@@ -100,15 +100,19 @@ func (s *SQLFolderStore) ListFolders(ctx context.Context, ns types.NamespaceInfo
 
 var _ FolderStore = (*APIFolderStore)(nil)
 
-func NewAPIFolderStore(configProvider func(ctx context.Context) *rest.Config) *APIFolderStore {
-	return &APIFolderStore{configProvider}
+func NewAPIFolderStore(tracer tracing.Tracer, configProvider func(ctx context.Context) *rest.Config) *APIFolderStore {
+	return &APIFolderStore{tracer, configProvider}
 }
 
 type APIFolderStore struct {
+	tracer         tracing.Tracer
 	configProvider func(ctx context.Context) *rest.Config
 }
 
 func (s *APIFolderStore) ListFolders(ctx context.Context, ns types.NamespaceInfo) ([]Folder, error) {
+	ctx, span := s.tracer.Start(ctx, "authz.apistore.ListFolders")
+	defer span.End()
+
 	client, err := s.client(ctx, ns.Value)
 	if err != nil {
 		return nil, fmt.Errorf("create resource client: %w", err)
@@ -131,10 +135,7 @@ func (s *APIFolderStore) ListFolders(ctx context.Context, ns types.NamespaceInfo
 				return nil, "", err
 			}
 
-			folder := Folder{
-				UID: object.GetName(),
-			}
-
+			folder := Folder{UID: object.GetName()}
 			parent := object.GetFolder()
 			if parent != "" {
 				folder.ParentUID = &parent

@@ -3,6 +3,8 @@ package authz
 import (
 	"context"
 	"errors"
+	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/fullstorydev/grpchan"
@@ -11,7 +13,9 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"k8s.io/client-go/rest"
 
+	"github.com/grafana/authlib/authn"
 	authnlib "github.com/grafana/authlib/authn"
 	authzlib "github.com/grafana/authlib/authz"
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
@@ -202,10 +206,31 @@ func RegisterRBACAuthZService(
 	tracer tracing.Tracer,
 	reg prometheus.Registerer,
 	cache cache.Cache,
+	exchangeClient authn.TokenExchanger,
+	folderAPIURL string,
 ) {
+
+	var folderStore store.FolderStore
+	// FIXME: for now we default to using database read proxy for folders if the api url is not configured.
+	// we should remove this and the sql implementation once we have verified that is works correctly
+	if folderAPIURL == "" {
+		folderStore = store.NewSQLFolderStore(db, tracer)
+	} else {
+		folderStore = store.NewAPIFolderStore(func(ctx context.Context) *rest.Config {
+			return &rest.Config{
+				Host: folderAPIURL,
+				WrapTransport: func(rt http.RoundTripper) http.RoundTripper {
+					return &tokenExhangeRoundTripper{te: exchangeClient, rt: rt}
+				},
+				QPS:   50,
+				Burst: 100,
+			}
+		})
+	}
+
 	server := rbac.NewService(
 		db,
-		store.NewSQLFolderStore(db, tracer),
+		folderStore,
 		legacy.NewLegacySQLStores(db),
 		store.NewSQLPermissionStore(db, tracer),
 		log.New("authz-grpc-server"),
@@ -217,4 +242,25 @@ func RegisterRBACAuthZService(
 	srv := handler.GetServer()
 	authzv1.RegisterAuthzServiceServer(srv, server)
 	authzextv1.RegisterAuthzExtentionServiceServer(srv, server)
+}
+
+var _ http.RoundTripper = tokenExhangeRoundTripper{}
+
+type tokenExhangeRoundTripper struct {
+	te authn.TokenExchanger
+	rt http.RoundTripper
+}
+
+func (t tokenExhangeRoundTripper) RoundTrip(r *http.Request) (*http.Response, error) {
+	res, err := t.te.Exchange(r.Context(), authnlib.TokenExchangeRequest{
+		Namespace: "*",
+		Audiences: []string{"folder.grafana.app"},
+	})
+
+	if err != nil {
+		return nil, fmt.Errorf("create access token: %w", err)
+	}
+
+	r.Header.Set("X-Access-Token", "Bearer "+res.Token)
+	return t.rt.RoundTrip(r)
 }
