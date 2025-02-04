@@ -14,84 +14,8 @@
       "spec": {
         "containers": [
           {
-            "image": "docker:27-cli",
-            "name": "docker"
-          },
-          {
             "image": "alpine/git:2.40.1",
             "name": "git"
-          },
-          {
-            "image": "google/cloud-sdk:431.0.0",
-            "name": "cloudsdk"
-          },
-          {
-            "image": "grafana/grafana-ci-deploy:1.3.3",
-            "name": "publish"
-          },
-          {
-            "image": "alpine:3.20.5",
-            "name": "alpine"
-          },
-          {
-            "image": "ubuntu:22.04",
-            "name": "ubuntu"
-          },
-          {
-            "image": "byrnedo/alpine-curl:0.1.8",
-            "name": "curl"
-          },
-          {
-            "image": "python:3.8",
-            "name": "python"
-          },
-          {
-            "image": "postgres:12.3-alpine",
-            "name": "postgres_alpine"
-          },
-          {
-            "image": "grafana/mimir-alpine:r316-55f47f8",
-            "name": "mimir"
-          },
-          {
-            "image": "mysql:8.0.32",
-            "name": "mysql8"
-          },
-          {
-            "image": "redis:6.2.11-alpine",
-            "name": "redis_alpine"
-          },
-          {
-            "image": "memcached:1.6.9-alpine",
-            "name": "memcached_alpine"
-          },
-          {
-            "image": "osixia/openldap:1.4.0",
-            "name": "openldap"
-          },
-          {
-            "image": "grafana/docker-puppeteer:1.1.0",
-            "name": "docker_puppeteer"
-          },
-          {
-            "image": "cypress/included:13.10.0",
-            "name": "cypress"
-          },
-          {
-            "image": "jwilder/dockerize:0.6.1",
-            "name": "dockerize"
-          },
-          {
-            "image": "koalaman/shellcheck:stable",
-            "name": "shellcheck"
-          },
-          {
-            "image": "rockylinux:9",
-            "name": "rocky"
-          },
-          {
-            "image": "scottyhardy/docker-wine:stable-9.0",
-            "name": "wine"
           }
         ]
       }
