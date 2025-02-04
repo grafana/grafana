@@ -17,6 +17,7 @@ import { DashboardRoutes } from 'app/types';
 import { DashboardPrompt } from '../saving/DashboardPrompt';
 
 import { getDashboardScenePageStateManager } from './DashboardScenePageStateManager';
+import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 export interface Props
   extends Omit<GrafanaRouteComponentProps<DashboardPageRouteParams, DashboardPageRouteSearchParams>, 'match'> {}
@@ -43,16 +44,15 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
 
     if (isObjectLike(data) && !data?.['source']) {
       console.log('sent!');
+
       const params = locationService.getSearchObject();
       const urlParams = { ...params, ...data };
-      console.log({ urlParams });
+
       locationService.partial(urlParams, true);
 
-      stateManager.loadDashboard({
-        uid: uid ?? '',
-        route: route.routeName as DashboardRoutes,
-        urlFolderUid: queryParams.folderUid,
-      });
+      console.log({ urlParams });
+
+      getTimeSrv().refreshTimeModel();
     }
   }, []);
 
