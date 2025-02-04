@@ -43,6 +43,11 @@ import {
   DashboardCursorSync,
   FieldConfig,
   FieldColor,
+  GridLayoutKind,
+  RowsLayoutKind,
+  RowGridLayoutKind,
+  ResponsiveGridLayoutKind,
+  ResponsiveGridLayoutItemKind,
 } from '../../../../../packages/grafana-schema/src/schema/dashboard/v2alpha0';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
@@ -50,6 +55,10 @@ import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
+import { ResponsiveGridItem } from '../scene/layout-responsive-grid/ResponsiveGridItem';
+import { ResponsiveGridLayoutManager } from '../scene/layout-responsive-grid/ResponsiveGridLayoutManager';
+import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
+import { DashboardLayoutManager } from '../scene/types';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import {
   getLibraryPanelBehavior,
@@ -72,22 +81,22 @@ type DeepPartial<T> = T extends object
   : T;
 
 export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnapshot = false): DashboardV2Spec {
-  const oldDash = scene.state;
-  const timeRange = oldDash.$timeRange!.state;
+  const sceneDash = scene.state;
+  const timeRange = sceneDash.$timeRange!.state;
 
-  const controlsState = oldDash.controls?.state;
+  const controlsState = sceneDash.controls?.state;
   const refreshPicker = controlsState?.refreshPicker;
 
   const dashboardSchemaV2: DeepPartial<DashboardV2Spec> = {
     //dashboard settings
-    title: oldDash.title,
-    description: oldDash.description ?? '',
-    cursorSync: getCursorSync(oldDash),
-    liveNow: getLiveNow(oldDash),
-    preload: oldDash.preload,
-    editable: oldDash.editable,
-    links: oldDash.links,
-    tags: oldDash.tags,
+    title: sceneDash.title,
+    description: sceneDash.description ?? '',
+    cursorSync: getCursorSync(sceneDash),
+    liveNow: getLiveNow(sceneDash),
+    preload: sceneDash.preload,
+    editable: sceneDash.editable,
+    links: sceneDash.links,
+    tags: sceneDash.tags,
     // EOF dashboard settings
 
     // time settings
@@ -106,24 +115,19 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
     // EOF time settings
 
     // variables
-    variables: getVariables(oldDash),
+    variables: getVariables(sceneDash),
     // EOF variables
 
     // elements
-    elements: getElements(oldDash),
+    elements: getElements(sceneDash),
     // EOF elements
 
     // annotations
-    annotations: getAnnotations(oldDash),
+    annotations: getAnnotations(sceneDash),
     // EOF annotations
 
     // layout
-    layout: {
-      kind: 'GridLayout',
-      spec: {
-        items: getGridLayoutItems(oldDash, isSnapshot),
-      },
-    },
+    layout: getLayout(sceneDash.body, isSnapshot),
     // EOF layout
   };
 
@@ -138,6 +142,76 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
     console.error('Error transforming dashboard to schema v2: ' + reason, dashboardSchemaV2);
     throw new Error('Error transforming dashboard to schema v2: ' + reason);
   }
+}
+
+function getLayout(
+  layoutManager: DashboardLayoutManager,
+  isSnapshot?: boolean
+): GridLayoutKind | RowsLayoutKind | ResponsiveGridLayoutKind {
+  if (layoutManager instanceof DefaultGridLayoutManager) {
+    return {
+      kind: 'GridLayout',
+      spec: {
+        items: getGridLayoutItems(layoutManager, isSnapshot),
+      },
+    };
+  } else if (layoutManager instanceof RowsLayoutManager) {
+    return {
+      kind: 'RowsLayout',
+      spec: {
+        rows: layoutManager.state.rows.map((row) => {
+          if (row.state.layout instanceof RowsLayoutManager) {
+            throw new Error('Nesting row layouts is not supported');
+          }
+          let layout: RowGridLayoutKind | ResponsiveGridLayoutKind | undefined = undefined;
+          if (row.state.layout instanceof DefaultGridLayoutManager) {
+            layout = getRowGridLayout(row.state.layout, isSnapshot);
+          } else if (row.state.layout instanceof ResponsiveGridLayoutManager) {
+            layout = {
+              kind: 'ResponsiveGridLayout',
+              spec: {
+                items: getResponsiveGridLayoutItems(row.state.layout),
+                col:
+                  row.state.layout.state.layout.state.templateColumns?.toString() ??
+                  'repeat(auto-fit, minmax(400px, auto))',
+                row: row.state.layout.state.layout.state.autoRows?.toString() ?? 'minmax(300px, auto)',
+              },
+            };
+          }
+          if (!layout) {
+            throw new Error('Unsupported layout type');
+          }
+          return {
+            kind: 'RowsLayoutRow',
+            spec: {
+              title: row.state.title,
+              collapsed: row.state.isCollapsed ?? false,
+              layout: layout,
+            },
+          };
+        }),
+      },
+    };
+  } else if (layoutManager instanceof ResponsiveGridLayoutManager) {
+    return {
+      kind: 'ResponsiveGridLayout',
+      spec: {
+        items: getResponsiveGridLayoutItems(layoutManager),
+        col: layoutManager.state.layout.state.templateColumns?.toString() ?? 'repeat(auto-fit, minmax(400px, auto))',
+        row: layoutManager.state.layout.state.autoRows?.toString() ?? 'minmax(300px, auto)',
+      },
+    };
+  }
+  throw new Error('Unsupported layout type');
+}
+
+function getRowGridLayout(layoutManager: DefaultGridLayoutManager, isSnapshot?: boolean): RowGridLayoutKind {
+  return {
+    kind: 'RowGridLayout',
+    spec: {
+      items: getRowGridLayoutItems(layoutManager, isSnapshot),
+    },
+  };
 }
 
 function getCursorSync(state: DashboardSceneState) {
@@ -159,27 +233,60 @@ function getLiveNow(state: DashboardSceneState) {
 }
 
 function getGridLayoutItems(
-  state: DashboardSceneState,
+  body: DefaultGridLayoutManager,
   isSnapshot?: boolean
 ): Array<GridLayoutItemKind | GridLayoutRowKind> {
-  const body = state.body;
   let elements: Array<GridLayoutItemKind | GridLayoutRowKind> = [];
-  if (body instanceof DefaultGridLayoutManager) {
-    for (const child of body.state.grid.state.children) {
-      if (child instanceof DashboardGridItem) {
-        // TODO: handle panel repeater scenario
-        if (child.state.variableName) {
-          elements = elements.concat(repeaterToLayoutItems(child, isSnapshot));
-        } else {
-          elements.push(gridItemToGridLayoutItemKind(child, isSnapshot));
-        }
-      } else if (child instanceof SceneGridRow) {
-        if (child.state.key!.indexOf('-clone-') > 0 && !isSnapshot) {
-          // Skip repeat rows
-          continue;
-        }
-        elements.push(gridRowToLayoutRowKind(child, isSnapshot));
+  for (const child of body.state.grid.state.children) {
+    if (child instanceof DashboardGridItem) {
+      // TODO: handle panel repeater scenario
+      if (child.state.variableName) {
+        elements = elements.concat(repeaterToLayoutItems(child, isSnapshot));
+      } else {
+        elements.push(gridItemToGridLayoutItemKind(child, isSnapshot));
       }
+    } else if (child instanceof SceneGridRow) {
+      if (child.state.key!.indexOf('-clone-') > 0 && !isSnapshot) {
+        // Skip repeat rows
+        continue;
+      }
+      elements.push(gridRowToLayoutRowKind(child, isSnapshot));
+    }
+  }
+
+  return elements;
+}
+
+function getResponsiveGridLayoutItems(body: ResponsiveGridLayoutManager): ResponsiveGridLayoutItemKind[] {
+  const items: ResponsiveGridLayoutItemKind[] = [];
+
+  for (const child of body.state.layout.state.children) {
+    if (child instanceof ResponsiveGridItem) {
+      items.push({
+        kind: 'ResponsiveGridLayoutItem',
+        spec: {
+          element: {
+            kind: 'ElementReference',
+            name: child.state?.body?.state.key ?? 'DefaultName',
+          },
+        },
+      });
+    }
+  }
+  return items;
+}
+
+function getRowGridLayoutItems(body: DefaultGridLayoutManager, isSnapshot?: boolean): GridLayoutItemKind[] {
+  let elements: GridLayoutItemKind[] = [];
+  for (const child of body.state.grid.state.children) {
+    if (child instanceof DashboardGridItem) {
+      if (child.state.variableName) {
+        elements = elements.concat(repeaterToLayoutItems(child, isSnapshot));
+      } else {
+        elements.push(gridItemToGridLayoutItemKind(child, isSnapshot));
+      }
+    } else if (child instanceof SceneGridRow) {
+      throw new Error('Row layout inside row layout is not supported');
     }
   }
 
@@ -729,15 +836,44 @@ function validateDashboardSchemaV2(dash: unknown): dash is DashboardV2Spec {
   if (!('layout' in dash) || typeof dash.layout !== 'object' || dash.layout === null) {
     throw new Error('Layout is not an object or is null');
   }
-  if (!('kind' in dash.layout) || dash.layout.kind !== 'GridLayout') {
-    throw new Error('Layout kind is not GridLayout');
+
+  if (!('kind' in dash.layout) || dash.layout.kind === 'GridLayout') {
+    validateGridLayout(dash.layout);
   }
-  if (!('spec' in dash.layout) || typeof dash.layout.spec !== 'object' || dash.layout.spec === null) {
-    throw new Error('Layout spec is not an object or is null');
-  }
-  if (!('items' in dash.layout.spec) || !Array.isArray(dash.layout.spec.items)) {
-    throw new Error('Layout spec items is not an array');
+
+  if (!('kind' in dash.layout) || dash.layout.kind === 'RowsLayout') {
+    validateRowsLayout(dash.layout);
   }
 
   return true;
+}
+
+function validateGridLayout(layout: unknown) {
+  if (typeof layout !== 'object' || layout === null) {
+    throw new Error('Layout is not an object or is null');
+  }
+  if (!('kind' in layout) || layout.kind !== 'GridLayout') {
+    throw new Error('Layout kind is not GridLayout');
+  }
+  if (!('spec' in layout) || typeof layout.spec !== 'object' || layout.spec === null) {
+    throw new Error('Layout spec is not an object or is null');
+  }
+  if (!('items' in layout.spec) || !Array.isArray(layout.spec.items)) {
+    throw new Error('Layout spec items is not an array');
+  }
+}
+
+function validateRowsLayout(layout: unknown) {
+  if (typeof layout !== 'object' || layout === null) {
+    throw new Error('Layout is not an object or is null');
+  }
+  if (!('kind' in layout) || layout.kind !== 'RowsLayout') {
+    throw new Error('Layout kind is not RowsLayout');
+  }
+  if (!('spec' in layout) || typeof layout.spec !== 'object' || layout.spec === null) {
+    throw new Error('Layout spec is not an object or is null');
+  }
+  if (!('rows' in layout.spec) || !Array.isArray(layout.spec.rows)) {
+    throw new Error('Layout spec items is not an array');
+  }
 }
