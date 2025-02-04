@@ -4,7 +4,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Badge, ConfirmModal, Icon, Spinner, Stack, Tooltip, useStyles2 } from '@grafana/ui';
+import { Badge, ConfirmModal, Icon, IconButton, LinkButton, Spinner, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { CombinedRuleGroup, CombinedRuleNamespace, RuleGroupIdentifier, RulesSource } from 'app/types/unified-alerting';
 
 import { LogMessages, logInfo } from '../../Analytics';
@@ -16,6 +16,7 @@ import { useRulesAccess } from '../../utils/accessControlHooks';
 import { GRAFANA_RULES_SOURCE_NAME, getRulesSourceName, isCloudRulesSource } from '../../utils/datasource';
 import { makeFolderLink, makeFolderSettingsLink } from '../../utils/misc';
 import { isFederatedRuleGroup, isGrafanaRulerRule } from '../../utils/rules';
+import { createRelativeUrl } from '../../utils/url';
 import { CollapseToggle } from '../CollapseToggle';
 import { RuleLocation } from '../RuleLocation';
 import { GrafanaRuleFolderExporter } from '../export/GrafanaRuleFolderExporter';
@@ -105,29 +106,23 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
   } else if (rulesSource === GRAFANA_RULES_SOURCE_NAME) {
     if (folderUID) {
       const baseUrl = makeFolderLink(folderUID);
+      if (isGroupView) {
+        actionIcons.push(
+          <LinkButton
+            aria-label="rule group details"
+            data-testid="rule-group-details"
+            key="rule-group-details"
+            icon="external-link-alt"
+            tooltip="rule group details"
+            href={createRelativeUrl(
+              `/alerting/grafana/namespaces/${namespace.uid}/groups/${encodeURIComponent(group.name)}`
+            )}
+            size="sm"
+            variant="secondary"
+          />
+        );
+      }
       if (folder?.canSave) {
-        if (isGroupView && !isProvisioned) {
-          actionIcons.push(
-            <ActionIcon
-              aria-label="edit rule group"
-              data-testid="edit-group"
-              key="edit"
-              icon="pen"
-              tooltip="edit rule group"
-              onClick={() => setIsEditingGroup(true)}
-            />
-          );
-          actionIcons.push(
-            <ActionIcon
-              data-testid="reorder-group"
-              key="reorder"
-              icon="exchange-alt"
-              tooltip="reorder rules"
-              className={styles.rotate90}
-              onClick={() => setIsReorderingGroup(true)}
-            />
-          );
-        }
         if (isListView) {
           actionIcons.push(
             <ActionIcon
