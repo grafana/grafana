@@ -64,8 +64,9 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 		return nil, fmt.Errorf("bad type request")
 	}
 
-	for _, fed := range req.Federated {
-		if (fed.Resource == dashboard.DASHBOARD_RESOURCE && queryType == searchstore.TypeFolder) || (fed.Resource == folderv0alpha1.RESOURCE && queryType == searchstore.TypeDashboard) {
+	if len(req.Federated) == 1 {
+		if (req.Federated[0].Resource == dashboard.DASHBOARD_RESOURCE && queryType == searchstore.TypeFolder) ||
+			(req.Federated[0].Resource == folderv0alpha1.RESOURCE && queryType == searchstore.TypeDashboard) {
 			queryType = "" // makes the legacy store search across both
 		}
 	}
