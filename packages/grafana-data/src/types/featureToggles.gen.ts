@@ -255,4 +255,5 @@ export interface FeatureToggles {
   fetchRulesUsingPost?: boolean;
   alertingAlertmanagerExtraDedupStage?: boolean;
   alertingAlertmanagerExtraDedupStageStopPipeline?: boolean;
+  newLogsPanel?: boolean;
 }
