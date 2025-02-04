@@ -1,29 +1,21 @@
 ---
-aliases:
-  - ../../../auth/grafana/
 description: Learn how to configure passwordless authentication with magic links in Grafana
 labels:
   products:
     - enterprise
     - oss
-menuTitle: Passwordless auth
-title: Configure passwordless authentication with magic links
+menuTitle: Passwordless
+title: Configure passwordless authentication
 weight: 200
 ---
 
 # Passwordless authentication with magic links
 
-The Passwordless integration in Grafana allows your Grafana users to authenticate with a magic link or one-time password (OTP) sent via email.
-
-{{% admonition type="note" %}}
-[Passwordless authentication]({{< relref "../passwordless" >}}) is available in [Grafana OSS]({{< relref "../../../../introduction/_index.md" >}}) and in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise" >}}).
-{{% /admonition %}}
+Passwordless authentication lets Grafana users authenticate with a magic link or one-time password (OTP) sent via email.
 
 ## Enable passwordless authentication
 
-{{% admonition type="note" %}}
-Available in Experimental in Grafana 11.4 behind the `passwordlessMagicLinkAuthentication` feature toggle.
-{{% /admonition %}}
+{{< docs/experimental product="passwordless authentication" featureFlag="passwordlessMagicLinkAuthentication" >}}
 
 To enable passwordless authentication, use the following configuration:
 
@@ -44,7 +36,9 @@ code_expiration = 20m
 
 ## Enable SMTP server
 
-The SMTP server must be enabled so that Grafana can send emails. See [SMTP]({{< relref "../../../configure-grafana/_index.md" >}}) for details on configuring the SMTP server.
+The SMTP server must be enabled so that Grafana can send emails.
+The following configuration enables the SMTP server.
+For more information on configuring the SMTP server, refer to [SMTP](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/#smtp).
 
 ```bash
 [smtp]
