@@ -1,9 +1,11 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { render } from 'test/test-utils';
 
 import { PanelPluginMeta, PluginMetaInfo, PluginType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Panel } from '@grafana/schema';
+import { jestRegisterMockServer } from 'app/core/components/NestedFolderPicker/mockServer';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 
 import { backendSrv } from '../../../../core/services/backend_srv';
@@ -26,22 +28,9 @@ jest.mock('@grafana/runtime', () => ({
   },
 }));
 
-jest.mock('debounce-promise', () => {
-  const debounce = () => {
-    const debounced = () =>
-      Promise.resolve([
-        { label: 'Dashboards', value: { uid: '', title: 'Dashboards' } },
-        { label: 'Folder1', value: { id: 'xMsQdBfWz', title: 'Folder1' } },
-        { label: 'Folder2', value: { id: 'wfTJJL5Wz', title: 'Folder2' } },
-      ]);
-    return debounced;
-  };
-
-  return debounce;
-});
-
 jest.spyOn(api, 'getConnectedDashboards').mockResolvedValue([]);
 jest.spyOn(api, 'deleteLibraryPanel').mockResolvedValue({ message: 'success' });
+
 async function getTestContext(
   propOverrides: Partial<LibraryPanelsSearchProps> = {},
   searchResult: LibraryElementsSearchResult = { elements: [], perPage: 40, page: 1, totalCount: 0 }
@@ -67,7 +56,7 @@ async function getTestContext(
     sort: 1,
   };
 
-  config.featureToggles = { panelTitleSearch: false };
+  config.featureToggles = { panelTitleSearch: false, nestedFolders: true };
   const getSpy = jest.spyOn(backendSrv, 'get');
 
   jest.spyOn(getGrafanaSearcher(), 'getSortOptions').mockResolvedValue([
@@ -99,6 +88,18 @@ async function getTestContext(
 }
 
 describe('LibraryPanelsSearch', () => {
+  jestRegisterMockServer();
+
+  const originalScrollIntoView = window.HTMLElement.prototype.scrollIntoView;
+
+  beforeAll(() => {
+    window.HTMLElement.prototype.scrollIntoView = function () {};
+  });
+
+  afterAll(() => {
+    window.HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
+  });
+
   describe('when mounted with default options', () => {
     it('should show input filter and library panels view', async () => {
       await getTestContext();
@@ -188,7 +189,7 @@ describe('LibraryPanelsSearch', () => {
 
       expect(screen.getByPlaceholderText(/search by name/i)).toBeInTheDocument();
       expect(screen.getByText(/you haven\'t created any library panels yet/i)).toBeInTheDocument();
-      expect(screen.getByRole('combobox', { name: /folder filter/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Filter by folder/i })).toBeInTheDocument();
     });
 
     describe('and user changes folder filter', () => {
@@ -222,8 +223,10 @@ describe('LibraryPanelsSearch', () => {
           }
         );
 
-        await userEvent.click(screen.getByRole('combobox', { name: /folder filter/i }));
-        await userEvent.type(screen.getByRole('combobox', { name: /folder filter/i }), 'library', {
+        const folderPicker = screen.getByRole('button', { name: /Filter by folder/i });
+
+        await userEvent.click(folderPicker);
+        await userEvent.type(folderPicker, 'library', {
           skipClick: true,
         });
 
