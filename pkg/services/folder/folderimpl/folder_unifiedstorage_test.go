@@ -886,7 +886,7 @@ type mockDashboardCli struct {
 	dynamic.ResourceInterface
 }
 
-func (c mockDashboardCli) Delete(ctx context.Context, name string, options metav1.DeleteOptions, subresources ...string) error {
+func (c *mockDashboardCli) Delete(ctx context.Context, name string, options metav1.DeleteOptions, subresources ...string) error {
 	args := c.Called(ctx, name, options)
 	return args.Error(0)
 }
@@ -968,7 +968,7 @@ func TestDeleteFoldersFromApiServer(t *testing.T) {
 	t.Run("Should delete dashboards and public dashboards within the folder through k8s if the ff is enabled", func(t *testing.T) {
 		dashboardK8sCli := mockDashboardCli{}
 		dashboardK8sCli.On("Delete", mock.Anything, "uid1", mock.Anything, mock.Anything).Return(nil).Once()
-		fakeK8sClient.On("getDashboardClient", mock.Anything, mock.Anything).Return(dashboardK8sCli, true)
+		fakeK8sClient.On("getDashboardClient", mock.Anything, mock.Anything).Return(&dashboardK8sCli, true)
 		fakeK8sClient.On("getSearcher", mock.Anything).Return(fakeK8sClient)
 		publicDashboardFakeService.On("DeleteByDashboardUIDs", mock.Anything, int64(1), []string{"uid1"}).Return(nil).Once()
 		err := service.deleteFromApiServer(ctx, &folder.DeleteFolderCommand{
@@ -981,5 +981,4 @@ func TestDeleteFoldersFromApiServer(t *testing.T) {
 		publicDashboardFakeService.AssertExpectations(t)
 		dashboardK8sCli.AssertExpectations(t)
 	})
-
 }
