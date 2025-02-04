@@ -2,7 +2,7 @@
 import { useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 import { usePrevious } from 'react-use';
-import { debounce, isObjectLike } from 'lodash';
+import { isObjectLike } from 'lodash';
 
 import { PageLayoutType } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
@@ -13,9 +13,6 @@ import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { DashboardPageRouteParams, DashboardPageRouteSearchParams } from 'app/features/dashboard/containers/types';
 import { DashboardRoutes } from 'app/types';
-import store from 'app/core/store';
-import { useDispatch } from 'app/types';
-import { dispatch } from 'app/store/store';
 
 import { DashboardPrompt } from '../saving/DashboardPrompt';
 
@@ -39,7 +36,7 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
 
   console.log('DashboardScenePage');
 
-  const updateLocation = debounce((query) => locationService.partial(query), 300);
+  // const updateLocation = debounce((query) => locationService.partial(query), 300);
 
   const handleFrameTasks = useCallback(({ data }: any) => {
     console.log('event.data:', data);
@@ -48,23 +45,24 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
       console.log('sent!');
       const params = locationService.getSearchObject();
       const urlParams = { ...params, ...data };
-      const currentPath = locationService.getLocation();
-      console.log({ currentPath });
+      console.log({ urlParams });
       locationService.partial(urlParams, true);
 
-      // dispatch(updateLocation({
-      //   query: data,
-      // }));
+      stateManager.loadDashboard({
+        uid: uid ?? '',
+        route: route.routeName as DashboardRoutes,
+        urlFolderUid: queryParams.folderUid,
+      });
     }
   }, []);
 
   useEffect(() => {
     window.addEventListener('message', handleFrameTasks, false);
 
-    return() => {
+    return () => {
       window.removeEventListener('message', handleFrameTasks);
-    }
-  }, [])
+    };
+  }, []);
 
   useEffect(() => {
     if (route.routeName === DashboardRoutes.Normal && type === 'snapshot') {
