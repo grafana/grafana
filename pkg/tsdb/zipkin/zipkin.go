@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 )
@@ -57,7 +58,7 @@ func (s *Service) getDSInfo(ctx context.Context, pluginCtx backend.PluginContext
 	}
 	instance, ok := i.(*datasourceInfo)
 	if !ok {
-		return nil, errors.New("failed to cast datasource info")
+		return nil, backend.DownstreamError(errors.New("failed to cast datasource info"))
 	}
 	return instance, nil
 }
@@ -80,4 +81,17 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 		Status:  backend.HealthStatusOk,
 		Message: "Data source is working",
 	}, nil
+}
+
+func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	handler := httpadapter.New(s.registerResourceRoutes())
+	return handler.CallResource(ctx, req, sender)
+}
+
+func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	dsInfo, err := s.getDSInfo(ctx, req.PluginContext)
+	if err != nil {
+		return nil, err
+	}
+	return queryData(ctx, dsInfo, req)
 }

@@ -7,9 +7,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/authlib/claims"
 	"golang.org/x/oauth2"
 	"golang.org/x/sync/singleflight"
+
+	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -17,12 +18,15 @@ import (
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 )
 
 const maxOAuthTokenCacheTTL = 5 * time.Minute
 
-func ProvideOAuthTokenSync(service oauthtoken.OAuthTokenService, sessionService auth.UserTokenService, socialService social.Service, tracer tracing.Tracer) *OAuthTokenSync {
+func ProvideOAuthTokenSync(service oauthtoken.OAuthTokenService, sessionService auth.UserTokenService, socialService social.Service, tracer tracing.Tracer,
+	features featuremgmt.FeatureToggles,
+) *OAuthTokenSync {
 	return &OAuthTokenSync{
 		log.New("oauth_token.sync"),
 		service,
@@ -31,6 +35,7 @@ func ProvideOAuthTokenSync(service oauthtoken.OAuthTokenService, sessionService 
 		new(singleflight.Group),
 		tracer,
 		localcache.New(maxOAuthTokenCacheTTL, 15*time.Minute),
+		features,
 	}
 }
 
@@ -42,6 +47,7 @@ type OAuthTokenSync struct {
 	singleflightGroup *singleflight.Group
 	tracer            tracing.Tracer
 	cache             *localcache.CacheService
+	features          featuremgmt.FeatureToggles
 }
 
 func (s *OAuthTokenSync) SyncOauthTokenHook(ctx context.Context, id *authn.Identity, _ *authn.Request) error {
@@ -72,6 +78,10 @@ func (s *OAuthTokenSync) SyncOauthTokenHook(ctx context.Context, id *authn.Ident
 	ctxLogger := s.log.FromContext(ctx).New("userID", userID)
 
 	cacheKey := fmt.Sprintf("token-check-%s", id.GetID())
+	if s.features.IsEnabledGlobally(featuremgmt.FlagImprovedExternalSessionHandling) {
+		cacheKey = fmt.Sprintf("token-check-%s-%d", id.GetID(), id.SessionToken.Id)
+	}
+
 	if _, ok := s.cache.Get(cacheKey); ok {
 		ctxLogger.Debug("Expiration check has been cached, no need to refresh")
 		return nil
@@ -83,10 +93,15 @@ func (s *OAuthTokenSync) SyncOauthTokenHook(ctx context.Context, id *authn.Ident
 		updateCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 15*time.Second)
 		defer cancel()
 
-		token, refreshErr := s.service.TryTokenRefresh(updateCtx, id)
+		token, refreshErr := s.service.TryTokenRefresh(updateCtx, id, id.SessionToken)
 		if refreshErr != nil {
 			if errors.Is(refreshErr, context.Canceled) {
 				return nil, nil
+			}
+
+			if errors.Is(refreshErr, oauthtoken.ErrRetriesExhausted) {
+				ctxLogger.Warn("Retries have been exhausted for locking the DB for OAuth token refresh", "id", id.ID, "error", refreshErr)
+				return nil, refreshErr
 			}
 
 			ctxLogger.Error("Failed to refresh OAuth access token", "id", id.ID, "error", refreshErr)

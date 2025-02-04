@@ -76,6 +76,7 @@ describe('QueryVariableEditorForm', () => {
   const mockOnMultiChange = jest.fn();
   const mockOnIncludeAllChange = jest.fn();
   const mockOnAllValueChange = jest.fn();
+  const mockOnAllowCustomValueChange = jest.fn();
 
   const defaultProps: React.ComponentProps<typeof QueryVariableEditorForm> = {
     datasource: { uid: defaultDatasource.uid, type: defaultDatasource.type },
@@ -90,12 +91,14 @@ describe('QueryVariableEditorForm', () => {
     onSortChange: mockOnSortChange,
     refresh: VariableRefresh.onDashboardLoad,
     onRefreshChange: mockOnRefreshChange,
+    allowCustomValue: true,
     isMulti: true,
     onMultiChange: mockOnMultiChange,
     includeAll: true,
     onIncludeAllChange: mockOnIncludeAllChange,
     allValue: 'custom all value',
     onAllValueChange: mockOnAllValueChange,
+    onAllowCustomValueChange: mockOnAllowCustomValueChange,
   };
 
   async function setup(props?: React.ComponentProps<typeof QueryVariableEditorForm>) {
@@ -135,6 +138,9 @@ describe('QueryVariableEditorForm', () => {
     const allValueInput = getByTestId(
       selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsCustomAllInput
     );
+    const allowCustomValueSwitch = getByTestId(
+      selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsAllowCustomValueSwitch
+    );
 
     expect(dataSourcePicker).toBeInTheDocument();
     expect(dataSourcePicker.getAttribute('placeholder')).toBe('Default Test Data Source');
@@ -146,6 +152,8 @@ describe('QueryVariableEditorForm', () => {
     expect(getByRole('radio', { name: 'On dashboard load' })).toBeChecked();
     expect(multiSwitch).toBeInTheDocument();
     expect(multiSwitch).toBeChecked();
+    expect(allowCustomValueSwitch).toBeInTheDocument();
+    expect(allowCustomValueSwitch).toBeChecked();
     expect(includeAllSwitch).toBeInTheDocument();
     expect(includeAllSwitch).toBeChecked();
     expect(allValueInput).toBeInTheDocument();
@@ -254,6 +262,20 @@ describe('QueryVariableEditorForm', () => {
     expect(mockOnIncludeAllChange).toHaveBeenCalledTimes(1);
     expect(
       (mockOnIncludeAllChange.mock.calls[0][0] as FormEvent<HTMLInputElement>).target as HTMLInputElement
+    ).toBeChecked();
+  });
+
+  it('should call onAllowCustomValue when changing the allow custom value switch', async () => {
+    const {
+      renderer: { getByTestId },
+    } = await setup();
+    const allowCustomValue = getByTestId(
+      selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsAllowCustomValueSwitch
+    );
+    await userEvent.click(allowCustomValue);
+    expect(mockOnAllowCustomValueChange).toHaveBeenCalledTimes(1);
+    expect(
+      (mockOnAllowCustomValueChange.mock.calls[0][0] as FormEvent<HTMLInputElement>).target as HTMLInputElement
     ).toBeChecked();
   });
 

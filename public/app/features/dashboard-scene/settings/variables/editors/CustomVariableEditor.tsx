@@ -10,7 +10,7 @@ interface CustomVariableEditorProps {
 }
 
 export function CustomVariableEditor({ variable, onRunQuery }: CustomVariableEditorProps) {
-  const { query, isMulti, allValue, includeAll } = variable.useState();
+  const { query, isMulti, allValue, includeAll, allowCustomValue } = variable.useState();
 
   const onMultiChange = (event: FormEvent<HTMLInputElement>) => {
     variable.setState({ isMulti: event.currentTarget.checked });
@@ -25,6 +25,9 @@ export function CustomVariableEditor({ variable, onRunQuery }: CustomVariableEdi
   const onAllValueChange = (event: FormEvent<HTMLInputElement>) => {
     variable.setState({ allValue: event.currentTarget.value });
   };
+  const onAllowCustomValueChange = (event: FormEvent<HTMLInputElement>) => {
+    variable.setState({ allowCustomValue: event.currentTarget.checked });
+  };
 
   return (
     <CustomVariableForm
@@ -32,10 +35,12 @@ export function CustomVariableEditor({ variable, onRunQuery }: CustomVariableEdi
       multi={!!isMulti}
       allValue={allValue ?? ''}
       includeAll={!!includeAll}
+      allowCustomValue={allowCustomValue}
       onMultiChange={onMultiChange}
       onIncludeAllChange={onIncludeAllChange}
       onQueryChange={onQueryChange}
       onAllValueChange={onAllValueChange}
+      onAllowCustomValueChange={onAllowCustomValueChange}
     />
   );
 }

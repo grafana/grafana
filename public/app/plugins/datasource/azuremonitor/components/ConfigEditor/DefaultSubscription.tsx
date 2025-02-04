@@ -1,14 +1,14 @@
 import { useEffect, useReducer } from 'react';
 
+import { AzureCredentials, isCredentialsComplete } from '@grafana/azure-sdk';
 import { SelectableValue } from '@grafana/data';
 import { Select, Button, Field } from '@grafana/ui';
 
-import { isCredentialsComplete } from '../../credentials';
 import { selectors } from '../../e2e/selectors';
-import { AzureCredentials, AzureDataSourceJsonData } from '../../types';
+import { AzureMonitorDataSourceJsonData } from '../../types';
 
 export interface Props {
-  options: AzureDataSourceJsonData;
+  options: AzureMonitorDataSourceJsonData;
   credentials: AzureCredentials;
   getSubscriptions?: () => Promise<SelectableValue[]>;
   subscriptions: Array<SelectableValue<string>>;

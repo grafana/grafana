@@ -21,7 +21,7 @@ describe('internationalization constants', () => {
     expect(GERMAN_GERMANY).toBe('de-DE');
     expect(BRAZILIAN_PORTUGUESE).toBe('pt-BR');
     expect(CHINESE_SIMPLIFIED).toBe('zh-Hans');
-    expect(PSEUDO_LOCALE).toBe('pseudo-LOCALE');
+    expect(PSEUDO_LOCALE).toBe('pseudo');
     expect(DEFAULT_LANGUAGE).toBe(ENGLISH_US);
   });
 

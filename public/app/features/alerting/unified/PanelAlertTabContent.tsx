@@ -2,10 +2,11 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Alert, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
-import { ScrollContainer } from '@grafana/ui/src/unstable';
+import { Alert, LoadingPlaceholder, ScrollContainer, useStyles2 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
-import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 
 import { NewRuleFromPanelButton } from './components/panel-alerts-tab/NewRuleFromPanelButton';
 import { RulesTable } from './components/rules/RulesTable';
@@ -59,18 +60,26 @@ export const PanelAlertTabContent = ({ dashboard, panel }: Props) => {
     );
   }
 
+  const isNew = !Boolean(dashboard.uid);
+
   return (
     <div data-testid={selectors.components.PanelAlertTabContent.content} className={styles.noRulesWrapper}>
       {alert}
-      {!!dashboard.uid && (
+      {!isNew && (
         <>
-          <p>There are no alert rules linked to this panel.</p>
+          <p>
+            <Trans i18nKey="dashboard.panel-edit.alerting-tab.no-rules">
+              There are no alert rules linked to this panel.
+            </Trans>
+          </p>
           {!!dashboard.meta.canSave && canCreateRules && <NewRuleFromPanelButton panel={panel} dashboard={dashboard} />}
         </>
       )}
-      {!dashboard.uid && !!dashboard.meta.canSave && (
+      {isNew && !!dashboard.meta.canSave && (
         <Alert severity="info" title="Dashboard not saved">
-          Dashboard must be saved before alerts can be added.
+          <Trans i18nKey="dashboard.panel-edit.alerting-tab.dashboard-not-saved">
+            Dashboard must be saved before alerts can be added.
+          </Trans>
         </Alert>
       )}
     </div>

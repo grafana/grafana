@@ -146,7 +146,7 @@ describe('PanelOptions', () => {
     it('Can update', async () => {
       const {} = setup();
 
-      await userEvent.click(screen.getByLabelText('Remove label'));
+      await userEvent.click(screen.getByLabelText('Remove property'));
 
       expect(screen.queryByLabelText(overrideRuleTooltipDescription)).not.toBeInTheDocument();
     });
@@ -177,7 +177,6 @@ describe('PanelOptions', () => {
 
     const libraryPanel = new LibraryPanelBehavior({
       isLoaded: true,
-      title: libraryPanelModel.title,
       uid: libraryPanelModel.uid,
       name: libraryPanelModel.name,
       _loadedPanel: libraryPanelModel,

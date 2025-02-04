@@ -28,6 +28,7 @@ const defaultProps: Omit<Props, 'children'> = {
   rows: [],
   sortOrder: LogsSortOrder.Descending,
   timeZone: 'browser',
+  scrollElement: null,
 };
 
 function ScrollWithWrapper({ children, ...props }: Props) {
@@ -74,11 +75,14 @@ function setup(
       wheel(-1);
     }
   }
-  function wheel(deltaY: number) {
+  function wheel(deltaY: number, timeStamp?: number) {
     element.scrollTop += deltaY;
 
     act(() => {
       const event = new WheelEvent('wheel', { deltaY });
+      if (timeStamp) {
+        jest.spyOn(event, 'timeStamp', 'get').mockReturnValue(timeStamp);
+      }
       events['wheel'](event);
     });
   }
@@ -164,7 +168,7 @@ describe('InfiniteScroll', () => {
 
       test.each([
         ['up', -5, 0],
-        ['down', 5, 100],
+        ['down', 5, 60],
       ])(
         'Requests more logs when moving the mousewheel %s',
         async (_: string, deltaY: number, startPosition: number) => {
@@ -272,6 +276,49 @@ describe('InfiniteScroll', () => {
             expect(await screen.findByTestId('end-of-range')).toBeInTheDocument();
           }
         );
+      });
+
+      describe('Chain of events', () => {
+        test('Ingnores chains of events', async () => {
+          const loadMoreMock = jest.fn();
+          const { wheel } = setup(loadMoreMock, 57, rows, order);
+
+          expect(await screen.findByTestId('contents')).toBeInTheDocument();
+
+          const timeStamps = [1, 2, 3, 4];
+          timeStamps.forEach((timeStamp) => {
+            wheel(1, timeStamp);
+          });
+
+          expect(loadMoreMock).not.toHaveBeenCalled();
+        });
+
+        test('Detects when chain of events ends', async () => {
+          const loadMoreMock = jest.fn();
+          const { wheel } = setup(loadMoreMock, 57, rows, order);
+
+          expect(await screen.findByTestId('contents')).toBeInTheDocument();
+
+          const timeStamps = [1, 2, 3, 600, 1];
+          timeStamps.forEach((timeStamp) => {
+            wheel(1, timeStamp);
+          });
+
+          expect(loadMoreMock).toHaveBeenCalledTimes(1);
+        });
+
+        test('Detects when the user wants to scroll', async () => {
+          const loadMoreMock = jest.fn();
+          const { wheel } = setup(loadMoreMock, 57, rows, order);
+
+          expect(await screen.findByTestId('contents')).toBeInTheDocument();
+
+          for (let i = 0; i <= 25; i++) {
+            wheel(1, 399 * i + 399);
+          }
+
+          expect(loadMoreMock).toHaveBeenCalledTimes(1);
+        });
       });
     }
   );

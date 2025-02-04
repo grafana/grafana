@@ -5,7 +5,11 @@ import * as faroWebSdkModule from '@grafana/faro-web-sdk';
 import { BrowserConfig, FetchTransport } from '@grafana/faro-web-sdk';
 
 import { EchoSrvTransport } from './EchoSrvTransport';
-import { GrafanaJavascriptAgentBackend, GrafanaJavascriptAgentBackendOptions } from './GrafanaJavascriptAgentBackend';
+import {
+  GrafanaJavascriptAgentBackend,
+  GrafanaJavascriptAgentBackendOptions,
+  TRACKING_URLS,
+} from './GrafanaJavascriptAgentBackend';
 
 describe('GrafanaJavascriptAgentEchoBackend', () => {
   let mockedSetUser: jest.Mock;
@@ -91,6 +95,12 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
     expect(initializeFaroMock).toHaveBeenCalledTimes(1);
     expect(initializeFaroMock.mock.calls[0][0].transports?.length).toEqual(2);
     expect(initializeFaroMock.mock.calls[0][0].transports?.[0]).toBeInstanceOf(EchoSrvTransport);
+    expect(initializeFaroMock.mock.calls[0][0].transports?.[0].getIgnoreUrls()).toEqual([
+      /.*\/log-grafana-javascript-agent.*/,
+      /\.(google-analytics|googletagmanager)\.com/,
+      /frontend-metrics/,
+      /\/collect(?:\/[\w]*)?$/,
+    ]);
     expect(initializeFaroMock.mock.calls[0][0].transports?.[1]).toBeInstanceOf(FetchTransport);
   });
 
@@ -107,6 +117,17 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
         orgId: '1',
       },
     });
+  });
+
+  test('will ensure the performance of TRACKING_URLS', async () => {
+    // 10e6 is based on true events
+    const longString = Array.from({ length: 10e6 }, () => Math.random().toString(36)[2]).join('');
+    const maxExecutionTime = 500;
+
+    const start = performance.now();
+    TRACKING_URLS.some((u) => u && longString.match(u) !== null);
+    const end = performance.now();
+    expect(end - start).toBeLessThanOrEqual(maxExecutionTime);
   });
 
   //@FIXME - make integration test work

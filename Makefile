@@ -8,7 +8,7 @@ WIRE_TAGS = "oss"
 include .bingo/Variables.mk
 
 GO = go
-GO_VERSION = 1.23.1
+GO_VERSION = 1.23.5
 GO_LINT_FILES ?= $(shell ./scripts/go-workspace/golangci-lint-includes.sh)
 GO_TEST_FILES ?= $(shell ./scripts/go-workspace/test-includes.sh)
 SH_FILES ?= $(shell find ./scripts -name *.sh)
@@ -146,6 +146,11 @@ gen-cue: ## Do all CUE/Thema code generation
 	go generate ./kinds/gen.go
 	go generate ./public/app/plugins/gen.go
 
+.PHONY: gen-cuev2
+gen-cuev2: ## Do all CUE code generation
+	@echo "generate code from .cue files (v2)"
+	@$(MAKE) -C ./kindsv2 all
+
 .PHONY: gen-feature-toggles
 gen-feature-toggles:
 ## First go test run fails because it will re-generate the feature toggles.
@@ -206,7 +211,6 @@ build-cli: ## Build Grafana CLI application.
 build-js: ## Build frontend assets.
 	@echo "build frontend"
 	yarn run build
-	yarn run plugins:build-bundled
 
 PLUGIN_ID ?=
 
@@ -305,7 +309,7 @@ test: test-go test-js ## Run all tests.
 golangci-lint: $(GOLANGCI_LINT)
 	@echo "lint via golangci-lint"
 	$(GOLANGCI_LINT) run \
-		--config .golangci.toml \
+		--config .golangci.yml \
 		$(GO_LINT_FILES)
 
 .PHONY: lint-go
@@ -416,7 +420,8 @@ protobuf: ## Compile protobuf definitions
 	buf generate pkg/plugins/backendplugin/pluginextensionv2 --template pkg/plugins/backendplugin/pluginextensionv2/buf.gen.yaml
 	buf generate pkg/plugins/backendplugin/secretsmanagerplugin --template pkg/plugins/backendplugin/secretsmanagerplugin/buf.gen.yaml
 	buf generate pkg/storage/unified/resource --template pkg/storage/unified/resource/buf.gen.yaml
-	buf generate pkg/services/authz/zanzana/proto/v1 --template pkg/services/authz/zanzana/proto/v1/buf.gen.yaml
+	buf generate pkg/services/authz/proto/v1 --template pkg/services/authz/proto/v1/buf.gen.yaml
+	buf generate pkg/services/ngalert/store/proto/v1 --template pkg/services/ngalert/store/proto/v1/buf.gen.yaml
 
 .PHONY: clean
 clean: ## Clean up intermediate build artifacts.

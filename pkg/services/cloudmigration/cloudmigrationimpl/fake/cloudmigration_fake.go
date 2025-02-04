@@ -6,8 +6,8 @@ import (
 	"sort"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/authapi"
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
-	"github.com/grafana/grafana/pkg/services/gcom"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -20,11 +20,11 @@ type FakeServiceImpl struct {
 
 var _ cloudmigration.Service = (*FakeServiceImpl)(nil)
 
-func (m FakeServiceImpl) GetToken(_ context.Context) (gcom.TokenView, error) {
+func (m FakeServiceImpl) GetToken(_ context.Context) (authapi.TokenView, error) {
 	if m.ReturnError {
-		return gcom.TokenView{}, fmt.Errorf("mock error")
+		return authapi.TokenView{}, fmt.Errorf("mock error")
 	}
-	return gcom.TokenView{ID: "mock_id", DisplayName: "mock_name"}, nil
+	return authapi.TokenView{ID: "mock_id", DisplayName: "mock_name"}, nil
 }
 
 func (m FakeServiceImpl) CreateToken(_ context.Context) (cloudmigration.CreateAccessTokenResponse, error) {
@@ -45,7 +45,7 @@ func (m FakeServiceImpl) DeleteToken(_ context.Context, _ string) error {
 	return nil
 }
 
-func (m FakeServiceImpl) CreateSession(_ context.Context, _ cloudmigration.CloudMigrationSessionRequest) (*cloudmigration.CloudMigrationSessionResponse, error) {
+func (m FakeServiceImpl) CreateSession(_ context.Context, _ *user.SignedInUser, _ cloudmigration.CloudMigrationSessionRequest) (*cloudmigration.CloudMigrationSessionResponse, error) {
 	if m.ReturnError {
 		return nil, cloudmigration.ErrSessionCreationFailure
 	}
@@ -57,21 +57,21 @@ func (m FakeServiceImpl) CreateSession(_ context.Context, _ cloudmigration.Cloud
 	}, nil
 }
 
-func (m FakeServiceImpl) GetSession(_ context.Context, _ string) (*cloudmigration.CloudMigrationSession, error) {
+func (m FakeServiceImpl) GetSession(_ context.Context, _ int64, _ string) (*cloudmigration.CloudMigrationSession, error) {
 	if m.ReturnError {
 		return nil, fmt.Errorf("mock error")
 	}
 	return &cloudmigration.CloudMigrationSession{UID: "fake"}, nil
 }
 
-func (m FakeServiceImpl) DeleteSession(_ context.Context, _ string) (*cloudmigration.CloudMigrationSession, error) {
+func (m FakeServiceImpl) DeleteSession(_ context.Context, _ int64, _ *user.SignedInUser, _ string) (*cloudmigration.CloudMigrationSession, error) {
 	if m.ReturnError {
 		return nil, fmt.Errorf("mock error")
 	}
 	return &cloudmigration.CloudMigrationSession{UID: "fake"}, nil
 }
 
-func (m FakeServiceImpl) GetSessionList(_ context.Context) (*cloudmigration.CloudMigrationSessionListResponse, error) {
+func (m FakeServiceImpl) GetSessionList(_ context.Context, _ int64) (*cloudmigration.CloudMigrationSessionListResponse, error) {
 	if m.ReturnError {
 		return nil, fmt.Errorf("mock error")
 	}
@@ -154,7 +154,7 @@ func (m FakeServiceImpl) GetSnapshotList(ctx context.Context, query cloudmigrati
 	return cloudSnapshots, nil
 }
 
-func (m FakeServiceImpl) UploadSnapshot(ctx context.Context, sessionUid string, snapshotUid string) error {
+func (m FakeServiceImpl) UploadSnapshot(ctx context.Context, _ int64, _ *user.SignedInUser, sessionUid string, snapshotUid string) error {
 	if m.ReturnError {
 		return fmt.Errorf("mock error")
 	}

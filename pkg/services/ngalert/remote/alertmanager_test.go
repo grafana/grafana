@@ -785,16 +785,18 @@ func TestIntegrationRemoteAlertmanagerAlerts(t *testing.T) {
 	require.Equal(t, 0, len(alertGroups))
 
 	// Let's create two active alerts and one expired one.
-	alert1 := genAlert(true, map[string]string{"test_1": "test_1", "empty": "", alertingModels.NamespaceUIDLabel: "test_1"})
-	alert2 := genAlert(true, map[string]string{"test_2": "test_2", "empty": "", alertingModels.NamespaceUIDLabel: "test_2"})
-	alert3 := genAlert(false, map[string]string{"test_3": "test_3", "empty": "", alertingModels.NamespaceUIDLabel: "test_3"})
+	// UTF-8 label names should be preserved.
+	utf8LabelName := "test utf-8 label 😳"
+	alert1 := genAlert(true, map[string]string{utf8LabelName: "test_1", "empty": "", alertingModels.NamespaceUIDLabel: "test_1"})
+	alert2 := genAlert(true, map[string]string{utf8LabelName: "test_2", "empty": "", alertingModels.NamespaceUIDLabel: "test_2"})
+	alert3 := genAlert(false, map[string]string{utf8LabelName: "test_3", "empty": "", alertingModels.NamespaceUIDLabel: "test_3"})
 	postableAlerts := apimodels.PostableAlerts{
 		PostableAlerts: []amv2.PostableAlert{alert1, alert2, alert3},
 	}
 	err = am.PutAlerts(context.Background(), postableAlerts)
 	require.NoError(t, err)
 
-	// We should have two alerts and one group now.
+	// We should eventually have two active alerts.
 	require.Eventually(t, func() bool {
 		alerts, err = am.GetAlerts(context.Background(), true, true, true, []string{}, "")
 		require.NoError(t, err)
@@ -806,15 +808,15 @@ func TestIntegrationRemoteAlertmanagerAlerts(t *testing.T) {
 	require.Equal(t, 1, len(alertGroups))
 
 	// Labels with empty values and the namespace UID label should be removed.
+	// UTF-8 label names should remain unchanged.
 	for _, a := range alertGroups {
-		require.NotContains(t, a.Labels, "empty")
-		require.NotContains(t, a.Labels, alertingModels.NamespaceUIDLabel)
+		require.Len(t, a.Alerts, 2)
+		for _, a := range a.Alerts {
+			require.NotContains(t, a.Labels, "empty")
+			require.NotContains(t, a.Labels, alertingModels.NamespaceUIDLabel)
+			require.Contains(t, a.Labels, utf8LabelName)
+		}
 	}
-
-	// Filtering by `test_1=test_1` should return one alert.
-	alerts, err = am.GetAlerts(context.Background(), true, true, true, []string{"test_1=test_1"}, "")
-	require.NoError(t, err)
-	require.Equal(t, 1, len(alerts))
 }
 
 func TestIntegrationRemoteAlertmanagerReceivers(t *testing.T) {

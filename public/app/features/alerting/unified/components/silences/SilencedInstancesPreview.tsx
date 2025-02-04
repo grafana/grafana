@@ -2,8 +2,9 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 import { useDebounce, useDeepCompareEffect } from 'react-use';
 
-import { dateTime, GrafanaTheme2 } from '@grafana/data';
-import { Alert, Badge, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
+import { GrafanaTheme2, dateTime } from '@grafana/data';
+import { Alert, Badge, Icon, LoadingPlaceholder, Tooltip, useStyles2 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 import { MatcherFieldValue } from 'app/features/alerting/unified/types/silence-form';
 import { matcherFieldToMatcher } from 'app/features/alerting/unified/utils/alertmanager';
 import { MATCHER_ALERT_RULE_UID } from 'app/features/alerting/unified/utils/constants';
@@ -79,7 +80,25 @@ export const SilencedInstancesPreview = ({ amSourceName, matchers: inputMatchers
   return (
     <div>
       <h4 className={styles.title}>
-        Affected alert rule instances
+        <Trans i18nKey="alerting.silences.affected-instances">Affected alert instances</Trans>
+        <Tooltip
+          content={
+            <div>
+              <Trans i18nKey="alerting.silences.preview-affected-instances">
+                Preview the alert instances affected by this silence.
+              </Trans>
+              <br />
+              <Trans i18nKey="alerting.silences.only-firing-instances">
+                Only alert instances in the firing state are displayed.
+              </Trans>
+            </div>
+          }
+        >
+          <span>
+            &nbsp;
+            <Icon name="info-circle" size="sm" />
+          </span>
+        </Tooltip>
         {tableItemAlerts.length > 0 ? (
           <Badge className={styles.badge} color="blue" text={tableItemAlerts.length} />
         ) : null}

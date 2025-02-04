@@ -661,7 +661,7 @@ describe('AddedLinksRegistry', () => {
     const currentState = await registry.getState();
 
     expect(Object.keys(currentState)).toHaveLength(0);
-    expect(log.warning).toHaveBeenCalled();
+    expect(log.error).toHaveBeenCalled();
   });
 
   it('should register a link added by core Grafana in dev-mode even if the meta-info is missing', async () => {
@@ -685,7 +685,7 @@ describe('AddedLinksRegistry', () => {
     const currentState = await registry.getState();
 
     expect(Object.keys(currentState)).toHaveLength(1);
-    expect(log.warning).not.toHaveBeenCalled();
+    expect(log.error).not.toHaveBeenCalled();
   });
 
   it('should register a link added by a plugin in production mode even if the meta-info is missing', async () => {
@@ -712,7 +712,7 @@ describe('AddedLinksRegistry', () => {
     const currentState = await registry.getState();
 
     expect(Object.keys(currentState)).toHaveLength(1);
-    expect(log.warning).not.toHaveBeenCalled();
+    expect(log.error).not.toHaveBeenCalled();
   });
 
   it('should register a link added by a plugin in dev-mode if the meta-info is present', async () => {
@@ -739,6 +739,6 @@ describe('AddedLinksRegistry', () => {
     const currentState = await registry.getState();
 
     expect(Object.keys(currentState)).toHaveLength(1);
-    expect(log.warning).not.toHaveBeenCalled();
+    expect(log.error).not.toHaveBeenCalled();
   });
 });

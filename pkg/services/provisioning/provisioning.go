@@ -164,6 +164,7 @@ type ProvisioningServiceImpl struct {
 	folderService                folder.Service
 	resourcePermissions          accesscontrol.ReceiverPermissionsService
 	tracer                       tracing.Tracer
+	onceInitProvisioners         sync.Once
 }
 
 func (ps *ProvisioningServiceImpl) RunInitProvisioners(ctx context.Context) error {
@@ -189,7 +190,19 @@ func (ps *ProvisioningServiceImpl) RunInitProvisioners(ctx context.Context) erro
 }
 
 func (ps *ProvisioningServiceImpl) Run(ctx context.Context) error {
-	err := ps.ProvisionDashboards(ctx)
+	var err error
+
+	// run Init Provisioners only once
+	ps.onceInitProvisioners.Do(func() {
+		err = ps.RunInitProvisioners(ctx)
+	})
+
+	if err != nil {
+		// error already logged
+		return err
+	}
+
+	err = ps.ProvisionDashboards(ctx)
 	if err != nil {
 		ps.log.Error("Failed to provision dashboard", "error", err)
 		// Consider the allow list of errors for which running the provisioning service should not

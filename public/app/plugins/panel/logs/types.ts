@@ -11,6 +11,7 @@ type onClickFilterOutStringType = (value: string, refId?: string) => void;
 type isFilterLabelActiveType = (key: string, value: string, refId?: string) => Promise<boolean>;
 type isOnClickShowFieldType = (value: string) => void;
 type isOnClickHideFieldType = (value: string) => void;
+export type onNewLogsReceivedType = (allLogs: DataFrame[], newLogs: DataFrame[]) => void;
 
 export function isOnClickFilterLabel(callback: unknown): callback is onClickFilterLabelType {
   return typeof callback === 'function';
@@ -37,6 +38,10 @@ export function isOnClickShowField(callback: unknown): callback is isOnClickShow
 }
 
 export function isOnClickHideField(callback: unknown): callback is isOnClickHideFieldType {
+  return typeof callback === 'function';
+}
+
+export function isOnNewLogsReceivedType(callback: unknown): callback is onNewLogsReceivedType {
   return typeof callback === 'function';
 }
 

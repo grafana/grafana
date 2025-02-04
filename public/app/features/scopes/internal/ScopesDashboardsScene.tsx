@@ -4,7 +4,7 @@ import { finalize, from, Subscription } from 'rxjs';
 
 import { GrafanaTheme2, ScopeDashboardBinding } from '@grafana/data';
 import { SceneComponentProps, SceneObjectBase, SceneObjectRef, SceneObjectState } from '@grafana/scenes';
-import { Button, CustomScrollbar, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
+import { Button, LoadingPlaceholder, ScrollContainer, useStyles2 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 
 import { ScopesDashboardsTree } from './ScopesDashboardsTree';
@@ -12,7 +12,7 @@ import { ScopesDashboardsTreeSearch } from './ScopesDashboardsTreeSearch';
 import { ScopesSelectorScene } from './ScopesSelectorScene';
 import { fetchDashboards } from './api';
 import { SuggestedDashboardsFoldersMap } from './types';
-import { filterFolders, getScopeNamesFromSelectedScopes, groupDashboards } from './utils';
+import { filterFolders, groupDashboards } from './utils';
 
 export interface ScopesDashboardsSceneState extends SceneObjectState {
   selector: SceneObjectRef<ScopesSelectorScene> | null;
@@ -27,7 +27,6 @@ export interface ScopesDashboardsSceneState extends SceneObjectState {
   isPanelOpened: boolean;
   isEnabled: boolean;
   isReadOnly: boolean;
-  scopesSelected: boolean;
   searchQuery: string;
 }
 
@@ -40,7 +39,6 @@ export const getInitialDashboardsState: () => Omit<ScopesDashboardsSceneState, '
   isPanelOpened: false,
   isEnabled: false,
   isReadOnly: false,
-  scopesSelected: false,
   searchQuery: '',
 });
 
@@ -56,40 +54,16 @@ export class ScopesDashboardsScene extends SceneObjectBase<ScopesDashboardsScene
     });
 
     this.addActivationHandler(() => {
-      const resolvedSelector = this.state.selector?.resolve();
-
-      if (resolvedSelector?.state.scopes.length ?? 0 > 0) {
-        this.fetchDashboards();
-        this.openPanel();
-      }
-
-      if (resolvedSelector) {
-        this._subs.add(
-          resolvedSelector.subscribeToState((newState, prevState) => {
-            const newScopeNames = getScopeNamesFromSelectedScopes(newState.scopes ?? []);
-            const oldScopeNames = getScopeNamesFromSelectedScopes(prevState.scopes ?? []);
-
-            if (!isEqual(newScopeNames, oldScopeNames)) {
-              this.fetchDashboards();
-
-              if (newState.scopes.length > 0) {
-                this.openPanel();
-              } else {
-                this.closePanel();
-              }
-            }
-          })
-        );
-      }
-
       return () => {
         this.dashboardsFetchingSub?.unsubscribe();
       };
     });
   }
 
-  public async fetchDashboards() {
-    const scopeNames = getScopeNamesFromSelectedScopes(this.state.selector?.resolve().state.scopes ?? []);
+  public async fetchDashboards(scopeNames: string[]) {
+    if (isEqual(this.state.forScopeNames, scopeNames)) {
+      return;
+    }
 
     this.dashboardsFetchingSub?.unsubscribe();
 
@@ -102,7 +76,7 @@ export class ScopesDashboardsScene extends SceneObjectBase<ScopesDashboardsScene
         filteredFolders: {},
         forScopeNames: [],
         isLoading: false,
-        scopesSelected: false,
+        isPanelOpened: false,
       });
     }
 
@@ -123,7 +97,7 @@ export class ScopesDashboardsScene extends SceneObjectBase<ScopesDashboardsScene
           folders,
           filteredFolders,
           isLoading: false,
-          scopesSelected: scopeNames.length > 0,
+          isPanelOpened: scopeNames.length > 0,
         });
 
         this.dashboardsFetchingSub?.unsubscribe();
@@ -202,7 +176,7 @@ export class ScopesDashboardsScene extends SceneObjectBase<ScopesDashboardsScene
 }
 
 export function ScopesDashboardsSceneRenderer({ model }: SceneComponentProps<ScopesDashboardsScene>) {
-  const { dashboards, filteredFolders, isLoading, isPanelOpened, isEnabled, isReadOnly, searchQuery, scopesSelected } =
+  const { dashboards, filteredFolders, forScopeNames, isLoading, isPanelOpened, isEnabled, isReadOnly, searchQuery } =
     model.useState();
 
   const styles = useStyles2(getStyles);
@@ -212,7 +186,7 @@ export function ScopesDashboardsSceneRenderer({ model }: SceneComponentProps<Sco
   }
 
   if (!isLoading) {
-    if (!scopesSelected) {
+    if (forScopeNames.length === 0) {
       return (
         <div
           className={cx(styles.container, styles.noResultsContainer)}
@@ -248,13 +222,13 @@ export function ScopesDashboardsSceneRenderer({ model }: SceneComponentProps<Sco
           data-testid="scopes-dashboards-loading"
         />
       ) : filteredFolders[''] ? (
-        <CustomScrollbar>
+        <ScrollContainer>
           <ScopesDashboardsTree
             folders={filteredFolders}
             folderPath={['']}
             onFolderUpdate={(path, isExpanded) => model.updateFolder(path, isExpanded)}
           />
-        </CustomScrollbar>
+        </ScrollContainer>
       ) : (
         <p className={styles.noResultsContainer} data-testid="scopes-dashboards-notFoundForFilter">
           <Trans i18nKey="scopes.dashboards.noResultsForFilter">No results found for your query</Trans>

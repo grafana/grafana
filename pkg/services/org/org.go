@@ -16,7 +16,6 @@ type Service interface {
 	GetByName(context.Context, *GetOrgByNameQuery) (*Org, error)
 	CreateWithMember(context.Context, *CreateOrgCommand) (*Org, error)
 	UpdateAddress(context.Context, *UpdateOrgAddressCommand) error
-	Delete(context.Context, *DeleteOrgCommand) error
 	GetOrCreate(context.Context, string) (int64, error)
 	AddOrgUser(context.Context, *AddOrgUserCommand) error
 	UpdateOrgUser(context.Context, *UpdateOrgUserCommand) error
@@ -24,4 +23,8 @@ type Service interface {
 	GetOrgUsers(context.Context, *GetOrgUsersQuery) ([]*OrgUserDTO, error)
 	SearchOrgUsers(context.Context, *SearchOrgUsersQuery) (*SearchOrgUsersQueryResult, error)
 	RegisterDelete(query string)
+}
+
+type DeletionService interface {
+	Delete(context.Context, *DeleteOrgCommand) error
 }

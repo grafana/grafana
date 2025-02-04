@@ -1,92 +1,115 @@
-import { AzureAuthType, AzureCloud, AzureCredentialsType, ConcealedSecretType } from '../types';
+import {
+  AzureCredentials,
+  AzureCloud,
+  ConcealedSecret,
+  AzureClientSecretCredentials,
+  instanceOfAzureCredential,
+  updateDatasourceCredentials,
+} from '@grafana/azure-sdk';
+import { config } from '@grafana/runtime';
 
 import {
-  configWithManagedIdentityEnabled,
-  configWithManagedIdentityDisabled,
   dataSourceSettingsWithMsiCredentials,
   dataSourceSettingsWithClientSecretOnServer,
   dataSourceSettingsWithClientSecretInSecureJSONData,
 } from './AzureAuth.testMocks';
-import { getDefaultCredentials, getSecret, getCredentials, updateCredentials } from './AzureCredentialsConfig';
+import { getDefaultCredentials, getCredentials } from './AzureCredentialsConfig';
 
 // NOTE: @ts-ignores are used to ignore the type errors that are thrown when passing in the mocks.
 // This is because the mocks are partials of the actual types, so the types are not complete.
 
-export const CLIENT_SECRET_SYMBOL: ConcealedSecretType = Symbol('Concealed client secret');
+export const CLIENT_SECRET_SYMBOL: ConcealedSecret = Symbol('Concealed client secret');
 
 export const CLIENT_SECRET_STRING = 'XXXX-super-secret-secret-XXXX';
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'), // Keep the rest of the actual module
+}));
+
 describe('AzureAuth', () => {
+  beforeEach(() => {
+    jest.resetModules();
+  });
+
   describe('AzureCredentialsConfig', () => {
     it('`getDefaultCredentials()` should return the correct credentials based on whether the managed identity is enabled', () => {
-      const resultForManagedIdentityEnabled = getDefaultCredentials(true, AzureCloud.Public);
-      const resultForManagedIdentityDisabled = getDefaultCredentials(false, AzureCloud.Public);
+      jest.mocked(config).azure.managedIdentityEnabled = true;
+      const resultForManagedIdentityEnabled = getDefaultCredentials();
+
+      jest.mocked(config).azure.managedIdentityEnabled = false;
+      const resultForManagedIdentityDisabled = getDefaultCredentials();
 
       expect(resultForManagedIdentityEnabled).toEqual({ authType: 'msi' });
       expect(resultForManagedIdentityDisabled).toEqual({ authType: 'clientsecret', azureCloud: 'AzureCloud' });
     });
 
-    it("`getSecret()` should correctly return the client secret if it's not concealed", () => {
-      const resultFromServerSideSecret = getSecret(false, CLIENT_SECRET_STRING);
-      expect(resultFromServerSideSecret).toBe(CLIENT_SECRET_STRING);
-
-      const resultFromSecureJSONDataSecret = typeof getSecret(true, '');
-      expect(resultFromSecureJSONDataSecret).toBe('symbol');
-    });
-
     describe('getCredentials()', () => {
       it('should return the correct managed identity credentials', () => {
-        // If `dataSourceSettings.authType === AzureAuthType.MSI` && `config.azure.managedIdentityEnabled === true`.
+        // If `dataSourceSettings.authType === 'msi'` && `config.azure.managedIdentityEnabled === true`.
+        jest.mocked(config).azure.managedIdentityEnabled = true;
         const resultForManagedIdentityEnabled = getCredentials(
           // @ts-ignore
-          dataSourceSettingsWithMsiCredentials,
-          configWithManagedIdentityEnabled
+          dataSourceSettingsWithMsiCredentials
         );
-        expect(resultForManagedIdentityEnabled).toEqual({ authType: AzureAuthType.MSI });
+        expect(resultForManagedIdentityEnabled).toEqual({ authType: 'msi' });
 
-        // If `dataSourceSettings.authType === AzureAuthType.MSI` but `config.azure.managedIdentityEnabled !== true`.
+        // If `dataSourceSettings.authType === 'msi'` but `config.azure.managedIdentityEnabled !== true`.
         // Default to basic client secret credentials.
+        jest.mocked(config).azure.managedIdentityEnabled = false;
         const resultForManagedIdentityEnabledInJSONButDisabledInConfig = getCredentials(
           // @ts-ignore
-          dataSourceSettingsWithMsiCredentials,
-          configWithManagedIdentityDisabled
+          dataSourceSettingsWithMsiCredentials
         );
         expect(resultForManagedIdentityEnabledInJSONButDisabledInConfig).toEqual({
-          authType: AzureAuthType.CLIENT_SECRET,
+          authType: 'clientsecret',
           azureCloud: 'AzureCloud',
         });
       });
 
       it('should return the correct client secret credentials', () => {
         const basicExpectedResult = {
-          authType: AzureAuthType.CLIENT_SECRET,
+          authType: 'clientsecret',
           azureCloud: 'AzureCloud',
           tenantId: 'XXXX-tenant-id-XXXX',
           clientId: 'XXXX-client-id-XXXX',
         };
 
-        // If `dataSourceSettings.authType === AzureAuthType.CLIENT_SECRET` && `secureJsonFields.azureClientSecret == true`,
+        // If `dataSourceSettings.authType === 'clientsecret'` && `secureJsonFields.azureClientSecret == true`,
         // i.e. the client secret is stored on the server.
+        jest.mocked(config).azure.managedIdentityEnabled = false;
         const resultForClientSecretCredentialsOnServer = getCredentials(
           // @ts-ignore
-          dataSourceSettingsWithClientSecretOnServer,
-          configWithManagedIdentityDisabled
+          dataSourceSettingsWithClientSecretOnServer
         );
 
         // Here we test the properties separately because the client secret is a symbol,
         // and since JS symobls are unique, we test via the `typeof` operator.
-        expect(resultForClientSecretCredentialsOnServer.authType).toEqual(AzureAuthType.CLIENT_SECRET);
-        expect(resultForClientSecretCredentialsOnServer.azureCloud).toEqual('AzureCloud');
-        expect(resultForClientSecretCredentialsOnServer.tenantId).toEqual('XXXX-tenant-id-XXXX');
-        expect(resultForClientSecretCredentialsOnServer.clientId).toEqual('XXXX-client-id-XXXX');
-        expect(typeof resultForClientSecretCredentialsOnServer.clientSecret).toEqual('symbol');
+        expect(resultForClientSecretCredentialsOnServer.authType).toEqual('clientsecret');
+        expect(
+          instanceOfAzureCredential<AzureClientSecretCredentials>(
+            'clientsecret',
+            resultForClientSecretCredentialsOnServer
+          )
+        ).toEqual(true);
+        expect((resultForClientSecretCredentialsOnServer as AzureClientSecretCredentials).azureCloud).toEqual(
+          'AzureCloud'
+        );
+        expect((resultForClientSecretCredentialsOnServer as AzureClientSecretCredentials).tenantId).toEqual(
+          'XXXX-tenant-id-XXXX'
+        );
+        expect((resultForClientSecretCredentialsOnServer as AzureClientSecretCredentials).clientId).toEqual(
+          'XXXX-client-id-XXXX'
+        );
+        expect(typeof (resultForClientSecretCredentialsOnServer as AzureClientSecretCredentials).clientSecret).toEqual(
+          'symbol'
+        );
 
-        //   If `dataSourceSettings.authType === AzureAuthType.CLIENT_SECRET` && `secureJsonFields.azureClientSecret == false`,
+        //   If `dataSourceSettings.authType === 'clientsecret'` && `secureJsonFields.azureClientSecret == false`,
         //   i.e. the client secret is stored in the secureJson.
+        jest.mocked(config).azure.managedIdentityEnabled = false;
         const resultForClientSecretCredentialsInSecureJSON = getCredentials(
           // @ts-ignore
-          dataSourceSettingsWithClientSecretInSecureJSONData,
-          configWithManagedIdentityDisabled
+          dataSourceSettingsWithClientSecretInSecureJSONData
         );
         expect(resultForClientSecretCredentialsInSecureJSON).toEqual({
           ...basicExpectedResult,
@@ -97,66 +120,68 @@ describe('AzureAuth', () => {
 
     describe('updateCredentials()', () => {
       it('should update the credentials for managed service identity correctly', () => {
-        // If `dataSourceSettings.authType === AzureAuthType.MSI` && `config.azure.managedIdentityEnabled === true`.
-        const resultForMsiCredentials = updateCredentials(
+        // If `dataSourceSettings.authType === 'msi'` && `config.azure.managedIdentityEnabled === true`.
+        jest.mocked(config).azure.managedIdentityEnabled = true;
+        const resultForMsiCredentials = updateDatasourceCredentials(
           // @ts-ignore
           dataSourceSettingsWithMsiCredentials,
-          configWithManagedIdentityEnabled,
           {
-            authType: AzureAuthType.MSI,
+            authType: 'msi',
           }
         );
         expect(resultForMsiCredentials).toEqual({ jsonData: { azureCredentials: { authType: 'msi' } } });
 
-        // If `dataSourceSettings.authType === AzureAuthType.MSI` but `config.azure.managedIdentityEnabled !== true`.
+        // If `dataSourceSettings.authType === 'msi'` but `config.azure.managedIdentityEnabled !== true`.
+        jest.mocked(config).azure.managedIdentityEnabled = false;
         expect(() =>
-          updateCredentials(
+          updateDatasourceCredentials(
             // @ts-ignore
             dataSourceSettingsWithMsiCredentials,
-            configWithManagedIdentityDisabled,
             {
-              authType: AzureAuthType.MSI,
+              authType: 'msi',
             }
           )
         ).toThrow('Managed Identity authentication is not enabled in Grafana config.');
       });
 
       it('should update the credentials for client secret correctly', () => {
-        const basicClientSecretCredentials: AzureCredentialsType = {
-          authType: AzureAuthType.CLIENT_SECRET,
-          azureCloud: 'AzureCloud',
+        const basicClientSecretCredentials: AzureCredentials = {
+          authType: 'clientsecret',
+          azureCloud: AzureCloud.Public,
           tenantId: 'XXXX-tenant-id-XXXX',
           clientId: 'XXXX-client-id-XXXX',
         };
 
-        // If `dataSourceSettings.authType === AzureAuthType.CLIENT_SECRET` && `secureJsonFields.azureClientSecret == true`.
-        const resultForClientSecretCredentials1 = updateCredentials(
+        // If `dataSourceSettings.authType === 'clientsecret'` && `secureJsonFields.azureClientSecret == true`.
+        jest.mocked(config).azure.managedIdentityEnabled = false;
+        const resultForClientSecretCredentials1 = updateDatasourceCredentials(
           // @ts-ignore
           dataSourceSettingsWithClientSecretOnServer,
-          configWithManagedIdentityDisabled,
           basicClientSecretCredentials
         );
-        expect(resultForClientSecretCredentials1).toEqual({
-          jsonData: {
-            azureCredentials: { ...basicClientSecretCredentials },
-          },
-          secureJsonData: { azureClientSecret: undefined },
-          secureJsonFields: { azureClientSecret: false },
+
+        expect(resultForClientSecretCredentials1.jsonData.azureCredentials).toEqual(basicClientSecretCredentials);
+        expect(resultForClientSecretCredentials1.secureJsonData).toEqual({ azureClientSecret: undefined });
+        expect(resultForClientSecretCredentials1.secureJsonFields).toEqual({
+          azureClientSecret: false,
+          clientSecret: false,
         });
 
-        // If `dataSourceSettings.authType === AzureAuthType.CLIENT_SECRET` && `secureJsonFields.azureClientSecret == false`.
-        const resultForClientSecretCredentials2 = updateCredentials(
+        // If `dataSourceSettings.authType === 'clientsecret'` && `secureJsonFields.azureClientSecret == false`.
+        jest.mocked(config).azure.managedIdentityEnabled = false;
+        const resultForClientSecretCredentials2 = updateDatasourceCredentials(
           // @ts-ignore
           dataSourceSettingsWithClientSecretInSecureJSONData,
-          configWithManagedIdentityDisabled,
           { ...basicClientSecretCredentials, clientSecret: 'XXXX-super-secret-secret-XXXX' }
         );
-        expect(resultForClientSecretCredentials2).toEqual({
-          jsonData: {
-            azureCredentials: { ...basicClientSecretCredentials },
-          },
-          secureJsonData: { azureClientSecret: 'XXXX-super-secret-secret-XXXX' },
-          secureJsonFields: { azureClientSecret: false },
+
+        expect(resultForClientSecretCredentials2.jsonData.azureCredentials).toEqual(basicClientSecretCredentials);
+        expect(resultForClientSecretCredentials2.secureJsonData).toEqual({
+          azureClientSecret: 'XXXX-super-secret-secret-XXXX',
+        });
+        expect(resultForClientSecretCredentials2.secureJsonFields).toEqual({
+          azureClientSecret: false,
+          clientSecret: false,
         });
       });
     });

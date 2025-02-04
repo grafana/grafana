@@ -125,7 +125,7 @@ func parseSupportingQueryType(jsonPointerValue *string) SupportingQueryType {
 	}
 }
 
-func parseQuery(queryContext *backend.QueryDataRequest) ([]*lokiQuery, error) {
+func parseQuery(queryContext *backend.QueryDataRequest, logqlScopesEnabled bool) ([]*lokiQuery, error) {
 	qs := []*lokiQuery{}
 	for _, query := range queryContext.Queries {
 		model, err := parseQueryModel(query.JSON)
@@ -154,7 +154,7 @@ func parseQuery(queryContext *backend.QueryDataRequest) ([]*lokiQuery, error) {
 			return nil, err
 		}
 
-		expr := interpolateVariables(depointerizer(model.Expr), interval, timeRange, queryType, step)
+		expr := interpolateVariables(model.Expr, interval, timeRange, queryType, step)
 
 		direction, err := parseDirection(model.Direction)
 		if err != nil {
@@ -171,6 +171,13 @@ func parseQuery(queryContext *backend.QueryDataRequest) ([]*lokiQuery, error) {
 			legendFormat = *model.LegendFormat
 		}
 
+		if logqlScopesEnabled {
+			rewrittenExpr, err := ApplyScopes(expr, model.Scopes)
+			if err == nil {
+				expr = rewrittenExpr
+			}
+		}
+
 		supportingQueryType := parseSupportingQueryType(model.SupportingQueryType)
 
 		qs = append(qs, &lokiQuery{
@@ -184,17 +191,9 @@ func parseQuery(queryContext *backend.QueryDataRequest) ([]*lokiQuery, error) {
 			End:                 end,
 			RefID:               query.RefID,
 			SupportingQueryType: supportingQueryType,
+			Scopes:              model.Scopes,
 		})
 	}
 
 	return qs, nil
-}
-
-func depointerizer[T any](v *T) T {
-	var emptyValue T
-	if v != nil {
-		emptyValue = *v
-	}
-
-	return emptyValue
 }

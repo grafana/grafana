@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
 import { Tooltip, Field, Button, Alert, useStyles2, Stack } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 import { getStyles } from '../Login/LoginForm';
 import { PasswordField } from '../PasswordField/PasswordField';
@@ -83,7 +84,7 @@ export const ChangePassword = ({ onSubmit, onSkip, showDefaultPasswordWarning }:
       </Field>
       <Stack direction="column">
         <Button type="submit" className={styles.submitButton}>
-          Submit
+          <Trans i18nKey="forgot-password.change-password.submit-button">Submit</Trans>
         </Button>
 
         {!config.auth.basicAuthStrongPasswordPolicy && onSkip && (
@@ -98,7 +99,7 @@ export const ChangePassword = ({ onSubmit, onSkip, showDefaultPasswordWarning }:
               type="button"
               data-testid={selectors.pages.Login.skip}
             >
-              Skip
+              <Trans i18nKey="forgot-password.change-password.skip-button">Skip</Trans>
             </Button>
           </Tooltip>
         )}

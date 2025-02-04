@@ -15,7 +15,8 @@ import { getDataSourceWithInspector } from 'app/features/dashboard/components/In
 import { supportsDataQuery } from 'app/features/dashboard/components/PanelEditor/utils';
 import { InspectTab } from 'app/features/inspector/types';
 
-import { getDashboardUrl } from '../utils/urlBuilders';
+import { DashboardScene } from '../scene/DashboardScene';
+import { getDashboardUrl } from '../utils/getDashboardUrl';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { HelpWizard } from './HelpWizard/HelpWizard';
@@ -91,18 +92,7 @@ export class PanelInspectDrawer extends SceneObjectBase<PanelInspectDrawerState>
   }
 
   onClose = () => {
-    const dashboard = getDashboardSceneFor(this);
-    locationService.push(
-      getDashboardUrl({
-        uid: dashboard.state.uid,
-        slug: dashboard.state.meta.slug,
-        currentQueryParams: locationService.getLocation().search,
-        updateQuery: {
-          inspect: null,
-          inspectTab: null,
-        },
-      })
-    );
+    onPanelInspectClose(getDashboardSceneFor(this));
   };
 }
 
@@ -151,5 +141,25 @@ function PanelInspectRenderer({ model }: SceneComponentProps<PanelInspectDrawer>
       )}
       {currentTab && currentTab.Component && <currentTab.Component model={currentTab} />}
     </Drawer>
+  );
+}
+
+export function onPanelInspectClose(dashboard: DashboardScene) {
+  const meta = dashboard.state.meta;
+  // Checking for location here as well, otherwise down below isHomeDashboard will be set to true
+  // as it doesn't have uid neither slug nor url.
+  const isNew = !dashboard.state.uid && locationService.getLocation().pathname === '/dashboard/new';
+
+  locationService.push(
+    getDashboardUrl({
+      uid: dashboard.state.uid,
+      slug: dashboard.state.meta.slug,
+      currentQueryParams: locationService.getLocation().search,
+      updateQuery: {
+        inspect: null,
+        inspectTab: null,
+      },
+      isHomeDashboard: !meta.url && !meta.slug && !isNew,
+    })
   );
 }

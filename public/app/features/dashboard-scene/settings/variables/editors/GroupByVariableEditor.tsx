@@ -1,3 +1,4 @@
+import { FormEvent } from 'react';
 import { useAsync } from 'react-use';
 
 import { DataSourceInstanceSettings, MetricFindValue, getDataSourceRef } from '@grafana/data';
@@ -13,7 +14,7 @@ interface GroupByVariableEditorProps {
 
 export function GroupByVariableEditor(props: GroupByVariableEditorProps) {
   const { variable, onRunQuery } = props;
-  const { datasource: datasourceRef, defaultOptions } = variable.useState();
+  const { datasource: datasourceRef, defaultOptions, allowCustomValue = true } = variable.useState();
 
   const { value: datasource } = useAsync(async () => {
     return await getDataSourceSrv().get(datasourceRef);
@@ -35,6 +36,10 @@ export function GroupByVariableEditor(props: GroupByVariableEditorProps) {
     onRunQuery();
   };
 
+  const onAllowCustomValueChange = (event: FormEvent<HTMLInputElement>) => {
+    variable.setState({ allowCustomValue: event.currentTarget.checked });
+  };
+
   return (
     <GroupByVariableForm
       defaultOptions={defaultOptions}
@@ -42,6 +47,8 @@ export function GroupByVariableEditor(props: GroupByVariableEditorProps) {
       infoText={datasourceRef ? message : undefined}
       onDataSourceChange={onDataSourceChange}
       onDefaultOptionsChange={onDefaultOptionsChange}
+      allowCustomValue={allowCustomValue}
+      onAllowCustomValueChange={onAllowCustomValueChange}
     />
   );
 }

@@ -19,6 +19,9 @@ export function addHeatmapCalculationOptions(
     defaultValue: {
       mode: HeatmapCalculationMode.Size,
     },
+    settings: {
+      allowInterval: true,
+    },
   });
 
   builder.addCustomEditor({

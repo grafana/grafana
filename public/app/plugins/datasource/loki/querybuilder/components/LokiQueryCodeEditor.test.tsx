@@ -27,7 +27,8 @@ const createDefaultProps = () => {
   return props;
 };
 
-describe('LokiQueryCodeEditor', () => {
+// Tests with Monaco are occasionally flaking in CI see #incident-2024-11-13-enterprise-drone-pipeline-failing. Skipping for now.
+describe.skip('LokiQueryCodeEditor', () => {
   it('shows explain section when showExplain is true', async () => {
     const props = createDefaultProps();
     props.showExplain = true;

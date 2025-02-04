@@ -222,6 +222,11 @@ func (s *sqlStore) ListAll(ctx context.Context, orgId int64) ([]playlist.Playlis
 	if err != nil {
 		return nil, err
 	}
+
+	defer func() {
+		_ = rows.Close()
+	}()
+
 	for rows.Next() {
 		err = rows.Scan(&playlistId, &itemType, &itemValue)
 		if err != nil {

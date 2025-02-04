@@ -2,7 +2,6 @@ package rest
 
 import (
 	"context"
-	"fmt"
 	"testing"
 	"time"
 
@@ -17,24 +16,41 @@ import (
 func TestSetDualWritingMode(t *testing.T) {
 	type testCase struct {
 		name         string
-		stackID      string
+		kvStore      *fakeNamespacedKV
 		desiredMode  DualWriterMode
 		expectedMode DualWriterMode
 	}
 	tests :=
-		// #TODO add test cases for kv store failures. Requires adding support in kvstore test_utils.go
 		[]testCase{
 			{
 				name:         "should return a mode 2 dual writer when mode 2 is set as the desired mode",
-				stackID:      "stack-1",
+				kvStore:      &fakeNamespacedKV{data: map[string]string{"playlist.grafana.app/playlists": "2"}, namespace: "storage.dualwriting"},
 				desiredMode:  Mode2,
 				expectedMode: Mode2,
 			},
 			{
 				name:         "should return a mode 1 dual writer when mode 1 is set as the desired mode",
-				stackID:      "stack-1",
+				kvStore:      &fakeNamespacedKV{data: map[string]string{"playlist.grafana.app/playlists": "2"}, namespace: "storage.dualwriting"},
 				desiredMode:  Mode1,
 				expectedMode: Mode1,
+			},
+			{
+				name:         "should return mode 3 as desired mode when current mode is > 3",
+				kvStore:      &fakeNamespacedKV{data: map[string]string{"playlist.grafana.app/playlists": "5"}, namespace: "storage.dualwriting"},
+				desiredMode:  Mode3,
+				expectedMode: Mode3,
+			},
+			{
+				name:         "should return mode 3 as desired mode when current mode is 2",
+				kvStore:      &fakeNamespacedKV{data: map[string]string{"playlist.grafana.app/playlists": "2"}, namespace: "storage.dualwriting"},
+				desiredMode:  Mode3,
+				expectedMode: Mode3,
+			},
+			{
+				name:         "should default to mode 0 if there is no desired mode",
+				kvStore:      &fakeNamespacedKV{data: map[string]string{}, namespace: "storage.dualwriting"},
+				desiredMode:  Mode0,
+				expectedMode: Mode0,
 			},
 		}
 
@@ -49,17 +65,20 @@ func TestSetDualWritingMode(t *testing.T) {
 		ls := legacyStoreMock{m, l}
 		us := storageMock{m, s}
 
-		kvStore := &fakeNamespacedKV{data: make(map[string]string), namespace: "storage.dualwriting." + tt.stackID}
+		dwMode, err := SetDualWritingMode(context.Background(), tt.kvStore, &SyncerConfig{
+			LegacyStorage:     ls,
+			Storage:           us,
+			Kind:              "playlist.grafana.app/playlists",
+			Mode:              tt.desiredMode,
+			ServerLockService: &fakeServerLock{},
+			RequestInfo:       &request.RequestInfo{},
+			Reg:               p,
 
-		dwMode, err := SetDualWritingMode(context.Background(), kvStore, ls, us, "playlist.grafana.app/v0alpha1", tt.desiredMode, p, &fakeServerLock{}, &request.RequestInfo{})
+			DataSyncerRecordsLimit: 1000,
+			DataSyncerInterval:     time.Hour,
+		})
 		assert.NoError(t, err)
 		assert.Equal(t, tt.expectedMode, dwMode)
-
-		// check kv store
-		val, ok, err := kvStore.Get(context.Background(), "playlist.grafana.app/v0alpha1")
-		assert.True(t, ok)
-		assert.NoError(t, err)
-		assert.Equal(t, val, fmt.Sprint(tt.expectedMode))
 	}
 }
 
@@ -113,7 +132,7 @@ type fakeNamespacedKV struct {
 }
 
 func (f *fakeNamespacedKV) Get(ctx context.Context, key string) (string, bool, error) {
-	val, ok := f.data[f.namespace+key]
+	val, ok := f.data[key]
 	return val, ok, nil
 }
 

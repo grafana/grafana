@@ -5,17 +5,17 @@ import { AddedLinksRegistry } from './AddedLinksRegistry';
 import { ExposedComponentsRegistry } from './ExposedComponentsRegistry';
 import { PluginExtensionRegistries } from './types';
 
-export function setupPluginExtensionRegistries(): PluginExtensionRegistries {
-  const pluginExtensionsRegistries = {
-    addedComponentsRegistry: new AddedComponentsRegistry(),
-    exposedComponentsRegistry: new ExposedComponentsRegistry(),
-    addedLinksRegistry: new AddedLinksRegistry(),
-  };
+export const addedComponentsRegistry = new AddedComponentsRegistry();
+export const exposedComponentsRegistry = new ExposedComponentsRegistry();
+export const addedLinksRegistry = new AddedLinksRegistry();
+export const pluginExtensionRegistries: PluginExtensionRegistries = {
+  addedComponentsRegistry,
+  exposedComponentsRegistry,
+  addedLinksRegistry,
+};
 
-  pluginExtensionsRegistries.addedLinksRegistry.register({
-    pluginId: 'grafana',
-    configs: getCoreExtensionConfigurations(),
-  });
-
-  return pluginExtensionsRegistries;
-}
+// Registering core extensions
+addedLinksRegistry.register({
+  pluginId: 'grafana',
+  configs: getCoreExtensionConfigurations(),
+});

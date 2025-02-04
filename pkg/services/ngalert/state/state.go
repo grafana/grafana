@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"math"
 	"strings"
 	"time"
@@ -73,6 +74,36 @@ type State struct {
 	LastEvaluationString string
 	LastEvaluationTime   time.Time
 	EvaluationDuration   time.Duration
+}
+
+// Copy creates a shallow copy of the State except for labels and annotations.
+func (a *State) Copy() *State {
+	// Deep copy annotations and labels
+	annotationsCopy := make(map[string]string, len(a.Annotations))
+	maps.Copy(annotationsCopy, a.Annotations)
+	labelsCopy := make(data.Labels, len(a.Labels))
+	maps.Copy(labelsCopy, a.Labels)
+	return &State{
+		OrgID:                a.OrgID,
+		AlertRuleUID:         a.AlertRuleUID,
+		CacheID:              a.CacheID,
+		State:                a.State,
+		StateReason:          a.StateReason,
+		ResultFingerprint:    a.ResultFingerprint,
+		LatestResult:         a.LatestResult,
+		Error:                a.Error,
+		Image:                a.Image,
+		Annotations:          annotationsCopy,
+		Labels:               labelsCopy,
+		Values:               a.Values,
+		StartsAt:             a.StartsAt,
+		EndsAt:               a.EndsAt,
+		ResolvedAt:           a.ResolvedAt,
+		LastSentAt:           a.LastSentAt,
+		LastEvaluationString: a.LastEvaluationString,
+		LastEvaluationTime:   a.LastEvaluationTime,
+		EvaluationDuration:   a.EvaluationDuration,
+	}
 }
 
 func (a *State) GetRuleKey() models.AlertRuleKey {
@@ -200,11 +231,6 @@ func (a *State) SetNextValues(result eval.Result) {
 		}
 	}
 	a.Values = newValues
-}
-
-// IsNormalStateWithNoReason returns true if the state is Normal and reason is empty
-func IsNormalStateWithNoReason(s *State) bool {
-	return s.State == eval.Normal && s.StateReason == ""
 }
 
 // StateTransition describes the transition from one state to another.
@@ -544,13 +570,24 @@ func (a *State) IsStale() bool {
 	return a.StateReason == models.StateReasonMissingSeries
 }
 
-// shouldTakeImage returns true if the state just has transitioned to alerting from another state,
-// transitioned to alerting in a previous evaluation but does not have a screenshot, or has just
-// been resolved.
-func shouldTakeImage(state, previousState eval.State, previousImage *models.Image, resolved bool) bool {
-	return resolved ||
-		state == eval.Alerting && previousState != eval.Alerting ||
-		state == eval.Alerting && previousImage == nil
+// shouldTakeImage determines whether a new image should be taken for a given transition. This should return true when
+// newly transitioning to an alerting state, when no valid image exists, or when the alert has been resolved.
+func shouldTakeImage(state, previousState eval.State, previousImage *models.Image, resolved bool) string {
+	if resolved {
+		return "resolved"
+	}
+	if state == eval.Alerting {
+		if previousState != eval.Alerting {
+			return "transition to alerting"
+		}
+		if previousImage == nil {
+			return "no image"
+		}
+		if previousImage.HasExpired() {
+			return "expired image"
+		}
+	}
+	return ""
 }
 
 // takeImage takes an image for the alert rule. It returns nil if screenshots are disabled or

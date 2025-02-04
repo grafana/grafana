@@ -1,12 +1,9 @@
 import { useCallback } from 'react';
-import { useAsync } from 'react-use';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
-import { dispatch } from 'app/store/store';
 
 import { useRulesSourcesWithRuler } from '../../hooks/useRuleSourcesWithRuler';
-import { fetchAllPromBuildInfoAction } from '../../state/actions';
 
 interface Props {
   disabled?: boolean;
@@ -17,20 +14,18 @@ interface Props {
 }
 
 export function CloudRulesSourcePicker({ value, disabled, ...props }: Props): JSX.Element {
-  const rulesSourcesWithRuler = useRulesSourcesWithRuler();
-
-  const { loading = true } = useAsync(() => dispatch(fetchAllPromBuildInfoAction()), [dispatch]);
+  const { rulesSourcesWithRuler: dataSourcesWithRuler, isLoading } = useRulesSourcesWithRuler();
 
   const dataSourceFilter = useCallback(
     (ds: DataSourceInstanceSettings): boolean => {
-      return !!rulesSourcesWithRuler.find(({ id }) => id === ds.id);
+      return dataSourcesWithRuler.some(({ uid }) => uid === ds.uid);
     },
-    [rulesSourcesWithRuler]
+    [dataSourcesWithRuler]
   );
 
   return (
     <DataSourcePicker
-      disabled={loading || disabled}
+      disabled={isLoading || disabled}
       noDefault
       alerting
       filter={dataSourceFilter}

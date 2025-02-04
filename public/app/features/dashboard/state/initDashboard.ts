@@ -24,6 +24,8 @@ import {
   DashboardDTO,
   DashboardInitPhase,
   DashboardRoutes,
+  HomeDashboardRedirectDTO,
+  isRedirectResponse,
   StoreState,
   ThunkDispatch,
   ThunkResult,
@@ -69,10 +71,10 @@ async function fetchDashboard(
         }
 
         // load home dash
-        const dashDTO: DashboardDTO = await backendSrv.get('/api/dashboards/home');
+        const dashDTO = await backendSrv.get<DashboardDTO | HomeDashboardRedirectDTO>('/api/dashboards/home');
 
         // if user specified a custom home dashboard redirect to that
-        if (dashDTO.redirectUri) {
+        if (isRedirectResponse(dashDTO)) {
           const newUrl = locationUtil.stripBaseFromUrl(dashDTO.redirectUri);
           locationService.replace(newUrl);
           return null;
@@ -125,10 +127,6 @@ async function fetchDashboard(
           await dispatch(getFolderByUid(args.urlFolderUid));
         }
         return await buildNewDashboardSaveModel(args.urlFolderUid);
-      }
-      case DashboardRoutes.Path: {
-        const path = args.urlSlug ?? '';
-        return await dashboardLoaderSrv.loadDashboard(DashboardRoutes.Path, path, path);
       }
       default:
         throw { message: 'Unknown route ' + args.routeName };

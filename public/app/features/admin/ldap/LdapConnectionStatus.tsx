@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 
 import { Alert, CellProps, Column, Icon, InteractiveTable, Stack, Text, Tooltip } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 import { AppNotificationSeverity, LdapConnectionInfo, LdapServerInfo } from 'app/types';
 
 interface Props {
@@ -54,7 +55,7 @@ export const LdapConnectionStatus = ({ ldapConnectionInfo }: Props) => {
     <section>
       <Stack direction="column" gap={2}>
         <Text color="primary" element="h3">
-          LDAP Connection
+          <Trans i18nKey="admin.ldap-status.title">LDAP Connection</Trans>
         </Text>
         <InteractiveTable data={data} columns={columns} getRowId={(serverInfo) => serverInfo.host + serverInfo.port} />
         <LdapErrorBox ldapConnectionInfo={ldapConnectionInfo} />
@@ -83,7 +84,7 @@ export const LdapErrorBox = ({ ldapConnectionInfo }: LdapConnectionErrorProps) =
   const errorElements = connectionErrors.map((info, index) => (
     <div key={index}>
       <span style={{ fontWeight: 500 }}>
-        {info.host}:{info.port}
+        {`${info.host}:${info.port}`}
         <br />
       </span>
       <span>{info.error}</span>

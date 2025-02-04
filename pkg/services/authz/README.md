@@ -18,7 +18,7 @@ To configure the authorization server and client, use the "authorization" sectio
 
 The `remote_address` setting, specifies the address where the authorization server is located (ex: `server.example.org:10000`). 
 
-The `mode` setting can be set to either `grpc` or `inproc`. When set to `grpc`, the client will connect to the specified address. When set to `inproc` the client will use inprocgrpc (relying on go channels) to wrap a local instantiation of the server. 
+The `mode` setting can be set to either `cloud`, `grpc` or `inproc`. When set to `cloud` (or `grpc`), the client will connect to the specified address. When set to `inproc` the client will use inprocgrpc (relying on go channels) to wrap a local instantiation of the server. 
 
 The `listen` setting determines whether the authorization server should listen for incoming requests. When set to `true`, the authorization service will be registered to the Grafana GRPC server.
 
@@ -60,7 +60,7 @@ stack_id = 11
 
 [authorization]
 remote_address = "server.example.org:10000"
-mode = "grpc"
+mode = "cloud"
 listen = false
 
 [grpc_client_authentication]

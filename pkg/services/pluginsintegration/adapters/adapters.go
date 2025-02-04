@@ -52,7 +52,7 @@ func BackendUserFromSignedInUser(requester identity.Requester) *backend.User {
 	}
 	return &backend.User{
 		Login: requester.GetLogin(),
-		Name:  requester.GetDisplayName(),
+		Name:  requester.GetName(),
 		Email: requester.GetEmail(),
 		Role:  string(requester.GetOrgRole()),
 	}

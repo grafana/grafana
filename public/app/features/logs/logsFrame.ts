@@ -45,7 +45,7 @@ export function logFrameLabelsToLabels(logFrameLabels: LogFrameLabels): Labels {
   return result;
 }
 
-function parseDataplaneLogsFrame(frame: DataFrame): LogsFrame | null {
+export function parseDataplaneLogsFrame(frame: DataFrame): LogsFrame | null {
   const cache = new FieldCache(frame);
 
   const timestampField = getField(cache, DATAPLANE_TIMESTAMP_NAME, FieldType.time);

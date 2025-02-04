@@ -13,6 +13,7 @@ interface DataSourceVariableFormProps {
   regex: string;
   multi: boolean;
   allValue?: string | null;
+  allowCustomValue?: boolean;
   includeAll: boolean;
   onChange: (option: SelectableValue) => void;
   optionTypes: Array<{ value: string; label: string }>;
@@ -20,6 +21,7 @@ interface DataSourceVariableFormProps {
   onMultiChange: (event: FormEvent<HTMLInputElement>) => void;
   onIncludeAllChange: (event: FormEvent<HTMLInputElement>) => void;
   onAllValueChange: (event: FormEvent<HTMLInputElement>) => void;
+  onAllowCustomValueChange?: (event: FormEvent<HTMLInputElement>) => void;
   onQueryBlur?: (event: FormEvent<HTMLTextAreaElement>) => void;
   onAllValueBlur?: (event: FormEvent<HTMLInputElement>) => void;
 }
@@ -28,6 +30,7 @@ export function DataSourceVariableForm({
   query,
   regex,
   optionTypes,
+  allowCustomValue,
   onChange,
   onRegExBlur,
   multi,
@@ -36,6 +39,7 @@ export function DataSourceVariableForm({
   onMultiChange,
   onIncludeAllChange,
   onAllValueChange,
+  onAllowCustomValueChange,
 }: DataSourceVariableFormProps) {
   const typeValue = optionTypes.find((o) => o.value === query) ?? optionTypes[0];
 
@@ -70,9 +74,11 @@ export function DataSourceVariableForm({
         multi={multi}
         includeAll={includeAll}
         allValue={allValue}
+        allowCustomValue={allowCustomValue}
         onMultiChange={onMultiChange}
         onIncludeAllChange={onIncludeAllChange}
         onAllValueChange={onAllValueChange}
+        onAllowCustomValueChange={onAllowCustomValueChange}
       />
     </>
   );

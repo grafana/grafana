@@ -1,17 +1,22 @@
-import { render, userEvent, screen, waitFor } from 'test/test-utils';
+import { render, screen, userEvent, waitFor } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
 import { setPluginLinksHook } from '@grafana/runtime';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 
-import { AlertRuleAction, useAlertRuleAbility } from '../../hooks/useAbilities';
+import { AlertRuleAction, useAlertRuleAbility, useRulerRuleAbility } from '../../hooks/useAbilities';
 import { getCloudRule, getGrafanaRule } from '../../mocks';
+import { mimirDataSource } from '../../mocks/server/configure';
 
 import { RulesTable } from './RulesTable';
 
 jest.mock('../../hooks/useAbilities');
 
 const mocks = {
+  // This is a bit unfortunate, but we need to mock both abilities
+  // RuleActionButtons still needs to use the useAlertRuleAbility hook
+  // whereas AlertRuleMenu has already been refactored to use useRulerRuleAbility
+  useRulerRuleAbility: jest.mocked(useRulerRuleAbility),
   useAlertRuleAbility: jest.mocked(useAlertRuleAbility),
 };
 
@@ -34,6 +39,8 @@ const ui = {
 const user = userEvent.setup();
 setupMswServer();
 
+const { dataSource: mimirDs } = mimirDataSource();
+
 describe('RulesTable RBAC', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -45,6 +52,9 @@ describe('RulesTable RBAC', () => {
     const grafanaRule = getGrafanaRule({ name: 'Grafana' });
 
     it('Should not render Edit button for users without the update permission', async () => {
+      mocks.useRulerRuleAbility.mockImplementation((_rule, _groupIdentifier, action) => {
+        return action === AlertRuleAction.Update ? [true, false] : [true, true];
+      });
       mocks.useAlertRuleAbility.mockImplementation((_rule, action) => {
         return action === AlertRuleAction.Update ? [true, false] : [true, true];
       });
@@ -55,6 +65,9 @@ describe('RulesTable RBAC', () => {
     });
 
     it('Should not render Delete button for users without the delete permission', async () => {
+      mocks.useRulerRuleAbility.mockImplementation((_rule, _groupIdentifier, action) => {
+        return action === AlertRuleAction.Delete ? [true, false] : [true, true];
+      });
       mocks.useAlertRuleAbility.mockImplementation((_rule, action) => {
         return action === AlertRuleAction.Delete ? [true, false] : [true, true];
       });
@@ -67,15 +80,22 @@ describe('RulesTable RBAC', () => {
     });
 
     it('Should render Edit button for users with the update permission', async () => {
+      mocks.useRulerRuleAbility.mockImplementation((_rule, _groupIdentifier, action) => {
+        return action === AlertRuleAction.Update ? [true, true] : [false, false];
+      });
       mocks.useAlertRuleAbility.mockImplementation((_rule, action) => {
         return action === AlertRuleAction.Update ? [true, true] : [false, false];
       });
+
       render(<RulesTable rules={[grafanaRule]} />);
 
       expect(await ui.actionButtons.edit.find()).toBeInTheDocument();
     });
 
     it('Should render Delete button for users with the delete permission', async () => {
+      mocks.useRulerRuleAbility.mockImplementation((_rule, _groupIdentifier, action) => {
+        return action === AlertRuleAction.Delete ? [true, true] : [false, false];
+      });
       mocks.useAlertRuleAbility.mockImplementation((_rule, action) => {
         return action === AlertRuleAction.Delete ? [true, true] : [false, false];
       });
@@ -103,6 +123,9 @@ describe('RulesTable RBAC', () => {
       };
 
       beforeEach(() => {
+        mocks.useRulerRuleAbility.mockImplementation(() => {
+          return [true, true];
+        });
         mocks.useAlertRuleAbility.mockImplementation(() => {
           return [true, true];
         });
@@ -132,9 +155,12 @@ describe('RulesTable RBAC', () => {
   });
 
   describe('Cloud rules action buttons', () => {
-    const cloudRule = getCloudRule({ name: 'Cloud' });
+    const cloudRule = getCloudRule({ name: 'Cloud' }, { rulesSource: mimirDs });
 
     it('Should not render Edit button for users without the update permission', async () => {
+      mocks.useRulerRuleAbility.mockImplementation((_rule, _groupIdentifier, action) => {
+        return action === AlertRuleAction.Update ? [true, false] : [true, true];
+      });
       mocks.useAlertRuleAbility.mockImplementation((_rule, action) => {
         return action === AlertRuleAction.Update ? [true, false] : [true, true];
       });
@@ -145,6 +171,9 @@ describe('RulesTable RBAC', () => {
     });
 
     it('Should not render Delete button for users without the delete permission', async () => {
+      mocks.useRulerRuleAbility.mockImplementation((_rule, _groupIdentifier, action) => {
+        return action === AlertRuleAction.Delete ? [true, false] : [true, true];
+      });
       mocks.useAlertRuleAbility.mockImplementation((_rule, action) => {
         return action === AlertRuleAction.Delete ? [true, false] : [true, true];
       });
@@ -156,6 +185,9 @@ describe('RulesTable RBAC', () => {
     });
 
     it('Should render Edit button for users with the update permission', async () => {
+      mocks.useRulerRuleAbility.mockImplementation((_rule, _groupIdentifier, action) => {
+        return action === AlertRuleAction.Update ? [true, true] : [false, false];
+      });
       mocks.useAlertRuleAbility.mockImplementation((_rule, action) => {
         return action === AlertRuleAction.Update ? [true, true] : [false, false];
       });
@@ -166,6 +198,9 @@ describe('RulesTable RBAC', () => {
     });
 
     it('Should render Delete button for users with the delete permission', async () => {
+      mocks.useRulerRuleAbility.mockImplementation((_rule, _groupIdentifier, action) => {
+        return action === AlertRuleAction.Delete ? [true, true] : [false, false];
+      });
       mocks.useAlertRuleAbility.mockImplementation((_rule, action) => {
         return action === AlertRuleAction.Delete ? [true, true] : [false, false];
       });

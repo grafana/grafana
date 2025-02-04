@@ -34,7 +34,7 @@ type Provider interface {
 }
 
 type gPRCServerService struct {
-	cfg         *setting.Cfg
+	cfg         setting.GRPCServerSettings
 	logger      log.Logger
 	server      *grpc.Server
 	address     string
@@ -44,9 +44,9 @@ type gPRCServerService struct {
 
 func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, authenticator interceptors.Authenticator, tracer tracing.Tracer, registerer prometheus.Registerer) (Provider, error) {
 	s := &gPRCServerService{
-		cfg:         cfg,
+		cfg:         cfg.GRPCServer,
 		logger:      log.New("grpc-server"),
-		enabled:     features.IsEnabledGlobally(featuremgmt.FlagGrpcServer),
+		enabled:     features.IsEnabledGlobally(featuremgmt.FlagGrpcServer), // TODO: replace with cfg.GRPCServer.Enabled when we remove feature toggle.
 		startedChan: make(chan struct{}),
 	}
 
@@ -75,7 +75,7 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, authe
 		grpc.StatsHandler(otelgrpc.NewServerHandler()),
 		grpc.ChainUnaryInterceptor(
 			grpcAuth.UnaryServerInterceptor(authenticator.Authenticate),
-			interceptors.LoggingUnaryInterceptor(s.cfg, s.logger), // needs to be registered after tracing interceptor to get trace id
+			interceptors.LoggingUnaryInterceptor(s.logger, s.cfg.EnableLogging), // needs to be registered after tracing interceptor to get trace id
 			middleware.UnaryServerInstrumentInterceptor(grpcRequestDuration),
 		),
 		grpc.ChainStreamInterceptor(
@@ -85,16 +85,16 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, authe
 		),
 	}
 
-	if s.cfg.GRPCServerTLSConfig != nil {
-		opts = append(opts, grpc.Creds(credentials.NewTLS(cfg.GRPCServerTLSConfig)))
+	if s.cfg.TLSConfig != nil {
+		opts = append(opts, grpc.Creds(credentials.NewTLS(s.cfg.TLSConfig)))
 	}
 
-	if s.cfg.GRPCServerMaxRecvMsgSize > 0 {
-		opts = append(opts, grpc.MaxRecvMsgSize(s.cfg.GRPCServerMaxRecvMsgSize))
+	if s.cfg.MaxRecvMsgSize > 0 {
+		opts = append(opts, grpc.MaxRecvMsgSize(s.cfg.MaxRecvMsgSize))
 	}
 
-	if s.cfg.GRPCServerMaxSendMsgSize > 0 {
-		opts = append(opts, grpc.MaxSendMsgSize(s.cfg.GRPCServerMaxSendMsgSize))
+	if s.cfg.MaxSendMsgSize > 0 {
+		opts = append(opts, grpc.MaxSendMsgSize(s.cfg.MaxSendMsgSize))
 	}
 
 	s.server = grpc.NewServer(opts...)
@@ -102,9 +102,9 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, authe
 }
 
 func (s *gPRCServerService) Run(ctx context.Context) error {
-	s.logger.Info("Running GRPC server", "address", s.cfg.GRPCServerAddress, "network", s.cfg.GRPCServerNetwork, "tls", s.cfg.GRPCServerTLSConfig != nil, "max_recv_msg_size", s.cfg.GRPCServerMaxRecvMsgSize, "max_send_msg_size", s.cfg.GRPCServerMaxSendMsgSize)
+	s.logger.Info("Running GRPC server", "address", s.cfg.Address, "network", s.cfg.Network, "tls", s.cfg.TLSConfig != nil, "max_recv_msg_size", s.cfg.MaxRecvMsgSize, "max_send_msg_size", s.cfg.MaxSendMsgSize)
 
-	listener, err := net.Listen(s.cfg.GRPCServerNetwork, s.cfg.GRPCServerAddress)
+	listener, err := net.Listen(s.cfg.Network, s.cfg.Address)
 	if err != nil {
 		return fmt.Errorf("GRPC server: failed to listen: %w", err)
 	}

@@ -1,31 +1,36 @@
 import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
-import { AppPlugin, GrafanaTheme2, PluginContextProvider, UrlQueryMap } from '@grafana/data';
+import { AppPlugin, GrafanaTheme2, PluginContextProvider, UrlQueryMap, PluginType } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { PageInfoItem } from '@grafana/runtime/src/components/PluginPage';
 import { CellProps, Column, InteractiveTable, Stack, useStyles2 } from '@grafana/ui';
 
 import { Changelog } from '../components/Changelog';
+import { PluginDetailsPanel } from '../components/PluginDetailsPanel';
 import { VersionList } from '../components/VersionList';
+import { shouldDisablePluginInstall } from '../helpers';
 import { usePluginConfig } from '../hooks/usePluginConfig';
 import { CatalogPlugin, Permission, PluginTabIds } from '../types';
 
 import { AppConfigCtrlWrapper } from './AppConfigWrapper';
+import Connections from './ConnectionsTab';
 import { PluginDashboards } from './PluginDashboards';
 import { PluginUsage } from './PluginUsage';
 
 type Props = {
   plugin: CatalogPlugin;
+  info: PageInfoItem[];
   queryParams: UrlQueryMap;
   pageId: string;
+  showDetails: boolean;
 };
 
 type Cell<T extends keyof Permission = keyof Permission> = CellProps<Permission, Permission[T]>;
 
-export function PluginDetailsBody({ plugin, queryParams, pageId }: Props): JSX.Element {
+export function PluginDetailsBody({ plugin, queryParams, pageId, info, showDetails }: Props): JSX.Element {
   const styles = useStyles2(getStyles);
   const { value: pluginConfig } = usePluginConfig(plugin);
-
   const columns: Array<Column<Permission>> = useMemo(
     () => [
       {
@@ -60,6 +65,7 @@ export function PluginDetailsBody({ plugin, queryParams, pageId }: Props): JSX.E
           pluginId={plugin.id}
           versions={plugin.details?.versions}
           installedVersion={plugin.installedVersion}
+          disableInstallation={shouldDisablePluginInstall(plugin)}
         />
       </div>
     );
@@ -73,6 +79,26 @@ export function PluginDetailsBody({ plugin, queryParams, pageId }: Props): JSX.E
     return (
       <div>
         <AppConfigCtrlWrapper app={pluginConfig as AppPlugin} />
+      </div>
+    );
+  }
+
+  if (pageId === PluginTabIds.PLUGINDETAILS && config.featureToggles.pluginsDetailsRightPanel && showDetails) {
+    return (
+      <div>
+        <PluginDetailsPanel pluginExtentionsInfo={info} plugin={plugin} width={'auto'} />
+      </div>
+    );
+  }
+
+  if (
+    config.featureToggles.datasourceConnectionsTab &&
+    pageId === PluginTabIds.DATASOURCE_CONNECTIONS &&
+    plugin.type === PluginType.datasource
+  ) {
+    return (
+      <div>
+        <Connections plugin={plugin} />
       </div>
     );
   }
@@ -118,7 +144,7 @@ export function PluginDetailsBody({ plugin, queryParams, pageId }: Props): JSX.E
 
   if (pageId === PluginTabIds.USAGE && pluginConfig) {
     return (
-      <div>
+      <div className={styles.wrap}>
         <PluginUsage plugin={pluginConfig?.meta} />
       </div>
     );
@@ -140,6 +166,10 @@ export function PluginDetailsBody({ plugin, queryParams, pageId }: Props): JSX.E
 }
 
 export const getStyles = (theme: GrafanaTheme2) => ({
+  wrap: css({
+    width: '100%',
+    height: '50vh',
+  }),
   readme: css({
     '& img': {
       maxWidth: '100%',

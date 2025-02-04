@@ -11,7 +11,7 @@ import { VizTooltipItem } from '@grafana/ui/src/components/VizTooltip/types';
 import { getContentItems } from '@grafana/ui/src/components/VizTooltip/utils';
 import { findNextStateIndex, fmtDuration } from 'app/core/components/TimelineChart/utils';
 
-import { getDataLinks, getFieldActions } from '../status-history/utils';
+import { getFieldActions } from '../status-history/utils';
 import { TimeSeriesTooltipProps } from '../timeseries/TimeSeriesTooltip';
 import { isTooltipScrollable } from '../timeseries/utils';
 
@@ -32,6 +32,7 @@ export const StateTimelineTooltip2 = ({
   withDuration,
   maxHeight,
   replaceVariables,
+  dataLinks,
 }: StateTimelineTooltip2Props) => {
   const xField = series.fields[0];
 
@@ -70,10 +71,9 @@ export const StateTimelineTooltip2 = ({
   if (isPinned && seriesIdx != null) {
     const field = series.fields[seriesIdx];
     const dataIdx = dataIdxs[seriesIdx]!;
-    const links = getDataLinks(field, dataIdx);
-    const actions = getFieldActions(series, field, replaceVariables!);
+    const actions = getFieldActions(series, field, replaceVariables!, dataIdx);
 
-    footer = <VizTooltipFooter dataLinks={links} annotate={annotate} actions={actions} />;
+    footer = <VizTooltipFooter dataLinks={dataLinks} annotate={annotate} actions={actions} />;
   }
 
   const headerItem: VizTooltipItem = {

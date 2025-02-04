@@ -269,12 +269,14 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 	originGlobs, _ := setting.GetAllowedOriginGlobs(originPatterns) // error already checked on config load.
 	checkOrigin := getCheckOriginFunc(appURL, originPatterns, originGlobs)
 
+	wsCfg := centrifuge.WebsocketConfig{
+		ReadBufferSize:   1024,
+		WriteBufferSize:  1024,
+		CheckOrigin:      checkOrigin,
+		MessageSizeLimit: cfg.LiveMessageSizeLimit,
+	}
 	// Use a pure websocket transport.
-	wsHandler := centrifuge.NewWebsocketHandler(node, centrifuge.WebsocketConfig{
-		ReadBufferSize:  1024,
-		WriteBufferSize: 1024,
-		CheckOrigin:     checkOrigin,
-	})
+	wsHandler := centrifuge.NewWebsocketHandler(node, wsCfg)
 
 	pushWSHandler := pushws.NewHandler(g.ManagedStreamRunner, pushws.Config{
 		ReadBufferSize:  1024,

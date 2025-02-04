@@ -2,7 +2,7 @@ import { isNumber, set, unset, get, cloneDeep } from 'lodash';
 import { useMemo, useRef } from 'react';
 import usePrevious from 'react-use/lib/usePrevious';
 
-import { VariableFormatID } from '@grafana/schema';
+import { ThresholdsMode, VariableFormatID } from '@grafana/schema';
 
 import { compareArrayValues, compareDataFrameStructures } from '../dataframe/frameComparisons';
 import { guessFieldTypeForField } from '../dataframe/processDataFrame';
@@ -347,6 +347,18 @@ export function setFieldConfigDefaults(config: FieldConfig, defaults: FieldConfi
     // Combine the data source links and the panel default config links
     config.links = [...config.links, ...defaults.links];
   }
+
+  // if we have a base threshold set by default but not on the config, we need to merge it in
+  const defaultBaseStep =
+    defaults?.thresholds?.mode === ThresholdsMode.Absolute &&
+    defaults.thresholds?.steps.find((step) => step.value === -Infinity);
+  if (
+    config.thresholds?.mode === ThresholdsMode.Absolute &&
+    !config.thresholds.steps.some((step) => step.value === -Infinity) &&
+    defaultBaseStep
+  ) {
+    config.thresholds.steps = [defaultBaseStep, ...config.thresholds.steps];
+  }
   for (const fieldConfigProperty of context.fieldConfigRegistry.list()) {
     if (fieldConfigProperty.isCustom && !config.custom) {
       config.custom = {};
@@ -489,6 +501,7 @@ export const getLinksSupplier =
             });
           },
           origin: field,
+          oneClick: link.oneClick ?? false,
         };
       } else {
         linkModel = {
@@ -496,6 +509,7 @@ export const getLinksSupplier =
           title: replaceVariables(link.title || '', dataLinkScopedVars),
           target: link.targetBlank ? '_blank' : undefined,
           origin: field,
+          oneClick: link.oneClick ?? false,
         };
       }
 

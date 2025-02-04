@@ -180,7 +180,8 @@ function StateVisualization({ ruleUID, timeRange, labels }: StateVisualizationPr
     return null;
   }
 
-  const numberOfTransitions = dataFrames[0]?.fields[0]?.values?.length - 1 ?? 0; // we subtract 1 as the first value is the initial state
+  // we subtract 1 as the first value is the initial state
+  const numberOfTransitions = dataFrames[0]?.fields[0]?.values?.length - 1 || 0;
 
   return (
     <>

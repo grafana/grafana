@@ -3,10 +3,10 @@ import * as React from 'react';
 
 import { Field, Switch, useTheme2 } from '@grafana/ui';
 
-import { AzureDataSourceJsonData } from '../../types';
+import { AzureMonitorDataSourceJsonData } from '../../types';
 
 export interface Props {
-  options: AzureDataSourceJsonData;
+  options: AzureMonitorDataSourceJsonData;
   onBasicLogsEnabledChange: (basicLogsEnabled: boolean) => void;
 }
 

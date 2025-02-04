@@ -20,6 +20,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/pkg/apis/folder/v0alpha1.FolderInfo":       schema_pkg_apis_folder_v0alpha1_FolderInfo(ref),
 		"github.com/grafana/grafana/pkg/apis/folder/v0alpha1.FolderInfoList":   schema_pkg_apis_folder_v0alpha1_FolderInfoList(ref),
 		"github.com/grafana/grafana/pkg/apis/folder/v0alpha1.FolderList":       schema_pkg_apis_folder_v0alpha1_FolderList(ref),
+		"github.com/grafana/grafana/pkg/apis/folder/v0alpha1.ResourceStats":    schema_pkg_apis_folder_v0alpha1_ResourceStats(ref),
 		"github.com/grafana/grafana/pkg/apis/folder/v0alpha1.Spec":             schema_pkg_apis_folder_v0alpha1_Spec(ref),
 	}
 }
@@ -46,14 +47,12 @@ func schema_pkg_apis_folder_v0alpha1_DescendantCounts(ref common.ReferenceCallba
 					},
 					"counts": {
 						SchemaProps: spec.SchemaProps{
-							Type: []string{"object"},
-							AdditionalProperties: &spec.SchemaOrBool{
-								Allows: true,
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: 0,
-										Type:    []string{"integer"},
-										Format:  "int64",
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/pkg/apis/folder/v0alpha1.ResourceStats"),
 									},
 								},
 							},
@@ -63,6 +62,8 @@ func schema_pkg_apis_folder_v0alpha1_DescendantCounts(ref common.ReferenceCallba
 				Required: []string{"counts"},
 			},
 		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/pkg/apis/folder/v0alpha1.ResourceStats"},
 	}
 }
 
@@ -169,9 +170,9 @@ func schema_pkg_apis_folder_v0alpha1_FolderInfo(ref common.ReferenceCallback) co
 				Description: "FolderInfo briefly describes a folder -- unlike a folder resource, this is a partial record of the folder metadata used for navigating parents and children",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
-					"uid": {
+					"name": {
 						SchemaProps: spec.SchemaProps{
-							Description: "UID is the unique identifier for a folder (and the k8s name)",
+							Description: "Name is the k8s name (eg, the unique identifier) for a folder",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
@@ -185,6 +186,13 @@ func schema_pkg_apis_folder_v0alpha1_FolderInfo(ref common.ReferenceCallback) co
 							Format:      "",
 						},
 					},
+					"description": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The folder description",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"parent": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The parent folder UID",
@@ -192,8 +200,15 @@ func schema_pkg_apis_folder_v0alpha1_FolderInfo(ref common.ReferenceCallback) co
 							Format:      "",
 						},
 					},
+					"detached": {
+						SchemaProps: spec.SchemaProps{
+							Description: "This folder does not resolve",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
 				},
-				Required: []string{"uid", "title"},
+				Required: []string{"name", "title"},
 			},
 		},
 	}
@@ -299,6 +314,40 @@ func schema_pkg_apis_folder_v0alpha1_FolderList(ref common.ReferenceCallback) co
 		},
 		Dependencies: []string{
 			"github.com/grafana/grafana/pkg/apis/folder/v0alpha1.Folder", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+	}
+}
+
+func schema_pkg_apis_folder_v0alpha1_ResourceStats(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"group": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"resource": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"count": {
+						SchemaProps: spec.SchemaProps{
+							Default: 0,
+							Type:    []string{"integer"},
+							Format:  "int64",
+						},
+					},
+				},
+				Required: []string{"group", "resource", "count"},
+			},
+		},
 	}
 }
 

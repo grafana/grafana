@@ -9,9 +9,9 @@ import {
   initialState,
   loadAlertRules,
   loadedAlertRules,
+  notificationChannelLoaded,
   notificationChannelReducer,
   setSearchQuery,
-  notificationChannelLoaded,
 } from './reducers';
 
 describe('Alert rules', () => {

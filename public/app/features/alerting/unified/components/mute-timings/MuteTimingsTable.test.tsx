@@ -19,7 +19,7 @@ import { MuteTimingsTable } from './MuteTimingsTable';
 const renderWithProvider = (alertManagerSource?: string) => {
   return render(
     <AlertmanagerProvider accessType={'notification'} alertmanagerSourceName={alertManagerSource}>
-      <MuteTimingsTable alertManagerSourceName={alertManagerSource ?? GRAFANA_RULES_SOURCE_NAME} />
+      <MuteTimingsTable />
     </AlertmanagerProvider>
   );
 };

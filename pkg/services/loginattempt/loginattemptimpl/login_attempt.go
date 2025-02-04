@@ -11,10 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-const (
-	maxInvalidLoginAttempts int64 = 5
-	loginAttemptsWindow           = time.Minute * 5
-)
+const loginAttemptsWindow = time.Minute * 5
 
 func ProvideService(db db.DB, cfg *setting.Cfg, lock *serverlock.ServerLockService) *Service {
 	return &Service{
@@ -80,7 +77,7 @@ func (s *Service) Validate(ctx context.Context, username string) (bool, error) {
 		return false, err
 	}
 
-	if count >= maxInvalidLoginAttempts {
+	if count >= s.cfg.BruteForceLoginProtectionMaxAttempts {
 		return false, nil
 	}
 

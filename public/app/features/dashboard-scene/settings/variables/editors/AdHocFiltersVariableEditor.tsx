@@ -1,3 +1,4 @@
+import { FormEvent } from 'react';
 import { useAsync } from 'react-use';
 
 import { DataSourceInstanceSettings, MetricFindValue, getDataSourceRef } from '@grafana/data';
@@ -13,7 +14,7 @@ interface AdHocFiltersVariableEditorProps {
 
 export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProps) {
   const { variable } = props;
-  const { datasource: datasourceRef, defaultKeys } = variable.useState();
+  const { datasource: datasourceRef, defaultKeys, allowCustomValue } = variable.useState();
 
   const { value: datasourceSettings } = useAsync(async () => {
     return await getDataSourceSrv().get(datasourceRef);
@@ -38,13 +39,19 @@ export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProp
     });
   };
 
+  const onAllowCustomValueChange = (event: FormEvent<HTMLInputElement>) => {
+    variable.setState({ allowCustomValue: event.currentTarget.checked });
+  };
+
   return (
     <AdHocVariableForm
       datasource={datasourceRef ?? undefined}
       infoText={message}
+      allowCustomValue={allowCustomValue}
       onDataSourceChange={onDataSourceChange}
       defaultKeys={defaultKeys}
       onDefaultKeysChange={onDefaultKeysChange}
+      onAllowCustomValueChange={onAllowCustomValueChange}
     />
   );
 }

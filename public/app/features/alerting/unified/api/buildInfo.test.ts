@@ -95,7 +95,7 @@ describe('discoverDataSourceFeatures', () => {
 
       const response = await discoverDataSourceFeatures({ url: '/datasource/proxy', name: 'Loki', type: 'loki' });
 
-      expect(response.application).toBe(PromApplication.Cortex);
+      expect(response.application).toBe('Loki');
       expect(response.features.rulerApiEnabled).toBe(true);
 
       expect(mocks.fetchTestRulerRulesGroup).toHaveBeenCalledTimes(1);

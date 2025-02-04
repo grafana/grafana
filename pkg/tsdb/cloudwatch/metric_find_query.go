@@ -97,39 +97,13 @@ func (e *cloudWatchExecutor) handleGetEc2InstanceAttribute(ctx context.Context, 
 	dupCheck := make(map[string]bool)
 	for _, reservation := range instances.Reservations {
 		for _, instance := range reservation.Instances {
-			tags := make(map[string]string)
-			for _, tag := range instance.Tags {
-				tags[*tag.Key] = *tag.Value
+			data, found, err := getInstanceAttributeValue(attributeName, instance)
+			if err != nil {
+				return nil, err
 			}
-
-			var data string
-			if strings.Index(attributeName, "Tags.") == 0 {
-				tagName := attributeName[5:]
-				data = tags[tagName]
-			} else {
-				attributePath := strings.Split(attributeName, ".")
-				v := reflect.ValueOf(instance)
-				for _, key := range attributePath {
-					if v.Kind() == reflect.Ptr {
-						v = v.Elem()
-					}
-					if v.Kind() != reflect.Struct {
-						return nil, errors.New("invalid attribute path")
-					}
-					v = v.FieldByName(key)
-					if !v.IsValid() {
-						return nil, errors.New("invalid attribute path")
-					}
-				}
-				if attr, ok := v.Interface().(*string); ok {
-					data = *attr
-				} else if attr, ok := v.Interface().(*time.Time); ok {
-					data = attr.String()
-				} else {
-					return nil, errors.New("invalid attribute path")
-				}
+			if !found {
+				continue
 			}
-
 			if _, exists := dupCheck[data]; exists {
 				continue
 			}
@@ -144,6 +118,54 @@ func (e *cloudWatchExecutor) handleGetEc2InstanceAttribute(ctx context.Context, 
 	})
 
 	return result, nil
+}
+
+func getInstanceAttributeValue(attributeName string, instance *ec2.Instance) (value string, found bool, err error) {
+	tags := make(map[string]string)
+	for _, tag := range instance.Tags {
+		tags[*tag.Key] = *tag.Value
+	}
+
+	var data string
+	if strings.Index(attributeName, "Tags.") == 0 {
+		tagName := attributeName[5:]
+		data = tags[tagName]
+	} else {
+		attributePath := strings.Split(attributeName, ".")
+		v := reflect.ValueOf(instance)
+		for _, key := range attributePath {
+			if v.Kind() == reflect.Ptr {
+				if v.IsNil() {
+					return "", false, nil
+				}
+				v = v.Elem()
+			}
+			if v.Kind() != reflect.Struct {
+				return "", false, errors.New("invalid attribute path")
+			}
+			v = v.FieldByName(key)
+			if !v.IsValid() {
+				return "", false, errors.New("invalid attribute path")
+			}
+		}
+
+		if v.Kind() == reflect.Ptr && v.IsNil() {
+			return "", false, nil
+		}
+		if attr, ok := v.Interface().(*string); ok {
+			data = *attr
+		} else if attr, ok := v.Interface().(*time.Time); ok {
+			data = attr.String()
+		} else if _, ok := v.Interface().(*bool); ok {
+			data = fmt.Sprint(v.Elem().Bool())
+		} else if v.Kind() == reflect.Ptr && v.Elem().CanInt() {
+			data = fmt.Sprint(v.Elem().Int())
+		} else {
+			return "", false, errors.New("cannot parse attribute")
+		}
+	}
+
+	return data, true, nil
 }
 
 func (e *cloudWatchExecutor) handleGetResourceArns(ctx context.Context, pluginCtx backend.PluginContext, parameters url.Values) ([]suggestData, error) {

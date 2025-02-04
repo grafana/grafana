@@ -18,14 +18,21 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.AnnotationPermission":    schema_pkg_apis_dashboard_v0alpha1_AnnotationPermission(ref),
 		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.Dashboard":               schema_pkg_apis_dashboard_v0alpha1_Dashboard(ref),
 		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.DashboardAccess":         schema_pkg_apis_dashboard_v0alpha1_DashboardAccess(ref),
+		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.DashboardHit":            schema_pkg_apis_dashboard_v0alpha1_DashboardHit(ref),
 		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.DashboardList":           schema_pkg_apis_dashboard_v0alpha1_DashboardList(ref),
 		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.DashboardVersionInfo":    schema_pkg_apis_dashboard_v0alpha1_DashboardVersionInfo(ref),
 		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.DashboardVersionList":    schema_pkg_apis_dashboard_v0alpha1_DashboardVersionList(ref),
 		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.DashboardWithAccessInfo": schema_pkg_apis_dashboard_v0alpha1_DashboardWithAccessInfo(ref),
+		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.FacetResult":             schema_pkg_apis_dashboard_v0alpha1_FacetResult(ref),
 		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.LibraryPanel":            schema_pkg_apis_dashboard_v0alpha1_LibraryPanel(ref),
 		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.LibraryPanelList":        schema_pkg_apis_dashboard_v0alpha1_LibraryPanelList(ref),
 		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.LibraryPanelSpec":        schema_pkg_apis_dashboard_v0alpha1_LibraryPanelSpec(ref),
 		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.LibraryPanelStatus":      schema_pkg_apis_dashboard_v0alpha1_LibraryPanelStatus(ref),
+		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.SearchResults":           schema_pkg_apis_dashboard_v0alpha1_SearchResults(ref),
+		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.SortBy":                  schema_pkg_apis_dashboard_v0alpha1_SortBy(ref),
+		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.SortableField":           schema_pkg_apis_dashboard_v0alpha1_SortableField(ref),
+		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.SortableFields":          schema_pkg_apis_dashboard_v0alpha1_SortableFields(ref),
+		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.TermFacet":               schema_pkg_apis_dashboard_v0alpha1_TermFacet(ref),
 		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.VersionsQueryOptions":    schema_pkg_apis_dashboard_v0alpha1_VersionsQueryOptions(ref),
 	}
 }
@@ -200,6 +207,86 @@ func schema_pkg_apis_dashboard_v0alpha1_DashboardAccess(ref common.ReferenceCall
 		},
 		Dependencies: []string{
 			"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.AnnotationPermission"},
+	}
+}
+
+func schema_pkg_apis_dashboard_v0alpha1_DashboardHit(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"resource": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Dashboard or folder",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The k8s \"name\" (eg, grafana UID)",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"title": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The display nam",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"tags": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Filter tags",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+					"folder": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The k8s name (eg, grafana UID) for the parent folder",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"field": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Stick untyped extra fields in this object (including the sort value)",
+							Ref:         ref("github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured"),
+						},
+					},
+					"score": {
+						SchemaProps: spec.SchemaProps{
+							Description: "When using \"real\" search, this is the score",
+							Type:        []string{"number"},
+							Format:      "double",
+						},
+					},
+					"explain": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Explain the score (if possible)",
+							Ref:         ref("github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured"),
+						},
+					},
+				},
+				Required: []string{"resource", "name", "title"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured"},
 	}
 }
 
@@ -393,6 +480,54 @@ func schema_pkg_apis_dashboard_v0alpha1_DashboardWithAccessInfo(ref common.Refer
 		},
 		Dependencies: []string{
 			"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured", "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.DashboardAccess", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+	}
+}
+
+func schema_pkg_apis_dashboard_v0alpha1_FacetResult(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"field": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"total": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The distinct terms",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"missing": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The number of documents that do *not* have this field",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"terms": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Term facets",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.TermFacet"),
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.TermFacet"},
 	}
 }
 
@@ -604,6 +739,222 @@ func schema_pkg_apis_dashboard_v0alpha1_LibraryPanelStatus(ref common.ReferenceC
 		},
 		Dependencies: []string{
 			"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured"},
+	}
+}
+
+func schema_pkg_apis_dashboard_v0alpha1_SearchResults(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"offset": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Where the query started from",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"totalHits": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The number of matching results",
+							Default:     0,
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"hits": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The dashboard body (unstructured for now)",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.DashboardHit"),
+									},
+								},
+							},
+						},
+					},
+					"queryCost": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Cost of running the query",
+							Type:        []string{"number"},
+							Format:      "double",
+						},
+					},
+					"maxScore": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Max score",
+							Type:        []string{"number"},
+							Format:      "double",
+						},
+					},
+					"sortBy": {
+						SchemaProps: spec.SchemaProps{
+							Description: "How are the results sorted",
+							Ref:         ref("github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.SortBy"),
+						},
+					},
+					"facets": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Facet results",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.FacetResult"),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"totalHits", "hits"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.DashboardHit", "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.FacetResult", "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.SortBy"},
+	}
+}
+
+func schema_pkg_apis_dashboard_v0alpha1_SortBy(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"field": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"desc": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"boolean"},
+							Format: "",
+						},
+					},
+				},
+				Required: []string{"field"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_dashboard_v0alpha1_SortableField(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"string": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"display": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"type": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_dashboard_v0alpha1_SortableFields(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"fields": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Sortable fields (depends on backend support)",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.SortableField"),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"fields"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.SortableField"},
+	}
+}
+
+func schema_pkg_apis_dashboard_v0alpha1_TermFacet(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"term": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"count": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int64",
+						},
+					},
+				},
+			},
+		},
 	}
 }
 

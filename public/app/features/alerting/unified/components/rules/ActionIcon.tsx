@@ -1,4 +1,4 @@
-import { IconName, Tooltip, LinkButton, Button } from '@grafana/ui';
+import { Button, IconName, LinkButton, Tooltip } from '@grafana/ui';
 import { PopoverContent, TooltipPlacement } from '@grafana/ui/src/components/Tooltip';
 
 interface Props {

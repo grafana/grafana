@@ -7,13 +7,13 @@ import { useDeleteModal } from 'app/features/alerting/unified/components/rule-vi
 import { INSTANCES_DISPLAY_LIMIT } from 'app/features/alerting/unified/components/rules/RuleDetails';
 import SilenceGrafanaRuleDrawer from 'app/features/alerting/unified/components/silences/SilenceGrafanaRuleDrawer';
 import { useRulesFilter } from 'app/features/alerting/unified/hooks/useFilteredRules';
-import { AlertmanagerProvider } from 'app/features/alerting/unified/state/AlertmanagerContext';
 import { useDispatch } from 'app/types';
 import { CombinedRule, RuleIdentifier, RulesSource } from 'app/types/unified-alerting';
 
 import { AlertRuleAction, useAlertRuleAbility } from '../../hooks/useAbilities';
 import { fetchPromAndRulerRulesAction } from '../../state/actions';
 import { GRAFANA_RULES_SOURCE_NAME, getRulesSourceName } from '../../utils/datasource';
+import { groupIdentifier } from '../../utils/groupIdentifier';
 import { createViewLink } from '../../utils/misc';
 import * as ruleId from '../../utils/rule-id';
 import { isGrafanaAlertingRule, isGrafanaRulerRule } from '../../utils/rules';
@@ -32,13 +32,12 @@ interface Props {
    */
   compact?: boolean;
   showViewButton?: boolean;
-  showCopyLinkButton?: boolean;
 }
 
 /**
  * **Action** buttons to show for an alert rule - e.g. "View", "Edit", "More..."
  */
-export const RuleActionsButtons = ({ compact, showViewButton, showCopyLinkButton, rule, rulesSource }: Props) => {
+export const RuleActionsButtons = ({ compact, showViewButton, rule, rulesSource }: Props) => {
   const dispatch = useDispatch();
 
   const redirectToListView = compact ? false : true;
@@ -65,6 +64,7 @@ export const RuleActionsButtons = ({ compact, showViewButton, showCopyLinkButton
   const sourceName = getRulesSourceName(rulesSource);
 
   const identifier = ruleId.fromCombinedRule(sourceName, rule);
+  const groupId = groupIdentifier.fromCombinedRule(rule);
 
   if (showViewButton) {
     buttons.push(
@@ -93,15 +93,24 @@ export const RuleActionsButtons = ({ compact, showViewButton, showCopyLinkButton
     );
   }
 
+  if (!rule.promRule) {
+    return null;
+  }
+
   return (
     <Stack gap={1} alignItems="center" wrap="nowrap">
       {buttons}
       <AlertRuleMenu
-        buttonSize={buttonSize}
-        rule={rule}
+        rulerRule={rule.rulerRule}
+        promRule={rule.promRule}
         identifier={identifier}
-        showCopyLinkButton={showCopyLinkButton}
-        handleDelete={() => showDeleteModal(rule)}
+        groupIdentifier={groupId}
+        handleDelete={() => {
+          if (rule.rulerRule) {
+            const editableRuleIdentifier = ruleId.fromRulerRuleAndGroupIdentifierV2(groupId, rule.rulerRule);
+            showDeleteModal(editableRuleIdentifier, groupId);
+          }
+        }}
         handleSilence={() => setShowSilenceDrawer(true)}
         handleDuplicateRule={() => setRedirectToClone({ identifier, isProvisioned })}
         onPauseChange={() => {
@@ -113,12 +122,11 @@ export const RuleActionsButtons = ({ compact, showViewButton, showCopyLinkButton
           // on tag invalidation (or optimistic cache updates) for this
           dispatch(fetchPromAndRulerRulesAction({ rulesSourceName: GRAFANA_RULES_SOURCE_NAME, limitAlerts }));
         }}
+        buttonSize={buttonSize}
       />
       {deleteModal}
       {isGrafanaAlertingRule(rule.rulerRule) && showSilenceDrawer && (
-        <AlertmanagerProvider accessType="instance">
-          <SilenceGrafanaRuleDrawer rulerRule={rule.rulerRule} onClose={() => setShowSilenceDrawer(false)} />
-        </AlertmanagerProvider>
+        <SilenceGrafanaRuleDrawer rulerRule={rule.rulerRule} onClose={() => setShowSilenceDrawer(false)} />
       )}
       {redirectToClone?.identifier && (
         <RedirectToCloneRule

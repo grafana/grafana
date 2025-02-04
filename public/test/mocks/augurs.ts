@@ -3,7 +3,7 @@ import type {
   OutlierDetector as AugursOutlierDetector,
   OutlierDetectorOptions,
   OutlierOutput,
-} from '@bsull/augurs';
+} from '@bsull/augurs/outlier';
 
 export default function init() {}
 
@@ -18,7 +18,7 @@ export class OutlierDetector implements AugursOutlierDetector {
   detect(): OutlierOutput {
     return dummyOutliers;
   }
-  preprocess(y: Float64Array, nTimestamps: number): AugursLoadedOutlierDetector {
+  preprocess(y: number[][] | Float64Array[]): AugursLoadedOutlierDetector {
     return new LoadedOutlierDetector();
   }
 }

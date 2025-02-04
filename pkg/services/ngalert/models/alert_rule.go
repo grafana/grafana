@@ -243,6 +243,21 @@ func SortAlertRuleGroupWithFolderTitle(g []AlertRuleGroupWithFolderFullpath) {
 	})
 }
 
+type UserUID string
+
+func NewUserUID(requester interface{ GetIdentifier() string }) *UserUID {
+	// use anonymous interface to abstract from identity package, which is part of apimachinery
+	if requester == nil {
+		return nil
+	}
+	identifier := requester.GetIdentifier()
+	if identifier == "" {
+		return nil
+	}
+	userUID := UserUID(identifier)
+	return &userUID
+}
+
 // AlertRule is the model for alert rules in unified alerting.
 type AlertRule struct {
 	ID              int64
@@ -251,6 +266,7 @@ type AlertRule struct {
 	Condition       string
 	Data            []AlertQuery
 	Updated         time.Time
+	UpdatedBy       *UserUID
 	IntervalSeconds int64
 	Version         int64
 	UID             string
@@ -278,6 +294,7 @@ type AlertRuleMetadata struct {
 
 type EditorSettings struct {
 	SimplifiedQueryAndExpressionsSection bool `json:"simplified_query_and_expressions_section"`
+	SimplifiedNotificationsSection       bool `json:"simplified_notifications_section"`
 }
 
 // Namespaced describes a class of resources that are stored in a specific namespace.
@@ -435,13 +452,13 @@ func (alertRule *AlertRule) SetDashboardAndPanelFromAnnotations() error {
 	dashUID := alertRule.Annotations[DashboardUIDAnnotation]
 	panelID := alertRule.Annotations[PanelIDAnnotation]
 	if dashUID != "" && panelID == "" || dashUID == "" && panelID != "" {
-		return fmt.Errorf("both annotations %s and %s must be specified",
+		return fmt.Errorf("%w: both annotations %s and %s must be specified", ErrAlertRuleFailedValidation,
 			DashboardUIDAnnotation, PanelIDAnnotation)
 	}
 	if dashUID != "" {
 		panelIDValue, err := strconv.ParseInt(panelID, 10, 64)
 		if err != nil {
-			return fmt.Errorf("annotation %s must be a valid integer Panel ID",
+			return fmt.Errorf("%w: annotation %s must be a valid integer Panel ID", ErrAlertRuleFailedValidation,
 				PanelIDAnnotation)
 		}
 		alertRule.DashboardUID = &dashUID
@@ -534,7 +551,7 @@ func (alertRule *AlertRule) GetGroupKey() AlertRuleGroupKey {
 }
 
 // PreSave sets default values and loads the updated model for each alert query.
-func (alertRule *AlertRule) PreSave(timeNow func() time.Time) error {
+func (alertRule *AlertRule) PreSave(timeNow func() time.Time, userUID *UserUID) error {
 	for i, q := range alertRule.Data {
 		err := q.PreSave()
 		if err != nil {
@@ -543,6 +560,7 @@ func (alertRule *AlertRule) PreSave(timeNow func() time.Time) error {
 		alertRule.Data[i] = q
 	}
 	alertRule.Updated = timeNow()
+	alertRule.UpdatedBy = userUID
 	return nil
 }
 

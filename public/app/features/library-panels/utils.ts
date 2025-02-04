@@ -1,4 +1,4 @@
-import { PanelModel } from '../dashboard/state';
+import { PanelModel } from '../dashboard/state/PanelModel';
 
 import { addLibraryPanel, updateLibraryPanel } from './state/api';
 import { LibraryElementDTO, PanelModelWithLibraryPanel } from './types';

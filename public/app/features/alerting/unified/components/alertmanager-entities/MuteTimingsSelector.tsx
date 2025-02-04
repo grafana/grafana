@@ -16,7 +16,7 @@ const MuteTimingsSelector = ({
   alertmanager,
   selectProps,
 }: BaseAlertmanagerArgs & { selectProps: MultiSelectCommonProps<string> }) => {
-  const { data } = useSelectableMuteTimings({ alertmanager });
+  const { data } = useSelectableMuteTimings({ alertmanager, skip: selectProps.disabled });
 
   const muteTimingOptions = data?.map((value) => mapMuteTiming(value)) || [];
 

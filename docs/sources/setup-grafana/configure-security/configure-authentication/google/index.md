@@ -1,20 +1,20 @@
 ---
 aliases:
   - ../../../auth/google/
-description: Grafana OAuthentication Guide
+description: Grafana Google OAuth Guide
 labels:
   products:
     - cloud
     - enterprise
     - oss
-menuTitle: Google OAuth2
-title: Configure Google OAuth2 authentication
+menuTitle: Google OAuth
+title: Configure Google OAuth authentication
 weight: 1100
 ---
 
-# Configure Google OAuth2 authentication
+# Configure Google OAuth authentication
 
-To enable Google OAuth2 you must register your application with Google. Google will generate a client ID and secret key for you to use.
+To enable Google OAuth you must register your application with Google. Google will generate a client ID and secret key for you to use.
 
 {{% admonition type="note" %}}
 If Users use the same email address in Google that they use with other authentication providers (such as Grafana.com), you need to do additional configuration to ensure that the users are matched correctly. Please refer to the [Using the same email address to login with different identity providers]({{< relref "../../configure-authentication#using-the-same-email-address-to-login-with-different-identity-providers" >}}) documentation for more information.
@@ -25,13 +25,21 @@ If Users use the same email address in Google that they use with other authentic
 First, you need to create a Google OAuth Client:
 
 1. Go to https://console.developers.google.com/apis/credentials.
+1. Create a new project if you don't have one already.
+   1. Enter a project name. The **Organization** and **Location** fields should both be set to your organization's information.
+   1. In **OAuth consent screen** select the **External** User Type. Click **CREATE**.
+   1. Fill out the requested information using the URL of your Grafana Cloud instance.
+   1. Accept the defaults, or customize the consent screen options.
 1. Click **Create Credentials**, then click **OAuth Client ID** in the drop-down menu
 1. Enter the following:
-   - Application Type: Web Application
-   - Name: Grafana
-   - Authorized JavaScript Origins: https://grafana.mycompany.com
-   - Authorized Redirect URLs: https://grafana.mycompany.com/login/google
-   - Replace https://grafana.mycompany.com with the URL of your Grafana instance.
+   - **Application Type**: Web application
+   - **Name**: Grafana
+   - **Authorized JavaScript origins**: `https://<YOUR_GRAFANA_URL>`
+   - **Authorized redirect URIs**: `https://<YOUR_GRAFANA_URL>/login/google`
+   - Replace `<YOUR_GRAFANA_URL>` with the URL of your Grafana instance.
+     {{< admonition type="note" >}}
+     The URL you enter is the one for your Grafana instance home page, not your Grafana Cloud portal URL.
+     {{< /admonition >}}
 1. Click Create
 1. Copy the Client ID and Client Secret from the 'OAuth Client' modal
 
@@ -41,7 +49,7 @@ First, you need to create a Google OAuth Client:
 Available in Public Preview in Grafana 10.4 behind the `ssoSettingsApi` feature toggle.
 {{% /admonition %}}
 
-As a Grafana Admin, you can configure Google OAuth2 client from within Grafana using the Google UI. To do this, navigate to **Administration > Authentication > Google** page and fill in the form. If you have a current configuration in the Grafana configuration file then the form will be pre-populated with those values otherwise the form will contain default values.
+As a Grafana Admin, you can configure Google OAuth client from within Grafana using the Google UI. To do this, navigate to **Administration > Authentication > Google** page and fill in the form. If you have a current configuration in the Grafana configuration file then the form will be pre-populated with those values otherwise the form will contain default values.
 
 After you have filled in the form, click **Save**. If the save was successful, Grafana will apply the new configurations.
 
@@ -130,7 +138,9 @@ introduces "proof key for code exchange" (PKCE) which provides
 additional protection against some forms of authorization code
 interception attacks. PKCE will be required in [OAuth 2.1](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-03).
 
-> You can disable PKCE in Grafana by setting `use_pkce` to `false` in the`[auth.google]` section.
+{{% admonition type="note" %}}
+You can disable PKCE in Grafana by setting `use_pkce` to `false` in the`[auth.google]` section.
+{{% /admonition %}}
 
 #### Configure refresh token
 
@@ -155,9 +165,15 @@ This setting is ignored if multiple auth providers are configured to use auto lo
 auto_login = true
 ```
 
-### Configure team sync for Google OAuth
+### Configure group synchronization
 
-With team sync, you can easily add users to teams by utilizing their Google groups. To set up team sync for Google OAuth, refer to the following example.
+{{< admonition type="note" >}}
+Available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise) and [Grafana Cloud](/docs/grafana-cloud/).
+{{< /admonition >}}
+
+Grafana supports syncing users to teams and roles based on their Google groups.
+
+To set up group sync for Google OAuth:
 
 1. Enable the Google Cloud Identity API on your [organization's dashboard](https://console.cloud.google.com/apis/api/cloudidentity.googleapis.com/).
 
@@ -171,10 +187,9 @@ With team sync, you can easily add users to teams by utilizing their Google grou
    scopes = openid email profile https://www.googleapis.com/auth/cloud-identity.groups.readonly
    ```
 
-1. Configure team sync in your Grafana team's `External group sync` tab.
-   The external group ID for a Google group is the group's email address, such as `dev@grafana.com`.
+The external group ID for a Google group is the group's email address, such as `dev@grafana.com`.
 
-To learn more about Team Sync, refer to [Configure Team Sync]({{< relref "../../configure-team-sync" >}}).
+To learn more about how to configure group synchronization, refer to [Configure team sync]({{< relref "../../configure-team-sync" >}}) and [Configure group attribute sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-group-attribute-sync) documentation.
 
 #### Configure allowed groups
 
@@ -183,7 +198,9 @@ to a comma or space separated list of groups.
 
 Google groups are referenced by the group email key. For example, `developers@google.com`.
 
-> Note: Add the `https://www.googleapis.com/auth/cloud-identity.groups.readonly` scope to your Grafana `[auth.google]` scopes configuration to retrieve groups
+{{% admonition type="note" %}}
+Add the `https://www.googleapis.com/auth/cloud-identity.groups.readonly` scope to your Grafana `[auth.google]` scopes configuration to retrieve groups.
+{{% /admonition %}}
 
 #### Configure role mapping
 
@@ -196,8 +213,9 @@ If no valid role is found, the user is assigned the role specified by [the `auto
 You can disable this default role assignment by setting `role_attribute_strict = true`. This setting denies user access if no role or an invalid role is returned after evaluating the `role_attribute_path` and the `org_mapping` expressions.
 
 To ease configuration of a proper JMESPath expression, go to [JMESPath](http://jmespath.org/) to test and evaluate expressions with custom payloads.
-
-> By default skip_org_role_sync is enabled. skip_org_role_sync will default to false in Grafana v10.3.0 and later versions.
+{{% admonition type="note" %}}
+By default skip_org_role_sync is enabled. skip_org_role_sync will default to false in Grafana v10.3.0 and later versions.
+{{% /admonition %}}
 
 ##### Role mapping examples
 
@@ -237,7 +255,9 @@ role_attribute_path = contains(groups[*], 'example-group@google.com') && 'Editor
 skip_org_role_sync = false
 ```
 
-> Note: Add the `https://www.googleapis.com/auth/cloud-identity.groups.readonly` scope to your Grafana `[auth.google]` scopes configuration to retrieve groups
+{{% admonition type="note" %}}
+Add the `https://www.googleapis.com/auth/cloud-identity.groups.readonly` scope to your Grafana `[auth.google]` scopes configuration to retrieve groups.
+{{% /admonition %}}
 
 ###### Map server administrator role
 
@@ -258,3 +278,39 @@ In this example, all users will be assigned `Viewer` role regardless of the user
 role_attribute_path = "'Viewer'"
 skip_org_role_sync = false
 ```
+
+## Configuration options
+
+The following table outlines the various Google OAuth configuration options. You can apply these options as environment variables, similar to any other configuration within Grafana. For more information, refer to [Override configuration with environment variables]({{< relref "../../../configure-grafana#override-configuration-with-environment-variables" >}}).
+
+| Setting                      | Required | Supported on Cloud | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     | Default                                            |
+| ---------------------------- | -------- | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| `enabled`                    | No       | Yes                | Enables Google authentication.                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | `false`                                            |
+| `name`                       | No       | Yes                | Name that refers to the Google authentication from the Grafana user interface.                                                                                                                                                                                                                                                                                                                                                                                                                  | `Google`                                           |
+| `icon`                       | No       | Yes                | Icon used for the Google authentication in the Grafana user interface.                                                                                                                                                                                                                                                                                                                                                                                                                          | `google`                                           |
+| `client_id`                  | Yes      | Yes                | Client ID of the App.                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |                                                    |
+| `client_secret`              | Yes      | Yes                | Client secret of the App.                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |                                                    |
+| `auth_url`                   | Yes      | Yes                | Authorization endpoint of the Google OAuth provider.                                                                                                                                                                                                                                                                                                                                                                                                                                            | `https://accounts.google.com/o/oauth2/v2/auth`     |
+| `token_url`                  | Yes      | Yes                | Endpoint used to obtain the OAuth2 access token.                                                                                                                                                                                                                                                                                                                                                                                                                                                | `https://oauth2.googleapis.com/token`              |
+| `api_url`                    | Yes      | Yes                | Endpoint used to obtain user information compatible with [OpenID UserInfo](https://connect2id.com/products/server/docs/api/userinfo).                                                                                                                                                                                                                                                                                                                                                           | `https://openidconnect.googleapis.com/v1/userinfo` |
+| `auth_style`                 | No       | Yes                | Name of the [OAuth2 AuthStyle](https://pkg.go.dev/golang.org/x/oauth2#AuthStyle) to be used when ID token is requested from OAuth2 provider. It determines how `client_id` and `client_secret` are sent to Oauth2 provider. Available values are `AutoDetect`, `InParams` and `InHeader`.                                                                                                                                                                                                       | `AutoDetect`                                       |
+| `scopes`                     | No       | Yes                | List of comma- or space-separated OAuth2 scopes.                                                                                                                                                                                                                                                                                                                                                                                                                                                | `openid email profile`                             |
+| `allow_sign_up`              | No       | Yes                | Controls Grafana user creation through the Google login. Only existing Grafana users can log in with Google if set to `false`.                                                                                                                                                                                                                                                                                                                                                                  | `true`                                             |
+| `auto_login`                 | No       | Yes                | Set to `true` to enable users to bypass the login screen and automatically log in. This setting is ignored if you configure multiple auth providers to use auto-login.                                                                                                                                                                                                                                                                                                                          | `false`                                            |
+| `hosted_domain`              | No       | Yes                | Specifies the domain to restrict access to users from that domain. This value is appended to the authorization request using the `hd` parameter.                                                                                                                                                                                                                                                                                                                                                |                                                    |
+| `validate_hd`                | No       | Yes                | Set to `false` to disable the validation of the `hd` parameter from the Google ID token. For more informatiion, refer to [Enable Google OAuth in Grafana]({{< relref "#enable-google-oauth-in-grafana" >}}).                                                                                                                                                                                                                                                                                    | `true`                                             |
+| `role_attribute_strict`      | No       | Yes                | Set to `true` to deny user login if the Grafana org role cannot be extracted using `role_attribute_path` or `org_mapping`. For more information on user role mapping, refer to [Configure role mapping]({{< relref "#configure-role-mapping" >}}).                                                                                                                                                                                                                                              | `false`                                            |
+| `org_attribute_path`         | No       | No                 | [JMESPath](http://jmespath.org/examples.html) expression to use for Grafana org to role lookup. Grafana will first evaluate the expression using the OAuth2 ID token. If no value is returned, the expression will be evaluated using the user information obtained from the UserInfo endpoint. The result of the evaluation will be mapped to org roles based on `org_mapping`. For more information on org to role mapping, refer to [Org roles mapping example](#org-roles-mapping-example). |                                                    |
+| `org_mapping`                | No       | No                 | List of comma- or space-separated `<ExternalOrgName>:<OrgIdOrName>:<Role>` mappings. Value can be `*` meaning "All users". Role is optional and can have the following values: `None`, `Viewer`, `Editor` or `Admin`. For more information on external organization to role mapping, refer to [Org roles mapping example](#org-roles-mapping-example).                                                                                                                                          |                                                    |
+| `allow_assign_grafana_admin` | No       | No                 | Set to `true` to automatically sync the Grafana server administrator role. When enabled, if the Google user's App role is `GrafanaAdmin`, Grafana grants the user server administrator privileges and the organization administrator role. If disabled, the user will only receive the organization administrator role. For more details on user role mapping, refer to [Map roles]({{< relref "#map-roles" >}}).                                                                               | `false`                                            |
+| `skip_org_role_sync`         | No       | Yes                | Set to `true` to stop automatically syncing user roles. This will allow you to set organization roles for your users from within Grafana manually.                                                                                                                                                                                                                                                                                                                                              | `false`                                            |
+| `allowed_groups`             | No       | Yes                | List of comma- or space-separated groups. The user should be a member of at least one group to log in. If you configure `allowed_groups`, you must also configure Google to include the `groups` claim following [Configure allowed groups]({{< relref "#configure-allowed-groups" >}}).                                                                                                                                                                                                        |                                                    |
+| `allowed_organizations`      | No       | Yes                | List of comma- or space-separated Azure tenant identifiers. The user should be a member of at least one tenant to log in.                                                                                                                                                                                                                                                                                                                                                                       |                                                    |
+| `allowed_domains`            | No       | Yes                | List of comma- or space-separated domains. The user should belong to at least one domain to log in.                                                                                                                                                                                                                                                                                                                                                                                             |                                                    |
+| `tls_skip_verify_insecure`   | No       | No                 | If set to `true`, the client accepts any certificate presented by the server and any host name in that certificate. _You should only use this for testing_, because this mode leaves SSL/TLS susceptible to man-in-the-middle attacks.                                                                                                                                                                                                                                                          | `false`                                            |
+| `tls_client_cert`            | No       | No                 | The path to the certificate.                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |                                                    |
+| `tls_client_key`             | No       | No                 | The path to the key.                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |                                                    |
+| `tls_client_ca`              | No       | No                 | The path to the trusted certificate authority list.                                                                                                                                                                                                                                                                                                                                                                                                                                             |                                                    |
+| `use_pkce`                   | No       | Yes                | Set to `true` to use [Proof Key for Code Exchange (PKCE)](https://datatracker.ietf.org/doc/html/rfc7636). Grafana uses the SHA256 based `S256` challenge method and a 128 bytes (base64url encoded) code verifier.                                                                                                                                                                                                                                                                              | `true`                                             |
+| `use_refresh_token`          | No       | Yes                | Enables the use of refresh tokens and checks for access token expiration. When enabled, Grafana automatically adds the `promp=consent` and `access_type=offline` parameters to the authorization request.                                                                                                                                                                                                                                                                                       | `true`                                             |
+| `signout_redirect_url`       | No       | Yes                | URL to redirect to after the user logs out.                                                                                                                                                                                                                                                                                                                                                                                                                                                     |                                                    |

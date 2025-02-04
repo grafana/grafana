@@ -75,18 +75,6 @@ func ProvideService(cfg *setting.Cfg,
 	}
 	s.tracer = tracer
 
-	// initialize and register metrics wrapper around the *sql.DB
-	db := s.engine.DB().DB
-
-	// register the go_sql_stats_connections_* metrics
-	if err := prometheus.Register(sqlstats.NewStatsCollector("grafana", db)); err != nil {
-		s.log.Warn("Failed to register sqlstore stats collector", "error", err)
-	}
-	// TODO: deprecate/remove these metrics
-	if err := prometheus.Register(newSQLStoreMetrics(db)); err != nil {
-		s.log.Warn("Failed to register sqlstore metrics", "error", err)
-	}
-
 	return s, nil
 }
 
@@ -150,7 +138,14 @@ func (ss *SQLStore) Migrate(isDatabaseLockingEnabled bool) error {
 	migrator := migrator.NewMigrator(ss.engine, ss.cfg)
 	ss.migrations.AddMigration(migrator)
 
-	return migrator.Start(isDatabaseLockingEnabled, ss.dbCfg.MigrationLockAttemptTimeout)
+	if err := prometheus.Register(migrator); err != nil {
+		ss.log.Warn("Failed to register migrator metrics", "error", err)
+	}
+
+	ctx, span := ss.tracer.Start(context.Background(), "SQLStore.Migrate")
+	defer span.End()
+
+	return migrator.RunMigrations(ctx, isDatabaseLockingEnabled, ss.dbCfg.MigrationLockAttemptTimeout)
 }
 
 // Reset resets database state.
@@ -289,7 +284,7 @@ func (ss *SQLStore) initEngine(engine *xorm.Engine) error {
 	}
 	if engine == nil {
 		// Ensure that parseTime is enabled for MySQL
-		if ss.features.IsEnabledGlobally(featuremgmt.FlagMysqlParseTime) && strings.Contains(ss.dbCfg.Type, migrator.MySQL) && !strings.Contains(ss.dbCfg.ConnectionString, "parseTime=") {
+		if strings.Contains(ss.dbCfg.Type, migrator.MySQL) && !strings.Contains(ss.dbCfg.ConnectionString, "parseTime=") {
 			if strings.Contains(ss.dbCfg.ConnectionString, "?") {
 				ss.dbCfg.ConnectionString += "&parseTime=true"
 			} else {
@@ -325,6 +320,19 @@ func (ss *SQLStore) initEngine(engine *xorm.Engine) error {
 		engine.SetLogger(NewXormLogger(log.LvlInfo, log.WithSuffix(log.New("sqlstore.xorm"), log.CallerContextKey, log.StackCaller(log.DefaultCallerDepth))))
 		engine.ShowSQL(true)
 		engine.ShowExecTime(true)
+	}
+
+	// initialize and register metrics wrapper around the *sql.DB
+	db := engine.DB().DB
+
+	// register the go_sql_stats_connections_* metrics
+	if err := prometheus.Register(sqlstats.NewStatsCollector("grafana", db)); err != nil {
+		ss.log.Warn("Failed to register sqlstore stats collector", "error", err)
+	}
+
+	// TODO: deprecate/remove these metrics
+	if err := prometheus.Register(newSQLStoreMetrics(db)); err != nil {
+		ss.log.Warn("Failed to register sqlstore metrics", "error", err)
 	}
 
 	ss.engine = engine
@@ -482,7 +490,6 @@ func getCfgForTesting(opts ...InitTestDBOpt) *setting.Cfg {
 func getFeaturesForTesting(opts ...InitTestDBOpt) featuremgmt.FeatureToggles {
 	featureKeys := []any{
 		featuremgmt.FlagPanelTitleSearch,
-		featuremgmt.FlagMysqlParseTime,
 	}
 	for _, opt := range opts {
 		if len(opt.FeatureFlags) > 0 {

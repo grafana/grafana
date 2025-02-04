@@ -4,7 +4,7 @@ import { catchError, map } from 'rxjs/operators';
 import { AnnotationEvent, DataSourceApi } from '@grafana/data';
 
 import { executeAnnotationQuery } from '../../../annotations/executeAnnotationQuery';
-import { PanelModel } from '../../../dashboard/state';
+import { PanelModel } from '../../../dashboard/state/PanelModel';
 
 import { AnnotationQueryRunner, AnnotationQueryRunnerOptions } from './types';
 import { handleAnnotationQueryRunnerError } from './utils';

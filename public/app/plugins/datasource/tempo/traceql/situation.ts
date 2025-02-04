@@ -169,6 +169,10 @@ export function getSituation(text: string, offset: number): Situation | null {
     // Try again with the previous character.
     errorNode = getErrorNode(tree, shiftedOffset - 1);
   }
+  if (!errorNode) {
+    // Try again with the next character
+    errorNode = getErrorNode(tree, shiftedOffset + 1);
+  }
 
   const cur = errorNode != null ? errorNode.cursor() : tree.cursorAt(shiftedOffset);
 

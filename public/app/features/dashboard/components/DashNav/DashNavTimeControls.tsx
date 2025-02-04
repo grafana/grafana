@@ -11,7 +11,7 @@ import { AutoRefreshInterval } from 'app/core/services/context_srv';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 import { ShiftTimeEvent, ShiftTimeEventDirection, ZoomOutEvent } from '../../../../types/events';
-import { DashboardModel } from '../../state';
+import { DashboardModel } from '../../state/DashboardModel';
 
 export interface Props {
   dashboard: DashboardModel;
@@ -93,7 +93,7 @@ export class DashNavTimeControls extends Component<Props> {
 
   render() {
     const { dashboard, isOnCanvas } = this.props;
-    const { refresh_intervals } = dashboard.timepicker;
+    const { quick_ranges, refresh_intervals } = dashboard.timepicker;
     const intervals = getTimeSrv().getValidIntervals(refresh_intervals || defaultIntervals);
 
     const timePickerValue = getTimeSrv().timeRange();
@@ -122,6 +122,7 @@ export class DashNavTimeControls extends Component<Props> {
           isOnCanvas={isOnCanvas}
           onToolbarTimePickerClick={this.props.onToolbarTimePickerClick}
           weekStart={weekStart}
+          quickRanges={quick_ranges}
         />
         <RefreshPicker
           onIntervalChanged={this.onChangeRefreshInterval}

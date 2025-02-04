@@ -1,7 +1,6 @@
 import { css } from '@emotion/css';
 import { useCallback } from 'react';
-import Calendar from 'react-calendar';
-import { CalendarType } from 'react-calendar/dist/cjs/shared/types';
+import Calendar, { CalendarType } from 'react-calendar';
 
 import { GrafanaTheme2, dateTimeParse, DateTime, TimeZone } from '@grafana/data';
 

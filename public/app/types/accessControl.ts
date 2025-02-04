@@ -77,6 +77,9 @@ export enum AccessControlAction {
   DashboardsPermissionsRead = 'dashboards.permissions:read',
   DashboardsPermissionsWrite = 'dashboards.permissions:write',
   DashboardsPublicWrite = 'dashboards.public:write',
+  SnapshotsCreate = 'snapshots:create',
+  SnapshotsDelete = 'snapshots:delete',
+  SnapshotsRead = 'snapshots:read',
 
   FoldersRead = 'folders:read',
   FoldersWrite = 'folders:write',
@@ -134,6 +137,19 @@ export enum AccessControlAction {
   AlertingReceiversWrite = 'alert.notifications.receivers:write',
   AlertingReceiversRead = 'alert.notifications.receivers:read',
 
+  // Alerting routes actions
+  AlertingRoutesRead = 'alert.notifications.routes:read',
+  AlertingRoutesWrite = 'alert.notifications.routes:write',
+
+  // Alerting time intervals actions
+  AlertingTimeIntervalsRead = 'alert.notifications.time-intervals:read',
+  AlertingTimeIntervalsWrite = 'alert.notifications.time-intervals:write',
+
+  // Alerting templates actions
+  AlertingTemplatesRead = 'alert.notifications.templates:read',
+  AlertingTemplatesWrite = 'alert.notifications.templates:write',
+  AlertingTemplatesDelete = 'alert.notifications.templates:delete',
+
   ActionAPIKeysRead = 'apikeys:read',
   ActionAPIKeysCreate = 'apikeys:create',
   ActionAPIKeysDelete = 'apikeys:delete',
@@ -148,6 +164,9 @@ export enum AccessControlAction {
   // GroupSync
   GroupSyncMappingsRead = 'groupsync.mappings:read',
   GroupSyncMappingsWrite = 'groupsync.mappings:write',
+
+  // Migration Assistant
+  MigrationAssistantMigrate = 'migrationassistant:migrate',
 }
 
 export interface Role {
@@ -158,6 +177,7 @@ export interface Role {
   group: string;
   global: boolean;
   delegatable?: boolean;
+  mapped?: boolean;
   version: number;
   created: string;
   updated: string;

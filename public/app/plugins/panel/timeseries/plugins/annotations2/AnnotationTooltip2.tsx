@@ -22,8 +22,10 @@ export const AnnotationTooltip2 = ({ annoVals, annoIdx, timeZone, onEdit }: Prop
   const { canEditAnnotations = retFalse, canDeleteAnnotations = retFalse, onAnnotationDelete } = usePanelContext();
 
   const dashboardUID = annoVals.dashboardUID?.[annoIdx];
-  const canEdit = canEditAnnotations(dashboardUID);
-  const canDelete = canDeleteAnnotations(dashboardUID) && onAnnotationDelete != null;
+
+  // grafana can be configured to load alert rules from loki. Those annotations cannot be edited or deleted. The id being 0 is the best indicator the annotation came from loki
+  const canEdit = annoId !== 0 && canEditAnnotations(dashboardUID);
+  const canDelete = annoId !== 0 && canDeleteAnnotations(dashboardUID) && onAnnotationDelete != null;
 
   const timeFormatter = (value: number) =>
     dateTimeFormat(value, {

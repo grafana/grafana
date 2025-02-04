@@ -728,6 +728,35 @@ describe('calculateField transformer w/ timeseries', () => {
     });
   });
 
+  it('calculates fixed, trailing moving average with missing values', async () => {
+    const cfg = {
+      id: DataTransformerID.calculateField,
+      options: {
+        mode: CalculateFieldMode.WindowFunctions,
+        window: {
+          windowAlignment: WindowAlignment.Trailing,
+          field: 'x',
+          windowSize: 2,
+          windowSizeMode: WindowSizeMode.Fixed,
+          reducer: ReducerID.mean,
+        },
+      },
+    };
+
+    const series = toDataFrame({
+      fields: [{ name: 'x', type: FieldType.number, values: [1, undefined, 3, 4, 5] }],
+    });
+
+    await expect(transformDataFrame([cfg], [series])).toEmitValuesWith((received) => {
+      const data = received[0][0];
+
+      //console.log(data.fields);
+
+      expect(data.fields.length).toEqual(2);
+      expect(data.fields[1].values).toEqual([1, 1, 3, 3.5, 4.5]);
+    });
+  });
+
   it('throws error when calculating moving average if window size < 1', async () => {
     const cfg = {
       id: DataTransformerID.calculateField,

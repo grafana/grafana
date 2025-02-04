@@ -86,6 +86,7 @@ export class TimelineChart extends Component<TimelineProps> {
         prepConfig={this.prepConfig}
         propsToDiff={propsToDiff}
         renderLegend={this.renderLegend}
+        omitHideFromViz={true}
       />
     );
   }

@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { ReactNode, useState } from 'react';
-import { useForm, Controller, useFieldArray } from 'react-hook-form';
+import { Controller, useFieldArray, useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import {
@@ -19,6 +19,7 @@ import {
 import MuteTimingsSelector from 'app/features/alerting/unified/components/alertmanager-entities/MuteTimingsSelector';
 import { ContactPointSelector } from 'app/features/alerting/unified/components/notification-policies/ContactPointSelector';
 import { handleContactPointSelect } from 'app/features/alerting/unified/components/notification-policies/utils';
+import { AlertmanagerAction, useAlertmanagerAbility } from 'app/features/alerting/unified/hooks/useAbilities';
 import { MatcherOperator, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
 import { useAlertmanager } from '../../state/AlertmanagerContext';
@@ -50,6 +51,7 @@ export const AmRoutesExpandedForm = ({ actionButtons, route, onSubmit, defaults 
   const styles = useStyles2(getStyles);
   const formStyles = useStyles2(getFormStyles);
   const { selectedAlertmanager } = useAlertmanager();
+  const [, canSeeMuteTimings] = useAlertmanagerAbility(AlertmanagerAction.ViewMuteTiming);
   const [groupByOptions, setGroupByOptions] = useState(stringsToSelectableValues(route?.group_by));
   const emptyMatcher = [{ name: '', operator: MatcherOperator.equal, value: '' }];
 
@@ -277,6 +279,7 @@ export const AmRoutesExpandedForm = ({ actionButtons, route, onSubmit, defaults 
               alertmanager={selectedAlertmanager!}
               selectProps={{
                 ...field,
+                disabled: !canSeeMuteTimings,
                 onChange: (value) => onChange(mapMultiSelectValueToStrings(value)),
               }}
             />

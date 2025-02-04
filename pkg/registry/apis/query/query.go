@@ -125,7 +125,7 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 			var refError ErrorWithRefID
 			statusCode := http.StatusBadRequest
 			message := err
-			refID := ""
+			refID := "A"
 
 			if errors.Is(err, datasources.ErrDataSourceNotFound) {
 				statusCode = http.StatusNotFound
@@ -146,6 +146,8 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 					},
 				},
 			}
+
+			b.log.Error("Error parsing query", "refId", refID, "message", message)
 
 			responder.Object(statusCode, qdr)
 			return
@@ -183,6 +185,11 @@ func (b *QueryAPIBuilder) execute(ctx context.Context, req parsedRequestInfo) (q
 	default:
 		b.log.Debug("executing concurrent queries")
 		qdr, err = b.executeConcurrentQueries(ctx, req.Requests)
+	}
+
+	if err != nil {
+		b.log.Debug("error in query phase, skipping expressions", "error", err)
+		return qdr, err //return early here to prevent expressions from being executed if we got an error during the query phase
 	}
 
 	if len(req.Expressions) > 0 {
@@ -230,10 +237,12 @@ func (b *QueryAPIBuilder) handleQuerySingleDatasource(ctx context.Context, req d
 		req.Headers,
 	)
 	if err != nil {
-		return nil, err
+		b.log.Debug("error getting single datasource client", "error", err, "reqUid", req.UID)
+		qdr := buildErrorResponse(err, req)
+		return qdr, err
 	}
 
-	code, rsp, err := client.QueryData(ctx, *req.Request)
+	rsp, err := client.QueryData(ctx, *req.Request)
 	if err == nil && rsp != nil {
 		for _, q := range req.Request.Queries {
 			if q.ResultAssertions != nil {
@@ -250,16 +259,6 @@ func (b *QueryAPIBuilder) handleQuerySingleDatasource(ctx context.Context, req d
 		}
 	}
 
-	// Create a response object with the error when missing (happens for client errors like 404)
-	if rsp == nil && err != nil {
-		rsp = &backend.QueryDataResponse{Responses: make(backend.Responses)}
-		for _, q := range req.Request.Queries {
-			rsp.Responses[q.RefID] = backend.DataResponse{
-				Status: backend.Status(code),
-				Error:  err,
-			}
-		}
-	}
 	return rsp, err
 }
 

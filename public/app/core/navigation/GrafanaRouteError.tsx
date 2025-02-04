@@ -6,6 +6,7 @@ import { GrafanaTheme2, locationUtil, PageLayoutType } from '@grafana/data';
 import { Button, ErrorWithStack, useStyles2 } from '@grafana/ui';
 
 import { Page } from '../components/Page/Page';
+import { Trans } from '../internationalization';
 
 interface Props {
   error: Error | null;
@@ -31,12 +32,18 @@ export function GrafanaRouteError({ error, errorInfo }: Props) {
       <div className={styles.container}>
         {isChunkLoadingError && (
           <div>
-            <h2>Unable to find application file</h2>
+            <h2>
+              <Trans i18nKey="route-error.title">Unable to find application file</Trans>
+            </h2>
             <br />
-            <h2 className="page-heading">Grafana has likely been updated. Please try reloading the page.</h2>
+            <h2 className="page-heading">
+              <Trans i18nKey="route-error.description">
+                Grafana has likely been updated. Please try reloading the page.
+              </Trans>
+            </h2>
             <br />
             <Button size="md" variant="secondary" icon="repeat" onClick={() => window.location.reload()}>
-              Reload
+              <Trans i18nKey="route-error.reload-button">Reload</Trans>
             </Button>
             <ErrorWithStack title={'Error details'} error={error} errorInfo={errorInfo} />
           </div>

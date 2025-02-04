@@ -1,0 +1,30 @@
+{
+  "kind": "Playlist",
+  "apiVersion": "playlist.grafana.app/v0alpha1",
+  "metadata": {
+    "name": "aaa",
+    "namespace": "default",
+    "uid": "8a2b984d-4663-4182-861b-edec2f987dff",
+    "creationTimestamp": "2024-11-11T14:45:53Z",
+    "annotations": {
+      "grafana.app/createdBy": "user:t000000001",
+      "grafana.app/originHash": "Grafana v11.4.0-pre (c0de407fee)",
+      "grafana.app/originName": "UI",
+      "grafana.app/originPath": "/playlists/new"
+    }
+  },
+  "spec": {
+    "title": "Test AAA",
+    "interval": "5m",
+    "items": [
+      {
+        "type": "dashboard_by_uid",
+        "value": "xCmMwXdVz"
+      },
+      {
+        "type": "dashboard_by_tag",
+        "value": "panel-tests"
+      }
+    ]
+  }
+}

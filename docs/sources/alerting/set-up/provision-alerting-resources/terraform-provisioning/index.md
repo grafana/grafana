@@ -272,19 +272,19 @@ In this section, we'll create Terraform configurations for each alerting resourc
 
 1. Continue to add more Grafana resources or [use the Terraform CLI for provisioning](#provision-grafana-resources-with-terraform).
 
-### Add and enable templates
+### Add and enable notification templates
 
 [Notification templates](ref:notification-template) allow customization of alert notifications across multiple contact points.
 
-1. Create or find the notification template you want to import in Grafana. Alternatively, consider writing the resource in code as demonstrated in the example below.
+1. Create or find the notification template group you want to import in Grafana. Alternatively, consider writing the resource in code as demonstrated in the example below.
 
-1. [Export](ref:alerting_export) the template as [`grafana_message_template` Terraform resource](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/message_template).
+1. [Export](ref:alerting_export) the notification template group as [`grafana_message_template` Terraform resource](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/message_template).
 
-   This example is a simple demo template defined as `custom_email.message`.
+   This example creates a notification template group named `custom_emails` that defines a `custom_email.message` template.
 
    ```terraform
     resource "grafana_message_template" "<terraform_message_template_name>" {
-        name = "custom_email.message"
+        name = "custom_emails"
 
         template = <<EOT
     {{ define "custom_email.message" }}
@@ -293,6 +293,8 @@ In this section, we'll create Terraform configurations for each alerting resourc
     EOT
     }
    ```
+
+   This enables contact points to use the notification templates (`{{ define "<NAME>"}}`) within the notification template group.
 
 1. In the previous contact point, enable the template by setting the `email.message` property as follows.
 
@@ -384,9 +386,9 @@ resource "grafana_contact_point" "my_contact_point" {
   disable_provenance = true
 }
 
-resource "grafana_message_template" "my_template" {
-  name     = "My Reusable Template"
-  template = "{{define \"My Reusable Template\" }}\n template content\n{{ end }}"
+resource "grafana_message_template" "custom_notification_template_group" {
+  name     = "custom_notification_template_group"
+  template = "{{define \"template1\" }}Say{{ end }}{{define \"template2\" }}Hi!{{ end }}"
 
   disable_provenance = true
 }

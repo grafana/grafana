@@ -54,6 +54,8 @@ func TestSuccessResponse(t *testing.T) {
 
 		{name: "parse structured metadata", filepath: "streams_structured_metadata", query: streamsQuery},
 		{name: "parse structured metadata different labels each log line", filepath: "streams_structured_metadata_2", query: streamsQuery},
+
+		{name: "parse warnings", filepath: "warning", query: streamsQuery},
 	}
 
 	runTest := func(folder string, path string, query lokiQuery, responseOpts ResponseOpts) {
@@ -72,10 +74,8 @@ func TestSuccessResponse(t *testing.T) {
 
 	for _, test := range tt {
 		t.Run(test.name, func(t *testing.T) {
-			runTest("testdata", test.filepath, test.query, ResponseOpts{metricDataplane: false, logsDataplane: false})
-			runTest("testdata_metric_dataplane", test.filepath, test.query, ResponseOpts{metricDataplane: true, logsDataplane: false})
-			runTest("testdata_logs_dataplane", test.filepath, test.query, ResponseOpts{metricDataplane: false, logsDataplane: true})
-			runTest("testdata_dataplane", test.filepath, test.query, ResponseOpts{metricDataplane: true, logsDataplane: true})
+			runTest("test_non_dataplane", test.filepath, test.query, ResponseOpts{logsDataplane: false})
+			runTest("testdata_dataplane", test.filepath, test.query, ResponseOpts{logsDataplane: true})
 		})
 	}
 }

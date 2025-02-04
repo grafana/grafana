@@ -419,6 +419,7 @@ export const prepConfig = ({ series, totalSeries, color, orientation, options, t
       direction: vizOrientation.yDir,
       distribution: customConfig.scaleDistribution?.type,
       log: customConfig.scaleDistribution?.log,
+      decimals: field.config.decimals,
     });
 
     if (customConfig.axisPlacement !== AxisPlacement.Hidden) {
@@ -445,6 +446,7 @@ export const prepConfig = ({ series, totalSeries, color, orientation, options, t
         tickLabelRotation: vizOrientation.xOri === 1 ? xTickLabelRotation * -1 : 0,
         theme,
         grid: { show: customConfig.axisGridShow },
+        decimals: field.config.decimals,
       };
 
       if (customConfig.axisBorderShow) {

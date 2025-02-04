@@ -441,7 +441,7 @@ func (s *SecretsService) dataKeyById(ctx context.Context, id string) ([]byte, er
 		return nil, fmt.Errorf("could not find encryption provider '%s'", dataKey.Provider)
 	}
 
-	// 2.2. Encrypt the data key.
+	// 2.2. Decrypt the data key.
 	decrypted, err := provider.Decrypt(ctx, dataKey.EncryptedData)
 	if err != nil {
 		return nil, err

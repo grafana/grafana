@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 func TestToModel(t *testing.T) {
@@ -65,5 +66,21 @@ func TestToModel(t *testing.T) {
 		require.Empty(t, rule.Condition)
 		require.Empty(t, rule.ExecErrState)
 		require.Nil(t, rule.NotificationSettings)
+	})
+}
+
+func TestAlertRuleMetadataFromModelMetadata(t *testing.T) {
+	t.Run("should convert model metadata to api metadata", func(t *testing.T) {
+		modelMetadata := models.AlertRuleMetadata{
+			EditorSettings: models.EditorSettings{
+				SimplifiedQueryAndExpressionsSection: true,
+				SimplifiedNotificationsSection:       true,
+			},
+		}
+
+		apiMetadata := AlertRuleMetadataFromModelMetadata(modelMetadata)
+
+		require.True(t, apiMetadata.EditorSettings.SimplifiedQueryAndExpressionsSection)
+		require.True(t, apiMetadata.EditorSettings.SimplifiedNotificationsSection)
 	})
 }

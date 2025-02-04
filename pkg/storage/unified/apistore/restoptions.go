@@ -24,25 +24,25 @@ import (
 
 var _ generic.RESTOptionsGetter = (*RESTOptionsGetter)(nil)
 
-// This is a copy of the original flag, as we are not allowed to import grafana core.
-const bigObjectSupportFlag = "unifiedStorageBigObjectsSupport"
+type StorageOptionsRegister func(gr schema.GroupResource, opts StorageOptions)
 
 type RESTOptionsGetter struct {
 	client   resource.ResourceClient
 	original storagebackend.Config
-	// As we are not allowed to import the feature management directly, we pass a map of enabled features.
-	features map[string]any
+
+	// Each group+resource may need custom options
+	options map[string]StorageOptions
 }
 
-func NewRESTOptionsGetterForClient(client resource.ResourceClient, original storagebackend.Config, features map[string]any) *RESTOptionsGetter {
+func NewRESTOptionsGetterForClient(client resource.ResourceClient, original storagebackend.Config) *RESTOptionsGetter {
 	return &RESTOptionsGetter{
 		client:   client,
 		original: original,
-		features: features,
+		options:  make(map[string]StorageOptions),
 	}
 }
 
-func NewRESTOptionsGetterMemory(originalStorageConfig storagebackend.Config, features map[string]any) (*RESTOptionsGetter, error) {
+func NewRESTOptionsGetterMemory(originalStorageConfig storagebackend.Config) (*RESTOptionsGetter, error) {
 	backend, err := resource.NewCDKBackend(context.Background(), resource.CDKBackendOptions{
 		Bucket: memblob.OpenBucket(&memblob.Options{}),
 	})
@@ -58,7 +58,6 @@ func NewRESTOptionsGetterMemory(originalStorageConfig storagebackend.Config, fea
 	return NewRESTOptionsGetterForClient(
 		resource.NewLocalResourceClient(server),
 		originalStorageConfig,
-		features,
 	), nil
 }
 
@@ -94,8 +93,11 @@ func NewRESTOptionsGetterForFile(path string,
 	return NewRESTOptionsGetterForClient(
 		resource.NewLocalResourceClient(server),
 		originalStorageConfig,
-		features,
 	), nil
+}
+
+func (r *RESTOptionsGetter) RegisterOptions(gr schema.GroupResource, opts StorageOptions) {
+	r.options[gr.String()] = opts
 }
 
 // TODO: The RESTOptionsGetter interface added a new example object parameter to help determine the default
@@ -131,12 +133,8 @@ func (r *RESTOptionsGetter) GetRESTOptions(resource schema.GroupResource, _ runt
 			trigger storage.IndexerFuncs,
 			indexers *cache.Indexers,
 		) (storage.Interface, factory.DestroyFunc, error) {
-			if _, enabled := r.features[bigObjectSupportFlag]; enabled {
-				return NewStorage(config, r.client, keyFunc, nil, newFunc, newListFunc, getAttrsFunc,
-					trigger, indexers, LargeObjectSupportEnabled)
-			}
 			return NewStorage(config, r.client, keyFunc, nil, newFunc, newListFunc, getAttrsFunc,
-				trigger, indexers, LargeObjectSupportDisabled)
+				trigger, indexers, r.options[resource.String()])
 		},
 		DeleteCollectionWorkers: 0,
 		EnableGarbageCollection: false,

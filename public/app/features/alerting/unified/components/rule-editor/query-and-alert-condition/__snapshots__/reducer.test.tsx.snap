@@ -86,6 +86,70 @@ exports[`Query and expressions reducer should add query 1`] = `
 }
 `;
 
+exports[`Query and expressions reducer should add reduce expression if there is no reduce expression and the query is not instant 1`] = `
+{
+  "queries": [
+    {
+      "datasourceUid": "abc123",
+      "model": {
+        "instant": false,
+        "refId": "A",
+      },
+      "queryType": "query",
+      "refId": "A",
+    },
+    {
+      "datasourceUid": "__expr__",
+      "model": {
+        "conditions": [
+          {
+            "evaluator": {
+              "params": [
+                0,
+                0,
+              ],
+              "type": "gt",
+            },
+            "operator": {
+              "type": "and",
+            },
+            "query": {
+              "params": [],
+            },
+            "reducer": {
+              "params": [],
+              "type": "avg",
+            },
+            "type": "query",
+          },
+        ],
+        "datasource": {
+          "name": "Expression",
+          "type": "__expr__",
+          "uid": "__expr__",
+        },
+        "expression": "A",
+        "reducer": "last",
+        "refId": "B",
+        "type": "reduce",
+      },
+      "queryType": "expression",
+      "refId": "B",
+    },
+    {
+      "datasourceUid": "__expr__",
+      "model": {
+        "expression": "B",
+        "refId": "C",
+        "type": "threshold",
+      },
+      "queryType": "expression",
+      "refId": "C",
+    },
+  ],
+}
+`;
+
 exports[`Query and expressions reducer should duplicate query 1`] = `
 {
   "queries": [
@@ -124,6 +188,31 @@ exports[`Query and expressions reducer should remove an expression or alert quer
       },
       "queryType": "query",
       "refId": "A",
+    },
+  ],
+}
+`;
+
+exports[`Query and expressions reducer should remove first reducer 1`] = `
+{
+  "queries": [
+    {
+      "datasourceUid": "abc123",
+      "model": {
+        "refId": "A",
+      },
+      "queryType": "query",
+      "refId": "A",
+    },
+    {
+      "datasourceUid": "__expr__",
+      "model": {
+        "expression": "A",
+        "refId": "C",
+        "type": "threshold",
+      },
+      "queryType": "expression",
+      "refId": "C",
     },
   ],
 }

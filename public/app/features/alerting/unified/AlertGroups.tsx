@@ -1,6 +1,6 @@
 import { Fragment, useEffect } from 'react';
 
-import { Alert, LoadingPlaceholder, Text, Box } from '@grafana/ui';
+import { Alert, Box, LoadingPlaceholder, Text } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { useDispatch } from 'app/types';
 

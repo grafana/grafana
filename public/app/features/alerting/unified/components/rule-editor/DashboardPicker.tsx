@@ -9,16 +9,17 @@ import { GrafanaTheme2 } from '@grafana/data/src';
 import {
   Alert,
   Button,
-  clearButtonStyles,
   FilterInput,
   Icon,
   LoadingPlaceholder,
   Modal,
   Tooltip,
+  clearButtonStyles,
   useStyles2,
 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
-import { DashboardModel } from '../../../../dashboard/state';
+import { DashboardModel } from '../../../../dashboard/state/DashboardModel';
 import { dashboardApi } from '../../api/dashboardApi';
 
 import { useDashboardQuery } from './useDashboardQuery';
@@ -243,7 +244,7 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
       </div>
       <Modal.ButtonRow>
         <Button type="button" variant="secondary" onClick={onDismiss} fill="text">
-          Cancel
+          <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
         </Button>
         <Button
           type="button"

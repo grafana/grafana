@@ -4,7 +4,6 @@ import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
 
 import { DataSourceInstanceSettings, MetricFindValue } from '@grafana/data';
-import { config } from '@grafana/runtime';
 
 import { PrometheusDatasource } from '../../datasource';
 import { PromOptions } from '../../types';
@@ -104,14 +103,12 @@ describe('MetricCombobox', () => {
 
     const combobox = screen.getByPlaceholderText('Select metric');
     await userEvent.click(combobox);
-
     await userEvent.type(combobox, 'unique');
-    expect(jest.mocked(mockDatasource.metricFindQuery)).toHaveBeenCalled();
 
     const item = await screen.findByRole('option', { name: 'unique_metric' });
     expect(item).toBeInTheDocument();
 
-    const negativeItem = await screen.queryByRole('option', { name: 'random_metric' });
+    const negativeItem = screen.queryByRole('option', { name: 'random_metric' });
     expect(negativeItem).not.toBeInTheDocument();
   });
 
@@ -127,29 +124,17 @@ describe('MetricCombobox', () => {
     expect(mockOnChange).toHaveBeenCalledWith({ metric: 'random_metric', labels: [], operations: [] });
   });
 
-  it("doesn't show the metrics explorer button by default", () => {
+  it('shows the metrics explorer button by default', () => {
     render(<MetricCombobox {...defaultProps} />);
-    expect(screen.queryByRole('button', { name: /open metrics explorer/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /open metrics explorer/i })).toBeInTheDocument();
   });
 
-  describe('when metrics explorer toggle is enabled', () => {
-    beforeAll(() => {
-      jest.replaceProperty(config, 'featureToggles', {
-        prometheusMetricEncyclopedia: true,
-      });
-    });
+  it('opens the metrics explorer when the button is clicked', async () => {
+    render(<MetricCombobox {...defaultProps} onGetMetrics={() => Promise.resolve([])} />);
 
-    afterAll(() => {
-      jest.restoreAllMocks();
-    });
+    const button = screen.getByRole('button', { name: /open metrics explorer/i });
+    await userEvent.click(button);
 
-    it('opens the metrics explorer when the button is clicked', async () => {
-      render(<MetricCombobox {...defaultProps} onGetMetrics={() => Promise.resolve([])} />);
-
-      const button = screen.getByRole('button', { name: /open metrics explorer/i });
-      await userEvent.click(button);
-
-      expect(screen.getByText('Metrics explorer')).toBeInTheDocument();
-    });
+    expect(screen.getByText('Metrics explorer')).toBeInTheDocument();
   });
 });

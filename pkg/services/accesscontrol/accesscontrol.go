@@ -3,10 +3,8 @@ package accesscontrol
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"strings"
 
-	"github.com/grafana/authlib/claims"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -61,6 +59,8 @@ type Service interface {
 	DeleteExternalServiceRole(ctx context.Context, externalServiceID string) error
 	// SyncUserRoles adds provided roles to user
 	SyncUserRoles(ctx context.Context, orgID int64, cmd SyncUserRolesCommand) error
+	// GetStaicRoles returns a map where key organization role and value is a static rbac role.
+	GetStaticRoles(ctx context.Context) map[string]*RoleDTO
 }
 
 //go:generate  mockery --name Store --structname MockStore --outpkg actest --filename store_mock.go --output ./actest/
@@ -90,7 +90,7 @@ type SearchOptions struct {
 	Action       string
 	ActionSets   []string
 	Scope        string
-	TypedID      string    // ID of the identity (ex: user:3, service-account:4)
+	UserID       int64
 	wildcards    Wildcards // private field computed based on the Scope
 	RolePrefixes []string
 }
@@ -108,19 +108,6 @@ func (s *SearchOptions) Wildcards() []string {
 
 	s.wildcards = WildcardsFromPrefix(ScopePrefix(s.Scope))
 	return s.wildcards
-}
-
-func (s *SearchOptions) ComputeUserID() (int64, error) {
-	typ, id, err := identity.ParseTypeAndID(s.TypedID)
-	if err != nil {
-		return 0, err
-	}
-
-	if !claims.IsIdentityType(typ, claims.TypeUser, claims.TypeServiceAccount) {
-		return 0, fmt.Errorf("invalid type: %s", typ)
-	}
-
-	return strconv.ParseInt(id, 10, 64)
 }
 
 type SyncUserRolesCommand struct {

@@ -9,7 +9,8 @@ import { config } from '@grafana/runtime';
 import { Alert, Spinner, useStyles2 } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { SearchResultsTable } from 'app/features/search/page/components/SearchResultsTable';
-import { getGrafanaSearcher, SearchQuery } from 'app/features/search/service';
+import { getGrafanaSearcher } from 'app/features/search/service/searcher';
+import { SearchQuery } from 'app/features/search/service/types';
 
 type Props = {
   plugin: PluginMeta;
@@ -88,7 +89,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
   return {
     wrap: css({
       width: '100%',
-      height: '100%',
+      height: '90%',
     }),
     info: css({
       paddingBottom: '30px',

@@ -6,10 +6,10 @@ import { useCallback, useDeferredValue, useEffect, useMemo } from 'react';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { Matcher } from 'app/plugins/datasource/alertmanager/types';
 import { CombinedRuleGroup, CombinedRuleNamespace, Rule } from 'app/types/unified-alerting';
-import { isPromAlertingRuleState, PromRuleType, RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
+import { PromRuleType, RulerGrafanaRuleDTO, isPromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { logError } from '../Analytics';
-import { applySearchFilterToQuery, getSearchFilterFromQuery, RulesFilter } from '../search/rulesSearchParser';
+import { RulesFilter, applySearchFilterToQuery, getSearchFilterFromQuery } from '../search/rulesSearchParser';
 import { labelsMatchMatchers, matcherToMatcherField } from '../utils/alertmanager';
 import { Annotation } from '../utils/constants';
 import { isCloudRulesSource } from '../utils/datasource';
@@ -192,7 +192,6 @@ const reduceNamespaces = (filterState: RulesFilter) => {
       const ufuzzy = getSearchInstance(groupNameFilter);
 
       const escapedQuery = escapeQueryRegex(groupNameFilter);
-
       const [idxs, info, order] = ufuzzy.search(
         groupsHaystack,
         escapedQuery,
@@ -272,7 +271,7 @@ const reduceGroups = (filterState: RulesFilter) => {
       }
 
       if ('plugins' in matchesFilterFor && filterState.plugins === 'hide') {
-        matchesFilterFor.plugins = !isPluginProvidedRule(rule);
+        matchesFilterFor.plugins = rule.rulerRule && !isPluginProvidedRule(rule.rulerRule);
       }
 
       if ('contactPoint' in matchesFilterFor) {

@@ -12,6 +12,7 @@ describe('Rows to fields', () => {
         { name: 'Miiin', type: FieldType.number, values: [3, 100] },
         { name: 'max', type: FieldType.string, values: [15, 200] },
       ],
+      refId: 'A',
     });
 
     const result = rowsToFields(
@@ -57,6 +58,7 @@ describe('Rows to fields', () => {
           },
         ],
         "length": 1,
+        "refId": "rowsToFields-A",
       }
     `);
   });
@@ -111,7 +113,7 @@ describe('Rows to fields', () => {
     });
 
     const result = rowsToFields({}, input);
-    expect(result.fields[0].config.thresholds?.steps[1].value).toBe(30);
+    expect(result.fields[0].config.thresholds?.steps[0].value).toBe(30);
   });
 
   it('Will extract other string fields to labels', () => {

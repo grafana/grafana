@@ -1,10 +1,10 @@
-import { AsyncThunk, createSlice, Draft, isAsyncThunkAction, PayloadAction, SerializedError } from '@reduxjs/toolkit';
+import { AsyncThunk, Draft, PayloadAction, SerializedError, createSlice, isAsyncThunkAction } from '@reduxjs/toolkit';
 
 import { AppEvents } from '@grafana/data';
 import { FetchError, isFetchError } from '@grafana/runtime';
 import { appEvents } from 'app/core/core';
 
-import { logInfo, LogMessages } from '../Analytics';
+import { LogMessages, logInfo } from '../Analytics';
 
 import { isErrorLike } from './misc';
 

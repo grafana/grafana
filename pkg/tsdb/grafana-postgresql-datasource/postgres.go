@@ -260,17 +260,9 @@ func (t *postgresQueryResultTransformer) TransformQueryError(_ log.Logger, err e
 func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 	dsHandler, err := s.getDSInfo(ctx, req.PluginContext)
 	if err != nil {
-		return nil, err
+		return &backend.CheckHealthResult{Status: backend.HealthStatusError, Message: err.Error()}, nil
 	}
-
-	err = dsHandler.Ping()
-
-	if err != nil {
-		s.logger.Error("Check health failed", "error", err)
-		return &backend.CheckHealthResult{Status: backend.HealthStatusError, Message: dsHandler.TransformQueryError(s.logger, err).Error()}, nil
-	}
-
-	return &backend.CheckHealthResult{Status: backend.HealthStatusOk, Message: "Database Connection OK"}, nil
+	return dsHandler.CheckHealth(ctx, req)
 }
 
 func (t *postgresQueryResultTransformer) GetConverterList() []sqlutil.StringConverter {

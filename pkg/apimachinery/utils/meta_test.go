@@ -4,11 +4,12 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 type TestResource struct {
@@ -129,7 +130,7 @@ func (in *Spec2) DeepCopy() *Spec2 {
 }
 
 func TestMetaAccessor(t *testing.T) {
-	originInfo := &utils.ResourceOriginInfo{
+	repoInfo := &utils.ResourceRepositoryInfo{
 		Name: "test",
 		Path: "a/b/c",
 		Hash: "kkk",
@@ -151,6 +152,28 @@ func TestMetaAccessor(t *testing.T) {
 			},
 		})
 		require.NoError(t, err) // Must be a pointer
+	})
+
+	t.Run("get and set grafana labels (unstructured)", func(t *testing.T) {
+		res := &unstructured.Unstructured{
+			Object: map[string]any{},
+		}
+		meta, err := utils.MetaAccessor(res)
+		require.NoError(t, err)
+
+		// should return 0 when not set
+		require.Equal(t, meta.GetDeprecatedInternalID(), int64(0))
+
+		// 0 is not allowed
+		meta.SetDeprecatedInternalID(0)
+		require.Equal(t, map[string]string(nil), res.GetLabels())
+
+		// should be able to set and get
+		meta.SetDeprecatedInternalID(1)
+		require.Equal(t, map[string]string{
+			"grafana.app/deprecatedInternalID": "1",
+		}, res.GetLabels())
+		require.Equal(t, meta.GetDeprecatedInternalID(), int64(1))
 	})
 
 	t.Run("get and set grafana metadata (unstructured)", func(t *testing.T) {
@@ -177,14 +200,14 @@ func TestMetaAccessor(t *testing.T) {
 			},
 		}
 
-		meta.SetOriginInfo(originInfo)
+		meta.SetRepositoryInfo(repoInfo)
 		meta.SetFolder("folderUID")
 
 		require.Equal(t, map[string]string{
-			"grafana.app/originName": "test",
-			"grafana.app/originPath": "a/b/c",
-			"grafana.app/originHash": "kkk",
-			"grafana.app/folder":     "folderUID",
+			"grafana.app/repoName": "test",
+			"grafana.app/repoPath": "a/b/c",
+			"grafana.app/repoHash": "kkk",
+			"grafana.app/folder":   "folderUID",
 		}, res.GetAnnotations())
 
 		meta.SetNamespace("aaa")
@@ -229,14 +252,14 @@ func TestMetaAccessor(t *testing.T) {
 		meta, err := utils.MetaAccessor(res)
 		require.NoError(t, err)
 
-		meta.SetOriginInfo(originInfo)
+		meta.SetRepositoryInfo(repoInfo)
 		meta.SetFolder("folderUID")
 
 		require.Equal(t, map[string]string{
-			"grafana.app/originName": "test",
-			"grafana.app/originPath": "a/b/c",
-			"grafana.app/originHash": "kkk",
-			"grafana.app/folder":     "folderUID",
+			"grafana.app/repoName": "test",
+			"grafana.app/repoPath": "a/b/c",
+			"grafana.app/repoHash": "kkk",
+			"grafana.app/folder":   "folderUID",
 		}, res.GetAnnotations())
 
 		meta.SetNamespace("aaa")
@@ -280,14 +303,14 @@ func TestMetaAccessor(t *testing.T) {
 		meta, err := utils.MetaAccessor(res)
 		require.NoError(t, err)
 
-		meta.SetOriginInfo(originInfo)
+		meta.SetRepositoryInfo(repoInfo)
 		meta.SetFolder("folderUID")
 
 		require.Equal(t, map[string]string{
-			"grafana.app/originName": "test",
-			"grafana.app/originPath": "a/b/c",
-			"grafana.app/originHash": "kkk",
-			"grafana.app/folder":     "folderUID",
+			"grafana.app/repoName": "test",
+			"grafana.app/repoPath": "a/b/c",
+			"grafana.app/repoHash": "kkk",
+			"grafana.app/folder":   "folderUID",
 		}, res.GetAnnotations())
 
 		meta.SetNamespace("aaa")
@@ -321,6 +344,28 @@ func TestMetaAccessor(t *testing.T) {
 		require.Equal(t, "ZZ", res.Status.Title)
 	})
 
+	t.Run("test reading old originInfo (now repository)", func(t *testing.T) {
+		res := &TestResource2{
+			ObjectMeta: metav1.ObjectMeta{
+				Annotations: map[string]string{
+					"grafana.app/repoName": "test",
+					"grafana.app/repoPath": "a/b/c",
+					"grafana.app/repoHash": "zzz",
+					"grafana.app/folder":   "folderUID",
+				},
+			},
+			Spec: Spec2{},
+		}
+		meta, err := utils.MetaAccessor(res)
+		require.NoError(t, err)
+
+		info, err := meta.GetRepositoryInfo()
+		require.NoError(t, err)
+		require.Equal(t, "test", info.Name)
+		require.Equal(t, "a/b/c", info.Path)
+		require.Equal(t, "zzz", info.Hash)
+	})
+
 	t.Run("blob info", func(t *testing.T) {
 		info := &utils.BlobInfo{UID: "AAA", Size: 123, Hash: "xyz", MimeType: "application/json", Charset: "utf-8"}
 		anno := info.String()
@@ -343,14 +388,14 @@ func TestMetaAccessor(t *testing.T) {
 
 		meta, err := utils.MetaAccessor(obj)
 		require.NoError(t, err)
-		meta.SetOriginInfo(originInfo)
+		meta.SetRepositoryInfo(repoInfo)
 		meta.SetFolder("folderUID")
 
 		require.Equal(t, map[string]string{
-			"grafana.app/originName": "test",
-			"grafana.app/originPath": "a/b/c",
-			"grafana.app/originHash": "kkk",
-			"grafana.app/folder":     "folderUID",
+			"grafana.app/repoName": "test",
+			"grafana.app/repoPath": "a/b/c",
+			"grafana.app/repoHash": "kkk",
+			"grafana.app/folder":   "folderUID",
 		}, obj.GetAnnotations())
 
 		require.Equal(t, "HELLO", obj.Spec.Title)
@@ -366,14 +411,14 @@ func TestMetaAccessor(t *testing.T) {
 
 		meta, err = utils.MetaAccessor(obj2)
 		require.NoError(t, err)
-		meta.SetOriginInfo(originInfo)
+		meta.SetRepositoryInfo(repoInfo)
 		meta.SetFolder("folderUID")
 
 		require.Equal(t, map[string]string{
-			"grafana.app/originName": "test",
-			"grafana.app/originPath": "a/b/c",
-			"grafana.app/originHash": "kkk",
-			"grafana.app/folder":     "folderUID",
+			"grafana.app/repoName": "test",
+			"grafana.app/repoPath": "a/b/c",
+			"grafana.app/repoHash": "kkk",
+			"grafana.app/folder":   "folderUID",
 		}, obj2.GetAnnotations())
 
 		require.Equal(t, "xxx", meta.FindTitle("xxx"))

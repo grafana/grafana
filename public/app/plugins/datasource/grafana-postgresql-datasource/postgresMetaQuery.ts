@@ -7,8 +7,13 @@ export function getTimescaleDBVersion() {
 }
 
 export function showTables() {
-  return `select quote_ident(table_name) as "table" from information_schema.tables
-    where quote_ident(table_schema) not in ('information_schema',
+  return `SELECT
+    CASE WHEN ${buildSchemaConstraint()}
+      THEN quote_ident(table_name)
+      ELSE quote_ident(table_schema) || '.' || quote_ident(table_name)
+    END AS "table"
+    FROM information_schema.tables
+    WHERE quote_ident(table_schema) NOT IN ('information_schema',
                              'pg_catalog',
                              '_timescaledb_cache',
                              '_timescaledb_catalog',
@@ -16,7 +21,7 @@ export function showTables() {
                              '_timescaledb_config',
                              'timescaledb_information',
                              'timescaledb_experimental')
-      and ${buildSchemaConstraint()}`;
+    ORDER BY CASE WHEN ${buildSchemaConstraint()} THEN 0 ELSE 1 END, 1`;
 }
 
 export function getSchema(table: string) {
@@ -24,10 +29,15 @@ export function getSchema(table: string) {
   // in the table-name
   const tableNamePart = "'" + table.replace(/'/g, "''") + "'";
 
-  return `select quote_ident(column_name) as "column", data_type as "type"
-    from information_schema.columns
-    where quote_ident(table_name) = ${tableNamePart};
-    `;
+  return `SELECT quote_ident(column_name) AS "column", data_type AS "type"
+    FROM information_schema.columns
+    WHERE
+      CASE WHEN array_length(parse_ident(${tableNamePart}),1) = 2
+        THEN quote_ident(table_schema) = (parse_ident(${tableNamePart}))[1]
+          AND quote_ident(table_name) = (parse_ident(${tableNamePart}))[2]
+        ELSE quote_ident(table_name) = ${tableNamePart}
+          AND ${buildSchemaConstraint()}
+      END`;
 }
 
 function buildSchemaConstraint() {

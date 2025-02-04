@@ -15,11 +15,10 @@ import { getRoutes as getDataConnectionsRoutes } from 'app/features/connections/
 import { DATASOURCES_ROUTES } from 'app/features/datasources/constants';
 import { ConfigureIRM } from 'app/features/gops/configuration-tracker/components/ConfigureIRM';
 import { getRoutes as getPluginCatalogRoutes } from 'app/features/plugins/admin/routes';
-import { getAppPluginRoutes } from 'app/features/plugins/routes';
+import { getAppPluginRoutes, getRouteForAppPlugin } from 'app/features/plugins/routes';
 import { getProfileRoutes } from 'app/features/profile/routes';
 import { AccessControlAction, DashboardRoutes } from 'app/types';
 
-import { BookmarksPage } from '../core/components/Bookmarks/BookmarksPage';
 import { SafeDynamicImport } from '../core/components/DynamicImports/SafeDynamicImport';
 import { RouteDescriptor } from '../core/navigation/types';
 import { getPublicDashboardRoutes } from '../features/dashboard/routes';
@@ -371,13 +370,6 @@ export function getAppRoutes(): RouteDescriptor[] {
         : () => <Navigate replace to="/admin" />,
     },
     {
-      path: '/admin/storage/:path/*',
-      roles: () => ['Admin'],
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "StoragePage" */ 'app/features/storage/StoragePage')
-      ),
-    },
-    {
       path: '/admin/stats',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "ServerStats" */ 'app/features/admin/ServerStats')
@@ -385,7 +377,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     config.featureToggles.onPremToCloudMigrations && {
       path: '/admin/migrate-to-cloud',
-      roles: () => ['Admin'],
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.MigrationAssistantMigrate]),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "MigrateToCloud" */ 'app/features/migrate-to-cloud/MigrateToCloud')
       ),
@@ -445,6 +437,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/dashboard/snapshots',
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.SnapshotsRead]),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "SnapshotListPage" */ 'app/features/manage-dashboards/SnapshotListPage')
       ),
@@ -522,15 +515,23 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     config.featureToggles.exploreMetrics && {
       path: '/explore/metrics/*',
-      chromeless: false,
       roles: () => contextSrv.evaluatePermission([AccessControlAction.DataSourcesExplore]),
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "DataTrailsPage"*/ 'app/features/trails/DataTrailsPage')
-      ),
+      ...(config.featureToggles.exploreMetricsUseExternalAppPlugin
+        ? {
+            component: getRouteForAppPlugin('grafana-metricsdrilldown-app').component,
+          }
+        : {
+            chromeless: false,
+            component: SafeDynamicImport(
+              () => import(/* webpackChunkName: "DataTrailsPage"*/ 'app/features/trails/DataTrailsPage')
+            ),
+          }),
     },
     {
       path: '/bookmarks',
-      component: () => <BookmarksPage />,
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "BookmarksPage"*/ 'app/features/bookmarks/BookmarksPage')
+      ),
     },
     ...getPluginCatalogRoutes(),
     ...getSupportBundleRoutes(),

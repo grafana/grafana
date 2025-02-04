@@ -10,13 +10,14 @@ type Mode string
 
 func (s Mode) IsValid() bool {
 	switch s {
-	case ModeGRPC, ModeInProc:
+	case ModeGRPC, ModeInProc, ModeCloud:
 		return true
 	}
 	return false
 }
 
 const (
+	ModeCloud  Mode = "cloud"
 	ModeGRPC   Mode = "grpc"
 	ModeInProc Mode = "inproc"
 )
@@ -47,7 +48,7 @@ func ReadCfg(cfg *setting.Cfg) (*Cfg, error) {
 	tokenNamespace := grpcClientAuthSection.Key("token_namespace").MustString("stacks-" + cfg.StackID)
 
 	// When running in cloud mode, the token and tokenExchangeURL are required.
-	if mode == ModeGRPC && cfg.StackID != "" {
+	if mode == ModeCloud {
 		if token == "" || tokenExchangeURL == "" {
 			return nil, fmt.Errorf("authorization:  missing token or tokenExchangeUrl")
 		}

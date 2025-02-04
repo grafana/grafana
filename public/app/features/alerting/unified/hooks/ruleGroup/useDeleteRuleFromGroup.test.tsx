@@ -7,15 +7,15 @@ import { CombinedRule } from 'app/types/unified-alerting';
 
 import server, { setupMswServer } from '../../mockApi';
 import {
+  grantUserPermissions,
   mockCombinedRule,
   mockGrafanaRulerRule,
-  mockRulerRuleGroup,
   mockRulerAlertingRule,
   mockRulerRecordingRule,
-  grantUserPermissions,
+  mockRulerRuleGroup,
 } from '../../mocks';
 import { grafanaRulerRule } from '../../mocks/grafanaRulerApi';
-import { setUpdateRulerRuleNamespaceHandler, setRulerRuleGroupHandler } from '../../mocks/server/configure';
+import { setRulerRuleGroupHandler, setUpdateRulerRuleNamespaceHandler } from '../../mocks/server/configure';
 import { captureRequests, serializeRequests } from '../../mocks/server/events';
 import { rulerRuleGroupHandler, updateRulerRuleNamespaceHandler } from '../../mocks/server/handlers/mimirRuler';
 import { fromRulerRuleAndRuleGroupIdentifier } from '../../utils/rule-id';

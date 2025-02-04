@@ -38,6 +38,7 @@ export interface AlertListOptions {
     pending: boolean;
   };
   folderId: number;
+  showInactiveAlerts: boolean;
 }
 
 export interface StateFilter {
@@ -62,4 +63,5 @@ export interface UnifiedAlertListOptions {
   alertInstanceLabelFilter: string;
   datasource: string;
   viewMode: ViewMode;
+  showInactiveAlerts: boolean;
 }

@@ -5,8 +5,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/setting"
 	"go.opentelemetry.io/otel/attribute"
+
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type TracingConfig struct {

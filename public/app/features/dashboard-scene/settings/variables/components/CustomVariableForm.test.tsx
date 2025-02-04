@@ -9,6 +9,7 @@ describe('CustomVariableForm', () => {
   const onMultiChange = jest.fn();
   const onIncludeAllChange = jest.fn();
   const onAllValueChange = jest.fn();
+  const onAllowCustomValueChange = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -21,10 +22,12 @@ describe('CustomVariableForm', () => {
         multi={true}
         allValue="custom value"
         includeAll={true}
+        allowCustomValue={true}
         onQueryChange={onQueryChange}
         onMultiChange={onMultiChange}
         onIncludeAllChange={onIncludeAllChange}
         onAllValueChange={onAllValueChange}
+        onAllowCustomValueChange={onAllowCustomValueChange}
       />
     );
 
@@ -39,12 +42,18 @@ describe('CustomVariableForm', () => {
       selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsCustomAllInput
     );
 
+    const allowCustomValueCheckbox = getByTestId(
+      selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsAllowCustomValueSwitch
+    );
+
     expect(queryInput).toBeInTheDocument();
     expect(queryInput).toHaveValue('query');
     expect(multiCheckbox).toBeInTheDocument();
     expect(multiCheckbox).toBeChecked();
     expect(includeAllCheckbox).toBeInTheDocument();
     expect(includeAllCheckbox).toBeChecked();
+    expect(allowCustomValueCheckbox).toBeInTheDocument();
+    expect(allowCustomValueCheckbox).toBeChecked();
     expect(allValueInput).toBeInTheDocument();
     expect(allValueInput).toHaveValue('custom value');
   });
@@ -56,10 +65,12 @@ describe('CustomVariableForm', () => {
         multi={true}
         allValue=""
         includeAll={true}
+        allowCustomValue={true}
         onQueryChange={onQueryChange}
         onMultiChange={onMultiChange}
         onIncludeAllChange={onIncludeAllChange}
         onAllValueChange={onAllValueChange}
+        onAllowCustomValueChange={onAllowCustomValueChange}
       />
     );
 
@@ -73,13 +84,18 @@ describe('CustomVariableForm', () => {
     const allValueInput = getByTestId(
       selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsCustomAllInput
     );
+    const allowCustomValueCheckbox = getByTestId(
+      selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsAllowCustomValueSwitch
+    );
 
     fireEvent.click(multiCheckbox);
     fireEvent.click(includeAllCheckbox);
+    fireEvent.click(allowCustomValueCheckbox);
     fireEvent.change(queryInput, { currentTarget: { value: 'test query' } });
     fireEvent.change(allValueInput, { currentTarget: { value: 'test value' } });
 
     expect(onMultiChange).toHaveBeenCalledTimes(1);
+    expect(onAllowCustomValueChange).toHaveBeenCalledTimes(1);
     expect(onIncludeAllChange).toHaveBeenCalledTimes(1);
     expect(onQueryChange).not.toHaveBeenCalledTimes(1);
     expect(onAllValueChange).not.toHaveBeenCalledTimes(1);
@@ -92,10 +108,12 @@ describe('CustomVariableForm', () => {
         multi={true}
         allValue="custom all value"
         includeAll={true}
+        allowCustomValue={true}
         onQueryChange={onQueryChange}
         onMultiChange={onMultiChange}
         onIncludeAllChange={onIncludeAllChange}
         onAllValueChange={onAllValueChange}
+        onAllowCustomValueChange={onAllowCustomValueChange}
       />
     );
 

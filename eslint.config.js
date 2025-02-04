@@ -1,6 +1,5 @@
 // @ts-check
 const emotionPlugin = require('@emotion/eslint-plugin');
-const { fixupPluginRules } = require('@eslint/compat');
 const importPlugin = require('eslint-plugin-import');
 const jestPlugin = require('eslint-plugin-jest');
 const jestDomPlugin = require('eslint-plugin-jest-dom');
@@ -9,9 +8,16 @@ const lodashPlugin = require('eslint-plugin-lodash');
 const barrelPlugin = require('eslint-plugin-no-barrel-files');
 const reactPlugin = require('eslint-plugin-react');
 const testingLibraryPlugin = require('eslint-plugin-testing-library');
+const unicornPlugin = require('eslint-plugin-unicorn');
 
 const grafanaConfig = require('@grafana/eslint-config/flat');
 const grafanaPlugin = require('@grafana/eslint-plugin');
+
+const bettererConfig = require('./.betterer.eslint.config');
+const getEnvConfig = require('./scripts/webpack/env-util');
+
+const envConfig = getEnvConfig();
+const enableBettererRules = envConfig.frontend_dev_betterer_eslint_rules;
 
 /**
  * @type {Array<import('eslint').Linter.Config>}
@@ -40,8 +46,11 @@ module.exports = [
       'public/locales/**/*.js',
       'public/vendor/',
       'scripts/grafana-server/tmp',
+      '!.betterer.eslint.config.js',
     ],
   },
+  // Conditionally run the betterer rules if enabled in dev's config
+  ...(enableBettererRules ? bettererConfig : []),
   grafanaConfig,
   {
     name: 'react/jsx-runtime',
@@ -69,9 +78,14 @@ module.exports = [
     settings: {
       'import/internal-regex': '^(app/)|(@grafana)',
       'import/external-module-folders': ['node_modules', '.yarn'],
+      // Silences a warning when linting enterprise code
+      react: {
+        version: 'detect',
+      },
     },
 
     rules: {
+      'no-duplicate-case': 'error',
       '@grafana/no-border-radius-literal': 'error',
       '@grafana/no-unreduced-motion': 'error',
       'react/prop-types': 'off',
@@ -101,6 +115,11 @@ module.exports = [
             {
               name: 'react-i18next',
               importNames: ['Trans', 't'],
+              message: 'Please import from app/core/internationalization instead',
+            },
+            {
+              name: 'i18next',
+              importNames: ['t'],
               message: 'Please import from app/core/internationalization instead',
             },
           ],
@@ -176,7 +195,6 @@ module.exports = [
   {
     name: 'grafana/ui-overrides',
     files: ['packages/grafana-ui/**/*.{ts,tsx}'],
-    ignores: ['packages/grafana-ui/**/*.{test,story}.{ts,tsx}'],
     rules: {
       'no-restricted-imports': [
         'error',
@@ -233,17 +251,24 @@ module.exports = [
   },
   {
     name: 'grafana/alerting-overrides',
+    plugins: {
+      unicorn: unicornPlugin,
+      react: reactPlugin,
+    },
     files: ['public/app/features/alerting/**/*.{ts,tsx,js,jsx}'],
     rules: {
+      'sort-imports': ['error', { ignoreDeclarationSort: true }],
       'dot-notation': 'error',
       'prefer-const': 'error',
       'react/no-unused-prop-types': 'error',
+      'react/self-closing-comp': 'error',
+      'unicorn/no-unused-properties': 'error',
     },
   },
   {
     name: 'grafana/alerting-test-overrides',
     plugins: {
-      'testing-library': fixupPluginRules({ rules: testingLibraryPlugin.rules }),
+      'testing-library': testingLibraryPlugin,
       'jest-dom': jestDomPlugin,
     },
     files: [

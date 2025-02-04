@@ -7,7 +7,7 @@ import {
   GrafanaTheme2,
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
-import { ConfigDescriptionLink, ConfigSection } from '@grafana/experimental';
+import { ConfigDescriptionLink, ConfigSection } from '@grafana/plugin-ui';
 import { DataSourcePicker } from '@grafana/runtime';
 import { Button, InlineField, InlineFieldRow, Input, useStyles2 } from '@grafana/ui';
 
@@ -57,24 +57,14 @@ export function TraceToMetricsSettings({ options, onOptionsChange }: Props) {
                 datasourceUid: ds.uid,
               })
             }
-          />
-        </InlineField>
-        {options.jsonData.tracesToMetrics?.datasourceUid ? (
-          <Button
-            type="button"
-            variant="secondary"
-            size="sm"
-            fill="text"
-            onClick={() => {
+            onClear={() =>
               updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToMetrics', {
                 ...options.jsonData.tracesToMetrics,
                 datasourceUid: undefined,
-              });
-            }}
-          >
-            Clear
-          </Button>
-        ) : null}
+              })
+            }
+          />
+        </InlineField>
       </InlineFieldRow>
 
       <InlineFieldRow>

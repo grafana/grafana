@@ -570,14 +570,14 @@ Content-Type: application/json
 
 ## Star a dashboard
 
-`POST /api/user/stars/dashboard/:dashboardId`
+`POST /api/user/stars/dashboard/uid/:uid`
 
 Stars the given Dashboard for the actual user.
 
 **Example Request**:
 
 ```http
-POST /api/user/stars/dashboard/1 HTTP/1.1
+POST /api/user/stars/dashboard/uid/BqokFhx7z HTTP/1.1
 Accept: application/json
 Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
@@ -594,14 +594,14 @@ Content-Type: application/json
 
 ## Unstar a dashboard
 
-`DELETE /api/user/stars/dashboard/:dashboardId`
+`DELETE /api/user/stars/dashboard/uid/:uid`
 
 Deletes the starring of the given Dashboard for the actual user.
 
 **Example Request**:
 
 ```http
-DELETE /api/user/stars/dashboard/1 HTTP/1.1
+DELETE /api/user/stars/dashboard/uid/BqokFhx7z HTTP/1.1
 Accept: application/json
 Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk

@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom-v5-compat';
+import { Route, Routes } from 'react-router-dom-v5-compat';
 
 import { withErrorBoundary } from '@grafana/ui';
 
@@ -11,7 +11,11 @@ const NotificationTemplates = (): JSX.Element => (
   <AlertmanagerPageWrapper
     navId="receivers"
     accessType="notification"
-    pageNav={{ id: 'templates', text: 'Notification templates', subTitle: 'Create and edit notification templates' }}
+    pageNav={{
+      id: 'templates',
+      text: 'Notification templates',
+      subTitle: 'Create and edit a group of notification templates',
+    }}
   >
     <Routes>
       <Route path=":name/edit" element={<EditMessageTemplate />} />
