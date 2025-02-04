@@ -89,7 +89,7 @@ jobs:
 
       - name: Attaching artifacts
         if: ${{ always() }}
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ui-tests-output
           path: ./pmm-ui-tests/tests/output
