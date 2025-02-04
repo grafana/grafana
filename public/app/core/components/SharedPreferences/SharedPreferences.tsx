@@ -81,7 +81,17 @@ export class SharedPreferences extends PureComponent<Props, State> {
       navbar: { bookmarkUrls: [] },
     };
 
-    this.themeOptions = getBuiltInThemes(config.featureToggles.extraThemes).map((theme) => ({
+    const validExtraThemes = [];
+
+    if (config.featureToggles.extraThemes) {
+      validExtraThemes.push('debug');
+    }
+
+    if (config.featureToggles.grafanaconThemes) {
+      // TODO add the new theme ids here
+    }
+
+    this.themeOptions = getBuiltInThemes(validExtraThemes).map((theme) => ({
       value: theme.id,
       label: getTranslatedThemeName(theme),
     }));
