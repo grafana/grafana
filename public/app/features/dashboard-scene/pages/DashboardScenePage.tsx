@@ -49,7 +49,10 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
 
       locationService.partial(urlParams, true);
 
-      debounce(() => dashboardRef.current?.state.$timeRange?.onRefresh(), 300);
+      setTimeout(() => {
+        console.log({ dashboardRef });
+        dashboardRef.current?.state.$timeRange?.onRefresh();
+      }, 300);
     }
   }, []);
 
