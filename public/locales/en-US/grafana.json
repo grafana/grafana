@@ -242,11 +242,13 @@
     "common": {
       "cancel": "Cancel",
       "clear-filters": "Clear filters",
+      "dashboard": "Dashboard",
       "delete": "Delete",
       "edit": "Edit",
       "export": "Export",
       "export-all": "Export all",
       "loading": "Loading...",
+      "panel": "Panel",
       "search-by-matchers": "Search by matchers",
       "view": "View"
     },

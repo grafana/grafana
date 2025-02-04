@@ -242,11 +242,13 @@
     "common": {
       "cancel": "Cäŉčęľ",
       "clear-filters": "Cľęäř ƒįľŧęřş",
+      "dashboard": "Đäşĥþőäřđ",
       "delete": "Đęľęŧę",
       "edit": "Ēđįŧ",
       "export": "Ēχpőřŧ",
       "export-all": "Ēχpőřŧ äľľ",
       "loading": "Ŀőäđįŉģ...",
+      "panel": "Päŉęľ",
       "search-by-matchers": "Ŝęäřčĥ þy mäŧčĥęřş",
       "view": "Vįęŵ"
     },

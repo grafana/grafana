@@ -12,7 +12,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { useNewFolderMutation } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { AccessControlAction } from 'app/types';
 
-import { Trans } from '../../../../../core/internationalization/index';
+import { Trans, t } from '../../../../../core/internationalization/index';
 import { Folder, RuleFormValues } from '../../types/rule-form';
 
 export function FolderSelector() {
@@ -123,7 +123,13 @@ function FolderCreationModal({
   };
 
   return (
-    <Modal className={styles.modal} isOpen={true} title={'New folder'} onDismiss={onClose} onClickBackdrop={onClose}>
+    <Modal
+      className={styles.modal}
+      isOpen={true}
+      title={t('alerting.folder-selector.new', 'New folder')}
+      onDismiss={onClose}
+      onClickBackdrop={onClose}
+    >
       <Stack direction="column" gap={2}>
         <Text color="secondary">
           <Trans i18nKey="alerting.rule-form.folder.create-folder">
@@ -143,7 +149,7 @@ function FolderCreationModal({
               data-testid={selectors.components.AlertRules.newFolderNameField}
               autoFocus={true}
               id="folderName"
-              placeholder="Enter a name"
+              placeholder={t('aleting.folder-selector.name-placeholder', 'Enter a name')}
               value={title}
               onChange={(e) => setTitle(e.currentTarget.value)}
             />

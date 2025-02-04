@@ -1,4 +1,5 @@
 import { Icon, IconButton, Stack, Text, TextLink } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
 import { DashboardDataDTO } from 'app/types';
 
 import { makeDashboardLink, makePanelLink } from '../../utils/misc';
@@ -33,8 +34,7 @@ const DashboardAnnotationField = ({
 
       {panel && (
         <>
-          {' '}
-          ·{' '}
+          {' · '}
           <TextLink href={panelLink} data-testid="panel-annotation" external inline={false} variant="bodySmall">
             {panel.title || '<No title>'}
           </TextLink>
@@ -43,21 +43,31 @@ const DashboardAnnotationField = ({
 
       {!dashboard && (
         <Text color="secondary" variant="bodySmall">
-          <Icon name="apps" size="sm" /> Dashboard {dashboardUid}
+          <Icon name="apps" size="sm" /> <Trans i18nKey="alerting.common.dashboard">Dashboard</Trans> {dashboardUid}
         </Text>
       )}
 
       {!panel && (
         <Text color="secondary" variant="bodySmall">
-          {' '}
-          - Panel {panelId}
+          {' - '}
+          <Trans i18nKey="alerting.common.panel">Panel</Trans> {panelId}
         </Text>
       )}
 
       {(dashboard || panel) && (
         <>
-          <IconButton name="pen" onClick={onEditClick} variant="secondary" aria-label="edit link" />
-          <IconButton name="trash-alt" onClick={onDeleteClick} variant="secondary" aria-label="delete link" />
+          <IconButton
+            name="pen"
+            onClick={onEditClick}
+            variant="secondary"
+            aria-label={t('alerting.common.edit', 'Edit')}
+          />
+          <IconButton
+            name="trash-alt"
+            onClick={onDeleteClick}
+            variant="secondary"
+            aria-label={t('alerting.common.delete', 'Delete')}
+          />
         </>
       )}
     </Stack>
