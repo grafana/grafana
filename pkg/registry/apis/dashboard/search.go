@@ -342,8 +342,7 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// The facet term fields
-	facets, ok := queryParams["facet"]
-	if ok {
+	if facets, ok := queryParams["facet"]; ok {
 		searchRequest.Facet = make(map[string]*resource.ResourceSearchRequest_Facet)
 		for _, v := range facets {
 			searchRequest.Facet[v] = &resource.ResourceSearchRequest_Facet{
@@ -354,8 +353,7 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// The tags filter
-	tags, ok := queryParams["tag"]
-	if ok {
+	if tags, ok := queryParams["tag"]; ok {
 		searchRequest.Options.Fields = []*resource.Requirement{{
 			Key:      "tags",
 			Operator: "=",
@@ -364,8 +362,7 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// The names filter
-	names, ok := queryParams["name"]
-	if ok {
+	if names, ok := queryParams["name"]; ok {
 		if searchRequest.Options.Fields == nil {
 			searchRequest.Options.Fields = []*resource.Requirement{}
 		}
@@ -377,8 +374,7 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		searchRequest.Options.Fields = append(searchRequest.Options.Fields, namesFilter...)
 	}
 
-	dashboardIds, ok := queryParams["dashboardIds"]
-	if ok {
+	if dashboardIds, ok := queryParams["dashboardIds"]; ok {
 		searchRequest.Options.Labels = append(searchRequest.Options.Labels, &resource.Requirement{
 			Key:      utils.LabelKeyDeprecatedInternalID, // nolint:staticcheck
 			Operator: "in",
@@ -386,8 +382,7 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	dashboardUids, ok := queryParams["dashboardUIDs"]
-	if ok {
+	if dashboardUids, ok := queryParams["dashboardUIDs"]; ok {
 		searchRequest.Options.Fields = []*resource.Requirement{{
 			Key:      resource.SEARCH_FIELD_NAME,
 			Operator: "in",
@@ -395,8 +390,7 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		}}
 	}
 
-	folderUids, ok := queryParams["folderUIDs"]
-	if ok {
+	if folderUids, ok := queryParams["folderUIDs"]; ok {
 		searchRequest.Options.Fields = []*resource.Requirement{{
 			Key:      resource.SEARCH_FIELD_FOLDER,
 			Operator: "in",
