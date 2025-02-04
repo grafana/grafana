@@ -113,7 +113,7 @@ export function DashList(props: PanelProps<Options>) {
     fetchDashboards(props.options, props.replaceVariables).then((dashes) => {
       setDashboards(dashes);
     });
-  }, [dashboards, props.options, props.replaceVariables, throttledRenderCount]);
+  }, [props.options, props.replaceVariables, throttledRenderCount]);
 
   const toggleDashboardStar = async (e: SyntheticEvent, dash: Dashboard) => {
     const { uid, title, url } = dash;
