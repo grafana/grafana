@@ -6,27 +6,14 @@ let ctx: CanvasRenderingContext2D | null = null;
 let gridSize = 8;
 let paddingBottom = gridSize * 0.5;
 let lineHeight = 22;
+let measurementMode: 'canvas' | 'dom' = 'canvas';
 
 export function init(theme: GrafanaTheme2) {
-  const letterSpacing = theme.typography.body.letterSpacing
-    ? (theme.typography.fontSize * parseFloat(theme.typography.body.letterSpacing)).toFixed(5)
-    : undefined;
-  const fontFamily = theme.typography.fontFamilyMonospace;
-  const fontSize = theme.typography.fontSize;
+  const font = `${theme.typography.fontSize}px ${theme.typography.fontFamilyMonospace}`;
+  const letterSpacing = theme.typography.body.letterSpacing;
 
-  const canvas = document.createElement('canvas');
-  ctx = canvas.getContext('2d');
-  if (!ctx) {
-    return false;
-  }
-  ctx.font = `${fontSize}px ${fontFamily}`;
-  ctx.fontKerning = 'normal';
-  ctx.fontStretch = 'normal';
-  ctx.fontVariantCaps = 'normal';
-  ctx.textRendering = 'optimizeLegibility';
-  if (letterSpacing) {
-    ctx.letterSpacing = `${letterSpacing}px`;
-  }
+  initDOMmeasurement(font, letterSpacing);
+  initCanvasMeasurement(font, letterSpacing);
 
   gridSize = theme.spacing.gridSize;
   paddingBottom = gridSize * 0.5;
@@ -35,7 +22,50 @@ export function init(theme: GrafanaTheme2) {
   widthMap = new Map<number, number>();
   resetLogLineSizes();
 
+  determineMeasurementMode();
+
   return true;
+}
+
+function determineMeasurementMode() {
+  if (!ctx) {
+    measurementMode = 'dom';
+    return;
+  }
+  const canvasCharWidth = ctx.measureText('e').width;
+  const domCharWidth = measureTextWidthWithDOM('e');
+  const diff = domCharWidth - canvasCharWidth;
+  if (diff >= 0.1) {
+    console.warn('Virtualized log list: falling back to DOM for measurement');
+    measurementMode = 'dom';
+  }
+}
+
+function initCanvasMeasurement(font: string, letterSpacing: string | undefined) {
+  const canvas = document.createElement('canvas');
+  ctx = canvas.getContext('2d');
+  if (!ctx) {
+    return;
+  }
+  ctx.font = font;
+  ctx.fontKerning = 'normal';
+  ctx.fontStretch = 'normal';
+  ctx.fontVariantCaps = 'normal';
+  ctx.textRendering = 'optimizeLegibility';
+  if (letterSpacing) {
+    ctx.letterSpacing = letterSpacing;
+  }
+}
+
+const span = document.createElement('span');
+function initDOMmeasurement(font: string, letterSpacing: string | undefined) {
+  span.style.font = font;
+  span.style.visibility = 'hidden';
+  span.style.position = 'absolute';
+  span.style.wordBreak = 'break-all';
+  if (letterSpacing) {
+    span.style.letterSpacing = letterSpacing;
+  }
 }
 
 let widthMap = new Map<number, number>();
@@ -50,15 +80,25 @@ export function measureTextWidth(text: string): number {
     return storedWidth;
   }
 
-  const width = ctx.measureText(text).width;
+  const width = measurementMode === 'canvas' ? ctx.measureText(text).width : measureTextWidthWithDOM(text);
   widthMap.set(key, width);
+
+  return width;
+}
+
+function measureTextWidthWithDOM(text: string) {
+  span.textContent = text;
+
+  document.body.appendChild(span);
+  const width = span.getBoundingClientRect().width;
+  document.body.removeChild(span);
 
   return width;
 }
 
 export function measureTextHeight(text: string, maxWidth: number, beforeWidth = 0) {
   let logLines = 0;
-  const charWidth = measureTextWidth('ee') / 2;
+  const charWidth = measureTextWidth('e');
   let logLineCharsLength = Math.round(maxWidth / charWidth);
   const firstLineCharsLength = Math.floor((maxWidth - beforeWidth) / charWidth) - 2 * charWidth;
   const textLines = text.split('\n');
