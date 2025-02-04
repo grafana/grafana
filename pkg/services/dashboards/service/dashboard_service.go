@@ -1279,7 +1279,7 @@ func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *dashb
 				Tags:        hit.Tags,
 			}
 
-			if hit.Resource == "folders" {
+			if hit.Resource == folderv0alpha1.RESOURCE {
 				result.IsFolder = true
 			}
 
