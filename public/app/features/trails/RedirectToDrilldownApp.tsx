@@ -8,7 +8,7 @@ import { getRouteForAppPlugin } from 'app/features/plugins/routes';
 const RedirectToDrilldownApp = () => {
   const { '*': remainingPath } = useParams();
   const location = useLocation();
-  const appPath = getRouteForAppPlugin('grafana-metricsdrilldown-app').path.replace('*', '');
+  const appPath = getRouteForAppPlugin('grafana-metricsdrilldown-app').path.replaceAll('*', '');
   const newPath = `${appPath}${remainingPath}${location.search}`;
 
   return <Navigate replace to={newPath} />;
