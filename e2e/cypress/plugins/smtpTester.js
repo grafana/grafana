@@ -91,7 +91,19 @@ const initialize = (on, config) => {
       removePDFGeneratedOnDate(inputDoc);
       removePDFGeneratedOnDate(expectedDoc);
 
-      return inputDoc.numpages === expectedDoc.numpages && inputDoc.text === expectedDoc.text;
+      if (inputDoc.numpages !== expectedDoc.numpages) {
+        console.log('PDFs do not contain the same number of pages')
+        return false;
+      }
+
+      if (inputDoc.text !== expectedDoc.text) {
+        console.log('PDFs do not contain the same text')
+        console.log('PDF expected text: ', expectedDoc.text);
+        console.log('PDF input text: ', inputDoc.text);
+        return false;
+      }
+
+      return true;
     },
   });
 };
