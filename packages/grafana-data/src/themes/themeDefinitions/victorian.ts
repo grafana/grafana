@@ -5,9 +5,9 @@ const victorianTheme: NewThemeOptions = {
   colors: {
     mode: 'dark',
     border: {
-      weak: '#4B3D32',
+      weak: '#3A2C22',
       medium: '#3A2C22',
-      strong: '#2A1C14',
+      strong: '#4B3D32',
     },
     text: {
       primary: '#D9D0A2',
@@ -17,22 +17,12 @@ const victorianTheme: NewThemeOptions = {
       maxContrast: '#FFFFFF',
     },
     primary: {
-      main: '#4B3D32',
+      main: '#C28A4D',
     },
     secondary: {
       main: '#3A2C22',
-    },
-    info: {
-      main: '#6F4F1F',
-    },
-    error: {
-      main: '#D32F2F',
-    },
-    success: {
-      main: '#388E3C',
-    },
-    warning: {
-      main: '#FFB300',
+      text: '#C4B89B',
+      border: '#4B3D32',
     },
     background: {
       canvas: '#1F1510',
@@ -50,8 +40,8 @@ const victorianTheme: NewThemeOptions = {
       disabledOpacity: 0.38,
     },
     gradients: {
-      brandHorizontal: 'linear-gradient(270deg, #4B3D32 0%, #3A2C22 100%)',
-      brandVertical: 'linear-gradient(0.01deg, #4B3D32 0.01%, #3A2C22 99.99%)',
+      brandHorizontal: 'linear-gradient(270deg, #D9D0a1 0%, #C28A4D 100%)',
+      brandVertical: 'linear-gradient(0.01deg, #D9D0a1 0.01%, #C28A4D 99.99%)',
     },
     contrastThreshold: 4,
     hoverFactor: 0.07,

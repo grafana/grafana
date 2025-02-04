@@ -20,19 +20,9 @@ const synthwaveTheme: NewThemeOptions = {
       main: '#FF1493',
     },
     secondary: {
-      main: 'rgba(255, 20, 147, 0.10)',
-    },
-    info: {
-      main: '#1E90FF',
-    },
-    error: {
-      main: '#FF4500',
-    },
-    success: {
-      main: '#32CD32',
-    },
-    warning: {
-      main: '#FFD700',
+      main: '#37183a',
+      text: 'rgba(224, 224, 224, 0.75)',
+      border: 'rgba(255, 20, 147, 0.10)',
     },
     background: {
       canvas: '#1A1A2E',
