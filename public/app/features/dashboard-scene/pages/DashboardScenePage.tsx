@@ -12,7 +12,7 @@ import { Page } from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { DashboardPageRouteParams, DashboardPageRouteSearchParams } from 'app/features/dashboard/containers/types';
-import { DashboardRoutes } from 'app/types';
+import { DashboardDTO, DashboardRoutes } from 'app/types';
 
 import { DashboardPrompt } from '../saving/DashboardPrompt';
 
@@ -70,10 +70,15 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
 
       console.log({ dashboard });
 
+      const { dashboard: board } = stateManager.useState();
+
+      console.log({ board });
       // getTimeSrv().refreshTimeModel();
       dashboard?.publishEvent(new RefreshEvent());
     }
   }, []);
+
+  console.log({ dashboard, isLoading, loadError });
 
   useEffect(() => {
     window.addEventListener('message', handleFrameTasks, false);
