@@ -522,6 +522,7 @@ export async function updateOtelData(
       resettingOtel: false,
       afterFirstOtelCheck: true,
       isUpdatingOtel: false,
+      nonPromotedOtelResources,
     });
   }
 }
