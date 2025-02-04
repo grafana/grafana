@@ -2,6 +2,7 @@ package provisioning
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -325,7 +326,21 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		if !res.Success {
 			logger.Error("repository is unhealthy", "errors", res.Errors)
 		} else {
-			logger.Debug("repository is healthy")
+			logger.Info("repository is healthy")
+		}
+
+		patch, err := json.Marshal(map[string]any{
+			"status": map[string]any{
+				"health": status.Health,
+			},
+		})
+		if err != nil {
+			return fmt.Errorf("error encoding health patch: %w", err)
+		}
+
+		if _, err := rc.client.Repositories(obj.GetNamespace()).
+			Patch(ctx, obj.GetName(), types.MergePatchType, patch, v1.PatchOptions{}, "status"); err != nil {
+			return fmt.Errorf("update health status: %w", err)
 		}
 	}
 
