@@ -49,6 +49,9 @@ const (
 	// Finished with success
 	JobStateSuccess JobState = "success"
 
+	// JobStatusSkipped is used when a job is skipped
+	JobStateSkipped JobState = "skipped"
+
 	// Finished with errors
 	JobStateError JobState = "error"
 )
