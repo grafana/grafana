@@ -96,7 +96,7 @@ describe('GetStartedWithApp', () => {
     expect(screen.queryByText('Disable')).not.toBeInTheDocument();
   });
 
-  it ('does not render disable button if plugin is enabled and provisioned', () => {
+  it('does not render disable button if plugin is enabled and provisioned', () => {
     (usePluginConfig as jest.Mock).mockReturnValue({ value: { meta: { enabled: true, autoEnabled: false } } });
     (contextSrv.hasPermission as jest.Mock).mockReturnValue(true);
 
