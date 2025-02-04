@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
 import { Alert, Button, Field, Modal, Text, Space } from '@grafana/ui';
-import { FolderPicker } from 'app/core/components/Select/FolderPicker';
+import { LazyFolderPicker } from 'app/core/components/NestedFolderPicker/LazyFolderPicker';
 import { t, Trans } from 'app/core/internationalization';
 
 import { DashboardTreeSelection } from '../../types';
@@ -51,7 +51,7 @@ export const MoveModal = ({ onConfirm, onDismiss, selectedItems, ...props }: Pro
       <Space v={3} />
 
       <Field label={t('browse-dashboards.action.move-modal-field-label', 'Folder name')}>
-        <FolderPicker value={moveTarget} excludeUIDs={selectedFolders} onChange={setMoveTarget} />
+        <LazyFolderPicker value={moveTarget} excludeUIDs={selectedFolders} onChange={setMoveTarget} />
       </Field>
 
       <Modal.ButtonRow>

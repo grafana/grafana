@@ -1,12 +1,6 @@
 import * as React from 'react';
 
-enum PermissionLevelString {
-  View = 'View',
-  Edit = 'Edit',
-  Admin = 'Admin',
-}
-
-export interface NestedFolderPickerProps {
+interface FolderPickerProps {
   /* Folder UID to show as selected */
   value?: string;
 
@@ -20,7 +14,7 @@ export interface NestedFolderPickerProps {
   excludeUIDs?: string[];
 
   /* Show folders matching this permission, mainly used to also show folders user can view. Defaults to showing only folders user has Edit  */
-  permission?: PermissionLevelString.View | PermissionLevelString.Edit;
+  permission?: 'view' | 'edit';
 
   /* Callback for when the user selects a folder */
   onChange?: (folderUID: string | undefined, folderName: string | undefined) => void;
@@ -29,21 +23,28 @@ export interface NestedFolderPickerProps {
   clearable?: boolean;
 }
 
-export type NestedFolderPickerType = React.ComponentType<NestedFolderPickerProps>;
+type FolderPickerComponentType = React.ComponentType<FolderPickerProps>;
+
+let FolderPickerComponent: FolderPickerComponentType | undefined;
 
 /**
- * Used to bootstrap the NestedFolderPicker during application start
- * is exposed via runtime.
+ * Used to bootstrap the FolderPicker during application start
  *
  * @internal
  */
-export function setNestedFolderPicker(component: NestedFolderPickerType) {
-  NestedFolderPicker = component;
+export function setFolderPicker(component: FolderPickerComponentType) {
+  FolderPickerComponent = component;
 }
 
-export let NestedFolderPicker: NestedFolderPickerType = (props) => {
-  if (NestedFolderPicker) {
-    return <NestedFolderPicker {...props} />;
+export function FolderPicker(props: FolderPickerProps) {
+  if (FolderPickerComponent) {
+    return <FolderPickerComponent {...props} />;
   }
+
+  if (process.env.NODE_ENV !== 'production') {
+    console.error('FolderPicker is not set');
+    return <div>@grafana/runtime FolderPicker is not set</div>;
+  }
+
   return null;
-};
+}
