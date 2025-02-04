@@ -45,7 +45,7 @@ export function PluginDetailsPanel(props: Props): React.ReactElement | null {
 
   return (
     <>
-      <Stack direction="column" gap={3} shrink={0} grow={0} maxWidth={width} data-testid="plugin-details-panel">
+      <Stack direction="column" gap={3} shrink={0} grow={0} width={width} data-testid="plugin-details-panel">
         <Box padding={2} borderColor="medium" borderStyle="solid">
           <Stack direction="column" gap={2}>
             {pluginExtentionsInfo.map((infoItem, index) => {
@@ -129,7 +129,10 @@ export function PluginDetailsPanel(props: Props): React.ReactElement | null {
                   </Text>
                   <Tooltip
                     content={
-                      'These links are provided by the plugin developer to offer additional, developer-specific resources and information'
+                      <Trans i18nKey="plugins.details.labels.customLinksTooltip">
+                        These links are provided by the plugin developer to offer additional, developer-specific
+                        resources and information
+                      </Trans>
                     }
                     placement="right-end"
                   >
@@ -151,6 +154,7 @@ export function PluginDetailsPanel(props: Props): React.ReactElement | null {
         {!plugin?.isCore && (
           <Box padding={2} borderColor="medium" borderStyle="solid">
             <CollapsableSection
+              headerDataTestId="reportConcern"
               isOpen={false}
               label={
                 <Stack direction="row" justifyContent="space-between" alignItems="center">
@@ -158,7 +162,11 @@ export function PluginDetailsPanel(props: Props): React.ReactElement | null {
                     <Trans i18nKey="plugins.details.labels.reportAbuse">Report a concern </Trans>
                   </Text>
                   <Tooltip
-                    content={'Report issues related to malicious or harmful plugins directly to Grafana Labs.'}
+                    content={
+                      <Trans i18nKey="plugins.details.labels.reportAbuseTooltip">
+                        Report issues related to malicious or harmful plugins directly to Grafana Labs.
+                      </Trans>
+                    }
                     placement="right-end"
                   >
                     <Icon name="info-circle" size="xs" />
@@ -176,7 +184,11 @@ export function PluginDetailsPanel(props: Props): React.ReactElement | null {
         )}
       </Stack>
       {reportAbuseModalOpen && (
-        <Modal title="Report a plugin concern" isOpen onDismiss={() => setReportAbuseModalOpen(false)}>
+        <Modal
+          title={<Trans i18nKey="plugins.details.modal.title">Report a plugin concern</Trans>}
+          isOpen
+          onDismiss={() => setReportAbuseModalOpen(false)}
+        >
           <Stack direction="column" gap={2}>
             <Text>
               <Trans i18nKey="plugins.details.modal.description">
@@ -193,10 +205,10 @@ export function PluginDetailsPanel(props: Props): React.ReactElement | null {
           </Stack>
           <Modal.ButtonRow>
             <Button variant="secondary" fill="outline" onClick={() => setReportAbuseModalOpen(false)}>
-              Cancel
+              <Trans i18nKey="plugins.details.modal.cancel">Cancel</Trans>
             </Button>
             <Button icon="copy" onClick={() => navigator.clipboard.writeText('integrations@grafana.com')}>
-              Copy email address
+              <Trans i18nKey="plugins.details.modal.copyEmail">Copy email address</Trans>
             </Button>
           </Modal.ButtonRow>
         </Modal>
