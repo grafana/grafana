@@ -68,9 +68,7 @@ export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls
   }
 
   const onBodyRef = (ref: HTMLDivElement) => {
-    const divRef = new DivScrollElement(ref);
-
-    dashboard.onSetScrollRef(divRef);
+    dashboard.onSetScrollRef(new DivScrollElement(ref));
   };
 
   return (
