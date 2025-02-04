@@ -592,3 +592,140 @@ func TestBackend_delete(t *testing.T) {
 		require.ErrorContains(t, err, "update history rv")
 	})
 }
+
+func TestBackend_restore(t *testing.T) {
+	t.Parallel()
+	meta, err := utils.MetaAccessor(&unstructured.Unstructured{
+		Object: map[string]any{},
+	})
+	require.NoError(t, err)
+	meta.SetUID("new-uid")
+	oldMeta, err := utils.MetaAccessor(&unstructured.Unstructured{
+		Object: map[string]any{},
+	})
+	require.NoError(t, err)
+	oldMeta.SetUID("old-uid")
+	event := resource.WriteEvent{
+		Type:      resource.WatchEvent_ADDED,
+		Key:       resKey,
+		Object:    meta,
+		ObjectOld: oldMeta,
+	}
+
+	t.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		b, ctx := setupBackendTest(t)
+
+		b.SQLMock.ExpectBegin()
+		b.ExecWithResult("insert resource", 0, 1)
+		b.ExecWithResult("insert resource_history", 0, 1)
+		expectSuccessfulResourceVersionAtomicInc(t, b)
+		b.ExecWithResult("update resource_history", 0, 1)
+		b.ExecWithResult("update resource", 0, 1)
+		b.ExecWithResult("update resource_history", 0, 1)
+		b.SQLMock.ExpectCommit()
+
+		v, err := b.restore(ctx, event)
+		require.NoError(t, err)
+		require.Equal(t, int64(23456), v)
+	})
+
+	t.Run("error restoring resource", func(t *testing.T) {
+		t.Parallel()
+		b, ctx := setupBackendTest(t)
+
+		b.SQLMock.ExpectBegin()
+		b.ExecWithErr("insert resource", errTest)
+		b.SQLMock.ExpectRollback()
+
+		v, err := b.restore(ctx, event)
+		require.Zero(t, v)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "insert into resource:")
+	})
+
+	t.Run("error inserting into resource history", func(t *testing.T) {
+		t.Parallel()
+		b, ctx := setupBackendTest(t)
+
+		b.SQLMock.ExpectBegin()
+		b.ExecWithResult("insert resource", 0, 1)
+		b.ExecWithErr("insert resource_history", errTest)
+		b.SQLMock.ExpectRollback()
+
+		v, err := b.restore(ctx, event)
+		require.Zero(t, v)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "insert into resource history")
+	})
+
+	t.Run("error incrementing resource version", func(t *testing.T) {
+		t.Parallel()
+		b, ctx := setupBackendTest(t)
+
+		b.SQLMock.ExpectBegin()
+		b.ExecWithResult("insert resource", 0, 1)
+		b.ExecWithResult("insert resource_history", 0, 1)
+		expectUnsuccessfulResourceVersionAtomicInc(t, b, errTest)
+		b.SQLMock.ExpectRollback()
+
+		v, err := b.restore(ctx, event)
+		require.Zero(t, v)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "increment resource version")
+	})
+
+	t.Run("error updating resource history", func(t *testing.T) {
+		t.Parallel()
+		b, ctx := setupBackendTest(t)
+
+		b.SQLMock.ExpectBegin()
+		b.ExecWithResult("insert resource", 0, 1)
+		b.ExecWithResult("insert resource_history", 0, 1)
+		expectSuccessfulResourceVersionAtomicInc(t, b)
+		b.ExecWithErr("update resource_history", errTest)
+		b.SQLMock.ExpectRollback()
+
+		v, err := b.restore(ctx, event)
+		require.Zero(t, v)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "update history rv")
+	})
+
+	t.Run("error updating resource", func(t *testing.T) {
+		t.Parallel()
+		b, ctx := setupBackendTest(t)
+
+		b.SQLMock.ExpectBegin()
+		b.ExecWithResult("insert resource", 0, 1)
+		b.ExecWithResult("insert resource_history", 0, 1)
+		expectSuccessfulResourceVersionAtomicInc(t, b)
+		b.ExecWithResult("update resource_history", 0, 1)
+		b.ExecWithErr("update resource", errTest)
+		b.SQLMock.ExpectRollback()
+
+		v, err := b.restore(ctx, event)
+		require.Zero(t, v)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "update resource rv")
+	})
+
+	t.Run("error updating resource history uid", func(t *testing.T) {
+		t.Parallel()
+		b, ctx := setupBackendTest(t)
+
+		b.SQLMock.ExpectBegin()
+		b.ExecWithResult("insert resource", 0, 1)
+		b.ExecWithResult("insert resource_history", 0, 1)
+		expectSuccessfulResourceVersionAtomicInc(t, b)
+		b.ExecWithResult("update resource_history", 0, 1)
+		b.ExecWithResult("update resource", 0, 1)
+		b.ExecWithErr("update resource_history", errTest)
+		b.SQLMock.ExpectRollback()
+
+		v, err := b.restore(ctx, event)
+		require.Zero(t, v)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "update history uid")
+	})
+}

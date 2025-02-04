@@ -12,7 +12,8 @@ import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { createDashboardEditViewFor } from '../settings/utils';
 import { ShareDrawer } from '../sharing/ShareDrawer/ShareDrawer';
 import { ShareModal } from '../sharing/ShareModal';
-import { findVizPanelByKey, getLibraryPanelBehavior, isPanelClone } from '../utils/utils';
+import { containsCloneKey } from '../utils/clone';
+import { findVizPanelByKey, getLibraryPanelBehavior } from '../utils/utils';
 
 import { DashboardScene, DashboardSceneState } from './DashboardScene';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
@@ -38,7 +39,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
       viewPanel: state.viewPanelScene?.getUrlKey(),
       editview: state.editview?.getUrlKey(),
       editPanel: state.editPanel?.getUrlKey() || undefined,
-      kiosk: state.kioskMode === KioskMode.Full ? '' : state.kioskMode === KioskMode.TV ? 'tv' : undefined,
+      kiosk: state.kioskMode === KioskMode.Full ? '' : undefined,
       shareView: state.shareView,
       orgId: contextSrv.user.orgId.toString(),
     };
@@ -94,8 +95,10 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
       const panel = findVizPanelByKey(this._scene, values.viewPanel);
 
       if (!panel) {
-        // // If we are trying to view a repeat clone that can't be found it might be that the repeats have not been processed yet
-        if (isPanelClone(values.viewPanel)) {
+        // If we are trying to view a repeat clone that can't be found it might be that the repeats have not been processed yet
+        // Here we check if the key contains the clone key so we force the repeat processing
+        // It doesn't matter if the element or the ancestors are clones or not, just that the key contains the clone key
+        if (containsCloneKey(values.viewPanel)) {
           this._handleViewRepeatClone(values.viewPanel);
           return;
         }
@@ -166,8 +169,6 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
     if (typeof values.kiosk === 'string') {
       if (values.kiosk === 'true' || values.kiosk === '') {
         update.kioskMode = KioskMode.Full;
-      } else if (values.kiosk === 'tv') {
-        update.kioskMode = KioskMode.TV;
       }
     }
 

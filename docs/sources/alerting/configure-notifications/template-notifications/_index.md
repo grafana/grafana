@@ -14,7 +14,7 @@ labels:
     - enterprise
     - oss
 title: Template notifications
-weight: 430
+weight: 450
 refs:
   template-annotations-and-labels:
     - pattern: /docs/grafana/
@@ -108,3 +108,7 @@ For further details on how to write notification templates, refer to:
 - [Select, create, and preview a notification template](ref:manage-notification-templates)
 - [Notification template reference](ref:reference)
 - [Notification template examples](ref:examples)
+
+{{< admonition type="tip" >}}
+For a practical example of templating, refer to our [Getting Started with Templating tutorial](https://grafana.com/tutorials/alerting-get-started-pt4/).
+{{< /admonition  >}}

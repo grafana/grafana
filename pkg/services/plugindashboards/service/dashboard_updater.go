@@ -95,7 +95,7 @@ func (du *DashboardUpdater) syncPluginDashboards(ctx context.Context, plugin plu
 		if dash.Removed {
 			du.logger.Info("Deleting plugin dashboard", "pluginId", plugin.ID, "dashboard", dash.Slug)
 
-			if err := du.dashboardService.DeleteDashboard(ctx, dash.DashboardId, orgID); err != nil {
+			if err := du.dashboardService.DeleteDashboard(ctx, dash.DashboardId, dash.UID, orgID); err != nil {
 				du.logger.Error("Failed to auto update app dashboard", "pluginId", plugin.ID, "error", err)
 				return
 			}
@@ -150,7 +150,7 @@ func (du *DashboardUpdater) handlePluginStateChanged(ctx context.Context, event 
 
 		for _, dash := range queryResult {
 			du.logger.Info("Deleting plugin dashboard", "pluginId", event.PluginId, "dashboard", dash.Slug)
-			if err := du.dashboardService.DeleteDashboard(ctx, dash.ID, dash.OrgID); err != nil {
+			if err := du.dashboardService.DeleteDashboard(ctx, dash.ID, dash.UID, dash.OrgID); err != nil {
 				return err
 			}
 		}

@@ -1,5 +1,5 @@
 import { Alert } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 
 import { stringifyErrorLike } from '../../utils/misc';
 

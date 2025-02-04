@@ -3,7 +3,7 @@ import { Fragment, useState } from 'react';
 import { logError } from '@grafana/runtime';
 import { Badge, ConfirmModal, Tooltip, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
-import { t, Trans } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 import { CodeText } from 'app/features/alerting/unified/components/common/TextVariants';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 
@@ -61,7 +61,7 @@ export const TemplatesTable = ({ alertManagerName, templates }: Props) => {
         </colgroup>
         <thead>
           <tr>
-            <th></th>
+            <th />
             <th>Template group</th>
             <Authorize
               actions={[
@@ -189,7 +189,7 @@ function TemplateRow({ notificationTemplate, idx, alertManagerName, onDeleteClic
       </tr>
       {isExpanded && (
         <tr className={idx % 2 === 0 ? tableStyles.evenRow : undefined}>
-          <td></td>
+          <td />
           <td colSpan={2}>
             <DetailsField label="" horizontal={true}>
               <TemplateEditor

@@ -14,9 +14,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/grafana/grafana/pkg/apis/service/v0alpha1"
-	informersservicev0alpha1 "github.com/grafana/grafana/pkg/generated/informers/externalversions/service/v0alpha1"
-	listersservicev0alpha1 "github.com/grafana/grafana/pkg/generated/listers/service/v0alpha1"
 	"k8s.io/apimachinery/pkg/api/equality"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -35,6 +32,10 @@ import (
 	informers "k8s.io/kube-aggregator/pkg/client/informers/externalversions/apiregistration/v1"
 	listers "k8s.io/kube-aggregator/pkg/client/listers/apiregistration/v1"
 	"k8s.io/kube-aggregator/pkg/controllers"
+
+	"github.com/grafana/grafana/pkg/apis/service/v0alpha1"
+	informersservicev0alpha1 "github.com/grafana/grafana/pkg/generated/informers/externalversions/service/v0alpha1"
+	listersservicev0alpha1 "github.com/grafana/grafana/pkg/generated/listers/service/v0alpha1"
 )
 
 type certKeyFunc func() ([]byte, []byte)
@@ -222,7 +223,9 @@ func (c *AvailableConditionController) sync(key string) error {
 					}
 
 					// setting the system-masters identity ensures that we will always have access rights
-					transport.SetAuthProxyHeaders(newReq, "system:kube-aggregator", []string{"system:masters"}, nil)
+					uid := ""
+					var extra map[string][]string
+					transport.SetAuthProxyHeaders(newReq, "system:kube-aggregator", uid, []string{"system:masters"}, extra)
 					resp, err := discoveryClient.Do(newReq)
 					if resp != nil {
 						_ = resp.Body.Close()

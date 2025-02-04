@@ -12,10 +12,10 @@ import { CombinedRule } from 'app/types/unified-alerting';
 import { AlertDataQuery, AlertQuery } from '../../../types/unified-alerting-dto';
 import { isExpressionQuery } from '../../expressions/guards';
 import {
-  downsamplingTypes,
   ExpressionQuery,
   ExpressionQueryType,
   ReducerMode,
+  downsamplingTypes,
   reducerModes,
   reducerTypes,
   thresholdFunctions,
@@ -26,7 +26,7 @@ import alertDef, { EvalFunction } from '../state/alertDef';
 import { Spacer } from './components/Spacer';
 import { WithReturnButton } from './components/WithReturnButton';
 import { ExpressionResult } from './components/expressions/Expression';
-import { getThresholdsForQueries, ThresholdDefinition } from './components/rule-editor/util';
+import { ThresholdDefinition, getThresholdsForQueries } from './components/rule-editor/util';
 import { RuleViewerVisualization } from './components/rule-viewer/RuleViewerVisualization';
 import { DatasourceModelPreview } from './components/rule-viewer/tabs/Query/DataSourceModelPreview';
 import { AlertRuleAction, useAlertRuleAbility } from './hooks/useAbilities';

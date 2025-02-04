@@ -5,7 +5,7 @@ import { FetchDataArgs } from '@grafana/ui';
 import { updateNavIndex } from 'app/core/actions';
 import { contextSrv } from 'app/core/core';
 import { accessControlQueryParam } from 'app/core/utils/accessControl';
-import { AccessControlAction, Team, TeamMember, ThunkResult } from 'app/types';
+import { AccessControlAction, TeamWithRoles, TeamMember, ThunkResult, Team } from 'app/types';
 
 import { buildNavModel } from './navModel';
 import {
@@ -46,9 +46,9 @@ export function loadTeams(initial = false): ThunkResult<void> {
       contextSrv.hasPermission(AccessControlAction.ActionTeamsRolesList)
     ) {
       dispatch(rolesFetchBegin());
-      const teamIds = response?.teams.map((t: Team) => t.id);
+      const teamIds = response?.teams.map((t: TeamWithRoles) => t.id);
       const roles = await getBackendSrv().post(`/api/access-control/teams/roles/search`, { teamIds });
-      response.teams.forEach((t: Team) => {
+      response.teams.forEach((t: TeamWithRoles) => {
         t.roles = roles ? roles[t.id] || [] : [];
       });
       dispatch(rolesFetchEnd());

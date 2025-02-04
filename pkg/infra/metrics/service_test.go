@@ -51,7 +51,7 @@ func TestGathererPrefixWrapper_Gather(t *testing.T) {
 func TestMultiRegistry_Gather(t *testing.T) {
 	one := &mockGatherer{}
 	two := &mockGatherer{}
-	g := newMultiRegistry(one, two)
+	g := NewMultiRegistry(one, two)
 
 	t.Run("should merge and sort metrics", func(t *testing.T) {
 		one.GatherFunc = func() ([]*dto.MetricFamily, error) {
@@ -99,12 +99,13 @@ func TestMultiRegistry_Gather(t *testing.T) {
 		require.Error(t, err)
 	})
 
-	t.Run("duplicate go_ prefixed metrics do not result in an error", func(t *testing.T) {
+	t.Run("duplicate go_ or process_ prefixed metrics do not result in an error", func(t *testing.T) {
 		one.GatherFunc = func() ([]*dto.MetricFamily, error) {
 			return []*dto.MetricFamily{
 				{Name: strptr("b")},
 				{Name: strptr("a")},
 				{Name: strptr("go_a")},
+				{Name: strptr("process_a")},
 			}, nil
 		}
 
@@ -113,6 +114,7 @@ func TestMultiRegistry_Gather(t *testing.T) {
 				{Name: strptr("d")},
 				{Name: strptr("c")},
 				{Name: strptr("go_a")},
+				{Name: strptr("process_a")},
 			}, nil
 		}
 
@@ -122,6 +124,7 @@ func TestMultiRegistry_Gather(t *testing.T) {
 			{Name: strptr("c")},
 			{Name: strptr("d")},
 			{Name: strptr("go_a")},
+			{Name: strptr("process_a")},
 		}
 
 		mf, err := g.Gather()

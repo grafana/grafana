@@ -1,6 +1,9 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/shared/LokiAndPromQueryModellerBase.ts
 import { Registry } from '@grafana/data';
+import { config } from '@grafana/runtime';
 
+import { prometheusRegularEscape } from '../../datasource';
+import { isValidLegacyName, utf8Support } from '../../utf8_support';
 import { PromVisualQueryOperationCategory } from '../types';
 
 import { QueryBuilderLabelFilter, QueryBuilderOperation, QueryBuilderOperationDef, VisualQueryModeller } from './types';
@@ -89,14 +92,34 @@ export abstract class LokiAndPromQueryModellerBase implements VisualQueryModelle
         expr += ', ';
       }
 
-      expr += `${filter.label}${filter.op}"${filter.value}"`;
+      let labelValue = filter.value;
+      const usingRegexOperator = filter.op === '=~' || filter.op === '!~';
+
+      if (config.featureToggles.prometheusSpecialCharsInLabelValues && !usingRegexOperator) {
+        labelValue = prometheusRegularEscape(labelValue);
+      }
+      expr += `${utf8Support(filter.label)}${filter.op}"${labelValue}"`;
     }
 
     return expr + `}`;
   }
 
   renderQuery(query: PromLokiVisualQuery, nested?: boolean) {
-    let queryString = `${query.metric ?? ''}${this.renderLabels(query.labels)}`;
+    let queryString = '';
+    const labels = this.renderLabels(query.labels);
+    if (query.metric) {
+      if (isValidLegacyName(query.metric)) {
+        // This is a legacy metric, put outside the curl legacy_query{label="value"}
+        queryString = `${query.metric}${labels}`;
+      } else {
+        // This is a utf8 metric, put inside the curly and quotes {"utf8.metric", label="value"}
+        queryString = `{"${query.metric}"${labels.length > 0 ? `, ${labels.substring(1)}` : `}`}`;
+      }
+    } else {
+      // No metric just use labels {label="value"}
+      queryString = labels;
+    }
+
     queryString = this.renderOperations(queryString, query.operations);
 
     if (!nested && this.hasBinaryOp(query) && Boolean(query.binaryQueries?.length)) {

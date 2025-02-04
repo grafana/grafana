@@ -85,6 +85,7 @@ module.exports = [
     },
 
     rules: {
+      'no-duplicate-case': 'error',
       '@grafana/no-border-radius-literal': 'error',
       '@grafana/no-unreduced-motion': 'error',
       'react/prop-types': 'off',
@@ -114,6 +115,11 @@ module.exports = [
             {
               name: 'react-i18next',
               importNames: ['Trans', 't'],
+              message: 'Please import from app/core/internationalization instead',
+            },
+            {
+              name: 'i18next',
+              importNames: ['t'],
               message: 'Please import from app/core/internationalization instead',
             },
           ],
@@ -189,7 +195,6 @@ module.exports = [
   {
     name: 'grafana/ui-overrides',
     files: ['packages/grafana-ui/**/*.{ts,tsx}'],
-    ignores: ['packages/grafana-ui/**/*.{test,story}.{ts,tsx}'],
     rules: {
       'no-restricted-imports': [
         'error',
@@ -248,12 +253,15 @@ module.exports = [
     name: 'grafana/alerting-overrides',
     plugins: {
       unicorn: unicornPlugin,
+      react: reactPlugin,
     },
     files: ['public/app/features/alerting/**/*.{ts,tsx,js,jsx}'],
     rules: {
+      'sort-imports': ['error', { ignoreDeclarationSort: true }],
       'dot-notation': 'error',
       'prefer-const': 'error',
       'react/no-unused-prop-types': 'error',
+      'react/self-closing-comp': 'error',
       'unicorn/no-unused-properties': 'error',
     },
   },

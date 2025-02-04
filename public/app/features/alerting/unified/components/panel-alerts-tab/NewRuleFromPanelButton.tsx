@@ -7,7 +7,7 @@ import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { useSelector } from 'app/types';
 
-import { logInfo, LogMessages } from '../../Analytics';
+import { LogMessages, logInfo } from '../../Analytics';
 import { panelToRuleFormValues } from '../../utils/rule-form';
 
 interface Props {

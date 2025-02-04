@@ -11,8 +11,10 @@ import {
   ButtonGroup,
   Dropdown,
   Icon,
+  InlineLabel,
   Menu,
   Stack,
+  Switch,
   ToolbarButton,
   ToolbarButtonRow,
   useStyles2,
@@ -54,7 +56,9 @@ NavToolbarActions.displayName = 'NavToolbarActions';
  * This part is split into a separate component to help test this
  */
 export function ToolbarActions({ dashboard }: Props) {
-  const { isEditing, viewPanelScene, isDirty, uid, meta, editview, editPanel, editable } = dashboard.useState();
+  const { isEditing, showHiddenElements, viewPanelScene, isDirty, uid, meta, editview, editPanel, editable } =
+    dashboard.useState();
+
   const { isPlaying } = playlistSrv.useState();
   const [isAddPanelMenuOpen, setIsAddPanelMenuOpen] = useState(false);
 
@@ -66,11 +70,13 @@ export function ToolbarActions({ dashboard }: Props) {
   const isViewingPanel = Boolean(viewPanelScene);
   const isEditedPanelDirty = usePanelEditDirty(editPanel);
   const isEditingLibraryPanel = editPanel && isLibraryPanel(editPanel.state.panelRef.resolve());
+  const isNew = !Boolean(uid);
+
   const hasCopiedPanel = store.exists(LS_PANEL_COPY_KEY);
   // Means we are not in settings view, fullscreen panel or edit panel
   const isShowingDashboard = !editview && !isViewingPanel && !isEditingPanel;
   const isEditingAndShowingDashboard = isEditing && isShowingDashboard;
-  const showScopesSelector = config.featureToggles.singleTopNav && config.featureToggles.scopeFilters && !isEditing;
+  const showScopesSelector = config.featureToggles.scopeFilters && !isEditing;
   const dashboardNewLayouts = config.featureToggles.dashboardNewLayouts;
 
   if (!isEditingPanel) {
@@ -139,12 +145,9 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'icon-actions',
-    condition: meta.isSnapshot && !meta.dashboardNotFound && !isEditing,
+    condition: meta.isSnapshot && !isEditing,
     render: () => (
-      <GoToSnapshotOriginButton
-        key="go-to-snapshot-origin"
-        originalURL={dashboard.getInitialSaveModel()?.snapshot?.originalUrl ?? ''}
-      />
+      <GoToSnapshotOriginButton key="go-to-snapshot-origin" originalURL={dashboard.getSnapshotUrl() ?? ''} />
     ),
   });
 
@@ -210,6 +213,25 @@ export function ToolbarActions({ dashboard }: Props) {
         >
           Import
         </Button>
+      ),
+    });
+    leftActions.push({
+      group: 'hidden-elements',
+      condition: isEditingAndShowingDashboard,
+      render: () => (
+        <InlineLabel key="toggle-hidden-elements" transparent={true} className={styles.hiddenElementsContainer}>
+          <Switch
+            value={showHiddenElements}
+            onChange={(evt) => {
+              evt.stopPropagation();
+              dashboard.onToggleHiddenElements();
+            }}
+            data-testid={selectors.components.PageToolbar.itemButton('toggle_hidden_elements')}
+          />
+          <span>
+            <Trans i18nKey="dashboard.toolbar.show-hidden-elements">Show hidden</Trans>
+          </span>
+        </InlineLabel>
       ),
     });
   } else {
@@ -464,7 +486,7 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'main-buttons',
-    condition: isEditing && !meta.isNew && isShowingDashboard,
+    condition: isEditing && !isNew && isShowingDashboard,
     render: () => (
       <Button
         onClick={() => dashboard.exitEditMode({ skipConfirm: false })}
@@ -558,7 +580,7 @@ export function ToolbarActions({ dashboard }: Props) {
     condition: isEditing && !isEditingLibraryPanel && (meta.canSave || canSaveAs),
     render: () => {
       // if we  only can save
-      if (meta.isNew) {
+      if (isNew) {
         return (
           <Button
             onClick={() => {
@@ -640,10 +662,10 @@ export function ToolbarActions({ dashboard }: Props) {
     },
   });
 
-  // Will open a schema v2 editor drawer. Only available with dashboardSchemaV2 feature toggle on.
+  // Will open a schema v2 editor drawer. Only available with useV2DashboardsAPI feature toggle on.
   toolbarActions.push({
     group: 'main-buttons',
-    condition: uid && config.featureToggles.dashboardSchemaV2,
+    condition: uid && config.featureToggles.useV2DashboardsAPI,
     render: () => {
       return (
         <ToolbarButton
@@ -738,6 +760,12 @@ interface ToolbarAction {
 
 function getStyles(theme: GrafanaTheme2) {
   return {
+    hiddenElementsContainer: css({
+      display: 'flex',
+      padding: 0,
+      gap: theme.spacing(1),
+      whiteSpace: 'nowrap',
+    }),
     buttonWithExtraMargin: css({
       margin: theme.spacing(0, 0.5),
     }),

@@ -18,7 +18,7 @@ We recommend using [Homebrew](https://brew.sh/) for installing any missing depen
 ```
 brew install git
 brew install go
-brew install node@20
+brew install node@22
 brew install corepack
 corepack enable
 ```

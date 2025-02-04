@@ -1,28 +1,16 @@
-import { getAzureClouds } from '@grafana/azure-sdk';
+import {
+  AzureCredentials,
+  AzureDataSourceJsonData,
+  AzureDataSourceSecureJsonData,
+  AzureDataSourceSettings,
+  getAzureClouds,
+  getDatasourceCredentials,
+  getDefaultAzureCloud,
+  updateDatasourceCredentials,
+} from '@grafana/azure-sdk';
 import { DataSourceSettings, SelectableValue } from '@grafana/data';
+import { PromOptions } from '@grafana/prometheus';
 import { config } from '@grafana/runtime';
-
-import { AzureCloud, AzureCredentials, ConcealedSecret } from './AzureCredentials';
-
-const concealed: ConcealedSecret = Symbol('Concealed client secret');
-
-function getDefaultAzureCloud(): string {
-  return config.azure.cloud || AzureCloud.Public;
-}
-
-function getSecret(options: DataSourceSettings<any, any>): undefined | string | ConcealedSecret {
-  if (options.secureJsonFields.azureClientSecret) {
-    // The secret is concealed on server
-    return concealed;
-  } else {
-    const secret = options.secureJsonData?.azureClientSecret;
-    return typeof secret === 'string' && secret.length > 0 ? secret : undefined;
-  }
-}
-
-export function hasCredentials(options: DataSourceSettings<any, any>): boolean {
-  return !!options.jsonData.azureCredentials;
-}
 
 export function getAzureCloudOptions(): Array<SelectableValue<string>> {
   const cloudInfo = getAzureClouds();
@@ -41,101 +29,25 @@ export function getDefaultCredentials(): AzureCredentials {
   }
 }
 
-export function getCredentials(options: DataSourceSettings<any, any>): AzureCredentials {
-  const credentials = options.jsonData.azureCredentials as AzureCredentials | undefined;
+export function getCredentials(options: AzureDataSourceSettings): AzureCredentials {
+  const credentials = getDatasourceCredentials(options);
+  if (credentials) {
+    return credentials;
+  }
 
   // If no credentials saved, then return empty credentials
   // of type based on whether the managed identity enabled
-  if (!credentials) {
-    return getDefaultCredentials();
-  }
-
-  switch (credentials.authType) {
-    case 'msi':
-    case 'workloadidentity':
-      if (
-        (credentials.authType === 'msi' && config.azure.managedIdentityEnabled) ||
-        (credentials.authType === 'workloadidentity' && config.azure.workloadIdentityEnabled)
-      ) {
-        return {
-          authType: credentials.authType,
-        };
-      } else {
-        // If authentication type is managed identity or workload identity but either method is disabled in Grafana config,
-        // then we should fallback to an empty app registration (client secret) configuration
-        return {
-          authType: 'clientsecret',
-          azureCloud: getDefaultAzureCloud(),
-        };
-      }
-    case 'clientsecret':
-      return {
-        authType: 'clientsecret',
-        azureCloud: credentials.azureCloud || getDefaultAzureCloud(),
-        tenantId: credentials.tenantId,
-        clientId: credentials.clientId,
-        clientSecret: getSecret(options),
-      };
-  }
+  return getDefaultCredentials();
 }
 
 export function updateCredentials(
-  options: DataSourceSettings<any, any>,
+  options: AzurePromDataSourceSettings,
   credentials: AzureCredentials
-): DataSourceSettings<any, any> {
-  switch (credentials.authType) {
-    case 'msi':
-    case 'workloadidentity':
-      if (credentials.authType === 'msi' && !config.azure.managedIdentityEnabled) {
-        throw new Error('Managed Identity authentication is not enabled in Grafana config.');
-      }
-      if (credentials.authType === 'workloadidentity' && !config.azure.workloadIdentityEnabled) {
-        throw new Error('Workload Identity authentication is not enabled in Grafana config.');
-      }
-
-      options = {
-        ...options,
-        jsonData: {
-          ...options.jsonData,
-          azureAuthType: credentials.authType,
-          azureCredentials: {
-            authType: credentials.authType,
-          },
-        },
-      };
-
-      return options;
-
-    case 'clientsecret':
-      options = {
-        ...options,
-        jsonData: {
-          ...options.jsonData,
-          azureCredentials: {
-            authType: 'clientsecret',
-            azureCloud: credentials.azureCloud || getDefaultAzureCloud(),
-            tenantId: credentials.tenantId,
-            clientId: credentials.clientId,
-          },
-        },
-        secureJsonData: {
-          ...options.secureJsonData,
-          azureClientSecret:
-            typeof credentials.clientSecret === 'string' && credentials.clientSecret.length > 0
-              ? credentials.clientSecret
-              : undefined,
-        },
-        secureJsonFields: {
-          ...options.secureJsonFields,
-          azureClientSecret: typeof credentials.clientSecret === 'symbol',
-        },
-      };
-
-      return options;
-  }
+): AzurePromDataSourceSettings {
+  return updateDatasourceCredentials(options, credentials);
 }
 
-export function setDefaultCredentials(options: DataSourceSettings<any, any>): Partial<DataSourceSettings<any, any>> {
+export function setDefaultCredentials(options: AzurePromDataSourceSettings): Partial<AzurePromDataSourceSettings> {
   return {
     jsonData: {
       ...options.jsonData,
@@ -144,13 +56,18 @@ export function setDefaultCredentials(options: DataSourceSettings<any, any>): Pa
   };
 }
 
-export function resetCredentials(options: DataSourceSettings<any, any>): Partial<DataSourceSettings<any, any>> {
+export function resetCredentials(options: AzurePromDataSourceSettings): Partial<AzurePromDataSourceSettings> {
   return {
     jsonData: {
       ...options.jsonData,
-      azureAuth: undefined,
       azureCredentials: undefined,
       azureEndpointResourceId: undefined,
     },
   };
 }
+
+export interface AzurePromDataSourceOptions extends PromOptions, AzureDataSourceJsonData {
+  azureEndpointResourceId?: string;
+}
+
+export type AzurePromDataSourceSettings = DataSourceSettings<AzurePromDataSourceOptions, AzureDataSourceSecureJsonData>;

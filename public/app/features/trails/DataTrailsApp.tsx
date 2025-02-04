@@ -108,7 +108,7 @@ function DataTrailView({ trail }: { trail: DataTrail }) {
   return (
     <UrlSyncContextProvider scene={trail}>
       <Page navId="explore/metrics" pageNav={{ text: getMetricName(metric) }} layout={PageLayoutType.Custom}>
-        {config.featureToggles.singleTopNav && config.featureToggles.enableScopesInMetricsExplore && (
+        {config.featureToggles.enableScopesInMetricsExplore && (
           <AppChromeUpdate
             actions={
               <div className={styles.topNavContainer}>
@@ -155,6 +155,7 @@ export function getDataTrailsApp() {
 const getStyles = () => ({
   topNavContainer: css({
     width: '100%',
+    height: '100%',
     display: 'flex',
     flexDirection: 'row',
     justifyItems: 'flex-start',

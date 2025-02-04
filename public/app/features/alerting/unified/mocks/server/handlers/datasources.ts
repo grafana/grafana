@@ -1,4 +1,4 @@
-import { http, HttpResponse } from 'msw';
+import { HttpResponse, http } from 'msw';
 
 import { buildInfoResponse } from 'app/features/alerting/unified/testSetup/featureDiscovery';
 
@@ -28,5 +28,28 @@ export const datasourceBuildInfoHandler = () =>
     }
   );
 
-const datasourcesHandlers = [datasourceBuildInfoHandler()];
+// TODO: Add more accurate endpoint responses as tests require
+const labelValuesHandler = () =>
+  http.get('/api/datasources/uid/:datasourceUid/resources/api/v1/label/__name__/values', ({ params }) => {
+    return HttpResponse.json({ status: 'sucess', data: [] });
+  });
+
+// TODO: Add more accurate endpoint responses as tests require
+const resourcesLabelsHandler = () =>
+  http.get('/api/datasources/uid/:datasourceUid/resources/api/v1/labels', () =>
+    HttpResponse.json({ status: 'success', data: [] })
+  );
+
+// TODO: Add more accurate endpoint responses as tests require
+const resourcesMetadataHandler = () =>
+  http.get('/api/datasources/uid/:datasourceUid/resources/api/v1/metadata', () =>
+    HttpResponse.json({ status: 'success', data: {} })
+  );
+
+const datasourcesHandlers = [
+  datasourceBuildInfoHandler(),
+  labelValuesHandler(),
+  resourcesLabelsHandler(),
+  resourcesMetadataHandler(),
+];
 export default datasourcesHandlers;

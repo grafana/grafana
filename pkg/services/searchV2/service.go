@@ -85,7 +85,7 @@ func (s *StandardSearchService) IsReady(ctx context.Context, orgId int64) IsSear
 
 func ProvideService(cfg *setting.Cfg, sql db.DB, entityEventStore store.EntityEventsService,
 	ac accesscontrol.Service, tracer tracing.Tracer, features featuremgmt.FeatureToggles, orgService org.Service,
-	userService user.Service, folderStore folder.Store) SearchService {
+	userService user.Service, folderService folder.Service) SearchService {
 	extender := &NoopExtender{}
 	logger := log.New("searchV2")
 	s := &StandardSearchService{
@@ -93,16 +93,15 @@ func ProvideService(cfg *setting.Cfg, sql db.DB, entityEventStore store.EntityEv
 		sql: sql,
 		ac:  ac,
 		auth: &simpleAuthService{
-			sql:         sql,
-			ac:          ac,
-			folderStore: folderStore,
-			logger:      logger,
+			sql:           sql,
+			ac:            ac,
+			folderService: folderService,
+			logger:        logger,
 		},
 		dashboardIndex: newSearchIndex(
 			newSQLDashboardLoader(sql, tracer, cfg.Search),
 			entityEventStore,
 			extender.GetDocumentExtender(),
-			newFolderIDLookup(sql),
 			tracer,
 			features,
 			cfg.Search,
@@ -155,18 +154,18 @@ func (s *StandardSearchService) getUser(ctx context.Context, backendUser *backen
 	// TODO: get user & user's permissions from the request context
 
 	var usr *user.SignedInUser
-	if s.cfg.AnonymousEnabled && backendUser.Email == "" && backendUser.Login == "" {
-		getOrg := org.GetOrgByNameQuery{Name: s.cfg.AnonymousOrgName}
+	if s.cfg.Anonymous.Enabled && backendUser.Email == "" && backendUser.Login == "" {
+		getOrg := org.GetOrgByNameQuery{Name: s.cfg.Anonymous.OrgName}
 		orga, err := s.orgService.GetByName(ctx, &getOrg)
 		if err != nil {
-			s.logger.Error("Anonymous access organization error.", "org_name", s.cfg.AnonymousOrgName, "error", err)
+			s.logger.Error("Anonymous access organization error.", "org_name", s.cfg.Anonymous.OrgName, "error", err)
 			return nil, err
 		}
 
 		usr = &user.SignedInUser{
 			OrgID:       orga.ID,
 			OrgName:     orga.Name,
-			OrgRole:     org.RoleType(s.cfg.AnonymousOrgRole),
+			OrgRole:     org.RoleType(s.cfg.Anonymous.OrgRole),
 			IsAnonymous: true,
 		}
 	} else {

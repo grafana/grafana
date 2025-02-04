@@ -69,8 +69,7 @@ export const CloudReceiverForm = ({ contactPoint, alertManagerSourceName, readOn
 
   // this basically checks if we can manage the selected alert manager data source, either because it's a Grafana Managed one
   // or a Mimir-based AlertManager
-  const isManageableAlertManagerDataSource =
-    !readOnly ?? !isVanillaPrometheusAlertManagerDataSource(alertManagerSourceName);
+  const isManageableAlertManagerDataSource = !readOnly && !isVanillaAM;
 
   return (
     <>

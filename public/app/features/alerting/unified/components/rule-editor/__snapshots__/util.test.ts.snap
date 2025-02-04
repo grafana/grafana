@@ -11,7 +11,7 @@ exports[`getThresholdsForQueries should work for classic_condition 1`] = `
           "value": -Infinity,
         },
         {
-          "color": "#D10E5C",
+          "color": "#d10e5c",
           "value": 0,
         },
       ],
@@ -32,7 +32,7 @@ exports[`getThresholdsForQueries should work for lt and gt 1`] = `
           "value": -Infinity,
         },
         {
-          "color": "#D10E5C",
+          "color": "#d10e5c",
           "value": 0,
         },
       ],
@@ -53,7 +53,7 @@ exports[`getThresholdsForQueries should work for lt and gt 2`] = `
           "value": -Infinity,
         },
         {
-          "color": "#D10E5C",
+          "color": "#d10e5c",
           "value": 0,
         },
       ],
@@ -70,11 +70,11 @@ exports[`getThresholdsForQueries should work for outside_range 1`] = `
       "mode": "absolute",
       "steps": [
         {
-          "color": "#D10E5C",
+          "color": "#d10e5c",
           "value": -Infinity,
         },
         {
-          "color": "#D10E5C",
+          "color": "#d10e5c",
           "value": 0,
         },
         {
@@ -82,7 +82,7 @@ exports[`getThresholdsForQueries should work for outside_range 1`] = `
           "value": 0,
         },
         {
-          "color": "#D10E5C",
+          "color": "#d10e5c",
           "value": 10,
         },
       ],
@@ -103,7 +103,7 @@ exports[`getThresholdsForQueries should work for threshold condition 1`] = `
           "value": -Infinity,
         },
         {
-          "color": "#D10E5C",
+          "color": "#d10e5c",
           "value": 0,
         },
       ],
@@ -124,11 +124,11 @@ exports[`getThresholdsForQueries should work for within_range 1`] = `
           "value": -Infinity,
         },
         {
-          "color": "#D10E5C",
+          "color": "#d10e5c",
           "value": 0,
         },
         {
-          "color": "#D10E5C",
+          "color": "#d10e5c",
           "value": 10,
         },
         {
