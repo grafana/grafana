@@ -31,16 +31,14 @@ export function PluginDetailsPanel(props: Props): React.ReactElement | null {
   const { pluginExtentionsInfo, plugin, width = '250px' } = props;
   const [reportAbuseModalOpen, setReportAbuseModalOpen] = useState(false);
 
-  const trailURLSlash = (url: string | undefined) => (url?.endsWith('/') ? url?.slice(0, -1) : url);
+  const normalizeURL = (url: string | undefined) => url?.replace(/\/$/, '');
 
-  console.log('plugin', plugin);
-  console.log('pluginExtentionsInfo', pluginExtentionsInfo);
-
-  const customLinks = plugin.details?.links?.filter(
-    (link) =>
-      ![plugin.url, plugin.details?.licenseUrl, plugin.details?.documentationUrl].includes(trailURLSlash(link.url))
-  );
-
+  const customLinks = plugin.details?.links?.filter((link) => {
+    const customLinksFiltered = ![plugin.url, plugin.details?.licenseUrl, plugin.details?.documentationUrl]
+      .map(normalizeURL)
+      .includes(normalizeURL(link.url));
+    return customLinksFiltered;
+  });
   const shouldRenderLinks = plugin.url || plugin.details?.licenseUrl || plugin.details?.documentationUrl;
 
   const styles = useStyles2(getStyles);
@@ -84,45 +82,6 @@ export function PluginDetailsPanel(props: Props): React.ReactElement | null {
             )}
           </Stack>
         </Box>
-
-        {plugin?.details?.links && plugin.details?.links?.length > 0 && (
-          <Box padding={2} borderColor="medium" borderStyle="solid">
-            <Stack direction="column" gap={2}>
-              {pluginExtentionsInfo.map((infoItem, index) => {
-                return (
-                  <Stack key={index} wrap direction="column" gap={0.5}>
-                    <Text color="secondary">{infoItem.label + ':'}</Text>
-                    <div>{infoItem.value}</div>
-                  </Stack>
-                );
-              })}
-              {plugin.updatedAt && (
-                <Stack direction="column" gap={0.5}>
-                  <Text color="secondary">
-                    <Trans i18nKey="plugins.details.labels.updatedAt">Last updated:</Trans>
-                  </Text>{' '}
-                  <Text>
-                    {formatDate(new Date(plugin.updatedAt), { day: 'numeric', month: 'short', year: 'numeric' })}
-                  </Text>
-                </Stack>
-              )}
-              {plugin?.details?.lastCommitDate && (
-                <Stack direction="column" gap={0.5}>
-                  <Text color="secondary">
-                    <Trans i18nKey="plugins.details.labels.lastCommitDate">Last commit date:</Trans>
-                  </Text>{' '}
-                  <Text>
-                    {formatDate(new Date(plugin.details.lastCommitDate), {
-                      day: 'numeric',
-                      month: 'short',
-                      year: 'numeric',
-                    })}
-                  </Text>
-                </Stack>
-              )}
-            </Stack>
-          </Box>
-        )}
         {shouldRenderLinks && (
           <>
             <Box padding={2} borderColor="medium" borderStyle="solid">
@@ -131,12 +90,12 @@ export function PluginDetailsPanel(props: Props): React.ReactElement | null {
                   <Trans i18nKey="plugins.details.labels.links">Links </Trans>
                 </Text>
                 {plugin.url && (
-                  <LinkButton href={plugin.url} variant="secondary" fill="solid" icon="github">
+                  <LinkButton href={plugin.url} variant="secondary" fill="solid" icon="code-branch">
                     <Trans i18nKey="plugins.details.labels.repository">Repository</Trans>
                   </LinkButton>
                 )}
                 {plugin.url && (
-                  <LinkButton href={`${plugin.url}/issues/new`} variant="secondary" fill="solid" icon="github">
+                  <LinkButton href={`${plugin.url}/issues/new`} variant="secondary" fill="solid" icon="bug">
                     <Trans i18nKey="plugins.details.labels.raiseAnIssue">Raise an issue</Trans>
                   </LinkButton>
                 )}
