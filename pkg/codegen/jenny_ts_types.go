@@ -1,10 +1,12 @@
 package codegen
 
 import (
+	"context"
+
+	"cuelang.org/go/cue"
 	"github.com/grafana/codejen"
-	"github.com/grafana/cuetsy"
+	"github.com/grafana/cog"
 	"github.com/grafana/cuetsy/ts/ast"
-	"github.com/grafana/grafana/pkg/codegen/generators"
 )
 
 type ApplyFunc func(sfg SchemaForGen, file *ast.File)
@@ -21,18 +23,17 @@ func (j TSTypesJenny) JennyName() string {
 }
 
 func (j TSTypesJenny) Generate(sfg SchemaForGen) (*codejen.File, error) {
-	f, err := generators.GenerateTypesTS(sfg.CueFile, &generators.TSConfig{
-		CuetsyConfig: &cuetsy.Config{
-			Export:       true,
-			ImportMapper: MapCUEImportToTS,
-		},
-		RootName: sfg.Name,
-		IsGroup:  sfg.IsGroup,
-	})
-
-	for _, renameFunc := range j.ApplyFuncs {
-		renameFunc(sfg, f)
+	cueValue := sfg.CueFile.LookupPath(cue.ParsePath("lineage.schemas[0].schema.spec"))
+	opts := make([]cog.CUEOption, 0)
+	if sfg.IsGroup {
+		opts = append(opts, cog.ForceEnvelope(sfg.Name))
 	}
+
+	f, err := cog.
+		TypesFromSchema().
+		CUEValue(sfg.Name, cueValue, opts...).
+		Typescript(cog.TypescriptConfig{}).
+		Run(context.Background())
 
 	if err != nil {
 		return nil, err
@@ -43,5 +44,5 @@ func (j TSTypesJenny) Generate(sfg SchemaForGen) (*codejen.File, error) {
 		outputName = sfg.OutputName
 	}
 
-	return codejen.NewFile(outputName+"_types.gen.ts", []byte(f.String()), j), nil
+	return codejen.NewFile(outputName+"_types.gen.ts", f[0].Data, j), nil
 }

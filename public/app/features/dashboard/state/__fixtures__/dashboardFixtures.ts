@@ -6,11 +6,12 @@ import {
   Panel,
   RowPanel,
   VariableModel,
+  VariableType,
 } from '@grafana/schema';
-import { GetVariables } from 'app/features/variables/state/selectors';
-import { DashboardMeta } from 'app/types';
+import {GetVariables} from 'app/features/variables/state/selectors';
+import {DashboardMeta} from 'app/types';
 
-import { DashboardModel } from '../DashboardModel';
+import {DashboardModel} from '../DashboardModel';
 
 export function createDashboardModelFixture(
   dashboardInput: Partial<Dashboard> = {},
@@ -19,7 +20,7 @@ export function createDashboardModelFixture(
 ): DashboardModel {
   const dashboardJson: Dashboard = {
     editable: true,
-    graphTooltip: defaultDashboardCursorSync,
+    graphTooltip: defaultDashboardCursorSync(),
     schemaVersion: 1,
     version: 1,
     timezone: '',
@@ -53,7 +54,7 @@ export function createVariableJSONFixture(annotationInput: Partial<VariableModel
   return {
     ...defaultVariableModel,
     name: 'foo.variable',
-    type: 'constant',
+    type: VariableType.Constant,
     ...annotationInput,
   };
 }

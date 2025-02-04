@@ -8,8 +8,10 @@ import (
 	"strings"
 
 	"github.com/grafana/codejen"
+	"github.com/grafana/cuetsy"
 	tsast "github.com/grafana/cuetsy/ts/ast"
 	"github.com/grafana/grafana/pkg/codegen"
+	"github.com/grafana/grafana/pkg/codegen/generators"
 	"github.com/grafana/grafana/pkg/plugins/codegen/pfs"
 )
 
@@ -17,14 +19,12 @@ var versionedPluginPath = filepath.Join("packages", "grafana-schema", "src", "ra
 
 func PluginTSTypesJenny(root string) codejen.OneToMany[*pfs.PluginDecl] {
 	return &ptsJenny{
-		root:  root,
-		inner: adaptToPipeline(codegen.TSTypesJenny{}),
+		root: root,
 	}
 }
 
 type ptsJenny struct {
-	root  string
-	inner codejen.OneToOne[*pfs.PluginDecl]
+	root string
 }
 
 func (j *ptsJenny) JennyName() string {
@@ -44,10 +44,22 @@ func (j *ptsJenny) Generate(decl *pfs.PluginDecl) (codejen.Files, error) {
 		}
 	}
 
-	jf, err := j.inner.Generate(decl)
+	rootName := derivePascalName(decl.PluginMeta.Id, decl.PluginMeta.Name) + decl.SchemaInterface.Name
+
+	tsGen, err := generators.GenerateTypesTS(decl.CueFile, &generators.TSConfig{
+		CuetsyConfig: &cuetsy.Config{
+			Export:       true,
+			ImportMapper: codegen.MapCUEImportToTS,
+		},
+		RootName: rootName,
+		IsGroup:  decl.SchemaInterface.IsGroup,
+	})
+
 	if err != nil {
 		return nil, err
 	}
+
+	jf := codejen.NewFile(rootName+"_types.gen.ts", []byte(tsGen.String()), j)
 
 	rawData := tsast.Raw{Data: string(jf.Data)}
 	rawVersion := tsast.Raw{
@@ -84,16 +96,6 @@ func getPluginVersion(pluginVersion *string) string {
 	}
 
 	return version
-}
-
-func adaptToPipeline(j codejen.OneToOne[codegen.SchemaForGen]) codejen.OneToOne[*pfs.PluginDecl] {
-	return codejen.AdaptOneToOne(j, func(pd *pfs.PluginDecl) codegen.SchemaForGen {
-		return codegen.SchemaForGen{
-			Name:    derivePascalName(pd.PluginMeta.Id, pd.PluginMeta.Name) + pd.SchemaInterface.Name,
-			CueFile: pd.CueFile,
-			IsGroup: pd.SchemaInterface.IsGroup,
-		}
-	})
 }
 
 func derivePascalName(id string, name string) string {

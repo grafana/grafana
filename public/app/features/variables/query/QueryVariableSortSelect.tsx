@@ -11,15 +11,15 @@ interface Props {
 }
 
 const SORT_OPTIONS = [
-  { label: 'Disabled', value: VariableSort.disabled },
-  { label: 'Alphabetical (asc)', value: VariableSort.alphabeticalAsc },
-  { label: 'Alphabetical (desc)', value: VariableSort.alphabeticalDesc },
-  { label: 'Numerical (asc)', value: VariableSort.numericalAsc },
-  { label: 'Numerical (desc)', value: VariableSort.numericalDesc },
-  { label: 'Alphabetical (case-insensitive, asc)', value: VariableSort.alphabeticalCaseInsensitiveAsc },
-  { label: 'Alphabetical (case-insensitive, desc)', value: VariableSort.alphabeticalCaseInsensitiveDesc },
-  { label: 'Natural (asc)', value: VariableSort.naturalAsc },
-  { label: 'Natural (desc)', value: VariableSort.naturalDesc },
+  { label: 'Disabled', value: VariableSort.Disabled },
+  { label: 'Alphabetical (asc)', value: VariableSort.AlphabeticalAsc },
+  { label: 'Alphabetical (desc)', value: VariableSort.AlphabeticalDesc },
+  { label: 'Numerical (asc)', value: VariableSort.NumericalAsc },
+  { label: 'Numerical (desc)', value: VariableSort.NumericalDesc },
+  { label: 'Alphabetical (case-insensitive, asc)', value: VariableSort.AlphabeticalCaseInsensitiveAsc },
+  { label: 'Alphabetical (case-insensitive, desc)', value: VariableSort.AlphabeticalCaseInsensitiveDesc },
+  { label: 'Natural (asc)', value: VariableSort.NaturalAsc },
+  { label: 'Natural (desc)', value: VariableSort.NaturalDesc },
 ];
 
 export function QueryVariableSortSelect({ onChange, sort, testId }: PropsWithChildren<Props>) {

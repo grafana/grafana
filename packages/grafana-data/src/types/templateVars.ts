@@ -26,21 +26,21 @@ export type TypedVariableModel =
   | SnapshotVariableModel;
 
 export enum VariableRefresh {
-  never, // removed from the UI
-  onDashboardLoad,
-  onTimeRangeChanged,
+  Never = 0,
+  OnDashboardLoad = 1,
+  OnTimeRangeChanged = 2,
 }
 
 export enum VariableSort {
-  disabled,
-  alphabeticalAsc,
-  alphabeticalDesc,
-  numericalAsc,
-  numericalDesc,
-  alphabeticalCaseInsensitiveAsc,
-  alphabeticalCaseInsensitiveDesc,
-  naturalAsc,
-  naturalDesc,
+  Disabled = 0,
+  AlphabeticalAsc = 1,
+  AlphabeticalDesc = 2,
+  NumericalAsc = 3,
+  NumericalDesc = 4,
+  AlphabeticalCaseInsensitiveAsc = 5,
+  AlphabeticalCaseInsensitiveDesc = 6,
+  NaturalAsc = 7,
+  NaturalDesc = 8,
 }
 
 export enum VariableHide {
