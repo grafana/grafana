@@ -125,7 +125,6 @@ func (s *APIFolderStore) ListFolders(ctx context.Context, ns types.NamespaceInfo
 	})
 
 	const defaultPageSize = 500
-
 	folders := make([]Folder, 0, defaultPageSize)
 	err = p.EachListItem(ctx, metav1.ListOptions{Limit: defaultPageSize}, func(obj runtime.Object) error {
 		object, err := utils.MetaAccessor(obj)
@@ -140,7 +139,6 @@ func (s *APIFolderStore) ListFolders(ctx context.Context, ns types.NamespaceInfo
 		}
 
 		folders = append(folders, folder)
-
 		return nil
 	})
 
