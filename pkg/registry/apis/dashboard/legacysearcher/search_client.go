@@ -10,6 +10,8 @@ import (
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/apis/dashboard"
+	folderv0alpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
@@ -48,9 +50,9 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 	}
 
 	var queryType string
-	if req.Options.Key.Resource == "dashboards" {
+	if req.Options.Key.Resource == dashboard.DASHBOARD_RESOURCE {
 		queryType = searchstore.TypeDashboard
-	} else if req.Options.Key.Resource == "folders" {
+	} else if req.Options.Key.Resource == folderv0alpha1.RESOURCE {
 		queryType = searchstore.TypeFolder
 	} else {
 		return nil, fmt.Errorf("bad type request")
@@ -61,7 +63,7 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 	}
 
 	for _, fed := range req.Federated {
-		if (fed.Resource == "dashboards" && queryType == searchstore.TypeFolder) || (fed.Resource == "folders" && queryType == searchstore.TypeDashboard) {
+		if (fed.Resource == dashboard.DASHBOARD_RESOURCE && queryType == searchstore.TypeFolder) || (fed.Resource == folderv0alpha1.RESOURCE && queryType == searchstore.TypeDashboard) {
 			queryType = "" // makes the legacy store search across both
 		}
 	}
@@ -168,17 +170,17 @@ func getResourceKey(item *dashboards.DashboardSearchProjection) *resource.Resour
 	if item.IsFolder {
 		return &resource.ResourceKey{
 			Namespace: "default",
-			Group:     "folder.grafana.app",
-			Resource:  "folders",
+			Group:     folderv0alpha1.GROUP,
+			Resource:  folderv0alpha1.RESOURCE,
 			Name:      item.UID,
 		}
-	} else {
-		return &resource.ResourceKey{
-			Namespace: "default",
-			Group:     "dashboard.grafana.app",
-			Resource:  "dashboards",
-			Name:      item.UID,
-		}
+	}
+
+	return &resource.ResourceKey{
+		Namespace: "default",
+		Group:     dashboard.GROUP,
+		Resource:  dashboard.DASHBOARD_RESOURCE,
+		Name:      item.UID,
 	}
 }
 

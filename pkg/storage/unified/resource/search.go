@@ -11,6 +11,7 @@ import (
 	"time"
 
 	dashboardv0alpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
+	folderv0alpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/hashicorp/golang-lru/v2/expirable"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -662,14 +663,14 @@ func AsResourceKey(ns string, k string) (*ResourceKey, error) {
 	case "folders", "folder":
 		return &ResourceKey{
 			Namespace: ns,
-			Group:     "folder.grafana.app",
-			Resource:  "folders",
+			Group:     folderv0alpha1.GROUP,
+			Resource:  folderv0alpha1.RESOURCE,
 		}, nil
 	case "dashboards", "dashboard":
 		return &ResourceKey{
 			Namespace: ns,
 			Group:     dashboardv0alpha1.GROUP,
-			Resource:  "dashboards",
+			Resource:  dashboardv0alpha1.RESOURCE,
 		}, nil
 
 	// NOT really supported in the dashboard search UI, but useful for manual testing
