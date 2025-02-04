@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"path"
+	"strings"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -166,7 +167,6 @@ func (r *syncer) Sync(ctx context.Context,
 func (r *syncer) replicateChanges(ctx context.Context, changes []repository.FileChange) (*provisioning.JobStatus, error) {
 	// Create an empty tree to avoid loading all folders unnecessarily
 	folderTree := resources.NewEmptyFolderTree()
-	parents := make(map[string]bool)
 	summary := provisioning.JobResourceSummary{}
 	status := &provisioning.JobStatus{}
 
@@ -223,12 +223,9 @@ func (r *syncer) replicateChanges(ctx context.Context, changes []repository.File
 		}
 
 		// Make sure the parent folders exist
-		parent := resources.ParentFolder(path.Dir(change.Path), r.repository.Config())
-		if !parents[parent] {
-			if err := r.ensureFolderPathExists(ctx, path.Dir(change.Path), parent, folderTree); err != nil {
-				return status, fmt.Errorf("ensure folder path exists: %w", err)
-			}
-			parents[parent] = true
+		parent, err := r.ensureFolderPathExists(ctx, change.Path, folderTree, r.repository.Config())
+		if err != nil {
+			return nil, err // fail when we can not make folders
 		}
 
 		// Replicate the file changes
@@ -280,24 +277,39 @@ func (r *syncer) replicateChanges(ctx context.Context, changes []repository.File
 }
 
 // ensureFolderPathExists creates the folder structure in the cluster.
-func (r *syncer) ensureFolderPathExists(ctx context.Context, dirPath, parent string, folderTree *resources.FolderTree) error {
-	return safepath.Walk(ctx, dirPath, func(ctx context.Context, path string) error {
-		fid := resources.ParseFolder(path, r.repository.Config().GetName())
-		if folderTree.In(fid.ID) {
-			// already visited
-			parent = fid.ID
-			return nil
+func (r *syncer) ensureFolderPathExists(ctx context.Context, filePath string, folderTree *resources.FolderTree, cfg *provisioning.Repository) (parent string, err error) {
+	f := resources.ParseFolder(path.Dir(filePath), cfg.Name)
+	if folderTree.In(f.ID) {
+		return f.ID, nil
+	}
+
+	parent = resources.RootFolder(cfg)
+	traverse := ""
+
+	for i, part := range strings.Split(f.Path, "/") {
+		if i == 0 {
+			traverse = part
+		} else {
+			traverse, err = safepath.Join(traverse, part)
+			if err != nil {
+				return "", fmt.Errorf("unable to make path: %w", err)
+			}
 		}
 
-		if err := r.ensureFolderExists(ctx, fid, parent); err != nil {
-			return fmt.Errorf("ensure folder exists: %w", err)
+		f := resources.ParseFolder(traverse, cfg.GetName())
+		if folderTree.In(f.ID) {
+			parent = f.ID
+			continue
 		}
 
-		folderTree.Add(fid, parent)
-		parent = fid.ID
-
-		return nil
-	})
+		err = r.ensureFolderExists(ctx, f, parent)
+		if err != nil {
+			return "", err
+		}
+		folderTree.Add(f, parent)
+		parent = f.ID
+	}
+	return f.ID, err
 }
 
 // ensureFolderExists creates the folder if it doesn't exist.
