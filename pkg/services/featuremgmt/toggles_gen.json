@@ -1529,16 +1529,16 @@
     {
       "metadata": {
         "name": "exploreMetrics",
-        "resourceVersion": "1720021873452",
+        "resourceVersion": "1737658563230",
         "creationTimestamp": "2024-04-09T18:15:18Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2024-07-03 15:51:13.452477 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2025-01-23 18:56:03.23086 +0000 UTC"
         }
       },
       "spec": {
         "description": "Enables the new Explore Metrics core app",
         "stage": "GA",
-        "codeowner": "@grafana/dashboards-squad",
+        "codeowner": "@grafana/observability-metrics",
         "frontend": true,
         "expression": "true"
       }
@@ -1554,6 +1554,24 @@
         "stage": "experimental",
         "codeowner": "@grafana/observability-metrics",
         "frontend": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "exploreMetricsUseExternalAppPlugin",
+        "resourceVersion": "1738596266973",
+        "creationTimestamp": "2025-01-21T23:24:50Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-02-03 15:24:26.973231 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Use the externalized Metrics Drilldown (formerly known as Explore Metrics) app plugin",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-metrics",
+        "frontend": true,
+        "requiresRestart": true,
         "hideFromDocs": true
       }
     },
