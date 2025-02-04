@@ -32,8 +32,7 @@ func Changes(source []FileTreeEntry, target *provisioning.ResourceList) ([]FileC
 					Path:   check.Path,
 					DB:     check,
 
-					Ref:         file.Hash,
-					PreviousRef: check.Hash,
+					Ref: file.Hash,
 				})
 			}
 			delete(lookup, file.Path)

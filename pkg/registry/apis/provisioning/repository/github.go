@@ -628,15 +628,13 @@ func (r *githubRepository) CompareFiles(ctx context.Context, base, ref string) (
 			})
 		case "renamed": // delete and then add
 			changes = append(changes, FileChange{
-				Action:      FileActionDeleted,
-				Path:        f.GetPreviousFilename(),
-				Ref:         ref,
-				PreviousRef: base,
+				Action: FileActionDeleted,
+				Path:   f.GetPreviousFilename(),
+				Ref:    ref,
 			}, FileChange{
-				Action:      FileActionCreated,
-				Path:        f.GetFilename(),
-				Ref:         ref,
-				PreviousRef: base,
+				Action: FileActionCreated,
+				Path:   f.GetFilename(),
+				Ref:    ref,
 			})
 		case "removed":
 			changes = append(changes, FileChange{
