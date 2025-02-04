@@ -1,11 +1,11 @@
 export { default as aubergine } from './aubergine';
 export { default as debug } from './debug';
-export { default as grafana12dark } from './grafana12dark';
 export { default as grafana12light } from './grafana12light';
 export { default as grafanacon } from './grafanacon';
 export { default as gildedgrove } from './gildedgrove';
 export { default as mars } from './mars';
 export { default as matrix } from './matrix';
+export { default as space } from './space';
 export { default as synthwave } from './synthwave';
 export { default as tron } from './tron';
 export { default as victorian } from './victorian';

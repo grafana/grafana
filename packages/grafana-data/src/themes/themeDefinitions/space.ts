@@ -1,7 +1,7 @@
 import { NewThemeOptions } from '../createTheme';
 
-const grafana12DarkTheme: NewThemeOptions = {
-  name: 'Grafana 12 Dark',
+const spaceTheme: NewThemeOptions = {
+  name: 'Space',
   colors: {
     mode: 'dark',
     border: {
@@ -40,7 +40,6 @@ const grafana12DarkTheme: NewThemeOptions = {
       main: '#4d4593',
       text: '#a8e9ed',
       border: '#5d54a7',
-      name: 'info',
       shade: 'rgb(255, 173, 80)',
       transparent: '#4d4593',
       contrastText: '#FFFFFF',
@@ -49,7 +48,6 @@ const grafana12DarkTheme: NewThemeOptions = {
     error: {
       main: '#c63370',
       text: '#FF5286',
-      name: 'error',
       border: '#db4f89',
       shade: 'rgb(215, 50, 116)',
       transparent: '#c633706b',
@@ -59,7 +57,6 @@ const grafana12DarkTheme: NewThemeOptions = {
     success: {
       main: '#1A7F4B',
       text: '#6CCF8E',
-      name: 'success',
       border: '#6CCF8E',
       shade: 'rgb(60, 146, 102)',
       transparent: '#1A7F4B26',
@@ -69,7 +66,6 @@ const grafana12DarkTheme: NewThemeOptions = {
     warning: {
       main: '#D448EA',
       text: '#FFD783',
-      name: 'warning',
       border: '#FFD783',
       shade: '#eec073',
       transparent: '#ffd684',
@@ -104,4 +100,4 @@ const grafana12DarkTheme: NewThemeOptions = {
   },
 };
 
-export default grafana12DarkTheme;
+export default spaceTheme;

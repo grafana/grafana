@@ -89,7 +89,6 @@ export class SharedPreferences extends PureComponent<Props, State> {
 
     if (config.featureToggles.grafanaconThemes) {
       allowedExtraThemes.push('aubergine');
-      allowedExtraThemes.push('gildedgrove');
       allowedExtraThemes.push('matrix');
       allowedExtraThemes.push('mars');
       allowedExtraThemes.push('synthwave');
@@ -97,8 +96,9 @@ export class SharedPreferences extends PureComponent<Props, State> {
       allowedExtraThemes.push('victorian');
       allowedExtraThemes.push('zen');
 
+      allowedExtraThemes.push('gildedgrove');
       // TODO check these for contrast problems first
-      allowedExtraThemes.push('grafana12dark');
+      allowedExtraThemes.push('space');
       allowedExtraThemes.push('grafana12light');
       allowedExtraThemes.push('grafanacon');
     }
