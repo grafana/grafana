@@ -307,7 +307,7 @@ func (sa *ServiceAccountsService) MigrateApiKeysToServiceAccounts(ctx context.Co
 }
 
 func (sa *ServiceAccountsService) migrateAPIKeysForAllOrgs(ctx context.Context) error {
-	sa.log.Debug("Starting to migrate API keys to service accounts")
+	sa.log.Info("Starting to migrate API keys to service accounts")
 
 	total := 0
 	migrated := 0
@@ -316,7 +316,7 @@ func (sa *ServiceAccountsService) migrateAPIKeysForAllOrgs(ctx context.Context) 
 
 	defer func() {
 		if total > 0 || errorsTotal > 0 {
-			sa.log.Info("API key migration finished", "keys_total", total, "keys_successful", migrated, "keys_failed", failed, "errors", errorsTotal)
+			sa.log.Info("API key migration finished", "total_keys", total, "successful_keys", migrated, "failed_keys", failed, "errors", errorsTotal)
 		}
 		setAPIKeyMigrationStats(total, migrated, failed)
 	}()
@@ -327,7 +327,7 @@ func (sa *ServiceAccountsService) migrateAPIKeysForAllOrgs(ctx context.Context) 
 	}
 
 	for _, o := range orgs {
-		sa.log.Debug("Migrating API keys for org", "orgId", o.ID)
+		sa.log.Info("Migrating API keys for an org", "orgId", o.ID)
 
 		result, err := sa.store.MigrateApiKeysToServiceAccounts(ctx, o.ID)
 		if err != nil {
@@ -336,9 +336,9 @@ func (sa *ServiceAccountsService) migrateAPIKeysForAllOrgs(ctx context.Context) 
 			continue
 		}
 		if result.Failed > 0 {
-			sa.log.Warn("Some API keys failed to be migrated", "keys_total", result.Total, "keys_failed", result.Failed, "orgId", o.ID)
+			sa.log.Warn("Some API keys failed to be migrated", "total_keys", result.Total, "failed_keys", result.Failed, "orgId", o.ID)
 		} else {
-			sa.log.Debug("API key migration is successful", "orgId", o.ID, "keys_total", result.Total)
+			sa.log.Info("API key migration was successful", "orgId", o.ID, "total_keys", result.Total)
 		}
 
 		total += result.Total
