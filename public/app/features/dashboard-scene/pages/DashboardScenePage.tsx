@@ -2,10 +2,9 @@
 import { useEffect, useCallback, useRef } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 import { usePrevious } from 'react-use';
-import { isObjectLike, debounce } from 'lodash';
 
 import { PageLayoutType } from '@grafana/data';
-import { config, locationService, RefreshEvent } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { UrlSyncContextProvider } from '@grafana/scenes';
 import { Alert, Box } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
@@ -18,7 +17,13 @@ import { DashboardPrompt } from '../saving/DashboardPrompt';
 
 import { getDashboardScenePageStateManager } from './DashboardScenePageStateManager';
 import { DashboardScene } from '../scene/DashboardScene';
-// import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
+
+type FilterEvent = {
+  data: {
+    source: string;
+    payload: object;
+  };
+};
 
 export interface Props
   extends Omit<GrafanaRouteComponentProps<DashboardPageRouteParams, DashboardPageRouteSearchParams>, 'match'> {}
@@ -36,31 +41,27 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
   const dashboardRef = useRef<DashboardScene>();
   // After scene migration is complete and we get rid of old dashboard we should refactor dashboardWatcher so this route reload is not need
   const routeReloadCounter = (location.state as any)?.routeReloadCounter;
+
   dashboardRef.current = dashboard;
 
-  console.log('DashboardScenePage');
+  const handleFilterDashboard = useCallback(({ data }: FilterEvent) => {
+    if (data?.source !== 'event-filter-dashboard') return;
 
-  const handleFrameTasks = useCallback(({ data }: any) => {
-    if (isObjectLike(data) && !data?.['source']) {
-      console.log('sent!');
+    const params = locationService.getSearchObject();
+    const urlParams = { ...params, ...data.payload };
 
-      const params = locationService.getSearchObject();
-      const urlParams = { ...params, ...data };
+    locationService.partial(urlParams, true);
 
-      locationService.partial(urlParams, true);
-
-      setTimeout(() => {
-        console.log({ dashboardRef });
-        dashboardRef.current?.state.$timeRange?.onRefresh();
-      }, 300);
-    }
+    setTimeout(() => {
+      dashboardRef.current?.state.$timeRange?.onRefresh();
+    }, 100);
   }, []);
 
   useEffect(() => {
-    window.addEventListener('message', handleFrameTasks, false);
+    window.addEventListener('message', handleFilterDashboard, false);
 
     return () => {
-      window.removeEventListener('message', handleFrameTasks);
+      window.removeEventListener('message', handleFilterDashboard);
     };
   }, []);
 
