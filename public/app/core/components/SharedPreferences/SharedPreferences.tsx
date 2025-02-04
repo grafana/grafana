@@ -81,17 +81,27 @@ export class SharedPreferences extends PureComponent<Props, State> {
       navbar: { bookmarkUrls: [] },
     };
 
-    const validExtraThemes = [];
+    const allowedExtraThemes = [];
 
     if (config.featureToggles.extraThemes) {
-      validExtraThemes.push('debug');
+      allowedExtraThemes.push('debug');
     }
 
     if (config.featureToggles.grafanaconThemes) {
-      // TODO add the new theme ids here
+      allowedExtraThemes.push('aubergine');
+      allowedExtraThemes.push('grafana12dark');
+      allowedExtraThemes.push('grafana12light');
+      allowedExtraThemes.push('grafanacon');
+      allowedExtraThemes.push('greengold');
+      allowedExtraThemes.push('mars');
+      allowedExtraThemes.push('matrix');
+      allowedExtraThemes.push('synthwave');
+      allowedExtraThemes.push('tron');
+      allowedExtraThemes.push('victorian');
+      allowedExtraThemes.push('zen');
     }
 
-    this.themeOptions = getBuiltInThemes(validExtraThemes).map((theme) => ({
+    this.themeOptions = getBuiltInThemes(allowedExtraThemes).map((theme) => ({
       value: theme.id,
       label: getTranslatedThemeName(theme),
     }));

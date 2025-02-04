@@ -11,6 +11,17 @@ var themes = []ThemeDTO{
 	{ID: "dark", Type: "dark"},
 	{ID: "system", Type: "dark"},
 	{ID: "debug", Type: "dark", IsExtra: true},
+	{ID: "aubergine", Type: "dark", IsExtra: true},
+	{ID: "grafana12dark", Type: "dark", IsExtra: true},
+	{ID: "grafana12light", Type: "light", IsExtra: true},
+	{ID: "grafanacon", Type: "dark", IsExtra: true},
+	{ID: "greengold", Type: "dark", IsExtra: true},
+	{ID: "mars", Type: "dark", IsExtra: true},
+	{ID: "matrix", Type: "dark", IsExtra: true},
+	{ID: "synthwave", Type: "dark", IsExtra: true},
+	{ID: "tron", Type: "dark", IsExtra: true},
+	{ID: "victorian", Type: "dark", IsExtra: true},
+	{ID: "zen", Type: "light", IsExtra: true},
 }
 
 func GetThemeByID(id string) *ThemeDTO {
