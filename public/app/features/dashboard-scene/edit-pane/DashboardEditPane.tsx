@@ -175,7 +175,7 @@ export function DashboardEditPaneRenderer({ editPane, isCollapsed, onToggleColla
         </div>
 
         {openOverlay && (
-          <Resizable className={cx(styles.fixed, styles.container)} defaultSize={{ height: '100%' }}>
+          <Resizable className={cx(styles.fixed, styles.container)} defaultSize={{ height: '100%', width: '20vw' }}>
             <ElementEditPane element={editableElement} key={editableElement.getTypeName()} />
           </Resizable>
         )}
