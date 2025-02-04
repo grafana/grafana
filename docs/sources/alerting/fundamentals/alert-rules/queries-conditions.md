@@ -171,7 +171,7 @@ The following aggregation functions are also available to further refine your qu
 | `diff`             | Displays the difference between the newest and oldest value                     |
 | `diff_abs`         | Displays the absolute value of diff                                             |
 | `percent_diff`     | Displays the percentage value of the difference between newest and oldest value |
-| `percent_diff_abs` | Displays the absolute value of percent_diff                                     |
+| `percent_diff_abs` | Displays the absolute value of `percent_diff`                                   |
 | `count_non_null`   | Displays a count of values in the result set that aren't `null`                 |
 
 {{< /collapse >}}
