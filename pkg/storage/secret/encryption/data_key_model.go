@@ -1,4 +1,4 @@
-package secret
+package encryption
 
 import (
 	"time"

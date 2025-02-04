@@ -1,4 +1,6 @@
-package secret
+package encryption
+
+import "github.com/grafana/grafana/pkg/storage/secret/migrator"
 
 type EncryptedValue struct {
 	UID           string `xorm:"pk 'uid'"`
@@ -8,5 +10,5 @@ type EncryptedValue struct {
 }
 
 func (*EncryptedValue) TableName() string {
-	return TableNameEncryptedValue
+	return migrator.TableNameEncryptedValue
 }

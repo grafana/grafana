@@ -22,7 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/kmsproviders"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/storage/secret"
+	encryptionstorage "github.com/grafana/grafana/pkg/storage/secret/encryption"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -38,7 +38,7 @@ var (
 
 type EncryptionManager struct {
 	tracer     tracing.Tracer
-	store      secret.DataKeyStorage
+	store      encryptionstorage.DataKeyStorage
 	enc        legacyEncryption.Internal
 	cfg        *setting.Cfg
 	usageStats usagestats.Service
@@ -57,7 +57,7 @@ type EncryptionManager struct {
 
 func NewEncryptionManager(
 	tracer tracing.Tracer,
-	store secret.DataKeyStorage,
+	store encryptionstorage.DataKeyStorage,
 	kmsProvidersService kmsproviders.Service,
 	enc legacyEncryption.Internal,
 	cfg *setting.Cfg,
@@ -219,7 +219,7 @@ func (s *EncryptionManager) dataKeyByLabel(ctx context.Context, namespace, label
 	// 1. Get data key from database.
 	dataKey, err := s.store.GetCurrentDataKey(ctx, namespace, label)
 	if err != nil {
-		if errors.Is(err, secret.ErrDataKeyNotFound) {
+		if errors.Is(err, encryptionstorage.ErrDataKeyNotFound) {
 			return "", nil, nil
 		}
 		return "", nil, err
@@ -266,7 +266,7 @@ func (s *EncryptionManager) newDataKey(ctx context.Context, namespace string, la
 	// 3. Store its encrypted value into the DB.
 	id := util.GenerateShortUID()
 
-	dbDataKey := secret.SecretDataKey{
+	dbDataKey := encryptionstorage.SecretDataKey{
 		Active:        true,
 		UID:           id,
 		Namespace:     namespace,
@@ -474,7 +474,7 @@ func (s *EncryptionManager) Run(ctx context.Context) error {
 // Look at the comments inline for further details.
 // You can also take a look at the issue below for more context:
 // https://github.com/grafana/grafana-enterprise/issues/4252
-func (s *EncryptionManager) cacheDataKey(dataKey *secret.SecretDataKey, decrypted []byte) {
+func (s *EncryptionManager) cacheDataKey(dataKey *encryptionstorage.SecretDataKey, decrypted []byte) {
 	// First, we cache the data key by id, because cache "by id" is
 	// only used by decrypt operations, so no risk of corrupting data.
 	entry := &dataKeyCacheEntry{

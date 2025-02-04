@@ -18,7 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/kmsproviders/osskmsproviders"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/storage/secret"
+	encryptionstorage "github.com/grafana/grafana/pkg/storage/secret/encryption"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
@@ -55,10 +55,10 @@ func setupTestService(t *testing.T, config string) (OSSKeeperService, error) {
 	cfg := &setting.Cfg{Raw: raw}
 	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
 
-	dataKeyStore, err := secret.ProvideDataKeyStorageStorage(testDB, cfg, features)
+	dataKeyStore, err := encryptionstorage.ProvideDataKeyStorageStorage(testDB, cfg, features)
 	require.NoError(t, err)
 
-	encValueStore, err := secret.ProvideEncryptedValueStorage(testDB, cfg, features)
+	encValueStore, err := encryptionstorage.ProvideEncryptedValueStorage(testDB, cfg, features)
 	require.NoError(t, err)
 
 	// Initialize the encryption manager

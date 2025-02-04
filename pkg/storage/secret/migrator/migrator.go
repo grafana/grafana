@@ -1,4 +1,4 @@
-package secret
+package migrator
 
 import (
 	"fmt"
@@ -16,7 +16,7 @@ const (
 	TableNameEncryptedValue = "secret_encrypted_value"
 )
 
-func migrateSecretSQL(engine *xorm.Engine, cfg *setting.Cfg) error {
+func MigrateSecretSQL(engine *xorm.Engine, cfg *setting.Cfg) error {
 	mg := migrator.NewScopedMigrator(engine, cfg, "secret")
 	mg.AddCreateMigration()
 

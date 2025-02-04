@@ -14,7 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/kmsproviders/osskmsproviders"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/storage/secret"
+	encryptionstorage "github.com/grafana/grafana/pkg/storage/secret/encryption"
 )
 
 func setupTestService(tb testing.TB) *EncryptionManager {
@@ -34,7 +34,7 @@ func setupTestService(tb testing.TB) *EncryptionManager {
 	require.NoError(tb, err)
 
 	cfg := &setting.Cfg{Raw: raw}
-	store, err := secret.ProvideDataKeyStorageStorage(testDB, cfg, features)
+	store, err := encryptionstorage.ProvideDataKeyStorageStorage(testDB, cfg, features)
 	require.NoError(tb, err)
 
 	encProvider := encryptionprovider.Provider{}

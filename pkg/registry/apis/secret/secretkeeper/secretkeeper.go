@@ -7,7 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/sqlkeeper"
 	keepertypes "github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/types"
-	secretstorage "github.com/grafana/grafana/pkg/storage/secret"
+	encryptionstorage "github.com/grafana/grafana/pkg/storage/secret/encryption"
 )
 
 type Service interface {
@@ -17,10 +17,10 @@ type Service interface {
 type OSSKeeperService struct {
 	tracer            tracing.Tracer
 	encryptionManager *manager.EncryptionManager
-	store             secretstorage.EncryptedValueStorage
+	store             encryptionstorage.EncryptedValueStorage
 }
 
-func ProvideService(encryptionManager *manager.EncryptionManager, store secretstorage.EncryptedValueStorage) (OSSKeeperService, error) {
+func ProvideService(encryptionManager *manager.EncryptionManager, store encryptionstorage.EncryptedValueStorage) (OSSKeeperService, error) {
 	return OSSKeeperService{
 		encryptionManager: encryptionManager,
 		store:             store,

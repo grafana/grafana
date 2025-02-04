@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
 	keepertypes "github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/types"
-	secretStorage "github.com/grafana/grafana/pkg/storage/secret"
+	encryptionstorage "github.com/grafana/grafana/pkg/storage/secret/encryption"
 )
 
 type FakeKeeper struct {
@@ -18,7 +18,7 @@ type FakeKeeper struct {
 
 var _ keepertypes.Keeper = (*FakeKeeper)(nil)
 
-func NewFakeKeeper(tracer tracing.Tracer, encryptionManager *manager.EncryptionManager, store secretStorage.EncryptedValueStorage) (*FakeKeeper, error) {
+func NewFakeKeeper(tracer tracing.Tracer, encryptionManager *manager.EncryptionManager, store encryptionstorage.EncryptedValueStorage) (*FakeKeeper, error) {
 	return &FakeKeeper{
 		values: make(map[string]map[string]string),
 	}, nil
