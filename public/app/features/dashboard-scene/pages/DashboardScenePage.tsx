@@ -41,7 +41,7 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
   console.log('DashboardScenePage');
 
   const handleFrameTasks = useCallback(({ data }: any) => {
-    console.log('event.data:', data);
+    // console.log('event.data:', data);
 
     if (isObjectLike(data) && !data?.['source']) {
       console.log('sent!');
@@ -53,7 +53,7 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
 
       console.log(dashboardRef.current);
 
-      dashboardRef.current?.publishEvent(new RefreshEvent());
+      dashboardRef.current?.state.$timeRange?.onRefresh();
     }
   }, []);
 
