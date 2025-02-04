@@ -1,24 +1,13 @@
-{
-  "apiVersion": "apps/v1",
-  "kind": "Deployment",
-  "metadata": {
-    "name": "image-versions"
-  },
-  "spec": {
-    "selector": {
-      "matchLabels": {
-        "name": "image-versions"
-      }
-    },
-    "template": {
-      "spec": {
-        "containers": [
-          {
-            "image": "alpine/git:2.40.1",
-            "name": "git"
-          }
-        ]
-      }
-    }
-  }
-}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: image-versions
+spec:
+  selector:
+    matchLabels:
+      name: image-versions
+  template:
+    spec:
+      containers:
+        - image: alpine/git:2.40.1
+          name: git
