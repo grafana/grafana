@@ -63,7 +63,7 @@ class HistoryAPIDatasource extends RuntimeDataSource<HistoryAPIQuery> {
     const stateTo = templateSrv.replace(query.stateTo ?? '', request.scopedVars);
     const stateFrom = templateSrv.replace(query.stateFrom ?? '', request.scopedVars);
 
-    const historyResult = await getHistory(from, to);
+    const historyResult = await getHistory(from, to, labels);
 
     return {
       data: historyResultToDataFrame(historyResult, { stateTo, stateFrom, labels }),
@@ -81,13 +81,14 @@ class HistoryAPIDatasource extends RuntimeDataSource<HistoryAPIQuery> {
  * @param to the end time
  * @returns the history events only filtered by time
  */
-export const getHistory = (from: number, to: number) => {
+export const getHistory = (from: number, to: number, labels?: string) => {
   return dispatch(
     stateHistoryApi.endpoints.getRuleHistory.initiate(
       {
         from: from,
         to: to,
         limit: LIMIT_EVENTS,
+        labels,
       },
       {
         forceRefetch: Boolean(getTimeSrv().getAutoRefreshInteval().interval), // force refetch in case we are using the refresh option

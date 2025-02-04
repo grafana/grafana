@@ -73,6 +73,7 @@ export const HistoryEventsList = ({
     from: from,
     to: to,
     limit: LIMIT_EVENTS,
+    labels: valueInLabelFilter.toString(),
   });
 
   const { historyRecords: historyRecordsNotSorted } = useRuleHistoryRecords(stateHistory, {
