@@ -512,11 +512,9 @@ describe('Combobox', () => {
 
     it('can be selected by label with @grafana/ui <Field>', () => {
       render(
-        <>
-          <Field label="Country">
-            <Combobox id="country-dropdown" options={options} value={null} onChange={onChangeHandler} />
-          </Field>
-        </>
+        <Field label="Country">
+          <Combobox id="country-dropdown" options={options} value={null} onChange={onChangeHandler} />
+        </Field>
       );
 
       const inputByLabelText = screen.getByLabelText('Country');
@@ -527,11 +525,7 @@ describe('Combobox', () => {
     });
 
     it('can be selected by placeholder', () => {
-      render(
-        <>
-          <Combobox placeholder="Country" options={options} value={null} onChange={onChangeHandler} />
-        </>
-      );
+      render(<Combobox placeholder="Country" options={options} value={null} onChange={onChangeHandler} />);
 
       const inputByPlaceholderText = screen.getByPlaceholderText('Country');
       expect(inputByPlaceholderText).toBeInTheDocument();
