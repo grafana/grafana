@@ -204,177 +204,6 @@ export function TableNG(props: TableNGProps) {
     return records;
   }, []);
   const calcsRef = useRef<string[]>([]);
-  const mapFrameToDataGrid = (main: DataFrame, calcsRef: React.MutableRefObject<string[]>, subTable?: boolean) => {
-    const columns: TableColumn[] = [];
-
-    // Check for nestedFrames
-    const nestedDataField = main.fields.find((f) => f.type === FieldType.nestedFrames);
-    const hasNestedData = nestedDataField !== undefined;
-
-    // If nested frames, add expansion control column
-    if (hasNestedData) {
-      const expanderField: Field = {
-        name: '',
-        type: FieldType.other,
-        config: {},
-        values: [],
-      };
-      columns.push({
-        key: 'expanded',
-        name: '',
-        field: expanderField,
-        cellClass: styles.cell,
-        colSpan(args) {
-          return args.type === 'ROW' && Number(args.row.__depth) === 1 ? main.fields.length : 1;
-        },
-        renderCell: ({ row }) => {
-          // TODO add TableRow type extension to include row depth and optional data
-          if (Number(row.__depth) === 0) {
-            const rowIdx = Number(row.__index);
-            return (
-              <RowExpander
-                height={defaultRowHeight}
-                onCellExpand={() => {
-                  if (!expandedRows.includes(rowIdx)) {
-                    setExpandedRows([...expandedRows, rowIdx]);
-                  } else {
-                    const currentExpandedRows = expandedRows;
-                    const indexToRemove = currentExpandedRows.indexOf(rowIdx);
-                    if (indexToRemove > -1) {
-                      currentExpandedRows.splice(indexToRemove, 1);
-                      setExpandedRows(currentExpandedRows);
-                    }
-                  }
-                  setResizeTrigger((prev) => prev + 1);
-                }}
-                isExpanded={expandedRows.includes(rowIdx)}
-              />
-            );
-          }
-          // If it's a child, render entire DataGrid at first column position
-          let expandedColumns: TableColumn[] = [];
-          let expandedRecords: Array<Record<string, string>> = [];
-          expandedColumns = mapFrameToDataGrid(row.data, calcsRef, true);
-          expandedRecords = frameToRecords(row.data);
-          // TODO add renderHeaderCell HeaderCell's here and handle all features
-          return (
-            <DataGrid
-              rows={expandedRecords}
-              columns={expandedColumns}
-              rowHeight={defaultRowHeight}
-              style={{ height: '100%', overflow: 'visible' }}
-              headerRowHeight={row.data.meta?.custom?.noHeader ? 0 : undefined}
-            />
-          );
-        },
-        width: EXPANDER_WIDTH,
-        minWidth: EXPANDER_WIDTH,
-      });
-    }
-
-    main.fields.map((field, fieldIndex) => {
-      if (field.type === FieldType.nestedFrames) {
-        // Don't render nestedFrames type field
-        return;
-      }
-      const key = field.name;
-
-      // get column width from overrides
-      const override = fieldConfig?.overrides?.find(
-        (o) => o.matcher.id === 'byName' && o.matcher.options === field.name
-      );
-      const width = override?.properties?.find((p) => p.id === 'width')?.value || field.config?.custom?.width;
-
-      const justifyColumnContent = getTextAlign(field);
-      const footerStyles = getFooterStyles(justifyColumnContent);
-
-      // Add a column for each field
-      columns.push({
-        key,
-        name: field.name,
-        field,
-        cellClass: styles.cell,
-        renderCell: subTable
-          ? undefined
-          : (props: any) => {
-              const { row, rowIdx } = props;
-              const value = row[key];
-              // Cell level rendering here
-              return (
-                <TableCellNG
-                  key={key}
-                  value={value}
-                  field={field}
-                  theme={theme}
-                  timeRange={timeRange}
-                  height={defaultRowHeight}
-                  justifyContent={justifyColumnContent}
-                  rowIdx={rowIdx}
-                  shouldTextOverflow={() =>
-                    shouldTextOverflow(
-                      key,
-                      row,
-                      columnTypes,
-                      headerCellRefs,
-                      osContext,
-                      defaultLineHeight,
-                      defaultRowHeight,
-                      DEFAULT_CELL_PADDING,
-                      textWrap
-                    )
-                  }
-                />
-              );
-            },
-        renderSummaryCell: () => {
-          if (isCountRowsSet && fieldIndex === 0) {
-            return (
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span>Count</span>
-                <span>{calcsRef.current[fieldIndex]}</span>
-              </div>
-            );
-          }
-          return <div className={footerStyles.footerCell}>{calcsRef.current[fieldIndex]}</div>;
-        },
-        renderHeaderCell: ({ column, sortDirection }) => (
-          <HeaderCell
-            column={column}
-            rows={rows}
-            field={field}
-            onSort={handleSort}
-            direction={sortDirection}
-            justifyContent={justifyColumnContent}
-            filter={filter}
-            setFilter={setFilter}
-            filterable={filterable}
-            onColumnResize={onColumnResize}
-            headerCellRefs={headerCellRefs}
-            crossFilterOrder={crossFilterOrder}
-            crossFilterRows={crossFilterRows}
-          />
-        ),
-        // TODO these anys are making me sad
-        width: width ?? columnWidth,
-        minWidth: field.config?.custom?.minWidth ?? columnMinWidth,
-      });
-    });
-
-    return columns;
-  };
-
-  function myRowRenderer(key: React.Key, props: RenderRowProps<TableRow>): React.ReactNode {
-    // Let's render row level things here!
-    // i.e. we can look at row styles and such here
-    const { row } = props;
-    // Don't render non expanded child rows
-    if (Number(row.__depth) === 1 && !expandedRows.includes(Number(row.__index))) {
-      return null;
-    }
-    return <Row key={key} {...props} />;
-  }
-
-  const rows = useMemo(() => frameToRecords(props.data), [frameToRecords, props.data]);
 
   // Create a map of column key to column type
   const columnTypes = useMemo(() => {
@@ -386,6 +215,200 @@ export function TableNG(props: TableNGProps) {
       {} as { [key: string]: string }
     );
   }, [props.data.fields]);
+
+  const rows = useMemo(() => frameToRecords(props.data), [frameToRecords, props.data]);
+
+  const mapFrameToDataGrid = useCallback(
+    (main: DataFrame, calcsRef: React.MutableRefObject<string[]>, subTable?: boolean) => {
+      const columns: TableColumn[] = [];
+
+      // Check for nestedFrames
+      const nestedDataField = main.fields.find((f) => f.type === FieldType.nestedFrames);
+      const hasNestedData = nestedDataField !== undefined;
+
+      // If nested frames, add expansion control column
+      if (hasNestedData) {
+        const expanderField: Field = {
+          name: '',
+          type: FieldType.other,
+          config: {},
+          values: [],
+        };
+        columns.push({
+          key: 'expanded',
+          name: '',
+          field: expanderField,
+          cellClass: styles.cell,
+          colSpan(args) {
+            return args.type === 'ROW' && Number(args.row.__depth) === 1 ? main.fields.length : 1;
+          },
+          renderCell: ({ row }) => {
+            // TODO add TableRow type extension to include row depth and optional data
+            if (Number(row.__depth) === 0) {
+              const rowIdx = Number(row.__index);
+              return (
+                <RowExpander
+                  height={defaultRowHeight}
+                  onCellExpand={() => {
+                    if (!expandedRows.includes(rowIdx)) {
+                      setExpandedRows([...expandedRows, rowIdx]);
+                    } else {
+                      const currentExpandedRows = expandedRows;
+                      const indexToRemove = currentExpandedRows.indexOf(rowIdx);
+                      if (indexToRemove > -1) {
+                        currentExpandedRows.splice(indexToRemove, 1);
+                        setExpandedRows(currentExpandedRows);
+                      }
+                    }
+                    setResizeTrigger((prev) => prev + 1);
+                  }}
+                  isExpanded={expandedRows.includes(rowIdx)}
+                />
+              );
+            }
+            // If it's a child, render entire DataGrid at first column position
+            let expandedColumns: TableColumn[] = [];
+            let expandedRecords: Array<Record<string, string>> = [];
+            expandedColumns = mapFrameToDataGrid(row.data, calcsRef, true);
+            expandedRecords = frameToRecords(row.data);
+            // TODO add renderHeaderCell HeaderCell's here and handle all features
+            return (
+              <DataGrid
+                rows={expandedRecords}
+                columns={expandedColumns}
+                rowHeight={defaultRowHeight}
+                style={{ height: '100%', overflow: 'visible' }}
+                headerRowHeight={row.data.meta?.custom?.noHeader ? 0 : undefined}
+              />
+            );
+          },
+          width: EXPANDER_WIDTH,
+          minWidth: EXPANDER_WIDTH,
+        });
+      }
+
+      main.fields.map((field, fieldIndex) => {
+        if (field.type === FieldType.nestedFrames) {
+          // Don't render nestedFrames type field
+          return;
+        }
+        const key = field.name;
+
+        // get column width from overrides
+        const override = fieldConfig?.overrides?.find(
+          (o) => o.matcher.id === 'byName' && o.matcher.options === field.name
+        );
+        const width = override?.properties?.find((p) => p.id === 'width')?.value || field.config?.custom?.width;
+
+        const justifyColumnContent = getTextAlign(field);
+        const footerStyles = getFooterStyles(justifyColumnContent);
+
+        // Add a column for each field
+        columns.push({
+          key,
+          name: field.name,
+          field,
+          cellClass: styles.cell,
+          renderCell: subTable
+            ? undefined
+            : (props: any) => {
+                const { row, rowIdx } = props;
+                const value = row[key];
+                // Cell level rendering here
+                return (
+                  <TableCellNG
+                    key={key}
+                    value={value}
+                    field={field}
+                    theme={theme}
+                    timeRange={timeRange}
+                    height={defaultRowHeight}
+                    justifyContent={justifyColumnContent}
+                    rowIdx={rowIdx}
+                    shouldTextOverflow={() =>
+                      shouldTextOverflow(
+                        key,
+                        row,
+                        columnTypes,
+                        headerCellRefs,
+                        osContext,
+                        defaultLineHeight,
+                        defaultRowHeight,
+                        DEFAULT_CELL_PADDING,
+                        textWrap
+                      )
+                    }
+                  />
+                );
+              },
+          renderSummaryCell: () => {
+            if (isCountRowsSet && fieldIndex === 0) {
+              return (
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span>Count</span>
+                  <span>{calcsRef.current[fieldIndex]}</span>
+                </div>
+              );
+            }
+            return <div className={footerStyles.footerCell}>{calcsRef.current[fieldIndex]}</div>;
+          },
+          renderHeaderCell: ({ column, sortDirection }) => (
+            <HeaderCell
+              column={column}
+              rows={rows}
+              field={field}
+              onSort={handleSort}
+              direction={sortDirection}
+              justifyContent={justifyColumnContent}
+              filter={filter}
+              setFilter={setFilter}
+              filterable={filterable}
+              onColumnResize={onColumnResize}
+              headerCellRefs={headerCellRefs}
+              crossFilterOrder={crossFilterOrder}
+              crossFilterRows={crossFilterRows}
+            />
+          ),
+          // TODO these anys are making me sad
+          width: width ?? columnWidth,
+          minWidth: field.config?.custom?.minWidth ?? columnMinWidth,
+        });
+      });
+
+      return columns;
+    },
+    [
+      columnMinWidth,
+      columnTypes,
+      columnWidth,
+      defaultLineHeight,
+      defaultRowHeight,
+      expandedRows,
+      fieldConfig,
+      filter,
+      filterable,
+      frameToRecords,
+      isCountRowsSet,
+      onColumnResize,
+      osContext,
+      rows,
+      styles.cell,
+      textWrap,
+      theme,
+      timeRange,
+    ]
+  );
+
+  function myRowRenderer(key: React.Key, props: RenderRowProps<TableRow>): React.ReactNode {
+    // Let's render row level things here!
+    // i.e. we can look at row styles and such here
+    const { row } = props;
+    // Don't render non expanded child rows
+    if (Number(row.__depth) === 1 && !expandedRows.includes(Number(row.__index))) {
+      return null;
+    }
+    return <Row key={key} {...props} />;
+  }
 
   // Sort rows
   const sortedRows = useMemo(() => {
@@ -476,12 +499,9 @@ export function TableNG(props: TableNGProps) {
       }
       return getFooterItemNG(filteredRows, field, footerOptions);
     });
-  }, [filteredRows, props.data.fields, footerOptions, isCountRowsSet]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [filteredRows, props.data.fields, footerOptions, isCountRowsSet]);
 
-  const columns = useMemo(
-    () => mapFrameToDataGrid(props.data, calcsRef),
-    [props.data, calcsRef, filter, expandedRows, footerOptions] // eslint-disable-line react-hooks/exhaustive-deps
-  );
+  const columns = useMemo(() => mapFrameToDataGrid(props.data, calcsRef), [props.data, calcsRef, mapFrameToDataGrid]);
 
   // This effect needed to set header cells refs before row height calculation
   useLayoutEffect(() => {
