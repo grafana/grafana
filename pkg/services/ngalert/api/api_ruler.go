@@ -757,23 +757,36 @@ type userIDToUserInfoFn func(id *ngmodels.UserUID) *apimodels.UserInfo
 
 // getIdentityName returns name of either user or service account
 func (srv RulerSrv) resolveUserIdToNameFn(ctx context.Context) userIDToUserInfoFn {
+	cache := map[ngmodels.UserUID]*apimodels.UserInfo{
+		ngmodels.AlertingUserUID: {
+			UID: string(ngmodels.AlertingUserUID),
+		},
+		ngmodels.FileProvisioningUserUID: {
+			UID: string(ngmodels.FileProvisioningUserUID),
+		},
+	}
 	return func(id *ngmodels.UserUID) *apimodels.UserInfo {
 		if id == nil {
 			return nil
 		}
+		if val, ok := cache[*id]; ok {
+			return val
+		}
 		u, err := srv.userService.GetByUID(ctx, &user.GetUserByUIDQuery{
 			UID: string(*id),
 		})
-		var result string
+		var name string
 		if err != nil {
 			srv.log.FromContext(ctx).Warn("Failed to get user by uid. Defaulting to an empty name", "uid", id, "error", err)
 		}
 		if u != nil {
-			result = u.NameOrFallback()
+			name = u.NameOrFallback()
 		}
-		return &apimodels.UserInfo{
+		result := &apimodels.UserInfo{
 			UID:  string(*id),
-			Name: result,
+			Name: name,
 		}
+		cache[*id] = result
+		return result
 	}
 }
