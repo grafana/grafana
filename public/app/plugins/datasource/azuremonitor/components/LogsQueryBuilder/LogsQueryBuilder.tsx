@@ -94,12 +94,7 @@ export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
           table={selectedTable}
           tables={tables}
         />
-        <FilterSection 
-          {...props}
-          query={query}
-          onChange={onQueryChange}
-          selectedColumns={selectedColumns}
-        />
+        <FilterSection {...props} query={query} onChange={onQueryChange} selectedColumns={selectedColumns} />
         <AggregateSection {...props} selectedColumns={selectedColumns} onChange={onQueryChange} />
         {/* <GroupBySection {...props} columns={columns} /> */}
         <KQLPreview query={query.azureLogAnalytics?.query || ''} />

@@ -11,12 +11,12 @@ import { formatKQLQuery, toOperatorOptions, valueToDefinition } from './utils';
 
 function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState(value);
-  
+
   useEffect(() => {
     const handler = setTimeout(() => setDebouncedValue(value), delay);
     return () => clearTimeout(handler);
   }, [value, delay]);
-  
+
   return debouncedValue;
 }
 
@@ -26,67 +26,64 @@ interface FilterSectionProps {
   onChange: (query: AzureMonitorQuery) => void;
 }
 
-export const FilterSection: React.FC<FilterSectionProps> = ({
-  query,
-  onChange,
-  selectedColumns
-}) => {
+export const FilterSection: React.FC<FilterSectionProps> = ({ query, onChange, selectedColumns }) => {
   const styles = useStyles2(getStyles);
 
   const [filters, setFilters] = useState<Array<{ column: string; operator: string; value: string }>>([]);
 
   const debouncedFilters = useDebounce(filters, 300);
 
-  const updateQueryWithFilters = useCallback((updatedFilters: Array<{ column: string; operator: string; value: string }>) => {
-    const hasValue = updatedFilters.some((f) => f.value.trim() !== "");
-    if (!hasValue && updatedFilters.length !== 0) {
-      return;
-    };
-    
-    let baseQuery = query.azureLogAnalytics?.query || '';
+  const updateQueryWithFilters = useCallback(
+    (updatedFilters: Array<{ column: string; operator: string; value: string }>) => {
+      const hasValue = updatedFilters.some((f) => f.value.trim() !== '');
+      if (!hasValue && updatedFilters.length !== 0) {
+        return;
+      }
 
-    if (updatedFilters.length === 0) {
-      baseQuery = baseQuery.replace(/\| where .*/, '').trim();
-    } else {
-      const filterClause = updatedFilters.map((f) => `${f.column} ${f.operator} '${f.value}'`).join(' and ');
+      let baseQuery = query.azureLogAnalytics?.query || '';
 
-      baseQuery = baseQuery.includes('| where')
-        ? baseQuery.replace(/\| where .*/, `| where ${filterClause}`)
-        : `${baseQuery} | where ${filterClause}`;
-    }
+      if (updatedFilters.length === 0) {
+        baseQuery = baseQuery.replace(/\| where .*/, '').trim();
+      } else {
+        const filterClause = updatedFilters.map((f) => `${f.column} ${f.operator} '${f.value}'`).join(' and ');
 
-    const formattedQuery = formatKQLQuery(baseQuery);
+        baseQuery = baseQuery.includes('| where')
+          ? baseQuery.replace(/\| where .*/, `| where ${filterClause}`)
+          : `${baseQuery} | where ${filterClause}`;
+      }
 
-    if (query.azureLogAnalytics?.query !== formattedQuery) {
-      onChange({
-        ...query,
-        azureLogAnalytics: {
-          ...query.azureLogAnalytics,
-          query: formattedQuery,
-        },
-      });
-    };
-  }, [query, onChange]);
+      const formattedQuery = formatKQLQuery(baseQuery);
+
+      if (query.azureLogAnalytics?.query !== formattedQuery) {
+        onChange({
+          ...query,
+          azureLogAnalytics: {
+            ...query.azureLogAnalytics,
+            query: formattedQuery,
+          },
+        });
+      }
+    },
+    [query, onChange]
+  );
 
   useEffect(() => {
     if (debouncedFilters.length === filters.length) {
       updateQueryWithFilters(filters);
     }
-  }, [filters, debouncedFilters, updateQueryWithFilters]); 
+  }, [filters, debouncedFilters, updateQueryWithFilters]);
 
-  const onChangeFilter = (index: number, key: keyof typeof filters[0], value: string) => {
-    setFilters((prevFilters) =>
-      prevFilters.map((f, i) => (i === index ? { ...f, [key]: value || '' } : f))
-    );
+  const onChangeFilter = (index: number, key: keyof (typeof filters)[0], value: string) => {
+    setFilters((prevFilters) => prevFilters.map((f, i) => (i === index ? { ...f, [key]: value || '' } : f)));
   };
 
   const onDeleteFilter = (index: number) => {
     setFilters((prevFilters) => {
       const updatedFilters = prevFilters.filter((_, i) => i !== index);
-      console.log("Deleted filter at index:", index, "New filters:", updatedFilters);
+      console.log('Deleted filter at index:', index, 'New filters:', updatedFilters);
 
       if (updatedFilters.length === 0) {
-        updateQueryWithFilters([]); 
+        updateQueryWithFilters([]);
       }
 
       return updatedFilters;
@@ -106,7 +103,7 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
                       aria-label="column"
                       width={30}
                       value={filter.column ? valueToDefinition(filter.column) : null}
-                      options={Array.isArray(selectedColumns) ? selectedColumns : [selectedColumns]}  
+                      options={Array.isArray(selectedColumns) ? selectedColumns : [selectedColumns]}
                       onChange={(e) => e.value && onChangeFilter(index, 'column', e.value)}
                     />
                     <Select
@@ -136,9 +133,8 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
             <Button
               variant="secondary"
               onClick={() => setFilters([...filters, { column: '', operator: '==', value: '' }])}
-              icon='plus'
-            >
-            </Button>
+              icon="plus"
+            ></Button>
           </>
         </EditorField>
       </EditorFieldGroup>

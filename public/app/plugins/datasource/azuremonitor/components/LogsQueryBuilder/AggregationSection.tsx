@@ -6,7 +6,13 @@ import { EditorField, EditorFieldGroup, EditorList, EditorRow } from '@grafana/p
 import { AzureMonitorQuery } from '../../types';
 
 import { AggregateItem } from './AggregateItem';
-import { formatKQLQuery, QueryEditorExpression, QueryEditorExpressionType, QueryEditorPropertyType, QueryEditorReduceExpression } from './utils';
+import {
+  formatKQLQuery,
+  QueryEditorExpression,
+  QueryEditorExpressionType,
+  QueryEditorPropertyType,
+  QueryEditorReduceExpression,
+} from './utils';
 
 interface AggregateSectionProps {
   query: AzureMonitorQuery;
@@ -19,14 +25,12 @@ export const AggregateSection: React.FC<AggregateSectionProps> = ({
   query,
   selectedColumns,
   onChange: onQueryChange,
-  templateVariableOptions
+  templateVariableOptions,
 }) => {
   const [aggregates, setAggregates] = useState<QueryEditorReduceExpression[]>([]);
 
   const updateQueryWithAggregates = (newAggregates: QueryEditorReduceExpression[]) => {
-    const validAggregates = newAggregates.filter(
-      (agg) => agg.property?.name && agg.reduce?.name
-    );
+    const validAggregates = newAggregates.filter((agg) => agg.property?.name && agg.reduce?.name);
 
     let baseQuery = query.azureLogAnalytics?.query || '';
 
@@ -34,9 +38,7 @@ export const AggregateSection: React.FC<AggregateSectionProps> = ({
       // If no aggregates are left, remove summarize clause
       baseQuery = baseQuery.replace(/\| summarize .*/, '').trim();
     } else {
-      const aggregateClauses = validAggregates
-        .map((agg) => `${agg.reduce.name}(${agg.property.name})`)
-        .join(', ');
+      const aggregateClauses = validAggregates.map((agg) => `${agg.reduce.name}(${agg.property.name})`).join(', ');
 
       baseQuery = baseQuery.includes('| summarize')
         ? baseQuery.replace(/\| summarize .*/, `| summarize ${aggregateClauses}`)

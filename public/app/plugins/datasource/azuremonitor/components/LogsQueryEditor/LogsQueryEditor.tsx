@@ -218,32 +218,32 @@ const LogsQueryEditor = ({
           />
         )}
         {dataIngestedWarning}
-          <EditorRow>
-            <EditorFieldGroup>
-              {!hideFormatAs && (
-                <FormatAsField
-                  query={query}
-                  datasource={datasource}
-                  subscriptionId={subscriptionId}
-                  variableOptionGroup={variableOptionGroup}
-                  onQueryChange={onChange}
-                  setError={setError}
-                  inputId={'azure-monitor-logs'}
-                  options={[
-                    { label: 'Log', value: ResultFormat.Logs },
-                    { label: 'Time series', value: ResultFormat.TimeSeries },
-                    { label: 'Table', value: ResultFormat.Table },
-                  ]}
-                  defaultValue={ResultFormat.Logs}
-                  setFormatAs={setFormatAs}
-                  resultFormat={query.azureLogAnalytics?.resultFormat}
-                  onLoad={onLoad}
-                />
-              )}
-              {portalLinkButton}
-              {migrationError && <Alert title={migrationError.title}>{migrationError.message}</Alert>}
-            </EditorFieldGroup>
-          </EditorRow>
+        <EditorRow>
+          <EditorFieldGroup>
+            {!hideFormatAs && (
+              <FormatAsField
+                query={query}
+                datasource={datasource}
+                subscriptionId={subscriptionId}
+                variableOptionGroup={variableOptionGroup}
+                onQueryChange={onChange}
+                setError={setError}
+                inputId={'azure-monitor-logs'}
+                options={[
+                  { label: 'Log', value: ResultFormat.Logs },
+                  { label: 'Time series', value: ResultFormat.TimeSeries },
+                  { label: 'Table', value: ResultFormat.Table },
+                ]}
+                defaultValue={ResultFormat.Logs}
+                setFormatAs={setFormatAs}
+                resultFormat={query.azureLogAnalytics?.resultFormat}
+                onLoad={onLoad}
+              />
+            )}
+            {portalLinkButton}
+            {migrationError && <Alert title={migrationError.title}>{migrationError.message}</Alert>}
+          </EditorFieldGroup>
+        </EditorRow>
       </EditorRows>
     </span>
   );
