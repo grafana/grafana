@@ -5,7 +5,7 @@ import { usePrevious } from 'react-use';
 import { isObjectLike } from 'lodash';
 
 import { PageLayoutType } from '@grafana/data';
-import { config, locationService } from '@grafana/runtime';
+import { config, locationService, RefreshEvent } from '@grafana/runtime';
 import { UrlSyncContextProvider } from '@grafana/scenes';
 import { Alert, Box } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
@@ -17,7 +17,7 @@ import { DashboardRoutes } from 'app/types';
 import { DashboardPrompt } from '../saving/DashboardPrompt';
 
 import { getDashboardScenePageStateManager } from './DashboardScenePageStateManager';
-import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
+// import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 export interface Props
   extends Omit<GrafanaRouteComponentProps<DashboardPageRouteParams, DashboardPageRouteSearchParams>, 'match'> {}
@@ -52,7 +52,10 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
 
       console.log({ urlParams });
 
-      getTimeSrv().refreshTimeModel();
+      console.log({ dashboard });
+
+      // getTimeSrv().refreshTimeModel();
+      dashboard?.publishEvent(new RefreshEvent());
     }
   }, []);
 
