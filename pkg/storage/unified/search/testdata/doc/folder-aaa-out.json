@@ -5,13 +5,13 @@
     "resource": "dashboards",
     "name": "aaa"
   },
-  "kind": "dashboards",
+  "name": "aaa",
   "rv": 1234,
   "title": "test-aaa",
-  "title_sort": "test-aaa",
+  "title_phrase": "test-aaa",
   "created": 1730490142000,
   "createdBy": "user:1",
-  "repository": {
+  "repo": {
     "name": "SQL"
   }
 }

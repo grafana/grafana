@@ -42,6 +42,8 @@ type Rule interface {
 	Type() ngmodels.RuleType
 	// Status indicates the status of the evaluating rule.
 	Status() ngmodels.RuleStatus
+	// Identifier returns the identifier of the rule.
+	Identifier() ngmodels.AlertRuleKeyWithGroup
 }
 
 type ruleFactoryFunc func(context.Context, *ngmodels.AlertRule) Rule
@@ -71,7 +73,7 @@ func newRuleFactory(
 		if rule.Type() == ngmodels.RuleTypeRecording {
 			return newRecordingRule(
 				ctx,
-				rule.GetKey(),
+				rule.GetKeyWithGroup(),
 				maxAttempts,
 				clock,
 				evalFactory,
@@ -178,6 +180,10 @@ func newAlertRule(
 	}
 }
 
+func (a *alertRule) Identifier() ngmodels.AlertRuleKeyWithGroup {
+	return a.key
+}
+
 func (a *alertRule) Type() ngmodels.RuleType {
 	return ngmodels.RuleTypeAlerting
 }
@@ -194,10 +200,9 @@ func (a *alertRule) Status() ngmodels.RuleStatus {
 //
 // the second element contains a dropped message that was sent by a concurrent sender.
 func (a *alertRule) Eval(eval *Evaluation) (bool, *Evaluation) {
-	if a.key != eval.rule.GetKeyWithGroup() {
+	if a.key.AlertRuleKey != eval.rule.GetKey() {
 		// Make sure that rule has the same key. This should not happen
-		a.logger.Error("Invalid rule sent for evaluating. Skipping", "ruleKeyToEvaluate", eval.rule.GetKey().String())
-		return false, eval
+		panic(fmt.Sprintf("Invalid rule sent for evaluating. Expected rule key %s, got %s", a.key.AlertRuleKey, eval.rule.GetKey()))
 	}
 	// read the channel in unblocking manner to make sure that there is no concurrent send operation.
 	var droppedMsg *Evaluation
@@ -315,6 +320,7 @@ func (a *alertRule) Run() error {
 						attribute.String("rule_fingerprint", fpStr),
 						attribute.String("tick", utcTick),
 					))
+					logger := logger.FromContext(tracingCtx)
 
 					// Check before any execution if the context was cancelled so that we don't do any evaluations.
 					if tracingCtx.Err() != nil {
@@ -345,17 +351,25 @@ func (a *alertRule) Run() error {
 			}()
 
 		case <-grafanaCtx.Done():
-			// clean up the state only if the reason for stopping the evaluation loop is that the rule was deleted
-			if errors.Is(grafanaCtx.Err(), errRuleDeleted) {
-				// We do not want a context to be unbounded which could potentially cause a go routine running
-				// indefinitely. 1 minute is an almost randomly chosen timeout, big enough to cover the majority of the
-				// cases.
-				ctx, cancelFunc := context.WithTimeout(context.Background(), time.Minute)
-				defer cancelFunc()
-				states := a.stateManager.DeleteStateByRuleUID(ngmodels.WithRuleKey(ctx, a.key.AlertRuleKey), a.key, ngmodels.StateReasonRuleDeleted)
-				a.expireAndSend(grafanaCtx, states)
+			reason := grafanaCtx.Err()
+
+			// We do not want a context to be unbounded which could potentially cause a go routine running
+			// indefinitely. 1 minute is an almost randomly chosen timeout, big enough to cover the majority of the
+			// cases.
+			ctx, cancelFunc := context.WithTimeout(context.Background(), time.Minute)
+			defer cancelFunc()
+
+			if errors.Is(reason, errRuleDeleted) {
+				// Clean up the state and send resolved notifications for firing alerts only if the reason for stopping
+				// the evaluation loop is that the rule was deleted.
+				stateTransitions := a.stateManager.DeleteStateByRuleUID(ngmodels.WithRuleKey(ctx, a.key.AlertRuleKey), a.key, ngmodels.StateReasonRuleDeleted)
+				a.expireAndSend(grafanaCtx, stateTransitions)
+			} else {
+				// Otherwise, just clean up the cache.
+				a.stateManager.ForgetStateByRuleUID(ngmodels.WithRuleKey(ctx, a.key.AlertRuleKey), a.key)
 			}
-			a.logger.Debug("Stopping alert rule routine")
+
+			a.logger.Debug("Stopping alert rule routine", "reason", reason)
 			return nil
 		}
 	}

@@ -52,7 +52,7 @@ type GetDashboardVersionQuery struct {
 	DashboardID  int64
 	DashboardUID string
 	OrgID        int64
-	Version      int
+	Version      int64
 }
 
 type DeleteExpiredVersionsCommand struct {
@@ -60,12 +60,19 @@ type DeleteExpiredVersionsCommand struct {
 }
 
 type ListDashboardVersionsQuery struct {
-	DashboardID  int64
-	DashboardUID string
-	OrgID        int64
-	Limit        int
-	Start        int
+	DashboardID   int64
+	DashboardUID  string
+	OrgID         int64
+	Limit         int
+	Start         int
+	ContinueToken string
 }
+
+type DashboardVersionResponse struct {
+	ContinueToken string                 `json:"continueToken"`
+	Versions      []*DashboardVersionDTO `json:"versions"`
+}
+
 type DashboardVersionDTO struct {
 	ID            int64            `json:"id"`
 	DashboardID   int64            `json:"dashboardId"`
@@ -93,4 +100,9 @@ type DashboardVersionMeta struct {
 	Message       string           `json:"message"`
 	Data          *simplejson.Json `json:"data"`
 	CreatedBy     string           `json:"createdBy"`
+}
+
+type DashboardVersionResponseMeta struct {
+	ContinueToken string                 `json:"continueToken"`
+	Versions      []DashboardVersionMeta `json:"versions"`
 }

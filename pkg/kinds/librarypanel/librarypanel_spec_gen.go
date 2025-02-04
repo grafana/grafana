@@ -7,55 +7,66 @@
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
+// Code generated - EDITING IS FUTILE. DO NOT EDIT.
+
 package librarypanel
 
 import (
-	"time"
+	time "time"
 )
 
-// LibraryElementDTOMeta defines model for LibraryElementDTOMeta.
+type LibraryElementDTOMetaUser struct {
+	Id        int64  `json:"id"`
+	Name      string `json:"name"`
+	AvatarUrl string `json:"avatarUrl"`
+}
+
+// NewLibraryElementDTOMetaUser creates a new LibraryElementDTOMetaUser object.
+func NewLibraryElementDTOMetaUser() *LibraryElementDTOMetaUser {
+	return &LibraryElementDTOMetaUser{}
+}
+
 type LibraryElementDTOMeta struct {
-	ConnectedDashboards int64                     `json:"connectedDashboards"`
-	Created             time.Time                 `json:"created"`
-	CreatedBy           LibraryElementDTOMetaUser `json:"createdBy"`
 	FolderName          string                    `json:"folderName"`
 	FolderUid           string                    `json:"folderUid"`
+	ConnectedDashboards int64                     `json:"connectedDashboards"`
+	Created             time.Time                 `json:"created"`
 	Updated             time.Time                 `json:"updated"`
+	CreatedBy           LibraryElementDTOMetaUser `json:"createdBy"`
 	UpdatedBy           LibraryElementDTOMetaUser `json:"updatedBy"`
 }
 
-// LibraryElementDTOMetaUser defines model for LibraryElementDTOMetaUser.
-type LibraryElementDTOMetaUser struct {
-	AvatarUrl string `json:"avatarUrl"`
-	Id        int64  `json:"id"`
-	Name      string `json:"name"`
+// NewLibraryElementDTOMeta creates a new LibraryElementDTOMeta object.
+func NewLibraryElementDTOMeta() *LibraryElementDTOMeta {
+	return &LibraryElementDTOMeta{
+		CreatedBy: *NewLibraryElementDTOMetaUser(),
+		UpdatedBy: *NewLibraryElementDTOMetaUser(),
+	}
 }
 
-// Spec defines model for Spec.
 type Spec struct {
+	// Folder UID
+	FolderUid *string `json:"folderUid,omitempty"`
+	// Library element UID
+	Uid string `json:"uid"`
+	// Panel name (also saved in the model)
+	Name string `json:"name"`
 	// Panel description
 	Description *string `json:"description,omitempty"`
-
-	// Folder UID
-	FolderUid *string                `json:"folderUid,omitempty"`
-	Meta      *LibraryElementDTOMeta `json:"meta,omitempty"`
-
+	// The panel type (from inside the model)
+	Type string `json:"type"`
+	// Dashboard version when this was saved (zero if unknown)
+	SchemaVersion *uint16 `json:"schemaVersion,omitempty"`
+	// panel version, incremented each time the dashboard is updated.
+	Version int64 `json:"version"`
 	// TODO: should be the same panel schema defined in dashboard
 	// Typescript: Omit<Panel, 'gridPos' | 'id' | 'libraryPanel'>;
 	Model map[string]any `json:"model"`
+	// Object storage metadata
+	Meta *LibraryElementDTOMeta `json:"meta,omitempty"`
+}
 
-	// Panel name (also saved in the model)
-	Name string `json:"name"`
-
-	// Dashboard version when this was saved (zero if unknown)
-	SchemaVersion *int `json:"schemaVersion,omitempty"`
-
-	// The panel type (from inside the model)
-	Type string `json:"type"`
-
-	// Library element UID
-	Uid string `json:"uid"`
-
-	// Version panel version, incremented each time the dashboard is updated.
-	Version int64 `json:"version"`
+// NewSpec creates a new Spec object.
+func NewSpec() *Spec {
+	return &Spec{}
 }

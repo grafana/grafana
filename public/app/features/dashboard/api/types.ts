@@ -5,11 +5,11 @@ import { AnnotationsPermissions, SaveDashboardResponseDTO } from 'app/types';
 
 import { SaveDashboardCommand } from '../components/SaveDashboard/types';
 
-export interface DashboardAPI<G> {
+export interface DashboardAPI<G, T> {
   /** Get a dashboard with the access control metadata */
   getDashboardDTO(uid: string, params?: UrlQueryMap): Promise<G>;
   /** Save dashboard */
-  saveDashboard(options: SaveDashboardCommand): Promise<SaveDashboardResponseDTO>;
+  saveDashboard(options: SaveDashboardCommand<T>): Promise<SaveDashboardResponseDTO>;
   /** Delete a dashboard */
   deleteDashboard(uid: string, showSuccessAlert: boolean): Promise<DeleteDashboardResponse>;
 }

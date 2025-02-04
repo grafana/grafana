@@ -60,6 +60,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/correlations"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
 	dashboardimportservice "github.com/grafana/grafana/pkg/services/dashboardimport/service"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashboardstore "github.com/grafana/grafana/pkg/services/dashboards/database"
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
@@ -167,6 +168,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 	"github.com/grafana/grafana/pkg/tsdb/graphite"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb"
+	"github.com/grafana/grafana/pkg/tsdb/jaeger"
 	"github.com/grafana/grafana/pkg/tsdb/loki"
 	"github.com/grafana/grafana/pkg/tsdb/mssql"
 	"github.com/grafana/grafana/pkg/tsdb/mysql"
@@ -268,6 +270,7 @@ var wireBasicSet = wire.NewSet(
 	pyroscope.ProvideService,
 	parca.ProvideService,
 	zipkin.ProvideService,
+	jaeger.ProvideService,
 	datasourceservice.ProvideCacheService,
 	wire.Bind(new(datasources.CacheService), new(*datasourceservice.CacheServiceImpl)),
 	encryptionservice.ProvideEncryptionService,
@@ -295,11 +298,13 @@ var wireBasicSet = wire.NewSet(
 	featuremgmt.ProvideManagerService,
 	featuremgmt.ProvideToggles,
 	dashboardservice.ProvideDashboardServiceImpl,
+	wire.Bind(new(dashboards.PermissionsRegistrationService), new(*dashboardservice.DashboardServiceImpl)),
 	dashboardservice.ProvideDashboardService,
 	dashboardservice.ProvideDashboardProvisioningService,
 	dashboardservice.ProvideDashboardPluginService,
 	dashboardstore.ProvideDashboardStore,
 	folderimpl.ProvideService,
+	wire.Bind(new(folder.Service), new(*folderimpl.Service)),
 	folderimpl.ProvideStore,
 	wire.Bind(new(folder.Store), new(*folderimpl.FolderStoreImpl)),
 	folderimpl.ProvideDashboardFolderStore,
@@ -337,6 +342,7 @@ var wireBasicSet = wire.NewSet(
 	starApi.ProvideApi,
 	userimpl.ProvideService,
 	orgimpl.ProvideService,
+	orgimpl.ProvideDeletionService,
 	statsimpl.ProvideService,
 	grpccontext.ProvideContextHandler,
 	grpcserver.ProvideService,

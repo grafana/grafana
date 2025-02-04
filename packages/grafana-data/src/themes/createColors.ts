@@ -277,7 +277,7 @@ export function createColors(colors: ThemeColorsInput): ThemeColors {
   const getRichColor = ({ color, name }: GetRichColorProps): ThemeRichColor => {
     color = { ...color, name };
     if (!color.main) {
-      throw new Error(`Missing main color for ${name}`);
+      color.main = base[name].main;
     }
     if (!color.text) {
       color.text = color.main;
@@ -318,7 +318,9 @@ export function createColors(colors: ThemeColorsInput): ThemeColors {
   );
 }
 
+type RichColorNames = 'primary' | 'secondary' | 'info' | 'error' | 'success' | 'warning';
+
 interface GetRichColorProps {
   color: Partial<ThemeRichColor>;
-  name: string;
+  name: RichColorNames;
 }

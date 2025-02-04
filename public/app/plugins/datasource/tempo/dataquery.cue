@@ -53,9 +53,15 @@ composableKinds: DataQuery: {
 					tableType?: #SearchTableType
 					// For metric queries, the step size to use
 					step?: string
+					// For metric queries, how many exemplars to request, 0 means no exemplars
+					exemplars?: int64
+					// For metric queries, whether to run instant or range queries
+					metricsQueryType?: #MetricsQueryType
 				} @cuetsy(kind="interface") @grafana(TSVeneer="type")
 
 				#TempoQueryType: "traceql" | "traceqlSearch" | "serviceMap" | "upload" | "nativeSearch" | "traceId" | "clear" @cuetsy(kind="type")
+
+				#MetricsQueryType: "range" | "instant" @cuetsy(kind="enum")
 
 				// The state of the TraceQL streaming search query
 				#SearchStreamingState: "pending" | "streaming" | "done" | "error" @cuetsy(kind="enum")

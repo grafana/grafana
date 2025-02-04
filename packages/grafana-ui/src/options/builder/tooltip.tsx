@@ -1,6 +1,15 @@
 import { PanelOptionsEditorBuilder } from '@grafana/data';
 import { OptionsWithTooltip, TooltipDisplayMode, SortOrder } from '@grafana/schema';
 
+/** @internal */
+export const optsWithHideZeros: OptionsWithTooltip = {
+  tooltip: {
+    mode: TooltipDisplayMode.Single,
+    sort: SortOrder.None,
+    hideZeros: false,
+  },
+};
+
 export function addTooltipOptions<T extends OptionsWithTooltip>(
   builder: PanelOptionsEditorBuilder<T>,
   singleOnly = false,
@@ -44,6 +53,14 @@ export function addTooltipOptions<T extends OptionsWithTooltip>(
       settings: {
         options: sortOptions,
       },
+    })
+    .addBooleanSwitch({
+      path: 'tooltip.hideZeros',
+      name: 'Hide zeros',
+      category,
+      defaultValue: false,
+      showIf: (options: T) =>
+        defaultOptions?.tooltip?.hideZeros !== undefined && options.tooltip?.mode === TooltipDisplayMode.Multi,
     });
 
   if (setProximity) {

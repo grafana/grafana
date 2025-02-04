@@ -4,7 +4,7 @@ import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Pagination, Tooltip, useStyles2 } from '@grafana/ui';
-import { CombinedRule } from 'app/types/unified-alerting';
+import { CombinedRule, RulesSource } from 'app/types/unified-alerting';
 
 import { DEFAULT_PER_PAGE_PAGINATION } from '../../../../../core/constants';
 import { alertRuleApi } from '../../api/alertRuleApi';
@@ -14,6 +14,7 @@ import { useAsync } from '../../hooks/useAsync';
 import { attachRulerRuleToCombinedRule } from '../../hooks/useCombinedRuleNamespaces';
 import { useHasRuler } from '../../hooks/useHasRuler';
 import { usePagination } from '../../hooks/usePagination';
+import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { PluginOriginBadge } from '../../plugins/PluginOriginBadge';
 import { calculateNextEvaluationEstimate } from '../../rule-list/components/util';
 import { Annotation } from '../../utils/constants';
@@ -328,8 +329,20 @@ function RuleActionsCell({ rule, isLoadingRuler }: { rule: CombinedRule; isLoadi
   );
 }
 
+export function useIsRulesLoading(rulesSource: RulesSource) {
+  const rulerRules = useUnifiedAlertingSelector((state) => state.rulerRules);
+  const rulesSourceName = getRulesSourceName(rulesSource);
+
+  const rulerRulesLoaded = Boolean(rulerRules[rulesSourceName]?.result);
+  return rulerRulesLoaded;
+}
+
 function useRuleStatus(rule: CombinedRule) {
-  const { hasRuler, rulerRulesLoaded } = useHasRuler(rule.namespace.rulesSource);
+  const rulesSource = rule.namespace.rulesSource;
+
+  const rulerRulesLoaded = useIsRulesLoading(rulesSource);
+  const { hasRuler } = useHasRuler(rulesSource);
+
   const { promRule, rulerRule } = rule;
 
   // If prometheusRulesPrimary is enabled, we don't fetch rules from the Ruler API (except for Grafana managed rules)

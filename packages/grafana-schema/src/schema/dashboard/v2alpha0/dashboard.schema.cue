@@ -5,10 +5,6 @@ import (
 )
 
 DashboardV2Spec: {
-  // Unique numeric identifier for the dashboard.
-  // `id` is internal to a specific Grafana instance. `uid` should be used to identify a dashboard across Grafana instances.
-  id?: int64
-
   // Title of dashboard.
   title: string
 
@@ -43,21 +39,44 @@ DashboardV2Spec: {
   // Configured template variables.
   variables: [...VariableKind]
 
-  elements: [ElementReference.name]: PanelKind // |* more element types in the future
+  elements: [ElementReference.name]: Element
 
   annotations: [...AnnotationQueryKind]
 
   layout: GridLayoutKind
 
-  // Version of the JSON schema, incremented each time a Grafana update brings
-  // changes to said schema.
-  schemaVersion: uint16 | *39
 
   // Plugins only. The version of the dashboard installed together with the plugin.
   // This is used to determine if the dashboard should be updated when the plugin is updated.
   revision?: uint16
 }
 
+// Supported dashboard elements
+Element: PanelKind | LibraryPanelKind // |* more element types in the future
+
+LibraryPanelKind: {
+  kind: "LibraryPanel"
+  spec: LibraryPanelSpec
+}
+
+LibraryPanelSpec: {
+  // Panel ID for the library panel in the dashboard
+  id: number
+  // Title for the library panel in the dashboard
+  title: string
+
+  libraryPanel: LibraryPanelRef
+}
+
+// A library panel is a reusable panel that you can use in any dashboard.
+// When you make a change to a library panel, that change propagates to all instances of where the panel is used.
+// Library panels streamline reuse of panels across multiple dashboards.
+LibraryPanelRef: {
+  // Library panel name
+  name: string
+  // Library panel uid
+  uid: string
+}
 
 AnnotationPanelFilter: {
   // Should the specified panels be included or excluded
@@ -455,12 +474,27 @@ TimeSettingsSpec: {
   nowDelay?: string // v1: timepicker.nowDelay
 }
 
+RepeatMode: "variable" // other repeat modes will be added in the future: label, frame
+
+RepeatOptions: {
+  mode: RepeatMode
+  value: string
+  direction?: "h" | "v"
+  maxPerRow?: int
+}
+
+RowRepeatOptions: {
+  mode: RepeatMode,
+  value: string
+}
+
 GridLayoutItemSpec: {
   x: int
   y: int
   width: int
   height: int
   element: ElementReference // reference to a PanelKind from dashboard.spec.elements Expressed as JSON Schema reference
+  repeat?: RepeatOptions
 }
 
 GridLayoutItemKind: {
@@ -468,8 +502,21 @@ GridLayoutItemKind: {
   spec: GridLayoutItemSpec
 }
 
+GridLayoutRowKind: {
+  kind: "GridLayoutRow"
+  spec: GridLayoutRowSpec 
+}
+
+GridLayoutRowSpec: {
+  y: int
+  collapsed: bool
+  title: string
+  elements: [...GridLayoutItemKind] // Grid items in the row will have their Y value be relative to the rows Y value. This means a panel positioned at Y: 0 in a row with Y: 10 will be positioned at Y: 11 (row header has a heigh of 1) in the dashboard.
+  repeat?: RowRepeatOptions
+}
+
 GridLayoutSpec: {
-  items: [...GridLayoutItemKind]
+  items: [...GridLayoutItemKind | GridLayoutRowKind]
 }
 
 GridLayoutKind: {
@@ -743,8 +790,6 @@ GroupByVariableSpec: {
   }
   options: [...VariableOption] | *[]
   multi: bool | *false
-  includeAll: bool | *false
-  allValue?: string
   label?: string
   hide: VariableHide
   skipUrlSync: bool | *false

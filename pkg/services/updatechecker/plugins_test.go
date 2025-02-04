@@ -165,7 +165,7 @@ func TestPluginUpdateChecker_checkForUpdates(t *testing.T) {
 							Info: plugins.Info{Version: "2.5.7"},
 							Type: plugins.TypePanel,
 						},
-						Class: plugins.ClassBundled,
+						Class: plugins.ClassExternal,
 					},
 					{
 						JSONData: plugins.JSONData{

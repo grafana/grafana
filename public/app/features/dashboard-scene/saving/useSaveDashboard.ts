@@ -46,7 +46,7 @@ export function useSaveDashboard(isCopy = false) {
           message: options.message,
           overwrite: options.overwrite,
           showErrorAlert: false,
-          k8s: undefined, // TODO?  pass the original metadata
+          k8s: options.k8s,
         });
 
         if ('error' in result) {

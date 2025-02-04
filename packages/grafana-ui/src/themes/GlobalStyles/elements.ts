@@ -54,6 +54,10 @@ export function getElementStyles(theme: GrafanaTheme2) {
         size: 'auto',
         padding: 0,
       },
+      // disable contextual font ligatures. otherwise, in firefox and safari,
+      // an "x" between 2 numbers is replaced by a multiplication ligature
+      // see https://github.com/rsms/inter/issues/222
+      fontVariantLigatures: 'no-contextual',
       ...theme.typography.body,
     },
 

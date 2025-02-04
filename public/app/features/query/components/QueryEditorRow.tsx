@@ -24,7 +24,7 @@ import {
   toLegacyResponseData,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { AngularComponent, getAngularLoader, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import { AngularComponent, config, getAngularLoader, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { Badge, ErrorBoundaryAlert } from '@grafana/ui';
 import { OperationRowHelp } from 'app/core/components/QueryOperationRow/OperationRowHelp';
 import {
@@ -39,6 +39,8 @@ import { Trans, t } from 'app/core/internationalization';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
+
+import { SaveQueryButton as SaveQueryToQueryLibraryButton } from '../../explore/QueryLibrary/SaveQueryButton';
 
 import { QueryActionComponent, RowActionComponents } from './QueryActionComponent';
 import { QueryEditorRowHeader } from './QueryEditorRowHeader';
@@ -398,17 +400,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
         return acc;
       }
 
-      let criterion;
-      if (type === 'warning') {
-        criterion = (item: QueryResultMetaNotice) => item.severity === 'warning';
-      } else {
-        // The first condition is because sometimes info notices are not marked as info.
-        // We don't filter on severity not being equal to warnings because there's still
-        // the error severity, which does not seem to be used as errors are indicated
-        // separately, but we do this just to be safe.
-        criterion = (item: QueryResultMetaNotice) => !('severity' in item) || item.severity === 'info';
-      }
-      const warnings = filter(serie.meta.notices, criterion) ?? [];
+      const warnings = filter(serie.meta.notices, (item: QueryResultMetaNotice) => item.severity === type) ?? [];
       return acc.concat(warnings);
     }, []);
 
@@ -497,6 +489,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
           />
         )}
         {this.renderExtraActions()}
+        {config.featureToggles.queryLibrary && <SaveQueryToQueryLibraryButton query={query} />}
         <QueryOperationAction
           title={t('query-operation.header.duplicate-query', 'Duplicate query')}
           icon="copy"

@@ -61,7 +61,7 @@ export const TemplatesTable = ({ alertManagerName, templates }: Props) => {
         </colgroup>
         <thead>
           <tr>
-            <th></th>
+            <th />
             <th>Template group</th>
             <Authorize
               actions={[
@@ -189,7 +189,7 @@ function TemplateRow({ notificationTemplate, idx, alertManagerName, onDeleteClic
       </tr>
       {isExpanded && (
         <tr className={idx % 2 === 0 ? tableStyles.evenRow : undefined}>
-          <td></td>
+          <td />
           <td colSpan={2}>
             <DetailsField label="" horizontal={true}>
               <TemplateEditor

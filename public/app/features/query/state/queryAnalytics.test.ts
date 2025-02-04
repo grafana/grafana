@@ -218,6 +218,30 @@ describe('emitDataRequestEvent', () => {
       emitDataRequestEvent(datasource)(data);
       expect(reportMetaAnalytics).not.toBeCalled();
     });
+
+    it('Should not report errors when there are none', () => {
+      const data = getTestData({
+        panelId: 2,
+      });
+      emitDataRequestEvent(datasource)(data);
+
+      expect(reportMetaAnalytics).toBeCalledTimes(1);
+      expect(reportMetaAnalytics).toHaveBeenCalledWith(expect.not.objectContaining({ error: expect.any(String) }));
+    });
+
+    it('Should report errors if they exist', () => {
+      const data = getTestData(
+        {
+          panelId: 2,
+        },
+        undefined,
+        [{ message: 'message A' }, { message: 'message B' }]
+      );
+      emitDataRequestEvent(datasource)(data);
+
+      expect(reportMetaAnalytics).toBeCalledTimes(1);
+      expect(reportMetaAnalytics).toHaveBeenCalledWith(expect.objectContaining({ error: 'message A, message B' }));
+    });
   });
 
   // Previously we filtered out Explore and Correlations events due to too many errors being generated while a user is building a query

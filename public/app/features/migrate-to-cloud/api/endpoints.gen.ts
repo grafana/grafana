@@ -182,7 +182,6 @@ export type MigrateDataResponseItemDto = {
     | 'RESOURCE_CONFLICT'
     | 'UNEXPECTED_STATUS_CODE'
     | 'INTERNAL_SERVICE_ERROR'
-    | 'ONLY_CORE_DATA_SOURCES'
     | 'GENERIC_ERROR';
   message?: string;
   name?: string;
@@ -198,7 +197,8 @@ export type MigrateDataResponseItemDto = {
     | 'CONTACT_POINT'
     | 'NOTIFICATION_POLICY'
     | 'NOTIFICATION_TEMPLATE'
-    | 'MUTE_TIMING';
+    | 'MUTE_TIMING'
+    | 'PLUGIN';
 };
 export type SnapshotResourceStats = {
   statuses?: {
@@ -302,7 +302,7 @@ export type DashboardFullWithMeta = {
   dashboard?: Json;
   meta?: DashboardMeta;
 };
-export type LibraryElementDtoMetaUserDefinesModelForLibraryElementDtoMetaUser = {
+export type LibraryElementDtoMetaUser = {
   avatarUrl?: string;
   id?: number;
   name?: string;
@@ -310,11 +310,11 @@ export type LibraryElementDtoMetaUserDefinesModelForLibraryElementDtoMetaUser = 
 export type LibraryElementDtoMetaIsTheMetaInformationForLibraryElementDto = {
   connectedDashboards?: number;
   created?: string;
-  createdBy?: LibraryElementDtoMetaUserDefinesModelForLibraryElementDtoMetaUser;
+  createdBy?: LibraryElementDtoMetaUser;
   folderName?: string;
   folderUid?: string;
   updated?: string;
-  updatedBy?: LibraryElementDtoMetaUserDefinesModelForLibraryElementDtoMetaUser;
+  updatedBy?: LibraryElementDtoMetaUser;
 };
 export type LibraryElementDtoIsTheFrontendDtoForEntities = {
   description?: string;

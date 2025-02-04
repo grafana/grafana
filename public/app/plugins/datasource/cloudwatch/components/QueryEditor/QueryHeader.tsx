@@ -1,12 +1,12 @@
 import { CoreApp, LoadingState, QueryEditorProps, SelectableValue } from '@grafana/data';
-import { EditorHeader, InlineSelect, FlexItem } from '@grafana/experimental';
+import { EditorHeader, InlineSelect, FlexItem } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
 import { Badge, Button } from '@grafana/ui';
 
 import { CloudWatchDatasource } from '../../datasource';
 import { isCloudWatchLogsQuery, isCloudWatchMetricsQuery } from '../../guards';
 import { useIsMonitoringAccount, useRegions } from '../../hooks';
-import { CloudWatchJsonData, CloudWatchQuery, CloudWatchQueryMode, MetricQueryType } from '../../types';
+import { CloudWatchJsonData, CloudWatchQuery, CloudWatchQueryMode } from '../../types';
 
 export interface Props extends QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData> {
   extraHeaderElementLeft?: JSX.Element;
@@ -52,16 +52,8 @@ const QueryHeader = ({
       onChange({ ...query, region });
     }
   };
-  const metricInsightsCrossAccountEnabled = config.featureToggles.cloudwatchMetricInsightsCrossAccount;
 
-  const shouldDisplayMonitoringBadge =
-    config.featureToggles.cloudWatchCrossAccountQuerying &&
-    isMonitoringAccount &&
-    (query.queryMode === 'Logs' ||
-      (isCloudWatchMetricsQuery(query) && query.metricQueryType === MetricQueryType.Search) ||
-      (metricInsightsCrossAccountEnabled &&
-        isCloudWatchMetricsQuery(query) &&
-        query.metricQueryType === MetricQueryType.Insights));
+  const shouldDisplayMonitoringBadge = config.featureToggles.cloudWatchCrossAccountQuerying && isMonitoringAccount;
 
   return (
     <>

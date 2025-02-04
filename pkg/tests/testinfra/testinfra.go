@@ -149,6 +149,8 @@ func StartGrafanaEnv(t *testing.T, grafDir, cfgPath string) (string, *server.Tes
 
 // CreateGrafDir creates the Grafana directory.
 // The log by default is muted in the regression test, to activate it, pass option EnableLog = true
+//
+//nolint:gocyclo
 func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 	t.Helper()
 
@@ -293,6 +295,13 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 	_, err = alertingSect.NewKey("max_attempts", "3")
 	require.NoError(t, err)
 
+	if opts.LicensePath != "" {
+		section, err := cfg.NewSection("enterprise")
+		require.NoError(t, err)
+		_, err = section.NewKey("license_path", opts.LicensePath)
+		require.NoError(t, err)
+	}
+
 	rbacSect, err := cfg.NewSection("rbac")
 	require.NoError(t, err)
 	_, err = rbacSect.NewKey("permission_cache", "false")
@@ -330,6 +339,14 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 		require.NoError(t, err)
 		_, err = featureSection.NewKey("enable", strings.Join(opts.EnableFeatureToggles, " "))
 		require.NoError(t, err)
+	}
+	if len(opts.DisableFeatureToggles) > 0 {
+		featureSection, err := cfg.NewSection("feature_toggles")
+		require.NoError(t, err)
+		for _, toggle := range opts.DisableFeatureToggles {
+			_, err = featureSection.NewKey(toggle, "false")
+			require.NoError(t, err)
+		}
 	}
 	if opts.NGAlertAdminConfigPollInterval != 0 {
 		ngalertingSection, err := cfg.NewSection("unified_alerting")
@@ -451,6 +468,13 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 		_, err = grafanaComSection.NewKey("api_url", opts.GrafanaComAPIURL)
 		require.NoError(t, err)
 	}
+	if opts.GrafanaComSSOAPIToken != "" {
+		grafanaComSection, err := getOrCreateSection("grafana_com")
+		require.NoError(t, err)
+		_, err = grafanaComSection.NewKey("sso_api_token", opts.GrafanaComSSOAPIToken)
+		require.NoError(t, err)
+	}
+
 	if opts.UnifiedStorageConfig != nil {
 		for k, v := range opts.UnifiedStorageConfig {
 			section, err := getOrCreateSection(fmt.Sprintf("unified_storage.%s", k))
@@ -490,6 +514,7 @@ func SQLiteIntegrationTest(t *testing.T) {
 type GrafanaOpts struct {
 	EnableCSP                             bool
 	EnableFeatureToggles                  []string
+	DisableFeatureToggles                 []string
 	NGAlertAdminConfigPollInterval        time.Duration
 	NGAlertAlertmanagerConfigPollInterval time.Duration
 	NGAlertSchedulerBaseInterval          time.Duration
@@ -510,6 +535,8 @@ type GrafanaOpts struct {
 	QueryRetries                          int64
 	GrafanaComAPIURL                      string
 	UnifiedStorageConfig                  map[string]setting.UnifiedStorageConfig
+	GrafanaComSSOAPIToken                 string
+	LicensePath                           string
 
 	// When "unified-grpc" is selected it will also start the grpc server
 	APIServerStorageType options.StorageType

@@ -30,6 +30,7 @@ import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { ShareDrawer } from '../sharing/ShareDrawer/ShareDrawer';
 import { ShareModal } from '../sharing/ShareModal';
+import { isInCloneChain } from '../utils/clone';
 import { DashboardInteractions } from '../utils/interactions';
 import { getEditPanelUrl, getInspectUrl, getViewPanelUrl, tryGetExploreUrlForPanel } from '../utils/urlBuilders';
 import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor, isLibraryPanel } from '../utils/utils';
@@ -41,7 +42,7 @@ import { UnlinkLibraryPanelModal } from './UnlinkLibraryPanelModal';
 /**
  * Behavior is called when VizPanelMenu is activated (ie when it's opened).
  */
-export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
+export function panelMenuBehavior(menu: VizPanelMenu) {
   const asyncFunc = async () => {
     // hm.. add another generic param to SceneObject to specify parent type?
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
@@ -53,6 +54,7 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
     const dashboard = getDashboardSceneFor(panel);
     const { isEmbedded } = dashboard.state.meta;
     const exploreMenuItem = await getExploreMenuItem(panel);
+    const isReadOnlyRepeat = isInCloneChain(panel.state.key!);
 
     // For embedded dashboards we only have explore action for now
     if (isEmbedded) {
@@ -72,7 +74,7 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
       });
     }
 
-    if (dashboard.canEditDashboard() && dashboard.state.editable && !isRepeat && !isEditingPanel) {
+    if (dashboard.canEditDashboard() && dashboard.state.editable && !isReadOnlyRepeat && !isEditingPanel) {
       // We could check isEditing here but I kind of think this should always be in the menu,
       // and going into panel edit should make the dashboard go into edit mode is it's not already
       items.push({
@@ -167,7 +169,7 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
       });
     }
 
-    if (dashboard.state.isEditing && !isRepeat && !isEditingPanel) {
+    if (dashboard.state.isEditing && !isReadOnlyRepeat && !isEditingPanel) {
       moreSubMenu.push({
         text: t('panel.header-menu.duplicate', `Duplicate`),
         iconClassName: 'file-copy-alt',
@@ -188,7 +190,7 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
       });
     }
 
-    if (dashboard.state.isEditing && !isRepeat && !isEditingPanel) {
+    if (dashboard.state.isEditing && !isReadOnlyRepeat && !isEditingPanel) {
       if (isLibraryPanel(panel)) {
         moreSubMenu.push({
           text: t('panel.header-menu.unlink-library-panel', `Unlink library panel`),
@@ -263,7 +265,7 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
       });
     }
 
-    if (dashboard.canEditDashboard() && plugin && !plugin.meta.skipDataQuery && !isRepeat) {
+    if (dashboard.canEditDashboard() && plugin && !plugin.meta.skipDataQuery && !isReadOnlyRepeat) {
       moreSubMenu.push({
         text: t('panel.header-menu.get-help', 'Get help'),
         iconClassName: 'question-circle',
@@ -313,7 +315,7 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
       });
     }
 
-    if (dashboard.state.isEditing && !isRepeat && !isEditingPanel) {
+    if (dashboard.state.isEditing && !isReadOnlyRepeat && !isEditingPanel) {
       items.push({
         text: '',
         type: 'divider',
@@ -334,8 +336,6 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
 
   asyncFunc();
 }
-
-export const repeatPanelMenuBehavior = (menu: VizPanelMenu) => panelMenuBehavior(menu, true);
 
 async function getExploreMenuItem(panel: VizPanel): Promise<PanelMenuItem | undefined> {
   const exploreUrl = await tryGetExploreUrlForPanel(panel);

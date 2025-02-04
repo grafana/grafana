@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"regexp"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/api/response"
@@ -19,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/util"
+	alertmanager_config "github.com/prometheus/alertmanager/config"
 )
 
 const disableProvenanceHeaderName = "X-Disable-Provenance"
@@ -171,7 +173,7 @@ func (srv *ProvisioningSrv) RoutePostContactPoint(c *contextmodel.ReqContext, cp
 		return ErrResp(http.StatusBadRequest, err, "")
 	}
 	if err != nil {
-		return ErrResp(http.StatusInternalServerError, err, "")
+		return response.ErrOrFallback(http.StatusInternalServerError, "", err)
 	}
 	return response.JSON(http.StatusAccepted, contactPoint)
 }
@@ -572,6 +574,7 @@ func exportResponse(c *contextmodel.ReqContext, body definitions.AlertingFileExp
 		return exportHcl(params.Download, body)
 	}
 
+	body = escapeAlertingFileExport(body)
 	if params.Download {
 		r := response.JSONDownload
 		if params.Format == "yaml" {
@@ -585,6 +588,122 @@ func exportResponse(c *contextmodel.ReqContext, body definitions.AlertingFileExp
 		r = response.YAML
 	}
 	return r(http.StatusOK, body)
+}
+
+// escape all strings except:
+// Alert rule annotations: groups[].rules[].annotations
+// Alert rule time range: groups[].rules[].relativeTimeRange
+// Alert rule query model: groups[].rules[].data.model
+// Mute timings name: muteTimes[].name
+// Mute timings time intervals: muteTimes[].time_intervals[]
+// Notification template name: templates[].name
+// Notification template content: templates[].template
+func escapeAlertingFileExport(body definitions.AlertingFileExport) definitions.AlertingFileExport {
+	for i, group := range body.Groups {
+		body.Groups[i] = escapeRuleGroup(group)
+	}
+	for i, cp := range body.ContactPoints {
+		body.ContactPoints[i] = escapeContactPoint(cp)
+	}
+	for i, np := range body.Policies {
+		body.Policies[i] = escapeNotificationPolicy(np)
+	}
+	return body
+}
+
+func escapeRouteExport(r *definitions.RouteExport) {
+	r.Receiver = addEscapeCharactersToString(r.Receiver)
+	if r.GroupByStr != nil {
+		groupByStr := make([]string, len(*r.GroupByStr))
+		for i, groupBy := range *r.GroupByStr {
+			groupByStr[i] = addEscapeCharactersToString(groupBy)
+		}
+		r.GroupByStr = &groupByStr
+	}
+	for k, v := range r.Match {
+		r.Match[k] = addEscapeCharactersToString(v)
+	}
+	for k, v := range r.MatchRE {
+		// convert regex to string, escape then covert back to regex
+		stringRepr := addEscapeCharactersToString(v.String())
+		mutated := regexp.MustCompile(stringRepr)
+		r.MatchRE[k] = alertmanager_config.Regexp{Regexp: mutated}
+	}
+	if r.MuteTimeIntervals != nil {
+		muteTimeIntervals := make([]string, len(*r.MuteTimeIntervals))
+		for i, muteTimeInterval := range *r.MuteTimeIntervals {
+			muteTimeIntervals[i] = addEscapeCharactersToString(muteTimeInterval)
+		}
+		r.MuteTimeIntervals = &muteTimeIntervals
+	}
+	for i := range r.Routes {
+		escapeRouteExport(r.Routes[i])
+	}
+}
+
+func escapeNotificationPolicy(np definitions.NotificationPolicyExport) definitions.NotificationPolicyExport {
+	escapeRouteExport(np.RouteExport)
+	return np
+}
+
+func escapeContactPoint(cp definitions.ContactPointExport) definitions.ContactPointExport {
+	cp.Name = addEscapeCharactersToString(cp.Name)
+	for i, receiver := range cp.Receivers {
+		settingsJson, err := receiver.Settings.MarshalJSON()
+		if err != nil {
+			// This should never happen, as the settings are already marshaled to JSON in the API
+			panic(fmt.Errorf("failed to marshal settings to JSON: %w", err))
+		}
+		settingsEscaped := []byte(addEscapeCharactersToString(string(settingsJson)))
+		if err := cp.Receivers[i].Settings.UnmarshalJSON(settingsEscaped); err != nil {
+			// This should never happen, as the settings are already marshaled to JSON in the API
+			panic(fmt.Errorf("failed to unmarshal settings from JSON: %w", err))
+		}
+	}
+	return cp
+}
+
+// escape all strings except:
+// Alert rule annotations: groups[].rules[].annotations
+// Alert rule time range: groups[].rules[].relativeTimeRange
+// Alert rule query model: groups[].rules[].data.model
+func escapeRuleGroup(group definitions.AlertRuleGroupExport) definitions.AlertRuleGroupExport {
+	group.Name = addEscapeCharactersToString(group.Name)
+	group.Folder = addEscapeCharactersToString(group.Folder)
+	for i, rule := range group.Rules {
+		group.Rules[i].Title = addEscapeCharactersToString(rule.Title)
+		if rule.Labels != nil {
+			group.Rules[i].Labels = escapeMapValues(*rule.Labels)
+		}
+		if rule.NotificationSettings != nil {
+			notificationSettings := escapeRuleNotificationSettings(*rule.NotificationSettings)
+			group.Rules[i].NotificationSettings = &notificationSettings
+		}
+	}
+	return group
+}
+
+func escapeRuleNotificationSettings(ns definitions.AlertRuleNotificationSettingsExport) definitions.AlertRuleNotificationSettingsExport {
+	ns.Receiver = addEscapeCharactersToString(ns.Receiver)
+	for j := range ns.GroupBy {
+		ns.GroupBy[j] = addEscapeCharactersToString(ns.GroupBy[j])
+	}
+	for k := range ns.MuteTimeIntervals {
+		ns.MuteTimeIntervals[k] = addEscapeCharactersToString(ns.MuteTimeIntervals[k])
+	}
+	return ns
+}
+
+func escapeMapValues(m map[string]string) *map[string]string {
+	escapedMap := make(map[string]string, len(m))
+	for k, v := range m {
+		escapedMap[k] = addEscapeCharactersToString(v)
+	}
+	return &escapedMap
+}
+
+func addEscapeCharactersToString(s string) string {
+	return strings.ReplaceAll(s, "$", "$$")
 }
 
 func exportHcl(download bool, body definitions.AlertingFileExport) response.Response {

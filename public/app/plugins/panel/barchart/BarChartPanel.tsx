@@ -173,6 +173,7 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
                     maxHeight={options.tooltip.maxHeight}
                     replaceVariables={replaceVariables}
                     dataLinks={dataLinks}
+                    hideZeros={options.tooltip.hideZeros}
                   />
                 );
               }}

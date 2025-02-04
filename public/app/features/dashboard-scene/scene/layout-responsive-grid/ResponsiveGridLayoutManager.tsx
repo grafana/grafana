@@ -3,7 +3,8 @@ import { SceneComponentProps, SceneCSSGridLayout, SceneObjectBase, SceneObjectSt
 import { Select } from '@grafana/ui';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
-import { getPanelIdForVizPanel, getVizPanelKeyForPanelId } from '../../utils/utils';
+import { getDashboardSceneFor, getPanelIdForVizPanel, getVizPanelKeyForPanelId } from '../../utils/utils';
+import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
 import { DashboardLayoutManager, LayoutRegistryItem } from '../types';
 
 import { ResponsiveGridItem } from './ResponsiveGridItem';
@@ -32,10 +33,12 @@ export class ResponsiveGridLayoutManager
   }
 
   public addNewRow(): void {
-    throw new Error('Method not implemented.');
+    const rowsLayout = RowsLayoutManager.createFromLayout(this);
+    rowsLayout.addNewRow();
+    getDashboardSceneFor(this).switchLayout(rowsLayout);
   }
 
-  public getNextPanelId(): number {
+  public getMaxPanelId(): number {
     let max = 0;
 
     for (const child of this.state.layout.state.children) {
@@ -49,6 +52,10 @@ export class ResponsiveGridLayoutManager
     }
 
     return max;
+  }
+
+  public getNextPanelId(): number {
+    return getDashboardSceneFor(this).getNextPanelId();
   }
 
   public removePanel(panel: VizPanel) {
@@ -123,6 +130,7 @@ export class ResponsiveGridLayoutManager
   activateRepeaters?(): void {
     throw new Error('Method not implemented.');
   }
+
   public static Component = ({ model }: SceneComponentProps<ResponsiveGridLayoutManager>) => {
     return <model.state.layout.Component model={model.state.layout} />;
   };

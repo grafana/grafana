@@ -64,10 +64,10 @@ type DashboardHit struct {
 	Folder string `json:"folder,omitempty"`
 	// Stick untyped extra fields in this object (including the sort value)
 	Field *common.Unstructured `json:"field,omitempty"`
-	// Explain the score (if possible)
-	Explain *common.Unstructured `json:"explain,omitempty"`
 	// When using "real" search, this is the score
 	Score float64 `json:"score,omitempty"`
+	// Explain the score (if possible)
+	Explain *common.Unstructured `json:"explain,omitempty"`
 }
 
 type FacetResult struct {

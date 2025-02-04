@@ -47,6 +47,7 @@ import { ExploreQueryParams } from '../../../../types';
 import { initialUserState } from '../../../profile/state/reducers';
 import ExplorePage from '../../ExplorePage';
 import { QueriesDrawerContextProvider } from '../../QueriesDrawer/QueriesDrawerContext';
+import { QueryLibraryContextProvider } from '../../QueryLibrary/QueryLibraryContext';
 
 type DatasourceSetup = { settings: DataSourceInstanceSettings; api: DataSourceApi };
 
@@ -76,6 +77,7 @@ export function setupExplore(options?: SetupOptions): {
   setBackendSrv({
     datasourceRequest: jest.fn().mockRejectedValue(undefined),
     delete: jest.fn().mockRejectedValue(undefined),
+    chunked: jest.fn().mockRejectedValue(undefined),
     fetch: jest.fn().mockImplementation((req) => {
       let data: Record<string, string | object | number> = {};
       if (req.url.startsWith('/api/datasources/correlations') && req.method === 'GET') {
@@ -119,6 +121,7 @@ export function setupExplore(options?: SetupOptions): {
   const previousDataSourceSrv = getDataSourceSrv();
 
   setDataSourceSrv({
+    registerRuntimeDataSource: jest.fn(),
     getList(): DataSourceInstanceSettings[] {
       return dsSettings.map((d) => d.settings);
     },
@@ -180,25 +183,29 @@ export function setupExplore(options?: SetupOptions): {
     <Provider store={storeState}>
       <GrafanaContext.Provider value={contextMock}>
         <Router history={history}>
-          <QueriesDrawerContextProvider>
-            {options?.withAppChrome ? (
-              <KBarProvider>
-                <AppChrome>
-                  <Route
-                    path="/explore"
-                    exact
-                    render={(props) => <GrafanaRoute {...props} route={{ component: ExplorePage, path: '/explore' }} />}
-                  />
-                </AppChrome>
-              </KBarProvider>
-            ) : (
-              <Route
-                path="/explore"
-                exact
-                render={(props) => <GrafanaRoute {...props} route={{ component: ExplorePage, path: '/explore' }} />}
-              />
-            )}
-          </QueriesDrawerContextProvider>
+          <QueryLibraryContextProvider>
+            <QueriesDrawerContextProvider>
+              {options?.withAppChrome ? (
+                <KBarProvider>
+                  <AppChrome>
+                    <Route
+                      path="/explore"
+                      exact
+                      render={(props) => (
+                        <GrafanaRoute {...props} route={{ component: ExplorePage, path: '/explore' }} />
+                      )}
+                    />
+                  </AppChrome>
+                </KBarProvider>
+              ) : (
+                <Route
+                  path="/explore"
+                  exact
+                  render={(props) => <GrafanaRoute {...props} route={{ component: ExplorePage, path: '/explore' }} />}
+                />
+              )}
+            </QueriesDrawerContextProvider>
+          </QueryLibraryContextProvider>
         </Router>
       </GrafanaContext.Provider>
     </Provider>

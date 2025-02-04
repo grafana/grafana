@@ -69,6 +69,131 @@ func DashboardBuilder(namespaced resource.NamespacedDocumentSupplier) (resource.
 				Filterable: true,
 			},
 		},
+		{
+			Name:        DASHBOARD_ERRORS_TODAY,
+			Type:        resource.ResourceTableColumnDefinition_INT64,
+			Description: "Number of errors that occurred today",
+			Properties: &resource.ResourceTableColumnDefinition_Properties{
+				Filterable: true,
+			},
+		},
+		{
+			Name:        DASHBOARD_ERRORS_LAST_1_DAYS,
+			Type:        resource.ResourceTableColumnDefinition_INT64,
+			Description: "Number of errors that occurred in the last 1 days",
+			Properties: &resource.ResourceTableColumnDefinition_Properties{
+				Filterable: true,
+			},
+		},
+		{
+			Name:        DASHBOARD_ERRORS_LAST_7_DAYS,
+			Type:        resource.ResourceTableColumnDefinition_INT64,
+			Description: "Number of errors that occurred in the last 7 days",
+			Properties: &resource.ResourceTableColumnDefinition_Properties{
+				Filterable: true,
+			},
+		},
+		{
+			Name:        DASHBOARD_ERRORS_LAST_30_DAYS,
+			Type:        resource.ResourceTableColumnDefinition_INT64,
+			Description: "Number of errors that occurred in the last 30 days",
+			Properties: &resource.ResourceTableColumnDefinition_Properties{
+				Filterable: true,
+			},
+		},
+		{
+			Name:        DASHBOARD_ERRORS_TOTAL,
+			Type:        resource.ResourceTableColumnDefinition_INT64,
+			Description: "Total number of errors",
+			Properties: &resource.ResourceTableColumnDefinition_Properties{
+				Filterable: true,
+			},
+		},
+		{
+			Name:        DASHBOARD_QUERIES_TODAY,
+			Type:        resource.ResourceTableColumnDefinition_INT64,
+			Description: "Number of queries that occurred today",
+			Properties: &resource.ResourceTableColumnDefinition_Properties{
+				Filterable: true,
+			},
+		},
+		{
+			Name:        DASHBOARD_QUERIES_LAST_1_DAYS,
+			Type:        resource.ResourceTableColumnDefinition_INT64,
+			Description: "Number of queries that occurred in the last 1 days",
+			Properties: &resource.ResourceTableColumnDefinition_Properties{
+				Filterable: true,
+			},
+		},
+		{
+			Name:        DASHBOARD_QUERIES_LAST_7_DAYS,
+			Type:        resource.ResourceTableColumnDefinition_INT64,
+			Description: "Number of queries that occurred in the last 7 days",
+			Properties: &resource.ResourceTableColumnDefinition_Properties{
+				Filterable: true,
+			},
+		},
+		{
+			Name:        DASHBOARD_QUERIES_LAST_30_DAYS,
+			Type:        resource.ResourceTableColumnDefinition_INT64,
+			Description: "Number of queries that occurred in the last 30 days",
+			Properties: &resource.ResourceTableColumnDefinition_Properties{
+				Filterable: true,
+			},
+		},
+		{
+			Name:        DASHBOARD_QUERIES_TOTAL,
+			Type:        resource.ResourceTableColumnDefinition_INT64,
+			Description: "Total number of queries",
+			Properties: &resource.ResourceTableColumnDefinition_Properties{
+				Filterable: true,
+			},
+		},
+		{
+			Name:        DASHBOARD_VIEWS_TODAY,
+			Type:        resource.ResourceTableColumnDefinition_INT64,
+			Description: "Number of views that occurred today",
+			Properties: &resource.ResourceTableColumnDefinition_Properties{
+				Filterable: true,
+			},
+		},
+		{
+			Name:        DASHBOARD_VIEWS_LAST_1_DAYS,
+			Type:        resource.ResourceTableColumnDefinition_INT64,
+			Description: "Number of views that occurred in the last 1 days",
+			Properties: &resource.ResourceTableColumnDefinition_Properties{
+				Filterable: true,
+			},
+		},
+		{
+			Name:        DASHBOARD_VIEWS_LAST_7_DAYS,
+			Type:        resource.ResourceTableColumnDefinition_INT64,
+			Description: "Number of views that occurred in the last 7 days",
+			Properties: &resource.ResourceTableColumnDefinition_Properties{
+				Filterable: true,
+			},
+		},
+		{
+			Name:        DASHBOARD_VIEWS_LAST_30_DAYS,
+			Type:        resource.ResourceTableColumnDefinition_INT64,
+			Description: "Number of views that occurred in the last 30 days",
+			Properties: &resource.ResourceTableColumnDefinition_Properties{
+				Filterable: true,
+			},
+		},
+		{
+			Name:        DASHBOARD_VIEWS_TOTAL,
+			Type:        resource.ResourceTableColumnDefinition_INT64,
+			Description: "Total number of views",
+			Properties: &resource.ResourceTableColumnDefinition_Properties{
+				Filterable: true,
+			},
+		},
+		{
+			Name:        DASHBOARD_LEGACY_ID,
+			Type:        resource.ResourceTableColumnDefinition_INT64,
+			Description: "Deprecated legacy id of the dashboard",
+		},
 	})
 	if namespaced == nil {
 		namespaced = func(ctx context.Context, namespace string, blob resource.BlobSupport) (resource.DocumentBuilder, error) {
@@ -147,6 +272,7 @@ func (s *DashboardDocumentBuilder) BuildDocument(ctx context.Context, key *resou
 
 	// metadata name is the dashboard uid
 	summary.UID = obj.GetName()
+	summary.ID = obj.GetDeprecatedInternalID() // nolint:staticcheck
 
 	doc := resource.NewIndexableDocument(key, rv, obj)
 	doc.Title = summary.Title
@@ -190,11 +316,9 @@ func (s *DashboardDocumentBuilder) BuildDocument(ctx context.Context, key *resou
 	doc.Fields = map[string]any{
 		DASHBOARD_SCHEMA_VERSION: summary.SchemaVersion,
 		DASHBOARD_LINK_COUNT:     summary.LinkCount,
+		DASHBOARD_LEGACY_ID:      summary.ID,
 	}
 
-	if summary.ID > 0 {
-		doc.Fields[DASHBOARD_LEGACY_ID] = summary.ID
-	}
 	if len(panelTypes) > 0 {
 		sort.Strings(panelTypes)
 		doc.Fields[DASHBOARD_PANEL_TYPES] = panelTypes
@@ -214,4 +338,37 @@ func (s *DashboardDocumentBuilder) BuildDocument(ctx context.Context, key *resou
 	}
 
 	return doc, nil
+}
+
+func DashboardFields() []string {
+	baseFields := []string{
+		DASHBOARD_LEGACY_ID,
+		DASHBOARD_SCHEMA_VERSION,
+		DASHBOARD_LINK_COUNT,
+		DASHBOARD_PANEL_TYPES,
+		DASHBOARD_DS_TYPES,
+		DASHBOARD_TRANSFORMATIONS,
+	}
+
+	return append(baseFields, UsageInsightsFields()...)
+}
+
+func UsageInsightsFields() []string {
+	return []string{
+		DASHBOARD_VIEWS_LAST_1_DAYS,
+		DASHBOARD_VIEWS_LAST_7_DAYS,
+		DASHBOARD_VIEWS_LAST_30_DAYS,
+		DASHBOARD_VIEWS_TODAY,
+		DASHBOARD_VIEWS_TOTAL,
+		DASHBOARD_QUERIES_LAST_1_DAYS,
+		DASHBOARD_QUERIES_LAST_7_DAYS,
+		DASHBOARD_QUERIES_LAST_30_DAYS,
+		DASHBOARD_QUERIES_TODAY,
+		DASHBOARD_QUERIES_TOTAL,
+		DASHBOARD_ERRORS_LAST_1_DAYS,
+		DASHBOARD_ERRORS_LAST_7_DAYS,
+		DASHBOARD_ERRORS_LAST_30_DAYS,
+		DASHBOARD_ERRORS_TODAY,
+		DASHBOARD_ERRORS_TOTAL,
+	}
 }

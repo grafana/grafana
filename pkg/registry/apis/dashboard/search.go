@@ -4,9 +4,12 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/url"
+	"slices"
+	"sort"
 	"strconv"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"go.opentelemetry.io/otel/trace"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -18,7 +21,8 @@ import (
 	dashboardv0alpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
-	dashboardsvc "github.com/grafana/grafana/pkg/services/dashboards/service"
+	dashboardsearch "github.com/grafana/grafana/pkg/services/dashboards/service/search"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 )
@@ -30,9 +34,10 @@ type SearchHandler struct {
 	tracer trace.Tracer
 }
 
-func NewSearchHandler(client resource.ResourceIndexClient, tracer trace.Tracer) *SearchHandler {
+func NewSearchHandler(client resource.ResourceIndexClient, tracer trace.Tracer, cfg *setting.Cfg, legacyDashboardSearcher resource.ResourceIndexClient) *SearchHandler {
+	searchClient := resource.NewSearchClient(cfg, setting.UnifiedStorageConfigKeyDashboard, client, legacyDashboardSearcher)
 	return &SearchHandler{
-		client: client,
+		client: searchClient,
 		log:    log.New("grafana-apiserver.dashboards.search"),
 		tracer: tracer,
 	}
@@ -192,6 +197,9 @@ func (s *SearchHandler) DoSortable(w http.ResponseWriter, r *http.Request) {
 	s.write(w, sortable)
 }
 
+const rootFolder = "general"
+
+//nolint:gocyclo
 func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	ctx, span := s.tracer.Start(r.Context(), "dashboard.search")
 	defer span.End()
@@ -223,16 +231,25 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		Query:   queryParams.Get("query"),
 		Limit:   int64(limit),
 		Offset:  int64(offset),
-		Fields: []string{
-			"title",
-			"folder",
-			"tags",
-		},
+		Explain: queryParams.Has("explain") && queryParams.Get("explain") != "false",
 	}
+	fields := []string{"title", "folder", "tags"}
+	if queryParams.Has("field") {
+		// add fields to search and exclude duplicates
+		for _, f := range queryParams["field"] {
+			if f != "" && !slices.Contains(fields, f) {
+				fields = append(fields, f)
+			}
+		}
+	}
+	searchRequest.Fields = fields
 
 	// Add the folder constraint. Note this does not do recursive search
 	folder := queryParams.Get("folder")
 	if folder != "" {
+		if folder == rootFolder {
+			folder = "" // root folder is empty in the search index
+		}
 		searchRequest.Options.Fields = []*resource.Requirement{{
 			Key:      "folder",
 			Operator: "=",
@@ -271,6 +288,9 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	// Add sorting
 	if queryParams.Has("sort") {
 		for _, sort := range queryParams["sort"] {
+			if slices.Contains(search.DashboardFields(), sort) {
+				sort = "fields." + sort
+			}
 			s := &resource.ResourceSearchRequest_Sort{Field: sort}
 			if strings.HasPrefix(sort, "-") {
 				s.Desc = true
@@ -302,14 +322,41 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		}}
 	}
 
-	// Run the query
+	// The names filter
+	names, ok := queryParams["name"]
+	if ok {
+		if searchRequest.Options.Fields == nil {
+			searchRequest.Options.Fields = []*resource.Requirement{}
+		}
+		namesFilter := []*resource.Requirement{{
+			Key:      "name",
+			Operator: "in",
+			Values:   names,
+		}}
+		searchRequest.Options.Fields = append(searchRequest.Options.Fields, namesFilter...)
+	}
+
 	result, err := s.client.Search(ctx, searchRequest)
 	if err != nil {
 		errhttp.Write(ctx, err, w)
 		return
 	}
 
-	s.write(w, dashboardsvc.ParseResults(result, searchRequest.Offset))
+	parsedResults, err := dashboardsearch.ParseResults(result, searchRequest.Offset)
+	if err != nil {
+		errhttp.Write(ctx, err, w)
+		return
+	}
+
+	if parsedResults != nil && len(searchRequest.SortBy) == 0 {
+		// default sort by resource descending ( folders then dashboards ) then title
+		sort.Slice(parsedResults.Hits, func(i, j int) bool {
+			return parsedResults.Hits[i].Resource > parsedResults.Hits[j].Resource ||
+				(parsedResults.Hits[i].Resource == parsedResults.Hits[j].Resource && strings.ToLower(parsedResults.Hits[i].Title) < strings.ToLower(parsedResults.Hits[j].Title))
+		})
+	}
+
+	s.write(w, parsedResults)
 }
 
 func (s *SearchHandler) write(w http.ResponseWriter, obj any) {
