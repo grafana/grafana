@@ -160,7 +160,7 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 		}
 
 		list.Results.Rows = append(list.Results.Rows, &resource.ResourceTableRow{
-			Key:   getResourceKey(dashboard),
+			Key:   getResourceKey(dashboard, req.Options.Key.Namespace),
 			Cells: [][]byte{[]byte(dashboard.Title), []byte(dashboard.FolderUID), tags},
 		})
 	}
@@ -168,11 +168,10 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 	return list, nil
 }
 
-func getResourceKey(item *dashboards.DashboardSearchProjection) *resource.ResourceKey {
-	// TODO check how we would handle dash-annotation and dash-folder-alerting
+func getResourceKey(item *dashboards.DashboardSearchProjection, namespace string) *resource.ResourceKey {
 	if item.IsFolder {
 		return &resource.ResourceKey{
-			Namespace: "default",
+			Namespace: namespace,
 			Group:     folderv0alpha1.GROUP,
 			Resource:  folderv0alpha1.RESOURCE,
 			Name:      item.UID,
@@ -180,7 +179,7 @@ func getResourceKey(item *dashboards.DashboardSearchProjection) *resource.Resour
 	}
 
 	return &resource.ResourceKey{
-		Namespace: "default",
+		Namespace: namespace,
 		Group:     dashboard.GROUP,
 		Resource:  dashboard.DASHBOARD_RESOURCE,
 		Name:      item.UID,
