@@ -10,7 +10,7 @@ import { Alert, Icon, Input, LoadingBar, Stack, Text, useStyles2 } from '@grafan
 import { t } from 'app/core/internationalization';
 import { skipToken, useGetFolderQuery } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { DashboardViewItemWithUIItems, DashboardsTreeItem } from 'app/features/browse-dashboards/types';
-import { Repository } from 'app/features/provisioning/api';
+import { RepositoryView } from 'app/features/provisioning/api';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { QueryResponse } from 'app/features/search/service/types';
 import { queryResultToViewItem } from 'app/features/search/service/utils';
@@ -40,7 +40,7 @@ export interface NestedFolderPickerProps {
   permission?: PermissionLevelString.View | PermissionLevelString.Edit;
 
   /* Callback for when the user selects a folder */
-  onChange?: (folderUID: string | undefined, folderName: string | undefined, repository?: Repository) => void;
+  onChange?: (folderUID: string | undefined, folderName: string | undefined, repository?: RepositoryView) => void;
 
   /* Whether the picker should be clearable */
   clearable?: boolean;

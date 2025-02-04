@@ -2,7 +2,6 @@ package provisioning
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -702,19 +701,11 @@ spec:
 		}
 	}
 	compBase := "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1."
-	schema := oas.Components.Schemas[compBase+"Settings"].Properties["repository"]
-	schema.AdditionalProperties.Schema = &spec.Schema{
-		SchemaProps: spec.SchemaProps{
-			Ref: spec.MustCreateRef("#/components/schemas/" + compBase + "RepositoryView"),
-		},
-	}
-	oas.Components.Schemas[compBase+"Settings"].Properties["repository"] = schema
-
-	schema = oas.Components.Schemas[compBase+"ResourceStats"].Properties["items"]
+	schema := oas.Components.Schemas[compBase+"ResourceStats"].Properties["items"]
 	schema.Items = &spec.SchemaOrArray{
 		Schema: &spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				AllOf: []spec.Schema{ // shows up for swagger + RTK :shrug:
+				AllOf: []spec.Schema{
 					{
 						SchemaProps: spec.SchemaProps{
 							Ref: spec.MustCreateRef("#/components/schemas/" + compBase + "ResourceCount"),
@@ -726,14 +717,21 @@ spec:
 	}
 	oas.Components.Schemas[compBase+"ResourceStats"].Properties["items"] = schema
 
-	jj, _ := json.MarshalIndent(oas.Components.Schemas[compBase+"ResourceStats"], "", "  ")
-	fmt.Printf(">> %s\n", string(jj))
-
-	// "allOf": [
-	// 	{
-	// 		"$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ResourceCount"
-	// 	}
-	// ]
+	schema = oas.Components.Schemas[compBase+"RepositoryViewList"].Properties["items"]
+	schema.Items = &spec.SchemaOrArray{
+		Schema: &spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				AllOf: []spec.Schema{
+					{
+						SchemaProps: spec.SchemaProps{
+							Ref: spec.MustCreateRef("#/components/schemas/" + compBase + "RepositoryView"),
+						},
+					},
+				},
+			},
+		},
+	}
+	oas.Components.Schemas[compBase+"RepositoryViewList"].Properties["items"] = schema
 
 	return oas, nil
 }
