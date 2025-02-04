@@ -48,6 +48,7 @@ func executeQuery(ctx context.Context, logger log.Logger, query queryModel, runn
 				}
 
 				dr.Error = fmt.Errorf(errMsg, maxPointError.Count, query.MaxDataPoints)
+				dr.ErrorSource = backend.ErrorSourceDownstream
 			}
 		}
 	}
@@ -96,6 +97,10 @@ func readDataFrames(logger log.Logger, result *api.QueryTableResult, maxPoints i
 		err := builder.Append(result.Record())
 		if err != nil {
 			dr.Error = err
+			var maxSeriesError maxSeriesExceededError
+			if errors.As(err, &maxSeriesError) {
+				dr.ErrorSource = backend.ErrorSourceDownstream
+			}
 			break
 		}
 	}

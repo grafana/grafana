@@ -25,6 +25,7 @@ type queryModel struct {
 	// Not from JSON
 	TimeRange     backend.TimeRange `json:"-"`
 	MaxDataPoints int64             `json:"-"`
+	MaxSeries     int               `json:"-"`
 	Interval      time.Duration     `json:"-"`
 }
 

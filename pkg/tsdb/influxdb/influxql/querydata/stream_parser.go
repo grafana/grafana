@@ -24,7 +24,10 @@ func ResponseParse(buf io.ReadCloser, statusCode int, query *models.Query) *back
 	r := converter.ReadInfluxQLStyleResult(iter, query)
 
 	if statusCode/100 != 2 {
-		return &backend.DataResponse{Error: fmt.Errorf("InfluxDB returned error: %s", r.Error)}
+		return &backend.DataResponse{
+			Error:       fmt.Errorf("InfluxDB returned error: %s", r.Error),
+			ErrorSource: backend.ErrorSourceFromHTTPStatus(statusCode),
+		}
 	}
 
 	// The ExecutedQueryString can be viewed in QueryInspector in UI

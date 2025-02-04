@@ -175,7 +175,10 @@ func createRequest(ctx context.Context, logger log.Logger, dsInfo *models.Dataso
 func execute(ctx context.Context, tracer trace.Tracer, dsInfo *models.DatasourceInfo, logger log.Logger, query *models.Query, request *http.Request, isStreamingParserEnabled bool) (backend.DataResponse, error) {
 	res, err := dsInfo.HTTPClient.Do(request)
 	if err != nil {
-		return backend.DataResponse{}, err
+		return backend.DataResponse{
+			Error:       err,
+			ErrorSource: backend.ErrorSourceFromHTTPStatus(res.StatusCode),
+		}, err
 	}
 	defer func() {
 		if err := res.Body.Close(); err != nil {
