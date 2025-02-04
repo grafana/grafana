@@ -230,7 +230,7 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	isDelete := obj.DeletionTimestamp != nil
 
 	if !hasSpecChanged && !isDelete && !isFirstTime && !isStale {
-		logger.Info("conditions not met, skip processing", "health_age", healthAge, "has_spec_changed", hasSpecChanged, "deletion_timestamp", obj.DeletionTimestamp)
+		logger.Info("skip processing as conditions are not met", "stale", isStale, "spec_changed", hasSpecChanged)
 		return nil
 	}
 
@@ -281,7 +281,7 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	}
 
 	if !hasHooks && !isStale && !hasSpecChanged {
-		logger.Info("no hooks, stale, or spec changed, skip processing")
+		logger.Info("no hooks, stale, or spec changed, skip processing", "has_hooks", hasHooks, "stale", isStale, "spec_changed", hasSpecChanged)
 		return nil
 	}
 
