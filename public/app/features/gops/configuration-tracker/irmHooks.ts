@@ -126,80 +126,112 @@ export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
     locationService.push(urlToGoWithIntegration);
   }
 
+  function getGrafanaAlertingConfigSteps(): SectionDtoStep[] {
+    let steps: SectionDtoStep[] = [
+      {
+        title: 'Update default e-mail contact point',
+        description: 'Update the default contact point to a method other than the example email address.',
+        button: {
+          type: 'openLink',
+          urlLink: {
+            url: `/alerting/notifications`,
+            queryParams: { search: defaultContactpoint, alertmanager: 'grafana' },
+          },
+          label: 'Edit',
+          labelOnDone: 'View',
+          urlLinkOnDone: {
+            url: `/alerting/notifications`,
+          },
+        },
+        done: isContactPointReady(defaultContactpoint, contactPoints),
+      },
+    ];
+
+    if (!getIsIrmPluginPresent()) {
+      steps = [
+        ...steps,
+        {
+          title: 'Connect alerting to OnCall',
+          description: 'Create an OnCall integration for an alerting contact point.',
+          button: {
+            type: 'openLink',
+            urlLink: {
+              url: '/alerting/notifications/receivers/new',
+            },
+            label: 'Connect',
+            urlLinkOnDone: {
+              url: '/alerting/notifications',
+            },
+            labelOnDone: 'View',
+          },
+          done: isOnCallContactPointReady(contactPoints),
+        },
+      ];
+    }
+
+    steps = [
+      ...steps,
+      {
+        title: 'Create alert rule',
+        description: 'Create an alert rule to monitor your system.',
+        button: {
+          type: 'openLink',
+          urlLink: {
+            url: '/alerting/new',
+          },
+          label: 'Create',
+          urlLinkOnDone: {
+            url: '/alerting/list',
+          },
+          labelOnDone: 'View',
+        },
+        done: isCreateAlertRuleDone,
+      },
+      {
+        title: 'Create SLO',
+        description: 'Create SLOs to monitor your service.',
+        button: {
+          type: 'openLink',
+          urlLink: {
+            url: '/a/grafana-slo-app/wizard/new',
+          },
+          label: 'Create',
+          urlLinkOnDone: {
+            url: '/a/grafana-slo-app/manage-slos',
+          },
+          labelOnDone: 'View',
+        },
+        done: hasSlo,
+      },
+      {
+        title: 'Enable SLO alerting',
+        description: 'Configure SLO alerting to receive notifications when your SLOs are breached.',
+        button: {
+          type: 'openLink',
+          urlLink: {
+            queryParams: { alertsEnabled: 'disabled' },
+            url: '/a/grafana-slo-app/manage-slos',
+          },
+          label: 'Enable',
+          urlLinkOnDone: {
+            queryParams: { alertsEnabled: 'enabled' },
+            url: '/a/grafana-slo-app/manage-slos',
+          },
+          labelOnDone: 'View',
+        },
+        done: hasSloWithAlert,
+      },
+    ];
+
+    return steps;
+  }
+
   const essentialContent: SectionsDto = {
     sections: [
       {
         title: 'Detect',
         description: 'Configure Grafana Alerting',
-        steps: [
-          {
-            title: 'Update default e-mail contact point',
-            description: 'Update the default contact point to a method other than the example email address.',
-            button: {
-              type: 'openLink',
-              urlLink: {
-                url: `/alerting/notifications`,
-                queryParams: { search: defaultContactpoint, alertmanager: 'grafana' },
-              },
-              label: 'Edit',
-              labelOnDone: 'View',
-              urlLinkOnDone: {
-                url: `/alerting/notifications`,
-              },
-            },
-            done: isContactPointReady(defaultContactpoint, contactPoints),
-          },
-          {
-            title: 'Create alert rule',
-            description: 'Create an alert rule to monitor your system.',
-            button: {
-              type: 'openLink',
-              urlLink: {
-                url: '/alerting/new',
-              },
-              label: 'Create',
-              urlLinkOnDone: {
-                url: '/alerting/list',
-              },
-              labelOnDone: 'View',
-            },
-            done: isCreateAlertRuleDone,
-          },
-          {
-            title: 'Create SLO',
-            description: 'Create SLOs to monitor your service.',
-            button: {
-              type: 'openLink',
-              urlLink: {
-                url: '/a/grafana-slo-app/wizard/new',
-              },
-              label: 'Create',
-              urlLinkOnDone: {
-                url: '/a/grafana-slo-app/manage-slos',
-              },
-              labelOnDone: 'View',
-            },
-            done: hasSlo,
-          },
-          {
-            title: 'Enable SLO alerting',
-            description: 'Configure SLO alerting to receive notifications when your SLOs are breached.',
-            button: {
-              type: 'openLink',
-              urlLink: {
-                queryParams: { alertsEnabled: 'disabled' },
-                url: '/a/grafana-slo-app/manage-slos',
-              },
-              label: 'Enable',
-              urlLinkOnDone: {
-                queryParams: { alertsEnabled: 'enabled' },
-                url: '/a/grafana-slo-app/manage-slos',
-              },
-              labelOnDone: 'View',
-            },
-            done: hasSloWithAlert,
-          },
-        ],
+        steps: getGrafanaAlertingConfigSteps(),
       },
       {
         title: 'Respond',
