@@ -115,7 +115,7 @@ func ProvideRegistration(
 		authnSvc.RegisterClient(clients.ProvideJWT(jwtService, cfg))
 	}
 
-	if cfg.ExtJWTAuth.Enabled && features.IsEnabledGlobally(featuremgmt.FlagAuthAPIAccessTokenAuth) {
+	if cfg.ExtJWTAuth.Enabled {
 		authnSvc.RegisterClient(clients.ProvideExtendedJWT(cfg))
 	}
 
