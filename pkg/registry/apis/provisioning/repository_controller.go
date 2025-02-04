@@ -248,6 +248,7 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	obj = obj.DeepCopy()
 	hooks, _ := repo.(repository.RepositoryHooks)
 	status := &obj.Status
+
 	var sync *provisioning.SyncJobOptions
 
 	switch {
@@ -279,17 +280,17 @@ func (rc *RepositoryController) process(item *queueItem) error {
 			status, err = hooks.OnCreate(ctx)
 		}
 		sync = &provisioning.SyncJobOptions{Complete: true}
-
 	case hasSpecChanged:
 		logger.Info("handle repository update")
 		if hooks != nil {
 			status, err = hooks.OnUpdate(ctx)
 		}
-		sync = &provisioning.SyncJobOptions{
-			Complete: hasSpecChanged,
-		}
-	default:
+		sync = &provisioning.SyncJobOptions{Complete: hasSpecChanged}
+	case shouldResync:
 		logger.Info("handle repository resync")
+		sync = &provisioning.SyncJobOptions{Complete: false}
+	default:
+		logger.Info("handle unknown repository situation")
 	}
 	if err != nil {
 		return err
@@ -344,7 +345,7 @@ func (rc *RepositoryController) process(item *queueItem) error {
 			Spec: provisioning.JobSpec{
 				Repository: obj.GetName(),
 				Action:     provisioning.JobActionSync,
-				Sync:       sync,
+				Sync:       &provisioning.SyncJobOptions{Complete: true},
 			},
 		})
 		if err != nil {
