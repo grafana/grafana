@@ -50,10 +50,16 @@ func TestIntegrationSecureValue(t *testing.T) {
 
 	t.Run("creating a secure value returns it without any of the value or ref", func(t *testing.T) {
 		keeper := mustGenerateKeeper(t, helper, helper.Org1.Admin, nil)
-		raw := mustGenerateSecureValue(t, helper, helper.Org1.Admin, keeper.GetName())
+
+		testSecureValue := helper.LoadYAMLOrJSONFile("testdata/secure-value-generate.yaml")
+		testSecureValue.Object["spec"].(map[string]any)["keeper"] = keeper.GetName()
+
+		raw, err := client.Resource.Create(ctx, testSecureValue, metav1.CreateOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, raw)
 
 		secureValue := new(secretv0alpha1.SecureValue)
-		err := runtime.DefaultUnstructuredConverter.FromUnstructured(raw.Object, secureValue)
+		err = runtime.DefaultUnstructuredConverter.FromUnstructured(raw.Object, secureValue)
 		require.NoError(t, err)
 		require.NotNil(t, secureValue)
 
@@ -107,6 +113,10 @@ func TestIntegrationSecureValue(t *testing.T) {
 			updatedRaw, err := client.Resource.Update(ctx, newRaw, metav1.UpdateOptions{})
 			require.NoError(t, err)
 			require.NotNil(t, updatedRaw)
+
+			t.Cleanup(func() {
+				require.NoError(t, client.Resource.Delete(ctx, newRaw.GetName(), metav1.DeleteOptions{}))
+			})
 
 			updatedSecureValue := new(secretv0alpha1.SecureValue)
 			err = runtime.DefaultUnstructuredConverter.FromUnstructured(updatedRaw.Object, updatedSecureValue)
