@@ -547,7 +547,8 @@
       "metadata": {
         "name": "authAPIAccessTokenAuth",
         "resourceVersion": "1718727528075",
-        "creationTimestamp": "2024-04-02T15:45:15Z"
+        "creationTimestamp": "2024-04-02T15:45:15Z",
+        "deletionTimestamp": "2025-02-04T14:58:33Z"
       },
       "spec": {
         "description": "Enables the use of Auth API access tokens for authentication",
