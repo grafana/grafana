@@ -81,19 +81,23 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, remot
 	var domain string
 
 	switch {
-	case cfg.RendererUrl != "":
-		// RendererCallbackUrl has already been passed, it won't generate an error.
+	case cfg.RendererCallbackUrl != "":
 		u, err := url.Parse(cfg.RendererCallbackUrl)
 		if err != nil {
+			logger.Warn("Image renderer callback url is not valid. " +
+				"Please provide a valid RendererCallbackUrl. " +
+				"Read more at https://grafana.com/docs/grafana/latest/administration/image_rendering/")
 			return nil, err
 		}
-
-		sanitizeURL = getSanitizerURL(cfg.RendererUrl)
 		domain = u.Hostname()
 	case cfg.HTTPAddr != setting.DefaultHTTPAddr:
 		domain = cfg.HTTPAddr
 	default:
 		domain = "localhost"
+	}
+
+	if cfg.RendererUrl != "" {
+		sanitizeURL = getSanitizerURL(cfg.RendererUrl)
 	}
 
 	var renderKeyProvider renderKeyProvider
@@ -425,6 +429,11 @@ func (rs *RenderingService) getGrafanaCallbackURL(path string) string {
 		// So we need to use the root_url to ensure the rendering service
 		// can reach this Grafana instance.
 
+		// &render=1 signals to the legacy redirect layer to
+		return fmt.Sprintf("%s%s&render=1", rs.Cfg.RendererCallbackUrl, path)
+	}
+
+	if rs.Cfg.RendererCallbackUrl != "" {
 		// &render=1 signals to the legacy redirect layer to
 		return fmt.Sprintf("%s%s&render=1", rs.Cfg.RendererCallbackUrl, path)
 	}
