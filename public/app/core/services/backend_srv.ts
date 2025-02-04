@@ -22,7 +22,7 @@ import { getConfig } from 'app/core/config';
 import { getSessionExpiry, hasSessionExpiry } from 'app/core/utils/auth';
 import { loadUrlToken } from 'app/core/utils/urlToken';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
-import { DashboardModel } from 'app/features/dashboard/state';
+import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { DashboardSearchItem } from 'app/features/search/types';
 import { TokenRevokedModal } from 'app/features/users/TokenRevokedModal';
 import { DashboardDTO, FolderDTO } from 'app/types';
@@ -138,6 +138,84 @@ export class BackendSrv implements BackendService {
 
         // When subscriptions is unsubscribed all the implicitly added subscriptions above are also unsubscribed.
         subscriptions.unsubscribe();
+      };
+    });
+  }
+
+  chunkRequestId = 1;
+
+  chunked(options: BackendSrvRequest): Observable<FetchResponse<Uint8Array | undefined>> {
+    const requestId = options.requestId ?? `chunked-${this.chunkRequestId++}`;
+    const controller = new AbortController();
+    const url = parseUrlFromOptions(options);
+    const init = parseInitFromOptions({
+      ...options,
+      requestId,
+      abortSignal: controller.signal,
+    });
+
+    return new Observable((observer) => {
+      let done = false;
+      // Calling fromFetch explicitly avoids the request queue
+      const sub = this.dependencies.fromFetch(url, init).subscribe({
+        next: (response) => {
+          const rsp = {
+            status: response.status,
+            statusText: response.statusText,
+            ok: response.ok,
+            headers: response.headers,
+            url: response.url,
+            type: response.type,
+            redirected: response.redirected,
+            config: options,
+            traceId: response.headers.get(GRAFANA_TRACEID_HEADER) ?? undefined,
+            data: undefined,
+          };
+
+          if (!response.body) {
+            observer.next(rsp);
+            observer.complete();
+            return;
+          }
+
+          const reader = response.body.getReader();
+          async function process() {
+            while (reader && !done) {
+              if (controller.signal.aborted) {
+                reader.cancel(controller.signal.reason);
+                console.log(requestId, 'signal.aborted');
+                return;
+              }
+              const chunk = await reader.read();
+              observer.next({
+                ...rsp,
+                data: chunk.value,
+              });
+              if (chunk.done) {
+                done = true;
+                console.log(requestId, 'done');
+              }
+            }
+          }
+          process()
+            .then(() => {
+              console.log(requestId, 'complete');
+              observer.complete();
+            }) // runs in background
+            .catch((e) => {
+              console.log(requestId, 'catch', e);
+              observer.error(e);
+            }); // from abort
+        },
+        error: (e) => {
+          observer.error(e);
+        },
+      });
+
+      return function unsubscribe() {
+        console.log(requestId, 'unsubscribe');
+        controller.abort('unsubscribe');
+        sub.unsubscribe();
       };
     });
   }

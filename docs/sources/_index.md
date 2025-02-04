@@ -45,7 +45,7 @@ cards:
       height: 24
     - title: Dashboards
       href: ./dashboards/
-      description: Query, transform, visualize, and understand your data no matter where it’s stored.
+      description: Query, transform, visualize, and understand your data no matter where it's stored.
       height: 24
     - title: Panels and Visualizations
       href: ./panels-visualizations/

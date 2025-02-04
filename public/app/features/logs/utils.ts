@@ -14,6 +14,7 @@ import {
   QueryResultMeta,
   LogsVolumeType,
   NumericLogLevel,
+  getFieldDisplayName,
 } from '@grafana/data';
 
 import { getDataframeFields } from './components/logParser';
@@ -142,32 +143,17 @@ export const sortLogRows = (logRows: LogRowModel[], sortOrder: LogsSortOrder) =>
   sortOrder === LogsSortOrder.Ascending ? logRows.sort(sortInAscendingOrder) : logRows.sort(sortInDescendingOrder);
 
 // Currently supports only error condition in Loki logs
-export const checkLogsError = (logRow: LogRowModel): { hasError: boolean; errorMessage?: string } => {
-  if (logRow.labels.__error__) {
-    return {
-      hasError: true,
-      errorMessage: logRow.labels.__error__,
-    };
-  }
-  return {
-    hasError: false,
-  };
+export const checkLogsError = (logRow: LogRowModel): string | undefined => {
+  return logRow.labels.__error__;
 };
 
-export const checkLogsSampled = (logRow: LogRowModel): { isSampled: boolean; sampleMessage?: string } => {
-  if (logRow.labels.__adaptive_logs_sampled__) {
-    let msg =
-      logRow.labels.__adaptive_logs_sampled__ === 'true'
-        ? 'Logs like this one have been dropped by Adaptive Logs'
-        : `${logRow.labels.__adaptive_logs_sampled__}% of logs like this one have been dropped by Adaptive Logs`;
-    return {
-      isSampled: true,
-      sampleMessage: msg,
-    };
+export const checkLogsSampled = (logRow: LogRowModel): string | undefined => {
+  if (!logRow.labels.__adaptive_logs_sampled__) {
+    return undefined;
   }
-  return {
-    isSampled: false,
-  };
+  return logRow.labels.__adaptive_logs_sampled__ === 'true'
+    ? 'Logs like this one have been dropped by Adaptive Logs'
+    : `${logRow.labels.__adaptive_logs_sampled__}% of logs like this one have been dropped by Adaptive Logs`;
 };
 
 export const escapeUnescapedString = (string: string) =>
@@ -231,22 +217,28 @@ export const mergeLogsVolumeDataFrames = (dataFrames: DataFrame[]): { dataFrames
 
   // collect and aggregate into aggregated object
   dataFrames.forEach((dataFrame) => {
-    const { level, valueField, timeField, length } = getLogLevelInfo(dataFrame);
+    const { level, valueField, timeField } = getLogLevelInfo(dataFrame, dataFrames);
+
+    if (!timeField || !valueField) {
+      return;
+    }
 
     configs[level] = {
       meta: dataFrame.meta,
-      valueFieldConfig: valueField.config,
-      timeFieldConfig: timeField.config,
+      valueFieldConfig: valueField?.config ?? {},
+      timeFieldConfig: timeField?.config ?? {},
     };
 
-    for (let pointIndex = 0; pointIndex < length; pointIndex++) {
+    for (let pointIndex = 0; pointIndex < dataFrame.length; pointIndex++) {
       const time: number = timeField.values[pointIndex];
       const value: number = valueField.values[pointIndex];
       aggregated[level] ??= {};
       aggregated[level][time] = (aggregated[level][time] || 0) + value;
 
       totals[time] = (totals[time] || 0) + value;
-      maximumValue = Math.max(totals[time], maximumValue);
+      if (totals[time] > maximumValue) {
+        maximumValue = totals[time];
+      }
     }
   });
 
@@ -311,21 +303,20 @@ export const copyText = async (text: string, buttonRef: React.MutableRefObject<E
   }
 };
 
-export function getLogLevelInfo(dataFrame: DataFrame) {
+export function getLogLevelInfo(dataFrame: DataFrame, allDataFrames: DataFrame[]) {
   const fieldCache = new FieldCache(dataFrame);
   const timeField = fieldCache.getFirstFieldOfType(FieldType.time);
   const valueField = fieldCache.getFirstFieldOfType(FieldType.number);
 
   if (!timeField) {
-    throw new Error('Missing time field');
+    console.error('Time field missing in data frame');
   }
   if (!valueField) {
-    throw new Error('Missing value field');
+    console.error('Value field missing in data frame');
   }
 
-  const level = valueField.config.displayNameFromDS || dataFrame.name || 'logs';
-  const length = valueField.values.length;
-  return { level, valueField, timeField, length };
+  const level = valueField ? getFieldDisplayName(valueField, dataFrame, allDataFrames) : 'logs';
+  return { level, valueField, timeField };
 }
 
 export function targetIsElement(target: EventTarget | null): target is Element {
@@ -342,4 +333,62 @@ export function createLogRowsMap() {
     logRowsSet.add(id);
     return false;
   };
+}
+
+function getLabelTypeFromFrame(labelKey: string, frame: DataFrame, index: number): null | string {
+  const typeField = frame.fields.find((field) => field.name === 'labelTypes')?.values[index];
+  if (!typeField) {
+    return null;
+  }
+  return typeField[labelKey] ?? null;
+}
+
+export function getLabelTypeFromRow(label: string, row: LogRowModel) {
+  if (!row.datasourceType) {
+    return null;
+  }
+  const idField = row.dataFrame.fields.find((field) => field.name === 'id');
+  if (!idField) {
+    return null;
+  }
+  const rowIndex = idField.values.findIndex((id) => id === row.rowId);
+  if (rowIndex < 0) {
+    return null;
+  }
+  const labelType = getLabelTypeFromFrame(label, row.dataFrame, rowIndex);
+  if (!labelType) {
+    return null;
+  }
+  return getDataSourceLabelType(labelType, row.datasourceType);
+}
+
+function getDataSourceLabelType(labelType: string, datasourceType: string) {
+  switch (datasourceType) {
+    case 'loki':
+      switch (labelType) {
+        case 'I':
+          return 'Indexed label';
+        case 'S':
+          return 'Structured metadata';
+        case 'P':
+          return 'Parsed label';
+        default:
+          return null;
+      }
+    default:
+      return null;
+  }
+}
+
+const POPOVER_STORAGE_KEY = 'logs.popover.disabled';
+export function disablePopoverMenu() {
+  localStorage.setItem(POPOVER_STORAGE_KEY, 'true');
+}
+
+export function enablePopoverMenu() {
+  localStorage.removeItem(POPOVER_STORAGE_KEY);
+}
+
+export function isPopoverMenuDisabled() {
+  return Boolean(localStorage.getItem(POPOVER_STORAGE_KEY));
 }

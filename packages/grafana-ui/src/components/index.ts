@@ -85,6 +85,7 @@ export { PageToolbar } from './PageLayout/PageToolbar';
 export { SetInterval } from './SetInterval/SetInterval';
 
 export { Table } from './Table/Table';
+export { TableCellInspector, TableCellInspectorMode } from './Table/TableCellInspector';
 export {
   type TableCustomCellOptions,
   type CustomCellRendererProps,
@@ -238,7 +239,8 @@ export { SelectMenuOptions } from './Select/SelectMenu';
 export { getSelectStyles } from './Select/getSelectStyles';
 export * from './Select/types';
 
-export { Combobox, type ComboboxOption } from './Combobox/Combobox';
+export { Combobox } from './Combobox/Combobox';
+export { type ComboboxOption } from './Combobox/types';
 
 export { HorizontalGroup, VerticalGroup, Container } from './Layout/Layout';
 export { Badge, type BadgeColor, type BadgeProps } from './Badge/Badge';
@@ -327,4 +329,5 @@ export {
   ElementSelectionContext,
   useElementSelection,
   type ElementSelectionContextState,
+  type ElementSelectionContextItem,
 } from './ElementSelectionContext/ElementSelectionContext';

@@ -15,8 +15,11 @@ export const emptySettings: SSOProviderDTO = {
   authStyle: '',
   authUrl: '',
   autoLogin: false,
+  clientAuthentication: '',
   clientId: '',
   clientSecret: '',
+  managedIdentityClientId: '',
+  federatedCredentialAudience: '',
   emailAttributeName: '',
   emailAttributePath: '',
   emptyScopes: false,
@@ -75,10 +78,7 @@ export function dataToDTO(data?: SSOProvider): SSOProviderDTO {
 }
 
 const valuesToString = (values: Array<SelectableValue<string>>) => {
-  if (values.length <= 1) {
-    return values.map(({ value }) => value).join(',');
-  }
-  // Store as JSON array if there are multiple values
+  // Store arrays as JSON array
   return JSON.stringify(values.map(({ value }) => value));
 };
 

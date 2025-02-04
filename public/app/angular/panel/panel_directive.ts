@@ -7,7 +7,7 @@ import { RefreshEvent } from '@grafana/runtime';
 import { coreModule } from 'app/angular/core_module';
 import { PanelDirectiveReadyEvent, RenderEvent } from 'app/types/events';
 
-import { PanelModel } from '../../features/dashboard/state';
+import { PanelModel } from '../../features/dashboard/state/PanelModel';
 
 import { PanelCtrl } from './panel_ctrl';
 

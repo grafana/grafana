@@ -8,7 +8,8 @@ import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 import { DataFrame, DataFrameView, FieldType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
-import { DashboardQueryResult, getGrafanaSearcher, QueryResponse } from 'app/features/search/service';
+import { getGrafanaSearcher } from 'app/features/search/service/searcher';
+import { DashboardQueryResult, QueryResponse } from 'app/features/search/service/types';
 
 import { Page } from '../Page/Page';
 
@@ -95,7 +96,7 @@ describe('AppChrome', () => {
     const skipLink = await screen.findByRole('link', { name: 'Skip to main content' });
     expect(skipLink).toHaveFocus();
     await userEvent.keyboard('{tab}');
-    expect(await screen.findByRole('link', { name: 'Go to home' })).toHaveFocus();
+    expect(await screen.findByRole('button', { name: 'Open menu' })).toHaveFocus();
   });
 
   it('should not render a skip link if the page is chromeless', async () => {

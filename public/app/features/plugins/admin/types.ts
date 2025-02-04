@@ -216,6 +216,7 @@ export interface Version {
   createdAt: string;
   isCompatible: boolean;
   grafanaDependency: string | null;
+  angularDetected?: boolean;
 }
 
 export interface PluginDetails {
@@ -255,6 +256,8 @@ export enum PluginTabLabels {
   USAGE = 'Usage',
   IAM = 'IAM',
   CHANGELOG = 'Changelog',
+  PLUGINDETAILS = 'Plugin details',
+  DATASOURCE_CONNECTIONS = 'Data source connections',
 }
 
 export enum PluginTabIds {
@@ -265,6 +268,8 @@ export enum PluginTabIds {
   USAGE = 'usage',
   IAM = 'iam',
   CHANGELOG = 'changelog',
+  PLUGINDETAILS = 'right-panel',
+  DATASOURCE_CONNECTIONS = 'datasource-connections',
 }
 
 export enum RequestStatus {
@@ -319,6 +324,7 @@ export type PluginVersion = {
   links: Array<{ rel: string; href: string }>;
   isCompatible: boolean;
   grafanaDependency: string | null;
+  angularDetected?: boolean;
 };
 
 export type InstancePlugin = {

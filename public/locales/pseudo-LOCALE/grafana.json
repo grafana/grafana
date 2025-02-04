@@ -37,7 +37,7 @@
   "actions-editor": {
     "inline": {
       "add-button": "Åđđ äčŧįőŉ",
-      "one-click-link": "Øŉę-čľįčĸ ľįŉĸ"
+      "one-click-action": "Øŉę-čľįčĸ äčŧįőŉ"
     }
   },
   "admin": {
@@ -241,11 +241,13 @@
     },
     "common": {
       "cancel": "Cäŉčęľ",
+      "clear-filters": "Cľęäř ƒįľŧęřş",
       "delete": "Đęľęŧę",
       "edit": "Ēđįŧ",
       "export": "Ēχpőřŧ",
       "export-all": "Ēχpőřŧ äľľ",
       "loading": "Ŀőäđįŉģ...",
+      "search-by-matchers": "Ŝęäřčĥ þy mäŧčĥęřş",
       "view": "Vįęŵ"
     },
     "contact-points": {
@@ -297,6 +299,13 @@
         }
       }
     },
+    "group-actions": {
+      "actions-trigger": "Ŗūľę ģřőūp äčŧįőŉş",
+      "delete": "Đęľęŧę",
+      "edit": "Ēđįŧ",
+      "export": "Ēχpőřŧ",
+      "reorder": "Ŗę-őřđęř řūľęş"
+    },
     "list-view": {
       "empty": {
         "new-alert-rule": "Ńęŵ äľęřŧ řūľę",
@@ -327,6 +336,8 @@
       }
     },
     "mute-timings": {
+      "add-mute-timing": "Åđđ mūŧę ŧįmįŉģ",
+      "description": "Ēŉŧęř şpęčįƒįč ŧįmę įŉŧęřväľş ŵĥęŉ ŉőŧ ŧő şęŉđ ŉőŧįƒįčäŧįőŉş őř ƒřęęžę ŉőŧįƒįčäŧįőŉş ƒőř řęčūřřįŉģ pęřįőđş őƒ ŧįmę.",
       "save": "Ŝävę mūŧę ŧįmįŉģ",
       "saving": "Ŝävįŉģ mūŧę ŧįmįŉģ"
     },
@@ -349,6 +360,7 @@
         "warning-1": "Đęľęŧįŉģ ŧĥįş ŉőŧįƒįčäŧįőŉ pőľįčy ŵįľľ pęřmäŉęŉŧľy řęmővę įŧ.",
         "warning-2": "Åřę yőū şūřę yőū ŵäŉŧ ŧő đęľęŧę ŧĥįş pőľįčy?"
       },
+      "filter-description": "Fįľŧęř ŉőŧįƒįčäŧįőŉ pőľįčįęş þy ūşįŉģ ä čőmmä şępäřäŧęđ ľįşŧ őƒ mäŧčĥęřş, ę.ģ.:<1>şęvęřįŧy=čřįŧįčäľ, řęģįőŉ=ĒMĒÅ</1>",
       "generated-policies": "Åūŧő-ģęŉęřäŧęđ pőľįčįęş",
       "matchers": "Mäŧčĥęřş",
       "metadata": {
@@ -479,7 +491,23 @@
     },
     "rule-list": {
       "configure-datasource": "Cőŉƒįģūřę",
-      "new-alert-rule": "Ńęŵ äľęřŧ řūľę"
+      "ds-error-boundary": {
+        "description": "Cĥęčĸ ŧĥę đäŧä şőūřčę čőŉƒįģūřäŧįőŉ. Đőęş ŧĥę đäŧä şőūřčę şūppőřŧ Přőmęŧĥęūş ÅPĨ?",
+        "title": "Ůŉäþľę ŧő ľőäđ řūľęş ƒřőm ŧĥįş đäŧä şőūřčę"
+      },
+      "filter-view": {
+        "no-more-results": "Ńő mőřę řęşūľŧş – şĥőŵįŉģ {{numberOfRules}} řūľęş",
+        "no-rules-found": "Ńő äľęřŧ őř řęčőřđįŉģ řūľęş mäŧčĥęđ yőūř čūřřęŉŧ şęŧ őƒ ƒįľŧęřş."
+      },
+      "new-alert-rule": "Ńęŵ äľęřŧ řūľę",
+      "pagination": {
+        "next-page": "ŉęχŧ päģę",
+        "previous-page": "přęvįőūş päģę"
+      },
+      "return-button": {
+        "title": "Åľęřŧ řūľęş"
+      },
+      "rulerrule-loading-error": "Fäįľęđ ŧő ľőäđ ŧĥę řūľę"
     },
     "rule-state": {
       "creating": "Cřęäŧįŉģ",
@@ -522,6 +550,11 @@
         "state": "Ŝŧäŧę"
       },
       "save-query": "Ŝävę čūřřęŉŧ şęäřčĥ"
+    },
+    "silences": {
+      "affected-instances": "Åƒƒęčŧęđ äľęřŧ įŉşŧäŉčęş",
+      "only-firing-instances": "Øŉľy äľęřŧ įŉşŧäŉčęş įŉ ŧĥę ƒįřįŉģ şŧäŧę äřę đįşpľäyęđ.",
+      "preview-affected-instances": "Přęvįęŵ ŧĥę äľęřŧ įŉşŧäŉčęş äƒƒęčŧęđ þy ŧĥįş şįľęŉčę."
     },
     "simpleCondition": {
       "alertCondition": "Åľęřŧ čőŉđįŧįőŉ"
@@ -602,15 +635,15 @@
     },
     "counts": {
       "alertRule_one": "{{count}} äľęřŧ řūľę",
-      "alertRule_other": "{{count}} äľęřŧ řūľęş",
+      "alertRule_other": "{{count}} äľęřŧ řūľę",
       "dashboard_one": "{{count}} đäşĥþőäřđ",
-      "dashboard_other": "{{count}} đäşĥþőäřđş",
+      "dashboard_other": "{{count}} đäşĥþőäřđ",
       "folder_one": "{{count}} ƒőľđęř",
-      "folder_other": "{{count}} ƒőľđęřş",
+      "folder_other": "{{count}} ƒőľđęř",
       "libraryPanel_one": "{{count}} ľįþřäřy päŉęľ",
-      "libraryPanel_other": "{{count}} ľįþřäřy päŉęľş",
+      "libraryPanel_other": "{{count}} ľįþřäřy päŉęľ",
       "total_one": "{{count}} įŧęm",
-      "total_other": "{{count}} įŧęmş"
+      "total_other": "{{count}} įŧęm"
     },
     "dashboards-tree": {
       "collapse-folder-button": "Cőľľäpşę ƒőľđęř {{title}}",
@@ -676,7 +709,7 @@
       "title": "Cľęäř väľūę"
     },
     "custom-value": {
-      "label": "Cūşŧőm väľūę: "
+      "description": "Ůşę čūşŧőm väľūę"
     },
     "options": {
       "no-found": "Ńő őpŧįőŉş ƒőūŉđ."
@@ -849,6 +882,55 @@
       "redirect-link": "Ŀįşŧ įŉ Ğřäƒäŉä Åľęřŧįŉģ",
       "subtitle": "Åľęřŧ řūľęş řęľäŧęđ ŧő ŧĥįş đäşĥþőäřđ"
     },
+    "default-layout": {
+      "row-actions": {
+        "delete": "Đęľęŧę řőŵ",
+        "modal": {
+          "alt-action": "Đęľęŧę řőŵ őŉľy",
+          "text": "Åřę yőū şūřę yőū ŵäŉŧ ŧő řęmővę ŧĥįş řőŵ äŉđ äľľ įŧş päŉęľş?",
+          "title": "Đęľęŧę řőŵ"
+        },
+        "repeat": {
+          "warning": {
+            "learn-more": "Ŀęäřŉ mőřę",
+            "text": "Päŉęľş įŉ ŧĥįş řőŵ ūşę ŧĥę {{SHARED_DASHBOARD_QUERY}} đäŧä şőūřčę. Ŧĥęşę päŉęľş ŵįľľ řęƒęřęŉčę ŧĥę päŉęľ įŉ ŧĥę őřįģįŉäľ řőŵ, ŉőŧ ŧĥę őŉęş įŉ ŧĥę řępęäŧęđ řőŵş."
+          }
+        }
+      },
+      "row-options": {
+        "button": {
+          "label": "Ŗőŵ őpŧįőŉş"
+        },
+        "form": {
+          "cancel": "Cäŉčęľ",
+          "repeat-for": "Ŗępęäŧ ƒőř",
+          "title": "Ŧįŧľę",
+          "update": "Ůpđäŧę"
+        },
+        "modal": {
+          "title": "Ŗőŵ őpŧįőŉş"
+        }
+      }
+    },
+    "edit-pane": {
+      "objects": {
+        "multi-select": {
+          "selection-number": "Ńő. őƒ őþĵęčŧş şęľęčŧęđ: "
+        }
+      },
+      "panels": {
+        "multi-select": {
+          "selection-number": "Ńő. őƒ päŉęľş şęľęčŧęđ: "
+        }
+      },
+      "row": {
+        "hide": "Ħįđę řőŵ ĥęäđęř",
+        "multi-select": {
+          "options-header": "Mūľŧį-şęľęčŧęđ Ŗőŵ őpŧįőŉş",
+          "selection-number": "Ńő. őƒ řőŵş şęľęčŧęđ: "
+        }
+      }
+    },
     "empty": {
       "add-library-panel-body": "Åđđ vįşūäľįžäŧįőŉş ŧĥäŧ äřę şĥäřęđ ŵįŧĥ őŧĥęř đäşĥþőäřđş.",
       "add-library-panel-button": "Åđđ ľįþřäřy päŉęľ",
@@ -859,6 +941,9 @@
       "import-a-dashboard-body": "Ĩmpőřŧ đäşĥþőäřđş ƒřőm ƒįľęş őř <1>ģřäƒäŉä.čőm</1>.",
       "import-a-dashboard-header": "Ĩmpőřŧ ä đäşĥþőäřđ",
       "import-dashboard-button": "Ĩmpőřŧ đäşĥþőäřđ"
+    },
+    "errors": {
+      "failed-to-load": "Fäįľęđ ŧő ľőäđ đäşĥþőäřđ"
     },
     "inspect": {
       "data-tab": "Đäŧä",
@@ -912,6 +997,20 @@
       "rows": "Ŧőŧäľ ŉūmþęř řőŵş",
       "table-title": "Ŝŧäŧş"
     },
+    "panel-edit": {
+      "alerting-tab": {
+        "dashboard-not-saved": "Đäşĥþőäřđ mūşŧ þę şävęđ þęƒőřę äľęřŧş čäŉ þę äđđęđ.",
+        "no-rules": "Ŧĥęřę äřę ŉő äľęřŧ řūľęş ľįŉĸęđ ŧő ŧĥįş päŉęľ."
+      }
+    },
+    "rows-layout": {
+      "row": {
+        "repeat": {
+          "learn-more": "Ŀęäřŉ mőřę",
+          "warning": "Päŉęľş įŉ ŧĥįş řőŵ ūşę ŧĥę {{SHARED_DASHBOARD_QUERY}} đäŧä şőūřčę. Ŧĥęşę päŉęľş ŵįľľ řęƒęřęŉčę ŧĥę päŉęľ įŉ ŧĥę őřįģįŉäľ řőŵ, ŉőŧ ŧĥę őŉęş įŉ ŧĥę řępęäŧęđ řőŵş."
+        }
+      }
+    },
     "toolbar": {
       "add": "Åđđ",
       "alert-rules": "Åľęřŧ řūľęş",
@@ -925,6 +1024,7 @@
       "settings": "Đäşĥþőäřđ şęŧŧįŉģş",
       "share": "Ŝĥäřę đäşĥþőäřđ",
       "share-button": "Ŝĥäřę",
+      "show-hidden-elements": "Ŝĥőŵ ĥįđđęŉ",
       "unmark-favorite": "Ůŉmäřĸ äş ƒävőřįŧę"
     },
     "validation": {
@@ -1033,6 +1133,12 @@
       "angular-deprecation-button-open-panel-json": "Øpęŉ ĴŜØŃ ęđįŧőř",
       "angular-deprecation-description": "Åŉģūľäř päŉęľş őpŧįőŉş čäŉ őŉľy þę ęđįŧęđ ūşįŉģ ŧĥę ĴŜØŃ ęđįŧőř.",
       "angular-deprecation-heading": "Päŉęľ őpŧįőŉş"
+    },
+    "panel-queries": {
+      "add-query-from-library": "Åđđ qūęřy ƒřőm ľįþřäřy"
+    },
+    "query-library": {
+      "add-query-button": "Åđđ qūęřy"
     },
     "settings": {
       "variables": {
@@ -1145,6 +1251,7 @@
       "close-tooltip": "Cľőşę qūęřy ĥįşŧőřy",
       "datasource-a-z": "Đäŧä şőūřčę Å-Ż",
       "datasource-z-a": "Đäŧä şőūřčę Ż-Å",
+      "library-history-dropdown": "Øpęŉ qūęřy ľįþřäřy őř qūęřy ĥįşŧőřy",
       "newest-first": "Ńęŵęşŧ ƒįřşŧ",
       "oldest-first": "Øľđęşŧ ƒįřşŧ",
       "query-history": "Qūęřy ĥįşŧőřy",
@@ -1261,6 +1368,8 @@
       "title-with-name": "Ŧäþľę - {{name}}"
     },
     "toolbar": {
+      "add-to-extensions": "Åđđ",
+      "add-to-queryless-extensions": "Ğő qūęřyľęşş",
       "aria-label": "Ēχpľőřę ŧőőľþäř",
       "copy-link": "Cőpy ŮŖĿ",
       "copy-link-abs-time": "Cőpy äþşőľūŧę ŮŖĿ",
@@ -1284,14 +1393,14 @@
     "breakdown": {
       "clearFilter": "Cľęäř ƒįľŧęř",
       "labelSelect": "Ŝęľęčŧ",
+      "missing-otel-labels": "Ŧĥįş męŧřįč ĥäş ŧőő mäŉy ĵőþ äŉđ įŉşŧäŉčę ľäþęľ väľūęş ŧő čäľľ ŧĥę Přőmęŧĥęūş ľäþęľ_väľūęş ęŉđpőįŉŧ ŵįŧĥ ŧĥę mäŧčĥ[] päřämęŧęř. Ŧĥęşę ľäþęľ väľūęş äřę ūşęđ ŧő ĵőįŉ ŧĥę męŧřįč ŵįŧĥ ŧäřģęŧ_įŉƒő, ŵĥįčĥ čőŉŧäįŉş ŧĥę řęşőūřčę äŧŧřįþūŧęş. Pľęäşę įŉčľūđę mőřę řęşőūřčę äŧŧřįþūŧęş ƒįľŧęřş.",
       "noMatchingValue": "Ńő väľūęş ƒőūŉđ mäŧčĥįŉģ; {{filter}}",
       "sortBy": "Ŝőřŧ þy"
     },
     "related-logs": {
-      "docsLink": "Ŀőĸį Ŗęčőřđįŉģ Ŗūľę",
+      "LrrDocsLink": "Ŀőĸį Ŗęčőřđįŉģ Ŗūľę",
       "openExploreLogs": "Øpęŉ Ēχpľőřę Ŀőģş",
-      "relatedLogsUnavailableAfterDocsLink": ", őř čĥęčĸ þäčĸ ľäŧęř äş ŵę ęχpäŉđ ŧĥę väřįőūş męŧĥőđş ƒőř ęşŧäþľįşĥįŉģ čőŉŉęčŧįőŉş þęŧŵęęŉ męŧřįčş äŉđ ľőģş.",
-      "relatedLogsUnavailableBeforeDocsLink": "Ŗęľäŧęđ ľőģş äřę ŉőŧ äväįľäþľę ƒőř ŧĥįş męŧřįč. Ŧřy şęľęčŧįŉģ ä męŧřįč čřęäŧęđ þy ä ",
+      "relatedLogsUnavailable": "Ńő řęľäŧęđ ľőģş ƒőūŉđ. Ŧő şęę řęľäŧęđ ľőģş, yőū čäŉ ęįŧĥęř:<1><0>äđĵūşŧ ŧĥę ľäþęľ ƒįľŧęř ŧő ƒįŉđ ľőģş ŵįŧĥ ŧĥę şämę ľäþęľş äş ŧĥę čūřřęŉŧľy-şęľęčŧęđ męŧřįč</0><1>şęľęčŧ ä męŧřįč čřęäŧęđ þy ä <2><0>Ŀőĸį Ŗęčőřđįŉģ Ŗūľę</0></2></1></1>",
       "warnExperimentalFeature": "Ŗęľäŧęđ ľőģş įş äŉ ęχpęřįmęŉŧäľ ƒęäŧūřę."
     },
     "viewBy": "Vįęŵ þy"
@@ -1356,10 +1465,16 @@
     },
     "data-link-editor-modal": {
       "cancel": "Cäŉčęľ",
+      "one-click-description": "Øŉľy őŉę ľįŉĸ čäŉ ĥävę őŉę čľįčĸ ęŉäþľęđ äŧ ä ŧįmę",
       "save": "Ŝävę"
+    },
+    "data-link-inline-editor": {
+      "one-click": "Øŉę čľįčĸ"
     },
     "data-links-inline-editor": {
       "add-link": "Åđđ ľįŉĸ",
+      "one-click": "Øŉę čľįčĸ",
+      "one-click-enabled": "Øŉę čľįčĸ ęŉäþľęđ",
       "one-click-link": "Øŉę-čľįčĸ ľįŉĸ"
     },
     "data-source-http-settings": {
@@ -1441,7 +1556,8 @@
       "right-axis-indicator": "(řįģĥŧ y-äχįş)"
     },
     "viz-tooltip": {
-      "footer-add-annotation": "Åđđ äŉŉőŧäŧįőŉ"
+      "footer-add-annotation": "Åđđ äŉŉőŧäŧįőŉ",
+      "footer-click-to-navigate": "Cľįčĸ ŧő őpęŉ {{linkTitle}}"
     }
   },
   "graph": {
@@ -1703,7 +1819,10 @@
     },
     "share-panel": {
       "config-description": "Cřęäŧę ä pęřşőŉäľįžęđ, đįřęčŧ ľįŉĸ ŧő şĥäřę yőūř päŉęľ ŵįŧĥįŉ yőūř őřģäŉįžäŧįőŉ, ŵįŧĥ ŧĥę ƒőľľőŵįŉģ čūşŧőmįžäŧįőŉ şęŧŧįŉģş:",
-      "render-image": "Ŗęŉđęř įmäģę"
+      "download-image": "Đőŵŉľőäđ įmäģę",
+      "render-image": "Ğęŉęřäŧę įmäģę",
+      "render-image-error": "Fäįľęđ ŧő řęŉđęř päŉęľ įmäģę",
+      "render-image-error-description": "Åŉ ęřřőř őččūřřęđ ŵĥęŉ ģęŉęřäŧįŉģ ŧĥę įmäģę"
     }
   },
   "login": {
@@ -1752,9 +1871,32 @@
     "infinite-scroll": {
       "older-logs": "Øľđęř ľőģş"
     },
+    "log-details": {
+      "fields": "Fįęľđş",
+      "links": "Ŀįŉĸş",
+      "log-line": "Ŀőģ ľįŉę",
+      "no-details": "Ńő đęŧäįľş äväįľäþľę"
+    },
     "log-row-message": {
       "ellipsis": "… ",
-      "more": "mőřę"
+      "more": "mőřę",
+      "see-details": "Ŝęę ľőģ đęŧäįľş"
+    },
+    "log-rows": {
+      "disable-popover": {
+        "confirm": "Cőŉƒįřm",
+        "message": "Ÿőū äřę äþőūŧ ŧő đįşäþľę ŧĥę ľőģş ƒįľŧęř męŉū. Ŧő řę-ęŉäþľę įŧ, şęľęčŧ ŧęχŧ įŉ ä ľőģ ľįŉę ŵĥįľę ĥőľđįŉģ ŧĥę äľŧ ĸęy.",
+        "title": "Đįşäþľę męŉū"
+      },
+      "disable-popover-message": {
+        "shortcut": "äľŧ+şęľęčŧ ŧő ęŉäþľę äģäįŉ"
+      }
+    },
+    "popover-menu": {
+      "copy": "Cőpy şęľęčŧįőŉ",
+      "disable-menu": "Đįşäþľę męŉū",
+      "line-contains": "Åđđ äş ľįŉę čőŉŧäįŉş ƒįľŧęř",
+      "line-contains-not": "Åđđ äş ľįŉę đőęş ŉőŧ čőŉŧäįŉ ƒįľŧęř"
     }
   },
   "migrate-to-cloud": {
@@ -1847,7 +1989,8 @@
       "library_elements": "ľįþřäřy ęľęmęŉŧş",
       "mute_timings": "mūŧę ŧįmįŉģş",
       "notification_policies": "ŉőŧįƒįčäŧįőŉ pőľįčįęş",
-      "notification_templates": "ŉőŧįƒįčäŧįőŉ ŧęmpľäŧęş"
+      "notification_templates": "ŉőŧįƒįčäŧįőŉ ŧęmpľäŧęş",
+      "plugins": "pľūģįŉş"
     },
     "migration-token": {
       "delete-button": "Đęľęŧę ŧőĸęŉ",
@@ -1898,7 +2041,10 @@
     "public-preview": {
       "button-text": "Ğįvę ƒęęđþäčĸ",
       "message": "Ńő ŜĿÅş äřę äväįľäþľę yęŧ. <2>Vįşįŧ őūř đőčş</2> ŧő ľęäřŉ mőřę äþőūŧ ŧĥįş ƒęäŧūřę!",
-      "title": "Mįģřäŧę ŧő Ğřäƒäŉä Cľőūđ įş įŉ pūþľįč přęvįęŵ"
+      "message-cloud": "Ÿőūř şęľƒ-mäŉäģęđ įŉşŧäŉčę őƒ Ğřäƒäŉä řęqūįřęş vęřşįőŉ 11.5+, őř 11.2+ ŵįŧĥ ŧĥę őŉPřęmŦőCľőūđMįģřäŧįőŉş ƒęäŧūřę ƒľäģ ęŉäþľęđ.",
+      "message-plugins": "Øŉľy Cőmmūŉįŧy äŉđ Cőmmęřčįäľ şįģŉęđ pľūģįŉş äřę ęľįģįþľę ƒőř mįģřäŧįőŉ. Ŧĥęįř ľäŧęşŧ vęřşįőŉ ŵįľľ þę įŉşŧäľľęđ įŉ ŧĥę čľőūđ įŉşŧäŉčę, pľęäşę ūpģřäđę yőūř pľūģįŉş þęƒőřę şŧäřŧįŉģ ŧĥę mįģřäŧįőŉ přőčęşş.",
+      "title": "Mįģřäŧę ŧő Ğřäƒäŉä Cľőūđ įş įŉ pūþľįč přęvįęŵ",
+      "title-plugins": "Mįģřäŧįőŉ őƒ pľūģįŉş"
     },
     "resource-details": {
       "dismiss-button": "ØĶ",
@@ -1911,7 +2057,6 @@
         "generic-error": "Ŧĥęřę ĥäş þęęŉ äŉ ęřřőř ŵĥįľę mįģřäŧįŉģ. Pľęäşę čĥęčĸ ŧĥę čľőūđ mįģřäŧįőŉ ľőģş ƒőř mőřę įŉƒőřmäŧįőŉ.",
         "internal-service-error": "Ŧĥęřę ĥäş þęęŉ äŉ ęřřőř ŵĥįľę mįģřäŧįŉģ. Pľęäşę čĥęčĸ ŧĥę Ğřäƒäŉä şęřvęř ľőģş ƒőř mőřę đęŧäįľş.",
         "library-element-name-conflict": "Ŧĥęřę įş ä ľįþřäřy ęľęmęŉŧ ŵįŧĥ ŧĥę şämę ŉämę įŉ ŧĥę ŧäřģęŧ įŉşŧäŉčę. Ŗęŉämę őŉę őƒ ŧĥęm äŉđ ŧřy äģäįŉ.",
-        "only-core-data-sources": "Øŉľy čőřę đäŧä şőūřčęş äřę şūppőřŧęđ. Pľęäşę ęŉşūřę ŧĥę pľūģįŉ įş įŉşŧäľľęđ őŉ ŧĥę čľőūđ şŧäčĸ.",
         "resource-conflict": "Ŧĥęřę įş ä řęşőūřčę čőŉƒľįčŧ ŵįŧĥ ŧĥę ŧäřģęŧ įŉşŧäŉčę. Pľęäşę čĥęčĸ ŧĥę Ğřäƒäŉä şęřvęř ľőģş ƒőř mőřę đęŧäįľş.",
         "unexpected-error": "Ŧĥęřę ĥäş þęęŉ äŉ ęřřőř ŵĥįľę mįģřäŧįŉģ. Pľęäşę čĥęčĸ ŧĥę Ğřäƒäŉä şęřvęř ľőģş ƒőř mőřę đęŧäįľş.",
         "unsupported-data-type": "Mįģřäŧįőŉ őƒ ŧĥįş đäŧä ŧypę įş ŉőŧ čūřřęŉŧľy şūppőřŧęđ."
@@ -1950,6 +2095,7 @@
       "mute_timing": "Mūŧę Ŧįmįŉģ",
       "notification_policy": "Ńőŧįƒįčäŧįőŉ Pőľįčy",
       "notification_template": "Ńőŧįƒįčäŧįőŉ Ŧęmpľäŧę",
+      "plugin": "Pľūģįŉ",
       "unknown": "Ůŉĸŉőŵŉ"
     },
     "summary": {
@@ -1986,6 +2132,15 @@
       "title": "Ŵĥy ĥőşŧ ŵįŧĥ Ğřäƒäŉä?"
     }
   },
+  "multicombobox": {
+    "all": {
+      "title": "Åľľ",
+      "title-filtered": "Åľľ (ƒįľŧęřęđ)"
+    },
+    "clear": {
+      "title": "Cľęäř äľľ"
+    }
+  },
   "nav": {
     "add-new-connections": {
       "title": "Åđđ ŉęŵ čőŉŉęčŧįőŉ"
@@ -2002,7 +2157,7 @@
       "title": "Åľęřŧįŉģ"
     },
     "alerting-admin": {
-      "subtitle": "Mäŉäģę Åľęřŧmäŉäģęř čőŉƒįģūřäŧįőŉş",
+      "subtitle": "Mäŉäģę Åľęřŧmäŉäģęř čőŉƒįģūřäŧįőŉş äŉđ ęŉäþľę řęčęįvįŉģ Ğřäƒäŉä-mäŉäģęđ äľęřŧş",
       "title": "Ŝęŧŧįŉģş"
     },
     "alerting-am-routes": {
@@ -2155,6 +2310,16 @@
     "help/documentation": "Đőčūmęŉŧäŧįőŉ",
     "help/keyboard-shortcuts": "Ķęyþőäřđ şĥőřŧčūŧş",
     "help/support": "Ŝūppőřŧ",
+    "history-container": {
+      "drawer-tittle": "Ħįşŧőřy"
+    },
+    "history-wrapper": {
+      "collapse": "Cőľľäpşę",
+      "expand": "Ēχpäŉđ",
+      "show-more": "Ŝĥőŵ mőřę",
+      "today": "Ŧőđäy",
+      "yesterday": "Ÿęşŧęřđäy"
+    },
     "home": {
       "title": "Ħőmę"
     },
@@ -2200,9 +2365,6 @@
     },
     "new-folder": {
       "title": "Ńęŵ ƒőľđęř"
-    },
-    "observability": {
-      "title": "Øþşęřväþįľįŧy"
     },
     "oncall": {
       "title": "ØŉCäľľ"
@@ -2333,12 +2495,7 @@
       "open": "Øpęŉ męŉū",
       "undock": "Ůŉđőčĸ męŉū"
     },
-    "toolbar": {
-      "close-menu": "Cľőşę męŉū",
-      "enable-kiosk": "Ēŉäþľę ĸįőşĸ mőđę",
-      "open-menu": "Øpęŉ męŉū",
-      "toggle-search-bar": "Ŧőģģľę ŧőp şęäřčĥ þäř"
-    }
+    "rss-button": "Ŀäŧęşŧ ƒřőm ŧĥę þľőģ"
   },
   "news": {
     "drawer": {
@@ -2470,20 +2627,22 @@
       }
     },
     "details": {
+      "connections-tab": {
+        "description": "Ŧĥę đäŧä şőūřčę čőŉŉęčŧįőŉş þęľőŵ äřę äľľ {{pluginName}}. Ÿőū čäŉ ƒįŉđ äľľ őƒ yőūř đäŧä şőūřčę čőŉŉęčŧįőŉş őƒ äľľ ŧypęş įŉ <4><0>Cőŉŉęčŧįőŉş</0> - <3>Đäŧä şőūřčęş</3>.</4>"
+      },
       "labels": {
         "contactGrafanaLabs": "Cőŉŧäčŧ Ğřäƒäŉä Ŀäþş",
         "dependencies": "Đępęŉđęŉčįęş",
         "downloads": "Đőŵŉľőäđş",
         "from": "Fřőm",
-        "installedVersion": "Ĩŉşŧäľľęđ vęřşįőŉ: ",
+        "installedVersion": "Ĩŉşŧäľľęđ Vęřşįőŉ",
         "lastCommitDate": "Ŀäşŧ čőmmįŧ đäŧę:",
-        "latestVersion": "Ŀäŧęşŧ vęřşįőŉ: ",
+        "latestVersion": "Ŀäŧęşŧ Vęřşįőŉ",
         "links": "Ŀįŉĸş ",
         "reportAbuse": "Ŗępőřŧ ä čőŉčęřŉ ",
         "signature": "Ŝįģŉäŧūřę",
         "status": "Ŝŧäŧūş",
-        "updatedAt": "Ŀäşŧ ūpđäŧęđ:",
-        "version": "Vęřşįőŉ"
+        "updatedAt": "Ŀäşŧ ūpđäŧęđ:"
       }
     },
     "empty-state": {
@@ -2686,7 +2845,7 @@
       "shared-dashboard-modal-title": "Ŝĥäřęđ đäşĥþőäřđş"
     },
     "table-body": {
-      "dashboard-count_one": "{{count}} đäşĥþőäřđ",
+      "dashboard-count_one": "{{count}} đäşĥþőäřđş",
       "dashboard-count_other": "{{count}} đäşĥþőäřđş"
     },
     "table-header": {
@@ -2701,7 +2860,7 @@
   "query-library": {
     "datasource-names": "Đäŧäşőūřčę ŉämę(ş):",
     "delete-query-button": "Đęľęŧę qūęřy",
-    "query-template-get-error": "Ēřřőř äŧŧęmpŧįŉģ ŧő ģęŧ qūęřy ŧęmpľäŧę ƒřőm ŧĥę ľįþřäřy: {{error}}",
+    "query-template-get-error": "Ēřřőř äŧŧęmpŧįŉģ ŧő ľőäđ qūęřy ŧęmpľäŧę męŧäđäŧä: {{error}}",
     "search": "Ŝęäřčĥ þy đäŧä şőūřčę, qūęřy čőŉŧęŉŧ őř đęşčřįpŧįőŉ",
     "user-info-get-error": "Ēřřőř äŧŧęmpŧįŉģ ŧő ģęŧ ūşęř įŉƒő ƒřőm ŧĥę ľįþřäřy: {{error}}",
     "user-names": "Ůşęř ŉämę(ş):"
@@ -2716,6 +2875,7 @@
       "hide-response": "Ħįđę řęşpőŉşę",
       "remove-query": "Ŗęmővę qūęřy",
       "save-to-query-library": "Ŝävę ŧő qūęřy ľįþřäřy",
+      "save-to-query-library-new": "Ńęŵ: Ŝävę ŧő qūęřy ľįþřäřy",
       "show-response": "Ŝĥőŵ řęşpőŉşę",
       "toggle-edit-mode": "Ŧőģģľę ŧęχŧ ęđįŧ mőđę"
     },
@@ -2752,6 +2912,12 @@
   "recentlyDeleted": {
     "filter": {
       "placeholder": "Ŝęäřčĥ ƒőř đäşĥþőäřđş"
+    }
+  },
+  "reduce": {
+    "strictMode": {
+      "description": "Ŵĥęŉ <1>Ŗęđūčę Ŝŧřįčŧ mőđę</1> įş ūşęđ, ŧĥę <3>ƒįľľ(ŉūľľ)</3> ƒūŉčŧįőŉ (ĨŉƒľūχQĿ) ŵįľľ řęşūľŧ įŉ <6>ŃäŃ</6>. <9>Ŝęę ŧĥę đőčūmęŉŧäŧįőŉ ƒőř mőřę đęŧäįľş.</9>",
+      "title": "Ŝŧřįčŧ Mőđę ßęĥävįőūř"
     }
   },
   "refresh-picker": {
@@ -2811,6 +2977,10 @@
     "title": "Ůŉäþľę ŧő ƒįŉđ äppľįčäŧįőŉ ƒįľę"
   },
   "save-dashboards": {
+    "message-length": {
+      "info": "Ŧĥę męşşäģę įş {{messageLength}} čĥäřäčŧęřş, ŵĥįčĥ ęχčęęđş ŧĥę mäχįmūm ľęŉģŧĥ őƒ 500 čĥäřäčŧęřş. Pľęäşę şĥőřŧęŉ įŧ þęƒőřę şävįŉģ.",
+      "title": "Męşşäģę ŧőő ľőŉģ"
+    },
     "name-exists": {
       "message-info": "Å đäşĥþőäřđ ŵįŧĥ ŧĥę şämę ŉämę įŉ ŧĥę şęľęčŧęđ ƒőľđęř äľřęäđy ęχįşŧş, įŉčľūđįŉģ řęčęŉŧľy đęľęŧęđ đäşĥþőäřđş.",
       "message-suggestion": "Pľęäşę čĥőőşę ä đįƒƒęřęŉŧ ŉämę őř ƒőľđęř.",
@@ -2915,6 +3085,7 @@
   "share-dashboard": {
     "menu": {
       "export-json-title": "Ēχpőřŧ äş ĴŜØŃ",
+      "invite-user-title": "Ĩŉvįŧę ŉęŵ męmþęř",
       "share-externally-title": "Ŝĥäřę ęχŧęřŉäľľy",
       "share-internally-title": "Ŝĥäřę įŉŧęřŉäľľy",
       "share-snapshot-title": "Ŝĥäřę şŉäpşĥőŧ"
@@ -3023,6 +3194,27 @@
       "create-button": "Cřęäŧę ľįþřäřy päŉęľ"
     }
   },
+  "share-panel-image": {
+    "preview": {
+      "title": "Päŉęľ přęvįęŵ"
+    },
+    "settings": {
+      "height-label": "Ħęįģĥŧ",
+      "height-min": "Ħęįģĥŧ mūşŧ þę ęqūäľ őř ģřęäŧęř ŧĥäŉ 1",
+      "height-placeholder": "500",
+      "height-required": "Ħęįģĥŧ įş řęqūįřęđ",
+      "max-warning": "Ŝęŧŧįŉģ mäχįmūmş äřę ľįmįŧęđ þy ŧĥę įmäģę řęŉđęřęř şęřvįčę",
+      "scale-factor-label": "Ŝčäľę ƒäčŧőř",
+      "scale-factor-min": "Ŝčäľę ƒäčŧőř mūşŧ þę ęqūäľ őř ģřęäŧęř ŧĥäŉ 1",
+      "scale-factor-placeholder": "1",
+      "scale-factor-required": "Ŝčäľę ƒäčŧőř įş řęqūįřęđ",
+      "title": "Ĩmäģę şęŧŧįŉģş",
+      "width-label": "Ŵįđŧĥ",
+      "width-min": "Ŵįđŧĥ mūşŧ þę ęqūäľ őř ģřęäŧęř ŧĥäŉ 1",
+      "width-placeholder": "1000",
+      "width-required": "Ŵįđŧĥ įş řęqūįřęđ"
+    }
+  },
   "share-playlist": {
     "checkbox-description": "Päŉęľ ĥęįģĥŧş ŵįľľ þę äđĵūşŧęđ ŧő ƒįŧ şčřęęŉ şįžę",
     "checkbox-label": "Åūŧőƒįŧ",
@@ -3031,7 +3223,6 @@
     "mode": "Mőđę",
     "mode-kiosk": "Ķįőşĸ",
     "mode-normal": "Ńőřmäľ",
-    "mode-tv": "ŦV",
     "title": "Ŝĥäřę pľäyľįşŧ"
   },
   "shared": {
@@ -3144,6 +3335,13 @@
     "url-column-header": "Ŝŉäpşĥőŧ ūřľ",
     "view-button": "Vįęŵ"
   },
+  "table": {
+    "container": {
+      "content": "Ŝĥőŵįŉģ ŧőő mäŉy čőľūmŉş įŉ ä şįŉģľę ŧäþľę mäy įmpäčŧ pęřƒőřmäŉčę äŉđ mäĸę đäŧä ĥäřđęř ŧő řęäđ. Cőŉşįđęř řęƒįŉįŉģ yőūř qūęřįęş.",
+      "show-all-series": "Ŝĥőŵ äľľ čőľūmŉş",
+      "show-only-series": "Ŝĥőŵįŉģ őŉľy {{MAX_NUMBER_OF_COLUMNS}} čőľūmŉş"
+    }
+  },
   "tag-filter": {
     "clear-button": "Cľęäř ŧäģş",
     "loading": "Ŀőäđįŉģ...",
@@ -3229,9 +3427,7 @@
       "or-view-bookmarks": "Øř vįęŵ þőőĸmäřĸş"
     },
     "card": {
-      "data-source": "Đäŧä şőūřčę: ",
-      "date-created": "Đäŧę čřęäŧęđ: ",
-      "metric": "Męŧřįč:"
+      "date-created": "Đäŧę čřęäŧęđ: "
     },
     "home": {
       "learn-more": "Ŀęäřŉ mőřę",
@@ -3239,18 +3435,25 @@
       "start-your-metrics-exploration": "Ŝŧäřŧ yőūř męŧřįčş ęχpľőřäŧįőŉ!",
       "subtitle": "Ēχpľőřę yőūř Přőmęŧĥęūş-čőmpäŧįþľę męŧřįčş ŵįŧĥőūŧ ŵřįŧįŉģ ä qūęřy."
     },
-    "metric-overview": {
-      "description-label": "Đęşčřįpŧįőŉ",
-      "labels": "Ŀäþęľş",
-      "metric-attributes": "Åŧŧřįþūŧęş",
-      "no-description": "Ńő đęşčřįpŧįőŉ äväįľäþľę",
-      "type-label": "Ŧypę",
-      "unit-label": "Ůŉįŧ",
-      "unknown-type": "Ůŉĸŉőŵŉ"
-    },
     "metric-select": {
       "filter-by": "Fįľŧęř þy",
+      "native-histogram": "Ńäŧįvę Ħįşŧőģřäm",
+      "new-badge": "Ńęŵ",
       "otel-switch": "Ŧĥįş şŵįŧčĥ ęŉäþľęş ƒįľŧęřįŉģ þy ØŦęľ řęşőūřčęş ƒőř ØŦęľ ŉäŧįvę đäŧä şőūřčęş."
+    },
+    "native-histogram-banner": {
+      "ch-heatmap": "Cľäşşįč Ħįşŧőģřäm đįşpľäyęđ äş ĥęäŧmäp:",
+      "ch-histogram": "Cľäşşįč Ħįşŧőģřäm đįşpľäyęđ äş ĥįşŧőģřäm:",
+      "click-histogram": "Cľįčĸ äŉy őƒ ŧĥę ŉäŧįvę ĥįşŧőģřämş þęľőŵ ŧő ęχpľőřę ŧĥęm:",
+      "hide-examples": "Ħįđę ęχämpľęş",
+      "learn-more": "Ŀęäřŉ mőřę",
+      "metric-examples": "",
+      "nh-heatmap": "Ńäŧįvę Ħįşŧőģřäm đįşpľäyęđ äş ĥęäŧmäp:",
+      "nh-histogram": "Ńäŧįvę Ħįşŧőģřäm đįşpľäyęđ äş ĥįşŧőģřäm:",
+      "now": "Ńőŵ:",
+      "previously": "Přęvįőūşľy:",
+      "see-examples": "> Ŝęę ęχämpľęş",
+      "sentence": "Přőmęŧĥęūş ŉäŧįvę ĥįşŧőģřämş őƒƒęř ĥįģĥ řęşőľūŧįőŉ, ĥįģĥ přęčįşįőŉ, şįmpľę ūşäģę įŉ įŉşŧřūmęŉŧäŧįőŉ äŉđ ä ŵäy ŧő čőmþįŉę äŉđ mäŉįpūľäŧę ĥįşŧőģřämş įŉ qūęřįęş äŉđ įŉ Ğřäƒäŉä."
     },
     "recent-metrics": {
       "or-view-a-recent-exploration": "Øř vįęŵ ä řęčęŉŧ ęχpľőřäŧįőŉ"
@@ -3338,6 +3541,12 @@
       "info-box-content": "Väřįäþľęş ęŉäþľę mőřę įŉŧęřäčŧįvę äŉđ đyŉämįč đäşĥþőäřđş. Ĩŉşŧęäđ őƒ ĥäřđ-čőđįŉģ ŧĥįŉģş ľįĸę şęřvęř őř şęŉşőř ŉämęş įŉ yőūř męŧřįč qūęřįęş yőū čäŉ ūşę väřįäþľęş įŉ ŧĥęįř pľäčę. Väřįäþľęş äřę şĥőŵŉ äş ľįşŧ þőχęş äŧ ŧĥę ŧőp őƒ ŧĥę đäşĥþőäřđ. Ŧĥęşę đřőp-đőŵŉ ľįşŧş mäĸę įŧ ęäşy ŧő čĥäŉģę ŧĥę đäŧä þęįŉģ đįşpľäyęđ įŉ yőūř đäşĥþőäřđ.",
       "info-box-content-2": "Cĥęčĸ őūŧ ŧĥę <2>Ŧęmpľäŧęş äŉđ väřįäþľęş đőčūmęŉŧäŧįőŉ</2> ƒőř mőřę įŉƒőřmäŧįőŉ.",
       "title": "Ŧĥęřę äřę ŉő väřįäþľęş äđđęđ yęŧ"
+    },
+    "unknown-table": {
+      "loading": "Ŀőäđįŉģ...",
+      "no-unknowns": "Ńő řęŉämęđ őř mįşşįŉģ väřįäþľęş ƒőūŉđ.",
+      "renamed-or-missing-variables": "Ŗęŉämęđ őř mįşşįŉģ väřįäþľęş",
+      "variable": "Väřįäþľę"
     }
   }
 }

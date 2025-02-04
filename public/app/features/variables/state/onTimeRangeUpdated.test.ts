@@ -7,7 +7,7 @@ import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsole
 import { appEvents } from '../../../core/core';
 import { notifyApp } from '../../../core/reducers/appNotification';
 import { DashboardState } from '../../../types';
-import { DashboardModel } from '../../dashboard/state';
+import { DashboardModel } from '../../dashboard/state/DashboardModel';
 import { createDashboardModelFixture } from '../../dashboard/state/__fixtures__/dashboardFixtures';
 import { TemplateSrv } from '../../templating/template_srv';
 import { variableAdapters } from '../adapters';

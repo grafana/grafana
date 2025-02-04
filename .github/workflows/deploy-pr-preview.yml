@@ -11,6 +11,7 @@ on:
 
 jobs:
   deploy-pr-preview:
+    if: ${{ ! github.event.pull_request.head.repo.fork }}
     uses: grafana/writers-toolkit/.github/workflows/deploy-preview.yml@main
     with:
       sha: ${{ github.event.pull_request.head.sha }}
@@ -20,3 +21,4 @@ jobs:
       repo: grafana
       website_directory: content/docs/grafana/latest
       relative_prefix: /docs/grafana/latest/
+      index_file: true

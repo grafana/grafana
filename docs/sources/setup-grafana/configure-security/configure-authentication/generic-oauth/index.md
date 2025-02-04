@@ -239,14 +239,10 @@ Payload:
 ```json
 {
     ...
-    "info": {
-        ...
-        "groups": [
-            "engineer",
-            "admin",
-        ],
-        ...
-    },
+    "groups": [
+        "engineer",
+        "admin",
+    ],
     ...
 }
 ```
@@ -254,7 +250,7 @@ Payload:
 Config:
 
 ```bash
-role_attribute_path = contains(info.groups[*], 'admin') && 'Admin' || contains(info.groups[*], 'editor') && 'Editor' || 'Viewer'
+role_attribute_path = contains(groups[*], 'admin') && 'Admin' || contains(groups[*], 'editor') && 'Editor' || 'Viewer'
 ```
 
 ##### Map server administrator role
@@ -266,13 +262,9 @@ Payload:
 ```json
 {
     ...
-    "info": {
-        ...
-        "roles": [
-            "admin",
-        ],
-        ...
-    },
+    "roles": [
+        "admin",
+    ],
     ...
 }
 ```
@@ -280,7 +272,7 @@ Payload:
 Config:
 
 ```ini
-role_attribute_path = contains(info.roles[*], 'admin') && 'GrafanaAdmin' || contains(info.roles[*], 'editor') && 'Editor' || 'Viewer'
+role_attribute_path = contains(roles[*], 'admin') && 'GrafanaAdmin' || contains(roles[*], 'editor') && 'Editor' || 'Viewer'
 allow_assign_grafana_admin = true
 ```
 
@@ -305,26 +297,16 @@ Payload:
 
 ```json
 {
-    ...
-    "info": {
-        ...
-        "roles": [
-            "org_foo",
-            "org_bar",
-            "another_org"
-        ],
-        ...
-    },
-    ...
+  "roles": ["org_foo", "org_bar", "another_org"]
 }
 ```
 
 Config:
 
 ```ini
-role_attribute_path = contains(info.roles[*], 'admin') && 'GrafanaAdmin' || 'None'
+role_attribute_path = contains(roles[*], 'admin') && 'GrafanaAdmin' || 'None'
 allow_assign_grafana_admin = true
-org_attribute_path = info.roles
+org_attribute_path = roles
 org_mapping = org_foo:org_foo:Viewer org_bar:org_bar:Editor *:org_baz:Editor
 ```
 
@@ -347,7 +329,7 @@ To learn more about group synchronization, refer to [Configure team sync](https:
 Configuration:
 
 ```bash
-groups_attribute_path = info.groups
+groups_attribute_path = groups
 ```
 
 Payload:
@@ -355,14 +337,10 @@ Payload:
 ```json
 {
     ...
-    "info": {
-        ...
-        "groups": [
-            "engineers",
-            "analysts",
-        ],
-        ...
-    },
+    "groups": [
+        "engineers",
+        "analysts",
+    ],
     ...
 }
 ```

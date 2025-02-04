@@ -5,7 +5,7 @@ import { getAlertmanagerConfig } from 'app/features/alerting/unified/mocks/serve
 import { ALERTING_API_SERVER_BASE_URL, getK8sResponse } from 'app/features/alerting/unified/mocks/server/utils';
 import { ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Receiver } from 'app/features/alerting/unified/openapi/receiversApi.gen';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
-import { PROVENANCE_NONE, K8sAnnotations } from 'app/features/alerting/unified/utils/k8s/constants';
+import { K8sAnnotations, PROVENANCE_NONE } from 'app/features/alerting/unified/utils/k8s/constants';
 
 const getReceiversList = () => {
   const config = getAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME);

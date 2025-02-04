@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 
 import { Button, Modal } from '@grafana/ui';
 
-import { DashboardModel } from '../../state';
+import { DashboardModel } from '../../state/DashboardModel';
 
 import { SaveDashboardButton } from './SaveDashboardButton';
 

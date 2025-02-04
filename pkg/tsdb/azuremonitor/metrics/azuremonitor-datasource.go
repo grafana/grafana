@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
@@ -25,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/loganalytics"
 	azTime "github.com/grafana/grafana/pkg/tsdb/azuremonitor/time"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/utils"
 )
 
 // AzureMonitorDatasource calls the Azure Monitor API - one of the four API's supported
@@ -55,12 +55,12 @@ func (e *AzureMonitorDatasource) ExecuteTimeSeriesQuery(ctx context.Context, ori
 	for _, query := range originalQueries {
 		azureQuery, err := e.buildQuery(query, dsInfo)
 		if err != nil {
-			errorsource.AddErrorToResponse(query.RefID, result, err)
+			result.Responses[query.RefID] = backend.ErrorResponseWithErrorSource(err)
 			continue
 		}
 		res, err := e.executeQuery(ctx, azureQuery, dsInfo, client, url)
 		if err != nil {
-			errorsource.AddErrorToResponse(query.RefID, result, err)
+			result.Responses[query.RefID] = backend.ErrorResponseWithErrorSource(err)
 			continue
 		}
 		result.Responses[query.RefID] = *res
@@ -284,7 +284,7 @@ func (e *AzureMonitorDatasource) retrieveSubscriptionDetails(cli *http.Client, c
 	}
 
 	if res.StatusCode/100 != 2 {
-		return "", errorsource.SourceError(backend.ErrorSourceFromHTTPStatus(res.StatusCode), fmt.Errorf("request failed, status: %s, error: %s", res.Status, string(body)), false)
+		return "", utils.CreateResponseErrorFromStatusCode(res.StatusCode, res.Status, body)
 	}
 
 	var data types.SubscriptionsResponse
@@ -321,7 +321,7 @@ func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, query *types.
 
 	res, err := cli.Do(req)
 	if err != nil {
-		return nil, errorsource.DownstreamError(err, false)
+		return nil, backend.DownstreamError(err)
 	}
 
 	defer func() {
@@ -366,7 +366,7 @@ func (e *AzureMonitorDatasource) unmarshalResponse(res *http.Response) (types.Az
 	}
 
 	if res.StatusCode/100 != 2 {
-		return types.AzureMonitorResponse{}, errorsource.SourceError(backend.ErrorSourceFromHTTPStatus(res.StatusCode), fmt.Errorf("request failed, status: %s, body: %s", res.Status, string(body)), false)
+		return types.AzureMonitorResponse{}, utils.CreateResponseErrorFromStatusCode(res.StatusCode, res.Status, body)
 	}
 
 	var data types.AzureMonitorResponse

@@ -4,7 +4,7 @@ import { config } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { RefreshPicker } from '@grafana/ui';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { DEFAULT_RANGE } from 'app/features/explore/state/utils';
+import { DEFAULT_RANGE } from 'app/features/explore/state/constants';
 import { getVariablesUrlParams } from 'app/features/variables/getAllVariableValuesForUrl';
 
 import { DatasourceSrvMock, MockDataSourceApi } from '../../../test/mocks/datasource_srv';

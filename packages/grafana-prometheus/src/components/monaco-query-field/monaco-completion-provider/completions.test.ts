@@ -274,3 +274,167 @@ describe.each(metricNameCompletionSituations)('metric name completions in situat
     expect(completions.length).toBeLessThanOrEqual(expectedCompletionsCount);
   });
 });
+
+describe('Label value completions', () => {
+  let dataProvider: DataProvider;
+
+  beforeEach(() => {
+    dataProvider = {
+      getAllMetricNames: jest.fn(),
+      metricNamesToMetrics: jest.fn(),
+      getHistory: jest.fn(),
+      getLabelNames: jest.fn(),
+      getLabelValues: jest.fn().mockResolvedValue(['value1', 'value"2', 'value\\3', "value'4"]),
+      getSeriesLabels: jest.fn(),
+      getSeriesValues: jest.fn(),
+      monacoSettings: {
+        setInputInRange: jest.fn(),
+        inputInRange: '',
+        suggestionsIncomplete: false,
+        enableAutocompleteSuggestionsUpdate: jest.fn(),
+      },
+      metricNamesSuggestionLimit: 100,
+    } as unknown as DataProvider;
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  describe('with prometheusSpecialCharsInLabelValues disabled', () => {
+    beforeEach(() => {
+      jest.replaceProperty(config, 'featureToggles', {
+        prometheusSpecialCharsInLabelValues: false,
+      });
+    });
+
+    it('should not escape special characters when between quotes', async () => {
+      const situation: Situation = {
+        type: 'IN_LABEL_SELECTOR_WITH_LABEL_NAME',
+        labelName: 'testLabel',
+        betweenQuotes: true,
+        otherLabels: [],
+      };
+
+      const completions = await getCompletions(situation, dataProvider);
+
+      expect(completions).toHaveLength(4);
+      expect(completions[0].insertText).toBe('value1');
+      expect(completions[1].insertText).toBe('value"2');
+      expect(completions[2].insertText).toBe('value\\3');
+      expect(completions[3].insertText).toBe("value'4");
+    });
+
+    it('should wrap in quotes but not escape special characters when not between quotes', async () => {
+      const situation: Situation = {
+        type: 'IN_LABEL_SELECTOR_WITH_LABEL_NAME',
+        labelName: 'testLabel',
+        betweenQuotes: false,
+        otherLabels: [],
+      };
+
+      const completions = await getCompletions(situation, dataProvider);
+
+      expect(completions).toHaveLength(4);
+      expect(completions[0].insertText).toBe('"value1"');
+      expect(completions[1].insertText).toBe('"value"2"');
+      expect(completions[2].insertText).toBe('"value\\3"');
+      expect(completions[3].insertText).toBe('"value\'4"');
+    });
+  });
+
+  describe('with prometheusSpecialCharsInLabelValues enabled', () => {
+    beforeEach(() => {
+      jest.replaceProperty(config, 'featureToggles', {
+        prometheusSpecialCharsInLabelValues: true,
+      });
+    });
+
+    it('should escape special characters when between quotes', async () => {
+      const situation: Situation = {
+        type: 'IN_LABEL_SELECTOR_WITH_LABEL_NAME',
+        labelName: 'testLabel',
+        betweenQuotes: true,
+        otherLabels: [],
+      };
+
+      const completions = await getCompletions(situation, dataProvider);
+
+      expect(completions).toHaveLength(4);
+      expect(completions[0].insertText).toBe('value1');
+      expect(completions[1].insertText).toBe('value\\"2');
+      expect(completions[2].insertText).toBe('value\\\\3');
+      expect(completions[3].insertText).toBe("value'4");
+    });
+
+    it('should wrap in quotes and escape special characters when not between quotes', async () => {
+      const situation: Situation = {
+        type: 'IN_LABEL_SELECTOR_WITH_LABEL_NAME',
+        labelName: 'testLabel',
+        betweenQuotes: false,
+        otherLabels: [],
+      };
+
+      const completions = await getCompletions(situation, dataProvider);
+
+      expect(completions).toHaveLength(4);
+      expect(completions[0].insertText).toBe('"value1"');
+      expect(completions[1].insertText).toBe('"value\\"2"');
+      expect(completions[2].insertText).toBe('"value\\\\3"');
+      expect(completions[3].insertText).toBe('"value\'4"');
+    });
+  });
+
+  describe('label value escaping edge cases', () => {
+    beforeEach(() => {
+      jest.replaceProperty(config, 'featureToggles', {
+        prometheusSpecialCharsInLabelValues: true,
+      });
+    });
+
+    it('should handle empty values', async () => {
+      jest.spyOn(dataProvider, 'getLabelValues').mockResolvedValue(['']);
+
+      const situation: Situation = {
+        type: 'IN_LABEL_SELECTOR_WITH_LABEL_NAME',
+        labelName: 'testLabel',
+        betweenQuotes: false,
+        otherLabels: [],
+      };
+
+      const completions = await getCompletions(situation, dataProvider);
+      expect(completions).toHaveLength(1);
+      expect(completions[0].insertText).toBe('""');
+    });
+
+    it('should handle values with multiple special characters', async () => {
+      jest.spyOn(dataProvider, 'getLabelValues').mockResolvedValue(['test"\\value']);
+
+      const situation: Situation = {
+        type: 'IN_LABEL_SELECTOR_WITH_LABEL_NAME',
+        labelName: 'testLabel',
+        betweenQuotes: true,
+        otherLabels: [],
+      };
+
+      const completions = await getCompletions(situation, dataProvider);
+      expect(completions).toHaveLength(1);
+      expect(completions[0].insertText).toBe('test\\"\\\\value');
+    });
+
+    it('should handle non-string values', async () => {
+      jest.spyOn(dataProvider, 'getLabelValues').mockResolvedValue([123 as unknown as string]);
+
+      const situation: Situation = {
+        type: 'IN_LABEL_SELECTOR_WITH_LABEL_NAME',
+        labelName: 'testLabel',
+        betweenQuotes: false,
+        otherLabels: [],
+      };
+
+      const completions = await getCompletions(situation, dataProvider);
+      expect(completions).toHaveLength(1);
+      expect(completions[0].insertText).toBe('"123"');
+    });
+  });
+});

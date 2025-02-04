@@ -26,7 +26,7 @@ import {
 import config from 'app/core/config';
 import { EmptyTransformationsMessage } from 'app/features/dashboard-scene/panel-edit/PanelDataPane/EmptyTransformationsMessage';
 
-import { PanelModel } from '../../state';
+import { PanelModel } from '../../state/PanelModel';
 import { PanelNotSupported } from '../PanelEditor/PanelNotSupported';
 
 import { TransformationOperationRows } from './TransformationOperationRows';

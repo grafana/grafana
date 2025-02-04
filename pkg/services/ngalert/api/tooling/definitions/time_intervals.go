@@ -4,6 +4,9 @@ package definitions
 //
 // Get all the time intervals
 //
+// This API is designated to internal use only and can be removed or changed at any time without prior notice.
+//
+// Deprecated: true
 //     Responses:
 //       200: GetAllIntervalsResponse
 //       403: ForbiddenError
@@ -12,6 +15,9 @@ package definitions
 //
 // Get a time interval by name.
 //
+// This API is designated to internal use only and can be removed or changed at any time without prior notice.
+//
+// Deprecated: true
 //     Responses:
 //       200: GetIntervalsByNameResponse
 //       404: NotFound

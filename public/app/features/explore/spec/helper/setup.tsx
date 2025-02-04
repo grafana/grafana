@@ -1,6 +1,7 @@
 import { ByRoleMatcher, waitFor, within } from '@testing-library/dom';
 import { render, screen } from '@testing-library/react';
 import { createMemoryHistory } from 'history';
+import { KBarProvider } from 'kbar';
 import { fromPairs } from 'lodash';
 import { stringify } from 'querystring';
 import { Provider } from 'react-redux';
@@ -30,6 +31,7 @@ import {
   setPluginLinksHook,
 } from '@grafana/runtime';
 import { DataSourceRef } from '@grafana/schema';
+import { AppChrome } from 'app/core/components/AppChrome/AppChrome';
 import { GrafanaContext } from 'app/core/context/GrafanaContext';
 import { GrafanaRoute } from 'app/core/navigation/GrafanaRoute';
 import { Echo } from 'app/core/services/echo/Echo';
@@ -45,6 +47,7 @@ import { ExploreQueryParams } from '../../../../types';
 import { initialUserState } from '../../../profile/state/reducers';
 import ExplorePage from '../../ExplorePage';
 import { QueriesDrawerContextProvider } from '../../QueriesDrawer/QueriesDrawerContext';
+import { QueryLibraryContextProvider } from '../../QueryLibrary/QueryLibraryContext';
 
 type DatasourceSetup = { settings: DataSourceInstanceSettings; api: DataSourceApi };
 
@@ -55,6 +58,8 @@ type SetupOptions = {
   urlParams?: ExploreQueryParams;
   prevUsedDatasource?: { orgId: number; datasource: string };
   failAddToLibrary?: boolean;
+  // Use AppChrome wrapper around ExplorePage - needed to test query library/history
+  withAppChrome?: boolean;
 };
 
 type TearDownOptions = {
@@ -72,6 +77,7 @@ export function setupExplore(options?: SetupOptions): {
   setBackendSrv({
     datasourceRequest: jest.fn().mockRejectedValue(undefined),
     delete: jest.fn().mockRejectedValue(undefined),
+    chunked: jest.fn().mockRejectedValue(undefined),
     fetch: jest.fn().mockImplementation((req) => {
       let data: Record<string, string | object | number> = {};
       if (req.url.startsWith('/api/datasources/correlations') && req.method === 'GET') {
@@ -115,6 +121,7 @@ export function setupExplore(options?: SetupOptions): {
   const previousDataSourceSrv = getDataSourceSrv();
 
   setDataSourceSrv({
+    registerRuntimeDataSource: jest.fn(),
     getList(): DataSourceInstanceSettings[] {
       return dsSettings.map((d) => d.settings);
     },
@@ -176,13 +183,29 @@ export function setupExplore(options?: SetupOptions): {
     <Provider store={storeState}>
       <GrafanaContext.Provider value={contextMock}>
         <Router history={history}>
-          <QueriesDrawerContextProvider>
-            <Route
-              path="/explore"
-              exact
-              render={(props) => <GrafanaRoute {...props} route={{ component: ExplorePage, path: '/explore' }} />}
-            />
-          </QueriesDrawerContextProvider>
+          <QueryLibraryContextProvider>
+            <QueriesDrawerContextProvider>
+              {options?.withAppChrome ? (
+                <KBarProvider>
+                  <AppChrome>
+                    <Route
+                      path="/explore"
+                      exact
+                      render={(props) => (
+                        <GrafanaRoute {...props} route={{ component: ExplorePage, path: '/explore' }} />
+                      )}
+                    />
+                  </AppChrome>
+                </KBarProvider>
+              ) : (
+                <Route
+                  path="/explore"
+                  exact
+                  render={(props) => <GrafanaRoute {...props} route={{ component: ExplorePage, path: '/explore' }} />}
+                />
+              )}
+            </QueriesDrawerContextProvider>
+          </QueryLibraryContextProvider>
         </Router>
       </GrafanaContext.Provider>
     </Provider>

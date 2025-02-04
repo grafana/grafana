@@ -1,7 +1,6 @@
-import { delay, http, HttpResponse } from 'msw';
+import { HttpResponse, delay, http } from 'msw';
 import { SetupServerApi } from 'msw/node';
 
-import { setDataSourceSrv } from '@grafana/runtime';
 import {
   AlertManagerCortexConfig,
   AlertManagerDataSourceJsonData,
@@ -10,8 +9,7 @@ import {
   Receiver,
 } from 'app/plugins/datasource/alertmanager/types';
 
-import { mockDataSource, MockDataSourceSrv } from '../../../mocks';
-import * as config from '../../../utils/config';
+import { mockDataSource } from '../../../mocks';
 import { DataSourceType } from '../../../utils/datasource';
 
 import internalAlertmanagerConfig from './api/alertmanager/grafana/config/api/v1/alerts.json';
@@ -22,41 +20,34 @@ import datasources from './api/datasources.json';
 import admin_config from './api/v1/ngalert/admin_config.json';
 import alertmanagers from './api/v1/ngalert/alertmanagers.json';
 
-export { datasources as DataSourcesResponse };
-export { admin_config as AdminConfigResponse };
-export { alertmanagers as AlertmanagersResponse };
-export { internalAlertmanagerConfig as InternalAlertmanagerConfiguration };
-export { vanillaAlertmanagerConfig as VanillaAlertmanagerConfiguration };
-export { history as alertmanagerConfigurationHistory };
-
 export const EXTERNAL_VANILLA_ALERTMANAGER_UID = 'vanilla-alertmanager';
 export const PROVISIONED_MIMIR_ALERTMANAGER_UID = 'provisioned-alertmanager';
 
-jest.spyOn(config, 'getAllDataSources');
-
-const mocks = {
-  getAllDataSources: jest.mocked(config.getAllDataSources),
-};
-
 export const mockDataSources = {
-  [EXTERNAL_VANILLA_ALERTMANAGER_UID]: mockDataSource<AlertManagerDataSourceJsonData>({
-    uid: EXTERNAL_VANILLA_ALERTMANAGER_UID,
-    name: EXTERNAL_VANILLA_ALERTMANAGER_UID,
-    type: DataSourceType.Alertmanager,
-    jsonData: {
-      implementation: AlertManagerImplementation.prometheus,
+  [EXTERNAL_VANILLA_ALERTMANAGER_UID]: mockDataSource<AlertManagerDataSourceJsonData>(
+    {
+      uid: EXTERNAL_VANILLA_ALERTMANAGER_UID,
+      name: EXTERNAL_VANILLA_ALERTMANAGER_UID,
+      type: DataSourceType.Alertmanager,
+      jsonData: {
+        implementation: AlertManagerImplementation.prometheus,
+      },
     },
-  }),
-  [PROVISIONED_MIMIR_ALERTMANAGER_UID]: mockDataSource<AlertManagerDataSourceJsonData>({
-    uid: PROVISIONED_MIMIR_ALERTMANAGER_UID,
-    name: PROVISIONED_MIMIR_ALERTMANAGER_UID,
-    type: DataSourceType.Alertmanager,
-    jsonData: {
-      // this is a mutable data source type but we're making it readOnly
-      implementation: AlertManagerImplementation.mimir,
+    { module: 'core:plugin/alertmanager' }
+  ),
+  [PROVISIONED_MIMIR_ALERTMANAGER_UID]: mockDataSource<AlertManagerDataSourceJsonData>(
+    {
+      uid: PROVISIONED_MIMIR_ALERTMANAGER_UID,
+      name: PROVISIONED_MIMIR_ALERTMANAGER_UID,
+      type: DataSourceType.Alertmanager,
+      jsonData: {
+        // this is a mutable data source type but we're making it readOnly
+        implementation: AlertManagerImplementation.mimir,
+      },
+      readOnly: true,
     },
-    readOnly: true,
-  }),
+    { module: 'core:plugin/alertmanager' }
+  ),
 };
 
 export function setupGrafanaManagedServer(server: SetupServerApi) {
@@ -72,9 +63,6 @@ export function setupGrafanaManagedServer(server: SetupServerApi) {
 }
 
 export function setupVanillaAlertmanagerServer(server: SetupServerApi) {
-  mocks.getAllDataSources.mockReturnValue(Object.values(mockDataSources));
-  setDataSourceSrv(new MockDataSourceSrv(mockDataSources));
-
   server.use(
     createVanillaAlertmanagerConfigurationHandler(EXTERNAL_VANILLA_ALERTMANAGER_UID),
     ...createAlertmanagerConfigurationHandlers()

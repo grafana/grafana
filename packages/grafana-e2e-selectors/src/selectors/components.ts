@@ -469,7 +469,7 @@ export const versionedComponents = {
     General: {
       content: {
         '11.1.0': 'data-testid Panel editor content',
-        [MIN_GRAFANA_VERSION]: 'Panel editor content',
+        '8.0.0': 'Panel editor content',
       },
     },
     OptionsPane: {
@@ -495,10 +495,12 @@ export const versionedComponents = {
     },
     applyButton: {
       '9.2.0': 'data-testid Apply changes and go back to dashboard',
+      '9.1.0': 'Apply changes and go back to dashboard',
+      '8.0.0': 'panel editor apply',
     },
     toggleVizPicker: {
       '10.0.0': 'data-testid toggle-viz-picker',
-      [MIN_GRAFANA_VERSION]: 'toggle-viz-picker',
+      '8.0.0': 'toggle-viz-picker',
     },
     toggleVizOptions: {
       '10.1.0': 'data-testid toggle-viz-options',
@@ -659,6 +661,12 @@ export const versionedComponents = {
     newEvaluationGroupCreate: {
       '11.1.0': 'data-testid alert-rule new-evaluation-group-create-button',
     },
+    step: {
+      '11.5.0': (stepNo: string) => `data-testid alert-rule step-${stepNo}`,
+    },
+    stepAdvancedModeSwitch: {
+      '11.5.0': (stepNo: string) => `data-testid advanced-mode-switch step-${stepNo}`,
+    },
   },
   Alert: {
     alertV2: {
@@ -786,7 +794,7 @@ export const versionedComponents = {
       '9.4.0': 'data-testid Nav toolbar',
     },
     commandPaletteTrigger: {
-      '11.4.0': 'data-testid Command palette trigger',
+      '11.5.0': 'data-testid Command palette trigger',
     },
     shareDashboard: {
       '11.1.0': 'data-testid Share dashboard',
@@ -878,7 +886,8 @@ export const versionedComponents = {
   },
   Select: {
     menu: {
-      '11.4.0': 'data-testid Select menu',
+      '11.5.0': 'data-testid Select menu',
+      [MIN_GRAFANA_VERSION]: 'Select options menu',
     },
     option: {
       '11.1.0': 'data-testid Select option',
@@ -920,7 +929,7 @@ export const versionedComponents = {
   DataSourcePicker: {
     container: {
       '10.0.0': 'data-testid Data source picker select container',
-      [MIN_GRAFANA_VERSION]: 'Data source picker select container',
+      '8.0.0': 'Data source picker select container',
     },
     inputV2: {
       '10.1.0': 'data-testid Select a data source',
@@ -1230,6 +1239,11 @@ export const versionedComponents = {
   EntityNotFound: {
     container: {
       '11.2.0': 'data-testid entity-not-found',
+    },
+  },
+  Portal: {
+    container: {
+      '11.5.0': 'data-testid portal-container',
     },
   },
 } satisfies VersionedSelectorGroup;

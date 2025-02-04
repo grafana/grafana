@@ -2,12 +2,12 @@ import { createAction, createReducer, original } from '@reduxjs/toolkit';
 
 import {
   DataQuery,
+  ReducerID,
+  RelativeTimeRange,
   getDataSourceRef,
   getDefaultRelativeTimeRange,
   getNextRefId,
   rangeUtil,
-  ReducerID,
-  RelativeTimeRange,
 } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';

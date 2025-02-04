@@ -65,7 +65,18 @@ func TestSetDualWritingMode(t *testing.T) {
 		ls := legacyStoreMock{m, l}
 		us := storageMock{m, s}
 
-		dwMode, err := SetDualWritingMode(context.Background(), tt.kvStore, ls, us, "playlist.grafana.app/playlists", tt.desiredMode, p, &fakeServerLock{}, &request.RequestInfo{})
+		dwMode, err := SetDualWritingMode(context.Background(), tt.kvStore, &SyncerConfig{
+			LegacyStorage:     ls,
+			Storage:           us,
+			Kind:              "playlist.grafana.app/playlists",
+			Mode:              tt.desiredMode,
+			ServerLockService: &fakeServerLock{},
+			RequestInfo:       &request.RequestInfo{},
+			Reg:               p,
+
+			DataSyncerRecordsLimit: 1000,
+			DataSyncerInterval:     time.Hour,
+		})
 		assert.NoError(t, err)
 		assert.Equal(t, tt.expectedMode, dwMode)
 	}

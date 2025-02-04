@@ -151,4 +151,35 @@ describe('Extract fields from text', () => {
       }
     `);
   });
+
+  describe('Delimiter', () => {
+    it('splits by comma', async () => {
+      const extractor = fieldExtractors.get(FieldExtractorID.Delimiter);
+      const parse = extractor.getParser({});
+      const out = parse('a,b,c');
+
+      expect(out).toMatchInlineSnapshot(`
+        {
+          "a": 1,
+          "b": 1,
+          "c": 1,
+        }
+      `);
+    });
+
+    it('trims whitespace', async () => {
+      const extractor = fieldExtractors.get(FieldExtractorID.Delimiter);
+      const parse = extractor.getParser({});
+      const out = parse(` a, b,c, d `);
+
+      expect(out).toMatchInlineSnapshot(`
+        {
+          "a": 1,
+          "b": 1,
+          "c": 1,
+          "d": 1,
+        }
+      `);
+    });
+  });
 });

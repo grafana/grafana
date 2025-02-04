@@ -7,7 +7,7 @@ import { FilterInput, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { t } from 'app/core/internationalization';
 import { ActionRow } from 'app/features/search/page/components/ActionRow';
-import { getGrafanaSearcher } from 'app/features/search/service';
+import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 
 import { useDispatch } from '../../types';
 

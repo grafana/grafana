@@ -5,7 +5,7 @@
 package externalversions
 
 import (
-	"fmt"
+	fmt "fmt"
 
 	v0alpha1 "github.com/grafana/grafana/pkg/aggregator/apis/aggregation/v0alpha1"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"

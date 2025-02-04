@@ -1,4 +1,4 @@
-import { http, HttpResponse, JsonBodyType, StrictResponse } from 'msw';
+import { HttpResponse, JsonBodyType, StrictResponse, http } from 'msw';
 
 import { TemplatesTestPayload } from 'app/features/alerting/unified/api/templateApi';
 import receiversMock from 'app/features/alerting/unified/components/contact-points/__mocks__/receivers.mock.json';

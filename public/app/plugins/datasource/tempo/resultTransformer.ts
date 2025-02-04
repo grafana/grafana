@@ -22,11 +22,10 @@ import {
   TraceSpanReference,
   TraceSpanRow,
 } from '@grafana/data';
-import { TraceToProfilesData } from '@grafana/o11y-ds-frontend';
+import { createNodeGraphFrames, TraceToProfilesData } from '@grafana/o11y-ds-frontend';
 import { getDataSourceSrv } from '@grafana/runtime';
 
 import { SearchTableType } from './dataquery.gen';
-import { createGraphFrames } from './graphTransform';
 import { Span, SpanAttributes, Spanset, TempoJsonData, TraceSearchMetadata } from './types';
 
 function getAttributeValue(value: collectorTypes.opentelemetryProto.common.v1.AnyValue): any {
@@ -195,7 +194,7 @@ export function transformFromOTLP(
 
   let data = [frame];
   if (nodeGraph) {
-    data.push(...(createGraphFrames(frame) as MutableDataFrame[]));
+    data.push(...(createNodeGraphFrames(frame) as MutableDataFrame[]));
   }
 
   return { data };
@@ -446,7 +445,7 @@ export function transformTrace(
 
   let data = [...response.data];
   if (nodeGraph) {
-    data.push(...createGraphFrames(toDataFrame(frame)));
+    data.push(...createNodeGraphFrames(toDataFrame(frame)));
   }
 
   return {
@@ -463,6 +462,42 @@ function transformToTraceData(data: TraceSearchMetadata) {
     traceService: data.rootServiceName || '',
     traceName: data.rootTraceName || '',
   };
+}
+
+export function enhanceTraceQlMetricsResponse(
+  data: DataQueryResponse,
+  instanceSettings: DataSourceInstanceSettings
+): DataQueryResponse {
+  data.data
+    ?.filter((f) => f.name === 'exemplar' && f.meta?.dataTopic === 'annotations')
+    .map((frame) => {
+      const traceIDField = frame.fields.find((field: Field) => field.name === 'traceId');
+      if (traceIDField) {
+        const links = getDataLinks(instanceSettings);
+        traceIDField.config.links = traceIDField.config.links?.length
+          ? [...traceIDField.config.links, ...links]
+          : links;
+      }
+      return frame;
+    });
+  return data;
+}
+
+function getDataLinks(instanceSettings: DataSourceInstanceSettings): DataLink[] {
+  const dataLinks: DataLink[] = [];
+
+  if (instanceSettings.uid) {
+    dataLinks.push({
+      title: 'View trace',
+      url: '',
+      internal: {
+        query: { query: '${__value.raw}', queryType: 'traceql' },
+        datasourceUid: instanceSettings.uid,
+        datasourceName: instanceSettings?.name ?? 'Data source not found',
+      },
+    });
+  }
+  return dataLinks;
 }
 
 export function formatTraceQLResponse(

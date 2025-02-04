@@ -12,19 +12,32 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 
 	authnlib "github.com/grafana/authlib/authn"
+	"github.com/grafana/authlib/types"
 
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/authn/grpcutils"
-	"github.com/grafana/grafana/pkg/services/authz"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
+	"github.com/grafana/grafana/pkg/storage/unified/federated"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 )
 
 const resourceStoreAudience = "resourceStore"
+
+var (
+	// internal provider of the package level resource client
+	pkgResourceClient resource.ResourceClient
+	ready             = make(chan struct{})
+)
+
+func GetResourceClient(ctx context.Context) resource.ResourceClient {
+	<-ready
+	return pkgResourceClient
+}
 
 // This adds a UnifiedStorage client into the wire dependency tree
 func ProvideUnifiedStorageClient(
@@ -33,19 +46,44 @@ func ProvideUnifiedStorageClient(
 	db infraDB.DB,
 	tracer tracing.Tracer,
 	reg prometheus.Registerer,
-	authzc authz.Client,
+	authzc types.AccessClient,
 	docs resource.DocumentBuilderSupplier,
 ) (resource.ResourceClient, error) {
 	// See: apiserver.ApplyGrafanaConfig(cfg, features, o)
 	apiserverCfg := cfg.SectionWithEnvOverrides("grafana-apiserver")
-	opts := options.StorageOptions{
-		StorageType:  options.StorageType(apiserverCfg.Key("storage_type").MustString(string(options.StorageTypeLegacy))),
+	client, err := newClient(options.StorageOptions{
+		StorageType:  options.StorageType(apiserverCfg.Key("storage_type").MustString(string(options.StorageTypeUnified))),
 		DataPath:     apiserverCfg.Key("storage_path").MustString(filepath.Join(cfg.DataPath, "grafana-apiserver")),
 		Address:      apiserverCfg.Key("address").MustString(""), // client address
 		BlobStoreURL: apiserverCfg.Key("blob_url").MustString(""),
+	}, cfg, features, db, tracer, reg, authzc, docs)
+	if err == nil {
+		// Used to get the folder stats
+		client = federated.NewFederatedClient(
+			client, // The original
+			legacysql.NewDatabaseProvider(db),
+		)
 	}
-	ctx := context.Background()
 
+	// only set the package level restConfig once
+	if pkgResourceClient == nil {
+		pkgResourceClient = client
+		close(ready)
+	}
+
+	return client, err
+}
+
+func newClient(opts options.StorageOptions,
+	cfg *setting.Cfg,
+	features featuremgmt.FeatureToggles,
+	db infraDB.DB,
+	tracer tracing.Tracer,
+	reg prometheus.Registerer,
+	authzc types.AccessClient,
+	docs resource.DocumentBuilderSupplier,
+) (resource.ResourceClient, error) {
+	ctx := context.Background()
 	switch opts.StorageType {
 	case options.StorageTypeFile:
 		if opts.DataPath == "" {

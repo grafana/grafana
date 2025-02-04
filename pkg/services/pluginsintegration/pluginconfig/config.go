@@ -39,7 +39,7 @@ func ProvidePluginManagementConfig(cfg *setting.Cfg, settingProvider setting.Pro
 		cfg.DisablePlugins,
 		cfg.HideAngularDeprecation,
 		cfg.ForwardHostEnvVars,
-		cfg.PluginInstallToken,
+		cfg.GrafanaComSSOAPIToken,
 	), nil
 }
 

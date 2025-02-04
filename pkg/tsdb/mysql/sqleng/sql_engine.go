@@ -231,6 +231,9 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 		emptyFrame.SetMeta(&data.FrameMeta{
 			ExecutedQueryString: query,
 		})
+		if backend.IsDownstreamError(err) {
+			source = backend.ErrorSourceDownstream
+		}
 		queryResult.dataResponse.Error = fmt.Errorf("%s: %w", frameErr, err)
 		queryResult.dataResponse.ErrorSource = source
 		queryResult.dataResponse.Frames = data.Frames{&emptyFrame}
@@ -440,7 +443,7 @@ func (e *DataSourceHandler) newProcessCfg(query backend.DataQuery, queryContext 
 			}
 		}
 
-		if qm.Format == dataQueryFormatTable && col == "timeend" {
+		if qm.Format == dataQueryFormatTable && strings.EqualFold(col, "timeend") {
 			qm.timeEndIndex = i
 			continue
 		}

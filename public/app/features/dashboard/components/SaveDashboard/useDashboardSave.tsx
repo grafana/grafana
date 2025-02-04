@@ -7,7 +7,7 @@ import appEvents from 'app/core/app_events';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { updateDashboardName } from 'app/core/reducers/navBarTree';
 import { useSaveDashboardMutation } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
-import { DashboardModel } from 'app/features/dashboard/state';
+import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { useDispatch } from 'app/types';
 import { DashboardSavedEvent } from 'app/types/events';
 

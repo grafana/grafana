@@ -127,6 +127,7 @@ export function setupMockedDataSource({
   datasource.resources.getMetrics = jest.fn().mockResolvedValue([]);
   datasource.resources.getAccounts = jest.fn().mockResolvedValue([]);
   datasource.resources.getLogGroups = jest.fn().mockResolvedValue([]);
+  datasource.resources.isMonitoringAccount = jest.fn().mockResolvedValue(false);
   const fetchMock = jest.fn().mockReturnValue(of({}));
   setBackendSrv({
     ...getBackendSrv(),
