@@ -21,6 +21,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckTypeList":                schema_pkg_apis_advisor_v0alpha1_CheckTypeList(ref),
 		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckTypeSpec":                schema_pkg_apis_advisor_v0alpha1_CheckTypeSpec(ref),
 		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckTypeStatus":              schema_pkg_apis_advisor_v0alpha1_CheckTypeStatus(ref),
+		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckTypeStep":                schema_pkg_apis_advisor_v0alpha1_CheckTypeStep(ref),
 		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckTypestatusOperatorState": schema_pkg_apis_advisor_v0alpha1_CheckTypestatusOperatorState(ref),
 		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckV0alpha1StatusReport":    schema_pkg_apis_advisor_v0alpha1_CheckV0alpha1StatusReport(ref),
 		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckstatusOperatorState":     schema_pkg_apis_advisor_v0alpha1_CheckstatusOperatorState(ref),
@@ -152,8 +153,24 @@ func schema_pkg_apis_advisor_v0alpha1_CheckReportError(ref common.ReferenceCallb
 							Format:      "",
 						},
 					},
+					"stepID": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Step ID that the error is associated with",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"elementID": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Element ID that the error is associated with",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 				},
-				Required: []string{"severity", "reason", "action"},
+				Required: []string{"severity", "reason", "action", "stepID", "elementID"},
 			},
 		},
 	}
@@ -346,10 +363,25 @@ func schema_pkg_apis_advisor_v0alpha1_CheckTypeSpec(ref common.ReferenceCallback
 							Format:  "",
 						},
 					},
+					"steps": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckTypeStep"),
+									},
+								},
+							},
+						},
+					},
 				},
-				Required: []string{"name"},
+				Required: []string{"name", "steps"},
 			},
 		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckTypeStep"},
 	}
 }
 
@@ -394,6 +426,40 @@ func schema_pkg_apis_advisor_v0alpha1_CheckTypeStatus(ref common.ReferenceCallba
 		},
 		Dependencies: []string{
 			"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckTypestatusOperatorState"},
+	}
+}
+
+func schema_pkg_apis_advisor_v0alpha1_CheckTypeStep(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"title": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"description": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"stepID": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+				},
+				Required: []string{"title", "description", "stepID"},
+			},
+		},
 	}
 }
 

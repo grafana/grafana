@@ -73,13 +73,30 @@ func processCheck(ctx context.Context, client resource.Client, obj resource.Obje
 		FallbackType: typ,
 	})
 	// Run the checks
-	report, err := check.Run(ctx, &c.Spec)
+	err = check.Init(ctx)
 	if err != nil {
 		setErr := setStatusAnnotation(ctx, client, obj, "error")
 		if setErr != nil {
 			return setErr
 		}
-		return err
+		return fmt.Errorf("error initializing check: %w", err)
+	}
+	steps := check.Steps()
+	errs := []advisorv0alpha1.CheckReportError{}
+	for _, step := range steps {
+		stepErrs, err := step.Run(ctx, &c.Spec)
+		if err != nil {
+			setErr := setStatusAnnotation(ctx, client, obj, "error")
+			if setErr != nil {
+				return setErr
+			}
+			return fmt.Errorf("error running step %s: %w", step.Title(), err)
+		}
+		errs = append(errs, stepErrs...)
+	}
+	report := &advisorv0alpha1.CheckV0alpha1StatusReport{
+		Errors: errs,
+		Count:  int64(check.ItemsLen()),
 	}
 	err = setStatusAnnotation(ctx, client, obj, "processed")
 	if err != nil {

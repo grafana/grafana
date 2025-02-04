@@ -34,41 +34,116 @@ type check struct {
 	PluginRepo       repo.Service
 	PluginPreinstall plugininstaller.Preinstall
 	ManagedPlugins   managedplugins.Manager
+
+	ps []pluginstore.Plugin
 }
 
-func (c *check) Type() string {
+func (c *check) ID() string {
 	return "plugin"
 }
 
-func (c *check) Run(ctx context.Context, _ *advisor.CheckSpec) (*advisor.CheckV0alpha1StatusReport, error) {
-	ps := c.PluginStore.Plugins(ctx)
+func (c *check) Init(ctx context.Context) error {
+	c.ps = c.PluginStore.Plugins(ctx)
+	return nil
+}
 
+func (c *check) Steps() []checks.Step {
+	return []checks.Step{
+		&DeprecationStep{
+			PluginRepo: c.PluginRepo,
+			ps:         c.ps,
+		},
+		&UpdateStep{
+			PluginRepo:       c.PluginRepo,
+			PluginPreinstall: c.PluginPreinstall,
+			ManagedPlugins:   c.ManagedPlugins,
+			ps:               c.ps,
+		},
+	}
+}
+
+func (c *check) ItemsLen() int {
+	return len(c.ps)
+}
+
+type DeprecationStep struct {
+	PluginRepo repo.Service
+
+	ps []pluginstore.Plugin
+}
+
+func (s *DeprecationStep) Title() string {
+	return "Deprecation check"
+}
+
+func (s *DeprecationStep) Description() string {
+	return "Check if any installed plugins are deprecated."
+}
+
+func (s *DeprecationStep) ID() string {
+	return "deprecation"
+}
+
+func (s *DeprecationStep) Run(ctx context.Context, _ *advisor.CheckSpec) ([]advisor.CheckReportError, error) {
 	errs := []advisor.CheckReportError{}
-	for _, p := range ps {
+	for _, p := range s.ps {
 		// Skip if it's a core plugin
 		if p.IsCorePlugin() {
 			continue
 		}
 
 		// Check if plugin is deprecated
-		i, err := c.PluginRepo.PluginInfo(ctx, p.ID)
+		i, err := s.PluginRepo.PluginInfo(ctx, p.ID)
 		if err != nil {
 			continue
 		}
 		if i.Status == "deprecated" {
 			errs = append(errs, advisor.CheckReportError{
-				Severity: advisor.CheckReportErrorSeverityHigh,
-				Reason:   fmt.Sprintf("Plugin deprecated: %s", p.ID),
-				Action:   "Check the <a href='https://grafana.com/legal/plugin-deprecation/#a-plugin-i-use-is-deprecated-what-should-i-do' target=_blank>documentation</a> for recommended steps.",
+				Severity:  advisor.CheckReportErrorSeverityHigh,
+				Reason:    fmt.Sprintf("Plugin deprecated: %s", p.ID),
+				Action:    "Check the <a href='https://grafana.com/legal/plugin-deprecation/#a-plugin-i-use-is-deprecated-what-should-i-do' target=_blank>documentation</a> for recommended steps.",
+				StepID:    s.ID(),
+				ElementID: p.ID,
 			})
+		}
+	}
+	return errs, nil
+}
+
+type UpdateStep struct {
+	PluginRepo       repo.Service
+	PluginPreinstall plugininstaller.Preinstall
+	ManagedPlugins   managedplugins.Manager
+
+	ps []pluginstore.Plugin
+}
+
+func (s *UpdateStep) Title() string {
+	return "Update check"
+}
+
+func (s *UpdateStep) Description() string {
+	return "Check if any installed plugins have a newer version available."
+}
+
+func (s *UpdateStep) ID() string {
+	return "update"
+}
+
+func (s *UpdateStep) Run(ctx context.Context, _ *advisor.CheckSpec) ([]advisor.CheckReportError, error) {
+	errs := []advisor.CheckReportError{}
+	for _, p := range s.ps {
+		// Skip if it's a core plugin
+		if p.IsCorePlugin() {
+			continue
 		}
 
 		// Check if plugin has a newer version, only if it's not managed or pinned
-		if c.isManaged(ctx, p.ID) || c.PluginPreinstall.IsPinned(p.ID) {
+		if s.isManaged(ctx, p.ID) || s.PluginPreinstall.IsPinned(p.ID) {
 			continue
 		}
 		compatOpts := repo.NewCompatOpts(services.GrafanaVersion, sysruntime.GOOS, sysruntime.GOARCH)
-		info, err := c.PluginRepo.GetPluginArchiveInfo(ctx, p.ID, "", compatOpts)
+		info, err := s.PluginRepo.GetPluginArchiveInfo(ctx, p.ID, "", compatOpts)
 		if err != nil {
 			continue
 		}
@@ -79,14 +154,17 @@ func (c *check) Run(ctx context.Context, _ *advisor.CheckSpec) (*advisor.CheckV0
 				Action: fmt.Sprintf(
 					"Go to the <a href='/plugins/%s?page=version-history'>plugin admin page</a>"+
 						" and upgrade to the latest version.", p.ID),
+				StepID:    s.ID(),
+				ElementID: p.ID,
 			})
 		}
 	}
 
-	return &advisor.CheckV0alpha1StatusReport{
-		Count:  int64(len(ps)),
-		Errors: errs,
-	}, nil
+	return errs, nil
+	// return &advisor.CheckV0alpha1StatusReport{
+	// 	Count:  int64(len(ps)),
+	// 	Errors: errs,
+	// }, nil
 }
 
 func hasUpdate(current pluginstore.Plugin, latest *repo.PluginArchiveInfo) bool {
@@ -100,8 +178,8 @@ func hasUpdate(current pluginstore.Plugin, latest *repo.PluginArchiveInfo) bool 
 	return current.Info.Version != latest.Version
 }
 
-func (c *check) isManaged(ctx context.Context, pluginID string) bool {
-	for _, managedPlugin := range c.ManagedPlugins.ManagedPlugins(ctx) {
+func (s *UpdateStep) isManaged(ctx context.Context, pluginID string) bool {
+	for _, managedPlugin := range s.ManagedPlugins.ManagedPlugins(ctx) {
 		if managedPlugin == pluginID {
 			return true
 		}

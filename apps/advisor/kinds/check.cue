@@ -28,6 +28,10 @@ check: {
 					reason: string
 					// Action to take to resolve the error
 					action: string
+					// Step ID that the error is associated with
+					stepID: string
+					// Element ID that the error is associated with
+					elementID: string
 				}	
 				#Report: {
 						// Number of elements analyzed

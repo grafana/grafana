@@ -11,8 +11,14 @@ checktype: {
 				backend:  true
 			}
 			schema: {
+				#Step: {
+					title:			string
+					description:	string
+					stepID:			string
+				}	
 				spec: {
-					name: string
+					name: 	string
+					steps:	[...#Step]
 				}
 			}
 		}

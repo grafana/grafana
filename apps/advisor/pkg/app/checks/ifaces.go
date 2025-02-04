@@ -8,6 +8,15 @@ import (
 
 // Check defines the methods that a check must implement to be executed.
 type Check interface {
-	Run(ctx context.Context, obj *advisorv0alpha1.CheckSpec) (*advisorv0alpha1.CheckV0alpha1StatusReport, error)
-	Type() string
+	ID() string
+	Init(ctx context.Context) error
+	Steps() []Step
+	ItemsLen() int
+}
+
+type Step interface {
+	ID() string
+	Title() string
+	Description() string
+	Run(ctx context.Context, obj *advisorv0alpha1.CheckSpec) ([]advisorv0alpha1.CheckReportError, error)
 }
