@@ -2,7 +2,6 @@ package reststorage
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 
@@ -11,82 +10,74 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 var (
-	_ rest.Storage         = (*DecryptStorage)(nil)
-	_ rest.Scoper          = (*DecryptStorage)(nil)
-	_ rest.Connecter       = (*DecryptStorage)(nil)
-	_ rest.StorageMetadata = (*DecryptStorage)(nil)
+	_ rest.Storage         = (*DecryptRest)(nil)
+	_ rest.Scoper          = (*DecryptRest)(nil)
+	_ rest.Connecter       = (*DecryptRest)(nil)
+	_ rest.StorageMetadata = (*DecryptRest)(nil)
 )
 
-type DecryptStorage struct {
+type DecryptRest struct {
 	config   *setting.Cfg
 	resource utils.ResourceInfo
-	storage  contracts.SecureValueStorage
+	storage  contracts.DecryptStorage
 }
 
-// NewDecryptStorage is a returns a constructed `*DecryptStorage`.
-func NewDecryptStorage(config *setting.Cfg, resource utils.ResourceInfo, storage contracts.SecureValueStorage) *DecryptStorage {
-	return &DecryptStorage{config, resource, storage}
+// NewDecryptRest is a returns a constructed `*DecryptRest`.
+func NewDecryptRest(config *setting.Cfg, resource utils.ResourceInfo, storage contracts.DecryptStorage) *DecryptRest {
+	return &DecryptRest{config, resource, storage}
 }
 
 // New returns an empty `*SecureValue` that is required to be implemented by any storage.
-func (s *DecryptStorage) New() runtime.Object {
+func (s *DecryptRest) New() runtime.Object {
 	return s.resource.NewFunc()
 }
 
 // Destroy is a no-op.
-func (s *DecryptStorage) Destroy() {}
+func (s *DecryptRest) Destroy() {}
 
 // NamespaceScoped returns `true` because the storage is namespaced (== org).
-func (s *DecryptStorage) NamespaceScoped() bool {
+func (s *DecryptRest) NamespaceScoped() bool {
 	return true
 }
 
 // ConnectMethods returns the list of HTTP methods we accept for this subresource.
-func (s *DecryptStorage) ConnectMethods() []string {
+func (s *DecryptRest) ConnectMethods() []string {
 	return []string{http.MethodGet}
 }
 
 // NewConnectOptions returns some custom options that is passed in the `opts` field used by `Connect`.
-func (s *DecryptStorage) NewConnectOptions() (runtime.Object, bool, string) {
+func (s *DecryptRest) NewConnectOptions() (runtime.Object, bool, string) {
 	return nil, false, ""
 }
 
 // ProducesMIMETypes returns the `Content-Type` used by `Connect`.
-func (s *DecryptStorage) ProducesMIMETypes(verb string) []string {
+func (s *DecryptRest) ProducesMIMETypes(verb string) []string {
 	return []string{"text/plain"}
 }
 
 // ProducesObject returns the concrete type (marshable with `json` tags) used by `Connect`.
-func (s *DecryptStorage) ProducesObject(verb string) interface{} {
+func (s *DecryptRest) ProducesObject(verb string) interface{} {
 	return s.resource.NewFunc()
 }
 
 // Connect returns an http.Handler that will handle the request/response for a given API invocation.
 // See other methods implemented for supporting/optional functionality.
-func (s *DecryptStorage) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
+func (s *DecryptRest) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
 	nn := xkube.NameNamespace{
 		Name:      name,
 		Namespace: xkube.Namespace(request.NamespaceValue(ctx)),
 	}
 
-	sv, err := s.storage.Read(ctx, nn)
+	exposedValue, err := s.storage.Decrypt(ctx, nn)
 	if err != nil {
-		if errors.Is(err, contracts.ErrSecureValueNotFound) {
-			return nil, s.resource.NewNotFound(name)
-		}
-
-		return nil, fmt.Errorf("failed to read secure value: %w", err)
+		return nil, fmt.Errorf("failed to decrypt secure value: %w", err)
 	}
-
-	// TODO: obtain exposed value with decrypt
-	exposedValue := secretv0alpha1.ExposedSecureValue("dummy value")
 
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		// !!! DANGER !!!
@@ -98,6 +89,6 @@ func (s *DecryptStorage) Connect(ctx context.Context, name string, opts runtime.
 			return
 		}
 
-		responder.Object(http.StatusOK, sv)
+		responder.Object(http.StatusOK, nil)
 	}), nil
 }

@@ -277,6 +277,7 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(datasources.CacheService), new(*datasourceservice.CacheServiceImpl)),
 	secret.ProvideSecureValueStorage,
 	secret.ProvideDataKeyStorageStorage,
+	secret.ProvideDecryptStorage,
 	secret.ProvideKeeperStorage,
 	secret.ProvideEncryptedValueStorage,
 	manager.NewEncryptionManager,
