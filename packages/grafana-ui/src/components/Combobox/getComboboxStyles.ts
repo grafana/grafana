@@ -78,7 +78,8 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
     }),
     optionFocused: css({
       label: 'combobox-option-focused',
-      top: 0,
+      // Commenting this line avoids the option to move to the top and place under the group label
+      // top: 0,
       background: theme.colors.action.focus,
       '@media (forced-colors: active), (prefers-contrast: more)': {
         border: `1px solid ${theme.colors.primary.border}`,

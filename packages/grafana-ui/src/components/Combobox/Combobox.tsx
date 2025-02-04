@@ -10,8 +10,10 @@ import { t } from '../../utils/i18n';
 import { Icon } from '../Icon/Icon';
 import { AutoSizeInput } from '../Input/AutoSizeInput';
 import { Input, Props as InputProps } from '../Input/Input';
+import { Box } from '../Layout/Box/Box';
 import { Portal } from '../Portal/Portal';
 import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
+import { Text } from '../Text/Text';
 
 import { AsyncError, NotFoundError } from './MessageRows';
 import { fuzzyFind, itemToString } from './filter';
@@ -146,7 +148,25 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
         }
       }
 
-      baseSetItems(itemsToSet);
+      const reorderItemsByGroup = (items: Array<ComboboxOption<T>>) => {
+        const reorgItems: Array<ComboboxOption<T>> = [];
+        items.forEach((item) => {
+          const isAlreadyReorg = reorgItems.find((i) => i === item);
+          if (isAlreadyReorg) {
+            return;
+          }
+          if (!item.group) {
+            reorgItems.push(item);
+          } else {
+            const group = item.group;
+            const sameGroupItems = items.filter((i) => i.group === group);
+            reorgItems.push(...sameGroupItems);
+          }
+        });
+        return reorgItems;
+      };
+
+      baseSetItems(reorderItemsByGroup(itemsToSet));
     },
     [createCustomValue, id, ariaLabelledBy]
   );
@@ -412,32 +432,42 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
                 <ul style={{ height: rowVirtualizer.getTotalSize() }} className={styles.menuUlContainer}>
                   {rowVirtualizer.getVirtualItems().map((virtualRow) => {
                     return (
-                      <li
-                        key={`${items[virtualRow.index].value}-${virtualRow.index}`}
-                        data-index={virtualRow.index}
-                        className={cx(
-                          styles.option,
-                          selectedItem && items[virtualRow.index].value === selectedItem.value && styles.optionSelected,
-                          highlightedIndex === virtualRow.index && styles.optionFocused
-                        )}
-                        style={{
-                          height: virtualRow.size,
-                          transform: `translateY(${virtualRow.start}px)`,
-                        }}
-                        {...getItemProps({
-                          item: items[virtualRow.index],
-                          index: virtualRow.index,
-                        })}
-                      >
-                        <div className={styles.optionBody}>
-                          <span className={styles.optionLabel}>
-                            {items[virtualRow.index].label ?? items[virtualRow.index].value}
-                          </span>
-                          {items[virtualRow.index].description && (
-                            <span className={styles.optionDescription}>{items[virtualRow.index].description}</span>
+                      <>
+                        <ComboboxOptionGroup
+                          key={virtualRow.index}
+                          index={virtualRow.index}
+                          item={items[virtualRow.index]}
+                          previousItem={items[virtualRow.index - 1]}
+                        />
+                        <li
+                          key={`${items[virtualRow.index].value}-${virtualRow.index}`}
+                          data-index={virtualRow.index}
+                          className={cx(
+                            styles.option,
+                            selectedItem &&
+                              items[virtualRow.index].value === selectedItem?.value &&
+                              styles.optionSelected,
+                            highlightedIndex === virtualRow.index && styles.optionFocused
                           )}
-                        </div>
-                      </li>
+                          style={{
+                            height: virtualRow.size,
+                            transform: `translateY(${virtualRow.start}px)`,
+                          }}
+                          {...getItemProps({
+                            item: items[virtualRow.index],
+                            index: virtualRow.index,
+                          })}
+                        >
+                          <div className={styles.optionBody}>
+                            <span className={styles.optionLabel}>
+                              {items[virtualRow.index].label ?? items[virtualRow.index].value}
+                            </span>
+                            {items[virtualRow.index].description && (
+                              <span className={styles.optionDescription}>{items[virtualRow.index].description}</span>
+                            )}
+                          </div>
+                        </li>
+                      </>
                     );
                   })}
                 </ul>
@@ -452,4 +482,26 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
       </Portal>
     </div>
   );
+};
+
+const ComboboxOptionGroup: React.FC<{
+  index: number;
+  item: ComboboxOption<any>;
+  previousItem: ComboboxOption<any>;
+}> = ({ index, item, previousItem }) => {
+  const isNewGroup = () => {
+    let isNew = false;
+    if (previousItem && previousItem.group !== item.group) {
+      isNew = true;
+    }
+    if (index === 0 && item.group) {
+      isNew = true;
+    }
+    return isNew;
+  };
+  return isNewGroup() && item.group ? (
+    <Box key={`${item.group}-${index}`} padding={1} color="disabled">
+      <Text variant="bodySmall">{item.group}</Text>
+    </Box>
+  ) : null;
 };
