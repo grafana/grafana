@@ -1,7 +1,7 @@
 import Map from 'ol/Map';
 import { Point } from 'ol/geom';
+import { VectorImage } from 'ol/layer';
 import LayerGroup from 'ol/layer/Group';
-import VectorLayer from 'ol/layer/Vector';
 import WebGLPointsLayer from 'ol/layer/WebGLPoints.js';
 import { LiteralStyle } from 'ol/style/literal';
 import { ReactNode } from 'react';
@@ -82,7 +82,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
     const location = await getLocationMatchers(options.location);
     const source = new FrameVectorSource<Point>(location);
     const symbolLayer = new WebGLPointsLayer({ source, style: symbolStyle as LiteralStyle });
-    const textLayer = new VectorLayer({ source });
+    const textLayer = new VectorImage({ source, declutter: true });
     const layers = new LayerGroup({
       layers: hasText ? [symbolLayer, textLayer] : [symbolLayer],
     });
