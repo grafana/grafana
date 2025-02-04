@@ -10,10 +10,11 @@ import (
 
 	"github.com/google/uuid"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/parquet"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
@@ -24,6 +25,36 @@ import (
 var (
 	_ resource.BatchProcessingBackend = (*backend)(nil)
 )
+
+type batchRV struct {
+	max     int64
+	counter int64
+}
+
+func newBatchRV() *batchRV {
+	t := time.Now().Truncate(time.Second * 10)
+	return &batchRV{
+		max:     (t.UnixMicro() / 10000000) * 10000000,
+		counter: 0,
+	}
+}
+
+func (x *batchRV) next(obj metav1.Object) int64 {
+	ts := obj.GetCreationTimestamp().UnixMicro()
+	anno := obj.GetAnnotations()
+	if anno != nil {
+		v := anno[utils.AnnoKeyUpdatedTimestamp]
+		t, err := time.Parse(time.RFC3339, v)
+		if err == nil {
+			ts = t.UnixMicro()
+		}
+	}
+	if ts > x.max || ts < 10000000 {
+		ts = x.max
+	}
+	x.counter++
+	return (ts/10000000)*10000000 + x.counter
+}
 
 type batchLock struct {
 	running map[string]bool
@@ -39,7 +70,7 @@ func (x *batchLock) Start(keys []*resource.ResourceKey) error {
 	for i, k := range keys {
 		id := k.BatchID()
 		if x.running[id] {
-			return &apierrors.StatusError{ErrStatus: v1.Status{
+			return &apierrors.StatusError{ErrStatus: metav1.Status{
 				Code:    http.StatusPreconditionFailed,
 				Message: "batch export is already running",
 			}}
@@ -135,7 +166,9 @@ func (b *backend) processBatch(ctx context.Context, setting resource.BatchSettin
 
 		// Use the max RV from all resources
 		// We are in a transaction so as long as the individual values increase we are set
-		rv := int64(0)
+		time.Now().UnixMicro()
+
+		rv := newBatchRV()
 
 		summaries := make(map[string]*resource.BatchResponse_Summary, len(setting.Collection)*4)
 
@@ -148,19 +181,7 @@ func (b *backend) processBatch(ctx context.Context, setting resource.BatchSettin
 				}
 				summaries[key.BatchID()] = summary
 				rsp.Summary = append(rsp.Summary, summary)
-
-				// get the RV for this resource
-				tmp, err := b.resourceVersionAtomicInc(ctx, tx, key)
-				if err != nil {
-					return rollbackWithError(fmt.Errorf("increment resource version: %w", err))
-				}
-				if tmp > rv {
-					rv = tmp
-				}
 			}
-		}
-		if rv < 100 {
-			return rollbackWithError(fmt.Errorf("expected resource version to be set"))
 		}
 
 		obj := &unstructured.Unstructured{}
@@ -195,8 +216,6 @@ func (b *backend) processBatch(ctx context.Context, setting resource.BatchSettin
 				continue
 			}
 
-			rv++ // Increment the resource version
-
 			// Write the event to history
 			if _, err := dbutil.Exec(ctx, tx, sqlResourceHistoryInsert, sqlResourceRequest{
 				SQLTemplate: sqltemplate.New(b.dialect),
@@ -208,12 +227,10 @@ func (b *backend) processBatch(ctx context.Context, setting resource.BatchSettin
 				},
 				Folder:          req.Folder,
 				GUID:            uuid.NewString(),
-				ResourceVersion: rv,
+				ResourceVersion: rv.next(obj),
 			}); err != nil {
 				return rollbackWithError(fmt.Errorf("insert into resource history: %w", err))
 			}
-
-			// fmt.Printf("WROTE %4d/%d/%s\n", rsp.Processed, rv, req.Key.Name)
 		}
 
 		// Now update the resource table from history
@@ -230,13 +247,7 @@ func (b *backend) processBatch(ctx context.Context, setting resource.BatchSettin
 			}
 
 			// Make sure the collection RV is above our last written event
-			for {
-				crv, _ := b.resourceVersionAtomicInc(ctx, tx, key)
-				if crv > rv {
-					break
-				}
-				time.Sleep(10 * time.Millisecond)
-			}
+			_, _ = b.resourceVersionAtomicInc(ctx, tx, key)
 		}
 		fmt.Printf("DONE (SQL) [%d]\n", rsp.Processed)
 		return nil

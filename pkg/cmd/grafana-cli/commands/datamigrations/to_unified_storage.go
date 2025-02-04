@@ -30,16 +30,18 @@ import (
 
 // ToUnifiedStorage converts dashboards+folders into unified storage
 func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) error {
-	ctx := authlib.WithAuthInfo(context.Background(), &identity.StaticRequester{
-		Type: authlib.TypeAccessPolicy, // unified storage wants this
-		Name: "export",
-	})
+	namespace := "default" // TODO... from command line
+	ns, err := authlib.ParseNamespace(namespace)
+	if err != nil {
+		return err
+	}
+	ctx, _ := identity.WithServiceIdentitiy(context.Background(), ns.OrgID)
 	start := time.Now()
 	last := time.Now()
 
 	opts := legacy.MigrateOptions{
-		Namespace:   "default", // from command line????
-		WithHistory: false,     // configured below
+		Namespace:   namespace,
+		WithHistory: false, // configured below
 		Resources: []schema.GroupResource{
 			{Group: folders.GROUP, Resource: folders.RESOURCE},
 			{Group: dashboard.GROUP, Resource: dashboard.DASHBOARD_RESOURCE},
