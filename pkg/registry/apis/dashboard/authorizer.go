@@ -5,9 +5,8 @@ import (
 
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 
-	"github.com/grafana/authlib/claims"
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/apis/dashboard"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/guardian"
@@ -27,12 +26,6 @@ func GetAuthorizer(dashboardService dashboards.DashboardService, l log.Logger) a
 			}
 
 			if attr.GetName() == "" {
-				// Discourage use of the "list" command for non super admin users
-				if attr.GetVerb() == "list" && attr.GetResource() == dashboard.DashboardResourceInfo.GroupResource().Resource {
-					if !user.GetIsGrafanaAdmin() {
-						return authorizer.DecisionDeny, "list summary objects (or connect as GrafanaAdmin)", err
-					}
-				}
 				return authorizer.DecisionNoOpinion, "", nil
 			}
 

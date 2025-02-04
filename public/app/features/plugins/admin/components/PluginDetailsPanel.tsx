@@ -3,7 +3,19 @@ import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { PageInfoItem } from '@grafana/runtime/src/components/PluginPage';
-import { Stack, Text, LinkButton, Box, TextLink, CollapsableSection, Tooltip, Icon, Modal, Button } from '@grafana/ui';
+import {
+  Stack,
+  Text,
+  LinkButton,
+  Box,
+  TextLink,
+  CollapsableSection,
+  Tooltip,
+  Icon,
+  Modal,
+  Button,
+  useStyles2,
+} from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 import { formatDate } from 'app/core/internationalization/dates';
 
@@ -31,16 +43,18 @@ export function PluginDetailsPanel(props: Props): React.ReactElement | null {
 
   const shouldRenderLinks = plugin.url || plugin.details?.licenseUrl || plugin.details?.documentationUrl;
 
+  const styles = useStyles2(getStyles);
+
   return (
     <>
-      <Stack direction="column" gap={3} shrink={0} grow={0} minWidth={width} data-testid="plugin-details-panel">
+      <Stack direction="column" gap={3} shrink={0} grow={0} maxWidth={width} data-testid="plugin-details-panel">
         <Box padding={2} borderColor="medium" borderStyle="solid">
           <Stack direction="column" gap={2}>
             {pluginExtentionsInfo.map((infoItem, index) => {
               return (
                 <Stack key={index} wrap direction="column" gap={0.5}>
                   <Text color="secondary">{infoItem.label + ':'}</Text>
-                  <div>{infoItem.value}</div>
+                  <div className={styles.pluginVersionDetails}>{infoItem.value}</div>
                 </Stack>
               );
             })}
@@ -71,6 +85,44 @@ export function PluginDetailsPanel(props: Props): React.ReactElement | null {
           </Stack>
         </Box>
 
+        {plugin?.details?.links && plugin.details?.links?.length > 0 && (
+          <Box padding={2} borderColor="medium" borderStyle="solid">
+            <Stack direction="column" gap={2}>
+              {pluginExtentionsInfo.map((infoItem, index) => {
+                return (
+                  <Stack key={index} wrap direction="column" gap={0.5}>
+                    <Text color="secondary">{infoItem.label + ':'}</Text>
+                    <div>{infoItem.value}</div>
+                  </Stack>
+                );
+              })}
+              {plugin.updatedAt && (
+                <Stack direction="column" gap={0.5}>
+                  <Text color="secondary">
+                    <Trans i18nKey="plugins.details.labels.updatedAt">Last updated:</Trans>
+                  </Text>{' '}
+                  <Text>
+                    {formatDate(new Date(plugin.updatedAt), { day: 'numeric', month: 'short', year: 'numeric' })}
+                  </Text>
+                </Stack>
+              )}
+              {plugin?.details?.lastCommitDate && (
+                <Stack direction="column" gap={0.5}>
+                  <Text color="secondary">
+                    <Trans i18nKey="plugins.details.labels.lastCommitDate">Last commit date:</Trans>
+                  </Text>{' '}
+                  <Text>
+                    {formatDate(new Date(plugin.details.lastCommitDate), {
+                      day: 'numeric',
+                      month: 'short',
+                      year: 'numeric',
+                    })}
+                  </Text>
+                </Stack>
+              )}
+            </Stack>
+          </Box>
+        )}
         {shouldRenderLinks && (
           <>
             <Box padding={2} borderColor="medium" borderStyle="solid">

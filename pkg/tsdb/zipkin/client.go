@@ -118,7 +118,7 @@ func (z *ZipkinClient) Traces(serviceName string, spanName string) ([][]model.Sp
 func (z *ZipkinClient) Trace(traceId string) ([]model.SpanModel, error) {
 	trace := []model.SpanModel{}
 	if traceId == "" {
-		return trace, errors.New("invalid/empty traceId")
+		return trace, backend.DownstreamError(errors.New("invalid/empty traceId"))
 	}
 
 	traceUrl, err := url.JoinPath(z.url, "/api/v2/trace", url.QueryEscape(traceId))
@@ -128,6 +128,9 @@ func (z *ZipkinClient) Trace(traceId string) ([]model.SpanModel, error) {
 
 	res, err := z.httpClient.Get(traceUrl)
 	if err != nil {
+		if backend.IsDownstreamHTTPError(err) {
+			return trace, backend.DownstreamError(err)
+		}
 		return trace, err
 	}
 
@@ -138,6 +141,15 @@ func (z *ZipkinClient) Trace(traceId string) ([]model.SpanModel, error) {
 			}
 		}
 	}()
+
+	if res != nil && res.StatusCode/100 != 2 {
+		err := backend.DownstreamError(fmt.Errorf("request failed: %s", res.Status))
+		if backend.ErrorSourceFromHTTPStatus(res.StatusCode) == backend.ErrorSourceDownstream {
+			return trace, backend.DownstreamError(err)
+		}
+		return trace, err
+	}
+
 	if err := json.NewDecoder(res.Body).Decode(&trace); err != nil {
 		return trace, err
 	}

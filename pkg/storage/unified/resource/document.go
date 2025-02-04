@@ -53,8 +53,8 @@ type IndexableDocument struct {
 	// The resource key
 	Key *ResourceKey `json:"key"`
 
-	// The resource type ( for federated indexes )
-	Kind string `json:"kind,omitempty"`
+	// The k8s name
+	Name string `json:"name,omitempty"`
 
 	// Resource version for the resource (if known)
 	RV int64 `json:"rv,omitempty"`
@@ -63,7 +63,7 @@ type IndexableDocument struct {
 	Title string `json:"title,omitempty"`
 
 	// internal sort field for title ( don't set this directly )
-	TitleSort string `json:"title_sort,omitempty"`
+	TitlePhrase string `json:"title_phrase,omitempty"`
 
 	// A generic description -- helpful in global search
 	Description string `json:"description,omitempty"`
@@ -102,7 +102,7 @@ type IndexableDocument struct {
 	References ResourceReferences `json:"reference,omitempty"`
 
 	// When the resource is managed by an upstream repository
-	RepoInfo *utils.ResourceRepositoryInfo `json:"repository,omitempty"`
+	RepoInfo *utils.ResourceRepositoryInfo `json:"repo,omitempty"`
 }
 
 func (m *IndexableDocument) Type() string {
@@ -163,15 +163,15 @@ func NewIndexableDocument(key *ResourceKey, rv int64, obj utils.GrafanaMetaAcces
 		}
 	}
 	doc := &IndexableDocument{
-		Key:       key,
-		Kind:      key.Resource,
-		RV:        rv,
-		Title:     title,                  // We always want *something* to display
-		TitleSort: strings.ToLower(title), // Lowercase for case-insensitive sorting
-		Labels:    obj.GetLabels(),
-		Folder:    obj.GetFolder(),
-		CreatedBy: obj.GetCreatedBy(),
-		UpdatedBy: obj.GetUpdatedBy(),
+		Key:         key,
+		RV:          rv,
+		Name:        key.Name,
+		Title:       title,                  // We always want *something* to display
+		TitlePhrase: strings.ToLower(title), // Lowercase for case-insensitive sorting
+		Labels:      obj.GetLabels(),
+		Folder:      obj.GetFolder(),
+		CreatedBy:   obj.GetCreatedBy(),
+		UpdatedBy:   obj.GetUpdatedBy(),
 	}
 	doc.RepoInfo, _ = obj.GetRepositoryInfo()
 	ts := obj.GetCreationTimestamp()
@@ -237,6 +237,8 @@ func (x *searchableDocumentFields) Fields() []string {
 }
 
 func (x *searchableDocumentFields) Field(name string) *ResourceTableColumnDefinition {
+	name = strings.TrimPrefix(name, "fields.")
+
 	f, ok := x.fields[name]
 	if ok {
 		return f.def
@@ -251,7 +253,7 @@ const SEARCH_FIELD_NAMESPACE = "namespace"
 const SEARCH_FIELD_NAME = "name"
 const SEARCH_FIELD_RV = "rv"
 const SEARCH_FIELD_TITLE = "title"
-const SEARCH_FIELD_TITLE_SORT = "title_sort"
+const SEARCH_FIELD_TITLE_PHRASE = "title_phrase" // filtering/sorting on title by full phrase
 const SEARCH_FIELD_DESCRIPTION = "description"
 const SEARCH_FIELD_TAGS = "tags"
 const SEARCH_FIELD_LABELS = "labels" // All labels, not a specific one
@@ -261,8 +263,11 @@ const SEARCH_FIELD_CREATED = "created"
 const SEARCH_FIELD_CREATED_BY = "createdBy"
 const SEARCH_FIELD_UPDATED = "updated"
 const SEARCH_FIELD_UPDATED_BY = "updatedBy"
-const SEARCH_FIELD_REPOSITORY = "repository"
-const SEARCH_FIELD_REPOSITORY_HASH = "repository_hash"
+
+const SEARCH_FIELD_REPOSITORY_NAME = "repo.name"
+const SEARCH_FIELD_REPOSITORY_PATH = "repo.path"
+const SEARCH_FIELD_REPOSITORY_HASH = "repo.hash"
+const SEARCH_FIELD_REPOSITORY_TIME = "repo.time"
 
 const SEARCH_FIELD_SCORE = "_score"     // the match score
 const SEARCH_FIELD_EXPLAIN = "_explain" // score explanation as JSON object

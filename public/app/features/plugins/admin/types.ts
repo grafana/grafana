@@ -262,6 +262,7 @@ export enum PluginTabLabels {
   IAM = 'IAM',
   CHANGELOG = 'Changelog',
   PLUGINDETAILS = 'Plugin details',
+  DATASOURCE_CONNECTIONS = 'Data source connections',
 }
 
 export enum PluginTabIds {
@@ -273,6 +274,7 @@ export enum PluginTabIds {
   IAM = 'iam',
   CHANGELOG = 'changelog',
   PLUGINDETAILS = 'right-panel',
+  DATASOURCE_CONNECTIONS = 'datasource-connections',
 }
 
 export enum RequestStatus {

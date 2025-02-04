@@ -13,7 +13,6 @@ import {
 import { config, locationService, RefreshEvent } from '@grafana/runtime';
 import {
   sceneGraph,
-  SceneGridRow,
   SceneObject,
   SceneObjectBase,
   SceneObjectRef,
@@ -25,15 +24,16 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 import { Dashboard, DashboardLink, LibraryPanel } from '@grafana/schema';
-import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
+import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import appEvents from 'app/core/app_events';
 import { ScrollRefElement } from 'app/core/components/NativeScrollbar';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import { getNavModel } from 'app/core/selectors/navModel';
 import store from 'app/core/store';
+import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { SaveDashboardAsOptions } from 'app/features/dashboard/components/SaveDashboard/types';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { DashboardModel, ScopeMeta } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { getClosestScopesFacade, ScopesFacade } from 'app/features/scopes';
@@ -53,16 +53,12 @@ import { DecoratedRevisionModel } from '../settings/VersionsEditView';
 import { DashboardEditView } from '../settings/utils';
 import { historySrv } from '../settings/version-history';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
+import { isInCloneChain } from '../utils/clone';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { djb2Hash } from '../utils/djb2Hash';
-import { getDashboardUrl, getViewPanelUrl } from '../utils/urlBuilders';
-import {
-  getClosestVizPanel,
-  getDashboardSceneFor,
-  getDefaultVizPanel,
-  getPanelIdForVizPanel,
-  isPanelClone,
-} from '../utils/utils';
+import { getDashboardUrl } from '../utils/getDashboardUrl';
+import { getViewPanelUrl } from '../utils/urlBuilders';
+import { getClosestVizPanel, getDashboardSceneFor, getDefaultVizPanel, getPanelIdForVizPanel } from '../utils/utils';
 import { SchemaV2EditorDrawer } from '../v2schema/SchemaV2EditorDrawer';
 
 import { AddLibraryPanelDrawer } from './AddLibraryPanelDrawer';
@@ -70,7 +66,6 @@ import { DashboardControls } from './DashboardControls';
 import { DashboardSceneRenderer } from './DashboardSceneRenderer';
 import { DashboardSceneUrlSync } from './DashboardSceneUrlSync';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
-import { RowRepeaterBehavior } from './RowRepeaterBehavior';
 import { ViewPanelScene } from './ViewPanelScene';
 import { isUsingAngularDatasourcePlugin, isUsingAngularPanelPlugin } from './angular/AngularDeprecation';
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
@@ -97,6 +92,8 @@ export interface DashboardSceneState extends SceneObjectState {
   preload?: boolean;
   /** A uid when saved */
   uid?: string;
+  /** @experimental */
+  scopeMeta?: ScopeMeta;
   /** @deprecated */
   id?: number | null;
   /** Layout of panels */
@@ -107,10 +104,12 @@ export interface DashboardSceneState extends SceneObjectState {
   controls?: DashboardControls;
   /** True when editing */
   isEditing?: boolean;
+  /** Controls the visibility of hidden elements like row headers */
+  showHiddenElements?: boolean;
   /** True when user made a change */
   isDirty?: boolean;
   /** meta flags */
-  meta: DashboardMeta;
+  meta: Omit<DashboardMeta, 'isNew'>;
   /** Version of the dashboard */
   version?: number;
   /** Panel to inspect */
@@ -172,8 +171,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   private _scrollRef?: ScrollRefElement;
   private _prevScrollPos?: number;
 
-  // TODO: use feature toggle to allow v2 serializer
-  private _serializer: DashboardSceneSerializerLike<Dashboard | DashboardV2Spec> = getDashboardSceneSerializer();
+  private _serializer: DashboardSceneSerializerLike<
+    Dashboard | DashboardV2Spec,
+    DashboardMeta | DashboardWithAccessInfo<DashboardV2Spec>['metadata']
+  > = getDashboardSceneSerializer();
 
   public constructor(state: Partial<DashboardSceneState>) {
     super({
@@ -184,7 +185,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       body: state.body ?? DefaultGridLayoutManager.fromVizPanels(),
       links: state.links ?? [],
       ...state,
-      editPane: new DashboardEditPane({}),
+      editPane: new DashboardEditPane(),
     });
 
     this._scopesFacade = getClosestScopesFacade(this);
@@ -196,6 +197,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
   private _activationHandler() {
     let prevSceneContext = window.__grafanaSceneContext;
+    const isNew = locationService.getLocation().pathname === '/dashboard/new';
 
     window.__grafanaSceneContext = this;
 
@@ -206,7 +208,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       this._changeTracker.startTrackingChanges();
     }
 
-    if (this.state.meta.isNew) {
+    if (isNew) {
       this.onEnterEditMode();
       this.setState({ isDirty: true });
     }
@@ -253,7 +255,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     this._initialUrlState = locationService.getLocation();
 
     // Switch to edit mode
-    this.setState({ isEditing: true });
+    this.setState({ isEditing: true, showHiddenElements: true });
 
     // Propagate change edit mode change to children
     this.state.body.editModeChanged(true);
@@ -280,7 +282,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
         url: result.url,
         slug: result.slug,
         folderUid: folderUid,
-        isNew: false,
         version: result.version,
       },
     });
@@ -334,10 +335,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
     if (restoreInitialState) {
       //  Restore initial state and disable editing
-      this.setState({ ...this._initialState, isEditing: false });
+      this.setState({ ...this._initialState, isEditing: false, showHiddenElements: false });
     } else {
       // Do not restore
-      this.setState({ isEditing: false });
+      this.setState({ isEditing: false, showHiddenElements: false });
     }
 
     // if we are in edit panel, we need to onDiscard()
@@ -355,6 +356,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     return this._initialState !== undefined;
   }
 
+  public onToggleHiddenElements = () => this.setState({ showHiddenElements: !this.state.showHiddenElements });
+
   public pauseTrackingChanges() {
     this._changeTracker.stopTrackingChanges();
   }
@@ -364,7 +367,13 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   }
 
   public onRestore = async (version: DecoratedRevisionModel): Promise<boolean> => {
-    const versionRsp = await historySrv.restoreDashboard(version.uid, version.version);
+    let versionRsp;
+    if (config.featureToggles.kubernetesCliDashboards) {
+      // the id here is the resource version in k8s, use this instead to get the specific version
+      versionRsp = await historySrv.restoreDashboard(version.uid, version.id);
+    } else {
+      versionRsp = await historySrv.restoreDashboard(version.uid, version.version);
+    }
 
     if (!Number.isInteger(versionRsp.version)) {
       return false;
@@ -374,6 +383,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       dashboard: new DashboardModel(version.data),
       meta: this.state.meta,
     };
+
     const dashScene = transformSaveModelToScene(dashboardDTO);
     const newState = sceneUtils.cloneSceneObjectState(dashScene.state);
     newState.version = versionRsp.version;
@@ -407,20 +417,18 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   }
 
   public getPageNav(location: H.Location, navIndex: NavIndex) {
-    const { meta, viewPanelScene, editPanel } = this.state;
-
-    if (meta.dashboardNotFound) {
-      return { text: 'Not found' };
-    }
+    const { meta, viewPanelScene, editPanel, title, uid } = this.state;
+    const isNew = !Boolean(uid);
 
     let pageNav: NavModelItem = {
-      text: this.state.title,
+      text: title,
       url: getDashboardUrl({
-        uid: this.state.uid,
+        uid,
         slug: meta.slug,
         currentQueryParams: location.search,
         updateQuery: { viewPanel: null, inspect: null, editview: null, editPanel: null, tab: null, shareView: null },
-        isHomeDashboard: !meta.url && !meta.slug && !meta.isNew,
+        isHomeDashboard: !meta.url && !meta.slug && !isNew && !meta.isSnapshot,
+        isSnapshot: meta.isSnapshot,
       }),
     };
 
@@ -465,6 +473,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
   public getInitialState(): DashboardSceneState | undefined {
     return this._initialState;
+  }
+
+  public getNextPanelId(): number {
+    return this.state.body.getMaxPanelId() + 1;
   }
 
   public addPanel(vizPanel: VizPanel): void {
@@ -593,10 +605,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
   public switchLayout(layout: DashboardLayoutManager) {
     this.setState({ body: layout });
+    layout.activateRepeaters?.();
   }
 
   /**
-   * Called by the SceneQueryRunner to privide contextural parameters (tracking) props for the request
+   * Called by the SceneQueryRunner to provide contextual parameters (tracking) props for the request
    */
   public enrichDataRequest(sceneObject: SceneObject): Partial<DataQueryRequest> {
     const dashboard = getDashboardSceneFor(sceneObject);
@@ -610,9 +623,12 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     let panelId = 0;
 
     if (panel && panel.state.key) {
-      if (isPanelClone(panel.state.key)) {
+      if (isInCloneChain(panel.state.key)) {
+        // We check if any of the panel ancestors are clones because we can't use the original panel ID in this case
         panelId = djb2Hash(panel?.state.key);
       } else {
+        // Otherwise, it's the absolute original panel, and we can use the key directly
+        // getPanelIdForVizPanel extracts the panel ID from the key so we don't need to do it manually
         panelId = getPanelIdForVizPanel(panel);
       }
     }
@@ -648,8 +664,14 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   };
 
   /** Hacky temp function until we refactor transformSaveModelToScene a bit */
-  public setInitialSaveModel(saveModel?: Dashboard | DashboardV2Spec) {
+  setInitialSaveModel(model?: Dashboard, meta?: DashboardMeta): void;
+  setInitialSaveModel(model?: DashboardV2Spec, meta?: DashboardWithAccessInfo<DashboardV2Spec>['metadata']): void;
+  public setInitialSaveModel(
+    saveModel?: Dashboard | DashboardV2Spec,
+    meta?: DashboardMeta | DashboardWithAccessInfo<DashboardV2Spec>['metadata']
+  ): void {
     this._serializer.initialSaveModel = saveModel;
+    this._serializer.metadata = meta;
   }
 
   public getTrackingInformation() {
@@ -742,31 +764,6 @@ export class DashboardVariableDependency implements SceneVariableDependencyConfi
       if (typeof panelsPerRow === 'string') {
         const perRow = Number.parseInt(panelsPerRow, 10);
         this._dashboard.setState({ panelsPerRow: Number.isInteger(perRow) ? perRow : undefined });
-      }
-    }
-
-    /**
-     * Propagate variable changes to repeat row behavior as it does not get it when it's nested under local value
-     * The first repeated row has the row repeater behavior but it also has a local SceneVariableSet with a local variable value
-     */
-    const layout = this._dashboard.state.body;
-    if (!(layout instanceof DefaultGridLayoutManager)) {
-      return;
-    }
-
-    for (const child of layout.state.grid.state.children) {
-      if (!(child instanceof SceneGridRow) || !child.state.$behaviors) {
-        continue;
-      }
-
-      for (const behavior of child.state.$behaviors) {
-        if (behavior instanceof RowRepeaterBehavior) {
-          if (behavior.isWaitingForVariables || (behavior.state.variableName === variable.state.name && hasChanged)) {
-            behavior.performRepeat(true);
-          } else if (!behavior.isWaitingForVariables && behavior.state.variableName === variable.state.name) {
-            behavior.notifyRepeatedPanelsWaitingForVariables(variable);
-          }
-        }
       }
     }
   }

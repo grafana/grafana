@@ -99,6 +99,16 @@ export const usePluginDetailsTabs = (
       });
     }
 
+    if (config.featureToggles.datasourceConnectionsTab && plugin?.type === PluginType.datasource) {
+      navModelChildren.push({
+        text: PluginTabLabels.DATASOURCE_CONNECTIONS,
+        icon: 'database',
+        id: PluginTabIds.DATASOURCE_CONNECTIONS,
+        url: `${pathname}?page=${PluginTabIds.DATASOURCE_CONNECTIONS}`,
+        active: PluginTabIds.DATASOURCE_CONNECTIONS === currentPageId,
+      });
+    }
+
     if (!canConfigurePlugins) {
       return navModelChildren;
     }

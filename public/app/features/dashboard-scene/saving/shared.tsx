@@ -3,7 +3,7 @@ import * as React from 'react';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, isFetchError } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
-import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
+import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import { Alert, Box, Button, Stack } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 

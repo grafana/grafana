@@ -213,7 +213,7 @@ The public cloud name is `AzureCloud`, the Chinese national cloud name is `Azure
 ### Configure Managed Identity
 
 {{< admonition type="note" >}}
-Managed Identity is available only in [Azure Managed Grafana](https://azure.microsoft.com/en-us/products/managed-grafana) or Grafana Enterprise when deployed in Azure. It is not available in Grafana Cloud.
+Managed Identity is available only in [Azure Managed Grafana](https://azure.microsoft.com/en-us/products/managed-grafana) or Grafana OSS/Enterprise when deployed in Azure. It is not available in Grafana Cloud.
 {{< /admonition >}}
 
 You can use managed identity to configure Azure Monitor in Grafana if you host Grafana in Azure (such as an App Service or with Azure Virtual Machines) and have managed identity enabled on your VM.
