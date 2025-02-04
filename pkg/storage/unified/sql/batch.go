@@ -164,10 +164,7 @@ func (b *backend) processBatch(ctx context.Context, setting resource.BatchSettin
 			logger:  logging.FromContext(ctx),
 		}
 
-		// Use the max RV from all resources
-		// We are in a transaction so as long as the individual values increase we are set
-		time.Now().UnixMicro()
-
+		// Calculate the RV based on incoming request timestamps
 		rv := newBatchRV()
 
 		summaries := make(map[string]*resource.BatchResponse_Summary, len(setting.Collection)*4)
