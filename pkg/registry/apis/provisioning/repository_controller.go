@@ -221,14 +221,17 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	}
 
 	healthAge := time.Since(time.UnixMilli(obj.Status.Health.Checked))
+	syncAge := time.Since(time.UnixMilli(obj.Status.Sync.Finished))
 	syncInterval := time.Duration(obj.Spec.Sync.IntervalSeconds) * time.Second
 	tolerance := time.Second
-	shouldResync := healthAge > syncInterval+tolerance
-
+	shouldResync := syncAge >= (syncInterval - tolerance)
 	hasSpecChanged := obj.Generation != obj.Status.ObservedGeneration
+
 	if !hasSpecChanged && obj.DeletionTimestamp == nil && (healthAge < time.Hour*4) && !shouldResync {
-		logger.Info("skipping as conditions are not met", "has_spec_changed", hasSpecChanged, "health_age", healthAge, "should_resync", shouldResync, "deletion_timestamp", obj.DeletionTimestamp)
+		logger.Info("skipping as conditions are not met", "status", obj.Status, "generation", obj.Generation, "deletion_timestamp", obj.DeletionTimestamp, "sync_spec", obj.Spec.Sync)
 		return nil
+	} else {
+		logger.Info("conditions met", "status", obj.Status, "generation", obj.Generation, "deletion_timestamp", obj.DeletionTimestamp, "sync_spec", obj.Spec.Sync)
 	}
 
 	ctx := context.Background()
