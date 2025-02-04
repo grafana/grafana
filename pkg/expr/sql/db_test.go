@@ -171,9 +171,6 @@ func TestQueryFramesDateTimeSelect(t *testing.T) {
 	f, err := db.QueryFrames(context.Background(), "b", qry, []*data.Frame{})
 	require.NoError(t, err)
 
-	f.Name = "b"
-	f.RefID = "b"
-
 	if diff := cmp.Diff(expectedFrame, f, data.FrameTestCompareOptions()...); diff != "" {
 		require.FailNowf(t, "Result mismatch (-want +got):%s\n", diff)
 	}
