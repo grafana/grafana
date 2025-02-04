@@ -6,27 +6,30 @@ const matrixTheme: NewThemeOptions = {
     mode: 'dark',
     background: {
       canvas: '#000000',
-      primary: '#010101',
-      secondary: '#020202',
+      primary: '#020202',
+      secondary: '#080808',
     },
     text: {
-      primary: '#008f11',
-      secondary: '#008f11',
-      disabled: '#008f11',
+      primary: '#00c017',
+      secondary: '#008910',
+      disabled: '#006a0c',
       link: '#00ff41',
       maxContrast: '#00ff41',
     },
     border: {
       weak: '#008f1144',
       medium: '#008f1188',
-      strong: '#008f11ff',
+      strong: '#008910',
     },
     primary: {
-      main: '#008f11',
+      main: '#008910',
+    },
+    secondary: {
+      text: '#008910',
     },
     gradients: {
-      brandVertical: 'linear-gradient(0deg, #008f11 0%, #00ff41 100%)',
-      brandHorizontal: 'linear-gradient(90deg, #008f11 0%, #00ff41 100%)',
+      brandVertical: 'linear-gradient(0deg, #008910 0%, #00ff41 100%)',
+      brandHorizontal: 'linear-gradient(90deg, #008910 0%, #00ff41 100%)',
     },
   },
   shape: {
