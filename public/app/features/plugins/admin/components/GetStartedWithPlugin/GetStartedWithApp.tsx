@@ -63,7 +63,7 @@ export function GetStartedWithApp({ plugin }: Props): React.ReactElement | null 
         </Button>
       )}
 
-      {enabled && !autoEnabled && (
+      {enabled && !autoEnabled && !plugin.isProvisioned && (
         <Button variant="destructive" onClick={disable}>
           Disable
         </Button>
