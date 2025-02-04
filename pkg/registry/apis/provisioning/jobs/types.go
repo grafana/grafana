@@ -8,7 +8,9 @@ import (
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 )
 
-var _ JobQueue = (*jobStore)(nil)
+var (
+	_ JobQueue = (*jobStore)(nil)
+)
 
 // Basic job queue infrastructure
 type JobQueue interface {
@@ -19,6 +21,9 @@ type JobQueue interface {
 
 	// Get the next job we should process
 	Next(ctx context.Context) *provisioning.Job
+
+	// Get the status for a job
+	Status(ctx context.Context, namespace string, name string) *provisioning.JobStatus
 
 	// Update the status on a given job
 	// This is only valid if current job is not finished
