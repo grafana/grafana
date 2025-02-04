@@ -10,7 +10,7 @@ export function FolderRepo({ repo }: Props) {
     return null;
   }
 
-  return <Badge text={'Provisioned'} color={'darkgrey'} style={{ marginLeft: 8 }} />;
+  return <Badge text={'Provisioned'} color={'darkgrey'} />;
   // const [repoName, icon] = getRepoDetails(repo);
   //
   // return (
