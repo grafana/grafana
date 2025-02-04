@@ -58,7 +58,7 @@ In Grafana Enterprise, the server administrator has access to the migration assi
 
 ### Grant access in Grafana Enterprise
 
-{{< admonition type="impotrtant">}}
+{{< admonition type="important">}}
 You must [configure RBAC](https://grafana.com/docs/grafana/latest/administration/roles-and-permissions/access-control/configure-rbac/) before you can grant other administrators access to the Grafana Migration Assistant.
 {{< /admonition >}}
 

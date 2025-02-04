@@ -52,13 +52,14 @@ import {
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
-import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
+import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior';
 import { ResponsiveGridItem } from '../scene/layout-responsive-grid/ResponsiveGridItem';
 import { ResponsiveGridLayoutManager } from '../scene/layout-responsive-grid/ResponsiveGridLayoutManager';
 import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
 import { DashboardLayoutManager } from '../scene/types';
+import { isClonedKey } from '../utils/clone';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import {
   getLibraryPanelBehavior,
@@ -246,7 +247,7 @@ function getGridLayoutItems(
         elements.push(gridItemToGridLayoutItemKind(child, isSnapshot));
       }
     } else if (child instanceof SceneGridRow) {
-      if (child.state.key!.indexOf('-clone-') > 0 && !isSnapshot) {
+      if (isClonedKey(child.state.key!) && !isSnapshot) {
         // Skip repeat rows
         continue;
       }
