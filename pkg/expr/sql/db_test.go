@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestQueryFramesInto(t *testing.T) {
+func TestQueryFrames(t *testing.T) {
 	db := DB{}
 
 	tests := []struct {
