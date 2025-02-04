@@ -211,9 +211,6 @@ func (c *pullRequestCommenter) ProcessPullRequest(ctx context.Context,
 		case repository.FileActionUpdated:
 			preview.OriginalURL = c.previewURL(base, f.Path, options.URL)
 			preview.PreviewURL = c.previewURL(ref, f.Path, options.URL)
-		case repository.FileActionRenamed:
-			preview.OriginalURL = c.previewURL(base, f.PreviousPath, options.URL)
-			preview.PreviewURL = c.previewURL(ref, f.Path, options.URL)
 		case repository.FileActionDeleted:
 			preview.OriginalURL = c.previewURL(base, f.Path, options.URL)
 		default:

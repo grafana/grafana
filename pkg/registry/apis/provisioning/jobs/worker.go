@@ -200,6 +200,8 @@ func (g *JobWorker) doSync(ctx context.Context,
 			"error running sync",
 			syncError.Error(),
 		}
+	} else if syncStatus.State == "" {
+		syncStatus.State = provisioning.JobStateSuccess
 	}
 
 	// Update the resource stats -- give the index some time to catch up

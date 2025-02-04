@@ -28,8 +28,10 @@ func Changes(source []FileTreeEntry, target *provisioning.ResourceList) ([]FileC
 		if ok {
 			if check.Hash != file.Hash {
 				changes = append(changes, FileChange{
-					Action:      FileActionUpdated,
-					Path:        file.Path,
+					Action: FileActionUpdated,
+					Path:   check.Path,
+					DB:     check,
+
 					Ref:         file.Hash,
 					PreviousRef: check.Hash,
 				})
@@ -47,9 +49,9 @@ func Changes(source []FileTreeEntry, target *provisioning.ResourceList) ([]FileC
 	// File that were previously added, but are not in the current list
 	for _, v := range lookup {
 		changes = append(changes, FileChange{
-			Path:        v.Path,
-			PreviousRef: v.Hash,
-			Action:      FileActionDeleted,
+			Path:   v.Path,
+			Action: FileActionDeleted,
+			DB:     v,
 		})
 	}
 

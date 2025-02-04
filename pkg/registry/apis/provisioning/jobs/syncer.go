@@ -1,8 +1,8 @@
 package jobs
 
 import (
+	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"path"
 
@@ -10,11 +10,11 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/dynamic"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/apis/dashboard"
 	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
@@ -34,6 +34,7 @@ type syncer struct {
 	parser     *resources.Parser
 	lister     resources.ResourceLister
 	folders    dynamic.ResourceInterface
+	dashboards dynamic.ResourceInterface
 	repository repository.Repository
 }
 
@@ -48,11 +49,16 @@ func NewSyncer(
 		Version:  folders.VERSION,
 		Resource: folders.RESOURCE,
 	})
-
+	dashboards := dynamicClient.Resource(schema.GroupVersionResource{
+		Group:    dashboard.GROUP,
+		Version:  "v1alpha0",
+		Resource: dashboard.DASHBOARD_RESOURCE,
+	})
 	return &syncer{
 		parser:     parser,
 		lister:     lister,
 		folders:    folders,
+		dashboards: dashboards,
 		repository: repo,
 	}, nil
 }
@@ -141,170 +147,136 @@ func (r *syncer) Sync(ctx context.Context,
 		}, syncStatus, nil
 	}
 
-	if err := r.replicateChanges(ctx, changes); err != nil {
-		return nil, nil, fmt.Errorf("replicate changes: %w", err)
+	// Now apply the changes
+	status, err := r.replicateChanges(ctx, changes)
+	if status == nil {
+		status = &provisioning.JobStatus{}
 	}
-
-	message := fmt.Sprintf("processed %d changes", len(changes))
-	syncStatus.State = provisioning.JobStateSuccess
-	return &provisioning.JobStatus{
-		State:   provisioning.JobStateSuccess,
-		Message: message,
-	}, syncStatus, nil
+	if err != nil {
+		status.State = provisioning.JobStateError
+		status.Message = "Sync error: " + err.Error()
+		syncStatus.State = status.State
+		syncStatus.Message = append(syncStatus.Message, status.Message)
+	} else if status.State == "" {
+		status.State = provisioning.JobStateSuccess
+	}
+	return status, syncStatus, nil
 }
 
-// replicateFile creates a new resource in the cluster.
-// If the resource already exists, it will be updated.
-func (r *syncer) replicateFile(ctx context.Context, file *resources.ParsedResource, folderTree *resources.FolderTree) error {
-	logger := logging.FromContext(ctx).With("file", file.Info.Path, "ref", file.Info.Ref)
-	logger = logger.With("action", file.Action, "name", file.Obj.GetName(), "file_namespace", file.Obj.GetNamespace())
-
-	parent := resources.ParentFolder(file.Info.Path, r.repository.Config())
-	logger = logger.With("folder", parent)
-	if parent != "" {
-		if !folderTree.In(parent) {
-			return fmt.Errorf("failed to find parent in tree for %s in %s", file.Info.Path, parent)
-		}
-		file.Meta.SetFolder(parent)
-	}
-
-	if file.Action == provisioning.ResourceActionCreate {
-		_, err := file.Client.Create(ctx, file.Obj, metav1.CreateOptions{})
-		if err != nil {
-			return fmt.Errorf("failed to create object: %w", err)
-		}
-	} else if file.Action == provisioning.ResourceActionUpdate {
-		existingMeta, err := utils.MetaAccessor(file.Existing)
-		if err != nil {
-			return fmt.Errorf("failed to create meta accessor for the existing object: %w", err)
-		}
-
-		// Just in case no uid is present on the metadata for some reason.
-		logger := logger.With("previous_uid", file.Meta.GetUID(), "previous_resource_version", existingMeta.GetResourceVersion())
-		if uid, ok, _ := unstructured.NestedString(file.Existing.Object, "spec", "uid"); ok {
-			logger.Debug("updating file's UID with spec.uid", "uid", uid)
-			file.Meta.SetUID(types.UID(uid))
-		}
-		if uid := existingMeta.GetUID(); uid != "" {
-			logger.Debug("updating file's UID with existing meta uid", "uid", uid)
-			file.Meta.SetUID(uid)
-		}
-		if rev := existingMeta.GetResourceVersion(); rev != "" {
-			logger.Debug("updating file's UID with existing resource version", "version", rev)
-			file.Meta.SetResourceVersion(rev)
-		}
-
-		_, err = file.Client.Update(ctx, file.Obj, metav1.UpdateOptions{})
-		if err != nil {
-			return fmt.Errorf("failed to update object: %w", err)
-		}
-	} else {
-		logger.Error("bug in Grafana: the file's action is unhandled")
-		return fmt.Errorf("bug in Grafana: got a file.Action of '%s', which is not defined to be handled", file.Action)
-	}
-
-	logger.Info("Replicated file")
-
-	return nil
-}
-
-func (r *syncer) replicateChanges(ctx context.Context, changes []repository.FileChange) error {
+func (r *syncer) replicateChanges(ctx context.Context, changes []repository.FileChange) (*provisioning.JobStatus, error) {
 	// Create an empty tree to avoid loading all folders unnecessarily
 	folderTree := resources.NewEmptyFolderTree()
+	parents := make(map[string]bool)
+	summary := provisioning.JobResourceSummary{}
+	status := &provisioning.JobStatus{}
 
 	// Create folder structure first
 	for _, change := range changes {
-		if change.Action == repository.FileActionDeleted {
-			// FIXME: this will leave empty folder behind until the next sync
-			continue
-		}
-
-		parent := resources.ParentFolder(path.Dir(change.Path), r.repository.Config())
-		if err := r.ensureFolderPathExists(ctx, path.Dir(change.Path), parent, folderTree); err != nil {
-			return fmt.Errorf("ensure folder path exists: %w", err)
-		}
-	}
-
-	// Replicate the file changes
-	for _, change := range changes {
 		if resources.ShouldIgnorePath(change.Path) {
+			summary.Noop++
+			continue
+		}
+		if len(status.Errors) > 20 {
+			status.Errors = append(status.Errors, "too many errors, stopping")
+			status.State = provisioning.JobStateError
+			return status, nil
+		}
+
+		if change.Action == repository.FileActionDeleted {
+			if change.DB == nil {
+				info, err := r.repository.Read(ctx, change.Path, change.Ref)
+				if err != nil {
+					status.Errors = append(status.Errors,
+						fmt.Sprintf("error reading deleted file: %s", change.Path))
+					continue
+				}
+
+				obj, gvk, _ := resources.DecodeYAMLObject(bytes.NewBuffer(info.Data))
+				if obj == nil || obj.GetName() == "" {
+					status.Errors = append(status.Errors,
+						fmt.Sprintf("no object found in: %s", change.Path))
+					continue
+				}
+
+				// Get the referenced
+				change.DB = &provisioning.ResourceListItem{
+					Group:    gvk.Group,
+					Resource: getResourceFromGVK(gvk),
+					Name:     obj.GetName(),
+				}
+			}
+
+			client, err := r.client(change.DB)
+			if err != nil {
+				status.Errors = append(status.Errors,
+					fmt.Sprintf("unsupported object: %s", change.Path))
+				continue
+			}
+			err = client.Delete(ctx, change.DB.Name, metav1.DeleteOptions{})
+			if err != nil {
+				status.Errors = append(status.Errors,
+					fmt.Sprintf("error deleting %s: %s // %s", change.DB.Resource, change.DB.Name, change.Path))
+			} else {
+				summary.Delete++
+			}
 			continue
 		}
 
+		// Make sure the parent folders exist
+		parent := resources.ParentFolder(path.Dir(change.Path), r.repository.Config())
+		if !parents[parent] {
+			if err := r.ensureFolderPathExists(ctx, path.Dir(change.Path), parent, folderTree); err != nil {
+				return status, fmt.Errorf("ensure folder path exists: %w", err)
+			}
+			parents[parent] = true
+		}
+
+		// Replicate the file changes
 		fileInfo, err := r.repository.Read(ctx, change.Path, change.Ref)
 		if err != nil {
-			return fmt.Errorf("read file: %w", err)
+			status.Errors = append(status.Errors,
+				fmt.Sprintf("Unable to read: %s", change.Path),
+			)
+			continue
 		}
 
-		parsed, err := r.parseResource(ctx, fileInfo)
+		parsed, err := r.parser.Parse(ctx, fileInfo, false)
 		if err != nil {
-			return fmt.Errorf("parse resource: %w", err)
+			status.Errors = append(status.Errors,
+				fmt.Sprintf("Unable to parse: %s // %s", change.Path, err.Error()),
+			)
+			continue
 		}
+
+		parsed.Meta.SetFolder(parent)
 
 		switch change.Action {
-		case repository.FileActionCreated, repository.FileActionUpdated:
-			if err := r.replicateFile(ctx, parsed, folderTree); err != nil {
-				return fmt.Errorf("replicate file: %w", err)
-			}
-		case repository.FileActionRenamed:
-			// delete in old path
-			oldPath, err := r.repository.Read(ctx, change.PreviousPath, change.Ref)
+		case repository.FileActionCreated:
+			_, err = parsed.Client.Create(ctx, parsed.Obj, metav1.CreateOptions{})
 			if err != nil {
-				return fmt.Errorf("read previous path: %w", err)
+				status.Errors = append(status.Errors,
+					fmt.Sprintf("error creating: %s from %s", parsed.Obj.GetName(), change.Path),
+				)
+			} else {
+				summary.Create++
 			}
-			oldParsed, err := r.parseResource(ctx, oldPath)
+
+		case repository.FileActionUpdated:
+			_, err = parsed.Client.Update(ctx, parsed.Obj, metav1.UpdateOptions{})
 			if err != nil {
-				return fmt.Errorf("parse old resource: %w", err)
+				status.Errors = append(status.Errors,
+					fmt.Sprintf("error updating: %s from %s", parsed.Obj.GetName(), change.Path),
+				)
+			} else {
+				summary.Update++
 			}
-			if err := r.deleteFile(ctx, oldParsed); err != nil {
-				return fmt.Errorf("delete file: %w", err)
-			}
-			if err := r.replicateFile(ctx, parsed, folderTree); err != nil {
-				return fmt.Errorf("replicate file in new path: %w", err)
-			}
-		case repository.FileActionDeleted:
-			if err := r.deleteFile(ctx, parsed); err != nil {
-				return fmt.Errorf("delete file: %w", err)
-			}
+		default:
+			return nil, fmt.Errorf("unexpected action: %s", change.Action)
 		}
 	}
 
-	return nil
-}
-
-func (r *syncer) deleteFile(ctx context.Context, file *resources.ParsedResource) error {
-	_, err := file.Client.Get(ctx, file.Obj.GetName(), metav1.GetOptions{})
-	// FIXME: Remove the 'false &&' when .Get returns 404 on 404 instead of 500. Until then, this is a really ugly workaround.
-	if false && err != nil && !apierrors.IsNotFound(err) {
-		return fmt.Errorf("failed to check if object already exists: %w", err)
-	}
-
-	if err != nil { // IsNotFound
-		return fmt.Errorf("get object to delete: %w", err)
-	}
-
-	if err = file.Client.Delete(ctx, file.Obj.GetName(), metav1.DeleteOptions{}); err != nil {
-		return fmt.Errorf("failed to delete object: %w", err)
-	}
-
-	return nil
-}
-
-func (r *syncer) parseResource(ctx context.Context, fileInfo *repository.FileInfo) (*resources.ParsedResource, error) {
-	file, err := r.parser.Parse(ctx, fileInfo, true)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse file %s: %w", fileInfo.Path, err)
-	}
-
-	if file.GVR == nil {
-		return nil, errors.New("parsed file is missing GVR")
-	}
-
-	if file.Client == nil {
-		return nil, errors.New("parsed file is missing client")
-	}
-
-	return file, nil
+	status.Summary = []provisioning.JobResourceSummary{summary}
+	return status, nil
 }
 
 // ensureFolderPathExists creates the folder structure in the cluster.
@@ -377,4 +349,36 @@ func (r *syncer) ensureFolderExists(ctx context.Context, folder resources.Folder
 	}
 
 	return nil
+}
+
+func (r *syncer) client(obj *provisioning.ResourceListItem) (dynamic.ResourceInterface, error) {
+	switch obj.Group {
+	case dashboard.GROUP:
+		switch obj.Resource {
+		case dashboard.DASHBOARD_RESOURCE:
+			return r.dashboards, nil
+		}
+	case folders.GROUP:
+		switch obj.Resource {
+		case folders.RESOURCE:
+			return r.folders, nil
+		}
+	}
+	return nil, fmt.Errorf("unsupported resource: %s/%s", obj.Group, obj.Resource)
+}
+
+func getResourceFromGVK(gvk *schema.GroupVersionKind) string {
+	switch gvk.Group {
+	case dashboard.GROUP:
+		switch gvk.Kind {
+		case "Dashboard":
+			return dashboard.DASHBOARD_RESOURCE
+		}
+	case folders.GROUP:
+		switch gvk.Kind {
+		case "Folder":
+			return folders.RESOURCE
+		}
+	}
+	return ""
 }

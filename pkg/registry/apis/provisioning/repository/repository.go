@@ -52,16 +52,19 @@ type FileAction string
 const (
 	FileActionCreated FileAction = "created"
 	FileActionUpdated FileAction = "updated"
-	FileActionRenamed FileAction = "renamed"
 	FileActionDeleted FileAction = "deleted"
 )
 
 type FileChange struct {
-	Path         string
-	PreviousPath string
-	Ref          string
-	PreviousRef  string
-	Action       FileAction
+	// Path to the file in a repository with a change
+	Path   string
+	Action FileAction
+
+	// The current value in the database (may be null for incremental?)
+	DB *provisioning.ResourceListItem
+
+	Ref         string // Only for git?
+	PreviousRef string // Only for git?
 }
 
 type Repository interface {

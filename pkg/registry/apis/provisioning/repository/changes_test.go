@@ -39,9 +39,15 @@ func TestChanges(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, changes, 1)
 		require.Equal(t, FileChange{
-			Action:      FileActionDeleted,
-			Path:        "adsl62h.yaml",
-			PreviousRef: "ce5d497c4deadde6831162ce8509e2b2b1776237",
+			Action: FileActionDeleted,
+			Path:   "adsl62h.yaml",
+			DB: &provisioning.ResourceListItem{
+				Path:     "adsl62h.yaml",
+				Group:    "dashboard.grafana.app",
+				Resource: "dashboards",
+				Name:     "adsl62h-hrw-f-fvlt2dghp-gufrc4lisksgmq-c",
+				Hash:     "ce5d497c4deadde6831162ce8509e2b2b1776237",
+			},
 		}, changes[0])
 	})
 
@@ -53,8 +59,15 @@ func TestChanges(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, changes, 1)
 		require.Equal(t, FileChange{
-			Action:      FileActionUpdated,
-			Path:        "adsl62h.yaml",
+			Action: FileActionUpdated,
+			Path:   "adsl62h.yaml",
+			DB: &provisioning.ResourceListItem{
+				Path:     "adsl62h.yaml",
+				Group:    "dashboard.grafana.app",
+				Resource: "dashboards",
+				Name:     "adsl62h-hrw-f-fvlt2dghp-gufrc4lisksgmq-c",
+				Hash:     "ce5d497c4deadde6831162ce8509e2b2b1776237",
+			},
 			Ref:         "different",
 			PreviousRef: "ce5d497c4deadde6831162ce8509e2b2b1776237",
 		}, changes[0])
@@ -73,26 +86,21 @@ func getBase(t *testing.T) (source []FileTreeEntry, target *provisioning.Resourc
 				"group": "folder.grafana.app",
 				"resource": "folders",
 				"name": "simplelocal-3794ab9",
-				"hash": "",
-				"title": "Simple local"
+				"hash": ""
 			},
 			{
 				"path": "ad4lwp2.yaml",
 				"group": "dashboard.grafana.app",
 				"resource": "dashboards",
 				"name": "ad4lwp2-xofjsuo-mr5blr1zwimlfi0ds0pyrrpd",
-				"hash": "ca83d64b9c4a23fed975aacdf47e7de8878b4ae0",
-				"title": "Test two",
-				"folder": "simplelocal-3794ab9"
+				"hash": "ca83d64b9c4a23fed975aacdf47e7de8878b4ae0"
 			},
 			{
 				"path": "adsl62h.yaml",
 				"group": "dashboard.grafana.app",
 				"resource": "dashboards",
 				"name": "adsl62h-hrw-f-fvlt2dghp-gufrc4lisksgmq-c",
-				"hash": "ce5d497c4deadde6831162ce8509e2b2b1776237",
-				"title": "Test one",
-				"folder": "simplelocal-3794ab9"
+				"hash": "ce5d497c4deadde6831162ce8509e2b2b1776237"
 			}
 		]
 	}`), target)
