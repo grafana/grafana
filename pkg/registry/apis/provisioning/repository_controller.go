@@ -224,7 +224,8 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	syncAge := time.Since(time.UnixMilli(obj.Status.Sync.Finished))
 	syncInterval := time.Duration(obj.Spec.Sync.IntervalSeconds) * time.Second
 	tolerance := time.Second
-	shouldResync := syncAge >= (syncInterval - tolerance)
+	isSyncJobPendingOrRunning := obj.Status.Sync.State == provisioning.JobStatePending || obj.Status.Sync.State == provisioning.JobStateWorking
+	shouldResync := syncAge >= (syncInterval-tolerance) && !isSyncJobPendingOrRunning
 	hasSpecChanged := obj.Generation != obj.Status.ObservedGeneration
 
 	if !hasSpecChanged && obj.DeletionTimestamp == nil && (healthAge < time.Hour*4) && !shouldResync {
@@ -301,6 +302,7 @@ func (rc *RepositoryController) process(item *queueItem) error {
 
 	status.ObservedGeneration = obj.Generation
 	if obj.DeletionTimestamp == nil && healthAge > 200*time.Millisecond {
+		logger.Info("running health check")
 		res, err := rc.tester.TestRepository(ctx, repo)
 		if err != nil {
 			res = &provisioning.TestResults{
@@ -319,12 +321,14 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		}
 		if !res.Success {
 			logger.Error("repository is unhealthy", "errors", res.Errors)
+		} else {
+			logger.Debug("repository is healthy")
 		}
 	}
 
 	// Queue a sync job
 	hash := status.Sync.Hash
-	if status.Sync.State == provisioning.JobStateWorking {
+	if isSyncJobPendingOrRunning {
 		res := rc.jobs.Status(ctx, obj.Namespace, status.Sync.JobID)
 		if res == nil {
 			logger.Warn("error getting job status", "job", status.Sync.JobID)
@@ -340,7 +344,8 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	if status.Health.Healthy &&
 		obj.Spec.Sync.Enabled && sync != nil &&
 		status.ObservedGeneration > 0 &&
-		status.Sync.State != provisioning.JobStateWorking {
+		status.Sync.State != provisioning.JobStateWorking &&
+		status.Sync.State != provisioning.JobStatePending {
 		job, err := rc.jobs.Add(ctx, &provisioning.Job{
 			ObjectMeta: v1.ObjectMeta{
 				Namespace: obj.Namespace,
