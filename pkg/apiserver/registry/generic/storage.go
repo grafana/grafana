@@ -29,3 +29,9 @@ func NewRegistryStore(scheme *runtime.Scheme, resourceInfo utils.ResourceInfo, o
 	}
 	return store, nil
 }
+
+func NewRegistryStatusStore(scheme *runtime.Scheme, specStore *registry.Store) *StatusREST {
+	gv := specStore.New().GetObjectKind().GroupVersionKind().GroupVersion()
+	strategy := NewStatusStrategy(scheme, gv)
+	return NewStatusREST(specStore, strategy)
+}

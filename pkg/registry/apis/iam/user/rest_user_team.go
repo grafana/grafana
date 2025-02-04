@@ -15,7 +15,6 @@ import (
 
 var (
 	_ rest.Storage         = (*LegacyUserTeamREST)(nil)
-	_ rest.Scoper          = (*LegacyUserTeamREST)(nil)
 	_ rest.StorageMetadata = (*LegacyUserTeamREST)(nil)
 	_ rest.Connecter       = (*LegacyUserTeamREST)(nil)
 )
@@ -35,11 +34,6 @@ func (s *LegacyUserTeamREST) New() runtime.Object {
 
 // Destroy implements rest.Storage.
 func (s *LegacyUserTeamREST) Destroy() {}
-
-// NamespaceScoped implements rest.Scoper.
-func (s *LegacyUserTeamREST) NamespaceScoped() bool {
-	return true
-}
 
 // ProducesMIMETypes implements rest.StorageMetadata.
 func (s *LegacyUserTeamREST) ProducesMIMETypes(verb string) []string {

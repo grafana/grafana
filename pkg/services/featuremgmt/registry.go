@@ -227,14 +227,6 @@ var (
 			Owner:        grafanaDatavizSquad,
 		},
 		{
-			Name:              "alertingNoNormalState",
-			Description:       "Stop maintaining state of alerts that are not firing",
-			Stage:             FeatureStagePublicPreview,
-			RequiresRestart:   false,
-			Owner:             grafanaAlertingSquad,
-			HideFromAdminPage: true,
-		},
-		{
 			Name:           "logsContextDatasourceUi",
 			Description:    "Allow datasource to provide custom UI for context view",
 			Stage:          FeatureStageGeneralAvailability,
@@ -772,6 +764,7 @@ var (
 			FrontendOnly:   false,
 			AllowSelfServe: true,
 			Owner:          identityAccessTeam,
+			Expression:     "true",
 		},
 		{
 			Name:         "cachingOptimizeSerializationMemoryUsage",
@@ -919,7 +912,7 @@ var (
 			Stage:        FeatureStageGeneralAvailability,
 			Expression:   "true", // enabled by default
 			FrontendOnly: true,
-			Owner:        grafanaDashboardsSquad,
+			Owner:        grafanaObservabilityMetricsSquad,
 		},
 		{
 			Name:         "alertingSimplifiedRouting",
@@ -1123,14 +1116,6 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
-			Name:              "authAPIAccessTokenAuth",
-			Description:       "Enables the use of Auth API access tokens for authentication",
-			Stage:             FeatureStageExperimental,
-			Owner:             identityAccessTeam,
-			HideFromDocs:      true,
-			HideFromAdminPage: true,
-		},
-		{
 			Name:              "scopeFilters",
 			Description:       "Enables the use of scope filters in Grafana",
 			FrontendOnly:      false,
@@ -1302,13 +1287,6 @@ var (
 			Owner:             identityAccessTeam,
 			HideFromAdminPage: true,
 			HideFromDocs:      true,
-		},
-		{
-			Name:        "openSearchBackendFlowEnabled",
-			Description: "Enables the backend query flow for Open Search datasource plugin",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       awsDatasourcesSquad,
-			Expression:  "true",
 		},
 		{
 			Name:            "ssoSettingsLDAP",
@@ -1729,6 +1707,13 @@ var (
 			HideFromDocs: true,
 		},
 		{
+			Name:         "templateVariablesUsesCombobox",
+			Description:  "Use new combobox component for template variables",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendPlatformSquad,
+			FrontendOnly: true,
+		},
+		{
 			Name:         "ABTestFeatureToggleB",
 			Description:  "Test feature toggle to see how cohorts could be set up AB testing",
 			Stage:        FeatureStageExperimental,
@@ -1756,12 +1741,47 @@ var (
 			Owner:       awsDatasourcesSquad,
 		},
 		{
+			Name:            "exploreMetricsUseExternalAppPlugin",
+			Description:     "Use the externalized Metrics Drilldown (formerly known as Explore Metrics) app plugin",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaObservabilityMetricsSquad,
+			FrontendOnly:    true,
+			RequiresRestart: true,
+			HideFromDocs:    true,
+		},
+		{
 			Name:            "datasourceConnectionsTab",
 			Description:     "Shows defined connections for a data source in the plugins detail page",
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaPluginsPlatformSquad,
 			RequiresDevMode: false,
 			FrontendOnly:    true,
+		},
+		{
+			Name:              "fetchRulesUsingPost",
+			Description:       "Use a POST request to list rules by passing down the namespaces user has access to",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaAlertingSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+		},
+		{
+			Name:              "alertingAlertmanagerExtraDedupStage",
+			Description:       "enables extra deduplication stage in alertmanager that checks that timestamps of the pipeline and the current state are matching",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaAlertingSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			RequiresRestart:   true,
+		},
+		{
+			Name:              "alertingAlertmanagerExtraDedupStageStopPipeline",
+			Description:       "works together with alertingAlertmanagerExtraDedupStage, if enabled, it will stop the pipeline if the timestamps are not matching. Otherwise, it will emit a warning",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaAlertingSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			RequiresRestart:   true,
 		},
 	}
 )
