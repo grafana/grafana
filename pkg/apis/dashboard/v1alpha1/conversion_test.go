@@ -27,6 +27,7 @@ func TestConvertDashboardVersions(t *testing.T) {
         }
       ]
     },
+    "refresh": true,
     "description": "",
     "editable": true,
     "fiscalYearStartMonth": 0,
@@ -35,7 +36,7 @@ func TestConvertDashboardVersions(t *testing.T) {
     "links": [],
     "panels": [],
     "preload": false,
-    "schemaVersion": 40,
+    "schemaVersion": 39,
     "tags": [],
     "templating": {
       "list": []
@@ -56,6 +57,7 @@ func TestConvertDashboardVersions(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, result.Title, "New dashboard")
 	require.Equal(t, result.Unstructured, object)
+	require.Equal(t, result.Unstructured.Object["refresh"], "", "schemaVersion migration not applied. refresh should be an empty string")
 
 	// now convert back & ensure it is the same
 	object2 := common.Unstructured{}
