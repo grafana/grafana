@@ -9,7 +9,7 @@ let lineHeight = 22;
 
 export function init(theme: GrafanaTheme2) {
   const letterSpacing = theme.typography.body.letterSpacing
-    ? theme.typography.fontSize * parseFloat(theme.typography.body.letterSpacing)
+    ? (theme.typography.fontSize * parseFloat(theme.typography.body.letterSpacing)).toFixed(5)
     : undefined;
   const fontFamily = theme.typography.fontFamilyMonospace;
   const fontSize = theme.typography.fontSize;
@@ -20,6 +20,10 @@ export function init(theme: GrafanaTheme2) {
     return false;
   }
   ctx.font = `${fontSize}px ${fontFamily}`;
+  ctx.fontKerning = 'normal';
+  ctx.fontStretch = 'normal';
+  ctx.fontVariantCaps = 'normal';
+  ctx.textRendering = 'optimizeLegibility';
   if (letterSpacing) {
     ctx.letterSpacing = `${letterSpacing}px`;
   }
