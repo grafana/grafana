@@ -676,6 +676,28 @@ def verify_i18n_step():
         ],
     }
 
+def verify_api_clients_step():
+    uncommited_error_message = "\nAPI client generation has not been committed. Please run 'yarn generate-apis', commit the changes and push again."
+    return {
+        "name": "verify-api-clients",
+        "image": images["node_deb"],
+        "depends_on": [
+            "yarn-install",
+        ],
+        "commands": [
+            "yarn generate-apis",
+            # Verify that client generation has been run and committed
+            '''
+            file_diff=$(git diff ':!conf')
+            if [ -n "$file_diff" ]; then
+                echo $file_diff
+                echo "{}"
+                exit 1
+            fi
+            '''.format(uncommited_error_message),
+        ],
+    }
+
 def test_a11y_frontend_step(ver_mode, port = 3001):
     """Runs automated accessiblity tests against the frontend.
 

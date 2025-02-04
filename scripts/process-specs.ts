@@ -168,10 +168,10 @@ function processDirectory(sourceDir: string, outputDir: string) {
 }
 
 const sourceDirs = [
-  path.resolve(__dirname, '../pkg/tests/apis/openapi_snapshots'),
-  path.resolve(__dirname, '../pkg/extensions/apiserver/tests/openapi_snapshots'),
+  path.resolve(import.meta.dirname, '../pkg/tests/apis/openapi_snapshots'),
+  path.resolve(import.meta.dirname, '../pkg/extensions/apiserver/tests/openapi_snapshots'),
 ];
-const outputDir = path.resolve(__dirname, '../data/openapi');
+const outputDir = path.resolve(import.meta.dirname, '../data/openapi');
 
 for (const sourceDir of sourceDirs) {
   processDirectory(sourceDir, outputDir);
