@@ -2,9 +2,7 @@ package notifications
 
 import (
 	"context"
-	"io"
 	"regexp"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -142,8 +140,8 @@ func TestSendEmailSync(t *testing.T) {
 				To:          []string{"asdf@grafana.com"},
 				SingleEmail: true,
 				Template:    "welcome_on_signup",
-				EmbeddedReaders: map[string]io.Reader{
-					"embed.jpg": strings.NewReader("image content"),
+				EmbeddedContents: []EmbeddedContent{
+					{Name: "embed.jpg", Content: []byte("image content")},
 				},
 			},
 		}
@@ -153,10 +151,10 @@ func TestSendEmailSync(t *testing.T) {
 
 		require.NotEmpty(t, mailer.Sent)
 		sent := mailer.Sent[len(mailer.Sent)-1]
-		require.Len(t, sent.EmbeddedReaders, 1)
-		contents, err := io.ReadAll(sent.EmbeddedReaders["embed.jpg"])
-		require.NoError(t, err)
-		require.Equal(t, "image content", string(contents))
+		require.Len(t, sent.EmbeddedContents, 1)
+		f := sent.EmbeddedContents[0]
+		require.Equal(t, "embed.jpg", f.Name)
+		require.Equal(t, "image content", string(f.Content))
 	})
 
 	t.Run("When SMTP disabled in configuration", func(t *testing.T) {

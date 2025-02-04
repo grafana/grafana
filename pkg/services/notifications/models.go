@@ -3,7 +3,6 @@ package notifications
 import (
 	"crypto/tls"
 	"errors"
-	"io"
 
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -19,16 +18,16 @@ type SendEmailAttachFile struct {
 
 // SendEmailCommand is the command for sending emails
 type SendEmailCommand struct {
-	To              []string
-	SingleEmail     bool
-	Template        string
-	Subject         string
-	Data            map[string]any
-	Info            string
-	ReplyTo         []string
-	EmbeddedFiles   []string
-	EmbeddedReaders map[string]io.Reader
-	AttachedFiles   []*SendEmailAttachFile
+	To               []string
+	SingleEmail      bool
+	Template         string
+	Subject          string
+	Data             map[string]any
+	Info             string
+	ReplyTo          []string
+	EmbeddedFiles    []string
+	EmbeddedContents []EmbeddedContent
+	AttachedFiles    []*SendEmailAttachFile
 }
 
 // SendEmailCommandSync is the command for sending emails synchronously
