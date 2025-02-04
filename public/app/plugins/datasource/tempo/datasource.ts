@@ -375,18 +375,15 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
 
     if (targets.traceqlSearch?.length) {
       try {
-        if (config.featureToggles.metricsSummary) {
-          const target = targets.traceqlSearch.find((t) => this.hasGroupBy(t));
-          if (target) {
-            const appliedQuery = this.applyVariables(target, options.scopedVars);
-            const queryFromFilters = this.languageProvider.generateQueryFromFilters(appliedQuery.filters);
-            subQueries.push(this.handleMetricsSummaryQuery(appliedQuery, queryFromFilters, options));
-          }
+        const target = targets.traceqlSearch.find((t) => this.hasGroupBy(t));
+        if (target) {
+          const appliedQuery = this.applyVariables(target, options.scopedVars);
+          const queryFromFilters = this.languageProvider.generateQueryFromFilters(appliedQuery.filters);
+          subQueries.push(this.handleMetricsSummaryQuery(appliedQuery, queryFromFilters, options));
         }
 
-        const traceqlSearchTargets = config.featureToggles.metricsSummary
-          ? targets.traceqlSearch.filter((t) => !this.hasGroupBy(t))
-          : targets.traceqlSearch;
+        const traceqlSearchTargets = targets.traceqlSearch;
+
         if (traceqlSearchTargets.length > 0) {
           const appliedQuery = this.applyVariables(traceqlSearchTargets[0], options.scopedVars);
           const queryFromFilters = this.languageProvider.generateQueryFromFilters(appliedQuery.filters);

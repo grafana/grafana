@@ -118,9 +118,6 @@ For additional information, refer to [Traces to metrics: Ad-hoc RED metrics in G
 
 {{< youtube id="xOolCpm2F8c" >}}
 
-**Aggregate by** is disabled by default.
-[Enable the `metricsSummary` feature toggle](/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/) in Grafana to use this feature.
-
 Your Grafana Tempo data source must also point to a Tempo database with the [Metrics Summary API](https://grafana.com/docs/tempo/latest/api_docs/metrics-summary/) enabled.
 Contact Grafana Support to enable this feature in Grafana Cloud.
 

@@ -79,7 +79,6 @@ export interface FeatureToggles {
   transformationsRedesign?: boolean;
   mlExpressions?: boolean;
   traceQLStreaming?: boolean;
-  metricsSummary?: boolean;
   datasourceAPIServers?: boolean;
   grafanaAPIServerWithExperimentalAPIs?: boolean;
   provisioning?: boolean;

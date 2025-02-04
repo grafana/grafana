@@ -237,15 +237,15 @@ const TraceQLSearch = ({ datasource, query, onChange, onClearResults, app, addVa
               addVariablesToOptions={addVariablesToOptions}
             />
           </InlineSearchField>
-          {config.featureToggles.metricsSummary && (
-            <GroupByField
-              datasource={datasource}
-              onChange={onChange}
-              query={query}
-              isTagsLoading={isTagsLoading}
-              addVariablesToOptions={addVariablesToOptions}
-            />
-          )}
+          (
+          <GroupByField
+            datasource={datasource}
+            onChange={onChange}
+            query={query}
+            isTagsLoading={isTagsLoading}
+            addVariablesToOptions={addVariablesToOptions}
+          />
+          )
         </div>
         <div className={styles.rawQueryContainer}>
           <RawQuery query={templateSrv.replace(traceQlQuery)} lang={{ grammar: traceqlGrammar, name: 'traceql' }} />

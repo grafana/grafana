@@ -457,13 +457,6 @@ var (
 			Expression:   "false",
 		},
 		{
-			Name:         "metricsSummary",
-			Description:  "Enables metrics summary queries in the Tempo data source",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaObservabilityTracesAndProfilingSquad,
-		},
-		{
 			Name:            "datasourceAPIServers",
 			Description:     "Expose some datasources as apiservers.",
 			Stage:           FeatureStageExperimental,
