@@ -2,7 +2,7 @@
 import { useEffect, useCallback, useRef } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 import { usePrevious } from 'react-use';
-import { isObjectLike } from 'lodash';
+import { isObjectLike, debounce } from 'lodash';
 
 import { PageLayoutType } from '@grafana/data';
 import { config, locationService, RefreshEvent } from '@grafana/runtime';
@@ -41,8 +41,6 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
   console.log('DashboardScenePage');
 
   const handleFrameTasks = useCallback(({ data }: any) => {
-    // console.log('event.data:', data);
-
     if (isObjectLike(data) && !data?.['source']) {
       console.log('sent!');
 
@@ -51,9 +49,7 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
 
       locationService.partial(urlParams, true);
 
-      console.log(dashboardRef.current);
-
-      dashboardRef.current?.state.$timeRange?.onRefresh();
+      debounce(() => dashboardRef.current?.state.$timeRange?.onRefresh(), 300);
     }
   }, []);
 
