@@ -404,6 +404,24 @@ func TestRouteGetRuleByUID(t *testing.T) {
 						Name: "Test",
 					},
 				},
+				{
+					desc:             "recognize system identifier (alerting)",
+					UpdatedBy:        &models.AlertingUserUID,
+					User:             nil,
+					UserServiceError: nil,
+					Expected: &apimodels.UserInfo{
+						UID: string(models.AlertingUserUID),
+					},
+				},
+				{
+					desc:             "recognize system identifier (provisioning)",
+					UpdatedBy:        &models.FileProvisioningUserUID,
+					User:             nil,
+					UserServiceError: nil,
+					Expected: &apimodels.UserInfo{
+						UID: string(models.FileProvisioningUserUID),
+					},
+				},
 			}
 			for _, tc := range testcases {
 				t.Run(tc.desc, func(t *testing.T) {

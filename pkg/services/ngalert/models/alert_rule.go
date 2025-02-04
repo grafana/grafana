@@ -47,6 +47,11 @@ var (
 	ErrNoPanel = errors.New("no panel")
 )
 
+var (
+	FileProvisioningUserUID = UserUID("__provisioning__")
+	AlertingUserUID         = UserUID("__alerting__")
+)
+
 // swagger:enum NoDataState
 type NoDataState string
 
