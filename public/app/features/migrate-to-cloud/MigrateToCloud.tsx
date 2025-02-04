@@ -41,11 +41,6 @@ export default function MigrateToCloud() {
             </Trans>
           </>
         )}
-        <br />
-        <br />
-        <Trans i18nKey="migrate-to-cloud.public-preview.message-plugins">
-          Only Community and Commercial signed plugins are eligible for migration.
-        </Trans>
       </Alert>
       {config.cloudMigrationIsTarget ? <CloudPage /> : <OnPremPage />}
     </Page>
