@@ -12,11 +12,11 @@ import { Page } from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { DashboardPageRouteParams, DashboardPageRouteSearchParams } from 'app/features/dashboard/containers/types';
-import { DashboardDTO, DashboardRoutes } from 'app/types';
+import { DashboardRoutes } from 'app/types';
 
 import { DashboardPrompt } from '../saving/DashboardPrompt';
 
-import { getDashboardScenePageStateManager, HOME_DASHBOARD_CACHE_KEY } from './DashboardScenePageStateManager';
+import { getDashboardScenePageStateManager } from './DashboardScenePageStateManager';
 import { DashboardScene } from '../scene/DashboardScene';
 // import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
@@ -36,16 +36,11 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
   const dashboardRef = useRef<DashboardScene>();
   // After scene migration is complete and we get rid of old dashboard we should refactor dashboardWatcher so this route reload is not need
   const routeReloadCounter = (location.state as any)?.routeReloadCounter;
+  dashboardRef.current = dashboard;
 
   console.log('DashboardScenePage');
 
-  useEffect(() => {
-    dashboardRef.current = dashboard;
-  }, [dashboard]);
-
-  // const updateLocation = debounce((query) => locationService.partial(query), 300);
-
-  const handleFrameTasks = ({ data }: any) => {
+  const handleFrameTasks = useCallback(({ data }: any) => {
     console.log('event.data:', data);
 
     if (isObjectLike(data) && !data?.['source']) {
@@ -56,37 +51,11 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
 
       locationService.partial(urlParams, true);
 
-      // const dash = await stateManager.fetchDashboard({
-      //   uid: uid ?? '',
-      //   route: route.routeName as DashboardRoutes,
-      //   urlFolderUid: queryParams.folderUid,
-      // });
-
-      // const cacheKey = (route.routeName as DashboardRoutes) === DashboardRoutes.Home ? HOME_DASHBOARD_CACHE_KEY : uid;
-
-      // console.log({ cacheKey });
-
-      // const test = stateManager.getDashboardFromCache(cacheKey || '');
-
-      // console.log({ test });
-
-      // console.log({ dash, uid, route, queryParams });
-
-      // console.log({ urlParams });
-
       console.log(dashboardRef.current);
 
-      console.log({ dashboard });
-
-      // const { dashboard: board } = stateManager.useState();
-
-      // console.log({ board });
-      // getTimeSrv().refreshTimeModel();
-      dashboard?.publishEvent(new RefreshEvent());
+      dashboardRef.current?.publishEvent(new RefreshEvent());
     }
-  };
-
-  console.log({ dashboard, isLoading, loadError });
+  }, []);
 
   useEffect(() => {
     window.addEventListener('message', handleFrameTasks, false);
