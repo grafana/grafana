@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apikey"
@@ -40,6 +41,7 @@ type ServiceAccountsService struct {
 	backgroundLog     log.Logger
 	secretScanService secretscan.Checker
 	orgService        org.Service
+	serverLock        *serverlock.ServerLockService
 
 	secretScanEnabled  bool
 	secretScanInterval time.Duration
@@ -55,6 +57,7 @@ func ProvideServiceAccountsService(
 	orgService org.Service,
 	acService accesscontrol.Service,
 	permissions accesscontrol.ServiceAccountPermissionsService,
+	serverLockService *serverlock.ServerLockService,
 ) (*ServiceAccountsService, error) {
 	serviceAccountsStore := database.ProvideServiceAccountsStore(
 		cfg,
@@ -73,6 +76,7 @@ func ProvideServiceAccountsService(
 		log:           log.New("serviceaccounts"),
 		backgroundLog: log.New("serviceaccounts.background"),
 		orgService:    orgService,
+		serverLock:    serverLockService,
 	}
 
 	if err := RegisterRoles(acService); err != nil {
@@ -104,9 +108,15 @@ func (sa *ServiceAccountsService) Run(ctx context.Context) error {
 		sa.log.Warn("Failed to get usage metrics", "error", err.Error())
 	}
 
-	err := sa.migrateAPIKeysForAllOrgs(ctx)
+	err := sa.serverLock.LockAndExecute(ctx, "migrate API keys to service accounts", time.Minute*30, func(context.Context) {
+		err := sa.migrateAPIKeysForAllOrgs(ctx)
+		if err != nil {
+			sa.log.Warn("Failed to migrate API keys", "error", err.Error())
+		}
+	})
+
 	if err != nil {
-		sa.log.Warn("Failed to migrate API keys", "error", err.Error())
+		sa.log.Error("Failed to lock and execute the migration of API keys to service accounts", "error", err)
 	}
 
 	updateStatsTicker := time.NewTicker(metricsCollectionInterval)
