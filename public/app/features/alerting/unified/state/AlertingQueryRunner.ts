@@ -261,11 +261,7 @@ const mapToPanelData = (
 const mapErrorToPanelData = (lastResult: Record<string, PanelData>, error: Error): Record<string, PanelData> => {
   const queryError = toDataQueryError(error);
 
-  return applyChange(lastResult, (refId, data) => {
-    if (data.state === LoadingState.Error) {
-      return data;
-    }
-
+  return applyChange(lastResult, (_refId, data) => {
     return {
       ...data,
       state: LoadingState.Error,
