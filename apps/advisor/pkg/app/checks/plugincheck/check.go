@@ -47,13 +47,17 @@ func (c *check) Init(ctx context.Context) error {
 	return nil
 }
 
+func (c *check) ItemsLen() int {
+	return len(c.ps)
+}
+
 func (c *check) Steps() []checks.Step {
 	return []checks.Step{
-		&DeprecationStep{
+		&deprecationStep{
 			PluginRepo: c.PluginRepo,
 			ps:         c.ps,
 		},
-		&UpdateStep{
+		&updateStep{
 			PluginRepo:       c.PluginRepo,
 			PluginPreinstall: c.PluginPreinstall,
 			ManagedPlugins:   c.ManagedPlugins,
@@ -62,29 +66,25 @@ func (c *check) Steps() []checks.Step {
 	}
 }
 
-func (c *check) ItemsLen() int {
-	return len(c.ps)
-}
-
-type DeprecationStep struct {
+type deprecationStep struct {
 	PluginRepo repo.Service
 
 	ps []pluginstore.Plugin
 }
 
-func (s *DeprecationStep) Title() string {
+func (s *deprecationStep) Title() string {
 	return "Deprecation check"
 }
 
-func (s *DeprecationStep) Description() string {
+func (s *deprecationStep) Description() string {
 	return "Check if any installed plugins are deprecated."
 }
 
-func (s *DeprecationStep) ID() string {
+func (s *deprecationStep) ID() string {
 	return "deprecation"
 }
 
-func (s *DeprecationStep) Run(ctx context.Context, _ *advisor.CheckSpec) ([]advisor.CheckReportError, error) {
+func (s *deprecationStep) Run(ctx context.Context, _ *advisor.CheckSpec) ([]advisor.CheckReportError, error) {
 	errs := []advisor.CheckReportError{}
 	for _, p := range s.ps {
 		// Skip if it's a core plugin
@@ -108,7 +108,7 @@ func (s *DeprecationStep) Run(ctx context.Context, _ *advisor.CheckSpec) ([]advi
 	return errs, nil
 }
 
-type UpdateStep struct {
+type updateStep struct {
 	PluginRepo       repo.Service
 	PluginPreinstall plugininstaller.Preinstall
 	ManagedPlugins   managedplugins.Manager
@@ -116,19 +116,19 @@ type UpdateStep struct {
 	ps []pluginstore.Plugin
 }
 
-func (s *UpdateStep) Title() string {
+func (s *updateStep) Title() string {
 	return "Update check"
 }
 
-func (s *UpdateStep) Description() string {
+func (s *updateStep) Description() string {
 	return "Check if any installed plugins have a newer version available."
 }
 
-func (s *UpdateStep) ID() string {
+func (s *updateStep) ID() string {
 	return "update"
 }
 
-func (s *UpdateStep) Run(ctx context.Context, _ *advisor.CheckSpec) ([]advisor.CheckReportError, error) {
+func (s *updateStep) Run(ctx context.Context, _ *advisor.CheckSpec) ([]advisor.CheckReportError, error) {
 	errs := []advisor.CheckReportError{}
 	for _, p := range s.ps {
 		// Skip if it's a core plugin
@@ -172,7 +172,7 @@ func hasUpdate(current pluginstore.Plugin, latest *repo.PluginArchiveInfo) bool 
 	return current.Info.Version != latest.Version
 }
 
-func (s *UpdateStep) isManaged(ctx context.Context, pluginID string) bool {
+func (s *updateStep) isManaged(ctx context.Context, pluginID string) bool {
 	for _, managedPlugin := range s.ManagedPlugins.ManagedPlugins(ctx) {
 		if managedPlugin == pluginID {
 			return true

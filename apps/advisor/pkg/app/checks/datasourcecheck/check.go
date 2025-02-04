@@ -51,12 +51,16 @@ func (c *check) ID() string {
 	return "datasource"
 }
 
+func (c *check) ItemsLen() int {
+	return len(c.dss)
+}
+
 func (c *check) Steps() []checks.Step {
 	return []checks.Step{
-		&UIDValidationStep{
+		&uidValidationStep{
 			dss: c.dss,
 		},
-		&HealthCheckStep{
+		&healthCheckStep{
 			PluginContextProvider: c.PluginContextProvider,
 			PluginClient:          c.PluginClient,
 			dss:                   c.dss,
@@ -64,27 +68,23 @@ func (c *check) Steps() []checks.Step {
 	}
 }
 
-func (c *check) ItemsLen() int {
-	return len(c.dss)
-}
-
-type UIDValidationStep struct {
+type uidValidationStep struct {
 	dss []*datasources.DataSource
 }
 
-func (s *UIDValidationStep) ID() string {
+func (s *uidValidationStep) ID() string {
 	return "uid-validation"
 }
 
-func (s *UIDValidationStep) Title() string {
+func (s *uidValidationStep) Title() string {
 	return "UID validation"
 }
 
-func (s *UIDValidationStep) Description() string {
+func (s *uidValidationStep) Description() string {
 	return "Check if the UID of each data source is valid."
 }
 
-func (s *UIDValidationStep) Run(ctx context.Context, obj *advisor.CheckSpec) ([]advisor.CheckReportError, error) {
+func (s *uidValidationStep) Run(ctx context.Context, obj *advisor.CheckSpec) ([]advisor.CheckReportError, error) {
 	dsErrs := []advisor.CheckReportError{}
 	for _, ds := range s.dss {
 		// Data source UID validation
@@ -100,26 +100,26 @@ func (s *UIDValidationStep) Run(ctx context.Context, obj *advisor.CheckSpec) ([]
 	return dsErrs, nil
 }
 
-type HealthCheckStep struct {
+type healthCheckStep struct {
 	PluginContextProvider datasource.PluginContextWrapper
 	PluginClient          plugins.Client
 
 	dss []*datasources.DataSource
 }
 
-func (s *HealthCheckStep) Title() string {
+func (s *healthCheckStep) Title() string {
 	return "Health check"
 }
 
-func (s *HealthCheckStep) Description() string {
+func (s *healthCheckStep) Description() string {
 	return "Check if all data sources are healthy."
 }
 
-func (s *HealthCheckStep) ID() string {
+func (s *healthCheckStep) ID() string {
 	return "health-check"
 }
 
-func (s *HealthCheckStep) Run(ctx context.Context, obj *advisor.CheckSpec) ([]advisor.CheckReportError, error) {
+func (s *healthCheckStep) Run(ctx context.Context, obj *advisor.CheckSpec) ([]advisor.CheckReportError, error) {
 	dsErrs := []advisor.CheckReportError{}
 	for _, ds := range s.dss {
 		// Health check execution
