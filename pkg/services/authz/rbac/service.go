@@ -247,7 +247,6 @@ func (s *Service) validateSubject(ctx context.Context, subject string) (string, 
 	if !types.IsIdentityType(identityType, types.TypeUser, types.TypeServiceAccount, types.TypeAnonymous, types.TypeRenderService) {
 		ctxLogger.Error("unsupported identity type", "type", identityType)
 		return "", "", status.Error(codes.PermissionDenied, "unsupported identity type")
-
 	}
 
 	return userUID, identityType, nil

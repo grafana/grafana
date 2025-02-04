@@ -15,7 +15,6 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"k8s.io/client-go/rest"
 
-	"github.com/grafana/authlib/authn"
 	authnlib "github.com/grafana/authlib/authn"
 	authzlib "github.com/grafana/authlib/authz"
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
@@ -206,7 +205,7 @@ func RegisterRBACAuthZService(
 	tracer tracing.Tracer,
 	reg prometheus.Registerer,
 	cache cache.Cache,
-	exchangeClient authn.TokenExchanger,
+	exchangeClient authnlib.TokenExchanger,
 	folderAPIURL string,
 ) {
 	var folderStore store.FolderStore
@@ -246,7 +245,7 @@ func RegisterRBACAuthZService(
 var _ http.RoundTripper = tokenExhangeRoundTripper{}
 
 type tokenExhangeRoundTripper struct {
-	te authn.TokenExchanger
+	te authnlib.TokenExchanger
 	rt http.RoundTripper
 }
 
