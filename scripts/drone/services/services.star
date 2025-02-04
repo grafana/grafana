@@ -59,14 +59,3 @@ def integration_test_services():
     ]
 
     return services
-
-def ldap_service():
-    return {
-        "name": "ldap",
-        "image": images["openldap"],
-        "environment": {
-            "LDAP_ADMIN_PASSWORD": "grafana",
-            "LDAP_DOMAIN": "grafana.org",
-            "SLAPD_ADDITIONAL_MODULES": "memberof",
-        },
-    }
