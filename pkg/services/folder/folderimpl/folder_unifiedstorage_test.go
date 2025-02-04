@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/dynamic"
 	clientrest "k8s.io/client-go/rest"
 
@@ -682,6 +683,46 @@ func (r resourceClientMock) Search(ctx context.Context, in *resource.ResourceSea
 		}, nil
 	}
 
+	if len(in.Options.Fields) > 0 &&
+		in.Options.Fields[0].Key == resource.SEARCH_FIELD_FOLDER &&
+		in.Options.Fields[0].Operator == "in" &&
+		len(in.Options.Fields[0].Values) > 0 {
+		rows := []*resource.ResourceTableRow{}
+		for i, row := range in.Options.Fields[0].Values {
+			rows = append(rows, &resource.ResourceTableRow{
+				Key: &resource.ResourceKey{
+					Name:     row,
+					Resource: "folders",
+				},
+				Cells: [][]byte{
+					[]byte(fmt.Sprintf("%d", i)),       // set legacy id as the row id
+					[]byte(fmt.Sprintf("folder%d", i)), // set title as folder + row id
+					[]byte(""),
+				},
+			})
+		}
+		return &resource.ResourceSearchResponse{
+			Results: &resource.ResourceTable{
+				Columns: []*resource.ResourceTableColumnDefinition{
+					{
+						Name: "_id",
+						Type: resource.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: "title",
+						Type: resource.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: "folder",
+						Type: resource.ResourceTableColumnDefinition_STRING,
+					},
+				},
+				Rows: rows,
+			},
+			TotalHits: int64(len(rows)),
+		}, nil
+	}
+
 	// not found
 	return &resource.ResourceSearchResponse{
 		Results: &resource.ResourceTable{},
@@ -712,6 +753,11 @@ type mockFoldersK8sCli struct {
 }
 
 func (m *mockFoldersK8sCli) getClient(ctx context.Context, orgID int64) (dynamic.ResourceInterface, bool) {
+	args := m.Called(ctx, orgID)
+	return args.Get(0).(dynamic.ResourceInterface), args.Bool(1)
+}
+
+func (m *mockFoldersK8sCli) getDashboardClient(ctx context.Context, orgID int64) (dynamic.ResourceInterface, bool) {
 	args := m.Called(ctx, orgID)
 	return args.Get(0).(dynamic.ResourceInterface), args.Bool(1)
 }
@@ -832,5 +878,107 @@ func TestSearchFoldersFromApiServer(t *testing.T) {
 			},
 		}
 		require.Equal(t, expectedResult, result)
+	})
+}
+
+type mockDashboardCli struct {
+	mock.Mock
+	dynamic.ResourceInterface
+}
+
+func (c *mockDashboardCli) Delete(ctx context.Context, name string, options metav1.DeleteOptions, subresources ...string) error {
+	args := c.Called(ctx, name, options)
+	return args.Error(0)
+}
+
+func TestDeleteFoldersFromApiServer(t *testing.T) {
+	fakeK8sClient := new(mockFoldersK8sCli)
+	fakeFolderStore := folder.NewFakeStore()
+	dashboardStore := dashboards.NewFakeDashboardStore(t)
+	publicDashboardFakeService := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
+	service := Service{
+		k8sclient:              fakeK8sClient,
+		unifiedStore:           fakeFolderStore,
+		dashboardStore:         dashboardStore,
+		publicDashboardService: publicDashboardFakeService,
+		registry:               make(map[string]folder.RegistryService),
+		features:               featuremgmt.WithFeatures(featuremgmt.FlagKubernetesFoldersServiceV2),
+	}
+	fakeK8sClient.On("getSearcher", mock.Anything).Return(fakeK8sClient)
+	user := &user.SignedInUser{OrgID: 1}
+	ctx := identity.WithRequester(context.Background(), user)
+	guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{
+		CanSaveValue: true,
+		CanViewValue: true,
+	})
+	db, cfg := sqlstore.InitTestDB(t)
+
+	alertingStore := ngstore.DBstore{
+		SQLStore:      db,
+		Cfg:           cfg.UnifiedAlerting,
+		Logger:        log.New("test-alerting-store"),
+		AccessControl: actest.FakeAccessControl{ExpectedEvaluate: true},
+	}
+	require.NoError(t, service.RegisterService(alertingStore))
+
+	t.Run("Should delete folder", func(t *testing.T) {
+		dashboardStore.On("FindDashboards", mock.Anything, mock.Anything).Return([]dashboards.DashboardSearchProjection{}, nil).Once()
+		publicDashboardFakeService.On("DeleteByDashboardUIDs", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
+		err := service.deleteFromApiServer(ctx, &folder.DeleteFolderCommand{
+			UID:          "uid",
+			OrgID:        1,
+			SignedInUser: user,
+		})
+		require.NoError(t, err)
+	})
+
+	t.Run("Should delete dashboards and public dashboards within the folder", func(t *testing.T) {
+		dashboardStore.On("FindDashboards", mock.Anything, mock.Anything).Return([]dashboards.DashboardSearchProjection{
+			{
+				UID:   "test",
+				OrgID: 1,
+			},
+			{
+				UID:   "test2",
+				OrgID: 1,
+			},
+		}, nil).Once()
+		dashboardStore.On("DeleteDashboard", mock.Anything, &dashboards.DeleteDashboardCommand{
+			UID:   "test",
+			OrgID: 1,
+		}).Return(nil).Once()
+		dashboardStore.On("DeleteDashboard", mock.Anything, &dashboards.DeleteDashboardCommand{
+			UID:   "test2",
+			OrgID: 1,
+		}).Return(nil).Once()
+		publicDashboardFakeService.On("DeleteByDashboardUIDs", mock.Anything, int64(1), []string{"test", "test2"}).Return(nil).Once()
+		err := service.deleteFromApiServer(ctx, &folder.DeleteFolderCommand{
+			UID:          "uid",
+			OrgID:        1,
+			SignedInUser: user,
+		})
+		require.NoError(t, err)
+		dashboardStore.AssertExpectations(t)
+		publicDashboardFakeService.AssertExpectations(t)
+	})
+
+	// enable k8s ff for dashboards, retest
+	service.features = featuremgmt.WithFeatures(featuremgmt.FlagKubernetesFoldersServiceV2, featuremgmt.FlagKubernetesCliDashboards)
+
+	t.Run("Should delete dashboards and public dashboards within the folder through k8s if the ff is enabled", func(t *testing.T) {
+		dashboardK8sCli := mockDashboardCli{}
+		dashboardK8sCli.On("Delete", mock.Anything, "uid1", mock.Anything, mock.Anything).Return(nil).Once()
+		fakeK8sClient.On("getDashboardClient", mock.Anything, mock.Anything).Return(&dashboardK8sCli, true)
+		fakeK8sClient.On("getSearcher", mock.Anything).Return(fakeK8sClient)
+		publicDashboardFakeService.On("DeleteByDashboardUIDs", mock.Anything, int64(1), []string{"uid1"}).Return(nil).Once()
+		err := service.deleteFromApiServer(ctx, &folder.DeleteFolderCommand{
+			UID:          "uid1",
+			OrgID:        1,
+			SignedInUser: user,
+		})
+		require.NoError(t, err)
+		dashboardStore.AssertExpectations(t)
+		publicDashboardFakeService.AssertExpectations(t)
+		dashboardK8sCli.AssertExpectations(t)
 	})
 }
