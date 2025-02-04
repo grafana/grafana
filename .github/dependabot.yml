@@ -39,3 +39,8 @@ updates:
       time: "02:00"
       timezone: Etc/UTC
     open-pull-requests-limit: 10
+  - package-ecosystem: docker
+    directory: /scripts/drone
+    schedule:
+      interval: daily
+    open-pull-requests-limit: 10
