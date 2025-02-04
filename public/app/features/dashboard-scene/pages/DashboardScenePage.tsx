@@ -1,5 +1,5 @@
 // Libraries
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useRef } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 import { usePrevious } from 'react-use';
 import { isObjectLike } from 'lodash';
@@ -17,6 +17,7 @@ import { DashboardDTO, DashboardRoutes } from 'app/types';
 import { DashboardPrompt } from '../saving/DashboardPrompt';
 
 import { getDashboardScenePageStateManager, HOME_DASHBOARD_CACHE_KEY } from './DashboardScenePageStateManager';
+import { DashboardScene } from '../scene/DashboardScene';
 // import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 export interface Props
@@ -32,54 +33,58 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
     ? getDashboardScenePageStateManager('v2')
     : getDashboardScenePageStateManager();
   const { dashboard, isLoading, loadError } = stateManager.useState();
+  const dashboardRef = useRef<DashboardScene>();
   // After scene migration is complete and we get rid of old dashboard we should refactor dashboardWatcher so this route reload is not need
   const routeReloadCounter = (location.state as any)?.routeReloadCounter;
 
   console.log('DashboardScenePage');
 
+  useEffect(() => {
+    dashboardRef.current = dashboard;
+  }, [dashboard]);
+
   // const updateLocation = debounce((query) => locationService.partial(query), 300);
 
-  const handleFrameTasks = useCallback(
-    async ({ data }: any) => {
-      console.log('event.data:', data);
+  const handleFrameTasks = ({ data }: any) => {
+    console.log('event.data:', data);
 
-      if (isObjectLike(data) && !data?.['source']) {
-        console.log('sent!');
+    if (isObjectLike(data) && !data?.['source']) {
+      console.log('sent!');
 
-        const params = locationService.getSearchObject();
-        const urlParams = { ...params, ...data };
+      const params = locationService.getSearchObject();
+      const urlParams = { ...params, ...data };
 
-        locationService.partial(urlParams, true);
+      locationService.partial(urlParams, true);
 
-        const dash = await stateManager.fetchDashboard({
-          uid: uid ?? '',
-          route: route.routeName as DashboardRoutes,
-          urlFolderUid: queryParams.folderUid,
-        });
+      // const dash = await stateManager.fetchDashboard({
+      //   uid: uid ?? '',
+      //   route: route.routeName as DashboardRoutes,
+      //   urlFolderUid: queryParams.folderUid,
+      // });
 
-        const cacheKey = (route.routeName as DashboardRoutes) === DashboardRoutes.Home ? HOME_DASHBOARD_CACHE_KEY : uid;
+      // const cacheKey = (route.routeName as DashboardRoutes) === DashboardRoutes.Home ? HOME_DASHBOARD_CACHE_KEY : uid;
 
-        console.log({ cacheKey });
+      // console.log({ cacheKey });
 
-        const test = stateManager.getDashboardFromCache(cacheKey || '');
+      // const test = stateManager.getDashboardFromCache(cacheKey || '');
 
-        console.log({ test });
+      // console.log({ test });
 
-        console.log({ dash, uid, route, queryParams });
+      // console.log({ dash, uid, route, queryParams });
 
-        console.log({ urlParams });
+      // console.log({ urlParams });
 
-        console.log({ dashboard });
+      console.log(dashboardRef.current);
 
-        // const { dashboard: board } = stateManager.useState();
+      console.log({ dashboard });
 
-        // console.log({ board });
-        // getTimeSrv().refreshTimeModel();
-        dashboard?.publishEvent(new RefreshEvent());
-      }
-    },
-    [dashboard]
-  );
+      // const { dashboard: board } = stateManager.useState();
+
+      // console.log({ board });
+      // getTimeSrv().refreshTimeModel();
+      dashboard?.publishEvent(new RefreshEvent());
+    }
+  };
 
   console.log({ dashboard, isLoading, loadError });
 
