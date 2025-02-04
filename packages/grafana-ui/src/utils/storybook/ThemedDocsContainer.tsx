@@ -1,9 +1,10 @@
-// Wrap the DocsContainer for storybook-dark-mode theme switching support.
+// Wrap the DocsContainer for theme switching support.
 import { DocsContainer, DocsContextProps } from '@storybook/addon-docs';
 import * as React from 'react';
-import { useDarkMode } from 'storybook-dark-mode';
 
-import { GrafanaLight, GrafanaDark } from '../../../.storybook/storybookTheme';
+import { getThemeById } from '@grafana/data';
+
+import { createStorybookTheme } from '../../../.storybook/storybookTheme';
 import { GlobalStyles } from '../../themes';
 
 type Props = {
@@ -12,10 +13,12 @@ type Props = {
 };
 
 export const ThemedDocsContainer = ({ children, context }: Props) => {
-  const dark = useDarkMode();
+  console.log(context);
+  // const [{theme: themeId}] = useGlobals();
+  const theme = getThemeById('');
 
   return (
-    <DocsContainer theme={dark ? GrafanaDark : GrafanaLight} context={context}>
+    <DocsContainer theme={createStorybookTheme(theme)} context={context}>
       <GlobalStyles />
       {children}
     </DocsContainer>
