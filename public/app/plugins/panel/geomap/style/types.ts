@@ -1,5 +1,4 @@
 import { Style } from 'ol/style';
-import { LiteralStyle } from 'ol/style/literal';
 
 import {
   ColorDimensionConfig,
@@ -171,4 +170,4 @@ export interface StyleConfigState {
 /**
  * Given values create a style
  */
-export type StyleMaker = (values: StyleConfigValues) => Style | Style[] | LiteralStyle;
+export type StyleMaker = (values: StyleConfigValues) => Style | Style[];

@@ -28,13 +28,13 @@ export function styleUsesText(config: StyleConfig): boolean {
 }
 
 /** Return a distinct list of fields used to dynamically change the style */
-export async function getStyleConfigState(cfg?: StyleConfig, webGL?: boolean): Promise<StyleConfigState> {
+export async function getStyleConfigState(cfg?: StyleConfig): Promise<StyleConfigState> {
   if (!cfg) {
     cfg = defaultStyleConfig;
   }
   const hasText = styleUsesText(cfg);
   const fields: StyleConfigFields = {};
-  const maker = await getMarkerMaker(cfg.symbol?.fixed, hasText, webGL);
+  const maker = await getMarkerMaker(cfg.symbol?.fixed, hasText);
   const state: StyleConfigState = {
     config: cfg, // raw values
     hasText,

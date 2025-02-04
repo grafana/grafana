@@ -3,7 +3,6 @@ import { Point } from 'ol/geom';
 import { VectorImage } from 'ol/layer';
 import LayerGroup from 'ol/layer/Group';
 import WebGLPointsLayer from 'ol/layer/WebGLPoints.js';
-import { LiteralStyle } from 'ol/style/literal';
 import { ReactNode } from 'react';
 import { ReplaySubject } from 'rxjs';
 import tinycolor from 'tinycolor2';
@@ -22,7 +21,7 @@ import { getLocationMatchers } from 'app/features/geo/utils/location';
 import { MarkersLegend, MarkersLegendProps } from '../../components/MarkersLegend';
 import { ObservablePropsWrapper } from '../../components/ObservablePropsWrapper';
 import { StyleEditor } from '../../editor/StyleEditor';
-import { textMarker } from '../../style/markers';
+import { getWebGLStyle, textMarker } from '../../style/markers';
 import { DEFAULT_SIZE, defaultStyleConfig, StyleConfig } from '../../style/types';
 import { getDisplacement, getRGBValues, getStyleConfigState, styleUsesText } from '../../style/utils';
 import { getStyleDimension } from '../../utils/utils';
@@ -75,13 +74,13 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
       ...options?.config,
     };
 
-    const style = await getStyleConfigState(config.style, true);
+    const style = await getStyleConfigState(config.style);
 
-    const symbolStyle = style.maker(style.base);
+    const webGLStyle = await getWebGLStyle(config.style.symbol?.fixed, config.style.opacity);
     const hasText = styleUsesText(config.style);
     const location = await getLocationMatchers(options.location);
     const source = new FrameVectorSource<Point>(location);
-    const symbolLayer = new WebGLPointsLayer({ source, style: symbolStyle as LiteralStyle });
+    const symbolLayer = new WebGLPointsLayer({ source, style: webGLStyle });
     const textLayer = new VectorImage({ source, declutter: true });
     const layers = new LayerGroup({
       layers: hasText ? [symbolLayer, textLayer] : [symbolLayer],
