@@ -1,27 +1,40 @@
 import { css, cx } from '@emotion/css';
 import { Draggable } from '@hello-pangea/dnd';
 
-import { Action, DataFrame, GrafanaTheme2 } from '@grafana/data';
-import { Icon } from '@grafana/ui/src/components/Icon/Icon';
-import { IconButton } from '@grafana/ui/src/components/IconButton/IconButton';
-import { useStyles2 } from '@grafana/ui/src/themes';
+import { Action, DataFrame, DataLink, GrafanaTheme2 } from '@grafana/data';
 
-export interface ActionsListItemProps {
+import { useStyles2 } from '../../../themes';
+import { t } from '../../../utils/i18n';
+import { Badge } from '../../Badge/Badge';
+import { Icon } from '../../Icon/Icon';
+import { IconButton } from '../../IconButton/IconButton';
+
+export interface DataLinksListItemBaseProps<T extends DataLink | Action> {
   index: number;
-  action: Action;
+  item: T;
   data: DataFrame[];
-  onChange: (index: number, action: Action) => void;
+  onChange: (index: number, item: T) => void;
   onEdit: () => void;
   onRemove: () => void;
   isEditing?: boolean;
   itemKey: string;
 }
 
-export const ActionListItem = ({ action, onEdit, onRemove, index, itemKey }: ActionsListItemProps) => {
-  const styles = useStyles2(getActionListItemStyles);
-  const { title = '' } = action;
+export function DataLinksListItemBase<T extends DataLink | Action>({
+  item,
+  onEdit,
+  onRemove,
+  index,
+  itemKey,
+}: DataLinksListItemBaseProps<T>) {
+  const styles = useStyles2(getDataLinkListItemStyles);
+  const { title = '', oneClick = false } = item;
+
+  // @ts-ignore - https://github.com/microsoft/TypeScript/issues/27808
+  const url = item.url ?? item.fetch?.url ?? '';
 
   const hasTitle = title.trim() !== '';
+  const hasUrl = url.trim() !== '';
 
   return (
     <Draggable key={itemKey} draggableId={itemKey} index={index}>
@@ -33,13 +46,20 @@ export const ActionListItem = ({ action, onEdit, onRemove, index, itemKey }: Act
           key={index}
         >
           <div className={styles.linkDetails}>
-            <div className={cx(styles.url, !hasTitle && styles.notConfigured)}>
-              {hasTitle ? title : 'Action title not provided'}
+            <div className={cx(styles.url, !hasUrl && styles.notConfigured)}>
+              {hasTitle ? title : 'Title not provided'}
             </div>
           </div>
           <div className={styles.icons}>
-            <IconButton name="pen" onClick={onEdit} className={styles.icon} tooltip="Edit action" />
-            <IconButton name="trash-alt" onClick={onRemove} className={styles.icon} tooltip="Remove action" />
+            {oneClick && (
+              <Badge
+                color="blue"
+                text={t('grafana-ui.data-links-inline-editor.one-click', 'One click')}
+                tooltip={t('grafana-ui.data-links-inline-editor.one-click-enabled', 'One click enabled')}
+              />
+            )}
+            <IconButton name="pen" onClick={onEdit} className={styles.icon} tooltip="Edit" />
+            <IconButton name="trash-alt" onClick={onRemove} className={styles.icon} tooltip="Remove" />
             <div className={styles.dragIcon} {...provided.dragHandleProps}>
               <Icon name="draggabledots" size="lg" />
             </div>
@@ -48,9 +68,9 @@ export const ActionListItem = ({ action, onEdit, onRemove, index, itemKey }: Act
       )}
     </Draggable>
   );
-};
+}
 
-const getActionListItemStyles = (theme: GrafanaTheme2) => {
+const getDataLinkListItemStyles = (theme: GrafanaTheme2) => {
   return {
     wrapper: css({
       display: 'flex',
@@ -66,6 +86,7 @@ const getActionListItemStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       flexDirection: 'column',
       flexGrow: 1,
+      maxWidth: `calc(100% - 100px)`,
     }),
     errored: css({
       color: theme.colors.error.text,
@@ -85,15 +106,6 @@ const getActionListItemStyles = (theme: GrafanaTheme2) => {
       whiteSpace: 'nowrap',
       overflow: 'hidden',
       textOverflow: 'ellipsis',
-      maxWidth: `calc(100% - 100px)`,
-    }),
-    dragIcon: css({
-      cursor: 'grab',
-      color: theme.colors.text.secondary,
-      margin: theme.spacing(0, 0.5),
-    }),
-    icon: css({
-      color: theme.colors.text.secondary,
     }),
     dragRow: css({
       position: 'relative',
@@ -104,6 +116,14 @@ const getActionListItemStyles = (theme: GrafanaTheme2) => {
       padding: 6,
       alignItems: 'center',
       gap: 8,
+    }),
+    dragIcon: css({
+      cursor: 'grab',
+      color: theme.colors.text.secondary,
+      margin: theme.spacing(0, 0.5),
+    }),
+    icon: css({
+      color: theme.colors.text.secondary,
     }),
   };
 };
