@@ -1,7 +1,8 @@
-import { ComponentPropsWithoutRef } from 'react';
+import { ComponentPropsWithoutRef, Suspense, lazy } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { config } from '@grafana/runtime';
+import { LoadingPlaceholder } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 
@@ -12,7 +13,7 @@ import { isGrafanaManagedRuleByType, isGrafanaRecordingRuleByType, isRecordingRu
 import { NeedHelpInfo } from './NeedHelpInfo';
 import { RuleEditorSection, RuleEditorSubSection } from './RuleEditorSection';
 import { SimplifiedRouting } from './alert-rule-form/simplifiedRouting/SimplifiedRouting';
-import { NotificationPreview } from './notificaton-preview/NotificationPreview';
+const NotificationPreview = lazy(() => import('./notificaton-preview/NotificationPreview'));
 
 type NotificationsStepProps = {
   alertUid?: string;
@@ -124,14 +125,16 @@ function PreviewNotificationPolicyRouting({ alertUid }: NotificationPolicyRoutin
     'manualRouting',
   ]);
   return (
-    <NotificationPreview
-      alertQueries={queries}
-      customLabels={labels}
-      condition={condition}
-      folder={folder}
-      alertName={alertName}
-      alertUid={alertUid}
-    />
+    <Suspense fallback={<LoadingPlaceholder text="Loading..." />}>
+      <NotificationPreview
+        alertQueries={queries}
+        customLabels={labels}
+        condition={condition}
+        folder={folder}
+        alertName={alertName}
+        alertUid={alertUid}
+      />
+    </Suspense>
   );
 }
 

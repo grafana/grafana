@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
+import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Alert, LoadingPlaceholder, useStyles2, withErrorBoundary } from '@grafana/ui';
+import { Alert, useStyles2, withErrorBoundary } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 import { stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
 
@@ -39,15 +40,14 @@ function NotificationPreviewByAlertManager({
     );
   }
 
-  // @TODO better loading with skeleton loaders
-  if (loading) {
-    return <LoadingPlaceholder text="Loading routing preview..." />;
+  const matchingPoliciesFound = matchingMap.size > 0;
+  if (!loading && !matchingPoliciesFound) {
+    return 'No matching instances found';
   }
 
-  const matchingPoliciesFound = matchingMap.size > 0;
-
-  return matchingPoliciesFound ? (
+  return (
     <div className={styles.alertManagerRow}>
+      {/* when several Alertmanagers are configured, show the header */}
       {!onlyOneAM && (
         <Stack direction="row" alignItems="center">
           <div className={styles.firstAlertManagerLine} />
@@ -59,31 +59,39 @@ function NotificationPreviewByAlertManager({
           <div className={styles.secondAlertManagerLine} />
         </Stack>
       )}
-      <Stack gap={0} direction="column">
-        {Array.from(matchingMap.entries()).map(([routeId, instanceMatches]) => {
-          const route = routesByIdMap.get(routeId);
-          const receiver = route?.receiver && receiversByName.get(route.receiver);
 
-          if (!route) {
-            return null;
-          }
-          if (!receiver) {
-            throw new Error('Receiver not found');
-          }
-          return (
-            <NotificationRoute
-              instanceMatches={instanceMatches}
-              route={route}
-              receiver={receiver}
-              key={routeId}
-              routesByIdMap={routesByIdMap}
-              alertManagerSourceName={alertManagerSource.name}
-            />
-          );
-        })}
-      </Stack>
+      {loading ? (
+        <>
+          <Skeleton width={250} height={16} containerTestId="loading-preview-instances" />
+        </>
+      ) : (
+        <Stack gap={0} direction="column">
+          {Array.from(matchingMap.entries()).map(([routeId, instanceMatches]) => {
+            const route = routesByIdMap.get(routeId);
+            const receiver = route?.receiver && receiversByName.get(route.receiver);
+
+            if (!route) {
+              return null;
+            }
+            if (!receiver) {
+              throw new Error('Receiver not found');
+            }
+
+            return (
+              <NotificationRoute
+                instanceMatches={instanceMatches}
+                route={route}
+                receiver={receiver}
+                key={routeId}
+                routesByIdMap={routesByIdMap}
+                alertManagerSourceName={alertManagerSource.name}
+              />
+            );
+          })}
+        </Stack>
+      )}
     </div>
-  ) : null;
+  );
 }
 
 // export default because we want to load the component dynamically using React.lazy

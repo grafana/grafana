@@ -1,7 +1,7 @@
 import { compact, debounce } from 'lodash';
-import { Suspense, lazy, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 
-import { LoadingPlaceholder, Stack, Text } from '@grafana/ui';
+import { Stack, Text } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
@@ -9,7 +9,7 @@ import { AlertQuery } from 'app/types/unified-alerting-dto';
 import { Folder, KBObjectArray } from '../../../types/rule-form';
 import { useGetAlertManagerDataSourcesByPermissionAndConfig } from '../../../utils/datasource';
 
-const NotificationPreviewByAlertManager = lazy(() => import('./NotificationPreviewByAlertManager'));
+import NotificationPreviewByAlertManager from './NotificationPreviewByAlertManager';
 
 interface NotificationPreviewProps {
   customLabels: KBObjectArray;
@@ -19,6 +19,8 @@ interface NotificationPreviewProps {
   alertName?: string;
   alertUid?: string;
 }
+
+const usePreview = alertRuleApi.endpoints.preview.useMutation;
 
 // TODO the scroll position keeps resetting when we preview
 // this is to be expected because the list of routes dissapears as we start the request but is very annoying
@@ -30,12 +32,11 @@ export const NotificationPreview = ({
   alertName,
   alertUid,
 }: NotificationPreviewProps) => {
-  const previewEndpoint = alertRuleApi.endpoints.preview;
-  const canPreview = folder && condition;
+  const [triggerPreview, { data = [], isLoading }] = usePreview();
+  const canPreview = Boolean(folder && condition);
 
-  const [trigger, { data = [], isLoading }] = previewEndpoint.useMutation();
   // make a debounced version of the preview function so we don't call the API on each keystroke (when updating rule name for example)
-  const handlePreview = useRef(debounce(trigger, 500));
+  const handlePreview = useRef(debounce(triggerPreview, 500, { leading: true }));
 
   // potential instances are the instances that are going to be routed to the notification policies
   // convert data to list of labels: are the representation of the potential instances
@@ -43,7 +44,7 @@ export const NotificationPreview = ({
 
   // try previewing when the component mounts and when dependencies are updated
   useEffect(() => {
-    if (!canPreview) {
+    if (!folder || !condition) {
       return;
     }
 
@@ -56,7 +57,7 @@ export const NotificationPreview = ({
       alertName: alertName || '__preview_alert_name__',
       alertUid: alertUid,
     });
-  }, [alertQueries, condition, customLabels, folder, alertName, alertUid, canPreview]);
+  }, [alertQueries, condition, customLabels, folder, alertName, alertUid, canPreview, handlePreview]);
 
   //  Get alert managers's data source information
   const alertManagerDataSources = useGetAlertManagerDataSourcesByPermissionAndConfig('notification');
@@ -71,7 +72,7 @@ export const NotificationPreview = ({
   }
 
   // @TODO make the loading a bit nicer with loading skeletons
-  if (canPreview && isLoading) {
+  if (isLoading) {
     return (
       <Text color="secondary" variant="bodySmall">
         <Trans i18nKey="alerting.common.loading">Loading...</Trans>
@@ -80,17 +81,17 @@ export const NotificationPreview = ({
   }
 
   return (
-    <Suspense fallback={<LoadingPlaceholder text="Loading..." />}>
-      <Stack direction="column" gap={2}>
-        {alertManagerDataSources.map((alertManagerSource) => (
-          <NotificationPreviewByAlertManager
-            alertManagerSource={alertManagerSource}
-            potentialInstances={potentialInstances}
-            onlyOneAM={onlyOneAM}
-            key={alertManagerSource.name}
-          />
-        ))}
-      </Stack>
-    </Suspense>
+    <Stack direction="column" gap={2}>
+      {alertManagerDataSources.map((alertManagerSource) => (
+        <NotificationPreviewByAlertManager
+          alertManagerSource={alertManagerSource}
+          potentialInstances={potentialInstances}
+          onlyOneAM={onlyOneAM}
+          key={alertManagerSource.name}
+        />
+      ))}
+    </Stack>
   );
 };
+
+export default NotificationPreview;
