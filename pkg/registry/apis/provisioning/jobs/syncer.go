@@ -45,6 +45,9 @@ func NewSyncer(
 	parser *resources.Parser,
 ) (Syncer, error) {
 	dynamicClient := parser.Client()
+	if repo.Config().Namespace != dynamicClient.GetNamespace() {
+		return nil, fmt.Errorf("namespace mismatch")
+	}
 	folders := dynamicClient.Resource(schema.GroupVersionResource{
 		Group:    folders.GROUP,
 		Version:  folders.VERSION,
@@ -52,7 +55,7 @@ func NewSyncer(
 	})
 	dashboards := dynamicClient.Resource(schema.GroupVersionResource{
 		Group:    dashboard.GROUP,
-		Version:  "v1alpha0",
+		Version:  "v1alpha1",
 		Resource: dashboard.DASHBOARD_RESOURCE,
 	})
 	return &syncer{
