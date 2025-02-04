@@ -39,44 +39,47 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
 
   // const updateLocation = debounce((query) => locationService.partial(query), 300);
 
-  const handleFrameTasks = useCallback(async ({ data }: any) => {
-    console.log('event.data:', data);
+  const handleFrameTasks = useCallback(
+    async ({ data }: any) => {
+      console.log('event.data:', data);
 
-    if (isObjectLike(data) && !data?.['source']) {
-      console.log('sent!');
+      if (isObjectLike(data) && !data?.['source']) {
+        console.log('sent!');
 
-      const params = locationService.getSearchObject();
-      const urlParams = { ...params, ...data };
+        const params = locationService.getSearchObject();
+        const urlParams = { ...params, ...data };
 
-      locationService.partial(urlParams, true);
+        locationService.partial(urlParams, true);
 
-      const dash = await stateManager.fetchDashboard({
-        uid: uid ?? '',
-        route: route.routeName as DashboardRoutes,
-        urlFolderUid: queryParams.folderUid,
-      });
+        const dash = await stateManager.fetchDashboard({
+          uid: uid ?? '',
+          route: route.routeName as DashboardRoutes,
+          urlFolderUid: queryParams.folderUid,
+        });
 
-      const cacheKey = (route.routeName as DashboardRoutes) === DashboardRoutes.Home ? HOME_DASHBOARD_CACHE_KEY : uid;
+        const cacheKey = (route.routeName as DashboardRoutes) === DashboardRoutes.Home ? HOME_DASHBOARD_CACHE_KEY : uid;
 
-      console.log({ cacheKey });
+        console.log({ cacheKey });
 
-      const test = stateManager.getDashboardFromCache(cacheKey || '');
+        const test = stateManager.getDashboardFromCache(cacheKey || '');
 
-      console.log({ test });
+        console.log({ test });
 
-      console.log({ dash, uid, route, queryParams });
+        console.log({ dash, uid, route, queryParams });
 
-      console.log({ urlParams });
+        console.log({ urlParams });
 
-      console.log({ dashboard });
+        console.log({ dashboard });
 
-      const { dashboard: board } = stateManager.useState();
+        // const { dashboard: board } = stateManager.useState();
 
-      console.log({ board });
-      // getTimeSrv().refreshTimeModel();
-      dashboard?.publishEvent(new RefreshEvent());
-    }
-  }, []);
+        // console.log({ board });
+        // getTimeSrv().refreshTimeModel();
+        dashboard?.publishEvent(new RefreshEvent());
+      }
+    },
+    [dashboard]
+  );
 
   console.log({ dashboard, isLoading, loadError });
 
