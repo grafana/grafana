@@ -1,6 +1,6 @@
 import { within } from '@testing-library/react';
 import { render, screen, userEvent, waitFor } from 'test/test-utils';
-import { byRole, byText } from 'testing-library-selector';
+import { byLabelText, byRole, byText } from 'testing-library-selector';
 
 import { setPluginLinksHook } from '@grafana/runtime';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
@@ -40,7 +40,7 @@ const ELEMENTS = {
     label: ([key, value]: [string, string]) => byRole('listitem', { name: `${key}: ${value}` }),
   },
   details: {
-    pendingPeriod: byText(/Pending period/i),
+    pendingPeriod: byLabelText(/Pending period/i),
   },
   actions: {
     edit: byRole('link', { name: 'Edit' }),
@@ -107,6 +107,10 @@ const dataSources = {
 };
 
 describe('RuleViewer', () => {
+  beforeEach(() => {
+    setupDataSources(...Object.values(dataSources));
+  });
+
   describe('Grafana managed alert rule', () => {
     const mockRule = getGrafanaRule(
       {
@@ -211,10 +215,6 @@ describe('RuleViewer', () => {
       ]);
     });
 
-    beforeEach(() => {
-      setupDataSources(...Object.values(dataSources));
-    });
-
     it('should render a data source managed alert rule', () => {
       renderRuleViewer(mockRule, mockRuleIdentifier);
 
@@ -291,7 +291,7 @@ describe('RuleViewer', () => {
       // One summary is rendered by the Title component, and the other by the DetailsTab component
       expect(ELEMENTS.metadata.summary(mockRule.annotations[Annotation.summary]).getAll()).toHaveLength(2);
 
-      expect(within(ELEMENTS.details.pendingPeriod.get()).getByText(/15m/i)).toBeInTheDocument();
+      expect(ELEMENTS.details.pendingPeriod.get()).toHaveTextContent(/15m/i);
     });
   });
 });
