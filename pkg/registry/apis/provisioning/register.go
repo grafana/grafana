@@ -330,6 +330,10 @@ func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admis
 		}
 	}
 
+	if r.Spec.Sync.IntervalSeconds == 0 {
+		r.Spec.Sync.IntervalSeconds = 10
+	}
+
 	if r.Spec.Type == provisioning.GitHubRepositoryType {
 		if r.Spec.GitHub == nil {
 			return fmt.Errorf("github configuration is required")

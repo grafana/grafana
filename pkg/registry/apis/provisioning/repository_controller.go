@@ -221,9 +221,16 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	}
 
 	healthAge := time.Since(time.UnixMilli(obj.Status.Health.Checked))
+	interval := time.Duration(obj.Spec.Sync.IntervalSeconds) * time.Second
+	tolerance := 2 * time.Second
+	isStale := healthAge > interval+tolerance
+
 	hasSpecChanged := obj.Generation != obj.Status.ObservedGeneration
-	if !hasSpecChanged && obj.DeletionTimestamp == nil && (healthAge < time.Hour*4) {
-		logger.Info("repository spec unchanged")
+	isFirstTime := obj.Status.ObservedGeneration == 0
+	isDelete := obj.DeletionTimestamp != nil
+
+	if !hasSpecChanged && !isDelete && !isFirstTime && !isStale {
+		logger.Info("conditions not met, skip processing", "health_age", healthAge, "has_spec_changed", hasSpecChanged, "deletion_timestamp", obj.DeletionTimestamp)
 		return nil
 	}
 
@@ -242,15 +249,13 @@ func (rc *RepositoryController) process(item *queueItem) error {
 
 	// Safe to edit the repository from here
 	obj = obj.DeepCopy()
-	hooks, ok := repo.(repository.RepositoryHooks)
-	if !ok {
-		return fmt.Errorf("repository does not implement hooks")
-	}
+	hooks, hasHooks := repo.(repository.RepositoryHooks)
 
 	status := &obj.Status
+	status.ObservedGeneration = obj.Generation
 
 	// Delete (note this switch does not fallthrough to the health check)
-	if obj.DeletionTimestamp != nil {
+	if isDelete {
 		logger.Info("handle repository delete")
 
 		// Process any finalizers
@@ -275,23 +280,30 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		return nil
 	}
 
+	if !hasHooks && !isStale && !hasSpecChanged {
+		logger.Info("no hooks, stale, or spec changed, skip processing")
+		return nil
+	}
+
 	// Execute hooks
-	if obj.Status.ObservedGeneration < 1 {
+	if isFirstTime && hasHooks {
 		logger.Info("handle repository create")
 		status, err = hooks.OnCreate(ctx)
 		if err != nil {
 			return fmt.Errorf("execute on create: %w", err)
 		}
-	} else {
+	} else if hasSpecChanged && hasHooks {
 		logger.Info("handle repository update")
 		status, err = hooks.OnUpdate(ctx)
 		if err != nil {
 			return fmt.Errorf("execute on create: %w", err)
 		}
+	} else {
+		logger.Info("handle only repository reconciliation")
 	}
 
 	// Trigger health check if it didn't run recently
-	if healthAge > 200*time.Millisecond {
+	if isStale || hasSpecChanged {
 		res, err := rc.tester.TestRepository(ctx, repo)
 		if err != nil {
 			res = &provisioning.TestResults{
@@ -311,43 +323,41 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		if !res.Success {
 			logger.Error("repository is unhealthy", "errors", res.Errors)
 		}
-	}
 
-	// Trigger sync if needed
-	switch {
-	case !status.Health.Healthy:
-		logger.Info("sync job not triggered as repository is unhealthy")
-	case !obj.Spec.Sync.Enabled:
-		logger.Info("sync job not triggered as sync is disabled")
-	case status.Sync.State == provisioning.JobStateWorking:
-		logger.Info("sync job not triggered as it is already running")
-	default:
-		job, err := rc.jobs.Add(ctx, &provisioning.Job{
-			ObjectMeta: v1.ObjectMeta{
-				Namespace: obj.GetNamespace(),
-			},
-			Spec: provisioning.JobSpec{
-				Repository: obj.GetName(),
-				Action:     provisioning.JobActionSync,
-				Sync: &provisioning.SyncJobOptions{
-					// Execute complete sync if repository is new or spec changed
-					Complete: status.ObservedGeneration < 1 || hasSpecChanged,
+		// Trigger sync if needed
+		switch {
+		case !status.Health.Healthy:
+			logger.Info("sync job not triggered as repository is unhealthy")
+		case !obj.Spec.Sync.Enabled:
+			logger.Info("sync job not triggered as sync is disabled")
+		case status.Sync.State == provisioning.JobStateWorking:
+			logger.Info("sync job not triggered as it is already running")
+		default:
+			job, err := rc.jobs.Add(ctx, &provisioning.Job{
+				ObjectMeta: v1.ObjectMeta{
+					Namespace: obj.GetNamespace(),
 				},
-			},
-		})
-		if err != nil {
-			logger.Error("error adding sync job", "error", err)
-			status.Sync = provisioning.SyncStatus{
-				State:   provisioning.JobStateError,
-				Started: time.Now().UnixMilli(),
-				Message: []string{"Error starting sync job", err.Error()},
+				Spec: provisioning.JobSpec{
+					Repository: obj.GetName(),
+					Action:     provisioning.JobActionSync,
+					Sync: &provisioning.SyncJobOptions{
+						// Execute complete sync if repository is new or spec changed
+						Complete: status.ObservedGeneration < 1 || hasSpecChanged,
+					},
+				},
+			})
+			if err != nil {
+				logger.Error("error adding sync job", "error", err)
+				status.Sync = provisioning.SyncStatus{
+					State:   provisioning.JobStateError,
+					Started: time.Now().UnixMilli(),
+					Message: []string{"Error starting sync job", err.Error()},
+				}
 			}
+			logger.Info("sync job triggered", "job", job.Name)
 		}
-		logger.Info("sync job triggered", "job", job.Name)
 	}
 
-	// Update the status
-	status.ObservedGeneration = obj.Generation
 	obj.Status = *status
 	// Write the updated status (careful not to trigger inf loop)
 	if _, err := rc.client.Repositories(obj.GetNamespace()).
