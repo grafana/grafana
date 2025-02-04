@@ -28,7 +28,10 @@ import (
 
 const loggerName = "provisioning-repository-controller"
 
-const maxAttempts = 3
+const (
+	maxAttempts    = 3
+	ResyncInterval = 10 * time.Second
+)
 
 type queueItem struct {
 	key      string

@@ -331,7 +331,7 @@ func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admis
 	}
 
 	if r.Spec.Sync.IntervalSeconds == 0 {
-		r.Spec.Sync.IntervalSeconds = 10
+		r.Spec.Sync.IntervalSeconds = int64(ResyncInterval / time.Second)
 	}
 
 	if r.Spec.Type == provisioning.GitHubRepositoryType {
@@ -420,7 +420,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			}
 			sharedInformerFactory := informers.NewSharedInformerFactory(
 				c,
-				10*time.Second, // Health and reconciliation interval check interval
+				ResyncInterval, // Health and reconciliation interval check interval
 			)
 
 			repoInformer := sharedInformerFactory.Provisioning().V0alpha1().Repositories()

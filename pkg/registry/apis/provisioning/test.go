@@ -3,6 +3,7 @@ package provisioning
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"slices"
@@ -167,9 +168,10 @@ func ValidateRepository(repo repository.Repository) field.ErrorList {
 			"The target type is required when sync is enabled"))
 	}
 
-	if cfg.Spec.Sync.Enabled && cfg.Spec.Sync.IntervalSeconds < 10 {
+	resyncIntervalSeconds := int64(ResyncInterval / time.Second)
+	if cfg.Spec.Sync.Enabled && cfg.Spec.Sync.IntervalSeconds < resyncIntervalSeconds {
 		list = append(list, field.Invalid(field.NewPath("spec", "sync", "intervalSeconds"),
-			cfg.Spec.Sync.IntervalSeconds, "Interval must be at least 10 seconds"))
+			cfg.Spec.Sync.IntervalSeconds, fmt.Sprintf("Interval must be at least %d seconds", resyncIntervalSeconds)))
 	}
 
 	// Reserved names (for now)
