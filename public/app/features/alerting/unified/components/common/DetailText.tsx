@@ -11,9 +11,11 @@ type DetailTextProps = {
   monospace?: boolean;
   /** Optional string to display in a tooltip on hover of the value */
   tooltipValue?: string;
-} & (
+} & ConditionalProps;
+
+type ConditionalProps =
+  // Require either both copy props or neither
   | {
-      // Require either both copy props or neither
       /** Should we show a button for copying the value to clipboard? */
       showCopyButton: boolean;
       /**
@@ -22,8 +24,7 @@ type DetailTextProps = {
        */
       copyValue: string;
     }
-  | { showCopyButton?: never; copyValue?: never }
-);
+  | { showCopyButton?: never; copyValue?: never };
 
 export const DetailText = ({
   id,
