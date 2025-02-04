@@ -55,14 +55,6 @@ const meta: Meta<PropsAndCustomArgs> = {
       { label: 'Eggplant', value: 'eggplant' },
       { label: 'Fennel', value: 'fennel' },
       { label: 'Grape', value: 'grape', group: 'Fruits' },
-      { label: 'Honeydew', value: 'honeydew' },
-      {
-        label: 'Iceberg Lettuce',
-        value: 'iceberg-lettuce',
-        description:
-          'this is a very long description that should be longer than the longest option label which should make it clip to only one line. It is a bit tough to estimate the width of the descriptions because the font size is smaller, but this should be enough.',
-      },
-      { label: 'Jackfruit', value: 'jackfruit' },
       {
         label: 'Eyes',
         value: 'eyes',
@@ -78,6 +70,14 @@ const meta: Meta<PropsAndCustomArgs> = {
         value: 'nose',
         group: 'Body Parts',
       },
+      { label: 'Honeydew', value: 'honeydew' },
+      {
+        label: 'Iceberg Lettuce',
+        value: 'iceberg-lettuce',
+        description:
+          'this is a very long description that should be longer than the longest option label which should make it clip to only one line. It is a bit tough to estimate the width of the descriptions because the font size is smaller, but this should be enough.',
+      },
+      { label: 'Jackfruit', value: 'jackfruit' },
     ],
     value: 'banana',
   },

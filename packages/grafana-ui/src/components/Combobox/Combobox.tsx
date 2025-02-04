@@ -10,7 +10,6 @@ import { t } from '../../utils/i18n';
 import { Icon } from '../Icon/Icon';
 import { AutoSizeInput } from '../Input/AutoSizeInput';
 import { Input, Props as InputProps } from '../Input/Input';
-import { Box } from '../Layout/Box/Box';
 import { Portal } from '../Portal/Portal';
 import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
 import { Text } from '../Text/Text';
@@ -170,6 +169,15 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     },
     [createCustomValue, id, ariaLabelledBy]
   );
+
+  const isLastItemGroup = (itemList: Array<ComboboxOption<T>>, item: ComboboxOption<T>) => {
+    const group = item.group;
+    if (!group) {
+      return false;
+    }
+    const groupItems = itemList.filter((i) => i.group === group);
+    return groupItems && groupItems.reverse()[0] === item;
+  };
 
   // Memoize for using in fuzzy search
   const stringifiedItems = useMemo(
@@ -438,6 +446,8 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
                           index={virtualRow.index}
                           item={items[virtualRow.index]}
                           previousItem={items[virtualRow.index - 1]}
+                          groupClass={styles.optionGroup}
+                          style={{ transform: `translateY(${virtualRow.start}px)` }}
                         />
                         <li
                           key={`${items[virtualRow.index].value}-${virtualRow.index}`}
@@ -447,7 +457,8 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
                             selectedItem &&
                               items[virtualRow.index].value === selectedItem?.value &&
                               styles.optionSelected,
-                            highlightedIndex === virtualRow.index && styles.optionFocused
+                            highlightedIndex === virtualRow.index && styles.optionFocused,
+                            isLastItemGroup(items, items[virtualRow.index]) && styles.optionGroupLastItem
                           )}
                           style={{
                             height: virtualRow.size,
@@ -484,11 +495,19 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
   );
 };
 
-const ComboboxOptionGroup: React.FC<{
+const ComboboxOptionGroup = ({
+  index,
+  item,
+  previousItem,
+  groupClass,
+  style,
+}: {
   index: number;
   item: ComboboxOption<any>;
   previousItem: ComboboxOption<any>;
-}> = ({ index, item, previousItem }) => {
+  groupClass?: string;
+  style: React.CSSProperties;
+}): JSX.Element | null => {
   const isNewGroup = () => {
     let isNew = false;
     if (previousItem && previousItem.group !== item.group) {
@@ -500,8 +519,8 @@ const ComboboxOptionGroup: React.FC<{
     return isNew;
   };
   return isNewGroup() && item.group ? (
-    <Box key={`${item.group}-${index}`} padding={1} color="disabled">
+    <div key={`${item.group}-${index}`} className={groupClass} style={style}>
       <Text variant="bodySmall">{item.group}</Text>
-    </Box>
+    </div>
   ) : null;
 };

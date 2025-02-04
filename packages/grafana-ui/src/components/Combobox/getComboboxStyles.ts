@@ -51,6 +51,23 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
         },
       },
     }),
+    optionGroup: css({
+      label: 'combobox-option-group',
+      height: MENU_OPTION_HEIGHT,
+      padding: MENU_ITEM_PADDING,
+      borderTop: `1px solid ${theme.colors.border.weak}`,
+      color: theme.colors.text.secondary,
+    }),
+    optionGroupDivider: css({
+      label: 'combobox-option-group-divider',
+      height: 1,
+      borderTop: `1px solid ${theme.colors.border.weak}`,
+    }),
+    optionGroupLastItem: css({
+      label: 'combobox-option-group-divider',
+      height: 1,
+      borderBottom: `1px solid ${theme.colors.border.weak}`,
+    }),
     optionBody: css({
       label: 'combobox-option-body',
       display: 'flex',
