@@ -59,7 +59,7 @@ For more information about traces and how to use them, refer to the following do
 - [Tempo data source](ref:tempo-data-source)
 - [Getting started with Tempo](/docs/tempo/latest/getting-started)
 
-{{< figure src="/static/img/docs/explore/trace-view-9-4.png" class="docs-image--no-shadow" max-width= "900px" alt="Screenshot of the trace view" >}}
+{{< figure src="screenshot-traces-visualization-11.5-v1.png" max-width= "700px" alt="Screenshot of the trace view" >}}
 
 {{< docs/play title="Traces Panel" url="https://play.grafana.org/d/edodkfmj0tce8f/" >}}
 
