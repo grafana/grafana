@@ -34,6 +34,8 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 		return nil, err
 	}
 
+	// the "*"s will be added in the k8s handler in dashboard_service.go in order to make search work
+	// in modes 3+. These "*"s will break the legacy sql query so we need to remove them here
 	if strings.Contains(req.Query, "*") {
 		req.Query = strings.ReplaceAll(req.Query, "*", "")
 	}
