@@ -39,6 +39,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/login/authinfoimpl"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/sandbox"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	publicdashboardsApi "github.com/grafana/grafana/pkg/services/publicdashboards/api"
@@ -70,7 +71,9 @@ var wireExtsBasicSet = wire.NewSet(
 	wire.Bind(new(pluginaccesscontrol.RoleRegistry), new(*acimpl.Service)),
 	wire.Bind(new(accesscontrol.Service), new(*acimpl.Service)),
 	validations.ProvideValidator,
-	wire.Bind(new(validations.PluginRequestValidator), new(*validations.OSSPluginRequestValidator)),
+	wire.Bind(new(validations.DataSourceRequestValidator), new(*validations.OSSDataSourceRequestValidator)),
+	validations.ProvideURLValidator,
+	wire.Bind(new(validations.DataSourceRequestURLValidator), new(*validations.OSSDataSourceRequestURLValidator)),
 	provisioning.ProvideService,
 	wire.Bind(new(provisioning.ProvisioningService), new(*provisioning.ProvisioningServiceImpl)),
 	backgroundsvcs.ProvideBackgroundServiceRegistry,
@@ -111,6 +114,8 @@ var wireExtsBasicSet = wire.NewSet(
 	search2.ProvideDashboardStats,
 	wire.Bind(new(search2.DashboardStats), new(*search2.OssDashboardStats)),
 	search2.ProvideDocumentBuilders,
+	sandbox.ProvideService,
+	wire.Bind(new(sandbox.Sandbox), new(*sandbox.Service)),
 )
 
 var wireExtsSet = wire.NewSet(

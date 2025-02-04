@@ -123,10 +123,6 @@ const (
 	// Enables drag and drop for CSV and Excel files
 	FlagEditPanelCSVDragAndDrop = "editPanelCSVDragAndDrop"
 
-	// FlagAlertingNoNormalState
-	// Stop maintaining state of alerts that are not firing
-	FlagAlertingNoNormalState = "alertingNoNormalState"
-
 	// FlagLogsContextDatasourceUi
 	// Allow datasource to provide custom UI for context view
 	FlagLogsContextDatasourceUi = "logsContextDatasourceUi"
@@ -547,13 +543,13 @@ const (
 	// Enable the Grafana Migration Assistant, which helps you easily migrate on-prem resources, such as dashboards, folders, and data source configurations, to your Grafana Cloud stack.
 	FlagOnPremToCloudMigrations = "onPremToCloudMigrations"
 
-	// FlagOnPremToCloudMigrationsAuthApiMig
-	// Enables the use of auth api instead of gcom for internal token services. Requires `onPremToCloudMigrations` to be enabled in conjunction.
-	FlagOnPremToCloudMigrationsAuthApiMig = "onPremToCloudMigrationsAuthApiMig"
-
 	// FlagAlertingSaveStatePeriodic
 	// Writes the state periodically to the database, asynchronous to rule evaluation
 	FlagAlertingSaveStatePeriodic = "alertingSaveStatePeriodic"
+
+	// FlagAlertingSaveStateCompressed
+	// Enables the compressed protobuf-based alert state storage
+	FlagAlertingSaveStateCompressed = "alertingSaveStateCompressed"
 
 	// FlagScopeApi
 	// In-development feature flag for the scope api using the app platform.
@@ -690,10 +686,6 @@ const (
 	// FlagAuthZGRPCServer
 	// Enables the gRPC server for authorization
 	FlagAuthZGRPCServer = "authZGRPCServer"
-
-	// FlagOpenSearchBackendFlowEnabled
-	// Enables the backend query flow for Open Search datasource plugin
-	FlagOpenSearchBackendFlowEnabled = "openSearchBackendFlowEnabled"
 
 	// FlagSsoSettingsLDAP
 	// Use the new SSO Settings API to configure LDAP
@@ -851,10 +843,6 @@ const (
 	// Enables the extension admin page regardless of development mode
 	FlagEnableExtensionsAdminPage = "enableExtensionsAdminPage"
 
-	// FlagZipkinBackendMigration
-	// Enables querying Zipkin data source without the proxy
-	FlagZipkinBackendMigration = "zipkinBackendMigration"
-
 	// FlagEnableSCIM
 	// Enables SCIM support for user and group management
 	FlagEnableSCIM = "enableSCIM"
@@ -931,6 +919,10 @@ const (
 	// Test feature toggle to see how cohorts could be set up AB testing
 	FlagABTestFeatureToggleA = "ABTestFeatureToggleA"
 
+	// FlagTemplateVariablesUsesCombobox
+	// Use new combobox component for template variables
+	FlagTemplateVariablesUsesCombobox = "templateVariablesUsesCombobox"
+
 	// FlagABTestFeatureToggleB
 	// Test feature toggle to see how cohorts could be set up AB testing
 	FlagABTestFeatureToggleB = "ABTestFeatureToggleB"
@@ -947,7 +939,23 @@ const (
 	// Enables less memory intensive Elasticsearch result parsing
 	FlagElasticsearchImprovedParsing = "elasticsearchImprovedParsing"
 
+	// FlagExploreMetricsUseExternalAppPlugin
+	// Use the externalized Metrics Drilldown (formerly known as Explore Metrics) app plugin
+	FlagExploreMetricsUseExternalAppPlugin = "exploreMetricsUseExternalAppPlugin"
+
 	// FlagDatasourceConnectionsTab
 	// Shows defined connections for a data source in the plugins detail page
 	FlagDatasourceConnectionsTab = "datasourceConnectionsTab"
+
+	// FlagFetchRulesUsingPost
+	// Use a POST request to list rules by passing down the namespaces user has access to
+	FlagFetchRulesUsingPost = "fetchRulesUsingPost"
+
+	// FlagAlertingAlertmanagerExtraDedupStage
+	// enables extra deduplication stage in alertmanager that checks that timestamps of the pipeline and the current state are matching
+	FlagAlertingAlertmanagerExtraDedupStage = "alertingAlertmanagerExtraDedupStage"
+
+	// FlagAlertingAlertmanagerExtraDedupStageStopPipeline
+	// works together with alertingAlertmanagerExtraDedupStage, if enabled, it will stop the pipeline if the timestamps are not matching. Otherwise, it will emit a warning
+	FlagAlertingAlertmanagerExtraDedupStageStopPipeline = "alertingAlertmanagerExtraDedupStageStopPipeline"
 )
