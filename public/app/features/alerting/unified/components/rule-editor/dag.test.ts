@@ -2,10 +2,9 @@ import { Graph } from 'app/core/utils/dag';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
 import {
-  _createDagFromQueries,
   _getDescendants,
   _getOriginsOfRefId,
-  fingerPrintQueries,
+  createDagFromQueries,
   fingerprintGraph,
   parseRefsFromMathExpression,
 } from './dag';
@@ -45,7 +44,7 @@ describe('working with dag', () => {
       },
     ] as AlertQuery[];
 
-    const dag = _createDagFromQueries(queries);
+    const dag = createDagFromQueries(queries);
 
     expect(Object.keys(dag.nodes)).toHaveLength(4);
 
@@ -84,9 +83,9 @@ describe('working with dag', () => {
       },
     ] as AlertQuery[];
 
-    expect(() => _createDagFromQueries(queries)).not.toThrow();
+    expect(() => createDagFromQueries(queries)).not.toThrow();
 
-    const dag = _createDagFromQueries(queries);
+    const dag = createDagFromQueries(queries);
 
     expect(Object.keys(dag.nodes)).toHaveLength(1);
 
@@ -156,37 +155,5 @@ describe('fingerprints', () => {
     graph.link('D', 'B');
 
     expect(fingerprintGraph(graph)).toMatchInlineSnapshot(`"A:B: B:C:A, D C::B D:B:"`);
-  });
-
-  test('Queries fingerprint', () => {
-    const queries = [
-      {
-        refId: 'A',
-        queryType: 'query',
-        model: {
-          refId: 'A',
-          expression: '',
-        },
-      },
-      {
-        refId: 'B',
-        queryType: 'query',
-        model: {
-          refId: 'B',
-          expression: 'A',
-        },
-      },
-      {
-        refId: 'C',
-        queryType: 'query',
-        model: {
-          refId: 'C',
-          expression: '$B > 0',
-          type: 'math',
-        },
-      },
-    ] as AlertQuery[];
-
-    expect(fingerPrintQueries(queries)).toMatchInlineSnapshot(`"Aquery,BAquery,C$B > 0math"`);
   });
 });

@@ -89,7 +89,7 @@ export function RichHistoryContainer(props: Props) {
     }
   }, [tracked, selectedTab]);
 
-  if (!richHistorySettings || !selectedTab) {
+  if (!richHistorySettings) {
     return (
       <span>
         <Trans i18nKey="explore.rich-history-container.loading">Loading...</Trans>

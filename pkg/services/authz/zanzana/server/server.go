@@ -10,6 +10,7 @@ import (
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"go.opentelemetry.io/otel"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	dashboardalpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1"
 	"github.com/grafana/grafana/pkg/infra/localcache"
@@ -26,11 +27,16 @@ var _ authzextv1.AuthzExtentionServiceServer = (*Server)(nil)
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/authz/zanzana/server")
 
+type OpenFGAServer interface {
+	openfgav1.OpenFGAServiceServer
+	IsReady(ctx context.Context) (bool, error)
+}
+
 type Server struct {
 	authzv1.UnimplementedAuthzServiceServer
 	authzextv1.UnimplementedAuthzExtentionServiceServer
 
-	openfga       openfgav1.OpenFGAServiceServer
+	openfga       OpenFGAServer
 	openfgaClient openfgav1.OpenFGAServiceClient
 
 	cfg      setting.ZanzanaServerSettings
@@ -45,7 +51,7 @@ type storeInfo struct {
 	ModelID string
 }
 
-func NewServer(cfg setting.ZanzanaServerSettings, openfga openfgav1.OpenFGAServiceServer, logger log.Logger) (*Server, error) {
+func NewServer(cfg setting.ZanzanaServerSettings, openfga OpenFGAServer, logger log.Logger) (*Server, error) {
 	channel := &inprocgrpc.Channel{}
 	openfgav1.RegisterOpenFGAServiceServer(channel, openfga)
 	openFGAClient := openfgav1.NewOpenFGAServiceClient(channel)
@@ -61,6 +67,15 @@ func NewServer(cfg setting.ZanzanaServerSettings, openfga openfgav1.OpenFGAServi
 	}
 
 	return s, nil
+}
+
+func (s *Server) IsHealthy(ctx context.Context) (bool, error) {
+	// FIXME: get back to openfga.IsReady() when issue is fixed
+	// https://github.com/openfga/openfga/issues/2251
+	_, err := s.openfga.ListStores(ctx, &openfgav1.ListStoresRequest{
+		PageSize: wrapperspb.Int32(1),
+	})
+	return err == nil, nil
 }
 
 func (s *Server) getContextuals(ctx context.Context, subject string) (*openfgav1.ContextualTupleKeys, error) {
