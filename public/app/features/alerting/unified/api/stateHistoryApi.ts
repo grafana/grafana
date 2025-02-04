@@ -1,5 +1,7 @@
 import { DataFrameJSON } from '@grafana/data';
 
+import { parsePromQLStyleMatcherLoose } from '../utils/matchers';
+
 import { alertingApi } from './alertingApi';
 
 export const LABELS_PREFIX = 'labels_';
@@ -9,18 +11,16 @@ export function labelsDtoFromLabelsAsString(labels?: string): Record<string, str
   if (!labels) {
     return {};
   }
-  const result = labels
-    .replace(/[{()}]/g, '')
-    .split(',')
-    .reduce(
-      (acc, label) => {
-        const [key, value] = label.split('=');
-        acc[`${LABELS_PREFIX}${key.trim()}`] = value;
-        return acc;
-      },
-      // eslint-disable-next-line
-      {} as Record<string, string>
-    );
+
+  const matchers = parsePromQLStyleMatcherLoose(labels);
+  const result = matchers.reduce(
+    (acc, matcher) => {
+      acc[`${LABELS_PREFIX}${matcher.name}`] = matcher.value;
+      return acc;
+    },
+    // eslint-disable-next-line
+    {} as Record<string, string>
+  );
 
   return result;
 }
