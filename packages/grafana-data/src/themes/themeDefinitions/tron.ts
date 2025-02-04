@@ -20,19 +20,9 @@ const tronTheme: NewThemeOptions = {
       main: '#00FFFF',
     },
     secondary: {
-      main: 'rgba(0, 255, 255, 0.10)',
-    },
-    info: {
-      main: '#29ABE2',
-    },
-    error: {
-      main: '#FF004D',
-    },
-    success: {
-      main: '#00FF80',
-    },
-    warning: {
-      main: '#FF9900',
+      main: '#0b2e36',
+      text: 'rgba(224, 224, 224, 0.75)',
+      border: 'rgba(0, 255, 255, 0.10)',
     },
     background: {
       canvas: '#0A0F18',
