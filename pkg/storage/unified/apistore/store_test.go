@@ -3,7 +3,7 @@
 // Provenance-includes-license: Apache-2.0
 // Provenance-includes-copyright: The Kubernetes Authors.
 
-package apistore
+package apistore_test
 
 import (
 	"context"
