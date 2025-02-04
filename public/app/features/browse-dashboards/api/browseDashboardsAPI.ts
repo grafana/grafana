@@ -464,13 +464,14 @@ export async function addRepositoryData(
     return data;
   }
 
+  const addRepositoryToItem = (item: FolderDataType, settings: RepositoryViewList) => {
+    const repository = settings.items.find((repo) => repo.name === item.uid);
+    return repository ? { ...item, repository } : item;
+  };
+
   if (Array.isArray(data)) {
-    return data.map((item) => {
-      const repository = settings.items.find((repo) => repo.name === item.uid);
-      return repository ? { ...item, repository } : item;
-    });
+    return data.map((item) => addRepositoryToItem(item, settings));
   }
 
-  const repository = settings.items.find((repo) => repo.name === data.uid);
-  return repository ? { ...data, repository } : data;
+  return addRepositoryToItem(data, settings);
 }
