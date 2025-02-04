@@ -1,4 +1,4 @@
-import { isEqual, take } from 'lodash';
+import { take } from 'lodash';
 import { SyntheticEvent, useEffect, useMemo, useState } from 'react';
 import { useThrottle } from 'react-use';
 
@@ -111,9 +111,7 @@ export function DashList(props: PanelProps<Options>) {
 
   useEffect(() => {
     fetchDashboards(props.options, props.replaceVariables).then((dashes) => {
-      if (!isEqual(dashes, dashboards)) {
-        setDashboards(dashes);
-      }
+      setDashboards(dashes);
     });
   }, [dashboards, props.options, props.replaceVariables, throttledRenderCount]);
 
