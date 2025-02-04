@@ -129,33 +129,50 @@ function simplifySchemaName(schemaName: string) {
   }
 }
 
-const sourceDir = path.resolve(__dirname, '../pkg/tests/apis/openapi_snapshots');
-const outputDir = path.resolve(__dirname, '../data/openapi');
-
-// Create the output directory if it doesn't exist
-if (!fs.existsSync(outputDir)) {
-  fs.mkdirSync(outputDir, { recursive: true });
-}
-
-const files = fs.readdirSync(sourceDir).filter((file: string) => file.endsWith('.json'));
-
-for (const file of files) {
-  const inputPath = path.join(sourceDir, file);
-  const outputPath = path.join(outputDir, file);
-
-  console.log(`Processing file "${file}"...`);
-
-  const fileContent = fs.readFileSync(inputPath, 'utf-8');
-
-  let inputSpec;
-  try {
-    inputSpec = JSON.parse(fileContent);
-  } catch (err) {
-    console.error(`Invalid JSON file "${file}". Skipping this file.`);
-    continue;
+/**
+ * Process all files in a source directory and write results to output directory
+ */
+function processDirectory(sourceDir: string, outputDir: string) {
+  // Skip if source directory doesn't exist
+  if (!fs.existsSync(sourceDir)) {
+    return;
   }
 
-  const outputSpec = processOpenAPISpec(inputSpec);
-  fs.writeFileSync(outputPath, JSON.stringify(outputSpec, null, 2), 'utf-8');
-  console.log(`Processing completed for file "${file}".`);
+  // Create the output directory if it doesn't exist
+  if (!fs.existsSync(outputDir)) {
+    fs.mkdirSync(outputDir, { recursive: true });
+  }
+
+  const files = fs.readdirSync(sourceDir).filter((file: string) => file.endsWith('.json'));
+
+  for (const file of files) {
+    const inputPath = path.join(sourceDir, file);
+    const outputPath = path.join(outputDir, file);
+
+    console.log(`Processing file "${file}"...`);
+
+    const fileContent = fs.readFileSync(inputPath, 'utf-8');
+
+    let inputSpec;
+    try {
+      inputSpec = JSON.parse(fileContent);
+    } catch (err) {
+      console.error(`Invalid JSON file "${file}". Skipping this file.`);
+      continue;
+    }
+
+    const outputSpec = processOpenAPISpec(inputSpec);
+    fs.writeFileSync(outputPath, JSON.stringify(outputSpec, null, 2), 'utf-8');
+    console.log(`Processing completed for file "${file}".`);
+  }
+}
+
+const sourceDirs = [
+  path.resolve(__dirname, '../pkg/tests/apis/openapi_snapshots'),
+  path.resolve(__dirname, '../pkg/extensions/apiserver/tests/openapi_snapshots'),
+];
+const outputDir = path.resolve(__dirname, '../data/openapi');
+
+for (const sourceDir of sourceDirs) {
+  processDirectory(sourceDir, outputDir);
 }
