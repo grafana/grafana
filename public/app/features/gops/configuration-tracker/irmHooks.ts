@@ -6,6 +6,7 @@ import { useNotificationPolicyRoute } from 'app/features/alerting/unified/compon
 import {
   getIrmIfPresentOrIncidentPluginId,
   getIrmIfPresentOrOnCallPluginId,
+  getIsIrmPluginPresent,
 } from 'app/features/alerting/unified/utils/config';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { RelativeUrl, createRelativeUrl } from 'app/features/alerting/unified/utils/url';
@@ -132,7 +133,7 @@ export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
         description: 'Configure Grafana Alerting',
         steps: [
           {
-            title: 'Update default contact point',
+            title: 'Update default e-mail contact point',
             description: 'Update the default contact point to a method other than the example email address.',
             button: {
               type: 'openLink',
@@ -147,22 +148,6 @@ export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
               },
             },
             done: isContactPointReady(defaultContactpoint, contactPoints),
-          },
-          {
-            title: 'Connect alerting to OnCall',
-            description: 'Create an OnCall integration for an alerting contact point.',
-            button: {
-              type: 'openLink',
-              urlLink: {
-                url: '/alerting/notifications/receivers/new',
-              },
-              label: 'Connect',
-              urlLinkOnDone: {
-                url: '/alerting/notifications',
-              },
-              labelOnDone: 'View',
-            },
-            done: isOnCallContactPointReady(contactPoints),
           },
           {
             title: 'Create alert rule',
@@ -181,7 +166,7 @@ export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
             done: isCreateAlertRuleDone,
           },
           {
-            title: 'Create your first SLO',
+            title: 'Create SLO',
             description: 'Create SLOs to monitor your service.',
             button: {
               type: 'openLink',
@@ -219,81 +204,132 @@ export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
       {
         title: 'Respond',
         description: 'Configure OnCall and Incident',
-        steps: [
-          {
-            title: 'Initialize Incident plugin',
-            description: 'Initialize the Incident plugin to declare and manage incidents.',
-            button: {
-              type: 'openLink',
-              urlLink: {
-                url: `/a/${getIrmIfPresentOrIncidentPluginId()}/walkthrough/generate-key`,
+        steps: getIsIrmPluginPresent()
+          ? [
+              {
+                title: 'Connect alerting to IRM',
+                description: 'Create an IRM integration for an alerting contact point.',
+                button: {
+                  type: 'openLink',
+                  urlLink: {
+                    url: '/alerting/notifications/receivers/new',
+                  },
+                  label: 'Connect',
+                  urlLinkOnDone: {
+                    url: '/alerting/notifications',
+                  },
+                  labelOnDone: 'View',
+                },
+                done: isOnCallContactPointReady(contactPoints),
               },
-              label: 'Initialize',
-              urlLinkOnDone: {
-                url: `/a/${getIrmIfPresentOrIncidentPluginId()}`,
+              {
+                title: 'Connect IRM to your Slack workspace',
+                description:
+                  'Receive alerts and oncall notifications, or automatically create an incident channel and manage incidents directly within your chat environment.',
+                button: {
+                  type: 'openLink',
+                  urlLink: {
+                    url: `/a/${getIrmIfPresentOrIncidentPluginId()}/integrations/grate.slack`,
+                  },
+                  label: 'Connect',
+                  urlLinkOnDone: {
+                    url: `/a/${getIrmIfPresentOrIncidentPluginId()}/integrations`,
+                  },
+                },
+                done: isChatOpsInstalled,
               },
-              labelOnDone: 'View',
-            },
-            done: isIncidentsInstalled,
-          },
-          {
-            title: 'Connect your Messaging workspace to OnCall',
-            description: 'Receive alerts and oncall notifications within your chat environment.',
-            button: {
-              type: 'openLink',
-              urlLink: {
-                url: `/a/${getIrmIfPresentOrOnCallPluginId()}/settings`,
-                queryParams: { tab: 'ChatOps', chatOpsTab: 'Slack' },
+              {
+                title: 'Add Slack notifications to IRM integrations',
+                description: 'Select ChatOps channels to route notifications',
+                button: {
+                  type: 'openLink',
+                  urlLink: {
+                    url: `/a/${getIrmIfPresentOrOnCallPluginId()}/integrations/`,
+                  },
+                  label: 'Add',
+                  urlLinkOnDone: {
+                    url: `/a/${getIrmIfPresentOrOnCallPluginId()}/integrations/`,
+                  },
+                  labelOnDone: 'View',
+                },
+                done: is_integration_chatops_connected,
               },
-              label: 'Connect',
-              urlLinkOnDone: {
-                url: `/a/${getIrmIfPresentOrOnCallPluginId()}/settings`,
-                queryParams: { tab: 'ChatOps' },
+            ]
+          : [
+              {
+                title: 'Initialize Incident plugin',
+                description: 'Initialize the Incident plugin to declare and manage incidents.',
+                button: {
+                  type: 'openLink',
+                  urlLink: {
+                    url: `/a/${getIrmIfPresentOrIncidentPluginId()}/walkthrough/generate-key`,
+                  },
+                  label: 'Initialize',
+                  urlLinkOnDone: {
+                    url: `/a/${getIrmIfPresentOrIncidentPluginId()}`,
+                  },
+                  labelOnDone: 'View',
+                },
+                done: isIncidentsInstalled,
               },
-              labelOnDone: 'View',
-            },
-            done: is_chatops_connected,
-          },
-          {
-            title: 'Connect your Messaging workspace to Incident',
-            description:
-              'Automatically create an incident channel and manage incidents directly within your chat environment.',
-            button: {
-              type: 'openLink',
-              urlLink: {
-                url: `/a/${getIrmIfPresentOrIncidentPluginId()}/integrations/grate.slack`,
+              {
+                title: 'Connect your Messaging workspace to OnCall',
+                description: 'Receive alerts and oncall notifications within your chat environment.',
+                button: {
+                  type: 'openLink',
+                  urlLink: {
+                    url: `/a/${getIrmIfPresentOrOnCallPluginId()}/settings`,
+                    queryParams: { tab: 'ChatOps', chatOpsTab: 'Slack' },
+                  },
+                  label: 'Connect',
+                  urlLinkOnDone: {
+                    url: `/a/${getIrmIfPresentOrOnCallPluginId()}/settings`,
+                    queryParams: { tab: 'ChatOps' },
+                  },
+                  labelOnDone: 'View',
+                },
+                done: is_chatops_connected,
               },
-              label: 'Connect',
-              urlLinkOnDone: {
-                url: `/a/${getIrmIfPresentOrIncidentPluginId()}/integrations`,
+              {
+                title: 'Connect your Messaging workspace to Incident',
+                description:
+                  'Automatically create an incident channel and manage incidents directly within your chat environment.',
+                button: {
+                  type: 'openLink',
+                  urlLink: {
+                    url: `/a/${getIrmIfPresentOrIncidentPluginId()}/integrations/grate.slack`,
+                  },
+                  label: 'Connect',
+                  urlLinkOnDone: {
+                    url: `/a/${getIrmIfPresentOrIncidentPluginId()}/integrations`,
+                  },
+                },
+                done: isChatOpsInstalled,
               },
-            },
-            done: isChatOpsInstalled,
-          },
-          {
-            title: 'Add Messaging workspace channel to OnCall Integration',
-            description: 'Select ChatOps channels to route notifications',
-            button: {
-              type: 'openLink',
-              urlLink: {
-                url: `/a/${getIrmIfPresentOrOnCallPluginId()}/integrations/`,
+              {
+                title: 'Add Messaging workspace channel to OnCall Integration',
+                description: 'Select ChatOps channels to route notifications',
+                button: {
+                  type: 'openLink',
+                  urlLink: {
+                    url: `/a/${getIrmIfPresentOrOnCallPluginId()}/integrations/`,
+                  },
+                  label: 'Add',
+                  urlLinkOnDone: {
+                    url: `/a/${getIrmIfPresentOrOnCallPluginId()}/integrations/`,
+                  },
+                  labelOnDone: 'View',
+                },
+                done: is_integration_chatops_connected,
               },
-              label: 'Add',
-              urlLinkOnDone: {
-                url: `/a/${getIrmIfPresentOrOnCallPluginId()}/integrations/`,
-              },
-              labelOnDone: 'View',
-            },
-            done: is_integration_chatops_connected,
-          },
-        ],
+            ],
       },
       {
         title: 'Test your configuration',
         description: '',
         steps: [
           {
-            title: 'Send OnCall demo alert via Alerting integration',
+            title: getIsIrmPluginPresent() ? 'Send test alert' : 'Send OnCall demo alert via Alerting integration',
             description: 'In the integration page, click Send demo alert, to review your notification',
             button: {
               type: 'dropDown',
