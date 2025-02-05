@@ -20,6 +20,7 @@ export const JSONCell = ({ value }: Omit<CellNGProps, 'theme' | 'field'>) => {
     displayValue = JSON.stringify(localValue, null, ' ');
   }
 
+  // TODO: Implement DataLinksContextMenu + actions
   return <div className={styles.jsonText}>{displayValue}</div>;
 };
 
