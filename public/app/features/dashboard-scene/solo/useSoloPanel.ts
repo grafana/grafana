@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { VizPanel, UrlSyncManager } from '@grafana/scenes';
 
 import { DashboardScene } from '../scene/DashboardScene';
-import { DashboardRepeatsProcessedEvent } from '../scene/types';
+import { DashboardRepeatsProcessedEvent } from '../scene/types/DashboardRepeatsProcessedEvent';
 import { containsCloneKey } from '../utils/clone';
 import { findVizPanelByKey } from '../utils/utils';
 

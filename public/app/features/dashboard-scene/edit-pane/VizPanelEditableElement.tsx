@@ -12,11 +12,14 @@ import {
   PanelDescriptionTextArea,
   PanelFrameTitleInput,
 } from '../panel-edit/getPanelFrameOptions';
-import { BulkActionElement, EditableDashboardElement, isDashboardLayoutItem } from '../scene/types';
+import { BulkActionElement } from '../scene/types/BulkActionElement';
+import { isDashboardLayoutItem } from '../scene/types/DashboardLayoutItem';
+import { EditableDashboardElement } from '../scene/types/EditableDashboardElement';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 
 export class VizPanelEditableElement implements EditableDashboardElement, BulkActionElement {
-  public isEditableDashboardElement: true = true;
+  public readonly isEditableDashboardElement = true;
+  public readonly typeName = 'Panel';
 
   public constructor(private panel: VizPanel) {}
 
@@ -94,10 +97,6 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
     categories.push(...visualizationOptions);
 
     return categories;
-  }
-
-  public getTypeName(): string {
-    return 'Panel';
   }
 
   public onDelete = () => {

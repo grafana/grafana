@@ -71,7 +71,7 @@ import { isUsingAngularDatasourcePlugin, isUsingAngularPanelPlugin } from './ang
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
 import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
-import { DashboardLayoutManager } from './types';
+import { DashboardLayoutManager } from './types/DashboardLayoutManager';
 
 export const PERSISTED_PROPS = ['title', 'description', 'tags', 'editable', 'graphTooltip', 'links', 'meta', 'preload'];
 export const PANEL_SEARCH_VAR = 'systemPanelFilterVar';
@@ -258,7 +258,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     this.setState({ isEditing: true, showHiddenElements: true });
 
     // Propagate change edit mode change to children
-    this.state.body.editModeChanged(true);
+    this.state.body.editModeChanged?.(true);
 
     // Propagate edit mode to scopes
     this._scopesFacade?.enterReadOnly();
@@ -349,7 +349,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     }
 
     // Disable grid dragging
-    this.state.body.editModeChanged(false);
+    this.state.body.editModeChanged?.(false);
   }
 
   public canDiscard() {

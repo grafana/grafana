@@ -25,7 +25,8 @@ import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components
 
 import { getCloneKey } from '../../utils/clone';
 import { getMultiVariableValues, getQueryRunnerFor } from '../../utils/utils';
-import { DashboardLayoutItem, DashboardRepeatsProcessedEvent } from '../types';
+import { DashboardLayoutItem } from '../types/DashboardLayoutItem';
+import { DashboardRepeatsProcessedEvent } from '../types/DashboardRepeatsProcessedEvent';
 
 import { getDashboardGridItemOptions } from './DashboardGridItemEditor';
 
@@ -46,6 +47,8 @@ export class DashboardGridItem
 {
   private _prevRepeatValues?: VariableValueSingle[];
   protected _variableDependency = new DashboardGridItemVariableDependencyHandler(this);
+
+  public readonly isDashboardLayoutItem = true;
 
   public constructor(state: DashboardGridItemState) {
     super(state);
@@ -187,11 +190,6 @@ export class DashboardGridItem
 
     this.setState(stateUpdate);
   }
-
-  /**
-   * DashboardLayoutItem interface start
-   */
-  public isDashboardLayoutItem: true = true;
 
   /**
    * Returns options for panel edit

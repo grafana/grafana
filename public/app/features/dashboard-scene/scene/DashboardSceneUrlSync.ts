@@ -19,7 +19,7 @@ import { DashboardScene, DashboardSceneState } from './DashboardScene';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
 import { ViewPanelScene } from './ViewPanelScene';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
-import { DashboardRepeatsProcessedEvent } from './types';
+import { DashboardRepeatsProcessedEvent } from './types/DashboardRepeatsProcessedEvent';
 
 export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
   private _eventSub?: Unsubscribable;
