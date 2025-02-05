@@ -301,6 +301,10 @@ Path to the certificate file (if `protocol` is set to `https` or `h2`).
 
 Path to the certificate key file (if `protocol` is set to `https` or `h2`).
 
+#### `cert_pass`
+
+Optional. Password to decrypt encrypted certificates.
+
 #### `certs_watch_interval`
 
 Controls whether `cert_key` and `cert_file` are periodically watched for changes.
