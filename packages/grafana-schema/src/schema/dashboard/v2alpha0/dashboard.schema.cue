@@ -577,7 +577,6 @@ ResponsiveGridLayoutItemKind: {
 
 ResponsiveGridLayoutItemSpec: {
   element: ElementReference
-  repeat?: ResponsiveGridRepeatOptions
 }
 
 PanelSpec: {

@@ -884,7 +884,6 @@ export const defaultResponsiveGridLayoutItemKind = (): ResponsiveGridLayoutItemK
 
 export interface ResponsiveGridLayoutItemSpec {
 	element: ElementReference;
-	repeat?: ResponsiveGridRepeatOptions;
 }
 
 export const defaultResponsiveGridLayoutItemSpec = (): ResponsiveGridLayoutItemSpec => ({

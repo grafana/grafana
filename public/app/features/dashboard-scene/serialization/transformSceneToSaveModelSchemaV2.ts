@@ -174,8 +174,10 @@ function getLayout(
                 items: getResponsiveGridLayoutItems(row.state.layout),
                 col:
                   row.state.layout.state.layout.state.templateColumns?.toString() ??
-                  'repeat(auto-fit, minmax(400px, auto))',
-                row: row.state.layout.state.layout.state.autoRows?.toString() ?? 'minmax(300px, auto)',
+                  ResponsiveGridLayoutManager.defaultCSS.templateColumns,
+                row:
+                  row.state.layout.state.layout.state.autoRows?.toString() ??
+                  ResponsiveGridLayoutManager.defaultCSS.autoRows,
               },
             };
           }
@@ -198,8 +200,10 @@ function getLayout(
       kind: 'ResponsiveGridLayout',
       spec: {
         items: getResponsiveGridLayoutItems(layoutManager),
-        col: layoutManager.state.layout.state.templateColumns?.toString() ?? 'repeat(auto-fit, minmax(400px, auto))',
-        row: layoutManager.state.layout.state.autoRows?.toString() ?? 'minmax(300px, auto)',
+        col:
+          layoutManager.state.layout.state.templateColumns?.toString() ??
+          ResponsiveGridLayoutManager.defaultCSS.templateColumns,
+        row: layoutManager.state.layout.state.autoRows?.toString() ?? ResponsiveGridLayoutManager.defaultCSS.autoRows,
       },
     };
   }

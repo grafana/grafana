@@ -307,7 +307,7 @@ function createLayoutManager(dashboard: DashboardV2Spec): DashboardLayoutManager
     });
   }
 
-  //@ts-ignore - this complains because we should never reach this point. If the model does not match the schema we will though.
+  // @ts-ignore - this complains because we should never reach this point. If the model does not match the schema we will though.
   throw new Error(`Unsupported layout type: ${dashboard.layout.kind}`);
 }
 
