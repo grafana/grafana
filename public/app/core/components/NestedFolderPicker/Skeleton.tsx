@@ -4,8 +4,8 @@ import Skeleton from 'react-loading-skeleton';
 import type { GrafanaTheme2 } from '@grafana/data';
 import { getInputStyles, useStyles2 } from '@grafana/ui';
 
-// Aim to keep the bundle-size of the as small as possible so it doesn't
-// impact tree shaking too much
+// This component is used as a fallback for codesplitting, so aim to keep
+// the bundle size of it as small as possible :)
 export function FolderPickerSkeleton() {
   const styles = useStyles2(getStyles);
 
