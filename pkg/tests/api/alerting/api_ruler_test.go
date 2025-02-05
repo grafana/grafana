@@ -1143,8 +1143,6 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 				"__panelId__": "1"
 			},
 			"grafana_alert": {
-				"id": 1,
-				"orgId": 1,
 				"title": "AlwaysFiring",
 				"condition": "A",
 				"data": [{
@@ -1186,8 +1184,6 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 			"expr": "",
 			"for":"0s",
 			"grafana_alert": {
-				"id": 2,
-				"orgId": 1,
 				"title": "AlwaysFiringButSilenced",
 				"condition": "A",
 				"data": [{
@@ -1241,8 +1237,6 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 				"__panelId__": "1"
 			},
 			"grafana_alert": {
-				"id": 1,
-				"orgId": 1,
 				"title": "AlwaysFiring",
 				"condition": "A",
 				"data": [{
@@ -1583,7 +1577,6 @@ func TestIntegrationRuleCreate(t *testing.T) {
 						},
 					},
 					GrafanaManagedAlert: &apimodels.GettableGrafanaRule{
-						OrgID:     1,
 						Title:     "test1 rule1",
 						Condition: "A",
 						Data: []apimodels.AlertQuery{
@@ -2526,8 +2519,6 @@ func TestIntegrationQuota(t *testing.T) {
 					       "expr":"",
 						   "for": "2m",
 					       "grafana_alert":{
-						  "id":1,
-						  "orgId":1,
 						  "title":"Updated alert rule",
 						  "condition":"A",
 						  "data":[
@@ -2641,8 +2632,6 @@ func TestIntegrationDeleteFolderWithRules(t *testing.T) {
 									"annotation1": "val1"
 								},
 								"grafana_alert": {
-									"id": 1,
-									"orgId": 1,
 									"title": "rule under folder default",
 									"condition": "A",
 									"data": [
@@ -3124,8 +3113,6 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 							"label1": "val1"
 					   },
 					   "grafana_alert":{
-						  "id":1,
-						  "orgId":1,
 						  "title":"AlwaysFiring",
 						  "condition":"A",
 						  "data":[
@@ -3170,8 +3157,6 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 					   "expr":"",
 					   "for": "0s",
 					   "grafana_alert":{
-						  "id":2,
-						  "orgId":1,
 						  "title":"AlwaysFiringButSilenced",
 						  "condition":"A",
 						  "data":[
@@ -3488,8 +3473,6 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 							"label2": "val2"
 					   },
 		               "grafana_alert":{
-		                  "id":1,
-		                  "orgId":1,
 		                  "title":"AlwaysNormal",
 		                  "condition":"A",
 		                  "data":[
@@ -3607,8 +3590,6 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 				       "expr":"",
 				       "for": "30s",
 				       "grafana_alert":{
-					  "id":1,
-					  "orgId":1,
 					  "title":"AlwaysNormal",
 					  "condition":"A",
 					  "data":[
@@ -3705,8 +3686,6 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 				       "expr":"",
                        "for": "30s",
 				       "grafana_alert":{
-					  "id":1,
-					  "orgId":1,
 					  "title":"AlwaysNormal",
 					  "condition":"A",
 					  "data":[
