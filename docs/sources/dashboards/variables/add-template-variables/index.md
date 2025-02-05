@@ -89,6 +89,8 @@ refs:
 
 # Add variables
 
+<!-- vale Grafana.Spelling = NO -->
+
 The following table lists the types of variables shipped with Grafana.
 
 | Variable type     | Description                                                                                                                                                                             |
@@ -133,6 +135,8 @@ To create a variable, follow these steps:
    - [Data source](#add-a-data-source-variable)
    - [Interval](#add-an-interval-variable)
    - [Ad hoc filters](#add-ad-hoc-filters)
+
+<!-- vale Grafana.Spelling = YES -->
 
 ## Add a query variable
 
@@ -415,10 +419,10 @@ This variable is the `$__interval` variable in milliseconds, not a time interval
 
 ### `$__name`
 
-This variable is only available in the Singlestat panel and can be used in the prefix or suffix fields on the Options tab. The variable is replaced with the series name or alias.
+This variable is only available in the **Singlestat** panel and can be used in the prefix or suffix fields on the Options tab. The variable is replaced with the series name or alias.
 
 {{< admonition type="note" >}}
-The Singlestat panel is no longer available from Grafana 8.0.
+The **Singlestat** panel is no longer available from Grafana 8.0.
 {{< /admonition >}}
 
 ### `$__org`
