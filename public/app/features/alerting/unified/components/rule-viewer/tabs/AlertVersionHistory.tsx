@@ -113,6 +113,7 @@ export function AlertVersionHistory({ ruleUid }: AlertVersionHistoryProps) {
   const [oldVersion, setOldVersion] = useState<RulerGrafanaRuleDTO<GrafanaRuleDefinition>>();
   const [newVersion, setNewVersion] = useState<RulerGrafanaRuleDTO<GrafanaRuleDefinition>>();
   const [showDrawer, setShowDrawer] = useState(false);
+  // checked versions for comparison. key is the version number, value is whether it's checked
   const [checkedVersions, setCheckedVersions] = useState<Map<string, boolean>>(new Map());
   const canCompare = useMemo(
     () => Array.from(checkedVersions.values()).filter((value) => value).length > 1,
@@ -253,10 +254,11 @@ function VersionHistoryTable({
   ruleVersions: Array<RulerGrafanaRuleDTO<GrafanaRuleDefinition>>;
   disableSelection: boolean;
 }) {
-  const [restoreDiff, setRestoreDiff] = useState<Diffs | undefined>();
   const [checkedVersions, setCheckedVersions] = useState<Map<string, boolean>>(new Map());
 
+  //----> restore code : no need to review as it's behind a feature flag
   const [confirmRestore, setConfirmRestore] = useState(false);
+  const [restoreDiff, setRestoreDiff] = useState<Diffs | undefined>();
 
   const showConfirmation = (id: string) => {
     const currentVersion = ruleVersions[0];
@@ -272,6 +274,8 @@ function VersionHistoryTable({
   const hideConfirmation = () => {
     setConfirmRestore(false);
   };
+
+  //----> end of restore code
 
   const rows: RevisionModel[] = ruleVersions.map((rule, index) => ({
     id: String(rule.grafana_alert.version),
@@ -359,6 +363,7 @@ function VersionHistoryTable({
         data={rows}
         getRowId={(row) => `${row.version}`}
       />
+      {/* ---------------------> restore code: no need to review for this pr as it's behind a feature flag */}
       <ConfirmModal
         isOpen={confirmRestore}
         title={t('alerting.alertVersionHistory.restore-modal.title', 'Restore Version')}
@@ -394,6 +399,7 @@ function VersionHistoryTable({
         }}
         onDismiss={() => hideConfirmation()}
       />
+      {/* ------------------------------------> END OF RESTORING CODE */}
     </>
   );
 }
