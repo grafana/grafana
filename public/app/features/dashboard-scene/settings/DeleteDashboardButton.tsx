@@ -55,7 +55,7 @@ export function DeleteDashboardButton({ dashboard }: ButtonProps) {
   }
 
   if (dashboard.isProvisioned() && showModal) {
-    return <ProvisionedResourceDeleteModal resource={dashboard} onClose={toggleModal} />;
+    return <ProvisionedResourceDeleteModal resource={dashboard} onDismiss={toggleModal} />;
   }
 
   return (

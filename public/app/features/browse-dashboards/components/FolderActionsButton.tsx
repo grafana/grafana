@@ -8,6 +8,7 @@ import { t, Trans } from 'app/core/internationalization';
 import { FolderDTO } from 'app/types';
 import { ShowModalReactEvent } from 'app/types/events';
 
+import { ProvisionedResourceDeleteModal } from '../../dashboard-scene/saving/provisioned/ProvisionedResourceDeleteModal';
 import { useDeleteFolderMutation, useMoveFolderMutation } from '../api/browseDashboardsAPI';
 import { getFolderPermissions } from '../permissions';
 
@@ -86,6 +87,17 @@ export function FolderActionsButton({ folder }: Props) {
     );
   };
 
+  const showDeleteProvisionedModal = () => {
+    appEvents.publish(
+      new ShowModalReactEvent({
+        component: ProvisionedResourceDeleteModal,
+        props: {
+          resource: folder,
+        },
+      })
+    );
+  };
+
   const managePermissionsLabel = t('browse-dashboards.folder-actions-button.manage-permissions', 'Manage permissions');
   const moveLabel = t('browse-dashboards.folder-actions-button.move', 'Move');
   const deleteLabel = t('browse-dashboards.folder-actions-button.delete', 'Delete');
@@ -94,7 +106,13 @@ export function FolderActionsButton({ folder }: Props) {
     <Menu>
       {canViewPermissions && <MenuItem onClick={() => setShowPermissionsDrawer(true)} label={managePermissionsLabel} />}
       {canMoveFolder && <MenuItem onClick={showMoveModal} label={moveLabel} />}
-      {canDeleteFolders && <MenuItem destructive onClick={showDeleteModal} label={deleteLabel} />}
+      {canDeleteFolders && (
+        <MenuItem
+          destructive
+          onClick={folder.repository ? showDeleteProvisionedModal : showDeleteModal}
+          label={deleteLabel}
+        />
+      )}
     </Menu>
   );
 

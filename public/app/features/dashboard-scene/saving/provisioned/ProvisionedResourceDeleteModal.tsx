@@ -4,14 +4,14 @@ import { FolderDataType } from '../../../browse-dashboards/api/browseDashboardsA
 import { DashboardScene } from '../../scene/DashboardScene';
 
 export interface Props {
-  onClose: () => void;
+  onDismiss: () => void;
   resource: DashboardScene | FolderDataType;
 }
 
-export function ProvisionedResourceDeleteModal({ onClose, resource }: Props) {
+export function ProvisionedResourceDeleteModal({ onDismiss, resource }: Props) {
   const type = isDashboard(resource) ? 'dashboard' : 'folder';
   return (
-    <Modal isOpen={true} title="Cannot delete provisioned resource" onDismiss={onClose}>
+    <Modal isOpen={true} title="Cannot delete provisioned resource" onDismiss={onDismiss}>
       <>
         <p>
           This {type} is managed by version control and cannot be deleted. To remove it, delete it from the repository
@@ -21,7 +21,7 @@ export function ProvisionedResourceDeleteModal({ onClose, resource }: Props) {
       </>
 
       <Modal.ButtonRow>
-        <Button variant="primary" onClick={onClose}>
+        <Button variant="primary" onClick={onDismiss}>
           OK
         </Button>
       </Modal.ButtonRow>
@@ -33,6 +33,6 @@ function isDashboard(resource: DashboardScene | FolderDataType): resource is Das
   return resource instanceof DashboardScene;
 }
 
-function isFolder(resource: DashboardScene | FolderDataType): resource is FolderDataType {
+export function isFolder(resource: DashboardScene | FolderDataType): resource is FolderDataType {
   return !isDashboard(resource);
 }
