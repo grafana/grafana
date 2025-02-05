@@ -58,10 +58,7 @@ HTTP Requests
 const webhook_ini = `...
 
 [server]
-root_url = https://d60d-83-33-235-27.ngrok-free.app
-
-[auth.anonymous]
-enabled = true`;
+root_url = https://d60d-83-33-235-27.ngrok-free.app`;
 
 export function SetupWarnings() {
   const [isCustomIniOpen, setCustomIniOpen] = useLocalStorage('collapse_custom_ini', true);
@@ -109,9 +106,7 @@ export function SetupWarnings() {
 
       <Collapse isOpen={isWebhookOpen} label="Webhook Support" onToggle={handleWebhookToggle} collapsible>
         <Alert severity="info" title="">
-          <Text element="h5">
-            Webhook support requires the server to run on a public URL — and (for now) anonymous access
-          </Text>
+          <Text element="h5">Webhook support requires the server to run on a public URL.</Text>
           <pre>
             <code>{webhook_ini}</code>
           </pre>
