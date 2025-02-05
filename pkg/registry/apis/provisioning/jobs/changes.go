@@ -3,6 +3,7 @@ package jobs
 import (
 	"fmt"
 	"sort"
+	"strings"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
@@ -30,6 +31,7 @@ func Changes(source []repository.FileTreeEntry, target *provisioning.ResourceLis
 		lookup[item.Path] = &item
 	}
 
+	var keep []string
 	changes := make([]ResourceFileChange, 0, len(source))
 	for _, file := range source {
 		if !file.Blob {
@@ -45,6 +47,7 @@ func Changes(source []repository.FileTreeEntry, target *provisioning.ResourceLis
 					Existing: check,
 				})
 			}
+			keep = append(keep, file.Path)
 			delete(lookup, file.Path)
 		} else if !resources.ShouldIgnorePath(file.Path) {
 			changes = append(changes, ResourceFileChange{
@@ -54,8 +57,22 @@ func Changes(source []repository.FileTreeEntry, target *provisioning.ResourceLis
 		}
 	}
 
-	// File that were previously added, but are not in the current list
+	// nested nested loop :grimmice: trie?
+	hasFolder := func(p string) bool {
+		for _, k := range keep {
+			if strings.HasPrefix(k, p) {
+				return true
+			}
+		}
+		return false
+	}
+
+	// Paths found in grafana, without a matching path in the repository
 	for _, v := range lookup {
+		if v.Resource == "folders" && hasFolder(v.Path) {
+			continue
+		}
+
 		changes = append(changes, ResourceFileChange{
 			Action:   repository.FileActionDeleted,
 			Path:     v.Path,

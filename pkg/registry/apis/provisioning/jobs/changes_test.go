@@ -62,6 +62,7 @@ func TestChanges(t *testing.T) {
 			Items: []provisioning.ResourceListItem{
 				{Path: "a.json"},
 				{Path: "x/y/file.json"},
+				{Path: "aaa/", Resource: "folders"}, // Folder... no action required
 				{Path: "aaa/bbb.yaml", Hash: "xyz"},
 				{Path: "zzz/longest/path/here.json"},
 				{Path: "short/file.yml"},
