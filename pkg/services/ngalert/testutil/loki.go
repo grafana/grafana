@@ -122,6 +122,7 @@ func (c *LokiClient) GetCurrentAlertState() (*AlertStateResponse, error) {
 	if err != nil {
 		return nil, err
 	}
+	//nolint:errcheck
 	defer resp.Body.Close()
 
 	res := LokiQueryResponse{}

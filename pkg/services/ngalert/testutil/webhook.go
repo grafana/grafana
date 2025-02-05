@@ -71,6 +71,7 @@ func (c *WebhookClient) GetNotifications() (*GetNotificationsResponse, error) {
 	if err != nil {
 		return nil, err
 	}
+	//nolint:errcheck
 	defer resp.Body.Close()
 
 	res := GetNotificationsResponse{}
