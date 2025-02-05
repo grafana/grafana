@@ -33,10 +33,7 @@ dualWriterMode = 5
 
 # For Github webhook support, you will need something like:
 [server]
-root_url = https://supreme-exact-beetle.ngrok-free.app
-
-[auth.anonymous]
-enabled = true`;
+root_url = https://supreme-exact-beetle.ngrok-free.app`;
 
 const ngrok_example = `ngrok http 3000
 

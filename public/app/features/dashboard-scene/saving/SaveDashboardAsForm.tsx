@@ -8,7 +8,7 @@ import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 
 import { AnnoKeyRepoName } from '../../apiserver/types';
-import { Repository } from '../../provisioning/api';
+import { RepositoryView } from '../../provisioning/api';
 import { DashboardScene } from '../scene/DashboardScene';
 
 import { DashboardChangeInfo, NameAlreadyExistsError, SaveButton, isNameExistsError } from './shared';
@@ -132,8 +132,8 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
 
       <Field label="Folder">
         <FolderPicker
-          onChange={(uid: string | undefined, title: string | undefined, repository?: Repository) => {
-            const name = repository?.metadata?.name;
+          onChange={(uid: string | undefined, title: string | undefined, repository?: RepositoryView) => {
+            const name = repository?.name;
             setValue('folder', { uid, title });
             const folderUid = dashboard.state.meta.folderUid;
             setHasFolderChanged(uid !== folderUid);

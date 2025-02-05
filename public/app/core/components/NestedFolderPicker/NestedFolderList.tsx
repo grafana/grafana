@@ -279,6 +279,9 @@ const getStyles = (theme: GrafanaTheme2) => {
     rowBody,
 
     label: css({
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(1),
       lineHeight: ROW_HEIGHT + 'px',
       flexGrow: 1,
       minWidth: 0,

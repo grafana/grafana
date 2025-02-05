@@ -363,7 +363,10 @@ export function GrafanaEvaluationBehaviorStep({
           {showErrorHandling && (
             <>
               <NeedHelpInfoForConfigureNoDataError />
-              <Field htmlFor="no-data-state-input" label="Alert state if no data or all values are null">
+              <Field
+                htmlFor="no-data-state-input"
+                label={t('alerting.alert.state-no-data', 'Alert state if no data or all values are null')}
+              >
                 <Controller
                   render={({ field: { onChange, ref, ...field } }) => (
                     <GrafanaAlertStatePicker
@@ -378,7 +381,10 @@ export function GrafanaEvaluationBehaviorStep({
                   name="noDataState"
                 />
               </Field>
-              <Field htmlFor="exec-err-state-input" label="Alert state if execution error or timeout">
+              <Field
+                htmlFor="exec-err-state-input"
+                label={t('alerting.alert.state-error-timeout', 'Alert state if execution error or timeout')}
+              >
                 <Controller
                   render={({ field: { onChange, ref, ...field } }) => (
                     <GrafanaAlertStatePicker

@@ -136,7 +136,9 @@ export function ToolbarActions({ dashboard }: Props) {
       group: 'icon-actions',
       condition: true,
       render: () => {
-        return <Badge color="green" icon="exchange-alt" text="Provisioned" key="provisioned-dashboard-button-badge" />;
+        return (
+          <Badge color="darkgrey" icon="exchange-alt" text="Provisioned" key="provisioned-dashboard-button-badge" />
+        );
       },
     });
   }
