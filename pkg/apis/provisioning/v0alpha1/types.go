@@ -32,6 +32,8 @@ type S3RepositoryConfig struct {
 	// TODO: How do we define access? Secrets?
 }
 
+// Workflow used for changes in the repository.
+// +enum
 type Workflow string
 
 const (
