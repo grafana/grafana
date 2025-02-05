@@ -20,6 +20,14 @@ type DB struct{}
 // It is expected that there is only one frame per RefID.
 // The name becomes the name and RefID of the returned frame.
 func (db *DB) QueryFrames(ctx context.Context, name string, query string, frames []*data.Frame) (*data.Frame, error) {
+	// We are parsing twice due to TablesList, but don't care fow now. We can save the parsed query and reuse it later if we want.
+	if allow, err := AllowQuery(query); err != nil || !allow {
+		if err != nil {
+			return nil, err
+		}
+		return nil, err
+	}
+
 	pro := NewFramesDBProvider(frames)
 	session := mysql.NewBaseSession()
 	mCtx := mysql.NewContext(ctx, mysql.WithSession(session))

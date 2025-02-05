@@ -29,12 +29,6 @@ func TablesList(rawSQL string) ([]string, error) {
 				}
 			case *sqlparser.TableName:
 				tables[v.Name.String()] = struct{}{}
-			case *sqlparser.FuncExpr:
-				switch v.Name.Lowered() {
-				case "load_file", "sleep", "connection_id", "user":
-					return false, fmt.Errorf("blocked function %v - not supported in queries", v.Name.Lowered())
-				default:
-				}
 			}
 			return true, nil
 		}, node)

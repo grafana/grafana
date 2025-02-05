@@ -83,9 +83,14 @@ func TestSQLService(t *testing.T) {
 
 		s.features = featuremgmt.WithFeatures(featuremgmt.FlagSqlExpressions)
 
-		_, err := s.BuildPipeline(req)
-		require.Error(t, err, "should return invalid sql error")
-		require.ErrorContains(t, err, "sql-invalid-sql")
+		pl, err := s.BuildPipeline(req)
+		require.NoError(t, err)
+
+		rsp, err := s.ExecutePipeline(context.Background(), time.Now(), pl)
+		require.NoError(t, err)
+
+		require.Error(t, rsp.Responses["B"].Error, "should return invalid sql error")
+		require.ErrorContains(t, rsp.Responses["B"].Error, "blocked function load_file")
 	})
 }
 
