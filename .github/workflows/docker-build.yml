@@ -1,4 +1,4 @@
-name: Create pre-release
+name: Docker Build and Publish
 on:
   workflow_dispatch:
     inputs:
