@@ -31,6 +31,8 @@ const handleThemeChange = (theme: GrafanaTheme2) => {
   }
 };
 
+const showExtraThemes = process.env.NODE_ENV === 'development';
+
 const preview: Preview = {
   decorators: [withTheme(handleThemeChange), withTimeZone()],
   parameters: {
@@ -69,7 +71,7 @@ const preview: Preview = {
       defaultValue: 'system',
       toolbar: {
         icon: 'paintbrush',
-        items: getBuiltInThemes(true).map((theme) => ({
+        items: getBuiltInThemes(showExtraThemes).map((theme) => ({
           value: theme.id,
           title: theme.name,
         })),
