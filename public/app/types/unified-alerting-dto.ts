@@ -249,8 +249,6 @@ interface UpdatedBy {
 }
 export interface PostableGrafanaRuleDefinition {
   uid?: string;
-  updated?: string;
-  updated_by?: UpdatedBy;
   title: string;
   condition: string;
   no_data_state?: GrafanaAlertStateDecision;
@@ -269,15 +267,14 @@ export interface PostableGrafanaRuleDefinition {
 export interface GrafanaRuleDefinition extends PostableGrafanaRuleDefinition {
   id?: string;
   uid: string;
-  version: number;
   namespace_uid: string;
   rule_group: string;
   provenance?: string;
-  updated_by?: {
-    uid: string;
-    name?: string;
-  };
+  // TODO: For updated_by, updated, and version, fix types so these aren't optional, and
+  // are not conflated with test fixtures
   updated?: string;
+  updated_by?: UpdatedBy;
+  version?: number;
 }
 
 export interface RulerGrafanaRuleDTO<T = GrafanaRuleDefinition> {
