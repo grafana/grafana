@@ -19,12 +19,14 @@ import { getActions } from '../../../features/actions/utils';
 
 import { hasDeprecatedParentRowIndex, migrateFromParentRowIndexToNestedFrames } from './migrations';
 import { Options } from './panelcfg.gen';
+import { getGaugePercentRange } from '@grafana/data/src/field/scale';
 
 interface Props extends PanelProps<Options> {}
 
 export function TablePanel(props: Props) {
   const { data, height, width, options, fieldConfig, id, timeRange, replaceVariables } = props;
 
+  getGaugePercentRange(data);
   const theme = useTheme2();
   const panelContext = usePanelContext();
   const frames = hasDeprecatedParentRowIndex(data.series)
