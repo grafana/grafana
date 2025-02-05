@@ -68,19 +68,9 @@ func (s *jobStore) Add(ctx context.Context, job *provisioning.Job) (*provisionin
 		return nil, apierrors.NewBadRequest("missing spec.sync")
 	}
 
+	// Only for add
 	if job.Status.State != "" {
 		return nil, apierrors.NewBadRequest("must add jobs with empty status")
-	}
-
-	// Check if a sync job is already running
-	for _, j := range s.jobs {
-		if j.Status.State == provisioning.JobStateWorking &&
-			job.Spec.Repository == j.Spec.Repository &&
-			job.Spec.Action == provisioning.JobActionSync &&
-			j.Spec.Action == provisioning.JobActionSync {
-			logging.FromContext(ctx).Info("skip adding a sync job to queue while already running")
-			return &j, nil
-		}
 	}
 
 	if job.Labels == nil {
