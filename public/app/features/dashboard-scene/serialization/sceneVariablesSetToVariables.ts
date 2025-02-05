@@ -1,5 +1,3 @@
-import { get } from 'lodash';
-
 import { config } from '@grafana/runtime';
 import { MultiValueVariable, SceneVariables, sceneUtils } from '@grafana/scenes';
 import {
