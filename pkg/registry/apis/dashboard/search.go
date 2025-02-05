@@ -18,7 +18,6 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apis/dashboard"
 	dashboardv0alpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	folderv0alpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
@@ -116,42 +115,6 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 										},
 										Required: false,
 										Schema:   spec.StringProperty(),
-									},
-								},
-								{
-									ParameterProps: spec3.ParameterProps{
-										Name:        "deleted",
-										In:          "query",
-										Description: "search/list deleted dashboards",
-										Required:    false,
-										Schema:      spec.BooleanProperty(),
-									},
-								},
-								{
-									ParameterProps: spec3.ParameterProps{
-										Name:        "dashboardIds",
-										In:          "query",
-										Description: "search/list dashboards by legacy id (deprecated)",
-										Required:    false,
-										Schema:      spec.StringProperty(),
-									},
-								},
-								{
-									ParameterProps: spec3.ParameterProps{
-										Name:        "dashboardUIDs",
-										In:          "query",
-										Description: "search/list dashboards by uid",
-										Required:    false,
-										Schema:      spec.StringProperty(),
-									},
-								},
-								{
-									ParameterProps: spec3.ParameterProps{
-										Name:        "folderUIDs",
-										In:          "query",
-										Description: "search/list dashboards by folder uid",
-										Required:    false,
-										Schema:      spec.StringProperty(),
 									},
 								},
 							},
@@ -266,13 +229,12 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	}
 
 	searchRequest := &resource.ResourceSearchRequest{
-		Options:   &resource.ListOptions{},
-		Query:     queryParams.Get("query"),
-		Limit:     int64(limit),
-		Offset:    int64(offset),
-		Page:      int64(offset), // on modes 0-2 (legacy) we use "Page" instead of "Offset"
-		Explain:   queryParams.Has("explain") && queryParams.Get("explain") != "false",
-		IsDeleted: queryParams.Has("deleted") && queryParams.Get("deleted") == "true",
+		Options: &resource.ListOptions{},
+		Query:   queryParams.Get("query"),
+		Limit:   int64(limit),
+		Offset:  int64(offset),
+		Page:    int64(offset), // on modes 0-2 (legacy) we use "Page" instead of "Offset"
+		Explain: queryParams.Has("explain") && queryParams.Get("explain") != "false",
 	}
 	fields := []string{"title", "folder", "tags"}
 	if queryParams.Has("field") {
@@ -374,32 +336,6 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		searchRequest.Options.Fields = append(searchRequest.Options.Fields, namesFilter...)
 	}
 
-	if dashboardIds, ok := queryParams["dashboardIds"]; ok {
-		searchRequest.Options.Labels = append(searchRequest.Options.Labels, &resource.Requirement{
-			Key:      utils.LabelKeyDeprecatedInternalID, // nolint:staticcheck
-			Operator: "in",
-			Values:   dashboardIds,
-		})
-	}
-
-	if dashboardUids, ok := queryParams["dashboardUIDs"]; ok {
-		searchRequest.Options.Fields = []*resource.Requirement{{
-			Key:      resource.SEARCH_FIELD_NAME,
-			Operator: "in",
-			Values:   dashboardUids,
-		}}
-	}
-
-	if folderUids, ok := queryParams["folderUIDs"]; ok {
-		searchRequest.Options.Fields = []*resource.Requirement{{
-			Key:      resource.SEARCH_FIELD_FOLDER,
-			Operator: "in",
-			Values:   folderUids,
-		}}
-	}
-
-	// TODO the following params only work in modes 0-2 (legacy):
-	// - "deleted": soft delete not implemented yet
 	result, err := s.client.Search(ctx, searchRequest)
 	if err != nil {
 		errhttp.Write(ctx, err, w)
