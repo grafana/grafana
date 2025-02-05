@@ -8,26 +8,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestConvertNumericWideToLong(t *testing.T) {
-	input := data.Frames{
-		data.NewFrame("",
-			data.NewField("count", data.Labels{"city": "MIA"}, []float64{5}),
-			data.NewField("moreCount", data.Labels{"city": "LGA"}, []float64{7}),
-		),
-	}
-	expectedFrame := data.NewFrame("",
-		data.NewField("count", nil, []float64{5, 0}),
-		data.NewField("moreCount", nil, []float64{0, 7}),
-		data.NewField("city", nil, []string{"MIA", "LGA"}),
-	)
-	output, err := convertNumericWideToNumericLong(input)
-	require.NoError(t, err)
-
-	if diff := cmp.Diff(expectedFrame, output[0], data.FrameTestCompareOptions()...); diff != "" {
-		require.FailNowf(t, "Result mismatch (-want +got):%s\n", diff)
-	}
-}
-
 func TestConvertNumericMultiToLong(t *testing.T) {
 	input := data.Frames{
 		data.NewFrame("test",
@@ -42,6 +22,26 @@ func TestConvertNumericMultiToLong(t *testing.T) {
 		data.NewField("city", nil, []string{"MIA", "LGA"}),
 	)
 	output, err := convertNumericMultiToNumericLong(input)
+	require.NoError(t, err)
+
+	if diff := cmp.Diff(expectedFrame, output[0], data.FrameTestCompareOptions()...); diff != "" {
+		require.FailNowf(t, "Result mismatch (-want +got):%s\n", diff)
+	}
+}
+
+func TestConvertNumericWideToLong(t *testing.T) {
+	input := data.Frames{
+		data.NewFrame("",
+			data.NewField("count", data.Labels{"city": "MIA"}, []float64{5}),
+			data.NewField("moreCount", data.Labels{"city": "LGA"}, []float64{7}),
+		),
+	}
+	expectedFrame := data.NewFrame("",
+		data.NewField("count", nil, []float64{5, 0}),
+		data.NewField("moreCount", nil, []float64{0, 7}),
+		data.NewField("city", nil, []string{"MIA", "LGA"}),
+	)
+	output, err := convertNumericWideToNumericLong(input)
 	require.NoError(t, err)
 
 	if diff := cmp.Diff(expectedFrame, output[0], data.FrameTestCompareOptions()...); diff != "" {
