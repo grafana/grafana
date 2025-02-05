@@ -12,6 +12,9 @@ interface AutoCellProps extends CellNGProps {
   setIsHovered: (isHovered: boolean) => void;
 }
 
+// z-index value to be able to show the full text on hover
+const CELL_Z_INDEX = '1';
+
 export default function AutoCell({ value, field, justifyContent, shouldTextOverflow }: AutoCellProps) {
   const displayValue = field.display!(value);
   const formattedValue = formattedValueToString(displayValue);
@@ -29,7 +32,7 @@ export default function AutoCell({ value, field, justifyContent, shouldTextOverf
     const tableCellDiv = div?.parentElement?.parentElement;
     tableCellDiv?.style.setProperty('position', 'absolute');
     tableCellDiv?.style.setProperty('top', '0');
-    tableCellDiv?.style.setProperty('z-index', '1');
+    tableCellDiv?.style.setProperty('z-index', CELL_Z_INDEX);
     tableCellDiv?.style.setProperty('white-space', 'normal');
   };
 
