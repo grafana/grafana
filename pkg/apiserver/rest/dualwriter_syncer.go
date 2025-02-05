@@ -179,7 +179,9 @@ func legacyToUnifiedStorageDataSyncer(ctx context.Context, cfg *SyncerConfig) (b
 
 		log.Info("got items from unified storage", "items", len(storageList))
 
-		legacyList, err := getList(ctx, cfg.LegacyStorage, &metainternalversion.ListOptions{})
+		legacyList, err := getList(ctx, cfg.LegacyStorage, &metainternalversion.ListOptions{
+			Limit: int64(cfg.DataSyncerRecordsLimit),
+		})
 		if err != nil {
 			log.Error(err, "unable to extract list from legacy storage")
 			return
@@ -295,10 +297,39 @@ func legacyToUnifiedStorageDataSyncer(ctx context.Context, cfg *SyncerConfig) (b
 }
 
 func getList(ctx context.Context, obj rest.Lister, listOptions *metainternalversion.ListOptions) ([]runtime.Object, error) {
-	ll, err := obj.List(ctx, listOptions)
-	if err != nil {
-		return nil, err
+	var allItems []runtime.Object
+
+	for {
+		if int64(len(allItems)) >= listOptions.Limit {
+			return nil, fmt.Errorf("list has more than %d records. Aborting sync", listOptions.Limit)
+		}
+
+		ll, err := obj.List(ctx, listOptions)
+		if err != nil {
+			return nil, err
+		}
+
+		items, err := meta.ExtractList(ll)
+		if err != nil {
+			return nil, err
+		}
+
+		allItems = append(allItems, items...)
+
+		// Get continue token from the list metadata.
+		listMeta, err := meta.ListAccessor(ll)
+		if err != nil {
+			return nil, err
+		}
+
+		// If no continue token, we're done paginating.
+		if listMeta.GetContinue() == "" {
+			break
+		}
+
+		// Set continue token for next page.
+		listOptions.Continue = listMeta.GetContinue()
 	}
 
-	return meta.ExtractList(ll)
+	return allItems, nil
 }
