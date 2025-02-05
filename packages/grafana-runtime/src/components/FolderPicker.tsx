@@ -42,7 +42,6 @@ export function FolderPicker(props: FolderPickerProps) {
   }
 
   if (process.env.NODE_ENV !== 'production') {
-    console.error('FolderPicker is not set');
     return <div>@grafana/runtime FolderPicker is not set</div>;
   }
 
