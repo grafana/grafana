@@ -662,7 +662,7 @@ spec:
 						MediaTypeProps: spec3.MediaTypeProps{
 							Schema: &optionsSchema,
 							Example: &provisioning.SyncJobOptions{
-								Complete: true,
+								Incremental: false,
 							},
 						},
 					},

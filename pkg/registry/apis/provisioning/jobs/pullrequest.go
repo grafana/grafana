@@ -62,7 +62,7 @@ Click the preview links above to view how your changes will look and compare the
 type PullRequestRepo interface {
 	Config() *provisioning.Repository
 	Read(ctx context.Context, path, ref string) (*repository.FileInfo, error)
-	CompareFiles(ctx context.Context, base, ref string) ([]repository.FileChange, error)
+	CompareFiles(ctx context.Context, base, ref string) ([]repository.VersionedFileChange, error)
 	ClearAllPullRequestFileComments(ctx context.Context, pr int) error
 	CommentPullRequestFile(ctx context.Context, pr int, path string, ref string, comment string) error
 	CommentPullRequest(ctx context.Context, pr int, comment string) error
@@ -185,7 +185,7 @@ func (c *pullRequestCommenter) ProcessPullRequest(ctx context.Context,
 			continue
 		}
 
-		if linting && len(parsed.Lint) > 0 && f.Action != repository.FileActionDeleted {
+		if linting && len(parsed.Lint) > 0 && f.Action != provisioning.FileActionDeleted {
 			var buf bytes.Buffer
 			if err := c.lintTemplate.Execute(&buf, parsed.Lint); err != nil {
 				return nil, fmt.Errorf("execute lint comment template: %w", err)
@@ -206,18 +206,21 @@ func (c *pullRequestCommenter) ProcessPullRequest(ctx context.Context,
 		}
 
 		switch f.Action {
-		case repository.FileActionCreated:
+		case provisioning.FileActionCreated:
 			preview.PreviewURL = c.previewURL(ref, f.Path, options.URL)
-		case repository.FileActionUpdated:
+		case provisioning.FileActionUpdated:
 			preview.OriginalURL = c.previewURL(base, f.Path, options.URL)
 			preview.PreviewURL = c.previewURL(ref, f.Path, options.URL)
-		case repository.FileActionDeleted:
+		case provisioning.FileActionRenamed:
+			preview.OriginalURL = c.previewURL(base, f.PreviousPath, options.URL)
+			preview.PreviewURL = c.previewURL(ref, f.Path, options.URL)
+		case provisioning.FileActionDeleted:
 			preview.OriginalURL = c.previewURL(base, f.Path, options.URL)
 		default:
 			return nil, fmt.Errorf("unknown file action: %s", f.Action)
 		}
 
-		if cfg.GitHub.GenerateDashboardPreviews && f.Action != repository.FileActionDeleted {
+		if cfg.GitHub.GenerateDashboardPreviews && f.Action != provisioning.FileActionDeleted {
 			screenshotURL, err := c.renderer.RenderDashboardPreview(ctx, f.Path, ref)
 			if err != nil {
 				return nil, fmt.Errorf("render dashboard preview: %w", err)

@@ -1,4 +1,4 @@
-package repository
+package jobs
 
 import (
 	"encoding/json"
@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 )
 
 func TestChanges(t *testing.T) {
@@ -19,28 +20,28 @@ func TestChanges(t *testing.T) {
 
 	t.Run("create a source file", func(t *testing.T) {
 		source, target := getBase(t)
-		source = append(source, FileTreeEntry{Path: "muta.json", Hash: "xyz", Blob: true})
+		source = append(source, repository.FileTreeEntry{Path: "muta.json", Hash: "xyz", Blob: true})
 
 		changes, err := Changes(source, target)
 		require.NoError(t, err)
 		require.Len(t, changes, 1)
-		require.Equal(t, FileChange{
-			Action: FileActionCreated,
+		require.Equal(t, ResourceFileChange{
+			Action: provisioning.FileActionCreated,
 			Path:   "muta.json",
 		}, changes[0])
 	})
 
 	t.Run("delete a source file", func(t *testing.T) {
 		source, target := getBase(t)
-		source = []FileTreeEntry{source[0]}
+		source = []repository.FileTreeEntry{source[0]}
 
 		changes, err := Changes(source, target)
 		require.NoError(t, err)
 		require.Len(t, changes, 1)
-		require.Equal(t, FileChange{
-			Action: FileActionDeleted,
+		require.Equal(t, ResourceFileChange{
+			Action: provisioning.FileActionDeleted,
 			Path:   "adsl62h.yaml",
-			DB: &provisioning.ResourceListItem{
+			Existing: &provisioning.ResourceListItem{
 				Path:     "adsl62h.yaml",
 				Group:    "dashboard.grafana.app",
 				Resource: "dashboards",
@@ -57,10 +58,10 @@ func TestChanges(t *testing.T) {
 		changes, err := Changes(source, target)
 		require.NoError(t, err)
 		require.Len(t, changes, 1)
-		require.Equal(t, FileChange{
-			Action: FileActionUpdated,
+		require.Equal(t, ResourceFileChange{
+			Action: provisioning.FileActionUpdated,
 			Path:   "adsl62h.yaml",
-			DB: &provisioning.ResourceListItem{
+			Existing: &provisioning.ResourceListItem{
 				Path:     "adsl62h.yaml",
 				Group:    "dashboard.grafana.app",
 				Resource: "dashboards",
@@ -71,7 +72,7 @@ func TestChanges(t *testing.T) {
 	})
 }
 
-func getBase(t *testing.T) (source []FileTreeEntry, target *provisioning.ResourceList) {
+func getBase(t *testing.T) (source []repository.FileTreeEntry, target *provisioning.ResourceList) {
 	target = &provisioning.ResourceList{}
 	err := json.Unmarshal([]byte(`{
 		"kind": "ResourceList",
@@ -103,7 +104,7 @@ func getBase(t *testing.T) (source []FileTreeEntry, target *provisioning.Resourc
 	}`), target)
 	require.NoError(t, err)
 
-	source = []FileTreeEntry{
+	source = []repository.FileTreeEntry{
 		{Path: "ad4lwp2.yaml", Hash: "ca83d64b9c4a23fed975aacdf47e7de8878b4ae0", Blob: true},
 		{Path: "adsl62h.yaml", Hash: "ce5d497c4deadde6831162ce8509e2b2b1776237", Blob: true},
 	}

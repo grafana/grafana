@@ -47,25 +47,6 @@ type FileTreeEntry struct {
 	Blob bool
 }
 
-type FileAction string
-
-const (
-	FileActionCreated FileAction = "created"
-	FileActionUpdated FileAction = "updated"
-	FileActionDeleted FileAction = "deleted"
-)
-
-type FileChange struct {
-	// Path to the file in a repository with a change
-	Path   string
-	Action FileAction
-
-	// The current value in the database (may be null for incremental?)
-	DB *provisioning.ResourceListItem
-
-	DeletedRef string // Only needed for git delete
-}
-
 type Repository interface {
 	// The saved Kubernetes object.
 	Config() *provisioning.Repository
@@ -118,12 +99,21 @@ type RepositoryHooks interface {
 	OnDelete(ctx context.Context) error
 }
 
+type VersionedFileChange struct {
+	Action provisioning.FileAction
+	Path   string
+
+	Ref          string
+	PreviousRef  string // rename | update
+	PreviousPath string // rename
+}
+
 // VersionedRepository is a repository that supports versioning
 // this inferface may be extended to make the the original Repository interface
 // more agnostic to the underlying storage system
 type VersionedRepository interface {
 	LatestRef(ctx context.Context) (string, error)
-	CompareFiles(ctx context.Context, base, ref string) ([]FileChange, error)
+	CompareFiles(ctx context.Context, base, ref string) ([]VersionedFileChange, error)
 }
 
 func writeWithReadThenCreateOrUpdate(ctx context.Context, r Repository, path, ref string, data []byte, comment string) error {

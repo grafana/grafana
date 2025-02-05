@@ -92,38 +92,42 @@ func (r *syncer) Sync(ctx context.Context,
 		}
 	}
 
-	syncStatus := &provisioning.SyncStatus{}
-	logger := logging.FromContext(ctx)
 	var err error
-	var changes []repository.FileChange
-	versionedRepo, isVersioned := r.repository.(repository.VersionedRepository)
-	currentRef := ""
+	var errors []string // added to the status response
+	var changes []ResourceFileChange
+	var currentRef string
+	syncStatus := &provisioning.SyncStatus{}
 
-	if isVersioned && versionedRepo != nil {
+	versionedRepo, _ := r.repository.(repository.VersionedRepository)
+	if versionedRepo != nil {
 		currentRef, err = versionedRepo.LatestRef(ctx)
 		if err != nil {
 			return nil, nil, fmt.Errorf("getting latest ref: %w", err)
 		}
+
+		if cfg.Status.Sync.Hash != "" && options.Incremental {
+			if currentRef == cfg.Status.Sync.Hash {
+				message := "same commit as last sync"
+				syncStatus.Hash = currentRef
+				syncStatus.State = provisioning.JobStateSuccess
+				syncStatus.Message = append(syncStatus.Message, message)
+				syncStatus.Incremental = true
+				return &provisioning.JobStatus{
+					State:   provisioning.JobStateSuccess,
+					Message: message,
+				}, syncStatus, nil
+			}
+
+			changes, errors, err = r.getVersionedChanges(ctx, versionedRepo, cfg.Status.Sync.Hash, currentRef)
+			if err != nil {
+				return nil, nil, fmt.Errorf("error getting versioned changes: %w", err)
+			}
+		}
 	}
 
-	if isVersioned && cfg.Status.Sync.Hash != "" && !options.Complete {
-		if currentRef == cfg.Status.Sync.Hash {
-			message := "same commit as last sync"
-			syncStatus.Hash = currentRef
-			syncStatus.State = provisioning.JobStateSuccess
-			syncStatus.Message = append(syncStatus.Message, message)
-			return &provisioning.JobStatus{
-				State:   provisioning.JobStateSuccess,
-				Message: message,
-			}, syncStatus, nil
-		}
-
-		logger.Info("get list of changes", "last_commit", cfg.Status.Sync.Hash, "latest", currentRef)
-		changes, err = versionedRepo.CompareFiles(ctx, cfg.Status.Sync.Hash, currentRef)
-		if err != nil {
-			return nil, nil, fmt.Errorf("compare files: %w", err)
-		}
-	} else {
+	// Read the complete change set
+	if changes == nil {
+		syncStatus.Incremental = false
 		target, err := r.lister.List(ctx, cfg.Namespace, cfg.Name)
 		if err != nil {
 			return nil, nil, fmt.Errorf("error listing current: %w", err)
@@ -132,8 +136,7 @@ func (r *syncer) Sync(ctx context.Context,
 		if err != nil {
 			return nil, nil, fmt.Errorf("error reading tree: %w", err)
 		}
-
-		changes, err = repository.Changes(source, target)
+		changes, err = Changes(source, target)
 		if err != nil {
 			return nil, nil, fmt.Errorf("error calculating changes: %w", err)
 		}
@@ -151,7 +154,7 @@ func (r *syncer) Sync(ctx context.Context,
 	}
 
 	// Now apply the changes
-	status, err := r.replicateChanges(ctx, changes)
+	status, err := r.applyChanges(ctx, changes)
 	if status == nil {
 		status = &provisioning.JobStatus{}
 	}
@@ -167,10 +170,13 @@ func (r *syncer) Sync(ctx context.Context,
 			status.State = provisioning.JobStateSuccess
 		}
 	}
+	if errors != nil {
+		status.Errors = append(status.Errors, errors...)
+	}
 	return status, syncStatus, nil
 }
 
-func (r *syncer) replicateChanges(ctx context.Context, changes []repository.FileChange) (*provisioning.JobStatus, error) {
+func (r *syncer) applyChanges(ctx context.Context, changes []ResourceFileChange) (*provisioning.JobStatus, error) {
 	// Create an empty tree to avoid loading all folders unnecessarily
 	folderTree := resources.NewEmptyFolderTree()
 	summary := provisioning.JobResourceSummary{}
@@ -189,44 +195,26 @@ func (r *syncer) replicateChanges(ctx context.Context, changes []repository.File
 			return status, nil
 		}
 
-		if change.Action == repository.FileActionDeleted {
-			if change.DB == nil {
-				// ??? should we find things in the index with this path?
-				info, err := r.repository.Read(ctx, change.Path, change.DeletedRef)
-				if err != nil {
-					status.Errors = append(status.Errors,
-						fmt.Sprintf("error reading deleted file: %s", change.Path))
-					continue
-				}
-
-				obj, gvk, _ := resources.DecodeYAMLObject(bytes.NewBuffer(info.Data))
-				if obj == nil {
-					status.Errors = append(status.Errors,
-						fmt.Sprintf("no object found in: %s", change.Path))
-					continue
-				}
-
-				// Find the referenced file
-				objName, _ := resources.NamesFromHashedRepoPath(r.repository.Config().Name, change.Path)
-				change.DB = &provisioning.ResourceListItem{
-					Group:    gvk.Group,
-					Resource: getResourceFromGVK(gvk),
-					Name:     objName,
-				}
-			}
-
-			client, err := r.client(change.DB)
-			if err != nil {
-				logger.Warn("unable to get client for deleted object", "file", change.Path, "err", err, "obj", change.DB)
+		if change.Action == provisioning.FileActionDeleted {
+			if change.Existing == nil || change.Existing.Name == "" {
+				logger.Error("deleted file is missing existing reference", "file", change.Path)
 				status.Errors = append(status.Errors,
-					fmt.Sprintf("unsupported object: %s / %s", change.Path, change.DB.Resource))
+					fmt.Sprintf("unable to delete resource from: %s", change.Path))
 				continue
 			}
-			err = client.Delete(ctx, change.DB.Name, metav1.DeleteOptions{})
+
+			client, err := r.client(change.Existing)
+			if err != nil {
+				logger.Warn("unable to get client for deleted object", "file", change.Path, "err", err, "obj", change.Existing)
+				status.Errors = append(status.Errors,
+					fmt.Sprintf("unsupported object: %s / %s", change.Path, change.Existing.Resource))
+				continue
+			}
+			err = client.Delete(ctx, change.Existing.Name, metav1.DeleteOptions{})
 			if err != nil {
 				logger.Warn("deleting error", "file", change.Path, "err", err)
 				status.Errors = append(status.Errors,
-					fmt.Sprintf("error deleting %s: %s // %s", change.DB.Resource, change.DB.Name, change.Path))
+					fmt.Sprintf("error deleting %s: %s // %s", change.Existing.Resource, change.Existing.Name, change.Path))
 			} else {
 				summary.Delete++
 			}
@@ -262,7 +250,7 @@ func (r *syncer) replicateChanges(ctx context.Context, changes []repository.File
 		parsed.Meta.SetResourceVersion("") // clear identifiers
 
 		switch change.Action {
-		case repository.FileActionCreated:
+		case provisioning.FileActionCreated:
 			_, err = parsed.Client.Create(ctx, parsed.Obj, metav1.CreateOptions{})
 			if err != nil {
 				logger.Warn("create error", "file", change.Path, "err", err)
@@ -273,7 +261,7 @@ func (r *syncer) replicateChanges(ctx context.Context, changes []repository.File
 				summary.Create++
 			}
 
-		case repository.FileActionUpdated:
+		case provisioning.FileActionUpdated:
 			_, err = parsed.Client.Update(ctx, parsed.Obj, metav1.UpdateOptions{})
 			if err != nil {
 				logger.Warn("update error", "file", change.Path, "err", err)
@@ -290,6 +278,72 @@ func (r *syncer) replicateChanges(ctx context.Context, changes []repository.File
 
 	status.Summary = []provisioning.JobResourceSummary{summary}
 	return status, nil
+}
+
+// Convert git changes into resource file changes
+func (r *syncer) getVersionedChanges(ctx context.Context, repo repository.VersionedRepository, previousRef, currentRef string) ([]ResourceFileChange, []string, error) {
+	diff, err := repo.CompareFiles(ctx, previousRef, currentRef)
+	if err != nil {
+		return nil, nil, fmt.Errorf("compare files error: %w", err)
+	}
+	var errors []string
+	changes := make([]ResourceFileChange, 0, len(diff)+5)
+	for _, change := range diff {
+		switch change.Action {
+		case provisioning.FileActionCreated, provisioning.FileActionUpdated:
+			changes = append(changes, ResourceFileChange{
+				Path:   change.Path,
+				Action: change.Action,
+			})
+
+		case provisioning.FileActionDeleted:
+			deleteFile, err := r.toDeleteFileChange(ctx, change.Path, change.PreviousRef)
+			if err != nil {
+				errors = append(errors,
+					fmt.Sprintf("error reading deleted file: %s", change.Path))
+				continue
+			}
+			changes = append(changes, deleteFile)
+
+		case provisioning.FileActionRenamed:
+			deleteFile, err := r.toDeleteFileChange(ctx, change.PreviousPath, change.PreviousRef)
+			if err != nil {
+				errors = append(errors,
+					fmt.Sprintf("error reading moved file: %s", change.Path))
+				continue
+			}
+			changes = append(changes, deleteFile, ResourceFileChange{
+				Path:   change.Path,
+				Action: provisioning.FileActionCreated, // rename = delete + create
+			})
+		}
+	}
+	return changes, errors, nil
+}
+
+func (r *syncer) toDeleteFileChange(ctx context.Context, path string, ref string) (ResourceFileChange, error) {
+	change := ResourceFileChange{
+		Path:   path,
+		Action: provisioning.FileActionDeleted,
+	}
+	info, err := r.repository.Read(ctx, path, ref)
+	if err != nil {
+		return change, err
+	}
+
+	obj, gvk, _ := resources.DecodeYAMLObject(bytes.NewBuffer(info.Data))
+	if obj == nil {
+		return change, fmt.Errorf("no object found in: %s", path)
+	}
+
+	// Find the referenced file
+	objName, _ := resources.NamesFromHashedRepoPath(r.repository.Config().Name, path)
+	change.Existing = &provisioning.ResourceListItem{
+		Group:    gvk.Group,
+		Resource: getResourceFromGVK(gvk),
+		Name:     objName,
+	}
+	return change, nil
 }
 
 // ensureFolderPathExists creates the folder structure in the cluster.

@@ -85,7 +85,7 @@ func TestParseWebhooks(t *testing.T) {
 				Repository: "unit-test-repo",
 				Action:     provisioning.JobActionSync,
 				Sync: &provisioning.SyncJobOptions{
-					Complete: false,
+					Incremental: true,
 				},
 			},
 		}},
@@ -95,7 +95,7 @@ func TestParseWebhooks(t *testing.T) {
 				Repository: "unit-test-repo",
 				Action:     provisioning.JobActionSync,
 				Sync: &provisioning.SyncJobOptions{
-					Complete: false,
+					Incremental: true,
 				},
 			},
 		}},
