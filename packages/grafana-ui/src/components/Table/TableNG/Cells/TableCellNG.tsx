@@ -4,6 +4,7 @@ import { TableCellDisplayMode } from '@grafana/schema';
 
 import AutoCell from './AutoCell';
 import { BarGaugeCell } from './BarGaugeCell';
+import { ImageCell } from './ImageCell';
 import { SparklineCell } from './SparklineCell';
 
 // interface TableCellNGProps {
@@ -61,6 +62,9 @@ export function TableCellNG(props: any) {
           width={divWidth}
         />
       );
+      break;
+    case TableCellDisplayMode.Image:
+      cell = <ImageCell value={value} field={field} height={height} />;
       break;
     case TableCellDisplayMode.Auto:
     default:
