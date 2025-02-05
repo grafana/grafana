@@ -26,22 +26,22 @@ func ConvertToLong(frames data.Frames) (data.Frames, error) {
 	if frames[0].Meta != nil && frames[0].Meta.Type != "" {
 		inputType = frames[0].Meta.Type
 	}
-	if inputType != "" && !supportedToLongConversion(inputType) {
-		return frames, fmt.Errorf("unsupported input type %s for SQL expression", inputType)
-	}
 
 	// TODO: Add some guessing of Type if not declared
-
 	if inputType == "" {
-		return frames, fmt.Errorf("could not determine input type")
+		return frames, fmt.Errorf("no input dataframe type set")
 	}
 
-	convert := getToLongConversionFunc(inputType)
-	if convert == nil {
+	if !supportedToLongConversion(inputType) {
+		return frames, fmt.Errorf("unsupported input dataframe type %s for SQL expression", inputType)
+	}
+
+	toLong := getToLongConversionFunc(inputType)
+	if toLong == nil {
 		return frames, fmt.Errorf("could not get conversion function for input type %s", inputType)
 	}
 
-	return convert(frames)
+	return toLong(frames)
 }
 
 func convertNumericMultiToNumericLong(frames data.Frames) (data.Frames, error) {
@@ -61,8 +61,8 @@ func convertNumericMultiToNumericWide(frames data.Frames) data.Frames {
 			newField := data.NewFieldFromFieldType(field.Type(), field.Len())
 			newField.Name = field.Name
 			newField.Labels = field.Labels.Copy()
-			for i := 0; i < field.Len(); i++ {
-				newField.Set(i, field.CopyAt(i))
+			if field.Len() == 1 {
+				newField.Set(0, field.CopyAt(0))
 			}
 			newFrame.Fields = append(newFrame.Fields, newField)
 		}
@@ -105,16 +105,17 @@ func convertNumericWideToNumericLong(frames data.Frames) (data.Frames, error) {
 		if field.Type().Numeric() {
 			if _, ok := uniqueNamesMap[field.Name]; !ok {
 				uniqueNames = append(uniqueNames, field.Name)
+				uniqueNamesMap[field.Name] = field.Type()
+
 			}
-			uniqueNamesMap[field.Name] = field.Type()
 
 			if field.Labels != nil {
+				registerPrint(field.Labels)
 				for key := range field.Labels {
 					if _, ok := uniqueKeysMap[key]; !ok {
 						uniqueKeys = append(uniqueKeys, key)
 					}
 					uniqueKeysMap[key] = struct{}{}
-					registerPrint(field.Labels)
 				}
 			}
 		}
@@ -152,10 +153,10 @@ func convertNumericWideToNumericLong(frames data.Frames) (data.Frames, error) {
 		if !field.Type().Numeric() {
 			continue
 		}
-		rowIdx := prints[field.Labels.Fingerprint().String()]
-		longFrame.Fields[nameIndexMap[field.Name]].Set(rowIdx, field.CopyAt(0))
+		fieldIdx := prints[field.Labels.Fingerprint().String()]
+		longFrame.Fields[nameIndexMap[field.Name]].Set(fieldIdx, field.CopyAt(0))
 		for key, value := range field.Labels {
-			longFrame.Fields[keyIndexMap[key]].Set(rowIdx, value)
+			longFrame.Fields[keyIndexMap[key]].Set(fieldIdx, value)
 		}
 	}
 
@@ -301,13 +302,9 @@ func convertErr(_ data.Frames) (data.Frames, error) {
 
 func supportedToLongConversion(inputType data.FrameType) bool {
 	switch inputType {
-	case data.FrameTypeNumericMulti:
+	case data.FrameTypeNumericMulti, data.FrameTypeNumericWide:
 		return true
-	case data.FrameTypeNumericWide:
-		return true
-	case data.FrameTypeTimeSeriesMulti:
-		return true
-	case data.FrameTypeTimeSeriesWide:
+	case data.FrameTypeTimeSeriesMulti, data.FrameTypeTimeSeriesWide:
 		return true
 	default:
 		return false
