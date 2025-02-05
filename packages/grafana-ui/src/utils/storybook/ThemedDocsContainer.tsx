@@ -13,6 +13,8 @@ type Props = {
 };
 
 export const ThemedDocsContainer = ({ children, context }: Props) => {
+  // Default to system theme for pages that don't have associated stories
+  // Currently this is only the case for the docs `Intro` page
   let themeId = 'system';
   if (context.componentStories().length > 0) {
     const story = context.storyById();
