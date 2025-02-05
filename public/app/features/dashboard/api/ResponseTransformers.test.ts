@@ -111,7 +111,6 @@ describe('ResponseTransformers', () => {
         timepicker: {
           refresh_intervals: ['5s', '10s', '30s'],
           hidden: false,
-          time_options: ['5m', '15m', '1h'],
           nowDelay: '1m',
           quick_ranges: [
             {
@@ -749,7 +748,6 @@ describe('ResponseTransformers', () => {
       expect(dashboard.refresh).toBe(dashboardV2.spec.timeSettings.autoRefresh);
       expect(dashboard.timepicker?.refresh_intervals).toEqual(dashboardV2.spec.timeSettings.autoRefreshIntervals);
       expect(dashboard.timepicker?.hidden).toBe(dashboardV2.spec.timeSettings.hideTimepicker);
-      expect(dashboard.timepicker?.time_options).toEqual(dashboardV2.spec.timeSettings.quickRanges);
       expect(dashboard.timepicker?.nowDelay).toBe(dashboardV2.spec.timeSettings.nowDelay);
       expect(dashboard.fiscalYearStartMonth).toBe(dashboardV2.spec.timeSettings.fiscalYearStartMonth);
       expect(dashboard.weekStart).toBe(dashboardV2.spec.timeSettings.weekStart);
