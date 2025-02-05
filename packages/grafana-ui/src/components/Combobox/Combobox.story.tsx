@@ -8,7 +8,7 @@ import { Field } from '../Forms/Field';
 
 import { Combobox, ComboboxProps } from './Combobox';
 import mdx from './Combobox.mdx';
-import { fakeSearchAPI, generateOptions } from './storyUtils';
+import { fakeSearchAPI, generateGroupingOptions, generateOptions } from './storyUtils';
 import { ComboboxOption } from './types';
 
 type PropsAndCustomArgs<T extends string | number = string> = ComboboxProps<T> & {
@@ -194,7 +194,41 @@ export const ManyOptions: Story = {
     );
   },
 };
+export const ManyOptionsWithGroups: Story = {
+  args: {
+    numberOfOptions: 1e4,
+    options: undefined,
+    value: undefined,
+  },
+  render: ({ numberOfOptions, ...args }: PropsAndCustomArgs) => {
+    const [dynamicArgs, setArgs] = useArgs();
+    const [options, setOptions] = useState<ComboboxOption[]>([]);
 
+    useEffect(() => {
+      setTimeout(() => {
+        generateGroupingOptions(numberOfOptions).then((options) => {
+          setOptions(options);
+          setArgs({ value: options[5].value });
+        });
+      }, 1000);
+    }, [numberOfOptions, setArgs]);
+
+    const { onChange, ...rest } = args;
+    return (
+      <Field label="Test input" description={options.length ? 'Input with a few options' : 'Preparing options...'}>
+        <Combobox
+          {...rest}
+          {...dynamicArgs}
+          options={options}
+          onChange={(value: ComboboxOption | null) => {
+            setArgs({ value: value?.value || null });
+            onChangeAction(value);
+          }}
+        />
+      </Field>
+    );
+  },
+};
 function loadOptionsWithLabels(inputValue: string) {
   loadOptionsAction(inputValue);
   return fakeSearchAPI(`http://example.com/search?errorOnQuery=break&query=${inputValue}`);
