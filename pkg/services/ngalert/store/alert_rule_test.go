@@ -93,7 +93,7 @@ func TestIntegrationUpdateAlertRules(t *testing.T) {
 			require.Truef(t, exist, fmt.Sprintf("rule with ID %d does not exist", rule.ID))
 			return err
 		})
-
+  
 		require.NoError(t, err)
 		require.Equal(t, rule.Version+1, dbrule.Version)
 	})
