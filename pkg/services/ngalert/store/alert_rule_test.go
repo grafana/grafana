@@ -93,7 +93,7 @@ func TestIntegrationUpdateAlertRules(t *testing.T) {
 			require.Truef(t, exist, fmt.Sprintf("rule with ID %d does not exist", rule.ID))
 			return err
 		})
-  
+
 		require.NoError(t, err)
 		require.Equal(t, rule.Version+1, dbrule.Version)
 	})
@@ -1558,6 +1558,7 @@ func TestGetRuleVersions(t *testing.T) {
 	gen = gen.With(gen.WithIntervalMatching(store.Cfg.BaseInterval), gen.WithOrgID(orgID), gen.WithVersion(1))
 
 	inserted, err := store.InsertAlertRules(context.Background(), &models.AlertingUserUID, []models.AlertRule{gen.Generate()})
+	require.NoError(t, err)
 	ruleV1, err := store.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{UID: inserted[0].UID})
 	require.NoError(t, err)
 	ruleV2 := models.CopyRule(ruleV1, gen.WithTitle(util.GenerateShortUID()), gen.WithGroupIndex(rand.Int()))
