@@ -41,6 +41,7 @@ export default function CheckboxCell({
       value={state === SelectionState.Selected}
       indeterminate={state === SelectionState.Mixed}
       onChange={(ev) => onItemSelectionChange?.(item, ev.currentTarget.checked)}
+      disabled={Boolean(item.repository)}
     />
   );
 }

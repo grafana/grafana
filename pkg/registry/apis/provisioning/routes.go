@@ -17,11 +17,6 @@ import (
 
 // GetAPIRoutes implements the direct HTTP handlers that bypass k8s
 func (b *APIBuilder) GetAPIRoutes() *builder.APIRoutes {
-	defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
-
-	schemaStats := defs["github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ResourceStats"].Schema
-	schemaSettings := defs["github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.Settings"].Schema
-
 	return &builder.APIRoutes{
 		Namespace: []builder.APIRouteHandler{
 			{
@@ -52,7 +47,11 @@ func (b *APIBuilder) GetAPIRoutes() *builder.APIRoutes {
 												Content: map[string]*spec3.MediaType{
 													"application/json": {
 														MediaTypeProps: spec3.MediaTypeProps{
-															Schema: &schemaStats,
+															Schema: &spec.Schema{
+																SchemaProps: spec.SchemaProps{
+																	Ref: spec.MustCreateRef("#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ResourceStats"),
+																},
+															},
 														},
 													},
 												},
@@ -94,7 +93,11 @@ func (b *APIBuilder) GetAPIRoutes() *builder.APIRoutes {
 												Content: map[string]*spec3.MediaType{
 													"application/json": {
 														MediaTypeProps: spec3.MediaTypeProps{
-															Schema: &schemaSettings,
+															Schema: &spec.Schema{
+																SchemaProps: spec.SchemaProps{
+																	Ref: spec.MustCreateRef("#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.RepositoryViewList"),
+																},
+															},
 														},
 													},
 												},
@@ -142,18 +145,16 @@ func (b *APIBuilder) handleSettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	settings := provisioning.Settings{
-		Repository: make(map[string]provisioning.RepositoryView, len(all)+2),
+	settings := provisioning.RepositoryViewList{
+		Items: make([]provisioning.RepositoryView, len(all)),
 	}
-	for _, val := range all {
-		settings.Repository[val.Name] = provisioning.RepositoryView{
+	for i, val := range all {
+		settings.Items[i] = provisioning.RepositoryView{
+			Name:     val.ObjectMeta.Name,
 			Title:    val.Spec.Title,
 			Type:     val.Spec.Type,
 			ReadOnly: val.Spec.ReadOnly,
 			Target:   val.Spec.Sync.Target,
-		}
-		if val.Spec.Sync.Target == provisioning.SyncTargetTypeInstance {
-			settings.Instance = val.Name
 		}
 	}
 	w.Header().Set("Content-Type", "application/json")

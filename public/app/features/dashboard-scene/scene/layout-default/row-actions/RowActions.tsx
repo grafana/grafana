@@ -11,14 +11,16 @@ import {
 } from '@grafana/scenes';
 import { Icon, TextLink, useStyles2 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
+import { t, Trans } from 'app/core/internationalization';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
+import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
-import { getDashboardSceneFor, getQueryRunnerFor } from '../../utils/utils';
-import { DashboardScene } from '../DashboardScene';
+import { getDashboardSceneFor, getQueryRunnerFor } from '../../../utils/utils';
+import { DashboardScene } from '../../DashboardScene';
+import { DashboardGridItem } from '../DashboardGridItem';
+import { DefaultGridLayoutManager } from '../DefaultGridLayoutManager';
 import { RowRepeaterBehavior } from '../RowRepeaterBehavior';
-import { DashboardGridItem } from '../layout-default/DashboardGridItem';
-import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
 
 import { RowOptionsButton } from './RowOptionsButton';
 
@@ -75,9 +77,12 @@ export class RowActions extends SceneObjectBase<RowActionsState> {
   public onDelete = () => {
     appEvents.publish(
       new ShowConfirmModalEvent({
-        title: 'Delete row',
-        text: 'Are you sure you want to remove this row and all its panels?',
-        altActionText: 'Delete row only',
+        title: t('dashboard.default-layout.row-actions.modal.title', 'Delete row'),
+        text: t(
+          'dashboard.default-layout.row-actions.modal.text',
+          'Are you sure you want to remove this row and all its panels?'
+        ),
+        altActionText: t('dashboard.default-layout.row-actions.modal.alt-action', 'Delete row only'),
         icon: 'trash-alt',
         onConfirm: () => this.removeRow(true),
         onAltAction: () => this.removeRow(),
@@ -97,7 +102,11 @@ export class RowActions extends SceneObjectBase<RowActionsState> {
       const vizPanel = gridItem.state.body;
       if (vizPanel instanceof VizPanel) {
         const runner = getQueryRunnerFor(vizPanel);
-        return runner?.state.datasource?.uid === SHARED_DASHBOARD_QUERY;
+        return (
+          runner?.state.datasource?.uid === SHARED_DASHBOARD_QUERY ||
+          (runner?.state.datasource?.uid === MIXED_DATASOURCE_NAME &&
+            runner?.state.queries.some((query) => query.datasource?.uid === SHARED_DASHBOARD_QUERY))
+        );
       }
 
       return false;
@@ -107,8 +116,10 @@ export class RowActions extends SceneObjectBase<RowActionsState> {
       return (
         <div>
           <p>
-            Panels in this row use the {SHARED_DASHBOARD_QUERY} data source. These panels will reference the panel in
-            the original row, not the ones in the repeated rows.
+            <Trans i18nKey="dashboard.default-layout.row-actions.repeat.warning.text">
+              Panels in this row use the {{ SHARED_DASHBOARD_QUERY }} data source. These panels will reference the panel
+              in the original row, not the ones in the repeated rows.
+            </Trans>
           </p>
           <TextLink
             external
@@ -116,7 +127,7 @@ export class RowActions extends SceneObjectBase<RowActionsState> {
               'https://grafana.com/docs/grafana/latest/dashboards/build-dashboards/create-dashboard/#configure-repeating-rows'
             }
           >
-            Learn more
+            <Trans i18nKey="dashboard.default-layout.row-actions.repeat.warning.learn-more">Learn more</Trans>
           </TextLink>
         </div>
       );
@@ -146,7 +157,11 @@ export class RowActions extends SceneObjectBase<RowActionsState> {
                 onUpdate={model.onUpdate}
                 warning={model.getWarning()}
               />
-              <button type="button" onClick={model.onDelete} aria-label="Delete row">
+              <button
+                type="button"
+                onClick={model.onDelete}
+                aria-label={t('dashboard.default-layout.row-actions.delete', 'Delete row')}
+              >
                 <Icon name="trash-alt" />
               </button>
             </div>

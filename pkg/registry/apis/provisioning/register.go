@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -407,10 +408,6 @@ func (b *APIBuilder) verifySingleInstanceTarget(cfg *provisioning.Repository) *f
 	return nil
 }
 
-func (b *APIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
-	return provisioning.GetOpenAPIDefinitions
-}
-
 func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartHookFunc, error) {
 	postStartHooks := map[string]genericapiserver.PostStartHookFunc{
 		"grafana-provisioning": func(postStartHookCtx genericapiserver.PostStartHookContext) error {
@@ -463,6 +460,10 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 		},
 	}
 	return postStartHooks, nil
+}
+
+func (b *APIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
+	return provisioning.GetOpenAPIDefinitions
 }
 
 func (b *APIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
@@ -691,11 +692,46 @@ spec:
 		}
 	}
 
-	// The root API discovery list
-	sub = oas.Paths.Paths[root]
-	if sub != nil && sub.Get != nil {
-		sub.Get.Tags = []string{"API Discovery"} // sorts first in the list
+	// Add any missing definitions
+	//-----------------------------
+	for k, v := range defs {
+		clean := strings.Replace(k, defsBase, "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.", 1)
+		if oas.Components.Schemas[clean] == nil {
+			oas.Components.Schemas[clean] = &v.Schema
+		}
 	}
+	compBase := "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1."
+	schema := oas.Components.Schemas[compBase+"ResourceStats"].Properties["items"]
+	schema.Items = &spec.SchemaOrArray{
+		Schema: &spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				AllOf: []spec.Schema{
+					{
+						SchemaProps: spec.SchemaProps{
+							Ref: spec.MustCreateRef("#/components/schemas/" + compBase + "ResourceCount"),
+						},
+					},
+				},
+			},
+		},
+	}
+	oas.Components.Schemas[compBase+"ResourceStats"].Properties["items"] = schema
+
+	schema = oas.Components.Schemas[compBase+"RepositoryViewList"].Properties["items"]
+	schema.Items = &spec.SchemaOrArray{
+		Schema: &spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				AllOf: []spec.Schema{
+					{
+						SchemaProps: spec.SchemaProps{
+							Ref: spec.MustCreateRef("#/components/schemas/" + compBase + "RepositoryView"),
+						},
+					},
+				},
+			},
+		},
+	}
+	oas.Components.Schemas[compBase+"RepositoryViewList"].Properties["items"] = schema
 
 	return oas, nil
 }

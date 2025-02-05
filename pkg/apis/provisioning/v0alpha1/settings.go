@@ -6,17 +6,17 @@ import (
 
 // Summary shows a view of the configuration that is sanitized and is OK for logged in users to see
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type Settings struct {
+type RepositoryViewList struct {
 	metav1.TypeMeta `json:",inline"`
 
-	// When a repository is configured to save everything in instance
-	Instance string `json:"instance,omitempty"`
-
-	// The basic repository settings
-	Repository map[string]RepositoryView `json:"repository"`
+	// +mapType=atomic
+	Items []RepositoryView `json:"items"`
 }
 
 type RepositoryView struct {
+	// The k8s name for this repository
+	Name string `json:"name"`
+
 	// Repository display
 	Title string `json:"title"`
 

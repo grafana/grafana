@@ -3,6 +3,21 @@
 package v0alpha1
 
 // +k8s:openapi-gen=true
+type CheckReportError struct {
+	// Severity of the error
+	Severity CheckReportErrorSeverity `json:"severity"`
+	// Human readable reason for the error
+	Reason string `json:"reason"`
+	// Action to take to resolve the error
+	Action string `json:"action"`
+}
+
+// NewCheckReportError creates a new CheckReportError object.
+func NewCheckReportError() *CheckReportError {
+	return &CheckReportError{}
+}
+
+// +k8s:openapi-gen=true
 type CheckstatusOperatorState struct {
 	// lastEvaluation is the ResourceVersion last evaluated
 	LastEvaluation string `json:"lastEvaluation"`
@@ -38,6 +53,14 @@ func NewCheckStatus() *CheckStatus {
 }
 
 // +k8s:openapi-gen=true
+type CheckReportErrorSeverity string
+
+const (
+	CheckReportErrorSeverityHigh CheckReportErrorSeverity = "high"
+	CheckReportErrorSeverityLow  CheckReportErrorSeverity = "low"
+)
+
+// +k8s:openapi-gen=true
 type CheckStatusOperatorStateState string
 
 const (
@@ -47,34 +70,11 @@ const (
 )
 
 // +k8s:openapi-gen=true
-type CheckStatusSeverity string
-
-const (
-	CheckStatusSeverityHigh CheckStatusSeverity = "high"
-	CheckStatusSeverityLow  CheckStatusSeverity = "low"
-)
-
-// +k8s:openapi-gen=true
-type CheckV0alpha1StatusReportErrors struct {
-	// Severity of the error
-	Severity CheckStatusSeverity `json:"severity"`
-	// Human readable reason for the error
-	Reason string `json:"reason"`
-	// Action to take to resolve the error
-	Action string `json:"action"`
-}
-
-// NewCheckV0alpha1StatusReportErrors creates a new CheckV0alpha1StatusReportErrors object.
-func NewCheckV0alpha1StatusReportErrors() *CheckV0alpha1StatusReportErrors {
-	return &CheckV0alpha1StatusReportErrors{}
-}
-
-// +k8s:openapi-gen=true
 type CheckV0alpha1StatusReport struct {
 	// Number of elements analyzed
 	Count int64 `json:"count"`
 	// List of errors
-	Errors []CheckV0alpha1StatusReportErrors `json:"errors"`
+	Errors []CheckReportError `json:"errors"`
 }
 
 // NewCheckV0alpha1StatusReport creates a new CheckV0alpha1StatusReport object.
