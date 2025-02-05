@@ -20,19 +20,6 @@ import { getDOMId, NestedFolderList } from './NestedFolderList';
 import Trigger from './Trigger';
 import { ROOT_FOLDER_ITEM, useFoldersQuery } from './useFoldersQuery';
 import { useTreeInteractions } from './useTreeInteractions';
-const debouncedSearch = debounce(getSearchResults, 300);
-
-async function getSearchResults(searchQuery: string, permission?: PermissionLevelString) {
-  const queryResponse = await getGrafanaSearcher().search({
-    query: searchQuery,
-    kind: ['folder'],
-    limit: 100,
-    permission: permission,
-  });
-
-  const items = queryResponse.view.map((v) => queryResultToViewItem(v, queryResponse.view));
-  return { ...queryResponse, items };
-}
 
 export interface NestedFolderPickerProps {
   /* Folder UID to show as selected */
@@ -55,6 +42,20 @@ export interface NestedFolderPickerProps {
 
   /* Whether the picker should be clearable */
   clearable?: boolean;
+}
+
+const debouncedSearch = debounce(getSearchResults, 300);
+
+async function getSearchResults(searchQuery: string, permission?: PermissionLevelString) {
+  const queryResponse = await getGrafanaSearcher().search({
+    query: searchQuery,
+    kind: ['folder'],
+    limit: 100,
+    permission,
+  });
+
+  const items = queryResponse.view.map((v) => queryResultToViewItem(v, queryResponse.view));
+  return { ...queryResponse, items };
 }
 
 export function NestedFolderPicker({

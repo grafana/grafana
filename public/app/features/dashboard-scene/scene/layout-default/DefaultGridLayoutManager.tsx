@@ -11,6 +11,7 @@ import {
   SceneGridItemLike,
 } from '@grafana/scenes';
 import { GRID_COLUMN_COUNT } from 'app/core/constants';
+import { t } from 'app/core/internationalization';
 
 import { isClonedKey, joinCloneKeys } from '../../utils/clone';
 import {
@@ -42,8 +43,12 @@ export class DefaultGridLayoutManager
   public readonly isDashboardLayoutManager = true;
 
   public static readonly descriptor = {
-    name: 'Default grid',
-    description: 'The default grid layout',
+    get name() {
+      return t('dashboard.default-layout.name', 'Default grid');
+    },
+    get description() {
+      return t('dashboard.default-layout.description', 'The default grid layout');
+    },
     id: 'default-grid',
     createFromLayout: DefaultGridLayoutManager.createFromLayout,
   };
