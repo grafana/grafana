@@ -82,7 +82,9 @@ func convertNumericWideToNumericLong(frames data.Frames) (data.Frames, error) {
 		return nil, fmt.Errorf("expected no more than one row in the frame, but got %d", inputFrame.Rows())
 	}
 
-	// Gather Unique Label Keys from each numeric, and unique numeric field names,
+	// Gather:
+	// - unique numeric Field Names, and
+	// - unique Label Keys (from Numeric Fields only)
 	// each one maps to a field in the output long Frame.
 	uniqueNames := make([]string, 0)
 	uniqueKeys := make([]string, 0)
@@ -132,7 +134,7 @@ func convertNumericWideToNumericLong(frames data.Frames) (data.Frames, error) {
 		nameIndexMap[name] = i
 	}
 
-	// Create the String field, tracking the index of each field by key
+	// Create the String fields, tracking the index of each field by key
 	var keyIndexMap = make(map[string]int, len(uniqueKeys))
 	for i, k := range uniqueKeys {
 		fields = append(fields, data.NewField(k, nil, make([]string, len(prints))))
@@ -157,7 +159,6 @@ func convertNumericWideToNumericLong(frames data.Frames) (data.Frames, error) {
 		}
 	}
 
-	// Create new Frame
 	return data.Frames{longFrame}, nil
 }
 
