@@ -250,7 +250,7 @@ func (l *LibraryElementService) deleteLibraryElement(c context.Context, signedIn
 		}
 
 		// then find the dashboards that were supposed to be connected to this element
-		_, requester := identity.WithServiceIdentitiy(c, signedInUser.GetOrgID())
+		_, requester := identity.WithServiceIdentity(c, signedInUser.GetOrgID())
 		dashs, err := l.dashboardsService.FindDashboards(c, &dashboards.FindPersistedDashboardsQuery{
 			OrgId:        signedInUser.GetOrgID(),
 			DashboardIds: dashboardIDs,

@@ -23,8 +23,10 @@ import {
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core/constants';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 
+import { getCloneKey } from '../../utils/clone';
 import { getMultiVariableValues, getQueryRunnerFor } from '../../utils/utils';
-import { DashboardLayoutItem, DashboardRepeatsProcessedEvent } from '../types';
+import { DashboardLayoutItem } from '../types/DashboardLayoutItem';
+import { DashboardRepeatsProcessedEvent } from '../types/DashboardRepeatsProcessedEvent';
 
 import { getDashboardGridItemOptions } from './DashboardGridItemEditor';
 
@@ -45,6 +47,8 @@ export class DashboardGridItem
 {
   private _prevRepeatValues?: VariableValueSingle[];
   protected _variableDependency = new DashboardGridItemVariableDependencyHandler(this);
+
+  public readonly isDashboardLayoutItem = true;
 
   public constructor(state: DashboardGridItemState) {
     super(state);
@@ -138,7 +142,7 @@ export class DashboardGridItem
             }),
           ],
         }),
-        key: `${panelToRepeat.state.key}-clone-${index}`,
+        key: getCloneKey(panelToRepeat.state.key!, index),
       };
       const clone = panelToRepeat.clone(cloneState);
       repeatedPanels.push(clone);
@@ -186,11 +190,6 @@ export class DashboardGridItem
 
     this.setState(stateUpdate);
   }
-
-  /**
-   * DashboardLayoutItem interface start
-   */
-  public isDashboardLayoutItem: true = true;
 
   /**
    * Returns options for panel edit

@@ -294,7 +294,8 @@
       "metadata": {
         "name": "alertingNoNormalState",
         "resourceVersion": "1718727528075",
-        "creationTimestamp": "2023-01-13T23:29:29Z"
+        "creationTimestamp": "2023-01-13T23:29:29Z",
+        "deletionTimestamp": "2025-01-31T15:46:31Z"
       },
       "spec": {
         "description": "Stop maintaining state of alerts that are not firing",
@@ -546,7 +547,8 @@
       "metadata": {
         "name": "authAPIAccessTokenAuth",
         "resourceVersion": "1718727528075",
-        "creationTimestamp": "2024-04-02T15:45:15Z"
+        "creationTimestamp": "2024-04-02T15:45:15Z",
+        "deletionTimestamp": "2025-02-04T14:58:33Z"
       },
       "spec": {
         "description": "Enables the use of Auth API access tokens for authentication",
@@ -1528,16 +1530,16 @@
     {
       "metadata": {
         "name": "exploreMetrics",
-        "resourceVersion": "1720021873452",
+        "resourceVersion": "1737658563230",
         "creationTimestamp": "2024-04-09T18:15:18Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2024-07-03 15:51:13.452477 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2025-01-23 18:56:03.23086 +0000 UTC"
         }
       },
       "spec": {
         "description": "Enables the new Explore Metrics core app",
         "stage": "GA",
-        "codeowner": "@grafana/dashboards-squad",
+        "codeowner": "@grafana/observability-metrics",
         "frontend": true,
         "expression": "true"
       }
@@ -1553,6 +1555,24 @@
         "stage": "experimental",
         "codeowner": "@grafana/observability-metrics",
         "frontend": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "exploreMetricsUseExternalAppPlugin",
+        "resourceVersion": "1738596266973",
+        "creationTimestamp": "2025-01-21T23:24:50Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-02-03 15:24:26.973231 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Use the externalized Metrics Drilldown (formerly known as Explore Metrics) app plugin",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-metrics",
+        "frontend": true,
+        "requiresRestart": true,
         "hideFromDocs": true
       }
     },
@@ -2689,6 +2709,19 @@
     },
     {
       "metadata": {
+        "name": "newLogsPanel",
+        "resourceVersion": "1738344859933",
+        "creationTimestamp": "2025-01-31T17:34:19Z"
+      },
+      "spec": {
+        "description": "Enables the new logs panel in Explore",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-logs",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
         "name": "newPDFRendering",
         "resourceVersion": "1735810618168",
         "creationTimestamp": "2024-02-08T12:09:34Z",
@@ -2794,6 +2827,7 @@
         "name": "openSearchBackendFlowEnabled",
         "resourceVersion": "1724141158995",
         "creationTimestamp": "2024-06-17T09:41:50Z",
+        "deletionTimestamp": "2025-01-16T11:09:59Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-08-20 08:05:58.995762 +0000 UTC"
         }
@@ -3721,17 +3755,18 @@
     {
       "metadata": {
         "name": "teamHttpHeaders",
-        "resourceVersion": "1726836253132",
+        "resourceVersion": "1738590709387",
         "creationTimestamp": "2023-10-17T10:23:54Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2024-09-20 12:44:13.132845 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2025-02-03 13:51:49.3871 +0000 UTC"
         }
       },
       "spec": {
         "description": "Enables LBAC for datasources to apply LogQL filtering of logs to the client requests for users in teams",
         "stage": "preview",
         "codeowner": "@grafana/identity-access-team",
-        "allowSelfServe": true
+        "allowSelfServe": true,
+        "expression": "true"
       }
     },
     {
