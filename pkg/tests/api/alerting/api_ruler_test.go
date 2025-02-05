@@ -1583,7 +1583,6 @@ func TestIntegrationRuleCreate(t *testing.T) {
 						},
 					},
 					GrafanaManagedAlert: &apimodels.GettableGrafanaRule{
-						OrgID:     1,
 						Title:     "test1 rule1",
 						Condition: "A",
 						Data: []apimodels.AlertQuery{
