@@ -592,6 +592,7 @@ export function histogramFieldsToFrame(info: HistogramFields, theme?: GrafanaThe
       type: DataFrameType.Histogram,
     },
     fields: [info.xMin, info.xMax, ...info.counts],
+    refId: `${DataTransformerID.histogram}`,
   };
 }
 

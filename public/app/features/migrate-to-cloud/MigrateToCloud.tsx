@@ -24,15 +24,23 @@ export default function MigrateToCloud() {
         }
       >
         <Trans i18nKey="migrate-to-cloud.public-preview.message">
-          No SLAs are available yet.{' '}
           <TextLink
-            href="https://grafana.com/docs/grafana-cloud/account-management/migration-guide/#grafana-cloud-migration-assistant"
+            href="https://grafana.com/docs/grafana-cloud/account-management/migration-guide/cloud-migration-assistant/"
             external
           >
             Visit our docs
           </TextLink>{' '}
           to learn more about this feature!
         </Trans>
+        {config.cloudMigrationIsTarget && (
+          <>
+            &nbsp;
+            <Trans i18nKey="migrate-to-cloud.public-preview.message-cloud">
+              Your self-managed instance of Grafana requires version 11.5+, or 11.2+ with the onPremToCloudMigrations
+              feature flag enabled.
+            </Trans>
+          </>
+        )}
       </Alert>
       {config.cloudMigrationIsTarget ? <CloudPage /> : <OnPremPage />}
     </Page>

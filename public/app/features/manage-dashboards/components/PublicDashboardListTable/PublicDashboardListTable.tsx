@@ -8,7 +8,6 @@ import { config, reportInteraction } from '@grafana/runtime';
 import {
   Card,
   EmptyState,
-  HorizontalGroup,
   LinkButton,
   Pagination,
   Spinner,
@@ -191,14 +190,12 @@ export const PublicDashboardListTable = () => {
                     </li>
                   ))}
                 </ul>
-                <HorizontalGroup justify="flex-end">
-                  <Pagination
-                    onNavigate={setPage}
-                    currentPage={paginatedPublicDashboards.page}
-                    numberOfPages={paginatedPublicDashboards.totalPages}
-                    hideWhenSinglePage
-                  />
-                </HorizontalGroup>
+                <Pagination
+                  onNavigate={setPage}
+                  currentPage={paginatedPublicDashboards.page}
+                  numberOfPages={paginatedPublicDashboards.totalPages}
+                  hideWhenSinglePage
+                />
               </>
             )}
           </div>

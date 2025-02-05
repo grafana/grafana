@@ -10,6 +10,7 @@ import {
   IntervalVariable,
   QueryVariable,
   SceneGridLayout,
+  SceneGridRow,
   SceneRefreshPicker,
   SceneTimePicker,
   SceneTimeRange,
@@ -31,6 +32,7 @@ import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
+import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior';
 
 import { transformSceneToSaveModelSchemaV2 } from './transformSceneToSaveModelSchemaV2';
 
@@ -85,6 +87,7 @@ describe('transformSceneToSaveModelSchemaV2', () => {
     // with all the possible properties set
     dashboardScene = setupDashboardScene({
       $data: new DashboardDataLayerSet({ annotationLayers }),
+      id: 1,
       title: 'Test Dashboard',
       description: 'Test Description',
       preload: true,
@@ -139,6 +142,8 @@ describe('transformSceneToSaveModelSchemaV2', () => {
           isLazy: false,
           children: [
             new DashboardGridItem({
+              y: 0,
+              height: 10,
               body: new VizPanel({
                 key: 'panel-1',
                 pluginId: 'timeseries',
@@ -171,11 +176,36 @@ describe('transformSceneToSaveModelSchemaV2', () => {
               // repeatDirection?: RepeatDirection,
               // maxPerRow?: number,
             }),
+            new SceneGridRow({
+              key: 'panel-4',
+              title: 'Test Row',
+              y: 10,
+              $behaviors: [new RowRepeaterBehavior({ variableName: 'customVar' })],
+              children: [
+                new DashboardGridItem({
+                  y: 11,
+                  body: new VizPanel({
+                    key: 'panel-2',
+                    pluginId: 'graph',
+                    title: 'Test Panel 2',
+                    description: 'Test Description 2',
+                    fieldConfig: { defaults: {}, overrides: [] },
+                    displayMode: 'transparent',
+                    pluginVersion: '7.0.0',
+                    $timeRange: new SceneTimeRange({
+                      timeZone: 'UTC',
+                      from: 'now-3h',
+                      to: 'now',
+                    }),
+                  }),
+                }),
+              ],
+            }),
           ],
         }),
       }),
       meta: {},
-      editPane: new DashboardEditPane({}),
+      editPane: new DashboardEditPane(),
       $behaviors: [
         new behaviors.CursorSync({
           sync: DashboardCursorSyncV1.Crosshair,
@@ -328,7 +358,7 @@ describe('transformSceneToSaveModelSchemaV2', () => {
     // Check that the annotation layers are correctly transformed
     expect(result.annotations).toHaveLength(3);
     // check annotation layer 3 with no datasource has the default datasource defined as type
-    expect(result.annotations?.[2].spec.query.kind).toBe('loki');
+    expect(result.annotations?.[2].spec.datasource?.type).toBe('loki');
   });
 });
 

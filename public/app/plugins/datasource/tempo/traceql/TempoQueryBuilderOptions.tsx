@@ -1,10 +1,12 @@
+import { css } from '@emotion/css';
 import * as React from 'react';
 
-import { EditorField, EditorRow } from '@grafana/experimental';
-import { AutoSizeInput, RadioButtonGroup } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { EditorField, EditorRow } from '@grafana/plugin-ui';
+import { AutoSizeInput, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 
 import { QueryOptionGroup } from '../_importedDependencies/datasources/prometheus/QueryOptionGroup';
-import { SearchTableType } from '../dataquery.gen';
+import { SearchTableType, MetricsQueryType } from '../dataquery.gen';
 import { DEFAULT_LIMIT, DEFAULT_SPSS } from '../datasource';
 import { TempoQuery } from '../types';
 
@@ -28,12 +30,18 @@ const parseIntWithFallback = (val: string, fallback: number) => {
 };
 
 export const TempoQueryBuilderOptions = React.memo<Props>(({ onChange, query, isStreaming }) => {
+  const styles = useStyles2(getStyles);
+
   if (!query.hasOwnProperty('limit')) {
     query.limit = DEFAULT_LIMIT;
   }
 
   if (!query.hasOwnProperty('tableType')) {
     query.tableType = SearchTableType.Traces;
+  }
+
+  if (!query.hasOwnProperty('metricsQueryType')) {
+    query.metricsQueryType = MetricsQueryType.Range;
   }
 
   const onLimitChange = (e: React.FormEvent<HTMLInputElement>) => {
@@ -45,22 +53,42 @@ export const TempoQueryBuilderOptions = React.memo<Props>(({ onChange, query, is
   const onTableTypeChange = (val: SearchTableType) => {
     onChange({ ...query, tableType: val });
   };
+  const onMetricsQueryTypeChange = (val: MetricsQueryType) => {
+    onChange({ ...query, metricsQueryType: val });
+  };
   const onStepChange = (e: React.FormEvent<HTMLInputElement>) => {
     onChange({ ...query, step: e.currentTarget.value });
   };
 
-  const collapsedInfoList = [
+  // There's a bug in Tempo which causes the exemplars param to be ignored. It's commented out for now.
+
+  // const onExemplarsChange = (e: React.FormEvent<HTMLInputElement>) => {
+  //   const exemplars = parseInt(e.currentTarget.value, 10);
+  //   if (!isNaN(exemplars) && exemplars >= 0) {
+  //     onChange({ ...query, exemplars });
+  //   } else {
+  //     onChange({ ...query, exemplars: undefined });
+  //   }
+  // };
+
+  const collapsedSearchOptions = [
     `Limit: ${query.limit || DEFAULT_LIMIT}`,
     `Spans Limit: ${query.spss || DEFAULT_SPSS}`,
     `Table Format: ${query.tableType === SearchTableType.Traces ? 'Traces' : 'Spans'}`,
-    `Step: ${query.step || 'auto'}`,
+    '|',
     `Streaming: ${isStreaming ? 'Enabled' : 'Disabled'}`,
   ];
 
+  const collapsedMetricsOptions = [
+    `Step: ${query.step || 'auto'}`,
+    `Type: ${query.metricsQueryType === MetricsQueryType.Range ? 'Range' : 'Instant'}`,
+    // `Exemplars: ${query.exemplars !== undefined ? query.exemplars : 'auto'}`,
+  ];
+
   return (
-    <>
-      <EditorRow>
-        <QueryOptionGroup title="Options" collapsedInfo={collapsedInfoList}>
+    <EditorRow>
+      <div className={styles.options}>
+        <QueryOptionGroup title="Search Options" collapsedInfo={collapsedSearchOptions}>
           <EditorField label="Limit" tooltip="Maximum number of traces to return.">
             <AutoSizeInput
               className="width-4"
@@ -93,6 +121,12 @@ export const TempoQueryBuilderOptions = React.memo<Props>(({ onChange, query, is
               onChange={onTableTypeChange}
             />
           </EditorField>
+          <EditorField label="Streaming" tooltip={<StreamingTooltip />} tooltipInteractive>
+            <div>{isStreaming ? 'Enabled' : 'Disabled'}</div>
+          </EditorField>
+        </QueryOptionGroup>
+
+        <QueryOptionGroup title="Metrics Options" collapsedInfo={collapsedMetricsOptions}>
           <EditorField
             label="Step"
             tooltip="Defines the step for metric queries. Use duration notation, for example 30s or 1m"
@@ -106,12 +140,32 @@ export const TempoQueryBuilderOptions = React.memo<Props>(({ onChange, query, is
               value={query.step}
             />
           </EditorField>
-          <EditorField label="Streaming" tooltip={<StreamingTooltip />} tooltipInteractive>
-            <div>{isStreaming ? 'Enabled' : 'Disabled'}</div>
+          <EditorField label="Type" tooltip="Type of metrics query to run">
+            <RadioButtonGroup
+              options={[
+                { label: 'Range', value: MetricsQueryType.Range },
+                { label: 'Instant', value: MetricsQueryType.Instant },
+              ]}
+              value={query.metricsQueryType}
+              onChange={onMetricsQueryTypeChange}
+            />
           </EditorField>
+          {/*<EditorField*/}
+          {/*  label="Exemplars"*/}
+          {/*  tooltip="Defines the amount of exemplars to request for metric queries. A value of 0 means no exemplars."*/}
+          {/*>*/}
+          {/*  <AutoSizeInput*/}
+          {/*    className="width-4"*/}
+          {/*    placeholder="auto"*/}
+          {/*    type="string"*/}
+          {/*    defaultValue={query.exemplars}*/}
+          {/*    onCommitChange={onExemplarsChange}*/}
+          {/*    value={query.exemplars}*/}
+          {/*  />*/}
+          {/*</EditorField>*/}
         </QueryOptionGroup>
-      </EditorRow>
-    </>
+      </div>
+    </EditorRow>
   );
 });
 
@@ -136,3 +190,17 @@ const StreamingTooltip = () => {
 };
 
 TempoQueryBuilderOptions.displayName = 'TempoQueryBuilderOptions';
+
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    options: css({
+      display: 'flex',
+      width: '-webkit-fill-available',
+      gap: theme.spacing(1),
+
+      '> div': {
+        width: 'auto',
+      },
+    }),
+  };
+};

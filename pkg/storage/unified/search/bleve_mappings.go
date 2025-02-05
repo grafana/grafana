@@ -17,17 +17,21 @@ func getBleveMappings(fields resource.SearchableDocumentFields) mapping.IndexMap
 func getBleveDocMappings(_ resource.SearchableDocumentFields) *mapping.DocumentMapping {
 	mapper := bleve.NewDocumentStaticMapping()
 
-	// for sorting by title
-	titleSortMapping := bleve.NewKeywordFieldMapping()
-	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_TITLE_SORT, titleSortMapping)
+	nameMapping := &mapping.FieldMapping{
+		Analyzer: keyword.Name,
+		Type:     "text",
+		Index:    true,
+	}
+	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_NAME, nameMapping)
+
+	// for filtering/sorting by title full phrase
+	titlePhraseMapping := bleve.NewKeywordFieldMapping()
+	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_TITLE_PHRASE, titlePhraseMapping)
 
 	// for searching by title
+	// TODO: do we still need this since we have SEARCH_FIELD_TITLE_PHRASE?
 	titleSearchMapping := bleve.NewTextFieldMapping()
 	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_TITLE, titleSearchMapping)
-
-	// for filtering by kind/resource ( federated search )
-	kindMapping := bleve.NewTextFieldMapping()
-	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_KIND, kindMapping)
 
 	descriptionMapping := &mapping.FieldMapping{
 		Name:               resource.SEARCH_FIELD_DESCRIPTION,
@@ -64,20 +68,44 @@ func getBleveDocMappings(_ resource.SearchableDocumentFields) *mapping.DocumentM
 	}
 	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_FOLDER, folderMapping)
 
-	repoMapping := &mapping.FieldMapping{
-		Name:               resource.SEARCH_FIELD_REPOSITORY,
+	// Repositories
+	repo := bleve.NewDocumentStaticMapping()
+	repo.AddFieldMappingsAt("name", &mapping.FieldMapping{
+		Name:               "name",
 		Type:               "text",
 		Analyzer:           keyword.Name,
 		Store:              true,
 		Index:              true,
 		IncludeTermVectors: false,
 		IncludeInAll:       true,
-		DocValues:          true,
-	}
-	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_REPOSITORY, repoMapping)
+	})
+	repo.AddFieldMappingsAt("path", &mapping.FieldMapping{
+		Name:               "path",
+		Type:               "text",
+		Analyzer:           keyword.Name,
+		Store:              true,
+		Index:              true,
+		IncludeTermVectors: false,
+		IncludeInAll:       true,
+	})
+	repo.AddFieldMappingsAt("hash", &mapping.FieldMapping{
+		Name:               "hash",
+		Type:               "text",
+		Analyzer:           keyword.Name,
+		Store:              true,
+		Index:              true,
+		IncludeTermVectors: false,
+		IncludeInAll:       true,
+	})
+	repo.AddFieldMappingsAt("time", mapping.NewDateTimeFieldMapping())
 
-	// TODO: we use the static mapper. why set dynamic to true?
-	mapper.Dynamic = true
+	mapper.AddSubDocumentMapping("repo", repo)
+
+	labelMapper := bleve.NewDocumentMapping()
+	mapper.AddSubDocumentMapping(resource.SEARCH_FIELD_LABELS, labelMapper)
+
+	fieldMapper := bleve.NewDocumentMapping()
+	mapper.AddSubDocumentMapping("fields", fieldMapper)
 
 	return mapper
 }

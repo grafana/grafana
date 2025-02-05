@@ -1,9 +1,8 @@
-import { Namespace } from 'i18next';
 import { find, startsWith } from 'lodash';
 
 import { AzureCredentials } from '@grafana/azure-sdk';
 import { ScopedVars } from '@grafana/data';
-import { DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
+import { DataSourceWithBackend, getTemplateSrv, TemplateSrv, VariableInterpolation } from '@grafana/runtime';
 
 import { getCredentials } from '../credentials';
 import TimegrainConverter from '../time_grain_converter';
@@ -26,6 +25,7 @@ import {
   Location,
   ResourceGroup,
   Metric,
+  MetricNamespace,
 } from '../types';
 import { routeNames } from '../utils/common';
 import migrateQuery from '../utils/migrateQuery';
@@ -238,7 +238,8 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<
     return (await Promise.all(promises)).flat();
   }
 
-  getMetricNamespaces(query: GetMetricNamespacesQuery, globalRegion: boolean, region?: string) {
+  // Note globalRegion should be false when querying custom metric namespaces
+  getMetricNamespaces(query: GetMetricNamespacesQuery, globalRegion: boolean, region?: string, custom?: boolean) {
     const url = UrlBuilder.buildAzureMonitorGetMetricNamespacesUrl(
       this.resourcePath,
       this.apiPreviewVersion,
@@ -249,7 +250,10 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<
       region
     );
     return this.getResource(url)
-      .then((result: AzureAPIResponse<Namespace>) => {
+      .then((result: AzureAPIResponse<MetricNamespace>) => {
+        if (custom) {
+          result.value = result.value.filter((namespace) => namespace.classification === 'Custom');
+        }
         return ResponseParser.parseResponseValues(
           result,
           'properties.metricNamespaceName',
@@ -351,19 +355,32 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<
     const workingQueries: Array<{ [K in keyof T]: string }> = [{ ...query }];
     const keys = Object.keys(query) as Array<keyof T>;
     keys.forEach((key) => {
-      const replaced = this.templateSrv.replace(workingQueries[0][key], scopedVars, 'raw');
-      if (replaced.includes(',')) {
-        const multiple = replaced.split(',');
-        const currentQueries = [...workingQueries];
-        multiple.forEach((value, i) => {
-          currentQueries.forEach((q) => {
-            if (i === 0) {
-              q[key] = value;
-            } else {
-              workingQueries.push({ ...q, [key]: value });
-            }
-          });
-        });
+      const rawValue = workingQueries[0][key];
+      let interpolated: VariableInterpolation[] = [];
+      const replaced = this.templateSrv.replace(rawValue, scopedVars, 'raw', interpolated);
+      if (interpolated.length > 0) {
+        for (const variable of interpolated) {
+          if (variable.found === false) {
+            continue;
+          }
+          if (variable.value.includes(',')) {
+            const multiple = variable.value.split(',');
+            const currentQueries = [...workingQueries];
+            multiple.forEach((value, i) => {
+              currentQueries.forEach((q) => {
+                if (i === 0) {
+                  q[key] = rawValue.replace(variable.match, value);
+                } else {
+                  workingQueries.push({ ...q, [key]: rawValue.replace(variable.match, value) });
+                }
+              });
+            });
+          } else {
+            workingQueries.forEach((q) => {
+              q[key] = replaced;
+            });
+          }
+        }
       } else {
         workingQueries.forEach((q) => {
           q[key] = replaced;

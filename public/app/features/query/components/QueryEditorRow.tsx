@@ -24,7 +24,7 @@ import {
   toLegacyResponseData,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { AngularComponent, getAngularLoader, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import { AngularComponent, config, getAngularLoader, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { Badge, ErrorBoundaryAlert } from '@grafana/ui';
 import { OperationRowHelp } from 'app/core/components/QueryOperationRow/OperationRowHelp';
 import {
@@ -39,6 +39,8 @@ import { Trans, t } from 'app/core/internationalization';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
+
+import { SaveQueryButton as SaveQueryToQueryLibraryButton } from '../../explore/QueryLibrary/SaveQueryButton';
 
 import { QueryActionComponent, RowActionComponents } from './QueryActionComponent';
 import { QueryEditorRowHeader } from './QueryEditorRowHeader';
@@ -389,7 +391,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     return null;
   }
 
-  renderWarnings = (): JSX.Element | null => {
+  renderWarnings = (type: string): JSX.Element | null => {
     const { data, query } = this.props;
     const dataFilteredByRefId = filterPanelDataToQuery(data, query.refId)?.series ?? [];
 
@@ -398,7 +400,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
         return acc;
       }
 
-      const warnings = filter(serie.meta.notices, { severity: 'warning' }) ?? [];
+      const warnings = filter(serie.meta.notices, (item: QueryResultMetaNotice) => item.severity === type) ?? [];
       return acc.concat(warnings);
     }, []);
 
@@ -409,16 +411,20 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
       return null;
     }
 
+    const key = 'query-' + type + 's';
+    const colour = type === 'warning' ? 'orange' : 'blue';
+    const iconName = type === 'warning' ? 'exclamation-triangle' : 'file-landscape-alt';
+
     const serializedWarnings = uniqueWarnings.map((warning) => warning.text).join('\n');
 
     return (
       <Badge
-        key="query-warning"
-        color="orange"
-        icon="exclamation-triangle"
+        key={key}
+        color={colour}
+        icon={iconName}
         text={
           <>
-            {uniqueWarnings.length} {pluralize('warning', uniqueWarnings.length)}
+            {uniqueWarnings.length} {pluralize(type, uniqueWarnings.length)}
           </>
         }
         tooltip={serializedWarnings}
@@ -450,7 +456,8 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
       )
       .filter(Boolean);
 
-    extraActions.push(this.renderWarnings());
+    extraActions.push(this.renderWarnings('info'));
+    extraActions.push(this.renderWarnings('warning'));
 
     return extraActions;
   };
@@ -482,6 +489,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
           />
         )}
         {this.renderExtraActions()}
+        {config.featureToggles.queryLibrary && <SaveQueryToQueryLibraryButton query={query} />}
         <QueryOperationAction
           title={t('query-operation.header.duplicate-query', 'Duplicate query')}
           icon="copy"

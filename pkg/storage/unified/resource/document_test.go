@@ -33,16 +33,16 @@ func TestStandardDocumentBuilder(t *testing.T) {
 			"resource": "playlists",
 			"name": "test1"
 		},
-		"kind": "playlists",
 		"rv": 10,
 		"title": "test playlist unified storage",
-		"title_sort": "test playlist unified storage",
+		"title_phrase": "test playlist unified storage",
 		"created": 1717236672000,
 		"createdBy": "user:ABC",
 		"updatedBy": "user:XYZ",
-		"repository": {
-			"name": "SQL",
-			"path": "15",
+		"name": "test1",
+		"repo": {
+			"name": "something",
+			"path": "path/in/system.json",
 			"hash": "xyz"
 		}
 		}`, string(jj))

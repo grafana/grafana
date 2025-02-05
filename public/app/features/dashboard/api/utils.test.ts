@@ -1,4 +1,4 @@
-import { config } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 
 import { getDashboardsApiVersion } from './utils';
 
@@ -47,5 +47,31 @@ describe('getDashboardsApiVersion', () => {
       kubernetesDashboards: false,
     };
     expect(getDashboardsApiVersion()).toBe('legacy');
+  });
+
+  describe('forcing scenes through URL', () => {
+    beforeAll(() => {
+      locationService.push('/test?scenes=false');
+    });
+
+    it('should return legacy when kubernetesDashboards is disabled', () => {
+      config.featureToggles = {
+        dashboardScene: false,
+        useV2DashboardsAPI: false,
+        kubernetesDashboards: false,
+      };
+
+      expect(getDashboardsApiVersion()).toBe('legacy');
+    });
+
+    it('should return legacy when kubernetesDashboards is disabled', () => {
+      config.featureToggles = {
+        dashboardScene: false,
+        useV2DashboardsAPI: false,
+        kubernetesDashboards: true,
+      };
+
+      expect(getDashboardsApiVersion()).toBe('v0');
+    });
   });
 });

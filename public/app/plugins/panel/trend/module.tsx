@@ -1,5 +1,6 @@
 import { Field, FieldType, PanelPlugin } from '@grafana/data';
 import { commonOptionsBuilder } from '@grafana/ui';
+import { optsWithHideZeros } from '@grafana/ui/src/options/builder/tooltip';
 
 import { defaultGraphConfig, getGraphFieldConfig } from '../timeseries/config';
 
@@ -24,7 +25,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TrendPanel)
       },
     });
 
-    commonOptionsBuilder.addTooltipOptions(builder, false, true);
+    commonOptionsBuilder.addTooltipOptions(builder, false, true, optsWithHideZeros);
     commonOptionsBuilder.addLegendOptions(builder);
   })
   .setSuggestionsSupplier(new TrendSuggestionsSupplier());

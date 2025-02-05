@@ -82,27 +82,20 @@ jobs:
           app_id: ${{ env.GH_APP_ID }}
           private_key: ${{ env.GH_APP_PEM }}
 
-      - name: Checkout auto-triager repository
+      - name: Checkout
         uses: actions/checkout@v4
-        with:
-          repository: grafana/auto-triager
-          path: auto-triager
-          token:  ${{ steps.generate_token.outputs.token }}
 
       - name: Send issue to the auto triager action
         id: auto_triage
-        # https://github.com/grafana/auto-triager/blob/main/action.yml
-        #uses: grafana/auto-triager@main
-        uses: ./auto-triager
+        uses: grafana/auto-triager@main
         with:
           token: ${{ steps.generate_token.outputs.token }}
           issue_number: ${{ github.event.issue.number }}
           openai_api_key: ${{ env.AUTOTRIAGER_OPENAI_API_KEY }}
           add_labels: true
-
-      - name: Labels from auto triage
-        run: |
-          echo ${{ steps.auto_triage.outputs.triage_labels }}
+          labels_file: ${{ github.workspace }}/.github/workflows/auto-triager/labels.txt
+          types_file: ${{ github.workspace }}/.github/workflows/auto-triager/types.txt
+          prompt_file: ${{ github.workspace }}/.github/workflows/auto-triager/prompt.txt
 
       - name: "Send Slack notification"
         if: ${{ steps.auto_triage.outputs.triage_labels != '' }}

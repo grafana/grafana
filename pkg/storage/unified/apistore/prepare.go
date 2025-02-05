@@ -47,7 +47,7 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 		return nil, err
 	}
 	if obj.GetName() == "" {
-		return nil, storage.ErrResourceVersionSetOnCreate
+		return nil, storage.NewInvalidObjError("", "missing name")
 	}
 	if obj.GetResourceVersion() != "" {
 		return nil, storage.ErrResourceVersionSetOnCreate
@@ -60,8 +60,11 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 		// nolint:staticcheck
 		id := obj.GetDeprecatedInternalID()
 		if id < 1 {
+			// the ID must be smaller than 9007199254740991, otherwise we will lose prescision
+			// on the frontend, which uses the number type to store ids. The largest safe number in
+			// javascript is 9007199254740991, compared to 9223372036854775807 as the max int64
 			// nolint:staticcheck
-			obj.SetDeprecatedInternalID(s.snowflake.Generate().Int64())
+			obj.SetDeprecatedInternalID(s.snowflake.Generate().Int64() & ((1 << 52) - 1))
 		}
 	}
 
@@ -123,8 +126,14 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 
 	obj.SetCreatedBy(previous.GetCreatedBy())
 	obj.SetCreationTimestamp(previous.GetCreationTimestamp())
-	obj.SetResourceVersion("")                                      // removed from saved JSON because the RV is not yet calculated
-	obj.SetDeprecatedInternalID(previous.GetDeprecatedInternalID()) // nolint:staticcheck
+	obj.SetResourceVersion("") // removed from saved JSON because the RV is not yet calculated
+
+	// for dashboards, a mutation hook will set it if it didn't exist on the previous obj
+	// avoid setting it back to 0
+	previousInternalID := previous.GetDeprecatedInternalID() // nolint:staticcheck
+	if previousInternalID != 0 {
+		obj.SetDeprecatedInternalID(previousInternalID) // nolint:staticcheck
+	}
 
 	// Read+write will verify that origin format is accurate
 	repo, err := obj.GetRepositoryInfo()

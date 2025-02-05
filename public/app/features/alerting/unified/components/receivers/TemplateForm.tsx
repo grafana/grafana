@@ -324,7 +324,7 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
               {isGrafanaAlertManager && (
                 <>
                   <div {...rowSplitter.secondaryProps}>
-                    <div {...rowSplitter.splitterProps}></div>
+                    <div {...rowSplitter.splitterProps} />
                     <TemplatePreview
                       payload={payload}
                       templateName={watch('title')}
