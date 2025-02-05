@@ -2,8 +2,6 @@ import { escapeRegExp } from 'lodash';
 
 import { SelectableValue } from '@grafana/data';
 
-import { AzureLogAnalyticsMetadataColumn } from '../../types';
-
 import { AggregateFunctions } from './AggregateItem';
 
 const DYNAMIC_TYPE_ARRAY_DELIMITER = '["`indexer`"]';
@@ -88,7 +86,6 @@ export interface QueryEditorReduceExpression extends QueryEditorExpression {
   focus?: boolean;
 }
 
-/** Given a partial aggregation expression, return a non-partial if it's valid, or undefined */
 export function sanitizeAggregate(expression: QueryEditorReduceExpression): QueryEditorReduceExpression | undefined {
   const func = expression.reduce?.name;
   const column = expression.property?.name;
@@ -96,16 +93,13 @@ export function sanitizeAggregate(expression: QueryEditorReduceExpression): Quer
   if (func) {
     switch (func) {
       case AggregateFunctions.Count:
-        // Count function does not require a column
         return expression;
       case AggregateFunctions.Percentile:
-        // Percentile requires a column and a parameter
         if (column && expression.parameters?.length) {
           return expression;
         }
         break;
       default:
-        // All the other functions require a column
         if (column) {
           return expression;
         }
@@ -122,7 +116,7 @@ export interface QueryEditorPropertyDefinition {
   dynamic?: boolean;
 }
 
-export const columnsToDefinition = (columns: AzureLogAnalyticsMetadataColumn[]): QueryEditorPropertyDefinition[] => {
+export const columnsToDefinition = (columns: SelectableValue<string>): QueryEditorPropertyDefinition[] => {
   if (!Array.isArray(columns)) {
     return [];
   }
@@ -156,5 +150,14 @@ export const toPropertyType = (kustoType: string): QueryEditorPropertyType => {
 };
 
 export const formatKQLQuery = (query: string): string => {
-  return query.replace(/\s*\|\s*/g, '\n| ').trim();
+  return query
+    .replace(/\s*\|\s*/g, '\n| ') // ✅ Ensure pipes remain on new lines
+    .replace(/\|\s*where\s*$/, '| where true') // ✅ If `| where` is empty, add `true`
+    .trim();
 };
+
+export interface QueryEditorGroupByExpression extends QueryEditorExpression {
+  property: QueryEditorProperty;
+  interval?: QueryEditorProperty;
+  focus?: boolean;
+}

@@ -14,6 +14,7 @@ import {
 
 import { AggregateSection } from './AggregationSection';
 import { FilterSection } from './FilterSection';
+import { GroupBySection } from './GroupBySection';
 import KQLPreview from './KQLPreview';
 import { TableSection } from './TableSection';
 import { formatKQLQuery } from './utils';
@@ -51,9 +52,10 @@ export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
     setSelectedColumns(columns);
     const uniqueLabels = [...new Set(columns.map((c: SelectableValue<string>) => c.label!))];
     const baseQuery = selectedTable!.split(' | project')[0];
-    const newQueryString = `${baseQuery} | project ${uniqueLabels.join(', ')}`;
+    const newQueryString = `${baseQuery} | project ${uniqueLabels.join(', ')} | where $__timeFilter(TimeGenerated)`;
 
     const formattedQuery = formatKQLQuery(newQueryString);
+    console.log(formattedQuery)
 
     onQueryChange({
       ...query,
@@ -96,7 +98,7 @@ export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
         />
         <FilterSection {...props} query={query} onChange={onQueryChange} selectedColumns={selectedColumns} />
         <AggregateSection {...props} selectedColumns={selectedColumns} onChange={onQueryChange} />
-        {/* <GroupBySection {...props} columns={columns} /> */}
+        <GroupBySection {...props} selectedColumns={selectedColumns} onChange={onQueryChange} />
         <KQLPreview query={query.azureLogAnalytics?.query || ''} />
       </EditorRows>
     </span>

@@ -6,6 +6,8 @@ import { Select } from '@grafana/ui';
 
 import { AzureLogAnalyticsMetadataColumn, AzureLogAnalyticsMetadataTable } from '../../types';
 
+import { QueryEditorPropertyType } from './utils';
+
 interface TableSectionProps {
   columns: AzureLogAnalyticsMetadataColumn[];
   onTableChange: (newTable: AzureLogAnalyticsMetadataTable) => void;
@@ -22,10 +24,13 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
     value: t.name,
   }));
 
-  const columnOptions: Array<SelectableValue<string>> = columns.map((col) => ({
-    label: col.name,
-    value: col.name,
-  }));
+  const columnOptions: Array<SelectableValue<string>> = Array.isArray(columns)
+  ? columns.map((col) => ({
+      label: col.name,
+      value: col.name,
+      type: col.type || QueryEditorPropertyType.String, 
+    }))
+  : [];
 
   return (
     <EditorRow>
