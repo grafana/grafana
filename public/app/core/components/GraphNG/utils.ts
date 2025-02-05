@@ -87,7 +87,7 @@ export function preparePlotFrame(frames: DataFrame[], dimFields: XYFieldMatchers
 
       for (let i = 0; i < xVals.length; i++) {
         if (i > 0) {
-          minXDelta = Math.min(minXDelta, Math.abs(xVals[i] - xVals[i - 1]));
+          minXDelta = Math.min(minXDelta, xVals[i] - xVals[i - 1]);
         }
       }
     });
