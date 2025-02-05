@@ -3,10 +3,13 @@ import { ReactNode } from 'react';
 import { Stack, Text, Button } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 
-import { BulkActionElement, MultiSelectedEditableDashboardElement } from '../scene/types';
+import { BulkActionElement } from '../scene/types/BulkActionElement';
+import { MultiSelectedEditableDashboardElement } from '../scene/types/MultiSelectedEditableDashboardElement';
 
 export class MultiSelectedObjectsEditableElement implements MultiSelectedEditableDashboardElement {
-  public isMultiSelectedEditableDashboardElement: true = true;
+  public readonly isMultiSelectedEditableDashboardElement = true;
+  public readonly typeName = 'Objects';
+
   private items?: BulkActionElement[];
 
   constructor(items: BulkActionElement[]) {
@@ -18,10 +21,6 @@ export class MultiSelectedObjectsEditableElement implements MultiSelectedEditabl
       item.onDelete();
     }
   };
-
-  public getTypeName(): string {
-    return 'Objects';
-  }
 
   renderActions(): ReactNode {
     return (

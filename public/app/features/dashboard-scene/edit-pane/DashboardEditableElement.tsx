@@ -6,10 +6,11 @@ import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/Pan
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { useLayoutCategory } from '../scene/layouts-shared/DashboardLayoutSelector';
-import { EditableDashboardElement } from '../scene/types';
+import { EditableDashboardElement } from '../scene/types/EditableDashboardElement';
 
 export class DashboardEditableElement implements EditableDashboardElement {
-  public isEditableDashboardElement: true = true;
+  public readonly isEditableDashboardElement = true;
+  public readonly typeName = 'Dashboard';
 
   public constructor(private dashboard: DashboardScene) {}
 
@@ -46,10 +47,6 @@ export class DashboardEditableElement implements EditableDashboardElement {
     const layoutCategory = useLayoutCategory(body);
 
     return [dashboardOptions, layoutCategory];
-  }
-
-  public getTypeName(): string {
-    return 'Dashboard';
   }
 }
 

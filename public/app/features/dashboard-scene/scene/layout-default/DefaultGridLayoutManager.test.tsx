@@ -26,19 +26,19 @@ describe('DefaultGridLayoutManager', () => {
     });
   });
 
-  describe('getNextPanelId', () => {
-    it('should get next panel id in a simple 3 panel layout', () => {
+  describe('getMaxPanelId', () => {
+    it('should get max panel id in a simple 3 panel layout', () => {
       const { manager } = setup();
-      const id = manager.getNextPanelId();
+      const id = manager.getMaxPanelId();
 
-      expect(id).toBe(4);
+      expect(id).toBe(3);
     });
 
-    it('should return 1 if no panels are found', () => {
+    it('should return 0 if no panels are found', () => {
       const { manager } = setup({ gridItems: [] });
-      const id = manager.getNextPanelId();
+      const id = manager.getMaxPanelId();
 
-      expect(id).toBe(1);
+      expect(id).toBe(0);
     });
   });
 

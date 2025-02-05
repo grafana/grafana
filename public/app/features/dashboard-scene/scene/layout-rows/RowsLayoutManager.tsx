@@ -18,7 +18,7 @@ import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
 import { RowRepeaterBehavior } from '../layout-default/RowRepeaterBehavior';
 import { ResponsiveGridLayoutManager } from '../layout-responsive-grid/ResponsiveGridLayoutManager';
-import { DashboardLayoutManager, LayoutRegistryItem } from '../types';
+import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 
 import { RowItem } from './RowItem';
 import { RowItemRepeaterBehavior } from './RowItemRepeaterBehavior';
@@ -28,7 +28,16 @@ interface RowsLayoutManagerState extends SceneObjectState {
 }
 
 export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> implements DashboardLayoutManager {
-  public isDashboardLayoutManager: true = true;
+  public readonly isDashboardLayoutManager = true;
+
+  public static readonly descriptor = {
+    name: 'Rows',
+    description: 'Rows layout',
+    id: 'rows-layout',
+    createFromLayout: RowsLayoutManager.createFromLayout,
+  };
+
+  public readonly descriptor = RowsLayoutManager.descriptor;
 
   public editModeChanged(isEditing: boolean): void {}
 
@@ -113,21 +122,8 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
     });
   }
 
-  public getDescriptor(): LayoutRegistryItem {
-    return RowsLayoutManager.getDescriptor();
-  }
-
   public getSelectedObject() {
     return sceneGraph.getAncestor(this, DashboardScene).state.editPane.state.selection?.getFirstObject();
-  }
-
-  public static getDescriptor(): LayoutRegistryItem {
-    return {
-      name: 'Rows',
-      description: 'Rows layout',
-      id: 'rows-layout',
-      createFromLayout: RowsLayoutManager.createFromLayout,
-    };
   }
 
   public static createEmpty() {

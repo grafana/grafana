@@ -6,7 +6,7 @@ import { Switch, useStyles2 } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
-import { DashboardLayoutItem } from '../types';
+import { DashboardLayoutItem } from '../types/DashboardLayoutItem';
 
 export interface ResponsiveGridItemState extends SceneObjectState {
   body: VizPanel;
@@ -14,6 +14,8 @@ export interface ResponsiveGridItemState extends SceneObjectState {
 }
 
 export class ResponsiveGridItem extends SceneObjectBase<ResponsiveGridItemState> implements DashboardLayoutItem {
+  public readonly isDashboardLayoutItem = true;
+
   public constructor(state: ResponsiveGridItemState) {
     super(state);
     this.addActivationHandler(() => this._activationHandler());
@@ -28,11 +30,6 @@ export class ResponsiveGridItem extends SceneObjectBase<ResponsiveGridItemState>
   public toggleHideWhenNoData() {
     this.setState({ hideWhenNoData: !this.state.hideWhenNoData });
   }
-
-  /**
-   * DashboardLayoutElement interface
-   */
-  public isDashboardLayoutItem: true = true;
 
   public getOptions?(): OptionsPaneCategoryDescriptor {
     const model = this;

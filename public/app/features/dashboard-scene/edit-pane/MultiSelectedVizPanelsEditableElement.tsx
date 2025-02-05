@@ -5,11 +5,12 @@ import { Button, Stack, Text } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 
-import { MultiSelectedEditableDashboardElement } from '../scene/types';
+import { MultiSelectedEditableDashboardElement } from '../scene/types/MultiSelectedEditableDashboardElement';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 
 export class MultiSelectedVizPanelsEditableElement implements MultiSelectedEditableDashboardElement {
-  public isMultiSelectedEditableDashboardElement: true = true;
+  public readonly isMultiSelectedEditableDashboardElement = true;
+  public readonly typeName = 'Panels';
 
   private items?: VizPanel[];
 
@@ -33,10 +34,6 @@ export class MultiSelectedVizPanelsEditableElement implements MultiSelectedEdita
       layout.removePanel(panel);
     }
   };
-
-  public getTypeName(): string {
-    return 'Panels';
-  }
 
   renderActions(): ReactNode {
     return (

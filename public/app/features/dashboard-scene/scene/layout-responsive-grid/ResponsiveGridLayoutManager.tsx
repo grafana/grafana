@@ -5,7 +5,7 @@ import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/Pan
 
 import { getDashboardSceneFor, getPanelIdForVizPanel, getVizPanelKeyForPanelId } from '../../utils/utils';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
-import { DashboardLayoutManager, LayoutRegistryItem } from '../types';
+import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 
 import { ResponsiveGridItem } from './ResponsiveGridItem';
 
@@ -17,7 +17,16 @@ export class ResponsiveGridLayoutManager
   extends SceneObjectBase<ResponsiveGridLayoutManagerState>
   implements DashboardLayoutManager
 {
-  public isDashboardLayoutManager: true = true;
+  public readonly isDashboardLayoutManager = true;
+
+  public static readonly descriptor = {
+    name: 'Responsive grid',
+    description: 'CSS layout that adjusts to the available space',
+    id: 'responsive-grid',
+    createFromLayout: ResponsiveGridLayoutManager.createFromLayout,
+  };
+
+  public readonly descriptor = ResponsiveGridLayoutManager.descriptor;
 
   public editModeChanged(isEditing: boolean): void {}
 
@@ -83,19 +92,6 @@ export class ResponsiveGridLayoutManager
     return getOptions(this);
   }
 
-  public getDescriptor(): LayoutRegistryItem {
-    return ResponsiveGridLayoutManager.getDescriptor();
-  }
-
-  public static getDescriptor(): LayoutRegistryItem {
-    return {
-      name: 'Responsive grid',
-      description: 'CSS layout that adjusts to the available space',
-      id: 'responsive-grid',
-      createFromLayout: ResponsiveGridLayoutManager.createFromLayout,
-    };
-  }
-
   public static createEmpty() {
     return new ResponsiveGridLayoutManager({
       layout: new SceneCSSGridLayout({
@@ -121,10 +117,6 @@ export class ResponsiveGridLayoutManager
         autoRows: 'minmax(300px, auto)',
       }),
     });
-  }
-
-  toSaveModel?() {
-    throw new Error('Method not implemented.');
   }
 
   activateRepeaters?(): void {
