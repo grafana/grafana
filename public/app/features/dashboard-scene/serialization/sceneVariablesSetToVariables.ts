@@ -1,3 +1,5 @@
+import { get } from 'lodash';
+
 import { config } from '@grafana/runtime';
 import { MultiValueVariable, SceneVariables, sceneUtils } from '@grafana/scenes';
 import {
@@ -22,7 +24,7 @@ import {
 
 import { getIntervalsQueryFromNewIntervalModel } from '../utils/utils';
 
-import { getDataQuerySpec } from './transformSceneToSaveModelSchemaV2';
+import { getDataQueryKind, getDataQuerySpec } from './transformSceneToSaveModelSchemaV2';
 import {
   transformVariableRefreshToEnum,
   transformVariableHideToEnum,
@@ -270,17 +272,16 @@ export function sceneVariablesSetToSchemaV2Variables(
       if (transformVariableRefreshToEnum(variable.state.refresh) === 'never' || keepQueryOptions) {
         options = variableValueOptionsToVariableOptions(variable.state);
       }
-      //query: DataQueryKind | string;
       const query = variable.state.query;
       let dataQuery: DataQueryKind | string;
       if (typeof query !== 'string') {
         dataQuery = {
-          kind: variable.state.datasource?.type || '',
+          kind: variable.state.datasource?.type ?? getDataQueryKind(query),
           spec: getDataQuerySpec(query),
         };
       } else {
         dataQuery = {
-          kind: variable.state.datasource?.type || '',
+          kind: variable.state.datasource?.type ?? getDataQueryKind(query),
           spec: {
             [LEGACY_STRING_VALUE_KEY]: query,
           },

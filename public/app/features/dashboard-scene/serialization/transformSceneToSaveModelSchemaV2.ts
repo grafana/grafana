@@ -363,8 +363,11 @@ function getVizPanelQueries(vizPanel: VizPanel): PanelQueryKind[] {
   return queries;
 }
 
-export function getDataQueryKind(query: SceneDataQuery): string {
-  // If the query has a datasource, use the datasource type, otherwise return empty kind
+export function getDataQueryKind(query: SceneDataQuery | string): string {
+  if (typeof query === 'string') {
+    return getDefaultDataSourceRef()?.type ?? '';
+  }
+
   return query.datasource?.type ?? getDefaultDataSourceRef()?.type ?? '';
 }
 
