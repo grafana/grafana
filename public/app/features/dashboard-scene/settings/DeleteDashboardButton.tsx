@@ -1,11 +1,12 @@
 import { useAsyncFn, useToggle } from 'react-use';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { config, reportInteraction } from '@grafana/runtime';
+import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { Button, ConfirmModal, Modal, Space, Text } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 
 import { useDeleteItemsMutation } from '../../browse-dashboards/api/browseDashboardsAPI';
+import { useDeleteRepositoryFilesWithPathMutation } from '../../provisioning/api';
 import { DashboardScene } from '../scene/DashboardScene';
 
 interface ButtonProps {
@@ -26,6 +27,9 @@ interface DeleteModalProps {
 export function DeleteDashboardButton({ dashboard }: ButtonProps) {
   const [showModal, toggleModal] = useToggle(false);
   const [deleteItems] = useDeleteItemsMutation();
+  const [deleteProvisionedItems] = useDeleteRepositoryFilesWithPathMutation();
+  const repoName = dashboard.getRepoName();
+  const path = dashboard.getPath();
 
   const [, onConfirm] = useAsyncFn(async () => {
     reportInteraction('grafana_manage_dashboards_delete_clicked', {
@@ -36,17 +40,23 @@ export function DeleteDashboardButton({ dashboard }: ButtonProps) {
       restore_enabled: Boolean(config.featureToggles.dashboardRestore),
     });
     toggleModal();
-    if (dashboard.state.uid) {
-      await deleteItems({
-        selectedItems: {
-          dashboard: {
-            [dashboard.state.uid]: true,
+    if (!!repoName && path) {
+      await deleteProvisionedItems({ name: repoName, path });
+      dashboard.setState({ isDirty: false });
+      locationService.replace('/dashboards');
+    } else {
+      if (dashboard.state.uid) {
+        await deleteItems({
+          selectedItems: {
+            dashboard: {
+              [dashboard.state.uid]: true,
+            },
+            folder: {},
           },
-          folder: {},
-        },
-      });
+        });
+      }
+      await dashboard.onDashboardDelete();
     }
-    await dashboard.onDashboardDelete();
   }, [dashboard, toggleModal]);
 
   if (dashboard.state.meta.provisioned && showModal) {
