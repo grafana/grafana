@@ -11,14 +11,13 @@ import (
 func TestConvertNumericMultiToLong(t *testing.T) {
 	input := data.Frames{
 		data.NewFrame("test",
-			data.NewField("count", data.Labels{"city": "MIA"}, []float64{5})),
-		data.NewFrame("test2",
-			data.NewField("moreCount", data.Labels{"city": "LGA"}, []float64{7}),
+			data.NewField("Value", data.Labels{"city": "MIA"}, []float64{5})),
+		data.NewFrame("test",
+			data.NewField("Value", data.Labels{"city": "LGA"}, []float64{7}),
 		),
 	}
 	expectedFrame := data.NewFrame("",
-		data.NewField("count", nil, []float64{5, 0}),
-		data.NewField("moreCount", nil, []float64{0, 7}),
+		data.NewField("Value", nil, []float64{5, 7}),
 		data.NewField("city", nil, []string{"MIA", "LGA"}),
 	)
 	output, err := convertNumericMultiToNumericLong(input)
