@@ -442,7 +442,7 @@ export const {
 
 export { skipToken } from '@reduxjs/toolkit/query/react';
 
-type FolderDataType = FolderListItemDTO | NestedFolderDTO | FolderDTO;
+export type FolderDataType = FolderListItemDTO | NestedFolderDTO | FolderDTO;
 
 // Overloaded function signatures to handle different input types
 export async function addRepositoryData(data: FolderListItemDTO[]): Promise<FolderListItemDTO[]>;
