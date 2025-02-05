@@ -32,10 +32,10 @@ func checkNilRequester(r Requester) bool {
 
 const serviceName = "service"
 
-// WithServiceIdentitiy sets creates an identity representing the service itself in provided org and store it in context.
+// WithServiceIdentity sets creates an identity representing the service itself in provided org and store it in context.
 // This is useful for background tasks that has to communicate with unfied storage. It also returns a Requester with
 // static permissions so it can be used in legacy code paths.
-func WithServiceIdentitiy(ctx context.Context, orgID int64) (context.Context, Requester) {
+func WithServiceIdentity(ctx context.Context, orgID int64) (context.Context, Requester) {
 	r := &StaticRequester{
 		Type:           types.TypeAccessPolicy,
 		Name:           serviceName,
