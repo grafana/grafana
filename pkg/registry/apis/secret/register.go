@@ -60,6 +60,7 @@ func RegisterAPIService(
 		fmt.Println("developer mode enabled")
 		secureValueStorage = reststorage.NewFakeSecureValueStore(cfg.SecretsManagement.DeveloperStubLatency)
 		keeperStorage = reststorage.NewFakeKeeperStore(cfg.SecretsManagement.DeveloperStubLatency)
+		decryptStorage = reststorage.NewFakeDecryptStore(secureValueStorage)
 	}
 
 	builder := NewSecretAPIBuilder(cfg, tracer, secureValueStorage, keeperStorage, decryptStorage)
