@@ -262,6 +262,8 @@ func TestRuleWithFolderFingerprint(t *testing.T) {
 			"UpdatedBy":       {},
 			"IntervalSeconds": {},
 			"Annotations":     {},
+			"ID":              {},
+			"OrgID":           {},
 		}
 
 		tp := reflect.TypeOf(rule).Elem()
