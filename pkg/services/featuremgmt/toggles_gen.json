@@ -372,6 +372,19 @@
     },
     {
       "metadata": {
+        "name": "alertingRuleVersionHistory",
+        "resourceVersion": "1737036492250",
+        "creationTimestamp": "2025-01-16T14:08:12Z"
+      },
+      "spec": {
+        "description": "Enables the alert rule version history feature",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingSaveStateCompressed",
         "resourceVersion": "1737472824047",
         "creationTimestamp": "2025-01-17T18:17:20Z",
@@ -383,19 +396,6 @@
         "description": "Enables the compressed protobuf-based alert state storage",
         "stage": "experimental",
         "codeowner": "@grafana/alerting-squad"
-      }
-    },
-    {
-      "metadata": {
-        "name": "alertingRuleVersionHistory",
-        "resourceVersion": "1737036492250",
-        "creationTimestamp": "2025-01-16T14:08:12Z"
-      },
-      "spec": {
-        "description": "Enables the alert rule version history feature",
-        "stage": "experimental",
-        "codeowner": "@grafana/alerting-squad",
-        "hideFromDocs": true
       }
     },
     {
@@ -560,7 +560,8 @@
       "metadata": {
         "name": "authAPIAccessTokenAuth",
         "resourceVersion": "1718727528075",
-        "creationTimestamp": "2024-04-02T15:45:15Z"
+        "creationTimestamp": "2024-04-02T15:45:15Z",
+        "deletionTimestamp": "2025-02-04T14:58:33Z"
       },
       "spec": {
         "description": "Enables the use of Auth API access tokens for authentication",
@@ -2716,6 +2717,19 @@
         "description": "Enables the nested folder picker without having nested folders enabled",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "newLogsPanel",
+        "resourceVersion": "1738344859933",
+        "creationTimestamp": "2025-01-31T17:34:19Z"
+      },
+      "spec": {
+        "description": "Enables the new logs panel in Explore",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-logs",
         "frontend": true
       }
     },

@@ -273,6 +273,11 @@ export interface GrafanaRuleDefinition extends PostableGrafanaRuleDefinition {
   namespace_uid: string;
   rule_group: string;
   provenance?: string;
+  updated_by?: {
+    uid: string;
+    name?: string;
+  };
+  updated?: string;
 }
 
 export interface RulerGrafanaRuleDTO<T = GrafanaRuleDefinition> {
