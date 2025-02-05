@@ -45,8 +45,8 @@ func ConvertToLong(frames data.Frames) (data.Frames, error) {
 }
 
 func convertNumericMultiToNumericLong(frames data.Frames) (data.Frames, error) {
-	// Apart from metadata. NumericMulti is basically numeric Wide, except one frame per thing
-	// to we collapse into one frame and call the wide conversion
+	// Apart from metadata, NumericMulti is basically NumericWide, except one frame per thing
+	// so we collapse into one frame and call the wide conversion
 	newFrame := data.NewFrame("")
 	for _, frame := range frames {
 		for _, field := range frame.Fields {
