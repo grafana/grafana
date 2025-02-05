@@ -10,11 +10,8 @@ jobs:
     if: github.repository == 'grafana/grafana'
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Actions
+      - name: Checkout
         uses: actions/checkout@v4
-        with:
-          repository: "grafana/grafana-github-actions"
-          path: ./actions
           ref: main
       - name: "Generate token"
         id: generate_token
@@ -24,8 +21,8 @@ jobs:
           private_key: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
       - run: git config --global user.email '132647405+grafana-delivery-bot[bot]@users.noreply.github.com'
       - run: git config --global user.name 'grafana-delivery-bot[bot]'
-      - run: git remote set-url origin https://grafana-delivery-bot:${{ steps.generate_token.outputs.token }}@github.com/grafana/grafana.git
+      - run: git remote set-url origin "https://grafana-delivery-bot:${{ steps.generate_token.outputs.token }}@github.com/grafana/grafana.git"
       - name: Run backport
-        uses: ./actions/backport
+        uses: grafana/grafana-github-actions-go/backport@main
         with:
           token: ${{ steps.generate_token.outputs.token }}
