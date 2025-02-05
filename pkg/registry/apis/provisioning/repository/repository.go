@@ -113,8 +113,8 @@ type Repository interface {
 
 // Hooks called after the repository has been created, updated or deleted
 type RepositoryHooks interface {
-	OnCreate(ctx context.Context) (*provisioning.RepositoryStatus, error)
-	OnUpdate(ctx context.Context) (*provisioning.RepositoryStatus, error)
+	OnCreate(ctx context.Context) (*provisioning.WebhookStatus, error)
+	OnUpdate(ctx context.Context) (*provisioning.WebhookStatus, error)
 	OnDelete(ctx context.Context) error
 }
 

@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router';
 import { useParams } from 'react-router-dom-v5-compat';
 import AutoSizer from 'react-virtualized-auto-sizer';
@@ -8,6 +9,7 @@ import {
   CodeEditor,
   EmptyState,
   LinkButton,
+  Button,
   Spinner,
   Stack,
   Tab,
@@ -19,7 +21,12 @@ import {
 import { Page } from 'app/core/components/Page/Page';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
-import { useGetRepositoryFilesWithPathQuery, useGetRepositoryStatusQuery, ResourceWrapper } from './api';
+import {
+  useGetRepositoryFilesWithPathQuery,
+  useGetRepositoryStatusQuery,
+  ResourceWrapper,
+  useReplaceRepositoryFilesWithPathMutation,
+} from './api';
 import { PROVISIONING_URL } from './constants';
 
 export default function FileStatusPage() {
@@ -75,19 +82,23 @@ function ResourceView({ wrap, repo, repoRef, tab }: Props) {
   const existingName = wrap.resource?.existing?.metadata?.name;
   const location = useLocation();
   const [queryParams] = useQueryParams();
+  const [replaceFile, replaceFileStatus] = useReplaceRepositoryFilesWithPathMutation();
 
-  let showJSON = '';
-  switch (tab) {
-    case TabSelection.Existing:
-      showJSON = JSON.stringify(wrap.resource.existing, null, '  ');
-      break;
-    case TabSelection.DryRun:
-      showJSON = JSON.stringify(wrap.resource.dryRun, null, '  ');
-      break;
-    case TabSelection.File:
-      showJSON = JSON.stringify(wrap.resource.file, null, '  ');
-      break;
-  }
+  const [jsonView, setJsonView] = useState('');
+
+  useEffect(() => {
+    switch (tab) {
+      case TabSelection.Existing:
+        setJsonView(JSON.stringify(wrap.resource.existing, null, 2));
+        return;
+      case TabSelection.DryRun:
+        setJsonView(JSON.stringify(wrap.resource.dryRun, null, 2));
+        return;
+      case TabSelection.File:
+        setJsonView(JSON.stringify(wrap.resource.file, null, 2));
+        return;
+    }
+  }, [wrap, tab, setJsonView]);
 
   const tabInfo = [
     { value: TabSelection.File, label: 'File (from repository)' },
@@ -155,20 +166,43 @@ function ResourceView({ wrap, repo, repoRef, tab }: Props) {
         )}
 
         {tab !== TabSelection.Lint && (
-          <div style={{ height: 800 }}>
-            <AutoSizer disableWidth>
-              {({ height }) => (
-                <CodeEditor
-                  width="100%"
-                  height={height}
-                  language={'json'}
-                  showLineNumbers={true}
-                  showMiniMap={true}
-                  value={showJSON}
-                  readOnly={true}
-                />
-              )}
-            </AutoSizer>
+          <div>
+            <div style={{ height: 800 }}>
+              <AutoSizer disableWidth>
+                {({ height }) => (
+                  <CodeEditor
+                    width="100%"
+                    height={height}
+                    language={'json'}
+                    showLineNumbers={true}
+                    showMiniMap={true}
+                    value={jsonView}
+                    onBlur={setJsonView}
+                    onSave={setJsonView}
+                  />
+                )}
+              </AutoSizer>
+            </div>
+            <Stack direction={'row'}>
+              <Button
+                disabled={replaceFileStatus.isLoading}
+                onClick={() => {
+                  replaceFile({
+                    name: repo,
+                    path: wrap.path!,
+                    body: JSON.parse(jsonView),
+                    message: 'updated from repo test UI',
+                  });
+                }}
+              >
+                {replaceFileStatus.isLoading ? 'Saving' : 'Save'}
+              </Button>
+            </Stack>
+            {replaceFileStatus.isError && (
+              <Alert title="Error saving file">
+                <pre>{JSON.stringify(replaceFileStatus.error)}</pre>
+              </Alert>
+            )}
           </div>
         )}
       </TabContent>
