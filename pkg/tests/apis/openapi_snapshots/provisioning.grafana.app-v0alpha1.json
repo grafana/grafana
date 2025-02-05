@@ -2248,15 +2248,19 @@
             "application/json": {
               "schema": {
                 "type": "object",
+                "required": [
+                  "incremental"
+                ],
                 "properties": {
-                  "complete": {
-                    "description": "Complete forces the sync to overwrite",
-                    "type": "boolean"
+                  "incremental": {
+                    "description": "When possible (git) look for differences in the VCS",
+                    "type": "boolean",
+                    "default": false
                   }
                 }
               },
               "example": {
-                "complete": true
+                "incremental": false
               }
             }
           }
@@ -3789,10 +3793,14 @@
       },
       "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.SyncJobOptions": {
         "type": "object",
+        "required": [
+          "incremental"
+        ],
         "properties": {
-          "complete": {
-            "description": "Complete forces the sync to overwrite",
-            "type": "boolean"
+          "incremental": {
+            "description": "When possible (git) look for differences in the VCS",
+            "type": "boolean",
+            "default": false
           }
         }
       },
@@ -3838,6 +3846,10 @@
           "hash": {
             "description": "The repository hash when the last sync ran",
             "type": "string"
+          },
+          "incremental": {
+            "description": "The previous job was incremental (only git)",
+            "type": "boolean"
           },
           "job": {
             "description": "The ID for the job that ran this sync",

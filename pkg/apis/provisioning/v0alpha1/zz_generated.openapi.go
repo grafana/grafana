@@ -1606,14 +1606,16 @@ func schema_pkg_apis_provisioning_v0alpha1_SyncJobOptions(ref common.ReferenceCa
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
-					"complete": {
+					"incremental": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Complete forces the sync to overwrite",
+							Description: "When possible (git) look for differences in the VCS",
+							Default:     false,
 							Type:        []string{"boolean"},
 							Format:      "",
 						},
 					},
 				},
+				Required: []string{"incremental"},
 			},
 		},
 	}
@@ -1723,6 +1725,13 @@ func schema_pkg_apis_provisioning_v0alpha1_SyncStatus(ref common.ReferenceCallba
 						SchemaProps: spec.SchemaProps{
 							Description: "The repository hash when the last sync ran",
 							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"incremental": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The previous job was incremental (only git)",
+							Type:        []string{"boolean"},
 							Format:      "",
 						},
 					},
