@@ -32,6 +32,8 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
 
   saveDashboard(options: SaveDashboardCommand<Dashboard>): Promise<SaveDashboardResponseDTO> {
     const dashboard = options.dashboard as DashboardDataDTO; // type for the uid property
+    // k8s apis server doesn't use dashboard.id
+    delete dashboard.id;
     const obj: ResourceForCreate<DashboardDataDTO> = {
       metadata: {
         ...options?.k8s,
