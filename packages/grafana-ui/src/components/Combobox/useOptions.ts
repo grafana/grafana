@@ -1,6 +1,8 @@
 import { debounce } from 'lodash';
 import { useState, useCallback, useMemo } from 'react';
 
+import { t } from '../../utils/i18n';
+
 import { itemFilter } from './filter';
 import { ComboboxOption } from './types';
 import { StaleResultError, useLatestAsyncCall } from './useLatestAsyncCall';
@@ -20,7 +22,7 @@ const asyncNoop = () => Promise.resolve([]);
  *  - function to call when user types (to filter, or call async fn)
  *  - loading and error states
  */
-export function useOptions<T extends string | number>(rawOptions: AsyncOptions<T>) {
+export function useOptions<T extends string | number>(rawOptions: AsyncOptions<T>, createCustomValue: boolean) {
   const isAsync = typeof rawOptions === 'function';
 
   const loadOptions = useLatestAsyncCall(isAsync ? rawOptions : asyncNoop);
@@ -56,6 +58,27 @@ export function useOptions<T extends string | number>(rawOptions: AsyncOptions<T
   // told it for async options loading anyway.
   const [userTypedSearch, setUserTypedSearch] = useState('');
 
+  const addCustomValue = useCallback(
+    (opts: Array<ComboboxOption<T>>) => {
+      let currentOptions: Array<ComboboxOption<T>> = opts;
+      if (createCustomValue && userTypedSearch) {
+        const customValueExists = opts.some((opt) => opt.value === userTypedSearch);
+        if (!customValueExists) {
+          currentOptions = [
+            {
+              label: userTypedSearch,
+              value: userTypedSearch as T,
+              description: t('combobox.custom-value.description', 'Use custom value'),
+            },
+            ...currentOptions,
+          ];
+        }
+      }
+      return currentOptions;
+    },
+    [createCustomValue, userTypedSearch]
+  );
+
   const updateOptions = useCallback(
     (inputValue: string) => {
       if (!isAsync) {
@@ -71,12 +94,15 @@ export function useOptions<T extends string | number>(rawOptions: AsyncOptions<T
   );
 
   const finalOptions = useMemo(() => {
+    let currentOptions = [];
     if (isAsync) {
-      return asyncOptions;
+      currentOptions = addCustomValue(asyncOptions);
     } else {
-      return rawOptions.filter(itemFilter(userTypedSearch));
+      currentOptions = addCustomValue(rawOptions.filter(itemFilter(userTypedSearch)));
     }
-  }, [rawOptions, asyncOptions, isAsync, userTypedSearch]);
+
+    return currentOptions;
+  }, [isAsync, addCustomValue, asyncOptions, rawOptions, userTypedSearch]);
 
   return { options: finalOptions, updateOptions, asyncLoading, asyncError };
 }

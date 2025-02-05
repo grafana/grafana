@@ -38,7 +38,7 @@
 
 /docs/sources/                                                                    @irenerl24
 
-/docs/sources/alerting/                                                           @brendamuir
+/docs/sources/alerting/                                                           @JohnnyK-Grafana
 /docs/sources/dashboards/                                                         @imatwawana
 /docs/sources/datasources/                                                        @lwandz13
 /docs/sources/panels-visualizations/                                              @imatwawana
@@ -492,6 +492,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/features/explore/ @grafana/observability-traces-and-profiling
 /public/app/features/expressions/ @grafana/observability-metrics
 /public/app/features/folders/ @grafana/grafana-frontend-platform
+/public/app/features/iam/ @grafana/grafana-frontend-platform
 /public/app/features/inspector/ @grafana/dashboards-squad
 /public/app/features/invites/ @grafana/grafana-frontend-platform
 /public/app/features/library-panels/ @grafana/dashboards-squad
@@ -534,6 +535,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/plugins/panel/heatmap/ @grafana/dataviz-squad
 /public/app/plugins/panel/histogram/ @grafana/dataviz-squad
 /public/app/plugins/panel/logs/ @grafana/observability-logs
+/public/app/plugins/panel/logs-new/ @grafana/observability-logs
 /public/app/plugins/panel/nodeGraph/ @grafana/observability-traces-and-profiling @grafana/app-o11y-visualizations
 /public/app/plugins/panel/traces/ @grafana/observability-traces-and-profiling
 /public/app/plugins/panel/flamegraph/ @grafana/observability-traces-and-profiling

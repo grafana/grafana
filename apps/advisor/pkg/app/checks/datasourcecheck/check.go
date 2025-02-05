@@ -7,8 +7,8 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	advisor "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/registry/apis/datasource"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/util"
@@ -18,7 +18,7 @@ import (
 func New(
 	datasourceSvc datasources.DataSourceService,
 	pluginStore pluginstore.Store,
-	pluginContextProvider datasource.PluginContextWrapper,
+	pluginContextProvider pluginContextProvider,
 	pluginClient plugins.Client,
 ) checks.Check {
 	return &check{
@@ -32,7 +32,7 @@ func New(
 type check struct {
 	DatasourceSvc         datasources.DataSourceService
 	PluginStore           pluginstore.Store
-	PluginContextProvider datasource.PluginContextWrapper
+	PluginContextProvider pluginContextProvider
 	PluginClient          plugins.Client
 }
 
@@ -49,24 +49,24 @@ func (c *check) Run(ctx context.Context, obj *advisor.CheckSpec) (*advisor.Check
 		return nil, err
 	}
 
-	dsErrs := []advisor.CheckV0alpha1StatusReportErrors{}
+	dsErrs := []advisor.CheckReportError{}
 	for _, ds := range dss {
 		// Data source UID validation
 		err := util.ValidateUID(ds.UID)
 		if err != nil {
-			dsErrs = append(dsErrs, advisor.CheckV0alpha1StatusReportErrors{
-				Severity: advisor.CheckStatusSeverityLow,
+			dsErrs = append(dsErrs, advisor.CheckReportError{
+				Severity: advisor.CheckReportErrorSeverityLow,
 				Reason:   fmt.Sprintf("Invalid UID '%s' for data source %s", ds.UID, ds.Name),
 				Action:   "Check the <a href='https://grafana.com/docs/grafana/latest/upgrade-guide/upgrade-v11.2/#grafana-data-source-uid-format-enforcement' target=_blank>documentation</a> for more information.",
 			})
 		}
 
 		// Health check execution
-		pCtx, err := c.PluginContextProvider.PluginContextForDataSource(ctx, &backend.DataSourceInstanceSettings{
-			Type:       ds.Type,
-			UID:        ds.UID,
-			APIVersion: ds.APIVersion,
-		})
+		requester, err := identity.GetRequester(ctx)
+		if err != nil {
+			return nil, err
+		}
+		pCtx, err := c.PluginContextProvider.GetWithDataSource(ctx, ds.Type, requester, ds)
 		if err != nil {
 			klog.ErrorS(err, "Error creating plugin context", "datasource", ds.Name)
 			continue
@@ -81,8 +81,8 @@ func (c *check) Run(ctx context.Context, obj *advisor.CheckSpec) (*advisor.Check
 			continue
 		}
 		if resp.Status != backend.HealthStatusOk {
-			dsErrs = append(dsErrs, advisor.CheckV0alpha1StatusReportErrors{
-				Severity: advisor.CheckStatusSeverityHigh,
+			dsErrs = append(dsErrs, advisor.CheckReportError{
+				Severity: advisor.CheckReportErrorSeverityHigh,
 				Reason:   fmt.Sprintf("Health check failed for %s", ds.Name),
 				Action: fmt.Sprintf(
 					"Go to the <a href='/connections/datasources/edit/%s'>data source configuration</a>"+
@@ -95,4 +95,8 @@ func (c *check) Run(ctx context.Context, obj *advisor.CheckSpec) (*advisor.Check
 		Count:  int64(len(dss)),
 		Errors: dsErrs,
 	}, nil
+}
+
+type pluginContextProvider interface {
+	GetWithDataSource(ctx context.Context, pluginID string, user identity.Requester, ds *datasources.DataSource) (backend.PluginContext, error)
 }
