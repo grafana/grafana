@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
 	"strconv"
 	"strings"
 	"sync"
@@ -60,8 +61,17 @@ var (
 	_ dashboards.DashboardProvisioningService = (*DashboardServiceImpl)(nil)
 	_ dashboards.PluginService                = (*DashboardServiceImpl)(nil)
 
-	daysInTrash = 24 * 30 * time.Hour
-	tracer      = otel.Tracer("github.com/grafana/grafana/pkg/services/dashboards/service")
+	daysInTrash               = 24 * 30 * time.Hour
+	tracer                    = otel.Tracer("github.com/grafana/grafana/pkg/services/dashboards/service")
+	ErrFolderReadAccessDenied = &apierrors.StatusError{
+		ErrStatus: v1.Status{
+			TypeMeta: v1.TypeMeta{
+				Kind:       "Status",
+				APIVersion: "v1",
+			},
+			Status: v1.StatusFailure,
+			Code:   http.StatusForbidden,
+		}}
 )
 
 type DashboardServiceImpl struct {
@@ -1257,6 +1267,10 @@ func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *dashb
 					SignedInUser: query.SignedInUser,
 				})
 				if err != nil {
+					if apierrors.IsForbidden(err) {
+						dr.log.Debug("Access to folder denied", "folderUid", hit.Folder, "error", err)
+						continue
+					}
 					return nil, err
 				}
 				foldersMap[hit.Folder] = f
