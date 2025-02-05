@@ -129,7 +129,7 @@ export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
   function getGrafanaAlertingConfigSteps(): SectionDtoStep[] {
     let steps: SectionDtoStep[] = [
       {
-        title: 'Update default e-mail contact point',
+        title: 'Update default contact point',
         description: 'Update the default contact point to a method other than the example email address.',
         button: {
           type: 'openLink',
