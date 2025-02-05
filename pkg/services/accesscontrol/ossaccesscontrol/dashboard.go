@@ -118,7 +118,7 @@ func ProvideDashboardPermissions(
 			ctx, span := tracer.Start(ctx, "accesscontrol.ossaccesscontrol.ProvideDashboardPermissions.ResourceValidator")
 			defer span.End()
 
-			ctx, _ = identity.WithServiceIdentitiy(ctx, orgID)
+			ctx, _ = identity.WithServiceIdentity(ctx, orgID)
 			dashboard, err := getDashboard(ctx, orgID, resourceID)
 			if err != nil {
 				return err
@@ -131,7 +131,7 @@ func ProvideDashboardPermissions(
 			return nil
 		},
 		InheritedScopesSolver: func(ctx context.Context, orgID int64, resourceID string) ([]string, error) {
-			ctx, _ = identity.WithServiceIdentitiy(ctx, orgID)
+			ctx, _ = identity.WithServiceIdentity(ctx, orgID)
 			dashboard, err := getDashboard(ctx, orgID, resourceID)
 			if err != nil {
 				return nil, err
