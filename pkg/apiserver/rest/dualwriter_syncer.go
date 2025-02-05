@@ -159,7 +159,7 @@ func legacyToUnifiedStorageDataSyncer(ctx context.Context, cfg *SyncerConfig) (b
 		startSync := time.Now()
 
 		ctx = klog.NewContext(ctx, log)
-		ctx, _ = identity.WithServiceIdentitiy(ctx, 0)
+		ctx, _ = identity.WithServiceIdentity(ctx, 0)
 		ctx = request.WithNamespace(ctx, cfg.RequestInfo.Namespace)
 		ctx = request.WithRequestInfo(ctx, cfg.RequestInfo)
 

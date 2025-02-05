@@ -39,7 +39,7 @@ func WithRequester(handler http.Handler) http.Handler {
 		} else if ok && info.GetName() == user.APIServerUser ||
 			slices.Contains(info.GetGroups(), user.SystemPrivilegedGroup) {
 			// For system:apiserver we use the identity of the service itself
-			ctx, _ = identity.WithServiceIdentitiy(ctx, 1)
+			ctx, _ = identity.WithServiceIdentity(ctx, 1)
 			req = req.WithContext(ctx)
 		} else {
 			klog.V(5).Info("unable to map the k8s user to grafana requester", "user", info)
