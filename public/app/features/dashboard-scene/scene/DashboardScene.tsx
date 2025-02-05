@@ -538,7 +538,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   }
 
   public removePanel(panel: VizPanel) {
-    this.state.body.removePanel(panel);
+    getLayoutManagerFor(panel).removePanel(panel);
   }
 
   public unlinkLibraryPanel(panel: VizPanel) {
