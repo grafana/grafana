@@ -1,7 +1,7 @@
 import { NewThemeOptions } from '../createTheme';
 
-const spaceTheme: NewThemeOptions = {
-  name: 'Space',
+const sapphireDuskTheme: NewThemeOptions = {
+  name: 'Sapphire dusk',
   colors: {
     mode: 'dark',
     border: {
@@ -38,39 +38,15 @@ const spaceTheme: NewThemeOptions = {
     },
     info: {
       main: '#4d4593',
-      text: '#a8e9ed',
-      border: '#5d54a7',
-      shade: 'rgb(255, 173, 80)',
-      transparent: '#4d4593',
-      contrastText: '#FFFFFF',
-      borderTransparent: '#6058a6',
     },
     error: {
       main: '#c63370',
-      text: '#FF5286',
-      border: '#db4f89',
-      shade: 'rgb(215, 50, 116)',
-      transparent: '#c633706b',
-      contrastText: '#FFFFFF',
-      borderTransparent: '#db4f8959',
     },
     success: {
       main: '#1A7F4B',
-      text: '#6CCF8E',
-      border: '#6CCF8E',
-      shade: 'rgb(60, 146, 102)',
-      transparent: '#1A7F4B26',
-      contrastText: '#FFFFFF',
-      borderTransparent: '#6CCF8E40',
     },
     warning: {
       main: '#D448EA',
-      text: '#FFD783',
-      border: '#FFD783',
-      shade: '#eec073',
-      transparent: '#ffd684',
-      contrastText: '#111614',
-      borderTransparent: '#fddc98',
     },
     background: {
       canvas: '#1e273d',
@@ -100,4 +76,4 @@ const spaceTheme: NewThemeOptions = {
   },
 };
 
-export default spaceTheme;
+export default sapphireDuskTheme;

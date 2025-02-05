@@ -1,7 +1,7 @@
 import { NewThemeOptions } from '../createTheme';
 
-const grafana12LightTheme: NewThemeOptions = {
-  name: 'Grafana 12 Light',
+const desertBloomTheme: NewThemeOptions = {
+  name: 'Desert bloom',
   colors: {
     mode: 'light',
     border: {
@@ -38,43 +38,15 @@ const grafana12LightTheme: NewThemeOptions = {
     },
     info: {
       main: '#1A82E2',
-      text: '#FFFFFF',
-      border: '#166EB8',
-      name: 'info',
-      shade: '#166EB8',
-      transparent: '#1A82E226',
-      contrastText: '#FFFFFF',
-      borderTransparent: '#1A82E240',
     },
     error: {
       main: '#FF6B6B',
-      text: '#FFFFFF',
-      border: '#E55A5A',
-      name: 'error',
-      shade: '#E55A5A',
-      transparent: '#FF6B6B26',
-      contrastText: '#FFFFFF',
-      borderTransparent: '#FF6B6B40',
     },
     success: {
       main: '#4CAF50',
-      text: '#FFFFFF',
-      border: '#399E3B',
-      name: 'success',
-      shade: '#399E3B',
-      transparent: '#4CAF5026',
-      contrastText: '#FFFFFF',
-      borderTransparent: '#4CAF5040',
     },
     warning: {
       main: '#FFC107',
-      text: '#333333',
-      border: '#E0A800',
-      name: 'warning',
-      shade: '#E0A800',
-      transparent: '#FFC10726',
-      contrastText: '#333333',
-      borderTransparent: '#FFC10740',
     },
     background: {
       canvas: '#FFF8F0',
@@ -104,4 +76,4 @@ const grafana12LightTheme: NewThemeOptions = {
   },
 };
 
-export default grafana12LightTheme;
+export default desertBloomTheme;
