@@ -34,9 +34,6 @@ func GetResponseCode(rsp *backend.QueryDataResponse) int {
 	}
 	for _, res := range rsp.Responses {
 		if res.Error != nil {
-			if res.Status > 0 {
-				return int(res.Status)
-			}
 			return http.StatusBadRequest
 		}
 	}

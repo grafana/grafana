@@ -9,7 +9,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
-	"github.com/grafana/grafana/pkg/extensions/apis/cloudconfig"
 	query_headers "github.com/grafana/grafana/pkg/registry/apis/query"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -56,12 +55,13 @@ func (r *subQueryREST) NewConnectOptions() (runtime.Object, bool, string) {
 
 func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
 	pluginCtx, err := r.builder.getPluginContext(ctx, name)
+
 	if err != nil {
 		if errors.Is(err, datasources.ErrDataSourceNotFound) {
 			return nil, k8serrors.NewNotFound(
 				schema.GroupResource{
-					Group:    cloudconfig.GROUP,
-					Resource: "datasources",
+					Group:    r.builder.connectionResourceInfo.GroupResource().Group,
+					Resource: r.builder.connectionResourceInfo.GroupResource().Resource,
 				},
 				name,
 			)
