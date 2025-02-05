@@ -18,7 +18,6 @@ import { AppChrome } from '../core/components/AppChrome/AppChrome';
 import { AppNotificationList } from '../core/components/AppNotifications/AppNotificationList';
 import { ModalsContextProvider } from '../core/context/ModalsContextProvider';
 import { QueriesDrawerContextProvider } from '../features/explore/QueriesDrawer/QueriesDrawerContext';
-import { QueryLibraryContextProvider } from '../features/explore/QueryLibrary/QueryLibraryContext';
 
 type RouterWrapperProps = {
   routes?: JSX.Element | false;
@@ -31,24 +30,22 @@ export function RouterWrapper(props: RouterWrapperProps) {
       <LocationServiceProvider service={locationService}>
         <CompatRouter>
           <QueriesDrawerContextProvider>
-            <QueryLibraryContextProvider>
-              <ModalsContextProvider>
-                <AppChrome>
-                  <AngularRoot />
-                  <AppNotificationList />
-                  <Stack gap={0} grow={1} direction="column">
-                    {props.pageBanners.map((Banner, index) => (
-                      <Banner key={index.toString()} />
-                    ))}
-                    {props.routes}
-                  </Stack>
-                  {props.bodyRenderHooks.map((Hook, index) => (
-                    <Hook key={index.toString()} />
+            <ModalsContextProvider>
+              <AppChrome>
+                <AngularRoot />
+                <AppNotificationList />
+                <Stack gap={0} grow={1} direction="column">
+                  {props.pageBanners.map((Banner, index) => (
+                    <Banner key={index.toString()} />
                   ))}
-                </AppChrome>
-                <ModalRoot />
-              </ModalsContextProvider>
-            </QueryLibraryContextProvider>
+                  {props.routes}
+                </Stack>
+                {props.bodyRenderHooks.map((Hook, index) => (
+                  <Hook key={index.toString()} />
+                ))}
+              </AppChrome>
+              <ModalRoot />
+            </ModalsContextProvider>
           </QueriesDrawerContextProvider>
         </CompatRouter>
       </LocationServiceProvider>

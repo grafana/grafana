@@ -1,5 +1,5 @@
 import { Action, KBarProvider } from 'kbar';
-import { Component, ComponentType, Fragment } from 'react';
+import { Component, ComponentType, Fragment, ReactNode } from 'react';
 import CacheProvider from 'react-inlinesvg/provider';
 import { Provider } from 'react-redux';
 import { Route, Routes } from 'react-router-dom-v5-compat';
@@ -37,6 +37,17 @@ interface AppWrapperState {
 /** Used by enterprise */
 let bodyRenderHooks: ComponentType[] = [];
 let pageBanners: ComponentType[] = [];
+const enterpriseProviders: Array<ComponentType<{ children: ReactNode }>> = [];
+
+export function addEnterpriseProviders(provider: ComponentType<{ children: ReactNode }>) {
+  enterpriseProviders.push(provider);
+}
+
+function EnterpriseProviders(props: { children: ReactNode }) {
+  return enterpriseProviders.reduce((tree, Provider): ReactNode => {
+    return <Provider>{tree}</Provider>;
+  }, props.children);
+}
 
 export function addBodyRenderHook(fn: ComponentType) {
   bodyRenderHooks.push(fn);
@@ -118,15 +129,17 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
                   <MaybeTimeRangeProvider>
                     <SidecarContext_EXPERIMENTAL.Provider value={sidecarServiceSingleton_EXPERIMENTAL}>
                       <ExtensionRegistriesProvider registries={pluginExtensionRegistries}>
-                        <div className="grafana-app">
-                          {config.featureToggles.appSidecar ? (
-                            <ExperimentalSplitPaneRouterWrapper {...routerWrapperProps} />
-                          ) : (
-                            <RouterWrapper {...routerWrapperProps} />
-                          )}
-                          <LiveConnectionWarning />
-                          <PortalContainer />
-                        </div>
+                        <EnterpriseProviders>
+                          <div className="grafana-app">
+                            {config.featureToggles.appSidecar ? (
+                              <ExperimentalSplitPaneRouterWrapper {...routerWrapperProps} />
+                            ) : (
+                              <RouterWrapper {...routerWrapperProps} />
+                            )}
+                            <LiveConnectionWarning />
+                            <PortalContainer />
+                          </div>
+                        </EnterpriseProviders>
                       </ExtensionRegistriesProvider>
                     </SidecarContext_EXPERIMENTAL.Provider>
                   </MaybeTimeRangeProvider>
