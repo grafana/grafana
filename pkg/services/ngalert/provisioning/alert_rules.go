@@ -232,7 +232,7 @@ func (service *AlertRuleService) CreateAlertRule(ctx context.Context, user ident
 		}
 	}
 	err = service.xact.InTransaction(ctx, func(ctx context.Context) error {
-		ids, err := service.ruleStore.InsertAlertRules(ctx, models.NewUserUID(user), []models.AlertRule{
+		ids, err := service.ruleStore.InsertAlertRules(ctx, userUidOrFallback(user), []models.AlertRule{
 			rule,
 		})
 		if err != nil {
@@ -359,7 +359,7 @@ func (service *AlertRuleService) UpdateRuleGroup(ctx context.Context, user ident
 			}
 		}
 
-		return service.ruleStore.UpdateAlertRules(ctx, models.NewUserUID(user), updateRules)
+		return service.ruleStore.UpdateAlertRules(ctx, userUidOrFallback(user), updateRules)
 	})
 }
 
@@ -511,7 +511,7 @@ func (service *AlertRuleService) persistDelta(ctx context.Context, user identity
 					New:      *update.New,
 				})
 			}
-			if err := service.ruleStore.UpdateAlertRules(ctx, models.NewUserUID(user), updates); err != nil {
+			if err := service.ruleStore.UpdateAlertRules(ctx, userUidOrFallback(user), updates); err != nil {
 				return fmt.Errorf("failed to update alert rules: %w", err)
 			}
 			for _, update := range delta.Update {
@@ -522,7 +522,7 @@ func (service *AlertRuleService) persistDelta(ctx context.Context, user identity
 		}
 
 		if len(delta.New) > 0 {
-			uids, err := service.ruleStore.InsertAlertRules(ctx, models.NewUserUID(user), withoutNilAlertRules(delta.New))
+			uids, err := service.ruleStore.InsertAlertRules(ctx, userUidOrFallback(user), withoutNilAlertRules(delta.New))
 			if err != nil {
 				return fmt.Errorf("failed to insert alert rules: %w", err)
 			}
@@ -618,7 +618,7 @@ func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, user ident
 		return models.AlertRule{}, err
 	}
 	err = service.xact.InTransaction(ctx, func(ctx context.Context) error {
-		err := service.ruleStore.UpdateAlertRules(ctx, models.NewUserUID(user), []models.UpdateRule{
+		err := service.ruleStore.UpdateAlertRules(ctx, userUidOrFallback(user), []models.UpdateRule{
 			{
 				Existing: storedRule,
 				New:      rule,
@@ -870,4 +870,12 @@ func (service *AlertRuleService) ensureNamespace(ctx context.Context, user ident
 	}
 
 	return nil
+}
+
+func userUidOrFallback(user identity.Requester) *models.UserUID {
+	userUID := models.NewUserUID(user)
+	if user == nil {
+		return &models.FileProvisioningUserUID
+	}
+	return userUID
 }
