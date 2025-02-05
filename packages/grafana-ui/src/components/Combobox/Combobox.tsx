@@ -233,22 +233,11 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
 
   const styles = useStyles2(getComboboxStyles);
 
-  // Calculate the size of each row depending on the item content
-  const calculateRowSize = (item: ComboboxOption<T> | ComboboxOption<T>['group']) => {
-    let rowSize = MENU_OPTION_HEIGHT;
-    if (!item) {
-      rowSize = 0;
-    } else if (typeof item !== 'string' && item.description) {
-      rowSize = MENU_OPTION_HEIGHT_DESCRIPTION;
-    }
-    return rowSize;
-  };
-
   // Use all items, including groups, to calculate the virtualized items, not just the options
   const virtualizerItems = {
     count: virtualizedItems.length,
     getScrollElement: () => scrollRef.current,
-    estimateSize: (index: number) => calculateRowSize(virtualizedItems[index]),
+    estimateSize: (index: number) => (items[index].description ? MENU_OPTION_HEIGHT_DESCRIPTION : MENU_OPTION_HEIGHT),
     overscan: VIRTUAL_OVERSCAN_ITEMS,
   };
 
