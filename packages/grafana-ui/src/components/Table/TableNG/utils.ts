@@ -1,6 +1,11 @@
-import { FieldType, Field, formattedValueToString, reduceField } from '@grafana/data';
+import tinycolor from 'tinycolor2';
 
-import { TableRow } from '../types';
+import { FieldType, Field, formattedValueToString, reduceField, GrafanaTheme2, DisplayValue } from '@grafana/data';
+import { TableCellBackgroundDisplayMode, TableCellDisplayMode, TableCellOptions } from '@grafana/schema';
+
+import { getTextColorForAlphaBackground } from '../../../utils';
+
+import { CellColors, TableRow } from './types';
 
 export function getCellHeight(
   text: string,
@@ -164,4 +169,40 @@ export function getFooterItemNG(rows: TableRow[], field: Field, options: TableFo
   const formattedValue = formattedValueToString(field.display!(value));
 
   return formattedValue;
+}
+
+export function getCellColors(
+  theme: GrafanaTheme2,
+  cellOptions: TableCellOptions,
+  displayValue: DisplayValue
+): CellColors {
+  // How much to darken elements depends upon if we're in dark mode
+  const darkeningFactor = theme.isDark ? 1 : -0.7;
+
+  // Setup color variables
+  let textColor: string | undefined = undefined;
+  let bgColor: string | undefined = undefined;
+  let bgHoverColor: string | undefined = undefined;
+
+  if (cellOptions.type === TableCellDisplayMode.ColorText) {
+    textColor = displayValue.color;
+  } else if (cellOptions.type === TableCellDisplayMode.ColorBackground) {
+    const mode = cellOptions.mode ?? TableCellBackgroundDisplayMode.Gradient;
+
+    if (mode === TableCellBackgroundDisplayMode.Basic) {
+      textColor = getTextColorForAlphaBackground(displayValue.color!, theme.isDark);
+      bgColor = tinycolor(displayValue.color).toRgbString();
+      bgHoverColor = tinycolor(displayValue.color).setAlpha(1).toRgbString();
+    } else if (mode === TableCellBackgroundDisplayMode.Gradient) {
+      const hoverColor = tinycolor(displayValue.color).setAlpha(1).toRgbString();
+      const bgColor2 = tinycolor(displayValue.color)
+        .darken(10 * darkeningFactor)
+        .spin(5);
+      textColor = getTextColorForAlphaBackground(displayValue.color!, theme.isDark);
+      bgColor = `linear-gradient(120deg, ${bgColor2.toRgbString()}, ${displayValue.color})`;
+      bgHoverColor = `linear-gradient(120deg, ${bgColor2.setAlpha(1).toRgbString()}, ${hoverColor})`;
+    }
+  }
+
+  return { textColor, bgColor, bgHoverColor };
 }

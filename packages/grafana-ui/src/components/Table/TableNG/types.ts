@@ -9,7 +9,6 @@ export interface CellNGProps {
   height?: number;
   justifyContent?: Property.JustifyContent;
   rowIdx?: number;
-  shouldTextOverflow?: () => boolean;
 }
 
 export interface RowExpanderNGProps {
@@ -25,3 +24,11 @@ export interface BarGaugeCellProps extends CellNGProps {
 }
 
 export interface SparklineCellProps extends BarGaugeCellProps {}
+
+export interface CellColors {
+  textColor?: string;
+  bgColor?: string;
+  bgHoverColor?: string;
+}
+
+export type TableRow = Record<string, unknown>;

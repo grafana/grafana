@@ -71,6 +71,7 @@ export function TableCellNG(props: any) {
           theme={theme}
           justifyContent={justifyContent}
           shouldTextOverflow={shouldTextOverflow}
+          cellOptions={fieldConfig.custom.cellOptions}
         />
       );
   }
