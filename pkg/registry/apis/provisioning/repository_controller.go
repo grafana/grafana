@@ -20,7 +20,6 @@ import (
 	client "github.com/grafana/grafana/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	informer "github.com/grafana/grafana/pkg/generated/informers/externalversions/provisioning/v0alpha1"
 	listers "github.com/grafana/grafana/pkg/generated/listers/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/auth"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -50,7 +49,6 @@ type RepositoryController struct {
 
 	// Converts config to instance
 	repoGetter RepoGetter
-	identities auth.BackgroundIdentityService
 	tester     *RepositoryTester
 
 	// To allow injection for testing.
@@ -68,7 +66,6 @@ func NewRepositoryController(
 	repoGetter RepoGetter,
 	resourceLister resources.ResourceLister,
 	parsers *resources.ParserFactory,
-	identities auth.BackgroundIdentityService,
 	tester *RepositoryTester,
 	jobs jobs.JobQueue,
 ) (*RepositoryController, error) {
@@ -85,7 +82,6 @@ func NewRepositoryController(
 		),
 		repoGetter: repoGetter,
 		parsers:    parsers,
-		identities: identities,
 		finalizer: &finalizer{
 			lister: resourceLister,
 			client: parsers.Client,
@@ -227,12 +223,10 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		return nil
 	}
 
-	ctx := context.Background()
-	id, err := rc.identities.WorkerIdentity(ctx, namespace)
+	ctx, _, err := identity.WithProvisioningIdentitiy(context.Background(), namespace)
 	if err != nil {
 		return err
 	}
-	ctx = identity.WithRequester(ctx, id)
 	logger = logger.WithContext(ctx)
 
 	repo, err := rc.repoGetter.AsRepository(ctx, obj)

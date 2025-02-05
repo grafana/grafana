@@ -31,6 +31,7 @@ func checkNilRequester(r Requester) bool {
 }
 
 const serviceName = "service"
+const serviceNameForProvisioning = "provisioning"
 
 // WithServiceIdentitiy sets creates an identity representing the service itself in provided org and store it in context.
 // This is useful for background tasks that has to communicate with unfied storage. It also returns a Requester with
@@ -51,6 +52,30 @@ func WithServiceIdentitiy(ctx context.Context, orgID int64) (context.Context, Re
 	}
 
 	return WithRequester(ctx, r), r
+}
+
+func WithProvisioningIdentitiy(ctx context.Context, namespace string) (context.Context, Requester, error) {
+	ns, err := types.ParseNamespace(namespace)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	r := &StaticRequester{
+		Type:           types.TypeAccessPolicy,
+		Name:           serviceNameForProvisioning,
+		UserUID:        serviceNameForProvisioning,
+		AuthID:         serviceNameForProvisioning,
+		Login:          serviceNameForProvisioning,
+		OrgRole:        RoleAdmin,
+		IsGrafanaAdmin: true,
+		Namespace:      namespace,
+		OrgID:          ns.OrgID,
+		Permissions: map[int64]map[string][]string{
+			ns.OrgID: serviceIdentityPermissions,
+		},
+	}
+
+	return WithRequester(ctx, r), r, nil
 }
 
 func getWildcardPermissions(actions ...string) map[string][]string {
@@ -76,9 +101,14 @@ var serviceIdentityPermissions = getWildcardPermissions(
 )
 
 func IsServiceIdentity(ctx context.Context) bool {
-	ident, err := GetRequester(ctx)
+	ident, ok := types.AuthInfoFrom(ctx)
+	if !ok {
+		return false
+	}
+	t, uid, err := types.ParseTypeID(ident.GetUID())
 	if err != nil {
 		return false
 	}
-	return ident.GetUID() == types.NewTypeID(types.TypeAccessPolicy, serviceName)
+
+	return t == types.TypeAccessPolicy && (uid == serviceName || uid == serviceNameForProvisioning)
 }

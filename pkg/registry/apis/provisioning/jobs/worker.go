@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	client "github.com/grafana/grafana/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/auth"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/services/rendering"
@@ -33,7 +32,6 @@ type JobWorker struct {
 	client      client.ProvisioningV0alpha1Interface
 	getter      RepoGetter
 	parsers     *resources.ParserFactory
-	identities  auth.BackgroundIdentityService
 	render      rendering.Service
 	lister      resources.ResourceLister
 	blobstore   blob.PublicBlobStore
@@ -44,7 +42,6 @@ func NewJobWorker(
 	getter RepoGetter,
 	parsers *resources.ParserFactory,
 	client client.ProvisioningV0alpha1Interface,
-	identities auth.BackgroundIdentityService,
 	render rendering.Service,
 	lister resources.ResourceLister,
 	blobstore blob.PublicBlobStore,
@@ -54,7 +51,6 @@ func NewJobWorker(
 		getter:      getter,
 		client:      client,
 		parsers:     parsers,
-		identities:  identities,
 		render:      render,
 		lister:      lister,
 		blobstore:   blobstore,
@@ -66,12 +62,12 @@ func (g *JobWorker) Process(ctx context.Context, job provisioning.Job, progress 
 	logger := logging.FromContext(ctx).With("job", job.GetName(), "namespace", job.GetNamespace())
 	ctx = logging.Context(ctx, logger)
 
-	id, err := g.identities.WorkerIdentity(ctx, job.Name)
+	ctx = request.WithNamespace(ctx, job.Namespace)
+	ctx, id, err := identity.WithProvisioningIdentitiy(ctx, job.Namespace)
 	if err != nil {
 		return nil, err
 	}
 
-	ctx = request.WithNamespace(identity.WithRequester(ctx, id), job.Namespace)
 	repoName := job.Spec.Repository
 	logger = logger.With("repository", repoName)
 	ctx = logging.Context(ctx, logger)
