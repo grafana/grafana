@@ -295,10 +295,35 @@ func legacyToUnifiedStorageDataSyncer(ctx context.Context, cfg *SyncerConfig) (b
 }
 
 func getList(ctx context.Context, obj rest.Lister, listOptions *metainternalversion.ListOptions) ([]runtime.Object, error) {
-	ll, err := obj.List(ctx, listOptions)
-	if err != nil {
-		return nil, err
+	var allItems []runtime.Object
+
+	for {
+		ll, err := obj.List(ctx, listOptions)
+		if err != nil {
+			return nil, err
+		}
+
+		items, err := meta.ExtractList(ll)
+		if err != nil {
+			return nil, err
+		}
+
+		allItems = append(allItems, items...)
+
+		// Get continue token from the list metadata.
+		listMeta, err := meta.ListAccessor(ll)
+		if err != nil {
+			return nil, err
+		}
+
+		// If no continue token, we're done paginating.
+		if listMeta.GetContinue() == "" {
+			break
+		}
+
+		// Set continue token for next page.
+		listOptions.Continue = listMeta.GetContinue()
 	}
 
-	return meta.ExtractList(ll)
+	return allItems, nil
 }
