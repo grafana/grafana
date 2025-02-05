@@ -174,8 +174,6 @@ export class SharedPreferences extends PureComponent<Props, State> {
     const styles = getStyles();
     const languages = getLanguageOptions();
     const currentThemeOption = this.themeOptions.find((x) => x.value === theme) ?? this.themeOptions[0];
-    // TODO update with correct survey link
-    const themeSurveyLink = 'http://www.google.com';
 
     return (
       <form onSubmit={this.onSubmitForm} className={styles.form}>
@@ -188,7 +186,11 @@ export class SharedPreferences extends PureComponent<Props, State> {
               config.featureToggles.grafanaconThemes ? (
                 <Trans i18nKey="shared-preferences.fields.theme-description">
                   Enjoying the limited edition themes? Tell us what you'd like to see{' '}
-                  <TextLink variant="bodySmall" external href={themeSurveyLink}>
+                  <TextLink
+                    variant="bodySmall"
+                    external
+                    href="https://docs.google.com/forms/d/e/1FAIpQLSeRKAY8nUMEVIKSYJ99uOO-dimF6Y69_If1Q1jTLOZRWqK1cw/viewform?usp=dialog"
+                  >
                     here.
                   </TextLink>
                 </Trans>
