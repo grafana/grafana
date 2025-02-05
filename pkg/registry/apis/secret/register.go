@@ -31,10 +31,11 @@ type SecretAPIBuilder struct {
 	tracer             tracing.Tracer
 	secureValueStorage contracts.SecureValueStorage
 	keeperStorage      contracts.KeeperStorage
+	decryptStorage     contracts.DecryptStorage
 }
 
-func NewSecretAPIBuilder(tracer tracing.Tracer, secureValueStorage contracts.SecureValueStorage, keeperStorage contracts.KeeperStorage) *SecretAPIBuilder {
-	return &SecretAPIBuilder{tracer, secureValueStorage, keeperStorage}
+func NewSecretAPIBuilder(tracer tracing.Tracer, secureValueStorage contracts.SecureValueStorage, keeperStorage contracts.KeeperStorage, decryptStorage contracts.DecryptStorage) *SecretAPIBuilder {
+	return &SecretAPIBuilder{tracer, secureValueStorage, keeperStorage, decryptStorage}
 }
 
 func RegisterAPIService(
@@ -44,6 +45,7 @@ func RegisterAPIService(
 	tracer tracing.Tracer,
 	secureValueStorage contracts.SecureValueStorage,
 	keeperStorage contracts.KeeperStorage,
+	decryptStorage contracts.DecryptStorage,
 ) (*SecretAPIBuilder, error) {
 	// Skip registration unless opting into experimental apis and the secrets management app platform flag.
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) ||
@@ -57,9 +59,10 @@ func RegisterAPIService(
 		fmt.Println("developer mode enabled")
 		secureValueStorage = reststorage.NewFakeSecureValueStore(cfg.SecretsManagement.DeveloperStubLatency)
 		keeperStorage = reststorage.NewFakeKeeperStore(cfg.SecretsManagement.DeveloperStubLatency)
+		decryptStorage = reststorage.NewFakeDecryptStore(secureValueStorage)
 	}
 
-	builder := NewSecretAPIBuilder(tracer, secureValueStorage, keeperStorage)
+	builder := NewSecretAPIBuilder(tracer, secureValueStorage, keeperStorage, decryptStorage)
 	apiregistration.RegisterAPI(builder)
 	return builder, nil
 }
@@ -104,6 +107,10 @@ func (b *SecretAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 		// Default path for `securevalue`.
 		// The `reststorage.SecureValueRest` struct will implement interfaces for CRUDL operations on `securevalue`.
 		secureValueResource.StoragePath(): reststorage.NewSecureValueRest(b.secureValueStorage, secureValueResource),
+
+		// TODO: only for testing purposes; remove it in favour of the grpc handler.
+		// This is a subresource from `securevalue`. It gets accessed like `securevalue/xyz/decrypt`.
+		secureValueResource.StoragePath("decrypt"): reststorage.NewDecryptRest(secureValueResource, b.decryptStorage),
 
 		// The `reststorage.KeeperRest` struct will implement interfaces for CRUDL operations on `keeper`.
 		keeperResource.StoragePath(): reststorage.NewKeeperRest(b.keeperStorage, keeperResource),
