@@ -33,7 +33,10 @@ import { isClonedKey } from '../../utils/clone';
 import { getDashboardSceneFor, getDefaultVizPanel, getQueryRunnerFor } from '../../utils/utils';
 import { DashboardScene } from '../DashboardScene';
 import { useLayoutCategory } from '../layouts-shared/DashboardLayoutSelector';
-import { BulkActionElement, DashboardLayoutManager, EditableDashboardElement, LayoutParent } from '../types';
+import { BulkActionElement } from '../types/BulkActionElement';
+import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
+import { EditableDashboardElement } from '../types/EditableDashboardElement';
+import { LayoutParent } from '../types/LayoutParent';
 
 import { MultiSelectedRowItemsElement } from './MultiSelectedRowItemsElement';
 import { RowItemRepeaterBehavior } from './RowItemRepeaterBehavior';
@@ -55,7 +58,8 @@ export class RowItem
     statePaths: ['title'],
   });
 
-  public isEditableDashboardElement: true = true;
+  public readonly isEditableDashboardElement = true;
+  public readonly typeName = 'Row';
 
   public useEditPaneOptions(): OptionsPaneCategoryDescriptor[] {
     const row = this;
@@ -105,10 +109,6 @@ export class RowItem
     const layoutOptions = useLayoutCategory(layout);
 
     return [rowOptions, rowRepeatOptions, layoutOptions];
-  }
-
-  public getTypeName(): string {
-    return 'Row';
   }
 
   public createMultiSelectedElement(items: SceneObject[]) {
