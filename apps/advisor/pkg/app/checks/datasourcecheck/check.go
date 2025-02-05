@@ -20,8 +20,6 @@ type check struct {
 	PluginStore           pluginstore.Store
 	PluginContextProvider datasource.PluginContextWrapper
 	PluginClient          plugins.Client
-
-	dss []*datasources.DataSource
 }
 
 func New(
@@ -38,39 +36,33 @@ func New(
 	}
 }
 
-func (c *check) Init(ctx context.Context) error {
+func (c *check) Items(ctx context.Context) ([]any, error) {
 	dss, err := c.DatasourceSvc.GetAllDataSources(ctx, &datasources.GetAllDataSourcesQuery{})
 	if err != nil {
-		return err
+		return nil, err
 	}
-	c.dss = dss
-	return nil
+	res := make([]any, len(dss))
+	for i, ds := range dss {
+		res[i] = ds
+	}
+	return res, nil
 }
 
 func (c *check) ID() string {
 	return "datasource"
 }
 
-func (c *check) ItemsLen() int {
-	return len(c.dss)
-}
-
 func (c *check) Steps() []checks.Step {
 	return []checks.Step{
-		&uidValidationStep{
-			dss: c.dss,
-		},
+		&uidValidationStep{},
 		&healthCheckStep{
 			PluginContextProvider: c.PluginContextProvider,
 			PluginClient:          c.PluginClient,
-			dss:                   c.dss,
 		},
 	}
 }
 
-type uidValidationStep struct {
-	dss []*datasources.DataSource
-}
+type uidValidationStep struct{}
 
 func (s *uidValidationStep) ID() string {
 	return "uid-validation"
@@ -84,9 +76,13 @@ func (s *uidValidationStep) Description() string {
 	return "Check if the UID of each data source is valid."
 }
 
-func (s *uidValidationStep) Run(ctx context.Context, obj *advisor.CheckSpec) ([]advisor.CheckReportError, error) {
+func (s *uidValidationStep) Run(ctx context.Context, obj *advisor.CheckSpec, items []any) ([]advisor.CheckReportError, error) {
 	dsErrs := []advisor.CheckReportError{}
-	for _, ds := range s.dss {
+	for _, i := range items {
+		ds, ok := i.(*datasources.DataSource)
+		if !ok {
+			return nil, fmt.Errorf("invalid item type %T", i)
+		}
 		// Data source UID validation
 		err := util.ValidateUID(ds.UID)
 		if err != nil {
@@ -103,8 +99,6 @@ func (s *uidValidationStep) Run(ctx context.Context, obj *advisor.CheckSpec) ([]
 type healthCheckStep struct {
 	PluginContextProvider datasource.PluginContextWrapper
 	PluginClient          plugins.Client
-
-	dss []*datasources.DataSource
 }
 
 func (s *healthCheckStep) Title() string {
@@ -119,9 +113,14 @@ func (s *healthCheckStep) ID() string {
 	return "health-check"
 }
 
-func (s *healthCheckStep) Run(ctx context.Context, obj *advisor.CheckSpec) ([]advisor.CheckReportError, error) {
+func (s *healthCheckStep) Run(ctx context.Context, obj *advisor.CheckSpec, items []any) ([]advisor.CheckReportError, error) {
 	dsErrs := []advisor.CheckReportError{}
-	for _, ds := range s.dss {
+	for _, i := range items {
+		ds, ok := i.(*datasources.DataSource)
+		if !ok {
+			return nil, fmt.Errorf("invalid item type %T", i)
+		}
+
 		// Health check execution
 		pCtx, err := s.PluginContextProvider.PluginContextForDataSource(ctx, &backend.DataSourceInstanceSettings{
 			Type:       ds.Type,

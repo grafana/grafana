@@ -122,12 +122,8 @@ func (m *mockCheck) ID() string {
 	return "mock"
 }
 
-func (m *mockCheck) Init(ctx context.Context) error {
-	return nil
-}
-
-func (m *mockCheck) ItemsLen() int {
-	return 0
+func (m *mockCheck) Items(ctx context.Context) ([]any, error) {
+	return []any{}, nil
 }
 
 func (m *mockCheck) Steps() []checks.Step {
@@ -140,7 +136,7 @@ type mockStep struct {
 	err error
 }
 
-func (m *mockStep) Run(ctx context.Context, obj *advisorv0alpha1.CheckSpec) ([]advisorv0alpha1.CheckReportError, error) {
+func (m *mockStep) Run(ctx context.Context, obj *advisorv0alpha1.CheckSpec, items []any) ([]advisorv0alpha1.CheckReportError, error) {
 	if m.err != nil {
 		return nil, m.err
 	}

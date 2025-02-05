@@ -10,13 +10,10 @@ import (
 type Check interface {
 	// ID returns the unique identifier of the check
 	ID() string
-	// Init is executed before Steps or ItemsLen are called and should be used
-	// to store any shared state or perform any initialization
-	Init(ctx context.Context) error
-	// Steps returns the list of steps that will be executed for
+	// Items returns the list of items that will be checked
+	Items(ctx context.Context) ([]any, error)
+	// Steps returns the list of steps that will be executed
 	Steps() []Step
-	// ItemsLen returns the number of items that will be checked
-	ItemsLen() int
 }
 
 // Step is a single step in a check, including its metadata
@@ -28,5 +25,5 @@ type Step interface {
 	// Description returns the description of the step
 	Description() string
 	// Run executes the step and returns a list of errors
-	Run(ctx context.Context, obj *advisorv0alpha1.CheckSpec) ([]advisorv0alpha1.CheckReportError, error)
+	Run(ctx context.Context, obj *advisorv0alpha1.CheckSpec, items []any) ([]advisorv0alpha1.CheckReportError, error)
 }

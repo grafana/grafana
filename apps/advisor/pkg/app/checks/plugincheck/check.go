@@ -34,42 +34,36 @@ type check struct {
 	PluginRepo       repo.Service
 	PluginPreinstall plugininstaller.Preinstall
 	ManagedPlugins   managedplugins.Manager
-
-	ps []pluginstore.Plugin
 }
 
 func (c *check) ID() string {
 	return "plugin"
 }
 
-func (c *check) Init(ctx context.Context) error {
-	c.ps = c.PluginStore.Plugins(ctx)
-	return nil
-}
-
-func (c *check) ItemsLen() int {
-	return len(c.ps)
+func (c *check) Items(ctx context.Context) ([]any, error) {
+	ps := c.PluginStore.Plugins(ctx)
+	res := make([]any, len(ps))
+	for i, p := range ps {
+		res[i] = p
+	}
+	return res, nil
 }
 
 func (c *check) Steps() []checks.Step {
 	return []checks.Step{
 		&deprecationStep{
 			PluginRepo: c.PluginRepo,
-			ps:         c.ps,
 		},
 		&updateStep{
 			PluginRepo:       c.PluginRepo,
 			PluginPreinstall: c.PluginPreinstall,
 			ManagedPlugins:   c.ManagedPlugins,
-			ps:               c.ps,
 		},
 	}
 }
 
 type deprecationStep struct {
 	PluginRepo repo.Service
-
-	ps []pluginstore.Plugin
 }
 
 func (s *deprecationStep) Title() string {
@@ -84,9 +78,14 @@ func (s *deprecationStep) ID() string {
 	return "deprecation"
 }
 
-func (s *deprecationStep) Run(ctx context.Context, _ *advisor.CheckSpec) ([]advisor.CheckReportError, error) {
+func (s *deprecationStep) Run(ctx context.Context, _ *advisor.CheckSpec, items []any) ([]advisor.CheckReportError, error) {
 	errs := []advisor.CheckReportError{}
-	for _, p := range s.ps {
+	for _, i := range items {
+		p, ok := i.(pluginstore.Plugin)
+		if !ok {
+			return nil, fmt.Errorf("invalid item type %T", i)
+		}
+
 		// Skip if it's a core plugin
 		if p.IsCorePlugin() {
 			continue
@@ -112,8 +111,6 @@ type updateStep struct {
 	PluginRepo       repo.Service
 	PluginPreinstall plugininstaller.Preinstall
 	ManagedPlugins   managedplugins.Manager
-
-	ps []pluginstore.Plugin
 }
 
 func (s *updateStep) Title() string {
@@ -128,9 +125,14 @@ func (s *updateStep) ID() string {
 	return "update"
 }
 
-func (s *updateStep) Run(ctx context.Context, _ *advisor.CheckSpec) ([]advisor.CheckReportError, error) {
+func (s *updateStep) Run(ctx context.Context, _ *advisor.CheckSpec, items []any) ([]advisor.CheckReportError, error) {
 	errs := []advisor.CheckReportError{}
-	for _, p := range s.ps {
+	for _, i := range items {
+		p, ok := i.(pluginstore.Plugin)
+		if !ok {
+			return nil, fmt.Errorf("invalid item type %T", i)
+		}
+
 		// Skip if it's a core plugin
 		if p.IsCorePlugin() {
 			continue

@@ -72,8 +72,8 @@ func processCheck(ctx context.Context, client resource.Client, obj resource.Obje
 		UserUID:      uid,
 		FallbackType: typ,
 	})
-	// Init the checks
-	err = check.Init(ctx)
+	// Get the items to check
+	items, err := check.Items(ctx)
 	if err != nil {
 		setErr := setStatusAnnotation(ctx, client, obj, "error")
 		if setErr != nil {
@@ -85,7 +85,7 @@ func processCheck(ctx context.Context, client resource.Client, obj resource.Obje
 	steps := check.Steps()
 	errs := []advisorv0alpha1.CheckReportError{}
 	for _, step := range steps {
-		stepErrs, err := step.Run(ctx, &c.Spec)
+		stepErrs, err := step.Run(ctx, &c.Spec, items)
 		if err != nil {
 			setErr := setStatusAnnotation(ctx, client, obj, "error")
 			if setErr != nil {
@@ -97,7 +97,7 @@ func processCheck(ctx context.Context, client resource.Client, obj resource.Obje
 	}
 	report := &advisorv0alpha1.CheckV0alpha1StatusReport{
 		Errors: errs,
-		Count:  int64(check.ItemsLen()),
+		Count:  int64(len(items)),
 	}
 	err = setStatusAnnotation(ctx, client, obj, "processed")
 	if err != nil {

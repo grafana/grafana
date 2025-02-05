@@ -29,17 +29,17 @@ func TestCheck_Run(t *testing.T) {
 			PluginClient:          mockPluginClient,
 		}
 
-		err := check.Init(context.Background())
+		items, err := check.Items(context.Background())
 		assert.NoError(t, err)
 		errs := []advisor.CheckReportError{}
 		for _, step := range check.Steps() {
-			stepErrs, err := step.Run(context.Background(), &advisor.CheckSpec{})
+			stepErrs, err := step.Run(context.Background(), &advisor.CheckSpec{}, items)
 			assert.NoError(t, err)
 			errs = append(errs, stepErrs...)
 		}
 
 		assert.NoError(t, err)
-		assert.Equal(t, 2, check.ItemsLen())
+		assert.Equal(t, 2, len(items))
 		assert.Empty(t, errs)
 	})
 
@@ -58,17 +58,17 @@ func TestCheck_Run(t *testing.T) {
 			PluginClient:          mockPluginClient,
 		}
 
-		err := check.Init(context.Background())
+		items, err := check.Items(context.Background())
 		assert.NoError(t, err)
 		errs := []advisor.CheckReportError{}
 		for _, step := range check.Steps() {
-			stepErrs, err := step.Run(context.Background(), &advisor.CheckSpec{})
+			stepErrs, err := step.Run(context.Background(), &advisor.CheckSpec{}, items)
 			assert.NoError(t, err)
 			errs = append(errs, stepErrs...)
 		}
 
 		assert.NoError(t, err)
-		assert.Equal(t, 1, check.ItemsLen())
+		assert.Equal(t, 1, len(items))
 		assert.Len(t, errs, 1)
 		assert.Equal(t, "Invalid UID 'invalid uid' for data source Prometheus", errs[0].Reason)
 	})
@@ -88,17 +88,17 @@ func TestCheck_Run(t *testing.T) {
 			PluginClient:          mockPluginClient,
 		}
 
-		err := check.Init(context.Background())
+		items, err := check.Items(context.Background())
 		assert.NoError(t, err)
 		errs := []advisor.CheckReportError{}
 		for _, step := range check.Steps() {
-			stepErrs, err := step.Run(context.Background(), &advisor.CheckSpec{})
+			stepErrs, err := step.Run(context.Background(), &advisor.CheckSpec{}, items)
 			assert.NoError(t, err)
 			errs = append(errs, stepErrs...)
 		}
 
 		assert.NoError(t, err)
-		assert.Equal(t, 1, check.ItemsLen())
+		assert.Equal(t, 1, len(items))
 		assert.Len(t, errs, 1)
 		assert.Equal(t, "Health check failed for Prometheus", errs[0].Reason)
 	})
