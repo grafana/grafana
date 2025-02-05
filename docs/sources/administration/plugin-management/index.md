@@ -248,21 +248,21 @@ To enable backend communication between plugins:
    actions_allow_post_url=
    ```
 
-   This is a comma-separated list which uses glob matching.
+   This is a comma-separated list that uses glob matching.
 
-   For example, to allow access to all plugins that have a backend:
+   To allow access to all plugins that have a backend:
 
    ```
    actions_allow_post_url=/api/plugins/*
    ```
 
-   Or, to access to the backend of only one plugin:
+   To access to the backend of only one plugin:
 
    ```
-   actions_allow_post_url=/api/plugins/grafana-special-app
+   actions_allow_post_url=/api/plugins/<GRAFANA_SPECIAL_APP>
    ```
 
-   You can use this to, for example, enable a [canvas panel]({{< relref "../../panels-visualizations/visualizations/canvas" >}}) to call an application resource API that is permitted by the `actions_allow_post_url` option.
+   You can use this to, for example, enable a [canvas panel](https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/canvas/) to call an application resource API that is permitted by the `actions_allow_post_url` option.
 
 ## Plugin Frontend Sandbox
 
