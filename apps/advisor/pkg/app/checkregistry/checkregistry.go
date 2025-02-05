@@ -6,9 +6,9 @@ import (
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks/plugincheck"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/repo"
-	"github.com/grafana/grafana/pkg/registry/apis/datasource"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugininstaller"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 )
@@ -20,7 +20,7 @@ type CheckService interface {
 type Service struct {
 	datasourceSvc         datasources.DataSourceService
 	pluginStore           pluginstore.Store
-	pluginContextProvider datasource.PluginContextWrapper
+	pluginContextProvider *plugincontext.Provider
 	pluginClient          plugins.Client
 	pluginRepo            repo.Service
 	pluginPreinstall      plugininstaller.Preinstall
@@ -28,7 +28,7 @@ type Service struct {
 }
 
 func ProvideService(datasourceSvc datasources.DataSourceService, pluginStore pluginstore.Store,
-	pluginContextProvider datasource.PluginContextWrapper, pluginClient plugins.Client,
+	pluginContextProvider *plugincontext.Provider, pluginClient plugins.Client,
 	pluginRepo repo.Service, pluginPreinstall plugininstaller.Preinstall, managedPlugins managedplugins.Manager) *Service {
 	return &Service{
 		datasourceSvc:         datasourceSvc,
