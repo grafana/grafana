@@ -26,7 +26,7 @@ export function FolderActionsButton({ folder }: Props) {
   const [deleteFolder] = useDeleteFolderMutation();
   const { canEditFolders, canDeleteFolders, canViewPermissions, canSetPermissions } = getFolderPermissions(folder);
   // Can only move folders when nestedFolders is enabled
-  const canMoveFolder = config.featureToggles.nestedFolders && canEditFolders;
+  const canMoveFolder = config.featureToggles.nestedFolders && canEditFolders && !folder.repository;
 
   const onMove = async (destinationUID: string) => {
     await moveFolder({ folder, destinationUID });
