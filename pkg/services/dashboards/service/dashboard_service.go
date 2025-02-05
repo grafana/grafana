@@ -13,6 +13,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
+
 	"golang.org/x/exp/slices"
 	"golang.org/x/sync/errgroup"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -989,10 +990,8 @@ func (dr *DashboardServiceImpl) setDefaultPermissions(ctx context.Context, dto *
 	}
 
 	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Dashboard).Inc()
-	// nolint:staticcheck
-	inFolder := dash.FolderID > 0
-	var permissions []accesscontrol.SetResourcePermissionCommand
 
+	var permissions []accesscontrol.SetResourcePermissionCommand
 	if !provisioned && dto.User.IsIdentityType(claims.TypeUser, claims.TypeServiceAccount) {
 		userID, err := dto.User.GetInternalID()
 		if err != nil {
@@ -1004,7 +1003,7 @@ func (dr *DashboardServiceImpl) setDefaultPermissions(ctx context.Context, dto *
 		}
 	}
 
-	if !inFolder {
+	if dash.FolderUID == "" {
 		permissions = append(permissions, []accesscontrol.SetResourcePermissionCommand{
 			{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_EDIT.String()},
 			{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_VIEW.String()},
@@ -1025,9 +1024,7 @@ func (dr *DashboardServiceImpl) setDefaultFolderPermissions(ctx context.Context,
 		return
 	}
 
-	inFolder := f.ParentUID != ""
 	var permissions []accesscontrol.SetResourcePermissionCommand
-
 	if !provisioned && cmd.SignedInUser.IsIdentityType(claims.TypeUser) {
 		userID, err := cmd.SignedInUser.GetInternalID()
 		if err != nil {
@@ -1039,7 +1036,7 @@ func (dr *DashboardServiceImpl) setDefaultFolderPermissions(ctx context.Context,
 		}
 	}
 
-	if !inFolder {
+	if f.ParentUID == "" {
 		permissions = append(permissions, []accesscontrol.SetResourcePermissionCommand{
 			{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_EDIT.String()},
 			{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_VIEW.String()},
