@@ -733,8 +733,6 @@ func (dr *DashboardServiceImpl) SaveDashboard(ctx context.Context, dto *dashboar
 		return nil, err
 	}
 
-	fmt.Println("Save dashboard")
-
 	// new dashboard created
 	if dto.Dashboard.ID == 0 {
 		dr.setDefaultPermissions(ctx, dto, dash, false)
