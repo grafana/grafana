@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"net/http"
 	"strconv"
 	"strings"
 	"sync"
@@ -61,17 +60,8 @@ var (
 	_ dashboards.DashboardProvisioningService = (*DashboardServiceImpl)(nil)
 	_ dashboards.PluginService                = (*DashboardServiceImpl)(nil)
 
-	daysInTrash               = 24 * 30 * time.Hour
-	tracer                    = otel.Tracer("github.com/grafana/grafana/pkg/services/dashboards/service")
-	ErrFolderReadAccessDenied = &apierrors.StatusError{
-		ErrStatus: v1.Status{
-			TypeMeta: v1.TypeMeta{
-				Kind:       "Status",
-				APIVersion: "v1",
-			},
-			Status: v1.StatusFailure,
-			Code:   http.StatusForbidden,
-		}}
+	daysInTrash = 24 * 30 * time.Hour
+	tracer      = otel.Tracer("github.com/grafana/grafana/pkg/services/dashboards/service")
 )
 
 type DashboardServiceImpl struct {
