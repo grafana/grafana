@@ -179,7 +179,9 @@ func legacyToUnifiedStorageDataSyncer(ctx context.Context, cfg *SyncerConfig) (b
 
 		log.Info("got items from unified storage", "items", len(storageList))
 
-		legacyList, err := getList(ctx, cfg.LegacyStorage, &metainternalversion.ListOptions{})
+		legacyList, err := getList(ctx, cfg.LegacyStorage, &metainternalversion.ListOptions{
+			Limit: int64(cfg.DataSyncerRecordsLimit),
+		})
 		if err != nil {
 			log.Error(err, "unable to extract list from legacy storage")
 			return
@@ -298,6 +300,10 @@ func getList(ctx context.Context, obj rest.Lister, listOptions *metainternalvers
 	var allItems []runtime.Object
 
 	for {
+		if int64(len(allItems)) >= listOptions.Limit {
+			return nil, fmt.Errorf("list has more than %d records. Aborting sync", listOptions.Limit)
+		}
+
 		ll, err := obj.List(ctx, listOptions)
 		if err != nil {
 			return nil, err
