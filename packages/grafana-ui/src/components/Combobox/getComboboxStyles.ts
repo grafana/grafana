@@ -53,15 +53,21 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
     }),
     optionGroup: css({
       label: 'combobox-option-group',
-      height: MENU_OPTION_HEIGHT,
       padding: MENU_ITEM_PADDING,
+      position: 'absolute',
+      display: 'flex',
+      alignItems: 'center',
+      flexDirection: 'row',
+      flexShrink: 0,
+      whiteSpace: 'nowrap',
+      width: '100%',
+      overflow: 'hidden',
       borderTop: `1px solid ${theme.colors.border.weak}`,
       color: theme.colors.text.secondary,
     }),
-    optionGroupDivider: css({
-      label: 'combobox-option-group-divider',
-      height: 1,
-      borderTop: `1px solid ${theme.colors.border.weak}`,
+    optionGroupFocused: css({
+      label: 'combobox-option-group-focused',
+      top: 0,
     }),
     optionGroupLastItem: css({
       label: 'combobox-option-group-divider',
@@ -95,8 +101,7 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
     }),
     optionFocused: css({
       label: 'combobox-option-focused',
-      // Commenting this line avoids the option to move to the top and place under the group label
-      // top: 0,
+      top: 0,
       background: theme.colors.action.focus,
       '@media (forced-colors: active), (prefers-contrast: more)': {
         border: `1px solid ${theme.colors.primary.border}`,
