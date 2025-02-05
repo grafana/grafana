@@ -289,6 +289,9 @@ The following example shows a more complex Graphite example, from the [Graphite 
 groupByNode(summarize(movingAverage(apps.$app.$server.counters.requests.count, 5), '$interval', 'sum', false), 2, 'sum')
 ```
 
+<!-- vale Grafana.WordList = NO -->
+<!-- vale Grafana.Spelling = NO -->
+
 ## Add ad hoc filters
 
 _Ad hoc filters_ are one of the most complex and flexible variable options available.
@@ -317,6 +320,9 @@ To create an ad hoc filter, follow these steps:
 1. Click **Back to dashboard** and **Exit edit**.
 
 Now you can [filter data on the dashboard](ref:filter-dashboard).
+
+<!-- vale Grafana.Spelling = YES -->
+<!-- vale Grafana.WordList = YES -->
 
 ## Configure variable selection options
 
@@ -380,7 +386,7 @@ Grafana has two built-in time range variables: `$__from` and `$__to`. They are c
 | Syntax                   | Example result           | Description                                                                                                                                                      |
 | ------------------------ | ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `${__from}`              | 1594671549254            | Unix millisecond epoch                                                                                                                                           |
-| `${__from:date}`         | 2020-07-13T20:19:09.254Z | No args, defaults to ISO 8601/RFC 3339                                                                                                                           |
+| `${__from:date}`         | 2020-07-13T20:19:09.254Z | No arguments, defaults to ISO 8601/RFC 3339                                                                                                                      |
 | `${__from:date:iso}`     | 2020-07-13T20:19:09.254Z | ISO 8601/RFC 3339                                                                                                                                                |
 | `${__from:date:seconds}` | 1594671549               | Unix seconds epoch                                                                                                                                               |
 | `${__from:date:YYYY-MM}` | 2020-07                  | Any custom [date format](https://momentjs.com/docs/#/displaying/) that does not include the `:` character. Uses browser time. Use `:date` or `:date:iso` for UTC |
@@ -485,7 +491,7 @@ In this example, there are several applications. Each application has a differen
 
 Now, you could make separate variables for each metric source, but then you have to know which server goes with which app. A better solution is to use one variable to filter another. In this example, when the user changes the value of the `app` variable, it changes the dropdown options returned by the `server` variable. Both variables use the **Multi-value** option and **Include all option**, enabling users to select some or all options presented at any time.
 
-##### app variable
+##### `app` variable
 
 The query for this variable basically says, "Find all the applications that exist."
 
@@ -495,7 +501,7 @@ apps.*
 
 The values returned are `backend`, `country`, `fakesite`, and `All`.
 
-##### server variable
+##### `server` variable
 
 The query for this variable basically says, "Find all servers for the currently chosen application."
 
@@ -547,7 +553,7 @@ In this example, you have several data centers. Each data center has a different
 
 In this example, when the user changes the value of the `datacenter` variable, it changes the dropdown options returned by the `host` variable. The `host` variable uses the **Multi-value** option and **Include all option**, allowing users to select some or all options presented at any time. The `datacenter` does not use either option, so you can only select one data center at a time.
 
-##### datacenter variable
+##### `datacenter` variable
 
 The query for this variable basically says, "Find all the data centers that exist."
 
@@ -557,7 +563,7 @@ SHOW TAG VALUES WITH KEY = "datacenter"
 
 The values returned are `America`, `Africa`, `Asia`, and `Europe`.
 
-##### host variable
+##### `host` variable
 
 The query for this variable basically says, "Find all hosts for the currently chosen data center."
 
@@ -627,7 +633,11 @@ The more layers of dependency you have in variables, the longer it takes to upda
 
 For example, if you have a series of four linked variables (country, region, server, metric) and you change a root variable value (country), then Grafana must run queries for all the dependent variables before it updates the visualizations in the dashboard.
 
+<!-- vale Grafana.WordList = NO -->
+
 ## Filter variables with regular expressions {#filter-variables-with-regex}
+
+<!-- vale Grafana.WordList = NO -->
 
 Using the **Regex** query option, you filter the list of options returned by the variable query or modify the options returned.
 
