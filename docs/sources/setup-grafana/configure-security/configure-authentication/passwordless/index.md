@@ -5,11 +5,11 @@ labels:
     - enterprise
     - oss
 menuTitle: Passwordless
-title: Configure passwordless authentication
+title: Configure passwordless authentication with magic links
 weight: 200
 ---
 
-# Passwordless authentication with magic links
+# Configure passwordless authentication with magic links
 
 Passwordless authentication lets Grafana users authenticate with a magic link or one-time password (OTP) sent via email.
 
