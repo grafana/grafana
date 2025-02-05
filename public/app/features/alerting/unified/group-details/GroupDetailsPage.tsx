@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
-import { Alert, Badge, Button, Icon, Stack, TextLink, withErrorBoundary } from '@grafana/ui';
+import { Alert, Badge, Button, Icon, Stack, Text, TextLink, withErrorBoundary } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 import { GrafanaRulesSourceSymbol, RuleGroup } from 'app/types/unified-alerting';
@@ -54,11 +54,11 @@ function RulesTable({ rules, groupInterval }: { rules: RulerRuleDTO[]; groupInte
           if (isGrafanaRulerRule(data)) {
             return (
               <TextLink href={createRelativeUrl(`/alerting/grafana/${data.grafana_alert.uid}/view`)}>
-                {getRuleName(data)}
+                <Text truncate>{getRuleName(data)}</Text>
               </TextLink>
             );
           }
-          return <>{getRuleName(data)}</>;
+          return <Text truncate>{getRuleName(data)}</Text>;
         },
         size: 0.4,
       },
@@ -144,7 +144,7 @@ function GroupDetailsPage() {
     isRuleNamespacesLoading ||
     isRuleNamespacesUninitialized ||
     isRuleGroupLoading ||
-    isRuleGroupUninitialized;
+    (isRuleGroupUninitialized && !!dsFeatures?.rulerConfig);
 
   // TODO Need to improve this
   const promGroup = ruleNamespaces?.[0]?.groups.find((g) => g.name === groupName);

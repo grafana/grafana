@@ -4,7 +4,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Badge, ConfirmModal, Icon, IconButton, LinkButton, Spinner, Stack, Tooltip, useStyles2 } from '@grafana/ui';
+import { Badge, ConfirmModal, Icon, LinkButton, Spinner, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { CombinedRuleGroup, CombinedRuleNamespace, RuleGroupIdentifier, RulesSource } from 'app/types/unified-alerting';
 
 import { LogMessages, logInfo } from '../../Analytics';
@@ -12,7 +12,6 @@ import { featureDiscoveryApi } from '../../api/featureDiscoveryApi';
 import { useDeleteRuleGroup } from '../../hooks/ruleGroup/useDeleteRuleGroup';
 import { useFolder } from '../../hooks/useFolder';
 import { useHasRuler } from '../../hooks/useHasRuler';
-import { useRulesAccess } from '../../utils/accessControlHooks';
 import { GRAFANA_RULES_SOURCE_NAME, getRulesSourceName, isCloudRulesSource } from '../../utils/datasource';
 import { makeFolderLink, makeFolderSettingsLink } from '../../utils/misc';
 import { isFederatedRuleGroup, isGrafanaRulerRule } from '../../utils/rules';
@@ -53,8 +52,6 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
   const [isReorderingGroup, setIsReorderingGroup] = useState(false);
   const [isExporting, setIsExporting] = useState<'group' | 'folder' | undefined>(undefined);
   const [isCollapsed, setIsCollapsed] = useState(!expandAll);
-
-  const { canEditRules } = useRulesAccess();
 
   useEffect(() => {
     setIsCollapsed(!expandAll);
@@ -119,7 +116,9 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
             )}
             size="sm"
             variant="secondary"
-          />
+          >
+            View
+          </LinkButton>
         );
       }
       if (folder?.canSave) {
@@ -161,53 +160,25 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
               onClick={() => setIsExporting('folder')}
             />
           );
-        } else if (isGroupView) {
-          actionIcons.push(
-            <ActionIcon
-              aria-label="export rule group"
-              data-testid="export-group"
-              key="export-group"
-              icon="download-alt"
-              tooltip="Export rule group"
-              onClick={() => setIsExporting('group')}
-            />
-          );
         }
       }
     }
-  } else if (canEditRules(rulesSource.name) && hasRuler) {
-    if (!isFederated) {
-      actionIcons.push(
-        <ActionIcon
-          aria-label="edit rule group"
-          data-testid="edit-group"
-          key="edit"
-          icon="pen"
-          tooltip="edit rule group"
-          onClick={() => setIsEditingGroup(true)}
-        />
-      );
-      actionIcons.push(
-        <ActionIcon
-          data-testid="reorder-group"
-          key="reorder"
-          icon="exchange-alt"
-          tooltip="reorder rules"
-          className={styles.rotate90}
-          onClick={() => setIsReorderingGroup(true)}
-        />
-      );
-    }
+  } else {
+    const groupDetailsUrl = createRelativeUrl(
+      `/alerting/${rulesSource.uid}/namespaces/${encodeURIComponent(namespace.name)}/groups/${encodeURIComponent(group.name)}`
+    );
 
     actionIcons.push(
-      <ActionIcon
-        aria-label="delete rule group"
-        data-testid="delete-group"
-        key="delete-group"
-        icon="trash-alt"
-        tooltip="delete rule group"
-        onClick={() => setIsDeletingGroup(true)}
-      />
+      <LinkButton
+        icon="external-link-alt"
+        key="group-details-link"
+        tooltip="Open group details"
+        href={groupDetailsUrl}
+        size="sm"
+        variant="secondary"
+      >
+        View
+      </LinkButton>
     );
   }
 
