@@ -318,9 +318,8 @@ func (r *syncer) ensureFolderPathExists(ctx context.Context, filePath string, fo
 			continue
 		}
 
-		err = r.ensureFolderExists(ctx, f, parent)
-		if err != nil {
-			return "", err
+		if err := r.ensureFolderExists(ctx, f, parent); err != nil {
+			return "", fmt.Errorf("ensure folder exists: %w", err)
 		}
 		folderTree.Add(f, parent)
 		parent = f.ID
