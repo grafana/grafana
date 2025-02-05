@@ -242,7 +242,7 @@ You can configure your Grafana instance to let the frontends of installed plugin
 
 To enable backend communication between plugins:
 
-1. Set the plugins you want to communicate with. In your configuration file (grafana.ini or custom.ini depending on your operating system) remove the semicolon to enable and then set the following configuration option:
+1. Set the plugins you want to communicate with. In your configuration file (`grafana.ini` or `custom.ini` depending on your operating system) remove the semicolon to enable and then set the following configuration option:
 
    ```
    actions_allow_post_url=
