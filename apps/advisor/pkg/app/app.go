@@ -11,6 +11,7 @@ import (
 	advisorv0alpha1 "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checkregistry"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
+	"github.com/grafana/grafana/apps/advisor/pkg/app/checktyperegisterer"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/klog/v2"
 )
@@ -33,11 +34,15 @@ func New(cfg app.Config) (app.App, error) {
 	if err != nil {
 		return nil, err
 	}
+	typesClient, err := clientGenerator.ClientFor(advisorv0alpha1.CheckTypeKind())
+	if err != nil {
+		return nil, err
+	}
 
 	// Initialize checks
 	checkMap := map[string]checks.Check{}
 	for _, c := range checkRegistry.Checks() {
-		checkMap[c.Type()] = c
+		checkMap[c.ID()] = c
 	}
 
 	simpleConfig := simple.AppConfig{
@@ -70,6 +75,9 @@ func New(cfg app.Config) (app.App, error) {
 					},
 				},
 			},
+			{
+				Kind: advisorv0alpha1.CheckTypeKind(),
+			},
 		},
 	}
 
@@ -83,6 +91,10 @@ func New(cfg app.Config) (app.App, error) {
 		return nil, err
 	}
 
+	// Save check types as resources
+	ctr := checktyperegisterer.NewRunner(checkMap, typesClient)
+	a.AddRunnable(ctr)
+
 	return a, nil
 }
 
@@ -95,6 +107,7 @@ func GetKinds() map[schema.GroupVersion][]resource.Kind {
 	return map[schema.GroupVersion][]resource.Kind{
 		gv: {
 			advisorv0alpha1.CheckKind(),
+			advisorv0alpha1.CheckTypeKind(),
 		},
 	}
 }

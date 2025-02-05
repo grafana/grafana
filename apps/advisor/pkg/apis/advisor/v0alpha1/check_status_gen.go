@@ -10,6 +10,10 @@ type CheckReportError struct {
 	Reason string `json:"reason"`
 	// Action to take to resolve the error
 	Action string `json:"action"`
+	// Step ID that the error is associated with
+	StepID string `json:"stepID"`
+	// Element ID that the error is associated with
+	ElementID string `json:"elementID"`
 }
 
 // NewCheckReportError creates a new CheckReportError object.

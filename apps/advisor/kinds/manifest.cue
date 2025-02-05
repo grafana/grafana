@@ -5,5 +5,6 @@ manifest: {
 	groupOverride:	"advisor.grafana.app"
 	kinds:			[
 		check,
+		checktype,
 	]
 }
