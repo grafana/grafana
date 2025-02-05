@@ -98,7 +98,12 @@ import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
 import { DashboardLayoutManager } from '../scene/types';
 import { preserveDashboardSceneStateInLocalStorage } from '../utils/dashboardSessionState';
-import { getDashboardSceneFor, getIntervalsFromQueryString, getVizPanelKeyForPanelId } from '../utils/utils';
+import {
+  getDashboardSceneFor,
+  getGridItemKeyForPanelId,
+  getIntervalsFromQueryString,
+  getVizPanelKeyForPanelId,
+} from '../utils/utils';
 
 import { GRID_ROW_HEIGHT } from './const';
 import { SnapshotVariable } from './custom-variables/SnapshotVariable';
@@ -324,7 +329,7 @@ function createResponsiveGridItems(
       throw new Error(`Unsupported element kind: ${panel.kind}`);
     }
     return new ResponsiveGridItem({
-      key: `grid-item-${panel.spec.id}`,
+      key: getGridItemKeyForPanelId(panel.spec.id),
       body: buildVizPanel(panel),
     });
   });
