@@ -1266,7 +1266,6 @@ func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *dashb
 				}
 				foldersMap[hit.Folder] = f
 			}
-
 			finalResults[i] = dashboards.DashboardSearchProjection{
 				ID:          hit.Field.GetNestedInt64(search.DASHBOARD_LEGACY_ID),
 				UID:         hit.Name,
