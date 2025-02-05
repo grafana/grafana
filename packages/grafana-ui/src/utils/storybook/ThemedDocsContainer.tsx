@@ -13,9 +13,10 @@ type Props = {
 };
 
 export const ThemedDocsContainer = ({ children, context }: Props) => {
-  console.log(context);
-  // const [{theme: themeId}] = useGlobals();
-  const theme = getThemeById('');
+  const story = context.storyById();
+  const { globals } = context.getStoryContext(story);
+  const { theme: themeId } = globals;
+  const theme = getThemeById(themeId);
 
   return (
     <DocsContainer theme={createStorybookTheme(theme)} context={context}>

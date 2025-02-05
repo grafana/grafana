@@ -66,7 +66,7 @@ const preview: Preview = {
     theme: {
       name: 'Theme',
       description: 'Global theme for components',
-      defaultValue: 'dark',
+      defaultValue: 'system',
       toolbar: {
         icon: 'paintbrush',
         items: getBuiltInThemes(true).map((theme) => ({
