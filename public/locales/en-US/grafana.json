@@ -902,6 +902,23 @@
       "subtitle": "Alert rules related to this dashboard"
     },
     "default-layout": {
+      "description": "The default grid layout",
+      "item-options": {
+        "repeat": {
+          "direction": {
+            "horizontal": "Horizontal",
+            "title": "Repeat direction",
+            "vertical": "Vertical"
+          },
+          "max": "Max per row",
+          "title": "Repeat options",
+          "variable": {
+            "description": "Repeat this panel for each value in the selected variable. This is not visible while in edit mode. You need to go back to dashboard and then update the variable or reload the dashboard.",
+            "title": "Repeat by variable"
+          }
+        }
+      },
+      "name": "Default grid",
       "row-actions": {
         "delete": "Delete row",
         "modal": {
@@ -937,6 +954,7 @@
           "selection-number": "No. of objects selected: "
         }
       },
+      "open": "Open options pane",
       "panels": {
         "multi-select": {
           "selection-number": "No. of panels selected: "
@@ -1016,34 +1034,118 @@
       "rows": "Total number rows",
       "table-title": "Stats"
     },
+    "options": {
+      "description": "Description",
+      "title": "Dashboard options",
+      "title-option": "Title"
+    },
     "panel-edit": {
       "alerting-tab": {
         "dashboard-not-saved": "Dashboard must be saved before alerts can be added.",
         "no-rules": "There are no alert rules linked to this panel."
       }
     },
+    "responsive-layout": {
+      "description": "CSS layout that adjusts to the available space",
+      "item-options": {
+        "hide-no-data": "Hide when no data",
+        "title": "Layout options"
+      },
+      "name": "Responsive grid",
+      "options": {
+        "columns": "Columns",
+        "fixed": "Fixed: {{size}}px",
+        "min": "Min: {{size}}px",
+        "one-column": "1 column",
+        "rows": "Rows",
+        "three-columns": "3 columns",
+        "two-columns": "2 columns"
+      }
+    },
     "rows-layout": {
+      "description": "Rows layout",
+      "name": "Rows",
       "row": {
+        "collapse": "Collapse row",
+        "expand": "Expand row",
+        "new": "New row",
         "repeat": {
           "learn-more": "Learn more",
           "warning": "Panels in this row use the {{SHARED_DASHBOARD_QUERY}} data source. These panels will reference the panel in the original row, not the ones in the repeated rows."
         }
+      },
+      "row-options": {
+        "height": {
+          "expand": "Expand",
+          "hide-row-header": "Hide row header",
+          "min": "Min",
+          "title": "Height"
+        },
+        "repeat": {
+          "title": "Repeat options",
+          "variable": {
+            "title": "Variable"
+          }
+        },
+        "title": "Row options",
+        "title-option": "Title"
       }
     },
     "toolbar": {
       "add": "Add",
+      "add-panel": "Panel",
+      "add-panel-lib": "Import",
+      "add-row": "Row",
       "alert-rules": "Alert rules",
+      "back-to-dashboard": "Back to dashboard",
+      "dashboard-settings": {
+        "label": "Settings",
+        "tooltip": "Dashboard settings"
+      },
+      "discard-library-panel-changes": "Discard library panel changes",
+      "discard-panel": "Discard panel changes",
+      "discard-panel-new": "Discard panel",
+      "edit": {
+        "label": "Edit",
+        "tooltip": "Enter edit mode"
+      },
+      "edit-dashboard-v2-schema": "Edit dashboard v2 schema",
+      "enter-edit-mode": {
+        "label": "Make editable",
+        "tooltip": "This dashboard was marked as read only"
+      },
+      "exit-edit-mode": {
+        "label": "Exit edit",
+        "tooltip": "Exits edit mode and discards unsaved changes"
+      },
       "mark-favorite": "Mark as favorite",
+      "more-save-options": "More save options",
       "open-original": "Open original dashboard",
       "playlist-next": "Go to next dashboard",
       "playlist-previous": "Go to previous dashboard",
       "playlist-stop": "Stop playlist",
+      "public-dashboard": "Public",
       "refresh": "Refresh dashboard",
       "save": "Save dashboard",
+      "save-dashboard": {
+        "label": "Save dashboard",
+        "tooltip": "Save changes"
+      },
+      "save-dashboard-copy": {
+        "label": "Save as copy",
+        "tooltip": "Save as copy"
+      },
+      "save-dashboard-short": "Save",
+      "save-library-panel": "Save library panel",
       "settings": "Dashboard settings",
-      "share": "Share dashboard",
+      "share": {
+        "label": "Share",
+        "tooltip": "Share dashboard"
+      },
       "share-button": "Share",
       "show-hidden-elements": "Show hidden",
+      "switch-old-dashboard": "Switch to old dashboard page",
+      "unlink-library-panel": "Unlink library panel",
       "unmark-favorite": "Unmark as favorite"
     },
     "validation": {
@@ -1051,6 +1153,14 @@
       "invalid-json": "Not valid JSON",
       "tags-expected-array": "tags expected array",
       "tags-expected-strings": "tags expected array of strings"
+    },
+    "viz-panel": {
+      "options": {
+        "description": "Description",
+        "title": "Panel options",
+        "title-option": "Title",
+        "transparent-background": "Transparent background"
+      }
     }
   },
   "dashboard-import": {

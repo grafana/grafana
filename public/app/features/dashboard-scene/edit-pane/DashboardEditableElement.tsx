@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 
 import { Input, TextArea } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
@@ -22,13 +23,13 @@ export class DashboardEditableElement implements EditableDashboardElement {
 
     const dashboardOptions = useMemo(() => {
       return new OptionsPaneCategoryDescriptor({
-        title: 'Dashboard options',
+        title: t('dashboard.options.title', 'Dashboard options'),
         id: 'dashboard-options',
         isOpenDefault: true,
       })
         .addItem(
           new OptionsPaneItemDescriptor({
-            title: 'Title',
+            title: t('dashboard.options.title-option', 'Title'),
             render: function renderTitle() {
               return <DashboardTitleInput dashboard={dashboard} />;
             },
@@ -36,7 +37,7 @@ export class DashboardEditableElement implements EditableDashboardElement {
         )
         .addItem(
           new OptionsPaneItemDescriptor({
-            title: 'Description',
+            title: t('dashboard.options.description', 'Description'),
             render: function renderTitle() {
               return <DashboardDescriptionInput dashboard={dashboard} />;
             },
