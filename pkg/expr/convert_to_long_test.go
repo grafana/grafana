@@ -11,13 +11,13 @@ import (
 func TestConvertNumericMultiToLong(t *testing.T) {
 	input := data.Frames{
 		data.NewFrame("test",
-			data.NewField("Value", data.Labels{"city": "MIA"}, []float64{5})),
+			data.NewField("Value", data.Labels{"city": "MIA"}, []int64{5})),
 		data.NewFrame("test",
-			data.NewField("Value", data.Labels{"city": "LGA"}, []float64{7}),
+			data.NewField("Value", data.Labels{"city": "LGA"}, []int64{7}),
 		),
 	}
 	expectedFrame := data.NewFrame("",
-		data.NewField("Value", nil, []float64{5, 7}),
+		data.NewField("Value", nil, []int64{5, 7}),
 		data.NewField("city", nil, []string{"MIA", "LGA"}),
 	)
 	output, err := convertNumericMultiToNumericLong(input)
@@ -31,12 +31,12 @@ func TestConvertNumericMultiToLong(t *testing.T) {
 func TestConvertNumericWideToLong(t *testing.T) {
 	input := data.Frames{
 		data.NewFrame("test",
-			data.NewField("Value", data.Labels{"city": "MIA"}, []float64{5}),
-			data.NewField("Value", data.Labels{"city": "LGA"}, []float64{7}),
+			data.NewField("Value", data.Labels{"city": "MIA"}, []int64{5}),
+			data.NewField("Value", data.Labels{"city": "LGA"}, []int64{7}),
 		),
 	}
 	expectedFrame := data.NewFrame("",
-		data.NewField("Value", nil, []float64{5, 7}),
+		data.NewField("Value", nil, []int64{5, 7}),
 		data.NewField("city", nil, []string{"MIA", "LGA"}),
 	)
 	output, err := convertNumericWideToNumericLong(input)
