@@ -112,9 +112,10 @@ export function shouldTextOverflow(
   lineHeight: number,
   defaultRowHeight: number,
   padding: number,
-  textWrap: boolean
+  textWrap: boolean,
+  cellInspect: boolean
 ): boolean {
-  if (textWrap) {
+  if (textWrap || cellInspect) {
     return false;
   }
 
