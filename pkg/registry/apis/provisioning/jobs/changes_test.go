@@ -20,7 +20,9 @@ func TestChanges(t *testing.T) {
 
 	t.Run("create a source file", func(t *testing.T) {
 		source, target := getBase(t)
-		source = append(source, repository.FileTreeEntry{Path: "muta.json", Hash: "xyz", Blob: true})
+		source = append(source, repository.FileTreeEntry{
+			Path: "muta.json", Hash: "xyz", Blob: true,
+		})
 
 		changes, err := Changes(source, target)
 		require.NoError(t, err)
@@ -49,6 +51,35 @@ func TestChanges(t *testing.T) {
 				Hash:     "ce5d497c4deadde6831162ce8509e2b2b1776237",
 			},
 		}, changes[0])
+	})
+
+	t.Run("folder deletion order", func(t *testing.T) {
+		source := []repository.FileTreeEntry{
+			{Path: "x/y/z/ignored.md"}, // ignored
+			{Path: "aaa/bbb.yaml", Hash: "xyz", Blob: true},
+		}
+		target := &provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{Path: "a.json"},
+				{Path: "x/y/file.json"},
+				{Path: "aaa/bbb.yaml", Hash: "xyz"},
+				{Path: "zzz/longest/path/here.json"},
+				{Path: "short/file.yml"},
+			},
+		}
+		changes, err := Changes(source, target)
+		require.NoError(t, err)
+
+		order := make([]string, len(changes))
+		for i := range changes {
+			order[i] = changes[i].Path
+		}
+		require.Equal(t, []string{
+			"zzz/longest/path/here.json",
+			"short/file.yml",
+			"x/y/file.json",
+			"a.json",
+		}, order)
 	})
 
 	t.Run("modify a file", func(t *testing.T) {

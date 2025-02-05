@@ -197,10 +197,6 @@ func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange
 
 	// Create folder structure first
 	for _, change := range changes {
-		if resources.ShouldIgnorePath(change.Path) {
-			r.summary.Noop++
-			continue
-		}
 		if len(r.jobStatus.Errors) > 20 {
 			r.jobStatus.Errors = append(r.jobStatus.Errors, "too many errors, stopping")
 			r.jobStatus.State = provisioning.JobStateError

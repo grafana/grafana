@@ -2,9 +2,11 @@ package jobs
 
 import (
 	"fmt"
+	"sort"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
 type ResourceFileChange struct {
@@ -12,7 +14,7 @@ type ResourceFileChange struct {
 	Path   string
 	Action provisioning.FileAction
 
-	// The current value in the database -- required for delete
+	// The current value in the database -- only required for delete
 	Existing *provisioning.ResourceListItem
 }
 
@@ -44,7 +46,7 @@ func Changes(source []repository.FileTreeEntry, target *provisioning.ResourceLis
 				})
 			}
 			delete(lookup, file.Path)
-		} else {
+		} else if !resources.ShouldIgnorePath(file.Path) {
 			changes = append(changes, ResourceFileChange{
 				Action: provisioning.FileActionCreated, // or previously ignored/failed
 				Path:   file.Path,
@@ -60,6 +62,11 @@ func Changes(source []repository.FileTreeEntry, target *provisioning.ResourceLis
 			Existing: v,
 		})
 	}
+
+	// Do longest paths first (important for delete, irrelevant otherwise)
+	sort.Slice(changes, func(i, j int) bool {
+		return len(changes[i].Path) > len(changes[j].Path)
+	})
 
 	return changes, nil
 }
