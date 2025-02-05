@@ -37,9 +37,12 @@ type S3RepositoryConfig struct {
 type Workflow string
 
 const (
+	// PullRequestWorkflow creates a pull request for changes
 	PullRequestWorkflow Workflow = "pull-request"
-	BranchWorkflow      Workflow = "branch"
-	PushWorkflow        Workflow = "push"
+	// BranchWorkflow creates a branch for changes
+	BranchWorkflow Workflow = "branch"
+	// PushWorkflow pushes changes directly the configured branch
+	PushWorkflow Workflow = "push"
 )
 
 type GitHubRepositoryConfig struct {
@@ -121,8 +124,8 @@ const (
 	SyncTargetTypeInstance SyncTargetType = "instance"
 
 	// Resources will be saved into a folder managed by this repository
-	// The folder k8s name will be the same as the repository k8s name
 	// It will contain a copy of everything from the remote
+	// The folder k8s name will be the same as the repository k8s name
 	SyncTargetTypeFolder SyncTargetType = "folder"
 )
 
