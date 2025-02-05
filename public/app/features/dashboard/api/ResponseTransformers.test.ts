@@ -113,6 +113,18 @@ describe('ResponseTransformers', () => {
           hidden: false,
           time_options: ['5m', '15m', '1h'],
           nowDelay: '1m',
+          quick_ranges: [
+            {
+              display: 'Last 6 hours',
+              from: 'now-6h',
+              to: 'now',
+            },
+            {
+              display: 'Last 7 days',
+              from: 'now-7d',
+              to: 'now',
+            },
+          ],
         },
         fiscalYearStartMonth: 1,
         weekStart: 'monday',
@@ -460,7 +472,7 @@ describe('ResponseTransformers', () => {
       expect(spec.timeSettings.autoRefresh).toBe(dashboardV1.refresh);
       expect(spec.timeSettings.autoRefreshIntervals).toEqual(dashboardV1.timepicker?.refresh_intervals);
       expect(spec.timeSettings.hideTimepicker).toBe(dashboardV1.timepicker?.hidden);
-      expect(spec.timeSettings.quickRanges).toEqual(dashboardV1.timepicker?.time_options);
+      expect(spec.timeSettings.quickRanges).toEqual(dashboardV1.timepicker?.quick_ranges);
       expect(spec.timeSettings.nowDelay).toBe(dashboardV1.timepicker?.nowDelay);
       expect(spec.timeSettings.fiscalYearStartMonth).toBe(dashboardV1.fiscalYearStartMonth);
       expect(spec.timeSettings.weekStart).toBe(dashboardV1.weekStart);
@@ -651,7 +663,18 @@ describe('ResponseTransformers', () => {
             autoRefresh: '5m',
             autoRefreshIntervals: ['5s', '10s', '30s'],
             hideTimepicker: false,
-            quickRanges: ['5m', '15m', '1h'],
+            quickRanges: [
+              {
+                display: 'Last 6 hours',
+                from: 'now-6h',
+                to: 'now',
+              },
+              {
+                display: 'Last 7 days',
+                from: 'now-7d',
+                to: 'now',
+              },
+            ],
             nowDelay: '1m',
             fiscalYearStartMonth: 1,
             weekStart: 'monday',
