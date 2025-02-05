@@ -62,7 +62,7 @@ export function useOptions<T extends string | number>(rawOptions: AsyncOptions<T
     (opts: Array<ComboboxOption<T>>) => {
       let currentOptions: Array<ComboboxOption<T>> = opts;
       if (createCustomValue && userTypedSearch) {
-        const customValueExists = opts.some((opt) => opt.value === userTypedSearch);
+        const customValueExists = opts.some((opt) => opt.value === userTypedSearch || opt.label === userTypedSearch);
         if (!customValueExists) {
           currentOptions = [
             {
