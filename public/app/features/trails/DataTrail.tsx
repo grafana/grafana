@@ -653,6 +653,8 @@ function getVariableSet(
         layout: 'vertical',
         defaultKeys: [],
         applyMode: 'manual',
+        supportsMultiValueOperators: true,
+        allowCustomValue: true,
       }),
       new AdHocFiltersVariable({
         name: VAR_FILTERS,
@@ -666,6 +668,7 @@ function getVariableSet(
         applyMode: 'manual',
         // since we only support prometheus datasources, this is always true
         supportsMultiValueOperators: true,
+        allowCustomValue: true,
       }),
       ...getVariablesWithOtelJoinQueryConstant(otelJoinQuery ?? ''),
       new ConstantVariable({
@@ -689,6 +692,7 @@ function getVariableSet(
         applyMode: 'manual',
         // since we only support prometheus datasources, this is always true
         supportsMultiValueOperators: true,
+        allowCustomValue: true,
         // skipUrlSync: true
       }),
       // Legacy variable needed for bookmarking which is necessary because

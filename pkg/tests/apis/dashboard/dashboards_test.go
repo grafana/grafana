@@ -17,17 +17,11 @@ import (
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
-var gvr = schema.GroupVersionResource{
-	Group:    "dashboard.grafana.app",
-	Version:  "v0alpha1",
-	Resource: "dashboards",
-}
-
 func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-func runDashboardTest(t *testing.T, helper *apis.K8sTestHelper) {
+func runDashboardTest(t *testing.T, helper *apis.K8sTestHelper, gvr schema.GroupVersionResource) {
 	t.Run("simple crud+list", func(t *testing.T) {
 		ctx := context.Background()
 		client := helper.GetResourceClient(apis.ResourceClientArgs{
@@ -62,6 +56,7 @@ func runDashboardTest(t *testing.T, helper *apis.K8sTestHelper) {
 		require.NoError(t, err)
 		require.Equal(t, created, obj.GetName())
 		require.Equal(t, int64(1), obj.GetGeneration())
+		require.Equal(t, "Test empty dashboard", obj.Object["spec"].(map[string]any)["title"])
 
 		wrap, err := utils.MetaAccessor(obj)
 		require.NoError(t, err)
@@ -87,6 +82,7 @@ func runDashboardTest(t *testing.T, helper *apis.K8sTestHelper) {
 		require.Equal(t, obj.GetName(), updated.GetName())
 		require.Equal(t, obj.GetUID(), updated.GetUID())
 		require.Less(t, obj.GetResourceVersion(), updated.GetResourceVersion())
+		require.Equal(t, "Changed title", updated.Object["spec"].(map[string]any)["title"])
 
 		// Delete the object, skipping the provisioned dashboard check
 		zeroInt64 := int64(0)
@@ -102,12 +98,17 @@ func runDashboardTest(t *testing.T, helper *apis.K8sTestHelper) {
 	})
 }
 
-func TestIntegrationDashboardsApp(t *testing.T) {
+func TestIntegrationDashboardsAppV0Alpha1(t *testing.T) {
+	gvr := schema.GroupVersionResource{
+		Group:    "dashboard.grafana.app",
+		Version:  "v0alpha1",
+		Resource: "dashboards",
+	}
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
 
-	t.Run("with dual writer mode 0", func(t *testing.T) {
+	t.Run("v0alpha1 with dual writer mode 0", func(t *testing.T) {
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 			DisableAnonymous: true,
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
@@ -116,10 +117,10 @@ func TestIntegrationDashboardsApp(t *testing.T) {
 				},
 			},
 		})
-		runDashboardTest(t, helper)
+		runDashboardTest(t, helper, gvr)
 	})
 
-	t.Run("with dual writer mode 1", func(t *testing.T) {
+	t.Run("v0alpha1 with dual writer mode 1", func(t *testing.T) {
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 			DisableAnonymous: true,
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
@@ -128,10 +129,10 @@ func TestIntegrationDashboardsApp(t *testing.T) {
 				},
 			},
 		})
-		runDashboardTest(t, helper)
+		runDashboardTest(t, helper, gvr)
 	})
 
-	t.Run("with dual writer mode 2", func(t *testing.T) {
+	t.Run("v0alpha1 with dual writer mode 2", func(t *testing.T) {
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 			DisableAnonymous: true,
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
@@ -140,10 +141,10 @@ func TestIntegrationDashboardsApp(t *testing.T) {
 				},
 			},
 		})
-		runDashboardTest(t, helper)
+		runDashboardTest(t, helper, gvr)
 	})
 
-	t.Run("with dual writer mode 3", func(t *testing.T) {
+	t.Run("v0alpha1 with dual writer mode 3", func(t *testing.T) {
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 			DisableAnonymous: true,
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
@@ -152,10 +153,10 @@ func TestIntegrationDashboardsApp(t *testing.T) {
 				},
 			},
 		})
-		runDashboardTest(t, helper)
+		runDashboardTest(t, helper, gvr)
 	})
 
-	t.Run("with dual writer mode 4", func(t *testing.T) {
+	t.Run("v0alpha1 with dual writer mode 4", func(t *testing.T) {
 		t.Skip("skipping test because of authorizer issue")
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 			DisableAnonymous: true,
@@ -165,6 +166,78 @@ func TestIntegrationDashboardsApp(t *testing.T) {
 				},
 			},
 		})
-		runDashboardTest(t, helper)
+		runDashboardTest(t, helper, gvr)
+	})
+}
+
+func TestIntegrationDashboardsAppV1Alpha1(t *testing.T) {
+	gvr := schema.GroupVersionResource{
+		Group:    "dashboard.grafana.app",
+		Version:  "v1alpha1",
+		Resource: "dashboards",
+	}
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	t.Run("v1alpha1 with dual writer mode 0", func(t *testing.T) {
+		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			DisableAnonymous: true,
+			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+				"dashboards.dashboard.grafana.app": {
+					DualWriterMode: 0,
+				},
+			},
+		})
+		runDashboardTest(t, helper, gvr)
+	})
+
+	t.Run("v1alpha1 with dual writer mode 1", func(t *testing.T) {
+		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			DisableAnonymous: true,
+			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+				"dashboards.dashboard.grafana.app": {
+					DualWriterMode: 1,
+				},
+			},
+		})
+		runDashboardTest(t, helper, gvr)
+	})
+
+	t.Run("v1alpha1 with dual writer mode 2", func(t *testing.T) {
+		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			DisableAnonymous: true,
+			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+				"dashboards.dashboard.grafana.app": {
+					DualWriterMode: 2,
+				},
+			},
+		})
+		runDashboardTest(t, helper, gvr)
+	})
+
+	t.Run("v1alpha1 with dual writer mode 3", func(t *testing.T) {
+		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			DisableAnonymous: true,
+			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+				"dashboards.dashboard.grafana.app": {
+					DualWriterMode: 3,
+				},
+			},
+		})
+		runDashboardTest(t, helper, gvr)
+	})
+
+	t.Run("v1alpha1 with dual writer mode 4", func(t *testing.T) {
+		t.Skip("skipping test because of authorizer issue")
+		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			DisableAnonymous: true,
+			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+				"dashboards.dashboard.grafana.app": {
+					DualWriterMode: 4,
+				},
+			},
+		})
+		runDashboardTest(t, helper, gvr)
 	})
 }

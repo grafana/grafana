@@ -585,8 +585,6 @@ func toGettableExtendedRuleNode(r ngmodels.AlertRule, provenanceRecords map[stri
 
 	gettableExtendedRuleNode := apimodels.GettableExtendedRuleNode{
 		GrafanaManagedAlert: &apimodels.GettableGrafanaRule{
-			ID:                   r.ID,
-			OrgID:                r.OrgID,
 			Title:                r.Title,
 			Condition:            r.Condition,
 			Data:                 ApiAlertQueriesFromAlertQueries(r.Data),
