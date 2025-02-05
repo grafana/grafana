@@ -64,7 +64,6 @@ export class GrafanaJavascriptAgentBackend
     const consoleInstrumentationOptions: ConsoleInstrumentationOptions =
       options.allInstrumentationsEnabled || options.consoleInstrumentalizationEnabled
         ? {
-            captureConsole: true,
             serializeErrors: true,
           }
         : {};
