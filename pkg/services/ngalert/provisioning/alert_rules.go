@@ -368,6 +368,16 @@ func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, user iden
 		return err
 	}
 
+	for _, rule := range group.Rules {
+		if rule.UID == "" {
+			// if empty the UID will be generated before save
+			continue
+		}
+		if err := util.ValidateUID(rule.UID); err != nil {
+			return errors.Join(models.ErrAlertRuleFailedValidation, fmt.Errorf("cannot create rule with UID '%s': %w", rule.UID, err))
+		}
+	}
+
 	delta, err := service.calcDelta(ctx, user, group)
 	if err != nil {
 		return err
