@@ -58,4 +58,17 @@ describe('combobox filter', () => {
       expect(matches.map((m) => m.value)).toEqual(['台南市', '南投縣']);
     });
   });
+
+  describe('operators', () => {
+    it('should do substring match when needle is only symbols', () => {
+      const needle = '=';
+
+      const stringOptions = ['=', '<=', '>', '!~'];
+      const options = stringOptions.map((value) => ({ value }));
+
+      const matches = fuzzyFind(options, stringOptions, needle);
+
+      expect(matches.map((m) => m.value)).toEqual(['=', '<=']);
+    });
+  });
 });
