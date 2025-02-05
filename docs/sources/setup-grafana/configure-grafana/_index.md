@@ -700,6 +700,10 @@ An existing user's account is unable to login for five minutes if all login atte
 Configure how many login attempts a user can have within a five minute window before their account is locked.
 Default is `5`.
 
+#### `disable_ip_address_login_protection`
+
+Set to `true` to disable [brute force login protection by IP address](https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html#account-lockout). Default is `true`. Anyone from the IP address will be unable to login for 5 minutes if all login attempts are spent within a 5 minute window.
+
 #### `cookie_secure`
 
 Set to `true` if you host Grafana behind HTTPS. Default is `false`.
