@@ -9,7 +9,7 @@ import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 
-import { dashboardSceneGraph } from './dashboardSceneGraph';
+import { dashboardSceneGraph, getNextPanelId } from './dashboardSceneGraph';
 import { findVizPanelByKey } from './utils';
 
 describe('dashboardSceneGraph', () => {
@@ -64,6 +64,22 @@ describe('dashboardSceneGraph', () => {
       const cursorSync = dashboardSceneGraph.getCursorSync(scene);
 
       expect(cursorSync).toBeUndefined();
+    });
+  });
+
+  describe('getNextPanelId', () => {
+    it('should get next panel id in a simple 3 panel layout', () => {
+      const scene = buildTestScene();
+      const id = getNextPanelId(scene);
+
+      expect(id).toBe(4);
+    });
+
+    it('should return 1 if no panels are found', () => {
+      const scene = buildTestScene();
+      const id = getNextPanelId(scene);
+
+      expect(id).toBe(1);
     });
   });
 });

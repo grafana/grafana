@@ -3,6 +3,7 @@ import { SceneComponentProps, SceneCSSGridLayout, SceneObjectBase, SceneObjectSt
 import { Select } from '@grafana/ui';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
+import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { getDashboardSceneFor, getPanelIdForVizPanel, getVizPanelKeyForPanelId } from '../../utils/utils';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
 import { DashboardLayoutManager, LayoutRegistryItem } from '../types';
@@ -19,10 +20,17 @@ export class ResponsiveGridLayoutManager
 {
   public isDashboardLayoutManager: true = true;
 
+  public constructor(state: ResponsiveGridLayoutManagerState) {
+    super(state);
+
+    //@ts-ignore
+    this.state.layout.getDragClassCancel = () => 'drag-cancel';
+  }
+
   public editModeChanged(isEditing: boolean): void {}
 
   public addPanel(vizPanel: VizPanel): void {
-    const panelId = this.getNextPanelId();
+    const panelId = dashboardSceneGraph.getNextPanelId(this);
 
     vizPanel.setState({ key: getVizPanelKeyForPanelId(panelId) });
     vizPanel.clearParent();
@@ -54,17 +62,35 @@ export class ResponsiveGridLayoutManager
     return max;
   }
 
-  public getNextPanelId(): number {
-    return getDashboardSceneFor(this).getNextPanelId();
-  }
-
   public removePanel(panel: VizPanel) {
     const element = panel.parent;
     this.state.layout.setState({ children: this.state.layout.state.children.filter((child) => child !== element) });
   }
 
   public duplicatePanel(panel: VizPanel): void {
-    throw new Error('Method not implemented.');
+    const gridItem = panel.parent;
+    if (!(gridItem instanceof ResponsiveGridItem)) {
+      console.error('Trying to duplicate a panel that is not inside a DashboardGridItem');
+      return;
+    }
+
+    const newPanelId = dashboardSceneGraph.getNextPanelId(this);
+    const grid = this.state.layout;
+
+    const newGridItem = gridItem.clone({
+      key: `grid-item-${newPanelId}`,
+      body: panel.clone({
+        key: getVizPanelKeyForPanelId(newPanelId),
+      }),
+    });
+
+    const sourceIndex = grid.state.children.indexOf(gridItem);
+    const newChildren = [...grid.state.children];
+
+    // insert after
+    newChildren.splice(sourceIndex + 1, 0, newGridItem);
+
+    grid.setState({ children: newChildren });
   }
 
   public getVizPanels(): VizPanel[] {
@@ -127,9 +153,10 @@ export class ResponsiveGridLayoutManager
     throw new Error('Method not implemented.');
   }
 
-  activateRepeaters?(): void {
-    throw new Error('Method not implemented.');
-  }
+  /**
+   * Might as well implement this as a no-top function as vs-code very eagerly adds optional functions that throw Method not implemented
+   */
+  public activateRepeaters(): void {}
 
   public static Component = ({ model }: SceneComponentProps<ResponsiveGridLayoutManager>) => {
     return <model.state.layout.Component model={model.state.layout} />;

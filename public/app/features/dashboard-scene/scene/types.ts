@@ -71,11 +71,6 @@ export interface DashboardLayoutManager extends SceneObject {
    * @param isSource
    */
   cloneLayout?(ancestorKey: string, isSource: boolean): DashboardLayoutManager;
-
-  /**
-   * Returns the highest panel id in the layout
-   */
-  getMaxPanelId(): number;
 }
 
 export function isDashboardLayoutManager(obj: SceneObject): obj is DashboardLayoutManager {
