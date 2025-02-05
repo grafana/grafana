@@ -71,11 +71,16 @@ export function doTempoSearchStreaming(
         if ('message' in evt && evt?.message) {
           const currentTime = performance.now();
           const elapsedTime = currentTime - requestTime;
-          // Schema should be [traces, metrics, state, error]
-          const traces = evt.message.data.values[0][0];
-          const metrics = evt.message.data.values[1][0];
-          const frameState: SearchStreamingState = evt.message.data.values[2][0];
-          const error = evt.message.data.values[3][0];
+
+          const dataIndex = evt.message.schema.fields.findIndex((f: DataFrame) => f.name === 'result');
+          const metricsIndex = evt.message.schema.fields.findIndex((f: DataFrame) => f.name === 'metrics');
+          const stateIndex = evt.message.schema.fields.findIndex((f: DataFrame) => f.name === 'state');
+          const errorIndex = evt.message.schema.fields.findIndex((f: DataFrame) => f.name === 'error');
+
+          const traces = evt.message.data.values[dataIndex][0];
+          const metrics = evt.message.data.values[metricsIndex][0];
+          const frameState: SearchStreamingState = evt.message.data.values[stateIndex][0];
+          const error = evt.message.data.values[errorIndex][0];
 
           switch (frameState) {
             case SearchStreamingState.Done:
@@ -142,10 +147,13 @@ export function doTempoMetricsStreaming(
       map((evt) => {
         let newResult: DataQueryResponse = { data: [], state: LoadingState.NotStarted };
         if ('message' in evt && evt?.message) {
-          // Schema should be [data, metrics, state, error]
-          const data = evt.message.data.values[0][0];
-          const frameState: SearchStreamingState = evt.message.data.values[2][0];
-          const error = evt.message.data.values[3][0];
+          const dataIndex = evt.message.schema.fields.findIndex((f: DataFrame) => f.name === 'result');
+          const stateIndex = evt.message.schema.fields.findIndex((f: DataFrame) => f.name === 'state');
+          const errorIndex = evt.message.schema.fields.findIndex((f: DataFrame) => f.name === 'error');
+
+          const data = evt.message.data.values[dataIndex][0];
+          const frameState: SearchStreamingState = evt.message.data.values[stateIndex][0];
+          const error = evt.message.data.values[errorIndex][0];
 
           switch (frameState) {
             case SearchStreamingState.Done:
