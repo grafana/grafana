@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { Property } from 'csstype';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { TableCellDisplayMode } from '@grafana/schema';
@@ -9,9 +10,9 @@ import { ImageCellProps } from '../types';
 
 const DATALINKS_HEIGHT_OFFSET = 10;
 
-export const ImageCell = ({ field, height, value }: ImageCellProps) => {
+export const ImageCell = ({ field, height, justifyContent, value }: ImageCellProps) => {
   const calculatedHeight = height - DATALINKS_HEIGHT_OFFSET;
-  const styles = useStyles2(getStyles, calculatedHeight);
+  const styles = useStyles2(getStyles, calculatedHeight, justifyContent);
 
   const cellOptions = getCellOptions(field);
   const { text } = field.display!(value);
@@ -24,13 +25,13 @@ export const ImageCell = ({ field, height, value }: ImageCellProps) => {
   return <div className={styles.imageContainer}>{img}</div>;
 };
 
-const getStyles = (theme: GrafanaTheme2, height: number) => ({
+const getStyles = (theme: GrafanaTheme2, height: number, justifyContent: Property.JustifyContent | undefined) => ({
   image: css({
     height,
     width: 'auto',
   }),
   imageContainer: css({
     display: 'flex',
-    justifyContent: 'center',
+    justifyContent,
   }),
 });

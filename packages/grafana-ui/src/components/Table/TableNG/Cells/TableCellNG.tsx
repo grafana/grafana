@@ -64,7 +64,7 @@ export function TableCellNG(props: any) {
       );
       break;
     case TableCellDisplayMode.Image:
-      cell = <ImageCell value={value} field={field} height={height} />;
+      cell = <ImageCell field={field} height={height} justifyContent={justifyContent} value={value} />;
       break;
     case TableCellDisplayMode.Auto:
     default:
