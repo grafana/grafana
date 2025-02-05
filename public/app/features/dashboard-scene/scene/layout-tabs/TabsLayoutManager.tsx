@@ -4,6 +4,7 @@ import { t } from 'app/core/internationalization';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 
 import { TabItem } from './TabItem';
+import { TabItemRepeaterBehavior } from './TabItemRepeaterBehavior';
 import { TabsLayoutManagerRenderer } from './TabsLayoutManagerRenderer';
 
 interface TabsLayoutManagerState extends SceneObjectState {
