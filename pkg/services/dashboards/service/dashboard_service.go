@@ -62,6 +62,7 @@ var (
 
 	daysInTrash = 24 * 30 * time.Hour
 	tracer      = otel.Tracer("github.com/grafana/grafana/pkg/services/dashboards/service")
+	forbidden   = string(v1.StatusReasonForbidden)
 )
 
 type DashboardServiceImpl struct {
@@ -1257,14 +1258,15 @@ func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *dashb
 					SignedInUser: query.SignedInUser,
 				})
 				if err != nil {
-					if apierrors.IsForbidden(err) {
-						dr.log.Debug("Access to folder denied", "folderUid", hit.Folder, "error", err)
-						continue
+					if !apierrors.IsForbidden(err) {
+						return nil, err
 					}
-					return nil, err
+					// add a forbidden folder to the cache so we don't try to fetch it again
+					f = &folder.Folder{UID: forbidden}
 				}
 				foldersMap[hit.Folder] = f
 			}
+
 			finalResults[i] = dashboards.DashboardSearchProjection{
 				ID:          hit.Field.GetNestedInt64(search.DASHBOARD_LEGACY_ID),
 				UID:         hit.Name,
