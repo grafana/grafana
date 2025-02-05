@@ -1,7 +1,6 @@
 import { PanelPlugin } from '@grafana/data';
 import { TagsInput } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
-import { PermissionLevelString } from 'app/types';
 
 import { DashList } from './DashList';
 import { dashlistMigrationHandler } from './migrations';
@@ -62,12 +61,7 @@ export const plugin = new PanelPlugin<Options>(DashList)
         defaultValue: undefined,
         editor: function RenderFolderPicker({ value, onChange }) {
           return (
-            <FolderPicker
-              clearable
-              permission={PermissionLevelString.View}
-              value={value}
-              onChange={(folderUID) => onChange(folderUID)}
-            />
+            <FolderPicker clearable permission="view" value={value} onChange={(folderUID) => onChange(folderUID)} />
           );
         },
       })
