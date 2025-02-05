@@ -21,7 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/storage/secret"
+	encryptionstorage "github.com/grafana/grafana/pkg/storage/secret/encryption"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -103,13 +103,13 @@ func TestEncryptionService_DataKeys(t *testing.T) {
 		data_keys_cache_cleanup_interval = 1ns`))
 	require.NoError(t, err)
 	cfg := &setting.Cfg{Raw: raw}
-	store, err := secret.ProvideDataKeyStorageStorage(testDB, cfg, features)
+	store, err := encryptionstorage.ProvideDataKeyStorageStorage(testDB, cfg, features)
 	require.NoError(t, err)
 
 	ctx := context.Background()
 	namespace := "test-namespace"
 
-	dataKey := &secret.SecretDataKey{
+	dataKey := &encryptionstorage.SecretDataKey{
 		UID:           util.GenerateShortUID(),
 		Label:         "test1",
 		Active:        true,
@@ -120,7 +120,7 @@ func TestEncryptionService_DataKeys(t *testing.T) {
 
 	t.Run("querying for a DEK that does not exist", func(t *testing.T) {
 		res, err := store.GetDataKey(ctx, namespace, dataKey.UID)
-		assert.ErrorIs(t, secret.ErrDataKeyNotFound, err)
+		assert.ErrorIs(t, encryptionstorage.ErrDataKeyNotFound, err)
 		assert.Nil(t, res)
 	})
 
@@ -146,7 +146,7 @@ func TestEncryptionService_DataKeys(t *testing.T) {
 	})
 
 	t.Run("creating an inactive DEK", func(t *testing.T) {
-		k := &secret.SecretDataKey{
+		k := &encryptionstorage.SecretDataKey{
 			UID:           util.GenerateShortUID(),
 			Namespace:     namespace,
 			Active:        false,
@@ -159,7 +159,7 @@ func TestEncryptionService_DataKeys(t *testing.T) {
 		require.Error(t, err)
 
 		res, err := store.GetDataKey(ctx, namespace, k.UID)
-		assert.Equal(t, secret.ErrDataKeyNotFound, err)
+		assert.Equal(t, encryptionstorage.ErrDataKeyNotFound, err)
 		assert.Nil(t, res)
 	})
 
@@ -179,7 +179,7 @@ func TestEncryptionService_DataKeys(t *testing.T) {
 		require.NoError(t, err)
 
 		res, err := store.GetDataKey(ctx, namespace, dataKey.UID)
-		assert.Equal(t, secret.ErrDataKeyNotFound, err)
+		assert.Equal(t, encryptionstorage.ErrDataKeyNotFound, err)
 		assert.Nil(t, res)
 	})
 }
@@ -214,7 +214,7 @@ func TestEncryptionService_UseCurrentProvider(t *testing.T) {
 		features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
 		kms := newFakeKMS(osskmsproviders.ProvideService(encryptionService, cfg, features))
 		testDB := db.InitTestDB(t)
-		encryptionStore, err := secret.ProvideDataKeyStorageStorage(testDB, &setting.Cfg{}, features)
+		encryptionStore, err := encryptionstorage.ProvideDataKeyStorageStorage(testDB, &setting.Cfg{}, features)
 		require.NoError(t, err)
 
 		encryptionManager, err := NewEncryptionManager(
@@ -518,7 +518,7 @@ func TestIntegration_SecretsService(t *testing.T) {
 			require.NoError(t, err)
 
 			cfg := &setting.Cfg{Raw: raw}
-			store, err := secret.ProvideDataKeyStorageStorage(testDB, cfg, features)
+			store, err := encryptionstorage.ProvideDataKeyStorageStorage(testDB, cfg, features)
 			require.NoError(t, err)
 
 			encProvider := encryptionprovider.Provider{}

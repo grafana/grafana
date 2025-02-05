@@ -1,4 +1,4 @@
-package secret
+package metadata
 
 import (
 	"encoding/json"
@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
+	"github.com/grafana/grafana/pkg/storage/secret/migrator"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 )
@@ -42,7 +43,7 @@ type keeperDB struct {
 }
 
 func (*keeperDB) TableName() string {
-	return TableNameKeeper
+	return migrator.TableNameKeeper
 }
 
 // toKubernetes maps a DB row into a Kubernetes resource (metadata + spec).

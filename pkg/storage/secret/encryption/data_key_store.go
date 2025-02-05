@@ -1,4 +1,4 @@
-package secret
+package encryption
 
 import (
 	"context"
@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/secret/migrator"
 )
 
 var (
@@ -42,7 +43,7 @@ func ProvideDataKeyStorageStorage(db db.DB, cfg *setting.Cfg, features featuremg
 		return &encryptionStoreImpl{}, nil
 	}
 
-	if err := migrateSecretSQL(db.GetEngine(), cfg); err != nil {
+	if err := migrator.MigrateSecretSQL(db.GetEngine(), cfg); err != nil {
 		return nil, fmt.Errorf("failed to run migrations: %w", err)
 	}
 
@@ -250,7 +251,7 @@ func (ss *encryptionStoreImpl) ReEncryptDataKeys(
 			%s.encrypted_data = updates.encrypted_data, 
 			%s.provider = '%s', 
 			%s.updated = '%s'
-	`, strings.Join(selectStatements, " UNION ALL "), TableNameDataKey, TableNameDataKey, TableNameDataKey, TableNameDataKey, TableNameDataKey, currProvider, TableNameDataKey, time.Now().UTC().Format("2006-01-02 15:04:05"))
+	`, strings.Join(selectStatements, " UNION ALL "), migrator.TableNameDataKey, migrator.TableNameDataKey, migrator.TableNameDataKey, migrator.TableNameDataKey, migrator.TableNameDataKey, currProvider, migrator.TableNameDataKey, time.Now().UTC().Format("2006-01-02 15:04:05"))
 
 	fmt.Println(rawSql)
 	if err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
