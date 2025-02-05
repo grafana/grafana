@@ -25,7 +25,7 @@ type FormData = {
   path: string;
   comment?: string;
   repo: string;
-  workflow?: string;
+  workflow?: WorkflowOption;
   title: string;
   description: string;
   folder: {

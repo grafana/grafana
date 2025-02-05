@@ -1,8 +1,8 @@
 import { RepositorySpec } from 'app/features/provisioning/api';
-import { WorkflowOption } from 'app/features/provisioning/types';
+import { WorkflowOption, mapToWorkflowOption } from 'app/features/provisioning/types';
 
 export function getDefaultWorkflow(config?: RepositorySpec) {
-  return config?.github?.workflows ? config?.github?.workflows[0] : '';
+  return config?.github?.workflows ? mapToWorkflowOption(config?.github?.workflows[0]) : undefined;
 }
 
 export function getWorkflowOptions(config?: RepositorySpec) {
