@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 var (
@@ -23,14 +22,13 @@ var (
 )
 
 type DecryptRest struct {
-	config   *setting.Cfg
 	resource utils.ResourceInfo
 	storage  contracts.DecryptStorage
 }
 
 // NewDecryptRest is a returns a constructed `*DecryptRest`.
-func NewDecryptRest(config *setting.Cfg, resource utils.ResourceInfo, storage contracts.DecryptStorage) *DecryptRest {
-	return &DecryptRest{config, resource, storage}
+func NewDecryptRest(resource utils.ResourceInfo, storage contracts.DecryptStorage) *DecryptRest {
+	return &DecryptRest{resource, storage}
 }
 
 // New returns an empty `*SecureValue` that is required to be implemented by any storage.
@@ -83,12 +81,6 @@ func (s *DecryptRest) Connect(ctx context.Context, name string, opts runtime.Obj
 		// !!! DANGER !!!
 		// This returns the decrypted and very raw `value` from a `securevalue`.
 		// It should not be used in production mode!
-		if s.config.Env != setting.Prod {
-			_, _ = w.Write([]byte(exposedValue.DangerouslyExposeAndConsumeValue()))
-
-			return
-		}
-
-		responder.Object(http.StatusOK, nil)
+		_, _ = w.Write([]byte(exposedValue.DangerouslyExposeAndConsumeValue()))
 	}), nil
 }
