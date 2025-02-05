@@ -6,10 +6,12 @@ import { TableCellDisplayMode } from '@grafana/schema';
 
 import { useStyles2 } from '../../../../themes';
 import { IconButton } from '../../../IconButton/IconButton';
+import { TableCellInspectorMode } from '../../TableCellInspector';
 import { getTextAlign } from '../../utils';
 
 import AutoCell from './AutoCell';
 import { BarGaugeCell } from './BarGaugeCell';
+import { JSONCell } from './JSONCell';
 import { SparklineCell } from './SparklineCell';
 
 // interface TableCellNGProps {
@@ -85,26 +87,39 @@ export function TableCellNG(props: any) {
         />
       );
       break;
+    case TableCellDisplayMode.JSONView:
+      cell = <JSONCell value={value} />;
+      break;
     case TableCellDisplayMode.Auto:
     default:
-      cell = (
-        <AutoCell
-          value={value}
-          field={field}
-          theme={theme}
-          justifyContent={justifyContent}
-          shouldTextOverflow={shouldTextOverflow}
-          setIsHovered={setIsHovered}
-        />
-      );
+      cell = <AutoCell value={value} field={field} theme={theme} justifyContent={justifyContent} />;
   }
 
   const handleMouseEnter = () => {
     setIsHovered(true);
+    if (shouldTextOverflow()) {
+      // TODO: The table cell styles in TableNG do not update dynamically even if we change the state
+      const div = divWidthRef.current;
+      const tableCellDiv = div?.parentElement;
+      tableCellDiv?.style.setProperty('position', 'absolute');
+      tableCellDiv?.style.setProperty('top', '0');
+      tableCellDiv?.style.setProperty('z-index', theme.zIndex.tooltip);
+      tableCellDiv?.style.setProperty('white-space', 'normal');
+      tableCellDiv?.style.setProperty('min-height', `${height}px`);
+    }
   };
 
   const handleMouseLeave = () => {
     setIsHovered(false);
+    if (shouldTextOverflow()) {
+      // TODO: The table cell styles in TableNG do not update dynamically even if we change the state
+      const div = divWidthRef.current;
+      const tableCellDiv = div?.parentElement;
+      tableCellDiv?.style.setProperty('position', 'relative');
+      tableCellDiv?.style.removeProperty('top');
+      tableCellDiv?.style.removeProperty('z-index');
+      tableCellDiv?.style.setProperty('white-space', 'nowrap');
+    }
   };
 
   return (
@@ -116,7 +131,13 @@ export function TableCellNG(props: any) {
             name="eye"
             tooltip="Inspect value"
             onClick={() => {
-              setContextMenuProps({ value });
+              setContextMenuProps({
+                value,
+                mode:
+                  cellType === TableCellDisplayMode.JSONView
+                    ? TableCellInspectorMode.code
+                    : TableCellInspectorMode.text,
+              });
               setIsInspecting(true);
             }}
           />

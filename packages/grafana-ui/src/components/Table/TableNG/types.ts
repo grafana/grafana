@@ -7,7 +7,7 @@ export interface CellNGProps {
   field: Field;
   theme: GrafanaTheme2;
   height?: number;
-  justifyContent: Property.JustifyContent;
+  justifyContent?: Property.JustifyContent;
   rowIdx?: number;
 }
 
