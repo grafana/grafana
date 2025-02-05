@@ -550,8 +550,6 @@ type PostableGrafanaRule struct {
 
 // swagger:model
 type GettableGrafanaRule struct {
-	ID                   int64                          `json:"id" yaml:"id"`
-	OrgID                int64                          `json:"orgId" yaml:"orgId"`
 	Title                string                         `json:"title" yaml:"title"`
 	Condition            string                         `json:"condition" yaml:"condition"`
 	Data                 []AlertQuery                   `json:"data" yaml:"data"`
