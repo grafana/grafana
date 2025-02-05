@@ -331,7 +331,7 @@ func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admis
 	}
 
 	if r.Spec.Sync.IntervalSeconds == 0 {
-		r.Spec.Sync.IntervalSeconds = int64(ResyncInterval / time.Second)
+		r.Spec.Sync.IntervalSeconds = 60
 	}
 
 	if r.Spec.Type == provisioning.GitHubRepositoryType {
