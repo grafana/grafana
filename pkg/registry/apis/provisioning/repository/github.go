@@ -618,13 +618,13 @@ func (r *githubRepository) CompareFiles(ctx context.Context, base, ref string) (
 			changes = append(changes, VersionedFileChange{
 				Path:   f.GetFilename(),
 				Ref:    ref,
-				Action: provisioning.FileActionCreated,
+				Action: FileActionCreated,
 			})
 		case "modified", "changed":
 			changes = append(changes, VersionedFileChange{
 				Path:   f.GetFilename(),
 				Ref:    ref,
-				Action: provisioning.FileActionUpdated,
+				Action: FileActionUpdated,
 			})
 		case "renamed":
 			changes = append(changes, VersionedFileChange{
@@ -632,13 +632,13 @@ func (r *githubRepository) CompareFiles(ctx context.Context, base, ref string) (
 				PreviousPath: f.GetPreviousFilename(),
 				Ref:          ref,
 				PreviousRef:  base,
-				Action:       provisioning.FileActionRenamed,
+				Action:       FileActionRenamed,
 			})
 		case "removed":
 			changes = append(changes, VersionedFileChange{
 				Ref:    base,
 				Path:   f.GetFilename(),
-				Action: provisioning.FileActionDeleted,
+				Action: FileActionDeleted,
 			})
 		case "unchanged":
 			// do nothing

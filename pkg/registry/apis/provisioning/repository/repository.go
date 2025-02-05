@@ -99,8 +99,19 @@ type RepositoryHooks interface {
 	OnDelete(ctx context.Context) error
 }
 
+type FileAction string
+
+const (
+	FileActionCreated FileAction = "created"
+	FileActionUpdated FileAction = "updated"
+	FileActionDeleted FileAction = "deleted"
+
+	// Renamed actions may be reconstructed as delete then create
+	FileActionRenamed FileAction = "renamed"
+)
+
 type VersionedFileChange struct {
-	Action provisioning.FileAction
+	Action FileAction
 	Path   string
 
 	Ref          string

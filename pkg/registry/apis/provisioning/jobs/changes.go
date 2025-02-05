@@ -12,7 +12,7 @@ import (
 type ResourceFileChange struct {
 	// Path to the file in a repository with a change
 	Path   string
-	Action provisioning.FileAction
+	Action repository.FileAction
 
 	// The current value in the database -- only required for delete
 	Existing *provisioning.ResourceListItem
@@ -40,7 +40,7 @@ func Changes(source []repository.FileTreeEntry, target *provisioning.ResourceLis
 		if ok {
 			if check.Hash != file.Hash {
 				changes = append(changes, ResourceFileChange{
-					Action:   provisioning.FileActionUpdated,
+					Action:   repository.FileActionUpdated,
 					Path:     check.Path,
 					Existing: check,
 				})
@@ -48,7 +48,7 @@ func Changes(source []repository.FileTreeEntry, target *provisioning.ResourceLis
 			delete(lookup, file.Path)
 		} else if !resources.ShouldIgnorePath(file.Path) {
 			changes = append(changes, ResourceFileChange{
-				Action: provisioning.FileActionCreated, // or previously ignored/failed
+				Action: repository.FileActionCreated, // or previously ignored/failed
 				Path:   file.Path,
 			})
 		}
@@ -57,7 +57,7 @@ func Changes(source []repository.FileTreeEntry, target *provisioning.ResourceLis
 	// File that were previously added, but are not in the current list
 	for _, v := range lookup {
 		changes = append(changes, ResourceFileChange{
-			Action:   provisioning.FileActionDeleted,
+			Action:   repository.FileActionDeleted,
 			Path:     v.Path,
 			Existing: v,
 		})

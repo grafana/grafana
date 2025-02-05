@@ -203,7 +203,7 @@ func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange
 			return nil
 		}
 
-		if change.Action == provisioning.FileActionDeleted {
+		if change.Action == repository.FileActionDeleted {
 			if change.Existing == nil || change.Existing.Name == "" {
 				logger.Error("deleted file is missing existing reference", "file", change.Path)
 				r.jobStatus.Errors = append(r.jobStatus.Errors,
@@ -258,7 +258,7 @@ func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange
 		parsed.Meta.SetResourceVersion("") // clear identifiers
 
 		switch change.Action {
-		case provisioning.FileActionCreated:
+		case repository.FileActionCreated:
 			_, err = parsed.Client.Create(ctx, parsed.Obj, metav1.CreateOptions{})
 			if err != nil {
 				logger.Warn("create error", "file", change.Path, "err", err)
@@ -269,7 +269,7 @@ func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange
 				r.summary.Create++
 			}
 
-		case provisioning.FileActionUpdated:
+		case repository.FileActionUpdated:
 			_, err = parsed.Client.Update(ctx, parsed.Obj, metav1.UpdateOptions{})
 			if err != nil {
 				logger.Warn("update error", "file", change.Path, "err", err)
@@ -295,13 +295,13 @@ func (r *syncJob) getVersionedChanges(ctx context.Context, repo repository.Versi
 	changes := make([]ResourceFileChange, 0, len(diff)+5)
 	for _, change := range diff {
 		switch change.Action {
-		case provisioning.FileActionCreated, provisioning.FileActionUpdated:
+		case repository.FileActionCreated, repository.FileActionUpdated:
 			changes = append(changes, ResourceFileChange{
 				Path:   change.Path,
 				Action: change.Action,
 			})
 
-		case provisioning.FileActionDeleted:
+		case repository.FileActionDeleted:
 			deleteFile, err := r.toDeleteFileChange(ctx, change.Path, change.PreviousRef)
 			if err != nil {
 				r.jobStatus.Errors = append(r.jobStatus.Errors,
@@ -310,7 +310,7 @@ func (r *syncJob) getVersionedChanges(ctx context.Context, repo repository.Versi
 			}
 			changes = append(changes, deleteFile)
 
-		case provisioning.FileActionRenamed:
+		case repository.FileActionRenamed:
 			deleteFile, err := r.toDeleteFileChange(ctx, change.PreviousPath, change.PreviousRef)
 			if err != nil {
 				r.jobStatus.Errors = append(r.jobStatus.Errors,
@@ -319,7 +319,7 @@ func (r *syncJob) getVersionedChanges(ctx context.Context, repo repository.Versi
 			}
 			changes = append(changes, deleteFile, ResourceFileChange{
 				Path:   change.Path,
-				Action: provisioning.FileActionCreated, // rename = delete + create
+				Action: repository.FileActionCreated, // rename = delete + create
 			})
 		}
 	}
@@ -329,7 +329,7 @@ func (r *syncJob) getVersionedChanges(ctx context.Context, repo repository.Versi
 func (r *syncJob) toDeleteFileChange(ctx context.Context, path string, ref string) (ResourceFileChange, error) {
 	change := ResourceFileChange{
 		Path:   path,
-		Action: provisioning.FileActionDeleted,
+		Action: repository.FileActionDeleted,
 	}
 	info, err := r.repository.Read(ctx, path, ref)
 	if err != nil {

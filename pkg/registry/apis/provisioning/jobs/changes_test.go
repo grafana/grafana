@@ -28,7 +28,7 @@ func TestChanges(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, changes, 1)
 		require.Equal(t, ResourceFileChange{
-			Action: provisioning.FileActionCreated,
+			Action: repository.FileActionCreated,
 			Path:   "muta.json",
 		}, changes[0])
 	})
@@ -41,7 +41,7 @@ func TestChanges(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, changes, 1)
 		require.Equal(t, ResourceFileChange{
-			Action: provisioning.FileActionDeleted,
+			Action: repository.FileActionDeleted,
 			Path:   "adsl62h.yaml",
 			Existing: &provisioning.ResourceListItem{
 				Path:     "adsl62h.yaml",
@@ -90,7 +90,7 @@ func TestChanges(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, changes, 1)
 		require.Equal(t, ResourceFileChange{
-			Action: provisioning.FileActionUpdated,
+			Action: repository.FileActionUpdated,
 			Path:   "adsl62h.yaml",
 			Existing: &provisioning.ResourceListItem{
 				Path:     "adsl62h.yaml",

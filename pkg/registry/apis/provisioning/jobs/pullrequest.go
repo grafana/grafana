@@ -185,7 +185,7 @@ func (c *pullRequestCommenter) ProcessPullRequest(ctx context.Context,
 			continue
 		}
 
-		if linting && len(parsed.Lint) > 0 && f.Action != provisioning.FileActionDeleted {
+		if linting && len(parsed.Lint) > 0 && f.Action != repository.FileActionDeleted {
 			var buf bytes.Buffer
 			if err := c.lintTemplate.Execute(&buf, parsed.Lint); err != nil {
 				return nil, fmt.Errorf("execute lint comment template: %w", err)
@@ -206,21 +206,21 @@ func (c *pullRequestCommenter) ProcessPullRequest(ctx context.Context,
 		}
 
 		switch f.Action {
-		case provisioning.FileActionCreated:
+		case repository.FileActionCreated:
 			preview.PreviewURL = c.previewURL(ref, f.Path, options.URL)
-		case provisioning.FileActionUpdated:
+		case repository.FileActionUpdated:
 			preview.OriginalURL = c.previewURL(base, f.Path, options.URL)
 			preview.PreviewURL = c.previewURL(ref, f.Path, options.URL)
-		case provisioning.FileActionRenamed:
+		case repository.FileActionRenamed:
 			preview.OriginalURL = c.previewURL(base, f.PreviousPath, options.URL)
 			preview.PreviewURL = c.previewURL(ref, f.Path, options.URL)
-		case provisioning.FileActionDeleted:
+		case repository.FileActionDeleted:
 			preview.OriginalURL = c.previewURL(base, f.Path, options.URL)
 		default:
 			return nil, fmt.Errorf("unknown file action: %s", f.Action)
 		}
 
-		if cfg.GitHub.GenerateDashboardPreviews && f.Action != provisioning.FileActionDeleted {
+		if cfg.GitHub.GenerateDashboardPreviews && f.Action != repository.FileActionDeleted {
 			screenshotURL, err := c.renderer.RenderDashboardPreview(ctx, f.Path, ref)
 			if err != nil {
 				return nil, fmt.Errorf("render dashboard preview: %w", err)
