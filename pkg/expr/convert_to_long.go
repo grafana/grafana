@@ -106,7 +106,6 @@ func convertNumericWideToNumericLong(frames data.Frames) (data.Frames, error) {
 			if _, ok := uniqueNamesMap[field.Name]; !ok {
 				uniqueNames = append(uniqueNames, field.Name)
 				uniqueNamesMap[field.Name] = field.Type()
-
 			}
 
 			if field.Labels != nil {
