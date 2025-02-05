@@ -1356,38 +1356,6 @@
                 "value": "title"
               }
             }
-          },
-          {
-            "name": "deleted",
-            "in": "query",
-            "description": "search/list deleted dashboards",
-            "schema": {
-              "type": "boolean"
-            }
-          },
-          {
-            "name": "dashboardIds",
-            "in": "query",
-            "description": "search/list dashboards by legacy id (deprecated)",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "dashboardUIDs",
-            "in": "query",
-            "description": "search/list dashboards by uid",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "folderUIDs",
-            "in": "query",
-            "description": "search/list dashboards by folder uid",
-            "schema": {
-              "type": "string"
-            }
           }
         ],
         "responses": {
