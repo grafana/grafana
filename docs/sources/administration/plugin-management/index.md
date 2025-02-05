@@ -238,7 +238,7 @@ If you're developing a plugin, then you can enable development mode to allow all
 
 ## Integrate plugins
 
-You can configure your Grafana instance to let the frontends of installed plugins directly communicate locally with the backends of other installed plugins. By default, you can only communicate with plugin backends remotely.
+You can configure your Grafana instance to let the frontends of installed plugins directly communicate locally with the backends of other installed plugins. By default, you can only communicate with plugin backends remotely. You can use this configuration to, for example, enable a [canvas panel](https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/canvas/) to call an application resource API that is permitted by the `actions_allow_post_url` option.
 
 To enable backend communication between plugins:
 
@@ -250,19 +250,17 @@ To enable backend communication between plugins:
 
    This is a comma-separated list that uses glob matching.
 
-   To allow access to all plugins that have a backend:
+   - To allow access to all plugins that have a backend:
 
-   ```
-   actions_allow_post_url=/api/plugins/*
-   ```
+     ```
+     actions_allow_post_url=/api/plugins/*
+     ```
 
-   To access to the backend of only one plugin:
+   - To access to the backend of only one plugin:
 
-   ```
-   actions_allow_post_url=/api/plugins/<GRAFANA_SPECIAL_APP>
-   ```
-
-   You can use this to, for example, enable a [canvas panel](https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/canvas/) to call an application resource API that is permitted by the `actions_allow_post_url` option.
+     ```
+     actions_allow_post_url=/api/plugins/<GRAFANA_SPECIAL_APP>
+     ```
 
 ## Plugin Frontend Sandbox
 
