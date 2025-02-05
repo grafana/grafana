@@ -40,6 +40,7 @@ func AllowQuery(rawSQL string) (bool, error) {
 	return true, nil
 }
 
+// nolint:gocyclo,nakedret
 func allowedNode(node sqlparser.SQLNode) (b bool) {
 	b = true // so don't have to return true in every case but default
 
@@ -118,6 +119,7 @@ func allowedNode(node sqlparser.SQLNode) (b bool) {
 	}
 }
 
+// nolint:gocyclo,nakedret
 func allowedFunction(f *sqlparser.FuncExpr) (b bool) {
 	b = true // so don't have to return true in every case but default
 
