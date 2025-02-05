@@ -1,11 +1,12 @@
 import { SelectableValue } from '@grafana/data';
 import { SceneComponentProps, SceneCSSGridLayout, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
 import { Select } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { getDashboardSceneFor, getPanelIdForVizPanel, getVizPanelKeyForPanelId } from '../../utils/utils';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
-import { DashboardLayoutManager, LayoutRegistryItem } from '../types';
+import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 
 import { ResponsiveGridItem } from './ResponsiveGridItem';
 
@@ -17,7 +18,20 @@ export class ResponsiveGridLayoutManager
   extends SceneObjectBase<ResponsiveGridLayoutManagerState>
   implements DashboardLayoutManager
 {
-  public isDashboardLayoutManager: true = true;
+  public readonly isDashboardLayoutManager = true;
+
+  public static readonly descriptor = {
+    get name() {
+      return t('dashboard.responsive-layout.name', 'Responsive grid');
+    },
+    get description() {
+      return t('dashboard.responsive-layout.description', 'CSS layout that adjusts to the available space');
+    },
+    id: 'responsive-grid',
+    createFromLayout: ResponsiveGridLayoutManager.createFromLayout,
+  };
+
+  public readonly descriptor = ResponsiveGridLayoutManager.descriptor;
 
   public editModeChanged(isEditing: boolean): void {}
 
@@ -83,19 +97,6 @@ export class ResponsiveGridLayoutManager
     return getOptions(this);
   }
 
-  public getDescriptor(): LayoutRegistryItem {
-    return ResponsiveGridLayoutManager.getDescriptor();
-  }
-
-  public static getDescriptor(): LayoutRegistryItem {
-    return {
-      name: 'Responsive grid',
-      description: 'CSS layout that adjusts to the available space',
-      id: 'responsive-grid',
-      createFromLayout: ResponsiveGridLayoutManager.createFromLayout,
-    };
-  }
-
   public static createEmpty() {
     return new ResponsiveGridLayoutManager({
       layout: new SceneCSSGridLayout({
@@ -123,10 +124,6 @@ export class ResponsiveGridLayoutManager
     });
   }
 
-  toSaveModel?() {
-    throw new Error('Method not implemented.');
-  }
-
   activateRepeaters?(): void {
     throw new Error('Method not implemented.');
   }
@@ -144,26 +141,35 @@ function getOptions(layoutManager: ResponsiveGridLayoutManager): OptionsPaneItem
   const rowOptions: Array<SelectableValue<string>> = [];
   const sizes = [100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 650];
   const colOptions: Array<SelectableValue<string>> = [
-    { label: `1 column`, value: `1fr` },
-    { label: `2 columns`, value: `1fr 1fr` },
-    { label: `3 columns`, value: `1fr 1fr 1fr` },
+    { label: t('dashboard.responsive-layout.options.one-column', '1 column'), value: `1fr` },
+    { label: t('dashboard.responsive-layout.options.two-columns', '2 columns'), value: `1fr 1fr` },
+    { label: t('dashboard.responsive-layout.options.three-columns', '3 columns'), value: `1fr 1fr 1fr` },
   ];
 
   for (const size of sizes) {
-    colOptions.push({ label: `Min: ${size}px`, value: `repeat(auto-fit, minmax(${size}px, auto))` });
+    colOptions.push({
+      label: t('dashboard.responsive-layout.options.min', 'Min: {{size}}px', { size }),
+      value: `repeat(auto-fit, minmax(${size}px, auto))`,
+    });
   }
 
   for (const size of sizes) {
-    rowOptions.push({ label: `Min: ${size}px`, value: `minmax(${size}px, auto)` });
+    rowOptions.push({
+      label: t('dashboard.responsive-layout.options.min', 'Min: {{size}}px', { size }),
+      value: `minmax(${size}px, auto)`,
+    });
   }
 
   for (const size of sizes) {
-    rowOptions.push({ label: `Fixed: ${size}px`, value: `${size}px` });
+    rowOptions.push({
+      label: t('dashboard.responsive-layout.options.fixed', 'Fixed: {{size}}px', { size }),
+      value: `${size}px`,
+    });
   }
 
   options.push(
     new OptionsPaneItemDescriptor({
-      title: 'Columns',
+      title: t('dashboard.responsive-layout.options.columns', 'Columns'),
       render: () => {
         const { templateColumns } = cssLayout.useState();
         return (
@@ -182,7 +188,7 @@ function getOptions(layoutManager: ResponsiveGridLayoutManager): OptionsPaneItem
 
   options.push(
     new OptionsPaneItemDescriptor({
-      title: 'Rows',
+      title: t('dashboard.responsive-layout.options.rows', 'Rows'),
       render: () => {
         const { autoRows } = cssLayout.useState();
         return (

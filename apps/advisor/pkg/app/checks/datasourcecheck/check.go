@@ -7,8 +7,8 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	advisor "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/registry/apis/datasource"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/util"
@@ -18,14 +18,14 @@ import (
 type check struct {
 	DatasourceSvc         datasources.DataSourceService
 	PluginStore           pluginstore.Store
-	PluginContextProvider datasource.PluginContextWrapper
+	PluginContextProvider pluginContextProvider
 	PluginClient          plugins.Client
 }
 
 func New(
 	datasourceSvc datasources.DataSourceService,
 	pluginStore pluginstore.Store,
-	pluginContextProvider datasource.PluginContextWrapper,
+	pluginContextProvider pluginContextProvider,
 	pluginClient plugins.Client,
 ) checks.Check {
 	return &check{
@@ -97,7 +97,7 @@ func (s *uidValidationStep) Run(ctx context.Context, obj *advisor.CheckSpec, ite
 }
 
 type healthCheckStep struct {
-	PluginContextProvider datasource.PluginContextWrapper
+	PluginContextProvider pluginContextProvider
 	PluginClient          plugins.Client
 }
 
@@ -122,11 +122,11 @@ func (s *healthCheckStep) Run(ctx context.Context, obj *advisor.CheckSpec, items
 		}
 
 		// Health check execution
-		pCtx, err := s.PluginContextProvider.PluginContextForDataSource(ctx, &backend.DataSourceInstanceSettings{
-			Type:       ds.Type,
-			UID:        ds.UID,
-			APIVersion: ds.APIVersion,
-		})
+		requester, err := identity.GetRequester(ctx)
+		if err != nil {
+			return nil, err
+		}
+		pCtx, err := s.PluginContextProvider.GetWithDataSource(ctx, ds.Type, requester, ds)
 		if err != nil {
 			klog.ErrorS(err, "Error creating plugin context", "datasource", ds.Name)
 			continue
@@ -151,4 +151,8 @@ func (s *healthCheckStep) Run(ctx context.Context, obj *advisor.CheckSpec, items
 		}
 	}
 	return dsErrs, nil
+}
+
+type pluginContextProvider interface {
+	GetWithDataSource(ctx context.Context, pluginID string, user identity.Requester, ds *datasources.DataSource) (backend.PluginContext, error)
 }

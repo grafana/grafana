@@ -301,6 +301,10 @@ Path to the certificate file (if `protocol` is set to `https` or `h2`).
 
 Path to the certificate key file (if `protocol` is set to `https` or `h2`).
 
+#### `cert_pass`
+
+Optional. Password to decrypt encrypted certificates.
+
 #### `certs_watch_interval`
 
 Controls whether `cert_key` and `cert_file` are periodically watched for changes.
@@ -2351,6 +2355,8 @@ URL to a remote HTTP image renderer service, for example, `http://localhost:8081
 #### `callback_url`
 
 If the remote HTTP image renderer service runs on a different server than the Grafana server you may have to configure this to a URL where Grafana is reachable, for example, http://grafana.domain/.
+
+The `callback_url` can also be configured to support usage of the image renderer running as a plugin with support for SSL / HTTPS. For example https://localhost:3000/.
 
 #### `concurrent_render_request_limit`
 

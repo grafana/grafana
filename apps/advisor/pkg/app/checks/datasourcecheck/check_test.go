@@ -6,9 +6,10 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	advisor "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/registry/apis/datasource"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -29,11 +30,12 @@ func TestCheck_Run(t *testing.T) {
 			PluginClient:          mockPluginClient,
 		}
 
-		items, err := check.Items(context.Background())
+		ctx := identity.WithRequester(context.Background(), &user.SignedInUser{})
+		items, err := check.Items(ctx)
 		assert.NoError(t, err)
 		errs := []advisor.CheckReportError{}
 		for _, step := range check.Steps() {
-			stepErrs, err := step.Run(context.Background(), &advisor.CheckSpec{}, items)
+			stepErrs, err := step.Run(ctx, &advisor.CheckSpec{}, items)
 			assert.NoError(t, err)
 			errs = append(errs, stepErrs...)
 		}
@@ -58,11 +60,12 @@ func TestCheck_Run(t *testing.T) {
 			PluginClient:          mockPluginClient,
 		}
 
-		items, err := check.Items(context.Background())
+		ctx := identity.WithRequester(context.Background(), &user.SignedInUser{})
+		items, err := check.Items(ctx)
 		assert.NoError(t, err)
 		errs := []advisor.CheckReportError{}
 		for _, step := range check.Steps() {
-			stepErrs, err := step.Run(context.Background(), &advisor.CheckSpec{}, items)
+			stepErrs, err := step.Run(ctx, &advisor.CheckSpec{}, items)
 			assert.NoError(t, err)
 			errs = append(errs, stepErrs...)
 		}
@@ -88,11 +91,12 @@ func TestCheck_Run(t *testing.T) {
 			PluginClient:          mockPluginClient,
 		}
 
-		items, err := check.Items(context.Background())
+		ctx := identity.WithRequester(context.Background(), &user.SignedInUser{})
+		items, err := check.Items(ctx)
 		assert.NoError(t, err)
 		errs := []advisor.CheckReportError{}
 		for _, step := range check.Steps() {
-			stepErrs, err := step.Run(context.Background(), &advisor.CheckSpec{}, items)
+			stepErrs, err := step.Run(ctx, &advisor.CheckSpec{}, items)
 			assert.NoError(t, err)
 			errs = append(errs, stepErrs...)
 		}
@@ -115,12 +119,10 @@ func (m *MockDatasourceSvc) GetAllDataSources(ctx context.Context, query *dataso
 }
 
 type MockPluginContextProvider struct {
-	datasource.PluginContextWrapper
-
 	pCtx backend.PluginContext
 }
 
-func (m *MockPluginContextProvider) PluginContextForDataSource(ctx context.Context, datasourceSettings *backend.DataSourceInstanceSettings) (backend.PluginContext, error) {
+func (m *MockPluginContextProvider) GetWithDataSource(ctx context.Context, pluginID string, user identity.Requester, ds *datasources.DataSource) (backend.PluginContext, error) {
 	return m.pCtx, nil
 }
 

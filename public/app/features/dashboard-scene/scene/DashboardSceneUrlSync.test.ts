@@ -8,7 +8,7 @@ import { getCloneKey } from '../utils/clone';
 import { DashboardScene } from './DashboardScene';
 import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
-import { DashboardRepeatsProcessedEvent } from './types';
+import { DashboardRepeatsProcessedEvent } from './types/DashboardRepeatsProcessedEvent';
 
 describe('DashboardSceneUrlSync', () => {
   describe('Given a standard scene', () => {
