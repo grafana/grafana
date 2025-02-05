@@ -13,6 +13,7 @@ type Props = {
 };
 
 export const ThemedDocsContainer = ({ children, context }: Props) => {
+  // TODO figure out how to make this work for docs not attached to stories (e.g. Intro)
   const story = context.storyById();
   const { globals } = context.getStoryContext(story);
   const { theme: themeId } = globals;
