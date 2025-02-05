@@ -38,6 +38,7 @@ type JobWorker struct {
 	lister      resources.ResourceLister
 	blobstore   blob.PublicBlobStore
 	urlProvider func(namespace string) string
+	syncer      Syncer
 }
 
 func NewJobWorker(
@@ -59,6 +60,10 @@ func NewJobWorker(
 		lister:      lister,
 		blobstore:   blobstore,
 		urlProvider: urlProvider,
+		syncer: &syncer{
+			parsers: parsers,
+			lister:  lister,
+		},
 	}
 }
 
@@ -91,7 +96,7 @@ func (g *JobWorker) Process(ctx context.Context, job provisioning.Job, progress 
 
 	switch job.Spec.Action {
 	case provisioning.JobActionSync:
-		return g.doSync(ctx, repo, job, parser, progress)
+		return g.doSync(ctx, repo, job, progress)
 
 	case provisioning.JobActionPullRequest:
 		prRepo, ok := repo.(PullRequestRepo)
@@ -156,10 +161,11 @@ func (g *JobWorker) Process(ctx context.Context, job provisioning.Job, progress 
 	}
 }
 
+// The Syncer will synchronize the external repo with grafana database
+// this function updates the status for both the job and the referenced repository
 func (g *JobWorker) doSync(ctx context.Context,
 	repo repository.Repository,
 	job provisioning.Job,
-	parser *resources.Parser,
 	progress func(provisioning.JobStatus) error,
 ) (*provisioning.JobStatus, error) {
 	var err error
@@ -181,19 +187,14 @@ func (g *JobWorker) doSync(ctx context.Context,
 		logger.Warn("unable to update repo with job status", "err", err)
 	}
 
-	syncer, err := NewSyncer(repo, g.lister, parser)
-	if err != nil {
-		return nil, fmt.Errorf("error creating replicator")
-	}
-
-	// Sync the repository
-	jobStatus, syncStatus, syncError := syncer.Sync(ctx, repo, *job.Spec.Sync, progress)
+	// Execute the sync task
+	jobStatus, syncStatus, syncError := g.syncer.Sync(ctx, repo, *job.Spec.Sync, progress)
 	if syncStatus == nil {
 		syncStatus = &provisioning.SyncStatus{}
 	}
 	syncStatus.JobID = job.Name
 	syncStatus.Started = job.Status.Started
-	syncStatus.Finished = time.Now().Unix()
+	syncStatus.Finished = time.Now().UnixMilli()
 	if syncError != nil {
 		syncStatus.State = provisioning.JobStateError
 		syncStatus.Message = []string{
