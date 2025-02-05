@@ -209,7 +209,8 @@ function removeDuplicateTimeFieldValues(accFrame: DataFrame, timeFieldIndex: num
 
   const indexesToRemove = Object.values(duplicatesMap)
     .filter((indexes) => indexes.length > 1)
-    .map((indexes) => indexes[1]);
+    .map((indexes) => indexes.slice(1))
+    .flat();
   accFrame.fields.forEach((field) => {
     field.values = field.values.filter((_, index) => !indexesToRemove.includes(index));
   });
