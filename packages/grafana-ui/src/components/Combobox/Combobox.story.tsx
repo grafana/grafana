@@ -35,14 +35,12 @@ const meta: Meta<PropsAndCustomArgs> = {
         label: 'Apple',
         value: 'apple',
         description: 'Apples are a great source of fiber and vitamin C.',
-        group: 'Fruits',
       },
       {
         label: 'Banana',
         value: 'banana',
         description:
           'Bananas are a great source of potassium, fiber, and vitamin C. They are also a great snack for on the go.',
-        group: 'Fruits',
       },
       { label: 'Carrot', value: 'carrot' },
       // Long label to test overflow
@@ -54,22 +52,7 @@ const meta: Meta<PropsAndCustomArgs> = {
       { label: 'Dill', value: 'dill' },
       { label: 'Eggplant', value: 'eggplant' },
       { label: 'Fennel', value: 'fennel' },
-      { label: 'Grape', value: 'grape', group: 'Fruits' },
-      {
-        label: 'Eyes',
-        value: 'eyes',
-        group: 'Body Parts',
-      },
-      {
-        label: 'Mouth',
-        value: 'mouth',
-        group: 'Body Parts',
-      },
-      {
-        label: 'Nose',
-        value: 'nose',
-        group: 'Body Parts',
-      },
+      { label: 'Grape', value: 'grape'},
       { label: 'Honeydew', value: 'honeydew' },
       {
         label: 'Iceberg Lettuce',
@@ -122,6 +105,56 @@ export const AutoSize: Story = {
 export const CustomValue: Story = {
   args: {
     createCustomValue: true,
+  },
+  render: BaseCombobox,
+};
+
+export const GroupOptions: Story = {
+  args: {
+    options: [
+      {
+        label: 'Apple',
+        value: 'apple',
+        description: 'Apples are a great source of fiber and vitamin C.',
+        group: 'Fruits',
+      },
+      {
+        label: 'Banana',
+        value: 'banana',
+        description:
+          'Bananas are a great source of potassium, fiber, and vitamin C. They are also a great snack for on the go.',
+        group: 'Fruits',
+      },
+      { label: 'Carrot', value: 'carrot' },
+      { label: 'Dill', value: 'dill' },
+      { label: 'Eggplant', value: 'eggplant' },
+      { label: 'Fennel', value: 'fennel' },
+      { label: 'Grape', value: 'grape', group: 'Fruits' },
+      {
+        label: 'Eyes',
+        value: 'eyes',
+        group: 'Body Parts',
+      },
+      {
+        label: 'Mouth',
+        value: 'mouth',
+        group: 'Body Parts',
+      },
+      {
+        label: 'Nose',
+        value: 'nose',
+        group: 'Body Parts',
+      },
+      { label: 'Honeydew', value: 'honeydew' },
+      {
+        label: 'Iceberg Lettuce',
+        value: 'iceberg-lettuce',
+        description:
+          'this is a very long description that should be longer than the longest option label which should make it clip to only one line. It is a bit tough to estimate the width of the descriptions because the font size is smaller, but this should be enough.',
+      },
+      { label: 'Jackfruit', value: 'jackfruit' },
+    ],
+    width: 50
   },
   render: BaseCombobox,
 };
