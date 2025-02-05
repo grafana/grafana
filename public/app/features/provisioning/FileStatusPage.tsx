@@ -89,13 +89,13 @@ function ResourceView({ wrap, repo, repoRef, tab }: Props) {
   useEffect(() => {
     switch (tab) {
       case TabSelection.Existing:
-        setJsonView(JSON.stringify(wrap.resource.existing, null, '  '));
+        setJsonView(JSON.stringify(wrap.resource.existing, null, 2));
         return;
       case TabSelection.DryRun:
-        setJsonView(JSON.stringify(wrap.resource.dryRun, null, '  '));
+        setJsonView(JSON.stringify(wrap.resource.dryRun, null, 2));
         return;
       case TabSelection.File:
-        setJsonView(JSON.stringify(wrap.resource.file, null, '  '));
+        setJsonView(JSON.stringify(wrap.resource.file, null, 2));
         return;
     }
   }, [wrap, tab, setJsonView]);

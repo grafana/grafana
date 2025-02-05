@@ -244,6 +244,9 @@ function ResourcesView({ repo }: RepoProps) {
           if (resource === 'dashboards') {
             return <a href={`/d/${name}`}>{title}</a>;
           }
+          if (resource === 'folders') {
+            return <a href={`/dashboards/f/${name}`}>{title}</a>;
+          }
           return <span>{title}</span>;
         },
       },
@@ -272,6 +275,13 @@ function ResourcesView({ repo }: RepoProps) {
         id: 'folder',
         header: 'Folder',
         sortType: 'string',
+        cell: ({ row: { original } }: ResourceCell<'title'>) => {
+          const { folder } = original;
+          if (folder?.length) {
+            return <a href={`/dashboards/f/${folder}`}>{folder}</a>;
+          }
+          return <span></span>;
+        },
       },
     ],
     []
