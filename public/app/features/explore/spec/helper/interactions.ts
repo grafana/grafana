@@ -26,9 +26,17 @@ export const runQuery = async (exploreId = 'left') => {
 };
 
 export const openQueryHistory = async () => {
-  const button = screen.getByRole('button', { name: 'Query history' });
-  await userEvent.click(button);
-  expect(await screen.findByPlaceholderText('Search queries')).toBeInTheDocument();
+  let button = screen.queryByRole('button', { name: 'Query history' });
+  if (button) {
+    await userEvent.click(button);
+    expect(await screen.findByPlaceholderText('Search queries')).toBeInTheDocument();
+  } else {
+    button = screen.getByRole('button', { name: 'Open query library or query history' });
+    await userEvent.click(button);
+    button = await screen.findByRole('menuitem', { name: 'Query history' });
+    await userEvent.click(button);
+    expect(await screen.findByPlaceholderText('Search queries')).toBeInTheDocument();
+  }
 };
 
 export const openQueryLibrary = async () => {
@@ -39,13 +47,6 @@ export const openQueryLibrary = async () => {
       name: /query library/i,
     });
   });
-};
-
-export const switchToQueryHistory = async () => {
-  const tab = screen.getByRole('tab', {
-    name: /query history/i,
-  });
-  await userEvent.click(tab);
 };
 
 export const addQueryHistoryToQueryLibrary = async () => {

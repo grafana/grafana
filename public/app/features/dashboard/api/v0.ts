@@ -1,6 +1,7 @@
 import { locationUtil } from '@grafana/data';
 import { Dashboard } from '@grafana/schema';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { getMessageFromError, getStatusFromError } from 'app/core/utils/errors';
 import kbn from 'app/core/utils/kbn';
 import { ScopedResourceClient } from 'app/features/apiserver/client';
 import {
@@ -91,32 +92,46 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
   }
 
   async getDashboardDTO(uid: string) {
-    const dash = await this.client.subresource<DashboardWithAccessInfo<DashboardDataDTO>>(uid, 'dto');
+    try {
+      const dash = await this.client.subresource<DashboardWithAccessInfo<DashboardDataDTO>>(uid, 'dto');
 
-    const result: DashboardDTO = {
-      meta: {
-        ...dash.access,
-        isNew: false,
-        isFolder: false,
-        uid: dash.metadata.name,
-        k8s: dash.metadata,
-        version: parseInt(dash.metadata.resourceVersion, 10),
-      },
-      dashboard: dash.spec,
-    };
+      const result: DashboardDTO = {
+        meta: {
+          ...dash.access,
+          isNew: false,
+          isFolder: false,
+          uid: dash.metadata.name,
+          k8s: dash.metadata,
+          version: parseInt(dash.metadata.resourceVersion, 10),
+        },
+        dashboard: dash.spec,
+      };
 
-    if (dash.metadata.annotations?.[AnnoKeyFolder]) {
-      try {
-        const folder = await backendSrv.getFolderByUid(dash.metadata.annotations[AnnoKeyFolder]);
-        result.meta.folderTitle = folder.title;
-        result.meta.folderUrl = folder.url;
-        result.meta.folderUid = folder.uid;
-        result.meta.folderId = folder.id;
-      } catch (e) {
-        console.error('Failed to load a folder', e);
+      if (dash.metadata.annotations?.[AnnoKeyFolder]) {
+        try {
+          const folder = await backendSrv.getFolderByUid(dash.metadata.annotations[AnnoKeyFolder]);
+          result.meta.folderTitle = folder.title;
+          result.meta.folderUrl = folder.url;
+          result.meta.folderUid = folder.uid;
+          result.meta.folderId = folder.id;
+        } catch (e) {
+          throw new Error('Failed to load folder');
+        }
       }
-    }
 
-    return result;
+      return result;
+    } catch (e) {
+      const status = getStatusFromError(e);
+      const message = getMessageFromError(e);
+      // Hacking around a bug in k8s api server that returns 500 for not found resources
+      if (message.includes('not found') && status !== 404) {
+        // @ts-expect-error
+        e.status = 404;
+        // @ts-expect-error
+        e.data.message = 'Dashboard not found';
+      }
+
+      throw e;
+    }
   }
 }

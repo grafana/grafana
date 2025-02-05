@@ -1,7 +1,6 @@
 import uFuzzy from '@leeoniya/ufuzzy';
 
-import { ComboboxOption } from './Combobox';
-import { ALL_OPTION_VALUE } from './MultiCombobox';
+import { ALL_OPTION_VALUE, ComboboxOption } from './types';
 
 // https://catonmat.net/my-favorite-regex :)
 const REGEXP_NON_ASCII = /[^ -~]/m;
@@ -20,9 +19,6 @@ const uf = new uFuzzy({ intraMode: 1 });
 export function itemToString<T extends string | number>(item?: ComboboxOption<T> | null) {
   if (item == null) {
     return '';
-  }
-  if (item.label?.startsWith('Custom value: ')) {
-    return item.value.toString();
   }
   return item.label ?? item.value.toString();
 }

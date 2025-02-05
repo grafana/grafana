@@ -12,10 +12,10 @@ import {
   PanelDescriptionTextArea,
   PanelFrameTitleInput,
 } from '../panel-edit/getPanelFrameOptions';
-import { EditableDashboardElement, isDashboardLayoutItem } from '../scene/types';
+import { BulkActionElement, EditableDashboardElement, isDashboardLayoutItem } from '../scene/types';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 
-export class VizPanelEditableElement implements EditableDashboardElement {
+export class VizPanelEditableElement implements EditableDashboardElement, BulkActionElement {
   public isEditableDashboardElement: true = true;
 
   public constructor(private panel: VizPanel) {}

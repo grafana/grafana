@@ -475,6 +475,13 @@ func (a apiClient) PostRulesGroupWithStatus(t *testing.T, folder string, group *
 	return m, resp.StatusCode, string(b)
 }
 
+func (a apiClient) PostRulesGroup(t *testing.T, folder string, group *apimodels.PostableRuleGroupConfig) apimodels.UpdateRuleGroupResponse {
+	t.Helper()
+	m, status, raw := a.PostRulesGroupWithStatus(t, folder, group)
+	requireStatusCode(t, http.StatusAccepted, status, raw)
+	return m
+}
+
 func (a apiClient) PostRulesExportWithStatus(t *testing.T, folder string, group *apimodels.PostableRuleGroupConfig, params *apimodels.ExportQueryParams) (int, string) {
 	t.Helper()
 	buf := bytes.Buffer{}
@@ -839,6 +846,32 @@ func (a apiClient) DeleteMuteTimingWithStatus(t *testing.T, name string) (int, s
 	return resp.StatusCode, string(body)
 }
 
+func (a apiClient) ExportMuteTiming(t *testing.T, name string, format string) string {
+	t.Helper()
+
+	u, err := url.Parse(fmt.Sprintf("%s/api/v1/provisioning/mute-timings/%s/export", a.url, name))
+	require.NoError(t, err)
+	q := url.Values{}
+	q.Set("format", format)
+	u.RawQuery = q.Encode()
+
+	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
+	require.NoError(t, err)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	require.NoError(t, err)
+
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+	body, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+
+	requireStatusCode(t, http.StatusOK, resp.StatusCode, string(body))
+	return string(body)
+}
+
 func (a apiClient) GetRouteWithStatus(t *testing.T) (apimodels.Route, int, string) {
 	t.Helper()
 
@@ -881,6 +914,32 @@ func (a apiClient) UpdateRouteWithStatus(t *testing.T, route apimodels.Route, no
 	require.NoError(t, err)
 
 	return resp.StatusCode, string(body)
+}
+
+func (a apiClient) ExportNotificationPolicy(t *testing.T, format string) string {
+	t.Helper()
+
+	u, err := url.Parse(fmt.Sprintf("%s/api/v1/provisioning/policies/export", a.url))
+	require.NoError(t, err)
+	q := url.Values{}
+	q.Set("format", format)
+	u.RawQuery = q.Encode()
+
+	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
+	require.NoError(t, err)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	require.NoError(t, err)
+
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+	body, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+
+	requireStatusCode(t, http.StatusOK, resp.StatusCode, string(body))
+	return string(body)
 }
 
 func (a apiClient) UpdateRoute(t *testing.T, route apimodels.Route, noProvenance bool) {
@@ -994,6 +1053,22 @@ func (a apiClient) GetActiveAlertsWithStatus(t *testing.T) (apimodels.AlertGroup
 	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/alertmanager/grafana/api/v2/alerts/groups", a.url), nil)
 	require.NoError(t, err)
 	return sendRequest[apimodels.AlertGroups](t, req, http.StatusOK)
+}
+
+func (a apiClient) GetRuleVersionsWithStatus(t *testing.T, ruleUID string) (apimodels.GettableRuleVersions, int, string) {
+	t.Helper()
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/ruler/grafana/api/v1/rule/%s/versions", a.url, ruleUID), nil)
+	require.NoError(t, err)
+	return sendRequest[apimodels.GettableRuleVersions](t, req, http.StatusOK)
+}
+
+func (a apiClient) GetRuleByUID(t *testing.T, ruleUID string) apimodels.GettableExtendedRuleNode {
+	t.Helper()
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/ruler/grafana/api/v1/rule/%s", a.url, ruleUID), nil)
+	require.NoError(t, err)
+	rule, status, raw := sendRequest[apimodels.GettableExtendedRuleNode](t, req, http.StatusOK)
+	requireStatusCode(t, http.StatusOK, status, raw)
+	return rule
 }
 
 func sendRequest[T any](t *testing.T, req *http.Request, successStatusCode int) (T, int, string) {

@@ -233,11 +233,6 @@ func (a *State) SetNextValues(result eval.Result) {
 	a.Values = newValues
 }
 
-// IsNormalStateWithNoReason returns true if the state is Normal and reason is empty
-func IsNormalStateWithNoReason(s *State) bool {
-	return s.State == eval.Normal && s.StateReason == ""
-}
-
 // StateTransition describes the transition from one state to another.
 type StateTransition struct {
 	*State
