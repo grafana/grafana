@@ -51,7 +51,7 @@ export const getActions = (
     }
 
     let actionModel: ActionModel<Field> = { title: '', onClick: (e) => {} };
-    const defaultActionConfirmation = action.title + '?';
+    const defaultActionConfirmation = `Are you sure you want to proceed with ${action.title}?`;
 
     actionModel = {
       title: replaceVariables(action.title || '', actionScopedVars),
