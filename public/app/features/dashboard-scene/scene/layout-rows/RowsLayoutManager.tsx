@@ -11,6 +11,7 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { isClonedKey } from '../../utils/clone';
 import { DashboardScene } from '../DashboardScene';
@@ -31,8 +32,12 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
   public readonly isDashboardLayoutManager = true;
 
   public static readonly descriptor = {
-    name: 'Rows',
-    description: 'Rows layout',
+    get name() {
+      return t('dashboard.rows-layout.name', 'Rows');
+    },
+    get description() {
+      return t('dashboard.rows-layout.description', 'Rows layout');
+    },
     id: 'rows-layout',
     createFromLayout: RowsLayoutManager.createFromLayout,
   };
@@ -63,7 +68,7 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
       rows: [
         ...this.state.rows,
         new RowItem({
-          title: 'New row',
+          title: t('dashboard.rows-layout.row.new', 'New row'),
           layout: ResponsiveGridLayoutManager.createEmpty(),
         }),
       ],
@@ -178,7 +183,7 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
       rows = config.map(
         (rowConfig) =>
           new RowItem({
-            title: rowConfig.title ?? 'Row title',
+            title: rowConfig.title ?? t('dashboard.rows-layout.row.new', 'New row'),
             isCollapsed: !!rowConfig.isCollapsed,
             layout: DefaultGridLayoutManager.fromGridItems(
               rowConfig.children,
@@ -189,7 +194,7 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
           })
       );
     } else {
-      rows = [new RowItem({ layout: layout.clone(), title: 'Row title' })];
+      rows = [new RowItem({ layout: layout.clone(), title: t('dashboard.rows-layout.row.new', 'New row') })];
     }
 
     return new RowsLayoutManager({ rows });
