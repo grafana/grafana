@@ -1,4 +1,4 @@
-package secret
+package metadata
 
 import (
 	"context"
@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/secret/migrator"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	"k8s.io/apimachinery/pkg/labels"
 )
@@ -22,7 +23,7 @@ func ProvideSecureValueStorage(db db.DB, cfg *setting.Cfg, features featuremgmt.
 		return &secureValueStorage{}, nil
 	}
 
-	if err := migrateSecretSQL(db.GetEngine(), cfg); err != nil {
+	if err := migrator.MigrateSecretSQL(db.GetEngine(), cfg); err != nil {
 		return nil, fmt.Errorf("failed to run migrations: %w", err)
 	}
 
