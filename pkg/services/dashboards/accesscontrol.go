@@ -5,7 +5,7 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"go.opentelemetry.io/otel"
@@ -65,6 +65,7 @@ func NewFolderIDScopeResolver(folderDB folder.FolderStore, folderSvc folder.Serv
 			return []string{ScopeFoldersProvider.GetResourceScopeUID(ac.GeneralFolderUID)}, nil
 		}
 
+		ctx = identity.WithServiceIdentityContext(ctx, orgID)
 		folder, err := folderDB.GetFolderByID(ctx, orgID, id)
 		if err != nil {
 			return nil, err
@@ -97,6 +98,7 @@ func NewFolderUIDScopeResolver(folderSvc folder.Service) (string, ac.ScopeAttrib
 			return nil, err
 		}
 
+		ctx = identity.WithServiceIdentityContext(ctx, orgID)
 		inheritedScopes, err := GetInheritedScopes(ctx, orgID, uid, folderSvc)
 		if err != nil {
 			return nil, err
@@ -107,7 +109,7 @@ func NewFolderUIDScopeResolver(folderSvc folder.Service) (string, ac.ScopeAttrib
 
 // NewDashboardIDScopeResolver provides an ScopeAttributeResolver that is able to convert a scope prefixed with "dashboards:id:"
 // into uid based scopes for both dashboard and folder
-func NewDashboardIDScopeResolver(folderDB folder.FolderStore, ds DashboardService, folderSvc folder.Service) (string, ac.ScopeAttributeResolver) {
+func NewDashboardIDScopeResolver(ds DashboardService, folderSvc folder.Service) (string, ac.ScopeAttributeResolver) {
 	prefix := ScopeDashboardsProvider.GetResourceScope("")
 	return prefix, ac.ScopeAttributeResolverFunc(func(ctx context.Context, orgID int64, scope string) ([]string, error) {
 		ctx, span := tracer.Start(ctx, "dashboards.NewDashboardIDScopeResolver")
@@ -122,18 +124,19 @@ func NewDashboardIDScopeResolver(folderDB folder.FolderStore, ds DashboardServic
 			return nil, err
 		}
 
+		ctx = identity.WithServiceIdentityContext(ctx, orgID)
 		dashboard, err := ds.GetDashboard(ctx, &GetDashboardQuery{ID: id, OrgID: orgID})
 		if err != nil {
 			return nil, err
 		}
 
-		return resolveDashboardScope(ctx, folderDB, orgID, dashboard, folderSvc)
+		return resolveDashboardScope(ctx, orgID, dashboard, folderSvc)
 	})
 }
 
 // NewDashboardUIDScopeResolver provides an ScopeAttributeResolver that is able to convert a scope prefixed with "dashboards:uid:"
 // into uid based scopes for both dashboard and folder
-func NewDashboardUIDScopeResolver(folderDB folder.FolderStore, ds DashboardService, folderSvc folder.Service) (string, ac.ScopeAttributeResolver) {
+func NewDashboardUIDScopeResolver(ds DashboardService, folderSvc folder.Service) (string, ac.ScopeAttributeResolver) {
 	prefix := ScopeDashboardsProvider.GetResourceScopeUID("")
 	return prefix, ac.ScopeAttributeResolverFunc(func(ctx context.Context, orgID int64, scope string) ([]string, error) {
 		ctx, span := tracer.Start(ctx, "dashboards.NewDashboardUIDScopeResolver")
@@ -148,36 +151,25 @@ func NewDashboardUIDScopeResolver(folderDB folder.FolderStore, ds DashboardServi
 			return nil, err
 		}
 
+		ctx = identity.WithServiceIdentityContext(ctx, orgID)
 		dashboard, err := ds.GetDashboard(ctx, &GetDashboardQuery{UID: uid, OrgID: orgID})
 		if err != nil {
 			return nil, err
 		}
 
-		return resolveDashboardScope(ctx, folderDB, orgID, dashboard, folderSvc)
+		return resolveDashboardScope(ctx, orgID, dashboard, folderSvc)
 	})
 }
 
-func resolveDashboardScope(ctx context.Context, folderDB folder.FolderStore, orgID int64, dashboard *Dashboard, folderSvc folder.Service) ([]string, error) {
+func resolveDashboardScope(ctx context.Context, orgID int64, dashboard *Dashboard, folderSvc folder.Service) ([]string, error) {
 	ctx, span := tracer.Start(ctx, "dashboards.resolveDashboardScope")
 	span.End()
 
 	var folderUID string
-	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Dashboard).Inc()
-	// nolint:staticcheck
-	if dashboard.FolderID < 0 {
-		return []string{ScopeDashboardsProvider.GetResourceScopeUID(dashboard.UID)}, nil
-	}
-
-	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Dashboard).Inc()
-	// nolint:staticcheck
-	if dashboard.FolderID == 0 {
+	if dashboard.FolderUID == "" {
 		folderUID = ac.GeneralFolderUID
 	} else {
-		folder, err := folderDB.GetFolderByID(ctx, orgID, dashboard.FolderID)
-		if err != nil {
-			return nil, err
-		}
-		folderUID = folder.UID
+		folderUID = dashboard.FolderUID
 	}
 
 	result, err := GetInheritedScopes(ctx, orgID, folderUID, folderSvc)
