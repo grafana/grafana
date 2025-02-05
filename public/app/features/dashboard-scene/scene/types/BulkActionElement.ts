@@ -1,5 +1,6 @@
 export interface BulkActionElement {
   onDelete(): void;
+
   onCopy?(): void;
 }
 

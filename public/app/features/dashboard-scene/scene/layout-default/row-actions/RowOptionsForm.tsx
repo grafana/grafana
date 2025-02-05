@@ -1,5 +1,4 @@
-import { useCallback, useState } from 'react';
-import * as React from 'react';
+import { ReactNode, useCallback, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { selectors } from '@grafana/e2e-selectors';
@@ -16,7 +15,7 @@ export interface Props {
   sceneContext: SceneObject;
   onUpdate: OnRowOptionsUpdate;
   onCancel: () => void;
-  warning?: React.ReactNode;
+  warning?: ReactNode;
 }
 
 export const RowOptionsForm = ({ repeat, title, sceneContext, warning, onUpdate, onCancel }: Props) => {

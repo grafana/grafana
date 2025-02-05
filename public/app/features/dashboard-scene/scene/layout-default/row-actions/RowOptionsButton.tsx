@@ -1,4 +1,4 @@
-import * as React from 'react';
+import { ReactNode } from 'react';
 
 import { SceneObject } from '@grafana/scenes';
 import { Icon, ModalsController } from '@grafana/ui';
@@ -12,7 +12,7 @@ export interface RowOptionsButtonProps {
   repeat?: string;
   parent: SceneObject;
   onUpdate: OnRowOptionsUpdate;
-  warning?: React.ReactNode;
+  warning?: ReactNode;
 }
 
 export const RowOptionsButton = ({ repeat, title, parent, onUpdate, warning }: RowOptionsButtonProps) => {

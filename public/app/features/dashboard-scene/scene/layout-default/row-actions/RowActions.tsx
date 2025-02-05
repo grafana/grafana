@@ -17,7 +17,6 @@ import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSou
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { getDashboardSceneFor, getQueryRunnerFor } from '../../../utils/utils';
-import { DashboardScene } from '../../DashboardScene';
 import { DashboardGridItem } from '../DashboardGridItem';
 import { DefaultGridLayoutManager } from '../DefaultGridLayoutManager';
 import { RowRepeaterBehavior } from '../RowRepeaterBehavior';
@@ -33,10 +32,6 @@ export class RowActions extends SceneObjectBase<RowActionsState> {
     }
 
     return this.parent;
-  }
-
-  public getDashboard(): DashboardScene {
-    return getDashboardSceneFor(this);
   }
 
   public removeRow(removePanels?: boolean) {
@@ -137,7 +132,7 @@ export class RowActions extends SceneObjectBase<RowActionsState> {
   };
 
   static Component = ({ model }: SceneComponentProps<RowActions>) => {
-    const dashboard = model.getDashboard();
+    const dashboard = getDashboardSceneFor(model);
     const row = model.getParent();
     const { title } = row.useState();
     const { meta, isEditing } = dashboard.useState();

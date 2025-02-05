@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import * as React from 'react';
+import { ReactNode } from 'react';
 
 import { SceneObject } from '@grafana/scenes';
 import { Modal, useStyles2 } from '@grafana/ui';
@@ -11,7 +11,7 @@ export interface RowOptionsModalProps {
   title: string;
   repeat?: string;
   parent: SceneObject;
-  warning?: React.ReactNode;
+  warning?: ReactNode;
   onDismiss: () => void;
   onUpdate: OnRowOptionsUpdate;
 }
