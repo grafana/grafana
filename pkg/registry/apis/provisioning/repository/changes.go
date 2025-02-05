@@ -31,8 +31,6 @@ func Changes(source []FileTreeEntry, target *provisioning.ResourceList) ([]FileC
 					Action: FileActionUpdated,
 					Path:   check.Path,
 					DB:     check,
-
-					Ref: file.Hash,
 				})
 			}
 			delete(lookup, file.Path)
@@ -40,7 +38,6 @@ func Changes(source []FileTreeEntry, target *provisioning.ResourceList) ([]FileC
 			changes = append(changes, FileChange{
 				Action: FileActionCreated, // or previously ignored/failed
 				Path:   file.Path,
-				Ref:    file.Hash,
 			})
 		}
 	}
@@ -48,8 +45,8 @@ func Changes(source []FileTreeEntry, target *provisioning.ResourceList) ([]FileC
 	// File that were previously added, but are not in the current list
 	for _, v := range lookup {
 		changes = append(changes, FileChange{
-			Path:   v.Path,
 			Action: FileActionDeleted,
+			Path:   v.Path,
 			DB:     v,
 		})
 	}

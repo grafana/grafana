@@ -137,9 +137,6 @@ func (r *syncer) Sync(ctx context.Context,
 		if err != nil {
 			return nil, nil, fmt.Errorf("error calculating changes: %w", err)
 		}
-		for i := range changes {
-			changes[i].Ref = "" // clear the refs so we do not try to write them
-		}
 	}
 
 	syncStatus.Hash = currentRef
@@ -164,7 +161,11 @@ func (r *syncer) Sync(ctx context.Context,
 		syncStatus.State = status.State
 		syncStatus.Message = append(syncStatus.Message, status.Message)
 	} else if status.State == "" {
-		status.State = provisioning.JobStateSuccess
+		if len(status.Errors) > 0 {
+			status.State = provisioning.JobStateError
+		} else {
+			status.State = provisioning.JobStateSuccess
+		}
 	}
 	return status, syncStatus, nil
 }
@@ -174,6 +175,7 @@ func (r *syncer) replicateChanges(ctx context.Context, changes []repository.File
 	folderTree := resources.NewEmptyFolderTree()
 	summary := provisioning.JobResourceSummary{}
 	status := &provisioning.JobStatus{}
+	logger := logging.FromContext(ctx)
 
 	// Create folder structure first
 	for _, change := range changes {
@@ -189,8 +191,8 @@ func (r *syncer) replicateChanges(ctx context.Context, changes []repository.File
 
 		if change.Action == repository.FileActionDeleted {
 			if change.DB == nil {
-				// ?? could we get this from the index?
-				info, err := r.repository.Read(ctx, change.Path, change.Ref)
+				// ??? should we find things in the index with this path?
+				info, err := r.repository.Read(ctx, change.Path, change.DeletedRef)
 				if err != nil {
 					status.Errors = append(status.Errors,
 						fmt.Sprintf("error reading deleted file: %s", change.Path))
@@ -215,12 +217,14 @@ func (r *syncer) replicateChanges(ctx context.Context, changes []repository.File
 
 			client, err := r.client(change.DB)
 			if err != nil {
+				logger.Warn("unable to get client for deleted object", "file", change.Path, "err", err, "obj", change.DB)
 				status.Errors = append(status.Errors,
-					fmt.Sprintf("unsupported object: %s", change.Path))
+					fmt.Sprintf("unsupported object: %s / %s", change.Path, change.DB.Resource))
 				continue
 			}
 			err = client.Delete(ctx, change.DB.Name, metav1.DeleteOptions{})
 			if err != nil {
+				logger.Warn("deleting error", "file", change.Path, "err", err)
 				status.Errors = append(status.Errors,
 					fmt.Sprintf("error deleting %s: %s // %s", change.DB.Resource, change.DB.Name, change.Path))
 			} else {
@@ -235,8 +239,8 @@ func (r *syncer) replicateChanges(ctx context.Context, changes []repository.File
 			return nil, err // fail when we can not make folders
 		}
 
-		// Replicate the file changes
-		fileInfo, err := r.repository.Read(ctx, change.Path, change.Ref)
+		// Read the referenced file
+		fileInfo, err := r.repository.Read(ctx, change.Path, "")
 		if err != nil {
 			status.Errors = append(status.Errors,
 				fmt.Sprintf("Unable to read: %s", change.Path),
@@ -244,8 +248,9 @@ func (r *syncer) replicateChanges(ctx context.Context, changes []repository.File
 			continue
 		}
 
-		parsed, err := r.parser.Parse(ctx, fileInfo, false)
+		parsed, err := r.parser.Parse(ctx, fileInfo, false) // no validation
 		if err != nil {
+			logger.Warn("parsing error", "file", change.Path, "err", err)
 			status.Errors = append(status.Errors,
 				fmt.Sprintf("Unable to parse: %s // %s", change.Path, err.Error()),
 			)
@@ -253,11 +258,14 @@ func (r *syncer) replicateChanges(ctx context.Context, changes []repository.File
 		}
 
 		parsed.Meta.SetFolder(parent)
+		parsed.Meta.SetUID("")             // clear identifiers
+		parsed.Meta.SetResourceVersion("") // clear identifiers
 
 		switch change.Action {
 		case repository.FileActionCreated:
 			_, err = parsed.Client.Create(ctx, parsed.Obj, metav1.CreateOptions{})
 			if err != nil {
+				logger.Warn("create error", "file", change.Path, "err", err)
 				status.Errors = append(status.Errors,
 					fmt.Sprintf("error creating: %s from %s", parsed.Obj.GetName(), change.Path),
 				)
@@ -268,6 +276,7 @@ func (r *syncer) replicateChanges(ctx context.Context, changes []repository.File
 		case repository.FileActionUpdated:
 			_, err = parsed.Client.Update(ctx, parsed.Obj, metav1.UpdateOptions{})
 			if err != nil {
+				logger.Warn("update error", "file", change.Path, "err", err)
 				status.Errors = append(status.Errors,
 					fmt.Sprintf("error updating: %s from %s", parsed.Obj.GetName(), change.Path),
 				)

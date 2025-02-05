@@ -63,7 +63,7 @@ type FileChange struct {
 	// The current value in the database (may be null for incremental?)
 	DB *provisioning.ResourceListItem
 
-	Ref string // Only needed for git delete
+	DeletedRef string // Only needed for git delete
 }
 
 type Repository interface {

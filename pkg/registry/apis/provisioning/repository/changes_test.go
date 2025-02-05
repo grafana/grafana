@@ -27,7 +27,6 @@ func TestChanges(t *testing.T) {
 		require.Equal(t, FileChange{
 			Action: FileActionCreated,
 			Path:   "muta.json",
-			Ref:    "xyz",
 		}, changes[0])
 	})
 
@@ -68,7 +67,6 @@ func TestChanges(t *testing.T) {
 				Name:     "adsl62h-hrw-f-fvlt2dghp-gufrc4lisksgmq-c",
 				Hash:     "ce5d497c4deadde6831162ce8509e2b2b1776237",
 			},
-			Ref: "different",
 		}, changes[0])
 	})
 }
