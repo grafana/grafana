@@ -8,7 +8,6 @@ import {
   DataQueryRequest,
   DataQueryResponse,
   DataSourceInstanceSettings,
-  Field,
   FieldType,
   LiveChannelScope,
   LoadingState,
@@ -184,21 +183,22 @@ function mergeFrames(acc: DataQueryResponse, newResult: DataQueryResponse): Data
   const result = combineResponses(cloneQueryResponse(acc), newResult);
 
   // Remove duplicate time field values for all frames
-  result.data.forEach((frame: DataFrame) => {
+  result.data = result.data.map((frame: DataFrame) => {
+    let newFrame = frame;
     const timeFieldIndex = frame.fields.findIndex((f) => f.type === FieldType.time);
     if (timeFieldIndex >= 0) {
-      const timeField = frame.fields[timeFieldIndex];
-      removeDuplicateTimeFieldValues(frame, timeField);
-      sortDataFrame(frame, timeFieldIndex);
+      removeDuplicateTimeFieldValues(frame, timeFieldIndex);
+      newFrame = sortDataFrame(frame, timeFieldIndex);
     }
+    return newFrame;
   });
 
   result.state = newResult.state;
   return result;
 }
 
-function removeDuplicateTimeFieldValues(accFrame: DataFrame, timeField: Field) {
-  const duplicatesMap = timeField.values.reduce((acc: Record<number, number[]>, value, index) => {
+function removeDuplicateTimeFieldValues(accFrame: DataFrame, timeFieldIndex: number) {
+  const duplicatesMap = accFrame.fields[timeFieldIndex].values.reduce((acc: Record<number, number[]>, value, index) => {
     if (acc[value]) {
       acc[value].push(index);
     } else {
