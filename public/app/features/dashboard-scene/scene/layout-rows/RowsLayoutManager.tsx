@@ -3,9 +3,11 @@ import { t } from 'app/core/internationalization';
 
 import { isClonedKey } from '../../utils/clone';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
+import { getDashboardSceneFor } from '../../utils/utils';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
 import { RowRepeaterBehavior } from '../layout-default/RowRepeaterBehavior';
+import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 
 import { RowItem } from './RowItem';
@@ -64,6 +66,12 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
 
   public addNewRow() {
     this.setState({ rows: [...this.state.rows, new RowItem()] });
+  }
+
+  public addNewTab() {
+    const tabsLayout = TabsLayoutManager.createFromLayout(this);
+    tabsLayout.addNewTab();
+    getDashboardSceneFor(this).switchLayout(tabsLayout);
   }
 
   public editModeChanged(isEditing: boolean) {

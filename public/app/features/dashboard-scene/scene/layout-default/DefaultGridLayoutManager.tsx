@@ -26,6 +26,7 @@ import {
   getGridItemKeyForPanelId,
   getDashboardSceneFor,
 } from '../../utils/utils';
+import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 
 import { DashboardGridItem } from './DashboardGridItem';
@@ -203,6 +204,12 @@ export class DefaultGridLayoutManager
     sceneGridLayout.setState({ children: [row, ...sceneGridLayout.state.children] });
 
     return row;
+  }
+
+  public addNewTab() {
+    const tabsLayout = TabsLayoutManager.createFromLayout(this);
+    tabsLayout.addNewTab();
+    getDashboardSceneFor(this).switchLayout(tabsLayout);
   }
 
   public editModeChanged(isEditing: boolean) {

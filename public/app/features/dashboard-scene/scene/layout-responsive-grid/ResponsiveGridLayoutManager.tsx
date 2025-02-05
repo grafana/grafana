@@ -5,6 +5,7 @@ import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/Pan
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { getDashboardSceneFor, getGridItemKeyForPanelId, getVizPanelKeyForPanelId } from '../../utils/utils';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
+import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 
 import { ResponsiveGridItem } from './ResponsiveGridItem';
@@ -100,6 +101,12 @@ export class ResponsiveGridLayoutManager
     const rowsLayout = RowsLayoutManager.createFromLayout(this);
     rowsLayout.addNewRow();
     getDashboardSceneFor(this).switchLayout(rowsLayout);
+  }
+
+  public addNewTab() {
+    const tabsLayout = TabsLayoutManager.createFromLayout(this);
+    tabsLayout.addNewTab();
+    getDashboardSceneFor(this).switchLayout(tabsLayout);
   }
 
   public getOptions(): OptionsPaneItemDescriptor[] {
