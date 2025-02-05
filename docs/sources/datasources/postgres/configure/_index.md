@@ -69,7 +69,7 @@ Example:
  CREATE USER grafanareader WITH PASSWORD 'password';
  GRANT USAGE ON SCHEMA schema TO grafanareader;
  GRANT SELECT ON schema.table TO grafanareader;
- ```
+```
 
 ## Add the PostgreSQL data source
 
@@ -93,16 +93,16 @@ Following is a list of PostgreSQL configuration options:
 **Connection section:**
 
 - **Host URL** - The IP address/hostname and optional port of your PostgreSQL instance. This does not include the database name. The connection string for connecting to Postgres will not be correct and it may cause errors.
-- **Database name** -  The name of your PostgreSQL database.
+- **Database name** - The name of your PostgreSQL database.
 
 **Authentication section:**
 
 - **Username** - Enter the username used to connect to your PostgreSQL database.
 - **Password** - Enter the password used to connect to the PostgreSQL database.
 - **TLS/SSL Mode** - Determines whether or with what priority a secure SSL TCP/IP connection will be negotiated with the server. When **TLS/SSL Mode** is disabled, **TLS/SSL Method** and **TLS/SSL Auth Details** aren't visible options.
-- **TLS/SSL Method** - Determines how TLS/SSL certificates are configured. 
+- **TLS/SSL Method** - Determines how TLS/SSL certificates are configured.
   - **File system path** - This option allows you to configure certificates by specifying paths to existing certificates on the local file system where Grafana is running. Ensure this file is readable by the user executing the Grafana process.
-  - **Certificate content** - This option allows you to configure certificate by specifying their content. The content is stored and encrypted in Grafana's database. When connecting to the database, the certificates are saved as files in Grafana's configured data path on the local filesystem. 
+  - **Certificate content** - This option allows you to configure certificate by specifying their content. The content is stored and encrypted in Grafana's database. When connecting to the database, the certificates are saved as files in Grafana's configured data path on the local filesystem.
 
 **TLS/SSL Auth Details**
 
@@ -114,14 +114,14 @@ If you select the TLS/SSL Mode options **require**, **verify-ca** or **verify-fu
 
 If you select the TLS/SSL Mode option **require** and TLS/SSL Method certificate content the following are required:
 
- - **TLS/SSL Client Certificate** - Provide the client certificate.
- - **TLS/SSL Client Key** - Provide the client key.
+- **TLS/SSL Client Certificate** - Provide the client certificate.
+- **TLS/SSL Client Key** - Provide the client key.
 
 If you select the TLS/SSL Mode options **verify-ca** or **verify-full** with the TLS/SSL Method certificate content the following are required:
 
- - **TLS/SSL Client Certificate** - Provide the client certificate.
- - **TLS/SSL Root Certificate** - Provide the root certificate.
- - **TLS/SSL Client Key** - Provide the client key.
+- **TLS/SSL Client Certificate** - Provide the client certificate.
+- **TLS/SSL Root Certificate** - Provide the root certificate.
+- **TLS/SSL Client Key** - Provide the client key.
 
 **PostgreSQL Options:**
 
@@ -146,7 +146,7 @@ Once you have added your PostgreSQL connection settings, click **Save & test** t
 
 The **Min time interval** setting defines a lower limit for the [`$__interval`](ref:add-template-variables-interval) and [`$__interval_ms`](ref:add-template-variables-interval-ms) variables.
 
-This option can also be configured or overridden in the dashboard panel under the data source settings. 
+This option can also be configured or overridden in the dashboard panel under the data source settings.
 
 This value must be formatted as a number followed by a valid time identifier:
 
