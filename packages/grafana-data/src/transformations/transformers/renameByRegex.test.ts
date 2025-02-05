@@ -239,5 +239,60 @@ describe('Rename By Regex Transformer', () => {
         `);
       });
     });
+
+    it('should rename by variable', async () => {
+      const cfg: DataTransformerConfig<RenameByRegexTransformerOptions> = {
+        id: DataTransformerID.renameByRegex,
+        options: {
+          regex: '([^.]+).example.com',
+          renamePattern: `$web`,
+        },
+      };
+
+      const ctxmock = { interpolate: jest.fn(() => 'variable') };
+
+      await expect(transformDataFrame([cfg], [data], ctxmock)).toEmitValuesWith((received) => {
+        const data = received[0];
+        const frame = data[0];
+        expect(frame.fields).toMatchInlineSnapshot(`
+          [
+            {
+              "config": {
+                "name": "Time",
+              },
+              "name": "Time",
+              "state": {
+                "displayName": "Time",
+                "multipleFrames": false,
+              },
+              "type": "time",
+              "values": [
+                3000,
+                4000,
+                5000,
+                6000,
+              ],
+            },
+            {
+              "config": {
+                "displayName": "variable",
+              },
+              "name": "Value",
+              "state": {
+                "displayName": "variable",
+                "multipleFrames": false,
+              },
+              "type": "number",
+              "values": [
+                10000.3,
+                10000.4,
+                10000.5,
+                10000.6,
+              ],
+            },
+          ]
+        `);
+      });
+    });
   });
 });
