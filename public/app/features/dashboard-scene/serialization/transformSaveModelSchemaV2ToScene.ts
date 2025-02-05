@@ -96,7 +96,7 @@ import { ResponsiveGridLayoutManager } from '../scene/layout-responsive-grid/Res
 import { RowItem } from '../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
-import { DashboardLayoutManager } from '../scene/types';
+import { DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 import { preserveDashboardSceneStateInLocalStorage } from '../utils/dashboardSessionState';
 import {
   getDashboardSceneFor,
