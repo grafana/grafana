@@ -1,3 +1,5 @@
+import { useState } from 'react';
+
 import { config } from '@grafana/runtime';
 import {
   SceneObjectState,
@@ -9,9 +11,12 @@ import {
   sceneUtils,
   SceneComponentProps,
   SceneGridItemLike,
+  SceneCSSGridLayout,
+  useSceneObjectState,
 } from '@grafana/scenes';
 import { GRID_COLUMN_COUNT } from 'app/core/constants';
 import { t } from 'app/core/internationalization';
+import DashboardEmpty from 'app/features/dashboard/dashgrid/DashboardEmpty';
 
 import { isClonedKey, joinCloneKeys } from '../../utils/clone';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
@@ -22,6 +27,7 @@ import {
   NEW_PANEL_WIDTH,
   getVizPanelKeyForPanelId,
   getGridItemKeyForPanelId,
+  getDashboardSceneFor,
 } from '../../utils/utils';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 
@@ -447,6 +453,16 @@ export class DefaultGridLayoutManager
   }
 
   public static Component = ({ model }: SceneComponentProps<DefaultGridLayoutManager>) => {
+    const dashboard = getDashboardSceneFor(model);
+    const { children } = useSceneObjectState(model.state.grid, { shouldActivateOrKeepAlive: true });
+    const isEmpty = children.length === 0;
+
+    if (isEmpty) {
+      return (
+        <DashboardEmpty dashboard={dashboard} canCreate={!!dashboard.state.meta.canEdit} key="dashboard-empty-state" />
+      );
+    }
+
     return <model.state.grid.Component model={model.state.grid} />;
   };
 }

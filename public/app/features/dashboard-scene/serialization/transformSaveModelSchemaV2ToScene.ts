@@ -88,7 +88,7 @@ import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior
 import { RowActions } from '../scene/layout-default/row-actions/RowActions';
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
 import { preserveDashboardSceneStateInLocalStorage } from '../utils/dashboardSessionState';
-import { getDashboardSceneFor, getIntervalsFromQueryString, getVizPanelKeyForPanelId } from '../utils/utils';
+import { getIntervalsFromQueryString, getVizPanelKeyForPanelId } from '../utils/utils';
 
 import { GRID_ROW_HEIGHT } from './const';
 import { SnapshotVariable } from './custom-variables/SnapshotVariable';
@@ -181,7 +181,6 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
       grid: new SceneGridLayout({
         isLazy: !(dashboard.preload || contextSrv.user.authenticatedBy === 'render'),
         children: createSceneGridLayoutForItems(dashboard),
-        $behaviors: [trackIfEmpty],
       }),
     }),
     $timeRange: new SceneTimeRange({
@@ -402,20 +401,6 @@ function buildVizPanel(panel: PanelKind): VizPanel {
   }
 
   return new VizPanel(vizPanelState);
-}
-
-function trackIfEmpty(grid: SceneGridLayout) {
-  getDashboardSceneFor(grid).setState({ isEmpty: grid.state.children.length === 0 });
-
-  const sub = grid.subscribeToState((n, p) => {
-    if (n.children.length !== p.children.length || n.children !== p.children) {
-      getDashboardSceneFor(grid).setState({ isEmpty: n.children.length === 0 });
-    }
-  });
-
-  return () => {
-    sub.unsubscribe();
-  };
 }
 
 function getPanelDataSource(panel: PanelKind): DataSourceRef | undefined {
