@@ -1611,6 +1611,8 @@
       "one-click": "One click",
       "one-click-enabled": "One click enabled",
       "title-not-provided": "Title not provided",
+      "tooltip-edit": "Edit",
+      "tooltip-remove": "Remove",
       "url-not-provided": "Data link url not provided"
     },
     "data-source-http-settings": {

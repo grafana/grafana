@@ -61,8 +61,18 @@ export function DataLinksListItemBase<T extends DataLink | Action>({
                 tooltip={t('grafana-ui.data-links-inline-editor.one-click-enabled', 'One click enabled')}
               />
             )}
-            <IconButton name="pen" onClick={onEdit} className={styles.icon} tooltip="Edit" />
-            <IconButton name="trash-alt" onClick={onRemove} className={styles.icon} tooltip="Remove" />
+            <IconButton
+              name="pen"
+              onClick={onEdit}
+              className={styles.icon}
+              tooltip={t('grafana-ui.data-links-inline-editor.tooltip-edit', 'Edit')}
+            />
+            <IconButton
+              name="trash-alt"
+              onClick={onRemove}
+              className={styles.icon}
+              tooltip={t('grafana-ui.data-links-inline-editor.tooltip-remove', 'Remove')}
+            />
             <div className={styles.dragIcon} {...provided.dragHandleProps}>
               <Icon name="draggabledots" size="lg" />
             </div>
