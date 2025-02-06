@@ -3,6 +3,7 @@ import { css } from '@emotion/css';
 import { Property } from 'csstype';
 import React, { useMemo, useState, useLayoutEffect, useCallback, useRef, useEffect } from 'react';
 import DataGrid, { Column, RenderRowProps, Row, SortColumn, SortDirection } from 'react-data-grid';
+import { useMeasure } from 'react-use';
 
 import {
   DataFrame,
@@ -14,6 +15,7 @@ import {
   ReducerID,
 } from '@grafana/data';
 import { TableCellHeight } from '@grafana/schema';
+import { getScrollbarWidth, Pagination } from '@grafana/ui';
 
 import { useStyles2, useTheme2 } from '../../../themes';
 import { ContextMenu } from '../../ContextMenu/ContextMenu';
@@ -46,7 +48,17 @@ export type FilterType = {
 };
 
 export function TableNG(props: TableNGProps) {
-  const { height, width, timeRange, cellHeight, noHeader, fieldConfig, footerOptions, onColumnResize } = props;
+  const {
+    height,
+    width,
+    timeRange,
+    cellHeight,
+    noHeader,
+    fieldConfig,
+    footerOptions,
+    onColumnResize,
+    enablePagination,
+  } = props;
 
   const textWrap = fieldConfig?.defaults?.custom?.cellOptions.wrapText ?? false;
   const cellInspect = fieldConfig?.defaults?.custom?.inspect ?? false;
@@ -88,12 +100,15 @@ export function TableNG(props: TableNGProps) {
   const [isInspecting, setIsInspecting] = useState(false);
   const [isContextMenuOpen, setIsContextMenuOpen] = useState(false);
   const [filter, setFilter] = useState<FilterType>({});
+  const [page, setPage] = useState(0);
 
   const crossFilterOrder = useRef<string[]>([]);
   const crossFilterRows = useRef<{ [key: string]: TableRow[] }>({});
 
   const headerCellRefs = useRef<Record<string, HTMLDivElement>>({});
   const [, setReadyForRowHeightCalc] = useState(false);
+
+  const [paginationWrapperRef, { height: paginationHeight, width: paginationWidth }] = useMeasure<HTMLDivElement>();
 
   // This state will trigger re-render for recalculating row heights
   const [, setResizeTrigger] = useState(0);
@@ -428,6 +443,8 @@ export function TableNG(props: TableNGProps) {
 
   // Filter rows
   const filteredRows = useMemo(() => {
+    // reset pagination
+    setPage(0);
     const filterValues = Object.entries(filter);
     if (filterValues.length === 0) {
       // reset cross filter order
@@ -466,6 +483,28 @@ export function TableNG(props: TableNGProps) {
       return true;
     });
   }, [rows, filter, sortedRows, props.data.fields]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Paginated rows
+  let headerCellHeight = 0;
+  if (!noHeader && Object.keys(headerCellRefs.current).length > 0) {
+    headerCellHeight = headerCellRefs.current[Object.keys(headerCellRefs.current)[0]].getBoundingClientRect().height;
+  }
+  const scrollBarWidth = getScrollbarWidth();
+  const rowsPerPage = Math.floor((height - headerCellHeight - scrollBarWidth - paginationHeight) / defaultRowHeight);
+
+  const numberOfPages = useMemo(() => {
+    const totalPages = Math.ceil(filteredRows.length / rowsPerPage);
+    if (page > totalPages) {
+      // resets pagination to end
+      setPage(totalPages - 1);
+    }
+    return totalPages;
+  }, [filteredRows, rowsPerPage]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const paginatedRows = useMemo(() => {
+    // TODO improve this to be more robust
+    return filteredRows.slice(0 + page * rowsPerPage, 0 + page * rowsPerPage + rowsPerPage);
+  }, [rows, filteredRows, page, rowsPerPage]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useMemo(() => {
     calcsRef.current = props.data.fields.map((field, index) => {
@@ -513,7 +552,7 @@ export function TableNG(props: TableNGProps) {
       <DataGrid
         className={styles.dataGrid}
         key={`DataGrid${revId}`}
-        rows={filteredRows}
+        rows={enablePagination ? paginatedRows : filteredRows}
         columns={columns}
         headerRowHeight={noHeader ? 0 : undefined}
         defaultColumnOptions={{
@@ -539,7 +578,7 @@ export function TableNG(props: TableNGProps) {
           );
         }}
         // TODO: This doesn't follow current table behavior
-        style={{ width, height }}
+        style={{ width, height: height - (enablePagination ? paginationHeight : 0) }}
         renderers={{ renderRow: myRowRenderer }}
         onCellContextMenu={({ row, column }, event) => {
           event.preventGridDefault();
@@ -568,6 +607,20 @@ export function TableNG(props: TableNGProps) {
           }
         }}
       />
+
+      {enablePagination && (
+        <div className={styles.paginationContainer} ref={paginationWrapperRef}>
+          <Pagination
+            className={styles.paginationElement}
+            currentPage={page + 1}
+            numberOfPages={numberOfPages}
+            showSmallVersion={paginationWidth < 550}
+            onNavigate={(toPage) => {
+              setPage(toPage - 1);
+            }}
+          />
+        </div>
+      )}
 
       {isContextMenuOpen && (
         <ContextMenu
@@ -641,6 +694,14 @@ const getStyles = (theme: GrafanaTheme2, textWrap: boolean) => ({
       boxShadow: 'rgb(61, 113, 217) 0px 0px 2px',
       backgroundColor: theme.colors.background.primary,
     },
+  }),
+  paginationContainer: css({
+    display: 'flex',
+    justifyContent: 'center',
+    width: '100%',
+  }),
+  paginationElement: css({
+    marginTop: '8px',
   }),
 });
 
