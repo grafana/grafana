@@ -258,7 +258,7 @@ func (r *syncJob) maybeNotify(ctx context.Context) {
 }
 
 // Convert git changes into resource file changes
-func (r *syncJob) applyVersiondChanges(ctx context.Context, repo repository.VersionedRepository, previousRef, currentRef string) error {
+func (r *syncJob) applyVersionedChanges(ctx context.Context, repo repository.VersionedRepository, previousRef, currentRef string) error {
 	diff, err := repo.CompareFiles(ctx, previousRef, currentRef)
 	if err != nil {
 		return fmt.Errorf("compare files error: %w", err)
