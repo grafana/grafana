@@ -36,7 +36,7 @@ export const RowOptionsForm = ({ repeat, title, sceneContext, isUsingDashboardDS
       <Field label={t('dashboard.default-layout.row-options.form.title', 'Title')}>
         <Input {...register('title')} type="text" />
       </Field>
-      <Field label={t('dashboard.default-layout.row-options.form.repeat-for', 'Repeat for')}>
+      <Field label={t('dashboard.default-layout.row-options.form.repeat-for.label', 'Repeat for')}>
         <RepeatRowSelect2 sceneContext={sceneContext} repeat={newRepeat} onChange={onChangeRepeat} />
       </Field>
       {isUsingDashboardDS && (
@@ -49,7 +49,7 @@ export const RowOptionsForm = ({ repeat, title, sceneContext, isUsingDashboardDS
         >
           <div>
             <p>
-              <Trans i18nKey="dashboard.default-layout.row-actions.repeat.warning.text">
+              <Trans i18nKey="dashboard.default-layout.row-options.form.repeat-for.warning.text">
                 Panels in this row use the {{ SHARED_DASHBOARD_QUERY }} data source. These panels will reference the
                 panel in the original row, not the ones in the repeated rows.
               </Trans>
@@ -60,7 +60,7 @@ export const RowOptionsForm = ({ repeat, title, sceneContext, isUsingDashboardDS
                 'https://grafana.com/docs/grafana/latest/dashboards/build-dashboards/create-dashboard/#configure-repeating-rows'
               }
             >
-              <Trans i18nKey="dashboard.default-layout.row-actions.repeat.warning.learn-more">Learn more</Trans>
+              <Trans i18nKey="dashboard.default-layout.row-options.form.repeat-for.learn-more">Learn more</Trans>
             </TextLink>
           </div>
         </Alert>
