@@ -216,7 +216,7 @@ export class GrafanaApp {
       setDataSourceSrv(dataSourceSrv);
       initWindowRuntime();
 
-      if (contextSrv.user.orgRole !== '') {
+      if (contextSrv.user.orgRole !== '' && contextSrv.user.authenticatedBy !== 'render') {
         const appPluginsToAwait = getAppPluginsToAwait();
         const appPluginsToPreload = getAppPluginsToPreload();
 
