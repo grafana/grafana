@@ -40,7 +40,7 @@ func TestConvertDataFramesToResults(t *testing.T) {
 
 				for _, dtype := range supported {
 					t.Run(dtype, func(t *testing.T) {
-						resultType, res, err := converter.Convert(context.Background(), dtype, frames, s.allowLongFrames)
+						resultType, res, err := converter.Convert(context.Background(), dtype, frames)
 						require.NoError(t, err)
 						assert.Equal(t, "single frame series", resultType)
 						require.Len(t, res.Values, 2)
@@ -68,7 +68,7 @@ func TestConvertDataFramesToResults(t *testing.T) {
 
 				for _, dtype := range supported {
 					t.Run(dtype, func(t *testing.T) {
-						resultType, res, err := converter.Convert(context.Background(), dtype, frames, s.allowLongFrames)
+						resultType, res, err := converter.Convert(context.Background(), dtype, frames)
 						require.NoError(t, err)
 						assert.Equal(t, "multi frame series", resultType)
 						require.Len(t, res.Values, 2)
@@ -101,7 +101,7 @@ func TestConvertDataFramesToResults(t *testing.T) {
 
 			for _, dtype := range supported {
 				t.Run(dtype, func(t *testing.T) {
-					resultType, res, err := converter.Convert(context.Background(), dtype, frames, s.allowLongFrames)
+					resultType, res, err := converter.Convert(context.Background(), dtype, frames)
 					require.NoError(t, err)
 					assert.Equal(t, "multi frame series", resultType)
 					require.Len(t, res.Values, 2)
