@@ -7,6 +7,7 @@ import (
 	"path"
 	"sort"
 	"strings"
+	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -69,7 +70,9 @@ func (r *syncer) Sync(ctx context.Context,
 		parser:     parser,
 		lister:     r.lister,
 		logger:     logging.FromContext(ctx),
-		jobStatus:  &provisioning.JobStatus{},
+		jobStatus: &provisioning.JobStatus{
+			State: provisioning.JobStateWorking,
+		},
 		syncStatus: &provisioning.SyncStatus{},
 		folders: dynamicClient.Resource(schema.GroupVersionResource{
 			Group:    folders.GROUP,
@@ -93,7 +96,7 @@ func (r *syncer) Sync(ctx context.Context,
 		job.syncStatus.Message = append(job.syncStatus.Message, job.jobStatus.Message)
 	} else if len(job.jobStatus.Errors) > 0 {
 		job.jobStatus.State = provisioning.JobStateError
-	} else if job.jobStatus.State == "" {
+	} else if !job.jobStatus.State.Finished() {
 		job.jobStatus.State = provisioning.JobStateSuccess
 	}
 	job.jobStatus.Summary = []provisioning.JobResourceSummary{job.summary}
@@ -144,6 +147,7 @@ func (r *syncJob) run(ctx context.Context) error {
 		}
 
 		if cfg.Status.Sync.Hash != "" && r.options.Incremental {
+			r.syncStatus.Hash = currentRef
 			if currentRef == cfg.Status.Sync.Hash {
 				message := "same commit as last sync"
 				r.syncStatus.Hash = currentRef
@@ -192,6 +196,7 @@ func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange
 	sort.Slice(changes, func(i, j int) bool {
 		return len(changes[i].Path) > len(changes[j].Path)
 	})
+	last := time.Now()
 
 	// Create folder structure first
 	for _, change := range changes {
@@ -199,6 +204,12 @@ func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange
 			r.jobStatus.Errors = append(r.jobStatus.Errors, "too many errors, stopping")
 			r.jobStatus.State = provisioning.JobStateError
 			return nil
+		}
+
+		// incremental progress
+		if time.Since(last) > 15*time.Second {
+			r.progress(*r.jobStatus)
+			last = time.Now()
 		}
 
 		if change.Action == repository.FileActionDeleted {
@@ -254,10 +265,17 @@ func (r *syncJob) applyVersiondChanges(ctx context.Context, repo repository.Vers
 		return nil
 	}
 
+	last := time.Now()
 	for _, change := range diff {
 		if len(r.jobStatus.Errors) > 20 {
 			r.jobStatus.Errors = append(r.jobStatus.Errors, "too many errors to continue")
 			return nil
+		}
+
+		// UI feedback
+		if time.Since(last) > 15*time.Second {
+			r.progress(*r.jobStatus)
+			last = time.Now()
 		}
 
 		switch change.Action {
