@@ -175,7 +175,7 @@
           "path": "public/app/plugins/datasource/azuremonitor/img/azure_monitor_cpu.png"
         }
       ],
-      "version": "11.3.0-pre",
+      "version": "11.5.0-pre",
       "updated": "",
       "keywords": [
         "azure",
@@ -734,7 +734,7 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "11.3.0-pre",
+      "version": "11.5.0-pre",
       "updated": "",
       "keywords": null
     },
@@ -780,7 +780,7 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "11.3.0-pre",
+      "version": "11.5.0-pre",
       "updated": "",
       "keywords": [
         "grafana",
@@ -805,47 +805,6 @@
     "defaultNavUrl": "/plugins/grafana-pyroscope-datasource/",
     "category": "profiling",
     "state": "",
-    "signature": "internal",
-    "signatureType": "",
-    "signatureOrg": "",
-    "angularDetected": false
-  },
-  {
-    "name": "Graph (old)",
-    "type": "panel",
-    "id": "graph",
-    "enabled": true,
-    "pinned": false,
-    "info": {
-      "author": {
-        "name": "Grafana Labs",
-        "url": "https://grafana.com"
-      },
-      "description": "The old default graph panel",
-      "links": null,
-      "logos": {
-        "small": "public/app/plugins/panel/graph/img/icn-graph-panel.svg",
-        "large": "public/app/plugins/panel/graph/img/icn-graph-panel.svg"
-      },
-      "build": {},
-      "screenshots": null,
-      "version": "",
-      "updated": "",
-      "keywords": null
-    },
-    "dependencies": {
-      "grafanaDependency": "",
-      "grafanaVersion": "*",
-      "plugins": [],
-      "extensions": {
-        "exposedComponents": []
-      }
-    },
-    "latestVersion": "",
-    "hasUpdate": false,
-    "defaultNavUrl": "/plugins/graph/",
-    "category": "",
-    "state": "deprecated",
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
@@ -1057,7 +1016,7 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "11.3.0-pre",
+      "version": "11.5.0-pre",
       "updated": "",
       "keywords": null
     },
@@ -1189,7 +1148,7 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "11.3.0-pre",
+      "version": "11.5.0-pre",
       "updated": "",
       "keywords": null
     },
@@ -1230,7 +1189,7 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "11.3.0-pre",
+      "version": "11.5.0-pre",
       "updated": "",
       "keywords": null
     },
@@ -1399,7 +1358,7 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "11.3.0-pre",
+      "version": "11.5.0-pre",
       "updated": "",
       "keywords": [
         "grafana",
@@ -1719,47 +1678,6 @@
     "angularDetected": false
   },
   {
-    "name": "Table (old)",
-    "type": "panel",
-    "id": "table-old",
-    "enabled": true,
-    "pinned": false,
-    "info": {
-      "author": {
-        "name": "Grafana Labs",
-        "url": "https://grafana.com"
-      },
-      "description": "Table Panel for Grafana",
-      "links": null,
-      "logos": {
-        "small": "public/app/plugins/panel/table-old/img/icn-table-panel.svg",
-        "large": "public/app/plugins/panel/table-old/img/icn-table-panel.svg"
-      },
-      "build": {},
-      "screenshots": null,
-      "version": "",
-      "updated": "",
-      "keywords": null
-    },
-    "dependencies": {
-      "grafanaDependency": "",
-      "grafanaVersion": "*",
-      "plugins": [],
-      "extensions": {
-        "exposedComponents": []
-      }
-    },
-    "latestVersion": "",
-    "hasUpdate": false,
-    "defaultNavUrl": "/plugins/table-old/",
-    "category": "",
-    "state": "deprecated",
-    "signature": "internal",
-    "signatureType": "",
-    "signatureOrg": "",
-    "angularDetected": false
-  },
-  {
     "name": "Tempo",
     "type": "datasource",
     "id": "tempo",
@@ -1783,7 +1701,7 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "11.3.0-pre",
+      "version": "11.5.0-pre",
       "updated": "",
       "keywords": null
     },
@@ -1824,7 +1742,7 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "11.3.0-pre",
+      "version": "11.5.0-pre",
       "updated": "",
       "keywords": null
     },
@@ -2119,7 +2037,7 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "11.3.0-pre",
+      "version": "11.5.0-pre",
       "updated": "",
       "keywords": null
     },
