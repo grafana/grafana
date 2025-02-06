@@ -52,6 +52,6 @@ func (v *Validate) Validate(ctx context.Context, ps *plugins.Plugin) error {
 			return err
 		}
 	}
-	
+
 	return nil
 }
