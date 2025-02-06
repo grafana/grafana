@@ -1107,14 +1107,6 @@
         "new": "New tab"
       },
       "tab-options": {
-        "repeat": {
-          "title": "Repeat options",
-          "variable": {
-            "learn-more": "Learn more",
-            "title": "Variable",
-            "warning": "Panels in this tab use the {{SHARED_DASHBOARD_QUERY}} data source. These panels will reference the panel in the original tab, not the ones in the repeated tabs."
-          }
-        },
         "title": "Tab options",
         "title-option": "Title"
       }

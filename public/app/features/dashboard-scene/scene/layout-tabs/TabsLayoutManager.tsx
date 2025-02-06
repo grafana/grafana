@@ -4,7 +4,6 @@ import { t } from 'app/core/internationalization';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 
 import { TabItem } from './TabItem';
-import { TabItemRepeaterBehavior } from './TabItemRepeaterBehavior';
 import { TabsLayoutManagerRenderer } from './TabsLayoutManagerRenderer';
 
 interface TabsLayoutManagerState extends SceneObjectState {
@@ -72,20 +71,12 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
 
   public activateRepeaters() {
     this.state.tabs.forEach((tab) => {
-      const behavior = (tab.state.$behaviors ?? []).find((b) => b instanceof TabItemRepeaterBehavior);
+      if (!tab.isActive) {
+        tab.activate();
+      }
 
-      if (behavior) {
-        if (!tab.isActive) {
-          tab.activate();
-        }
-
-        if (!tab.getLayout().isActive) {
-          tab.getLayout().activate();
-        }
-
-        if (!behavior.isActive) {
-          behavior.activate();
-        }
+      if (!tab.getLayout().isActive) {
+        tab.getLayout().activate();
       }
     });
   }

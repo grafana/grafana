@@ -12,7 +12,6 @@ import { LayoutParent } from '../types/LayoutParent';
 
 import { getEditOptions, renderActions } from './TabItemEditor';
 import { TabItemRenderer } from './TabItemRenderer';
-import { TabItemRepeaterBehavior } from './TabItemRepeaterBehavior';
 import { TabItems } from './TabItems';
 import { TabsLayoutManager } from './TabsLayoutManager';
 
@@ -75,32 +74,7 @@ export class TabItem
     this.getParentLayout().changeTab(this);
   }
 
-  public getRepeatVariable(): string | undefined {
-    return this._getRepeatBehavior()?.state.variableName;
-  }
-
   public onChangeTitle(title: string) {
     this.setState({ title });
-  }
-
-  public onChangeRepeat(repeat: string | undefined) {
-    let repeatBehavior = this._getRepeatBehavior();
-
-    if (repeat) {
-      // Remove repeat behavior if it exists to trigger repeat when adding new one
-      if (repeatBehavior) {
-        repeatBehavior.removeBehavior();
-      }
-
-      repeatBehavior = new TabItemRepeaterBehavior({ variableName: repeat });
-      this.setState({ $behaviors: [...(this.state.$behaviors ?? []), repeatBehavior] });
-      repeatBehavior.activate();
-    } else {
-      repeatBehavior?.removeBehavior();
-    }
-  }
-
-  private _getRepeatBehavior(): TabItemRepeaterBehavior | undefined {
-    return this.state.$behaviors?.find((b) => b instanceof TabItemRepeaterBehavior);
   }
 }
