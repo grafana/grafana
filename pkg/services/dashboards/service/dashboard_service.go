@@ -1246,26 +1246,33 @@ func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *dashb
 			return nil, err
 		}
 
-		finalResults := make([]dashboards.DashboardSearchProjection, len(response.Hits))
-		// Create a small runtime cache for folders to avoid extra calls to the folder service
-		foldersMap := make(map[string]*folder.Folder)
-		for i, hit := range response.Hits {
-			f, ok := foldersMap[hit.Folder]
-			if !ok {
-				f, err = dr.folderService.Get(ctx, &folder.GetFolderQuery{
-					UID:          &hit.Folder,
-					OrgID:        query.OrgId,
-					SignedInUser: query.SignedInUser,
-				})
-				if err != nil {
-					if !apierrors.IsForbidden(err) {
-						return nil, err
-					}
-					// add a forbidden folder to the cache so we don't try to fetch it again
-					f = &folder.Folder{UID: forbidden}
-				}
-				foldersMap[hit.Folder] = f
+		folderIds := []string{}
+		for _, hit := range response.Hits {
+			if hit.Folder != "" {
+				folderIds = append(folderIds, hit.Folder)
 			}
+		}
+
+		var folders []*folder.Folder
+		if query.SignedInUser != nil { // can be nil when grafana starts up, we don't need the folder names in that case
+			folders, err = dr.folderService.GetFolders(ctx, folder.GetFoldersQuery{
+				UIDs:         folderIds,
+				OrgID:        query.OrgId,
+				OrderByTitle: true,
+				SignedInUser: query.SignedInUser,
+			})
+			if err != nil {
+				return nil, folder.ErrInternal.Errorf("failed to fetch parent folders from store: %w", err)
+			}
+		}
+		folderNames := make(map[string]string)
+		for _, f := range folders {
+			folderNames[f.UID] = f.Title
+		}
+
+		finalResults := make([]dashboards.DashboardSearchProjection, len(response.Hits))
+		for i, hit := range response.Hits {
+			folderName := folderNames[hit.Folder]
 			finalResults[i] = dashboards.DashboardSearchProjection{
 				ID:          hit.Field.GetNestedInt64(search.DASHBOARD_LEGACY_ID),
 				UID:         hit.Name,
@@ -1274,7 +1281,7 @@ func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *dashb
 				Slug:        slugify.Slugify(hit.Title),
 				IsFolder:    false,
 				FolderUID:   hit.Folder,
-				FolderTitle: f.Title,
+				FolderTitle: folderName,
 				Tags:        hit.Tags,
 			}
 		}
