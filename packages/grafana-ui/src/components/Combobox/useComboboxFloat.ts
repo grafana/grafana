@@ -75,10 +75,10 @@ export const useComboboxFloat = (items: Array<ComboboxOption<string | number>>, 
   const floatStyles = {
     ...floatingStyles,
     width: longestItemWidth,
-    maxWidth: popoverMaxSize?.width,
+    maxWidth: popoverMaxSize.width,
     minWidth: inputRef.current?.offsetWidth,
 
-    maxHeight: popoverMaxSize?.height,
+    maxHeight: popoverMaxSize.height,
   };
 
   return { inputRef, floatingRef, scrollRef, floatStyles };
