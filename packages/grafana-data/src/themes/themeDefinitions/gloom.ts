@@ -6,6 +6,7 @@ import { NewThemeOptions } from '../createTheme';
  */
 
 const whiteBase = `210, 210, 220`;
+const secondaryBase = `250, 220, 189`;
 const brandMain = '#ff934d';
 const brandText = '#f99a5c';
 
@@ -37,18 +38,19 @@ const gloomTheme: NewThemeOptions = {
     },
 
     secondary: {
-      main: `rgba(${whiteBase}, 0.10)`,
-      shade: `rgba(${whiteBase}, 0.14)`,
-      transparent: `rgba(${whiteBase}, 0.08)`,
-      text: `rgba(${whiteBase})`,
-      contrastText: `rgb(${whiteBase})`,
-      border: `rgba(${whiteBase}, 0.08)`,
+      main: `rgba(${secondaryBase}, 0.10)`,
+      shade: `rgba(${secondaryBase}, 0.14)`,
+      transparent: `rgba(${secondaryBase}, 0.08)`,
+      text: `rgba(${secondaryBase})`,
+      contrastText: `rgb(${secondaryBase})`,
+      border: `rgba(${secondaryBase}, 0.08)`,
     },
 
     background: {
       canvas: '#000',
       primary: '#170c0c',
-      secondary: '#231919',
+      //secondary: '#231919',
+      secondary: '#281c1c',
     },
 
     action: {
