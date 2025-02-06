@@ -46,6 +46,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/search/model"
+	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -1436,7 +1437,12 @@ func (dr *DashboardServiceImpl) DeleteInFolders(ctx context.Context, orgID int64
 	}
 
 	// We need a list of dashboard uids inside the folder to delete related public dashboards
-	dashes, err := dr.dashboardStore.FindDashboards(ctx, &dashboards.FindPersistedDashboardsQuery{SignedInUser: u, FolderUIDs: folderUIDs, OrgId: orgID})
+	dashes, err := dr.dashboardStore.FindDashboards(ctx, &dashboards.FindPersistedDashboardsQuery{
+		SignedInUser: u,
+		FolderUIDs:   folderUIDs,
+		OrgId:        orgID,
+		Type:         searchstore.TypeDashboard,
+	})
 	if err != nil {
 		return folder.ErrInternal.Errorf("failed to fetch dashboards: %w", err)
 	}
@@ -1744,6 +1750,8 @@ func (dr *DashboardServiceImpl) searchProvisionedDashboardsThroughK8s(ctx contex
 		query.ProvisionedReposNotIn = repos
 	}
 
+	query.Type = searchstore.TypeDashboard
+
 	searchResults, err := dr.searchDashboardsThroughK8sRaw(ctx, &query)
 	if err != nil {
 		return nil, err
@@ -1807,6 +1815,11 @@ func (dr *DashboardServiceImpl) searchProvisionedDashboardsThroughK8s(ctx contex
 }
 
 func (dr *DashboardServiceImpl) searchDashboardsThroughK8s(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]*dashboards.Dashboard, error) {
+	if query == nil {
+		return nil, errors.New("query cannot be empty")
+	}
+	query.Type = searchstore.TypeDashboard
+
 	response, err := dr.searchDashboardsThroughK8sRaw(ctx, query)
 	if err != nil {
 		return nil, err
