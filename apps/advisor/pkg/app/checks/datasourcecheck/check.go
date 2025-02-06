@@ -160,5 +160,3 @@ func (s *healthCheckStep) Run(ctx context.Context, obj *advisor.CheckSpec, items
 type pluginContextProvider interface {
 	GetWithDataSource(ctx context.Context, pluginID string, user identity.Requester, ds *datasources.DataSource) (backend.PluginContext, error)
 }
-
-// Trigger tests
