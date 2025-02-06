@@ -417,11 +417,9 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 			convertForSQL = true
 		}
 
-		for _, frame := range dataFrames {
-			if convertForSQL {
-				break
-			}
-			for _, field := range frame.Fields {
+		// check the first frame for labels, if it exists
+		if !convertForSQL && len(dataFrames) > 0 {
+			for _, field := range dataFrames[0].Fields {
 				if len(field.Labels) > 0 {
 					convertForSQL = true
 					break
