@@ -217,7 +217,7 @@ require (
 	github.com/grafana/grafana/pkg/storage/unified/resource v0.0.0-20250121113133-e747350fee2d // @grafana/grafana-search-and-storage
 )
 
-require github.com/grafana/grafana-api-golang-client v0.27.0
+require github.com/grafana/grafana-api-golang-client v0.27.0 // @grafana/alerting-backend
 
 require (
 	cel.dev/expr v0.19.0 // indirect
