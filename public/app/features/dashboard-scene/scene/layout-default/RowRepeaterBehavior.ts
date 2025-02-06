@@ -23,7 +23,7 @@ import {
   isClonedKey,
 } from '../../utils/clone';
 import { getMultiVariableValues } from '../../utils/utils';
-import { DashboardRepeatsProcessedEvent } from '../types';
+import { DashboardRepeatsProcessedEvent } from '../types/DashboardRepeatsProcessedEvent';
 
 import { DashboardGridItem } from './DashboardGridItem';
 
