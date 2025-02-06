@@ -7,8 +7,8 @@
  * @alpha
  */
 
+import { QUERY_LIBRARY_GET_LIMIT } from './api/api';
 import { generatedQueryLibraryApi } from './api/endpoints.gen';
-import { QUERY_LIBRARY_GET_LIMIT } from './api/factory';
 import { mockData } from './api/mocks';
 
 export const {

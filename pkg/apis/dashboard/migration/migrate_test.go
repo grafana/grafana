@@ -3,7 +3,6 @@ package migration_test
 import (
 	"encoding/json"
 	"fmt"
-	"io/fs"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -51,18 +50,17 @@ func TestMigrate(t *testing.T) {
 			require.JSONEq(t, string(expectedDash), string(outBytes), "%s input check did not match", f.Name())
 		})
 
-		for targetVersion := range schemaversion.Migrations {
+		for targetVersion := inputVersion + 1; targetVersion <= schemaversion.LATEST_VERSION; targetVersion++ {
 			testName := fmt.Sprintf("%s v%d to v%d", name, inputVersion, targetVersion)
 			t.Run(testName, func(t *testing.T) {
-				testMigration(t, f, targetVersion)
+				testMigration(t, inputDash, name, inputVersion, targetVersion)
 			})
 		}
 	}
 }
 
-func testMigration(t *testing.T, file fs.DirEntry, targetVersion int) {
+func testMigration(t *testing.T, dash map[string]interface{}, name string, inputVersion, targetVersion int) {
 	t.Helper()
-	dash, inputVersion, name := load(t, filepath.Join(INPUT_DIR, file.Name()))
 	require.NoError(t, migration.Migrate(dash, targetVersion), "%d migration failed", targetVersion)
 
 	outPath := filepath.Join(OUTPUT_DIR, fmt.Sprintf("%d.%s.%d.json", inputVersion, name, targetVersion))
