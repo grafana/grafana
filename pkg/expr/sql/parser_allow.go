@@ -130,6 +130,9 @@ func allowedFunction(f *sqlparser.FuncExpr) (b bool) {
 	case "coalesce":
 		return
 
+	case "str_to_date":
+		return
+
 	default:
 		return false
 	}
