@@ -637,7 +637,7 @@ const getStyles = (theme: GrafanaTheme2, textWrap: boolean) => ({
     overflow: 'hidden',
     textOverflow: 'ellipsis',
 
-    // reset default cell styles to handle cell styles inside custom cell component
+    // Reset default cell styles for custom cell component styling
     paddingInline: '0',
 
     '&:hover': {
