@@ -62,7 +62,6 @@ var (
 
 	daysInTrash = 24 * 30 * time.Hour
 	tracer      = otel.Tracer("github.com/grafana/grafana/pkg/services/dashboards/service")
-	forbidden   = string(v1.StatusReasonForbidden)
 )
 
 type DashboardServiceImpl struct {
@@ -1246,27 +1245,9 @@ func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *dashb
 			return nil, err
 		}
 
-		folderIds := []string{}
-		for _, hit := range response.Hits {
-			if hit.Folder != "" {
-				folderIds = append(folderIds, hit.Folder)
-			}
-		}
-
-		var folders []*folder.Folder
-		if query.SignedInUser != nil { // can be nil when grafana starts up, we don't need the folder names in that case
-			folders, err = dr.folderService.GetFolders(ctx, folder.GetFoldersQuery{
-				UIDs:         folderIds,
-				OrgID:        query.OrgId,
-				SignedInUser: query.SignedInUser,
-			})
-			if err != nil {
-				return nil, folder.ErrInternal.Errorf("failed to fetch parent folders from store: %w", err)
-			}
-		}
-		folderNames := make(map[string]string)
-		for _, f := range folders {
-			folderNames[f.UID] = f.Title
+		folderNames, err := dr.fetchFolderNames(ctx, response, query)
+		if err != nil {
+			return nil, err
 		}
 
 		finalResults := make([]dashboards.DashboardSearchProjection, len(response.Hits))
@@ -1289,6 +1270,34 @@ func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *dashb
 	}
 
 	return dr.dashboardStore.FindDashboards(ctx, query)
+}
+
+func (dr *DashboardServiceImpl) fetchFolderNames(ctx context.Context, response *v0alpha1.SearchResults, query *dashboards.FindPersistedDashboardsQuery) (map[string]string, error) {
+	if query.SignedInUser == nil {
+		// can be nil when grafana starts up, we don't need the folder names in that case
+		return map[string]string{}, nil
+	}
+
+	folderIds := []string{}
+	for _, hit := range response.Hits {
+		if hit.Folder != "" {
+			folderIds = append(folderIds, hit.Folder)
+		}
+	}
+
+	folders, err := dr.folderService.GetFolders(ctx, folder.GetFoldersQuery{
+		UIDs:         folderIds,
+		OrgID:        query.OrgId,
+		SignedInUser: query.SignedInUser,
+	})
+	if err != nil {
+		return nil, folder.ErrInternal.Errorf("failed to fetch parent folders from store: %w", err)
+	}
+	folderNames := make(map[string]string)
+	for _, f := range folders {
+		folderNames[f.UID] = f.Title
+	}
+	return folderNames, nil
 }
 
 func (dr *DashboardServiceImpl) SearchDashboards(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) (model.HitList, error) {
