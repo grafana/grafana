@@ -1,12 +1,13 @@
 import { SelectableValue } from '@grafana/data';
-import { SceneComponentProps, SceneCSSGridLayout, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
+import { SceneComponentProps, SceneCSSGridLayout, SceneObjectState, VizPanel } from '@grafana/scenes';
 import { Select } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { getDashboardSceneFor, getPanelIdForVizPanel, getVizPanelKeyForPanelId } from '../../utils/utils';
-import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
+import { DashboardScene } from '../DashboardScene';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
+import { BaseLayoutManager } from '../layouts-shared/BaseLayoutManager';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 
 import { ResponsiveGridItem } from './ResponsiveGridItem';
@@ -16,7 +17,7 @@ interface ResponsiveGridLayoutManagerState extends SceneObjectState {
 }
 
 export class ResponsiveGridLayoutManager
-  extends SceneObjectBase<ResponsiveGridLayoutManagerState>
+  extends BaseLayoutManager<ResponsiveGridLayoutManagerState>
   implements DashboardLayoutManager
 {
   public readonly isDashboardLayoutManager = true;
@@ -98,13 +99,32 @@ export class ResponsiveGridLayoutManager
     return getOptions(this);
   }
 
+  public trackIfEmpty() {
+    if (!(this.parent && this.parent instanceof DashboardScene)) {
+      return;
+    }
+
+    const scene = this.parent;
+
+    scene.setState({ isEmpty: this.state.layout.state.children.length === 0 });
+
+    const sub = this.state.layout.subscribeToState((n, p) => {
+      if (n.children.length !== p.children.length || n.children !== p.children) {
+        scene.setState({ isEmpty: n.children.length === 0 });
+      }
+    });
+
+    return () => {
+      sub.unsubscribe();
+    };
+  }
+
   public static createEmpty() {
     return new ResponsiveGridLayoutManager({
       layout: new SceneCSSGridLayout({
         children: [],
         templateColumns: 'repeat(auto-fit, minmax(400px, auto))',
         autoRows: 'minmax(300px, auto)',
-        $behaviors: [DefaultGridLayoutManager.trackIfEmpty],
       }),
     });
   }
@@ -122,7 +142,6 @@ export class ResponsiveGridLayoutManager
         children,
         templateColumns: 'repeat(auto-fit, minmax(400px, auto))',
         autoRows: 'minmax(300px, auto)',
-        $behaviors: [DefaultGridLayoutManager.trackIfEmpty],
       }),
     });
   }

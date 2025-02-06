@@ -267,7 +267,6 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
       grid: new SceneGridLayout({
         isLazy: !(dto.preload || contextSrv.user.authenticatedBy === 'render'),
         children: createSceneObjectsForPanels(oldModel.panels),
-        $behaviors: [DefaultGridLayoutManager.trackIfEmpty],
       }),
     }),
     $timeRange: new SceneTimeRange({

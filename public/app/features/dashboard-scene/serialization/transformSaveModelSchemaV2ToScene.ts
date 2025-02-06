@@ -181,7 +181,6 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
       grid: new SceneGridLayout({
         isLazy: !(dashboard.preload || contextSrv.user.authenticatedBy === 'render'),
         children: createSceneGridLayoutForItems(dashboard),
-        $behaviors: [DefaultGridLayoutManager.trackIfEmpty],
       }),
     }),
     $timeRange: new SceneTimeRange({

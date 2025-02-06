@@ -6,7 +6,6 @@ import {
   sceneGraph,
   SceneGridItemLike,
   SceneGridRow,
-  SceneObjectBase,
   SceneObjectState,
   VizPanel,
 } from '@grafana/scenes';
@@ -20,6 +19,7 @@ import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
 import { RowRepeaterBehavior } from '../layout-default/RowRepeaterBehavior';
 import { ResponsiveGridLayoutManager } from '../layout-responsive-grid/ResponsiveGridLayoutManager';
+import { BaseLayoutManager } from '../layouts-shared/BaseLayoutManager';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 
 import { RowItem } from './RowItem';
@@ -29,7 +29,7 @@ interface RowsLayoutManagerState extends SceneObjectState {
   rows: RowItem[];
 }
 
-export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> implements DashboardLayoutManager {
+export class RowsLayoutManager extends BaseLayoutManager<RowsLayoutManagerState> implements DashboardLayoutManager {
   public readonly isDashboardLayoutManager = true;
 
   public static readonly descriptor = {
@@ -109,6 +109,26 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
 
   public getOptions() {
     return [];
+  }
+
+  public trackIfEmpty() {
+    if (!(this.parent && this.parent instanceof DashboardScene)) {
+      return;
+    }
+
+    const scene = this.parent;
+
+    scene.setState({ isEmpty: this.state.rows.length === 0 });
+
+    const sub = this.subscribeToState((n, p) => {
+      if (n.rows.length !== p.rows.length || n.rows !== p.rows) {
+        scene.setState({ isEmpty: n.rows.length === 0 });
+      }
+    });
+
+    return () => {
+      sub.unsubscribe();
+    };
   }
 
   public activateRepeaters() {

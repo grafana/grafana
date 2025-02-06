@@ -2,14 +2,12 @@ import { config } from '@grafana/runtime';
 import {
   SceneObjectState,
   SceneGridLayout,
-  SceneObjectBase,
   SceneGridRow,
   VizPanel,
   sceneGraph,
   sceneUtils,
   SceneComponentProps,
   SceneGridItemLike,
-  SceneLayout,
 } from '@grafana/scenes';
 import { GRID_COLUMN_COUNT } from 'app/core/constants';
 import { t } from 'app/core/internationalization';
@@ -24,6 +22,8 @@ import {
   getGridItemKeyForPanelId,
   getDashboardSceneFor,
 } from '../../utils/utils';
+import { DashboardScene } from '../DashboardScene';
+import { BaseLayoutManager } from '../layouts-shared/BaseLayoutManager';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 
 import { DashboardGridItem } from './DashboardGridItem';
@@ -38,7 +38,7 @@ interface DefaultGridLayoutManagerState extends SceneObjectState {
  * State manager for the default grid layout
  */
 export class DefaultGridLayoutManager
-  extends SceneObjectBase<DefaultGridLayoutManagerState>
+  extends BaseLayoutManager<DefaultGridLayoutManagerState>
   implements DashboardLayoutManager
 {
   public readonly isDashboardLayoutManager = true;
@@ -413,12 +413,18 @@ export class DefaultGridLayoutManager
     });
   }
 
-  public static trackIfEmpty(grid: SceneLayout) {
-    getDashboardSceneFor(grid).setState({ isEmpty: grid.state.children.length === 0 });
+  public trackIfEmpty() {
+    if (!(this.parent && this.parent instanceof DashboardScene)) {
+      return;
+    }
 
-    const sub = grid.subscribeToState((n, p) => {
+    const scene = this.parent;
+
+    scene.setState({ isEmpty: this.state.grid.state.children.length === 0 });
+
+    const sub = this.state.grid.subscribeToState((n, p) => {
       if (n.children.length !== p.children.length || n.children !== p.children) {
-        getDashboardSceneFor(grid).setState({ isEmpty: n.children.length === 0 });
+        scene.setState({ isEmpty: n.children.length === 0 });
       }
     });
 
@@ -475,7 +481,6 @@ export class DefaultGridLayoutManager
         children: children,
         isDraggable: true,
         isResizable: true,
-        $behaviors: [DefaultGridLayoutManager.trackIfEmpty],
       }),
     });
   }
