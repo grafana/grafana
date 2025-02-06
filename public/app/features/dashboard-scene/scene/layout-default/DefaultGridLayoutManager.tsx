@@ -9,6 +9,7 @@ import {
   sceneUtils,
   SceneComponentProps,
   SceneGridItemLike,
+  SceneLayout,
 } from '@grafana/scenes';
 import { GRID_COLUMN_COUNT } from 'app/core/constants';
 import { t } from 'app/core/internationalization';
@@ -412,7 +413,7 @@ export class DefaultGridLayoutManager
     });
   }
 
-  public static trackIfEmpty(grid: SceneGridLayout) {
+  public static trackIfEmpty(grid: SceneLayout) {
     getDashboardSceneFor(grid).setState({ isEmpty: grid.state.children.length === 0 });
 
     const sub = grid.subscribeToState((n, p) => {
