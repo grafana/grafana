@@ -424,16 +424,11 @@ func (rs *RenderingService) getNewFilePath(rt RenderType) (string, error) {
 
 // getGrafanaCallbackURL creates a URL to send to the image rendering as callback for rendering a Grafana resource
 func (rs *RenderingService) getGrafanaCallbackURL(path string) string {
-	if rs.Cfg.RendererUrl != "" {
+	if rs.Cfg.RendererUrl != "" || rs.Cfg.RendererCallbackUrl != "" {
 		// The backend rendering service can potentially be remote.
 		// So we need to use the root_url to ensure the rendering service
 		// can reach this Grafana instance.
 
-		// &render=1 signals to the legacy redirect layer to
-		return fmt.Sprintf("%s%s&render=1", rs.Cfg.RendererCallbackUrl, path)
-	}
-
-	if rs.Cfg.RendererCallbackUrl != "" {
 		// &render=1 signals to the legacy redirect layer to
 		return fmt.Sprintf("%s%s&render=1", rs.Cfg.RendererCallbackUrl, path)
 	}
