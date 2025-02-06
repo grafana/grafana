@@ -374,17 +374,19 @@ export class PrometheusDatasource
   }
 
   processTargetV2(target: PromQuery, request: DataQueryRequest<PromQuery>) {
-    // The utcOffsetSec parameter is required by the backend to ensure proper alignment of time ranges.
-    // For relative queries (e.g., Last N hours/days/weeks/years),
-    // the range must be adjusted according to the selected timezone.
-    // Without this adjustment, queries would default to using UTC-0 for "now," which may lead to incorrect results.
+    // The `utcOffsetSec` parameter is required by the backend to correctly align time ranges.
+    // This alignment ensures that relative time ranges (e.g., "Last N hours/days/years") are adjusted 
+    // according to the user's selected time zone, rather than defaulting to UTC.
     //
-    // However, this does not apply to absolute time ranges where the user explicitly sets the start and end times.
-    // In such cases, utcOffsetSec must match the user's selected timezone.
+    // Example: If the user selects "Last 5 days," each day should begin at 00:00 in the chosen time zone, 
+    // rather than at 00:00 UTC, ensuring an accurate breakdown.
     //
-    // - If the user relies on the browser's timezone, we derive the utcOffset from the request range object.
-    // - If the user overrides the timezone, the utcOffset must be determined based on the selected timezone.
+    // This adjustment does not apply to absolute time ranges, where users explicitly set 
+    // the start and end timestamps.
     //
+    // Handling `utcOffsetSec`:
+    // - When using the browser's time zone, the UTC offset is derived from the request range object.
+    // - When the user selects a custom time zone, the UTC offset must be calculated accordingly.
     // More details:
     // - Issue that led to the introduction of utcOffsetSec: https://github.com/grafana/grafana/issues/17278
     // - Implementation PR: https://github.com/grafana/grafana/pull/17477
