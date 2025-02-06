@@ -265,13 +265,24 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
       ),
     },
     {
-      path: '/alerting/:sourceId/namespaces/:namespaceId/groups/:groupName',
+      path: '/alerting/:sourceId/namespaces/:namespaceId/groups/:groupName/view',
       pageClass: 'page-alerting',
       roles: evaluateAccess([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleExternalRead]),
       component: importAlertingComponent(
         () =>
           import(
             /* webpackChunkName: "AlertingGroupDetails" */ 'app/features/alerting/unified/group-details/GroupDetailsPage'
+          )
+      ),
+    },
+    {
+      path: '/alerting/:sourceId/namespaces/:namespaceId/groups/:groupName/edit',
+      pageClass: 'page-alerting',
+      roles: evaluateAccess([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleExternalRead]),
+      component: importAlertingComponent(
+        () =>
+          import(
+            /* webpackChunkName: "AlertingGroupEdit" */ 'app/features/alerting/unified/group-details/GroupEditPage'
           )
       ),
     },

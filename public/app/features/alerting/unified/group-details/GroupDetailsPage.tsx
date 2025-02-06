@@ -1,11 +1,11 @@
 import { useMemo } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
-import { Alert, Badge, Button, Icon, Stack, Text, TextLink, withErrorBoundary } from '@grafana/ui';
+import { Alert, Badge, Button, Field, Icon, Input, Stack, Text, withErrorBoundary } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
-import { GrafanaRulesSourceSymbol, RuleGroup } from 'app/types/unified-alerting';
-import { RulerRuleDTO, RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
+import { GrafanaRulesSourceSymbol, Rule, RuleGroup } from 'app/types/unified-alerting';
+import { RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../api/alertRuleApi';
 import { featureDiscoveryApi } from '../api/featureDiscoveryApi';
@@ -14,13 +14,7 @@ import { DynamicTable, DynamicTableColumnProps } from '../components/DynamicTabl
 import { useFolder } from '../hooks/useFolder';
 import { DEFAULT_GROUP_EVALUATION_INTERVAL } from '../rule-editor/formDefaults';
 import { stringifyErrorLike } from '../utils/misc';
-import {
-  getNumberEvaluationsToStartAlerting,
-  getRuleName,
-  isAlertingRulerRule,
-  isGrafanaRulerRule,
-} from '../utils/rules';
-import { createRelativeUrl } from '../utils/url';
+import { getNumberEvaluationsToStartAlerting, isAlertingRule } from '../utils/rules';
 
 interface GroupDetailsProps {
   promGroup: RuleGroup;
@@ -28,37 +22,33 @@ interface GroupDetailsProps {
 }
 
 function GroupDetails({ promGroup, rulerGroup }: GroupDetailsProps) {
+  const groupInterval = rulerGroup?.interval ?? DEFAULT_GROUP_EVALUATION_INTERVAL;
+
   return (
     <div>
       <AppChromeUpdate actions={<Button size="sm">Save</Button>} />
       {rulerGroup && <div>{rulerGroup.interval ?? '<Not defined>'}</div>}
-      {rulerGroup && (
-        <RulesTable rules={rulerGroup.rules} groupInterval={rulerGroup.interval ?? DEFAULT_GROUP_EVALUATION_INTERVAL} />
-      )}
+      <Field label="Interval" description="The interval at which the group is evaluated">
+        <Input id="interval" defaultValue={groupInterval} />
+      </Field>
+      {rulerGroup && <RulesTable rules={rulerGroup.rules} groupInterval={groupInterval} />}
     </div>
   );
 }
 
-function RulesTable({ rules, groupInterval }: { rules: RulerRuleDTO[]; groupInterval: string }) {
-  const rows = rules.map((rule: RulerRuleDTO, index) => ({
+function RulesTable({ rules, groupInterval }: { rules: Rule[]; groupInterval: string }) {
+  const rows = rules.map((rule: Rule, index) => ({
     id: index,
     data: rule,
   }));
 
-  const columns: Array<DynamicTableColumnProps<RulerRuleDTO>> = useMemo(() => {
+  const columns: Array<DynamicTableColumnProps<Rule>> = useMemo(() => {
     return [
       {
         id: 'alertName',
         label: 'Rule name',
         renderCell: ({ data }) => {
-          if (isGrafanaRulerRule(data)) {
-            return (
-              <TextLink href={createRelativeUrl(`/alerting/grafana/${data.grafana_alert.uid}/view`)}>
-                <Text truncate>{getRuleName(data)}</Text>
-              </TextLink>
-            );
-          }
-          return <Text truncate>{getRuleName(data)}</Text>;
+          return <Text truncate>{data.name}</Text>;
         },
         size: 0.4,
       },
@@ -66,8 +56,8 @@ function RulesTable({ rules, groupInterval }: { rules: RulerRuleDTO[]; groupInte
         id: 'for',
         label: 'Pending period',
         renderCell: ({ data }) => {
-          if (isAlertingRulerRule(data) || isGrafanaRulerRule(data)) {
-            return <>{data.for}</>;
+          if (isAlertingRule(data)) {
+            return <>{data.duration}</>;
           }
           return null;
         },
@@ -77,8 +67,9 @@ function RulesTable({ rules, groupInterval }: { rules: RulerRuleDTO[]; groupInte
         id: 'numberEvaluations',
         label: 'Evaluation cycles to fire',
         renderCell: ({ data }) => {
-          if (isAlertingRulerRule(data) || isGrafanaRulerRule(data)) {
-            return <>{getNumberEvaluationsToStartAlerting(data.for ?? '0s', groupInterval)}</>;
+          if (isAlertingRule(data)) {
+            // TODO
+            return null; //<>{getNumberEvaluationsToStartAlerting(data.duration, groupInterval)}</>;
           }
           return <Badge text="Recording" color="purple" />;
         },
@@ -161,6 +152,10 @@ function GroupDetailsPage() {
       }
       navId="alert-list"
       isLoading={isLoading}
+      onEditTitle={(newTitle) => {
+        console.log('edit title', newTitle);
+        return Promise.resolve();
+      }}
     >
       <>
         {dsFeaturesError && (

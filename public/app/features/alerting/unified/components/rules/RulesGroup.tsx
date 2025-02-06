@@ -112,7 +112,7 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
             icon="external-link-alt"
             tooltip="rule group details"
             href={createRelativeUrl(
-              `/alerting/grafana/namespaces/${namespace.uid}/groups/${encodeURIComponent(group.name)}`
+              `/alerting/grafana/namespaces/${namespace.uid}/groups/${encodeURIComponent(group.name)}/view`
             )}
             size="sm"
             variant="secondary"
