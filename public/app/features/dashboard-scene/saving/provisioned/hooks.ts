@@ -1,5 +1,5 @@
 import { AnnoKeyRepoName, AnnoKeyRepoPath } from 'app/features/apiserver/types';
-import { useFolderRepository } from 'app/features/provisioning/hooks';
+import { useGetRepositoryQuery } from 'app/features/provisioning/api';
 import { DashboardMeta } from 'app/types';
 
 import { getDefaultWorkflow } from './defaults';
@@ -21,20 +21,18 @@ function generatePath(timestamp: number, pathFromAnnotation?: string, slug?: str
 }
 
 export function useDefaultValues({ meta, defaultTitle, defaultDescription }: UseDefaultValuesParams) {
-  // ???? why is this getting the repository from the folder, not the file???
-  // Should we only get it from the folder when new?
-  const folderRepository = useFolderRepository(meta.folderUid);
-  const timestamp = Date.now();
   const annotations = meta.k8s?.annotations;
+  const annoName = annotations?.[AnnoKeyRepoName];
   const annoPath = annotations?.[AnnoKeyRepoPath];
+  const { data: folderRepository } = useGetRepositoryQuery({ name: annoName ?? '' });
+  const timestamp = Date.now();
   const repositoryConfig = folderRepository?.spec;
-  const repositoryName = folderRepository?.metadata?.name ?? '';
 
   return {
     values: {
       ref: `dashboard/${timestamp}`,
       path: generatePath(timestamp, annoPath, meta.slug),
-      repo: annotations?.[AnnoKeyRepoName] ?? repositoryName,
+      repo: annoName,
       comment: '',
       folder: {
         uid: meta.folderUid,
