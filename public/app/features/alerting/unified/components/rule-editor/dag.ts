@@ -1,4 +1,4 @@
-import { compact, isArray, memoize, uniq } from 'lodash';
+import { compact, isArray, memoize, reject, uniq } from 'lodash';
 
 import { Edge, Graph, Node } from 'app/core/utils/dag';
 import { isExpressionQuery } from 'app/features/expressions/guards';
@@ -38,11 +38,31 @@ export function createDagFromQueries(queries: AlertQuery[]): Graph {
     });
   });
 
+  // @TODO recursively find nodes that are pointing to nodes with linkErrors
+
   if (linkErrors.length > 0) {
     throw new DAGError('failed to create DAG from queries', { cause: linkErrors });
   }
 
   return graph;
+}
+
+/**
+ * This function attempts to create a "clean" DAG where only the nodes that successfully link are left
+ */
+export function createCleanDagFromQueries(queries: AlertQuery[]): Graph {
+  try {
+    return createDagFromQueries(queries);
+  } catch (error) {
+    if (error instanceof DAGError) {
+      const updatedQueries = reject(queries, (query) =>
+        error.cause.some((linkError) => linkError.source === query.refId)
+      );
+      return createCleanDagFromQueries(updatedQueries);
+    }
+  }
+
+  return new Graph();
 }
 
 // determine if input error is a DAGError
@@ -56,11 +76,6 @@ interface LinkError {
   error: unknown;
 }
 
-interface LinkError {
-  source: string;
-  target: string;
-  error: unknown;
-}
 
 /** DAGError subclass, this is just a regular error but with LinkError[] as the cause */
 export class DAGError extends Error {

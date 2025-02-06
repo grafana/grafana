@@ -347,6 +347,13 @@ describe('prepareQueries', () => {
           expression: '$B', // this node will be omitted, ref does not exist
         },
       }),
+      createExpression('F', {
+        model: {
+          refId: 'F',
+          type: ExpressionQueryType.math,
+          expression: '$D', // this node will be omitted, because D is broken too
+        },
+      }),
     ];
 
     const runner = new AlertingQueryRunner(
@@ -360,7 +367,7 @@ describe('prepareQueries', () => {
 
     expect(queriesToRun).toHaveLength(2);
     expect(queriesToRun[0]).toStrictEqual(queries[1]);
-    expect(queriesToRun[1]).toStrictEqual(queries.at(-1));
+    expect(queriesToRun[1]).toStrictEqual(queries[4]);
   });
 });
 
