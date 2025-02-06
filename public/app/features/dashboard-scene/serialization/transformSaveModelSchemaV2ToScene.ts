@@ -370,7 +370,7 @@ function buildVizPanel(panel: PanelKind): VizPanel {
   const timeOverrideShown = (queryOptions.timeFrom || queryOptions.timeShift) && !queryOptions.hideTimeOverride;
 
   const vizPanelState: VizPanelState = {
-    key: getVizPanelKeyForPanelId(panel.spec.id),
+    key: panel.spec.uid,
     title: panel.spec.title,
     description: panel.spec.description,
     pluginId: panel.spec.vizConfig.kind,

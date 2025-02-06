@@ -62,6 +62,10 @@ LibraryPanelKind: {
 LibraryPanelSpec: {
   // Panel ID for the library panel in the dashboard
   id: number
+
+  // Panel UID for the library panel
+  uid: string
+
   // Title for the library panel in the dashboard
   title: string
 
@@ -504,7 +508,7 @@ GridLayoutItemKind: {
 
 GridLayoutRowKind: {
   kind: "GridLayoutRow"
-  spec: GridLayoutRowSpec 
+  spec: GridLayoutRowSpec
 }
 
 GridLayoutRowSpec: {
@@ -526,6 +530,7 @@ GridLayoutKind: {
 
 PanelSpec: {
   id: number
+  uid: string // this will be the arbitrary uid element_identifier. Needed for transforming scene to schema v2
   title: string
   description: string
   links: [...DataLink]

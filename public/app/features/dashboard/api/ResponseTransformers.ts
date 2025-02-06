@@ -371,6 +371,9 @@ function yOffsetInRows(p: Panel, rowY: number): number {
 }
 
 function buildElement(p: Panel): [PanelKind | LibraryPanelKind, string] {
+  // Use arbitrary random string for element_identifier
+  const element_identifier = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+
   if (p.libraryPanel) {
     // LibraryPanelKind
     const panelKind: LibraryPanelKind = {
@@ -381,11 +384,11 @@ function buildElement(p: Panel): [PanelKind | LibraryPanelKind, string] {
           name: p.libraryPanel.name,
         },
         id: p.id!,
+        uid: element_identifier,
         title: p.title ?? '',
       },
     };
-
-    return [panelKind, p.id!.toString()];
+    return [panelKind, element_identifier];
   } else {
     // PanelKind
 
@@ -416,6 +419,7 @@ function buildElement(p: Panel): [PanelKind | LibraryPanelKind, string] {
             targetBlank: l.targetBlank,
           })) || [],
         id: p.id!,
+        uid: element_identifier,
         data: {
           kind: 'QueryGroup',
           spec: {
@@ -435,7 +439,7 @@ function buildElement(p: Panel): [PanelKind | LibraryPanelKind, string] {
       },
     };
 
-    return [panelKind, p.id!.toString()];
+    return [panelKind, element_identifier];
   }
 }
 
