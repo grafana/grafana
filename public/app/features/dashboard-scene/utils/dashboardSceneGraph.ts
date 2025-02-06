@@ -34,7 +34,7 @@ function getVizPanels(scene: DashboardScene): VizPanel[] {
  * and find the next free panel id
  */
 export function getNextPanelId(scene: SceneObject): number {
-  let max = 1;
+  let max = 0;
 
   sceneGraph
     .findAllObjects(scene.getRoot(), (obj) => obj instanceof VizPanel || obj instanceof SceneGridRow)
