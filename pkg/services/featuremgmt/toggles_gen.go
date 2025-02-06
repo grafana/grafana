@@ -959,7 +959,7 @@ const (
 	// Enables the new logs panel in Explore
 	FlagNewLogsPanel = "newLogsPanel"
 
-	// FlagPluginsCDNSyncLoader
-	// Load plugins from CDN synchronously
-	FlagPluginsCDNSyncLoader = "pluginsCDNSyncLoader"
+	// FlagGrafanaconThemes
+	// Enables the temporary themes for GrafanaCon
+	FlagGrafanaconThemes = "grafanaconThemes"
 )

@@ -1785,6 +1785,15 @@ var (
 			Owner:        grafanaObservabilityLogsSquad,
 		},
 		{
+			Name:              "grafanaconThemes",
+			Description:       "Enables the temporary themes for GrafanaCon",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaFrontendPlatformSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			RequiresRestart:   true,
+		},
+		{
 			Name:        "pluginsCDNSyncLoader",
 			Description: "Load plugins from CDN synchronously",
 			Stage:       FeatureStageExperimental,
