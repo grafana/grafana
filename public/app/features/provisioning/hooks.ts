@@ -91,20 +91,6 @@ export const usePullRequestParam = () => {
   return decodeURIComponent(prParam);
 };
 
-export const useFolderRepository = (folderUid?: string | typeof skipToken) => {
-  const [items, isLoading] = useRepositoryList();
-
-  if (!folderUid) {
-    return undefined;
-  }
-
-  if (!items?.length || isLoading || !folderUid) {
-    return undefined;
-  }
-
-  return items.find((repo) => repo.metadata?.name === folderUid);
-};
-
 interface GetResourceRepositoryArgs {
   name?: string;
   folderUid?: string;
