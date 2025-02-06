@@ -17,7 +17,6 @@ import { ID_PREFIX } from 'app/core/reducers/navBarTree';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
-import { AngularMigrationNotice } from 'app/features/plugins/angularDeprecation/AngularMigrationNotice';
 import { KioskMode, StoreState } from 'app/types';
 import { PanelEditEnteredEvent, PanelEditExitedEvent } from 'app/types/events';
 
@@ -373,50 +372,6 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
       'page-hidden': Boolean(queryParams.editview || editPanel),
     });
 
-    const migrationFeatureFlags = new Set([
-      'autoMigrateOldPanels',
-      'autoMigrateGraphPanel',
-      'autoMigrateTablePanel',
-      'autoMigratePiechartPanel',
-      'autoMigrateWorldmapPanel',
-      'autoMigrateStatPanel',
-      'disableAngular',
-    ]);
-
-    const isAutoMigrationFlagSet = () => {
-      const urlParams = new URLSearchParams(window.location.search);
-      let isFeatureFlagSet = false;
-
-      urlParams.forEach((value, key) => {
-        if (key.startsWith('__feature.')) {
-          const featureName = key.substring(10);
-          const toggleState = value === 'true' || value === '';
-          const featureToggles = config.featureToggles as Record<string, boolean>;
-
-          if (featureToggles[featureName]) {
-            return;
-          }
-
-          if (migrationFeatureFlags.has(featureName) && toggleState) {
-            isFeatureFlagSet = true;
-            return;
-          }
-        }
-      });
-
-      return isFeatureFlagSet;
-    };
-
-    const dashboardWasAngular = dashboard.panels.some(
-      (panel) => panel.autoMigrateFrom && autoMigrateAngular[panel.autoMigrateFrom] != null
-    );
-
-    const showDashboardMigrationNotice =
-      config.featureToggles.angularDeprecationUI &&
-      dashboardWasAngular &&
-      isAutoMigrationFlagSet() &&
-      dashboard.uid !== null;
-
     return (
       <>
         <Page
@@ -445,7 +400,6 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
               <SubMenu dashboard={dashboard} annotations={dashboard.annotations.list} links={dashboard.links} />
             </section>
           )}
-          {showDashboardMigrationNotice && <AngularMigrationNotice dashboardUid={dashboard.uid} />}
           {!initError && (
             <DashboardGrid
               dashboard={dashboard}
