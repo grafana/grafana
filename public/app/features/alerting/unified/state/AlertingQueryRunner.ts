@@ -55,10 +55,8 @@ export class AlertingQueryRunner {
   async run(queries: AlertQuery[], condition: string) {
     const queriesToRun = await this.prepareQueries(queries);
 
-    // if we don't have any we just mark all of them as "done"
+    // if we don't have any queries to run we just bail
     if (queriesToRun.length === 0) {
-      const emptyState = initialState(queries, LoadingState.Done);
-      this.subject.next(emptyState);
       return;
     }
 
