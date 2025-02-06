@@ -225,9 +225,9 @@ enum ResourceVersionMatch {
 }
 
 message ListRequest {
-  enum Source { 
+  enum Source {
     STORE = 0; // the standard place
-    HISTORY = 1; 
+    HISTORY = 1;
     TRASH = 2;
   }
 
@@ -248,7 +248,7 @@ message ListRequest {
   ListOptions options = 5;
 
   // Select values from history or trash
-  Source source = 6; 
+  Source source = 6;
 }
 
 message ListResponse {
@@ -329,7 +329,7 @@ message ResourceStatsRequest {
   // NOTE, this query may need to federate across a few storage instances
   repeated string kinds = 2;
 
-  // Limit the stats within a folder (not recursive!) 
+  // Limit the stats within a folder (not recursive!)
   string folder = 3;
 }
 
@@ -356,7 +356,7 @@ message ResourceSearchRequest {
     string field = 1;
     bool desc = 2; // defaults to ascending
   }
-  
+
   message Facet {
     string field = 1;
     int64 limit = 2;
@@ -370,8 +370,8 @@ message ResourceSearchRequest {
 
   // To search additional resource types, add additional keys to this list
   // NOTE: queries will only support federation across kinds with common fields
-  repeated ResourceKey federated = 2; 
-  
+  repeated ResourceKey federated = 2;
+
   // When a query exists, it is parsed and used to influence
   // query string for chosen implementation (currently just bleve)
   // The score is only relevant when a query exists
@@ -394,6 +394,10 @@ message ResourceSearchRequest {
 
   // explain each result (added to the each row)
   bool explain = 9;
+
+  bool is_deleted = 10;
+
+  int64 page = 11;
 }
 
 message ResourceSearchResponse {
@@ -406,7 +410,7 @@ message ResourceSearchResponse {
     // Top term stats
     repeated TermFacet terms = 4;
     // numeric range
-    // date range facets 
+    // date range facets
   }
 
   message TermFacet {
@@ -444,7 +448,7 @@ message ListRepositoryObjectsRequest {
 
   // Namespace (tenant)
   string namespace = 2;
-  
+
   // The name of the repository
   string name = 3;
 }
@@ -456,16 +460,16 @@ message ListRepositoryObjectsResponse {
 
     // Hash for the resource
     string path = 2;
-  
+
     // Verification hash from the origin
     string hash = 3;
-  
+
     // Change time from the origin
     int64 time = 5;
 
     // Title inside the payload
     string title = 6;
-  
+
     // The name of the folder in metadata
     string folder = 7;
   }
@@ -484,7 +488,7 @@ message ListRepositoryObjectsResponse {
 message CountRepositoryObjectsRequest {
   // Namespace (tenant)
   string namespace = 1;
-  
+
   // The name of the repository
   // empty to count across all repositories
   string name = 2;
@@ -559,16 +563,16 @@ message ResourceTableColumnDefinition {
     STRING = 1;
     BOOLEAN = 2;
     INT32 = 3;
-    INT64 = 4; 
-    FLOAT = 5;  
-    DOUBLE = 6; 
-    DATE = 7; 
-    DATE_TIME = 8; 
-    BINARY = 9;  
+    INT64 = 4;
+    FLOAT = 5;
+    DOUBLE = 6;
+    DATE = 7;
+    DATE_TIME = 8;
+    BINARY = 9;
     OBJECT = 10; // map[string]any
   }
 
-  // These values are not part of standard k8s format 
+  // These values are not part of standard k8s format
   // however these are useful when indexing and analyzing results
   message Properties {
     // All values in this columns should be unique
@@ -618,7 +622,7 @@ message ResourceTableRow {
   // The resource version for the given values
   int64 resource_version = 2;
 
-  // Cells will be as wide as the column definitions array 
+  // Cells will be as wide as the column definitions array
   // Numeric values will be encoded using big endian bytes
   // All arrays will be JSON encoded
   repeated bytes cells = 3;
@@ -638,7 +642,7 @@ message ResourceTableRow {
 message RestoreRequest {
   // Full key must be set
   ResourceKey key = 1;
-  
+
   // The resource version to restore
   int64 resource_version = 2;
 }
@@ -759,7 +763,7 @@ service ResourceIndex {
   rpc GetStats(ResourceStatsRequest) returns (ResourceStatsResponse);
 }
 
-// Query repository info from the search index.  
+// Query repository info from the search index.
 // Results access control is based on access to the repository *not* the items
 service RepositoryIndex {
   // Describe how many resources of each type exist within a repository
