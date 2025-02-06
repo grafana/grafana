@@ -86,7 +86,7 @@ type PullRequestJobOptions struct {
 }
 
 type SyncJobOptions struct {
-	// When possible (git) look for differences in the VCS
+	// Incremental synchronization for versioned repositories
 	Incremental bool `json:"incremental"`
 }
 
