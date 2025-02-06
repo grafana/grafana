@@ -1899,6 +1899,134 @@ func TestCountInFolders(t *testing.T) {
 	})
 }
 
+func TestSearchDashboardsThroughK8sRaw(t *testing.T) {
+	ctx := context.Background()
+	k8sCliMock := new(client.MockK8sHandler)
+	service := &DashboardServiceImpl{k8sclient: k8sCliMock}
+	query := &dashboards.FindPersistedDashboardsQuery{
+		OrgId: 1,
+	}
+	k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resource.ResourceSearchResponse{
+		Results: &resource.ResourceTable{
+			Columns: []*resource.ResourceTableColumnDefinition{
+				{
+					Name: "title",
+					Type: resource.ResourceTableColumnDefinition_STRING,
+				},
+				{
+					Name: "folder",
+					Type: resource.ResourceTableColumnDefinition_STRING,
+				},
+			},
+			Rows: []*resource.ResourceTableRow{
+				{
+					Key: &resource.ResourceKey{
+						Name:     "uid",
+						Resource: "dashboard",
+					},
+					Cells: [][]byte{
+						[]byte("Dashboard 1"),
+						[]byte("folder1"),
+					},
+				},
+			},
+		},
+		TotalHits: 1,
+	}, nil)
+	res, err := service.searchDashboardsThroughK8s(ctx, query)
+	require.NoError(t, err)
+	assert.Equal(t, []*dashboards.Dashboard{
+		{
+			UID:       "uid",
+			OrgID:     1,
+			FolderUID: "folder1",
+			Title:     "Dashboard 1",
+			Slug:      "dashboard-1", // should be slugified
+		},
+	}, res)
+	assert.Equal(t, "dash-db", query.Type) // query type should be added
+}
+
+func TestSearchProvisionedDashboardsThroughK8sRaw(t *testing.T) {
+	ctx := context.Background()
+	k8sCliMock := new(client.MockK8sHandler)
+	service := &DashboardServiceImpl{k8sclient: k8sCliMock}
+	query := &dashboards.FindPersistedDashboardsQuery{
+		OrgId: 1,
+	}
+	dashboardUnstructuredProvisioned := unstructured.Unstructured{Object: map[string]any{
+		"metadata": map[string]any{
+			"name": "uid",
+			"annotations": map[string]any{
+				utils.AnnoKeyRepoName:      fileProvisionedRepoPrefix + "test",
+				utils.AnnoKeyRepoHash:      "hash",
+				utils.AnnoKeyRepoPath:      "path/to/file",
+				utils.AnnoKeyRepoTimestamp: "2025-01-01T00:00:00Z",
+			},
+		},
+		"spec": map[string]any{},
+	}}
+	dashboardUnstructuredNotProvisioned := unstructured.Unstructured{Object: map[string]any{
+		"metadata": map[string]any{
+			"name": "uid2",
+		},
+		"spec": map[string]any{},
+	}}
+	k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resource.ResourceSearchResponse{
+		Results: &resource.ResourceTable{
+			Columns: []*resource.ResourceTableColumnDefinition{
+				{
+					Name: "title",
+					Type: resource.ResourceTableColumnDefinition_STRING,
+				},
+				{
+					Name: "folder",
+					Type: resource.ResourceTableColumnDefinition_STRING,
+				},
+			},
+			Rows: []*resource.ResourceTableRow{
+				{
+					Key: &resource.ResourceKey{
+						Name:     "uid",
+						Resource: "dashboard",
+					},
+					Cells: [][]byte{
+						[]byte("Dashboard 1"),
+						[]byte("folder1"),
+					},
+				},
+				{
+					Key: &resource.ResourceKey{
+						Name:     "uid2",
+						Resource: "dashboard",
+					},
+					Cells: [][]byte{
+						[]byte("Dashboard 2"),
+						[]byte("folder2"),
+					},
+				},
+			},
+		},
+		TotalHits: 1,
+	}, nil)
+	k8sCliMock.On("Get", mock.Anything, "uid", mock.Anything, mock.Anything, mock.Anything).Return(&dashboardUnstructuredProvisioned, nil).Once()
+	k8sCliMock.On("Get", mock.Anything, "uid2", mock.Anything, mock.Anything, mock.Anything).Return(&dashboardUnstructuredNotProvisioned, nil).Once()
+	res, err := service.searchProvisionedDashboardsThroughK8s(ctx, query)
+	require.NoError(t, err)
+	assert.Equal(t, []*dashboardProvisioningWithUID{
+		{
+			DashboardUID: "uid",
+			DashboardProvisioning: dashboards.DashboardProvisioning{
+				Name:       "test",
+				ExternalID: "path/to/file",
+				CheckSum:   "hash",
+				Updated:    1735689600,
+			},
+		},
+	}, res) // only should return the one provisioned dashboard
+	assert.Equal(t, "dash-db", query.Type) // query type should be added as dashboards only
+}
+
 func TestLegacySaveCommandToUnstructured(t *testing.T) {
 	namespace := "test-namespace"
 	t.Run("successfully converts save command to unstructured", func(t *testing.T) {
