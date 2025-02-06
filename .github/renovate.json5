@@ -13,7 +13,6 @@
     "slate-react", // we don't want to continue using this on the long run, use Monaco editor instead of Slate
     "@types/slate-react", // we don't want to continue using this on the long run, use Monaco editor instead of Slate
     "@types/slate", // we don't want to continue using this on the long run, use Monaco editor instead of Slate
-    "storybook-dark-mode", // 4.0.2 causes storybook 8.4 to break with react hooks errors
     // Temporarily pause updating lerna and nx until we resolve build issues
     "lerna",
     "nx"
