@@ -35,6 +35,7 @@ import {
 import { trackRuleVersionsComparisonClick } from '../../../Analytics';
 import { alertRuleApi } from '../../../api/alertRuleApi';
 import { stringifyErrorLike } from '../../../utils/misc';
+import { computeVersionDiff } from '../../settings/VersionManager';
 
 const { useGetAlertVersionHistoryQuery } = alertRuleApi;
 
@@ -44,9 +45,17 @@ export interface AlertVersionHistoryProps {
 
 const VERSIONS_PAGE_SIZE = 20;
 
+<<<<<<< Updated upstream
 const UNKNOWN = 'Unknown';
 
 /** List of (top level) properties to exclude from being shown in human readable summary of version changes */
+=======
+export type Diff = {
+  added: number;
+  removed: number;
+};
+
+>>>>>>> Stashed changes
 const grafanaAlertPropertiesToIgnore: Array<keyof GrafanaRuleDefinition> = [
   'id',
   'uid',
@@ -324,12 +333,26 @@ function VersionHistoryTable({
 
   //----> end of restore code
 
+<<<<<<< Updated upstream
   const rows = ruleVersions.map((rule, index) => ({
     id: String(rule.grafana_alert.version),
     version: rule.grafana_alert.version || `unknown-rule-${index}`,
     created: rule.grafana_alert.updated || 'unknown',
     createdBy: rule.grafana_alert.updated_by,
   }));
+=======
+  const rows: RevisionModel[] = ruleVersions.map((rule, index) => {
+    const nextVersion = ruleVersions[index + 1];
+    const currentVersion = ruleVersions[index];
+    return {
+      id: String(rule.grafana_alert.version),
+      version: rule.grafana_alert.version || `unknown-rule-${index}`,
+      created: rule.grafana_alert.updated || 'unknown',
+      createdBy: rule.grafana_alert.updated_by?.name || 'unknown',
+      diff: nextVersion ? computeVersionDiff(currentVersion, nextVersion) : { added: 0, removed: 0 },
+    };
+  });
+>>>>>>> Stashed changes
 
   // todo: fix types
   const columns: Array<Column<(typeof rows)[0]>> = [
@@ -401,6 +424,27 @@ function VersionHistoryTable({
       header: 'Date',
       disableGrow: true,
       cell: ({ value }) => dateTimeFormat(value) + ' (' + dateTimeFormatTimeAgo(value) + ')',
+    },
+    {
+      id: 'diff',
+      disableGrow: true,
+      cell: ({ row, value }) => {
+        const isLastItem = row.index === ruleVersions.length - 1;
+        if (isLastItem) {
+          return null;
+        }
+
+        return (
+          <Stack alignItems="baseline" gap={0.5}>
+            <Text color="success" variant="bodySmall">
+              +{value.added}
+            </Text>
+            <Text color="error" variant="bodySmall">
+              -{value.removed}
+            </Text>
+          </Stack>
+        );
+      },
     },
     {
       id: 'actions',

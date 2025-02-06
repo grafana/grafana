@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { chain, omit } from 'lodash';
+import { chain, identity, omit } from 'lodash';
 import moment from 'moment';
 import { useState } from 'react';
 
@@ -98,7 +98,7 @@ const AlertmanagerConfigurationVersionManager = ({
 
     return {
       ...config,
-      diff: priorConfig ? computeConfigDiff(config, latestConfig) : { added: 0, removed: 0 },
+      diff: priorConfig ? computeVersionDiff(config, latestConfig, normalizeConfig) : { added: 0, removed: 0 },
     };
   });
 
@@ -296,9 +296,13 @@ function normalizeConfig(config: AlertManagerCortexConfig) {
   return omit(config, ['id', 'last_applied']);
 }
 
-function computeConfigDiff(json1: AlertManagerCortexConfig, json2: AlertManagerCortexConfig): Diff {
-  const cleanedJson1 = normalizeConfig(json1);
-  const cleanedJson2 = normalizeConfig(json2);
+export function computeVersionDiff<T extends Object>(
+  json1: T,
+  json2: T,
+  normalizeFunction: (item: T) => Object = identity
+): Diff {
+  const cleanedJson1 = normalizeFunction(json1);
+  const cleanedJson2 = normalizeFunction(json2);
 
   const diff = jsonDiff(cleanedJson1, cleanedJson2);
   const added = chain(diff)
@@ -320,5 +324,4 @@ function computeConfigDiff(json1: AlertManagerCortexConfig, json2: AlertManagerC
     removed,
   };
 }
-
 export { AlertmanagerConfigurationVersionManager };
