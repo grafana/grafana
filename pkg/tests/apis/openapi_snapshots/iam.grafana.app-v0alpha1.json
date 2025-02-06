@@ -1,6 +1,7 @@
 {
   "openapi": "3.0.0",
   "info": {
+    "description": "Identity and Access Management",
     "title": "iam.grafana.app/v0alpha1"
   },
   "paths": {
@@ -73,89 +74,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "keys",
-                    "display"
-                  ],
-                  "properties": {
-                    "apiVersion": {
-                      "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-                      "type": "string"
-                    },
-                    "display": {
-                      "description": "Matching items (the caller may need to remap from keys to results)",
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "required": [
-                          "identity",
-                          "displayName"
-                        ],
-                        "properties": {
-                          "avatarURL": {
-                            "description": "AvatarURL is the url where we can get the avatar for identity",
-                            "type": "string"
-                          },
-                          "displayName": {
-                            "description": "Display name for identity.",
-                            "type": "string",
-                            "default": ""
-                          },
-                          "identity": {
-                            "type": "object",
-                            "required": [
-                              "type",
-                              "name"
-                            ],
-                            "properties": {
-                              "name": {
-                                "description": "Name is the unique identifier for identity, guaranteed to be a unique value for the type within a namespace.",
-                                "type": "string",
-                                "default": ""
-                              },
-                              "type": {
-                                "description": "Type of identity e.g. \"user\". For a full list see https://github.com/grafana/authlib/blob/d6737a7dc8f55e9d42834adb83b5da607ceed293/types/type.go#L15",
-                                "type": "string",
-                                "default": ""
-                              }
-                            }
-                          },
-                          "internalId": {
-                            "description": "InternalID is the legacy numeric id for identity, Deprecated: use the identityRef where possible",
-                            "type": "integer",
-                            "format": "int64"
-                          }
-                        }
-                      },
-                      "x-kubernetes-list-type": "atomic"
-                    },
-                    "invalidKeys": {
-                      "description": "Input keys that were not useable",
-                      "type": "array",
-                      "items": {
-                        "type": "string",
-                        "default": ""
-                      },
-                      "x-kubernetes-list-type": "set"
-                    },
-                    "keys": {
-                      "description": "Request keys used to lookup the display value",
-                      "type": "array",
-                      "items": {
-                        "type": "string",
-                        "default": ""
-                      },
-                      "x-kubernetes-list-type": "set"
-                    },
-                    "kind": {
-                      "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-                      "type": "string"
-                    },
-                    "metadata": {
-                      "default": {}
-                    }
-                  }
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.iam.v0alpha1.DisplayList"
                 }
               }
             }
@@ -2511,6 +2430,90 @@
         "additionalProperties": true,
         "x-kubernetes-preserve-unknown-fields": true
       },
+      "com.github.grafana.grafana.pkg.apis.iam.v0alpha1.Display": {
+        "type": "object",
+        "required": [
+          "identity",
+          "displayName"
+        ],
+        "properties": {
+          "avatarURL": {
+            "description": "AvatarURL is the url where we can get the avatar for identity",
+            "type": "string"
+          },
+          "displayName": {
+            "description": "Display name for identity.",
+            "type": "string",
+            "default": ""
+          },
+          "identity": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.iam.v0alpha1.IdentityRef"
+              }
+            ]
+          },
+          "internalId": {
+            "description": "InternalID is the legacy numeric id for identity, Deprecated: use the identityRef where possible",
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "com.github.grafana.grafana.pkg.apis.iam.v0alpha1.DisplayList": {
+        "type": "object",
+        "required": [
+          "keys",
+          "display"
+        ],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "display": {
+            "description": "Matching items (the caller may need to remap from keys to results)",
+            "type": "array",
+            "items": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.iam.v0alpha1.Display"
+                }
+              ]
+            },
+            "x-kubernetes-list-type": "atomic"
+          },
+          "invalidKeys": {
+            "description": "Input keys that were not useable",
+            "type": "array",
+            "items": {
+              "type": "string",
+              "default": ""
+            },
+            "x-kubernetes-list-type": "set"
+          },
+          "keys": {
+            "description": "Request keys used to lookup the display value",
+            "type": "array",
+            "items": {
+              "type": "string",
+              "default": ""
+            },
+            "x-kubernetes-list-type": "set"
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "metadata": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"
+              }
+            ]
+          }
+        }
+      },
       "com.github.grafana.grafana.pkg.apis.iam.v0alpha1.IdentityRef": {
         "type": "object",
         "required": [
@@ -2731,6 +2734,45 @@
           },
           "title": {
             "type": "string"
+          }
+        }
+      },
+      "com.github.grafana.grafana.pkg.apis.iam.v0alpha1.ServiceAccountToken": {
+        "type": "object",
+        "required": [
+          "created"
+        ],
+        "properties": {
+          "created": {},
+          "expires": {},
+          "lastUsed": {},
+          "name": {
+            "type": "string"
+          },
+          "revoked": {
+            "type": "boolean"
+          }
+        }
+      },
+      "com.github.grafana.grafana.pkg.apis.iam.v0alpha1.ServiceAccountTokenList": {
+        "type": "object",
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "default": {}
+            }
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "metadata": {
+            "default": {}
           }
         }
       },

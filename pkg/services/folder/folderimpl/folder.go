@@ -37,6 +37,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/supportbundles"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -1028,7 +1029,12 @@ func (s *Service) legacyDelete(ctx context.Context, cmd *folder.DeleteFolderComm
 	// if dashboard restore is on we don't delete public dashboards, the hard delete will take care of it later
 	if !s.features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore) {
 		// We need a list of dashboard uids inside the folder to delete related public dashboards
-		dashes, err := s.dashboardStore.FindDashboards(ctx, &dashboards.FindPersistedDashboardsQuery{SignedInUser: cmd.SignedInUser, FolderUIDs: folderUIDs, OrgId: cmd.OrgID})
+		dashes, err := s.dashboardStore.FindDashboards(ctx, &dashboards.FindPersistedDashboardsQuery{
+			SignedInUser: cmd.SignedInUser,
+			FolderUIDs:   folderUIDs,
+			OrgId:        cmd.OrgID,
+			Type:         searchstore.TypeDashboard,
+		})
 		if err != nil {
 			return folder.ErrInternal.Errorf("failed to fetch dashboards: %w", err)
 		}

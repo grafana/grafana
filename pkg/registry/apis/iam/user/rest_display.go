@@ -29,11 +29,6 @@ func NewLegacyDisplayREST(store legacy.LegacyIdentityStore) *LegacyDisplayREST {
 }
 
 func (r *LegacyDisplayREST) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *builder.APIRoutes {
-	listSchema := defs["github.com/grafana/grafana/pkg/apis/iam/v0alpha1.DisplayList"].Schema
-	displaySchema := defs["github.com/grafana/grafana/pkg/apis/iam/v0alpha1.Display"].Schema
-	identitySchema := defs["github.com/grafana/grafana/pkg/apis/iam/v0alpha1.IdentityRef"].Schema
-	listSchema.Properties["display"].Items.Schema = &displaySchema // not sure why this is lost
-	displaySchema.Properties["identity"] = identitySchema          // not sure why this is lost
 	return &builder.APIRoutes{
 		Namespace: []builder.APIRouteHandler{
 			{
@@ -76,7 +71,11 @@ func (r *LegacyDisplayREST) GetAPIRoutes(defs map[string]common.OpenAPIDefinitio
 												Content: map[string]*spec3.MediaType{
 													"application/json": {
 														MediaTypeProps: spec3.MediaTypeProps{
-															Schema: &listSchema,
+															Schema: &spec.Schema{
+																SchemaProps: spec.SchemaProps{
+																	Ref: spec.MustCreateRef("#/components/schemas/com.github.grafana.grafana.pkg.apis.iam.v0alpha1.DisplayList"),
+																},
+															},
 														},
 													},
 												},
