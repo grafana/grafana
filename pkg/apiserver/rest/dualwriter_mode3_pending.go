@@ -1,0 +1,107 @@
+package rest
+
+import (
+	"context"
+	"net/http"
+
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/registry/rest"
+
+	"github.com/grafana/grafana/pkg/storage/legacysql/modecheck"
+)
+
+// CRUD without watch... you get watch when real mode 3++
+type DualWriterPendingMode3 struct {
+	status modecheck.Service
+	target *DualWriterPendingMode3
+	gr     schema.GroupResource
+}
+
+// Get overrides the behavior of the generic DualWriter and retrieves an object from Storage.
+func (d *DualWriterPendingMode3) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
+	return d.target.Get(ctx, name, options)
+}
+
+// List overrides the behavior of the generic DualWriter and reads only from Unified Store.
+func (d *DualWriterPendingMode3) List(ctx context.Context, options *metainternalversion.ListOptions) (runtime.Object, error) {
+	return d.target.List(ctx, options)
+}
+
+// Create overrides the behavior of the generic DualWriter and writes to LegacyStorage and Storage.
+func (d *DualWriterPendingMode3) Create(ctx context.Context, in runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
+	if d.status.IsMigrated(ctx, d.gr) {
+		return d.target.Create(ctx, in, createValidation, options)
+	}
+	return nil, &apierrors.StatusError{
+		ErrStatus: metav1.Status{
+			Code:    http.StatusServiceUnavailable,
+			Message: "the system needs to migrate",
+		},
+	}
+}
+
+// Update overrides the behavior of the generic DualWriter and writes first to Storage and then to LegacyStorage.
+func (d *DualWriterPendingMode3) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
+	if d.status.IsMigrated(ctx, d.gr) {
+		return d.target.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
+	}
+	return nil, false, &apierrors.StatusError{
+		ErrStatus: metav1.Status{
+			Code:    http.StatusServiceUnavailable,
+			Message: "the system needs to migrate",
+		},
+	}
+}
+
+func (d *DualWriterPendingMode3) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
+	if d.status.IsMigrated(ctx, d.gr) {
+		return d.target.Delete(ctx, name, deleteValidation, options)
+	}
+	return nil, false, &apierrors.StatusError{
+		ErrStatus: metav1.Status{
+			Code:    http.StatusServiceUnavailable,
+			Message: "the system needs to migrate",
+		},
+	}
+}
+
+// DeleteCollection overrides the behavior of the generic DualWriter and deletes from both LegacyStorage and Storage.
+func (d *DualWriterPendingMode3) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *metainternalversion.ListOptions) (runtime.Object, error) {
+	if d.status.IsMigrated(ctx, d.gr) {
+		return d.target.DeleteCollection(ctx, deleteValidation, options, listOptions)
+	}
+	return nil, &apierrors.StatusError{
+		ErrStatus: metav1.Status{
+			Code:    http.StatusServiceUnavailable,
+			Message: "the system needs to migrate",
+		},
+	}
+}
+
+func (d *DualWriterPendingMode3) Destroy() {
+	d.target.Destroy()
+}
+
+func (d *DualWriterPendingMode3) GetSingularName() string {
+	return d.target.GetSingularName()
+}
+
+func (d *DualWriterPendingMode3) NamespaceScoped() bool {
+	return d.target.NamespaceScoped()
+}
+
+func (d *DualWriterPendingMode3) New() runtime.Object {
+	return d.target.New()
+}
+
+func (d *DualWriterPendingMode3) NewList() runtime.Object {
+	return d.target.NewList()
+}
+
+func (d *DualWriterPendingMode3) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
+	return d.target.ConvertToTable(ctx, object, tableOptions)
+}
