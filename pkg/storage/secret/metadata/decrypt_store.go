@@ -52,17 +52,12 @@ func (s *decryptStorage) Decrypt(ctx context.Context, nn xkube.NameNamespace) (s
 }
 
 func (s *decryptStorage) decryptFromKeeper(ctx context.Context, nn xkube.NameNamespace) (secretv0alpha1.ExposedSecureValue, error) {
-	// TODO:
-	// Get sv and keeper credentials from metdata store
-	// Decrypt from keeper, passing those keeper credentials cfg
-
 	row := &secureValueDB{Name: nn.Name, Namespace: nn.Namespace.String()}
 	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		found, err := sess.Get(row)
 		if err != nil {
 			return fmt.Errorf("could not get row: %w", err)
 		}
-
 		if !found {
 			return contracts.ErrSecureValueNotFound
 		}
@@ -73,17 +68,22 @@ func (s *decryptStorage) decryptFromKeeper(ctx context.Context, nn xkube.NameNam
 		return "", fmt.Errorf("db failure: %w", err)
 	}
 
-	var keeperConfig secretv0alpha1.KeeperConfig
-
-	// Check if keeper is default
+	// Check if keeper is default.
 	if row.Keeper == keepertypes.DefaultKeeperName {
-		exposedValue, err := s.keepers[keepertypes.SQLKeeperType].Expose(ctx, keeperConfig, nn.Namespace.String(), keepertypes.ExternalID(row.ExternalID))
+		keeper, exists := s.keepers[keepertypes.SQLKeeperType]
+		if !exists {
+			return "", fmt.Errorf("could not find default keeper")
+		}
+		exposedValue, err := keeper.Expose(ctx, nil, nn.Namespace.String(), keepertypes.ExternalID(row.ExternalID))
 		if err != nil {
 			return "", fmt.Errorf("failed to store in default keeper: %w", err)
 		}
 		return exposedValue, err
 	}
 
-	// TODO: implement storing in other keepers, returns dummy secret for now
+	// TODO:
+	// Load keeper config from metadata store.
+	// Decrypt from keeper.
+	// Returns dummy secret for now.
 	return secretv0alpha1.ExposedSecureValue("TODO"), nil
 }

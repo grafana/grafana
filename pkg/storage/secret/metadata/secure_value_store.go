@@ -150,11 +150,12 @@ func (s *secureValueStorage) Delete(ctx context.Context, nn xkube.NameNamespace)
 		return fmt.Errorf("missing auth info in context")
 	}
 
-	// TODO: delete from the keeper!
+	// Delete from the keeper.
+	// TODO: log any errors, but do not inform the caller what the errors are.
+	_ = s.deleteFromKeeper(ctx, nn)
 
 	// TODO: do we need to delete by GUID? name+namespace is a unique index. It would avoid doing a fetch.
 	row := &secureValueDB{Name: nn.Name, Namespace: nn.Namespace.String()}
-
 	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		// TODO: because this is a securevalue, do we care to inform the caller if a row was delete (existed) or not?
 		if _, err := sess.Delete(row); err != nil {
@@ -242,22 +243,39 @@ func (s *secureValueStorage) readInternal(ctx context.Context, nn xkube.NameName
 }
 
 func (s *secureValueStorage) storeInKeeper(ctx context.Context, sv *secretv0alpha1.SecureValue) (keepertypes.ExternalID, error) {
-	// Check if keeper is default
-	var keeperConfig secretv0alpha1.KeeperConfig
+	// Check if keeper is default.
 	if sv.Spec.Keeper == keepertypes.DefaultKeeperName {
-		externalID, err := s.keepers[keepertypes.SQLKeeperType].Store(ctx, keeperConfig, sv.Namespace, string(sv.Spec.Value))
+		keeper, exists := s.keepers[keepertypes.SQLKeeperType]
+		if !exists {
+			return "", fmt.Errorf("could not find default keeper")
+		}
+		externalID, err := keeper.Store(ctx, nil, sv.Namespace, string(sv.Spec.Value))
 		if err != nil {
 			return "", fmt.Errorf("failed to store in default keeper: %w", err)
 		}
 		return externalID, err
 	}
 
-	// TODO:
-	// Get keeper credentials by name and namespace from metadata store
-	// Store in keeper, passing those keeper credentials cfg
-	// return externalID, error
+	// Load keeper config from metadata store.
+	keeperType, keeperConfig, err := s.getKeeperConfig(ctx, sv.Spec.Keeper, sv.Namespace)
+	if err != nil {
+		return "", fmt.Errorf("get keeper config: %w", err)
+	}
 
-	return keepertypes.ExternalID("TODO"), nil
+	// Store in keeper.
+	keeper, ok := s.keepers[keeperType]
+	if !ok {
+		return "", fmt.Errorf("could not find keeper: %s", keeperType)
+	}
+
+	var exposedValueOrRef string
+	if keeperType == keepertypes.SQLKeeperType {
+		exposedValueOrRef = string(sv.Spec.Value)
+	} else {
+		exposedValueOrRef = sv.Spec.Ref
+	}
+
+	return keeper.Store(ctx, keeperConfig, sv.Namespace, exposedValueOrRef)
 }
 
 func (s *secureValueStorage) updateInKeeper(ctx context.Context, sv *secretv0alpha1.SecureValue) error {
@@ -271,9 +289,54 @@ func (s *secureValueStorage) updateInKeeper(ctx context.Context, sv *secretv0alp
 }
 
 func (s *secureValueStorage) deleteFromKeeper(ctx context.Context, nn xkube.NameNamespace) error {
-	// TODO:
-	// Get sv and keeper credentials from metadata store
-	// Delete from keeper, passing those keeper credentials cfg
+	sv, err := s.readInternal(ctx, nn)
+	if err != nil {
+		return fmt.Errorf("read securevalue: %w", err)
+	}
 
-	return nil
+	// Check if keeper is default.
+	if sv.Keeper == keepertypes.DefaultKeeperName {
+		keeper, exists := s.keepers[keepertypes.SQLKeeperType]
+		if !exists {
+			return fmt.Errorf("could not find default keeper")
+		}
+		return keeper.Delete(ctx, nil, nn.Namespace.String(), keepertypes.ExternalID(sv.ExternalID))
+	}
+
+	// Load keeper config from metadata store.
+	keeperType, keeperConfig, err := s.getKeeperConfig(ctx, sv.Keeper, nn.Namespace.String())
+	if err != nil {
+		return fmt.Errorf("get keeper config: %w", err)
+	}
+
+	// Delete from keeper.
+	keeper, ok := s.keepers[keeperType]
+	if !ok {
+		return fmt.Errorf("could not find keeper: %s", keeperType)
+	}
+	return keeper.Delete(ctx, keeperConfig, nn.Namespace.String(), keepertypes.ExternalID(sv.ExternalID))
+}
+
+// this feels like it should belong to keeper store
+func (s *secureValueStorage) getKeeperConfig(ctx context.Context, keeperName string, namespace string) (keepertypes.KeeperType, secretv0alpha1.KeeperConfig, error) {
+	kp := &keeperDB{Name: keeperName, Namespace: namespace}
+	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		found, err := sess.Get(kp)
+		if err != nil {
+			return fmt.Errorf("failed to get row: %w", err)
+		}
+		if !found {
+			return contracts.ErrKeeperNotFound
+		}
+
+		return nil
+	})
+	if err != nil {
+		return "", nil, fmt.Errorf("db failure: %w", err)
+	}
+
+	keeperConfig := toProvider(kp.Type, kp.Payload)
+	keeperType := keepertypes.SQLKeeperType // TODO: mapping between keeperDB.Type and KeeperType
+
+	return keeperType, keeperConfig, nil
 }
