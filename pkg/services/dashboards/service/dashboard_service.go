@@ -1249,13 +1249,17 @@ func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *dashb
 		finalResults := make([]dashboards.DashboardSearchProjection, len(response.Hits))
 		// Create a small runtime cache for folders to avoid extra calls to the folder service
 		foldersMap := make(map[string]*folder.Folder)
+		serviceCtx, serviceIdent := identity.WithServiceIdentity(ctx, query.OrgId)
 		for i, hit := range response.Hits {
 			f, ok := foldersMap[hit.Folder]
 			if !ok {
-				f, err = dr.folderService.Get(ctx, &folder.GetFolderQuery{
+				// We can get search result where user don't have access to parents. If that happens this thi
+				// will fail if we call it as the requesting user. To resolve this we call this as the service so we can
+				// garantuee that we can fetch the parent.
+				f, err = dr.folderService.Get(serviceCtx, &folder.GetFolderQuery{
 					UID:          &hit.Folder,
 					OrgID:        query.OrgId,
-					SignedInUser: query.SignedInUser,
+					SignedInUser: serviceIdent,
 				})
 				if err != nil {
 					return nil, err
