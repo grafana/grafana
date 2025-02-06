@@ -1282,11 +1282,6 @@ func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *dashb
 }
 
 func (dr *DashboardServiceImpl) fetchFolderNames(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery, response *dashboardv0alpha1.SearchResults) (map[string]string, error) {
-	if query.SignedInUser == nil {
-		// can be nil when grafana starts up, we don't need the folder names in that case
-		return map[string]string{}, nil
-	}
-
 	folderIds := []string{}
 	for _, hit := range response.Hits {
 		if hit.Folder != "" {
