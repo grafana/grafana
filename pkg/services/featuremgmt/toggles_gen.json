@@ -373,23 +373,27 @@
     {
       "metadata": {
         "name": "alertingSaveStateCompressed",
-        "resourceVersion": "1737472824047",
+        "resourceVersion": "1738604435531",
         "creationTimestamp": "2025-01-17T18:17:20Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2025-01-21 15:20:24.047499 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2025-02-03 17:40:35.53174 +0000 UTC"
         }
       },
       "spec": {
         "description": "Enables the compressed protobuf-based alert state storage",
-        "stage": "experimental",
-        "codeowner": "@grafana/alerting-squad"
+        "stage": "preview",
+        "codeowner": "@grafana/alerting-squad",
+        "expression": "false"
       }
     },
     {
       "metadata": {
         "name": "alertingSaveStatePeriodic",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2024-01-23T16:03:30Z"
+        "resourceVersion": "1738604155684",
+        "creationTimestamp": "2024-01-23T16:03:30Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-02-03 17:35:55.684572 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Writes the state periodically to the database, asynchronous to rule evaluation",
