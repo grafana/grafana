@@ -31,7 +31,7 @@ export function basicMatcherEditor<T = any>(
       <SuggestionsInput
         invalid={isInvalid}
         value={value}
-        error={'Value needs to be an integer or a variable'}
+        error={'Value needs to be a number or a variable'}
         onChange={onChangeVariableValue}
         placeholder="Value or variable"
         suggestions={getVariableSuggestions()}

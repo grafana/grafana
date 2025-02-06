@@ -49,7 +49,7 @@ export function rangeMatcherEditor<T = any>(
         <SuggestionsInput
           value={String(options.from)}
           invalid={isInvalid.from}
-          error={'Value needs to be an integer or a variable'}
+          error={'Value needs to be a number or a variable'}
           placeholder="From"
           onChange={(val) => onChangeOptionsSuggestions(val, 'from')}
           suggestions={suggestions}
@@ -57,7 +57,7 @@ export function rangeMatcherEditor<T = any>(
         <InlineLabel>and</InlineLabel>
         <SuggestionsInput
           invalid={isInvalid.to}
-          error={'Value needs to be an integer or a variable'}
+          error={'Value needs to be a number or a variable'}
           value={String(options.to)}
           placeholder="To"
           suggestions={suggestions}
