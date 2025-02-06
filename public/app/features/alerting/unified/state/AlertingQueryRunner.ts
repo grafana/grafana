@@ -15,6 +15,7 @@ import {
   withLoadingIndicator,
 } from '@grafana/data';
 import { DataSourceWithBackend, FetchResponse, getDataSourceSrv, toDataQueryError } from '@grafana/runtime';
+import { t } from 'app/core/internationalization';
 import { BackendSrv, getBackendSrv } from 'app/core/services/backend_srv';
 import { Graph } from 'app/core/utils/dag';
 import { isExpressionQuery } from 'app/features/expressions/guards';
@@ -22,8 +23,7 @@ import { cancelNetworkRequestsOnUnsubscribe } from 'app/features/query/state/pro
 import { setStructureRevision } from 'app/features/query/state/processing/revision';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
-import { createDagFromQueries, getDescendants, isDagError } from '../components/rule-editor/dag';
-import { stringifyErrorLike } from '../utils/misc';
+import { DAGError, LinkError, createDagFromQueries, getDescendants } from '../components/rule-editor/dag';
 import { getTimeRangeForExpression } from '../utils/timeRange';
 
 export interface AlertingQueryResult {
@@ -77,12 +77,10 @@ export class AlertingQueryRunner {
         try {
           createDagFromQueries(queries);
         } catch (error) {
-          if (isDagError(error)) {
-            const linkErrors = error.cause;
-
-            // add link errors to the panelData and mark them as errors
-            linkErrors.forEach((linkError) => {
-              nextResult[linkError.source] = createErrorPanelData(linkError.error);
+          // add link errors to the panelData and mark them as errors
+          if (error instanceof DAGError) {
+            error.cause.forEach((linkError) => {
+              nextResult[linkError.source] = createLinkErrorPanelData(linkError);
             });
           }
         }
@@ -108,8 +106,8 @@ export class AlertingQueryRunner {
     try {
       queriesGraph = createDagFromQueries(queries);
     } catch (error) {
-      if (isDagError(error)) {
-        const nodesFailedToLink = error.cause?.map((linkError) => linkError.source);
+      if (error instanceof DAGError) {
+        const nodesFailedToLink = error.cause.map((linkError) => linkError.source);
         queriesToExclude.push(...nodesFailedToLink);
       } else {
         throw error;
@@ -284,13 +282,23 @@ const applyChange = (
   return nextResult;
 };
 
-const createErrorPanelData = (error: unknown): PanelData => ({
+const createLinkErrorPanelData = (error: LinkError): PanelData => ({
   series: [],
   state: LoadingState.Error,
   errors: [
     {
-      message: stringifyErrorLike(error),
+      message: createLinkErrorMessage(error),
     },
   ],
   timeRange: getDefaultTimeRange(),
 });
+
+function createLinkErrorMessage(error: LinkError): string {
+  const isSelfReference = error.source === error.target;
+
+  return isSelfReference
+    ? t('alerting.dag.self-reference', "You can't link an expression to itself")
+    : t('alerting.dag.missing-reference', `Failed to find query or expression named "{{target}}"`, {
+        target: error.target,
+      });
+}

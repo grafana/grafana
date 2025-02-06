@@ -39,7 +39,7 @@ export function createDagFromQueries(queries: AlertQuery[]): Graph {
   });
 
   if (linkErrors.length > 0) {
-    throw new Error('failed to create DAG from queries', { cause: linkErrors });
+    throw new DAGError('failed to create DAG from queries', { cause: linkErrors });
   }
 
   return graph;
@@ -56,22 +56,23 @@ interface LinkError {
   error: unknown;
 }
 
-interface DAGError extends Error {
-  cause: LinkError[];
-}
-
-
 interface LinkError {
   source: string;
   target: string;
   error: unknown;
 }
 
-interface DAGError extends Error {
+/** DAGError subclass, this is just a regular error but with LinkError[] as the cause */
+export class DAGError extends Error {
+  constructor(message: string, options: { cause: LinkError[] }) {
+    super(message, options);
+    this.cause = options?.cause ?? [];
+  }
+
   cause: LinkError[];
 }
 
-function getTargets(model: ExpressionQuery) {
+export function getTargets(model: ExpressionQuery) {
   const isMathExpression = model.type === ExpressionQueryType.math;
   const isClassicCondition = model.type === ExpressionQueryType.classic;
 

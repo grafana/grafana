@@ -283,6 +283,10 @@
     "contactPointFilter": {
       "label": "Contact point"
     },
+    "dag": {
+      "missing-reference": "Failed to find query or expression named \"{{target}}\"",
+      "self-reference": "You can't link an expression to itself"
+    },
     "export": {
       "subtitle": {
         "formats": "Select the format and download the file or copy the contents to clipboard",
