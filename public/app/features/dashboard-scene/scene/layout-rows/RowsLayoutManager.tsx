@@ -12,8 +12,10 @@ import {
 } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
+import DashboardEmpty from 'app/features/dashboard/dashgrid/DashboardEmpty';
 
 import { isClonedKey } from '../../utils/clone';
+import { getDashboardSceneFor } from '../../utils/utils';
 import { DashboardScene } from '../DashboardScene';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
@@ -195,6 +197,14 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
   public static Component = ({ model }: SceneComponentProps<RowsLayoutManager>) => {
     const { rows } = model.useState();
     const styles = useStyles2(getStyles);
+    const dashboard = getDashboardSceneFor(model);
+
+    // If we are top level layout and have no children, show empty state
+    if (model.parent === dashboard && rows.length === 0) {
+      return (
+        <DashboardEmpty dashboard={dashboard} canCreate={!!dashboard.state.meta.canEdit} key="dashboard-empty-state" />
+      );
+    }
 
     return (
       <div className={styles.wrapper}>
