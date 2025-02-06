@@ -37,3 +37,11 @@ export async function generateOptions(amount: number): Promise<ComboboxOption[]>
     value: index.toString(),
   }));
 }
+
+export async function generateGroupingOptions(amount: number): Promise<ComboboxOption[]> {
+  return Array.from({ length: amount }, (_, index) => ({
+    label: 'Option ' + index,
+    value: index.toString(),
+    group: index % 10 === 0 ? 'Ten' : index % 2 === 0 ? 'Even' : undefined,
+  }));
+}
