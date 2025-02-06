@@ -368,8 +368,7 @@ func (b *QueryAPIBuilder) handleExpressions(ctx context.Context, req parsedReque
 			if !ok {
 				dr, ok := qdr.Responses[refId]
 				if ok {
-					allowLongFrames := false // TODO -- depends on input type and only if SQL?
-					_, res, err := b.converter.Convert(ctx, req.RefIDTypes[refId], dr.Frames, allowLongFrames)
+					_, res, err := b.converter.Convert(ctx, req.RefIDTypes[refId], dr.Frames)
 					if err != nil {
 						expressionsLogger.Error("error converting frames for expressions", "error", err)
 						res.Error = err
@@ -409,13 +408,12 @@ func (b *QueryAPIBuilder) convertQueryWithoutExpression(ctx context.Context, req
 	if qdr == nil {
 		return nil, errors.New("queryDataResponse is nil")
 	}
-	allowLongFrames := false
 	refID := req.Request.Queries[0].RefID
 	if _, exist := qdr.Responses[refID]; !exist {
 		return nil, fmt.Errorf("refID '%s' does not exist", refID)
 	}
 	frames := qdr.Responses[refID].Frames
-	_, results, err := b.converter.Convert(ctx, req.PluginId, frames, allowLongFrames)
+	_, results, err := b.converter.Convert(ctx, req.PluginId, frames)
 	if err != nil {
 		results.Error = err
 	}
