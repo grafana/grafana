@@ -27,7 +27,9 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
+	"github.com/grafana/grafana/pkg/apis/dashboard"
+	dashboardv0alpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
+	folderv0alpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -93,7 +95,7 @@ func ProvideDashboardServiceImpl(
 	restConfigProvider apiserver.RestConfigProvider, userService user.Service, unified resource.ResourceClient,
 	quotaService quota.Service, orgService org.Service, publicDashboardService publicdashboards.ServiceWrapper,
 ) (*DashboardServiceImpl, error) {
-	k8sHandler := client.NewK8sHandler(cfg, request.GetNamespaceMapper(cfg), v0alpha1.DashboardResourceInfo.GroupVersionResource(), restConfigProvider, unified, dashboardStore, userService)
+	k8sHandler := client.NewK8sHandler(cfg, request.GetNamespaceMapper(cfg), dashboardv0alpha1.DashboardResourceInfo.GroupVersionResource(), restConfigProvider, unified, dashboardStore, userService)
 
 	dashSvc := &DashboardServiceImpl{
 		cfg:                       cfg,
@@ -1266,7 +1268,7 @@ func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *dashb
 				}
 				foldersMap[hit.Folder] = f
 			}
-			finalResults[i] = dashboards.DashboardSearchProjection{
+			result := dashboards.DashboardSearchProjection{
 				ID:          hit.Field.GetNestedInt64(search.DASHBOARD_LEGACY_ID),
 				UID:         hit.Name,
 				OrgID:       query.OrgId,
@@ -1277,6 +1279,12 @@ func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *dashb
 				FolderTitle: f.Title,
 				Tags:        hit.Tags,
 			}
+
+			if hit.Resource == folderv0alpha1.RESOURCE {
+				result.IsFolder = true
+			}
+
+			finalResults[i] = result
 		}
 
 		return finalResults, nil
@@ -1644,7 +1652,7 @@ func (dr *DashboardServiceImpl) listDashboardsThroughK8s(ctx context.Context, or
 	return dashboards, nil
 }
 
-func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) (*v0alpha1.SearchResults, error) {
+func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) (*dashboardv0alpha1.SearchResults, error) {
 	request := &resource.ResourceSearchRequest{
 		Options: &resource.ListOptions{
 			Fields: []*resource.Requirement{},
@@ -1722,8 +1730,55 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 		request.Options.Fields = append(request.Options.Fields, req...)
 	}
 
-	if query.Limit > 0 {
-		request.Limit = query.Limit
+	if query.IsDeleted {
+		request.IsDeleted = query.IsDeleted
+	}
+
+	if query.Limit < 1 {
+		query.Limit = 1000
+	}
+
+	if query.Page < 1 {
+		query.Page = 1
+	}
+
+	request.Limit = query.Limit
+	request.Page = query.Page
+	request.Offset = query.Page - 1 // bleve's offset is 0 indexed
+
+	namespace := dr.k8sclient.GetNamespace(query.OrgId)
+	var err error
+	var federate *resource.ResourceKey
+	switch query.Type {
+	case "":
+		// When no type specified, search for dashboards
+		request.Options.Key, err = resource.AsResourceKey(namespace, dashboard.DASHBOARD_RESOURCE)
+		// Currently a search query is across folders and dashboards
+		if err == nil {
+			federate, err = resource.AsResourceKey(namespace, folderv0alpha1.RESOURCE)
+		}
+	case searchstore.TypeDashboard, searchstore.TypeAnnotation:
+		request.Options.Key, err = resource.AsResourceKey(namespace, dashboard.DASHBOARD_RESOURCE)
+	case searchstore.TypeFolder, searchstore.TypeAlertFolder:
+		request.Options.Key, err = resource.AsResourceKey(namespace, folderv0alpha1.RESOURCE)
+	default:
+		err = fmt.Errorf("bad type request")
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	if federate != nil {
+		request.Federated = []*resource.ResourceKey{federate}
+	}
+
+	// technically, there exists the ability to register multiple ways of sorting using the legacy database
+	// see RegisterSortOption in pkg/services/search/sorting.go
+	// however, it doesn't look like we are taking advantage of that. And since by default the legacy
+	// sql will sort by title ascending, we only really need to handle the "alpha-desc" case
+	if query.Sort.Name == "alpha-desc" {
+		request.SortBy = append(request.SortBy, &resource.ResourceSearchRequest_Sort{Field: resource.SEARCH_FIELD_TITLE, Desc: true})
 	}
 
 	res, err := dr.k8sclient.Search(ctx, query.OrgId, request)
@@ -1770,7 +1825,7 @@ func (dr *DashboardServiceImpl) searchProvisionedDashboardsThroughK8s(ctx contex
 	var mu sync.Mutex
 	g, ctx := errgroup.WithContext(ctx)
 	for _, h := range searchResults.Hits {
-		func(hit v0alpha1.DashboardHit) {
+		func(hit dashboardv0alpha1.DashboardHit) {
 			g.Go(func() error {
 				out, err := dr.k8sclient.Get(ctx, hit.Name, query.OrgId, v1.GetOptions{})
 				if err != nil {
@@ -2000,7 +2055,7 @@ func LegacySaveCommandToUnstructured(cmd *dashboards.SaveDashboardCommand, names
 	finalObj.Object["spec"] = obj
 	finalObj.SetName(uid)
 	finalObj.SetNamespace(namespace)
-	finalObj.SetGroupVersionKind(v0alpha1.DashboardResourceInfo.GroupVersionKind())
+	finalObj.SetGroupVersionKind(dashboardv0alpha1.DashboardResourceInfo.GroupVersionKind())
 
 	meta, err := utils.MetaAccessor(&finalObj)
 	if err != nil {

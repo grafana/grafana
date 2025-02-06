@@ -179,10 +179,12 @@ func (h *k8sHandler) Search(ctx context.Context, orgID int64, in *resource.Resou
 		in.Options = &resource.ListOptions{}
 	}
 
-	in.Options.Key = &resource.ResourceKey{
-		Namespace: h.GetNamespace(orgID),
-		Group:     h.gvr.Group,
-		Resource:  h.gvr.Resource,
+	if in.Options.Key == nil {
+		in.Options.Key = &resource.ResourceKey{
+			Namespace: h.GetNamespace(orgID),
+			Group:     h.gvr.Group,
+			Resource:  h.gvr.Resource,
+		}
 	}
 
 	return h.searcher.Search(ctx, in)

@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/search/model"
-	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -112,20 +111,6 @@ func (s *SearchService) SearchHandler(ctx context.Context, query *Query) (model.
 
 	if sortOpt, exists := s.sortOptions[query.Sort]; exists {
 		dashboardQuery.Sort = sortOpt
-	}
-
-	// if folders are stored in unified storage, we need to use the folder service to query for folders
-	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesFoldersServiceV2) && (query.Type == searchstore.TypeFolder || query.Type == searchstore.TypeAlertFolder) {
-		hits, err := s.folderService.SearchFolders(ctx, folder.SearchFoldersQuery{
-			OrgID:        query.OrgId,
-			UIDs:         query.FolderUIDs,
-			IDs:          query.FolderIds,
-			Title:        query.Title,
-			Limit:        query.Limit,
-			SignedInUser: query.SignedInUser,
-		})
-
-		return sortedHits(hits), err
 	}
 
 	hits, err := s.dashboardService.SearchDashboards(ctx, &dashboardQuery)
