@@ -31,7 +31,7 @@ func NewDashboardLargeObjectSupport(scheme *runtime.Scheme) *apistore.BasicLarge
 			dash.Spec = spec
 			dash.SetManagedFields(nil) // this could be bigger than the object!
 
-			keep := []string{"title", "description", "schemaVersion"}
+			keep := []string{"title", "description", "tags", "schemaVersion"}
 			for _, k := range keep {
 				v, ok := old[k]
 				if ok {
