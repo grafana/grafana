@@ -68,6 +68,8 @@ export interface BoxProps extends FlexProps, SizeProps, Omit<React.HTMLAttribute
   /** Sets the HTML element that will be rendered as a Box. Defaults to 'div' */
   element?: ElementType;
   position?: ResponsiveProp<Property.Position>;
+
+  overflow?: ResponsiveProp<Property.Overflow>;
 }
 
 export const Box = forwardRef<HTMLElement, PropsWithChildren<BoxProps>>((props, ref) => {
@@ -109,6 +111,7 @@ export const Box = forwardRef<HTMLElement, PropsWithChildren<BoxProps>>((props, 
     minHeight,
     maxHeight,
     position,
+    overflow,
     ...rest
   } = props;
   const styles = useStyles2(
@@ -141,7 +144,8 @@ export const Box = forwardRef<HTMLElement, PropsWithChildren<BoxProps>>((props, 
     alignItems,
     boxShadow,
     gap,
-    position
+    position,
+    overflow
   );
   const sizeStyles = useStyles2(getSizeStyles, width, minWidth, maxWidth, height, minHeight, maxHeight);
   const Element = element ?? 'div';
@@ -209,7 +213,8 @@ const getStyles = (
   alignItems: BoxProps['alignItems'],
   boxShadow: BoxProps['boxShadow'],
   gap: BoxProps['gap'],
-  position: BoxProps['position']
+  position: BoxProps['position'],
+  overflow: BoxProps['overflow']
 ) => {
   return {
     root: css([
@@ -306,6 +311,9 @@ const getStyles = (
       })),
       getResponsiveStyle(theme, position, (val) => ({
         position: val,
+      })),
+      getResponsiveStyle(theme, overflow, (val) => ({
+        overflow: val,
       })),
     ]),
   };
