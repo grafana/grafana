@@ -450,10 +450,11 @@ export class DefaultGridLayoutManager
   }
 
   public static Component = ({ model }: SceneComponentProps<DefaultGridLayoutManager>) => {
-    const dashboard = getDashboardSceneFor(model);
     const { children } = useSceneObjectState(model.state.grid, { shouldActivateOrKeepAlive: true });
 
     if (children.length === 0) {
+      const dashboard = getDashboardSceneFor(model);
+
       return (
         <DashboardEmpty dashboard={dashboard} canCreate={!!dashboard.state.meta.canEdit} key="dashboard-empty-state" />
       );
