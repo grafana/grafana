@@ -8,24 +8,32 @@ import (
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper"
+	keepertypes "github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/types"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func ProvideDecryptStorage(db db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles) (contracts.DecryptStorage, error) {
+func ProvideDecryptStorage(db db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, keeperService secretkeeper.Service) (contracts.DecryptStorage, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) ||
 		!features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) {
 		return &decryptStorage{}, nil
 	}
 
-	return &decryptStorage{db: db}, nil
+	keepers, err := keeperService.GetKeepers()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get keepers: %w", err)
+	}
+
+	return &decryptStorage{db: db, keepers: keepers}, nil
 }
 
 // decryptStorage is the actual implementation of the decrypt storage.
 type decryptStorage struct {
-	db db.DB
+	db      db.DB
+	keepers map[keepertypes.KeeperType]keepertypes.Keeper
 }
 
 func (s *decryptStorage) Decrypt(ctx context.Context, nn xkube.NameNamespace) (secretv0alpha1.ExposedSecureValue, error) {
@@ -35,19 +43,20 @@ func (s *decryptStorage) Decrypt(ctx context.Context, nn xkube.NameNamespace) (s
 		return "", fmt.Errorf("missing auth info in context")
 	}
 
-	_, err := s.readSecureValue(ctx, nn)
+	exposedValue, err := s.decryptFromKeeper(ctx, nn)
 	if err != nil {
-		return "", fmt.Errorf("read secure value: %w", err)
+		return "", fmt.Errorf("decrypt from keeper: %w", err)
 	}
 
-	// TODO: implement expose with keeper.
-	// Returns a dummy value for now.
-	return secretv0alpha1.ExposedSecureValue("super duper secure"), nil
+	return exposedValue, nil
 }
 
-func (s *decryptStorage) readSecureValue(ctx context.Context, nn xkube.NameNamespace) (*secureValueDB, error) {
-	row := &secureValueDB{Name: nn.Name, Namespace: nn.Namespace.String()}
+func (s *decryptStorage) decryptFromKeeper(ctx context.Context, nn xkube.NameNamespace) (secretv0alpha1.ExposedSecureValue, error) {
+	// TODO:
+	// Get sv and keeper credentials from metdata store
+	// Decrypt from keeper, passing those keeper credentials cfg
 
+	row := &secureValueDB{Name: nn.Name, Namespace: nn.Namespace.String()}
 	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		found, err := sess.Get(row)
 		if err != nil {
@@ -61,8 +70,20 @@ func (s *decryptStorage) readSecureValue(ctx context.Context, nn xkube.NameNames
 		return nil
 	})
 	if err != nil {
-		return nil, fmt.Errorf("db failure: %w", err)
+		return "", fmt.Errorf("db failure: %w", err)
 	}
 
-	return row, nil
+	var keeperConfig secretv0alpha1.KeeperConfig
+
+	// Check if keeper is default
+	if row.Keeper == keepertypes.DefaultKeeperName {
+		exposedValue, err := s.keepers[keepertypes.SQLKeeperType].Expose(ctx, keeperConfig, nn.Namespace.String(), keepertypes.ExternalID(row.ExternalID))
+		if err != nil {
+			return "", fmt.Errorf("failed to store in default keeper: %w", err)
+		}
+		return exposedValue, err
+	}
+
+	// TODO: implement storing in other keepers, returns dummy secret for now
+	return secretv0alpha1.ExposedSecureValue("TODO"), nil
 }
