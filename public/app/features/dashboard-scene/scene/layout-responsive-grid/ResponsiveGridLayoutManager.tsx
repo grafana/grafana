@@ -1,8 +1,16 @@
 import { SelectableValue } from '@grafana/data';
-import { SceneComponentProps, SceneCSSGridLayout, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
+import {
+  SceneComponentProps,
+  SceneCSSGridLayout,
+  SceneObjectBase,
+  SceneObjectState,
+  useSceneObjectState,
+  VizPanel,
+} from '@grafana/scenes';
 import { Select } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
+import DashboardEmpty from 'app/features/dashboard/dashgrid/DashboardEmpty';
 
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { getDashboardSceneFor, getGridItemKeyForPanelId, getVizPanelKeyForPanelId } from '../../utils/utils';
@@ -140,6 +148,16 @@ export class ResponsiveGridLayoutManager
   public activateRepeaters(): void {}
 
   public static Component = ({ model }: SceneComponentProps<ResponsiveGridLayoutManager>) => {
+    const { children } = useSceneObjectState(model.state.layout, { shouldActivateOrKeepAlive: true });
+    const dashboard = getDashboardSceneFor(model);
+
+    // If we are top level layout and have no children, show empty state
+    if (model.parent === dashboard && children.length === 0) {
+      return (
+        <DashboardEmpty dashboard={dashboard} canCreate={!!dashboard.state.meta.canEdit} key="dashboard-empty-state" />
+      );
+    }
+
     return <model.state.layout.Component model={model.state.layout} />;
   };
 }
