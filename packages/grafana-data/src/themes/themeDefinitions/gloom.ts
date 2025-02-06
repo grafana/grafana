@@ -6,7 +6,7 @@ import { NewThemeOptions } from '../createTheme';
  */
 
 const whiteBase = `210, 210, 220`;
-const secondaryBase = `250, 220, 189`;
+const secondaryBase = `250, 225, 195`;
 const brandMain = '#ff934d';
 const brandText = '#f99a5c';
 
@@ -48,9 +48,8 @@ const gloomTheme: NewThemeOptions = {
 
     background: {
       canvas: '#000',
-      primary: '#170c0c',
-      //secondary: '#231919',
-      secondary: '#281c1c',
+      primary: '#140b0b',
+      secondary: '#231919',
     },
 
     action: {
