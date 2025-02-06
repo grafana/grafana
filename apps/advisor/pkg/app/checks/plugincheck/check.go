@@ -97,11 +97,13 @@ func (s *deprecationStep) Run(ctx context.Context, _ *advisor.CheckSpec, items [
 			continue
 		}
 		if i.Status == "deprecated" {
-			errs = append(errs, advisor.CheckReportError{
-				Severity: advisor.CheckReportErrorSeverityHigh,
-				Reason:   fmt.Sprintf("Plugin deprecated: %s", p.ID),
-				Action:   "Check the <a href='https://grafana.com/legal/plugin-deprecation/#a-plugin-i-use-is-deprecated-what-should-i-do' target=_blank>documentation</a> for recommended steps.",
-			})
+			errs = append(errs, checks.NewCheckReportError(
+				advisor.CheckReportErrorSeverityHigh,
+				fmt.Sprintf("Plugin deprecated: %s", p.ID),
+				"Check the <a href='https://grafana.com/legal/plugin-deprecation/#a-plugin-i-use-is-deprecated-what-should-i-do' target=_blank>documentation</a> for recommended steps.",
+				s.ID(),
+				p.ID,
+			))
 		}
 	}
 	return errs, nil
@@ -150,13 +152,15 @@ func (s *updateStep) Run(ctx context.Context, _ *advisor.CheckSpec, items []any)
 			continue
 		}
 		if hasUpdate(p, info) {
-			errs = append(errs, advisor.CheckReportError{
-				Severity: advisor.CheckReportErrorSeverityLow,
-				Reason:   fmt.Sprintf("New version available for %s", p.ID),
-				Action: fmt.Sprintf(
+			errs = append(errs, checks.NewCheckReportError(
+				advisor.CheckReportErrorSeverityLow,
+				fmt.Sprintf("New version available for %s", p.ID),
+				fmt.Sprintf(
 					"Go to the <a href='/plugins/%s?page=version-history'>plugin admin page</a>"+
 						" and upgrade to the latest version.", p.ID),
-			})
+				s.ID(),
+				p.ID,
+			))
 		}
 	}
 
