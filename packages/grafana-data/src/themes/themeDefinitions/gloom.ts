@@ -48,8 +48,8 @@ const gloomTheme: NewThemeOptions = {
 
     background: {
       canvas: '#000',
-      primary: '#140b0b',
-      secondary: '#231919',
+      primary: '#0d0b14',
+      secondary: '#19171f',
     },
 
     action: {
