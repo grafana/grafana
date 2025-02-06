@@ -442,7 +442,7 @@ For more information, refer to the AWS documentation for [Service Quotas](https:
 
 The CloudWatch plugin enables you to monitor and troubleshoot applications across multiple regional accounts. Using cross-account observability, you can seamlessly search, visualize and analyze metrics and logs without worrying about account boundaries.
 
-To use this feature, configure in the [AWS console under Cloudwatch Settings](https://aws.amazon.com/blogs/aws/new-amazon-cloudwatch-cross-account-observability/), a monitoring and source account, and then add the necessary IAM permissions as described above.
+To use this feature, configure in the [AWS console under CloudWatch Settings](https://aws.amazon.com/blogs/aws/new-amazon-cloudwatch-cross-account-observability/), a monitoring and source account, and then add the necessary IAM permissions as described above.
 
 ## CloudWatch Logs data protection
 
