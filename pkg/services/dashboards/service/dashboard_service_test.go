@@ -1388,6 +1388,7 @@ func TestSearchDashboards(t *testing.T) {
 				Title:       "Dashboard 1",
 				Tags:        []string{"tag1", "tag2"},
 				FolderTitle: "testing-folder-1",
+				FolderUID:   "f1",
 			},
 			{
 				UID:         "uid2",
@@ -1395,6 +1396,7 @@ func TestSearchDashboards(t *testing.T) {
 				OrgID:       1,
 				Title:       "Dashboard 2",
 				FolderTitle: "testing-folder-1",
+				FolderUID:   "f1",
 			},
 		}, nil).Once()
 		result, err := service.SearchDashboards(context.Background(), &query)
