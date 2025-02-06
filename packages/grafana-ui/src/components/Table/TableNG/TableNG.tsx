@@ -18,6 +18,7 @@ import { TableCellHeight } from '@grafana/schema';
 import { getScrollbarWidth, Pagination } from '@grafana/ui';
 
 import { useStyles2, useTheme2 } from '../../../themes';
+import { Trans } from '../../../utils/i18n';
 import { ContextMenu } from '../../ContextMenu/ContextMenu';
 import { MenuItem } from '../../Menu/MenuItem';
 import { TableCellInspector, TableCellInspectorMode } from '../TableCellInspector';
@@ -32,6 +33,9 @@ import { getRowHeight, shouldTextOverflow, getFooterItemNG } from './utils';
 const DEFAULT_CELL_PADDING = 6;
 const COLUMN_MIN_WIDTH = 150;
 const EXPANDER_WIDTH = 50;
+const SMALL_PAGINATION_LIMIT = 750;
+const MAX_CELL_HEIGHT = 48;
+const SCROLL_BAR_WIDTH = getScrollbarWidth();
 
 type TableRow = Record<string, unknown>;
 
@@ -162,7 +166,7 @@ export function TableNG(props: TableNGProps) {
       case TableCellHeight.Md:
         return 42;
       case TableCellHeight.Lg:
-        return 48;
+        return MAX_CELL_HEIGHT;
     }
 
     return DEFAULT_CELL_PADDING * 2 + bodyFontSize * lineHeight;
@@ -485,12 +489,22 @@ export function TableNG(props: TableNGProps) {
   }, [rows, filter, sortedRows, props.data.fields]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Paginated rows
-  let headerCellHeight = 0;
-  if (!noHeader && Object.keys(headerCellRefs.current).length > 0) {
+  // TODO consolidate all of this into a useMemo with proper deps returning a pagination object
+  const numRows = filteredRows.length;
+  let headerCellHeight = MAX_CELL_HEIGHT;
+  if (noHeader) {
+    headerCellHeight = 0;
+  } else if (!noHeader && Object.keys(headerCellRefs.current).length > 0) {
     headerCellHeight = headerCellRefs.current[Object.keys(headerCellRefs.current)[0]].getBoundingClientRect().height;
   }
-  const scrollBarWidth = getScrollbarWidth();
-  const rowsPerPage = Math.floor((height - headerCellHeight - scrollBarWidth - paginationHeight) / defaultRowHeight);
+  const rowsPerPage = Math.floor((height - headerCellHeight - SCROLL_BAR_WIDTH - paginationHeight) / defaultRowHeight);
+  const itemsRangeStart = page * rowsPerPage + 1;
+  let itemsRangeEnd = itemsRangeStart + rowsPerPage - 1;
+  if (itemsRangeEnd > numRows) {
+    itemsRangeEnd = numRows;
+  }
+  const displayedEnd = itemsRangeEnd < numRows ? itemsRangeEnd : numRows;
+  const smallPagination = width < SMALL_PAGINATION_LIMIT;
 
   const numberOfPages = useMemo(() => {
     const totalPages = Math.ceil(filteredRows.length / rowsPerPage);
@@ -611,14 +625,20 @@ export function TableNG(props: TableNGProps) {
       {enablePagination && (
         <div className={styles.paginationContainer} ref={paginationWrapperRef}>
           <Pagination
-            className={styles.paginationElement}
             currentPage={page + 1}
             numberOfPages={numberOfPages}
-            showSmallVersion={paginationWidth < 550}
+            showSmallVersion={smallPagination}
             onNavigate={(toPage) => {
               setPage(toPage - 1);
             }}
           />
+          {!smallPagination && (
+            <div className={styles.paginationSummary}>
+              <Trans i18nKey="grafana-ui.table.pagination-summary">
+                {{ itemsRangeStart }} - {{ displayedEnd }} of {{ numRows }} rows
+              </Trans>
+            </div>
+          )}
         </div>
       )}
 
@@ -696,12 +716,18 @@ const getStyles = (theme: GrafanaTheme2, textWrap: boolean) => ({
     },
   }),
   paginationContainer: css({
+    alignItems: 'center',
     display: 'flex',
     justifyContent: 'center',
+    marginTop: '8px',
     width: '100%',
   }),
-  paginationElement: css({
-    marginTop: '8px',
+  paginationSummary: css({
+    color: theme.colors.text.secondary,
+    fontSize: theme.typography.bodySmall.fontSize,
+    display: 'flex',
+    justifyContent: 'flex-end',
+    padding: theme.spacing(0, 1, 0, 2),
   }),
 });
 
