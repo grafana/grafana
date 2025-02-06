@@ -924,12 +924,12 @@ func TestAlertRuleGetKeyWithGroup(t *testing.T) {
 func TestAlertRuleCopy(t *testing.T) {
 	for i := 0; i < 100; i++ {
 		rule := RuleGen.GenerateRef()
-		copied := CopyRule(rule)
+		copied := rule.Copy()
 		require.Empty(t, rule.Diff(copied))
 	}
 }
 
-// This test makes sure the default generator does not skip any fields unless explicitly specified
+// This test makes sure the default generator
 func TestGeneratorFillsAllFields(t *testing.T) {
 	ignoredFields := map[string]struct{}{
 		"ID":       {},

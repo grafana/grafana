@@ -180,7 +180,7 @@ func UpdateCalculatedRuleFields(ch *GroupDelta) *GroupDelta {
 			}
 			if groupKey != ch.GroupKey {
 				if rule.RuleGroupIndex != idx {
-					upd.New = models.CopyRule(rule)
+					upd.New = rule.Copy()
 					upd.New.RuleGroupIndex = idx
 					upd.Diff = rule.Diff(upd.New, AlertRuleFieldsToIgnoreInDiff[:]...)
 				}
