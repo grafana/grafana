@@ -409,25 +409,26 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 	}
 
 	var result mathexp.Results
-	// TODO: Don't run Datasource Node Results through converter if input is SQL expression
-	// Also for now; must be one frame and none of the fields may have labels
+	// If the datasource node is an input to a SQL expression,
+	// the data must be in the Long format
 	if dn.isInputToSQLExpr {
-		var convertForSQL bool
+		var needsConversion bool
+		// Convert it if Multi:
 		if len(dataFrames) > 1 {
-			convertForSQL = true
+			needsConversion = true
 		}
 
-		// check the first frame for labels, if it exists
-		if !convertForSQL && len(dataFrames) > 0 {
+		// Convert it if Wide (has labels):
+		if len(dataFrames) == 1 {
 			for _, field := range dataFrames[0].Fields {
 				if len(field.Labels) > 0 {
-					convertForSQL = true
+					needsConversion = true
 					break
 				}
 			}
 		}
 
-		if convertForSQL {
+		if needsConversion {
 			convertedFrames, err := ConvertToLong(dataFrames)
 			if err != nil {
 				return result, fmt.Errorf("failed to convert data frames to long format for sql: %w", err)
@@ -438,6 +439,7 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 			return result, nil
 		}
 
+		// Otherwise it is already Long format; return as is
 		result.Values = mathexp.Values{
 			mathexp.TableData{Frame: dataFrames[0]},
 		}
