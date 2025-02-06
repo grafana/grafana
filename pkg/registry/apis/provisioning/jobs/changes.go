@@ -73,7 +73,7 @@ func Changes(source []repository.FileTreeEntry, target *provisioning.ResourceLis
 
 	// Paths found in grafana, without a matching path in the repository
 	for _, v := range lookup {
-		if v.Resource == "folders" && hasFolder(v.Path) {
+		if v.Resource == folders.RESOURCE && hasFolder(v.Path) {
 			continue
 		}
 
