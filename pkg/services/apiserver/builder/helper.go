@@ -288,11 +288,8 @@ func InstallAPIs(
 
 			// Get the option from custom.ini/command line
 			// when missing this will default to mode zero (legacy only)
-			var mode = grafanarest.DualWriterMode(0)
-
-			var (
-				requiresMigration = false
-			)
+			mode := grafanarest.DualWriterMode(0)
+			requiresMigration := false
 
 			resourceConfig, resourceExists := storageOpts.UnifiedStorageConfig[key]
 			if resourceExists {
@@ -321,10 +318,11 @@ func InstallAPIs(
 
 			// use pending checker
 			if requiresMigration {
-				// TODO... OSS start migration?
-
+				// TODO... OSS start migration?  that will then restart the service
+				return grafanarest.NewAlmostMode3(migrationStatus, gr, legacy, storage, reg, key), nil
 			}
 
+			// Only mode 2
 			return grafanarest.NewDualWriter(mode, legacy, storage, reg, key), nil
 		}
 	}
