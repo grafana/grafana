@@ -5,22 +5,19 @@ import (
 	"path/filepath"
 
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 type Service struct {
-	cfg  *setting.Cfg
-	pCfg *config.PluginManagementCfg
-	log  log.Logger
+	cfg *setting.Cfg
+	log log.Logger
 }
 
-func ProvideService(cfg *setting.Cfg, pCfg *config.PluginManagementCfg) *Service {
+func ProvideService(cfg *setting.Cfg) *Service {
 	return &Service{
-		cfg:  cfg,
-		pCfg: pCfg,
-		log:  log.New("plugin.sources"),
+		cfg: cfg,
+		log: log.New("plugin.sources"),
 	}
 }
 
