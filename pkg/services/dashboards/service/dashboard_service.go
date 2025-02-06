@@ -1258,7 +1258,6 @@ func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *dashb
 			folders, err = dr.folderService.GetFolders(ctx, folder.GetFoldersQuery{
 				UIDs:         folderIds,
 				OrgID:        query.OrgId,
-				OrderByTitle: true,
 				SignedInUser: query.SignedInUser,
 			})
 			if err != nil {
