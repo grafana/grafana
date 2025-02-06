@@ -43,12 +43,6 @@ export function addEnterpriseProviders(provider: ComponentType<{ children: React
   enterpriseProviders.push(provider);
 }
 
-function EnterpriseProviders(props: { children: ReactNode }) {
-  return enterpriseProviders.reduce((tree, Provider): ReactNode => {
-    return <Provider>{tree}</Provider>;
-  }, props.children);
-}
-
 export function addBodyRenderHook(fn: ComponentType) {
   bodyRenderHooks.push(fn);
 }
@@ -111,6 +105,7 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
       routes: ready && this.renderRoutes(),
       pageBanners,
       bodyRenderHooks,
+      providers: enterpriseProviders,
     };
 
     const MaybeTimeRangeProvider = config.featureToggles.timeRangeProvider ? TimeRangeProvider : Fragment;
@@ -129,17 +124,15 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
                   <MaybeTimeRangeProvider>
                     <SidecarContext_EXPERIMENTAL.Provider value={sidecarServiceSingleton_EXPERIMENTAL}>
                       <ExtensionRegistriesProvider registries={pluginExtensionRegistries}>
-                        <EnterpriseProviders>
-                          <div className="grafana-app">
-                            {config.featureToggles.appSidecar ? (
-                              <ExperimentalSplitPaneRouterWrapper {...routerWrapperProps} />
-                            ) : (
-                              <RouterWrapper {...routerWrapperProps} />
-                            )}
-                            <LiveConnectionWarning />
-                            <PortalContainer />
-                          </div>
-                        </EnterpriseProviders>
+                        <div className="grafana-app">
+                          {config.featureToggles.appSidecar ? (
+                            <ExperimentalSplitPaneRouterWrapper {...routerWrapperProps} />
+                          ) : (
+                            <RouterWrapper {...routerWrapperProps} />
+                          )}
+                          <LiveConnectionWarning />
+                          <PortalContainer />
+                        </div>
                       </ExtensionRegistriesProvider>
                     </SidecarContext_EXPERIMENTAL.Provider>
                   </MaybeTimeRangeProvider>
