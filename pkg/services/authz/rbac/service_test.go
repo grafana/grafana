@@ -541,13 +541,14 @@ func TestService_listPermission(t *testing.T) {
 				{UID: "some_folder_parent"},
 				{UID: "some_folder_child", ParentUID: strPtr("some_folder_parent")},
 				{UID: "some_folder_subchild", ParentUID: strPtr("some_folder_child")},
+				{UID: "some_folder_child2", ParentUID: strPtr("some_folder_parent")},
 			},
 			list: ListRequest{
 				Action:   "dashboards:read",
 				Group:    "dashboard.grafana.app",
 				Resource: "dashboards",
 			},
-			expectedFolders: []string{"some_folder_parent", "some_folder_child", "some_folder_subchild"},
+			expectedFolders: []string{"some_folder_parent", "some_folder_child", "some_folder_child2", "some_folder_subchild"},
 		},
 		{
 			name:        "return no dashboards and folders if the user doesn't have access to any resources",
