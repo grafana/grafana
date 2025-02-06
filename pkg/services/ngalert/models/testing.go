@@ -655,6 +655,7 @@ func CopyRule(r *AlertRule, mutators ...AlertRuleMutator) *AlertRule {
 		For:             r.For,
 		Record:          r.Record,
 		IsPaused:        r.IsPaused,
+		Metadata:        r.Metadata,
 	}
 
 	if r.DashboardUID != nil {
