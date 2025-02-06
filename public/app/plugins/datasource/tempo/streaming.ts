@@ -8,6 +8,7 @@ import {
   DataQueryRequest,
   DataQueryResponse,
   DataSourceInstanceSettings,
+  FieldCache,
   FieldType,
   LiveChannelScope,
   LoadingState,
@@ -72,15 +73,13 @@ export function doTempoSearchStreaming(
           const currentTime = performance.now();
           const elapsedTime = currentTime - requestTime;
 
-          const dataIndex = evt.message.schema.fields.findIndex((f: DataFrame) => f.name === 'result');
-          const metricsIndex = evt.message.schema.fields.findIndex((f: DataFrame) => f.name === 'metrics');
-          const stateIndex = evt.message.schema.fields.findIndex((f: DataFrame) => f.name === 'state');
-          const errorIndex = evt.message.schema.fields.findIndex((f: DataFrame) => f.name === 'error');
+          const messageFrame = dataFrameFromJSON(evt.message);
+          const fieldCache = new FieldCache(messageFrame);
 
-          const traces = evt.message.data.values[dataIndex][0];
-          const metrics = evt.message.data.values[metricsIndex][0];
-          const frameState: SearchStreamingState = evt.message.data.values[stateIndex][0];
-          const error = evt.message.data.values[errorIndex][0];
+          const traces = fieldCache.getFieldByName('result')?.values[0];
+          const metrics = fieldCache.getFieldByName('metrics')?.values[0];
+          const frameState = fieldCache.getFieldByName('state')?.values[0];
+          const error = fieldCache.getFieldByName('error')?.values[0];
 
           switch (frameState) {
             case SearchStreamingState.Done:
@@ -147,13 +146,12 @@ export function doTempoMetricsStreaming(
       map((evt) => {
         let newResult: DataQueryResponse = { data: [], state: LoadingState.NotStarted };
         if ('message' in evt && evt?.message) {
-          const dataIndex = evt.message.schema.fields.findIndex((f: DataFrame) => f.name === 'result');
-          const stateIndex = evt.message.schema.fields.findIndex((f: DataFrame) => f.name === 'state');
-          const errorIndex = evt.message.schema.fields.findIndex((f: DataFrame) => f.name === 'error');
+          const messageFrame = dataFrameFromJSON(evt.message);
+          const fieldCache = new FieldCache(messageFrame);
 
-          const data = evt.message.data.values[dataIndex][0];
-          const frameState: SearchStreamingState = evt.message.data.values[stateIndex][0];
-          const error = evt.message.data.values[errorIndex][0];
+          const data = fieldCache.getFieldByName('result')?.values[0];
+          const frameState = fieldCache.getFieldByName('state')?.values[0];
+          const error = fieldCache.getFieldByName('error')?.values[0];
 
           switch (frameState) {
             case SearchStreamingState.Done:
