@@ -1,6 +1,10 @@
 import { NewThemeOptions } from '../createTheme';
 
-const gildedGroveTheme: NewThemeOptions = {
+/**
+ * Torkel's GrafanaCon theme
+ * very WIP state
+ */
+const gloomTheme: NewThemeOptions = {
   name: 'Gloom',
   colors: {
     mode: 'dark',
@@ -10,7 +14,7 @@ const gildedGroveTheme: NewThemeOptions = {
       strong: 'rgba(200, 200, 180, 0.30)',
     },
     text: {
-      primary: 'rgb(250, 250, 239)',
+      primary: 'rgb(210, 210, 220)',
       secondary: 'rgba(200, 200, 180, 0.85)',
       disabled: 'rgba(200, 200, 180, 0.6)',
       link: '#ff934d',
@@ -64,4 +68,4 @@ const gildedGroveTheme: NewThemeOptions = {
   },
 };
 
-export default gildedGroveTheme;
+export default gloomTheme;
