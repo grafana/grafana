@@ -125,7 +125,7 @@ const getSwitchStyles = (theme: GrafanaTheme2, transparent?: boolean) => ({
         },
       },
 
-      '&:focus + label, &:focus-visible + label': getFocusStyles(theme),
+      '&:focus + label, &:focus-visible + label': getFocusStyles(theme, theme.colors.primary.main),
 
       '&:focus:not(:focus-visible) + label': getMouseFocusStyles(theme),
     },

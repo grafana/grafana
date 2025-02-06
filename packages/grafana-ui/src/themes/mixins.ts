@@ -48,9 +48,7 @@ export const focusCss = (theme: GrafanaTheme | GrafanaTheme2) => {
   outline: 2px dotted ${secondColor};
   outline-offset: 0px;
   box-shadow: none;
-  transition-property: outline, outline-offset, box-shadow;
-  transition-duration: 0.2s;
-  transition-timing-function: cubic-bezier(0.19, 1, 0.22, 1);`;
+  `;
 };
 
 export function getMouseFocusStyles(theme: GrafanaTheme | GrafanaTheme2) {
@@ -68,7 +66,7 @@ export function getFocusStyles(theme: GrafanaTheme2, backgroundColor?: string) {
     contrast = colorManipulator.getContrastRatio(backgroundColor, focusColor);
 
     if (contrast < 2) {
-      focusColor = theme.colors.primary.contrastText;
+      focusColor = theme.colors.text.maxContrast;
     }
   }
 
