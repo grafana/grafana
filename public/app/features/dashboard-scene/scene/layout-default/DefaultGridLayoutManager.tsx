@@ -412,6 +412,20 @@ export class DefaultGridLayoutManager
     });
   }
 
+  public static trackIfEmpty(grid: SceneGridLayout) {
+    getDashboardSceneFor(grid).setState({ isEmpty: grid.state.children.length === 0 });
+
+    const sub = grid.subscribeToState((n, p) => {
+      if (n.children.length !== p.children.length || n.children !== p.children) {
+        getDashboardSceneFor(grid).setState({ isEmpty: n.children.length === 0 });
+      }
+    });
+
+    return () => {
+      sub.unsubscribe();
+    };
+  }
+
   /**
    * Handle switching to the manual grid layout from other layouts
    * @param currentLayout
@@ -460,6 +474,7 @@ export class DefaultGridLayoutManager
         children: children,
         isDraggable: true,
         isResizable: true,
+        $behaviors: [DefaultGridLayoutManager.trackIfEmpty],
       }),
     });
   }

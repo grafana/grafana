@@ -97,12 +97,27 @@ export class ResponsiveGridLayoutManager
     return getOptions(this);
   }
 
+  private static trackIfEmpty(layout: SceneCSSGridLayout) {
+    getDashboardSceneFor(layout).setState({ isEmpty: layout.state.children.length === 0 });
+
+    const sub = layout.subscribeToState((n, p) => {
+      if (n.children.length !== p.children.length || n.children !== p.children) {
+        getDashboardSceneFor(layout).setState({ isEmpty: n.children.length === 0 });
+      }
+    });
+
+    return () => {
+      sub.unsubscribe();
+    };
+  }
+
   public static createEmpty() {
     return new ResponsiveGridLayoutManager({
       layout: new SceneCSSGridLayout({
         children: [],
         templateColumns: 'repeat(auto-fit, minmax(400px, auto))',
         autoRows: 'minmax(300px, auto)',
+        $behaviors: [ResponsiveGridLayoutManager.trackIfEmpty],
       }),
     });
   }
@@ -120,6 +135,7 @@ export class ResponsiveGridLayoutManager
         children,
         templateColumns: 'repeat(auto-fit, minmax(400px, auto))',
         autoRows: 'minmax(300px, auto)',
+        $behaviors: [ResponsiveGridLayoutManager.trackIfEmpty],
       }),
     });
   }

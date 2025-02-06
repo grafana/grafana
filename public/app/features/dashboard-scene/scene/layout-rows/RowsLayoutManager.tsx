@@ -14,6 +14,7 @@ import { useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
 import { isClonedKey } from '../../utils/clone';
+import { getDashboardSceneFor } from '../../utils/utils';
 import { DashboardScene } from '../DashboardScene';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
@@ -131,8 +132,22 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
     return sceneGraph.getAncestor(this, DashboardScene).state.editPane.state.selection?.getFirstObject();
   }
 
+  private static trackIfEmpty(layoutManager: RowsLayoutManager) {
+    getDashboardSceneFor(layoutManager).setState({ isEmpty: layoutManager.state.rows.length === 0 });
+
+    const sub = layoutManager.subscribeToState((n, p) => {
+      if (n.rows.length !== p.rows.length || n.rows !== p.rows) {
+        getDashboardSceneFor(layoutManager).setState({ isEmpty: n.rows.length === 0 });
+      }
+    });
+
+    return () => {
+      sub.unsubscribe();
+    };
+  }
+
   public static createEmpty() {
-    return new RowsLayoutManager({ rows: [] });
+    return new RowsLayoutManager({ rows: [], $behaviors: [RowsLayoutManager.trackIfEmpty] });
   }
 
   public static createFromLayout(layout: DashboardLayoutManager): RowsLayoutManager {
@@ -197,7 +212,7 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
       rows = [new RowItem({ layout: layout.clone(), title: t('dashboard.rows-layout.row.new', 'New row') })];
     }
 
-    return new RowsLayoutManager({ rows });
+    return new RowsLayoutManager({ rows, $behaviors: [RowsLayoutManager.trackIfEmpty] });
   }
 
   public static Component = ({ model }: SceneComponentProps<RowsLayoutManager>) => {
