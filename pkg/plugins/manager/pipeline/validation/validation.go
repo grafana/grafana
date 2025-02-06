@@ -8,6 +8,8 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/log"
 )
 
+const concurrencyLimit = 32
+
 // Validator is responsible for the Validation stage of the plugin loader pipeline.
 type Validator interface {
 	Validate(ctx context.Context, ps *plugins.Plugin) error
@@ -50,7 +52,7 @@ func (v *Validate) Validate(ctx context.Context, ps *plugins.Plugin) error {
 	// Otherwise, run the validation steps sequentially.
 	var limitSize int
 	if v.cfg.Features.PluginsCDNSyncLoaderEnabled && ps.Class == plugins.ClassCDN {
-		limitSize = min(len(v.validateSteps), v.cfg.LoaderConcurrencyLimit)
+		limitSize = min(len(v.validateSteps), concurrencyLimit)
 	} else {
 		limitSize = 1
 	}

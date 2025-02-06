@@ -18,6 +18,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginerrs"
 )
 
+const concurrencyLimit = 32
+
 type Loader struct {
 	cfg          *pluginsCfg.PluginManagementCfg
 	discovery    discovery.Discoverer
@@ -95,7 +97,7 @@ func (l *Loader) Load(ctx context.Context, src plugins.PluginSource) ([]*plugins
 	// Otherwise, validate plugins sequentially.
 	var limitSize int
 	if l.cfg.Features.PluginsCDNSyncLoaderEnabled && src.PluginClass(ctx) == plugins.ClassCDN {
-		limitSize = min(len(bootstrappedPlugins), l.cfg.LoaderConcurrencyLimit)
+		limitSize = min(len(bootstrappedPlugins), ConcurrencyLimit)
 	} else {
 		limitSize = 1
 	}
