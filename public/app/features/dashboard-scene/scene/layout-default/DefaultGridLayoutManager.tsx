@@ -1,5 +1,3 @@
-import { useState } from 'react';
-
 import { config } from '@grafana/runtime';
 import {
   SceneObjectState,
@@ -11,7 +9,6 @@ import {
   sceneUtils,
   SceneComponentProps,
   SceneGridItemLike,
-  SceneCSSGridLayout,
   useSceneObjectState,
 } from '@grafana/scenes';
 import { GRID_COLUMN_COUNT } from 'app/core/constants';
