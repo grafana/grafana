@@ -951,20 +951,23 @@
     "edit-pane": {
       "objects": {
         "multi-select": {
-          "selection-number": "No. of objects selected: "
+          "selection-number": "No. of objects selected: {{length}}"
         }
       },
       "open": "Open options pane",
       "panels": {
         "multi-select": {
-          "selection-number": "No. of panels selected: "
+          "selection-number": "No. of panels selected: {{length}}"
         }
       },
       "row": {
-        "hide": "Hide row header",
+        "header": {
+          "hide": "Hide",
+          "title": "Row header"
+        },
         "multi-select": {
           "options-header": "Multi-selected Row options",
-          "selection-number": "No. of rows selected: "
+          "selection-number": "No. of rows selected: {{length}}"
         }
       }
     },

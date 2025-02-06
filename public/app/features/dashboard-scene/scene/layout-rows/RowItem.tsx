@@ -78,8 +78,8 @@ export class RowItem
     this.setState({ title });
   }
 
-  public onHeaderHiddenToggle() {
-    this.setState({ isHeaderHidden: !this.state.isHeaderHidden });
+  public onHeaderHiddenToggle(isHeaderHidden = !this.state.isHeaderHidden) {
+    this.setState({ isHeaderHidden });
   }
 
   public onChangeHeight(height: 'expand' | 'min') {

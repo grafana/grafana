@@ -72,21 +72,17 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
 
   public activateRepeaters() {
     this.state.rows.forEach((row) => {
+      if (!row.isActive) {
+        row.activate();
+      }
+
       const behavior = (row.state.$behaviors ?? []).find((b) => b instanceof RowItemRepeaterBehavior);
 
-      if (behavior) {
-        if (!row.isActive) {
-          row.activate();
-        }
-
-        if (!row.getLayout().isActive) {
-          row.getLayout().activate();
-        }
-
-        if (!behavior.isActive) {
-          behavior.activate();
-        }
+      if (!behavior?.isActive) {
+        behavior?.activate();
       }
+
+      row.getLayout().activateRepeaters?.();
     });
   }
 
@@ -160,6 +156,11 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
       );
     } else {
       rows = [new RowItem({ layout: layout.clone() })];
+    }
+
+    // Ensure we always get at least one row
+    if (rows.length === 0) {
+      rows = [new RowItem()];
     }
 
     return new RowsLayoutManager({ rows });

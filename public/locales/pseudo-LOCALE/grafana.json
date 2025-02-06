@@ -951,20 +951,23 @@
     "edit-pane": {
       "objects": {
         "multi-select": {
-          "selection-number": "Ńő. őƒ őþĵęčŧş şęľęčŧęđ: "
+          "selection-number": "Ńő. őƒ őþĵęčŧş şęľęčŧęđ: {{length}}"
         }
       },
       "open": "Øpęŉ őpŧįőŉş päŉę",
       "panels": {
         "multi-select": {
-          "selection-number": "Ńő. őƒ päŉęľş şęľęčŧęđ: "
+          "selection-number": "Ńő. őƒ päŉęľş şęľęčŧęđ: {{length}}"
         }
       },
       "row": {
-        "hide": "Ħįđę řőŵ ĥęäđęř",
+        "header": {
+          "hide": "Ħįđę",
+          "title": "Ŗőŵ ĥęäđęř"
+        },
         "multi-select": {
           "options-header": "Mūľŧį-şęľęčŧęđ Ŗőŵ őpŧįőŉş",
-          "selection-number": "Ńő. őƒ řőŵş şęľęčŧęđ: "
+          "selection-number": "Ńő. őƒ řőŵş şęľęčŧęđ: {{length}}"
         }
       }
     },
