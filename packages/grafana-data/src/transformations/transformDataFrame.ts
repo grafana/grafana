@@ -26,7 +26,6 @@ const getOperator =
 
     const interpolated = JSON.parse(ctx.interpolate(JSON.stringify(options)));
 
-    console.log('interpolated', interpolated);
     const matcher = config.filter?.options ? getFrameMatchers(config.filter) : undefined;
     return source.pipe(
       mergeMap((before) =>
