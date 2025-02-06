@@ -31,11 +31,18 @@ func TestCheck_Run(t *testing.T) {
 		}
 
 		ctx := identity.WithRequester(context.Background(), &user.SignedInUser{})
-		report, err := check.Run(ctx, &advisor.CheckSpec{})
+		items, err := check.Items(ctx)
+		assert.NoError(t, err)
+		errs := []advisor.CheckReportError{}
+		for _, step := range check.Steps() {
+			stepErrs, err := step.Run(ctx, &advisor.CheckSpec{}, items)
+			assert.NoError(t, err)
+			errs = append(errs, stepErrs...)
+		}
 
 		assert.NoError(t, err)
-		assert.Equal(t, int64(2), report.Count)
-		assert.Empty(t, report.Errors)
+		assert.Equal(t, 2, len(items))
+		assert.Empty(t, errs)
 	})
 
 	t.Run("should return errors when datasource UID is invalid", func(t *testing.T) {
@@ -54,12 +61,19 @@ func TestCheck_Run(t *testing.T) {
 		}
 
 		ctx := identity.WithRequester(context.Background(), &user.SignedInUser{})
-		report, err := check.Run(ctx, &advisor.CheckSpec{})
+		items, err := check.Items(ctx)
+		assert.NoError(t, err)
+		errs := []advisor.CheckReportError{}
+		for _, step := range check.Steps() {
+			stepErrs, err := step.Run(ctx, &advisor.CheckSpec{}, items)
+			assert.NoError(t, err)
+			errs = append(errs, stepErrs...)
+		}
 
 		assert.NoError(t, err)
-		assert.Equal(t, int64(1), report.Count)
-		assert.Len(t, report.Errors, 1)
-		assert.Equal(t, "Invalid UID 'invalid uid' for data source Prometheus", report.Errors[0].Reason)
+		assert.Equal(t, 1, len(items))
+		assert.Len(t, errs, 1)
+		assert.Equal(t, "Invalid UID 'invalid uid' for data source Prometheus", errs[0].Reason)
 	})
 
 	t.Run("should return errors when datasource health check fails", func(t *testing.T) {
@@ -78,12 +92,19 @@ func TestCheck_Run(t *testing.T) {
 		}
 
 		ctx := identity.WithRequester(context.Background(), &user.SignedInUser{})
-		report, err := check.Run(ctx, &advisor.CheckSpec{})
+		items, err := check.Items(ctx)
+		assert.NoError(t, err)
+		errs := []advisor.CheckReportError{}
+		for _, step := range check.Steps() {
+			stepErrs, err := step.Run(ctx, &advisor.CheckSpec{}, items)
+			assert.NoError(t, err)
+			errs = append(errs, stepErrs...)
+		}
 
 		assert.NoError(t, err)
-		assert.Equal(t, int64(1), report.Count)
-		assert.Len(t, report.Errors, 1)
-		assert.Equal(t, "Health check failed for Prometheus", report.Errors[0].Reason)
+		assert.Equal(t, 1, len(items))
+		assert.Len(t, errs, 1)
+		assert.Equal(t, "Health check failed for Prometheus", errs[0].Reason)
 	})
 }
 

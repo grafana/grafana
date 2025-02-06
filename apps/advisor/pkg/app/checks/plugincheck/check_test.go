@@ -126,10 +126,17 @@ func TestRun(t *testing.T) {
 			managedPlugins := &mockManagedPlugins{managed: tt.pluginManaged}
 			check := New(pluginStore, pluginRepo, pluginPreinstall, managedPlugins)
 
-			report, err := check.Run(context.Background(), nil)
+			items, err := check.Items(context.Background())
 			assert.NoError(t, err)
-			assert.Equal(t, int64(len(tt.plugins)), report.Count)
-			assert.Equal(t, tt.expectedErrors, report.Errors)
+			errs := []advisor.CheckReportError{}
+			for _, step := range check.Steps() {
+				stepErrs, err := step.Run(context.Background(), &advisor.CheckSpec{}, items)
+				assert.NoError(t, err)
+				errs = append(errs, stepErrs...)
+			}
+			assert.NoError(t, err)
+			assert.Equal(t, len(tt.plugins), len(items))
+			assert.Equal(t, tt.expectedErrors, errs)
 		})
 	}
 }
