@@ -14,7 +14,7 @@ import { PanelSearchLayout } from './PanelSearchLayout';
 import { DashboardAngularDeprecationBanner } from './angular/DashboardAngularDeprecationBanner';
 
 export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) {
-  const { controls, overlay, body, editview, editPanel, viewPanelScene, panelSearch, panelsPerRow, isEditing } =
+  const { controls, overlay, editview, editPanel, viewPanelScene, panelSearch, panelsPerRow, isEditing } =
     model.useState();
   const { type } = useParams();
   const location = useLocation();
