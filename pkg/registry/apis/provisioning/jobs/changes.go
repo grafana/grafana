@@ -50,7 +50,10 @@ func Changes(source []repository.FileTreeEntry, target *provisioning.ResourceLis
 			}
 			keep = append(keep, file.Path)
 			delete(lookup, file.Path)
-		} else if !resources.ShouldIgnorePath(file.Path) {
+			continue
+		}
+
+		if !resources.ShouldIgnorePath(file.Path) {
 			changes = append(changes, ResourceFileChange{
 				Action: repository.FileActionCreated, // or previously ignored/failed
 				Path:   file.Path,
