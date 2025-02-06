@@ -47,16 +47,16 @@ const gloomTheme: NewThemeOptions = {
 
     background: {
       canvas: '#000',
-      primary: '#111',
-      secondary: '#222',
+      primary: '#170c0c',
+      secondary: '#231919',
     },
 
     action: {
-      hover: `rgba(${whiteBase}, 0.16)`,
+      hover: `rgba(${whiteBase}, 0.10)`,
       selected: `rgba(${whiteBase}, 0.12)`,
       selectedBorder: brandMain,
-      focus: `rgba(${whiteBase}, 0.16)`,
-      hoverOpacity: 0.08,
+      focus: `rgba(${whiteBase}, 0.10)`,
+      hoverOpacity: 0.05,
       disabledText: disabledText,
       disabledBackground: `rgba(${whiteBase}, 0.04)`,
       disabledOpacity: 0.38,
