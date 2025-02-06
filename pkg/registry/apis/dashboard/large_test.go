@@ -54,7 +54,8 @@ func TestLargeDashboardSupport(t *testing.T) {
 	require.NoError(t, err)
 	require.JSONEq(t, `{
 		"schemaVersion": 33,
-		"title": "Panel tests - All panels"
+		"title": "Panel tests - All panels",
+		"tags": ["gdev","panel-tests","all-panels"]
 	}`, string(small))
 
 	// Now make it big again
