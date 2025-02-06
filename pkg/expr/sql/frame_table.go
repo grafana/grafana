@@ -1,6 +1,5 @@
 //go:build !arm
 
-// -build arm
 package sql
 
 import (
