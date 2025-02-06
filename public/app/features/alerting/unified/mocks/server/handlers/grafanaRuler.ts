@@ -139,15 +139,54 @@ export const rulerRuleHandler = () => {
 
 export const rulerRuleVersionHistoryHandler = () => {
   const grafanaRuleVersions = [
-    grafanaRulerRule,
     produce(grafanaRulerRule, (draft: RulerGrafanaRuleDTO<GrafanaRuleDefinition>) => {
-      draft.grafana_alert.version = 1;
-      draft.grafana_alert.title = 'Updated alert';
+      draft.grafana_alert.version = 6;
+      draft.grafana_alert.updated = '2025-01-18T09:35:17.000Z';
+      draft.grafana_alert.updated_by = {
+        uid: 'service',
+        name: '',
+      };
+    }),
+    produce(grafanaRulerRule, (draft: RulerGrafanaRuleDTO<GrafanaRuleDefinition>) => {
+      draft.grafana_alert.version = 5;
       draft.grafana_alert.updated = '2025-01-17T09:35:17.000Z';
+      draft.grafana_alert.updated_by = {
+        uid: '__alerting__',
+        name: '',
+      };
+    }),
+    produce(grafanaRulerRule, (draft: RulerGrafanaRuleDTO<GrafanaRuleDefinition>) => {
+      draft.grafana_alert.version = 4;
+      draft.grafana_alert.title = 'Some new title';
+      draft.grafana_alert.updated = '2025-01-16T09:35:17.000Z';
+      draft.grafana_alert.updated_by = {
+        uid: 'different',
+        name: 'different user',
+      };
+    }),
+    produce(grafanaRulerRule, (draft: RulerGrafanaRuleDTO<GrafanaRuleDefinition>) => {
+      draft.grafana_alert.version = 3;
+      draft.grafana_alert.updated = '2025-01-15T09:35:17.000Z';
       draft.grafana_alert.updated_by = {
         uid: '1',
         name: 'user1',
       };
+    }),
+    produce(grafanaRulerRule, (draft: RulerGrafanaRuleDTO<GrafanaRuleDefinition>) => {
+      draft.grafana_alert.version = 2;
+      draft.grafana_alert.updated = '2025-01-14T09:35:17.000Z';
+      draft.for = '2h';
+      draft.labels.foo = 'bar';
+      draft.grafana_alert.notification_settings = { receiver: 'another receiver' };
+      draft.grafana_alert.updated_by = {
+        uid: 'foo',
+        name: '',
+      };
+    }),
+    produce(grafanaRulerRule, (draft: RulerGrafanaRuleDTO<GrafanaRuleDefinition>) => {
+      draft.grafana_alert.version = 1;
+      draft.grafana_alert.updated = '2025-01-13T09:35:17.000Z';
+      draft.grafana_alert.updated_by = null;
     }),
   ];
 

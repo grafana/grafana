@@ -193,6 +193,46 @@ describe('RuleViewer', () => {
         grafanaRulerRule.grafana_alert.title
       );
     });
+
+    describe('version history', () => {
+      it('shows version history with special case `updated_by` values', async () => {
+        await renderRuleViewer(mockRule, mockRuleIdentifier, ActiveTab.VersionHistory);
+        expect(await screen.findByText(/Compare versions/i)).toBeInTheDocument();
+
+        expect(screen.getByRole('cell', { name: /provisioning/i })).toBeInTheDocument();
+        expect(screen.getByRole('cell', { name: /alerting/i })).toBeInTheDocument();
+        expect(screen.getByRole('cell', { name: /Unknown/i })).toBeInTheDocument();
+        expect(screen.getByRole('cell', { name: /user id foo/i })).toBeInTheDocument();
+      });
+
+      it('shows comparison of versions', async () => {
+        const { user } = await renderRuleViewer(mockRule, mockRuleIdentifier, ActiveTab.VersionHistory);
+        expect(await screen.findByText(/Compare versions/i)).toBeInTheDocument();
+
+        await user.click(screen.getByLabelText('1'));
+        await user.click(screen.getByLabelText('2'));
+        await user.click(screen.getByRole('button', { name: /Compare versions/i }));
+        await screen.findByText(/comparing versions/i);
+        expect(await screen.findByText(/pending period/i)).toBeInTheDocument();
+        expect(screen.getAllByTestId('diffGroup')[0]).toHaveTextContent(/pending period changed 5m2h/i);
+        expect(screen.getAllByTestId('diffGroup')[1]).toHaveTextContent(/labels added foo bar/i);
+        expect(screen.getAllByTestId('diffGroup')[2]).toHaveTextContent(/contact point routing added/i);
+      });
+
+      it('renders version summary correctly for special cases', async () => {
+        const { user } = await renderRuleViewer(mockRule, mockRuleIdentifier, ActiveTab.VersionHistory);
+        expect(await screen.findByText(/Compare versions/i)).toBeInTheDocument();
+
+        await user.click(screen.getByLabelText('6'));
+        await user.click(screen.getByLabelText('5'));
+        await user.click(screen.getByRole('button', { name: /Compare versions/i }));
+        await screen.findByText(/comparing versions/i);
+
+        const versionSummary = screen.getByRole('heading', { level: 4 });
+        expect(versionSummary).toHaveTextContent(/Version 5 updated by alerting/i);
+        expect(versionSummary).toHaveTextContent(/Version 6 updated by provisioning/i);
+      });
+    });
   });
 
   describe('Data source managed alert rule', () => {
@@ -298,7 +338,7 @@ describe('RuleViewer', () => {
 
 const renderRuleViewer = async (rule: CombinedRule, identifier: RuleIdentifier, tab: ActiveTab = ActiveTab.Query) => {
   const path = `/alerting/${identifier.ruleSourceName}/${stringifyIdentifier(identifier)}/view?tab=${tab}`;
-  render(
+  const view = render(
     <AlertRuleProvider identifier={identifier} rule={rule}>
       <RuleViewer />
     </AlertRuleProvider>,
@@ -306,6 +346,8 @@ const renderRuleViewer = async (rule: CombinedRule, identifier: RuleIdentifier, 
   );
 
   await waitFor(() => expect(ELEMENTS.loading.query()).not.toBeInTheDocument());
+
+  return view;
 };
 
 jest.mock('@grafana/runtime', () => ({
