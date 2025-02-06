@@ -88,7 +88,7 @@ export function TableCellNG(props: any) {
       );
       break;
     case TableCellDisplayMode.JSONView:
-      cell = <JSONCell value={value} />;
+      cell = <JSONCell value={value} justifyContent={justifyContent} />;
       break;
     case TableCellDisplayMode.Auto:
     default:

@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { Property } from 'csstype';
 import { isString } from 'lodash';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -6,8 +7,8 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '../../../../themes';
 import { CellNGProps } from '../types';
 
-export const JSONCell = ({ value }: Omit<CellNGProps, 'theme' | 'field'>) => {
-  const styles = useStyles2(getStyles);
+export const JSONCell = ({ value, justifyContent }: Omit<CellNGProps, 'theme' | 'field'>) => {
+  const styles = useStyles2(getStyles, justifyContent);
 
   let localValue = value;
   let displayValue = localValue;
@@ -24,9 +25,11 @@ export const JSONCell = ({ value }: Omit<CellNGProps, 'theme' | 'field'>) => {
   return <div className={styles.jsonText}>{displayValue}</div>;
 };
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2, justifyContent: Property.JustifyContent) => ({
   jsonText: css({
+    display: 'flex',
     cursor: 'pointer',
     fontFamily: 'monospace',
+    justifyContent: justifyContent,
   }),
 });
