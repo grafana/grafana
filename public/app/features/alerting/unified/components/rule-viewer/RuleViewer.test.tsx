@@ -195,9 +195,19 @@ describe('RuleViewer', () => {
     });
 
     describe('version history', () => {
+      it('renders version history tab, and the compare version is enabled only when we have 2 versions selected', async () => {
+        const { user } = await renderRuleViewer(mockRule, mockRuleIdentifier, ActiveTab.VersionHistory);
+
+        expect(await screen.findByRole('button', { name: /Compare versions/i })).toBeDisabled();
+        await user.click(screen.getByLabelText('1'));
+        await user.click(screen.getByLabelText('2'));
+        expect(await screen.findByRole('button', { name: /Compare versions/i })).toBeEnabled();
+        await user.click(screen.getByLabelText('1'));
+        expect(await screen.findByRole('button', { name: /Compare versions/i })).toBeDisabled();
+      });
       it('shows version history with special case `updated_by` values', async () => {
         await renderRuleViewer(mockRule, mockRuleIdentifier, ActiveTab.VersionHistory);
-        expect(await screen.findByText(/Compare versions/i)).toBeInTheDocument();
+        expect(await screen.findByRole('button', { name: /Compare versions/i })).toBeDisabled();
 
         expect(screen.getByRole('cell', { name: /provisioning/i })).toBeInTheDocument();
         expect(screen.getByRole('cell', { name: /alerting/i })).toBeInTheDocument();
@@ -207,7 +217,7 @@ describe('RuleViewer', () => {
 
       it('shows comparison of versions', async () => {
         const { user } = await renderRuleViewer(mockRule, mockRuleIdentifier, ActiveTab.VersionHistory);
-        expect(await screen.findByText(/Compare versions/i)).toBeInTheDocument();
+        expect(await screen.findByRole('button', { name: /Compare versions/i })).toBeDisabled();
 
         await user.click(screen.getByLabelText('1'));
         await user.click(screen.getByLabelText('2'));
@@ -221,7 +231,7 @@ describe('RuleViewer', () => {
 
       it('renders version summary correctly for special cases', async () => {
         const { user } = await renderRuleViewer(mockRule, mockRuleIdentifier, ActiveTab.VersionHistory);
-        expect(await screen.findByText(/Compare versions/i)).toBeInTheDocument();
+        expect(await screen.findByRole('button', { name: /Compare versions/i })).toBeDisabled();
 
         await user.click(screen.getByLabelText('6'));
         await user.click(screen.getByLabelText('5'));
