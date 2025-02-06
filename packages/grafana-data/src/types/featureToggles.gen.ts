@@ -256,5 +256,6 @@ export interface FeatureToggles {
   alertingAlertmanagerExtraDedupStage?: boolean;
   alertingAlertmanagerExtraDedupStageStopPipeline?: boolean;
   newLogsPanel?: boolean;
+  grafanaconThemes?: boolean;
   alertingRuleVersionHistoryRestore?: boolean;
 }

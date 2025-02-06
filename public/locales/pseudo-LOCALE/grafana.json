@@ -2155,6 +2155,7 @@
       "title": "Ŀęŧ ūş ĥęľp yőū mįģřäŧę ŧő ŧĥįş şŧäčĸ"
     },
     "migrated-counts": {
+      "alert_rule_groups": "äľęřŧ řūľę ģřőūpş",
       "alert_rules": "äľęřŧ řūľęş",
       "contact_points": "čőŉŧäčŧ pőįŉŧş",
       "dashboards": "đäşĥþőäřđş",
@@ -2259,6 +2260,7 @@
     },
     "resource-type": {
       "alert_rule": "Åľęřŧ Ŗūľę",
+      "alert_rule_group": "Åľęřŧ Ŗūľę Ğřőūp",
       "contact_point": "Cőŉŧäčŧ Pőįŉŧ",
       "dashboard": "Đäşĥþőäřđ",
       "datasource": "Đäŧä şőūřčę",
@@ -3436,6 +3438,7 @@
       "home-dashboard-placeholder": "Đęƒäūľŧ đäşĥþőäřđ",
       "locale-label": "Ŀäŉģūäģę",
       "locale-placeholder": "Cĥőőşę ľäŉģūäģę",
+      "theme-description": "Ēŉĵőyįŉģ ŧĥę ľįmįŧęđ ęđįŧįőŉ ŧĥęmęş? Ŧęľľ ūş ŵĥäŧ yőū'đ ľįĸę ŧő şęę <2>ĥęřę.</2>",
       "theme-label": "Ĩŉŧęřƒäčę ŧĥęmę",
       "week-start-label": "Ŵęęĸ şŧäřŧ"
     },

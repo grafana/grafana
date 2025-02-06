@@ -1785,6 +1785,15 @@ var (
 			Owner:        grafanaObservabilityLogsSquad,
 		},
 		{
+			Name:              "grafanaconThemes",
+			Description:       "Enables the temporary themes for GrafanaCon",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaFrontendPlatformSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			RequiresRestart:   true,
+		},
+		{
 			Name:              "alertingRuleVersionHistoryRestore",
 			Description:       "Enables the alert rule version history restore feature",
 			FrontendOnly:      true,

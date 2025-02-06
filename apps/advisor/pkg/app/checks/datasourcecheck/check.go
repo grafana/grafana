@@ -15,6 +15,13 @@ import (
 	"k8s.io/klog/v2"
 )
 
+type check struct {
+	DatasourceSvc         datasources.DataSourceService
+	PluginStore           pluginstore.Store
+	PluginContextProvider pluginContextProvider
+	PluginClient          plugins.Client
+}
+
 func New(
 	datasourceSvc datasources.DataSourceService,
 	pluginStore pluginstore.Store,
@@ -29,28 +36,53 @@ func New(
 	}
 }
 
-type check struct {
-	DatasourceSvc         datasources.DataSourceService
-	PluginStore           pluginstore.Store
-	PluginContextProvider pluginContextProvider
-	PluginClient          plugins.Client
-}
-
-func (c *check) Type() string {
-	return "datasource"
-}
-
-func (c *check) Run(ctx context.Context, obj *advisor.CheckSpec) (*advisor.CheckV0alpha1StatusReport, error) {
-	// Optionally read the check input encoded in the object
-	// fmt.Println(obj.Data)
-
+func (c *check) Items(ctx context.Context) ([]any, error) {
 	dss, err := c.DatasourceSvc.GetAllDataSources(ctx, &datasources.GetAllDataSourcesQuery{})
 	if err != nil {
 		return nil, err
 	}
+	res := make([]any, len(dss))
+	for i, ds := range dss {
+		res[i] = ds
+	}
+	return res, nil
+}
 
+func (c *check) ID() string {
+	return "datasource"
+}
+
+func (c *check) Steps() []checks.Step {
+	return []checks.Step{
+		&uidValidationStep{},
+		&healthCheckStep{
+			PluginContextProvider: c.PluginContextProvider,
+			PluginClient:          c.PluginClient,
+		},
+	}
+}
+
+type uidValidationStep struct{}
+
+func (s *uidValidationStep) ID() string {
+	return "uid-validation"
+}
+
+func (s *uidValidationStep) Title() string {
+	return "UID validation"
+}
+
+func (s *uidValidationStep) Description() string {
+	return "Check if the UID of each data source is valid."
+}
+
+func (s *uidValidationStep) Run(ctx context.Context, obj *advisor.CheckSpec, items []any) ([]advisor.CheckReportError, error) {
 	dsErrs := []advisor.CheckReportError{}
-	for _, ds := range dss {
+	for _, i := range items {
+		ds, ok := i.(*datasources.DataSource)
+		if !ok {
+			return nil, fmt.Errorf("invalid item type %T", i)
+		}
 		// Data source UID validation
 		err := util.ValidateUID(ds.UID)
 		if err != nil {
@@ -60,13 +92,41 @@ func (c *check) Run(ctx context.Context, obj *advisor.CheckSpec) (*advisor.Check
 				Action:   "Check the <a href='https://grafana.com/docs/grafana/latest/upgrade-guide/upgrade-v11.2/#grafana-data-source-uid-format-enforcement' target=_blank>documentation</a> for more information.",
 			})
 		}
+	}
+	return dsErrs, nil
+}
+
+type healthCheckStep struct {
+	PluginContextProvider pluginContextProvider
+	PluginClient          plugins.Client
+}
+
+func (s *healthCheckStep) Title() string {
+	return "Health check"
+}
+
+func (s *healthCheckStep) Description() string {
+	return "Check if all data sources are healthy."
+}
+
+func (s *healthCheckStep) ID() string {
+	return "health-check"
+}
+
+func (s *healthCheckStep) Run(ctx context.Context, obj *advisor.CheckSpec, items []any) ([]advisor.CheckReportError, error) {
+	dsErrs := []advisor.CheckReportError{}
+	for _, i := range items {
+		ds, ok := i.(*datasources.DataSource)
+		if !ok {
+			return nil, fmt.Errorf("invalid item type %T", i)
+		}
 
 		// Health check execution
 		requester, err := identity.GetRequester(ctx)
 		if err != nil {
 			return nil, err
 		}
-		pCtx, err := c.PluginContextProvider.GetWithDataSource(ctx, ds.Type, requester, ds)
+		pCtx, err := s.PluginContextProvider.GetWithDataSource(ctx, ds.Type, requester, ds)
 		if err != nil {
 			klog.ErrorS(err, "Error creating plugin context", "datasource", ds.Name)
 			continue
@@ -75,7 +135,7 @@ func (c *check) Run(ctx context.Context, obj *advisor.CheckSpec) (*advisor.Check
 			PluginContext: pCtx,
 			Headers:       map[string]string{},
 		}
-		resp, err := c.PluginClient.CheckHealth(ctx, req)
+		resp, err := s.PluginClient.CheckHealth(ctx, req)
 		if err != nil {
 			fmt.Println("Error checking health", err)
 			continue
@@ -90,11 +150,7 @@ func (c *check) Run(ctx context.Context, obj *advisor.CheckSpec) (*advisor.Check
 			})
 		}
 	}
-
-	return &advisor.CheckV0alpha1StatusReport{
-		Count:  int64(len(dss)),
-		Errors: dsErrs,
-	}, nil
+	return dsErrs, nil
 }
 
 type pluginContextProvider interface {
