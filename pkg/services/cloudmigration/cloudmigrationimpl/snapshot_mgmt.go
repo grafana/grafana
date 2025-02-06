@@ -43,6 +43,7 @@ var currentMigrationTypes = []cloudmigration.MigrateDataType{
 	cloudmigration.NotificationTemplateType,
 	cloudmigration.ContactPointType,
 	cloudmigration.NotificationPolicyType,
+	cloudmigration.AlertRuleGroupType,
 	cloudmigration.AlertRuleType,
 	cloudmigration.PluginDataType,
 }
@@ -103,6 +104,13 @@ func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.S
 	notificationPolicies, err := s.getNotificationPolicies(ctx, signedInUser)
 	if err != nil {
 		s.log.Error("Failed to get alert notification policies", "err", err)
+		return nil, err
+	}
+
+	// Alerts: Alert Rule Groups
+	alertRuleGroups, err := s.getAlertRuleGroups(ctx, signedInUser)
+	if err != nil {
+		s.log.Error("Failed to get alert rule groups", "err", err)
 		return nil, err
 	}
 
@@ -206,6 +214,15 @@ func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.S
 			RefID: notificationPolicies.Name, // no UID available
 			Name:  notificationPolicies.Name,
 			Data:  notificationPolicies.Routes,
+		})
+	}
+
+	for _, alertRuleGroup := range alertRuleGroups {
+		migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
+			Type:  cloudmigration.AlertRuleGroupType,
+			RefID: alertRuleGroup.Title, // no UID available
+			Name:  alertRuleGroup.Title,
+			Data:  alertRuleGroup,
 		})
 	}
 

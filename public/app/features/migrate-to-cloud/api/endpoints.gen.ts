@@ -194,6 +194,7 @@ export type MigrateDataResponseItemDto = {
     | 'FOLDER'
     | 'LIBRARY_ELEMENT'
     | 'ALERT_RULE'
+    | 'ALERT_RULE_GROUP'
     | 'CONTACT_POINT'
     | 'NOTIFICATION_POLICY'
     | 'NOTIFICATION_TEMPLATE'
