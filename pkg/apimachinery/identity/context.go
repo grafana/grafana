@@ -53,10 +53,15 @@ func WithServiceIdentity(ctx context.Context, orgID int64) (context.Context, Req
 	return WithRequester(ctx, r), r
 }
 
-// WithServiceIdentityContext an identity representing the service itself in provided org and store it in context.
+// WithServiceIdentityContext sets an identity representing the service itself in context.
 func WithServiceIdentityContext(ctx context.Context, orgID int64) context.Context {
 	ctx, _ = WithServiceIdentity(ctx, orgID)
 	return ctx
+}
+
+// WithServiceIdentityFN calls provided closure with an context contaning the identity of the service.
+func WithServiceIdentityFn[T any](ctx context.Context, orgID int64, fn func(ctx context.Context) (T, error)) (T, error) {
+	return fn(WithServiceIdentityContext(ctx, orgID))
 }
 
 func getWildcardPermissions(actions ...string) map[string][]string {
