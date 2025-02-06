@@ -170,7 +170,7 @@ func (r *syncJob) run(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("error listing current: %w", err)
 	}
-	source, err := r.repository.ReadTree(ctx, "")
+	source, err := r.repository.ReadTree(ctx, currentRef)
 	if err != nil {
 		return fmt.Errorf("error reading tree: %w", err)
 	}
