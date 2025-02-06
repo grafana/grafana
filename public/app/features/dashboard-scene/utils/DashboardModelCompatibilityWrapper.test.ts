@@ -141,7 +141,7 @@ function setup() {
       },
     },
     $timeRange: new SceneTimeRange({
-      weekStart: 'friday',
+      weekStart: 'saturday',
       timeZone: 'America/New_York',
     }),
     $data: new DashboardDataLayerSet({

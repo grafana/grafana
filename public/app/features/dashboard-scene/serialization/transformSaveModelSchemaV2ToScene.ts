@@ -54,6 +54,7 @@ import {
   QueryVariableKind,
   TextVariableKind,
 } from '@grafana/schema/src/schema/dashboard/v2alpha0';
+import { WeekStart } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import {
   AnnoKeyCreatedBy,
@@ -189,7 +190,7 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
       to: dashboard.timeSettings.to,
       fiscalYearStartMonth: dashboard.timeSettings.fiscalYearStartMonth,
       timeZone: dashboard.timeSettings.timezone,
-      weekStart: dashboard.timeSettings.weekStart,
+      weekStart: dashboard.timeSettings.weekStart as WeekStart,
       UNSAFE_nowDelay: dashboard.timeSettings.nowDelay,
     }),
     $variables: getVariables(dashboard, meta.isSnapshot ?? false),
