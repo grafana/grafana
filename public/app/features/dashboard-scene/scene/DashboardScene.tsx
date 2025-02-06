@@ -58,7 +58,13 @@ import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { djb2Hash } from '../utils/djb2Hash';
 import { getDashboardUrl } from '../utils/getDashboardUrl';
 import { getViewPanelUrl } from '../utils/urlBuilders';
-import { getClosestVizPanel, getDashboardSceneFor, getDefaultVizPanel, getPanelIdForVizPanel } from '../utils/utils';
+import {
+  getClosestVizPanel,
+  getDashboardSceneFor,
+  getDefaultVizPanel,
+  getLayoutManagerFor,
+  getPanelIdForVizPanel,
+} from '../utils/utils';
 import { SchemaV2EditorDrawer } from '../v2schema/SchemaV2EditorDrawer';
 
 import { AddLibraryPanelDrawer } from './AddLibraryPanelDrawer';
@@ -475,10 +481,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     return this._initialState;
   }
 
-  public getNextPanelId(): number {
-    return this.state.body.getMaxPanelId() + 1;
-  }
-
   public addPanel(vizPanel: VizPanel): void {
     if (!this.state.isEditing) {
       this.onEnterEditMode();
@@ -502,7 +504,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   }
 
   public duplicatePanel(vizPanel: VizPanel) {
-    this.state.body.duplicatePanel(vizPanel);
+    getLayoutManagerFor(vizPanel).duplicatePanel(vizPanel);
   }
 
   public copyPanel(vizPanel: VizPanel) {
@@ -536,7 +538,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   }
 
   public removePanel(panel: VizPanel) {
-    this.state.body.removePanel(panel);
+    getLayoutManagerFor(panel).removePanel(panel);
   }
 
   public unlinkLibraryPanel(panel: VizPanel) {

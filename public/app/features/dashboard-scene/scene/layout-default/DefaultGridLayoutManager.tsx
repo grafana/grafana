@@ -14,6 +14,7 @@ import { GRID_COLUMN_COUNT } from 'app/core/constants';
 import { t } from 'app/core/internationalization';
 
 import { isClonedKey, joinCloneKeys } from '../../utils/clone';
+import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import {
   forceRenderChildren,
   getPanelIdForVizPanel,
@@ -21,7 +22,6 @@ import {
   NEW_PANEL_WIDTH,
   getVizPanelKeyForPanelId,
   getGridItemKeyForPanelId,
-  getDashboardSceneFor,
 } from '../../utils/utils';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 
@@ -72,7 +72,7 @@ export class DefaultGridLayoutManager
   }
 
   public addPanel(vizPanel: VizPanel): void {
-    const panelId = this.getNextPanelId();
+    const panelId = dashboardSceneGraph.getNextPanelId(this);
 
     vizPanel.setState({ key: getVizPanelKeyForPanelId(panelId) });
     vizPanel.clearParent();
@@ -95,7 +95,8 @@ export class DefaultGridLayoutManager
    * Adds a new empty row
    */
   public addNewRow(): SceneGridRow {
-    const id = this.getNextPanelId();
+    const id = dashboardSceneGraph.getNextPanelId(this);
+
     const row = new SceneGridRow({
       key: getVizPanelKeyForPanelId(id),
       title: 'Row title',
@@ -183,7 +184,7 @@ export class DefaultGridLayoutManager
     let panelData;
     let newGridItem;
 
-    const newPanelId = this.getNextPanelId();
+    const newPanelId = dashboardSceneGraph.getNextPanelId(this);
     const grid = this.state.grid;
 
     if (gridItem instanceof DashboardGridItem) {
@@ -246,53 +247,6 @@ export class DefaultGridLayoutManager
     });
 
     return panels;
-  }
-
-  public getMaxPanelId(): number {
-    let max = 0;
-
-    for (const child of this.state.grid.state.children) {
-      if (child instanceof DashboardGridItem) {
-        const vizPanel = child.state.body;
-
-        if (vizPanel) {
-          const panelId = getPanelIdForVizPanel(vizPanel);
-
-          if (panelId > max) {
-            max = panelId;
-          }
-        }
-      }
-
-      if (child instanceof SceneGridRow) {
-        //rows follow the same key pattern --- e.g.: `panel-6`
-        const panelId = getPanelIdForVizPanel(child);
-
-        if (panelId > max) {
-          max = panelId;
-        }
-
-        for (const rowChild of child.state.children) {
-          if (rowChild instanceof DashboardGridItem) {
-            const vizPanel = rowChild.state.body;
-
-            if (vizPanel) {
-              const panelId = getPanelIdForVizPanel(vizPanel);
-
-              if (panelId > max) {
-                max = panelId;
-              }
-            }
-          }
-        }
-      }
-    }
-
-    return max;
-  }
-
-  public getNextPanelId(): number {
-    return getDashboardSceneFor(this).getNextPanelId();
   }
 
   public collapseAllRows(): void {

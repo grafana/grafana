@@ -39,11 +39,6 @@ export interface DashboardLayoutManager<S = {}> extends SceneObject {
   getVizPanels(): VizPanel[];
 
   /**
-   * Returns the highest panel id in the layout
-   */
-  getMaxPanelId(): number;
-
-  /**
    * Add row
    */
   addNewRow(): void;
