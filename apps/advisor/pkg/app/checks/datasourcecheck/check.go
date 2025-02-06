@@ -86,11 +86,13 @@ func (s *uidValidationStep) Run(ctx context.Context, obj *advisor.CheckSpec, ite
 		// Data source UID validation
 		err := util.ValidateUID(ds.UID)
 		if err != nil {
-			dsErrs = append(dsErrs, advisor.CheckReportError{
-				Severity: advisor.CheckReportErrorSeverityLow,
-				Reason:   fmt.Sprintf("Invalid UID '%s' for data source %s", ds.UID, ds.Name),
-				Action:   "Check the <a href='https://grafana.com/docs/grafana/latest/upgrade-guide/upgrade-v11.2/#grafana-data-source-uid-format-enforcement' target=_blank>documentation</a> for more information.",
-			})
+			dsErrs = append(dsErrs, checks.NewCheckReportError(
+				advisor.CheckReportErrorSeverityLow,
+				fmt.Sprintf("Invalid UID '%s' for data source %s", ds.UID, ds.Name),
+				"Check the <a href='https://grafana.com/docs/grafana/latest/upgrade-guide/upgrade-v11.2/#grafana-data-source-uid-format-enforcement' target=_blank>documentation</a> for more information.",
+				s.ID(),
+				ds.UID,
+			))
 		}
 	}
 	return dsErrs, nil
@@ -141,13 +143,15 @@ func (s *healthCheckStep) Run(ctx context.Context, obj *advisor.CheckSpec, items
 			continue
 		}
 		if resp.Status != backend.HealthStatusOk {
-			dsErrs = append(dsErrs, advisor.CheckReportError{
-				Severity: advisor.CheckReportErrorSeverityHigh,
-				Reason:   fmt.Sprintf("Health check failed for %s", ds.Name),
-				Action: fmt.Sprintf(
+			dsErrs = append(dsErrs, checks.NewCheckReportError(
+				advisor.CheckReportErrorSeverityHigh,
+				fmt.Sprintf("Health check failed for %s", ds.Name),
+				fmt.Sprintf(
 					"Go to the <a href='/connections/datasources/edit/%s'>data source configuration</a>"+
 						" and address the issues reported.", ds.UID),
-			})
+				s.ID(),
+				ds.UID,
+			))
 		}
 	}
 	return dsErrs, nil

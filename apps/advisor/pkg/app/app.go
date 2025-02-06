@@ -11,6 +11,7 @@ import (
 	advisorv0alpha1 "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checkregistry"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
+	"github.com/grafana/grafana/apps/advisor/pkg/app/checktyperegisterer"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/klog/v2"
 )
@@ -70,6 +71,9 @@ func New(cfg app.Config) (app.App, error) {
 					},
 				},
 			},
+			{
+				Kind: advisorv0alpha1.CheckTypeKind(),
+			},
 		},
 	}
 
@@ -83,6 +87,13 @@ func New(cfg app.Config) (app.App, error) {
 		return nil, err
 	}
 
+	// Save check types as resources
+	ctr, err := checktyperegisterer.New(cfg)
+	if err != nil {
+		return nil, err
+	}
+	a.AddRunnable(ctr)
+
 	return a, nil
 }
 
@@ -95,6 +106,7 @@ func GetKinds() map[schema.GroupVersion][]resource.Kind {
 	return map[schema.GroupVersion][]resource.Kind{
 		gv: {
 			advisorv0alpha1.CheckKind(),
+			advisorv0alpha1.CheckTypeKind(),
 		},
 	}
 }
