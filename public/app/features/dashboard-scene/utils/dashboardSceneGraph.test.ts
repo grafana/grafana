@@ -22,7 +22,7 @@ describe('dashboardSceneGraph', () => {
 
     it('should resolve VizPanelLinks object', () => {
       const scene = buildTestScene();
-      const panelWithNoLinks = findVizPanelByKey(scene, 'panel-with-links')!;
+      const panelWithNoLinks = findVizPanelByKey(scene, 'panel-2')!;
       expect(dashboardSceneGraph.getPanelLinks(panelWithNoLinks)).toBeInstanceOf(VizPanelLinks);
     });
   });
@@ -72,13 +72,15 @@ describe('dashboardSceneGraph', () => {
       const scene = buildTestScene();
       const id = getNextPanelId(scene);
 
-      expect(id).toBe(4);
+      expect(id).toBe(3);
     });
 
     it('should return 1 if no panels are found', () => {
       const scene = buildTestScene();
-      const id = getNextPanelId(scene);
 
+      const grid = scene.state.body as DefaultGridLayoutManager;
+      grid.state.grid.setState({ children: [] });
+      const id = getNextPanelId(scene);
       expect(id).toBe(1);
     });
   });
@@ -127,7 +129,7 @@ function buildTestScene(overrides?: Partial<DashboardSceneState>) {
           new DashboardGridItem({
             body: new VizPanel({
               title: 'Panel D',
-              key: 'panel-with-links',
+              key: 'panel-2',
               pluginId: 'table',
               $data: new SceneQueryRunner({ key: 'data-query-runner3', queries: [{ refId: 'A' }] }),
               titleItems: [new VizPanelLinks({ menu: new VizPanelLinksMenu({}) })],
