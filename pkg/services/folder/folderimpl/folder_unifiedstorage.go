@@ -31,6 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/search/model"
+	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -737,7 +738,12 @@ func (s *Service) deleteFromApiServer(ctx context.Context, cmd *folder.DeleteFol
 					}
 				}
 			} else {
-				dashes, err := s.dashboardStore.FindDashboards(ctx, &dashboards.FindPersistedDashboardsQuery{SignedInUser: cmd.SignedInUser, FolderUIDs: folders, OrgId: cmd.OrgID})
+				dashes, err := s.dashboardStore.FindDashboards(ctx, &dashboards.FindPersistedDashboardsQuery{
+					SignedInUser: cmd.SignedInUser,
+					FolderUIDs:   folders,
+					OrgId:        cmd.OrgID,
+					Type:         searchstore.TypeDashboard,
+				})
 				if err != nil {
 					return folder.ErrInternal.Errorf("failed to fetch dashboards: %w", err)
 				}
