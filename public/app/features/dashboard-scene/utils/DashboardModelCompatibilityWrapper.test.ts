@@ -26,7 +26,7 @@ describe('DashboardModelCompatibilityWrapper', () => {
     expect(wrapper.links).toEqual([NEW_LINK]);
     expect(wrapper.time.from).toBe('now-6h');
     expect(wrapper.timezone).toBe('America/New_York');
-    expect(wrapper.weekStart).toBe('friday');
+    expect(wrapper.weekStart).toBe('saturday');
     expect(wrapper.timepicker.refresh_intervals![0]).toEqual('5s');
     expect(wrapper.timepicker.hidden).toEqual(true);
     expect(wrapper.panels).toHaveLength(5);
