@@ -16,8 +16,8 @@ import { AggregateSection } from './AggregationSection';
 import { FilterSection } from './FilterSection';
 import { GroupBySection } from './GroupBySection';
 import KQLPreview from './KQLPreview';
+import { AzureMonitorQueryParser } from './KustoExpressionQueryParser';
 import { TableSection } from './TableSection';
-import { formatKQLQuery } from './utils';
 
 interface LogsQueryBuilderProps {
   query: AzureMonitorQuery;
@@ -48,37 +48,49 @@ export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
     }
   }, [selectedTable, tables]);
 
-  const handleColumnChange = (columns: Array<SelectableValue<string>>) => {
-    setSelectedColumns(columns);
-    const uniqueLabels = [...new Set(columns.map((c: SelectableValue<string>) => c.label!))];
-    const baseQuery = selectedTable!.split(' | project')[0];
-    const newQueryString = `${baseQuery} | project ${uniqueLabels.join(', ')} | where $__timeFilter(TimeGenerated)`;
+  const handleQueryUpdate = ({
+    newTable,
+    newColumns,
+    filters,
+    aggregates,
+    groupBy,
+  }: {
+    newTable?: AzureLogAnalyticsMetadataTable;
+    newColumns?: Array<SelectableValue<string>>;
+    filters?: string;
+    aggregates?: string;
+    groupBy?: string[];
+  }) => {
+    let tableName = selectedTable;
+    let columnList = selectedColumns.map((c) => c.value!);
 
-    const formattedQuery = formatKQLQuery(newQueryString);
-    console.log(formattedQuery)
+    if (newTable) {
+      tableName = newTable.name;
+      setSelectedTable(newTable.name);
+      setColumns([]);
+    }
+
+    if (newColumns) {
+      setSelectedColumns(newColumns);
+      columnList = [...new Set(newColumns.map((c) => c.label!))];
+    }
+
+    const formattedQuery = AzureMonitorQueryParser.updateQuery(
+      query.azureLogAnalytics?.query || '',
+      tableName!,
+      columnList,
+      filters ?? '',
+      aggregates ?? '',
+      groupBy ?? []
+    );
 
     onQueryChange({
       ...query,
       azureLogAnalytics: {
         ...query.azureLogAnalytics,
-        query: columns.length > 0 ? formattedQuery : baseQuery,
+        query: formattedQuery,
       },
     });
-  };
-
-  const handleTableChange = (newTable: AzureLogAnalyticsMetadataTable) => {
-    if (newTable) {
-      setSelectedTable(newTable.name);
-      setColumns([]);
-
-      onQueryChange({
-        ...query,
-        azureLogAnalytics: {
-          ...query.azureLogAnalytics,
-          query: newTable.name,
-        },
-      });
-    }
   };
 
   return (
@@ -90,15 +102,14 @@ export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
         <TableSection
           {...props}
           columns={columns}
-          onColumnChange={handleColumnChange}
-          onTableChange={handleTableChange}
+          onQueryUpdate={handleQueryUpdate}
           selectedColumns={selectedColumns}
           table={selectedTable}
           tables={tables}
         />
-        <FilterSection {...props} query={query} onChange={onQueryChange} selectedColumns={selectedColumns} />
-        <AggregateSection {...props} selectedColumns={selectedColumns} onChange={onQueryChange} />
-        <GroupBySection {...props} selectedColumns={selectedColumns} onChange={onQueryChange} />
+        <FilterSection {...props} onQueryUpdate={handleQueryUpdate} selectedColumns={selectedColumns} />
+        <AggregateSection {...props} selectedColumns={selectedColumns} onQueryUpdate={handleQueryUpdate} />
+        <GroupBySection {...props} selectedColumns={selectedColumns} onQueryUpdate={handleQueryUpdate} />
         <KQLPreview query={query.azureLogAnalytics?.query || ''} />
       </EditorRows>
     </span>

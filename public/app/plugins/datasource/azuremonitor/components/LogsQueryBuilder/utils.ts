@@ -2,7 +2,9 @@ import { escapeRegExp } from 'lodash';
 
 import { SelectableValue } from '@grafana/data';
 
-import { AggregateFunctions } from './AggregateItem';
+import { AggregateFunctions, QueryEditorPropertyType } from '../../types';
+
+import { QueryEditorReduceExpression } from './expressions';
 
 const DYNAMIC_TYPE_ARRAY_DELIMITER = '["`indexer`"]';
 export const valueToDefinition = (name: string) => {
@@ -43,48 +45,6 @@ export const OPERATORS_BY_TYPE: Record<string, Array<SelectableValue<string>>> =
 export const toOperatorOptions = (type: string): Array<SelectableValue<string>> => {
   return OPERATORS_BY_TYPE[type] || OPERATORS_BY_TYPE.string;
 };
-
-export enum QueryEditorPropertyType {
-  Number = 'number',
-  String = 'string',
-  Boolean = 'boolean',
-  DateTime = 'dateTime',
-  TimeSpan = 'timeSpan',
-  Function = 'function',
-  Interval = 'interval',
-}
-
-export enum QueryEditorExpressionType {
-  Property = 'property',
-  Operator = 'operator',
-  Reduce = 'reduce',
-  FunctionParameter = 'functionParameter',
-  GroupBy = 'groupBy',
-  Or = 'or',
-  And = 'and',
-}
-
-export interface QueryEditorProperty {
-  type: QueryEditorPropertyType;
-  name: string;
-}
-
-export interface QueryEditorExpression {
-  type: QueryEditorExpressionType;
-}
-
-export interface QueryEditorFunctionParameterExpression extends QueryEditorExpression {
-  value: string;
-  fieldType: QueryEditorPropertyType;
-  name: string;
-}
-
-export interface QueryEditorReduceExpression extends QueryEditorExpression {
-  property: QueryEditorProperty;
-  reduce: QueryEditorProperty;
-  parameters?: QueryEditorFunctionParameterExpression[];
-  focus?: boolean;
-}
 
 export function sanitizeAggregate(expression: QueryEditorReduceExpression): QueryEditorReduceExpression | undefined {
   const func = expression.reduce?.name;
@@ -155,9 +115,3 @@ export const formatKQLQuery = (query: string): string => {
     .replace(/\|\s*where\s*$/, '| where true') // ✅ If `| where` is empty, add `true`
     .trim();
 };
-
-export interface QueryEditorGroupByExpression extends QueryEditorExpression {
-  property: QueryEditorProperty;
-  interval?: QueryEditorProperty;
-  focus?: boolean;
-}

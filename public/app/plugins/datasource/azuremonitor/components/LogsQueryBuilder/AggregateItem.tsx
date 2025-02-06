@@ -5,28 +5,12 @@ import { SelectableValue } from '@grafana/data';
 import { AccessoryButton, InputGroup } from '@grafana/plugin-ui';
 import { Select, Label } from '@grafana/ui';
 
-import { AzureMonitorQuery } from '../../types';
+import { AggregateFunctions, QueryEditorProperty, QueryEditorPropertyType } from '../../types';
 
-import {
-  QueryEditorExpressionType,
-  QueryEditorProperty,
-  QueryEditorPropertyType,
-  QueryEditorReduceExpression,
-  valueToDefinition,
-} from './utils';
-
-export enum AggregateFunctions {
-  Sum = 'sum',
-  Avg = 'avg',
-  Count = 'count',
-  Dcount = 'dcount',
-  Max = 'max',
-  Min = 'min',
-  Percentile = 'percentile',
-}
+import { QueryEditorExpressionType, QueryEditorReduceExpression } from './expressions';
+import { valueToDefinition } from './utils';
 
 interface AggregateItemProps {
-  query: AzureMonitorQuery;
   aggregate: Partial<QueryEditorReduceExpression>;
   columns: SelectableValue<string> | undefined;
   templateVariableOptions?: SelectableValue<string>;

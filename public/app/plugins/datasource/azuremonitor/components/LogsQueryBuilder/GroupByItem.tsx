@@ -4,13 +4,10 @@ import { SelectableValue } from '@grafana/data';
 import { AccessoryButton, InputGroup } from '@grafana/plugin-ui';
 import { Select } from '@grafana/ui';
 
-import {
-  QueryEditorExpressionType,
-  QueryEditorGroupByExpression,
-  QueryEditorPropertyType,
-  toPropertyType,
-  valueToDefinition,
-} from './utils';
+import { QueryEditorPropertyType } from '../../types';
+
+import { QueryEditorExpressionType, QueryEditorGroupByExpression } from './expressions';
+import { toPropertyType, valueToDefinition } from './utils';
 
 interface GroupByItemProps {
   groupBy: Partial<QueryEditorGroupByExpression>;
@@ -22,7 +19,7 @@ interface GroupByItemProps {
 export const GroupByItem: React.FC<GroupByItemProps> = ({ groupBy, onChange, onDelete, columns }) => {
   const columnOptions = columns.length
     ? columns.map((c) => ({ label: c.label, value: c.value }))
-    : [{ label: 'No columns available', value: '' }]; // 🚀 Always show an option
+    : [{ label: 'No columns available', value: '' }];
 
   return (
     <InputGroup>
@@ -35,16 +32,14 @@ export const GroupByItem: React.FC<GroupByItemProps> = ({ groupBy, onChange, onD
         allowCustomValue
         onChange={(e) => {
           if (!e.value) {
-            return
+            return;
           }
 
           const selectedColumn = columns.find((c) => c.value === e.value);
           onChange({
             property: {
               name: e.value!,
-              type: selectedColumn?.type
-                ? toPropertyType(selectedColumn.type)
-                : QueryEditorPropertyType.String,
+              type: selectedColumn?.type ? toPropertyType(selectedColumn.type) : QueryEditorPropertyType.String,
             },
             interval: groupBy.interval,
             type: QueryEditorExpressionType.GroupBy,
