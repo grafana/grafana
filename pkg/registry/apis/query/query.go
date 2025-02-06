@@ -160,6 +160,7 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 		// Actually run the query
 		rsp, err := b.execute(ctx, req)
 		if err != nil {
+			b.log.Error("hit unexpected error while executing query, this will show as an unhandled k8s status error", "err", err)
 			responder.Error(err)
 			return
 		}
