@@ -7,8 +7,8 @@ import { NewThemeOptions } from '../createTheme';
 
 const whiteBase = `210, 210, 220`;
 const secondaryBase = `210, 210, 220`;
-const brandMain = '#ff934d';
-const brandText = '#f99a5c';
+const brandMain = '#3d71d9';
+const brandText = '#6e9fff';
 
 const disabledText = `rgba(${whiteBase}, 0.6)`;
 
@@ -18,7 +18,7 @@ const gloomTheme: NewThemeOptions = {
     mode: 'dark',
     border: {
       weak: `rgba(${whiteBase}, 0.08)`,
-      medium: `rgba(${whiteBase}, 0.12)`,
+      medium: `rgba(${whiteBase}, 0.15)`,
       strong: `rgba(${whiteBase}, 0.30)`,
     },
 
@@ -63,10 +63,10 @@ const gloomTheme: NewThemeOptions = {
       disabledOpacity: 0.38,
     },
 
-    gradients: {
-      brandHorizontal: 'linear-gradient(270deg, #ff934d 0%, #FEAC34 100%)',
-      brandVertical: 'linear-gradient(0.01deg, #ff934d 0.01%, #FEAC34 99.99%)',
-    },
+    // gradients: {
+    //   brandHorizontal: 'linear-gradient(270deg, #ff934d 0%, #FEAC34 100%)',
+    //   brandVertical: 'linear-gradient(0.01deg, #ff934d 0.01%, #FEAC34 99.99%)',
+    // },
 
     contrastThreshold: 3,
     hoverFactor: 0.03,
