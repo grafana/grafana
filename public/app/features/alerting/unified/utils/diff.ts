@@ -1,6 +1,6 @@
-import { chain, identity } from "lodash";
+import { chain, identity } from 'lodash';
 
-import { jsonDiff } from "app/features/dashboard-scene/settings/version-history/utils";
+import { jsonDiff } from 'app/features/dashboard-scene/settings/version-history/utils';
 
 export type Diff = {
   added: number;
