@@ -6,11 +6,6 @@ export enum SortOrder {
   TimeDesc,
 }
 
-export enum ShowOption {
-  Current = 'current',
-  RecentChanges = 'changes',
-}
-
 export enum GroupMode {
   Default = 'default',
   Custom = 'custom',
