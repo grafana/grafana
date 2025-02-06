@@ -1,5 +1,5 @@
 import { cx } from '@emotion/css';
-import { useVirtualizer, VirtualItem } from '@tanstack/react-virtual';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import { useCombobox } from 'downshift';
 import { debounce } from 'lodash';
 import { useCallback, useId, useMemo, useState } from 'react';
@@ -150,26 +150,29 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
 
       const reorderItemsByGroup = (items: Array<ComboboxOption<T>>) => {
         const reorgItems: Array<ComboboxOption<T> | ComboboxOption<T>['group']> = [];
-        items.forEach((item) => {
-          const isAlreadyReorg = reorgItems.find((i) => i === item);
-          if (isAlreadyReorg) {
-            return;
+        const processedGroups = new Set<ComboboxOption<T>['group']>();
+        const processedItems = new Set<ComboboxOption<T>>();
+        for (const item of items) {
+          if (processedItems.has(item)) {
+            continue;
           }
           // Add it to the list if the options does not have a group
           if (typeof item === 'object' && !item.group) {
             reorgItems.push(item);
+            processedItems.add(item);
           } else {
             const group = item.group;
-            const sameGroupItems = items.filter((i) => i.group === group);
-            const isGroupAlreadyAdded = reorgItems.includes(group);
             // Add the group only if it is not already added
-            if (!isGroupAlreadyAdded) {
+            if (!processedGroups.has(group)) {
               reorgItems.push(group);
+              processedGroups.add(group);
             }
             // Add the items of the group
+            const sameGroupItems = items.filter((i) => i.group === group && !processedItems.has(i));
             reorgItems.push(...sameGroupItems);
+            sameGroupItems.forEach((i) => processedItems.add(i));
           }
-        });
+        }
         return reorgItems;
       };
 
@@ -179,15 +182,18 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     [createCustomValue, id, ariaLabelledBy]
   );
 
-  const isLastItemGroup = (itemList: Array<ComboboxOption<T>>, item: ComboboxOption<T> | string) => {
-    if (!item || typeof item === 'string') {
+  const isLastItemGroup = (
+    itemList: Array<ComboboxOption<T> | ComboboxOption<T>['group']>,
+    item: ComboboxOption<T> | string
+  ) => {
+    if (!item || !isComboboxOption(item)) {
       return false;
     }
     const group = item.group;
     if (!group) {
       return false;
     }
-    const groupItems = itemList.filter((i) => i.group === group);
+    const groupItems = itemList.filter((i) => isComboboxOption(i) && i.group === group);
     return groupItems && groupItems.reverse()[0] === item;
   };
 
@@ -235,7 +241,10 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
   const virtualizerItems = {
     count: items.length,
     getScrollElement: () => scrollRef.current,
-    estimateSize: (index: number) => (items && items[index]  && typeof items[index] !== 'string' && items[index].description ? MENU_OPTION_HEIGHT_DESCRIPTION : MENU_OPTION_HEIGHT),
+    estimateSize: (index: number) =>
+      items && items[index] && typeof items[index] !== 'string' && items[index].description
+        ? MENU_OPTION_HEIGHT_DESCRIPTION
+        : MENU_OPTION_HEIGHT,
     overscan: VIRTUAL_OVERSCAN_ITEMS,
   };
 
@@ -364,7 +373,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
         if (changes.selectedItem) {
           changes = {
             ...changes,
-            inputValue: typeof changes.selectedItem === 'object' ? itemToString(changes.selectedItem) : '',
+            inputValue: isComboboxOption(changes.selectedItem) ? itemToString(changes.selectedItem) : '',
           };
         } else if (changes.inputValue !== '') {
           // Otherwise if no selected value, clear any search from the input
@@ -456,19 +465,39 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
               {!asyncError && (
                 <ul style={{ height: rowVirtualizer.getTotalSize() }} className={styles.menuUlContainer}>
                   {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+                    if (!items || !items[virtualRow.index]) {
+                      return null;
+                    }
+                    const index = virtualRow.index;
+                    const item = items[index];
+                    const itemProps = getItemProps({ item, index });
+                    const isLastItem = isComboboxOption(item) && isLastItemGroup(items, item);
+                    const isSelectedItem = isComboboxOption(item) && selectedItem && item.value === selectedItem?.value;
+                    const isHighlighted = highlightedIndex === index;
+                    const key = isComboboxOption(item)
+                      ? `${item.value}-${virtualRow.index}`
+                      : `${item}-group-${virtualRow.index}`;
+                    const itemStyle = {
+                      height: virtualRow.size,
+                      transform: `translateY(${virtualRow.start}px)`,
+                    };
+                    const groupClass = cx(styles.optionGroup, { [styles.optionGroupFocused]: isHighlighted });
+                    const optionClass = cx(
+                      styles.option,
+                      { [styles.optionSelected]: isSelectedItem },
+                      { [styles.optionFocused]: isHighlighted },
+                      { [styles.optionGroupLastItem]: isLastItem }
+                    );
                     return (
-                      items &&
-                      items[virtualRow.index] && (
-                        <ComboboxRow
-                          item={items[virtualRow.index]}
-                          virtualRow={virtualRow}
-                          getItemProps={getItemProps}
-                          selectedItem={selectedItem}
-                          highlightedIndex={highlightedIndex}
-                          //@ts-expect-error
-                          isLastItem={isLastItemGroup(items, items[virtualRow.index])}
-                        />
-                      )
+                      <li
+                        key={key}
+                        data-index={virtualRow.index}
+                        className={isComboboxOption(item) ? optionClass : groupClass}
+                        style={itemStyle}
+                        {...itemProps}
+                      >
+                        <ComboboxRow item={item} />
+                      </li>
                     );
                   })}
                 </ul>
@@ -488,69 +517,23 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
 // Returns the group item or the option item, depending on the row content type
 const ComboboxRow = <T extends string | number>({
   item,
-  virtualRow,
-  getItemProps,
-  selectedItem,
-  highlightedIndex,
-  isLastItem,
 }: {
   item: ComboboxOption<T> | ComboboxOption<T>['group'];
-  virtualRow: VirtualItem;
-  getItemProps: any;
-  selectedItem: ComboboxOption<T> | null;
-  highlightedIndex?: number;
-  isLastItem: boolean;
 }): JSX.Element => {
   const styles = useStyles2(getComboboxStyles);
 
-  if (!item || (typeof item === 'string' && item === '') || (typeof item === 'object' && !item.value)) {
-    return <></>;
-  }
-  if (typeof item === 'string' && item !== '') {
+  if (isComboboxOption(item)) {
     return (
-      <li
-        key={`${virtualRow.index}`}
-        style={{
-          height: virtualRow.size,
-          transform: `translateY(${virtualRow.start}px)`,
-        }}
-        {...getItemProps({
-          item: item,
-          index: virtualRow.index,
-        })}
-        className={cx(styles.optionGroup, highlightedIndex === virtualRow.index && styles.optionGroupFocused)}
-        aria-disabled
-      >
-        <Text variant="bodySmall">{item}</Text>
-      </li>
+      <div className={styles.optionBody}>
+        <span className={styles.optionLabel}>{item.label ?? item.value}</span>
+        {item.description && <span className={styles.optionDescription}>{item.description}</span>}
+      </div>
     );
-  } else if (typeof item === 'object' && item.value) {
-    return (
-      <li
-        key={`${item.value}-${virtualRow.index}`}
-        data-index={virtualRow.index}
-        aria-describedby={item.group ? `${item.value}-in-${item.group}` : item.value}
-        className={cx(
-          styles.option,
-          selectedItem && item.value === selectedItem?.value && styles.optionSelected,
-          highlightedIndex === virtualRow.index && styles.optionFocused,
-          isLastItem && styles.optionGroupLastItem
-        )}
-        style={{
-          height: virtualRow.size,
-          transform: `translateY(${virtualRow.start}px)`,
-        }}
-        {...getItemProps({
-          item: item,
-          index: virtualRow.index,
-        })}
-      >
-        <div className={styles.optionBody}>
-          <span className={styles.optionLabel}>{item.label ?? item.value}</span>
-          {item.description && <span className={styles.optionDescription}>{item.description}</span>}
-        </div>
-      </li>
-    );
+  } else {
+    return <Text variant="bodySmall">{item || ''}</Text>;
   }
-  return <></>;
 };
+
+const isComboboxOption = <T extends string | number>(
+  item: ComboboxOption<T> | ComboboxOption<T>['group']
+): item is ComboboxOption<T> => typeof item === 'object' && item.value !== undefined;
