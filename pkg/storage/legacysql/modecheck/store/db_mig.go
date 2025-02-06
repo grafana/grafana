@@ -10,7 +10,7 @@ func AddUnifiedStatusMigrations(mg *migrator.Migrator) {
 			{Name: "group", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
 			{Name: "resource", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
 			{Name: "migrated", Type: migrator.DB_BigInt, Nullable: false},   // Timestamp when we can start trusting unified storage
-			{Name: "migrating", Type: migrator.DB_BigInt, Nullable: false},  // Activly running a migration (start timestamp)
+			{Name: "migrating", Type: migrator.DB_BigInt, Nullable: false},  // Actively running a migration (start timestamp)
 			{Name: "update_key", Type: migrator.DB_BigInt, Nullable: false}, // optimistic lock key -- required for update
 		},
 		Indices: []*migrator.Index{

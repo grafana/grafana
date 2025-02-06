@@ -24,6 +24,7 @@ type Service interface {
 	FinishMigration(ctx context.Context, gr schema.GroupResource, key int64, migrated bool) (StorageStatus, error)
 }
 
+// The storage interface has zero business logic and simply writes values to a database
 type StatusStorage interface {
 	Get(ctx context.Context, gr schema.GroupResource) (StorageStatus, bool)
 	Set(ctx context.Context, status StorageStatus) (StorageStatus, error)
