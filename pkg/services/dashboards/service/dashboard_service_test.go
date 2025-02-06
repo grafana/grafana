@@ -1338,7 +1338,9 @@ func TestSearchDashboards(t *testing.T) {
 	fakeFolders := foldertest.NewFakeService()
 	fakeFolders.ExpectedFolder = &folder.Folder{
 		Title: "testing-folder-1",
+		UID:   "f1",
 	}
+	fakeFolders.ExpectedFolders = []*folder.Folder{fakeFolders.ExpectedFolder}
 	defer fakeStore.AssertExpectations(t)
 	service := &DashboardServiceImpl{
 		cfg:            setting.NewCfg(),
@@ -1426,7 +1428,7 @@ func TestSearchDashboards(t *testing.T) {
 						},
 						Cells: [][]byte{
 							[]byte("Dashboard 1"),
-							[]byte(""),
+							[]byte("f1"),
 							[]byte("[\"tag1\", \"tag2\"]"),
 						},
 					},
@@ -1437,7 +1439,7 @@ func TestSearchDashboards(t *testing.T) {
 						},
 						Cells: [][]byte{
 							[]byte("Dashboard 2"),
-							[]byte(""),
+							[]byte("f1"),
 							[]byte(""),
 						},
 					},
