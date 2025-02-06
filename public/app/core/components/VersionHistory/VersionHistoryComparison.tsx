@@ -3,7 +3,7 @@ import { useState } from 'react';
 
 import { dateTimeFormatTimeAgo } from '@grafana/data';
 import { Box, Button, Divider, EmptyState, Icon, Stack, Text } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 import { DiffGroup } from 'app/features/dashboard-scene/settings/version-history/DiffGroup';
 import { DiffViewer } from 'app/features/dashboard-scene/settings/version-history/DiffViewer';
 import { jsonDiff } from 'app/features/dashboard-scene/settings/version-history/utils';
@@ -70,7 +70,11 @@ export const VersionHistoryComparison = <T extends DiffArgument>({
       </Box>
       <Box>
         {noDiffs && (
-          <EmptyState message="No relevant properties changed" variant="not-found" hideImage>
+          <EmptyState
+            message={t('core.versionHistory.no-properties-changed', 'No relevant properties changed')}
+            variant="not-found"
+            hideImage
+          >
             <Trans i18nKey="core.versionHistory.see-json-diff">See JSON diff to see all changes</Trans>
           </EmptyState>
         )}

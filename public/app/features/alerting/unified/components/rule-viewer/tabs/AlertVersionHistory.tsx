@@ -46,8 +46,6 @@ export interface AlertVersionHistoryProps {
 
 const VERSIONS_PAGE_SIZE = 20;
 
-const UNKNOWN = 'Unknown';
-
 /** List of (top level) properties to exclude from being shown in human readable summary of version changes */
 
 const grafanaAlertPropertiesToIgnore: Array<keyof GrafanaRuleDefinition> = [
@@ -112,7 +110,7 @@ function preprocessRuleForDiffDisplay(rulerRule: RulerGrafanaRuleDTO<GrafanaRule
   };
 }
 
-const SPECIAL_UID_MAP: Record<
+const getSpecialUidMap: () => Record<
   string,
   {
     name: string;
@@ -120,26 +118,32 @@ const SPECIAL_UID_MAP: Record<
     badgeColor: BadgeColor;
     icon?: IconName;
   }
-> = {
+> = () => ({
   __alerting__: {
-    name: 'Alerting',
-    tooltipContent:
-      'This update was made by the alerting system due to other changes. For example, when renaming a contact point that is used for simplified routing, this will update affected rules',
+    name: t('alerting.alertVersionHistory.alerting', 'Alerting'),
+    tooltipContent: t(
+      'alerting.alertVersionHistory.alerting-change-description',
+      'This update was made by the alerting system due to other changes. For example, when renaming a contact point that is used for simplified routing, this will update affected rules'
+    ),
     badgeColor: 'orange',
     icon: 'bell',
   },
   service: {
-    name: 'Provisioning',
-    tooltipContent: 'Version update was made via provisioning',
+    name: t('alerting.alertVersionHistory.provisioning', 'Provisioning'),
+    tooltipContent: t(
+      'alerting.alertVersionHistory.provisioning-change-description',
+      'Version update was made via provisioning'
+    ),
     badgeColor: 'purple',
   },
-};
+});
 
 /**
  * Render the version history of a given Grafana managed alert rule, showing different edits
  * and allowing to restore to a previous version.
  */
 export function AlertVersionHistory({ ruleUid }: AlertVersionHistoryProps) {
+  const SPECIAL_UID_MAP = getSpecialUidMap();
   const { isLoading, currentData: ruleVersions = [], error } = useGetAlertVersionHistoryQuery({ uid: ruleUid });
 
   const [oldVersion, setOldVersion] = useState<RulerGrafanaRuleDTO<GrafanaRuleDefinition>>();
@@ -211,13 +215,14 @@ export function AlertVersionHistory({ ruleUid }: AlertVersionHistoryProps) {
   };
 
   const parseVersionInfo = (version: RulerGrafanaRuleDTO<GrafanaRuleDefinition>): RevisionModel => {
+    const unknown = t('alerting.alertVersionHistory.unknown', 'Unknown');
     const createdBy = (() => {
       const updatedBy = version?.grafana_alert.updated_by;
       const uid = updatedBy?.uid;
       const name = updatedBy?.name;
 
       if (!updatedBy) {
-        return UNKNOWN;
+        return unknown;
       }
       if (uid && SPECIAL_UID_MAP[uid]) {
         return SPECIAL_UID_MAP[uid].name;
@@ -225,13 +230,13 @@ export function AlertVersionHistory({ ruleUid }: AlertVersionHistoryProps) {
       if (name) {
         return name;
       }
-      return uid ? `User ID ${uid}` : UNKNOWN;
+      return uid ? `User ID ${uid}` : unknown;
     })();
 
     return {
-      created: version.grafana_alert.updated || UNKNOWN,
+      created: version.grafana_alert.updated || unknown,
       createdBy,
-      version: version.grafana_alert.version || UNKNOWN,
+      version: version.grafana_alert.version || unknown,
     };
   };
 
@@ -244,7 +249,10 @@ export function AlertVersionHistory({ ruleUid }: AlertVersionHistoryProps) {
         </Trans>
       </Text>
       <Stack>
-        <Tooltip content="Select two versions to start comparing" placement="bottom">
+        <Tooltip
+          content={t('core.versionHistory.comparison.select', 'Select two versions to start comparing')}
+          placement="bottom"
+        >
           <Button type="button" disabled={!canCompare} onClick={compareVersions} icon="code-branch">
             <Trans i18nKey="alerting.alertVersionHistory.compareVersions">Compare versions</Trans>
           </Button>
@@ -329,24 +337,26 @@ function VersionHistoryTable({
 
   //----> end of restore code
 
+  const unknown = t('alerting.alertVersionHistory.unknown', 'Unknown');
+
   const rows = ruleVersions.map((rule, index) => {
     const nextVersion = ruleVersions[index + 1];
     const currentVersion = ruleVersions[index];
     return {
       id: String(rule.grafana_alert.version),
       version: rule.grafana_alert.version || `unknown-rule-${index}`,
-      created: rule.grafana_alert.updated || 'unknown',
+      created: rule.grafana_alert.updated || unknown,
       createdBy: rule.grafana_alert.updated_by,
       diff: nextVersion ? computeVersionDiff(currentVersion, nextVersion) : { added: 0, removed: 0 },
     };
   });
-
+  const SPECIAL_UID_MAP = getSpecialUidMap();
   // todo: fix types
   const columns: Array<Column<(typeof rows)[0]>> = [
     {
       disableGrow: true,
       id: 'id',
-      header: 'Version',
+      header: t('core.versionHistory.table.version', 'Version'),
       cell: ({ value }) => {
         const thisValue = checkedVersions.get(String(value ?? false)) ?? false;
         return (
@@ -370,14 +380,19 @@ function VersionHistoryTable({
     },
     {
       id: 'createdBy',
-      header: 'Updated By',
+      header: t('core.versionHistory.table.updatedBy', 'Updated By'),
       disableGrow: true,
       cell: ({ value }) => {
         if (!value) {
           return (
-            <Tooltip content="This update was made prior to the implementation of alert rule version history. The user who made the change is not tracked, but future changes will include the user">
+            <Tooltip
+              content={t(
+                'alerting.alertVersionHistory.unknown-change-description',
+                'This update was made prior to the implementation of alert rule version history. The user who made the change is not tracked, but future changes will include the user'
+              )}
+            >
               <span>
-                <span className={styles.underline}>{UNKNOWN} </span>
+                <span className={styles.underline}>{unknown} </span>
                 <Icon name="question-circle" />
               </span>
             </Tooltip>
@@ -402,13 +417,13 @@ function VersionHistoryTable({
           return value.name;
         }
         if (value.uid) {
-          return `User ID ${value.uid}`;
+          return t('alerting.alertVersionHistory.user-id', 'User ID {{uid}}', { uid: value.uid });
         }
       },
     },
     {
       id: 'created',
-      header: 'Date',
+      header: t('core.versionHistory.table.updated', 'Date'),
       disableGrow: true,
       cell: ({ value }) => dateTimeFormat(value) + ' (' + dateTimeFormatTimeAgo(value) + ')',
     },

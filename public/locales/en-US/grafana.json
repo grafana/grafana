@@ -212,6 +212,8 @@
       }
     },
     "alertVersionHistory": {
+      "alerting": "Alerting",
+      "alerting-change-description": "This update was made by the alerting system due to other changes. For example, when renaming a contact point that is used for simplified routing, this will update affected rules",
       "annotations": "Annotations",
       "compareVersions": "Compare versions",
       "comparing-versions": "Comparing versions",
@@ -228,6 +230,8 @@
       "noVersionsFound": "No versions found for this rule",
       "paused": "Paused state",
       "pendingPeriod": "Pending period",
+      "provisioning": "Provisioning",
+      "provisioning-change-description": "Version update was made via provisioning",
       "queryAndAlertCondition": "Query and alert condition",
       "reset": "Reset to version {oldVersion.grafana_alert.version}",
       "restore": "Restore",
@@ -236,7 +240,10 @@
         "summary": "Summary of changes to be applied:",
         "title": "Restore Version"
       },
-      "rule_group": "Rule group"
+      "rule_group": "Rule group",
+      "unknown": "Unknown",
+      "unknown-change-description": "This update was made prior to the implementation of alert rule version history. The user who made the change is not tracked, but future changes will include the user",
+      "user-id": "User ID {{uid}}"
     },
     "annotations": {
       "description": "Add more context to your alert notifications.",
@@ -820,9 +827,16 @@
           "hide-json-diff": "Hide JSON diff ",
           "show-json-diff": "Show JSON diff ",
           "text": "Version {{version}} updated by {{createdBy}} ({{ageString}}) {{message}}"
-        }
+        },
+        "select": "Select two versions to start comparing"
       },
-      "see-json-diff": "See JSON diff to see all changes"
+      "no-properties-changed": "No relevant properties changed",
+      "see-json-diff": "See JSON diff to see all changes",
+      "table": {
+        "updated": "Date",
+        "updatedBy": "Updated By",
+        "version": "Version"
+      }
     }
   },
   "correlations": {
