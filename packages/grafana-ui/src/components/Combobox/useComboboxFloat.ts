@@ -22,7 +22,10 @@ export const useComboboxFloat = (items: Array<ComboboxOption<string | number>>, 
   const inputRef = useRef<HTMLInputElement>(null);
   const floatingRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [popoverMaxSize, setPopoverMaxSize] = useState<{ width: number; height: number } | undefined>(undefined);
+  const [popoverMaxSize, setPopoverMaxSize] = useState<{ width: number; height: number }>({
+    width: 500,
+    height: 500,
+  }); // set arbitrary initial values to prevent infinite size, briefly removing the list virtualization
 
   const scrollbarWidth = useMemo(() => getScrollbarWidth(), []);
 
