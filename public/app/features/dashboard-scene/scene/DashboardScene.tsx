@@ -41,6 +41,7 @@ import { VariablesChanged } from 'app/features/variables/types';
 import { DashboardDTO, DashboardMeta, KioskMode, SaveDashboardResponseDTO } from 'app/types';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
+import { AnnoKeyRepoName, AnnoKeyRepoPath } from '../../apiserver/types';
 import { DashboardEditPane } from '../edit-pane/DashboardEditPane';
 import { PanelEditor } from '../panel-edit/PanelEditor';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
@@ -738,6 +739,21 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
   getDashboardChanges(saveTimeRange?: boolean, saveVariables?: boolean, saveRefresh?: boolean): DashboardChangeInfo {
     return this._serializer.getDashboardChangesFromScene(this, { saveTimeRange, saveVariables, saveRefresh });
+  }
+
+  /**
+   * Provisioned dashboards helpers
+   */
+  getRepoName() {
+    return this.state.meta.k8s?.annotations?.[AnnoKeyRepoName];
+  }
+
+  isProvisioned() {
+    return Boolean(this.getRepoName());
+  }
+
+  getPath() {
+    return this.state.meta.k8s?.annotations?.[AnnoKeyRepoPath];
   }
 }
 
