@@ -1,3 +1,4 @@
+import { skipToken } from '@reduxjs/toolkit/query/react';
 import { useCallback } from 'react';
 
 import { useUrlParams } from 'app/core/navigation/hooks';
@@ -88,7 +89,7 @@ export const usePullRequestParam = () => {
   return decodeURIComponent(prParam);
 };
 
-export const useFolderRepository = (folderUid?: string) => {
+export const useFolderRepository = (folderUid?: string | typeof skipToken) => {
   const [items, isLoading] = useRepositoryList();
 
   if (!folderUid) {
@@ -100,4 +101,19 @@ export const useFolderRepository = (folderUid?: string) => {
   }
 
   return items.find((repo) => repo.metadata?.name === folderUid);
+};
+
+interface GetResourceRepositoryArgs {
+  name?: string;
+  folderUid?: string;
+}
+
+export const useGetResourceRepository = ({ name, folderUid }: GetResourceRepositoryArgs) => {
+  const [items, isLoading] = useRepositoryList();
+
+  if (!items || isLoading || !(name && folderUid)) {
+    return undefined;
+  }
+
+  return items.find((repo) => repo.metadata?.name === (name || folderUid));
 };

@@ -59,6 +59,7 @@ export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerStat
     const { provisioned: isProvisioned, folderTitle } = meta;
     const [params] = useUrlParams();
     const folderUid = params.get('folderUid');
+    console.log('meta', meta);
     const folderRepository = useFolderRepository(folderUid ?? undefined);
     // Provisioned dashboards have k8s metadata annotations
     const isProvisionedNG = meta.k8s?.annotations?.[AnnoKeyRepoName] || Boolean(folderRepository);

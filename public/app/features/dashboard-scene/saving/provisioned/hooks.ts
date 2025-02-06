@@ -1,5 +1,5 @@
 import { AnnoKeyRepoName, AnnoKeyRepoPath } from 'app/features/apiserver/types';
-import { useGetRepositoryQuery } from 'app/features/provisioning/api';
+import { useGetResourceRepository } from 'app/features/provisioning/hooks';
 import { DashboardMeta } from 'app/types';
 
 import { getDefaultWorkflow } from './defaults';
@@ -24,15 +24,16 @@ export function useDefaultValues({ meta, defaultTitle, defaultDescription }: Use
   const annotations = meta.k8s?.annotations;
   const annoName = annotations?.[AnnoKeyRepoName];
   const annoPath = annotations?.[AnnoKeyRepoPath];
-  const { data: folderRepository } = useGetRepositoryQuery({ name: annoName ?? '' });
+  // Get config by resource name or folder UID for new resources
+  const repositoryConfig = useGetResourceRepository({ name: annoName, folderUid: meta.folderUid });
+  const repository = repositoryConfig?.spec;
   const timestamp = Date.now();
-  const repositoryConfig = folderRepository?.spec;
 
   return {
     values: {
       ref: `dashboard/${timestamp}`,
       path: generatePath(timestamp, annoPath, meta.slug),
-      repo: annoName,
+      repo: annoName || repositoryConfig?.metadata?.name || '',
       comment: '',
       folder: {
         uid: meta.folderUid,
@@ -40,10 +41,10 @@ export function useDefaultValues({ meta, defaultTitle, defaultDescription }: Use
       },
       title: defaultTitle,
       description: defaultDescription ?? '',
-      workflow: getDefaultWorkflow(repositoryConfig),
+      workflow: getDefaultWorkflow(repository),
     },
-    isNew: !annoPath,
-    repositoryConfig,
-    isGitHub: repositoryConfig?.type === 'github',
+    isNew: !annoName,
+    repositoryConfig: repository,
+    isGitHub: repository?.type === 'github',
   };
 }
