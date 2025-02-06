@@ -16,6 +16,7 @@ import { FolderDTO } from 'app/types';
 import { useNewFolderMutation } from '../api/browseDashboardsAPI';
 
 import { NewFolderForm } from './NewFolderForm';
+import { NewProvisionedFolderForm } from './NewProvisionedFolderForm';
 
 interface Props {
   parentFolder?: FolderDTO;
@@ -29,7 +30,7 @@ export default function CreateNewButton({ parentFolder, canCreateDashboard, canC
   const [newFolder] = useNewFolderMutation();
   const [showNewFolderDrawer, setShowNewFolderDrawer] = useState(false);
   const notifyApp = useAppNotification();
-
+  console.log('par', parentFolder);
   const onCreateFolder = async (folderName: string) => {
     try {
       const folder = await newFolder({
@@ -102,7 +103,16 @@ export default function CreateNewButton({ parentFolder, canCreateDashboard, canC
           onClose={() => setShowNewFolderDrawer(false)}
           size="sm"
         >
-          <NewFolderForm onConfirm={onCreateFolder} onCancel={() => setShowNewFolderDrawer(false)} />
+          {parentFolder?.repository ? (
+            <NewProvisionedFolderForm
+              onSubmit={() => setShowNewFolderDrawer(false)}
+              onCancel={() => setShowNewFolderDrawer(false)}
+              repositoryName={parentFolder.repository.name}
+              parentTitle={parentFolder.title}
+            />
+          ) : (
+            <NewFolderForm onConfirm={onCreateFolder} onCancel={() => setShowNewFolderDrawer(false)} />
+          )}
         </Drawer>
       )}
     </>
