@@ -13,6 +13,7 @@ import {
   Column,
   ConfirmModal,
   Drawer,
+  EmptyState,
   Icon,
   InteractiveTable,
   LoadingPlaceholder,
@@ -32,7 +33,7 @@ import {
   TopLevelGrafanaRuleDTOField,
 } from 'app/types/unified-alerting-dto';
 
-import { trackRuleVersionsComparisonClick } from '../../../Analytics';
+import { LogMessages, logInfo, trackRuleVersionsComparisonClick } from '../../../Analytics';
 import { alertRuleApi } from '../../../api/alertRuleApi';
 import { computeVersionDiff } from '../../../utils/diff';
 import { stringifyErrorLike } from '../../../utils/misc';
@@ -164,11 +165,13 @@ export function AlertVersionHistory({ ruleUid }: AlertVersionHistoryProps) {
   }
 
   if (!ruleVersions.length) {
+    // We don't expect this to happen - all alert rules _should_ have at least one version
+    logInfo(LogMessages.noAlertRuleVersionsFound, { ruleUid });
     return (
-      <Trans i18nKey="alerting.alertVersionHistory.noVersionsFound">
-        {/* I think this is not possible? */}
-        No versions found for this rule
-      </Trans>
+      <EmptyState
+        variant="not-found"
+        message={t('alerting.alertVersionHistory.noVersionsFound', 'No versions found for this rule')}
+      />
     );
   }
 
