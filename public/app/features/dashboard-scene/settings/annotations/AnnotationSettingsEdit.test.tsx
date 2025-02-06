@@ -57,8 +57,6 @@ jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => ({
   }),
 }));
 
-jest.mock('./AngularEditorLoader', () => ({ AngularEditorLoader: () => 'mocked AngularEditorLoader' }));
-
 const runRequestMock = jest.fn().mockReturnValue(
   of<PanelData>({
     state: LoadingState.Done,
