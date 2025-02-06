@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { chain, identity, omit } from 'lodash';
+import { omit } from 'lodash';
 import moment from 'moment';
 import { useState } from 'react';
 
@@ -17,10 +17,10 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { DiffViewer } from 'app/features/dashboard-scene/settings/version-history/DiffViewer';
-import { jsonDiff } from 'app/features/dashboard-scene/settings/version-history/utils';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
+import { computeVersionDiff } from '../../utils/diff';
 import { stringifyErrorLike } from '../../utils/misc';
 import { Spacer } from '../Spacer';
 
@@ -296,32 +296,4 @@ function normalizeConfig(config: AlertManagerCortexConfig) {
   return omit(config, ['id', 'last_applied']);
 }
 
-export function computeVersionDiff<T extends Object>(
-  json1: T,
-  json2: T,
-  normalizeFunction: (item: T) => Object = identity
-): Diff {
-  const cleanedJson1 = normalizeFunction(json1);
-  const cleanedJson2 = normalizeFunction(json2);
-
-  const diff = jsonDiff(cleanedJson1, cleanedJson2);
-  const added = chain(diff)
-    .values()
-    .flatMap()
-    .filter((operation) => operation.op === 'add' || operation.op === 'replace' || operation.op === 'move')
-    .sumBy((operation) => operation.endLineNumber - operation.startLineNumber + 1)
-    .value();
-
-  const removed = chain(diff)
-    .values()
-    .flatMap()
-    .filter((operation) => operation.op === 'remove' || operation.op === 'replace')
-    .sumBy((operation) => operation.endLineNumber - operation.startLineNumber + 1)
-    .value();
-
-  return {
-    added,
-    removed,
-  };
-}
 export { AlertmanagerConfigurationVersionManager };

@@ -34,8 +34,8 @@ import {
 
 import { trackRuleVersionsComparisonClick } from '../../../Analytics';
 import { alertRuleApi } from '../../../api/alertRuleApi';
+import { computeVersionDiff } from '../../../utils/diff';
 import { stringifyErrorLike } from '../../../utils/misc';
-import { computeVersionDiff } from '../../settings/VersionManager';
 
 const { useGetAlertVersionHistoryQuery } = alertRuleApi;
 
@@ -48,10 +48,6 @@ const VERSIONS_PAGE_SIZE = 20;
 const UNKNOWN = 'Unknown';
 
 /** List of (top level) properties to exclude from being shown in human readable summary of version changes */
-export type Diff = {
-  added: number;
-  removed: number;
-};
 
 const grafanaAlertPropertiesToIgnore: Array<keyof GrafanaRuleDefinition> = [
   'id',
