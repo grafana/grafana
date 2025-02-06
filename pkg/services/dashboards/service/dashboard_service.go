@@ -1686,6 +1686,17 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 			Values:   query.FolderUIDs,
 		}}
 		request.Options.Fields = append(request.Options.Fields, req...)
+	} else if len(query.FolderIds) > 0 { // nolint:staticcheck
+		values := make([]string, len(query.FolderIds)) // nolint:staticcheck
+		for i, id := range query.FolderIds {           // nolint:staticcheck
+			values[i] = strconv.FormatInt(id, 10)
+		}
+
+		request.Options.Labels = append(request.Options.Labels, &resource.Requirement{
+			Key:      utils.LabelKeyDeprecatedInternalID, // nolint:staticcheck
+			Operator: string(selection.In),
+			Values:   values,
+		})
 	}
 
 	if query.ProvisionedRepo != "" {
