@@ -99,10 +99,9 @@ export class AlertingQueryRunner {
   // to do this we will convert the list of queries into a DAG and walk the invalid node's output edges recursively
   async prepareQueries(queries: AlertQuery[]): Promise<AlertQuery[]> {
     const queriesToExclude: string[] = [];
-    const nodesThatFailedToLink: string[] = [];
+    const nodesWithInvalidEdges: string[] = [];
 
-    // find all invalid nodes and omit those and their child nodes from the final queries array
-    // ⚠️ also make sure all dependent nodes are omitted, otherwise we will be evaluating a broken graph with missing references
+    // find all invalid nodes and omit those
     for (const query of queries) {
       const refId = query.model.refId;
 
@@ -124,14 +123,15 @@ export class AlertingQueryRunner {
       }
     }
 
-    // exclude nodes that failed to link, try to parse the graph
+    // exclude nodes that failed to link and their child nodes from the final queries array by trying to parse the graph
+    // ⚠️ also make sure all dependent nodes are omitted, otherwise we will be evaluating a broken graph with missing references
     try {
       createDagFromQueries(queries);
     } catch (error) {
       if (error instanceof DAGError) {
-        const nodesFailedToLink = error.cause.map((linkError) => linkError.source);
-        queriesToExclude.push(...nodesFailedToLink);
-        nodesThatFailedToLink.push(...nodesFailedToLink);
+        const brokenNodes = error.cause.map((linkError) => linkError.source);
+        queriesToExclude.push(...brokenNodes);
+        nodesWithInvalidEdges.push(...brokenNodes);
       } else {
         throw error;
       }
@@ -139,11 +139,11 @@ export class AlertingQueryRunner {
 
     // now find dependant nodes of the nodes we've excluded
     try {
-      const queriesWithoutFailedNodes = reject(queries, (q) => nodesThatFailedToLink.includes(q.model.refId));
-      const includeGraph = createDagFromQueries(queriesWithoutFailedNodes);
+      const queriesWithoutInvalidEdges = reject(queries, (q) => nodesWithInvalidEdges.includes(q.model.refId));
+      const graph = createDagFromQueries(queriesWithoutInvalidEdges);
 
       queriesToExclude.forEach((refId) => {
-        const descendants = getDescendants(refId, includeGraph);
+        const descendants = getDescendants(refId, graph);
         queriesToExclude.push(...descendants);
       });
     } catch (error) {
