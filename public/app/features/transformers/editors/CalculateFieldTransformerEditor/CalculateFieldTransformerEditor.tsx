@@ -81,10 +81,8 @@ export const CalculateFieldTransformerEditor = (props: CalculateFieldTransformer
   }, [input, configuredOptions]);
 
   const getVariableNames = (): OperatorFunction<string[], string[]> => {
-    if (!cfg.featureToggles.transformationsVariableSupport) {
-      return identity;
-    }
     const templateSrv = getTemplateSrv();
+
     return (source) =>
       source.pipe(
         map((input) => {
