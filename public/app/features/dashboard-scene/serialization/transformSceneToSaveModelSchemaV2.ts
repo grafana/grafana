@@ -58,7 +58,7 @@ import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior
 import { ResponsiveGridItem } from '../scene/layout-responsive-grid/ResponsiveGridItem';
 import { ResponsiveGridLayoutManager } from '../scene/layout-responsive-grid/ResponsiveGridLayoutManager';
 import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
-import { DashboardLayoutManager } from '../scene/types';
+import { DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 import { isClonedKey } from '../utils/clone';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import {
