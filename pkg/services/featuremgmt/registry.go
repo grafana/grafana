@@ -1784,6 +1784,15 @@ var (
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityLogsSquad,
 		},
+		{
+			Name:              "grafanaconThemes",
+			Description:       "Enables the temporary themes for GrafanaCon",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaFrontendPlatformSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			RequiresRestart:   true,
+		},
 	}
 )
 
