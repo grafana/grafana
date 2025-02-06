@@ -46,32 +46,12 @@ func (v *Validate) Validate(ctx context.Context, ps *plugins.Plugin) error {
 	if len(v.validateSteps) == 0 {
 		return nil
 	}
-	errs := make(chan error, len(v.validateSteps))
-
-	// If the PluginsCDNSyncLoaderEnabled feature is enabled, run all the validation steps in parallel.
-	// Otherwise, run the validation steps sequentially.
-	var limitSize int
-	if v.cfg.Features.PluginsCDNSyncLoaderEnabled && ps.Class == plugins.ClassCDN {
-		limitSize = min(len(v.validateSteps), concurrencyLimit)
-	} else {
-		limitSize = 1
-	}
-	limit := make(chan struct{}, limitSize)
 	for _, validate := range v.validateSteps {
-		validate := validate
-		limit <- struct{}{}
-		go func() {
-			errs <- validate(ctx, ps)
-			<-limit
-		}()
-	}
-	for i := 0; i < len(v.validateSteps); i++ {
-		err := <-errs
+		err := validate(ctx, ps)
 		if err != nil {
 			v.log.Error("Plugin validation failed", "pluginId", ps.ID, "error", err)
 			return err
 		}
 	}
-	close(errs)
 	return nil
 }
