@@ -1,4 +1,4 @@
-import { SceneObject, VizPanel } from '@grafana/scenes';
+import { SceneDeactivationHandler, SceneObject, VizPanel } from '@grafana/scenes';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { LayoutRegistryItem } from './LayoutRegistryItem';
@@ -51,7 +51,7 @@ export interface DashboardLayoutManager<S = {}> extends SceneObject {
   /**
    * Tracks whether the dashboard is empty or not
    */
-  trackIfEmpty(): void;
+  trackIfEmpty(): SceneDeactivationHandler | void;
 
   /**
    * Notify the layout manager that the edit mode has changed

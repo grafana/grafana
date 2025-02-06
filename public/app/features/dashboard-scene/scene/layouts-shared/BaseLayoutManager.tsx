@@ -1,4 +1,4 @@
-import { SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
+import { SceneDeactivationHandler, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
 
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
@@ -13,7 +13,7 @@ export abstract class BaseLayoutManager<T extends SceneObjectState>
   }
 
   private _activationHandler() {
-    this.trackIfEmpty();
+    return this.trackIfEmpty();
   }
 
   public readonly isDashboardLayoutManager = true;
@@ -26,5 +26,5 @@ export abstract class BaseLayoutManager<T extends SceneObjectState>
   abstract getVizPanels(): VizPanel[];
   abstract getMaxPanelId(): number;
   abstract addNewRow(): void;
-  abstract trackIfEmpty(): void;
+  abstract trackIfEmpty(): SceneDeactivationHandler | void;
 }
