@@ -45,17 +45,14 @@ export interface AlertVersionHistoryProps {
 
 const VERSIONS_PAGE_SIZE = 20;
 
-<<<<<<< Updated upstream
 const UNKNOWN = 'Unknown';
 
 /** List of (top level) properties to exclude from being shown in human readable summary of version changes */
-=======
 export type Diff = {
   added: number;
   removed: number;
 };
 
->>>>>>> Stashed changes
 const grafanaAlertPropertiesToIgnore: Array<keyof GrafanaRuleDefinition> = [
   'id',
   'uid',
@@ -269,7 +266,7 @@ export function AlertVersionHistory({ ruleUid }: AlertVersionHistoryProps) {
           {config.featureToggles.alertingRuleVersionHistoryRestore && (
             <Box paddingTop={2}>
               <Stack justifyContent="flex-end">
-                <Button variant="destructive" onClick={() => {}}>
+                <Button variant="destructive" onClick={() => { }}>
                   <Trans i18nKey="alerting.alertVersionHistory.reset">
                     Reset to version {oldVersion.grafana_alert.version}
                   </Trans>
@@ -333,26 +330,17 @@ function VersionHistoryTable({
 
   //----> end of restore code
 
-<<<<<<< Updated upstream
-  const rows = ruleVersions.map((rule, index) => ({
-    id: String(rule.grafana_alert.version),
-    version: rule.grafana_alert.version || `unknown-rule-${index}`,
-    created: rule.grafana_alert.updated || 'unknown',
-    createdBy: rule.grafana_alert.updated_by,
-  }));
-=======
-  const rows: RevisionModel[] = ruleVersions.map((rule, index) => {
+  const rows = ruleVersions.map((rule, index) => {
     const nextVersion = ruleVersions[index + 1];
     const currentVersion = ruleVersions[index];
     return {
       id: String(rule.grafana_alert.version),
       version: rule.grafana_alert.version || `unknown-rule-${index}`,
       created: rule.grafana_alert.updated || 'unknown',
-      createdBy: rule.grafana_alert.updated_by?.name || 'unknown',
+      createdBy: rule.grafana_alert.updated_by,
       diff: nextVersion ? computeVersionDiff(currentVersion, nextVersion) : { added: 0, removed: 0 },
     };
   });
->>>>>>> Stashed changes
 
   // todo: fix types
   const columns: Array<Column<(typeof rows)[0]>> = [
