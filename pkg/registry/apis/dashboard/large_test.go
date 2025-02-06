@@ -1,15 +1,12 @@
 package dashboard
 
 import (
-	"context"
 	"encoding/json"
 	"os"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	dashboardinternal "github.com/grafana/grafana/pkg/apis/dashboard"
 	dashboardv0alpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/stretchr/testify/require"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -61,50 +58,18 @@ func TestLargeDashboardSupport(t *testing.T) {
 	}`, string(small))
 
 	// Now make it big again
-	err = largeObject.RebuildSpec(dash, f)
-	require.NoError(t, err)
-
-	// check that all panels exist again
-	panels, found, err = unstructured.NestedSlice(dash.Spec.Object, "panels")
-	require.NoError(t, err)
-	require.True(t, found)
-	require.Len(t, panels, expectedPanelCount)
-
-	// specObj := v0alpha1.Unstructured{
-	specObj := &unstructured.Unstructured{
-		Object: map[string]interface{}{
-			"spec": map[string]interface{}{
-				"title":       "example title",
-				"description": "example description",
-			},
-		},
-	}
-
-	dashObj := &dashboardv0alpha1.Dashboard{
+	rehydratedDash := &dashboardv0alpha1.Dashboard{
 		ObjectMeta: v1.ObjectMeta{
 			Name:      "test",
 			Namespace: "test",
 		},
-		Spec: specObj,
 	}
-	err = json.Unmarshal(f, &dashObj.Spec)
+	err = largeObject.RebuildSpec(rehydratedDash, f)
 	require.NoError(t, err)
 
-	meta, err := utils.MetaAccessor(dashObj)
+	// check that all panels exist again
+	panels, found, err = unstructured.NestedSlice(rehydratedDash.Spec.Object, "panels")
 	require.NoError(t, err)
-	gr := largeObject.GroupResource()
-
-	client := resource.NewBlobStoreClient(nil)
-	err = largeObject.Reconstruct(context.Background(), &resource.ResourceKey{
-		Group:     gr.Group,
-		Resource:  gr.Resource,
-		Namespace: dashObj.GetNamespace(),
-		Name:      dashObj.GetName(),
-	}, client, meta)
-
-	reconstructedSpec, err := meta.GetSpec()
-	require.NoError(t, err)
-
-	// require.Equal(t, dashObj.Spec, reconstructedSpec)
-	require.Equal(t, specObj, reconstructedSpec)
+	require.True(t, found)
+	require.Len(t, panels, expectedPanelCount)
 }

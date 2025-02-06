@@ -7,7 +7,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 
 	commonV0 "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	dashboard "github.com/grafana/grafana/pkg/apis/dashboard"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 )
@@ -52,17 +51,16 @@ func NewDashboardLargeObjectSupport(scheme *runtime.Scheme) *apistore.BasicLarge
 			if err != nil {
 				return err
 			}
-			// TODO figure out how we want to set the spec. Do we
-			// want to use the byte array? Do we want to pass in the the
-			// metaAccessor instead of (or in addition to) the runtime.Object?
-			err = json.Unmarshal(blob, &dash.Spec)
 
-			meta, err := utils.MetaAccessor(obj)
-			if err != nil {
-				return err
+			if err := json.Unmarshal(blob, &dash.Spec); err != nil {
+				return fmt.Errorf("failed to unmarshal blob into spec: %w", err)
 			}
 
-			return meta.SetSpec(dash.Spec)
+			if err := scheme.Convert(dash, obj, nil); err != nil {
+				return fmt.Errorf("failed to update original object: %w", err)
+			}
+
+			return nil
 		},
 	}
 }
