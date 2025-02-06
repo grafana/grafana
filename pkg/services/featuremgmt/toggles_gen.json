@@ -294,7 +294,8 @@
       "metadata": {
         "name": "alertingNoNormalState",
         "resourceVersion": "1718727528075",
-        "creationTimestamp": "2023-01-13T23:29:29Z"
+        "creationTimestamp": "2023-01-13T23:29:29Z",
+        "deletionTimestamp": "2025-01-31T15:46:31Z"
       },
       "spec": {
         "description": "Stop maintaining state of alerts that are not firing",
@@ -372,23 +373,27 @@
     {
       "metadata": {
         "name": "alertingSaveStateCompressed",
-        "resourceVersion": "1737472824047",
+        "resourceVersion": "1738604435531",
         "creationTimestamp": "2025-01-17T18:17:20Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2025-01-21 15:20:24.047499 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2025-02-03 17:40:35.53174 +0000 UTC"
         }
       },
       "spec": {
         "description": "Enables the compressed protobuf-based alert state storage",
-        "stage": "experimental",
-        "codeowner": "@grafana/alerting-squad"
+        "stage": "preview",
+        "codeowner": "@grafana/alerting-squad",
+        "expression": "false"
       }
     },
     {
       "metadata": {
         "name": "alertingSaveStatePeriodic",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2024-01-23T16:03:30Z"
+        "resourceVersion": "1738604155684",
+        "creationTimestamp": "2024-01-23T16:03:30Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-02-03 17:35:55.684572 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Writes the state periodically to the database, asynchronous to rule evaluation",
@@ -546,7 +551,8 @@
       "metadata": {
         "name": "authAPIAccessTokenAuth",
         "resourceVersion": "1718727528075",
-        "creationTimestamp": "2024-04-02T15:45:15Z"
+        "creationTimestamp": "2024-04-02T15:45:15Z",
+        "deletionTimestamp": "2025-02-04T14:58:33Z"
       },
       "spec": {
         "description": "Enables the use of Auth API access tokens for authentication",
@@ -1528,16 +1534,16 @@
     {
       "metadata": {
         "name": "exploreMetrics",
-        "resourceVersion": "1720021873452",
+        "resourceVersion": "1737658563230",
         "creationTimestamp": "2024-04-09T18:15:18Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2024-07-03 15:51:13.452477 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2025-01-23 18:56:03.23086 +0000 UTC"
         }
       },
       "spec": {
         "description": "Enables the new Explore Metrics core app",
         "stage": "GA",
-        "codeowner": "@grafana/dashboards-squad",
+        "codeowner": "@grafana/observability-metrics",
         "frontend": true,
         "expression": "true"
       }
@@ -1553,6 +1559,24 @@
         "stage": "experimental",
         "codeowner": "@grafana/observability-metrics",
         "frontend": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "exploreMetricsUseExternalAppPlugin",
+        "resourceVersion": "1738596266973",
+        "creationTimestamp": "2025-01-21T23:24:50Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-02-03 15:24:26.973231 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Use the externalized Metrics Drilldown (formerly known as Explore Metrics) app plugin",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-metrics",
+        "frontend": true,
+        "requiresRestart": true,
         "hideFromDocs": true
       }
     },
@@ -1841,6 +1865,21 @@
         "description": "Enables Grafana-managed recording rules.",
         "stage": "experimental",
         "codeowner": "@grafana/alerting-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafanaconThemes",
+        "resourceVersion": "1738661140740",
+        "creationTimestamp": "2025-02-04T09:25:40Z"
+      },
+      "spec": {
+        "description": "Enables the temporary themes for GrafanaCon",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "requiresRestart": true,
         "hideFromAdminPage": true,
         "hideFromDocs": true
       }
@@ -2689,6 +2728,19 @@
     },
     {
       "metadata": {
+        "name": "newLogsPanel",
+        "resourceVersion": "1738344859933",
+        "creationTimestamp": "2025-01-31T17:34:19Z"
+      },
+      "spec": {
+        "description": "Enables the new logs panel in Explore",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-logs",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
         "name": "newPDFRendering",
         "resourceVersion": "1735810618168",
         "creationTimestamp": "2024-02-08T12:09:34Z",
@@ -2794,6 +2846,7 @@
         "name": "openSearchBackendFlowEnabled",
         "resourceVersion": "1724141158995",
         "creationTimestamp": "2024-06-17T09:41:50Z",
+        "deletionTimestamp": "2025-01-16T11:09:59Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-08-20 08:05:58.995762 +0000 UTC"
         }
@@ -3609,13 +3662,16 @@
     {
       "metadata": {
         "name": "sqlExpressions",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2024-02-27T21:16:00Z"
+        "resourceVersion": "1738589190784",
+        "creationTimestamp": "2024-02-27T21:16:00Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-02-03 13:26:30.784245615 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables using SQL and DuckDB functions as Expressions.",
         "stage": "experimental",
-        "codeowner": "@grafana/grafana-app-platform-squad"
+        "codeowner": "@grafana/grafana-datasources-core-services"
       }
     },
     {
@@ -3721,17 +3777,18 @@
     {
       "metadata": {
         "name": "teamHttpHeaders",
-        "resourceVersion": "1726836253132",
+        "resourceVersion": "1738590709387",
         "creationTimestamp": "2023-10-17T10:23:54Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2024-09-20 12:44:13.132845 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2025-02-03 13:51:49.3871 +0000 UTC"
         }
       },
       "spec": {
         "description": "Enables LBAC for datasources to apply LogQL filtering of logs to the client requests for users in teams",
         "stage": "preview",
         "codeowner": "@grafana/identity-access-team",
-        "allowSelfServe": true
+        "allowSelfServe": true,
+        "expression": "true"
       }
     },
     {

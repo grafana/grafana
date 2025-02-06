@@ -222,7 +222,13 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
         "multi": true,
         "name": "queryVar",
         "options": [],
-        "query": "query1",
+        "query": {
+          "kind": "prometheus",
+          "spec": {
+            "expr": "label_values(node_boot_time_seconds)",
+            "refId": "A",
+          },
+        },
         "refresh": "onDashboardLoad",
         "regex": "regex1",
         "skipUrlSync": false,

@@ -1,28 +1,33 @@
 import { iamApi as api } from './api';
-export const addTagTypes = ['DisplayList'] as const;
+export const addTagTypes = ['Display'] as const;
 const injectedRtkApi = api
   .enhanceEndpoints({
     addTagTypes,
   })
   .injectEndpoints({
     endpoints: (build) => ({
-      getDisplayList: build.query<GetDisplayListApiResponse, GetDisplayListApiArg>({
-        query: (queryArg) => ({ url: `/display/${queryArg.name}` }),
-        providesTags: ['DisplayList'],
+      getDisplayMapping: build.query<GetDisplayMappingApiResponse, GetDisplayMappingApiArg>({
+        query: (queryArg) => ({
+          url: `/display`,
+          params: {
+            key: queryArg.key,
+          },
+        }),
+        providesTags: ['Display'],
       }),
     }),
     overrideExisting: false,
   });
 export { injectedRtkApi as generatedIamApi };
-export type GetDisplayListApiResponse = /** status 200 OK */ DisplayList;
-export type GetDisplayListApiArg = {
-  /** name of the DisplayList */
-  name: string;
+export type GetDisplayMappingApiResponse = /** status 200 undefined */ DisplayList;
+export type GetDisplayMappingApiArg = {
+  /** Display keys */
+  key: string[];
 };
 export type IdentityRef = {
-  /** Name is the unique identifier for identity, guaranteed jo be a unique value for the type within a namespace. */
+  /** Name is the unique identifier for identity, guaranteed to be a unique value for the type within a namespace. */
   name: string;
-  /** Type of identity e.g. "user". For a full list see https://github.com/grafana/authlib/blob/2f8d13a83ca3e82da08b53726de1697ee5b5b4cc/claims/type.go#L15-L24 */
+  /** Type of identity e.g. "user". For a full list see https://github.com/grafana/authlib/blob/d6737a7dc8f55e9d42834adb83b5da607ceed293/types/type.go#L15 */
   type: string;
 };
 export type Display = {
@@ -31,7 +36,7 @@ export type Display = {
   /** Display name for identity. */
   displayName: string;
   identity: IdentityRef;
-  /** InternalID is the legacy numreric id for identity, this is deprecated and should be phased out */
+  /** InternalID is the legacy numeric id for identity, Deprecated: use the identityRef where possible */
   internalId?: number;
 };
 export type ListMeta = {

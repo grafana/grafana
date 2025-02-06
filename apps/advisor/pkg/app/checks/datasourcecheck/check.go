@@ -7,18 +7,25 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	advisor "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/registry/apis/datasource"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/util"
 	"k8s.io/klog/v2"
 )
 
+type check struct {
+	DatasourceSvc         datasources.DataSourceService
+	PluginStore           pluginstore.Store
+	PluginContextProvider pluginContextProvider
+	PluginClient          plugins.Client
+}
+
 func New(
 	datasourceSvc datasources.DataSourceService,
 	pluginStore pluginstore.Store,
-	pluginContextProvider datasource.PluginContextWrapper,
+	pluginContextProvider pluginContextProvider,
 	pluginClient plugins.Client,
 ) checks.Check {
 	return &check{
@@ -29,44 +36,99 @@ func New(
 	}
 }
 
-type check struct {
-	DatasourceSvc         datasources.DataSourceService
-	PluginStore           pluginstore.Store
-	PluginContextProvider datasource.PluginContextWrapper
-	PluginClient          plugins.Client
-}
-
-func (c *check) Type() string {
-	return "datasource"
-}
-
-func (c *check) Run(ctx context.Context, obj *advisor.CheckSpec) (*advisor.CheckV0alpha1StatusReport, error) {
-	// Optionally read the check input encoded in the object
-	// fmt.Println(obj.Data)
-
+func (c *check) Items(ctx context.Context) ([]any, error) {
 	dss, err := c.DatasourceSvc.GetAllDataSources(ctx, &datasources.GetAllDataSourcesQuery{})
 	if err != nil {
 		return nil, err
 	}
+	res := make([]any, len(dss))
+	for i, ds := range dss {
+		res[i] = ds
+	}
+	return res, nil
+}
 
+func (c *check) ID() string {
+	return "datasource"
+}
+
+func (c *check) Steps() []checks.Step {
+	return []checks.Step{
+		&uidValidationStep{},
+		&healthCheckStep{
+			PluginContextProvider: c.PluginContextProvider,
+			PluginClient:          c.PluginClient,
+		},
+	}
+}
+
+type uidValidationStep struct{}
+
+func (s *uidValidationStep) ID() string {
+	return "uid-validation"
+}
+
+func (s *uidValidationStep) Title() string {
+	return "UID validation"
+}
+
+func (s *uidValidationStep) Description() string {
+	return "Check if the UID of each data source is valid."
+}
+
+func (s *uidValidationStep) Run(ctx context.Context, obj *advisor.CheckSpec, items []any) ([]advisor.CheckReportError, error) {
 	dsErrs := []advisor.CheckReportError{}
-	for _, ds := range dss {
+	for _, i := range items {
+		ds, ok := i.(*datasources.DataSource)
+		if !ok {
+			return nil, fmt.Errorf("invalid item type %T", i)
+		}
 		// Data source UID validation
 		err := util.ValidateUID(ds.UID)
 		if err != nil {
-			dsErrs = append(dsErrs, advisor.CheckReportError{
-				Severity: advisor.CheckReportErrorSeverityLow,
-				Reason:   fmt.Sprintf("Invalid UID '%s' for data source %s", ds.UID, ds.Name),
-				Action:   "Check the <a href='https://grafana.com/docs/grafana/latest/upgrade-guide/upgrade-v11.2/#grafana-data-source-uid-format-enforcement' target=_blank>documentation</a> for more information.",
-			})
+			dsErrs = append(dsErrs, checks.NewCheckReportError(
+				advisor.CheckReportErrorSeverityLow,
+				fmt.Sprintf("Invalid UID '%s' for data source %s", ds.UID, ds.Name),
+				"Check the <a href='https://grafana.com/docs/grafana/latest/upgrade-guide/upgrade-v11.2/#grafana-data-source-uid-format-enforcement' target=_blank>documentation</a> for more information.",
+				s.ID(),
+				ds.UID,
+			))
+		}
+	}
+	return dsErrs, nil
+}
+
+type healthCheckStep struct {
+	PluginContextProvider pluginContextProvider
+	PluginClient          plugins.Client
+}
+
+func (s *healthCheckStep) Title() string {
+	return "Health check"
+}
+
+func (s *healthCheckStep) Description() string {
+	return "Check if all data sources are healthy."
+}
+
+func (s *healthCheckStep) ID() string {
+	return "health-check"
+}
+
+func (s *healthCheckStep) Run(ctx context.Context, obj *advisor.CheckSpec, items []any) ([]advisor.CheckReportError, error) {
+	dsErrs := []advisor.CheckReportError{}
+	for _, i := range items {
+		ds, ok := i.(*datasources.DataSource)
+		if !ok {
+			return nil, fmt.Errorf("invalid item type %T", i)
 		}
 
 		// Health check execution
-		pCtx, err := c.PluginContextProvider.PluginContextForDataSource(ctx, &backend.DataSourceInstanceSettings{
-			Type:       ds.Type,
-			UID:        ds.UID,
-			APIVersion: ds.APIVersion,
-		})
+		requester, err := identity.GetRequester(ctx)
+		if err != nil {
+			return nil, err
+		}
+		pCtx, err := s.PluginContextProvider.GetWithDataSource(ctx, ds.Type, requester, ds)
 		if err != nil {
 			klog.ErrorS(err, "Error creating plugin context", "datasource", ds.Name)
 			continue
@@ -75,24 +137,26 @@ func (c *check) Run(ctx context.Context, obj *advisor.CheckSpec) (*advisor.Check
 			PluginContext: pCtx,
 			Headers:       map[string]string{},
 		}
-		resp, err := c.PluginClient.CheckHealth(ctx, req)
+		resp, err := s.PluginClient.CheckHealth(ctx, req)
 		if err != nil {
 			fmt.Println("Error checking health", err)
 			continue
 		}
 		if resp.Status != backend.HealthStatusOk {
-			dsErrs = append(dsErrs, advisor.CheckReportError{
-				Severity: advisor.CheckReportErrorSeverityHigh,
-				Reason:   fmt.Sprintf("Health check failed for %s", ds.Name),
-				Action: fmt.Sprintf(
+			dsErrs = append(dsErrs, checks.NewCheckReportError(
+				advisor.CheckReportErrorSeverityHigh,
+				fmt.Sprintf("Health check failed for %s", ds.Name),
+				fmt.Sprintf(
 					"Go to the <a href='/connections/datasources/edit/%s'>data source configuration</a>"+
 						" and address the issues reported.", ds.UID),
-			})
+				s.ID(),
+				ds.UID,
+			))
 		}
 	}
+	return dsErrs, nil
+}
 
-	return &advisor.CheckV0alpha1StatusReport{
-		Count:  int64(len(dss)),
-		Errors: dsErrs,
-	}, nil
+type pluginContextProvider interface {
+	GetWithDataSource(ctx context.Context, pluginID string, user identity.Requester, ds *datasources.DataSource) (backend.PluginContext, error)
 }

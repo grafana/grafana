@@ -10,6 +10,8 @@ import (
 	"sync"
 	"time"
 
+	dashboardv0alpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
+	folderv0alpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/hashicorp/golang-lru/v2/expirable"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -460,9 +462,9 @@ func (s *searchSupport) handleEvent(ctx context.Context, evt *WrittenEvent) {
 	// record latency from when event was created to when it was indexed
 	latencySeconds := float64(time.Now().UnixMicro()-evt.ResourceVersion) / 1e6
 	span.AddEvent("index latency", trace.WithAttributes(attribute.Float64("latency_seconds", latencySeconds)))
-	if latencySeconds > 5 {
-		s.log.Debug("high index latency object details", "resource", evt.Key.Resource, "latency_seconds", latencySeconds, "name", evt.Key.Name, "namespace", evt.Key.Namespace)
-		s.log.Warn("high index latency", "latency", latencySeconds)
+	s.log.Debug("indexed new object", "resource", evt.Key.Resource, "latency_seconds", latencySeconds, "name", evt.Key.Name, "namespace", evt.Key.Namespace, "rv", evt.ResourceVersion)
+	if latencySeconds > 1 {
+		s.log.Warn("high index latency object details", "resource", evt.Key.Resource, "latency_seconds", latencySeconds, "name", evt.Key.Name, "namespace", evt.Key.Namespace, "rv", evt.ResourceVersion)
 	}
 	if IndexMetrics != nil {
 		IndexMetrics.IndexLatency.WithLabelValues(evt.Key.Resource).Observe(latencySeconds)
@@ -650,4 +652,35 @@ func (s *builderCache) get(ctx context.Context, key NamespacedResource) (Documen
 		}
 	}
 	return s.defaultBuilder, nil
+}
+
+// AsResourceKey converts the given namespace and type to a search key
+func AsResourceKey(ns string, t string) (*ResourceKey, error) {
+	if ns == "" {
+		return nil, fmt.Errorf("missing namespace")
+	}
+	switch t {
+	case "folders", "folder":
+		return &ResourceKey{
+			Namespace: ns,
+			Group:     folderv0alpha1.GROUP,
+			Resource:  folderv0alpha1.RESOURCE,
+		}, nil
+	case "dashboards", "dashboard":
+		return &ResourceKey{
+			Namespace: ns,
+			Group:     dashboardv0alpha1.GROUP,
+			Resource:  dashboardv0alpha1.RESOURCE,
+		}, nil
+
+	// NOT really supported in the dashboard search UI, but useful for manual testing
+	case "playlist", "playlists":
+		return &ResourceKey{
+			Namespace: ns,
+			Group:     "playlist.grafana.app",
+			Resource:  "playlists",
+		}, nil
+	}
+
+	return nil, fmt.Errorf("unknown resource type")
 }

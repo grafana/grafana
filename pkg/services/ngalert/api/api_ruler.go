@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"slices"
+	"sort"
 	"strings"
 	"time"
 
@@ -330,6 +331,30 @@ func (srv RulerSrv) RouteGetRuleByUID(c *contextmodel.ReqContext, ruleUID string
 	return response.JSON(http.StatusOK, result)
 }
 
+func (srv RulerSrv) RouteGetRuleVersionsByUID(c *contextmodel.ReqContext, ruleUID string) response.Response {
+	ctx := c.Req.Context()
+	// make sure the user has access to the current version of the rule. Also, check if it exists
+	_, err := srv.getAuthorizedRuleByUid(ctx, c, ruleUID)
+	if err != nil {
+		if errors.Is(err, ngmodels.ErrAlertRuleNotFound) {
+			return response.Empty(http.StatusNotFound)
+		}
+		return response.ErrOrFallback(http.StatusInternalServerError, "failed to get rule by UID", err)
+	}
+
+	rules, err := srv.store.GetAlertRuleVersions(ctx, ngmodels.AlertRuleKey{OrgID: c.OrgID, UID: ruleUID})
+	if err != nil {
+		return response.ErrOrFallback(http.StatusInternalServerError, "failed to get rule history", err)
+	}
+	sort.Slice(rules, func(i, j int) bool { return rules[i].ID > rules[j].ID })
+	result := make(apimodels.GettableRuleVersions, 0, len(rules))
+	for _, rule := range rules {
+		// do not provide provenance status because we do not have historical changes for it
+		result = append(result, toGettableExtendedRuleNode(*rule, map[string]ngmodels.Provenance{}, srv.resolveUserIdToNameFn(ctx)))
+	}
+	return response.JSON(http.StatusOK, result)
+}
+
 func (srv RulerSrv) RoutePostNameRulesConfig(c *contextmodel.ReqContext, ruleGroupConfig apimodels.PostableRuleGroupConfig, namespaceUID string) response.Response {
 	namespace, err := srv.store.GetNamespaceByUID(c.Req.Context(), namespaceUID, c.SignedInUser.GetOrgID(), c.SignedInUser)
 	if err != nil {
@@ -560,8 +585,6 @@ func toGettableExtendedRuleNode(r ngmodels.AlertRule, provenanceRecords map[stri
 
 	gettableExtendedRuleNode := apimodels.GettableExtendedRuleNode{
 		GrafanaManagedAlert: &apimodels.GettableGrafanaRule{
-			ID:                   r.ID,
-			OrgID:                r.OrgID,
 			Title:                r.Title,
 			Condition:            r.Condition,
 			Data:                 ApiAlertQueriesFromAlertQueries(r.Data),
@@ -732,23 +755,36 @@ type userIDToUserInfoFn func(id *ngmodels.UserUID) *apimodels.UserInfo
 
 // getIdentityName returns name of either user or service account
 func (srv RulerSrv) resolveUserIdToNameFn(ctx context.Context) userIDToUserInfoFn {
+	cache := map[ngmodels.UserUID]*apimodels.UserInfo{
+		ngmodels.AlertingUserUID: {
+			UID: string(ngmodels.AlertingUserUID),
+		},
+		ngmodels.FileProvisioningUserUID: {
+			UID: string(ngmodels.FileProvisioningUserUID),
+		},
+	}
 	return func(id *ngmodels.UserUID) *apimodels.UserInfo {
 		if id == nil {
 			return nil
 		}
+		if val, ok := cache[*id]; ok {
+			return val
+		}
 		u, err := srv.userService.GetByUID(ctx, &user.GetUserByUIDQuery{
 			UID: string(*id),
 		})
-		var result string
+		var name string
 		if err != nil {
 			srv.log.FromContext(ctx).Warn("Failed to get user by uid. Defaulting to an empty name", "uid", id, "error", err)
 		}
 		if u != nil {
-			result = u.NameOrFallback()
+			name = u.NameOrFallback()
 		}
-		return &apimodels.UserInfo{
+		result := &apimodels.UserInfo{
 			UID:  string(*id),
-			Name: result,
+			Name: name,
 		}
+		cache[*id] = result
+		return result
 	}
 }

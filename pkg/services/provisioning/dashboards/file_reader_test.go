@@ -411,7 +411,7 @@ func TestDashboardFileReader(t *testing.T) {
 		require.NoError(t, err)
 
 		ctx := context.Background()
-		ctx, _ = identity.WithServiceIdentitiy(ctx, 1)
+		ctx, _ = identity.WithServiceIdentity(ctx, 1)
 		_, _, err = r.getOrCreateFolder(ctx, cfg, fakeService, cfg.Folder)
 		require.NoError(t, err)
 	})
@@ -433,7 +433,7 @@ func TestDashboardFileReader(t *testing.T) {
 		require.NoError(t, err)
 
 		ctx := context.Background()
-		ctx, _ = identity.WithServiceIdentitiy(ctx, 1)
+		ctx, _ = identity.WithServiceIdentity(ctx, 1)
 		_, _, err = r.getOrCreateFolder(ctx, cfg, fakeService, cfg.Folder)
 		require.ErrorIs(t, err, dashboards.ErrFolderInvalidUID)
 	})

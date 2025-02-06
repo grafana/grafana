@@ -11,6 +11,7 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { isClonedKey } from '../../utils/clone';
 import { DashboardScene } from '../DashboardScene';
@@ -18,7 +19,7 @@ import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
 import { RowRepeaterBehavior } from '../layout-default/RowRepeaterBehavior';
 import { ResponsiveGridLayoutManager } from '../layout-responsive-grid/ResponsiveGridLayoutManager';
-import { DashboardLayoutManager, LayoutRegistryItem } from '../types';
+import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 
 import { RowItem } from './RowItem';
 import { RowItemRepeaterBehavior } from './RowItemRepeaterBehavior';
@@ -28,7 +29,20 @@ interface RowsLayoutManagerState extends SceneObjectState {
 }
 
 export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> implements DashboardLayoutManager {
-  public isDashboardLayoutManager: true = true;
+  public readonly isDashboardLayoutManager = true;
+
+  public static readonly descriptor = {
+    get name() {
+      return t('dashboard.rows-layout.name', 'Rows');
+    },
+    get description() {
+      return t('dashboard.rows-layout.description', 'Rows layout');
+    },
+    id: 'rows-layout',
+    createFromLayout: RowsLayoutManager.createFromLayout,
+  };
+
+  public readonly descriptor = RowsLayoutManager.descriptor;
 
   public editModeChanged(isEditing: boolean): void {}
 
@@ -54,19 +68,11 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
       rows: [
         ...this.state.rows,
         new RowItem({
-          title: 'New row',
+          title: t('dashboard.rows-layout.row.new', 'New row'),
           layout: ResponsiveGridLayoutManager.createEmpty(),
         }),
       ],
     });
-  }
-
-  public getMaxPanelId(): number {
-    return Math.max(...this.state.rows.map((row) => row.getLayout().getMaxPanelId()));
-  }
-
-  public getNextPanelId(): number {
-    return 0;
   }
 
   public removePanel(panel: VizPanel) {}
@@ -113,21 +119,8 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
     });
   }
 
-  public getDescriptor(): LayoutRegistryItem {
-    return RowsLayoutManager.getDescriptor();
-  }
-
   public getSelectedObject() {
-    return sceneGraph.getAncestor(this, DashboardScene).state.editPane.state.selectedObject?.resolve();
-  }
-
-  public static getDescriptor(): LayoutRegistryItem {
-    return {
-      name: 'Rows',
-      description: 'Rows layout',
-      id: 'rows-layout',
-      createFromLayout: RowsLayoutManager.createFromLayout,
-    };
+    return sceneGraph.getAncestor(this, DashboardScene).state.editPane.state.selection?.getFirstObject();
   }
 
   public static createEmpty() {
@@ -182,7 +175,7 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
       rows = config.map(
         (rowConfig) =>
           new RowItem({
-            title: rowConfig.title ?? 'Row title',
+            title: rowConfig.title ?? t('dashboard.rows-layout.row.new', 'New row'),
             isCollapsed: !!rowConfig.isCollapsed,
             layout: DefaultGridLayoutManager.fromGridItems(
               rowConfig.children,
@@ -193,7 +186,7 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
           })
       );
     } else {
-      rows = [new RowItem({ layout: layout.clone(), title: 'Row title' })];
+      rows = [new RowItem({ layout: layout.clone(), title: t('dashboard.rows-layout.row.new', 'New row') })];
     }
 
     return new RowsLayoutManager({ rows });

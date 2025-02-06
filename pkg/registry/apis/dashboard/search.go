@@ -18,7 +18,9 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apis/dashboard"
 	dashboardv0alpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
+	folderv0alpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	dashboardsearch "github.com/grafana/grafana/pkg/services/dashboards/service/search"
@@ -199,7 +201,7 @@ func (s *SearchHandler) DoSortable(w http.ResponseWriter, r *http.Request) {
 
 const rootFolder = "general"
 
-//nolint:gocyclo
+// nolint:gocyclo
 func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	ctx, span := s.tracer.Start(r.Context(), "dashboard.search")
 	defer span.End()
@@ -231,6 +233,7 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		Query:   queryParams.Get("query"),
 		Limit:   int64(limit),
 		Offset:  int64(offset),
+		Page:    int64(offset), // on modes 0-2 (legacy) we use "Page" instead of "Offset"
 		Explain: queryParams.Has("explain") && queryParams.Get("explain") != "false",
 	}
 	fields := []string{"title", "folder", "tags"}
@@ -262,10 +265,10 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	switch len(types) {
 	case 0:
 		// When no type specified, search for dashboards
-		searchRequest.Options.Key, err = asResourceKey(user.GetNamespace(), "dashboards")
+		searchRequest.Options.Key, err = asResourceKey(user.GetNamespace(), dashboard.DASHBOARD_RESOURCE)
 		// Currently a search query is across folders and dashboards
-		if searchRequest.Query != "" {
-			federate, err = asResourceKey(user.GetNamespace(), "folders")
+		if err == nil {
+			federate, err = asResourceKey(user.GetNamespace(), folderv0alpha1.RESOURCE)
 		}
 	case 1:
 		searchRequest.Options.Key, err = asResourceKey(user.GetNamespace(), types[0])
@@ -301,8 +304,7 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// The facet term fields
-	facets, ok := queryParams["facet"]
-	if ok {
+	if facets, ok := queryParams["facet"]; ok {
 		searchRequest.Facet = make(map[string]*resource.ResourceSearchRequest_Facet)
 		for _, v := range facets {
 			searchRequest.Facet[v] = &resource.ResourceSearchRequest_Facet{
@@ -313,8 +315,7 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// The tags filter
-	tags, ok := queryParams["tag"]
-	if ok {
+	if tags, ok := queryParams["tag"]; ok {
 		searchRequest.Options.Fields = []*resource.Requirement{{
 			Key:      "tags",
 			Operator: "=",
@@ -323,8 +324,7 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// The names filter
-	names, ok := queryParams["name"]
-	if ok {
+	if names, ok := queryParams["name"]; ok {
 		if searchRequest.Options.Fields == nil {
 			searchRequest.Options.Fields = []*resource.Requirement{}
 		}
@@ -366,30 +366,10 @@ func (s *SearchHandler) write(w http.ResponseWriter, obj any) {
 
 // Given a namespace and type convert it to a search key
 func asResourceKey(ns string, k string) (*resource.ResourceKey, error) {
-	if ns == "" {
-		return nil, apierrors.NewBadRequest("missing namespace")
+	key, err := resource.AsResourceKey(ns, k)
+	if err != nil {
+		return nil, apierrors.NewBadRequest(err.Error())
 	}
-	switch k {
-	case "folders", "folder":
-		return &resource.ResourceKey{
-			Namespace: ns,
-			Group:     "folder.grafana.app",
-			Resource:  "folders",
-		}, nil
-	case "dashboards", "dashboard":
-		return &resource.ResourceKey{
-			Namespace: ns,
-			Group:     dashboardv0alpha1.GROUP,
-			Resource:  "dashboards",
-		}, nil
 
-	// NOT really supported in the dashboard search UI, but useful for manual testing
-	case "playlist", "playlists":
-		return &resource.ResourceKey{
-			Namespace: ns,
-			Group:     "playlist.grafana.app",
-			Resource:  "playlists",
-		}, nil
-	}
-	return nil, apierrors.NewBadRequest("unknown resource type")
+	return key, nil
 }

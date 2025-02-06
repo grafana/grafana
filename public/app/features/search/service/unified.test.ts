@@ -1,6 +1,143 @@
-import { toDashboardResults, SearchHit, SearchAPIResponse } from './unified';
+import { BackendSrv } from '@grafana/runtime';
+
+import { GrafanaSearcher, SearchQuery } from './types';
+import { toDashboardResults, SearchHit, SearchAPIResponse, UnifiedSearcher } from './unified';
+
+beforeEach(() => {
+  jest.clearAllMocks();
+});
+
+const mockResults: SearchAPIResponse = {
+  hits: [],
+  totalHits: 0,
+};
+
+const mockFolders: SearchAPIResponse = {
+  hits: [],
+  totalHits: 0,
+};
+
+const mockFallbackSearcher = {
+  search: jest.fn(),
+} as unknown as GrafanaSearcher;
+
+const getResponse = (uri: string) => {
+  if (uri.endsWith('?type=folders')) {
+    return Promise.resolve(mockFolders);
+  }
+  return Promise.resolve(mockResults);
+};
+
+const mockSearcher = {
+  search: (uri: string) => getResponse(uri),
+};
+
+jest.mock('@grafana/runtime', () => {
+  const originalRuntime = jest.requireActual('@grafana/runtime');
+  return {
+    ...originalRuntime,
+    getBackendSrv: () =>
+      ({
+        get: (uri: string) => mockSearcher.search(uri),
+      }) as unknown as BackendSrv,
+  };
+});
 
 describe('Unified Storage Searcher', () => {
+  it('should perform search with basic query', async () => {
+    mockFolders.hits = [
+      {
+        name: 'folder1',
+        title: 'Folder 1',
+        resource: 'folders',
+      } as SearchHit,
+    ];
+    mockResults.hits = [
+      {
+        name: 'dashboard1',
+        title: 'Dashboard 1',
+        resource: 'dashboards',
+        folder: 'folder1',
+      } as SearchHit,
+    ];
+
+    const query: SearchQuery = {
+      query: 'test',
+      limit: 50,
+    };
+
+    const searcher = new UnifiedSearcher(mockFallbackSearcher);
+
+    const response = await searcher.search(query);
+
+    expect(response.view.length).toBe(1);
+    expect(response.view.get(0).title).toBe('Dashboard 1');
+
+    const df = response.view.dataFrame;
+    const locationInfo = df.meta?.custom?.locationInfo;
+    expect(locationInfo).toBeDefined();
+    expect(locationInfo?.folder1.name).toBe('Folder 1');
+  });
+
+  it('should perform search and sync folders with missing folder', async () => {
+    const mockFolders = {
+      hits: [
+        {
+          name: 'folder2',
+          title: 'Folder 2',
+          resource: 'folders',
+        } as SearchHit,
+      ],
+      totalHits: 1,
+    };
+
+    const mockResults = {
+      hits: [
+        {
+          name: 'db1',
+          title: 'DB 1',
+          resource: 'dashboards',
+          folder: 'folder1',
+        } as SearchHit,
+        {
+          name: 'db2',
+          title: 'DB 2',
+          resource: 'dashboards',
+          folder: 'folder2',
+        } as SearchHit,
+      ],
+      totalHits: 2,
+    };
+
+    jest
+      .spyOn(mockSearcher, 'search')
+      .mockResolvedValueOnce(mockFolders)
+      .mockResolvedValueOnce(mockResults)
+      .mockResolvedValueOnce(mockFolders);
+
+    const consoleWarn = jest.fn();
+    jest.spyOn(console, 'warn').mockImplementationOnce(consoleWarn);
+
+    const query: SearchQuery = {
+      query: 'test',
+      limit: 50,
+    };
+
+    const searcher = new UnifiedSearcher(mockFallbackSearcher);
+
+    const response = await searcher.search(query);
+
+    expect(response.view.length).toBe(1);
+    expect(response.view.get(0).title).toBe('DB 2');
+
+    const df = response.view.dataFrame;
+    const locationInfo = df.meta?.custom?.locationInfo;
+    expect(locationInfo).toBeDefined();
+    expect(locationInfo?.folder2.name).toBe('Folder 2');
+    expect(consoleWarn).toHaveBeenCalled();
+    expect(mockSearcher.search).toHaveBeenCalledTimes(3);
+  });
+
   it('can create dashboard search results and set meta sortBy so column is added for sprinkles sort field', () => {
     const mockHits: SearchHit[] = [
       {

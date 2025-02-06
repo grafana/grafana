@@ -227,14 +227,6 @@ var (
 			Owner:        grafanaDatavizSquad,
 		},
 		{
-			Name:              "alertingNoNormalState",
-			Description:       "Stop maintaining state of alerts that are not firing",
-			Stage:             FeatureStagePublicPreview,
-			RequiresRestart:   false,
-			Owner:             grafanaAlertingSquad,
-			HideFromAdminPage: true,
-		},
-		{
 			Name:           "logsContextDatasourceUi",
 			Description:    "Allow datasource to provide custom UI for context view",
 			Stage:          FeatureStageGeneralAvailability,
@@ -772,6 +764,7 @@ var (
 			FrontendOnly:   false,
 			AllowSelfServe: true,
 			Owner:          identityAccessTeam,
+			Expression:     "true",
 		},
 		{
 			Name:         "cachingOptimizeSerializationMemoryUsage",
@@ -919,7 +912,7 @@ var (
 			Stage:        FeatureStageGeneralAvailability,
 			Expression:   "true", // enabled by default
 			FrontendOnly: true,
-			Owner:        grafanaDashboardsSquad,
+			Owner:        grafanaObservabilityMetricsSquad,
 		},
 		{
 			Name:         "alertingSimplifiedRouting",
@@ -1030,9 +1023,10 @@ var (
 		{
 			Name:         "alertingSaveStateCompressed",
 			Description:  "Enables the compressed protobuf-based alert state storage",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: false,
 			Owner:        grafanaAlertingSquad,
+			Expression:   "false",
 		},
 		{
 			Name:              "scopeApi",
@@ -1061,7 +1055,7 @@ var (
 			Description:  "Enables using SQL and DuckDB functions as Expressions.",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: false,
-			Owner:        grafanaAppPlatformSquad,
+			Owner:        grafanaDatasourcesCoreServicesSquad,
 		},
 		{
 			Name:         "nodeGraphDotLayout",
@@ -1113,14 +1107,6 @@ var (
 			Stage:             FeatureStageExperimental,
 			Owner:             grafanaDashboardsSquad,
 			AllowSelfServe:    false,
-			HideFromDocs:      true,
-			HideFromAdminPage: true,
-		},
-		{
-			Name:              "authAPIAccessTokenAuth",
-			Description:       "Enables the use of Auth API access tokens for authentication",
-			Stage:             FeatureStageExperimental,
-			Owner:             identityAccessTeam,
 			HideFromDocs:      true,
 			HideFromAdminPage: true,
 		},
@@ -1296,13 +1282,6 @@ var (
 			Owner:             identityAccessTeam,
 			HideFromAdminPage: true,
 			HideFromDocs:      true,
-		},
-		{
-			Name:        "openSearchBackendFlowEnabled",
-			Description: "Enables the backend query flow for Open Search datasource plugin",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       awsDatasourcesSquad,
-			Expression:  "true",
 		},
 		{
 			Name:            "ssoSettingsLDAP",
@@ -1757,6 +1736,15 @@ var (
 			Owner:       awsDatasourcesSquad,
 		},
 		{
+			Name:            "exploreMetricsUseExternalAppPlugin",
+			Description:     "Use the externalized Metrics Drilldown (formerly known as Explore Metrics) app plugin",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaObservabilityMetricsSquad,
+			FrontendOnly:    true,
+			RequiresRestart: true,
+			HideFromDocs:    true,
+		},
+		{
 			Name:            "datasourceConnectionsTab",
 			Description:     "Shows defined connections for a data source in the plugins detail page",
 			Stage:           FeatureStageExperimental,
@@ -1786,6 +1774,22 @@ var (
 			Description:       "works together with alertingAlertmanagerExtraDedupStage, if enabled, it will stop the pipeline if the timestamps are not matching. Otherwise, it will emit a warning",
 			Stage:             FeatureStageExperimental,
 			Owner:             grafanaAlertingSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			RequiresRestart:   true,
+		},
+		{
+			Name:         "newLogsPanel",
+			Description:  "Enables the new logs panel in Explore",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityLogsSquad,
+		},
+		{
+			Name:              "grafanaconThemes",
+			Description:       "Enables the temporary themes for GrafanaCon",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaFrontendPlatformSquad,
 			HideFromAdminPage: true,
 			HideFromDocs:      true,
 			RequiresRestart:   true,

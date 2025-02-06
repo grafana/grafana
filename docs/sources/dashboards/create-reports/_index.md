@@ -19,11 +19,6 @@ title: Create and manage reports
 description: Generate and share PDF reports from your Grafana dashboards
 weight: 600
 refs:
-  change-ui-theme:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/organization-preferences/#change-grafana-ui-theme
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/organization-preferences/#change-grafana-ui-theme
   grafana-enterprise:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/
@@ -97,7 +92,7 @@ For Grafana Enterprise, the Reporting feature has the following requirements:
 ### Rendering configuration
 
 By default, attachments (PDFs, CSV files, and embedded images) larger than 10 MB are not sent, which keeps email servers from rejecting the email.
-You can increase or decrease this limit by configuring the [`max_attachment_size_mb`](ref:max-size-configuration) setting in your `ini` file.
+You can increase or decrease this limit in the [reporting configuration](ref:max-size-configuration).
 
 When a report file is generated, it's temporarily written to the corresponding folder (`csv`, `pdf`, `png`) in the Grafana `data` folder.
 A background job runs every 10 minutes and removes temporary files.

@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { ReactNode, useMemo, useRef } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import {
   SceneObjectState,
@@ -9,6 +9,7 @@ import {
   SceneComponentProps,
   sceneGraph,
   VariableDependencyConfig,
+  SceneObject,
 } from '@grafana/scenes';
 import {
   Alert,
@@ -21,7 +22,7 @@ import {
   useElementSelection,
   useStyles2,
 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import { RepeatRowSelect2 } from 'app/features/dashboard/components/RepeatRowSelect/RepeatRowSelect';
@@ -32,8 +33,12 @@ import { isClonedKey } from '../../utils/clone';
 import { getDashboardSceneFor, getDefaultVizPanel, getQueryRunnerFor } from '../../utils/utils';
 import { DashboardScene } from '../DashboardScene';
 import { useLayoutCategory } from '../layouts-shared/DashboardLayoutSelector';
-import { DashboardLayoutManager, EditableDashboardElement, LayoutParent } from '../types';
+import { BulkActionElement } from '../types/BulkActionElement';
+import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
+import { EditableDashboardElement } from '../types/EditableDashboardElement';
+import { LayoutParent } from '../types/LayoutParent';
 
+import { MultiSelectedRowItemsElement } from './MultiSelectedRowItemsElement';
 import { RowItemRepeaterBehavior } from './RowItemRepeaterBehavior';
 import { RowsLayoutManager } from './RowsLayoutManager';
 
@@ -45,37 +50,41 @@ export interface RowItemState extends SceneObjectState {
   height?: 'expand' | 'min';
 }
 
-export class RowItem extends SceneObjectBase<RowItemState> implements LayoutParent, EditableDashboardElement {
+export class RowItem
+  extends SceneObjectBase<RowItemState>
+  implements LayoutParent, BulkActionElement, EditableDashboardElement
+{
   protected _variableDependency = new VariableDependencyConfig(this, {
     statePaths: ['title'],
   });
 
-  public isEditableDashboardElement: true = true;
+  public readonly isEditableDashboardElement = true;
+  public readonly typeName = 'Row';
 
   public useEditPaneOptions(): OptionsPaneCategoryDescriptor[] {
     const row = this;
 
     const rowOptions = useMemo(() => {
       return new OptionsPaneCategoryDescriptor({
-        title: 'Row options',
+        title: t('dashboard.rows-layout.row-options.title', 'Row options'),
         id: 'row-options',
         isOpenDefault: true,
       })
         .addItem(
           new OptionsPaneItemDescriptor({
-            title: 'Title',
+            title: t('dashboard.rows-layout.row-options.title-option', 'Title'),
             render: () => <RowTitleInput row={row} />,
           })
         )
         .addItem(
           new OptionsPaneItemDescriptor({
-            title: 'Height',
+            title: t('dashboard.rows-layout.row-options.height.title', 'Height'),
             render: () => <RowHeightSelect row={row} />,
           })
         )
         .addItem(
           new OptionsPaneItemDescriptor({
-            title: 'Hide row header',
+            title: t('dashboard.rows-layout.row-options.height.hide-row-header', 'Hide row header'),
             render: () => <RowHeaderSwitch row={row} />,
           })
         );
@@ -85,12 +94,12 @@ export class RowItem extends SceneObjectBase<RowItemState> implements LayoutPare
       const dashboard = getDashboardSceneFor(row);
 
       return new OptionsPaneCategoryDescriptor({
-        title: 'Repeat options',
+        title: t('dashboard.rows-layout.row-options.repeat.title', 'Repeat options'),
         id: 'row-repeat-options',
         isOpenDefault: true,
       }).addItem(
         new OptionsPaneItemDescriptor({
-          title: 'Variable',
+          title: t('dashboard.rows-layout.row-options.repeat.variable.title', 'Variable'),
           render: () => <RowRepeatSelect row={row} dashboard={dashboard} />,
         })
       );
@@ -102,8 +111,8 @@ export class RowItem extends SceneObjectBase<RowItemState> implements LayoutPare
     return [rowOptions, rowRepeatOptions, layoutOptions];
   }
 
-  public getTypeName(): string {
-    return 'Row';
+  public createMultiSelectedElement(items: SceneObject[]) {
+    return new MultiSelectedRowItemsElement(items);
   }
 
   public onDelete = () => {
@@ -162,7 +171,11 @@ export class RowItem extends SceneObjectBase<RowItemState> implements LayoutPare
             <button
               onClick={model.onCollapseToggle}
               className={styles.rowTitleButton}
-              aria-label={isCollapsed ? 'Expand row' : 'Collapse row'}
+              aria-label={
+                isCollapsed
+                  ? t('dashboard.rows-layout.row.expand', 'Expand row')
+                  : t('dashboard.rows-layout.row.collapse', 'Collapse row')
+              }
               data-testid={selectors.components.DashboardRow.title(titleInterpolated!)}
             >
               <Icon name={isCollapsed ? 'angle-right' : 'angle-down'} />
@@ -266,9 +279,9 @@ export function RowHeaderSwitch({ row }: { row: RowItem }) {
 export function RowHeightSelect({ row }: { row: RowItem }) {
   const { height = 'expand' } = row.useState();
 
-  const options = [
-    { label: 'Expand', value: 'expand' as const },
-    { label: 'Min', value: 'min' as const },
+  const options: Array<SelectableValue<'expand' | 'min'>> = [
+    { label: t('dashboard.rows-layout.row-options.height.expand', 'Expand'), value: 'expand' },
+    { label: t('dashboard.rows-layout.row-options.height.min', 'Min'), value: 'min' },
   ];
 
   return (

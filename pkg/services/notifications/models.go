@@ -18,15 +18,16 @@ type SendEmailAttachFile struct {
 
 // SendEmailCommand is the command for sending emails
 type SendEmailCommand struct {
-	To            []string
-	SingleEmail   bool
-	Template      string
-	Subject       string
-	Data          map[string]any
-	Info          string
-	ReplyTo       []string
-	EmbeddedFiles []string
-	AttachedFiles []*SendEmailAttachFile
+	To               []string
+	SingleEmail      bool
+	Template         string
+	Subject          string
+	Data             map[string]any
+	Info             string
+	ReplyTo          []string
+	EmbeddedFiles    []string
+	EmbeddedContents []EmbeddedContent
+	AttachedFiles    []*SendEmailAttachFile
 }
 
 // SendEmailCommandSync is the command for sending emails synchronously

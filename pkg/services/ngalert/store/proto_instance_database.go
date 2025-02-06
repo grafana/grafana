@@ -68,15 +68,10 @@ func (st ProtoInstanceDBStore) ListAlertInstances(ctx context.Context, cmd *mode
 			// Convert proto instances to model instances
 			for _, protoInstance := range instances {
 				modelInstance := alertInstanceProtoToModel(row.RuleUID, row.OrgID, protoInstance)
-				if modelInstance != nil {
-					// If FlagAlertingNoNormalState is enabled, we should not return instances with normal state and no reason.
-					if st.FeatureToggles.IsEnabled(ctx, featuremgmt.FlagAlertingNoNormalState) {
-						if modelInstance.CurrentState == models.InstanceStateNormal && modelInstance.CurrentReason == "" {
-							continue
-						}
-					}
-					alertInstances = append(alertInstances, modelInstance)
+				if modelInstance == nil {
+					continue
 				}
+				alertInstances = append(alertInstances, modelInstance)
 			}
 		}
 
@@ -91,29 +86,6 @@ func (st ProtoInstanceDBStore) ListAlertInstances(ctx context.Context, cmd *mode
 func (st ProtoInstanceDBStore) SaveAlertInstance(ctx context.Context, alertInstance models.AlertInstance) error {
 	st.Logger.Error("SaveAlertInstance called and not implemented")
 	return errors.New("save alert instance is not implemented for proto instance database store")
-}
-
-func (st ProtoInstanceDBStore) FetchOrgIds(ctx context.Context) ([]int64, error) {
-	orgIds := []int64{}
-
-	err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
-		s := strings.Builder{}
-		params := make([]any, 0)
-
-		addToQuery := func(stmt string, p ...any) {
-			s.WriteString(stmt)
-			params = append(params, p...)
-		}
-
-		addToQuery("SELECT DISTINCT org_id FROM alert_rule_state")
-
-		if err := sess.SQL(s.String(), params...).Find(&orgIds); err != nil {
-			return err
-		}
-		return nil
-	})
-
-	return orgIds, err
 }
 
 func (st ProtoInstanceDBStore) DeleteAlertInstances(ctx context.Context, keys ...models.AlertInstanceKey) error {

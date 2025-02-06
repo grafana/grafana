@@ -1,4 +1,4 @@
-import { BASE_URL } from './query';
+import { BASE_URL } from './api';
 import { getIdentityDisplayList } from './testdata/identityDisplayList';
 import { getTestQueryList } from './testdata/testQueryList';
 

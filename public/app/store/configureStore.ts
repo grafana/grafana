@@ -12,7 +12,7 @@ import { buildInitialState } from '../core/reducers/navModel';
 import { addReducer, createRootReducer } from '../core/reducers/root';
 import { alertingApi } from '../features/alerting/unified/api/alertingApi';
 import { iamApi } from '../features/iam/api/api';
-import { queryLibraryApi } from '../features/query-library/api/factory';
+import { queryLibraryApi } from '../features/query-library/api/api';
 
 import { setStore } from './store';
 

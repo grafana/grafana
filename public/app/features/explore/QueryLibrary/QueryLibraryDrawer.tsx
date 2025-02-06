@@ -5,7 +5,7 @@ import { TabbedContainer, TabConfig } from '@grafana/ui';
 
 import { t } from '../../../core/internationalization';
 import { useListQueryTemplateQuery } from '../../query-library';
-import { QUERY_LIBRARY_GET_LIMIT } from '../../query-library/api/factory';
+import { QUERY_LIBRARY_GET_LIMIT } from '../../query-library/api/api';
 import { ExploreDrawer } from '../ExploreDrawer';
 
 import { QueryLibrary } from './QueryLibrary';

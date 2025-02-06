@@ -4,7 +4,6 @@ import { AnnoKeyCreatedBy } from '../../apiserver/types';
 import { AddQueryTemplateCommand, QueryTemplate } from '../types';
 
 import { ListQueryTemplateApiResponse, QueryTemplate as QT } from './endpoints.gen';
-import { API_VERSION, QueryTemplateKinds } from './query';
 
 export const convertDataQueryResponseToQueryTemplates = (result: ListQueryTemplateApiResponse): QueryTemplate[] => {
   if (!result.items) {
@@ -30,8 +29,6 @@ export const convertDataQueryResponseToQueryTemplates = (result: ListQueryTempla
 export const convertAddQueryTemplateCommandToDataQuerySpec = (addQueryTemplateCommand: AddQueryTemplateCommand): QT => {
   const { title, targets } = addQueryTemplateCommand;
   return {
-    apiVersion: API_VERSION,
-    kind: QueryTemplateKinds.QueryTemplate,
     metadata: {
       /**
        * Server will append to whatever is passed here, but just to be safe we generate a uuid

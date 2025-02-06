@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/permreg"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
@@ -88,7 +87,6 @@ func ProvideFolderPermissions(
 		sqlStore,
 		ac,
 		license,
-		&dashboards.FakeDashboardStore{},
 		fService,
 		acSvc,
 		teamSvc,

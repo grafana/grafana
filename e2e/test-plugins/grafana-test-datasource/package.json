@@ -1,6 +1,6 @@
 {
   "name": "@test-plugins/grafana-e2etest-datasource",
-  "version": "11.5.0-pre",
+  "version": "11.6.0-pre",
   "private": true,
   "scripts": {
     "build": "webpack -c ./webpack.config.ts --env production",
@@ -11,7 +11,7 @@
   "author": "Grafana",
   "license": "Apache-2.0",
   "devDependencies": {
-    "@grafana/plugin-configs": "11.5.0-pre",
+    "@grafana/plugin-configs": "workspace:*",
     "@types/lodash": "4.17.7",
     "@types/node": "22.10.2",
     "@types/prismjs": "1.26.4",

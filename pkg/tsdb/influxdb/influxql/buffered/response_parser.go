@@ -30,7 +30,10 @@ func parse(buf io.Reader, statusCode int, query *models.Query) *backend.DataResp
 		if errorStr == "" {
 			errorStr = response.Message
 		}
-		return &backend.DataResponse{Error: fmt.Errorf("InfluxDB returned error: %s", errorStr)}
+		return &backend.DataResponse{
+			Error:       fmt.Errorf("InfluxDB returned error: %s", errorStr),
+			ErrorSource: backend.ErrorSourceFromHTTPStatus(statusCode),
+		}
 	}
 
 	if jsonErr != nil {
@@ -38,12 +41,18 @@ func parse(buf io.Reader, statusCode int, query *models.Query) *backend.DataResp
 	}
 
 	if response.Error != "" {
-		return &backend.DataResponse{Error: errors.New(response.Error)}
+		return &backend.DataResponse{
+			Error:       errors.New(response.Error),
+			ErrorSource: backend.ErrorSourceDownstream,
+		}
 	}
 
 	result := response.Results[0]
 	if result.Error != "" {
-		return &backend.DataResponse{Error: errors.New(result.Error)}
+		return &backend.DataResponse{
+			Error:       errors.New(result.Error),
+			ErrorSource: backend.ErrorSourceDownstream,
+		}
 	}
 
 	if query.ResultFormat == "table" {

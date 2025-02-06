@@ -6,9 +6,10 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	advisor "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/registry/apis/datasource"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -29,11 +30,19 @@ func TestCheck_Run(t *testing.T) {
 			PluginClient:          mockPluginClient,
 		}
 
-		report, err := check.Run(context.Background(), &advisor.CheckSpec{})
+		ctx := identity.WithRequester(context.Background(), &user.SignedInUser{})
+		items, err := check.Items(ctx)
+		assert.NoError(t, err)
+		errs := []advisor.CheckReportError{}
+		for _, step := range check.Steps() {
+			stepErrs, err := step.Run(ctx, &advisor.CheckSpec{}, items)
+			assert.NoError(t, err)
+			errs = append(errs, stepErrs...)
+		}
 
 		assert.NoError(t, err)
-		assert.Equal(t, int64(2), report.Count)
-		assert.Empty(t, report.Errors)
+		assert.Equal(t, 2, len(items))
+		assert.Empty(t, errs)
 	})
 
 	t.Run("should return errors when datasource UID is invalid", func(t *testing.T) {
@@ -51,12 +60,20 @@ func TestCheck_Run(t *testing.T) {
 			PluginClient:          mockPluginClient,
 		}
 
-		report, err := check.Run(context.Background(), &advisor.CheckSpec{})
+		ctx := identity.WithRequester(context.Background(), &user.SignedInUser{})
+		items, err := check.Items(ctx)
+		assert.NoError(t, err)
+		errs := []advisor.CheckReportError{}
+		for _, step := range check.Steps() {
+			stepErrs, err := step.Run(ctx, &advisor.CheckSpec{}, items)
+			assert.NoError(t, err)
+			errs = append(errs, stepErrs...)
+		}
 
 		assert.NoError(t, err)
-		assert.Equal(t, int64(1), report.Count)
-		assert.Len(t, report.Errors, 1)
-		assert.Equal(t, "Invalid UID 'invalid uid' for data source Prometheus", report.Errors[0].Reason)
+		assert.Equal(t, 1, len(items))
+		assert.Len(t, errs, 1)
+		assert.Equal(t, "Invalid UID 'invalid uid' for data source Prometheus", errs[0].Reason)
 	})
 
 	t.Run("should return errors when datasource health check fails", func(t *testing.T) {
@@ -74,12 +91,20 @@ func TestCheck_Run(t *testing.T) {
 			PluginClient:          mockPluginClient,
 		}
 
-		report, err := check.Run(context.Background(), &advisor.CheckSpec{})
+		ctx := identity.WithRequester(context.Background(), &user.SignedInUser{})
+		items, err := check.Items(ctx)
+		assert.NoError(t, err)
+		errs := []advisor.CheckReportError{}
+		for _, step := range check.Steps() {
+			stepErrs, err := step.Run(ctx, &advisor.CheckSpec{}, items)
+			assert.NoError(t, err)
+			errs = append(errs, stepErrs...)
+		}
 
 		assert.NoError(t, err)
-		assert.Equal(t, int64(1), report.Count)
-		assert.Len(t, report.Errors, 1)
-		assert.Equal(t, "Health check failed for Prometheus", report.Errors[0].Reason)
+		assert.Equal(t, 1, len(items))
+		assert.Len(t, errs, 1)
+		assert.Equal(t, "Health check failed for Prometheus", errs[0].Reason)
 	})
 }
 
@@ -94,12 +119,10 @@ func (m *MockDatasourceSvc) GetAllDataSources(ctx context.Context, query *dataso
 }
 
 type MockPluginContextProvider struct {
-	datasource.PluginContextWrapper
-
 	pCtx backend.PluginContext
 }
 
-func (m *MockPluginContextProvider) PluginContextForDataSource(ctx context.Context, datasourceSettings *backend.DataSourceInstanceSettings) (backend.PluginContext, error) {
+func (m *MockPluginContextProvider) GetWithDataSource(ctx context.Context, pluginID string, user identity.Requester, ds *datasources.DataSource) (backend.PluginContext, error) {
 	return m.pCtx, nil
 }
 

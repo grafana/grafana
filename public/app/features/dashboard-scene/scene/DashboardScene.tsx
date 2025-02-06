@@ -58,7 +58,13 @@ import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { djb2Hash } from '../utils/djb2Hash';
 import { getDashboardUrl } from '../utils/getDashboardUrl';
 import { getViewPanelUrl } from '../utils/urlBuilders';
-import { getClosestVizPanel, getDashboardSceneFor, getDefaultVizPanel, getPanelIdForVizPanel } from '../utils/utils';
+import {
+  getClosestVizPanel,
+  getDashboardSceneFor,
+  getDefaultVizPanel,
+  getLayoutManagerFor,
+  getPanelIdForVizPanel,
+} from '../utils/utils';
 import { SchemaV2EditorDrawer } from '../v2schema/SchemaV2EditorDrawer';
 
 import { AddLibraryPanelDrawer } from './AddLibraryPanelDrawer';
@@ -71,7 +77,7 @@ import { isUsingAngularDatasourcePlugin, isUsingAngularPanelPlugin } from './ang
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
 import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
-import { DashboardLayoutManager } from './types';
+import { DashboardLayoutManager } from './types/DashboardLayoutManager';
 
 export const PERSISTED_PROPS = ['title', 'description', 'tags', 'editable', 'graphTooltip', 'links', 'meta', 'preload'];
 export const PANEL_SEARCH_VAR = 'systemPanelFilterVar';
@@ -122,8 +128,6 @@ export interface DashboardSceneState extends SceneObjectState {
   editPanel?: PanelEditor;
   /** Scene object that handles the current drawer or modal */
   overlay?: SceneObject;
-  /** The dashboard doesn't have panels */
-  isEmpty?: boolean;
   /** Kiosk mode */
   kioskMode?: KioskMode;
   /** Share view */
@@ -258,7 +262,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     this.setState({ isEditing: true, showHiddenElements: true });
 
     // Propagate change edit mode change to children
-    this.state.body.editModeChanged(true);
+    this.state.body.editModeChanged?.(true);
 
     // Propagate edit mode to scopes
     this._scopesFacade?.enterReadOnly();
@@ -349,7 +353,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     }
 
     // Disable grid dragging
-    this.state.body.editModeChanged(false);
+    this.state.body.editModeChanged?.(false);
   }
 
   public canDiscard() {
@@ -475,10 +479,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     return this._initialState;
   }
 
-  public getNextPanelId(): number {
-    return this.state.body.getMaxPanelId() + 1;
-  }
-
   public addPanel(vizPanel: VizPanel): void {
     if (!this.state.isEditing) {
       this.onEnterEditMode();
@@ -502,7 +502,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   }
 
   public duplicatePanel(vizPanel: VizPanel) {
-    this.state.body.duplicatePanel(vizPanel);
+    getLayoutManagerFor(vizPanel).duplicatePanel(vizPanel);
   }
 
   public copyPanel(vizPanel: VizPanel) {
@@ -536,7 +536,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   }
 
   public removePanel(panel: VizPanel) {
-    this.state.body.removePanel(panel);
+    getLayoutManagerFor(panel).removePanel(panel);
   }
 
   public unlinkLibraryPanel(panel: VizPanel) {
