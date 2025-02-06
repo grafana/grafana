@@ -1283,9 +1283,11 @@ func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *dashb
 
 func (dr *DashboardServiceImpl) fetchFolderNames(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery, response *dashboardv0alpha1.SearchResults) (map[string]string, error) {
 	folderIds := []string{}
+	folderSet := map[string]string{} // to avoid duplicates
 	for _, hit := range response.Hits {
-		if hit.Folder != "" {
+		if hit.Folder != "" && folderSet[hit.Folder] == "" {
 			folderIds = append(folderIds, hit.Folder)
+			folderSet[hit.Folder] = hit.Folder
 		}
 	}
 
