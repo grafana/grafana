@@ -82,6 +82,7 @@ export function TableNG(props: TableNGProps) {
   const [contextMenuProps, setContextMenuProps] = useState<{
     rowIdx?: number;
     value: string;
+    mode?: TableCellInspectorMode.code | TableCellInspectorMode.text;
     top?: number;
     left?: number;
   } | null>(null);
@@ -580,7 +581,7 @@ export function TableNG(props: TableNGProps) {
 
       {isInspecting && (
         <TableCellInspector
-          mode={TableCellInspectorMode.text}
+          mode={contextMenuProps?.mode ?? TableCellInspectorMode.text}
           value={contextMenuProps?.value}
           onDismiss={() => {
             setIsInspecting(false);
@@ -635,6 +636,9 @@ const getStyles = (theme: GrafanaTheme2, textWrap: boolean) => ({
     wordWrap: 'break-word',
     overflow: 'hidden',
     textOverflow: 'ellipsis',
+
+    // Reset default cell styles for custom cell component styling
+    paddingInline: '0',
 
     '&:hover': {
       // TODO: border was replaced with boxShadow, because it was causing cell shift on hover

@@ -1,15 +1,19 @@
 import { css } from '@emotion/css';
-import { ReactNode, useLayoutEffect, useRef, useState } from 'react';
+import { ReactNode, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { TableCellDisplayMode } from '@grafana/schema';
 
 import { useStyles2 } from '../../../../themes';
 import { IconButton } from '../../../IconButton/IconButton';
+import { TableCellInspectorMode } from '../../TableCellInspector';
 import { getTextAlign } from '../../utils';
+import { CellColors } from '../types';
+import { getCellColors } from '../utils';
 
 import AutoCell from './AutoCell';
 import { BarGaugeCell } from './BarGaugeCell';
+import { JSONCell } from './JSONCell';
 import { SparklineCell } from './SparklineCell';
 
 // interface TableCellNGProps {
@@ -35,7 +39,12 @@ export function TableCellNG(props: any) {
   const { type: cellType } = fieldConfig.custom.cellOptions;
 
   const isRightAligned = getTextAlign(field) === 'flex-end';
-  const styles = useStyles2(getStyles, isRightAligned);
+  const displayValue = field.display!(value);
+  const colors = useMemo(
+    () => getCellColors(theme, fieldConfig.custom.cellOptions, displayValue),
+    [theme, fieldConfig.custom.cellOptions, displayValue]
+  );
+  const styles = useStyles2(getStyles, isRightAligned, colors);
 
   // TODO
   // TableNG provides either an overridden cell width or 'auto' as the cell width value.
@@ -85,6 +94,9 @@ export function TableCellNG(props: any) {
         />
       );
       break;
+    case TableCellDisplayMode.JSONView:
+      cell = <JSONCell value={value} justifyContent={justifyContent} />;
+      break;
     case TableCellDisplayMode.Auto:
     default:
       cell = (
@@ -93,7 +105,6 @@ export function TableCellNG(props: any) {
           field={field}
           theme={theme}
           justifyContent={justifyContent}
-          shouldTextOverflow={shouldTextOverflow}
           cellOptions={fieldConfig.custom.cellOptions}
         />
       );
@@ -101,14 +112,33 @@ export function TableCellNG(props: any) {
 
   const handleMouseEnter = () => {
     setIsHovered(true);
+    if (shouldTextOverflow()) {
+      // TODO: The table cell styles in TableNG do not update dynamically even if we change the state
+      const div = divWidthRef.current;
+      const tableCellDiv = div?.parentElement;
+      tableCellDiv?.style.setProperty('position', 'absolute');
+      tableCellDiv?.style.setProperty('top', '0');
+      tableCellDiv?.style.setProperty('z-index', theme.zIndex.tooltip);
+      tableCellDiv?.style.setProperty('white-space', 'normal');
+      tableCellDiv?.style.setProperty('min-height', `${height}px`);
+    }
   };
 
   const handleMouseLeave = () => {
     setIsHovered(false);
+    if (shouldTextOverflow()) {
+      // TODO: The table cell styles in TableNG do not update dynamically even if we change the state
+      const div = divWidthRef.current;
+      const tableCellDiv = div?.parentElement;
+      tableCellDiv?.style.setProperty('position', 'relative');
+      tableCellDiv?.style.removeProperty('top');
+      tableCellDiv?.style.removeProperty('z-index');
+      tableCellDiv?.style.setProperty('white-space', 'nowrap');
+    }
   };
 
   return (
-    <div ref={divWidthRef} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
+    <div ref={divWidthRef} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} className={styles.cell}>
       {cell}
       {cellInspect && isHovered && (
         <div className={styles.cellActions}>
@@ -116,7 +146,13 @@ export function TableCellNG(props: any) {
             name="eye"
             tooltip="Inspect value"
             onClick={() => {
-              setContextMenuProps({ value });
+              setContextMenuProps({
+                value,
+                mode:
+                  cellType === TableCellDisplayMode.JSONView
+                    ? TableCellInspectorMode.code
+                    : TableCellInspectorMode.text,
+              });
               setIsInspecting(true);
             }}
           />
@@ -126,7 +162,15 @@ export function TableCellNG(props: any) {
   );
 }
 
-const getStyles = (theme: GrafanaTheme2, isRightAligned: boolean) => ({
+const getStyles = (theme: GrafanaTheme2, isRightAligned: boolean, color: CellColors) => ({
+  cell: css({
+    height: '100%',
+    alignContent: 'center',
+    paddingInline: '8px',
+    // TODO: follow-up on this: change styles on hover on table row level
+    background: color.bgColor || theme.colors.background.primary,
+    color: color.textColor,
+  }),
   cellActions: css({
     display: 'flex',
     position: 'absolute',
