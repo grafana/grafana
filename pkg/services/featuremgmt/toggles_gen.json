@@ -1867,6 +1867,21 @@
     },
     {
       "metadata": {
+        "name": "grafanaconThemes",
+        "resourceVersion": "1738661140740",
+        "creationTimestamp": "2025-02-04T09:25:40Z"
+      },
+      "spec": {
+        "description": "Enables the temporary themes for GrafanaCon",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "requiresRestart": true,
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "groupAttributeSync",
         "resourceVersion": "1731087176211",
         "creationTimestamp": "2024-09-09T15:29:43Z",
