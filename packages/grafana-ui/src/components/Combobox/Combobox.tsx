@@ -124,11 +124,8 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
   const [asyncError, setAsyncError] = useState(false);
 
   // A custom setter to always prepend the custom value at the beginning, if needed
-  const [items, baseSetItems] = useState(isAsync ? [] : options);
-  // To save the options as long as the group items to generate rows per each
-  const [virtualizedItems, setVirtualizedItems] = useState<Array<ComboboxOption<T> | ComboboxOption<T>['group']>>(
-    isAsync ? [] : options
-  );
+  const [items, baseSetItems] = useState<Array<ComboboxOption<T> | ComboboxOption<T>['group']>>(isAsync ? [] : options);
+
   const setItems = useCallback(
     (items: Array<ComboboxOption<T>>, inputValue: string | undefined) => {
       let itemsToSet = items;
@@ -159,7 +156,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
             return;
           }
           // Add it to the list if the options does not have a group
-          if (!item.group) {
+          if (typeof item === 'object' && !item.group) {
             reorgItems.push(item);
           } else {
             const group = item.group;
@@ -177,14 +174,15 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
       };
 
       // Set the items including custom ones
-      baseSetItems(itemsToSet);
-      // Set the items to be displayed in the dropdown, including groups
-      setVirtualizedItems(reorderItemsByGroup(itemsToSet));
+      baseSetItems(reorderItemsByGroup(itemsToSet));
     },
     [createCustomValue, id, ariaLabelledBy]
   );
 
-  const isLastItemGroup = (itemList: Array<ComboboxOption<T>>, item: ComboboxOption<T>) => {
+  const isLastItemGroup = (itemList: Array<ComboboxOption<T>>, item: ComboboxOption<T> | string) => {
+    if (!item || typeof item === 'string') {
+      return false;
+    }
     const group = item.group;
     if (!group) {
       return false;
@@ -235,9 +233,9 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
 
   // Use all items, including groups, to calculate the virtualized items, not just the options
   const virtualizerItems = {
-    count: virtualizedItems.length,
+    count: items.length,
     getScrollElement: () => scrollRef.current,
-    estimateSize: (index: number) => (items[index].description ? MENU_OPTION_HEIGHT_DESCRIPTION : MENU_OPTION_HEIGHT),
+    estimateSize: (index: number) => (items && items[index]  && typeof items[index] !== 'string' && items[index].description ? MENU_OPTION_HEIGHT_DESCRIPTION : MENU_OPTION_HEIGHT),
     overscan: VIRTUAL_OVERSCAN_ITEMS,
   };
 
@@ -276,6 +274,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     labelId,
     inputId: id,
     items,
+    //@ts-expect-error
     itemToString,
     selectedItem,
 
@@ -285,7 +284,9 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     // Instead, stateReducer is called in the same tick as state changes, before that state is committed and rendered.
 
     onSelectedItemChange: ({ selectedItem }) => {
-      onChange(selectedItem);
+      if (selectedItem && typeof selectedItem !== 'string') {
+        onChange(selectedItem);
+      }
     },
 
     defaultHighlightedIndex: selectedItemIndex ?? 0,
@@ -363,7 +364,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
         if (changes.selectedItem) {
           changes = {
             ...changes,
-            inputValue: itemToString(changes.selectedItem),
+            inputValue: typeof changes.selectedItem === 'object' ? itemToString(changes.selectedItem) : '',
           };
         } else if (changes.inputValue !== '') {
           // Otherwise if no selected value, clear any search from the input
@@ -378,7 +379,8 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     },
   });
 
-  const { inputRef, floatingRef, floatStyles, scrollRef } = useComboboxFloat(items, isOpen);
+  const validItems = items.filter((item): item is ComboboxOption<T> => item !== undefined && typeof item !== 'string');
+  const { inputRef, floatingRef, floatStyles, scrollRef } = useComboboxFloat(validItems, isOpen);
 
   const isAutoSize = width === 'auto';
 
@@ -455,15 +457,16 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
                 <ul style={{ height: rowVirtualizer.getTotalSize() }} className={styles.menuUlContainer}>
                   {rowVirtualizer.getVirtualItems().map((virtualRow) => {
                     return (
-                      virtualizedItems &&
-                      virtualizedItems[virtualRow.index] && (
+                      items &&
+                      items[virtualRow.index] && (
                         <ComboboxRow
-                          item={virtualizedItems[virtualRow.index]}
+                          item={items[virtualRow.index]}
                           virtualRow={virtualRow}
                           getItemProps={getItemProps}
                           selectedItem={selectedItem}
                           highlightedIndex={highlightedIndex}
-                          isLastItem={isLastItemGroup(items, virtualizedItems[virtualRow.index] as ComboboxOption<T>)}
+                          //@ts-expect-error
+                          isLastItem={isLastItemGroup(items, items[virtualRow.index])}
                         />
                       )
                     );
