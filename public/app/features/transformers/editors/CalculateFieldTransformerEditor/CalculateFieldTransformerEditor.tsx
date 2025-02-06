@@ -1,6 +1,6 @@
 import { ChangeEvent, useEffect, useState } from 'react';
 import * as React from 'react';
-import { identity, of, OperatorFunction } from 'rxjs';
+import { of, OperatorFunction } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 import {

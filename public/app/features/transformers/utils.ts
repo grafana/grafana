@@ -9,7 +9,7 @@ import {
   VariableOrigin,
   VariableSuggestion,
 } from '@grafana/data';
-import { config, getTemplateSrv } from '@grafana/runtime';
+import { getTemplateSrv } from '@grafana/runtime';
 
 export function useAllFieldNamesFromDataFrames(input: DataFrame[]): string[] {
   return useMemo(() => {
