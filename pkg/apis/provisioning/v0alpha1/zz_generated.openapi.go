@@ -1736,7 +1736,7 @@ func schema_pkg_apis_provisioning_v0alpha1_SyncStatus(ref common.ReferenceCallba
 						},
 					},
 				},
-				Required: []string{"state"},
+				Required: []string{"state", "message"},
 			},
 		},
 	}

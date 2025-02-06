@@ -161,7 +161,7 @@ func (r *syncJob) run(ctx context.Context) error {
 				r.jobStatus.Message = message
 				return nil
 			}
-			return r.applyVersiondChanges(ctx, versionedRepo, cfg.Status.Sync.Hash, currentRef)
+			return r.applyVersionedChanges(ctx, versionedRepo, cfg.Status.Sync.Hash, currentRef)
 		}
 	}
 
