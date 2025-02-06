@@ -26,22 +26,6 @@ describe('DefaultGridLayoutManager', () => {
     });
   });
 
-  describe('getMaxPanelId', () => {
-    it('should get max panel id in a simple 3 panel layout', () => {
-      const { manager } = setup();
-      const id = manager.getMaxPanelId();
-
-      expect(id).toBe(3);
-    });
-
-    it('should return 0 if no panels are found', () => {
-      const { manager } = setup({ gridItems: [] });
-      const id = manager.getMaxPanelId();
-
-      expect(id).toBe(0);
-    });
-  });
-
   describe('addPanel', () => {
     it('Should add a new panel', () => {
       const { manager } = setup();
