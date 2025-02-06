@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"path"
+	"sort"
 	"strings"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -45,9 +46,17 @@ func (r *syncer) Sync(ctx context.Context,
 	options provisioning.SyncJobOptions,
 	progress func(provisioning.JobStatus) error,
 ) (*provisioning.JobStatus, *provisioning.SyncStatus, error) {
+	cfg := repo.Config()
+	if !cfg.Spec.Sync.Enabled {
+		return &provisioning.JobStatus{
+			State:   provisioning.JobStateError,
+			Message: "sync is not enabled",
+		}, nil, nil
+	}
+
 	parser, err := r.parsers.GetParser(ctx, repo)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to get parser for %s: %w", repo.Config().Name, err)
+		return nil, nil, fmt.Errorf("failed to get parser for %s: %w", cfg.Name, err)
 	}
 	dynamicClient := parser.Client()
 	if repo.Config().Namespace != dynamicClient.GetNamespace() {
@@ -59,6 +68,7 @@ func (r *syncer) Sync(ctx context.Context,
 		progress:   progress,
 		parser:     parser,
 		lister:     r.lister,
+		logger:     logging.FromContext(ctx),
 		jobStatus:  &provisioning.JobStatus{},
 		syncStatus: &provisioning.SyncStatus{},
 		folders: dynamicClient.Resource(schema.GroupVersionResource{
@@ -72,7 +82,22 @@ func (r *syncer) Sync(ctx context.Context,
 			Resource: dashboard.DASHBOARD_RESOURCE,
 		}),
 	}
-	return job.run(ctx)
+
+	// Execute the job
+	err = job.run(ctx)
+	if err != nil {
+		job.logger.Warn("error running job", "err", err)
+		job.jobStatus.State = provisioning.JobStateError
+		job.jobStatus.Message = "Sync error: " + err.Error()
+		job.syncStatus.State = job.jobStatus.State
+		job.syncStatus.Message = append(job.syncStatus.Message, job.jobStatus.Message)
+	} else if len(job.jobStatus.Errors) > 0 {
+		job.jobStatus.State = provisioning.JobStateError
+	} else if job.jobStatus.State == "" {
+		job.jobStatus.State = provisioning.JobStateSuccess
+	}
+	job.jobStatus.Summary = []provisioning.JobResourceSummary{job.summary}
+	return job.jobStatus, job.syncStatus, nil
 }
 
 // created once for each sync execution
@@ -80,13 +105,14 @@ type syncJob struct {
 	repository repository.Repository
 	options    provisioning.SyncJobOptions
 	progress   func(provisioning.JobStatus) error
+	logger     logging.Logger
 
 	parser     *resources.Parser
 	lister     resources.ResourceLister
 	folders    dynamic.ResourceInterface
 	dashboards dynamic.ResourceInterface
+	folderTree *resources.FolderTree
 
-	changes    []ResourceFileChange
 	jobStatus  *provisioning.JobStatus
 	syncStatus *provisioning.SyncStatus
 
@@ -94,23 +120,16 @@ type syncJob struct {
 	summary provisioning.JobResourceSummary
 }
 
-func (r *syncJob) run(ctx context.Context) (*provisioning.JobStatus, *provisioning.SyncStatus, error) {
-	cfg := r.repository.Config()
-	if !cfg.Spec.Sync.Enabled {
-		return &provisioning.JobStatus{
-			State:   provisioning.JobStateError,
-			Message: "sync is not enabled",
-		}, nil, nil
-	}
-
+func (r *syncJob) run(ctx context.Context) error {
 	// Ensure the configured folder exists and is managed by the repository
+	cfg := r.repository.Config()
 	rootFolder := resources.RootFolder(cfg)
 	if rootFolder != "" {
 		if err := r.ensureFolderExists(ctx, resources.Folder{
 			ID:    rootFolder, // will not change if exists
 			Title: cfg.Spec.Title,
 		}, ""); err != nil {
-			return nil, nil, fmt.Errorf("unable to create root folder: %w", err)
+			return fmt.Errorf("unable to create root folder: %w", err)
 		}
 	}
 
@@ -121,7 +140,7 @@ func (r *syncJob) run(ctx context.Context) (*provisioning.JobStatus, *provisioni
 	if versionedRepo != nil {
 		currentRef, err = versionedRepo.LatestRef(ctx)
 		if err != nil {
-			return nil, nil, fmt.Errorf("getting latest ref: %w", err)
+			return fmt.Errorf("getting latest ref: %w", err)
 		}
 
 		if cfg.Status.Sync.Hash != "" && r.options.Incremental {
@@ -131,69 +150,48 @@ func (r *syncJob) run(ctx context.Context) (*provisioning.JobStatus, *provisioni
 				r.syncStatus.State = provisioning.JobStateSuccess
 				r.syncStatus.Message = append(r.syncStatus.Message, message)
 				r.syncStatus.Incremental = true
-				return &provisioning.JobStatus{
-					State:   provisioning.JobStateSuccess,
-					Message: message,
-				}, r.syncStatus, nil
+				r.jobStatus.Message = message
+				return nil
 			}
-
-			r.changes, err = r.getVersionedChanges(ctx, versionedRepo, cfg.Status.Sync.Hash, currentRef)
-			if err != nil {
-				return nil, nil, fmt.Errorf("error getting versioned changes: %w", err)
-			}
+			return r.applyVersiondChanges(ctx, versionedRepo, cfg.Status.Sync.Hash, currentRef)
 		}
 	}
 
 	// Read the complete change set
-	if r.changes == nil {
-		r.syncStatus.Incremental = false
-		target, err := r.lister.List(ctx, cfg.Namespace, cfg.Name)
-		if err != nil {
-			return nil, nil, fmt.Errorf("error listing current: %w", err)
-		}
-		source, err := r.repository.ReadTree(ctx, "")
-		if err != nil {
-			return nil, nil, fmt.Errorf("error reading tree: %w", err)
-		}
-		r.changes, err = Changes(source, target)
-		if err != nil {
-			return nil, nil, fmt.Errorf("error calculating changes: %w", err)
-		}
+	target, err := r.lister.List(ctx, cfg.Namespace, cfg.Name)
+	if err != nil {
+		return fmt.Errorf("error listing current: %w", err)
+	}
+	source, err := r.repository.ReadTree(ctx, "")
+	if err != nil {
+		return fmt.Errorf("error reading tree: %w", err)
+	}
+	changes, err := Changes(source, target)
+	if err != nil {
+		return fmt.Errorf("error calculating changes: %w", err)
 	}
 
 	r.syncStatus.Hash = currentRef
-	if len(r.changes) == 0 {
+	if len(changes) == 0 {
 		message := "no changes to sync"
 		r.syncStatus.State = provisioning.JobStateSuccess
 		r.syncStatus.Message = append(r.syncStatus.Message, message)
-		return &provisioning.JobStatus{
-			State:   provisioning.JobStateSuccess,
-			Message: message,
-		}, r.syncStatus, nil
+		r.jobStatus.Message = message
+		return nil
 	}
 
+	// Load any existing folder information
+	r.folderTree = resources.NewFolderTreeFromResourceList(target)
+
 	// Now apply the changes
-	err = r.applyChanges(ctx, r.changes)
-	if err != nil {
-		r.jobStatus.State = provisioning.JobStateError
-		r.jobStatus.Message = "Sync error: " + err.Error()
-		r.syncStatus.State = r.jobStatus.State
-		r.syncStatus.Message = append(r.syncStatus.Message, r.jobStatus.Message)
-	} else if r.jobStatus.State == "" {
-		if len(r.jobStatus.Errors) > 0 {
-			r.jobStatus.State = provisioning.JobStateError
-		} else {
-			r.jobStatus.State = provisioning.JobStateSuccess
-		}
-	}
-	r.jobStatus.Summary = []provisioning.JobResourceSummary{r.summary}
-	return r.jobStatus, r.syncStatus, nil
+	return r.applyChanges(ctx, changes)
 }
 
 func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange) error {
-	// Create an empty tree to avoid loading all folders unnecessarily
-	folderTree := resources.NewEmptyFolderTree()
-	logger := logging.FromContext(ctx)
+	// Do the longest paths first (important for delete)
+	sort.Slice(changes, func(i, j int) bool {
+		return len(changes[i].Path) > len(changes[j].Path)
+	})
 
 	// Create folder structure first
 	for _, change := range changes {
@@ -205,22 +203,22 @@ func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange
 
 		if change.Action == repository.FileActionDeleted {
 			if change.Existing == nil || change.Existing.Name == "" {
-				logger.Error("deleted file is missing existing reference", "file", change.Path)
+				r.logger.Error("deleted file is missing existing reference", "file", change.Path)
 				r.jobStatus.Errors = append(r.jobStatus.Errors,
 					fmt.Sprintf("unable to delete resource from: %s", change.Path))
 				continue
 			}
 
-			client, err := r.client(change.Existing)
+			client, err := r.client(change.Existing.Resource)
 			if err != nil {
-				logger.Warn("unable to get client for deleted object", "file", change.Path, "err", err, "obj", change.Existing)
+				r.logger.Warn("unable to get client for deleted object", "file", change.Path, "err", err, "obj", change.Existing)
 				r.jobStatus.Errors = append(r.jobStatus.Errors,
 					fmt.Sprintf("unsupported object: %s / %s", change.Path, change.Existing.Resource))
 				continue
 			}
 			err = client.Delete(ctx, change.Existing.Name, metav1.DeleteOptions{})
 			if err != nil {
-				logger.Warn("deleting error", "file", change.Path, "err", err)
+				r.logger.Warn("deleting error", "file", change.Path, "err", err)
 				r.jobStatus.Errors = append(r.jobStatus.Errors,
 					fmt.Sprintf("error deleting %s: %s // %s", change.Existing.Resource, change.Existing.Name, change.Path))
 			} else {
@@ -229,130 +227,153 @@ func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange
 			continue
 		}
 
-		// Make sure the parent folders exist
-		folder, err := r.ensureFolderPathExists(ctx, change.Path, folderTree, r.repository.Config())
+		// Write the resource file
+		err := r.writeResourceFromFile(ctx, change.Path, "", change.Action)
 		if err != nil {
-			return err // fail when we can not make folders
-		}
-
-		// Read the referenced file
-		fileInfo, err := r.repository.Read(ctx, change.Path, "")
-		if err != nil {
+			r.logger.Warn("write resource error", "file", change.Path, "err", err)
 			r.jobStatus.Errors = append(r.jobStatus.Errors,
-				fmt.Sprintf("Unable to read: %s", change.Path),
-			)
-			continue
-		}
-
-		parsed, err := r.parser.Parse(ctx, fileInfo, false) // no validation
-		if err != nil {
-			logger.Warn("parsing error", "file", change.Path, "err", err)
-			r.jobStatus.Errors = append(r.jobStatus.Errors,
-				fmt.Sprintf("Unable to parse: %s // %s", change.Path, err.Error()),
-			)
-			continue
-		}
-
-		parsed.Meta.SetFolder(folder)
-		parsed.Meta.SetUID("")             // clear identifiers
-		parsed.Meta.SetResourceVersion("") // clear identifiers
-
-		switch change.Action {
-		case repository.FileActionCreated:
-			_, err = parsed.Client.Create(ctx, parsed.Obj, metav1.CreateOptions{})
-			if err != nil {
-				logger.Warn("create error", "file", change.Path, "err", err)
-				r.jobStatus.Errors = append(r.jobStatus.Errors,
-					fmt.Sprintf("error creating: %s from %s", parsed.Obj.GetName(), change.Path),
-				)
-			} else {
-				r.summary.Create++
-			}
-
-		case repository.FileActionUpdated:
-			_, err = parsed.Client.Update(ctx, parsed.Obj, metav1.UpdateOptions{})
-			if err != nil {
-				logger.Warn("update error", "file", change.Path, "err", err)
-				r.jobStatus.Errors = append(r.jobStatus.Errors,
-					fmt.Sprintf("error updating: %s from %s", parsed.Obj.GetName(), change.Path),
-				)
-			} else {
-				r.summary.Update++
-			}
-		default:
-			return fmt.Errorf("unexpected action: %s", change.Action)
+				fmt.Sprintf("error writing: %s // %s", change.Path, err.Error()))
 		}
 	}
 	return nil
 }
 
 // Convert git changes into resource file changes
-func (r *syncJob) getVersionedChanges(ctx context.Context, repo repository.VersionedRepository, previousRef, currentRef string) ([]ResourceFileChange, error) {
+func (r *syncJob) applyVersiondChanges(ctx context.Context, repo repository.VersionedRepository, previousRef, currentRef string) error {
 	diff, err := repo.CompareFiles(ctx, previousRef, currentRef)
 	if err != nil {
-		return nil, fmt.Errorf("compare files error: %w", err)
+		return fmt.Errorf("compare files error: %w", err)
 	}
-	changes := make([]ResourceFileChange, 0, len(diff)+5)
+
+	if len(diff) < 1 {
+		message := "no changes detected between commits"
+		r.syncStatus.State = provisioning.JobStateSuccess
+		r.syncStatus.Message = append(r.syncStatus.Message, message)
+		r.syncStatus.Incremental = true
+		r.jobStatus.Message = message
+		return nil
+	}
+
 	for _, change := range diff {
+		if len(r.jobStatus.Errors) > 20 {
+			r.jobStatus.Errors = append(r.jobStatus.Errors, "too many errors to continue")
+			return nil
+		}
+
 		switch change.Action {
 		case repository.FileActionCreated, repository.FileActionUpdated:
-			changes = append(changes, ResourceFileChange{
-				Path:   change.Path,
-				Action: change.Action,
-			})
+			err = r.writeResourceFromFile(ctx, change.Path, change.Ref, change.Action)
+			if err != nil {
+				r.logger.Warn("error writing", "change", change, "err", err)
+				r.jobStatus.Errors = append(r.jobStatus.Errors,
+					fmt.Sprintf("error loading: %s / %s", change.Path, err.Error()))
+			}
 
 		case repository.FileActionDeleted:
-			deleteFile, err := r.toDeleteFileChange(ctx, change.Path, change.PreviousRef)
+			err = r.deleteObject(ctx, change.Path, change.PreviousRef)
 			if err != nil {
 				r.jobStatus.Errors = append(r.jobStatus.Errors,
-					fmt.Sprintf("error reading deleted file: %s", change.Path))
+					fmt.Sprintf("error deleting file: %s / %s", change.Path, err.Error()))
 				continue
 			}
-			changes = append(changes, deleteFile)
 
 		case repository.FileActionRenamed:
-			deleteFile, err := r.toDeleteFileChange(ctx, change.PreviousPath, change.PreviousRef)
+			// 1. Delete
+			err = r.deleteObject(ctx, change.Path, change.PreviousRef)
 			if err != nil {
 				r.jobStatus.Errors = append(r.jobStatus.Errors,
-					fmt.Sprintf("error reading moved file: %s", change.Path))
+					fmt.Sprintf("error deleting renamed file: %s / %s", change.Path, err.Error()))
 				continue
 			}
-			changes = append(changes, deleteFile, ResourceFileChange{
-				Path:   change.Path,
-				Action: repository.FileActionCreated, // rename = delete + create
-			})
+
+			// 2. Create
+			err = r.writeResourceFromFile(ctx, change.Path, change.Ref, repository.FileActionCreated)
+			if err != nil {
+				r.logger.Warn("error writing", "change", change, "err", err)
+				r.jobStatus.Errors = append(r.jobStatus.Errors,
+					fmt.Sprintf("error loading: %s / %s", change.Path, err.Error()))
+			}
 		}
 	}
-	return changes, nil
+	return nil
 }
 
-func (r *syncJob) toDeleteFileChange(ctx context.Context, path string, ref string) (ResourceFileChange, error) {
-	change := ResourceFileChange{
-		Path:   path,
-		Action: repository.FileActionDeleted,
-	}
+func (r *syncJob) deleteObject(ctx context.Context, path string, ref string) error {
 	info, err := r.repository.Read(ctx, path, ref)
 	if err != nil {
-		return change, err
+		return err
 	}
 
 	obj, gvk, _ := resources.DecodeYAMLObject(bytes.NewBuffer(info.Data))
 	if obj == nil {
-		return change, fmt.Errorf("no object found in: %s", path)
+		return fmt.Errorf("no object found in: %s", path)
 	}
 
 	// Find the referenced file
 	objName, _ := resources.NamesFromHashedRepoPath(r.repository.Config().Name, path)
-	change.Existing = &provisioning.ResourceListItem{
-		Group:    gvk.Group,
-		Resource: getResourceFromGVK(gvk),
-		Name:     objName,
+
+	client, err := r.client(gvk.Kind)
+	if err != nil {
+		return err
 	}
-	return change, nil
+	err = client.Delete(ctx, objName, metav1.DeleteOptions{})
+	if err != nil {
+		return fmt.Errorf("deleting error: %s, %w", path, err)
+	}
+	r.summary.Delete++
+	return nil
+}
+
+func (r *syncJob) writeResourceFromFile(ctx context.Context, path string, ref string, action repository.FileAction) error {
+	if resources.ShouldIgnorePath(path) {
+		return nil // skip
+	}
+
+	// Make sure the parent folders exist
+	folder, err := r.ensureFolderPathExists(ctx, path)
+	if err != nil {
+		return err // fail when we can not make folders
+	}
+
+	// Read the referenced file
+	fileInfo, err := r.repository.Read(ctx, path, ref)
+	if err != nil {
+		return err
+	}
+
+	parsed, err := r.parser.Parse(ctx, fileInfo, false) // no validation
+	if err != nil {
+		return err
+	}
+
+	parsed.Meta.SetFolder(folder)
+	parsed.Meta.SetUID("")             // clear identifiers
+	parsed.Meta.SetResourceVersion("") // clear identifiers
+
+	switch action {
+	case repository.FileActionCreated:
+		_, err = parsed.Client.Create(ctx, parsed.Obj, metav1.CreateOptions{})
+		if err != nil {
+			return err
+		}
+		r.summary.Create++
+
+	case repository.FileActionUpdated:
+		_, err = parsed.Client.Update(ctx, parsed.Obj, metav1.UpdateOptions{})
+		if err != nil {
+			return err
+		}
+		r.summary.Update++
+
+	default:
+		return fmt.Errorf("unexpected action: %s", action)
+	}
+	return nil
 }
 
 // ensureFolderPathExists creates the folder structure in the cluster.
-func (r *syncJob) ensureFolderPathExists(ctx context.Context, filePath string, folderTree *resources.FolderTree, cfg *provisioning.Repository) (parent string, err error) {
+func (r *syncJob) ensureFolderPathExists(ctx context.Context, filePath string) (parent string, err error) {
+	cfg := r.repository.Config()
 	parent = resources.RootFolder(cfg)
 
 	dir := path.Dir(filePath)
@@ -360,8 +381,12 @@ func (r *syncJob) ensureFolderPathExists(ctx context.Context, filePath string, f
 		return parent, nil
 	}
 
+	if r.folderTree == nil {
+		r.folderTree = resources.NewEmptyFolderTree()
+	}
+
 	f := resources.ParseFolder(dir, cfg.Name)
-	if folderTree.In(f.ID) {
+	if r.folderTree.In(f.ID) {
 		return f.ID, nil
 	}
 
@@ -378,7 +403,7 @@ func (r *syncJob) ensureFolderPathExists(ctx context.Context, filePath string, f
 		}
 
 		f := resources.ParseFolder(traverse, cfg.GetName())
-		if folderTree.In(f.ID) {
+		if r.folderTree.In(f.ID) {
 			parent = f.ID
 			continue
 		}
@@ -386,7 +411,7 @@ func (r *syncJob) ensureFolderPathExists(ctx context.Context, filePath string, f
 		if err := r.ensureFolderExists(ctx, f, parent); err != nil {
 			return "", fmt.Errorf("ensure folder exists: %w", err)
 		}
-		folderTree.Add(f, parent)
+		r.folderTree.Add(f, parent)
 		parent = f.ID
 	}
 	return f.ID, err
@@ -443,34 +468,12 @@ func (r *syncJob) ensureFolderExists(ctx context.Context, folder resources.Folde
 	return nil
 }
 
-func (r *syncJob) client(obj *provisioning.ResourceListItem) (dynamic.ResourceInterface, error) {
-	switch obj.Group {
-	case dashboard.GROUP:
-		switch obj.Resource {
-		case dashboard.DASHBOARD_RESOURCE:
-			return r.dashboards, nil
-		}
-	case folders.GROUP:
-		switch obj.Resource {
-		case folders.RESOURCE:
-			return r.folders, nil
-		}
+func (r *syncJob) client(kind string) (dynamic.ResourceInterface, error) {
+	switch kind {
+	case dashboard.GROUP, dashboard.DASHBOARD_RESOURCE, "Dashboard":
+		return r.dashboards, nil
+	case folders.GROUP, folders.RESOURCE, "Folder":
+		return r.folders, nil
 	}
-	return nil, fmt.Errorf("unsupported resource: %s/%s", obj.Group, obj.Resource)
-}
-
-func getResourceFromGVK(gvk *schema.GroupVersionKind) string {
-	switch gvk.Group {
-	case dashboard.GROUP:
-		switch gvk.Kind {
-		case "Dashboard":
-			return dashboard.DASHBOARD_RESOURCE
-		}
-	case folders.GROUP:
-		switch gvk.Kind {
-		case "Folder":
-			return folders.RESOURCE
-		}
-	}
-	return ""
+	return nil, fmt.Errorf("unsupported resource: %s", kind)
 }

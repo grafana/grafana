@@ -80,7 +80,7 @@ func Changes(source []repository.FileTreeEntry, target *provisioning.ResourceLis
 		})
 	}
 
-	// Do longest paths first (important for delete, irrelevant otherwise)
+	// Longest first (stable sort order)
 	sort.Slice(changes, func(i, j int) bool {
 		return len(changes[i].Path) > len(changes[j].Path)
 	})
