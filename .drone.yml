@@ -489,6 +489,7 @@ trigger:
     - public/app/plugins/**/plugin.json
     - docs/sources/setup-grafana/configure-grafana/feature-toggles/**
     - devenv/**
+    - apps/**
 type: docker
 volumes:
 - host:
@@ -598,6 +599,7 @@ trigger:
     - public/app/plugins/**/plugin.json
     - devenv/**
     - .bingo/**
+    - apps/**
 type: docker
 volumes:
 - host:
@@ -5599,6 +5601,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: abd48dfdec08a719b414fba06b06dfc97560df31d81751cd833b5fdf5b7f9937
+hmac: e1f198d994216d163d6a710aef2f6091572eb624081c550a5db42208ef37827b
 
 ...
