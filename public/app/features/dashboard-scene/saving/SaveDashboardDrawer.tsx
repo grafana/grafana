@@ -20,7 +20,6 @@ interface SaveDashboardDrawerState extends SceneObjectState {
   saveRefresh?: boolean;
   saveAsCopy?: boolean;
   onSaveSuccess?: () => void;
-  saveProvisioned?: boolean;
 }
 
 export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerState> {
@@ -47,7 +46,7 @@ export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerStat
   };
 
   static Component = ({ model }: SceneComponentProps<SaveDashboardDrawer>) => {
-    const { saveProvisioned, showDiff, saveAsCopy, saveTimeRange, saveVariables, saveRefresh } = model.useState();
+    const { showDiff, saveAsCopy, saveTimeRange, saveVariables, saveRefresh } = model.useState();
 
     const changeInfo = model.state.dashboardRef
       .resolve()
@@ -62,7 +61,7 @@ export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerStat
     const folderUid = params.get('folderUid');
     const folderRepository = useFolderRepository(folderUid ?? undefined);
     // Provisioned dashboards have k8s metadata annotations
-    const isProvisionedNG = saveProvisioned || meta.k8s?.annotations?.[AnnoKeyRepoName] || Boolean(folderRepository);
+    const isProvisionedNG = meta.k8s?.annotations?.[AnnoKeyRepoName] || Boolean(folderRepository);
 
     const tabs = (
       <TabsBar>
