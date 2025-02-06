@@ -1,6 +1,6 @@
 import tinycolor from 'tinycolor2';
 
-import { GrafanaTheme, GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme, GrafanaTheme2, colorManipulator } from '@grafana/data';
 
 export function cardChrome(theme: GrafanaTheme2): string {
   return `
@@ -60,9 +60,20 @@ export function getMouseFocusStyles(theme: GrafanaTheme | GrafanaTheme2) {
   };
 }
 
-export function getFocusStyles(theme: GrafanaTheme2) {
+export function getFocusStyles(theme: GrafanaTheme2, backgroundColor?: string) {
+  let contrast = 1;
+  let focusColor = theme.colors.primary.main;
+
+  if (backgroundColor && backgroundColor !== 'transparent') {
+    contrast = colorManipulator.getContrastRatio(backgroundColor, focusColor);
+
+    if (contrast < 2) {
+      focusColor = theme.colors.primary.contrastText;
+    }
+  }
+
   return {
-    outline: `2px solid ${theme.colors.primary.main}`,
+    outline: `2px solid ${focusColor}`,
     outlineOffset: '0px',
     boxShadow: `none`,
   };
