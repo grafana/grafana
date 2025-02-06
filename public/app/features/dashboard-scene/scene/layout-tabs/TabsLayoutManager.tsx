@@ -70,15 +70,7 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
   }
 
   public activateRepeaters() {
-    this.state.tabs.forEach((tab) => {
-      if (!tab.isActive) {
-        tab.activate();
-      }
-
-      if (!tab.getLayout().isActive) {
-        tab.getLayout().activate();
-      }
-    });
+    this.state.tabs.forEach((tab) => tab.getLayout().activateRepeaters?.());
   }
 
   public removeTab(tab: TabItem) {
