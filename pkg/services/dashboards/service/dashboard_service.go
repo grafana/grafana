@@ -1245,7 +1245,7 @@ func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *dashb
 			return nil, err
 		}
 
-		folderNames, err := dr.fetchFolderNames(ctx, response, query)
+		folderNames, err := dr.fetchFolderNames(ctx, query, response)
 		if err != nil {
 			return nil, err
 		}
@@ -1272,7 +1272,7 @@ func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *dashb
 	return dr.dashboardStore.FindDashboards(ctx, query)
 }
 
-func (dr *DashboardServiceImpl) fetchFolderNames(ctx context.Context, response *v0alpha1.SearchResults, query *dashboards.FindPersistedDashboardsQuery) (map[string]string, error) {
+func (dr *DashboardServiceImpl) fetchFolderNames(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery, response *v0alpha1.SearchResults) (map[string]string, error) {
 	if query.SignedInUser == nil {
 		// can be nil when grafana starts up, we don't need the folder names in that case
 		return map[string]string{}, nil
