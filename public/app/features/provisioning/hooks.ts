@@ -3,16 +3,18 @@ import { useCallback } from 'react';
 
 import { useUrlParams } from 'app/core/navigation/hooks';
 
+import { useGetFolderQuery } from '../browse-dashboards/api/browseDashboardsAPI';
+
 import {
+  ListRepositoryArg,
+  ReplaceRepositoryFilesWithPathArg,
   Repository,
+  RepositorySpec,
   useCreateRepositoryFilesWithPathMutation,
   useCreateRepositoryMutation,
   useListRepositoryQuery,
   useReplaceRepositoryFilesWithPathMutation,
-  RepositorySpec,
-  ReplaceRepositoryFilesWithPathArg,
   useReplaceRepositoryMutation,
-  ListRepositoryArg,
 } from './api';
 
 export function useCreateOrUpdateRepository(name?: string) {
@@ -110,10 +112,14 @@ interface GetResourceRepositoryArgs {
 
 export const useGetResourceRepository = ({ name, folderUid }: GetResourceRepositoryArgs) => {
   const [items, isLoading] = useRepositoryList();
+  // Get the folder data from API to get repository data for nested folders
+  const folderQuery = useGetFolderQuery(name || !folderUid ? skipToken : folderUid);
 
-  if (!items || isLoading || !(name && folderUid)) {
+  const repoName = name || folderQuery.data?.repository?.name;
+
+  if (!items?.length || isLoading || !repoName) {
     return undefined;
   }
 
-  return items.find((repo) => repo.metadata?.name === (name || folderUid));
+  return items.find((repo) => repo.metadata?.name === repoName);
 };

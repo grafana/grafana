@@ -1,10 +1,9 @@
 import { SceneComponentProps, SceneObjectBase, SceneObjectState, SceneObjectRef } from '@grafana/scenes';
 import { Drawer, Tab, TabsBar } from '@grafana/ui';
 import { useUrlParams } from 'app/core/navigation/hooks';
-import { AnnoKeyRepoName } from 'app/features/apiserver/types';
 import { SaveDashboardDiff } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDiff';
 
-import { useFolderRepository } from '../../provisioning/hooks';
+import { useGetResourceRepository } from '../../provisioning/hooks';
 import { DashboardScene } from '../scene/DashboardScene';
 
 import { SaveDashboardAsForm } from './SaveDashboardAsForm';
@@ -51,18 +50,16 @@ export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerStat
     const changeInfo = model.state.dashboardRef
       .resolve()
       .getDashboardChanges(saveTimeRange, saveVariables, saveRefresh);
-
     const { changedSaveModel, initialSaveModel, diffs, diffCount, hasFolderChanges } = changeInfo;
     const changesCount = diffCount + (hasFolderChanges ? 1 : 0);
     const dashboard = model.state.dashboardRef.resolve();
     const { meta } = dashboard.useState();
     const { provisioned: isProvisioned, folderTitle } = meta;
     const [params] = useUrlParams();
-    const folderUid = params.get('folderUid');
-    console.log('meta', meta);
-    const folderRepository = useFolderRepository(folderUid ?? undefined);
-    // Provisioned dashboards have k8s metadata annotations
-    const isProvisionedNG = meta.k8s?.annotations?.[AnnoKeyRepoName] || Boolean(folderRepository);
+    const folderUid = params.get('folderUid') || undefined;
+
+    const folderRepository = useGetResourceRepository({ folderUid });
+    const isProvisionedNG = dashboard.isProvisioned() || Boolean(folderRepository);
 
     const tabs = (
       <TabsBar>
