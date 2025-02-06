@@ -273,7 +273,7 @@ export interface GrafanaRuleDefinition extends PostableGrafanaRuleDefinition {
   // TODO: For updated_by, updated, and version, fix types so these aren't optional, and
   // are not conflated with test fixtures
   updated?: string;
-  updated_by?: UpdatedBy;
+  updated_by?: UpdatedBy | null;
   version?: number;
 }
 

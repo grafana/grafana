@@ -1,22 +1,25 @@
-import moment from 'moment';
+import { css } from '@emotion/css';
 import { ComponentProps, useMemo, useState } from 'react';
 
-import { dateTimeFormatTimeAgo } from '@grafana/data';
+import { IconName, dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import {
   Alert,
   Badge,
+  BadgeColor,
   Box,
   Button,
   Checkbox,
   Column,
   ConfirmModal,
   Drawer,
+  Icon,
   InteractiveTable,
   LoadingPlaceholder,
   Stack,
   Text,
   Tooltip,
+  useStyles2,
 } from '@grafana/ui';
 import { RevisionModel, VersionHistoryComparison } from 'app/core/components/VersionHistory/VersionHistoryComparison';
 import { Trans, t } from 'app/core/internationalization';
@@ -41,6 +44,9 @@ export interface AlertVersionHistoryProps {
 
 const VERSIONS_PAGE_SIZE = 20;
 
+const UNKNOWN = 'Unknown';
+
+/** List of (top level) properties to exclude from being shown in human readable summary of version changes */
 const grafanaAlertPropertiesToIgnore: Array<keyof GrafanaRuleDefinition> = [
   'id',
   'uid',
@@ -102,6 +108,29 @@ function preprocessRuleForDiffDisplay(rulerRule: RulerGrafanaRuleDTO<GrafanaRule
     ...processedGrafanaAlert,
   };
 }
+
+const SPECIAL_UID_MAP: Record<
+  string,
+  {
+    name: string;
+    tooltipContent: string;
+    badgeColor: BadgeColor;
+    icon?: IconName;
+  }
+> = {
+  __alerting__: {
+    name: 'Alerting',
+    tooltipContent:
+      'This update was made by the alerting system due to other changes. For example, when renaming a contact point that is used for simplified routing, this will update affected rules',
+    badgeColor: 'orange',
+    icon: 'bell',
+  },
+  service: {
+    name: 'Provisioning',
+    tooltipContent: 'Version update was made via provisioning',
+    badgeColor: 'purple',
+  },
+};
 
 /**
  * Render the version history of a given Grafana managed alert rule, showing different edits
@@ -176,11 +205,30 @@ export function AlertVersionHistory({ ruleUid }: AlertVersionHistoryProps) {
     setNewVersion(undefined);
   };
 
-  // const resetSelection = () => {
-  //   setCheckedVersions(new Map());
-  //   setOldVersion(undefined);
-  //   setNewVersion(undefined);
-  // };
+  const parseVersionInfo = (version: RulerGrafanaRuleDTO<GrafanaRuleDefinition>): RevisionModel => {
+    const createdBy = (() => {
+      const updatedBy = version?.grafana_alert.updated_by;
+      const uid = updatedBy?.uid;
+      const name = updatedBy?.name;
+
+      if (!updatedBy) {
+        return UNKNOWN;
+      }
+      if (uid && SPECIAL_UID_MAP[uid]) {
+        return SPECIAL_UID_MAP[uid].name;
+      }
+      if (name) {
+        return name;
+      }
+      return uid ? `User ID ${uid}` : UNKNOWN;
+    })();
+
+    return {
+      created: version.grafana_alert.updated || UNKNOWN,
+      createdBy,
+      version: version.grafana_alert.version || UNKNOWN,
+    };
+  };
 
   return (
     <Stack direction="column" gap={2}>
@@ -196,11 +244,6 @@ export function AlertVersionHistory({ ruleUid }: AlertVersionHistoryProps) {
             <Trans i18nKey="alerting.alertVersionHistory.compareVersions">Compare versions</Trans>
           </Button>
         </Tooltip>
-        {/* {checkedVersions.size > 0 && (
-          <Button type="button" onClick={resetSelection} icon="times" variant="secondary">
-            <Trans i18nKey="alerting.alertVersionHistory.clearSelection">Clear selected versions</Trans>
-          </Button>
-        )} */}
       </Stack>
       {showDrawer && oldVersion && newVersion && (
         <Drawer
@@ -208,17 +251,9 @@ export function AlertVersionHistory({ ruleUid }: AlertVersionHistoryProps) {
           title={t('alerting.alertVersionHistory.comparing-versions', 'Comparing versions')}
         >
           <VersionHistoryComparison
-            oldInfo={{
-              created: oldVersion.grafana_alert.updated || 'unknown',
-              createdBy: oldVersion.grafana_alert.updated_by?.name || 'unknown',
-              version: oldVersion.grafana_alert.version || 'unknown',
-            }}
+            oldInfo={parseVersionInfo(oldVersion)}
             oldVersion={oldVersion}
-            newInfo={{
-              created: newVersion.grafana_alert.updated || 'unknown',
-              createdBy: newVersion.grafana_alert.updated_by?.name || 'unknown',
-              version: newVersion.grafana_alert.version || 'unknown',
-            }}
+            newInfo={parseVersionInfo(newVersion)}
             newVersion={newVersion}
             preprocessVersion={preprocessRuleForDiffDisplay}
           />
@@ -245,6 +280,17 @@ export function AlertVersionHistory({ ruleUid }: AlertVersionHistoryProps) {
   );
 }
 
+const getStyles = () => {
+  return {
+    badge: css({ cursor: 'help' }),
+    underline: css({
+      textDecoration: 'underline dotted',
+      textUnderlineOffset: '5px',
+      cursor: 'help',
+    }),
+  };
+};
+
 function VersionHistoryTable({
   onVersionsChecked,
   ruleVersions,
@@ -254,6 +300,7 @@ function VersionHistoryTable({
   ruleVersions: Array<RulerGrafanaRuleDTO<GrafanaRuleDefinition>>;
   disableSelection: boolean;
 }) {
+  const styles = useStyles2(getStyles);
   const [checkedVersions, setCheckedVersions] = useState<Map<string, boolean>>(new Map());
 
   //----> restore code : no need to review as it's behind a feature flag
@@ -277,14 +324,15 @@ function VersionHistoryTable({
 
   //----> end of restore code
 
-  const rows: RevisionModel[] = ruleVersions.map((rule, index) => ({
+  const rows = ruleVersions.map((rule, index) => ({
     id: String(rule.grafana_alert.version),
     version: rule.grafana_alert.version || `unknown-rule-${index}`,
     created: rule.grafana_alert.updated || 'unknown',
-    createdBy: rule.grafana_alert.updated_by?.name || 'unknown',
+    createdBy: rule.grafana_alert.updated_by,
   }));
 
-  const columns: Array<Column<RevisionModel>> = [
+  // todo: fix types
+  const columns: Array<Column<(typeof rows)[0]>> = [
     {
       disableGrow: true,
       id: 'id',
@@ -314,18 +362,45 @@ function VersionHistoryTable({
       id: 'createdBy',
       header: 'Updated By',
       disableGrow: true,
-      cell: ({ value }) => value,
+      cell: ({ value }) => {
+        if (!value) {
+          return (
+            <Tooltip content="This change was made prior to tracking of user updates. ">
+              <span>
+                <span className={styles.underline}>{UNKNOWN} </span>
+                <Icon name="question-circle" />
+              </span>
+            </Tooltip>
+          );
+        }
+        const specialCase = SPECIAL_UID_MAP[value.uid];
+        if (specialCase || !value) {
+          return (
+            <Tooltip content={specialCase.tooltipContent}>
+              <span>
+                <Badge
+                  className={styles.badge}
+                  text={specialCase.name}
+                  color={specialCase.badgeColor}
+                  icon={specialCase.icon}
+                />
+              </span>
+            </Tooltip>
+          );
+        }
+        if (value.name) {
+          return value.name;
+        }
+        if (value.uid) {
+          return `User ID ${value.uid}`;
+        }
+      },
     },
     {
       id: 'created',
       header: 'Date',
       disableGrow: true,
-      cell: ({ value }) => moment(value).toLocaleString(),
-    },
-    {
-      id: 'timeSince',
-      disableGrow: true,
-      cell: ({ row }) => dateTimeFormatTimeAgo(row.values.created),
+      cell: ({ value }) => dateTimeFormat(value) + ' (' + dateTimeFormatTimeAgo(value) + ')',
     },
     {
       id: 'actions',
@@ -391,10 +466,6 @@ function VersionHistoryTable({
         }
         confirmText={'Yes, restore configuration'}
         onConfirm={() => {
-          // if (activeRestoreVersion) {
-          //   restoreVersion(activeRestoreVersion);
-          // }
-
           hideConfirmation();
         }}
         onDismiss={() => hideConfirmation()}
