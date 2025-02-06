@@ -4129,7 +4129,6 @@ __metadata:
     slate-plain-serializer: "npm:0.7.13"
     slate-react: "npm:0.22.10"
     storybook: "npm:^8.4.2"
-    storybook-dark-mode: "npm:4.0.1"
     style-loader: "npm:4.0.0"
     tinycolor2: "npm:1.6.0"
     tslib: "npm:2.8.1"
@@ -7524,7 +7523,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@storybook/components@npm:8.4.4, @storybook/components@npm:^8.0.0, @storybook/components@npm:^8.4.2":
+"@storybook/components@npm:8.4.4, @storybook/components@npm:^8.4.2":
   version: 8.4.4
   resolution: "@storybook/components@npm:8.4.4"
   peerDependencies:
@@ -7533,7 +7532,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@storybook/core-events@npm:^8.0.0, @storybook/core-events@npm:^8.4.2":
+"@storybook/core-events@npm:^8.4.2":
   version: 8.4.4
   resolution: "@storybook/core-events@npm:8.4.4"
   peerDependencies:
@@ -7605,7 +7604,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@storybook/icons@npm:^1.2.12, @storybook/icons@npm:^1.2.5":
+"@storybook/icons@npm:^1.2.12":
   version: 1.2.12
   resolution: "@storybook/icons@npm:1.2.12"
   peerDependencies:
@@ -7615,7 +7614,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@storybook/manager-api@npm:8.4.4, @storybook/manager-api@npm:^8.0.0, @storybook/manager-api@npm:^8.4.2":
+"@storybook/manager-api@npm:8.4.4, @storybook/manager-api@npm:^8.4.2":
   version: 8.4.4
   resolution: "@storybook/manager-api@npm:8.4.4"
   peerDependencies:
@@ -7766,7 +7765,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@storybook/theming@npm:8.4.4, @storybook/theming@npm:^8.0.0, @storybook/theming@npm:^8.4.2":
+"@storybook/theming@npm:8.4.4, @storybook/theming@npm:^8.4.2":
   version: 8.4.4
   resolution: "@storybook/theming@npm:8.4.4"
   peerDependencies:
@@ -28883,22 +28882,6 @@ __metadata:
   version: 3.7.0
   resolution: "std-env@npm:3.7.0"
   checksum: 10/6ee0cca1add3fd84656b0002cfbc5bfa20340389d9ba4720569840f1caa34bce74322aef4c93f046391583e50649d0cf81a5f8fe1d411e50b659571690a45f12
-  languageName: node
-  linkType: hard
-
-"storybook-dark-mode@npm:4.0.1":
-  version: 4.0.1
-  resolution: "storybook-dark-mode@npm:4.0.1"
-  dependencies:
-    "@storybook/components": "npm:^8.0.0"
-    "@storybook/core-events": "npm:^8.0.0"
-    "@storybook/global": "npm:^5.0.0"
-    "@storybook/icons": "npm:^1.2.5"
-    "@storybook/manager-api": "npm:^8.0.0"
-    "@storybook/theming": "npm:^8.0.0"
-    fast-deep-equal: "npm:^3.1.3"
-    memoizerific: "npm:^1.11.3"
-  checksum: 10/3225e5bdaba0ea76b65d642202d9712d7de234e3b5673fb46e444892ab114be207dd287778e2002b662ec35bb8153d2624ff280ce51c5299fb13c711431dad40
   languageName: node
   linkType: hard
 
