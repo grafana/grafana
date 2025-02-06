@@ -225,7 +225,10 @@ describe('transformSceneToSaveModelSchemaV2', () => {
             hide: VariableHideV1.hideLabel,
             value: 'value1',
             text: 'text1',
-            query: 'query1',
+            query: {
+              expr: 'label_values(node_boot_time_seconds)',
+              refId: 'A',
+            },
             definition: 'definition1',
             datasource: { uid: 'datasource1', type: 'prometheus' },
             sort: VariableSortV1.alphabeticalDesc,

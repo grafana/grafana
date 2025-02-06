@@ -651,7 +651,7 @@ QueryVariableSpec: {
   skipUrlSync: bool | *false
   description?: string
   datasource?: DataSourceRef
-  query: string | DataQueryKind | *""
+  query: DataQueryKind
   regex: string | *""
   sort: VariableSort
   definition?: string
