@@ -13,10 +13,6 @@ import {
   FilterByValueType,
 } from './filterByValue';
 import { DataTransformerID } from './ids';
-import * as utils from './utils';
-
-const mockTransformationsVariableSupport = jest.spyOn(utils, 'transformationsVariableSupport');
-mockTransformationsVariableSupport.mockReturnValue(false);
 
 const seriesAWithSingleField = toDataFrame({
   name: 'A',
@@ -261,8 +257,6 @@ describe('FilterByValue transformer', () => {
   });
 
   it('should interpolate dashboard variables', async () => {
-    mockTransformationsVariableSupport.mockReturnValue(true);
-
     const lower: MatcherConfig<BasicValueMatcherOptions<string | number>> = {
       id: ValueMatcherID.lower,
       options: { value: 'thiswillinterpolateto6' },
@@ -306,8 +300,6 @@ describe('FilterByValue transformer', () => {
   });
 
   it('should interpolate dashboard variables for regex matcher', async () => {
-    mockTransformationsVariableSupport.mockReturnValue(true);
-
     const regex: MatcherConfig<BasicValueMatcherOptions<string | number>> = {
       id: ValueMatcherID.regex,
       options: { value: '.*thiswillinterpolateto6' },
@@ -351,8 +343,6 @@ describe('FilterByValue transformer', () => {
   });
 
   it('should not interpolate dashboard variables when feature toggle is off', async () => {
-    mockTransformationsVariableSupport.mockReturnValue(false);
-
     const lower: MatcherConfig<BasicValueMatcherOptions<number | string>> = {
       id: ValueMatcherID.lower,
       options: { value: 'notinterpolating' },
