@@ -15,9 +15,9 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql/modecheck"
 )
 
-// CRUD without watch... you get watch when real mode 3++
 type dualWriterPendingMode3 struct {
 	status modecheck.Service
+	legacy LegacyStorage
 	target *DualWriterMode3
 	gr     schema.GroupResource
 }
@@ -35,23 +35,27 @@ func NewAlmostMode3(
 	metrics.init(reg)
 
 	return &dualWriterPendingMode3{
+		legacy: legacy,
 		target: newDualWriterMode3(legacy, storage, metrics, resource),
 		status: status,
 		gr:     gr,
 	}
 }
 
-// Get overrides the behavior of the generic DualWriter and retrieves an object from Storage.
 func (d *dualWriterPendingMode3) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	return d.target.Get(ctx, name, options)
+	if d.status.IsMigrated(ctx, d.gr) {
+		return d.target.Get(ctx, name, options)
+	}
+	return d.legacy.Get(ctx, name, options)
 }
 
-// List overrides the behavior of the generic DualWriter and reads only from Unified Store.
 func (d *dualWriterPendingMode3) List(ctx context.Context, options *metainternalversion.ListOptions) (runtime.Object, error) {
-	return d.target.List(ctx, options)
+	if d.status.IsMigrated(ctx, d.gr) {
+		return d.target.List(ctx, options)
+	}
+	return d.legacy.List(ctx, options)
 }
 
-// Create overrides the behavior of the generic DualWriter and writes to LegacyStorage and Storage.
 func (d *dualWriterPendingMode3) Create(ctx context.Context, in runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
 	if d.status.IsMigrated(ctx, d.gr) {
 		return d.target.Create(ctx, in, createValidation, options)
@@ -64,7 +68,6 @@ func (d *dualWriterPendingMode3) Create(ctx context.Context, in runtime.Object, 
 	}
 }
 
-// Update overrides the behavior of the generic DualWriter and writes first to Storage and then to LegacyStorage.
 func (d *dualWriterPendingMode3) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
 	if d.status.IsMigrated(ctx, d.gr) {
 		return d.target.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
