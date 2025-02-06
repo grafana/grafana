@@ -959,7 +959,7 @@ const (
 	// Enables the new logs panel in Explore
 	FlagNewLogsPanel = "newLogsPanel"
 
-	// FlagAlertingRuleVersionHistory
-	// Enables the alert rule version history feature
-	FlagAlertingRuleVersionHistory = "alertingRuleVersionHistory"
+	// FlagAlertingRuleVersionHistoryRestore
+	// Enables the alert rule version history restore feature
+	FlagAlertingRuleVersionHistoryRestore = "alertingRuleVersionHistoryRestore"
 )

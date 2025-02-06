@@ -1785,11 +1785,13 @@ var (
 			Owner:        grafanaObservabilityLogsSquad,
 		},
 		{
-			Name:         "alertingRuleVersionHistory",
-			Description:  "Enables the alert rule version history feature",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaAlertingSquad,
-			HideFromDocs: true,
+			Name:              "alertingRuleVersionHistoryRestore",
+			Description:       "Enables the alert rule version history restore feature",
+			FrontendOnly:      true,
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaAlertingSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
 		},
 	}
 )

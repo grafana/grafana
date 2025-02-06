@@ -256,5 +256,5 @@ export interface FeatureToggles {
   alertingAlertmanagerExtraDedupStage?: boolean;
   alertingAlertmanagerExtraDedupStageStopPipeline?: boolean;
   newLogsPanel?: boolean;
-  alertingRuleVersionHistory?: boolean;
+  alertingRuleVersionHistoryRestore?: boolean;
 }

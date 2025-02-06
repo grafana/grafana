@@ -222,7 +222,7 @@ export function AlertVersionHistory({ ruleUid }: AlertVersionHistoryProps) {
             newVersion={newVersion}
             preprocessVersion={preprocessRuleForDiffDisplay}
           />
-          {config.featureToggles.alertingRuleVersionHistory && (
+          {config.featureToggles.alertingRuleVersionHistoryRestore && (
             <Box paddingTop={2}>
               <Stack justifyContent="flex-end">
                 <Button variant="destructive" onClick={() => {}}>
@@ -337,7 +337,7 @@ function VersionHistoryTable({
           <Stack direction="row" alignItems="center" justifyContent="flex-end">
             {isFirstItem ? (
               <Badge text={t('alerting.alertVersionHistory.latest', 'Latest')} color="blue" />
-            ) : config.featureToggles.alertingRuleVersionHistory ? (
+            ) : config.featureToggles.alertingRuleVersionHistoryRestore ? (
               <Button
                 variant="secondary"
                 size="sm"
