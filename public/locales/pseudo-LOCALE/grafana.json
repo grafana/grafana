@@ -821,7 +821,8 @@
           "show-json-diff": "Ŝĥőŵ ĴŜØŃ đįƒƒ ",
           "text": "Vęřşįőŉ {{version}} ūpđäŧęđ þy <3></3> ({{ageString}}) {{message}}"
         }
-      }
+      },
+      "see-json-diff": "Ŝęę ĴŜØŃ đįƒƒ ŧő şęę äľľ čĥäŉģęş"
     }
   },
   "correlations": {

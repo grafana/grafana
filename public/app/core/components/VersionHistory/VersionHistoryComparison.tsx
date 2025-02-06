@@ -2,7 +2,7 @@ import { identity } from 'lodash';
 import { useState } from 'react';
 
 import { dateTimeFormatTimeAgo, IconName } from '@grafana/data';
-import { Badge, BadgeColor, Box, Button, Divider, Icon, Stack, Text } from '@grafana/ui';
+import { Badge, BadgeColor, Box, Button, Divider, EmptyState, Icon, Stack, Text } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 import { DiffGroup } from 'app/features/dashboard-scene/settings/version-history/DiffGroup';
 import { DiffViewer } from 'app/features/dashboard-scene/settings/version-history/DiffViewer';
@@ -76,20 +76,26 @@ export const VersionHistoryComparison = <T extends DiffArgument>({
   preprocessVersion = identity,
 }: DiffViewProps<T>) => {
   const diff = jsonDiff(preprocessVersion(oldVersion), preprocessVersion(newVersion));
-  const [showJsonDiff, setShowJsonDiff] = useState(false);
+  const noDiffs = Object.entries(diff).length === 0;
+  const [showJsonDiff, setShowJsonDiff] = useState(noDiffs);
 
   return (
     <Stack gap={2} direction="column">
       <Box>
-        <Text>
+        <Text variant="h5" element="h4">
           <VersionChangeSummary info={oldInfo} />
-        </Text>
-        <Icon name="arrow-right" />
-        <Text>
+
+          <Icon name="arrow-right" />
+
           <VersionChangeSummary info={newInfo} />
         </Text>
       </Box>
       <Box>
+        {noDiffs && (
+          <EmptyState message="No relevant properties changed" variant="not-found" hideImage>
+            <Trans i18nKey="core.versionHistory.see-json-diff">See JSON diff to see all changes</Trans>
+          </EmptyState>
+        )}
         {Object.entries(diff).map(([key, diffs]) => (
           <DiffGroup diffs={diffs} key={key} title={key} />
         ))}
@@ -97,12 +103,12 @@ export const VersionHistoryComparison = <T extends DiffArgument>({
       </Box>
       <Box>
         {showJsonDiff && (
-          <Button variant="secondary" size="sm" onClick={() => setShowJsonDiff(false)}>
+          <Button variant="secondary" onClick={() => setShowJsonDiff(false)}>
             <Trans i18nKey="core.versionHistory.comparison.header.hide-json-diff">Hide JSON diff </Trans>
           </Button>
         )}
         {!showJsonDiff && (
-          <Button variant="secondary" size="sm" onClick={() => setShowJsonDiff(true)}>
+          <Button variant="secondary" onClick={() => setShowJsonDiff(true)}>
             <Trans i18nKey="core.versionHistory.comparison.header.show-json-diff">Show JSON diff </Trans>
           </Button>
         )}

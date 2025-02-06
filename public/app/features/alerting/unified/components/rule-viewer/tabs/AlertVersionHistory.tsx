@@ -262,7 +262,7 @@ export function AlertVersionHistory({ ruleUid }: AlertVersionHistoryProps) {
           {config.featureToggles.alertingRuleVersionHistoryRestore && (
             <Box paddingTop={2}>
               <Stack justifyContent="flex-end">
-                <Button variant="destructive" onClick={() => { }}>
+                <Button variant="destructive" onClick={() => {}}>
                   <Trans i18nKey="alerting.alertVersionHistory.reset">
                     Reset to version {oldVersion.grafana_alert.version}
                   </Trans>
@@ -372,7 +372,7 @@ function VersionHistoryTable({
       cell: ({ value }) => {
         if (!value) {
           return (
-            <Tooltip content="This change was made prior to tracking of user updates. ">
+            <Tooltip content="This update was made prior to the implementation of alert rule version history. The user who made the change is not tracked, but future changes will include the user">
               <span>
                 <span className={styles.underline}>{UNKNOWN} </span>
                 <Icon name="question-circle" />
@@ -418,13 +418,15 @@ function VersionHistoryTable({
           return null;
         }
 
+        const added = `+${value.added}`;
+        const removed = `-${value.removed}`;
         return (
           <Stack alignItems="baseline" gap={0.5}>
             <Text color="success" variant="bodySmall">
-              +{value.added}
+              {added}
             </Text>
             <Text color="error" variant="bodySmall">
-              -{value.removed}
+              {removed}
             </Text>
           </Stack>
         );

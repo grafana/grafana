@@ -821,7 +821,8 @@
           "show-json-diff": "Show JSON diff ",
           "text": "Version {{version}} updated by <3></3> ({{ageString}}) {{message}}"
         }
-      }
+      },
+      "see-json-diff": "See JSON diff to see all changes"
     }
   },
   "correlations": {
