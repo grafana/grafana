@@ -24,7 +24,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	grafanaresponsewriter "github.com/grafana/grafana/pkg/apiserver/endpoints/responsewriter"
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
@@ -47,6 +46,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql/modecheck"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
@@ -137,7 +137,7 @@ type service struct {
 
 	authorizer        *authorizer.GrafanaAuthorizer
 	serverLockService builder.ServerLockService
-	kvStore           kvstore.KVStore
+	migrationStatus   modecheck.Service
 
 	pluginClient    plugins.Client
 	datasources     datasource.ScopedPluginDatasourceProvider
@@ -154,7 +154,7 @@ func ProvideService(
 	tracing *tracing.TracingService,
 	serverLockService *serverlock.ServerLockService,
 	db db.DB,
-	kvStore kvstore.KVStore,
+	migrationStatus modecheck.Service,
 	pluginClient plugins.Client,
 	datasources datasource.ScopedPluginDatasourceProvider,
 	contextProvider datasource.PluginContextWrapper,
@@ -172,7 +172,7 @@ func ProvideService(
 		tracing:           tracing,
 		db:                db, // For Unified storage
 		metrics:           metrics.ProvideRegisterer(),
-		kvStore:           kvStore,
+		migrationStatus:   migrationStatus,
 		pluginClient:      pluginClient,
 		datasources:       datasources,
 		contextProvider:   contextProvider,
@@ -359,7 +359,9 @@ func (s *service) start(ctx context.Context) error {
 	// Install the API group+version
 	err = builder.InstallAPIs(Scheme, Codecs, server, serverConfig.RESTOptionsGetter, builders, o.StorageOptions,
 		// Required for the dual writer initialization
-		s.metrics, request.GetNamespaceMapper(s.cfg), kvstore.WithNamespace(s.kvStore, 0, "storage.dualwriting"),
+		s.metrics,
+		request.GetNamespaceMapper(s.cfg),
+		s.migrationStatus,
 		s.serverLockService,
 		optsregister,
 	)

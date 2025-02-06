@@ -26,13 +26,13 @@ import (
 	k8sscheme "k8s.io/client-go/kubernetes/scheme"
 	k8stracing "k8s.io/component-base/tracing"
 	utilversion "k8s.io/component-base/version"
-	"k8s.io/klog/v2"
 	"k8s.io/kube-openapi/pkg/common"
 
 	"github.com/grafana/grafana/pkg/apiserver/endpoints/filters"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
+	"github.com/grafana/grafana/pkg/storage/legacysql/modecheck"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 )
 
@@ -272,7 +272,7 @@ func InstallAPIs(
 	storageOpts *options.StorageOptions,
 	reg prometheus.Registerer,
 	namespaceMapper request.NamespaceMapper,
-	kvStore grafanarest.NamespacedKVStore,
+	migrationStatus modecheck.Service,
 	serverLock ServerLockService,
 	optsregister apistore.StorageOptionsRegister,
 ) error {
@@ -291,68 +291,41 @@ func InstallAPIs(
 			var mode = grafanarest.DualWriterMode(0)
 
 			var (
-				dualWriterPeriodicDataSyncJobEnabled bool
-				dataSyncerInterval                   = time.Hour
-				dataSyncerRecordsLimit               = 1000
+				requiresMigration = false
 			)
 
 			resourceConfig, resourceExists := storageOpts.UnifiedStorageConfig[key]
 			if resourceExists {
 				mode = resourceConfig.DualWriterMode
-				dualWriterPeriodicDataSyncJobEnabled = resourceConfig.DualWriterPeriodicDataSyncJobEnabled
-				dataSyncerInterval = resourceConfig.DataSyncerInterval
-				dataSyncerRecordsLimit = resourceConfig.DataSyncerRecordsLimit
 			}
 
-			// Force using storage only -- regardless of internal synchronization state
-			if mode == grafanarest.Mode5 {
-				return storage, nil
-			}
-
-			// TODO: inherited context from main Grafana process
-			ctx := context.Background()
-
-			// Moving from one version to the next can only happen after the previous step has
-			// successfully synchronized.
-			requestInfo := getRequestInfo(gr, namespaceMapper)
-
-			syncerCfg := &grafanarest.SyncerConfig{
-				Kind:                   key,
-				RequestInfo:            requestInfo,
-				Mode:                   mode,
-				LegacyStorage:          legacy,
-				Storage:                storage,
-				ServerLockService:      serverLock,
-				DataSyncerInterval:     dataSyncerInterval,
-				DataSyncerRecordsLimit: dataSyncerRecordsLimit,
-				Reg:                    reg,
-			}
-
-			// This also sets the currentMode on the syncer config.
-			currentMode, err := grafanarest.SetDualWritingMode(ctx, kvStore, syncerCfg)
-			if err != nil {
-				return nil, err
-			}
-			switch currentMode {
+			switch mode {
 			case grafanarest.Mode0:
 				return legacy, nil
-			case grafanarest.Mode4, grafanarest.Mode5:
-				return storage, nil
+			case grafanarest.Mode1: // legacy... with dual write (respect the config)
+				return grafanarest.NewDualWriter(mode, legacy, storage, reg, key), nil
+			case grafanarest.Mode2:
+				requiresMigration = false
+			case grafanarest.Mode3, grafanarest.Mode4:
+				requiresMigration = true
+			case grafanarest.Mode5:
+				return storage, nil // ignore any settings
 			default:
-			}
-			if dualWriterPeriodicDataSyncJobEnabled {
-				// The mode might have changed in SetDualWritingMode, so apply current mode first.
-				syncerCfg.Mode = currentMode
-				if err := grafanarest.StartPeriodicDataSyncer(ctx, syncerCfg); err != nil {
-					return nil, err
-				}
+				return legacy, nil
 			}
 
-			// when unable to use
-			if currentMode != mode {
-				klog.Warningf("Requested DualWrite mode: %d, but using %d for %+v", mode, currentMode, gr)
+			migrated := migrationStatus.IsMigrated(context.Background(), gr)
+			if migrated && requiresMigration {
+				return grafanarest.NewDualWriter(mode, legacy, storage, reg, key), nil
 			}
-			return grafanarest.NewDualWriter(currentMode, legacy, storage, reg, key), nil
+
+			// use pending checker
+			if requiresMigration {
+				// TODO... OSS start migration?
+
+			}
+
+			return grafanarest.NewDualWriter(mode, legacy, storage, reg, key), nil
 		}
 	}
 
