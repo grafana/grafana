@@ -123,6 +123,7 @@ func (g *AlertRuleGenerator) Generate() AlertRule {
 		Annotations:          annotations,
 		Labels:               labels,
 		NotificationSettings: ns,
+		Metadata:             GenerateMetadata(),
 	}
 
 	for _, mutator := range g.mutators {
@@ -563,6 +564,12 @@ func (a *AlertRuleMutators) WithKey(key AlertRuleKey) AlertRuleMutator {
 	}
 }
 
+func (a *AlertRuleMutators) WithMetadata(meta AlertRuleMetadata) AlertRuleMutator {
+	return func(r *AlertRule) {
+		r.Metadata = meta
+	}
+}
+
 func (g *AlertRuleGenerator) GenerateLabels(min, max int, prefix string) data.Labels {
 	count := max
 	if min > max {
@@ -855,6 +862,15 @@ func CreateHysteresisExpression(t *testing.T, refID string, inputRefID string, t
 	require.NoError(t, err)
 	require.Truef(t, h, "test model is expected to be a hysteresis expression")
 	return q
+}
+
+func GenerateMetadata() AlertRuleMetadata {
+	return AlertRuleMetadata{
+		EditorSettings: EditorSettings{
+			SimplifiedQueryAndExpressionsSection: rand.Int()%2 == 0,
+			SimplifiedNotificationsSection:       rand.Int()%2 == 0,
+		},
+	}
 }
 
 type AlertInstanceMutator func(*AlertInstance)
