@@ -176,7 +176,6 @@ compilation-stats.json
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
-
 # grafana server
 /scripts/grafana-server/server.log
 

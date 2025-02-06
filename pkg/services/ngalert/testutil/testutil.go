@@ -19,6 +19,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/guardian"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
@@ -28,7 +30,7 @@ import (
 func SetupFolderService(tb testing.TB, cfg *setting.Cfg, db db.DB, dashboardStore dashboards.Store, folderStore *folderimpl.DashboardFolderStoreImpl, bus *bus.InProcBus, features featuremgmt.FeatureToggles, ac accesscontrol.AccessControl) folder.Service {
 	tb.Helper()
 	fStore := folderimpl.ProvideStore(db)
-	return folderimpl.ProvideService(fStore, ac, bus, dashboardStore, folderStore, db,
+	return folderimpl.ProvideService(fStore, ac, bus, dashboardStore, folderStore, nil, db,
 		features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest())
 }
 
@@ -66,4 +68,10 @@ func SetupDashboardService(tb testing.TB, sqlStore db.DB, fs *folderimpl.Dashboa
 	dashboardService.RegisterDashboardPermissions(dashboardPermissions)
 
 	return dashboardService, dashboardStore
+}
+
+func SetupOrgService(tb testing.TB, sqlStore db.DB, cfg *setting.Cfg) (org.Service, error) {
+	tb.Helper()
+	quotaService := quotatest.New(false, nil)
+	return orgimpl.ProvideService(sqlStore, cfg, quotaService)
 }

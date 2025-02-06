@@ -16,7 +16,8 @@ import { hashRule } from '../utils/rule-id';
 import { getRulePluginOrigin, isAlertingRule, isGrafanaRulerRule } from '../utils/rules';
 
 import { AlertRuleListItem } from './components/AlertRuleListItem';
-import { ActionsLoader, RuleActionsButtons } from './components/RuleActionsButtons.V2';
+import { RuleActionsButtons } from './components/RuleActionsButtons.V2';
+import { RuleActionsSkeleton } from './components/RuleActionsSkeleton';
 
 interface Props {
   namespaces: CombinedRuleNamespace[];
@@ -124,7 +125,7 @@ const RulesByState = ({ state, rules }: { state: PromAlertingRuleState; rules: C
               rule.rulerRule ? (
                 <RuleActionsButtons compact rule={rule.rulerRule} promRule={promRule} groupIdentifier={groupId} />
               ) : (
-                <ActionsLoader />
+                <RuleActionsSkeleton />
               )
             }
             origin={originMeta}

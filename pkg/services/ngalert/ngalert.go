@@ -49,6 +49,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/secrets"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -78,6 +79,7 @@ func ProvideService(
 	ruleStore *store.DBstore,
 	httpClientProvider httpclient.Provider,
 	resourcePermissions accesscontrol.ReceiverPermissionsService,
+	userService user.Service,
 ) (*AlertNG, error) {
 	ng := &AlertNG{
 		Cfg:                  cfg,
@@ -106,6 +108,7 @@ func ProvideService(
 		store:                ruleStore,
 		httpClientProvider:   httpClientProvider,
 		ResourcePermissions:  resourcePermissions,
+		userService:          userService,
 	}
 
 	if ng.IsDisabled() {
@@ -144,6 +147,9 @@ type AlertNG struct {
 	dashboardService    dashboards.DashboardService
 	Api                 *api.API
 	httpClientProvider  httpclient.Provider
+	InstanceStore       state.InstanceStore
+	// StartupInstanceReader is used to fetch the state of alerts on startup.
+	StartupInstanceReader state.InstanceReader
 
 	// Alerting notification services
 	MultiOrgAlertmanager *notifier.MultiOrgAlertmanager
@@ -153,6 +159,7 @@ type AlertNG struct {
 	ResourcePermissions  accesscontrol.ReceiverPermissionsService
 	annotationsRepo      annotations.Repository
 	store                *store.DBstore
+	userService          user.Service
 
 	bus          bus.Bus
 	pluginsStore pluginstore.Store
@@ -398,15 +405,17 @@ func (ng *AlertNG) init() error {
 	if err != nil {
 		return err
 	}
-	cfg := state.ManagerCfg{
+
+	ng.InstanceStore, ng.StartupInstanceReader = initInstanceStore(ng.store.SQLStore, ng.Log, ng.FeatureToggles)
+
+	stateManagerCfg := state.ManagerCfg{
 		Metrics:                        ng.Metrics.GetStateMetrics(),
 		ExternalURL:                    appUrl,
 		DisableExecution:               !ng.Cfg.UnifiedAlerting.ExecuteAlerts,
-		InstanceStore:                  ng.store,
+		InstanceStore:                  ng.InstanceStore,
 		Images:                         ng.ImageService,
 		Clock:                          clk,
 		Historian:                      history,
-		DoNotSaveNormalState:           ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingNoNormalState),
 		ApplyNoDataAndErrorToAllStates: ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingNoDataErrorExecution),
 		MaxStateSaveConcurrency:        ng.Cfg.UnifiedAlerting.MaxStateSaveConcurrency,
 		StatePeriodicSaveBatchSize:     ng.Cfg.UnifiedAlerting.StatePeriodicSaveBatchSize,
@@ -415,13 +424,8 @@ func (ng *AlertNG) init() error {
 		Log:                            log.New("ngalert.state.manager"),
 		ResolvedRetention:              ng.Cfg.UnifiedAlerting.ResolvedAlertRetention,
 	}
-	logger := log.New("ngalert.state.manager.persist")
-	statePersister := state.NewSyncStatePersisiter(logger, cfg)
-	if ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingSaveStatePeriodic) {
-		ticker := clock.New().Ticker(ng.Cfg.UnifiedAlerting.StatePeriodicSaveInterval)
-		statePersister = state.NewAsyncStatePersister(logger, ticker, cfg)
-	}
-	stateManager := state.NewManager(cfg, statePersister)
+	statePersister := initStatePersister(ng.Cfg.UnifiedAlerting, stateManagerCfg, ng.FeatureToggles)
+	stateManager := state.NewManager(stateManagerCfg, statePersister)
 	scheduler := schedule.NewScheduler(schedCfg, stateManager)
 
 	// if it is required to include folder title to the alerts, we need to subscribe to changes of alert title
@@ -497,6 +501,7 @@ func (ng *AlertNG) init() error {
 		Historian:            history,
 		Hooks:                api.NewHooks(ng.Log),
 		Tracer:               ng.tracer,
+		UserService:          ng.userService,
 	}
 	ng.Api.RegisterAPIEndpoints(ng.Metrics.GetAPIMetrics())
 
@@ -513,6 +518,62 @@ func (ng *AlertNG) init() error {
 	})
 
 	return DeclareFixedRoles(ng.AccesscontrolService, ng.FeatureToggles)
+}
+
+// initInstanceStore initializes the instance store based on the feature toggles.
+// It returns two vales: the instance store that should be used for writing alert instances,
+// and an alert instance reader that can be used to read alert instances on startup.
+func initInstanceStore(sqlStore db.DB, logger log.Logger, featureToggles featuremgmt.FeatureToggles) (state.InstanceStore, state.InstanceReader) {
+	var instanceStore state.InstanceStore
+
+	// We init both stores here, but only one will be used based on the feature toggles.
+	// Two stores are needed for the multi-instance reader to work correctly.
+	// It's used to read the state of alerts on startup, and allows switching the feature
+	// flags seamlessly without losing the state of alerts.
+	protoInstanceStore := store.ProtoInstanceDBStore{
+		SQLStore:       sqlStore,
+		Logger:         logger,
+		FeatureToggles: featureToggles,
+	}
+	simpleInstanceStore := store.InstanceDBStore{
+		SQLStore: sqlStore,
+		Logger:   logger,
+	}
+
+	if featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingSaveStateCompressed) {
+		logger.Info("Using protobuf-based alert instance store")
+		instanceStore = protoInstanceStore
+		// If FlagAlertingSaveStateCompressed is enabled, ProtoInstanceDBStore is used,
+		// which functions differently from InstanceDBStore. FlagAlertingSaveStatePeriodic is
+		// not applicable to ProtoInstanceDBStore, so a warning is logged if it is set.
+		if featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingSaveStatePeriodic) {
+			logger.Warn("alertingSaveStatePeriodic is not used when alertingSaveStateCompressed feature flag enabled")
+		}
+	} else {
+		logger.Info("Using simple database alert instance store")
+		instanceStore = simpleInstanceStore
+	}
+
+	return instanceStore, state.NewMultiInstanceReader(logger, protoInstanceStore, simpleInstanceStore)
+}
+
+func initStatePersister(uaCfg setting.UnifiedAlertingSettings, cfg state.ManagerCfg, featureToggles featuremgmt.FeatureToggles) state.StatePersister {
+	logger := log.New("ngalert.state.manager.persist")
+	var statePersister state.StatePersister
+
+	if featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingSaveStateCompressed) {
+		logger.Info("Using rule state persister")
+		statePersister = state.NewSyncRuleStatePersisiter(logger, cfg)
+	} else if featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingSaveStatePeriodic) {
+		logger.Info("Using periodic state persister")
+		ticker := clock.New().Ticker(uaCfg.StatePeriodicSaveInterval)
+		statePersister = state.NewAsyncStatePersister(logger, ticker, cfg)
+	} else {
+		logger.Info("Using sync state persister")
+		statePersister = state.NewSyncStatePersisiter(logger, cfg)
+	}
+
+	return statePersister
 }
 
 func subscribeToFolderChanges(logger log.Logger, bus bus.Bus, dbStore api.RuleStore) {
@@ -553,7 +614,7 @@ func (ng *AlertNG) Run(ctx context.Context) error {
 		// Also note that this runs synchronously to ensure state is loaded
 		// before rule evaluation begins, hence we use ctx and not subCtx.
 		//
-		ng.stateManager.Warm(ctx, ng.store, ng.store)
+		ng.stateManager.Warm(ctx, ng.store, ng.store, ng.StartupInstanceReader)
 
 		children.Go(func() error {
 			return ng.schedule.Run(subCtx)

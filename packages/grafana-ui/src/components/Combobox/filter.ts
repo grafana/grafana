@@ -1,10 +1,12 @@
 import uFuzzy from '@leeoniya/ufuzzy';
 
-import { ComboboxOption } from './Combobox';
-import { ALL_OPTION_VALUE } from './MultiCombobox';
+import { ALL_OPTION_VALUE, ComboboxOption } from './types';
 
 // https://catonmat.net/my-favorite-regex :)
 const REGEXP_NON_ASCII = /[^ -~]/m;
+// https://www.asciitable.com/
+// matches only these: `~!@#$%^&*()_+-=[]\{}|;':",./<>?
+const REGEXP_ONLY_SYMBOLS = /^[\x21-\x2F\x3A-\x40\x5B-\x60\x7B-\x7E]+$/m;
 // limit max terms in needle that qualify for re-ordering
 const outOfOrderLimit = 5;
 // beyond 25 chars fall back to substring search
@@ -20,9 +22,6 @@ const uf = new uFuzzy({ intraMode: 1 });
 export function itemToString<T extends string | number>(item?: ComboboxOption<T> | null) {
   if (item == null) {
     return '';
-  }
-  if (item.label?.startsWith('Custom value: ')) {
-    return item.value.toString();
   }
   return item.label ?? item.value.toString();
 }
@@ -55,6 +54,8 @@ export function fuzzyFind<T extends string | number>(
   else if (
     // contains non-ascii
     REGEXP_NON_ASCII.test(needle) ||
+    // is only ascii symbols (operators)
+    REGEXP_ONLY_SYMBOLS.test(needle) ||
     // too long (often copy-paste from somewhere)
     needle.length > maxNeedleLength ||
     uf.split(needle).length > maxFuzzyTerms
