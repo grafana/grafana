@@ -2117,6 +2117,7 @@
       "title": "Ŀęŧ ūş ĥęľp yőū mįģřäŧę ŧő ŧĥįş şŧäčĸ"
     },
     "migrated-counts": {
+      "alert_rule_groups": "äľęřŧ řūľę ģřőūpş",
       "alert_rules": "äľęřŧ řūľęş",
       "contact_points": "čőŉŧäčŧ pőįŉŧş",
       "dashboards": "đäşĥþőäřđş",
@@ -2221,6 +2222,7 @@
     },
     "resource-type": {
       "alert_rule": "Åľęřŧ Ŗūľę",
+      "alert_rule_group": "Åľęřŧ Ŗūľę Ğřőūp",
       "contact_point": "Cőŉŧäčŧ Pőįŉŧ",
       "dashboard": "Đäşĥþőäřđ",
       "datasource": "Đäŧä şőūřčę",
