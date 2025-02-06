@@ -8,8 +8,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/log"
 )
 
-const concurrencyLimit = 32
-
 // Validator is responsible for the Validation stage of the plugin loader pipeline.
 type Validator interface {
 	Validate(ctx context.Context, ps *plugins.Plugin) error
