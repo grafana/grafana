@@ -1,4 +1,4 @@
-import { PanelPlugin } from '@grafana/data';
+import { FieldConfigProperty, PanelPlugin } from '@grafana/data';
 import {
   BigValueColorMode,
   BigValueGraphMode,
@@ -15,7 +15,9 @@ import { defaultOptions, Options } from './panelcfg.gen';
 import { StatSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<Options>(StatPanel)
-  .useFieldConfig()
+  .useFieldConfig({
+    disableStandardOptions: [FieldConfigProperty.Actions],
+  })
   .setPanelOptions((builder) => {
     const mainCategory = ['Stat styles'];
 

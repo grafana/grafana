@@ -6,13 +6,13 @@ import { addStandardDataReduceOptions } from '../stat/common';
 
 import { PieChartPanel } from './PieChartPanel';
 import { PieChartPanelChangedHandler } from './migrations';
-import { Options, FieldConfig, PieChartType, PieChartLabels, PieChartLegendValues } from './panelcfg.gen';
+import { FieldConfig, Options, PieChartLabels, PieChartLegendValues, PieChartType } from './panelcfg.gen';
 import { PieChartSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<Options, FieldConfig>(PieChartPanel)
   .setPanelChangeHandler(PieChartPanelChangedHandler)
   .useFieldConfig({
-    disableStandardOptions: [FieldConfigProperty.Thresholds],
+    disableStandardOptions: [FieldConfigProperty.Thresholds, FieldConfigProperty.Actions],
     standardOptions: {
       [FieldConfigProperty.Color]: {
         settings: {
