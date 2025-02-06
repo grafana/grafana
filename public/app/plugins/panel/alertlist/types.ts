@@ -21,26 +21,6 @@ export enum ViewMode {
   Stat = 'stat',
 }
 
-export interface AlertListOptions {
-  showOptions: ShowOption;
-  maxItems: number;
-  sortOrder: SortOrder;
-  dashboardAlerts: boolean;
-  alertName: string;
-  dashboardTitle: string;
-  tags: string[];
-  stateFilter: {
-    ok: boolean;
-    paused: boolean;
-    no_data: boolean;
-    execution_error: boolean;
-    alerting: boolean;
-    pending: boolean;
-  };
-  folderId: number;
-  showInactiveAlerts: boolean;
-}
-
 export interface StateFilter {
   firing: boolean;
   pending: boolean;
