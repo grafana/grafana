@@ -391,7 +391,7 @@ export class PrometheusDatasource
     // - Issue that led to the introduction of utcOffsetSec: https://github.com/grafana/grafana/issues/17278
     // - Implementation PR: https://github.com/grafana/grafana/pull/17477
     let utcOffset = request.range.to.utcOffset();
-    if (request.timezone === 'browser') {
+    if (request.timezone !== 'browser') {
       utcOffset = tz(request.timezone).utcOffset();
     }
     const processedTargets: PromQuery[] = [];
