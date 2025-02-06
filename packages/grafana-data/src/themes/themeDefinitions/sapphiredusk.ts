@@ -38,6 +38,8 @@ const sapphireDuskTheme: NewThemeOptions = {
     },
     info: {
       main: '#4d4593',
+      text: '#a8e9ed',
+      border: '#5d54a7',
     },
     error: {
       main: '#c63370',
