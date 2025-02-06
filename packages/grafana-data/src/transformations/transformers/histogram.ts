@@ -581,10 +581,12 @@ export function histogramFieldsToFrame(info: HistogramFields, theme?: GrafanaThe
   }
 
   // ensure updated units are reflected on the count field used for y axis formatting
-  info.counts[0].display = getDisplayProcessor({
-    field: info.counts[0],
-    theme: theme ?? createTheme(),
-  });
+  info.counts.forEach(count => {
+    count.display = getDisplayProcessor({
+      field: count,
+      theme: theme ?? createTheme(),
+    });
+  })
 
   return {
     length: info.xMin.values.length,
