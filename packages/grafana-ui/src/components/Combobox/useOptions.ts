@@ -62,7 +62,9 @@ export function useOptions<T extends string | number>(rawOptions: AsyncOptions<T
     (opts: Array<ComboboxOption<T>>) => {
       let currentOptions: Array<ComboboxOption<T>> = opts;
       if (createCustomValue && userTypedSearch) {
-        const customValueExists = opts.some((opt) => opt.value === userTypedSearch || opt.label === userTypedSearch);
+        //Since the label of a normal option does not have to match its value and a custom option has the same value and label,
+        //we just focus on the value to check if the option already exists
+        const customValueExists = opts.some((opt) => opt.value === userTypedSearch);
         if (!customValueExists) {
           currentOptions = [
             {
