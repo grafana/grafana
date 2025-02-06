@@ -17,7 +17,6 @@ import {
 import { DataSourceWithBackend, FetchResponse, getDataSourceSrv, toDataQueryError } from '@grafana/runtime';
 import { t } from 'app/core/internationalization';
 import { BackendSrv, getBackendSrv } from 'app/core/services/backend_srv';
-import { Graph } from 'app/core/utils/dag';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { cancelNetworkRequestsOnUnsubscribe } from 'app/features/query/state/processing/canceler';
 import { setStructureRevision } from 'app/features/query/state/processing/revision';
@@ -98,28 +97,16 @@ export class AlertingQueryRunner {
 
   // this function will omit any invalid queries and all of its descendants from the list of queries
   // to do this we will convert the list of queries into a DAG and walk the invalid node's output edges recursively
-  async prepareQueries(queries: AlertQuery[]) {
+  async prepareQueries(queries: AlertQuery[]): Promise<AlertQuery[]> {
     const queriesToExclude: string[] = [];
-    let queriesGraph: Graph | undefined;
-
-    // exclude nodes that failed to link
-    try {
-      queriesGraph = createDagFromQueries(queries);
-    } catch (error) {
-      if (error instanceof DAGError) {
-        const nodesFailedToLink = error.cause.map((linkError) => linkError.source);
-        queriesToExclude.push(...nodesFailedToLink);
-      } else {
-        throw error;
-      }
-    }
+    const nodesThatFailedToLink: string[] = [];
 
     // find all invalid nodes and omit those and their child nodes from the final queries array
     // ⚠️ also make sure all dependent nodes are omitted, otherwise we will be evaluating a broken graph with missing references
     for (const query of queries) {
       const refId = query.model.refId;
 
-      // expresson queries cannot be excluded / filtered out
+      // expression queries cannot be excluded / filtered out
       if (isExpressionQuery(query.model)) {
         continue;
       }
@@ -133,14 +120,35 @@ export class AlertingQueryRunner {
       // if we need to skip the query, we'll try to find the descendant nodes and skip those too.
       // if that fails we'll skip the nodes we failed to link too
       if (skipRunningQuery) {
-        if (queriesGraph) {
-          const descendants = getDescendants(refId, queriesGraph);
-          queriesToExclude.push(...descendants);
-        }
-
-        // if that fails just omit the query itself
         queriesToExclude.push(refId);
       }
+    }
+
+    // exclude nodes that failed to link, try to parse the graph
+    try {
+      createDagFromQueries(queries);
+    } catch (error) {
+      if (error instanceof DAGError) {
+        const nodesFailedToLink = error.cause.map((linkError) => linkError.source);
+        queriesToExclude.push(...nodesFailedToLink);
+        nodesThatFailedToLink.push(...nodesFailedToLink);
+      } else {
+        throw error;
+      }
+    }
+
+    // now find dependant nodes of the nodes we've excluded
+    try {
+      const queriesWithoutFailedNodes = reject(queries, (q) => nodesThatFailedToLink.includes(q.model.refId));
+      const includeGraph = createDagFromQueries(queriesWithoutFailedNodes);
+
+      queriesToExclude.forEach((refId) => {
+        const descendants = getDescendants(refId, includeGraph);
+        queriesToExclude.push(...descendants);
+      });
+    } catch (error) {
+      // if this still fails, the graph is really broken in unexpected ways
+      throw error;
     }
 
     return reject(queries, (q) => queriesToExclude.includes(q.model.refId));
