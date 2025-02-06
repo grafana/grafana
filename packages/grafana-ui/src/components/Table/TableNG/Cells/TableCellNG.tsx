@@ -123,7 +123,7 @@ export function TableCellNG(props: any) {
   };
 
   return (
-    <div ref={divWidthRef} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
+    <div ref={divWidthRef} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} className={styles.cell}>
       {cell}
       {cellInspect && isHovered && (
         <div className={styles.cellActions}>
@@ -148,6 +148,11 @@ export function TableCellNG(props: any) {
 }
 
 const getStyles = (theme: GrafanaTheme2, isRightAligned: boolean) => ({
+  cell: css({
+    height: '100%',
+    alignContent: 'center',
+    paddingInline: '8px',
+  }),
   cellActions: css({
     display: 'flex',
     position: 'absolute',

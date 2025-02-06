@@ -637,6 +637,9 @@ const getStyles = (theme: GrafanaTheme2, textWrap: boolean) => ({
     overflow: 'hidden',
     textOverflow: 'ellipsis',
 
+    // Reset default cell styles for custom cell component styling
+    paddingInline: '0',
+
     '&:hover': {
       // TODO: border was replaced with boxShadow, because it was causing cell shift on hover
       boxShadow: 'rgb(61, 113, 217) 0px 0px 2px',
