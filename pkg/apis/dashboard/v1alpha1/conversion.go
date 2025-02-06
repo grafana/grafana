@@ -34,6 +34,8 @@ func Convert_v0alpha1_Unstructured_To_v1alpha1_DashboardSpec(in *common.Unstruct
 
 func Convert_v1alpha1_DashboardSpec_To_v0alpha1_Unstructured(in *DashboardSpec, out *common.Unstructured, s conversion.Scope) error {
 	*out = in.Unstructured
-	out.Object["title"] = in.Title
+	if in.Title != "" {
+		out.Object["title"] = in.Title
+	}
 	return nil
 }
