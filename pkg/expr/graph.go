@@ -77,8 +77,6 @@ func (dp *DataPipeline) execute(c context.Context, now time.Time, s *Service) (m
 		executeDSNodesGrouped(c, now, vars, s, dsNodes)
 	}
 
-	s.allowLongFrames = hasSqlExpression(*dp)
-
 	for _, node := range *dp {
 		if groupByDSFlag && node.NodeType() == TypeDatasourceNode {
 			continue // already executed via executeDSNodesGrouped
@@ -321,10 +319,24 @@ func buildGraphEdges(dp *simple.DirectedGraph, registry map[string]Node) error {
 			neededNode, ok := registry[neededVar]
 			if !ok {
 				_, ok := cmdNode.Command.(*SQLCommand)
+				// If the SSE is a SQL expression, and the node can't be found, it might be a CTE table name
+				// CTEs are calculated during the evaluation of the SQL, so we won't have a node for them
+				// So we `continue` in order to support CTE functionality
+				// TODO: remove CTE table names from the list of table names during parsing of the SQL
 				if ok {
 					continue
 				}
 				return fmt.Errorf("unable to find dependent node '%v'", neededVar)
+			}
+
+			// If the input is SQL, conversion is handled differently
+			if _, ok := cmdNode.Command.(*SQLCommand); ok {
+				if dsNode, ok := neededNode.(*DSNode); ok {
+					dsNode.isInputToSQLExpr = true
+				} else {
+					// Only allow data source nodes as SQL expression inputs for now
+					return fmt.Errorf("only data source queries may be inputs to a sql expression, %v is the input for %v", neededVar, cmdNode.RefID())
+				}
 			}
 
 			if neededNode.ID() == cmdNode.ID() {
@@ -340,6 +352,13 @@ func buildGraphEdges(dp *simple.DirectedGraph, registry map[string]Node) error {
 			if neededNode.NodeType() == TypeCMDNode {
 				if neededNode.(*CMDNode).CMDType == TypeClassicConditions {
 					return fmt.Errorf("classic conditions may not be the input for other expressions, but %v is the input for %v", neededVar, cmdNode.RefID())
+				}
+			}
+
+			if neededNode.NodeType() == TypeCMDNode {
+				if neededNode.(*CMDNode).CMDType == TypeSQL {
+					// Do not allow SQL expressions to be inputs for other expressions for now
+					return fmt.Errorf("sql expressions can not be the input for other expressions, but %v in the input for %v", neededVar, cmdNode.RefID())
 				}
 			}
 
@@ -370,37 +389,3 @@ func GetCommandsFromPipeline[T Command](pipeline DataPipeline) []T {
 	}
 	return results
 }
-
-func hasSqlExpression(dp DataPipeline) bool {
-	for _, node := range dp {
-		if node.NodeType() == TypeCMDNode {
-			cmdNode := node.(*CMDNode)
-			_, ok := cmdNode.Command.(*SQLCommand)
-			if ok {
-				return true
-			}
-		}
-	}
-	return false
-}
-
-// func graphHasSqlExpresssion(dp *simple.DirectedGraph) bool {
-// 	node := dp.Nodes()
-// 	for node.Next() {
-// 		if cmdNode, ok := node.Node().(*CMDNode); ok {
-// 			// res[dpNode.RefID()] = dpNode
-// 			_, ok := cmdNode.Command.(*SQLCommand)
-// 			if ok {
-// 				return true
-// 			}
-// 		}
-// 		// if node.NodeType() == TypeCMDNode {
-// 		// 	cmdNode := node.(*CMDNode)
-// 		// 	_, ok := cmdNode.Command.(*SQLCommand)
-// 		// 	if ok {
-// 		// 		return true
-// 		// 	}
-// 		// }
-// 	}
-// 	return false
-// }
