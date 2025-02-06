@@ -44,6 +44,7 @@ func (v *Validate) Validate(ctx context.Context, ps *plugins.Plugin) error {
 	if len(v.validateSteps) == 0 {
 		return nil
 	}
+
 	for _, validate := range v.validateSteps {
 		err := validate(ctx, ps)
 		if err != nil {
@@ -51,5 +52,6 @@ func (v *Validate) Validate(ctx context.Context, ps *plugins.Plugin) error {
 			return err
 		}
 	}
+	
 	return nil
 }
