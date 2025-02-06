@@ -62,6 +62,7 @@ import {
   transformVariableRefreshToEnumV1,
 } from 'app/features/dashboard-scene/serialization/transformToV1TypesUtils';
 import {
+  LEGACY_STRING_VALUE_KEY,
   transformCursorSynctoEnum,
   transformDataTopic,
   transformSortVariableToEnum,
@@ -504,8 +505,12 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
         let query = v.query || {};
 
         if (typeof query === 'string') {
-          console.error('Query variable query is a string. It needs to extend DataQuery.');
-          query = {};
+          console.warn(
+            'Query variable query is a string which is deprecated in the schema v2. It should extend DataQuery'
+          );
+          query = {
+            [LEGACY_STRING_VALUE_KEY]: query,
+          };
         }
 
         const qv: QueryVariableKind = {
@@ -527,7 +532,7 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
             query: {
               kind: v.datasource?.type || getDefaultDatasourceType(),
               spec: {
-                ...query,
+                ...v.query,
               },
             },
           },
@@ -708,7 +713,10 @@ function getVariablesV1(vars: DashboardV2Spec['variables']): VariableModel[] {
           ...commonProperties,
           current: v.spec.current,
           options: v.spec.options,
-          query: typeof v.spec.query === 'string' ? v.spec.query : v.spec.query.spec,
+          query:
+            LEGACY_STRING_VALUE_KEY in v.spec.query.spec
+              ? v.spec.query.spec[LEGACY_STRING_VALUE_KEY]
+              : v.spec.query.spec,
           datasource: v.spec.datasource,
           sort: transformSortVariableToEnumV1(v.spec.sort),
           refresh: transformVariableRefreshToEnumV1(v.spec.refresh),
