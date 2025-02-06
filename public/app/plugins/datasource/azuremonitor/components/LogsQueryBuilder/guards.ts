@@ -56,7 +56,7 @@ export const isDateTimeOperator = (
   return propertyType === QueryEditorPropertyType.DateTime && typeof operator?.value === 'string';
 };
 
-export const isStringArray = (value: any): value is string[] => {
+export const isStringArray = (value: unknown): value is string[] => {
   return value instanceof Array && value.every((item) => typeof item === 'string');
 };
 
