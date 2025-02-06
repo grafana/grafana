@@ -103,16 +103,15 @@ func (l *Loader) Load(ctx context.Context, src plugins.PluginSource) ([]*plugins
 	}
 	limit := make(chan struct{}, limitSize)
 	for _, bootstrappedPlugin := range bootstrappedPlugins {
-		bootstrappedPlugin := bootstrappedPlugin
 		limit <- struct{}{}
-		go func() {
-			err := l.validation.Validate(ctx, bootstrappedPlugin)
+		go func(p *plugins.Plugin) {
+			err := l.validation.Validate(ctx, p)
 			validateResults <- validateResult{
 				bootstrappedPlugin: bootstrappedPlugin,
 				err:                err,
 			}
 			<-limit
-		}()
+		}(bootstrappedPlugin)
 	}
 	for i := 0; i < len(bootstrappedPlugins); i++ {
 		r := <-validateResults
@@ -122,7 +121,7 @@ func (l *Loader) Load(ctx context.Context, src plugins.PluginSource) ([]*plugins
 		}
 		validatedPlugins = append(validatedPlugins, r.bootstrappedPlugin)
 	}
-	l.log.Debug("Validated", "class", src.PluginClass(ctx), "duration", time.Since(st))
+	l.log.Debug("Validated", "class", src.PluginClass(ctx), "duration", time.Since(st), "total", len(validatedPlugins))
 
 	st = time.Now()
 	initializedPlugins := []*plugins.Plugin{}
