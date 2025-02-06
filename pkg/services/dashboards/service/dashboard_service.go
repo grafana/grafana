@@ -1725,14 +1725,17 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 		request.IsDeleted = query.IsDeleted
 	}
 
-	if query.Limit > 0 {
-		request.Limit = query.Limit
+	if query.Limit < 1 {
+		query.Limit = 1000
 	}
 
-	if query.Page > 0 {
-		request.Page = query.Page
-		request.Offset = query.Page
+	if query.Page < 1 {
+		query.Page = 1
 	}
+
+	request.Limit = query.Limit
+	request.Page = query.Page
+	request.Offset = query.Page - 1 // bleve's offset is 0 indexed
 
 	namespace := dr.k8sclient.GetNamespace(query.OrgId)
 	var err error
