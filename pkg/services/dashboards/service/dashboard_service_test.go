@@ -1917,6 +1917,7 @@ func TestSearchDashboardsThroughK8sRaw(t *testing.T) {
 	query := &dashboards.FindPersistedDashboardsQuery{
 		OrgId: 1,
 	}
+	k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
 	k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resource.ResourceSearchResponse{
 		Results: &resource.ResourceTable{
 			Columns: []*resource.ResourceTableColumnDefinition{
