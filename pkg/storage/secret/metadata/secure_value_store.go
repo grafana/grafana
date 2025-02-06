@@ -63,20 +63,7 @@ func (s *secureValueStorage) Create(ctx context.Context, sv *secretv0alpha1.Secu
 		return nil, fmt.Errorf("to create row: %w", err)
 	}
 
-	err = s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		// TODO: validation not needed if store in keeper is successful
-		// // Validate before inserting that the chosen `keeper` exists.
-		// keeperRow := &keeperDB{Name: row.Keeper, Namespace: row.Namespace}
-
-		// keeperExists, err := sess.Table(keeperRow.TableName()).ForUpdate().Exist(keeperRow)
-		// if err != nil {
-		// 	return fmt.Errorf("check keeper existence: %w", err)
-		// }
-
-		// if !keeperExists {
-		// 	return contracts.ErrKeeperNotFound
-		// }
-
+	err = s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		if _, err := sess.Insert(row); err != nil {
 			return fmt.Errorf("insert row: %w", err)
 		}
@@ -125,8 +112,10 @@ func (s *secureValueStorage) Update(ctx context.Context, newSecureValue *secretv
 		return nil, fmt.Errorf("read securevalue: %w", err)
 	}
 
-	// This should come from the keeper.
+	// TODO: This should come from the keeper.
 	externalID := "TODO2"
+
+	// From this point on, we should not have a need to read value.
 	newSecureValue.Spec.Value = ""
 
 	newRow, err := toUpdateRow(currentRow, newSecureValue, authInfo.GetUID(), externalID)
@@ -134,19 +123,7 @@ func (s *secureValueStorage) Update(ctx context.Context, newSecureValue *secretv
 		return nil, fmt.Errorf("to update row: %w", err)
 	}
 
-	err = s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		// Validate before updating that the new `keeper` exists.
-		keeperRow := &keeperDB{Name: newRow.Keeper, Namespace: newRow.Namespace}
-
-		keeperExists, err := sess.Table(keeperRow.TableName()).ForUpdate().Exist(keeperRow)
-		if err != nil {
-			return fmt.Errorf("check keeper existence: %w", err)
-		}
-
-		if !keeperExists {
-			return contracts.ErrKeeperNotFound
-		}
-
+	err = s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		cond := &secureValueDB{Name: nn.Name, Namespace: nn.Namespace.String()}
 
 		if _, err := sess.Update(newRow, cond); err != nil {
