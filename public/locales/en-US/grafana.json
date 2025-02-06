@@ -819,7 +819,7 @@
         "header": {
           "hide-json-diff": "Hide JSON diff ",
           "show-json-diff": "Show JSON diff ",
-          "text": "Version {{version}} updated by <3></3> ({{ageString}}) {{message}}"
+          "text": "Version {{version}} updated by {{createdBy}} ({{ageString}}) {{message}}"
         }
       },
       "see-json-diff": "See JSON diff to see all changes"

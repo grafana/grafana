@@ -1,8 +1,8 @@
 import { identity } from 'lodash';
 import { useState } from 'react';
 
-import { dateTimeFormatTimeAgo, IconName } from '@grafana/data';
-import { Badge, BadgeColor, Box, Button, Divider, EmptyState, Icon, Stack, Text } from '@grafana/ui';
+import { dateTimeFormatTimeAgo } from '@grafana/data';
+import { Box, Button, Divider, EmptyState, Icon, Stack, Text } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 import { DiffGroup } from 'app/features/dashboard-scene/settings/version-history/DiffGroup';
 import { DiffViewer } from 'app/features/dashboard-scene/settings/version-history/DiffViewer';
@@ -38,36 +38,12 @@ type DiffViewProps<T extends DiffArgument> = {
   preprocessVersion?: (version: T) => DiffArgument;
 };
 
-const RenderCreatedBy = ({
-  user,
-  iconName,
-  badge,
-  badgeColor,
-}: {
-  user: string;
-  iconName?: IconName;
-  badge?: boolean;
-  badgeColor?: BadgeColor;
-}) => {
-  if (badge) {
-    return <Badge color={badgeColor || 'blue'} text={user} icon={iconName} />;
-  }
-  return (
-    <Text>
-      <span>
-        {iconName && <Icon name={iconName} />}
-        {user}
-      </span>
-    </Text>
-  );
-};
-
 const VersionChangeSummary = ({ info }: { info: RevisionModel }) => {
   const { created, createdBy, version, message = '' } = info;
   const ageString = dateTimeFormatTimeAgo(created);
   return (
     <Trans i18nKey="core.versionHistory.comparison.header.text">
-      Version {{ version }} updated by <RenderCreatedBy user={createdBy} /> ({{ ageString }}) {{ message }}
+      Version {{ version }} updated by {{ createdBy }} ({{ ageString }}) {{ message }}
     </Trans>
   );
 };
