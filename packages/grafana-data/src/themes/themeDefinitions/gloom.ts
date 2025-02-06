@@ -54,10 +54,10 @@ const gloomTheme: NewThemeOptions = {
     },
 
     action: {
-      hover: `rgba(${whiteBase}, 0.10)`,
-      selected: `rgba(${whiteBase}, 0.12)`,
+      hover: `rgba(${secondaryBase}, 0.10)`,
+      selected: `rgba(${secondaryBase}, 0.12)`,
       selectedBorder: brandMain,
-      focus: `rgba(${whiteBase}, 0.10)`,
+      focus: `rgba(${secondaryBase}, 0.10)`,
       hoverOpacity: 0.05,
       disabledText: disabledText,
       disabledBackground: `rgba(${whiteBase}, 0.04)`,
