@@ -64,12 +64,14 @@ func (r *syncer) Sync(ctx context.Context,
 		return nil, nil, fmt.Errorf("namespace mismatch")
 	}
 	job := &syncJob{
-		repository: repo,
-		options:    options,
-		progress:   progress,
-		parser:     parser,
-		lister:     r.lister,
-		logger:     logging.FromContext(ctx),
+		repository:       repo,
+		options:          options,
+		progress:         progress,
+		progressInterval: time.Second * 15, // how often we update the status
+		progressLast:     time.Now(),
+		parser:           parser,
+		lister:           r.lister,
+		logger:           logging.FromContext(ctx),
 		jobStatus: &provisioning.JobStatus{
 			State: provisioning.JobStateWorking,
 		},
@@ -105,16 +107,18 @@ func (r *syncer) Sync(ctx context.Context,
 
 // created once for each sync execution
 type syncJob struct {
-	repository repository.Repository
-	options    provisioning.SyncJobOptions
-	progress   func(provisioning.JobStatus) error
-	logger     logging.Logger
+	repository       repository.Repository
+	options          provisioning.SyncJobOptions
+	progress         func(provisioning.JobStatus) error
+	progressInterval time.Duration
+	progressLast     time.Time
+	logger           logging.Logger
 
-	parser     *resources.Parser
-	lister     resources.ResourceLister
-	folders    dynamic.ResourceInterface
-	dashboards dynamic.ResourceInterface
-	folderTree *resources.FolderTree
+	parser       *resources.Parser
+	lister       resources.ResourceLister
+	folders      dynamic.ResourceInterface
+	dashboards   dynamic.ResourceInterface
+	folderLookup *resources.FolderTree
 
 	jobStatus  *provisioning.JobStatus
 	syncStatus *provisioning.SyncStatus
@@ -185,7 +189,7 @@ func (r *syncJob) run(ctx context.Context) error {
 	}
 
 	// Load any existing folder information
-	r.folderTree = resources.NewFolderTreeFromResourceList(target)
+	r.folderLookup = resources.NewFolderTreeFromResourceList(target)
 
 	// Now apply the changes
 	return r.applyChanges(ctx, changes)
@@ -196,7 +200,6 @@ func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange
 	sort.Slice(changes, func(i, j int) bool {
 		return len(changes[i].Path) > len(changes[j].Path)
 	})
-	last := time.Now()
 
 	// Create folder structure first
 	for _, change := range changes {
@@ -205,12 +208,7 @@ func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange
 			r.jobStatus.State = provisioning.JobStateError
 			return nil
 		}
-
-		// incremental progress
-		if time.Since(last) > 15*time.Second {
-			r.progress(*r.jobStatus)
-			last = time.Now()
-		}
+		r.maybeNotify(ctx)
 
 		if change.Action == repository.FileActionDeleted {
 			if change.Existing == nil || change.Existing.Name == "" {
@@ -250,6 +248,16 @@ func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange
 }
 
 // Convert git changes into resource file changes
+func (r *syncJob) maybeNotify(ctx context.Context) {
+	if time.Since(r.progressLast) > r.progressInterval {
+		err := r.progress(*r.jobStatus)
+		if err != nil {
+			r.logger.Warn("unable to send progress", "err", err)
+		}
+	}
+}
+
+// Convert git changes into resource file changes
 func (r *syncJob) applyVersiondChanges(ctx context.Context, repo repository.VersionedRepository, previousRef, currentRef string) error {
 	diff, err := repo.CompareFiles(ctx, previousRef, currentRef)
 	if err != nil {
@@ -265,18 +273,12 @@ func (r *syncJob) applyVersiondChanges(ctx context.Context, repo repository.Vers
 		return nil
 	}
 
-	last := time.Now()
 	for _, change := range diff {
 		if len(r.jobStatus.Errors) > 20 {
 			r.jobStatus.Errors = append(r.jobStatus.Errors, "too many errors to continue")
 			return nil
 		}
-
-		// UI feedback
-		if time.Since(last) > 15*time.Second {
-			r.progress(*r.jobStatus)
-			last = time.Now()
-		}
+		r.maybeNotify(ctx)
 
 		switch change.Action {
 		case repository.FileActionCreated, repository.FileActionUpdated:
@@ -399,12 +401,12 @@ func (r *syncJob) ensureFolderPathExists(ctx context.Context, filePath string) (
 		return parent, nil
 	}
 
-	if r.folderTree == nil {
-		r.folderTree = resources.NewEmptyFolderTree()
+	if r.folderLookup == nil {
+		r.folderLookup = resources.NewEmptyFolderTree()
 	}
 
 	f := resources.ParseFolder(dir, cfg.Name)
-	if r.folderTree.In(f.ID) {
+	if r.folderLookup.In(f.ID) {
 		return f.ID, nil
 	}
 
@@ -421,7 +423,7 @@ func (r *syncJob) ensureFolderPathExists(ctx context.Context, filePath string) (
 		}
 
 		f := resources.ParseFolder(traverse, cfg.GetName())
-		if r.folderTree.In(f.ID) {
+		if r.folderLookup.In(f.ID) {
 			parent = f.ID
 			continue
 		}
@@ -429,7 +431,7 @@ func (r *syncJob) ensureFolderPathExists(ctx context.Context, filePath string) (
 		if err := r.ensureFolderExists(ctx, f, parent); err != nil {
 			return "", fmt.Errorf("ensure folder exists: %w", err)
 		}
-		r.folderTree.Add(f, parent)
+		r.folderLookup.Add(f, parent)
 		parent = f.ID
 	}
 	return f.ID, err
