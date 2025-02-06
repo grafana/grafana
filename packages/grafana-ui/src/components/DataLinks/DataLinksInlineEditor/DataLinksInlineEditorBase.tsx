@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import { Action, DataFrame, DataLink, GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../../themes';
-import { Trans } from '../../../utils/i18n';
+import { t } from '../../../utils/i18n';
 import { Button } from '../../Button';
 import { Modal } from '../../Modal/Modal';
 
@@ -113,10 +113,16 @@ export function DataLinksInlineEditorBase<T extends DataLink | Action>({
     let text = '';
     switch (type) {
       case 'link':
-        text = action === 'edit' ? 'Edit link' : 'Add link';
+        text =
+          action === 'edit'
+            ? t('grafana-ui.data-links-inline-editor.edit-link', 'Edit link')
+            : t('grafana-ui.data-links-inline-editor.add-link', 'Add link');
         break;
       case 'action':
-        text = action === 'edit' ? 'Edit action' : 'Add action';
+        text =
+          action === 'edit'
+            ? t('grafana-ui.actions-editor.inline.edit-action', 'Edit action')
+            : t('grafana-ui.actions-editor.inline.add-action', 'Add action');
         break;
     }
 
@@ -164,15 +170,7 @@ export function DataLinksInlineEditorBase<T extends DataLink | Action>({
       )}
 
       <Button size="sm" icon="plus" onClick={onDataLinkAdd} variant="secondary" className={styles.button}>
-        <Trans
-          i18nKey={
-            type === 'link'
-              ? 'grafana-ui.data-links-inline-editor.add-link'
-              : 'grafana-ui.actions-editor.inline.add-button'
-          }
-        >
-          {getItemText('add')}
-        </Trans>
+        {getItemText('add')}
       </Button>
     </div>
   );
