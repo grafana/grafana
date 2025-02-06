@@ -1604,7 +1604,9 @@
       "add-link": "Add link",
       "one-click": "One click",
       "one-click-enabled": "One click enabled",
-      "one-click-link": "One-click link"
+      "one-click-link": "One-click link",
+      "title-not-provided": "Title not provided",
+      "url-not-provided": "Data link url not provided"
     },
     "data-source-http-settings": {
       "access-help": "Help <1></1>",

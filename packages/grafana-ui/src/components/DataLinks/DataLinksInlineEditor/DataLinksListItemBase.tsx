@@ -46,8 +46,11 @@ export function DataLinksListItemBase<T extends DataLink | Action>({
           key={index}
         >
           <div className={styles.linkDetails}>
-            <div className={cx(styles.url, !hasUrl && styles.notConfigured)}>
-              {hasTitle ? title : 'Title not provided'}
+            <div className={cx(styles.url, !hasTitle && styles.notConfigured)}>
+              {hasTitle ? title : t('grafana-ui.data-links-inline-editor.title-not-provided', 'Title not provided')}
+            </div>
+            <div className={cx(styles.url, !hasUrl && styles.notConfigured)} title={url}>
+              {hasUrl ? url : t('grafana-ui.data-links-inline-editor.url-not-provided', 'Data link url not provided')}
             </div>
           </div>
           <div className={styles.icons}>
