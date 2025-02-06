@@ -253,9 +253,9 @@ export function AlertVersionHistory({ ruleUid }: AlertVersionHistoryProps) {
           title={t('alerting.alertVersionHistory.comparing-versions', 'Comparing versions')}
         >
           <VersionHistoryComparison
-            oldInfo={parseVersionInfo(oldVersion)}
+            oldSummary={parseVersionInfo(oldVersion)}
             oldVersion={oldVersion}
-            newInfo={parseVersionInfo(newVersion)}
+            newSummary={parseVersionInfo(newVersion)}
             newVersion={newVersion}
             preprocessVersion={preprocessRuleForDiffDisplay}
           />

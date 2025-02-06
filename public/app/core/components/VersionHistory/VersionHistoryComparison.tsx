@@ -22,9 +22,13 @@ export interface RevisionModel {
 type DiffArgument = Parameters<typeof jsonDiff>[0];
 
 type DiffViewProps<T extends DiffArgument> = {
-  newInfo: RevisionModel;
-  oldInfo: RevisionModel;
+  /** Information to help summarise the change in the newer version */
+  newSummary: RevisionModel;
+  /** Information to help summarise the change in the older version */
+  oldSummary: RevisionModel;
+  /** The actual data model of the older version */
   oldVersion: T;
+  /** The actual data model of the newer version */
   newVersion: T;
   /**
    * Helper method to tweak the calculated diff for the human readable output.
@@ -69,8 +73,8 @@ const VersionChangeSummary = ({ info }: { info: RevisionModel }) => {
 };
 
 export const VersionHistoryComparison = <T extends DiffArgument>({
-  oldInfo,
-  newInfo,
+  oldSummary,
+  newSummary,
   oldVersion,
   newVersion,
   preprocessVersion = identity,
@@ -83,11 +87,9 @@ export const VersionHistoryComparison = <T extends DiffArgument>({
     <Stack gap={2} direction="column">
       <Box>
         <Text variant="h5" element="h4">
-          <VersionChangeSummary info={oldInfo} />
-
+          <VersionChangeSummary info={oldSummary} />
           <Icon name="arrow-right" />
-
-          <VersionChangeSummary info={newInfo} />
+          <VersionChangeSummary info={newSummary} />
         </Text>
       </Box>
       <Box>
