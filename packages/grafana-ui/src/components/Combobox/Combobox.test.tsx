@@ -297,7 +297,7 @@ describe('Combobox', () => {
 
       await act(async () => jest.advanceTimersByTime(200));
 
-      expect(asyncOptions).toHaveBeenCalled();
+      expect(asyncOptions).toHaveBeenCalledTimes(1);
     });
 
     it('should allow async options and select value', async () => {
@@ -312,6 +312,12 @@ describe('Combobox', () => {
 
       expect(onChangeHandler).toHaveBeenCalledWith(simpleAsyncOptions[2]);
       expect(screen.getByDisplayValue('Option 3')).toBeInTheDocument();
+
+      // Should call async once when reopening
+
+      await user.click(input);
+      await act(async () => jest.advanceTimersByTime(200));
+      expect(asyncOptions).toHaveBeenCalledTimes(1);
     });
 
     it('should ignore late responses', async () => {

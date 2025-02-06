@@ -279,18 +279,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
       if (isAsync && isOpen && inputValue === '') {
         setAsyncLoading(true);
         // TODO: dedupe this loading logic with debounceAsync
-        loadOptions(inputValue)
-          .then((opts) => {
-            setItems(opts, inputValue);
-            setAsyncLoading(false);
-            setAsyncError(false);
-          })
-          .catch((err) => {
-            if (!(err instanceof StaleResultError)) {
-              setAsyncError(true);
-              setAsyncLoading(false);
-            }
-          });
+        debounceAsync(inputValue);
       }
     },
 
