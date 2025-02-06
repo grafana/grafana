@@ -37,7 +37,7 @@ func New(cfg app.Config) (app.App, error) {
 	// Initialize checks
 	checkMap := map[string]checks.Check{}
 	for _, c := range checkRegistry.Checks() {
-		checkMap[c.Type()] = c
+		checkMap[c.ID()] = c
 	}
 
 	simpleConfig := simple.AppConfig{

@@ -115,10 +115,42 @@ func (m *mockClient) PatchInto(ctx context.Context, id resource.Identifier, req 
 }
 
 type mockCheck struct {
-	checks.Check
 	err error
 }
 
-func (m *mockCheck) Run(ctx context.Context, spec *advisorv0alpha1.CheckSpec) (*advisorv0alpha1.CheckV0alpha1StatusReport, error) {
-	return &advisorv0alpha1.CheckV0alpha1StatusReport{}, m.err
+func (m *mockCheck) ID() string {
+	return "mock"
+}
+
+func (m *mockCheck) Items(ctx context.Context) ([]any, error) {
+	return []any{}, nil
+}
+
+func (m *mockCheck) Steps() []checks.Step {
+	return []checks.Step{
+		&mockStep{err: m.err},
+	}
+}
+
+type mockStep struct {
+	err error
+}
+
+func (m *mockStep) Run(ctx context.Context, obj *advisorv0alpha1.CheckSpec, items []any) ([]advisorv0alpha1.CheckReportError, error) {
+	if m.err != nil {
+		return nil, m.err
+	}
+	return nil, nil
+}
+
+func (m *mockStep) Title() string {
+	return "mock"
+}
+
+func (m *mockStep) Description() string {
+	return "mock"
+}
+
+func (m *mockStep) ID() string {
+	return "mock"
 }
