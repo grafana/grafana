@@ -44,6 +44,8 @@ func TestRun(t *testing.T) {
 					Severity: advisor.CheckReportErrorSeverityHigh,
 					Reason:   "Plugin deprecated: plugin1",
 					Action:   "Check the <a href='https://grafana.com/legal/plugin-deprecation/#a-plugin-i-use-is-deprecated-what-should-i-do' target=_blank>documentation</a> for recommended steps.",
+					StepID:   "deprecation",
+					ItemID:   "plugin1",
 				},
 			},
 		},
@@ -63,6 +65,8 @@ func TestRun(t *testing.T) {
 					Severity: advisor.CheckReportErrorSeverityLow,
 					Reason:   "New version available for plugin2",
 					Action:   "Go to the <a href='/plugins/plugin2?page=version-history'>plugin admin page</a> and upgrade to the latest version.",
+					StepID:   "update",
+					ItemID:   "plugin2",
 				},
 			},
 		},
@@ -82,6 +86,8 @@ func TestRun(t *testing.T) {
 					Severity: advisor.CheckReportErrorSeverityLow,
 					Reason:   "New version available for plugin2",
 					Action:   "Go to the <a href='/plugins/plugin2?page=version-history'>plugin admin page</a> and upgrade to the latest version.",
+					StepID:   "update",
+					ItemID:   "plugin2",
 				},
 			},
 		},
@@ -126,10 +132,17 @@ func TestRun(t *testing.T) {
 			managedPlugins := &mockManagedPlugins{managed: tt.pluginManaged}
 			check := New(pluginStore, pluginRepo, pluginPreinstall, managedPlugins)
 
-			report, err := check.Run(context.Background(), nil)
+			items, err := check.Items(context.Background())
 			assert.NoError(t, err)
-			assert.Equal(t, int64(len(tt.plugins)), report.Count)
-			assert.Equal(t, tt.expectedErrors, report.Errors)
+			errs := []advisor.CheckReportError{}
+			for _, step := range check.Steps() {
+				stepErrs, err := step.Run(context.Background(), &advisor.CheckSpec{}, items)
+				assert.NoError(t, err)
+				errs = append(errs, stepErrs...)
+			}
+			assert.NoError(t, err)
+			assert.Equal(t, len(tt.plugins), len(items))
+			assert.Equal(t, tt.expectedErrors, errs)
 		})
 	}
 }

@@ -3,7 +3,7 @@
   "license": "AGPL-3.0-only",
   "private": true,
   "name": "grafana",
-  "version": "11.5.0-pre",
+  "version": "11.6.0-pre",
   "repository": "github:grafana/grafana",
   "scripts": {
     "build": "NODE_ENV=production nx exec --verbose -- webpack --config scripts/webpack/webpack.prod.js --progress",
@@ -11,7 +11,8 @@
     "build:stats": "NODE_ENV=production webpack --progress --config scripts/webpack/webpack.stats.js",
     "dev": "NODE_ENV=dev nx exec -- webpack --config scripts/webpack/webpack.dev.js",
     "e2e": "./e2e/start-and-run-suite",
-    "e2e:scenes": "./e2e/start-and-run-suite scenes",
+    "e2e:old-arch": "./e2e/start-and-run-suite old-arch",
+    "e2e:schema-v2": "./e2e/start-and-run-suite dashboards-schema-v2",
     "e2e:debug": "./e2e/start-and-run-suite debug",
     "e2e:dev": "./e2e/start-and-run-suite dev",
     "e2e:benchmark:live": "./e2e/start-and-run-suite benchmark live",
@@ -62,7 +63,7 @@
     "plugin:build:commit": "nx run-many -t build:commit --projects='tag:scope:plugin'",
     "plugin:build:dev": "nx run-many -t dev --projects='tag:scope:plugin' --maxParallel=100",
     "generate-icons": "nx run grafana-icons:generate",
-    "process-specs": "npx tsx scripts/process-specs.ts",
+    "process-specs": "node --experimental-strip-types scripts/process-specs.ts",
     "generate-apis": "yarn process-specs && rtk-query-codegen-openapi ./scripts/generate-rtk-apis.ts"
   },
   "grafana": {
@@ -274,8 +275,8 @@
     "@grafana/prometheus": "workspace:*",
     "@grafana/runtime": "workspace:*",
     "@grafana/saga-icons": "workspace:*",
-    "@grafana/scenes": "5.41.1",
-    "@grafana/scenes-react": "5.41.1",
+    "@grafana/scenes": "5.41.2",
+    "@grafana/scenes-react": "5.41.2",
     "@grafana/schema": "workspace:*",
     "@grafana/sql": "workspace:*",
     "@grafana/ui": "workspace:*",
