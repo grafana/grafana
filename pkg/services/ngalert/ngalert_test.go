@@ -292,7 +292,7 @@ func TestInitStatePersister(t *testing.T) {
 	}
 }
 
-func TestIntegrationAlertmanager_ExtraDedupStage(t *testing.T) {
+func TestAlertmanagerIntegration_ExtraDedupStage(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}

@@ -277,7 +277,7 @@ test-go-integration-grafana-alertmanager: ## Run integration tests for the grafa
 	@export GRAFANA_VERSION=11.5.0-81938; \
 	$(GO) run tools/setup_grafana_alertmanager_integration_test_images.go; \
 	$(GO) clean -testcache; \
-	$(GO) test $(GO_RACE_FLAG) -count=1 -run "^TestIntegrationAlertmanager" -covermode=atomic -timeout=10m ./pkg/services/ngalert/...
+	$(GO) test $(GO_RACE_FLAG) -count=1 -run "^TestAlertmanagerIntegration" -covermode=atomic -timeout=10m ./pkg/services/ngalert/...
 
 .PHONY: test-go-integration-postgres
 test-go-integration-postgres: devenv-postgres ## Run integration tests for postgres backend with flags.
