@@ -827,44 +827,34 @@ func (r *githubRepository) deleteWebhook(ctx context.Context) error {
 	return nil
 }
 
-func (r *githubRepository) OnCreate(ctx context.Context) (*provisioning.RepositoryStatus, error) {
+func (r *githubRepository) OnCreate(ctx context.Context) (*provisioning.WebhookStatus, error) {
 	ctx, _ = r.logger(ctx, "")
 	hook, err := r.createWebhook(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	status := r.config.Status.DeepCopy()
-	status.Webhook = &provisioning.WebhookStatus{
+	return &provisioning.WebhookStatus{
 		ID:               hook.ID,
 		URL:              hook.URL,
 		Secret:           hook.Secret,
 		SubscribedEvents: hook.Events,
-	}
-
-	return status, nil
+	}, nil
 }
 
-func (r *githubRepository) OnUpdate(ctx context.Context) (*provisioning.RepositoryStatus, error) {
+func (r *githubRepository) OnUpdate(ctx context.Context) (*provisioning.WebhookStatus, error) {
 	ctx, _ = r.logger(ctx, "")
-	hook, updated, err := r.updateWebhook(ctx)
+	hook, _, err := r.updateWebhook(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	if !updated {
-		return nil, nil
-	}
-
-	status := r.config.Status.DeepCopy()
-	status.Webhook = &provisioning.WebhookStatus{
+	return &provisioning.WebhookStatus{
 		ID:               hook.ID,
 		URL:              hook.URL,
 		Secret:           hook.Secret,
 		SubscribedEvents: hook.Events,
-	}
-
-	return status, nil
+	}, nil
 }
 
 func (r *githubRepository) OnDelete(ctx context.Context) error {

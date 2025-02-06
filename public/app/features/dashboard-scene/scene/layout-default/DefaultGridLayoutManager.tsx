@@ -11,6 +11,7 @@ import {
   SceneGridItemLike,
 } from '@grafana/scenes';
 import { GRID_COLUMN_COUNT } from 'app/core/constants';
+import { t } from 'app/core/internationalization';
 
 import { isClonedKey, joinCloneKeys } from '../../utils/clone';
 import {
@@ -22,7 +23,7 @@ import {
   getGridItemKeyForPanelId,
   getDashboardSceneFor,
 } from '../../utils/utils';
-import { DashboardLayoutManager, LayoutRegistryItem } from '../types';
+import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 
 import { DashboardGridItem } from './DashboardGridItem';
 import { RowRepeaterBehavior } from './RowRepeaterBehavior';
@@ -39,7 +40,20 @@ export class DefaultGridLayoutManager
   extends SceneObjectBase<DefaultGridLayoutManagerState>
   implements DashboardLayoutManager
 {
-  public isDashboardLayoutManager: true = true;
+  public readonly isDashboardLayoutManager = true;
+
+  public static readonly descriptor = {
+    get name() {
+      return t('dashboard.default-layout.name', 'Default grid');
+    },
+    get description() {
+      return t('dashboard.default-layout.description', 'The default grid layout');
+    },
+    id: 'default-grid',
+    createFromLayout: DefaultGridLayoutManager.createFromLayout,
+  };
+
+  public readonly descriptor = DefaultGridLayoutManager.descriptor;
 
   public editModeChanged(isEditing: boolean): void {
     const updateResizeAndDragging = () => {
@@ -328,10 +342,6 @@ export class DefaultGridLayoutManager
     });
   }
 
-  public getDescriptor(): LayoutRegistryItem {
-    return DefaultGridLayoutManager.getDescriptor();
-  }
-
   public cloneLayout(ancestorKey: string, isSource: boolean): DashboardLayoutManager {
     return this.clone({
       grid: this.state.grid.clone({
@@ -400,15 +410,6 @@ export class DefaultGridLayoutManager
         ).children,
       }),
     });
-  }
-
-  public static getDescriptor(): LayoutRegistryItem {
-    return {
-      name: 'Default grid',
-      description: 'The default grid layout',
-      id: 'default-grid',
-      createFromLayout: DefaultGridLayoutManager.createFromLayout,
-    };
   }
 
   /**

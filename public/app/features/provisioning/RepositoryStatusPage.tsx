@@ -5,9 +5,11 @@ import { useParams } from 'react-router-dom-v5-compat';
 import { SelectableValue, urlUtil } from '@grafana/data';
 import {
   Alert,
+  Button,
   Card,
   CellProps,
   Column,
+  ConfirmModal,
   EmptyState,
   FilterInput,
   InteractiveTable,
@@ -26,6 +28,7 @@ import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
 import { isNotFoundError } from '../alerting/unified/api/util';
 
+import { ConfigForm } from './ConfigForm';
 import { ExportToRepository } from './ExportToRepository';
 import { StatusBadge } from './StatusBadge';
 import {
@@ -35,6 +38,7 @@ import {
   ResourceListItem,
   useGetRepositoryResourcesQuery,
   useListRepositoryQuery,
+  useDeleteRepositoryFilesWithPathMutation,
 } from './api';
 import { FileDetails } from './api/types';
 import { PROVISIONING_URL } from './constants';
@@ -44,6 +48,7 @@ enum TabSelection {
   Files = 'files',
   Jobs = 'jobs',
   Export = 'export',
+  Config = 'config',
   Health = 'health',
 }
 
@@ -52,6 +57,7 @@ const tabInfo: SelectableValue<TabSelection> = [
   { value: TabSelection.Files, label: 'Files', title: 'The raw file list from the repository' },
   { value: TabSelection.Jobs, label: 'Recent events' },
   { value: TabSelection.Export, label: 'Export' },
+  { value: TabSelection.Config, label: 'Configuration' },
   { value: TabSelection.Health, label: 'Repository health' },
 ];
 
@@ -102,6 +108,11 @@ export default function RepositoryStatusPage() {
                   {tab === TabSelection.Jobs && <JobsView repo={data} />}
                   {tab === TabSelection.Export && <ExportToRepository repo={data} />}
                   {tab === TabSelection.Health && <RepositoryHealth repo={data} />}
+                  {tab === TabSelection.Config && (
+                    <div style={{ marginTop: '30px', marginLeft: '16px' }}>
+                      <ConfigForm data={data} />
+                    </div>
+                  )}
                 </TabContent>
               </>
             ) : (
@@ -122,7 +133,10 @@ type FileCell<T extends keyof FileDetails = keyof FileDetails> = CellProps<FileD
 function FilesView({ repo }: RepoProps) {
   const name = repo.metadata?.name ?? '';
   const query = useGetRepositoryFilesQuery({ name });
+  const [deleteFile, deleteFileStatus] = useDeleteRepositoryFilesWithPathMutation();
+
   const [searchQuery, setSearchQuery] = useState('');
+  const [pathToDelete, setPathToDelete] = useState<string>();
   const data = [...(query.data?.items ?? [])].filter((file) =>
     file.path.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -162,6 +176,9 @@ function FilesView({ repo }: RepoProps) {
                 <LinkButton href={`${PROVISIONING_URL}/${name}/file/${path}`}>View</LinkButton>
               )}
               <LinkButton href={`${PROVISIONING_URL}/${name}/history/${path}`}>History</LinkButton>
+              <Button variant="destructive" onClick={() => setPathToDelete(path)}>
+                Delete
+              </Button>
             </Stack>
           );
         },
@@ -180,6 +197,22 @@ function FilesView({ repo }: RepoProps) {
 
   return (
     <Stack grow={1} direction={'column'} gap={2}>
+      <ConfirmModal
+        isOpen={Boolean(pathToDelete?.length) || deleteFileStatus.isLoading}
+        title="Delete file in repository?"
+        body={deleteFileStatus.isLoading ? 'Deleting file...' : pathToDelete}
+        confirmText="Delete"
+        icon={deleteFileStatus.isLoading ? `spinner` : `exclamation-triangle`}
+        onConfirm={() => {
+          deleteFile({
+            name: name,
+            path: pathToDelete!,
+            message: `Deleted from repo test UI`,
+          });
+          setPathToDelete('');
+        }}
+        onDismiss={() => setPathToDelete('')}
+      />
       <Stack gap={2}>
         <FilterInput placeholder="Search" autoFocus={true} value={searchQuery} onChange={setSearchQuery} />
       </Stack>
@@ -211,6 +244,9 @@ function ResourcesView({ repo }: RepoProps) {
           if (resource === 'dashboards') {
             return <a href={`/d/${name}`}>{title}</a>;
           }
+          if (resource === 'folders') {
+            return <a href={`/dashboards/f/${name}`}>{title}</a>;
+          }
           return <span>{title}</span>;
         },
       },
@@ -239,6 +275,13 @@ function ResourcesView({ repo }: RepoProps) {
         id: 'folder',
         header: 'Folder',
         sortType: 'string',
+        cell: ({ row: { original } }: ResourceCell<'title'>) => {
+          const { folder } = original;
+          if (folder?.length) {
+            return <a href={`/dashboards/f/${folder}`}>{folder}</a>;
+          }
+          return <span></span>;
+        },
       },
     ],
     []

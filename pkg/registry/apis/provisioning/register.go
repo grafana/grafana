@@ -2,7 +2,6 @@ package provisioning
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -48,7 +47,14 @@ import (
 
 const repoControllerWorkers = 1
 
-var _ builder.APIGroupBuilder = (*APIBuilder)(nil)
+var (
+	_ builder.APIGroupBuilder               = (*APIBuilder)(nil)
+	_ builder.APIGroupMutation              = (*APIBuilder)(nil)
+	_ builder.APIGroupValidation            = (*APIBuilder)(nil)
+	_ builder.APIGroupRouteProvider         = (*APIBuilder)(nil)
+	_ builder.APIGroupPostStartHookProvider = (*APIBuilder)(nil)
+	_ builder.OpenAPIPostProcessor          = (*APIBuilder)(nil)
+)
 
 type APIBuilder struct {
 	urlProvider      func(namespace string) string
@@ -330,6 +336,10 @@ func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admis
 		}
 	}
 
+	if r.Spec.Sync.IntervalSeconds == 0 {
+		r.Spec.Sync.IntervalSeconds = 60
+	}
+
 	if r.Spec.Type == provisioning.GitHubRepositoryType {
 		if r.Spec.GitHub == nil {
 			return fmt.Errorf("github configuration is required")
@@ -424,7 +434,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			}
 			sharedInformerFactory := informers.NewSharedInformerFactory(
 				c,
-				15*time.Minute, // Health check interval
+				ResyncInterval, // Health and reconciliation interval check interval
 			)
 
 			repoInformer := sharedInformerFactory.Provisioning().V0alpha1().Repositories()
@@ -708,19 +718,11 @@ spec:
 		}
 	}
 	compBase := "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1."
-	schema := oas.Components.Schemas[compBase+"Settings"].Properties["repository"]
-	schema.AdditionalProperties.Schema = &spec.Schema{
-		SchemaProps: spec.SchemaProps{
-			Ref: spec.MustCreateRef("#/components/schemas/" + compBase + "RepositoryView"),
-		},
-	}
-	oas.Components.Schemas[compBase+"Settings"].Properties["repository"] = schema
-
-	schema = oas.Components.Schemas[compBase+"ResourceStats"].Properties["items"]
+	schema := oas.Components.Schemas[compBase+"ResourceStats"].Properties["items"]
 	schema.Items = &spec.SchemaOrArray{
 		Schema: &spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				AllOf: []spec.Schema{ // shows up for swagger + RTK :shrug:
+				AllOf: []spec.Schema{
 					{
 						SchemaProps: spec.SchemaProps{
 							Ref: spec.MustCreateRef("#/components/schemas/" + compBase + "ResourceCount"),
@@ -732,14 +734,21 @@ spec:
 	}
 	oas.Components.Schemas[compBase+"ResourceStats"].Properties["items"] = schema
 
-	jj, _ := json.MarshalIndent(oas.Components.Schemas[compBase+"ResourceStats"], "", "  ")
-	fmt.Printf(">> %s\n", string(jj))
-
-	// "allOf": [
-	// 	{
-	// 		"$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ResourceCount"
-	// 	}
-	// ]
+	schema = oas.Components.Schemas[compBase+"RepositoryViewList"].Properties["items"]
+	schema.Items = &spec.SchemaOrArray{
+		Schema: &spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				AllOf: []spec.Schema{
+					{
+						SchemaProps: spec.SchemaProps{
+							Ref: spec.MustCreateRef("#/components/schemas/" + compBase + "RepositoryView"),
+						},
+					},
+				},
+			},
+		},
+	}
+	oas.Components.Schemas[compBase+"RepositoryViewList"].Properties["items"] = schema
 
 	return oas, nil
 }

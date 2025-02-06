@@ -7,7 +7,7 @@ import { Alert, Button, Field, Input, RadioButtonGroup, Stack, TextArea, TextLin
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { AnnoKeyRepoName } from 'app/features/apiserver/types';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
-import { Repository } from 'app/features/provisioning/api';
+import { RepositoryView } from 'app/features/provisioning/api';
 import { useCreateOrUpdateRepositoryFile, usePullRequestParam } from 'app/features/provisioning/hooks';
 import { WorkflowOption } from 'app/features/provisioning/types';
 import { createPRLink, validateBranchName } from 'app/features/provisioning/utils/git';
@@ -135,9 +135,9 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Prop
                 render={({ field: { ref, value, onChange, ...field } }) => {
                   return (
                     <FolderPicker
-                      onChange={(uid?: string, title?: string, repository?: Repository) => {
+                      onChange={(uid?: string, title?: string, repository?: RepositoryView) => {
                         onChange({ uid, title });
-                        const name = repository?.metadata?.name;
+                        const name = repository?.name;
                         if (name) {
                           setValue('repo', name);
                         }

@@ -2479,7 +2479,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.Settings"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.RepositoryViewList"
                 }
               }
             }
@@ -3409,12 +3409,18 @@
       "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.RepositoryView": {
         "type": "object",
         "required": [
+          "name",
           "title",
           "readOnly",
           "type",
           "target"
         ],
         "properties": {
+          "name": {
+            "description": "The k8s name for this repository",
+            "type": "string",
+            "default": ""
+          },
           "readOnly": {
             "description": "Edit options within the repository",
             "type": "boolean",
@@ -3443,6 +3449,34 @@
               "local",
               "s3"
             ]
+          }
+        }
+      },
+      "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.RepositoryViewList": {
+        "description": "Summary shows a view of the configuration that is sanitized and is OK for logged in users to see",
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.RepositoryView"
+                }
+              ]
+            },
+            "x-kubernetes-map-type": "atomic"
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
           }
         }
       },
@@ -3754,35 +3788,6 @@
           },
           "region": {
             "type": "string"
-          }
-        }
-      },
-      "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.Settings": {
-        "description": "Summary shows a view of the configuration that is sanitized and is OK for logged in users to see",
-        "type": "object",
-        "required": [
-          "repository"
-        ],
-        "properties": {
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-            "type": "string"
-          },
-          "instance": {
-            "description": "When a repository is configured to save everything in instance",
-            "type": "string"
-          },
-          "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "type": "string"
-          },
-          "repository": {
-            "description": "The basic repository settings",
-            "type": "object",
-            "additionalProperties": {
-              "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.RepositoryView"
-            },
-            "x-kubernetes-map-type": "atomic"
           }
         }
       },

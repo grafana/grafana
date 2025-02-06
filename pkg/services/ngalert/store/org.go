@@ -7,10 +7,10 @@ import (
 )
 
 type OrgStore interface {
-	GetOrgs(ctx context.Context) ([]int64, error)
+	FetchOrgIds(ctx context.Context) ([]int64, error)
 }
 
-func (st DBstore) GetOrgs(ctx context.Context) ([]int64, error) {
+func (st DBstore) FetchOrgIds(ctx context.Context) ([]int64, error) {
 	orgs := make([]int64, 0)
 	err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
 		q := "SELECT id FROM org"

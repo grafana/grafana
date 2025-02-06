@@ -2,7 +2,7 @@ import { Action } from 'redux';
 
 import { WithAccessControlMetadata } from '@grafana/data';
 
-import { Repository } from '../provisioning/api';
+import { RepositoryView } from '../provisioning/api';
 
 import { QueryResponse } from './service/types';
 
@@ -82,7 +82,7 @@ export interface DashboardViewItem {
   // For enterprise sort options
   sortMeta?: number | string; // value sorted by
   sortMetaName?: string; // name of the value being sorted e.g. 'Views'
-  repository?: Repository;
+  repository?: RepositoryView;
 }
 
 export interface SearchAction extends Action {

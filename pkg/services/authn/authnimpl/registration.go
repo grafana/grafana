@@ -115,13 +115,17 @@ func ProvideRegistration(
 		authnSvc.RegisterClient(clients.ProvideJWT(jwtService, cfg))
 	}
 
-	if cfg.ExtJWTAuth.Enabled && features.IsEnabledGlobally(featuremgmt.FlagAuthAPIAccessTokenAuth) {
+	if cfg.ExtJWTAuth.Enabled {
 		authnSvc.RegisterClient(clients.ProvideExtendedJWT(cfg))
 	}
 
 	for name := range socialService.GetOAuthProviders() {
 		clientName := authn.ClientWithPrefix(name)
 		authnSvc.RegisterClient(clients.ProvideOAuth(clientName, cfg, oauthTokenService, socialService, settingsProviderService, features))
+	}
+
+	if features.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
+		authnSvc.RegisterClient(clients.ProvideProvisioning())
 	}
 
 	// FIXME (jguer): move to User package
