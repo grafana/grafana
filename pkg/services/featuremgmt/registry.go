@@ -1783,6 +1783,13 @@ var (
 			HideFromDocs:      true,
 			RequiresRestart:   true,
 		},
+		{
+			Name:         "newLogsPanel",
+			Description:  "Enables the new logs panel in Explore",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityLogsSquad,
+		},
 	}
 )
 

@@ -7,6 +7,9 @@ export enum TeamPermissionLevel {
 
 export { OrgRole as OrgRole };
 
+export type PermissionLevel = 'view' | 'edit' | 'admin';
+
+/** @deprecated Use PermissionLevel instead */
 export enum PermissionLevelString {
   View = 'View',
   Edit = 'Edit',
