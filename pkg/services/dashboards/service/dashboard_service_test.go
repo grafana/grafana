@@ -1361,6 +1361,7 @@ func TestSearchDashboards(t *testing.T) {
 				"tag2",
 			},
 			FolderTitle: "testing-folder-1",
+			FolderUID:   "f1",
 		},
 		{
 			UID:         "uid2",
@@ -1371,6 +1372,7 @@ func TestSearchDashboards(t *testing.T) {
 			URL:         "/d/uid2/dashboard-2",
 			Tags:        []string{},
 			FolderTitle: "testing-folder-1",
+			FolderUID:   "f1",
 		},
 	}
 	query := dashboards.FindPersistedDashboardsQuery{
