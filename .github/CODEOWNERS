@@ -241,6 +241,7 @@
 /devenv/dev-dashboards/extensions/ @grafana/plugins-platform-frontend
 
 /devenv/docker/blocks/alert_webhook_listener/ @grafana/alerting-backend
+/devenv/docker/blocks/stateful_webhook/ @grafana/alerting-backend
 /devenv/docker/blocks/caddy_tls/ @grafana/alerting-backend
 /devenv/docker/blocks/clickhouse/ @grafana/partner-datasources
 /devenv/docker/blocks/collectd/ @grafana/observability-metrics
