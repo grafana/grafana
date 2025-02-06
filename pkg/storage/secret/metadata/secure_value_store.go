@@ -49,7 +49,7 @@ func (s *secureValueStorage) Create(ctx context.Context, sv *secretv0alpha1.Secu
 		return nil, fmt.Errorf("missing auth info in context")
 	}
 
-	// Store secret in respective keeper
+	// Store in keeper.
 	externalID, err := s.storeInKeeper(ctx, sv)
 	if err != nil {
 		return nil, fmt.Errorf("failed to store in keeper: %w", err)
@@ -156,6 +156,7 @@ func (s *secureValueStorage) Delete(ctx context.Context, nn xkube.NameNamespace)
 
 	// TODO: do we need to delete by GUID? name+namespace is a unique index. It would avoid doing a fetch.
 	row := &secureValueDB{Name: nn.Name, Namespace: nn.Namespace.String()}
+
 	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		// TODO: because this is a securevalue, do we care to inform the caller if a row was delete (existed) or not?
 		if _, err := sess.Delete(row); err != nil {
