@@ -1273,11 +1273,6 @@
     }
   },
   "dashboards": {
-    "panel-edit": {
-      "angular-deprecation-button-open-panel-json": "Øpęŉ ĴŜØŃ ęđįŧőř",
-      "angular-deprecation-description": "Åŉģūľäř päŉęľş őpŧįőŉş čäŉ őŉľy þę ęđįŧęđ ūşįŉģ ŧĥę ĴŜØŃ ęđįŧőř.",
-      "angular-deprecation-heading": "Päŉęľ őpŧįőŉş"
-    },
     "panel-queries": {
       "add-query-from-library": "Åđđ qūęřy ƒřőm ľįþřäřy"
     },

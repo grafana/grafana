@@ -174,13 +174,6 @@ function getStyles(theme: GrafanaTheme2) {
     rotateIcon: css({
       rotate: '180deg',
     }),
-    angularDeprecationContainer: css({
-      label: 'angular-deprecation-container',
-      padding: theme.spacing(1),
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'flex-end',
-    }),
   };
 }
 
