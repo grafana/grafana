@@ -1,4 +1,4 @@
-import { VizPanel, sceneGraph, behaviors, SceneObject } from '@grafana/scenes';
+import { VizPanel, sceneGraph, behaviors, SceneObject, SceneGridRow } from '@grafana/scenes';
 
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene } from '../scene/DashboardScene';
@@ -37,7 +37,7 @@ export function getNextPanelId(scene: SceneObject): number {
   let max = 1;
 
   sceneGraph
-    .findAllObjects(scene.getRoot(), (obj) => obj instanceof VizPanel)
+    .findAllObjects(scene.getRoot(), (obj) => obj instanceof VizPanel || obj instanceof SceneGridRow)
     .forEach((panel) => {
       if (isClonedKey(panel.state.key!)) {
         return;
