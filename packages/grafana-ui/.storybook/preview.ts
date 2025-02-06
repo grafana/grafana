@@ -31,7 +31,15 @@ const handleThemeChange = (theme: GrafanaTheme2) => {
   }
 };
 
-const showExtraThemes = process.env.NODE_ENV === 'development';
+const allowedExtraThemes: string[] = [];
+
+if (process.env.NODE_ENV === 'development') {
+  allowedExtraThemes.push('debug');
+  allowedExtraThemes.push('desertbloom');
+  allowedExtraThemes.push('gildedgrove');
+  allowedExtraThemes.push('sapphiredusk');
+  allowedExtraThemes.push('tron');
+}
 
 const preview: Preview = {
   decorators: [withTheme(handleThemeChange), withTimeZone()],
@@ -71,7 +79,7 @@ const preview: Preview = {
       defaultValue: 'system',
       toolbar: {
         icon: 'paintbrush',
-        items: getBuiltInThemes(showExtraThemes).map((theme) => ({
+        items: getBuiltInThemes(allowedExtraThemes).map((theme) => ({
           value: theme.id,
           title: theme.name,
         })),
