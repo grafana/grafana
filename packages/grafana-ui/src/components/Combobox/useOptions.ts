@@ -59,10 +59,10 @@ export function useOptions<T extends string | number>(rawOptions: AsyncOptions<T
   const [userTypedSearch, setUserTypedSearch] = useState('');
 
   const addCustomValue = useCallback(
-    (opts: Array<ComboboxOption<T>>) => {
-      let currentOptions: Array<ComboboxOption<T>> = opts;
+    (opts: Array<ComboboxOption<T> | string>) => {
+      let currentOptions: Array<ComboboxOption<T> | string> = opts;
       if (createCustomValue && userTypedSearch) {
-        const customValueExists = opts.some((opt) => opt.value === userTypedSearch);
+        const customValueExists = opts.some((opt) => isComboboxOption(opt) && opt.value === userTypedSearch);
         if (!customValueExists) {
           currentOptions = [
             {
@@ -93,16 +93,45 @@ export function useOptions<T extends string | number>(rawOptions: AsyncOptions<T
     [debouncedLoadOptions, isAsync]
   );
 
+  const reorganizeOptions = useCallback((options: Array<ComboboxOption<T>>) => {
+    const groupedOptions = new Map<string, Array<ComboboxOption<T>>>();
+    const ungroupedOptions: Array<ComboboxOption<T>> = [];
+    const optionsReorganized: Array<ComboboxOption<T> | string> = [];
+    for (const option of options) {
+      const group = option.group;
+      if (group) {
+        if (!groupedOptions.has(group)) {
+          groupedOptions.set(group, []);
+        }
+        groupedOptions.get(group)?.push(option);
+      } else {
+        ungroupedOptions.push(option);
+      }
+    }
+    groupedOptions.forEach((groupOptions, group) => {
+      optionsReorganized.push(group);
+      optionsReorganized.push(...groupOptions);
+    });
+    optionsReorganized.push(...ungroupedOptions);
+    return optionsReorganized;
+  }, []);
+
   const finalOptions = useMemo(() => {
     let currentOptions = [];
     if (isAsync) {
-      currentOptions = addCustomValue(asyncOptions);
+      currentOptions = asyncOptions;
     } else {
-      currentOptions = addCustomValue(rawOptions.filter(itemFilter(userTypedSearch)));
+      currentOptions = rawOptions.filter(itemFilter(userTypedSearch));
     }
 
-    return currentOptions;
-  }, [isAsync, addCustomValue, asyncOptions, rawOptions, userTypedSearch]);
+    return addCustomValue(reorganizeOptions(currentOptions));
+  }, [isAsync, addCustomValue, asyncOptions, rawOptions, userTypedSearch, reorganizeOptions]);
 
   return { options: finalOptions, updateOptions, asyncLoading, asyncError };
 }
+
+export const isComboboxOption = <T extends string | number>(
+  option: ComboboxOption<T> | string
+): option is ComboboxOption<T> => {
+  return typeof option !== 'string';
+};

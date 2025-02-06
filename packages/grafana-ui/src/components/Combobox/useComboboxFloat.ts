@@ -11,6 +11,7 @@ import {
   POPOVER_MAX_HEIGHT,
 } from './getComboboxStyles';
 import { ComboboxOption } from './types';
+import { isComboboxOption } from './useOptions';
 
 // Only consider the first n items when calculating the width of the popover.
 const WIDTH_CALCULATION_LIMIT_ITEMS = 100_000;
@@ -18,7 +19,7 @@ const WIDTH_CALCULATION_LIMIT_ITEMS = 100_000;
 // Clearance around the popover to prevent it from being too close to the edge of the viewport
 const POPOVER_PADDING = 16;
 
-export const useComboboxFloat = (items: Array<ComboboxOption<string | number>>, isOpen: boolean) => {
+export const useComboboxFloat = (items: Array<ComboboxOption<string | number> | string>, isOpen: boolean) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const floatingRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -63,7 +64,14 @@ export const useComboboxFloat = (items: Array<ComboboxOption<string | number>>, 
     const itemsToLookAt = Math.min(items.length, WIDTH_CALCULATION_LIMIT_ITEMS);
 
     for (let i = 0; i < itemsToLookAt; i++) {
-      const itemLabel = items[i].label ?? items[i].value.toString();
+      let itemLabel = '';
+      if (isComboboxOption(items[i])) {
+        //@ts-expect-error TODO fix this
+        itemLabel = items[i].label ?? items[i].value.toString();
+      } else {
+        //@ts-expect-error TODO fix this
+        itemLabel = items[i];
+      }
       longestItem = itemLabel.length > longestItem.length ? itemLabel : longestItem;
     }
 

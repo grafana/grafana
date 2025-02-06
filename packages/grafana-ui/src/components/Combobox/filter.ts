@@ -19,7 +19,10 @@ const rankThreshold = 1e4;
 // typo tolerance mode
 const uf = new uFuzzy({ intraMode: 1 });
 
-export function itemToString<T extends string | number>(item?: ComboboxOption<T> | null) {
+export function itemToString<T extends string | number>(item?: ComboboxOption<T> | string | null) {
+  if (typeof item === 'string') {
+    return item;
+  }
   if (item == null) {
     return '';
   }
