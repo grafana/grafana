@@ -289,16 +289,16 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		if hooks != nil {
 			webhookStatus, err = hooks.OnCreate(ctx)
 		}
-		sync = &provisioning.SyncJobOptions{Incremental: false}
+		sync = &provisioning.SyncJobOptions{}
 	case hasSpecChanged:
 		logger.Info("handle repository update")
 		if hooks != nil {
 			webhookStatus, err = hooks.OnUpdate(ctx)
 		}
-		sync = &provisioning.SyncJobOptions{Incremental: !hasSpecChanged}
+		sync = &provisioning.SyncJobOptions{}
 	case shouldResync:
 		logger.Info("handle repository resync")
-		sync = &provisioning.SyncJobOptions{Incremental: false}
+		sync = &provisioning.SyncJobOptions{Incremental: true}
 	default:
 		logger.Info("handle unknown repository situation")
 	}

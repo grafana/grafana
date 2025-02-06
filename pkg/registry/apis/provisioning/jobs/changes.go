@@ -5,6 +5,7 @@ import (
 	"sort"
 	"strings"
 
+	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -23,7 +24,7 @@ func Changes(source []repository.FileTreeEntry, target *provisioning.ResourceLis
 	lookup := make(map[string]*provisioning.ResourceListItem, len(target.Items))
 	for _, item := range target.Items {
 		if item.Path == "" {
-			if item.Group != "folder.grafana.app" {
+			if item.Group != folders.GROUP {
 				return nil, fmt.Errorf("empty path on a non folder")
 			}
 			continue

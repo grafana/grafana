@@ -40,10 +40,7 @@ export function SyncRepository({ repository }: Props) {
     if (!name) {
       return;
     }
-    const elapsed = Date.now() - (repository.status?.sync.started ?? 0);
-    const incremental = elapsed > 10000; // If clicked recently, do complete
-    console.log('Queue sync task', { elapsed, incremental });
-    syncResource({ name, body: { incremental } });
+    syncResource({ name, body: {} }); // will queue a full resync job
     setIsModalOpen(false);
   };
 

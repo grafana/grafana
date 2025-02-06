@@ -2253,7 +2253,7 @@
                 ],
                 "properties": {
                   "incremental": {
-                    "description": "When possible (git) look for differences in the VCS",
+                    "description": "Incremental synchronization for versioned repositories",
                     "type": "boolean",
                     "default": false
                   }
@@ -3798,7 +3798,7 @@
         ],
         "properties": {
           "incremental": {
-            "description": "When possible (git) look for differences in the VCS",
+            "description": "Incremental synchronization for versioned repositories",
             "type": "boolean",
             "default": false
           }
@@ -3848,7 +3848,7 @@
             "type": "string"
           },
           "incremental": {
-            "description": "The previous job was incremental (only git)",
+            "description": "Incremental synchronization for versioned repositories",
             "type": "boolean"
           },
           "job": {

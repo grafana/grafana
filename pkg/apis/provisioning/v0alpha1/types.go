@@ -186,7 +186,7 @@ type SyncStatus struct {
 	// The repository hash when the last sync ran
 	Hash string `json:"hash,omitempty"`
 
-	// The previous job was incremental (only git)
+	// Incremental synchronization for versioned repositories
 	Incremental bool `json:"incremental,omitempty"`
 }
 

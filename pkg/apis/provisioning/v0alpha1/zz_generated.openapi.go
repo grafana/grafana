@@ -1608,7 +1608,7 @@ func schema_pkg_apis_provisioning_v0alpha1_SyncJobOptions(ref common.ReferenceCa
 				Properties: map[string]spec.Schema{
 					"incremental": {
 						SchemaProps: spec.SchemaProps{
-							Description: "When possible (git) look for differences in the VCS",
+							Description: "Incremental synchronization for versioned repositories",
 							Default:     false,
 							Type:        []string{"boolean"},
 							Format:      "",
@@ -1730,7 +1730,7 @@ func schema_pkg_apis_provisioning_v0alpha1_SyncStatus(ref common.ReferenceCallba
 					},
 					"incremental": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The previous job was incremental (only git)",
+							Description: "Incremental synchronization for versioned repositories",
 							Type:        []string{"boolean"},
 							Format:      "",
 						},
