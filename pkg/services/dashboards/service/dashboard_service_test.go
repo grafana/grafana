@@ -1984,6 +1984,7 @@ func TestSearchProvisionedDashboardsThroughK8sRaw(t *testing.T) {
 		},
 		"spec": map[string]any{},
 	}}
+	k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
 	k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resource.ResourceSearchResponse{
 		Results: &resource.ResourceTable{
 			Columns: []*resource.ResourceTableColumnDefinition{
