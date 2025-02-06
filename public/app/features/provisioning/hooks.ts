@@ -57,7 +57,7 @@ export function useCreateOrUpdateRepository(name?: string) {
 // Sort repositories alphabetically by title
 export function useRepositoryList(options: ListRepositoryArg = {}): [Repository[] | undefined, boolean] {
   const query = useListRepositoryQuery(options);
-  const collator = new Intl.Collator(undefined, {numeric: true});
+  const collator = new Intl.Collator(undefined, { numeric: true });
 
   const sortedItems = query.data?.items?.slice().sort((a, b) => {
     const titleA = a.spec?.title ?? '';
