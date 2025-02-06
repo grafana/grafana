@@ -1,5 +1,7 @@
 import { SelectableValue } from '@grafana/data';
 
+import { QueryEditorOperator, QueryEditorPropertyType } from '../../types';
+
 import {
   QueryEditorArrayExpression,
   QueryEditorExpression,
@@ -9,7 +11,6 @@ import {
   QueryEditorPropertyExpression,
   QueryEditorReduceExpression,
 } from './expressions';
-import { QueryEditorOperator, QueryEditorPropertyType } from './types';
 
 export const isReduceExpression = (expression?: QueryEditorExpression): expression is QueryEditorReduceExpression => {
   return expression?.type === QueryEditorExpressionType.Reduce;
@@ -22,7 +23,7 @@ export const isFieldExpression = (expression: QueryEditorExpression): expression
 export const isFunctionParameterExpression = (
   expression?: QueryEditorExpression
 ): expression is QueryEditorFunctionParameterExpression => {
-  return (expression as QueryEditorFunctionParameterExpression)?.type === QueryEditorExpressionType.FunctionParameter;
+  return expression!.type === QueryEditorExpressionType.FunctionParameter;
 };
 
 export const isFieldAndOperator = (expression?: QueryEditorExpression): expression is QueryEditorExpression => {
@@ -33,8 +34,8 @@ export const isGroupBy = (expression?: QueryEditorExpression): expression is Que
   return expression?.type === QueryEditorExpressionType.GroupBy;
 };
 
-export const isDateGroupBy = (expression: QueryEditorExpression): boolean => {
-  return (expression as QueryEditorGroupByExpression)?.property?.type === QueryEditorPropertyType.DateTime;
+export const isDateGroupBy = (expression: QueryEditorGroupByExpression): boolean => {
+  return expression.property?.type === QueryEditorPropertyType.DateTime;
 };
 
 export const isBoolOperator = (operator: QueryEditorOperator | undefined): operator is QueryEditorOperator<boolean> => {
