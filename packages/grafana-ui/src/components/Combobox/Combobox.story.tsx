@@ -52,7 +52,7 @@ const meta: Meta<PropsAndCustomArgs> = {
       { label: 'Dill', value: 'dill' },
       { label: 'Eggplant', value: 'eggplant' },
       { label: 'Fennel', value: 'fennel' },
-      { label: 'Grape', value: 'grape'},
+      { label: 'Grape', value: 'grape' },
       { label: 'Honeydew', value: 'honeydew' },
       {
         label: 'Iceberg Lettuce',
@@ -154,7 +154,7 @@ export const GroupOptions: Story = {
       },
       { label: 'Jackfruit', value: 'jackfruit' },
     ],
-    width: 50
+    width: 50,
   },
   render: BaseCombobox,
 };
@@ -196,7 +196,7 @@ export const ManyOptions: Story = {
 };
 export const ManyOptionsWithGroups: Story = {
   args: {
-    numberOfOptions: 1e4,
+    numberOfOptions: 1e5,
     options: undefined,
     value: undefined,
   },
