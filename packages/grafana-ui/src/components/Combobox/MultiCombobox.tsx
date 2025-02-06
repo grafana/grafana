@@ -201,7 +201,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
 
               // if every option is already selected, clear the selection.
               // otherwise, select all the options (excluding the first ALL_OTION)
-              const realOptions = options.slice(1);
+              const realOptions = options.slice(1).filter((option) => isComboboxOption(option));
               let newSelectedItems = isAllFilteredSelected && inputValue === '' ? [] : realOptions;
 
               if (!isAllFilteredSelected && inputValue !== '') {
@@ -211,10 +211,9 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
 
               if (isAllFilteredSelected && inputValue !== '') {
                 // Deselect all currently filtered items
-                const filteredSet = new Set(realOptions.map((item) => isComboboxOption(item) && item.value));
+                const filteredSet = new Set(realOptions.map((item) => item.value));
                 newSelectedItems = selectedItems.filter((item) => !filteredSet.has(item.value));
               }
-              //@ts-expect-error
               setSelectedItems(newSelectedItems);
             } else if (newSelectedItem && isOptionSelected(newSelectedItem)) {
               removeSelectedItem(newSelectedItem);
