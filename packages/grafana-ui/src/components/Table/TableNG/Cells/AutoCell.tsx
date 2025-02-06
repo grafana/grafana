@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { Property } from 'csstype';
 import { useRef } from 'react';
 
 import { GrafanaTheme2, formattedValueToString } from '@grafana/data';
@@ -13,6 +14,9 @@ interface AutoCellProps extends CellNGProps {
   cellOptions: TableCellOptions;
 }
 
+// z-index value to be able to show the full text on hover
+const CELL_Z_INDEX = '1';
+
 export default function AutoCell({ value, field, justifyContent, shouldTextOverflow, cellOptions }: AutoCellProps) {
   const displayValue = field.display!(value);
   const formattedValue = formattedValueToString(displayValue);
@@ -22,58 +26,55 @@ export default function AutoCell({ value, field, justifyContent, shouldTextOverf
   // Get colors
   const colors = getCellColors(theme, cellOptions, displayValue);
 
-  const styles = useStyles2(getStyles, colors);
+  const styles = useStyles2(getStyles, colors, justifyContent);
   const divRef = useRef<HTMLDivElement>(null);
-  // const [isHovered, setIsHovered] = useState(false);
 
   const handleMouseEnter = () => {
-    if (shouldTextOverflow && !shouldTextOverflow()) {
+    if (!shouldTextOverflow()) {
       return;
     }
-    // setIsHovered(true);
 
+    // TODO: The table cell styles in TableNG do not update dynamically even if we change the state
     const div = divRef.current;
-    div?.parentElement?.style.setProperty('overflow', 'visible');
+    const tableCellDiv = div?.parentElement?.parentElement;
+    tableCellDiv?.style.setProperty('position', 'absolute');
+    tableCellDiv?.style.setProperty('top', '0');
+    tableCellDiv?.style.setProperty('z-index', CELL_Z_INDEX);
+    tableCellDiv?.style.setProperty('white-space', 'normal');
   };
 
   const handleMouseLeave = () => {
-    if (shouldTextOverflow && !shouldTextOverflow()) {
+    if (!shouldTextOverflow()) {
       return;
     }
 
-    // setIsHovered(false);
-
+    // TODO: The table cell styles in TableNG do not update dynamically even if we change the state
     const div = divRef.current;
-    div?.parentElement?.style.setProperty('overflow', 'hidden');
+    const tableCellDiv = div?.parentElement?.parentElement;
+    tableCellDiv?.style.setProperty('position', 'relative');
+    tableCellDiv?.style.removeProperty('top');
+    tableCellDiv?.style.removeProperty('z-index');
+    tableCellDiv?.style.setProperty('white-space', 'nowrap');
   };
 
   return (
-    <div
-      ref={divRef}
-      style={{ display: 'flex', justifyContent }}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-      // className={isHovered ? styles.cell : ''}
-      className={styles.defaultCell}
-    >
+    <div ref={divRef} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} className={styles.cell}>
       {formattedValue}
     </div>
   );
 }
 
-const getStyles = (theme: GrafanaTheme2, color: CellColors) => ({
+const getStyles = (theme: GrafanaTheme2, color: CellColors, justifyContent: Property.JustifyContent) => ({
   cell: css({
-    border: `1px solid ${theme.colors.border.medium}`,
-    position: 'relative',
-    whiteSpace: 'break-spaces',
-    zIndex: `${theme.zIndex.activePanel}`,
-  }),
-  defaultCell: css({
-    background: color.bgColor || theme.colors.background.primary,
+    display: 'flex',
+    justifyContent: justifyContent,
+    // TODO: use background color for Cell type: Colored background
+    // background: color.bgColor || theme.colors.background.primary,
     color: color.textColor,
 
     '&:hover': {
-      background: color.bgHoverColor,
+      // TODO: use background color for Cell type: Colored background
+      // background: color.bgHoverColor,
     },
   }),
 });
