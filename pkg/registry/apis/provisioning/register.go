@@ -101,8 +101,6 @@ func NewAPIBuilder(
 		render:         render,
 		resourceLister: resources.NewResourceLister(index),
 		blobstore:      blobstore,
-		// TODO: Add repo getter
-		jobs: jobs.NewJobQueue(50, nil, identities), // in memory for now
 	}
 }
 
@@ -185,6 +183,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 		return fmt.Errorf("failed to create repository storage: %w", err)
 	}
 	b.getter = repositoryStorage
+	b.jobs = jobs.NewJobQueue(50, b, b.identities) // in memory for now
 
 	repositoryStatusStorage := grafanaregistry.NewRegistryStatusStore(opts.Scheme, repositoryStorage)
 
