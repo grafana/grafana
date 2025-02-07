@@ -1,0 +1,50 @@
+name: Migrate open PRs
+# Migrate open PRs from a superseded release branch to the current release branch and notify authors
+on: 
+  workflow_call:
+    inputs:
+      from:
+        description: 'The base branch to check for open PRs'
+        required: true
+        type: string
+      to:
+        description: 'The base branch to migrate open PRs to'
+        required: true
+        type: string
+      ownerRepo:
+        description: Owner/repo of the repository where the branch is created (e.g. 'grafana/grafana')
+        required: true
+        type: string
+    secrets:
+      token:
+        required: true
+  workflow_dispatch:
+    inputs:
+      from:
+        description: 'The base branch to check for open PRs'
+        required: true
+        type: string
+      to:
+        description: 'The base branch to migrate open PRs to'
+        required: true
+        type: string
+      ownerRepo:
+        description: Owner/repo of the repository where the branch is created (e.g. 'grafana/grafana')
+        required: true
+        type: string
+    secrets:
+      token:
+        required: true
+
+jobs:
+  main:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Migrate PRs
+        uses: grafana/grafana-github-actions-go/migrate-open-prs@main
+        with:
+          token: ${{ secrets.token }}
+          ownerRepo: ${{ inputs.ownerRepo }}
+          from: ${{ inputs.from }}
+          to: ${{ inputs.to }}
+          binary_release_tag: 'dev'
