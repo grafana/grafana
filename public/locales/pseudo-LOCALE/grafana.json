@@ -1569,6 +1569,19 @@
     "send-custom-feedback": "Ŝęŉđ"
   },
   "grafana-ui": {
+    "action-editor": {
+      "button": {
+        "confirm": "Cőŉƒįřm",
+        "confirm-action": "Cőŉƒįřm äčŧįőŉ"
+      },
+      "modal": {
+        "action-body": "ßőđy",
+        "action-method": "Męŧĥőđ",
+        "action-query-params": "Qūęřy päřämęŧęřş",
+        "action-title": "Ŧįŧľę",
+        "action-title-placeholder": "Åčŧįőŉ ŧįŧľę"
+      }
+    },
     "auto-save-field": {
       "saved": "Ŝävęđ!",
       "saving": "Ŝävįŉģ <1></1>"
@@ -1676,6 +1689,9 @@
       "right-axis-indicator": "(řįģĥŧ y-äχįş)"
     },
     "viz-tooltip": {
+      "actions-confirmation-input-placeholder": "Åřę yőū şūřę yőū ŵäŉŧ ŧő {{ actionTitle }}?",
+      "actions-confirmation-label": "Cőŉƒįřmäŧįőŉ męşşäģę",
+      "actions-confirmation-message": "Přővįđę ä đęşčřįpŧįvę přőmpŧ ŧő čőŉƒįřm őř čäŉčęľ ŧĥę äčŧįőŉ.",
       "footer-add-annotation": "Åđđ äŉŉőŧäŧįőŉ",
       "footer-click-to-navigate": "Cľįčĸ ŧő őpęŉ {{linkTitle}}"
     }
