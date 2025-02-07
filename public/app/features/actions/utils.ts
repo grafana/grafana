@@ -50,12 +50,11 @@ export const getActions = (
       dataContext.value.calculatedValue = config.calculatedValue;
     }
 
-    let confirmation =
-      action.confirmation && action.confirmation !== ''
-        ? action.confirmation
-        : `Are you sure you want to ${action.title}?`;
     const title = replaceVariables(action.title, actionScopedVars);
-    confirmation = replaceVariables(confirmation, actionScopedVars);
+    const confirmation = replaceVariables(
+      action.confirmation || `Are you sure you want to ${action.title}?`,
+      actionScopedVars
+    );
 
     const actionModel: ActionModel<Field> = {
       title,
