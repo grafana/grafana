@@ -50,7 +50,7 @@ export const getActions = (
       dataContext.value.calculatedValue = config.calculatedValue;
     }
 
-    const title = replaceVariables(action.title || '', actionScopedVars);
+    const title = replaceVariables(action.title, actionScopedVars);
     const confirmation = replaceVariables(
       action.confirmation ?? `Are you sure you want to ${action.title}?`,
       actionScopedVars
