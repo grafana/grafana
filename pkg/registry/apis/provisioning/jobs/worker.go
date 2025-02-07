@@ -23,6 +23,14 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/blob"
 )
 
+type Syncer interface {
+	Sync(ctx context.Context,
+		repo repository.Repository,
+		options provisioning.SyncJobOptions,
+		progress func(provisioning.JobStatus) error,
+	) (*provisioning.JobStatus, *provisioning.SyncStatus, error)
+}
+
 type RepoGetter interface {
 	GetRepository(ctx context.Context, name string) (repository.Repository, error)
 }
@@ -48,6 +56,7 @@ func NewJobWorker(
 	identities auth.BackgroundIdentityService,
 	render rendering.Service,
 	lister resources.ResourceLister,
+	syncer Syncer,
 	blobstore blob.PublicBlobStore,
 	urlProvider func(namespace string) string,
 ) *JobWorker {
@@ -60,10 +69,7 @@ func NewJobWorker(
 		lister:      lister,
 		blobstore:   blobstore,
 		urlProvider: urlProvider,
-		syncer: &syncer{
-			parsers: parsers,
-			lister:  lister,
-		},
+		syncer:      syncer,
 	}
 }
 

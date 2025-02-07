@@ -1,4 +1,4 @@
-package jobs
+package sync
 
 import (
 	"bytes"
@@ -20,30 +20,25 @@ import (
 	"github.com/grafana/grafana/pkg/apis/dashboard"
 	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 )
 
-// Sync will make grafana look like the contents of the repository
-// it will add/remove/update resources in grafana so the results look like a mirror
-type Syncer interface {
-	Sync(ctx context.Context,
-		repo repository.Repository,
-		options provisioning.SyncJobOptions,
-		progress func(provisioning.JobStatus) error,
-	) (*provisioning.JobStatus, *provisioning.SyncStatus, error)
-}
-
-// syncer will start sync jobs
-type syncer struct {
+type Syncer struct {
 	parsers *resources.ParserFactory
 	lister  resources.ResourceLister
 }
 
+func NewSyncer(parsers *resources.ParserFactory, lister resources.ResourceLister) *Syncer {
+	return &Syncer{
+		parsers: parsers,
+		lister:  lister,
+	}
+}
+
 // start a job and run it
-func (r *syncer) Sync(ctx context.Context,
+func (r *Syncer) Sync(ctx context.Context,
 	repo repository.Repository,
 	options provisioning.SyncJobOptions,
 	progress func(provisioning.JobStatus) error,
@@ -175,7 +170,7 @@ func (r *syncJob) run(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("error reading tree: %w", err)
 	}
-	changes, err := sync.Changes(source, target)
+	changes, err := Changes(source, target)
 	if err != nil {
 		return fmt.Errorf("error calculating changes: %w", err)
 	}
@@ -196,7 +191,7 @@ func (r *syncJob) run(ctx context.Context) error {
 	return r.applyChanges(ctx, changes)
 }
 
-func (r *syncJob) applyChanges(ctx context.Context, changes []sync.ResourceFileChange) error {
+func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange) error {
 	// Do the longest paths first (important for delete)
 	sort.Slice(changes, func(i, j int) bool {
 		return len(changes[i].Path) > len(changes[j].Path)
