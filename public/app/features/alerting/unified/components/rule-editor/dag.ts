@@ -38,8 +38,6 @@ export function createDagFromQueries(queries: AlertQuery[]): Graph {
     });
   });
 
-  // @TODO recursively find nodes that are pointing to nodes with linkErrors
-
   if (linkErrors.length > 0) {
     throw new DAGError('failed to create DAG from queries', { cause: linkErrors });
   }
@@ -49,20 +47,28 @@ export function createDagFromQueries(queries: AlertQuery[]): Graph {
 
 /**
  * This function attempts to create a "clean" DAG where only the nodes that successfully link are left
+ * ⚠️ This is a recursive function and very expensive for larger DAGs or large amount of queries
  */
-export function createCleanDagFromQueries(queries: AlertQuery[]): Graph {
+export function createDAGFromQueriesSafe(
+  queries: AlertQuery[],
+  collectedLinkErrors: LinkError[] = []
+): [Graph, LinkError[]] {
   try {
-    return createDagFromQueries(queries);
+    return [createDagFromQueries(queries), collectedLinkErrors];
   } catch (error) {
     if (error instanceof DAGError) {
+      const linkErrors = error.cause;
+      collectedLinkErrors.push(...linkErrors);
+
       const updatedQueries = reject(queries, (query) =>
-        error.cause.some((linkError) => linkError.source === query.refId)
+        linkErrors.some((linkError) => linkError.source === query.refId)
       );
-      return createCleanDagFromQueries(updatedQueries);
+
+      return createDAGFromQueriesSafe(updatedQueries, collectedLinkErrors);
     }
   }
 
-  return new Graph();
+  return [new Graph(), collectedLinkErrors];
 }
 
 // determine if input error is a DAGError

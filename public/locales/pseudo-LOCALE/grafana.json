@@ -307,7 +307,7 @@
     },
     "copy-to-clipboard": "Cőpy \"{{label}}\" ŧő čľįpþőäřđ",
     "dag": {
-      "missing-reference": "Fäįľęđ ŧő ƒįŉđ qūęřy őř ęχpřęşşįőŉ ŉämęđ \"{{target}}\"",
+      "missing-reference": "Ēχpřęşşįőŉ \"{{source}}\" ƒäįľęđ ŧő řūŉ þęčäūşę \"{{target}}\" įş mįşşįŉģ őř äľşő ƒäįľęđ.",
       "self-reference": "Ÿőū čäŉ'ŧ ľįŉĸ äŉ ęχpřęşşįőŉ ŧő įŧşęľƒ"
     },
     "export": {

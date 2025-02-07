@@ -307,7 +307,7 @@
     },
     "copy-to-clipboard": "Copy \"{{label}}\" to clipboard",
     "dag": {
-      "missing-reference": "Failed to find query or expression named \"{{target}}\"",
+      "missing-reference": "Expression \"{{source}}\" failed to run because \"{{target}}\" is missing or also failed.",
       "self-reference": "You can't link an expression to itself"
     },
     "export": {

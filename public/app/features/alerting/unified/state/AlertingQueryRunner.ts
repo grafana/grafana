@@ -22,13 +22,7 @@ import { cancelNetworkRequestsOnUnsubscribe } from 'app/features/query/state/pro
 import { setStructureRevision } from 'app/features/query/state/processing/revision';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
-import {
-  DAGError,
-  LinkError,
-  createCleanDagFromQueries,
-  createDagFromQueries,
-  getDescendants,
-} from '../components/rule-editor/dag';
+import { LinkError, createDAGFromQueriesSafe, getDescendants } from '../components/rule-editor/dag';
 import { getTimeRangeForExpression } from '../utils/timeRange';
 
 export interface AlertingQueryResult {
@@ -78,17 +72,11 @@ export class AlertingQueryRunner {
           return setStructureRevision(preProcessed, previous);
         });
 
-        // now append DAG errors to each individual node
-        try {
-          createDagFromQueries(queries);
-        } catch (error) {
-          // add link errors to the panelData and mark them as errors
-          if (error instanceof DAGError) {
-            error.cause.forEach((linkError) => {
-              nextResult[linkError.source] = createLinkErrorPanelData(linkError);
-            });
-          }
-        }
+        // add link errors to the panelData and mark them as errors
+        const [_, linkErrors] = createDAGFromQueriesSafe(queries);
+        linkErrors.forEach((linkError) => {
+          nextResult[linkError.source] = createLinkErrorPanelData(linkError);
+        });
 
         this.lastResult = nextResult;
         this.subject.next(this.lastResult);
@@ -121,8 +109,6 @@ export class AlertingQueryRunner {
         dataSourceInstance.filterQuery &&
         !dataSourceInstance.filterQuery(query.model);
 
-      // if we need to skip the query, we'll try to find the descendant nodes and skip those too.
-      // if that fails we'll skip the nodes we failed to link too
       if (skipRunningQuery) {
         queriesToExclude.push(refId);
       }
@@ -130,15 +116,18 @@ export class AlertingQueryRunner {
 
     // exclude nodes that failed to link and their child nodes from the final queries array by trying to parse the graph
     // ⚠️ also make sure all dependent nodes are omitted, otherwise we will be evaluating a broken graph with missing references
-    const cleanGraph = createCleanDagFromQueries(queries);
+    const [cleanGraph] = createDAGFromQueriesSafe(queries);
+    const cleanNodes = Object.keys(cleanGraph.nodes);
+
+    // find descendant nodes of data queries that have been excluded
     queriesToExclude.forEach((refId) => {
       const descendants = getDescendants(refId, cleanGraph);
       queriesToExclude.push(...descendants);
     });
 
-    // also exclude all nodes that aren't in cleanGraph
-    const missingNodes = queries.filter((query) => !Object.keys(cleanGraph.nodes).includes(query.refId));
-    missingNodes.forEach((node) => {
+    // also exclude all nodes that aren't in cleanGraph, this means they point to other broken nodes
+    const nodesNotInGraph = queries.filter((query) => !cleanNodes.includes(query.refId));
+    nodesNotInGraph.forEach((node) => {
       queriesToExclude.push(node.refId);
     });
 
@@ -297,7 +286,12 @@ function createLinkErrorMessage(error: LinkError): string {
 
   return isSelfReference
     ? t('alerting.dag.self-reference', "You can't link an expression to itself")
-    : t('alerting.dag.missing-reference', `Failed to find query or expression named "{{target}}"`, {
-        target: error.target,
-      });
+    : t(
+        'alerting.dag.missing-reference',
+        `Expression "{{source}}" failed to run because "{{target}}" is missing or also failed.`,
+        {
+          source: error.source,
+          target: error.target,
+        }
+      );
 }
