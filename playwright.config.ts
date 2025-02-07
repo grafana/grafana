@@ -10,7 +10,7 @@ export default defineConfig<PluginOptions>({
   webServer: {
     timeout: 2 * 60 * 1000,
     command: 'make run',
-    url: `http://${process.env.HOST || 'localhost'}:${process.env.PORT || 3000}`,
+    port: Number(`${process.env.PORT || 3000}`),
     reuseExistingServer: !process.env.CI,
     stdout: 'ignore',
     stderr: 'pipe',
