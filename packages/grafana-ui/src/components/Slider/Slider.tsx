@@ -109,6 +109,7 @@ export const Slider = ({
 
         <Input
           type="text"
+          width={7.5}
           className={cx(styles.sliderInputField, ...sliderInputFieldClassNames)}
           value={sliderValue}
           onChange={onSliderInputChange}
