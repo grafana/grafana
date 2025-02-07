@@ -162,6 +162,8 @@ func (r *Parser) Parse(ctx context.Context, info *repository.FileInfo, validate 
 
 	objName, folderName := NamesFromHashedRepoPath(cfg.Name, info.Path)
 	obj.SetName(objName)
+	obj.SetUID("")             // clear identifiers
+	obj.SetResourceVersion("") // clear identifiers
 	parsed.Meta.SetFolder(folderName)
 
 	// We can not do anything more if no kind is defined

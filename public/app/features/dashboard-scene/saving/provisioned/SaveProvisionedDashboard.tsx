@@ -41,7 +41,6 @@ export interface Props {
 }
 
 export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Props) {
-  const { saveProvisioned } = drawer.useState();
   const { meta, title: defaultTitle, description: defaultDescription } = dashboard.useState();
   const prURL = usePullRequestParam();
 
@@ -51,7 +50,7 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Prop
     isGitHub,
     repositoryConfig,
   } = useDefaultValues({ meta, defaultTitle, defaultDescription });
-  const [action, request] = useCreateOrUpdateRepositoryFile(saveProvisioned || isNew ? undefined : defaultValues.path);
+  const [action, request] = useCreateOrUpdateRepositoryFile(isNew ? undefined : defaultValues.path);
   const {
     register,
     handleSubmit,
@@ -207,7 +206,7 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Prop
           </Alert>
         )}
         <Stack gap={2}>
-          <Button variant="primary" type="submit" disabled={(request.isLoading || !isDirty) && !saveProvisioned}>
+          <Button variant="primary" type="submit" disabled={request.isLoading || !isDirty}>
             {request.isLoading ? 'Saving...' : 'Save'}
           </Button>
           <Button variant="secondary" onClick={drawer.onClose} fill="outline">
@@ -218,6 +217,7 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Prop
     </form>
   );
 }
+
 const BranchValidationError = () => {
   return (
     <>
@@ -231,6 +231,7 @@ const BranchValidationError = () => {
     </>
   );
 };
+
 async function validateDashboardName(title: string, formValues: FormData) {
   if (title === formValues.folder.title?.trim()) {
     return 'Dashboard name cannot be the same as folder name';

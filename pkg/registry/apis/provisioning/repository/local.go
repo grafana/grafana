@@ -94,6 +94,9 @@ func NewLocal(config *provisioning.Repository, resolver *LocalFolderResolver) *l
 	}
 	if config.Spec.Local != nil {
 		r.path, _ = resolver.LocalPath(config.Spec.Local.Path)
+		if r.path != "" && !strings.HasSuffix(r.path, "/") {
+			r.path += "/"
+		}
 	}
 	return r
 }
@@ -201,7 +204,7 @@ func (r *localRepository) Read(ctx context.Context, filePath string, ref string)
 		return nil, fmt.Errorf("stat file: %w", err)
 	}
 
-	path := strings.TrimPrefix(filePath, safepath.Clean(r.path))
+	path := strings.TrimPrefix(filePath, r.path)
 	if info.IsDir() {
 		return &FileInfo{
 			Path: path,

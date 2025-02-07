@@ -256,14 +256,7 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	obj = obj.DeepCopy()
 	hooks, _ := repo.(repository.RepositoryHooks)
 
-	var (
-		sync          *provisioning.SyncJobOptions
-		webhookStatus *provisioning.WebhookStatus
-	)
-
-	switch {
-	// Delete (note this switch does not fallthrough to the health check)
-	case obj.DeletionTimestamp != nil:
+	if obj.DeletionTimestamp != nil {
 		logger.Info("handle repository delete")
 
 		// Process any finalizers
@@ -281,33 +274,12 @@ func (rc *RepositoryController) process(item *queueItem) error {
 					FieldManager: "repository-controller",
 				})
 		}
+
 		return err // delete will be called again
-
-	// Create
-	case obj.Status.ObservedGeneration < 1:
-		logger.Info("handle repository create")
-		if hooks != nil {
-			webhookStatus, err = hooks.OnCreate(ctx)
-		}
-		sync = &provisioning.SyncJobOptions{Complete: true}
-	case hasSpecChanged:
-		logger.Info("handle repository update")
-		if hooks != nil {
-			webhookStatus, err = hooks.OnUpdate(ctx)
-		}
-		sync = &provisioning.SyncJobOptions{Complete: hasSpecChanged}
-	case shouldResync:
-		logger.Info("handle repository resync")
-		sync = &provisioning.SyncJobOptions{Complete: false}
-	default:
-		logger.Info("handle unknown repository situation")
-	}
-	if err != nil {
-		return fmt.Errorf("error running hooks: %w", err)
 	}
 
+	// Test configuration before anything else
 	health := obj.Status.Health
-
 	if obj.DeletionTimestamp == nil && healthAge > 200*time.Millisecond {
 		logger.Info("running health check")
 		res, err := rc.tester.TestRepository(ctx, repo)
@@ -326,12 +298,6 @@ func (rc *RepositoryController) process(item *queueItem) error {
 			Checked: time.Now().UnixMilli(),
 			Message: res.Errors,
 		}
-		if !res.Success {
-			logger.Error("repository is unhealthy", "errors", res.Errors)
-		} else {
-			logger.Info("repository is healthy")
-		}
-
 		patch, err := json.Marshal(map[string]any{
 			"status": map[string]any{
 				"health": health,
@@ -347,11 +313,55 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		}
 	}
 
-	// Maybe add a new sync job
-	if health.Healthy &&
-		obj.Spec.Sync.Enabled && sync != nil &&
-		obj.Generation > 0 &&
-		!isSyncJobPendingOrRunning {
+	// Do not continue if provided invalid configuration because sync and hooks won't probably work
+	if !health.Healthy {
+		logger.Error("repository is unhealthy", "errors", health.Message)
+		patch, err := json.Marshal(map[string]any{
+			"status": map[string]any{
+				"observedGeneration": obj.Generation,
+			},
+		})
+		if err != nil {
+			return fmt.Errorf("error encoding health patch: %w", err)
+		}
+
+		if _, err := rc.client.Repositories(obj.GetNamespace()).
+			Patch(ctx, obj.GetName(), types.MergePatchType, patch, v1.PatchOptions{}, "status"); err != nil {
+			return fmt.Errorf("update health status: %w", err)
+		}
+
+		return nil
+	}
+
+	var (
+		sync          *provisioning.SyncJobOptions
+		webhookStatus *provisioning.WebhookStatus
+	)
+
+	switch {
+	case obj.Status.ObservedGeneration < 1:
+		logger.Info("handle repository create")
+		if hooks != nil {
+			webhookStatus, err = hooks.OnCreate(ctx)
+		}
+		sync = &provisioning.SyncJobOptions{}
+	case hasSpecChanged:
+		logger.Info("handle repository update")
+		if hooks != nil {
+			webhookStatus, err = hooks.OnUpdate(ctx)
+		}
+		sync = &provisioning.SyncJobOptions{}
+	case shouldResync:
+		logger.Info("handle repository resync")
+		sync = &provisioning.SyncJobOptions{Incremental: true}
+	default:
+		logger.Info("handle unknown repository situation")
+	}
+	if err != nil {
+		return fmt.Errorf("error running hooks: %w", err)
+	}
+
+	if obj.Spec.Sync.Enabled && sync != nil && obj.Generation > 0 && !isSyncJobPendingOrRunning {
 		job, err := rc.jobs.Add(ctx, &provisioning.Job{
 			ObjectMeta: v1.ObjectMeta{
 				Namespace: obj.Namespace,

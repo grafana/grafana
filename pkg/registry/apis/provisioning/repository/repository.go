@@ -47,23 +47,6 @@ type FileTreeEntry struct {
 	Blob bool
 }
 
-type FileAction string
-
-const (
-	FileActionCreated FileAction = "created"
-	FileActionUpdated FileAction = "updated"
-	FileActionRenamed FileAction = "renamed"
-	FileActionDeleted FileAction = "deleted"
-)
-
-type FileChange struct {
-	Path         string
-	PreviousPath string
-	Ref          string
-	PreviousRef  string
-	Action       FileAction
-}
-
 type Repository interface {
 	// The saved Kubernetes object.
 	Config() *provisioning.Repository
@@ -116,12 +99,32 @@ type RepositoryHooks interface {
 	OnDelete(ctx context.Context) error
 }
 
+type FileAction string
+
+const (
+	FileActionCreated FileAction = "created"
+	FileActionUpdated FileAction = "updated"
+	FileActionDeleted FileAction = "deleted"
+
+	// Renamed actions may be reconstructed as delete then create
+	FileActionRenamed FileAction = "renamed"
+)
+
+type VersionedFileChange struct {
+	Action FileAction
+	Path   string
+
+	Ref          string
+	PreviousRef  string // rename | update
+	PreviousPath string // rename
+}
+
 // VersionedRepository is a repository that supports versioning
 // this inferface may be extended to make the the original Repository interface
 // more agnostic to the underlying storage system
 type VersionedRepository interface {
 	LatestRef(ctx context.Context) (string, error)
-	CompareFiles(ctx context.Context, base, ref string) ([]FileChange, error)
+	CompareFiles(ctx context.Context, base, ref string) ([]VersionedFileChange, error)
 }
 
 func writeWithReadThenCreateOrUpdate(ctx context.Context, r Repository, path, ref string, data []byte, comment string) error {

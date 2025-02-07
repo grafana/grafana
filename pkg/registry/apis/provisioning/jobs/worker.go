@@ -38,6 +38,7 @@ type JobWorker struct {
 	lister      resources.ResourceLister
 	blobstore   blob.PublicBlobStore
 	urlProvider func(namespace string) string
+	syncer      Syncer
 }
 
 func NewJobWorker(
@@ -59,6 +60,10 @@ func NewJobWorker(
 		lister:      lister,
 		blobstore:   blobstore,
 		urlProvider: urlProvider,
+		syncer: &syncer{
+			parsers: parsers,
+			lister:  lister,
+		},
 	}
 }
 
@@ -91,7 +96,7 @@ func (g *JobWorker) Process(ctx context.Context, job provisioning.Job, progress 
 
 	switch job.Spec.Action {
 	case provisioning.JobActionSync:
-		return g.doSync(ctx, repo, job, parser, progress)
+		return g.doSync(ctx, repo, job, progress)
 
 	case provisioning.JobActionPullRequest:
 		prRepo, ok := repo.(PullRequestRepo)
@@ -156,20 +161,20 @@ func (g *JobWorker) Process(ctx context.Context, job provisioning.Job, progress 
 	}
 }
 
+// The Syncer will synchronize the external repo with grafana database
+// this function updates the status for both the job and the referenced repository
 func (g *JobWorker) doSync(ctx context.Context,
 	repo repository.Repository,
 	job provisioning.Job,
-	parser *resources.Parser,
-	_ func(provisioning.JobStatus) error,
+	progress func(provisioning.JobStatus) error,
 ) (*provisioning.JobStatus, error) {
 	var err error
 	cfg := repo.Config()
 
 	logger := logging.FromContext(ctx).With("job", job.GetName(), "namespace", job.GetNamespace())
-	status := job.Status.ToSyncStatus(job.Name)
 	patch, err := json.Marshal(map[string]any{
 		"status": map[string]any{
-			"sync": status,
+			"sync": job.Status.ToSyncStatus(job.Name),
 		},
 	})
 	if err != nil {
@@ -182,32 +187,26 @@ func (g *JobWorker) doSync(ctx context.Context,
 		logger.Warn("unable to update repo with job status", "err", err)
 	}
 
-	syncer, err := NewSyncer(repo, g.lister, parser)
-	if err != nil {
-		return nil, fmt.Errorf("error creating replicator")
+	// Execute the sync task
+	jobStatus, syncStatus, syncError := g.syncer.Sync(ctx, repo, *job.Spec.Sync, progress)
+	if syncStatus == nil {
+		syncStatus = &provisioning.SyncStatus{}
 	}
-
-	var complete bool
-	if job.Spec.Sync != nil && job.Spec.Sync.Complete {
-		complete = job.Spec.Sync.Complete
-	}
-
-	// Sync the repository
-	ref, syncError := syncer.Sync(ctx, complete)
-	status = job.Status.ToSyncStatus(job.Name)
-	status.Hash = ref
-	status.Finished = time.Now().UnixMilli()
+	syncStatus.JobID = job.Name
+	syncStatus.Started = job.Status.Started
+	syncStatus.Finished = time.Now().UnixMilli()
 	if syncError != nil {
-		status.State = provisioning.JobStateError
-		status.Message = []string{
+		syncStatus.State = provisioning.JobStateError
+		syncStatus.Message = []string{
 			"error running sync",
 			syncError.Error(),
 		}
-	} else {
-		status.State = provisioning.JobStateSuccess
+	} else if syncStatus.State == "" {
+		syncStatus.State = provisioning.JobStateSuccess
 	}
 
-	// Update the resource stats
+	// Update the resource stats -- give the index some time to catch up
+	time.Sleep(1 * time.Second)
 	stats, err := g.lister.Stats(ctx, cfg.Namespace, cfg.Name)
 	if err != nil {
 		logger.Warn("unable to read stats", "error", err)
@@ -218,7 +217,7 @@ func (g *JobWorker) doSync(ctx context.Context,
 
 	patch, err = json.Marshal(map[string]any{
 		"status": map[string]any{
-			"sync":  status,
+			"sync":  syncStatus,
 			"stats": stats.Items,
 		},
 	})
@@ -235,8 +234,5 @@ func (g *JobWorker) doSync(ctx context.Context,
 	if syncError != nil {
 		return nil, syncError
 	}
-
-	return &provisioning.JobStatus{
-		State: provisioning.JobStateSuccess,
-	}, nil
+	return jobStatus, nil
 }
