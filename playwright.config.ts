@@ -8,6 +8,7 @@ const testDirRoot = 'e2e/plugin-e2e/';
 export default defineConfig<PluginOptions>({
   fullyParallel: true,
   webServer: {
+    timeout: 2 * 60 * 1000,
     command: 'make run',
     url: `http://${process.env.HOST || 'localhost'}:${process.env.PORT || 3000}`,
     reuseExistingServer: !process.env.CI,

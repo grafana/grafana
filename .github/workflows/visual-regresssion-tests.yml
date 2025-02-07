@@ -28,8 +28,6 @@ jobs:
         with:
           node-version: 20
           cache: 'yarn'
-      - name: Install dependencies
-        run: yarn install --immutable
       - name: Install Playwright Browsers
         run: yarn exec playwright install --with-deps
       - name: Run Playwright tests
@@ -58,5 +56,3 @@ jobs:
             ### Playwright visual snapshot differences were detected.
             View the [Playwright report](${{ steps.artifact-upload.outputs.artifact-url }}) to review the visual differences.
             **To approve the snapshot changes and update the snapshots, please comment:** /approve-snapshots
-      - name: Stop server
-        run: kill $(jobs -p)
