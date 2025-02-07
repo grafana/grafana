@@ -365,7 +365,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
                       {...itemProps}
                       className={cx(
                         styles.optionBasic,
-                        { [styles.optionFocused]: highlightedIndex === index && !isComboboxOption(item) },
+                        { [styles.optionFocused]: highlightedIndex === index && isComboboxOption(item) },
                         isComboboxOption(item) ? styles.option : styles.optionGroup
                       )}
                       style={{ height: virtualRow.size, transform: `translateY(${virtualRow.start}px)` }}

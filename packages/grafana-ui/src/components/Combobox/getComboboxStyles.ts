@@ -75,6 +75,7 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
     optionLabelGroup: css({
       label: 'combobox-option-label-group',
       color: theme.colors.text.secondary,
+      fontSize: theme.typography.bodySmall.fontSize,
       fontWeight: theme.typography.fontWeightLight,
     }),
     optionDescription: css({
