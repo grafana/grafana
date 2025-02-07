@@ -582,10 +582,9 @@ func (a apiClient) DeleteSilence(t *testing.T, id string) (any, int, string) {
 	return sendRequest[dynamic](t, req, http.StatusOK)
 }
 
-func (a apiClient) GetRulesGroup(t *testing.T, folder string, group string) apimodels.RuleGroupConfigResponse {
+func (a apiClient) GetRulesGroup(t *testing.T, folder string, group string) (apimodels.RuleGroupConfigResponse, int) {
 	result, status, _ := a.GetRulesGroupWithStatus(t, folder, group)
-	require.Equal(t, http.StatusAccepted, status)
-	return result
+	return result, status
 }
 
 func (a apiClient) GetRulesGroupWithStatus(t *testing.T, folder string, group string) (apimodels.RuleGroupConfigResponse, int, []byte) {

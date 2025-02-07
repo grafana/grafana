@@ -664,7 +664,8 @@ func TestIntegrationTimeIntervalReferentialIntegrity(t *testing.T) {
 	require.Equalf(t, http.StatusAccepted, status, "Failed to post Rule: %s", data)
 
 	currentRoute := legacyCli.GetRoute(t)
-	currentRuleGroup := legacyCli.GetRulesGroup(t, folderUID, ruleGroup.Name)
+	currentRuleGroup, status := legacyCli.GetRulesGroup(t, folderUID, ruleGroup.Name)
+	require.Equal(t, http.StatusAccepted, status)
 
 	adminClient := newClient(t, helper.Org1.Admin)
 
@@ -696,7 +697,8 @@ func TestIntegrationTimeIntervalReferentialIntegrity(t *testing.T) {
 			actual, err := adminClient.Update(ctx, renamed, v1.UpdateOptions{})
 			require.NoError(t, err)
 
-			updatedRuleGroup := legacyCli.GetRulesGroup(t, folderUID, ruleGroup.Name)
+			updatedRuleGroup, status := legacyCli.GetRulesGroup(t, folderUID, ruleGroup.Name)
+			require.Equal(t, http.StatusAccepted, status)
 			for idx, rule := range updatedRuleGroup.Rules {
 				expectedTimeIntervals := currentRuleGroup.Rules[idx].GrafanaManagedAlert.NotificationSettings.MuteTimeIntervals
 				expectedTimeIntervals = replace(expectedTimeIntervals, interval.Spec.Name, actual.Spec.Name)
