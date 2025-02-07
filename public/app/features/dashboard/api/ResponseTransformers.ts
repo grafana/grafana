@@ -860,6 +860,10 @@ function getPanelsV1(
 
   let maxPanelId = 0;
 
+  if (layout.kind !== 'GridLayout') {
+    throw new Error('Cannot convert non-GridLayout layout to v1');
+  }
+
   for (const item of layout.spec.items) {
     if (item.kind === 'GridLayoutItem') {
       const panel = panels[item.spec.element.name];

@@ -22,6 +22,7 @@ import {
   DashboardV2Spec,
   DatasourceVariableKind,
   GridLayoutItemSpec,
+  GridLayoutSpec,
   GroupByVariableKind,
   IntervalVariableKind,
   QueryVariableKind,
@@ -231,7 +232,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
     const panel = getPanelElement(dash, 'panel-1')!;
     expect(layout.state.grid.state.children.length).toBe(3);
     expect(layout.state.grid.state.children[0].state.key).toBe(`grid-item-${panel.spec.id}`);
-    const gridLayoutItemSpec = dash.layout.spec.items[0].spec as GridLayoutItemSpec;
+    const gridLayoutItemSpec = (dash.layout.spec as GridLayoutSpec).items[0].spec as GridLayoutItemSpec;
     expect(layout.state.grid.state.children[0].state.width).toBe(gridLayoutItemSpec.width);
     expect(layout.state.grid.state.children[0].state.height).toBe(gridLayoutItemSpec.height);
     expect(layout.state.grid.state.children[0].state.x).toBe(gridLayoutItemSpec.x);
@@ -242,7 +243,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
     // Library Panel
     const libraryPanel = getLibraryPanelElement(dash, 'panel-2')!;
     expect(layout.state.grid.state.children[1].state.key).toBe(`grid-item-${libraryPanel.spec.id}`);
-    const libraryGridLayoutItemSpec = dash.layout.spec.items[1].spec as GridLayoutItemSpec;
+    const libraryGridLayoutItemSpec = (dash.layout.spec as GridLayoutSpec).items[1].spec as GridLayoutItemSpec;
     expect(layout.state.grid.state.children[1].state.width).toBe(libraryGridLayoutItemSpec.width);
     expect(layout.state.grid.state.children[1].state.height).toBe(libraryGridLayoutItemSpec.height);
     expect(layout.state.grid.state.children[1].state.x).toBe(libraryGridLayoutItemSpec.x);
