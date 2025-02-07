@@ -98,7 +98,7 @@ export const onDashboardLoadedHandler = ({
       dashboard_id: dashboardId,
       org_id: orgId,
       logs_queries_count: logsQueries?.length,
-      logs_cwli_queries_count: logsQueries?.filter((q) => q.queryLanguage === LogsQueryLanguage.CWLI).length,
+      logs_cwli_queries_count: logsQueries?.filter((q) => !q.queryLanguage || q.queryLanguage === LogsQueryLanguage.CWLI).length,
       logs_sql_queries_count: logsQueries?.filter((q) => q.queryLanguage === LogsQueryLanguage.SQL).length,
       logs_ppl_queries_count: logsQueries?.filter((q) => q.queryLanguage === LogsQueryLanguage.PPL).length,
       metrics_queries_count: metricsQueries?.length,
