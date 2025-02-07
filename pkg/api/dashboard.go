@@ -211,6 +211,7 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 		}
 
 		if err != nil {
+			hs.log.Error("Failed to get dashboard folder", "error", err)
 			return response.Error(http.StatusInternalServerError, "Dashboard folder could not be read", err)
 		}
 
@@ -251,7 +252,7 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 		)
 		if err != nil {
 			// Not sure when this could happen so not sure how to better handle this. Right now ProvisionedExternalId
-			// is for better UX, showing in Save/Delete dialogs and so it won't break anything if it is empty.
+			// is for better UX, showing in Save/Delete dias and so it won't break anything if it is empty.
 			hs.log.Warn("Failed to create ProvisionedExternalId", "err", err)
 		}
 	}
