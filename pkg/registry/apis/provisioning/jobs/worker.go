@@ -19,7 +19,7 @@ import (
 )
 
 type Syncer interface {
-	Do(
+	Process(
 		ctx context.Context,
 		repo repository.Repository,
 		job provisioning.Job,
@@ -95,7 +95,7 @@ func (g *JobWorker) Process(ctx context.Context, job provisioning.Job, progress 
 
 	switch job.Spec.Action {
 	case provisioning.JobActionSync:
-		return g.syncer.Do(ctx, repo, job, progress)
+		return g.syncer.Process(ctx, repo, job, progress)
 	case provisioning.JobActionPullRequest:
 		prRepo, ok := repo.(PullRequestRepo)
 		if !ok {

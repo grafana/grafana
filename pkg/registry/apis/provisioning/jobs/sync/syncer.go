@@ -29,6 +29,8 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 )
 
+// Syncer synchronizes the external repo with grafana database
+// this function updates the status for both the job and the referenced repository
 type Syncer struct {
 	client  client.ProvisioningV0alpha1Interface
 	parsers *resources.ParserFactory
@@ -47,9 +49,7 @@ func NewSyncer(
 	}
 }
 
-// The Syncer will synchronize the external repo with grafana database
-// this function updates the status for both the job and the referenced repository
-func (r *Syncer) Do(ctx context.Context,
+func (r *Syncer) Process(ctx context.Context,
 	repo repository.Repository,
 	job provisioning.Job,
 	progress func(provisioning.JobStatus) error,
