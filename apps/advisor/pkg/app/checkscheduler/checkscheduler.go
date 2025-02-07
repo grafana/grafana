@@ -64,7 +64,7 @@ func (r *Runner) Run(ctx context.Context) error {
 
 	nextSendInterval := time.Until(lastCreated.Add(evaluateChecksInterval))
 	if nextSendInterval < time.Minute {
-		nextSendInterval = 10 * time.Minute
+		nextSendInterval = 1 * time.Minute
 	}
 
 	ticker := time.NewTicker(nextSendInterval)
