@@ -12,7 +12,6 @@ import (
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
@@ -68,7 +67,7 @@ func (r *SyncWorker) Process(ctx context.Context,
 	}
 
 	cfg, err = r.client.Repositories(cfg.Namespace).
-		Patch(ctx, cfg.Name, types.MergePatchType, patch, v1.PatchOptions{}, "status")
+		Patch(ctx, cfg.Name, types.MergePatchType, patch, metav1.PatchOptions{}, "status")
 	if err != nil {
 		logger.Warn("unable to update repo with job status", "err", err)
 	}
@@ -112,7 +111,7 @@ func (r *SyncWorker) Process(ctx context.Context,
 	}
 
 	_, err = r.client.Repositories(cfg.Namespace).
-		Patch(ctx, cfg.Name, types.MergePatchType, patch, v1.PatchOptions{}, "status")
+		Patch(ctx, cfg.Name, types.MergePatchType, patch, metav1.PatchOptions{}, "status")
 	if err != nil {
 		logger.Warn("unable to update repo with job status", "err", err)
 	}
