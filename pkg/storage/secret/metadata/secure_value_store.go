@@ -244,6 +244,11 @@ func (s *secureValueStorage) readInternal(ctx context.Context, nn xkube.NameName
 }
 
 func (s *secureValueStorage) storeInKeeper(ctx context.Context, sv *secretv0alpha1.SecureValue) (keepertypes.ExternalID, error) {
+	// TODO: Implement store by ref
+	if sv.Spec.Ref != "" {
+		return "", fmt.Errorf("store by ref in keeper")
+	}
+
 	// Check if keeper is default.
 	if sv.Spec.Keeper == keepertypes.DefaultKeeper {
 		keeper, exists := s.keepers[keepertypes.SQLKeeperType]
@@ -267,11 +272,6 @@ func (s *secureValueStorage) storeInKeeper(ctx context.Context, sv *secretv0alph
 	keeper, ok := s.keepers[keeperType]
 	if !ok {
 		return "", fmt.Errorf("could not find keeper: %s", keeperType)
-	}
-
-	// TODO: Implement store by ref
-	if sv.Spec.Ref != "" {
-		return "", fmt.Errorf("could not store by ref in keeper: %s", keeperType)
 	}
 
 	return keeper.Store(ctx, keeperConfig, sv.Namespace, string(sv.Spec.Value))
