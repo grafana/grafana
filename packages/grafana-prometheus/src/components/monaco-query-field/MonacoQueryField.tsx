@@ -133,6 +133,8 @@ const MonacoQueryField = (props: Props) => {
       ref={containerRef}
     >
       <ReactMonacoEditor
+        // see https://github.com/suren-atoyan/monaco-react/issues/365
+        saveViewState
         overrideServices={overrideServicesRef.current}
         options={options}
         language="promql"
