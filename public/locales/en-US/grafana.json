@@ -1346,36 +1346,6 @@
       "scan-for-older-logs": "Scan for older logs",
       "stop-scan": "Stop scan"
     },
-    "query-library": {
-      "add-edit-description": "Add/edit description",
-      "cancel": "Cancel",
-      "default-description": "Public",
-      "delete-query": "Delete query",
-      "delete-query-text": "You're about to remove this query from the query library. This action cannot be undone. Do you want to continue?",
-      "delete-query-title": "Delete query",
-      "private": "Private",
-      "public": "Public",
-      "query-deleted": "Query deleted",
-      "query-template-add-error": "Error attempting to save this query to the library",
-      "query-template-added": "Query successfully saved to the library",
-      "query-template-edit-error": "Error attempting to edit this query",
-      "query-template-edited": "Query template successfully edited",
-      "save": "Save"
-    },
-    "query-template-modal": {
-      "add-info": "You're about to save this query. Once saved, you can easily access it in the Query Library tab for future use and reference.",
-      "add-title": "Add query to Query Library",
-      "auto-star": "Auto-star this query to add it to your starred list in the Query Library.",
-      "data-source-name": "Data source name",
-      "description": "Description",
-      "edit-info": "You're about to edit this query. Once saved, you can easily access it in the Query Library tab for future use and reference.",
-      "edit-title": "Edit query",
-      "query": "Query",
-      "visibility": "Visibility"
-    },
-    "query-template-modall": {
-      "data-source-type": "Data source type"
-    },
     "rich-history": {
       "close-tooltip": "Close query history",
       "datasource-a-z": "Data source A-Z",
@@ -2993,14 +2963,6 @@
       "role-label": "Role"
     }
   },
-  "query-library": {
-    "datasource-names": "Datasource name(s):",
-    "delete-query-button": "Delete query",
-    "query-template-get-error": "Error attempting to load query template metadata: {{error}}",
-    "search": "Search by data source, query content or description",
-    "user-info-get-error": "Error attempting to get user info from the library: {{error}}",
-    "user-names": "User name(s):"
-  },
   "query-operation": {
     "header": {
       "collapse-row": "Collapse query row",
@@ -3010,8 +2972,6 @@
       "expand-row": "Expand query row",
       "hide-response": "Hide response",
       "remove-query": "Remove query",
-      "save-to-query-library": "Save to query library",
-      "save-to-query-library-new": "New: Save to query library",
       "show-response": "Show response",
       "toggle-edit-mode": "Toggle text edit mode"
     },
