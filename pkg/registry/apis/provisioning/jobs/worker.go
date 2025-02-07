@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/auth"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/export"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/services/rendering"
@@ -141,13 +142,12 @@ func (g *JobWorker) Process(ctx context.Context, job provisioning.Job, progress 
 			}, nil
 		}
 
-		var exporter Exporter
-
+		var exporter export.Exporter
 		// Test for now... so we have something with long spinners for UI testing!!!
 		if job.Spec.Export.Branch == "*dummy*" {
-			exporter = &dummyExporter{}
+			exporter = export.NewDummyExporter()
 		} else {
-			exporter, err = NewExporter(repo, parser.Client())
+			exporter, err = export.NewExporter(repo, parser.Client())
 			if err != nil {
 				return nil, err
 			}

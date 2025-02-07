@@ -1,4 +1,4 @@
-package jobs
+package export
 
 import (
 	"context"
@@ -13,6 +13,10 @@ import (
 )
 
 type dummyExporter struct{}
+
+func NewDummyExporter() Exporter {
+	return &dummyExporter{}
+}
 
 func (s *dummyExporter) Export(ctx context.Context,
 	repo repository.Repository,
