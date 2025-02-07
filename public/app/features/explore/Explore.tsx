@@ -605,6 +605,10 @@ export class Explore extends PureComponent<Props, ExploreState> {
                           queryInspectorButtonActive={showQueryInspector}
                           onClickAddQueryRowButton={this.onClickAddQueryRowButton}
                           onClickQueryInspectorButton={() => setShowQueryInspector(!showQueryInspector)}
+                          // TODO
+                          onSelectQueryFromLibrary={(query) => {
+                            console.log('adding!', query);
+                          }}
                         />
                         <ResponseErrorContainer exploreId={exploreId} />
                       </PanelContainer>
