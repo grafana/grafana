@@ -784,7 +784,6 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/publish-technical-documentation-next.yml @grafana/docs-tooling
 /.github/workflows/publish-technical-documentation-release.yml @grafana/docs-tooling
 /.github/workflows/remove-milestone.yml @grafana/grafana-developer-enablement-squad
-/.github/workflows/sbom-report.yml @grafana/security-team
 /.github/workflows/scripts/json-file-to-job-output.js @grafana/plugins-platform-frontend
 /.github/workflows/stale.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/update-changelog.yml @grafana/grafana-developer-enablement-squad
