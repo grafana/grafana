@@ -1686,6 +1686,17 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 			Values:   query.FolderUIDs,
 		}}
 		request.Options.Fields = append(request.Options.Fields, req...)
+	} else if len(query.FolderIds) > 0 { // nolint:staticcheck
+		values := make([]string, len(query.FolderIds)) // nolint:staticcheck
+		for i, id := range query.FolderIds {           // nolint:staticcheck
+			values[i] = strconv.FormatInt(id, 10)
+		}
+
+		request.Options.Labels = append(request.Options.Labels, &resource.Requirement{
+			Key:      utils.LabelKeyDeprecatedInternalID, // nolint:staticcheck
+			Operator: string(selection.In),
+			Values:   values,
+		})
 	}
 
 	if query.ProvisionedRepo != "" {
@@ -1744,7 +1755,7 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 
 	request.Limit = query.Limit
 	request.Page = query.Page
-	request.Offset = query.Page - 1 // bleve's offset is 0 indexed
+	request.Offset = (query.Page - 1) * query.Limit // only relevant when running in modes 3+
 
 	namespace := dr.k8sclient.GetNamespace(query.OrgId)
 	var err error
