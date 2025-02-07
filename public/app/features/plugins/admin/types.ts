@@ -65,6 +65,7 @@ export interface CatalogPlugin extends WithAccessControlMetadata {
   iam?: IdentityAccessManagement;
   isProvisioned?: boolean;
   url?: string;
+  raiseAnIssueUrl?: string;
 }
 
 export interface CatalogPluginDetails {
@@ -146,6 +147,7 @@ export type RemotePlugin = {
   lastCommitDate?: string;
   licenseUrl?: string;
   documentationUrl?: string;
+  raiseAnIssueUrl?: string;
 };
 
 // The available status codes on GCOM are available here:
@@ -193,6 +195,7 @@ export type LocalPlugin = WithAccessControlMetadata & {
   dependencies: PluginDependencies;
   angularDetected: boolean;
   iam?: IdentityAccessManagement;
+  raiseAnIssueUrl?: string;
 };
 
 interface IdentityAccessManagement {

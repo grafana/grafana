@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 import { PageInfoItem } from '@grafana/runtime/src/components/PluginPage';
 import {
   Stack,
@@ -42,6 +43,14 @@ export function PluginDetailsPanel(props: Props): React.ReactElement | null {
   const shouldRenderLinks = plugin.url || plugin.details?.licenseUrl || plugin.details?.documentationUrl;
 
   const styles = useStyles2(getStyles);
+  console.log('plugin', plugin);
+
+  const onClickReportConcern = (pluginId: string) => {
+    setReportAbuseModalOpen(true);
+    reportInteraction('plugin_detail_report_concern', {
+      plugin_id: pluginId,
+    });
+  };
 
   return (
     <>
@@ -90,17 +99,23 @@ export function PluginDetailsPanel(props: Props): React.ReactElement | null {
                   <Trans i18nKey="plugins.details.labels.links">Links </Trans>
                 </Text>
                 {plugin.url && (
-                  <LinkButton href={plugin.url} variant="secondary" fill="solid" icon="code-branch">
+                  <LinkButton href={plugin.url} variant="secondary" fill="solid" icon="code-branch" target="_blank">
                     <Trans i18nKey="plugins.details.labels.repository">Repository</Trans>
                   </LinkButton>
                 )}
-                {plugin.url && (
-                  <LinkButton href={`${plugin.url}/issues/new`} variant="secondary" fill="solid" icon="bug">
+                {plugin.raiseAnIssueUrl && (
+                  <LinkButton href={plugin.raiseAnIssueUrl} variant="secondary" fill="solid" icon="bug" target="_blank">
                     <Trans i18nKey="plugins.details.labels.raiseAnIssue">Raise an issue</Trans>
                   </LinkButton>
                 )}
                 {plugin.details?.licenseUrl && (
-                  <LinkButton href={plugin.details?.licenseUrl} variant="secondary" fill="solid" icon={'document-info'}>
+                  <LinkButton
+                    href={plugin.details?.licenseUrl}
+                    variant="secondary"
+                    fill="solid"
+                    icon={'document-info'}
+                    target="_blank"
+                  >
                     <Trans i18nKey="plugins.details.labels.license">License</Trans>
                   </LinkButton>
                 )}
@@ -110,6 +125,7 @@ export function PluginDetailsPanel(props: Props): React.ReactElement | null {
                     variant="secondary"
                     fill="solid"
                     icon={'list-ui-alt'}
+                    target="_blank"
                   >
                     <Trans i18nKey="plugins.details.labels.documentation">Documentation</Trans>
                   </LinkButton>
@@ -175,7 +191,7 @@ export function PluginDetailsPanel(props: Props): React.ReactElement | null {
               }
             >
               <Stack direction="column">
-                <Button variant="secondary" fill="solid" icon="bell" onClick={() => setReportAbuseModalOpen(true)}>
+                <Button variant="secondary" fill="solid" icon="bell" onClick={() => onClickReportConcern(plugin.id)}>
                   <Trans i18nKey="plugins.details.labels.contactGrafanaLabs">Contact Grafana Labs</Trans>
                 </Button>
               </Stack>
@@ -193,8 +209,9 @@ export function PluginDetailsPanel(props: Props): React.ReactElement | null {
             <Text>
               <Trans i18nKey="plugins.details.modal.description">
                 This feature is for reporting malicious or harmful behaviour within plugins. For plugin concerns, email
-                us at: <TextLink href="mailto:integrations@grafana.com">integrations@grafana.com</TextLink>.{' '}
+                us at:{' '}
               </Trans>
+              <TextLink href="mailto:integrations+report-plugin@grafana.com">integrations@grafana.com</TextLink>
             </Text>
             <Text>
               <Trans i18nKey="plugins.details.modal.node">
