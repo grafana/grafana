@@ -99,7 +99,7 @@ interface Context {
 }
 
 // TODO find a better approach for grafana global variables
-function isValidPromQLMinusGrafanaGlobalVariables(expr: string) {
+export function isValidPromQLMinusGrafanaGlobalVariables(expr: string) {
   const context: Context = {
     query: {
       metric: '',
@@ -116,6 +116,9 @@ function isValidPromQLMinusGrafanaGlobalVariables(expr: string) {
   expr = expr.replace(/\$__range_ms/g, '1000');
   expr = expr.replace(/\$__range_s/g, '1');
   expr = expr.replace(/\$__range/g, '1s');
+  expr = expr.replace(/\$prate/g, 'rate');
+  expr = expr.replace(/\$pincrease/g, 'increase');
+  expr = expr.replace(/\$pdelta/g, 'delta');
 
   const tree = parser.parse(expr);
   const node = tree.topNode;
