@@ -7,8 +7,10 @@ import { NewThemeOptions } from '../createTheme';
 
 const whiteBase = `210, 210, 220`;
 const secondaryBase = `210, 210, 220`;
-const brandMain = '#3d71d9';
-const brandText = '#6e9fff';
+//const brandMain = '#3d71d9';
+//const brandText = '#6e9fff';
+const brandMain = '#ff934d';
+const brandText = '#f99a5c';
 
 const disabledText = `rgba(${whiteBase}, 0.6)`;
 
