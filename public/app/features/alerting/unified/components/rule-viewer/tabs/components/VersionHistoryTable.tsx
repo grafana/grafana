@@ -59,17 +59,6 @@ export function VersionHistoryTable({
   //----> end of restore code
   const unknown = t('alerting.alertVersionHistory.unknown', 'Unknown');
 
-  // const rows = ruleVersions.map((rule, index) => {
-  //   const nextVersion = ruleVersions[index + 1];
-  //   const currentVersion = ruleVersions[index];
-  //   return {
-  //     id: String(rule.grafana_alert.version),
-  //     version: rule.grafana_alert.version || `unknown-rule-${index}`,
-  //     created: rule.grafana_alert.updated || unknown,
-  //     createdBy: rule.grafana_alert.updated_by,
-  //     diff: nextVersion ? computeVersionDiff(currentVersion, nextVersion) : { added: 0, removed: 0 },
-  //   };
-  // });
   const SPECIAL_UID_MAP = getSpecialUidMap();
 
   const columns: Array<Column<(typeof ruleVersions)[0]>> = [
