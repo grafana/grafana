@@ -1,28 +1,15 @@
-import { css } from '@emotion/css';
 import { useState } from 'react';
 
 import { dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import {
-  Badge,
-  Button,
-  Checkbox,
-  Column,
-  ConfirmModal,
-  Icon,
-  InteractiveTable,
-  Stack,
-  Text,
-  Tooltip,
-  useStyles2,
-} from '@grafana/ui';
+import { Badge, Button, Checkbox, Column, ConfirmModal, InteractiveTable, Stack, Text } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 import { computeVersionDiff } from 'app/features/alerting/unified/utils/diff';
 import { DiffGroup } from 'app/features/dashboard-scene/settings/version-history/DiffGroup';
 import { Diffs, jsonDiff } from 'app/features/dashboard-scene/settings/version-history/utils';
 import { GrafanaRuleDefinition, RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
-import { getSpecialUidMap } from '../versions-utils';
+import { UpdatedByUser } from './UpdatedBy';
 
 const VERSIONS_PAGE_SIZE = 20;
 
@@ -35,7 +22,6 @@ export function VersionHistoryTable({
   ruleVersions: Array<RulerGrafanaRuleDTO<GrafanaRuleDefinition>>;
   disableSelection: boolean;
 }) {
-  const styles = useStyles2(getStyles);
   const [checkedVersions, setCheckedVersions] = useState<Map<string, boolean>>(new Map());
 
   //----> restore code : no need to review as it's behind a feature flag
@@ -58,8 +44,6 @@ export function VersionHistoryTable({
   };
   //----> end of restore code
   const unknown = t('alerting.alertVersionHistory.unknown', 'Unknown');
-
-  const SPECIAL_UID_MAP = getSpecialUidMap();
 
   const columns: Array<Column<(typeof ruleVersions)[0]>> = [
     {
@@ -93,45 +77,7 @@ export function VersionHistoryTable({
       header: t('core.versionHistory.table.updatedBy', 'Updated By'),
       disableGrow: true,
       cell: ({ row }) => {
-        const value = row.original.grafana_alert.updated_by;
-        const unknownCase = (
-          <Tooltip
-            content={t(
-              'alerting.alertVersionHistory.unknown-change-description',
-              'This update was made prior to the implementation of alert rule version history. The user who made the change is not tracked, but future changes will include the user'
-            )}
-          >
-            <span>
-              <span className={styles.underline}>{unknown} </span>
-              <Icon name="question-circle" />
-            </span>
-          </Tooltip>
-        );
-        if (!value) {
-          return unknownCase;
-        }
-        const specialCase = SPECIAL_UID_MAP[value.uid];
-        if (specialCase || !value) {
-          return (
-            <Tooltip content={specialCase.tooltipContent}>
-              <span>
-                <Badge
-                  className={styles.badge}
-                  text={specialCase.name}
-                  color={specialCase.badgeColor}
-                  icon={specialCase.icon}
-                />
-              </span>
-            </Tooltip>
-          );
-        }
-        if (value.name) {
-          return value.name;
-        }
-        if (value.uid) {
-          return t('alerting.alertVersionHistory.user-id', 'User ID {{uid}}', { uid: value.uid });
-        }
-        return unknownCase;
+        return <UpdatedByUser user={row.original.grafana_alert.updated_by} />;
       },
     },
     {
@@ -242,14 +188,3 @@ export function VersionHistoryTable({
     </>
   );
 }
-
-const getStyles = () => {
-  return {
-    badge: css({ cursor: 'help' }),
-    underline: css({
-      textDecoration: 'underline dotted',
-      textUnderlineOffset: '5px',
-      cursor: 'help',
-    }),
-  };
-};

@@ -243,7 +243,7 @@ export interface GrafanaEditorSettings {
   simplified_notifications_section: boolean;
 }
 
-interface UpdatedBy {
+export interface UpdatedBy {
   uid: string;
   name: string;
 }
