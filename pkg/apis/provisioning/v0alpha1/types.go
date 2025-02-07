@@ -74,9 +74,6 @@ type RepositorySpec struct {
 	// Repository description
 	Description string `json:"description,omitempty"`
 
-	// The folder that is backed by the repository.
-	// The value is a reference to the Kubernetes metadata name of the folder in the same namespace.
-	Folder string `json:"folder,omitempty"`
 
 	// Edit options within the repository
 	Editing EditingOptions `json:"editing"`
