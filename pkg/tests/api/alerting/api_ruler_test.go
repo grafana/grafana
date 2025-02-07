@@ -3529,8 +3529,6 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 							"label1": "val1"
 					   },
 					   "grafana_alert":{
-						  "id":1,
-						  "orgId":1,
 						  "title":"AlwaysFiring",
 						  "condition":"A",
 						  "data":[
@@ -3575,8 +3573,6 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 					   "expr":"",
 					   "for": "0s",
 					   "grafana_alert":{
-						  "id":2,
-						  "orgId":1,
 						  "title":"AlwaysFiringButSilenced",
 						  "condition":"A",
 						  "data":[
