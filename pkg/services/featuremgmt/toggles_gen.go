@@ -966,4 +966,8 @@ const (
 	// FlagPluginsCDNSyncLoader
 	// Load plugins from CDN synchronously
 	FlagPluginsCDNSyncLoader = "pluginsCDNSyncLoader"
+
+	// FlagManagedPluginsInstallationImprovements
+	// Improve the installation experience for managed plugins
+	FlagManagedPluginsInstallationImprovements = "managedPluginsInstallationImprovements"
 )

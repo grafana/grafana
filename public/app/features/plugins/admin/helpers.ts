@@ -477,3 +477,11 @@ export function shouldDisablePluginInstall(plugin: CatalogPlugin) {
 
   return false;
 }
+
+export function pluginRequiresRestartForInstall(plugin: CatalogPlugin) {
+  return (
+    config.pluginAdminExternalManageEnabled &&
+    config.featureToggles.managedPluginsInstall &&
+    !(plugin.isManaged && config.featureToggles.managedPluginsInstallationImprovements)
+  );
+}

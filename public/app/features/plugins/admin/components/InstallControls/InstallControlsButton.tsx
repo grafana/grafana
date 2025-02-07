@@ -10,6 +10,7 @@ import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { removePluginFromNavTree } from 'app/core/reducers/navBarTree';
 import { useDispatch } from 'app/types';
 
+import { pluginRequiresRestartForInstall } from '../../helpers';
 import {
   useInstallStatus,
   useUninstallStatus,
@@ -72,7 +73,11 @@ export function InstallControlsButton({
     const result = await install(plugin.id, latestCompatibleVersion?.version);
     if (!errorInstalling && !('error' in result)) {
       let successMessage = `Installed ${plugin.name}`;
-      if (config.pluginAdminExternalManageEnabled && configCore.featureToggles.managedPluginsInstall) {
+      if (
+        config.pluginAdminExternalManageEnabled &&
+        configCore.featureToggles.managedPluginsInstall &&
+        !(plugin.isManaged && configCore.featureToggles.managedPluginsInstallationImprovements)
+      ) {
         successMessage = 'Install requested, this may take a few minutes.';
       }
 
@@ -98,7 +103,11 @@ export function InstallControlsButton({
       }
 
       let successMessage = `Uninstalled ${plugin.name}`;
-      if (config.pluginAdminExternalManageEnabled && configCore.featureToggles.managedPluginsInstall) {
+      if (
+        config.pluginAdminExternalManageEnabled &&
+        configCore.featureToggles.managedPluginsInstall &&
+        !(plugin.isManaged && configCore.featureToggles.managedPluginsInstallationImprovements)
+      ) {
         successMessage = 'Uninstall requested, this may take a few minutes.';
       }
 
@@ -154,10 +163,7 @@ export function InstallControlsButton({
   }
 
   if (pluginStatus === PluginStatus.UPDATE) {
-    const disableUpdate =
-      config.pluginAdminExternalManageEnabled && configCore.featureToggles.managedPluginsInstall
-        ? plugin.isUpdatingFromInstance
-        : isInstalling;
+    const disableUpdate = pluginRequiresRestartForInstall(plugin) ? plugin.isUpdatingFromInstance : isInstalling;
 
     return (
       <Stack alignItems="flex-start" width="auto" height="auto">
@@ -181,7 +187,7 @@ export function InstallControlsButton({
 }
 
 function shouldDisableUninstall(isUninstalling: boolean, plugin: CatalogPlugin) {
-  if (config.pluginAdminExternalManageEnabled && config.featureToggles.managedPluginsInstall) {
+  if (pluginRequiresRestartForInstall(plugin)) {
     return plugin.isUninstallingFromInstance || !plugin.isFullyInstalled || plugin.isUpdatingFromInstance;
   }
 

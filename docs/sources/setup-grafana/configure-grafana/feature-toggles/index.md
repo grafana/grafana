@@ -234,6 +234,7 @@ Experimental features might be changed or removed without prior notice.
 | `datasourceConnectionsTab`                  | Shows defined connections for a data source in the plugins detail page                                                                                                                                                                                                            |
 | `newLogsPanel`                              | Enables the new logs panel in Explore                                                                                                                                                                                                                                             |
 | `pluginsCDNSyncLoader`                      | Load plugins from CDN synchronously                                                                                                                                                                                                                                               |
+| `managedPluginsInstallationImprovements`    | Improve the installation experience for managed plugins                                                                                                                                                                                                                           |
 
 ## Development feature toggles
 

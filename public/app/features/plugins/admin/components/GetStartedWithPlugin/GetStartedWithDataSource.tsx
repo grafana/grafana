@@ -2,12 +2,12 @@ import { useCallback } from 'react';
 import * as React from 'react';
 
 import { DataSourcePluginMeta } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { Button } from '@grafana/ui';
 import { ROUTES } from 'app/features/connections/constants';
 import { addDataSource } from 'app/features/datasources/state';
 import { useDispatch } from 'app/types';
 
+import { pluginRequiresRestartForInstall } from '../../helpers';
 import { isDataSourceEditor } from '../../permissions';
 import { CatalogPlugin } from '../../types';
 
@@ -30,8 +30,7 @@ export function GetStartedWithDataSource({ plugin }: Props): React.ReactElement 
     return null;
   }
 
-  const disabledButton =
-    config.featureToggles.managedPluginsInstall && config.pluginAdminExternalManageEnabled && !plugin.isFullyInstalled;
+  const disabledButton = pluginRequiresRestartForInstall(plugin) ? !plugin.isFullyInstalled : !plugin.isInstalled;
 
   return (
     <Button

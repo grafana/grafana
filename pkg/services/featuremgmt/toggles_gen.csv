@@ -239,3 +239,4 @@ alertingAlertmanagerExtraDedupStageStopPipeline,experimental,@grafana/alerting-s
 newLogsPanel,experimental,@grafana/observability-logs,false,false,true
 grafanaconThemes,experimental,@grafana/grafana-frontend-platform,false,true,false
 pluginsCDNSyncLoader,experimental,@grafana/plugins-platform-backend,false,false,false
+managedPluginsInstallationImprovements,experimental,@grafana/plugins-platform-backend,false,false,false

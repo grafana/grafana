@@ -1800,6 +1800,12 @@ var (
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaPluginsPlatformSquad,
 		},
+		{
+			Name:        "managedPluginsInstallationImprovements",
+			Description: "Improve the installation experience for managed plugins",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaPluginsPlatformSquad,
+		},
 	}
 )
 

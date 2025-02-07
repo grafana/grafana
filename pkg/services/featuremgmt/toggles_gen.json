@@ -2615,6 +2615,18 @@
     },
     {
       "metadata": {
+        "name": "managedPluginsInstallationImprovements",
+        "resourceVersion": "1738926174659",
+        "creationTimestamp": "2025-02-07T11:02:54Z"
+      },
+      "spec": {
+        "description": "Improve the installation experience for managed plugins",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend"
+      }
+    },
+    {
+      "metadata": {
         "name": "metricsSummary",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2023-08-28T14:02:12Z"
