@@ -51,7 +51,16 @@ func NewDashboardLargeObjectSupport(scheme *runtime.Scheme) *apistore.BasicLarge
 			if err != nil {
 				return err
 			}
-			return json.Unmarshal(blob, &dash.Spec)
+
+			if err := json.Unmarshal(blob, &dash.Spec); err != nil {
+				return fmt.Errorf("failed to unmarshal blob into spec: %w", err)
+			}
+
+			if err := scheme.Convert(dash, obj, nil); err != nil {
+				return fmt.Errorf("failed to update original object: %w", err)
+			}
+
+			return nil
 		},
 	}
 }
