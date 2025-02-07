@@ -216,7 +216,8 @@ export class GrafanaApp {
       setDataSourceSrv(dataSourceSrv);
       initWindowRuntime();
 
-      if (contextSrv.user.orgRole !== '' && (!config.featureToggles.improveRendererTraffic || contextSrv.user.authenticatedBy !== 'render')) {
+      // Do not pre-load apps if improveRendererTraffic is true and the request comes from the image renderer
+      if (contextSrv.user.orgRole !== '' && !(config.featureToggles.improveRendererTraffic && contextSrv.user.authenticatedBy === 'render')) {
         const appPluginsToAwait = getAppPluginsToAwait();
         const appPluginsToPreload = getAppPluginsToPreload();
 
