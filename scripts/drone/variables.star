@@ -2,7 +2,7 @@
 global variables
 """
 
-grabpl_version = "v3.1.1"
+grabpl_version = "v3.1.2"
 golang_version = "1.22.11"
 
 # nodejs_version should match what's in ".nvmrc", but without the v prefix.
