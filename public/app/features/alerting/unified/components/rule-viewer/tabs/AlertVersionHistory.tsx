@@ -1,142 +1,32 @@
-import { css } from '@emotion/css';
 import { ComponentProps, useMemo, useState } from 'react';
 
-import { IconName, dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import {
-  Alert,
-  Badge,
-  BadgeColor,
-  Box,
-  Button,
-  Checkbox,
-  Column,
-  ConfirmModal,
-  Drawer,
-  EmptyState,
-  Icon,
-  InteractiveTable,
-  LoadingPlaceholder,
-  Stack,
-  Text,
-  Tooltip,
-  useStyles2,
-} from '@grafana/ui';
+import { Alert, Box, Button, Drawer, EmptyState, LoadingPlaceholder, Stack, Text, Tooltip } from '@grafana/ui';
 import { RevisionModel, VersionHistoryComparison } from 'app/core/components/VersionHistory/VersionHistoryComparison';
 import { Trans, t } from 'app/core/internationalization';
-import { DiffGroup } from 'app/features/dashboard-scene/settings/version-history/DiffGroup';
-import { Diffs, jsonDiff } from 'app/features/dashboard-scene/settings/version-history/utils';
-import {
-  GrafanaAlertRuleDTOField,
-  GrafanaRuleDefinition,
-  RulerGrafanaRuleDTO,
-  TopLevelGrafanaRuleDTOField,
-} from 'app/types/unified-alerting-dto';
+import { GrafanaRuleDefinition, RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { LogMessages, logInfo, trackRuleVersionsComparisonClick } from '../../../Analytics';
 import { alertRuleApi } from '../../../api/alertRuleApi';
-import { computeVersionDiff } from '../../../utils/diff';
 import { stringifyErrorLike } from '../../../utils/misc';
+
+import { VersionHistoryTable } from './components/VersionHistoryTable';
+import { getSpecialUidMap, preprocessRuleForDiffDisplay } from './versions-utils';
 
 const { useGetAlertVersionHistoryQuery } = alertRuleApi;
 
-export interface AlertVersionHistoryProps {
+interface AlertVersionHistoryProps {
   ruleUid: string;
 }
 
-const VERSIONS_PAGE_SIZE = 20;
-
 /** List of (top level) properties to exclude from being shown in human readable summary of version changes */
-
-const grafanaAlertPropertiesToIgnore: Array<keyof GrafanaRuleDefinition> = [
+export const grafanaAlertPropertiesToIgnore: Array<keyof GrafanaRuleDefinition> = [
   'id',
   'uid',
   'updated',
   'updated_by',
   'version',
 ];
-
-function preprocessRuleForDiffDisplay(rulerRule: RulerGrafanaRuleDTO<GrafanaRuleDefinition>) {
-  const { grafana_alert, ...rest } = rulerRule;
-
-  // translations for properties not in `grafana_alert`
-  const translationMap: Partial<Record<TopLevelGrafanaRuleDTOField, string>> = {
-    for: t('alerting.alertVersionHistory.pendingPeriod', 'Pending period'),
-    annotations: t('alerting.alertVersionHistory.annotations', 'Annotations'),
-    labels: t('alerting.alertVersionHistory.labels', 'Labels'),
-  };
-
-  // translations for properties in `grafana_alert`
-  const grafanaAlertTranslationMap: Partial<Record<GrafanaAlertRuleDTOField, string>> = {
-    title: t('alerting.alertVersionHistory.name', 'Name'),
-    namespace_uid: t('alerting.alertVersionHistory.namespace_uid', 'Folder UID'),
-    data: t('alerting.alertVersionHistory.queryAndAlertCondition', 'Query and alert condition'),
-    notification_settings: t('alerting.alertVersionHistory.contactPointRouting', 'Contact point routing'),
-    no_data_state: t('alerting.alertVersionHistory.noDataState', 'Alert state when no data'),
-    exec_err_state: t('alerting.alertVersionHistory.execErrorState', 'Alert state when execution error'),
-    is_paused: t('alerting.alertVersionHistory.paused', 'Paused state'),
-    rule_group: t('alerting.alertVersionHistory.rule_group', 'Rule group'),
-    condition: t('alerting.alertVersionHistory.condition', 'Alert condition'),
-  };
-
-  const processedTopLevel = Object.entries(rest).reduce((acc, [key, value]) => {
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    const topLevelRuleKey = key as keyof Omit<RulerGrafanaRuleDTO, 'grafana_alert'>;
-    const potentiallyTranslatedKey = translationMap[topLevelRuleKey] || key;
-    return {
-      ...acc,
-      [potentiallyTranslatedKey]: value,
-    };
-  }, {});
-
-  const processedGrafanaAlert = Object.entries(grafana_alert).reduce((acc, [key, value]) => {
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    const grafanaRuleKey = key as keyof GrafanaRuleDefinition;
-
-    if (grafanaAlertPropertiesToIgnore.includes(grafanaRuleKey)) {
-      return acc;
-    }
-
-    const potentiallyTranslatedKey = grafanaAlertTranslationMap[grafanaRuleKey] || key;
-    return {
-      ...acc,
-      [potentiallyTranslatedKey]: value,
-    };
-  }, {});
-
-  return {
-    ...processedTopLevel,
-    ...processedGrafanaAlert,
-  };
-}
-
-const getSpecialUidMap: () => Record<
-  string,
-  {
-    name: string;
-    tooltipContent: string;
-    badgeColor: BadgeColor;
-    icon?: IconName;
-  }
-> = () => ({
-  __alerting__: {
-    name: t('alerting.alertVersionHistory.alerting', 'Alerting'),
-    tooltipContent: t(
-      'alerting.alertVersionHistory.alerting-change-description',
-      'This update was made by the alerting system due to other changes. For example, when renaming a contact point that is used for simplified routing, this will update affected rules'
-    ),
-    badgeColor: 'orange',
-    icon: 'bell',
-  },
-  service: {
-    name: t('alerting.alertVersionHistory.provisioning', 'Provisioning'),
-    tooltipContent: t(
-      'alerting.alertVersionHistory.provisioning-change-description',
-      'Version update was made via provisioning'
-    ),
-    badgeColor: 'purple',
-  },
-});
 
 /**
  * Render the version history of a given Grafana managed alert rule, showing different edits
@@ -158,7 +48,7 @@ export function AlertVersionHistory({ ruleUid }: AlertVersionHistoryProps) {
 
   if (error) {
     return (
-      <Alert title={t('alerting.alertVersionHistory.errorloading', 'Failed to load alert rule history')}>
+      <Alert title={t('alerting.alertVersionHistory.errorloading', 'Failed to load alert rule versions')}>
         {stringifyErrorLike(error)}
       </Alert>
     );
@@ -214,6 +104,10 @@ export function AlertVersionHistory({ ruleUid }: AlertVersionHistoryProps) {
     setNewVersion(undefined);
   };
 
+  /**
+   * Turns a version of a Grafana rule definition into data structure
+   * used to display the version summary when comparing versions
+   */
   const parseVersionInfo = (version: RulerGrafanaRuleDTO<GrafanaRuleDefinition>): RevisionModel => {
     const unknown = t('alerting.alertVersionHistory.unknown', 'Unknown');
     const createdBy = (() => {
@@ -230,7 +124,7 @@ export function AlertVersionHistory({ ruleUid }: AlertVersionHistoryProps) {
       if (name) {
         return name;
       }
-      return uid ? `User ID ${uid}` : unknown;
+      return uid ? t('alerting.alertVersionHistory.user-id', 'User ID {{uid}}', { uid }) : unknown;
     })();
 
     return {
@@ -275,7 +169,7 @@ export function AlertVersionHistory({ ruleUid }: AlertVersionHistoryProps) {
               <Stack justifyContent="flex-end">
                 <Button variant="destructive" onClick={() => {}}>
                   <Trans i18nKey="alerting.alertVersionHistory.reset">
-                    Reset to version {oldVersion.grafana_alert.version}
+                    Reset to version {{ version: oldVersion.grafana_alert.version }}
                   </Trans>
                 </Button>
               </Stack>
@@ -290,235 +184,5 @@ export function AlertVersionHistory({ ruleUid }: AlertVersionHistoryProps) {
         disableSelection={canCompare}
       />
     </Stack>
-  );
-}
-
-const getStyles = () => {
-  return {
-    badge: css({ cursor: 'help' }),
-    underline: css({
-      textDecoration: 'underline dotted',
-      textUnderlineOffset: '5px',
-      cursor: 'help',
-    }),
-  };
-};
-
-function VersionHistoryTable({
-  onVersionsChecked,
-  ruleVersions,
-  disableSelection,
-}: {
-  onVersionsChecked: (value: Map<string, boolean>) => void;
-  ruleVersions: Array<RulerGrafanaRuleDTO<GrafanaRuleDefinition>>;
-  disableSelection: boolean;
-}) {
-  const styles = useStyles2(getStyles);
-  const [checkedVersions, setCheckedVersions] = useState<Map<string, boolean>>(new Map());
-
-  //----> restore code : no need to review as it's behind a feature flag
-  const [confirmRestore, setConfirmRestore] = useState(false);
-  const [restoreDiff, setRestoreDiff] = useState<Diffs | undefined>();
-
-  const showConfirmation = (id: string) => {
-    const currentVersion = ruleVersions[0];
-    const restoreVersion = ruleVersions.find((rule) => String(rule.grafana_alert.version) === id);
-    if (!restoreVersion) {
-      return;
-    }
-
-    setConfirmRestore(true);
-    setRestoreDiff(jsonDiff(currentVersion, restoreVersion));
-  };
-
-  const hideConfirmation = () => {
-    setConfirmRestore(false);
-  };
-
-  //----> end of restore code
-
-  const unknown = t('alerting.alertVersionHistory.unknown', 'Unknown');
-
-  const rows = ruleVersions.map((rule, index) => {
-    const priorVersion = ruleVersions[index + 1];
-    const currentVersion = ruleVersions[index];
-    return {
-      id: String(rule.grafana_alert.version),
-      version: rule.grafana_alert.version || `unknown-rule-${index}`,
-      created: rule.grafana_alert.updated || unknown,
-      createdBy: rule.grafana_alert.updated_by,
-      diff: priorVersion ? computeVersionDiff(priorVersion, currentVersion) : { added: 0, removed: 0 },
-    };
-  });
-  const SPECIAL_UID_MAP = getSpecialUidMap();
-  // todo: fix types
-  const columns: Array<Column<(typeof rows)[0]>> = [
-    {
-      disableGrow: true,
-      id: 'id',
-      header: t('core.versionHistory.table.version', 'Version'),
-      cell: ({ value }) => {
-        const thisValue = checkedVersions.get(String(value ?? false)) ?? false;
-        return (
-          <Stack direction="row">
-            <Checkbox
-              label={value}
-              checked={thisValue}
-              disabled={disableSelection && !thisValue}
-              onChange={() => {
-                setCheckedVersions((prevState) => {
-                  const newState = new Map(prevState);
-                  newState.set(String(value), !prevState.get(String(value)));
-                  onVersionsChecked(newState);
-                  return newState;
-                });
-              }}
-            />
-          </Stack>
-        );
-      },
-    },
-    {
-      id: 'createdBy',
-      header: t('core.versionHistory.table.updatedBy', 'Updated By'),
-      disableGrow: true,
-      cell: ({ value }) => {
-        if (!value) {
-          return (
-            <Tooltip
-              content={t(
-                'alerting.alertVersionHistory.unknown-change-description',
-                'This update was made prior to the implementation of alert rule version history. The user who made the change is not tracked, but future changes will include the user'
-              )}
-            >
-              <span>
-                <span className={styles.underline}>{unknown} </span>
-                <Icon name="question-circle" />
-              </span>
-            </Tooltip>
-          );
-        }
-        const specialCase = SPECIAL_UID_MAP[value.uid];
-        if (specialCase || !value) {
-          return (
-            <Tooltip content={specialCase.tooltipContent}>
-              <span>
-                <Badge
-                  className={styles.badge}
-                  text={specialCase.name}
-                  color={specialCase.badgeColor}
-                  icon={specialCase.icon}
-                />
-              </span>
-            </Tooltip>
-          );
-        }
-        if (value.name) {
-          return value.name;
-        }
-        if (value.uid) {
-          return t('alerting.alertVersionHistory.user-id', 'User ID {{uid}}', { uid: value.uid });
-        }
-      },
-    },
-    {
-      id: 'created',
-      header: t('core.versionHistory.table.updated', 'Date'),
-      disableGrow: true,
-      cell: ({ value }) => dateTimeFormat(value) + ' (' + dateTimeFormatTimeAgo(value) + ')',
-    },
-    {
-      id: 'diff',
-      disableGrow: true,
-      cell: ({ row, value }) => {
-        const isLastItem = row.index === ruleVersions.length - 1;
-        if (isLastItem) {
-          return null;
-        }
-
-        const added = `+${value.added}`;
-        const removed = `-${value.removed}`;
-        return (
-          <Stack alignItems="baseline" gap={0.5}>
-            <Text color="success" variant="bodySmall">
-              {added}
-            </Text>
-            <Text color="error" variant="bodySmall">
-              {removed}
-            </Text>
-          </Stack>
-        );
-      },
-    },
-    {
-      id: 'actions',
-      disableGrow: true,
-      cell: ({ row }) => {
-        const isFirstItem = row.index === 0;
-
-        return (
-          <Stack direction="row" alignItems="center" justifyContent="flex-end">
-            {isFirstItem ? (
-              <Badge text={t('alerting.alertVersionHistory.latest', 'Latest')} color="blue" />
-            ) : config.featureToggles.alertingRuleVersionHistoryRestore ? (
-              <Button
-                variant="secondary"
-                size="sm"
-                icon="history"
-                onClick={() => {
-                  showConfirmation(row.values.id);
-                }}
-              >
-                <Trans i18nKey="alerting.alertVersionHistory.restore">Restore</Trans>
-              </Button>
-            ) : null}
-          </Stack>
-        );
-      },
-    },
-  ];
-
-  return (
-    <>
-      <InteractiveTable
-        pageSize={VERSIONS_PAGE_SIZE}
-        columns={columns}
-        data={rows}
-        getRowId={(row) => `${row.version}`}
-      />
-      {/* ---------------------> restore code: no need to review for this pr as it's behind a feature flag */}
-      <ConfirmModal
-        isOpen={confirmRestore}
-        title={t('alerting.alertVersionHistory.restore-modal.title', 'Restore Version')}
-        body={
-          <Stack direction="column" gap={2}>
-            <Trans i18nKey="alerting.alertVersionHistory.restore-modal.body">
-              Are you sure you want to restore the alert rule definition to this version? All unsaved changes will be
-              lost.
-            </Trans>
-            <Text variant="h6">
-              <Trans i18nKey="alerting.alertVersionHistory.restore-modal.summary">
-                Summary of changes to be applied:
-              </Trans>
-            </Text>
-            <div>
-              {restoreDiff && (
-                <>
-                  {Object.entries(restoreDiff).map(([key, diffs]) => (
-                    <DiffGroup diffs={diffs} key={key} title={key} />
-                  ))}
-                </>
-              )}
-            </div>
-          </Stack>
-        }
-        confirmText={'Yes, restore configuration'}
-        onConfirm={() => {
-          hideConfirmation();
-        }}
-        onDismiss={() => hideConfirmation()}
-      />
-      {/* ------------------------------------> END OF RESTORING CODE */}
-    </>
   );
 }
