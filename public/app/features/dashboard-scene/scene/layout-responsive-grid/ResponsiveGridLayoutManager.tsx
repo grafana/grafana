@@ -97,15 +97,35 @@ export class ResponsiveGridLayoutManager
     return panels;
   }
 
+  public hasVizPanels(): boolean {
+    for (const child of this.state.layout.state.children) {
+      if (child instanceof ResponsiveGridItem) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   public addNewRow() {
+    const shouldAddRow = this.hasVizPanels();
     const rowsLayout = RowsLayoutManager.createFromLayout(this);
-    rowsLayout.addNewRow();
+
+    if (shouldAddRow) {
+      rowsLayout.addNewRow();
+    }
+
     getDashboardSceneFor(this).switchLayout(rowsLayout);
   }
 
   public addNewTab() {
+    const shouldAddTab = this.hasVizPanels();
     const tabsLayout = TabsLayoutManager.createFromLayout(this);
-    tabsLayout.addNewTab();
+
+    if (shouldAddTab) {
+      tabsLayout.addNewTab();
+    }
+
     getDashboardSceneFor(this).switchLayout(tabsLayout);
   }
 

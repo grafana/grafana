@@ -44,6 +44,16 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     return panels;
   }
 
+  public hasVizPanels(): boolean {
+    for (const tab of this.state.tabs) {
+      if (tab.getLayout().hasVizPanels()) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   public addNewRow() {
     this.state.currentTab.getLayout().addNewRow();
   }

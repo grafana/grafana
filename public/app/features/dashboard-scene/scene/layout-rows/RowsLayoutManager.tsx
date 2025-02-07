@@ -64,13 +64,28 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
     return panels;
   }
 
+  public hasVizPanels(): boolean {
+    for (const row of this.state.rows) {
+      if (row.getLayout().hasVizPanels()) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   public addNewRow() {
     this.setState({ rows: [...this.state.rows, new RowItem()] });
   }
 
   public addNewTab() {
+    const shouldAddTab = this.hasVizPanels();
     const tabsLayout = TabsLayoutManager.createFromLayout(this);
-    tabsLayout.addNewTab();
+
+    if (shouldAddTab) {
+      tabsLayout.addNewTab();
+    }
+
     getDashboardSceneFor(this).switchLayout(tabsLayout);
   }
 

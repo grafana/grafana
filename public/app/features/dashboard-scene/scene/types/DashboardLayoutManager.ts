@@ -34,9 +34,14 @@ export interface DashboardLayoutManager<S = {}> extends SceneObject {
   duplicatePanel?(panel: VizPanel): void;
 
   /**
-   * getVizPanels
+   * Gets all the viz panels in the layout
    */
   getVizPanels(): VizPanel[];
+
+  /**
+   * Check if the layout has viz panels
+   */
+  hasVizPanels(): boolean;
 
   /**
    * Add row
