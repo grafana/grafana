@@ -48,6 +48,11 @@ elif [ -d "../e2e/test-plugins" ]; then
   cp -r "../e2e/test-plugins" "$RUNDIR/data/plugins"
 fi
 
+if [ "$INSTALL_IMAGE_RENDERER" ]; then
+  echo -e "Installing image renderer"
+  $RUNDIR/bin/"$ARCH"grafana cli --pluginsDir "$RUNDIR/data/plugins" plugins install grafana-image-renderer
+fi
+
 echo -e "Copy provisioning setup from devenv"
 
 cp devenv/datasources.yaml $PROV_DIR/datasources
