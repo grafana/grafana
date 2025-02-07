@@ -141,7 +141,7 @@ function buildScene(
       $behaviors: [repeatBehavior],
       layout: DefaultGridLayoutManager.fromGridItems([
         new DashboardGridItem({
-          key: 'griditem-1',
+          key: 'grid-item-1',
           x: 0,
           y: 11,
           width: 24,
@@ -155,13 +155,13 @@ function buildScene(
       title: 'Row at the bottom',
       layout: DefaultGridLayoutManager.fromGridItems([
         new DashboardGridItem({
-          key: 'griditem-2',
+          key: 'grid-item-2',
           x: 0,
           y: 17,
           body: buildTextPanel('text-2', 'Panel inside row, server = $server'),
         }),
         new DashboardGridItem({
-          key: 'griditem-3',
+          key: 'grid-item-3',
           x: 0,
           y: 25,
           body: buildTextPanel('text-3', 'Panel inside row, server = $server'),

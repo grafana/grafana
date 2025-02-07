@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import * as React from 'react';
 
 import { SceneObject } from '@grafana/scenes';
 import { Modal, useStyles2 } from '@grafana/ui';
@@ -11,12 +10,19 @@ export interface RowOptionsModalProps {
   title: string;
   repeat?: string;
   parent: SceneObject;
-  warning?: React.ReactNode;
+  isUsingDashboardDS: boolean;
   onDismiss: () => void;
   onUpdate: OnRowOptionsUpdate;
 }
 
-export const RowOptionsModal = ({ repeat, title, parent, onDismiss, onUpdate, warning }: RowOptionsModalProps) => {
+export const RowOptionsModal = ({
+  repeat,
+  title,
+  parent,
+  onDismiss,
+  onUpdate,
+  isUsingDashboardDS,
+}: RowOptionsModalProps) => {
   const styles = useStyles2(getStyles);
 
   return (
@@ -32,7 +38,7 @@ export const RowOptionsModal = ({ repeat, title, parent, onDismiss, onUpdate, wa
         title={title}
         onCancel={onDismiss}
         onUpdate={onUpdate}
-        warning={warning}
+        isUsingDashboardDS={isUsingDashboardDS}
       />
     </Modal>
   );
