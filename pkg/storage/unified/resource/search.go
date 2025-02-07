@@ -431,15 +431,19 @@ func (s *searchSupport) handleEvent(ctx context.Context, evt *WrittenEvent) {
 		return
 	}
 
+	_, buildDocSpan := s.tracer.Start(ctx, tracingPrexfixSearch+"BuildDocument")
 	doc, err := builder.BuildDocument(ctx, evt.Key, evt.ResourceVersion, evt.Value)
 	if err != nil {
 		s.log.Warn("error building document watch event", "error", err)
 		return
 	}
+	buildDocSpan.End()
 
 	switch evt.Type {
 	case WatchEvent_ADDED, WatchEvent_MODIFIED:
+		_, writeSpan := s.tracer.Start(ctx, tracingPrexfixSearch+"WriteDocument")
 		err = index.Write(doc)
+		writeSpan.End()
 		if err != nil {
 			s.log.Warn("error writing document watch event", "error", err)
 			return
@@ -448,7 +452,9 @@ func (s *searchSupport) handleEvent(ctx context.Context, evt *WrittenEvent) {
 			IndexMetrics.IndexedKinds.WithLabelValues(evt.Key.Resource).Inc()
 		}
 	case WatchEvent_DELETED:
+		_, deleteSpan := s.tracer.Start(ctx, tracingPrexfixSearch+"DeleteDocument")
 		err = index.Delete(evt.Key)
+		deleteSpan.End()
 		if err != nil {
 			s.log.Warn("error deleting document watch event", "error", err)
 			return
