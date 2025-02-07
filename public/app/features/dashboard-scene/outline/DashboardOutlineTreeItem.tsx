@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import { useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Icon, IconButton, Stack, useStyles2 } from '@grafana/ui';
+import { Icon, IconButton, Stack, useElementSelection, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
 import { isInCloneChain } from '../utils/clone';
@@ -20,6 +20,7 @@ export function DashboardOutlineTreeItem({ item }: Props) {
   const styles = useStyles2(getStyles);
   const hasChildren = 'children' in item && item.children.length > 0;
   const isCloned = useMemo(() => isInCloneChain(key!), [key]);
+  const { onSelect } = useElementSelection(key);
 
   return (
     <>
@@ -44,7 +45,15 @@ export function DashboardOutlineTreeItem({ item }: Props) {
         ) : (
           <Icon name="graph-bar" className={cx(isCloned && styles.cloned)} />
         )}
-        <span role="treeitem" className={cx(isCloned && styles.cloned)}>
+        <span
+          role="treeitem"
+          className={cx(isCloned && styles.cloned, !isCloned && styles.clickable)}
+          onPointerDown={(evt) => {
+            if (!isCloned) {
+              onSelect?.(evt);
+            }
+          }}
+        >
           {title}
         </span>
       </Stack>
@@ -54,6 +63,9 @@ export function DashboardOutlineTreeItem({ item }: Props) {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  clickable: css({
+    cursor: 'pointer',
+  }),
   cloned: css({
     color: theme.colors.text.secondary,
   }),
