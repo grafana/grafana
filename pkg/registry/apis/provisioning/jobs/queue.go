@@ -2,6 +2,7 @@ package jobs
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -28,6 +29,7 @@ type RepoGetter interface {
 
 func NewJobQueue(capacity int, getter RepoGetter, identities auth.BackgroundIdentityService) JobQueue {
 	return &jobStore{
+		workers:    make([]Worker, 0),
 		getter:     getter,
 		identities: identities,
 		rv:         1,
@@ -42,7 +44,7 @@ type jobStore struct {
 	getter     RepoGetter
 	identities auth.BackgroundIdentityService
 	capacity   int
-	worker     Worker
+	workers    []Worker
 
 	// All jobs
 	jobs      []provisioning.Job
@@ -55,7 +57,7 @@ type jobStore struct {
 
 // Register a worker (inline for now)
 func (s *jobStore) Register(worker Worker) {
-	s.worker = worker
+	s.workers = append(s.workers, worker)
 }
 
 // Add implements JobQueue.
@@ -143,51 +145,18 @@ func (s *jobStore) drainPending() {
 		ctx := logging.Context(ctx, logger)
 
 		started := time.Now()
-		var status *provisioning.JobStatus
-		// TODO: loop over workers and if they are applicable
-		if s.worker == nil {
-			status = &provisioning.JobStatus{
-				State: provisioning.JobStateError,
-				Errors: []string{
-					"no registered worker supports this job",
-				},
-			}
-		} else {
-			id, err := s.identities.WorkerIdentity(ctx, job.Name)
-			if err != nil {
-				logger.Error("error getting repository", "error", err)
-				status = &provisioning.JobStatus{
-					State:  provisioning.JobStateError,
-					Errors: []string{err.Error()},
-				}
-				// TODO: how to stop execution in the loop?
-			}
-			ctx = request.WithNamespace(identity.WithRequester(ctx, id), job.Namespace)
+		var (
+			status      *provisioning.JobStatus
+			foundWorker bool
+		)
 
-			repoName := job.Spec.Repository
-			logger = logger.With("repository", repoName)
-			ctx = logging.Context(ctx, logger)
-
-			repo, err := s.getter.GetRepository(ctx, repoName)
-			if err != nil {
-				logger.Error("error getting repository", "error", err)
-				status = &provisioning.JobStatus{
-					State:  provisioning.JobStateError,
-					Errors: []string{err.Error()},
-				}
+		for _, worker := range s.workers {
+			if !worker.IsSupported(ctx, *job) {
+				continue
 			}
 
-			if repo == nil {
-				logger.Error("unknown repository")
-				status = &provisioning.JobStatus{
-					State:  provisioning.JobStateError,
-					Errors: []string{"unknown repository"},
-				}
-			}
-
-			status, err = s.worker.Process(ctx, repo, *job, func(ctx context.Context, j provisioning.JobStatus) error {
-				return s.Update(ctx, job.Namespace, job.Name, j)
-			})
+			foundWorker = true
+			status, err := s.processByWorker(ctx, worker, *job)
 			if err != nil {
 				logger.Error("error processing job", "error", err)
 				status = &provisioning.JobStatus{
@@ -205,6 +174,18 @@ func (s *jobStore) drainPending() {
 				status.State = provisioning.JobStateSuccess
 			}
 			logger.Debug("job processing finished", "status", status.State)
+
+			// Already found a worker, no need to continue
+			break
+		}
+
+		if !foundWorker {
+			status = &provisioning.JobStatus{
+				State: provisioning.JobStateError,
+				Errors: []string{
+					"no registered worker supports this job",
+				},
+			}
 		}
 
 		status.Started = started.UnixMilli()
@@ -216,6 +197,44 @@ func (s *jobStore) drainPending() {
 		}
 		logger.Debug("job has been fully completed")
 	}
+}
+
+func (s *jobStore) processByWorker(ctx context.Context, worker Worker, job provisioning.Job) (*provisioning.JobStatus, error) {
+	id, err := s.identities.WorkerIdentity(ctx, job.Name)
+	if err != nil {
+		return nil, fmt.Errorf("get worker identity: %w", err)
+	}
+
+	ctx = request.WithNamespace(identity.WithRequester(ctx, id), job.Namespace)
+	repoName := job.Spec.Repository
+
+	logger := logging.FromContext(ctx)
+	logger = logger.With("repository", repoName)
+	ctx = logging.Context(ctx, logger)
+
+	repo, err := s.getter.GetRepository(ctx, repoName)
+	if err != nil {
+		return nil, fmt.Errorf("get repository: %w", err)
+	}
+
+	// TODO: does this really happen?
+	if repo == nil {
+		return nil, errors.New("unknown repository")
+	}
+
+	status, err := worker.Process(ctx, repo, job, func(ctx context.Context, j provisioning.JobStatus) error {
+		return s.Update(ctx, job.Namespace, job.Name, j)
+	})
+	if err != nil {
+		return nil, fmt.Errorf("process job: %w", err)
+	}
+
+	// TODO: does this really happen?
+	if status == nil {
+		return nil, errors.New("worker did not return a status")
+	}
+
+	return nil, nil
 }
 
 // Checkout the next "pending" job

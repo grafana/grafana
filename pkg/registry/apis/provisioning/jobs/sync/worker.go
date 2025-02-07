@@ -49,6 +49,10 @@ func NewSyncWorker(
 	}
 }
 
+func (r *SyncWorker) IsSupported(ctx context.Context, job provisioning.Job) bool {
+	return job.Spec.Action == provisioning.JobActionSync
+}
+
 func (r *SyncWorker) Process(ctx context.Context,
 	repo repository.Repository,
 	job provisioning.Job,

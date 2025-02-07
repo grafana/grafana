@@ -100,6 +100,10 @@ func NewPullRequestWorker(
 	}, nil
 }
 
+func (c *PullRequestWorker) IsSupported(ctx context.Context, job provisioning.Job) bool {
+	return job.Spec.Action == provisioning.JobActionPullRequest
+}
+
 func (c *PullRequestWorker) Process(ctx context.Context,
 	repo repository.Repository,
 	job provisioning.Job,

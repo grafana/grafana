@@ -30,6 +30,10 @@ func NewExportWorker(parsers *resources.ParserFactory) *ExportWorker {
 	return &ExportWorker{parsers: parsers}
 }
 
+func (r *ExportWorker) IsSupported(ctx context.Context, job provisioning.Job) bool {
+	return job.Spec.Action == provisioning.JobActionExport
+}
+
 //nolint:gocyclo
 func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, job provisioning.Job, progress jobs.ProgressFn) (*provisioning.JobStatus, error) {
 	if repo.Config().Spec.ReadOnly {
