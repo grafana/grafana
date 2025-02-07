@@ -30,12 +30,9 @@ type JobQueue interface {
 }
 
 type Worker interface {
+	// TODO: should we do this as part of the registration?
+	// IsApplicable(ctx context.Context, job provisioning.Job) bool
 	// Process a single job, can periodically make progress updates
-	Process(ctx context.Context, job provisioning.Job, progress ProgressFn) (*provisioning.JobStatus, error)
-}
-
-// RepoJobWorker is a worker that processes jobs for a single repository.
-type RepoJobWorker interface {
 	Process(ctx context.Context, repo repository.Repository, job provisioning.Job, progress ProgressFn) (*provisioning.JobStatus, error)
 }
 

@@ -11,26 +11,38 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/watch"
+	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/storage"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/auth"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func NewJobQueue(capacity int) JobQueue {
+type RepoGetter interface {
+	GetRepository(ctx context.Context, name string) (repository.Repository, error)
+}
+
+func NewJobQueue(capacity int, getter RepoGetter, identities auth.BackgroundIdentityService) JobQueue {
 	return &jobStore{
-		rv:        1,
-		capacity:  capacity,
-		jobs:      []provisioning.Job{},
-		watchSet:  NewWatchSet(),
-		versioner: &storage.APIObjectVersioner{},
+		getter:     getter,
+		identities: identities,
+		rv:         1,
+		capacity:   capacity,
+		jobs:       []provisioning.Job{},
+		watchSet:   NewWatchSet(),
+		versioner:  &storage.APIObjectVersioner{},
 	}
 }
 
 type jobStore struct {
-	capacity int
-	worker   Worker
+	getter     RepoGetter
+	identities auth.BackgroundIdentityService
+	capacity   int
+	worker     Worker
 
 	// All jobs
 	jobs      []provisioning.Job
@@ -132,6 +144,7 @@ func (s *jobStore) drainPending() {
 
 		started := time.Now()
 		var status *provisioning.JobStatus
+		// TODO: loop over workers and if they are applicable
 		if s.worker == nil {
 			status = &provisioning.JobStatus{
 				State: provisioning.JobStateError,
@@ -140,7 +153,39 @@ func (s *jobStore) drainPending() {
 				},
 			}
 		} else {
-			status, err = s.worker.Process(ctx, *job, func(ctx context.Context, j provisioning.JobStatus) error {
+			id, err := s.identities.WorkerIdentity(ctx, job.Name)
+			if err != nil {
+				logger.Error("error getting repository", "error", err)
+				status = &provisioning.JobStatus{
+					State:  provisioning.JobStateError,
+					Errors: []string{err.Error()},
+				}
+				// TODO: how to stop execution in the loop?
+			}
+			ctx = request.WithNamespace(identity.WithRequester(ctx, id), job.Namespace)
+
+			repoName := job.Spec.Repository
+			logger = logger.With("repository", repoName)
+			ctx = logging.Context(ctx, logger)
+
+			repo, err := s.getter.GetRepository(ctx, repoName)
+			if err != nil {
+				logger.Error("error getting repository", "error", err)
+				status = &provisioning.JobStatus{
+					State:  provisioning.JobStateError,
+					Errors: []string{err.Error()},
+				}
+			}
+
+			if repo == nil {
+				logger.Error("unknown repository")
+				status = &provisioning.JobStatus{
+					State:  provisioning.JobStateError,
+					Errors: []string{"unknown repository"},
+				}
+			}
+
+			status, err = s.worker.Process(ctx, repo, *job, func(ctx context.Context, j provisioning.JobStatus) error {
 				return s.Update(ctx, job.Namespace, job.Name, j)
 			})
 			if err != nil {

@@ -101,7 +101,8 @@ func NewAPIBuilder(
 		render:         render,
 		resourceLister: resources.NewResourceLister(index),
 		blobstore:      blobstore,
-		jobs:           jobs.NewJobQueue(50), // in memory for now
+		// TODO: Add repo getter
+		jobs: jobs.NewJobQueue(50, nil, identities), // in memory for now
 	}
 }
 
@@ -435,19 +436,19 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			}
 			b.repositoryLister = repoInformer.Lister()
 
-			syncWorker := sync.NewSyncWorker(
+			b.jobs.Register(export.NewExportWorker(b.parsers))
+			b.jobs.Register(sync.NewSyncWorker(
 				c.ProvisioningV0alpha1(),
 				b.parsers,
 				b.resourceLister,
-			)
-			exportWorker := export.NewExportWorker(b.parsers)
+			))
+
 			renderer := pullrequest.NewRenderer(b.render, b.blobstore)
 			pullRequestWorker, err := pullrequest.NewPullRequestWorker(b.parsers, renderer, b.urlProvider)
 			if err != nil {
 				return fmt.Errorf("create pull request worker: %w", err)
 			}
-
-			b.jobs.Register(jobs.NewJobWorker(b, b.identities, syncWorker, exportWorker, pullRequestWorker))
+			b.jobs.Register(pullRequestWorker)
 
 			repoController, err := NewRepositoryController(
 				c.ProvisioningV0alpha1(),
