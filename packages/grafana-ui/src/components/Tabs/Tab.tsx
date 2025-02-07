@@ -53,7 +53,7 @@ export const Tab = React.forwardRef<HTMLElement, TabProps>(
 
     if (href) {
       return (
-        <div className={tabsStyles.item}>
+        <div className={cx(tabsStyles.item, className)}>
           <a
             {...commonProps}
             href={href}
@@ -68,7 +68,7 @@ export const Tab = React.forwardRef<HTMLElement, TabProps>(
     }
 
     return (
-      <div className={tabsStyles.item}>
+      <div className={cx(tabsStyles.item, className)}>
         <button
           {...commonProps}
           type="button"
