@@ -143,6 +143,10 @@ type RepositoryStatus struct {
 	// Sync information with the last sync information
 	Sync SyncStatus `json:"sync"`
 
+	// The object count when sync last ran
+	// +listType=atomic
+	Stats []ResourceCount `json:"stats,omitempty"`
+
 	// Webhook Information (if applicable)
 	Webhook *WebhookStatus `json:"webhook"`
 }
@@ -298,6 +302,23 @@ type FileItem struct {
 	Hash     string `json:"hash,omitempty"`
 	Modified int64  `json:"modified,omitempty"`
 	Author   string `json:"author,omitempty"`
+}
+
+// Information we can get just from the file listing
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type ResourceStats struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty"`
+
+	// +listType=atomic
+	Items []ResourceCount `json:"items,omitempty"`
+}
+
+type ResourceCount struct {
+	Repository string `json:"repository,omitempty"`
+	Group      string `json:"group"`
+	Resource   string `json:"resource"`
+	Count      int64  `json:"count"`
 }
 
 // HistoryList is a list of versions of a resource
