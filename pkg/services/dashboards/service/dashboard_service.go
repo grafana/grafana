@@ -1661,7 +1661,7 @@ func (dr *DashboardServiceImpl) listDashboardsThroughK8s(ctx context.Context, or
 	return dashboards, nil
 }
 
-func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) (*dashboardv0alpha1.SearchResults, error) {
+func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) (dashboardv0alpha1.SearchResults, error) {
 	request := &resource.ResourceSearchRequest{
 		Options: &resource.ListOptions{
 			Fields: []*resource.Requirement{},
@@ -1775,7 +1775,7 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 	}
 
 	if err != nil {
-		return nil, err
+		return dashboardv0alpha1.SearchResults{}, err
 	}
 
 	if federate != nil {
@@ -1792,7 +1792,7 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 
 	res, err := dr.k8sclient.Search(ctx, query.OrgId, request)
 	if err != nil {
-		return nil, err
+		return dashboardv0alpha1.SearchResults{}, err
 	}
 
 	return dashboardsearch.ParseResults(res, 0)

@@ -36,13 +36,13 @@ var (
 	}
 )
 
-func ParseResults(result *resource.ResourceSearchResponse, offset int64) (*v0alpha1.SearchResults, error) {
+func ParseResults(result *resource.ResourceSearchResponse, offset int64) (v0alpha1.SearchResults, error) {
 	if result == nil {
-		return nil, nil
+		return v0alpha1.SearchResults{}, nil
 	} else if result.Error != nil {
-		return nil, fmt.Errorf("%d error searching: %s: %s", result.Error.Code, result.Error.Message, result.Error.Details)
+		return v0alpha1.SearchResults{}, fmt.Errorf("%d error searching: %s: %s", result.Error.Code, result.Error.Message, result.Error.Details)
 	} else if result.Results == nil {
-		return nil, nil
+		return v0alpha1.SearchResults{}, nil
 	}
 
 	titleIDX := 0
@@ -66,7 +66,7 @@ func ParseResults(result *resource.ResourceSearchResponse, offset int64) (*v0alp
 		}
 	}
 
-	sr := &v0alpha1.SearchResults{
+	sr := v0alpha1.SearchResults{
 		Offset:    offset,
 		TotalHits: result.TotalHits,
 		QueryCost: result.QueryCost,
@@ -74,13 +74,15 @@ func ParseResults(result *resource.ResourceSearchResponse, offset int64) (*v0alp
 		Hits:      make([]v0alpha1.DashboardHit, len(result.Results.Rows)),
 	}
 
+	folderUIDs := []string{}
+	folderSet := map[string]bool{}
 	for i, row := range result.Results.Rows {
 		fields := &common.Unstructured{}
 		for colIndex, col := range result.Results.Columns {
 			if _, ok := excludedFields[col.Name]; !ok {
 				val, err := resource.DecodeCell(col, colIndex, row.Cells[colIndex])
 				if err != nil {
-					return nil, err
+					return v0alpha1.SearchResults{}, err
 				}
 				// Some of the dashboard fields come in as int32, but we need to convert them to int64 or else fields.Set() will panic
 				int32Val, ok := val.(int32)
@@ -99,6 +101,10 @@ func ParseResults(result *resource.ResourceSearchResponse, offset int64) (*v0alp
 		}
 		if folderIDX > 0 && row.Cells[folderIDX] != nil {
 			hit.Folder = string(row.Cells[folderIDX])
+			if hit.Resource == v0alpha1.RESOURCE && hit.Folder != "" && folderSet[hit.Folder] == false {
+				folderUIDs = append(folderUIDs, hit.Folder)
+				folderSet[hit.Folder] = true
+			}
 		}
 		if tagsIDX > 0 && row.Cells[tagsIDX] != nil {
 			_ = json.Unmarshal(row.Cells[tagsIDX], &hit.Tags)
