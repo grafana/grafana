@@ -5,27 +5,29 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
-	"math/rand"
 	"os"
 	"path"
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-
 	dashboard "github.com/grafana/grafana/pkg/apis/dashboard/v1alpha1"
+	folder "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+	"golang.org/x/exp/rand"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 func TestMain(m *testing.M) {
@@ -43,49 +45,51 @@ func TestIntegrationProvisioning(t *testing.T) {
 		AppModeProduction: false, // required for experimental APIs
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagProvisioning,
-			featuremgmt.FlagKubernetesFoldersServiceV2, // Required for tests that deal with folders.
+			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
+			featuremgmt.FlagKubernetesCliDashboards,
+			featuremgmt.FlagKubernetesFoldersServiceV2,
 			featuremgmt.FlagUnifiedStorageSearch,
+		},
+		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+			"dashboards.dashboard.grafana.app": {
+				DualWriterMode: rest.Mode5,
+			},
+			"folders.folder.grafana.app": {
+				DualWriterMode: rest.Mode5,
+			},
 		},
 		PermittedProvisioningPaths: ".|" + provisioningPath,
 	})
 
-	// Scope create+get
 	client := helper.GetResourceClient(apis.ResourceClientArgs{
 		User:      helper.Org1.Admin,
 		Namespace: "default", // actually org1
-		GVR: schema.GroupVersionResource{
-			Group: "provisioning.grafana.app", Version: "v0alpha1", Resource: "repositories",
-		},
+		GVR:       provisioning.RepositoryResourceInfo.GroupVersionResource(),
 	})
 
 	jobClient := helper.GetResourceClient(apis.ResourceClientArgs{
 		User:      helper.Org1.Admin,
 		Namespace: "default", // actually org1
-		GVR: schema.GroupVersionResource{
-			Group: "provisioning.grafana.app", Version: "v0alpha1", Resource: "jobs",
-		},
-	})
-
-	// Repo client, but less guard rails.
-	restClient := helper.Org1.Admin.RESTClient(t, &schema.GroupVersion{
-		Group: "provisioning.grafana.app", Version: "v0alpha1",
+		GVR:       provisioning.JobResourceInfo.GroupVersionResource(),
 	})
 
 	folderClient := helper.GetResourceClient(apis.ResourceClientArgs{
 		User:      helper.Org1.Admin,
 		Namespace: "default", // actually org1
-		GVR: schema.GroupVersionResource{
-			Group: "folder.grafana.app", Version: "v0alpha1", Resource: "folders",
-		},
+		GVR:       folder.FolderResourceInfo.GroupVersionResource(),
 	})
 
 	dashboardClient := helper.GetResourceClient(apis.ResourceClientArgs{
 		User:      helper.Org1.Admin,
 		Namespace: "default", // actually org1
-		GVR: schema.GroupVersionResource{
-			Group: dashboard.GROUP, Version: dashboard.VERSION, Resource: "dashboards",
-		},
+		GVR:       dashboard.DashboardResourceInfo.GroupVersionResource(),
 	})
+
+	// Repo client, but less guard rails. Useful for subresources. We'll need this later...
+	restClient := helper.Org1.Admin.RESTClient(t, &schema.GroupVersion{
+		Group: "provisioning.grafana.app", Version: "v0alpha1",
+	})
+	_ = restClient
 
 	cleanSlate := func(t *testing.T) {
 		helper.GetEnv().GitHubMockFactory.Constructor = func(ttc github.TestingTWithCleanup) github.Client {
@@ -120,127 +124,42 @@ func TestIntegrationProvisioning(t *testing.T) {
 	}
 	cleanSlate(t)
 
-	t.Run("Check basic create and get", func(t *testing.T) {
+	t.Run("Creating and getting repositories", func(t *testing.T) {
 		cleanSlate(t)
 
 		createOptions := metav1.CreateOptions{FieldValidation: "Strict"}
 
-		// Load the samples
-		_, err := client.Resource.Create(ctx,
-			helper.LoadYAMLOrJSONFile("testdata/local-conf-provisioning-sample.yaml"),
-			createOptions,
-		)
-		require.NoError(t, err)
+		for _, inputFilePath := range []string{
+			"testdata/github-example.json",
+			"testdata/local-conf-provisioning-sample.json",
+			"testdata/local-devenv.json",
+			"testdata/local-tmp.json",
+			"testdata/local-xxx.json",
+			"testdata/s3-example.json",
+		} {
+			t.Run(inputFilePath, func(t *testing.T) {
+				input := helper.LoadYAMLOrJSONFile(inputFilePath)
+				expectedOutput, err := json.MarshalIndent(input.Object["spec"], "", "  ")
+				require.NoError(t, err, "failed to marshal JSON from input spec")
 
-		_, err = client.Resource.Create(ctx,
-			helper.LoadYAMLOrJSONFile("testdata/local-devenv.yaml"),
-			createOptions,
-		)
-		require.NoError(t, err)
+				_, err = client.Resource.Create(ctx, input, createOptions)
+				require.NoError(t, err, "failed to create resource")
 
-		_, err = client.Resource.Create(ctx,
-			helper.LoadYAMLOrJSONFile("testdata/github-example.yaml"),
-			createOptions,
-		)
-		require.NoError(t, err)
+				output, err := client.Resource.Get(ctx, mustNestedString(input.Object, "metadata", "name"), metav1.GetOptions{})
+				require.NoError(t, err, "failed to read back resource")
+				outputJSON, err := json.MarshalIndent(output.Object["spec"], "", "  ")
+				require.NoError(t, err, "failed to marshal JSON from read back resource")
 
-		_, err = client.Resource.Create(ctx,
-			helper.LoadYAMLOrJSONFile("testdata/s3-example.yaml"),
-			createOptions,
-		)
-		require.NoError(t, err)
-
-		samples, err := client.Resource.List(ctx, metav1.ListOptions{})
-		require.NoError(t, err)
-		found := map[string]any{}
-		for _, v := range samples.Items {
-			found[v.GetName()] = v.Object["spec"]
+				require.JSONEq(t, string(expectedOutput), string(outputJSON))
+			})
 		}
-
-		js, _ := json.MarshalIndent(found, "", "  ")
-		require.JSONEq(t, `{
-			"github-example": {
-				"description": "load resources from github",
-				"editing": {
-					"create": true,
-					"delete": true,
-					"update": true
-				},
-				"github": {
-					"branch": "dummy-branch",
-					"branchWorkflow": true,
-					"generateDashboardPreviews": true,
-					"owner": "grafana",
-					"repository": "git-ui-sync-demo",
-					"token": "github_pat_dummy"
-				},
-				"sync": {
-					"enabled": true,
-					"target": "mirror"
-				},
-				"title": "Github Example",
-				"type": "github"
-			},
-			"local-conf-provisioning-sample": {
-				"description": "load resources from https://github.com/grafana/grafana/tree/main/conf/provisioning/sample",
-				"editing": {
-					"create": true,
-					"delete": true,
-					"update": true
-				},
-				"local": {
-					"path": "provisioning/sample"
-				},
-				"sync": {
-					"enabled": false,
-					"target": ""
-				},
-				"title": "Config provisioning files",
-				"type": "local"
-			},
-			"local-devenv": {
-				"description": "load https://github.com/grafana/grafana/tree/main/devenv/dev-dashboards",
-				"editing": {
-					"create": true,
-					"delete": true,
-					"update": true
-				},
-				"local": {
-					"path": "devenv/dev-dashboards"
-				},
-				"sync": {
-					"enabled": false,
-					"target": "mirror"
-				},
-				"title": "Load devenv dashboards",
-				"type": "local"
-			},
-			"s3-example": {
-				"description": "load resources from an S3 bucket",
-				"editing": {
-					"create": false,
-					"delete": false,
-					"update": false
-				},
-				"s3": {
-					"bucket": "my-bucket",
-					"region": "us-west-1"
-				},
-				"sync": {
-					"enabled": false,
-					"target": "mirror"
-				},
-				"title": "S3 Example",
-				"type": "s3"
-			}
-		}`, string(js))
 	})
 
 	t.Run("creating repository creates folder", func(t *testing.T) {
 		cleanSlate(t)
 
 		_, err := client.Resource.Update(ctx,
-			helper.LoadYAMLOrJSONFile("testdata/github-example.yaml"),
+			helper.LoadYAMLOrJSONFile("testdata/github-example.json"),
 			metav1.UpdateOptions{},
 		)
 		require.NoError(t, err)
@@ -296,7 +215,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 		}
 
 		_, err := client.Resource.Update(ctx,
-			helper.LoadYAMLOrJSONFile("testdata/github-example.yaml"),
+			helper.LoadYAMLOrJSONFile("testdata/github-example.json"),
 			metav1.UpdateOptions{},
 		)
 		require.NoError(t, err)
@@ -341,7 +260,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 		cleanSlate(t)
 
 		_, err := client.Resource.Update(ctx,
-			helper.LoadYAMLOrJSONFile("testdata/local-devenv.yaml"),
+			helper.LoadYAMLOrJSONFile("testdata/local-devenv.json"),
 			metav1.UpdateOptions{},
 		)
 		require.NoError(t, err)
@@ -380,7 +299,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 		repoPath := path.Join(provisioningPath, repo, randomAsciiStr(10))
 		err := os.MkdirAll(repoPath, 0700)
 		require.NoError(t, err, "should be able to create repo path")
-		localTmp := helper.LoadYAMLOrJSONFile("testdata/local-tmp.yaml")
+		localTmp := helper.LoadYAMLOrJSONFile("testdata/local-tmp.json")
 		require.NoError(t, unstructured.SetNestedField(localTmp.Object, repoPath, "spec", "local", "path"))
 
 		_, err = client.Resource.Create(ctx, localTmp, metav1.CreateOptions{})

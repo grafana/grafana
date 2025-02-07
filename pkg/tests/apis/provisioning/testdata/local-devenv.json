@@ -1,0 +1,21 @@
+{
+    "apiVersion": "provisioning.grafana.app/v0alpha1",
+    "kind": "Repository",
+    "metadata": {
+        "name": "local-devenv"
+    },
+    "spec": {
+        "title": "Load devenv dashboards",
+        "description": "Load /devenv/dev-dashboards (from root of repository)",
+        "sync": {
+            "enabled": false,
+            "target": "mirror",
+            "intervalSeconds": 60
+        },
+        "readOnly": false,
+        "type": "local",
+        "local": {
+            "path": "devenv/dev-dashboards"
+        }
+    }
+}
