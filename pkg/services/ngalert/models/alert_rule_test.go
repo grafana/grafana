@@ -408,7 +408,7 @@ func TestDiff(t *testing.T) {
 		rule1 := RuleGen.GenerateRef()
 		rule2 := RuleGen.GenerateRef()
 
-		diffs := rule1.Diff(rule2, "Data", "Annotations", "Labels", "NotificationSettings") // these fields will be tested separately
+		diffs := rule1.Diff(rule2, "Data", "Annotations", "Labels", "NotificationSettings", "Metadata") // these fields will be tested separately
 
 		difCnt := 0
 		if rule1.ID != rule2.ID {
@@ -839,6 +839,24 @@ func TestDiff(t *testing.T) {
 				}
 			})
 		}
+	})
+
+	t.Run("should detect changes in Metadata", func(t *testing.T) {
+		rule1 := RuleGen.With(RuleGen.WithMetadata(AlertRuleMetadata{EditorSettings: EditorSettings{
+			SimplifiedQueryAndExpressionsSection: false,
+			SimplifiedNotificationsSection:       false,
+		}})).GenerateRef()
+
+		rule2 := CopyRule(rule1, RuleGen.WithMetadata(AlertRuleMetadata{EditorSettings: EditorSettings{
+			SimplifiedQueryAndExpressionsSection: true,
+			SimplifiedNotificationsSection:       true,
+		}}))
+
+		diff := rule1.Diff(rule2)
+		assert.ElementsMatch(t, []string{
+			"Metadata.EditorSettings.SimplifiedQueryAndExpressionsSection",
+			"Metadata.EditorSettings.SimplifiedNotificationsSection",
+		}, diff.Paths())
 	})
 }
 

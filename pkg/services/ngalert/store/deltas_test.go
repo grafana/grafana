@@ -81,7 +81,7 @@ func TestCalculateChanges(t *testing.T) {
 		submittedMap := groupByUID(t, rules)
 		submitted := make([]*models.AlertRuleWithOptionals, 0, len(rules))
 		for _, rule := range rules {
-			submitted = append(submitted, &models.AlertRuleWithOptionals{AlertRule: *rule})
+			submitted = append(submitted, &models.AlertRuleWithOptionals{AlertRule: *rule, HasMetadata: true})
 		}
 
 		fakeStore := fakes.NewRuleStore(t)
@@ -216,7 +216,7 @@ func TestCalculateChanges(t *testing.T) {
 		submittedMap := groupByUID(t, rules)
 		submitted := make([]*models.AlertRuleWithOptionals, 0, len(rules))
 		for _, rule := range rules {
-			submitted = append(submitted, &models.AlertRuleWithOptionals{AlertRule: *rule})
+			submitted = append(submitted, &models.AlertRuleWithOptionals{AlertRule: *rule, HasMetadata: true})
 		}
 
 		changes, err := CalculateChanges(context.Background(), fakeStore, groupKey, submitted)
