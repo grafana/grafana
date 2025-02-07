@@ -11,13 +11,14 @@ import (
 // SyncStatusApplyConfiguration represents a declarative configuration of the SyncStatus type for use
 // with apply.
 type SyncStatusApplyConfiguration struct {
-	State     *provisioningv0alpha1.JobState `json:"state,omitempty"`
-	JobID     *string                        `json:"job,omitempty"`
-	Started   *int64                         `json:"started,omitempty"`
-	Finished  *int64                         `json:"finished,omitempty"`
-	Scheduled *int64                         `json:"scheduled,omitempty"`
-	Message   []string                       `json:"message,omitempty"`
-	Hash      *string                        `json:"hash,omitempty"`
+	State       *provisioningv0alpha1.JobState `json:"state,omitempty"`
+	JobID       *string                        `json:"job,omitempty"`
+	Started     *int64                         `json:"started,omitempty"`
+	Finished    *int64                         `json:"finished,omitempty"`
+	Scheduled   *int64                         `json:"scheduled,omitempty"`
+	Message     []string                       `json:"message,omitempty"`
+	Hash        *string                        `json:"hash,omitempty"`
+	Incremental *bool                          `json:"incremental,omitempty"`
 }
 
 // SyncStatusApplyConfiguration constructs a declarative configuration of the SyncStatus type for use with
@@ -81,5 +82,13 @@ func (b *SyncStatusApplyConfiguration) WithMessage(values ...string) *SyncStatus
 // If called multiple times, the Hash field is set to the value of the last call.
 func (b *SyncStatusApplyConfiguration) WithHash(value string) *SyncStatusApplyConfiguration {
 	b.Hash = &value
+	return b
+}
+
+// WithIncremental sets the Incremental field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the Incremental field is set to the value of the last call.
+func (b *SyncStatusApplyConfiguration) WithIncremental(value bool) *SyncStatusApplyConfiguration {
+	b.Incremental = &value
 	return b
 }

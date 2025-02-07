@@ -8,11 +8,6 @@
         "title": "Github Example",
         "description": "load resources from github",
         "type": "github",
-        "editing": {
-            "create": true,
-            "update": true,
-            "delete": true
-        },
         "github": {
             "owner": "grafana",
             "repository": "git-ui-sync-demo",
@@ -20,6 +15,12 @@
             "branchWorkflow": true,
             "generateDashboardPreviews": true,
             "token": "github_pat_dummy"
-        }
+        },
+        "sync": {
+            "enabled": false,
+            "target": "",
+            "intervalSeconds": 60
+        },
+        "readOnly": false
     }
 }
