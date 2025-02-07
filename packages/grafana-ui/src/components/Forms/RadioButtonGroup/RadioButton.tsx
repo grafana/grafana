@@ -5,7 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { StringSelector, selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2 } from '../../../themes';
-import { getFocusStyles, getMouseFocusStyles } from '../../../themes/mixins';
+import { getFocusStyles, getInternalRadius, getMouseFocusStyles } from '../../../themes/mixins';
 import { Tooltip } from '../../Tooltip/Tooltip';
 import { getPropertiesForButtonSize } from '../commonStyles';
 
@@ -130,7 +130,7 @@ const getRadioButtonStyles = (theme: GrafanaTheme2, size: RadioButtonSize, fullW
       lineHeight: `${labelHeight}px`,
       color: textColor,
       padding: theme.spacing(0, padding),
-      borderRadius: theme.shape.radius.default,
+      borderRadius: getInternalRadius(theme.shape.radius.default, 2, 1),
       background: theme.colors.background.primary,
       cursor: 'pointer',
       userSelect: 'none',

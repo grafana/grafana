@@ -5,7 +5,6 @@ import { useCallback, useEffect, useRef } from 'react';
 import { GrafanaTheme2, SelectableValue, toIconName } from '@grafana/data';
 
 import { useStyles2 } from '../../../themes';
-import { getExternalRadius } from '../../../themes/mixins';
 import { Icon } from '../../Icon/Icon';
 
 import { RadioButtonSize, RadioButton } from './RadioButton';
@@ -118,7 +117,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       flexDirection: 'row',
       flexWrap: 'nowrap',
       border: `1px solid ${theme.components.input.borderColor}`,
-      borderRadius: getExternalRadius(theme.shape.radius.default, 2, 1),
+      borderRadius: theme.shape.radius.default,
       padding: '2px',
       '&:hover': {
         borderColor: theme.components.input.borderHover,
