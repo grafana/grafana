@@ -24,6 +24,6 @@ type Step interface {
 	Title() string
 	// Description returns the description of the step
 	Description() string
-	// Run executes the step and returns a list of errors
-	Run(ctx context.Context, obj *advisorv0alpha1.CheckSpec, items []any) ([]advisorv0alpha1.CheckReportError, error)
+	// Run executes the step for an item and returns a report
+	Run(ctx context.Context, obj *advisorv0alpha1.CheckSpec, item any) (*advisorv0alpha1.CheckReportError, error)
 }

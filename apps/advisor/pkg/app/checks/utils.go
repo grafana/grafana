@@ -10,8 +10,8 @@ func NewCheckReportError(
 	action string,
 	stepID string,
 	itemID string,
-) advisor.CheckReportError {
-	return advisor.CheckReportError{
+) *advisor.CheckReportError {
+	return &advisor.CheckReportError{
 		Severity: severity,
 		Reason:   reason,
 		Action:   action,
