@@ -16013,10 +16013,6 @@
             "Error"
           ]
         },
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
         "intervalSeconds": {
           "type": "integer",
           "format": "int64"
@@ -16040,10 +16036,6 @@
         },
         "notification_settings": {
           "$ref": "#/definitions/AlertRuleNotificationSettings"
-        },
-        "orgId": {
-          "type": "integer",
-          "format": "int64"
         },
         "provenance": {
           "$ref": "#/definitions/Provenance"
@@ -17190,6 +17182,7 @@
             "FOLDER",
             "LIBRARY_ELEMENT",
             "ALERT_RULE",
+            "ALERT_RULE_GROUP",
             "CONTACT_POINT",
             "NOTIFICATION_POLICY",
             "NOTIFICATION_TEMPLATE",
