@@ -53,6 +53,10 @@ export interface ThemeComponents {
     rowHoverBackground: string;
     rowSelected: string;
   };
+  popover: {
+    background: string;
+    borderColor: string;
+  };
 }
 
 export function createComponents(colors: ThemeColors, shadows: ThemeShadows): ThemeComponents {
@@ -81,6 +85,10 @@ export function createComponents(colors: ThemeColors, shadows: ThemeShadows): Th
     panel,
     dropdown: {
       background: input.background,
+    },
+    popover: {
+      background: colors.mode === 'dark' ? colors.background.secondary : colors.background.primary,
+      borderColor: 'transparent',
     },
     tooltip: {
       background: colors.background.secondary,

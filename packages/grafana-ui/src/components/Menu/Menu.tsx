@@ -5,7 +5,6 @@ import * as React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes';
-import { Box } from '../Layout/Box/Box';
 
 import { MenuDivider } from './MenuDivider';
 import { MenuGroup } from './MenuGroup';
@@ -25,26 +24,20 @@ export interface MenuProps extends React.HTMLAttributes<HTMLDivElement> {
 const MenuComp = React.forwardRef<HTMLDivElement, MenuProps>(
   ({ header, children, ariaLabel, onOpen, onClose, onKeyDown, ...otherProps }, forwardedRef) => {
     const styles = useStyles2(getStyles);
-
     const localRef = useRef<HTMLDivElement>(null);
     useImperativeHandle(forwardedRef, () => localRef.current!);
 
     const [handleKeys] = useMenuFocus({ isMenuOpen: true, localRef, onOpen, onClose, onKeyDown });
 
     return (
-      <Box
+      <div
         {...otherProps}
-        aria-label={ariaLabel}
-        backgroundColor="primary"
-        borderRadius="default"
-        boxShadow="z3"
-        display="inline-block"
-        onKeyDown={handleKeys}
-        paddingX={0}
-        paddingY={0.5}
-        ref={localRef}
-        role="menu"
         tabIndex={-1}
+        ref={localRef}
+        className={styles.wrapper}
+        role="menu"
+        aria-label={ariaLabel}
+        onKeyDown={handleKeys}
       >
         {header && (
           <div
@@ -57,7 +50,7 @@ const MenuComp = React.forwardRef<HTMLDivElement, MenuProps>(
           </div>
         )}
         {children}
-      </Box>
+      </div>
     );
   }
 );
@@ -77,6 +70,14 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     headerBorder: css({
       borderBottom: `1px solid ${theme.colors.border.weak}`,
+    }),
+    wrapper: css({
+      background: `${theme.components.popover.background}`,
+      border: `1px solid ${theme.components.popover.borderColor}`,
+      boxShadow: `${theme.shadows.z3}`,
+      display: `inline-block`,
+      borderRadius: `${theme.shape.radius.default}`,
+      padding: `${theme.spacing(0.5)}`,
     }),
   };
 };
