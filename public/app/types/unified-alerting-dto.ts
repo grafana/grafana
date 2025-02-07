@@ -263,6 +263,7 @@ export interface PostableGrafanaRuleDefinition {
     metric: string;
     from: string;
   };
+  intervalSeconds?: number;
 }
 export interface GrafanaRuleDefinition extends PostableGrafanaRuleDefinition {
   id?: string;
