@@ -77,7 +77,8 @@ const getStyles = (theme: GrafanaTheme2) => {
       color: theme.colors.text.secondary,
     }),
     itemsWrapper: css({
-      background: theme.colors.background.primary,
+      background: theme.components.popover.background,
+      border: `1px solid ${theme.components.popover.borderColor}`,
       boxShadow: theme.shadows.z3,
       display: 'inline-block',
       borderRadius: theme.shape.radius.default,
