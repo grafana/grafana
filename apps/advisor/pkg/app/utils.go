@@ -111,7 +111,7 @@ func processCheck(ctx context.Context, client resource.Client, obj resource.Obje
 }
 
 func runStepsInParallel(ctx context.Context, spec *advisorv0alpha1.CheckSpec, steps []checks.Step, items []any) ([]advisorv0alpha1.CheckReportFailure, error) {
-	reportErrs := []advisorv0alpha1.CheckReportFailure{}
+	reportFailures := []advisorv0alpha1.CheckReportFailure{}
 	var internalErr error
 	var wg sync.WaitGroup
 	var mu sync.Mutex
@@ -133,11 +133,11 @@ func runStepsInParallel(ctx context.Context, spec *advisorv0alpha1.CheckSpec, st
 					return
 				}
 				if stepErr != nil {
-					reportErrs = append(reportErrs, *stepErr)
+					reportFailures = append(reportFailures, *stepErr)
 				}
 			}(step, item)
 		}
 	}
 	wg.Wait()
-	return reportErrs, internalErr
+	return reportFailures, internalErr
 }
