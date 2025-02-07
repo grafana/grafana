@@ -114,6 +114,30 @@ type JobStatus struct {
 	Finished int64    `json:"finished,omitempty"`
 	Message  string   `json:"message,omitempty"`
 	Errors   []string `json:"errors,omitempty"`
+
+	// Optional value 0-100 that can be set while running
+	Progress float64 `json:"progress,omitempty"`
+
+	// Summary of processed actions
+	Summary []JobResourceSummary `json:"summary,omitempty"`
+}
+
+type JobResourceSummary struct {
+	Group    string `json:"group,omitempty"`
+	Resource string `json:"resource,omitempty"`
+
+	Create int64 `json:"create,omitempty"`
+	Update int64 `json:"update,omitempty"`
+	Delete int64 `json:"delete,omitempty"`
+	Write  int64 `json:"write,omitempty"` // Create or update (export)
+	Error  int64 `json:"error,omitempty"` // The error count
+
+	// No action required (useful for sync)
+	Noop int64 `json:"noop,omitempty"`
+
+	// Report errors for this resource type
+	// This may not be an exhaustive list and recommend looking at the logs for more info
+	Errors []string `json:"errors,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
