@@ -20,6 +20,7 @@ export interface DataLinksListItemBaseProps<T extends DataLink | Action> {
   itemKey: string;
 }
 
+/** @internal */
 export function DataLinksListItemBase<T extends DataLink | Action>({
   item,
   onEdit,

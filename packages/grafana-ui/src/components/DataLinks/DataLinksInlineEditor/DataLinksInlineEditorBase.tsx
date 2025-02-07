@@ -135,13 +135,13 @@ export function DataLinksInlineEditorBase<T extends DataLink | Action>({
         <Droppable droppableId="sortable-links" direction="vertical">
           {(provided) => (
             <div className={styles.wrapper} ref={provided.innerRef} {...provided.droppableProps}>
-              {itemsSafe.map((link, idx) => {
-                const key = `${link.title}/${idx}`;
+              {itemsSafe.map((item, idx) => {
+                const key = `${item.title}/${idx}`;
                 return (
                   <DataLinksListItemBase<T>
                     key={key}
                     index={idx}
-                    item={link}
+                    item={item}
                     onChange={_onChange}
                     onEdit={() => setEditIndex(idx)}
                     onRemove={() => onDataLinkRemove(idx)}
