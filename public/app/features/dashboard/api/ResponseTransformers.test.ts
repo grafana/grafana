@@ -19,6 +19,7 @@ import {
 } from 'app/features/apiserver/types';
 import { getDefaultDataSourceRef } from 'app/features/dashboard-scene/serialization/transformSceneToSaveModelSchemaV2';
 import {
+  LEGACY_STRING_VALUE_KEY,
   transformVariableHideToEnum,
   transformVariableRefreshToEnum,
 } from 'app/features/dashboard-scene/serialization/transformToV2TypesUtils';
@@ -915,7 +916,7 @@ describe('ResponseTransformers', () => {
       expect(v2.spec.datasource).toEqual(v1.datasource);
 
       if (typeof v1.query === 'string') {
-        expect(v2.spec.query).toEqual(v1.query);
+        expect(v2.spec.query.spec[LEGACY_STRING_VALUE_KEY]).toEqual(v1.query);
       } else {
         expect(v2.spec.query).toEqual({
           kind: v1.datasource?.type,

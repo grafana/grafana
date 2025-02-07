@@ -1,17 +1,20 @@
+import { skipToken } from '@reduxjs/toolkit/query/react';
 import { useCallback } from 'react';
 
 import { useUrlParams } from 'app/core/navigation/hooks';
 
+import { useGetFolderQuery } from '../browse-dashboards/api/browseDashboardsAPI';
+
 import {
+  ListRepositoryArg,
+  ReplaceRepositoryFilesWithPathArg,
   Repository,
+  RepositorySpec,
   useCreateRepositoryFilesWithPathMutation,
   useCreateRepositoryMutation,
   useListRepositoryQuery,
   useReplaceRepositoryFilesWithPathMutation,
-  RepositorySpec,
-  ReplaceRepositoryFilesWithPathArg,
   useReplaceRepositoryMutation,
-  ListRepositoryArg,
 } from './api';
 
 export function useCreateOrUpdateRepository(name?: string) {
@@ -51,12 +54,15 @@ export function useCreateOrUpdateRepository(name?: string) {
   return [updateOrCreate, name ? updateRequest : createRequest] as const;
 }
 
-// Sort repositories by resourceVersion to show the last modified
+// Sort repositories alphabetically by title
 export function useRepositoryList(options: ListRepositoryArg = {}): [Repository[] | undefined, boolean] {
   const query = useListRepositoryQuery(options);
+  const collator = new Intl.Collator(undefined, { numeric: true });
 
   const sortedItems = query.data?.items?.slice().sort((a, b) => {
-    return Number(b.metadata?.resourceVersion) - Number(a.metadata?.resourceVersion);
+    const titleA = a.spec?.title ?? '';
+    const titleB = b.spec?.title ?? '';
+    return collator.compare(titleA, titleB);
   });
 
   return [sortedItems, query.isLoading];
@@ -88,16 +94,21 @@ export const usePullRequestParam = () => {
   return decodeURIComponent(prParam);
 };
 
-export const useFolderRepository = (folderUid?: string) => {
+interface GetResourceRepositoryArgs {
+  name?: string;
+  folderUid?: string;
+}
+
+export const useGetResourceRepository = ({ name, folderUid }: GetResourceRepositoryArgs) => {
   const [items, isLoading] = useRepositoryList();
+  // Get the folder data from API to get repository data for nested folders
+  const folderQuery = useGetFolderQuery(name || !folderUid ? skipToken : folderUid);
 
-  if (!folderUid) {
+  const repoName = name || folderQuery.data?.repository?.name;
+
+  if (!items?.length || isLoading || !repoName) {
     return undefined;
   }
 
-  if (!items?.length || isLoading || !folderUid) {
-    return undefined;
-  }
-
-  return items.find((repo) => repo.metadata?.name === folderUid);
+  return items.find((repo) => repo.metadata?.name === repoName);
 };
