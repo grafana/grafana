@@ -1141,7 +1141,7 @@ func TestLoader_AngularClass(t *testing.T) {
 				},
 			}
 			// if angularDetected = true, it means that the detection has run
-			l := newLoaderWithOpts(t, &config.PluginManagementCfg{AngularSupportEnabled: true}, loaderDepOpts{
+			l := newLoaderWithOpts(t, &config.PluginManagementCfg{}, loaderDepOpts{
 				angularInspector: angularinspector.AlwaysAngularFakeInspector,
 			})
 			p, err := l.Load(context.Background(), fakePluginSource)
@@ -1169,8 +1169,8 @@ func TestLoader_Load_Angular(t *testing.T) {
 		name string
 		cfg  *config.PluginManagementCfg
 	}{
-		{name: "angular support enabled", cfg: &config.PluginManagementCfg{AngularSupportEnabled: true}},
-		{name: "angular support disabled", cfg: &config.PluginManagementCfg{AngularSupportEnabled: false}},
+		{name: "angular support enabled", cfg: &config.PluginManagementCfg{}},
+		{name: "angular support disabled", cfg: &config.PluginManagementCfg{}},
 	} {
 		t.Run(cfgTc.name, func(t *testing.T) {
 			for _, tc := range []struct {
@@ -1182,7 +1182,7 @@ func TestLoader_Load_Angular(t *testing.T) {
 					name:             "angular plugin",
 					angularInspector: angularinspector.AlwaysAngularFakeInspector,
 					// angular plugins should load only if allowed by the cfg
-					shouldLoad: cfgTc.cfg.AngularSupportEnabled,
+					shouldLoad: false,
 				},
 				{
 					name:             "non angular plugin",
@@ -1221,15 +1221,12 @@ func TestLoader_HideAngularDeprecation(t *testing.T) {
 		expHideAngularDeprecation bool
 	}{
 		{name: "with plugin id in HideAngularDeprecation list", cfg: &config.PluginManagementCfg{
-			AngularSupportEnabled:  true,
 			HideAngularDeprecation: []string{"one-app", "two-panel", "test-datasource", "three-datasource"},
 		}, expHideAngularDeprecation: true},
 		{name: "without plugin id in HideAngularDeprecation list", cfg: &config.PluginManagementCfg{
-			AngularSupportEnabled:  true,
 			HideAngularDeprecation: []string{"one-app", "two-panel", "three-datasource"},
 		}, expHideAngularDeprecation: false},
 		{name: "with empty HideAngularDeprecation", cfg: &config.PluginManagementCfg{
-			AngularSupportEnabled:  true,
 			HideAngularDeprecation: nil,
 		}, expHideAngularDeprecation: false},
 	} {
