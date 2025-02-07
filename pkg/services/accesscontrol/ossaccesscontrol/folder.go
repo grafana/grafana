@@ -2,6 +2,7 @@ package ossaccesscontrol
 
 import (
 	"context"
+	"errors"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -98,7 +99,7 @@ func ProvideFolderPermissions(
 			ctx, span := tracer.Start(ctx, "accesscontrol.ossaccesscontrol.ProvideFolderPermissions.ResourceValidator")
 			defer span.End()
 
-			ctx, ident := identity.WithServiceIdentitiy(ctx, orgID)
+			ctx, ident := identity.WithServiceIdentity(ctx, orgID)
 			_, err := folderService.Get(ctx, &folder.GetFolderQuery{
 				UID:          &resourceID,
 				OrgID:        orgID,
@@ -106,13 +107,24 @@ func ProvideFolderPermissions(
 			})
 
 			if err != nil {
+				// if the folder is not found, this may be on the create path,
+				// where the write path to legacy will then go through the read
+				// path and try to read from both legacy & unified before it exists on both
+				if features.IsEnabledGlobally(featuremgmt.FlagKubernetesFoldersServiceV2) && errors.Is(err, dashboards.ErrFolderNotFound) {
+					_, err = folderService.GetLegacy(ctx, &folder.GetFolderQuery{
+						UID:          &resourceID,
+						OrgID:        orgID,
+						SignedInUser: ident,
+					})
+					return err
+				}
 				return err
 			}
 
 			return nil
 		},
 		InheritedScopesSolver: func(ctx context.Context, orgID int64, resourceID string) ([]string, error) {
-			ctx, _ = identity.WithServiceIdentitiy(ctx, orgID)
+			ctx, _ = identity.WithServiceIdentity(ctx, orgID)
 			return dashboards.GetInheritedScopes(ctx, orgID, resourceID, folderService)
 		},
 		Assignments: resourcepermissions.Assignments{

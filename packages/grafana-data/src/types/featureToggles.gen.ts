@@ -165,7 +165,6 @@ export interface FeatureToggles {
   kubernetesAggregator?: boolean;
   expressionParser?: boolean;
   groupByVariable?: boolean;
-  authAPIAccessTokenAuth?: boolean;
   scopeFilters?: boolean;
   ssoSettingsSAML?: boolean;
   oauthRequireSubClaim?: boolean;
@@ -251,8 +250,12 @@ export interface FeatureToggles {
   queryLibraryDashboards?: boolean;
   grafanaAdvisor?: boolean;
   elasticsearchImprovedParsing?: boolean;
+  exploreMetricsUseExternalAppPlugin?: boolean;
   datasourceConnectionsTab?: boolean;
   fetchRulesUsingPost?: boolean;
   alertingAlertmanagerExtraDedupStage?: boolean;
   alertingAlertmanagerExtraDedupStageStopPipeline?: boolean;
+  newLogsPanel?: boolean;
+  grafanaconThemes?: boolean;
+  pluginsCDNSyncLoader?: boolean;
 }

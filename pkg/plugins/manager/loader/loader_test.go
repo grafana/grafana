@@ -58,6 +58,7 @@ func TestLoader_Load(t *testing.T) {
 		t.Errorf("could not construct absolute path of current dir")
 		return
 	}
+	zeroCfg := &config.PluginManagementCfg{}
 	tests := []struct {
 		name        string
 		class       plugins.Class
@@ -420,7 +421,7 @@ func TestLoader_Load(t *testing.T) {
 			require.NoError(t, err)
 			et := pluginerrs.ProvideErrorTracker()
 
-			l := New(discovery.New(tt.cfg, discovery.Opts{}), bootstrap.New(tt.cfg, bootstrap.Opts{}),
+			l := New(zeroCfg, discovery.New(tt.cfg, discovery.Opts{}), bootstrap.New(tt.cfg, bootstrap.Opts{}),
 				validation.New(tt.cfg, validation.Opts{}), initialization.New(tt.cfg, initialization.Opts{}),
 				terminationStage, et)
 
@@ -455,6 +456,7 @@ func TestLoader_Load(t *testing.T) {
 
 		var steps []string
 		l := New(
+			zeroCfg,
 			&fakes.FakeDiscoverer{
 				DiscoverFunc: func(ctx context.Context, s plugins.PluginSource) ([]*plugins.FoundBundle, error) {
 					require.Equal(t, src, s)
@@ -512,6 +514,7 @@ func TestLoader_Load(t *testing.T) {
 
 		var steps []string
 		l := New(
+			zeroCfg,
 			&fakes.FakeDiscoverer{
 				DiscoverFunc: func(ctx context.Context, s plugins.PluginSource) ([]*plugins.FoundBundle, error) {
 					require.Equal(t, src, s)
@@ -574,6 +577,7 @@ func TestLoader_Load(t *testing.T) {
 
 		var steps []string
 		l := New(
+			zeroCfg,
 			&fakes.FakeDiscoverer{
 				DiscoverFunc: func(ctx context.Context, s plugins.PluginSource) ([]*plugins.FoundBundle, error) {
 					require.Equal(t, src, s)
@@ -629,7 +633,9 @@ func TestLoader_Unload(t *testing.T) {
 		}
 
 		for _, tc := range tcs {
-			l := New(&fakes.FakeDiscoverer{},
+			l := New(
+				&config.PluginManagementCfg{},
+				&fakes.FakeDiscoverer{},
 				&fakes.FakeBootstrapper{},
 				&fakes.FakeValidator{},
 				&fakes.FakeInitializer{},

@@ -912,7 +912,7 @@ var (
 			Stage:        FeatureStageGeneralAvailability,
 			Expression:   "true", // enabled by default
 			FrontendOnly: true,
-			Owner:        grafanaDashboardsSquad,
+			Owner:        grafanaObservabilityMetricsSquad,
 		},
 		{
 			Name:         "alertingSimplifiedRouting",
@@ -1023,9 +1023,10 @@ var (
 		{
 			Name:         "alertingSaveStateCompressed",
 			Description:  "Enables the compressed protobuf-based alert state storage",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: false,
 			Owner:        grafanaAlertingSquad,
+			Expression:   "false",
 		},
 		{
 			Name:              "scopeApi",
@@ -1054,7 +1055,7 @@ var (
 			Description:  "Enables using SQL and DuckDB functions as Expressions.",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: false,
-			Owner:        grafanaAppPlatformSquad,
+			Owner:        grafanaDatasourcesCoreServicesSquad,
 		},
 		{
 			Name:         "nodeGraphDotLayout",
@@ -1106,14 +1107,6 @@ var (
 			Stage:             FeatureStageExperimental,
 			Owner:             grafanaDashboardsSquad,
 			AllowSelfServe:    false,
-			HideFromDocs:      true,
-			HideFromAdminPage: true,
-		},
-		{
-			Name:              "authAPIAccessTokenAuth",
-			Description:       "Enables the use of Auth API access tokens for authentication",
-			Stage:             FeatureStageExperimental,
-			Owner:             identityAccessTeam,
 			HideFromDocs:      true,
 			HideFromAdminPage: true,
 		},
@@ -1743,6 +1736,15 @@ var (
 			Owner:       awsDatasourcesSquad,
 		},
 		{
+			Name:            "exploreMetricsUseExternalAppPlugin",
+			Description:     "Use the externalized Metrics Drilldown (formerly known as Explore Metrics) app plugin",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaObservabilityMetricsSquad,
+			FrontendOnly:    true,
+			RequiresRestart: true,
+			HideFromDocs:    true,
+		},
+		{
 			Name:            "datasourceConnectionsTab",
 			Description:     "Shows defined connections for a data source in the plugins detail page",
 			Stage:           FeatureStageExperimental,
@@ -1775,6 +1777,28 @@ var (
 			HideFromAdminPage: true,
 			HideFromDocs:      true,
 			RequiresRestart:   true,
+		},
+		{
+			Name:         "newLogsPanel",
+			Description:  "Enables the new logs panel in Explore",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityLogsSquad,
+		},
+		{
+			Name:              "grafanaconThemes",
+			Description:       "Enables the temporary themes for GrafanaCon",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaFrontendPlatformSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			RequiresRestart:   true,
+		},
+		{
+			Name:        "pluginsCDNSyncLoader",
+			Description: "Load plugins from CDN synchronously",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaPluginsPlatformSquad,
 		},
 	}
 )

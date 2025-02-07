@@ -711,6 +711,16 @@ export const defaultRowRepeatOptions = (): RowRepeatOptions => ({
 	value: "",
 });
 
+export interface ResponsiveGridRepeatOptions {
+	mode: "variable";
+	value: string;
+}
+
+export const defaultResponsiveGridRepeatOptions = (): ResponsiveGridRepeatOptions => ({
+	mode: RepeatMode,
+	value: "",
+});
+
 export interface GridLayoutItemSpec {
 	x: number;
 	y: number;
@@ -781,6 +791,86 @@ export interface GridLayoutKind {
 export const defaultGridLayoutKind = (): GridLayoutKind => ({
 	kind: "GridLayout",
 	spec: defaultGridLayoutSpec(),
+});
+
+export interface RowsLayoutKind {
+	kind: "RowsLayout";
+	spec: RowsLayoutSpec;
+}
+
+export const defaultRowsLayoutKind = (): RowsLayoutKind => ({
+	kind: "RowsLayout",
+	spec: defaultRowsLayoutSpec(),
+});
+
+export interface RowsLayoutSpec {
+	rows: RowsLayoutRowKind[];
+}
+
+export const defaultRowsLayoutSpec = (): RowsLayoutSpec => ({
+	rows: [],
+});
+
+export interface RowsLayoutRowKind {
+	kind: "RowsLayoutRow";
+	spec: RowsLayoutRowSpec;
+}
+
+export const defaultRowsLayoutRowKind = (): RowsLayoutRowKind => ({
+	kind: "RowsLayoutRow",
+	spec: defaultRowsLayoutRowSpec(),
+});
+
+export interface RowsLayoutRowSpec {
+	title?: string;
+	collapsed: boolean;
+	repeat?: RowRepeatOptions;
+	layout: GridLayoutKind | ResponsiveGridLayoutKind;
+}
+
+export const defaultRowsLayoutRowSpec = (): RowsLayoutRowSpec => ({
+	collapsed: false,
+	layout: defaultGridLayoutKind(),
+});
+
+export interface ResponsiveGridLayoutKind {
+	kind: "ResponsiveGridLayout";
+	spec: ResponsiveGridLayoutSpec;
+}
+
+export const defaultResponsiveGridLayoutKind = (): ResponsiveGridLayoutKind => ({
+	kind: "ResponsiveGridLayout",
+	spec: defaultResponsiveGridLayoutSpec(),
+});
+
+export interface ResponsiveGridLayoutSpec {
+	row: string;
+	col: string;
+	items: ResponsiveGridLayoutItemKind[];
+}
+
+export const defaultResponsiveGridLayoutSpec = (): ResponsiveGridLayoutSpec => ({
+	row: "",
+	col: "",
+	items: [],
+});
+
+export interface ResponsiveGridLayoutItemKind {
+	kind: "ResponsiveGridLayoutItem";
+	spec: ResponsiveGridLayoutItemSpec;
+}
+
+export const defaultResponsiveGridLayoutItemKind = (): ResponsiveGridLayoutItemKind => ({
+	kind: "ResponsiveGridLayoutItem",
+	spec: defaultResponsiveGridLayoutItemSpec(),
+});
+
+export interface ResponsiveGridLayoutItemSpec {
+	element: ElementReference;
+}
+
+export const defaultResponsiveGridLayoutItemSpec = (): ResponsiveGridLayoutItemSpec => ({
+	element: defaultElementReference(),
 });
 
 export interface PanelSpec {
@@ -962,7 +1052,7 @@ export interface QueryVariableSpec {
 	skipUrlSync: boolean;
 	description?: string;
 	datasource?: DataSourceRef;
-	query: string | DataQueryKind;
+	query: DataQueryKind;
 	regex: string;
 	sort: VariableSort;
 	definition?: string;
@@ -979,7 +1069,7 @@ export const defaultQueryVariableSpec = (): QueryVariableSpec => ({
 	hide: "dontHide",
 	refresh: "never",
 	skipUrlSync: false,
-	query: "",
+	query: defaultDataQueryKind(),
 	regex: "",
 	sort: "disabled",
 	options: [],
