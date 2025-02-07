@@ -159,6 +159,7 @@ type HealthStatus struct {
 	Checked int64 `json:"checked,omitempty"`
 
 	// Summary messages (will be shown to users)
+	// +listType=atomic
 	Message []string `json:"message,omitempty"`
 }
 
@@ -179,6 +180,7 @@ type SyncStatus struct {
 	Scheduled int64 `json:"scheduled,omitempty"`
 
 	// Summary messages (will be shown to users)
+	// +listType=atomic
 	Message []string `json:"message,omitempty"`
 
 	// The repository hash when the last sync ran
@@ -197,6 +199,7 @@ type RepositoryList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 
+	// +listType=atomic
 	Items []Repository `json:"items,omitempty"`
 }
 
@@ -232,9 +235,11 @@ type ResourceWrapper struct {
 	Resource ResourceObjects `json:"resource"`
 
 	// Lint results
+	// +listType=atomic
 	Lint []LintIssue `json:"lint,omitempty"`
 
 	// If errors exist, show them here
+	// +listType=atomic
 	Errors []string `json:"errors,omitempty"`
 }
 
@@ -293,6 +298,7 @@ type FileList struct {
 
 	// should be named "items", but avoid subresource error for now:
 	// kubernetes/kubernetes#126809
+	// +listType=atomic
 	Items []FileItem `json:"files,omitempty"`
 }
 
@@ -347,6 +353,7 @@ type HistoryList struct {
 
 	// should be named "items", but avoid subresource error for now:
 	// kubernetes/kubernetes#126809
+	// +listType=atomic
 	Items []HistoryItem `json:"items,omitempty"`
 }
 
@@ -359,6 +366,7 @@ type Author struct {
 type HistoryItem struct {
 	Ref       string   `json:"ref"`
 	Message   string   `json:"message"`
+	// +listType=atomic
 	Authors   []Author `json:"authors"`
 	CreatedAt int64    `json:"createdAt"`
 }
