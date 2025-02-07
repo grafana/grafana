@@ -521,7 +521,7 @@ func (r *githubRepository) parsePushEvent(event *github.PushEvent) (*provisionin
 			Repository: r.Config().GetName(),
 			Action:     provisioning.JobActionSync,
 			Sync: &provisioning.SyncJobOptions{
-				Complete: false,
+				Incremental: true,
 			},
 		},
 	}, nil
@@ -593,7 +593,7 @@ func (r *githubRepository) LatestRef(ctx context.Context) (string, error) {
 	return branch.Sha, nil
 }
 
-func (r *githubRepository) CompareFiles(ctx context.Context, base, ref string) ([]FileChange, error) {
+func (r *githubRepository) CompareFiles(ctx context.Context, base, ref string) ([]VersionedFileChange, error) {
 	if ref == "" {
 		var err error
 		ref, err = r.LatestRef(ctx)
@@ -610,24 +610,24 @@ func (r *githubRepository) CompareFiles(ctx context.Context, base, ref string) (
 		return nil, fmt.Errorf("compare commits: %w", err)
 	}
 
-	changes := make([]FileChange, 0)
+	changes := make([]VersionedFileChange, 0)
 	for _, f := range files {
 		// reference: https://docs.github.com/en/rest/commits/commits?apiVersion=2022-11-28#get-a-commit
 		switch f.GetStatus() {
 		case "added", "copied":
-			changes = append(changes, FileChange{
+			changes = append(changes, VersionedFileChange{
 				Path:   f.GetFilename(),
 				Ref:    ref,
 				Action: FileActionCreated,
 			})
 		case "modified", "changed":
-			changes = append(changes, FileChange{
+			changes = append(changes, VersionedFileChange{
 				Path:   f.GetFilename(),
 				Ref:    ref,
 				Action: FileActionUpdated,
 			})
 		case "renamed":
-			changes = append(changes, FileChange{
+			changes = append(changes, VersionedFileChange{
 				Path:         f.GetFilename(),
 				PreviousPath: f.GetPreviousFilename(),
 				Ref:          ref,
@@ -635,7 +635,7 @@ func (r *githubRepository) CompareFiles(ctx context.Context, base, ref string) (
 				Action:       FileActionRenamed,
 			})
 		case "removed":
-			changes = append(changes, FileChange{
+			changes = append(changes, VersionedFileChange{
 				Ref:    base,
 				Path:   f.GetFilename(),
 				Action: FileActionDeleted,

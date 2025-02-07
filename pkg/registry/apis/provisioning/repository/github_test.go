@@ -84,6 +84,9 @@ func TestParseWebhooks(t *testing.T) {
 			Job: &provisioning.JobSpec{ // we want to always push a sync job
 				Repository: "unit-test-repo",
 				Action:     provisioning.JobActionSync,
+				Sync: &provisioning.SyncJobOptions{
+					Incremental: true,
+				},
 			},
 		}},
 		{"push", "nested", provisioning.WebhookResponse{
@@ -91,6 +94,9 @@ func TestParseWebhooks(t *testing.T) {
 			Job: &provisioning.JobSpec{
 				Repository: "unit-test-repo",
 				Action:     provisioning.JobActionSync,
+				Sync: &provisioning.SyncJobOptions{
+					Incremental: true,
+				},
 			},
 		}},
 		{"issue_comment", "created", provisioning.WebhookResponse{
@@ -104,6 +110,9 @@ func TestParseWebhooks(t *testing.T) {
 				Name: "unit-test-repo",
 			},
 			Spec: provisioning.RepositorySpec{
+				Sync: provisioning.SyncOptions{
+					Enabled: true, // required to accept sync job
+				},
 				GitHub: &provisioning.GitHubRepositoryConfig{
 					Repository: "git-ui-sync-demo",
 					Owner:      "grafana",

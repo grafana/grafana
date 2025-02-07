@@ -523,7 +523,7 @@ export type CreateRepositorySyncArg = {
   name: string;
   body: {
     /** Complete forces the sync to overwrite */
-    complete?: boolean;
+    incremental?: boolean;
   };
 };
 export type CreateRepositoryTestResponse = /** status 200 OK */ TestResults;
