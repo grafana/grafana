@@ -35,7 +35,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
-	errs "k8s.io/apimachinery/pkg/api/errors"
 )
 
 const (
@@ -203,7 +202,7 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 			return response.Error(http.StatusNotFound, "Folder not found", err)
 		}
 
-		if errs.IsForbidden(err) {
+		if apierrors.IsForbidden(err) {
 			// the dashboard is in a folder the user can't access, so return the dashboard without folder info
 			err = nil
 			queryResult = &folder.Folder{
