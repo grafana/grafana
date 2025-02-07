@@ -313,6 +313,28 @@ type FileItem struct {
 
 // Information we can get just from the file listing
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type ResourceList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty"`
+
+	// +listType=atomic
+	Items []ResourceListItem `json:"items,omitempty"`
+}
+
+type ResourceListItem struct {
+	Path     string `json:"path"`
+	Group    string `json:"group"`
+	Resource string `json:"resource"`
+	Name     string `json:"name"` // the k8s identifier
+	Hash     string `json:"hash"`
+	Time     int64  `json:"time,omitempty"`
+
+	Title  string `json:"title,omitempty"`
+	Folder string `json:"folder,omitempty"`
+}
+
+// Information we can get just from the file listing
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type ResourceStats struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
