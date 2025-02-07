@@ -1,6 +1,6 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/PromQueryEditorSelector.tsx
 import { isEqual, map } from 'lodash';
-import { memo, SyntheticEvent, useCallback, useEffect, useState } from 'react';
+import { memo, SyntheticEvent, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { CoreApp, LoadingState, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -13,7 +13,7 @@ import { PromQueryFormat } from '../../dataquery';
 import { PromQuery } from '../../types';
 import { QueryPatternsModal } from '../QueryPatternsModal';
 import { promQueryEditorExplainKey, useFlag } from '../hooks/useFlag';
-import { buildVisualQueryFromString } from '../parsing';
+import { buildVisualQueryFromString, isValidPromQLMinusGrafanaGlobalVariables } from '../parsing';
 import { QueryEditorModeToggle } from '../shared/QueryEditorModeToggle';
 import { QueryHeaderSwitch } from '../shared/QueryHeaderSwitch';
 import { QueryEditorMode } from '../shared/types';
@@ -37,6 +37,38 @@ export const INTERVAL_FACTOR_OPTIONS: Array<SelectableValue<number>> = map([1, 2
 
 type Props = PromQueryEditorProps;
 
+class DelayedTriggerState {
+  private timer: ReturnType<typeof setTimeout> | null = null;
+  private delay: number;
+  private action: () => void;
+  private state = false; // Indicates if the trigger is active
+
+  constructor(action: () => void, delay = 3000) {
+    this.action = action;
+    this.delay = delay;
+  }
+
+  start() {
+    this.reset();
+    this.state = true;
+    this.timer = setTimeout(() => {
+      this.state = false;
+      this.action();
+    }, this.delay);
+  }
+
+  reset() {
+    if (this.timer) {
+      clearTimeout(this.timer);
+    }
+    this.state = false;
+  }
+
+  isActive() {
+    return this.state;
+  }
+}
+
 export const PromQueryEditorSelector = memo<Props>((props) => {
   const {
     onChange,
@@ -52,6 +84,7 @@ export const PromQueryEditorSelector = memo<Props>((props) => {
   const [parseModalOpen, setParseModalOpen] = useState(false);
   const [queryPatternsModalOpen, setQueryPatternsModalOpen] = useState(false);
   const [dataIsStale, setDataIsStale] = useState(false);
+  const delayTrigger = useMemo(() => new DelayedTriggerState(onRunQuery), [onRunQuery]);
   const { flag: explain, setFlag: setExplain } = useFlag(promQueryEditorExplainKey);
 
   const query = getQueryWithDefaults(props.query, app, defaultEditor);
@@ -88,9 +121,36 @@ export const PromQueryEditorSelector = memo<Props>((props) => {
     setDataIsStale(false);
   }, [data]);
 
+  useEffect(() => {
+    window.parent.postMessage({
+      type: 'message',
+      payload: {
+        source: 'oodle-grafana',
+        eventType: 'dataIsStale',
+        value: {
+          dataIsStale,
+        }
+      },
+    }, '*');
+  }, [dataIsStale])
+
   const onChangeInternal = (query: PromQuery) => {
     if (!isEqual(query, props.query)) {
       setDataIsStale(true);
+
+      if (queryBuilderOnly) {
+        if (isValidPromQLMinusGrafanaGlobalVariables(query.expr)) {
+          if (editorMode === QueryEditorMode.Builder) {
+            onRunQuery();
+          } else {
+            // For code editor add a delay before running query rather than do it for
+            // every character.
+            delayTrigger.start();
+          }
+        } else {
+          delayTrigger.reset();
+        }
+      }
     }
     onChange(query);
   };
