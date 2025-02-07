@@ -14,6 +14,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
 
+	"golang.org/x/exp/maps"
 	"golang.org/x/exp/slices"
 	"golang.org/x/sync/errgroup"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -1248,26 +1249,13 @@ func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *dashb
 			return nil, err
 		}
 
+		folderNames, err := dr.fetchFolderNames(ctx, query, response.Hits)
+		if err != nil {
+			return nil, err
+		}
+
 		finalResults := make([]dashboards.DashboardSearchProjection, len(response.Hits))
-		// Create a small runtime cache for folders to avoid extra calls to the folder service
-		foldersMap := make(map[string]*folder.Folder)
-		serviceCtx, serviceIdent := identity.WithServiceIdentity(ctx, query.OrgId)
 		for i, hit := range response.Hits {
-			f, ok := foldersMap[hit.Folder]
-			if !ok {
-				// We can get search result where user don't have access to parents. If that happens this thi
-				// will fail if we call it as the requesting user. To resolve this we call this as the service so we can
-				// garantuee that we can fetch the parent.
-				f, err = dr.folderService.Get(serviceCtx, &folder.GetFolderQuery{
-					UID:          &hit.Folder,
-					OrgID:        query.OrgId,
-					SignedInUser: serviceIdent,
-				})
-				if err != nil {
-					return nil, err
-				}
-				foldersMap[hit.Folder] = f
-			}
 			result := dashboards.DashboardSearchProjection{
 				ID:          hit.Field.GetNestedInt64(search.DASHBOARD_LEGACY_ID),
 				UID:         hit.Name,
@@ -1276,7 +1264,7 @@ func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *dashb
 				Slug:        slugify.Slugify(hit.Title),
 				IsFolder:    false,
 				FolderUID:   hit.Folder,
-				FolderTitle: f.Title,
+				FolderTitle: folderNames[hit.Folder],
 				Tags:        hit.Tags,
 			}
 
@@ -1291,6 +1279,28 @@ func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *dashb
 	}
 
 	return dr.dashboardStore.FindDashboards(ctx, query)
+}
+
+func (dr *DashboardServiceImpl) fetchFolderNames(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery, hits []dashboardv0alpha1.DashboardHit) (map[string]string, error) {
+	// call this with elevated permissions so we can get folder names where user does not have access
+	// some dashboards are shared directly with user, but the folder is not accessible via the folder permissions
+	serviceCtx, serviceIdent := identity.WithServiceIdentity(ctx, query.OrgId)
+	search := folder.SearchFoldersQuery{
+		UIDs:         getFolderUIDs(hits),
+		OrgID:        query.OrgId,
+		SignedInUser: serviceIdent,
+	}
+
+	folders, err := dr.folderService.SearchFolders(serviceCtx, search)
+	if err != nil {
+		return nil, folder.ErrInternal.Errorf("failed to fetch parent folders: %w", err)
+	}
+
+	folderNames := make(map[string]string)
+	for _, f := range folders {
+		folderNames[f.UID] = f.Title
+	}
+	return folderNames, nil
 }
 
 func (dr *DashboardServiceImpl) SearchDashboards(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) (model.HitList, error) {
@@ -1652,7 +1662,7 @@ func (dr *DashboardServiceImpl) listDashboardsThroughK8s(ctx context.Context, or
 	return dashboards, nil
 }
 
-func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) (*dashboardv0alpha1.SearchResults, error) {
+func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) (dashboardv0alpha1.SearchResults, error) {
 	request := &resource.ResourceSearchRequest{
 		Options: &resource.ListOptions{
 			Fields: []*resource.Requirement{},
@@ -1777,7 +1787,7 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 	}
 
 	if err != nil {
-		return nil, err
+		return dashboardv0alpha1.SearchResults{}, err
 	}
 
 	if federate != nil {
@@ -1794,7 +1804,7 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 
 	res, err := dr.k8sclient.Search(ctx, query.OrgId, request)
 	if err != nil {
-		return nil, err
+		return dashboardv0alpha1.SearchResults{}, err
 	}
 
 	return dashboardsearch.ParseResults(res, 0)
@@ -2082,4 +2092,14 @@ func LegacySaveCommandToUnstructured(cmd *dashboards.SaveDashboardCommand, names
 	}
 
 	return finalObj, nil
+}
+
+func getFolderUIDs(hits []dashboardv0alpha1.DashboardHit) []string {
+	folderSet := map[string]bool{}
+	for _, hit := range hits {
+		if hit.Folder != "" && !folderSet[hit.Folder] {
+			folderSet[hit.Folder] = true
+		}
+	}
+	return maps.Keys(folderSet)
 }
