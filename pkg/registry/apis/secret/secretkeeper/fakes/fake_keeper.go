@@ -52,3 +52,17 @@ func (s *FakeKeeper) Expose(ctx context.Context, cfg secretv0alpha1.KeeperConfig
 func (s *FakeKeeper) Delete(ctx context.Context, cfg secretv0alpha1.KeeperConfig, namespace string, externalID keepertypes.ExternalID) error {
 	return nil
 }
+
+func (s *FakeKeeper) Update(ctx context.Context, cfg secretv0alpha1.KeeperConfig, namespace string, externalID keepertypes.ExternalID, exposedValueOrRef string) error {
+	ns, ok := s.values[namespace]
+	if !ok {
+		return keepertypes.ErrSecretNotFound
+	}
+	_, ok = ns[externalID.String()]
+	if !ok {
+		return keepertypes.ErrSecretNotFound
+	}
+
+	ns[externalID.String()] = exposedValueOrRef
+	return nil
+}

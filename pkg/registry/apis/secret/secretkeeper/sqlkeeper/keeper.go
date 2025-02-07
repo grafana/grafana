@@ -77,3 +77,14 @@ func (s *SQLKeeper) Delete(ctx context.Context, cfg secretv0alpha1.KeeperConfig,
 	}
 	return nil
 }
+
+func (s *SQLKeeper) Update(ctx context.Context, cfg secretv0alpha1.KeeperConfig, namespace string, externalID keepertypes.ExternalID, exposedValueOrRef string) error {
+	ctx, span := s.tracer.Start(ctx, "sqlKeeper.Update")
+	defer span.End()
+
+	err := s.store.Update(ctx, externalID.String(), []byte(exposedValueOrRef))
+	if err != nil {
+		return fmt.Errorf("failed to update encrypted value: %w", err)
+	}
+	return nil
+}
