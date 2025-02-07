@@ -1114,6 +1114,16 @@
       "title": "Dashboard options",
       "title-option": "Title"
     },
+    "outline": {
+      "item": "Dashboard",
+      "title": "Outline",
+      "tree": {
+        "item": {
+          "collapse": "Collapse item",
+          "expand": "Expand item"
+        }
+      }
+    },
     "panel-edit": {
       "alerting-tab": {
         "dashboard-not-saved": "Dashboard must be saved before alerts can be added.",
