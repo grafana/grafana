@@ -205,7 +205,6 @@ type FrontendSettingsDTO struct {
 	ExternalUserMngAnalytics            bool     `json:"externalUserMngAnalytics"`
 	ExternalUserMngAnalyticsParams      string   `json:"externalUserMngAnalyticsParams"`
 	ViewersCanEdit                      bool     `json:"viewersCanEdit"`
-	AngularSupportEnabled               bool     `json:"angularSupportEnabled"`
 	EditorsCanAdmin                     bool     `json:"editorsCanAdmin"`
 	DisableSanitizeHtml                 bool     `json:"disableSanitizeHtml"`
 	TrustedTypesDefaultPolicyEnabled    bool     `json:"trustedTypesDefaultPolicyEnabled"`
