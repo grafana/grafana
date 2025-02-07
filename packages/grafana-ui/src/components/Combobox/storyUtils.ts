@@ -42,6 +42,6 @@ export async function generateGroupingOptions(amount: number): Promise<ComboboxO
   return Array.from({ length: amount }, (_, index) => ({
     label: 'Option ' + index,
     value: index.toString(),
-    group: index % 10 === 0 ? 'Ten' : index % 2 === 0 ? 'Even' : undefined,
+    group: index % 9 !== 0 ? 'Group ' + Math.floor(index / 10) : undefined,
   }));
 }

@@ -94,26 +94,28 @@ export function useOptions<T extends string | number>(rawOptions: AsyncOptions<T
   );
 
   const reorganizeOptions = useCallback((options: Array<ComboboxOption<T>>) => {
-    const groupedOptions = new Map<string, Array<ComboboxOption<T>>>();
-    const ungroupedOptions: Array<ComboboxOption<T>> = [];
-    const optionsReorganized: Array<ComboboxOption<T> | string> = [];
+    const groupedOptions = new Map<string | undefined, Array<ComboboxOption<T>>>();
     for (const option of options) {
-      const group = option.group;
-      if (group) {
-        if (!groupedOptions.has(group)) {
-          groupedOptions.set(group, []);
-        }
-        groupedOptions.get(group)?.push(option);
+      const groupExists = groupedOptions.has(option.group);
+      if (groupExists) {
+        groupedOptions.get(option.group)?.push(option);
       } else {
-        ungroupedOptions.push(option);
+        groupedOptions.set(option.group, [option]);
       }
     }
-    groupedOptions.forEach((groupOptions, group) => {
-      optionsReorganized.push(group);
-      optionsReorganized.push(...groupOptions);
-    });
-    optionsReorganized.push(...ungroupedOptions);
-    return optionsReorganized;
+    const reorganizeOptions = [];
+    for (const [group, groupOptions] of groupedOptions) {
+      if (!group) {
+        continue;
+      }
+      reorganizeOptions.push(group);
+      reorganizeOptions.push(...groupOptions);
+    }
+    const undefinedGroupOptiones = groupedOptions.get(undefined);
+    if (undefinedGroupOptiones) {
+      reorganizeOptions.push(...undefinedGroupOptiones);
+    }
+    return reorganizeOptions;
   }, []);
 
   const finalOptions = useMemo(() => {
