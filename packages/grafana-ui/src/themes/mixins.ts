@@ -82,3 +82,7 @@ export const getTooltipContainerStyles = (theme: GrafanaTheme2) => ({
   borderRadius: theme.shape.radius.default,
   zIndex: theme.zIndex.tooltip,
 });
+
+export const getExternalRadius = (radius: string, padding: number, borderWidth?: number): number => {
+  return parseInt(radius.replace('px', ''), 10) + padding + (borderWidth ?? 0);
+};
