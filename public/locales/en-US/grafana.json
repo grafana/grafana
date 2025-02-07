@@ -2654,7 +2654,7 @@
       "modal": {
         "cancel": "Cancel",
         "copyEmail": "Copy email address",
-        "description": "This feature is for reporting malicious or harmful behaviour within plugins. For plugin concerns, email us at: <1>integrations@grafana.com</1>. ",
+        "description": "This feature is for reporting malicious or harmful behaviour within plugins. For plugin concerns, email us at: ",
         "node": "Note: For general plugin issues like bugs or feature requests, please contact the plugin author using the provided links. ",
         "title": "Report a plugin concern"
       }

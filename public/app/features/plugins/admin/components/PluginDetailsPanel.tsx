@@ -1,3 +1,4 @@
+/* eslint @grafana/no-untranslated-strings: "error" */
 import { css } from '@emotion/css';
 import { useState } from 'react';
 
@@ -43,7 +44,6 @@ export function PluginDetailsPanel(props: Props): React.ReactElement | null {
   const shouldRenderLinks = plugin.url || plugin.details?.licenseUrl || plugin.details?.documentationUrl;
 
   const styles = useStyles2(getStyles);
-  console.log('plugin', plugin);
 
   const onClickReportConcern = (pluginId: string) => {
     setReportAbuseModalOpen(true);
