@@ -570,7 +570,6 @@ func TestIntegrationProvisioningRules(t *testing.T) {
 		EnableUnifiedAlerting: true,
 		DisableAnonymous:      true,
 		AppModeProduction:     true,
-		EnableLog:             true,
 	})
 
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
