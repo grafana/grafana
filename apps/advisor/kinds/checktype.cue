@@ -7,7 +7,7 @@ checktype: {
 	versions: {
 		"v0alpha1": {
 			codegen: {
-				frontend: false
+				frontend: true
 				backend:  true
 			}
 			schema: {
