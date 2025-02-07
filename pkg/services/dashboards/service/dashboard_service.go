@@ -2084,11 +2084,11 @@ func LegacySaveCommandToUnstructured(cmd *dashboards.SaveDashboardCommand, names
 
 func getFolderUIDs(hits []dashboardv0alpha1.DashboardHit) []string {
 	folderUIDs := []string{}
-	folderSet := map[string]string{} // to avoid duplicates
+	folderSet := map[string]bool{} // to avoid duplicates
 	for _, hit := range hits {
-		if hit.Folder != "" && folderSet[hit.Folder] == "" {
+		if hit.Folder != "" && !folderSet[hit.Folder] {
 			folderUIDs = append(folderUIDs, hit.Folder)
-			folderSet[hit.Folder] = hit.Folder
+			folderSet[hit.Folder] = true
 		}
 	}
 	return folderUIDs
