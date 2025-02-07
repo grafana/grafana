@@ -52,7 +52,9 @@ func (fl *folderSearch) GetFolders(ctx context.Context, query folder.GetFoldersQ
 	}
 	request.Federated = []*resource.ResourceKey{federate}
 	request.Options.Key, err = resource.AsResourceKey(fl.namespace, folderv0alpha1.RESOURCE)
-
+	if err != nil {
+		return nil, err
+	}
 	res, err := fl.k8sClient.Search(ctx, query.OrgID, request)
 	if err != nil {
 		return nil, err
