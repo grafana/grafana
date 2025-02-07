@@ -273,7 +273,7 @@ export function AlertVersionHistory({ ruleUid }: AlertVersionHistoryProps) {
           {config.featureToggles.alertingRuleVersionHistoryRestore && (
             <Box paddingTop={2}>
               <Stack justifyContent="flex-end">
-                <Button variant="destructive" onClick={() => {}}>
+                <Button variant="destructive" onClick={() => { }}>
                   <Trans i18nKey="alerting.alertVersionHistory.reset">
                     Reset to version {oldVersion.grafana_alert.version}
                   </Trans>
@@ -340,14 +340,14 @@ function VersionHistoryTable({
   const unknown = t('alerting.alertVersionHistory.unknown', 'Unknown');
 
   const rows = ruleVersions.map((rule, index) => {
-    const nextVersion = ruleVersions[index + 1];
+    const priorVersion = ruleVersions[index + 1];
     const currentVersion = ruleVersions[index];
     return {
       id: String(rule.grafana_alert.version),
       version: rule.grafana_alert.version || `unknown-rule-${index}`,
       created: rule.grafana_alert.updated || unknown,
       createdBy: rule.grafana_alert.updated_by,
-      diff: nextVersion ? computeVersionDiff(currentVersion, nextVersion) : { added: 0, removed: 0 },
+      diff: priorVersion ? computeVersionDiff(priorVersion, currentVersion) : { added: 0, removed: 0 },
     };
   });
   const SPECIAL_UID_MAP = getSpecialUidMap();

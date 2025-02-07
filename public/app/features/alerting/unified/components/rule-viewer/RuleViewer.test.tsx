@@ -199,6 +199,25 @@ describe('RuleViewer', () => {
         const { user } = await renderRuleViewer(mockRule, mockRuleIdentifier, ActiveTab.VersionHistory);
 
         expect(await screen.findByRole('button', { name: /Compare versions/i })).toBeDisabled();
+
+        expect(screen.getAllByRole('row')).toHaveLength(7);
+        expect(screen.getAllByRole('row')[1]).toHaveTextContent(/6Provisioning2025-01-18 04:35:17/i);
+        expect(screen.getAllByRole('row')[1]).toHaveTextContent('+3-3Latest');
+
+        expect(screen.getAllByRole('row')[2]).toHaveTextContent(/5Alerting2025-01-17 04:35:17/i);
+        expect(screen.getAllByRole('row')[2]).toHaveTextContent('+5-5');
+
+        expect(screen.getAllByRole('row')[3]).toHaveTextContent(/4different user2025-01-16 04:35:17/i);
+        expect(screen.getAllByRole('row')[3]).toHaveTextContent('+5-5');
+
+        expect(screen.getAllByRole('row')[4]).toHaveTextContent(/3user12025-01-15 04:35:17/i);
+        expect(screen.getAllByRole('row')[4]).toHaveTextContent('+5-9');
+
+        expect(screen.getAllByRole('row')[5]).toHaveTextContent(/2User ID foo2025-01-14 04:35:17/i);
+        expect(screen.getAllByRole('row')[5]).toHaveTextContent('+11-7');
+
+        expect(screen.getAllByRole('row')[6]).toHaveTextContent(/1Unknown 2025-01-13 04:35:17/i);
+
         await user.click(screen.getByLabelText('1'));
         await user.click(screen.getByLabelText('2'));
         expect(await screen.findByRole('button', { name: /Compare versions/i })).toBeEnabled();
