@@ -2,26 +2,30 @@ package jobs
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/url"
-	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
-	client "github.com/grafana/grafana/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/auth"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/storage/unified/blob"
 )
+
+type SyncWorker interface {
+	Process(
+		ctx context.Context,
+		repo repository.Repository,
+		job provisioning.Job,
+		progress func(provisioning.JobStatus) error,
+	) (*provisioning.JobStatus, error)
+}
 
 type RepoGetter interface {
 	GetRepository(ctx context.Context, name string) (repository.Repository, error)
@@ -30,7 +34,6 @@ type RepoGetter interface {
 var _ Worker = (*JobWorker)(nil)
 
 type JobWorker struct {
-	client      client.ProvisioningV0alpha1Interface
 	getter      RepoGetter
 	parsers     *resources.ParserFactory
 	identities  auth.BackgroundIdentityService
@@ -38,32 +41,28 @@ type JobWorker struct {
 	lister      resources.ResourceLister
 	blobstore   blob.PublicBlobStore
 	urlProvider func(namespace string) string
-	syncer      Syncer
+	syncWorker  SyncWorker
 }
 
 func NewJobWorker(
 	getter RepoGetter,
 	parsers *resources.ParserFactory,
-	client client.ProvisioningV0alpha1Interface,
 	identities auth.BackgroundIdentityService,
 	render rendering.Service,
 	lister resources.ResourceLister,
+	syncWorker SyncWorker,
 	blobstore blob.PublicBlobStore,
 	urlProvider func(namespace string) string,
 ) *JobWorker {
 	return &JobWorker{
 		getter:      getter,
-		client:      client,
 		parsers:     parsers,
 		identities:  identities,
 		render:      render,
 		lister:      lister,
 		blobstore:   blobstore,
 		urlProvider: urlProvider,
-		syncer: &syncer{
-			parsers: parsers,
-			lister:  lister,
-		},
+		syncWorker:  syncWorker,
 	}
 }
 
@@ -96,8 +95,7 @@ func (g *JobWorker) Process(ctx context.Context, job provisioning.Job, progress 
 
 	switch job.Spec.Action {
 	case provisioning.JobActionSync:
-		return g.doSync(ctx, repo, job, progress)
-
+		return g.syncWorker.Process(ctx, repo, job, progress)
 	case provisioning.JobActionPullRequest:
 		prRepo, ok := repo.(PullRequestRepo)
 		if !ok {
@@ -159,80 +157,4 @@ func (g *JobWorker) Process(ctx context.Context, job provisioning.Job, progress 
 	default:
 		return nil, fmt.Errorf("unknown job action: %s", job.Spec.Action)
 	}
-}
-
-// The Syncer will synchronize the external repo with grafana database
-// this function updates the status for both the job and the referenced repository
-func (g *JobWorker) doSync(ctx context.Context,
-	repo repository.Repository,
-	job provisioning.Job,
-	progress func(provisioning.JobStatus) error,
-) (*provisioning.JobStatus, error) {
-	var err error
-	cfg := repo.Config()
-
-	logger := logging.FromContext(ctx).With("job", job.GetName(), "namespace", job.GetNamespace())
-	patch, err := json.Marshal(map[string]any{
-		"status": map[string]any{
-			"sync": job.Status.ToSyncStatus(job.Name),
-		},
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	cfg, err = g.client.Repositories(cfg.Namespace).
-		Patch(ctx, cfg.Name, types.MergePatchType, patch, v1.PatchOptions{}, "status")
-	if err != nil {
-		logger.Warn("unable to update repo with job status", "err", err)
-	}
-
-	// Execute the sync task
-	jobStatus, syncStatus, syncError := g.syncer.Sync(ctx, repo, *job.Spec.Sync, progress)
-	if syncStatus == nil {
-		syncStatus = &provisioning.SyncStatus{}
-	}
-	syncStatus.JobID = job.Name
-	syncStatus.Started = job.Status.Started
-	syncStatus.Finished = time.Now().UnixMilli()
-	if syncError != nil {
-		syncStatus.State = provisioning.JobStateError
-		syncStatus.Message = []string{
-			"error running sync",
-			syncError.Error(),
-		}
-	} else if syncStatus.State == "" {
-		syncStatus.State = provisioning.JobStateSuccess
-	}
-
-	// Update the resource stats -- give the index some time to catch up
-	time.Sleep(1 * time.Second)
-	stats, err := g.lister.Stats(ctx, cfg.Namespace, cfg.Name)
-	if err != nil {
-		logger.Warn("unable to read stats", "error", err)
-	}
-	if stats == nil {
-		stats = &provisioning.ResourceStats{}
-	}
-
-	patch, err = json.Marshal(map[string]any{
-		"status": map[string]any{
-			"sync":  syncStatus,
-			"stats": stats.Items,
-		},
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	_, err = g.client.Repositories(cfg.Namespace).
-		Patch(ctx, cfg.Name, types.MergePatchType, patch, v1.PatchOptions{}, "status")
-	if err != nil {
-		logger.Warn("unable to update repo with job status", "err", err)
-	}
-
-	if syncError != nil {
-		return nil, syncError
-	}
-	return jobStatus, nil
 }

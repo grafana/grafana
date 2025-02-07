@@ -1,4 +1,4 @@
-package jobs
+package sync
 
 import (
 	"encoding/json"
