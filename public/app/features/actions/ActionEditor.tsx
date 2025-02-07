@@ -128,7 +128,7 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions }: Actio
           placeholder={t(
             'grafana-ui.viz-tooltip.actions-confirmation-input-placeholder',
             'Are you sure you want to {{ actionTitle }}?',
-            { actionTitle: value.title || '...' }
+            { actionTitle: value.title || '... ' }
           )}
         />
       </Field>
