@@ -141,7 +141,11 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
 
   const isDashboardEditable = Boolean(dashboard.editable);
   const canSave = dto.access.canSave !== false;
-  const dashboardId = metadata.labels?.[DeprecatedInternalId];
+  let dashboardId: number | undefined = undefined;
+
+  if (metadata.labels?.[DeprecatedInternalId]) {
+    dashboardId = parseInt(metadata.labels[DeprecatedInternalId], 10);
+  }
 
   const meta: DashboardMeta = {
     canShare: dto.access.canShare !== false,
