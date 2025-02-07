@@ -841,7 +841,7 @@ func TestIntegrationAlertRuleEditorSettings(t *testing.T) {
 		}
 
 		respModel, status, _ := apiClient.PostRulesGroupWithStatus(t, folderName, &rules)
-		assert.Equal(t, http.StatusAccepted, status)
+		require.Equal(t, http.StatusAccepted, status)
 		require.Len(t, respModel.Created, 1)
 
 		createdRuleGroup, status := apiClient.GetRulesGroup(t, folderName, rules.Name)
@@ -873,7 +873,7 @@ func TestIntegrationAlertRuleEditorSettings(t *testing.T) {
 		rulesWithUID.Rules[0].GrafanaManagedAlert.Metadata.EditorSettings.SimplifiedQueryAndExpressionsSection = true
 
 		_, status, _ := apiClient.PostRulesGroupWithStatus(t, folderName, &rulesWithUID)
-		assert.Equal(t, http.StatusAccepted, status)
+		require.Equal(t, http.StatusAccepted, status)
 
 		updatedRuleGroup, status := apiClient.GetRulesGroup(t, folderName, groupName)
 		require.Equal(t, http.StatusAccepted, status)
@@ -895,7 +895,7 @@ func TestIntegrationAlertRuleEditorSettings(t *testing.T) {
 		rulesWithUID.Rules[0].GrafanaManagedAlert.Metadata.EditorSettings.SimplifiedQueryAndExpressionsSection = false
 
 		_, status, _ := apiClient.PostRulesGroupWithStatus(t, folderName, &rulesWithUID)
-		assert.Equal(t, http.StatusAccepted, status)
+		require.Equal(t, http.StatusAccepted, status)
 
 		updatedRuleGroup, status := apiClient.GetRulesGroup(t, folderName, groupName)
 		require.Equal(t, http.StatusAccepted, status)
@@ -915,9 +915,10 @@ func TestIntegrationAlertRuleEditorSettings(t *testing.T) {
 		rulesWithUID.Rules[0].GrafanaManagedAlert.Metadata.EditorSettings.SimplifiedNotificationsSection = true
 
 		_, status, _ := apiClient.PostRulesGroupWithStatus(t, folderName, &rulesWithUID)
-		assert.Equal(t, http.StatusAccepted, status)
+		require.Equal(t, http.StatusAccepted, status)
 
 		updatedRuleGroup, status := apiClient.GetRulesGroup(t, folderName, groupName)
+		require.Equal(t, http.StatusAccepted, status)
 		require.Len(t, updatedRuleGroup.Rules, 1)
 		require.True(t, updatedRuleGroup.Rules[0].GrafanaManagedAlert.Metadata.EditorSettings.SimplifiedNotificationsSection)
 	})
@@ -936,7 +937,7 @@ func TestIntegrationAlertRuleEditorSettings(t *testing.T) {
 		rulesWithUID.Rules[0].GrafanaManagedAlert.Metadata.EditorSettings.SimplifiedNotificationsSection = false
 
 		_, status, _ := apiClient.PostRulesGroupWithStatus(t, folderName, &rulesWithUID)
-		assert.Equal(t, http.StatusAccepted, status)
+		require.Equal(t, http.StatusAccepted, status)
 
 		updatedRuleGroup, status := apiClient.GetRulesGroup(t, folderName, groupName)
 		require.Equal(t, http.StatusAccepted, status)
@@ -986,7 +987,7 @@ func TestIntegrationAlertRuleConflictingTitle(t *testing.T) {
 	rules := newTestingRuleConfig(t)
 
 	respModel, status, _ := apiClient.PostRulesGroupWithStatus(t, "folder1", &rules)
-	assert.Equal(t, http.StatusAccepted, status)
+	require.Equal(t, http.StatusAccepted, status)
 	require.Len(t, respModel.Created, len(rules.Rules))
 
 	// fetch the created rules, so we can get the uid's and trigger
@@ -1022,7 +1023,7 @@ func TestIntegrationAlertRuleConflictingTitle(t *testing.T) {
 	t.Run("trying to create alert with same title under another folder should succeed", func(t *testing.T) {
 		rules := newTestingRuleConfig(t)
 		resp, status, _ := apiClient.PostRulesGroupWithStatus(t, "folder2", &rules)
-		assert.Equal(t, http.StatusAccepted, status)
+		require.Equal(t, http.StatusAccepted, status)
 		require.Len(t, resp.Created, len(rules.Rules))
 	})
 
@@ -1034,7 +1035,7 @@ func TestIntegrationAlertRuleConflictingTitle(t *testing.T) {
 		rulesWithUID.Rules[1].GrafanaManagedAlert.Title = title0
 
 		resp, status, _ := apiClient.PostRulesGroupWithStatus(t, "folder1", &rulesWithUID)
-		assert.Equal(t, http.StatusAccepted, status)
+		require.Equal(t, http.StatusAccepted, status)
 		require.Len(t, resp.Updated, 2)
 	})
 
@@ -1044,7 +1045,7 @@ func TestIntegrationAlertRuleConflictingTitle(t *testing.T) {
 		rulesWithUID.Rules[1].GrafanaManagedAlert.Title = "something new"
 
 		resp, status, _ := apiClient.PostRulesGroupWithStatus(t, "folder1", &rulesWithUID)
-		assert.Equal(t, http.StatusAccepted, status)
+		require.Equal(t, http.StatusAccepted, status)
 		require.Len(t, resp.Updated, len(rulesWithUID.Rules))
 	})
 }
@@ -1134,7 +1135,7 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 			},
 		}
 		resp, status, _ := apiClient.PostRulesGroupWithStatus(t, "default", &rules)
-		assert.Equal(t, http.StatusAccepted, status)
+		require.Equal(t, http.StatusAccepted, status)
 		require.Len(t, resp.Created, len(rules.Rules))
 	}
 
@@ -1953,7 +1954,7 @@ func TestIntegrationAlertAndGroupsQuery(t *testing.T) {
 		}
 
 		_, status, _ := apiClient.PostRulesGroupWithStatus(t, "default", &rules)
-		assert.Equal(t, http.StatusAccepted, status)
+		require.Equal(t, http.StatusAccepted, status)
 	}
 
 	// Eventually, we'll get an alert with its state being active.
@@ -2511,7 +2512,7 @@ func TestIntegrationQuota(t *testing.T) {
 		}
 
 		respModel, status, _ := apiClient.PostRulesGroupWithStatus(t, "default", &rules)
-		assert.Equal(t, http.StatusAccepted, status)
+		require.Equal(t, http.StatusAccepted, status)
 		require.Len(t, respModel.Updated, 1)
 
 		// let's make sure that rule definitions are updated correctly.
@@ -3090,7 +3091,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 			},
 		}
 		resp, status, _ := apiClient.PostRulesGroupWithStatus(t, "default", &rules)
-		assert.Equal(t, http.StatusAccepted, status)
+		require.Equal(t, http.StatusAccepted, status)
 		require.Equal(t, "rule group updated successfully", resp.Message)
 		assert.Len(t, resp.Created, 2)
 		assert.Empty(t, resp.Updated)
@@ -3456,7 +3457,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 			Interval: interval,
 		}
 		respModel, status, _ := apiClient.PostRulesGroupWithStatus(t, "default", &rules)
-		assert.Equal(t, http.StatusAccepted, status)
+		require.Equal(t, http.StatusAccepted, status)
 		require.Equal(t, respModel.Updated, []string{ruleUID})
 		require.Len(t, respModel.Deleted, 1)
 
@@ -3582,7 +3583,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 			Interval: interval,
 		}
 		respModel, status, _ := apiClient.PostRulesGroupWithStatus(t, "default", &rules)
-		assert.Equal(t, http.StatusAccepted, status)
+		require.Equal(t, http.StatusAccepted, status)
 		require.Equal(t, respModel.Updated, []string{ruleUID})
 
 		// let's make sure that rule definitions are updated correctly.
@@ -3675,7 +3676,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 			Interval: interval,
 		}
 		respModel, status, _ := apiClient.PostRulesGroupWithStatus(t, "default", &rules)
-		assert.Equal(t, http.StatusAccepted, status)
+		require.Equal(t, http.StatusAccepted, status)
 		require.Equal(t, "no changes detected in the rule group", respModel.Message)
 		assert.Empty(t, respModel.Created)
 		assert.Empty(t, respModel.Updated)
@@ -4570,7 +4571,7 @@ func createRule(t *testing.T, client apiClient, folder string) (apimodels.Postab
 		},
 	}
 	resp, status, _ := client.PostRulesGroupWithStatus(t, folder, &rules)
-	assert.Equal(t, http.StatusAccepted, status)
+	require.Equal(t, http.StatusAccepted, status)
 	require.Len(t, resp.Created, 1)
 	return rules, resp.Created[0]
 }
