@@ -23,7 +23,7 @@ type CloudWatchOnDashboardLoadedTrackingEvent = {
   logs_queries_count: number;
 
   /* The number of Logs queries that use Logs Insights query language */
-  logs_liql_queries_count: number;
+  logs_cwli_queries_count: number;
 
   /* The number of Logs queries that use SQL language */
   logs_sql_queries_count: number;
@@ -98,7 +98,7 @@ export const onDashboardLoadedHandler = ({
       dashboard_id: dashboardId,
       org_id: orgId,
       logs_queries_count: logsQueries?.length,
-      logs_liql_queries_count: logsQueries?.filter((q) => q.queryLanguage === LogsQueryLanguage.CWLI).length,
+      logs_cwli_queries_count: logsQueries?.filter((q) => q.queryLanguage === LogsQueryLanguage.CWLI).length,
       logs_sql_queries_count: logsQueries?.filter((q) => q.queryLanguage === LogsQueryLanguage.SQL).length,
       logs_ppl_queries_count: logsQueries?.filter((q) => q.queryLanguage === LogsQueryLanguage.PPL).length,
       metrics_queries_count: metricsQueries?.length,
