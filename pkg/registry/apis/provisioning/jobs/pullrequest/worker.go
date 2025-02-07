@@ -104,6 +104,7 @@ func (c *PullRequestWorker) IsSupported(ctx context.Context, job provisioning.Jo
 	return job.Spec.Action == provisioning.JobActionPullRequest
 }
 
+//nolint:gocyclo
 func (c *PullRequestWorker) Process(ctx context.Context,
 	repo repository.Repository,
 	job provisioning.Job,
