@@ -63,6 +63,17 @@ type JobSpec struct {
 	// The the repository reference (for now also in labels)
 	Repository string `json:"repository"`
 
+	// Pull request options
+	PullRequest *PullRequestJobOptions `json:"pr,omitempty"`
+
+	// Required when the action is `export`
+	Export *ExportJobOptions `json:"export,omitempty"`
+
+	// Required when the action is `sync`
+	Sync *SyncJobOptions `json:"sync,omitempty"`
+}
+
+type PullRequestJobOptions struct {
 	// The branch of commit hash
 	Ref string `json:"ref,omitempty"`
 
@@ -72,6 +83,28 @@ type JobSpec struct {
 
 	// URL to the originator (eg, PR URL)
 	URL string `json:"url,omitempty"`
+}
+
+type SyncJobOptions struct {
+	// Incremental synchronization for versioned repositories
+	Incremental bool `json:"incremental"`
+}
+
+type ExportJobOptions struct {
+	// The source folder (or empty) to export
+	Folder string `json:"folder,omitempty"`
+
+	// Preserve history (if possible)
+	History bool `json:"history,omitempty"`
+
+	// Target branch for export (only git)
+	Branch string `json:"branch,omitempty"`
+
+	// Target file prefix
+	Prefix string `json:"prefix,omitempty"`
+
+	// Include the identifier in the exported metadata
+	Identifier bool `json:"identifier"`
 }
 
 // The job status
