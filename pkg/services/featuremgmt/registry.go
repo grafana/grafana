@@ -93,13 +93,6 @@ var (
 			AllowSelfServe: true,
 		},
 		{
-			Name:         "autoMigrateTablePanel",
-			Description:  "Migrate old table panel to supported table panel - broken out from autoMigrateOldPanels to enable granular tracking",
-			Stage:        FeatureStagePublicPreview,
-			FrontendOnly: true,
-			Owner:        grafanaDatavizSquad,
-		},
-		{
 			Name:         "autoMigratePiechartPanel",
 			Description:  "Migrate old piechart panel to supported piechart panel - broken out from autoMigrateOldPanels to enable granular tracking",
 			Stage:        FeatureStagePublicPreview,
