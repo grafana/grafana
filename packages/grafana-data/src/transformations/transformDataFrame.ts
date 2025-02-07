@@ -24,13 +24,11 @@ const getOperator =
     const defaultOptions = info.transformation.defaultOptions ?? {};
     const options = { ...defaultOptions, ...config.options };
 
-    const interpolated = JSON.parse(ctx.interpolate(JSON.stringify(options)));
-
     const matcher = config.filter?.options ? getFrameMatchers(config.filter) : undefined;
     return source.pipe(
       mergeMap((before) =>
         of(filterInput(before, matcher)).pipe(
-          info.transformation.operator(interpolated, ctx),
+          info.transformation.operator(options, ctx),
           postProcessTransform(before, info, matcher)
         )
       )
