@@ -74,7 +74,7 @@ func (r *Syncer) Do(ctx context.Context,
 	}
 
 	// Execute the sync task
-	jobStatus, syncStatus, syncError := r.Sync(ctx, repo, *job.Spec.Sync, progress)
+	jobStatus, syncStatus, syncError := r.sync(ctx, repo, *job.Spec.Sync, progress)
 	if syncStatus == nil {
 		syncStatus = &provisioning.SyncStatus{}
 	}
@@ -124,7 +124,7 @@ func (r *Syncer) Do(ctx context.Context,
 }
 
 // start a job and run it
-func (r *Syncer) Sync(ctx context.Context,
+func (r *Syncer) sync(ctx context.Context,
 	repo repository.Repository,
 	options provisioning.SyncJobOptions,
 	progress func(provisioning.JobStatus) error,
