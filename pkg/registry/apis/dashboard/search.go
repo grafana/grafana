@@ -1,6 +1,7 @@
 package dashboard
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/url"
@@ -23,6 +24,7 @@ import (
 	folderv0alpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashboardsearch "github.com/grafana/grafana/pkg/services/dashboards/service/search"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -247,19 +249,6 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	}
 	searchRequest.Fields = fields
 
-	// Add the folder constraint. Note this does not do recursive search
-	folder := queryParams.Get("folder")
-	if folder != "" {
-		if folder == rootFolder {
-			folder = "" // root folder is empty in the search index
-		}
-		searchRequest.Options.Fields = []*resource.Requirement{{
-			Key:      "folder",
-			Operator: "=",
-			Values:   []string{folder},
-		}}
-	}
-
 	types := queryParams["type"]
 	var federate *resource.ResourceKey
 	switch len(types) {
@@ -324,7 +313,33 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// The names filter
-	if names, ok := queryParams["name"]; ok {
+	names := queryParams["name"]
+
+	// Add the folder constraint. Note this does not do recursive search
+	folder := queryParams.Get("folder")
+	if folder == "sharedwithme" { // TODO use const variable here
+		dashboardUIDs, err := s.getDashboardsUIDsSharedWithUser(ctx, user)
+		if err != nil {
+			errhttp.Write(ctx, err, w)
+			return
+		}
+
+		// populate search request with name = dashboardUIDs (like it's done in the "names" filter)
+		if len(dashboardUIDs) > 0 {
+			names = append(names, dashboardUIDs...)
+		}
+	} else if folder != "" {
+		if folder == rootFolder {
+			folder = "" // root folder is empty in the search index
+		}
+		searchRequest.Options.Fields = []*resource.Requirement{{
+			Key:      "folder",
+			Operator: "=",
+			Values:   []string{folder},
+		}}
+	}
+
+	if len(names) > 0 {
 		if searchRequest.Options.Fields == nil {
 			searchRequest.Options.Fields = []*resource.Requirement{}
 		}
@@ -372,4 +387,98 @@ func asResourceKey(ns string, k string) (*resource.ResourceKey, error) {
 	}
 
 	return key, nil
+}
+
+func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, user identity.Requester) ([]string, error) {
+	// TODO skip if permission ff is not enabled
+	permissions := user.GetPermissions()
+	dashboardPermissions := permissions[dashboards.ActionDashboardsRead]
+	dashboardUids := make([]string, 0)
+	sharedDashboards := make([]string, 0)
+
+	for _, dashboardPermission := range dashboardPermissions {
+		if dashboardUid, found := strings.CutPrefix(dashboardPermission, dashboards.ScopeDashboardsPrefix); found {
+			if !slices.Contains(dashboardUids, dashboardUid) {
+				dashboardUids = append(dashboardUids, dashboardUid)
+			}
+		}
+	}
+
+	if len(dashboardUids) == 0 {
+		return sharedDashboards, nil
+	}
+
+	key, err := asResourceKey(user.GetNamespace(), dashboard.DASHBOARD_RESOURCE)
+	if err != nil {
+		return sharedDashboards, err
+	}
+
+	// TODO handle case where user has more than 50 shared dashboards
+	dashboardSearchRequest := &resource.ResourceSearchRequest{
+		Fields: []string{"folder"},
+		Limit:  50,
+		Options: &resource.ListOptions{
+			Key: key,
+			Fields: []*resource.Requirement{{
+				Key:      "name",
+				Operator: "in",
+				Values:   dashboardUids,
+			}},
+		},
+	}
+	dashboardResult, err := s.client.Search(ctx, dashboardSearchRequest)
+	if err != nil {
+		return nil, err
+	}
+
+	// find list of unique folder UIDs in the list of shared dashboards
+	folders := make([]string, 0)
+	for _, dash := range dashboardResult.Results.Rows {
+		folderUid := string(dash.Cells[0])
+		if folderUid != "" && !slices.Contains(folders, folderUid) {
+			folders = append(folders, folderUid)
+		}
+	}
+
+	// get folder list. only folders the user has access to will be returned here
+	folderKey, err := asResourceKey(user.GetNamespace(), folderv0alpha1.RESOURCE)
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO handle case where there are more than 50 here
+	folderSearchRequest := &resource.ResourceSearchRequest{
+		Fields: []string{"folder"},
+		Limit:  50,
+		Options: &resource.ListOptions{
+			Key: folderKey,
+			Fields: []*resource.Requirement{{
+				Key:      "name",
+				Operator: "in",
+				Values:   folders,
+			}},
+		},
+	}
+	foldersResult, err := s.client.Search(ctx, folderSearchRequest)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, fold := range foldersResult.Results.Rows {
+		folderUid := fold.Key.Name
+		i := slices.Index(folders, folderUid)
+		if i > -1 {
+			folders[i] = folders[len(folders)-1]
+			folders = folders[:len(folders)-1]
+		}
+	}
+
+	for _, dash := range dashboardResult.Results.Rows {
+		dashboardUid := dash.Key.Name
+		folderUid := string(dash.Cells[0])
+		if slices.Contains(folders, folderUid) {
+			sharedDashboards = append(folders, dashboardUid)
+		}
+	}
+	return sharedDashboards, nil
 }
