@@ -16,11 +16,14 @@ jobs:
     runs-on: ubuntu-latest
     continue-on-error: true
     # if: github.event.pull_request.draft == false
-    # permissions:
-    #   contents: write
-    #   pull-requests: write
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Pin Go version to mod file
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+      - run: go version
       - uses: actions/setup-node@v4
         with:
           node-version: 20
