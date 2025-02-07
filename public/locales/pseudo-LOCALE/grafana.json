@@ -1146,6 +1146,16 @@
       "title": "Đäşĥþőäřđ őpŧįőŉş",
       "title-option": "Ŧįŧľę"
     },
+    "outline": {
+      "item": "Đäşĥþőäřđ",
+      "title": "Øūŧľįŉę",
+      "tree": {
+        "item": {
+          "collapse": "Cőľľäpşę įŧęm",
+          "expand": "Ēχpäŉđ įŧęm"
+        }
+      }
+    },
     "panel-edit": {
       "alerting-tab": {
         "dashboard-not-saved": "Đäşĥþőäřđ mūşŧ þę şävęđ þęƒőřę äľęřŧş čäŉ þę äđđęđ.",
