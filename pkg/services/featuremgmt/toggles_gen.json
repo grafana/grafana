@@ -593,7 +593,8 @@
       "metadata": {
         "name": "autoMigrateOldPanels",
         "resourceVersion": "1718727528075",
-        "creationTimestamp": "2023-03-23T04:02:36Z"
+        "creationTimestamp": "2023-03-23T04:02:36Z",
+        "deletionTimestamp": "2025-02-06T14:58:01Z"
       },
       "spec": {
         "description": "Migrate old angular panels to supported versions (graph, table-old, worldmap, etc)",

@@ -47,10 +47,6 @@ const (
 	// Correlations page
 	FlagCorrelations = "correlations"
 
-	// FlagAutoMigrateOldPanels
-	// Migrate old angular panels to supported versions (graph, table-old, worldmap, etc)
-	FlagAutoMigrateOldPanels = "autoMigrateOldPanels"
-
 	// FlagAutoMigrateGraphPanel
 	// Migrate old graph panel to supported time series panel - broken out from autoMigrateOldPanels to enable granular tracking
 	FlagAutoMigrateGraphPanel = "autoMigrateGraphPanel"
