@@ -388,7 +388,7 @@ function usePageNav(rule: CombinedRule) {
         onClick: () => {
           setActiveTab(ActiveTab.VersionHistory);
         },
-        hideFromTabs: !isGrafanaAlertRule,
+        hideFromTabs: !isGrafanaRulerRule(rulerRule),
       },
     ],
     parentItem: {
