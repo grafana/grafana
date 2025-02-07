@@ -925,12 +925,6 @@
           "alt-action": "Đęľęŧę řőŵ őŉľy",
           "text": "Åřę yőū şūřę yőū ŵäŉŧ ŧő řęmővę ŧĥįş řőŵ äŉđ äľľ įŧş päŉęľş?",
           "title": "Đęľęŧę řőŵ"
-        },
-        "repeat": {
-          "warning": {
-            "learn-more": "Ŀęäřŉ mőřę",
-            "text": "Päŉęľş įŉ ŧĥįş řőŵ ūşę ŧĥę {{SHARED_DASHBOARD_QUERY}} đäŧä şőūřčę. Ŧĥęşę päŉęľş ŵįľľ řęƒęřęŉčę ŧĥę päŉęľ įŉ ŧĥę őřįģįŉäľ řőŵ, ŉőŧ ŧĥę őŉęş įŉ ŧĥę řępęäŧęđ řőŵş."
-          }
         }
       },
       "row-options": {
@@ -939,7 +933,13 @@
         },
         "form": {
           "cancel": "Cäŉčęľ",
-          "repeat-for": "Ŗępęäŧ ƒőř",
+          "repeat-for": {
+            "label": "Ŗępęäŧ ƒőř",
+            "learn-more": "Ŀęäřŉ mőřę",
+            "warning": {
+              "text": "Päŉęľş įŉ ŧĥįş řőŵ ūşę ŧĥę {{SHARED_DASHBOARD_QUERY}} đäŧä şőūřčę. Ŧĥęşę päŉęľş ŵįľľ řęƒęřęŉčę ŧĥę päŉęľ įŉ ŧĥę őřįģįŉäľ řőŵ, ŉőŧ ŧĥę őŉęş įŉ ŧĥę řępęäŧęđ řőŵş."
+            }
+          },
           "title": "Ŧįŧľę",
           "update": "Ůpđäŧę"
         },
@@ -951,20 +951,23 @@
     "edit-pane": {
       "objects": {
         "multi-select": {
-          "selection-number": "Ńő. őƒ őþĵęčŧş şęľęčŧęđ: "
+          "selection-number": "Ńő. őƒ őþĵęčŧş şęľęčŧęđ: {{length}}"
         }
       },
       "open": "Øpęŉ őpŧįőŉş päŉę",
       "panels": {
         "multi-select": {
-          "selection-number": "Ńő. őƒ päŉęľş şęľęčŧęđ: "
+          "selection-number": "Ńő. őƒ päŉęľş şęľęčŧęđ: {{length}}"
         }
       },
       "row": {
-        "hide": "Ħįđę řőŵ ĥęäđęř",
+        "header": {
+          "hide": "Ħįđę",
+          "title": "Ŗőŵ ĥęäđęř"
+        },
         "multi-select": {
           "options-header": "Mūľŧį-şęľęčŧęđ Ŗőŵ őpŧįőŉş",
-          "selection-number": "Ńő. őƒ řőŵş şęľęčŧęđ: "
+          "selection-number": "Ńő. őƒ řőŵş şęľęčŧęđ: {{length}}"
         }
       }
     },

@@ -22,10 +22,6 @@ interface RowItemRepeaterBehaviorState extends SceneObjectState {
   variableName: string;
 }
 
-/**
- * This behavior will run an effect function when specified variables change
- */
-
 export class RowItemRepeaterBehavior extends SceneObjectBase<RowItemRepeaterBehaviorState> {
   protected _variableDependency = new VariableDependencyConfig(this, {
     variableNames: [this.state.variableName],
