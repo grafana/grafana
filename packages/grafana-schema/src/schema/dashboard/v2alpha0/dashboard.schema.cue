@@ -43,7 +43,7 @@ DashboardV2Spec: {
 
   annotations: [...AnnotationQueryKind]
 
-  layout: GridLayoutKind
+  layout: GridLayoutKind | RowsLayoutKind | ResponsiveGridLayoutKind
 
 
   // Plugins only. The version of the dashboard installed together with the plugin.
@@ -488,6 +488,11 @@ RowRepeatOptions: {
   value: string
 }
 
+ResponsiveGridRepeatOptions: {
+  mode: RepeatMode
+  value: string
+}
+
 GridLayoutItemSpec: {
   x: int
   y: int
@@ -522,6 +527,47 @@ GridLayoutSpec: {
 GridLayoutKind: {
   kind: "GridLayout"
   spec: GridLayoutSpec
+}
+
+RowsLayoutKind: {
+  kind: "RowsLayout"
+  spec: RowsLayoutSpec
+}
+
+RowsLayoutSpec: {
+  rows: [...RowsLayoutRowKind]
+}
+
+RowsLayoutRowKind: {
+  kind: "RowsLayoutRow"
+  spec: RowsLayoutRowSpec
+}
+
+RowsLayoutRowSpec: {
+  title?: string
+  collapsed: bool
+  repeat?: RowRepeatOptions
+  layout: GridLayoutKind | ResponsiveGridLayoutKind
+}
+
+ResponsiveGridLayoutKind: {
+  kind: "ResponsiveGridLayout"
+  spec: ResponsiveGridLayoutSpec
+}
+
+ResponsiveGridLayoutSpec: {
+  row: string,
+  col: string,
+  items: [...ResponsiveGridLayoutItemKind]
+}
+
+ResponsiveGridLayoutItemKind: {
+  kind: "ResponsiveGridLayoutItem"
+  spec: ResponsiveGridLayoutItemSpec
+}
+
+ResponsiveGridLayoutItemSpec: {
+  element: ElementReference
 }
 
 PanelSpec: {
