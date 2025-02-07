@@ -74,8 +74,6 @@ func ParseResults(result *resource.ResourceSearchResponse, offset int64) (v0alph
 		Hits:      make([]v0alpha1.DashboardHit, len(result.Results.Rows)),
 	}
 
-	folderUIDs := []string{}
-	folderSet := map[string]bool{}
 	for i, row := range result.Results.Rows {
 		fields := &common.Unstructured{}
 		for colIndex, col := range result.Results.Columns {
@@ -101,10 +99,6 @@ func ParseResults(result *resource.ResourceSearchResponse, offset int64) (v0alph
 		}
 		if folderIDX > 0 && row.Cells[folderIDX] != nil {
 			hit.Folder = string(row.Cells[folderIDX])
-			if hit.Resource == v0alpha1.RESOURCE && hit.Folder != "" && folderSet[hit.Folder] == false {
-				folderUIDs = append(folderUIDs, hit.Folder)
-				folderSet[hit.Folder] = true
-			}
 		}
 		if tagsIDX > 0 && row.Cells[tagsIDX] != nil {
 			_ = json.Unmarshal(row.Cells[tagsIDX], &hit.Tags)
