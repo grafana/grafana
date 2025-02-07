@@ -74,6 +74,8 @@ type RepositorySpec struct {
 	// Repository description
 	Description string `json:"description,omitempty"`
 
+	// ReadOnly  repository does not allow any write commands
+	ReadOnly bool `json:"readOnly"`
 
 	// Edit options within the repository
 	Editing EditingOptions `json:"editing"`
