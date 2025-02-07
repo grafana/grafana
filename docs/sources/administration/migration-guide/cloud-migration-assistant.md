@@ -149,6 +149,10 @@ The migration assistant supports any plugins found in the plugins catalog. As lo
 
 Upgrade any plugins you intend to migrate before using the migration assistant as any migrated plugins will be configured on the Grafana Cloud instance as the latest version of that plugin.
 
+{{< admonition type="caution">}}
+If you want to migrate enterprise plugins, check what type of plan your Grafana Cloud instance is on and whether or not this plan requires an enterprise plugin add-on.
+{{< /admonition >}}
+
 ### Grafana Alerting resources
 
 The migration assistant can migrate the majority of Grafana Alerting resources to your Grafana Cloud instance. These include:
