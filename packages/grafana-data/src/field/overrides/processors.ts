@@ -50,7 +50,9 @@ export interface SliderFieldConfigSettings {
   ariaLabelForHandle?: string;
 }
 
-export interface DataLinksFieldConfigSettings {}
+export interface DataLinksFieldConfigSettings extends StringFieldConfigSettings {
+  showOneClick?: boolean;
+}
 
 export const dataLinksOverrideProcessor = (
   value: any,

@@ -1,4 +1,4 @@
-import { PanelPlugin, VizOrientation } from '@grafana/data';
+import { FieldConfigProperty, PanelPlugin, VizOrientation } from '@grafana/data';
 import { BarGaugeDisplayMode, BarGaugeNamePlacement, BarGaugeSizing, BarGaugeValueMode } from '@grafana/schema';
 import { commonOptionsBuilder, sharedSingleStatPanelChangedHandler } from '@grafana/ui';
 
@@ -10,7 +10,15 @@ import { Options, defaultOptions } from './panelcfg.gen';
 import { BarGaugeSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<Options>(BarGaugePanel)
-  .useFieldConfig()
+  .useFieldConfig({
+    standardOptions: {
+      [FieldConfigProperty.Links]: {
+        settings: {
+          showOneClick: false,
+        },
+      },
+    },
+  })
   .setPanelOptions((builder) => {
     addStandardDataReduceOptions(builder);
     addOrientationOption(builder);

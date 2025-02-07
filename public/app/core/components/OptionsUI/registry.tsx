@@ -27,6 +27,7 @@ import {
   FieldNamePickerConfigSettings,
   booleanOverrideProcessor,
   Action,
+  DataLinksFieldConfigSettings,
 } from '@grafana/data';
 import { actionsOverrideProcessor } from '@grafana/data/src/field/overrides/processors';
 import { config } from '@grafana/runtime';
@@ -350,7 +351,7 @@ export const getAllStandardFieldConfigs = () => {
 
   const dataLinksCategory = config.featureToggles.vizActions ? 'Data links and actions' : 'Data links';
 
-  const links: FieldConfigPropertyItem<FieldConfig, DataLink[], StringFieldConfigSettings> = {
+  const links: FieldConfigPropertyItem<FieldConfig, DataLink[], DataLinksFieldConfigSettings> = {
     id: 'links',
     path: 'links',
     name: 'Data links',
@@ -359,13 +360,14 @@ export const getAllStandardFieldConfigs = () => {
     process: dataLinksOverrideProcessor,
     settings: {
       placeholder: '-',
+      showOneClick: true,
     },
     shouldApply: () => true,
     category: [dataLinksCategory],
     getItemsCount: (value) => (value ? value.length : 0),
   };
 
-  const actions: FieldConfigPropertyItem<FieldConfig, Action[], StringFieldConfigSettings> = {
+  const actions: FieldConfigPropertyItem<FieldConfig, Action[], DataLinksFieldConfigSettings> = {
     id: 'actions',
     path: 'actions',
     name: 'Actions',
