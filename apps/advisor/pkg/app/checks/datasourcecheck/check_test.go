@@ -33,7 +33,7 @@ func TestCheck_Run(t *testing.T) {
 		ctx := identity.WithRequester(context.Background(), &user.SignedInUser{})
 		items, err := check.Items(ctx)
 		assert.NoError(t, err)
-		errs := []advisor.CheckReportError{}
+		errs := []advisor.CheckReportFailure{}
 		for _, step := range check.Steps() {
 			for _, item := range items {
 				stepErr, err := step.Run(ctx, &advisor.CheckSpec{}, item)
@@ -67,7 +67,7 @@ func TestCheck_Run(t *testing.T) {
 		ctx := identity.WithRequester(context.Background(), &user.SignedInUser{})
 		items, err := check.Items(ctx)
 		assert.NoError(t, err)
-		errs := []advisor.CheckReportError{}
+		errs := []advisor.CheckReportFailure{}
 		for _, step := range check.Steps() {
 			for _, item := range items {
 				stepErr, err := step.Run(ctx, &advisor.CheckSpec{}, item)
@@ -102,7 +102,7 @@ func TestCheck_Run(t *testing.T) {
 		ctx := identity.WithRequester(context.Background(), &user.SignedInUser{})
 		items, err := check.Items(ctx)
 		assert.NoError(t, err)
-		errs := []advisor.CheckReportError{}
+		errs := []advisor.CheckReportFailure{}
 		for _, step := range check.Steps() {
 			for _, item := range items {
 				stepErr, err := step.Run(ctx, &advisor.CheckSpec{}, item)
