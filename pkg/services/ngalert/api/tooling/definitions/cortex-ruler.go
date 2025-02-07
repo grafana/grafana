@@ -167,6 +167,7 @@ import (
 //     Responses:
 //       202: RuleGroupConfigResponse
 //       403: ForbiddenError
+//		 404: NotFound
 
 // swagger:route Get /ruler/{DatasourceUID}/api/v1/rules/{Namespace}/{Groupname} ruler RouteGetRulegGroupConfig
 //
