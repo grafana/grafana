@@ -59,7 +59,6 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Prop
     control,
     setValue,
   } = useForm<FormData>({ defaultValues });
-
   const [title, ref, workflow, comment] = watch(['title', 'ref', 'workflow', 'comment']);
   const { isDirty } = dashboard.state;
   const href = createPRLink(repositoryConfig, title, ref, comment);
@@ -184,7 +183,7 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Prop
                 }}
               />
             </Field>
-            {(workflow === WorkflowOption.PullRequest || workflow === WorkflowOption.Branch) && (
+            {workflow === WorkflowOption.Branch && (
               <Field
                 label="Branch"
                 description="Branch name in GitHub"
