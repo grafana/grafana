@@ -385,8 +385,8 @@ type Author struct {
 }
 
 type HistoryItem struct {
-	Ref       string   `json:"ref"`
-	Message   string   `json:"message"`
+	Ref     string `json:"ref"`
+	Message string `json:"message"`
 	// +listType=atomic
 	Authors   []Author `json:"authors"`
 	CreatedAt int64    `json:"createdAt"`
