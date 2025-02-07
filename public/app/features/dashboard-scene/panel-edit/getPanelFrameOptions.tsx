@@ -102,6 +102,7 @@ function ScenePanelLinksEditor({ panelLinks }: ScenePanelLinksEditorProps) {
       onChange={(links) => panelLinks?.setState({ rawLinks: links })}
       getSuggestions={getPanelLinksVariableSuggestions}
       data={[]}
+      showOneClick={false}
     />
   );
 }

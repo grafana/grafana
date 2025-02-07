@@ -111,6 +111,7 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
                 onChange={(links) => onPanelConfigChange('links', links)}
                 getSuggestions={getPanelLinksVariableSuggestions}
                 data={[]}
+                showOneClick={false}
               />
             );
           },
