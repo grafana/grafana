@@ -17,6 +17,11 @@ func TestAllowQuery(t *testing.T) {
 			q:    example_metrics_query,
 			err:  nil,
 		},
+		{
+			name: "an example from todd",
+			q:    example_argo_commit_example,
+			err:  nil,
+		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -78,3 +83,29 @@ SELECT *
 FROM usage_by_team
 CROSS JOIN total_metrics
 CROSS JOIN total_traces`
+
+var example_argo_commit_example = `WITH
+gh AS
+  (SELECT Count(*) AS commits
+   FROM
+     (SELECT *
+      FROM oss_repo
+      UNION ALL SELECT *
+      FROM ent_repo) AS ent_repos),
+argo_success AS
+  (SELECT IF(argo.status = 'Succeeded', argo.value, 0) AS value FROM argo),
+argo_failure AS
+  (SELECT IF(argo.status = 'Failed', argo.value, 0) AS value FROM argo)
+SELECT IF(env.value > 1, TRUE, workflows.runs < 1 OR gh.commits < 1) AS status,
+       gh.commits AS 'merged commits to main (OSS + enterprise)',
+       drone.value AS 'enterprise downstream publish',
+       workflows.runs AS 'github trigger instant workflow runs today',
+       argo_success.value AS 'argo success',
+       argo_failure.value AS 'argo failure',
+       (env.value - 1) AS 'new dev instant deployments'
+FROM drone,
+     env,
+     gh,
+     argo_success,
+     argo_failure,
+     workflows;`

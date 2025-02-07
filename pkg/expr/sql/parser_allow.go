@@ -54,7 +54,13 @@ func allowedNode(node sqlparser.SQLNode) (b bool) {
 	case *sqlparser.AliasedExpr, *sqlparser.AliasedTableExpr:
 		return
 
-	case *sqlparser.BinaryExpr:
+	case *sqlparser.AndExpr, *sqlparser.OrExpr:
+		return
+
+	case *sqlparser.BinaryExpr, *sqlparser.UnaryExpr:
+		return
+
+	case sqlparser.BoolVal:
 		return
 
 	case sqlparser.ColIdent, *sqlparser.ColName, sqlparser.Columns:
@@ -87,6 +93,9 @@ func allowedNode(node sqlparser.SQLNode) (b bool) {
 	case *sqlparser.Select, sqlparser.SelectExprs:
 		return
 
+	case *sqlparser.SetOp:
+		return
+
 	case *sqlparser.StarExpr:
 		return
 
@@ -100,6 +109,9 @@ func allowedNode(node sqlparser.SQLNode) (b bool) {
 		return
 
 	case *sqlparser.Over:
+		return
+
+	case *sqlparser.ParenExpr:
 		return
 
 	case *sqlparser.Subquery:
@@ -124,6 +136,9 @@ func allowedFunction(f *sqlparser.FuncExpr) (b bool) {
 	b = true // so don't have to return true in every case but default
 
 	switch strings.ToLower(f.Name.String()) {
+	case "if":
+		return
+
 	case "sum", "avg", "count", "min", "max":
 		return
 
