@@ -541,6 +541,7 @@ describe('DashboardScenePageStateManager v2', () => {
             metadata: {
               name: 'fake-dash',
               creationTimestamp: '',
+              generation: 1,
               resourceVersion: '1',
             },
             spec: { ...defaultDashboardV2Spec() },
@@ -574,6 +575,7 @@ describe('DashboardScenePageStateManager v2', () => {
           metadata: {
             name: 'fake-dash',
             creationTimestamp: '',
+            generation: 2,
             resourceVersion: '2',
           },
           spec: { ...defaultDashboardV2Spec() },
