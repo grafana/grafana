@@ -10,6 +10,7 @@ import {
   AnnoKeyMessage,
   AnnoKeyFolder,
   Resource,
+  DeprecatedInternalId,
 } from 'app/features/apiserver/types';
 import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
 import { DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
@@ -32,8 +33,6 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
 
   saveDashboard(options: SaveDashboardCommand<Dashboard>): Promise<SaveDashboardResponseDTO> {
     const dashboard = options.dashboard as DashboardDataDTO; // type for the uid property
-    // k8s apis server doesn't use dashboard.id
-    delete dashboard.id;
     const obj: ResourceForCreate<DashboardDataDTO> = {
       metadata: {
         ...options?.k8s,
@@ -108,6 +107,10 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
         },
         dashboard: dash.spec,
       };
+
+      if (dash.metadata.labels?.[DeprecatedInternalId]) {
+        result.dashboard.id = parseInt(dash.metadata.labels[DeprecatedInternalId], 10);
+      }
 
       if (dash.metadata.annotations?.[AnnoKeyFolder]) {
         try {

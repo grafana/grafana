@@ -426,7 +426,7 @@ describe('ResponseTransformers', () => {
             [AnnoKeySlug]: 'dashboard-slug',
           },
           labels: {
-            [DeprecatedInternalId]: 123,
+            [DeprecatedInternalId]: '123',
           },
         },
       };
