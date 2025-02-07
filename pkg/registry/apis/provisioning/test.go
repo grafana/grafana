@@ -168,10 +168,9 @@ func ValidateRepository(repo repository.Repository) field.ErrorList {
 			"The target type is required when sync is enabled"))
 	}
 
-	resyncIntervalSeconds := int64(ResyncInterval / time.Second)
-	if cfg.Spec.Sync.Enabled && cfg.Spec.Sync.IntervalSeconds < resyncIntervalSeconds {
+	if cfg.Spec.Sync.Enabled && cfg.Spec.Sync.IntervalSeconds < 10 {
 		list = append(list, field.Invalid(field.NewPath("spec", "sync", "intervalSeconds"),
-			cfg.Spec.Sync.IntervalSeconds, fmt.Sprintf("Interval must be at least %d seconds", resyncIntervalSeconds)))
+			cfg.Spec.Sync.IntervalSeconds, fmt.Sprintf("Interval must be at least %d seconds", 10)))
 	}
 
 	// Reserved names (for now)

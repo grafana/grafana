@@ -1,4 +1,4 @@
-package provisioning
+package controller
 
 import (
 	"sort"
@@ -20,13 +20,13 @@ import (
 )
 
 // Remove everything this repo created
-const finalizer_REMOVE_ORPHAN_RESOURCE = "remove-orphan-resources"
+const REMOVE_ORPHAN_RESOURCE_FINALIZER = "remove-orphan-resources"
 
 // Remove the metadata for anything this repo created
-const finalizer_RELEASE_ORPHAN_RESOURCE = "release-orphan-resources"
+const RELEASE_ORPHAN_RESOURCE_FINALIZER = "release-orphan-resources"
 
 // Calls the "OnDelete" function for resource
-const finalizer_CLEANUP_FINALIZER = "cleanup"
+const CLEANUP_FINALIZER = "cleanup"
 
 type finalizer struct {
 	lister resources.ResourceLister
@@ -41,7 +41,7 @@ func (f *finalizer) process(ctx context.Context,
 
 	for _, finalizer := range finalizers {
 		switch finalizer {
-		case finalizer_CLEANUP_FINALIZER:
+		case CLEANUP_FINALIZER:
 			// NOTE: the controller loop will never get run unless a finalizer is set
 			hooks, ok := repo.(repository.RepositoryHooks)
 			if ok {
@@ -50,7 +50,7 @@ func (f *finalizer) process(ctx context.Context,
 				}
 			}
 
-		case finalizer_RELEASE_ORPHAN_RESOURCE:
+		case RELEASE_ORPHAN_RESOURCE_FINALIZER:
 			err := f.processExistingItems(ctx, repo.Config(),
 				func(client dynamic.ResourceInterface, item *provisioning.ResourceListItem) error {
 					_, err := client.Patch(ctx, item.Name, types.JSONPatchType, []byte(`[
@@ -64,7 +64,7 @@ func (f *finalizer) process(ctx context.Context,
 				return err
 			}
 
-		case finalizer_REMOVE_ORPHAN_RESOURCE:
+		case REMOVE_ORPHAN_RESOURCE_FINALIZER:
 			err := f.processExistingItems(ctx, repo.Config(),
 				func(client dynamic.ResourceInterface, item *provisioning.ResourceListItem) error {
 					return client.Delete(ctx, item.Name, v1.DeleteOptions{})

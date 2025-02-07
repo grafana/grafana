@@ -1,4 +1,4 @@
-package provisioning
+package controller
 
 import (
 	"context"
@@ -27,11 +27,21 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
+type RepoGetter interface {
+	// Given a repository configuration, return it as a repository instance
+	// This will only error for un-recoverable system errors
+	// the repository instance may or may not be valid/healthy
+	AsRepository(ctx context.Context, cfg *provisioning.Repository) (repository.Repository, error)
+}
+
+type RepositoryTester interface {
+	TestRepository(ctx context.Context, repo repository.Repository) (*provisioning.TestResults, error)
+}
+
 const loggerName = "provisioning-repository-controller"
 
 const (
-	maxAttempts    = 3
-	ResyncInterval = 10 * time.Second
+	maxAttempts = 3
 )
 
 type queueItem struct {
@@ -55,7 +65,7 @@ type RepositoryController struct {
 	// Converts config to instance
 	repoGetter RepoGetter
 	identities auth.BackgroundIdentityService
-	tester     *RepositoryTester
+	tester     RepositoryTester
 
 	// To allow injection for testing.
 	processFn         func(item *queueItem) error
@@ -73,7 +83,7 @@ func NewRepositoryController(
 	resourceLister resources.ResourceLister,
 	parsers *resources.ParserFactory,
 	identities auth.BackgroundIdentityService,
-	tester *RepositoryTester,
+	tester RepositoryTester,
 	jobs jobs.JobQueue,
 ) (*RepositoryController, error) {
 	rc := &RepositoryController{

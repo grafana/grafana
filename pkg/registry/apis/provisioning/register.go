@@ -30,6 +30,7 @@ import (
 	informers "github.com/grafana/grafana/pkg/generated/informers/externalversions"
 	listers "github.com/grafana/grafana/pkg/generated/listers/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/auth"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
@@ -325,8 +326,8 @@ func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admis
 	// This is called on every update, so be careful to only add the finalizer for create
 	if len(r.Finalizers) == 0 && a.GetOperation() == admission.Create {
 		r.Finalizers = []string{
-			finalizer_REMOVE_ORPHAN_RESOURCE,
-			finalizer_CLEANUP_FINALIZER,
+			controller.REMOVE_ORPHAN_RESOURCE_FINALIZER,
+			controller.CLEANUP_FINALIZER,
 		}
 	}
 
@@ -418,11 +419,9 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			if err != nil {
 				return err
 			}
-			sharedInformerFactory := informers.NewSharedInformerFactory(
-				c,
-				ResyncInterval, // Health and reconciliation interval check interval
-			)
 
+			// Informer with resync interval used for health check and reconciliation
+			sharedInformerFactory := informers.NewSharedInformerFactory(c, 10*time.Second)
 			repoInformer := sharedInformerFactory.Provisioning().V0alpha1().Repositories()
 			go repoInformer.Informer().Run(postStartHookCtx.Context.Done())
 
@@ -449,7 +448,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.urlProvider,
 			))
 
-			repoController, err := NewRepositoryController(
+			repoController, err := controller.NewRepositoryController(
 				c.ProvisioningV0alpha1(),
 				repoInformer,
 				b, // repoGetter
