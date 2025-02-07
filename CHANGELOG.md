@@ -6,6 +6,7 @@
 
 - **CodeEditor:** Fix cursor alignment [#99090](https://github.com/grafana/grafana/pull/99090), [@ashharrison90](https://github.com/ashharrison90)
 - **TransformationFilter**: Include transformation outputs in transformation filtering options: Include transformation outputs in transformation filtering options [#98323](https://github.com/grafana/grafana/pull/98323), [@Sergej-Vlasov](https://github.com/Sergej-Vlasov)
+- **DashboardScene:** Fix datalinks with `${__dashboard}` variable when dashboard title contains spaces or special characters. [#100274](https://github.com/grafana/grafana/pull/100274), [@mansoor17syed](https://github.com/mansoor17syed)
 
 <!-- 11.5.1 END -->
 <!-- 11.5.0 START -->
