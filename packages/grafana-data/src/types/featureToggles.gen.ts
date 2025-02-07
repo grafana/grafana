@@ -28,7 +28,6 @@ export interface FeatureToggles {
   featureHighlights?: boolean;
   storage?: boolean;
   correlations?: boolean;
-  autoMigrateWorldmapPanel?: boolean;
   autoMigrateStatPanel?: boolean;
   canvasPanelNesting?: boolean;
   vizActions?: boolean;

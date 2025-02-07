@@ -93,13 +93,6 @@ var (
 			AllowSelfServe: true,
 		},
 		{
-			Name:         "autoMigrateWorldmapPanel",
-			Description:  "Migrate old worldmap panel to supported geomap panel - broken out from autoMigrateOldPanels to enable granular tracking",
-			Stage:        FeatureStagePublicPreview,
-			FrontendOnly: true,
-			Owner:        grafanaDatavizSquad,
-		},
-		{
 			Name:         "autoMigrateStatPanel",
 			Description:  "Migrate old stat panel to supported stat panel - broken out from autoMigrateOldPanels to enable granular tracking",
 			Stage:        FeatureStagePublicPreview,
