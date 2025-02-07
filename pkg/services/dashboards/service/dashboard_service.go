@@ -1291,21 +1291,20 @@ func (dr *DashboardServiceImpl) fetchFolderNames(ctx context.Context, query *das
 		}
 	}
 
-	namespace := dr.k8sclient.GetNamespace(query.OrgId)
-	// call this with elevated permissions so we can get folder names where user does not have access
-	// some dashboards are shared directly with user, but the folder is not accessible via the folder permissions
-	serviceCtx, serviceIdent := identity.WithServiceIdentity(ctx, query.OrgId)
-	folders, err := NewFolderLookup(namespace, dr.k8sclient).GetFolders(serviceCtx, folder.GetFoldersQuery{
+	search := folder.SearchFoldersQuery{
 		UIDs:         folderIds,
 		OrgID:        query.OrgId,
-		SignedInUser: serviceIdent,
-	})
-	if err != nil {
-		return nil, folder.ErrInternal.Errorf("failed to fetch parent folders from store: %w", err)
+		SignedInUser: query.SignedInUser,
 	}
+
+	hits, err := dr.folderService.SearchFolders(ctx, search)
+	if err != nil {
+		return nil, folder.ErrInternal.Errorf("failed to fetch parent folders: %w", err)
+	}
+
 	folderNames := make(map[string]string)
-	for _, f := range folders {
-		folderNames[f.UID] = f.Title
+	for _, hit := range hits {
+		folderNames[hit.UID] = hit.Title
 	}
 	return folderNames, nil
 }
