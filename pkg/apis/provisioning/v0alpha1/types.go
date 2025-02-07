@@ -299,10 +299,8 @@ type FileList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 
-	// should be named "items", but avoid subresource error for now:
-	// kubernetes/kubernetes#126809
 	// +listType=atomic
-	Items []FileItem `json:"files,omitempty"`
+	Items []FileItem `json:"items,omitempty"`
 }
 
 type FileItem struct {
@@ -354,8 +352,6 @@ type HistoryList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 
-	// should be named "items", but avoid subresource error for now:
-	// kubernetes/kubernetes#126809
 	// +listType=atomic
 	Items []HistoryItem `json:"items,omitempty"`
 }
