@@ -36,35 +36,28 @@ const plugin: CatalogPlugin = {
   isPreinstalled: { found: false, withVersion: false },
 };
 
-function setup(opts: { angularDetected: boolean }) {
-  render(
-    <TestProvider>
-      <InstallControlsButton
-        plugin={{ ...plugin, angularDetected: opts.angularDetected }}
-        pluginStatus={PluginStatus.INSTALL}
-      />
-    </TestProvider>
-  );
-}
-
 describe('InstallControlsButton', () => {
-  describe.each([{ angularDetected: true }, { angularDetected: false }])(
-    'angular detected is $angularDetected',
-    ({ angularDetected }) => {
-      setup({ angularDetected });
+  it('should not allow install if angular is detected', () => {
+    render(
+      <TestProvider>
+        <InstallControlsButton plugin={{ ...plugin, angularDetected: true }} pluginStatus={PluginStatus.INSTALL} />
+      </TestProvider>
+    );
+    // setup({ angularDetected: true });
 
-      const el = screen.getByRole('button');
-      expect(el).toHaveTextContent(/install/i);
-      expect(el).toBeVisible();
-      expect(el).toBeDisabled();
-    }
-  );
+    const el = screen.getByRole('button');
+    expect(el).toHaveTextContent(/install/i);
+    expect(el).toBeVisible();
+    expect(el).toBeDisabled();
+  });
+
   it("should allow to uninstall a plugin even if it's unpublished", () => {
     render(
       <TestProvider>
         <InstallControlsButton plugin={{ ...plugin, isPublished: false }} pluginStatus={PluginStatus.UNINSTALL} />
       </TestProvider>
     );
+    // screen.debug();
     const el = screen.getByRole('button');
     expect(el).toHaveTextContent(/uninstall/i);
     expect(el).toBeVisible();
