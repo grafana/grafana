@@ -19,21 +19,7 @@ func dummyExport(
 	job provisioning.Job,
 	progress jobs.ProgressFn,
 ) (*provisioning.JobStatus, error) {
-	if repo.Config().Spec.ReadOnly {
-		return &provisioning.JobStatus{
-			State:  provisioning.JobStateError,
-			Errors: []string{"Exporting to a read only repository is not supported"},
-		}, nil
-	}
-
 	options := job.Spec.Export
-	if options == nil {
-		return &provisioning.JobStatus{
-			State:  provisioning.JobStateError,
-			Errors: []string{"Export job missing export settings"},
-		}, nil
-	}
-
 	logger := logging.FromContext(ctx).With("logger", "exporter", "repository", repo.Config().Name, "namespace", repo.Config().Name)
 	logger.Info("start export", "folder", options.Folder)
 
