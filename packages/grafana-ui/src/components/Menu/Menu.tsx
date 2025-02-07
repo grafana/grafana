@@ -73,10 +73,11 @@ export const Menu = Object.assign(MenuComp, {
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     header: css({
-      padding: theme.spacing(0.5, 1, 1, 1),
+      padding: theme.spacing(0.5, 0.5, 1, 0.5),
     }),
     headerBorder: css({
       borderBottom: `1px solid ${theme.colors.border.weak}`,
+      marginBottom: theme.spacing(0.5),
     }),
   };
 };
