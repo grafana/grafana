@@ -134,7 +134,7 @@ export function ensureV2Response(
     };
     creationTimestamp = dto.meta.created;
     labelsMeta = {
-      [DeprecatedInternalId]: dashboard.id ?? undefined,
+      [DeprecatedInternalId]: dashboard.id?.toString() ?? undefined,
     };
   }
 
@@ -859,6 +859,10 @@ function getPanelsV1(
   const panelsV1: Array<Panel | LibraryPanelDTO | RowPanel> = [];
 
   let maxPanelId = 0;
+
+  if (layout.kind !== 'GridLayout') {
+    throw new Error('Cannot convert non-GridLayout layout to v1');
+  }
 
   for (const item of layout.spec.items) {
     if (item.kind === 'GridLayoutItem') {
