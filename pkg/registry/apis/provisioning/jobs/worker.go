@@ -145,7 +145,7 @@ func (g *JobWorker) Process(ctx context.Context, job provisioning.Job, progress 
 		var exporter export.ExportWorker
 		// Test for now... so we have something with long spinners for UI testing!!!
 		if job.Spec.Export.Branch == "*dummy*" {
-			exporter = export.NewDummyExporter()
+			exporter = export.NewDummyExportWorker()
 		} else {
 			exporter, err = export.NewExportWorker(repo, parser.Client())
 			if err != nil {
