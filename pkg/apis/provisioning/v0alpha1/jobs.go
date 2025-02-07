@@ -86,8 +86,8 @@ type PullRequestJobOptions struct {
 }
 
 type SyncJobOptions struct {
-	// Complete forces the sync to overwrite
-	Complete bool `json:"complete,omitempty"`
+	// Incremental synchronization for versioned repositories
+	Incremental bool `json:"incremental"`
 }
 
 type ExportJobOptions struct {

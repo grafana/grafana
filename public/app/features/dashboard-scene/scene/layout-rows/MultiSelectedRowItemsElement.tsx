@@ -6,12 +6,13 @@ import { t, Trans } from 'app/core/internationalization';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
-import { MultiSelectedEditableDashboardElement } from '../types';
+import { MultiSelectedEditableDashboardElement } from '../types/MultiSelectedEditableDashboardElement';
 
 import { RowItem } from './RowItem';
 
 export class MultiSelectedRowItemsElement implements MultiSelectedEditableDashboardElement {
-  public isMultiSelectedEditableDashboardElement: true = true;
+  public readonly isMultiSelectedEditableDashboardElement = true;
+  public readonly typeName = 'Rows';
 
   private items?: RowItem[];
 
@@ -42,10 +43,6 @@ export class MultiSelectedRowItemsElement implements MultiSelectedEditableDashbo
     }, [rows]);
 
     return [rowOptions];
-  }
-
-  public getTypeName(): string {
-    return 'Rows';
   }
 
   public onDelete = () => {

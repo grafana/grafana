@@ -46,9 +46,7 @@ import (
 
 const repoControllerWorkers = 1
 
-var (
-	_ builder.APIGroupBuilder = (*APIBuilder)(nil)
-)
+var _ builder.APIGroupBuilder = (*APIBuilder)(nil)
 
 type APIBuilder struct {
 	urlProvider      func(namespace string) string
@@ -324,6 +322,10 @@ func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admis
 		}
 	}
 
+	if r.Spec.Sync.IntervalSeconds == 0 {
+		r.Spec.Sync.IntervalSeconds = 60
+	}
+
 	if r.Spec.Type == provisioning.GitHubRepositoryType {
 		if r.Spec.GitHub == nil {
 			return fmt.Errorf("github configuration is required")
@@ -410,7 +412,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			}
 			sharedInformerFactory := informers.NewSharedInformerFactory(
 				c,
-				15*time.Minute, // Health check interval
+				ResyncInterval, // Health and reconciliation interval check interval
 			)
 
 			repoInformer := sharedInformerFactory.Provisioning().V0alpha1().Repositories()
@@ -651,7 +653,7 @@ spec:
 						MediaTypeProps: spec3.MediaTypeProps{
 							Schema: &optionsSchema,
 							Example: &provisioning.SyncJobOptions{
-								Complete: true,
+								Incremental: false,
 							},
 						},
 					},

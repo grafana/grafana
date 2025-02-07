@@ -1606,14 +1606,16 @@ func schema_pkg_apis_provisioning_v0alpha1_SyncJobOptions(ref common.ReferenceCa
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
-					"complete": {
+					"incremental": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Complete forces the sync to overwrite",
+							Description: "Incremental synchronization for versioned repositories",
+							Default:     false,
 							Type:        []string{"boolean"},
 							Format:      "",
 						},
 					},
 				},
+				Required: []string{"incremental"},
 			},
 		},
 	}
@@ -1726,8 +1728,15 @@ func schema_pkg_apis_provisioning_v0alpha1_SyncStatus(ref common.ReferenceCallba
 							Format:      "",
 						},
 					},
+					"incremental": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Incremental synchronization for versioned repositories",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
 				},
-				Required: []string{"state"},
+				Required: []string{"state", "message"},
 			},
 		},
 	}

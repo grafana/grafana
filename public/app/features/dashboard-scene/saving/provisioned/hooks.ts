@@ -1,5 +1,5 @@
 import { AnnoKeyRepoName, AnnoKeyRepoPath } from 'app/features/apiserver/types';
-import { useFolderRepository } from 'app/features/provisioning/hooks';
+import { useGetResourceRepository } from 'app/features/provisioning/hooks';
 import { DashboardMeta } from 'app/types';
 
 import { getDefaultWorkflow } from './defaults';
@@ -21,20 +21,19 @@ function generatePath(timestamp: number, pathFromAnnotation?: string, slug?: str
 }
 
 export function useDefaultValues({ meta, defaultTitle, defaultDescription }: UseDefaultValuesParams) {
-  // ???? why is this getting the repository from the folder, not the file???
-  // Should we only get it from the folder when new?
-  const folderRepository = useFolderRepository(meta.folderUid);
-  const timestamp = Date.now();
   const annotations = meta.k8s?.annotations;
+  const annoName = annotations?.[AnnoKeyRepoName];
   const annoPath = annotations?.[AnnoKeyRepoPath];
-  const repositoryConfig = folderRepository?.spec;
-  const repositoryName = folderRepository?.metadata?.name ?? '';
+  // Get config by resource name or folder UID for new resources
+  const repositoryConfig = useGetResourceRepository({ name: annoName, folderUid: meta.folderUid });
+  const repository = repositoryConfig?.spec;
+  const timestamp = Date.now();
 
   return {
     values: {
       ref: `dashboard/${timestamp}`,
       path: generatePath(timestamp, annoPath, meta.slug),
-      repo: annotations?.[AnnoKeyRepoName] ?? repositoryName,
+      repo: annoName || repositoryConfig?.metadata?.name || '',
       comment: '',
       folder: {
         uid: meta.folderUid,
@@ -42,10 +41,10 @@ export function useDefaultValues({ meta, defaultTitle, defaultDescription }: Use
       },
       title: defaultTitle,
       description: defaultDescription ?? '',
-      workflow: getDefaultWorkflow(repositoryConfig),
+      workflow: getDefaultWorkflow(repository),
     },
-    isNew: !annoPath,
-    repositoryConfig,
-    isGitHub: repositoryConfig?.type === 'github',
+    isNew: !annoName,
+    repositoryConfig: repository,
+    isGitHub: repository?.type === 'github',
   };
 }
