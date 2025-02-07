@@ -146,7 +146,7 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions, showOne
         <Field
           label={t('grafana-ui.data-link-inline-editor.one-click', 'One click')}
           description={t(
-            'grafana-ui.action-editor-modal.one-click-description',
+            'grafana-ui.action-editor.modal.one-click-description',
             'Only one link {{ action }} can have one click enabled at a time',
             { action }
           )}

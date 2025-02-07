@@ -121,8 +121,8 @@ export function DataLinksInlineEditorBase<T extends DataLink | Action>({
       case 'action':
         text =
           action === 'edit'
-            ? t('grafana-ui.actions-editor.inline.edit-action', 'Edit action')
-            : t('grafana-ui.actions-editor.inline.add-action', 'Add action');
+            ? t('grafana-ui.action-editor.inline.edit-action', 'Edit action')
+            : t('grafana-ui.action-editor.inline.add-action', 'Add action');
         break;
     }
 
