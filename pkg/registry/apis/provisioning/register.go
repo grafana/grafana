@@ -30,6 +30,7 @@ import (
 	informers "github.com/grafana/grafana/pkg/generated/informers/externalversions"
 	listers "github.com/grafana/grafana/pkg/generated/listers/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -425,12 +426,18 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			}
 			b.repositoryLister = repoInformer.Lister()
 
+			syncWorker := sync.NewSyncWorker(
+				c.ProvisioningV0alpha1(),
+				b.parsers,
+				b.resourceLister,
+			)
 			b.jobs.Register(jobs.NewJobWorker(
 				b,
 				b.parsers,
 				c.ProvisioningV0alpha1(),
 				b.render,
 				b.resourceLister,
+				syncWorker,
 				b.blobstore,
 				b.urlProvider,
 			))

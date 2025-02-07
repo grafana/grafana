@@ -1,0 +1,21 @@
+{
+    "apiVersion": "provisioning.grafana.app/v0alpha1",
+    "kind": "Repository",
+    "metadata": {
+        "name": "local-tmp"
+    },
+    "spec": {
+        "description": "load a /tmp directory",
+        "local": {
+            "path": "the test will replace this string"
+        },
+        "sync": {
+            "enabled": false,
+            "target": "mirror",
+            "intervalSeconds": 60
+        },
+        "readOnly": false,
+        "title": "Load tmp dashboards",
+        "type": "local"
+    }
+}
