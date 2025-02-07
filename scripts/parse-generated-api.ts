@@ -53,9 +53,9 @@ const transformedContent = content
     return `${removeDuplicateTypes(typeDef)};`;
   });
 
-  // Modify any 'List...Arg>' to 'List...Arg | void>'
-  // FIXME: We do field accesses on these types. This breaks compilation. It's more convenient to just pass {} to these call sites than deal with it (for now?).
-  // .replace(/(List[A-Za-z0-9]+Arg)>/g, '$1 | void>');
+// Modify any 'List...Arg>' to 'List...Arg | void>'
+// FIXME: We do field accesses on these types. This breaks compilation. It's more convenient to just pass {} to these call sites than deal with it (for now?).
+// .replace(/(List[A-Za-z0-9]+Arg)>/g, '$1 | void>');
 
 // Write the transformed content back to a new file
 fs.writeFileSync(outputFilePath, transformedContent);

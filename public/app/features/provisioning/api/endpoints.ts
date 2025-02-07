@@ -105,7 +105,7 @@ const injectedRtkApi = api
     overrideExisting: false,
   });
 export { injectedRtkApi as generatedAPI };
-export type ListRepositoryResponse =  RepositoryList;
+export type ListRepositoryResponse = RepositoryList;
 export type ListRepositoryArg = {
   pretty?: string;
   allowWatchBookmarks?: boolean;
@@ -119,7 +119,7 @@ export type ListRepositoryArg = {
   timeoutSeconds?: number;
   watch?: boolean;
 };
-export type CreateRepositoryResponse = | Repository;
+export type CreateRepositoryResponse = Repository;
 export type CreateRepositoryArg = {
   pretty?: string;
   dryRun?: string;
@@ -127,12 +127,12 @@ export type CreateRepositoryArg = {
   fieldValidation?: string;
   repository: Repository;
 };
-export type GetRepositoryResponse =  Repository;
+export type GetRepositoryResponse = Repository;
 export type GetRepositoryArg = {
   name: string;
   pretty?: string;
 };
-export type ReplaceRepositoryResponse =  Repository | Repository;
+export type ReplaceRepositoryResponse = Repository | Repository;
 export type ReplaceRepositoryArg = {
   name: string;
   pretty?: string;
@@ -141,7 +141,7 @@ export type ReplaceRepositoryArg = {
   fieldValidation?: string;
   repository: Repository;
 };
-export type DeleteRepositoryResponse =  Status | Status;
+export type DeleteRepositoryResponse = Status | Status;
 export type DeleteRepositoryArg = {
   name: string;
   pretty?: string;
@@ -152,12 +152,12 @@ export type DeleteRepositoryArg = {
   propagationPolicy?: string;
   deleteOptions: DeleteOptions;
 };
-export type GetRepositoryStatusResponse =  Repository;
+export type GetRepositoryStatusResponse = Repository;
 export type GetRepositoryStatusArg = {
   name: string;
   pretty?: string;
 };
-export type ReplaceRepositoryStatusResponse =  Repository | Repository;
+export type ReplaceRepositoryStatusResponse = Repository | Repository;
 export type ReplaceRepositoryStatusArg = {
   name: string;
   pretty?: string;
