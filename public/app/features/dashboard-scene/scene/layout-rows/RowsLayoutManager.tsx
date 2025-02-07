@@ -95,9 +95,8 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
   }
 
   public removeRow(row: RowItem) {
-    this.setState({
-      rows: this.state.rows.filter((r) => r !== row),
-    });
+    const rows = this.state.rows.filter((r) => r !== row);
+    this.setState({ rows: rows.length === 0 ? [new RowItem()] : rows });
   }
 
   public static createEmpty(): RowsLayoutManager {

@@ -33,14 +33,6 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     this.state.currentTab.getLayout().addPanel(vizPanel);
   }
 
-  public removePanel(panel: VizPanel) {
-    this.state.currentTab.getLayout().removePanel(panel);
-  }
-
-  public duplicatePanel(panel: VizPanel) {
-    this.state.currentTab.getLayout().duplicatePanel(panel);
-  }
-
   public getVizPanels(): VizPanel[] {
     const panels: VizPanel[] = [];
 
@@ -50,10 +42,6 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     }
 
     return panels;
-  }
-
-  public getMaxPanelId(): number {
-    return Math.max(...this.state.tabs.map((tab) => tab.getLayout().getMaxPanelId()));
   }
 
   public addNewRow() {
@@ -74,10 +62,6 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
   }
 
   public removeTab(tab: TabItem) {
-    if (this.state.tabs.length === 1) {
-      throw new Error('TabsLayoutManager: Cannot remove last tab');
-    }
-
     if (this.state.currentTab === tab) {
       const currentTabIndex = this.state.tabs.indexOf(tab);
       const nextTabIndex = currentTabIndex === 0 ? 1 : currentTabIndex - 1;
@@ -86,10 +70,10 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
       return;
     }
 
-    this.setState({
-      tabs: this.state.tabs.filter((tab) => tab !== this.state.currentTab),
-      currentTab: this.state.tabs[this.state.tabs.length - 1],
-    });
+    const filteredTab = this.state.tabs.filter((tab) => tab !== this.state.currentTab);
+    const tabs = filteredTab.length === 0 ? [new TabItem()] : filteredTab;
+
+    this.setState({ tabs, currentTab: tabs[tabs.length - 1] });
   }
 
   public changeTab(tab: TabItem) {
