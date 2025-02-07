@@ -280,7 +280,8 @@ func (rc *RepositoryController) process(item *queueItem) error {
 
 	// Test configuration before anything else
 	health := obj.Status.Health
-	if obj.DeletionTimestamp == nil && healthAge > 200*time.Millisecond {
+	statusPatch := make(map[string]any)
+	if obj.DeletionTimestamp == nil && healthAge > 350*time.Millisecond {
 		logger.Info("running health check")
 		res, err := rc.tester.TestRepository(ctx, repo)
 		if err != nil {
@@ -298,58 +299,34 @@ func (rc *RepositoryController) process(item *queueItem) error {
 			Checked: time.Now().UnixMilli(),
 			Message: res.Errors,
 		}
-		patch, err := json.Marshal(map[string]any{
-			"status": map[string]any{
-				"health": health,
-			},
-		})
-		if err != nil {
-			return fmt.Errorf("error encoding health patch: %w", err)
-		}
-
-		if _, err := rc.client.Repositories(obj.GetNamespace()).
-			Patch(ctx, obj.GetName(), types.MergePatchType, patch, v1.PatchOptions{}, "status"); err != nil {
-			return fmt.Errorf("update health status: %w", err)
-		}
-	}
-
-	// Do not continue if provided invalid configuration because sync and hooks won't probably work
-	if !health.Healthy {
-		logger.Error("repository is unhealthy", "errors", health.Message)
-		patch, err := json.Marshal(map[string]any{
-			"status": map[string]any{
-				"observedGeneration": obj.Generation,
-			},
-		})
-		if err != nil {
-			return fmt.Errorf("error encoding health patch: %w", err)
-		}
-
-		if _, err := rc.client.Repositories(obj.GetNamespace()).
-			Patch(ctx, obj.GetName(), types.MergePatchType, patch, v1.PatchOptions{}, "status"); err != nil {
-			return fmt.Errorf("update health status: %w", err)
-		}
-
-		return nil
+		statusPatch["health"] = health
 	}
 
 	var (
-		sync          *provisioning.SyncJobOptions
-		webhookStatus *provisioning.WebhookStatus
+		sync *provisioning.SyncJobOptions
 	)
 
 	switch {
 	case obj.Status.ObservedGeneration < 1:
 		logger.Info("handle repository create")
 		if hooks != nil {
-			webhookStatus, err = hooks.OnCreate(ctx)
+			webhookStatus, err := hooks.OnCreate(ctx)
+			if err != nil {
+				return fmt.Errorf("error running OnCreate: %w", err)
+			}
+			statusPatch["webhook"] = webhookStatus
 		}
 		sync = &provisioning.SyncJobOptions{}
 	case hasSpecChanged:
-		logger.Info("handle repository update")
+		logger.Info("handle repository spec update", "Generation", obj.Generation, "ObservedGeneration", obj.Status.ObservedGeneration)
 		if hooks != nil {
-			webhookStatus, err = hooks.OnUpdate(ctx)
+			webhookStatus, err := hooks.OnUpdate(ctx)
+			if err != nil {
+				return fmt.Errorf("error running OnCreate: %w", err)
+			}
+			statusPatch["webhook"] = webhookStatus
 		}
+		statusPatch["observedGeneration"] = obj.Generation
 		sync = &provisioning.SyncJobOptions{}
 	case shouldResync:
 		logger.Info("handle repository resync")
@@ -357,11 +334,9 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	default:
 		logger.Info("handle unknown repository situation")
 	}
-	if err != nil {
-		return fmt.Errorf("error running hooks: %w", err)
-	}
 
-	if obj.Spec.Sync.Enabled && sync != nil && obj.Generation > 0 && !isSyncJobPendingOrRunning {
+	if obj.Spec.Sync.Enabled && sync != nil &&
+		obj.Generation > 0 && !isSyncJobPendingOrRunning && health.Healthy {
 		job, err := rc.jobs.Add(ctx, &provisioning.Job{
 			ObjectMeta: v1.ObjectMeta{
 				Namespace: obj.Namespace,
@@ -379,22 +354,19 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		}
 	}
 
-	if hasSpecChanged {
+	// The one place we update status (triggers another controller loop!)
+	if len(statusPatch) > 0 {
+		statusPatch["observedGeneration"] = obj.Generation
 		patch, err := json.Marshal(map[string]any{
-			"status": map[string]any{
-				"observedGeneration": obj.Generation,
-				"webhook":            webhookStatus,
-			},
+			"status": statusPatch,
 		})
 		if err != nil {
 			return fmt.Errorf("error encoding health patch: %w", err)
 		}
-
 		if _, err := rc.client.Repositories(obj.GetNamespace()).
 			Patch(ctx, obj.GetName(), types.MergePatchType, patch, v1.PatchOptions{}, "status"); err != nil {
 			return fmt.Errorf("update health status: %w", err)
 		}
 	}
-
 	return nil
 }
