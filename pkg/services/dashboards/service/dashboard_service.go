@@ -1248,7 +1248,7 @@ func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *dashb
 			return nil, err
 		}
 
-		folderNames, err := dr.fetchFolderNames(ctx, query, response)
+		folderNames, err := dr.fetchFolderNames(ctx, query, response.Hits)
 		if err != nil {
 			return nil, err
 		}
@@ -1280,24 +1280,24 @@ func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *dashb
 	return dr.dashboardStore.FindDashboards(ctx, query)
 }
 
-func (dr *DashboardServiceImpl) fetchFolderNames(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery, response *dashboardv0alpha1.SearchResults) (map[string]string, error) {
+func (dr *DashboardServiceImpl) fetchFolderNames(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery, hits []dashboardv0alpha1.DashboardHit) (map[string]string, error) {
 	// call this with elevated permissions so we can get folder names where user does not have access
 	// some dashboards are shared directly with user, but the folder is not accessible via the folder permissions
 	serviceCtx, serviceIdent := identity.WithServiceIdentity(ctx, query.OrgId)
 	search := folder.SearchFoldersQuery{
-		UIDs:         getFolderIds(response),
+		UIDs:         getFolderIds(hits),
 		OrgID:        query.OrgId,
 		SignedInUser: serviceIdent,
 	}
 
-	hits, err := dr.folderService.SearchFolders(serviceCtx, search)
+	folders, err := dr.folderService.SearchFolders(serviceCtx, search)
 	if err != nil {
 		return nil, folder.ErrInternal.Errorf("failed to fetch parent folders: %w", err)
 	}
 
 	folderNames := make(map[string]string)
-	for _, hit := range hits {
-		folderNames[hit.UID] = hit.Title
+	for _, f := range folders {
+		folderNames[f.UID] = f.Title
 	}
 	return folderNames, nil
 }
@@ -2082,10 +2082,10 @@ func LegacySaveCommandToUnstructured(cmd *dashboards.SaveDashboardCommand, names
 	return finalObj, nil
 }
 
-func getFolderIds(response *dashboardv0alpha1.SearchResults) []string {
+func getFolderIds(hits []dashboardv0alpha1.DashboardHit) []string {
 	folderIds := []string{}
 	folderSet := map[string]string{} // to avoid duplicates
-	for _, hit := range response.Hits {
+	for _, hit := range hits {
 		if hit.Folder != "" && folderSet[hit.Folder] == "" {
 			folderIds = append(folderIds, hit.Folder)
 			folderSet[hit.Folder] = hit.Folder
