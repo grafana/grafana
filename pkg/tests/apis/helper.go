@@ -675,6 +675,8 @@ func VerifyOpenAPISnapshots(t *testing.T, dir string, gv schema.GroupVersion, h 
 			User:   h.Org1.Admin,
 		}, &AnyResource{})
 
+		fmt.Println("PATH", path)
+
 		require.NotNil(t, rsp.Response)
 		require.Equal(t, 200, rsp.Response.StatusCode, path)
 

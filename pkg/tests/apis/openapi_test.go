@@ -29,7 +29,6 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 		AppModeProduction: true,
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagKubernetesFoldersServiceV2, // Will be default on by G12
-			featuremgmt.FlagQueryService,               // Query Library
 			featuremgmt.FlagProvisioning,
 		},
 	})
@@ -63,9 +62,6 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 		Version: "v0alpha1",
 	}, {
 		Group:   "folder.grafana.app",
-		Version: "v0alpha1",
-	}, {
-		Group:   "peakq.grafana.app",
 		Version: "v0alpha1",
 	}, {
 		Group:   "iam.grafana.app",
