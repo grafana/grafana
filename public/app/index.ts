@@ -26,6 +26,7 @@ const prepareInit = async () => {
       workerModule.default.start({ onUnhandledRequest: 'bypass' });
     });
   }
+  return Promise.resolve();
 };
 
 prepareInit().then(() => {
