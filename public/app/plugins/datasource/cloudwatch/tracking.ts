@@ -137,5 +137,14 @@ export const onDashboardLoadedHandler = ({
   }
 };
 
+type SampleQueryTrackingEvent = {
+  queryLanguage: LogsQueryLanguage;
+  queryCategory: string;
+}
+
+export const trackSampleQuerySelection = (props: SampleQueryTrackingEvent) => {
+   reportInteraction('cloudwatch-logs-cheat-sheet-query-clicked', props);
+}
+
 const isMetricSearchBuilder = (q: CloudWatchMetricsQuery) =>
   Boolean(q.metricQueryType === MetricQueryType.Search && q.metricEditorMode === MetricEditorMode.Builder);

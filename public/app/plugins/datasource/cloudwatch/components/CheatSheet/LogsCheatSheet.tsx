@@ -6,11 +6,12 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Collapse, useStyles2, Text } from '@grafana/ui';
 import { flattenTokens } from '@grafana/ui/src/slate-plugins/slate-prism';
 
+import { trackSampleQuerySelection } from '../../tracking';
 import { CloudWatchLogsQuery, CloudWatchQuery, LogsQueryLanguage } from '../../types';
 
 import * as sampleQueries from './sampleQueries';
 import { cwliTokenizer, pplTokenizer, sqlTokenizer } from './tokenizer';
-import { reportInteraction } from '@grafana/runtime';
+
 interface QueryExample {
   category: string;
   examples: sampleQueries.SampleQuery[];
@@ -96,7 +97,7 @@ const LogsCheatSheet = (props: Props) => {
   const queryLanguage: LogsQueryLanguage =
     (isLogsQuery(props.query) && props.query.queryLanguage) || LogsQueryLanguage.CWLI;
 
-  const onClickExample = (query: sampleQueries.SampleQuery) => {
+  const onClickExample = (query: sampleQueries.SampleQuery, queryCategory: string) => {
     props.onClickExample({
       ...props.query,
       refId: props.query.refId ?? 'A',
@@ -107,7 +108,7 @@ const LogsCheatSheet = (props: Props) => {
       logGroupNames: 'logGroupNames' in props.query ? props.query.logGroupNames : [],
       logGroups: 'logGroups' in props.query ? props.query.logGroups : [],
     });
-    reportInteraction('cloudwatch-logs-cheat-sheet-example-clicked', { queryLanguage });
+    trackSampleQuerySelection({queryLanguage, queryCategory});
   };
 
   return (
@@ -131,7 +132,7 @@ const LogsCheatSheet = (props: Props) => {
                       type="button"
                       className={styles.cheatSheetExample}
                       key={item.expr[queryLanguage]}
-                      onClick={() => onClickExample(item)}
+                      onClick={() => onClickExample(item, query.category)}
                     >
                       <pre>{renderHighlightedMarkup(item.expr[queryLanguage], `item-${j}`, queryLanguage)}</pre>
                     </button>
