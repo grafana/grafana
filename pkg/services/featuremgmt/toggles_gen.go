@@ -962,4 +962,8 @@ const (
 	// FlagGrafanaconThemes
 	// Enables the temporary themes for GrafanaCon
 	FlagGrafanaconThemes = "grafanaconThemes"
+
+	// FlagImproveRendererTraffic
+	// Reduce number of requests done when the request is coming from the renderer
+	FlagImproveRendererTraffic = "improveRendererTraffic"
 )
