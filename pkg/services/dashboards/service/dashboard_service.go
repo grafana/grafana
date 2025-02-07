@@ -14,6 +14,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
 
+	"golang.org/x/exp/maps"
 	"golang.org/x/exp/slices"
 	"golang.org/x/sync/errgroup"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -2083,13 +2084,11 @@ func LegacySaveCommandToUnstructured(cmd *dashboards.SaveDashboardCommand, names
 }
 
 func getFolderUIDs(hits []dashboardv0alpha1.DashboardHit) []string {
-	folderUIDs := []string{}
-	folderSet := map[string]bool{} // to avoid duplicates
+	folderSet := map[string]bool{}
 	for _, hit := range hits {
 		if hit.Folder != "" && !folderSet[hit.Folder] {
-			folderUIDs = append(folderUIDs, hit.Folder)
 			folderSet[hit.Folder] = true
 		}
 	}
-	return folderUIDs
+	return maps.Keys(folderSet)
 }
