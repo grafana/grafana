@@ -60,6 +60,9 @@ func (j JobState) Finished() bool {
 type JobSpec struct {
 	Action JobAction `json:"action"`
 
+	// The the repository reference (for now also in labels)
+	Repository string `json:"repository"`
+
 	// The branch of commit hash
 	Ref string `json:"ref,omitempty"`
 
