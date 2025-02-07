@@ -416,8 +416,7 @@
     "uplot": "1.6.31",
     "uuid": "11.0.5",
     "visjs-network": "4.25.0",
-    "whatwg-fetch": "3.6.20",
-    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.2/xlsx-0.20.2.tgz"
+    "whatwg-fetch": "3.6.20"
   },
   "resolutions": {
     "underscore": "1.13.7",
