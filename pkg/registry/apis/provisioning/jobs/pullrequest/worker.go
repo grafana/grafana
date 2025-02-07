@@ -1,4 +1,4 @@
-package jobs
+package pullrequest
 
 import (
 	"bytes"
@@ -17,7 +17,7 @@ import (
 )
 
 type PullRequestWorker interface {
-	ProcessPullRequest(ctx context.Context,
+	Process(ctx context.Context,
 		repo repository.Repository,
 		options provisioning.PullRequestJobOptions,
 		progress func(provisioning.JobStatus) error,
@@ -83,7 +83,7 @@ type pullRequestCommenter struct {
 	renderer     PreviewRenderer
 }
 
-func NewPullRequestCommenter(
+func NewPullRequestWorker(
 	repo PullRequestRepo,
 	parser *resources.Parser,
 	renderer PreviewRenderer,
@@ -108,7 +108,7 @@ func NewPullRequestCommenter(
 	}, nil
 }
 
-func (c *pullRequestCommenter) ProcessPullRequest(ctx context.Context,
+func (c *pullRequestCommenter) Process(ctx context.Context,
 	repo repository.Repository,
 	options provisioning.PullRequestJobOptions,
 	progress func(provisioning.JobStatus) error,
