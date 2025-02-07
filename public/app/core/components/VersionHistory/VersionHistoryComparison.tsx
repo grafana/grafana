@@ -56,8 +56,8 @@ export const VersionHistoryComparison = <T extends DiffArgument>({
   preprocessVersion = identity,
 }: DiffViewProps<T>) => {
   const diff = jsonDiff(preprocessVersion(oldVersion), preprocessVersion(newVersion));
-  const noDiffs = Object.entries(diff).length === 0;
-  const [showJsonDiff, setShowJsonDiff] = useState(noDiffs);
+  const noHumanReadableDiffs = Object.entries(diff).length === 0;
+  const [showJsonDiff, setShowJsonDiff] = useState(noHumanReadableDiffs);
 
   return (
     <Stack gap={2} direction="column">
@@ -69,13 +69,13 @@ export const VersionHistoryComparison = <T extends DiffArgument>({
         </Text>
       </Box>
       <Box>
-        {noDiffs && (
+        {noHumanReadableDiffs && (
           <EmptyState
             message={t('core.versionHistory.no-properties-changed', 'No relevant properties changed')}
             variant="not-found"
             hideImage
           >
-            <Trans i18nKey="core.versionHistory.see-json-diff">See JSON diff to see all changes</Trans>
+            <Trans i18nKey="core.versionHistory.view-json-diff">View JSON diff to see all changes</Trans>
           </EmptyState>
         )}
         {Object.entries(diff).map(([key, diffs]) => (
