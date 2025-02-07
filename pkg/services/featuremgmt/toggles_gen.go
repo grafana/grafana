@@ -79,10 +79,6 @@ const (
 	// Allow elements nesting
 	FlagCanvasPanelNesting = "canvasPanelNesting"
 
-	// FlagVizActions
-	// Allow actions in visualizations
-	FlagVizActions = "vizActions"
-
 	// FlagDisableSecretsCompatibility
 	// Disable duplicated secret storage in legacy tables
 	FlagDisableSecretsCompatibility = "disableSecretsCompatibility"

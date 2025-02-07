@@ -36,7 +36,6 @@ export interface FeatureToggles {
   autoMigrateStatPanel?: boolean;
   disableAngular?: boolean;
   canvasPanelNesting?: boolean;
-  vizActions?: boolean;
   disableSecretsCompatibility?: boolean;
   logRequestsInstrumentedAsUnknown?: boolean;
   grpcServer?: boolean;
