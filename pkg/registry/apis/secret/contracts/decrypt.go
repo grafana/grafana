@@ -11,3 +11,9 @@ import (
 type DecryptStorage interface {
 	Decrypt(ctx context.Context, nn xkube.NameNamespace) (secretv0alpha1.ExposedSecureValue, error)
 }
+
+// DecryptClient will have a function-call implementation and a gRPC implementation.
+// The function-call implementation is used by the gRPC server, and the gRPC implementation calls that same gRPC server.
+type DecryptClient interface {
+	Decrypt(ctx context.Context, namespace xkube.Namespace, names ...string) (map[string]string, error)
+}
