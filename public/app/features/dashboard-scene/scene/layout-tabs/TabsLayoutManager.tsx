@@ -2,6 +2,7 @@ import { SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
 import { t } from 'app/core/internationalization';
 
 import { ConditionalRendering } from '../../conditional-rendering/ConditionalRendering';
+import { DashboardOutlineItemType, DashboardOutlineTabItem } from '../../outline/types';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
@@ -13,7 +14,10 @@ interface TabsLayoutManagerState extends SceneObjectState {
   currentTab: TabItem;
 }
 
-export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> implements DashboardLayoutManager {
+export class TabsLayoutManager
+  extends SceneObjectBase<TabsLayoutManagerState>
+  implements DashboardLayoutManager<{}, DashboardOutlineTabItem>
+{
   public static Component = TabsLayoutManagerRenderer;
 
   public readonly isDashboardLayoutManager = true;
@@ -67,6 +71,14 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
       $behaviors: [ConditionalRendering.createEmpty()],
     });
     this.setState({ tabs: [...this.state.tabs, currentTab], currentTab });
+  }
+
+  public getOutline(): DashboardOutlineTabItem[] {
+    return this.state.tabs.map((tab) => ({
+      type: DashboardOutlineItemType.TAB,
+      item: tab,
+      children: tab.getLayout().getOutline(),
+    }));
   }
 
   public editModeChanged(isEditing: boolean) {
