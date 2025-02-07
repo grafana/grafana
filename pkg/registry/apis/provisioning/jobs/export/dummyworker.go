@@ -1,4 +1,4 @@
-package jobs
+package export
 
 import (
 	"context"
@@ -12,9 +12,13 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-type dummyExporter struct{}
+type dummyExportWorker struct{}
 
-func (s *dummyExporter) Export(ctx context.Context,
+func NewDummyExportWorker() ExportWorker {
+	return &dummyExportWorker{}
+}
+
+func (s *dummyExportWorker) Export(ctx context.Context,
 	repo repository.Repository,
 	options provisioning.ExportJobOptions,
 	progress func(provisioning.JobStatus) error,
