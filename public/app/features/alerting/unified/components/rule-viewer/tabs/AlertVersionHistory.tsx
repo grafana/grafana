@@ -273,7 +273,7 @@ export function AlertVersionHistory({ ruleUid }: AlertVersionHistoryProps) {
           {config.featureToggles.alertingRuleVersionHistoryRestore && (
             <Box paddingTop={2}>
               <Stack justifyContent="flex-end">
-                <Button variant="destructive" onClick={() => { }}>
+                <Button variant="destructive" onClick={() => {}}>
                   <Trans i18nKey="alerting.alertVersionHistory.reset">
                     Reset to version {oldVersion.grafana_alert.version}
                   </Trans>
