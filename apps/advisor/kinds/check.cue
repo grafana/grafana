@@ -21,23 +21,23 @@ check: {
 					// Generic data input that a check can receive
 					data?: [string]: string
 				}
-				#ReportError: {
-					// Severity of the error
+				#ReportFailure: {
+					// Severity of the failure
 					severity: "high" | "low"
-					// Human readable reason for the error
+					// Human readable reason for the failure
 					reason: string
-					// Action to take to resolve the error
+					// Action to take to resolve the failure
 					action: string
-					// Step ID that the error is associated with
+					// Step ID that the failure is associated with
 					stepID: string
-					// Item ID that the error is associated with
+					// Item ID that the failure is associated with
 					itemID: string
 				}	
 				#Report: {
 						// Number of elements analyzed
 						count: int
-						// List of errors
-						errors: [...#ReportError]
+						// List of failures
+						failures: [...#ReportFailure]
 				}
 				spec: #Data
 				status: {

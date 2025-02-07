@@ -78,7 +78,7 @@ func (s *deprecationStep) ID() string {
 	return "deprecation"
 }
 
-func (s *deprecationStep) Run(ctx context.Context, _ *advisor.CheckSpec, it any) (*advisor.CheckReportError, error) {
+func (s *deprecationStep) Run(ctx context.Context, _ *advisor.CheckSpec, it any) (*advisor.CheckReportFailure, error) {
 	p, ok := it.(pluginstore.Plugin)
 	if !ok {
 		return nil, fmt.Errorf("invalid item type %T", it)
@@ -96,8 +96,8 @@ func (s *deprecationStep) Run(ctx context.Context, _ *advisor.CheckSpec, it any)
 		return nil, nil
 	}
 	if i.Status == "deprecated" {
-		return checks.NewCheckReportError(
-			advisor.CheckReportErrorSeverityHigh,
+		return checks.NewCheckReportFailure(
+			advisor.CheckReportFailureSeverityHigh,
 			fmt.Sprintf("Plugin deprecated: %s", p.ID),
 			"Check the <a href='https://grafana.com/legal/plugin-deprecation/#a-plugin-i-use-is-deprecated-what-should-i-do' target=_blank>documentation</a> for recommended steps.",
 			s.ID(),
@@ -125,7 +125,7 @@ func (s *updateStep) ID() string {
 	return "update"
 }
 
-func (s *updateStep) Run(ctx context.Context, _ *advisor.CheckSpec, i any) (*advisor.CheckReportError, error) {
+func (s *updateStep) Run(ctx context.Context, _ *advisor.CheckSpec, i any) (*advisor.CheckReportFailure, error) {
 	p, ok := i.(pluginstore.Plugin)
 	if !ok {
 		return nil, fmt.Errorf("invalid item type %T", i)
@@ -149,8 +149,8 @@ func (s *updateStep) Run(ctx context.Context, _ *advisor.CheckSpec, i any) (*adv
 		return nil, nil
 	}
 	if hasUpdate(p, info) {
-		return checks.NewCheckReportError(
-			advisor.CheckReportErrorSeverityLow,
+		return checks.NewCheckReportFailure(
+			advisor.CheckReportFailureSeverityLow,
 			fmt.Sprintf("New version available for %s", p.ID),
 			fmt.Sprintf(
 				"Go to the <a href='/plugins/%s?page=version-history'>plugin admin page</a>"+

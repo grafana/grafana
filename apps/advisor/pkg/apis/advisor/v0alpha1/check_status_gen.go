@@ -3,22 +3,22 @@
 package v0alpha1
 
 // +k8s:openapi-gen=true
-type CheckReportError struct {
-	// Severity of the error
-	Severity CheckReportErrorSeverity `json:"severity"`
-	// Human readable reason for the error
+type CheckReportFailure struct {
+	// Severity of the failure
+	Severity CheckReportFailureSeverity `json:"severity"`
+	// Human readable reason for the failure
 	Reason string `json:"reason"`
-	// Action to take to resolve the error
+	// Action to take to resolve the failure
 	Action string `json:"action"`
-	// Step ID that the error is associated with
+	// Step ID that the failure is associated with
 	StepID string `json:"stepID"`
-	// Item ID that the error is associated with
+	// Item ID that the failure is associated with
 	ItemID string `json:"itemID"`
 }
 
-// NewCheckReportError creates a new CheckReportError object.
-func NewCheckReportError() *CheckReportError {
-	return &CheckReportError{}
+// NewCheckReportFailure creates a new CheckReportFailure object.
+func NewCheckReportFailure() *CheckReportFailure {
+	return &CheckReportFailure{}
 }
 
 // +k8s:openapi-gen=true
@@ -57,11 +57,11 @@ func NewCheckStatus() *CheckStatus {
 }
 
 // +k8s:openapi-gen=true
-type CheckReportErrorSeverity string
+type CheckReportFailureSeverity string
 
 const (
-	CheckReportErrorSeverityHigh CheckReportErrorSeverity = "high"
-	CheckReportErrorSeverityLow  CheckReportErrorSeverity = "low"
+	CheckReportFailureSeverityHigh CheckReportFailureSeverity = "high"
+	CheckReportFailureSeverityLow  CheckReportFailureSeverity = "low"
 )
 
 // +k8s:openapi-gen=true
@@ -77,8 +77,8 @@ const (
 type CheckV0alpha1StatusReport struct {
 	// Number of elements analyzed
 	Count int64 `json:"count"`
-	// List of errors
-	Errors []CheckReportError `json:"errors"`
+	// List of failures
+	Failures []CheckReportFailure `json:"failures"`
 }
 
 // NewCheckV0alpha1StatusReport creates a new CheckV0alpha1StatusReport object.

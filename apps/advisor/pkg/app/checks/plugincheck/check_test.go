@@ -21,12 +21,12 @@ func TestRun(t *testing.T) {
 		pluginArchives     map[string]*repo.PluginArchiveInfo
 		pluginPreinstalled []string
 		pluginManaged      []string
-		expectedErrors     []advisor.CheckReportError
+		expectedFailures   []advisor.CheckReportFailure
 	}{
 		{
-			name:           "No plugins",
-			plugins:        []pluginstore.Plugin{},
-			expectedErrors: []advisor.CheckReportError{},
+			name:             "No plugins",
+			plugins:          []pluginstore.Plugin{},
+			expectedFailures: []advisor.CheckReportFailure{},
 		},
 		{
 			name: "Deprecated plugin",
@@ -39,9 +39,9 @@ func TestRun(t *testing.T) {
 			pluginArchives: map[string]*repo.PluginArchiveInfo{
 				"plugin1": {Version: "1.0.0"},
 			},
-			expectedErrors: []advisor.CheckReportError{
+			expectedFailures: []advisor.CheckReportFailure{
 				{
-					Severity: advisor.CheckReportErrorSeverityHigh,
+					Severity: advisor.CheckReportFailureSeverityHigh,
 					Reason:   "Plugin deprecated: plugin1",
 					Action:   "Check the <a href='https://grafana.com/legal/plugin-deprecation/#a-plugin-i-use-is-deprecated-what-should-i-do' target=_blank>documentation</a> for recommended steps.",
 					StepID:   "deprecation",
@@ -60,9 +60,9 @@ func TestRun(t *testing.T) {
 			pluginArchives: map[string]*repo.PluginArchiveInfo{
 				"plugin2": {Version: "1.1.0"},
 			},
-			expectedErrors: []advisor.CheckReportError{
+			expectedFailures: []advisor.CheckReportFailure{
 				{
-					Severity: advisor.CheckReportErrorSeverityLow,
+					Severity: advisor.CheckReportFailureSeverityLow,
 					Reason:   "New version available for plugin2",
 					Action:   "Go to the <a href='/plugins/plugin2?page=version-history'>plugin admin page</a> and upgrade to the latest version.",
 					StepID:   "update",
@@ -81,9 +81,9 @@ func TestRun(t *testing.T) {
 			pluginArchives: map[string]*repo.PluginArchiveInfo{
 				"plugin2": {Version: "beta"},
 			},
-			expectedErrors: []advisor.CheckReportError{
+			expectedFailures: []advisor.CheckReportFailure{
 				{
-					Severity: advisor.CheckReportErrorSeverityLow,
+					Severity: advisor.CheckReportFailureSeverityLow,
 					Reason:   "New version available for plugin2",
 					Action:   "Go to the <a href='/plugins/plugin2?page=version-history'>plugin admin page</a> and upgrade to the latest version.",
 					StepID:   "update",
@@ -103,7 +103,7 @@ func TestRun(t *testing.T) {
 				"plugin3": {Version: "1.1.0"},
 			},
 			pluginPreinstalled: []string{"plugin3"},
-			expectedErrors:     []advisor.CheckReportError{},
+			expectedFailures:   []advisor.CheckReportFailure{},
 		},
 		{
 			name: "Managed plugin",
@@ -116,8 +116,8 @@ func TestRun(t *testing.T) {
 			pluginArchives: map[string]*repo.PluginArchiveInfo{
 				"plugin4": {Version: "1.1.0"},
 			},
-			pluginManaged:  []string{"plugin4"},
-			expectedErrors: []advisor.CheckReportError{},
+			pluginManaged:    []string{"plugin4"},
+			expectedFailures: []advisor.CheckReportFailure{},
 		},
 	}
 
@@ -134,19 +134,19 @@ func TestRun(t *testing.T) {
 
 			items, err := check.Items(context.Background())
 			assert.NoError(t, err)
-			errs := []advisor.CheckReportError{}
+			failures := []advisor.CheckReportFailure{}
 			for _, step := range check.Steps() {
 				for _, item := range items {
-					stepErr, err := step.Run(context.Background(), &advisor.CheckSpec{}, item)
+					stepFailures, err := step.Run(context.Background(), &advisor.CheckSpec{}, item)
 					assert.NoError(t, err)
-					if stepErr != nil {
-						errs = append(errs, *stepErr)
+					if stepFailures != nil {
+						failures = append(failures, *stepFailures)
 					}
 				}
 			}
 			assert.NoError(t, err)
 			assert.Equal(t, len(tt.plugins), len(items))
-			assert.Equal(t, tt.expectedErrors, errs)
+			assert.Equal(t, tt.expectedFailures, failures)
 		})
 	}
 }
