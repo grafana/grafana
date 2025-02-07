@@ -156,7 +156,7 @@ func (s *jobStore) drainPending() {
 			}
 
 			foundWorker = true
-			status, err := s.processByWorker(ctx, worker, *job)
+			status, err = s.processByWorker(ctx, worker, *job)
 			if err != nil {
 				logger.Error("error processing job", "error", err)
 				status = &provisioning.JobStatus{
