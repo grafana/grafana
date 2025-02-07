@@ -35,6 +35,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
+	errs "k8s.io/apimachinery/pkg/api/errors"
 )
 
 const (
@@ -201,12 +202,19 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 		if errors.Is(err, dashboards.ErrFolderNotFound) {
 			return response.Error(http.StatusNotFound, "Folder not found", err)
 		}
-		if errors.Is(err, dashboards.ErrFolderAccessDenied) {
-			return response.Error(http.StatusForbidden, "Folder access denied ", err)
+
+		if errs.IsForbidden(err) {
+			// the dashboard is in a folder the user can't access, so return the dashboard without folder info
+			err = nil
+			queryResult = &folder.Folder{
+				UID: dash.FolderUID,
+			}
 		}
+
 		if err != nil {
 			return response.Error(http.StatusInternalServerError, "Dashboard folder could not be read", err)
 		}
+
 		meta.FolderUid = queryResult.UID
 		meta.FolderTitle = queryResult.Title
 		meta.FolderId = queryResult.ID // nolint:staticcheck
