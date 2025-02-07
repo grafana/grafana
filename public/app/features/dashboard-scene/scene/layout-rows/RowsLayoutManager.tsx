@@ -1,6 +1,7 @@
 import { SceneGridItemLike, SceneGridRow, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
 import { t } from 'app/core/internationalization';
 
+import { DashboardOutlineItemType, DashboardOutlineRowItem } from '../../outline/types';
 import { isClonedKey } from '../../utils/clone';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { getDashboardSceneFor } from '../../utils/utils';
@@ -19,7 +20,10 @@ interface RowsLayoutManagerState extends SceneObjectState {
   rows: RowItem[];
 }
 
-export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> implements DashboardLayoutManager {
+export class RowsLayoutManager
+  extends SceneObjectBase<RowsLayoutManagerState>
+  implements DashboardLayoutManager<{}, DashboardOutlineRowItem>
+{
   public static Component = RowLayoutManagerRenderer;
 
   public readonly isDashboardLayoutManager = true;
@@ -90,6 +94,14 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
     }
 
     getDashboardSceneFor(this).switchLayout(tabsLayout);
+  }
+
+  public getOutline(): DashboardOutlineRowItem[] {
+    return this.state.rows.map((row) => ({
+      type: DashboardOutlineItemType.ROW,
+      item: row,
+      children: row.getLayout().getOutline(),
+    }));
   }
 
   public editModeChanged(isEditing: boolean) {
