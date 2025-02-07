@@ -81,7 +81,7 @@ func (r *githubRepository) Validate() (list field.ErrorList) {
 
 	for _, w := range gh.Workflows {
 		switch w {
-		case provisioning.PushWorkflow, provisioning.BranchWorkflow, provisioning.PullRequestWorkflow:
+		case provisioning.PushWorkflow, provisioning.BranchWorkflow:
 		default:
 			list = append(list, field.Invalid(field.NewPath("spec", "github", "workflow"), w, "invalid workflow"))
 		}

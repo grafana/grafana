@@ -37,8 +37,6 @@ type S3RepositoryConfig struct {
 type Workflow string
 
 const (
-	// PullRequestWorkflow creates a pull request for changes
-	PullRequestWorkflow Workflow = "pull-request"
 	// BranchWorkflow creates a branch for changes
 	BranchWorkflow Workflow = "branch"
 	// PushWorkflow pushes changes directly the configured branch

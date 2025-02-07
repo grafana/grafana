@@ -69,7 +69,7 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Prop
     const appEvents = getAppEvents();
     if (request.isSuccess) {
       dashboard.setState({ isDirty: false });
-      const prLink = workflow === WorkflowOption.PullRequest ? href : undefined;
+      const prLink = workflow !== WorkflowOption.Push ? href : undefined;
       dashboard.closeModal();
       locationService.partial({
         viewPanel: null,

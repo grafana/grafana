@@ -32,7 +32,6 @@ const targetOptions = [
 ];
 
 const workflowOptions = [
-  { label: 'Pull Request', value: WorkflowOption.PullRequest },
   { label: 'Push', value: WorkflowOption.Push },
   { label: 'Branch', value: WorkflowOption.Branch },
 ];
@@ -49,7 +48,7 @@ function getDefaultValues(repository?: RepositorySpec): RepositoryFormData {
       repository: '',
       branch: 'main',
       generateDashboardPreviews: true,
-      workflows: [WorkflowOption.PullRequest, WorkflowOption.Push, WorkflowOption.Branch],
+      workflows: [WorkflowOption.Push, WorkflowOption.Branch],
       sync: {
         enabled: false,
         target: 'instance',

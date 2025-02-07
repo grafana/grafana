@@ -276,7 +276,7 @@ func schema_pkg_apis_provisioning_v0alpha1_GitHubRepositoryConfig(ref common.Ref
 										Default: "",
 										Type:    []string{"string"},
 										Format:  "",
-										Enum:    []interface{}{"branch", "pull-request", "push"},
+										Enum:    []interface{}{"branch", "push"},
 									},
 								},
 							},

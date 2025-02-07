@@ -12,7 +12,6 @@ export function getWorkflowOptions(config?: RepositorySpec) {
 
   const availableOptions = [
     { label: `Push to ${config.github?.branch}`, value: WorkflowOption.Push },
-    { label: 'Open Pull Request', value: WorkflowOption.PullRequest },
     { label: 'Push to Different Branch', value: WorkflowOption.Branch },
   ];
 
