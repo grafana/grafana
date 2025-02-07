@@ -197,7 +197,8 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
             if (newSelectedItem?.value === ALL_OPTION_VALUE) {
               // TODO: fix bug where if the search filtered items list is the
               // same length, but different, than the selected items (ask tobias)
-              const isAllFilteredSelected = selectedItems.length === options.length - 1;
+              const optionsWithoutGroups = options.filter((option) => isComboboxOption(option));
+              const isAllFilteredSelected = selectedItems.length === optionsWithoutGroups.length - 1;
 
               // if every option is already selected, clear the selection.
               // otherwise, select all the options (excluding the first ALL_OTION)
@@ -208,7 +209,6 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
                 // Select all currently filtered items and deduplicate
                 newSelectedItems = [...new Set([...selectedItems, ...realOptions])];
               }
-
               if (isAllFilteredSelected && inputValue !== '') {
                 // Deselect all currently filtered items
                 const filteredSet = new Set(realOptions.map((item) => item.value));
