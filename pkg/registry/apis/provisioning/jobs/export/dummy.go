@@ -8,21 +8,18 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/util"
 )
 
-type dummyExportWorker struct{}
-
-func NewDummyExportWorker() ExportWorker {
-	return &dummyExportWorker{}
-}
-
-func (s *dummyExportWorker) Export(ctx context.Context,
+func dummyExport(
+	ctx context.Context,
 	repo repository.Repository,
-	options provisioning.ExportJobOptions,
-	progress func(provisioning.JobStatus) error,
+	job provisioning.Job,
+	progress jobs.ProgressFn,
 ) (*provisioning.JobStatus, error) {
+	options := job.Spec.Export
 	logger := logging.FromContext(ctx).With("logger", "exporter", "repository", repo.Config().Name, "namespace", repo.Config().Name)
 	logger.Info("start export", "folder", options.Folder)
 
@@ -38,10 +35,10 @@ func (s *dummyExportWorker) Export(ctx context.Context,
 		Progress: 0,
 	}
 
-	err := progress(status)
-	if err != nil {
+	if err := progress(ctx, status); err != nil {
 		return nil, err
 	}
+
 	time.Sleep(200 * time.Millisecond)
 	for i := 0; i < size; i++ {
 		status.Progress = (float64(i) / float64(size)) * 100
@@ -65,8 +62,7 @@ func (s *dummyExportWorker) Export(ctx context.Context,
 			dashboards,
 		}
 
-		err = progress(status)
-		if err != nil {
+		if err := progress(ctx, status); err != nil {
 			return nil, err
 		}
 	}

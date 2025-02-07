@@ -2,6 +2,7 @@ package jobs
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -11,15 +12,24 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/watch"
+	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/storage"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func NewJobQueue(capacity int) JobQueue {
+type RepoGetter interface {
+	GetRepository(ctx context.Context, name string) (repository.Repository, error)
+}
+
+func NewJobQueue(capacity int, getter RepoGetter) JobQueue {
 	return &jobStore{
+		workers:   make([]Worker, 0),
+		getter:    getter,
 		rv:        1,
 		capacity:  capacity,
 		jobs:      []provisioning.Job{},
@@ -29,8 +39,9 @@ func NewJobQueue(capacity int) JobQueue {
 }
 
 type jobStore struct {
+	getter   RepoGetter
 	capacity int
-	worker   Worker
+	workers  []Worker
 
 	// All jobs
 	jobs      []provisioning.Job
@@ -43,7 +54,7 @@ type jobStore struct {
 
 // Register a worker (inline for now)
 func (s *jobStore) Register(worker Worker) {
-	s.worker = worker
+	s.workers = append(s.workers, worker)
 }
 
 // Add implements JobQueue.
@@ -131,18 +142,18 @@ func (s *jobStore) drainPending() {
 		ctx := logging.Context(ctx, logger)
 
 		started := time.Now()
-		var status *provisioning.JobStatus
-		if s.worker == nil {
-			status = &provisioning.JobStatus{
-				State: provisioning.JobStateError,
-				Errors: []string{
-					"no registered worker supports this job",
-				},
+		var (
+			status      *provisioning.JobStatus
+			foundWorker bool
+		)
+
+		for _, worker := range s.workers {
+			if !worker.IsSupported(ctx, *job) {
+				continue
 			}
-		} else {
-			status, err = s.worker.Process(ctx, *job, func(j provisioning.JobStatus) error {
-				return s.Update(ctx, job.Namespace, job.Name, j)
-			})
+
+			foundWorker = true
+			status, err = s.processByWorker(ctx, worker, *job)
 			if err != nil {
 				logger.Error("error processing job", "error", err)
 				status = &provisioning.JobStatus{
@@ -160,6 +171,18 @@ func (s *jobStore) drainPending() {
 				status.State = provisioning.JobStateSuccess
 			}
 			logger.Debug("job processing finished", "status", status.State)
+
+			// Already found a worker, no need to continue
+			break
+		}
+
+		if !foundWorker {
+			status = &provisioning.JobStatus{
+				State: provisioning.JobStateError,
+				Errors: []string{
+					"no registered worker supports this job",
+				},
+			}
 		}
 
 		status.Started = started.UnixMilli()
@@ -171,6 +194,43 @@ func (s *jobStore) drainPending() {
 		}
 		logger.Debug("job has been fully completed")
 	}
+}
+
+func (s *jobStore) processByWorker(ctx context.Context, worker Worker, job provisioning.Job) (*provisioning.JobStatus, error) {
+	ctx = request.WithNamespace(ctx, job.Namespace)
+	ctx, _, err := identity.WithProvisioningIdentitiy(ctx, job.Namespace)
+	if err != nil {
+		return nil, fmt.Errorf("get worker identity: %w", err)
+	}
+	repoName := job.Spec.Repository
+
+	logger := logging.FromContext(ctx)
+	logger = logger.With("repository", repoName)
+	ctx = logging.Context(ctx, logger)
+
+	repo, err := s.getter.GetRepository(ctx, repoName)
+	if err != nil {
+		return nil, fmt.Errorf("get repository: %w", err)
+	}
+
+	// TODO: does this really happen?
+	if repo == nil {
+		return nil, errors.New("unknown repository")
+	}
+
+	status, err := worker.Process(ctx, repo, job, func(ctx context.Context, j provisioning.JobStatus) error {
+		return s.Update(ctx, job.Namespace, job.Name, j)
+	})
+	if err != nil {
+		return nil, fmt.Errorf("process job: %w", err)
+	}
+
+	// TODO: does this really happen?
+	if status == nil {
+		return nil, errors.New("worker did not return a status")
+	}
+
+	return nil, nil
 }
 
 // Checkout the next "pending" job

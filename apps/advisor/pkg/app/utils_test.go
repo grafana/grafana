@@ -105,7 +105,7 @@ func TestProcessMultipleCheckItems(t *testing.T) {
 	assert.Equal(t, "processed", obj.GetAnnotations()[statusAnnotation])
 	r := client.lastValue.(advisorv0alpha1.CheckV0alpha1StatusReport)
 	assert.Equal(t, r.Count, int64(100))
-	assert.Len(t, r.Errors, 50)
+	assert.Len(t, r.Failures, 50)
 }
 
 func TestProcessCheck_AlreadyProcessed(t *testing.T) {
@@ -173,12 +173,12 @@ type mockStep struct {
 	err error
 }
 
-func (m *mockStep) Run(ctx context.Context, obj *advisorv0alpha1.CheckSpec, items any) (*advisorv0alpha1.CheckReportError, error) {
+func (m *mockStep) Run(ctx context.Context, obj *advisorv0alpha1.CheckSpec, items any) (*advisorv0alpha1.CheckReportFailure, error) {
 	if m.err != nil {
 		return nil, m.err
 	}
 	if _, ok := items.(error); ok {
-		return &advisorv0alpha1.CheckReportError{}, nil
+		return &advisorv0alpha1.CheckReportFailure{}, nil
 	}
 	return nil, nil
 }
