@@ -7,7 +7,7 @@ import { RepeatRowSelect2 } from 'app/features/dashboard/components/RepeatRowSel
 
 import { DashboardGridItem } from './DashboardGridItem';
 
-export function getDashboardGridItemOptions(gridItem: DashboardGridItem) {
+export function getDashboardGridItemOptions(gridItem: DashboardGridItem): OptionsPaneCategoryDescriptor {
   const category = new OptionsPaneCategoryDescriptor({
     title: t('dashboard.default-layout.item-options.repeat.title', 'Repeat options'),
     id: 'Repeat options',
@@ -66,20 +66,23 @@ function RepeatDirectionOption({ gridItem }: OptionComponentProps) {
     <RadioButtonGroup
       options={directionOptions}
       value={repeatDirection ?? 'h'}
-      onChange={(value) => gridItem.setState({ repeatDirection: value })}
+      onChange={(value) => gridItem.setRepeatDirection(value)}
     />
   );
 }
 
 function MaxPerRowOption({ gridItem }: OptionComponentProps) {
   const { maxPerRow } = gridItem.useState();
-  const maxPerRowOptions = [2, 3, 4, 6, 8, 12].map((value) => ({ label: value.toString(), value }));
+  const maxPerRowOptions: Array<SelectableValue<number>> = [2, 3, 4, 6, 8, 12].map((value) => ({
+    label: value.toString(),
+    value,
+  }));
 
   return (
     <Select
       options={maxPerRowOptions}
       value={maxPerRow ?? 4}
-      onChange={(value) => gridItem.setState({ maxPerRow: value.value })}
+      onChange={(value) => gridItem.setMaxPerRow(value.value)}
     />
   );
 }

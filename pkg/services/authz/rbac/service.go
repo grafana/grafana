@@ -31,10 +31,10 @@ import (
 )
 
 const (
-	shortCacheTTL        = 1 * time.Minute
-	shortCleanupInterval = 5 * time.Minute
-	longCacheTTL         = 5 * time.Minute
-	longCleanupInterval  = 10 * time.Minute
+	shortCacheTTL        = 30 * time.Second
+	shortCleanupInterval = 2 * time.Minute
+	longCacheTTL         = 2 * time.Minute
+	longCleanupInterval  = 4 * time.Minute
 )
 
 type Service struct {
@@ -82,7 +82,7 @@ func NewService(
 		idCache:         newCacheWrap[store.UserIdentifiers](cache, logger, longCacheTTL),
 		permCache:       newCacheWrap[map[string]bool](cache, logger, shortCacheTTL),
 		teamCache:       newCacheWrap[[]int64](cache, logger, shortCacheTTL),
-		basicRoleCache:  newCacheWrap[store.BasicRole](cache, logger, longCacheTTL),
+		basicRoleCache:  newCacheWrap[store.BasicRole](cache, logger, shortCacheTTL),
 		folderCache:     newCacheWrap[map[string]FolderNode](cache, logger, shortCacheTTL),
 		sf:              new(singleflight.Group),
 	}
