@@ -183,7 +183,7 @@ const getTagStyles = (theme: GrafanaTheme2) => ({
 /** Card description text */
 const Description = ({ children, className }: ChildProps) => {
   const styles = useStyles2(getDescriptionStyles);
-  return <p className={cx(styles.description, className)}>{children}</p>;
+  return <div className={cx(styles.description, className)}>{children}</div>;
 };
 Description.displayName = 'Description';
 
