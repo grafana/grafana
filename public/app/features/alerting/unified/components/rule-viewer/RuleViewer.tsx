@@ -343,6 +343,7 @@ function usePageNav(rule: CombinedRule) {
   const groupName = rule.group.name;
 
   const isGrafanaAlertRule = isGrafanaRulerRule(rulerRule) && isAlertType;
+  const grafanaRecordingRule = isGrafanaRecordingRule(rulerRule);
   const isRecordingRuleType = isRecordingRule(promRule);
 
   const pageNav: NavModelItem = {
@@ -388,7 +389,7 @@ function usePageNav(rule: CombinedRule) {
         onClick: () => {
           setActiveTab(ActiveTab.VersionHistory);
         },
-        hideFromTabs: !isGrafanaRulerRule(rulerRule),
+        hideFromTabs: !isGrafanaAlertRule && !grafanaRecordingRule,
       },
     ],
     parentItem: {
