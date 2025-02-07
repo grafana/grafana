@@ -32,8 +32,6 @@ jobs:
         run: yarn install --immutable
       - name: Install Playwright Browsers
         run: yarn exec playwright install --with-deps
-      - name: Build grafana
-        run: make build
       - name: Run Playwright tests
         run: |
           yarn e2e:playwright:vizregression | tee output.log

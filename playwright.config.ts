@@ -7,6 +7,13 @@ const testDirRoot = 'e2e/plugin-e2e/';
 
 export default defineConfig<PluginOptions>({
   fullyParallel: true,
+  webServer: {
+    command: 'make run',
+    url: `http://${process.env.HOST || 'localhost'}:${process.env.PORT || 3000}`,
+    reuseExistingServer: !process.env.CI,
+    stdout: 'ignore',
+    stderr: 'pipe',
+  },
   /* Retry on CI only */
   retries: process.env.CI ? 2 : 0,
   /* Opt out of parallel tests on CI. */
