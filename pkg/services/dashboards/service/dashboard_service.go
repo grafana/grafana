@@ -1291,10 +1291,11 @@ func (dr *DashboardServiceImpl) fetchFolderNames(ctx context.Context, query *das
 		}
 	}
 
+	namespace := dr.k8sclient.GetNamespace(query.OrgId)
 	// call this with elevated permissions so we can get folder names where user does not have access
 	// some dashboards are shared directly with user, but the folder is not accessible via the folder permissions
 	serviceCtx, serviceIdent := identity.WithServiceIdentity(ctx, query.OrgId)
-	folders, err := dr.folderService.GetFolders(serviceCtx, folder.GetFoldersQuery{
+	folders, err := NewFolderLookup(namespace, dr.k8sclient).GetFolders(serviceCtx, folder.GetFoldersQuery{
 		UIDs:         folderIds,
 		OrgID:        query.OrgId,
 		SignedInUser: serviceIdent,
