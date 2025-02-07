@@ -68,10 +68,10 @@ const (
 )
 
 type RepositorySpec struct {
-	// Describe the feature toggle
+	// The repository display name (shown in the UI)
 	Title string `json:"title"`
 
-	// Describe the feature toggle
+	// Repository description
 	Description string `json:"description,omitempty"`
 
 	// The folder that is backed by the repository.
@@ -90,15 +90,15 @@ type RepositorySpec struct {
 	Type RepositoryType `json:"type"`
 
 	// The repository on the local file system.
-	// Mutually exclusive with s3 and github.
+	// Mutually exclusive with local | s3 | github.
 	Local *LocalRepositoryConfig `json:"local,omitempty"`
 
 	// The repository in an S3 bucket.
-	// Mutually exclusive with local and github.
+	// Mutually exclusive with local | s3 | github.
 	S3 *S3RepositoryConfig `json:"s3,omitempty"`
 
 	// The repository on GitHub.
-	// Mutually exclusive with local and s3.
+	// Mutually exclusive with local | s3 | github.
 	// TODO: github or just 'git'??
 	GitHub *GitHubRepositoryConfig `json:"github,omitempty"`
 }
