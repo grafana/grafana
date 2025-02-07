@@ -925,12 +925,6 @@
           "alt-action": "Delete row only",
           "text": "Are you sure you want to remove this row and all its panels?",
           "title": "Delete row"
-        },
-        "repeat": {
-          "warning": {
-            "learn-more": "Learn more",
-            "text": "Panels in this row use the {{SHARED_DASHBOARD_QUERY}} data source. These panels will reference the panel in the original row, not the ones in the repeated rows."
-          }
         }
       },
       "row-options": {
@@ -939,7 +933,13 @@
         },
         "form": {
           "cancel": "Cancel",
-          "repeat-for": "Repeat for",
+          "repeat-for": {
+            "label": "Repeat for",
+            "learn-more": "Learn more",
+            "warning": {
+              "text": "Panels in this row use the {{SHARED_DASHBOARD_QUERY}} data source. These panels will reference the panel in the original row, not the ones in the repeated rows."
+            }
+          },
           "title": "Title",
           "update": "Update"
         },
@@ -951,20 +951,23 @@
     "edit-pane": {
       "objects": {
         "multi-select": {
-          "selection-number": "No. of objects selected: "
+          "selection-number": "No. of objects selected: {{length}}"
         }
       },
       "open": "Open options pane",
       "panels": {
         "multi-select": {
-          "selection-number": "No. of panels selected: "
+          "selection-number": "No. of panels selected: {{length}}"
         }
       },
       "row": {
-        "hide": "Hide row header",
+        "header": {
+          "hide": "Hide",
+          "title": "Row header"
+        },
         "multi-select": {
           "options-header": "Multi-selected Row options",
-          "selection-number": "No. of rows selected: "
+          "selection-number": "No. of rows selected: {{length}}"
         }
       }
     },
