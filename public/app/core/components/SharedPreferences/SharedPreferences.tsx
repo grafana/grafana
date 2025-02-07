@@ -17,6 +17,7 @@ import {
   FeatureBadge,
   Combobox,
   ComboboxOption,
+  TextLink,
 } from '@grafana/ui';
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 import { t, Trans } from 'app/core/internationalization';
@@ -80,7 +81,20 @@ export class SharedPreferences extends PureComponent<Props, State> {
       navbar: { bookmarkUrls: [] },
     };
 
-    this.themeOptions = getBuiltInThemes(config.featureToggles.extraThemes).map((theme) => ({
+    const allowedExtraThemes = [];
+
+    if (config.featureToggles.extraThemes) {
+      allowedExtraThemes.push('debug');
+    }
+
+    if (config.featureToggles.grafanaconThemes) {
+      allowedExtraThemes.push('desertbloom');
+      allowedExtraThemes.push('gildedgrove');
+      allowedExtraThemes.push('sapphiredusk');
+      allowedExtraThemes.push('tron');
+    }
+
+    this.themeOptions = getBuiltInThemes(allowedExtraThemes).map((theme) => ({
       value: theme.id,
       label: getTranslatedThemeName(theme),
     }));
@@ -168,6 +182,20 @@ export class SharedPreferences extends PureComponent<Props, State> {
             loading={isLoading}
             disabled={isLoading}
             label={t('shared-preferences.fields.theme-label', 'Interface theme')}
+            description={
+              config.featureToggles.grafanaconThemes ? (
+                <Trans i18nKey="shared-preferences.fields.theme-description">
+                  Enjoying the limited edition themes? Tell us what you'd like to see{' '}
+                  <TextLink
+                    variant="bodySmall"
+                    external
+                    href="https://docs.google.com/forms/d/e/1FAIpQLSeRKAY8nUMEVIKSYJ99uOO-dimF6Y69_If1Q1jTLOZRWqK1cw/viewform?usp=dialog"
+                  >
+                    here.
+                  </TextLink>
+                </Trans>
+              ) : undefined
+            }
           >
             <Combobox
               options={this.themeOptions}
