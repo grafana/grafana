@@ -88,6 +88,7 @@ const getStyles = (theme: GrafanaTheme2, placeholder: string) => {
       justifyContent: 'start',
       alignItems: 'center',
       height: '100%',
+      overflow: 'hidden',
     }),
     placeholder: css({
       '::after': {
