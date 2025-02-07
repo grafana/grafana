@@ -40,7 +40,7 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 	healthStatusUrl.Path = path.Join(healthStatusUrl.Path, "_cluster/health")
 	healthStatusUrl.RawQuery = "wait_for_status=yellow"
 
-	request, err := http.NewRequestWithContext(ctx, "GET", healthStatusUrl.String(), nil)
+	request, err := http.NewRequestWithContext(ctx, http.MethodGet, healthStatusUrl.String(), nil)
 	if err != nil {
 		logger.Error("Failed to create request", "error", err, "url", healthStatusUrl.String())
 		return &backend.CheckHealthResult{
@@ -98,12 +98,11 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 	if err != nil {
 		truncatedBody := string(body)
 		if len(truncatedBody) > 100 {
-			truncatedBody = truncatedBody[:100] + "..."
+			truncatedBody = truncatedBody[:200] + "..."
 		}
-		logger.Error("Error unmarshalling body", "error", err, "body", truncatedBody)
 		return &backend.CheckHealthResult{
 			Status:  backend.HealthStatusUnknown,
-			Message: "Health check failed: Failed to parse response from Elasticsearch. Check the logs for more information",
+			Message: fmt.Sprintf("Health check failed: Failed to parse response from Elasticsearch. Response received: %s", truncatedBody),
 		}, nil
 	}
 
@@ -151,7 +150,10 @@ func validateIndex(ctx context.Context, ds *es.DatasourceInfo) (message string, 
 		return fmt.Sprintf("Failed to get build index pattern: %s", err), "error"
 	}
 
-	indices, err := ip.GetIndexForToday(ds.Interval, ds.Database)
+	indices, err := ip.GetIndices(backend.TimeRange{
+		From: time.Now().UTC(),
+		To:   time.Now().UTC(),
+	})
 	if err != nil {
 		return fmt.Sprintf("Failed to get index pattern: %s", err), "error"
 	}
@@ -163,7 +165,7 @@ func validateIndex(ctx context.Context, ds *es.DatasourceInfo) (message string, 
 		validateUrl = fmt.Sprintf("%s/_field_caps?fields=%s", ds.URL, ds.ConfiguredFields.TimeField)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "GET", validateUrl, nil)
+	request, err := http.NewRequestWithContext(ctx, http.MethodGet, validateUrl, nil)
 	if err != nil {
 		return fmt.Sprint("Failed to create request", "error", err, "url", validateUrl), "error"
 	}
@@ -193,20 +195,24 @@ func validateIndex(ctx context.Context, ds *es.DatasourceInfo) (message string, 
 			return "Error validating index", "warning"
 		}
 	}
-	if fields, ok := fieldCaps["fields"].(map[string]any); ok {
-		if len(fields) == 0 {
-			return fmt.Sprintf("Could not find field %s in index", ds.ConfiguredFields.TimeField), "warning"
-		}
-		if timeFieldInfo, ok := fields[ds.ConfiguredFields.TimeField].(map[string]any); ok {
-			dateTypeField, ok := timeFieldInfo["date"].(map[string]any)
-			if !ok || dateTypeField == nil {
-				return fmt.Sprintf("Could not find time field %s with type date in index", ds.ConfiguredFields.TimeField), "warning"
-			}
-		} else {
-			return "Failed to parse time field info from response", "error"
-		}
-	} else {
+
+	fields, ok := fieldCaps["fields"].(map[string]any)
+	if !ok {
 		return "Failed to parse fields from response", "error"
 	}
+	if len(fields) == 0 {
+		return fmt.Sprintf("Could not find field %s in index", ds.ConfiguredFields.TimeField), "warning"
+	}
+
+	timeFieldInfo, ok := fields[ds.ConfiguredFields.TimeField].(map[string]any)
+	if !ok {
+		return "Failed to parse time field info from response", "error"
+	}
+
+	dateTypeField, ok := timeFieldInfo["date"].(map[string]any)
+	if !ok || dateTypeField == nil {
+		return fmt.Sprintf("Could not find time field '%s' with type date in index", ds.ConfiguredFields.TimeField), "warning"
+	}
+
 	return "", ""
 }
