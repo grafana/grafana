@@ -1,7 +1,6 @@
 import { css } from '@emotion/css';
 import { ComponentProps, useState } from 'react';
 
-import { config } from '@grafana/runtime';
 import { Button, ButtonGroup, Dropdown, Menu, ToolbarButton } from '@grafana/ui';
 import { useStyles2 } from '@grafana/ui/';
 import { t } from 'app/core/internationalization';
@@ -9,7 +8,6 @@ import { t } from 'app/core/internationalization';
 import { createDatasourcesList } from '../../../core/utils/richHistory';
 import { useSelector } from '../../../types';
 import ExploreRunQueryButton from '../ExploreRunQueryButton';
-import { queryLibraryTrackToggle } from '../QueryLibrary/QueryLibraryAnalyticsEvents';
 import { useQueryLibraryContext } from '../QueryLibrary/QueryLibraryContext';
 import { QueryActionButton } from '../QueryLibrary/types';
 import { selectExploreDSMaps } from '../state/selectors';
@@ -39,6 +37,7 @@ export function QueriesDrawerDropdown({ variant }: Props) {
     openDrawer: openQueryLibraryDrawer,
     closeDrawer: closeQueryLibraryDrawer,
     isDrawerOpen: isQueryLibraryDrawerOpen,
+    queryLibraryEnabled,
   } = useQueryLibraryContext();
 
   const [queryOption, setQueryOption] = useState<'library' | 'history'>('library');
@@ -48,7 +47,7 @@ export function QueriesDrawerDropdown({ variant }: Props) {
   const styles = useStyles2(getStyles);
 
   // In case query library is not enabled we show only simple button for query history in the parent.
-  if (!config.featureToggles.queryLibrary) {
+  if (!queryLibraryEnabled) {
     return undefined;
   }
 
@@ -73,7 +72,6 @@ export function QueriesDrawerDropdown({ variant }: Props) {
 
       openQueryLibraryDrawer(activeDatasources, ExploreRunQueryButtonWrapper);
     }
-    queryLibraryTrackToggle(!isQueryLibraryDrawerOpen);
   }
 
   const menu = (

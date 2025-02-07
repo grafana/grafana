@@ -13,7 +13,7 @@ import {
 
 import { isClonedKeyOf, getCloneKey } from '../../utils/clone';
 import { getMultiVariableValues } from '../../utils/utils';
-import { DashboardRepeatsProcessedEvent } from '../types';
+import { DashboardRepeatsProcessedEvent } from '../types/DashboardRepeatsProcessedEvent';
 
 import { RowItem } from './RowItem';
 import { RowsLayoutManager } from './RowsLayoutManager';
@@ -21,10 +21,6 @@ import { RowsLayoutManager } from './RowsLayoutManager';
 interface RowItemRepeaterBehaviorState extends SceneObjectState {
   variableName: string;
 }
-
-/**
- * This behavior will run an effect function when specified variables change
- */
 
 export class RowItemRepeaterBehavior extends SceneObjectBase<RowItemRepeaterBehaviorState> {
   protected _variableDependency = new VariableDependencyConfig(this, {
