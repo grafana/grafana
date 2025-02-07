@@ -109,13 +109,7 @@ func (g *JobWorker) Process(ctx context.Context, job provisioning.Job, progress 
 			return nil, fmt.Errorf("error parsing base url: %w", err)
 		}
 
-		// FIXME: renderer should be in its own package
-		renderer := &renderer{
-			cfg:       repo.Config(),
-			render:    g.render,
-			blobstore: g.blobstore,
-			id:        id,
-		}
+		renderer := pullrequest.NewRenderer(repo.Config(), g.render, g.blobstore, id)
 
 		options := job.Spec.PullRequest
 		if options == nil {
