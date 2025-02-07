@@ -1,42 +1,42 @@
 import { useMemo } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
-import { Alert, Badge, Button, Field, Icon, Input, Stack, Text, withErrorBoundary } from '@grafana/ui';
-import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
+import { Alert, Badge, Icon, LinkButton, Stack, Text, withErrorBoundary } from '@grafana/ui';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 import { GrafanaRulesSourceSymbol, Rule, RuleGroup } from 'app/types/unified-alerting';
-import { RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../api/alertRuleApi';
 import { featureDiscoveryApi } from '../api/featureDiscoveryApi';
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
 import { DynamicTable, DynamicTableColumnProps } from '../components/DynamicTable';
 import { useFolder } from '../hooks/useFolder';
-import { DEFAULT_GROUP_EVALUATION_INTERVAL } from '../rule-editor/formDefaults';
 import { stringifyErrorLike } from '../utils/misc';
-import { getNumberEvaluationsToStartAlerting, isAlertingRule } from '../utils/rules';
+import { getEvaluationsToStartAlerting, isAlertingRule } from '../utils/rules';
+import { formatPrometheusDuration } from '../utils/time';
+import { groups } from '../utils/navigation';
+import { useRulesAccess } from '../utils/accessControlHooks';
 
 interface GroupDetailsProps {
   promGroup: RuleGroup;
-  rulerGroup?: RulerRuleGroupDTO;
 }
 
-function GroupDetails({ promGroup, rulerGroup }: GroupDetailsProps) {
-  const groupInterval = rulerGroup?.interval ?? DEFAULT_GROUP_EVALUATION_INTERVAL;
+function GroupDetails({ promGroup }: GroupDetailsProps) {
+  const groupIntervalMs = promGroup.interval * 1000;
 
   return (
     <div>
-      <AppChromeUpdate actions={<Button size="sm">Save</Button>} />
-      {rulerGroup && <div>{rulerGroup.interval ?? '<Not defined>'}</div>}
-      <Field label="Interval" description="The interval at which the group is evaluated">
-        <Input id="interval" defaultValue={groupInterval} />
-      </Field>
-      {rulerGroup && <RulesTable rules={rulerGroup.rules} groupInterval={groupInterval} />}
+      <dl>
+        <dt>Name</dt>
+        <dd>{promGroup.name}</dd>
+        <dt>Interval</dt>
+        <dd>{formatPrometheusDuration(groupIntervalMs)}</dd>
+      </dl>
+      <RulesTable rules={promGroup.rules} groupInterval={groupIntervalMs} />
     </div>
   );
 }
 
-function RulesTable({ rules, groupInterval }: { rules: Rule[]; groupInterval: string }) {
+function RulesTable({ rules, groupInterval }: { rules: Rule[]; groupInterval: number }) {
   const rows = rules.map((rule: Rule, index) => ({
     id: index,
     data: rule,
@@ -57,7 +57,7 @@ function RulesTable({ rules, groupInterval }: { rules: Rule[]; groupInterval: st
         label: 'Pending period',
         renderCell: ({ data }) => {
           if (isAlertingRule(data)) {
-            return <>{data.duration}</>;
+            return <>{formatPrometheusDuration(data.duration ? data.duration * 1000 : 0)}</>;
           }
           return null;
         },
@@ -68,8 +68,7 @@ function RulesTable({ rules, groupInterval }: { rules: Rule[]; groupInterval: st
         label: 'Evaluation cycles to fire',
         renderCell: ({ data }) => {
           if (isAlertingRule(data)) {
-            // TODO
-            return null; //<>{getNumberEvaluationsToStartAlerting(data.duration, groupInterval)}</>;
+            return <>{getEvaluationsToStartAlerting(data.duration ? data.duration * 1000 : 0, groupInterval)}</>;
           }
           return <Badge text="Recording" color="purple" />;
         },
@@ -88,12 +87,13 @@ type GroupPageRouteParams = {
 };
 
 const { useDiscoverDsFeaturesQuery } = featureDiscoveryApi;
-const { useGetRuleGroupForNamespaceQuery, usePrometheusRuleNamespacesQuery } = alertRuleApi;
+const { usePrometheusRuleNamespacesQuery } = alertRuleApi;
 
 function GroupDetailsPage() {
   const { sourceId = '', namespaceId = '', groupName = '' } = useParams<GroupPageRouteParams>();
 
   const { folder, loading: isFolderLoading } = useFolder(sourceId === 'grafana' ? namespaceId : '');
+  const { canEditRules } = useRulesAccess();
 
   const {
     data: dsFeatures,
@@ -115,30 +115,13 @@ function GroupDetailsPage() {
     { skip: !dsFeatures }
   );
 
-  const {
-    data: rulerGroup,
-    isLoading: isRuleGroupLoading,
-    isUninitialized: isRuleGroupUninitialized,
-    error: ruleGroupError,
-  } = useGetRuleGroupForNamespaceQuery(
-    {
-      rulerConfig: dsFeatures?.rulerConfig!,
-      namespace: namespaceId,
-      group: groupName,
-    },
-    { skip: !dsFeatures?.rulerConfig }
-  );
-
-  const isLoading =
-    isFolderLoading ||
-    isDsFeaturesLoading ||
-    isRuleNamespacesLoading ||
-    isRuleNamespacesUninitialized ||
-    isRuleGroupLoading ||
-    (isRuleGroupUninitialized && !!dsFeatures?.rulerConfig);
+  const isLoading = isFolderLoading || isDsFeaturesLoading || isRuleNamespacesLoading || isRuleNamespacesUninitialized;
 
   // TODO Need to improve this
   const promGroup = ruleNamespaces?.[0]?.groups.find((g) => g.name === groupName);
+
+  const canSaveInFolder = sourceId === 'grafana' ? !!folder?.canSave : true;
+  const canEdit = dsFeatures && dsFeatures.rulerConfig && canEditRules(dsFeatures.name) && canSaveInFolder;
 
   return (
     <AlertingPageWrapper
@@ -152,10 +135,15 @@ function GroupDetailsPage() {
       }
       navId="alert-list"
       isLoading={isLoading}
-      onEditTitle={(newTitle) => {
-        console.log('edit title', newTitle);
-        return Promise.resolve();
-      }}
+      actions={
+        <>
+          {canEdit && (
+            <LinkButton icon="pen" href={groups.editPageLink(sourceId, namespaceId, groupName)} variant="secondary">
+              Edit
+            </LinkButton>
+          )}
+        </>
+      }
     >
       <>
         {dsFeaturesError && (
@@ -168,14 +156,9 @@ function GroupDetailsPage() {
             {stringifyErrorLike(ruleNamespacesError)}
           </Alert>
         )}
-        {ruleGroupError && (
-          <Alert title="Error loading rule group" bottomSpacing={0} topSpacing={2}>
-            {stringifyErrorLike(ruleGroupError)}
-          </Alert>
-        )}
       </>
       {!isLoading && !promGroup && <EntityNotFound entity={`${namespaceId}/${groupName}`} />}
-      {!isLoading && promGroup && <GroupDetails promGroup={promGroup} rulerGroup={rulerGroup} />}
+      {!isLoading && promGroup && <GroupDetails promGroup={promGroup} />}
     </AlertingPageWrapper>
   );
 }

@@ -12,10 +12,11 @@ import { featureDiscoveryApi } from '../../api/featureDiscoveryApi';
 import { useDeleteRuleGroup } from '../../hooks/ruleGroup/useDeleteRuleGroup';
 import { useFolder } from '../../hooks/useFolder';
 import { useHasRuler } from '../../hooks/useHasRuler';
+import { useRulesAccess } from '../../utils/accessControlHooks';
 import { GRAFANA_RULES_SOURCE_NAME, getRulesSourceName, isCloudRulesSource } from '../../utils/datasource';
 import { makeFolderLink, makeFolderSettingsLink } from '../../utils/misc';
+import { groups } from '../../utils/navigation';
 import { isFederatedRuleGroup, isGrafanaRulerRule } from '../../utils/rules';
-import { createRelativeUrl } from '../../utils/url';
 import { CollapseToggle } from '../CollapseToggle';
 import { RuleLocation } from '../RuleLocation';
 import { GrafanaRuleFolderExporter } from '../export/GrafanaRuleFolderExporter';
@@ -64,6 +65,8 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
   const folderUID = (rulerRule && isGrafanaRulerRule(rulerRule) && rulerRule.grafana_alert.namespace_uid) || undefined;
   const { folder } = useFolder(folderUID);
 
+  const { canEditRules } = useRulesAccess();
+
   // group "is deleting" if rules source has ruler, but this group has no rules that are in ruler
   const isDeleting = hasRuler && rulerRulesLoaded && !group.rules.find((rule) => !!rule.rulerRule);
   const isFederated = isFederatedRuleGroup(group);
@@ -109,17 +112,27 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
             aria-label="rule group details"
             data-testid="rule-group-details"
             key="rule-group-details"
-            icon="external-link-alt"
+            icon="info-circle"
             tooltip="rule group details"
-            href={createRelativeUrl(
-              `/alerting/grafana/namespaces/${namespace.uid}/groups/${encodeURIComponent(group.name)}/view`
-            )}
+            href={groups.detailsPageLink('grafana', folderUID, group.name)}
             size="sm"
             variant="secondary"
-          >
-            View
-          </LinkButton>
+          />
         );
+        if (folder?.canSave) {
+          actionIcons.push(
+            <LinkButton
+              aria-label="edit rule group"
+              data-testid="edit-rule-group"
+              key="rule-group-edit"
+              icon="pen"
+              tooltip="edit rule group"
+              href={groups.editPageLink('grafana', folderUID, group.name)}
+              size="sm"
+              variant="secondary"
+            />
+          );
+        }
       }
       if (folder?.canSave) {
         if (isListView) {
@@ -164,22 +177,28 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
       }
     }
   } else {
-    const groupDetailsUrl = createRelativeUrl(
-      `/alerting/${rulesSource.uid}/namespaces/${encodeURIComponent(namespace.name)}/groups/${encodeURIComponent(group.name)}`
-    );
-
     actionIcons.push(
       <LinkButton
-        icon="external-link-alt"
+        icon="info-circle"
         key="group-details-link"
         tooltip="Open group details"
-        href={groupDetailsUrl}
+        href={groups.detailsPageLink(rulesSource.uid, namespace.name, group.name)}
         size="sm"
         variant="secondary"
-      >
-        View
-      </LinkButton>
+      />
     );
+    if (canEditRules(rulesSourceName)) {
+      actionIcons.push(
+        <LinkButton
+          icon="pen"
+          key="group-edit-link"
+          tooltip="Edit group"
+          href={groups.editPageLink(rulesSource.uid, namespace.name, group.name)}
+          size="sm"
+          variant="secondary"
+        />
+      );
+    }
   }
 
   // ungrouped rules are rules that are in the "default" group name
