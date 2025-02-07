@@ -433,7 +433,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			}
 			b.repositoryLister = repoInformer.Lister()
 
-			syncer := sync.NewSyncer(
+			syncWorker := sync.NewSyncWorker(
 				c.ProvisioningV0alpha1(),
 				b.parsers,
 				b.resourceLister,
@@ -444,7 +444,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.identities,
 				b.render,
 				b.resourceLister,
-				syncer,
+				syncWorker,
 				b.blobstore,
 				b.urlProvider,
 			))

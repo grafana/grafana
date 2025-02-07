@@ -29,27 +29,27 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 )
 
-// Syncer synchronizes the external repo with grafana database
+// SyncWorker synchronizes the external repo with grafana database
 // this function updates the status for both the job and the referenced repository
-type Syncer struct {
+type SyncWorker struct {
 	client  client.ProvisioningV0alpha1Interface
 	parsers *resources.ParserFactory
 	lister  resources.ResourceLister
 }
 
-func NewSyncer(
+func NewSyncWorker(
 	client client.ProvisioningV0alpha1Interface,
 	parsers *resources.ParserFactory,
 	lister resources.ResourceLister,
-) *Syncer {
-	return &Syncer{
+) *SyncWorker {
+	return &SyncWorker{
 		client:  client,
 		parsers: parsers,
 		lister:  lister,
 	}
 }
 
-func (r *Syncer) Process(ctx context.Context,
+func (r *SyncWorker) Process(ctx context.Context,
 	repo repository.Repository,
 	job provisioning.Job,
 	progress func(provisioning.JobStatus) error,
@@ -124,7 +124,7 @@ func (r *Syncer) Process(ctx context.Context,
 }
 
 // start a job and run it
-func (r *Syncer) sync(ctx context.Context,
+func (r *SyncWorker) sync(ctx context.Context,
 	repo repository.Repository,
 	options provisioning.SyncJobOptions,
 	progress func(provisioning.JobStatus) error,

@@ -18,7 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/blob"
 )
 
-type Syncer interface {
+type SyncWorker interface {
 	Process(
 		ctx context.Context,
 		repo repository.Repository,
@@ -41,7 +41,7 @@ type JobWorker struct {
 	lister      resources.ResourceLister
 	blobstore   blob.PublicBlobStore
 	urlProvider func(namespace string) string
-	syncer      Syncer
+	syncWorker  SyncWorker
 }
 
 func NewJobWorker(
@@ -50,7 +50,7 @@ func NewJobWorker(
 	identities auth.BackgroundIdentityService,
 	render rendering.Service,
 	lister resources.ResourceLister,
-	syncer Syncer,
+	syncWorker SyncWorker,
 	blobstore blob.PublicBlobStore,
 	urlProvider func(namespace string) string,
 ) *JobWorker {
@@ -62,7 +62,7 @@ func NewJobWorker(
 		lister:      lister,
 		blobstore:   blobstore,
 		urlProvider: urlProvider,
-		syncer:      syncer,
+		syncWorker:  syncWorker,
 	}
 }
 
@@ -95,7 +95,7 @@ func (g *JobWorker) Process(ctx context.Context, job provisioning.Job, progress 
 
 	switch job.Spec.Action {
 	case provisioning.JobActionSync:
-		return g.syncer.Process(ctx, repo, job, progress)
+		return g.syncWorker.Process(ctx, repo, job, progress)
 	case provisioning.JobActionPullRequest:
 		prRepo, ok := repo.(PullRequestRepo)
 		if !ok {
