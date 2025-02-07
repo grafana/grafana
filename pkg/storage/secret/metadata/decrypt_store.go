@@ -69,7 +69,7 @@ func (s *decryptStorage) decryptFromKeeper(ctx context.Context, nn xkube.NameNam
 	}
 
 	// Check if keeper is default.
-	if row.Keeper == keepertypes.DefaultKeeperName {
+	if row.Keeper == keepertypes.DefaultKeeper {
 		keeper, exists := s.keepers[keepertypes.SQLKeeperType]
 		if !exists {
 			return "", fmt.Errorf("could not find default keeper")
