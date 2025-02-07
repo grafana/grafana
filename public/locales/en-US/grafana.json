@@ -969,6 +969,12 @@
           "options-header": "Multi-selected Row options",
           "selection-number": "No. of rows selected: {{length}}"
         }
+      },
+      "tab": {
+        "multi-select": {
+          "options-header": "Multi-selected Tab options",
+          "selection-number": "No. of tabs selected: "
+        }
       }
     },
     "empty": {
@@ -1094,11 +1100,23 @@
         "title-option": "Title"
       }
     },
+    "tabs-layout": {
+      "description": "Tabs layout",
+      "name": "Tabs",
+      "tab": {
+        "new": "New tab"
+      },
+      "tab-options": {
+        "title": "Tab options",
+        "title-option": "Title"
+      }
+    },
     "toolbar": {
       "add": "Add",
       "add-panel": "Panel",
       "add-panel-lib": "Import",
       "add-row": "Row",
+      "add-tab": "Tab",
       "alert-rules": "Alert rules",
       "back-to-dashboard": "Back to dashboard",
       "dashboard-settings": {
