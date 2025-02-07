@@ -3,6 +3,7 @@ package sync
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"path"
 	"sort"
@@ -11,8 +12,10 @@ import (
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/dynamic"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -20,21 +23,104 @@ import (
 	"github.com/grafana/grafana/pkg/apis/dashboard"
 	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	client "github.com/grafana/grafana/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 )
 
 type Syncer struct {
+	client  client.ProvisioningV0alpha1Interface
 	parsers *resources.ParserFactory
 	lister  resources.ResourceLister
 }
 
-func NewSyncer(parsers *resources.ParserFactory, lister resources.ResourceLister) *Syncer {
+func NewSyncer(
+	client client.ProvisioningV0alpha1Interface,
+	parsers *resources.ParserFactory,
+	lister resources.ResourceLister,
+) *Syncer {
 	return &Syncer{
+		client:  client,
 		parsers: parsers,
 		lister:  lister,
 	}
+}
+
+// The Syncer will synchronize the external repo with grafana database
+// this function updates the status for both the job and the referenced repository
+func (r *Syncer) Do(ctx context.Context,
+	repo repository.Repository,
+	job provisioning.Job,
+	progress func(provisioning.JobStatus) error,
+) (*provisioning.JobStatus, error) {
+	var err error
+	cfg := repo.Config()
+
+	logger := logging.FromContext(ctx).With("job", job.GetName(), "namespace", job.GetNamespace())
+	patch, err := json.Marshal(map[string]any{
+		"status": map[string]any{
+			"sync": job.Status.ToSyncStatus(job.Name),
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	cfg, err = r.client.Repositories(cfg.Namespace).
+		Patch(ctx, cfg.Name, types.MergePatchType, patch, v1.PatchOptions{}, "status")
+	if err != nil {
+		logger.Warn("unable to update repo with job status", "err", err)
+	}
+
+	// Execute the sync task
+	jobStatus, syncStatus, syncError := r.Sync(ctx, repo, *job.Spec.Sync, progress)
+	if syncStatus == nil {
+		syncStatus = &provisioning.SyncStatus{}
+	}
+	syncStatus.JobID = job.Name
+	syncStatus.Started = job.Status.Started
+	syncStatus.Finished = time.Now().UnixMilli()
+	if syncError != nil {
+		syncStatus.State = provisioning.JobStateError
+		syncStatus.Message = []string{
+			"error running sync",
+			syncError.Error(),
+		}
+	} else if syncStatus.State == "" {
+		syncStatus.State = provisioning.JobStateSuccess
+	}
+
+	// Update the resource stats -- give the index some time to catch up
+	time.Sleep(1 * time.Second)
+	stats, err := r.lister.Stats(ctx, cfg.Namespace, cfg.Name)
+	if err != nil {
+		logger.Warn("unable to read stats", "error", err)
+	}
+	if stats == nil {
+		stats = &provisioning.ResourceStats{}
+	}
+
+	patch, err = json.Marshal(map[string]any{
+		"status": map[string]any{
+			"sync":  syncStatus,
+			"stats": stats.Items,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = r.client.Repositories(cfg.Namespace).
+		Patch(ctx, cfg.Name, types.MergePatchType, patch, v1.PatchOptions{}, "status")
+	if err != nil {
+		logger.Warn("unable to update repo with job status", "err", err)
+	}
+
+	if syncError != nil {
+		return nil, syncError
+	}
+	return jobStatus, nil
 }
 
 // start a job and run it
