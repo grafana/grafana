@@ -1285,7 +1285,7 @@ func (dr *DashboardServiceImpl) fetchFolderNames(ctx context.Context, query *das
 	// some dashboards are shared directly with user, but the folder is not accessible via the folder permissions
 	serviceCtx, serviceIdent := identity.WithServiceIdentity(ctx, query.OrgId)
 	search := folder.SearchFoldersQuery{
-		UIDs:         getFolderIds(hits),
+		UIDs:         getFolderUIDs(hits),
 		OrgID:        query.OrgId,
 		SignedInUser: serviceIdent,
 	}
@@ -2082,14 +2082,14 @@ func LegacySaveCommandToUnstructured(cmd *dashboards.SaveDashboardCommand, names
 	return finalObj, nil
 }
 
-func getFolderIds(hits []dashboardv0alpha1.DashboardHit) []string {
-	folderIds := []string{}
+func getFolderUIDs(hits []dashboardv0alpha1.DashboardHit) []string {
+	folderUIDs := []string{}
 	folderSet := map[string]string{} // to avoid duplicates
 	for _, hit := range hits {
 		if hit.Folder != "" && folderSet[hit.Folder] == "" {
-			folderIds = append(folderIds, hit.Folder)
+			folderUIDs = append(folderUIDs, hit.Folder)
 			folderSet[hit.Folder] = hit.Folder
 		}
 	}
-	return folderIds
+	return folderUIDs
 }
