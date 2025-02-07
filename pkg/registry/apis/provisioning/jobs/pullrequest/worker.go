@@ -10,19 +10,14 @@ import (
 	"os"
 	"path"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
-
-type PullRequestWorker interface {
-	Process(ctx context.Context,
-		repo repository.Repository,
-		options provisioning.PullRequestJobOptions,
-		progress func(provisioning.JobStatus) error,
-	) (*provisioning.JobStatus, error)
-}
 
 // resourcePreview represents a resource that has changed in a pull request.
 type resourcePreview struct {
@@ -71,24 +66,22 @@ type PullRequestRepo interface {
 // PreviewRenderer is an interface for rendering a preview of a file
 type PreviewRenderer interface {
 	IsAvailable(ctx context.Context) bool
-	RenderDashboardPreview(ctx context.Context, path string, ref string) (string, error)
+	RenderDashboardPreview(ctx context.Context, namespace, repoName, path, ref string) (string, error)
 }
 
-type pullRequestCommenter struct {
-	repo         PullRequestRepo
-	parser       *resources.Parser
+type PullRequestWorker struct {
+	parsers      *resources.ParserFactory
 	lintTemplate *template.Template
 	prevTemplate *template.Template
-	baseURL      *url.URL
+	urlProvider  func(namespace string) string
 	renderer     PreviewRenderer
 }
 
 func NewPullRequestWorker(
-	repo PullRequestRepo,
-	parser *resources.Parser,
+	parsers *resources.ParserFactory,
 	renderer PreviewRenderer,
-	baseURL *url.URL,
-) (PullRequestWorker, error) {
+	urlProvider func(namespace string) string,
+) (*PullRequestWorker, error) {
 	lintTemplate, err := template.New("comment").Parse(lintDashboardIssuesTemplate)
 	if err != nil {
 		return nil, fmt.Errorf("parse lint comment template: %w", err)
@@ -98,22 +91,46 @@ func NewPullRequestWorker(
 		return nil, fmt.Errorf("parse previews comment template: %w", err)
 	}
 
-	return &pullRequestCommenter{
-		repo:         repo,
-		parser:       parser,
+	return &PullRequestWorker{
+		parsers:      parsers,
 		lintTemplate: lintTemplate,
 		prevTemplate: prevTemplate,
 		renderer:     renderer,
-		baseURL:      baseURL,
+		urlProvider:  urlProvider,
 	}, nil
 }
 
-func (c *pullRequestCommenter) Process(ctx context.Context,
+func (c *PullRequestWorker) IsSupported(ctx context.Context, job provisioning.Job) bool {
+	return job.Spec.Action == provisioning.JobActionPullRequest
+}
+
+//nolint:gocyclo
+func (c *PullRequestWorker) Process(ctx context.Context,
 	repo repository.Repository,
-	options provisioning.PullRequestJobOptions,
-	progress func(provisioning.JobStatus) error,
+	job provisioning.Job,
+	progress jobs.ProgressFn,
 ) (*provisioning.JobStatus, error) {
-	cfg := c.repo.Config().Spec
+	cfg := repo.Config().Spec
+
+	options := job.Spec.PullRequest
+	if options == nil {
+		return nil, apierrors.NewBadRequest("missing spec.pr")
+	}
+
+	prRepo, ok := repo.(PullRequestRepo)
+	if !ok {
+		return nil, fmt.Errorf("repository is not a github repository")
+	}
+
+	baseURL, err := url.Parse(c.urlProvider(job.Namespace))
+	if err != nil {
+		return nil, fmt.Errorf("error parsing base url: %w", err)
+	}
+
+	parser, err := c.parsers.GetParser(ctx, repo)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get parser for %s: %w", repo.Config().Name, err)
+	}
 
 	// TODO: Figure out how we want to determine this in practice.
 	lintingVal, ok := os.LookupEnv("GRAFANA_LINTING")
@@ -136,7 +153,7 @@ func (c *pullRequestCommenter) Process(ctx context.Context,
 	ref := options.Hash
 
 	// list pull requests changes files
-	files, err := c.repo.CompareFiles(ctx, base, ref)
+	files, err := prRepo.CompareFiles(ctx, base, ref)
 	if err != nil {
 		return &provisioning.JobStatus{
 			State:   provisioning.JobStateError,
@@ -145,7 +162,7 @@ func (c *pullRequestCommenter) Process(ctx context.Context,
 	}
 
 	// clear all previous comments
-	if err := c.repo.ClearAllPullRequestFileComments(ctx, options.PR); err != nil {
+	if err := prRepo.ClearAllPullRequestFileComments(ctx, options.PR); err != nil {
 		return &provisioning.JobStatus{
 			State:   provisioning.JobStateError,
 			Message: fmt.Sprintf("failed to clear pull request comments: %+v", err),
@@ -167,7 +184,7 @@ func (c *pullRequestCommenter) Process(ctx context.Context,
 		}
 
 		logger := logger.With("file", f.Path)
-		fileInfo, err := c.repo.Read(ctx, f.Path, ref)
+		fileInfo, err := prRepo.Read(ctx, f.Path, ref)
 		if err != nil {
 			return &provisioning.JobStatus{
 				State:   provisioning.JobStateError,
@@ -175,7 +192,7 @@ func (c *pullRequestCommenter) Process(ctx context.Context,
 			}, nil
 		}
 
-		parsed, err := c.parser.Parse(ctx, fileInfo, true)
+		parsed, err := parser.Parse(ctx, fileInfo, true)
 		if err != nil {
 			if errors.Is(err, resources.ErrUnableToReadResourceBytes) {
 				logger.Debug("file is not a resource", "path", f.Path)
@@ -191,7 +208,7 @@ func (c *pullRequestCommenter) Process(ctx context.Context,
 				return nil, fmt.Errorf("execute lint comment template: %w", err)
 			}
 
-			if err := c.repo.CommentPullRequestFile(ctx, options.PR, f.Path, ref, buf.String()); err != nil {
+			if err := prRepo.CommentPullRequestFile(ctx, options.PR, f.Path, ref, buf.String()); err != nil {
 				return nil, fmt.Errorf("comment pull request file %s: %w", f.Path, err)
 			}
 
@@ -207,21 +224,21 @@ func (c *pullRequestCommenter) Process(ctx context.Context,
 
 		switch f.Action {
 		case repository.FileActionCreated:
-			preview.PreviewURL = c.previewURL(ref, f.Path, options.URL)
+			preview.PreviewURL = c.previewURL(baseURL, repo.Config().GetName(), ref, f.Path, options.URL)
 		case repository.FileActionUpdated:
-			preview.OriginalURL = c.previewURL(base, f.Path, options.URL)
-			preview.PreviewURL = c.previewURL(ref, f.Path, options.URL)
+			preview.OriginalURL = c.previewURL(baseURL, repo.Config().GetName(), ref, f.Path, options.URL)
+			preview.PreviewURL = c.previewURL(baseURL, repo.Config().GetName(), ref, f.Path, options.URL)
 		case repository.FileActionRenamed:
-			preview.OriginalURL = c.previewURL(base, f.PreviousPath, options.URL)
-			preview.PreviewURL = c.previewURL(ref, f.Path, options.URL)
+			preview.OriginalURL = c.previewURL(baseURL, repo.Config().GetName(), base, f.PreviousPath, options.URL)
+			preview.PreviewURL = c.previewURL(baseURL, repo.Config().GetName(), ref, f.Path, options.URL)
 		case repository.FileActionDeleted:
-			preview.OriginalURL = c.previewURL(base, f.Path, options.URL)
+			preview.OriginalURL = c.previewURL(baseURL, repo.Config().GetName(), base, f.Path, options.URL)
 		default:
 			return nil, fmt.Errorf("unknown file action: %s", f.Action)
 		}
 
 		if cfg.GitHub.GenerateDashboardPreviews && f.Action != repository.FileActionDeleted {
-			screenshotURL, err := c.renderer.RenderDashboardPreview(ctx, f.Path, ref)
+			screenshotURL, err := c.renderer.RenderDashboardPreview(ctx, repo.Config().GetNamespace(), repo.Config().GetName(), f.Path, ref)
 			if err != nil {
 				return nil, fmt.Errorf("render dashboard preview: %w", err)
 			}
@@ -239,7 +256,7 @@ func (c *pullRequestCommenter) Process(ctx context.Context,
 			return nil, fmt.Errorf("execute previews comment template: %w", err)
 		}
 
-		if err := c.repo.CommentPullRequest(ctx, options.PR, buf.String()); err != nil {
+		if err := prRepo.CommentPullRequest(ctx, options.PR, buf.String()); err != nil {
 			return nil, fmt.Errorf("comment pull request: %w", err)
 		}
 
@@ -253,10 +270,10 @@ func (c *pullRequestCommenter) Process(ctx context.Context,
 }
 
 // previewURL returns the URL to preview the file in Grafana
-func (c *pullRequestCommenter) previewURL(ref, filePath, pullRequestURL string) string {
+func (c *PullRequestWorker) previewURL(u *url.URL, repoName, ref, filePath, pullRequestURL string) string {
 	// Copy the baseURL to modify path and query
-	baseURL := *c.baseURL
-	baseURL = *baseURL.JoinPath("/admin/provisioning", c.repo.Config().GetName(), "dashboard/preview", filePath)
+	baseURL := *u
+	baseURL = *baseURL.JoinPath("/admin/provisioning", repoName, "dashboard/preview", filePath)
 
 	query := baseURL.Query()
 	if ref != "" {

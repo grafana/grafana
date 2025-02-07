@@ -31,6 +31,8 @@ import (
 	listers "github.com/grafana/grafana/pkg/generated/listers/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/auth"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/export"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/pullrequest"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
@@ -99,7 +101,6 @@ func NewAPIBuilder(
 		render:         render,
 		resourceLister: resources.NewResourceLister(index),
 		blobstore:      blobstore,
-		jobs:           jobs.NewJobQueue(50), // in memory for now
 	}
 }
 
@@ -182,6 +183,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 		return fmt.Errorf("failed to create repository storage: %w", err)
 	}
 	b.getter = repositoryStorage
+	b.jobs = jobs.NewJobQueue(50, b, b.identities) // in memory for now
 
 	repositoryStatusStorage := grafanaregistry.NewRegistryStatusStore(opts.Scheme, repositoryStorage)
 
@@ -433,21 +435,19 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			}
 			b.repositoryLister = repoInformer.Lister()
 
-			syncWorker := sync.NewSyncWorker(
+			b.jobs.Register(export.NewExportWorker(b.parsers))
+			b.jobs.Register(sync.NewSyncWorker(
 				c.ProvisioningV0alpha1(),
 				b.parsers,
 				b.resourceLister,
-			)
-			b.jobs.Register(jobs.NewJobWorker(
-				b,
-				b.parsers,
-				b.identities,
-				b.render,
-				b.resourceLister,
-				syncWorker,
-				b.blobstore,
-				b.urlProvider,
 			))
+
+			renderer := pullrequest.NewRenderer(b.render, b.blobstore)
+			pullRequestWorker, err := pullrequest.NewPullRequestWorker(b.parsers, renderer, b.urlProvider)
+			if err != nil {
+				return fmt.Errorf("create pull request worker: %w", err)
+			}
+			b.jobs.Register(pullRequestWorker)
 
 			repoController, err := NewRepositoryController(
 				c.ProvisioningV0alpha1(),
