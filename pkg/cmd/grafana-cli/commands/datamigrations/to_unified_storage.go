@@ -35,7 +35,7 @@ func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) err
 	if err != nil {
 		return err
 	}
-	ctx, _ := identity.WithServiceIdentitiy(context.Background(), ns.OrgID)
+	ctx := identity.WithServiceIdentityContext(context.Background(), ns.OrgID)
 	start := time.Now()
 	last := time.Now()
 
