@@ -1,68 +1,61 @@
+import { AzureLogAnalyticsMetadataColumn } from '../../types';
+
 export class AzureMonitorQueryParser {
   static updateQuery(
-    query: string,
     selectedTable: string,
     selectedColumns: string[],
+    columns: AzureLogAnalyticsMetadataColumn[],
     filters?: string,
     aggregation?: string,
     groupBy?: string[]
   ): string {
     let updatedQuery = selectedTable;
+    let whereConditions = new Set<string>();
 
-    // **Step 1: Add Selected Columns (`| project`)**
-    if (selectedColumns.length > 0) {
+    // **Step 1: Detect datetime column**
+    const timeField = this.getTimeField(selectedColumns, columns);
+
+    // **Step 2: Deduplicate Filters**
+    if (timeField) {
+      if (![...whereConditions].some((c) => c.includes(`$__timeFilter(${timeField})`))) {
+        whereConditions.add(`$__timeFilter(${timeField})`);
+      }
+    }
+
+    if (filters && filters.trim()) {
+      whereConditions.add(filters);
+    }
+
+    if (whereConditions.size > 0) {
+      updatedQuery += `\n| where ${Array.from(whereConditions).join(' and ')}`;
+    }
+
+    // **Step 3: Ensure Aggregation is Applied Independently**
+    let finalGroupBy = new Set(groupBy || []);
+
+    if (aggregation && aggregation.trim()) {
+      if (timeField) {
+        finalGroupBy.add(`bin(${timeField}, 1m)`);
+      }
+
+      updatedQuery += `\n| summarize ${aggregation}${
+        finalGroupBy.size > 0 ? ` by ${Array.from(finalGroupBy).join(', ')}` : ''
+      }`;
+    } else if (selectedColumns.length > 0) {
       updatedQuery += `\n| project ${selectedColumns.join(', ')}`;
     }
 
-    // **Step 2: Add Time Filter (`| where $__timeFilter(TimeGenerated)`)**
-    updatedQuery = AzureMonitorQueryParser.ensureTimeFilter(updatedQuery);
-
-    // **Step 3: Add Additional Filters (`| where column operator value`)**
-    if (filters && filters.trim()) {
-      updatedQuery = AzureMonitorQueryParser.ensureWhereClause(updatedQuery, filters);
+    // **Step 4: Ensure Correct Execution Order**
+    if (timeField) {
+      updatedQuery += `\n| order by ${timeField} asc`;
     }
-
-    // **Step 4: Add Aggregation (`| summarize count() by column`)**
-    if (aggregation && aggregation.trim()) {
-      updatedQuery = AzureMonitorQueryParser.ensureSummarize(updatedQuery, aggregation, groupBy);
-    }
-
-    // **Step 5: Ensure Order By (`| order by TimeGenerated asc`)**
-    updatedQuery = AzureMonitorQueryParser.ensureOrderBy(updatedQuery);
 
     return updatedQuery;
   }
 
-  // ✅ Ensures that the time filter is always included
-  static ensureTimeFilter(query: string): string {
-    if (!query.includes('| where $__timeFilter(TimeGenerated)')) {
-      return `${query}\n| where $__timeFilter(TimeGenerated)`;
-    }
-    return query;
-  }
-
-  // ✅ Ensures that additional filters are appended to the `| where` clause
-  static ensureWhereClause(query: string, filters: string): string {
-    if (query.includes('| where')) {
-      return query.replace(/\| where.*/, `| where $__timeFilter(TimeGenerated) and ${filters}`);
-    }
-    return `${query}\n| where $__timeFilter(TimeGenerated) and ${filters}`;
-  }
-
-  // ✅ Ensures `| summarize` is correctly added without duplicates
-  static ensureSummarize(query: string, aggregation: string, groupBy?: string[]): string {
-    query = query.replace(/\| summarize.*/g, '').trim(); // Remove any existing summarize
-    if (groupBy && groupBy.length > 0) {
-      return `${query}\n| summarize ${aggregation} by ${groupBy.join(', ')}`;
-    }
-    return `${query}\n| summarize ${aggregation}`;
-  }
-
-  // ✅ Ensures the query ends with `| order by TimeGenerated asc`
-  static ensureOrderBy(query: string): string {
-    if (!query.includes('| order by TimeGenerated')) {
-      return `${query}\n| order by TimeGenerated asc`;
-    }
-    return query;
+  static getTimeField(selectedColumns: string[], columns: AzureLogAnalyticsMetadataColumn[]): string | null {
+    const defaultTimeField = 'TimeGenerated';
+    const datetimeColumn = columns.find((col) => selectedColumns.includes(col.name) && col.type === 'datetime');
+    return datetimeColumn ? datetimeColumn.name : selectedColumns.length === 0 ? defaultTimeField : null;
   }
 }

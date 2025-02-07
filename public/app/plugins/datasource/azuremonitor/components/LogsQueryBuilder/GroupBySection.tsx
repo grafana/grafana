@@ -62,8 +62,7 @@ const makeRenderGroupBy = (
 ) => {
   return (
     item: Partial<QueryEditorGroupByExpression>,
-    onChange: (updatedItem: QueryEditorGroupByExpression) => void,
-    onDelete: () => void
+    onChange: (updatedItem: QueryEditorGroupByExpression) => void
   ) => (
     <GroupByItem
       groupBy={item}
@@ -71,6 +70,7 @@ const makeRenderGroupBy = (
         setGroupBys((prevGroupBys) =>
           prevGroupBys.map((g) => (g.property.name === item.property?.name ? updatedItem : g))
         );
+        onChange(updatedItem);
       }}
       onDelete={() => {
         setGroupBys((prevGroupBys) => prevGroupBys.filter((i) => i.property?.name !== item.property?.name));

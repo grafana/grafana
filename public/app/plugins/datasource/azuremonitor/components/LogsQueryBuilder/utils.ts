@@ -109,9 +109,24 @@ export const toPropertyType = (kustoType: string): QueryEditorPropertyType => {
   }
 };
 
-export const formatKQLQuery = (query: string): string => {
-  return query
-    .replace(/\s*\|\s*/g, '\n| ') // ✅ Ensure pipes remain on new lines
-    .replace(/\|\s*where\s*$/, '| where true') // ✅ If `| where` is empty, add `true`
-    .trim();
+export const parseQuery = (query: string) => {
+  let prevFilters = '';
+  let prevAggregates = '';
+  let prevGroupBy: string[] = [];
+
+  const whereMatch = query.match(/\| where (.+)/);
+  if (whereMatch) {
+    prevFilters = whereMatch[1].split('|')[0].trim();
+  }
+
+  const summarizeMatch = query.match(/\| summarize (.+)/);
+  if (summarizeMatch) {
+    const parts = summarizeMatch[1].split(' by ');
+    prevAggregates = parts[0].trim();
+    if (parts[1]) {
+      prevGroupBy = parts[1].split(',').map((g) => g.trim());
+    }
+  }
+
+  return { prevFilters, prevAggregates, prevGroupBy };
 };

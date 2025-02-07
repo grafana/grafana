@@ -18,6 +18,7 @@ import { GroupBySection } from './GroupBySection';
 import KQLPreview from './KQLPreview';
 import { AzureMonitorQueryParser } from './KustoExpressionQueryParser';
 import { TableSection } from './TableSection';
+import { parseQuery } from './utils';
 
 interface LogsQueryBuilderProps {
   query: AzureMonitorQuery;
@@ -64,6 +65,9 @@ export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
     let tableName = selectedTable;
     let columnList = selectedColumns.map((c) => c.value!);
 
+    const prevQuery = query.azureLogAnalytics?.query || '';
+    const { prevFilters, prevAggregates, prevGroupBy } = parseQuery(prevQuery);
+
     if (newTable) {
       tableName = newTable.name;
       setSelectedTable(newTable.name);
@@ -75,13 +79,21 @@ export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
       columnList = [...new Set(newColumns.map((c) => c.label!))];
     }
 
+    let updatedFilters = filters !== undefined ? filters : prevFilters;
+    if (updatedFilters.includes(`$__timeFilter(TimeGenerated)`)) {
+      updatedFilters = updatedFilters.replace(`$__timeFilter(TimeGenerated) and `, ''); // Remove duplicates
+    }
+
+    const updatedAggregates = aggregates !== undefined ? aggregates : prevAggregates;
+    const updatedGroupBy = groupBy !== undefined ? groupBy : prevGroupBy;
+
     const formattedQuery = AzureMonitorQueryParser.updateQuery(
-      query.azureLogAnalytics?.query || '',
       tableName!,
       columnList,
-      filters ?? '',
-      aggregates ?? '',
-      groupBy ?? []
+      columns,
+      updatedFilters,
+      updatedAggregates,
+      updatedGroupBy
     );
 
     onQueryChange({
