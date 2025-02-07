@@ -12,13 +12,13 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-type dummyExporter struct{}
+type dummyExportWorker struct{}
 
-func NewDummyExporter() Exporter {
-	return &dummyExporter{}
+func NewDummyExportWorker() ExportWorker {
+	return &dummyExportWorker{}
 }
 
-func (s *dummyExporter) Export(ctx context.Context,
+func (s *dummyExportWorker) Export(ctx context.Context,
 	repo repository.Repository,
 	options provisioning.ExportJobOptions,
 	progress func(provisioning.JobStatus) error,

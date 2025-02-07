@@ -23,7 +23,7 @@ import (
 )
 
 // Export reads from grafana and writes to a a repository
-type Exporter interface {
+type ExportWorker interface {
 	Export(ctx context.Context,
 		repo repository.Repository,
 		options provisioning.ExportJobOptions,
@@ -31,17 +31,17 @@ type Exporter interface {
 	) (*provisioning.JobStatus, error)
 }
 
-type exporter struct {
+type exportWorker struct {
 	client     *resources.DynamicClient // namespaced!
 	dashboards dynamic.ResourceInterface
 	folders    dynamic.ResourceInterface
 	repository repository.Repository
 }
 
-func NewExporter(
+func NewExportWorker(
 	repo repository.Repository,
 	dynamicClient *resources.DynamicClient,
-) (Exporter, error) {
+) (ExportWorker, error) {
 	if dynamicClient.GetNamespace() != repo.Config().Namespace {
 		return nil, fmt.Errorf("bad setup, exporter needs a namespaced client matching the repository")
 	}
@@ -57,7 +57,7 @@ func NewExporter(
 		Resource: "dashboards",
 	})
 
-	return &exporter{
+	return &exportWorker{
 		client:     dynamicClient,
 		folders:    folders,
 		dashboards: dashboards,
@@ -66,7 +66,7 @@ func NewExporter(
 }
 
 //nolint:gocyclo
-func (r *exporter) Export(ctx context.Context,
+func (r *exportWorker) Export(ctx context.Context,
 	repo repository.Repository,
 	options provisioning.ExportJobOptions,
 	progress func(provisioning.JobStatus) error,
