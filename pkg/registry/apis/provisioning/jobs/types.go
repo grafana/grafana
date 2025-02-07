@@ -6,6 +6,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 )
 
 var _ JobQueue = (*jobStore)(nil)
@@ -30,5 +31,13 @@ type JobQueue interface {
 
 type Worker interface {
 	// Process a single job, can periodically make progress updates
-	Process(ctx context.Context, job provisioning.Job, progress func(provisioning.JobStatus) error) (*provisioning.JobStatus, error)
+	Process(ctx context.Context, job provisioning.Job, progress ProgressFn) (*provisioning.JobStatus, error)
 }
+
+// RepoJobWorker is a worker that processes jobs for a single repository.
+type RepoJobWorker interface {
+	Process(ctx context.Context, repo repository.Repository, job provisioning.Job, progress ProgressFn) (*provisioning.JobStatus, error)
+}
+
+// ProgressFn is a function that can be called to update the progress of a job
+type ProgressFn func(ctx context.Context, status provisioning.JobStatus) error

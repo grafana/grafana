@@ -10,83 +10,85 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/client-go/dynamic"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
 	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/slugify"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 )
 
-// Export reads from grafana and writes to a a repository
-type ExportWorker interface {
-	Export(ctx context.Context,
-		repo repository.Repository,
-		options provisioning.ExportJobOptions,
-		progress func(provisioning.JobStatus) error,
-	) (*provisioning.JobStatus, error)
+type ExportWorker struct {
+	parsers *resources.ParserFactory
 }
 
-type exportWorker struct {
-	client     *resources.DynamicClient // namespaced!
-	dashboards dynamic.ResourceInterface
-	folders    dynamic.ResourceInterface
-	repository repository.Repository
+func NewExportWorker(parsers *resources.ParserFactory) *ExportWorker {
+	return &ExportWorker{parsers: parsers}
 }
 
-func NewExportWorker(
-	repo repository.Repository,
-	dynamicClient *resources.DynamicClient,
-) (ExportWorker, error) {
-	if dynamicClient.GetNamespace() != repo.Config().Namespace {
-		return nil, fmt.Errorf("bad setup, exporter needs a namespaced client matching the repository")
+//nolint:gocyclo
+func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, job provisioning.Job, progress jobs.ProgressFn) (*provisioning.JobStatus, error) {
+	if repo.Config().Spec.ReadOnly {
+		return &provisioning.JobStatus{
+			State:  provisioning.JobStateError,
+			Errors: []string{"Exporting to a read only repository is not supported"},
+		}, nil
 	}
-	folders := dynamicClient.Resource(schema.GroupVersionResource{
+
+	options := job.Spec.Export
+	if options == nil {
+		return &provisioning.JobStatus{
+			State:  provisioning.JobStateError,
+			Errors: []string{"Export job missing export settings"},
+		}, nil
+	}
+
+	// TODO: remove this dummy export
+	if job.Spec.Export.Branch == "*dummy*" {
+		return dummyExport(ctx, repo, job, progress)
+	}
+
+	parser, err := r.parsers.GetParser(ctx, repo)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get parser for %s: %w", repo.Config().GetName(), err)
+	}
+	dynamicClient := parser.Client()
+	if repo.Config().Namespace != dynamicClient.GetNamespace() {
+		return nil, fmt.Errorf("namespace mismatch")
+	}
+
+	foldersClient := dynamicClient.Resource(schema.GroupVersionResource{
 		Group:    folders.GROUP,
 		Version:  folders.VERSION,
 		Resource: folders.RESOURCE,
 	})
 
-	dashboards := dynamicClient.Resource(schema.GroupVersionResource{
+	dashboardsClient := dynamicClient.Resource(schema.GroupVersionResource{
 		Group:    "dashboard.grafana.app",
 		Version:  "v1alpha1",
 		Resource: "dashboards",
 	})
 
-	return &exportWorker{
-		client:     dynamicClient,
-		folders:    folders,
-		dashboards: dashboards,
-		repository: repo,
-	}, nil
-}
-
-//nolint:gocyclo
-func (r *exportWorker) Export(ctx context.Context,
-	repo repository.Repository,
-	options provisioning.ExportJobOptions,
-	progress func(provisioning.JobStatus) error,
-) (*provisioning.JobStatus, error) {
 	logger := logging.FromContext(ctx)
 	status := provisioning.JobStatus{
 		State:   provisioning.JobStateWorking,
 		Message: "reading folder tree...",
 	}
-	err := progress(status)
-	if err != nil {
+	if err := progress(ctx, status); err != nil {
 		return nil, err
 	}
+
 	ref := options.Branch // only valid for git (defaults to the configured repo)
 	if options.Prefix != "" {
 		options.Prefix = safepath.Clean(options.Prefix)
 	}
 
 	// TODO: handle pagination
-	rawList, err := r.folders.List(ctx, metav1.ListOptions{Limit: 10000})
+	rawList, err := foldersClient.List(ctx, metav1.ListOptions{Limit: 10000})
 	if err != nil {
 		return nil, fmt.Errorf("failed to list folders: %w", err)
 	}
@@ -106,8 +108,7 @@ func (r *exportWorker) Export(ctx context.Context,
 	}
 
 	status.Message = fmt.Sprintf("exporting folders (%d)...", len(rawFolders))
-	err = progress(status)
-	if err != nil {
+	if err := progress(ctx, status); err != nil {
 		return nil, err
 	}
 
@@ -128,7 +129,7 @@ func (r *exportWorker) Export(ctx context.Context,
 		}
 		logger := logger.With("path", p)
 
-		_, err = r.repository.Read(ctx, p, ref)
+		_, err = repo.Read(ctx, p, ref)
 		if err != nil && !(errors.Is(err, repository.ErrFileNotFound) || apierrors.IsNotFound(err)) {
 			logger.Error("failed to check if folder exists before writing", "error", err)
 			return fmt.Errorf("failed to check if folder exists before writing: %w", err)
@@ -139,7 +140,7 @@ func (r *exportWorker) Export(ctx context.Context,
 		}
 
 		// Create with an empty body will make a folder (or .keep file if unsupported)
-		if err := r.repository.Create(ctx, p, ref, nil, "export folder `"+p+"`"); err != nil {
+		if err := repo.Create(ctx, p, ref, nil, "export folder `"+p+"`"); err != nil {
 			logger.Error("failed to write a folder in repository", "error", err)
 			return fmt.Errorf("failed to write folder in repo: %w", err)
 		}
@@ -153,13 +154,12 @@ func (r *exportWorker) Export(ctx context.Context,
 	status.Summary = append(status.Summary, summary)
 	status.Message = "writing dashboards..."
 
-	err = progress(status)
-	if err != nil {
+	if err := progress(ctx, status); err != nil {
 		return nil, err
 	}
 
 	// TODO: handle pagination
-	dashboardList, err := r.dashboards.List(ctx, metav1.ListOptions{Limit: 1000})
+	dashboardList, err := dashboardsClient.List(ctx, metav1.ListOptions{Limit: 1000})
 	if err != nil {
 		return nil, fmt.Errorf("failed to list dashboards: %w", err)
 	}
@@ -220,7 +220,7 @@ func (r *exportWorker) Export(ctx context.Context,
 		}
 
 		// Write the file
-		err = r.repository.Write(ctx, fileName, ref, body, commitMessage)
+		err = repo.Write(ctx, fileName, ref, body, commitMessage)
 		if err != nil {
 			summary.Error++
 			logger.Error("failed to write a file in repository", "error", err)

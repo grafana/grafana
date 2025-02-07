@@ -140,7 +140,7 @@ func (s *jobStore) drainPending() {
 				},
 			}
 		} else {
-			status, err = s.worker.Process(ctx, *job, func(j provisioning.JobStatus) error {
+			status, err = s.worker.Process(ctx, *job, func(ctx context.Context, j provisioning.JobStatus) error {
 				return s.Update(ctx, job.Namespace, job.Name, j)
 			})
 			if err != nil {

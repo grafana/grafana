@@ -23,6 +23,7 @@ import (
 	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	client "github.com/grafana/grafana/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
@@ -51,7 +52,7 @@ func NewSyncWorker(
 func (r *SyncWorker) Process(ctx context.Context,
 	repo repository.Repository,
 	job provisioning.Job,
-	progress func(provisioning.JobStatus) error,
+	progress jobs.ProgressFn,
 ) (*provisioning.JobStatus, error) {
 	var err error
 	cfg := repo.Config()
@@ -126,7 +127,7 @@ func (r *SyncWorker) Process(ctx context.Context,
 func (r *SyncWorker) sync(ctx context.Context,
 	repo repository.Repository,
 	options provisioning.SyncJobOptions,
-	progress func(provisioning.JobStatus) error,
+	progress jobs.ProgressFn,
 ) (*provisioning.JobStatus, *provisioning.SyncStatus, error) {
 	cfg := repo.Config()
 	if !cfg.Spec.Sync.Enabled {
@@ -190,7 +191,7 @@ func (r *SyncWorker) sync(ctx context.Context,
 type syncJob struct {
 	repository       repository.Repository
 	options          provisioning.SyncJobOptions
-	progress         func(provisioning.JobStatus) error
+	progress         jobs.ProgressFn
 	progressInterval time.Duration
 	progressLast     time.Time
 	logger           logging.Logger
@@ -331,7 +332,7 @@ func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange
 // Convert git changes into resource file changes
 func (r *syncJob) maybeNotify(ctx context.Context) {
 	if time.Since(r.progressLast) > r.progressInterval {
-		err := r.progress(*r.jobStatus)
+		err := r.progress(ctx, *r.jobStatus)
 		if err != nil {
 			r.logger.Warn("unable to send progress", "err", err)
 		}

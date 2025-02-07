@@ -31,6 +31,8 @@ import (
 	listers "github.com/grafana/grafana/pkg/generated/listers/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/auth"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/export"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/pullrequest"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
@@ -438,16 +440,14 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.parsers,
 				b.resourceLister,
 			)
-			b.jobs.Register(jobs.NewJobWorker(
-				b,
-				b.parsers,
-				b.identities,
-				b.render,
-				b.resourceLister,
-				syncWorker,
-				b.blobstore,
-				b.urlProvider,
-			))
+			exportWorker := export.NewExportWorker(b.parsers)
+			renderer := pullrequest.NewRenderer(b.render, b.blobstore)
+			pullRequestWorker, err := pullrequest.NewPullRequestWorker(b.parsers, renderer, b.urlProvider)
+			if err != nil {
+				return fmt.Errorf("create pull request worker: %w", err)
+			}
+
+			b.jobs.Register(jobs.NewJobWorker(b, b.identities, syncWorker, exportWorker, pullRequestWorker))
 
 			repoController, err := NewRepositoryController(
 				c.ProvisioningV0alpha1(),
