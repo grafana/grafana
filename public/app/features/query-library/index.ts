@@ -7,8 +7,6 @@
  * @alpha
  */
 
-import { config } from '@grafana/runtime';
-
 import { QUERY_LIBRARY_GET_LIMIT } from './api/api';
 import { generatedQueryLibraryApi } from './api/endpoints.gen';
 import { mockData } from './api/mocks';
@@ -45,10 +43,6 @@ export const {
     },
   },
 });
-
-export function isQueryLibraryEnabled() {
-  return config.featureToggles.queryLibrary;
-}
 
 export const QueryLibraryMocks = {
   data: mockData.all,

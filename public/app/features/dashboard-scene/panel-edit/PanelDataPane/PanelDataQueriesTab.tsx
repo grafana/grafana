@@ -309,7 +309,7 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
 export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<PanelDataQueriesTab>) {
   const { datasource, dsSettings } = model.useState();
   const { data, queries } = model.queryRunner.useState();
-  const { openDrawer: openQueryLibraryDrawer } = useQueryLibraryContext();
+  const { openDrawer: openQueryLibraryDrawer, queryLibraryEnabled } = useQueryLibraryContext();
 
   if (!datasource || !dsSettings || !data) {
     return null;
@@ -355,7 +355,7 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
             >
               Add query
             </Button>
-            {config.featureToggles.queryLibrary && (
+            {queryLibraryEnabled && (
               <Button
                 icon="plus"
                 onClick={() => {

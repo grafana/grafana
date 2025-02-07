@@ -4,6 +4,7 @@ import { createMemoryHistory } from 'history';
 import { KBarProvider } from 'kbar';
 import { fromPairs } from 'lodash';
 import { stringify } from 'querystring';
+import { ComponentType, ReactNode } from 'react';
 import { Provider } from 'react-redux';
 // eslint-disable-next-line no-restricted-imports
 import { Route, Router } from 'react-router-dom';
@@ -47,7 +48,6 @@ import { ExploreQueryParams } from '../../../../types';
 import { initialUserState } from '../../../profile/state/reducers';
 import ExplorePage from '../../ExplorePage';
 import { QueriesDrawerContextProvider } from '../../QueriesDrawer/QueriesDrawerContext';
-import { QueryLibraryContextProvider } from '../../QueryLibrary/QueryLibraryContext';
 
 type DatasourceSetup = { settings: DataSourceInstanceSettings; api: DataSourceApi };
 
@@ -60,6 +60,7 @@ type SetupOptions = {
   failAddToLibrary?: boolean;
   // Use AppChrome wrapper around ExplorePage - needed to test query library/history
   withAppChrome?: boolean;
+  provider?: ComponentType<{ children: ReactNode }>;
 };
 
 type TearDownOptions = {
@@ -179,12 +180,18 @@ export function setupExplore(options?: SetupOptions): {
 
   const contextMock = getGrafanaContextMock({ location });
 
+  const FinalProvider =
+    options?.provider ||
+    (({ children }) => {
+      return children;
+    });
+
   const { unmount, container } = render(
     <Provider store={storeState}>
       <GrafanaContext.Provider value={contextMock}>
         <Router history={history}>
-          <QueryLibraryContextProvider>
-            <QueriesDrawerContextProvider>
+          <QueriesDrawerContextProvider>
+            <FinalProvider>
               {options?.withAppChrome ? (
                 <KBarProvider>
                   <AppChrome>
@@ -204,8 +211,8 @@ export function setupExplore(options?: SetupOptions): {
                   render={(props) => <GrafanaRoute {...props} route={{ component: ExplorePage, path: '/explore' }} />}
                 />
               )}
-            </QueriesDrawerContextProvider>
-          </QueryLibraryContextProvider>
+            </FinalProvider>
+          </QueriesDrawerContextProvider>
         </Router>
       </GrafanaContext.Provider>
     </Provider>
