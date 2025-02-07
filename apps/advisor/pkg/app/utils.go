@@ -84,7 +84,7 @@ func processCheck(ctx context.Context, client resource.Client, obj resource.Obje
 	}
 	// Run the steps
 	steps := check.Steps()
-	errs, err := runStepsInParallel(ctx, &c.Spec, steps, items)
+	reportErrors, err := runStepsInParallel(ctx, &c.Spec, steps, items)
 	if err != nil {
 		setErr := setStatusAnnotation(ctx, client, obj, "error")
 		if setErr != nil {
@@ -94,7 +94,7 @@ func processCheck(ctx context.Context, client resource.Client, obj resource.Obje
 	}
 
 	report := &advisorv0alpha1.CheckV0alpha1StatusReport{
-		Errors: errs,
+		Errors: reportErrors,
 		Count:  int64(len(items)),
 	}
 	err = setStatusAnnotation(ctx, client, obj, "processed")

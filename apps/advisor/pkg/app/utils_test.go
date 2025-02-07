@@ -93,7 +93,7 @@ func TestProcessMultipleCheckItems(t *testing.T) {
 		if i%2 == 0 {
 			items[i] = fmt.Sprintf("item-%d", i)
 		} else {
-			items[i] = "error"
+			items[i] = errors.New("error")
 		}
 	}
 	check := &mockCheck{
@@ -177,8 +177,7 @@ func (m *mockStep) Run(ctx context.Context, obj *advisorv0alpha1.CheckSpec, item
 	if m.err != nil {
 		return nil, m.err
 	}
-	i := items.(string)
-	if i == "error" {
+	if _, ok := items.(error); ok {
 		return &advisorv0alpha1.CheckReportError{}, nil
 	}
 	return nil, nil
