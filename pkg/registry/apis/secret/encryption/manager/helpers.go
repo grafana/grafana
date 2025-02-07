@@ -25,10 +25,10 @@ func setupTestService(tb testing.TB) *EncryptionManager {
 	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
 	defaultKey := "SdlklWklckeLS"
 	raw, err := ini.Load([]byte(`
-			[security]
+			[secrets_manager]
 			secret_key = ` + defaultKey + `
 	
-			[security.encryption]
+			[secrets_manager.encryption]
 			data_keys_cache_ttl = 5m
 			data_keys_cache_cleanup_interval = 1ns`))
 	require.NoError(tb, err)
