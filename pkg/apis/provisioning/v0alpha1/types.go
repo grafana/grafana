@@ -78,11 +78,6 @@ type RepositorySpec struct {
 	// The value is a reference to the Kubernetes metadata name of the folder in the same namespace.
 	Folder string `json:"folder,omitempty"`
 
-	// Should we prefer emitting YAML for this repository, e.g. upon export?
-	// Editing existing dashboards will continue to emit the file format used in the repository. (TODO: implement this)
-	// If you delete and then recreate a dashboard, it will switch to the preferred format.
-	PreferYAML bool `json:"preferYaml,omitempty"`
-
 	// Edit options within the repository
 	Editing EditingOptions `json:"editing"`
 
