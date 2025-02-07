@@ -148,27 +148,21 @@ func TestQueryFramesNumericSelect(t *testing.T) {
 }
 
 func TestQueryFramesDateTimeSelect(t *testing.T) {
-	t.Skip("need a fix in go-mysql-server, and then handle the datetime strings (or figure out why strings and not time.Time)")
 	expectedFrame := &data.Frame{
 		RefID: "a",
 		Name:  "a",
 		Fields: []*data.Field{
-			data.NewField("ts", nil, []time.Time{}),
+			data.NewField("ts", nil, []*time.Time{
+				p(time.Date(2025, 2, 3, 3, 0, 0, 0, time.UTC)),
+			}),
 		},
 	}
 
 	db := DB{}
 
-	// It doesn't like the T in the time string
 	qry := `SELECT str_to_date('2025-02-03T03:00:00','%Y-%m-%dT%H:%i:%s') as ts`
 
-	// This comes back as a string, which needs to be dealt with?
-	//qry := `SELECT str_to_date('2025-02-03-03:00:00','%Y-%m-%d-%H:%i:%s') as ts`
-
-	// This is a datetime(6), need to deal with that as well
-	//qry := `SELECT current_timestamp() as ts`
-
-	f, err := db.QueryFrames(context.Background(), "b", qry, []*data.Frame{})
+	f, err := db.QueryFrames(context.Background(), "a", qry, nil)
 	require.NoError(t, err)
 
 	if diff := cmp.Diff(expectedFrame, f, data.FrameTestCompareOptions()...); diff != "" {

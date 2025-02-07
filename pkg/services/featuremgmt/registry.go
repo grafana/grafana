@@ -1023,9 +1023,10 @@ var (
 		{
 			Name:         "alertingSaveStateCompressed",
 			Description:  "Enables the compressed protobuf-based alert state storage",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: false,
 			Owner:        grafanaAlertingSquad,
+			Expression:   "false",
 		},
 		{
 			Name:              "scopeApi",
