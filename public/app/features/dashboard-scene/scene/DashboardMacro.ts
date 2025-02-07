@@ -24,7 +24,8 @@ class DashboardMacro implements FormatVariable {
       case 'name':
       case 'id':
       default:
-        return dashboard.state.title;
+        // URL encode the dashboard title when it's used in URLs
+        return fieldPath === 'raw' ? dashboard.state.title : encodeURIComponent(dashboard.state.title);
     }
   }
 
