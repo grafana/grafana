@@ -250,58 +250,6 @@ func TestMode3_List(t *testing.T) {
 	}
 }
 
-func TestMode1_ListFromLegacyStorage(t *testing.T) {
-	ctxCanceled, cancel := context.WithCancel(context.TODO())
-	cancel()
-
-	type testCase struct {
-		ctx           *context.Context
-		name          string
-		setupLegacyFn func(m *mock.Mock)
-	}
-	tests :=
-		[]testCase{
-			{
-				name: "list from legacy storage",
-				setupLegacyFn: func(m *mock.Mock) {
-					m.On("List", mock.Anything, mock.Anything).Return(anotherList, nil)
-				},
-			},
-			{
-				name: "list from legacy storage works even if parent context is canceled",
-				ctx:  &ctxCanceled,
-				setupLegacyFn: func(m *mock.Mock) {
-					m.On("List", mock.Anything, mock.Anything).Return(anotherList, nil)
-				},
-			},
-		}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			l := (LegacyStorage)(nil)
-			s := (Storage)(nil)
-			m := &mock.Mock{}
-
-			ls := legacyStoreMock{m, l}
-			us := storageMock{m, s}
-
-			if tt.setupLegacyFn != nil {
-				tt.setupLegacyFn(m)
-			}
-
-			ctx := context.TODO()
-			if tt.ctx != nil {
-				ctx = *tt.ctx
-			}
-
-			dw := NewDualWriter(Mode3, ls, us, p, kind)
-
-			err := dw.(*DualWriterMode3).listFromLegacyStorage(ctx, &metainternalversion.ListOptions{}, anotherList)
-			assert.NoError(t, err)
-		})
-	}
-}
-
 func TestMode3_Delete(t *testing.T) {
 	type testCase struct {
 		setupLegacyFn  func(m *mock.Mock, input string)

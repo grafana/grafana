@@ -156,51 +156,6 @@ func (d *DualWriterMode2) List(ctx context.Context, options *metainternalversion
 		return ll, err
 	}
 	d.recordLegacyDuration(false, mode2Str, d.resource, method, startLegacy)
-
-	legacyList, err := meta.ExtractList(ll)
-	if err != nil {
-		log.Error(err, "unable to extract list from legacy storage")
-		return nil, err
-	}
-
-	// Record the index of each LegacyStorage object so it can later be replaced by
-	// an equivalent Storage object if it exists.
-	legacyNames, err := parseList(legacyList)
-	if err != nil {
-		return nil, err
-	}
-
-	startStorage := time.Now()
-	sl, err := d.Storage.List(ctx, options)
-	if err != nil {
-		log.Error(err, "unable to list objects from storage")
-		d.recordStorageDuration(true, mode2Str, d.resource, method, startStorage)
-		return sl, err
-	}
-	d.recordStorageDuration(false, mode2Str, d.resource, method, startStorage)
-
-	storageList, err := meta.ExtractList(sl)
-	if err != nil {
-		log.Error(err, "unable to extract list from storage")
-		return nil, err
-	}
-
-	for _, obj := range storageList {
-		name := getName(obj)
-		if i, ok := legacyNames[name]; ok {
-			areEqual := Compare(obj, legacyList[i])
-			d.recordOutcome(mode2Str, name, areEqual, method)
-			if !areEqual {
-				log.WithValues("name", name).Info("object from legacy and storage are not equal")
-			}
-		}
-	}
-
-	if err = meta.SetList(ll, legacyList); err != nil {
-		return nil, err
-	}
-
-	// always return the list from legacy storage
 	return ll, nil
 }
 
