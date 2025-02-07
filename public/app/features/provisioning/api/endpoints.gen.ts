@@ -811,7 +811,7 @@ export type SyncStatus = {
   /** The ID for the job that ran this sync */
   job?: string;
   /** Summary messages (will be shown to users) */
-  message?: string[];
+  message: string[];
   /** When the next sync check is scheduled */
   scheduled?: number;
   /** When the sync job started */

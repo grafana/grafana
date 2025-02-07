@@ -3827,7 +3827,8 @@
       "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.SyncStatus": {
         "type": "object",
         "required": [
-          "state"
+          "state",
+          "message"
         ],
         "properties": {
           "finished": {
