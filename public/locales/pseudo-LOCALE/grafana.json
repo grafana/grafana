@@ -969,6 +969,12 @@
           "options-header": "Mūľŧį-şęľęčŧęđ Ŗőŵ őpŧįőŉş",
           "selection-number": "Ńő. őƒ řőŵş şęľęčŧęđ: {{length}}"
         }
+      },
+      "tab": {
+        "multi-select": {
+          "options-header": "Mūľŧį-şęľęčŧęđ Ŧäþ őpŧįőŉş",
+          "selection-number": "Ńő. őƒ ŧäþş şęľęčŧęđ: "
+        }
       }
     },
     "empty": {
@@ -1094,11 +1100,23 @@
         "title-option": "Ŧįŧľę"
       }
     },
+    "tabs-layout": {
+      "description": "Ŧäþş ľäyőūŧ",
+      "name": "Ŧäþş",
+      "tab": {
+        "new": "Ńęŵ ŧäþ"
+      },
+      "tab-options": {
+        "title": "Ŧäþ őpŧįőŉş",
+        "title-option": "Ŧįŧľę"
+      }
+    },
     "toolbar": {
       "add": "Åđđ",
       "add-panel": "Päŉęľ",
       "add-panel-lib": "Ĩmpőřŧ",
       "add-row": "Ŗőŵ",
+      "add-tab": "Ŧäþ",
       "alert-rules": "Åľęřŧ řūľęş",
       "back-to-dashboard": "ßäčĸ ŧő đäşĥþőäřđ",
       "dashboard-settings": {
