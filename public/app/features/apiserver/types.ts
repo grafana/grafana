@@ -90,7 +90,7 @@ type GrafanaClientAnnotations = {
 
 // Labels
 type GrafanaLabels = {
-  [DeprecatedInternalId]?: number;
+  [DeprecatedInternalId]?: string;
 };
 
 export interface Resource<T = object, S = object, K = string> extends TypeMeta<K> {

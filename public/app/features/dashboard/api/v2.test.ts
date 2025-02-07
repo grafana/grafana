@@ -113,7 +113,7 @@ describe('v2 dashboard API - Save', () => {
     k8s: {
       name: 'test-dash',
       labels: {
-        [DeprecatedInternalId]: 123,
+        [DeprecatedInternalId]: '123',
       },
 
       annotations: {

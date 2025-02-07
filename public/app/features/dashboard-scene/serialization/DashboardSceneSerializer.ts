@@ -64,7 +64,7 @@ export class V1DashboardSerializer implements DashboardSceneSerializerLike<Dashb
       id: null,
       uid: '',
       title: options.title || '',
-      description: options.description || '',
+      description: options.description || undefined,
       tags: options.isNew || options.copyTags ? saveModel.tags : [],
     };
   }

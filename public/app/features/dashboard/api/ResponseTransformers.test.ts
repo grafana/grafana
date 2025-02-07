@@ -428,7 +428,7 @@ describe('ResponseTransformers', () => {
             [AnnoKeySlug]: 'dashboard-slug',
           },
           labels: {
-            [DeprecatedInternalId]: 123,
+            [DeprecatedInternalId]: '123',
           },
         },
       };
@@ -444,7 +444,7 @@ describe('ResponseTransformers', () => {
       expect(transformed.metadata.annotations?.[AnnoKeyFolder]).toEqual('folder1');
       expect(transformed.metadata.annotations?.[AnnoKeySlug]).toEqual('dashboard-slug');
       expect(transformed.metadata.annotations?.[AnnoKeyDashboardGnetId]).toBe('something-like-a-uid');
-      expect(transformed.metadata.labels?.[DeprecatedInternalId]).toBe(123);
+      expect(transformed.metadata.labels?.[DeprecatedInternalId]).toBe('123');
 
       // Spec
       const spec = transformed.spec;
