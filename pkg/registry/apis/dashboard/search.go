@@ -221,11 +221,14 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	// get limit and offset from query params
 	limit := 50
 	offset := 0
+	page := 1
 	if queryParams.Has("limit") {
 		limit, _ = strconv.Atoi(queryParams.Get("limit"))
 	}
 	if queryParams.Has("offset") {
 		offset, _ = strconv.Atoi(queryParams.Get("offset"))
+	} else if queryParams.Has("page") {
+		page, _ = strconv.Atoi(queryParams.Get("page"))
 	}
 
 	searchRequest := &resource.ResourceSearchRequest{
@@ -233,7 +236,7 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		Query:   queryParams.Get("query"),
 		Limit:   int64(limit),
 		Offset:  int64(offset),
-		Page:    int64(offset), // on modes 0-2 (legacy) we use "Page" instead of "Offset"
+		Page:    int64(page), // for modes 0-2 (legacy)
 		Explain: queryParams.Has("explain") && queryParams.Get("explain") != "false",
 	}
 	fields := []string{"title", "folder", "tags"}
