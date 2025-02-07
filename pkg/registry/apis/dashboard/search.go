@@ -351,7 +351,7 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if parsedResults != nil && len(searchRequest.SortBy) == 0 {
+	if len(searchRequest.SortBy) == 0 {
 		// default sort by resource descending ( folders then dashboards ) then title
 		sort.Slice(parsedResults.Hits, func(i, j int) bool {
 			return parsedResults.Hits[i].Resource > parsedResults.Hits[j].Resource ||
