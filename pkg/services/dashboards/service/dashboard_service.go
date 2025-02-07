@@ -1255,7 +1255,6 @@ func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *dashb
 
 		finalResults := make([]dashboards.DashboardSearchProjection, len(response.Hits))
 		for i, hit := range response.Hits {
-			folderName := folderNames[hit.Folder]
 			result := dashboards.DashboardSearchProjection{
 				ID:          hit.Field.GetNestedInt64(search.DASHBOARD_LEGACY_ID),
 				UID:         hit.Name,
@@ -1264,7 +1263,7 @@ func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *dashb
 				Slug:        slugify.Slugify(hit.Title),
 				IsFolder:    false,
 				FolderUID:   hit.Folder,
-				FolderTitle: folderName,
+				FolderTitle: folderNames[hit.Folder],
 				Tags:        hit.Tags,
 			}
 
