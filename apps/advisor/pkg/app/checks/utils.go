@@ -4,14 +4,14 @@ import (
 	advisor "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 )
 
-func NewCheckReportError(
-	severity advisor.CheckReportErrorSeverity,
+func NewCheckReportFailure(
+	severity advisor.CheckReportFailureSeverity,
 	reason string,
 	action string,
 	stepID string,
 	itemID string,
-) *advisor.CheckReportError {
-	return &advisor.CheckReportError{
+) *advisor.CheckReportFailure {
+	return &advisor.CheckReportFailure{
 		Severity: severity,
 		Reason:   reason,
 		Action:   action,
