@@ -149,7 +149,7 @@ export function VersionHistoryTable({
     {
       id: 'diff',
       disableGrow: true,
-      cell: ({ rows, row, value }) => {
+      cell: ({ rows, row }) => {
         const isLastItem = row.index === ruleVersions.length - 1;
 
         const prevVersion = isLastItem ? {} : rows[row.index + 1]?.original;
