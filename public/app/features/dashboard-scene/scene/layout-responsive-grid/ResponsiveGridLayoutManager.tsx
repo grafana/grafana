@@ -2,6 +2,7 @@ import { SceneComponentProps, SceneCSSGridLayout, SceneObjectBase, SceneObjectSt
 import { t } from 'app/core/internationalization';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
+import { DashboardOutlineItemType, DashboardOutlinePanelItem } from '../../outline/types';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { getDashboardSceneFor, getGridItemKeyForPanelId, getVizPanelKeyForPanelId } from '../../utils/utils';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
@@ -16,7 +17,7 @@ interface ResponsiveGridLayoutManagerState extends SceneObjectState {
 
 export class ResponsiveGridLayoutManager
   extends SceneObjectBase<ResponsiveGridLayoutManagerState>
-  implements DashboardLayoutManager
+  implements DashboardLayoutManager<{}, DashboardOutlinePanelItem>
 {
   public static Component = ResponsiveGridLayoutManagerRenderer;
 
@@ -131,6 +132,19 @@ export class ResponsiveGridLayoutManager
     }
 
     getDashboardSceneFor(this).switchLayout(tabsLayout);
+  }
+
+  public getOutline(): DashboardOutlinePanelItem[] {
+    return this.state.layout.state.children.reduce<DashboardOutlinePanelItem[]>((acc, child) => {
+      if (child instanceof ResponsiveGridItem) {
+        acc.push({
+          type: DashboardOutlineItemType.PANEL,
+          item: child.state.body,
+        });
+      }
+
+      return acc;
+    }, []);
   }
 
   public getOptions(): OptionsPaneItemDescriptor[] {

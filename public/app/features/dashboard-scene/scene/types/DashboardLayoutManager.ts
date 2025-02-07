@@ -1,13 +1,15 @@
 import { SceneObject, VizPanel } from '@grafana/scenes';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
+import { DashboardOutlineItem } from '../../outline/types';
+
 import { LayoutRegistryItem } from './LayoutRegistryItem';
 
 /**
  * A scene object that usually wraps an underlying layout
  * Dealing with all the state management and editing of the layout
  */
-export interface DashboardLayoutManager<S = {}> extends SceneObject {
+export interface DashboardLayoutManager<S = {}, O = DashboardOutlineItem> extends SceneObject {
   /** Marks it as a DashboardLayoutManager */
   isDashboardLayoutManager: true;
 
@@ -52,6 +54,11 @@ export interface DashboardLayoutManager<S = {}> extends SceneObject {
    * Add tab
    */
   addNewTab(): void;
+
+  /**
+   * Get the outline of the layout
+   */
+  getOutline(): O[];
 
   /**
    * Notify the layout manager that the edit mode has changed
