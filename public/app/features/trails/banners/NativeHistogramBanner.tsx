@@ -3,7 +3,7 @@ import { useState, type Dispatch, type SetStateAction } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, useTheme2, Alert, Button } from '@grafana/ui';
-import { t, Trans } from '@grafana/ui/src/utils/i18n';
+import { t, Trans } from 'app/core/internationalization';
 
 import { DataTrail } from '../DataTrail';
 import { reportExploreMetrics } from '../interactions';
@@ -34,6 +34,7 @@ export function NativeHistogramBanner(props: NativeHistogramInfoProps) {
           onRemove={() => {
             setHistogramMessage(false);
           }}
+          className={styles.banner}
         >
           <div className={styles.histogramRow}>
             <div className={styles.histogramSentence}>
@@ -231,6 +232,9 @@ const NativeHistogramExamples = ({ trail, nativeHistograms, setHistogramMessage 
 
 function getStyles(theme: GrafanaTheme2, _chromeHeaderHeight: number) {
   return {
+    banner: css({
+      flexGrow: 0,
+    }),
     histogramRow: css({
       display: 'flex',
       flexDirection: 'row',

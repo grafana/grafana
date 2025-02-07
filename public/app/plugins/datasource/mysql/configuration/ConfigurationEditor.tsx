@@ -7,7 +7,7 @@ import {
   updateDatasourcePluginJsonDataOption,
   updateDatasourcePluginResetOption,
 } from '@grafana/data';
-import { ConfigSection, ConfigSubSection, DataSourceDescription, Stack } from '@grafana/experimental';
+import { ConfigSection, ConfigSubSection, DataSourceDescription, EditorStack } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
 import { ConnectionLimits, Divider, TLSSecretsConfig, useMigrateDatabaseFields } from '@grafana/sql';
 import {
@@ -169,7 +169,7 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<My
           <Field
             label={
               <Label>
-                <Stack gap={0.5}>
+                <EditorStack gap={0.5}>
                   <span>Session timezone</span>
                   <Tooltip
                     content={
@@ -185,7 +185,7 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<My
                   >
                     <Icon name="info-circle" size="sm" />
                   </Tooltip>
-                </Stack>
+                </EditorStack>
               </Label>
             }
           >
@@ -200,7 +200,7 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<My
           <Field
             label={
               <Label>
-                <Stack gap={0.5}>
+                <EditorStack gap={0.5}>
                   <span>Min time interval</span>
                   <Tooltip
                     content={
@@ -213,7 +213,7 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<My
                   >
                     <Icon name="info-circle" size="sm" />
                   </Tooltip>
-                </Stack>
+                </EditorStack>
               </Label>
             }
             description="A lower limit for the auto group by time interval. Recommended to be set to write frequency, for example 1m if your data is written every minute."

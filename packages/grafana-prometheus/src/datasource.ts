@@ -456,13 +456,15 @@ export class PrometheusDatasource
       return Promise.resolve([]);
     }
 
+    const timeRange = options?.range ?? this.languageProvider.timeRange ?? getDefaultTimeRange();
+
     const scopedVars = {
       ...this.getIntervalVars(),
-      ...this.getRangeScopedVars(options?.range ?? getDefaultTimeRange()),
+      ...this.getRangeScopedVars(timeRange),
     };
     const interpolated = this.templateSrv.replace(query, scopedVars, this.interpolateQueryExpr);
     const metricFindQuery = new PrometheusMetricFindQuery(this, interpolated);
-    return metricFindQuery.process(options?.range ?? getDefaultTimeRange());
+    return metricFindQuery.process(timeRange);
   }
 
   getIntervalVars() {
@@ -706,7 +708,11 @@ export class PrometheusDatasource
     let expandedQueries = queries;
     if (queries && queries.length) {
       expandedQueries = queries.map((query) => {
-        const interpolatedQuery = this.templateSrv.replace(query.expr, scopedVars, this.interpolateQueryExpr);
+        const interpolatedQuery = this.templateSrv.replace(
+          query.expr,
+          scopedVars,
+          this.interpolateExploreMetrics(query.fromExploreMetrics)
+        );
         const replacedInterpolatedQuery = config.featureToggles.promQLScope
           ? interpolatedQuery
           : this.templateSrv.replace(
@@ -929,17 +935,7 @@ export class PrometheusDatasource
     const expr = this.templateSrv.replace(
       target.expr,
       variables,
-      (value: string | string[] = [], variable: QueryVariableModel | CustomVariableModel) => {
-        if (typeof value === 'string' && target.fromExploreMetrics) {
-          if (variable.name === 'filters') {
-            return wrapUtf8Filters(value);
-          }
-          if (variable.name === 'groupby') {
-            return utf8Support(value);
-          }
-        }
-        return this.interpolateQueryExpr(value, variable);
-      }
+      this.interpolateExploreMetrics(target.fromExploreMetrics)
     );
 
     // Apply ad-hoc filters
@@ -963,6 +959,20 @@ export class PrometheusDatasource
 
   interpolateString(string: string, scopedVars?: ScopedVars) {
     return this.templateSrv.replace(string, scopedVars, this.interpolateQueryExpr);
+  }
+
+  interpolateExploreMetrics(fromExploreMetrics?: boolean) {
+    return (value: string | string[] = [], variable: QueryVariableModel | CustomVariableModel) => {
+      if (typeof value === 'string' && fromExploreMetrics) {
+        if (variable.name === 'filters') {
+          return wrapUtf8Filters(value);
+        }
+        if (variable.name === 'groupby') {
+          return utf8Support(value);
+        }
+      }
+      return this.interpolateQueryExpr(value, variable);
+    };
   }
 
   getDebounceTimeInMilliseconds(): number {

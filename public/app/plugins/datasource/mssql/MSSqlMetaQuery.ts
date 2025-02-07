@@ -10,7 +10,7 @@ export function getSchemaAndName(database?: string) {
 
 export function getSchema(database?: string, table?: string) {
   return `
-   USE ${database}
+   USE [${database}]
    SELECT COLUMN_NAME as 'column',DATA_TYPE as 'type'
    FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='${table}';`;
 }

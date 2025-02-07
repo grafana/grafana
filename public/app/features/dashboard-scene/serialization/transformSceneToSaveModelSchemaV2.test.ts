@@ -10,6 +10,7 @@ import {
   IntervalVariable,
   QueryVariable,
   SceneGridLayout,
+  SceneGridRow,
   SceneRefreshPicker,
   SceneTimePicker,
   SceneTimeRange,
@@ -31,6 +32,7 @@ import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
+import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior';
 
 import { transformSceneToSaveModelSchemaV2 } from './transformSceneToSaveModelSchemaV2';
 
@@ -140,6 +142,8 @@ describe('transformSceneToSaveModelSchemaV2', () => {
           isLazy: false,
           children: [
             new DashboardGridItem({
+              y: 0,
+              height: 10,
               body: new VizPanel({
                 key: 'panel-1',
                 pluginId: 'timeseries',
@@ -172,6 +176,31 @@ describe('transformSceneToSaveModelSchemaV2', () => {
               // repeatDirection?: RepeatDirection,
               // maxPerRow?: number,
             }),
+            new SceneGridRow({
+              key: 'panel-4',
+              title: 'Test Row',
+              y: 10,
+              $behaviors: [new RowRepeaterBehavior({ variableName: 'customVar' })],
+              children: [
+                new DashboardGridItem({
+                  y: 11,
+                  body: new VizPanel({
+                    key: 'panel-2',
+                    pluginId: 'graph',
+                    title: 'Test Panel 2',
+                    description: 'Test Description 2',
+                    fieldConfig: { defaults: {}, overrides: [] },
+                    displayMode: 'transparent',
+                    pluginVersion: '7.0.0',
+                    $timeRange: new SceneTimeRange({
+                      timeZone: 'UTC',
+                      from: 'now-3h',
+                      to: 'now',
+                    }),
+                  }),
+                }),
+              ],
+            }),
           ],
         }),
       }),
@@ -196,7 +225,10 @@ describe('transformSceneToSaveModelSchemaV2', () => {
             hide: VariableHideV1.hideLabel,
             value: 'value1',
             text: 'text1',
-            query: 'query1',
+            query: {
+              expr: 'label_values(node_boot_time_seconds)',
+              refId: 'A',
+            },
             definition: 'definition1',
             datasource: { uid: 'datasource1', type: 'prometheus' },
             sort: VariableSortV1.alphabeticalDesc,
