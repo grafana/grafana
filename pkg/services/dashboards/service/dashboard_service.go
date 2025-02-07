@@ -1282,22 +1282,16 @@ func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *dashb
 }
 
 func (dr *DashboardServiceImpl) fetchFolderNames(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery, response *dashboardv0alpha1.SearchResults) (map[string]string, error) {
-	folderIds := []string{}
-	folderSet := map[string]string{} // to avoid duplicates
-	for _, hit := range response.Hits {
-		if hit.Folder != "" && folderSet[hit.Folder] == "" {
-			folderIds = append(folderIds, hit.Folder)
-			folderSet[hit.Folder] = hit.Folder
-		}
-	}
-
+	// call this with elevated permissions so we can get folder names where user does not have access
+	// some dashboards are shared directly with user, but the folder is not accessible via the folder permissions
+	serviceCtx, serviceIdent := identity.WithServiceIdentity(ctx, query.OrgId)
 	search := folder.SearchFoldersQuery{
-		UIDs:         folderIds,
+		UIDs:         getFolderIds(response),
 		OrgID:        query.OrgId,
-		SignedInUser: query.SignedInUser,
+		SignedInUser: serviceIdent,
 	}
 
-	hits, err := dr.folderService.SearchFolders(ctx, search)
+	hits, err := dr.folderService.SearchFolders(serviceCtx, search)
 	if err != nil {
 		return nil, folder.ErrInternal.Errorf("failed to fetch parent folders: %w", err)
 	}
@@ -2087,4 +2081,16 @@ func LegacySaveCommandToUnstructured(cmd *dashboards.SaveDashboardCommand, names
 	}
 
 	return finalObj, nil
+}
+
+func getFolderIds(response *dashboardv0alpha1.SearchResults) []string {
+	folderIds := []string{}
+	folderSet := map[string]string{} // to avoid duplicates
+	for _, hit := range response.Hits {
+		if hit.Folder != "" && folderSet[hit.Folder] == "" {
+			folderIds = append(folderIds, hit.Folder)
+			folderSet[hit.Folder] = hit.Folder
+		}
+	}
+	return folderIds
 }

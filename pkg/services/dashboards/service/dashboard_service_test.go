@@ -1407,6 +1407,13 @@ func TestSearchDashboards(t *testing.T) {
 
 	t.Run("Should use Kubernetes client if feature flags are enabled", func(t *testing.T) {
 		ctx, k8sCliMock := setupK8sDashboardTests(service)
+		expectedFolders := model.HitList{
+			{
+				UID:   "f1",
+				Title: "testing-folder-1",
+			},
+		}
+		fakeFolders.ExpectedHitList = expectedFolders
 		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
 		k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resource.ResourceSearchResponse{
 			Results: &resource.ResourceTable{
