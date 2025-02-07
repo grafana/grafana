@@ -20,7 +20,7 @@ export default defineConfig<PluginOptions>({
       timeout: 2 * 60 * 1000,
       command: 'yarn start',
       port: Number(`${process.env.PORT || 3000}`),
-      reuseExistingServer: !process.env.CI,
+      reuseExistingServer: true,
       stdout: 'ignore',
       stderr: 'pipe',
     },
