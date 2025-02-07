@@ -15,7 +15,7 @@ const baseLogsQuery = {
   refId: 'A',
   region: 'default',
   statsGroups: [],
-}
+};
 
 export const CloudWatchDashboardLoadedEvent = new DashboardLoadedEvent({
   dashboardId: 'dashboard123',
@@ -475,23 +475,23 @@ export const CloudWatchDashboardLoadedEvent = new DashboardLoadedEvent({
         statistic: 'Average',
       },
       {
-        ...baseLogsQuery
+        ...baseLogsQuery,
       },
       {
         ...baseLogsQuery,
-        queryLanguage: 'PPL'
+        queryLanguage: 'PPL',
       },
       {
         ...baseLogsQuery,
-        queryLanguage: 'PPL'
+        queryLanguage: 'PPL',
       },
       {
         ...baseLogsQuery,
-        queryLanguage: 'SQL'
+        queryLanguage: 'SQL',
       },
       {
         ...baseLogsQuery,
-        queryLanguage: 'CWLI'
+        queryLanguage: 'CWLI',
       },
       {
         alias: '',

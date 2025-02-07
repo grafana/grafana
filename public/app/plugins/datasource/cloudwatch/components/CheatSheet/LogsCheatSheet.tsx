@@ -108,7 +108,7 @@ const LogsCheatSheet = (props: Props) => {
       logGroupNames: 'logGroupNames' in props.query ? props.query.logGroupNames : [],
       logGroups: 'logGroups' in props.query ? props.query.logGroups : [],
     });
-    trackSampleQuerySelection({queryLanguage, queryCategory});
+    trackSampleQuerySelection({ queryLanguage, queryCategory });
   };
 
   return (

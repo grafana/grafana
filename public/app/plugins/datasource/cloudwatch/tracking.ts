@@ -98,7 +98,9 @@ export const onDashboardLoadedHandler = ({
       dashboard_id: dashboardId,
       org_id: orgId,
       logs_queries_count: logsQueries?.length,
-      logs_cwli_queries_count: logsQueries?.filter((q) => !q.queryLanguage || q.queryLanguage === LogsQueryLanguage.CWLI).length,
+      logs_cwli_queries_count: logsQueries?.filter(
+        (q) => !q.queryLanguage || q.queryLanguage === LogsQueryLanguage.CWLI
+      ).length,
       logs_sql_queries_count: logsQueries?.filter((q) => q.queryLanguage === LogsQueryLanguage.SQL).length,
       logs_ppl_queries_count: logsQueries?.filter((q) => q.queryLanguage === LogsQueryLanguage.PPL).length,
       metrics_queries_count: metricsQueries?.length,
@@ -140,11 +142,11 @@ export const onDashboardLoadedHandler = ({
 type SampleQueryTrackingEvent = {
   queryLanguage: LogsQueryLanguage;
   queryCategory: string;
-}
+};
 
 export const trackSampleQuerySelection = (props: SampleQueryTrackingEvent) => {
-   reportInteraction('cloudwatch-logs-cheat-sheet-query-clicked', props);
-}
+  reportInteraction('cloudwatch-logs-cheat-sheet-query-clicked', props);
+};
 
 const isMetricSearchBuilder = (q: CloudWatchMetricsQuery) =>
   Boolean(q.metricQueryType === MetricQueryType.Search && q.metricEditorMode === MetricEditorMode.Builder);
