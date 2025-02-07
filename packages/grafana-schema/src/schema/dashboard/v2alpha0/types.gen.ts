@@ -13,16 +13,16 @@ export interface DashboardV2Spec {
 	cursorSync: DashboardCursorSync;
 	// Description of dashboard.
 	description?: string;
-	elements: Record<string, Element>;
 	// Whether a dashboard is editable or not.
 	editable?: boolean;
+	elements: Record<string, Element>;
+	layout: GridLayoutKind | RowsLayoutKind | ResponsiveGridLayoutKind;
+	// Links with references to other dashboards or external websites.
+	links: DashboardLink[];
 	// When set to true, the dashboard will redraw panels at an interval matching the pixel width.
 	// This will keep data "moving left" regardless of the query refresh rate. This setting helps
 	// avoid dashboards presenting stale live data.
 	liveNow?: boolean;
-	// Links with references to other dashboards or external websites.
-	links: DashboardLink[];
-	layout: GridLayoutKind;
 	// When set to true, the dashboard will load all panels in the dashboard when it's loaded.
 	preload: boolean;
 	// Plugins only. The version of the dashboard installed together with the plugin.
@@ -40,10 +40,10 @@ export interface DashboardV2Spec {
 export const defaultDashboardV2Spec = (): DashboardV2Spec => ({
 	annotations: [],
 	cursorSync: "Off",
-	elements: {},
 	editable: true,
-	links: [],
+	elements: {},
 	layout: defaultGridLayoutKind(),
+	links: [],
 	preload: false,
 	tags: [],
 	timeSettings: defaultTimeSettingsSpec(),

@@ -17,20 +17,20 @@ DashboardV2Spec: {
   // Description of dashboard.
   description?: string
 
-  elements: [ElementReference.name]: Element
-
   // Whether a dashboard is editable or not.
   editable?: bool | *true
+
+  elements: [ElementReference.name]: Element
+
+  layout: GridLayoutKind | RowsLayoutKind | ResponsiveGridLayoutKind
+
+  // Links with references to other dashboards or external websites.
+  links: [...DashboardLink]
 
   // When set to true, the dashboard will redraw panels at an interval matching the pixel width.
   // This will keep data "moving left" regardless of the query refresh rate. This setting helps
   // avoid dashboards presenting stale live data.
   liveNow?: bool
-
-  // Links with references to other dashboards or external websites.
-  links: [...DashboardLink]
-
-  layout: GridLayoutKind
 
   // When set to true, the dashboard will load all panels in the dashboard when it's loaded.
   preload: bool
