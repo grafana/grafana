@@ -22,14 +22,11 @@ export const AggregateSection: React.FC<AggregateSectionProps> = ({
   const [aggregates, setAggregates] = useState<QueryEditorReduceExpression[]>([]);
 
   const updateQueryWithAggregates = (newAggregates: QueryEditorReduceExpression[]) => {
-    // ✅ Only keep valid aggregates (ignore empty selections)
     const validAggregates = newAggregates.filter((agg) => agg.property?.name && agg.reduce?.name);
 
-    // ✅ Only update the query if there is at least one valid aggregation
     if (validAggregates.length > 0) {
       const aggregation = validAggregates.map((agg) => `${agg.reduce.name}(${agg.property.name})`).join(', ');
 
-      // Send the formatted aggregates back to LogsQueryBuilder
       onQueryUpdate({ aggregates: aggregation });
     }
   };
@@ -37,7 +34,6 @@ export const AggregateSection: React.FC<AggregateSectionProps> = ({
   const onChange = (newItems: Array<Partial<QueryEditorReduceExpression>>) => {
     const cleaned = newItems.map((v): QueryEditorReduceExpression => {
       const isNewItem = Object.keys(v).length === 0;
-      console.log('v', v);
       return {
         type: QueryEditorExpressionType.Reduce,
         property: v.property ?? { type: QueryEditorPropertyType.String, name: '' },
