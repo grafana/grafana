@@ -47,10 +47,6 @@ const (
 	// Correlations page
 	FlagCorrelations = "correlations"
 
-	// FlagAutoMigratePiechartPanel
-	// Migrate old piechart panel to supported piechart panel - broken out from autoMigrateOldPanels to enable granular tracking
-	FlagAutoMigratePiechartPanel = "autoMigratePiechartPanel"
-
 	// FlagAutoMigrateWorldmapPanel
 	// Migrate old worldmap panel to supported geomap panel - broken out from autoMigrateOldPanels to enable granular tracking
 	FlagAutoMigrateWorldmapPanel = "autoMigrateWorldmapPanel"

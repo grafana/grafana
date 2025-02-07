@@ -9,7 +9,6 @@ lokiExperimentalStreaming,experimental,@grafana/observability-logs,false,false,f
 featureHighlights,GA,@grafana/grafana-as-code,false,false,false
 storage,experimental,@grafana/search-and-storage,false,false,false
 correlations,GA,@grafana/dataviz-squad,false,false,false
-autoMigratePiechartPanel,preview,@grafana/dataviz-squad,false,false,true
 autoMigrateWorldmapPanel,preview,@grafana/dataviz-squad,false,false,true
 autoMigrateStatPanel,preview,@grafana/dataviz-squad,false,false,true
 canvasPanelNesting,experimental,@grafana/dataviz-squad,false,false,true

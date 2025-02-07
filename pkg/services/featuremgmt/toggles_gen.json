@@ -608,7 +608,8 @@
       "metadata": {
         "name": "autoMigratePiechartPanel",
         "resourceVersion": "1718727528075",
-        "creationTimestamp": "2024-02-14T16:06:25Z"
+        "creationTimestamp": "2024-02-14T16:06:25Z",
+        "deletionTimestamp": "2025-02-07T11:06:35Z"
       },
       "spec": {
         "description": "Migrate old piechart panel to supported piechart panel - broken out from autoMigrateOldPanels to enable granular tracking",
