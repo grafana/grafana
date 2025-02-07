@@ -257,5 +257,6 @@ export interface FeatureToggles {
   alertingAlertmanagerExtraDedupStageStopPipeline?: boolean;
   newLogsPanel?: boolean;
   grafanaconThemes?: boolean;
+  pluginsCDNSyncLoader?: boolean;
   alertingRuleVersionHistoryRestore?: boolean;
 }
