@@ -55,6 +55,7 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
     }),
     optionGroup: css({
       cursor: 'default',
+      borderTop: `1px solid ${theme.colors.border.weak}`,
     }),
     optionBody: css({
       label: 'combobox-option-body',
