@@ -201,6 +201,18 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 		if errors.Is(err, dashboards.ErrFolderNotFound) {
 			return response.Error(http.StatusNotFound, "Folder not found", err)
 		}
+		if apierrors.IsForbidden(err) {
+			// the dashboard is in a folder the user can't access, so return the dashboard without folder info
+			err = nil
+			queryResult = &folder.Folder{
+				UID: dash.FolderUID,
+			}
+		}
+		if err != nil {
+			hs.log.Error("Failed to get dashboard folder", "error", err)
+			return response.Error(http.StatusInternalServerError, "Dashboard folder could not be read", err)
+		}
+
 		meta.FolderUid = queryResult.UID
 		meta.FolderTitle = queryResult.Title
 		meta.FolderId = queryResult.ID // nolint:staticcheck

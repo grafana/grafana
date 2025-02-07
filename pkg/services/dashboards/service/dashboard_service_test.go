@@ -1338,7 +1338,9 @@ func TestSearchDashboards(t *testing.T) {
 	fakeFolders := foldertest.NewFakeService()
 	fakeFolders.ExpectedFolder = &folder.Folder{
 		Title: "testing-folder-1",
+		UID:   "f1",
 	}
+	fakeFolders.ExpectedFolders = []*folder.Folder{fakeFolders.ExpectedFolder}
 	defer fakeStore.AssertExpectations(t)
 	service := &DashboardServiceImpl{
 		cfg:            setting.NewCfg(),
@@ -1359,6 +1361,7 @@ func TestSearchDashboards(t *testing.T) {
 				"tag2",
 			},
 			FolderTitle: "testing-folder-1",
+			FolderUID:   "f1",
 		},
 		{
 			UID:         "uid2",
@@ -1369,6 +1372,7 @@ func TestSearchDashboards(t *testing.T) {
 			URL:         "/d/uid2/dashboard-2",
 			Tags:        []string{},
 			FolderTitle: "testing-folder-1",
+			FolderUID:   "f1",
 		},
 	}
 	query := dashboards.FindPersistedDashboardsQuery{
@@ -1384,6 +1388,7 @@ func TestSearchDashboards(t *testing.T) {
 				Title:       "Dashboard 1",
 				Tags:        []string{"tag1", "tag2"},
 				FolderTitle: "testing-folder-1",
+				FolderUID:   "f1",
 			},
 			{
 				UID:         "uid2",
@@ -1391,6 +1396,7 @@ func TestSearchDashboards(t *testing.T) {
 				OrgID:       1,
 				Title:       "Dashboard 2",
 				FolderTitle: "testing-folder-1",
+				FolderUID:   "f1",
 			},
 		}, nil).Once()
 		result, err := service.SearchDashboards(context.Background(), &query)
@@ -1401,6 +1407,13 @@ func TestSearchDashboards(t *testing.T) {
 
 	t.Run("Should use Kubernetes client if feature flags are enabled", func(t *testing.T) {
 		ctx, k8sCliMock := setupK8sDashboardTests(service)
+		expectedFolders := model.HitList{
+			{
+				UID:   "f1",
+				Title: "testing-folder-1",
+			},
+		}
+		fakeFolders.ExpectedHitList = expectedFolders
 		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
 		k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resource.ResourceSearchResponse{
 			Results: &resource.ResourceTable{
@@ -1426,7 +1439,7 @@ func TestSearchDashboards(t *testing.T) {
 						},
 						Cells: [][]byte{
 							[]byte("Dashboard 1"),
-							[]byte(""),
+							[]byte("f1"),
 							[]byte("[\"tag1\", \"tag2\"]"),
 						},
 					},
@@ -1437,7 +1450,7 @@ func TestSearchDashboards(t *testing.T) {
 						},
 						Cells: [][]byte{
 							[]byte("Dashboard 2"),
-							[]byte(""),
+							[]byte("f1"),
 							[]byte(""),
 						},
 					},
