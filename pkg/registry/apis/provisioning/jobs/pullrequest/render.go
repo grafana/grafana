@@ -1,4 +1,4 @@
-package jobs
+package pullrequest
 
 import (
 	"context"
@@ -14,18 +14,27 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/blob"
 )
 
-type renderer struct {
+type Renderer struct {
 	cfg       *provisioning.Repository
 	render    rendering.Service
 	blobstore blob.PublicBlobStore
 	id        identity.Requester
 }
 
-func (r *renderer) IsAvailable(ctx context.Context) bool {
+func NewRenderer(cfg *provisioning.Repository, render rendering.Service, blobstore blob.PublicBlobStore, id identity.Requester) *Renderer {
+	return &Renderer{
+		cfg:       cfg,
+		render:    render,
+		blobstore: blobstore,
+		id:        id,
+	}
+}
+
+func (r *Renderer) IsAvailable(ctx context.Context) bool {
 	return r.render != nil && r.render.IsAvailable(ctx) && r.blobstore.IsAvailable()
 }
 
-func (r *renderer) RenderDashboardPreview(ctx context.Context, path string, ref string) (string, error) {
+func (r *Renderer) RenderDashboardPreview(ctx context.Context, path string, ref string) (string, error) {
 	url := fmt.Sprintf("admin/provisioning/%s/dashboard/preview/%s?kiosk&ref=%s", r.cfg.Name, path, ref)
 	// fmt.Printf("RENDER: http://localhost:3000/render/%s\n", url)
 
