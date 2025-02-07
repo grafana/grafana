@@ -529,15 +529,6 @@ GridLayoutKind: {
   spec: GridLayoutSpec
 }
 
-RowGridLayoutKind: {
-  kind: "RowGridLayout"
-  spec: RowGridLayoutSpec
-}
-
-RowGridLayoutSpec: {
-  items: [...GridLayoutItemKind]
-}
-
 RowsLayoutKind: {
   kind: "RowsLayout"
   spec: RowsLayoutSpec
@@ -556,7 +547,7 @@ RowsLayoutRowSpec: {
   title?: string
   collapsed: bool
   repeat?: RowRepeatOptions
-  layout: RowGridLayoutKind | ResponsiveGridLayoutKind
+  layout: GridLayoutKind | ResponsiveGridLayoutKind
 }
 
 ResponsiveGridLayoutKind: {

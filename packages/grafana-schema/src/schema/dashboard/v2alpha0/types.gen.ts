@@ -792,24 +792,6 @@ export const defaultGridLayoutKind = (): GridLayoutKind => ({
 	spec: defaultGridLayoutSpec(),
 });
 
-export interface RowGridLayoutKind {
-	kind: "RowGridLayout";
-	spec: RowGridLayoutSpec;
-}
-
-export const defaultRowGridLayoutKind = (): RowGridLayoutKind => ({
-	kind: "RowGridLayout",
-	spec: defaultRowGridLayoutSpec(),
-});
-
-export interface RowGridLayoutSpec {
-	items: GridLayoutItemKind[];
-}
-
-export const defaultRowGridLayoutSpec = (): RowGridLayoutSpec => ({
-	items: [],
-});
-
 export interface RowsLayoutKind {
 	kind: "RowsLayout";
 	spec: RowsLayoutSpec;
@@ -842,12 +824,12 @@ export interface RowsLayoutRowSpec {
 	title?: string;
 	collapsed: boolean;
 	repeat?: RowRepeatOptions;
-	layout: RowGridLayoutKind | ResponsiveGridLayoutKind;
+	layout: GridLayoutKind | ResponsiveGridLayoutKind;
 }
 
 export const defaultRowsLayoutRowSpec = (): RowsLayoutRowSpec => ({
 	collapsed: false,
-	layout: defaultRowGridLayoutKind(),
+	layout: defaultGridLayoutKind(),
 });
 
 export interface ResponsiveGridLayoutKind {

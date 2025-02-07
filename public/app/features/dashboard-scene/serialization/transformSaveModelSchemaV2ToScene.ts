@@ -56,7 +56,6 @@ import {
   PanelQueryKind,
   QueryVariableKind,
   TextVariableKind,
-  RowGridLayoutKind,
   ResponsiveGridLayoutItemKind,
 } from '@grafana/schema/src/schema/dashboard/v2alpha0';
 import { contextSrv } from 'app/core/core';
@@ -274,7 +273,7 @@ function createLayoutManager(dashboard: DashboardV2Spec): DashboardLayoutManager
       rows: dashboard.layout.spec.rows.map((row) => {
         let layout: DashboardLayoutManager | undefined = undefined;
 
-        if (row.spec.layout.kind === 'RowGridLayout') {
+        if (row.spec.layout.kind === 'GridLayout') {
           layout = new DefaultGridLayoutManager({
             grid: new SceneGridLayout({
               children: createSceneGridLayoutForItems(row.spec.layout, dashboard.elements),
@@ -335,10 +334,7 @@ function createResponsiveGridItems(
   });
 }
 
-function createSceneGridLayoutForItems(
-  layout: GridLayoutKind | RowGridLayoutKind,
-  elements: Record<string, Element>
-): SceneGridItemLike[] {
+function createSceneGridLayoutForItems(layout: GridLayoutKind, elements: Record<string, Element>): SceneGridItemLike[] {
   const gridElements = layout.spec.items;
 
   return gridElements.map((element) => {

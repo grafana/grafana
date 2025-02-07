@@ -45,7 +45,6 @@ import {
   FieldColor,
   GridLayoutKind,
   RowsLayoutKind,
-  RowGridLayoutKind,
   ResponsiveGridLayoutKind,
   ResponsiveGridLayoutItemKind,
 } from '../../../../../packages/grafana-schema/src/schema/dashboard/v2alpha0';
@@ -150,12 +149,7 @@ function getLayout(
   isSnapshot?: boolean
 ): GridLayoutKind | RowsLayoutKind | ResponsiveGridLayoutKind {
   if (layoutManager instanceof DefaultGridLayoutManager) {
-    return {
-      kind: 'GridLayout',
-      spec: {
-        items: getGridLayoutItems(layoutManager, isSnapshot),
-      },
-    };
+    return getGridLayout(layoutManager, isSnapshot);
   } else if (layoutManager instanceof RowsLayoutManager) {
     return {
       kind: 'RowsLayout',
@@ -164,9 +158,9 @@ function getLayout(
           if (row.state.layout instanceof RowsLayoutManager) {
             throw new Error('Nesting row layouts is not supported');
           }
-          let layout: RowGridLayoutKind | ResponsiveGridLayoutKind | undefined = undefined;
+          let layout: GridLayoutKind | ResponsiveGridLayoutKind | undefined = undefined;
           if (row.state.layout instanceof DefaultGridLayoutManager) {
-            layout = getRowGridLayout(row.state.layout, isSnapshot);
+            layout = getGridLayout(row.state.layout, isSnapshot);
           } else if (row.state.layout instanceof ResponsiveGridLayoutManager) {
             layout = {
               kind: 'ResponsiveGridLayout',
@@ -210,11 +204,11 @@ function getLayout(
   throw new Error('Unsupported layout type');
 }
 
-function getRowGridLayout(layoutManager: DefaultGridLayoutManager, isSnapshot?: boolean): RowGridLayoutKind {
+function getGridLayout(layoutManager: DefaultGridLayoutManager, isSnapshot?: boolean): GridLayoutKind {
   return {
-    kind: 'RowGridLayout',
+    kind: 'GridLayout',
     spec: {
-      items: getRowGridLayoutItems(layoutManager, isSnapshot),
+      items: getGridLayoutItems(layoutManager, isSnapshot),
     },
   };
 }
@@ -279,23 +273,6 @@ function getResponsiveGridLayoutItems(body: ResponsiveGridLayoutManager): Respon
     }
   }
   return items;
-}
-
-function getRowGridLayoutItems(body: DefaultGridLayoutManager, isSnapshot?: boolean): GridLayoutItemKind[] {
-  let elements: GridLayoutItemKind[] = [];
-  for (const child of body.state.grid.state.children) {
-    if (child instanceof DashboardGridItem) {
-      if (child.state.variableName) {
-        elements = elements.concat(repeaterToLayoutItems(child, isSnapshot));
-      } else {
-        elements.push(gridItemToGridLayoutItemKind(child, isSnapshot));
-      }
-    } else if (child instanceof SceneGridRow) {
-      throw new Error('Row layout inside row layout is not supported');
-    }
-  }
-
-  return elements;
 }
 
 export function gridItemToGridLayoutItemKind(
