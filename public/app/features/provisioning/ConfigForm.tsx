@@ -52,6 +52,7 @@ function getDefaultValues(repository?: RepositorySpec): RepositoryFormData {
       sync: {
         enabled: false,
         target: 'instance',
+        intervalSeconds: 60,
       },
       readOnly: false,
     };
@@ -239,6 +240,13 @@ export function ConfigForm({ data }: ConfigFormProps) {
               );
             }}
           />
+        </Field>
+        <Field
+          label={'Interval (seconds)'}
+          error={errors?.sync?.intervalSeconds?.message}
+          invalid={!!errors?.sync?.intervalSeconds}
+        >
+          <Input {...register('sync.intervalSeconds')} type={'number'} placeholder={'60'} />
         </Field>
       </FieldSet>
       <FieldSet label="Advanced Settings">
