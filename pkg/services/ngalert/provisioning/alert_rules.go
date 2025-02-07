@@ -374,7 +374,7 @@ func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, user iden
 			continue
 		}
 		if err := util.ValidateUID(rule.UID); err != nil {
-			return errors.Join(models.ErrAlertRuleFailedValidation, fmt.Errorf("cannot create rule with UID '%s': %w", rule.UID, err))
+			return fmt.Errorf("%w: cannot create rule with UID %q: %w", models.ErrAlertRuleFailedValidation, rule.UID, err)
 		}
 	}
 
