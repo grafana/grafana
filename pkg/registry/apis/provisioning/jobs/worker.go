@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/auth"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/pullrequest"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/services/rendering"
@@ -97,7 +98,7 @@ func (g *JobWorker) Process(ctx context.Context, job provisioning.Job, progress 
 	case provisioning.JobActionSync:
 		return g.syncWorker.Process(ctx, repo, job, progress)
 	case provisioning.JobActionPullRequest:
-		prRepo, ok := repo.(PullRequestRepo)
+		prRepo, ok := repo.(pullrequest.PullRequestRepo)
 		if !ok {
 			return nil, fmt.Errorf("repository is not a github repository")
 		}
@@ -120,11 +121,11 @@ func (g *JobWorker) Process(ctx context.Context, job provisioning.Job, progress 
 			return nil, apierrors.NewBadRequest("missing spec.pr")
 		}
 
-		commenter, err := NewPullRequestCommenter(prRepo, parser, renderer, baseURL)
+		commenter, err := pullrequest.NewPullRequestWorker(prRepo, parser, renderer, baseURL)
 		if err != nil {
 			return nil, fmt.Errorf("error creating pull request commenter: %w", err)
 		}
-		return commenter.ProcessPullRequest(ctx, repo, *options, progress)
+		return commenter.Process(ctx, repo, *options, progress)
 
 	case provisioning.JobActionExport:
 		if job.Spec.Export == nil {
