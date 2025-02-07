@@ -3036,6 +3036,18 @@
     },
     {
       "metadata": {
+        "name": "pluginsCDNSyncLoader",
+        "resourceVersion": "1737026684018",
+        "creationTimestamp": "2025-01-16T11:24:44Z"
+      },
+      "spec": {
+        "description": "Load plugins from CDN synchronously",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend"
+      }
+    },
+    {
+      "metadata": {
         "name": "pluginsDetailsRightPanel",
         "resourceVersion": "1720788722220",
         "creationTimestamp": "2024-08-13T09:55:30Z",
