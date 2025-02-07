@@ -83,6 +83,8 @@ export const PieChart = ({
     ),
   ];
 
+  // The pie chart will display slices going clockwise with the largest value first, we set a constant sort so it will be displayed with the legend order
+
   return (
     <div className={styles.container}>
       <svg width={layout.size} height={layout.size} ref={containerRef} style={{ overflow: 'visible' }}>
@@ -110,6 +112,7 @@ export const PieChart = ({
             innerRadius={layout.innerRadius}
             cornerRadius={3}
             padAngle={0.005}
+            pieSortValues={() => -1}
           >
             {(pie) => (
               <>
