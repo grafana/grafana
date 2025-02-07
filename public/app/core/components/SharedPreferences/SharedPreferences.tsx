@@ -92,6 +92,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
       allowedExtraThemes.push('gildedgrove');
       allowedExtraThemes.push('sapphiredusk');
       allowedExtraThemes.push('tron');
+      allowedExtraThemes.push('gloom');
     }
 
     this.themeOptions = getBuiltInThemes(allowedExtraThemes).map((theme) => ({
