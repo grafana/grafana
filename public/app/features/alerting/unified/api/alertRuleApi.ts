@@ -118,7 +118,6 @@ export const alertRuleApi = alertingApi.injectEndpoints({
         data: {
           rule: {
             grafana_alert: {
-              version: 2,
               data: alertQueries,
               condition: condition,
               no_data_state: 'Alerting',
