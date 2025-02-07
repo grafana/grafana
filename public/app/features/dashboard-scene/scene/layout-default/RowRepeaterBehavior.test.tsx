@@ -60,7 +60,7 @@ describe('RowRepeaterBehavior', () => {
       expect(row1.state.actions).toBeDefined();
 
       const gridItemRow1 = row1.state.children[0] as SceneGridItem;
-      expect(gridItemRow1.state.key!).toBe(joinCloneKeys(row1.state.key!, 'griditem-1'));
+      expect(gridItemRow1.state.key!).toBe(joinCloneKeys(row1.state.key!, 'grid-item-1'));
       expect(gridItemRow1.state.body?.state.key).toBe(joinCloneKeys(gridItemRow1.state.key!, 'canvas-1'));
 
       const row2 = grid.state.children[2] as SceneGridRow;
@@ -70,7 +70,7 @@ describe('RowRepeaterBehavior', () => {
       expect(row2.state.actions).toBeUndefined();
 
       const gridItemRow2 = row2.state.children[0] as SceneGridItem;
-      expect(gridItemRow2.state.key!).toBe(joinCloneKeys(row2.state.key!, 'griditem-1'));
+      expect(gridItemRow2.state.key!).toBe(joinCloneKeys(row2.state.key!, 'grid-item-1'));
       expect(gridItemRow2.state.body?.state.key).toBe(joinCloneKeys(gridItemRow2.state.key!, 'canvas-1'));
     });
 
@@ -98,7 +98,7 @@ describe('RowRepeaterBehavior', () => {
             y: 16,
             width: 24,
             height: 5,
-            key: 'griditem-4',
+            key: 'grid-item-4',
             body: new SceneCanvasText({
               text: 'new panel',
             }),
@@ -235,7 +235,7 @@ function buildScene(
         $behaviors: [repeatBehavior],
         children: [
           new SceneGridItem({
-            key: 'griditem-1',
+            key: 'grid-item-1',
             x: 0,
             y: 11,
             width: 24,
@@ -256,7 +256,7 @@ function buildScene(
         title: 'Row at the bottom',
         children: [
           new SceneGridItem({
-            key: 'griditem-2',
+            key: 'grid-item-2',
             x: 0,
             y: 17,
             body: new SceneCanvasText({
@@ -265,7 +265,7 @@ function buildScene(
             }),
           }),
           new SceneGridItem({
-            key: 'griditem-3',
+            key: 'grid-item-3',
             x: 0,
             y: 25,
             body: new SceneCanvasText({

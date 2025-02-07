@@ -128,8 +128,6 @@ export interface DashboardSceneState extends SceneObjectState {
   editPanel?: PanelEditor;
   /** Scene object that handles the current drawer or modal */
   overlay?: SceneObject;
-  /** The dashboard doesn't have panels */
-  isEmpty?: boolean;
   /** Kiosk mode */
   kioskMode?: KioskMode;
   /** Share view */
@@ -504,7 +502,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   }
 
   public duplicatePanel(vizPanel: VizPanel) {
-    getLayoutManagerFor(vizPanel).duplicatePanel(vizPanel);
+    getLayoutManagerFor(vizPanel).duplicatePanel?.(vizPanel);
   }
 
   public copyPanel(vizPanel: VizPanel) {
@@ -538,7 +536,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   }
 
   public removePanel(panel: VizPanel) {
-    getLayoutManagerFor(panel).removePanel(panel);
+    getLayoutManagerFor(panel).removePanel?.(panel);
   }
 
   public unlinkLibraryPanel(panel: VizPanel) {

@@ -97,12 +97,7 @@ import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
 import { DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 import { preserveDashboardSceneStateInLocalStorage } from '../utils/dashboardSessionState';
-import {
-  getDashboardSceneFor,
-  getGridItemKeyForPanelId,
-  getIntervalsFromQueryString,
-  getVizPanelKeyForPanelId,
-} from '../utils/utils';
+import { getGridItemKeyForPanelId, getIntervalsFromQueryString, getVizPanelKeyForPanelId } from '../utils/utils';
 
 import { GRID_ROW_HEIGHT } from './const';
 import { SnapshotVariable } from './custom-variables/SnapshotVariable';
@@ -114,6 +109,7 @@ import {
   transformVariableHideToEnumV1,
   transformVariableRefreshToEnumV1,
 } from './transformToV1TypesUtils';
+import { LEGACY_STRING_VALUE_KEY } from './transformToV2TypesUtils';
 
 const DEFAULT_DATASOURCE = 'default';
 
@@ -265,7 +261,6 @@ function createLayoutManager(dashboard: DashboardV2Spec): DashboardLayoutManager
       grid: new SceneGridLayout({
         isLazy: !(dashboard.preload || contextSrv.user.authenticatedBy === 'render'),
         children: createSceneGridLayoutForItems(dashboard.layout, dashboard.elements),
-        $behaviors: [trackIfEmpty],
       }),
     });
   } else if (dashboard.layout.kind === 'RowsLayout') {
@@ -487,20 +482,6 @@ function buildVizPanel(panel: PanelKind): VizPanel {
   }
 
   return new VizPanel(vizPanelState);
-}
-
-function trackIfEmpty(grid: SceneGridLayout) {
-  getDashboardSceneFor(grid).setState({ isEmpty: grid.state.children.length === 0 });
-
-  const sub = grid.subscribeToState((n, p) => {
-    if (n.children.length !== p.children.length || n.children !== p.children) {
-      getDashboardSceneFor(grid).setState({ isEmpty: n.children.length === 0 });
-    }
-  });
-
-  return () => {
-    sub.unsubscribe();
-  };
 }
 
 function getPanelDataSource(panel: PanelKind): DataSourceRef | undefined {
@@ -735,12 +716,12 @@ function createSceneVariableFromVariableModel(variable: TypedVariableModelV2): S
 }
 
 function getDataQueryForVariable(variable: QueryVariableKind) {
-  return typeof variable.spec.query !== 'string'
-    ? {
+  return LEGACY_STRING_VALUE_KEY in variable.spec.query.spec
+    ? (variable.spec.query.spec[LEGACY_STRING_VALUE_KEY] ?? '')
+    : {
         ...variable.spec.query.spec,
         refId: variable.spec.query.spec.refId ?? 'A',
-      }
-    : (variable.spec.query ?? '');
+      };
 }
 
 export function getCurrentValueForOldIntervalModel(variable: IntervalVariableKind, intervals: string[]): string {
