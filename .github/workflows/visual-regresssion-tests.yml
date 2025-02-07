@@ -28,6 +28,8 @@ jobs:
         with:
           node-version: 20
           cache: 'yarn'
+      - name: Install dependencies
+        run: yarn install --immutable
       - name: Install Playwright Browsers
         run: yarn exec playwright install --with-deps
       - name: Run Playwright tests
