@@ -78,35 +78,33 @@ func (s *deprecationStep) ID() string {
 	return "deprecation"
 }
 
-func (s *deprecationStep) Run(ctx context.Context, _ *advisor.CheckSpec, items []any) ([]advisor.CheckReportError, error) {
-	errs := []advisor.CheckReportError{}
-	for _, i := range items {
-		p, ok := i.(pluginstore.Plugin)
-		if !ok {
-			return nil, fmt.Errorf("invalid item type %T", i)
-		}
-
-		// Skip if it's a core plugin
-		if p.IsCorePlugin() {
-			continue
-		}
-
-		// Check if plugin is deprecated
-		i, err := s.PluginRepo.PluginInfo(ctx, p.ID)
-		if err != nil {
-			continue
-		}
-		if i.Status == "deprecated" {
-			errs = append(errs, checks.NewCheckReportError(
-				advisor.CheckReportErrorSeverityHigh,
-				fmt.Sprintf("Plugin deprecated: %s", p.ID),
-				"Check the <a href='https://grafana.com/legal/plugin-deprecation/#a-plugin-i-use-is-deprecated-what-should-i-do' target=_blank>documentation</a> for recommended steps.",
-				s.ID(),
-				p.ID,
-			))
-		}
+func (s *deprecationStep) Run(ctx context.Context, _ *advisor.CheckSpec, it any) (*advisor.CheckReportError, error) {
+	p, ok := it.(pluginstore.Plugin)
+	if !ok {
+		return nil, fmt.Errorf("invalid item type %T", it)
 	}
-	return errs, nil
+
+	// Skip if it's a core plugin
+	if p.IsCorePlugin() {
+		return nil, nil
+	}
+
+	// Check if plugin is deprecated
+	i, err := s.PluginRepo.PluginInfo(ctx, p.ID)
+	if err != nil {
+		// Unable to check deprecation status
+		return nil, nil
+	}
+	if i.Status == "deprecated" {
+		return checks.NewCheckReportError(
+			advisor.CheckReportErrorSeverityHigh,
+			fmt.Sprintf("Plugin deprecated: %s", p.ID),
+			"Check the <a href='https://grafana.com/legal/plugin-deprecation/#a-plugin-i-use-is-deprecated-what-should-i-do' target=_blank>documentation</a> for recommended steps.",
+			s.ID(),
+			p.ID,
+		), nil
+	}
+	return nil, nil
 }
 
 type updateStep struct {
@@ -127,44 +125,42 @@ func (s *updateStep) ID() string {
 	return "update"
 }
 
-func (s *updateStep) Run(ctx context.Context, _ *advisor.CheckSpec, items []any) ([]advisor.CheckReportError, error) {
-	errs := []advisor.CheckReportError{}
-	for _, i := range items {
-		p, ok := i.(pluginstore.Plugin)
-		if !ok {
-			return nil, fmt.Errorf("invalid item type %T", i)
-		}
-
-		// Skip if it's a core plugin
-		if p.IsCorePlugin() {
-			continue
-		}
-
-		// Skip if it's managed or pinned
-		if s.isManaged(ctx, p.ID) || s.PluginPreinstall.IsPinned(p.ID) {
-			continue
-		}
-
-		// Check if plugin has a newer version available
-		compatOpts := repo.NewCompatOpts(services.GrafanaVersion, sysruntime.GOOS, sysruntime.GOARCH)
-		info, err := s.PluginRepo.GetPluginArchiveInfo(ctx, p.ID, "", compatOpts)
-		if err != nil {
-			continue
-		}
-		if hasUpdate(p, info) {
-			errs = append(errs, checks.NewCheckReportError(
-				advisor.CheckReportErrorSeverityLow,
-				fmt.Sprintf("New version available for %s", p.ID),
-				fmt.Sprintf(
-					"Go to the <a href='/plugins/%s?page=version-history'>plugin admin page</a>"+
-						" and upgrade to the latest version.", p.ID),
-				s.ID(),
-				p.ID,
-			))
-		}
+func (s *updateStep) Run(ctx context.Context, _ *advisor.CheckSpec, i any) (*advisor.CheckReportError, error) {
+	p, ok := i.(pluginstore.Plugin)
+	if !ok {
+		return nil, fmt.Errorf("invalid item type %T", i)
 	}
 
-	return errs, nil
+	// Skip if it's a core plugin
+	if p.IsCorePlugin() {
+		return nil, nil
+	}
+
+	// Skip if it's managed or pinned
+	if s.isManaged(ctx, p.ID) || s.PluginPreinstall.IsPinned(p.ID) {
+		return nil, nil
+	}
+
+	// Check if plugin has a newer version available
+	compatOpts := repo.NewCompatOpts(services.GrafanaVersion, sysruntime.GOOS, sysruntime.GOARCH)
+	info, err := s.PluginRepo.GetPluginArchiveInfo(ctx, p.ID, "", compatOpts)
+	if err != nil {
+		// Unable to check updates
+		return nil, nil
+	}
+	if hasUpdate(p, info) {
+		return checks.NewCheckReportError(
+			advisor.CheckReportErrorSeverityLow,
+			fmt.Sprintf("New version available for %s", p.ID),
+			fmt.Sprintf(
+				"Go to the <a href='/plugins/%s?page=version-history'>plugin admin page</a>"+
+					" and upgrade to the latest version.", p.ID),
+			s.ID(),
+			p.ID,
+		), nil
+	}
+
+	return nil, nil
 }
 
 func hasUpdate(current pluginstore.Plugin, latest *repo.PluginArchiveInfo) bool {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sync"
 
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/resource"
@@ -83,20 +84,17 @@ func processCheck(ctx context.Context, client resource.Client, obj resource.Obje
 	}
 	// Run the steps
 	steps := check.Steps()
-	errs := []advisorv0alpha1.CheckReportError{}
-	for _, step := range steps {
-		stepErrs, err := step.Run(ctx, &c.Spec, items)
-		if err != nil {
-			setErr := setStatusAnnotation(ctx, client, obj, "error")
-			if setErr != nil {
-				return setErr
-			}
-			return fmt.Errorf("error running step %s: %w", step.Title(), err)
+	reportErrors, err := runStepsInParallel(ctx, &c.Spec, steps, items)
+	if err != nil {
+		setErr := setStatusAnnotation(ctx, client, obj, "error")
+		if setErr != nil {
+			return setErr
 		}
-		errs = append(errs, stepErrs...)
+		return fmt.Errorf("error running steps: %w", err)
 	}
+
 	report := &advisorv0alpha1.CheckV0alpha1StatusReport{
-		Errors: errs,
+		Errors: reportErrors,
 		Count:  int64(len(items)),
 	}
 	err = setStatusAnnotation(ctx, client, obj, "processed")
@@ -110,4 +108,36 @@ func processCheck(ctx context.Context, client resource.Client, obj resource.Obje
 			Value:     *report,
 		}},
 	}, resource.PatchOptions{}, obj)
+}
+
+func runStepsInParallel(ctx context.Context, spec *advisorv0alpha1.CheckSpec, steps []checks.Step, items []any) ([]advisorv0alpha1.CheckReportError, error) {
+	reportErrs := []advisorv0alpha1.CheckReportError{}
+	var internalErr error
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+	// Avoid too many concurrent requests
+	limit := make(chan struct{}, 10)
+
+	for _, step := range steps {
+		for _, item := range items {
+			wg.Add(1)
+			limit <- struct{}{}
+			go func(step checks.Step, item any) {
+				defer wg.Done()
+				defer func() { <-limit }()
+				stepErr, err := step.Run(ctx, spec, item)
+				mu.Lock()
+				defer mu.Unlock()
+				if err != nil {
+					internalErr = fmt.Errorf("error running step %s: %w", step.ID(), err)
+					return
+				}
+				if stepErr != nil {
+					reportErrs = append(reportErrs, *stepErr)
+				}
+			}(step, item)
+		}
+	}
+	wg.Wait()
+	return reportErrs, internalErr
 }

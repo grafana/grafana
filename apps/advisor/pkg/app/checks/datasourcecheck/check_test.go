@@ -35,9 +35,13 @@ func TestCheck_Run(t *testing.T) {
 		assert.NoError(t, err)
 		errs := []advisor.CheckReportError{}
 		for _, step := range check.Steps() {
-			stepErrs, err := step.Run(ctx, &advisor.CheckSpec{}, items)
-			assert.NoError(t, err)
-			errs = append(errs, stepErrs...)
+			for _, item := range items {
+				stepErr, err := step.Run(ctx, &advisor.CheckSpec{}, item)
+				assert.NoError(t, err)
+				if stepErr != nil {
+					errs = append(errs, *stepErr)
+				}
+			}
 		}
 
 		assert.NoError(t, err)
@@ -65,9 +69,13 @@ func TestCheck_Run(t *testing.T) {
 		assert.NoError(t, err)
 		errs := []advisor.CheckReportError{}
 		for _, step := range check.Steps() {
-			stepErrs, err := step.Run(ctx, &advisor.CheckSpec{}, items)
-			assert.NoError(t, err)
-			errs = append(errs, stepErrs...)
+			for _, item := range items {
+				stepErr, err := step.Run(ctx, &advisor.CheckSpec{}, item)
+				assert.NoError(t, err)
+				if stepErr != nil {
+					errs = append(errs, *stepErr)
+				}
+			}
 		}
 
 		assert.NoError(t, err)
@@ -96,9 +104,13 @@ func TestCheck_Run(t *testing.T) {
 		assert.NoError(t, err)
 		errs := []advisor.CheckReportError{}
 		for _, step := range check.Steps() {
-			stepErrs, err := step.Run(ctx, &advisor.CheckSpec{}, items)
-			assert.NoError(t, err)
-			errs = append(errs, stepErrs...)
+			for _, item := range items {
+				stepErr, err := step.Run(ctx, &advisor.CheckSpec{}, item)
+				assert.NoError(t, err)
+				if stepErr != nil {
+					errs = append(errs, *stepErr)
+				}
+			}
 		}
 
 		assert.NoError(t, err)
