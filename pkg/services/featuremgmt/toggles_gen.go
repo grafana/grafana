@@ -47,10 +47,6 @@ const (
 	// Correlations page
 	FlagCorrelations = "correlations"
 
-	// FlagAutoMigrateGraphPanel
-	// Migrate old graph panel to supported time series panel - broken out from autoMigrateOldPanels to enable granular tracking
-	FlagAutoMigrateGraphPanel = "autoMigrateGraphPanel"
-
 	// FlagAutoMigrateTablePanel
 	// Migrate old table panel to supported table panel - broken out from autoMigrateOldPanels to enable granular tracking
 	FlagAutoMigrateTablePanel = "autoMigrateTablePanel"

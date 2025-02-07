@@ -580,7 +580,8 @@
       "metadata": {
         "name": "autoMigrateGraphPanel",
         "resourceVersion": "1718727528075",
-        "creationTimestamp": "2024-02-08T22:00:48Z"
+        "creationTimestamp": "2024-02-08T22:00:48Z",
+        "deletionTimestamp": "2025-02-07T09:47:00Z"
       },
       "spec": {
         "description": "Migrate old graph panel to supported time series panel - broken out from autoMigrateOldPanels to enable granular tracking",

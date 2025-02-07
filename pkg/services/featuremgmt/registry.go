@@ -93,13 +93,6 @@ var (
 			AllowSelfServe: true,
 		},
 		{
-			Name:         "autoMigrateGraphPanel",
-			Description:  "Migrate old graph panel to supported time series panel - broken out from autoMigrateOldPanels to enable granular tracking",
-			Stage:        FeatureStagePublicPreview,
-			FrontendOnly: true,
-			Owner:        grafanaDatavizSquad,
-		},
-		{
 			Name:         "autoMigrateTablePanel",
 			Description:  "Migrate old table panel to supported table panel - broken out from autoMigrateOldPanels to enable granular tracking",
 			Stage:        FeatureStagePublicPreview,
