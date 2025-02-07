@@ -77,6 +77,8 @@ type RepositorySpec struct {
 	// ReadOnly  repository does not allow any write commands
 	ReadOnly bool `json:"readOnly"`
 
+	// Sync settings -- how values are pulled from the repository into grafana
+	Sync SyncOptions `json:"sync"`
 
 	// The repository type.  When selected oneOf the values below should be non-nil
 	Type RepositoryType `json:"type"`
@@ -93,6 +95,39 @@ type RepositorySpec struct {
 	// Mutually exclusive with local | s3 | github.
 	// TODO: github or just 'git'??
 	GitHub *GitHubRepositoryConfig `json:"github,omitempty"`
+}
+
+// SyncTargetType defines where we want all values to resolve
+// +enum
+type SyncTargetType string
+
+// RepositoryType values
+const (
+	// Resources are saved in the global context
+	// Only one repository may specify the `instance` target
+	// When this exists, the UI will promote writing to the instance repo
+	// rather than the grafana database (where possible)
+	SyncTargetTypeInstance SyncTargetType = "instance"
+
+	// Resources will be saved into a folder managed by this repository
+	// The folder k8s name will be the same as the repository k8s name
+	// It will contain a copy of everything from the remote
+	SyncTargetTypeFolder SyncTargetType = "folder"
+)
+
+type SyncOptions struct {
+	// Enabled must be saved as true before any sync job will run
+	Enabled bool `json:"enabled"`
+
+	// Where values should be saved
+	Target SyncTargetType `json:"target"`
+
+	// Shared folder target
+	// The value is a reference to the Kubernetes metadata name of the folder in the same namespace
+	// Folder string `json:"folder,omitempty"`
+
+	// When non-zero, the sync will run periodically
+	IntervalSeconds int64 `json:"intervalSeconds,omitempty"`
 }
 
 // The status of a Repository.
