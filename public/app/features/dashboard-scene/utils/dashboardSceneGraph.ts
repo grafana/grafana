@@ -5,7 +5,7 @@ import { DashboardScene } from '../scene/DashboardScene';
 import { VizPanelLinks } from '../scene/PanelLinks';
 
 import { isClonedKey } from './clone';
-import { getLayoutManagerFor, getPanelIdForVizPanel } from './utils';
+import { getDashboardSceneFor, getLayoutManagerFor, getPanelIdForVizPanel } from './utils';
 
 function getTimePicker(scene: DashboardScene) {
   return scene.state.controls?.state.timePicker;
@@ -62,6 +62,14 @@ function getDataLayers(scene: DashboardScene): DashboardDataLayerSet {
   return data;
 }
 
+function getAllSelectedObjects(scene: SceneObject): SceneObject[] {
+  return (
+    getDashboardSceneFor(scene)
+      .state.editPane.state.selection?.getSelectionEntries()
+      .map(([, ref]) => ref.resolve()) ?? []
+  );
+}
+
 export function getCursorSync(scene: DashboardScene) {
   const cursorSync = scene.state.$behaviors?.find((b) => b instanceof behaviors.CursorSync);
 
@@ -78,6 +86,7 @@ export const dashboardSceneGraph = {
   getPanelLinks,
   getVizPanels,
   getDataLayers,
+  getAllSelectedObjects,
   getCursorSync,
   getLayoutManagerFor,
   getNextPanelId,

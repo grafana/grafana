@@ -30,7 +30,7 @@ export interface DashboardV2Spec {
 	variables: VariableKind[];
 	elements: Record<string, Element>;
 	annotations: AnnotationQueryKind[];
-	layout: GridLayoutKind;
+	layout: GridLayoutKind | RowsLayoutKind | ResponsiveGridLayoutKind;
 	// Plugins only. The version of the dashboard installed together with the plugin.
 	// This is used to determine if the dashboard should be updated when the plugin is updated.
 	revision?: number;
@@ -710,6 +710,16 @@ export const defaultRowRepeatOptions = (): RowRepeatOptions => ({
 	value: "",
 });
 
+export interface ResponsiveGridRepeatOptions {
+	mode: "variable";
+	value: string;
+}
+
+export const defaultResponsiveGridRepeatOptions = (): ResponsiveGridRepeatOptions => ({
+	mode: RepeatMode,
+	value: "",
+});
+
 export interface GridLayoutItemSpec {
 	x: number;
 	y: number;
@@ -752,6 +762,7 @@ export interface GridLayoutRowSpec {
 	y: number;
 	collapsed: boolean;
 	title: string;
+	// Grid items in the row will have their Y value be relative to the rows Y value. This means a panel positioned at Y: 0 in a row with Y: 10 will be positioned at Y: 11 (row header has a heigh of 1) in the dashboard.
 	elements: GridLayoutItemKind[];
 	repeat?: RowRepeatOptions;
 }
@@ -779,6 +790,86 @@ export interface GridLayoutKind {
 export const defaultGridLayoutKind = (): GridLayoutKind => ({
 	kind: "GridLayout",
 	spec: defaultGridLayoutSpec(),
+});
+
+export interface RowsLayoutKind {
+	kind: "RowsLayout";
+	spec: RowsLayoutSpec;
+}
+
+export const defaultRowsLayoutKind = (): RowsLayoutKind => ({
+	kind: "RowsLayout",
+	spec: defaultRowsLayoutSpec(),
+});
+
+export interface RowsLayoutSpec {
+	rows: RowsLayoutRowKind[];
+}
+
+export const defaultRowsLayoutSpec = (): RowsLayoutSpec => ({
+	rows: [],
+});
+
+export interface RowsLayoutRowKind {
+	kind: "RowsLayoutRow";
+	spec: RowsLayoutRowSpec;
+}
+
+export const defaultRowsLayoutRowKind = (): RowsLayoutRowKind => ({
+	kind: "RowsLayoutRow",
+	spec: defaultRowsLayoutRowSpec(),
+});
+
+export interface RowsLayoutRowSpec {
+	title?: string;
+	collapsed: boolean;
+	repeat?: RowRepeatOptions;
+	layout: GridLayoutKind | ResponsiveGridLayoutKind;
+}
+
+export const defaultRowsLayoutRowSpec = (): RowsLayoutRowSpec => ({
+	collapsed: false,
+	layout: defaultGridLayoutKind(),
+});
+
+export interface ResponsiveGridLayoutKind {
+	kind: "ResponsiveGridLayout";
+	spec: ResponsiveGridLayoutSpec;
+}
+
+export const defaultResponsiveGridLayoutKind = (): ResponsiveGridLayoutKind => ({
+	kind: "ResponsiveGridLayout",
+	spec: defaultResponsiveGridLayoutSpec(),
+});
+
+export interface ResponsiveGridLayoutSpec {
+	row: string;
+	col: string;
+	items: ResponsiveGridLayoutItemKind[];
+}
+
+export const defaultResponsiveGridLayoutSpec = (): ResponsiveGridLayoutSpec => ({
+	row: "",
+	col: "",
+	items: [],
+});
+
+export interface ResponsiveGridLayoutItemKind {
+	kind: "ResponsiveGridLayoutItem";
+	spec: ResponsiveGridLayoutItemSpec;
+}
+
+export const defaultResponsiveGridLayoutItemKind = (): ResponsiveGridLayoutItemKind => ({
+	kind: "ResponsiveGridLayoutItem",
+	spec: defaultResponsiveGridLayoutItemSpec(),
+});
+
+export interface ResponsiveGridLayoutItemSpec {
+	element: ElementReference;
+}
+
+export const defaultResponsiveGridLayoutItemSpec = (): ResponsiveGridLayoutItemSpec => ({
+	element: defaultElementReference(),
 });
 
 export interface PanelSpec {

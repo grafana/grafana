@@ -199,6 +199,25 @@ export function ToolbarActions({ dashboard }: Props) {
       condition: isEditingAndShowingDashboard,
       render: () => (
         <Button
+          key="add-tab-button"
+          variant="secondary"
+          size="sm"
+          icon="plus"
+          fill="text"
+          onClick={() => {
+            dashboard.onCreateNewTab();
+          }}
+          data-testid={selectors.components.PageToolbar.itemButton('add_tab')}
+        >
+          <Trans i18nKey="dashboard.toolbar.add-tab">Tab</Trans>
+        </Button>
+      ),
+    });
+    leftActions.push({
+      group: 'add-panel',
+      condition: isEditingAndShowingDashboard,
+      render: () => (
+        <Button
           key="add-panel-lib"
           variant="secondary"
           size="sm"

@@ -13,7 +13,6 @@ type GitHubRepositoryConfigApplyConfiguration struct {
 	Token                     *string `json:"token,omitempty"`
 	BranchWorkflow            *bool   `json:"branchWorkflow,omitempty"`
 	GenerateDashboardPreviews *bool   `json:"generateDashboardPreviews,omitempty"`
-	PullRequestLinter         *bool   `json:"pullRequestLinter,omitempty"`
 }
 
 // GitHubRepositoryConfigApplyConfiguration constructs a declarative configuration of the GitHubRepositoryConfig type for use with
@@ -67,13 +66,5 @@ func (b *GitHubRepositoryConfigApplyConfiguration) WithBranchWorkflow(value bool
 // If called multiple times, the GenerateDashboardPreviews field is set to the value of the last call.
 func (b *GitHubRepositoryConfigApplyConfiguration) WithGenerateDashboardPreviews(value bool) *GitHubRepositoryConfigApplyConfiguration {
 	b.GenerateDashboardPreviews = &value
-	return b
-}
-
-// WithPullRequestLinter sets the PullRequestLinter field in the declarative configuration to the given value
-// and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the PullRequestLinter field is set to the value of the last call.
-func (b *GitHubRepositoryConfigApplyConfiguration) WithPullRequestLinter(value bool) *GitHubRepositoryConfigApplyConfiguration {
-	b.PullRequestLinter = &value
 	return b
 }

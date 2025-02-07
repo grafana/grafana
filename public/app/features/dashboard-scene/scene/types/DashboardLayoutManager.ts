@@ -25,23 +25,33 @@ export interface DashboardLayoutManager<S = {}> extends SceneObject {
    * Remove an element / panel
    * @param panel
    */
-  removePanel(panel: VizPanel): void;
+  removePanel?(panel: VizPanel): void;
 
   /**
    * Creates a copy of an existing element and adds it to the layout
    * @param panel
    */
-  duplicatePanel(panel: VizPanel): void;
+  duplicatePanel?(panel: VizPanel): void;
 
   /**
-   * getVizPanels
+   * Gets all the viz panels in the layout
    */
   getVizPanels(): VizPanel[];
+
+  /**
+   * Check if the layout has viz panels
+   */
+  hasVizPanels(): boolean;
 
   /**
    * Add row
    */
   addNewRow(): void;
+
+  /**
+   * Add tab
+   */
+  addNewTab(): void;
 
   /**
    * Notify the layout manager that the edit mode has changed
