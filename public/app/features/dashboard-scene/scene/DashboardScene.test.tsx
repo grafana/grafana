@@ -48,7 +48,6 @@ jest.mock('@grafana/runtime', () => ({
   },
   config: {
     ...jest.requireActual('@grafana/runtime').config,
-    angularSupportEnabled: true,
     panels: {
       'briangann-datatable-panel': {
         id: 'briangann-datatable-panel',
