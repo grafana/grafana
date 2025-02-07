@@ -35,6 +35,11 @@ export class ResponsiveGridLayoutManager
 
   public readonly descriptor = ResponsiveGridLayoutManager.descriptor;
 
+  public static defaultCSS = {
+    templateColumns: 'repeat(auto-fit, minmax(400px, auto))',
+    autoRows: 'minmax(300px, auto)',
+  };
+
   public constructor(state: ResponsiveGridLayoutManagerState) {
     super(state);
 
@@ -118,8 +123,8 @@ export class ResponsiveGridLayoutManager
     return new ResponsiveGridLayoutManager({
       layout: new SceneCSSGridLayout({
         children: [],
-        templateColumns: 'repeat(auto-fit, minmax(400px, auto))',
-        autoRows: 'minmax(300px, auto)',
+        templateColumns: ResponsiveGridLayoutManager.defaultCSS.templateColumns,
+        autoRows: ResponsiveGridLayoutManager.defaultCSS.autoRows,
       }),
     });
   }
