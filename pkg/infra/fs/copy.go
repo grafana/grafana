@@ -18,8 +18,7 @@ func CopyFile(src, dst string) (err error) {
 	}
 	sfi, err := os.Stat(src)
 	if err != nil {
-		err = fmt.Errorf("couldn't stat source file %q: %w", absSrc, err)
-		return
+		return fmt.Errorf("couldn't stat source file %q: %w", absSrc, err)
 	}
 	if !sfi.Mode().IsRegular() {
 		// Cannot copy non-regular files (e.g., directories, symlinks, devices, etc.)
@@ -35,8 +34,7 @@ func CopyFile(src, dst string) (err error) {
 		return
 	}
 
-	var dfi os.FileInfo
-	dfi, err = os.Stat(dst)
+	dfi, err := os.Stat(dst)
 	if err != nil {
 		if !os.IsNotExist(err) {
 			return
@@ -45,13 +43,15 @@ func CopyFile(src, dst string) (err error) {
 		if !(dfi.Mode().IsRegular()) {
 			return fmt.Errorf("non-regular destination file %s (%q)", dfi.Name(), dfi.Mode().String())
 		}
+		// If they are the same file they share the same inode and permissions.
 		if os.SameFile(sfi, dfi) {
-			return copyPermissions(sfi.Name(), dfi.Name())
+			return nil
 		}
 	}
 
+	// If the hard link succeeds both share same inode and permissions.
 	if err = os.Link(src, dst); err == nil {
-		return copyPermissions(src, dst)
+		return nil
 	}
 
 	err = copyFileContents(src, dst)
@@ -154,12 +154,6 @@ func CopyRecursive(src, dst string) error {
 			}
 		default:
 			if err := CopyFile(srcPath, dstPath); err != nil {
-				return err
-			}
-		}
-
-		if srcFi.Mode()&os.ModeSymlink != 0 {
-			if err := os.Chmod(dstPath, srcFi.Mode()); err != nil {
 				return err
 			}
 		}
