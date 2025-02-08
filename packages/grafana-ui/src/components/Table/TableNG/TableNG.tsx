@@ -447,8 +447,6 @@ export function TableNG(props: TableNGProps) {
 
   // Filter rows
   const filteredRows = useMemo(() => {
-    // reset pagination
-    setPage(0);
     const filterValues = Object.entries(filter);
     if (filterValues.length === 0) {
       // reset cross filter order
@@ -489,7 +487,6 @@ export function TableNG(props: TableNGProps) {
   }, [rows, filter, sortedRows, props.data.fields]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Paginated rows
-  // TODO consolidate all of this into a useMemo with proper deps returning a pagination object
   const numRows = filteredRows.length;
   let headerCellHeight = MAX_CELL_HEIGHT;
   if (noHeader) {
@@ -498,26 +495,21 @@ export function TableNG(props: TableNGProps) {
     headerCellHeight = headerCellRefs.current[Object.keys(headerCellRefs.current)[0]].getBoundingClientRect().height;
   }
   const rowsPerPage = Math.floor((height - headerCellHeight - SCROLL_BAR_WIDTH - paginationHeight) / defaultRowHeight);
-  const itemsRangeStart = page * rowsPerPage + 1;
-  let itemsRangeEnd = itemsRangeStart + rowsPerPage - 1;
-  if (itemsRangeEnd > numRows) {
-    itemsRangeEnd = numRows;
+  const numberOfPages = Math.ceil(numRows / rowsPerPage);
+  if (page > numberOfPages) {
+    // resets pagination to end
+    setPage(numberOfPages - 1);
   }
-  const displayedEnd = itemsRangeEnd < numRows ? itemsRangeEnd : numRows;
+  const itemsRangeStart = page * rowsPerPage + 1;
+  let displayedEnd = itemsRangeStart + rowsPerPage - 1;
+  if (displayedEnd > numRows) {
+    displayedEnd = numRows;
+  }
   const smallPagination = width < SMALL_PAGINATION_LIMIT;
 
-  const numberOfPages = useMemo(() => {
-    const totalPages = Math.ceil(filteredRows.length / rowsPerPage);
-    if (page > totalPages) {
-      // resets pagination to end
-      setPage(totalPages - 1);
-    }
-    return totalPages;
-  }, [filteredRows, rowsPerPage]); // eslint-disable-line react-hooks/exhaustive-deps
-
   const paginatedRows = useMemo(() => {
-    // TODO improve this to be more robust
-    return filteredRows.slice(0 + page * rowsPerPage, 0 + page * rowsPerPage + rowsPerPage);
+    const pageOffset = page * rowsPerPage;
+    return filteredRows.slice(pageOffset, pageOffset + rowsPerPage);
   }, [rows, filteredRows, page, rowsPerPage]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useMemo(() => {
