@@ -18,8 +18,7 @@ func CopyFile(src, dst string) (err error) {
 	}
 	sfi, err := os.Stat(src)
 	if err != nil {
-		err = fmt.Errorf("couldn't stat source file %q: %w", absSrc, err)
-		return
+		return fmt.Errorf("couldn't stat source file %q: %w", absSrc, err)
 	}
 	if !sfi.Mode().IsRegular() {
 		// Cannot copy non-regular files (e.g., directories, symlinks, devices, etc.)
@@ -35,27 +34,27 @@ func CopyFile(src, dst string) (err error) {
 		return
 	}
 
-	var dfi os.FileInfo
-	dfi, err = os.Stat(dst)
-	if err != nil {
-		if !os.IsNotExist(err) {
-			return
-		}
-	} else {
+	dfi, err := os.Stat(dst)
+	if err == nil {
 		if !(dfi.Mode().IsRegular()) {
 			return fmt.Errorf("non-regular destination file %s (%q)", dfi.Name(), dfi.Mode().String())
 		}
 		if os.SameFile(sfi, dfi) {
-			return copyPermissions(sfi.Name(), dfi.Name())
+			return copyPermissions(src, dst)
 		}
+	} else if !os.IsNotExist(err) {
+		return err
 	}
 
 	if err = os.Link(src, dst); err == nil {
 		return copyPermissions(src, dst)
 	}
 
-	err = copyFileContents(src, dst)
-	return err
+	if err = copyFileContents(src, dst); err != nil {
+		return err
+	}
+
+	return copyPermissions(src, dst)
 }
 
 // copyFileContents copies the contents of the file named src to the file named
@@ -98,7 +97,7 @@ func copyFileContents(src, dst string) (err error) {
 }
 
 func copyPermissions(src, dst string) error {
-	sfi, err := os.Lstat(src)
+	sfi, err := os.Stat(src)
 	if err != nil {
 		return err
 	}
@@ -154,12 +153,6 @@ func CopyRecursive(src, dst string) error {
 			}
 		default:
 			if err := CopyFile(srcPath, dstPath); err != nil {
-				return err
-			}
-		}
-
-		if srcFi.Mode()&os.ModeSymlink != 0 {
-			if err := os.Chmod(dstPath, srcFi.Mode()); err != nil {
 				return err
 			}
 		}
