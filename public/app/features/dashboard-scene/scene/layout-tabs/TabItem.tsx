@@ -4,6 +4,7 @@ import { SceneObjectState, SceneObjectBase, sceneGraph, VariableDependencyConfig
 import { t } from 'app/core/internationalization';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 
+import { getDefaultVizPanel } from '../../utils/utils';
 import { ResponsiveGridLayoutManager } from '../layout-responsive-grid/ResponsiveGridLayoutManager';
 import { BulkActionElement } from '../types/BulkActionElement';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
@@ -39,6 +40,18 @@ export class TabItem
       title: state?.title ?? t('dashboard.tabs-layout.tab.new', 'New tab'),
       layout: state?.layout ?? ResponsiveGridLayoutManager.createEmpty(),
     });
+
+    this.addActivationHandler(() => this._activationHandler());
+  }
+
+  private _activationHandler() {
+    this._subs.add(
+      this._getParentLayout().subscribeToState((newState, prevState) => {
+        if (newState.tabs !== prevState.tabs || newState.currentTab !== prevState.currentTab) {
+          this.forceRender();
+        }
+      })
+    );
   }
 
   public getLayout(): DashboardLayoutManager {
@@ -57,10 +70,6 @@ export class TabItem
     return renderActions(this);
   }
 
-  public getParentLayout(): TabsLayoutManager {
-    return sceneGraph.getAncestor(this, TabsLayoutManager);
-  }
-
   public onDelete() {
     const layout = sceneGraph.getAncestor(this, TabsLayoutManager);
     layout.removeTab(this);
@@ -70,11 +79,47 @@ export class TabItem
     return new TabItems(items.filter((item) => item instanceof TabItem));
   }
 
+  public onAddPanel(panel = getDefaultVizPanel()) {
+    this.getLayout().addPanel(panel);
+  }
+
+  public onAddTabBefore() {
+    this._getParentLayout().addTabBefore(this);
+  }
+
+  public onAddTabAfter() {
+    this._getParentLayout().addTabAfter(this);
+  }
+
+  public onMoveLeft() {
+    this._getParentLayout().moveTabLeft(this);
+  }
+
+  public onMoveRight() {
+    this._getParentLayout().moveTabRight(this);
+  }
+
+  public isCurrentTab(): boolean {
+    return this._getParentLayout().isCurrentTab(this);
+  }
+
+  public isFirstTab(): boolean {
+    return this._getParentLayout().isFirstTab(this);
+  }
+
+  public isLastTab(): boolean {
+    return this._getParentLayout().isLastTab(this);
+  }
+
   public onChangeTab() {
-    this.getParentLayout().changeTab(this);
+    this._getParentLayout().changeTab(this);
   }
 
   public onChangeTitle(title: string) {
     this.setState({ title });
+  }
+
+  private _getParentLayout(): TabsLayoutManager {
+    return sceneGraph.getAncestor(this, TabsLayoutManager);
   }
 }
