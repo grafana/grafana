@@ -1,6 +1,6 @@
 import { RegistryItem } from '@grafana/data';
 
-import { DashboardLayoutManager } from './DashboardLayoutManager';
+import { DashboardLayoutManager, LayoutManagerSerializer } from './DashboardLayoutManager';
 
 /**
  * The layout descriptor used when selecting / switching layouts
@@ -17,4 +17,9 @@ export interface LayoutRegistryItem<S = {}> extends RegistryItem {
    * @param saveModel
    */
   createFromSaveModel?(saveModel: S): void;
+
+  /**
+   * Serializer for the layout
+   */
+  getSerializer(): LayoutManagerSerializer;
 }

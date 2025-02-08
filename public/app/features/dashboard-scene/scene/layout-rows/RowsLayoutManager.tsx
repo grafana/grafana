@@ -1,6 +1,7 @@
 import { SceneGridItemLike, SceneGridRow, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
 import { t } from 'app/core/internationalization';
 
+import { layoutSerializerRegistry } from '../../serialization/layoutSerializers/layoutSerializerRegistry';
 import { isClonedKey } from '../../utils/clone';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { getDashboardSceneFor } from '../../utils/utils';
@@ -32,6 +33,10 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
     },
     id: 'rows-layout',
     createFromLayout: RowsLayoutManager.createFromLayout,
+
+    getSerializer: () => {
+      return layoutSerializerRegistry.get('RowsLayout').serializer;
+    },
   };
 
   public readonly descriptor = RowsLayoutManager.descriptor;
