@@ -487,7 +487,9 @@ export function TableNG(props: TableNGProps) {
   }, [rows, filter, sortedRows, props.data.fields]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Paginated rows
+  // TODO consolidate calculations into pagination wrapper component and only use when needed
   const numRows = filteredRows.length;
+  // calculate number of rowsPerPage based on height stack
   let headerCellHeight = MAX_CELL_HEIGHT;
   if (noHeader) {
     headerCellHeight = 0;
@@ -500,6 +502,7 @@ export function TableNG(props: TableNGProps) {
     // resets pagination to end
     setPage(numberOfPages - 1);
   }
+  // calculate row range for pagination summary display
   const itemsRangeStart = page * rowsPerPage + 1;
   let displayedEnd = itemsRangeStart + rowsPerPage - 1;
   if (displayedEnd > numRows) {
