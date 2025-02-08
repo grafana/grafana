@@ -34,12 +34,6 @@
       "save-button": "Ŝävę"
     }
   },
-  "actions-editor": {
-    "inline": {
-      "add-button": "Åđđ äčŧįőŉ",
-      "one-click-action": "Øŉę-čľįčĸ äčŧįőŉ"
-    }
-  },
   "admin": {
     "anon-users": {
       "not-found": "Ńő äŉőŉymőūş ūşęřş ƒőūŉđ."
@@ -1574,12 +1568,17 @@
         "confirm": "Cőŉƒįřm",
         "confirm-action": "Cőŉƒįřm äčŧįőŉ"
       },
+      "inline": {
+        "add-action": "Åđđ äčŧįőŉ",
+        "edit-action": "Ēđįŧ äčŧįőŉ"
+      },
       "modal": {
         "action-body": "ßőđy",
         "action-method": "Męŧĥőđ",
         "action-query-params": "Qūęřy päřämęŧęřş",
         "action-title": "Ŧįŧľę",
-        "action-title-placeholder": "Åčŧįőŉ ŧįŧľę"
+        "action-title-placeholder": "Åčŧįőŉ ŧįŧľę",
+        "one-click-description": "Øŉľy őŉę ľįŉĸ {{ action }} čäŉ ĥävę őŉę čľįčĸ ęŉäþľęđ äŧ ä ŧįmę"
       }
     },
     "auto-save-field": {
@@ -1606,9 +1605,13 @@
     },
     "data-links-inline-editor": {
       "add-link": "Åđđ ľįŉĸ",
+      "edit-link": "Ēđįŧ ľįŉĸ",
       "one-click": "Øŉę čľįčĸ",
       "one-click-enabled": "Øŉę čľįčĸ ęŉäþľęđ",
-      "one-click-link": "Øŉę-čľįčĸ ľįŉĸ"
+      "title-not-provided": "Ŧįŧľę ŉőŧ přővįđęđ",
+      "tooltip-edit": "Ēđįŧ",
+      "tooltip-remove": "Ŗęmővę",
+      "url-not-provided": "Đäŧä ľįŉĸ ūřľ ŉőŧ přővįđęđ"
     },
     "data-source-http-settings": {
       "access-help": "Ħęľp <1></1>",
