@@ -1171,6 +1171,15 @@
       "row": {
         "collapse": "Cőľľäpşę řőŵ",
         "expand": "Ēχpäŉđ řőŵ",
+        "menu": {
+          "add": "Åđđ",
+          "add-panel": "Päŉęľ",
+          "add-row-above": "Ŗőŵ äþővę",
+          "add-row-below": "Ŗőŵ þęľőŵ",
+          "delete": "Đęľęŧę",
+          "move-down": "Mővę đőŵŉ",
+          "move-up": "Mővę ūp"
+        },
         "new": "Ńęŵ řőŵ",
         "repeat": {
           "learn-more": "Ŀęäřŉ mőřę",
@@ -1198,7 +1207,19 @@
       "description": "Ŧäþş ľäyőūŧ",
       "name": "Ŧäþş",
       "tab": {
-        "new": "Ńęŵ ŧäþ"
+        "affix": {
+          "move-left": "Mővę ľęƒŧ"
+        },
+        "new": "Ńęŵ ŧäþ",
+        "suffix": {
+          "add": "Åđđ",
+          "add-panel": "Päŉęľ",
+          "add-tab-above": "Ŧäþ þęƒőřę",
+          "add-tab-after": "Ŧäþ äƒŧęř",
+          "add-tab-before": "Ŧäþ þęƒőřę",
+          "delete": "Đęľęŧę",
+          "move-right": "Mővę řįģĥŧ"
+        }
       },
       "tab-options": {
         "title": "Ŧäþ őpŧįőŉş",

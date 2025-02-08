@@ -2,8 +2,8 @@ import { css, cx } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { SceneComponentProps } from '@grafana/scenes';
-import { Button, Icon, useStyles2 } from '@grafana/ui';
+import { SceneComponentProps, sceneGraph } from '@grafana/scenes';
+import { Checkbox, clearButtonStyles, Icon, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
 import { useIsClone } from '../../utils/clone';
@@ -15,6 +15,7 @@ import {
 } from '../../utils/utils';
 
 import { RowItem } from './RowItem';
+import { RowItemMenu } from './RowItemMenu';
 
 export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
   const { layout, isCollapsed, height = 'expand', isHeaderHidden } = model.useState();
@@ -43,11 +44,16 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
         !isClone && isSelected && 'dashboard-selected-element'
       )}
     >
-      {(!isHeaderHidden || showHiddenElements) && (
-        <div className={cx(isHiddenButVisibleHeader && 'dashboard-visible-hidden-element', styles.rowHeader)}>
+      {(!isHeaderHidden || (isEditing && showHiddenElements)) && (
+        <div className={styles.rowHeader}>
+          {!isClone && isEditing && (
+            <span onPointerDown={onSelect}>
+              <Checkbox value={!!isSelected} />
+            </span>
+          )}
           <button
             onClick={() => model.onCollapseToggle()}
-            className={styles.rowTitleButton}
+            className={cx(clearStyles, styles.rowTitleButton)}
             aria-label={
               isCollapsed
                 ? t('dashboard.rows-layout.row.expand', 'Expand row')
@@ -60,9 +66,7 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
               {title}
             </span>
           </button>
-          {!isClone && isEditing && (
-            <Button icon="pen" variant="secondary" size="sm" fill="text" onPointerDown={onSelect} />
-          )}
+          {!isClone && isEditing && <RowItemMenu model={model} />}
         </div>
       )}
       {!isCollapsed && <layout.Component model={layout} />}
@@ -79,17 +83,6 @@ function getStyles(theme: GrafanaTheme2) {
       padding: theme.spacing(0, 0, 0.5, 0),
       margin: theme.spacing(0, 0, 1, 0),
       alignItems: 'center',
-
-      '&:hover, &:focus-within': {
-        '& > div': {
-          opacity: 1,
-        },
-      },
-
-      '& > div': {
-        marginBottom: 0,
-        marginRight: theme.spacing(1),
-      },
     }),
     rowTitleButton: css({
       display: 'flex',

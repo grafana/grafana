@@ -1171,6 +1171,15 @@
       "row": {
         "collapse": "Collapse row",
         "expand": "Expand row",
+        "menu": {
+          "add": "Add",
+          "add-panel": "Panel",
+          "add-row-above": "Row above",
+          "add-row-below": "Row below",
+          "delete": "Delete",
+          "move-down": "Move down",
+          "move-up": "Move up"
+        },
         "new": "New row",
         "repeat": {
           "learn-more": "Learn more",
@@ -1198,7 +1207,19 @@
       "description": "Tabs layout",
       "name": "Tabs",
       "tab": {
-        "new": "New tab"
+        "affix": {
+          "move-left": "Move left"
+        },
+        "new": "New tab",
+        "suffix": {
+          "add": "Add",
+          "add-panel": "Panel",
+          "add-tab-above": "Tab before",
+          "add-tab-after": "Tab after",
+          "add-tab-before": "Tab before",
+          "delete": "Delete",
+          "move-right": "Move right"
+        }
       },
       "tab-options": {
         "title": "Tab options",
