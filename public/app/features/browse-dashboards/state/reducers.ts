@@ -46,8 +46,12 @@ export function fetchNextChildrenPageFulfilled(
   const collection = parentUID ? state.childrenByParentUID[parentUID] : state.rootItems;
   const prevItems = collection?.items ?? [];
 
+  const newChildren = children.filter(
+    (child) => !prevItems.some((existing) => existing.uid === child.uid)
+  );
+
   const newCollection = {
-    items: prevItems.concat(children),
+    items: prevItems.concat(newChildren),
     lastFetchedKind: kind,
     lastFetchedPage: page,
     lastKindHasMoreItems: !lastPageOfKind,
@@ -64,7 +68,7 @@ export function fetchNextChildrenPageFulfilled(
   // If the parent of the items we've loaded are selected, we must select all these items also
   const parentIsSelected = state.selectedItems.folder[parentUID];
   if (parentIsSelected) {
-    for (const child of children) {
+    for (const child of newChildren) {
       state.selectedItems[child.kind][child.uid] = true;
     }
   }
