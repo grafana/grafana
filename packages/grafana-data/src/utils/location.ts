@@ -58,7 +58,7 @@ const stripBaseFromUrl = (urlOrPath: string): string => {
  * @param url
  * @internal
  */
-const assureBaseUrl = (url: string): string => {
+export const assureBaseUrl = (url: string): string => {
   if (url.startsWith('/')) {
     return `${grafanaConfig.appSubUrl}${stripBaseFromUrl(url)}`;
   }

@@ -1,4 +1,5 @@
 import { locationUtil, UrlQueryMap, urlUtil } from '@grafana/data';
+import { assureBaseUrl } from "@grafana/data/src/utils/location";
 import { config, locationSearchToObject, locationService } from '@grafana/runtime';
 import { sceneGraph, VizPanel } from '@grafana/scenes';
 import { contextSrv } from 'app/core/core';
@@ -81,7 +82,7 @@ export function getDashboardUrl(options: DashboardUrlOptions) {
     return config.appUrl + relativeUrl.slice(1);
   }
 
-  return relativeUrl;
+  return assureBaseUrl(relativeUrl);
 }
 
 export function getViewPanelUrl(vizPanel: VizPanel) {
