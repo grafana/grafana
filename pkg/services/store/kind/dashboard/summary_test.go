@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"io/fs"
 	"os"
 	"path"
 	"path/filepath"
@@ -20,13 +21,13 @@ func TestGdevReadSummaries(t *testing.T) {
 	reader := GetEntitySummaryBuilder()
 	failed := make([]string, 0, 10)
 
-	err := filepath.Walk(devdash,
-		func(path string, info os.FileInfo, err error) error {
+	err := filepath.WalkDir(devdash,
+		func(path string, d fs.DirEntry, err error) error {
 			if err != nil {
 				return err
 			}
 
-			if !info.IsDir() && strings.HasSuffix(path, ".json") {
+			if !d.IsDir() && filepath.Ext(path) == ".json" {
 				// Ignore gosec warning G304 since it's a test
 				// nolint:gosec
 				body, err := os.ReadFile(path)

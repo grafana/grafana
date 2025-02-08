@@ -5,10 +5,10 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"io"
+	"io/fs"
 	"log"
 	"os"
 	"path/filepath"
-	"strings"
 )
 
 func logAndClose(c io.Closer) {
@@ -18,12 +18,12 @@ func logAndClose(c io.Closer) {
 }
 
 func shaDir(dir string) error {
-	return filepath.Walk(dir, func(path string, f os.FileInfo, err error) error {
+	return filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
 		if path == dir {
 			return nil
 		}
 
-		if strings.Contains(path, ".sha256") {
+		if filepath.Ext(path) == ".sha256" {
 			return nil
 		}
 		if err := shaFile(path); err != nil {
