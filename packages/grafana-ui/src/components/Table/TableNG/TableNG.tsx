@@ -496,7 +496,11 @@ export function TableNG(props: TableNGProps) {
   } else if (!noHeader && Object.keys(headerCellRefs.current).length > 0) {
     headerCellHeight = headerCellRefs.current[Object.keys(headerCellRefs.current)[0]].getBoundingClientRect().height;
   }
-  const rowsPerPage = Math.floor((height - headerCellHeight - SCROLL_BAR_WIDTH - paginationHeight) / defaultRowHeight);
+  let rowsPerPage = Math.floor((height - headerCellHeight - SCROLL_BAR_WIDTH - paginationHeight) / defaultRowHeight);
+  if (rowsPerPage < 1) {
+    // avoid 0 or negative rowsPerPage
+    rowsPerPage = 1;
+  }
   const numberOfPages = Math.ceil(numRows / rowsPerPage);
   if (page > numberOfPages) {
     // resets pagination to end
