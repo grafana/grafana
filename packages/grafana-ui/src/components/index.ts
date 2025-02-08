@@ -169,6 +169,10 @@ export { MenuGroup, type MenuItemsGroup, type MenuGroupProps } from './Menu/Menu
 export { MenuItem, type MenuItemProps } from './Menu/MenuItem';
 export { WithContextMenu } from './ContextMenu/WithContextMenu';
 export { DataLinksInlineEditor } from './DataLinks/DataLinksInlineEditor/DataLinksInlineEditor';
+export {
+  DataLinksInlineEditorBase,
+  type DataLinksInlineEditorBaseProps,
+} from './DataLinks/DataLinksInlineEditor/DataLinksInlineEditorBase';
 export { DataLinkInput } from './DataLinks/DataLinkInput';
 export {
   DataLinksContextMenu,

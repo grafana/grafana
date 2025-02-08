@@ -14,14 +14,16 @@ interface DataLinkEditorModalContentProps {
   getSuggestions: () => VariableSuggestion[];
   onSave: (index: number, ink: DataLink) => void;
   onCancel: (index: number) => void;
+  showOneClick?: boolean;
 }
 
 export const DataLinkEditorModalContent = ({
   link,
   index,
-  getSuggestions,
   onSave,
   onCancel,
+  getSuggestions,
+  showOneClick,
 }: DataLinkEditorModalContentProps) => {
   const [dirtyLink, setDirtyLink] = useState(link);
   return (
@@ -30,10 +32,11 @@ export const DataLinkEditorModalContent = ({
         value={dirtyLink}
         index={index}
         isLast={false}
-        suggestions={getSuggestions()}
         onChange={(index, link) => {
           setDirtyLink(link);
         }}
+        suggestions={getSuggestions()}
+        showOneClick={showOneClick}
       />
       <Modal.ButtonRow>
         <Button variant="secondary" onClick={() => onCancel(index)} fill="outline">
@@ -43,6 +46,7 @@ export const DataLinkEditorModalContent = ({
           onClick={() => {
             onSave(index, dirtyLink);
           }}
+          disabled={dirtyLink.title.trim() === '' || dirtyLink.url.trim() === ''}
         >
           <Trans i18nKey="grafana-ui.data-link-editor-modal.save">Save</Trans>
         </Button>
