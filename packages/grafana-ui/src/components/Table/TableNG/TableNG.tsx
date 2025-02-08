@@ -112,7 +112,7 @@ export function TableNG(props: TableNGProps) {
   const headerCellRefs = useRef<Record<string, HTMLDivElement>>({});
   const [, setReadyForRowHeightCalc] = useState(false);
 
-  const [paginationWrapperRef, { height: paginationHeight, width: paginationWidth }] = useMeasure<HTMLDivElement>();
+  const [paginationWrapperRef, { height: paginationHeight }] = useMeasure<HTMLDivElement>();
 
   // This state will trigger re-render for recalculating row heights
   const [, setResizeTrigger] = useState(0);
