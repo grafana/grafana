@@ -34,12 +34,6 @@
       "save-button": "Save"
     }
   },
-  "actions-editor": {
-    "inline": {
-      "add-button": "Add action",
-      "one-click-action": "One-click action"
-    }
-  },
   "admin": {
     "anon-users": {
       "not-found": "No anonymous users found."
@@ -1574,12 +1568,17 @@
         "confirm": "Confirm",
         "confirm-action": "Confirm action"
       },
+      "inline": {
+        "add-action": "Add action",
+        "edit-action": "Edit action"
+      },
       "modal": {
         "action-body": "Body",
         "action-method": "Method",
         "action-query-params": "Query parameters",
         "action-title": "Title",
-        "action-title-placeholder": "Action title"
+        "action-title-placeholder": "Action title",
+        "one-click-description": "Only one link {{ action }} can have one click enabled at a time"
       }
     },
     "auto-save-field": {
@@ -1606,9 +1605,13 @@
     },
     "data-links-inline-editor": {
       "add-link": "Add link",
+      "edit-link": "Edit link",
       "one-click": "One click",
       "one-click-enabled": "One click enabled",
-      "one-click-link": "One-click link"
+      "title-not-provided": "Title not provided",
+      "tooltip-edit": "Edit",
+      "tooltip-remove": "Remove",
+      "url-not-provided": "Data link url not provided"
     },
     "data-source-http-settings": {
       "access-help": "Help <1></1>",
