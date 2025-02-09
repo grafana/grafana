@@ -895,6 +895,23 @@
       "redirect-link": "List in Grafana Alerting",
       "subtitle": "Alert rules related to this dashboard"
     },
+    "conditional-rendering": {
+      "between": {
+        "from": "From",
+        "to": "To"
+      },
+      "condition": {
+        "and": "And",
+        "or": "Or"
+      },
+      "data": "Has data",
+      "from": "From",
+      "group": {
+        "add": "Add"
+      },
+      "to": "To",
+      "variable": "Here it should be variable editor"
+    },
     "default-layout": {
       "description": "The default grid layout",
       "item-options": {
@@ -1078,6 +1095,9 @@
         }
       },
       "row-options": {
+        "conditional-rendering": {
+          "title": "Conditional rendering options"
+        },
         "height": {
           "expand": "Expand",
           "hide-row-header": "Hide row header",
