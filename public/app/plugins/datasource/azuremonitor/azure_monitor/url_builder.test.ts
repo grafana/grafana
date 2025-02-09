@@ -135,8 +135,8 @@ describe('AzureMonitorUrlBuilder', () => {
         {
           resourceUri: '/subscriptions/sub/resource-uri/resource',
         },
-        true,
-        templateSrv
+        templateSrv,
+        true
       );
       expect(url).toBe(
         '/subscriptions/sub/resource-uri/resource/providers/microsoft.insights/metricNamespaces?api-version=2017-05-01-preview&region=global'
@@ -150,8 +150,8 @@ describe('AzureMonitorUrlBuilder', () => {
         {
           resourceUri: '/subscriptions/sub/resource-uri/resource',
         },
-        false,
         templateSrv,
+        false,
         'testregion'
       );
       expect(url).toBe(
@@ -166,8 +166,8 @@ describe('AzureMonitorUrlBuilder', () => {
         {
           resourceUri: '/subscriptions/sub/resource-uri/resource',
         },
-        true,
         templateSrv,
+        true,
         'testregion'
       );
       expect(url).toBe(
@@ -236,8 +236,8 @@ describe('AzureMonitorUrlBuilder', () => {
             metricNamespace: 'Microsoft.NetApp/netAppAccounts/capacityPools/volumes',
             resourceName: 'rn1/rn2/rn3',
           },
-          true,
-          templateSrv
+          templateSrv,
+          true
         );
         expect(url).toBe(
           '/subscriptions/sub1/resourceGroups/rg/providers/Microsoft.NetApp/netAppAccounts/rn1/capacityPools/rn2/volumes/rn3/' +
@@ -257,8 +257,8 @@ describe('AzureMonitorUrlBuilder', () => {
             metricNamespace: 'Microsoft.Sql/servers/databases',
             resourceName: 'rn1/rn2',
           },
-          true,
-          templateSrv
+          templateSrv,
+          true
         );
         expect(url).toBe(
           '/subscriptions/sub1/resourceGroups/rg/providers/Microsoft.Sql/servers/rn1/databases/rn2/' +
@@ -276,8 +276,8 @@ describe('AzureMonitorUrlBuilder', () => {
             metricNamespace: 'Microsoft.Sql/servers/databases',
             resourceName: 'rn1/rn2',
           },
-          false,
-          templateSrv
+          templateSrv,
+          false
         );
         expect(url).toBe(
           '/subscriptions/sub1/resourceGroups/rg/providers/Microsoft.Sql/servers/rn1/databases/rn2/' +
@@ -297,8 +297,8 @@ describe('AzureMonitorUrlBuilder', () => {
             metricNamespace: 'Microsoft.Sql/servers',
             resourceName: 'rn',
           },
-          true,
-          templateSrv
+          templateSrv,
+          true
         );
         expect(url).toBe(
           '/subscriptions/sub1/resourceGroups/rg/providers/Microsoft.Sql/servers/rn/' +

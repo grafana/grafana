@@ -50,8 +50,8 @@ export default class UrlBuilder {
     baseUrl: string,
     apiVersion: string,
     query: GetMetricNamespacesQuery,
-    globalRegion: boolean,
     templateSrv: TemplateSrv,
+    globalRegion?: boolean,
     region?: string
   ) {
     let resourceUri: string;
@@ -67,7 +67,11 @@ export default class UrlBuilder {
         resourceName,
       });
     }
-    return `${baseUrl}${resourceUri}/resources?api-version=${apiVersion}`;
+    return (
+      `${baseUrl}${resourceUri}/resources?api-version=${apiVersion}` +
+      (globalRegion ? `&globalRegion=${globalRegion}` : '') +
+      (region ? `&region=${region}` : '')
+    );
   }
 
   static buildAzureMonitorGetMetricNamesUrl(

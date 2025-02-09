@@ -239,14 +239,14 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<
   }
 
   // Note globalRegion should be false when querying custom metric namespaces
-  getMetricNamespaces(query: GetMetricNamespacesQuery, globalRegion: boolean, region?: string, custom?: boolean) {
+  getMetricNamespaces(query: GetMetricNamespacesQuery, globalRegion?: boolean, region?: string, custom?: boolean) {
     const url = UrlBuilder.buildAzureMonitorGetMetricNamespacesUrl(
       this.resourcePath,
       this.apiVersion,
       // Only use the first query, as the metric namespaces should be the same for all queries
       this.replaceSingleTemplateVariables(query),
-      globalRegion,
       this.templateSrv,
+      globalRegion,
       region
     );
     return this.getResource(url)
@@ -254,7 +254,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<
         if (custom) {
           result.value = result.value.filter((namespace) => namespace.classification === 'Custom');
         }
-        return ResponseParser.parseResponseValues(result, 'type', 'type');
+        return ResponseParser.parseResponseValues(result, 'type', 'name');
       })
       .then((result) => {
         if (url.toLowerCase().includes('microsoft.storage/storageaccounts')) {
