@@ -242,7 +242,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<
   getMetricNamespaces(query: GetMetricNamespacesQuery, globalRegion: boolean, region?: string, custom?: boolean) {
     const url = UrlBuilder.buildAzureMonitorGetMetricNamespacesUrl(
       this.resourcePath,
-      this.apiPreviewVersion,
+      this.apiVersion,
       // Only use the first query, as the metric namespaces should be the same for all queries
       this.replaceSingleTemplateVariables(query),
       globalRegion,
@@ -254,11 +254,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<
         if (custom) {
           result.value = result.value.filter((namespace) => namespace.classification === 'Custom');
         }
-        return ResponseParser.parseResponseValues(
-          result,
-          'properties.metricNamespaceName',
-          'properties.metricNamespaceName'
-        );
+        return ResponseParser.parseResponseValues(result, 'type', 'type');
       })
       .then((result) => {
         if (url.toLowerCase().includes('microsoft.storage/storageaccounts')) {
