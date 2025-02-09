@@ -18,6 +18,7 @@ import (
 	"github.com/go-git/go-billy/v5/util"
 
 	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	githttp "github.com/go-git/go-git/v5/plumbing/transport/http"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -36,8 +37,11 @@ var (
 type BufferedRepository interface {
 	repository.Repository
 
-	Checkout(ctx context.Context, ref string, create string) error
-	Push(ctx context.Context) error
+	// Remove everything from the tree
+	NewEmptyBranch(ctx context.Context, branch string) (int64, error)
+
+	// Push changes
+	Push(ctx context.Context, progress io.Writer) error
 }
 
 type GoGitRepo struct {
@@ -48,12 +52,12 @@ type GoGitRepo struct {
 	dir  string // file path to worktree root (necessary? should use billy)
 }
 
-func Clone(
+func Wrap(
 	ctx context.Context,
 	config *provisioning.Repository,
 	root string, // tempdir (when empty, memory??)
 	progress io.Writer, // os.Stdout
-) (*GoGitRepo, error) {
+) (BufferedRepository, error) {
 	gitcfg := config.Spec.GitHub
 	if gitcfg == nil {
 		return nil, fmt.Errorf("missing github config")
@@ -76,8 +80,9 @@ func Clone(
 				Username: "grafana",    // this can be anything except an empty string for PAT
 				Password: gitcfg.Token, // TODO... will need to get from a service!
 			},
-			URL:      url,
-			Progress: progress,
+			URL:           url,
+			ReferenceName: plumbing.ReferenceName(gitcfg.Branch),
+			Progress:      progress,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("clone error %w", err)
@@ -101,13 +106,14 @@ func Clone(
 	if err != nil {
 		return nil, err
 	}
-	// err = worktree.Checkout(&git.CheckoutOptions{
-	// 	Branch: plumbing.ReferenceName(gitcfg.Branch),
-	// 	Force:  true, // clear any local changes
-	// })
-	// if err != nil {
-	// 	return nil, err
-	// }
+
+	err = worktree.Checkout(&git.CheckoutOptions{
+		Branch: plumbing.NewBranchReferenceName(gitcfg.Branch),
+		Force:  true, // clear any local changes
+	})
+	if err != nil {
+		return nil, fmt.Errorf("unable to open branch %w", err)
+	}
 
 	return &GoGitRepo{
 		config: config,
@@ -142,6 +148,30 @@ func getRepoFolder(root string, config *provisioning.Repository) (string, error)
 		return "", err
 	}
 	return dir, nil
+}
+
+// Remove everything from the tree
+func (g *GoGitRepo) NewEmptyBranch(ctx context.Context, branch string) (int64, error) {
+	err := g.tree.Checkout(&git.CheckoutOptions{
+		Branch: plumbing.NewBranchReferenceName(branch),
+		Force:  true, // clear any local changes
+		Create: true,
+	})
+	if err != nil {
+		return 0, err
+	}
+
+	count := int64(0)
+	return count, util.Walk(g.tree.Filesystem, "/", func(path string, info fs.FileInfo, err error) error {
+		if err != nil || strings.HasPrefix(path, "/.git") || path == "/" {
+			return err
+		}
+		if !info.IsDir() {
+			count++
+			_, err = g.tree.Remove(strings.TrimLeft(path, "/"))
+		}
+		return err
+	})
 }
 
 // Affer making changes to the worktree, push changes

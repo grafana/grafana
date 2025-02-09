@@ -5,6 +5,7 @@ import (
 	"time"
 )
 
+// When writing values from history, we want the metadata to match Legacy grafana SQL
 type CommitSignature struct {
 	// Name represents a person name. It is an arbitrary string.
 	Name string
