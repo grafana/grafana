@@ -22,7 +22,7 @@ require (
 	github.com/Masterminds/semver v1.5.0 // @grafana/grafana-backend-group
 	github.com/Masterminds/semver/v3 v3.3.0 // @grafana/grafana-developer-enablement-squad
 	github.com/Masterminds/sprig/v3 v3.3.0 // @grafana/grafana-backend-group
-	github.com/ProtonMail/go-crypto v0.0.0-20230828082145-3c4c8a2d2371 // @grafana/plugins-platform-backend
+	github.com/ProtonMail/go-crypto v1.1.5 // @grafana/plugins-platform-backend
 	github.com/VividCortex/mysqlerr v0.0.0-20170204212430-6c6b55f8796f // @grafana/grafana-backend-group
 	github.com/alicebob/miniredis/v2 v2.33.0 // @grafana/alerting-backend
 	github.com/andybalholm/brotli v1.1.1 // @grafana/partner-datasources
@@ -323,7 +323,7 @@ require (
 	github.com/dolthub/maphash v0.1.0 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/edsrzf/mmap-go v1.2.0 // indirect
-	github.com/elazarl/goproxy v1.3.0 // indirect
+	github.com/elazarl/goproxy v1.4.0 // indirect
 	github.com/emicklei/go-restful/v3 v3.11.0 // indirect
 	github.com/emicklei/proto v1.13.2 // indirect
 	github.com/emirpasic/gods v1.18.1 // indirect
@@ -540,6 +540,20 @@ require (
 	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.31.0 // indirect
 	sigs.k8s.io/json v0.0.0-20241010143419-9aa6b5e7a4b3 // indirect
 	sigs.k8s.io/yaml v1.4.0 // indirect
+)
+
+require (
+	github.com/Microsoft/go-winio v0.6.2 // indirect
+	github.com/cyphar/filepath-securejoin v0.3.6 // indirect
+	github.com/go-git/gcfg v1.5.1-0.20230307220236-3a3c6141e376 // indirect
+	github.com/go-git/go-billy/v5 v5.6.2 // indirect
+	github.com/go-git/go-git/v5 v5.13.2 // indirect
+	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
+	github.com/kevinburke/ssh_config v1.2.0 // indirect
+	github.com/pjbgf/sha1cd v0.3.2 // indirect
+	github.com/skeema/knownhosts v1.3.0 // indirect
+	github.com/xanzy/ssh-agent v0.3.3 // indirect
+	gopkg.in/warnings.v0 v0.1.2 // indirect
 )
 
 // Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream
