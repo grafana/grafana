@@ -967,6 +967,23 @@
       "redirect-link": "Ŀįşŧ įŉ Ğřäƒäŉä Åľęřŧįŉģ",
       "subtitle": "Åľęřŧ řūľęş řęľäŧęđ ŧő ŧĥįş đäşĥþőäřđ"
     },
+    "conditional-rendering": {
+      "between": {
+        "from": "Fřőm",
+        "to": "Ŧő"
+      },
+      "condition": {
+        "and": "Åŉđ",
+        "or": "Øř"
+      },
+      "data": "Ħäş đäŧä",
+      "from": "Fřőm",
+      "group": {
+        "add": "Åđđ"
+      },
+      "to": "Ŧő",
+      "variable": "Ħęřę įŧ şĥőūľđ þę väřįäþľę ęđįŧőř"
+    },
     "default-layout": {
       "description": "Ŧĥę đęƒäūľŧ ģřįđ ľäyőūŧ",
       "item-options": {
@@ -1150,6 +1167,9 @@
         }
       },
       "row-options": {
+        "conditional-rendering": {
+          "title": "Cőŉđįŧįőŉäľ řęŉđęřįŉģ őpŧįőŉş"
+        },
         "height": {
           "expand": "Ēχpäŉđ",
           "hide-row-header": "Ħįđę řőŵ ĥęäđęř",
