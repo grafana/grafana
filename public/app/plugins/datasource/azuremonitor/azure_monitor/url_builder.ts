@@ -67,11 +67,9 @@ export default class UrlBuilder {
         resourceName,
       });
     }
-    return (
-      `${baseUrl}${resourceUri}/resources?api-version=${apiVersion}` +
-      (globalRegion ? `&globalRegion=${globalRegion}` : '') +
-      (region ? `&region=${region}` : '')
-    );
+    return `${baseUrl}${resourceUri}/resources?api-version=${apiVersion}${
+      region ? `&region=${region}` : globalRegion ? '&region=global' : ''
+    }`;
   }
 
   static buildAzureMonitorGetMetricNamesUrl(

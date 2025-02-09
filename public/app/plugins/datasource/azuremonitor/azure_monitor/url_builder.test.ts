@@ -139,7 +139,7 @@ describe('AzureMonitorUrlBuilder', () => {
         true
       );
       expect(url).toBe(
-        '/subscriptions/sub/resource-uri/resource/providers/microsoft.insights/metricNamespaces?api-version=2017-05-01-preview&region=global'
+        '/subscriptions/sub/resource-uri/resource/resources?api-version=2017-05-01-preview&region=global'
       );
     });
 
@@ -155,7 +155,7 @@ describe('AzureMonitorUrlBuilder', () => {
         'testregion'
       );
       expect(url).toBe(
-        '/subscriptions/sub/resource-uri/resource/providers/microsoft.insights/metricNamespaces?api-version=2017-05-01-preview&region=testregion'
+        '/subscriptions/sub/resource-uri/resource/resources?api-version=2017-05-01-preview&region=testregion'
       );
     });
 
@@ -171,7 +171,7 @@ describe('AzureMonitorUrlBuilder', () => {
         'testregion'
       );
       expect(url).toBe(
-        '/subscriptions/sub/resource-uri/resource/providers/microsoft.insights/metricNamespaces?api-version=2017-05-01-preview&region=testregion'
+        '/subscriptions/sub/resource-uri/resource/resources?api-version=2017-05-01-preview&region=testregion'
       );
     });
   });
@@ -241,7 +241,7 @@ describe('AzureMonitorUrlBuilder', () => {
         );
         expect(url).toBe(
           '/subscriptions/sub1/resourceGroups/rg/providers/Microsoft.NetApp/netAppAccounts/rn1/capacityPools/rn2/volumes/rn3/' +
-            'providers/microsoft.insights/metricNamespaces?api-version=2017-05-01-preview&region=global'
+            'resources?api-version=2017-05-01-preview&region=global'
         );
       });
     });
@@ -262,7 +262,7 @@ describe('AzureMonitorUrlBuilder', () => {
         );
         expect(url).toBe(
           '/subscriptions/sub1/resourceGroups/rg/providers/Microsoft.Sql/servers/rn1/databases/rn2/' +
-            'providers/microsoft.insights/metricNamespaces?api-version=2017-05-01-preview&region=global'
+            'resources?api-version=2017-05-01-preview&region=global'
         );
       });
 
@@ -281,7 +281,7 @@ describe('AzureMonitorUrlBuilder', () => {
         );
         expect(url).toBe(
           '/subscriptions/sub1/resourceGroups/rg/providers/Microsoft.Sql/servers/rn1/databases/rn2/' +
-            'providers/microsoft.insights/metricNamespaces?api-version=2017-05-01-preview'
+            'resources?api-version=2017-05-01-preview'
         );
       });
     });
@@ -302,7 +302,7 @@ describe('AzureMonitorUrlBuilder', () => {
         );
         expect(url).toBe(
           '/subscriptions/sub1/resourceGroups/rg/providers/Microsoft.Sql/servers/rn/' +
-            'providers/microsoft.insights/metricNamespaces?api-version=2017-05-01-preview&region=global'
+            'resources?api-version=2017-05-01-preview&region=global'
         );
       });
     });
