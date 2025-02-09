@@ -6,15 +6,18 @@ import (
 	"fmt"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 )
 
 func TestGoGitWrapper(t *testing.T) {
-	wrap, err := Clone(context.Background(), &v0alpha1.Repository{
+	ctx := context.Background()
+	wrap, err := Clone(ctx, &v0alpha1.Repository{
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: "ns",
 			Name:      "unit-tester",
@@ -30,11 +33,26 @@ func TestGoGitWrapper(t *testing.T) {
 	}, "ttt", os.Stdout)
 	require.NoError(t, err)
 
-	tree, err := wrap.ReadTree(context.Background(), "")
+	tree, err := wrap.ReadTree(ctx, "")
 	require.NoError(t, err)
 
 	jj, err := json.MarshalIndent(tree, "", "  ")
 	require.NoError(t, err)
 
 	fmt.Printf("TREE:%s\n", string(jj))
+
+	ctx = repository.WithAuthorSignature(ctx, repository.CommitSignature{
+		Name:  "xxxxx",
+		Email: "rrr@yyyy.zzz",
+		When:  time.Now(),
+	})
+
+	for i := 0; i < 10; i++ {
+		fname := fmt.Sprintf("deep/path/in/test_%d.txt", i)
+		err = wrap.Write(ctx, fname, "", []byte(fmt.Sprintf("body/%d %s", i, time.Now())), "the commit message")
+		require.NoError(t, err)
+	}
+
+	err = wrap.Push(ctx, os.Stdout)
+	require.NoError(t, err)
 }
