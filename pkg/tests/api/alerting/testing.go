@@ -687,6 +687,30 @@ func (a apiClient) ExportRulesWithStatus(t *testing.T, params *apimodels.AlertRu
 	return resp.StatusCode, string(b)
 }
 
+func (a apiClient) GetRuleGroupProvisioning(t *testing.T, folderUID string, groupName string) (apimodels.AlertRuleGroup, int, string) {
+	t.Helper()
+
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/v1/provisioning/folder/%s/rule-groups/%s", a.url, folderUID, groupName), nil)
+	require.NoError(t, err)
+
+	return sendRequest[apimodels.AlertRuleGroup](t, req, http.StatusOK)
+}
+
+func (a apiClient) CreateOrUpdateRuleGroupProvisioning(t *testing.T, group apimodels.AlertRuleGroup) (apimodels.AlertRuleGroup, int, string) {
+	t.Helper()
+
+	buf := bytes.Buffer{}
+	enc := json.NewEncoder(&buf)
+	err := enc.Encode(group)
+	require.NoError(t, err)
+
+	req, err := http.NewRequest(http.MethodPut, fmt.Sprintf("%s/api/v1/provisioning/folder/%s/rule-groups/%s", a.url, group.FolderUID, group.Title), &buf)
+	require.NoError(t, err)
+	req.Header.Add("Content-Type", "application/json")
+
+	return sendRequest[apimodels.AlertRuleGroup](t, req, http.StatusOK)
+}
+
 func (a apiClient) SubmitRuleForBacktesting(t *testing.T, config apimodels.BacktestConfig) (int, string) {
 	t.Helper()
 	buf := bytes.Buffer{}
