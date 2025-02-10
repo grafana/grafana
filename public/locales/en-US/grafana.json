@@ -968,21 +968,36 @@
       "subtitle": "Alert rules related to this dashboard"
     },
     "conditional-rendering": {
-      "between": {
-        "from": "From",
-        "to": "To"
+      "after": {
+        "label": "After"
       },
-      "condition": {
-        "and": "And",
-        "or": "Or"
+      "before": {
+        "label": "Before"
       },
-      "data": "Has data",
-      "from": "From",
+      "data": {
+        "label": "Data"
+      },
       "group": {
-        "add": "Add"
+        "add": {
+          "between": "Between",
+          "button": "Add",
+          "data": "Data",
+          "from": "From",
+          "group": "Group",
+          "to": "To"
+        },
+        "condition": {
+          "and": "And",
+          "label": "Condition",
+          "or": "Or"
+        },
+        "label": "Group"
       },
-      "to": "To",
-      "variable": "Here it should be variable editor"
+      "title": "Conditional rendering options",
+      "variable": {
+        "label": "Variable",
+        "placeholder": "Here it should be variable editor"
+      }
     },
     "default-layout": {
       "description": "The default grid layout",
@@ -1139,10 +1154,6 @@
     },
     "responsive-layout": {
       "description": "CSS layout that adjusts to the available space",
-      "item-options": {
-        "hide-no-data": "Hide when no data",
-        "title": "Layout options"
-      },
       "name": "Responsive grid",
       "options": {
         "columns": "Columns",
@@ -1167,9 +1178,6 @@
         }
       },
       "row-options": {
-        "conditional-rendering": {
-          "title": "Conditional rendering options"
-        },
         "height": {
           "expand": "Expand",
           "hide-row-header": "Hide row header",

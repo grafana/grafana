@@ -10,6 +10,7 @@ import { RepeatRowSelect2 } from 'app/features/dashboard/components/RepeatRowSel
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
+import { useConditionalRenderingEditor } from '../../conditional-rendering/ConditionalRenderingEditor';
 import { getDashboardSceneFor, getQueryRunnerFor } from '../../utils/utils';
 import { DashboardScene } from '../DashboardScene';
 import { useLayoutCategory } from '../layouts-shared/DashboardLayoutSelector';
@@ -58,23 +59,16 @@ export function getEditOptions(model: RowItem): OptionsPaneCategoryDescriptor[] 
     );
   }, [model]);
 
-  const rowConditionalRenderingOptions = useMemo(() => {
-    return new OptionsPaneCategoryDescriptor({
-      title: t('dashboard.rows-layout.row-options.conditional-rendering.title', 'Conditional rendering options'),
-      id: 'row-conditional-rendering-options',
-      isOpenDefault: true,
-    }).addItem(
-      new OptionsPaneItemDescriptor({
-        title: t('dashboard.rows-layout.row-options.conditional-rendering.title', 'Conditional rendering options'),
-        render: () => <RowConditionalRendering row={model} />,
-      })
-    );
-  }, [model]);
-
   const { layout } = model.useState();
   const layoutOptions = useLayoutCategory(layout);
+  const options = [rowOptions, rowRepeatOptions, layoutOptions];
+  const rowConditionalRenderingOptions = useConditionalRenderingEditor(model);
 
-  return [rowOptions, rowRepeatOptions, rowConditionalRenderingOptions, layoutOptions];
+  if (rowConditionalRenderingOptions) {
+    options.push(rowConditionalRenderingOptions);
+  }
+
+  return options;
 }
 
 export function renderActions(model: RowItem) {
@@ -154,14 +148,4 @@ function RowRepeatSelect({ row, dashboard }: { row: RowItem; dashboard: Dashboar
       ) : undefined}
     </>
   );
-}
-
-function RowConditionalRendering({ row }: { row: RowItem }) {
-  const { conditionalRendering } = row.useState();
-
-  if (!conditionalRendering) {
-    return null;
-  }
-
-  return <conditionalRendering.Component model={conditionalRendering} />;
 }

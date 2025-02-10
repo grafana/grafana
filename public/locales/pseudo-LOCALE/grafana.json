@@ -968,21 +968,36 @@
       "subtitle": "Åľęřŧ řūľęş řęľäŧęđ ŧő ŧĥįş đäşĥþőäřđ"
     },
     "conditional-rendering": {
-      "between": {
-        "from": "Fřőm",
-        "to": "Ŧő"
+      "after": {
+        "label": "Åƒŧęř"
       },
-      "condition": {
-        "and": "Åŉđ",
-        "or": "Øř"
+      "before": {
+        "label": "ßęƒőřę"
       },
-      "data": "Ħäş đäŧä",
-      "from": "Fřőm",
+      "data": {
+        "label": "Đäŧä"
+      },
       "group": {
-        "add": "Åđđ"
+        "add": {
+          "between": "ßęŧŵęęŉ",
+          "button": "Åđđ",
+          "data": "Đäŧä",
+          "from": "Fřőm",
+          "group": "Ğřőūp",
+          "to": "Ŧő"
+        },
+        "condition": {
+          "and": "Åŉđ",
+          "label": "Cőŉđįŧįőŉ",
+          "or": "Øř"
+        },
+        "label": "Ğřőūp"
       },
-      "to": "Ŧő",
-      "variable": "Ħęřę įŧ şĥőūľđ þę väřįäþľę ęđįŧőř"
+      "title": "Cőŉđįŧįőŉäľ řęŉđęřįŉģ őpŧįőŉş",
+      "variable": {
+        "label": "Väřįäþľę",
+        "placeholder": "Ħęřę įŧ şĥőūľđ þę väřįäþľę ęđįŧőř"
+      }
     },
     "default-layout": {
       "description": "Ŧĥę đęƒäūľŧ ģřįđ ľäyőūŧ",
@@ -1139,10 +1154,6 @@
     },
     "responsive-layout": {
       "description": "CŜŜ ľäyőūŧ ŧĥäŧ äđĵūşŧş ŧő ŧĥę äväįľäþľę şpäčę",
-      "item-options": {
-        "hide-no-data": "Ħįđę ŵĥęŉ ŉő đäŧä",
-        "title": "Ŀäyőūŧ őpŧįőŉş"
-      },
       "name": "Ŗęşpőŉşįvę ģřįđ",
       "options": {
         "columns": "Cőľūmŉş",
@@ -1167,9 +1178,6 @@
         }
       },
       "row-options": {
-        "conditional-rendering": {
-          "title": "Cőŉđįŧįőŉäľ řęŉđęřįŉģ őpŧįőŉş"
-        },
         "height": {
           "expand": "Ēχpäŉđ",
           "hide-row-header": "Ħįđę řőŵ ĥęäđęř",

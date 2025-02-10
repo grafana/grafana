@@ -1,97 +1,164 @@
 import { css } from '@emotion/css';
+import { Fragment, ReactNode, useMemo } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { SceneComponentProps, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
-import { IconButton, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+import { dateTime, GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { SceneComponentProps } from '@grafana/scenes';
+import { Divider, Dropdown, InlineField, Menu, Select, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { t, Trans } from 'app/core/internationalization';
 
-import { ConditionalRenderingBetween } from './ConditionalRenderingBetween';
-import { ConditionalRenderingCondition } from './ConditionalRenderingCondition';
+import { ConditionalRenderingAfter } from './ConditionalRenderingAfter';
+import { ConditionalRenderingBase, ConditionalRenderingBaseState } from './ConditionalRenderingBase';
+import { ConditionalRenderingBefore } from './ConditionalRenderingBefore';
 import { ConditionalRenderingData } from './ConditionalRenderingData';
-import { ConditionalRenderingFrom } from './ConditionalRenderingFrom';
-import { ConditionalRenderingTo } from './ConditionalRenderingTo';
 import { ConditionalRenderingVariable } from './ConditionalRenderingVariable';
 
-export interface ConditionalRenderingGroupState extends SceneObjectState {
-  value: Array<
-    | ConditionalRenderingData
-    | ConditionalRenderingFrom
-    | ConditionalRenderingTo
-    | ConditionalRenderingBetween
-    | ConditionalRenderingVariable
-    | ConditionalRenderingCondition
-    | ConditionalRenderingGroup
-  >;
+type Value = Array<
+  | ConditionalRenderingData
+  | ConditionalRenderingAfter
+  | ConditionalRenderingBefore
+  | ConditionalRenderingVariable
+  | ConditionalRenderingGroup
+>;
+
+export interface ConditionalRenderingGroupState extends ConditionalRenderingBaseState<Value> {
+  condition: 'and' | 'or';
 }
 
-export class ConditionalRenderingGroup extends SceneObjectBase<ConditionalRenderingGroupState> {
-  public static Component = ConditionalRenderingGroupRenderer;
-
-  public evaluate(): boolean {
-    if (this.state.value.length === 0) {
-      return true;
-    }
-
-    let acc = this.state.value[0].evaluate();
-
-    for (let idx = 1; idx < this.state.value.length; idx++) {
-      const entry = this.state.value[idx];
-
-      if (entry instanceof ConditionalRenderingCondition) {
-        continue;
-      }
-
-      const evaluation = entry.evaluate();
-      const prevItem = this.state.value[idx - 1];
-      const operator =
-        prevItem === undefined || !(prevItem instanceof ConditionalRenderingCondition) ? 'and' : prevItem.state.value;
-
-      if (operator === 'and') {
-        if (!evaluation) {
-          return false;
-        }
-
-        acc = acc && evaluation;
-      } else {
-        acc = acc || evaluation;
-      }
-    }
-
-    return acc;
+export class ConditionalRenderingGroup extends ConditionalRenderingBase<ConditionalRenderingGroupState> {
+  public get title(): string {
+    return t('dashboard.conditional-rendering.group.label', 'Group');
   }
 
-  public addItem(item: ConditionalRenderingGroup) {
-    this.setState({
-      value: [...this.state.value, item],
-    });
+  public evaluate(): boolean {
+    if (this.state.condition === 'and') {
+      return this.state.value.every((entry) => entry.evaluate());
+    }
+
+    return this.state.value.some((entry) => entry.evaluate());
+  }
+
+  public render(): ReactNode {
+    return <ConditionalRenderingGroupRenderer model={this} />;
+  }
+
+  public changeCondition(condition: 'and' | 'or') {
+    this.setStateAndNotify({ condition });
+  }
+
+  public addItem(
+    item:
+      | ConditionalRenderingData
+      | ConditionalRenderingAfter
+      | ConditionalRenderingBefore
+      | ConditionalRenderingVariable
+      | ConditionalRenderingGroup
+  ) {
+    this.changeValue([...this.state.value, item]);
   }
 }
 
 function ConditionalRenderingGroupRenderer({ model }: SceneComponentProps<ConditionalRenderingGroup>) {
   const styles = useStyles2(getStyles);
-  const { value } = model.useState();
+  const { condition, value } = model.useState();
+
+  const conditionsOptions: Array<SelectableValue<'and' | 'or'>> = useMemo(
+    () => [
+      { label: t('dashboard.conditional-rendering.group.condition.and', 'And'), value: 'and' },
+      { label: t('dashboard.conditional-rendering.group.condition.or', 'Or'), value: 'or' },
+    ],
+    []
+  );
+
+  const currentConditionOption = useMemo(
+    () => conditionsOptions.find((option) => option.value === condition)!,
+    [conditionsOptions, condition]
+  );
 
   return (
-    <div className={styles.container}>
+    <>
+      <InlineField label={t('dashboard.conditional-rendering.group.condition.label', 'Condition')}>
+        <Select
+          isClearable={false}
+          value={currentConditionOption}
+          onChange={({ value }) => model.changeCondition(value!)}
+        />
+      </InlineField>
+
+      <Divider />
+
       {value.map((entry) => (
-        <>
+        <Fragment key={entry!.state.key}>
           {/* eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions */}
-          <entry.Component model={entry as any} key={entry!.state.key} />
-        </>
+          <entry.Component model={entry as any} />
+
+          <div className={styles.entryDivider}>
+            <Divider />
+            <p className={styles.entryDividerText}> {currentConditionOption.label}</p>
+            <Divider />
+          </div>
+        </Fragment>
       ))}
 
-      <IconButton
-        name="plus"
-        aria-label={t('dashboard.conditional-rendering.group.add', 'Add')}
-        onClick={() => model.addItem(new ConditionalRenderingGroup({ value: [] }))}
-      />
-    </div>
+      <div className={styles.addButtonContainer}>
+        <Dropdown
+          overlay={
+            <Menu>
+              <Menu.Item
+                label={t('dashboard.conditional-rendering.group.add.data', 'Data')}
+                onClick={() => model.addItem(new ConditionalRenderingData({ value: true }))}
+              />
+              <Menu.Item
+                label={t('dashboard.conditional-rendering.group.add.from', 'From')}
+                onClick={() => model.addItem(new ConditionalRenderingAfter({ value: dateTime() }))}
+              />
+              <Menu.Item
+                label={t('dashboard.conditional-rendering.group.add.to', 'To')}
+                onClick={() => model.addItem(new ConditionalRenderingBefore({ value: dateTime() }))}
+              />
+              <Menu.Item
+                label={t('dashboard.conditional-rendering.group.add.between', 'Between')}
+                onClick={() =>
+                  model.addItem(
+                    new ConditionalRenderingGroup({
+                      condition: 'and',
+                      value: [
+                        new ConditionalRenderingAfter({ value: dateTime() }),
+                        new ConditionalRenderingBefore({ value: dateTime() }),
+                      ],
+                    })
+                  )
+                }
+              />
+              <Menu.Item
+                label={t('dashboard.conditional-rendering.group.add.group', 'Group')}
+                onClick={() => model.addItem(new ConditionalRenderingGroup({ condition: 'and', value: [] }))}
+              />
+            </Menu>
+          }
+        >
+          <ToolbarButton icon="plus" iconSize="xs" variant="canvas">
+            <Trans i18nKey="dashboard.conditional-rendering.group.add.button">Add</Trans>
+          </ToolbarButton>
+        </Dropdown>
+      </div>
+    </>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  container: css({
-    padding: theme.spacing(1),
-    border: `1px solid ${theme.colors.border.weak}`,
+  entryDivider: css({
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+  }),
+  entryDividerText: css({
+    margin: 0,
+    padding: theme.spacing(0, 2),
+  }),
+  addButtonContainer: css({
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
   }),
 });
