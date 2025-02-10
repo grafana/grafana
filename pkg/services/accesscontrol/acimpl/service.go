@@ -12,6 +12,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 
 	claims "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -25,7 +26,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/api"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/dualwrite"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/migrator"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/permreg"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/pluginutils"
@@ -101,7 +101,6 @@ func ProvideOSSService(
 		log:            log.New("accesscontrol.service"),
 		roles:          accesscontrol.BuildBasicRoleDefinitions(),
 		store:          store,
-		reconciler:     dualwrite.NewZanzanaReconciler(cfg, zclient, db, lock, folderService),
 		permRegistry:   permRegistry,
 	}
 
@@ -118,16 +117,7 @@ type Service struct {
 	registrations  accesscontrol.RegistrationList
 	roles          map[string]*accesscontrol.RoleDTO
 	store          accesscontrol.Store
-	reconciler     *dualwrite.ZanzanaReconciler
 	permRegistry   permreg.PermissionRegistry
-}
-
-// Run implements accesscontrol.Service.
-func (s *Service) Run(ctx context.Context) error {
-	if s.features.IsEnabledGlobally(featuremgmt.FlagZanzana) {
-		return s.reconciler.Reconcile(ctx)
-	}
-	return nil
 }
 
 func (s *Service) GetUsageStats(_ context.Context) map[string]any {

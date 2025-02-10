@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
@@ -25,12 +26,12 @@ var tracer = otel.Tracer("github.com/grafana/grafana/pkg/accesscontrol/migrator"
 // We should rewrite the migration after we have "migrated" all possible actions
 // into our schema.
 type ZanzanaReconciler struct {
-	cfg *setting.Cfg
-	log log.Logger
-
-	store  db.DB
-	client zanzana.Client
-	lock   *serverlock.ServerLockService
+	cfg      *setting.Cfg
+	log      log.Logger
+	features featuremgmt.FeatureToggles
+	store    db.DB
+	client   zanzana.Client
+	lock     *serverlock.ServerLockService
 	// reconcilers are migrations that tries to reconcile the state of grafana db to zanzana store.
 	// These are run periodically to try to maintain a consistent state.
 	reconcilers []resourceReconciler
@@ -38,13 +39,26 @@ type ZanzanaReconciler struct {
 	globalReconcilers []resourceReconciler
 }
 
-func NewZanzanaReconciler(cfg *setting.Cfg, client zanzana.Client, store db.DB, lock *serverlock.ServerLockService, folderService folder.Service) *ZanzanaReconciler {
+// Run implements registry.BackgroundService
+func (r *ZanzanaReconciler) Run(ctx context.Context) error {
+	if r.features.IsEnabledGlobally(featuremgmt.FlagZanzana) {
+		return r.Reconcile(ctx)
+	}
+	return nil
+}
+
+func ProvideZanzanaReconciler(cfg *setting.Cfg, features featuremgmt.FeatureToggles, client zanzana.Client, store db.DB, lock *serverlock.ServerLockService, folderService folder.Service) *ZanzanaReconciler {
+	return NewZanzanaReconciler(cfg, features, client, store, lock, folderService)
+}
+
+func NewZanzanaReconciler(cfg *setting.Cfg, features featuremgmt.FeatureToggles, client zanzana.Client, store db.DB, lock *serverlock.ServerLockService, folderService folder.Service) *ZanzanaReconciler {
 	zanzanaReconciler := &ZanzanaReconciler{
-		cfg:    cfg,
-		log:    log.New("zanzana.reconciler"),
-		client: client,
-		lock:   lock,
-		store:  store,
+		cfg:      cfg,
+		log:      log.New("zanzana.reconciler"),
+		features: features,
+		client:   client,
+		lock:     lock,
+		store:    store,
 		reconcilers: []resourceReconciler{
 			newResourceReconciler(
 				"team memberships",
