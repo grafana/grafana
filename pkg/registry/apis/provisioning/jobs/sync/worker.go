@@ -187,7 +187,7 @@ func (r *SyncWorker) sync(ctx context.Context,
 	} else if !job.jobStatus.State.Finished() {
 		job.jobStatus.State = provisioning.JobStateSuccess
 	}
-	job.jobStatus.Summary = []provisioning.JobResourceSummary{job.summary}
+	job.jobStatus.Summary = []*provisioning.JobResourceSummary{&job.summary}
 	return job.jobStatus, job.syncStatus, nil
 }
 

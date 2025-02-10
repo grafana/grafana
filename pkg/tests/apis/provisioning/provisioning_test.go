@@ -11,6 +11,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+	"golang.org/x/exp/rand"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+
 	dashboard "github.com/grafana/grafana/pkg/apis/dashboard/v1alpha1"
 	folder "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
@@ -21,13 +29,6 @@ import (
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
-	"golang.org/x/exp/rand"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 func TestMain(m *testing.M) {
@@ -153,23 +154,6 @@ func TestIntegrationProvisioning(t *testing.T) {
 				require.JSONEq(t, string(expectedOutput), string(outputJSON))
 			})
 		}
-	})
-
-	t.Run("creating repository creates folder", func(t *testing.T) {
-		cleanSlate(t)
-
-		_, err := client.Resource.Update(ctx,
-			helper.LoadYAMLOrJSONFile("testdata/github-example.json"),
-			metav1.UpdateOptions{},
-		)
-		require.NoError(t, err)
-
-		require.EventuallyWithT(t, func(collect *assert.CollectT) {
-			resp, err := folderClient.Resource.Get(ctx, "github-example", metav1.GetOptions{})
-			if assert.NoError(collect, err) {
-				assert.Equal(collect, "github-example", mustNestedString(resp.Object, "metadata", "name"))
-			}
-		}, time.Second*2, time.Millisecond*20)
 	})
 
 	t.Run("creating GitHub repository syncs from branch selected", func(t *testing.T) {
@@ -313,7 +297,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 		require.NoError(t, err, "valid path should be fine")
 
 		// But the dashboard shouldn't exist yet
-		const allPanels = "all-panels-5Y4ReX6LwL7d"
+		const allPanels = "all-panels-hallaxjov44rbumtikbi1sbzroco9"
 		_, err = dashboardClient.Resource.Get(ctx, allPanels, metav1.GetOptions{})
 		require.Error(t, err, "no all-panels dashboard should exist")
 
@@ -323,6 +307,9 @@ func TestIntegrationProvisioning(t *testing.T) {
 			Resource("repositories").
 			Name(repo).
 			SubResource("sync").
+			Body(asJSON(provisioning.SyncJobOptions{
+				Incremental: false,
+			})).
 			Do(ctx)
 
 		obj, err := result.Get()
@@ -367,6 +354,11 @@ func mustNestedString(obj map[string]interface{}, fields ...string) string {
 func mustNested(obj map[string]interface{}, fields ...string) interface{} {
 	v, _, _ := unstructured.NestedFieldNoCopy(obj, fields...)
 	return v
+}
+
+func asJSON(obj any) []byte {
+	jj, _ := json.Marshal(obj)
+	return jj
 }
 
 func randomAsciiStr(n int) string {

@@ -522,8 +522,8 @@ export type CreateRepositorySyncArg = {
   /** name of the Job */
   name: string;
   body: {
-    /** Complete forces the sync to overwrite */
-    incremental?: boolean;
+    /** Incremental synchronization for versioned repositories */
+    incremental: boolean;
   };
 };
 export type CreateRepositoryTestResponse = /** status 200 OK */ TestResults;
@@ -658,8 +658,8 @@ export type PullRequestJobOptions = {
   url?: string;
 };
 export type SyncJobOptions = {
-  /** Complete forces the sync to overwrite */
-  complete?: boolean;
+  /** Incremental synchronization for versioned repositories */
+  incremental: boolean;
 };
 export type JobSpec = {
   /** Possible enum values:
@@ -808,6 +808,8 @@ export type SyncStatus = {
   finished?: number;
   /** The repository hash when the last sync ran */
   hash?: string;
+  /** Incremental synchronization for versioned repositories */
+  incremental?: boolean;
   /** The ID for the job that ran this sync */
   job?: string;
   /** Summary messages (will be shown to users) */

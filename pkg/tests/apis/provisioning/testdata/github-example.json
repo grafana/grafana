@@ -11,7 +11,7 @@
         "readOnly": false,
         "sync": {
             "enabled": true,
-            "target": "mirror",
+            "target": "folder",
             "intervalSeconds": 60
         },
         "github": {
