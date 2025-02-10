@@ -60,19 +60,10 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 		return worker.jobStatus, err
 	}
 
-	// Add dashboards, library panels and playlists
 	kinds := []schema.GroupVersionResource{{
 		Group:    dashboards.GROUP,
 		Version:  "v1alpha1",
 		Resource: dashboards.DASHBOARD_RESOURCE,
-	}, {
-		Group:    dashboards.GROUP,
-		Version:  "v1alpha1",
-		Resource: dashboards.LIBRARY_PANEL_RESOURCE,
-	}, {
-		Group:    "playlist.grafana.app",
-		Version:  "v0alpha1",
-		Resource: "playlists", // NOTE, nothing lives in folders
 	}}
 	for _, kind := range kinds {
 		err = worker.export(ctx, kind)
