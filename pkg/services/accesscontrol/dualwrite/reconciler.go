@@ -48,10 +48,6 @@ func (r *ZanzanaReconciler) Run(ctx context.Context) error {
 }
 
 func ProvideZanzanaReconciler(cfg *setting.Cfg, features featuremgmt.FeatureToggles, client zanzana.Client, store db.DB, lock *serverlock.ServerLockService, folderService folder.Service) *ZanzanaReconciler {
-	return NewZanzanaReconciler(cfg, features, client, store, lock, folderService)
-}
-
-func NewZanzanaReconciler(cfg *setting.Cfg, features featuremgmt.FeatureToggles, client zanzana.Client, store db.DB, lock *serverlock.ServerLockService, folderService folder.Service) *ZanzanaReconciler {
 	zanzanaReconciler := &ZanzanaReconciler{
 		cfg:      cfg,
 		log:      log.New("zanzana.reconciler"),
