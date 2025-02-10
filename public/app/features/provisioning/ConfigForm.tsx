@@ -31,9 +31,9 @@ const targetOptions = [
   { value: 'folder', label: 'Managed folder' },
 ];
 
-const workflowOptions = [
-  { label: 'Push', value: WorkflowOption.Push },
-  { label: 'Branch', value: WorkflowOption.Branch },
+const workflowOptions: Array<{ label: string; value: WorkflowOption }> = [
+  { label: 'Push', value: 'push' },
+  { label: 'Branch', value: 'branch' },
 ];
 
 const appEvents = getAppEvents();
@@ -48,7 +48,7 @@ function getDefaultValues(repository?: RepositorySpec): RepositoryFormData {
       repository: '',
       branch: 'main',
       generateDashboardPreviews: true,
-      workflows: [WorkflowOption.Push, WorkflowOption.Branch],
+      workflows: ['push', 'branch'],
       sync: {
         enabled: false,
         target: 'instance',

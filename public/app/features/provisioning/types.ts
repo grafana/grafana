@@ -12,18 +12,4 @@ export interface ProvisioningPreview {
   ref?: string;
 }
 
-export enum WorkflowOption {
-  Push = 'push',
-  Branch = 'branch',
-}
-
-export function mapToWorkflowOption(value: string): WorkflowOption | undefined {
-  switch (value) {
-    case WorkflowOption.Push:
-      return WorkflowOption.Push;
-    case WorkflowOption.Branch:
-      return WorkflowOption.Branch;
-    default:
-      return undefined;
-  }
-}
+export type WorkflowOption = 'branch' | 'push';

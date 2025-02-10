@@ -1,8 +1,8 @@
 import { RepositorySpec } from 'app/features/provisioning/api';
-import { WorkflowOption, mapToWorkflowOption } from 'app/features/provisioning/types';
+import { WorkflowOption } from 'app/features/provisioning/types';
 
 export function getDefaultWorkflow(config?: RepositorySpec) {
-  return config?.github?.workflows ? mapToWorkflowOption(config?.github?.workflows[0]) : undefined;
+  return config?.github?.workflows?.[0];
 }
 
 export function getWorkflowOptions(config?: RepositorySpec) {
@@ -10,9 +10,9 @@ export function getWorkflowOptions(config?: RepositorySpec) {
     return [];
   }
 
-  const availableOptions = [
-    { label: `Push to ${config.github?.branch}`, value: WorkflowOption.Push },
-    { label: 'Push to Different Branch', value: WorkflowOption.Branch },
+  const availableOptions: Array<{ label: string; value: WorkflowOption }> = [
+    { label: `Push to ${config.github?.branch}`, value: 'push' },
+    { label: 'Push to Different Branch', value: 'branch' },
   ];
 
   // Filter options based on the workflows in the config

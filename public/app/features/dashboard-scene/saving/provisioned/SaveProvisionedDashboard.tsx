@@ -70,7 +70,7 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Prop
       if (isNew) {
         dashboard.setRepoName(defaultValues.repo);
       }
-      const prLink = workflow !== WorkflowOption.Push ? href : undefined;
+      const prLink = workflow !== 'push' ? href : undefined;
       dashboard.closeModal();
       locationService.partial({
         viewPanel: null,
@@ -102,7 +102,7 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Prop
       description: description,
     });
 
-    if (workflow === WorkflowOption.Push) {
+    if (workflow === 'push') {
       ref = undefined;
     }
 
@@ -186,7 +186,7 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Prop
                 }}
               />
             </Field>
-            {workflow === WorkflowOption.Branch && (
+            {workflow === 'branch' && (
               <Field
                 label="Branch"
                 description="Branch name in GitHub"
