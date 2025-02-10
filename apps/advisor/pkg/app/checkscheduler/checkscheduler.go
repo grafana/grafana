@@ -54,7 +54,7 @@ func (r *Runner) Run(ctx context.Context) error {
 
 	// do an initial creation if necessary
 	if lastCreated.IsZero() {
-		err = r.updateChecks(ctx)
+		err = r.createChecks(ctx)
 		if err != nil {
 			klog.Error("Error creating new check reports", "error", err)
 		} else {
@@ -73,7 +73,7 @@ func (r *Runner) Run(ctx context.Context) error {
 	for {
 		select {
 		case <-ticker.C:
-			err = r.updateChecks(ctx)
+			err = r.createChecks(ctx)
 			if err != nil {
 				klog.Error("Error creating new check reports", "error", err)
 			}
@@ -106,8 +106,8 @@ func (r *Runner) checkLastCreated(ctx context.Context) (time.Time, error) {
 	return lastCreated, nil
 }
 
-// updateChecks creates a new check for each check type in the registry.
-func (r *Runner) updateChecks(ctx context.Context) error {
+// createChecks creates a new check for each check type in the registry.
+func (r *Runner) createChecks(ctx context.Context) error {
 	for _, check := range r.checkRegistry.Checks() {
 		obj := &advisorv0alpha1.Check{
 			ObjectMeta: metav1.ObjectMeta{

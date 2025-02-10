@@ -64,10 +64,7 @@ func TestRunner_Run_ErrorOnList(t *testing.T) {
 		client:        mockClient,
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	err := runner.Run(ctx)
+	err := runner.Run(context.Background())
 	assert.Error(t, err)
 }
 
@@ -82,14 +79,12 @@ func TestRunner_checkLastCreated_ErrorOnList(t *testing.T) {
 		client: mockClient,
 	}
 
-	ctx := context.Background()
-
-	lastCreated, err := runner.checkLastCreated(ctx)
+	lastCreated, err := runner.checkLastCreated(context.Background())
 	assert.Error(t, err)
 	assert.True(t, lastCreated.IsZero())
 }
 
-func TestRunner_updateChecks_ErrorOnCreate(t *testing.T) {
+func TestRunner_createChecks_ErrorOnCreate(t *testing.T) {
 	mockCheckService := &MockCheckService{
 		checks: []checks.Check{
 			&mockCheck{
@@ -108,13 +103,11 @@ func TestRunner_updateChecks_ErrorOnCreate(t *testing.T) {
 		client:        mockClient,
 	}
 
-	ctx := context.Background()
-
-	err := runner.updateChecks(ctx)
+	err := runner.createChecks(context.Background())
 	assert.Error(t, err)
 }
 
-func TestRunner_updateChecks_Success(t *testing.T) {
+func TestRunner_createChecks_Success(t *testing.T) {
 	mockCheckService := &MockCheckService{
 		checks: []checks.Check{
 			&mockCheck{
@@ -133,8 +126,6 @@ func TestRunner_updateChecks_Success(t *testing.T) {
 		client:        mockClient,
 	}
 
-	ctx := context.Background()
-
-	err := runner.updateChecks(ctx)
+	err := runner.createChecks(context.Background())
 	assert.NoError(t, err)
 }
