@@ -375,13 +375,13 @@ export class PrometheusDatasource
 
   processTargetV2(target: PromQuery, request: DataQueryRequest<PromQuery>) {
     // The `utcOffsetSec` parameter is required by the backend to correctly align time ranges.
-    // This alignment ensures that relative time ranges (e.g., "Last N hours/days/years") are adjusted 
+    // This alignment ensures that relative time ranges (e.g., "Last N hours/days/years") are adjusted
     // according to the user's selected time zone, rather than defaulting to UTC.
     //
-    // Example: If the user selects "Last 5 days," each day should begin at 00:00 in the chosen time zone, 
+    // Example: If the user selects "Last 5 days," each day should begin at 00:00 in the chosen time zone,
     // rather than at 00:00 UTC, ensuring an accurate breakdown.
     //
-    // This adjustment does not apply to absolute time ranges, where users explicitly set 
+    // This adjustment does not apply to absolute time ranges, where users explicitly set
     // the start and end timestamps.
     //
     // Handling `utcOffsetSec`:
