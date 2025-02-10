@@ -2,7 +2,7 @@ import * as React from 'react';
 import { CSSProperties } from 'react';
 import { OnDrag, OnResize, OnRotate } from 'react-moveable/declaration/types';
 
-import { FieldType, getLinksSupplier, LinkModel, ScopedVars, ValueLinkConfig } from '@grafana/data';
+import { FieldType, getLinksSupplier, LinkModel, ScopedVars, ValueLinkConfig, OneClickMode } from '@grafana/data';
 import { LayerElement } from 'app/core/components/Layers/types';
 import { notFoundItem } from 'app/features/canvas/elements/notFound';
 import { DimensionContext } from 'app/features/dimensions';
@@ -18,7 +18,6 @@ import { getConnectionsByTarget, getRowIndex, isConnectionTarget } from 'app/plu
 import { getActions, getActionsDefaultField } from '../../actions/utils';
 import { CanvasElementItem, CanvasElementOptions } from '../element';
 import { canvasElementRegistry } from '../registry';
-import { OneClickMode } from '../types';
 
 import { FrameState } from './frame';
 import { RootElement } from './root';
