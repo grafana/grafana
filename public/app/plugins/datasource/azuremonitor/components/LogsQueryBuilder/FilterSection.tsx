@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { EditorField, EditorFieldGroup, EditorRow, InputGroup } from '@grafana/plugin-ui';
@@ -14,8 +14,13 @@ interface FilterSectionProps {
 
 export const FilterSection: React.FC<FilterSectionProps> = ({ onQueryUpdate, selectedColumns }) => {
   const styles = useStyles2(getStyles);
-
   const [filters, setFilters] = useState<Array<{ column: string; operator: string; value: string }>>([]);
+
+  useEffect(() => {
+    if (selectedColumns.length === 0) {
+      setFilters([]); 
+    }
+  }, [selectedColumns]);
 
   const formatFilters = (filters: Array<{ column: string; operator: string; value: string }>): string => {
     return filters

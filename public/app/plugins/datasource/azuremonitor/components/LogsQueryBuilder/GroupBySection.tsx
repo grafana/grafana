@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { EditorField, EditorFieldGroup, EditorList, EditorRow } from '@grafana/plugin-ui';
@@ -16,7 +16,14 @@ interface GroupBySectionProps {
 export const GroupBySection: React.FC<GroupBySectionProps> = ({ selectedColumns, onQueryUpdate }) => {
   const [groupBys, setGroupBys] = useState<QueryEditorGroupByExpression[]>([]);
 
+  useEffect(() => {
+    if (selectedColumns.length === 0) {
+      setGroupBys([]); 
+    }
+  }, [selectedColumns]);
+
   const handleGroupByChange = (newItems: Array<Partial<QueryEditorGroupByExpression>>) => {
+    console.log("newItems", newItems)
     let cleaned: QueryEditorGroupByExpression[] = newItems
       .filter((g) => g.property?.name)
       .map((g) => ({
@@ -37,6 +44,7 @@ export const GroupBySection: React.FC<GroupBySectionProps> = ({ selectedColumns,
       ];
     }
 
+    console.log("cleaned", cleaned.map((gb) => gb.property?.name ?? null))
     setGroupBys(cleaned);
     onQueryUpdate({ groupBy: cleaned.map((gb) => gb.property?.name ?? '') });
   };

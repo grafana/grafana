@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { EditorRows } from '@grafana/plugin-ui';
-import { Alert } from '@grafana/ui';
+import { EditorField, EditorFieldGroup, EditorRow, EditorRows } from '@grafana/plugin-ui';
+import { Alert, Input } from '@grafana/ui';
 
 import { selectors } from '../../e2e/selectors';
 import {
@@ -36,6 +36,7 @@ export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
   const [selectedTable, setSelectedTable] = useState<string | null>(null);
   const [columns, setColumns] = useState<AzureLogAnalyticsMetadataColumn[]>([]);
   const [selectedColumns, setSelectedColumns] = useState<Array<SelectableValue<string>>>([]);
+  const [limit, setLimit] = useState<number>();
 
   useEffect(() => {
     if (selectedTable) {
@@ -55,47 +56,57 @@ export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
     filters,
     aggregates,
     groupBy,
+    limit
   }: {
     newTable?: AzureLogAnalyticsMetadataTable;
     newColumns?: Array<SelectableValue<string>>;
     filters?: string;
     aggregates?: string;
     groupBy?: string[];
+    limit?: number;
   }) => {
     let tableName = selectedTable;
     let columnList = selectedColumns.map((c) => c.value!);
-
+  
     const prevQuery = query.azureLogAnalytics?.query || '';
     const { prevFilters, prevAggregates, prevGroupBy } = parseQuery(prevQuery);
-
-    if (newTable) {
+  
+    const isNewTable = newTable && newTable.name !== selectedTable;
+  
+    if (isNewTable) {
       tableName = newTable.name;
       setSelectedTable(newTable.name);
-      setColumns([]);
+  
+      onQueryChange({
+        ...query,
+        azureLogAnalytics: {
+          ...query.azureLogAnalytics,
+          query: tableName,
+        },
+      });
     }
-
-    if (newColumns) {
+  
+    if (newColumns && !isNewTable) {
       setSelectedColumns(newColumns);
       columnList = [...new Set(newColumns.map((c) => c.label!))];
+    } else {
+      columnList = []; 
     }
-
-    let updatedFilters = filters !== undefined ? filters : prevFilters;
-    if (updatedFilters.includes(`$__timeFilter(TimeGenerated)`)) {
-      updatedFilters = updatedFilters.replace(`$__timeFilter(TimeGenerated) and `, ''); // Remove duplicates
-    }
-
-    const updatedAggregates = aggregates !== undefined ? aggregates : prevAggregates;
-    const updatedGroupBy = groupBy !== undefined ? groupBy : prevGroupBy;
-
+  
+    const updatedFilters = isNewTable ? undefined : filters !== undefined ? filters : prevFilters;
+    const updatedAggregates = isNewTable ? undefined : aggregates !== undefined ? aggregates : prevAggregates;
+    const updatedGroupBy = isNewTable ? [] : groupBy !== undefined ? groupBy : prevGroupBy;
+  
     const formattedQuery = AzureMonitorQueryParser.updateQuery(
       tableName!,
       columnList,
       columns,
       updatedFilters,
       updatedAggregates,
-      updatedGroupBy
+      updatedGroupBy,
+      limit
     );
-
+  
     onQueryChange({
       ...query,
       azureLogAnalytics: {
@@ -104,6 +115,8 @@ export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
       },
     });
   };
+  
+  
 
   return (
     <span data-testid={selectors.components.queryEditor.logsQueryEditor.container.input}>
@@ -122,6 +135,23 @@ export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
         <FilterSection {...props} onQueryUpdate={handleQueryUpdate} selectedColumns={selectedColumns} />
         <AggregateSection {...props} selectedColumns={selectedColumns} onQueryUpdate={handleQueryUpdate} />
         <GroupBySection {...props} selectedColumns={selectedColumns} onQueryUpdate={handleQueryUpdate} />
+        <EditorRow>
+          <EditorFieldGroup>
+            <EditorField label="Limit">
+              <Input
+                className="width-10"
+                type="number"  
+                placeholder="Enter limit"
+                value={limit ?? ''}  
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                  const newValue = e.target.value.replace(/[^0-9]/g, '');
+                  setLimit(newValue ? Number(newValue) : undefined); 
+                  handleQueryUpdate({ limit: Number(newValue) })
+                }}
+              />
+            </EditorField>
+          </EditorFieldGroup>
+        </EditorRow>
         <KQLPreview query={query.azureLogAnalytics?.query || ''} />
       </EditorRows>
     </span>

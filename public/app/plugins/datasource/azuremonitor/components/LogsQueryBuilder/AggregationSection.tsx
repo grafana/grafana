@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { EditorField, EditorFieldGroup, EditorList, EditorRow } from '@grafana/plugin-ui';
@@ -20,6 +20,12 @@ export const AggregateSection: React.FC<AggregateSectionProps> = ({
   templateVariableOptions,
 }) => {
   const [aggregates, setAggregates] = useState<QueryEditorReduceExpression[]>([]);
+
+  useEffect(() => {
+    if (selectedColumns.length === 0) {
+      setAggregates([]); 
+    }
+  }, [selectedColumns]);
 
   const updateQueryWithAggregates = (newAggregates: QueryEditorReduceExpression[]) => {
     const validAggregates = newAggregates.filter((agg) => agg.property?.name && agg.reduce?.name);
