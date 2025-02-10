@@ -1,4 +1,4 @@
-package v1alpha1
+package v0alpha1
 
 import (
 	"encoding/json"
@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana/pkg/apis/dashboard"
 )
 
 func TestConvertDashboardVersions(t *testing.T) {
@@ -43,7 +44,7 @@ func TestConvertDashboardVersions(t *testing.T) {
     },
     "timepicker": {},
     "timezone": "utc",
-    "title": "New dashboard",
+    "title": "New",
     "uid": "be3ymutzclgqod",
     "version": 1,
     "weekStart": ""
@@ -51,17 +52,17 @@ func TestConvertDashboardVersions(t *testing.T) {
 	object := common.Unstructured{}
 	err := json.Unmarshal(dashboardV0Spec, &object.Object)
 	require.NoError(t, err)
-	result := DashboardSpec{}
-	// convert v0 to v1, where we should extract the title & all other elements should be copied
-	err = Convert_v0alpha1_Unstructured_To_v1alpha1_DashboardSpec(&object, &result, nil)
+	in := dashboard.DashboardSpec{Title: "New dashboard", Unstructured: object}
+	result := common.Unstructured{}
+	err = Convert_dashboard_DashboardSpec_To_v0alpha1_Unstructured(&in, &result, nil)
 	require.NoError(t, err)
-	require.Equal(t, result.Title, "New dashboard")
-	require.Equal(t, result.Unstructured, object)
-	require.Equal(t, result.Unstructured.Object["refresh"], "", "schemaVersion migration not applied. refresh should be an empty string")
 
 	// now convert back & ensure it is the same
-	object2 := common.Unstructured{}
-	err = Convert_v1alpha1_DashboardSpec_To_v0alpha1_Unstructured(&result, &object2, nil)
+	object2 := *(result.DeepCopy())
+	result2 := dashboard.DashboardSpec{}
+	err = Convert_v0alpha1_Unstructured_To_dashboard_DashboardSpec(&object2, &result2, nil)
 	require.NoError(t, err)
-	require.Equal(t, object, object2)
+	require.Equal(t, result2.Title, "New dashboard")
+	require.Equal(t, result2.Unstructured.Object["schemaVersion"], 41, "schemaVersion migration not applied.")
+	require.Equal(t, result2.Unstructured.Object["refresh"], "", "schemaVersion migration not applied. refresh should be an empty string")
 }
