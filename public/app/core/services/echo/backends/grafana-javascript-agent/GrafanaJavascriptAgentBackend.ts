@@ -5,6 +5,7 @@ import {
   BrowserConfig,
   ErrorsInstrumentation,
   ConsoleInstrumentation,
+  ConsoleInstrumentationOptions,
   WebVitalsInstrumentation,
   SessionInstrumentation,
   FetchTransport,
@@ -60,6 +61,12 @@ export class GrafanaJavascriptAgentBackend
     ];
 
     const transports: BaseTransport[] = [new EchoSrvTransport({ ignoreUrls })];
+    const consoleInstrumentationOptions: ConsoleInstrumentationOptions =
+      options.allInstrumentationsEnabled || options.consoleInstrumentalizationEnabled
+        ? {
+            serializeErrors: true,
+          }
+        : {};
 
     // If in cross origin iframe, default to writing to instance logging endpoint
     if (options.customEndpoint && !isCrossOriginIframe()) {
@@ -94,6 +101,7 @@ export class GrafanaJavascriptAgentBackend
       instrumentations: options.allInstrumentationsEnabled
         ? instrumentations
         : [...getWebInstrumentations(), new TracingInstrumentation()],
+      consoleInstrumentation: consoleInstrumentationOptions,
       transports,
       ignoreErrors: [
         'ResizeObserver loop limit exceeded',
