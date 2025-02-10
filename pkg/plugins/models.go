@@ -288,7 +288,6 @@ type DataSourceDTO struct {
 	Access     string         `json:"access,omitempty"`
 	Preload    bool           `json:"preload"`
 	Module     string         `json:"module,omitempty"`
-	Extensions Extensions     `json:"extensions"`
 	JSONData   map[string]any `json:"jsonData"`
 	ReadOnly   bool           `json:"readOnly"`
 	APIVersion string         `json:"apiVersion,omitempty"`
@@ -320,7 +319,6 @@ type PanelDTO struct {
 	SkipDataQuery   bool            `json:"skipDataQuery"`
 	ReleaseState    string          `json:"state"`
 	BaseURL         string          `json:"baseUrl"`
-	Extensions      Extensions      `json:"extensions"`
 	Signature       string          `json:"signature"`
 	Module          string          `json:"module"`
 	Angular         AngularMeta     `json:"angular"`
