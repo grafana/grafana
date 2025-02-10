@@ -23,7 +23,7 @@ killercoda:
 
 <!-- INTERACTIVE page intro.md START -->
 
-The Get started with Grafana Alerting tutorial Part 5 is a continuation of [Get started with Grafana Alerting tutorial Part 4](http://grafana.com/tutorials/alerting-get-started-pt4/).
+The Get started with Grafana Alerting tutorial Part 5 is a continuation of [Get started with Grafana Alerting tutorial Part 4](http://www.grafana.com/tutorials/alerting-get-started-pt4/).
 
 In this tutorial, we focus on optimizing your alerting strategy using Grafana for monitoring system health, particularly when working with [Prometheus](https://grafana.com/docs/grafana/latest/datasources/prometheus/). Imagine you are managing a web application or a fleet of servers, tracking critical metrics such as CPU, memory, and disk usage. While monitoring is essential, managing alerts allows your team to act on issues without necessarily feeling overwhelmed by the noise.
 
@@ -341,8 +341,8 @@ By using notification policies, you can route alerts based on query values, dire
 
 Explore related topics covered in this tutorial:
 
-- Understand how alert routing works in [Get started with Grafana Alerting - Part 2](http://grafana.com/tutorials/alerting-get-started-pt2/).
-- Learn how templating works in [Get started with Grafana Alerting - Part 4](http://grafana.com/tutorials/alerting-get-started-pt4/).
+- Understand how alert routing works in [Get started with Grafana Alerting - Part 2](http://www.grafana.com/tutorials/alerting-get-started-pt2/).
+- Learn how templating works in [Get started with Grafana Alerting - Part 4](http://www.grafana.com/tutorials/alerting-get-started-pt4/).
   - More [examples on templating labels](https://grafana.com/docs/grafana/latest/alerting/alerting-rules/templates/examples/).
 
 <!-- INTERACTIVE page finish.md END -->
