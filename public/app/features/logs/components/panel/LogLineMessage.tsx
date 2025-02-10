@@ -1,8 +1,8 @@
-import { CSSProperties, ReactNode } from "react";
+import { CSSProperties, ReactNode } from 'react';
 
-import { useTheme2 } from "@grafana/ui";
+import { useTheme2 } from '@grafana/ui';
 
-import { getStyles } from "./LogLine";
+import { getStyles } from './LogLine';
 
 interface Props {
   children: ReactNode;
@@ -12,5 +12,9 @@ interface Props {
 export const LogLineMessage = ({ children, style }: Props) => {
   const theme = useTheme2();
   const styles = getStyles(theme);
-  return <div style={style} className={`${styles.logLine} ${styles.logLineMessage}`}>{children}</div>
-} 
+  return (
+    <div style={style} className={`${styles.logLine} ${styles.logLineMessage}`}>
+      {children}
+    </div>
+  );
+};
