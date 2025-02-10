@@ -68,6 +68,9 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Prop
     const appEvents = getAppEvents();
     if (request.isSuccess) {
       dashboard.setState({ isDirty: false });
+      if (isNew) {
+        dashboard.setRepoName(defaultValues.repo);
+      }
       const prLink = workflow === WorkflowOption.Direct ? undefined : href;
       dashboard.closeModal();
       locationService.partial({
@@ -82,7 +85,7 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Prop
         payload: ['Error saving dashboard', request.error],
       });
     }
-  }, [request.isSuccess, request.isError, request.error, dashboard, workflow, href]);
+  }, [request.isSuccess, request.isError, request.error, dashboard, workflow, href, isNew, defaultValues.repo]);
 
   useEffect(() => {
     setValue('workflow', getDefaultWorkflow(repositoryConfig));
