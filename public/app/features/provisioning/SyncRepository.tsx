@@ -40,7 +40,7 @@ export function SyncRepository({ repository }: Props) {
     if (!name) {
       return;
     }
-    syncResource({ name, body: {} }); // will queue a full resync job
+    syncResource({ name, body: { incremental: true } }); // will queue a full resync job
     setIsModalOpen(false);
   };
 

@@ -11,7 +11,7 @@ export const dataToSpec = (data: RepositoryFormData): RepositorySpec => {
   switch (data.type) {
     case 'github':
       spec.github = {
-        branchWorkflow: data.branchWorkflow,
+        workflows: data.workflows,
         generateDashboardPreviews: data.generateDashboardPreviews,
         owner: data.owner,
         repository: data.repository,

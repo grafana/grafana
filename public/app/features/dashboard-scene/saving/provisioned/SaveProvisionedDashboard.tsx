@@ -59,7 +59,6 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Prop
     control,
     setValue,
   } = useForm<FormData>({ defaultValues });
-
   const [title, ref, workflow, comment] = watch(['title', 'ref', 'workflow', 'comment']);
   const { isDirty } = dashboard.state;
   const href = createPRLink(repositoryConfig, title, ref, comment);
@@ -71,7 +70,7 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Prop
       if (isNew) {
         dashboard.setRepoName(defaultValues.repo);
       }
-      const prLink = workflow === WorkflowOption.Direct ? undefined : href;
+      const prLink = workflow !== 'push' ? href : undefined;
       dashboard.closeModal();
       locationService.partial({
         viewPanel: null,
@@ -103,7 +102,7 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Prop
       description: description,
     });
 
-    if (workflow === WorkflowOption.Direct) {
+    if (workflow === 'push') {
       ref = undefined;
     }
 
@@ -183,11 +182,11 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Prop
                 control={control}
                 name={'workflow'}
                 render={({ field: { ref, ...field } }) => {
-                  return <RadioButtonGroup {...field} options={getWorkflowOptions(repositoryConfig?.github?.branch)} />;
+                  return <RadioButtonGroup {...field} options={getWorkflowOptions(repositoryConfig)} />;
                 }}
               />
             </Field>
-            {workflow === WorkflowOption.PullRequest && (
+            {workflow === 'branch' && (
               <Field
                 label="Branch"
                 description="Branch name in GitHub"

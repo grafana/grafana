@@ -345,6 +345,13 @@ func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admis
 		if r.Spec.GitHub.Branch == "" {
 			r.Spec.GitHub.Branch = "main"
 		}
+
+		if len(r.Spec.GitHub.Workflows) == 0 {
+			r.Spec.GitHub.Workflows = []provisioning.Workflow{
+				provisioning.BranchWorkflow,
+				provisioning.PushWorkflow,
+			}
+		}
 	}
 
 	return nil

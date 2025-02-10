@@ -78,8 +78,13 @@ func (r *githubRepository) Validate() (list field.ErrorList) {
 	if gh.Token == "" {
 		list = append(list, field.Required(field.NewPath("spec", "github", "token"), "a github access token is required"))
 	}
-	if gh.GenerateDashboardPreviews && !gh.BranchWorkflow {
-		list = append(list, field.Forbidden(field.NewPath("spec", "github", "token"), "to generate dashboard previews, you must activate the branch workflow"))
+
+	for _, w := range gh.Workflows {
+		switch w {
+		case provisioning.PushWorkflow, provisioning.BranchWorkflow:
+		default:
+			list = append(list, field.Invalid(field.NewPath("spec", "github", "workflow"), w, "invalid workflow"))
+		}
 	}
 
 	return list
@@ -219,6 +224,9 @@ func (r *githubRepository) Create(ctx context.Context, path, ref string, data []
 		ref = r.config.Spec.GitHub.Branch
 	}
 	ctx, _ = r.logger(ctx, ref)
+	if err := r.isWorkflowAllowed(ref); err != nil {
+		return err
+	}
 
 	if err := r.ensureBranchExists(ctx, ref); err != nil {
 		return fmt.Errorf("create branch on create: %w", err)
@@ -254,6 +262,9 @@ func (r *githubRepository) Update(ctx context.Context, path, ref string, data []
 		ref = r.config.Spec.GitHub.Branch
 	}
 	ctx, _ = r.logger(ctx, ref)
+	if err := r.isWorkflowAllowed(ref); err != nil {
+		return err
+	}
 
 	if err := r.ensureBranchExists(ctx, ref); err != nil {
 		return fmt.Errorf("create branch on update: %w", err)
@@ -286,6 +297,14 @@ func (r *githubRepository) Update(ctx context.Context, path, ref string, data []
 }
 
 func (r *githubRepository) Write(ctx context.Context, path string, ref string, data []byte, message string) error {
+	if ref == "" {
+		ref = r.config.Spec.GitHub.Branch
+	}
+	ctx, _ = r.logger(ctx, ref)
+	if err := r.isWorkflowAllowed(ref); err != nil {
+		return err
+	}
+
 	return writeWithReadThenCreateOrUpdate(ctx, r, path, ref, data, message)
 }
 
@@ -294,6 +313,9 @@ func (r *githubRepository) Delete(ctx context.Context, path, ref, comment string
 		ref = r.config.Spec.GitHub.Branch
 	}
 	ctx, _ = r.logger(ctx, ref)
+	if err := r.isWorkflowAllowed(ref); err != nil {
+		return err
+	}
 
 	if err := r.ensureBranchExists(ctx, ref); err != nil {
 		return fmt.Errorf("create branch on delete: %w", err)
@@ -387,6 +409,25 @@ func (r *githubRepository) History(ctx context.Context, path, ref string) ([]pro
 	}
 
 	return ret, nil
+}
+
+func (r *githubRepository) isWorkflowAllowed(ref string) error {
+	cfg := r.config.Spec
+
+	workflows := make(map[provisioning.Workflow]bool)
+	for _, w := range cfg.GitHub.Workflows {
+		workflows[w] = true
+	}
+
+	if ref == cfg.GitHub.Branch && !workflows[provisioning.PushWorkflow] {
+		return apierrors.NewBadRequest("direct push not allowed")
+	}
+
+	if ref != cfg.GitHub.Branch && !workflows[provisioning.BranchWorkflow] {
+		return apierrors.NewBadRequest("branch push not allowed")
+	}
+
+	return nil
 }
 
 // basicGitBranchNameRegex is a regular expression to validate a git branch name
