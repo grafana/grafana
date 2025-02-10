@@ -52,8 +52,15 @@ export class JaegerDatasource extends DataSourceWithBackend<JaegerQuery, JaegerJ
     this.traceIdTimeParams = instanceSettings.jsonData.traceIdTimeParams;
   }
 
+  /**
+   * Migrated to backend with feature toggle `jaegerBackendMigration`
+   */
   async metadataRequest(url: string, params?: Record<string, unknown>) {
-    const res = await lastValueFrom(this._request(url, params, { hideFromInspector: true }));
+    if (config.featureToggles.jaegerBackendMigration) {
+      return await this.getResource(url, params);
+    }
+
+    const res = await lastValueFrom(this._request('/api/' + url, params, { hideFromInspector: true }));
     return res.data.data;
   }
 
@@ -193,6 +200,9 @@ export class JaegerDatasource extends DataSourceWithBackend<JaegerQuery, JaegerJ
     };
   }
 
+  /**
+   * Migrated to backend with feature toggle `jaegerBackendMigration`
+   */
   async testDatasource() {
     if (config.featureToggles.jaegerBackendMigration) {
       return await super.testDatasource();
