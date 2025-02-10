@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"net/http"
 	"strconv"
 
@@ -8,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/validation"
@@ -31,7 +33,9 @@ func (api *Api) ViewPublicDashboard(c *contextmodel.ReqContext) response.Respons
 		return response.Err(ErrInvalidAccessToken.Errorf("ViewPublicDashboard: invalid access token"))
 	}
 
-	dto, err := api.PublicDashboardService.GetPublicDashboardForView(c.Req.Context(), accessToken)
+	dto, err := identity.WithServiceIdentityFn(c.Req.Context(), c.OrgID, func(ctx context.Context) (*dtos.DashboardFullWithMeta, error) {
+		return api.PublicDashboardService.GetPublicDashboardForView(ctx, accessToken)
+	})
 	if err != nil {
 		return response.Err(err)
 	}
@@ -67,7 +71,9 @@ func (api *Api) QueryPublicDashboard(c *contextmodel.ReqContext) response.Respon
 		return response.Err(ErrBadRequest.Errorf("QueryPublicDashboard: error parsing request: %v", err))
 	}
 
-	resp, err := api.PublicDashboardService.GetQueryDataResponse(c.Req.Context(), c.SkipDSCache, reqDTO, panelId, accessToken)
+	resp, err := identity.WithServiceIdentityFn(c.Req.Context(), c.OrgID, func(ctx context.Context) (*backend.QueryDataResponse, error) {
+		return api.PublicDashboardService.GetQueryDataResponse(ctx, c.SkipDSCache, reqDTO, panelId, accessToken)
+	})
 	if err != nil {
 		return response.Err(err)
 	}
@@ -97,7 +103,9 @@ func (api *Api) GetPublicAnnotations(c *contextmodel.ReqContext) response.Respon
 		To:   c.QueryInt64("to"),
 	}
 
-	annotations, err := api.PublicDashboardService.FindAnnotations(c.Req.Context(), reqDTO, accessToken)
+	annotations, err := identity.WithServiceIdentityFn(c.Req.Context(), c.OrgID, func(ctx context.Context) ([]AnnotationEvent, error) {
+		return api.PublicDashboardService.FindAnnotations(ctx, reqDTO, accessToken)
+	})
 	if err != nil {
 		return response.Err(err)
 	}
