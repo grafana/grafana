@@ -29,7 +29,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/migrator"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/permreg"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/pluginutils"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -54,7 +53,7 @@ var OSSRolesPrefixes = []string{accesscontrol.ManagedRolePrefix, accesscontrol.E
 func ProvideService(
 	cfg *setting.Cfg, db db.DB, routeRegister routing.RouteRegister, cache *localcache.CacheService,
 	accessControl accesscontrol.AccessControl, userService user.Service, actionResolver accesscontrol.ActionResolver,
-	features featuremgmt.FeatureToggles, tracer tracing.Tracer, zclient zanzana.Client, permRegistry permreg.PermissionRegistry,
+	features featuremgmt.FeatureToggles, tracer tracing.Tracer, permRegistry permreg.PermissionRegistry,
 	lock *serverlock.ServerLockService, folderService folder.Service,
 ) (*Service, error) {
 	service := ProvideOSSService(
@@ -64,7 +63,6 @@ func ProvideService(
 		cache,
 		features,
 		tracer,
-		zclient,
 		db,
 		permRegistry,
 		lock,
@@ -90,8 +88,8 @@ func ProvideService(
 func ProvideOSSService(
 	cfg *setting.Cfg, store accesscontrol.Store, actionResolver accesscontrol.ActionResolver,
 	cache *localcache.CacheService, features featuremgmt.FeatureToggles, tracer tracing.Tracer,
-	zclient zanzana.Client, db db.DB, permRegistry permreg.PermissionRegistry,
-	lock *serverlock.ServerLockService, folderService folder.Service,
+	db db.DB, permRegistry permreg.PermissionRegistry, lock *serverlock.ServerLockService,
+	folderService folder.Service,
 ) *Service {
 	s := &Service{
 		actionResolver: actionResolver,
