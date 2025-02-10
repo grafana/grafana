@@ -194,6 +194,7 @@ export type MigrateDataResponseItemDto = {
     | 'FOLDER'
     | 'LIBRARY_ELEMENT'
     | 'ALERT_RULE'
+    | 'ALERT_RULE_GROUP'
     | 'CONTACT_POINT'
     | 'NOTIFICATION_POLICY'
     | 'NOTIFICATION_TEMPLATE'
@@ -302,7 +303,7 @@ export type DashboardFullWithMeta = {
   dashboard?: Json;
   meta?: DashboardMeta;
 };
-export type LibraryElementDtoMetaUserDefinesModelForLibraryElementDtoMetaUser = {
+export type LibraryElementDtoMetaUser = {
   avatarUrl?: string;
   id?: number;
   name?: string;
@@ -310,11 +311,11 @@ export type LibraryElementDtoMetaUserDefinesModelForLibraryElementDtoMetaUser = 
 export type LibraryElementDtoMetaIsTheMetaInformationForLibraryElementDto = {
   connectedDashboards?: number;
   created?: string;
-  createdBy?: LibraryElementDtoMetaUserDefinesModelForLibraryElementDtoMetaUser;
+  createdBy?: LibraryElementDtoMetaUser;
   folderName?: string;
   folderUid?: string;
   updated?: string;
-  updatedBy?: LibraryElementDtoMetaUserDefinesModelForLibraryElementDtoMetaUser;
+  updatedBy?: LibraryElementDtoMetaUser;
 };
 export type LibraryElementDtoIsTheFrontendDtoForEntities = {
   description?: string;

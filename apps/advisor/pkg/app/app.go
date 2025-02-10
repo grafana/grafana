@@ -11,13 +11,10 @@ import (
 	advisorv0alpha1 "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checkregistry"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
+	"github.com/grafana/grafana/apps/advisor/pkg/app/checkscheduler"
+	"github.com/grafana/grafana/apps/advisor/pkg/app/checktyperegisterer"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/klog/v2"
-)
-
-const (
-	typeLabel        = "advisor.grafana.app/type"
-	statusAnnotation = "advisor.grafana.app/status"
 )
 
 func New(cfg app.Config) (app.App, error) {
@@ -37,7 +34,7 @@ func New(cfg app.Config) (app.App, error) {
 	// Initialize checks
 	checkMap := map[string]checks.Check{}
 	for _, c := range checkRegistry.Checks() {
-		checkMap[c.Type()] = c
+		checkMap[c.ID()] = c
 	}
 
 	simpleConfig := simple.AppConfig{
@@ -70,6 +67,9 @@ func New(cfg app.Config) (app.App, error) {
 					},
 				},
 			},
+			{
+				Kind: advisorv0alpha1.CheckTypeKind(),
+			},
 		},
 	}
 
@@ -83,6 +83,20 @@ func New(cfg app.Config) (app.App, error) {
 		return nil, err
 	}
 
+	// Save check types as resources
+	ctr, err := checktyperegisterer.New(cfg)
+	if err != nil {
+		return nil, err
+	}
+	a.AddRunnable(ctr)
+
+	// Start scheduler
+	csch, err := checkscheduler.New(cfg)
+	if err != nil {
+		return nil, err
+	}
+	a.AddRunnable(csch)
+
 	return a, nil
 }
 
@@ -95,6 +109,7 @@ func GetKinds() map[schema.GroupVersion][]resource.Kind {
 	return map[schema.GroupVersion][]resource.Kind{
 		gv: {
 			advisorv0alpha1.CheckKind(),
+			advisorv0alpha1.CheckTypeKind(),
 		},
 	}
 }

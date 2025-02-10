@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/publicdashboards/service/intervalv2"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/validation"
 	"github.com/grafana/grafana/pkg/services/query"
+	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -375,7 +376,13 @@ func (pd *PublicDashboardServiceImpl) FindAllWithPagination(ctx context.Context,
 		dashUIDs[i] = pubdash.DashboardUid
 	}
 
-	dashboardsFound, err := pd.dashboardService.FindDashboards(ctx, &dashboards.FindPersistedDashboardsQuery{OrgId: query.OrgID, DashboardUIDs: dashUIDs, SignedInUser: query.User, Limit: int64(len(dashUIDs))})
+	dashboardsFound, err := pd.dashboardService.FindDashboards(ctx, &dashboards.FindPersistedDashboardsQuery{
+		OrgId:         query.OrgID,
+		DashboardUIDs: dashUIDs,
+		SignedInUser:  query.User,
+		Limit:         int64(len(dashUIDs)),
+		Type:          searchstore.TypeDashboard,
+	})
 	if err != nil {
 		return nil, ErrInternalServerError.Errorf("FindAllWithPagination: GetDashboards: %w", err)
 	}
