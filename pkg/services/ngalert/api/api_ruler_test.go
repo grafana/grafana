@@ -694,6 +694,24 @@ func TestRouteGetRulesGroupConfig(t *testing.T) {
 			}
 		}
 	})
+	t.Run("should return a 404 when fetching a group that doesn't exist", func(t *testing.T) {
+		orgID := rand.Int63()
+		folder := randFolder()
+		ruleStore := fakes.NewRuleStore(t)
+		ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
+		groupKey := models.GenerateGroupKey(orgID)
+		groupKey.NamespaceUID = folder.UID
+
+		expectedRules := gen.With(gen.WithGroupKey(groupKey), gen.WithUniqueGroupIndex()).GenerateManyRef(5, 10)
+		ruleStore.PutRule(context.Background(), expectedRules...)
+
+		perms := createPermissionsForRules(expectedRules, orgID)
+		req := createRequestContextWithPerms(orgID, perms, nil)
+
+		response := createService(ruleStore).RouteGetRulesGroupConfig(req, folder.UID, "non-existent-rule-group")
+
+		require.Equal(t, http.StatusNotFound, response.Status())
+	})
 }
 
 func TestVerifyProvisionedRulesNotAffected(t *testing.T) {

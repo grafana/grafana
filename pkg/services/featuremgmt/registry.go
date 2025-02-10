@@ -1029,9 +1029,10 @@ var (
 		{
 			Name:         "alertingSaveStateCompressed",
 			Description:  "Enables the compressed protobuf-based alert state storage",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: false,
 			Owner:        grafanaAlertingSquad,
+			Expression:   "false",
 		},
 		{
 			Name:              "scopeApi",
@@ -1798,6 +1799,12 @@ var (
 			HideFromAdminPage: true,
 			HideFromDocs:      true,
 			RequiresRestart:   true,
+		},
+		{
+			Name:        "pluginsCDNSyncLoader",
+			Description: "Load plugins from CDN synchronously",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaPluginsPlatformSquad,
 		},
 	}
 )
