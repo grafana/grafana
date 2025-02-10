@@ -421,10 +421,10 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 		return sharedDashboards, err
 	}
 
-	// TODO handle case where user has more than 50 shared dashboards
+	limit := int64(100_000)
 	dashboardSearchRequest := &resource.ResourceSearchRequest{
 		Fields: []string{"folder"},
-		Limit:  50, // TODO bump this
+		Limit:  limit,
 		Options: &resource.ListOptions{
 			Key: key,
 			Fields: []*resource.Requirement{{
@@ -440,9 +440,34 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 		return nil, err
 	}
 
+	dashboardResultRows := dashboardResult.Results.Rows
+	// in case we didn't get all results, fetch what's left
+	if dashboardResult.TotalHits > limit {
+		rest := dashboardResult.TotalHits - limit
+		dashboardSearchRequestMissing := &resource.ResourceSearchRequest{
+			Fields: []string{"folder"},
+			Limit:  rest,
+			Offset: limit,
+			Options: &resource.ListOptions{
+				Key: key,
+				Fields: []*resource.Requirement{{
+					Key:      "name",
+					Operator: "in",
+					Values:   dashboardUids,
+				}},
+			},
+		}
+		dashboardResultMissing, err := s.client.Search(ctx, dashboardSearchRequestMissing)
+		if err != nil {
+			return nil, err
+		}
+
+		dashboardResultRows = append(dashboardResultRows, dashboardResultMissing.Results.Rows...)
+	}
+
 	// populate list of unique folder UIDs in the list of shared dashboards
 	folders := make([]string, 0)
-	for _, dash := range dashboardResult.Results.Rows {
+	for _, dash := range dashboardResultRows {
 		folderUid := string(dash.Cells[0])
 		if folderUid != "" && !slices.Contains(folders, folderUid) {
 			folders = append(folders, folderUid)
@@ -455,10 +480,9 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 		return nil, err
 	}
 
-	// TODO handle case where there are more than 50 here
 	folderSearchRequest := &resource.ResourceSearchRequest{
 		Fields: []string{"folder"},
-		Limit:  50, // TODO bump this
+		Limit:  limit,
 		Options: &resource.ListOptions{
 			Key: folderKey,
 			Fields: []*resource.Requirement{{
@@ -473,8 +497,33 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 		return nil, err
 	}
 
+	foldersResultRows := foldersResult.Results.Rows
+	// in case we didn't get all results, fetch what's left
+	if foldersResult.TotalHits > limit {
+		rest := foldersResult.TotalHits - limit
+		folderSearchRequestMissing := &resource.ResourceSearchRequest{
+			Fields: []string{"folder"},
+			Limit:  rest,
+			Offset: limit,
+			Options: &resource.ListOptions{
+				Key: folderKey,
+				Fields: []*resource.Requirement{{
+					Key:      "name",
+					Operator: "in",
+					Values:   folders,
+				}},
+			},
+		}
+		foldersResultMissing, err := s.client.Search(ctx, folderSearchRequestMissing)
+		if err != nil {
+			return nil, err
+		}
+
+		foldersResultRows = append(foldersResultRows, foldersResultMissing.Results.Rows...)
+	}
+
 	// go over list of folders user HAS access to, and remove it from the original folder list
-	for _, fold := range foldersResult.Results.Rows {
+	for _, fold := range foldersResultRows {
 		folderUid := fold.Key.Name
 		i := slices.Index(folders, folderUid)
 		if i > -1 {
@@ -484,7 +533,7 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 	}
 
 	// add to sharedDashboards dashboards user has access to, but does NOT have access to it's parent folder
-	for _, dash := range dashboardResult.Results.Rows {
+	for _, dash := range dashboardResultRows {
 		dashboardUid := dash.Key.Name
 		folderUid := string(dash.Cells[0])
 		if slices.Contains(folders, folderUid) {
