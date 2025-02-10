@@ -427,7 +427,7 @@ export enum QueryEditorPropertyType {
   Number = 'number',
   String = 'string',
   Boolean = 'boolean',
-  DateTime = 'dateTime',
+  DateTime = 'datetime',
   TimeSpan = 'timeSpan',
   Function = 'function',
   Interval = 'interval',

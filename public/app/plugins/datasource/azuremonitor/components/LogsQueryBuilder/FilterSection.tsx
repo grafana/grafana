@@ -17,9 +17,7 @@ export const FilterSection: React.FC<FilterSectionProps> = ({ onQueryUpdate, sel
   const [filters, setFilters] = useState<Array<{ column: string; operator: string; value: string }>>([]);
 
   useEffect(() => {
-    if (selectedColumns.length === 0) {
-      setFilters([]); 
-    }
+    setFilters((prevFilters) => prevFilters.filter((f) => selectedColumns.some((col) => col.value === f.column)));
   }, [selectedColumns]);
 
   const formatFilters = (filters: Array<{ column: string; operator: string; value: string }>): string => {
@@ -44,7 +42,12 @@ export const FilterSection: React.FC<FilterSectionProps> = ({ onQueryUpdate, sel
 
   const onDeleteFilter = (index: number) => {
     const newFilters = filters.filter((_, i) => i !== index);
-    updateFilters(newFilters);
+    setFilters(newFilters);
+
+    const updatedFilters =
+      newFilters.length > 0 ? newFilters.map((f) => `${f.column} ${f.operator} '${f.value}'`).join(' and ') : '';
+
+    onQueryUpdate({ filters: updatedFilters });
   };
 
   return (

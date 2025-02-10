@@ -10,7 +10,7 @@ import { QueryEditorExpressionType, QueryEditorReduceExpression } from './expres
 
 interface AggregateSectionProps {
   selectedColumns: Array<SelectableValue<string>>;
-  onQueryUpdate: (params: { aggregates?: string }) => void;
+  onQueryUpdate: (params: { aggregates?: string; aggregateColumns?: Array<{ name: string; type: string }> }) => void;
   templateVariableOptions?: SelectableValue<string>;
 }
 
@@ -22,9 +22,9 @@ export const AggregateSection: React.FC<AggregateSectionProps> = ({
   const [aggregates, setAggregates] = useState<QueryEditorReduceExpression[]>([]);
 
   useEffect(() => {
-    if (selectedColumns.length === 0) {
-      setAggregates([]); 
-    }
+    setAggregates((prevAggregates) =>
+      prevAggregates.filter((agg) => selectedColumns.some((col) => col.value === agg.property?.name))
+    );
   }, [selectedColumns]);
 
   const updateQueryWithAggregates = (newAggregates: QueryEditorReduceExpression[]) => {
@@ -33,7 +33,13 @@ export const AggregateSection: React.FC<AggregateSectionProps> = ({
     if (validAggregates.length > 0) {
       const aggregation = validAggregates.map((agg) => `${agg.reduce.name}(${agg.property.name})`).join(', ');
 
-      onQueryUpdate({ aggregates: aggregation });
+      onQueryUpdate({
+        aggregates: aggregation,
+        aggregateColumns: validAggregates.map((agg) => ({
+          name: agg.property.name,
+          type: agg.property.type,
+        })),
+      });
     }
   };
 
@@ -55,8 +61,16 @@ export const AggregateSection: React.FC<AggregateSectionProps> = ({
 
   const onDeleteAggregate = (aggregateToDelete: Partial<QueryEditorReduceExpression>) => {
     setAggregates((prevAggregates) => {
-      const updatedAggregates = prevAggregates.filter((agg) => agg !== aggregateToDelete);
-      updateQueryWithAggregates(updatedAggregates);
+      const updatedAggregates = prevAggregates.filter((agg) => agg.property?.name !== aggregateToDelete.property?.name);
+
+      const aggregation = updatedAggregates.map((agg) => `${agg.reduce.name}(${agg.property.name})`).join(', ');
+      const aggregateColumns = updatedAggregates.map((agg) => ({
+        name: agg.property.name,
+        type: agg.property.type,
+      }));
+
+      onQueryUpdate({ aggregates: aggregation, aggregateColumns });
+
       return updatedAggregates;
     });
   };
@@ -93,7 +107,7 @@ function makeRenderAggregate(
         onChange={onChange}
         onDelete={() => onDeleteAggregate(item)}
         columns={columns}
-        templateVariableOptions={templateVariableOptions}
+        // templateVariableOptions={templateVariableOptions}
       />
     );
   };

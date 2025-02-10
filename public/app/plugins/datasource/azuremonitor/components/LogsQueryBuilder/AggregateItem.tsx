@@ -1,112 +1,91 @@
-import { range } from 'lodash';
 import React from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { AccessoryButton, InputGroup } from '@grafana/plugin-ui';
-import { Select, Label } from '@grafana/ui';
+import { Select } from '@grafana/ui';
 
-import { AggregateFunctions, QueryEditorProperty, QueryEditorPropertyType } from '../../types';
+import { QueryEditorPropertyType } from '../../types';
 
 import { QueryEditorExpressionType, QueryEditorReduceExpression } from './expressions';
 import { valueToDefinition } from './utils';
 
 interface AggregateItemProps {
   aggregate: Partial<QueryEditorReduceExpression>;
-  columns: SelectableValue<string> | undefined;
-  templateVariableOptions?: SelectableValue<string>;
+  columns: Array<SelectableValue<string>>;
   onChange: (item: QueryEditorReduceExpression) => void;
   onDelete: () => void;
 }
 
-export const AggregateItem: React.FC<AggregateItemProps> = (props) => {
-  const { aggregate, onChange, onDelete, columns, templateVariableOptions } = props;
+export const AggregateItem: React.FC<AggregateItemProps> = ({ aggregate, onChange, onDelete, columns }) => {
+  const selectedColumn = columns.find((c) => c.value === aggregate.property?.name);
+  const columnType = selectedColumn?.type || QueryEditorPropertyType.String;
 
-  let columnOptions: Array<SelectableValue<string>> = Array.isArray(columns)
-    ? columns.map((c) => ({ label: c.label, value: c.value }))
-    : [];
+  let availableAggregates: Array<SelectableValue<string>> = [];
 
-  if (templateVariableOptions) {
-    columnOptions = columnOptions.concat(templateVariableOptions);
+  switch (columnType) {
+    case QueryEditorPropertyType.Number:
+      availableAggregates = [
+        { label: 'sum', value: 'sum' },
+        { label: 'avg', value: 'avg' },
+        { label: 'min', value: 'min' },
+        { label: 'max', value: 'max' },
+        { label: 'percentile', value: 'percentile' },
+      ];
+      break;
+    case QueryEditorPropertyType.String:
+      availableAggregates = [
+        { label: 'count', value: 'count' },
+        { label: 'dcount', value: 'dcount' },
+        { label: 'make_set', value: 'make_set' },
+        { label: 'make_list', value: 'make_list' },
+      ];
+      break;
+    case QueryEditorPropertyType.DateTime:
+      availableAggregates = [
+        { label: 'min', value: 'min' },
+        { label: 'max', value: 'max' },
+        { label: 'bin', value: 'bin' },
+      ];
+      break;
   }
-
-  const getDefaultProperty = (): QueryEditorProperty => ({
-    name: aggregate.property?.name || '',
-    type: aggregate.property?.type || QueryEditorPropertyType.String,
-  });
 
   return (
     <InputGroup>
       <Select
-        data-testid="aggregate-item-function"
-        aria-label="function"
+        aria-label="column"
+        width="auto"
+        value={aggregate.property?.name ? valueToDefinition(aggregate.property?.name) : null}
+        options={columns}
+        allowCustomValue
+        onChange={(e) => {
+          const selectedCol = columns.find((c) => c.value === e.value);
+          onChange({
+            ...aggregate,
+            property: {
+              name: e.value!,
+              type: selectedCol?.type || QueryEditorPropertyType.String,
+            },
+            reduce: aggregate.reduce ?? { name: '', type: QueryEditorPropertyType.Function }, // Ensure `reduce` is always defined
+            type: QueryEditorExpressionType.Reduce, // Ensure `type` is always defined
+          });
+        }}
+      />
+      <Select
+        aria-label="aggregate function"
         width="auto"
         value={aggregate.reduce?.name ? valueToDefinition(aggregate.reduce?.name) : null}
-        options={Object.values(AggregateFunctions).map((f) => ({ label: f, value: f }))}
+        options={availableAggregates}
         allowCustomValue
         onChange={(e) =>
           e.value &&
           onChange({
             ...aggregate,
             type: QueryEditorExpressionType.Reduce,
-            property: getDefaultProperty(),
+            property: aggregate.property ?? { name: '', type: QueryEditorPropertyType.String },
             reduce: { name: e.value, type: QueryEditorPropertyType.Function },
           })
         }
       />
-      {aggregate.reduce?.name === AggregateFunctions.Percentile ? (
-        <Select
-          aria-label="percentile"
-          options={range(0, 100, 5).map((n) => ({ label: n.toString(), value: n.toString() }))}
-          value={aggregate.parameters?.length ? aggregate.parameters[0].value : undefined}
-          width="auto"
-          allowCustomValue
-          onChange={(e) => {
-            e.value &&
-              onChange({
-                ...aggregate,
-                type: QueryEditorExpressionType.Reduce,
-                property: getDefaultProperty(),
-                reduce: aggregate.reduce ?? { name: '', type: QueryEditorPropertyType.Function },
-                parameters: [
-                  {
-                    type: QueryEditorExpressionType.FunctionParameter,
-                    fieldType: QueryEditorPropertyType.Number,
-                    value: e.value,
-                    name: 'percentileParam',
-                  },
-                ],
-              });
-          }}
-        />
-      ) : (
-        <></>
-      )}
-      {aggregate.reduce?.name !== AggregateFunctions.Count && aggregate.reduce?.name !== AggregateFunctions.Dcount ? (
-        <>
-          <Label style={{ margin: '9px 9px 0 9px' }}>of</Label>
-          <Select
-            aria-label="column"
-            width={'auto'}
-            value={aggregate.property?.name ? valueToDefinition(aggregate.property?.name) : null}
-            options={Array.isArray(columnOptions) ? columnOptions : [columnOptions]}
-            allowCustomValue
-            onChange={(e) =>
-              e.value &&
-              onChange({
-                ...aggregate,
-                type: QueryEditorExpressionType.Reduce,
-                reduce: aggregate.reduce ?? { name: '', type: QueryEditorPropertyType.Function },
-                property: {
-                  name: e.value,
-                  type: QueryEditorPropertyType.String,
-                },
-              })
-            }
-          />
-        </>
-      ) : (
-        <></>
-      )}
       <AccessoryButton aria-label="remove" icon="times" variant="secondary" onClick={onDelete} />
     </InputGroup>
   );

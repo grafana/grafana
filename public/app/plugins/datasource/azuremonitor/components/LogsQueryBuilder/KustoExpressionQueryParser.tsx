@@ -1,4 +1,4 @@
-import { AzureLogAnalyticsMetadataColumn } from "../../types";
+import { AzureLogAnalyticsMetadataColumn } from '../../types';
 
 export class AzureMonitorQueryParser {
   static updateQuery(
@@ -24,57 +24,69 @@ export class AzureMonitorQueryParser {
     const hasSelectedTimeColumn = selectedColumns.includes(datetimeColumn);
     const shouldApplyTimeFilter = selectedColumns.length === 0 || hasSelectedTimeColumn;
 
-    console.log("hasSelectedTimeColumn", hasSelectedTimeColumn)
-    console.log("shouldApplyTimeFilter", shouldApplyTimeFilter)
-
-
-    // ✅ **Step 3: Ensure $__timeFilter is added ONLY when required**
+    // ✅ **Step 3: Ensure $__timeFilter is added ONLY ONCE**
     if (shouldApplyTimeFilter) {
       whereConditions.add(`$__timeFilter(${datetimeColumn})`);
     }
 
+    // ✅ **Step 4: Remove Filters Referencing Removed Columns**
     if (filters && filters.trim()) {
-      whereConditions.add(filters);
-    }
+      const validFilters = filters.split(' and ').filter((filter) => {
+        const filterColumn = filter.split(' ')[0]; // Extract column name
+        return selectedColumns.includes(filterColumn);
+      });
 
-    // ✅ **Step 4: Ensure `where` clause is only added when necessary**
-    if (whereConditions.size > 0) {
-      // **Only add `where` if there’s a datetime column OR non-time filters exist**
-      const validConditions = Array.from(whereConditions).filter((cond) => cond !== `$__timeFilter(${datetimeColumn})` || shouldApplyTimeFilter);
-
-      if (validConditions.length > 0) {
-        updatedQuery += `\n| where ${validConditions.join(' and ')}`;
+      if (validFilters.length > 0) {
+        whereConditions.add(validFilters.join(' and '));
       }
     }
 
-    // ✅ **Step 5: Handle Aggregation and Group By Correctly**
+    // ✅ **Step 5: Ensure `where` clause is only added when necessary**
+    if (whereConditions.size > 0) {
+      updatedQuery += `\n| where ${Array.from(whereConditions).join(' and ')}`;
+    }
+
+    // ✅ **Step 6: Handle Aggregation and Group By Correctly**
     let finalGroupBy = new Set(groupBy || []);
 
     if (aggregation && aggregation.trim()) {
-      // **Only apply time binning when a datetime column is explicitly selected**
-      if (hasSelectedTimeColumn) {
-        finalGroupBy.add(`bin(${datetimeColumn}, 1m)`);
-      }
+      // 🚀 **Ensure only selected columns are aggregated**
+      const validAggregation = aggregation
+        .split(',')
+        .filter((agg) => selectedColumns.some((col) => agg.includes(col)))
+        .join(', ');
 
-      updatedQuery += `\n| summarize ${aggregation}${
-        finalGroupBy.size > 0 ? ` by ${Array.from(finalGroupBy).join(', ')}` : ''
-      }`;
+      if (validAggregation) {
+        // ✅ **Ensure bin() is added only once**
+        if (hasSelectedTimeColumn && ![...finalGroupBy].some((g) => g.startsWith('bin('))) {
+          finalGroupBy.add(`bin(${datetimeColumn}, 1m)`);
+        }
+
+        updatedQuery += `\n| summarize ${validAggregation}${
+          finalGroupBy.size > 0 ? ` by ${Array.from(finalGroupBy).join(', ')}` : ''
+        }`;
+      }
     }
     // ✅ **Apply Group By without aggregation**
     else if (finalGroupBy.size > 0) {
-      updatedQuery += `\n| summarize count() by ${Array.from(finalGroupBy).join(', ')}`;
+      // 🚀 **Ensure group-by columns exist in selected columns**
+      const validGroupBy = [...finalGroupBy].filter((g) => selectedColumns.includes(g));
+
+      if (validGroupBy.length > 0) {
+        updatedQuery += `\n| summarize count() by ${validGroupBy.join(', ')}`;
+      }
     }
     // ✅ **Ensure selected columns are projected when no aggregation or group by exists**
     else if (selectedColumns.length > 0) {
       updatedQuery += `\n| project ${selectedColumns.join(', ')}`;
     }
 
-    // ✅ **Step 6: Ensure `order by` is only added when needed**
+    // ✅ **Step 7: Ensure `order by` is only added when needed**
     if (shouldApplyTimeFilter) {
       updatedQuery += `\n| order by ${datetimeColumn} asc`;
     }
 
-    // ✅ **Step 7: Add limit if provided**
+    // ✅ **Step 8: Add limit if provided**
     if (limit && limit > 0) {
       updatedQuery += `\n| limit ${limit}`;
     }

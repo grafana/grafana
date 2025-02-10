@@ -18,14 +18,12 @@ export const GroupBySection: React.FC<GroupBySectionProps> = ({ selectedColumns,
   const [groupBys, setGroupBys] = useState<QueryEditorGroupByExpression[]>([]);
 
   useEffect(() => {
-    if (selectedColumns.length === 0) {
-      setGroupBys([]);
-    }
+    setGroupBys((prevGroupBys) =>
+      prevGroupBys.filter((g) => selectedColumns.some((col) => col.value === g.property.name))
+    );
   }, [selectedColumns]);
 
   const handleGroupByChange = (newItems: Array<Partial<QueryEditorGroupByExpression>>) => {
-    console.log("newItems", newItems);
-
     let cleaned: QueryEditorGroupByExpression[] = newItems
       .filter((g) => g.property?.name)
       .map((g) => ({
@@ -39,9 +37,29 @@ export const GroupBySection: React.FC<GroupBySectionProps> = ({ selectedColumns,
     onQueryUpdate({ groupBy: cleaned.map((gb) => gb.property?.name ?? '') });
   };
 
-  // ✅ Add new GroupBy when "+" is clicked
+  const onDeleteGroupBy = (propertyName: string) => {
+    setGroupBys((prevGroupBys) => {
+      const updatedGroupBys = prevGroupBys.filter((gb) => gb.property.name !== propertyName);
+
+      // Ensure the query updates correctly
+      onQueryUpdate({
+        groupBy: updatedGroupBys.length > 0 ? updatedGroupBys.map((gb) => gb.property.name) : undefined,
+      });
+
+      return updatedGroupBys;
+    });
+  };
+
   const addGroupBy = () => {
-    setGroupBys([...groupBys, { type: QueryEditorExpressionType.GroupBy, property: { type: QueryEditorPropertyType.String, name: '' }, interval: undefined, focus: true }]);
+    setGroupBys([
+      ...groupBys,
+      {
+        type: QueryEditorExpressionType.GroupBy,
+        property: { type: QueryEditorPropertyType.String, name: '' },
+        interval: undefined,
+        focus: true,
+      },
+    ]);
   };
 
   return (
@@ -52,7 +70,7 @@ export const GroupBySection: React.FC<GroupBySectionProps> = ({ selectedColumns,
             <EditorList
               items={groupBys}
               onChange={handleGroupByChange}
-              renderItem={makeRenderGroupBy(selectedColumns, setGroupBys)}
+              renderItem={makeRenderGroupBy(selectedColumns, onDeleteGroupBy)}
             />
           ) : (
             <Button variant="secondary" icon="plus" onClick={addGroupBy} />
@@ -65,22 +83,23 @@ export const GroupBySection: React.FC<GroupBySectionProps> = ({ selectedColumns,
 
 const makeRenderGroupBy = (
   columns: Array<SelectableValue<string>>,
-  setGroupBys: React.Dispatch<React.SetStateAction<QueryEditorGroupByExpression[]>>
+  onDeleteGroupBy: (propertyName: string) => void
 ) => {
   return (
     item: Partial<QueryEditorGroupByExpression>,
-    onChange: (updatedItem: QueryEditorGroupByExpression) => void
+    onChangeItem: (updatedItem: Partial<QueryEditorGroupByExpression>) => void,
+    onDeleteItem: () => void
   ) => (
     <GroupByItem
       groupBy={item}
       onChange={(updatedItem) => {
-        setGroupBys((prevGroupBys) =>
-          prevGroupBys.map((g) => (g.property.name === item.property?.name ? updatedItem : g))
-        );
-        onChange(updatedItem);
+        onChangeItem(updatedItem);
       }}
       onDelete={() => {
-        setGroupBys((prevGroupBys) => prevGroupBys.filter((i) => i.property?.name !== item.property?.name));
+        if (item.property?.name) {
+          onDeleteGroupBy(item.property.name);
+        }
+        onDeleteItem();
       }}
       columns={columns}
     />
