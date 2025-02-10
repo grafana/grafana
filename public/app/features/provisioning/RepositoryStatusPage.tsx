@@ -76,6 +76,7 @@ export default function RepositoryStatusPage() {
       navId="provisioning"
       pageNav={{
         text: data?.spec?.title ?? 'Repository Status',
+        subTitle: data?.spec?.description,
       }}
     >
       <Page.Contents isLoading={query.isLoading}>
