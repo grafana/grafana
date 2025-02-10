@@ -159,10 +159,11 @@ func (s *jobStore) drainPending() {
 			status, err = s.processByWorker(ctx, worker, *job)
 			if err != nil {
 				logger.Error("error processing job", "error", err)
-				status = &provisioning.JobStatus{
-					State:  provisioning.JobStateError,
-					Errors: []string{err.Error()},
+				if status == nil {
+					status = &provisioning.JobStatus{}
 				}
+				status.State = provisioning.JobStateError
+				status.Errors = append(status.Errors, err.Error())
 			}
 			if status == nil {
 				status = &provisioning.JobStatus{
@@ -170,8 +171,9 @@ func (s *jobStore) drainPending() {
 					Errors: []string{"no status response from worker"},
 				}
 			}
-			if status.State == "" {
+			if !status.State.Finished() {
 				status.State = provisioning.JobStateSuccess
+				status.Message = ""
 			}
 			logger.Debug("job processing finished", "status", status.State)
 
@@ -222,19 +224,9 @@ func (s *jobStore) processByWorker(ctx context.Context, worker Worker, job provi
 		return nil, errors.New("unknown repository")
 	}
 
-	status, err := worker.Process(ctx, repo, job, func(ctx context.Context, j provisioning.JobStatus) error {
+	return worker.Process(ctx, repo, job, func(ctx context.Context, j provisioning.JobStatus) error {
 		return s.Update(ctx, job.Namespace, job.Name, j)
 	})
-	if err != nil {
-		return nil, fmt.Errorf("process job: %w", err)
-	}
-
-	// TODO: does this really happen?
-	if status == nil {
-		return nil, errors.New("worker did not return a status")
-	}
-
-	return nil, nil
 }
 
 // Checkout the next "pending" job
