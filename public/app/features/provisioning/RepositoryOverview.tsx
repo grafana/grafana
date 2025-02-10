@@ -1,7 +1,8 @@
-import { Stack, Text, LinkButton, Card, TextLink } from '@grafana/ui';
+import { Stack, Button, Text, LinkButton, Card, TextLink } from '@grafana/ui';
 
 import { RepositoryHealth } from './RepositoryHealth';
 import { StatusBadge } from './StatusBadge';
+import { SyncRepository } from './SyncRepository';
 import { Repository, ResourceCount } from './api';
 import { formatTimestamp } from './utils/time';
 
@@ -54,6 +55,13 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
         <Card.Meta>
           <RepositoryHealth repo={repo} />
         </Card.Meta>
+
+        {/* TODO: Implement manual check */}
+        <Card.Actions>
+          <Button icon={'check-circle'} variant="secondary">
+            Check
+          </Button>
+        </Card.Actions>
       </Card>
       <Card>
         <Card.Heading>
@@ -76,6 +84,9 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
             </li>
           </ul>
         </Card.Meta>
+        <Card.Actions>
+          <SyncRepository repository={repo} />
+        </Card.Actions>
       </Card>
       <Card>
         <Card.Heading>Last Sync Stats</Card.Heading>
