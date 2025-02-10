@@ -2,8 +2,6 @@ module github.com/grafana/grafana/pkg/aggregator
 
 go 1.23.5
 
-toolchain go1.23.6
-
 require (
 	github.com/emicklei/go-restful/v3 v3.11.0
 	github.com/grafana/grafana-plugin-sdk-go v0.265.0
