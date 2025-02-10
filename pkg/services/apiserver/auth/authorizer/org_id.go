@@ -60,8 +60,8 @@ func (auth orgIDAuthorizer) Authorize(ctx context.Context, a authorizer.Attribut
 		return authorizer.DecisionNoOpinion, "", nil
 	}
 
-	// If we have an access policy, let the API decide.
-	if signedInUser.GetIdentityType() == claims.TypeAccessPolicy {
+	// If we have an anonymous user, let the next authorizers decide.
+	if signedInUser.GetIdentityType() == claims.TypeAnonymous {
 		return authorizer.DecisionNoOpinion, "", nil
 	}
 

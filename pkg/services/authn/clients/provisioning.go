@@ -37,7 +37,7 @@ func (*Provisioning) Name() string {
 
 func (p *Provisioning) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
 	return &authn.Identity{
-		Type:            claims.TypeAccessPolicy,
+		Type:            claims.TypeAnonymous,
 		Name:            p.Name(),
 		UID:             p.Name(),
 		Login:           p.Name(),
