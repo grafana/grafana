@@ -39,7 +39,7 @@ export function useProduceNewRuleGroup() {
    * │ fetch latest rule group │─▶│ apply reducer │─▶│  new rule group  │
    * └─────────────────────────┘  └───────────────┘  └──────────────────┘
    */
-  const produceNewRuleGroup = async (ruleGroup: RuleGroupIdentifier, action: Action) => {
+  const produceNewRuleGroup = async (ruleGroup: RuleGroupIdentifier, actions: Action[]) => {
     const { dataSourceName, groupName, namespaceName } = ruleGroup;
 
     const { rulerConfig } = await discoverDataSourceFeatures({ rulesSourceName: dataSourceName }).unwrap();
@@ -57,9 +57,10 @@ export function useProduceNewRuleGroup() {
       .unwrap()
       .catch(notFoundToNullOrThrow);
 
-    const newRuleGroupDefinition = ruleGroupReducer(
-      latestRuleGroupDefinition ?? createBlankRuleGroup(ruleGroup.groupName),
-      action
+    const initialRuleGroupDefinition = latestRuleGroupDefinition ?? createBlankRuleGroup(groupName);
+    const newRuleGroupDefinition = actions.reduce(
+      (ruleGroup, action) => ruleGroupReducer(ruleGroup, action),
+      initialRuleGroupDefinition
     );
 
     return { newRuleGroupDefinition, rulerConfig };

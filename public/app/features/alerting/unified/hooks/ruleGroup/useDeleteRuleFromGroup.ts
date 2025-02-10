@@ -22,7 +22,7 @@ export function useDeleteRuleFromGroup() {
     const { groupName, namespaceName } = ruleGroup;
 
     const action = deleteRuleAction({ identifier: ruleIdentifier });
-    const { newRuleGroupDefinition, rulerConfig } = await produceNewRuleGroup(ruleGroup, action);
+    const { newRuleGroupDefinition, rulerConfig } = await produceNewRuleGroup(ruleGroup, [action]);
 
     const successMessage = t('alerting.rules.delete-rule.success', 'Rule successfully deleted');
 

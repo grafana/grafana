@@ -28,7 +28,7 @@ export function useUpdateRuleGroupConfiguration() {
     const { namespaceName } = ruleGroup;
 
     const action = updateRuleGroupAction({ interval });
-    const { newRuleGroupDefinition, rulerConfig } = await produceNewRuleGroup(ruleGroup, action);
+    const { newRuleGroupDefinition, rulerConfig } = await produceNewRuleGroup(ruleGroup, [action]);
 
     return upsertRuleGroup({
       rulerConfig,
@@ -61,7 +61,7 @@ export function useMoveRuleGroup() {
       }
 
       const action = moveRuleGroupAction({ newNamespaceName: namespaceName, groupName, interval });
-      const { newRuleGroupDefinition, rulerConfig } = await produceNewRuleGroup(ruleGroup, action);
+      const { newRuleGroupDefinition, rulerConfig } = await produceNewRuleGroup(ruleGroup, [action]);
 
       const oldNamespace = ruleGroup.namespaceName;
       const targetNamespace = action.payload.newNamespaceName;
@@ -122,7 +122,7 @@ export function useRenameRuleGroup() {
 
   return useAsync(async (ruleGroup: RuleGroupIdentifier, groupName: string, interval?: string) => {
     const action = renameRuleGroupAction({ groupName, interval });
-    const { newRuleGroupDefinition, rulerConfig } = await produceNewRuleGroup(ruleGroup, action);
+    const { newRuleGroupDefinition, rulerConfig } = await produceNewRuleGroup(ruleGroup, [action]);
 
     const oldGroupName = ruleGroup.groupName;
     const newGroupName = action.payload.groupName;
@@ -178,7 +178,7 @@ export function useReorderRuleForRuleGroup() {
     const { namespaceName } = ruleGroup;
 
     const action = reorderRulesInRuleGroupAction({ swaps });
-    const { newRuleGroupDefinition, rulerConfig } = await produceNewRuleGroup(ruleGroup, action);
+    const { newRuleGroupDefinition, rulerConfig } = await produceNewRuleGroup(ruleGroup, [action]);
 
     return upsertRuleGroup({
       rulerConfig,
