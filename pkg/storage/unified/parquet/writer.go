@@ -18,15 +18,8 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-type ResourceWriter interface {
-	io.Closer
-	Add(ctx context.Context, key *resource.ResourceKey, value []byte) error
-
-	Results() *resource.BatchResponse
-}
-
 // Write resources into a parquet file
-func NewParquetWriter(f io.Writer) (ResourceWriter, error) {
+func NewParquetWriter(f io.Writer) (resource.BatchResourceWriter, error) {
 	w := &parquetWriter{
 		pool:    memory.DefaultAllocator,
 		schema:  newSchema(nil),
@@ -115,7 +108,7 @@ func (w *parquetWriter) init() error {
 	return nil
 }
 
-func (w *parquetWriter) Add(ctx context.Context, key *resource.ResourceKey, value []byte) error {
+func (w *parquetWriter) Write(ctx context.Context, key *resource.ResourceKey, value []byte) error {
 	w.rsp.Processed++
 	obj := &unstructured.Unstructured{}
 	err := obj.UnmarshalJSON(value)

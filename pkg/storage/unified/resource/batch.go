@@ -35,6 +35,15 @@ type BatchProcessingBackend interface {
 	ProcessBatch(ctx context.Context, setting BatchSettings, iter BatchRequestIterator) *BatchResponse
 }
 
+type BatchResourceWriter interface {
+	io.Closer
+
+	Write(ctx context.Context, key *ResourceKey, value []byte) error
+
+	// Called after adding everything succesfully
+	Results() *BatchResponse
+}
+
 type BatchSettings struct {
 	// All requests will be within this namespace/group/resource
 	Collection []*ResourceKey
@@ -287,4 +296,77 @@ func (b *batchRunner) RollbackRequested() bool {
 		return true
 	}
 	return false
+}
+
+// For
+func NewBatchWritingBackend(factory func(settings BatchSettings) (BatchResourceWriter, error)) *batchBackend {
+	return &batchBackend{factory: factory}
+}
+
+type batchBackend struct {
+	factory func(settings BatchSettings) (BatchResourceWriter, error)
+}
+
+// ProcessBatch implements resource.BatchProcessingBackend.
+func (b *batchBackend) ProcessBatch(ctx context.Context, setting BatchSettings, iter BatchRequestIterator) *BatchResponse {
+	writer, err := b.factory(setting)
+	if err != nil {
+		return &BatchResponse{
+			Error: AsErrorResult(err),
+		}
+	}
+	defer func() { _ = writer.Close() }()
+
+	for iter.Next() {
+		if iter.RollbackRequested() {
+			break
+		}
+
+		req := iter.Request()
+
+		err = writer.Write(ctx, req.Key, req.Value)
+		if err != nil {
+			break
+		}
+	}
+
+	rsp := writer.Results()
+	if rsp == nil {
+		rsp = &BatchResponse{}
+	}
+	if err != nil {
+		rsp.Error = AsErrorResult(err)
+	}
+	return rsp
+}
+
+// GetResourceStats implements StorageBackend.
+func (b *batchBackend) GetResourceStats(ctx context.Context, namespace string, minCount int) ([]ResourceStats, error) {
+	return nil, fmt.Errorf("[batchBackend] not implemented (GetResourceStats)")
+}
+
+// ListIterator implements StorageBackend.
+func (b *batchBackend) ListIterator(context.Context, *ListRequest, func(ListIterator) error) (int64, error) {
+	return 0, fmt.Errorf("[batchBackend] not implemented (GetResourceStats)")
+}
+
+// ReadResource implements StorageBackend.
+func (b *batchBackend) ReadResource(context.Context, *ReadRequest) *BackendReadResponse {
+	return &BackendReadResponse{
+		Error: &ErrorResult{
+			Code:    http.StatusNotImplemented,
+			Message: "Not implemented in batchBackend",
+		},
+	}
+}
+
+// WatchWriteEvents implements StorageBackend.
+func (b *batchBackend) WatchWriteEvents(ctx context.Context) (<-chan *WrittenEvent, error) {
+	v := make(<-chan *WrittenEvent)
+	return v, nil // no events will be sent
+}
+
+// WriteEvent implements StorageBackend.
+func (b *batchBackend) WriteEvent(context.Context, WriteEvent) (int64, error) {
+	return 0, fmt.Errorf("[batchBackend] not implemented (WatchWriteEvents)")
 }

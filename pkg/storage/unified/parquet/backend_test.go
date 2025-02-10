@@ -22,7 +22,7 @@ func TestParquetWriteThenRead(t *testing.T) {
 		require.NoError(t, err)
 		ctx := context.Background()
 
-		require.NoError(t, writer.Add(toKeyAndBytes(ctx, "ggg", "rrr", &unstructured.Unstructured{
+		require.NoError(t, writer.Write(toKeyAndBytes(ctx, "ggg", "rrr", &unstructured.Unstructured{
 			Object: map[string]any{
 				"metadata": map[string]any{
 					"namespace":       "ns",
@@ -38,7 +38,7 @@ func TestParquetWriteThenRead(t *testing.T) {
 			},
 		})))
 
-		require.NoError(t, writer.Add(toKeyAndBytes(ctx, "ggg", "rrr", &unstructured.Unstructured{
+		require.NoError(t, writer.Write(toKeyAndBytes(ctx, "ggg", "rrr", &unstructured.Unstructured{
 			Object: map[string]any{
 				"metadata": map[string]any{
 					"namespace":       "ns",
@@ -52,7 +52,7 @@ func TestParquetWriteThenRead(t *testing.T) {
 			},
 		})))
 
-		require.NoError(t, writer.Add(toKeyAndBytes(ctx, "ggg", "rrr", &unstructured.Unstructured{
+		require.NoError(t, writer.Write(toKeyAndBytes(ctx, "ggg", "rrr", &unstructured.Unstructured{
 			Object: map[string]any{
 				"metadata": map[string]any{
 					"namespace":       "ns",
