@@ -118,7 +118,7 @@ Complete the following steps to install Grafana using the standalone binaries:
 1. Move the unpacked binary to `/usr/local/grafana`:
 
    ```shell
-   sudo mv <your_grafana_download> /usr/local/grafana
+   sudo mv <DOWNLOAD PATH> /usr/local/grafana
    ```
 
 1. Change the owner of `/usr/local/grafana` to Grafana users:
@@ -127,7 +127,7 @@ Complete the following steps to install Grafana using the standalone binaries:
    sudo chown -R grafana:users /usr/local/grafana
    ```
 
-1. Create a Grafana server `systemd` unit file:
+1. Create a Grafana server systemd unit file:
 
    ```shell
    sudo touch /etc/systemd/system/grafana-server.service
@@ -157,9 +157,9 @@ Complete the following steps to install Grafana using the standalone binaries:
    /usr/local/grafana/bin/grafana-server --homepath /usr/local/grafana
    ```
 
-   {{% admonition type="note" %}}
+   {{< admonition type="note" >}}
    Manually invoking the binary in this step automatically creates the `/usr/local/grafana/data` directory, which needs to be created and configured before the installation can be considered complete.
-   {{% /admonition %}}
+   {{< /admonition >}}
 
 1. Press `CTRL+C` to stop the Grafana server.
 1. Change the owner of `/usr/local/grafana` to Grafana users again to apply the ownership to the newly created `/usr/local/grafana/data` directory:
