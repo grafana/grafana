@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 
-import { DataQuery, GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
+import { DataQuery } from '@grafana/schema';
 import { ToolbarButton, useTheme2 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 import { useSelector } from 'app/types';

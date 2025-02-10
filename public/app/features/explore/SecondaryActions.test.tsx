@@ -7,7 +7,13 @@ import { SecondaryActions } from './SecondaryActions';
 
 describe('SecondaryActions', () => {
   it('should render component with two buttons', () => {
-    render(<SecondaryActions onClickAddQueryRowButton={noop} onClickQueryInspectorButton={noop} />);
+    render(
+      <SecondaryActions
+        onClickAddQueryRowButton={noop}
+        onClickQueryInspectorButton={noop}
+        onSelectQueryFromLibrary={noop}
+      />
+    );
 
     expect(screen.getByRole('button', { name: /Add query/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Query inspector/i })).toBeInTheDocument();
@@ -21,6 +27,7 @@ describe('SecondaryActions', () => {
           richHistoryRowButtonHidden={true}
           onClickAddQueryRowButton={noop}
           onClickQueryInspectorButton={noop}
+          onSelectQueryFromLibrary={noop}
         />
       </QueriesDrawerContextProviderMock>
     );
@@ -35,6 +42,7 @@ describe('SecondaryActions', () => {
         addQueryRowButtonDisabled={true}
         onClickAddQueryRowButton={noop}
         onClickQueryInspectorButton={noop}
+        onSelectQueryFromLibrary={noop}
       />
     );
 
@@ -54,6 +62,7 @@ describe('SecondaryActions', () => {
         <SecondaryActions
           onClickAddQueryRowButton={onClickAddRow}
           onClickQueryInspectorButton={onClickQueryInspector}
+          onSelectQueryFromLibrary={noop}
         />
       </QueriesDrawerContextProviderMock>
     );
