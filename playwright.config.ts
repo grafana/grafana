@@ -9,20 +9,14 @@ export default defineConfig<PluginOptions>({
   fullyParallel: true,
   webServer: [
     {
-      timeout: 2 * 60 * 1000,
       command: 'make run',
       port: Number(`${process.env.PORT || 3000}`),
       reuseExistingServer: !process.env.CI,
-      stdout: 'ignore',
-      stderr: 'pipe',
     },
     {
-      timeout: 2 * 60 * 1000,
       command: 'yarn start',
       port: Number(`${process.env.PORT || 3000}`),
       reuseExistingServer: true,
-      stdout: 'ignore',
-      stderr: 'pipe',
     },
   ],
   /* Retry on CI only */

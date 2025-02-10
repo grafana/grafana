@@ -50,6 +50,12 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 30
+      - name: Upload Playwright trace
+        if: always()
+        uses: actions/upload-artifact@v2
+        with:
+          name: playwright-trace
+          path: trace.zip
       - name: Comment on PR with report link
         uses: thollander/actions-comment-pull-request@v3
         if: ${{ failure() && env.SNAPSHOT_DIFFERENCES == 'true' }}

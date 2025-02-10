@@ -9,6 +9,7 @@ test('BarGauge', { tag: '@viz_regression' }, async ({ page }) => {
   const ledBarGauge = await page.locator('.react-grid-item').nth(6).boundingBox();
 
   await expect(page).toHaveScreenshot('bargauge.png', { animations: 'disabled', clip: ledBarGauge, fullPage: true });
+  await page.context().tracing.stop({ path: 'trace.zip' });
 });
 
 test('TimeSeriesStacking', { tag: '@viz_regression' }, async ({ page }) => {
@@ -26,4 +27,5 @@ test('TimeSeriesStacking', { tag: '@viz_regression' }, async ({ page }) => {
     fullPage: true,
     mask: [yAxis, xAxis],
   });
+  await page.context().tracing.stop({ path: 'trace2.zip' });
 });
