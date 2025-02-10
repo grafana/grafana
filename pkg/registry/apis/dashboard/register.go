@@ -11,7 +11,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/admission"
-	"k8s.io/apiserver/pkg/authorization/authorizer"
 	genericregistry "k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
@@ -61,6 +60,7 @@ type DashboardsAPIBuilder struct {
 	unified                      resource.ResourceClient
 	dashboardProvisioningService dashboards.DashboardProvisioningService
 	search                       *SearchHandler
+	scheme                       *runtime.Scheme
 
 	log log.Logger
 	reg prometheus.Registerer
@@ -106,15 +106,16 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 	return builder
 }
 
-func (b *DashboardsAPIBuilder) GetGroupVersion() schema.GroupVersion {
-	return dashboardinternal.DashboardResourceInfo.GroupVersion()
-}
-
-func (b *DashboardsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
-	return nil // no authorizer
+func (b *DashboardsAPIBuilder) GetGroupVersions() []schema.GroupVersion {
+	return []schema.GroupVersion{
+		dashboardv0alpha1.DashboardResourceInfo.GroupVersion(),
+		dashboardv1alpha1.DashboardResourceInfo.GroupVersion(),
+		dashboardv2alpha1.DashboardResourceInfo.GroupVersion(),
+	}
 }
 
 func (b *DashboardsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
+	b.scheme = scheme
 	if err := dashboardinternal.AddToScheme(scheme); err != nil {
 		return err
 	}
@@ -127,11 +128,7 @@ func (b *DashboardsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	if err := dashboardv2alpha1.AddToScheme(scheme); err != nil {
 		return err
 	}
-	return scheme.SetVersionPriority(
-		dashboardv0alpha1.DashboardResourceInfo.GroupVersion(),
-		dashboardv1alpha1.DashboardResourceInfo.GroupVersion(),
-		dashboardv2alpha1.DashboardResourceInfo.GroupVersion(),
-	)
+	return scheme.SetVersionPriority(b.GetGroupVersions()...)
 }
 
 // Validate will prevent deletion of provisioned dashboards, unless the grace period is set to 0, indicating a force deletion
@@ -171,24 +168,26 @@ func (b *DashboardsAPIBuilder) Validate(ctx context.Context, a admission.Attribu
 // Mutate removes any internal ID set in the spec & adds it as a label
 func (b *DashboardsAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
 	op := a.GetOperation()
-	if op == admission.Create || op == admission.Update {
-		obj := a.GetObject()
-		dash, ok := obj.(*dashboardv2alpha1.Dashboard)
-		if !ok {
-			return fmt.Errorf("expected v2alpha1 dashboard")
-		}
+	if op != admission.Create && op != admission.Update {
+		return nil
+	}
+	obj := a.GetObject()
+	dash, ok := obj.(*dashboardinternal.Dashboard)
+	if !ok {
+		return fmt.Errorf("mutation error: expected *dashboardinternal.Dashboard, got %T", obj)
+	}
 
-		if id, ok := dash.Spec.Object["id"].(float64); ok {
-			delete(dash.Spec.Object, "id")
-			if id != 0 {
-				meta, err := utils.MetaAccessor(obj)
-				if err != nil {
-					return err
-				}
-				meta.SetDeprecatedInternalID(int64(id)) // nolint:staticcheck
+	if id, ok := dash.Spec.Object["id"].(float64); ok {
+		delete(dash.Spec.Object, "id")
+		if id != 0 {
+			meta, err := utils.MetaAccessor(obj)
+			if err != nil {
+				return err
 			}
+			meta.SetDeprecatedInternalID(int64(id)) // nolint:staticcheck
 		}
 	}
+
 	return nil
 }
 
