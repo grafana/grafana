@@ -20,11 +20,7 @@ type GrafanaAuthorizer struct {
 }
 
 func NewGrafanaAuthorizer(cfg *setting.Cfg, orgService orgsvc.Service) *GrafanaAuthorizer {
-	// Individual services may have explicit implementations
-	apis := make(map[string]authorizer.Authorizer)
-
 	authorizers := []authorizer.Authorizer{
-		&authorizerForAPI{apis},
 		&impersonationAuthorizer{},
 		authorizerfactory.NewPrivilegedGroups(k8suser.SystemPrivilegedGroup),
 	}
@@ -35,6 +31,10 @@ func NewGrafanaAuthorizer(cfg *setting.Cfg, orgService orgsvc.Service) *GrafanaA
 	} else {
 		authorizers = append(authorizers, newOrgIDAuthorizer(orgService))
 	}
+
+	// Individual services may have explicit implementations
+	apis := make(map[string]authorizer.Authorizer)
+	authorizers = append(authorizers, &authorizerForAPI{apis})
 
 	// org role is last -- and will return allow for verbs that match expectations
 	// The apiVersion flavors will run first and can return early when FGAC has appropriate rules

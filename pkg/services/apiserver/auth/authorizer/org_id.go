@@ -60,6 +60,11 @@ func (auth orgIDAuthorizer) Authorize(ctx context.Context, a authorizer.Attribut
 		return authorizer.DecisionNoOpinion, "", nil
 	}
 
+	// If we have an access policy, let the API decide.
+	if signedInUser.GetIdentityType() == claims.TypeAccessPolicy {
+		return authorizer.DecisionNoOpinion, "", nil
+	}
+
 	// Check if the user has access to the specified org
 	// nolint:staticcheck
 	userId, err := signedInUser.GetInternalID()
