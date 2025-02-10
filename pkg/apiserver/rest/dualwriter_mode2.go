@@ -119,17 +119,18 @@ func (d *DualWriterMode2) Get(ctx context.Context, name string, options *metav1.
 	}
 	d.recordLegacyDuration(false, mode2Str, d.resource, method, startLegacy)
 
-	go func() {
-		startStorage := time.Now()
-		objStorage, err := d.Storage.Get(ctx, name, options)
-		d.recordStorageDuration(err != nil, mode2Str, d.resource, method, startStorage)
-		if err != nil {
-			if !apierrors.IsNotFound(err) {
-				log.Error(err, "unable to fetch object from storage")
-				return
-			}
-			log.Info("object not found in storage, fetching from legacy")
+	startStorage := time.Now()
+	objStorage, err := d.Storage.Get(ctx, name, options)
+	d.recordStorageDuration(err != nil, mode2Str, d.resource, method, startStorage)
+	if err != nil {
+		if !apierrors.IsNotFound(err) {
+			log.Error(err, "unable to fetch object from storage")
+			return nil, err
 		}
+		log.Info("object not found in storage, fetching from legacy")
+	}
+
+	go func() {
 		areEqual := Compare(objStorage, objLegacy)
 		d.recordOutcome(mode2Str, name, areEqual, method)
 		if !areEqual {
