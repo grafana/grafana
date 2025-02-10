@@ -1,4 +1,4 @@
-import { AzureLogAnalyticsMetadataColumn } from '../../types';
+import { AzureLogAnalyticsMetadataColumn } from "../../types";
 
 export class AzureMonitorQueryParser {
   static updateQuery(
@@ -17,65 +17,68 @@ export class AzureMonitorQueryParser {
     let updatedQuery = selectedTable;
     let whereConditions = new Set<string>();
 
-    // **Step 1: Detect the first datetime column from selected columns**
-    const datetimeColumn = columns.find(
-      (col) => selectedColumns.includes(col.name) && col.type === 'datetime'
-    );
+    // ✅ **Step 1: Detect first datetime column (Do NOT assume TimeGenerated)**
+    const datetimeColumn = columns.find((col) => col.type === 'datetime')?.name || 'TimeGenerated';
 
-    // **Step 2: If no columns are selected, assume TimeGenerated should be used**
-    let timeField: string | null = datetimeColumn ? datetimeColumn.name : selectedColumns.length === 0 ? 'TimeGenerated' : null;
+    // ✅ **Step 2: Determine if time filter should be applied**
+    const hasSelectedTimeColumn = selectedColumns.includes(datetimeColumn);
+    const shouldApplyTimeFilter = selectedColumns.length === 0 || hasSelectedTimeColumn;
 
-    // **Step 3: Add $__timeFilter() ONLY when a datetime column is involved OR no columns are selected**
-    let timeFilterAdded = false;
-    if (timeField) {
-      whereConditions.add(`$__timeFilter(${timeField})`);
-      timeFilterAdded = true;
+    console.log("hasSelectedTimeColumn", hasSelectedTimeColumn)
+    console.log("shouldApplyTimeFilter", shouldApplyTimeFilter)
+
+
+    // ✅ **Step 3: Ensure $__timeFilter is added ONLY when required**
+    if (shouldApplyTimeFilter) {
+      whereConditions.add(`$__timeFilter(${datetimeColumn})`);
     }
 
     if (filters && filters.trim()) {
       whereConditions.add(filters);
     }
 
-    // **Step 4: Only add `where` clause if we actually have a time field or additional filters**
-    if (whereConditions.size > 0 && (datetimeColumn || selectedColumns.length === 0)) {
-      updatedQuery += `\n| where ${Array.from(whereConditions).join(' and ')}`;
+    // ✅ **Step 4: Ensure `where` clause is only added when necessary**
+    if (whereConditions.size > 0) {
+      // **Only add `where` if there’s a datetime column OR non-time filters exist**
+      const validConditions = Array.from(whereConditions).filter((cond) => cond !== `$__timeFilter(${datetimeColumn})` || shouldApplyTimeFilter);
+
+      if (validConditions.length > 0) {
+        updatedQuery += `\n| where ${validConditions.join(' and ')}`;
+      }
     }
 
-    // **Step 5: Handle Aggregation and Group By**
+    // ✅ **Step 5: Handle Aggregation and Group By Correctly**
     let finalGroupBy = new Set(groupBy || []);
+
     if (aggregation && aggregation.trim()) {
-      if (timeField) {
-        finalGroupBy.add(`bin(${timeField}, 1m)`);
+      // **Only apply time binning when a datetime column is explicitly selected**
+      if (hasSelectedTimeColumn) {
+        finalGroupBy.add(`bin(${datetimeColumn}, 1m)`);
       }
 
       updatedQuery += `\n| summarize ${aggregation}${
         finalGroupBy.size > 0 ? ` by ${Array.from(finalGroupBy).join(', ')}` : ''
       }`;
-    } else if (selectedColumns.length > 0) {
-      const projectedColumns = new Set(selectedColumns);
-      if (datetimeColumn) {
-        projectedColumns.add(datetimeColumn.name); // Ensure datetime column is projected if selected
-      }
-      updatedQuery += `\n| project ${Array.from(projectedColumns).join(', ')}`;
+    }
+    // ✅ **Apply Group By without aggregation**
+    else if (finalGroupBy.size > 0) {
+      updatedQuery += `\n| summarize count() by ${Array.from(finalGroupBy).join(', ')}`;
+    }
+    // ✅ **Ensure selected columns are projected when no aggregation or group by exists**
+    else if (selectedColumns.length > 0) {
+      updatedQuery += `\n| project ${selectedColumns.join(', ')}`;
     }
 
-    // **Step 6: Add order by if timeField is present and it's not a non-datetime selection**
-    if (timeFilterAdded) {
-      updatedQuery += `\n| order by ${timeField} asc`;
+    // ✅ **Step 6: Ensure `order by` is only added when needed**
+    if (shouldApplyTimeFilter) {
+      updatedQuery += `\n| order by ${datetimeColumn} asc`;
     }
 
-    // **Step 7: Add limit if provided**
+    // ✅ **Step 7: Add limit if provided**
     if (limit && limit > 0) {
       updatedQuery += `\n| limit ${limit}`;
     }
 
     return updatedQuery;
-  }
-
-  static getTimeField(selectedColumns: string[], columns: AzureLogAnalyticsMetadataColumn[]): string | null {
-    const defaultTimeField = 'TimeGenerated';
-    const datetimeColumn = columns.find((col) => selectedColumns.includes(col.name) && col.type === 'datetime');
-
-    return datetimeColumn ? datetimeColumn.name : selectedColumns.length === 0 ? defaultTimeField : null;
   }
 }

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { EditorField, EditorFieldGroup, EditorList, EditorRow } from '@grafana/plugin-ui';
+import { Button } from '@grafana/ui';
 
 import { QueryEditorPropertyType } from '../../types';
 
@@ -18,12 +19,13 @@ export const GroupBySection: React.FC<GroupBySectionProps> = ({ selectedColumns,
 
   useEffect(() => {
     if (selectedColumns.length === 0) {
-      setGroupBys([]); 
+      setGroupBys([]);
     }
   }, [selectedColumns]);
 
   const handleGroupByChange = (newItems: Array<Partial<QueryEditorGroupByExpression>>) => {
-    console.log("newItems", newItems)
+    console.log("newItems", newItems);
+
     let cleaned: QueryEditorGroupByExpression[] = newItems
       .filter((g) => g.property?.name)
       .map((g) => ({
@@ -33,31 +35,28 @@ export const GroupBySection: React.FC<GroupBySectionProps> = ({ selectedColumns,
         focus: g.focus ?? false,
       }));
 
-    if (cleaned.length === 0) {
-      cleaned = [
-        {
-          type: QueryEditorExpressionType.GroupBy,
-          property: { type: QueryEditorPropertyType.String, name: '' },
-          interval: undefined,
-          focus: true,
-        },
-      ];
-    }
-
-    console.log("cleaned", cleaned.map((gb) => gb.property?.name ?? null))
     setGroupBys(cleaned);
     onQueryUpdate({ groupBy: cleaned.map((gb) => gb.property?.name ?? '') });
+  };
+
+  // ✅ Add new GroupBy when "+" is clicked
+  const addGroupBy = () => {
+    setGroupBys([...groupBys, { type: QueryEditorExpressionType.GroupBy, property: { type: QueryEditorPropertyType.String, name: '' }, interval: undefined, focus: true }]);
   };
 
   return (
     <EditorRow>
       <EditorFieldGroup>
         <EditorField label="Group by" optional={true}>
-          <EditorList
-            items={groupBys}
-            onChange={handleGroupByChange}
-            renderItem={makeRenderGroupBy(selectedColumns, setGroupBys)}
-          />
+          {groupBys.length > 0 ? (
+            <EditorList
+              items={groupBys}
+              onChange={handleGroupByChange}
+              renderItem={makeRenderGroupBy(selectedColumns, setGroupBys)}
+            />
+          ) : (
+            <Button variant="secondary" icon="plus" onClick={addGroupBy} />
+          )}
         </EditorField>
       </EditorFieldGroup>
     </EditorRow>

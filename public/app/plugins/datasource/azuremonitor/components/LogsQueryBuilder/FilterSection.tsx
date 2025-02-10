@@ -32,7 +32,9 @@ export const FilterSection: React.FC<FilterSectionProps> = ({ onQueryUpdate, sel
   const updateFilters = (newFilters: Array<{ column: string; operator: string; value: string }>) => {
     setFilters(newFilters);
     const formattedFilters = formatFilters(newFilters);
-    onQueryUpdate({ filters: formattedFilters || undefined });
+    if (formattedFilters) {
+      onQueryUpdate({ filters: formattedFilters });
+    }
   };
 
   const onChangeFilter = (index: number, key: keyof (typeof filters)[0], value: string) => {

@@ -89,14 +89,14 @@ export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
     if (newColumns && !isNewTable) {
       setSelectedColumns(newColumns);
       columnList = [...new Set(newColumns.map((c) => c.label!))];
-    } else {
-      columnList = []; 
-    }
+    } else if (!isNewTable) {
+      columnList = selectedColumns.map((c) => c.value!);
+    }    
   
     const updatedFilters = isNewTable ? undefined : filters !== undefined ? filters : prevFilters;
     const updatedAggregates = isNewTable ? undefined : aggregates !== undefined ? aggregates : prevAggregates;
     const updatedGroupBy = isNewTable ? [] : groupBy !== undefined ? groupBy : prevGroupBy;
-  
+
     const formattedQuery = AzureMonitorQueryParser.updateQuery(
       tableName!,
       columnList,
