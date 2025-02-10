@@ -37,6 +37,11 @@ func (auth stackIDAuthorizer) Authorize(ctx context.Context, a authorizer.Attrib
 		return authorizer.DecisionDeny, fmt.Sprintf("error getting signed in user: %v", err), nil
 	}
 
+	// If we have an anonymous user, let the next authorizers decide.
+	if signedInUser.GetIdentityType() == claims.TypeAnonymous {
+		return authorizer.DecisionNoOpinion, "", nil
+	}
+
 	info, err := claims.ParseNamespace(a.GetNamespace())
 	if err != nil {
 		return authorizer.DecisionDeny, fmt.Sprintf("error reading namespace: %v", err), nil
@@ -50,12 +55,6 @@ func (auth stackIDAuthorizer) Authorize(ctx context.Context, a authorizer.Attrib
 		msg := fmt.Sprintf("wrong stack id is selected (expected: %d, found %d)", auth.stackID, info.StackID)
 		return authorizer.DecisionDeny, msg, nil
 	}
-
-	// If we have an anonymous user, let the next authorizers decide.
-	if signedInUser.GetIdentityType() == claims.TypeAnonymous {
-		return authorizer.DecisionNoOpinion, "", nil
-	}
-
 	if info.OrgID != 1 {
 		return authorizer.DecisionDeny, "cloud instance requires org 1", nil
 	}
