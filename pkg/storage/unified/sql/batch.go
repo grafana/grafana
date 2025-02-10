@@ -244,9 +244,11 @@ func (b *backend) processBatch(ctx context.Context, setting resource.BatchSettin
 			}
 
 			// Make sure the collection RV is above our last written event
-			_, _ = b.resourceVersionAtomicInc(ctx, tx, key)
+			_, err = b.resourceVersionAtomicInc(ctx, tx, key)
+			if err != nil {
+				b.log.Warn("error increasing RV", "error", err)
+			}
 		}
-		fmt.Printf("DONE (SQL) [%d]\n", rsp.Processed)
 		return nil
 	})
 	if err != nil {

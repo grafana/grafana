@@ -229,8 +229,6 @@ func (s *server) BatchProcess(stream ResourceStore_BatchProcessServer) error {
 			}
 		}
 	}
-
-	fmt.Printf("backend finished, now SendAndClose\n")
 	return stream.SendAndClose(rsp)
 }
 
