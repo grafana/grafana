@@ -1508,7 +1508,7 @@
         "creationTimestamp": "2024-08-29T13:55:59Z"
       },
       "spec": {
-        "description": "Used in \Logs Drilldown to limit the time range",
+        "description": "Used in Logs Drilldown to limit the time range",
         "stage": "experimental",
         "codeowner": "@grafana/observability-logs",
         "frontend": true
