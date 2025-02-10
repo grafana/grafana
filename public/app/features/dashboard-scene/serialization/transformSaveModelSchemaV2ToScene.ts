@@ -59,6 +59,8 @@ import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSou
 import { DashboardMeta } from 'app/types';
 
 import { addPanelsOnLoadBehavior } from '../addToDashboard/addPanelsOnLoadBehavior';
+import { ConditionalRendering } from '../conditional-rendering/ConditionalRendering';
+import { ConditionalRenderingGroup } from '../conditional-rendering/ConditionalRenderingGroup';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';

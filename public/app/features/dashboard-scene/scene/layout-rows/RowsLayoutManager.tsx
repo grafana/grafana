@@ -1,6 +1,8 @@
 import { SceneGridItemLike, SceneGridRow, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
 import { t } from 'app/core/internationalization';
 
+import { ConditionalRendering } from '../../conditional-rendering/ConditionalRendering';
+import { ConditionalRenderingGroup } from '../../conditional-rendering/ConditionalRenderingGroup';
 import { isClonedKey } from '../../utils/clone';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { getDashboardSceneFor } from '../../utils/utils';
@@ -78,7 +80,18 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
   }
 
   public addNewRow() {
-    this.setState({ rows: [...this.state.rows, new RowItem()] });
+    this.setState({
+      rows: [
+        ...this.state.rows,
+        new RowItem({
+          $behaviors: [
+            new ConditionalRendering({
+              rootGroup: new ConditionalRenderingGroup({ condition: 'or', value: [] }),
+            }),
+          ],
+        }),
+      ],
+    });
   }
 
   public addNewTab() {
@@ -114,11 +127,32 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
 
   public removeRow(row: RowItem) {
     const rows = this.state.rows.filter((r) => r !== row);
-    this.setState({ rows: rows.length === 0 ? [new RowItem()] : rows });
+    this.setState({
+      rows:
+        rows.length === 0
+          ? [
+              new RowItem({
+                $behaviors: [
+                  new ConditionalRendering({
+                    rootGroup: new ConditionalRenderingGroup({ condition: 'or', value: [] }),
+                  }),
+                ],
+              }),
+            ]
+          : rows,
+    });
   }
 
   public static createEmpty(): RowsLayoutManager {
-    return new RowsLayoutManager({ rows: [new RowItem()] });
+    return new RowsLayoutManager({
+      rows: [
+        new RowItem({
+          $behaviors: [
+            new ConditionalRendering({ rootGroup: new ConditionalRenderingGroup({ condition: 'or', value: [] }) }),
+          ],
+        }),
+      ],
+    });
   }
 
   public static createFromLayout(layout: DashboardLayoutManager): RowsLayoutManager {
@@ -176,16 +210,40 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
               rowConfig.isDraggable,
               rowConfig.isResizable
             ),
-            $behaviors: rowConfig.repeat ? [new RowItemRepeaterBehavior({ variableName: rowConfig.repeat })] : [],
+            $behaviors: rowConfig.repeat
+              ? [
+                  new ConditionalRendering({
+                    rootGroup: new ConditionalRenderingGroup({ condition: 'or', value: [] }),
+                  }),
+                  new RowItemRepeaterBehavior({ variableName: rowConfig.repeat }),
+                ]
+              : [
+                  new ConditionalRendering({
+                    rootGroup: new ConditionalRenderingGroup({ condition: 'or', value: [] }),
+                  }),
+                ],
           })
       );
     } else {
-      rows = [new RowItem({ layout: layout.clone() })];
+      rows = [
+        new RowItem({
+          layout: layout.clone(),
+          $behaviors: [
+            new ConditionalRendering({ rootGroup: new ConditionalRenderingGroup({ condition: 'or', value: [] }) }),
+          ],
+        }),
+      ];
     }
 
     // Ensure we always get at least one row
     if (rows.length === 0) {
-      rows = [new RowItem()];
+      rows = [
+        new RowItem({
+          $behaviors: [
+            new ConditionalRendering({ rootGroup: new ConditionalRenderingGroup({ condition: 'or', value: [] }) }),
+          ],
+        }),
+      ];
     }
 
     return new RowsLayoutManager({ rows });

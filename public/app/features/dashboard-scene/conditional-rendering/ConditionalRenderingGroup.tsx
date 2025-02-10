@@ -30,6 +30,10 @@ export class ConditionalRenderingGroup extends ConditionalRenderingBase<Conditio
   }
 
   public evaluate(): boolean {
+    if (this.state.value.length === 0) {
+      return true;
+    }
+
     if (this.state.condition === 'and') {
       return this.state.value.every((entry) => entry.evaluate());
     }
@@ -79,6 +83,7 @@ function ConditionalRenderingGroupRenderer({ model }: SceneComponentProps<Condit
       <InlineField label={t('dashboard.conditional-rendering.group.condition.label', 'Condition')}>
         <Select
           isClearable={false}
+          options={conditionsOptions}
           value={currentConditionOption}
           onChange={({ value }) => model.changeCondition(value!)}
         />

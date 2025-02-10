@@ -12,6 +12,8 @@ import {
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 import { TextMode } from 'app/plugins/panel/text/panelcfg.gen';
 
+import { ConditionalRendering } from '../../conditional-rendering/ConditionalRendering';
+import { ConditionalRenderingGroup } from '../../conditional-rendering/ConditionalRenderingGroup';
 import { getCloneKey, isInCloneChain, joinCloneKeys } from '../../utils/clone';
 import { activateFullSceneTree } from '../../utils/test-utils';
 import { DashboardScene } from '../DashboardScene';
@@ -183,7 +185,10 @@ function buildScene(
   const rows = [
     new RowItem({
       key: 'row-1',
-      $behaviors: [repeatBehavior],
+      $behaviors: [
+        repeatBehavior,
+        new ConditionalRendering({ rootGroup: new ConditionalRenderingGroup({ condition: 'or', value: [] }) }),
+      ],
       layout: DefaultGridLayoutManager.fromGridItems([
         new DashboardGridItem({
           key: 'grid-item-1',
@@ -198,6 +203,9 @@ function buildScene(
     new RowItem({
       key: 'row-2',
       title: 'Row at the bottom',
+      $behaviors: [
+        new ConditionalRendering({ rootGroup: new ConditionalRenderingGroup({ condition: 'or', value: [] }) }),
+      ],
       layout: DefaultGridLayoutManager.fromGridItems([
         new DashboardGridItem({
           key: 'grid-item-2',
