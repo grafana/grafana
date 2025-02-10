@@ -47,6 +47,7 @@ import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTrack
 import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
 import { DashboardChangeInfo } from '../saving/shared';
 import { DashboardSceneSerializerLike, getDashboardSceneSerializer } from '../serialization/DashboardSceneSerializer';
+import { ElementPanelMapping } from '../serialization/ElementPanelLookup';
 import { buildGridItemForPanel, transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { gridItemToPanel } from '../serialization/transformSceneToSaveModel';
 import { DecoratedRevisionModel } from '../settings/VersionsEditView';
@@ -138,6 +139,9 @@ export interface DashboardSceneState extends SceneObjectState {
   panelsPerRow?: number;
   /** options pane */
   editPane: DashboardEditPane;
+
+  /** element panel mapping schema v2 */
+  elementPanelMapping?: ElementPanelMapping;
 }
 
 export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
