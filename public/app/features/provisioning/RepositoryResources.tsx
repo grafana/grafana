@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 
 import { Column, CellProps, Stack, Spinner, FilterInput, InteractiveTable } from '@grafana/ui';
 
+import { RepositorySyncStatus } from './RepositorySyncStatus';
 import { Repository, ResourceListItem, useGetRepositoryResourcesQuery } from './api';
 
 interface RepoProps {
@@ -84,6 +85,7 @@ export function RepositoryResources({ repo }: RepoProps) {
 
   return (
     <Stack grow={1} direction={'column'} gap={2}>
+      <RepositorySyncStatus repo={repo} />
       <Stack gap={2}>
         <FilterInput placeholder="Search" autoFocus={true} value={searchQuery} onChange={setSearchQuery} />
       </Stack>

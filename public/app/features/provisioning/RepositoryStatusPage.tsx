@@ -31,7 +31,6 @@ import { isNotFoundError } from '../alerting/unified/api/util';
 import { ConfigForm } from './ConfigForm';
 import { ExportToRepository } from './ExportToRepository';
 import { RepositoryResources } from './RepositoryResources';
-import { RepositorySyncStatus } from './RepositorySyncStatus';
 import {
   useListJobQuery,
   useGetRepositoryFilesQuery,
@@ -46,7 +45,6 @@ enum TabSelection {
   Resources = 'resources',
   Files = 'files',
   Jobs = 'jobs',
-  Sync = 'sync',
   Export = 'export',
   Settings = 'settings',
   Health = 'health',
@@ -56,7 +54,6 @@ const tabInfo: SelectableValue<TabSelection> = [
   { value: TabSelection.Resources, label: 'Resources', title: 'Resources saved in grafana database' },
   { value: TabSelection.Files, label: 'Files', title: 'The raw file list from the repository' },
   { value: TabSelection.Jobs, label: 'Recent events' },
-  { value: TabSelection.Sync, label: 'Sync' },
   { value: TabSelection.Export, label: 'Export' },
   { value: TabSelection.Health, label: 'Health' },
   { value: TabSelection.Settings, label: 'Settings' },
@@ -106,7 +103,6 @@ export default function RepositoryStatusPage() {
                   {tab === TabSelection.Resources && <RepositoryResources repo={data} />}
                   {tab === TabSelection.Files && <FilesView repo={data} />}
                   {tab === TabSelection.Jobs && <JobsView repo={data} />}
-                  {tab === TabSelection.Sync && <RepositorySyncStatus repo={data} />}
                   {tab === TabSelection.Export && <ExportToRepository repo={data} />}
                   {tab === TabSelection.Health && <RepositoryHealth repo={data} />}
                   {tab === TabSelection.Settings && (
