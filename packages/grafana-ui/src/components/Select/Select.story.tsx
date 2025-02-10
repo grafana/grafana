@@ -464,8 +464,8 @@ function DeprecatedDecorator(Story: React.ElementType) {
       <Alert title="Deprecated!" severity="warning">
         The Select component is deprecated.
         <br />
-        Use Combobox instead - it's performant by default, can handle hundreds of thousands of options, and has a
-        simpler API.
+        Use Combobox instead - it supports most use cases, is performant by default, and can handle hundreds of
+        thousands of options, and has a simpler API.
       </Alert>
 
       <Story />
