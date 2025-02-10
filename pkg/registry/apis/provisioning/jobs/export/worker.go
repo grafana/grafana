@@ -49,12 +49,13 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 		return nil, fmt.Errorf("namespace mismatch")
 	}
 
-	worker := newExportJob(ctx, repo, dynamicClient, progress)
+	worker := newExportJob(ctx, repo, *options, dynamicClient, progress)
 
-	err = worker.run(ctx, *options)
+	err = worker.run(ctx)
 
 	status := worker.jobStatus
-	status.Summary = append(status.Summary, worker.folderSummary, worker.dashboardSummary)
-
+	for _, v := range worker.summary {
+		status.Summary = append(status.Summary, *v)
+	}
 	return worker.jobStatus, err
 }
