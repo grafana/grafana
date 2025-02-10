@@ -14,8 +14,6 @@ import {
   FilterInput,
   InteractiveTable,
   LinkButton,
-  PageToolbar,
-  ToolbarButton,
   Spinner,
   Stack,
   Tab,
@@ -79,6 +77,20 @@ export default function RepositoryStatusPage() {
         text: data?.spec?.title ?? 'Repository Status',
         subTitle: data?.spec?.description,
       }}
+      actions={
+        data && (
+          <Stack>
+            <StatusBadge enabled={Boolean(data.spec?.sync?.enabled)} state={data.status?.sync?.state} name={name} />
+            <SyncRepository repository={data} />
+            <Button variant="secondary" icon="upload">
+              Export
+            </Button>
+            <LinkButton variant="secondary" icon="cog" href={`${PROVISIONING_URL}/${name}/edit`}>
+              Settings
+            </LinkButton>
+          </Stack>
+        )
+      }
     >
       <Page.Contents isLoading={query.isLoading}>
         {notFound ? (
@@ -90,18 +102,6 @@ export default function RepositoryStatusPage() {
           <>
             {data ? (
               <>
-                <PageToolbar>
-                  <StatusBadge
-                    enabled={Boolean(data.spec?.sync?.enabled)}
-                    state={data.status?.sync?.state}
-                    name={name}
-                  />
-                  <SyncRepository repository={data} />
-                  <ToolbarButton icon="upload">Export</ToolbarButton>
-                  <LinkButton variant="secondary" icon="cog" href={`${PROVISIONING_URL}/${name}/edit`}>
-                    Settings
-                  </LinkButton>
-                </PageToolbar>
                 <TabsBar>
                   {tabInfo.map((t: SelectableValue) => (
                     <Tab
