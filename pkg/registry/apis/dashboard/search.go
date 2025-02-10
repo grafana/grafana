@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashboardsearch "github.com/grafana/grafana/pkg/services/dashboards/service/search"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	foldermodel "github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/util/errhttp"
@@ -320,7 +321,7 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 
 	// Add the folder constraint. Note this does not do recursive search
 	folder := queryParams.Get("folder")
-	if folder == "sharedwithme" { // TODO use const variable here
+	if folder == foldermodel.SharedWithMeFolderUID {
 		dashboardUIDs, err := s.getDashboardsUIDsSharedWithUser(ctx, user)
 		if err != nil {
 			errhttp.Write(ctx, err, w)
