@@ -522,8 +522,8 @@ export type CreateRepositorySyncArg = {
   /** name of the Job */
   name: string;
   body: {
-    /** Complete forces the sync to overwrite */
-    incremental?: boolean;
+    /** Incremental synchronization for versioned repositories */
+    incremental: boolean;
   };
 };
 export type CreateRepositoryTestResponse = /** status 200 OK */ TestResults;
@@ -658,8 +658,8 @@ export type PullRequestJobOptions = {
   url?: string;
 };
 export type SyncJobOptions = {
-  /** Complete forces the sync to overwrite */
-  complete?: boolean;
+  /** Incremental synchronization for versioned repositories */
+  incremental: boolean;
 };
 export type JobSpec = {
   /** Possible enum values:
@@ -744,8 +744,8 @@ export type GitHubRepositoryConfig = {
   repository?: string;
   /** Token for accessing the repository. */
   token?: string;
-  /** Workflow allowed for changes to the repository. The order is relevant for defining the precedence of the workflows. Possible values: pull-request, branch, direct-push. */
-  workflows?: string[];
+  /** Workflow allowed for changes to the repository. The order is relevant for defining the precedence of the workflows. Possible values: pull-request, branch, push. */
+  workflows?: ('branch' | 'push')[];
 };
 export type LocalRepositoryConfig = {
   path?: string;
@@ -762,7 +762,7 @@ export type SyncOptions = {
   /** Where values should be saved
     
     Possible enum values:
-     - `"folder"` Resources will be saved into a folder managed by this repository The folder k8s name will be the same as the repository k8s name It will contain a copy of everything from the remote
+     - `"folder"` Resources will be saved into a folder managed by this repository It will contain a copy of everything from the remote The folder k8s name will be the same as the repository k8s name
      - `"instance"` Resources are saved in the global context Only one repository may specify the `instance` target When this exists, the UI will promote writing to the instance repo rather than the grafana database (where possible) */
   target: 'folder' | 'instance';
 };
@@ -808,6 +808,8 @@ export type SyncStatus = {
   finished?: number;
   /** The repository hash when the last sync ran */
   hash?: string;
+  /** Incremental synchronization for versioned repositories */
+  incremental?: boolean;
   /** The ID for the job that ran this sync */
   job?: string;
   /** Summary messages (will be shown to users) */
@@ -1046,7 +1048,7 @@ export type RepositoryView = {
   /** When syncing, where values are saved
     
     Possible enum values:
-     - `"folder"` Resources will be saved into a folder managed by this repository The folder k8s name will be the same as the repository k8s name It will contain a copy of everything from the remote
+     - `"folder"` Resources will be saved into a folder managed by this repository It will contain a copy of everything from the remote The folder k8s name will be the same as the repository k8s name
      - `"instance"` Resources are saved in the global context Only one repository may specify the `instance` target When this exists, the UI will promote writing to the instance repo rather than the grafana database (where possible) */
   target: 'folder' | 'instance';
   /** Repository display */
