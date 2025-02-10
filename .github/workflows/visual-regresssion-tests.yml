@@ -33,16 +33,8 @@ jobs:
       - name: Install Playwright
         run: yarn playwright install  
       - name: Run Playwright tests
-        run: |
-          yarn e2e:playwright:vizregression | tee output.log
-          if grep -q -e "Error: A snapshot doesn't exist at" -e "Screenshot comparison failed" output.log; then
-            echo "Playwright tests failed due to a snapshot issue."
-            echo "SNAPSHOT_DIFFERENCES=true" >> $GITHUB_ENV
-            exit 1
-          elif grep -q "failed" output.log; then
-            echo "Playwright tests failed due to a non-snapshot issue."
-            exit 1
-          fi
+        run:
+          yarn e2e:playwright:vizregression
       - uses: actions/upload-artifact@v4
         id: artifact-upload
         if: always()
@@ -50,12 +42,6 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 30
-      - name: Upload Playwright trace
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-trace
-          path: trace.zip
       - name: Comment on PR with report link
         uses: thollander/actions-comment-pull-request@v3
         if: ${{ failure() && env.SNAPSHOT_DIFFERENCES == 'true' }}
