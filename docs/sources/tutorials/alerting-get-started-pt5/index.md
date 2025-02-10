@@ -23,7 +23,7 @@ killercoda:
 
 <!-- INTERACTIVE page intro.md START -->
 
-The Get started with Grafana Alerting tutorial Part 5 is a continuation of [Get started with Grafana Alerting tutorial Part 4](https://grafana.com/tutorials/alerting-get-started-pt4/).
+The Get started with Grafana Alerting tutorial Part 5 is a continuation of [Get started with Grafana Alerting tutorial Part 4](http://grafana.com/tutorials/alerting-get-started-pt4/).
 
 In this tutorial, we focus on optimizing your alerting strategy using Grafana for monitoring system health, particularly when working with [Prometheus](https://grafana.com/docs/grafana/latest/datasources/prometheus/). Imagine you are managing a web application or a fleet of servers, tracking critical metrics such as CPU, memory, and disk usage. While monitoring is essential, managing alerts allows your team to act on issues without necessarily feeling overwhelmed by the noise.
 
@@ -163,9 +163,9 @@ The time-series visualization supports alert rules to provide more context in th
           flask_app_memory_usage{environment="prod"}
           ```
 
-          {{< figure src="/media/docs/alerting/time-series_cpu_mem_usage_metrics.png" max-width="1200px" caption="Time-series panel displaying CPU and memory usage metrics in production." >}}
+        {{< figure src="/media/docs/alerting/time-series_cpu_mem_usage_metrics.png" max-width="1200px" caption="Time-series panel displaying CPU and memory usage metrics in production." >}}
 
-          Both metrics return labels that we’ll use later to link alert instances with the appropriate routing. These labels help define how alerts are routed based on their environment or other criteria.
+        Both metrics return labels that we’ll use later to link alert instances with the appropriate routing. These labels help define how alerts are routed based on their environment or other criteria.
 
 1.  Click Save dashboard.
     We have our time-series panel ready. Feel free to combine metrics with labels such as `environment = “staging”`.
@@ -341,8 +341,8 @@ By using notification policies, you can route alerts based on query values, dire
 
 Explore related topics covered in this tutorial:
 
-- Understand how alert routing works in [Get started with Grafana Alerting - Part 2](https://grafana.com/tutorials/alerting-get-started-pt2/).
-- Learn how templating works in [Get started with Grafana Alerting - Part 4](https://grafana.com/tutorials/alerting-get-started-pt4/).
+- Understand how alert routing works in [Get started with Grafana Alerting - Part 2](http://grafana.com/tutorials/alerting-get-started-pt2/).
+- Learn how templating works in [Get started with Grafana Alerting - Part 4](http://grafana.com/tutorials/alerting-get-started-pt4/).
   - More [examples on templating labels](https://grafana.com/docs/grafana/latest/alerting/alerting-rules/templates/examples/).
 
 <!-- INTERACTIVE page finish.md END -->
