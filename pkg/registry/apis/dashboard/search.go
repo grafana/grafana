@@ -328,7 +328,7 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// populate search request with name = dashboardUIDs (like it's done in the "names" filter)
+		// hijacks the "name" query param to only search for shared dashboard UIDs
 		if len(dashboardUIDs) > 0 {
 			names = append(names, dashboardUIDs...)
 		}
@@ -437,7 +437,7 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 	// get all dashboards user has access to, along with their parent folder
 	dashboardResult, err := s.client.Search(ctx, dashboardSearchRequest)
 	if err != nil {
-		return nil, err
+		return sharedDashboards, err
 	}
 
 	dashboardResultRows := dashboardResult.Results.Rows
@@ -459,7 +459,7 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 		}
 		dashboardResultMissing, err := s.client.Search(ctx, dashboardSearchRequestMissing)
 		if err != nil {
-			return nil, err
+			return sharedDashboards, err
 		}
 
 		dashboardResultRows = append(dashboardResultRows, dashboardResultMissing.Results.Rows...)
@@ -477,7 +477,7 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 	// get folder list. only folders the user has access to will be returned here
 	folderKey, err := asResourceKey(user.GetNamespace(), folderv0alpha1.RESOURCE)
 	if err != nil {
-		return nil, err
+		return sharedDashboards, err
 	}
 
 	folderSearchRequest := &resource.ResourceSearchRequest{
@@ -494,7 +494,7 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 	}
 	foldersResult, err := s.client.Search(ctx, folderSearchRequest)
 	if err != nil {
-		return nil, err
+		return sharedDashboards, err
 	}
 
 	foldersResultRows := foldersResult.Results.Rows
@@ -516,7 +516,7 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 		}
 		foldersResultMissing, err := s.client.Search(ctx, folderSearchRequestMissing)
 		if err != nil {
-			return nil, err
+			return sharedDashboards, err
 		}
 
 		foldersResultRows = append(foldersResultRows, foldersResultMissing.Results.Rows...)
