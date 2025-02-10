@@ -1,6 +1,6 @@
 import { defaultsDeep } from 'lodash';
-import { Observable, of, throwError } from 'rxjs';
-import { delay, take } from 'rxjs/operators';
+import { Observable, TimeoutError, lastValueFrom, of, throwError } from 'rxjs';
+import { delay, take, timeout } from 'rxjs/operators';
 import { createFetchResponse } from 'test/helpers/createFetchResponse';
 
 import {
@@ -200,7 +200,7 @@ describe('AlertingQueryRunner', () => {
     });
   });
 
-  it('should not execute if all queries fail filterQuery check', async () => {
+  it('should not push any values if all queries fail filterQuery check', async () => {
     const runner = new AlertingQueryRunner(
       mockBackendSrv({
         fetch: () => throwError(new Error("shouldn't happen")),
@@ -211,15 +211,7 @@ describe('AlertingQueryRunner', () => {
     const data = runner.get();
     runner.run([createQuery('A'), createQuery('B')], 'B');
 
-    await expect(data.pipe(take(1))).toEmitValuesWith((values) => {
-      const [data] = values;
-
-      expect(data.A.state).toEqual(LoadingState.Done);
-      expect(data.A.series).toHaveLength(0);
-
-      expect(data.B.state).toEqual(LoadingState.Done);
-      expect(data.B.series).toHaveLength(0);
-    });
+    await expect(lastValueFrom(data.pipe(timeout(200)))).rejects.toThrow(TimeoutError);
   });
 
   it('should skip hidden queries and descendant nodes', async () => {

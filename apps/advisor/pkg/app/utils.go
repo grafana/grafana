@@ -15,16 +15,16 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
-func getCheck(obj resource.Object, checks map[string]checks.Check) (checks.Check, error) {
+func getCheck(obj resource.Object, checkMap map[string]checks.Check) (checks.Check, error) {
 	labels := obj.GetLabels()
-	objTypeLabel, ok := labels[typeLabel]
+	objTypeLabel, ok := labels[checks.TypeLabel]
 	if !ok {
 		return nil, errors.New("missing check type as label")
 	}
-	c, ok := checks[objTypeLabel]
+	c, ok := checkMap[objTypeLabel]
 	if !ok {
 		supportedTypes := ""
-		for k := range checks {
+		for k := range checkMap {
 			supportedTypes += k + ", "
 		}
 		return nil, fmt.Errorf("unknown check type %s. Supported types are: %s", objTypeLabel, supportedTypes)
@@ -34,12 +34,12 @@ func getCheck(obj resource.Object, checks map[string]checks.Check) (checks.Check
 }
 
 func getStatusAnnotation(obj resource.Object) string {
-	return obj.GetAnnotations()[statusAnnotation]
+	return obj.GetAnnotations()[checks.StatusAnnotation]
 }
 
 func setStatusAnnotation(ctx context.Context, client resource.Client, obj resource.Object, status string) error {
 	annotations := obj.GetAnnotations()
-	annotations[statusAnnotation] = status
+	annotations[checks.StatusAnnotation] = status
 	return client.PatchInto(ctx, obj.GetStaticMetadata().Identifier(), resource.PatchRequest{
 		Operations: []resource.PatchOperation{{
 			Operation: resource.PatchOpAdd,
@@ -84,7 +84,7 @@ func processCheck(ctx context.Context, client resource.Client, obj resource.Obje
 	}
 	// Run the steps
 	steps := check.Steps()
-	reportErrors, err := runStepsInParallel(ctx, &c.Spec, steps, items)
+	failures, err := runStepsInParallel(ctx, &c.Spec, steps, items)
 	if err != nil {
 		setErr := setStatusAnnotation(ctx, client, obj, "error")
 		if setErr != nil {
@@ -94,8 +94,8 @@ func processCheck(ctx context.Context, client resource.Client, obj resource.Obje
 	}
 
 	report := &advisorv0alpha1.CheckV0alpha1StatusReport{
-		Errors: reportErrors,
-		Count:  int64(len(items)),
+		Failures: failures,
+		Count:    int64(len(items)),
 	}
 	err = setStatusAnnotation(ctx, client, obj, "processed")
 	if err != nil {
@@ -110,8 +110,8 @@ func processCheck(ctx context.Context, client resource.Client, obj resource.Obje
 	}, resource.PatchOptions{}, obj)
 }
 
-func runStepsInParallel(ctx context.Context, spec *advisorv0alpha1.CheckSpec, steps []checks.Step, items []any) ([]advisorv0alpha1.CheckReportError, error) {
-	reportErrs := []advisorv0alpha1.CheckReportError{}
+func runStepsInParallel(ctx context.Context, spec *advisorv0alpha1.CheckSpec, steps []checks.Step, items []any) ([]advisorv0alpha1.CheckReportFailure, error) {
+	reportFailures := []advisorv0alpha1.CheckReportFailure{}
 	var internalErr error
 	var wg sync.WaitGroup
 	var mu sync.Mutex
@@ -133,11 +133,11 @@ func runStepsInParallel(ctx context.Context, spec *advisorv0alpha1.CheckSpec, st
 					return
 				}
 				if stepErr != nil {
-					reportErrs = append(reportErrs, *stepErr)
+					reportFailures = append(reportFailures, *stepErr)
 				}
 			}(step, item)
 		}
 	}
 	wg.Wait()
-	return reportErrs, internalErr
+	return reportFailures, internalErr
 }
