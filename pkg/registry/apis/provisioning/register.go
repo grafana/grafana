@@ -32,6 +32,8 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/auth"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/export"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/pullrequest"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
@@ -100,7 +102,6 @@ func NewAPIBuilder(
 		render:         render,
 		resourceLister: resources.NewResourceLister(index),
 		blobstore:      blobstore,
-		jobs:           jobs.NewJobQueue(50), // in memory for now
 	}
 }
 
@@ -183,6 +184,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 		return fmt.Errorf("failed to create repository storage: %w", err)
 	}
 	b.getter = repositoryStorage
+	b.jobs = jobs.NewJobQueue(50, b, b.identities) // in memory for now
 
 	repositoryStatusStorage := grafanaregistry.NewRegistryStatusStore(opts.Scheme, repositoryStorage)
 
@@ -248,7 +250,7 @@ func (b *APIBuilder) GetHealthyRepository(ctx context.Context, name string) (rep
 			ctx := identity.WithRequester(ctx, id)
 
 			// Check health again
-			s, err := b.tester.TestRepository(ctx, repo)
+			s, err := repository.TestRepository(ctx, repo)
 			if err != nil {
 				return nil, err // The status
 			}
@@ -326,8 +328,8 @@ func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admis
 	// This is called on every update, so be careful to only add the finalizer for create
 	if len(r.Finalizers) == 0 && a.GetOperation() == admission.Create {
 		r.Finalizers = []string{
-			controller.REMOVE_ORPHAN_RESOURCE_FINALIZER,
-			controller.CLEANUP_FINALIZER,
+			controller.RemoveOrphanResourcesFinalizer,
+			controller.CleanFinalizer,
 		}
 	}
 
@@ -359,7 +361,7 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 		return err
 	}
 
-	list := ValidateRepository(repo)
+	list := repository.ValidateRepository(repo)
 	cfg := repo.Config()
 
 	if a.GetOperation() == admission.Update {
@@ -432,21 +434,19 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			}
 			b.repositoryLister = repoInformer.Lister()
 
-			syncWorker := sync.NewSyncWorker(
+			b.jobs.Register(export.NewExportWorker(b.parsers))
+			b.jobs.Register(sync.NewSyncWorker(
 				c.ProvisioningV0alpha1(),
 				b.parsers,
 				b.resourceLister,
-			)
-			b.jobs.Register(jobs.NewJobWorker(
-				b,
-				b.parsers,
-				b.identities,
-				b.render,
-				b.resourceLister,
-				syncWorker,
-				b.blobstore,
-				b.urlProvider,
 			))
+
+			renderer := pullrequest.NewRenderer(b.render, b.blobstore)
+			pullRequestWorker, err := pullrequest.NewPullRequestWorker(b.parsers, renderer, b.urlProvider)
+			if err != nil {
+				return fmt.Errorf("create pull request worker: %w", err)
+			}
+			b.jobs.Register(pullRequestWorker)
 
 			repoController, err := controller.NewRepositoryController(
 				c.ProvisioningV0alpha1(),
@@ -455,7 +455,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.resourceLister,
 				b.parsers,
 				b.identities,
-				b.tester,
+				&repository.Tester{},
 				b.jobs,
 			)
 			if err != nil {

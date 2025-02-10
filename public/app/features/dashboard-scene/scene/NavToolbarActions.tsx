@@ -28,7 +28,6 @@ import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { ScopesSelector } from 'app/features/scopes';
 import { useSelector } from 'app/types';
 
-import { AnnoKeyRepoName } from '../../apiserver/types';
 import { shareDashboardType } from '../../dashboard/components/ShareModal/utils';
 import { selectFolderRepository } from '../../provisioning/api';
 import { PanelEditor, buildPanelEditScene } from '../panel-edit/PanelEditor';
@@ -72,7 +71,7 @@ export function ToolbarActions({ dashboard }: Props) {
   const isViewingPanel = Boolean(viewPanelScene);
   const isEditedPanelDirty = usePanelEditDirty(editPanel);
   const isEditingLibraryPanel = editPanel && isLibraryPanel(editPanel.state.panelRef.resolve());
-  const isNew = !Boolean(uid);
+  const isNew = !Boolean(uid || dashboard.getRepoName());
 
   const hasCopiedPanel = store.exists(LS_PANEL_COPY_KEY);
   // Means we are not in settings view, fullscreen panel or edit panel
@@ -81,7 +80,7 @@ export function ToolbarActions({ dashboard }: Props) {
   const showScopesSelector = config.featureToggles.scopeFilters && !isEditing;
   const dashboardNewLayouts = config.featureToggles.dashboardNewLayouts;
   const folderRepo = useSelector((state) => selectFolderRepository(state, meta.folderUid));
-  const isProvisionedNG = Boolean(meta.k8s?.annotations?.[AnnoKeyRepoName] || folderRepo);
+  const isProvisionedNG = Boolean(dashboard.isProvisioned() || folderRepo);
 
   if (!isEditingPanel) {
     // This adds the presence indicators in enterprise
@@ -208,6 +207,25 @@ export function ToolbarActions({ dashboard }: Props) {
           data-testid={selectors.components.PageToolbar.itemButton('add_row')}
         >
           <Trans i18nKey="dashboard.toolbar.add-row">Row</Trans>
+        </Button>
+      ),
+    });
+    leftActions.push({
+      group: 'add-panel',
+      condition: isEditingAndShowingDashboard,
+      render: () => (
+        <Button
+          key="add-tab-button"
+          variant="secondary"
+          size="sm"
+          icon="plus"
+          fill="text"
+          onClick={() => {
+            dashboard.onCreateNewTab();
+          }}
+          data-testid={selectors.components.PageToolbar.itemButton('add_tab')}
+        >
+          <Trans i18nKey="dashboard.toolbar.add-tab">Tab</Trans>
         </Button>
       ),
     });
