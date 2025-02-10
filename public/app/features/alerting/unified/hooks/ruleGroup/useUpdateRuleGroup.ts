@@ -1,9 +1,12 @@
+import { Action } from '@reduxjs/toolkit';
+
 import { t } from 'app/core/internationalization';
 import { RuleGroupIdentifier } from 'app/types/unified-alerting';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
 import { notFoundToNullOrThrow } from '../../api/util';
 import {
+  SwapOperation,
   moveRuleGroupAction,
   renameRuleGroupAction,
   reorderRulesInRuleGroupAction,
@@ -15,6 +18,99 @@ import { useAsync } from '../useAsync';
 import { useProduceNewRuleGroup } from './useProduceNewRuleGroup';
 
 const ruleUpdateSuccessMessage = () => t('alerting.rule-groups.update.success', 'Successfully updated rule group');
+
+export interface UpdateGroupDelta {
+  namespaceName?: string;
+  groupName?: string;
+  interval?: string;
+  ruleSwaps?: SwapOperation[];
+}
+
+export function useUpdateRuleGroup() {
+  const [produceNewRuleGroup] = useProduceNewRuleGroup();
+  const [fetchRuleGroup] = alertRuleApi.endpoints.getRuleGroupForNamespace.useLazyQuery();
+  const [upsertRuleGroup] = alertRuleApi.endpoints.upsertRuleGroupForNamespace.useMutation();
+  const [deleteRuleGroup] = alertRuleApi.endpoints.deleteRuleGroupFromNamespace.useMutation();
+
+  // @TODO maybe add where we moved it from and to for additional peace of mind
+  const successMessage = t('alerting.rule-groups.move.success', 'Successfully moved rule group');
+
+  return useAsync(async (ruleGroup: RuleGroupIdentifier, delta: UpdateGroupDelta) => {
+    const updateActions: Action[] = [];
+
+    if (delta.namespaceName) {
+      // we could technically support moving rule groups to another folder, though we don't have a "move" wizard yet.
+      if (isGrafanaRulesSource(ruleGroup.dataSourceName)) {
+        throw new Error('Moving a Grafana-managed rule group to another folder is currently not supported.');
+      }
+      updateActions.push(moveRuleGroupAction({ newNamespaceName: delta.namespaceName }));
+    }
+
+    if (delta.groupName) {
+      updateActions.push(renameRuleGroupAction({ groupName: delta.groupName }));
+    }
+
+    if (delta.interval) {
+      updateActions.push(updateRuleGroupAction({ interval: delta.interval }));
+    }
+
+    if (delta.ruleSwaps) {
+      updateActions.push(reorderRulesInRuleGroupAction({ swaps: delta.ruleSwaps }));
+    }
+
+    const { newRuleGroupDefinition, rulerConfig } = await produceNewRuleGroup(ruleGroup, updateActions);
+
+    const oldNamespace = ruleGroup.namespaceName;
+    const targetNamespace = delta.namespaceName ?? oldNamespace;
+
+    const oldGroupName = ruleGroup.groupName;
+    const targetGroupName = delta.groupName ?? oldGroupName;
+
+    const isNamespaceChanged = Boolean(targetNamespace) && oldNamespace !== targetNamespace;
+    const isGroupRenamed = Boolean(targetGroupName) && oldGroupName !== targetGroupName;
+
+    const shouldRemoveOldGroup = isNamespaceChanged || isGroupRenamed;
+
+    // if we're also renaming the group, check if the target does not already exist
+    if (targetGroupName && isGroupRenamed) {
+      const targetGroup = await fetchRuleGroup({
+        rulerConfig,
+        namespace: targetNamespace,
+        group: targetGroupName,
+        // since this could throw 404
+        notificationOptions: { showErrorAlert: false },
+      })
+        .unwrap()
+        .catch(notFoundToNullOrThrow);
+
+      if (targetGroup?.rules?.length) {
+        throw new Error('Target group already has rules, merging rule groups is currently not supported.');
+      }
+    }
+
+    // create the new group in the target namespace or update the existing one
+    // ⚠️ it's important to do this before we remove the old group – better to have two groups than none if one of these requests fails
+    const result = await upsertRuleGroup({
+      rulerConfig,
+      namespace: targetNamespace,
+      payload: newRuleGroupDefinition,
+      notificationOptions: { successMessage },
+    }).unwrap();
+
+    // TODO How to make this safer?
+    if (shouldRemoveOldGroup) {
+      // now remove the old one
+      await deleteRuleGroup({
+        rulerConfig,
+        namespace: oldNamespace,
+        group: oldGroupName,
+        notificationOptions: { showSuccessAlert: false },
+      }).unwrap();
+    }
+
+    return result;
+  });
+}
 
 /**
  * Update an existing rule group, currently only supports updating the interval.

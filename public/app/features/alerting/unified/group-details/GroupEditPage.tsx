@@ -22,9 +22,11 @@ import { RulerRuleDTO, RulerRuleGroupDTO } from 'app/types/unified-alerting-dto'
 import { alertRuleApi } from '../api/alertRuleApi';
 import { featureDiscoveryApi } from '../api/featureDiscoveryApi';
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
+import { UpdateGroupDelta, useUpdateRuleGroup } from '../hooks/ruleGroup/useUpdateRuleGroup';
 import { useFolder } from '../hooks/useFolder';
 import { SwapOperation, swapItems } from '../reducers/ruler/ruleGroups';
 import { DEFAULT_GROUP_EVALUATION_INTERVAL } from '../rule-editor/formDefaults';
+import { ruleGroupIdentifierV2toV1 } from '../utils/groupIdentifier';
 import { stringifyErrorLike } from '../utils/misc';
 import { createListFilterLink } from '../utils/navigation';
 import { hashRulerRule } from '../utils/rule-id';
@@ -47,6 +49,7 @@ interface GroupEditFormData {
 }
 
 function GroupEditForm({ rulerGroup, groupIdentifier }: GroupEditFormProps) {
+  const [updateRuleGroup] = useUpdateRuleGroup();
   const groupIntervalOrDefault = rulerGroup?.interval ?? DEFAULT_GROUP_EVALUATION_INTERVAL;
   const [operations, setOperations] = useState<SwapOperation[]>([]);
 
@@ -71,9 +74,14 @@ function GroupEditForm({ rulerGroup, groupIdentifier }: GroupEditFormProps) {
   }, []);
 
   const onSubmit: SubmitHandler<GroupEditFormData> = (data) => {
-    console.log(dirtyFields);
-    console.log(data);
-    console.log(operations);
+    const changeDelta: UpdateGroupDelta = {
+      namespaceName: dirtyFields.namespace ? data.namespace : undefined,
+      groupName: dirtyFields.name ? data.name : undefined,
+      interval: dirtyFields.interval ? data.interval : undefined,
+      ruleSwaps: operations.length ? operations : undefined,
+    };
+
+    return updateRuleGroup.execute(ruleGroupIdentifierV2toV1(groupIdentifier), changeDelta);
   };
 
   return (
