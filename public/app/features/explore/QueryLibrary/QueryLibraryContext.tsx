@@ -2,6 +2,8 @@ import { createContext, ReactNode, useContext } from 'react';
 
 import { DataQuery } from '@grafana/schema';
 
+import { OnSelectQueryType } from './types';
+
 /**
  * Context with state and action to interact with Query Library. The Query Library feature consists of a drawer
  * that shows existing queries and allows users to use them and manage them and then an AddQueryModal which allows
@@ -18,11 +20,7 @@ export type QueryLibraryContextType = {
    * @param options.context Used for tracking. Should identify the context this is called from, like 'explore' or
    *   'dashboard'.
    */
-  openDrawer: (
-    datasourceFilters: string[],
-    onSelectQuery: (query: DataQuery) => void,
-    options?: { context?: string }
-  ) => void;
+  openDrawer: (datasourceFilters: string[], onSelectQuery: OnSelectQueryType, options?: { context?: string }) => void;
   closeDrawer: () => void;
   isDrawerOpen: boolean;
 

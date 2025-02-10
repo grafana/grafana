@@ -1,14 +1,13 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { DataQuery } from '@grafana/schema';
 import { ToolbarButton, useTheme2 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 import { useSelector } from 'app/types';
 
 import { createDatasourcesList } from '../../core/utils/richHistory';
 
-import { useQueryLibraryContext } from './QueryLibrary/QueryLibraryContext';
+import { type OnSelectQueryType, useQueryLibraryContext } from './QueryLibrary/QueryLibraryContext';
 import { selectExploreDSMaps } from './state/selectors';
 
 type Props = {
@@ -19,7 +18,7 @@ type Props = {
 
   onClickAddQueryRowButton: () => void;
   onClickQueryInspectorButton: () => void;
-  onSelectQueryFromLibrary: (query: DataQuery) => void;
+  onSelectQueryFromLibrary: OnSelectQueryType;
 };
 
 const getStyles = (theme: GrafanaTheme2) => {
