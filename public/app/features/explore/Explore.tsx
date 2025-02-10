@@ -8,6 +8,7 @@ import {
   AbsoluteTimeRange,
   DataFrame,
   EventBus,
+  getNextRefId,
   GrafanaTheme2,
   hasToggleableQueryFiltersSupport,
   LoadingState,
@@ -615,7 +616,13 @@ export class Explore extends PureComponent<Props, ExploreState> {
                                 await this.props.changeDatasource({ exploreId, datasource: query.datasource.uid });
                               }
                             }
-                            this.props.setQueries(exploreId, [...this.props.queries, query]);
+                            this.props.setQueries(exploreId, [
+                              ...this.props.queries,
+                              {
+                                ...query,
+                                refId: getNextRefId(this.props.queries),
+                              },
+                            ]);
                           }}
                         />
                         <ResponseErrorContainer exploreId={exploreId} />

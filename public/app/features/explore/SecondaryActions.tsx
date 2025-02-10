@@ -7,7 +7,8 @@ import { useSelector } from 'app/types';
 
 import { createDatasourcesList } from '../../core/utils/richHistory';
 
-import { type OnSelectQueryType, useQueryLibraryContext } from './QueryLibrary/QueryLibraryContext';
+import { useQueryLibraryContext } from './QueryLibrary/QueryLibraryContext';
+import { type OnSelectQueryType } from './QueryLibrary/types';
 import { selectExploreDSMaps } from './state/selectors';
 
 type Props = {
