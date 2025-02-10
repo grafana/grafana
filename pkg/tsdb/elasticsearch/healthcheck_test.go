@@ -65,7 +65,7 @@ func Test_validateIndex_Warning_WrongTimestampType(t *testing.T) {
 		Headers:       nil,
 	})
 	assert.Equal(t, backend.HealthStatusOk, res.Status)
-	assert.Equal(t, "Elasticsearch data source is healthy. Warning: Could not find time field timestamp with type date in index", res.Message)
+	assert.Equal(t, "Elasticsearch data source is healthy. Warning: Could not find time field 'timestamp' with type date in index", res.Message)
 }
 func Test_validateIndex_Error_FailedToUnmarshalValidateResponse(t *testing.T) {
 	service := GetMockService(http.StatusOK, "200 OK", `{"status":"green"}`, `\\\///{"fields":null}"`)
