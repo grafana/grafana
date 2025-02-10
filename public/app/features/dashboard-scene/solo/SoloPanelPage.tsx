@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { UrlSyncContextProvider } from '@grafana/scenes';
 import { Alert, Spinner, useStyles2 } from '@grafana/ui';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
@@ -39,14 +40,25 @@ export function SoloPanelPage({ queryParams }: Props) {
     return <PageLoader />;
   }
 
-  return <SoloPanelRenderer dashboard={dashboard} panelId={queryParams.panelId} />;
+  return (
+    <UrlSyncContextProvider scene={dashboard}>
+      <SoloPanelRenderer dashboard={dashboard} panelId={queryParams.panelId} />
+    </UrlSyncContextProvider>
+  );
 }
 
 export default SoloPanelPage;
 
 export function SoloPanelRenderer({ dashboard, panelId }: { dashboard: DashboardScene; panelId: string }) {
   const [panel, error] = useSoloPanel(dashboard, panelId);
+  const { controls } = dashboard.useState();
+  const refreshPicker = controls?.useState()?.refreshPicker;
+
   const styles = useStyles2(getStyles);
+
+  useEffect(() => {
+    return refreshPicker?.activate();
+  }, [refreshPicker]);
 
   if (error) {
     return <Alert title={error} />;

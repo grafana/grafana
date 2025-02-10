@@ -115,7 +115,9 @@ CPU usage has exceeded 80% (81.2345) for the last 5 minutes.
 
 ### Include labels for extra details
 
-To provide additional context, you can include labels from the query. For instance, access the [`$labels`](ref:reference-labels) variable to display a label that informs about the affected instance:
+To provide additional context, you can include labels from the query using the [`$labels`](ref:reference-labels) variable.
+
+For instance, the previous case could also include the affected `instance`.
 
 ```
 CPU usage for {{ $labels.instance }} has exceeded 80% ({{ $values.A.Value }}) for the last 5 minutes.
@@ -125,14 +127,14 @@ CPU usage for {{ $labels.instance }} has exceeded 80% ({{ $values.A.Value }}) fo
 CPU usage for Instance 1 has exceeded 80% (81.2345) for the last 5 minutes.
 ```
 
-Annotations can also be used to provide a summary of key alert labels, such as the environment and alert severity. For instance, you can display a summary of the alert with important labels like:
+You can incorporate any labels returned by the query into the template. For instance, the following template includes information about the environment and region where the alert occurred.
 
 ```
-Alert triggered in {{ $labels.environment }} with severity {{ $labels.severity }}
+Alert triggered in {{ $labels.environment }} on {{ $labels.region }} region.
 ```
 
 ```template_output
-Alert triggered in production with severity critical.
+Alert triggered in production on AMER region.
 ```
 
 ### Print a range query

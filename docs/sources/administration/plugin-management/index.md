@@ -103,53 +103,45 @@ To browse for available plugins:
 
 ### Install a plugin
 
-To install a plugin:
+The most common way to install a plugin is through the Grafana UI, but alternative methods are also available.
 
 1. In Grafana, click **Administration > Plugins and data > Plugins** in the side navigation menu to view all plugins.
 1. Browse and find a plugin.
 1. Click the plugin's logo.
 1. Click **Install**.
 
-When the update is complete, you'll see a confirmation message that the installation was successful.
+There are also additional ways to install plugins depending on your setup.
 
-### Update a plugin
+#### Install a plugin using Grafana CLI
 
-To update a plugin:
+Grafana CLI allows you to install, upgrade, and manage your Grafana plugins using a command line. For more information about Grafana CLI plugin commands, refer to [Plugin commands]({{< relref "../../cli/#plugins-commands" >}}).
 
-1. In Grafana, click **Administration > Plugins and data > Plugins** in the side navigation menu to view all plugins.
-1. Click the **Installed** filter to show only installed plugins.
-1. Click the plugin's logo.
-1. Click **Update**.
+#### Install a plugin from a ZIP file
 
-When the update is complete, you'll see a confirmation message that the update was successful.
+This method is typically used for plugins not available in the Plugin Catalog or in environments without internet access.
 
-### Uninstall a plugin
+Download the archive containing the plugin assets, and install it by extracting the archive into the plugin directory. For example:
 
-To uninstall a plugin:
+```bash
+unzip my-plugin-0.2.0.zip -d YOUR_PLUGIN_DIR/my-plugin
+```
 
-1. In Grafana, click **Administration > Plugins and data > Plugins** in the side navigation menu to view all plugins.
-1. Click the plugin's logo.
-1. Click the **Installed** filter to show only installed plugins.
-1. Click **Uninstall**.
+The path to the plugin directory is defined in the configuration file. For more information, refer to [Configuration]({{< relref "../../setup-grafana/configure-grafana/#plugins" >}}).
 
-When the update is complete, you'll see a confirmation message that the uninstall was successful.
+#### Install a plugin in air-gapped environment
 
-## Install Grafana plugins
+Plugin installation usually requires an internet connection. You can check which endpoints are used during the installation on your instance and add them to your instance’s allowlist.
 
-Grafana supports data source, panel, and app plugins.
+If this is not possible you can go via installing a plugin using [Grafana CLI](#install-a-plugin-using-grafana-cli) or as a [ZIP file](#install-a-plugin-from-a-zip-file).
 
-1. In a web browser, navigate to the [Grafana plugin catalog](https://grafana.com/plugins) and find a plugin that you want to install.
-1. Click the plugin, and then click the **Installation** tab.
+You can fetch any plugin from Grafana.com API following the download link referenced in the API.
+Here is an example based on `grafana-lokiexplore-app` plugins.
 
-### Install plugin on Grafana Cloud
+1. Open `https://grafana.com/api/plugins/grafana-lokiexplore-app` and look for `links` section
+1. Find a `download` url which looks something like `https://grafana.com/api/plugins/grafana-lokiexplore-app/versions/1.0.2/download`
+1. Use this URL to download the plugin ZIP file, which you can then install as described above.
 
-On the **Installation tab**, in the **For** field, click the name of the Grafana instance on which you want to install the plugin.
-
-Grafana Cloud handles the plugin installation automatically.
-
-If you're logged in to Grafana Cloud when you add a plugin, log out and then log back in again to use the new plugin.
-
-### Install plugins using the Grafana Helm chart
+#### Install plugins using the Grafana Helm chart
 
 With the Grafana Helm chart, add the plugins you want to install as a list using the `plugins` field in the your values file. For more information about the configuration, refer to [the Helm chart configuration reference](https://github.com/grafana/helm-charts/tree/main/charts/grafana#configuration).
 
@@ -162,21 +154,29 @@ plugins:
   - redis-datasource
 ```
 
-### Install plugin on local Grafana
+When the update is complete, a confirmation message will indicate the installation was successful.
 
-Follow the instructions on the **Install** tab. You can either install the plugin with a Grafana CLI command or by downloading and uncompressing a zip file into the Grafana plugins directory. We recommend using Grafana CLI in most instances. The zip option is available if your Grafana server doesn't have access to the internet.
+### Update a plugin
 
-For more information about Grafana CLI plugin commands, refer to [Plugin commands]({{< relref "../../cli/#plugins-commands" >}}).
+To update a plugin:
 
-#### Install a packaged plugin
+1. In Grafana, click **Administration > Plugins and data > Plugins** in the side navigation menu to view all plugins.
+1. Click the **Installed** filter to show only installed plugins.
+1. Click the plugin's logo.
+1. Click **Update**.
 
-After the user has downloaded the archive containing the plugin assets, they can install it by extracting the archive into their plugin directory. For example:
+When the update is complete, a confirmation message will indicate the installation was successful.
 
-```bash
-unzip my-plugin-0.2.0.zip -d YOUR_PLUGIN_DIR/my-plugin
-```
+### Uninstall a plugin
 
-The path to the plugin directory is defined in the configuration file. For more information, refer to [Configuration]({{< relref "../../setup-grafana/configure-grafana/#plugins" >}}).
+To uninstall a plugin:
+
+1. In Grafana, click **Administration > Plugins and data > Plugins** in the side navigation menu to view all plugins.
+1. Click the plugin's logo.
+1. Click the **Installed** filter to show only installed plugins.
+1. Click **Uninstall**.
+
+When the update is complete, a confirmation message will indicate the installation was successful.
 
 ## Plugin signatures
 

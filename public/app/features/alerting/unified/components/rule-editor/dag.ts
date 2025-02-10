@@ -59,6 +59,7 @@ export function parseRefsFromMathExpression(input: string): string[] {
 }
 
 export const getOriginOfRefId = memoize(_getOriginsOfRefId, (refId, graph) => refId + fingerprintGraph(graph));
+export const getDescendants = memoize(_getDescendants, (refId, graph) => refId + fingerprintGraph(graph));
 
 export function _getOriginsOfRefId(refId: string, graph: Graph): string[] {
   const node = graph.getNode(refId);
@@ -66,23 +67,45 @@ export function _getOriginsOfRefId(refId: string, graph: Graph): string[] {
   const origins: Node[] = [];
 
   // recurse through "node > inputEdges > inputNode"
-  function findChildNode(node: Node) {
+  function findParentNode(node: Node) {
     const inputEdges = node.inputEdges;
 
     if (inputEdges.length > 0) {
       inputEdges.forEach((edge) => {
         if (edge.inputNode) {
-          findChildNode(edge.inputNode);
+          findParentNode(edge.inputNode);
         }
       });
     } else {
-      origins?.push(node);
+      origins.push(node);
     }
+  }
+
+  findParentNode(node);
+
+  return origins.map((origin) => origin.name);
+}
+
+// get all children (and children's children etc) from a given node
+export function _getDescendants(refId: string, graph: Graph): string[] {
+  const node = graph.getNode(refId);
+  const descendants: Node[] = [];
+
+  // recurse through "node > outputEdges > outputNode"
+  function findChildNode(node: Node) {
+    const outputEdges = node.outputEdges;
+
+    outputEdges.forEach((edge) => {
+      if (edge.outputNode) {
+        descendants.push(edge.outputNode);
+        findChildNode(edge.outputNode);
+      }
+    });
   }
 
   findChildNode(node);
 
-  return origins.map((origin) => origin.name);
+  return descendants.map((descendant) => descendant.name);
 }
 
 // create a unique fingerprint of the DAG

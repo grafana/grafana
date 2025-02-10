@@ -37,4 +37,5 @@ images = {
     "shellcheck": "koalaman/shellcheck:stable",
     "rocky": "rockylinux:9",
     "wine": "scottyhardy/docker-wine:stable-9.0",
+    "github_app_secret_writer": "us-docker.pkg.dev/grafanalabs-global/docker-deployment-tools-prod/github-app-secret-writer:2024-11-05-v11688112090.1-83920c59",
 }

@@ -585,6 +585,18 @@ describe('transformSaveModelToScene', () => {
       expect(vizPanel.state.hoverHeader).toEqual(true);
     });
 
+    it('should set hoverHeader to true if timeFrom and hideTimeOverride is true', () => {
+      const panel = {
+        type: 'test-plugin',
+        timeFrom: '2h',
+        hideTimeOverride: true,
+      };
+
+      const { vizPanel } = buildGridItemForTest(panel);
+
+      expect(vizPanel.state.hoverHeader).toBe(true);
+    });
+
     it('should initalize the VizPanel with min interval set', () => {
       const panel = {
         title: '',
@@ -646,6 +658,26 @@ describe('transformSaveModelToScene', () => {
       const { vizPanel } = buildGridItemForTest(panel);
 
       expect(vizPanel.state.$data).toBeUndefined();
+    });
+
+    it('When repeat is set but repeatDirection is not it should default to horizontal repeat', () => {
+      const panel = {
+        title: '',
+        type: 'text-plugin-34',
+        gridPos: { x: 0, y: 0, w: 8, h: 8 },
+        repeat: 'server',
+        maxPerRow: 8,
+      };
+
+      const gridItem = buildGridItemForPanel(new PanelModel(panel));
+      const repeater = gridItem as DashboardGridItem;
+
+      expect(repeater.state.maxPerRow).toBe(8);
+      expect(repeater.state.variableName).toBe('server');
+      expect(repeater.state.width).toBe(24);
+      expect(repeater.state.height).toBe(8);
+      expect(repeater.state.repeatDirection).toBe('h');
+      expect(repeater.state.maxPerRow).toBe(8);
     });
 
     it('When repeat is set should build PanelRepeaterGridItem', () => {
