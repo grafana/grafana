@@ -52,7 +52,7 @@ jobs:
           retention-days: 30
       - name: Upload Playwright trace
         if: always()
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: playwright-trace
           path: trace.zip
