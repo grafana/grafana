@@ -145,7 +145,8 @@ type SampleQueryTrackingEvent = {
 };
 
 export const trackSampleQuerySelection = (props: SampleQueryTrackingEvent) => {
-  reportInteraction('cloudwatch-logs-cheat-sheet-query-clicked', props);
+  const { queryLanguage, queryCategory } = props;
+  reportInteraction('cloudwatch-logs-cheat-sheet-query-clicked', { queryLanguage, queryCategory });
 };
 
 const isMetricSearchBuilder = (q: CloudWatchMetricsQuery) =>
