@@ -170,12 +170,12 @@ export class RelatedLogsScene extends SceneObjectBase<RelatedLogsSceneState> {
             <LinkButton
               href={`${config.appSubUrl}/a/grafana-lokiexplore-app`} // We prefix with the appSubUrl for environments that don't host grafana at the root.
               target="_blank"
-              tooltip="Navigate to the Explore Logs app"
+              tooltip="Navigate to the Logs Drilldown app"
               variant="secondary"
               size="sm"
               onClick={() => reportExploreMetrics('related_logs_action_clicked', { action: 'open_explore_logs' })}
             >
-              <Trans i18nKey="explore-metrics.related-logs.openExploreLogs">Open Explore Logs</Trans>
+              <Trans i18nKey="explore-metrics.related-logs.openExploreLogs">Open Logs Drilldown</Trans>
             </LinkButton>
           </Stack>
           <body.Component model={body} />

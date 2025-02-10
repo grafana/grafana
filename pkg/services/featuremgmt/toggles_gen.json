@@ -1495,7 +1495,7 @@
         "creationTimestamp": "2024-08-29T13:55:59Z"
       },
       "spec": {
-        "description": "Used in Explore Logs to query by aggregated metrics",
+        "description": "Used in Logs Drilldown to query by aggregated metrics",
         "stage": "experimental",
         "codeowner": "@grafana/observability-logs",
         "frontend": true
@@ -1508,7 +1508,7 @@
         "creationTimestamp": "2024-08-29T13:55:59Z"
       },
       "spec": {
-        "description": "Used in Explore Logs to limit the time range",
+        "description": "Used in \Logs Drilldown to limit the time range",
         "stage": "experimental",
         "codeowner": "@grafana/observability-logs",
         "frontend": true
@@ -1521,7 +1521,7 @@
         "creationTimestamp": "2024-08-29T13:55:59Z"
       },
       "spec": {
-        "description": "Used in Explore Logs to split queries into multiple queries based on the number of shards",
+        "description": "Used in Logs Drilldown to split queries into multiple queries based on the number of shards",
         "stage": "experimental",
         "codeowner": "@grafana/observability-logs",
         "frontend": true

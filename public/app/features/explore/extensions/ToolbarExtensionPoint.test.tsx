@@ -288,8 +288,8 @@ describe('ToolbarExtensionPoint', () => {
             pluginId: 'grafana-lokiexplore-app',
             id: '4',
             type: PluginExtensionTypes.link,
-            title: 'Explore Logs',
-            description: 'Explore Logs',
+            title: 'Logs Drilldown',
+            description: 'Logs Drilldown',
             path: '/a/grafana-lokiexplore-app',
           },
         ],
@@ -317,7 +317,7 @@ describe('ToolbarExtensionPoint', () => {
       expect(screen.queryByRole('menuitem', { name: 'Add to dashboard' })).not.toBeInTheDocument();
       expect(screen.queryByRole('menuitem', { name: 'ML: Forecast' })).not.toBeInTheDocument();
       expect(screen.getByRole('menuitem', { name: 'Explore Profiles' })).toBeVisible();
-      expect(screen.getByRole('menuitem', { name: 'Explore Logs' })).toBeVisible();
+      expect(screen.getByRole('menuitem', { name: 'Logs Drilldown' })).toBeVisible();
     });
   });
 
@@ -361,7 +361,7 @@ describe('ToolbarExtensionPoint', () => {
       await userEvent.click(screen.getByRole('button', { name: /go queryless/i }));
 
       expect(screen.queryByRole('menuitem', { name: 'Explore Profiles' })).not.toBeInTheDocument();
-      expect(screen.queryByRole('menuitem', { name: 'Explore Logs' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('menuitem', { name: 'Logs Drilldown' })).not.toBeInTheDocument();
     });
   });
 });
