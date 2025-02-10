@@ -48,15 +48,6 @@ const config: ConfigFile = {
       flattenArg: false,
       tag: true,
     },
-    '../public/app/features/query-library/api/endpoints.gen.ts': {
-      schemaFile: '../data/openapi/peakq.grafana.app-v0alpha1.json',
-      apiFile: '../public/app/features/query-library/api/api.ts',
-      apiImport: 'queryLibraryApi',
-      filterEndpoints: ['listQueryTemplate', 'createQueryTemplate', 'deleteQueryTemplate', 'updateQueryTemplate'],
-      exportName: 'generatedQueryLibraryApi',
-      flattenArg: false,
-      tag: true,
-    },
   },
 };
 
