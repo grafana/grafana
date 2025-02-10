@@ -1063,7 +1063,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
               />
             </>
           )}
-          {visualisationType === 'logs' && config.featureToggles.newLogsPanel && (
+          {visualisationType === 'logs' && hasData && config.featureToggles.newLogsPanel && (
             <>
               <div data-testid="logRows" ref={logsContainerRef} className={styles.logRows}>
                 {logsContainerRef.current && (
