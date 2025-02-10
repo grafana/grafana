@@ -35,7 +35,9 @@ import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSou
 
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
+import { ResponsiveGridItem } from '../scene/layout-responsive-grid/ResponsiveGridItem';
 import { ResponsiveGridLayoutManager } from '../scene/layout-responsive-grid/ResponsiveGridLayoutManager';
+import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
 import { DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getQueryRunnerFor } from '../utils/utils';
@@ -48,8 +50,6 @@ import {
   transformSaveModelSchemaV2ToScene,
 } from './transformSaveModelSchemaV2ToScene';
 import { transformCursorSynctoEnum } from './transformToV2TypesUtils';
-import { ResponsiveGridItem } from '../scene/layout-responsive-grid/ResponsiveGridItem';
-import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
 
 export const defaultDashboard: DashboardWithAccessInfo<DashboardV2Spec> = {
   kind: 'DashboardWithAccessInfo',
@@ -602,7 +602,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
 
         const row2Manager = layoutManager.state.rows[1].state.layout as DefaultGridLayoutManager;
         expect(row2Manager.descriptor.kind).toBe('GridLayout');
-        const row2GridItem = row1Manager.state.layout.state.children[0] as SceneGridItem;
+        const row2GridItem = row2Manager.state.grid.state.children[0] as SceneGridItem;
         expect(row2GridItem.state.body!.state.key).toBe('panel-2');
       });
     });
