@@ -6,23 +6,13 @@ import {
   DataSourceApi,
   DataSourceJsonData,
   DataSourceRef,
-  DataTransformerID,
   getDefaultTimeRange,
   LoadingState,
   PanelData,
-  ValueMatcherID,
 } from '@grafana/data';
-import { FilterByValueMatch, FilterByValueType } from '@grafana/data/src/transformations/transformers/filterByValue';
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { setPluginImportUtils } from '@grafana/runtime';
-import {
-  SceneDataTransformer,
-  SceneFlexLayout,
-  SceneQueryRunner,
-  SceneVariableSet,
-  TestVariable,
-  VizPanel,
-} from '@grafana/scenes';
+import { SceneDataTransformer, SceneFlexLayout, SceneQueryRunner, VizPanel } from '@grafana/scenes';
 import { SHARED_DASHBOARD_QUERY, DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/constants';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
@@ -32,8 +22,6 @@ import { DashboardDatasourceBehaviour } from './DashboardDatasourceBehaviour';
 import { DashboardScene } from './DashboardScene';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
-import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
-import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 const grafanaDs = {
   id: 1,
