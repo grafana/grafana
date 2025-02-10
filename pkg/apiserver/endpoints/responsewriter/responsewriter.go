@@ -2,13 +2,20 @@ package responsewriter
 
 import (
 	"bufio"
+	"context"
 	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"sync/atomic"
 
+	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"k8s.io/apiserver/pkg/authentication/user"
+	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/endpoints/responsewriter"
+	"k8s.io/component-base/tracing"
 	"k8s.io/klog/v2"
 )
 
@@ -27,7 +34,17 @@ func WrapHandler(handler http.Handler) func(req *http.Request) (*http.Response, 
 	// so the client will be responsible for closing the response body.
 	//nolint:bodyclose
 	return func(req *http.Request) (*http.Response, error) {
-		w := NewAdapter(req)
+		ctx, cancel, err := createLimitedContext(req)
+		if err != nil {
+			return nil, err
+		}
+		defer cancel()
+		req = req.WithContext(ctx) // returns a shallow copy, so we can't do it as part of the adapter.
+
+		w, err := NewAdapter(req)
+		if err != nil {
+			return nil, err
+		}
 		go func() {
 			handler.ServeHTTP(w, req)
 			if err := w.CloseWriter(); err != nil {
@@ -37,6 +54,79 @@ func WrapHandler(handler http.Handler) func(req *http.Request) (*http.Response, 
 
 		return w.Response()
 	}
+}
+
+// createLimitedContext creates a new context based on the the req's.
+// It contains vital information such as a logger for the driver of the request, a user for auth, tracing, and deadlines. It propagates the parent's cancellation.
+func createLimitedContext(req *http.Request) (context.Context, context.CancelFunc, error) {
+	refCtx := req.Context()
+	newCtx := context.Background()
+
+	if ns, ok := request.NamespaceFrom(refCtx); ok {
+		newCtx = request.WithNamespace(newCtx, ns)
+	}
+	if signal := request.ServerShutdownSignalFrom(refCtx); signal != nil {
+		newCtx = request.WithServerShutdownSignal(newCtx, signal)
+	}
+
+	requester, _ := identity.GetRequester(refCtx)
+	if requester != nil {
+		newCtx = identity.WithRequester(newCtx, requester)
+	}
+
+	usr, ok := request.UserFrom(refCtx)
+	if !ok && requester != nil {
+		// add in k8s user if not there yet
+		var ok bool
+		usr, ok = requester.(user.Info)
+		if !ok {
+			return nil, nil, fmt.Errorf("could not convert user to Kubernetes user")
+		}
+	}
+	if ok {
+		newCtx = request.WithUser(newCtx, usr)
+	}
+
+	// App SDK logger
+	appLogger := logging.FromContext(refCtx)
+	newCtx = logging.Context(newCtx, appLogger)
+	// Klog logger
+	klogger := klog.FromContext(refCtx)
+	if klogger.Enabled() {
+		newCtx = klog.NewContext(newCtx, klogger)
+	}
+	// Grafana infra
+	infraLogger := log.FromContext(refCtx)
+	if len(infraLogger) > 0 {
+		newCtx = log.WithContextualAttributes(newCtx, infraLogger)
+	}
+
+	// The tracing package deals with both k8s trace and otel.
+	if span := tracing.SpanFromContext(refCtx); span != nil && *span != (tracing.Span{}) {
+		newCtx = tracing.ContextWithSpan(newCtx, span)
+	}
+
+	deadlineCancel := context.CancelFunc(func() {})
+	if deadline, ok := refCtx.Deadline(); ok {
+		newCtx, deadlineCancel = context.WithDeadline(newCtx, deadline)
+	}
+
+	newCtx, cancel := context.WithCancelCause(newCtx)
+	// We intentionally do not defer a cancel(nil) here. It wouldn't make sense to cancel until (*ResponseAdapter).Close() is called.
+	go func() { // Even context's own impls do goroutines for this type of pattern.
+		select {
+		case <-newCtx.Done():
+			// We don't have to do anything!
+		case <-refCtx.Done():
+			cancel(context.Cause(refCtx))
+		}
+		deadlineCancel()
+	}()
+
+	return newCtx, context.CancelFunc(func() {
+		cancel(nil)
+		deadlineCancel()
+	}), nil
 }
 
 // ResponseAdapter is an implementation of [http.ResponseWriter] that allows conversion to a [http.Response].
@@ -51,7 +141,7 @@ type ResponseAdapter struct {
 }
 
 // NewAdapter returns an initialized [ResponseAdapter].
-func NewAdapter(req *http.Request) *ResponseAdapter {
+func NewAdapter(req *http.Request) (*ResponseAdapter, error) {
 	r, w := io.Pipe()
 	writer := bufio.NewWriter(w)
 	reader := bufio.NewReader(r)
@@ -74,7 +164,7 @@ func NewAdapter(req *http.Request) *ResponseAdapter {
 		writer:   w,
 		buffered: buffered,
 		ready:    make(chan struct{}),
-	}
+	}, nil
 }
 
 // Header implements [http.ResponseWriter].
