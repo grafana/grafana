@@ -14,7 +14,6 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
 	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
@@ -101,7 +100,7 @@ func (r *exportJob) loadFolders(ctx context.Context) error {
 	logger := r.logger
 	targetRepoName := r.target.Config().Name
 	status := r.jobStatus
-	status.Message = fmt.Sprintf("reading folder tree")
+	status.Message = "reading folder tree"
 	foldersTree, err := readFolders(ctx, r.client.Resource(schema.GroupVersionResource{
 		Group:    folders.GROUP,
 		Version:  folders.VERSION,
@@ -115,6 +114,7 @@ func (r *exportJob) loadFolders(ctx context.Context) error {
 
 	// first create folders
 	// TODO! this should not be necessary if writing to a path also makes the parents
+	status.Message = "writing folders"
 	err = foldersTree.Walk(ctx, func(ctx context.Context, folder resources.Folder) error {
 		p := folder.Path + "/"
 		if r.prefix != "" {
@@ -203,7 +203,7 @@ func (r *exportJob) add(ctx context.Context, summary *provisioning.JobResourceSu
 	if title == "" {
 		title = name
 	}
-	folder := item.GetAnnotations()[apiutils.AnnoKeyFolder]
+	folder := item.GetFolder()
 
 	// Get the absolute path of the folder
 	fid, ok := r.foldersTree.DirPath(folder, "")
