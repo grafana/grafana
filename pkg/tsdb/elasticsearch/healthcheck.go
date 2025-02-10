@@ -15,7 +15,7 @@ import (
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
 )
 
-const errorBodyMaxSize = 200
+const ErrorBodyMaxSize = 200
 
 func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 	logger := s.logger.FromContext(ctx)
@@ -99,8 +99,8 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 	err = json.Unmarshal(body, &jsonData)
 	if err != nil {
 		truncatedBody := string(body)
-		if len(truncatedBody) > errorBodyMaxSize {
-			truncatedBody = truncatedBody[:errorBodyMaxSize] + "..."
+		if len(truncatedBody) > ErrorBodyMaxSize {
+			truncatedBody = truncatedBody[:ErrorBodyMaxSize] + "..."
 		}
 		return &backend.CheckHealthResult{
 			Status:  backend.HealthStatusUnknown,
