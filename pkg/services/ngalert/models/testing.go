@@ -563,6 +563,12 @@ func (a *AlertRuleMutators) WithKey(key AlertRuleKey) AlertRuleMutator {
 	}
 }
 
+func (a *AlertRuleMutators) WithVersion(version int64) AlertRuleMutator {
+	return func(r *AlertRule) {
+		r.Version = version
+	}
+}
+
 func (g *AlertRuleGenerator) GenerateLabels(min, max int, prefix string) data.Labels {
 	count := max
 	if min > max {

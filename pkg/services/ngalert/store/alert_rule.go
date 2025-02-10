@@ -121,11 +121,12 @@ func (st DBstore) GetAlertRuleByUID(ctx context.Context, query *ngmodels.GetAler
 func (st DBstore) GetAlertRuleVersions(ctx context.Context, key ngmodels.AlertRuleKey) ([]*ngmodels.AlertRule, error) {
 	alertRules := make([]*ngmodels.AlertRule, 0)
 	err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
-		rows, err := sess.Table(new(alertRuleVersion)).Where("rule_org_id = ? AND rule_uid = ?", key.OrgID, key.UID).Desc("id").Rows(new(alertRuleVersion))
+		rows, err := sess.Table(new(alertRuleVersion)).Where("rule_org_id = ? AND rule_uid = ?", key.OrgID, key.UID).Asc("id").Rows(new(alertRuleVersion))
 		if err != nil {
 			return err
 		}
 		// Deserialize each rule separately in case any of them contain invalid JSON.
+		var previousVersion *alertRuleVersion
 		for rows.Next() {
 			rule := new(alertRuleVersion)
 			err = rows.Scan(rule)
@@ -133,11 +134,17 @@ func (st DBstore) GetAlertRuleVersions(ctx context.Context, key ngmodels.AlertRu
 				st.Logger.Error("Invalid rule version found in DB store, ignoring it", "func", "GetAlertRuleVersions", "error", err)
 				continue
 			}
+			// skip version that has no diff with previous version
+			// this is pretty basic comparison, it may have false negatives
+			if previousVersion != nil && previousVersion.EqualSpec(*rule) {
+				continue
+			}
 			converted, err := alertRuleToModelsAlertRule(alertRuleVersionToAlertRule(*rule), st.Logger)
 			if err != nil {
 				st.Logger.Error("Invalid rule found in DB store, cannot convert, ignoring it", "func", "GetAlertRuleVersions", "error", err, "version_id", rule.ID)
 				continue
 			}
+			previousVersion = rule
 			alertRules = append(alertRules, &converted)
 		}
 		return nil
@@ -145,6 +152,15 @@ func (st DBstore) GetAlertRuleVersions(ctx context.Context, key ngmodels.AlertRu
 	if err != nil {
 		return nil, err
 	}
+	slices.SortFunc(alertRules, func(a, b *ngmodels.AlertRule) int {
+		if a.ID > b.ID {
+			return -1
+		}
+		if a.ID < b.ID {
+			return 1
+		}
+		return 0
+	})
 	return alertRules, nil
 }
 
