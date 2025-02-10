@@ -545,8 +545,10 @@ func (s *Storage) GuaranteedUpdate(
 		return nil
 	}
 
-	rv := int64(0)
-	value := []byte{}
+	var (
+		value []byte
+		rv    int64
+	)
 	if created {
 		value, err = s.prepareObjectForStorage(ctx, updatedObj)
 		if err != nil {
