@@ -3,6 +3,7 @@ package checkscheduler
 import (
 	"context"
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/app"
@@ -15,7 +16,8 @@ import (
 	"k8s.io/klog/v2"
 )
 
-const evaluateChecksInterval = 24 * time.Hour
+const evaluateChecksInterval = 1 * time.Minute
+const maxChecks = 10
 
 // Runner is a "runnable" app used to be able to expose and API endpoint
 // with the existing checks types. This does not need to be a CRUD resource, but it is
@@ -78,6 +80,11 @@ func (r *Runner) Run(ctx context.Context) error {
 				klog.Error("Error creating new check reports", "error", err)
 			}
 
+			err = r.cleanupChecks(ctx)
+			if err != nil {
+				klog.Error("Error cleaning up old check reports", "error", err)
+			}
+
 			if nextSendInterval != evaluateChecksInterval {
 				nextSendInterval = evaluateChecksInterval
 			}
@@ -125,5 +132,47 @@ func (r *Runner) createChecks(ctx context.Context) error {
 			return fmt.Errorf("error creating check: %w", err)
 		}
 	}
+	return nil
+}
+
+// cleanupChecks deletes the olders checks if the number of checks exceeds the limit.
+func (r *Runner) cleanupChecks(ctx context.Context) error {
+	list, err := r.client.List(ctx, metav1.NamespaceDefault, resource.ListOptions{Limit: -1})
+	if err != nil {
+		return err
+	}
+
+	// organize checks by type
+	checksByType := map[string][]resource.Object{}
+	for _, check := range list.GetItems() {
+		labels := check.GetLabels()
+		checkType, ok := labels[checks.TypeLabel]
+		if !ok {
+			klog.Error("Check type not found in labels", "check", check)
+			continue
+		}
+		checksByType[checkType] = append(checksByType[checkType], check)
+	}
+
+	for _, checks := range checksByType {
+		if len(checks) > maxChecks {
+			// Sort checks by creation time
+			sort.Slice(checks, func(i, j int) bool {
+				ti := checks[i].GetCreationTimestamp().Time
+				tj := checks[j].GetCreationTimestamp().Time
+				return ti.Before(tj)
+			})
+			// Delete the oldest checks
+			for i := 0; i < len(checks)-maxChecks; i++ {
+				check := checks[i]
+				id := check.GetStaticMetadata().Identifier()
+				err := r.client.Delete(ctx, id, resource.DeleteOptions{Preconditions: resource.DeleteOptionsPreconditions{}})
+				if err != nil {
+					return fmt.Errorf("error deleting check: %w", err)
+				}
+			}
+		}
+	}
+
 	return nil
 }
