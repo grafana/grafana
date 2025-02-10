@@ -264,6 +264,8 @@ Instead of hardcoding values like server, application, or sensor names in your m
 
 Refer to [Templates](ref:variables) for an introduction to creating template variables as well as the different types.
 
+<!-- vale Grafana.GooglePassive = NO -->
+
 ### Query variable
 
 If you add a `Query` template variable you can write a PostgreSQL query to retrieve items such as measurement names, key names, or key values, which will be displayed in the drop-down menu.
