@@ -191,7 +191,7 @@ func TestRunner_cleanupChecks_Success(t *testing.T) {
 	}
 	err := runner.cleanupChecks(context.Background())
 	assert.NoError(t, err)
-	assert.Equal(t, "check-0", itemsDeleted[0])
+	assert.Equal(t, []string{"check-0"}, itemsDeleted)
 }
 
 type MockCheckService struct {

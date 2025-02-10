@@ -16,7 +16,7 @@ import (
 	"k8s.io/klog/v2"
 )
 
-const evaluateChecksInterval = 1 * time.Minute
+const evaluateChecksInterval = 24 * time.Hour
 const maxChecks = 10
 
 // Runner is a "runnable" app used to be able to expose and API endpoint
@@ -166,7 +166,7 @@ func (r *Runner) cleanupChecks(ctx context.Context) error {
 			for i := 0; i < len(checks)-maxChecks; i++ {
 				check := checks[i]
 				id := check.GetStaticMetadata().Identifier()
-				err := r.client.Delete(ctx, id, resource.DeleteOptions{Preconditions: resource.DeleteOptionsPreconditions{}})
+				err := r.client.Delete(ctx, id, resource.DeleteOptions{})
 				if err != nil {
 					return fmt.Errorf("error deleting check: %w", err)
 				}
