@@ -127,7 +127,7 @@ func (d *DualWriterMode2) Get(ctx context.Context, name string, options *metav1.
 			log.Error(err, "unable to fetch object from storage")
 			return nil, err
 		}
-		log.Info("object not found in storage, fetching from legacy")
+		log.Info("object not found in storage, dual write or migration didn't happen yet")
 	}
 
 	go func() {
