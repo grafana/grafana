@@ -18520,6 +18520,21 @@
         }
       }
     },
+    "PrometheusNamespace": {
+      "type": "object",
+      "properties": {
+        "Body": {
+          "description": "in: body",
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/PrometheusRuleGroup"
+            }
+          }
+        }
+      }
+    },
     "PrometheusRemoteWriteTargetJSON": {
       "type": "object",
       "properties": {
@@ -18531,6 +18546,52 @@
         },
         "remote_write_path": {
           "type": "string"
+        }
+      }
+    },
+    "PrometheusRule": {
+      "type": "object",
+      "properties": {
+        "alert": {
+          "type": "string"
+        },
+        "annotations": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "expr": {
+          "type": "string"
+        },
+        "for": {
+          "type": "string"
+        },
+        "keep_firing_for": {
+          "type": "string"
+        },
+        "labels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "record": {
+          "type": "string"
+        }
+      }
+    },
+    "PrometheusRuleGroup": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "rules": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PrometheusRule"
+          }
         }
       }
     },
@@ -21920,6 +21981,17 @@
         }
       }
     },
+    "UpdatePrometheusRuleGroupResponse": {
+      "type": "object",
+      "properties": {
+        "errorType": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        }
+      }
+    },
     "UpdateQuotaCmd": {
       "type": "object",
       "properties": {
@@ -22483,7 +22555,6 @@
       }
     },
     "alertGroups": {
-      "description": "AlertGroups alert groups",
       "type": "array",
       "items": {
         "type": "object",
@@ -22688,7 +22759,6 @@
       }
     },
     "gettableAlerts": {
-      "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
         "type": "object",
@@ -22813,7 +22883,6 @@
       }
     },
     "gettableSilences": {
-      "description": "GettableSilences gettable silences",
       "type": "array",
       "items": {
         "type": "object",

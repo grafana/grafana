@@ -1102,6 +1102,253 @@
         }
       }
     },
+    "/convert/prometheus/config/v1/rules": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "convert_prometheus"
+        ],
+        "summary": "Gets all namespaces with their rule groups in Prometheus format.",
+        "operationId": "RouteConvertPrometheusGetRules",
+        "responses": {
+          "200": {
+            "description": "PrometheusNamespace",
+            "schema": {
+              "$ref": "#/definitions/PrometheusNamespace"
+            }
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
+            }
+          },
+          "404": {
+            "description": "NotFound",
+            "schema": {
+              "$ref": "#/definitions/NotFound"
+            }
+          }
+        }
+      }
+    },
+    "/convert/prometheus/config/v1/rules/{NamespaceTitle}": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "convert_prometheus"
+        ],
+        "summary": "Gets rules in prometheus format for a given namespace.",
+        "operationId": "RouteConvertPrometheusGetNamespace",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "NamespaceTitle",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "PrometheusNamespace",
+            "schema": {
+              "$ref": "#/definitions/PrometheusNamespace"
+            }
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
+            }
+          },
+          "404": {
+            "description": "NotFound",
+            "schema": {
+              "$ref": "#/definitions/NotFound"
+            }
+          }
+        }
+      },
+      "post": {
+        "consumes": [
+          "application/yaml"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "convert_prometheus"
+        ],
+        "summary": "Creates or updates a rule group in Prometheus format.",
+        "operationId": "RouteConvertPrometheusPostRuleGroup",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "NamespaceTitle",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "x-datasource-uid",
+            "in": "header"
+          },
+          {
+            "type": "string",
+            "name": "x-datasource-type",
+            "in": "header"
+          },
+          {
+            "type": "boolean",
+            "name": "x-recording-rules-paused",
+            "in": "header"
+          },
+          {
+            "type": "boolean",
+            "name": "x-alert-rules-paused",
+            "in": "header"
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/PrometheusRuleGroup"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "UpdatePrometheusRuleGroupResponse",
+            "schema": {
+              "$ref": "#/definitions/UpdatePrometheusRuleGroupResponse"
+            }
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
+            }
+          }
+        },
+        "x-raw-request": "true"
+      },
+      "delete": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "convert_prometheus"
+        ],
+        "summary": "Deletes all rule groups in the given namespace.",
+        "operationId": "RouteConvertPrometheusDeleteNamespace",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "NamespaceTitle",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "rule groups in the namespace were deleted successfully.",
+            "$ref": "#/responses/The"
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
+            }
+          }
+        }
+      }
+    },
+    "/convert/prometheus/config/v1/rules/{NamespaceTitle}/{Group}": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "convert_prometheus"
+        ],
+        "summary": "Gets a rule group in Prometheus format.",
+        "operationId": "RouteConvertPrometheusGetRuleGroup",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "NamespaceTitle",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "Group",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "PrometheusRuleGroup",
+            "schema": {
+              "$ref": "#/definitions/PrometheusRuleGroup"
+            }
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
+            }
+          },
+          "404": {
+            "description": "NotFound",
+            "schema": {
+              "$ref": "#/definitions/NotFound"
+            }
+          }
+        }
+      },
+      "delete": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "convert_prometheus"
+        ],
+        "summary": "Deletes a rule group in Prometheus format.",
+        "operationId": "RouteConvertPrometheusDeleteRuleGroup",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "NamespaceTitle",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "Group",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "rule group was deleted successfully.",
+            "$ref": "#/responses/The"
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
+            }
+          }
+        }
+      }
+    },
     "/prometheus/grafana/api/v1/alerts": {
       "get": {
         "description": "gets the current alerts",
@@ -6628,6 +6875,67 @@
         }
       }
     },
+    "PrometheusNamespace": {
+      "type": "object",
+      "properties": {
+        "Body": {
+          "description": "in: body",
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/PrometheusRuleGroup"
+            }
+          }
+        }
+      }
+    },
+    "PrometheusRule": {
+      "type": "object",
+      "properties": {
+        "alert": {
+          "type": "string"
+        },
+        "annotations": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "expr": {
+          "type": "string"
+        },
+        "for": {
+          "type": "string"
+        },
+        "keep_firing_for": {
+          "type": "string"
+        },
+        "labels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "record": {
+          "type": "string"
+        }
+      }
+    },
+    "PrometheusRuleGroup": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "rules": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PrometheusRule"
+          }
+        }
+      }
+    },
     "Provenance": {
       "type": "string"
     },
@@ -8103,8 +8411,9 @@
       }
     },
     "URL": {
+      "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nThe Host field contains the host and port subcomponents of the URL.\nWhen the port is present, it is separated from the host with a colon.\nWhen the host is an IPv6 address, it must be enclosed in square brackets:\n\"[fe80::1]:80\". The [net.JoinHostPort] function combines a host and port\ninto a string suitable for the Host field, adding square brackets to\nthe host when necessary.\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use the [URL.EscapedPath] method, which preserves\nthe original encoding of Path.\n\nThe RawPath field is an optional field which is only set when the default\nencoding of Path is different from the escaped path. See the EscapedPath method\nfor more details.\n\nURL's String method uses the EscapedPath method to obtain the path.",
       "type": "object",
-      "title": "URL is a custom URL type that allows validation at configuration load time.",
+      "title": "A URL represents a parsed URL (technically, a URI reference).",
       "properties": {
         "ForceQuery": {
           "type": "boolean"
@@ -8138,6 +8447,17 @@
         },
         "User": {
           "$ref": "#/definitions/Userinfo"
+        }
+      }
+    },
+    "UpdatePrometheusRuleGroupResponse": {
+      "type": "object",
+      "properties": {
+        "errorType": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
         }
       }
     },
@@ -8380,7 +8700,6 @@
       }
     },
     "alertGroups": {
-      "description": "AlertGroups alert groups",
       "type": "array",
       "items": {
         "type": "object",
@@ -8667,7 +8986,6 @@
       }
     },
     "gettableSilences": {
-      "description": "GettableSilences gettable silences",
       "type": "array",
       "items": {
         "type": "object",

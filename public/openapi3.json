@@ -8595,6 +8595,21 @@
         },
         "type": "object"
       },
+      "PrometheusNamespace": {
+        "properties": {
+          "Body": {
+            "additionalProperties": {
+              "items": {
+                "$ref": "#/components/schemas/PrometheusRuleGroup"
+              },
+              "type": "array"
+            },
+            "description": "in: body",
+            "type": "object"
+          }
+        },
+        "type": "object"
+      },
       "PrometheusRemoteWriteTargetJSON": {
         "properties": {
           "data_source_uid": {
@@ -8605,6 +8620,52 @@
           },
           "remote_write_path": {
             "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "PrometheusRule": {
+        "properties": {
+          "alert": {
+            "type": "string"
+          },
+          "annotations": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "expr": {
+            "type": "string"
+          },
+          "for": {
+            "type": "string"
+          },
+          "keep_firing_for": {
+            "type": "string"
+          },
+          "labels": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "record": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "PrometheusRuleGroup": {
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "rules": {
+            "items": {
+              "$ref": "#/components/schemas/PrometheusRule"
+            },
+            "type": "array"
           }
         },
         "type": "object"
@@ -11994,6 +12055,17 @@
         },
         "type": "object"
       },
+      "UpdatePrometheusRuleGroupResponse": {
+        "properties": {
+          "errorType": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "UpdateQuotaCmd": {
         "properties": {
           "limit": {
@@ -12557,7 +12629,6 @@
         "type": "object"
       },
       "alertGroups": {
-        "description": "AlertGroups alert groups",
         "items": {
           "$ref": "#/components/schemas/alertGroup"
         },
@@ -12761,7 +12832,6 @@
         "type": "object"
       },
       "gettableAlerts": {
-        "description": "GettableAlerts gettable alerts",
         "items": {
           "$ref": "#/components/schemas/gettableAlert"
         },
@@ -12885,7 +12955,6 @@
         "type": "object"
       },
       "gettableSilences": {
-        "description": "GettableSilences gettable silences",
         "items": {
           "$ref": "#/components/schemas/gettableSilence"
         },

@@ -2940,6 +2940,67 @@
    },
    "type": "object"
   },
+  "PrometheusNamespace": {
+   "properties": {
+    "Body": {
+     "additionalProperties": {
+      "items": {
+       "$ref": "#/definitions/PrometheusRuleGroup"
+      },
+      "type": "array"
+     },
+     "description": "in: body",
+     "type": "object"
+    }
+   },
+   "type": "object"
+  },
+  "PrometheusRule": {
+   "properties": {
+    "alert": {
+     "type": "string"
+    },
+    "annotations": {
+     "additionalProperties": {
+      "type": "string"
+     },
+     "type": "object"
+    },
+    "expr": {
+     "type": "string"
+    },
+    "for": {
+     "type": "string"
+    },
+    "keep_firing_for": {
+     "type": "string"
+    },
+    "labels": {
+     "additionalProperties": {
+      "type": "string"
+     },
+     "type": "object"
+    },
+    "record": {
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
+  "PrometheusRuleGroup": {
+   "properties": {
+    "name": {
+     "type": "string"
+    },
+    "rules": {
+     "items": {
+      "$ref": "#/definitions/PrometheusRule"
+     },
+     "type": "array"
+    }
+   },
+   "type": "object"
+  },
   "Provenance": {
    "type": "string"
   },
@@ -4453,6 +4514,17 @@
    "title": "URL is a custom URL type that allows validation at configuration load time.",
    "type": "object"
   },
+  "UpdatePrometheusRuleGroupResponse": {
+   "properties": {
+    "errorType": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
   "UpdateRuleGroupResponse": {
    "properties": {
     "created": {
@@ -4692,7 +4764,6 @@
    "type": "object"
   },
   "alertGroups": {
-   "description": "AlertGroups alert groups",
    "items": {
     "$ref": "#/definitions/alertGroup",
     "type": "object"
@@ -4854,7 +4925,6 @@
    "type": "object"
   },
   "gettableAlerts": {
-   "description": "GettableAlerts gettable alerts",
    "items": {
     "$ref": "#/definitions/gettableAlert",
     "type": "object"
@@ -4979,7 +5049,6 @@
    "type": "object"
   },
   "gettableSilences": {
-   "description": "GettableSilences gettable silences",
    "items": {
     "$ref": "#/definitions/gettableSilence",
     "type": "object"
