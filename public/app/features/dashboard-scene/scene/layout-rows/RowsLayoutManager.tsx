@@ -2,7 +2,6 @@ import { SceneGridItemLike, SceneGridRow, SceneObjectBase, SceneObjectState, Viz
 import { t } from 'app/core/internationalization';
 
 import { ConditionalRendering } from '../../conditional-rendering/ConditionalRendering';
-import { ConditionalRenderingGroup } from '../../conditional-rendering/ConditionalRenderingGroup';
 import { isClonedKey } from '../../utils/clone';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { getDashboardSceneFor } from '../../utils/utils';
@@ -84,11 +83,7 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
       rows: [
         ...this.state.rows,
         new RowItem({
-          $behaviors: [
-            new ConditionalRendering({
-              rootGroup: new ConditionalRenderingGroup({ condition: 'or', value: [] }),
-            }),
-          ],
+          $behaviors: [ConditionalRendering.createEmpty()],
         }),
       ],
     });
@@ -132,11 +127,7 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
         rows.length === 0
           ? [
               new RowItem({
-                $behaviors: [
-                  new ConditionalRendering({
-                    rootGroup: new ConditionalRenderingGroup({ condition: 'or', value: [] }),
-                  }),
-                ],
+                $behaviors: [ConditionalRendering.createEmpty()],
               }),
             ]
           : rows,
@@ -147,9 +138,7 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
     return new RowsLayoutManager({
       rows: [
         new RowItem({
-          $behaviors: [
-            new ConditionalRendering({ rootGroup: new ConditionalRenderingGroup({ condition: 'or', value: [] }) }),
-          ],
+          $behaviors: [ConditionalRendering.createEmpty()],
         }),
       ],
     });
@@ -211,26 +200,15 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
               rowConfig.isResizable
             ),
             $behaviors: rowConfig.repeat
-              ? [
-                  new ConditionalRendering({
-                    rootGroup: new ConditionalRenderingGroup({ condition: 'or', value: [] }),
-                  }),
-                  new RowItemRepeaterBehavior({ variableName: rowConfig.repeat }),
-                ]
-              : [
-                  new ConditionalRendering({
-                    rootGroup: new ConditionalRenderingGroup({ condition: 'or', value: [] }),
-                  }),
-                ],
+              ? [ConditionalRendering.createEmpty(), new RowItemRepeaterBehavior({ variableName: rowConfig.repeat })]
+              : [ConditionalRendering.createEmpty()],
           })
       );
     } else {
       rows = [
         new RowItem({
           layout: layout.clone(),
-          $behaviors: [
-            new ConditionalRendering({ rootGroup: new ConditionalRenderingGroup({ condition: 'or', value: [] }) }),
-          ],
+          $behaviors: [ConditionalRendering.createEmpty()],
         }),
       ];
     }
@@ -239,9 +217,7 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
     if (rows.length === 0) {
       rows = [
         new RowItem({
-          $behaviors: [
-            new ConditionalRendering({ rootGroup: new ConditionalRenderingGroup({ condition: 'or', value: [] }) }),
-          ],
+          $behaviors: [ConditionalRendering.createEmpty()],
         }),
       ];
     }

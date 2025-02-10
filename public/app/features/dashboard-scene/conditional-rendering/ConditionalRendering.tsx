@@ -16,6 +16,10 @@ export class ConditionalRendering extends SceneObjectBase<ConditionalRenderingSt
   public notifyChange() {
     this.parent?.forceRender();
   }
+
+  public static createEmpty(): ConditionalRendering {
+    return new ConditionalRendering({ rootGroup: ConditionalRenderingGroup.createEmpty() });
+  }
 }
 
 function ConditionalRenderingRenderer({ model }: SceneComponentProps<ConditionalRendering>) {
