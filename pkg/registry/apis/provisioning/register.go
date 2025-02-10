@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -71,6 +72,7 @@ type APIBuilder struct {
 	client            *resources.ClientFactory
 	parsers           *resources.ParserFactory
 	ghFactory         github.ClientFactory
+	clonedir          string // where repo clones are managed
 	jobs              jobs.JobQueue
 	tester            *RepositoryTester
 	resourceLister    resources.ResourceLister
@@ -88,6 +90,7 @@ func NewAPIBuilder(
 	render rendering.Service,
 	index resource.RepositoryIndexClient,
 	blobstore blob.PublicBlobStore,
+	clonedir string, // where repo clones are managed
 	configProvider apiserver.RestConfigProvider,
 	ghFactory github.ClientFactory,
 ) *APIBuilder {
@@ -103,6 +106,7 @@ func NewAPIBuilder(
 			Client: clientFactory,
 		},
 		render:         render,
+		clonedir:       clonedir,
 		resourceLister: resources.NewResourceLister(index),
 		blobstore:      blobstore,
 	}
@@ -140,7 +144,10 @@ func RegisterAPIService(
 		return cfg.AppURL
 	}
 
-	builder := NewAPIBuilder(folderResolver, urlProvider, cfg.SecretKey, features, render, client, store, configProvider, ghFactory)
+	builder := NewAPIBuilder(folderResolver, urlProvider, cfg.SecretKey, features,
+		render, client, store,
+		filepath.Join(cfg.DataPath, "clone"), // where repositories are cloned (temporarialy for now)
+		configProvider, ghFactory)
 	apiregistration.RegisterAPI(builder)
 	return builder, nil
 }
@@ -441,7 +448,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			}
 			b.repositoryLister = repoInformer.Lister()
 
-			b.jobs.Register(export.NewExportWorker(b.client))
+			b.jobs.Register(export.NewExportWorker(b.client, b.clonedir))
 			b.jobs.Register(sync.NewSyncWorker(
 				c.ProvisioningV0alpha1(),
 				b.parsers,

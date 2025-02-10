@@ -2,21 +2,17 @@ package gogit
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"io/fs"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"path"
-	"path/filepath"
 	"strings"
 
 	"github.com/go-git/go-billy/v5/util"
-
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
@@ -26,23 +22,12 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 )
 
 var (
 	_ repository.Repository = (*GoGitRepo)(nil)
 )
-
-type BufferedRepository interface {
-	repository.Repository
-
-	// Remove everything from the tree
-	NewEmptyBranch(ctx context.Context, branch string) (int64, error)
-
-	// Push changes
-	Push(ctx context.Context, progress io.Writer) error
-}
 
 type GoGitRepo struct {
 	config *provisioning.Repository
@@ -52,17 +37,23 @@ type GoGitRepo struct {
 	dir  string // file path to worktree root (necessary? should use billy)
 }
 
-func Wrap(
+// This will create a new clone every time
+// As structured, it is valid for one context and should not be shared across multiple requests
+func Clone(
 	ctx context.Context,
 	config *provisioning.Repository,
 	root string, // tempdir (when empty, memory??)
 	progress io.Writer, // os.Stdout
-) (BufferedRepository, error) {
+) (*GoGitRepo, error) {
 	gitcfg := config.Spec.GitHub
 	if gitcfg == nil {
 		return nil, fmt.Errorf("missing github config")
 	}
-	dir, err := getRepoFolder(root, config)
+	err := os.MkdirAll(root, 0755)
+	if err != nil {
+		return nil, err
+	}
+	dir, err := mkdirTempClone(root, config)
 	if err != nil {
 		return nil, err
 	}
@@ -123,31 +114,14 @@ func Wrap(
 	}, nil
 }
 
-func getRepoFolder(root string, config *provisioning.Repository) (string, error) {
+func mkdirTempClone(root string, config *provisioning.Repository) (string, error) {
 	if config.Namespace == "" {
 		return "", fmt.Errorf("config is missing namespace")
 	}
 	if config.Name == "" {
 		return "", fmt.Errorf("config is missing name")
 	}
-	bytes, err := json.Marshal(config.Spec)
-	if err != nil {
-		return "", err
-	}
-	h := sha256.New()
-	_, err = h.Write(bytes)
-	if err != nil {
-		return "", err
-	}
-	hashstring := hex.EncodeToString(h.Sum(nil))
-	dir := filepath.Join(root, config.Namespace, fmt.Sprintf("%s-%s",
-		slugify.Slugify(config.Name), hashstring[0:8]))
-
-	err = os.MkdirAll(dir, 0755)
-	if err != nil {
-		return "", err
-	}
-	return dir, nil
+	return os.MkdirTemp(root, fmt.Sprintf("clone-%s-%s-", config.Namespace, config.Name))
 }
 
 // Remove everything from the tree
@@ -239,6 +213,11 @@ func (g *GoGitRepo) Write(ctx context.Context, fpath string, ref string, data []
 		return err
 	}
 
+	// For folders, just create the folder and ignore the commit
+	if strings.HasSuffix(fpath, "/") {
+		return g.tree.Filesystem.MkdirAll(fpath, 0750)
+	}
+
 	dir := path.Dir(fpath)
 	if dir != "" {
 		err := g.tree.Filesystem.MkdirAll(dir, 0750)
@@ -281,12 +260,25 @@ func (g *GoGitRepo) Delete(ctx context.Context, path string, ref string, message
 
 // Read implements repository.Repository.
 func (g *GoGitRepo) Read(ctx context.Context, path string, ref string) (*repository.FileInfo, error) {
-	return nil, &apierrors.StatusError{
-		ErrStatus: metav1.Status{
-			Message: "read is not yet implemented",
-			Code:    http.StatusNotImplemented,
-		},
+	stat, err := g.tree.Filesystem.Lstat(path)
+	if err != nil {
+		return nil, err
 	}
+	mod := metav1.Time{
+		Time: stat.ModTime(),
+	}
+	info := &repository.FileInfo{
+		Path:     path,
+		Modified: &mod,
+	}
+	if !stat.IsDir() {
+		f, err := g.tree.Filesystem.Open(path)
+		if err != nil {
+			return nil, err
+		}
+		info.Data, err = ioutil.ReadAll(f)
+	}
+	return info, err
 }
 
 func verifyPathWithoutRef(path string, ref string) error {
