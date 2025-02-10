@@ -11,7 +11,6 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 import { DataSourceRef } from '@grafana/schema';
-import { layout } from 'app/plugins/panel/nodeGraph/layeredLayout';
 
 import {
   DashboardV2Spec,
