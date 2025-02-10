@@ -1,6 +1,8 @@
 import { SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
 import { t } from 'app/core/internationalization';
 
+import { ConditionalRendering } from '../../conditional-rendering/ConditionalRendering';
+import { ConditionalRenderingGroup } from '../../conditional-rendering/ConditionalRenderingGroup';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 
 import { TabItem } from './TabItem';
@@ -59,7 +61,11 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
   }
 
   public addNewTab() {
-    const currentTab = new TabItem();
+    const currentTab = new TabItem({
+      $behaviors: [
+        new ConditionalRendering({ rootGroup: new ConditionalRenderingGroup({ condition: 'or', value: [] }) }),
+      ],
+    });
     this.setState({ tabs: [...this.state.tabs, currentTab], currentTab });
   }
 
@@ -81,7 +87,16 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     }
 
     const filteredTab = this.state.tabs.filter((tab) => tab !== this.state.currentTab);
-    const tabs = filteredTab.length === 0 ? [new TabItem()] : filteredTab;
+    const tabs =
+      filteredTab.length === 0
+        ? [
+            new TabItem({
+              $behaviors: [
+                new ConditionalRendering({ rootGroup: new ConditionalRenderingGroup({ condition: 'or', value: [] }) }),
+              ],
+            }),
+          ]
+        : filteredTab;
 
     this.setState({ tabs, currentTab: tabs[tabs.length - 1] });
   }
@@ -91,12 +106,21 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
   }
 
   public static createEmpty(): TabsLayoutManager {
-    const tab = new TabItem();
+    const tab = new TabItem({
+      $behaviors: [
+        new ConditionalRendering({ rootGroup: new ConditionalRenderingGroup({ condition: 'or', value: [] }) }),
+      ],
+    });
     return new TabsLayoutManager({ tabs: [tab], currentTab: tab });
   }
 
   public static createFromLayout(layout: DashboardLayoutManager): TabsLayoutManager {
-    const tab = new TabItem({ layout: layout.clone() });
+    const tab = new TabItem({
+      layout: layout.clone(),
+      $behaviors: [
+        new ConditionalRendering({ rootGroup: new ConditionalRenderingGroup({ condition: 'or', value: [] }) }),
+      ],
+    });
     return new TabsLayoutManager({ tabs: [tab], currentTab: tab });
   }
 }

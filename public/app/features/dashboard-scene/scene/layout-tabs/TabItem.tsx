@@ -4,8 +4,6 @@ import { SceneObjectState, SceneObjectBase, sceneGraph, VariableDependencyConfig
 import { t } from 'app/core/internationalization';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 
-import { ConditionalRendering } from '../../conditional-rendering/ConditionalRendering';
-import { ConditionalRenderingGroup } from '../../conditional-rendering/ConditionalRenderingGroup';
 import { ResponsiveGridLayoutManager } from '../layout-responsive-grid/ResponsiveGridLayoutManager';
 import { BulkActionElement } from '../types/BulkActionElement';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
@@ -40,15 +38,6 @@ export class TabItem
       ...state,
       title: state?.title ?? t('dashboard.tabs-layout.tab.new', 'New tab'),
       layout: state?.layout ?? ResponsiveGridLayoutManager.createEmpty(),
-      $behaviors: [
-        ...(state?.$behaviors ?? []),
-        new ConditionalRendering({
-          rootGroup: new ConditionalRenderingGroup({
-            condition: 'or',
-            value: [],
-          }),
-        }),
-      ],
     });
   }
 

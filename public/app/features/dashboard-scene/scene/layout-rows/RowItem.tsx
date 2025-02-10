@@ -4,7 +4,6 @@ import { sceneGraph, SceneObject, SceneObjectBase, SceneObjectState, VariableDep
 import { t } from 'app/core/internationalization';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 
-import { ConditionalRendering } from '../../conditional-rendering/ConditionalRendering';
 import { ConditionalRenderingGroup } from '../../conditional-rendering/ConditionalRenderingGroup';
 import { ResponsiveGridLayoutManager } from '../layout-responsive-grid/ResponsiveGridLayoutManager';
 import { BulkActionElement } from '../types/BulkActionElement';
@@ -45,15 +44,6 @@ export class RowItem
       ...state,
       title: state?.title ?? t('dashboard.rows-layout.row.new', 'New row'),
       layout: state?.layout ?? ResponsiveGridLayoutManager.createEmpty(),
-      $behaviors: [
-        ...(state?.$behaviors ?? []),
-        new ConditionalRendering({
-          rootGroup: new ConditionalRenderingGroup({
-            condition: 'or',
-            value: [],
-          }),
-        }),
-      ],
     });
   }
 
