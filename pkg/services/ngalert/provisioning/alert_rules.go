@@ -368,6 +368,16 @@ func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, user iden
 		return err
 	}
 
+	for _, rule := range group.Rules {
+		if rule.UID == "" {
+			// if empty the UID will be generated before save
+			continue
+		}
+		if err := util.ValidateUID(rule.UID); err != nil {
+			return fmt.Errorf("%w: cannot create rule with UID %q: %w", models.ErrAlertRuleFailedValidation, rule.UID, err)
+		}
+	}
+
 	delta, err := service.calcDelta(ctx, user, group)
 	if err != nil {
 		return err
@@ -574,6 +584,10 @@ func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, user ident
 		if delta.IsEmpty() {
 			// No changes to the rule.
 			return rule, nil
+		}
+		// new rules not allowed in update for a single rule
+		if len(delta.New) > 0 {
+			return models.AlertRule{}, fmt.Errorf("failed to update rule with UID %s because %w", rule.UID, models.ErrAlertRuleNotFound)
 		}
 		for _, d := range delta.Update {
 			if d.Existing.GetKey() == rule.GetKey() {
@@ -817,6 +831,7 @@ func syncGroupRuleFields(group *models.AlertRuleGroup, orgID int64) *models.Aler
 		group.Rules[i].RuleGroup = group.Title
 		group.Rules[i].NamespaceUID = group.FolderUID
 		group.Rules[i].OrgID = orgID
+		group.Rules[i].RuleGroupIndex = i
 	}
 	return group
 }

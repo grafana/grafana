@@ -240,14 +240,19 @@ func TestCalculateChanges(t *testing.T) {
 		require.Len(t, changes.AffectedGroups[sourceGroupKey], len(inDatabase))
 	})
 
-	t.Run("should fail when submitted rule has UID that does not exist in db", func(t *testing.T) {
+	t.Run("should add rule when submitted rule has UID that does not exist in db", func(t *testing.T) {
 		fakeStore := fakes.NewRuleStore(t)
 		groupKey := models.GenerateGroupKey(orgId)
 		submitted := gen.With(gen.WithOrgID(orgId), simulateSubmitted).Generate()
 		require.NotEqual(t, "", submitted.UID)
 
-		_, err := CalculateChanges(context.Background(), fakeStore, groupKey, []*models.AlertRuleWithOptionals{{AlertRule: submitted}})
-		require.Error(t, err)
+		diff, err := CalculateChanges(context.Background(), fakeStore, groupKey, []*models.AlertRuleWithOptionals{{AlertRule: submitted}})
+		require.NoError(t, err)
+
+		require.Len(t, diff.New, 1)
+		require.Empty(t, diff.Delete)
+		require.Empty(t, diff.Update)
+		require.Equal(t, submitted, *diff.New[0])
 	})
 
 	t.Run("should fail if cannot fetch current rules in the group", func(t *testing.T) {
