@@ -1,6 +1,7 @@
 import { action } from '@storybook/addon-actions';
 import { useArgs, useEffect, useState } from '@storybook/preview-api';
 import type { Meta, StoryFn, StoryObj } from '@storybook/react';
+import { ComponentProps } from 'react';
 
 import { Field } from '../Forms/Field';
 
@@ -30,7 +31,7 @@ const commonArgs = {
 
 export default meta;
 
-type storyArgs = React.ComponentProps<typeof MultiCombobox>;
+type storyArgs = ComponentProps<typeof MultiCombobox>;
 type ManyOptionsArgs = storyArgs & { numberOfOptions?: number };
 
 type Story = StoryObj<typeof MultiCombobox>;
@@ -123,7 +124,7 @@ export const AsyncOptionsWithLabels: Story = {
 
     return (
       <Field
-        label='Asynbc options fn returns objects like { label: "Option 69", value: "69" }'
+        label='Async options fn returns objects like { label: "Option 69", value: "69" }'
         description="Search for 'break' to see an error"
       >
         <MultiCombobox
