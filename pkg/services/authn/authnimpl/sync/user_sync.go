@@ -102,10 +102,10 @@ func (s *UserSync) SyncUserHook(ctx context.Context, id *authn.Identity, _ *auth
 		usr, err = s.createUser(ctx, id)
 
 		// There is a possibility for a race condition when creating a user. Most clients will probably not hit this
-		// case but others will. The one we have seen this issue fot is auth proxy. First time a new user loads grafana
+		// case but others will. The one we have seen this issue for is auth proxy. First time a new user loads grafana
 		// several requests can get "user.ErrUserNotFound" at the same time but only one of the request will be allowed
 		// to actually create the user, resulting in all other requests getting "user.ErrUserAlreadyExists". So we can
-		// just try to fetch the user one more time in these cases.
+		// just try to fetch the user one more to make the other request work.
 		if errors.Is(err, user.ErrUserAlreadyExists) {
 			usr, _, err = s.getUser(ctx, id)
 		}
