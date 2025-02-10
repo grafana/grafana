@@ -8,6 +8,7 @@ import { getDashboardSceneFor, getGridItemKeyForPanelId, getVizPanelKeyForPanelI
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
 import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
+import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
 import { ResponsiveGridItem } from './ResponsiveGridItem';
 import { getEditOptions } from './ResponsiveGridLayoutManagerEditor';
@@ -24,7 +25,7 @@ export class ResponsiveGridLayoutManager
 
   public readonly isDashboardLayoutManager = true;
 
-  public static readonly descriptor = {
+  public static readonly descriptor: LayoutRegistryItem = {
     get name() {
       return t('dashboard.responsive-layout.name', 'Responsive grid');
     },
@@ -33,9 +34,8 @@ export class ResponsiveGridLayoutManager
     },
     id: 'responsive-grid',
     createFromLayout: ResponsiveGridLayoutManager.createFromLayout,
-    getSerializer: () => {
-      return layoutSerializerRegistry.get('ResponsiveGridLayout').serializer;
-    },
+
+    kind: 'ResponsiveGridLayout',
   };
 
   public readonly descriptor = ResponsiveGridLayoutManager.descriptor;

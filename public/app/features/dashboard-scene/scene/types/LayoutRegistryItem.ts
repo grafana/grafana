@@ -1,6 +1,7 @@
 import { RegistryItem } from '@grafana/data';
+import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 
-import { DashboardLayoutManager, LayoutManagerSerializer } from './DashboardLayoutManager';
+import { DashboardLayoutManager } from './DashboardLayoutManager';
 
 /**
  * The layout descriptor used when selecting / switching layouts
@@ -19,7 +20,7 @@ export interface LayoutRegistryItem<S = {}> extends RegistryItem {
   createFromSaveModel?(saveModel: S): void;
 
   /**
-   * Serializer for the layout
+   * Schema kind of layout
    */
-  getSerializer(): LayoutManagerSerializer;
+  kind?: DashboardV2Spec['layout']['kind'];
 }

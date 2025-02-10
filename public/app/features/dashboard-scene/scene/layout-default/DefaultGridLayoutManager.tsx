@@ -29,6 +29,7 @@ import {
 } from '../../utils/utils';
 import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
+import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
 import { DashboardGridItem } from './DashboardGridItem';
 import { RowRepeaterBehavior } from './RowRepeaterBehavior';
@@ -46,7 +47,7 @@ export class DefaultGridLayoutManager
 
   public readonly isDashboardLayoutManager = true;
 
-  public static readonly descriptor = {
+  public static readonly descriptor: LayoutRegistryItem = {
     get name() {
       return t('dashboard.default-layout.name', 'Default grid');
     },
@@ -55,9 +56,7 @@ export class DefaultGridLayoutManager
     },
     id: 'default-grid',
     createFromLayout: DefaultGridLayoutManager.createFromLayout,
-    getSerializer: () => {
-      return layoutSerializerRegistry.get('GridLayout').serializer;
-    },
+    kind: 'GridLayout',
   };
 
   public readonly descriptor = DefaultGridLayoutManager.descriptor;

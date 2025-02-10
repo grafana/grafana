@@ -11,6 +11,7 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 import { DataSourceRef } from '@grafana/schema';
+import { layout } from 'app/plugins/panel/nodeGraph/layeredLayout';
 
 import {
   DashboardV2Spec,
@@ -52,6 +53,7 @@ import {
   isLibraryPanel,
 } from '../utils/utils';
 
+import { getLayout } from './layoutSerializers/utils';
 import { sceneVariablesSetToSchemaV2Variables } from './sceneVariablesSetToVariables';
 import { colorIdEnumToColorIdV2, transformCursorSynctoEnum } from './transformToV2TypesUtils';
 
@@ -109,7 +111,7 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
     // EOF annotations
 
     // layout
-    layout: sceneDash.body.descriptor.getSerializer().serialize(sceneDash.body),
+    layout: getLayout(sceneDash.body),
     // EOF layout
   };
 

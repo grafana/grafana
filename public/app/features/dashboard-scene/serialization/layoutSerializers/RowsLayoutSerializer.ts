@@ -5,6 +5,7 @@ import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
 import { LayoutManagerSerializer } from '../../scene/types/DashboardLayoutManager';
 
 import { layoutSerializerRegistry } from './layoutSerializerRegistry';
+import { getLayout } from './utils';
 
 export class RowsLayoutSerializer implements LayoutManagerSerializer {
   serialize(layoutManager: RowsLayoutManager): DashboardV2Spec['layout'] {
@@ -12,7 +13,7 @@ export class RowsLayoutSerializer implements LayoutManagerSerializer {
       kind: 'RowsLayout',
       spec: {
         rows: layoutManager.state.rows.map((row) => {
-          const layout = row.state.layout.descriptor.getSerializer().serialize(row.state.layout);
+          const layout = getLayout(row.state.layout);
           if (layout.kind === 'RowsLayout') {
             throw new Error('Nested RowsLayout is not supported');
           }
