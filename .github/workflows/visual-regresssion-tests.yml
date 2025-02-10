@@ -8,17 +8,6 @@ jobs:
   playwright:
     timeout-minutes: 60
     runs-on: ubuntu-latest
-    services:
-      frontend:
-        image: node:14
-        ports:
-          - 3000:3000
-        options: -c "yarn start"
-      backend:
-        image: node:14
-        ports:
-          - 3000:3000
-        options: -c "make run"
     permissions:
       contents: write
       pull-requests: write
@@ -31,6 +20,14 @@ jobs:
         run: yarn install
       - name: Install Playwright Browsers
         run: yarn exec playwright install --with-deps
+      - name: Start backend server
+        run: |
+          echo "Starting backend server..."
+          make run &
+      - name: Start frontend server
+        run: |
+          echo "Starting frontend server..."
+          yarn start &
       - name: Wait for service to be available
         run: npx wait-on http://localhost:3000
       - name: Run Playwright tests
