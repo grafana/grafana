@@ -95,7 +95,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
 
   const { getSelectedItemProps, getDropdownProps, setSelectedItems, addSelectedItem, removeSelectedItem, reset } =
     useMultipleSelection({
-      selectedItems, // initally selected items,
+      selectedItems, // initially selected items,
       onStateChange: ({ type, selectedItems: newSelectedItems }) => {
         switch (type) {
           case useMultipleSelection.stateChangeTypes.SelectedItemKeyDownBackspace:

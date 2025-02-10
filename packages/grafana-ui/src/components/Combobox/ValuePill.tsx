@@ -40,7 +40,6 @@ export const ValuePill = forwardRef<HTMLSpanElement, ValuePillProps>(
 const getValuePillStyles = (theme: GrafanaTheme2, disabled?: boolean) => ({
   wrapper: css({
     display: 'inline-flex',
-    gap: theme.spacing(0.5),
     borderRadius: theme.shape.radius.default,
     color: theme.colors.text.primary,
     background: theme.colors.background.secondary,
@@ -49,6 +48,7 @@ const getValuePillStyles = (theme: GrafanaTheme2, disabled?: boolean) => ({
     fontSize: theme.typography.bodySmall.fontSize,
     flexShrink: 0,
     minWidth: '50px',
+    alignItems: 'center',
 
     '&:first-child:has(+ div)': {
       flexShrink: 1,
@@ -59,12 +59,13 @@ const getValuePillStyles = (theme: GrafanaTheme2, disabled?: boolean) => ({
     whiteSpace: 'nowrap',
     overflow: 'hidden',
     textOverflow: 'ellipsis',
+    padding: theme.spacing(0, 1, 0, 0.75),
   }),
 
   separator: css({
     background: theme.colors.border.weak,
     width: '2px',
-    marginLeft: theme.spacing(0.25),
     height: '100%',
+    marginRight: theme.spacing(0.5),
   }),
 });
