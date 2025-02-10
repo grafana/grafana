@@ -51,8 +51,7 @@ require (
 	github.com/Masterminds/semver/v3 v3.3.0 // indirect
 	github.com/Masterminds/sprig/v3 v3.3.0 // indirect
 	github.com/Masterminds/squirrel v1.5.4 // indirect
-	github.com/Microsoft/go-winio v0.6.2 // indirect
-	github.com/ProtonMail/go-crypto v0.0.0-20230828082145-3c4c8a2d2371 // indirect
+	github.com/ProtonMail/go-crypto v1.1.5 // indirect
 	github.com/RoaringBitmap/roaring v1.9.3 // indirect
 	github.com/VividCortex/mysqlerr v0.0.0-20170204212430-6c6b55f8796f // indirect
 	github.com/Yiling-J/theine-go v0.6.0 // indirect
@@ -123,7 +122,7 @@ require (
 	github.com/dolthub/jsonpath v0.0.2-0.20240227200619-19675ab05c71 // indirect
 	github.com/dolthub/vitess v0.0.0-20250123002143-3b45b8cacbfa // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
-	github.com/elazarl/goproxy v1.3.0 // indirect
+	github.com/elazarl/goproxy v1.4.0 // indirect
 	github.com/emicklei/go-restful/v3 v3.11.0 // indirect
 	github.com/emirpasic/gods v1.18.1 // indirect
 	github.com/envoyproxy/protoc-gen-validate v1.1.0 // indirect
