@@ -1543,6 +1543,74 @@ func TestIncreaseVersionForAllRulesInNamespaces(t *testing.T) {
 	})
 }
 
+func TestGetRuleVersions(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+	cfg := setting.NewCfg()
+	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{BaseInterval: time.Duration(rand.Int63n(100)+1) * time.Second}
+	sqlStore := db.InitTestDB(t)
+	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+	b := &fakeBus{}
+	store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+	orgID := int64(1)
+	gen := models.RuleGen
+	gen = gen.With(gen.WithIntervalMatching(store.Cfg.BaseInterval), gen.WithOrgID(orgID), gen.WithVersion(1))
+
+	inserted, err := store.InsertAlertRules(context.Background(), &models.AlertingUserUID, []models.AlertRule{gen.Generate()})
+	require.NoError(t, err)
+	ruleV1, err := store.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{UID: inserted[0].UID})
+	require.NoError(t, err)
+	ruleV2 := models.CopyRule(ruleV1, gen.WithTitle(util.GenerateShortUID()), gen.WithGroupIndex(rand.Int()))
+
+	err = store.UpdateAlertRules(context.Background(), &models.AlertingUserUID, []models.UpdateRule{
+		{
+			Existing: ruleV1,
+			New:      *ruleV2,
+		},
+	})
+	require.NoError(t, err)
+
+	t.Run("should return rule versions sorted in decreasing order", func(t *testing.T) {
+		versions, err := store.GetAlertRuleVersions(context.Background(), ruleV2.GetKey())
+		require.NoError(t, err)
+		assert.Len(t, versions, 2)
+		assert.IsDecreasing(t, versions[0].ID, versions[1].ID)
+		diff := versions[1].Diff(versions[0], AlertRuleFieldsToIgnoreInDiff[:]...)
+		assert.ElementsMatch(t, []string{"Title", "RuleGroupIndex"}, diff.Paths())
+	})
+
+	t.Run("should not remove versions without diff", func(t *testing.T) {
+		for i := 0; i < rand.Intn(2)+1; i++ {
+			r, err := store.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{UID: ruleV2.UID})
+			require.NoError(t, err)
+			rn := models.CopyRule(r)
+			err = store.UpdateAlertRules(context.Background(), &models.AlertingUserUID, []models.UpdateRule{
+				{
+					Existing: r,
+					New:      *rn,
+				},
+			})
+			require.NoError(t, err)
+		}
+		ruleV2, err = store.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{UID: ruleV2.UID})
+		ruleV3 := models.CopyRule(ruleV2, gen.WithGroupName(util.GenerateShortUID()), gen.WithNamespaceUID(util.GenerateShortUID()))
+
+		err = store.UpdateAlertRules(context.Background(), &models.AlertingUserUID, []models.UpdateRule{
+			{
+				Existing: ruleV2,
+				New:      *ruleV3,
+			},
+		})
+
+		versions, err := store.GetAlertRuleVersions(context.Background(), ruleV3.GetKey())
+		require.NoError(t, err)
+		assert.Len(t, versions, 3)
+		diff := versions[0].Diff(versions[1], AlertRuleFieldsToIgnoreInDiff[:]...)
+		assert.ElementsMatch(t, []string{"RuleGroup", "NamespaceUID"}, diff.Paths())
+	})
+}
+
 // createAlertRule creates an alert rule in the database and returns it.
 // If a generator is not specified, uniqueness of primary key is not guaranteed.
 func createRule(t *testing.T, store *DBstore, generator *models.AlertRuleGenerator) *models.AlertRule {
