@@ -3,11 +3,9 @@ package export
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"time"
 
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -97,7 +95,6 @@ func (r *exportJob) getSummary(gr schema.GroupResource) *provisioning.JobResourc
 }
 
 func (r *exportJob) loadFolders(ctx context.Context) error {
-	logger := r.logger
 	targetRepoName := r.target.Config().Name
 	status := r.jobStatus
 	status.Message = "reading folder tree"
@@ -107,45 +104,9 @@ func (r *exportJob) loadFolders(ctx context.Context) error {
 		Resource: folders.RESOURCE,
 	}), targetRepoName)
 
-	summary := r.getSummary(schema.GroupResource{
-		Group:    folders.GROUP,
-		Resource: folders.RESOURCE,
-	})
-
-	// first create folders
-	// TODO! this should not be necessary if writing to a path also makes the parents
-	status.Message = "writing folders"
-	err = foldersTree.Walk(ctx, func(ctx context.Context, folder resources.Folder) error {
-		p := folder.Path + "/"
-		if r.prefix != "" {
-			p = r.prefix + "/" + p
-		}
-		logger := logger.With("path", p)
-
-		_, err = r.target.Read(ctx, p, r.ref)
-		if err != nil && !(errors.Is(err, repository.ErrFileNotFound) || apierrors.IsNotFound(err)) {
-			logger.Error("failed to check if folder exists before writing", "error", err)
-			return fmt.Errorf("failed to check if folder exists before writing: %w", err)
-		} else if err == nil {
-			logger.Info("folder already exists")
-			summary.Noop++
-			return nil
-		}
-
-		// Create with an empty body will make a folder (or .keep file if unsupported)
-		if err := r.target.Create(ctx, p, r.ref, nil, "export folder `"+p+"`"); err != nil {
-			logger.Error("failed to write a folder in repository", "error", err)
-			return fmt.Errorf("failed to write folder in repo: %w", err)
-		}
-		summary.Create++
-		logger.Debug("successfully exported folder")
-		return nil
-	})
-	if err != nil {
-		return fmt.Errorf("failed to write folders: %w", err)
-	}
 	r.foldersTree = foldersTree
-	return nil
+	r.logger.Info("Loaded folders.  They will be exported implicilty with resources")
+	return err
 }
 
 func (r *exportJob) export(ctx context.Context, kind schema.GroupVersionResource) error {
