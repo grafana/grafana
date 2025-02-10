@@ -58,5 +58,5 @@ func (p *Provisioning) Test(ctx context.Context, r *authn.Request) bool {
 }
 
 func (*Provisioning) Priority() uint {
-	return 50
+	return 5 // let most other clients go first
 }
