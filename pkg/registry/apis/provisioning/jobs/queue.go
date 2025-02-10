@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/auth"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -27,24 +26,22 @@ type RepoGetter interface {
 	GetRepository(ctx context.Context, name string) (repository.Repository, error)
 }
 
-func NewJobQueue(capacity int, getter RepoGetter, identities auth.BackgroundIdentityService) JobQueue {
+func NewJobQueue(capacity int, getter RepoGetter) JobQueue {
 	return &jobStore{
-		workers:    make([]Worker, 0),
-		getter:     getter,
-		identities: identities,
-		rv:         1,
-		capacity:   capacity,
-		jobs:       []provisioning.Job{},
-		watchSet:   NewWatchSet(),
-		versioner:  &storage.APIObjectVersioner{},
+		workers:   make([]Worker, 0),
+		getter:    getter,
+		rv:        1,
+		capacity:  capacity,
+		jobs:      []provisioning.Job{},
+		watchSet:  NewWatchSet(),
+		versioner: &storage.APIObjectVersioner{},
 	}
 }
 
 type jobStore struct {
-	getter     RepoGetter
-	identities auth.BackgroundIdentityService
-	capacity   int
-	workers    []Worker
+	getter   RepoGetter
+	capacity int
+	workers  []Worker
 
 	// All jobs
 	jobs      []provisioning.Job
@@ -159,10 +156,11 @@ func (s *jobStore) drainPending() {
 			status, err = s.processByWorker(ctx, worker, *job)
 			if err != nil {
 				logger.Error("error processing job", "error", err)
-				status = &provisioning.JobStatus{
-					State:  provisioning.JobStateError,
-					Errors: []string{err.Error()},
+				if status == nil {
+					status = &provisioning.JobStatus{}
 				}
+				status.State = provisioning.JobStateError
+				status.Errors = append(status.Errors, err.Error())
 			}
 			if status == nil {
 				status = &provisioning.JobStatus{
@@ -170,8 +168,9 @@ func (s *jobStore) drainPending() {
 					Errors: []string{"no status response from worker"},
 				}
 			}
-			if status.State == "" {
+			if !status.State.Finished() {
 				status.State = provisioning.JobStateSuccess
+				status.Message = ""
 			}
 			logger.Debug("job processing finished", "status", status.State)
 
@@ -200,12 +199,11 @@ func (s *jobStore) drainPending() {
 }
 
 func (s *jobStore) processByWorker(ctx context.Context, worker Worker, job provisioning.Job) (*provisioning.JobStatus, error) {
-	id, err := s.identities.WorkerIdentity(ctx, job.Name)
+	ctx = request.WithNamespace(ctx, job.Namespace)
+	ctx, _, err := identity.WithProvisioningIdentitiy(ctx, job.Namespace)
 	if err != nil {
 		return nil, fmt.Errorf("get worker identity: %w", err)
 	}
-
-	ctx = request.WithNamespace(identity.WithRequester(ctx, id), job.Namespace)
 	repoName := job.Spec.Repository
 
 	logger := logging.FromContext(ctx)
@@ -222,19 +220,9 @@ func (s *jobStore) processByWorker(ctx context.Context, worker Worker, job provi
 		return nil, errors.New("unknown repository")
 	}
 
-	status, err := worker.Process(ctx, repo, job, func(ctx context.Context, j provisioning.JobStatus) error {
+	return worker.Process(ctx, repo, job, func(ctx context.Context, j provisioning.JobStatus) error {
 		return s.Update(ctx, job.Namespace, job.Name, j)
 	})
-	if err != nil {
-		return nil, fmt.Errorf("process job: %w", err)
-	}
-
-	// TODO: does this really happen?
-	if status == nil {
-		return nil, errors.New("worker did not return a status")
-	}
-
-	return nil, nil
 }
 
 // Checkout the next "pending" job

@@ -14,7 +14,6 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
 	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
@@ -25,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 )
 
+// ExportJob holds all context for a running job
 type exportJob struct {
 	logger logging.Logger
 	client *resources.DynamicClient // Read from
@@ -72,7 +72,7 @@ func newExportJob(ctx context.Context,
 	}
 }
 
-// Convert git changes into resource file changes
+// Send progress messages to any listeners
 func (r *exportJob) maybeNotify(ctx context.Context) {
 	if time.Since(r.progressLast) > r.progressInterval {
 		err := r.progress(ctx, *r.jobStatus)
@@ -82,6 +82,7 @@ func (r *exportJob) maybeNotify(ctx context.Context) {
 	}
 }
 
+// Register summary information for a group/resource
 func (r *exportJob) getSummary(gr schema.GroupResource) *provisioning.JobResourceSummary {
 	summary, ok := r.summary[gr.String()]
 	if !ok {
@@ -90,17 +91,16 @@ func (r *exportJob) getSummary(gr schema.GroupResource) *provisioning.JobResourc
 			Resource: gr.Resource,
 		}
 		r.summary[gr.String()] = summary
+		r.jobStatus.Summary = append(r.jobStatus.Summary, summary)
 	}
 	return summary
 }
 
-func (r *exportJob) run(ctx context.Context) error {
+func (r *exportJob) loadFolders(ctx context.Context) error {
 	logger := r.logger
 	targetRepoName := r.target.Config().Name
-	status := provisioning.JobStatus{
-		State: provisioning.JobStateWorking,
-	}
-	status.Message = fmt.Sprintf("reading folder tree")
+	status := r.jobStatus
+	status.Message = "reading folder tree"
 	foldersTree, err := readFolders(ctx, r.client.Resource(schema.GroupVersionResource{
 		Group:    folders.GROUP,
 		Version:  folders.VERSION,
@@ -114,6 +114,7 @@ func (r *exportJob) run(ctx context.Context) error {
 
 	// first create folders
 	// TODO! this should not be necessary if writing to a path also makes the parents
+	status.Message = "writing folders"
 	err = foldersTree.Walk(ctx, func(ctx context.Context, folder resources.Folder) error {
 		p := folder.Path + "/"
 		if r.prefix != "" {
@@ -144,33 +145,34 @@ func (r *exportJob) run(ctx context.Context) error {
 		return fmt.Errorf("failed to write folders: %w", err)
 	}
 	r.foldersTree = foldersTree
+	return nil
+}
 
-	status.Message = "writing dashboards..."
+func (r *exportJob) export(ctx context.Context, kind schema.GroupVersionResource) error {
+	r.jobStatus.Message = "Exporting " + kind.Resource + "..."
 	r.maybeNotify(ctx)
+	client := r.client.Resource(kind)
+	summary := r.getSummary(kind.GroupResource())
 
-	dashboardsClient := r.client.Resource(schema.GroupVersionResource{
-		Group:    "dashboard.grafana.app",
-		Version:  "v1alpha1",
-		Resource: "dashboards",
-	})
+	continueToken := ""
+	for {
+		list, err := client.List(ctx, metav1.ListOptions{Limit: 100, Continue: continueToken})
+		if err != nil {
+			return fmt.Errorf("error executing list: %w", err)
+		}
 
-	summary = r.getSummary(schema.GroupResource{
-		Group:    "dashboard.grafana.app",
-		Resource: "dashboards",
-	})
+		for _, item := range list.Items {
+			if err = r.add(ctx, summary, &item); err != nil {
+				return fmt.Errorf("error adding value: %w", err)
+			}
+		}
 
-	// TODO: handle pagination
-	dashboardList, err := dashboardsClient.List(ctx, metav1.ListOptions{Limit: 1000})
-	if err != nil {
-		return fmt.Errorf("failed to list dashboards: %w", err)
-	}
-	for _, item := range dashboardList.Items {
-		if err = r.add(ctx, summary, &item); err != nil {
-			return err
+		continueToken = list.GetContinue()
+		if continueToken == "" {
+			break
 		}
 	}
-	status.State = provisioning.JobStateSuccess
-	status.Message = ""
+
 	return nil
 }
 
@@ -178,6 +180,7 @@ func (r *exportJob) add(ctx context.Context, summary *provisioning.JobResourceSu
 	if err := ctx.Err(); err != nil {
 		return err
 	}
+	r.maybeNotify(ctx)
 
 	item, err := utils.MetaAccessor(obj)
 	if err != nil {
@@ -185,6 +188,10 @@ func (r *exportJob) add(ctx context.Context, summary *provisioning.JobResourceSu
 	}
 
 	commitMessage := item.GetMessage()
+	if commitMessage == "" {
+		commitMessage = "exported from grafana"
+	}
+
 	name := item.GetName()
 	repoName := item.GetRepositoryName()
 	if repoName == r.target.Config().GetName() {
@@ -196,7 +203,7 @@ func (r *exportJob) add(ctx context.Context, summary *provisioning.JobResourceSu
 	if title == "" {
 		title = name
 	}
-	folder := item.GetAnnotations()[apiutils.AnnoKeyFolder]
+	folder := item.GetFolder()
 
 	// Get the absolute path of the folder
 	fid, ok := r.foldersTree.DirPath(folder, "")

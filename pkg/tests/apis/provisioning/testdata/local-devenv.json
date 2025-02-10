@@ -9,7 +9,7 @@
         "description": "Load /devenv/dev-dashboards (from root of repository)",
         "sync": {
             "enabled": false,
-            "target": "mirror",
+            "target": "folder",
             "intervalSeconds": 60
         },
         "readOnly": false,

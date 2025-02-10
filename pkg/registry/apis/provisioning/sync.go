@@ -63,7 +63,7 @@ func (c *syncConnector) Connect(
 		var options provisioning.SyncJobOptions
 		err := json.NewDecoder(r.Body).Decode(&options)
 		if err != nil {
-			responder.Error(apierrors.NewBadRequest("error decoding request"))
+			responder.Error(apierrors.NewBadRequest("error decoding SyncJobOptions from request"))
 			return
 		}
 

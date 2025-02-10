@@ -25,7 +25,7 @@ func dummyExport(
 
 	size := 5 + rand.IntN(15)
 
-	dashboards := provisioning.JobResourceSummary{
+	dashboards := &provisioning.JobResourceSummary{
 		Group:    "dashboard.grafana.app",
 		Resource: "dashboards",
 	}
@@ -58,7 +58,7 @@ func dummyExport(
 				dashboards.Noop++
 			}
 		}
-		status.Summary = []provisioning.JobResourceSummary{
+		status.Summary = []*provisioning.JobResourceSummary{
 			dashboards,
 		}
 

@@ -110,9 +110,6 @@ type DirectRestConfigProvider interface {
 	// creating clients that map legacy API handlers to k8s backed services
 	GetDirectRestConfig(c *contextmodel.ReqContext) *clientrest.Config
 
-	// Get a rest client with the given identity
-	GetRestConfigForBackgroundWorker(requester func() identity.Requester) *clientrest.Config
-
 	// This can be used to rewrite incoming requests to path now supported under /apis
 	DirectlyServeHTTP(w http.ResponseWriter, r *http.Request)
 }
@@ -531,22 +528,6 @@ func (s *service) GetDirectRestConfig(c *contextmodel.ReqContext) *clientrest.Co
 					return nil, err
 				}
 				ctx := identity.WithRequester(req.Context(), c.SignedInUser)
-				wrapped := grafanaresponsewriter.WrapHandler(s.handler)
-				return wrapped(req.WithContext(ctx))
-			},
-		},
-	}
-}
-
-func (s *service) GetRestConfigForBackgroundWorker(requester func() identity.Requester) *clientrest.Config {
-	return &clientrest.Config{
-		Transport: &roundTripperFunc{
-			fn: func(req *http.Request) (*http.Response, error) {
-				if err := s.NamedService.AwaitRunning(req.Context()); err != nil {
-					return nil, err
-				}
-				fmt.Printf("WORKER: %-5s %v\n", req.Method, req.URL)
-				ctx := identity.WithRequester(context.Background(), requester())
 				wrapped := grafanaresponsewriter.WrapHandler(s.handler)
 				return wrapped(req.WithContext(ctx))
 			},

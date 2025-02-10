@@ -4,6 +4,9 @@ import (
 	"context"
 	"fmt"
 
+	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	dashboards "github.com/grafana/grafana/pkg/apis/dashboard"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
@@ -51,11 +54,29 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 
 	worker := newExportJob(ctx, repo, *options, dynamicClient, progress)
 
-	err = worker.run(ctx)
-
-	status := worker.jobStatus
-	for _, v := range worker.summary {
-		status.Summary = append(status.Summary, *v)
+	// Load and write all folders
+	err = worker.loadFolders(ctx)
+	if err != nil {
+		return worker.jobStatus, err
 	}
-	return worker.jobStatus, err
+
+	kinds := []schema.GroupVersionResource{{
+		Group:    dashboards.GROUP,
+		Version:  "v1alpha1",
+		Resource: dashboards.DASHBOARD_RESOURCE,
+	}}
+	for _, kind := range kinds {
+		err = worker.export(ctx, kind)
+		if err != nil {
+			return worker.jobStatus, err
+		}
+	}
+
+	// Add summary info to response
+	status := worker.jobStatus
+	if !status.State.Finished() && err == nil {
+		status.State = provisioning.JobStateSuccess
+		status.Message = ""
+	}
+	return status, err
 }
