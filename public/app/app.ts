@@ -403,6 +403,11 @@ function handleRedirectTo(): void {
   const queryParams = locationService.getSearch();
   const redirectToParamKey = 'redirectTo';
 
+  if (queryParams.has('auth_token')) {
+    // URL Login should not be redirected
+    window.sessionStorage.removeItem(RedirectToUrlKey);
+  }
+
   if (queryParams.has(redirectToParamKey) && window.location.pathname !== '/') {
     const rawRedirectTo = queryParams.get(redirectToParamKey)!;
     window.sessionStorage.setItem(RedirectToUrlKey, encodeURIComponent(rawRedirectTo));
