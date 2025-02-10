@@ -18,7 +18,7 @@
             "owner": "grafana",
             "repository": "git-ui-sync-demo",
             "branch": "dummy-branch",
-            "branchWorkflow": true,
+            "workflows": ["push", "branch"],
             "generateDashboardPreviews": true,
             "token": "github_pat_dummy"
         }

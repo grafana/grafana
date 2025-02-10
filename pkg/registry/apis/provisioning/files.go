@@ -235,6 +235,11 @@ func (s *filesConnector) doWrite(ctx context.Context, update bool, repo reposito
 		return nil, apierrors.NewBadRequest("The payload does not map to a known resource")
 	}
 
+	// Do not write if any errors exist
+	if len(parsed.Errors) > 0 {
+		return parsed.AsResourceWrapper(), err
+	}
+
 	data, err = parsed.ToSaveBytes()
 	if err != nil {
 		return nil, err
