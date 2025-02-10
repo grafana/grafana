@@ -2,7 +2,6 @@ import { SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
 import { t } from 'app/core/internationalization';
 
 import { ConditionalRendering } from '../../conditional-rendering/ConditionalRendering';
-import { ConditionalRenderingGroup } from '../../conditional-rendering/ConditionalRenderingGroup';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 
 import { TabItem } from './TabItem';
@@ -62,9 +61,7 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
 
   public addNewTab() {
     const currentTab = new TabItem({
-      $behaviors: [
-        new ConditionalRendering({ rootGroup: new ConditionalRenderingGroup({ condition: 'or', value: [] }) }),
-      ],
+      $behaviors: [ConditionalRendering.createEmpty()],
     });
     this.setState({ tabs: [...this.state.tabs, currentTab], currentTab });
   }
@@ -91,9 +88,7 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
       filteredTab.length === 0
         ? [
             new TabItem({
-              $behaviors: [
-                new ConditionalRendering({ rootGroup: new ConditionalRenderingGroup({ condition: 'or', value: [] }) }),
-              ],
+              $behaviors: [ConditionalRendering.createEmpty()],
             }),
           ]
         : filteredTab;
@@ -107,9 +102,7 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
 
   public static createEmpty(): TabsLayoutManager {
     const tab = new TabItem({
-      $behaviors: [
-        new ConditionalRendering({ rootGroup: new ConditionalRenderingGroup({ condition: 'or', value: [] }) }),
-      ],
+      $behaviors: [ConditionalRendering.createEmpty()],
     });
     return new TabsLayoutManager({ tabs: [tab], currentTab: tab });
   }
@@ -117,9 +110,7 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
   public static createFromLayout(layout: DashboardLayoutManager): TabsLayoutManager {
     const tab = new TabItem({
       layout: layout.clone(),
-      $behaviors: [
-        new ConditionalRendering({ rootGroup: new ConditionalRenderingGroup({ condition: 'or', value: [] }) }),
-      ],
+      $behaviors: [ConditionalRendering.createEmpty()],
     });
     return new TabsLayoutManager({ tabs: [tab], currentTab: tab });
   }

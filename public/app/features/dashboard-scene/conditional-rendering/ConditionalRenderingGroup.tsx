@@ -59,6 +59,10 @@ export class ConditionalRenderingGroup extends ConditionalRenderingBase<Conditio
   ) {
     this.changeValue([...this.state.value, item]);
   }
+
+  public static createEmpty(): ConditionalRenderingGroup {
+    return new ConditionalRenderingGroup({ condition: 'and', value: [] });
+  }
 }
 
 function ConditionalRenderingGroupRenderer({ model }: SceneComponentProps<ConditionalRenderingGroup>) {
@@ -136,7 +140,7 @@ function ConditionalRenderingGroupRenderer({ model }: SceneComponentProps<Condit
               />
               <Menu.Item
                 label={t('dashboard.conditional-rendering.group.add.group', 'Group')}
-                onClick={() => model.addItem(new ConditionalRenderingGroup({ condition: 'and', value: [] }))}
+                onClick={() => model.addItem(ConditionalRenderingGroup.createEmpty())}
               />
             </Menu>
           }
