@@ -3098,6 +3098,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 		assert.Empty(t, resp.Deleted)
 	}
 
+	createdRuleUIDs := make(map[string]string)
 	// With the rules created, let's make sure that rule definition is stored correctly.
 	{
 		u := fmt.Sprintf("http://grafana:password@%s/api/ruler/grafana/api/v1/rules/default", grafanaListedAddr)
@@ -3228,9 +3229,11 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 		   ]
 		}`
 		assert.JSONEq(t, expectedGetNamespaceResponseBody, body)
+		createdRuleUIDs["AlwaysFiring"] = generatedUIDs[0]
+		createdRuleUIDs["AlwaysFiringButSilenced"] = generatedUIDs[1]
 	}
 
-	// try to update by pass an invalid UID
+	// validate that a rulegroup with a new rule with a user specified UID can be created while others updated
 	{
 		interval, err := model.ParseDuration("30s")
 		require.NoError(t, err)
@@ -3238,6 +3241,57 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 		rules := apimodels.PostableRuleGroupConfig{
 			Name: "arulegroup",
 			Rules: []apimodels.PostableExtendedRuleNode{
+				{
+					ApiRuleNode: &apimodels.ApiRuleNode{
+						For:         &interval,
+						Labels:      map[string]string{"label1": "val1"},
+						Annotations: map[string]string{"annotation1": "val1"},
+					},
+					// this rule does not explicitly set no data and error states
+					// therefore it should get the default values
+					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
+						Title:     "AlwaysFiring",
+						UID:       createdRuleUIDs["AlwaysFiring"],
+						Condition: "A",
+						Data: []apimodels.AlertQuery{
+							{
+								RefID: "A",
+								RelativeTimeRange: apimodels.RelativeTimeRange{
+									From: apimodels.Duration(time.Duration(5) * time.Hour),
+									To:   apimodels.Duration(time.Duration(3) * time.Hour),
+								},
+								DatasourceUID: expr.DatasourceUID,
+								Model: json.RawMessage(`{
+									"type": "math",
+									"expression": "2 + 3 > 1"
+									}`),
+							},
+						},
+					},
+				},
+				{
+					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
+						Title:     "AlwaysFiringButSilenced",
+						UID:       createdRuleUIDs["AlwaysFiringButSilenced"],
+						Condition: "A",
+						Data: []apimodels.AlertQuery{
+							{
+								RefID: "A",
+								RelativeTimeRange: apimodels.RelativeTimeRange{
+									From: apimodels.Duration(time.Duration(5) * time.Hour),
+									To:   apimodels.Duration(time.Duration(3) * time.Hour),
+								},
+								DatasourceUID: expr.DatasourceUID,
+								Model: json.RawMessage(`{
+									"type": "math",
+									"expression": "2 + 3 > 1"
+									}`),
+							},
+						},
+						NoDataState:  apimodels.NoDataState(ngmodels.Alerting),
+						ExecErrState: apimodels.ExecutionErrorState(ngmodels.AlertingErrState),
+					},
+				},
 				{
 					ApiRuleNode: &apimodels.ApiRuleNode{
 						For: &interval,
@@ -3276,31 +3330,83 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 			Interval: interval,
 		}
 
-		_, status, body := apiClient.PostRulesGroupWithStatus(t, "default", &rules)
-		assert.Equal(t, http.StatusNotFound, status)
-		var res map[string]any
-		assert.NoError(t, json.Unmarshal([]byte(body), &res))
-		require.Equal(t, "failed to update rule group: failed to update rule with UID unknown because could not find alert rule", res["message"])
+		response, status, _ := apiClient.PostRulesGroupWithStatus(t, "default", &rules)
+		assert.Equal(t, http.StatusAccepted, status)
 
-		// let's make sure that rule definitions are not affected by the failed POST request.
-		u := fmt.Sprintf("http://grafana:password@%s/api/ruler/grafana/api/v1/rules/default", grafanaListedAddr)
-		// nolint:gosec
-		resp, err := http.Get(u)
-		require.NoError(t, err)
-		t.Cleanup(func() {
-			err := resp.Body.Close()
-			require.NoError(t, err)
-		})
-		b, err := io.ReadAll(resp.Body)
+		require.Len(t, response.Created, 1)
+		require.Len(t, response.Updated, 2)
+		require.Len(t, response.Deleted, 0)
+	}
+
+	// remove the added rule and set the interval back to 1m
+	{
+		interval, err := model.ParseDuration("1m")
 		require.NoError(t, err)
 
-		assert.Equal(t, resp.StatusCode, 202)
+		rules := apimodels.PostableRuleGroupConfig{
+			Name: "arulegroup",
+			Rules: []apimodels.PostableExtendedRuleNode{
+				{
+					ApiRuleNode: &apimodels.ApiRuleNode{
+						For:         &interval,
+						Labels:      map[string]string{"label1": "val1"},
+						Annotations: map[string]string{"annotation1": "val1"},
+					},
+					// this rule does not explicitly set no data and error states
+					// therefore it should get the default values
+					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
+						Title:     "AlwaysFiring",
+						UID:       createdRuleUIDs["AlwaysFiring"],
+						Condition: "A",
+						Data: []apimodels.AlertQuery{
+							{
+								RefID: "A",
+								RelativeTimeRange: apimodels.RelativeTimeRange{
+									From: apimodels.Duration(time.Duration(5) * time.Hour),
+									To:   apimodels.Duration(time.Duration(3) * time.Hour),
+								},
+								DatasourceUID: expr.DatasourceUID,
+								Model: json.RawMessage(`{
+									"type": "math",
+									"expression": "2 + 3 > 1"
+									}`),
+							},
+						},
+					},
+				},
+				{
+					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
+						Title:     "AlwaysFiringButSilenced",
+						UID:       createdRuleUIDs["AlwaysFiringButSilenced"],
+						Condition: "A",
+						Data: []apimodels.AlertQuery{
+							{
+								RefID: "A",
+								RelativeTimeRange: apimodels.RelativeTimeRange{
+									From: apimodels.Duration(time.Duration(5) * time.Hour),
+									To:   apimodels.Duration(time.Duration(3) * time.Hour),
+								},
+								DatasourceUID: expr.DatasourceUID,
+								Model: json.RawMessage(`{
+									"type": "math",
+									"expression": "2 + 3 > 1"
+									}`),
+							},
+						},
+						NoDataState:  apimodels.NoDataState(ngmodels.Alerting),
+						ExecErrState: apimodels.ExecutionErrorState(ngmodels.AlertingErrState),
+					},
+				},
+			},
+			Interval: interval,
+		}
 
-		body, m := rulesNamespaceWithoutVariableValues(t, b)
-		returnedUIDs, ok := m["default,arulegroup"]
-		assert.True(t, ok)
-		assert.Equal(t, 2, len(returnedUIDs))
-		assert.JSONEq(t, expectedGetNamespaceResponseBody, body)
+		response, status, _ := apiClient.PostRulesGroupWithStatus(t, "default", &rules)
+		assert.Equal(t, http.StatusAccepted, status)
+
+		require.Len(t, response.Created, 0)
+		require.Len(t, response.Updated, 2)
+		require.Len(t, response.Deleted, 1)
 	}
 
 	// try to update by pass two rules with conflicting UIDs
@@ -3406,6 +3512,111 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 		returnedUIDs, ok := m["default,arulegroup"]
 		assert.True(t, ok)
 		assert.Equal(t, 2, len(returnedUIDs))
+		expectedGetNamespaceResponseBody = `
+		{
+		   "default":[
+			  {
+				 "name":"arulegroup",
+				 "interval":"1m",
+				 "rules":[
+					{
+						"annotations": {
+							"annotation1": "val1"
+					   },
+					   "expr":"",
+					   "for": "1m",
+					   "labels": {
+							"label1": "val1"
+					   },
+					   "grafana_alert":{
+						  "title":"AlwaysFiring",
+						  "condition":"A",
+						  "data":[
+							 {
+								"refId":"A",
+								"queryType":"",
+								"relativeTimeRange":{
+								   "from":18000,
+								   "to":10800
+								},
+								"datasourceUid":"__expr__",
+								"model":{
+								   "expression":"2 + 3 \u003e 1",
+								   "intervalMs":1000,
+								   "maxDataPoints":43200,
+								   "type":"math"
+								}
+							 }
+						  ],
+						  "updated":"2021-02-21T01:10:30Z",
+						  "updated_by": {
+							"uid": "uid",
+							"name": "grafana"
+						  },
+						  "intervalSeconds":60,
+						  "is_paused": false,
+						  "version":3,
+						  "uid":"uid",
+						  "namespace_uid":"nsuid",
+						  "rule_group":"arulegroup",
+						  "no_data_state":"NoData",
+						  "exec_err_state":"Alerting",
+						  "metadata": {
+						      "editor_settings": {
+							      "simplified_query_and_expressions_section": false,
+								  "simplified_notifications_section": false
+							  }
+						  }
+					   }
+					},
+					{
+					   "expr":"",
+					   "for": "0s",
+					   "grafana_alert":{
+						  "title":"AlwaysFiringButSilenced",
+						  "condition":"A",
+						  "data":[
+							 {
+								"refId":"A",
+								"queryType":"",
+								"relativeTimeRange":{
+								   "from":18000,
+								   "to":10800
+								},
+								"datasourceUid":"__expr__",
+								"model":{
+								   "expression":"2 + 3 \u003e 1",
+								   "intervalMs":1000,
+								   "maxDataPoints":43200,
+								   "type":"math"
+								}
+							 }
+						  ],
+						  "updated":"2021-02-21T01:10:30Z",
+						  "updated_by": {
+							"uid": "uid",
+							"name": "grafana"
+						  },
+						  "intervalSeconds":60,
+						  "is_paused": false,
+						  "version":3,
+						  "uid":"uid",
+						  "namespace_uid":"nsuid",
+						  "rule_group":"arulegroup",
+						  "no_data_state":"Alerting",
+						  "exec_err_state":"Alerting",
+						  "metadata": {
+						      "editor_settings": {
+							      "simplified_query_and_expressions_section": false,
+								  "simplified_notifications_section": false
+							  }
+						  }
+					   }
+					}
+				 ]
+			  }
+		   ]
+		}`
 		assert.JSONEq(t, expectedGetNamespaceResponseBody, body)
 	}
 
@@ -3525,7 +3736,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 						  },
 		                  "intervalSeconds":60,
 		                  "is_paused": false,
-		                  "version":2,
+		                  "version":4,
 		                  "uid":"uid",
 		                  "namespace_uid":"nsuid",
 		                  "rule_group":"arulegroup",
@@ -3642,7 +3853,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 					  },
 					  "intervalSeconds":60,
 					  "is_paused":false,
-					  "version":3,
+					  "version":5,
 					  "uid":"uid",
 					  "namespace_uid":"nsuid",
 					  "rule_group":"arulegroup",
@@ -3738,7 +3949,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
                       },
 					  "intervalSeconds":60,
 					  "is_paused":false,
-					  "version":3,
+					  "version":5,
 					  "uid":"uid",
 					  "namespace_uid":"nsuid",
 					  "rule_group":"arulegroup",

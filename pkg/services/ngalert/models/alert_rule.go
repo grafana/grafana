@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/cmputil"
 )
 
@@ -571,6 +572,9 @@ func (alertRule *AlertRule) PreSave(timeNow func() time.Time, userUID *UserUID) 
 
 // ValidateAlertRule validates various alert rule fields.
 func (alertRule *AlertRule) ValidateAlertRule(cfg setting.UnifiedAlertingSettings) error {
+	if err := util.ValidateUID(alertRule.UID); err != nil {
+		return errors.Join(ErrAlertRuleFailedValidation, fmt.Errorf("cannot create rule with UID '%s': %w", alertRule.UID, err))
+	}
 	if len(alertRule.Data) == 0 {
 		return fmt.Errorf("%w: no queries or expressions are found", ErrAlertRuleFailedValidation)
 	}
