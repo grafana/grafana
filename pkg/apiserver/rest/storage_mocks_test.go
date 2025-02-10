@@ -3,6 +3,7 @@ package rest
 import (
 	"context"
 	"errors"
+	"strings"
 
 	"github.com/stretchr/testify/mock"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -11,6 +12,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 )
+
+const failingObject = "object-fail"
 
 type legacyStoreMock struct {
 	*mock.Mock
@@ -30,7 +33,7 @@ func (m legacyStoreMock) Get(ctx context.Context, name string, options *metav1.G
 	}
 
 	args := m.Called(ctx, name, options)
-	if name == "object-fail" {
+	if strings.Contains(name, failingObject) {
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(runtime.Object), args.Error(1)
@@ -49,7 +52,7 @@ func (m legacyStoreMock) Create(ctx context.Context, obj runtime.Object, createV
 		return nil, args.Error(1)
 	}
 	name := acc.GetName()
-	if name == "object-fail" {
+	if strings.Contains(name, failingObject) {
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(runtime.Object), args.Error(1)
@@ -80,7 +83,7 @@ func (m legacyStoreMock) Update(ctx context.Context, name string, objInfo rest.U
 	default:
 	}
 	args := m.Called(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
-	if name == "object-fail" {
+	if strings.Contains(name, failingObject) {
 		return nil, false, args.Error(2)
 	}
 	return args.Get(0).(runtime.Object), args.Bool(1), args.Error(2)
@@ -94,7 +97,7 @@ func (m legacyStoreMock) Delete(ctx context.Context, name string, deleteValidati
 	}
 
 	args := m.Called(ctx, name, deleteValidation, options)
-	if name == "object-fail" {
+	if strings.Contains(name, failingObject) {
 		return nil, false, args.Error(2)
 	}
 	if name == "not-found-legacy" {
@@ -125,7 +128,7 @@ func (m storageMock) Get(ctx context.Context, name string, options *metav1.GetOp
 	}
 
 	args := m.Called(ctx, name, options)
-	if name == "object-fail" {
+	if strings.Contains(name, failingObject) {
 		return nil, args.Error(1)
 	}
 	if name == "not-found" {
@@ -147,7 +150,7 @@ func (m storageMock) Create(ctx context.Context, obj runtime.Object, createValid
 		return nil, args.Error(1)
 	}
 	name := acc.GetName()
-	if name == "object-fail" {
+	if strings.Contains(name, failingObject) {
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(runtime.Object), args.Error(1)
@@ -179,7 +182,7 @@ func (m storageMock) Update(ctx context.Context, name string, objInfo rest.Updat
 	}
 
 	args := m.Called(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
-	if name == "object-fail" {
+	if strings.Contains(name, failingObject) {
 		return nil, false, args.Error(2)
 	}
 	return args.Get(0).(runtime.Object), args.Bool(1), args.Error(2)
@@ -193,7 +196,7 @@ func (m storageMock) Delete(ctx context.Context, name string, deleteValidation r
 	}
 
 	args := m.Called(ctx, name, deleteValidation, options)
-	if name == "object-fail" {
+	if strings.Contains(name, failingObject) {
 		return nil, false, args.Error(2)
 	}
 	return args.Get(0).(runtime.Object), args.Bool(1), args.Error(2)
