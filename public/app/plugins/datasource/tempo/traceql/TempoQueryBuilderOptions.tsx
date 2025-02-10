@@ -85,6 +85,7 @@ export const TempoQueryBuilderOptions = React.memo<Props>(({ onChange, query, se
   const collapsedMetricsOptions = [
     `Step: ${query.step || 'auto'}`,
     `Type: ${query.metricsQueryType === MetricsQueryType.Range ? 'Range' : 'Instant'}`,
+    '|',
     `Streaming: ${metricsStreaming ? 'Enabled' : 'Disabled'}`,
     // `Exemplars: ${query.exemplars !== undefined ? query.exemplars : 'auto'}`,
   ];

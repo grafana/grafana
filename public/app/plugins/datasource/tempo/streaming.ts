@@ -203,6 +203,13 @@ function mergeFrames(acc: DataQueryResponse, newResult: DataQueryResponse): Data
   return result;
 }
 
+/**
+ * Remove duplicate time field values from the DataFrame. This is necessary because Tempo sends partial results to Grafana
+ * that we append to an existing DataFrame. This can result in duplicate values for the same timestamp so this function removes
+ * older values and keeps the latest value.
+ * @param accFrame
+ * @param timeFieldIndex
+ */
 function removeDuplicateTimeFieldValues(accFrame: DataFrame, timeFieldIndex: number) {
   const duplicatesMap = accFrame.fields[timeFieldIndex].values.reduce((acc: Record<number, number[]>, value, index) => {
     if (acc[value]) {
