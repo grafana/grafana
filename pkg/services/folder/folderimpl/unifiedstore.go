@@ -353,7 +353,10 @@ func (ss *FolderUnifiedStoreImpl) GetFolders(ctx context.Context, q folder.GetFo
 			return nil, fmt.Errorf("unable to convert unstructured item to legacy folder %w", err)
 		}
 		if q.WithFullpath || q.WithFullpathUIDs {
-			parents, err := ss.GetParents(ctx, folder.GetParentsQuery{UID: f.UID, OrgID: q.OrgID})
+			nextCtx, _ := identity.WithServiceIdentity(ctx, q.OrgID)
+			// TODO: probably need to add a new context with the service identity to get all parents for all
+			// calls to GetParents
+			parents, err := ss.GetParents(nextCtx, folder.GetParentsQuery{UID: f.UID, OrgID: q.OrgID})
 			if err != nil {
 				return nil, fmt.Errorf("failed to get parents for folder %s: %w", f.UID, err)
 			}
