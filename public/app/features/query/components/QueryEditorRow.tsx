@@ -8,7 +8,6 @@ import { PureComponent, ReactNode } from 'react';
 // Utils & Services
 import {
   CoreApp,
-  DataQuery,
   DataSourceApi,
   DataSourceInstanceSettings,
   DataSourcePluginContextProvider,
@@ -24,7 +23,8 @@ import {
   toLegacyResponseData,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { AngularComponent, config, getAngularLoader, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import { AngularComponent, getAngularLoader, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import { DataQuery } from '@grafana/schema';
 import { Badge, ErrorBoundaryAlert } from '@grafana/ui';
 import { OperationRowHelp } from 'app/core/components/QueryOperationRow/OperationRowHelp';
 import {
@@ -40,7 +40,7 @@ import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 
-import { SaveQueryButton as SaveQueryToQueryLibraryButton } from '../../explore/QueryLibrary/SaveQueryButton';
+import { useQueryLibraryContext } from '../../explore/QueryLibrary/QueryLibraryContext';
 
 import { QueryActionComponent, RowActionComponents } from './QueryActionComponent';
 import { QueryEditorRowHeader } from './QueryEditorRowHeader';
@@ -489,7 +489,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
           />
         )}
         {this.renderExtraActions()}
-        {config.featureToggles.queryLibrary && <SaveQueryToQueryLibraryButton query={query} />}
+        <MaybeQueryLibrarySaveButton query={query} />
         <QueryOperationAction
           title={t('query-operation.header.duplicate-query', 'Duplicate query')}
           icon="copy"
@@ -658,4 +658,10 @@ export function filterPanelDataToQuery(data: PanelData, refId: string): PanelDat
     errors: error ? [error] : undefined,
     timeRange,
   };
+}
+
+// Will render anything only if query library is enabled
+function MaybeQueryLibrarySaveButton(props: { query: DataQuery }) {
+  const { renderSaveQueryButton } = useQueryLibraryContext();
+  return renderSaveQueryButton(props.query);
 }
