@@ -20,7 +20,6 @@ import (
 
 type testConnector struct {
 	getter RepoGetter
-	tester *RepositoryTester
 }
 
 func (*testConnector) New() runtime.Object {
