@@ -101,6 +101,7 @@ Example use cases:
 | theme.colors.background.canvas    | Dashboard background. A background surface for panels and panes that use primary background      |
 | theme.colors.background.primary   | The default content background for content panes and panels                                      |
 | theme.colors.background.secondary | For cards and other surfaces that need to stand out when placed on top of the primary background |
+| theme.colors.background.elevated  | For popovers and menu backgrounds. This is the same color as primary in most light themes but in dark themes it has a brighter gray shade to help give it contast against the primary backgrund |
 
 ### Borders
 
