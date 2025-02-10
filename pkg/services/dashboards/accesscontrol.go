@@ -65,7 +65,7 @@ func NewFolderIDScopeResolver(folderDB folder.FolderStore, folderSvc folder.Serv
 			return []string{ScopeFoldersProvider.GetResourceScopeUID(ac.GeneralFolderUID)}, nil
 		}
 
-		return identity.WithServiceIdentityFn(ctx, orgID, func(ctx context.Context, _ identity.Requester) ([]string, error) {
+		return identity.WithServiceIdentityFn(ctx, orgID, func(ctx context.Context) ([]string, error) {
 			folder, err := folderDB.GetFolderByID(ctx, orgID, id)
 			if err != nil {
 				return nil, err
@@ -98,7 +98,7 @@ func NewFolderUIDScopeResolver(folderSvc folder.Service) (string, ac.ScopeAttrib
 			return nil, err
 		}
 
-		return identity.WithServiceIdentityFn(ctx, orgID, func(ctx context.Context, _ identity.Requester) ([]string, error) {
+		return identity.WithServiceIdentityFn(ctx, orgID, func(ctx context.Context) ([]string, error) {
 			inheritedScopes, err := GetInheritedScopes(ctx, orgID, uid, folderSvc)
 			if err != nil {
 				return nil, err
@@ -125,7 +125,7 @@ func NewDashboardIDScopeResolver(ds DashboardService, folderSvc folder.Service) 
 			return nil, err
 		}
 
-		return identity.WithServiceIdentityFn(ctx, orgID, func(ctx context.Context, _ identity.Requester) ([]string, error) {
+		return identity.WithServiceIdentityFn(ctx, orgID, func(ctx context.Context) ([]string, error) {
 			dashboard, err := ds.GetDashboard(ctx, &GetDashboardQuery{ID: id, OrgID: orgID})
 			if err != nil {
 				return nil, err
@@ -153,7 +153,7 @@ func NewDashboardUIDScopeResolver(ds DashboardService, folderSvc folder.Service)
 			return nil, err
 		}
 
-		return identity.WithServiceIdentityFn(ctx, orgID, func(ctx context.Context, _ identity.Requester) ([]string, error) {
+		return identity.WithServiceIdentityFn(ctx, orgID, func(ctx context.Context) ([]string, error) {
 			dashboard, err := ds.GetDashboard(ctx, &GetDashboardQuery{UID: uid, OrgID: orgID})
 			if err != nil {
 				return nil, err
