@@ -57,8 +57,8 @@ func (t *folderTree) Insert(uid string, parentUID *string) int {
 			Parent: parent,
 		})
 	} else {
-		// make sure properties are set correctly, this will "path" parent nodes that was added
-		// if it did not exist when its child node was added.
+		// make sure properties are set correctly
+		// if a node is added as a parent node first, its parent will not be set, so we make sure to do it now
 		t.Nodes[i].UID = uid
 		t.Nodes[i].Parent = parent
 	}
