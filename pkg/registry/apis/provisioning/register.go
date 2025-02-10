@@ -242,7 +242,7 @@ func (b *APIBuilder) GetHealthyRepository(ctx context.Context, name string) (rep
 			}
 
 			// Check health again
-			s, err := b.tester.TestRepository(ctx, repo)
+			s, err := repository.TestRepository(ctx, repo)
 			if err != nil {
 				return nil, err // The status
 			}
@@ -353,7 +353,7 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 		return err
 	}
 
-	list := ValidateRepository(repo)
+	list := repository.ValidateRepository(repo)
 	cfg := repo.Config()
 
 	if a.GetOperation() == admission.Update {
@@ -448,7 +448,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b, // repoGetter
 				b.resourceLister,
 				b.parsers,
-				b.tester,
+				&repository.Tester{},
 				b.jobs,
 			)
 			if err != nil {

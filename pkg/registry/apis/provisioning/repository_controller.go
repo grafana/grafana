@@ -53,7 +53,7 @@ type RepositoryController struct {
 
 	// Converts config to instance
 	repoGetter RepoGetter
-	tester     *RepositoryTester
+	tester     *repository.Tester
 
 	// To allow injection for testing.
 	processFn         func(item *queueItem) error
@@ -70,7 +70,7 @@ func NewRepositoryController(
 	repoGetter RepoGetter,
 	resourceLister resources.ResourceLister,
 	parsers *resources.ParserFactory,
-	tester *RepositoryTester,
+	tester *repository.Tester,
 	jobs jobs.JobQueue,
 ) (*RepositoryController, error) {
 	rc := &RepositoryController{
