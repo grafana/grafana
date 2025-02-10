@@ -19,13 +19,13 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
-// Remove everything this repo created
+// RemoveOrphanResourcesFinalizer removes everything this repo created
 const RemoveOrphanResourcesFinalizer = "remove-orphan-resources"
 
-// Remove the metadata for anything this repo created
+// ReleaseOrphanResourcesFinalizer removes the metadata for anything this repo created
 const ReleaseOrphanResourcesFinalizer = "release-orphan-resources"
 
-// Calls the "OnDelete" function for resource
+// CleanFinalizer calls the "OnDelete" function for resource
 const CleanFinalizer = "cleanup"
 
 type finalizer struct {
