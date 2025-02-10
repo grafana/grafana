@@ -15,16 +15,16 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
-func getCheck(obj resource.Object, checks map[string]checks.Check) (checks.Check, error) {
+func getCheck(obj resource.Object, checkMap map[string]checks.Check) (checks.Check, error) {
 	labels := obj.GetLabels()
-	objTypeLabel, ok := labels[typeLabel]
+	objTypeLabel, ok := labels[checks.TypeLabel]
 	if !ok {
 		return nil, errors.New("missing check type as label")
 	}
-	c, ok := checks[objTypeLabel]
+	c, ok := checkMap[objTypeLabel]
 	if !ok {
 		supportedTypes := ""
-		for k := range checks {
+		for k := range checkMap {
 			supportedTypes += k + ", "
 		}
 		return nil, fmt.Errorf("unknown check type %s. Supported types are: %s", objTypeLabel, supportedTypes)
@@ -34,12 +34,12 @@ func getCheck(obj resource.Object, checks map[string]checks.Check) (checks.Check
 }
 
 func getStatusAnnotation(obj resource.Object) string {
-	return obj.GetAnnotations()[statusAnnotation]
+	return obj.GetAnnotations()[checks.StatusAnnotation]
 }
 
 func setStatusAnnotation(ctx context.Context, client resource.Client, obj resource.Object, status string) error {
 	annotations := obj.GetAnnotations()
-	annotations[statusAnnotation] = status
+	annotations[checks.StatusAnnotation] = status
 	return client.PatchInto(ctx, obj.GetStaticMetadata().Identifier(), resource.PatchRequest{
 		Operations: []resource.PatchOperation{{
 			Operation: resource.PatchOpAdd,
