@@ -103,6 +103,8 @@ export function useOptions<T extends string | number>(rawOptions: AsyncOptions<T
         groupedOptions.set(option.group, [option]);
       }
     }
+
+    // Reorganize options to have groups first, then undefined group
     const reorganizeOptions = [];
     for (const [group, groupOptions] of groupedOptions) {
       if (!group) {
@@ -110,6 +112,7 @@ export function useOptions<T extends string | number>(rawOptions: AsyncOptions<T
       }
       reorganizeOptions.push(...groupOptions);
     }
+
     const undefinedGroupOptiones = groupedOptions.get(undefined);
     if (undefinedGroupOptiones) {
       reorganizeOptions.push(...undefinedGroupOptiones);
@@ -118,13 +121,10 @@ export function useOptions<T extends string | number>(rawOptions: AsyncOptions<T
   }, []);
 
   const finalOptions = useMemo(() => {
-    let currentOptions = [];
-    if (isAsync) {
-      currentOptions = addCustomValue(asyncOptions);
-    } else {
-      currentOptions = addCustomValue(rawOptions.filter(itemFilter(userTypedSearch)));
-    }
-    return reorganizeOptions(currentOptions);
+    const currentOptions = isAsync ? asyncOptions : rawOptions.filter(itemFilter(userTypedSearch));
+    const currentOptionsOrganised = reorganizeOptions(currentOptions);
+
+    return addCustomValue(currentOptionsOrganised);
   }, [isAsync, reorganizeOptions, addCustomValue, asyncOptions, rawOptions, userTypedSearch]);
 
   return { options: finalOptions, updateOptions, asyncLoading, asyncError };

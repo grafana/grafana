@@ -247,17 +247,16 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     count: options.length,
     getScrollElement: () => scrollRef.current,
     estimateSize: (index: number) => {
-      const firstGroupItem = hasOptionGroupHeader(options, index);
+      const firstGroupItem = isNewGroup(options[index], index > 0 ? options[index - 1] : undefined);
       const hasDescription = 'description' in options[index];
-      if (firstGroupItem && hasDescription) {
-        return MENU_OPTION_HEIGHT + MENU_OPTION_HEIGHT_DESCRIPTION;
-      } else if (firstGroupItem && !hasDescription) {
-        return MENU_OPTION_HEIGHT * 2;
-      } else if (!firstGroupItem && hasDescription) {
-        return MENU_OPTION_HEIGHT_DESCRIPTION;
-      } else {
-        return MENU_OPTION_HEIGHT;
+      let itemHeight = MENU_OPTION_HEIGHT;
+      if (hasDescription) {
+        itemHeight = MENU_OPTION_HEIGHT_DESCRIPTION;
       }
+      if (firstGroupItem) {
+        itemHeight += MENU_OPTION_HEIGHT;
+      }
+      return itemHeight;
     },
     overscan: VIRTUAL_OVERSCAN_ITEMS,
   };
@@ -370,9 +369,13 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
                       style={{ height: virtualRow.size, transform: `translateY(${virtualRow.start}px)` }}
                     >
                       <Stack direction="column" justifyContent="space-between" width={'100%'} height={'100%'} gap={0}>
-                        {startingNewGroup && item.group && (
+                        {startingNewGroup && (
                           <div className={styles.optionGroup}>
-                            <OptionListItem label={item.group} id={id} isGroup={true} />
+                            <OptionListItem
+                              label={item.group ?? t('combobox.group.undefined', 'No group')}
+                              id={id}
+                              isGroup={true}
+                            />
                           </div>
                         )}
                         <div
@@ -451,27 +454,16 @@ function isComboboxOptions<T extends string | number>(
   return typeof value[0] === 'object';
 }
 
-const isNewGroup = <T extends string | number>(option: ComboboxOption<T>, prevOption: ComboboxOption<T>) => {
+const isNewGroup = <T extends string | number>(option: ComboboxOption<T>, prevOption?: ComboboxOption<T>) => {
   const currentGroup = option.group;
-  let isNew = false;
-  if (prevOption && currentGroup) {
-    const lastGroup = prevOption.group;
-    if (!lastGroup) {
-      isNew = true;
-    }
-    isNew = lastGroup !== currentGroup;
-  } else if (!prevOption && currentGroup) {
-    isNew = true;
-  }
-  return isNew;
-};
 
-const hasOptionGroupHeader = <T extends string | number>(options: Array<ComboboxOption<T>>, index: number) => {
-  const group = options[index].group;
-  if (group) {
-    const firstGroupIndex = options.findIndex((option) => option.group === group);
-    return index === firstGroupIndex;
-  } else {
-    return false;
+  if (!currentGroup) {
+    return prevOption?.group ? true : false;
   }
+
+  if (!prevOption) {
+    return true;
+  }
+
+  return prevOption.group !== currentGroup;
 };
