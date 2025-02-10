@@ -16,7 +16,8 @@ import {
   ControlledCollapse,
   RadioButtonGroup,
   Stack,
-  MultiSelect,
+  MultiCombobox,
+  ComboboxOption,
 } from '@grafana/ui';
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 
@@ -31,7 +32,7 @@ const targetOptions = [
   { value: 'folder', label: 'Managed folder' },
 ];
 
-const workflowOptions: Array<{ label: string; value: WorkflowOption }> = [
+const workflowOptions: Array<ComboboxOption<WorkflowOption>> = [
   { label: 'Push', value: 'push' },
   { label: 'Branch', value: 'branch' },
 ];
@@ -186,16 +187,9 @@ export function ConfigForm({ data }: ConfigFormProps) {
               name={'workflows'}
               control={control}
               rules={{ required: 'This field is required.' }}
-              render={({ field: { ref, onChange, ...field } }) => {
-                return (
-                  <MultiSelect
-                    options={workflowOptions}
-                    onChange={(value) => onChange(value.map((v) => v.value))}
-                    placeholder={'Select workflows'}
-                    {...field}
-                  />
-                );
-              }}
+              render={({ field: { ref, ...field } }) => (
+                <MultiCombobox options={workflowOptions} placeholder={'Select workflows'} {...field} />
+              )}
             />
           </Field>
           <Field label={'Show dashboard previews'}>
