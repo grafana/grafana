@@ -76,7 +76,7 @@ The first option to configure is the name of your connection:
 ### Connection section
 
 - **Prometheus server URL** - The URL of your Prometheus server. {{< shared id="prom-data-source-url" >}}
-If your Prometheus server is local, use `http://localhost:9090`. If it's on a server within a network, this is the URL with the port where you are running Prometheus. Example: `http://prometheus.example.orgname:9090`.
+  If your Prometheus server is local, use `http://localhost:9090`. If it's on a server within a network, this is the URL with the port where you are running Prometheus. Example: `http://prometheus.example.orgname:9090`.
 
 {{< admonition type="note" >}}
 
