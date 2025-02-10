@@ -162,35 +162,7 @@ func (d *DualWriterMode3) List(ctx context.Context, options *metainternalversion
 	if err != nil {
 		log.Error(err, "unable to list object in storage")
 	}
-
-	//nolint:errcheck
-	go d.listFromLegacyStorage(ctx, options, objFromStorage)
-
 	return objFromStorage, err
-}
-
-func (d *DualWriterMode3) listFromLegacyStorage(ctx context.Context, options *metainternalversion.ListOptions, objFromStorage runtime.Object) error {
-	var method = "list"
-	log := d.Log.WithValues("resourceVersion", options.ResourceVersion, "method", method)
-	startLegacy := time.Now()
-
-	ctx, cancel := context.WithTimeoutCause(context.WithoutCancel(ctx), time.Second*10, errors.New("legacy list timeout"))
-	defer cancel()
-
-	objFromLegacy, err := d.Legacy.List(ctx, options)
-	d.recordLegacyDuration(err != nil, mode3Str, d.resource, method, startLegacy)
-	if err != nil {
-		log.Error(err, "unable to list object in legacy storage")
-		cancel()
-	}
-
-	areEqual := Compare(objFromStorage, objFromLegacy)
-	d.recordOutcome(mode3Str, getName(objFromStorage), areEqual, method)
-	if !areEqual {
-		log.WithValues("name", getName(objFromStorage)).Info("object from legacy and storage are not equal")
-	}
-
-	return err
 }
 
 func (d *DualWriterMode3) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {

@@ -143,10 +143,15 @@ export class K8sDashboardV2API
       })
     );
 
+    let dashId = 0;
+    if (v.metadata.labels?.[DeprecatedInternalId]) {
+      dashId = parseInt(v.metadata.labels[DeprecatedInternalId], 10);
+    }
+
     return {
       uid: v.metadata.name,
       version: parseInt(v.metadata.resourceVersion, 10) ?? 0,
-      id: v.metadata.labels?.[DeprecatedInternalId] ?? 0,
+      id: dashId,
       status: 'success',
       url,
       slug: '',

@@ -75,7 +75,7 @@ func (s *uidValidationStep) Description() string {
 	return "Check if the UID of each data source is valid."
 }
 
-func (s *uidValidationStep) Run(ctx context.Context, obj *advisor.CheckSpec, i any) (*advisor.CheckReportError, error) {
+func (s *uidValidationStep) Run(ctx context.Context, obj *advisor.CheckSpec, i any) (*advisor.CheckReportFailure, error) {
 	ds, ok := i.(*datasources.DataSource)
 	if !ok {
 		return nil, fmt.Errorf("invalid item type %T", i)
@@ -83,8 +83,8 @@ func (s *uidValidationStep) Run(ctx context.Context, obj *advisor.CheckSpec, i a
 	// Data source UID validation
 	err := util.ValidateUID(ds.UID)
 	if err != nil {
-		return checks.NewCheckReportError(
-			advisor.CheckReportErrorSeverityLow,
+		return checks.NewCheckReportFailure(
+			advisor.CheckReportFailureSeverityLow,
 			fmt.Sprintf("Invalid UID '%s' for data source %s", ds.UID, ds.Name),
 			"Check the <a href='https://grafana.com/docs/grafana/latest/upgrade-guide/upgrade-v11.2/#grafana-data-source-uid-format-enforcement' target=_blank>documentation</a> for more information.",
 			s.ID(),
@@ -111,7 +111,7 @@ func (s *healthCheckStep) ID() string {
 	return "health-check"
 }
 
-func (s *healthCheckStep) Run(ctx context.Context, obj *advisor.CheckSpec, i any) (*advisor.CheckReportError, error) {
+func (s *healthCheckStep) Run(ctx context.Context, obj *advisor.CheckSpec, i any) (*advisor.CheckReportFailure, error) {
 	ds, ok := i.(*datasources.DataSource)
 	if !ok {
 		return nil, fmt.Errorf("invalid item type %T", i)
@@ -132,8 +132,8 @@ func (s *healthCheckStep) Run(ctx context.Context, obj *advisor.CheckSpec, i any
 	}
 	resp, err := s.PluginClient.CheckHealth(ctx, req)
 	if err != nil || resp.Status != backend.HealthStatusOk {
-		return checks.NewCheckReportError(
-			advisor.CheckReportErrorSeverityHigh,
+		return checks.NewCheckReportFailure(
+			advisor.CheckReportFailureSeverityHigh,
 			fmt.Sprintf("Health check failed for %s", ds.Name),
 			fmt.Sprintf(
 				"Go to the <a href='/connections/datasources/edit/%s'>data source configuration</a>"+
