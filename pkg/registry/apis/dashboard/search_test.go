@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -31,7 +32,7 @@ func TestSearchFallback(t *testing.T) {
 				"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode0},
 			},
 		}
-		searchHandler := NewSearchHandler(mockClient, tracing.NewNoopTracerService(), cfg, mockLegacyClient)
+		searchHandler := NewSearchHandler(mockClient, tracing.NewNoopTracerService(), cfg, mockLegacyClient, nil)
 
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/search", nil)
@@ -57,7 +58,7 @@ func TestSearchFallback(t *testing.T) {
 				"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode1},
 			},
 		}
-		searchHandler := NewSearchHandler(mockClient, tracing.NewNoopTracerService(), cfg, mockLegacyClient)
+		searchHandler := NewSearchHandler(mockClient, tracing.NewNoopTracerService(), cfg, mockLegacyClient, nil)
 
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/search", nil)
@@ -83,7 +84,7 @@ func TestSearchFallback(t *testing.T) {
 				"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode2},
 			},
 		}
-		searchHandler := NewSearchHandler(mockClient, tracing.NewNoopTracerService(), cfg, mockLegacyClient)
+		searchHandler := NewSearchHandler(mockClient, tracing.NewNoopTracerService(), cfg, mockLegacyClient, nil)
 
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/search", nil)
@@ -109,7 +110,7 @@ func TestSearchFallback(t *testing.T) {
 				"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode3},
 			},
 		}
-		searchHandler := NewSearchHandler(mockClient, tracing.NewNoopTracerService(), cfg, mockLegacyClient)
+		searchHandler := NewSearchHandler(mockClient, tracing.NewNoopTracerService(), cfg, mockLegacyClient, nil)
 
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/search", nil)
@@ -135,7 +136,7 @@ func TestSearchFallback(t *testing.T) {
 				"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode4},
 			},
 		}
-		searchHandler := NewSearchHandler(mockClient, tracing.NewNoopTracerService(), cfg, mockLegacyClient)
+		searchHandler := NewSearchHandler(mockClient, tracing.NewNoopTracerService(), cfg, mockLegacyClient, nil)
 
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/search", nil)
@@ -161,7 +162,7 @@ func TestSearchFallback(t *testing.T) {
 				"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode5},
 			},
 		}
-		searchHandler := NewSearchHandler(mockClient, tracing.NewNoopTracerService(), cfg, mockLegacyClient)
+		searchHandler := NewSearchHandler(mockClient, tracing.NewNoopTracerService(), cfg, mockLegacyClient, nil)
 
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/search", nil)
@@ -184,11 +185,13 @@ func TestSearchHandler(t *testing.T) {
 		// Create a mock client
 		mockClient := &MockClient{}
 
+		features := featuremgmt.WithFeatures()
 		// Initialize the search handler with the mock client
 		searchHandler := SearchHandler{
-			log:    log.New("test", "test"),
-			client: mockClient,
-			tracer: tracing.NewNoopTracerService(),
+			log:      log.New("test", "test"),
+			client:   mockClient,
+			tracer:   tracing.NewNoopTracerService(),
+			features: features,
 		}
 
 		rr := httptest.NewRecorder()
@@ -211,11 +214,13 @@ func TestSearchHandler(t *testing.T) {
 		// Create a mock client
 		mockClient := &MockClient{}
 
+		features := featuremgmt.WithFeatures()
 		// Initialize the search handler with the mock client
 		searchHandler := SearchHandler{
-			log:    log.New("test", "test"),
-			client: mockClient,
-			tracer: tracing.NewNoopTracerService(),
+			log:      log.New("test", "test"),
+			client:   mockClient,
+			tracer:   tracing.NewNoopTracerService(),
+			features: features,
 		}
 
 		rr := httptest.NewRecorder()
@@ -238,11 +243,13 @@ func TestSearchHandler(t *testing.T) {
 		// Create a mock client
 		mockClient := &MockClient{}
 
+		features := featuremgmt.WithFeatures()
 		// Initialize the search handler with the mock client
 		searchHandler := SearchHandler{
-			log:    log.New("test", "test"),
-			client: mockClient,
-			tracer: tracing.NewNoopTracerService(),
+			log:      log.New("test", "test"),
+			client:   mockClient,
+			tracer:   tracing.NewNoopTracerService(),
+			features: features,
 		}
 
 		rr := httptest.NewRecorder()
@@ -288,11 +295,13 @@ func TestSearchHandler(t *testing.T) {
 			MockResponses: []*resource.ResourceSearchResponse{mockResponse},
 		}
 
+		features := featuremgmt.WithFeatures()
 		// Initialize the search handler with the mock client
 		searchHandler := SearchHandler{
-			log:    log.New("test", "test"),
-			client: mockClient,
-			tracer: tracing.NewNoopTracerService(),
+			log:      log.New("test", "test"),
+			client:   mockClient,
+			tracer:   tracing.NewNoopTracerService(),
+			features: features,
 		}
 
 		rr := httptest.NewRecorder()
@@ -323,6 +332,26 @@ func TestSearchHandler(t *testing.T) {
 }
 
 func TestSearchHandlerSharedDashboards(t *testing.T) {
+	t.Run("should bail out if FlagUnifiedStorageSearchPermissionFiltering is not enabled globally", func(t *testing.T) {
+		mockClient := &MockClient{}
+
+		features := featuremgmt.WithFeatures()
+		searchHandler := SearchHandler{
+			log:      log.New("test", "test"),
+			client:   mockClient,
+			tracer:   tracing.NewNoopTracerService(),
+			features: features,
+		}
+		rr := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", "/search?folder=sharedwithme", nil)
+		req.Header.Add("content-type", "application/json")
+		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test"}))
+
+		searchHandler.DoSearch(rr, req)
+
+		assert.Equal(t, mockClient.CallCount, 1)
+	})
+
 	t.Run("should return the dashboards shared with the user", func(t *testing.T) {
 		// dashboardSearchRequest
 		mockResponse1 := &resource.ResourceSearchResponse{
@@ -378,10 +407,12 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 			MockResponses: []*resource.ResourceSearchResponse{mockResponse1, mockResponse2},
 		}
 
+		features := featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorageSearchPermissionFiltering)
 		searchHandler := SearchHandler{
-			log:    log.New("test", "test"),
-			client: mockClient,
-			tracer: tracing.NewNoopTracerService(),
+			log:      log.New("test", "test"),
+			client:   mockClient,
+			tracer:   tracing.NewNoopTracerService(),
+			features: features,
 		}
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/search?folder=sharedwithme", nil)

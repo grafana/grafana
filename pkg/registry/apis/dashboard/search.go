@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashboardsearch "github.com/grafana/grafana/pkg/services/dashboards/service/search"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/util/errhttp"
@@ -33,17 +34,19 @@ import (
 
 // The DTO returns everything the UI needs in a single request
 type SearchHandler struct {
-	log    log.Logger
-	client resource.ResourceIndexClient
-	tracer trace.Tracer
+	log      log.Logger
+	client   resource.ResourceIndexClient
+	tracer   trace.Tracer
+	features featuremgmt.FeatureToggles
 }
 
-func NewSearchHandler(client resource.ResourceIndexClient, tracer trace.Tracer, cfg *setting.Cfg, legacyDashboardSearcher resource.ResourceIndexClient) *SearchHandler {
+func NewSearchHandler(client resource.ResourceIndexClient, tracer trace.Tracer, cfg *setting.Cfg, legacyDashboardSearcher resource.ResourceIndexClient, features featuremgmt.FeatureToggles) *SearchHandler {
 	searchClient := resource.NewSearchClient(cfg, setting.UnifiedStorageConfigKeyDashboard, client, legacyDashboardSearcher)
 	return &SearchHandler{
-		client: searchClient,
-		log:    log.New("grafana-apiserver.dashboards.search"),
-		tracer: tracer,
+		client:   searchClient,
+		log:      log.New("grafana-apiserver.dashboards.search"),
+		tracer:   tracer,
+		features: features,
 	}
 }
 
@@ -390,7 +393,10 @@ func asResourceKey(ns string, k string) (*resource.ResourceKey, error) {
 }
 
 func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, user identity.Requester) ([]string, error) {
-	// TODO skip if permission ff is not enabled
+	if !s.features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageSearchPermissionFiltering) {
+		return []string{}, nil
+	}
+
 	// gets dashboards that the user was granted read access to
 	permissions := user.GetPermissions()
 	dashboardPermissions := permissions[dashboards.ActionDashboardsRead]
