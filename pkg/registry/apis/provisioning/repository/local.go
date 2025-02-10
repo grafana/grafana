@@ -350,21 +350,25 @@ func (r *localRepository) Update(ctx context.Context, path string, ref string, d
 	return os.WriteFile(path, data, 0600)
 }
 
-func (r *localRepository) Write(ctx context.Context, path, ref string, data []byte, comment string) error {
+func (r *localRepository) Write(ctx context.Context, fpath, ref string, data []byte, comment string) error {
 	if err := r.validateRequest(ref); err != nil {
 		return err
 	}
 
-	path, err := safepath.Join(r.path, path)
+	fpath, err := safepath.Join(r.path, fpath)
 	if err != nil {
 		return fmt.Errorf("join path: %w", err)
 	}
 
-	if strings.HasSuffix(path, "/") {
-		return os.MkdirAll(path, 0600)
+	if strings.HasSuffix(fpath, "/") {
+		return os.MkdirAll(fpath, 0700)
 	}
 
-	return os.WriteFile(path, data, 0600)
+	if err := os.MkdirAll(path.Dir(fpath), 0700); err != nil {
+		return apierrors.NewInternalError(fmt.Errorf("failed to create path: %w", err))
+	}
+
+	return os.WriteFile(fpath, data, 0600)
 }
 
 func (r *localRepository) Delete(ctx context.Context, path string, ref string, comment string) error {
