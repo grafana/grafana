@@ -6,7 +6,7 @@ import { Button } from '@grafana/ui';
 
 import { Loader } from '../plugins/admin/components/Loader';
 
-import { Repository, useCreateRepositoryTestMutation, useListRepositoryQuery } from './api';
+import { Repository, useCreateRepositoryTestMutation } from './api';
 
 interface Props {
   repository: Repository;

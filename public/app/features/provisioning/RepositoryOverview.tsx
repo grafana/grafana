@@ -1,4 +1,4 @@
-import { Stack, Button, Text, LinkButton, Card, TextLink } from '@grafana/ui';
+import { Stack, Text, LinkButton, Card, TextLink } from '@grafana/ui';
 
 import { CheckRepository } from './CheckRepository';
 import { RepositoryHealth } from './RepositoryHealth';
@@ -36,19 +36,26 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
             )}
           </Stack>
         </Card.Meta>
+        <Card.Actions>
+          <LinkButton fill="outline" size="md" href={getFolderURL(repo)}>
+            Containing Folder
+          </LinkButton>
+        </Card.Actions>
       </Card>
       <Card>
         <Card.Heading>Resources</Card.Heading>
         <Card.Meta>
-          {repo.status?.stats?.length && (
-            <Stack>
-              {repo.status.stats.map((v, index) => (
-                <LinkButton key={index} fill="outline" size="md" href={getListURL(repo, v)}>
-                  {v.count} {v.resource}
-                </LinkButton>
-              ))}
-            </Stack>
-          )}
+          <Stack>
+            {repo.status?.stats?.length && (
+              <ul style={{ listStyle: 'none' }}>
+                {repo.status.stats.map((v, index) => (
+                  <li key={index}>
+                    {v.count} {v.resource}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Stack>
         </Card.Meta>
       </Card>
       <Card>
@@ -111,11 +118,7 @@ function getWebhookURL(repo: Repository) {
   return undefined;
 }
 
-// This should return a URL in the UI that will show the selected values
-function getListURL(repo: Repository, stats: ResourceCount): string {
-  if (stats.resource === 'playlists') {
-    return '/playlists';
-  }
+function getFolderURL(repo: Repository) {
   if (repo.spec?.sync.target === 'folder') {
     return `/dashboards/f/${repo.metadata?.name}`;
   }
