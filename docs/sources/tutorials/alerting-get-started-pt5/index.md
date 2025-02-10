@@ -41,6 +41,7 @@ In this tutorial you will learn how to:
 - **Interactive learning environment**
 
   - Alternatively, you can [try out this example in our interactive learning environment](https://killercoda.com/grafana-labs/course/grafana/alerting-get-started-pt5/). It’s a fully configured environment with all the dependencies already installed.
+
 - **Grafana OSS**
   - If you opt to run a Grafana stack locally, ensure you have the following applications installed:
     - Docker Compose (included in Docker for Desktop for macOS and Windows)
@@ -54,41 +55,43 @@ To demonstrate the observation of data using the Grafana stack, download and run
 
 1. Clone the [tutorial environment repository](https://github.com/tonypowa/grafana-prometheus-alerting-demo.git).
 
-    ```bash
-    git clone https://github.com/tonypowa/grafana-prometheus-alerting-demo.git
-    ```
+   ```bash
+   git clone https://github.com/tonypowa/grafana-prometheus-alerting-demo.git
+   ```
 
 1. Change to the directory where you cloned the repository:
 
-    ```bash
-    cd grafana-prometheus-alerting-demo
-    ```
-1. Build the Grafana stack:
-    ```bash
-    docker compose build
-    ```
-1. Bring up the containers:
-    ```bash
-    docker compose up –d
-    ```
+   ```bash
+   cd grafana-prometheus-alerting-demo
+   ```
 
-    The first time you run `docker compose up -d`, Docker downloads all the necessary resources for the tutorial. This might take a few minutes, depending on your internet connection.
+1. Build the Grafana stack:
+   ```bash
+   docker compose build
+   ```
+1. Bring up the containers:
+
+   ```bash
+   docker compose up –d
+   ```
+
+   The first time you run `docker compose up -d`, Docker downloads all the necessary resources for the tutorial. This might take a few minutes, depending on your internet connection.
 
  <!-- INTERACTIVE ignore START -->
 
-   {{< admonition type="note" >}}
-   If you already have Grafana, Loki, or Prometheus running on your system, you might see errors, because the Docker image is trying to use ports that your local installations are already using. If this is the case, stop the services, then run the command again.
-   {{< /admonition >}}
+{{< admonition type="note" >}}
+If you already have Grafana, Loki, or Prometheus running on your system, you might see errors, because the Docker image is trying to use ports that your local installations are already using. If this is the case, stop the services, then run the command again.
+{{< /admonition >}}
 
    <!-- INTERACTIVE ignore END -->
 
-   {{< docs/ignore >}}
+{{< docs/ignore >}}
 
-   NOTE:
+NOTE:
 
-   If you already have Grafana, Loki, or Prometheus running on your system, you might see errors, because the Docker image is trying to use ports that your local installations are already using. If this is the case, stop the services, then run the command again.
+If you already have Grafana, Loki, or Prometheus running on your system, you might see errors, because the Docker image is trying to use ports that your local installations are already using. If this is the case, stop the services, then run the command again.
 
-   {{< /docs/ignore >}}
+{{< /docs/ignore >}}
 
 <!-- INTERACTIVE page step1.md END -->
 <!-- INTERACTIVE page step2.md START -->
@@ -123,10 +126,11 @@ To keep track of these metrics and understand system behavior across different e
 
 The time-series visualization supports alert rules to provide more context in the form of annotations and alert rule state. Follow these steps to create a visualization to monitor the application’s metrics.
 
-1. Log in to Grafana:
+1.  Log in to Grafana:
 
     Navigate to [http://localhost:3000](http://localhost:3000), where Grafana should be running.
-1. Create a time series panel:
+
+1.  Create a time series panel:
 
     - Navigate to **Dashboards**.
     - Click **New**.
@@ -134,7 +138,8 @@ The time-series visualization supports alert rules to provide more context in th
     - Click **+ Add visualization**.
     - Select **Prometheus** as the data source (provided with the demo).
     - Enter a title for your panel, e.g., **CPU and Memory Usage**.
-1. Add queries for metrics:
+
+1.  Add queries for metrics:
 
     - In the query area, copy and paste the following PromQL query:
 
@@ -142,26 +147,26 @@ The time-series visualization supports alert rules to provide more context in th
     flask_app_cpu_usage{environment="prod"}
     ```
 
-     - Click **Run queries**.
+    - Click **Run queries**.
 
     This query should display the simulated CPU usage data in the **prod** environment.
 
-1. Add memory usage query:
+1.  Add memory usage query:
 
     - Click **+ Add query**.
-    - In the query area, paste the following 
-    PromQL query:
+    - In the query area, paste the following
+      PromQL query:
 
-        ```promql
-        flask_app_memory_usage{environment="prod"}
-        ```
+          ```promql
+          flask_app_memory_usage{environment="prod"}
+          ```
 
-        {{< figure src="/media/docs/alerting/time-series_cpu_mem_usage_metrics.png" max-width="1200px" caption="Time-series panel displaying CPU and memory usage metrics in production." >}}
+          {{< figure src="/media/docs/alerting/time-series_cpu_mem_usage_metrics.png" max-width="1200px" caption="Time-series panel displaying CPU and memory usage metrics in production." >}}
 
-        Both metrics return labels that we’ll use later to link alert instances with the appropriate routing. These labels help define how alerts are routed based on their environment or other criteria.
+          Both metrics return labels that we’ll use later to link alert instances with the appropriate routing. These labels help define how alerts are routed based on their environment or other criteria.
 
-1. Click Save dashboard.
-We have our time-series panel ready. Feel free to combine metrics with labels such as `environment = “staging”`.
+1.  Click Save dashboard.
+    We have our time-series panel ready. Feel free to combine metrics with labels such as `environment = “staging”`.
 
 <!-- INTERACTIVE page step3.md END -->
 <!-- INTERACTIVE page step4.md START -->
@@ -176,17 +181,17 @@ Notification policies route alert instances to contact points via label matchers
 
 1. Add a child policy:
 
-    - In the **Default policy**, click **+ New child policy**.
-    - **Label**: `environment`.
-    - **Operator**: `=`.
-    - **Value**: `prod`.
-    - This label matches alert rules where the environment label is `prod`.
+   - In the **Default policy**, click **+ New child policy**.
+   - **Label**: `environment`.
+   - **Operator**: `=`.
+   - **Value**: `prod`.
+   - This label matches alert rules where the environment label is `prod`.
 
 1. Choose a **contact point**:
 
    - If you don’t have any contact points, add a [Contact point](https://grafana.com/docs/grafana/latest/alerting/configure-notifications/manage-contact-points/#add-a-contact-point).
 
-    For a quick test, you can use a public webhook from [webhook.site](https://webhook.site/) to capture and inspect alert notifications. If you choose this method, select **Webhook** from the drop-down menu in contact points.
+   For a quick test, you can use a public webhook from [webhook.site](https://webhook.site/) to capture and inspect alert notifications. If you choose this method, select **Webhook** from the drop-down menu in contact points.
 
 1. Enable continue matching:
 
@@ -194,9 +199,9 @@ Notification policies route alert instances to contact points via label matchers
 
 1. Save and repeat
 
-    - Create another child policy by following the same steps.
-    - Use `environment = staging` as the label/value pair.
-    - Feel free to use a different contact point.
+   - Create another child policy by following the same steps.
+   - Use `environment = staging` as the label/value pair.
+   - Feel free to use a different contact point.
 
 Now that the labels are defined, we can create alert rules for CPU and memory metrics. These alert rules will use the labels from the collected and stored metrics in Prometheus.
 
@@ -214,47 +219,48 @@ Follow these steps to manually create alert rules and link them to a visualizati
 
 ### Enter alert rule name
 
-Make it short and descriptive as this will appear in your alert notification. For instance,  `CPU usage` .
+Make it short and descriptive as this will appear in your alert notification. For instance, `CPU usage` .
 
 ### Define query and alert condition
 
 1. Select **Prometheus** data source from the drop-down menu.
 1. In the query section, enter the following query:
 
-    ** switch to Code mode if not already selected **
+   ** switch to Code mode if not already selected **
 
-    ``` 
-    flask_app_cpu_usage{}
-    ```
+   ```
+   flask_app_cpu_usage{}
+   ```
+
 1. **Alert condition** section:
 
-    - Enter 75 as the value for **WHEN QUERY IS ABOVE** to set the threshold for the alert.
-    - Click **Preview alert rule condition** to run the queries.
+   - Enter 75 as the value for **WHEN QUERY IS ABOVE** to set the threshold for the alert.
+   - Click **Preview alert rule condition** to run the queries.
 
-    {{< figure src="/media/docs/alerting/promql-returning-metrics.png" max-width="1200px" caption="Preview of a query returning alert instances in Grafana." >}}
-	
+   {{< figure src="/media/docs/alerting/promql-returning-metrics.png" max-width="1200px" caption="Preview of a query returning alert instances in Grafana." >}}
 
-    Among the labels returned for flask_app_cpu_usage, the environment label is particularly important, as it enables dynamic alert routing based on the environment value, ensuring the right team receives the relevant notifications.
+   Among the labels returned for flask_app_cpu_usage, the environment label is particularly important, as it enables dynamic alert routing based on the environment value, ensuring the right team receives the relevant notifications.
 
 ### Add folders and labels
 
 In this section we add a [templated label based on query value](https://grafana.com/docs/grafana/latest/alerting/alerting-rules/templates/examples/#based-on-query-value) to map to the notification policies.
 
-1. In **Folder**, click *+ New folder* and enter a name. For example: `App metrics` . This folder contains our alerts.
+1. In **Folder**, click _+ New folder_ and enter a name. For example: `App metrics` . This folder contains our alerts.
 1. Click **+ Add labels**.
 1. **Key** field: `environment` .
 1. In the **value** field copy in the following template:
 
-    ``` go
-    {{- if eq $labels.environment "prod" -}}
-    production
-    {{- else if eq $labels.environment "staging" -}}
-    staging
-    {{- else -}}
-    development
-    {{- end -}}
-    ```
-    In this context, the template is used to route alert notifications based on the `environment` label. When a metric like CPU usage exceeds a threshold, the template checks the environment (e.g., `prod`, `staging`, or any other value). It then generates a label based on query value (e.g., _production_, _staging_, or _development_). This label is used in the alert notification policy to route alerts to the appropriate team, so that notifications are directed to the right group, making the process more efficient and avoiding unnecessary overlap.
+   ```go
+   {{- if eq $labels.environment "prod" -}}
+   production
+   {{- else if eq $labels.environment "staging" -}}
+   staging
+   {{- else -}}
+   development
+   {{- end -}}
+   ```
+
+   In this context, the template is used to route alert notifications based on the `environment` label. When a metric like CPU usage exceeds a threshold, the template checks the environment (e.g., `prod`, `staging`, or any other value). It then generates a label based on query value (e.g., _production_, _staging_, or _development_). This label is used in the alert notification policy to route alerts to the appropriate team, so that notifications are directed to the right group, making the process more efficient and avoiding unnecessary overlap.
 
 ### Set evaluation behaviour
 
@@ -265,13 +271,14 @@ In this section we add a [templated label based on query value](https://grafana.
 ### Configure notifications
 
 Select who should receive a notification when an alert rule fires.
+
 1. Toggle the **Advance options** button.
 1. Click **Preview routing**.
-	The preview should display which firing alerts are routed to contact points based on notification policies that match the `environment` label.
+   The preview should display which firing alerts are routed to contact points based on notification policies that match the `environment` label.
 
-    {{< figure src="/media/docs/alerting/routing-preview-cpu-metrics.png" max-width="1200px" caption="Notification policies matched by the environment label matcher." >}}
+   {{< figure src="/media/docs/alerting/routing-preview-cpu-metrics.png" max-width="1200px" caption="Notification policies matched by the environment label matcher." >}}
 
-    The environment label matcher should map to the notification policies created earlier. This makes sure that firing alert instances are routed to the appropriate contact points associated with each policy.
+   The environment label matcher should map to the notification policies created earlier. This makes sure that firing alert instances are routed to the appropriate contact points associated with each policy.
 
 ### Configure notification message
 
@@ -284,7 +291,7 @@ Link your dashboard panel to this alert rule to display alert annotations in you
 ### Create a second alert rule for memory usage
 
 1. Duplicate the existing alert rule (**More > Duplicate**), or create a new alert rule for memory usage, defining a threshold condition (e.g., memory usage exceeding `60%`).
-1. Query: ```flask_app_memory_usage{}```
+1. Query: `flask_app_memory_usage{}`
 1. Link to the same visualization to obtain memory usage annotations whenever the alert rule triggers or resolves.
 
 Now that the CPU and memory alert rules are set up, they are linked to the notification policies through the custom label matcher we added. The value of the label dynamically changes based on the environment template, using $labels.environment. This ensures that the label value will be set to production, staging, or development, depending on the environment.
@@ -298,7 +305,7 @@ Check how your dashboard looks now that both alerts have been linked to your das
 
 {{< figure src="/media/docs/alerting/time-series_cpu_with_alert.png" max-width="1200px" caption="Time series panel displaying health indicators and annotations." >}}
 
-Once the alert rules are created, they should appear as **health indicators** (colored heart icons: red heart when the alert is in Alerting state, and green heart when in Normal state.) on the linked panel. In addition, the annotations include helpful context, such as the time the alert was triggered.
+After the alert rules are created, they should appear as **health indicators** (colored heart icons: red heart when the alert is in Alerting state, and green heart when in Normal state.) on the linked panel. In addition, the annotations include helpful context, such as the time the alert was triggered.
 
 <!-- INTERACTIVE page step6.md END -->
 <!-- INTERACTIVE page step7.md START -->
@@ -310,16 +317,16 @@ Now that we've set up notification policies, we can demonstrate how to mute aler
 Mute timings are useful for suppressing alerts with certain labels during maintenance windows or weekends.
 
 1. Navigate to **Alerts & IRM > Alerting > Notification Policies**.
-    - Enter a name. E.g., `Planned downtime` , or `Non-business hours`.
-    - Select **Sat** and **Sun**, to apply the mute timing to all Saturdays and Sundays.
-    - Click **Save mute timing**.
+   - Enter a name. E.g., `Planned downtime` , or `Non-business hours`.
+   - Select **Sat** and **Sun**, to apply the mute timing to all Saturdays and Sundays.
+   - Click **Save mute timing**.
 1. Add mute timing to the desired policy:
-    - Go to the notification policy that routes instances with the `staging` label.
-    - Select **More > Edit**.
-    - Choose the mute timing from the drop-down menu
-    - Click **Update policy**.
+   - Go to the notification policy that routes instances with the `staging` label.
+   - Select **More > Edit**.
+   - Choose the mute timing from the drop-down menu
+   - Click **Update policy**.
 
-This mute timing will apply to any alerts from the staging environment that trigger on Saturdays and Sundays. 
+This mute timing will apply to any alerts from the staging environment that trigger on Saturdays and Sundays.
 
 <!-- INTERACTIVE page step7.md END -->
 <!-- INTERACTIVE page finish.md START -->
@@ -332,8 +339,8 @@ By using notification policies, you can route alerts based on query values, dire
 
 Explore related topics covered in this tutorial:
 
-- Understand how alert routing works in [Get started with Grafana Alerting - Part 2](https://grafana.com/tutorials/alerting-get-started-pt2/). 
-- Learn how templating works in [Get started with Grafana Alerting - Part 4](https://grafana.com/tutorials/alerting-get-started-pt4/).  
+- Understand how alert routing works in [Get started with Grafana Alerting - Part 2](https://grafana.com/tutorials/alerting-get-started-pt2/).
+- Learn how templating works in [Get started with Grafana Alerting - Part 4](https://grafana.com/tutorials/alerting-get-started-pt4/).
   - More [examples on templating labels](https://grafana.com/docs/grafana/latest/alerting/alerting-rules/templates/examples/).
 
 <!-- INTERACTIVE page finish.md END -->
