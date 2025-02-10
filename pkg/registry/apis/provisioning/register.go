@@ -29,7 +29,6 @@ import (
 	clientset "github.com/grafana/grafana/pkg/generated/clientset/versioned"
 	informers "github.com/grafana/grafana/pkg/generated/informers/externalversions"
 	listers "github.com/grafana/grafana/pkg/generated/listers/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/auth"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/export"
@@ -65,7 +64,6 @@ type APIBuilder struct {
 	client            *resources.ClientFactory
 	parsers           *resources.ParserFactory
 	ghFactory         github.ClientFactory
-	identities        auth.BackgroundIdentityService
 	jobs              jobs.JobQueue
 	tester            *RepositoryTester
 	resourceLister    resources.ResourceLister
@@ -79,7 +77,6 @@ func NewAPIBuilder(
 	local *repository.LocalFolderResolver,
 	urlProvider func(namespace string) string,
 	webhookSecretKey string,
-	identities auth.BackgroundIdentityService,
 	features featuremgmt.FeatureToggles,
 	render rendering.Service,
 	index resource.RepositoryIndexClient,
@@ -87,14 +84,13 @@ func NewAPIBuilder(
 	configProvider apiserver.RestConfigProvider,
 	ghFactory github.ClientFactory,
 ) *APIBuilder {
-	clientFactory := resources.NewFactory(identities)
+	clientFactory := resources.NewFactory(configProvider)
 	return &APIBuilder{
 		urlProvider:       urlProvider,
 		localFileResolver: local,
 		webhookSecretKey:  webhookSecretKey,
 		features:          features,
 		ghFactory:         ghFactory,
-		identities:        identities,
 		client:            clientFactory,
 		parsers: &resources.ParserFactory{
 			Client: clientFactory,
@@ -113,7 +109,6 @@ func RegisterAPIService(
 	features featuremgmt.FeatureToggles,
 	apiregistration builder.APIRegistrar,
 	reg prometheus.Registerer,
-	identities auth.BackgroundIdentityService,
 	render rendering.Service,
 	client resource.ResourceClient, // implements resource.RepositoryClient
 	configProvider apiserver.RestConfigProvider,
@@ -138,7 +133,7 @@ func RegisterAPIService(
 		return cfg.AppURL
 	}
 
-	builder := NewAPIBuilder(folderResolver, urlProvider, cfg.SecretKey, identities, features, render, client, store, configProvider, ghFactory)
+	builder := NewAPIBuilder(folderResolver, urlProvider, cfg.SecretKey, features, render, client, store, configProvider, ghFactory)
 	apiregistration.RegisterAPI(builder)
 	return builder, nil
 }
@@ -184,7 +179,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 		return fmt.Errorf("failed to create repository storage: %w", err)
 	}
 	b.getter = repositoryStorage
-	b.jobs = jobs.NewJobQueue(50, b, b.identities) // in memory for now
+	b.jobs = jobs.NewJobQueue(50, b) // in memory for now
 
 	repositoryStatusStorage := grafanaregistry.NewRegistryStatusStore(opts.Scheme, repositoryStorage)
 
@@ -194,7 +189,6 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	storage[provisioning.RepositoryResourceInfo.StoragePath("status")] = repositoryStatusStorage
 	storage[provisioning.RepositoryResourceInfo.StoragePath("webhook")] = &webhookConnector{
 		getter: b,
-		client: b.identities,
 		jobs:   b.jobs,
 	}
 	storage[provisioning.RepositoryResourceInfo.StoragePath("test")] = &testConnector{
@@ -243,11 +237,10 @@ func (b *APIBuilder) GetHealthyRepository(ctx context.Context, name string) (rep
 	status := repo.Config().Status.Health
 	if !status.Healthy {
 		if timeSince(status.Checked) > time.Second*25 {
-			id, err := b.identities.WorkerIdentity(ctx, repo.Config().Namespace)
+			ctx, _, err = identity.WithProvisioningIdentitiy(ctx, repo.Config().Namespace)
 			if err != nil {
 				return nil, err // The status
 			}
-			ctx := identity.WithRequester(ctx, id)
 
 			// Check health again
 			s, err := repository.TestRepository(ctx, repo)
@@ -454,7 +447,6 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b, // repoGetter
 				b.resourceLister,
 				b.parsers,
-				b.identities,
 				&repository.Tester{},
 				b.jobs,
 			)
