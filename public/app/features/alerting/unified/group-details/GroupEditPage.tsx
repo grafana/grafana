@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import {
   DragDropContext,
   Draggable,
@@ -8,13 +8,15 @@ import {
   DroppableProvided,
 } from '@hello-pangea/dnd';
 import { produce } from 'immer';
-import { useCallback, useMemo, useState } from 'react';
+import React, { forwardRef, useCallback, useMemo, useState } from 'react';
+import { SubmitHandler, useForm } from 'react-hook-form';
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
-import { Alert, Badge, Field, Icon, Input, Stack, useStyles2, withErrorBoundary } from '@grafana/ui';
+import { locationService } from '@grafana/runtime';
+import { Alert, Badge, Button, Field, Icon, Input, Label, Stack, useStyles2, withErrorBoundary } from '@grafana/ui';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
-import { GrafanaRulesSourceSymbol } from 'app/types/unified-alerting';
+import { GrafanaRulesSourceSymbol, RuleGroupIdentifierV2 } from 'app/types/unified-alerting';
 import { RulerRuleDTO, RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../api/alertRuleApi';
@@ -35,30 +37,72 @@ import {
 
 interface GroupEditFormProps {
   rulerGroup: RulerRuleGroupDTO;
+  groupIdentifier: RuleGroupIdentifierV2;
 }
 
-function GroupEditForm({ rulerGroup }: GroupEditFormProps) {
-  const groupInterval = rulerGroup?.interval ?? DEFAULT_GROUP_EVALUATION_INTERVAL;
+interface GroupEditFormData {
+  name: string;
+  interval: string;
+  namespace?: string;
+}
+
+function GroupEditForm({ rulerGroup, groupIdentifier }: GroupEditFormProps) {
+  const groupIntervalOrDefault = rulerGroup?.interval ?? DEFAULT_GROUP_EVALUATION_INTERVAL;
+  const [operations, setOperations] = useState<SwapOperation[]>([]);
+
+  const {
+    register,
+    handleSubmit,
+    formState: { dirtyFields },
+  } = useForm<GroupEditFormData>({
+    defaultValues: {
+      name: rulerGroup.name,
+      interval: rulerGroup.interval,
+      namespace: groupIdentifier.groupOrigin === 'datasource' ? groupIdentifier.namespace.name : undefined,
+    },
+  });
+
+  const onSwap = useCallback((swapOperation: SwapOperation) => {
+    setOperations((prevOperations) => {
+      return produce(prevOperations, (draft) => {
+        draft.push(swapOperation);
+      });
+    });
+  }, []);
+
+  const onSubmit: SubmitHandler<GroupEditFormData> = (data) => {
+    console.log(dirtyFields);
+    console.log(data);
+    console.log(operations);
+  };
 
   return (
-    <div>
-      {rulerGroup && <div>{rulerGroup.interval ?? '<Not defined>'}</div>}
-      <Field label="Interval" description="The interval at which the group is evaluated">
-        <Input id="interval" defaultValue={groupInterval} />
+    <form onSubmit={handleSubmit(onSubmit)} id="group-edit-form">
+      {groupIdentifier.groupOrigin === 'datasource' && (
+        <Field label="Namespace">
+          <Input id="namespace" {...register('namespace')} />
+        </Field>
+      )}
+      <Field label="Evaluation group name">
+        <Input id="group-name" {...register('name')} />
       </Field>
-      {rulerGroup && <DraggableRulesTable rules={rulerGroup.rules} groupInterval={groupInterval} />}
-    </div>
+      <Field label="Evaluation interval" description="How often is the group evaluated">
+        <Input id="interval" {...register('interval')} />
+      </Field>
+      <DraggableRulesTable rules={rulerGroup.rules} groupInterval={groupIntervalOrDefault} onSwap={onSwap} />
+    </form>
   );
 }
 
 interface DraggableRulesTableProps {
   rules: RulerRuleDTO[];
   groupInterval: string;
+  onSwap: (swapOperation: SwapOperation) => void;
 }
 
-function DraggableRulesTable({ rules, groupInterval }: DraggableRulesTableProps) {
+function DraggableRulesTable({ rules, groupInterval, onSwap }: DraggableRulesTableProps) {
+  const styles = useStyles2(getStyles);
   const [rulesList, setRulesList] = useState<RulerRuleDTO[]>(rules);
-  const [operations, setOperations] = useState<Array<[number, number]>>([]);
 
   const onDragEnd = useCallback(
     (result: DropResult) => {
@@ -69,12 +113,7 @@ function DraggableRulesTable({ rules, groupInterval }: DraggableRulesTableProps)
 
       const swapOperation: SwapOperation = [result.source.index, result.destination.index];
 
-      // add old index and new index to the modifications object
-      setOperations(
-        produce(operations, (draft) => {
-          draft.push(swapOperation);
-        })
-      );
+      onSwap(swapOperation);
 
       // re-order the rules list for the UI rendering
       const newOrderedRules = produce(rulesList, (draft) => {
@@ -82,48 +121,54 @@ function DraggableRulesTable({ rules, groupInterval }: DraggableRulesTableProps)
       });
       setRulesList(newOrderedRules);
     },
-    [rulesList, operations]
+    [rulesList, onSwap]
   );
 
   const rulesWithUID = useMemo(() => {
-    return rulesList.map((rulerRule) => ({
-      ...rulerRule,
-      uid: hashRulerRule(rulerRule),
-    }));
+    return rulesList.map((rulerRule) => ({ ...rulerRule, uid: hashRulerRule(rulerRule) }));
   }, [rulesList]);
 
   return (
-    <DragDropContext onDragEnd={onDragEnd}>
-      <Droppable
-        droppableId="alert-list"
-        mode="standard"
-        renderClone={(provided, _snapshot, rubric) => (
-          <ListItem
-            provided={provided}
-            rule={rulesWithUID[rubric.source.index]}
-            isClone
-            groupInterval={groupInterval}
-          />
-        )}
-      >
-        {(droppableProvided: DroppableProvided) => (
-          <Stack direction="column" gap={0} ref={droppableProvided.innerRef} {...droppableProvided.droppableProps}>
-            {rulesWithUID.map((rule, index) => (
-              <Draggable key={rule.uid} draggableId={rule.uid} index={index} isDragDisabled={false}>
-                {(provided: DraggableProvided) => (
-                  <ListItem key={rule.uid} provided={provided} rule={rule} groupInterval={groupInterval} />
-                )}
-              </Draggable>
-            ))}
-            {droppableProvided.placeholder}
-          </Stack>
-        )}
-      </Droppable>
-    </DragDropContext>
+    <div>
+      <Label description="Drag rules to reorder">Alerting and recording rules</Label>
+      <ListItem
+        ruleName="Rule name"
+        pendingPeriod="Pending period"
+        evalsToStartAlerting="Evaluations to start alerting"
+        className={styles.listHeader}
+      />
+      <DragDropContext onDragEnd={onDragEnd}>
+        <Droppable
+          droppableId="alert-list"
+          mode="standard"
+          renderClone={(provided, _snapshot, rubric) => (
+            <DraggableListItem
+              provided={provided}
+              rule={rulesWithUID[rubric.source.index]}
+              isClone
+              groupInterval={groupInterval}
+            />
+          )}
+        >
+          {(droppableProvided: DroppableProvided) => (
+            <Stack direction="column" gap={0} ref={droppableProvided.innerRef} {...droppableProvided.droppableProps}>
+              {rulesWithUID.map((rule, index) => (
+                <Draggable key={rule.uid} draggableId={rule.uid} index={index} isDragDisabled={false}>
+                  {(provided: DraggableProvided) => (
+                    <DraggableListItem key={rule.uid} provided={provided} rule={rule} groupInterval={groupInterval} />
+                  )}
+                </Draggable>
+              ))}
+              {droppableProvided.placeholder}
+            </Stack>
+          )}
+        </Droppable>
+      </DragDropContext>
+    </div>
   );
 }
 
-interface ListItemProps extends React.HTMLAttributes<HTMLDivElement> {
+interface DraggableListItemProps extends React.HTMLAttributes<HTMLDivElement> {
   provided: DraggableProvided;
   rule: RulerRuleDTO;
   groupInterval: string;
@@ -131,8 +176,14 @@ interface ListItemProps extends React.HTMLAttributes<HTMLDivElement> {
   isDragging?: boolean;
 }
 
-const ListItem = ({ provided, rule, groupInterval, isClone = false, isDragging = false }: ListItemProps) => {
-  const styles = useStyles2(getStyles);
+const DraggableListItem = ({
+  provided,
+  rule,
+  groupInterval,
+  isClone = false,
+  isDragging = false,
+}: DraggableListItemProps) => {
+  // const styles = useStyles2(getStyles);
 
   // @TODO does this work with Grafana-managed recording rules too? Double check that.
   const ruleName = getRuleName(rule);
@@ -142,22 +193,43 @@ const ListItem = ({ provided, rule, groupInterval, isClone = false, isDragging =
       ? getNumberEvaluationsToStartAlerting(pendingPeriod ?? '0s', groupInterval)
       : null;
 
+  // TODO Bring back isClone and isDraggin styles
   return (
-    <div
-      className={styles.listItem}
+    <ListItem
+      dragHandle={<Icon name="draggabledots" />}
+      ruleName={ruleName}
+      pendingPeriod={pendingPeriod}
+      evalsToStartAlerting={numberEvaluationsToStartAlerting ?? <Badge text="Recording" color="purple" />}
       data-testid="reorder-alert-rule"
       // className={cx(styles.listItem, isClone && 'isClone', isDragging && 'isDragging')}
       ref={provided.innerRef}
       {...provided.draggableProps}
       {...provided.dragHandleProps}
-    >
-      <Icon name="draggabledots" />
-      <Stack flex={1}>{ruleName}</Stack>
-      <Stack basis="30%">{pendingPeriod}</Stack>
-      <Stack basis="30%">{numberEvaluationsToStartAlerting ?? <Badge text="Recording" color="purple" />}</Stack>
-    </div>
+    />
   );
 };
+
+interface ListItemProps extends React.HTMLAttributes<HTMLDivElement> {
+  dragHandle?: React.ReactNode;
+  ruleName: React.ReactNode;
+  pendingPeriod: React.ReactNode;
+  evalsToStartAlerting: React.ReactNode;
+}
+
+const ListItem = forwardRef<HTMLDivElement, ListItemProps>(
+  ({ dragHandle, ruleName, pendingPeriod, evalsToStartAlerting, className, ...props }, ref) => {
+    const styles = useStyles2(getStyles);
+
+    return (
+      <div className={cx(styles.listItem, className)} data-testid="reorder-alert-rule" ref={ref} {...props}>
+        <Stack flex="0 0 24px">{dragHandle}</Stack>
+        <Stack flex={1}>{ruleName}</Stack>
+        <Stack basis="30%">{pendingPeriod}</Stack>
+        <Stack basis="30%">{evalsToStartAlerting}</Stack>
+      </div>
+    );
+  }
+);
 
 const getStyles = (theme: GrafanaTheme2) => ({
   listItem: css({
@@ -172,7 +244,24 @@ const getStyles = (theme: GrafanaTheme2) => ({
       background: theme.colors.background.secondary,
     },
   }),
+  listHeader: css({
+    fontWeight: theme.typography.fontWeightBold,
+    borderBottom: `1px solid ${theme.colors.border.weak}`,
+  }),
 });
+
+function GroupActions() {
+  return (
+    <Stack>
+      <Button type="submit" form="group-edit-form">
+        Save
+      </Button>
+      <Button variant="secondary" onClick={() => locationService.getHistory().goBack()}>
+        Cancel
+      </Button>
+    </Stack>
+  );
+}
 
 type GroupEditPageRouteParams = {
   sourceId?: string;
@@ -211,7 +300,7 @@ function GroupEditPage() {
   const isLoading = isFolderLoading || isDsFeaturesLoading || isRuleGroupLoading || isRuleGroupUninitialized;
 
   const pageNav: NavModelItem = {
-    text: groupName,
+    text: 'Edit rule group',
     parentItem: {
       text: folder?.title ?? namespaceId,
       url: createListFilterLink([
@@ -231,8 +320,28 @@ function GroupEditPage() {
     );
   }
 
+  const groupIdentifier: RuleGroupIdentifierV2 =
+    sourceId === 'grafana'
+      ? {
+          namespace: { uid: namespaceId },
+          groupName: groupName,
+          groupOrigin: 'grafana',
+        }
+      : {
+          rulesSource: { uid: sourceId, name: dsFeatures?.name ?? '', ruleSourceType: 'datasource' },
+          namespace: { name: namespaceId },
+          groupName: groupName,
+          groupOrigin: 'datasource',
+        };
+
   return (
-    <AlertingPageWrapper pageNav={pageNav} title={groupName} navId="alert-list" isLoading={isLoading}>
+    <AlertingPageWrapper
+      pageNav={pageNav}
+      title="Edit evaluation group"
+      navId="alert-list"
+      isLoading={isLoading}
+      actions={<GroupActions />}
+    >
       <>
         {dsFeaturesError && (
           <Alert title="Error loading data source details" bottomSpacing={0} topSpacing={2}>
@@ -246,7 +355,7 @@ function GroupEditPage() {
         )}
       </>
       {!isLoading && !rulerGroup && <EntityNotFound entity={`${namespaceId}/${groupName}`} />}
-      {!isLoading && rulerGroup && <GroupEditForm rulerGroup={rulerGroup} />}
+      {!isLoading && rulerGroup && <GroupEditForm rulerGroup={rulerGroup} groupIdentifier={groupIdentifier} />}
     </AlertingPageWrapper>
   );
 }
