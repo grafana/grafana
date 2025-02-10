@@ -241,7 +241,7 @@ Make it short and descriptive as this will appear in your alert notification. Fo
 
    {{< figure src="/media/docs/alerting/promql-returning-metrics.png" max-width="1200px" caption="Preview of a query returning alert instances in Grafana." >}}
 
-   Among the labels returned for flask_app_cpu_usage, the environment label is particularly important, as it enables dynamic alert routing based on the environment value, ensuring the right team receives the relevant notifications.
+   Among the labels returned for `flask_app_cpu_usage`, the environment label is particularly important, as it enables dynamic alert routing based on the environment value, ensuring the right team receives the relevant notifications.
 
 ### Add folders and labels
 
