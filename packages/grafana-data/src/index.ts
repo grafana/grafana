@@ -802,6 +802,7 @@ export {
   VariableOrigin,
   type VariableSuggestion,
   VariableSuggestionsScope,
+  OneClickMode,
 } from './types/dataLink';
 export {
   type Action,
