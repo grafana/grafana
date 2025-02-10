@@ -208,7 +208,6 @@
     "jest-watch-typeahead": "^2.2.2",
     "jimp": "^1.6.0",
     "jsdom-testing-mocks": "^1.13.1",
-    "knip": "^5.10.0",
     "lerna": "8.1.8",
     "mini-css-extract-plugin": "2.9.2",
     "msw": "2.7.0",
