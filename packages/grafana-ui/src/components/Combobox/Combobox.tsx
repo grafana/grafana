@@ -2,29 +2,23 @@ import { cx } from '@emotion/css';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useCombobox } from 'downshift';
 import { debounce } from 'lodash';
-import { ReactNode, useCallback, useId, useMemo, useState } from 'react';
+import { useCallback, useId, useMemo, useState } from 'react';
 
 import { useStyles2 } from '../../themes';
 import { logOptions } from '../../utils';
-import { t, Trans } from '../../utils/i18n';
+import { t } from '../../utils/i18n';
 import { Icon } from '../Icon/Icon';
 import { AutoSizeInput } from '../Input/AutoSizeInput';
 import { Input, Props as InputProps } from '../Input/Input';
-import { Box } from '../Layout/Box/Box';
-import { Stack } from '../Layout/Stack/Stack';
 import { Portal } from '../Portal/Portal';
 import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
 
-import { itemFilter, itemToString } from './filter';
+import { AsyncError, NotFoundError } from './MessageRows';
+import { fuzzyFind, itemToString } from './filter';
 import { getComboboxStyles, MENU_OPTION_HEIGHT, MENU_OPTION_HEIGHT_DESCRIPTION } from './getComboboxStyles';
+import { ComboboxOption } from './types';
 import { useComboboxFloat } from './useComboboxFloat';
 import { StaleResultError, useLatestAsyncCall } from './useLatestAsyncCall';
-
-export type ComboboxOption<T extends string | number = string> = {
-  label?: string;
-  value: T;
-  description?: string;
-};
 
 // TODO: It would be great if ComboboxOption["label"] was more generic so that if consumers do pass it in (for async),
 // then the onChange handler emits ComboboxOption with the label as non-undefined.
@@ -85,7 +79,9 @@ export type AutoSizeConditionals =
       maxWidth?: never;
     };
 
-type ComboboxProps<T extends string | number> = ComboboxBaseProps<T> & AutoSizeConditionals & ClearableConditionals<T>;
+export type ComboboxProps<T extends string | number> = ComboboxBaseProps<T> &
+  AutoSizeConditionals &
+  ClearableConditionals<T>;
 
 const noop = () => {};
 const asyncNoop = () => Promise.resolve([]);
@@ -139,12 +135,10 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
 
         if (!optionMatchingInput) {
           const customValueOption = {
-            label: t('combobox.custom-value.label', 'Custom value: ') + inputValue,
+            label: inputValue,
             // Type casting needed to make this work when T is a number
-            value: inputValue as unknown as T,
-            /* TODO: Add this back when we do support descriptions and have need for it
-            description: t('combobox.custom-value.create', 'Create custom value'),
-            */
+            value: inputValue as T,
+            description: t('combobox.custom-value.description', 'Use custom value'),
           };
 
           itemsToSet = items.slice(0);
@@ -155,6 +149,12 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
       baseSetItems(itemsToSet);
     },
     [createCustomValue, id, ariaLabelledBy]
+  );
+
+  // Memoize for using in fuzzy search
+  const stringifiedItems = useMemo(
+    () => (isAsync ? [] : options.map((item) => itemToString(item))),
+    [options, isAsync]
   );
 
   const selectedItemIndex = useMemo(() => {
@@ -261,7 +261,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
       }
 
       if (!isAsync) {
-        const filteredItems = options.filter(itemFilter(inputValue));
+        const filteredItems = fuzzyFind(options, stringifiedItems, inputValue);
         setItems(filteredItems, inputValue);
       } else {
         if (inputValue && createCustomValue) {
@@ -443,32 +443,13 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
                 </ul>
               )}
               <div aria-live="polite">
-                {asyncError && (
-                  <MessageRow>
-                    <Icon name="exclamation-triangle" size="md" className={styles.warningIcon} />
-                    <Trans i18nKey="combobox.async.error">An error occurred while loading options.</Trans>
-                  </MessageRow>
-                )}
-                {items.length === 0 && !asyncError && (
-                  <MessageRow>
-                    <Trans i18nKey="combobox.options.no-found">No options found.</Trans>
-                  </MessageRow>
-                )}
+                {asyncError && <AsyncError />}
+                {items.length === 0 && !asyncError && <NotFoundError />}
               </div>
             </ScrollContainer>
           )}
         </div>
       </Portal>
     </div>
-  );
-};
-
-const MessageRow = ({ children }: { children: ReactNode }) => {
-  return (
-    <Box padding={2} color="secondary">
-      <Stack justifyContent="center" alignItems="center">
-        {children}
-      </Stack>
-    </Box>
   );
 };

@@ -23,12 +23,14 @@ export interface ObjectMeta {
   namespace?: string;
   // Resource version will increase (not sequentially!) with any change to the saved value
   resourceVersion: string;
+  // Incremented by the server when the value of spec changes
+  generation?: number;
   // The first time this was saved
   creationTimestamp: string;
   // General resource annotations -- including the common grafana.app values
   annotations?: GrafanaAnnotations & GrafanaClientAnnotations;
   // General application level key+value pairs
-  labels?: Record<string, string>;
+  labels?: GrafanaLabels;
 }
 
 export const AnnoKeyCreatedBy = 'grafana.app/createdBy';
@@ -40,7 +42,6 @@ export const AnnoKeyFolderId = 'grafana.app/folderId';
 export const AnnoKeyFolderUrl = 'grafana.app/folderUrl';
 export const AnnoKeyMessage = 'grafana.app/message';
 export const AnnoKeySlug = 'grafana.app/slug';
-export const AnnoKeyDashboardId = 'grafana.app/dashboardId';
 
 // Identify where values came from
 export const AnnoKeyRepoName = 'grafana.app/repoName';
@@ -52,8 +53,10 @@ export const AnnoKeySavedFromUI = 'grafana.app/saved-from-ui';
 export const AnnoKeyDashboardNotFound = 'grafana.app/dashboard-not-found';
 export const AnnoKeyDashboardIsSnapshot = 'grafana.app/dashboard-is-snapshot';
 export const AnnoKeyDashboardSnapshotOriginalUrl = 'grafana.app/dashboard-snapshot-original-url';
-export const AnnoKeyDashboardIsNew = 'grafana.app/dashboard-is-new';
 export const AnnoKeyDashboardGnetId = 'grafana.app/dashboard-gnet-id';
+
+// labels
+export const DeprecatedInternalId = 'grafana.app/deprecatedInternalID';
 
 // Annotations provided by the API
 type GrafanaAnnotations = {
@@ -62,7 +65,6 @@ type GrafanaAnnotations = {
   [AnnoKeyUpdatedBy]?: string;
   [AnnoKeyFolder]?: string;
   [AnnoKeySlug]?: string;
-  [AnnoKeyDashboardId]?: number;
 
   [AnnoKeyRepoName]?: string;
   [AnnoKeyRepoPath]?: string;
@@ -78,14 +80,17 @@ type GrafanaClientAnnotations = {
   [AnnoKeyFolderId]?: number;
   [AnnoKeyFolderId]?: number;
   [AnnoKeySavedFromUI]?: string;
-  [AnnoKeyDashboardNotFound]?: boolean;
   [AnnoKeyDashboardIsSnapshot]?: boolean;
   [AnnoKeyDashboardSnapshotOriginalUrl]?: string;
-  [AnnoKeyDashboardIsNew]?: boolean;
 
   // TODO: This should be provided by the API
   // This is the dashboard ID for the Gcom API. This set when a dashboard is created through importing a dashboard from Grafana.com.
   [AnnoKeyDashboardGnetId]?: string;
+};
+
+// Labels
+type GrafanaLabels = {
+  [DeprecatedInternalId]?: string;
 };
 
 export interface Resource<T = object, S = object, K = string> extends TypeMeta<K> {

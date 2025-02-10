@@ -6,8 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/grafana/authlib/authz"
-
+	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
@@ -20,7 +19,7 @@ func TestLegacyAccessClient_Check(t *testing.T) {
 	t.Run("should reject when when no configuration for resource exist", func(t *testing.T) {
 		a := accesscontrol.NewLegacyAccessClient(ac)
 
-		res, err := a.Check(context.Background(), &identity.StaticRequester{}, authz.CheckRequest{
+		res, err := a.Check(context.Background(), &identity.StaticRequester{}, authlib.CheckRequest{
 			Verb:      "get",
 			Resource:  "dashboards",
 			Namespace: "default",
@@ -43,7 +42,7 @@ func TestLegacyAccessClient_Check(t *testing.T) {
 			accesscontrol.Permission{Action: "dashboards:read", Scope: "dashboards:uid:2"},
 		)
 
-		res, err := a.Check(context.Background(), ident, authz.CheckRequest{
+		res, err := a.Check(context.Background(), ident, authlib.CheckRequest{
 			Verb:      "get",
 			Namespace: "default",
 			Resource:  "dashboards",
@@ -67,7 +66,7 @@ func TestLegacyAccessClient_Check(t *testing.T) {
 			accesscontrol.Permission{Action: "dashboards:read"},
 		)
 
-		res, err := a.Check(context.Background(), ident, authz.CheckRequest{
+		res, err := a.Check(context.Background(), ident, authlib.CheckRequest{
 			Verb:      "list",
 			Namespace: "default",
 			Resource:  "dashboards",
@@ -90,7 +89,7 @@ func TestLegacyAccessClient_Check(t *testing.T) {
 			accesscontrol.Permission{Action: "dashboards:read", Scope: "dashboards:uid:1"},
 		)
 
-		res, err := a.Check(context.Background(), ident, authz.CheckRequest{
+		res, err := a.Check(context.Background(), ident, authlib.CheckRequest{
 			Verb:      "get",
 			Namespace: "default",
 			Resource:  "dashboards",
@@ -115,7 +114,7 @@ func TestLegacyAccessClient_Check(t *testing.T) {
 
 		ident := newIdent(accesscontrol.Permission{})
 
-		res, err := a.Check(context.Background(), ident, authz.CheckRequest{
+		res, err := a.Check(context.Background(), ident, authlib.CheckRequest{
 			Verb:      "get",
 			Namespace: "default",
 			Resource:  "dashboards",
@@ -125,7 +124,7 @@ func TestLegacyAccessClient_Check(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, true, res.Allowed)
 
-		res, err = a.Check(context.Background(), ident, authz.CheckRequest{
+		res, err = a.Check(context.Background(), ident, authlib.CheckRequest{
 			Verb:      "create",
 			Namespace: "default",
 			Resource:  "dashboards",
