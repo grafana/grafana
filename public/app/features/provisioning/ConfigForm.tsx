@@ -181,10 +181,11 @@ export function ConfigForm({ data }: ConfigFormProps) {
           <Field label={'Branch'} error={errors?.branch?.message} invalid={!!errors?.branch}>
             <Input {...register('branch')} placeholder={'main'} />
           </Field>
-          <Field label={'Workflows'}>
+          <Field label={'Workflows'} required error={errors?.workflows?.message} invalid={!!errors?.workflows}>
             <Controller
               name={'workflows'}
               control={control}
+              rules={{ required: 'This field is required.' }}
               render={({ field: { ref, onChange, ...field } }) => {
                 return (
                   <MultiSelect
@@ -221,7 +222,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
         </FieldSet>
       )}
       <FieldSet label="Sync Settings">
-        <Field label={'Enabled'}>
+        <Field label={'Enabled'} description={'Once sync is enabled, the target cannot be changed.'}>
           <Switch {...register('sync.enabled')} id={'sync.enabled'} />
         </Field>
         <Field label={'Target'} required error={errors?.sync?.target?.message} invalid={!!errors?.sync?.target}>
@@ -241,11 +242,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
             }}
           />
         </Field>
-        <Field
-          label={'Interval (seconds)'}
-          error={errors?.sync?.intervalSeconds?.message}
-          invalid={!!errors?.sync?.intervalSeconds}
-        >
+        <Field label={'Interval (seconds)'}>
           <Input {...register('sync.intervalSeconds')} type={'number'} placeholder={'60'} />
         </Field>
       </FieldSet>
