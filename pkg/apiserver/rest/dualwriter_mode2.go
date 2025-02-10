@@ -54,7 +54,7 @@ func (d *DualWriterMode2) Mode() DualWriterMode {
 // Create overrides the behavior of the generic DualWriter and writes to LegacyStorage and Storage.
 func (d *DualWriterMode2) Create(ctx context.Context, in runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
 	var method = "create"
-	log := d.Log.WithValues("method", method, "resource", d.resource)
+	log := d.Log.WithValues("method", method)
 	ctx = klog.NewContext(ctx, log)
 
 	accIn, err := meta.Accessor(in)
