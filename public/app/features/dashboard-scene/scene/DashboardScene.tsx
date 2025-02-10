@@ -750,6 +750,14 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   getPath() {
     return this.state.meta.k8s?.annotations?.[AnnoKeyRepoPath];
   }
+
+  setRepoName(name: string) {
+    this.setState({
+      meta: {
+        k8s: { annotations: { [AnnoKeyRepoName]: name } },
+      },
+    });
+  }
 }
 
 export class DashboardVariableDependency implements SceneVariableDependencyConfigLike {
