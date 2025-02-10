@@ -112,13 +112,16 @@ func (s *secureValueStorage) Update(ctx context.Context, newSecureValue *secretv
 		return nil, fmt.Errorf("read securevalue: %w", err)
 	}
 
-	// TODO: This should come from the keeper.
-	externalID := "TODO2"
+	// Update in keeper at value updates.
+	err = s.updateInKeeper(ctx, currentRow, newSecureValue)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update in keeper: %w", err)
+	}
 
 	// From this point on, we should not have a need to read value.
 	newSecureValue.Spec.Value = ""
 
-	newRow, err := toUpdateRow(currentRow, newSecureValue, authInfo.GetUID(), externalID)
+	newRow, err := toUpdateRow(currentRow, newSecureValue, authInfo.GetUID(), currentRow.ExternalID)
 	if err != nil {
 		return nil, fmt.Errorf("to update row: %w", err)
 	}
@@ -275,6 +278,45 @@ func (s *secureValueStorage) storeInKeeper(ctx context.Context, sv *secretv0alph
 	}
 
 	return keeper.Store(ctx, keeperConfig, sv.Namespace, string(sv.Spec.Value))
+}
+
+func (s *secureValueStorage) updateInKeeper(ctx context.Context, currRow *secureValueDB, newSV *secretv0alpha1.SecureValue) error {
+	// TODO: Implement store by ref
+	if newSV.Spec.Ref != "" {
+		return fmt.Errorf("store by ref in keeper")
+	}
+
+	// Check if an update is needed.
+	if newSV.Spec.Value == "" {
+		return nil
+	}
+
+	if currRow.Keeper != newSV.Spec.Keeper {
+		return fmt.Errorf("keeper change not supported")
+	}
+
+	// Check if keeper is default.
+	if currRow.Keeper == keepertypes.DefaultKeeper {
+		keeper, exists := s.keepers[keepertypes.SQLKeeperType]
+		if !exists {
+			return fmt.Errorf("could not find default keeper")
+		}
+		return keeper.Update(ctx, nil, currRow.Namespace, keepertypes.ExternalID(currRow.ExternalID), string(newSV.Spec.Value))
+	}
+
+	// Load keeper config from metadata store.
+	keeperType, keeperConfig, err := s.getKeeperConfig(ctx, currRow.Keeper, currRow.Namespace)
+	if err != nil {
+		return fmt.Errorf("get keeper config: %w", err)
+	}
+
+	// Store in keeper.
+	keeper, ok := s.keepers[keeperType]
+	if !ok {
+		return fmt.Errorf("could not find keeper: %s", keeperType)
+	}
+
+	return keeper.Update(ctx, keeperConfig, currRow.Namespace, keepertypes.ExternalID(currRow.ExternalID), string(newSV.Spec.Value))
 }
 
 func (s *secureValueStorage) deleteFromKeeper(ctx context.Context, nn xkube.NameNamespace) error {
