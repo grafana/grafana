@@ -30,7 +30,7 @@ import { isNotFoundError } from '../alerting/unified/api/util';
 
 import { ConfigForm } from './ConfigForm';
 import { ExportToRepository } from './ExportToRepository';
-import { StatusBadge } from './StatusBadge';
+import { RepositorySyncStatus } from './RepositorySyncStatus';
 import {
   useListJobQuery,
   useGetRepositoryFilesQuery,
@@ -47,8 +47,9 @@ enum TabSelection {
   Resources = 'resources',
   Files = 'files',
   Jobs = 'jobs',
+  Sync = 'sync',
   Export = 'export',
-  Config = 'config',
+  Settings = 'settings',
   Health = 'health',
 }
 
@@ -56,9 +57,10 @@ const tabInfo: SelectableValue<TabSelection> = [
   { value: TabSelection.Resources, label: 'Resources', title: 'Resources saved in grafana database' },
   { value: TabSelection.Files, label: 'Files', title: 'The raw file list from the repository' },
   { value: TabSelection.Jobs, label: 'Recent events' },
+  { value: TabSelection.Sync, label: 'Sync' },
   { value: TabSelection.Export, label: 'Export' },
-  { value: TabSelection.Config, label: 'Configuration' },
-  { value: TabSelection.Health, label: 'Repository health' },
+  { value: TabSelection.Health, label: 'Health' },
+  { value: TabSelection.Settings, label: 'Settings' },
 ];
 
 export default function RepositoryStatusPage() {
@@ -78,7 +80,6 @@ export default function RepositoryStatusPage() {
       navId="provisioning"
       pageNav={{
         text: data?.spec?.title ?? 'Repository Status',
-        subTitle: 'Check the status of configured repository.',
       }}
     >
       <Page.Contents isLoading={query.isLoading}>
@@ -106,9 +107,10 @@ export default function RepositoryStatusPage() {
                   {tab === TabSelection.Resources && <ResourcesView repo={data} />}
                   {tab === TabSelection.Files && <FilesView repo={data} />}
                   {tab === TabSelection.Jobs && <JobsView repo={data} />}
+                  {tab === TabSelection.Sync && <RepositorySyncStatus repo={data} />}
                   {tab === TabSelection.Export && <ExportToRepository repo={data} />}
                   {tab === TabSelection.Health && <RepositoryHealth repo={data} />}
-                  {tab === TabSelection.Config && (
+                  {tab === TabSelection.Settings && (
                     <div style={{ marginTop: '30px', marginLeft: '16px' }}>
                       <ConfigForm data={data} />
                     </div>
@@ -354,13 +356,6 @@ function JobsView({ repo }: RepoProps) {
   );
 }
 
-function formatTimestamp(timestamp?: number) {
-  if (!timestamp) {
-    return 'N/A';
-  }
-  return new Date(timestamp).toLocaleString();
-}
-
 function getRemoteURL(repo: Repository) {
   if (repo.spec?.type === 'github') {
     const spec = repo.spec.github;
@@ -383,7 +378,6 @@ function getWebhookURL(repo: Repository) {
 }
 
 export function RepositoryHealth({ repo }: { repo: Repository }) {
-  const name = repo.metadata?.name ?? '';
   const status = repo.status;
   const remoteURL = getRemoteURL(repo);
   const webhookURL = getWebhookURL(repo);
@@ -425,34 +419,6 @@ export function RepositoryHealth({ repo }: { repo: Repository }) {
             Webhook
           </TextLink>
         </Text>
-      )}
-
-      <Text element={'h2'}>Sync Status</Text>
-      <StatusBadge enabled={Boolean(repo.spec?.sync?.enabled)} state={status?.sync?.state} name={name} />
-      <ul style={{ listStyle: 'none' }}>
-        <li>
-          Job ID: <b>{status?.sync.job ?? 'N/A'}</b>
-        </li>
-        <li>
-          Last Ref: <b>{status?.sync.hash ?? 'N/A'}</b>
-        </li>
-        <li>
-          Started: <b>{formatTimestamp(status?.sync.started)}</b>
-        </li>
-        <li>
-          Finished: <b>{formatTimestamp(status?.sync.finished)}</b>
-        </li>
-      </ul>
-
-      {status?.sync?.message && status.sync.message.length > 0 && (
-        <>
-          <Text>Messages:</Text>
-          <ul style={{ listStyle: 'none' }}>
-            {status.sync.message.map((message) => (
-              <li key={message}>{message}</li>
-            ))}
-          </ul>
-        </>
       )}
     </Stack>
   );

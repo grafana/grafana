@@ -137,7 +137,6 @@ function RepositoryListPageContent({ items }: { items?: Repository[] }) {
                   <LinkButton href={`${PROVISIONING_URL}/${name}/edit`} variant="secondary">
                     Edit
                   </LinkButton>
-                  <SyncRepository repository={item} />
                 </Card.Actions>
                 <Card.SecondaryActions>
                   <DeleteRepositoryButton name={name} />
