@@ -29,7 +29,6 @@ import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
 import { isNotFoundError } from '../alerting/unified/api/util';
 
-import { ConfigForm } from './ConfigForm';
 import { ExportToRepository } from './ExportToRepository';
 import { RepositoryOverview } from './RepositoryOverview';
 import { RepositoryResources } from './RepositoryResources';
@@ -51,7 +50,6 @@ enum TabSelection {
   Files = 'files',
   Jobs = 'jobs',
   Export = 'export',
-  Settings = 'settings',
 }
 
 const tabInfo: SelectableValue<TabSelection> = [
@@ -60,7 +58,6 @@ const tabInfo: SelectableValue<TabSelection> = [
   { value: TabSelection.Files, label: 'Files', title: 'The raw file list from the repository' },
   { value: TabSelection.Jobs, label: 'Recent events' },
   { value: TabSelection.Export, label: 'Export' },
-  { value: TabSelection.Settings, label: 'Settings' },
 ];
 
 export default function RepositoryStatusPage() {
@@ -122,11 +119,6 @@ export default function RepositoryStatusPage() {
                   {tab === TabSelection.Files && <FilesView repo={data} />}
                   {tab === TabSelection.Jobs && <JobsView repo={data} />}
                   {tab === TabSelection.Export && <ExportToRepository repo={data} />}
-                  {tab === TabSelection.Settings && (
-                    <div style={{ marginTop: '30px', marginLeft: '16px' }}>
-                      <ConfigForm data={data} />
-                    </div>
-                  )}
                 </TabContent>
               </>
             ) : (
