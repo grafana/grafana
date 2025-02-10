@@ -2956,6 +2956,9 @@
             "format": "double",
             "type": "number"
           },
+          "folderUid": {
+            "type": "string"
+          },
           "health": {
             "type": "string"
           },
@@ -2995,10 +2998,15 @@
           },
           "type": {
             "type": "string"
+          },
+          "uid": {
+            "type": "string"
           }
         },
         "required": [
+          "uid",
           "name",
+          "folderUid",
           "query",
           "health",
           "type",
@@ -5465,6 +5473,14 @@
           "CounterResetHint": {
             "$ref": "#/components/schemas/CounterResetHint"
           },
+          "CustomValues": {
+            "description": "Holds the custom (usually upper) bounds for bucket definitions, otherwise nil.\nThis slice is interned, to be treated as immutable and copied by reference.\nThese numbers should be strictly increasing. This field is only used when the\nschema is for custom buckets, and the ZeroThreshold, ZeroCount, NegativeSpans\nand NegativeBuckets fields are not used in that case.",
+            "items": {
+              "format": "double",
+              "type": "number"
+            },
+            "type": "array"
+          },
           "PositiveBuckets": {
             "description": "Observation counts in buckets. Each represents an absolute count and\nmust be zero or positive.",
             "items": {
@@ -5481,7 +5497,7 @@
             "type": "array"
           },
           "Schema": {
-            "description": "Currently valid schema numbers are -4 \u003c= n \u003c= 8.  They are all for\nbase-2 bucket schemas, where 1 is a bucket boundary in each case, and\nthen each power of two is divided into 2^n logarithmic buckets.  Or\nin other words, each bucket boundary is the previous boundary times\n2^(2^-n).",
+            "description": "Currently valid schema numbers are -4 \u003c= n \u003c= 8 for exponential buckets.\nThey are all for base-2 bucket schemas, where 1 is a bucket boundary in\neach case, and then each power of two is divided into 2^n logarithmic buckets.\nOr in other words, each bucket boundary is the previous boundary times\n2^(2^-n). Another valid schema number is -53 for custom buckets, defined by\nthe CustomValues field.",
             "format": "int32",
             "type": "integer"
           },
@@ -6071,10 +6087,6 @@
             ],
             "type": "string"
           },
-          "id": {
-            "format": "int64",
-            "type": "integer"
-          },
           "intervalSeconds": {
             "format": "int64",
             "type": "integer"
@@ -6099,10 +6111,6 @@
           "notification_settings": {
             "$ref": "#/components/schemas/AlertRuleNotificationSettings"
           },
-          "orgId": {
-            "format": "int64",
-            "type": "integer"
-          },
           "provenance": {
             "$ref": "#/components/schemas/Provenance"
           },
@@ -6121,6 +6129,9 @@
           "updated": {
             "format": "date-time",
             "type": "string"
+          },
+          "updated_by": {
+            "$ref": "#/components/schemas/UserInfo"
           },
           "version": {
             "format": "int64",
@@ -6205,6 +6216,12 @@
           }
         },
         "type": "object"
+      },
+      "GettableRuleVersions": {
+        "items": {
+          "$ref": "#/components/schemas/GettableExtendedRuleNode"
+        },
+        "type": "array"
       },
       "GettableStatus": {
         "properties": {
@@ -7233,6 +7250,7 @@
               "FOLDER",
               "LIBRARY_ELEMENT",
               "ALERT_RULE",
+              "ALERT_RULE_GROUP",
               "CONTACT_POINT",
               "NOTIFICATION_POLICY",
               "NOTIFICATION_TEMPLATE",
@@ -9888,6 +9906,9 @@
             "format": "double",
             "type": "number"
           },
+          "folderUid": {
+            "type": "string"
+          },
           "health": {
             "type": "string"
           },
@@ -9909,10 +9930,15 @@
           },
           "type": {
             "type": "string"
+          },
+          "uid": {
+            "type": "string"
           }
         },
         "required": [
+          "uid",
           "name",
+          "folderUid",
           "query",
           "health",
           "type"
@@ -9952,6 +9978,9 @@
           "file": {
             "type": "string"
           },
+          "folderUid": {
+            "type": "string"
+          },
           "interval": {
             "format": "double",
             "type": "number"
@@ -9981,6 +10010,7 @@
         "required": [
           "name",
           "file",
+          "folderUid",
           "rules",
           "interval"
         ],
@@ -10083,6 +10113,10 @@
       "Sample": {
         "description": "Sample is a single sample belonging to a metric. It represents either a float\nsample or a histogram sample. If H is nil, it is a float sample. Otherwise,\nit is a histogram sample.",
         "properties": {
+          "DropName": {
+            "description": "DropName is used to indicate whether the __name__ label should be dropped\nas part of the query evaluation.",
+            "type": "boolean"
+          },
           "F": {
             "format": "double",
             "type": "number"
@@ -12106,6 +12140,18 @@
         },
         "type": "object"
       },
+      "UserInfo": {
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          }
+        },
+        "title": "UserInfo represents user-related information, including a unique identifier and a name.",
+        "type": "object"
+      },
       "UserLookupDTO": {
         "properties": {
           "avatarUrl": {
@@ -12511,6 +12557,7 @@
         "type": "object"
       },
       "alertGroups": {
+        "description": "AlertGroups alert groups",
         "items": {
           "$ref": "#/components/schemas/alertGroup"
         },
@@ -12838,6 +12885,7 @@
         "type": "object"
       },
       "gettableSilences": {
+        "description": "GettableSilences gettable silences",
         "items": {
           "$ref": "#/components/schemas/gettableSilence"
         },
