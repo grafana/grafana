@@ -122,7 +122,7 @@ class UnThemedColorPickerPopover<T extends CustomPickersDescriptor> extends Comp
               active={activePicker === 'palette'}
             />
             <Tab
-              label={t('grafana-ui.color-picker-popover.spectrum-tab', 'Spectrum')}
+              label={t('grafana-ui.color-picker-popover.spectrum-tab', 'Custom')}
               onChangeTab={this.onTabChange('spectrum')}
               active={activePicker === 'spectrum'}
             />
