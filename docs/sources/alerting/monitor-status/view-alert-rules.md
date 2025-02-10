@@ -5,7 +5,7 @@ aliases:
   - ../../alerting/alerting-rules/rule-list/ # /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/rule-list
   - ../../alerting/manage-notifications/view-alert-rules/ # /docs/grafana/<GRAFANA_VERSION>/alerting/manage-notifications/view-alert-rules/
 canonical: https://grafana.com/docs/grafana/latest/alerting/monitor-status/view-alert-rules/
-description: View alert rules
+description: View alert rules, view alert rule versions, and restore previous alert rules.
 keywords:
   - grafana
   - alerting
@@ -56,3 +56,15 @@ Select a group to expand it and view the list of alert rules within that group.
 {{< figure src="/media/docs/alerting/view-alert-rule-list-with-actions.png" max-width="750px" alt="View alert rule state and alert rule health in Grafana Alerting" >}}
 
 For details on how rule states and alert instance states are displayed, refer to [View alert state](ref:view-alert-state).
+
+## View, compare, and restore previous alert rules
+
+To view previous alert rules for an alert, complete the following steps.
+
+1. Navigate to **Alerts & IRM -> Alerting -> Alert rules**.
+1. Select an alert rule and click **View**.
+1. Click the **Versions** tab.  
+  The page displays a list of the previous rule versions. 
+  
+  On the Alert rule's Versions page you can view the previous rule versions, or compare previous rule versions. To compare previous rule versions, select the checkboxes next to the rules you are comparing and then click **Compare versions**.  To restore a previous rule, click **Restore**.
+
