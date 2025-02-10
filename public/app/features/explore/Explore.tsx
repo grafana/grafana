@@ -54,6 +54,7 @@ import { ResponseErrorContainer } from './ResponseErrorContainer';
 import { SecondaryActions } from './SecondaryActions';
 import TableContainer from './Table/TableContainer';
 import { TraceViewContainer } from './TraceView/TraceViewContainer';
+import { changeDatasource } from './state/datasource';
 import { changeSize } from './state/explorePane';
 import { splitOpen } from './state/main';
 import {
@@ -65,7 +66,7 @@ import {
   setQueries,
   setSupplementaryQueryEnabled,
 } from './state/query';
-import { isSplit } from './state/selectors';
+import { isSplit, selectExploreDSMaps } from './state/selectors';
 import { updateTimeRange } from './state/time';
 
 const getStyles = (theme: GrafanaTheme2) => {
@@ -605,9 +606,16 @@ export class Explore extends PureComponent<Props, ExploreState> {
                           queryInspectorButtonActive={showQueryInspector}
                           onClickAddQueryRowButton={this.onClickAddQueryRowButton}
                           onClickQueryInspectorButton={() => setShowQueryInspector(!showQueryInspector)}
-                          // TODO
-                          onSelectQueryFromLibrary={(query) => {
-                            console.log('adding!', query);
+                          onSelectQueryFromLibrary={async (query) => {
+                            if (query.datasource?.uid) {
+                              const isDifferentDatasource = !this.props.exploreActiveDS.dsToExplore
+                                .find((di) => di.datasource.uid === query.datasource?.uid)
+                                ?.exploreIds.includes(exploreId);
+                              if (isDifferentDatasource) {
+                                await this.props.changeDatasource({ exploreId, datasource: query.datasource.uid });
+                              }
+                            }
+                            this.props.setQueries(exploreId, [...this.props.queries, query]);
                           }}
                         />
                         <ResponseErrorContainer exploreId={exploreId} />
@@ -720,10 +728,12 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     showLogsSample,
     correlationEditorHelperData,
     correlationEditorDetails: explore.correlationEditorDetails,
+    exploreActiveDS: selectExploreDSMaps(state),
   };
 }
 
 const mapDispatchToProps = {
+  changeDatasource,
   changeSize,
   modifyQueries,
   scanStart,
