@@ -610,10 +610,6 @@ func buildFolderList(scopes map[string]bool, tree folderTree) *authzv1.ListRespo
 
 		itemSet[identifier] = struct{}{}
 		for n := range tree.Children(identifier) {
-			if _, ok := itemSet[n.UID]; ok {
-				// we have already walked this part of the tree
-				break
-			}
 			itemSet[n.UID] = struct{}{}
 		}
 	}
@@ -637,10 +633,6 @@ func buildItemList(scopes map[string]bool, tree folderTree, prefix string) *auth
 			}
 			folderSet[identifier] = struct{}{}
 			for n := range tree.Children(identifier) {
-				if _, ok := folderSet[n.UID]; ok {
-					// we have already walked this part of the tree
-					break
-				}
 				folderSet[n.UID] = struct{}{}
 			}
 		} else {
