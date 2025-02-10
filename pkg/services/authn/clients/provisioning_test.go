@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/grafana/authlib/types"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/stretchr/testify/assert"
@@ -56,10 +57,9 @@ func TestProvisioning_Authenticate(t *testing.T) {
 	identity, err := svc.Authenticate(ctx, req)
 	require.NoError(t, err, "Authenticate shouldn't err")
 
+	assert.Equal(t, types.TypeAnonymous, identity.GetIdentityType(), "IdentityType")
 	assert.Equal(t, "auth.client.apiserver.provisioning", identity.UID, "UID")
 	assert.Equal(t, "auth.client.apiserver.provisioning", identity.Login, "Login")
-	assert.Equal(t, "auth.client.apiserver.provisioning", identity.Email, "Email")
-	assert.Equal(t, "555", identity.ID, "ID")
 	assert.Equal(t, "auth.client.apiserver.provisioning", identity.AuthenticatedBy, "AuthenticatedBy")
 	assert.Equal(t, false, identity.GetIsGrafanaAdmin(), "IsAdmin")
 }
