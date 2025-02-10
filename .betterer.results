@@ -1367,13 +1367,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "\'@grafana/ui/src/themes\' import is restricted from being used by a pattern. Import from the public export instead.", "2"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "3"]
     ],
-    "public/app/features/actions/ActionsListItem.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/Icon/Icon\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
-      [0, 0, 0, "\'@grafana/ui/src/components/IconButton/IconButton\' import is restricted from being used by a pattern. Import from the public export instead.", "1"],
-      [0, 0, 0, "\'@grafana/ui/src/themes\' import is restricted from being used by a pattern. Import from the public export instead.", "2"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "3"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "4"]
-    ],
     "public/app/features/actions/ParamsEditor.tsx:5381": [
       [0, 0, 0, "\'@grafana/ui/src/components/IconButton/IconButton\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
       [0, 0, 0, "\'@grafana/ui/src/components/Input/Input\' import is restricted from being used by a pattern. Import from the public export instead.", "1"],
