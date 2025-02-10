@@ -155,6 +155,16 @@ func (d *DualWriterMode2) List(ctx context.Context, options *metainternalversion
 		return ll, err
 	}
 	d.recordLegacyDuration(false, mode2Str, d.resource, method, startLegacy)
+
+	// Even if we don't compare, we want to fetch from unified storage and check that it doesn't error.
+	startStorage := time.Now()
+	if _, err := d.Storage.List(ctx, options); err != nil {
+		log.Error(err, "unable to list objects from storage")
+		d.recordStorageDuration(true, mode2Str, d.resource, method, startStorage)
+		return nil, err
+	}
+	d.recordStorageDuration(false, mode2Str, d.resource, method, startStorage)
+
 	return ll, nil
 }
 
