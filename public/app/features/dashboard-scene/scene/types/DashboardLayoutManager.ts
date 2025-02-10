@@ -86,7 +86,7 @@ export interface DashboardLayoutManager<S = {}> extends SceneObject {
 export interface LayoutManagerSerializer {
   serialize(layout: DashboardLayoutManager, isSnapshot?: boolean): DashboardV2Spec['layout'];
   deserialize(
-    dashboard: DashboardV2Spec['layout'],
+    layout: DashboardV2Spec['layout'],
     elements: DashboardV2Spec['elements'],
     preload: boolean
   ): DashboardLayoutManager;
