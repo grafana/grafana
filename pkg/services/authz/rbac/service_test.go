@@ -148,7 +148,7 @@ func TestService_checkPermission(t *testing.T) {
 			expected: false,
 		},
 		{
-			name: "should return true if user permissions on folder",
+			name: "should return true if user has permissions on folder",
 			permissions: []accesscontrol.Permission{
 				{
 					Scope:      "folders:uid:parent",
