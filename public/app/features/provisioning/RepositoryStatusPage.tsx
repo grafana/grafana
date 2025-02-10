@@ -14,7 +14,8 @@ import {
   FilterInput,
   InteractiveTable,
   LinkButton,
-  Space,
+  PageToolbar,
+  ToolbarButton,
   Spinner,
   Stack,
   Tab,
@@ -30,7 +31,10 @@ import { isNotFoundError } from '../alerting/unified/api/util';
 
 import { ConfigForm } from './ConfigForm';
 import { ExportToRepository } from './ExportToRepository';
+import { RepositoryOverview } from './RepositoryOverview';
 import { RepositoryResources } from './RepositoryResources';
+import { StatusBadge } from './StatusBadge';
+import { SyncRepository } from './SyncRepository';
 import {
   useListJobQuery,
   useGetRepositoryFilesQuery,
@@ -42,20 +46,20 @@ import { FileDetails } from './api/types';
 import { PROVISIONING_URL } from './constants';
 
 enum TabSelection {
+  Overview = 'overview',
   Resources = 'resources',
   Files = 'files',
   Jobs = 'jobs',
   Export = 'export',
   Settings = 'settings',
-  Health = 'health',
 }
 
 const tabInfo: SelectableValue<TabSelection> = [
+  { value: TabSelection.Overview, label: 'Overview', title: 'Repository overview' },
   { value: TabSelection.Resources, label: 'Resources', title: 'Resources saved in grafana database' },
   { value: TabSelection.Files, label: 'Files', title: 'The raw file list from the repository' },
   { value: TabSelection.Jobs, label: 'Recent events' },
   { value: TabSelection.Export, label: 'Export' },
-  { value: TabSelection.Health, label: 'Health' },
   { value: TabSelection.Settings, label: 'Settings' },
 ];
 
@@ -68,7 +72,7 @@ export default function RepositoryStatusPage() {
   const data = query.data?.items?.[0];
   const location = useLocation();
   const [queryParams] = useQueryParams();
-  const tab = queryParams['tab'] ?? TabSelection.Resources;
+  const tab = queryParams['tab'] ?? TabSelection.Overview;
 
   const notFound = query.isError && isNotFoundError(query.error);
   return (
@@ -89,6 +93,18 @@ export default function RepositoryStatusPage() {
           <>
             {data ? (
               <>
+                <PageToolbar>
+                  <StatusBadge
+                    enabled={Boolean(data.spec?.sync?.enabled)}
+                    state={data.status?.sync?.state}
+                    name={name}
+                  />
+                  <SyncRepository repository={data} />
+                  <ToolbarButton icon="upload">Export</ToolbarButton>
+                  <LinkButton variant="secondary" icon="cog" href={`${PROVISIONING_URL}/${name}/edit`}>
+                    Settings
+                  </LinkButton>
+                </PageToolbar>
                 <TabsBar>
                   {tabInfo.map((t: SelectableValue) => (
                     <Tab
@@ -101,11 +117,11 @@ export default function RepositoryStatusPage() {
                   ))}
                 </TabsBar>
                 <TabContent>
+                  {tab === TabSelection.Overview && <RepositoryOverview repo={data} />}
                   {tab === TabSelection.Resources && <RepositoryResources repo={data} />}
                   {tab === TabSelection.Files && <FilesView repo={data} />}
                   {tab === TabSelection.Jobs && <JobsView repo={data} />}
                   {tab === TabSelection.Export && <ExportToRepository repo={data} />}
-                  {tab === TabSelection.Health && <RepositoryHealth repo={data} />}
                   {tab === TabSelection.Settings && (
                     <div style={{ marginTop: '30px', marginLeft: '16px' }}>
                       <ConfigForm data={data} />
@@ -260,73 +276,5 @@ function JobsView({ repo }: RepoProps) {
         );
       })}
     </div>
-  );
-}
-
-function getRemoteURL(repo: Repository) {
-  if (repo.spec?.type === 'github') {
-    const spec = repo.spec.github;
-    let url = `https://github.com/${spec?.owner}/${spec?.repository}/`;
-    if (spec?.branch) {
-      url += `tree/${spec.branch}`;
-    }
-    return url;
-  }
-  return undefined;
-}
-
-function getWebhookURL(repo: Repository) {
-  const { status, spec } = repo;
-  if (spec?.type === 'github' && status?.webhook?.url) {
-    const { github } = spec;
-    return `https://github.com/${github?.owner}/${github?.repository}/settings/hooks/${status.webhook?.id}`;
-  }
-  return undefined;
-}
-
-export function RepositoryHealth({ repo }: { repo: Repository }) {
-  const status = repo.status;
-  const remoteURL = getRemoteURL(repo);
-  const webhookURL = getWebhookURL(repo);
-
-  return (
-    <Stack gap={2} direction="column" alignItems="flex-start">
-      <Space />
-      <Text element={'h2'}>Health Status</Text>
-      {status?.health?.healthy ? (
-        <Alert title="Repository is healthy" severity="success" style={{ width: '100%' }}>
-          No errors found
-        </Alert>
-      ) : (
-        <Alert title="Repository is unhealthy" severity="warning" style={{ width: '100%' }}>
-          {status?.health?.message && status.health.message.length > 0 && (
-            <>
-              <Text>Details:</Text>
-              <ul>
-                {status.health.message.map((message) => (
-                  <li key={message}>{message}</li>
-                ))}
-              </ul>
-            </>
-          )}
-        </Alert>
-      )}
-
-      {remoteURL && (
-        <Text>
-          <TextLink external href={remoteURL}>
-            {remoteURL}
-          </TextLink>
-        </Text>
-      )}
-
-      {webhookURL && (
-        <Text>
-          <TextLink external href={webhookURL}>
-            Webhook
-          </TextLink>
-        </Text>
-      )}
-    </Stack>
   );
 }

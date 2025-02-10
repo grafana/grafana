@@ -60,7 +60,7 @@ export function StatusBadge({ enabled, state, name }: StatusBadgeProps) {
       style={{ cursor: 'pointer' }}
       tooltip={tooltip}
       onClick={() => {
-        locationService.push(`${PROVISIONING_URL}/${name}/?tab=health`);
+        locationService.push(`${PROVISIONING_URL}/${name}/?tab=overview`);
       }}
     />
   );
