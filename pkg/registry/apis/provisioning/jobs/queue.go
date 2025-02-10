@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/auth"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -27,24 +26,22 @@ type RepoGetter interface {
 	GetRepository(ctx context.Context, name string) (repository.Repository, error)
 }
 
-func NewJobQueue(capacity int, getter RepoGetter, identities auth.BackgroundIdentityService) JobQueue {
+func NewJobQueue(capacity int, getter RepoGetter) JobQueue {
 	return &jobStore{
-		workers:    make([]Worker, 0),
-		getter:     getter,
-		identities: identities,
-		rv:         1,
-		capacity:   capacity,
-		jobs:       []provisioning.Job{},
-		watchSet:   NewWatchSet(),
-		versioner:  &storage.APIObjectVersioner{},
+		workers:   make([]Worker, 0),
+		getter:    getter,
+		rv:        1,
+		capacity:  capacity,
+		jobs:      []provisioning.Job{},
+		watchSet:  NewWatchSet(),
+		versioner: &storage.APIObjectVersioner{},
 	}
 }
 
 type jobStore struct {
-	getter     RepoGetter
-	identities auth.BackgroundIdentityService
-	capacity   int
-	workers    []Worker
+	getter   RepoGetter
+	capacity int
+	workers  []Worker
 
 	// All jobs
 	jobs      []provisioning.Job
@@ -202,12 +199,11 @@ func (s *jobStore) drainPending() {
 }
 
 func (s *jobStore) processByWorker(ctx context.Context, worker Worker, job provisioning.Job) (*provisioning.JobStatus, error) {
-	id, err := s.identities.WorkerIdentity(ctx, job.Name)
+	ctx = request.WithNamespace(ctx, job.Namespace)
+	ctx, _, err := identity.WithProvisioningIdentitiy(ctx, job.Namespace)
 	if err != nil {
 		return nil, fmt.Errorf("get worker identity: %w", err)
 	}
-
-	ctx = request.WithNamespace(identity.WithRequester(ctx, id), job.Namespace)
 	repoName := job.Spec.Repository
 
 	logger := logging.FromContext(ctx)
