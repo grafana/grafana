@@ -32,10 +32,9 @@ type DualWriterMode2 struct {
 
 const mode2Str = "2"
 
-// NewDualWriterMode2 returns a new DualWriter in mode 2.
-// Mode 2 represents writing to LegacyStorage first, then to Storage
-// When reading, values from storage will be returned if they exist
-// otherwise the value from legacy will be used
+// newDualWriterMode2 returns a new DualWriter in mode 2.
+// Mode 2 represents writing to LegacyStorage first, then to Storage.
+// When reading, values from LegacyStorage will be returned.
 func newDualWriterMode2(legacy LegacyStorage, storage Storage, dwm *dualWriterMetrics, resource string) *DualWriterMode2 {
 	return &DualWriterMode2{
 		Legacy:            legacy,
