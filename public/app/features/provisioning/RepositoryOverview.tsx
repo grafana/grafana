@@ -1,11 +1,22 @@
-import { Stack, Text, LinkButton, Card, TextLink } from '@grafana/ui';
+import { Stack, Text, LinkButton, Card, TextLink, InteractiveTable } from '@grafana/ui';
+import { CellProps } from '@grafana/ui';
+import { useMemo } from 'react';
 
 import { CheckRepository } from './CheckRepository';
 import { RepositoryHealth } from './RepositoryHealth';
 import { StatusBadge } from './StatusBadge';
 import { SyncRepository } from './SyncRepository';
-import { Repository, ResourceCount } from './api';
+import { Repository } from './api';
 import { formatTimestamp } from './utils/time';
+
+// Define the type for our stats
+interface StatItem {
+  resource: string;
+  group: string;
+  count: number;
+}
+
+type StatCell<T extends keyof StatItem = keyof StatItem> = CellProps<StatItem, StatItem[T]>;
 
 export function RepositoryOverview({ repo }: { repo: Repository }) {
   const remoteURL = getRemoteURL(repo);
@@ -45,17 +56,38 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
       <Card>
         <Card.Heading>Resources</Card.Heading>
         <Card.Meta>
-          <Stack>
-            {repo.status?.stats?.length && (
-              <ul style={{ listStyle: 'none' }}>
-                {repo.status.stats.map((v, index) => (
-                  <li key={index}>
-                    {v.count} {v.resource}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </Stack>
+          {repo.status?.stats ? (
+            <InteractiveTable
+              columns={useMemo(
+                () => [
+                  {
+                    id: 'resource',
+                    header: 'Resource',
+                    cell: ({ row: { original } }: StatCell<'resource'>) => {
+                      return <span>{original.resource}</span>;
+                    },
+                  },
+                  {
+                    id: 'group',
+                    header: 'Group',
+                    cell: ({ row: { original } }: StatCell<'group'>) => {
+                      return <span>{original.group}</span>;
+                    },
+                  },
+                  {
+                    id: 'count',
+                    header: 'Count',
+                    cell: ({ row: { original } }: StatCell<'count'>) => {
+                      return <span>{original.count}</span>;
+                    },
+                  },
+                ],
+                []
+              )}
+              data={repo.status.stats}
+              getRowId={(r: StatItem) => `${r.group}-${r.resource}`}
+            />
+          ) : null}
         </Card.Meta>
       </Card>
       <Card>
