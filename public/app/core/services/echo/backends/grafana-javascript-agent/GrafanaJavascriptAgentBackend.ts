@@ -5,12 +5,12 @@ import {
   BrowserConfig,
   ErrorsInstrumentation,
   ConsoleInstrumentation,
-  ConsoleInstrumentationOptions,
   WebVitalsInstrumentation,
   SessionInstrumentation,
   FetchTransport,
   type Instrumentation,
   getWebInstrumentations,
+  Config,
 } from '@grafana/faro-web-sdk';
 import { TracingInstrumentation } from '@grafana/faro-web-tracing';
 import { EchoBackend, EchoEvent, EchoEventType } from '@grafana/runtime';
@@ -61,7 +61,7 @@ export class GrafanaJavascriptAgentBackend
     ];
 
     const transports: BaseTransport[] = [new EchoSrvTransport({ ignoreUrls })];
-    const consoleInstrumentationOptions: ConsoleInstrumentationOptions =
+    const consoleInstrumentationOptions: Config['consoleInstrumentation'] =
       options.allInstrumentationsEnabled || options.consoleInstrumentalizationEnabled
         ? {
             serializeErrors: true,
