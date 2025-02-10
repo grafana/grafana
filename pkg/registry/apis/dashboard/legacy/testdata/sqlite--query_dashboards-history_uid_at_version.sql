@@ -18,7 +18,7 @@ WHERE dashboard.is_folder = FALSE
   AND dashboard.org_id = 2
   AND dashboard.uid = 'UUU'
   AND dashboard_version.version = 3
-  ORDER BY 
+  ORDER BY
     dashboard_version.created DESC,
     dashboard_version.version DESC,
     dashboard.uid ASC
