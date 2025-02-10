@@ -10,7 +10,7 @@ type DataLinksInlineEditorProps = Omit<DataLinksInlineEditorBaseProps<Action>, '
 };
 
 export const ActionsInlineEditor = ({ actions, getSuggestions, showOneClick, ...rest }: DataLinksInlineEditorProps) => (
-  <DataLinksInlineEditorBase<Action> type={'action'} items={actions} {...rest}>
+  <DataLinksInlineEditorBase<Action> type="action" items={actions} {...rest}>
     {(item, index, onSave, onCancel) => (
       <ActionEditorModalContent
         index={index}

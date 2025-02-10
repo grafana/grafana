@@ -244,6 +244,8 @@ To configure Grafana HTTPS and restart Grafana, complete the following steps.
 
    > **Note**: The standard port for SSL traffic is 443, which you can use instead of Grafana's default port 3000. This change might require additional operating system privileges or configuration to bind to lower-numbered privileged ports.
 
+1. Optional. From Grafana v11.2, edit the `cert_pass` configuration option with the decryption password if you are using encrypted certificates.
+
 1. [Restart the Grafana server]({{< relref "./start-restart-grafana#linux" >}}) using `systemd`, `init.d`, or the binary as appropriate for your environment.
 
 ## Troubleshooting

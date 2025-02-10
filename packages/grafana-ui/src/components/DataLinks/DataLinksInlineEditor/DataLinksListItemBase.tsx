@@ -20,6 +20,7 @@ export interface DataLinksListItemBaseProps<T extends DataLink | Action> {
   itemKey: string;
 }
 
+/** @internal */
 export function DataLinksListItemBase<T extends DataLink | Action>({
   item,
   onEdit,
@@ -46,8 +47,11 @@ export function DataLinksListItemBase<T extends DataLink | Action>({
           key={index}
         >
           <div className={styles.linkDetails}>
-            <div className={cx(styles.url, !hasUrl && styles.notConfigured)}>
-              {hasTitle ? title : 'Title not provided'}
+            <div className={cx(styles.url, !hasTitle && styles.notConfigured)}>
+              {hasTitle ? title : t('grafana-ui.data-links-inline-editor.title-not-provided', 'Title not provided')}
+            </div>
+            <div className={cx(styles.url, !hasUrl && styles.notConfigured)} title={url}>
+              {hasUrl ? url : t('grafana-ui.data-links-inline-editor.url-not-provided', 'Data link url not provided')}
             </div>
           </div>
           <div className={styles.icons}>
@@ -58,8 +62,18 @@ export function DataLinksListItemBase<T extends DataLink | Action>({
                 tooltip={t('grafana-ui.data-links-inline-editor.one-click-enabled', 'One click enabled')}
               />
             )}
-            <IconButton name="pen" onClick={onEdit} className={styles.icon} tooltip="Edit" />
-            <IconButton name="trash-alt" onClick={onRemove} className={styles.icon} tooltip="Remove" />
+            <IconButton
+              name="pen"
+              onClick={onEdit}
+              className={styles.icon}
+              tooltip={t('grafana-ui.data-links-inline-editor.tooltip-edit', 'Edit')}
+            />
+            <IconButton
+              name="trash-alt"
+              onClick={onRemove}
+              className={styles.icon}
+              tooltip={t('grafana-ui.data-links-inline-editor.tooltip-remove', 'Remove')}
+            />
             <div className={styles.dragIcon} {...provided.dragHandleProps}>
               <Icon name="draggabledots" size="lg" />
             </div>

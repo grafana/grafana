@@ -38,6 +38,7 @@ export const DataLinkEditor = memo(
     const onUrlChange = (url: string, callback?: () => void) => {
       onChange(index, { ...value, url }, callback);
     };
+
     const onTitleChange = (event: ChangeEvent<HTMLInputElement>) => {
       onChange(index, { ...value, title: event.target.value });
     };

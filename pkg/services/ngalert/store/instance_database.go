@@ -10,15 +10,13 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
 type InstanceDBStore struct {
-	SQLStore       db.DB
-	Logger         log.Logger
-	FeatureToggles featuremgmt.FeatureToggles
+	SQLStore db.DB
+	Logger   log.Logger
 }
 
 // ListAlertInstances is a handler for retrieving alert instances within specific organisation
@@ -44,9 +42,6 @@ func (st InstanceDBStore) ListAlertInstances(ctx context.Context, cmd *models.Li
 			return errors.New("filtering by RuleGroup is not supported")
 		}
 
-		if st.FeatureToggles.IsEnabled(ctx, featuremgmt.FlagAlertingNoNormalState) {
-			s.WriteString(fmt.Sprintf(" AND NOT (current_state = '%s' AND current_reason = '')", models.InstanceStateNormal))
-		}
 		if err := sess.SQL(s.String(), params...).Find(&alertInstances); err != nil {
 			return err
 		}
@@ -94,29 +89,6 @@ func (st InstanceDBStore) SaveAlertInstance(ctx context.Context, alertInstance m
 
 		return nil
 	})
-}
-
-func (st InstanceDBStore) FetchOrgIds(ctx context.Context) ([]int64, error) {
-	orgIds := []int64{}
-
-	err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
-		s := strings.Builder{}
-		params := make([]any, 0)
-
-		addToQuery := func(stmt string, p ...any) {
-			s.WriteString(stmt)
-			params = append(params, p...)
-		}
-
-		addToQuery("SELECT DISTINCT rule_org_id FROM alert_instance")
-
-		if err := sess.SQL(s.String(), params...).Find(&orgIds); err != nil {
-			return err
-		}
-		return nil
-	})
-
-	return orgIds, err
 }
 
 // DeleteAlertInstances deletes instances with the provided keys in a single transaction.
