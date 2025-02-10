@@ -63,7 +63,7 @@ func (c *exportConnector) Connect(
 		options := &provisioning.ExportJobOptions{}
 		err := json.NewDecoder(r.Body).Decode(options)
 		if err != nil {
-			responder.Error(apierrors.NewBadRequest("error decoding request"))
+			responder.Error(apierrors.NewBadRequest("error decoding ExportJobOptions from request"))
 			return
 		}
 		job, err := c.jobs.Add(ctx, &provisioning.Job{

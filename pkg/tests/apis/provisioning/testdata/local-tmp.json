@@ -10,8 +10,8 @@
             "path": "the test will replace this string"
         },
         "sync": {
-            "enabled": false,
-            "target": "mirror",
+            "enabled": true,
+            "target": "folder",
             "intervalSeconds": 60
         },
         "readOnly": false,

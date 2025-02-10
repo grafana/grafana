@@ -14,7 +14,7 @@
         "readOnly": false,
         "sync": {
             "enabled": false,
-            "target": "",
+            "target": "folder",
             "intervalSeconds": 60
         }
     }
