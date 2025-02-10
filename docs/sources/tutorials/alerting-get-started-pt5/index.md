@@ -19,6 +19,8 @@ killercoda:
     imageid: ubuntu
 ---
 
+# Get started with Grafana Alerting - Part 5
+
 <!-- INTERACTIVE page intro.md START -->
 
 The Get started with Grafana Alerting tutorial Part 5 is a continuation of [Get started with Grafana Alerting tutorial Part 4](https://grafana.com/tutorials/alerting-get-started-pt4/).
