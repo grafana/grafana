@@ -4,7 +4,7 @@ go 1.23.1
 
 require (
 	github.com/grafana/dskit v0.0.0-20241105154643-a6b453a88040
-	github.com/grafana/grafana-plugin-sdk-go v0.263.0
+	github.com/grafana/grafana-plugin-sdk-go v0.264.0
 	github.com/json-iterator/go v1.1.12
 	github.com/prometheus/client_golang v1.20.5
 	github.com/prometheus/common v0.61.0

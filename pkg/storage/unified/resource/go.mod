@@ -15,7 +15,7 @@ require (
 	github.com/grafana/authlib/types v0.0.0-20250120145936-5f0e28e7a87c
 	github.com/grafana/dskit v0.0.0-20241105154643-a6b453a88040
 	github.com/grafana/grafana v11.4.0-00010101000000-000000000000+incompatible
-	github.com/grafana/grafana-plugin-sdk-go v0.263.0
+	github.com/grafana/grafana-plugin-sdk-go v0.264.0
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250121113133-e747350fee2d
 	github.com/grafana/grafana/pkg/apiserver v0.0.0-20250121113133-e747350fee2d
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.2.0
