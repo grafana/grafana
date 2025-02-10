@@ -8,10 +8,10 @@ interface Props {
   label: string;
   description?: string;
   id: string;
-  isGroup: boolean;
+  isGroup?: boolean;
 }
 
-export const OptionListItem = ({ label, description, id, isGroup }: Props) => {
+export const OptionListItem = ({ label, description, id, isGroup = false }: Props) => {
   const styles = useStyles2(getComboboxStyles);
   return (
     <div className={styles.optionBody} aria-disabled={isGroup}>

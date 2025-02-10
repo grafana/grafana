@@ -34,7 +34,6 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
     }),
     optionBasic: css({
       label: 'combobox-option',
-      padding: MENU_ITEM_PADDING,
       position: 'absolute',
       display: 'flex',
       alignItems: 'center',
@@ -45,7 +44,9 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
       overflow: 'hidden',
     }),
     option: css({
+      padding: MENU_ITEM_PADDING,
       cursor: 'pointer',
+      width: '100%',
       '&:hover': {
         background: theme.colors.action.hover,
         '@media (forced-colors: active), (prefers-contrast: more)': {
@@ -55,6 +56,7 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
     }),
     optionGroup: css({
       cursor: 'default',
+      padding: MENU_ITEM_PADDING,
       borderTop: `1px solid ${theme.colors.border.weak}`,
     }),
     optionBody: css({

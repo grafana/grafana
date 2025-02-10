@@ -59,10 +59,10 @@ export function useOptions<T extends string | number>(rawOptions: AsyncOptions<T
   const [userTypedSearch, setUserTypedSearch] = useState('');
 
   const addCustomValue = useCallback(
-    (opts: Array<ComboboxOption<T> | string>) => {
-      let currentOptions: Array<ComboboxOption<T> | string> = opts;
+    (opts: Array<ComboboxOption<T>>) => {
+      let currentOptions: Array<ComboboxOption<T>> = opts;
       if (createCustomValue && userTypedSearch) {
-        const customValueExists = opts.some((opt) => isComboboxOption(opt) && opt.value === userTypedSearch);
+        const customValueExists = opts.some((opt) => opt.value === userTypedSearch);
         if (!customValueExists) {
           currentOptions = [
             {
@@ -108,7 +108,6 @@ export function useOptions<T extends string | number>(rawOptions: AsyncOptions<T
       if (!group) {
         continue;
       }
-      reorganizeOptions.push(group);
       reorganizeOptions.push(...groupOptions);
     }
     const undefinedGroupOptiones = groupedOptions.get(undefined);
@@ -121,19 +120,12 @@ export function useOptions<T extends string | number>(rawOptions: AsyncOptions<T
   const finalOptions = useMemo(() => {
     let currentOptions = [];
     if (isAsync) {
-      currentOptions = asyncOptions;
+      currentOptions = addCustomValue(asyncOptions);
     } else {
-      currentOptions = rawOptions.filter(itemFilter(userTypedSearch));
+      currentOptions = addCustomValue(rawOptions.filter(itemFilter(userTypedSearch)));
     }
-
-    return addCustomValue(reorganizeOptions(currentOptions));
-  }, [isAsync, addCustomValue, asyncOptions, rawOptions, userTypedSearch, reorganizeOptions]);
+    return reorganizeOptions(currentOptions);
+  }, [isAsync, reorganizeOptions, addCustomValue, asyncOptions, rawOptions, userTypedSearch]);
 
   return { options: finalOptions, updateOptions, asyncLoading, asyncError };
 }
-
-export const isComboboxOption = <T extends string | number>(
-  option: ComboboxOption<T> | string
-): option is ComboboxOption<T> => {
-  return typeof option !== 'string';
-};

@@ -26,7 +26,7 @@ import { ALL_OPTION_VALUE, ComboboxOption } from './types';
 import { useComboboxFloat } from './useComboboxFloat';
 import { MAX_SHOWN_ITEMS, useMeasureMulti } from './useMeasureMulti';
 import { useMultiInputAutoSize } from './useMultiInputAutoSize';
-import { isComboboxOption, useOptions } from './useOptions';
+import { useOptions } from './useOptions';
 
 interface MultiComboboxBaseProps<T extends string | number> extends Omit<ComboboxBaseProps<T>, 'value' | 'onChange'> {
   value?: T[] | Array<ComboboxOption<T>>;
@@ -192,34 +192,32 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
       switch (type) {
         case useCombobox.stateChangeTypes.InputKeyDownEnter:
         case useCombobox.stateChangeTypes.ItemClick:
-          if (newSelectedItem && isComboboxOption(newSelectedItem)) {
-            // Handle All functionality
-            if (newSelectedItem?.value === ALL_OPTION_VALUE) {
-              // TODO: fix bug where if the search filtered items list is the
-              // same length, but different, than the selected items (ask tobias)
-              const optionsWithoutGroups = options.filter((option) => isComboboxOption(option));
-              const isAllFilteredSelected = selectedItems.length === optionsWithoutGroups.length - 1;
+          // Handle All functionality
+          if (newSelectedItem?.value === ALL_OPTION_VALUE) {
+            // TODO: fix bug where if the search filtered items list is the
+            // same length, but different, than the selected items (ask tobias)
+            const isAllFilteredSelected = selectedItems.length === options.length - 1;
 
-              // if every option is already selected, clear the selection.
-              // otherwise, select all the options (excluding the first ALL_OTION)
-              const realOptions = options.slice(1).filter((option) => isComboboxOption(option));
-              let newSelectedItems = isAllFilteredSelected && inputValue === '' ? [] : realOptions;
+            // if every option is already selected, clear the selection.
+            // otherwise, select all the options (excluding the first ALL_OTION)
+            const realOptions = options.slice(1);
+            let newSelectedItems = isAllFilteredSelected && inputValue === '' ? [] : realOptions;
 
-              if (!isAllFilteredSelected && inputValue !== '') {
-                // Select all currently filtered items and deduplicate
-                newSelectedItems = [...new Set([...selectedItems, ...realOptions])];
-              }
-              if (isAllFilteredSelected && inputValue !== '') {
-                // Deselect all currently filtered items
-                const filteredSet = new Set(realOptions.map((item) => item.value));
-                newSelectedItems = selectedItems.filter((item) => !filteredSet.has(item.value));
-              }
-              setSelectedItems(newSelectedItems);
-            } else if (newSelectedItem && isOptionSelected(newSelectedItem)) {
-              removeSelectedItem(newSelectedItem);
-            } else if (newSelectedItem) {
-              addSelectedItem(newSelectedItem);
+            if (!isAllFilteredSelected && inputValue !== '') {
+              // Select all currently filtered items and deduplicate
+              newSelectedItems = [...new Set([...selectedItems, ...realOptions])];
             }
+
+            if (isAllFilteredSelected && inputValue !== '') {
+              // Deselect all currently filtered items
+              const filteredSet = new Set(realOptions.map((item) => item.value));
+              newSelectedItems = selectedItems.filter((item) => !filteredSet.has(item.value));
+            }
+            setSelectedItems(newSelectedItems);
+          } else if (newSelectedItem && isOptionSelected(newSelectedItem)) {
+            removeSelectedItem(newSelectedItem);
+          } else if (newSelectedItem) {
+            addSelectedItem(newSelectedItem);
           }
           break;
         case useCombobox.stateChangeTypes.InputChange:
@@ -248,10 +246,19 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
   const virtualizerOptions = {
     count: options.length,
     getScrollElement: () => scrollRef.current,
-    estimateSize: (index: number) =>
-      isComboboxOption(options[index]) && 'description' in options[index]
-        ? MENU_OPTION_HEIGHT_DESCRIPTION
-        : MENU_OPTION_HEIGHT,
+    estimateSize: (index: number) => {
+      const firstGroupItem = hasOptionGroupHeader(options, index);
+      const hasDescription = 'description' in options[index];
+      if (firstGroupItem && hasDescription) {
+        return MENU_OPTION_HEIGHT + MENU_OPTION_HEIGHT_DESCRIPTION;
+      } else if (firstGroupItem && !hasDescription) {
+        return MENU_OPTION_HEIGHT * 2;
+      } else if (!firstGroupItem && hasDescription) {
+        return MENU_OPTION_HEIGHT_DESCRIPTION;
+      } else {
+        return MENU_OPTION_HEIGHT;
+      }
+    },
     overscan: VIRTUAL_OVERSCAN_ITEMS,
   };
 
@@ -341,60 +348,60 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
             <ScrollContainer showScrollIndicators maxHeight="inherit" ref={scrollRef}>
               <ul style={{ height: rowVirtualizer.getTotalSize() }} className={styles.menuUlContainer}>
                 {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+                  const startingNewGroup = isNewGroup(options[virtualRow.index], options[virtualRow.index - 1]);
                   const index = virtualRow.index;
                   const item = options[index];
                   const itemProps = getItemProps({ item, index });
-                  const isSelected = isComboboxOption(item) && isOptionSelected(item);
-                  const id = isComboboxOption(item)
-                    ? 'multicombobox-option-' + item.value.toString()
-                    : 'multicombobox-option-' + item;
-                  const key = isComboboxOption(item) ? item.value.toString() : item + '-' + index.toString();
-                  const isAll = isComboboxOption(item) && item.value === ALL_OPTION_VALUE;
+                  const isSelected = isOptionSelected(item);
+                  const id = 'multicombobox-option-' + item.value.toString();
+                  const isAll = item.value === ALL_OPTION_VALUE;
 
                   // TODO: fix bug where if the search filtered items list is the
                   // same length, but different, than the selected items (ask tobias)
                   const allItemsSelected =
-                    isComboboxOption(options[0]) &&
-                    options[0]?.value === ALL_OPTION_VALUE &&
-                    selectedItems.length === options.length - 1;
+                    options[0]?.value === ALL_OPTION_VALUE && selectedItems.length === options.length - 1;
 
                   return (
                     <li
-                      key={key}
+                      key={`${item.value}-${index}`}
                       data-index={index}
                       {...itemProps}
-                      className={cx(
-                        styles.optionBasic,
-                        { [styles.optionFocused]: highlightedIndex === index && isComboboxOption(item) },
-                        isComboboxOption(item) ? styles.option : styles.optionGroup
-                      )}
+                      className={styles.optionBasic}
                       style={{ height: virtualRow.size, transform: `translateY(${virtualRow.start}px)` }}
                     >
-                      <Stack direction="row" alignItems="center">
-                        {isComboboxOption(item) && (
-                          <Checkbox
-                            key={id}
-                            value={allItemsSelected || isSelected}
-                            indeterminate={isAll && selectedItems.length > 0 && !allItemsSelected}
-                            aria-labelledby={id}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                            }}
-                          />
+                      <Stack direction="column" justifyContent="space-between" width={'100%'} height={'100%'} gap={0}>
+                        {startingNewGroup && item.group && (
+                          <div className={styles.optionGroup}>
+                            <OptionListItem label={item.group} id={id} isGroup={true} />
+                          </div>
                         )}
-                        <OptionListItem
-                          label={
-                            isAll
-                              ? (item.label ?? item.value.toString()) +
-                                (isAll && inputValue !== '' ? ` (${options.length - 1})` : '')
-                              : isComboboxOption(item)
-                                ? (item.label ?? item.value.toString())
-                                : item
-                          }
-                          description={isComboboxOption(item) ? item?.description : undefined}
-                          id={id}
-                          isGroup={!isComboboxOption(item)}
-                        />
+                        <div
+                          className={cx(styles.option, {
+                            [styles.optionFocused]: highlightedIndex === index,
+                          })}
+                        >
+                          <Stack direction="row" alignItems="center">
+                            <Checkbox
+                              key={id}
+                              value={allItemsSelected || isSelected}
+                              indeterminate={isAll && selectedItems.length > 0 && !allItemsSelected}
+                              aria-labelledby={id}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                              }}
+                            />
+                            <OptionListItem
+                              label={
+                                isAll
+                                  ? (item.label ?? item.value.toString()) +
+                                    (isAll && inputValue !== '' ? ` (${options.length - 1})` : '')
+                                  : (item.label ?? item.value.toString())
+                              }
+                              description={item?.description}
+                              id={id}
+                            />
+                          </Stack>
+                        </div>
                       </Stack>
                     </li>
                   );
@@ -411,7 +418,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
 
 function getSelectedItemsFromValue<T extends string | number>(
   value: T[] | Array<ComboboxOption<T>>,
-  options: Array<ComboboxOption<T> | string>
+  options: Array<ComboboxOption<T>>
 ) {
   if (isComboboxOptions(value)) {
     return value;
@@ -420,16 +427,14 @@ function getSelectedItemsFromValue<T extends string | number>(
   const resultingItems: Array<ComboboxOption<T>> = [];
 
   for (const option of options) {
-    if (isComboboxOption(option)) {
-      const index = valueMap.get(option.value);
-      if (index !== undefined) {
-        resultingItems[index] = option;
-        valueMap.delete(option.value);
-      }
-      if (valueMap.size === 0) {
-        // We found all values
-        break;
-      }
+    const index = valueMap.get(option.value);
+    if (index !== undefined) {
+      resultingItems[index] = option;
+      valueMap.delete(option.value);
+    }
+    if (valueMap.size === 0) {
+      // We found all values
+      break;
     }
   }
 
@@ -445,3 +450,28 @@ function isComboboxOptions<T extends string | number>(
 ): value is Array<ComboboxOption<T>> {
   return typeof value[0] === 'object';
 }
+
+const isNewGroup = <T extends string | number>(option: ComboboxOption<T>, prevOption: ComboboxOption<T>) => {
+  const currentGroup = option.group;
+  let isNew = false;
+  if (prevOption && currentGroup) {
+    const lastGroup = prevOption.group;
+    if (!lastGroup) {
+      isNew = true;
+    }
+    isNew = lastGroup !== currentGroup;
+  } else if (!prevOption && currentGroup) {
+    isNew = true;
+  }
+  return isNew;
+};
+
+const hasOptionGroupHeader = <T extends string | number>(options: Array<ComboboxOption<T>>, index: number) => {
+  const group = options[index].group;
+  if (group) {
+    const firstGroupIndex = options.findIndex((option) => option.group === group);
+    return index === firstGroupIndex;
+  } else {
+    return false;
+  }
+};
