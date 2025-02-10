@@ -14,11 +14,11 @@ jobs:
       with:
         node-version: lts/*
     - name: Install dependencies
-      run: npm ci
+      run: yarn install
     - name: Install Playwright Browsers
       run: npx playwright install --with-deps
     - name: Run Playwright tests
-      run: npx playwright test
+      run: npx playwright test --project=visual_regression
     - uses: actions/upload-artifact@v4
       if: ${{ !cancelled() }}
       with:
