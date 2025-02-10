@@ -2,7 +2,6 @@ import { SceneComponentProps, SceneCSSGridLayout, SceneObjectBase, SceneObjectSt
 import { t } from 'app/core/internationalization';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
-import { layoutSerializerRegistry } from '../../serialization/layoutSerializers/layoutSerializerRegistry';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { getDashboardSceneFor, getGridItemKeyForPanelId, getVizPanelKeyForPanelId } from '../../utils/utils';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';

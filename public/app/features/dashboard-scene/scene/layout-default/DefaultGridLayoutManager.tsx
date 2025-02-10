@@ -15,7 +15,6 @@ import { GRID_COLUMN_COUNT } from 'app/core/constants';
 import { t } from 'app/core/internationalization';
 import DashboardEmpty from 'app/features/dashboard/dashgrid/DashboardEmpty';
 
-import { layoutSerializerRegistry } from '../../serialization/layoutSerializers/layoutSerializerRegistry';
 import { isClonedKey, joinCloneKeys } from '../../utils/clone';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import {

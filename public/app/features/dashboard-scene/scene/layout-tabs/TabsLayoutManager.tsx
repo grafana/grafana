@@ -25,9 +25,6 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     },
     id: 'tabs-layout',
     createFromLayout: TabsLayoutManager.createFromLayout,
-    getSerializer: () => {
-      throw new Error('Not implemented');
-    },
   };
 
   public readonly descriptor = TabsLayoutManager.descriptor;
