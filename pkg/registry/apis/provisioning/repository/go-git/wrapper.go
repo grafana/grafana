@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path"
@@ -49,7 +48,7 @@ func Clone(
 	if gitcfg == nil {
 		return nil, fmt.Errorf("missing github config")
 	}
-	err := os.MkdirAll(root, 0755)
+	err := os.MkdirAll(root, 0700)
 	if err != nil {
 		return nil, err
 	}
@@ -264,19 +263,18 @@ func (g *GoGitRepo) Read(ctx context.Context, path string, ref string) (*reposit
 	if err != nil {
 		return nil, err
 	}
-	mod := metav1.Time{
-		Time: stat.ModTime(),
-	}
 	info := &repository.FileInfo{
-		Path:     path,
-		Modified: &mod,
+		Path: path,
+		Modified: &metav1.Time{
+			Time: stat.ModTime(),
+		},
 	}
 	if !stat.IsDir() {
 		f, err := g.tree.Filesystem.Open(path)
 		if err != nil {
 			return nil, err
 		}
-		info.Data, err = ioutil.ReadAll(f)
+		info.Data, err = io.ReadAll(f)
 	}
 	return info, err
 }

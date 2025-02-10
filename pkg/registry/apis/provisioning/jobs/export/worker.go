@@ -104,7 +104,7 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 	if buffered != nil && status.State != provisioning.JobStateError {
 		status.Message = "pushing changes..."
 		worker.maybeNotify(ctx) // force notify?
-		buffered.Push(ctx, os.Stdout)
+		err = buffered.Push(ctx, os.Stdout)
 		status.Message = ""
 	}
 
