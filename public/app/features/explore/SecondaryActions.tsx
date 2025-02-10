@@ -70,6 +70,7 @@ export function SecondaryActions({
           </ToolbarButton>
           {queryLibraryEnabled && (
             <ToolbarButton
+              aria-label={t('explore.secondary-actions.add-from-query-library', 'Add query from library')}
               variant="canvas"
               onClick={() => openQueryLibraryDrawer(activeDatasources, onSelectQueryFromLibrary)}
               icon="plus"
