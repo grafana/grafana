@@ -3,6 +3,7 @@ package dashboard
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/url"
 	"slices"
@@ -391,6 +392,7 @@ func asResourceKey(ns string, k string) (*resource.ResourceKey, error) {
 
 func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, user identity.Requester) ([]string, error) {
 	// TODO skip if permission ff is not enabled
+	// gets dashboards that the user was granted read access to
 	permissions := user.GetPermissions()
 	dashboardPermissions := permissions[dashboards.ActionDashboardsRead]
 	dashboardUids := make([]string, 0)
@@ -416,7 +418,7 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 	// TODO handle case where user has more than 50 shared dashboards
 	dashboardSearchRequest := &resource.ResourceSearchRequest{
 		Fields: []string{"folder"},
-		Limit:  50,
+		Limit:  50, // TODO bump this
 		Options: &resource.ListOptions{
 			Key: key,
 			Fields: []*resource.Requirement{{
@@ -426,12 +428,13 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 			}},
 		},
 	}
+	// get all dashboards user has access to, along with their parent folder
 	dashboardResult, err := s.client.Search(ctx, dashboardSearchRequest)
 	if err != nil {
 		return nil, err
 	}
 
-	// find list of unique folder UIDs in the list of shared dashboards
+	// populate list of unique folder UIDs in the list of shared dashboards
 	folders := make([]string, 0)
 	for _, dash := range dashboardResult.Results.Rows {
 		folderUid := string(dash.Cells[0])
@@ -449,7 +452,7 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 	// TODO handle case where there are more than 50 here
 	folderSearchRequest := &resource.ResourceSearchRequest{
 		Fields: []string{"folder"},
-		Limit:  50,
+		Limit:  50, // TODO bump this
 		Options: &resource.ListOptions{
 			Key: folderKey,
 			Fields: []*resource.Requirement{{
@@ -464,6 +467,7 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 		return nil, err
 	}
 
+	// go over list of folders user HAS access to, and remove it from the original folder list
 	for _, fold := range foldersResult.Results.Rows {
 		folderUid := fold.Key.Name
 		i := slices.Index(folders, folderUid)
@@ -473,11 +477,12 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 		}
 	}
 
+	// add to sharedDashboards dashboards user has access to, but does NOT have access to it's parent folder
 	for _, dash := range dashboardResult.Results.Rows {
 		dashboardUid := dash.Key.Name
 		folderUid := string(dash.Cells[0])
 		if slices.Contains(folders, folderUid) {
-			sharedDashboards = append(folders, dashboardUid)
+			sharedDashboards = append(sharedDashboards, dashboardUid)
 		}
 	}
 	return sharedDashboards, nil
