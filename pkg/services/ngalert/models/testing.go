@@ -564,6 +564,12 @@ func (a *AlertRuleMutators) WithKey(key AlertRuleKey) AlertRuleMutator {
 	}
 }
 
+func (a *AlertRuleMutators) WithVersion(version int64) AlertRuleMutator {
+	return func(r *AlertRule) {
+		r.Version = version
+	}
+}
+
 func (a *AlertRuleMutators) WithMetadata(meta AlertRuleMetadata) AlertRuleMutator {
 	return func(r *AlertRule) {
 		r.Metadata = meta
