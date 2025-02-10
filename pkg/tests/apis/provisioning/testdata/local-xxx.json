@@ -1,0 +1,21 @@
+{
+    "apiVersion": "provisioning.grafana.app/v0alpha1",
+    "kind": "Repository",
+    "metadata": {
+        "name": "local-xxx"
+    },
+    "spec": {
+        "description": "load resources from https://github.com/grafana/grafana/tree/main/conf/provisioning/sample",
+        "local": {
+            "path": "conf/provisioning/sample"
+        },
+        "sync": {
+            "enabled": false,
+            "target": "mirror",
+            "intervalSeconds": 60
+        },
+        "readOnly": false,
+        "title": "Config provisioning files",
+        "type": "local"
+    }
+}

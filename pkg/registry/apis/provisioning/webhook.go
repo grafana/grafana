@@ -13,13 +13,11 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/auth"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 )
 
 // This only works for github right now
 type webhookConnector struct {
-	client auth.BackgroundIdentityService
 	getter RepoGetter
 	jobs   jobs.JobQueue
 }
@@ -51,13 +49,13 @@ func (*webhookConnector) NewConnectOptions() (runtime.Object, bool, string) {
 
 func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
 	namespace := request.NamespaceValue(ctx)
-	id, err := s.client.WorkerIdentity(ctx, namespace)
+	ctx, _, err := identity.WithProvisioningIdentitiy(ctx, namespace)
 	if err != nil {
 		return nil, err
 	}
 
 	// Get the repository with the worker identity (since the request user is likely anonymous)
-	repo, err := s.getter.GetHealthyRepository(identity.WithRequester(ctx, id), name)
+	repo, err := s.getter.GetHealthyRepository(ctx, name)
 	if err != nil {
 		return nil, err
 	}

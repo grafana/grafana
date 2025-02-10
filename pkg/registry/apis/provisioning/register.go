@@ -29,8 +29,11 @@ import (
 	clientset "github.com/grafana/grafana/pkg/generated/clientset/versioned"
 	informers "github.com/grafana/grafana/pkg/generated/informers/externalversions"
 	listers "github.com/grafana/grafana/pkg/generated/listers/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/auth"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/export"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/pullrequest"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -61,7 +64,6 @@ type APIBuilder struct {
 	client            *resources.ClientFactory
 	parsers           *resources.ParserFactory
 	ghFactory         github.ClientFactory
-	identities        auth.BackgroundIdentityService
 	jobs              jobs.JobQueue
 	tester            *RepositoryTester
 	resourceLister    resources.ResourceLister
@@ -75,7 +77,6 @@ func NewAPIBuilder(
 	local *repository.LocalFolderResolver,
 	urlProvider func(namespace string) string,
 	webhookSecretKey string,
-	identities auth.BackgroundIdentityService,
 	features featuremgmt.FeatureToggles,
 	render rendering.Service,
 	index resource.RepositoryIndexClient,
@@ -83,14 +84,13 @@ func NewAPIBuilder(
 	configProvider apiserver.RestConfigProvider,
 	ghFactory github.ClientFactory,
 ) *APIBuilder {
-	clientFactory := resources.NewFactory(identities)
+	clientFactory := resources.NewFactory(configProvider)
 	return &APIBuilder{
 		urlProvider:       urlProvider,
 		localFileResolver: local,
 		webhookSecretKey:  webhookSecretKey,
 		features:          features,
 		ghFactory:         ghFactory,
-		identities:        identities,
 		client:            clientFactory,
 		parsers: &resources.ParserFactory{
 			Client: clientFactory,
@@ -98,7 +98,6 @@ func NewAPIBuilder(
 		render:         render,
 		resourceLister: resources.NewResourceLister(index),
 		blobstore:      blobstore,
-		jobs:           jobs.NewJobQueue(50), // in memory for now
 	}
 }
 
@@ -110,7 +109,6 @@ func RegisterAPIService(
 	features featuremgmt.FeatureToggles,
 	apiregistration builder.APIRegistrar,
 	reg prometheus.Registerer,
-	identities auth.BackgroundIdentityService,
 	render rendering.Service,
 	client resource.ResourceClient, // implements resource.RepositoryClient
 	configProvider apiserver.RestConfigProvider,
@@ -135,7 +133,7 @@ func RegisterAPIService(
 		return cfg.AppURL
 	}
 
-	builder := NewAPIBuilder(folderResolver, urlProvider, cfg.SecretKey, identities, features, render, client, store, configProvider, ghFactory)
+	builder := NewAPIBuilder(folderResolver, urlProvider, cfg.SecretKey, features, render, client, store, configProvider, ghFactory)
 	apiregistration.RegisterAPI(builder)
 	return builder, nil
 }
@@ -181,6 +179,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 		return fmt.Errorf("failed to create repository storage: %w", err)
 	}
 	b.getter = repositoryStorage
+	b.jobs = jobs.NewJobQueue(50, b) // in memory for now
 
 	repositoryStatusStorage := grafanaregistry.NewRegistryStatusStore(opts.Scheme, repositoryStorage)
 
@@ -190,7 +189,6 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	storage[provisioning.RepositoryResourceInfo.StoragePath("status")] = repositoryStatusStorage
 	storage[provisioning.RepositoryResourceInfo.StoragePath("webhook")] = &webhookConnector{
 		getter: b,
-		client: b.identities,
 		jobs:   b.jobs,
 	}
 	storage[provisioning.RepositoryResourceInfo.StoragePath("test")] = &testConnector{
@@ -239,14 +237,13 @@ func (b *APIBuilder) GetHealthyRepository(ctx context.Context, name string) (rep
 	status := repo.Config().Status.Health
 	if !status.Healthy {
 		if timeSince(status.Checked) > time.Second*25 {
-			id, err := b.identities.WorkerIdentity(ctx, repo.Config().Namespace)
+			ctx, _, err = identity.WithProvisioningIdentitiy(ctx, repo.Config().Namespace)
 			if err != nil {
 				return nil, err // The status
 			}
-			ctx := identity.WithRequester(ctx, id)
 
 			// Check health again
-			s, err := b.tester.TestRepository(ctx, repo)
+			s, err := repository.TestRepository(ctx, repo)
 			if err != nil {
 				return nil, err // The status
 			}
@@ -324,8 +321,8 @@ func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admis
 	// This is called on every update, so be careful to only add the finalizer for create
 	if len(r.Finalizers) == 0 && a.GetOperation() == admission.Create {
 		r.Finalizers = []string{
-			finalizer_REMOVE_ORPHAN_RESOURCE,
-			finalizer_CLEANUP_FINALIZER,
+			controller.RemoveOrphanResourcesFinalizer,
+			controller.CleanFinalizer,
 		}
 	}
 
@@ -364,7 +361,7 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 		return err
 	}
 
-	list := ValidateRepository(repo)
+	list := repository.ValidateRepository(repo)
 	cfg := repo.Config()
 
 	if a.GetOperation() == admission.Update {
@@ -424,11 +421,9 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			if err != nil {
 				return err
 			}
-			sharedInformerFactory := informers.NewSharedInformerFactory(
-				c,
-				ResyncInterval, // Health and reconciliation interval check interval
-			)
 
+			// Informer with resync interval used for health check and reconciliation
+			sharedInformerFactory := informers.NewSharedInformerFactory(c, 10*time.Second)
 			repoInformer := sharedInformerFactory.Provisioning().V0alpha1().Repositories()
 			go repoInformer.Informer().Run(postStartHookCtx.Context.Done())
 
@@ -439,25 +434,27 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			}
 			b.repositoryLister = repoInformer.Lister()
 
-			b.jobs.Register(jobs.NewJobWorker(
-				b,
-				b.parsers,
+			b.jobs.Register(export.NewExportWorker(b.parsers))
+			b.jobs.Register(sync.NewSyncWorker(
 				c.ProvisioningV0alpha1(),
-				b.identities,
-				b.render,
+				b.parsers,
 				b.resourceLister,
-				b.blobstore,
-				b.urlProvider,
 			))
 
-			repoController, err := NewRepositoryController(
+			renderer := pullrequest.NewRenderer(b.render, b.blobstore)
+			pullRequestWorker, err := pullrequest.NewPullRequestWorker(b.parsers, renderer, b.urlProvider)
+			if err != nil {
+				return fmt.Errorf("create pull request worker: %w", err)
+			}
+			b.jobs.Register(pullRequestWorker)
+
+			repoController, err := controller.NewRepositoryController(
 				c.ProvisioningV0alpha1(),
 				repoInformer,
 				b, // repoGetter
 				b.resourceLister,
 				b.parsers,
-				b.identities,
-				b.tester,
+				&repository.Tester{},
 				b.jobs,
 			)
 			if err != nil {
