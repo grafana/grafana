@@ -1,17 +1,11 @@
 import { ReactNode } from 'react';
 
-import { dateTime } from '@grafana/data';
 import { sceneGraph, SceneObject, SceneObjectBase, SceneObjectState, VariableDependencyConfig } from '@grafana/scenes';
 import { t } from 'app/core/internationalization';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 
-import { ConditionalRenderingBetween } from '../../conditional-rendering/ConditionalRenderingBetween';
-import { ConditionalRenderingCondition } from '../../conditional-rendering/ConditionalRenderingCondition';
-import { ConditionalRenderingData } from '../../conditional-rendering/ConditionalRenderingData';
-import { ConditionalRenderingFrom } from '../../conditional-rendering/ConditionalRenderingFrom';
+import { ConditionalRendering } from '../../conditional-rendering/ConditionalRendering';
 import { ConditionalRenderingGroup } from '../../conditional-rendering/ConditionalRenderingGroup';
-import { ConditionalRenderingTo } from '../../conditional-rendering/ConditionalRenderingTo';
-import { ConditionalRenderingVariable } from '../../conditional-rendering/ConditionalRenderingVariable';
 import { ResponsiveGridLayoutManager } from '../layout-responsive-grid/ResponsiveGridLayoutManager';
 import { BulkActionElement } from '../types/BulkActionElement';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
@@ -51,29 +45,15 @@ export class RowItem
       ...state,
       title: state?.title ?? t('dashboard.rows-layout.row.new', 'New row'),
       layout: state?.layout ?? ResponsiveGridLayoutManager.createEmpty(),
-      conditionalRendering: new ConditionalRenderingGroup({
-        value: [
-          new ConditionalRenderingData({ value: true }),
-          new ConditionalRenderingCondition({ value: 'or' }),
-          new ConditionalRenderingBetween({ value: { from: dateTime(), to: dateTime() } }),
-          new ConditionalRenderingCondition({ value: 'or' }),
-          new ConditionalRenderingGroup({
-            value: [
-              new ConditionalRenderingFrom({ value: dateTime() }),
-              new ConditionalRenderingCondition({ value: 'and' }),
-              new ConditionalRenderingVariable({ value: { name: 'var1', values: ['1'] } }),
-              new ConditionalRenderingCondition({ value: 'or' }),
-              new ConditionalRenderingGroup({
-                value: [
-                  new ConditionalRenderingTo({ value: dateTime() }),
-                  new ConditionalRenderingCondition({ value: 'and' }),
-                  new ConditionalRenderingVariable({ value: { name: 'var2', values: ['2'] } }),
-                ],
-              }),
-            ],
+      $behaviors: [
+        ...(state?.$behaviors ?? []),
+        new ConditionalRendering({
+          rootGroup: new ConditionalRenderingGroup({
+            condition: 'or',
+            value: [],
           }),
-        ],
-      }),
+        }),
+      ],
     });
   }
 

@@ -7,13 +7,14 @@ import { SceneComponentProps, sceneGraph } from '@grafana/scenes';
 import { Button, Icon, useElementSelection, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
+import { ConditionalRendering } from '../../conditional-rendering/ConditionalRendering';
 import { isClonedKey } from '../../utils/clone';
 import { getDashboardSceneFor } from '../../utils/utils';
 
 import { RowItem } from './RowItem';
 
 export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
-  const { layout, title, isCollapsed, height = 'expand', isHeaderHidden, key } = model.useState();
+  const { layout, title, isCollapsed, height = 'expand', isHeaderHidden, key, $behaviors } = model.useState();
   const isClone = useMemo(() => isClonedKey(key!), [key]);
   const dashboard = getDashboardSceneFor(model);
   const { isEditing, showHiddenElements } = dashboard.useState();
@@ -22,6 +23,11 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
   const ref = useRef<HTMLDivElement>(null);
   const shouldGrow = !isCollapsed && height === 'expand';
   const { isSelected, onSelect } = useElementSelection(key);
+
+  const conditionalRendering = $behaviors?.find((behavior) => behavior instanceof ConditionalRendering);
+  if (!(conditionalRendering?.evaluate() ?? true) && !showHiddenElements) {
+    return null;
+  }
 
   return (
     <div
