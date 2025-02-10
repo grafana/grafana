@@ -169,6 +169,10 @@ export { MenuGroup, type MenuItemsGroup, type MenuGroupProps } from './Menu/Menu
 export { MenuItem, type MenuItemProps } from './Menu/MenuItem';
 export { WithContextMenu } from './ContextMenu/WithContextMenu';
 export { DataLinksInlineEditor } from './DataLinks/DataLinksInlineEditor/DataLinksInlineEditor';
+export {
+  DataLinksInlineEditorBase,
+  type DataLinksInlineEditorBaseProps,
+} from './DataLinks/DataLinksInlineEditor/DataLinksInlineEditorBase';
 export { DataLinkInput } from './DataLinks/DataLinkInput';
 export {
   DataLinksContextMenu,
@@ -240,6 +244,7 @@ export { getSelectStyles } from './Select/getSelectStyles';
 export * from './Select/types';
 
 export { Combobox } from './Combobox/Combobox';
+export { MultiCombobox } from './Combobox/MultiCombobox';
 export { type ComboboxOption } from './Combobox/types';
 
 export { HorizontalGroup, VerticalGroup, Container } from './Layout/Layout';

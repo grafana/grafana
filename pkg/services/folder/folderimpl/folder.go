@@ -34,8 +34,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
+	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/supportbundles"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -165,6 +167,17 @@ func (s *Service) DBMigration(db db.DB) {
 	}
 
 	s.log.Debug("syncing dashboard and folder tables finished")
+}
+
+func (s *Service) SearchFolders(ctx context.Context, q folder.SearchFoldersQuery) (model.HitList, error) {
+	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesFoldersServiceV2) {
+		// TODO:
+		// - implement filtering by alerting folders and k6 folders (see the dashboards store `FindDashboards` method for reference)
+		// - implement fallback on search client in unistore to go to legacy store (will need to read from dashboard store)
+		return s.searchFoldersFromApiServer(ctx, q)
+	}
+
+	return nil, fmt.Errorf("cannot be called on the legacy folder service")
 }
 
 func (s *Service) GetFolders(ctx context.Context, q folder.GetFoldersQuery) ([]*folder.Folder, error) {
@@ -1016,7 +1029,12 @@ func (s *Service) legacyDelete(ctx context.Context, cmd *folder.DeleteFolderComm
 	// if dashboard restore is on we don't delete public dashboards, the hard delete will take care of it later
 	if !s.features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore) {
 		// We need a list of dashboard uids inside the folder to delete related public dashboards
-		dashes, err := s.dashboardStore.FindDashboards(ctx, &dashboards.FindPersistedDashboardsQuery{SignedInUser: cmd.SignedInUser, FolderUIDs: folderUIDs, OrgId: cmd.OrgID})
+		dashes, err := s.dashboardStore.FindDashboards(ctx, &dashboards.FindPersistedDashboardsQuery{
+			SignedInUser: cmd.SignedInUser,
+			FolderUIDs:   folderUIDs,
+			OrgId:        cmd.OrgID,
+			Type:         searchstore.TypeDashboard,
+		})
 		if err != nil {
 			return folder.ErrInternal.Errorf("failed to fetch dashboards: %w", err)
 		}

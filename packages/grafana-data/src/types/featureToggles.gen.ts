@@ -47,7 +47,6 @@ export interface FeatureToggles {
   nestedFolders?: boolean;
   alertingBacktesting?: boolean;
   editPanelCSVDragAndDrop?: boolean;
-  alertingNoNormalState?: boolean;
   logsContextDatasourceUi?: boolean;
   lokiShardSplitting?: boolean;
   lokiQuerySplitting?: boolean;
@@ -166,7 +165,6 @@ export interface FeatureToggles {
   kubernetesAggregator?: boolean;
   expressionParser?: boolean;
   groupByVariable?: boolean;
-  authAPIAccessTokenAuth?: boolean;
   scopeFilters?: boolean;
   ssoSettingsSAML?: boolean;
   oauthRequireSubClaim?: boolean;
@@ -189,7 +187,6 @@ export interface FeatureToggles {
   azureMonitorPrometheusExemplars?: boolean;
   pinNavItems?: boolean;
   authZGRPCServer?: boolean;
-  openSearchBackendFlowEnabled?: boolean;
   ssoSettingsLDAP?: boolean;
   failWrongDSUID?: boolean;
   zanzana?: boolean;
@@ -248,10 +245,17 @@ export interface FeatureToggles {
   improvedExternalSessionHandlingSAML?: boolean;
   teamHttpHeadersMimir?: boolean;
   ABTestFeatureToggleA?: boolean;
+  templateVariablesUsesCombobox?: boolean;
   ABTestFeatureToggleB?: boolean;
   queryLibraryDashboards?: boolean;
   grafanaAdvisor?: boolean;
   elasticsearchImprovedParsing?: boolean;
+  exploreMetricsUseExternalAppPlugin?: boolean;
   datasourceConnectionsTab?: boolean;
   fetchRulesUsingPost?: boolean;
+  alertingAlertmanagerExtraDedupStage?: boolean;
+  alertingAlertmanagerExtraDedupStageStopPipeline?: boolean;
+  newLogsPanel?: boolean;
+  grafanaconThemes?: boolean;
+  pluginsCDNSyncLoader?: boolean;
 }
