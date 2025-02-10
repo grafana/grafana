@@ -18,9 +18,9 @@ This topic explains how to install Grafana dependencies, install Grafana on Linu
 
 There are multiple ways to install Grafana: using the Grafana Labs APT repository, by downloading a `.deb` package, or by downloading a binary `.tar.gz` file. Choose only one of the methods below that best suits your needs.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 If you install via the `.deb` package or `.tar.gz` file, then you must manually update Grafana for each new version.
-{{% /admonition %}}
+{{< /admonition >}}
 
 The following video demonstrates how to install Grafana on Debian and Ubuntu as outlined in this document:
 
@@ -37,9 +37,9 @@ If you install from the APT repository, Grafana automatically updates when you r
 | Grafana OSS               | grafana            | `https://apt.grafana.com stable main` |
 | Grafana OSS (Beta)        | grafana            | `https://apt.grafana.com beta main`   |
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Grafana Enterprise is the recommended and default edition. It is available for free and includes all the features of the OSS edition. You can also upgrade to the [full Enterprise feature set](/products/enterprise/?utm_source=grafana-install-page), which has support for [Enterprise plugins](/grafana/plugins/?enterprise=1&utcm_source=grafana-install-page).
-{{% /admonition %}}
+{{< /admonition >}}
 
 Complete the following steps to install Grafana from the APT repository:
 
@@ -114,7 +114,7 @@ Complete the following steps to install Grafana using the standalone binaries:
    - The most recent Grafana version is selected by default.
    - The **Version** field displays only tagged releases. If you want to install a nightly build, click **Nightly Builds** and then select a version.
 1. Select an **Edition**.
-   - **Enterprise:** This is the recommended version. It is functionally identical to the open-source version but includes features you can unlock with a license if you so choose.
+   - **Enterprise:** This is the recommended version. It is functionally identical to the open source version but includes features you can unlock with a license if you so choose.
    - **Open Source:** This version is functionally identical to the Enterprise version, but you will need to download the Enterprise version if you want Enterprise features.
 1. Depending on which system you are running, click the **Linux** or **ARM** tab on the [download page](/grafana/download).
 1. Copy and paste the code from the [download page](/grafana/download) page into your command line and run.
