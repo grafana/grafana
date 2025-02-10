@@ -30,8 +30,6 @@ jobs:
           cache: 'yarn'
       - name: Install dependencies
         run: yarn install --immutable
-      - name: Install Playwright Browsers
-        run: yarn exec playwright install --with-deps
       - name: Run Playwright tests
         run: |
           yarn e2e:playwright:vizregression | tee output.log
