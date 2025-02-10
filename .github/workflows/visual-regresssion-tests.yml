@@ -1,52 +1,27 @@
-name: Playwright Visual Regression Tests
+name: Playwright Tests
 on:
   push:
-    branches:
-      - main
+    branches: [ main, master ]
   pull_request:
-    branches:
-      - '**' 
-
-env:
-  ARCH: linux-amd64
-
+    branches: [ main, master ]
 jobs:
-  playwright-visual-regression:
+  test:
     timeout-minutes: 60
     runs-on: ubuntu-latest
-    continue-on-error: true
-    # if: github.event.pull_request.draft == false
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Pin Go version to mod file
-        uses: actions/setup-go@v5
-        with:
-          go-version-file: 'go.mod'
-      - run: go version
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: 'yarn'
-      - name: Install dependencies
-        run: yarn install --immutable
-      - name: Install Playwright
-        run: yarn playwright install --with-deps
-      - name: Run Playwright tests
-        run:
-          yarn e2e:playwright:vizregression
-      - uses: actions/upload-artifact@v4
-        id: artifact-upload
-        if: always()
-        with:
-          name: playwright-report
-          path: playwright-report/
-          retention-days: 30
-      - name: Comment on PR with report link
-        uses: thollander/actions-comment-pull-request@v3
-        if: ${{ failure() && env.SNAPSHOT_DIFFERENCES == 'true' }}
-        with:
-          message: |
-            ### Playwright visual snapshot differences were detected.
-            View the [Playwright report](${{ steps.artifact-upload.outputs.artifact-url }}) to review the visual differences.
-            **To approve the snapshot changes and update the snapshots, please comment:** /approve-snapshots
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version: lts/*
+    - name: Install dependencies
+      run: npm ci
+    - name: Install Playwright Browsers
+      run: npx playwright install --with-deps
+    - name: Run Playwright tests
+      run: npx playwright test
+    - uses: actions/upload-artifact@v4
+      if: ${{ !cancelled() }}
+      with:
+        name: playwright-report
+        path: playwright-report/
+        retention-days: 30
