@@ -250,6 +250,7 @@ describe('Combobox', () => {
       const input = screen.getByRole('combobox');
       await userEvent.type(input, '4');
       await userEvent.keyboard('{Enter}');
+      expect(screen.queryByDisplayValue('Use custom value')).not.toBeInTheDocument();
       expect(screen.getByDisplayValue('Option 4')).toBeInTheDocument();
       expect(onChangeHandler).toHaveBeenCalledWith(expect.objectContaining({ value: '4' }));
       expect(onChangeHandler).not.toHaveBeenCalledWith(expect.objectContaining({ description: 'Use custom value' }));
