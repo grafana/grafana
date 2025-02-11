@@ -11,6 +11,6 @@ For each data link, set the following options:
 - **Title**
 - **URL**
 - **Open in new tab**
-- **One click** - Opens the data link with a single click. Only one data link can have one click enabled at a time.
+- **One click** - Opens the data link with a single click. Only one data link can have **One click** enabled at a time.
 
 To learn more, refer to [Configure data links](../../configure-data-links/).

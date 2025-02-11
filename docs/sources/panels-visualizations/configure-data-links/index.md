@@ -262,7 +262,7 @@ If you want to add all of the current dashboard's variables to the URL, then use
 1. If you want the link to open in a new tab, toggle the **Open in a new tab** switch.
 1. If you want the data link to open with a single click, toggle the **One click** switch.
 
-   Only one data link can have one click enabled at a time. One click is only supported for some visualizations.
+   Only one data link can have **One click** enabled at a time. **One click** is only supported for some visualizations.
 
 1. Click **Save** to save changes and close the dialog box.
 1. Click **Save dashboard**.
