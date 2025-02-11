@@ -130,44 +130,44 @@ The time-series visualization supports alert rules to provide more context in th
 
 1. Log in to Grafana:
 
-    Navigate to [http://localhost:3000](http://localhost:3000), where Grafana should be running.
+   Navigate to [http://localhost:3000](http://localhost:3000), where Grafana should be running.
 
 1. Create a time series panel:
 
-    - Navigate to **Dashboards**.
-    - Click **New**.
-    - Select **New Dashboard**.
-    - Click **+ Add visualization**.
-    - Select **Prometheus** as the data source (provided with the demo).
-    - Enter a title for your panel, e.g., **CPU and Memory Usage**.
+   - Navigate to **Dashboards**.
+   - Click **New**.
+   - Select **New Dashboard**.
+   - Click **+ Add visualization**.
+   - Select **Prometheus** as the data source (provided with the demo).
+   - Enter a title for your panel, e.g., **CPU and Memory Usage**.
 
 1. Add queries for metrics:
 
-    - In the query area, copy and paste the following PromQL query:
+   - In the query area, copy and paste the following PromQL query:
 
-        ```promql
-        flask_app_cpu_usage{environment="prod"}
-        ```
+     ```promql
+     flask_app_cpu_usage{environment="prod"}
+     ```
 
-    - Click **Run queries**.
+   - Click **Run queries**.
 
-    This query should display the simulated CPU usage data in the **prod** environment.
+   This query should display the simulated CPU usage data in the **prod** environment.
 
 1. Add memory usage query:
 
-    - Click **+ Add query**.
-    - In the query area, paste the following PromQL query:
+   - Click **+ Add query**.
+   - In the query area, paste the following PromQL query:
 
-        ```promql
-        flask_app_memory_usage{environment="prod"}
-        ```
+     ```promql
+     flask_app_memory_usage{environment="prod"}
+     ```
 
-        {{< figure src="/media/docs/alerting/time-series_cpu_mem_usage_metrics.png" max-width="1200px" caption="Time-series panel displaying CPU and memory usage metrics in production." >}}
+     {{< figure src="/media/docs/alerting/time-series_cpu_mem_usage_metrics.png" max-width="1200px" caption="Time-series panel displaying CPU and memory usage metrics in production." >}}
 
-        Both metrics return labels that we’ll use later to link alert instances with the appropriate routing. These labels help define how alerts are routed based on their environment or other criteria.
+     Both metrics return labels that we’ll use later to link alert instances with the appropriate routing. These labels help define how alerts are routed based on their environment or other criteria.
 
 1. Click Save dashboard.
-    We have our time-series panel ready. Feel free to combine metrics with labels such as `environment = “staging”`.
+   We have our time-series panel ready. Feel free to combine metrics with labels such as `environment = “staging”`.
 
 <!-- INTERACTIVE page step3.md END -->
 <!-- INTERACTIVE page step4.md START -->
