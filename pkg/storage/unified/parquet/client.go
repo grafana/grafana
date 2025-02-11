@@ -15,7 +15,7 @@ var (
 	_ resource.BatchStoreClient              = (*writerClient)(nil)
 	_ resource.BatchStore_BatchProcessClient = (*writerClient)(nil)
 
-	unimplemented = errors.New("not implemented (BatchResourceWriter as BatchStoreClient shim)")
+	errUnimplemented = errors.New("not implemented (BatchResourceWriter as BatchStoreClient shim)")
 )
 
 type writerClient struct {
@@ -59,17 +59,17 @@ func (w *writerClient) Context() context.Context {
 
 // Header implements resource.ResourceStore_BatchProcessClient.
 func (w *writerClient) Header() (metadata.MD, error) {
-	return nil, unimplemented
+	return nil, errUnimplemented
 }
 
 // RecvMsg implements resource.ResourceStore_BatchProcessClient.
 func (w *writerClient) RecvMsg(m any) error {
-	return unimplemented
+	return errUnimplemented
 }
 
 // SendMsg implements resource.ResourceStore_BatchProcessClient.
 func (w *writerClient) SendMsg(m any) error {
-	return unimplemented
+	return errUnimplemented
 }
 
 // Trailer implements resource.ResourceStore_BatchProcessClient.
