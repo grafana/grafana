@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/client-go/rest"
 )
 
 var _ K8sHandler = (*MockK8sHandler)(nil)
@@ -87,4 +88,12 @@ func (m *MockK8sHandler) GetUserFromMeta(ctx context.Context, userMeta string) (
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*user.User), args.Error(1)
+}
+
+type MockTestRestConfig struct {
+	cfg *rest.Config
+}
+
+func (r MockTestRestConfig) GetRestConfig(ctx context.Context) *rest.Config {
+	return r.cfg
 }

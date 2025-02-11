@@ -152,7 +152,7 @@ export class ElementSelection {
       const firstObj = this.selectedObjects?.values().next().value?.resolve();
 
       if (firstObj instanceof VizPanel) {
-        return new MultiSelectedVizPanelsEditableElement(sceneObjects);
+        return new MultiSelectedVizPanelsEditableElement(sceneObjects.filter((obj) => obj instanceof VizPanel));
       }
 
       if (isEditableDashboardElement(firstObj!)) {
