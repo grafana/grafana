@@ -12,6 +12,7 @@ import (
 	dashboardsnapshot "github.com/grafana/grafana/pkg/apis/dashboardsnapshot/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/db"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashdb "github.com/grafana/grafana/pkg/services/dashboards/database"
 	dashsvc "github.com/grafana/grafana/pkg/services/dashboards/service"
@@ -110,8 +111,7 @@ func TestValidateDashboardExists(t *testing.T) {
 		foldertest.NewFakeService(),
 		folder.NewFakeStore(),
 		nil,
-		nil,
-		nil,
+		client.MockTestRestConfig{},
 		nil,
 		quotatest.New(false, nil),
 		nil,

@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
@@ -355,8 +356,7 @@ func createDashboard(t *testing.T, sqlStore db.DB, user user.SignedInUser, dash 
 		folderSvc,
 		folder.NewFakeStore(),
 		nil,
-		nil,
-		nil,
+		client.MockTestRestConfig{},
 		nil,
 		quotaService,
 		nil,
@@ -453,7 +453,7 @@ func scenarioWithPanel(t *testing.T, desc string, fn func(t *testing.T, sc scena
 		cfg, dashboardStore, folderStore,
 		features, folderPermissions, ac,
 		folderSvc, fStore,
-		nil, nil, nil, nil, quotaService, nil, nil,
+		nil, client.MockTestRestConfig{}, nil, quotaService, nil, nil,
 	)
 	require.NoError(t, svcErr)
 	dashboardService.RegisterDashboardPermissions(dashboardPermissions)
@@ -526,7 +526,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			cfg, dashboardStore, folderStore,
 			features, folderPermissions, ac,
 			folderSvc, fStore,
-			nil, nil, nil, nil, quotaService, nil, nil,
+			nil, client.MockTestRestConfig{}, nil, quotaService, nil, nil,
 		)
 		require.NoError(t, dashSvcErr)
 		dashService.RegisterDashboardPermissions(dashboardPermissions)

@@ -93,10 +93,10 @@ func ProvideDashboardServiceImpl(
 	cfg *setting.Cfg, dashboardStore dashboards.Store, folderStore folder.FolderStore,
 	features featuremgmt.FeatureToggles, folderPermissionsService accesscontrol.FolderPermissionsService,
 	ac accesscontrol.AccessControl, folderSvc folder.Service, fStore folder.Store, r prometheus.Registerer,
-	restConfigProvider apiserver.RestConfigProvider, userService user.Service, unified resource.ResourceClient,
+	restConfigProvider apiserver.RestConfigProvider, userService user.Service,
 	quotaService quota.Service, orgService org.Service, publicDashboardService publicdashboards.ServiceWrapper,
 ) (*DashboardServiceImpl, error) {
-	k8sHandler := client.NewK8sHandler(cfg, request.GetNamespaceMapper(cfg), dashboardv0alpha1.DashboardResourceInfo.GroupVersionResource(), restConfigProvider, unified, dashboardStore, userService)
+	k8sHandler := client.NewK8sHandler(cfg, request.GetNamespaceMapper(cfg), dashboardv0alpha1.DashboardResourceInfo.GroupVersionResource(), restConfigProvider.GetRestConfig, dashboardStore, userService)
 
 	dashSvc := &DashboardServiceImpl{
 		cfg:                       cfg,
