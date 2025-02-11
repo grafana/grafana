@@ -20,6 +20,5 @@ func TestBatch(t *testing.T) {
 		require.True(t, v0 > 1000)
 		require.Equal(t, int64(1), v1-v0)
 		require.Equal(t, int64(1), v2-v1)
-
 	})
 }
