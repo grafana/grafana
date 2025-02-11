@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { AccessoryButton, InputGroup } from '@grafana/plugin-ui';
@@ -18,36 +18,59 @@ interface AggregateItemProps {
 
 export const AggregateItem: React.FC<AggregateItemProps> = ({ aggregate, onChange, onDelete, columns }) => {
   const selectedColumn = columns.find((c) => c.value === aggregate.property?.name);
-  const columnType = selectedColumn?.type || QueryEditorPropertyType.String;
 
-  let availableAggregates: Array<SelectableValue<string>> = [];
+  const mapColumnType = (type: string): QueryEditorPropertyType => {
+    switch (type.toLowerCase()) {
+      case 'number':
+      case 'int':
+      case 'float':
+      case 'double':
+        return QueryEditorPropertyType.Number;
+      case 'string':
+      case 'text':
+        return QueryEditorPropertyType.String;
+      case 'datetime':
+      case 'timestamp':
+        return QueryEditorPropertyType.DateTime;
+      default:
+        return QueryEditorPropertyType.String;
+    }
+  };
 
-  switch (columnType) {
-    case QueryEditorPropertyType.Number:
-      availableAggregates = [
-        { label: 'sum', value: 'sum' },
-        { label: 'avg', value: 'avg' },
-        { label: 'min', value: 'min' },
-        { label: 'max', value: 'max' },
-        { label: 'percentile', value: 'percentile' },
-      ];
-      break;
-    case QueryEditorPropertyType.String:
-      availableAggregates = [
-        { label: 'count', value: 'count' },
-        { label: 'dcount', value: 'dcount' },
-        { label: 'make_set', value: 'make_set' },
-        { label: 'make_list', value: 'make_list' },
-      ];
-      break;
-    case QueryEditorPropertyType.DateTime:
-      availableAggregates = [
-        { label: 'min', value: 'min' },
-        { label: 'max', value: 'max' },
-        { label: 'bin', value: 'bin' },
-      ];
-      break;
-  }
+  const columnType = selectedColumn ? mapColumnType(selectedColumn.type || '') : QueryEditorPropertyType.String;
+
+  const availableAggregates: Array<SelectableValue<string>> = useMemo(() => {
+    const allAggregates = [
+      { label: 'sum', value: 'sum' },
+      { label: 'avg', value: 'avg' },
+      { label: 'min', value: 'min' },
+      { label: 'max', value: 'max' },
+      { label: 'percentile', value: 'percentile' },
+      { label: 'count', value: 'count' },
+      { label: 'dcount', value: 'dcount' },
+      { label: 'make_set', value: 'make_set' },
+      { label: 'make_list', value: 'make_list' },
+      { label: 'bin', value: 'bin' },
+    ];
+
+    if (!selectedColumn) {
+      return allAggregates
+    }; 
+
+    return allAggregates.filter((agg) => {
+      const aggValue = agg.value as string;
+      if (columnType === QueryEditorPropertyType.Number) {
+        return ['sum', 'avg', 'min', 'max', 'percentile'].includes(aggValue);
+      }
+      if (columnType === QueryEditorPropertyType.String) {
+        return ['count', 'dcount', 'make_set', 'make_list'].includes(aggValue);
+      }
+      if (columnType === QueryEditorPropertyType.DateTime) {
+        return ['min', 'max', 'bin'].includes(aggValue);
+      }
+      return true;
+    });
+  }, [selectedColumn, columnType]);
 
   return (
     <InputGroup>
@@ -57,18 +80,14 @@ export const AggregateItem: React.FC<AggregateItemProps> = ({ aggregate, onChang
         value={aggregate.property?.name ? valueToDefinition(aggregate.property?.name) : null}
         options={columns}
         allowCustomValue
-        onChange={(e) => {
-          const selectedCol = columns.find((c) => c.value === e.value);
+        onChange={(e) =>
           onChange({
             ...aggregate,
-            property: {
-              name: e.value!,
-              type: selectedCol?.type || QueryEditorPropertyType.String,
-            },
-            reduce: aggregate.reduce ?? { name: '', type: QueryEditorPropertyType.Function }, // Ensure `reduce` is always defined
-            type: QueryEditorExpressionType.Reduce, // Ensure `type` is always defined
-          });
-        }}
+            property: { name: e.value!, type: columnType }, // Ensure 'property' is always defined
+            reduce: aggregate.reduce ?? { name: '', type: QueryEditorPropertyType.Function },
+            type: aggregate.type ?? QueryEditorExpressionType.Reduce,
+          })
+        }
       />
       <Select
         aria-label="aggregate function"
@@ -77,12 +96,11 @@ export const AggregateItem: React.FC<AggregateItemProps> = ({ aggregate, onChang
         options={availableAggregates}
         allowCustomValue
         onChange={(e) =>
-          e.value &&
           onChange({
             ...aggregate,
-            type: QueryEditorExpressionType.Reduce,
-            property: aggregate.property ?? { name: '', type: QueryEditorPropertyType.String },
-            reduce: { name: e.value, type: QueryEditorPropertyType.Function },
+            property: aggregate.property ?? { name: '', type: QueryEditorPropertyType.String }, // Ensure 'property' exists
+            reduce: { name: e.value!, type: QueryEditorPropertyType.Function },
+            type: aggregate.type ?? QueryEditorExpressionType.Reduce,
           })
         }
       />

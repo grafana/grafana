@@ -51,14 +51,14 @@ export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
     newTable,
     newColumns,
     filters,
-    aggregates,
+    aggregates, 
     groupBy,
     limit,
   }: {
     newTable?: AzureLogAnalyticsMetadataTable;
     newColumns?: Array<SelectableValue<string>>;
     filters?: string;
-    aggregates?: string;
+    aggregates?: string; 
     groupBy?: string[];
     limit?: number;
   }) => {
@@ -70,13 +70,11 @@ export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
   
     const isNewTable = newTable && newTable.name !== selectedTable;
   
-    // ✅ **Reset when switching tables**
     if (isNewTable) {
       tableName = newTable.name;
       setSelectedTable(newTable.name);
-      setSelectedColumns([]); // ✅ Clear selected columns
+      setSelectedColumns([]);
   
-      // ✅ **Ensure $__timeFilter is included**
       const timeFilter = `$__timeFilter(TimeGenerated)`;
   
       onQueryChange({
@@ -95,32 +93,33 @@ export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
       columnList = [...new Set(newColumns.map((c) => c.label!))];
     }
   
-    // ✅ **Preserve previous filters if not explicitly updated**
     let updatedFilters = filters !== undefined ? filters : prevFilters;
   
-    // ✅ **Determine if the selected column is a datetime**
     const hasSelectedDatetime = columnList.some(
       (col) => columns.find((c) => c.name === col)?.type === 'datetime'
     );
   
     if (hasSelectedDatetime) {
-      // ✅ **Ensure Time Filter Exists**
       if (!updatedFilters.includes(`$__timeFilter(TimeGenerated)`)) {
         updatedFilters = `$__timeFilter(TimeGenerated) and ${updatedFilters}`.trim();
       }
     } else {
-      // ✅ **Remove Time Filter If No Datetime Columns Are Selected**
       updatedFilters = updatedFilters.replace(`$__timeFilter(TimeGenerated) and `, '').trim();
       updatedFilters = updatedFilters.replace(`$__timeFilter(TimeGenerated)`, '').trim();
     }
   
-    // ✅ **Rebuild the query using the cleaned filters**
+    let updatedAggregates = aggregates !== undefined ? aggregates : prevAggregates;
+  
+    if (updatedAggregates.trim() === '') {
+      updatedAggregates = ''; 
+    }
+  
     const formattedQuery = AzureMonitorKustoQueryParser.updateQuery(
       tableName!,
       columnList,
       columns,
       updatedFilters,
-      aggregates !== undefined ? aggregates : prevAggregates,
+      updatedAggregates, 
       groupBy !== undefined ? groupBy : prevGroupBy,
       limit
     );
@@ -132,7 +131,7 @@ export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
         query: formattedQuery,
       },
     });
-  };
+  };  
   
   return (
     <span data-testid={selectors.components.queryEditor.logsQueryEditor.container.input}>
@@ -149,7 +148,7 @@ export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
           tables={tables}
         />
         <FilterSection {...props} onQueryUpdate={handleQueryUpdate} selectedTable={selectedTable!} columns={columns} selectedColumns={selectedColumns} />
-        <AggregateSection {...props} selectedColumns={selectedColumns} onQueryUpdate={handleQueryUpdate} />
+        <AggregateSection {...props} selectedTable={selectedTable!} columns={columns} selectedColumns={selectedColumns} onQueryUpdate={handleQueryUpdate} />
         <GroupBySection {...props} selectedColumns={selectedColumns} onQueryUpdate={handleQueryUpdate} />
         <EditorRow>
           <EditorFieldGroup>
