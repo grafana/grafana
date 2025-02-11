@@ -41,10 +41,7 @@ func WrapHandler(handler http.Handler) func(req *http.Request) (*http.Response, 
 		defer cancel()
 		req = req.WithContext(ctx) // returns a shallow copy, so we can't do it as part of the adapter.
 
-		w, err := NewAdapter(req)
-		if err != nil {
-			return nil, err
-		}
+		w := NewAdapter(req)
 		go func() {
 			handler.ServeHTTP(w, req)
 			if err := w.CloseWriter(); err != nil {
@@ -141,7 +138,7 @@ type ResponseAdapter struct {
 }
 
 // NewAdapter returns an initialized [ResponseAdapter].
-func NewAdapter(req *http.Request) (*ResponseAdapter, error) {
+func NewAdapter(req *http.Request) *ResponseAdapter {
 	r, w := io.Pipe()
 	writer := bufio.NewWriter(w)
 	reader := bufio.NewReader(r)
@@ -164,7 +161,7 @@ func NewAdapter(req *http.Request) (*ResponseAdapter, error) {
 		writer:   w,
 		buffered: buffered,
 		ready:    make(chan struct{}),
-	}, nil
+	}
 }
 
 // Header implements [http.ResponseWriter].
