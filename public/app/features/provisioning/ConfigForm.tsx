@@ -19,9 +19,9 @@ import {
 } from '@grafana/ui';
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 
+import { TokenPermissionsInfo } from './TokenPermissionsInfo';
 import { Repository, RepositorySpec } from './api';
 import { useCreateOrUpdateRepository } from './hooks';
-import { TokenPermissionsInfo } from './TokenPermissionsInfo';
 import { RepositoryFormData, WorkflowOption } from './types';
 import { dataToSpec, specToData } from './utils/data';
 
