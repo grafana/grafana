@@ -17,10 +17,7 @@ export function DashboardOutlineTree({ items, id }: Props) {
   return (
     <div id={id} role={id ? 'group' : 'tree'} className={styles.container}>
       {items.map((item) => (
-        <DashboardOutlineTreeItem
-          item={item}
-          key={`${item.item.state.key}-${'children' in item ? item.children.length : 0}`}
-        />
+        <DashboardOutlineTreeItem item={item} key={`${item.item.state.key}-${item.children.length ?? 0}`} />
       ))}
     </div>
   );

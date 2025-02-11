@@ -1,26 +1,28 @@
 import { css, cx } from '@emotion/css';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Icon, IconButton, Stack, useElementSelection, useStyles2 } from '@grafana/ui';
+import { Icon, IconButton, Stack, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
-import { isInCloneChain } from '../utils/clone';
+import { useIsClone } from '../utils/clone';
+import { useElementSelectionScene } from '../utils/utils';
 
 import { DashboardOutlineTree } from './DashboardOutlineTree';
-import { DashboardOutlineItem } from './types';
+import { DashboardOutlineItem, DashboardOutlineItemType } from './types';
 
 interface Props {
   item: DashboardOutlineItem;
 }
 
-export function DashboardOutlineTreeItem({ item }: Props) {
-  const { key, title } = item.item.useState();
-  const [isExpanded, setIsExpanded] = useState(true);
+export function DashboardOutlineTreeItem({ item: { type, item, children } }: Props) {
+  const isExpandable = type !== DashboardOutlineItemType.PANEL;
+
+  const { key, title } = item.useState();
+  const [isExpanded, setIsExpanded] = useState(isExpandable);
   const styles = useStyles2(getStyles);
-  const hasChildren = 'children' in item && item.children.length > 0;
-  const isCloned = useMemo(() => isInCloneChain(key!), [key]);
-  const { onSelect } = useElementSelection(key);
+  const isCloned = useIsClone(item);
+  const { onSelect } = useElementSelectionScene(item);
 
   return (
     <>
@@ -29,10 +31,10 @@ export function DashboardOutlineTreeItem({ item }: Props) {
         gap={1}
         alignItems="center"
         role="presentation"
-        aria-expanded={hasChildren ? isExpanded : undefined}
-        aria-owns={hasChildren ? key : undefined}
+        aria-expanded={isExpandable ? isExpanded : undefined}
+        aria-owns={isExpandable ? key : undefined}
       >
-        {hasChildren ? (
+        {isExpandable ? (
           <IconButton
             name={isExpanded ? 'angle-down' : 'angle-right'}
             onClick={() => setIsExpanded(!isExpanded)}
@@ -57,7 +59,7 @@ export function DashboardOutlineTreeItem({ item }: Props) {
           {title}
         </span>
       </Stack>
-      {hasChildren && isExpanded && <DashboardOutlineTree items={item.children} id={key} />}
+      {isExpandable && isExpanded && <DashboardOutlineTree items={children} id={key} />}
     </>
   );
 }
