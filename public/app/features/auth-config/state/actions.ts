@@ -41,6 +41,10 @@ export function loadProviders(provider = ''): ThunkResult<Promise<SSOProvider[]>
       return [];
     }
     const result = await getBackendSrv().get(`/api/v1/sso-settings${provider ? `/${provider}` : ''}`);
+    // const providerSettingsList =  provider ? [result] : result;
+    // providerSettingsList.forEach((providerSettings: SSOProvider) => {
+    //   providerSettings.settings.defineAllowedTeamsIds = result.settings.teamIds && result.settings.teamsUrl && result.settings.teamIdsAttributePath;
+    // })
     dispatch(providersLoaded(provider ? [result] : result));
     return result;
   };

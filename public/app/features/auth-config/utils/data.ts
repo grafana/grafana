@@ -56,7 +56,9 @@ const strToValue = (val: string | string[]): SelectableValue[] => {
   }
   // Stored as JSON Array
   if (val.startsWith('[') && val.endsWith(']')) {
-    return JSON.parse(val).map((v: string) => ({ label: v, value: v }));
+    try {
+      return JSON.parse(val).map((v: string) => ({ label: v, value: v }));
+    } catch {}
   }
 
   return val.split(/[\s,]/).map((s) => ({ label: s, value: s }));

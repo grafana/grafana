@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useEffect, useState } from 'react';
+import { Resolver, useForm } from 'react-hook-form';
 
 import { AppEvents } from '@grafana/data';
 import { getAppEvents, getBackendSrv, isFetchError, locationService, reportInteraction } from '@grafana/runtime';
@@ -25,6 +25,36 @@ import { sectionFields } from './fields';
 import { SSOProvider, SSOProviderDTO } from './types';
 import { dataToDTO, dtoToData } from './utils/data';
 
+const resolver: Resolver<SSOProviderDTO> = async (values) => {
+  let validTeamIds = false;
+  if (values.teamIds) {
+    const validateTeamId = (v: string) => {
+      // Stored as JSON Array
+      if (v.startsWith('[') && v.endsWith(']')) {
+        try {
+          JSON.parse(v);
+          return true;
+        } catch {
+          return false;
+        }
+      }
+      return true;
+    };
+    validTeamIds = values.teamIds.every((v) => v?.value && validateTeamId(v.value));
+  }
+  return {
+    values: validTeamIds ? values : {},
+    errors: !validTeamIds
+      ? {
+          teamIds: {
+            // type: "required",
+            message: 'Team Ids is not valid', // this is not displayed?
+          },
+        }
+      : {},
+  };
+};
+
 const appEvents = getAppEvents();
 
 interface ProviderConfigProps {
@@ -42,8 +72,9 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
     watch,
     setValue,
     unregister,
+    trigger,
     formState: { errors, dirtyFields, isSubmitted },
-  } = useForm({ defaultValues: dataToDTO(config), mode: 'onSubmit', reValidateMode: 'onChange' });
+  } = useForm({ defaultValues: dataToDTO(config), mode: 'onSubmit', reValidateMode: 'onChange', resolver });
   const [isSaving, setIsSaving] = useState(false);
   const [submitError, setSubmitError] = useState(false);
   const dataSubmitted = isSubmitted && !submitError;
@@ -149,6 +180,10 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
       setValue('enabled', !isEnabled);
     }
   };
+
+  useEffect(() => {
+    trigger();
+  }, [trigger]);
 
   return (
     <Page.Contents isLoading={isLoading}>
