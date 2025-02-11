@@ -35,7 +35,7 @@ const MenuComp = React.forwardRef<HTMLDivElement, MenuProps>(
       <Box
         {...otherProps}
         aria-label={ariaLabel}
-        backgroundColor="primary"
+        backgroundColor="elevated"
         borderRadius="default"
         boxShadow="z3"
         display="inline-block"
