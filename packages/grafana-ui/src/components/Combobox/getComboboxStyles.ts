@@ -27,6 +27,7 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
       position: 'relative',
       borderRadius: theme.shape.radius.default,
       overflow: 'hidden',
+      padding: theme.spacing(0.5),
     }),
     menuUlContainer: css({
       label: 'combobox-menu-ul-container',
@@ -44,6 +45,7 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
       width: '100%',
       overflow: 'hidden',
       cursor: 'pointer',
+      borderRadius: theme.shape.radius.default,
       '&:hover': {
         background: theme.colors.action.hover,
         '@media (forced-colors: active), (prefers-contrast: more)': {
