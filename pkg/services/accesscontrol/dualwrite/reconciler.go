@@ -147,13 +147,6 @@ func (r *ZanzanaReconciler) Reconcile(ctx context.Context) error {
 	}
 }
 
-// ReconcileSync runs reconciliation and returns. Useful for tests to perform
-// reconciliation in a synchronous way.
-func (r *ZanzanaReconciler) ReconcileSync(ctx context.Context) error {
-	r.reconcile(ctx)
-	return nil
-}
-
 func (r *ZanzanaReconciler) reconcile(ctx context.Context) {
 	runGlobal := func(ctx context.Context) {
 		for _, reconciler := range r.globalReconcilers {
