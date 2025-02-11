@@ -48,7 +48,10 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 	var err error
 	var buffered *gogit.GoGitRepo
 	if repo.Config().Spec.GitHub != nil {
-		buffered, err = gogit.Clone(ctx, repo.Config(), r.clonedir, os.Stdout)
+		buffered, err = gogit.Clone(ctx, repo.Config(), gogit.GoGitCloneOptions{
+			Root:                   r.clonedir,
+			SingleCommitBeforePush: !options.History,
+		}, os.Stdout)
 		if err != nil {
 			return &provisioning.JobStatus{
 				State:  provisioning.JobStateError,

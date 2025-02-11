@@ -28,8 +28,16 @@ var (
 	_ repository.Repository = (*GoGitRepo)(nil)
 )
 
+type GoGitCloneOptions struct {
+	Root string // tempdir (when empty, memory??)
+
+	// Skip intermediate commits and commit all before push
+	SingleCommitBeforePush bool
+}
+
 type GoGitRepo struct {
 	config *provisioning.Repository
+	opts   GoGitCloneOptions
 
 	repo *git.Repository
 	tree *git.Worktree
@@ -41,18 +49,21 @@ type GoGitRepo struct {
 func Clone(
 	ctx context.Context,
 	config *provisioning.Repository,
-	root string, // tempdir (when empty, memory??)
+	opts GoGitCloneOptions,
 	progress io.Writer, // os.Stdout
 ) (*GoGitRepo, error) {
 	gitcfg := config.Spec.GitHub
 	if gitcfg == nil {
 		return nil, fmt.Errorf("missing github config")
 	}
-	err := os.MkdirAll(root, 0700)
+	if opts.Root == "" {
+		return nil, fmt.Errorf("missing root config")
+	}
+	err := os.MkdirAll(opts.Root, 0700)
 	if err != nil {
 		return nil, err
 	}
-	dir, err := mkdirTempClone(root, config)
+	dir, err := mkdirTempClone(opts.Root, config)
 	if err != nil {
 		return nil, err
 	}
@@ -107,6 +118,7 @@ func Clone(
 
 	return &GoGitRepo{
 		config: config,
+		opts:   opts,
 		tree:   worktree,
 		repo:   repo,
 		dir:    dir,
@@ -149,6 +161,15 @@ func (g *GoGitRepo) NewEmptyBranch(ctx context.Context, branch string) (int64, e
 
 // Affer making changes to the worktree, push changes
 func (g *GoGitRepo) Push(ctx context.Context, progress io.Writer) error {
+	if g.opts.SingleCommitBeforePush {
+		_, err := g.tree.Commit("exported from grafana", &git.CommitOptions{
+			All: true, // Add everything that changed
+		})
+		if err != nil {
+			return err
+		}
+	}
+
 	return g.repo.PushContext(ctx, &git.PushOptions{
 		Progress: progress,
 		Auth: &githttp.BasicAuth{ // reuse logic from clone?
@@ -237,6 +258,11 @@ func (g *GoGitRepo) Write(ctx context.Context, fpath string, ref string, data []
 	_, err = g.tree.Add(fpath)
 	if err != nil {
 		return err
+	}
+
+	// Skip commit for each file
+	if g.opts.SingleCommitBeforePush {
+		return nil
 	}
 
 	opts := &git.CommitOptions{}

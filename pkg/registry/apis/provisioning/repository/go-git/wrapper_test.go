@@ -36,7 +36,11 @@ func TestGoGitWrapper(t *testing.T) {
 			},
 		},
 	},
-		"testdata/clone", // where things are cloned
+		GoGitCloneOptions{
+			Root: "testdata/clone", // where things are cloned,
+			// one commit (not 11)
+			SingleCommitBeforePush: true,
+		},
 		os.Stdout)
 	require.NoError(t, err)
 
