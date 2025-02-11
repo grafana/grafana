@@ -45,11 +45,6 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 		}, nil
 	}
 
-	// TODO: remove this dummy export
-	if job.Spec.Export.Branch == "*dummy*" {
-		return dummyExport(ctx, repo, job, progress)
-	}
-
 	var err error
 	var buffered *gogit.GoGitRepo
 	if repo.Config().Spec.GitHub != nil {

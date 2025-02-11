@@ -194,6 +194,7 @@ func TestMetaAccessor(t *testing.T) {
 		res.Object = map[string]any{
 			"spec": map[string]any{
 				"hello": "world",
+				"title": "Title",
 			},
 			"status": map[string]any{
 				"sloth": "🦥",
@@ -218,12 +219,13 @@ func TestMetaAccessor(t *testing.T) {
 		rv, err := meta.GetResourceVersionInt64()
 		require.NoError(t, err)
 		require.Equal(t, int64(12345), rv)
+		require.Equal(t, "Title", meta.FindTitle(""))
 
 		// Make sure access to spec works for Unstructured
 		spec, err = meta.GetSpec()
 		require.NoError(t, err)
 		require.Equal(t, res.Object["spec"], spec)
-		spec = &map[string]string{"a": "b"}
+		spec = map[string]any{"a": "b"}
 		err = meta.SetSpec(spec)
 		require.NoError(t, err)
 		spec, err = meta.GetSpec()
