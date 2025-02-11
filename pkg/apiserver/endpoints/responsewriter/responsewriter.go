@@ -56,6 +56,12 @@ func NewAdapter(req *http.Request) *ResponseAdapter {
 	writer := bufio.NewWriter(w)
 	reader := bufio.NewReader(r)
 	buffered := bufio.NewReadWriter(reader, writer)
+	if req.Method == http.MethodDelete && req.Body == nil {
+		// The apiserver tries to read the body of DELETE requests,
+		// which causes a panic if the body is nil.
+		// https://github.com/kubernetes/apiserver/blob/v0.32.1/pkg/endpoints/handlers/delete.go#L88
+		req.Body = http.NoBody
+	}
 	return &ResponseAdapter{
 		req: req,
 		res: http.Response{
