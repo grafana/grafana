@@ -5,24 +5,23 @@ import { useNavigate } from 'react-router-dom-v5-compat';
 import { AppEvents } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
 import {
+  Button,
+  Combobox,
+  ComboboxOption,
   Field,
   FieldSet,
-  Combobox,
-  SecretInput,
   Input,
-  Button,
-  Switch,
-  TextLink,
-  ControlledCollapse,
-  RadioButtonGroup,
-  Stack,
   MultiCombobox,
-  ComboboxOption,
+  RadioButtonGroup,
+  SecretInput,
+  Stack,
+  Switch,
 } from '@grafana/ui';
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 
 import { Repository, RepositorySpec } from './api';
 import { useCreateOrUpdateRepository } from './hooks';
+import { TokenPermissionsInfo } from './TokenPermissionsInfo';
 import { RepositoryFormData, WorkflowOption } from './types';
 import { dataToSpec, specToData } from './utils/data';
 
@@ -153,26 +152,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
               }}
             />
           </Field>
-          <ControlledCollapse collapsible label="Access Token Permissions">
-            <p>
-              To create a new Access Token, navigate to{' '}
-              <TextLink external href="https://github.com/settings/tokens">
-                Personal Access Tokens
-              </TextLink>{' '}
-              and create a click &quot;Generate new token.&quot;
-            </p>
-
-            <p>Ensure that your token has the following permissions:</p>
-
-            <b>For all repositories:</b>
-            <pre>public_repo, repo:status, repo_deployment, read:packages, read:user, user:email</pre>
-
-            <b>For GitHub projects:</b>
-            <pre>read:org, read:project</pre>
-
-            <b>An extra setting is required for private repositories:</b>
-            <pre>repo (Full control of private repositories)</pre>
-          </ControlledCollapse>
+          <TokenPermissionsInfo />
           <Field label={'Repository owner'} error={errors?.owner?.message} invalid={!!errors?.owner}>
             <Input {...register('owner', { required: 'This field is required.' })} placeholder={'test'} />
           </Field>
