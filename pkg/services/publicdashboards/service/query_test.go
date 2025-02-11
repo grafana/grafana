@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	dashboard2 "github.com/grafana/grafana/pkg/kinds/dashboard"
@@ -731,8 +732,7 @@ func TestGetQueryDataResponse(t *testing.T) {
 func TestFindAnnotations(t *testing.T) {
 	color := "red"
 	name := "annoName"
-	features := featuremgmt.WithFeatures(featuremgmt.FlagAnnotationPermissionUpdate)
-	t.Run("will build anonymous user with correct permissions to get annotations", func(t *testing.T) {
+	t.Run("service identity has correct permissions to get annotations", func(t *testing.T) {
 		fakeStore := &FakePublicDashboardStore{}
 		fakeStore.On("FindByAccessToken", mock.Anything, mock.AnythingOfType("string")).
 			Return(&PublicDashboard{Uid: "uid1", IsEnabled: true}, nil)
@@ -746,11 +746,12 @@ func TestFindAnnotations(t *testing.T) {
 		}
 		dash := dashboards.NewDashboard("testDashboard")
 
-		items, _ := service.FindAnnotations(context.Background(), reqDTO, "abc123")
-		anonUser := buildAnonymousUser(context.Background(), dash, features)
-
-		assert.Equal(t, "dashboards:*", anonUser.Permissions[0]["dashboards:read"][0])
+		items, err := service.FindAnnotations(context.Background(), reqDTO, "abc123")
+		require.NoError(t, err)
 		assert.Len(t, items, 0)
+
+		_, svcIdent := identity.WithServiceIdentity(context.Background(), dash.OrgID)
+		assert.Equal(t, "*", svcIdent.GetPermissions()["annotations:read"][0])
 	})
 
 	t.Run("Test events from tag queries overwrite built-in annotation queries and duplicate events are not returned", func(t *testing.T) {
@@ -1323,31 +1324,14 @@ func TestBuildAnonymousUser(t *testing.T) {
 	dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore))
 	require.NoError(t, err)
 	dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, "", true, []map[string]interface{}{}, nil)
-	features := featuremgmt.WithFeatures()
 
 	t.Run("will add datasource read and query permissions to user for each datasource in dashboard", func(t *testing.T) {
-		user := buildAnonymousUser(context.Background(), dashboard, features)
+		_, user := identity.WithServiceIdentity(context.Background(), dashboard.OrgID)
 
-		require.Equal(t, dashboard.OrgID, user.OrgID)
-		require.Equal(t, "datasources:uid:ds1", user.Permissions[user.OrgID]["datasources:query"][0])
-		require.Equal(t, "datasources:uid:ds3", user.Permissions[user.OrgID]["datasources:query"][1])
-		require.Equal(t, "datasources:uid:ds1", user.Permissions[user.OrgID]["datasources:read"][0])
-		require.Equal(t, "datasources:uid:ds3", user.Permissions[user.OrgID]["datasources:read"][1])
-	})
-	t.Run("will add dashboard and annotation permissions needed for getting annotations", func(t *testing.T) {
-		user := buildAnonymousUser(context.Background(), dashboard, features)
-
-		require.Equal(t, dashboard.OrgID, user.OrgID)
-		require.Equal(t, "annotations:type:dashboard", user.Permissions[user.OrgID]["annotations:read"][0])
-		require.Equal(t, "dashboards:*", user.Permissions[user.OrgID]["dashboards:read"][0])
-	})
-	t.Run("will add dashboard and annotation permissions needed for getting annotations when FlagAnnotationPermissionUpdate is enabled", func(t *testing.T) {
-		features = featuremgmt.WithFeatures(featuremgmt.FlagAnnotationPermissionUpdate)
-		user := buildAnonymousUser(context.Background(), dashboard, features)
-
-		require.Equal(t, dashboard.OrgID, user.OrgID)
-		require.Equal(t, "dashboards:*", user.Permissions[user.OrgID]["annotations:read"][0])
-		require.Equal(t, "dashboards:*", user.Permissions[user.OrgID]["dashboards:read"][0])
+		require.Equal(t, dashboard.OrgID, user.GetOrgID())
+		require.Equal(t, "*", user.GetPermissions()["datasources:query"][0])
+		require.Equal(t, "*", user.GetPermissions()["dashboards:read"][0])
+		require.Equal(t, "*", user.GetPermissions()["annotations:read"][0])
 	})
 }
 
