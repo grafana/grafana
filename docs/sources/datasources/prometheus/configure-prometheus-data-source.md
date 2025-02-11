@@ -48,6 +48,8 @@ Grafana ships with built-in support for Prometheus. If you are new to Prometheus
 
 ## Configure the data source
 
+{{< shared id="add-prom-data-source" >}}
+
 To add the Prometheus data source, complete the following steps:
 
 1. Click **Connections** in the left-side menu.
@@ -55,6 +57,9 @@ To add the Prometheus data source, complete the following steps:
 1. Enter `Prometheus` in the search bar.
 1. Select **Prometheus**.
 1. Click **Add new data source** in the upper right.
+1. Enter a name for the data source.
+
+{{< /shared >}}
 
 You will be taken to the **Settings** tab where you will set up your Prometheus configuration.
 
@@ -70,7 +75,8 @@ The first option to configure is the name of your connection:
 
 ### Connection section
 
-- **Prometheus server URL** - The URL of your Prometheus server. If your Prometheus server is local, use `http://localhost:9090`. If it is on a server within a network, this is the URL with port where you are running Prometheus. Example: `http://prometheus.example.orgname:9090`.
+- **Prometheus server URL** - The URL of your Prometheus server. {{< shared id="prom-data-source-url" >}}
+  If your Prometheus server is local, use `http://localhost:9090`. If it's on a server within a network, this is the URL with the port where you are running Prometheus. Example: `http://prometheus.example.orgname:9090`.
 
 {{< admonition type="note" >}}
 
@@ -79,6 +85,8 @@ If you're running Grafana and Prometheus together in different container environ
 You should use the IP address of the Prometheus container, or the hostname if you are using Docker Compose. Alternatively, you can consider `http://host.docker.internal:9090`.
 
 {{< /admonition >}}
+
+{{< /shared >}}
 
 ### Authentication section
 
@@ -171,3 +179,15 @@ Support for exemplars is available only for the Prometheus data source. If this 
 - **Label name** - The name of the field in the `labels` object used to obtain the traceID property.
 
 - **Remove exemplar link** - Click to remove existing links.
+
+### Troubleshooting
+
+Refer to the following troubleshooting information, as required.
+
+#### Data doesn't appear in Explore metrics
+
+If metric data doesn't appear in Explore after you've successfully tested a connection to a Prometheus data source, ensure that you've selected the correct data source in the **Data source** drop-down menu.
+
+The following image shows the **Data source** field in Explore metrics.
+
+![Image that shows Prometheus metrics in Explore](/media/docs/grafana/data-sources/prometheus/troubleshoot-connection-1.png)
