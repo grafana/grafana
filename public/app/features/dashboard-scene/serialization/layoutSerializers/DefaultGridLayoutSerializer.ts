@@ -36,7 +36,7 @@ import { isClonedKey } from '../../utils/clone';
 import { calculateGridItemDimensions, getVizPanelKeyForPanelId, isLibraryPanel } from '../../utils/utils';
 import { GRID_ROW_HEIGHT } from '../const';
 
-import { buildVizPanel } from './utils';
+import { buildVizPanel, getElementIdentifierForVizPanel } from './utils';
 
 export class DefaultGridLayoutManagerSerializer implements LayoutManagerSerializer {
   serialize(layoutManager: DefaultGridLayoutManager, isSnapshot?: boolean): DashboardV2Spec['layout'] {
@@ -142,8 +142,8 @@ function gridItemToGridLayoutItemKind(gridItem: DashboardGridItem, yOverride?: n
   width = gridItem_.state.width ?? 0;
   const repeatVar = gridItem_.state.variableName;
 
-  // FIXME: which name should we use for the element reference, key or something else ?
-  const elementName = gridItem_.state.body.state.key ?? 'DefaultName';
+  const elementKey = getElementIdentifierForVizPanel(gridItem.state.body) ?? 'DefaultName';
+
   elementGridItem = {
     kind: 'GridLayoutItem',
     spec: {
@@ -153,7 +153,7 @@ function gridItemToGridLayoutItemKind(gridItem: DashboardGridItem, yOverride?: n
       height: height,
       element: {
         kind: 'ElementReference',
-        name: elementName,
+        name: elementKey,
       },
     },
   };

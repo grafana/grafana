@@ -579,6 +579,8 @@ function createElementPanelMapping(dashboard: DashboardV2Spec) {
   elementsKeys.forEach((element) => {
     const dashboardElement = dashboard.elements[element];
     if (dashboardElement.kind === 'Panel') {
+      // TODO: what happens if the id is null?
+      // What happens if the id is not unique?
       mapping.set(element, dashboardElement.spec.id);
     }
   });

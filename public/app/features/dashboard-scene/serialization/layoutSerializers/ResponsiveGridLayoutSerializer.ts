@@ -6,7 +6,7 @@ import { ResponsiveGridLayoutManager } from '../../scene/layout-responsive-grid/
 import { DashboardLayoutManager, LayoutManagerSerializer } from '../../scene/types/DashboardLayoutManager';
 import { getGridItemKeyForPanelId } from '../../utils/utils';
 
-import { buildVizPanel } from './utils';
+import { buildVizPanel, getElementIdentifierForVizPanel } from './utils';
 
 export class ResponsiveGridLayoutSerializer implements LayoutManagerSerializer {
   serialize(layoutManager: ResponsiveGridLayoutManager): DashboardV2Spec['layout'] {
@@ -21,12 +21,14 @@ export class ResponsiveGridLayoutSerializer implements LayoutManagerSerializer {
           if (!(child instanceof ResponsiveGridItem)) {
             throw new Error('Expected ResponsiveGridItem');
           }
+          const elementKey = getElementIdentifierForVizPanel(child.state?.body) ?? 'DefaultName';
+
           return {
             kind: 'ResponsiveGridLayoutItem',
             spec: {
               element: {
                 kind: 'ElementReference',
-                name: child.state?.body?.state.key ?? 'DefaultName',
+                name: elementKey,
               },
             },
           };

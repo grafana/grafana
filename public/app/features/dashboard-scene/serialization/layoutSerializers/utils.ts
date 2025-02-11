@@ -21,7 +21,7 @@ import { PanelTimeRange } from '../../scene/PanelTimeRange';
 import { AngularDeprecation } from '../../scene/angular/AngularDeprecation';
 import { setDashboardPanelContext } from '../../scene/setDashboardPanelContext';
 import { DashboardLayoutManager } from '../../scene/types/DashboardLayoutManager';
-import { getVizPanelKeyForPanelId } from '../../utils/utils';
+import { getDashboardSceneFor, getPanelIdForVizPanel, getVizPanelKeyForPanelId } from '../../utils/utils';
 import { transformMappingsToV1 } from '../transformToV1TypesUtils';
 
 import { layoutSerializerRegistry } from './layoutSerializerRegistry';
@@ -151,4 +151,12 @@ export function getLayout(sceneState: DashboardLayoutManager): DashboardV2Spec['
     throw new Error(`Layout serializer not found for kind: ${sceneState.descriptor.kind}`);
   }
   return registryItem.serializer.serialize(sceneState);
+}
+
+export function getElementIdentifierForVizPanel(vizPanel: VizPanel): string {
+  const scene = getDashboardSceneFor(vizPanel);
+  const panelId = getPanelIdForVizPanel(vizPanel);
+  const elementKey = scene.state.elementPanelMapping?.getElementIdentifier(panelId) ?? 'DefaultName';
+
+  return elementKey;
 }
