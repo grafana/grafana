@@ -41,11 +41,15 @@ export enum HttpRequestMethod {
   POST = 'POST',
   PUT = 'PUT',
   GET = 'GET',
+  PATCH = 'PATCH',
+  DELETE = 'DELETE',
 }
 
 export const httpMethodOptions: SelectableValue[] = [
   { label: HttpRequestMethod.POST, value: HttpRequestMethod.POST },
   { label: HttpRequestMethod.PUT, value: HttpRequestMethod.PUT },
+  { label: HttpRequestMethod.PATCH, value: HttpRequestMethod.PATCH },
+  { label: HttpRequestMethod.DELETE, value: HttpRequestMethod.DELETE },
   { label: HttpRequestMethod.GET, value: HttpRequestMethod.GET },
 ];
 
