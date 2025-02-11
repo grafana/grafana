@@ -8,6 +8,7 @@ import (
 	"github.com/fullstorydev/grpchan"
 	"github.com/fullstorydev/grpchan/inprocgrpc"
 	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
+	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
@@ -38,6 +39,7 @@ func ProvideAuthZClient(
 	features featuremgmt.FeatureToggles,
 	grpcServer grpcserver.Provider,
 	tracer tracing.Tracer,
+	reg prometheus.Registerer,
 	db db.DB,
 	acService accesscontrol.Service,
 ) (authlib.AccessClient, error) {
@@ -69,6 +71,7 @@ func ProvideAuthZClient(
 			),
 			log.New("authz-grpc-server"),
 			tracer,
+			reg,
 			cache.NewLocalCache(cache.Config{Expiry: 5 * time.Minute, CleanupInterval: 10 * time.Minute}),
 		)
 		return newInProcLegacyClient(server, tracer)
@@ -121,6 +124,10 @@ func newInProcLegacyClient(server *rbac.Service, tracer tracing.Tracer) (authlib
 		authzlib.WithGrpcConnectionClientOption(channel),
 		authzlib.WithDisableAccessTokenClientOption(),
 		authzlib.WithTracerClientOption(tracer),
+		authzlib.WithCacheClientOption(cache.NewLocalCache(cache.Config{
+			Expiry:          30 * time.Second,
+			CleanupInterval: 2 * time.Minute,
+		})),
 	)
 }
 
@@ -144,6 +151,10 @@ func newGrpcLegacyClient(authCfg *Cfg, tracer tracing.Tracer) (authlib.AccessCli
 			grpc.WithStreamInterceptor(clientInterceptor.StreamClientInterceptor),
 		),
 		authzlib.WithTracerClientOption(tracer),
+		authzlib.WithCacheClientOption(cache.NewLocalCache(cache.Config{
+			Expiry:          30 * time.Second,
+			CleanupInterval: 2 * time.Minute,
+		})),
 		// TODO: remove this once access tokens are supported on-prem
 		authzlib.WithDisableAccessTokenClientOption(),
 	)
@@ -178,6 +189,10 @@ func newCloudLegacyClient(authCfg *Cfg, tracer tracing.Tracer) (authlib.AccessCl
 			grpc.WithUnaryInterceptor(clientInterceptor.UnaryClientInterceptor),
 			grpc.WithStreamInterceptor(clientInterceptor.StreamClientInterceptor),
 		),
+		authzlib.WithCacheClientOption(cache.NewLocalCache(cache.Config{
+			Expiry:          30 * time.Second,
+			CleanupInterval: 2 * time.Minute,
+		})),
 		authzlib.WithTracerClientOption(tracer),
 	)
 	if err != nil {

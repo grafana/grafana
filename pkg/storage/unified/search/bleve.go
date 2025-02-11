@@ -177,6 +177,7 @@ func (b *bleveBackend) BuildIndex(ctx context.Context,
 		fields:    fields,
 		standard:  resource.StandardSearchFields(),
 		features:  b.features,
+		tracing:   b.tracer,
 	}
 
 	idx.allFields, err = getAllFields(idx.standard, fields)
@@ -250,6 +251,7 @@ type bleveIndex struct {
 	batchSize int // ??? not totally sure the units here
 
 	features featuremgmt.FeatureToggles
+	tracing  trace.Tracer
 }
 
 // Write implements resource.DocumentIndex.
@@ -404,6 +406,9 @@ func (b *bleveIndex) Search(
 	req *resource.ResourceSearchRequest,
 	federate []resource.ResourceIndex, // For federated queries, these will match the values in req.federate
 ) (*resource.ResourceSearchResponse, error) {
+	ctx, span := b.tracing.Start(ctx, tracingPrexfixBleve+"Search")
+	defer span.End()
+
 	if req.Options == nil || req.Options.Key == nil {
 		return &resource.ResourceSearchResponse{
 			Error: resource.NewBadRequestError("missing query key"),
@@ -418,7 +423,7 @@ func (b *bleveIndex) Search(
 	}
 
 	// Verifies the index federation
-	index, err := b.getIndex(req, federate)
+	index, err := b.getIndex(ctx, req, federate)
 	if err != nil {
 		return nil, err
 	}
@@ -448,7 +453,7 @@ func (b *bleveIndex) Search(
 	response.QueryCost = float64(res.Cost)
 	response.MaxScore = res.MaxScore
 
-	response.Results, err = b.hitsToTable(searchrequest.Fields, res.Hits, req.Explain)
+	response.Results, err = b.hitsToTable(ctx, searchrequest.Fields, res.Hits, req.Explain)
 	if err != nil {
 		return nil, err
 	}
@@ -465,6 +470,9 @@ func (b *bleveIndex) Search(
 }
 
 func (b *bleveIndex) DocCount(ctx context.Context, folder string) (int64, error) {
+	ctx, span := b.tracing.Start(ctx, tracingPrexfixBleve+"DocCount")
+	defer span.End()
+
 	if folder == "" {
 		count, err := b.index.DocCount()
 		return int64(count), err
@@ -500,9 +508,13 @@ func (b *bleveIndex) verifyKey(key *resource.ResourceKey) *resource.ErrorResult 
 }
 
 func (b *bleveIndex) getIndex(
+	ctx context.Context,
 	req *resource.ResourceSearchRequest,
 	federate []resource.ResourceIndex,
 ) (bleve.Index, error) {
+	_, span := b.tracing.Start(ctx, tracingPrexfixBleve+"getIndex")
+	defer span.End()
+
 	if len(req.Federated) != len(federate) {
 		return nil, fmt.Errorf("federation is misconfigured")
 	}
@@ -527,6 +539,9 @@ func (b *bleveIndex) getIndex(
 }
 
 func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resource.ResourceSearchRequest, access authlib.AccessClient) (*bleve.SearchRequest, *resource.ErrorResult) {
+	ctx, span := b.tracing.Start(ctx, tracingPrexfixBleve+"toBleveSearchRequest")
+	defer span.End()
+
 	facets := bleve.FacetsRequest{}
 	for _, f := range req.Facet {
 		facets[f.Field] = bleve.NewFacetRequest(f.Field, int(f.Limit))
@@ -574,7 +589,12 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resource.Res
 	// Add a text query
 	if req.Query != "" && req.Query != "*" {
 		searchrequest.Fields = append(searchrequest.Fields, resource.SEARCH_FIELD_SCORE)
-		queries = append(queries, bleve.NewFuzzyQuery(req.Query))
+		// mimic the behavior of the sql search
+		query := strings.ToLower(req.Query)
+		if !strings.Contains(query, "*") {
+			query = "*" + query + "*"
+		}
+		queries = append(queries, bleve.NewWildcardQuery(query))
 	}
 
 	switch len(queries) {
@@ -650,6 +670,10 @@ func getSortFields(req *resource.ResourceSearchRequest) []string {
 			input = field
 		}
 
+		if slices.Contains(DashboardFields(), input) {
+			input = "fields." + input
+		}
+
 		if sort.Desc {
 			input = "-" + input
 		}
@@ -660,8 +684,10 @@ func getSortFields(req *resource.ResourceSearchRequest) []string {
 
 // fields that we went to sort by the full text
 var textSortFields = map[string]string{
-	resource.SEARCH_FIELD_TITLE: resource.SEARCH_FIELD_TITLE + "_sort",
+	resource.SEARCH_FIELD_TITLE: resource.SEARCH_FIELD_TITLE_PHRASE,
 }
+
+const lowerCase = "phrase"
 
 // Convert a "requirement" into a bleve query
 func requirementQuery(req *resource.Requirement, prefix string) (query.Query, *resource.ErrorResult) {
@@ -672,14 +698,14 @@ func requirementQuery(req *resource.Requirement, prefix string) (query.Query, *r
 		}
 
 		if len(req.Values[0]) == 1 {
-			q := query.NewMatchQuery(req.Values[0])
+			q := query.NewMatchQuery(filterValue(req.Key, req.Values[0]))
 			q.FieldVal = prefix + req.Key
 			return q, nil
 		}
 
 		conjuncts := []query.Query{}
 		for _, v := range req.Values {
-			q := query.NewMatchQuery(v)
+			q := query.NewMatchQuery(filterValue(req.Key, v))
 			q.FieldVal = prefix + req.Key
 			conjuncts = append(conjuncts, q)
 		}
@@ -696,14 +722,14 @@ func requirementQuery(req *resource.Requirement, prefix string) (query.Query, *r
 			return query.NewMatchAllQuery(), nil
 		}
 		if len(req.Values) == 1 {
-			q := query.NewMatchQuery(req.Values[0])
+			q := query.NewMatchQuery(filterValue(req.Key, req.Values[0]))
 			q.FieldVal = prefix + req.Key
 			return q, nil
 		}
 
 		disjuncts := []query.Query{}
 		for _, v := range req.Values {
-			q := query.NewMatchQuery(v)
+			q := query.NewMatchQuery(filterValue(req.Key, v))
 			q.FieldVal = prefix + req.Key
 			disjuncts = append(disjuncts, q)
 		}
@@ -715,7 +741,7 @@ func requirementQuery(req *resource.Requirement, prefix string) (query.Query, *r
 
 		var mustNotQueries []query.Query
 		for _, value := range req.Values {
-			mustNotQueries = append(mustNotQueries, bleve.NewMatchQuery(value))
+			mustNotQueries = append(mustNotQueries, bleve.NewMatchQuery(filterValue(req.Key, value)))
 		}
 		boolQuery.AddMustNot(mustNotQueries...)
 
@@ -730,7 +756,18 @@ func requirementQuery(req *resource.Requirement, prefix string) (query.Query, *r
 	)
 }
 
-func (b *bleveIndex) hitsToTable(selectFields []string, hits search.DocumentMatchCollection, explain bool) (*resource.ResourceTable, error) {
+// filterValue will convert the value to lower case if the field is a phrase field
+func filterValue(field string, v string) string {
+	if strings.HasSuffix(field, lowerCase) {
+		return strings.ToLower(v)
+	}
+	return v
+}
+
+func (b *bleveIndex) hitsToTable(ctx context.Context, selectFields []string, hits search.DocumentMatchCollection, explain bool) (*resource.ResourceTable, error) {
+	_, span := b.tracing.Start(ctx, tracingPrexfixBleve+"hitsToTable")
+	defer span.End()
+
 	fields := []*resource.ResourceTableColumnDefinition{}
 	for _, name := range selectFields {
 		if name == "_all" {

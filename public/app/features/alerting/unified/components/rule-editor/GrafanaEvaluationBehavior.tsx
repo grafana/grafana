@@ -1,20 +1,19 @@
 import { css } from '@emotion/css';
-import { debounce, take, uniqueId } from 'lodash';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { uniqueId } from 'lodash';
+import { useEffect, useMemo, useState } from 'react';
 import { Controller, FormProvider, RegisterOptions, useForm, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import {
-  AsyncSelect,
   Box,
   Button,
   Field,
   Icon,
-  IconButton,
   Input,
   Label,
   Modal,
+  Select,
   Stack,
   Switch,
   Text,
@@ -22,17 +21,12 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
-import { CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
 import { RulerRuleGroupDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
-import { LogMessages, logInfo } from '../../Analytics';
 import { alertRuleApi } from '../../api/alertRuleApi';
 import { GRAFANA_RULER_CONFIG } from '../../api/featureDiscoveryApi';
-import { useCombinedRuleNamespaces } from '../../hooks/useCombinedRuleNamespaces';
-import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
+import { DEFAULT_GROUP_EVALUATION_INTERVAL } from '../../rule-editor/formDefaults';
 import { RuleFormValues } from '../../types/rule-form';
-import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
-import { DEFAULT_GROUP_EVALUATION_INTERVAL } from '../../utils/rule-form';
 import {
   isGrafanaAlertingRuleByType,
   isGrafanaManagedRuleByType,
@@ -42,7 +36,7 @@ import {
 import { parsePrometheusDuration } from '../../utils/time';
 import { CollapseToggle } from '../CollapseToggle';
 import { ProvisioningBadge } from '../Provisioning';
-import { EditRuleGroupModal, evaluateEveryValidationOptions } from '../rules/EditRuleGroupModal';
+import { evaluateEveryValidationOptions } from '../rules/EditRuleGroupModal';
 
 import { EvaluationGroupQuickPick } from './EvaluationGroupQuickPick';
 import { GrafanaAlertStatePicker } from './GrafanaAlertStatePicker';
@@ -53,48 +47,38 @@ import { RuleEditorSection } from './RuleEditorSection';
 export const MIN_TIME_RANGE_STEP_S = 10; // 10 seconds
 export const MAX_GROUP_RESULTS = 1000;
 
-export const useFolderGroupOptions = (folderUid: string, enableProvisionedGroups: boolean) => {
+const useFetchGroupsForFolder = (folderUid: string) => {
   // fetch the ruler rules from the database so we can figure out what other "groups" are already defined
   // for our folders
-  const { isLoading: isLoadingRulerNamespace, currentData: rulerNamespace } =
-    alertRuleApi.endpoints.rulerNamespace.useQuery(
-      {
-        namespace: folderUid,
-        rulerConfig: GRAFANA_RULER_CONFIG,
-      },
-      {
-        skip: !folderUid,
-        refetchOnMountOrArgChange: true,
-      }
-    );
-
-  // There should be only one entry in the rulerNamespace object
-  // However it uses folder name as key, so to avoid fetching folder name, we use Object.values
-  const groupOptions = useMemo(() => {
-    if (!rulerNamespace) {
-      // still waiting for namespace information to be fetched
-      return [];
+  return alertRuleApi.endpoints.rulerNamespace.useQuery(
+    {
+      namespace: folderUid,
+      rulerConfig: GRAFANA_RULER_CONFIG,
+    },
+    {
+      refetchOnMountOrArgChange: true,
+      skip: !folderUid,
     }
+  );
+};
 
-    const folderGroups = Object.values(rulerNamespace).flat() ?? [];
+const namespaceToGroupOptions = (rulerNamespace: RulerRulesConfigDTO, enableProvisionedGroups: boolean) => {
+  const folderGroups = Object.values(rulerNamespace).flat();
 
-    return folderGroups
-      .map<SelectableValue<string>>((group) => {
-        const isProvisioned = isProvisionedGroup(group);
-        return {
-          label: group.name,
-          value: group.name,
-          description: group.interval ?? DEFAULT_GROUP_EVALUATION_INTERVAL,
-          // we include provisioned folders, but disable the option to select them
-          isDisabled: !enableProvisionedGroups ? isProvisioned : false,
-          isProvisioned: isProvisioned,
-        };
-      })
+  return folderGroups
+    .map<SelectableValue<string>>((group) => {
+      const isProvisioned = isProvisionedGroup(group);
+      return {
+        label: group.name,
+        value: group.name,
+        description: group.interval ?? DEFAULT_GROUP_EVALUATION_INTERVAL,
+        // we include provisioned folders, but disable the option to select them
+        isDisabled: !enableProvisionedGroups ? isProvisioned : false,
+        isProvisioned: isProvisioned,
+      };
+    })
 
-      .sort(sortByLabel);
-  }, [rulerNamespace, enableProvisionedGroups]);
-
-  return { groupOptions, loading: isLoadingRulerNamespace };
+    .sort(sortByLabel);
 };
 
 const isProvisionedGroup = (group: RulerRuleGroupDTO) => {
@@ -103,10 +87,6 @@ const isProvisionedGroup = (group: RulerRuleGroupDTO) => {
 
 const sortByLabel = (a: SelectableValue<string>, b: SelectableValue<string>) => {
   return a.label?.localeCompare(b.label ?? '') || 0;
-};
-
-const findGroupMatchingLabel = (group: SelectableValue<string>, query: string) => {
-  return group.label?.toLowerCase().includes(query.toLowerCase());
 };
 
 const forValidationOptions = (evaluateEvery: string): RegisterOptions<{ evaluateFor: string }> => ({
@@ -149,24 +129,10 @@ const forValidationOptions = (evaluateEvery: string): RegisterOptions<{ evaluate
   },
 });
 
-const useIsNewGroup = (folder: string, group: string) => {
-  const { groupOptions } = useFolderGroupOptions(folder, false);
-
-  const groupIsInGroupOptions = useCallback(
-    (group_: string) => groupOptions.some((groupInList: SelectableValue<string>) => groupInList.label === group_),
-    [groupOptions]
-  );
-  return !groupIsInGroupOptions(group);
-};
-
 export function GrafanaEvaluationBehaviorStep({
-  evaluateEvery,
-  setEvaluateEvery,
   existing,
   enableProvisionedGroups,
 }: {
-  evaluateEvery: string;
-  setEvaluateEvery: (value: string) => void;
   existing: boolean;
   enableProvisionedGroups: boolean;
 }) {
@@ -181,51 +147,32 @@ export function GrafanaEvaluationBehaviorStep({
     control,
   } = useFormContext<RuleFormValues>();
 
-  const [folder, group, type, isPaused, folderUid, folderName] = watch([
-    'folder',
+  const [group, type, isPaused, folder, evaluateEvery] = watch([
     'group',
     'type',
     'isPaused',
-    'folder.uid',
-    'folder.title',
+    'folder',
+    'evaluateEvery',
   ]);
 
   const isGrafanaAlertingRule = isGrafanaAlertingRuleByType(type);
   const isGrafanaRecordingRule = isGrafanaRecordingRuleByType(type);
-  const { groupOptions, loading } = useFolderGroupOptions(folder?.uid ?? '', enableProvisionedGroups);
-  const [isEditingGroup, setIsEditingGroup] = useState(false);
+  const { currentData: rulerNamespace, isLoading: loadingGroups } = useFetchGroupsForFolder(folder?.uid ?? '');
 
-  const rulerRuleRequests = useUnifiedAlertingSelector((state) => state.rulerRules);
-  const groupfoldersForGrafana = rulerRuleRequests[GRAFANA_RULES_SOURCE_NAME];
+  const groupOptions = useMemo(() => {
+    return rulerNamespace ? namespaceToGroupOptions(rulerNamespace, enableProvisionedGroups) : [];
+  }, [enableProvisionedGroups, rulerNamespace]);
 
-  const grafanaNamespaces = useCombinedRuleNamespaces(GRAFANA_RULES_SOURCE_NAME);
-  const existingNamespace = grafanaNamespaces.find((ns) => ns.uid === folderUid);
-  const existingGroup = existingNamespace?.groups.find((g) => g.name === group);
+  const existingGroup = Object.values(rulerNamespace ?? {})
+    .flat()
+    .find((ruleGroup) => ruleGroup.name === group);
 
-  const isNewGroup = useIsNewGroup(folderUid ?? '', group);
-
+  // synchronize the evaluation interval with the group name when it's an existing group
   useEffect(() => {
-    if (!isNewGroup && existingGroup?.interval) {
-      setEvaluateEvery(existingGroup.interval);
+    if (existingGroup) {
+      setValue('evaluateEvery', existingGroup.interval ?? DEFAULT_GROUP_EVALUATION_INTERVAL);
     }
-  }, [setEvaluateEvery, isNewGroup, setValue, existingGroup]);
-
-  const closeEditGroupModal = (saved = false) => {
-    if (!saved) {
-      logInfo(LogMessages.leavingRuleGroupEdit);
-    }
-    setIsEditingGroup(false);
-  };
-
-  const onOpenEditGroupModal = () => setIsEditingGroup(true);
-
-  const editGroupDisabled = groupfoldersForGrafana?.loading || isNewGroup || !folderUid || !group;
-  const emptyNamespace: CombinedRuleNamespace = {
-    name: folderName,
-    rulesSource: GRAFANA_RULES_SOURCE_NAME,
-    groups: [],
-  };
-  const emptyGroup: CombinedRuleGroup = { name: group, interval: evaluateEvery, rules: [], totals: {} };
+  }, [existingGroup, setValue]);
 
   const [isCreatingEvaluationGroup, setIsCreatingEvaluationGroup] = useState(false);
 
@@ -234,18 +181,6 @@ export function GrafanaEvaluationBehaviorStep({
     setValue('evaluateEvery', evaluationInterval);
     setIsCreatingEvaluationGroup(false);
   };
-
-  const getOptions = useCallback(
-    async (query: string) => {
-      const results = query ? groupOptions.filter((group) => findGroupMatchingLabel(group, query)) : groupOptions;
-      return take(results, MAX_GROUP_RESULTS);
-    },
-    [groupOptions]
-  );
-
-  const debouncedSearch = useMemo(() => {
-    return debounce(getOptions, 300, { leading: true });
-  }, [getOptions]);
 
   const defaultGroupValue = group ? { value: group, label: group } : undefined;
 
@@ -257,7 +192,7 @@ export function GrafanaEvaluationBehaviorStep({
 
   const step = isGrafanaManagedRuleByType(type) ? 4 : 3;
   const label =
-    isGrafanaManagedRuleByType(type) && !folder
+    isGrafanaManagedRuleByType(type) && !folder?.uid
       ? t(
           'alerting.rule-form.evaluation.select-folder-before',
           'Select a folder before setting evaluation group and interval'
@@ -284,21 +219,20 @@ export function GrafanaEvaluationBehaviorStep({
             >
               <Controller
                 render={({ field: { ref, ...field }, fieldState }) => (
-                  <AsyncSelect
-                    disabled={!folder || loading}
+                  <Select
+                    disabled={!folder?.uid || loadingGroups}
                     inputId="group"
                     key={uniqueId()}
                     {...field}
                     onChange={(group) => {
                       field.onChange(group.label ?? '');
                     }}
-                    isLoading={loading}
-                    invalid={Boolean(folder) && !group && Boolean(fieldState.error)}
-                    loadOptions={debouncedSearch}
+                    isLoading={loadingGroups}
+                    invalid={Boolean(folder?.uid) && !group && Boolean(fieldState.error)}
                     cacheOptions
                     loadingMessage={'Loading groups...'}
                     defaultValue={defaultGroupValue}
-                    defaultOptions={groupOptions}
+                    options={groupOptions}
                     getOptionLabel={(option: SelectableValue<string>) => (
                       <div>
                         <span>{option.label}</span>
@@ -329,7 +263,7 @@ export function GrafanaEvaluationBehaviorStep({
               icon="plus"
               fill="outline"
               variant="secondary"
-              disabled={!folder}
+              disabled={!folder?.uid}
               data-testid={selectors.components.AlertRules.newEvaluationGroupButton}
             >
               <Trans i18nKey="alerting.rule-form.evaluation.new-group">New evaluation group</Trans>
@@ -339,40 +273,20 @@ export function GrafanaEvaluationBehaviorStep({
             <EvaluationGroupCreationModal
               onCreate={handleEvalGroupCreation}
               onClose={() => setIsCreatingEvaluationGroup(false)}
-              groupfoldersForGrafana={groupfoldersForGrafana?.result}
+              groupfoldersForGrafana={rulerNamespace}
             />
           )}
         </Stack>
 
-        {folderName && isEditingGroup && (
-          <EditRuleGroupModal
-            namespace={existingNamespace ?? emptyNamespace}
-            group={existingGroup ?? emptyGroup}
-            folderUid={folderUid}
-            onClose={() => closeEditGroupModal()}
-            intervalEditOnly
-            hideFolder={true}
-          />
-        )}
-        {folderName && group && (
+        {folder?.title && group && (
           <div className={styles.evaluationContainer}>
             <Stack direction="column" gap={0}>
               <div className={styles.marginTop}>
                 <Stack direction="column" gap={1}>
                   {getValues('group') && getValues('evaluateEvery') && (
-                    <Stack direction="row" gap={1} alignItems="center">
-                      <Trans i18nKey="alerting.rule-form.evaluation.group-text" values={{ evaluateEvery }}>
-                        All rules in the selected group are evaluated every {{ evaluateEvery }}.
-                      </Trans>
-                      {!isNewGroup && (
-                        <IconButton
-                          name="pen"
-                          aria-label="Edit"
-                          disabled={editGroupDisabled}
-                          onClick={onOpenEditGroupModal}
-                        />
-                      )}
-                    </Stack>
+                    <Trans i18nKey="alerting.rule-form.evaluation.group-text" values={{ evaluateEvery }}>
+                      All rules in the selected group are evaluated every {{ evaluateEvery }}.
+                    </Trans>
                   )}
                 </Stack>
               </div>
@@ -417,7 +331,10 @@ export function GrafanaEvaluationBehaviorStep({
           {showErrorHandling && (
             <>
               <NeedHelpInfoForConfigureNoDataError />
-              <Field htmlFor="no-data-state-input" label="Alert state if no data or all values are null">
+              <Field
+                htmlFor="no-data-state-input"
+                label={t('alerting.alert.state-no-data', 'Alert state if no data or all values are null')}
+              >
                 <Controller
                   render={({ field: { onChange, ref, ...field } }) => (
                     <GrafanaAlertStatePicker
@@ -432,7 +349,10 @@ export function GrafanaEvaluationBehaviorStep({
                   name="noDataState"
                 />
               </Field>
-              <Field htmlFor="exec-err-state-input" label="Alert state if execution error or timeout">
+              <Field
+                htmlFor="exec-err-state-input"
+                label={t('alerting.alert.state-error-timeout', 'Alert state if execution error or timeout')}
+              >
                 <Controller
                   render={({ field: { onChange, ref, ...field } }) => (
                     <GrafanaAlertStatePicker

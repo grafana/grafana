@@ -5,8 +5,7 @@ import * as React from 'react';
 import { FormEvent, useEffect, useReducer } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
-import { InlineField, InlineFieldRow, InlineSwitch, Input, Select, useStyles2 } from '@grafana/ui';
+import { InlineField, InlineFieldRow, InlineSwitch, Input, Select, useStyles2, Stack } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { EvalFunction } from 'app/features/alerting/state/alertDef';
 
