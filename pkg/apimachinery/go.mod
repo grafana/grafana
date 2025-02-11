@@ -1,8 +1,6 @@
 module github.com/grafana/grafana/pkg/apimachinery
 
-go 1.23.4
-
-toolchain go1.23.6
+go 1.23.1
 
 require (
 	github.com/grafana/authlib v0.0.0-20250204100101-00a7f40e4029 // @grafana/identity-access-team
@@ -12,8 +10,6 @@ require (
 	k8s.io/apiserver v0.32.1
 	k8s.io/kube-openapi v0.0.0-20241105132330-32ad38e42d3f
 )
-
-require github.com/grafana/grafana-app-sdk/logging v0.30.0
 
 require (
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect

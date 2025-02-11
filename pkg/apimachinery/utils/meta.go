@@ -15,8 +15,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
-
-	"github.com/grafana/grafana-app-sdk/logging"
 )
 
 // LabelKeyGetHistory is used to select object history for an given resource
@@ -703,17 +701,11 @@ func (m *grafanaMetaAccessor) FindTitle(defaultTitle string) string {
 
 	obj, ok := m.obj.(*unstructured.Unstructured)
 	if ok {
-		title, ok, err := unstructured.NestedString(obj.Object, "spec", "title")
-		if err != nil {
-			logging.DefaultLogger.Warn("unable to read title", "err", err)
-		}
+		title, ok, _ := unstructured.NestedString(obj.Object, "spec", "title")
 		if ok && title != "" {
 			return title
 		}
-		title, ok, err = unstructured.NestedString(obj.Object, "spec", "name")
-		if err != nil {
-			logging.DefaultLogger.Warn("unable to read title", "err", err)
-		}
+		title, ok, _ = unstructured.NestedString(obj.Object, "spec", "name")
 		if ok && title != "" {
 			return title
 		}
