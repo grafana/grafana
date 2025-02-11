@@ -10,15 +10,10 @@ import {
   GroupByVariable,
   IntervalVariable,
   QueryVariable,
-  SceneCSSGridLayout,
   SceneDataLayerControls,
   SceneDataProvider,
   SceneDataQuery,
   SceneDataTransformer,
-  SceneGridItemLike,
-  SceneGridLayout,
-  SceneGridRow,
-  SceneObject,
   SceneQueryRunner,
   SceneRefreshPicker,
   SceneTimePicker,
@@ -27,9 +22,6 @@ import {
   SceneVariableSet,
   TextBoxVariable,
   VariableValueSelectors,
-  VizPanel,
-  VizPanelMenu,
-  VizPanelState,
 } from '@grafana/scenes';
 import { DataSourceRef } from '@grafana/schema/dist/esm/index.gen';
 import {
@@ -46,9 +38,6 @@ import {
   defaultIntervalVariableKind,
   defaultQueryVariableKind,
   defaultTextVariableKind,
-  GridLayoutItemSpec,
-  GridLayoutKind,
-  Element,
   GroupByVariableKind,
   IntervalVariableKind,
   LibraryPanelKind,
@@ -56,9 +45,7 @@ import {
   PanelQueryKind,
   QueryVariableKind,
   TextVariableKind,
-  ResponsiveGridLayoutItemKind,
 } from '@grafana/schema/src/schema/dashboard/v2alpha0';
-import { contextSrv } from 'app/core/core';
 import {
   AnnoKeyCreatedBy,
   AnnoKeyFolder,
@@ -80,32 +67,16 @@ import { registerDashboardMacro } from '../scene/DashboardMacro';
 import { DashboardReloadBehavior } from '../scene/DashboardReloadBehavior';
 import { DashboardScene } from '../scene/DashboardScene';
 import { DashboardScopesFacade } from '../scene/DashboardScopesFacade';
-import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
-import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
-import { panelLinksBehavior, panelMenuBehavior } from '../scene/PanelMenuBehavior';
-import { PanelNotices } from '../scene/PanelNotices';
-import { PanelTimeRange } from '../scene/PanelTimeRange';
-import { AngularDeprecation } from '../scene/angular/AngularDeprecation';
-import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
-import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
-import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior';
-import { RowActions } from '../scene/layout-default/row-actions/RowActions';
-import { ResponsiveGridItem } from '../scene/layout-responsive-grid/ResponsiveGridItem';
-import { ResponsiveGridLayoutManager } from '../scene/layout-responsive-grid/ResponsiveGridLayoutManager';
-import { RowItem } from '../scene/layout-rows/RowItem';
-import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
-import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
 import { DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 import { preserveDashboardSceneStateInLocalStorage } from '../utils/dashboardSessionState';
-import { getGridItemKeyForPanelId, getIntervalsFromQueryString, getVizPanelKeyForPanelId } from '../utils/utils';
+import { getIntervalsFromQueryString } from '../utils/utils';
 
-import { GRID_ROW_HEIGHT } from './const';
 import { SnapshotVariable } from './custom-variables/SnapshotVariable';
+import { layoutSerializerRegistry } from './layoutSerializers/layoutSerializerRegistry';
 import { registerPanelInteractionsReporter } from './transformSaveModelToScene';
 import {
   transformCursorSyncV2ToV1,
   transformSortVariableToEnumV1,
-  transformMappingsToV1,
   transformVariableHideToEnumV1,
   transformVariableRefreshToEnumV1,
 } from './transformToV1TypesUtils';
@@ -179,7 +150,11 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
     meta.canSave = false;
   }
 
-  const layoutManager: DashboardLayoutManager = createLayoutManager(dashboard);
+  const layoutManager: DashboardLayoutManager = layoutSerializerRegistry
+    .get(dashboard.layout.kind)
+    .serializer.deserialize(dashboard.layout, dashboard.elements, dashboard.preload);
+
+  //createLayoutManager(dashboard);
 
   const dashboardScene = new DashboardScene({
     description: dashboard.description,
@@ -241,251 +216,6 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
   dashboardScene.setInitialSaveModel(dto.spec, dto.metadata);
 
   return dashboardScene;
-}
-
-function buildGridItem(gridItem: GridLayoutItemSpec, panel: PanelKind, yOverride?: number): DashboardGridItem {
-  const vizPanel = buildVizPanel(panel);
-  return new DashboardGridItem({
-    key: `grid-item-${panel.spec.id}`,
-    x: gridItem.x,
-    y: yOverride ?? gridItem.y,
-    width: gridItem.repeat?.direction === 'h' ? 24 : gridItem.width,
-    height: gridItem.height,
-    itemHeight: gridItem.height,
-    body: vizPanel,
-    variableName: gridItem.repeat?.value,
-    repeatDirection: gridItem.repeat?.direction,
-    maxPerRow: gridItem.repeat?.maxPerRow,
-  });
-}
-
-function createLayoutManager(dashboard: DashboardV2Spec): DashboardLayoutManager {
-  if (dashboard.layout.kind === 'GridLayout') {
-    return new DefaultGridLayoutManager({
-      grid: new SceneGridLayout({
-        isLazy: !(dashboard.preload || contextSrv.user.authenticatedBy === 'render'),
-        children: createSceneGridLayoutForItems(dashboard.layout, dashboard.elements),
-      }),
-    });
-  } else if (dashboard.layout.kind === 'RowsLayout') {
-    return new RowsLayoutManager({
-      rows: dashboard.layout.spec.rows.map((row) => {
-        let layout: DashboardLayoutManager | undefined = undefined;
-
-        if (row.spec.layout.kind === 'GridLayout') {
-          layout = new DefaultGridLayoutManager({
-            grid: new SceneGridLayout({
-              children: createSceneGridLayoutForItems(row.spec.layout, dashboard.elements),
-            }),
-          });
-        }
-
-        if (row.spec.layout.kind === 'ResponsiveGridLayout') {
-          layout = new ResponsiveGridLayoutManager({
-            layout: new SceneCSSGridLayout({
-              templateColumns: row.spec.layout.spec.col,
-              autoRows: row.spec.layout.spec.row,
-              children: createResponsiveGridItems(row.spec.layout.spec.items, dashboard.elements),
-            }),
-          });
-        }
-
-        if (!layout) {
-          throw new Error(`Unsupported layout kind: ${row.spec.layout.kind} in row`);
-        }
-        return new RowItem({
-          title: row.spec.title,
-          isCollapsed: row.spec.collapsed,
-          layout: layout,
-        });
-      }),
-    });
-  } else if (dashboard.layout.kind === 'ResponsiveGridLayout') {
-    return new ResponsiveGridLayoutManager({
-      layout: new SceneCSSGridLayout({
-        templateColumns: dashboard.layout.spec.col,
-        autoRows: dashboard.layout.spec.row,
-        children: createResponsiveGridItems(dashboard.layout.spec.items, dashboard.elements),
-      }),
-    });
-  }
-
-  // @ts-ignore - this complains because we should never reach this point. If the model does not match the schema we will though.
-  throw new Error(`Unsupported layout type: ${dashboard.layout.kind}`);
-}
-
-function createResponsiveGridItems(
-  items: ResponsiveGridLayoutItemKind[],
-  elements: Record<string, Element>
-): ResponsiveGridItem[] {
-  return items.map((item) => {
-    const panel = elements[item.spec.element.name];
-    if (!panel) {
-      throw new Error(`Panel with uid ${item.spec.element.name} not found in the dashboard elements`);
-    }
-    if (panel.kind !== 'Panel') {
-      throw new Error(`Unsupported element kind: ${panel.kind}`);
-    }
-    return new ResponsiveGridItem({
-      key: getGridItemKeyForPanelId(panel.spec.id),
-      body: buildVizPanel(panel),
-    });
-  });
-}
-
-function createSceneGridLayoutForItems(layout: GridLayoutKind, elements: Record<string, Element>): SceneGridItemLike[] {
-  const gridElements = layout.spec.items;
-
-  return gridElements.map((element) => {
-    if (element.kind === 'GridLayoutItem') {
-      const panel = elements[element.spec.element.name];
-
-      if (!panel) {
-        throw new Error(`Panel with uid ${element.spec.element.name} not found in the dashboard elements`);
-      }
-
-      if (panel.kind === 'Panel') {
-        return buildGridItem(element.spec, panel);
-      } else if (panel.kind === 'LibraryPanel') {
-        const libraryPanel = buildLibraryPanel(panel);
-
-        return new DashboardGridItem({
-          key: `grid-item-${panel.spec.id}`,
-          x: element.spec.x,
-          y: element.spec.y,
-          width: element.spec.width,
-          height: element.spec.height,
-          itemHeight: element.spec.height,
-          body: libraryPanel,
-        });
-      } else {
-        throw new Error(`Unknown element kind: ${element.kind}`);
-      }
-    } else if (element.kind === 'GridLayoutRow') {
-      const children = element.spec.elements.map((gridElement) => {
-        const panel = elements[gridElement.spec.element.name];
-        if (panel.kind === 'Panel') {
-          return buildGridItem(gridElement.spec, panel, element.spec.y + GRID_ROW_HEIGHT + gridElement.spec.y);
-        } else {
-          throw new Error(`Unknown element kind: ${gridElement.kind}`);
-        }
-      });
-      let behaviors: SceneObject[] | undefined;
-      if (element.spec.repeat) {
-        behaviors = [new RowRepeaterBehavior({ variableName: element.spec.repeat.value })];
-      }
-      return new SceneGridRow({
-        y: element.spec.y,
-        isCollapsed: element.spec.collapsed,
-        title: element.spec.title,
-        $behaviors: behaviors,
-        actions: new RowActions({}),
-        children,
-      });
-    } else {
-      // If this has been validated by the schema we should never reach this point, which is why TS is telling us this is an error.
-      //@ts-expect-error
-      throw new Error(`Unknown layout element kind: ${element.kind}`);
-    }
-  });
-}
-
-function buildLibraryPanel(panel: LibraryPanelKind): VizPanel {
-  const titleItems: SceneObject[] = [];
-
-  if (config.featureToggles.angularDeprecationUI) {
-    titleItems.push(new AngularDeprecation());
-  }
-
-  titleItems.push(
-    new VizPanelLinks({
-      rawLinks: [],
-      menu: new VizPanelLinksMenu({ $behaviors: [panelLinksBehavior] }),
-    })
-  );
-
-  titleItems.push(new PanelNotices());
-
-  const vizPanelState: VizPanelState = {
-    key: getVizPanelKeyForPanelId(panel.spec.id),
-    titleItems,
-    $behaviors: [
-      new LibraryPanelBehavior({
-        uid: panel.spec.libraryPanel.uid,
-        name: panel.spec.libraryPanel.name,
-      }),
-    ],
-    extendPanelContext: setDashboardPanelContext,
-    pluginId: LibraryPanelBehavior.LOADING_VIZ_PANEL_PLUGIN_ID,
-    title: panel.spec.title,
-    options: {},
-    fieldConfig: {
-      defaults: {},
-      overrides: [],
-    },
-  };
-
-  if (!config.publicDashboardAccessToken) {
-    vizPanelState.menu = new VizPanelMenu({
-      $behaviors: [panelMenuBehavior],
-    });
-  }
-
-  return new VizPanel(vizPanelState);
-}
-
-function buildVizPanel(panel: PanelKind): VizPanel {
-  const titleItems: SceneObject[] = [];
-
-  if (config.featureToggles.angularDeprecationUI) {
-    titleItems.push(new AngularDeprecation());
-  }
-
-  titleItems.push(
-    new VizPanelLinks({
-      rawLinks: panel.spec.links,
-      menu: new VizPanelLinksMenu({ $behaviors: [panelLinksBehavior] }),
-    })
-  );
-
-  titleItems.push(new PanelNotices());
-
-  const queryOptions = panel.spec.data.spec.queryOptions;
-  const timeOverrideShown = (queryOptions.timeFrom || queryOptions.timeShift) && !queryOptions.hideTimeOverride;
-
-  const vizPanelState: VizPanelState = {
-    key: getVizPanelKeyForPanelId(panel.spec.id),
-    title: panel.spec.title,
-    description: panel.spec.description,
-    pluginId: panel.spec.vizConfig.kind,
-    options: panel.spec.vizConfig.spec.options,
-    fieldConfig: transformMappingsToV1(panel.spec.vizConfig.spec.fieldConfig),
-    pluginVersion: panel.spec.vizConfig.spec.pluginVersion,
-    displayMode: panel.spec.transparent ? 'transparent' : 'default',
-    hoverHeader: !panel.spec.title && !timeOverrideShown,
-    hoverHeaderOffset: 0,
-    $data: createPanelDataProvider(panel),
-    titleItems,
-    $behaviors: [],
-    extendPanelContext: setDashboardPanelContext,
-    // _UNSAFE_customMigrationHandler: getAngularPanelMigrationHandler(panel), //FIXME: Angular Migration
-  };
-
-  if (!config.publicDashboardAccessToken) {
-    vizPanelState.menu = new VizPanelMenu({
-      $behaviors: [panelMenuBehavior],
-    });
-  }
-
-  if (queryOptions.timeFrom || queryOptions.timeShift) {
-    vizPanelState.$timeRange = new PanelTimeRange({
-      timeFrom: queryOptions.timeFrom,
-      timeShift: queryOptions.timeShift,
-      hideTimeOverride: queryOptions.hideTimeOverride,
-    });
-  }
-
-  return new VizPanel(vizPanelState);
 }
 
 function getPanelDataSource(panel: PanelKind): DataSourceRef | undefined {
