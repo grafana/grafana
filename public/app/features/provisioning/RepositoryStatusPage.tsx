@@ -4,9 +4,7 @@ import { useParams } from 'react-router-dom-v5-compat';
 
 import { SelectableValue, urlUtil } from '@grafana/data';
 import {
-  Alert,
   Button,
-  Card,
   CellProps,
   Column,
   ConfirmModal,
@@ -33,7 +31,6 @@ import { RepositoryResources } from './RepositoryResources';
 import { StatusBadge } from './StatusBadge';
 import { SyncRepository } from './SyncRepository';
 import {
-  useListJobQuery,
   useGetRepositoryFilesQuery,
   Repository,
   useListRepositoryQuery,
@@ -46,7 +43,6 @@ enum TabSelection {
   Overview = 'overview',
   Resources = 'resources',
   Files = 'files',
-  Jobs = 'jobs',
   Export = 'export',
 }
 
@@ -54,7 +50,6 @@ const tabInfo: SelectableValue<TabSelection> = [
   { value: TabSelection.Overview, label: 'Overview', title: 'Repository overview' },
   { value: TabSelection.Resources, label: 'Resources', title: 'Resources saved in grafana database' },
   { value: TabSelection.Files, label: 'Files', title: 'The raw file list from the repository' },
-  { value: TabSelection.Jobs, label: 'Recent events' },
   { value: TabSelection.Export, label: 'Export' },
 ];
 
@@ -117,7 +112,6 @@ export default function RepositoryStatusPage() {
                   {tab === TabSelection.Overview && <RepositoryOverview repo={data} />}
                   {tab === TabSelection.Resources && <RepositoryResources repo={data} />}
                   {tab === TabSelection.Files && <FilesView repo={data} />}
-                  {tab === TabSelection.Jobs && <JobsView repo={data} />}
                   {tab === TabSelection.Export && <ExportToRepository repo={data} />}
                 </TabContent>
               </>
@@ -224,49 +218,5 @@ function FilesView({ repo }: RepoProps) {
       </Stack>
       <InteractiveTable columns={columns} data={data} pageSize={25} getRowId={(f: FileDetails) => String(f.path)} />
     </Stack>
-  );
-}
-
-function JobsView({ repo }: RepoProps) {
-  const name = repo.metadata?.name;
-  const query = useListJobQuery({ labelSelector: `repository=${name}` });
-  const items = query?.data?.items ?? [];
-
-  if (query.isLoading) {
-    return <Spinner />;
-  }
-  if (query.isError) {
-    return (
-      <Alert title="error loading jobs">
-        <pre>{JSON.stringify(query.error)}</pre>
-      </Alert>
-    );
-  }
-  if (!items?.length) {
-    return (
-      <div>
-        No recent events...
-        <br />
-        Note: history is not maintained after system restart
-      </div>
-    );
-  }
-
-  return (
-    <div>
-      {items.map((item) => {
-        return (
-          <Card key={item.metadata?.resourceVersion}>
-            <Card.Heading>
-              {item.spec?.action} / {item.status?.state}
-            </Card.Heading>
-            <Card.Description>
-              <span>{JSON.stringify(item.spec)}</span>
-              <span>{JSON.stringify(item.status)}</span>
-            </Card.Description>
-          </Card>
-        );
-      })}
-    </div>
   );
 }

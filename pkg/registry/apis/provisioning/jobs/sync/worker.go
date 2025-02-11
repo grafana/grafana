@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"path"
+	"reflect"
 	"sort"
 	"strings"
 	"time"
@@ -156,6 +157,10 @@ func (r *SyncWorker) sync(ctx context.Context,
 		return nil, nil, fmt.Errorf("namespace mismatch")
 	}
 	job := &syncJob{
+		summary: provisioning.JobResourceSummary{
+			Resource: "all",
+			Group:    "all",
+		},
 		repository:       repo,
 		options:          options,
 		progress:         progress,
@@ -193,7 +198,10 @@ func (r *SyncWorker) sync(ctx context.Context,
 	} else if !job.jobStatus.State.Finished() {
 		job.jobStatus.State = provisioning.JobStateSuccess
 	}
-	job.jobStatus.Summary = []*provisioning.JobResourceSummary{&job.summary}
+
+	if !reflect.DeepEqual(job.summary, provisioning.JobResourceSummary{}) {
+		job.jobStatus.Summary = []*provisioning.JobResourceSummary{&job.summary}
+	}
 	return job.jobStatus, job.syncStatus, nil
 }
 
@@ -215,7 +223,7 @@ type syncJob struct {
 	jobStatus  *provisioning.JobStatus
 	syncStatus *provisioning.SyncStatus
 
-	// generic summary for now (not typed)
+	// FIXME: generic summary for now (not typed)
 	summary provisioning.JobResourceSummary
 }
 

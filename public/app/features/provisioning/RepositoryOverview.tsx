@@ -15,6 +15,7 @@ import {
 } from '@grafana/ui';
 
 import { CheckRepository } from './CheckRepository';
+import { RecentJobs } from './RecentJobs';
 import { RepositoryHealth } from './RepositoryHealth';
 import { SyncRepository } from './SyncRepository';
 import { Repository, ResourceCount } from './api';
@@ -51,79 +52,137 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
   );
   return (
     <Box padding={2}>
-      <Grid columns={2} gap={2}>
-        <div className={styles.cardContainer}>
-          <Card className={styles.card}>
-            <Card.Heading>Links</Card.Heading>
-            <Card.Meta>
-              <Stack>
-                {remoteURL && (
-                  <Text>
-                    <TextLink external href={remoteURL}>
-                      {remoteURL}
-                    </TextLink>
-                  </Text>
-                )}
-
-                {webhookURL && (
-                  <Text>
-                    <TextLink external href={webhookURL}>
-                      Webhook
-                    </TextLink>
-                  </Text>
-                )}
-              </Stack>
-            </Card.Meta>
-            <Card.Actions className={styles.actions}>
-              <LinkButton fill="outline" size="md" href={getFolderURL(repo)}>
-                Containing Folder
-              </LinkButton>
-            </Card.Actions>
-          </Card>
-        </div>
-        <div className={styles.cardContainer}>
-          <Card className={styles.card}>
-            <Card.Heading>Resources</Card.Heading>
-            <Card.Description>
-              {repo.status?.stats ? (
-                <InteractiveTable
-                  columns={resourceColumns}
-                  data={repo.status.stats}
-                  getRowId={(r: ResourceCount) => `${r.group}-${r.resource}`}
-                />
-              ) : null}
-            </Card.Description>
-          </Card>
-        </div>
-        {repo.status?.health && (
+      <Stack direction="column" gap={2}>
+        <Grid columns={2} gap={2}>
           <div className={styles.cardContainer}>
             <Card className={styles.card}>
-              <Card.Heading>Health</Card.Heading>
+              <Card.Heading>Links</Card.Heading>
+              <Card.Meta>
+                <Stack>
+                  {remoteURL && (
+                    <Text>
+                      <TextLink external href={remoteURL}>
+                        {remoteURL}
+                      </TextLink>
+                    </Text>
+                  )}
+
+                  {webhookURL && (
+                    <Text>
+                      <TextLink external href={webhookURL}>
+                        Webhook
+                      </TextLink>
+                    </Text>
+                  )}
+                </Stack>
+              </Card.Meta>
+              <Card.Actions className={styles.actions}>
+                <LinkButton fill="outline" size="md" href={getFolderURL(repo)}>
+                  Containing Folder
+                </LinkButton>
+              </Card.Actions>
+            </Card>
+          </div>
+          <div className={styles.cardContainer}>
+            <Card className={styles.card}>
+              <Card.Heading>Resources</Card.Heading>
               <Card.Description>
-                <RepositoryHealth health={repo.status?.health} />
+                {repo.status?.stats ? (
+                  <InteractiveTable
+                    columns={resourceColumns}
+                    data={repo.status.stats}
+                    getRowId={(r: ResourceCount) => `${r.group}-${r.resource}`}
+                  />
+                ) : null}
+              </Card.Description>
+            </Card>
+          </div>
+          {repo.status?.health && (
+            <div className={styles.cardContainer}>
+              <Card className={styles.card}>
+                <Card.Heading>Health</Card.Heading>
+                <Card.Description>
+                  <RepositoryHealth health={repo.status?.health} />
+                  <Grid columns={12} gap={1} alignItems="baseline">
+                    <div className={styles.labelColumn}>
+                      <Text color="secondary">Status:</Text>
+                    </div>
+                    <div className={styles.valueColumn}>
+                      <Text variant="body">{status?.health?.healthy ? 'Healthy' : 'Unhealthy'}</Text>
+                    </div>
+
+                    <div className={styles.labelColumn}>
+                      <Text color="secondary">Checked:</Text>
+                    </div>
+                    <div className={styles.valueColumn}>
+                      <Text variant="body">{formatTimestamp(status?.health?.checked)}</Text>
+                    </div>
+
+                    {!!status?.health?.message?.length && (
+                      <>
+                        <div className={styles.labelColumn}>
+                          <Text color="secondary">Messages:</Text>
+                        </div>
+                        <div className={styles.valueColumn}>
+                          <Stack gap={1}>
+                            {status.health.message.map((msg, idx) => (
+                              <Text key={idx} variant="body">
+                                {msg}
+                              </Text>
+                            ))}
+                          </Stack>
+                        </div>
+                      </>
+                    )}
+                  </Grid>
+                </Card.Description>
+                <Card.Actions className={styles.actions}>
+                  <CheckRepository repository={repo} />
+                </Card.Actions>
+              </Card>
+            </div>
+          )}
+          <div className={styles.cardContainer}>
+            <Card className={styles.card}>
+              <Card.Heading>Sync status</Card.Heading>
+              <Card.Description>
                 <Grid columns={12} gap={1} alignItems="baseline">
                   <div className={styles.labelColumn}>
-                    <Text color="secondary">Status:</Text>
+                    <Text color="secondary">Job ID:</Text>
                   </div>
                   <div className={styles.valueColumn}>
-                    <Text variant="body">{status?.health?.healthy ? 'Healthy' : 'Unhealthy'}</Text>
+                    <Text variant="body">{status?.sync.job ?? 'N/A'}</Text>
                   </div>
 
                   <div className={styles.labelColumn}>
-                    <Text color="secondary">Checked:</Text>
+                    <Text color="secondary">Last Ref:</Text>
                   </div>
                   <div className={styles.valueColumn}>
-                    <Text variant="body">{formatTimestamp(status?.health?.checked)}</Text>
+                    <Text variant="body">{status?.sync.hash ? status.sync.hash.substring(0, 7) : 'N/A'}</Text>
                   </div>
 
-                  {!!status?.health?.message?.length && (
+                  <div className={styles.labelColumn}>
+                    <Text color="secondary">Started:</Text>
+                  </div>
+                  <div className={styles.valueColumn}>
+                    <Text variant="body">{formatTimestamp(status?.sync.started)}</Text>
+                  </div>
+
+                  <div className={styles.labelColumn}>
+                    <Text color="secondary">Finished:</Text>
+                  </div>
+                  <div className={styles.valueColumn}>
+                    <Text variant="body">{formatTimestamp(status?.sync.finished)}</Text>
+                  </div>
+
+                  {!!status?.sync?.message?.length && (
                     <>
                       <div className={styles.labelColumn}>
                         <Text color="secondary">Messages:</Text>
                       </div>
                       <div className={styles.valueColumn}>
                         <Stack gap={1}>
-                          {status.health.message.map((msg, idx) => (
+                          {status.sync.message.map((msg, idx) => (
                             <Text key={idx} variant="body">
                               {msg}
                             </Text>
@@ -135,68 +194,15 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
                 </Grid>
               </Card.Description>
               <Card.Actions className={styles.actions}>
-                <CheckRepository repository={repo} />
+                <SyncRepository repository={repo} />
               </Card.Actions>
             </Card>
           </div>
-        )}
+        </Grid>
         <div className={styles.cardContainer}>
-          <Card className={styles.card}>
-            <Card.Heading>Sync status</Card.Heading>
-            <Card.Description>
-              <Grid columns={12} gap={1} alignItems="baseline">
-                <div className={styles.labelColumn}>
-                  <Text color="secondary">Job ID:</Text>
-                </div>
-                <div className={styles.valueColumn}>
-                  <Text variant="body">{status?.sync.job ?? 'N/A'}</Text>
-                </div>
-
-                <div className={styles.labelColumn}>
-                  <Text color="secondary">Last Ref:</Text>
-                </div>
-                <div className={styles.valueColumn}>
-                  <Text variant="body">{status?.sync.hash ? status.sync.hash.substring(0, 7) : 'N/A'}</Text>
-                </div>
-
-                <div className={styles.labelColumn}>
-                  <Text color="secondary">Started:</Text>
-                </div>
-                <div className={styles.valueColumn}>
-                  <Text variant="body">{formatTimestamp(status?.sync.started)}</Text>
-                </div>
-
-                <div className={styles.labelColumn}>
-                  <Text color="secondary">Finished:</Text>
-                </div>
-                <div className={styles.valueColumn}>
-                  <Text variant="body">{formatTimestamp(status?.sync.finished)}</Text>
-                </div>
-
-                {!!status?.sync?.message?.length && (
-                  <>
-                    <div className={styles.labelColumn}>
-                      <Text color="secondary">Messages:</Text>
-                    </div>
-                    <div className={styles.valueColumn}>
-                      <Stack gap={1}>
-                        {status.sync.message.map((msg, idx) => (
-                          <Text key={idx} variant="body">
-                            {msg}
-                          </Text>
-                        ))}
-                      </Stack>
-                    </div>
-                  </>
-                )}
-              </Grid>
-            </Card.Description>
-            <Card.Actions className={styles.actions}>
-              <SyncRepository repository={repo} />
-            </Card.Actions>
-          </Card>
+          <RecentJobs repo={repo} />
         </div>
-      </Grid>
+      </Stack>
     </Box>
   );
 }
