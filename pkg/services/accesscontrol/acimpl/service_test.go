@@ -71,7 +71,6 @@ func TestUsageMetrics(t *testing.T) {
 				featuremgmt.WithFeatures(),
 				tracing.InitializeTracerForTest(),
 				nil,
-				nil,
 				permreg.ProvidePermissionRegistry(),
 				nil,
 				nil,
