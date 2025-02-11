@@ -39,15 +39,23 @@ type OrgRecord struct {
 }
 
 func NewGrafanaComProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper *OrgRoleMapper, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles) *SocialGrafanaCom {
+	s := newSocialBase(social.GrafanaComProviderName, orgRoleMapper, info, features, cfg)
+
 	// Override necessary settings
 	info.AuthUrl = cfg.GrafanaComURL + "/oauth2/authorize"
 	info.TokenUrl = cfg.GrafanaComURL + "/api/oauth2/token"
 	info.AuthStyle = "inheader"
 
+	allowedOrganizations, err := util.SplitStringWithError(info.Extra[allowedOrganizationsKey])
+	if err != nil {
+		s.log.Error("Invalid settings for allowed_organizations in Grafana Com OAuth", "config", allowedOrganizationsKey, "error", err)
+		// TODO: Think if we want to add a metric
+	}
+
 	provider := &SocialGrafanaCom{
-		SocialBase:           newSocialBase(social.GrafanaComProviderName, orgRoleMapper, info, features, cfg),
+		SocialBase:           s,
 		url:                  cfg.GrafanaComURL,
-		allowedOrganizations: util.SplitString(info.Extra[allowedOrganizationsKey]),
+		allowedOrganizations: allowedOrganizations,
 	}
 
 	if features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsApi) {
@@ -73,6 +81,12 @@ func (s *SocialGrafanaCom) Validate(ctx context.Context, newSettings ssoModels.S
 		return err
 	}
 
+	_, err = util.SplitStringWithError(info.Extra[allowedOrganizationsKey])
+	if err != nil {
+		s.log.Error("Invalid settings for allowed_organizations in Grafana Com OAuth", "config", allowedOrganizationsKey, "error", err)
+		// TODO: Think if we want to add a metric
+	}
+
 	return validation.Validate(info, requester,
 		validation.MustBeEmptyValidator(info.AuthUrl, "Auth URL"),
 		validation.MustBeEmptyValidator(info.TokenUrl, "Token URL"),
@@ -96,7 +110,13 @@ func (s *SocialGrafanaCom) Reload(ctx context.Context, settings ssoModels.SSOSet
 	s.updateInfo(ctx, social.GrafanaComProviderName, newInfo)
 
 	s.url = s.cfg.GrafanaComURL
-	s.allowedOrganizations = util.SplitString(newInfo.Extra[allowedOrganizationsKey])
+
+	allowedOrganizations, err := util.SplitStringWithError(newInfo.Extra[allowedOrganizationsKey])
+	if err != nil {
+		s.log.Error("Invalid settings for allowed_organizations in Grafana Com OAuth", "config", allowedOrganizationsKey, "error", err)
+		// TODO: Think if we want to add a metric
+	}
+	s.allowedOrganizations = allowedOrganizations
 
 	return nil
 }

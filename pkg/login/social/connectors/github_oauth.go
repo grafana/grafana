@@ -62,13 +62,25 @@ var (
 )
 
 func NewGitHubProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper *OrgRoleMapper, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles) *SocialGithub {
-	teamIdsSplitted := util.SplitString(info.Extra[teamIdsKey])
+	s := newSocialBase(social.GitHubProviderName, orgRoleMapper, info, features, cfg)
+
+	teamIdsSplitted, err := util.SplitStringWithError(info.Extra[teamIdsKey])
+	if err != nil {
+		s.log.Error("Invalid settings for team_ids in Github OAuth", "config", teamIdsKey, "error", err)
+		// TODO: Think if we want to add a metric
+	}
 	teamIds := mustInts(teamIdsSplitted)
 
+	allowedOrganizations, err := util.SplitStringWithError(info.Extra[allowedOrganizationsKey])
+	if err != nil {
+		s.log.Error("Invalid settings for allowed_organizations in Github OAuth", "config", allowedOrganizationsKey, "error", err)
+		// TODO: Think if we want to add a metric
+	}
+
 	provider := &SocialGithub{
-		SocialBase:           newSocialBase(social.GitHubProviderName, orgRoleMapper, info, features, cfg),
+		SocialBase:           s,
 		teamIds:              teamIds,
-		allowedOrganizations: util.SplitString(info.Extra[allowedOrganizationsKey]),
+		allowedOrganizations: allowedOrganizations,
 	}
 
 	if len(teamIdsSplitted) != len(teamIds) {
@@ -98,6 +110,18 @@ func (s *SocialGithub) Validate(ctx context.Context, newSettings ssoModels.SSOSe
 		return err
 	}
 
+	_, err = util.SplitStringWithError(info.Extra[teamIdsKey])
+	if err != nil {
+		s.log.Error("Invalid settings for team_ids in Github OAuth", "config", teamIdsKey, "error", err)
+		// TODO: Think if we want to add a metric
+	}
+
+	_, err = util.SplitStringWithError(info.Extra[allowedOrganizationsKey])
+	if err != nil {
+		s.log.Error("Invalid settings for allowed_organizations in Github OAuth", "config", allowedOrganizationsKey, "error", err)
+		// TODO: Think if we want to add a metric
+	}
+
 	return validation.Validate(info, requester,
 		validation.MustBeEmptyValidator(info.AuthUrl, "Auth URL"),
 		validation.MustBeEmptyValidator(info.TokenUrl, "Token URL"),
@@ -122,8 +146,18 @@ func (s *SocialGithub) Reload(ctx context.Context, settings ssoModels.SSOSetting
 		return ssosettings.ErrInvalidSettings.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
 	}
 
-	teamIdsSplitted := util.SplitString(newInfo.Extra[teamIdsKey])
+	teamIdsSplitted, err := util.SplitStringWithError(newInfo.Extra[teamIdsKey])
+	if err != nil {
+		s.log.Error("Invalid settings for team_ids in Github OAuth", "config", teamIdsKey, "error", err)
+		// TODO: Think if we want to add a metric
+	}
 	teamIds := mustInts(teamIdsSplitted)
+
+	allowedOrganizations, err := util.SplitStringWithError(newInfo.Extra[allowedOrganizationsKey])
+	if err != nil {
+		s.log.Error("Invalid settings for allowed_organizations in Github OAuth", "config", allowedOrganizationsKey, "error", err)
+		// TODO: Think if we want to add a metric
+	}
 
 	if len(teamIdsSplitted) != len(teamIds) {
 		s.log.Warn("Failed to parse team ids. Team ids must be a list of numbers.", "teamIds", teamIdsSplitted)
@@ -135,7 +169,7 @@ func (s *SocialGithub) Reload(ctx context.Context, settings ssoModels.SSOSetting
 	s.updateInfo(ctx, social.GitHubProviderName, newInfo)
 
 	s.teamIds = teamIds
-	s.allowedOrganizations = util.SplitString(newInfo.Extra[allowedOrganizationsKey])
+	s.allowedOrganizations = allowedOrganizations
 
 	return nil
 }

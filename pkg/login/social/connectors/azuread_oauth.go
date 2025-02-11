@@ -88,10 +88,18 @@ type keySetJWKS struct {
 }
 
 func NewAzureADProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper *OrgRoleMapper, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles, cache remotecache.CacheStorage) *SocialAzureAD {
+	s := newSocialBase(social.AzureADProviderName, orgRoleMapper, info, features, cfg)
+
+	allowedOrganizations, err := util.SplitStringWithError(info.Extra[allowedOrganizationsKey])
+	if err != nil {
+		s.log.Error("Invalid settings for allowed_organizations in AzureAD OAuth", "config", allowedOrganizationsKey, "error", err)
+		// TODO: Think if we want to add a metric
+	}
+
 	provider := &SocialAzureAD{
-		SocialBase:           newSocialBase(social.AzureADProviderName, orgRoleMapper, info, features, cfg),
+		SocialBase:           s,
 		cache:                cache,
-		allowedOrganizations: util.SplitString(info.Extra[allowedOrganizationsKey]),
+		allowedOrganizations: allowedOrganizations,
 		forceUseGraphAPI:     MustBool(info.Extra[forceUseGraphAPIKey], ExtraAzureADSettingKeys[forceUseGraphAPIKey].DefaultValue.(bool)),
 	}
 
@@ -250,7 +258,13 @@ func (s *SocialAzureAD) Reload(ctx context.Context, settings ssoModels.SSOSettin
 		appendUniqueScope(s.Config, social.OfflineAccessScope)
 	}
 
-	s.allowedOrganizations = util.SplitString(newInfo.Extra[allowedOrganizationsKey])
+	allowedOrganizations, err := util.SplitStringWithError(newInfo.Extra[allowedOrganizationsKey])
+	if err != nil {
+		s.log.Error("Invalid settings for allowed_organizations in AzureAD OAuth", "config", allowedOrganizationsKey, "error", err)
+		// TODO: Think if we want to add a metric
+	}
+
+	s.allowedOrganizations = allowedOrganizations
 	s.forceUseGraphAPI = MustBool(newInfo.Extra[forceUseGraphAPIKey], false)
 
 	return nil
@@ -270,6 +284,12 @@ func (s *SocialAzureAD) Validate(ctx context.Context, newSettings ssoModels.SSOS
 	err = validateInfo(info, oldInfo, requester)
 	if err != nil {
 		return err
+	}
+
+	_, err = util.SplitStringWithError(info.Extra[allowedOrganizationsKey])
+	if err != nil {
+		s.log.Error("Invalid settings for allowed_organizations in AzureAD OAuth", "config", allowedOrganizationsKey, "error", err)
+		// TODO: Think if we want to add a metric
 	}
 
 	return validation.Validate(info, requester,
