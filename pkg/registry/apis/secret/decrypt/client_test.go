@@ -21,14 +21,11 @@ func TestDecryptClientFunc(t *testing.T) {
 
 		decryptStorage := &MockDecryptStorage{}
 
-		ns := xkube.Namespace("default")
+		ns := "default"
 		name1, name2 := "first", "second"
 
-		nn1 := xkube.NameNamespace{Namespace: ns, Name: name1}
-		nn2 := xkube.NameNamespace{Namespace: ns, Name: name2}
-
-		decryptStorage.On("Decrypt", mock.Anything, nn1).Return(v0alpha1.ExposedSecureValue("secure-value-1"), nil).Once()
-		decryptStorage.On("Decrypt", mock.Anything, nn2).Return(v0alpha1.ExposedSecureValue(""), errors.New("mock error")).Once()
+		decryptStorage.On("Decrypt", mock.Anything, ns, name1).Return(v0alpha1.ExposedSecureValue("secure-value-1"), nil).Once()
+		decryptStorage.On("Decrypt", mock.Anything, ns, name2).Return(v0alpha1.ExposedSecureValue(""), errors.New("mock error")).Once()
 
 		client := DecryptClientFunc{decryptStorage: decryptStorage}
 
@@ -44,7 +41,7 @@ type MockDecryptStorage struct {
 	mock.Mock
 }
 
-func (m *MockDecryptStorage) Decrypt(ctx context.Context, nn xkube.NameNamespace) (v0alpha1.ExposedSecureValue, error) {
-	args := m.Called(ctx, nn)
+func (m *MockDecryptStorage) Decrypt(ctx context.Context, namespace xkube.Namespace, name string) (v0alpha1.ExposedSecureValue, error) {
+	args := m.Called(ctx, namespace, name)
 	return args.Get(0).(v0alpha1.ExposedSecureValue), args.Error(1)
 }
