@@ -1,6 +1,6 @@
 import Editor, { loader as monacoEditorLoader, Monaco } from '@monaco-editor/react';
 import * as monaco from 'monaco-editor';
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 
 import { useTheme2 } from '../../themes';
 
@@ -16,11 +16,14 @@ export const ReactMonacoEditor = (props: ReactMonacoEditorProps) => {
   const theme = useTheme2();
   const onMonacoBeforeMount = useCallback(
     (monaco: Monaco) => {
-      defineThemes(monaco, theme);
       beforeMount?.(monaco);
     },
-    [beforeMount, theme]
+    [beforeMount]
   );
+
+  useEffect(() => {
+    defineThemes(monaco, theme);
+  }, [theme]);
 
   return (
     <Editor
