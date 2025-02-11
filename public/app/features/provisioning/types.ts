@@ -1,9 +1,11 @@
 import { GitHubRepositoryConfig, LocalRepositoryConfig, RepositorySpec, S3RepositoryConfig } from './api';
 
-export type RepositoryFormData = GitHubRepositoryConfig &
+export type RepositoryFormData = Omit<GitHubRepositoryConfig, 'owner' | 'repository'> &
   S3RepositoryConfig &
   LocalRepositoryConfig &
-  Omit<RepositorySpec, 'github' | 's3' | 'local'>;
+  Omit<RepositorySpec, 'github' | 's3' | 'local'> & {
+    repositoryUrl?: string;
+  };
 
 // Added to DashboardDTO to help editor
 export interface ProvisioningPreview {
