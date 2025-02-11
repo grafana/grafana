@@ -79,19 +79,6 @@ export function RecentJobs({ repo }: Props) {
               <IconButton name="exclamation-triangle" variant="destructive" tooltip="View error details" />
             </Tooltip>
           )}
-          {job.status?.summary?.length && job.status?.summary?.length > 0 && (
-            <Tooltip
-              content={
-                <InteractiveTable
-                  data={job.status.summary}
-                  columns={summaryColumns}
-                  getRowId={(item) => item.resource || ''}
-                />
-              }
-            >
-              <IconButton name="list-ul" variant="secondary" tooltip="View summary details" />
-            </Tooltip>
-          )}
         </div>
       ),
     },
@@ -159,6 +146,17 @@ export function RecentJobs({ repo }: Props) {
           data={items.slice(0, 10)}
           columns={columns}
           getRowId={(item) => item.metadata?.resourceVersion || ''}
+          renderExpandedRow={(row) =>
+            row.status?.summary?.length ? (
+              <Box padding={2}>
+                <InteractiveTable
+                  data={row.status.summary}
+                  columns={summaryColumns}
+                  getRowId={(item) => item.resource || ''}
+                />
+              </Box>
+            ) : null
+          }
         />
       </Card.Description>
     </Card>
