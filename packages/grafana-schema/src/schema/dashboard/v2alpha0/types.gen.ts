@@ -4,9 +4,6 @@ import * as common from '@grafana/schema';
 
 
 export interface DashboardV2Spec {
-	// Unique numeric identifier for the dashboard.
-	// `id` is internal to a specific Grafana instance. `uid` should be used to identify a dashboard across Grafana instances.
-	id?: number;
 	// Title of dashboard.
 	title: string;
 	// Description of dashboard.
@@ -33,7 +30,7 @@ export interface DashboardV2Spec {
 	variables: VariableKind[];
 	elements: Record<string, Element>;
 	annotations: AnnotationQueryKind[];
-	layout: GridLayoutKind;
+	layout: GridLayoutKind | RowsLayoutKind | ResponsiveGridLayoutKind;
 	// Plugins only. The version of the dashboard installed together with the plugin.
 	// This is used to determine if the dashboard should be updated when the plugin is updated.
 	revision?: number;
@@ -703,6 +700,26 @@ export const defaultRepeatOptions = (): RepeatOptions => ({
 	value: "",
 });
 
+export interface RowRepeatOptions {
+	mode: "variable";
+	value: string;
+}
+
+export const defaultRowRepeatOptions = (): RowRepeatOptions => ({
+	mode: RepeatMode,
+	value: "",
+});
+
+export interface ResponsiveGridRepeatOptions {
+	mode: "variable";
+	value: string;
+}
+
+export const defaultResponsiveGridRepeatOptions = (): ResponsiveGridRepeatOptions => ({
+	mode: RepeatMode,
+	value: "",
+});
+
 export interface GridLayoutItemSpec {
 	x: number;
 	y: number;
@@ -731,8 +748,34 @@ export const defaultGridLayoutItemKind = (): GridLayoutItemKind => ({
 	spec: defaultGridLayoutItemSpec(),
 });
 
+export interface GridLayoutRowKind {
+	kind: "GridLayoutRow";
+	spec: GridLayoutRowSpec;
+}
+
+export const defaultGridLayoutRowKind = (): GridLayoutRowKind => ({
+	kind: "GridLayoutRow",
+	spec: defaultGridLayoutRowSpec(),
+});
+
+export interface GridLayoutRowSpec {
+	y: number;
+	collapsed: boolean;
+	title: string;
+	// Grid items in the row will have their Y value be relative to the rows Y value. This means a panel positioned at Y: 0 in a row with Y: 10 will be positioned at Y: 11 (row header has a heigh of 1) in the dashboard.
+	elements: GridLayoutItemKind[];
+	repeat?: RowRepeatOptions;
+}
+
+export const defaultGridLayoutRowSpec = (): GridLayoutRowSpec => ({
+	y: 0,
+	collapsed: false,
+	title: "",
+	elements: [],
+});
+
 export interface GridLayoutSpec {
-	items: GridLayoutItemKind[];
+	items: (GridLayoutItemKind | GridLayoutRowKind)[];
 }
 
 export const defaultGridLayoutSpec = (): GridLayoutSpec => ({
@@ -747,6 +790,86 @@ export interface GridLayoutKind {
 export const defaultGridLayoutKind = (): GridLayoutKind => ({
 	kind: "GridLayout",
 	spec: defaultGridLayoutSpec(),
+});
+
+export interface RowsLayoutKind {
+	kind: "RowsLayout";
+	spec: RowsLayoutSpec;
+}
+
+export const defaultRowsLayoutKind = (): RowsLayoutKind => ({
+	kind: "RowsLayout",
+	spec: defaultRowsLayoutSpec(),
+});
+
+export interface RowsLayoutSpec {
+	rows: RowsLayoutRowKind[];
+}
+
+export const defaultRowsLayoutSpec = (): RowsLayoutSpec => ({
+	rows: [],
+});
+
+export interface RowsLayoutRowKind {
+	kind: "RowsLayoutRow";
+	spec: RowsLayoutRowSpec;
+}
+
+export const defaultRowsLayoutRowKind = (): RowsLayoutRowKind => ({
+	kind: "RowsLayoutRow",
+	spec: defaultRowsLayoutRowSpec(),
+});
+
+export interface RowsLayoutRowSpec {
+	title?: string;
+	collapsed: boolean;
+	repeat?: RowRepeatOptions;
+	layout: GridLayoutKind | ResponsiveGridLayoutKind;
+}
+
+export const defaultRowsLayoutRowSpec = (): RowsLayoutRowSpec => ({
+	collapsed: false,
+	layout: defaultGridLayoutKind(),
+});
+
+export interface ResponsiveGridLayoutKind {
+	kind: "ResponsiveGridLayout";
+	spec: ResponsiveGridLayoutSpec;
+}
+
+export const defaultResponsiveGridLayoutKind = (): ResponsiveGridLayoutKind => ({
+	kind: "ResponsiveGridLayout",
+	spec: defaultResponsiveGridLayoutSpec(),
+});
+
+export interface ResponsiveGridLayoutSpec {
+	row: string;
+	col: string;
+	items: ResponsiveGridLayoutItemKind[];
+}
+
+export const defaultResponsiveGridLayoutSpec = (): ResponsiveGridLayoutSpec => ({
+	row: "",
+	col: "",
+	items: [],
+});
+
+export interface ResponsiveGridLayoutItemKind {
+	kind: "ResponsiveGridLayoutItem";
+	spec: ResponsiveGridLayoutItemSpec;
+}
+
+export const defaultResponsiveGridLayoutItemKind = (): ResponsiveGridLayoutItemKind => ({
+	kind: "ResponsiveGridLayoutItem",
+	spec: defaultResponsiveGridLayoutItemSpec(),
+});
+
+export interface ResponsiveGridLayoutItemSpec {
+	element: ElementReference;
+}
+
+export const defaultResponsiveGridLayoutItemSpec = (): ResponsiveGridLayoutItemSpec => ({
+	element: defaultElementReference(),
 });
 
 export interface PanelSpec {
@@ -928,7 +1051,7 @@ export interface QueryVariableSpec {
 	skipUrlSync: boolean;
 	description?: string;
 	datasource?: DataSourceRef;
-	query: string | DataQueryKind;
+	query: DataQueryKind;
 	regex: string;
 	sort: VariableSort;
 	definition?: string;
@@ -945,7 +1068,7 @@ export const defaultQueryVariableSpec = (): QueryVariableSpec => ({
 	hide: "dontHide",
 	refresh: "never",
 	skipUrlSync: false,
-	query: "",
+	query: defaultDataQueryKind(),
 	regex: "",
 	sort: "disabled",
 	options: [],
