@@ -52,11 +52,15 @@ type SocialGenericOAuth struct {
 	teamIds              []string
 }
 
-func NewGenericOAuthProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper *OrgRoleMapper, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles) (*SocialGenericOAuth, error) {
+func NewGenericOAuthProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper *OrgRoleMapper, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles) *SocialGenericOAuth {
+	s := newSocialBase(social.GenericOAuthProviderName, orgRoleMapper, info, features, cfg)
+
 	teamIds, err := util.SplitStringWithError(info.Extra[teamIdsKey])
 	if err != nil {
-		return nil, fmt.Errorf("%s format is not valid", teamIdsKey)
+		s.log.Error("Invalid settings for team_ids in Generic OAuth", "config", teamIdsKey, "error", err)
+		// TODO: Think if we want to add a metric
 	}
+	// TODO: Do the same for all other fields using the StringSplit func, in all other components
 	provider := &SocialGenericOAuth{
 		SocialBase:           newSocialBase(social.GenericOAuthProviderName, orgRoleMapper, info, features, cfg),
 		teamsUrl:             info.TeamsUrl,
@@ -75,7 +79,7 @@ func NewGenericOAuthProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMa
 		ssoSettings.RegisterReloadable(social.GenericOAuthProviderName, provider)
 	}
 
-	return provider, nil
+	return provider
 }
 
 func (s *SocialGenericOAuth) Validate(ctx context.Context, newSettings ssoModels.SSOSettings, oldSettings ssoModels.SSOSettings, requester identity.Requester) error {
@@ -98,10 +102,9 @@ func (s *SocialGenericOAuth) Validate(ctx context.Context, newSettings ssoModels
 		validation.UrlValidator(info.AuthUrl, "Auth URL"),
 		validation.UrlValidator(info.TokenUrl, "Token URL"),
 		validateTeamsUrlWhenNotEmpty,
-		validateTeamIds)
+	)
 
 	if err != nil {
-		s.log.Error("Invalid settings for team_ids in SSO settings")
 		return err
 	}
 
@@ -112,6 +115,12 @@ func (s *SocialGenericOAuth) Validate(ctx context.Context, newSettings ssoModels
 	if len(info.AllowedGroups) > 0 && info.GroupsAttributePath == "" {
 		return ssosettings.ErrInvalidOAuthConfig("If Allowed groups is configured then Groups attribute path must be configured.")
 	}
+	_, err = util.SplitStringWithError(info.Extra[teamIdsKey])
+	if err != nil {
+		s.log.Error("Invalid settings for team_ids in Generic OAuth", "config", teamIdsKey, "error", err)
+		// TODO: Think if we want to add a metric
+	}
+	// TODO: Do the same for all other fields using the StringSplit func, in all other components
 
 	return nil
 }
@@ -123,13 +132,6 @@ func validateTeamsUrlWhenNotEmpty(info *social.OAuthInfo, requester identity.Req
 	return validation.UrlValidator(info.TeamsUrl, "Teams URL")(info, requester)
 }
 
-func validateTeamIds(info *social.OAuthInfo, requester identity.Requester) error {
-	if _, err := util.SplitStringWithError(info.Extra[teamIdsKey]); err != nil {
-		return ssosettings.ErrInvalidOAuthConfig("Team Ids format is not valid.")
-	}
-	return nil
-}
-
 func (s *SocialGenericOAuth) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {
 	newInfo, err := CreateOAuthInfoFromKeyValues(settings.Settings)
 	if err != nil {
@@ -138,8 +140,10 @@ func (s *SocialGenericOAuth) Reload(ctx context.Context, settings ssoModels.SSOS
 
 	teamIds, err := util.SplitStringWithError(newInfo.Extra[teamIdsKey])
 	if err != nil {
-		return ssosettings.ErrInvalidSettings.Errorf("%s is not valid: %v", teamIdsKey, err)
+		s.log.Error("Invalid settings for team_ids in Generic OAuth", "config", teamIdsKey, "error", err)
+		// TODO: Think if we want to add a metric
 	}
+	// TODO: Do the same for all other fields using the StringSplit func, in all other components
 
 	s.reloadMutex.Lock()
 	defer s.reloadMutex.Unlock()
