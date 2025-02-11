@@ -8,7 +8,6 @@ import (
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -81,13 +80,13 @@ func (s *secureValueStorage) Create(ctx context.Context, sv *secretv0alpha1.Secu
 	return createdSecureValue, nil
 }
 
-func (s *secureValueStorage) Read(ctx context.Context, name string, namespace xkube.Namespace) (*secretv0alpha1.SecureValue, error) {
+func (s *secureValueStorage) Read(ctx context.Context, name string, namespace string) (*secretv0alpha1.SecureValue, error) {
 	_, ok := claims.AuthInfoFrom(ctx)
 	if !ok {
 		return nil, fmt.Errorf("missing auth info in context")
 	}
 
-	row := &secureValueDB{Name: name, Namespace: namespace.String()}
+	row := &secureValueDB{Name: name, Namespace: namespace}
 
 	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		found, err := sess.Get(row)
@@ -179,7 +178,7 @@ func (s *secureValueStorage) Update(ctx context.Context, newSecureValue *secretv
 	return secureValue, nil
 }
 
-func (s *secureValueStorage) Delete(ctx context.Context, name string, namespace xkube.Namespace) error {
+func (s *secureValueStorage) Delete(ctx context.Context, name string, namespace string) error {
 	_, ok := claims.AuthInfoFrom(ctx)
 	if !ok {
 		return fmt.Errorf("missing auth info in context")
@@ -188,7 +187,7 @@ func (s *secureValueStorage) Delete(ctx context.Context, name string, namespace 
 	// TODO: delete from the keeper!
 
 	// TODO: do we need to delete by GUID? name+namespace is a unique index. It would avoid doing a fetch.
-	row := &secureValueDB{Name: name, Namespace: namespace.String()}
+	row := &secureValueDB{Name: name, Namespace: namespace}
 
 	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		// TODO: because this is a securevalue, do we care to inform the caller if a row was delete (existed) or not?
@@ -205,7 +204,7 @@ func (s *secureValueStorage) Delete(ctx context.Context, name string, namespace 
 	return nil
 }
 
-func (s *secureValueStorage) List(ctx context.Context, namespace xkube.Namespace, options *internalversion.ListOptions) (*secretv0alpha1.SecureValueList, error) {
+func (s *secureValueStorage) List(ctx context.Context, namespace string, options *internalversion.ListOptions) (*secretv0alpha1.SecureValueList, error) {
 	_, ok := claims.AuthInfoFrom(ctx)
 	if !ok {
 		return nil, fmt.Errorf("missing auth info in context")
@@ -219,7 +218,7 @@ func (s *secureValueStorage) List(ctx context.Context, namespace xkube.Namespace
 	secureValueRows := make([]*secureValueDB, 0)
 
 	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		cond := &secureValueDB{Namespace: namespace.String()}
+		cond := &secureValueDB{Namespace: namespace}
 
 		if err := sess.Find(&secureValueRows, cond); err != nil {
 			return fmt.Errorf("find rows: %w", err)
@@ -249,13 +248,13 @@ func (s *secureValueStorage) List(ctx context.Context, namespace xkube.Namespace
 	}, nil
 }
 
-func (s *secureValueStorage) readInternal(ctx context.Context, name string, namespace xkube.Namespace) (*secureValueDB, error) {
+func (s *secureValueStorage) readInternal(ctx context.Context, name string, namespace string) (*secureValueDB, error) {
 	_, ok := claims.AuthInfoFrom(ctx)
 	if !ok {
 		return nil, fmt.Errorf("missing auth info in context")
 	}
 
-	row := &secureValueDB{Name: name, Namespace: namespace.String()}
+	row := &secureValueDB{Name: name, Namespace: namespace}
 
 	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		found, err := sess.Get(row)

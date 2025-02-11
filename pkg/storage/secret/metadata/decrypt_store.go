@@ -8,7 +8,6 @@ import (
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -28,7 +27,7 @@ type decryptStorage struct {
 	db db.DB
 }
 
-func (s *decryptStorage) Decrypt(ctx context.Context, name string, namespace xkube.Namespace) (secretv0alpha1.ExposedSecureValue, error) {
+func (s *decryptStorage) Decrypt(ctx context.Context, name string, namespace string) (secretv0alpha1.ExposedSecureValue, error) {
 	// TODO: do proper checks here.
 	_, ok := claims.AuthInfoFrom(ctx)
 	if !ok {
@@ -45,8 +44,8 @@ func (s *decryptStorage) Decrypt(ctx context.Context, name string, namespace xku
 	return secretv0alpha1.ExposedSecureValue("super duper secure"), nil
 }
 
-func (s *decryptStorage) readSecureValue(ctx context.Context, name string, namespace xkube.Namespace) (*secureValueDB, error) {
-	row := &secureValueDB{Name: name, Namespace: namespace.String()}
+func (s *decryptStorage) readSecureValue(ctx context.Context, name string, namespace string) (*secureValueDB, error) {
+	row := &secureValueDB{Name: name, Namespace: namespace}
 
 	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		found, err := sess.Get(row)

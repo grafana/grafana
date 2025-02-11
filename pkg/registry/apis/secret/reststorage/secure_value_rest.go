@@ -74,7 +74,7 @@ func (s *SecureValueRest) ConvertToTable(ctx context.Context, object runtime.Obj
 
 // List calls the inner `store` (persistence) and returns a list of `securevalues` within a `namespace` filtered by the `options`.
 func (s *SecureValueRest) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
-	namespace := xkube.Namespace(request.NamespaceValue(ctx))
+	namespace := request.NamespaceValue(ctx)
 
 	secureValueList, err := s.storage.List(ctx, namespace, options)
 	if err != nil {
@@ -91,7 +91,7 @@ func (s *SecureValueRest) Get(ctx context.Context, name string, options *metav1.
 		return nil, fmt.Errorf("missing namespace")
 	}
 
-	sv, err := s.storage.Read(ctx, name, xkube.Namespace(namespace))
+	sv, err := s.storage.Read(ctx, name, namespace)
 	if err != nil {
 		if errors.Is(err, contracts.ErrSecureValueNotFound) {
 			return nil, s.resource.NewNotFound(name)
@@ -179,7 +179,7 @@ func (s *SecureValueRest) Delete(ctx context.Context, name string, deleteValidat
 		return nil, false, fmt.Errorf("missing namespace")
 	}
 
-	if err := s.storage.Delete(ctx, name, xkube.Namespace(namespace)); err != nil {
+	if err := s.storage.Delete(ctx, name, string(namespace)); err != nil {
 		return nil, false, fmt.Errorf("delete secure value: %w", err)
 	}
 

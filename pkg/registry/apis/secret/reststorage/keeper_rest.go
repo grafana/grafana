@@ -74,7 +74,7 @@ func (s *KeeperRest) ConvertToTable(ctx context.Context, object runtime.Object, 
 
 // List calls the inner `store` (persistence) and returns a list of `Keepers` within a `namespace` filtered by the `options`.
 func (s *KeeperRest) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
-	namespace := xkube.Namespace(request.NamespaceValue(ctx))
+	namespace := string(request.NamespaceValue(ctx))
 
 	keepersList, err := s.storage.List(ctx, namespace, options)
 	if err != nil {
@@ -91,7 +91,7 @@ func (s *KeeperRest) Get(ctx context.Context, name string, options *metav1.GetOp
 		return nil, fmt.Errorf("missing namespace")
 	}
 
-	kp, err := s.storage.Read(ctx, name, xkube.Namespace(namespace))
+	kp, err := s.storage.Read(ctx, name, string(namespace))
 	if err != nil {
 		if errors.Is(err, contracts.ErrKeeperNotFound) {
 			return nil, s.resource.NewNotFound(name)
@@ -190,7 +190,7 @@ func (s *KeeperRest) Delete(ctx context.Context, name string, deleteValidation r
 		return nil, false, fmt.Errorf("missing namespace")
 	}
 
-	if err := s.storage.Delete(ctx, name, xkube.Namespace(namespace)); err != nil {
+	if err := s.storage.Delete(ctx, name, string(namespace)); err != nil {
 		return nil, false, fmt.Errorf("failed to delete keeper: %w", err)
 	}
 

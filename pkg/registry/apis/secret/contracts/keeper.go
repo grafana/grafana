@@ -17,10 +17,10 @@ var (
 // KeeperStorage is the interface for wiring and dependency injection.
 type KeeperStorage interface {
 	Create(ctx context.Context, sv *secretv0alpha1.Keeper) (*secretv0alpha1.Keeper, error)
-	Read(ctx context.Context, name string, namespace xkube.Namespace) (*secretv0alpha1.Keeper, error)
+	Read(ctx context.Context, name string, namespace string) (*secretv0alpha1.Keeper, error)
 	Update(ctx context.Context, sv *secretv0alpha1.Keeper) (*secretv0alpha1.Keeper, error)
-	Delete(ctx context.Context, name string, namespace xkube.Namespace) error
-	List(ctx context.Context, namespace xkube.Namespace, options *internalversion.ListOptions) (*secretv0alpha1.KeeperList, error)
+	Delete(ctx context.Context, name string, namespace string) error
+	List(ctx context.Context, namespace string, options *internalversion.ListOptions) (*secretv0alpha1.KeeperList, error)
 }
 
 // ErrKeeperInvalidSecureValues is returned when a Keeper references SecureValues that do not exist.

@@ -11,7 +11,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 )
 
 var (
@@ -72,7 +71,7 @@ func (s *DecryptRest) Connect(ctx context.Context, name string, opts runtime.Obj
 		return nil, fmt.Errorf("missing namespace")
 	}
 
-	exposedValue, err := s.storage.Decrypt(ctx, name, xkube.Namespace(namespace))
+	exposedValue, err := s.storage.Decrypt(ctx, name, string(namespace))
 	if err != nil {
 		return nil, fmt.Errorf("failed to decrypt secure value: %w", err)
 	}
