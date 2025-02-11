@@ -51,14 +51,14 @@ export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
     newTable,
     newColumns,
     filters,
-    aggregates, 
+    aggregates,
     groupBy,
     limit,
   }: {
     newTable?: AzureLogAnalyticsMetadataTable;
     newColumns?: Array<SelectableValue<string>>;
     filters?: string;
-    aggregates?: string; 
+    aggregates?: string;
     groupBy?: string[];
     limit?: number;
   }) => {
@@ -100,27 +100,35 @@ export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
     );
   
     if (hasSelectedDatetime) {
-      if (!updatedFilters.includes(`$__timeFilter(TimeGenerated)`)) {
+      if (updatedFilters && !updatedFilters.includes(`$__timeFilter(TimeGenerated)`)) {
         updatedFilters = `$__timeFilter(TimeGenerated) and ${updatedFilters}`.trim();
       }
-    } else {
+    } else if (updatedFilters) {
       updatedFilters = updatedFilters.replace(`$__timeFilter(TimeGenerated) and `, '').trim();
       updatedFilters = updatedFilters.replace(`$__timeFilter(TimeGenerated)`, '').trim();
     }
   
     let updatedAggregates = aggregates !== undefined ? aggregates : prevAggregates;
-  
-    if (updatedAggregates.trim() === '') {
-      updatedAggregates = ''; 
+    let updatedGroupBys: string[] | undefined = undefined;
+
+    if (groupBy !== undefined) {
+      updatedGroupBys = groupBy.length > 0 ? groupBy : undefined;
+    } else {
+      updatedGroupBys = prevGroupBy && prevGroupBy.length > 0 ? prevGroupBy : undefined;
     }
-  
+
+    
+    if (!updatedGroupBys) {
+      updatedGroupBys = undefined;
+    }
+
     const formattedQuery = AzureMonitorKustoQueryParser.updateQuery(
       tableName!,
       columnList,
       columns,
       updatedFilters,
-      updatedAggregates, 
-      groupBy !== undefined ? groupBy : prevGroupBy,
+      updatedAggregates,
+      updatedGroupBys,
       limit
     );
   
@@ -149,7 +157,7 @@ export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
         />
         <FilterSection {...props} onQueryUpdate={handleQueryUpdate} selectedTable={selectedTable!} columns={columns} selectedColumns={selectedColumns} />
         <AggregateSection {...props} selectedTable={selectedTable!} columns={columns} selectedColumns={selectedColumns} onQueryUpdate={handleQueryUpdate} />
-        <GroupBySection {...props} selectedColumns={selectedColumns} onQueryUpdate={handleQueryUpdate} />
+        <GroupBySection {...props} columns={columns} selectedTable={selectedTable!} selectedColumns={selectedColumns} onQueryUpdate={handleQueryUpdate} />
         <EditorRow>
           <EditorFieldGroup>
             <EditorField label="Limit">

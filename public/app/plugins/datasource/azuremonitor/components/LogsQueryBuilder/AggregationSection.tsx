@@ -33,12 +33,9 @@ export const AggregateSection: React.FC<AggregateSectionProps> = ({
   const availableColumns: Array<SelectableValue<string>> = selectedColumns.length > 0 ? selectedColumns : selectableColumns;
   
   useEffect(() => {
-    setAggregates((prevAggregates) => {
-      if (!selectedTable) {
+    setAggregates(() => {
         return [];
-      }
-      
-      return prevAggregates; 
+
     });
   }, [selectedTable]); 
 

@@ -26,13 +26,11 @@ export const FilterSection: React.FC<FilterSectionProps> = ({ onQueryUpdate, sel
   );
 
   useEffect(() => {
-    setFilters((prevFilters) => {
-      if (!selectedTable) {
-        return [];
-      }
-      return prevFilters;
+    setFilters(() => {
+      return [];
     });
-  }, [selectedTable]);  
+  }, [selectedTable]);
+  
 
   const formatFilters = (filters: Array<{ column: string; operator: string; value: string }>): string => {
     return filters

@@ -4,24 +4,31 @@ import { SelectableValue } from '@grafana/data';
 import { EditorField, EditorFieldGroup, EditorList, EditorRow } from '@grafana/plugin-ui';
 import { Button } from '@grafana/ui';
 
-import { QueryEditorPropertyType } from '../../types';
+import { AzureLogAnalyticsMetadataColumn, QueryEditorPropertyType } from '../../types';
 
 import { GroupByItem } from './GroupByItem';
 import { QueryEditorExpressionType, QueryEditorGroupByExpression } from './expressions';
 
 interface GroupBySectionProps {
   selectedColumns: Array<SelectableValue<string>>;
+  columns: AzureLogAnalyticsMetadataColumn[];
+  selectedTable: string;
   onQueryUpdate: (params: { groupBy?: string[] }) => void;
 }
 
-export const GroupBySection: React.FC<GroupBySectionProps> = ({ selectedColumns, onQueryUpdate }) => {
+export const GroupBySection: React.FC<GroupBySectionProps> = ({ selectedColumns, selectedTable, onQueryUpdate, columns }) => {
   const [groupBys, setGroupBys] = useState<QueryEditorGroupByExpression[]>([]);
 
+  const availableColumns = selectedColumns.length > 0 ? selectedColumns : columns.map((col) => ({
+    label: col.name,
+    value: col.name,
+  }));
+
   useEffect(() => {
-    setGroupBys((prevGroupBys) =>
-      prevGroupBys.filter((g) => selectedColumns.some((col) => col.value === g.property.name))
-    );
-  }, [selectedColumns]);
+    setGroupBys(() => {
+        return [];
+    });
+  }, [selectedTable]);
 
   const handleGroupByChange = (newItems: Array<Partial<QueryEditorGroupByExpression>>) => {
     let cleaned: QueryEditorGroupByExpression[] = newItems
@@ -32,23 +39,54 @@ export const GroupBySection: React.FC<GroupBySectionProps> = ({ selectedColumns,
         interval: g.interval,
         focus: g.focus ?? false,
       }));
-
+  
     setGroupBys(cleaned);
-    onQueryUpdate({ groupBy: cleaned.map((gb) => gb.property?.name ?? '') });
-  };
-
+  
+    let groupByClauses: string[] = [];
+  
+    cleaned.forEach((gb) => {
+      if (gb.property?.name) {
+        const isDatetime = columns.find((col) => col.name === gb.property?.name)?.type === 'datetime';
+  
+        // 🔥 **Replace raw datetime with bin() if it's in groupBy**
+        if (isDatetime) {
+          groupByClauses.push(`bin(${gb.property.name}, 1m)`);
+        } else {
+          groupByClauses.push(gb.property.name);
+        }
+      }
+    });
+  
+    onQueryUpdate({ groupBy: groupByClauses });
+  };  
+  
   const onDeleteGroupBy = (propertyName: string) => {
     setGroupBys((prevGroupBys) => {
       const updatedGroupBys = prevGroupBys.filter((gb) => gb.property.name !== propertyName);
 
-      // Ensure the query updates correctly
-      onQueryUpdate({
-        groupBy: updatedGroupBys.length > 0 ? updatedGroupBys.map((gb) => gb.property.name) : undefined,
-      });
+      let hasSelectedDatetime = updatedGroupBys.some((g) => g.property?.type === QueryEditorPropertyType.DateTime);
+      let shouldIncludeTime = selectedColumns.length === 0 || hasSelectedDatetime;
+      
+      let groupByClauses = updatedGroupBys.map((gb) => gb.property.name);
+      
+      if (updatedGroupBys.length === 0) {
+        groupByClauses = []; 
+      } else {
+        if (!shouldIncludeTime) {
+          groupByClauses = groupByClauses.filter((g) => g !== `bin(TimeGenerated, 1m)`);
+        }
+      }
 
+      console.log("groupByClauses.length > 0 ? groupByClauses : undefined", groupByClauses.length > 0 ? groupByClauses : undefined)
+      
+      onQueryUpdate({
+        groupBy: groupByClauses.length > 0 ? groupByClauses : undefined,
+      });
+      
+      console.log("updatedGroupBys", updatedGroupBys)
       return updatedGroupBys;
     });
-  };
+  };  
 
   const addGroupBy = () => {
     setGroupBys([
@@ -70,7 +108,7 @@ export const GroupBySection: React.FC<GroupBySectionProps> = ({ selectedColumns,
             <EditorList
               items={groupBys}
               onChange={handleGroupByChange}
-              renderItem={makeRenderGroupBy(selectedColumns, onDeleteGroupBy)}
+              renderItem={makeRenderGroupBy(availableColumns, onDeleteGroupBy)}
             />
           ) : (
             <Button variant="secondary" icon="plus" onClick={addGroupBy} />

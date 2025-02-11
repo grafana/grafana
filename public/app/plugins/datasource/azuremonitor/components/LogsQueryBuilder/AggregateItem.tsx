@@ -83,7 +83,7 @@ export const AggregateItem: React.FC<AggregateItemProps> = ({ aggregate, onChang
         onChange={(e) =>
           onChange({
             ...aggregate,
-            property: { name: e.value!, type: columnType }, // Ensure 'property' is always defined
+            property: { name: e.value!, type: columnType },
             reduce: aggregate.reduce ?? { name: '', type: QueryEditorPropertyType.Function },
             type: aggregate.type ?? QueryEditorExpressionType.Reduce,
           })
@@ -98,7 +98,7 @@ export const AggregateItem: React.FC<AggregateItemProps> = ({ aggregate, onChang
         onChange={(e) =>
           onChange({
             ...aggregate,
-            property: aggregate.property ?? { name: '', type: QueryEditorPropertyType.String }, // Ensure 'property' exists
+            property: aggregate.property ?? { name: '', type: QueryEditorPropertyType.String },
             reduce: { name: e.value!, type: QueryEditorPropertyType.Function },
             type: aggregate.type ?? QueryEditorExpressionType.Reduce,
           })

@@ -4,7 +4,7 @@ import { SelectableValue } from '@grafana/data';
 
 import { AggregateFunctions, QueryEditorPropertyType } from '../../types';
 
-import { QueryEditorReduceExpression } from './expressions';
+import { QueryEditorExpression } from './expressions';
 
 const DYNAMIC_TYPE_ARRAY_DELIMITER = '["`indexer`"]';
 export const valueToDefinition = (name: string) => {
@@ -45,29 +45,6 @@ export const OPERATORS_BY_TYPE: Record<string, Array<SelectableValue<string>>> =
 export const toOperatorOptions = (type: string): Array<SelectableValue<string>> => {
   return OPERATORS_BY_TYPE[type] || OPERATORS_BY_TYPE.string;
 };
-
-export function sanitizeAggregate(expression: QueryEditorReduceExpression): QueryEditorReduceExpression | undefined {
-  const func = expression.reduce?.name;
-  const column = expression.property?.name;
-
-  if (func) {
-    switch (func) {
-      case AggregateFunctions.Count:
-        return expression;
-      case AggregateFunctions.Percentile:
-        if (column && expression.parameters?.length) {
-          return expression;
-        }
-        break;
-      default:
-        if (column) {
-          return expression;
-        }
-    }
-  }
-
-  return undefined;
-}
 
 export interface QueryEditorPropertyDefinition {
   value: string;
@@ -110,9 +87,9 @@ export const toPropertyType = (kustoType: string): QueryEditorPropertyType => {
 };
 
 export const parseQuery = (query: string) => {
-  let prevFilters = '';
-  let prevAggregates = '';
-  let prevGroupBy: string[] = [];
+  let prevFilters: string | undefined = undefined;
+  let prevAggregates: string | undefined = undefined;
+  let prevGroupBy: string[] | undefined = undefined;
 
   const whereMatch = query.match(/\| where (.+)/);
   if (whereMatch) {
@@ -121,12 +98,35 @@ export const parseQuery = (query: string) => {
 
   const summarizeMatch = query.match(/\| summarize (.+)/);
   if (summarizeMatch) {
-    const parts = summarizeMatch[1].split(' by ');
-    prevAggregates = parts[0].trim();
-    if (parts[1]) {
-      prevGroupBy = parts[1].split(',').map((g) => g.trim());
+    const summarizeContent = summarizeMatch[1].trim();
+    const parts = summarizeContent.split(" by ");
+
+    if (parts.length > 1) {
+      // 🔥 There is a `by` clause → Treat as GroupBy
+      prevGroupBy = parts[1]
+        .split(",")
+        .map((g) => g.trim())
+        .filter((g) => g !== ""); // Remove empty values
+
+      // ✅ Only set prevAggregates if it contains an actual function (not just count())
+      prevAggregates = parts[0].trim();
+      if (prevAggregates === "count()") {
+        prevAggregates = undefined; // ✅ `count()` in GroupBy is NOT an aggregate
+      }
+    } else {
+      // 🔥 No `by` clause → This is an actual aggregation
+      prevAggregates = summarizeContent.trim() || undefined;
+      prevGroupBy = undefined; // ✅ No groupBy in this case
     }
   }
 
+  // 🔥 Ensure `prevGroupBy` is undefined if it's empty
+  if (prevGroupBy && prevGroupBy.length === 0) {
+    prevGroupBy = undefined;
+  }
+
+  console.log("Parsed Query:", { prevFilters, prevAggregates, prevGroupBy });
+
   return { prevFilters, prevAggregates, prevGroupBy };
 };
+

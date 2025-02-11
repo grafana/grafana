@@ -49,28 +49,34 @@ export class AzureMonitorKustoQueryParser {
     }
 
     // **Step 6: Handle Aggregation and Group By Correctly**
-    let finalGroupBy = new Set(groupBy || []);
+    let finalGroupBy = new Set<string>();
 
-    if (finalGroupBy.size > 0) {
+    if (groupBy && groupBy.length > 0) {
+      finalGroupBy = new Set(groupBy);
+
       if (hasSelectedTimeColumn) {
         finalGroupBy.add(`bin(${datetimeColumn}, 1m)`);
       }
     }
 
-    if (aggregation?.trim()) {
-      updatedQuery += `\n| summarize ${aggregation}${
-        finalGroupBy.size > 0 ? ` by ${Array.from(finalGroupBy).join(', ')}` : ''
+    // 🔥 **Ensure Group By is Completely Removed When Undefined**
+    const hasValidGroupBy = finalGroupBy.size > 0;
+    const hasValidAggregation = aggregation && aggregation.trim() !== "";
+
+    // 🔥 **REMOVE `summarize` if neither aggregation nor groupBy exist**
+    if (hasValidAggregation || hasValidGroupBy) {
+      updatedQuery += `\n| summarize ${aggregation || "count()"}${
+        hasValidGroupBy ? ` by ${Array.from(finalGroupBy).join(', ')}` : ""
       }`;
-    }
-    else if (finalGroupBy.size > 0) {
-      updatedQuery += `\n| summarize count() by ${Array.from(finalGroupBy).join(', ')}`;
-    }
-    else if (selectedColumns.length > 0) {
+    } else if (selectedColumns.length > 0) {
       updatedQuery += `\n| project ${selectedColumns.join(', ')}`;
     }
 
     // **Step 7: Ensure `order by` is only added when needed**
-    if (shouldApplyTimeFilter) {
+    const hasDatetimeGroupBy = groupBy?.some((col) => col.startsWith("bin("));
+    const isTimeSelected = selectedColumns.includes(datetimeColumn);
+
+    if (shouldApplyTimeFilter && !hasDatetimeGroupBy && !isTimeSelected) {
       updatedQuery += `\n| order by ${datetimeColumn} asc`;
     }
 
