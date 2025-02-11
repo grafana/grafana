@@ -26,7 +26,7 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
   const name = repo.metadata?.name ?? '';
   return (
     <Box padding={2}>
-      <Stack gap={2}>
+      <Stack gap={2} direction="row" justifyContent="center">
         <Card>
           <Card.Heading>Links</Card.Heading>
           <Card.Meta>
@@ -86,11 +86,33 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
             ) : null}
           </Card.Description>
         </Card>
+      </Stack>
+      <Stack gap={2} direction="row" alignItems="stretch" justifyContent="center">
         <Card>
           <Card.Heading>Health</Card.Heading>
-          <Card.Meta>
+          <Card.Description>
             <RepositoryHealth repo={repo} />
-          </Card.Meta>
+            <div style={{ display: 'grid', gridTemplateColumns: '100px 1fr', gap: '8px', alignItems: 'baseline' }}>
+              <Text color="secondary">Status:</Text>
+              <Text variant="body">{status?.health?.healthy ? 'Healthy' : 'Unhealthy'}</Text>
+
+              <Text color="secondary">Checked:</Text>
+              <Text variant="body">{formatTimestamp(status?.health?.checked)}</Text>
+
+              {status?.health?.message && status.health.message.length > 0 && (
+                <>
+                  <Text color="secondary">Messages:</Text>
+                  <Stack gap={1}>
+                    {status.health.message.map((msg, idx) => (
+                      <Text key={idx} variant="body">
+                        {msg}
+                      </Text>
+                    ))}
+                  </Stack>
+                </>
+              )}
+            </div>
+          </Card.Description>
 
           <Card.Actions>
             <CheckRepository repository={repo} />
@@ -114,6 +136,19 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
 
               <Text color="secondary">Finished:</Text>
               <Text variant="body">{formatTimestamp(status?.sync.finished)}</Text>
+
+              {status?.sync?.message && status.sync.message.length > 0 && (
+                <>
+                  <Text color="secondary">Messages:</Text>
+                  <Stack gap={1}>
+                    {status.sync.message.map((msg, idx) => (
+                      <Text key={idx} variant="body">
+                        {msg}
+                      </Text>
+                    ))}
+                  </Stack>
+                </>
+              )}
             </div>
           </Card.Description>
           <Card.Actions>
