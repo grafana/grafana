@@ -34,6 +34,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/export"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/pullrequest"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/k8sctx"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -225,6 +226,12 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 }
 
 func (b *APIBuilder) GetRepository(ctx context.Context, name string) (repository.Repository, error) {
+	ctx, cancel, err := k8sctx.Fork(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer cancel()
+
 	obj, err := b.getter.Get(ctx, name, &metav1.GetOptions{})
 	if err != nil {
 		return nil, err
@@ -344,6 +351,13 @@ func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admis
 
 		if r.Spec.GitHub.Branch == "" {
 			r.Spec.GitHub.Branch = "main"
+		}
+
+		if len(r.Spec.GitHub.Workflows) == 0 {
+			r.Spec.GitHub.Workflows = []provisioning.Workflow{
+				provisioning.BranchWorkflow,
+				provisioning.PushWorkflow,
+			}
 		}
 	}
 

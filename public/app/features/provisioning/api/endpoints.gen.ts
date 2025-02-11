@@ -736,8 +736,6 @@ export type JobList = {
 export type GitHubRepositoryConfig = {
   /** The branch to use in the repository. By default, this is the main branch. */
   branch?: string;
-  /** Whether we should commit to change branches and use a Pull Request flow to achieve this. By default, this is false (i.e. we will commit straight to the main branch). */
-  branchWorkflow?: boolean;
   /** Whether we should show dashboard previews in the pull requests caused by the BranchWorkflow option. By default, this is false (i.e. we will not create previews). This option is a no-op if BranchWorkflow is `false` or default. */
   generateDashboardPreviews?: boolean;
   /** The owner of the repository (e.g. example in `example/test` or `https://github.com/example/test`). */
@@ -746,6 +744,8 @@ export type GitHubRepositoryConfig = {
   repository?: string;
   /** Token for accessing the repository. */
   token?: string;
+  /** Workflow allowed for changes to the repository. The order is relevant for defining the precedence of the workflows. Possible values: pull-request, branch, push. */
+  workflows?: ('branch' | 'push')[];
 };
 export type LocalRepositoryConfig = {
   path?: string;
@@ -762,7 +762,7 @@ export type SyncOptions = {
   /** Where values should be saved
 
     Possible enum values:
-     - `"folder"` Resources will be saved into a folder managed by this repository The folder k8s name will be the same as the repository k8s name It will contain a copy of everything from the remote
+     - `"folder"` Resources will be saved into a folder managed by this repository It will contain a copy of everything from the remote The folder k8s name will be the same as the repository k8s name
      - `"instance"` Resources are saved in the global context Only one repository may specify the `instance` target When this exists, the UI will promote writing to the instance repo rather than the grafana database (where possible) */
   target: 'folder' | 'instance';
 };
@@ -1048,7 +1048,7 @@ export type RepositoryView = {
   /** When syncing, where values are saved
 
     Possible enum values:
-     - `"folder"` Resources will be saved into a folder managed by this repository The folder k8s name will be the same as the repository k8s name It will contain a copy of everything from the remote
+     - `"folder"` Resources will be saved into a folder managed by this repository It will contain a copy of everything from the remote The folder k8s name will be the same as the repository k8s name
      - `"instance"` Resources are saved in the global context Only one repository may specify the `instance` target When this exists, the UI will promote writing to the instance repo rather than the grafana database (where possible) */
   target: 'folder' | 'instance';
   /** Repository display */

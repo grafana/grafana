@@ -17,6 +17,7 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/k8sctx"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
@@ -235,6 +236,11 @@ func (s *filesConnector) doWrite(ctx context.Context, update bool, repo reposito
 		return nil, apierrors.NewBadRequest("The payload does not map to a known resource")
 	}
 
+	// Do not write if any errors exist
+	if len(parsed.Errors) > 0 {
+		return parsed.AsResourceWrapper(), err
+	}
+
 	data, err = parsed.ToSaveBytes()
 	if err != nil {
 		return nil, err
@@ -248,6 +254,12 @@ func (s *filesConnector) doWrite(ctx context.Context, update bool, repo reposito
 	if err != nil {
 		return nil, err
 	}
+
+	ctx, cancel, err := k8sctx.Fork(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer cancel()
 
 	// Which context?  request of background???
 	// Behaves the same running sync after writing

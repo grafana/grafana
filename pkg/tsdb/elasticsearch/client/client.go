@@ -59,7 +59,7 @@ type Client interface {
 var NewClient = func(ctx context.Context, ds *DatasourceInfo, logger log.Logger) (Client, error) {
 	logger = logger.FromContext(ctx).With("entity", "client")
 
-	ip, err := newIndexPattern(ds.Interval, ds.Database)
+	ip, err := NewIndexPattern(ds.Interval, ds.Database)
 	if err != nil {
 		logger.Error("Failed creating index pattern", "error", err, "interval", ds.Interval, "index", ds.Database)
 		return nil, err
