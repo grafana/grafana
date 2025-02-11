@@ -171,7 +171,7 @@
     "cypress": "13.10.0",
     "cypress-file-upload": "5.0.8",
     "cypress-recurse": "^1.35.3",
-    "esbuild": "0.24.2",
+    "esbuild": "0.25.0",
     "esbuild-loader": "4.2.2",
     "esbuild-plugin-browserslist": "^0.15.0",
     "eslint": "9.19.0",
