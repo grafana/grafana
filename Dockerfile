@@ -62,24 +62,24 @@ COPY go.* ./
 COPY .bingo .bingo
 
 # Include vendored dependencies
-COPY pkg/util/xorm/go.* pkg/util/xorm/
-COPY pkg/apiserver/go.* pkg/apiserver/
-COPY pkg/apimachinery/go.* pkg/apimachinery/
-COPY pkg/build/go.* pkg/build/
-COPY pkg/build/wire/go.* pkg/build/wire/
-COPY pkg/promlib/go.* pkg/promlib/
-COPY pkg/storage/unified/resource/go.* pkg/storage/unified/resource/
-COPY pkg/storage/unified/apistore/go.* pkg/storage/unified/apistore/
-COPY pkg/semconv/go.* pkg/semconv/
-COPY pkg/aggregator/go.* pkg/aggregator/
-COPY apps/playlist/go.* apps/playlist/
-COPY apps/investigation/go.* apps/investigation/
-COPY apps/advisor/go.* apps/advisor/
+COPY pkg/util/xorm pkg/util/xorm
+COPY pkg/apiserver pkg/apiserver
+COPY pkg/apimachinery pkg/apimachinery
+COPY pkg/build pkg/build
+COPY pkg/build/wire pkg/build/wire
+COPY pkg/promlib pkg/promlib
+COPY pkg/storage/unified/resource pkg/storage/unified/resource
+COPY pkg/storage/unified/apistore pkg/storage/unified/apistore
+COPY pkg/semconv pkg/semconv
+COPY pkg/aggregator pkg/aggregator
+COPY apps/playlist apps/playlist
+COPY apps/investigation apps/investigation
+COPY apps/advisor apps/advisor
 COPY apps apps
 COPY kindsv2 kindsv2
-COPY apps/alerting/notifications/go.* apps/alerting/notifications/
-COPY pkg/codegen/go.* pkg/codegen/
-COPY pkg/plugins/codegen/go.* pkg/plugins/codegen/
+COPY apps/alerting/notifications apps/alerting/notifications
+COPY pkg/codegen pkg/codegen
+COPY pkg/plugins/codegen pkg/plugins/codegen
 
 RUN go mod download
 RUN if [[ "$BINGO" = "true" ]]; then \
