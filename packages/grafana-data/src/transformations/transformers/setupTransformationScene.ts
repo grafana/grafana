@@ -9,7 +9,6 @@ import {
   SceneObjectBase,
   SceneVariable,
   SceneVariableSet,
-  TextBoxVariable,
 } from '@grafana/scenes';
 import { DataTransformerConfig, LoadingState } from '@grafana/schema';
 
