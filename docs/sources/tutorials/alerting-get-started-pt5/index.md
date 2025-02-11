@@ -128,11 +128,11 @@ To keep track of these metrics and understand system behavior across different e
 
 The time-series visualization supports alert rules to provide more context in the form of annotations and alert rule state. Follow these steps to create a visualization to monitor the application’s metrics.
 
-1.  Log in to Grafana:
+1. Log in to Grafana:
 
     Navigate to [http://localhost:3000](http://localhost:3000), where Grafana should be running.
 
-1.  Create a time series panel:
+1. Create a time series panel:
 
     - Navigate to **Dashboards**.
     - Click **New**.
@@ -141,33 +141,32 @@ The time-series visualization supports alert rules to provide more context in th
     - Select **Prometheus** as the data source (provided with the demo).
     - Enter a title for your panel, e.g., **CPU and Memory Usage**.
 
-1.  Add queries for metrics:
+1. Add queries for metrics:
 
     - In the query area, copy and paste the following PromQL query:
 
-    ```promql
-    flask_app_cpu_usage{environment="prod"}
-    ```
+        ```promql
+        flask_app_cpu_usage{environment="prod"}
+        ```
 
     - Click **Run queries**.
 
     This query should display the simulated CPU usage data in the **prod** environment.
 
-1.  Add memory usage query:
+1. Add memory usage query:
 
     - Click **+ Add query**.
-    - In the query area, paste the following
-      PromQL query:
+    - In the query area, paste the following PromQL query:
 
-          ```promql
-          flask_app_memory_usage{environment="prod"}
-          ```
+        ```promql
+        flask_app_memory_usage{environment="prod"}
+        ```
 
         {{< figure src="/media/docs/alerting/time-series_cpu_mem_usage_metrics.png" max-width="1200px" caption="Time-series panel displaying CPU and memory usage metrics in production." >}}
 
         Both metrics return labels that we’ll use later to link alert instances with the appropriate routing. These labels help define how alerts are routed based on their environment or other criteria.
 
-1.  Click Save dashboard.
+1. Click Save dashboard.
     We have our time-series panel ready. Feel free to combine metrics with labels such as `environment = “staging”`.
 
 <!-- INTERACTIVE page step3.md END -->
@@ -175,9 +174,7 @@ The time-series visualization supports alert rules to provide more context in th
 
 ## Create Notification Policies
 
-Notification policies route alert instances to contact points via label matchers. Since we know what labels our application returns (i.e., environment, job, instance), we can use these labels to match alert rules. If you want to learn more about routing with notification policies, see the Get started with Grafana Alerting - Part 2 tutorial.
-
-### Navigate to Notification Policies:
+Notification policies route alert instances to contact points via label matchers. Since we know what labels our application returns (i.e., `environment`, `job`, `instance`), we can use these labels to match alert rules.
 
 1. Navigate to **Alerts & IRM > Alerting > Notification Policies**.
 
@@ -214,7 +211,7 @@ Now that the labels are defined, we can create alert rules for CPU and memory me
 
 Follow these steps to manually create alert rules and link them to a visualization.
 
-### Create an alert rule for CPU usage
+## Create an alert rule for CPU usage
 
 1. Navigate to **Alerts & IRM > Alerting > Alert rules** from the Grafana sidebar.
 1. Click **+ New alert** rule to create a new alert.
@@ -290,13 +287,13 @@ Link your dashboard panel to this alert rule to display alert annotations in you
 1. Find the panel that you created earlier.
 1. Click **Confirm**.
 
-### Create a second alert rule for memory usage
+## Create a second alert rule for memory usage
 
 1. Duplicate the existing alert rule (**More > Duplicate**), or create a new alert rule for memory usage, defining a threshold condition (e.g., memory usage exceeding `60%`).
 1. Query: `flask_app_memory_usage{}`
 1. Link to the same visualization to obtain memory usage annotations whenever the alert rule triggers or resolves.
 
-Now that the CPU and memory alert rules are set up, they are linked to the notification policies through the custom label matcher we added. The value of the label dynamically changes based on the environment template, using $labels.environment. This ensures that the label value will be set to production, staging, or development, depending on the environment.
+Now that the CPU and memory alert rules are set up, they are linked to the notification policies through the custom label matcher we added. The value of the label dynamically changes based on the environment template, using `$labels.environment`. This ensures that the label value will be set to production, staging, or development, depending on the environment.
 
 <!-- INTERACTIVE page step5.md END -->
 <!-- INTERACTIVE page step6.md START -->
@@ -307,7 +304,7 @@ Check how your dashboard looks now that both alerts have been linked to your das
 
 {{< figure src="/media/docs/alerting/time-series_cpu_with_alert.png" max-width="1200px" caption="Time series panel displaying health indicators and annotations." >}}
 
-After the alert rules are created, they should appear as **health indicators** (colored heart icons: red heart when the alert is in Alerting state, and green heart when in Normal state.) on the linked panel. In addition, the annotations include helpful context, such as the time the alert was triggered.
+After the alert rules are created, they should appear as **health indicators** (colored heart icons: red heart when the alert is in **Alerting** state, and green heart when in **Normal** state.) on the linked panel. In addition, the annotations include helpful context, such as the time the alert was triggered.
 
 <!-- INTERACTIVE page step6.md END -->
 <!-- INTERACTIVE page step7.md START -->
