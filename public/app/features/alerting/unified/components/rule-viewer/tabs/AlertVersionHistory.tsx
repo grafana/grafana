@@ -33,7 +33,6 @@ export const grafanaAlertPropertiesToIgnore: Array<keyof GrafanaRuleDefinition> 
  * and allowing to restore to a previous version.
  */
 export function AlertVersionHistory({ ruleUid }: AlertVersionHistoryProps) {
-  const SPECIAL_UID_MAP = getSpecialUidMap();
   const { isLoading, currentData: ruleVersions = [], error } = useGetAlertVersionHistoryQuery({ uid: ruleUid });
 
   const [oldVersion, setOldVersion] = useState<RulerGrafanaRuleDTO<GrafanaRuleDefinition>>();
@@ -104,36 +103,6 @@ export function AlertVersionHistory({ ruleUid }: AlertVersionHistoryProps) {
     setNewVersion(undefined);
   };
 
-  /**
-   * Turns a version of a Grafana rule definition into data structure
-   * used to display the version summary when comparing versions
-   */
-  const parseVersionInfo = (version: RulerGrafanaRuleDTO<GrafanaRuleDefinition>): RevisionModel => {
-    const unknown = t('alerting.alertVersionHistory.unknown', 'Unknown');
-    const createdBy = (() => {
-      const updatedBy = version?.grafana_alert.updated_by;
-      const uid = updatedBy?.uid;
-      const name = updatedBy?.name;
-
-      if (!updatedBy) {
-        return unknown;
-      }
-      if (uid && SPECIAL_UID_MAP[uid]) {
-        return SPECIAL_UID_MAP[uid].name;
-      }
-      if (name) {
-        return name;
-      }
-      return uid ? t('alerting.alertVersionHistory.user-id', 'User ID {{uid}}', { uid }) : unknown;
-    })();
-
-    return {
-      created: version.grafana_alert.updated || unknown,
-      createdBy,
-      version: version.grafana_alert.version || unknown,
-    };
-  };
-
   return (
     <Stack direction="column" gap={2}>
       <Text variant="body">
@@ -158,16 +127,16 @@ export function AlertVersionHistory({ ruleUid }: AlertVersionHistoryProps) {
           title={t('alerting.alertVersionHistory.comparing-versions', 'Comparing versions')}
         >
           <VersionHistoryComparison
-            oldSummary={parseVersionInfo(oldVersion)}
+            oldSummary={parseVersionInfoToSummary(oldVersion)}
             oldVersion={oldVersion}
-            newSummary={parseVersionInfo(newVersion)}
+            newSummary={parseVersionInfoToSummary(newVersion)}
             newVersion={newVersion}
             preprocessVersion={preprocessRuleForDiffDisplay}
           />
           {config.featureToggles.alertingRuleVersionHistoryRestore && (
             <Box paddingTop={2}>
               <Stack justifyContent="flex-end">
-                <Button variant="destructive" onClick={() => {}}>
+                <Button variant="destructive" onClick={() => { }}>
                   <Trans i18nKey="alerting.alertVersionHistory.reset">
                     Reset to version {{ version: oldVersion.grafana_alert.version }}
                   </Trans>
@@ -186,3 +155,35 @@ export function AlertVersionHistory({ ruleUid }: AlertVersionHistoryProps) {
     </Stack>
   );
 }
+
+/**
+ * Turns a version of a Grafana rule definition into data structure
+ * used to display the version summary when comparing versions
+ */
+function parseVersionInfoToSummary(version: RulerGrafanaRuleDTO<GrafanaRuleDefinition>): RevisionModel {
+  const unknown = t('alerting.alertVersionHistory.unknown', 'Unknown');
+  const SPECIAL_UID_MAP = getSpecialUidMap();
+  const createdBy = (() => {
+    const updatedBy = version?.grafana_alert.updated_by;
+    const uid = updatedBy?.uid;
+    const name = updatedBy?.name;
+
+    if (!updatedBy) {
+      return unknown;
+    }
+    if (uid && SPECIAL_UID_MAP[uid]) {
+      return SPECIAL_UID_MAP[uid].name;
+    }
+    if (name) {
+      return name;
+    }
+    return uid ? t('alerting.alertVersionHistory.user-id', 'User ID {{uid}}', { uid }) : unknown;
+  })();
+
+  return {
+    created: version.grafana_alert.updated || unknown,
+    createdBy,
+    version: version.grafana_alert.version || unknown,
+  };
+};
+
