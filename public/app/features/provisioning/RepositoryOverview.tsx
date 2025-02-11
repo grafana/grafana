@@ -4,7 +4,6 @@ import { CellProps, Stack, Box, Text, LinkButton, Card, TextLink, InteractiveTab
 
 import { CheckRepository } from './CheckRepository';
 import { RepositoryHealth } from './RepositoryHealth';
-import { StatusBadge } from './StatusBadge';
 import { SyncRepository } from './SyncRepository';
 import { Repository, ResourceCount } from './api';
 import { formatTimestamp } from './utils/time';
@@ -15,7 +14,6 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
   const remoteURL = getRemoteURL(repo);
   const webhookURL = getWebhookURL(repo);
   const status = repo.status;
-  const name = repo.metadata?.name ?? '';
 
   const resourceColumns = useMemo(
     () => [
@@ -115,10 +113,7 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
           </Card>
         )}
         <Card>
-          <Card.Heading>
-            Sync Status{' '}
-            <StatusBadge enabled={Boolean(repo.spec?.sync?.enabled)} state={repo.status?.sync?.state} name={name} />
-          </Card.Heading>
+          <Card.Heading>Sync Status </Card.Heading>
           <Card.Description>
             <div style={{ display: 'grid', gridTemplateColumns: '100px 1fr', gap: '8px', alignItems: 'baseline' }}>
               <Text color="secondary">Job ID:</Text>
