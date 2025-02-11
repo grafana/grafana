@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"path"
 	"reflect"
@@ -67,39 +68,48 @@ func (r *SyncWorker) Process(ctx context.Context,
 	defer cancel()
 
 	cfg := repo.Config()
-
 	logger := logging.FromContext(ctx).With("job", job.GetName(), "namespace", job.GetNamespace())
-	patch, err := json.Marshal(map[string]any{
+
+	// Update sync status at the start
+	data := map[string]any{
 		"status": map[string]any{
 			"sync": job.Status.ToSyncStatus(job.Name),
 		},
-	})
-	if err != nil {
-		return nil, err
 	}
 
-	cfg, err = r.client.Repositories(cfg.Namespace).
-		Patch(ctx, cfg.Name, types.MergePatchType, patch, metav1.PatchOptions{}, "status")
-	if err != nil {
-		logger.Warn("unable to update repo with job status", "err", err)
+	if err := r.patchStatus(ctx, cfg, data); err != nil {
+		return nil, fmt.Errorf("update repo with job status at start: %w", err)
 	}
 
-	// Execute the sync task
-	jobStatus, syncStatus, syncError := r.sync(ctx, repo, *job.Spec.Sync, progress)
-	if syncStatus == nil {
-		syncStatus = &provisioning.SyncStatus{}
+	// Create job
+	syncJob, err := r.createJob(ctx, repo, *job.Spec.Sync, progress)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create sync job: %w", err)
 	}
-	syncStatus.JobID = job.Name
-	syncStatus.Started = job.Status.Started
-	syncStatus.Finished = time.Now().UnixMilli()
+
+	// Execute the job
+	syncError := syncJob.run(ctx)
+	if len(syncJob.jobStatus.Errors) > 0 {
+		syncJob.jobStatus.State = provisioning.JobStateError
+	}
+
 	if syncError != nil {
-		syncStatus.State = provisioning.JobStateError
-		syncStatus.Message = []string{
-			"error running sync",
-			syncError.Error(),
+		syncJob.jobStatus = &provisioning.JobStatus{
+			State:    provisioning.JobStateError,
+			Started:  job.Status.Started,
+			Finished: time.Now().UnixMilli(),
+			Message:  "error running sync",
+			Errors:   []string{syncError.Error()},
 		}
-	} else if syncStatus.State == "" {
-		syncStatus.State = provisioning.JobStateSuccess
+	}
+
+	if !reflect.DeepEqual(syncJob.summary, provisioning.JobResourceSummary{}) {
+		syncJob.jobStatus.Summary = []*provisioning.JobResourceSummary{&syncJob.summary}
+	}
+
+	syncStatus := syncJob.jobStatus.ToSyncStatus(job.Name)
+	if syncStatus.State == provisioning.JobStateSuccess {
+		// TODO: ref
 	}
 
 	// Update the resource stats -- give the index some time to catch up
@@ -112,52 +122,44 @@ func (r *SyncWorker) Process(ctx context.Context,
 		stats = &provisioning.ResourceStats{}
 	}
 
-	patch, err = json.Marshal(map[string]any{
+	data = map[string]any{
 		"status": map[string]any{
 			"sync":  syncStatus,
 			"stats": stats.Items,
 		},
-	})
-	if err != nil {
-		return nil, err
 	}
 
-	_, err = r.client.Repositories(cfg.Namespace).
-		Patch(ctx, cfg.Name, types.MergePatchType, patch, metav1.PatchOptions{}, "status")
-	if err != nil {
-		logger.Warn("unable to update repo with job status", "err", err)
+	if err := r.patchStatus(ctx, cfg, data); err != nil {
+		return nil, fmt.Errorf("update repo with job final status: %w", err)
 	}
 
 	if syncError != nil {
 		return nil, syncError
 	}
-	return jobStatus, nil
+
+	return syncJob.jobStatus, nil
 }
 
 // start a job and run it
-func (r *SyncWorker) sync(ctx context.Context,
+func (r *SyncWorker) createJob(ctx context.Context,
 	repo repository.Repository,
 	options provisioning.SyncJobOptions,
 	progress jobs.ProgressFn,
-) (*provisioning.JobStatus, *provisioning.SyncStatus, error) {
+) (*syncJob, error) {
 	cfg := repo.Config()
 	if !cfg.Spec.Sync.Enabled {
-		return &provisioning.JobStatus{
-			State:   provisioning.JobStateError,
-			Message: "sync is not enabled",
-		}, nil, nil
+		return nil, errors.New("sync is not enabled")
 	}
 
 	parser, err := r.parsers.GetParser(ctx, repo)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to get parser for %s: %w", cfg.Name, err)
-	}
-	dynamicClient := parser.Client()
-	if repo.Config().Namespace != dynamicClient.GetNamespace() {
-		return nil, nil, fmt.Errorf("namespace mismatch")
+		return nil, fmt.Errorf("failed to get parser for %s: %w", cfg.Name, err)
 	}
 
-	logger := logging.FromContext(ctx)
+	dynamicClient := parser.Client()
+	if repo.Config().Namespace != dynamicClient.GetNamespace() {
+		return nil, fmt.Errorf("namespace mismatch")
+	}
 
 	job := &syncJob{
 		summary: provisioning.JobResourceSummary{
@@ -174,7 +176,6 @@ func (r *SyncWorker) sync(ctx context.Context,
 		jobStatus: &provisioning.JobStatus{
 			State: provisioning.JobStateWorking,
 		},
-		syncStatus: &provisioning.SyncStatus{},
 		folders: dynamicClient.Resource(schema.GroupVersionResource{
 			Group:    folders.GROUP,
 			Version:  folders.VERSION,
@@ -187,24 +188,22 @@ func (r *SyncWorker) sync(ctx context.Context,
 		}),
 	}
 
-	// Execute the job
-	err = job.run(ctx)
+	return job, nil
+}
+
+func (r *SyncWorker) patchStatus(ctx context.Context, repo *provisioning.Repository, data interface{}) error {
+	patch, err := json.Marshal(data)
 	if err != nil {
-		logger.Warn("error running job", "err", err)
-		job.jobStatus.State = provisioning.JobStateError
-		job.jobStatus.Message = "Sync error: " + err.Error()
-		job.syncStatus.State = job.jobStatus.State
-		job.syncStatus.Message = append(job.syncStatus.Message, job.jobStatus.Message)
-	} else if len(job.jobStatus.Errors) > 0 {
-		job.jobStatus.State = provisioning.JobStateError
-	} else if !job.jobStatus.State.Finished() {
-		job.jobStatus.State = provisioning.JobStateSuccess
+		return fmt.Errorf("unable to marshal patch data: %w", err)
 	}
 
-	if !reflect.DeepEqual(job.summary, provisioning.JobResourceSummary{}) {
-		job.jobStatus.Summary = []*provisioning.JobResourceSummary{&job.summary}
+	repo, err = r.client.Repositories(repo.Namespace).
+		Patch(ctx, repo.Name, types.MergePatchType, patch, metav1.PatchOptions{}, "status")
+	if err != nil {
+		return fmt.Errorf("unable to update repo with job status: %w", err)
 	}
-	return job.jobStatus, job.syncStatus, nil
+
+	return nil
 }
 
 // created once for each sync execution
@@ -221,8 +220,7 @@ type syncJob struct {
 	dashboards   dynamic.ResourceInterface
 	folderLookup *resources.FolderTree
 
-	jobStatus  *provisioning.JobStatus
-	syncStatus *provisioning.SyncStatus
+	jobStatus *provisioning.JobStatus
 
 	// FIXME: generic summary for now (not typed)
 	summary provisioning.JobResourceSummary
@@ -252,13 +250,8 @@ func (r *syncJob) run(ctx context.Context) error {
 		}
 
 		if cfg.Status.Sync.Hash != "" && r.options.Incremental {
-			r.syncStatus.Hash = currentRef
 			if currentRef == cfg.Status.Sync.Hash {
 				message := "same commit as last sync"
-				r.syncStatus.Hash = currentRef
-				r.syncStatus.State = provisioning.JobStateSuccess
-				r.syncStatus.Message = append(r.syncStatus.Message, message)
-				r.syncStatus.Incremental = true
 				r.jobStatus.Message = message
 				return nil
 			}
@@ -280,12 +273,8 @@ func (r *syncJob) run(ctx context.Context) error {
 		return fmt.Errorf("error calculating changes: %w", err)
 	}
 
-	r.syncStatus.Hash = currentRef
 	if len(changes) == 0 {
-		message := "no changes to sync"
-		r.syncStatus.State = provisioning.JobStateSuccess
-		r.syncStatus.Message = append(r.syncStatus.Message, message)
-		r.jobStatus.Message = message
+		r.jobStatus.Message = "no changes to sync"
 		return nil
 	}
 
@@ -302,17 +291,18 @@ func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange
 		return len(changes[i].Path) > len(changes[j].Path)
 	})
 
+	// TODO: collect issues here
 	logger := logging.FromContext(ctx)
 	// Create folder structure first
 	for _, change := range changes {
 		if len(r.jobStatus.Errors) > 20 {
 			r.jobStatus.Errors = append(r.jobStatus.Errors, "too many errors, stopping")
-			r.jobStatus.State = provisioning.JobStateError
-			return nil
+			return errors.New("too many errors")
 		}
 
 		if err := r.maybeNotify(ctx); err != nil {
 			logger.Warn("error notifying progress", "err", err)
+			r.jobStatus.Errors = append(r.jobStatus.Errors, fmt.Errorf("error notifying progress: %w", err).Error())
 		}
 
 		if change.Action == repository.FileActionDeleted {
@@ -369,11 +359,7 @@ func (r *syncJob) applyVersionedChanges(ctx context.Context, repo repository.Ver
 	}
 
 	if len(diff) < 1 {
-		message := "no changes detected between commits"
-		r.syncStatus.State = provisioning.JobStateSuccess
-		r.syncStatus.Message = append(r.syncStatus.Message, message)
-		r.syncStatus.Incremental = true
-		r.jobStatus.Message = message
+		r.jobStatus.Message = "no changes detected between commits"
 		return nil
 	}
 
@@ -423,6 +409,7 @@ func (r *syncJob) applyVersionedChanges(ctx context.Context, repo repository.Ver
 			}
 		}
 	}
+
 	return nil
 }
 
