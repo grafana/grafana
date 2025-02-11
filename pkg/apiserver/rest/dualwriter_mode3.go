@@ -188,7 +188,7 @@ func (d *DualWriterMode3) Delete(ctx context.Context, name string, deleteValidat
 
 	startStorage := time.Now()
 	objFromStorage, asyncStorage, err := d.Storage.Delete(ctx, name, deleteValidation, options)
-	d.recordStorageDuration(err != nil, mode3Str, d.resource, method, startStorage)
+	d.recordStorageDuration(err != nil && !apierrors.IsNotFound(err), mode3Str, d.resource, method, startStorage)
 	if err != nil {
 		return nil, false, err
 	}
