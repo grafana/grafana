@@ -52,6 +52,7 @@ const gloomTheme: NewThemeOptions = {
       canvas: '#000',
       primary: '#0d0b14',
       secondary: '#19171f',
+      elevated: '#19171f',
     },
 
     action: {
