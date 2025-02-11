@@ -644,7 +644,7 @@ export interface TimeSettingsSpec {
 	// v1: timepicker.hidden
 	hideTimepicker: boolean;
 	// Day when the week starts. Expressed by the name of the day in lowercase, e.g. "monday".
-	weekStart: string;
+	weekStart?: "saturday" | "monday" | "sunday";
 	// The month that the fiscal year starts on. 0 = January, 11 = December
 	fiscalYearStartMonth: number;
 	// Override the now time by entering a time delay. Use this option to accommodate known delays in data aggregation to avoid null values.
@@ -681,7 +681,6 @@ export const defaultTimeSettingsSpec = (): TimeSettingsSpec => ({
 "30d",
 ],
 	hideTimepicker: false,
-	weekStart: "",
 	fiscalYearStartMonth: 0,
 });
 
@@ -752,6 +751,7 @@ export interface GridLayoutRowSpec {
 	y: number;
 	collapsed: boolean;
 	title: string;
+	// Grid items in the row will have their Y value be relative to the rows Y value. This means a panel positioned at Y: 0 in a row with Y: 10 will be positioned at Y: 11 (row header has a heigh of 1) in the dashboard.
 	elements: GridLayoutItemKind[];
 	repeat?: RowRepeatOptions;
 }

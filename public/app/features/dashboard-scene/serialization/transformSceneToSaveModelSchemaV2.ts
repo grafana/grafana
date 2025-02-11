@@ -701,7 +701,12 @@ function validateDashboardSchemaV2(dash: unknown): dash is DashboardV2Spec {
   if (!('hideTimepicker' in dash.timeSettings) || typeof dash.timeSettings.hideTimepicker !== 'boolean') {
     throw new Error('HideTimepicker is not a boolean');
   }
-  if (!('weekStart' in dash.timeSettings) || typeof dash.timeSettings.weekStart !== 'string') {
+  if (
+    'weekStart' in dash.timeSettings &&
+    typeof dash.timeSettings.weekStart === 'string' &&
+    !['saturday', 'sunday', 'monday'].includes(dash.timeSettings.weekStart)
+  ) {
+    console.log(dash.timeSettings);
     throw new Error('WeekStart is not a string');
   }
   if (!('fiscalYearStartMonth' in dash.timeSettings) || typeof dash.timeSettings.fiscalYearStartMonth !== 'number') {
