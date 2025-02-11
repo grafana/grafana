@@ -2,9 +2,7 @@ import { useEffect } from 'react';
 
 import { AppEvents } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
-import { Button } from '@grafana/ui';
-
-import { Loader } from '../plugins/admin/components/Loader';
+import { Button, Spinner } from '@grafana/ui';
 
 import { Repository, useCreateRepositoryTestMutation } from './api';
 
@@ -39,17 +37,12 @@ export function CheckRepository({ repository }: Props) {
   };
 
   if (testQuery.isLoading) {
-    return <Loader />;
+    return <Spinner />;
   }
 
   return (
     <>
-      <Button
-        icon="check-circle"
-        variant={'secondary'}
-        disabled={testQuery.isLoading || !name}
-        onClick={() => onClick()}
-      >
+      <Button icon="check-circle" variant={'secondary'} disabled={testQuery.isLoading || !name} onClick={onClick}>
         Check
       </Button>
     </>

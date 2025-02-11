@@ -16,9 +16,8 @@ export function ExportToRepository({ repo }: Props) {
 
   const { register, control, formState, handleSubmit } = useForm<ExportJobOptions>({
     defaultValues: {
-      branch: '*dummy*', // << triggers a fake exporter
       history: true,
-      prefix: 'prefix/in/remote/tree',
+      prefix: '',
     },
   });
 
@@ -32,6 +31,8 @@ export function ExportToRepository({ repo }: Props) {
     return <ExportJobStatus name={exportName} />;
   }
 
+  const isGit = repo.spec?.type === 'github';
+
   return (
     <Box paddingTop={2}>
       <form onSubmit={handleSubmit(onSubmit)}>
@@ -44,9 +45,11 @@ export function ExportToRepository({ repo }: Props) {
             />
           </Field>
 
-          <Field label="Target Branch" description={'the target branch (use *dummy* to simulate long export)'}>
-            <Input placeholder="branch name" {...register('branch')} />
-          </Field>
+          {isGit && (
+            <Field label="Target Branch" description={'The target branch.  This will be created and emptied first'}>
+              <Input placeholder={repo.spec?.github?.branch} {...register('branch')} />
+            </Field>
+          )}
 
           <Field label="Prefix">
             <Input placeholder="Prefix in the remote system" {...register('prefix')} />

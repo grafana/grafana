@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 
-import { Column, CellProps, Stack, Spinner, FilterInput, InteractiveTable } from '@grafana/ui';
+import { Column, CellProps, Link, Stack, Spinner, FilterInput, InteractiveTable } from '@grafana/ui';
 
 import { Repository, ResourceListItem, useGetRepositoryResourcesQuery } from './api';
 
@@ -17,7 +17,7 @@ export function RepositoryResources({ repo }: RepoProps) {
   const name = repo.metadata?.name ?? '';
   const query = useGetRepositoryResourcesQuery({ name });
   const [searchQuery, setSearchQuery] = useState('');
-  const data = [...(query.data?.items ?? [])].filter((Resource) =>
+  const data = (query.data?.items ?? []).filter((Resource) =>
     Resource.path.toLowerCase().includes(searchQuery.toLowerCase())
   );
   const columns: Array<Column<ResourceListItem>> = useMemo(
@@ -65,7 +65,7 @@ export function RepositoryResources({ repo }: RepoProps) {
         cell: ({ row: { original } }: ResourceCell<'title'>) => {
           const { folder } = original;
           if (folder?.length) {
-            return <a href={`/dashboards/f/${folder}`}>{folder}</a>;
+            return <Link href={`/dashboards/f/${folder}`}>{folder}</Link>;
           }
           return <span></span>;
         },

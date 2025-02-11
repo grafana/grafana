@@ -3,27 +3,39 @@ import { useMemo } from 'react';
 import { CellProps, Stack, Box, Text, LinkButton, Card, TextLink, InteractiveTable } from '@grafana/ui';
 
 import { CheckRepository } from './CheckRepository';
-import { RecentJobs } from './RecentJobs';
 import { RepositoryHealth } from './RepositoryHealth';
-import { StatusBadge } from './StatusBadge';
 import { SyncRepository } from './SyncRepository';
-import { Repository } from './api';
+import { Repository, ResourceCount } from './api';
 import { formatTimestamp } from './utils/time';
-
-// Define the type for our stats
-interface StatItem {
-  resource: string;
-  group: string;
-  count: number;
-}
-
-type StatCell<T extends keyof StatItem = keyof StatItem> = CellProps<StatItem, StatItem[T]>;
+import { RecentJobs } from './RecentJobs';
+type StatCell<T extends keyof ResourceCount = keyof ResourceCount> = CellProps<ResourceCount, ResourceCount[T]>;
 
 export function RepositoryOverview({ repo }: { repo: Repository }) {
   const remoteURL = getRemoteURL(repo);
   const webhookURL = getWebhookURL(repo);
   const status = repo.status;
-  const name = repo.metadata?.name ?? '';
+
+  const resourceColumns = useMemo(
+    () => [
+      {
+        id: 'Resource',
+        header: 'Resource Type',
+        cell: ({ row: { original } }: StatCell<'resource'>) => {
+          return <span>{original.resource}</span>;
+        },
+        size: 'auto',
+      },
+      {
+        id: 'count',
+        header: 'Count',
+        cell: ({ row: { original } }: StatCell<'count'>) => {
+          return <span>{original.count}</span>;
+        },
+        size: 100,
+      },
+    ],
+    []
+  );
   return (
     <Box padding={2}>
       <Stack gap={2} direction="row" justifyContent="center">
@@ -59,70 +71,49 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
           <Card.Description>
             {repo.status?.stats ? (
               <InteractiveTable
-                columns={useMemo(
-                  () => [
-                    {
-                      id: 'Resource',
-                      header: 'Resource Type',
-                      cell: ({ row: { original } }: StatCell<'resource'>) => {
-                        return <span>{original.resource}</span>;
-                      },
-                      size: 'auto',
-                    },
-                    {
-                      id: 'count',
-                      header: 'Count',
-                      cell: ({ row: { original } }: StatCell<'count'>) => {
-                        return <span>{original.count}</span>;
-                      },
-                      size: 100,
-                    },
-                  ],
-                  []
-                )}
+                columns={resourceColumns}
                 data={repo.status.stats}
-                getRowId={(r: StatItem) => `${r.group}-${r.resource}`}
+                getRowId={(r: ResourceCount) => `${r.group}-${r.resource}`}
               />
             ) : null}
           </Card.Description>
         </Card>
       </Stack>
       <Stack gap={2} direction="row" alignItems="stretch" justifyContent="center">
+        {repo.status?.health && (
+          <Card>
+            <Card.Heading>Health</Card.Heading>
+            <Card.Description>
+              <RepositoryHealth health={repo.status?.health} />
+              <div style={{ display: 'grid', gridTemplateColumns: '100px 1fr', gap: '8px', alignItems: 'baseline' }}>
+                <Text color="secondary">Status:</Text>
+                <Text variant="body">{status?.health?.healthy ? 'Healthy' : 'Unhealthy'}</Text>
+
+                <Text color="secondary">Checked:</Text>
+                <Text variant="body">{formatTimestamp(status?.health?.checked)}</Text>
+
+                {status?.health?.message && status.health.message.length > 0 && (
+                  <>
+                    <Text color="secondary">Messages:</Text>
+                    <Stack gap={1}>
+                      {status.health.message.map((msg, idx) => (
+                        <Text key={idx} variant="body">
+                          {msg}
+                        </Text>
+                      ))}
+                    </Stack>
+                  </>
+                )}
+              </div>
+            </Card.Description>
+
+            <Card.Actions>
+              <CheckRepository repository={repo} />
+            </Card.Actions>
+          </Card>
+        )}
         <Card>
-          <Card.Heading>Health</Card.Heading>
-          <Card.Description>
-            <RepositoryHealth repo={repo} />
-            <div style={{ display: 'grid', gridTemplateColumns: '100px 1fr', gap: '8px', alignItems: 'baseline' }}>
-              <Text color="secondary">Status:</Text>
-              <Text variant="body">{status?.health?.healthy ? 'Healthy' : 'Unhealthy'}</Text>
-
-              <Text color="secondary">Checked:</Text>
-              <Text variant="body">{formatTimestamp(status?.health?.checked)}</Text>
-
-              {status?.health?.message && status.health.message.length > 0 && (
-                <>
-                  <Text color="secondary">Messages:</Text>
-                  <Stack gap={1}>
-                    {status.health.message.map((msg, idx) => (
-                      <Text key={idx} variant="body">
-                        {msg}
-                      </Text>
-                    ))}
-                  </Stack>
-                </>
-              )}
-            </div>
-          </Card.Description>
-
-          <Card.Actions>
-            <CheckRepository repository={repo} />
-          </Card.Actions>
-        </Card>
-        <Card>
-          <Card.Heading>
-            Sync Status{' '}
-            <StatusBadge enabled={Boolean(repo.spec?.sync?.enabled)} state={repo.status?.sync?.state} name={name} />
-          </Card.Heading>
+          <Card.Heading>Sync Status </Card.Heading>
           <Card.Description>
             <div style={{ display: 'grid', gridTemplateColumns: '100px 1fr', gap: '8px', alignItems: 'baseline' }}>
               <Text color="secondary">Job ID:</Text>

@@ -39,6 +39,7 @@ type exportJob struct {
 	prefix         string // from options (now clean+safe)
 	ref            string // from options (only git)
 	keepIdentifier bool
+	addAuthorInfo  bool
 
 	jobStatus *provisioning.JobStatus
 	summary   map[string]*provisioning.JobResourceSummary
@@ -65,6 +66,7 @@ func newExportJob(ctx context.Context,
 		prefix:         prefix,
 		ref:            options.Branch,
 		keepIdentifier: options.Identifier,
+		addAuthorInfo:  options.History,
 
 		jobStatus: &provisioning.JobStatus{
 			State: provisioning.JobStateWorking,
@@ -194,9 +196,15 @@ func (r *exportJob) add(ctx context.Context, summary *provisioning.JobResourceSu
 		return err
 	}
 
+	// Message from annotations
 	commitMessage := item.GetMessage()
 	if commitMessage == "" {
-		commitMessage = "exported from grafana"
+		g := item.GetGeneration()
+		if g > 0 {
+			commitMessage = fmt.Sprintf("Generation: %d, ResourceVersion: %s", g, item.GetResourceVersion())
+		} else {
+			commitMessage = "exported from grafana"
+		}
 	}
 
 	name := item.GetName()
@@ -243,6 +251,9 @@ func (r *exportJob) add(ctx context.Context, summary *provisioning.JobResourceSu
 		}
 	}
 
+	// Add the author in context (if available)
+	ctx = r.withAuthorSignature(ctx, item)
+
 	// Write the file
 	err = r.target.Write(ctx, fileName, r.ref, body, commitMessage)
 	if err != nil {
@@ -256,4 +267,27 @@ func (r *exportJob) add(ctx context.Context, summary *provisioning.JobResourceSu
 	}
 
 	return nil
+}
+
+func (r *exportJob) withAuthorSignature(ctx context.Context, item utils.GrafanaMetaAccessor) context.Context {
+	if !r.addAuthorInfo {
+		return ctx
+	}
+
+	sig := repository.CommitSignature{
+		Name: item.GetUpdatedBy(),
+		When: item.GetCreationTimestamp().Time,
+	}
+	if sig.Name == "" {
+		sig.Name = item.GetCreatedBy()
+	}
+	if sig.Name == "" {
+		return ctx // no user info
+	}
+	// TODO: convert internal id to name+email
+	updated, _ := item.GetUpdatedTimestamp()
+	if updated != nil {
+		sig.When = *updated
+	}
+	return repository.WithAuthorSignature(ctx, sig)
 }
