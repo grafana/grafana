@@ -125,6 +125,9 @@ func (m legacyStoreMock) DeleteCollection(ctx context.Context, deleteValidation 
 	if options.Kind == "fail" {
 		return nil, args.Error(1)
 	}
+	if err := args.Get(1); err != nil {
+		return nil, err.(error)
+	}
 	return args.Get(0).(runtime.Object), args.Error(1)
 }
 
@@ -164,6 +167,9 @@ func (m storageMock) Create(ctx context.Context, obj runtime.Object, createValid
 	name := acc.GetName()
 	if strings.Contains(name, failingObject) {
 		return nil, args.Error(1)
+	}
+	if err := args.Get(1); err != nil {
+		return nil, err.(error)
 	}
 	return args.Get(0).(runtime.Object), args.Error(1)
 }
