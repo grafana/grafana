@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -79,11 +79,11 @@ func TestMode3_Create(t *testing.T) {
 			obj, err := dw.Create(context.Background(), tt.input, createFn, &metav1.CreateOptions{})
 
 			if tt.wantErr {
-				assert.Error(t, err)
+				require.Error(t, err)
 				return
 			}
 
-			assert.Equal(t, exampleObj, obj)
+			require.Equal(t, exampleObj, obj)
 		})
 	}
 }
@@ -150,12 +150,12 @@ func TestMode3_Get(t *testing.T) {
 			obj, err := dw.Get(context.Background(), name, &metav1.GetOptions{})
 
 			if tt.wantErr {
-				assert.Error(t, err)
+				require.Error(t, err)
 				return
 			}
 
-			assert.Equal(t, obj, exampleObj)
-			assert.NotEqual(t, obj, anotherObj)
+			require.Equal(t, obj, exampleObj)
+			require.NotEqual(t, obj, anotherObj)
 		})
 	}
 }
@@ -207,7 +207,7 @@ func TestMode1_GetFromLegacyStorage(t *testing.T) {
 
 			dw := NewDualWriter(Mode3, ls, us, p, kind)
 			err := dw.(*DualWriterMode3).getFromLegacyStorage(ctx, exampleObj, name, &metav1.GetOptions{})
-			assert.NoError(t, err)
+			require.NoError(t, err)
 		})
 	}
 }
@@ -252,12 +252,12 @@ func TestMode3_List(t *testing.T) {
 			res, err := dw.List(context.Background(), &metainternalversion.ListOptions{TypeMeta: metav1.TypeMeta{Kind: "foo"}})
 
 			if tt.wantErr {
-				assert.Error(t, err)
+				require.Error(t, err)
 				return
 			}
 
-			assert.Equal(t, exampleList, res)
-			assert.NotEqual(t, anotherList, res)
+			require.Equal(t, exampleList, res)
+			require.NotEqual(t, anotherList, res)
 		})
 	}
 }
@@ -332,12 +332,12 @@ func TestMode3_Delete(t *testing.T) {
 			obj, _, err := dw.Delete(context.Background(), name, func(context.Context, runtime.Object) error { return nil }, &metav1.DeleteOptions{})
 
 			if tt.wantErr {
-				assert.Error(t, err)
+				require.Error(t, err)
 				return
 			}
 
-			assert.Equal(t, obj, exampleObj)
-			assert.NotEqual(t, obj, anotherObj)
+			require.Equal(t, obj, exampleObj)
+			require.NotEqual(t, obj, anotherObj)
 		})
 	}
 }
@@ -401,10 +401,10 @@ func TestMode3_DeleteCollection(t *testing.T) {
 			obj, err := dw.DeleteCollection(context.Background(), func(ctx context.Context, obj runtime.Object) error { return nil }, &metav1.DeleteOptions{TypeMeta: metav1.TypeMeta{Kind: name}}, &metainternalversion.ListOptions{})
 
 			if tt.wantErr {
-				assert.Error(t, err)
+				require.Error(t, err)
 				return
 			}
-			assert.Equal(t, exampleList, obj)
+			require.Equal(t, exampleList, obj)
 		})
 	}
 }
@@ -470,12 +470,12 @@ func TestMode3_Update(t *testing.T) {
 			obj, _, err := dw.Update(context.Background(), name, updatedObjInfoObj{}, func(ctx context.Context, obj runtime.Object) error { return nil }, func(ctx context.Context, obj, old runtime.Object) error { return nil }, false, &metav1.UpdateOptions{})
 
 			if tt.wantErr {
-				assert.Error(t, err)
+				require.Error(t, err)
 				return
 			}
 
-			assert.Equal(t, tt.expectedObj, obj)
-			assert.NotEqual(t, anotherObj, obj)
+			require.Equal(t, tt.expectedObj, obj)
+			require.NotEqual(t, anotherObj, obj)
 		})
 	}
 }
