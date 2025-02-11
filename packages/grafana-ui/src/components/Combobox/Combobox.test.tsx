@@ -243,7 +243,19 @@ describe('Combobox', () => {
       await userEvent.keyboard('{Enter}');
 
       expect(screen.getByDisplayValue('Use custom value')).toBeInTheDocument();
-      expect(onChangeHandler).toHaveBeenCalledWith(expect.objectContaining({ value: 'Use custom value' }));
+      expect(onChangeHandler).toHaveBeenCalledWith(expect.objectContaining({ description: 'Use custom value' }));
+    });
+
+    it('should not allow creating a custom value when it is an existing value', async () => {
+      const onChangeHandler = jest.fn();
+      render(<Combobox options={options} value={null} onChange={onChangeHandler} createCustomValue />);
+      const input = screen.getByRole('combobox');
+      await userEvent.type(input, '4');
+      await userEvent.keyboard('{Enter}');
+      expect(screen.queryByDisplayValue('Use custom value')).not.toBeInTheDocument();
+      expect(screen.getByDisplayValue('Option 4')).toBeInTheDocument();
+      expect(onChangeHandler).toHaveBeenCalledWith(expect.objectContaining({ value: '4' }));
+      expect(onChangeHandler).not.toHaveBeenCalledWith(expect.objectContaining({ description: 'Use custom value' }));
     });
 
     it('should provide custom string when all options are numbers', async () => {
