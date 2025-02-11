@@ -11,6 +11,7 @@ import { getTextAlign } from '../../utils';
 
 import AutoCell from './AutoCell';
 import { BarGaugeCell } from './BarGaugeCell';
+import { DataLinksCell } from './DataLinksCell';
 import { JSONCell } from './JSONCell';
 import { SparklineCell } from './SparklineCell';
 
@@ -89,6 +90,9 @@ export function TableCellNG(props: any) {
       break;
     case TableCellDisplayMode.JSONView:
       cell = <JSONCell value={value} justifyContent={justifyContent} />;
+      break;
+    case TableCellDisplayMode.DataLinks:
+      cell = <DataLinksCell value={value} field={field} theme={theme} justifyContent={justifyContent} />;
       break;
     case TableCellDisplayMode.Auto:
     default:

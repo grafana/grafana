@@ -1,5 +1,4 @@
 import { getCellLinks } from '../../../utils';
-
 import { TableCellProps } from '../types';
 
 export const DataLinksCell = (props: TableCellProps) => {

@@ -1,4 +1,4 @@
-import { FieldType, Field, formattedValueToString, reduceField } from '@grafana/data';
+import { FieldType, Field, formattedValueToString, reduceField, LinkModel } from '@grafana/data';
 
 import { TableRow } from '../types';
 
@@ -166,3 +166,38 @@ export function getFooterItemNG(rows: TableRow[], field: Field, options: TableFo
 
   return formattedValue;
 }
+
+/**
+ * @internal
+ */
+export const getCellLinks = (field: Field, rowIdx: number) => {
+  let links: Array<LinkModel<unknown>> | undefined;
+  if (field.getLinks) {
+    links = field.getLinks({
+      valueRowIndex: rowIdx,
+    });
+  }
+
+  if (!links) {
+    return;
+  }
+
+  for (let i = 0; i < links?.length; i++) {
+    if (links[i].onClick) {
+      const origOnClick = links[i].onClick;
+
+      links[i].onClick = (event) => {
+        // Allow opening in new tab
+        if (!(event.ctrlKey || event.metaKey || event.shiftKey)) {
+          event.preventDefault();
+          origOnClick!(event, {
+            field,
+            rowIndex: rowIdx,
+          });
+        }
+      };
+    }
+  }
+
+  return links;
+};
