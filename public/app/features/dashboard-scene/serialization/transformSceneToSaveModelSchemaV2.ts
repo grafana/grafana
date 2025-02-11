@@ -448,7 +448,7 @@ function validateDashboardSchemaV2(dash: unknown): dash is DashboardV2Spec {
   if ('title' in dash && typeof dash.title !== 'string') {
     throw new Error('Title is not a string');
   }
-  if ('description' in dash && typeof dash.description !== 'string') {
+  if ('description' in dash && dash.description !== undefined && typeof dash.description !== 'string') {
     throw new Error('Description is not a string');
   }
   if ('cursorSync' in dash && typeof dash.cursorSync !== 'string') {
