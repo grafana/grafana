@@ -83,6 +83,8 @@ export interface CatalogPluginDetails {
   lastCommitDate?: string;
   licenseUrl?: string;
   documentationUrl?: string;
+  signatureType?: PluginSignatureType;
+  signature?: PluginSignatureStatus;
 }
 
 export interface CatalogPluginInfo {

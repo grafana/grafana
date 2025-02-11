@@ -595,10 +595,6 @@ const (
 	// Enable groupBy variable support in scenes dashboards
 	FlagGroupByVariable = "groupByVariable"
 
-	// FlagAuthAPIAccessTokenAuth
-	// Enables the use of Auth API access tokens for authentication
-	FlagAuthAPIAccessTokenAuth = "authAPIAccessTokenAuth"
-
 	// FlagScopeFilters
 	// Enables the use of scope filters in Grafana
 	FlagScopeFilters = "scopeFilters"
@@ -958,4 +954,16 @@ const (
 	// FlagAlertingAlertmanagerExtraDedupStageStopPipeline
 	// works together with alertingAlertmanagerExtraDedupStage, if enabled, it will stop the pipeline if the timestamps are not matching. Otherwise, it will emit a warning
 	FlagAlertingAlertmanagerExtraDedupStageStopPipeline = "alertingAlertmanagerExtraDedupStageStopPipeline"
+
+	// FlagNewLogsPanel
+	// Enables the new logs panel in Explore
+	FlagNewLogsPanel = "newLogsPanel"
+
+	// FlagGrafanaconThemes
+	// Enables the temporary themes for GrafanaCon
+	FlagGrafanaconThemes = "grafanaconThemes"
+
+	// FlagPluginsCDNSyncLoader
+	// Load plugins from CDN synchronously
+	FlagPluginsCDNSyncLoader = "pluginsCDNSyncLoader"
 )

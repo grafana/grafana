@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 
-import { EditableDashboardElement, MultiSelectedEditableDashboardElement } from '../scene/types';
+import { EditableDashboardElement } from '../scene/types/EditableDashboardElement';
+import { MultiSelectedEditableDashboardElement } from '../scene/types/MultiSelectedEditableDashboardElement';
 
 import { ElementSelection } from './ElementSelection';
 
