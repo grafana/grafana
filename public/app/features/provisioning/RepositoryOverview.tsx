@@ -3,11 +3,12 @@ import { useMemo } from 'react';
 import { CellProps, Stack, Box, Text, LinkButton, Card, TextLink, InteractiveTable } from '@grafana/ui';
 
 import { CheckRepository } from './CheckRepository';
+import { RecentJobs } from './RecentJobs';
 import { RepositoryHealth } from './RepositoryHealth';
 import { SyncRepository } from './SyncRepository';
 import { Repository, ResourceCount } from './api';
 import { formatTimestamp } from './utils/time';
-import { RecentJobs } from './RecentJobs';
+
 type StatCell<T extends keyof ResourceCount = keyof ResourceCount> = CellProps<ResourceCount, ResourceCount[T]>;
 
 export function RepositoryOverview({ repo }: { repo: Repository }) {

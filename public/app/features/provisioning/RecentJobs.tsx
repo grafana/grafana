@@ -1,6 +1,7 @@
 import { Spinner, Alert, Badge, InteractiveTable, Button, Card, Box, Stack, Icon } from '@grafana/ui';
-import { formatTimestamp } from './utils/time';
+
 import { Repository, JobResourceSummary, useListJobQuery, Job } from './api';
+import { formatTimestamp } from './utils/time';
 
 interface Props {
   repo: Repository;
