@@ -1,4 +1,4 @@
-import { Spinner, Alert, Tag, InteractiveTable, Button, Card, Tooltip, IconButton, Box, Stack } from '@grafana/ui';
+import { Spinner, Alert, Tag, InteractiveTable, Button, Card, Box, Stack } from '@grafana/ui';
 import { formatTimestamp } from './utils/time';
 import { Repository, JobResourceSummary, useListJobQuery, Job } from './api';
 
@@ -74,11 +74,6 @@ export function RecentJobs({ repo }: Props) {
       cell: ({ row: { original: job } }: { row: { original: Job } }) => (
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <span>{job.status?.message}</span>
-          {job.status?.errors && (
-            <Tooltip content={<pre style={{ whiteSpace: 'pre-wrap' }}>{job.status.errors}</pre>}>
-              <IconButton name="exclamation-triangle" variant="destructive" tooltip="View error details" />
-            </Tooltip>
-          )}
         </div>
       ),
     },
@@ -147,13 +142,22 @@ export function RecentJobs({ repo }: Props) {
           columns={columns}
           getRowId={(item) => item.metadata?.resourceVersion || ''}
           renderExpandedRow={(row) =>
-            row.status?.summary?.length ? (
+            row.status?.summary?.length || row.status?.errors ? (
               <Box padding={2}>
-                <InteractiveTable
-                  data={row.status.summary}
-                  columns={summaryColumns}
-                  getRowId={(item) => item.resource || ''}
-                />
+                <Stack direction="column" gap={2}>
+                  {row.status?.summary && row.status.summary.length > 0 && (
+                    <InteractiveTable
+                      data={row.status.summary}
+                      columns={summaryColumns}
+                      getRowId={(item) => item.resource || ''}
+                    />
+                  )}
+                  {row.status?.errors && (
+                    <Alert severity="error" title="Error Details">
+                      <pre style={{ whiteSpace: 'pre-wrap', margin: 0 }}>{row.status.errors}</pre>
+                    </Alert>
+                  )}
+                </Stack>
               </Box>
             ) : null
           }
