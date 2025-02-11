@@ -33,10 +33,7 @@ func (d *DecryptClientFunc) Decrypt(ctx context.Context, namespace string, names
 	decryptedValues := make(map[string]string, len(names))
 
 	for _, name := range names {
-		decryptedValue, err := d.decryptStorage.Decrypt(ctx, xkube.NameNamespace{
-			Name:      name,
-			Namespace: xkube.Namespace(namespace),
-		})
+		decryptedValue, err := d.decryptStorage.Decrypt(ctx, xkube.Namespace(namespace), name)
 		if err != nil {
 			// TODO: Return error depending on the situation...
 			// For now return an empty value and continue.

@@ -18,8 +18,8 @@ type fakeDecryptStorage struct {
 	securevaluestore contracts.SecureValueStorage
 }
 
-func (s *fakeDecryptStorage) Decrypt(ctx context.Context, nn xkube.NameNamespace) (secretv0alpha1.ExposedSecureValue, error) {
-	_, err := s.securevaluestore.Read(ctx, nn)
+func (s *fakeDecryptStorage) Decrypt(ctx context.Context, namespace xkube.Namespace, name string) (secretv0alpha1.ExposedSecureValue, error) {
+	_, err := s.securevaluestore.Read(ctx, namespace, name)
 	if err != nil {
 		return "", contracts.ErrSecureValueNotFound
 	}
