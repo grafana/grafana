@@ -175,7 +175,7 @@
     "rollup": "^4.22.4",
     "rollup-plugin-copy": "3.5.0",
     "rollup-plugin-dts": "^6.1.1",
-    "rollup-plugin-esbuild": "6.1.1",
+    "rollup-plugin-esbuild": "6.2.0",
     "rollup-plugin-node-externals": "^8.0.0",
     "rollup-plugin-svg-import": "3.0.0",
     "sass-loader": "16.0.4",
