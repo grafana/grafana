@@ -476,7 +476,7 @@ describe('ResponseTransformers', () => {
       expect(layout.spec.items[0].spec).toEqual({
         element: {
           kind: 'ElementReference',
-          name: '1',
+          name: 'panel-1',
         },
         x: 0,
         y: 0,
@@ -484,7 +484,7 @@ describe('ResponseTransformers', () => {
         height: 8,
         repeat: { value: 'var1', direction: 'h', mode: 'variable', maxPerRow: undefined },
       });
-      expect(spec.elements['1']).toEqual({
+      expect(spec.elements['panel-1']).toEqual({
         kind: 'Panel',
         spec: {
           title: 'Panel Title',
@@ -539,14 +539,14 @@ describe('ResponseTransformers', () => {
       expect(layout.spec.items[1].spec).toEqual({
         element: {
           kind: 'ElementReference',
-          name: '2',
+          name: 'panel-2',
         },
         x: 0,
         y: 8,
         width: 12,
         height: 8,
       });
-      expect(spec.elements['2']).toEqual({
+      expect(spec.elements['panel-2']).toEqual({
         kind: 'LibraryPanel',
         spec: {
           libraryPanel: {
@@ -569,7 +569,7 @@ describe('ResponseTransformers', () => {
       expect(panelInRow).toEqual({
         element: {
           kind: 'ElementReference',
-          name: '4',
+          name: 'panel-4',
         },
         x: 0,
         y: 0,
@@ -587,7 +587,7 @@ describe('ResponseTransformers', () => {
       expect(panelInCollapsedRow).toEqual({
         element: {
           kind: 'ElementReference',
-          name: '5',
+          name: 'panel-5',
         },
         x: 0,
         y: 0,
