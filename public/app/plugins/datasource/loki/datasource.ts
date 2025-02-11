@@ -1014,8 +1014,8 @@ export class LokiDatasource
    * Part of `DataSourceWithLogsContextSupport`, used to retrieve the log context UI for the provided log row and original query.
    * @returns A React component or element representing the log context UI for the log row.
    */
-  getLogRowContextUi(row: LogRowModel, runContextQuery: () => void, origQuery: DataQuery): React.ReactNode {
-    return this.logContextProvider.getLogRowContextUi(row, runContextQuery, getLokiQueryFromDataQuery(origQuery));
+  getLogRowContextUi(row: LogRowModel, runContextQuery: () => void, origQuery: DataQuery, scopedVars?: ScopedVars): React.ReactNode {
+    return this.logContextProvider.getLogRowContextUi(row, runContextQuery, getLokiQueryFromDataQuery(origQuery), scopedVars);
   }
 
   /**
@@ -1149,7 +1149,7 @@ export class LokiDatasource
         value: '$__interval_ms',
       },
     };
-
+    
     const exprWithAdHoc = this.addAdHocFilters(
       this.templateSrv.replace(target.expr, variables, this.interpolateQueryExpr),
       adhocFilters
