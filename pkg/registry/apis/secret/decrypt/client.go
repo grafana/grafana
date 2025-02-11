@@ -27,7 +27,7 @@ func ProvideDecryptClientFunc(features featuremgmt.FeatureToggles, decryptStorag
 }
 
 // Decrypt a series of `names` from a `namespace`.
-func (d *DecryptClientFunc) Decrypt(ctx context.Context, namespace xkube.Namespace, names ...string) (map[string]string, error) {
+func (d *DecryptClientFunc) Decrypt(ctx context.Context, namespace string, names ...string) (map[string]string, error) {
 	// TODO: ctx auth stuff.
 
 	decryptedValues := make(map[string]string, len(names))
@@ -35,7 +35,7 @@ func (d *DecryptClientFunc) Decrypt(ctx context.Context, namespace xkube.Namespa
 	for _, name := range names {
 		decryptedValue, err := d.decryptStorage.Decrypt(ctx, xkube.NameNamespace{
 			Name:      name,
-			Namespace: namespace,
+			Namespace: xkube.Namespace(namespace),
 		})
 		if err != nil {
 			// TODO: Return error depending on the situation...
