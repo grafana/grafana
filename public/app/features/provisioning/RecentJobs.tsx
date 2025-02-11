@@ -1,5 +1,5 @@
-import { Spinner, Card, Alert } from '@grafana/ui';
-
+import { Spinner, Card, Alert, Tag, Text } from '@grafana/ui';
+import { formatTimestamp } from './utils/time';
 import { Repository, useListJobQuery } from './api';
 
 interface Props {
@@ -33,15 +33,40 @@ export function RecentJobs({ repo }: Props) {
 
   return (
     <div>
-      {items.map((item) => {
+      {items.slice(0, 10).map((item) => {
         return (
           <Card key={item.metadata?.resourceVersion}>
-            <Card.Heading>
-              {item.spec?.action} / {item.status?.state}
-            </Card.Heading>
+            <Card.Heading>{item.spec?.action}</Card.Heading>
+            <Card.Tags>
+              <Tag
+                name={item.status?.state || ''}
+                color={
+                  item.status?.state === 'success'
+                    ? 'success'
+                    : item.status?.state === 'working'
+                      ? 'warning'
+                      : item.status?.state === 'pending'
+                        ? 'warning'
+                        : item.status?.state === 'error'
+                          ? 'error'
+                          : 'secondary'
+                }
+                icon={item.status?.state === 'working' ? 'spinner' : undefined}
+              />
+            </Card.Tags>
             <Card.Description>
-              <span>{JSON.stringify(item.spec)}</span>
-              <span>{JSON.stringify(item.status)}</span>
+              <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '8px' }}>
+                <Text color="secondary">Started:</Text>
+                <Text>{formatTimestamp(item.status?.started)}</Text>
+                <Text color="secondary">Ended:</Text>
+                <Text>{formatTimestamp(item.status?.finished)}</Text>
+                {item.status?.message && (
+                  <>
+                    <Text color="secondary">Message:</Text>
+                    <Text>{item.status.message}</Text>
+                  </>
+                )}
+              </div>
             </Card.Description>
           </Card>
         );
