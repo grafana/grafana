@@ -15,7 +15,7 @@ var (
 	_ resource.ResourceStoreClient              = (*writerClient)(nil)
 	_ resource.ResourceStore_BatchProcessClient = (*writerClient)(nil)
 
-	unimplemented = errors.New("not implemented (parquet client stub)")
+	unimplemented = errors.New("not implemented (BatchResourceWriter as ResourceStoreClient shim)")
 )
 
 type writerClient struct {
@@ -23,6 +23,7 @@ type writerClient struct {
 	ctx    context.Context
 }
 
+// NewBatchResourceWriterClient wraps a BatchResourceWriter so that it can be used as a ResourceStoreClient
 func NewBatchResourceWriterClient(writer resource.BatchResourceWriter) *writerClient {
 	return &writerClient{writer: writer}
 }
