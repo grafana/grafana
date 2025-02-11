@@ -24,8 +24,8 @@ func TestDecryptClientFunc(t *testing.T) {
 		ns := "default"
 		name1, name2 := "first", "second"
 
-		decryptStorage.On("Decrypt", mock.Anything, ns, name1).Return(v0alpha1.ExposedSecureValue("secure-value-1"), nil).Once()
-		decryptStorage.On("Decrypt", mock.Anything, ns, name2).Return(v0alpha1.ExposedSecureValue(""), errors.New("mock error")).Once()
+		decryptStorage.On("Decrypt", mock.Anything, xkube.Namespace(ns), name1).Return(v0alpha1.ExposedSecureValue("secure-value-1"), nil).Once()
+		decryptStorage.On("Decrypt", mock.Anything, xkube.Namespace(ns), name2).Return(v0alpha1.ExposedSecureValue(""), errors.New("mock error")).Once()
 
 		client := DecryptClientFunc{decryptStorage: decryptStorage}
 
