@@ -156,7 +156,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
             label={'Repository URL'}
             error={errors?.url?.message}
             invalid={!!errors?.url}
-            description={'Enter the GitHub repository URL or owner/repository name'}
+            description={'Enter the GitHub repository URL'}
             required
           >
             <Input

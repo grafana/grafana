@@ -78,8 +78,6 @@ func (r *githubRepository) Validate() (list field.ErrorList) {
 			list = append(list, field.Invalid(field.NewPath("spec", "github", "url"), gh.URL, err.Error()))
 		} else if !strings.HasPrefix(gh.URL, "https://github.com/") {
 			list = append(list, field.Invalid(field.NewPath("spec", "github", "url"), gh.URL, "URL must start with https://github.com/"))
-		} else if !strings.HasSuffix(gh.URL, "/") {
-			list = append(list, field.Invalid(field.NewPath("spec", "github", "url"), gh.URL, "URL must end with a /"))
 		}
 	}
 	if gh.Branch == "" {

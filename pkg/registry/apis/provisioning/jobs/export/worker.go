@@ -3,6 +3,7 @@ package export
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -10,15 +11,17 @@ import (
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
+	gogit "github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/go-git"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
 type ExportWorker struct {
-	clients *resources.ClientFactory
+	clients  *resources.ClientFactory
+	clonedir string
 }
 
-func NewExportWorker(clients *resources.ClientFactory) *ExportWorker {
-	return &ExportWorker{clients}
+func NewExportWorker(clients *resources.ClientFactory, clonedir string) *ExportWorker {
+	return &ExportWorker{clients, clonedir}
 }
 
 func (r *ExportWorker) IsSupported(ctx context.Context, job provisioning.Job) bool {
@@ -42,9 +45,32 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 		}, nil
 	}
 
-	// TODO: remove this dummy export
-	if job.Spec.Export.Branch == "*dummy*" {
-		return dummyExport(ctx, repo, job, progress)
+	var err error
+	var buffered *gogit.GoGitRepo
+	if repo.Config().Spec.GitHub != nil {
+		buffered, err = gogit.Clone(ctx, repo.Config(), gogit.GoGitCloneOptions{
+			Root:                   r.clonedir,
+			SingleCommitBeforePush: !options.History,
+		}, os.Stdout)
+		if err != nil {
+			return &provisioning.JobStatus{
+				State:  provisioning.JobStateError,
+				Errors: []string{"Unable to clone target", err.Error()},
+			}, nil
+		}
+
+		// New empty branch
+		if options.Branch != "" {
+			_, err := buffered.NewEmptyBranch(ctx, options.Branch)
+			if err != nil {
+				return &provisioning.JobStatus{
+					State:  provisioning.JobStateError,
+					Errors: []string{"Unable to create empty branch", err.Error()},
+				}, nil
+			}
+		}
+		repo = buffered     // send all writes to the buffered repo
+		options.Branch = "" // :( the branch is now baked into the repo
 	}
 
 	dynamicClient, _, err := r.clients.New(repo.Config().Namespace)
@@ -72,8 +98,15 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 		}
 	}
 
-	// Add summary info to response
 	status := worker.jobStatus
+	if buffered != nil && status.State != provisioning.JobStateError {
+		status.Message = "pushing changes..."
+		worker.maybeNotify(ctx) // force notify?
+		err = buffered.Push(ctx, os.Stdout)
+		status.Message = ""
+	}
+
+	// Add summary info to response
 	if !status.State.Finished() && err == nil {
 		status.State = provisioning.JobStateSuccess
 		status.Message = ""
