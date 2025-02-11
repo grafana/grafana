@@ -50,7 +50,7 @@ export interface SliderFieldConfigSettings {
   ariaLabelForHandle?: string;
 }
 
-export interface DataLinksFieldConfigSettings extends StringFieldConfigSettings {
+export interface DataLinksFieldConfigSettings {
   showOneClick?: boolean;
 }
 
