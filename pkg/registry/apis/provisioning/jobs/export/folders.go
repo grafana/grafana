@@ -1,46 +1,137 @@
 package export
 
 import (
+	"context"
+	"errors"
 	"fmt"
 
-	"golang.org/x/net/context"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/client-go/dynamic"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
+	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/k8sctx"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/pkg/storage/unified/parquet"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-func readFolders(ctx context.Context, client dynamic.ResourceInterface, skip string) (*resources.FolderTree, error) {
-	ctx, cancel, err := k8sctx.Fork(ctx)
-	if err != nil {
-		return nil, err
-	}
-	defer cancel()
+var (
+	_ resource.BatchResourceWriter = (*folderReader)(nil)
+)
 
-	// TODO: handle pagination
-	rawList, err := client.List(ctx, metav1.ListOptions{Limit: 10000})
+type folderReader struct {
+	tree           *resources.FolderTree
+	targetRepoName string
+}
+
+// Close implements resource.BatchResourceWriter.
+func (f *folderReader) Close() error {
+	return nil
+}
+
+// CloseWithResults implements resource.BatchResourceWriter.
+func (f *folderReader) CloseWithResults() (*resource.BatchResponse, error) {
+	return &resource.BatchResponse{}, nil
+}
+
+// Write implements resource.BatchResourceWriter.
+func (f *folderReader) Write(ctx context.Context, key *resource.ResourceKey, value []byte) error {
+	item := &unstructured.Unstructured{}
+	err := item.UnmarshalJSON(value)
 	if err != nil {
-		return nil, fmt.Errorf("failed to list folders: %w", err)
+		return err
 	}
-	if rawList.GetContinue() != "" {
-		return nil, fmt.Errorf("unable to list all folders in one request: %s", rawList.GetContinue())
+	return f.tree.AddUnstructured(item, f.targetRepoName)
+}
+
+func (r *exportJob) loadFolders(ctx context.Context) error {
+	logger := r.logger
+	status := r.jobStatus
+	status.Message = "reading folder tree"
+
+	reader := &folderReader{
+		tree:           resources.NewEmptyFolderTree(),
+		targetRepoName: r.target.Config().Name,
 	}
 
-	// filter out the folders we already own
-	rawFolders := make([]unstructured.Unstructured, 0, len(rawList.Items))
-	for _, f := range rawList.Items {
-		repoName := f.GetAnnotations()[apiutils.AnnoKeyRepoName]
-		if repoName == skip {
-			logger.Info("skip as folder is already in repository", "folder", f.GetName())
-			continue
+	if r.legacy != nil {
+		_, err := r.legacy.Migrate(ctx, legacy.MigrateOptions{
+			Namespace: r.namespace,
+			Resources: []schema.GroupResource{{
+				Group:    folders.GROUP,
+				Resource: folders.RESOURCE,
+			}},
+			Store: parquet.NewBatchResourceWriterClient(reader),
+		})
+		if err != nil {
+			return fmt.Errorf("unable to read folders from legacy storage %w", err)
+		}
+	} else {
+		ctx, cancel, err := k8sctx.Fork(ctx)
+		if err != nil {
+			return err
+		}
+		defer cancel()
+
+		client := r.client.Resource(schema.GroupVersionResource{
+			Group:    folders.GROUP,
+			Version:  folders.VERSION,
+			Resource: folders.RESOURCE,
+		})
+
+		rawList, err := client.List(ctx, metav1.ListOptions{Limit: 10000})
+		if err != nil {
+			return fmt.Errorf("failed to list folders: %w", err)
+		}
+		if rawList.GetContinue() != "" {
+			return fmt.Errorf("unable to list all folders in one request: %s", rawList.GetContinue())
+		}
+		for _, item := range rawList.Items {
+			reader.tree.AddUnstructured(&item, reader.targetRepoName)
+		}
+	}
+
+	summary := r.getSummary(schema.GroupResource{
+		Group:    folders.GROUP,
+		Resource: folders.RESOURCE,
+	})
+
+	// first create folders
+	// NOTE: this is required so that empty folders exist when finished
+	status.Message = "writing folders"
+	err := reader.tree.Walk(ctx, func(ctx context.Context, folder resources.Folder) error {
+		p := folder.Path + "/"
+		if r.prefix != "" {
+			p = r.prefix + "/" + p
+		}
+		logger := logger.With("path", p)
+
+		_, err := r.target.Read(ctx, p, r.ref)
+		if err != nil && !(errors.Is(err, repository.ErrFileNotFound) || apierrors.IsNotFound(err)) {
+			logger.Error("failed to check if folder exists before writing", "error", err)
+			return fmt.Errorf("failed to check if folder exists before writing: %w", err)
+		} else if err == nil {
+			logger.Info("folder already exists")
+			summary.Noop++
+			return nil
 		}
 
-		rawFolders = append(rawFolders, f)
+		// Create with an empty body will make a folder (or .keep file if unsupported)
+		if err := r.target.Create(ctx, p, r.ref, nil, "export folder `"+p+"`"); err != nil {
+			logger.Error("failed to write a folder in repository", "error", err)
+			return fmt.Errorf("failed to write folder in repo: %w", err)
+		}
+		summary.Create++
+		logger.Debug("successfully exported folder")
+		return nil
+	})
+	if err != nil {
+		return fmt.Errorf("failed to write folders: %w", err)
 	}
-
-	return resources.NewFolderTreeFromUnstructure(ctx, rawFolders), nil
+	r.foldersTree = reader.tree
+	return nil
 }

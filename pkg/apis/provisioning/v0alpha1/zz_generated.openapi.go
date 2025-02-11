@@ -92,6 +92,13 @@ func schema_pkg_apis_provisioning_v0alpha1_ExportJobOptions(ref common.Reference
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
+					"legacy": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Export from legacy SQL -- important for initial onboarding",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
 					"folder": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The source folder (or empty) to export",

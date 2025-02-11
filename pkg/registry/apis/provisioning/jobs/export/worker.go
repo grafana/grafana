@@ -5,10 +5,8 @@ import (
 	"fmt"
 	"os"
 
-	"k8s.io/apimachinery/pkg/runtime/schema"
-
-	dashboards "github.com/grafana/grafana/pkg/apis/dashboard"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	gogit "github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/go-git"
@@ -16,12 +14,18 @@ import (
 )
 
 type ExportWorker struct {
-	clients  *resources.ClientFactory
+	// When exporting from legacy
+	legacyMigrator legacy.LegacyMigrator
+
+	// When exporting from apiservers
+	clients *resources.ClientFactory
+
+	// Tempdir for repo clones
 	clonedir string
 }
 
-func NewExportWorker(clients *resources.ClientFactory, clonedir string) *ExportWorker {
-	return &ExportWorker{clients, clonedir}
+func NewExportWorker(clients *resources.ClientFactory, legacyMigrator legacy.LegacyMigrator, clonedir string) *ExportWorker {
+	return &ExportWorker{legacyMigrator, clients, clonedir}
 }
 
 func (r *ExportWorker) IsSupported(ctx context.Context, job provisioning.Job) bool {
@@ -79,6 +83,14 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 	}
 
 	worker := newExportJob(ctx, repo, *options, dynamicClient, progress)
+	if options.Legacy || true { // <<<<<<<<< ALWAYS LEGACY FOR NOW
+		worker.legacy = r.legacyMigrator
+	}
+
+	if options.History {
+		// TODO. load user info (for commits)
+		fmt.Printf("TODO... load history")
+	}
 
 	// Load and write all folders
 	err = worker.loadFolders(ctx)
@@ -86,16 +98,9 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 		return worker.jobStatus, err
 	}
 
-	kinds := []schema.GroupVersionResource{{
-		Group:    dashboards.GROUP,
-		Version:  "v1alpha1",
-		Resource: dashboards.DASHBOARD_RESOURCE,
-	}}
-	for _, kind := range kinds {
-		err = worker.export(ctx, kind)
-		if err != nil {
-			return worker.jobStatus, err
-		}
+	err = worker.loadResources(ctx)
+	if err != nil {
+		return worker.jobStatus, err
 	}
 
 	status := worker.jobStatus

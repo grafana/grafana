@@ -3,21 +3,19 @@ package export
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"time"
 
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/infra/slugify"
+	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/k8sctx"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
@@ -27,9 +25,11 @@ import (
 
 // ExportJob holds all context for a running job
 type exportJob struct {
-	logger logging.Logger
-	client *resources.DynamicClient // Read from
-	target repository.Repository    // Write to
+	logger    logging.Logger
+	client    *resources.DynamicClient // Read from
+	target    repository.Repository    // Write to
+	legacy    legacy.LegacyMigrator
+	namespace string
 
 	progress         jobs.ProgressFn
 	progressInterval time.Duration
@@ -40,6 +40,7 @@ type exportJob struct {
 	ref            string // from options (only git)
 	keepIdentifier bool
 	addAuthorInfo  bool
+	withHistory    bool
 
 	jobStatus *provisioning.JobStatus
 	summary   map[string]*provisioning.JobResourceSummary
@@ -56,6 +57,7 @@ func newExportJob(ctx context.Context,
 		prefix = safepath.Clean(prefix)
 	}
 	return &exportJob{
+		namespace:        target.Config().Namespace,
 		target:           target,
 		client:           client,
 		logger:           logging.FromContext(ctx),
@@ -67,6 +69,7 @@ func newExportJob(ctx context.Context,
 		ref:            options.Branch,
 		keepIdentifier: options.Identifier,
 		addAuthorInfo:  options.History,
+		withHistory:    options.History,
 
 		jobStatus: &provisioning.JobStatus{
 			State: provisioning.JobStateWorking,
@@ -97,58 +100,6 @@ func (r *exportJob) getSummary(gr schema.GroupResource) *provisioning.JobResourc
 		r.jobStatus.Summary = append(r.jobStatus.Summary, summary)
 	}
 	return summary
-}
-
-func (r *exportJob) loadFolders(ctx context.Context) error {
-	logger := r.logger
-	targetRepoName := r.target.Config().Name
-	status := r.jobStatus
-	status.Message = "reading folder tree"
-	foldersTree, err := readFolders(ctx, r.client.Resource(schema.GroupVersionResource{
-		Group:    folders.GROUP,
-		Version:  folders.VERSION,
-		Resource: folders.RESOURCE,
-	}), targetRepoName)
-
-	summary := r.getSummary(schema.GroupResource{
-		Group:    folders.GROUP,
-		Resource: folders.RESOURCE,
-	})
-
-	// first create folders
-	// TODO! this should not be necessary if writing to a path also makes the parents
-	status.Message = "writing folders"
-	err = foldersTree.Walk(ctx, func(ctx context.Context, folder resources.Folder) error {
-		p := folder.Path + "/"
-		if r.prefix != "" {
-			p = r.prefix + "/" + p
-		}
-		logger := logger.With("path", p)
-
-		_, err = r.target.Read(ctx, p, r.ref)
-		if err != nil && !(errors.Is(err, repository.ErrFileNotFound) || apierrors.IsNotFound(err)) {
-			logger.Error("failed to check if folder exists before writing", "error", err)
-			return fmt.Errorf("failed to check if folder exists before writing: %w", err)
-		} else if err == nil {
-			logger.Info("folder already exists")
-			summary.Noop++
-			return nil
-		}
-
-		// Create with an empty body will make a folder (or .keep file if unsupported)
-		if err := r.target.Create(ctx, p, r.ref, nil, "export folder `"+p+"`"); err != nil {
-			logger.Error("failed to write a folder in repository", "error", err)
-			return fmt.Errorf("failed to write folder in repo: %w", err)
-		}
-		summary.Create++
-		logger.Debug("successfully exported folder")
-		return nil
-	})
-	if err != nil {
-		return fmt.Errorf("failed to write folders: %w", err)
-	}
-	r.foldersTree = foldersTree
-	return nil
 }
 
 func (r *exportJob) export(ctx context.Context, kind schema.GroupVersionResource) error {
@@ -201,7 +152,7 @@ func (r *exportJob) add(ctx context.Context, summary *provisioning.JobResourceSu
 	if commitMessage == "" {
 		g := item.GetGeneration()
 		if g > 0 {
-			commitMessage = fmt.Sprintf("Generation: %d, ResourceVersion: %s", g, item.GetResourceVersion())
+			commitMessage = fmt.Sprintf("Generation: %d", g)
 		} else {
 			commitMessage = "exported from grafana"
 		}

@@ -30,6 +30,7 @@ import (
 	clientset "github.com/grafana/grafana/pkg/generated/clientset/versioned"
 	informers "github.com/grafana/grafana/pkg/generated/informers/externalversions"
 	listers "github.com/grafana/grafana/pkg/generated/listers/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/export"
@@ -78,6 +79,7 @@ type APIBuilder struct {
 	tester            *RepositoryTester
 	resourceLister    resources.ResourceLister
 	repositoryLister  listers.RepositoryLister
+	legacyMigrator    legacy.LegacyMigrator
 }
 
 // NewAPIBuilder creates an API builder.
@@ -94,6 +96,7 @@ func NewAPIBuilder(
 	clonedir string, // where repo clones are managed
 	configProvider apiserver.RestConfigProvider,
 	ghFactory github.ClientFactory,
+	legacyMigrator legacy.LegacyMigrator,
 ) *APIBuilder {
 	clientFactory := resources.NewFactory(configProvider)
 	return &APIBuilder{
@@ -110,6 +113,7 @@ func NewAPIBuilder(
 		clonedir:       clonedir,
 		resourceLister: resources.NewResourceLister(index),
 		blobstore:      blobstore,
+		legacyMigrator: legacyMigrator,
 	}
 }
 
@@ -125,6 +129,7 @@ func RegisterAPIService(
 	client resource.ResourceClient, // implements resource.RepositoryClient
 	configProvider apiserver.RestConfigProvider,
 	ghFactory github.ClientFactory,
+	legacyMigrator legacy.LegacyMigrator,
 ) (*APIBuilder, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagProvisioning) &&
 		!features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
@@ -148,7 +153,7 @@ func RegisterAPIService(
 	builder := NewAPIBuilder(folderResolver, urlProvider, cfg.SecretKey, features,
 		render, client, store,
 		filepath.Join(cfg.DataPath, "clone"), // where repositories are cloned (temporarialy for now)
-		configProvider, ghFactory)
+		configProvider, ghFactory, legacyMigrator)
 	apiregistration.RegisterAPI(builder)
 	return builder, nil
 }
@@ -460,7 +465,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			}
 			b.repositoryLister = repoInformer.Lister()
 
-			b.jobs.Register(export.NewExportWorker(b.client, b.clonedir))
+			b.jobs.Register(export.NewExportWorker(b.client, b.legacyMigrator, b.clonedir))
 			b.jobs.Register(sync.NewSyncWorker(
 				c.ProvisioningV0alpha1(),
 				b.parsers,

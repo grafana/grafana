@@ -91,6 +91,9 @@ type SyncJobOptions struct {
 }
 
 type ExportJobOptions struct {
+	// Export from legacy SQL -- important for initial onboarding
+	Legacy bool `json:"legacy,omitempty"`
+
 	// The source folder (or empty) to export
 	Folder string `json:"folder,omitempty"`
 
