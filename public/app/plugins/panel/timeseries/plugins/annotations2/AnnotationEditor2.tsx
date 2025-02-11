@@ -129,8 +129,7 @@ export const AnnotationEditor2 = ({ annoVals, annoIdx, dismiss, timeZone, ...oth
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     editor: css({
-      // zIndex: theme.zIndex.tooltip,
-      background: theme.colors.background.primary,
+      background: theme.colors.background.elevated,
       border: `1px solid ${theme.colors.border.weak}`,
       borderRadius: theme.shape.radius.default,
       boxShadow: theme.shadows.z3,

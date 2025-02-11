@@ -54,7 +54,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       },
     }),
     colorLabel: css({
-      paddingLeft: theme.spacing(2),
+      paddingLeft: theme.spacing(1),
       display: 'flex',
       alignItems: 'center',
     }),

@@ -83,7 +83,7 @@ export function createComponents(colors: ThemeColors, shadows: ThemeShadows): Th
       background: input.background,
     },
     tooltip: {
-      background: colors.background.secondary,
+      background: colors.background.elevated,
       text: colors.text.primary,
     },
     dashboard: {

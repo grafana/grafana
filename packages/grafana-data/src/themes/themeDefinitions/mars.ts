@@ -28,6 +28,7 @@ const marsTheme: NewThemeOptions = {
       canvas: '#3C1E1E',
       primary: '#522626',
       secondary: '#6A2F2F',
+      elevated: '#6A2F2F',
     },
     action: {
       hover: 'rgba(210, 90, 60, 0.16)',
