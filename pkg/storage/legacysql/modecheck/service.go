@@ -12,16 +12,26 @@ import (
 type StorageStatus struct {
 	Group     string `xorm:"group"`
 	Resource  string `xorm:"resource"`
-	Migrated  int64  `xorm:"migrated"`  // means we can safely use unified as the "source of truth"
-	Migrating int64  `xorm:"migrating"` // something checked it out
+	Primary   string `xorm:"primary"`    // legacy | unified
+	DualWrite bool   `xorm:"dual_write"` // write both
+	Migrated  int64  `xorm:"migrated"`   // means we can safely use unified as the "source of truth"
+	Migrating int64  `xorm:"migrating"`  // something checked it out
 	UpdateKey int64  `xorm:"update_key"`
 }
 
+// ManagedStorage
+// * dualWrute = bool
+// * read = legacy | unified
+// * migrating (will lock writes)
+// * migrated (finished)
+
+// Mode2 -- dual write, read from legacy
+// Mode3 -- dual write, read from unified (unified is key)
+
 type Service interface {
-	IsMigrated(ctx context.Context, gr schema.GroupResource) bool
 	Status(ctx context.Context, gr schema.GroupResource) (StorageStatus, bool)
 	StartMigration(ctx context.Context, gr schema.GroupResource, key int64) (StorageStatus, error)
-	FinishMigration(ctx context.Context, gr schema.GroupResource, key int64, migrated bool) (StorageStatus, error)
+	Update(ctx context.Context, status StorageStatus) (StorageStatus, error)
 }
 
 // The storage interface has zero business logic and simply writes values to a database
