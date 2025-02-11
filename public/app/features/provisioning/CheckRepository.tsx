@@ -33,7 +33,7 @@ export function CheckRepository({ repository }: Props) {
     if (!name) {
       return;
     }
-    testRepo({ name });
+    testRepo({ name, body: {} });
   };
 
   if (testQuery.isLoading) {

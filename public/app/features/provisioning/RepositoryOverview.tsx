@@ -1,6 +1,18 @@
+import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
-import { CellProps, Stack, Box, Text, LinkButton, Card, TextLink, InteractiveTable } from '@grafana/ui';
+import {
+  CellProps,
+  Stack,
+  Box,
+  Text,
+  LinkButton,
+  Card,
+  TextLink,
+  InteractiveTable,
+  Grid,
+  useStyles2,
+} from '@grafana/ui';
 
 import { CheckRepository } from './CheckRepository';
 import { RecentJobs } from './RecentJobs';
@@ -12,6 +24,7 @@ import { formatTimestamp } from './utils/time';
 type StatCell<T extends keyof ResourceCount = keyof ResourceCount> = CellProps<ResourceCount, ResourceCount[T]>;
 
 export function RepositoryOverview({ repo }: { repo: Repository }) {
+  const styles = useStyles2(getStyles);
   const remoteURL = getRemoteURL(repo);
   const webhookURL = getWebhookURL(repo);
   const status = repo.status;
@@ -39,115 +52,152 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
   );
   return (
     <Box padding={2}>
-      <Stack gap={2} direction="row" justifyContent="center">
-        <Card>
-          <Card.Heading>Links</Card.Heading>
-          <Card.Meta>
-            <Stack>
-              {remoteURL && (
-                <Text>
-                  <TextLink external href={remoteURL}>
-                    {remoteURL}
-                  </TextLink>
-                </Text>
-              )}
-
-              {webhookURL && (
-                <Text>
-                  <TextLink external href={webhookURL}>
-                    Webhook
-                  </TextLink>
-                </Text>
-              )}
-            </Stack>
-          </Card.Meta>
-          <Card.Actions>
-            <LinkButton fill="outline" size="md" href={getFolderURL(repo)}>
-              Containing Folder
-            </LinkButton>
-          </Card.Actions>
-        </Card>
-        <Card>
-          <Card.Heading>Resources</Card.Heading>
-          <Card.Description>
-            {repo.status?.stats ? (
-              <InteractiveTable
-                columns={resourceColumns}
-                data={repo.status.stats}
-                getRowId={(r: ResourceCount) => `${r.group}-${r.resource}`}
-              />
-            ) : null}
-          </Card.Description>
-        </Card>
-      </Stack>
-      <Stack gap={2} direction="row" alignItems="stretch" justifyContent="center">
-        {repo.status?.health && (
-          <Card>
-            <Card.Heading>Health</Card.Heading>
-            <Card.Description>
-              <RepositoryHealth health={repo.status?.health} />
-              <div style={{ display: 'grid', gridTemplateColumns: '100px 1fr', gap: '8px', alignItems: 'baseline' }}>
-                <Text color="secondary">Status:</Text>
-                <Text variant="body">{status?.health?.healthy ? 'Healthy' : 'Unhealthy'}</Text>
-
-                <Text color="secondary">Checked:</Text>
-                <Text variant="body">{formatTimestamp(status?.health?.checked)}</Text>
-
-                {status?.health?.message && status.health.message.length > 0 && (
-                  <>
-                    <Text color="secondary">Messages:</Text>
-                    <Stack gap={1}>
-                      {status.health.message.map((msg, idx) => (
-                        <Text key={idx} variant="body">
-                          {msg}
-                        </Text>
-                      ))}
-                    </Stack>
-                  </>
+      <Grid columns={2} gap={2}>
+        <div className={styles.cardContainer}>
+          <Card className={styles.card}>
+            <Card.Heading>Links</Card.Heading>
+            <Card.Meta>
+              <Stack>
+                {remoteURL && (
+                  <Text>
+                    <TextLink external href={remoteURL}>
+                      {remoteURL}
+                    </TextLink>
+                  </Text>
                 )}
-              </div>
-            </Card.Description>
 
-            <Card.Actions>
-              <CheckRepository repository={repo} />
+                {webhookURL && (
+                  <Text>
+                    <TextLink external href={webhookURL}>
+                      Webhook
+                    </TextLink>
+                  </Text>
+                )}
+              </Stack>
+            </Card.Meta>
+            <Card.Actions className={styles.actions}>
+              <LinkButton fill="outline" size="md" href={getFolderURL(repo)}>
+                Containing Folder
+              </LinkButton>
             </Card.Actions>
           </Card>
+        </div>
+        <div className={styles.cardContainer}>
+          <Card className={styles.card}>
+            <Card.Heading>Resources</Card.Heading>
+            <Card.Description>
+              {repo.status?.stats ? (
+                <InteractiveTable
+                  columns={resourceColumns}
+                  data={repo.status.stats}
+                  getRowId={(r: ResourceCount) => `${r.group}-${r.resource}`}
+                />
+              ) : null}
+            </Card.Description>
+          </Card>
+        </div>
+        {repo.status?.health && (
+          <div className={styles.cardContainer}>
+            <Card className={styles.card}>
+              <Card.Heading>Health</Card.Heading>
+              <Card.Description>
+                <RepositoryHealth health={repo.status?.health} />
+                <Grid columns={12} gap={1} alignItems="baseline">
+                  <div className={styles.labelColumn}>
+                    <Text color="secondary">Status:</Text>
+                  </div>
+                  <div className={styles.valueColumn}>
+                    <Text variant="body">{status?.health?.healthy ? 'Healthy' : 'Unhealthy'}</Text>
+                  </div>
+
+                  <div className={styles.labelColumn}>
+                    <Text color="secondary">Checked:</Text>
+                  </div>
+                  <div className={styles.valueColumn}>
+                    <Text variant="body">{formatTimestamp(status?.health?.checked)}</Text>
+                  </div>
+
+                  {!!status?.health?.message?.length && (
+                    <>
+                      <div className={styles.labelColumn}>
+                        <Text color="secondary">Messages:</Text>
+                      </div>
+                      <div className={styles.valueColumn}>
+                        <Stack gap={1}>
+                          {status.health.message.map((msg, idx) => (
+                            <Text key={idx} variant="body">
+                              {msg}
+                            </Text>
+                          ))}
+                        </Stack>
+                      </div>
+                    </>
+                  )}
+                </Grid>
+              </Card.Description>
+              <Card.Actions className={styles.actions}>
+                <CheckRepository repository={repo} />
+              </Card.Actions>
+            </Card>
+          </div>
         )}
-        <Card>
-          <Card.Heading>Sync Status </Card.Heading>
-          <Card.Description>
-            <div style={{ display: 'grid', gridTemplateColumns: '100px 1fr', gap: '8px', alignItems: 'baseline' }}>
-              <Text color="secondary">Job ID:</Text>
-              <Text variant="body">{status?.sync.job ?? 'N/A'}</Text>
+        <div className={styles.cardContainer}>
+          <Card className={styles.card}>
+            <Card.Heading>Sync status</Card.Heading>
+            <Card.Description>
+              <Grid columns={12} gap={1} alignItems="baseline">
+                <div className={styles.labelColumn}>
+                  <Text color="secondary">Job ID:</Text>
+                </div>
+                <div className={styles.valueColumn}>
+                  <Text variant="body">{status?.sync.job ?? 'N/A'}</Text>
+                </div>
 
-              <Text color="secondary">Last Ref:</Text>
-              <Text variant="body">{status?.sync.hash ? status.sync.hash.substring(0, 7) : 'N/A'}</Text>
+                <div className={styles.labelColumn}>
+                  <Text color="secondary">Last Ref:</Text>
+                </div>
+                <div className={styles.valueColumn}>
+                  <Text variant="body">{status?.sync.hash ? status.sync.hash.substring(0, 7) : 'N/A'}</Text>
+                </div>
 
-              <Text color="secondary">Started:</Text>
-              <Text variant="body">{formatTimestamp(status?.sync.started)}</Text>
+                <div className={styles.labelColumn}>
+                  <Text color="secondary">Started:</Text>
+                </div>
+                <div className={styles.valueColumn}>
+                  <Text variant="body">{formatTimestamp(status?.sync.started)}</Text>
+                </div>
 
-              <Text color="secondary">Finished:</Text>
-              <Text variant="body">{formatTimestamp(status?.sync.finished)}</Text>
+                <div className={styles.labelColumn}>
+                  <Text color="secondary">Finished:</Text>
+                </div>
+                <div className={styles.valueColumn}>
+                  <Text variant="body">{formatTimestamp(status?.sync.finished)}</Text>
+                </div>
 
-              {status?.sync?.message && status.sync.message.length > 0 && (
-                <>
-                  <Text color="secondary">Messages:</Text>
-                  <Stack gap={1}>
-                    {status.sync.message.map((msg, idx) => (
-                      <Text key={idx} variant="body">
-                        {msg}
-                      </Text>
-                    ))}
-                  </Stack>
-                </>
-              )}
-            </div>
-          </Card.Description>
-          <Card.Actions>
-            <SyncRepository repository={repo} />
-          </Card.Actions>
-        </Card>
-      </Stack>
+                {!!status?.sync?.message?.length && (
+                  <>
+                    <div className={styles.labelColumn}>
+                      <Text color="secondary">Messages:</Text>
+                    </div>
+                    <div className={styles.valueColumn}>
+                      <Stack gap={1}>
+                        {status.sync.message.map((msg, idx) => (
+                          <Text key={idx} variant="body">
+                            {msg}
+                          </Text>
+                        ))}
+                      </Stack>
+                    </div>
+                  </>
+                )}
+              </Grid>
+            </Card.Description>
+            <Card.Actions className={styles.actions}>
+              <SyncRepository repository={repo} />
+            </Card.Actions>
+          </Card>
+        </div>
+      </Grid>
       <Stack>
         <RecentJobs repo={repo} />
       </Stack>
@@ -181,3 +231,25 @@ function getFolderURL(repo: Repository) {
   }
   return '/dashboards';
 }
+
+const getStyles = () => {
+  return {
+    cardContainer: css({
+      height: '100%',
+    }),
+    card: css({
+      height: '100%',
+      display: 'flex',
+      flexDirection: 'column',
+    }),
+    actions: css({
+      marginTop: 'auto',
+    }),
+    labelColumn: css({
+      gridColumn: 'span 3',
+    }),
+    valueColumn: css({
+      gridColumn: 'span 9',
+    }),
+  };
+};
