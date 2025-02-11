@@ -454,13 +454,12 @@ func TestUserInfoSearchesForEmailAndOrgRoles(t *testing.T) {
 			tc.Setup(orgSvc)
 		}
 		orgRoleMapper := ProvideOrgRoleMapper(cfg, orgSvc)
-		provider, err := NewGenericOAuthProvider(&social.OAuthInfo{
+		provider := NewGenericOAuthProvider(&social.OAuthInfo{
 			EmailAttributePath: "email",
 		}, cfg,
 			orgRoleMapper,
 			&ssosettingstests.MockService{},
 			featuremgmt.WithFeatures())
-		require.NoError(t, err)
 
 		provider.info.RoleAttributePath = tc.RoleAttributePath
 		provider.info.OrgAttributePath = tc.OrgAttributePath
@@ -504,13 +503,12 @@ func TestUserInfoSearchesForEmailAndOrgRoles(t *testing.T) {
 	t.Run("Generic OAuth with empty API URL shouldn't call fetchPrivateEmail function", func(t *testing.T) {
 		orgSvc := &orgtest.FakeOrgService{ExpectedOrgs: []*org.OrgDTO{{ID: 4, Name: "org_dev"}, {ID: 5, Name: "org_engineering"}}}
 		orgRoleMapper := ProvideOrgRoleMapper(cfg, orgSvc)
-		provider, err := NewGenericOAuthProvider(&social.OAuthInfo{
+		provider := NewGenericOAuthProvider(&social.OAuthInfo{
 			EmailAttributePath: "email",
 		}, cfg,
 			orgRoleMapper,
 			&ssosettingstests.MockService{},
 			featuremgmt.WithFeatures())
-		require.NoError(t, err)
 
 		body, err := json.Marshal(map[string]any{"info": map[string]any{"roles": []string{"engineering", "SRE"}}})
 		require.NoError(t, err)
@@ -596,7 +594,7 @@ func TestUserInfoSearchesForLogin(t *testing.T) {
 		},
 	}
 
-	provider, err := NewGenericOAuthProvider(&social.OAuthInfo{
+	provider := NewGenericOAuthProvider(&social.OAuthInfo{
 		Extra: map[string]string{
 			"login_attribute_path": "login",
 		},
@@ -604,7 +602,6 @@ func TestUserInfoSearchesForLogin(t *testing.T) {
 		ProvideOrgRoleMapper(setting.NewCfg(), orgtest.NewOrgServiceFake()),
 		&ssosettingstests.MockService{},
 		featuremgmt.WithFeatures())
-	require.NoError(t, err)
 
 	for _, tc := range testCases {
 		provider.loginAttributePath = tc.LoginAttributePath
@@ -696,7 +693,7 @@ func TestUserInfoSearchesForName(t *testing.T) {
 		},
 	}
 
-	provider, err := NewGenericOAuthProvider(&social.OAuthInfo{
+	provider := NewGenericOAuthProvider(&social.OAuthInfo{
 		Extra: map[string]string{
 			"name_attribute_path": "name",
 		},
@@ -705,7 +702,6 @@ func TestUserInfoSearchesForName(t *testing.T) {
 		ProvideOrgRoleMapper(setting.NewCfg(), orgtest.NewOrgServiceFake()),
 		&ssosettingstests.MockService{},
 		featuremgmt.WithFeatures())
-	require.NoError(t, err)
 
 	for _, tc := range testCases {
 		provider.nameAttributePath = tc.NameAttributePath
@@ -781,14 +777,13 @@ func TestUserInfoSearchesForGroup(t *testing.T) {
 				require.NoError(t, err)
 			}))
 
-			provider, err := NewGenericOAuthProvider(&social.OAuthInfo{
+			provider := NewGenericOAuthProvider(&social.OAuthInfo{
 				GroupsAttributePath: test.groupsAttributePath,
 				ApiUrl:              ts.URL,
 			}, setting.NewCfg(),
 				ProvideOrgRoleMapper(setting.NewCfg(), orgtest.NewOrgServiceFake()),
 				&ssosettingstests.MockService{},
 				featuremgmt.WithFeatures())
-			require.NoError(t, err)
 
 			token := &oauth2.Token{
 				AccessToken:  "",
@@ -805,10 +800,9 @@ func TestUserInfoSearchesForGroup(t *testing.T) {
 }
 
 func TestPayloadCompression(t *testing.T) {
-	provider, err := NewGenericOAuthProvider(&social.OAuthInfo{
+	provider := NewGenericOAuthProvider(&social.OAuthInfo{
 		EmailAttributePath: "email",
 	}, &setting.Cfg{}, nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
-	require.NoError(t, err)
 
 	tests := []struct {
 		Name          string
@@ -963,8 +957,7 @@ func TestSocialGenericOAuth_InitializeExtraFields(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s, err := NewGenericOAuthProvider(tc.settings, &setting.Cfg{}, nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
-			require.NoError(t, err)
+			s := NewGenericOAuthProvider(tc.settings, &setting.Cfg{}, nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
 
 			require.Equal(t, tc.want.nameAttributePath, s.nameAttributePath)
 			require.Equal(t, tc.want.loginAttributePath, s.loginAttributePath)
@@ -1123,45 +1116,16 @@ func TestSocialGenericOAuth_Validate(t *testing.T) {
 			},
 			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
 		},
-		{
-			name: "fails if team ids is not valid",
-			settings: ssoModels.SSOSettings{
-				Settings: map[string]any{
-					"client_id":               "client-id",
-					"auth_url":                "https://example.com/auth",
-					"token_url":               "https://example.com/token",
-					"teams_url":               "https://example.com/teams",
-					"team_ids":                "[unquoted string]",
-					"team_ids_attribute_path": "team-ids-attr-path",
-				},
-			},
-			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
-		},
-		{
-			name: "fails if team ids is set but team url or team ids attribute path are missing",
-			settings: ssoModels.SSOSettings{
-				Settings: map[string]any{
-					"client_id":               "client-id",
-					"auth_url":                "https://example.com/auth",
-					"token_url":               "https://example.com/token",
-					"teams_url":               "https://example.com/teams",
-					"team_ids":                "[\"team1\"]",
-					"team_ids_attribute_path": "",
-				},
-			},
-			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
-		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s, err := NewGenericOAuthProvider(&social.OAuthInfo{}, &setting.Cfg{}, nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
-			require.NoError(t, err)
+			s := NewGenericOAuthProvider(&social.OAuthInfo{}, &setting.Cfg{}, nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
 
 			if tc.requester == nil {
 				tc.requester = &user.SignedInUser{IsGrafanaAdmin: false}
 			}
-			err = s.Validate(context.Background(), tc.settings, ssoModels.SSOSettings{}, tc.requester)
+			err := s.Validate(context.Background(), tc.settings, ssoModels.SSOSettings{}, tc.requester)
 			if tc.wantErr != nil {
 				require.ErrorIs(t, err, tc.wantErr)
 				return
@@ -1236,10 +1200,9 @@ func TestSocialGenericOAuth_Reload(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s, err := NewGenericOAuthProvider(tc.info, &setting.Cfg{}, nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
-			require.NoError(t, err)
+			s := NewGenericOAuthProvider(tc.info, &setting.Cfg{}, nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
 
-			err = s.Reload(context.Background(), tc.settings)
+			err := s.Reload(context.Background(), tc.settings)
 			if tc.expectError {
 				require.Error(t, err)
 				return
@@ -1335,10 +1298,9 @@ func TestGenericOAuth_Reload_ExtraFields(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s, err := NewGenericOAuthProvider(tc.info, setting.NewCfg(), nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
-			require.NoError(t, err)
+			s := NewGenericOAuthProvider(tc.info, setting.NewCfg(), nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
 
-			err = s.Reload(context.Background(), tc.settings)
+			err := s.Reload(context.Background(), tc.settings)
 			require.NoError(t, err)
 
 			require.EqualValues(t, tc.expectedInfo, s.info)

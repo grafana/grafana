@@ -100,6 +100,7 @@ func ProvideService(cfg *setting.Cfg,
 			}
 
 			conn, _ := createOAuthConnector(name, info, cfg, orgRoleMapper, ssoSettings, features, cache)
+
 			ss.socialMap[name] = conn
 		}
 	}

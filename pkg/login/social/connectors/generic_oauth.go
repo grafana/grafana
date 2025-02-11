@@ -60,7 +60,13 @@ func NewGenericOAuthProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMa
 		s.log.Error("Invalid settings for team_ids in Generic OAuth", "config", teamIdsKey, "error", err)
 		// TODO: Think if we want to add a metric
 	}
-	// TODO: Do the same for all other fields using the StringSplit func, in all other components
+
+	allowedOrganizations, err := util.SplitStringWithError(info.Extra[allowedOrganizationsKey])
+	if err != nil {
+		s.log.Error("Invalid settings for allowed_organizations in Generic OAuth", "config", allowedOrganizationsKey, "error", err)
+		// TODO: Think if we want to add a metric
+	}
+
 	provider := &SocialGenericOAuth{
 		SocialBase:           newSocialBase(social.GenericOAuthProviderName, orgRoleMapper, info, features, cfg),
 		teamsUrl:             info.TeamsUrl,
@@ -72,7 +78,7 @@ func NewGenericOAuthProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMa
 		idTokenAttributeName: info.Extra[idTokenAttributeNameKey],
 		teamIdsAttributePath: info.TeamIdsAttributePath,
 		teamIds:              teamIds,
-		allowedOrganizations: util.SplitString(info.Extra[allowedOrganizationsKey]),
+		allowedOrganizations: allowedOrganizations,
 	}
 
 	if features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsApi) {
@@ -101,8 +107,7 @@ func (s *SocialGenericOAuth) Validate(ctx context.Context, newSettings ssoModels
 	err = validation.Validate(info, requester,
 		validation.UrlValidator(info.AuthUrl, "Auth URL"),
 		validation.UrlValidator(info.TokenUrl, "Token URL"),
-		validateTeamsUrlWhenNotEmpty,
-	)
+		validateTeamsUrlWhenNotEmpty)
 
 	if err != nil {
 		return err
@@ -120,7 +125,12 @@ func (s *SocialGenericOAuth) Validate(ctx context.Context, newSettings ssoModels
 		s.log.Error("Invalid settings for team_ids in Generic OAuth", "config", teamIdsKey, "error", err)
 		// TODO: Think if we want to add a metric
 	}
-	// TODO: Do the same for all other fields using the StringSplit func, in all other components
+
+	_, err = util.SplitStringWithError(info.Extra[allowedOrganizationsKey])
+	if err != nil {
+		s.log.Error("Invalid settings for allowed_organizations in Generic OAuth", "config", allowedOrganizationsKey, "error", err)
+		// TODO: Think if we want to add a metric
+	}
 
 	return nil
 }
@@ -143,7 +153,12 @@ func (s *SocialGenericOAuth) Reload(ctx context.Context, settings ssoModels.SSOS
 		s.log.Error("Invalid settings for team_ids in Generic OAuth", "config", teamIdsKey, "error", err)
 		// TODO: Think if we want to add a metric
 	}
-	// TODO: Do the same for all other fields using the StringSplit func, in all other components
+
+	allowedOrganizations, err := util.SplitStringWithError(newInfo.Extra[allowedOrganizationsKey])
+	if err != nil {
+		s.log.Error("Invalid settings for allowed_organizations in Generic OAuth", "config", allowedOrganizationsKey, "error", err)
+		// TODO: Think if we want to add a metric
+	}
 
 	s.reloadMutex.Lock()
 	defer s.reloadMutex.Unlock()
@@ -159,7 +174,7 @@ func (s *SocialGenericOAuth) Reload(ctx context.Context, settings ssoModels.SSOS
 	s.idTokenAttributeName = newInfo.Extra[idTokenAttributeNameKey]
 	s.teamIdsAttributePath = newInfo.TeamIdsAttributePath
 	s.teamIds = teamIds
-	s.allowedOrganizations = util.SplitString(newInfo.Extra[allowedOrganizationsKey])
+	s.allowedOrganizations = allowedOrganizations
 
 	return nil
 }
