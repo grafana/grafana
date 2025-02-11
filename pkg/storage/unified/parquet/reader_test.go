@@ -89,7 +89,7 @@ func TestParquetWriteThenRead(t *testing.T) {
 	t.Run("read-write-empty-db", func(t *testing.T) {
 		file, err := os.CreateTemp(t.TempDir(), "temp-*.parquet")
 		require.NoError(t, err)
-		//defer os.Remove(file.Name())
+		defer os.Remove(file.Name())
 
 		writer, err := NewParquetWriter(file)
 		require.NoError(t, err)
