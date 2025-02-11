@@ -73,6 +73,16 @@ func TestIntegrationUpdateAlertRules(t *testing.T) {
 
 		require.NoError(t, err)
 		require.Equal(t, rule.Version+1, dbrule.Version)
+
+		t.Run("should create version record", func(t *testing.T) {
+			var count int64
+			err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+				count, err = sess.Table(alertRuleVersion{}).Where("rule_uid = ?", rule.UID).Count()
+				return err
+			})
+			require.NoError(t, err)
+			require.EqualValues(t, 1, count) // only the current version, insert did not create version.
+		})
 	})
 
 	t.Run("updating record field should increase version", func(t *testing.T) {
@@ -189,6 +199,32 @@ func TestIntegrationUpdateAlertRules(t *testing.T) {
 				return err
 			})
 			assert.Nil(t, dbrule.UpdatedBy)
+		})
+	})
+
+	t.Run("should save noop update", func(t *testing.T) {
+		rule := createRule(t, store, gen)
+		newRule := models.CopyRule(rule)
+		err := store.UpdateAlertRules(context.Background(), &usr, []models.UpdateRule{{
+			Existing: rule,
+			New:      *newRule,
+		},
+		})
+		require.NoError(t, err)
+
+		newRule, err = store.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{UID: rule.UID})
+		require.NoError(t, err)
+
+		assert.Equal(t, rule.Version+1, newRule.Version)
+
+		t.Run("should not create version record", func(t *testing.T) {
+			var count int64
+			err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+				count, err = sess.Table(alertRuleVersion{}).Where("rule_uid = ?", rule.UID).Count()
+				return err
+			})
+			require.NoError(t, err)
+			require.EqualValues(t, 1, count) // only the current version
 		})
 	})
 }
