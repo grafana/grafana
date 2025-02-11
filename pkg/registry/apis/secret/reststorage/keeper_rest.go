@@ -12,7 +12,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/admission"
-	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -74,9 +73,7 @@ func (s *KeeperRest) ConvertToTable(ctx context.Context, object runtime.Object, 
 
 // List calls the inner `store` (persistence) and returns a list of `Keepers` within a `namespace` filtered by the `options`.
 func (s *KeeperRest) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
-	namespace := xkube.Namespace(request.NamespaceValue(ctx))
-
-	keepersList, err := s.storage.List(ctx, namespace, options)
+	keepersList, err := s.storage.List(ctx, options)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list keepers: %w", err)
 	}
@@ -86,12 +83,7 @@ func (s *KeeperRest) List(ctx context.Context, options *internalversion.ListOpti
 
 // Get calls the inner `store` (persistence) and returns a `Keeper` by `name`.
 func (s *KeeperRest) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	nn := xkube.NameNamespace{
-		Name:      name,
-		Namespace: xkube.Namespace(request.NamespaceValue(ctx)),
-	}
-
-	kp, err := s.storage.Read(ctx, nn)
+	kp, err := s.storage.Read(ctx, name)
 	if err != nil {
 		if errors.Is(err, contracts.ErrKeeperNotFound) {
 			return nil, s.resource.NewNotFound(name)
@@ -185,12 +177,7 @@ func (s *KeeperRest) Update(
 // Delete calls the inner `store` (persistence) in order to delete the `Keeper`.
 // The second return parameter `bool` indicates whether the delete was intant or not. It always is for `Keepers`.
 func (s *KeeperRest) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
-	nn := xkube.NameNamespace{
-		Name:      name,
-		Namespace: xkube.Namespace(request.NamespaceValue(ctx)),
-	}
-
-	if err := s.storage.Delete(ctx, nn); err != nil {
+	if err := s.storage.Delete(ctx, name); err != nil {
 		return nil, false, fmt.Errorf("failed to delete keeper: %w", err)
 	}
 

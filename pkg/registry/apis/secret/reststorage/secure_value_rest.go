@@ -12,7 +12,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/admission"
-	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -74,9 +73,7 @@ func (s *SecureValueRest) ConvertToTable(ctx context.Context, object runtime.Obj
 
 // List calls the inner `store` (persistence) and returns a list of `securevalues` within a `namespace` filtered by the `options`.
 func (s *SecureValueRest) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
-	namespace := xkube.Namespace(request.NamespaceValue(ctx))
-
-	secureValueList, err := s.storage.List(ctx, namespace, options)
+	secureValueList, err := s.storage.List(ctx, options)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list secure values: %w", err)
 	}
@@ -86,12 +83,7 @@ func (s *SecureValueRest) List(ctx context.Context, options *internalversion.Lis
 
 // Get calls the inner `store` (persistence) and returns a `securevalue` by `name`. It will NOT return the decrypted `value`.
 func (s *SecureValueRest) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	nn := xkube.NameNamespace{
-		Name:      name,
-		Namespace: xkube.Namespace(request.NamespaceValue(ctx)),
-	}
-
-	sv, err := s.storage.Read(ctx, nn)
+	sv, err := s.storage.Read(ctx, name)
 	if err != nil {
 		if errors.Is(err, contracts.ErrSecureValueNotFound) {
 			return nil, s.resource.NewNotFound(name)
@@ -174,12 +166,7 @@ func (s *SecureValueRest) Update(
 // Delete calls the inner `store` (persistence) in order to delete the `securevalue`.
 // The second return parameter `bool` indicates whether the delete was instant or not. It always is for `securevalues`.
 func (s *SecureValueRest) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
-	nn := xkube.NameNamespace{
-		Name:      name,
-		Namespace: xkube.Namespace(request.NamespaceValue(ctx)),
-	}
-
-	if err := s.storage.Delete(ctx, nn); err != nil {
+	if err := s.storage.Delete(ctx, name); err != nil {
 		return nil, false, fmt.Errorf("delete secure value: %w", err)
 	}
 

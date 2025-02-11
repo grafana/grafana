@@ -5,7 +5,6 @@ import (
 
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 )
 
 func NewFakeDecryptStore(securevaluestore contracts.SecureValueStorage) contracts.DecryptStorage {
@@ -18,8 +17,8 @@ type fakeDecryptStorage struct {
 	securevaluestore contracts.SecureValueStorage
 }
 
-func (s *fakeDecryptStorage) Decrypt(ctx context.Context, nn xkube.NameNamespace) (secretv0alpha1.ExposedSecureValue, error) {
-	_, err := s.securevaluestore.Read(ctx, nn)
+func (s *fakeDecryptStorage) Decrypt(ctx context.Context, name string) (secretv0alpha1.ExposedSecureValue, error) {
+	_, err := s.securevaluestore.Read(ctx, name)
 	if err != nil {
 		return "", contracts.ErrSecureValueNotFound
 	}

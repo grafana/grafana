@@ -8,13 +8,13 @@ import (
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/secret/migrator"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apiserver/pkg/endpoints/request"
 )
 
 func ProvideSecureValueStorage(db db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles) (contracts.SecureValueStorage, error) {
@@ -81,10 +81,33 @@ func (s *secureValueStorage) Create(ctx context.Context, sv *secretv0alpha1.Secu
 	return createdSecureValue, nil
 }
 
-func (s *secureValueStorage) Read(ctx context.Context, nn xkube.NameNamespace) (*secretv0alpha1.SecureValue, error) {
-	row, err := s.readInternal(ctx, nn)
+func (s *secureValueStorage) Read(ctx context.Context, name string) (*secretv0alpha1.SecureValue, error) {
+	namespace, ok := request.NamespaceFrom(ctx)
+	if !ok {
+		return nil, fmt.Errorf("namespace not found")
+	}
+
+	_, ok = claims.AuthInfoFrom(ctx)
+	if !ok {
+		return nil, fmt.Errorf("missing auth info in context")
+	}
+
+	row := &secureValueDB{Name: name, Namespace: namespace}
+
+	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		found, err := sess.Get(row)
+		if err != nil {
+			return fmt.Errorf("could not get row: %w", err)
+		}
+
+		if !found {
+			return contracts.ErrSecureValueNotFound
+		}
+
+		return nil
+	})
 	if err != nil {
-		return nil, fmt.Errorf("read internal: %w", err)
+		return nil, fmt.Errorf("db failure: %w", err)
 	}
 
 	secureValue, err := row.toKubernetes()
@@ -96,19 +119,32 @@ func (s *secureValueStorage) Read(ctx context.Context, nn xkube.NameNamespace) (
 }
 
 func (s *secureValueStorage) Update(ctx context.Context, newSecureValue *secretv0alpha1.SecureValue) (*secretv0alpha1.SecureValue, error) {
+	namespace, ok := request.NamespaceFrom(ctx)
+	if !ok {
+		return nil, fmt.Errorf("namespace not found")
+	}
+
 	authInfo, ok := claims.AuthInfoFrom(ctx)
 	if !ok {
 		return nil, fmt.Errorf("missing auth info in context")
 	}
 
-	nn := xkube.NameNamespace{
-		Name:      newSecureValue.Name,
-		Namespace: xkube.Namespace(newSecureValue.Namespace),
-	}
+	currentRow := &secureValueDB{Name: newSecureValue.Name, Namespace: namespace}
 
-	currentRow, err := s.readInternal(ctx, nn)
+	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		found, err := sess.Get(currentRow)
+		if err != nil {
+			return fmt.Errorf("could not get row: %w", err)
+		}
+
+		if !found {
+			return contracts.ErrSecureValueNotFound
+		}
+
+		return nil
+	})
 	if err != nil {
-		return nil, fmt.Errorf("read securevalue: %w", err)
+		return nil, fmt.Errorf("db failure: %w", err)
 	}
 
 	// This should come from the keeper.
@@ -122,7 +158,7 @@ func (s *secureValueStorage) Update(ctx context.Context, newSecureValue *secretv
 
 	err = s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		// Validate before updating that the new `keeper` exists.
-		keeperRow := &keeperDB{Name: newRow.Keeper, Namespace: newRow.Namespace}
+		keeperRow := &keeperDB{Name: newRow.Keeper, Namespace: namespace}
 
 		keeperExists, err := sess.Table(keeperRow.TableName()).ForUpdate().Exist(keeperRow)
 		if err != nil {
@@ -133,7 +169,7 @@ func (s *secureValueStorage) Update(ctx context.Context, newSecureValue *secretv
 			return contracts.ErrKeeperNotFound
 		}
 
-		cond := &secureValueDB{Name: nn.Name, Namespace: nn.Namespace.String()}
+		cond := &secureValueDB{Name: newSecureValue.Name, Namespace: namespace}
 
 		if _, err := sess.Update(newRow, cond); err != nil {
 			return fmt.Errorf("update row: %w", err)
@@ -153,8 +189,13 @@ func (s *secureValueStorage) Update(ctx context.Context, newSecureValue *secretv
 	return secureValue, nil
 }
 
-func (s *secureValueStorage) Delete(ctx context.Context, nn xkube.NameNamespace) error {
-	_, ok := claims.AuthInfoFrom(ctx)
+func (s *secureValueStorage) Delete(ctx context.Context, name string) error {
+	namespace, ok := request.NamespaceFrom(ctx)
+	if !ok {
+		return fmt.Errorf("namespace not found")
+	}
+
+	_, ok = claims.AuthInfoFrom(ctx)
 	if !ok {
 		return fmt.Errorf("missing auth info in context")
 	}
@@ -162,7 +203,7 @@ func (s *secureValueStorage) Delete(ctx context.Context, nn xkube.NameNamespace)
 	// TODO: delete from the keeper!
 
 	// TODO: do we need to delete by GUID? name+namespace is a unique index. It would avoid doing a fetch.
-	row := &secureValueDB{Name: nn.Name, Namespace: nn.Namespace.String()}
+	row := &secureValueDB{Name: name, Namespace: namespace}
 
 	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		// TODO: because this is a securevalue, do we care to inform the caller if a row was delete (existed) or not?
@@ -179,8 +220,13 @@ func (s *secureValueStorage) Delete(ctx context.Context, nn xkube.NameNamespace)
 	return nil
 }
 
-func (s *secureValueStorage) List(ctx context.Context, namespace xkube.Namespace, options *internalversion.ListOptions) (*secretv0alpha1.SecureValueList, error) {
-	_, ok := claims.AuthInfoFrom(ctx)
+func (s *secureValueStorage) List(ctx context.Context, options *internalversion.ListOptions) (*secretv0alpha1.SecureValueList, error) {
+	namespace, ok := request.NamespaceFrom(ctx)
+	if !ok {
+		return nil, fmt.Errorf("namespace not found")
+	}
+
+	_, ok = claims.AuthInfoFrom(ctx)
 	if !ok {
 		return nil, fmt.Errorf("missing auth info in context")
 	}
@@ -193,7 +239,7 @@ func (s *secureValueStorage) List(ctx context.Context, namespace xkube.Namespace
 	secureValueRows := make([]*secureValueDB, 0)
 
 	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		cond := &secureValueDB{Namespace: namespace.String()}
+		cond := &secureValueDB{Namespace: namespace}
 
 		if err := sess.Find(&secureValueRows, cond); err != nil {
 			return fmt.Errorf("find rows: %w", err)
@@ -221,31 +267,4 @@ func (s *secureValueStorage) List(ctx context.Context, namespace xkube.Namespace
 	return &secretv0alpha1.SecureValueList{
 		Items: secureValues,
 	}, nil
-}
-
-func (s *secureValueStorage) readInternal(ctx context.Context, nn xkube.NameNamespace) (*secureValueDB, error) {
-	_, ok := claims.AuthInfoFrom(ctx)
-	if !ok {
-		return nil, fmt.Errorf("missing auth info in context")
-	}
-
-	row := &secureValueDB{Name: nn.Name, Namespace: nn.Namespace.String()}
-
-	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		found, err := sess.Get(row)
-		if err != nil {
-			return fmt.Errorf("could not get row: %w", err)
-		}
-
-		if !found {
-			return contracts.ErrSecureValueNotFound
-		}
-
-		return nil
-	})
-	if err != nil {
-		return nil, fmt.Errorf("db failure: %w", err)
-	}
-
-	return row, nil
 }

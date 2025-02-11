@@ -6,12 +6,10 @@ import (
 	"net/http"
 
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 )
 
 var (
@@ -67,12 +65,7 @@ func (s *DecryptRest) ProducesObject(verb string) interface{} {
 // Connect returns an http.Handler that will handle the request/response for a given API invocation.
 // See other methods implemented for supporting/optional functionality.
 func (s *DecryptRest) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	nn := xkube.NameNamespace{
-		Name:      name,
-		Namespace: xkube.Namespace(request.NamespaceValue(ctx)),
-	}
-
-	exposedValue, err := s.storage.Decrypt(ctx, nn)
+	exposedValue, err := s.storage.Decrypt(ctx, name)
 	if err != nil {
 		return nil, fmt.Errorf("failed to decrypt secure value: %w", err)
 	}

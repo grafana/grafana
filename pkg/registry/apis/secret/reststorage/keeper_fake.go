@@ -2,16 +2,17 @@ package reststorage
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 	"time"
 
 	"github.com/google/uuid"
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apiserver/pkg/endpoints/request"
 )
 
 func NewFakeKeeperStore(latency time.Duration) contracts.KeeperStorage {
@@ -42,12 +43,17 @@ func (s *fakeKeeperStorage) Create(ctx context.Context, k *secretv0alpha1.Keeper
 	return &v, nil
 }
 
-func (s *fakeKeeperStorage) Read(ctx context.Context, nn xkube.NameNamespace) (*secretv0alpha1.Keeper, error) {
-	ns, ok := s.values[nn.Namespace.String()]
+func (s *fakeKeeperStorage) Read(ctx context.Context, name string) (*secretv0alpha1.Keeper, error) {
+	namespace, ok := request.NamespaceFrom(ctx)
+	if !ok {
+		return nil, fmt.Errorf("namespace not found")
+	}
+
+	ns, ok := s.values[namespace]
 	if !ok {
 		return nil, contracts.ErrSecureValueNotFound
 	}
-	v, ok := ns[nn.Name]
+	v, ok := ns[name]
 	if !ok {
 		return nil, contracts.ErrSecureValueNotFound
 	}
@@ -73,26 +79,36 @@ func (s *fakeKeeperStorage) Update(ctx context.Context, nk *secretv0alpha1.Keepe
 	return &v, nil
 }
 
-func (s *fakeKeeperStorage) Delete(ctx context.Context, nn xkube.NameNamespace) error {
-	ns, ok := s.values[nn.Namespace.String()]
+func (s *fakeKeeperStorage) Delete(ctx context.Context, name string) error {
+	namespace, ok := request.NamespaceFrom(ctx)
+	if !ok {
+		return fmt.Errorf("namespace not found")
+	}
+
+	ns, ok := s.values[namespace]
 	if !ok {
 		return contracts.ErrSecureValueNotFound
 	}
-	_, ok = ns[nn.Name]
+	_, ok = ns[name]
 	if !ok {
 		return contracts.ErrSecureValueNotFound
 	}
 	time.AfterFunc(s.latency, func() {
-		delete(ns, nn.Name)
+		delete(ns, name)
 	})
 
 	return nil
 }
 
-func (s *fakeKeeperStorage) List(ctx context.Context, namespace xkube.Namespace, options *internalversion.ListOptions) (*secretv0alpha1.KeeperList, error) {
-	ns, ok := s.values[namespace.String()]
+func (s *fakeKeeperStorage) List(ctx context.Context, options *internalversion.ListOptions) (*secretv0alpha1.KeeperList, error) {
+	namespace, ok := request.NamespaceFrom(ctx)
 	if !ok {
-		s.values[namespace.String()] = ns
+		return nil, fmt.Errorf("namespace not found")
+	}
+
+	ns, ok := s.values[namespace]
+	if !ok {
+		s.values[namespace] = ns
 	}
 	l := make([]secretv0alpha1.Keeper, len(ns))
 	for _, v := range ns {

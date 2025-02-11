@@ -8,10 +8,10 @@ import (
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"k8s.io/apiserver/pkg/endpoints/request"
 )
 
 func ProvideDecryptStorage(db db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles) (contracts.DecryptStorage, error) {
@@ -28,14 +28,14 @@ type decryptStorage struct {
 	db db.DB
 }
 
-func (s *decryptStorage) Decrypt(ctx context.Context, nn xkube.NameNamespace) (secretv0alpha1.ExposedSecureValue, error) {
+func (s *decryptStorage) Decrypt(ctx context.Context, name string) (secretv0alpha1.ExposedSecureValue, error) {
 	// TODO: do proper checks here.
 	_, ok := claims.AuthInfoFrom(ctx)
 	if !ok {
 		return "", fmt.Errorf("missing auth info in context")
 	}
 
-	_, err := s.readSecureValue(ctx, nn)
+	_, err := s.readSecureValue(ctx, name)
 	if err != nil {
 		return "", fmt.Errorf("read secure value: %w", err)
 	}
@@ -45,8 +45,13 @@ func (s *decryptStorage) Decrypt(ctx context.Context, nn xkube.NameNamespace) (s
 	return secretv0alpha1.ExposedSecureValue("super duper secure"), nil
 }
 
-func (s *decryptStorage) readSecureValue(ctx context.Context, nn xkube.NameNamespace) (*secureValueDB, error) {
-	row := &secureValueDB{Name: nn.Name, Namespace: nn.Namespace.String()}
+func (s *decryptStorage) readSecureValue(ctx context.Context, name string) (*secureValueDB, error) {
+	namespace, ok := request.NamespaceFrom(ctx)
+	if !ok {
+		return nil, fmt.Errorf("namespace not found")
+	}
+
+	row := &secureValueDB{Name: name, Namespace: namespace}
 
 	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		found, err := sess.Get(row)
