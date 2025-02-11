@@ -10,11 +10,11 @@ import { featureDiscoveryApi } from '../api/featureDiscoveryApi';
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
 import { DynamicTable, DynamicTableColumnProps } from '../components/DynamicTable';
 import { useFolder } from '../hooks/useFolder';
+import { useRulesAccess } from '../utils/accessControlHooks';
 import { stringifyErrorLike } from '../utils/misc';
+import { groups } from '../utils/navigation';
 import { getEvaluationsToStartAlerting, isAlertingRule } from '../utils/rules';
 import { formatPrometheusDuration } from '../utils/time';
-import { groups } from '../utils/navigation';
-import { useRulesAccess } from '../utils/accessControlHooks';
 
 interface GroupDetailsProps {
   promGroup: RuleGroup;
@@ -26,10 +26,10 @@ function GroupDetails({ promGroup }: GroupDetailsProps) {
   return (
     <div>
       <dl>
-        <dt>Name</dt>
-        <dd>{promGroup.name}</dd>
-        <dt>Interval</dt>
-        <dd>{formatPrometheusDuration(groupIntervalMs)}</dd>
+        <dt id="group-name">Name</dt>
+        <dd aria-labelledby="group-name">{promGroup.name}</dd>
+        <dt id="group-interval">Interval</dt>
+        <dd aria-labelledby="group-interval">{formatPrometheusDuration(groupIntervalMs)}</dd>
       </dl>
       <RulesTable rules={promGroup.rules} groupInterval={groupIntervalMs} />
     </div>

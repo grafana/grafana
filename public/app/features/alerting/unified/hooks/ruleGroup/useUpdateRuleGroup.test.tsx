@@ -1,4 +1,4 @@
-import { render } from 'test/test-utils';
+import { render, renderHook } from 'test/test-utils';
 import { byRole, byText } from 'testing-library-selector';
 
 import { AccessControlAction } from 'app/types';
@@ -19,6 +19,7 @@ import {
   useMoveRuleGroup,
   useRenameRuleGroup,
   useReorderRuleForRuleGroup,
+  useUpdateRuleGroup,
   useUpdateRuleGroupConfiguration,
 } from './useUpdateRuleGroup';
 
@@ -26,6 +27,27 @@ setupMswServer();
 
 beforeAll(() => {
   grantUserPermissions([AccessControlAction.AlertingRuleExternalRead, AccessControlAction.AlertingRuleRead]);
+});
+
+describe('useUpdateRuleGroup', () => {
+  it('should update a rule group interval', async () => {
+    const { result } = renderHook(() => useUpdateRuleGroup());
+
+    const ruleGroupID: RuleGroupIdentifier = {
+      dataSourceName: GRAFANA_RULES_SOURCE_NAME,
+      groupName: grafanaRulerGroupName,
+      namespaceName: grafanaRulerNamespace.uid,
+    };
+
+    const delta: UpdateGroupDelta = {
+      interval: '1m',
+    };
+
+    const [updateRuleGroup, requestState] = result.current;
+    const updateReuslt = await updateRuleGroup.execute(ruleGroupID, delta);
+
+    expect(result).toBeDefined();
+  });
 });
 
 describe('useUpdateRuleGroupConfiguration', () => {

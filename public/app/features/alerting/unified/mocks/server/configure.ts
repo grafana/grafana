@@ -120,7 +120,11 @@ export function mimirDataSource() {
   return { dataSource, rulerConfig };
 }
 
-export function setPrometheusRules(ds: DataSourceInstanceSettings, groups: PromRuleGroupDTO[]) {
+interface DataSourceLike {
+  uid: string;
+}
+
+export function setPrometheusRules(ds: DataSourceLike, groups: PromRuleGroupDTO[]) {
   server.use(http.get(`/api/prometheus/${ds.uid}/api/v1/rules`, paginatedHandlerFor(groups)));
 }
 

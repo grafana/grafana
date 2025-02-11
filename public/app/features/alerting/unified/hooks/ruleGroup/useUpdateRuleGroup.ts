@@ -3,6 +3,7 @@ import { Action } from '@reduxjs/toolkit';
 import { t } from 'app/core/internationalization';
 import { RuleGroupIdentifier } from 'app/types/unified-alerting';
 
+import { logError } from '../../Analytics';
 import { alertRuleApi } from '../../api/alertRuleApi';
 import { notFoundToNullOrThrow } from '../../api/util';
 import {
@@ -64,10 +65,10 @@ export function useUpdateRuleGroup() {
     const targetNamespace = delta.namespaceName ?? oldNamespace;
 
     const oldGroupName = ruleGroup.groupName;
-    const targetGroupName = delta.groupName ?? oldGroupName;
+    const targetGroupName = newRuleGroupDefinition.name;
 
-    const isNamespaceChanged = Boolean(targetNamespace) && oldNamespace !== targetNamespace;
-    const isGroupRenamed = Boolean(targetGroupName) && oldGroupName !== targetGroupName;
+    const isNamespaceChanged = oldNamespace !== targetNamespace;
+    const isGroupRenamed = oldGroupName !== targetGroupName;
 
     const shouldRemoveOldGroup = isNamespaceChanged || isGroupRenamed;
 
@@ -105,7 +106,11 @@ export function useUpdateRuleGroup() {
         namespace: oldNamespace,
         group: oldGroupName,
         notificationOptions: { showSuccessAlert: false },
-      }).unwrap();
+      })
+        .unwrap()
+        .catch((e) => {
+          logError(e);
+        });
     }
 
     return result;
