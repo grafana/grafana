@@ -10,19 +10,21 @@ import {
 
 import { grafanaAlertPropertiesToIgnore } from './AlertVersionHistory';
 
+interface SpecialUidsDisplayMapEntry {
+  name: string;
+  tooltipContent: string;
+  badgeColor: BadgeColor;
+  icon?: IconName;
+}
+
 /**
  * Gets a map of special case UIDs that we should display differently.
  * Used for mapping cases where provisioning or the alerting system is listed as responsible for a version history entry.
  */
 
-export const getSpecialUidMap: () => Record<
+export const getSpecialUidsDisplayMap: () => Record<
   string,
-  {
-    name: string;
-    tooltipContent: string;
-    badgeColor: BadgeColor;
-    icon?: IconName;
-  }
+  SpecialUidsDisplayMapEntry
 > = () => {
   const provisioning = {
     name: t('alerting.alertVersionHistory.provisioning', 'Provisioning'),

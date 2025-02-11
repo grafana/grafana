@@ -11,7 +11,7 @@ import { alertRuleApi } from '../../../api/alertRuleApi';
 import { stringifyErrorLike } from '../../../utils/misc';
 
 import { VersionHistoryTable } from './components/VersionHistoryTable';
-import { getSpecialUidMap, preprocessRuleForDiffDisplay } from './versions-utils';
+import { getSpecialUidsDisplayMap, preprocessRuleForDiffDisplay } from './versions-utils';
 
 const { useGetAlertVersionHistoryQuery } = alertRuleApi;
 
@@ -167,7 +167,7 @@ export function AlertVersionHistory({ ruleUid }: AlertVersionHistoryProps) {
  */
 function parseVersionInfoToSummary(version: RulerGrafanaRuleDTO<GrafanaRuleDefinition>): RevisionModel {
   const unknown = t('alerting.alertVersionHistory.unknown', 'Unknown');
-  const SPECIAL_UID_MAP = getSpecialUidMap();
+  const SPECIAL_UID_MAP = getSpecialUidsDisplayMap();
   const createdBy = (() => {
     const updatedBy = version?.grafana_alert.updated_by;
     const uid = updatedBy?.uid;
