@@ -414,7 +414,7 @@ describe('LogsPanel', () => {
         await userEvent.click(screen.getByLabelText(/show context/i));
 
         const getRowContextCb = logRowContextModalMock.mock.calls[0][0].getRowContext;
-        getRowContextCb();
+        getRowContextCb({}, {});
         expect(showContextDs.getLogRowContext).toBeCalled();
       });
     });
