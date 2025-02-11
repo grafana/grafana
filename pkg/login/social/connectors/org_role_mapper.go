@@ -189,18 +189,18 @@ func (m *OrgRoleMapper) getOrgIDForInternalMapping(ctx context.Context, orgIdCfg
 	}
 
 	orgID, err := strconv.Atoi(orgIdCfg)
-	if err != nil {
-		res, getErr := m.orgService.GetByName(ctx, &org.GetOrgByNameQuery{Name: orgIdCfg})
-
-		if getErr != nil {
-			// skip in case of error
-			m.logger.Warn("Could not fetch organization. Skipping.", "err", err, "org", orgIdCfg)
-			return 0, getErr
-		}
-		orgID = int(res.ID)
+	if err == nil {
+		return orgID, nil
 	}
 
-	return orgID, nil
+	res, getErr := m.orgService.GetByName(ctx, &org.GetOrgByNameQuery{Name: orgIdCfg})
+	if getErr != nil {
+		// skip in case of error
+		m.logger.Warn("Could not fetch organization. Skipping.", "err", getErr, "org", orgIdCfg)
+		return 0, getErr
+	}
+
+	return int(res.ID), nil
 }
 
 func (m *OrgRoleMapper) getAllOrgs() (map[int64]bool, error) {
