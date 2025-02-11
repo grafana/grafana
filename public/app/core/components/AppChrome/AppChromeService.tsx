@@ -153,9 +153,6 @@ export class AppChromeService {
     if (isSamePath) {
       entries[0] = newEntry;
     } else {
-      if (newEntry.name === lastEntry.name) {
-        // TODO add rudderstack event for same page navigation
-      }
       entries = [newEntry, ...entries];
     }
 
