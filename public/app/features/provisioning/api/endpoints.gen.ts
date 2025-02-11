@@ -736,14 +736,12 @@ export type JobList = {
 export type GitHubRepositoryConfig = {
   /** The branch to use in the repository. By default, this is the main branch. */
   branch?: string;
-  /** Whether we should show dashboard previews in the pull requests caused by the BranchWorkflow option. By default, this is false (i.e. we will not create previews). This option is a no-op if BranchWorkflow is `false` or default. */
+  /** Whether we should show dashboard previews for pull requests By default, this is false (i.e. we will not create previews). */
   generateDashboardPreviews?: boolean;
-  /** The owner of the repository (e.g. example in `example/test` or `https://github.com/example/test`). */
-  owner?: string;
-  /** The name of the repository (e.g. test in `example/test` or `https://github.com/example/test`). */
-  repository?: string;
   /** Token for accessing the repository. */
   token?: string;
+  /** The repository URL `https://github.com/example/test`). */
+  url: string;
   /** Workflow allowed for changes to the repository. The order is relevant for defining the precedence of the workflows. Possible values: pull-request, branch, push. */
   workflows?: ('branch' | 'push')[];
 };

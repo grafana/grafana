@@ -44,7 +44,7 @@ function getDefaultValues(repository?: RepositorySpec): RepositoryFormData {
       type: 'github',
       title: '',
       token: '',
-      repositoryUrl: '',
+      url: '',
       branch: 'main',
       generateDashboardPreviews: true,
       workflows: ['push', 'branch'],
@@ -154,20 +154,20 @@ export function ConfigForm({ data }: ConfigFormProps) {
           <TokenPermissionsInfo />
           <Field
             label={'Repository URL'}
-            error={errors?.repositoryUrl?.message}
-            invalid={!!errors?.repositoryUrl}
+            error={errors?.url?.message}
+            invalid={!!errors?.url}
             description={'Enter the GitHub repository URL or owner/repository name'}
             required
           >
             <Input
-              {...register('repositoryUrl', {
+              {...register('url', {
                 required: 'This field is required.',
                 pattern: {
                   value: /^(?:https:\/\/github\.com\/)?[^/]+\/[^/]+$/,
-                  message: 'Please enter a valid GitHub repository URL or owner/repository (e.g. grafana/grafana)',
+                  message: 'Please enter a valid GitHub repository URL',
                 },
               })}
-              placeholder={'https://github.com/username/repo-name or username/repo-name'}
+              placeholder={'https://github.com/username/repo-name/'}
             />
           </Field>
           <Field label={'Branch'}>

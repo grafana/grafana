@@ -78,6 +78,8 @@ func (r *githubRepository) Validate() (list field.ErrorList) {
 			list = append(list, field.Invalid(field.NewPath("spec", "github", "url"), gh.URL, err.Error()))
 		} else if !strings.HasPrefix(gh.URL, "https://github.com/") {
 			list = append(list, field.Invalid(field.NewPath("spec", "github", "url"), gh.URL, "URL must start with https://github.com/"))
+		} else if !strings.HasSuffix(gh.URL, "/") {
+			list = append(list, field.Invalid(field.NewPath("spec", "github", "url"), gh.URL, "URL must end with a /"))
 		}
 	}
 	if gh.Branch == "" {
@@ -108,12 +110,8 @@ func parseOwnerRepo(giturl string) (owner string, repo string, err error) {
 		return
 	}
 	parts := strings.Split(parsed.Path, "/")
-	if len(parts) != 4 {
+	if len(parts) < 3 {
 		err = fmt.Errorf("unable to parse repo+owner from url")
-		return
-	}
-	if parts[0] != "" && parts[3] != "" {
-		err = fmt.Errorf("expecting trailing slash")
 		return
 	}
 	return parts[1], parts[2], nil
