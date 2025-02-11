@@ -40,8 +40,7 @@ func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) err
 	last := time.Now()
 
 	opts := legacy.MigrateOptions{
-		Namespace:   namespace,
-		WithHistory: false, // configured below
+		Namespace: namespace,
 		Resources: []schema.GroupResource{
 			{Group: folders.GROUP, Resource: folders.RESOURCE},
 			{Group: dashboard.GROUP, Resource: dashboard.DASHBOARD_RESOURCE},
