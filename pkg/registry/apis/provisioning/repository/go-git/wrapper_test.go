@@ -18,8 +18,8 @@ import (
 // FIXME!! NOTE!!!!!
 // This is really just a sketchpad while trying to get things working
 // the test makes destructive changes to a real git repository :)
-// this should be removed before commiting to main (likely sooner)
-// and replaced with integratino tests that check the more specific results
+// this should be removed before committing to main (likely sooner)
+// and replaced with integration tests that check the more specific results
 func TestGoGitWrapper(t *testing.T) {
 	token, ok := os.LookupEnv("gitwraptoken")
 	if !ok {
