@@ -2,7 +2,17 @@ import { debounce } from 'lodash';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { VariableSizeList } from 'react-window';
 
-import { AbsoluteTimeRange, CoreApp, EventBus, LogRowModel, LogsSortOrder, TimeRange } from '@grafana/data';
+import {
+  AbsoluteTimeRange,
+  CoreApp,
+  DataFrame,
+  EventBus,
+  Field,
+  LinkModel,
+  LogRowModel,
+  LogsSortOrder,
+  TimeRange,
+} from '@grafana/data';
 import { useTheme2 } from '@grafana/ui';
 
 import { InfiniteScroll } from './InfiniteScroll';
@@ -15,14 +25,18 @@ import {
   storeLogLineSize,
 } from './virtualization';
 
+export type GetFieldLinksFn = (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>;
+
 interface Props {
   app: CoreApp;
-  logs: LogRowModel[];
   containerElement: HTMLDivElement;
+  displayedFields: string[];
   eventBus: EventBus;
   forceEscape?: boolean;
+  getFieldLinks?: GetFieldLinksFn;
   initialScrollPosition?: 'top' | 'bottom';
   loadMore?: (range: AbsoluteTimeRange) => void;
+  logs: LogRowModel[];
   showTime: boolean;
   sortOrder: LogsSortOrder;
   timeRange: TimeRange;
@@ -33,8 +47,10 @@ interface Props {
 export const LogList = ({
   app,
   containerElement,
+  displayedFields = [],
   eventBus,
   forceEscape = false,
+  getFieldLinks,
   initialScrollPosition = 'top',
   loadMore,
   logs,
@@ -65,9 +81,11 @@ export const LogList = ({
   }, [eventBus, logs.length]);
 
   useEffect(() => {
-    setProcessedLogs(preProcessLogs(logs, { wrap: wrapLogMessage, escape: forceEscape, order: sortOrder, timeZone }));
+    setProcessedLogs(
+      preProcessLogs(logs, { getFieldLinks, wrap: wrapLogMessage, escape: forceEscape, order: sortOrder, timeZone })
+    );
     listRef.current?.resetAfterIndex(0);
-  }, [forceEscape, logs, sortOrder, timeZone, wrapLogMessage]);
+  }, [forceEscape, getFieldLinks, logs, sortOrder, timeZone, wrapLogMessage]);
 
   useEffect(() => {
     const handleResize = debounce(() => {
@@ -110,6 +128,7 @@ export const LogList = ({
 
   return (
     <InfiniteScroll
+      displayedFields={displayedFields}
       handleOverflow={handleOverflow}
       logs={processedLogs}
       loadMore={loadMore}

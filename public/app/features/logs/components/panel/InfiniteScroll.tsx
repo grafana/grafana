@@ -22,6 +22,7 @@ interface ChildrenProps {
 
 interface Props {
   children: (props: ChildrenProps) => ReactNode;
+  displayedFields: string[];
   handleOverflow: (index: number, id: string, height: number) => void;
   loadMore?: (range: AbsoluteTimeRange) => void;
   logs: LogListModel[];
@@ -38,6 +39,7 @@ type InfiniteLoaderState = 'idle' | 'out-of-bounds' | 'pre-scroll' | 'loading';
 
 export const InfiniteScroll = ({
   children,
+  displayedFields,
   handleOverflow,
   loadMore,
   logs,
@@ -139,6 +141,7 @@ export const InfiniteScroll = ({
       }
       return (
         <LogLine
+          displayedFields={displayedFields}
           index={index}
           log={logs[index]}
           showTime={showTime}
@@ -149,7 +152,7 @@ export const InfiniteScroll = ({
         />
       );
     },
-    [handleOverflow, infiniteLoaderState, logs, onLoadMore, showTime, sortOrder, wrapLogMessage]
+    [displayedFields, handleOverflow, infiniteLoaderState, logs, onLoadMore, showTime, sortOrder, wrapLogMessage]
   );
 
   const onItemsRendered = useCallback(

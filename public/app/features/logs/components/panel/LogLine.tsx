@@ -8,6 +8,7 @@ import { LogListModel } from './processing';
 import { hasUnderOrOverflow } from './virtualization';
 
 interface Props {
+  displayedFields: string[];
   index: number;
   log: LogListModel;
   showTime: boolean;
@@ -17,7 +18,16 @@ interface Props {
   wrapLogMessage: boolean;
 }
 
-export const LogLine = ({ index, log, style, onOverflow, showTime, variant, wrapLogMessage }: Props) => {
+export const LogLine = ({
+  displayedFields,
+  index,
+  log,
+  style,
+  onOverflow,
+  showTime,
+  variant,
+  wrapLogMessage,
+}: Props) => {
   const theme = useTheme2();
   const styles = getStyles(theme);
   const logLineRef = useRef<HTMLDivElement | null>(null);
