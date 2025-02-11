@@ -113,9 +113,9 @@ export function useOptions<T extends string | number>(rawOptions: AsyncOptions<T
       reorganizeOptions.push(...groupOptions);
     }
 
-    const undefinedGroupOptiones = groupedOptions.get(undefined);
-    if (undefinedGroupOptiones) {
-      reorganizeOptions.push(...undefinedGroupOptiones);
+    const undefinedGroupOptions = groupedOptions.get(undefined);
+    if (undefinedGroupOptions) {
+      reorganizeOptions.push(...undefinedGroupOptions);
     }
     return reorganizeOptions;
   }, []);
