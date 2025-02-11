@@ -72,8 +72,8 @@ You use the Service Graph to detect performance issues; track increases in error
 
 ## Display the Service Graph
 
-1. [Configure Grafana Alloy](https://grafana.com/docs/tempo/latest/configuration/grafana-alloy/) or [Tempo or GET](https://grafana.com/docs/tempo/latest/metrics-generator/service_graphs/#tempo) to generate Service Graph data.
-1. Link a Prometheus data source in the Tempo data source's [Service Graph]({{< relref "./configure-tempo-data-source#configure-service-graph" >}}) settings.
+1. [Configure Grafana Alloy](https://grafana.com/docs/tempo/<TEMPO_VERSION>/configuration/grafana-alloy/) or [Tempo or GET](https://grafana.com/docs/tempo/<TEMPO_VERSION>/metrics-generator/service_graphs/#tempo) to generate Service Graph data.
+1. Link a Prometheus data source in the Tempo data source's [Service Graph](./configure-tempo-data-source#configure-service-graph) settings.
 1. Navigate to [Explore](ref:explore).
 1. Select the Tempo data source.
 1. Select the **Service Graph** query type.
@@ -113,10 +113,10 @@ To open the Service Graph view:
 1. Run the query.
 1. _(Optional)_ Filter your results.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Grafana uses the `traces_spanmetrics_calls_total` metric to display the name, rate, and error rate columns, and `traces_spanmetrics_latency_bucket` to display the duration column.
 These metrics must exist in your Prometheus data source.
-{{% /admonition %}}
+{{< /admonition >}}
 
 To open a query in Prometheus with the span name of that row automatically set in the query, click a row in the **rate**, **error rate**, or **duration** columns.
 

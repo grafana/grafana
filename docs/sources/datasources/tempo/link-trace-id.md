@@ -12,7 +12,7 @@ labels:
     - oss
 menuTitle: Link to a trace ID
 title: Link to a trace ID
-weight: 700
+weight: 800
 refs:
   configure-grafana-feature-toggles:
     - pattern: /docs/grafana/

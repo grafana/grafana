@@ -12,7 +12,7 @@ labels:
     - oss
 menuTitle: Upload JSON trace file
 title: Upload a JSON trace file
-weight: 400
+weight: 900
 ---
 
 # Upload a JSON trace file
