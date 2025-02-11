@@ -34,12 +34,6 @@
       "save-button": "Save"
     }
   },
-  "actions-editor": {
-    "inline": {
-      "add-button": "Add action",
-      "one-click-action": "One-click action"
-    }
-  },
   "admin": {
     "anon-users": {
       "not-found": "No anonymous users found."
@@ -902,18 +896,29 @@
       "subtitle": "Alert rules related to this dashboard"
     },
     "default-layout": {
+      "description": "The default grid layout",
+      "item-options": {
+        "repeat": {
+          "direction": {
+            "horizontal": "Horizontal",
+            "title": "Repeat direction",
+            "vertical": "Vertical"
+          },
+          "max": "Max per row",
+          "title": "Repeat options",
+          "variable": {
+            "description": "Repeat this panel for each value in the selected variable. This is not visible while in edit mode. You need to go back to dashboard and then update the variable or reload the dashboard.",
+            "title": "Repeat by variable"
+          }
+        }
+      },
+      "name": "Default grid",
       "row-actions": {
         "delete": "Delete row",
         "modal": {
           "alt-action": "Delete row only",
           "text": "Are you sure you want to remove this row and all its panels?",
           "title": "Delete row"
-        },
-        "repeat": {
-          "warning": {
-            "learn-more": "Learn more",
-            "text": "Panels in this row use the {{SHARED_DASHBOARD_QUERY}} data source. These panels will reference the panel in the original row, not the ones in the repeated rows."
-          }
         }
       },
       "row-options": {
@@ -922,7 +927,13 @@
         },
         "form": {
           "cancel": "Cancel",
-          "repeat-for": "Repeat for",
+          "repeat-for": {
+            "label": "Repeat for",
+            "learn-more": "Learn more",
+            "warning": {
+              "text": "Panels in this row use the {{SHARED_DASHBOARD_QUERY}} data source. These panels will reference the panel in the original row, not the ones in the repeated rows."
+            }
+          },
           "title": "Title",
           "update": "Update"
         },
@@ -934,19 +945,29 @@
     "edit-pane": {
       "objects": {
         "multi-select": {
-          "selection-number": "No. of objects selected: "
+          "selection-number": "No. of objects selected: {{length}}"
         }
       },
+      "open": "Open options pane",
       "panels": {
         "multi-select": {
-          "selection-number": "No. of panels selected: "
+          "selection-number": "No. of panels selected: {{length}}"
         }
       },
       "row": {
-        "hide": "Hide row header",
+        "header": {
+          "hide": "Hide",
+          "title": "Row header"
+        },
         "multi-select": {
           "options-header": "Multi-selected Row options",
-          "selection-number": "No. of rows selected: "
+          "selection-number": "No. of rows selected: {{length}}"
+        }
+      },
+      "tab": {
+        "multi-select": {
+          "options-header": "Multi-selected Tab options",
+          "selection-number": "No. of tabs selected: "
         }
       }
     },
@@ -1016,34 +1037,130 @@
       "rows": "Total number rows",
       "table-title": "Stats"
     },
+    "options": {
+      "description": "Description",
+      "title": "Dashboard options",
+      "title-option": "Title"
+    },
     "panel-edit": {
       "alerting-tab": {
         "dashboard-not-saved": "Dashboard must be saved before alerts can be added.",
         "no-rules": "There are no alert rules linked to this panel."
       }
     },
+    "responsive-layout": {
+      "description": "CSS layout that adjusts to the available space",
+      "item-options": {
+        "hide-no-data": "Hide when no data",
+        "title": "Layout options"
+      },
+      "name": "Responsive grid",
+      "options": {
+        "columns": "Columns",
+        "fixed": "Fixed: {{size}}px",
+        "min": "Min: {{size}}px",
+        "one-column": "1 column",
+        "rows": "Rows",
+        "three-columns": "3 columns",
+        "two-columns": "2 columns"
+      }
+    },
     "rows-layout": {
+      "description": "Rows layout",
+      "name": "Rows",
       "row": {
+        "collapse": "Collapse row",
+        "expand": "Expand row",
+        "new": "New row",
         "repeat": {
           "learn-more": "Learn more",
           "warning": "Panels in this row use the {{SHARED_DASHBOARD_QUERY}} data source. These panels will reference the panel in the original row, not the ones in the repeated rows."
         }
+      },
+      "row-options": {
+        "height": {
+          "expand": "Expand",
+          "hide-row-header": "Hide row header",
+          "min": "Min",
+          "title": "Height"
+        },
+        "repeat": {
+          "title": "Repeat options",
+          "variable": {
+            "title": "Variable"
+          }
+        },
+        "title": "Row options",
+        "title-option": "Title"
+      }
+    },
+    "tabs-layout": {
+      "description": "Tabs layout",
+      "name": "Tabs",
+      "tab": {
+        "new": "New tab"
+      },
+      "tab-options": {
+        "title": "Tab options",
+        "title-option": "Title"
       }
     },
     "toolbar": {
       "add": "Add",
+      "add-panel": "Panel",
+      "add-panel-lib": "Import",
+      "add-row": "Row",
+      "add-tab": "Tab",
       "alert-rules": "Alert rules",
+      "back-to-dashboard": "Back to dashboard",
+      "dashboard-settings": {
+        "label": "Settings",
+        "tooltip": "Dashboard settings"
+      },
+      "discard-library-panel-changes": "Discard library panel changes",
+      "discard-panel": "Discard panel changes",
+      "discard-panel-new": "Discard panel",
+      "edit": {
+        "label": "Edit",
+        "tooltip": "Enter edit mode"
+      },
+      "edit-dashboard-v2-schema": "Edit dashboard v2 schema",
+      "enter-edit-mode": {
+        "label": "Make editable",
+        "tooltip": "This dashboard was marked as read only"
+      },
+      "exit-edit-mode": {
+        "label": "Exit edit",
+        "tooltip": "Exits edit mode and discards unsaved changes"
+      },
       "mark-favorite": "Mark as favorite",
+      "more-save-options": "More save options",
       "open-original": "Open original dashboard",
       "playlist-next": "Go to next dashboard",
       "playlist-previous": "Go to previous dashboard",
       "playlist-stop": "Stop playlist",
+      "public-dashboard": "Public",
       "refresh": "Refresh dashboard",
       "save": "Save dashboard",
+      "save-dashboard": {
+        "label": "Save dashboard",
+        "tooltip": "Save changes"
+      },
+      "save-dashboard-copy": {
+        "label": "Save as copy",
+        "tooltip": "Save as copy"
+      },
+      "save-dashboard-short": "Save",
+      "save-library-panel": "Save library panel",
       "settings": "Dashboard settings",
-      "share": "Share dashboard",
+      "share": {
+        "label": "Share",
+        "tooltip": "Share dashboard"
+      },
       "share-button": "Share",
       "show-hidden-elements": "Show hidden",
+      "switch-old-dashboard": "Switch to old dashboard page",
+      "unlink-library-panel": "Unlink library panel",
       "unmark-favorite": "Unmark as favorite"
     },
     "validation": {
@@ -1051,6 +1168,14 @@
       "invalid-json": "Not valid JSON",
       "tags-expected-array": "tags expected array",
       "tags-expected-strings": "tags expected array of strings"
+    },
+    "viz-panel": {
+      "options": {
+        "description": "Description",
+        "title": "Panel options",
+        "title-option": "Title",
+        "transparent-background": "Transparent background"
+      }
     }
   },
   "dashboard-import": {
@@ -1235,36 +1360,6 @@
       "no-logs-found": "No logs found.",
       "scan-for-older-logs": "Scan for older logs",
       "stop-scan": "Stop scan"
-    },
-    "query-library": {
-      "add-edit-description": "Add/edit description",
-      "cancel": "Cancel",
-      "default-description": "Public",
-      "delete-query": "Delete query",
-      "delete-query-text": "You're about to remove this query from the query library. This action cannot be undone. Do you want to continue?",
-      "delete-query-title": "Delete query",
-      "private": "Private",
-      "public": "Public",
-      "query-deleted": "Query deleted",
-      "query-template-add-error": "Error attempting to save this query to the library",
-      "query-template-added": "Query successfully saved to the library",
-      "query-template-edit-error": "Error attempting to edit this query",
-      "query-template-edited": "Query template successfully edited",
-      "save": "Save"
-    },
-    "query-template-modal": {
-      "add-info": "You're about to save this query. Once saved, you can easily access it in the Query Library tab for future use and reference.",
-      "add-title": "Add query to Query Library",
-      "auto-star": "Auto-star this query to add it to your starred list in the Query Library.",
-      "data-source-name": "Data source name",
-      "description": "Description",
-      "edit-info": "You're about to edit this query. Once saved, you can easily access it in the Query Library tab for future use and reference.",
-      "edit-title": "Edit query",
-      "query": "Query",
-      "visibility": "Visibility"
-    },
-    "query-template-modall": {
-      "data-source-type": "Data source type"
     },
     "rich-history": {
       "close-tooltip": "Close query history",
@@ -1468,6 +1563,24 @@
     "send-custom-feedback": "Send"
   },
   "grafana-ui": {
+    "action-editor": {
+      "button": {
+        "confirm": "Confirm",
+        "confirm-action": "Confirm action"
+      },
+      "inline": {
+        "add-action": "Add action",
+        "edit-action": "Edit action"
+      },
+      "modal": {
+        "action-body": "Body",
+        "action-method": "Method",
+        "action-query-params": "Query parameters",
+        "action-title": "Title",
+        "action-title-placeholder": "Action title",
+        "one-click-description": "Only one link {{ action }} can have one click enabled at a time"
+      }
+    },
     "auto-save-field": {
       "saved": "Saved!",
       "saving": "Saving <1></1>"
@@ -1492,9 +1605,13 @@
     },
     "data-links-inline-editor": {
       "add-link": "Add link",
+      "edit-link": "Edit link",
       "one-click": "One click",
       "one-click-enabled": "One click enabled",
-      "one-click-link": "One-click link"
+      "title-not-provided": "Title not provided",
+      "tooltip-edit": "Edit",
+      "tooltip-remove": "Remove",
+      "url-not-provided": "Data link url not provided"
     },
     "data-source-http-settings": {
       "access-help": "Help <1></1>",
@@ -1575,6 +1692,9 @@
       "right-axis-indicator": "(right y-axis)"
     },
     "viz-tooltip": {
+      "actions-confirmation-input-placeholder": "Are you sure you want to {{ actionTitle }}?",
+      "actions-confirmation-label": "Confirmation message",
+      "actions-confirmation-message": "Provide a descriptive prompt to confirm or cancel the action.",
       "footer-add-annotation": "Add annotation",
       "footer-click-to-navigate": "Click to open {{linkTitle}}"
     }
@@ -1911,6 +2031,13 @@
         "shortcut": "alt+select to enable again"
       }
     },
+    "logs-navigation": {
+      "newer-logs": "Newer logs",
+      "older-logs": "Older logs",
+      "scroll-bottom": "Scroll to bottom",
+      "scroll-top": "Scroll to top",
+      "start-of-range": "Start of range"
+    },
     "popover-menu": {
       "copy": "Copy selection",
       "disable-menu": "Disable menu",
@@ -2000,6 +2127,7 @@
       "title": "Let us help you migrate to this stack"
     },
     "migrated-counts": {
+      "alert_rule_groups": "alert rule groups",
       "alert_rules": "alert rules",
       "contact_points": "contact points",
       "dashboards": "dashboards",
@@ -2059,11 +2187,9 @@
     },
     "public-preview": {
       "button-text": "Give feedback",
-      "message": "No SLAs are available yet. <2>Visit our docs</2> to learn more about this feature!",
+      "message": "<0>Visit our docs</0> to learn more about this feature!",
       "message-cloud": "Your self-managed instance of Grafana requires version 11.5+, or 11.2+ with the onPremToCloudMigrations feature flag enabled.",
-      "message-plugins": "Only Community and Commercial signed plugins are eligible for migration. Their latest version will be installed in the cloud instance, please upgrade your plugins before starting the migration process.",
-      "title": "Migrate to Grafana Cloud is in public preview",
-      "title-plugins": "Migration of plugins"
+      "title": "Migrate to Grafana Cloud is in public preview"
     },
     "resource-details": {
       "dismiss-button": "OK",
@@ -2106,6 +2232,7 @@
     },
     "resource-type": {
       "alert_rule": "Alert Rule",
+      "alert_rule_group": "Alert Rule Group",
       "contact_point": "Contact Point",
       "dashboard": "Dashboard",
       "datasource": "Data source",
@@ -2876,14 +3003,6 @@
       "role-label": "Role"
     }
   },
-  "query-library": {
-    "datasource-names": "Datasource name(s):",
-    "delete-query-button": "Delete query",
-    "query-template-get-error": "Error attempting to load query template metadata: {{error}}",
-    "search": "Search by data source, query content or description",
-    "user-info-get-error": "Error attempting to get user info from the library: {{error}}",
-    "user-names": "User name(s):"
-  },
   "query-operation": {
     "header": {
       "collapse-row": "Collapse query row",
@@ -2893,8 +3012,6 @@
       "expand-row": "Expand query row",
       "hide-response": "Hide response",
       "remove-query": "Remove query",
-      "save-to-query-library": "Save to query library",
-      "save-to-query-library-new": "New: Save to query library",
       "show-response": "Show response",
       "toggle-edit-mode": "Toggle text edit mode"
     },
@@ -3283,6 +3400,7 @@
       "home-dashboard-placeholder": "Default dashboard",
       "locale-label": "Language",
       "locale-placeholder": "Choose language",
+      "theme-description": "Enjoying the limited edition themes? Tell us what you'd like to see <2>here.</2>",
       "theme-label": "Interface theme",
       "week-start-label": "Week start"
     },

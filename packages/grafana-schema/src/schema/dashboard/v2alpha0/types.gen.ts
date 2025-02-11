@@ -30,7 +30,7 @@ export interface DashboardV2Spec {
 	variables: VariableKind[];
 	elements: Record<string, Element>;
 	annotations: AnnotationQueryKind[];
-	layout: GridLayoutKind;
+	layout: GridLayoutKind | RowsLayoutKind | ResponsiveGridLayoutKind;
 	// Plugins only. The version of the dashboard installed together with the plugin.
 	// This is used to determine if the dashboard should be updated when the plugin is updated.
 	revision?: number;
@@ -656,7 +656,7 @@ export interface TimeSettingsSpec {
 	// v1: timepicker.hidden
 	hideTimepicker: boolean;
 	// Day when the week starts. Expressed by the name of the day in lowercase, e.g. "monday".
-	weekStart: string;
+	weekStart?: "saturday" | "monday" | "sunday";
 	// The month that the fiscal year starts on. 0 = January, 11 = December
 	fiscalYearStartMonth: number;
 	// Override the now time by entering a time delay. Use this option to accommodate known delays in data aggregation to avoid null values.
@@ -682,7 +682,6 @@ export const defaultTimeSettingsSpec = (): TimeSettingsSpec => ({
 "1d",
 ],
 	hideTimepicker: false,
-	weekStart: "",
 	fiscalYearStartMonth: 0,
 });
 
@@ -707,6 +706,16 @@ export interface RowRepeatOptions {
 }
 
 export const defaultRowRepeatOptions = (): RowRepeatOptions => ({
+	mode: RepeatMode,
+	value: "",
+});
+
+export interface ResponsiveGridRepeatOptions {
+	mode: "variable";
+	value: string;
+}
+
+export const defaultResponsiveGridRepeatOptions = (): ResponsiveGridRepeatOptions => ({
 	mode: RepeatMode,
 	value: "",
 });
@@ -781,6 +790,86 @@ export interface GridLayoutKind {
 export const defaultGridLayoutKind = (): GridLayoutKind => ({
 	kind: "GridLayout",
 	spec: defaultGridLayoutSpec(),
+});
+
+export interface RowsLayoutKind {
+	kind: "RowsLayout";
+	spec: RowsLayoutSpec;
+}
+
+export const defaultRowsLayoutKind = (): RowsLayoutKind => ({
+	kind: "RowsLayout",
+	spec: defaultRowsLayoutSpec(),
+});
+
+export interface RowsLayoutSpec {
+	rows: RowsLayoutRowKind[];
+}
+
+export const defaultRowsLayoutSpec = (): RowsLayoutSpec => ({
+	rows: [],
+});
+
+export interface RowsLayoutRowKind {
+	kind: "RowsLayoutRow";
+	spec: RowsLayoutRowSpec;
+}
+
+export const defaultRowsLayoutRowKind = (): RowsLayoutRowKind => ({
+	kind: "RowsLayoutRow",
+	spec: defaultRowsLayoutRowSpec(),
+});
+
+export interface RowsLayoutRowSpec {
+	title?: string;
+	collapsed: boolean;
+	repeat?: RowRepeatOptions;
+	layout: GridLayoutKind | ResponsiveGridLayoutKind;
+}
+
+export const defaultRowsLayoutRowSpec = (): RowsLayoutRowSpec => ({
+	collapsed: false,
+	layout: defaultGridLayoutKind(),
+});
+
+export interface ResponsiveGridLayoutKind {
+	kind: "ResponsiveGridLayout";
+	spec: ResponsiveGridLayoutSpec;
+}
+
+export const defaultResponsiveGridLayoutKind = (): ResponsiveGridLayoutKind => ({
+	kind: "ResponsiveGridLayout",
+	spec: defaultResponsiveGridLayoutSpec(),
+});
+
+export interface ResponsiveGridLayoutSpec {
+	row: string;
+	col: string;
+	items: ResponsiveGridLayoutItemKind[];
+}
+
+export const defaultResponsiveGridLayoutSpec = (): ResponsiveGridLayoutSpec => ({
+	row: "",
+	col: "",
+	items: [],
+});
+
+export interface ResponsiveGridLayoutItemKind {
+	kind: "ResponsiveGridLayoutItem";
+	spec: ResponsiveGridLayoutItemSpec;
+}
+
+export const defaultResponsiveGridLayoutItemKind = (): ResponsiveGridLayoutItemKind => ({
+	kind: "ResponsiveGridLayoutItem",
+	spec: defaultResponsiveGridLayoutItemSpec(),
+});
+
+export interface ResponsiveGridLayoutItemSpec {
+	element: ElementReference;
+}
+
+export const defaultResponsiveGridLayoutItemSpec = (): ResponsiveGridLayoutItemSpec => ({
+	element: defaultElementReference(),
 });
 
 export interface PanelSpec {
@@ -962,7 +1051,7 @@ export interface QueryVariableSpec {
 	skipUrlSync: boolean;
 	description?: string;
 	datasource?: DataSourceRef;
-	query: string | DataQueryKind;
+	query: DataQueryKind;
 	regex: string;
 	sort: VariableSort;
 	definition?: string;
@@ -979,7 +1068,7 @@ export const defaultQueryVariableSpec = (): QueryVariableSpec => ({
 	hide: "dontHide",
 	refresh: "never",
 	skipUrlSync: false,
-	query: "",
+	query: defaultDataQueryKind(),
 	regex: "",
 	sort: "disabled",
 	options: [],

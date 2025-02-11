@@ -5,6 +5,7 @@ import { useEffect, useRef } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { SceneObjectState, SceneObjectBase, SceneObject, sceneGraph, useSceneObjectState } from '@grafana/scenes';
 import { ElementSelectionContextItem, ElementSelectionContextState, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { isInCloneChain } from '../utils/clone';
 import { getDashboardSceneFor } from '../utils/utils';
@@ -165,18 +166,18 @@ export function DashboardEditPaneRenderer({ editPane, isCollapsed, onToggleColla
       <>
         <div className={styles.expandOptionsWrapper}>
           <ToolbarButton
-            tooltip={'Open options pane'}
-            icon={'arrow-to-right'}
+            tooltip={t('dashboard.edit-pane.open', 'Open options pane')}
+            icon="arrow-to-right"
             onClick={onToggleCollapse}
             variant="canvas"
             className={styles.rotate180}
-            aria-label={'Open options pane'}
+            aria-label={t('dashboard.edit-pane.open', 'Open options pane')}
           />
         </div>
 
         {openOverlay && (
           <Resizable className={cx(styles.fixed, styles.container)} defaultSize={{ height: '100%', width: '20vw' }}>
-            <ElementEditPane element={editableElement} key={editableElement.getTypeName()} />
+            <ElementEditPane element={editableElement} key={editableElement.typeName} />
           </Resizable>
         )}
       </>
@@ -185,7 +186,7 @@ export function DashboardEditPaneRenderer({ editPane, isCollapsed, onToggleColla
 
   return (
     <div className={styles.wrapper} ref={paneRef}>
-      <ElementEditPane element={editableElement} key={editableElement.getTypeName()} />
+      <ElementEditPane element={editableElement} key={editableElement.typeName} />
     </div>
   );
 }

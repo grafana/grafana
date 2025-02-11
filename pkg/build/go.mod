@@ -23,7 +23,7 @@ require (
 	github.com/stretchr/testify v1.10.0 // @grafana/grafana-backend-group
 	github.com/urfave/cli v1.22.16 // @grafana/grafana-backend-group
 	github.com/urfave/cli/v2 v2.27.1 // @grafana/grafana-backend-group
-	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.58.0 // indirect; @grafana/plugins-platform-backend
+	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.59.0 // indirect; @grafana/plugins-platform-backend
 	go.opentelemetry.io/otel v1.34.0 // indirect; @grafana/grafana-backend-group
 	go.opentelemetry.io/otel/sdk v1.34.0 // indirect; @grafana/grafana-backend-group
 	go.opentelemetry.io/otel/trace v1.34.0 // indirect; @grafana/grafana-backend-group
@@ -31,12 +31,12 @@ require (
 	golang.org/x/mod v0.22.0 // @grafana/grafana-backend-group
 	golang.org/x/net v0.34.0 // indirect; @grafana/oss-big-tent @grafana/partner-datasources
 	golang.org/x/oauth2 v0.25.0 // @grafana/identity-access-team
-	golang.org/x/sync v0.10.0 // indirect; @grafana/alerting-backend
+	golang.org/x/sync v0.11.0 // indirect; @grafana/alerting-backend
 	golang.org/x/text v0.21.0 // indirect; @grafana/grafana-backend-group
 	golang.org/x/time v0.9.0 // indirect; @grafana/grafana-backend-group
 	google.golang.org/api v0.216.0 // @grafana/grafana-backend-group
 	google.golang.org/grpc v1.70.0 // indirect; @grafana/plugins-platform-backend
-	google.golang.org/protobuf v1.36.3 // indirect; @grafana/plugins-platform-backend
+	google.golang.org/protobuf v1.36.4 // indirect; @grafana/plugins-platform-backend
 	gopkg.in/yaml.v3 v3.0.1 // @grafana/alerting-backend
 )
 
@@ -72,7 +72,7 @@ require (
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/xrash/smetrics v0.0.0-20201216005158-039620a65673 // indirect
 	go.opencensus.io v0.24.0 // indirect
-	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.58.0 // indirect
+	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.59.0 // indirect
 	go.opentelemetry.io/otel/metric v1.34.0 // indirect
 	go.starlark.net v0.0.0-20230525235612-a134d8f9ddca // indirect
 	golang.org/x/sys v0.29.0 // indirect
