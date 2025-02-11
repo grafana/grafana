@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2, ThemeContext, ThemeRegistryItem } from '@grafana/data';
-import { Box, Drawer, RadioButtonDot, useStyles2, useTheme2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+import { Box, Drawer, RadioButtonDot, TextLink, useStyles2, useTheme2 } from '@grafana/ui';
+import { t, Trans } from 'app/core/internationalization';
 import { changeTheme } from 'app/core/services/theme';
 
 import { Branding } from '../Branding/Branding';
@@ -22,8 +22,21 @@ export function ThemeSelectorDrawer({ onClose }: Props) {
     changeTheme(theme.id, true);
   };
 
+  const subTitle = (
+    <Trans i18nKey="shared-preferences.fields.theme-description">
+      Enjoying the limited edition themes? Tell us what you'd like to see{' '}
+      <TextLink
+        variant="bodySmall"
+        external
+        href="https://docs.google.com/forms/d/e/1FAIpQLSeRKAY8nUMEVIKSYJ99uOO-dimF6Y69_If1Q1jTLOZRWqK1cw/viewform?usp=dialog"
+      >
+        here.
+      </TextLink>
+    </Trans>
+  );
+
   return (
-    <Drawer title="Change theme" onClose={onClose} size="md">
+    <Drawer title="Change theme" onClose={onClose} size="md" subtitle={subTitle}>
       <div className={styles.grid} role="radiogroup">
         {themes.map((themeOption) => (
           <ThemeCard
