@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/cmputil"
 )
 
@@ -45,6 +46,11 @@ var (
 	// ErrNoPanel is returned when the alert rule does not have a PanelID in its
 	// annotations.
 	ErrNoPanel = errors.New("no panel")
+)
+
+var (
+	FileProvisioningUserUID = UserUID("__provisioning__")
+	AlertingUserUID         = UserUID("__alerting__")
 )
 
 // swagger:enum NoDataState
@@ -566,6 +572,9 @@ func (alertRule *AlertRule) PreSave(timeNow func() time.Time, userUID *UserUID) 
 
 // ValidateAlertRule validates various alert rule fields.
 func (alertRule *AlertRule) ValidateAlertRule(cfg setting.UnifiedAlertingSettings) error {
+	if err := util.ValidateUID(alertRule.UID); err != nil {
+		return errors.Join(ErrAlertRuleFailedValidation, fmt.Errorf("cannot create rule with UID '%s': %w", alertRule.UID, err))
+	}
 	if len(alertRule.Data) == 0 {
 		return fmt.Errorf("%w: no queries or expressions are found", ErrAlertRuleFailedValidation)
 	}

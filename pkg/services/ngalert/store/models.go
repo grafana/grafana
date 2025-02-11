@@ -65,6 +65,29 @@ type alertRuleVersion struct {
 	Metadata             string `xorm:"metadata"`
 }
 
+// EqualSpec compares two alertRuleVersion objects for equality based on their specifications and returns true if they match.
+// The comparison is very basic and can produce false-negative. Fields excluded: ID, ParentVersion, RestoredFrom, Version, Created and CreatedBy
+func (a alertRuleVersion) EqualSpec(b alertRuleVersion) bool {
+	return a.RuleOrgID == b.RuleOrgID &&
+		a.RuleUID == b.RuleUID &&
+		a.RuleNamespaceUID == b.RuleNamespaceUID &&
+		a.RuleGroup == b.RuleGroup &&
+		a.RuleGroupIndex == b.RuleGroupIndex &&
+		a.Title == b.Title &&
+		a.Condition == b.Condition &&
+		a.Data == b.Data &&
+		a.IntervalSeconds == b.IntervalSeconds &&
+		a.Record == b.Record &&
+		a.NoDataState == b.NoDataState &&
+		a.ExecErrState == b.ExecErrState &&
+		a.For == b.For &&
+		a.Annotations == b.Annotations &&
+		a.Labels == b.Labels &&
+		a.IsPaused == b.IsPaused &&
+		a.NotificationSettings == b.NotificationSettings &&
+		a.Metadata == b.Metadata
+}
+
 func (a alertRuleVersion) TableName() string {
 	return "alert_rule_version"
 }

@@ -55,3 +55,21 @@ func TestGetSchemaVersion(t *testing.T) {
 		})
 	}
 }
+
+type migrationTestCase struct {
+	name     string
+	input    map[string]interface{}
+	expected map[string]interface{}
+}
+
+func runMigrationTests(t *testing.T, testCases []migrationTestCase, migrationFunc schemaversion.SchemaVersionMigrationFunc) {
+	t.Helper()
+
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			err := migrationFunc(tt.input)
+			require.NoError(t, err)
+			require.Equal(t, tt.expected, tt.input)
+		})
+	}
+}
