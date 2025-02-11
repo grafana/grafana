@@ -1,7 +1,6 @@
-import { Spinner, Alert, Tag, InteractiveTable, Button, Card, Tooltip, IconButton } from '@grafana/ui';
+import { Spinner, Alert, Tag, InteractiveTable, Button, Card, Tooltip, IconButton, Box, Stack } from '@grafana/ui';
 import { formatTimestamp } from './utils/time';
-import { Repository, useListJobQuery, Job } from './api';
-import { joinByLabels } from '../transformers/joinByLabels/joinByLabels';
+import { Repository, JobResourceSummary, useListJobQuery, Job } from './api';
 
 interface Props {
   repo: Repository;
@@ -83,18 +82,67 @@ export function RecentJobs({ repo }: Props) {
           {job.status?.summary?.length && job.status?.summary?.length > 0 && (
             <Tooltip
               content={
-                <pre style={{ whiteSpace: 'pre-wrap' }}>
-                  {`Summary length: ${job.status.summary.length}\n`}
-                  {`Raw summary: ${JSON.stringify(job.status.summary, null, 2)}\n`}
-                  {`Mapped resources: ${job.status.summary.map((s) => s.resource).join(', ')}`}
-                </pre>
+                <InteractiveTable
+                  data={job.status.summary}
+                  columns={summaryColumns}
+                  getRowId={(item) => item.resource || ''}
+                />
               }
             >
-              <IconButton name="list-ul" variant="secondary" tooltip="View error details" />
+              <IconButton name="list-ul" variant="secondary" tooltip="View summary details" />
             </Tooltip>
           )}
         </div>
       ),
+    },
+  ];
+
+  const summaryColumns = [
+    {
+      id: 'group',
+      header: 'Group',
+      cell: ({ row: { original: item } }: { row: { original: JobResourceSummary } }) => item.group || '-',
+    },
+    {
+      id: 'resource',
+      header: 'Resource',
+      cell: ({ row: { original: item } }: { row: { original: JobResourceSummary } }) => item.resource,
+    },
+    {
+      id: 'write',
+      header: 'Write',
+      cell: ({ row: { original: item } }: { row: { original: JobResourceSummary } }) =>
+        item.write ? <Tag name={item.write.toString()} color="secondary" /> : '-',
+    },
+    {
+      id: 'created',
+      header: 'Created',
+      cell: ({ row: { original: item } }: { row: { original: JobResourceSummary } }) =>
+        item.create ? <Tag name={item.create.toString()} color="green" /> : '-',
+    },
+    {
+      id: 'deleted',
+      header: 'Deleted',
+      cell: ({ row: { original: item } }: { row: { original: JobResourceSummary } }) =>
+        item.delete ? <Tag name={item.delete.toString()} color="red" /> : '-',
+    },
+    {
+      id: 'updated',
+      header: 'Updated',
+      cell: ({ row: { original: item } }: { row: { original: JobResourceSummary } }) =>
+        item.update ? <Tag name={item.update.toString()} color="blue" /> : '-',
+    },
+    {
+      id: 'unchanged',
+      header: 'Unchanged',
+      cell: ({ row: { original: item } }: { row: { original: JobResourceSummary } }) =>
+        item.noop ? <Tag name={item.noop.toString()} color="secondary" /> : '-',
+    },
+    {
+      id: 'errors',
+      header: 'Errors',
+      cell: ({ row: { original: item } }: { row: { original: JobResourceSummary } }) =>
+        item.error ? <Tag name={item.error.toString()} color="red" /> : '-',
     },
   ];
 
