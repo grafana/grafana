@@ -1,6 +1,8 @@
 import { PluginMeta, PluginSignatureStatus, PluginSignatureType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
+import { getPluginDetails } from '../admin/api';
+import { CatalogPluginDetails } from '../admin/types';
 import { getPluginSettings } from '../pluginSettings';
 
 import {
@@ -9,8 +11,6 @@ import {
   isPluginFrontendSandboxEnabled,
   isPluginFrontendSandboxEligible,
 } from './sandbox_plugin_loader_registry';
-import { getPluginDetails } from '../admin/api';
-import { CatalogPluginDetails } from '../admin/types';
 
 jest.mock('@grafana/runtime', () => ({
   config: {
