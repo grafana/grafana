@@ -23,9 +23,3 @@ type ListRequest struct {
 	Verb         string
 	Action       string
 }
-
-type FolderNode struct {
-	UID          string
-	ParentUID    *string
-	ChildrenUIDs []string
-}
