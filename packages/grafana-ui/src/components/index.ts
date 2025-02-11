@@ -244,6 +244,7 @@ export { getSelectStyles } from './Select/getSelectStyles';
 export * from './Select/types';
 
 export { Combobox } from './Combobox/Combobox';
+export { MultiCombobox } from './Combobox/MultiCombobox';
 export { type ComboboxOption } from './Combobox/types';
 
 export { HorizontalGroup, VerticalGroup, Container } from './Layout/Layout';

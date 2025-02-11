@@ -5,23 +5,23 @@ import { useNavigate } from 'react-router-dom-v5-compat';
 import { AppEvents } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
 import {
+  Button,
+  Combobox,
+  ComboboxOption,
   Field,
   FieldSet,
-  Combobox,
-  SecretInput,
   Input,
-  Button,
-  Switch,
-  TextLink,
-  ControlledCollapse,
+  MultiCombobox,
   RadioButtonGroup,
+  SecretInput,
   Stack,
-  MultiSelect,
+  Switch,
 } from '@grafana/ui';
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 
 import { Repository, RepositorySpec } from './api';
 import { useCreateOrUpdateRepository } from './hooks';
+import { TokenPermissionsInfo } from './TokenPermissionsInfo';
 import { RepositoryFormData, WorkflowOption } from './types';
 import { dataToSpec, specToData } from './utils/data';
 
@@ -31,7 +31,7 @@ const targetOptions = [
   { value: 'folder', label: 'Managed folder' },
 ];
 
-const workflowOptions: Array<{ label: string; value: WorkflowOption }> = [
+const workflowOptions: Array<ComboboxOption<WorkflowOption>> = [
   { label: 'Push', value: 'push' },
   { label: 'Branch', value: 'branch' },
 ];
@@ -152,26 +152,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
               }}
             />
           </Field>
-          <ControlledCollapse collapsible label="Access Token Permissions">
-            <p>
-              To create a new Access Token, navigate to{' '}
-              <TextLink external href="https://github.com/settings/tokens">
-                Personal Access Tokens
-              </TextLink>{' '}
-              and create a click &quot;Generate new token.&quot;
-            </p>
-
-            <p>Ensure that your token has the following permissions:</p>
-
-            <b>For all repositories:</b>
-            <pre>public_repo, repo:status, repo_deployment, read:packages, read:user, user:email</pre>
-
-            <b>For GitHub projects:</b>
-            <pre>read:org, read:project</pre>
-
-            <b>An extra setting is required for private repositories:</b>
-            <pre>repo (Full control of private repositories)</pre>
-          </ControlledCollapse>
+          <TokenPermissionsInfo />
           <Field label={'Repository owner'} error={errors?.owner?.message} invalid={!!errors?.owner}>
             <Input {...register('owner', { required: 'This field is required.' })} placeholder={'test'} />
           </Field>
@@ -186,16 +167,9 @@ export function ConfigForm({ data }: ConfigFormProps) {
               name={'workflows'}
               control={control}
               rules={{ required: 'This field is required.' }}
-              render={({ field: { ref, onChange, ...field } }) => {
-                return (
-                  <MultiSelect
-                    options={workflowOptions}
-                    onChange={(value) => onChange(value.map((v) => v.value))}
-                    placeholder={'Select workflows'}
-                    {...field}
-                  />
-                );
-              }}
+              render={({ field: { ref, ...field } }) => (
+                <MultiCombobox options={workflowOptions} placeholder={'Select workflows'} {...field} />
+              )}
             />
           </Field>
           <Field label={'Show dashboard previews'}>
