@@ -1,33 +1,37 @@
 import { css, cx } from '@emotion/css';
-import { useMemo, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { SceneComponentProps, sceneGraph } from '@grafana/scenes';
-import { Button, Icon, useElementSelection, useStyles2 } from '@grafana/ui';
+import { SceneComponentProps } from '@grafana/scenes';
+import { Button, Icon, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
-import { ConditionalRendering } from '../../conditional-rendering/ConditionalRendering';
-import { isClonedKey } from '../../utils/clone';
-import { getDashboardSceneFor } from '../../utils/utils';
+import { useIsClone } from '../../utils/clone';
+import {
+  useDashboardState,
+  useElementSelectionScene,
+  useInterpolatedTitle,
+  useIsConditionallyHidden,
+} from '../../utils/utils';
 
 import { RowItem } from './RowItem';
 
 export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
-  const { layout, title, isCollapsed, height = 'expand', isHeaderHidden, key, $behaviors } = model.useState();
-  const isClone = useMemo(() => isClonedKey(key!), [key]);
-  const dashboard = getDashboardSceneFor(model);
-  const { isEditing, showHiddenElements } = dashboard.useState();
+  const { layout, isCollapsed, height = 'expand', isHeaderHidden } = model.useState();
+  const isClone = useIsClone(model);
+  const { isEditing, showHiddenElements } = useDashboardState(model);
+  const isConditionallyHidden = useIsConditionallyHidden(model);
+  const { isSelected, onSelect } = useElementSelectionScene(model);
+  const title = useInterpolatedTitle(model);
   const styles = useStyles2(getStyles);
-  const titleInterpolated = sceneGraph.interpolate(model, title, undefined, 'text');
-  const ref = useRef<HTMLDivElement>(null);
-  const shouldGrow = !isCollapsed && height === 'expand';
-  const { isSelected, onSelect } = useElementSelection(key);
 
-  const conditionalRendering = $behaviors?.find((behavior) => behavior instanceof ConditionalRendering);
-  if (!(conditionalRendering?.evaluate() ?? true) && !showHiddenElements) {
+  if (isConditionallyHidden && !showHiddenElements) {
     return null;
   }
+
+  const shouldGrow = !isCollapsed && height === 'expand';
+  const isHiddenButVisibleElement = showHiddenElements && isConditionallyHidden;
+  const isHiddenButVisibleHeader = showHiddenElements && isHeaderHidden;
 
   return (
     <div
@@ -35,12 +39,12 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
         styles.wrapper,
         isCollapsed && styles.wrapperCollapsed,
         shouldGrow && styles.wrapperGrow,
+        isHiddenButVisibleElement && 'dashboard-visible-hidden-element',
         !isClone && isSelected && 'dashboard-selected-element'
       )}
-      ref={ref}
     >
-      {(!isHeaderHidden || (isEditing && showHiddenElements)) && (
-        <div className={styles.rowHeader}>
+      {(!isHeaderHidden || showHiddenElements) && (
+        <div className={cx(isHiddenButVisibleHeader && 'dashboard-visible-hidden-element', styles.rowHeader)}>
           <button
             onClick={() => model.onCollapseToggle()}
             className={styles.rowTitleButton}
@@ -49,15 +53,15 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
                 ? t('dashboard.rows-layout.row.expand', 'Expand row')
                 : t('dashboard.rows-layout.row.collapse', 'Collapse row')
             }
-            data-testid={selectors.components.DashboardRow.title(titleInterpolated!)}
+            data-testid={selectors.components.DashboardRow.title(title!)}
           >
             <Icon name={isCollapsed ? 'angle-right' : 'angle-down'} />
             <span className={styles.rowTitle} role="heading">
-              {titleInterpolated}
+              {title}
             </span>
           </button>
           {!isClone && isEditing && (
-            <Button icon="pen" variant="secondary" size="sm" fill="text" onPointerDown={(evt) => onSelect?.(evt)} />
+            <Button icon="pen" variant="secondary" size="sm" fill="text" onPointerDown={onSelect} />
           )}
         </div>
       )}

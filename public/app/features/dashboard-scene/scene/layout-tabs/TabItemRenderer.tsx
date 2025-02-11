@@ -1,40 +1,40 @@
-import { useMemo } from 'react';
+import { SceneComponentProps } from '@grafana/scenes';
+import { Tab } from '@grafana/ui';
 
-import { SceneComponentProps, sceneGraph } from '@grafana/scenes';
-import { Tab, useElementSelection } from '@grafana/ui';
-
-import { ConditionalRendering } from '../../conditional-rendering/ConditionalRendering';
-import { isClonedKey } from '../../utils/clone';
-import { getDashboardSceneFor } from '../../utils/utils';
+import { useIsClone } from '../../utils/clone';
+import {
+  useDashboardState,
+  useElementSelectionScene,
+  useInterpolatedTitle,
+  useIsConditionallyHidden,
+} from '../../utils/utils';
 
 import { TabItem } from './TabItem';
 
 export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
-  const { title, key, $behaviors } = model.useState();
-  const isClone = useMemo(() => isClonedKey(key!), [key]);
+  const isClone = useIsClone(model);
   const parentLayout = model.getParentLayout();
   const { currentTab } = parentLayout.useState();
-  const dashboard = getDashboardSceneFor(model);
-  const { isEditing, showHiddenElements } = dashboard.useState();
-  const titleInterpolated = sceneGraph.interpolate(model, title, undefined, 'text');
-  const { isSelected, onSelect } = useElementSelection(key);
+  const { isEditing, showHiddenElements } = useDashboardState(model);
+  const isConditionallyHidden = useIsConditionallyHidden(model);
+  const { isSelected, onSelect, onClear } = useElementSelectionScene(model);
+  const title = useInterpolatedTitle(model);
 
-  const conditionalRendering = $behaviors?.find((behavior) => behavior instanceof ConditionalRendering);
-  if (!(conditionalRendering?.evaluate() ?? true) && !showHiddenElements) {
+  if (isConditionallyHidden && !showHiddenElements) {
     return null;
   }
 
   return (
     <Tab
       className={!isClone && isSelected ? 'dashboard-selected-element' : undefined}
-      label={titleInterpolated}
+      label={title}
       active={model === currentTab}
       onPointerDown={(evt) => {
         evt.stopPropagation();
 
         if (isEditing) {
           if (isClone) {
-            dashboard.state.editPane.clearSelection();
+            onClear?.();
           } else {
             onSelect?.(evt);
           }

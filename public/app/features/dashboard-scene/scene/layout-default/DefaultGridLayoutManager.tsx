@@ -25,6 +25,7 @@ import {
   getVizPanelKeyForPanelId,
   getGridItemKeyForPanelId,
   getDashboardSceneFor,
+  useDashboard,
 } from '../../utils/utils';
 import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
@@ -462,7 +463,7 @@ export class DefaultGridLayoutManager
 
 function DefaultGridLayoutManagerRenderer({ model }: SceneComponentProps<DefaultGridLayoutManager>) {
   const { children } = useSceneObjectState(model.state.grid, { shouldActivateOrKeepAlive: true });
-  const dashboard = getDashboardSceneFor(model);
+  const dashboard = useDashboard(model);
 
   // If we are top level layout and have no children, show empty state
   if (model.parent === dashboard && children.length === 0) {
