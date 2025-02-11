@@ -1,4 +1,4 @@
-import { Spinner, Alert, Tag, InteractiveTable, Button, Card, Box, Stack } from '@grafana/ui';
+import { Spinner, Alert, Tag, InteractiveTable, Button, Card, Box, Stack, Icon } from '@grafana/ui';
 import { formatTimestamp } from './utils/time';
 import { Repository, JobResourceSummary, useListJobQuery, Job } from './api';
 
@@ -93,38 +93,32 @@ export function RecentJobs({ repo }: Props) {
     {
       id: 'write',
       header: 'Write',
-      cell: ({ row: { original: item } }: { row: { original: JobResourceSummary } }) =>
-        item.write ? <Tag name={item.write.toString()} color="secondary" /> : '-',
+      cell: ({ row: { original: item } }: { row: { original: JobResourceSummary } }) => item.write?.toString() || '-',
     },
     {
       id: 'created',
       header: 'Created',
-      cell: ({ row: { original: item } }: { row: { original: JobResourceSummary } }) =>
-        item.create ? <Tag name={item.create.toString()} color="green" /> : '-',
+      cell: ({ row: { original: item } }: { row: { original: JobResourceSummary } }) => item.create?.toString() || '-',
     },
     {
       id: 'deleted',
       header: 'Deleted',
-      cell: ({ row: { original: item } }: { row: { original: JobResourceSummary } }) =>
-        item.delete ? <Tag name={item.delete.toString()} color="red" /> : '-',
+      cell: ({ row: { original: item } }: { row: { original: JobResourceSummary } }) => item.delete?.toString() || '-',
     },
     {
       id: 'updated',
       header: 'Updated',
-      cell: ({ row: { original: item } }: { row: { original: JobResourceSummary } }) =>
-        item.update ? <Tag name={item.update.toString()} color="blue" /> : '-',
+      cell: ({ row: { original: item } }: { row: { original: JobResourceSummary } }) => item.update?.toString() || '-',
     },
     {
       id: 'unchanged',
       header: 'Unchanged',
-      cell: ({ row: { original: item } }: { row: { original: JobResourceSummary } }) =>
-        item.noop ? <Tag name={item.noop.toString()} color="secondary" /> : '-',
+      cell: ({ row: { original: item } }: { row: { original: JobResourceSummary } }) => item.noop?.toString() || '-',
     },
     {
       id: 'errors',
       header: 'Errors',
-      cell: ({ row: { original: item } }: { row: { original: JobResourceSummary } }) =>
-        item.error ? <Tag name={item.error.toString()} color="red" /> : '-',
+      cell: ({ row: { original: item } }: { row: { original: JobResourceSummary } }) => item.error?.toString() || '-',
     },
   ];
 
@@ -142,20 +136,30 @@ export function RecentJobs({ repo }: Props) {
           columns={columns}
           getRowId={(item) => item.metadata?.resourceVersion || ''}
           renderExpandedRow={(row) =>
-            row.status?.summary?.length || row.status?.errors ? (
+            (row.status?.summary?.length ?? 0) > 0 || row.status?.errors ? (
               <Box padding={2}>
                 <Stack direction="column" gap={2}>
-                  {row.status?.summary && row.status.summary.length > 0 && (
+                  {row.status?.errors && (
+                    <Stack direction="column" gap={1}>
+                      {row.status.errors.map(
+                        (error, index) =>
+                          error.trim() && (
+                            <Alert key={index} severity="error" title="Error">
+                              <Stack direction="row" alignItems="center" gap={1}>
+                                <Icon name="exclamation-circle" size="sm" />
+                                {error}
+                              </Stack>
+                            </Alert>
+                          )
+                      )}
+                    </Stack>
+                  )}
+                  {row.status?.summary?.length && row.status.summary.length > 0 && (
                     <InteractiveTable
                       data={row.status.summary}
                       columns={summaryColumns}
                       getRowId={(item) => item.resource || ''}
                     />
-                  )}
-                  {row.status?.errors && (
-                    <Alert severity="error" title="Error Details">
-                      <pre style={{ whiteSpace: 'pre-wrap', margin: 0 }}>{row.status.errors}</pre>
-                    </Alert>
                   )}
                 </Stack>
               </Box>
