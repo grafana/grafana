@@ -117,15 +117,15 @@ func (b *backend) ProcessBatch(ctx context.Context, setting resource.BatchSettin
 			}
 		}
 
-		handler, err := parquet.NewParquetBatchProcessingBackend(file)
+		writer, err := parquet.NewParquetWriter(file)
 		if err != nil {
 			return &resource.BatchResponse{
 				Error: resource.AsErrorResult(err),
 			}
 		}
 
-		// Parquet export
-		rsp := handler.ProcessBatch(ctx, setting, iter)
+		// write batch to parquet
+		rsp := writer.ProcessBatch(ctx, setting, iter)
 		if rsp.Error != nil {
 			return rsp
 		}

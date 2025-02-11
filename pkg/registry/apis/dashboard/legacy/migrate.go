@@ -21,8 +21,10 @@ import (
 
 type MigrateOptions struct {
 	Namespace    string
-	Store        resource.ResourceClient
+	Store        resource.ResourceStoreClient
+	Writer       resource.BatchResourceWriter
 	LargeObjects apistore.LargeObjectSupport
+	BlobStore    resource.BlobStoreClient
 	Resources    []schema.GroupResource
 	WithHistory  bool // only applies to dashboards
 	OnlyCount    bool // just count the values
@@ -237,7 +239,7 @@ func (a *dashboardSqlAccess) migrateDashboards(ctx context.Context, orgId int64,
 			}
 
 			opts.Progress(i, fmt.Sprintf("[v:%d] %s Large object (%d)", dash.Generation, dash.Name, len(body)))
-			err = large.Deconstruct(ctx, req.Key, opts.Store, obj, req.Value)
+			err = large.Deconstruct(ctx, req.Key, opts.BlobStore, obj, req.Value)
 			if err != nil {
 				return blobs, err
 			}

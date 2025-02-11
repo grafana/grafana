@@ -4,22 +4,25 @@ import (
 	"context"
 	"io"
 
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-
 	"github.com/apache/arrow-go/v18/arrow"
 	"github.com/apache/arrow-go/v18/arrow/array"
 	"github.com/apache/arrow-go/v18/arrow/memory"
 	"github.com/apache/arrow-go/v18/parquet"
 	"github.com/apache/arrow-go/v18/parquet/compress"
 	"github.com/apache/arrow-go/v18/parquet/pqarrow"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
+var (
+	_ resource.BatchResourceWriter = (*parquetWriter)(nil)
+)
+
 // Write resources into a parquet file
-func NewParquetWriter(f io.Writer) (resource.BatchResourceWriter, error) {
+func NewParquetWriter(f io.Writer) (*parquetWriter, error) {
 	w := &parquetWriter{
 		pool:    memory.DefaultAllocator,
 		schema:  newSchema(nil),
@@ -38,6 +41,37 @@ func NewParquetWriter(f io.Writer) (resource.BatchResourceWriter, error) {
 	}
 	w.writer = writer
 	return w, w.init()
+}
+
+// ProcessBatch implements resource.BatchProcessingBackend.
+func (w *parquetWriter) ProcessBatch(ctx context.Context, setting resource.BatchSettings, iter resource.BatchRequestIterator) *resource.BatchResponse {
+	defer func() { _ = w.Close() }()
+
+	var err error
+	for iter.Next() {
+		if iter.RollbackRequested() {
+			break
+		}
+
+		req := iter.Request()
+
+		err = w.Write(ctx, req.Key, req.Value)
+		if err != nil {
+			break
+		}
+	}
+
+	rsp, err := w.CloseWithResults()
+	if err != nil {
+		w.logger.Warn("error closing parquet file", "err", err)
+	}
+	if rsp == nil {
+		rsp = &resource.BatchResponse{}
+	}
+	if err != nil {
+		rsp.Error = resource.AsErrorResult(err)
+	}
+	return rsp
 }
 
 type parquetWriter struct {
@@ -62,8 +96,9 @@ type parquetWriter struct {
 	summary map[string]*resource.BatchResponse_Summary
 }
 
-func (w *parquetWriter) Results() *resource.BatchResponse {
-	return w.rsp
+func (w *parquetWriter) CloseWithResults() (*resource.BatchResponse, error) {
+	err := w.Close()
+	return w.rsp, err
 }
 
 func (w *parquetWriter) Close() error {

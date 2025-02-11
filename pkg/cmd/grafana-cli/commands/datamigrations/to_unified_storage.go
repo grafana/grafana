@@ -123,7 +123,7 @@ func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) err
 		return err
 	}
 	if yes {
-		opts.Store, err = newUnifiedClient(cfg, sqlStore)
+		client, err := newUnifiedClient(cfg, sqlStore)
 		if err != nil {
 			return err
 		}
@@ -135,7 +135,8 @@ func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) err
 		for _, r := range opts.Resources {
 			req.Kinds = append(req.Kinds, fmt.Sprintf("%s/%s", r.Group, r.Resource))
 		}
-		stats, err := opts.Store.GetStats(ctx, req)
+
+		stats, err := client.GetStats(ctx, req)
 		if err != nil {
 			return err
 		}
@@ -153,6 +154,8 @@ func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) err
 		if yes {
 			start = time.Now()
 			last = time.Now()
+			opts.Store = client
+			opts.BlobStore = client
 			rsp, err := migrator.Migrate(ctx, opts)
 			if err != nil {
 				return err
@@ -195,18 +198,11 @@ func newUnifiedClient(cfg *setting.Cfg, sqlStore db.DB) (resource.ResourceClient
 	)
 }
 
-func newParquetClient(file *os.File) (resource.ResourceClient, error) {
-	backend, err := parquet.NewParquetBatchProcessingBackend(file)
+func newParquetClient(file *os.File) (resource.ResourceStoreClient, error) {
+	writer, err := parquet.NewParquetWriter(file)
 	if err != nil {
 		return nil, err
 	}
-
-	server, err := resource.NewResourceServer(resource.ResourceServerOptions{
-		Backend: backend,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return resource.NewLocalResourceClient(server), nil
+	client := parquet.NewBatchResourceWriterClient(writer)
+	return client, nil
 }
