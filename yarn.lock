@@ -3231,7 +3231,7 @@ __metadata:
     rimraf: "npm:6.0.1"
     rollup: "npm:^4.22.4"
     rollup-plugin-dts: "npm:^6.1.1"
-    rollup-plugin-esbuild: "npm:6.1.1"
+    rollup-plugin-esbuild: "npm:6.2.0"
     rollup-plugin-node-externals: "npm:^8.0.0"
     rxjs: "npm:7.8.1"
     string-hash: "npm:^1.1.3"
@@ -3269,7 +3269,7 @@ __metadata:
     rimraf: "npm:6.0.1"
     rollup: "npm:^4.22.4"
     rollup-plugin-dts: "npm:^6.1.1"
-    rollup-plugin-esbuild: "npm:6.1.1"
+    rollup-plugin-esbuild: "npm:6.2.0"
     rollup-plugin-node-externals: "npm:^8.0.0"
     semver: "npm:7.7.0"
     tslib: "npm:2.8.1"
@@ -3311,27 +3311,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/faro-core@npm:^1.12.3":
-  version: 1.12.3
-  resolution: "@grafana/faro-core@npm:1.12.3"
-  dependencies:
-    "@opentelemetry/api": "npm:^1.9.0"
-    "@opentelemetry/otlp-transformer": "npm:^0.57.1"
-  checksum: 10/616592a8e65c72be763f27baa3a44c228fc61aeff9cd6c895dac7b4adc24a836accc4766d574a3b5156896b3068c8d7df51c1d715679f3f1a1feef90dcaf82e3
-  languageName: node
-  linkType: hard
-
-"@grafana/faro-core@npm:^1.13.1":
-  version: 1.13.1
-  resolution: "@grafana/faro-core@npm:1.13.1"
-  dependencies:
-    "@opentelemetry/api": "npm:^1.9.0"
-    "@opentelemetry/otlp-transformer": "npm:^0.57.1"
-  checksum: 10/ce3747c476bd2b0f2b07c808c584953de75bf970fc17fbeb27258decf86919a753472cc464a4dccd4e0091003232feec6d3ba07f2e1b7bc38b487d9199abd18f
-  languageName: node
-  linkType: hard
-
-"@grafana/faro-core@npm:^1.13.2":
+"@grafana/faro-core@npm:^1.13.1, @grafana/faro-core@npm:^1.13.2":
   version: 1.13.2
   resolution: "@grafana/faro-core@npm:1.13.2"
   dependencies:
@@ -3341,7 +3321,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/faro-web-sdk@npm:^1.13.2":
+"@grafana/faro-web-sdk@npm:^1.13.2, @grafana/faro-web-sdk@npm:^1.3.6":
   version: 1.13.2
   resolution: "@grafana/faro-web-sdk@npm:1.13.2"
   dependencies:
@@ -3349,17 +3329,6 @@ __metadata:
     ua-parser-js: "npm:^1.0.32"
     web-vitals: "npm:^4.0.1"
   checksum: 10/a6896cbbe3b89867a23ffa4f482eb9510d0e9cd637c92a9e04e06157471bb7ffd35d68b7f6077791393e2203cad69f48ade00e86e54d454da10bbb6179cdc357
-  languageName: node
-  linkType: hard
-
-"@grafana/faro-web-sdk@npm:^1.3.6":
-  version: 1.12.3
-  resolution: "@grafana/faro-web-sdk@npm:1.12.3"
-  dependencies:
-    "@grafana/faro-core": "npm:^1.12.3"
-    ua-parser-js: "npm:^1.0.32"
-    web-vitals: "npm:^4.0.1"
-  checksum: 10/433b118ff5b8bc231e209902c20b8a645efe6efd9ecc4ef57947111fa076842becc9760b5bcc8957c1f04cd20c801241ba9cca0a6d4637b8aa2b034d7a7c1888
   languageName: node
   linkType: hard
 
@@ -3418,7 +3387,7 @@ __metadata:
     react-virtualized-auto-sizer: "npm:1.0.25"
     rollup: "npm:^4.22.4"
     rollup-plugin-dts: "npm:^6.1.1"
-    rollup-plugin-esbuild: "npm:6.1.1"
+    rollup-plugin-esbuild: "npm:6.2.0"
     rollup-plugin-node-externals: "npm:^8.0.0"
     tinycolor2: "npm:1.6.0"
     ts-jest: "npm:29.2.5"
@@ -3712,7 +3681,7 @@ __metadata:
     react-window: "npm:1.8.11"
     rollup: "npm:^4.22.4"
     rollup-plugin-dts: "npm:^6.1.1"
-    rollup-plugin-esbuild: "npm:6.1.1"
+    rollup-plugin-esbuild: "npm:6.2.0"
     rollup-plugin-node-externals: "npm:^8.0.0"
     rxjs: "npm:7.8.1"
     sass: "npm:1.83.4"
@@ -3764,7 +3733,7 @@ __metadata:
     rimraf: "npm:6.0.1"
     rollup: "npm:^4.22.4"
     rollup-plugin-dts: "npm:^6.1.1"
-    rollup-plugin-esbuild: "npm:6.1.1"
+    rollup-plugin-esbuild: "npm:6.2.0"
     rollup-plugin-node-externals: "npm:^8.0.0"
     rollup-plugin-sourcemaps: "npm:0.6.3"
     rxjs: "npm:7.8.1"
@@ -3821,7 +3790,7 @@ __metadata:
     rimraf: "npm:6.0.1"
     rollup: "npm:^4.22.4"
     rollup-plugin-dts: "npm:^6.1.1"
-    rollup-plugin-esbuild: "npm:6.1.1"
+    rollup-plugin-esbuild: "npm:6.2.0"
     rollup-plugin-node-externals: "npm:8.0.0"
     ts-node: "npm:10.9.2"
     typescript: "npm:5.7.3"
@@ -3893,7 +3862,7 @@ __metadata:
     rimraf: "npm:6.0.1"
     rollup: "npm:^4.22.4"
     rollup-plugin-dts: "npm:^6.1.1"
-    rollup-plugin-esbuild: "npm:6.1.1"
+    rollup-plugin-esbuild: "npm:6.2.0"
     rollup-plugin-node-externals: "npm:^8.0.0"
     tslib: "npm:2.8.1"
     typescript: "npm:5.7.3"
@@ -4151,7 +4120,7 @@ __metadata:
     rollup: "npm:^4.22.4"
     rollup-plugin-copy: "npm:3.5.0"
     rollup-plugin-dts: "npm:^6.1.1"
-    rollup-plugin-esbuild: "npm:6.1.1"
+    rollup-plugin-esbuild: "npm:6.2.0"
     rollup-plugin-node-externals: "npm:^8.0.0"
     rollup-plugin-svg-import: "npm:3.0.0"
     rxjs: "npm:7.8.1"
@@ -7167,7 +7136,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rollup/pluginutils@npm:^5.0.1, @rollup/pluginutils@npm:^5.0.5, @rollup/pluginutils@npm:^5.1.0":
+"@rollup/pluginutils@npm:^5.0.1, @rollup/pluginutils@npm:^5.1.0":
   version: 5.1.2
   resolution: "@rollup/pluginutils@npm:5.1.2"
   dependencies:
@@ -14923,15 +14892,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"debug@npm:4, debug@npm:^4.1.0, debug@npm:^4.1.1, debug@npm:^4.3.1, debug@npm:^4.3.2, debug@npm:^4.3.4, debug@npm:^4.3.5, debug@npm:^4.3.6, debug@npm:^4.3.7, debug@npm:~4.3.1, debug@npm:~4.3.2, debug@npm:~4.3.4":
-  version: 4.3.7
-  resolution: "debug@npm:4.3.7"
+"debug@npm:4, debug@npm:^4.1.0, debug@npm:^4.1.1, debug@npm:^4.3.1, debug@npm:^4.3.2, debug@npm:^4.3.4, debug@npm:^4.3.5, debug@npm:^4.3.6, debug@npm:^4.3.7, debug@npm:^4.4.0":
+  version: 4.4.0
+  resolution: "debug@npm:4.4.0"
   dependencies:
     ms: "npm:^2.1.3"
   peerDependenciesMeta:
     supports-color:
       optional: true
-  checksum: 10/71168908b9a78227ab29d5d25fe03c5867750e31ce24bf2c44a86efc5af041758bb56569b0a3d48a9b5344c00a24a777e6f4100ed6dfd9534a42c1dde285125a
+  checksum: 10/1847944c2e3c2c732514b93d11886575625686056cd765336212dc15de2d2b29612b6cd80e1afba767bb8e1803b778caf9973e98169ef1a24a7a7009e1820367
   languageName: node
   linkType: hard
 
@@ -14941,6 +14910,18 @@ __metadata:
   dependencies:
     ms: "npm:^2.1.1"
   checksum: 10/d86fd7be2b85462297ea16f1934dc219335e802f629ca9a69b63ed8ed041dda492389bb2ee039217c02e5b54792b1c51aa96ae954cf28634d363a2360c7a1639
+  languageName: node
+  linkType: hard
+
+"debug@npm:~4.3.1, debug@npm:~4.3.2, debug@npm:~4.3.4":
+  version: 4.3.7
+  resolution: "debug@npm:4.3.7"
+  dependencies:
+    ms: "npm:^2.1.3"
+  peerDependenciesMeta:
+    supports-color:
+      optional: true
+  checksum: 10/71168908b9a78227ab29d5d25fe03c5867750e31ce24bf2c44a86efc5af041758bb56569b0a3d48a9b5344c00a24a777e6f4100ed6dfd9534a42c1dde285125a
   languageName: node
   linkType: hard
 
@@ -14961,14 +14942,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"decimal.js@npm:10":
-  version: 10.4.3
-  resolution: "decimal.js@npm:10.4.3"
-  checksum: 10/de663a7bc4d368e3877db95fcd5c87b965569b58d16cdc4258c063d231ca7118748738df17cd638f7e9dd0be8e34cec08d7234b20f1f2a756a52fc5a38b188d0
-  languageName: node
-  linkType: hard
-
-"decimal.js@npm:^10.4.2":
+"decimal.js@npm:10, decimal.js@npm:^10.4.2":
   version: 10.5.0
   resolution: "decimal.js@npm:10.5.0"
   checksum: 10/714d49cf2f2207b268221795ede330e51452b7c451a0c02a770837d2d4faed47d603a729c2aa1d952eb6c4102d999e91c9b952c1aa016db3c5cba9fc8bf4cda2
@@ -15901,10 +15875,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"es-module-lexer@npm:^1.2.1, es-module-lexer@npm:^1.3.1, es-module-lexer@npm:^1.5.0, es-module-lexer@npm:^1.5.3":
-  version: 1.5.4
-  resolution: "es-module-lexer@npm:1.5.4"
-  checksum: 10/f29c7c97a58eb17640dcbd71bd6ef754ad4f58f95c3073894573d29dae2cad43ecd2060d97ed5b866dfb7804d5590fb7de1d2c5339a5fceae8bd60b580387fc5
+"es-module-lexer@npm:^1.2.1, es-module-lexer@npm:^1.5.0, es-module-lexer@npm:^1.5.3, es-module-lexer@npm:^1.6.0":
+  version: 1.6.0
+  resolution: "es-module-lexer@npm:1.6.0"
+  checksum: 10/807ee7020cc46a9c970c78cad1f2f3fc139877e5ebad7f66dbfbb124d451189ba1c48c1c632bd5f8ce1b8af2caef3fca340ba044a410fa890d17b080a59024bb
   languageName: node
   linkType: hard
 
@@ -17381,18 +17355,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"form-data@npm:^4.0.0":
-  version: 4.0.0
-  resolution: "form-data@npm:4.0.0"
-  dependencies:
-    asynckit: "npm:^0.4.0"
-    combined-stream: "npm:^1.0.8"
-    mime-types: "npm:^2.1.12"
-  checksum: 10/7264aa760a8cf09482816d8300f1b6e2423de1b02bba612a136857413fdc96d7178298ced106817655facc6b89036c6e12ae31c9eb5bdc16aabf502ae8a5d805
-  languageName: node
-  linkType: hard
-
-"form-data@npm:~4.0.0":
+"form-data@npm:^4.0.0, form-data@npm:~4.0.0":
   version: 4.0.1
   resolution: "form-data@npm:4.0.1"
   dependencies:
@@ -17773,12 +17736,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"get-tsconfig@npm:^4.7.0, get-tsconfig@npm:^4.7.2":
-  version: 4.8.1
-  resolution: "get-tsconfig@npm:4.8.1"
+"get-tsconfig@npm:^4.10.0, get-tsconfig@npm:^4.7.0":
+  version: 4.10.0
+  resolution: "get-tsconfig@npm:4.10.0"
   dependencies:
     resolve-pkg-maps: "npm:^1.0.0"
-  checksum: 10/3fb5a8ad57b9633eaea085d81661e9e5c9f78b35d8f8689eaf8b8b45a2a3ebf3b3422266d4d7df765e308cc1e6231648d114803ab3d018332e29916f2c1de036
+  checksum: 10/5259b5c99a1957114337d9d0603b4a305ec9e29fa6cac7d2fbf634ba6754a0cc88bfd281a02416ce64e604b637d3cb239185381a79a5842b17fb55c097b38c4b
   languageName: node
   linkType: hard
 
@@ -24543,6 +24506,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"pathe@npm:^2.0.2":
+  version: 2.0.2
+  resolution: "pathe@npm:2.0.2"
+  checksum: 10/027dd246720ec6d3b5567e2b0201f1a815b6a69f2912a4dcafed59620afc729af15b4aff4bc780504c88d11dfb081c051e37327b928a093e714c3e09bf35aff3
+  languageName: node
+  linkType: hard
+
 "pbf@npm:3.2.1":
   version: 3.2.1
   resolution: "pbf@npm:3.2.1"
@@ -24604,6 +24574,13 @@ __metadata:
   version: 2.3.1
   resolution: "picomatch@npm:2.3.1"
   checksum: 10/60c2595003b05e4535394d1da94850f5372c9427ca4413b71210f437f7b2ca091dbd611c45e8b37d10036fa8eade25c1b8951654f9d3973bfa66a2ff4d3b08bc
+  languageName: node
+  linkType: hard
+
+"picomatch@npm:^4.0.2":
+  version: 4.0.2
+  resolution: "picomatch@npm:4.0.2"
+  checksum: 10/ce617b8da36797d09c0baacb96ca8a44460452c89362d7cb8f70ca46b4158ba8bc3606912de7c818eb4a939f7f9015cef3c766ec8a0c6bfc725fdc078e39c717
   languageName: node
   linkType: hard
 
@@ -25519,7 +25496,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"qs@npm:6.13.0, qs@npm:^6.11.2, qs@npm:^6.4.0":
+"qs@npm:6.13.0":
   version: 6.13.0
   resolution: "qs@npm:6.13.0"
   dependencies:
@@ -25528,7 +25505,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"qs@npm:6.13.1":
+"qs@npm:6.13.1, qs@npm:^6.11.2, qs@npm:^6.4.0":
   version: 6.13.1
   resolution: "qs@npm:6.13.1"
   dependencies:
@@ -27867,18 +27844,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rollup-plugin-esbuild@npm:6.1.1":
-  version: 6.1.1
-  resolution: "rollup-plugin-esbuild@npm:6.1.1"
+"rollup-plugin-esbuild@npm:6.2.0":
+  version: 6.2.0
+  resolution: "rollup-plugin-esbuild@npm:6.2.0"
   dependencies:
-    "@rollup/pluginutils": "npm:^5.0.5"
-    debug: "npm:^4.3.4"
-    es-module-lexer: "npm:^1.3.1"
-    get-tsconfig: "npm:^4.7.2"
+    debug: "npm:^4.4.0"
+    es-module-lexer: "npm:^1.6.0"
+    get-tsconfig: "npm:^4.10.0"
+    unplugin-utils: "npm:^0.2.3"
   peerDependencies:
     esbuild: ">=0.18.0"
     rollup: ^1.20.0 || ^2.0.0 || ^3.0.0 || ^4.0.0
-  checksum: 10/bba2d1dfb92a193823ac9dd1cdd44a8fd8cd9f25868e9a22ca077e1b7445feb4eaaf6df051148e367fc902d7d59c9f50efab49086c24c367972f05c86f3a656d
+  checksum: 10/305563dfa72a843fd7db7b885583f22f62d4d584cbce7e8d80f138692ce67eb34e45dc1227b3420662f22fa75fa603ca09b64e7d1670919275a8577da653fada
   languageName: node
   linkType: hard
 
@@ -31126,6 +31103,16 @@ __metadata:
   version: 1.0.0
   resolution: "unpipe@npm:1.0.0"
   checksum: 10/4fa18d8d8d977c55cb09715385c203197105e10a6d220087ec819f50cb68870f02942244f1017565484237f1f8c5d3cd413631b1ae104d3096f24fdfde1b4aa2
+  languageName: node
+  linkType: hard
+
+"unplugin-utils@npm:^0.2.3":
+  version: 0.2.3
+  resolution: "unplugin-utils@npm:0.2.3"
+  dependencies:
+    pathe: "npm:^2.0.2"
+    picomatch: "npm:^4.0.2"
+  checksum: 10/95a18001b4a3aa92e58259162ee70be74f49780bff7aca0272035b206143772d07f3b117922ec9d7caaed8bd24578afcf7baa4330943796ea9f011dcc96af1d9
   languageName: node
   linkType: hard
 
