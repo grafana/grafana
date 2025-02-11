@@ -1,6 +1,7 @@
 import { Spinner, Alert, Tag, InteractiveTable, Button, Card, Tooltip, IconButton } from '@grafana/ui';
 import { formatTimestamp } from './utils/time';
 import { Repository, useListJobQuery, Job } from './api';
+import { joinByLabels } from '../transformers/joinByLabels/joinByLabels';
 
 interface Props {
   repo: Repository;
@@ -77,6 +78,19 @@ export function RecentJobs({ repo }: Props) {
           {job.status?.errors && (
             <Tooltip content={<pre style={{ whiteSpace: 'pre-wrap' }}>{job.status.errors}</pre>}>
               <IconButton name="exclamation-triangle" variant="destructive" tooltip="View error details" />
+            </Tooltip>
+          )}
+          {job.status?.summary?.length && job.status?.summary?.length > 0 && (
+            <Tooltip
+              content={
+                <pre style={{ whiteSpace: 'pre-wrap' }}>
+                  {`Summary length: ${job.status.summary.length}\n`}
+                  {`Raw summary: ${JSON.stringify(job.status.summary, null, 2)}\n`}
+                  {`Mapped resources: ${job.status.summary.map((s) => s.resource).join(', ')}`}
+                </pre>
+              }
+            >
+              <IconButton name="list-ul" variant="secondary" tooltip="View error details" />
             </Tooltip>
           )}
         </div>
