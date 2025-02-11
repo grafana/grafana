@@ -166,13 +166,11 @@ func (r *SyncWorker) createJob(ctx context.Context,
 			Resource: "all",
 			Group:    "all",
 		},
-		repository:       repo,
-		options:          options,
-		progress:         progress,
-		progressInterval: time.Second * 15, // how often we update the status
-		progressLast:     time.Now(),
-		parser:           parser,
-		lister:           r.lister,
+		repository: repo,
+		options:    options,
+		progress:   progress,
+		parser:     parser,
+		lister:     r.lister,
 		jobStatus: &provisioning.JobStatus{
 			State: provisioning.JobStateWorking,
 		},
@@ -208,11 +206,9 @@ func (r *SyncWorker) patchStatus(ctx context.Context, repo *provisioning.Reposit
 
 // created once for each sync execution
 type syncJob struct {
-	repository       repository.Repository
-	options          provisioning.SyncJobOptions
-	progress         jobs.ProgressFn
-	progressInterval time.Duration
-	progressLast     time.Time
+	repository repository.Repository
+	options    provisioning.SyncJobOptions
+	progress   jobs.ProgressFn
 
 	parser       *resources.Parser
 	lister       resources.ResourceLister
@@ -300,7 +296,7 @@ func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange
 			return errors.New("too many errors")
 		}
 
-		if err := r.maybeNotify(ctx); err != nil {
+		if err := r.progress(ctx, *r.jobStatus); err != nil {
 			logger.Warn("error notifying progress", "err", err)
 			r.jobStatus.Errors = append(r.jobStatus.Errors, fmt.Errorf("error notifying progress: %w", err).Error())
 		}
@@ -342,15 +338,6 @@ func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange
 	return nil
 }
 
-// maybeNotify sends a progress update if the interval has passed
-func (r *syncJob) maybeNotify(ctx context.Context) error {
-	if time.Since(r.progressLast) < r.progressInterval {
-		return nil
-	}
-
-	return r.progress(ctx, *r.jobStatus)
-}
-
 // Convert git changes into resource file changes
 func (r *syncJob) applyVersionedChanges(ctx context.Context, repo repository.VersionedRepository, previousRef, currentRef string) error {
 	diff, err := repo.CompareFiles(ctx, previousRef, currentRef)
@@ -370,7 +357,7 @@ func (r *syncJob) applyVersionedChanges(ctx context.Context, repo repository.Ver
 			return nil
 		}
 
-		if err := r.maybeNotify(ctx); err != nil {
+		if err := r.progress(ctx, *r.jobStatus); err != nil {
 			logger.Warn("error notifying progress", "err", err)
 		}
 

@@ -220,9 +220,9 @@ func (s *jobStore) processByWorker(ctx context.Context, worker Worker, job provi
 		return nil, errors.New("unknown repository")
 	}
 
-	return worker.Process(ctx, repo, job, func(ctx context.Context, j provisioning.JobStatus) error {
-		return s.Update(ctx, job.Namespace, job.Name, j)
-	})
+	return worker.Process(ctx, repo, job, MaybeNotifyProgress(15*time.Second, func(ctx context.Context, status provisioning.JobStatus) error {
+		return s.Update(ctx, job.Namespace, job.Name, status)
+	}))
 }
 
 // Checkout the next "pending" job
