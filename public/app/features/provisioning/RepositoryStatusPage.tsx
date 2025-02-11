@@ -364,7 +364,7 @@ function formatTimestamp(timestamp?: number) {
 function getRemoteURL(repo: Repository) {
   if (repo.spec?.type === 'github') {
     const spec = repo.spec.github;
-    let url = `https://github.com/${spec?.owner}/${spec?.repository}/`;
+    let url = spec?.url ?? '';
     if (spec?.branch) {
       url += `tree/${spec.branch}`;
     }
@@ -377,7 +377,7 @@ function getWebhookURL(repo: Repository) {
   const { status, spec } = repo;
   if (spec?.type === 'github' && status?.webhook?.url) {
     const { github } = spec;
-    return `https://github.com/${github?.owner}/${github?.repository}/settings/hooks/${status.webhook?.id}`;
+    return github?.url ? `${github?.url}/settings/hooks/${status.webhook?.id}` : '';
   }
   return undefined;
 }
