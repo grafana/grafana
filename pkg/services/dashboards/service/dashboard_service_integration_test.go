@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -904,8 +905,7 @@ func permissionScenario(t *testing.T, desc string, canSave bool, fn permissionSc
 			folderService,
 			folder.NewFakeStore(),
 			nil,
-			nil,
-			nil,
+			client.MockTestRestConfig{},
 			nil,
 			quotaService,
 			nil,
@@ -993,8 +993,7 @@ func callSaveWithResult(t *testing.T, cmd dashboards.SaveDashboardCommand, sqlSt
 		folderService,
 		folder.NewFakeStore(),
 		nil,
-		nil,
-		nil,
+		client.MockTestRestConfig{},
 		nil,
 		quotaService,
 		nil,
@@ -1040,8 +1039,7 @@ func callSaveWithError(t *testing.T, cmd dashboards.SaveDashboardCommand, sqlSto
 		folderService,
 		folder.NewFakeStore(),
 		nil,
-		nil,
-		nil,
+		client.MockTestRestConfig{},
 		nil,
 		quotaService,
 		nil,
@@ -1106,8 +1104,7 @@ func saveTestDashboard(t *testing.T, title string, orgID int64, folderUID string
 		folderService,
 		folder.NewFakeStore(),
 		nil,
-		nil,
-		nil,
+		client.MockTestRestConfig{},
 		nil,
 		quotaService,
 		nil,
@@ -1179,8 +1176,7 @@ func saveTestFolder(t *testing.T, title string, orgID int64, sqlStore db.DB) *da
 		folderService,
 		folder.NewFakeStore(),
 		nil,
-		nil,
-		nil,
+		client.MockTestRestConfig{},
 		nil,
 		quotaService,
 		nil,

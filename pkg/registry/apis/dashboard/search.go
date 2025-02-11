@@ -1,6 +1,7 @@
 package dashboard
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/url"
@@ -9,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/storage/unified"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"go.opentelemetry.io/otel/trace"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -32,12 +34,12 @@ import (
 // The DTO returns everything the UI needs in a single request
 type SearchHandler struct {
 	log    log.Logger
-	client resource.ResourceIndexClient
+	client func(context.Context) resource.ResourceIndexClient
 	tracer trace.Tracer
 }
 
-func NewSearchHandler(client resource.ResourceIndexClient, tracer trace.Tracer, cfg *setting.Cfg, legacyDashboardSearcher resource.ResourceIndexClient) *SearchHandler {
-	searchClient := resource.NewSearchClient(cfg, setting.UnifiedStorageConfigKeyDashboard, client, legacyDashboardSearcher)
+func NewSearchHandler(tracer trace.Tracer, cfg *setting.Cfg, legacyDashboardSearcher resource.ResourceIndexClient) *SearchHandler {
+	searchClient := resource.NewSearchClient(cfg, setting.UnifiedStorageConfigKeyDashboard, unified.GetResourceClient, legacyDashboardSearcher)
 	return &SearchHandler{
 		client: searchClient,
 		log:    log.New("grafana-apiserver.dashboards.search"),
@@ -339,7 +341,7 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		searchRequest.Options.Fields = append(searchRequest.Options.Fields, namesFilter...)
 	}
 
-	result, err := s.client.Search(ctx, searchRequest)
+	result, err := s.client(ctx).Search(ctx, searchRequest)
 	if err != nil {
 		errhttp.Write(ctx, err, w)
 		return
