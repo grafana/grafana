@@ -2425,6 +2425,9 @@
     "detect": {
       "title": "Detect"
     },
+    "drilldown": {
+      "title": "Drilldown"
+    },
     "explore": {
       "title": "Explore"
     },
