@@ -11,8 +11,7 @@ import (
 // GitHubRepositoryConfigApplyConfiguration represents a declarative configuration of the GitHubRepositoryConfig type for use
 // with apply.
 type GitHubRepositoryConfigApplyConfiguration struct {
-	Owner                     *string                         `json:"owner,omitempty"`
-	Repository                *string                         `json:"repository,omitempty"`
+	URL                       *string                         `json:"url,omitempty"`
 	Branch                    *string                         `json:"branch,omitempty"`
 	Token                     *string                         `json:"token,omitempty"`
 	Workflows                 []provisioningv0alpha1.Workflow `json:"workflows,omitempty"`
@@ -25,19 +24,11 @@ func GitHubRepositoryConfig() *GitHubRepositoryConfigApplyConfiguration {
 	return &GitHubRepositoryConfigApplyConfiguration{}
 }
 
-// WithOwner sets the Owner field in the declarative configuration to the given value
+// WithURL sets the URL field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the Owner field is set to the value of the last call.
-func (b *GitHubRepositoryConfigApplyConfiguration) WithOwner(value string) *GitHubRepositoryConfigApplyConfiguration {
-	b.Owner = &value
-	return b
-}
-
-// WithRepository sets the Repository field in the declarative configuration to the given value
-// and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the Repository field is set to the value of the last call.
-func (b *GitHubRepositoryConfigApplyConfiguration) WithRepository(value string) *GitHubRepositoryConfigApplyConfiguration {
-	b.Repository = &value
+// If called multiple times, the URL field is set to the value of the last call.
+func (b *GitHubRepositoryConfigApplyConfiguration) WithURL(value string) *GitHubRepositoryConfigApplyConfiguration {
+	b.URL = &value
 	return b
 }
 

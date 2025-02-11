@@ -44,27 +44,24 @@ const (
 )
 
 type GitHubRepositoryConfig struct {
-	// The owner of the repository (e.g. example in `example/test` or `https://github.com/example/test`).
-	Owner string `json:"owner,omitempty"`
-	// The name of the repository (e.g. test in `example/test` or `https://github.com/example/test`).
-	Repository string `json:"repository,omitempty"`
+	// The repository URL `https://github.com/example/test`).
+	URL string `json:"url"`
+
 	// The branch to use in the repository.
 	// By default, this is the main branch.
 	Branch string `json:"branch,omitempty"`
+
 	// Token for accessing the repository.
 	// TODO: this should be part of secrets and a simple reference.
 	Token string `json:"token,omitempty"`
-	// TODO: Do we want an SSH url instead maybe?
-	// TODO: On-prem GitHub Enterprise support?
 
 	// Workflow allowed for changes to the repository.
 	// The order is relevant for defining the precedence of the workflows.
 	// Possible values: pull-request, branch, push.
 	Workflows []Workflow `json:"workflows,omitempty"`
 
-	// Whether we should show dashboard previews in the pull requests caused by the BranchWorkflow option.
+	// Whether we should show dashboard previews for pull requests
 	// By default, this is false (i.e. we will not create previews).
-	// This option is a no-op if BranchWorkflow is `false` or default.
 	GenerateDashboardPreviews bool `json:"generateDashboardPreviews,omitempty"`
 }
 

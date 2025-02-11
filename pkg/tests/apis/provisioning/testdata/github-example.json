@@ -15,8 +15,7 @@
             "intervalSeconds": 60
         },
         "github": {
-            "owner": "grafana",
-            "repository": "git-ui-sync-demo",
+            "url": "https://github.com/grafana/git-ui-sync-demo/",
             "branch": "dummy-branch",
             "workflows": ["push", "branch"],
             "generateDashboardPreviews": true,
