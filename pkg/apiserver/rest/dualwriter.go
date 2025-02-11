@@ -94,7 +94,7 @@ const (
 	Mode1
 	// Mode2 is the dual writing mode that represents writing to LegacyStorage and Storage and reading from LegacyStorage.
 	// The objects written to storage will include any labels and annotations.
-	// When reading values, the results will be from Storage when they exist, otherwise from legacy storage
+	// When reading values, the results will be from LegacyStorage.
 	Mode2
 	// Mode3 represents writing to LegacyStorage and Storage and reading from Storage.
 	// NOTE: Requesting mode3 will only happen when after a background sync job succeeds
