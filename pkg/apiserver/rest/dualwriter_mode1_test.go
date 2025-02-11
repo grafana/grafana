@@ -157,7 +157,7 @@ func TestMode1_Get(t *testing.T) {
 	tests :=
 		[]testCase{
 			{
-				name: "get an object only in the legacy store",
+				name: "should succeed when getting an object from LegacyStorage",
 				setupLegacyFn: func(m *mock.Mock, name string) {
 					m.On("Get", mock.Anything, name, mock.Anything).Return(exampleObj, nil)
 				},
@@ -166,7 +166,7 @@ func TestMode1_Get(t *testing.T) {
 				},
 			},
 			{
-				name: "error when getting an object in the legacy store fails",
+				name: "should error when getting an object from LegacyStorage fails",
 				setupLegacyFn: func(m *mock.Mock, name string) {
 					m.On("Get", mock.Anything, name, mock.Anything).Return(nil, errors.New("error"))
 				},
@@ -174,6 +174,15 @@ func TestMode1_Get(t *testing.T) {
 					m.On("Get", mock.Anything, name, mock.Anything).Return(exampleObj, nil)
 				},
 				wantErr: true,
+			},
+			{
+				name: "should not error when getting an object from UnifiedStorage fails",
+				setupLegacyFn: func(m *mock.Mock, name string) {
+					m.On("Get", mock.Anything, name, mock.Anything).Return(exampleObj, nil)
+				},
+				setupStorageFn: func(m *mock.Mock, name string) {
+					m.On("Get", mock.Anything, name, mock.Anything).Return(nil, errors.New("error"))
+				},
 			},
 		}
 
@@ -224,13 +233,13 @@ func TestMode1_GetFromUnifiedStorage(t *testing.T) {
 	tests :=
 		[]testCase{
 			{
-				name: "Get from unified storage",
+				name: "should succeed when getting an object from UnifiedStorage",
 				setupStorageFn: func(m *mock.Mock, name string) {
 					m.On("Get", mock.Anything, name, mock.Anything).Return(exampleObj, nil)
 				},
 			},
 			{
-				name: "Get from unified storage works even if parent context is canceled",
+				name: "should succeed when getting an object from UnifiedStorage even if parent context is canceled",
 				ctx:  &ctxCanceled,
 				setupStorageFn: func(m *mock.Mock, name string) {
 					m.On("Get", mock.Anything, name, mock.Anything).Return(exampleObj, nil)
@@ -277,15 +286,24 @@ func TestMode1_List(t *testing.T) {
 	tests :=
 		[]testCase{
 			{
-				name: "error when listing an object in the legacy store is not implemented",
+				name: "should error when listing from LegacyStorage fails",
 				setupLegacyFn: func(m *mock.Mock) {
 					m.On("List", mock.Anything, mock.Anything).Return(nil, errors.New("error"))
 				},
 				setupStorageFn: func(m *mock.Mock) {
 					m.On("List", mock.Anything, mock.Anything).Return(&example.PodList{}, nil)
 				},
+				wantErr: true,
 			},
-			// TODO: legacy list is missing
+			{
+				name: "should not error when listing from UnifiedStorage fails",
+				setupLegacyFn: func(m *mock.Mock) {
+					m.On("List", mock.Anything, mock.Anything).Return(&example.PodList{}, nil)
+				},
+				setupStorageFn: func(m *mock.Mock) {
+					m.On("List", mock.Anything, mock.Anything).Return(nil, errors.New("error"))
+				},
+			},
 		}
 
 	for _, tt := range tests {
@@ -305,11 +323,7 @@ func TestMode1_List(t *testing.T) {
 
 			dw := NewDualWriter(Mode1, ls, us, p, kind)
 
-			_, err := dw.List(context.Background(), &metainternalversion.ListOptions{
-				TypeMeta: metav1.TypeMeta{
-					Kind: "fail",
-				},
-			})
+			_, err := dw.List(context.Background(), &metainternalversion.ListOptions{})
 
 			if tt.wantErr {
 				require.Error(t, err)
@@ -332,7 +346,7 @@ func TestMode1_ListFromUnifiedStorage(t *testing.T) {
 	tests :=
 		[]testCase{
 			{
-				name: "list from unified storage",
+				name: "should succeed when listing from UnifiedStorage",
 				setupStorageFn: func(m *mock.Mock) {
 					m.On("List", mock.Anything, mock.Anything).Return(anotherList, nil)
 				},
@@ -341,7 +355,7 @@ func TestMode1_ListFromUnifiedStorage(t *testing.T) {
 				},
 			},
 			{
-				name: "list from unified storage works even if parent context is canceled",
+				name: "should succeed when listing from UnifiedStorage even if parent context is canceled",
 				ctx:  &ctxCanceled,
 				setupStorageFn: func(m *mock.Mock) {
 					m.On("List", mock.Anything, mock.Anything).Return(anotherList, nil)
@@ -387,7 +401,7 @@ func TestMode1_Delete(t *testing.T) {
 	tests :=
 		[]testCase{
 			{
-				name: "deleting an object in the legacy store",
+				name: "should succeed when deleting an object from LegacyStorage",
 				setupLegacyFn: func(m *mock.Mock, name string) {
 					m.On("Delete", mock.Anything, name, mock.Anything, mock.Anything).Return(exampleObj, false, nil)
 				},
@@ -396,7 +410,7 @@ func TestMode1_Delete(t *testing.T) {
 				},
 			},
 			{
-				name: "error when deleting an object in the legacy store",
+				name: "should error when deleting an object from LegacyStorage fails",
 				setupLegacyFn: func(m *mock.Mock, name string) {
 					m.On("Delete", mock.Anything, name, mock.Anything, mock.Anything).Return(nil, false, errors.New("error"))
 				},
@@ -404,6 +418,15 @@ func TestMode1_Delete(t *testing.T) {
 					m.On("Delete", mock.Anything, name, mock.Anything, mock.Anything).Return(exampleObj, false, nil)
 				},
 				wantErr: true,
+			},
+			{
+				name: "should not error when deleting an object from UnifiedStorage fails",
+				setupLegacyFn: func(m *mock.Mock, name string) {
+					m.On("Delete", mock.Anything, name, mock.Anything, mock.Anything).Return(exampleObj, false, nil)
+				},
+				setupStorageFn: func(m *mock.Mock, name string) {
+					m.On("Delete", mock.Anything, name, mock.Anything, mock.Anything).Return(nil, false, errors.New("error"))
+				},
 			},
 		}
 
@@ -453,16 +476,16 @@ func TestMode1_DeleteFromUnifiedStorage(t *testing.T) {
 	tests :=
 		[]testCase{
 			{
-				name: "Delete from unified storage",
-				setupStorageFn: func(m *mock.Mock, input string) {
-					m.On("Delete", mock.Anything, input, mock.Anything, mock.Anything).Return(exampleObj, false, nil)
+				name: "should succeed when deleting an object from UnifiedStorage",
+				setupStorageFn: func(m *mock.Mock, name string) {
+					m.On("Delete", mock.Anything, name, mock.Anything, mock.Anything).Return(exampleObj, false, nil)
 				},
 			},
 			{
-				name: "Delete from unified storage works even if parent context is canceled",
+				name: "should succeed when deleting an object from UnifiedStorage even if parent context is canceled",
 				ctx:  &ctxCanceled,
-				setupStorageFn: func(m *mock.Mock, input string) {
-					m.On("Delete", mock.Anything, input, mock.Anything, mock.Anything).Return(exampleObj, false, nil)
+				setupStorageFn: func(m *mock.Mock, name string) {
+					m.On("Delete", mock.Anything, name, mock.Anything, mock.Anything).Return(exampleObj, false, nil)
 				},
 			},
 		}
@@ -508,7 +531,7 @@ func TestMode1_DeleteCollection(t *testing.T) {
 	tests :=
 		[]testCase{
 			{
-				name:  "deleting a collection in the legacy store",
+				name:  "should succeed when deleting a collection from LegacyStorage",
 				input: &metav1.DeleteOptions{TypeMeta: metav1.TypeMeta{Kind: "foo"}},
 				setupLegacyFn: func(m *mock.Mock, input *metav1.DeleteOptions) {
 					m.On("DeleteCollection", mock.Anything, mock.Anything, input, mock.Anything).Return(exampleObj, nil)
@@ -518,7 +541,7 @@ func TestMode1_DeleteCollection(t *testing.T) {
 				},
 			},
 			{
-				name:  "error deleting a collection in the legacy store",
+				name:  "should error when deleting a collection from LegacyStorage fails",
 				input: &metav1.DeleteOptions{TypeMeta: metav1.TypeMeta{Kind: "fail"}},
 				setupLegacyFn: func(m *mock.Mock, input *metav1.DeleteOptions) {
 					m.On("DeleteCollection", mock.Anything, mock.Anything, input, mock.Anything).Return(nil, errors.New("error"))
@@ -527,6 +550,16 @@ func TestMode1_DeleteCollection(t *testing.T) {
 					m.On("DeleteCollection", mock.Anything, mock.Anything, input, mock.Anything).Return(exampleObj, nil)
 				},
 				wantErr: true,
+			},
+			{
+				name:  "should not error when deleting a collection from UnifiedStorage fails",
+				input: &metav1.DeleteOptions{TypeMeta: metav1.TypeMeta{Kind: "foo"}},
+				setupLegacyFn: func(m *mock.Mock, input *metav1.DeleteOptions) {
+					m.On("DeleteCollection", mock.Anything, mock.Anything, input, mock.Anything).Return(exampleObj, nil)
+				},
+				setupStorageFn: func(m *mock.Mock, input *metav1.DeleteOptions) {
+					m.On("DeleteCollection", mock.Anything, mock.Anything, input, mock.Anything).Return(nil, errors.New("error"))
+				},
 			},
 		}
 
@@ -575,14 +608,14 @@ func TestMode1_DeleteCollectionFromUnifiedStorage(t *testing.T) {
 	tests :=
 		[]testCase{
 			{
-				name:  "Delete Collection from unified storage",
+				name:  "should succeed when deleting a collection from UnifiedStorage",
 				input: &metav1.DeleteOptions{TypeMeta: metav1.TypeMeta{Kind: "foo"}},
 				setupStorageFn: func(m *mock.Mock) {
 					m.On("DeleteCollection", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(exampleObj, nil)
 				},
 			},
 			{
-				name:  "Delete Collection from unified storage works even if parent context is canceled",
+				name:  "should succeed when deleting a collection from UnifiedStorage even if parent context is canceled",
 				input: &metav1.DeleteOptions{TypeMeta: metav1.TypeMeta{Kind: "foo"}},
 				ctx:   &ctxCanceled,
 				setupStorageFn: func(m *mock.Mock) {
@@ -629,7 +662,7 @@ func TestMode1_Update(t *testing.T) {
 	tests :=
 		[]testCase{
 			{
-				name: "update an object in legacy",
+				name: "should succeed when updating an object in LegacyStorage",
 				setupLegacyFn: func(m *mock.Mock, input string) {
 					m.On("Update", mock.Anything, input, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(exampleObj, false, nil)
 				},
@@ -638,7 +671,7 @@ func TestMode1_Update(t *testing.T) {
 				},
 			},
 			{
-				name: "error updating an object in legacy",
+				name: "should error when updating an object in LegacyStorage fails",
 				setupLegacyFn: func(m *mock.Mock, input string) {
 					m.On("Update", mock.Anything, input, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, false, errors.New("error"))
 				},
@@ -646,6 +679,15 @@ func TestMode1_Update(t *testing.T) {
 					m.On("Update", mock.Anything, input, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(anotherObj, false, nil)
 				},
 				wantErr: true,
+			},
+			{
+				name: "should not error when updating an object in UnifiedStorage fails",
+				setupLegacyFn: func(m *mock.Mock, input string) {
+					m.On("Update", mock.Anything, input, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(exampleObj, false, nil)
+				},
+				setupStorageFn: func(m *mock.Mock, input string) {
+					m.On("Update", mock.Anything, input, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, false, errors.New("error"))
+				},
 			},
 		}
 
@@ -695,7 +737,7 @@ func TestMode1_UpdateOnUnifiedStorage(t *testing.T) {
 	tests :=
 		[]testCase{
 			{
-				name: "Update on unified storage",
+				name: "should succeed when updating an object on UnifiedStorage",
 				setupStorageFn: func(m *mock.Mock, input string) {
 					m.On("Update", mock.Anything, input, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(anotherObj, false, nil)
 				},
@@ -704,7 +746,7 @@ func TestMode1_UpdateOnUnifiedStorage(t *testing.T) {
 				},
 			},
 			{
-				name: "Update on unified storage works even if parent context is canceled",
+				name: "should succeed when updating an object on UnifiedStorage even if parent context is canceled",
 				ctx:  &ctxCanceled,
 				setupStorageFn: func(m *mock.Mock, input string) {
 					m.On("Update", mock.Anything, input, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(anotherObj, false, nil)
