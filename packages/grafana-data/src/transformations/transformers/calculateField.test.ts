@@ -1,8 +1,8 @@
+import { TestVariable, TextBoxVariable } from '@grafana/scenes';
+
 import { DataFrameView } from '../../dataframe/DataFrameView';
 import { toDataFrame } from '../../dataframe/processDataFrame';
-import { ScopedVars } from '../../types/ScopedVars';
 import { FieldType } from '../../types/dataFrame';
-import { DataTransformContext } from '../../types/transformations';
 import { BinaryOperationID } from '../../utils/binaryOperators';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 import { UnaryOperationID } from '../../utils/unaryOperators';
@@ -18,6 +18,7 @@ import {
   WindowAlignment,
 } from './calculateField';
 import { DataTransformerID } from './ids';
+import { setupTransformationScene } from './setupTransformationScene';
 
 const seriesA = toDataFrame({
   fields: [
@@ -565,51 +566,26 @@ describe('calculateField transformer w/ timeseries', () => {
         replaceFields: true,
       },
     };
-    const context: DataTransformContext = {
-      interpolate: (target: string | undefined, scopedVars?: ScopedVars, format?: string | Function): string => {
-        if (!target) {
-          return '';
-        }
-        const variables: ScopedVars = {
-          var1: {
-            value: 'Test',
-            text: 'Test',
-          },
-          var2: {
-            value: 5,
-            text: '5',
-          },
-          __interval: {
-            value: 10000,
-            text: '10000',
-          },
-        };
-        for (const key in variables) {
-          if (target === `$${key}`) {
-            return variables[key]!.value + '';
-          }
-        }
-        return target;
-      },
-    };
 
-    await expect(transformDataFrame([cfg], [seriesA], context)).toEmitValuesWith((received) => {
-      const data = received[0];
-      const filtered = data[0];
-      const rows = new DataFrameView(filtered).toArray();
-      expect(rows).toMatchInlineSnapshot(`
-        [
-          {
-            "Test": 6,
-            "TheTime": 1000,
-          },
-          {
-            "Test": 105,
-            "TheTime": 2000,
-          },
-        ]
-      `);
-    });
+    const data = setupTransformationScene(seriesA, cfg, [
+      new TextBoxVariable({ name: 'var1', value: 'Test' }),
+      new TestVariable({ name: 'var2', value: 5 }),
+    ]);
+
+    const filtered = data[0];
+    const rows = new DataFrameView(filtered).toArray();
+    expect(rows).toMatchInlineSnapshot(`
+      [
+        {
+          "Test": 6,
+          "TheTime": 1000,
+        },
+        {
+          "Test": 105,
+          "TheTime": 2000,
+        },
+      ]
+    `);
   });
 
   it('calculates centered moving average on odd window size', async () => {
