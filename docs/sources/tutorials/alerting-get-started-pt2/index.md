@@ -10,10 +10,10 @@ labels:
     - cloud
 tags:
   - beginner
-title: Get started with Grafana Alerting - Part 2 of 4
+title: Get started with Grafana Alerting - Part 2
 weight: 50
 killercoda:
-  title: Get started with Grafana Alerting - Part 2 of 4
+  title: Get started with Grafana Alerting - Part 2
   description: Learn to use alert instances and route notifications by labels to contacts, building on your alerting skills in Grafana for more advanced workflows — Part 2.
   backend:
     imageid: ubuntu
@@ -21,7 +21,7 @@ killercoda:
 
 <!-- INTERACTIVE page intro.md START -->
 
-# Get started with Grafana Alerting - Part 2 of 4
+# Get started with Grafana Alerting - Part 2
 
 The Get started with Grafana Alerting tutorial Part 2 is a continuation of [Get started with Grafana Alerting tutorial Part 1](http://www.grafana.com/tutorials/alerting-get-started/).
 
