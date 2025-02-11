@@ -529,6 +529,9 @@ func (r resourceClientMock) List(ctx context.Context, in *resource.ListRequest, 
 func (r resourceClientMock) Watch(ctx context.Context, in *resource.WatchRequest, opts ...grpc.CallOption) (resource.ResourceStore_WatchClient, error) {
 	return nil, nil
 }
+func (r resourceClientMock) BatchProcess(ctx context.Context, opts ...grpc.CallOption) (resource.BatchStore_BatchProcessClient, error) {
+	return nil, nil
+}
 func (r resourceClientMock) Search(ctx context.Context, in *resource.ResourceSearchRequest, opts ...grpc.CallOption) (*resource.ResourceSearchResponse, error) {
 	if len(in.Options.Labels) > 0 &&
 		in.Options.Labels[0].Key == utils.LabelKeyDeprecatedInternalID &&
