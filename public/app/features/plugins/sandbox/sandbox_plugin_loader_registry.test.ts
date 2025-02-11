@@ -36,9 +36,7 @@ const fakePluginSettings: PluginMeta = {
   name: 'Test Plugin',
 } as PluginMeta;
 
-const fakePluginDetails: CatalogPluginDetails = {
-} as CatalogPluginDetails;
-
+const fakePluginDetails: CatalogPluginDetails = {} as CatalogPluginDetails;
 
 describe('Sandbox eligibility checks', () => {
   const originalNodeEnv = process.env.NODE_ENV;
@@ -91,8 +89,7 @@ describe('Sandbox eligibility checks', () => {
     expect(result).toBe(false);
   });
 
-  describe("with getPluginDetails", () => {
-
+  describe('with getPluginDetails', () => {
     test('shouldLoadPluginInFrontendSandbox returns false for Grafana-signed plugins', async () => {
       getPluginSettingsMock.mockRejectedValueOnce(new Error('not found'));
 
@@ -142,16 +139,18 @@ describe('Sandbox eligibility checks', () => {
     test('isPluginFrontendSandboxEligible returns false for plugins with internal signature', async () => {
       getPluginSettingsMock.mockRejectedValueOnce(new Error('not found'));
 
-      getPluginDetailsMock.mockResolvedValue({ ...fakePluginDetails, signatureType: PluginSignatureType.community, signature: PluginSignatureStatus.internal });
+      getPluginDetailsMock.mockResolvedValue({
+        ...fakePluginDetails,
+        signatureType: PluginSignatureType.community,
+        signature: PluginSignatureStatus.internal,
+      });
 
       const result = await isPluginFrontendSandboxEligible({ pluginId: 'test-plugin' });
       expect(result).toBe(false);
     });
+  });
 
-  })
-
-  describe("with getPluginSettings", () => {
-
+  describe('with getPluginSettings', () => {
     test('shouldLoadPluginInFrontendSandbox returns false for Grafana-signed plugins', async () => {
       // if getPluginDetails fails it fallsback to getPluginSettings
       getPluginDetailsMock.mockRejectedValueOnce(new Error('not found'));
@@ -208,5 +207,5 @@ describe('Sandbox eligibility checks', () => {
       const result = await isPluginFrontendSandboxEligible({ pluginId: 'test-plugin' });
       expect(result).toBe(false);
     });
-  })
+  });
 });
