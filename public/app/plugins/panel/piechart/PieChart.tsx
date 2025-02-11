@@ -66,6 +66,9 @@ export const PieChart = ({
   });
 
   const filteredFieldDisplayValues = fieldDisplayValues.filter(filterDisplayItems);
+  const sortedFieldDisplayValues = filteredFieldDisplayValues.slice().sort((a, b) => {
+    return (a.colIndex ?? Infinity) - (b.colIndex ?? Infinity);
+  });
 
   const getValue = (d: FieldDisplay) => d.display.numeric;
   const getGradientId = (color: string) => `${componentInstanceId}-${tinycolor(color).toHex()}`;
@@ -75,12 +78,10 @@ export const PieChart = ({
 
   const showLabel = displayLabels.length > 0;
   const showTooltip = tooltipOptions.mode !== 'none' && tooltip.tooltipOpen;
-  const total = filteredFieldDisplayValues.reduce(sumDisplayItemsReducer, 0);
+  const total = sortedFieldDisplayValues.reduce(sumDisplayItemsReducer, 0);
   const layout = getPieLayout(width, height, pieType);
   const colors = [
-    ...new Set(
-      filteredFieldDisplayValues.map((fieldDisplayValue) => fieldDisplayValue.display.color ?? FALLBACK_COLOR)
-    ),
+    ...new Set(sortedFieldDisplayValues.map((fieldDisplayValue) => fieldDisplayValue.display.color ?? FALLBACK_COLOR)),
   ];
 
   // The pie chart will display slices going clockwise with the largest value first, we set a constant sort so it will be displayed with the legend order
@@ -106,7 +107,7 @@ export const PieChart = ({
             );
           })}
           <Pie
-            data={filteredFieldDisplayValues}
+            data={sortedFieldDisplayValues}
             pieValue={getValue}
             outerRadius={layout.outerRadius}
             innerRadius={layout.innerRadius}
