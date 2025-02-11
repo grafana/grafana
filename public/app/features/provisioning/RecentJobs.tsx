@@ -1,4 +1,4 @@
-import { Spinner, Alert, Tag, InteractiveTable, Button, Card, Box, Stack, Icon } from '@grafana/ui';
+import { Spinner, Alert, Badge, InteractiveTable, Button, Card, Box, Stack, Icon } from '@grafana/ui';
 import { formatTimestamp } from './utils/time';
 import { Repository, JobResourceSummary, useListJobQuery, Job } from './api';
 
@@ -36,18 +36,18 @@ export function RecentJobs({ repo }: Props) {
       id: 'status',
       header: 'Status',
       cell: ({ row: { original: job } }: { row: { original: Job } }) => (
-        <Tag
-          name={job.status?.state || ''}
+        <Badge
+          text={job.status?.state || ''}
           color={
             job.status?.state === 'success'
-              ? 'success'
+              ? 'green'
               : job.status?.state === 'working'
-                ? 'warning'
+                ? 'orange'
                 : job.status?.state === 'pending'
-                  ? 'warning'
+                  ? 'orange'
                   : job.status?.state === 'error'
-                    ? 'error'
-                    : 'secondary'
+                    ? 'red'
+                    : 'darkgrey'
           }
           icon={job.status?.state === 'working' ? 'spinner' : undefined}
         />
