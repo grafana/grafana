@@ -213,7 +213,7 @@ func (d *DualWriterMode2) Delete(ctx context.Context, name string, deleteValidat
 	d.recordStorageDuration(err != nil, mode2Str, d.resource, method, startStorage)
 	if err != nil {
 		if !apierrors.IsNotFound(err) {
-			log.WithValues("objectList", deletedS).Error(err, "could not delete from duplicate storage")
+			log.WithValues("objectList", deletedS).Error(err, "could not delete from unified storage")
 			return nil, false, err
 		}
 	}
