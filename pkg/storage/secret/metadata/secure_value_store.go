@@ -81,10 +81,28 @@ func (s *secureValueStorage) Create(ctx context.Context, sv *secretv0alpha1.Secu
 	return createdSecureValue, nil
 }
 
-func (s *secureValueStorage) Read(ctx context.Context, nn xkube.NameNamespace) (*secretv0alpha1.SecureValue, error) {
-	row, err := s.readInternal(ctx, nn)
+func (s *secureValueStorage) Read(ctx context.Context, name string, namespace xkube.Namespace) (*secretv0alpha1.SecureValue, error) {
+	_, ok := claims.AuthInfoFrom(ctx)
+	if !ok {
+		return nil, fmt.Errorf("missing auth info in context")
+	}
+
+	row := &secureValueDB{Name: name, Namespace: namespace.String()}
+
+	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		found, err := sess.Get(row)
+		if err != nil {
+			return fmt.Errorf("could not get row: %w", err)
+		}
+
+		if !found {
+			return contracts.ErrSecureValueNotFound
+		}
+
+		return nil
+	})
 	if err != nil {
-		return nil, fmt.Errorf("read internal: %w", err)
+		return nil, fmt.Errorf("db failure: %w", err)
 	}
 
 	secureValue, err := row.toKubernetes()
@@ -101,14 +119,22 @@ func (s *secureValueStorage) Update(ctx context.Context, newSecureValue *secretv
 		return nil, fmt.Errorf("missing auth info in context")
 	}
 
-	nn := xkube.NameNamespace{
-		Name:      newSecureValue.Name,
-		Namespace: xkube.Namespace(newSecureValue.Namespace),
-	}
+	currentRow := &secureValueDB{Name: newSecureValue.Name, Namespace: newSecureValue.Namespace}
 
-	currentRow, err := s.readInternal(ctx, nn)
+	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		found, err := sess.Get(currentRow)
+		if err != nil {
+			return fmt.Errorf("could not get row: %w", err)
+		}
+
+		if !found {
+			return contracts.ErrSecureValueNotFound
+		}
+
+		return nil
+	})
 	if err != nil {
-		return nil, fmt.Errorf("read securevalue: %w", err)
+		return nil, fmt.Errorf("db failure: %w", err)
 	}
 
 	// This should come from the keeper.
@@ -133,7 +159,7 @@ func (s *secureValueStorage) Update(ctx context.Context, newSecureValue *secretv
 			return contracts.ErrKeeperNotFound
 		}
 
-		cond := &secureValueDB{Name: nn.Name, Namespace: nn.Namespace.String()}
+		cond := &secureValueDB{Name: newSecureValue.Name, Namespace: newSecureValue.Namespace}
 
 		if _, err := sess.Update(newRow, cond); err != nil {
 			return fmt.Errorf("update row: %w", err)
@@ -153,7 +179,7 @@ func (s *secureValueStorage) Update(ctx context.Context, newSecureValue *secretv
 	return secureValue, nil
 }
 
-func (s *secureValueStorage) Delete(ctx context.Context, nn xkube.NameNamespace) error {
+func (s *secureValueStorage) Delete(ctx context.Context, name string, namespace xkube.Namespace) error {
 	_, ok := claims.AuthInfoFrom(ctx)
 	if !ok {
 		return fmt.Errorf("missing auth info in context")
@@ -162,7 +188,7 @@ func (s *secureValueStorage) Delete(ctx context.Context, nn xkube.NameNamespace)
 	// TODO: delete from the keeper!
 
 	// TODO: do we need to delete by GUID? name+namespace is a unique index. It would avoid doing a fetch.
-	row := &secureValueDB{Name: nn.Name, Namespace: nn.Namespace.String()}
+	row := &secureValueDB{Name: name, Namespace: namespace.String()}
 
 	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		// TODO: because this is a securevalue, do we care to inform the caller if a row was delete (existed) or not?
@@ -223,13 +249,13 @@ func (s *secureValueStorage) List(ctx context.Context, namespace xkube.Namespace
 	}, nil
 }
 
-func (s *secureValueStorage) readInternal(ctx context.Context, nn xkube.NameNamespace) (*secureValueDB, error) {
+func (s *secureValueStorage) readInternal(ctx context.Context, name string, namespace xkube.Namespace) (*secureValueDB, error) {
 	_, ok := claims.AuthInfoFrom(ctx)
 	if !ok {
 		return nil, fmt.Errorf("missing auth info in context")
 	}
 
-	row := &secureValueDB{Name: nn.Name, Namespace: nn.Namespace.String()}
+	row := &secureValueDB{Name: name, Namespace: namespace.String()}
 
 	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		found, err := sess.Get(row)

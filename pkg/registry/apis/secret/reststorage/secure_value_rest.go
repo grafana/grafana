@@ -86,12 +86,12 @@ func (s *SecureValueRest) List(ctx context.Context, options *internalversion.Lis
 
 // Get calls the inner `store` (persistence) and returns a `securevalue` by `name`. It will NOT return the decrypted `value`.
 func (s *SecureValueRest) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	nn := xkube.NameNamespace{
-		Name:      name,
-		Namespace: xkube.Namespace(request.NamespaceValue(ctx)),
+	namespace, ok := request.NamespaceFrom(ctx)
+	if !ok {
+		return nil, fmt.Errorf("missing namespace")
 	}
 
-	sv, err := s.storage.Read(ctx, nn)
+	sv, err := s.storage.Read(ctx, name, xkube.Namespace(namespace))
 	if err != nil {
 		if errors.Is(err, contracts.ErrSecureValueNotFound) {
 			return nil, s.resource.NewNotFound(name)
@@ -174,12 +174,12 @@ func (s *SecureValueRest) Update(
 // Delete calls the inner `store` (persistence) in order to delete the `securevalue`.
 // The second return parameter `bool` indicates whether the delete was instant or not. It always is for `securevalues`.
 func (s *SecureValueRest) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
-	nn := xkube.NameNamespace{
-		Name:      name,
-		Namespace: xkube.Namespace(request.NamespaceValue(ctx)),
+	namespace, ok := request.NamespaceFrom(ctx)
+	if !ok {
+		return nil, false, fmt.Errorf("missing namespace")
 	}
 
-	if err := s.storage.Delete(ctx, nn); err != nil {
+	if err := s.storage.Delete(ctx, name, xkube.Namespace(namespace)); err != nil {
 		return nil, false, fmt.Errorf("delete secure value: %w", err)
 	}
 

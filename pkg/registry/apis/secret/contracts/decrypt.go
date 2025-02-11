@@ -9,5 +9,5 @@ import (
 
 // DecryptStorage is the interface for wiring and dependency injection.
 type DecryptStorage interface {
-	Decrypt(ctx context.Context, nn xkube.NameNamespace) (secretv0alpha1.ExposedSecureValue, error)
+	Decrypt(ctx context.Context, name string, namespace xkube.Namespace) (secretv0alpha1.ExposedSecureValue, error)
 }

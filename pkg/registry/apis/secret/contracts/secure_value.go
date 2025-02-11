@@ -16,8 +16,8 @@ var (
 // SecureValueStorage is the interface for wiring and dependency injection.
 type SecureValueStorage interface {
 	Create(ctx context.Context, sv *secretv0alpha1.SecureValue) (*secretv0alpha1.SecureValue, error)
-	Read(ctx context.Context, nn xkube.NameNamespace) (*secretv0alpha1.SecureValue, error)
+	Read(ctx context.Context, name string, namespace xkube.Namespace) (*secretv0alpha1.SecureValue, error)
 	Update(ctx context.Context, sv *secretv0alpha1.SecureValue) (*secretv0alpha1.SecureValue, error)
-	Delete(ctx context.Context, nn xkube.NameNamespace) error
+	Delete(ctx context.Context, name string, namespace xkube.Namespace) error
 	List(ctx context.Context, namespace xkube.Namespace, options *internalversion.ListOptions) (*secretv0alpha1.SecureValueList, error)
 }

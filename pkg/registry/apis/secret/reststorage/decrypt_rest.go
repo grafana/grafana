@@ -67,12 +67,12 @@ func (s *DecryptRest) ProducesObject(verb string) interface{} {
 // Connect returns an http.Handler that will handle the request/response for a given API invocation.
 // See other methods implemented for supporting/optional functionality.
 func (s *DecryptRest) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	nn := xkube.NameNamespace{
-		Name:      name,
-		Namespace: xkube.Namespace(request.NamespaceValue(ctx)),
+	namespace, ok := request.NamespaceFrom(ctx)
+	if !ok {
+		return nil, fmt.Errorf("missing namespace")
 	}
 
-	exposedValue, err := s.storage.Decrypt(ctx, nn)
+	exposedValue, err := s.storage.Decrypt(ctx, name, xkube.Namespace(namespace))
 	if err != nil {
 		return nil, fmt.Errorf("failed to decrypt secure value: %w", err)
 	}

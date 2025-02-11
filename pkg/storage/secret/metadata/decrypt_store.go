@@ -28,14 +28,14 @@ type decryptStorage struct {
 	db db.DB
 }
 
-func (s *decryptStorage) Decrypt(ctx context.Context, nn xkube.NameNamespace) (secretv0alpha1.ExposedSecureValue, error) {
+func (s *decryptStorage) Decrypt(ctx context.Context, name string, namespace xkube.Namespace) (secretv0alpha1.ExposedSecureValue, error) {
 	// TODO: do proper checks here.
 	_, ok := claims.AuthInfoFrom(ctx)
 	if !ok {
 		return "", fmt.Errorf("missing auth info in context")
 	}
 
-	_, err := s.readSecureValue(ctx, nn)
+	_, err := s.readSecureValue(ctx, name, namespace)
 	if err != nil {
 		return "", fmt.Errorf("read secure value: %w", err)
 	}
@@ -45,8 +45,8 @@ func (s *decryptStorage) Decrypt(ctx context.Context, nn xkube.NameNamespace) (s
 	return secretv0alpha1.ExposedSecureValue("super duper secure"), nil
 }
 
-func (s *decryptStorage) readSecureValue(ctx context.Context, nn xkube.NameNamespace) (*secureValueDB, error) {
-	row := &secureValueDB{Name: nn.Name, Namespace: nn.Namespace.String()}
+func (s *decryptStorage) readSecureValue(ctx context.Context, name string, namespace xkube.Namespace) (*secureValueDB, error) {
+	row := &secureValueDB{Name: name, Namespace: namespace.String()}
 
 	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		found, err := sess.Get(row)
