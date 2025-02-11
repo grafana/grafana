@@ -61,18 +61,12 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
               columns={useMemo(
                 () => [
                   {
-                    id: 'resource',
-                    header: 'Resource',
+                    id: 'Resource',
+                    header: 'Resource Type',
                     cell: ({ row: { original } }: StatCell<'resource'>) => {
                       return <span>{original.resource}</span>;
                     },
-                  },
-                  {
-                    id: 'group',
-                    header: 'Group',
-                    cell: ({ row: { original } }: StatCell<'group'>) => {
-                      return <span>{original.group}</span>;
-                    },
+                    size: 'auto',
                   },
                   {
                     id: 'count',
@@ -80,6 +74,7 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
                     cell: ({ row: { original } }: StatCell<'count'>) => {
                       return <span>{original.count}</span>;
                     },
+                    size: 100,
                   },
                 ],
                 []
@@ -106,20 +101,19 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
           <StatusBadge enabled={Boolean(repo.spec?.sync?.enabled)} state={repo.status?.sync?.state} name={name} />
         </Card.Heading>
         <Card.Meta>
-          <ul style={{ listStyle: 'none' }}>
-            <li>
-              Job ID: <b>{status?.sync.job ?? 'N/A'}</b>
-            </li>
-            <li>
-              Last Ref: <b>{status?.sync.hash ?? 'N/A'}</b>
-            </li>
-            <li>
-              Started: <b>{formatTimestamp(status?.sync.started)}</b>
-            </li>
-            <li>
-              Finished: <b>{formatTimestamp(status?.sync.finished)}</b>
-            </li>
-          </ul>
+          <div style={{ display: 'grid', gridTemplateColumns: '100px 1fr', gap: '8px', alignItems: 'baseline' }}>
+            <Text color="secondary">Job ID:</Text>
+            <Text variant="body">{status?.sync.job ?? 'N/A'}</Text>
+
+            <Text color="secondary">Last Ref:</Text>
+            <Text variant="body">{status?.sync.hash ? status.sync.hash.substring(0, 7) : 'N/A'}</Text>
+
+            <Text color="secondary">Started:</Text>
+            <Text variant="body">{formatTimestamp(status?.sync.started)}</Text>
+
+            <Text color="secondary">Finished:</Text>
+            <Text variant="body">{formatTimestamp(status?.sync.finished)}</Text>
+          </div>
         </Card.Meta>
         <Card.Actions>
           <SyncRepository repository={repo} />
