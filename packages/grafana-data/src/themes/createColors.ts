@@ -36,7 +36,7 @@ export interface ThemeColorsBase<TColor> {
     secondary: string;
     /**
      * For popovers and menu backgrounds. This is the same color as primary in most light themes but in dark
-     * themes it can have a brighter gray shade to help give it contast against the primary backgrund.
+     * themes it has a brighter shade to help give it contrast against the primary background.
      **/
     elevated: string;
   };
