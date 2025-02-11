@@ -585,7 +585,6 @@ describe('DashboardSceneSerializer', () => {
             autoRefreshIntervals: [],
             quickRanges: [],
             hideTimepicker: false,
-            weekStart: undefined,
             fiscalYearStartMonth: 0,
             timezone: '',
           },
@@ -649,7 +648,6 @@ describe('DashboardSceneSerializer', () => {
           quickRanges: [],
           timezone: 'browser',
           to: 'now',
-          weekStart: undefined,
         });
       });
 
