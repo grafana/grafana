@@ -254,8 +254,8 @@ If you want to add all of the current dashboard's variables to the URL, then use
 1. Click the menu icon and select **Edit** to open the panel editor.
 1. In the panel edit pane, scroll down to the **Data links** section and expand it.
 1. Click **+ Add link**.
-1. In the dialog box that opens, enter a **Title**. This is a human-readable label for the link displayed in the UI.
-1. Enter the **URL** or variable to which you want to link.
+1. In the dialog box that opens, enter a **Title**. This is a human-readable label for the link displayed in the UI. This is a required field.
+1. Enter the **URL** or variable to which you want to link. This is a required field.
 
    To add a data link variable, click in the **URL** field and enter `$` or press Ctrl+Space or Cmd+Space to see a list of available variables.
 
