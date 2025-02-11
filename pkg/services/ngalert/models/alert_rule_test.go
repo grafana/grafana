@@ -15,6 +15,7 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/exp/maps"
 	"gopkg.in/yaml.v3"
 
 	"github.com/grafana/grafana/pkg/util"
@@ -407,7 +408,7 @@ func TestDiff(t *testing.T) {
 		rule1 := RuleGen.GenerateRef()
 		rule2 := RuleGen.GenerateRef()
 
-		diffs := rule1.Diff(rule2, "Data", "Annotations", "Labels", "NotificationSettings") // these fields will be tested separately
+		diffs := rule1.Diff(rule2, "Data", "Annotations", "Labels", "NotificationSettings", "Metadata") // these fields will be tested separately
 
 		difCnt := 0
 		if rule1.ID != rule2.ID {
@@ -839,6 +840,24 @@ func TestDiff(t *testing.T) {
 			})
 		}
 	})
+
+	t.Run("should detect changes in Metadata", func(t *testing.T) {
+		rule1 := RuleGen.With(RuleGen.WithMetadata(AlertRuleMetadata{EditorSettings: EditorSettings{
+			SimplifiedQueryAndExpressionsSection: false,
+			SimplifiedNotificationsSection:       false,
+		}})).GenerateRef()
+
+		rule2 := CopyRule(rule1, RuleGen.WithMetadata(AlertRuleMetadata{EditorSettings: EditorSettings{
+			SimplifiedQueryAndExpressionsSection: true,
+			SimplifiedNotificationsSection:       true,
+		}}))
+
+		diff := rule1.Diff(rule2)
+		assert.ElementsMatch(t, []string{
+			"Metadata.EditorSettings.SimplifiedQueryAndExpressionsSection",
+			"Metadata.EditorSettings.SimplifiedNotificationsSection",
+		}, diff.Paths())
+	})
 }
 
 func TestSortByGroupIndex(t *testing.T) {
@@ -918,4 +937,49 @@ func TestAlertRuleGetKeyWithGroup(t *testing.T) {
 		}
 		require.Equal(t, expected, rule.GetKeyWithGroup())
 	})
+}
+
+func TestAlertRuleCopy(t *testing.T) {
+	for i := 0; i < 100; i++ {
+		rule := RuleGen.GenerateRef()
+		copied := rule.Copy()
+		require.Empty(t, rule.Diff(copied))
+	}
+}
+
+// This test makes sure the default generator
+func TestGeneratorFillsAllFields(t *testing.T) {
+	ignoredFields := map[string]struct{}{
+		"ID":       {},
+		"IsPaused": {},
+		"Record":   {},
+	}
+
+	tpe := reflect.TypeOf(AlertRule{})
+	fields := make(map[string]struct{}, tpe.NumField())
+	for i := 0; i < tpe.NumField(); i++ {
+		if _, ok := ignoredFields[tpe.Field(i).Name]; ok {
+			continue
+		}
+		fields[tpe.Field(i).Name] = struct{}{}
+	}
+
+	for i := 0; i < 1000; i++ {
+		rule := RuleGen.Generate()
+		v := reflect.ValueOf(rule)
+
+		for j := 0; j < tpe.NumField(); j++ {
+			field := tpe.Field(j)
+			value := v.Field(j)
+			if !value.IsValid() || value.Kind() == reflect.Ptr && value.IsNil() || value.IsZero() {
+				continue
+			}
+			delete(fields, field.Name)
+			if len(fields) == 0 {
+				return
+			}
+		}
+	}
+
+	require.FailNow(t, "AlertRule generator does not populate fields", "skipped fields: %v", maps.Keys(fields))
 }

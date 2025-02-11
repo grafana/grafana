@@ -784,6 +784,7 @@ func TestSchedule_updateRulesMetrics(t *testing.T) {
 
 		alertRuleWithAdvancedSettings := models.RuleGen.With(
 			models.RuleGen.WithOrgID(firstOrgID),
+			models.RuleGen.WithEditorSettingsSimplifiedNotificationsSection(false),
 			models.RuleGen.WithEditorSettingsSimplifiedQueryAndExpressionsSection(false),
 		).GenerateRef()
 
@@ -818,6 +819,7 @@ func TestSchedule_updateRulesMetrics(t *testing.T) {
 
 		alertRule2 := models.RuleGen.With(
 			models.RuleGen.WithOrgID(secondOrgID),
+			models.RuleGen.WithEditorSettingsSimplifiedNotificationsSection(false),
 			models.RuleGen.WithEditorSettingsSimplifiedQueryAndExpressionsSection(true),
 		).GenerateRef()
 
