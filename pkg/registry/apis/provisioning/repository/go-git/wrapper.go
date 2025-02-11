@@ -68,7 +68,7 @@ func Clone(
 		return nil, err
 	}
 
-	url := fmt.Sprintf("https://github.com/%s/%s.git", gitcfg.Owner, gitcfg.Repository)
+	url := fmt.Sprintf("/%s.git", gitcfg.URL)
 
 	repo, err := git.PlainOpen(dir)
 	if err != nil {

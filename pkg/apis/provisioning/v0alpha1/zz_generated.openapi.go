@@ -238,16 +238,10 @@ func schema_pkg_apis_provisioning_v0alpha1_GitHubRepositoryConfig(ref common.Ref
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
-					"owner": {
+					"url": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The owner of the repository (e.g. example in `example/test` or `https://github.com/example/test`).",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"repository": {
-						SchemaProps: spec.SchemaProps{
-							Description: "The name of the repository (e.g. test in `example/test` or `https://github.com/example/test`).",
+							Description: "The repository URL `https://github.com/example/test`).",
+							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -284,12 +278,13 @@ func schema_pkg_apis_provisioning_v0alpha1_GitHubRepositoryConfig(ref common.Ref
 					},
 					"generateDashboardPreviews": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Whether we should show dashboard previews in the pull requests caused by the BranchWorkflow option. By default, this is false (i.e. we will not create previews). This option is a no-op if BranchWorkflow is `false` or default.",
+							Description: "Whether we should show dashboard previews for pull requests By default, this is false (i.e. we will not create previews).",
 							Type:        []string{"boolean"},
 							Format:      "",
 						},
 					},
 				},
+				Required: []string{"url"},
 			},
 		},
 	}

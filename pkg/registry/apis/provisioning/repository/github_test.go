@@ -114,15 +114,17 @@ func TestParseWebhooks(t *testing.T) {
 					Enabled: true, // required to accept sync job
 				},
 				GitHub: &provisioning.GitHubRepositoryConfig{
-					Repository: "git-ui-sync-demo",
-					Owner:      "grafana",
-					Branch:     "main",
+					URL:    "https://github.com/grafana/git-ui-sync-demo",
+					Branch: "main",
 
 					GenerateDashboardPreviews: true,
 				},
 			},
 		},
 	}
+	var err error
+	gh.owner, gh.repo, err = parseOwnerRepo(gh.config.Spec.GitHub.URL)
+	require.NoError(t, err)
 
 	for _, tt := range tests {
 		name := fmt.Sprintf("webhook-%s-%s.json", tt.messageType, tt.name)

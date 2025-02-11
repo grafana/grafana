@@ -72,7 +72,7 @@ function RepositoryListPageContent({ items }: { items?: Repository[] }) {
               case 'github':
                 icon = 'github';
                 const spec = item.spec.github;
-                const url = `https://github.com/${spec?.owner}/${spec?.repository}/`;
+                const url = item.spec.github?.url ?? '';
                 let branch = url;
                 if (spec?.branch) {
                   branch += `tree/` + spec?.branch;

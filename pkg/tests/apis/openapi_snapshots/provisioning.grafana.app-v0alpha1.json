@@ -2780,26 +2780,26 @@
       },
       "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.GitHubRepositoryConfig": {
         "type": "object",
+        "required": [
+          "url"
+        ],
         "properties": {
           "branch": {
             "description": "The branch to use in the repository. By default, this is the main branch.",
             "type": "string"
           },
           "generateDashboardPreviews": {
-            "description": "Whether we should show dashboard previews in the pull requests caused by the BranchWorkflow option. By default, this is false (i.e. we will not create previews). This option is a no-op if BranchWorkflow is `false` or default.",
+            "description": "Whether we should show dashboard previews for pull requests By default, this is false (i.e. we will not create previews).",
             "type": "boolean"
-          },
-          "owner": {
-            "description": "The owner of the repository (e.g. example in `example/test` or `https://github.com/example/test`).",
-            "type": "string"
-          },
-          "repository": {
-            "description": "The name of the repository (e.g. test in `example/test` or `https://github.com/example/test`).",
-            "type": "string"
           },
           "token": {
             "description": "Token for accessing the repository.",
             "type": "string"
+          },
+          "url": {
+            "description": "The repository URL `https://github.com/example/test`).",
+            "type": "string",
+            "default": ""
           },
           "workflows": {
             "description": "Workflow allowed for changes to the repository. The order is relevant for defining the precedence of the workflows. Possible values: pull-request, branch, push.",

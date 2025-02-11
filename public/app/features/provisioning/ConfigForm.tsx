@@ -44,8 +44,7 @@ function getDefaultValues(repository?: RepositorySpec): RepositoryFormData {
       type: 'github',
       title: '',
       token: '',
-      owner: '',
-      repository: '',
+      url: '',
       branch: 'main',
       generateDashboardPreviews: true,
       workflows: ['push', 'branch'],
@@ -153,13 +152,25 @@ export function ConfigForm({ data }: ConfigFormProps) {
             />
           </Field>
           <TokenPermissionsInfo />
-          <Field label={'Repository owner'} error={errors?.owner?.message} invalid={!!errors?.owner}>
-            <Input {...register('owner', { required: 'This field is required.' })} placeholder={'test'} />
+          <Field
+            label={'Repository URL'}
+            error={errors?.url?.message}
+            invalid={!!errors?.url}
+            description={'Enter the GitHub repository URL'}
+            required
+          >
+            <Input
+              {...register('url', {
+                required: 'This field is required.',
+                pattern: {
+                  value: /^(?:https:\/\/github\.com\/)?[^/]+\/[^/]+$/,
+                  message: 'Please enter a valid GitHub repository URL',
+                },
+              })}
+              placeholder={'https://github.com/username/repo-name'}
+            />
           </Field>
-          <Field label={'Repository name'} error={errors?.repository?.message} invalid={!!errors?.repository}>
-            <Input {...register('repository', { required: 'This field is required.' })} placeholder={'example'} />
-          </Field>
-          <Field label={'Branch'} error={errors?.branch?.message} invalid={!!errors?.branch}>
+          <Field label={'Branch'}>
             <Input {...register('branch')} placeholder={'main'} />
           </Field>
           <Field label={'Workflows'} required error={errors?.workflows?.message} invalid={!!errors?.workflows}>
