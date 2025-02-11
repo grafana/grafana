@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/k8sctx"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/lint"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 )
@@ -200,6 +201,12 @@ func (r *Parser) Parse(ctx context.Context, info *repository.FileInfo, validate 
 		parsed.Errors = append(parsed.Errors, fmt.Errorf("unable to find client"))
 		return parsed, nil
 	}
+
+	ctx, cancel, err := k8sctx.Fork(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer cancel()
 
 	// Dry run CREATE or UPDATE
 	parsed.Existing, _ = parsed.Client.Get(ctx, obj.GetName(), metav1.GetOptions{})
