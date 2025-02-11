@@ -151,7 +151,7 @@ In the provided demo setup, you're monitoring:
 - CPU Usage.
 - Memory Consumption.
 
-You have a mixture of critical alerts (e.g., CPU usage over 75%) and warning alerts (e.g., memory usage over 60%).
+You have a mixture of critical alerts (e.g., CPU usage over `75%`) and warning alerts (e.g., memory usage over `60%`).
 
 At times, you also have scheduled maintenance windows, where you might temporarily suppress certain alerts during planned downtime.
 
@@ -182,6 +182,8 @@ The time-series visualization supports alert rules to provide more context in th
 
    - In the query area, copy and paste the following PromQL query:
 
+    ** switch to **Code** mode if not already selected **
+
      ```promql
      flask_app_cpu_usage{environment="prod"}
      ```
@@ -203,7 +205,8 @@ The time-series visualization supports alert rules to provide more context in th
 
      Both metrics return labels that we’ll use later to link alert instances with the appropriate routing. These labels help define how alerts are routed based on their environment or other criteria.
 
-1. Click Save dashboard.
+1. Click **Save dashboard**.
+
    We have our time-series panel ready. Feel free to combine metrics with labels such as `environment = “staging”`.
 
 <!-- INTERACTIVE page step3.md END -->
@@ -220,7 +223,7 @@ Notification policies route alert instances to contact points via label matchers
    - In the **Default policy**, click **+ New child policy**.
    - **Label**: `environment`.
    - **Operator**: `=`.
-   - **Value**: `prod`.
+   - **Value**: `production`.
    - This label matches alert rules where the environment label is `prod`.
 
 1. Choose a **contact point**:
@@ -262,7 +265,7 @@ Make it short and descriptive as this will appear in your alert notification. Fo
 1. Select **Prometheus** data source from the drop-down menu.
 1. In the query section, enter the following query:
 
-   ** switch to Code mode if not already selected **
+   ** switch to **Code** mode if not already selected **
 
    ```
    flask_app_cpu_usage{}
