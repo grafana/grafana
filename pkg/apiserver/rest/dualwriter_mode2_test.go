@@ -244,14 +244,12 @@ func TestMode2_Delete(t *testing.T) {
 		setupLegacyFn  func(m *mock.Mock, input string)
 		setupStorageFn func(m *mock.Mock, input string)
 		name           string
-		input          string
 		wantErr        bool
 	}
 	tests :=
 		[]testCase{
 			{
-				name:  "should delete an object from both the LegacyStorage and Storage",
-				input: "foo",
+				name: "should delete an object from both the LegacyStorage and Storage",
 				setupLegacyFn: func(m *mock.Mock, input string) {
 					m.On("Delete", mock.Anything, input, mock.Anything, mock.Anything).Return(exampleObj, false, nil)
 				},
@@ -260,8 +258,7 @@ func TestMode2_Delete(t *testing.T) {
 				},
 			},
 			{
-				name:  "should return an error when deleting an object from the LegacyStorage fails",
-				input: "foo",
+				name: "should return an error when deleting an object from the LegacyStorage fails",
 				setupLegacyFn: func(m *mock.Mock, input string) {
 					m.On("Delete", mock.Anything, input, mock.Anything, mock.Anything).Return(nil, false, errors.New("error"))
 				},
@@ -271,8 +268,7 @@ func TestMode2_Delete(t *testing.T) {
 				wantErr: true,
 			},
 			{
-				name:  "should return an error when deleting an object from the Storage fails",
-				input: "foo",
+				name: "should return an error when deleting an object from the Storage fails",
 				setupLegacyFn: func(m *mock.Mock, input string) {
 					m.On("Delete", mock.Anything, input, mock.Anything, mock.Anything).Return(exampleObj, false, nil)
 				},
@@ -282,8 +278,7 @@ func TestMode2_Delete(t *testing.T) {
 				wantErr: true,
 			},
 			{
-				name:  "should return an error when the object is not found in LegacyStorage",
-				input: "foo",
+				name: "should return an error when the object is not found in LegacyStorage",
 				setupLegacyFn: func(m *mock.Mock, input string) {
 					m.On("Delete", mock.Anything, input, mock.Anything, mock.Anything).Return(nil, false,
 						apierrors.NewNotFound(schema.GroupResource{Group: "", Resource: "pods"}, input))
@@ -294,8 +289,7 @@ func TestMode2_Delete(t *testing.T) {
 				wantErr: true,
 			},
 			{
-				name:  "should not return an error when the object is not found in Storage",
-				input: "foo",
+				name: "should not return an error when the object is not found in Storage",
 				setupLegacyFn: func(m *mock.Mock, input string) {
 					m.On("Delete", mock.Anything, input, mock.Anything, mock.Anything).Return(exampleObj, false, nil)
 				},
@@ -305,8 +299,7 @@ func TestMode2_Delete(t *testing.T) {
 				},
 			},
 			{
-				name:  "should return an error when deleting an object from both the LegacyStorage and Storage fails",
-				input: "foo",
+				name: "should return an error when deleting an object from both the LegacyStorage and Storage fails",
 				setupLegacyFn: func(m *mock.Mock, input string) {
 					m.On("Delete", mock.Anything, input, mock.Anything, mock.Anything).Return(nil, false, errors.New("error"))
 				},
@@ -317,6 +310,8 @@ func TestMode2_Delete(t *testing.T) {
 			},
 		}
 
+	name := "foo"
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			l := (LegacyStorage)(nil)
@@ -326,15 +321,15 @@ func TestMode2_Delete(t *testing.T) {
 			us := storageMock{&mock.Mock{}, s}
 
 			if tt.setupLegacyFn != nil {
-				tt.setupLegacyFn(ls.Mock, tt.input)
+				tt.setupLegacyFn(ls.Mock, name)
 			}
 			if tt.setupStorageFn != nil {
-				tt.setupStorageFn(us.Mock, tt.input)
+				tt.setupStorageFn(us.Mock, name)
 			}
 
 			dw := NewDualWriter(Mode2, ls, us, p, kind)
 
-			obj, _, err := dw.Delete(context.Background(), tt.input, func(context.Context, runtime.Object) error { return nil }, &metav1.DeleteOptions{})
+			obj, _, err := dw.Delete(context.Background(), name, func(context.Context, runtime.Object) error { return nil }, &metav1.DeleteOptions{})
 
 			if tt.wantErr {
 				require.Error(t, err)
@@ -352,14 +347,12 @@ func TestMode2_DeleteCollection(t *testing.T) {
 		setupLegacyFn  func(m *mock.Mock)
 		setupStorageFn func(m *mock.Mock)
 		name           string
-		input          string
 		wantErr        bool
 	}
 	tests :=
 		[]testCase{
 			{
-				name:  "should delete a collection from both the LegacyStorage and Storage",
-				input: "foo",
+				name: "should delete a collection from both the LegacyStorage and Storage",
 				setupLegacyFn: func(m *mock.Mock) {
 					m.On("DeleteCollection", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(exampleList, nil)
 				},
@@ -368,8 +361,7 @@ func TestMode2_DeleteCollection(t *testing.T) {
 				},
 			},
 			{
-				name:  "should return an error when deleting a collection from the Storage fails",
-				input: "fail",
+				name: "should return an error when deleting a collection from the Storage fails",
 				setupLegacyFn: func(m *mock.Mock) {
 					m.On("DeleteCollection", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(exampleList, nil)
 				},
@@ -379,14 +371,15 @@ func TestMode2_DeleteCollection(t *testing.T) {
 				wantErr: true,
 			},
 			{
-				name:  "should return an error when deleting a collection from the LegacyStorage fails",
-				input: "fail",
+				name: "should return an error when deleting a collection from the LegacyStorage fails",
 				setupLegacyFn: func(m *mock.Mock) {
 					m.On("DeleteCollection", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, errors.New("error"))
 				},
 				wantErr: true,
 			},
 		}
+
+	name := "foo"
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -405,7 +398,7 @@ func TestMode2_DeleteCollection(t *testing.T) {
 
 			dw := NewDualWriter(Mode2, ls, us, p, kind)
 
-			obj, err := dw.DeleteCollection(context.Background(), func(ctx context.Context, obj runtime.Object) error { return nil }, &metav1.DeleteOptions{TypeMeta: metav1.TypeMeta{Kind: tt.input}}, &metainternalversion.ListOptions{})
+			obj, err := dw.DeleteCollection(context.Background(), func(ctx context.Context, obj runtime.Object) error { return nil }, &metav1.DeleteOptions{TypeMeta: metav1.TypeMeta{Kind: name}}, &metainternalversion.ListOptions{})
 
 			if tt.wantErr {
 				require.Error(t, err)
@@ -422,14 +415,12 @@ func TestMode2_Update(t *testing.T) {
 		setupLegacyFn  func(m *mock.Mock, input string)
 		setupStorageFn func(m *mock.Mock, input string)
 		name           string
-		input          string
 		wantErr        bool
 	}
 	tests :=
 		[]testCase{
 			{
-				name:  "should succeed when updating an object in both the LegacyStorage and Storage is successful",
-				input: "foo",
+				name: "should succeed when updating an object in both the LegacyStorage and Storage is successful",
 				setupLegacyFn: func(m *mock.Mock, input string) {
 					m.On("Update", mock.Anything, input, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(exampleObj, false, nil)
 				},
@@ -439,16 +430,14 @@ func TestMode2_Update(t *testing.T) {
 				expectedObj: exampleObj,
 			},
 			{
-				name:  "should return an error when updating the LegacyStorage fails",
-				input: "foo",
+				name: "should return an error when updating the LegacyStorage fails",
 				setupLegacyFn: func(m *mock.Mock, input string) {
 					m.On("Update", mock.Anything, input, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, false, errors.New("error"))
 				},
 				wantErr: true,
 			},
 			{
-				name:  "should return an error when updating the Storage fails",
-				input: "foo",
+				name: "should return an error when updating the Storage fails",
 				setupLegacyFn: func(m *mock.Mock, input string) {
 					m.On("Update", mock.Anything, input, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(exampleObj, false, nil)
 				},
@@ -459,6 +448,8 @@ func TestMode2_Update(t *testing.T) {
 			},
 		}
 
+	name := "foo"
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			l := (LegacyStorage)(nil)
@@ -468,15 +459,15 @@ func TestMode2_Update(t *testing.T) {
 			us := storageMock{&mock.Mock{}, s}
 
 			if tt.setupLegacyFn != nil {
-				tt.setupLegacyFn(ls.Mock, tt.input)
+				tt.setupLegacyFn(ls.Mock, name)
 			}
 			if tt.setupStorageFn != nil {
-				tt.setupStorageFn(us.Mock, tt.input)
+				tt.setupStorageFn(us.Mock, name)
 			}
 
 			dw := NewDualWriter(Mode2, ls, us, p, kind)
 
-			obj, _, err := dw.Update(context.Background(), tt.input, updatedObjInfoObj{}, func(ctx context.Context, obj runtime.Object) error { return nil }, func(ctx context.Context, obj, old runtime.Object) error { return nil }, false, &metav1.UpdateOptions{})
+			obj, _, err := dw.Update(context.Background(), name, updatedObjInfoObj{}, func(ctx context.Context, obj runtime.Object) error { return nil }, func(ctx context.Context, obj, old runtime.Object) error { return nil }, false, &metav1.UpdateOptions{})
 
 			if tt.wantErr {
 				require.Error(t, err)
