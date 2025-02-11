@@ -65,11 +65,7 @@ const getJobColumns = () => [
   {
     id: 'message',
     header: 'Message',
-    cell: ({ row: { original: job } }: JobCell) => (
-      <Stack alignItems="center" gap={1}>
-        <span>{job.status?.message}</span>
-      </Stack>
-    ),
+    cell: ({ row: { original: job } }: JobCell) => <span>{job.status?.message}</span>,
   },
 ];
 
@@ -190,9 +186,9 @@ export function RecentJobs({ repo }: Props) {
 
   return (
     <Card>
-      <Card.Heading>Recent Jobs</Card.Heading>
+      <Card.Heading>Recent jobs</Card.Heading>
       <Card.Actions>
-        <Button icon="sync" variant="secondary" onClick={() => query.refetch()} disabled={query.isFetching}>
+        <Button icon="sync" variant="secondary" onClick={query.refetch} disabled={query.isFetching}>
           Refresh
         </Button>
       </Card.Actions>
