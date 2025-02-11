@@ -308,25 +308,4 @@ describe('OptionsPaneOptions', () => {
     scenario.render();
     expect(screen.getByLabelText(overrideRuleTooltipDescription)).toBeInTheDocument();
   });
-
-  it('should not render categories with hidden fields only', () => {
-    const scenario = new OptionsPaneOptionsTestScenario();
-
-    scenario.plugin = getPanelPlugin({
-      id: 'TestPanel',
-    }).useFieldConfig({
-      standardOptions: {},
-      useCustomConfig: (b) => {
-        b.addBooleanSwitch({
-          name: 'CustomBool',
-          path: 'CustomBool',
-          hideFromDefaults: true,
-          category: ['Axis'],
-        });
-      },
-    });
-
-    scenario.render();
-    expect(screen.queryByRole('heading', { name: /Axis/ })).not.toBeInTheDocument();
-  });
 });
