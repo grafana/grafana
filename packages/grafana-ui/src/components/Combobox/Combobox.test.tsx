@@ -2,6 +2,8 @@ import { act, render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
+import { Field } from '../Forms/Field';
+
 import { Combobox } from './Combobox';
 import { ComboboxOption } from './types';
 
@@ -489,6 +491,44 @@ describe('Combobox', () => {
         expect(onChangeHandler).not.toHaveBeenCalled();
         expect(input).toHaveValue('Option 1');
       });
+    });
+  });
+
+  describe('with RTL selectors', () => {
+    it('can be selected by label with HTML <label>', () => {
+      render(
+        <>
+          <label htmlFor="country-dropdown">Country</label>
+          <Combobox id="country-dropdown" options={options} value={null} onChange={onChangeHandler} />
+        </>
+      );
+
+      const inputByLabelText = screen.getByLabelText('Country');
+      expect(inputByLabelText).toBeInTheDocument();
+
+      const inputByRole = screen.getByRole('combobox', { name: 'Country' });
+      expect(inputByRole).toBeInTheDocument();
+    });
+
+    it('can be selected by label with @grafana/ui <Field>', () => {
+      render(
+        <Field label="Country">
+          <Combobox id="country-dropdown" options={options} value={null} onChange={onChangeHandler} />
+        </Field>
+      );
+
+      const inputByLabelText = screen.getByLabelText('Country');
+      expect(inputByLabelText).toBeInTheDocument();
+
+      const inputByRole = screen.getByRole('combobox', { name: 'Country' });
+      expect(inputByRole).toBeInTheDocument();
+    });
+
+    it('can be selected by placeholder', () => {
+      render(<Combobox placeholder="Country" options={options} value={null} onChange={onChangeHandler} />);
+
+      const inputByPlaceholderText = screen.getByPlaceholderText('Country');
+      expect(inputByPlaceholderText).toBeInTheDocument();
     });
   });
 });
