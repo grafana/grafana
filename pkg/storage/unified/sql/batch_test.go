@@ -21,8 +21,5 @@ func TestBatch(t *testing.T) {
 		require.Equal(t, int64(1), v1-v0)
 		require.Equal(t, int64(1), v2-v1)
 
-		// for i := 0; i < 100; i++ {
-		// 	fmt.Printf("%d\n", rv.next(&unstructured.Unstructured{}))
-		// }
 	})
 }
