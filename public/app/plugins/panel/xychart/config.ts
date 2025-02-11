@@ -48,6 +48,12 @@ export function getScatterFieldConfig(cfg: FieldConfig): SetFieldConfigOptionsAr
           mode: FieldColorModeId.PaletteClassic,
         },
       },
+
+      [FieldConfigProperty.Links]: {
+        settings: {
+          showOneClick: true,
+        },
+      },
     },
 
     useCustomConfig: (builder) => {

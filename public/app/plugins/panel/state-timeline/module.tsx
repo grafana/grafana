@@ -29,6 +29,11 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(StateTimelinePanel)
           mode: FieldColorModeId.ContinuousGrYlRd,
         },
       },
+      [FieldConfigProperty.Links]: {
+        settings: {
+          showOneClick: true,
+        },
+      },
     },
     useCustomConfig: (builder) => {
       builder

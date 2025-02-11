@@ -1,4 +1,4 @@
-import { FieldConfigProperty, PanelPlugin } from '@grafana/data';
+import { PanelPlugin } from '@grafana/data';
 import { BarGaugeSizing, VizOrientation } from '@grafana/schema';
 import { commonOptionsBuilder } from '@grafana/ui';
 
@@ -11,13 +11,6 @@ import { GaugeSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<Options>(GaugePanel)
   .useFieldConfig({
-    standardOptions: {
-      [FieldConfigProperty.Links]: {
-        settings: {
-          showOneClick: false,
-        },
-      },
-    },
     useCustomConfig: (builder) => {
       builder.addNumberInput({
         path: 'neutral',

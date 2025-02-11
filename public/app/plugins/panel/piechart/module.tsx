@@ -24,11 +24,6 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(PieChartPanel)
           mode: FieldColorModeId.PaletteClassic,
         },
       },
-      [FieldConfigProperty.Links]: {
-        settings: {
-          showOneClick: false,
-        },
-      },
     },
     useCustomConfig: (builder) => {
       commonOptionsBuilder.addHideFrom(builder);

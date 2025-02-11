@@ -359,7 +359,7 @@ export const getAllStandardFieldConfigs = () => {
     override: standardEditorsRegistry.get('links').editor,
     process: dataLinksOverrideProcessor,
     settings: {
-      showOneClick: true,
+      showOneClick: false,
     },
     shouldApply: () => true,
     category: [dataLinksCategory],
@@ -373,6 +373,9 @@ export const getAllStandardFieldConfigs = () => {
     editor: standardEditorsRegistry.get('actions').editor,
     override: standardEditorsRegistry.get('actions').editor,
     process: actionsOverrideProcessor,
+    settings: {
+      showOneClick: false,
+    },
     shouldApply: () => true,
     category: [dataLinksCategory],
     getItemsCount: (value) => (value ? value.length : 0),
