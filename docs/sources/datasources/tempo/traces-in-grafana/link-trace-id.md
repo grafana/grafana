@@ -13,6 +13,9 @@ labels:
 menuTitle: Link to a trace ID
 title: Link to a trace ID
 weight: 800
+aliases:
+  - ../link-trace-id/ # /docs/grafana/latest/datasources/tempo/link-trace-id/
+
 refs:
   configure-grafana-feature-toggles:
     - pattern: /docs/grafana/

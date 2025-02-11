@@ -13,6 +13,8 @@ labels:
 menuTitle: Upload JSON trace file
 title: Upload a JSON trace file
 weight: 900
+aliases:
+  - ../json-trace-file/ # /docs/grafana/latest/datasources/tempo/json-trace-file
 ---
 
 # Upload a JSON trace file
