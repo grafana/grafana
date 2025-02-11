@@ -79,6 +79,8 @@ export interface CatalogPluginDetails {
   iam?: IdentityAccessManagement;
   changelog?: string;
   lastCommitDate?: string;
+  signatureType?: PluginSignatureType;
+  signature?: PluginSignatureStatus;
 }
 
 export interface CatalogPluginInfo {
