@@ -32,10 +32,9 @@ type DualWriterMode2 struct {
 
 const mode2Str = "2"
 
-// NewDualWriterMode2 returns a new DualWriter in mode 2.
-// Mode 2 represents writing to LegacyStorage first, then to Storage
-// When reading, values from storage will be returned if they exist
-// otherwise the value from legacy will be used
+// newDualWriterMode2 returns a new DualWriter in mode 2.
+// Mode 2 represents writing to LegacyStorage first, then to Storage.
+// When reading, values from LegacyStorage will be returned.
 func newDualWriterMode2(legacy LegacyStorage, storage Storage, dwm *dualWriterMetrics, resource string) *DualWriterMode2 {
 	return &DualWriterMode2{
 		Legacy:            legacy,
@@ -71,7 +70,7 @@ func (d *DualWriterMode2) Create(ctx context.Context, in runtime.Object, createV
 	if err != nil {
 		log.Error(err, "unable to create object in legacy storage")
 		d.recordLegacyDuration(true, mode2Str, d.resource, method, startLegacy)
-		return createdFromLegacy, err
+		return nil, err
 	}
 	d.recordLegacyDuration(false, mode2Str, d.resource, method, startLegacy)
 
@@ -79,7 +78,7 @@ func (d *DualWriterMode2) Create(ctx context.Context, in runtime.Object, createV
 
 	accCreated, err := meta.Accessor(createdCopy)
 	if err != nil {
-		return createdFromLegacy, err
+		return nil, err
 	}
 
 	accCreated.SetResourceVersion("")
@@ -93,51 +92,50 @@ func (d *DualWriterMode2) Create(ctx context.Context, in runtime.Object, createV
 	}
 	d.recordStorageDuration(false, mode2Str, d.resource, method, startStorage)
 
-	areEqual := Compare(createdFromStorage, createdFromLegacy)
-	d.recordOutcome(mode2Str, getName(createdFromStorage), areEqual, method)
-	if !areEqual {
-		log.Info("object from legacy and storage are not equal")
-	}
+	go func() {
+		areEqual := Compare(createdFromStorage, createdFromLegacy)
+		d.recordOutcome(mode2Str, getName(createdFromStorage), areEqual, method)
+		if !areEqual {
+			log.Info("object from legacy and storage are not equal")
+		}
+	}()
 
 	return createdFromLegacy, err
 }
 
-// It retrieves an object from Storage if possible, and if not it falls back to LegacyStorage.
+// Get retrieves an object from Storage if possible, and if not it falls back to LegacyStorage.
 func (d *DualWriterMode2) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	var method = "get"
 	log := d.Log.WithValues("name", name, "resourceVersion", options.ResourceVersion, "method", method)
 	ctx = klog.NewContext(ctx, log)
-
-	startStorage := time.Now()
-	objStorage, err := d.Storage.Get(ctx, name, options)
-	d.recordStorageDuration(err != nil, mode2Str, d.resource, method, startStorage)
-	if err != nil {
-		// if it errors because it's not found, we try to fetch it from the legacy storage
-		if !apierrors.IsNotFound(err) {
-			log.Error(err, "unable to fetch object from storage")
-			return objStorage, err
-		}
-		log.Info("object not found in storage, fetching from legacy")
-	}
 
 	startLegacy := time.Now()
 	objLegacy, err := d.Legacy.Get(ctx, name, options)
 	if err != nil {
 		log.Error(err, "unable to fetch object from legacy")
 		d.recordLegacyDuration(true, mode2Str, d.resource, method, startLegacy)
-		return objLegacy, err
+		return nil, err
 	}
 	d.recordLegacyDuration(false, mode2Str, d.resource, method, startLegacy)
 
-	areEqual := Compare(objStorage, objLegacy)
-	d.recordOutcome(mode2Str, name, areEqual, method)
-	if !areEqual {
-		log.Info("object from legacy and storage are not equal")
+	startStorage := time.Now()
+	objStorage, err := d.Storage.Get(ctx, name, options)
+	d.recordStorageDuration(err != nil, mode2Str, d.resource, method, startStorage)
+	if err != nil {
+		if !apierrors.IsNotFound(err) {
+			log.Error(err, "unable to fetch object from storage")
+			return nil, err
+		}
+		log.Info("object not found in storage, dual write or migration didn't happen yet")
 	}
 
-	if objStorage != nil {
-		return objStorage, err
-	}
+	go func() {
+		areEqual := Compare(objStorage, objLegacy)
+		d.recordOutcome(mode2Str, name, areEqual, method)
+		if !areEqual {
+			log.Info("object from legacy and storage are not equal")
+		}
+	}()
 
 	return objLegacy, err
 }
@@ -156,6 +154,16 @@ func (d *DualWriterMode2) List(ctx context.Context, options *metainternalversion
 		return ll, err
 	}
 	d.recordLegacyDuration(false, mode2Str, d.resource, method, startLegacy)
+
+	// Even if we don't compare, we want to fetch from unified storage and check that it doesn't error.
+	startStorage := time.Now()
+	if _, err := d.Storage.List(ctx, options); err != nil {
+		log.Error(err, "unable to list objects from storage")
+		d.recordStorageDuration(true, mode2Str, d.resource, method, startStorage)
+		return nil, err
+	}
+	d.recordStorageDuration(false, mode2Str, d.resource, method, startStorage)
+
 	return ll, nil
 }
 
@@ -170,36 +178,26 @@ func (d *DualWriterMode2) DeleteCollection(ctx context.Context, deleteValidation
 	if err != nil {
 		log.WithValues("deleted", deletedLegacy).Error(err, "failed to delete collection successfully from legacy storage")
 		d.recordLegacyDuration(true, mode2Str, d.resource, method, startLegacy)
-		return deletedLegacy, err
+		return nil, err
 	}
 	d.recordLegacyDuration(false, mode2Str, d.resource, method, startLegacy)
-
-	legacyList, err := meta.ExtractList(deletedLegacy)
-	if err != nil {
-		log.Error(err, "unable to extract list from legacy storage")
-		return nil, err
-	}
-
-	// Only the items deleted by the legacy DeleteCollection call are selected for deletion by Storage.
-	_, err = parseList(legacyList)
-	if err != nil {
-		return nil, err
-	}
 
 	startStorage := time.Now()
 	deletedStorage, err := d.Storage.DeleteCollection(ctx, deleteValidation, options, listOptions)
 	if err != nil {
 		log.WithValues("deleted", deletedStorage).Error(err, "failed to delete collection successfully from Storage")
 		d.recordStorageDuration(true, mode2Str, d.resource, method, startStorage)
-		return deletedStorage, err
+		return nil, err
 	}
 	d.recordStorageDuration(false, mode2Str, d.resource, method, startStorage)
 
-	areEqual := Compare(deletedStorage, deletedLegacy)
-	d.recordOutcome(mode2Str, getName(deletedStorage), areEqual, method)
-	if !areEqual {
-		log.Info("object from legacy and storage are not equal")
-	}
+	go func() {
+		areEqual := Compare(deletedStorage, deletedLegacy)
+		d.recordOutcome(mode2Str, getName(deletedStorage), areEqual, method)
+		if !areEqual {
+			log.Info("object from legacy and storage are not equal")
+		}
+	}()
 
 	return deletedLegacy, err
 }
@@ -208,17 +206,6 @@ func (d *DualWriterMode2) Delete(ctx context.Context, name string, deleteValidat
 	var method = "delete"
 	log := d.Log.WithValues("name", name, "method", method)
 	ctx = klog.NewContext(ctx, log)
-
-	startStorage := time.Now()
-	deletedS, async, err := d.Storage.Delete(ctx, name, deleteValidation, options)
-	if err != nil {
-		if !apierrors.IsNotFound(err) {
-			log.WithValues("objectList", deletedS).Error(err, "could not delete from duplicate storage")
-			d.recordStorageDuration(true, mode2Str, d.resource, method, startStorage)
-		}
-		return deletedS, async, err
-	}
-	d.recordStorageDuration(false, mode2Str, d.resource, method, startStorage)
 
 	startLegacy := time.Now()
 	deletedLS, async, err := d.Legacy.Delete(ctx, name, deleteValidation, options)
@@ -232,11 +219,24 @@ func (d *DualWriterMode2) Delete(ctx context.Context, name string, deleteValidat
 	}
 	d.recordLegacyDuration(false, mode2Str, d.resource, method, startLegacy)
 
-	areEqual := Compare(deletedS, deletedLS)
-	d.recordOutcome(mode2Str, name, areEqual, method)
-	if !areEqual {
-		log.WithValues("name", name).Info("object from legacy and storage are not equal")
+	startStorage := time.Now()
+	deletedS, async, err := d.Storage.Delete(ctx, name, deleteValidation, options)
+	if err != nil {
+		if !apierrors.IsNotFound(err) {
+			log.WithValues("objectList", deletedS).Error(err, "could not delete from duplicate storage")
+			d.recordStorageDuration(true, mode2Str, d.resource, method, startStorage)
+		}
+		return deletedS, async, err
 	}
+	d.recordStorageDuration(false, mode2Str, d.resource, method, startStorage)
+
+	go func() {
+		areEqual := Compare(deletedS, deletedLS)
+		d.recordOutcome(mode2Str, name, areEqual, method)
+		if !areEqual {
+			log.WithValues("name", name).Info("object from legacy and storage are not equal")
+		}
+	}()
 
 	return deletedLS, async, err
 }
@@ -268,15 +268,13 @@ func (d *DualWriterMode2) Update(ctx context.Context, name string, objInfo rest.
 		return objFromStorage, created, err
 	}
 
-	areEqual := Compare(objFromStorage, objFromLegacy)
-	d.recordOutcome(mode2Str, name, areEqual, method)
-	if !areEqual {
-		log.WithValues("name", name).Info("object from legacy and storage are not equal")
-	}
-
-	if objFromStorage != nil {
-		return objFromStorage, created, err
-	}
+	go func() {
+		areEqual := Compare(objFromStorage, objFromLegacy)
+		d.recordOutcome(mode2Str, name, areEqual, method)
+		if !areEqual {
+			log.WithValues("name", name).Info("object from legacy and storage are not equal")
+		}
+	}()
 
 	return objFromLegacy, created, err
 }
