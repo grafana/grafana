@@ -192,7 +192,12 @@ export class LogContextProvider {
     };
   }
 
-  getLogRowContextUi(row: LogRowModel, runContextQuery?: () => void, origQuery?: LokiQuery, scopedVars?: ScopedVars): React.ReactNode {
+  getLogRowContextUi(
+    row: LogRowModel,
+    runContextQuery?: () => void,
+    origQuery?: LokiQuery,
+    scopedVars?: ScopedVars
+  ): React.ReactNode {
     if (origQuery && scopedVars) {
       origQuery = this.datasource.applyTemplateVariables(origQuery, scopedVars);
     }

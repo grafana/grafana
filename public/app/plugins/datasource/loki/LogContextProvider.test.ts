@@ -20,14 +20,11 @@ import {
 import { createLokiDatasource } from './__mocks__/datasource';
 import { LokiQuery } from './types';
 
-
 const defaultLanguageProviderMock = {
   start: jest.fn(),
   fetchLabels: jest.fn(() => ['bar', 'xyz']),
   getLabelKeys: jest.fn(() => ['bar', 'xyz']),
 } as unknown as LokiLanguageProvider;
-
-
 
 const defaultLogRow = {
   rowIndex: 0,
@@ -69,9 +66,7 @@ const frameWithoutTypes = {
 describe('LogContextProvider', () => {
   let logContextProvider: LogContextProvider;
   beforeEach(() => {
-    const templateSrv = initTemplateSrv('key', [
-      { type: 'query', name: 'foo', current: { value: 'baz' } },
-    ]);
+    const templateSrv = initTemplateSrv('key', [{ type: 'query', name: 'foo', current: { value: 'baz' } }]);
     setTemplateSrv(templateSrv);
     const defaultDatasourceMock = createLokiDatasource(templateSrv);
     defaultDatasourceMock.query = jest.fn(() => of({ data: [] } as DataQueryResponse));
@@ -127,7 +122,7 @@ describe('LogContextProvider', () => {
         {
           limit: 10,
           direction: LogRowContextQueryDirection.Backward,
-          scopedVars: { test: {value:'baz', text: 'baz'} },
+          scopedVars: { test: { value: 'baz', text: 'baz' } },
         },
         {
           expr: '{bar="$test"}',
@@ -137,7 +132,7 @@ describe('LogContextProvider', () => {
       expect(logContextProvider.getInitContextFilters).toHaveBeenCalledWith(
         expect.anything(),
         expect.objectContaining({ expr: '{bar="baz"}', refId: 'A' }),
-        expect.anything(),
+        expect.anything()
       );
     });
 
@@ -180,14 +175,17 @@ describe('LogContextProvider', () => {
         preservedFiltersApplied: false,
       });
 
-      const query = await logContextProvider.getLogRowContextQuery(defaultLogRow, {
-        limit: 10,
-        direction: LogRowContextQueryDirection.Backward,
-      },        
-      {
-        expr: '{bar="$test"}',
-        refId: 'A',
-      });
+      const query = await logContextProvider.getLogRowContextQuery(
+        defaultLogRow,
+        {
+          limit: 10,
+          direction: LogRowContextQueryDirection.Backward,
+        },
+        {
+          expr: '{bar="$test"}',
+          refId: 'A',
+        }
+      );
       expect(query.expr).toBe('{bar="baz"}');
     });
 
