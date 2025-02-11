@@ -1,6 +1,8 @@
-import { PluginMeta, PluginSignatureType } from '@grafana/data';
+import { PluginMeta, PluginSignatureStatus, PluginSignatureType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
+import { getPluginDetails } from '../admin/api';
+import { CatalogPluginDetails } from '../admin/types';
 import { getPluginSettings } from '../pluginSettings';
 
 import {
@@ -22,18 +24,31 @@ jest.mock('../pluginSettings', () => ({
   getPluginSettings: jest.fn(),
 }));
 
-const getPluginSettingsMock = getPluginSettings as jest.MockedFunction<typeof getPluginSettings>;
+jest.mock('../admin/api', () => ({
+  getPluginDetails: jest.fn(),
+}));
 
-const fakePlugin: PluginMeta = {
+const getPluginSettingsMock = jest.mocked(getPluginSettings);
+const getPluginDetailsMock = jest.mocked(getPluginDetails);
+
+const fakePluginSettings: PluginMeta = {
   id: 'test-plugin',
   name: 'Test Plugin',
 } as PluginMeta;
+
+const fakePluginDetails: CatalogPluginDetails = {} as CatalogPluginDetails;
 
 describe('Sandbox eligibility checks', () => {
   const originalNodeEnv = process.env.NODE_ENV;
 
   beforeEach(() => {
     jest.clearAllMocks();
+    getPluginDetailsMock.mockReset();
+    getPluginSettingsMock.mockReset();
+
+    // restore default check
+    setSandboxEnabledCheck(isPluginFrontendSandboxEnabled);
+
     config.enableFrontendSandboxForPlugins = [];
     config.featureToggles.pluginsFrontendSandbox = true;
     process.env.NODE_ENV = 'development';
@@ -54,26 +69,8 @@ describe('Sandbox eligibility checks', () => {
     expect(result).toBe(false);
   });
 
-  test('shouldLoadPluginInFrontendSandbox returns false for Grafana-signed plugins', async () => {
-    getPluginSettingsMock.mockResolvedValue({ ...fakePlugin, signatureType: PluginSignatureType.grafana });
-    const result = await shouldLoadPluginInFrontendSandbox({ pluginId: 'test-plugin' });
-    expect(result).toBe(false);
-  });
-
-  test('shouldLoadPluginInFrontendSandbox returns true for eligible plugins in the list', async () => {
-    getPluginSettingsMock.mockResolvedValue({ ...fakePlugin, signatureType: PluginSignatureType.community });
-    config.enableFrontendSandboxForPlugins = ['test-plugin'];
-    const result = await shouldLoadPluginInFrontendSandbox({ pluginId: 'test-plugin' });
-    expect(result).toBe(true);
-  });
-
-  test('isPluginFrontendSandboxEnabled returns false when plugin is not in the enabled list', async () => {
-    config.enableFrontendSandboxForPlugins = ['other-plugin'];
-    const result = await isPluginFrontendSandboxEnabled({ pluginId: 'test-plugin' });
-    expect(result).toBe(false);
-  });
-
   test('setSandboxEnabledCheck sets custom check function', async () => {
+    getPluginDetailsMock.mockResolvedValue(fakePluginDetails);
     const customCheck = jest.fn().mockResolvedValue(true);
     setSandboxEnabledCheck(customCheck);
     const result = await shouldLoadPluginInFrontendSandbox({ pluginId: 'test-plugin' });
@@ -82,6 +79,7 @@ describe('Sandbox eligibility checks', () => {
   });
 
   test('setSandboxEnabledCheck has precedence over default', async () => {
+    getPluginDetailsMock.mockResolvedValue(fakePluginDetails);
     const customCheck = jest.fn().mockResolvedValue(false);
     setSandboxEnabledCheck(customCheck);
     // this should be ignored by the custom check
@@ -91,10 +89,123 @@ describe('Sandbox eligibility checks', () => {
     expect(result).toBe(false);
   });
 
-  test('isPluginFrontendSandboxEligible returns false for plugins with internal signature', async () => {
-    //@ts-expect-error We don't publicly export the internal signature
-    getPluginSettingsMock.mockResolvedValue({ ...fakePlugin, signature: 'internal' });
-    const result = await isPluginFrontendSandboxEligible({ pluginId: 'test-plugin' });
-    expect(result).toBe(false);
+  describe('with getPluginDetails', () => {
+    test('shouldLoadPluginInFrontendSandbox returns false for Grafana-signed plugins', async () => {
+      getPluginSettingsMock.mockRejectedValueOnce(new Error('not found'));
+
+      getPluginDetailsMock.mockResolvedValue({ ...fakePluginDetails, signatureType: PluginSignatureType.grafana });
+
+      const result = await shouldLoadPluginInFrontendSandbox({ pluginId: 'test-plugin' });
+      expect(result).toBe(false);
+    });
+
+    test('shouldLoadPluginInFrontendSandbox returns true for community plugins', async () => {
+      getPluginSettingsMock.mockRejectedValueOnce(new Error('not found'));
+
+      getPluginDetailsMock.mockResolvedValue({ ...fakePluginDetails, signatureType: PluginSignatureType.community });
+
+      config.enableFrontendSandboxForPlugins = ['test-plugin'];
+      const result = await shouldLoadPluginInFrontendSandbox({ pluginId: 'test-plugin' });
+      expect(result).toBe(true);
+    });
+
+    test('isPluginFrontendSandboxEnabled returns false when plugin is not in the enabled list', async () => {
+      getPluginSettingsMock.mockRejectedValueOnce(new Error('not found'));
+
+      getPluginDetailsMock.mockResolvedValue({ ...fakePluginDetails, signatureType: PluginSignatureType.community });
+      config.enableFrontendSandboxForPlugins = ['other-plugin'];
+      const result = await isPluginFrontendSandboxEnabled({ pluginId: 'test-plugin' });
+      expect(result).toBe(false);
+    });
+
+    test('shouldLoadPluginInFrontendSandbox returns true for commercial plugins in the enabled list', async () => {
+      getPluginSettingsMock.mockRejectedValueOnce(new Error('not found'));
+
+      getPluginDetailsMock.mockResolvedValue({ ...fakePluginDetails, signatureType: PluginSignatureType.commercial });
+      config.enableFrontendSandboxForPlugins = ['test-plugin'];
+      const result = await shouldLoadPluginInFrontendSandbox({ pluginId: 'test-plugin' });
+      expect(result).toBe(true);
+    });
+
+    test('shouldLoadPluginInFrontendSandbox returns true for private plugins in the enabled list', async () => {
+      getPluginSettingsMock.mockRejectedValueOnce(new Error('not found'));
+
+      getPluginDetailsMock.mockResolvedValue({ ...fakePluginDetails, signatureType: PluginSignatureType.private });
+      config.enableFrontendSandboxForPlugins = ['test-plugin'];
+      const result = await shouldLoadPluginInFrontendSandbox({ pluginId: 'test-plugin' });
+      expect(result).toBe(true);
+    });
+
+    test('isPluginFrontendSandboxEligible returns false for plugins with internal signature', async () => {
+      getPluginSettingsMock.mockRejectedValueOnce(new Error('not found'));
+
+      getPluginDetailsMock.mockResolvedValue({
+        ...fakePluginDetails,
+        signatureType: PluginSignatureType.community,
+        signature: PluginSignatureStatus.internal,
+      });
+
+      const result = await isPluginFrontendSandboxEligible({ pluginId: 'test-plugin' });
+      expect(result).toBe(false);
+    });
+  });
+
+  describe('with getPluginSettings', () => {
+    test('shouldLoadPluginInFrontendSandbox returns false for Grafana-signed plugins', async () => {
+      // if getPluginDetails fails it fallsback to getPluginSettings
+      getPluginDetailsMock.mockRejectedValueOnce(new Error('not found'));
+
+      getPluginSettingsMock.mockResolvedValue({ ...fakePluginSettings, signatureType: PluginSignatureType.grafana });
+      const result = await shouldLoadPluginInFrontendSandbox({ pluginId: 'test-plugin' });
+      expect(result).toBe(false);
+    });
+
+    test('shouldLoadPluginInFrontendSandbox returns true for eligible plugins in the list', async () => {
+      // if getPluginDetails fails it fallsback to getPluginSettings
+      getPluginDetailsMock.mockRejectedValueOnce(new Error('not found'));
+
+      getPluginSettingsMock.mockResolvedValue({ ...fakePluginSettings, signatureType: PluginSignatureType.community });
+      config.enableFrontendSandboxForPlugins = ['test-plugin'];
+      const result = await shouldLoadPluginInFrontendSandbox({ pluginId: 'test-plugin' });
+      expect(result).toBe(true);
+    });
+
+    test('isPluginFrontendSandboxEnabled returns false when plugin is not in the enabled list', async () => {
+      // if getPluginDetails fails it fallsback to getPluginSettings
+      getPluginDetailsMock.mockRejectedValueOnce(new Error('not found'));
+
+      config.enableFrontendSandboxForPlugins = ['other-plugin'];
+      const result = await isPluginFrontendSandboxEnabled({ pluginId: 'test-plugin' });
+      expect(result).toBe(false);
+    });
+
+    test('shouldLoadPluginInFrontendSandbox returns true for commercial plugins in the enabled list', async () => {
+      // if getPluginDetails fails it fallsback to getPluginSettings
+      getPluginDetailsMock.mockRejectedValueOnce(new Error('not found'));
+
+      getPluginSettingsMock.mockResolvedValue({ ...fakePluginSettings, signatureType: PluginSignatureType.commercial });
+      config.enableFrontendSandboxForPlugins = ['test-plugin'];
+      const result = await shouldLoadPluginInFrontendSandbox({ pluginId: 'test-plugin' });
+      expect(result).toBe(true);
+    });
+
+    test('shouldLoadPluginInFrontendSandbox returns true for private plugins in the enabled list', async () => {
+      // if getPluginDetails fails it fallsback to getPluginSettings
+      getPluginDetailsMock.mockRejectedValueOnce(new Error('not found'));
+
+      getPluginSettingsMock.mockResolvedValue({ ...fakePluginSettings, signatureType: PluginSignatureType.private });
+      config.enableFrontendSandboxForPlugins = ['test-plugin'];
+      const result = await shouldLoadPluginInFrontendSandbox({ pluginId: 'test-plugin' });
+      expect(result).toBe(true);
+    });
+
+    test('isPluginFrontendSandboxEligible returns false for plugins with internal signature', async () => {
+      // if getPluginDetails fails it fallsback to getPluginSettings
+      getPluginDetailsMock.mockRejectedValueOnce(new Error('not found'));
+
+      getPluginSettingsMock.mockResolvedValue({ ...fakePluginSettings, signature: PluginSignatureStatus.internal });
+      const result = await isPluginFrontendSandboxEligible({ pluginId: 'test-plugin' });
+      expect(result).toBe(false);
+    });
   });
 });
