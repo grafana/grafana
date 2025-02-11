@@ -32,16 +32,16 @@ type ThresholdCommand struct {
 type ThresholdType string
 
 const (
-	ThresholdIsAbove                = "gt"
-	ThresholdIsBelow                = "lt"
-	ThresholdIsEqual                = "eq"
-	ThresholdIsNotEqual             = "ne"
-	ThresholdIsGreaterThanEqual       = "gte"
-	ThresholdIsLessThanEqual          = "lte"
-	ThresholdIsWithinRange          = "within_range"
-	ThresholdIsOutsideRange         = "outside_range"
-	ThresholdIsWithinRangeIncluded  = "within_range_included"
-	ThresholdIsOutsideRangeIncluded = "outside_range_included"
+	ThresholdIsAbove                ThresholdType = "gt"
+	ThresholdIsBelow                ThresholdType = "lt"
+	ThresholdIsEqual                ThresholdType = "eq"
+	ThresholdIsNotEqual             ThresholdType = "ne"
+	ThresholdIsGreaterThanEqual     ThresholdType = "gte"
+	ThresholdIsLessThanEqual        ThresholdType = "lte"
+	ThresholdIsWithinRange          ThresholdType = "within_range"
+	ThresholdIsOutsideRange         ThresholdType = "outside_range"
+	ThresholdIsWithinRangeIncluded  ThresholdType = "within_range_included"
+	ThresholdIsOutsideRangeIncluded ThresholdType = "outside_range_included"
 )
 
 var (

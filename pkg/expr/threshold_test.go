@@ -49,12 +49,12 @@ func TestNewThresholdCommand(t *testing.T) {
 			shouldError: false,
 		},
 		{
-			fn:          "ge",
+			fn:          "gte",
 			args:        []float64{0},
 			shouldError: false,
 		},
 		{
-			fn:          "le",
+			fn:          "lte",
 			args:        []float64{0},
 			shouldError: false,
 		},
@@ -103,13 +103,13 @@ func TestNewThresholdCommand(t *testing.T) {
 			expectedError: "incorrect number of arguments",
 		},
 		{
-			fn:            "ge",
+			fn:            "gte",
 			args:          []float64{},
 			shouldError:   true,
 			expectedError: "incorrect number of arguments",
 		},
 		{
-			fn:            "le",
+			fn:            "lte",
 			args:          []float64{},
 			shouldError:   true,
 			expectedError: "incorrect number of arguments",
