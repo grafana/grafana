@@ -60,24 +60,41 @@ export type NodeFields = {
   highlighted?: Field;
 };
 
-export function getNodeFields(nodes: DataFrame): NodeFields {
+export function getNodeFields(nodes: DataFrame, options?: NodeGraphOptions): NodeFields {
   const normalizedFrames = {
     ...nodes,
     fields: nodes.fields.map((field) => ({ ...field, name: field.name.toLowerCase() })),
   };
   const fieldsCache = new FieldCache(normalizedFrames);
   return {
-    id: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.id.toLowerCase()),
-    title: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.title.toLowerCase()),
-    subTitle: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.subTitle.toLowerCase()),
-    mainStat: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.mainStat.toLowerCase()),
-    secondaryStat: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.secondaryStat.toLowerCase()),
-    arc: findFieldsByPrefix(nodes, NodeGraphDataFrameFieldNames.arc),
-    details: findFieldsByPrefix(nodes, NodeGraphDataFrameFieldNames.detail),
-    color: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.color),
-    icon: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.icon),
-    nodeRadius: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.nodeRadius.toLowerCase()),
-    highlighted: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.highlighted.toLowerCase()),
+    id: fieldsCache.getFieldByName(
+      options?.nodes?.idField?.toLowerCase() ?? NodeGraphDataFrameFieldNames.id.toLowerCase()
+    ),
+    title: fieldsCache.getFieldByName(
+      options?.nodes?.titleField?.toLowerCase() ?? NodeGraphDataFrameFieldNames.title.toLowerCase()
+    ),
+    subTitle: fieldsCache.getFieldByName(
+      options?.nodes?.subtitleField?.toLowerCase() ?? NodeGraphDataFrameFieldNames.subTitle.toLowerCase()
+    ),
+    mainStat: fieldsCache.getFieldByName(
+      options?.nodes?.mainStatField?.toLowerCase() ?? NodeGraphDataFrameFieldNames.mainStat.toLowerCase()
+    ),
+    secondaryStat: fieldsCache.getFieldByName(
+      options?.nodes?.secondaryStatField?.toLowerCase() ?? NodeGraphDataFrameFieldNames.secondaryStat.toLowerCase()
+    ),
+    arc: findFieldsByPrefix(nodes, options?.nodes?.arcsPrefix?.toLowerCase() ?? NodeGraphDataFrameFieldNames.arc),
+    details: findFieldsByPrefix(
+      nodes,
+      options?.nodes?.detailsPrefix?.toLowerCase() ?? NodeGraphDataFrameFieldNames.detail
+    ),
+    color: fieldsCache.getFieldByName(options?.nodes?.colorField?.toLowerCase() ?? NodeGraphDataFrameFieldNames.color),
+    icon: fieldsCache.getFieldByName(options?.nodes?.iconField?.toLowerCase() ?? NodeGraphDataFrameFieldNames.icon),
+    nodeRadius: fieldsCache.getFieldByName(
+      options?.nodes?.nodeRadiusField?.toLowerCase() ?? NodeGraphDataFrameFieldNames.nodeRadius.toLowerCase()
+    ),
+    highlighted: fieldsCache.getFieldByName(
+      options?.nodes?.highlightedField?.toLowerCase() ?? NodeGraphDataFrameFieldNames.highlighted.toLowerCase()
+    ),
     fixedX: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.fixedX.toLowerCase()),
     fixedY: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.fixedY.toLowerCase()),
   };
@@ -99,24 +116,43 @@ export type EdgeFields = {
   strokeDasharray?: Field;
 };
 
-export function getEdgeFields(edges: DataFrame): EdgeFields {
+export function getEdgeFields(edges: DataFrame, options?: NodeGraphOptions): EdgeFields {
   const normalizedFrames = {
     ...edges,
     fields: edges.fields.map((field) => ({ ...field, name: field.name.toLowerCase() })),
   };
   const fieldsCache = new FieldCache(normalizedFrames);
   return {
-    id: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.id.toLowerCase()),
-    source: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.source.toLowerCase()),
-    target: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.target.toLowerCase()),
-    mainStat: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.mainStat.toLowerCase()),
-    secondaryStat: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.secondaryStat.toLowerCase()),
-    details: findFieldsByPrefix(edges, NodeGraphDataFrameFieldNames.detail.toLowerCase()),
+    id: fieldsCache.getFieldByName(
+      options?.edges?.idField?.toLowerCase() ?? NodeGraphDataFrameFieldNames.id.toLowerCase()
+    ),
+    source: fieldsCache.getFieldByName(
+      options?.edges?.sourceField?.toLowerCase() ?? NodeGraphDataFrameFieldNames.source.toLowerCase()
+    ),
+    target: fieldsCache.getFieldByName(
+      options?.edges?.targetField?.toLowerCase() ?? NodeGraphDataFrameFieldNames.target.toLowerCase()
+    ),
+    mainStat: fieldsCache.getFieldByName(
+      options?.edges?.mainStatField?.toLowerCase() ?? NodeGraphDataFrameFieldNames.mainStat.toLowerCase()
+    ),
+    secondaryStat: fieldsCache.getFieldByName(
+      options?.edges?.secondaryStatField?.toLowerCase() ?? NodeGraphDataFrameFieldNames.secondaryStat.toLowerCase()
+    ),
+    details: findFieldsByPrefix(
+      edges,
+      options?.edges?.detailsPrefix?.toLowerCase() ?? NodeGraphDataFrameFieldNames.detail.toLowerCase()
+    ),
     // @deprecated -- for edges use color instead
     highlighted: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.highlighted.toLowerCase()),
-    thickness: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.thickness.toLowerCase()),
-    color: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.color.toLowerCase()),
-    strokeDasharray: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.strokeDasharray.toLowerCase()),
+    thickness: fieldsCache.getFieldByName(
+      options?.edges?.thicknessField?.toLowerCase() ?? NodeGraphDataFrameFieldNames.thickness.toLowerCase()
+    ),
+    color: fieldsCache.getFieldByName(
+      options?.edges?.colorField?.toLowerCase() ?? NodeGraphDataFrameFieldNames.color.toLowerCase()
+    ),
+    strokeDasharray: fieldsCache.getFieldByName(
+      options?.edges?.strokeDasharrayField?.toLowerCase() ?? NodeGraphDataFrameFieldNames.strokeDasharray.toLowerCase()
+    ),
   };
 }
 
@@ -129,7 +165,8 @@ function findFieldsByPrefix(frame: DataFrame, prefix: string): Field[] {
  */
 export function processNodes(
   nodes: DataFrame | undefined,
-  edges: DataFrame | undefined
+  edges: DataFrame | undefined,
+  options?: NodeGraphOptions
 ): {
   nodes: NodeDatum[];
   edges: EdgeDatum[];
@@ -144,7 +181,7 @@ export function processNodes(
   }
 
   if (nodes) {
-    const nodeFields = getNodeFields(nodes);
+    const nodeFields = getNodeFields(nodes, options);
     if (!nodeFields.id) {
       throw new Error('id field is required for nodes data frame.');
     }
@@ -175,7 +212,7 @@ export function processNodes(
     }
 
     // We may not have edges in case of single node
-    let edgeDatums: EdgeDatum[] = edges ? processEdges(edges, getEdgeFields(edges), nodesMap) : [];
+    let edgeDatums: EdgeDatum[] = edges ? processEdges(edges, getEdgeFields(edges, options), nodesMap) : [];
 
     for (const e of edgeDatums) {
       // We are adding incoming edges count, so we can later on find out which nodes are the roots
@@ -201,7 +238,7 @@ export function processNodes(
 
     const nodesMap: { [id: string]: NodeDatumFromEdge } = {};
 
-    const edgeFields = getEdgeFields(edges);
+    const edgeFields = getEdgeFields(edges, options);
 
     // Turn edges into reasonable filled in nodes
     for (let i = 0; i < edges.length; i++) {
@@ -595,7 +632,7 @@ export const applyOptionsToFrames = (frames: DataFrame[], options: NodeGraphOpti
     const fieldsCache = new FieldCache(frame);
 
     // Edges frame has source which can be used to identify nodes vs edges frames
-    if (fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.source.toLowerCase())) {
+    if (fieldsCache.getFieldByName(options.edges?.sourceField ?? NodeGraphDataFrameFieldNames.source.toLowerCase())) {
       if (options?.edges?.mainStatUnit) {
         const field = frame.fields.find((field) => field.name.toLowerCase() === NodeGraphDataFrameFieldNames.mainStat);
         if (field) {

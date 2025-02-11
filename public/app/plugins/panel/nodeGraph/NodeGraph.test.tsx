@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { NodeGraph } from './NodeGraph';
 import { ZoomMode } from './panelcfg.gen';
 import { makeEdgesDataFrame, makeNodesDataFrame } from './utils';
+import { DataFrame, FieldType } from '@grafana/data';
 
 jest.mock('react-use/lib/useMeasure', () => {
   return {
@@ -42,7 +43,7 @@ describe('NodeGraph', () => {
     render(
       <NodeGraph
         dataFrames={[makeNodesDataFrame(2), makeEdgesDataFrame([{ source: '0', target: '1' }])]}
-        zoomMode={ZoomMode.Cooperative}
+        options={{ zoomMode: ZoomMode.Cooperative }}
         getLinks={() => []}
       />
     );
@@ -60,7 +61,7 @@ describe('NodeGraph', () => {
     render(
       <NodeGraph
         dataFrames={[makeNodesDataFrame(2), makeEdgesDataFrame([{ source: '0', target: '1' }])]}
-        zoomMode={ZoomMode.Greedy}
+        options={{ zoomMode: ZoomMode.Greedy }}
         getLinks={() => []}
       />
     );
@@ -251,6 +252,25 @@ describe('NodeGraph', () => {
     await expectNodePositionCloseTo('service:1', { x: 60, y: -60 });
     await expectNodePositionCloseTo('service:2', { x: -60, y: 80 });
   });
+
+  it('can customize field names', async () => {
+    render(
+      <NodeGraph
+        dataFrames={[customEdgesFrame()]}
+        getLinks={() => []}
+        options={{
+          edges: {
+            idField: 'connectionName',
+            sourceField: 'from',
+            targetField: 'to',
+            mainStatField: 'value',
+          },
+        }}
+      />
+    );
+    const nodes = await screen.findAllByLabelText(/Node: [ab]/);
+    expect(nodes).toHaveLength(2);
+  });
 });
 
 async function expectNodePositionCloseTo(node: string, pos: { x: number; y: number }) {
@@ -304,5 +324,36 @@ function getXY(e: Element) {
   return {
     x: parseFloat(e.attributes.getNamedItem('cx')?.value || ''),
     y: parseFloat(e.attributes.getNamedItem('cy')?.value || ''),
+  };
+}
+
+function customEdgesFrame(): DataFrame {
+  const fields = {
+    connectionName: {
+      values: ['foo'],
+      type: FieldType.string,
+    },
+    from: {
+      values: ['a'],
+      type: FieldType.string,
+    },
+    to: {
+      values: ['b'],
+      type: FieldType.string,
+    },
+    value: {
+      values: [7],
+      type: FieldType.number,
+    },
+  };
+
+  return {
+    name: 'edges',
+    length: 1,
+    fields: Object.entries(fields).map(([key, value]) => ({
+      ...value,
+      name: key,
+      config: {},
+    })),
   };
 }
