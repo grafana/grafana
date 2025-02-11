@@ -198,7 +198,7 @@ func newUnifiedClient(cfg *setting.Cfg, sqlStore db.DB) (resource.ResourceClient
 	)
 }
 
-func newParquetClient(file *os.File) (resource.ResourceStoreClient, error) {
+func newParquetClient(file *os.File) (resource.BatchStoreClient, error) {
 	writer, err := parquet.NewParquetWriter(file)
 	if err != nil {
 		return nil, err
