@@ -26,7 +26,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/store"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
 
@@ -59,7 +58,7 @@ type Service struct {
 	permCache      *cacheWrap[map[string]bool]
 	teamCache      *cacheWrap[[]int64]
 	basicRoleCache *cacheWrap[store.BasicRole]
-	folderCache    *cacheWrap[map[string]FolderNode]
+	folderCache    *cacheWrap[folderTree]
 }
 
 func NewService(
@@ -83,7 +82,7 @@ func NewService(
 		permCache:       newCacheWrap[map[string]bool](cache, logger, shortCacheTTL),
 		teamCache:       newCacheWrap[[]int64](cache, logger, shortCacheTTL),
 		basicRoleCache:  newCacheWrap[store.BasicRole](cache, logger, shortCacheTTL),
-		folderCache:     newCacheWrap[map[string]FolderNode](cache, logger, shortCacheTTL),
+		folderCache:     newCacheWrap[folderTree](cache, logger, shortCacheTTL),
 		sf:              new(singleflight.Group),
 	}
 }
@@ -517,31 +516,26 @@ func (s *Service) checkInheritedPermissions(ctx context.Context, scopeMap map[st
 	defer span.End()
 	ctxLogger := s.logger.FromContext(ctx)
 
-	folderMap, err := s.buildFolderTree(ctx, req.Namespace)
+	tree, err := s.buildFolderTree(ctx, req.Namespace)
 	if err != nil {
 		ctxLogger.Error("could not build folder and dashboard tree", "error", err)
 		return false, err
 	}
 
-	currentUID := req.ParentFolder
-	for {
-		if node, has := folderMap[currentUID]; has {
-			scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(node.UID)
-			if scopeMap[scope] {
-				return true, nil
-			}
-			if node.ParentUID == nil {
-				break
-			}
-			currentUID = *node.ParentUID
-		} else {
-			break
+	if scopeMap["folders:uid:"+req.ParentFolder] {
+		return true, nil
+	}
+
+	for n := range tree.Ancestors(req.ParentFolder) {
+		if scopeMap["folders:uid:"+n.UID] {
+			return true, nil
 		}
 	}
+
 	return false, nil
 }
 
-func (s *Service) buildFolderTree(ctx context.Context, ns claims.NamespaceInfo) (map[string]FolderNode, error) {
+func (s *Service) buildFolderTree(ctx context.Context, ns claims.NamespaceInfo) (folderTree, error) {
 	ctx, span := s.tracer.Start(ctx, "authz_direct_db.service.buildFolderTree")
 	defer span.End()
 
@@ -557,41 +551,16 @@ func (s *Service) buildFolderTree(ctx context.Context, ns claims.NamespaceInfo) 
 		}
 		span.SetAttributes(attribute.Int("num_folders", len(folders)))
 
-		folderMap := make(map[string]FolderNode, len(folders))
-		for _, folder := range folders {
-			if node, has := folderMap[folder.UID]; !has {
-				folderMap[folder.UID] = FolderNode{
-					UID:       folder.UID,
-					ParentUID: folder.ParentUID,
-				}
-			} else {
-				node.ParentUID = folder.ParentUID
-				folderMap[folder.UID] = node
-			}
-			// Register that the parent has this child node
-			if folder.ParentUID == nil {
-				continue
-			}
-			if parent, has := folderMap[*folder.ParentUID]; has {
-				parent.ChildrenUIDs = append(parent.ChildrenUIDs, folder.UID)
-				folderMap[*folder.ParentUID] = parent
-			} else {
-				folderMap[*folder.ParentUID] = FolderNode{
-					UID:          *folder.ParentUID,
-					ChildrenUIDs: []string{folder.UID},
-				}
-			}
-		}
-
-		s.folderCache.Set(ctx, key, folderMap)
-		return folderMap, nil
+		tree := newFolderTree(folders)
+		s.folderCache.Set(ctx, key, tree)
+		return tree, nil
 	})
 
 	if err != nil {
-		return nil, err
+		return folderTree{}, err
 	}
 
-	return res.(map[string]FolderNode), nil
+	return res.(folderTree), nil
 }
 
 func (s *Service) listPermission(ctx context.Context, scopeMap map[string]bool, req *ListRequest) (*authzv1.ListResponse, error) {
@@ -609,10 +578,10 @@ func (s *Service) listPermission(ctx context.Context, scopeMap map[string]bool, 
 		return nil, status.Error(codes.NotFound, "unsupported resource")
 	}
 
-	var folderMap map[string]FolderNode
+	var tree folderTree
 	if t.folderSupport {
 		var err error
-		folderMap, err = s.buildFolderTree(ctx, req.Namespace)
+		tree, err = s.buildFolderTree(ctx, req.Namespace)
 		if err != nil {
 			ctxLogger.Error("could not build folder and dashboard tree", "error", err)
 			return nil, err
@@ -621,16 +590,16 @@ func (s *Service) listPermission(ctx context.Context, scopeMap map[string]bool, 
 
 	var res *authzv1.ListResponse
 	if strings.HasPrefix(req.Action, "folders:") {
-		res = buildFolderList(scopeMap, folderMap)
+		res = buildFolderList(scopeMap, tree)
 	} else {
-		res = buildItemList(scopeMap, folderMap, t.prefix())
+		res = buildItemList(scopeMap, tree, t.prefix())
 	}
 
 	span.SetAttributes(attribute.Int("num_folders", len(res.Folders)), attribute.Int("num_items", len(res.Items)))
 	return res, nil
 }
 
-func buildFolderList(scopes map[string]bool, tree map[string]FolderNode) *authzv1.ListResponse {
+func buildFolderList(scopes map[string]bool, tree folderTree) *authzv1.ListResponse {
 	itemSet := make(map[string]struct{}, len(scopes))
 
 	for scope := range scopes {
@@ -640,7 +609,9 @@ func buildFolderList(scopes map[string]bool, tree map[string]FolderNode) *authzv
 		}
 
 		itemSet[identifier] = struct{}{}
-		getChildren(tree, identifier, itemSet)
+		for n := range tree.Children(identifier) {
+			itemSet[n.UID] = struct{}{}
+		}
 	}
 
 	itemList := make([]string, 0, len(itemSet))
@@ -651,7 +622,7 @@ func buildFolderList(scopes map[string]bool, tree map[string]FolderNode) *authzv
 	return &authzv1.ListResponse{Items: itemList}
 }
 
-func buildItemList(scopes map[string]bool, tree map[string]FolderNode, prefix string) *authzv1.ListResponse {
+func buildItemList(scopes map[string]bool, tree folderTree, prefix string) *authzv1.ListResponse {
 	folderSet := make(map[string]struct{}, len(scopes))
 	itemSet := make(map[string]struct{}, len(scopes))
 
@@ -661,7 +632,9 @@ func buildItemList(scopes map[string]bool, tree map[string]FolderNode, prefix st
 				continue
 			}
 			folderSet[identifier] = struct{}{}
-			getChildren(tree, identifier, folderSet)
+			for n := range tree.Children(identifier) {
+				folderSet[n.UID] = struct{}{}
+			}
 		} else {
 			identifier := strings.TrimPrefix(scope, prefix)
 			itemSet[identifier] = struct{}{}
@@ -677,19 +650,4 @@ func buildItemList(scopes map[string]bool, tree map[string]FolderNode, prefix st
 	}
 
 	return &authzv1.ListResponse{Folders: folderList, Items: itemList}
-}
-
-func getChildren(folderMap map[string]FolderNode, folderUID string, folderSet map[string]struct{}) {
-	folder, has := folderMap[folderUID]
-	if !has {
-		return
-	}
-	for _, child := range folder.ChildrenUIDs {
-		// We have already processed all the children of this folder
-		if _, ok := folderSet[child]; ok {
-			return
-		}
-		folderSet[child] = struct{}{}
-		getChildren(folderMap, child, folderSet)
-	}
 }
