@@ -55,7 +55,7 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
       </Card>
       <Card>
         <Card.Heading>Resources</Card.Heading>
-        <Card.Meta>
+        <Card.Description>
           {repo.status?.stats ? (
             <InteractiveTable
               columns={useMemo(
@@ -83,7 +83,7 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
               getRowId={(r: StatItem) => `${r.group}-${r.resource}`}
             />
           ) : null}
-        </Card.Meta>
+        </Card.Description>
       </Card>
       <Card>
         <Card.Heading>Health</Card.Heading>
@@ -100,7 +100,7 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
           Sync Status{' '}
           <StatusBadge enabled={Boolean(repo.spec?.sync?.enabled)} state={repo.status?.sync?.state} name={name} />
         </Card.Heading>
-        <Card.Meta>
+        <Card.Description>
           <div style={{ display: 'grid', gridTemplateColumns: '100px 1fr', gap: '8px', alignItems: 'baseline' }}>
             <Text color="secondary">Job ID:</Text>
             <Text variant="body">{status?.sync.job ?? 'N/A'}</Text>
@@ -114,7 +114,7 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
             <Text color="secondary">Finished:</Text>
             <Text variant="body">{formatTimestamp(status?.sync.finished)}</Text>
           </div>
-        </Card.Meta>
+        </Card.Description>
         <Card.Actions>
           <SyncRepository repository={repo} />
         </Card.Actions>
