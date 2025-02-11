@@ -185,7 +185,8 @@ func TestResponseAdapter(t *testing.T) {
 					require.True(t, ok, "no user found in request context")
 					require.Equal(t, expectedUsr.Name, usr.GetName(), "user data was not propagated through request context")
 
-					w.Write([]byte("OK"))
+					_, err := w.Write([]byte("OK"))
+					require.NoError(t, err)
 				})),
 			},
 		}

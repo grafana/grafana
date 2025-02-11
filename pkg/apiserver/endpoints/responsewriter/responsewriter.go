@@ -11,7 +11,6 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"k8s.io/apiserver/pkg/authentication/user"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/endpoints/responsewriter"
@@ -91,11 +90,6 @@ func createLimitedContext(req *http.Request) (context.Context, context.CancelFun
 	klogger := klog.FromContext(refCtx)
 	if klogger.Enabled() {
 		newCtx = klog.NewContext(newCtx, klogger)
-	}
-	// Grafana infra
-	infraLogger := log.FromContext(refCtx)
-	if len(infraLogger) > 0 {
-		newCtx = log.WithContextualAttributes(newCtx, infraLogger)
 	}
 
 	// The tracing package deals with both k8s trace and otel.
