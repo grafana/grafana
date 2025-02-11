@@ -317,7 +317,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
 
     const vizPanels = (scene.state.body as DashboardLayoutManager).getVizPanels();
     expect(vizPanels.length).toBe(3);
-    expect(getQueryRunnerFor(vizPanels[0])?.state.datasource).toEqual({
+    expect(getQueryRunnerFor(vizPanels[0])?.state.queries[0].datasource).toEqual({
       type: 'prometheus',
       uid: 'datasource1',
     });

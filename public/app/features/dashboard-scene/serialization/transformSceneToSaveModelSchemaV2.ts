@@ -74,7 +74,7 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
   const dashboardSchemaV2: DeepPartial<DashboardV2Spec> = {
     //dashboard settings
     title: sceneDash.title,
-    description: sceneDash.description ?? '',
+    description: sceneDash.description,
     cursorSync: getCursorSync(sceneDash),
     liveNow: getLiveNow(sceneDash),
     preload: sceneDash.preload,
@@ -243,7 +243,7 @@ function getVizPanelQueries(vizPanel: VizPanel): PanelQueryKind[] {
   const queries: PanelQueryKind[] = [];
   const queryRunner = getQueryRunnerFor(vizPanel);
   const vizPanelQueries = queryRunner?.state.queries;
-  const datasource = queryRunner?.state.datasource;
+  const datasource = queryRunner?.state.datasource ?? getDefaultDataSourceRef();
 
   if (vizPanelQueries) {
     vizPanelQueries.forEach((query) => {
@@ -252,7 +252,7 @@ function getVizPanelQueries(vizPanel: VizPanel): PanelQueryKind[] {
         spec: omit(query, 'datasource', 'refId', 'hide'),
       };
       const querySpec: PanelQuerySpec = {
-        datasource: datasource ?? getDefaultDataSourceRef(),
+        datasource: query.datasource ?? datasource,
         query: dataQuery,
         refId: query.refId,
         hidden: Boolean(query.hide),
