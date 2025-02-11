@@ -715,7 +715,6 @@ func (m *grafanaMetaAccessor) FindTitle(defaultTitle string) string {
 	if title.IsValid() && title.Kind() == reflect.String {
 		return title.String()
 	}
-
 	return defaultTitle
 }
 

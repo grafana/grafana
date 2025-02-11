@@ -225,7 +225,7 @@ func TestMetaAccessor(t *testing.T) {
 		spec, err = meta.GetSpec()
 		require.NoError(t, err)
 		require.Equal(t, res.Object["spec"], spec)
-		spec = map[string]any{"a": "b"}
+		spec = &map[string]string{"a": "b"}
 		err = meta.SetSpec(spec)
 		require.NoError(t, err)
 		spec, err = meta.GetSpec()
