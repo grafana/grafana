@@ -1,10 +1,172 @@
-import { Spinner, Alert, Badge, InteractiveTable, Button, Card, Box, Stack, Icon } from '@grafana/ui';
+import { useMemo } from 'react';
 
-import { Repository, JobResourceSummary, useListJobQuery, Job } from './api';
+import { Spinner, Alert, Badge, InteractiveTable, Button, Card, Box, Stack, Icon, Text } from '@grafana/ui';
+
+import { Repository, JobResourceSummary, useListJobQuery, Job, SyncStatus } from './api';
 import { formatTimestamp } from './utils/time';
 
 interface Props {
   repo: Repository;
+}
+
+type JobCell<T extends keyof Job = keyof Job> = {
+  row: {
+    original: Job;
+  };
+};
+
+type SummaryCell<T extends keyof JobResourceSummary = keyof JobResourceSummary> = {
+  row: {
+    original: JobResourceSummary;
+  };
+};
+
+const getStatusColor = (state?: SyncStatus['state']) => {
+  switch (state) {
+    case 'success':
+      return 'green';
+    case 'working':
+    case 'pending':
+      return 'orange';
+    case 'error':
+      return 'red';
+    default:
+      return 'darkgrey';
+  }
+};
+
+const getJobColumns = () => [
+  {
+    id: 'status',
+    header: 'Status',
+    cell: ({ row: { original: job } }: JobCell) => (
+      <Badge
+        text={job.status?.state || ''}
+        color={getStatusColor(job.status?.state)}
+        icon={job.status?.state === 'working' ? 'spinner' : undefined}
+      />
+    ),
+  },
+  {
+    id: 'action',
+    header: 'Action',
+    cell: ({ row: { original: job } }: JobCell) => job.spec?.action,
+  },
+  {
+    id: 'started',
+    header: 'Started',
+    cell: ({ row: { original: job } }: JobCell) => formatTimestamp(job.status?.started),
+  },
+  {
+    id: 'finished',
+    header: 'Finished',
+    cell: ({ row: { original: job } }: JobCell) => formatTimestamp(job.status?.finished),
+  },
+  {
+    id: 'message',
+    header: 'Message',
+    cell: ({ row: { original: job } }: JobCell) => (
+      <Stack alignItems="center" gap={1}>
+        <span>{job.status?.message}</span>
+      </Stack>
+    ),
+  },
+];
+
+const getSummaryColumns = () => [
+  {
+    id: 'group',
+    header: 'Group',
+    cell: ({ row: { original: item } }: SummaryCell) => item.group || '-',
+  },
+  {
+    id: 'resource',
+    header: 'Resource',
+    cell: ({ row: { original: item } }: SummaryCell) => item.resource,
+  },
+  {
+    id: 'write',
+    header: 'Write',
+    cell: ({ row: { original: item } }: SummaryCell) => item.write?.toString() || '-',
+  },
+  {
+    id: 'created',
+    header: 'Created',
+    cell: ({ row: { original: item } }: SummaryCell) => item.create?.toString() || '-',
+  },
+  {
+    id: 'deleted',
+    header: 'Deleted',
+    cell: ({ row: { original: item } }: SummaryCell) => item.delete?.toString() || '-',
+  },
+  {
+    id: 'updated',
+    header: 'Updated',
+    cell: ({ row: { original: item } }: SummaryCell) => item.update?.toString() || '-',
+  },
+  {
+    id: 'unchanged',
+    header: 'Unchanged',
+    cell: ({ row: { original: item } }: SummaryCell) => item.noop?.toString() || '-',
+  },
+  {
+    id: 'errors',
+    header: 'Errors',
+    cell: ({ row: { original: item } }: SummaryCell) => item.error?.toString() || '-',
+  },
+];
+
+interface ExpandedRowProps {
+  row: Job;
+}
+
+function ExpandedRow({ row }: ExpandedRowProps) {
+  const hasSummary = Boolean(row.status?.summary?.length);
+  const hasErrors = Boolean(row.status?.errors?.length);
+
+  if (!hasSummary && !hasErrors) {
+    return null;
+  }
+
+  return (
+    <Box padding={2}>
+      <Stack direction="column" gap={2}>
+        {hasErrors && (
+          <Stack direction="column" gap={1}>
+            {row.status?.errors?.map(
+              (error, index) =>
+                error.trim() && (
+                  <Alert key={index} severity="error" title="Error">
+                    <Stack alignItems="center" gap={1}>
+                      <Icon name="exclamation-circle" size="sm" />
+                      {error}
+                    </Stack>
+                  </Alert>
+                )
+            )}
+          </Stack>
+        )}
+        {hasSummary && (
+          <InteractiveTable
+            data={row.status!.summary!}
+            columns={getSummaryColumns()}
+            getRowId={(item) => item.resource || ''}
+          />
+        )}
+      </Stack>
+    </Box>
+  );
+}
+
+function EmptyState() {
+  return (
+    <Stack direction={'column'} alignItems={'center'}>
+      <Text color="secondary">No recent events...</Text>
+      <Text variant="bodySmall" color="secondary">
+        Note: history is not maintained after system restart
+      </Text>
+    </Stack>
+  );
 }
 
 export function RecentJobs({ repo }: Props) {
@@ -12,116 +174,19 @@ export function RecentJobs({ repo }: Props) {
   const query = useListJobQuery({ labelSelector: `repository=${name}` });
   const items = query?.data?.items ?? [];
 
+  const jobColumns = useMemo(() => getJobColumns(), []);
+
   if (query.isLoading) {
     return <Spinner />;
   }
+
   if (query.isError) {
     return (
-      <Alert title="error loading jobs">
+      <Alert title="Error loading jobs" severity="error">
         <pre>{JSON.stringify(query.error)}</pre>
       </Alert>
     );
   }
-  if (!items?.length) {
-    return (
-      <div>
-        No recent events...
-        <br />
-        Note: history is not maintained after system restart
-      </div>
-    );
-  }
-
-  const columns = [
-    {
-      id: 'status',
-      header: 'Status',
-      cell: ({ row: { original: job } }: { row: { original: Job } }) => (
-        <Badge
-          text={job.status?.state || ''}
-          color={
-            job.status?.state === 'success'
-              ? 'green'
-              : job.status?.state === 'working'
-                ? 'orange'
-                : job.status?.state === 'pending'
-                  ? 'orange'
-                  : job.status?.state === 'error'
-                    ? 'red'
-                    : 'darkgrey'
-          }
-          icon={job.status?.state === 'working' ? 'spinner' : undefined}
-        />
-      ),
-    },
-    {
-      id: 'action',
-      header: 'Action',
-      cell: ({ row: { original: job } }: { row: { original: Job } }) => job.spec?.action,
-    },
-    {
-      id: 'started',
-      header: 'Started',
-      cell: ({ row: { original: job } }: { row: { original: Job } }) => formatTimestamp(job.status?.started),
-    },
-    {
-      id: 'finished',
-      header: 'Finished',
-      cell: ({ row: { original: job } }: { row: { original: Job } }) => formatTimestamp(job.status?.finished),
-    },
-    {
-      id: 'message',
-      header: 'Message',
-      cell: ({ row: { original: job } }: { row: { original: Job } }) => (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span>{job.status?.message}</span>
-        </div>
-      ),
-    },
-  ];
-
-  const summaryColumns = [
-    {
-      id: 'group',
-      header: 'Group',
-      cell: ({ row: { original: item } }: { row: { original: JobResourceSummary } }) => item.group || '-',
-    },
-    {
-      id: 'resource',
-      header: 'Resource',
-      cell: ({ row: { original: item } }: { row: { original: JobResourceSummary } }) => item.resource,
-    },
-    {
-      id: 'write',
-      header: 'Write',
-      cell: ({ row: { original: item } }: { row: { original: JobResourceSummary } }) => item.write?.toString() || '-',
-    },
-    {
-      id: 'created',
-      header: 'Created',
-      cell: ({ row: { original: item } }: { row: { original: JobResourceSummary } }) => item.create?.toString() || '-',
-    },
-    {
-      id: 'deleted',
-      header: 'Deleted',
-      cell: ({ row: { original: item } }: { row: { original: JobResourceSummary } }) => item.delete?.toString() || '-',
-    },
-    {
-      id: 'updated',
-      header: 'Updated',
-      cell: ({ row: { original: item } }: { row: { original: JobResourceSummary } }) => item.update?.toString() || '-',
-    },
-    {
-      id: 'unchanged',
-      header: 'Unchanged',
-      cell: ({ row: { original: item } }: { row: { original: JobResourceSummary } }) => item.noop?.toString() || '-',
-    },
-    {
-      id: 'errors',
-      header: 'Errors',
-      cell: ({ row: { original: item } }: { row: { original: JobResourceSummary } }) => item.error?.toString() || '-',
-    },
-  ];
 
   return (
     <Card>
@@ -132,41 +197,17 @@ export function RecentJobs({ repo }: Props) {
         </Button>
       </Card.Actions>
       <Card.Description>
-        <InteractiveTable
-          data={items.slice(0, 10)}
-          columns={columns}
-          getRowId={(item) => item.metadata?.resourceVersion || ''}
-          renderExpandedRow={(row) =>
-            (row.status?.summary?.length ?? 0) > 0 || row.status?.errors ? (
-              <Box padding={2}>
-                <Stack direction="column" gap={2}>
-                  {row.status?.errors && (
-                    <Stack direction="column" gap={1}>
-                      {row.status.errors.map(
-                        (error, index) =>
-                          error.trim() && (
-                            <Alert key={index} severity="error" title="Error">
-                              <Stack direction="row" alignItems="center" gap={1}>
-                                <Icon name="exclamation-circle" size="sm" />
-                                {error}
-                              </Stack>
-                            </Alert>
-                          )
-                      )}
-                    </Stack>
-                  )}
-                  {row.status?.summary?.length && row.status.summary.length > 0 && (
-                    <InteractiveTable
-                      data={row.status.summary}
-                      columns={summaryColumns}
-                      getRowId={(item) => item.resource || ''}
-                    />
-                  )}
-                </Stack>
-              </Box>
-            ) : null
-          }
-        />
+        {!items?.length ? (
+          <EmptyState />
+        ) : (
+          <InteractiveTable
+            data={items.slice(0, 10)}
+            columns={jobColumns}
+            getRowId={(item) => item.metadata?.resourceVersion || ''}
+            renderExpandedRow={(row) => <ExpandedRow row={row} />}
+            pageSize={30}
+          />
+        )}
       </Card.Description>
     </Card>
   );
