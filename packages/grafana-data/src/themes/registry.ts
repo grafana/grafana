@@ -24,9 +24,9 @@ export function getThemeById(id: string): GrafanaTheme2 {
  */
 export function getBuiltInThemes(allowedExtras: string[]) {
   const themes = themeRegistry.list().filter((item) => {
-    // if (item.isExtra) {
-    //   return allowedExtras.includes(item.id);
-    // }
+    if (item.isExtra) {
+      return allowedExtras.includes(item.id);
+    }
     return true;
   });
   // sort themes alphabetically, but put built-in themes (default, dark, light, system) first

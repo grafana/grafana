@@ -77,6 +77,7 @@ function ThemePreview() {
         <Branding.MenuLogo className={styles.img} />
         <div className={styles.breadcrumbs}>Home / Dashboards</div>
         <div style={{ flexGrow: 1 }} />
+        <div className={styles.formInput} />
         <div className={styles.profileCircle} />
       </div>
       <div className={styles.body}>
@@ -102,7 +103,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     grid: css({
       display: 'grid',
       gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-      gridAutoRows: `300px`,
+      gridAutoRows: `250px`,
       gap: theme.spacing(2),
     }),
     card: css({
@@ -143,9 +144,10 @@ const getDemoStyles = (theme: GrafanaTheme2) => {
       color: theme.colors.text.primary,
     }),
     profileCircle: css({
-      background: theme.colors.text.primary,
+      background: theme.colors.text.secondary,
       height: '8px',
       width: '8px',
+      marginLeft: 4,
       borderRadius: theme.shape.radius.circle,
     }),
     body: css({
@@ -164,13 +166,13 @@ const getDemoStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       flexDirection: 'column',
       flexGrow: 1,
+      borderRadius: theme.shape.radius.default,
     }),
     panelHeader: css({
       height: 20,
       fontSize: '5px',
       color: theme.colors.text.primary,
       padding: 4,
-      borderRadius: theme.shape.radius.default,
     }),
     panelBody: css({
       flexGrow: 1,
