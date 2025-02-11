@@ -3,19 +3,17 @@ import { css, cx } from '@emotion/css';
 import { SceneComponentProps } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 
-import { ConditionalRendering } from '../../conditional-rendering/ConditionalRendering';
-import { getDashboardSceneFor } from '../../utils/utils';
+import { useDashboardState, useIsConditionallyHidden } from '../../utils/utils';
 
 import { ResponsiveGridItem } from './ResponsiveGridItem';
 
 export function ResponsiveGridItemRenderer({ model }: SceneComponentProps<ResponsiveGridItem>) {
-  const { body, $behaviors } = model.useState();
+  const { body } = model.useState();
   const style = useStyles2(getStyles);
-  const dashboard = getDashboardSceneFor(model);
-  const { showHiddenElements } = dashboard.useState();
+  const { showHiddenElements } = useDashboardState(model);
+  const isConditionallyHidden = useIsConditionallyHidden(model);
 
-  const conditionalRendering = $behaviors?.find((behavior) => behavior instanceof ConditionalRendering);
-  if (!(conditionalRendering?.evaluate() ?? true) && !showHiddenElements) {
+  if (isConditionallyHidden && !showHiddenElements) {
     return null;
   }
 
