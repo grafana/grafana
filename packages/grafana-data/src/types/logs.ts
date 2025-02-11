@@ -174,7 +174,12 @@ export interface DataSourceWithLogsContextSupport<TQuery extends DataQuery = Dat
    * @alpha
    * @internal
    */
-  getLogRowContextUi?(row: LogRowModel, runContextQuery?: () => void, origQuery?: TQuery, scopedVars?: ScopedVars): React.ReactNode;
+  getLogRowContextUi?(
+    row: LogRowModel,
+    runContextQuery?: () => void,
+    origQuery?: TQuery,
+    scopedVars?: ScopedVars
+  ): React.ReactNode;
 }
 
 export const hasLogsContextSupport = (datasource: unknown): datasource is DataSourceWithLogsContextSupport => {
