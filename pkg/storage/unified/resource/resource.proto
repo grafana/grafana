@@ -308,7 +308,7 @@ message WatchEvent {
   // Timestamp the event was sent
   int64 timestamp = 1;
 
-  // Timestamp the event was sent
+  // The event type
   Type type = 2;
 
   // Resource version for the object
@@ -317,6 +317,65 @@ message WatchEvent {
   // Previous resource version (for update+delete)
   Resource previous = 4;
 }
+
+message BatchRequest {
+  enum Action {
+    // will be an error
+    UNKNOWN = 0; 
+
+    // Matches Watch event enum
+    ADDED = 1;
+    MODIFIED = 2;
+    DELETED = 3;
+  }
+
+  // NOTE everything in the same stream must share the same Namespace/Group/Resource
+  ResourceKey key = 1;
+
+  // Requested action
+  Action action = 2;
+
+  // The resource value 
+  bytes value = 3;
+
+  // Hint that a new version will be written on-top of this
+  string folder = 4;
+}
+
+message BatchResponse {
+  message Summary {
+    string namespace = 1;
+    string group = 2;
+    string resource = 3;
+    int64 count = 4;
+    int64 history = 5;
+    int64 resource_version = 6; // The max saved RV
+
+    // The previous count
+    int64 previous_count = 7;
+    int64 previous_history = 8;
+  }
+
+  // Collect a few invalid messages
+  message Rejected {
+    ResourceKey         key    = 1;
+    BatchRequest.Action action = 2;
+    string              error  = 3;
+  }
+
+  // Error details
+  ErrorResult error = 1;
+
+  // Total events processed
+  int64 processed = 2;
+
+  // Summary status for the processed values
+  repeated Summary summary = 3;
+
+  // Rejected 
+  repeated Rejected rejected = 4;
+}
+
 
 // Get statistics across multiple resources
 // For these queries, we do not need authorization to see the actual values
@@ -752,6 +811,13 @@ service ResourceStore {
   // This will perform best-effort filtering to increase performace.
   // NOTE: storage.Interface is ultimatly responsible for the final filtering
   rpc Watch(WatchRequest) returns (stream WatchEvent);
+}
+
+service BatchStore {
+  // Write multiple resources to the same Namespace/Group/Resource
+  // Events will not be sent until the stream is complete
+  // Only the *create* permissions is checked
+  rpc BatchProcess(stream BatchRequest) returns (BatchResponse);
 }
 
 // Unlike the ResourceStore, this service can be exposed to clients directly

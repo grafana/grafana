@@ -59,6 +59,7 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 		tracer:          opts.Tracer,
 		dbProvider:      opts.DBProvider,
 		pollingInterval: pollingInterval,
+		batchLock:       &batchLock{running: make(map[string]bool)},
 	}, nil
 }
 
@@ -77,6 +78,7 @@ type backend struct {
 	dbProvider db.DBProvider
 	db         db.DB
 	dialect    sqltemplate.Dialect
+	batchLock  *batchLock
 
 	// watch streaming
 	//stream chan *resource.WatchEvent
@@ -701,7 +703,7 @@ func (b *backend) WatchWriteEvents(ctx context.Context) (<-chan *resource.Writte
 	// Get the latest RV
 	since, err := b.listLatestRVs(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("get the latest resource version: %w", err)
+		return nil, fmt.Errorf("watch, get latest resource version: %w", err)
 	}
 	// Start the poller
 	stream := make(chan *resource.WrittenEvent)
@@ -713,17 +715,23 @@ func (b *backend) poller(ctx context.Context, since groupResourceRV, stream chan
 	t := time.NewTicker(b.pollingInterval)
 	defer close(stream)
 	defer t.Stop()
+	isSQLite := b.dialect.DialectName() == "sqlite"
 
 	for {
 		select {
 		case <-b.done:
 			return
 		case <-t.C:
+			// Block polling duffing import to avoid database locked issues
+			if isSQLite && b.batchLock.Active() {
+				continue
+			}
+
 			ctx, span := b.tracer.Start(ctx, tracePrefix+"poller")
 			// List the latest RVs
 			grv, err := b.listLatestRVs(ctx)
 			if err != nil {
-				b.log.Error("get the latest resource version", "err", err)
+				b.log.Error("poller get latest resource version", "err", err)
 				t.Reset(b.pollingInterval)
 				continue
 			}

@@ -44,6 +44,7 @@ var (
 	sqlResourceHistoryPoll       = mustTemplate("resource_history_poll.sql")
 	sqlResourceHistoryGet        = mustTemplate("resource_history_get.sql")
 	sqlResourceHistoryDelete     = mustTemplate("resource_history_delete.sql")
+	sqlResourceInsertFromHistory = mustTemplate("resource_insert_from_history.sql")
 
 	// sqlResourceLabelsInsert = mustTemplate("resource_labels_insert.sql")
 	sqlResourceVersionGet    = mustTemplate("resource_version_get.sql")
@@ -81,6 +82,18 @@ type sqlResourceRequest struct {
 
 func (r sqlResourceRequest) Validate() error {
 	return nil // TODO
+}
+
+type sqlResourceInsertFromHistoryRequest struct {
+	sqltemplate.SQLTemplate
+	Key *resource.ResourceKey
+}
+
+func (r sqlResourceInsertFromHistoryRequest) Validate() error {
+	if r.Key == nil {
+		return fmt.Errorf("missing key")
+	}
+	return nil
 }
 
 type sqlStatsRequest struct {
