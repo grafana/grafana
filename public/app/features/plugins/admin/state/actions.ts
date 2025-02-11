@@ -3,7 +3,6 @@ import { from, forkJoin, timeout, lastValueFrom, catchError, of } from 'rxjs';
 
 import { PanelPlugin, PluginError } from '@grafana/data';
 import { config, getBackendSrv, isFetchError } from '@grafana/runtime';
-import configCore from 'app/core/config';
 import { importPanelPlugin } from 'app/features/plugins/importPanelPlugin';
 import { StoreState, ThunkResult } from 'app/types';
 
@@ -28,14 +27,8 @@ export const fetchAll = createAsyncThunk(`${STATE_PREFIX}/fetchAll`, async (_, t
     thunkApi.dispatch({ type: `${STATE_PREFIX}/fetchLocal/pending` });
     thunkApi.dispatch({ type: `${STATE_PREFIX}/fetchRemote/pending` });
 
-    const instance$ =
-      config.pluginAdminExternalManageEnabled && configCore.featureToggles.managedPluginsInstall
-        ? from(getInstancePlugins())
-        : of(undefined);
-    const provisioned$ =
-      config.pluginAdminExternalManageEnabled && configCore.featureToggles.managedPluginsInstall
-        ? from(getProvisionedPlugins())
-        : of(undefined);
+    const instance$ = config.pluginAdminExternalManageEnabled ? from(getInstancePlugins()) : of(undefined);
+    const provisioned$ = config.pluginAdminExternalManageEnabled ? from(getProvisionedPlugins()) : of(undefined);
     const TIMEOUT = 500;
     const pluginErrors$ = from(getPluginErrors());
     const local$ = from(getLocalPlugins());

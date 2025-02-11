@@ -82,8 +82,7 @@ func DeclareRBACRoles(service ac.Service, cfg *setting.Cfg, features featuremgmt
 		Grants: []string{ac.RoleGrafanaAdmin},
 	}
 
-	if !cfg.PluginAdminEnabled ||
-		(cfg.PluginAdminExternalManageEnabled && !features.IsEnabledGlobally(featuremgmt.FlagManagedPluginsInstall)) {
+	if !cfg.PluginAdminEnabled {
 		PluginsMaintainer.Grants = []string{}
 	}
 
