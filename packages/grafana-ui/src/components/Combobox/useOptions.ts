@@ -93,7 +93,7 @@ export function useOptions<T extends string | number>(rawOptions: AsyncOptions<T
     [debouncedLoadOptions, isAsync]
   );
 
-  const reorganizeOptions = useCallback((options: Array<ComboboxOption<T>>) => {
+  const organizeOptionsByGroup = useCallback((options: Array<ComboboxOption<T>>) => {
     const groupedOptions = new Map<string | undefined, Array<ComboboxOption<T>>>();
     for (const option of options) {
       const groupExists = groupedOptions.has(option.group);
@@ -122,10 +122,10 @@ export function useOptions<T extends string | number>(rawOptions: AsyncOptions<T
 
   const finalOptions = useMemo(() => {
     const currentOptions = isAsync ? asyncOptions : rawOptions.filter(itemFilter(userTypedSearch));
-    const currentOptionsOrganised = reorganizeOptions(currentOptions);
+    const currentOptionsOrganised = organizeOptionsByGroup(currentOptions);
 
     return addCustomValue(currentOptionsOrganised);
-  }, [isAsync, reorganizeOptions, addCustomValue, asyncOptions, rawOptions, userTypedSearch]);
+  }, [isAsync, organizeOptionsByGroup, addCustomValue, asyncOptions, rawOptions, userTypedSearch]);
 
   return { options: finalOptions, updateOptions, asyncLoading, asyncError };
 }
