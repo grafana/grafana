@@ -706,8 +706,7 @@ function validateDashboardSchemaV2(dash: unknown): dash is DashboardV2Spec {
     typeof dash.timeSettings.weekStart === 'string' &&
     !['saturday', 'sunday', 'monday'].includes(dash.timeSettings.weekStart)
   ) {
-    console.log(dash.timeSettings);
-    throw new Error('WeekStart is not a string');
+    throw new Error('WeekStart should be one of "saturday", "sunday" or "monday"');
   }
   if (!('fiscalYearStartMonth' in dash.timeSettings) || typeof dash.timeSettings.fiscalYearStartMonth !== 'number') {
     throw new Error('FiscalYearStartMonth is not a number');
