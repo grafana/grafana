@@ -131,7 +131,7 @@ export const OptionsPaneCategory = React.memo(
             variant="secondary"
             aria-expanded={isExpanded}
             className={styles.toggleButton}
-            icon={isExpanded ? 'angle-down' : 'angle-up'}
+            icon={isExpanded ? 'angle-up' : 'angle-down'}
             onClick={onToggle}
           />
         </div>
