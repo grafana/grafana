@@ -126,7 +126,7 @@ function HistoryEntryAppView({ entry, isSelected, onClick }: ItemProps) {
             <Stack direction="column">
               <div>
                 {breadcrumbs.map((breadcrumb, index) => (
-                  <Text key={index} color="secondary">
+                  <Text key={index}>
                     {breadcrumb.text} {index !== breadcrumbs.length - 1 ? '> ' : ''}
                   </Text>
                 ))}
