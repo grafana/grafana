@@ -76,7 +76,6 @@ func TestParquetWriteThenRead(t *testing.T) {
 		for reader.Next() {
 			req := reader.Request()
 			keys = append(keys, req.Key.SearchID())
-			//fmt.Printf("ROW: %+v\n", req.Key)
 		}
 
 		// Verify that we read all values
