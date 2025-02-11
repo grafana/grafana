@@ -35,8 +35,17 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
     return null;
   }
 
+  const isCurrentTab = model.isCurrentTab();
+
   return (
-    <div className={cx(styles.container, isSelected && 'dashboard-selected-element')} role="presentation">
+    <div
+      className={cx(
+        styles.container,
+        isSelected && 'dashboard-selected-element',
+        isConditionallyHidden && showHiddenElements && 'dashboard-visible-hidden-element'
+      )}
+      role="presentation"
+    >
       {isEditing && <TabItemAffix model={model} />}
 
       <span onPointerDown={onSelect}>
