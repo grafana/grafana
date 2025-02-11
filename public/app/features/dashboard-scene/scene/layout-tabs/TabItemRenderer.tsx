@@ -1,15 +1,11 @@
 import { css, cx } from '@emotion/css';
-import { SceneComponentProps } from '@grafana/scenes';
-import { Tab } from '@grafana/ui';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { SceneComponentProps, sceneGraph } from '@grafana/scenes';
-import { Checkbox, clearButtonStyles, useElementSelection, useStyles2 } from '@grafana/ui';
+import { SceneComponentProps } from '@grafana/scenes';
+import { Checkbox, clearButtonStyles, useStyles2 } from '@grafana/ui';
 // eslint-disable-next-line no-restricted-imports
 import { getFocusStyles } from '@grafana/ui/src/themes/mixins';
 
-import { getDashboardSceneFor } from '../../utils/utils';
-import { useIsClone } from '../../utils/clone';
 import {
   useDashboardState,
   useElementSelectionScene,
@@ -22,11 +18,9 @@ import { TabItemAffix } from './TabItemAffix';
 import { TabItemSuffix } from './TabItemSuffix';
 
 export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
-  const { title, key } = model.useState();
-  const dashboard = getDashboardSceneFor(model);
-  const { isEditing } = dashboard.useState();
-  const titleInterpolated = sceneGraph.interpolate(model, title, undefined, 'text');
+  const { isEditing, showHiddenElements } = useDashboardState(model);
   const { isSelected, onSelect } = useElementSelectionScene(model);
+  const isConditionallyHidden = useIsConditionallyHidden(model);
   const title = useInterpolatedTitle(model);
   const styles = useStyles2(getStyles);
   const clearStyles = useStyles2(clearButtonStyles);

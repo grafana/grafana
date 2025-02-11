@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { SceneComponentProps, sceneGraph } from '@grafana/scenes';
+import { SceneComponentProps } from '@grafana/scenes';
 import { Checkbox, clearButtonStyles, Icon, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
@@ -25,6 +25,7 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
   const { isSelected, onSelect } = useElementSelectionScene(model);
   const title = useInterpolatedTitle(model);
   const styles = useStyles2(getStyles);
+  const clearStyles = useStyles2(clearButtonStyles);
 
   if (isConditionallyHidden && !showHiddenElements) {
     return null;
@@ -45,7 +46,7 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
       )}
     >
       {(!isHeaderHidden || (isEditing && showHiddenElements)) && (
-        <div className={styles.rowHeader}>
+        <div className={cx(styles.rowHeader, isHiddenButVisibleHeader && 'dashboard-visible-hidden-element')}>
           {!isClone && isEditing && (
             <span onPointerDown={onSelect}>
               <Checkbox value={!!isSelected} />

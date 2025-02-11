@@ -1,5 +1,6 @@
 import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 
+import { ConditionalRendering } from '../../conditional-rendering/ConditionalRendering';
 import { RowItem } from '../../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
 import { LayoutManagerSerializer } from '../../scene/types/DashboardLayoutManager';
@@ -44,6 +45,7 @@ export class RowsLayoutSerializer implements LayoutManagerSerializer {
         title: row.spec.title,
         isCollapsed: row.spec.collapsed,
         layout: layoutSerializerRegistry.get(layout.kind).serializer.deserialize(layout, elements, preload),
+        $behaviors: [ConditionalRendering.createEmpty()],
       });
     });
     return new RowsLayoutManager({ rows });

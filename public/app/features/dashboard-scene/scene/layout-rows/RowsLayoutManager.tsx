@@ -83,14 +83,7 @@ export class RowsLayoutManager
   }
 
   public addNewRow() {
-    this.setState({
-      rows: [
-        ...this.state.rows,
-        new RowItem({
-          $behaviors: [ConditionalRendering.createEmpty()],
-        }),
-      ],
-    });
+    this.setState({ rows: [...this.state.rows, new RowItem({ $behaviors: [ConditionalRendering.createEmpty()] })] });
   }
 
   public addNewTab() {
@@ -135,7 +128,7 @@ export class RowsLayoutManager
   public addRowAbove(row: RowItem) {
     const rows = this.state.rows;
     const index = rows.indexOf(row);
-    rows.splice(index, 0, new RowItem());
+    rows.splice(index, 0, new RowItem({ $behaviors: [ConditionalRendering.createEmpty()] }));
     this.setState({ rows });
   }
 
@@ -148,21 +141,14 @@ export class RowsLayoutManager
       index = index + 1;
     }
 
-    rows.splice(index + 1, 0, new RowItem());
+    rows.splice(index + 1, 0, new RowItem({ $behaviors: [ConditionalRendering.createEmpty()] }));
     this.setState({ rows });
   }
 
   public removeRow(row: RowItem) {
     const rows = this.state.rows.filter((r) => r !== row);
     this.setState({
-      rows:
-        rows.length === 0
-          ? [
-              new RowItem({
-                $behaviors: [ConditionalRendering.createEmpty()],
-              }),
-            ]
-          : rows,
+      rows: rows.length === 0 ? [new RowItem({ $behaviors: [ConditionalRendering.createEmpty()] })] : rows,
     });
   }
 
@@ -204,11 +190,7 @@ export class RowsLayoutManager
 
   public static createEmpty(): RowsLayoutManager {
     return new RowsLayoutManager({
-      rows: [
-        new RowItem({
-          $behaviors: [ConditionalRendering.createEmpty()],
-        }),
-      ],
+      rows: [new RowItem({ $behaviors: [ConditionalRendering.createEmpty()] })],
     });
   }
 
@@ -273,21 +255,12 @@ export class RowsLayoutManager
           })
       );
     } else {
-      rows = [
-        new RowItem({
-          layout: layout.clone(),
-          $behaviors: [ConditionalRendering.createEmpty()],
-        }),
-      ];
+      rows = [new RowItem({ layout: layout.clone(), $behaviors: [ConditionalRendering.createEmpty()] })];
     }
 
     // Ensure we always get at least one row
     if (rows.length === 0) {
-      rows = [
-        new RowItem({
-          $behaviors: [ConditionalRendering.createEmpty()],
-        }),
-      ];
+      rows = [new RowItem({ $behaviors: [ConditionalRendering.createEmpty()] })];
     }
 
     return new RowsLayoutManager({ rows });

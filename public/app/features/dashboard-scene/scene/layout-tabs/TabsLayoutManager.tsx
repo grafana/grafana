@@ -67,9 +67,7 @@ export class TabsLayoutManager
   }
 
   public addNewTab() {
-    const currentTab = new TabItem({
-      $behaviors: [ConditionalRendering.createEmpty()],
-    });
+    const currentTab = new TabItem({ $behaviors: [ConditionalRendering.createEmpty()] });
     this.setState({ tabs: [...this.state.tabs, currentTab], currentTab });
   }
 
@@ -90,14 +88,14 @@ export class TabsLayoutManager
   }
 
   public addTabBefore(tab: TabItem) {
-    const newTab = new TabItem();
+    const newTab = new TabItem({ $behaviors: [ConditionalRendering.createEmpty()] });
     const tabs = this.state.tabs.slice();
     tabs.splice(tabs.indexOf(tab), 0, newTab);
     this.setState({ tabs, currentTab: newTab });
   }
 
   public addTabAfter(tab: TabItem) {
-    const newTab = new TabItem();
+    const newTab = new TabItem({ $behaviors: [ConditionalRendering.createEmpty()] });
     const tabs = this.state.tabs.slice();
     tabs.splice(tabs.indexOf(tab) + 1, 0, newTab);
     this.setState({ tabs, currentTab: newTab });
@@ -142,13 +140,7 @@ export class TabsLayoutManager
 
     const filteredTab = this.state.tabs.filter((tab) => tab !== this.state.currentTab);
     const tabs =
-      filteredTab.length === 0
-        ? [
-            new TabItem({
-              $behaviors: [ConditionalRendering.createEmpty()],
-            }),
-          ]
-        : filteredTab;
+      filteredTab.length === 0 ? [new TabItem({ $behaviors: [ConditionalRendering.createEmpty()] })] : filteredTab;
 
     this.setState({ tabs, currentTab: tabs[tabs.length - 1] });
   }
@@ -160,17 +152,12 @@ export class TabsLayoutManager
   }
 
   public static createEmpty(): TabsLayoutManager {
-    const tab = new TabItem({
-      $behaviors: [ConditionalRendering.createEmpty()],
-    });
+    const tab = new TabItem({ $behaviors: [ConditionalRendering.createEmpty()] });
     return new TabsLayoutManager({ tabs: [tab], currentTab: tab });
   }
 
   public static createFromLayout(layout: DashboardLayoutManager): TabsLayoutManager {
-    const tab = new TabItem({
-      layout: layout.clone(),
-      $behaviors: [ConditionalRendering.createEmpty()],
-    });
+    const tab = new TabItem({ layout: layout.clone(), $behaviors: [ConditionalRendering.createEmpty()] });
     return new TabsLayoutManager({ tabs: [tab], currentTab: tab });
   }
 }
