@@ -12,10 +12,10 @@ import (
 )
 
 var (
-	_ resource.ResourceStoreClient              = (*writerClient)(nil)
-	_ resource.ResourceStore_BatchProcessClient = (*writerClient)(nil)
+	_ resource.BatchStoreClient              = (*writerClient)(nil)
+	_ resource.BatchStore_BatchProcessClient = (*writerClient)(nil)
 
-	unimplemented = errors.New("not implemented (BatchResourceWriter as ResourceStoreClient shim)")
+	unimplemented = errors.New("not implemented (BatchResourceWriter as BatchStoreClient shim)")
 )
 
 type writerClient struct {
@@ -34,7 +34,7 @@ func (w *writerClient) Send(req *resource.BatchRequest) error {
 }
 
 // BatchProcess implements resource.ResourceStoreClient.
-func (w *writerClient) BatchProcess(ctx context.Context, opts ...grpc.CallOption) (resource.ResourceStore_BatchProcessClient, error) {
+func (w *writerClient) BatchProcess(ctx context.Context, opts ...grpc.CallOption) (resource.BatchStore_BatchProcessClient, error) {
 	if w.ctx != nil {
 		return nil, fmt.Errorf("only one batch request supported")
 	}
@@ -75,39 +75,4 @@ func (w *writerClient) SendMsg(m any) error {
 // Trailer implements resource.ResourceStore_BatchProcessClient.
 func (w *writerClient) Trailer() metadata.MD {
 	return nil
-}
-
-// Create implements resource.ResourceStoreClient.
-func (w *writerClient) Create(ctx context.Context, in *resource.CreateRequest, opts ...grpc.CallOption) (*resource.CreateResponse, error) {
-	return nil, unimplemented
-}
-
-// Delete implements resource.ResourceStoreClient.
-func (w *writerClient) Delete(ctx context.Context, in *resource.DeleteRequest, opts ...grpc.CallOption) (*resource.DeleteResponse, error) {
-	return nil, unimplemented
-}
-
-// List implements resource.ResourceStoreClient.
-func (w *writerClient) List(ctx context.Context, in *resource.ListRequest, opts ...grpc.CallOption) (*resource.ListResponse, error) {
-	return nil, unimplemented
-}
-
-// Read implements resource.ResourceStoreClient.
-func (w *writerClient) Read(ctx context.Context, in *resource.ReadRequest, opts ...grpc.CallOption) (*resource.ReadResponse, error) {
-	return nil, unimplemented
-}
-
-// Restore implements resource.ResourceStoreClient.
-func (w *writerClient) Restore(ctx context.Context, in *resource.RestoreRequest, opts ...grpc.CallOption) (*resource.RestoreResponse, error) {
-	return nil, unimplemented
-}
-
-// Update implements resource.ResourceStoreClient.
-func (w *writerClient) Update(ctx context.Context, in *resource.UpdateRequest, opts ...grpc.CallOption) (*resource.UpdateResponse, error) {
-	return nil, unimplemented
-}
-
-// Watch implements resource.ResourceStoreClient.
-func (w *writerClient) Watch(ctx context.Context, in *resource.WatchRequest, opts ...grpc.CallOption) (resource.ResourceStore_WatchClient, error) {
-	return nil, unimplemented
 }

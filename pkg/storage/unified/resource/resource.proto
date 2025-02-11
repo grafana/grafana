@@ -811,7 +811,9 @@ service ResourceStore {
   // This will perform best-effort filtering to increase performace.
   // NOTE: storage.Interface is ultimatly responsible for the final filtering
   rpc Watch(WatchRequest) returns (stream WatchEvent);
+}
 
+service BatchStore {
   // Write multiple resources to the same Namespace/Group/Resource
   // Events will not be sent until the stream is complete
   // Only the *create* permissions is checked

@@ -96,7 +96,7 @@ func NewBatchSettings(md metadata.MD) (BatchSettings, error) {
 
 // BatchWrite implements ResourceServer.
 // All requests must be to the same NAMESPACE/GROUP/RESOURCE
-func (s *server) BatchProcess(stream ResourceStore_BatchProcessServer) error {
+func (s *server) BatchProcess(stream BatchStore_BatchProcessServer) error {
 	ctx := stream.Context()
 	user, ok := authlib.AuthInfoFrom(ctx)
 	if !ok || user == nil {
@@ -237,7 +237,7 @@ var (
 )
 
 type batchRunner struct {
-	stream   ResourceStore_BatchProcessServer
+	stream   BatchStore_BatchProcessServer
 	rollback bool
 	request  *BatchRequest
 	err      error

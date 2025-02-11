@@ -21,7 +21,7 @@ import (
 
 type MigrateOptions struct {
 	Namespace    string
-	Store        resource.ResourceStoreClient
+	Store        resource.BatchStoreClient
 	Writer       resource.BatchResourceWriter
 	LargeObjects apistore.LargeObjectSupport
 	BlobStore    resource.BlobStoreClient
@@ -42,7 +42,7 @@ type BlobStoreInfo struct {
 }
 
 // migrate function -- works for a single kind
-type migrator = func(ctx context.Context, orgId int64, opts MigrateOptions, stream resource.ResourceStore_BatchProcessClient) (*BlobStoreInfo, error)
+type migrator = func(ctx context.Context, orgId int64, opts MigrateOptions, stream resource.BatchStore_BatchProcessClient) (*BlobStoreInfo, error)
 
 func (a *dashboardSqlAccess) Migrate(ctx context.Context, opts MigrateOptions) (*resource.BatchResponse, error) {
 	info, err := authlib.ParseNamespace(opts.Namespace)
@@ -175,7 +175,7 @@ func (a *dashboardSqlAccess) countValues(ctx context.Context, opts MigrateOption
 	return rsp, nil
 }
 
-func (a *dashboardSqlAccess) migrateDashboards(ctx context.Context, orgId int64, opts MigrateOptions, stream resource.ResourceStore_BatchProcessClient) (*BlobStoreInfo, error) {
+func (a *dashboardSqlAccess) migrateDashboards(ctx context.Context, orgId int64, opts MigrateOptions, stream resource.BatchStore_BatchProcessClient) (*BlobStoreInfo, error) {
 	query := &DashboardQuery{
 		OrgID:      orgId,
 		Limit:      100000000,
@@ -281,7 +281,7 @@ func (a *dashboardSqlAccess) migrateDashboards(ctx context.Context, orgId int64,
 	return blobs, err
 }
 
-func (a *dashboardSqlAccess) migrateFolders(ctx context.Context, orgId int64, opts MigrateOptions, stream resource.ResourceStore_BatchProcessClient) (*BlobStoreInfo, error) {
+func (a *dashboardSqlAccess) migrateFolders(ctx context.Context, orgId int64, opts MigrateOptions, stream resource.BatchStore_BatchProcessClient) (*BlobStoreInfo, error) {
 	query := &DashboardQuery{
 		OrgID:      orgId,
 		Limit:      100000000,
@@ -362,7 +362,7 @@ func (a *dashboardSqlAccess) migrateFolders(ctx context.Context, orgId int64, op
 	return nil, err
 }
 
-func (a *dashboardSqlAccess) migratePanels(ctx context.Context, orgId int64, opts MigrateOptions, stream resource.ResourceStore_BatchProcessClient) (*BlobStoreInfo, error) {
+func (a *dashboardSqlAccess) migratePanels(ctx context.Context, orgId int64, opts MigrateOptions, stream resource.BatchStore_BatchProcessClient) (*BlobStoreInfo, error) {
 	opts.Progress(-1, "migrating library panels...")
 	panels, err := a.GetLibraryPanels(ctx, LibraryPanelQuery{
 		OrgID: orgId,

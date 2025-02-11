@@ -26,6 +26,7 @@ import (
 // ResourceServer implements all gRPC services
 type ResourceServer interface {
 	ResourceStoreServer
+	BatchStoreServer
 	ResourceIndexServer
 	RepositoryIndexServer
 	BlobStoreServer
