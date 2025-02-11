@@ -5728,8 +5728,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "28"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "29"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "30"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "31"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "32"]
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "31"]
     ],
     "public/app/features/provisioning/DeleteRepositoryButton.tsx:5381": [
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],

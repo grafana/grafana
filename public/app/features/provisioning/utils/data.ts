@@ -13,8 +13,7 @@ export const dataToSpec = (data: RepositoryFormData): RepositorySpec => {
       spec.github = {
         workflows: data.workflows,
         generateDashboardPreviews: data.generateDashboardPreviews,
-        owner: data.owner,
-        repository: data.repository,
+        url: data.url || '',
         branch: data.branch,
         token: data.token,
       };
@@ -38,10 +37,9 @@ export const dataToSpec = (data: RepositoryFormData): RepositorySpec => {
 export const specToData = (spec: RepositorySpec): RepositoryFormData => {
   return {
     ...spec,
-    owner: spec?.github?.owner || '',
-    repository: spec?.github?.repository || '',
     ...spec.github,
     ...spec.local,
     ...spec.s3,
+    url: spec.github?.url || '',
   };
 };

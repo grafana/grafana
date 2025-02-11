@@ -360,6 +360,11 @@ func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admis
 			r.Spec.GitHub.Branch = "main"
 		}
 
+		// Trim trailing slash or .git
+		if len(r.Spec.GitHub.URL) > 5 {
+			r.Spec.GitHub.URL = strings.TrimRight(strings.TrimRight(r.Spec.GitHub.URL, "/"), ".git")
+		}
+
 		if len(r.Spec.GitHub.Workflows) == 0 {
 			r.Spec.GitHub.Workflows = []provisioning.Workflow{
 				provisioning.BranchWorkflow,
