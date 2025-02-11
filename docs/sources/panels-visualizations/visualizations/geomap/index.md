@@ -713,7 +713,7 @@ Displays debug information in the upper right corner. This can be useful for deb
 
 ### Data links
 
-{{< docs/shared lookup="visualizations/datalink-options-1.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+{{< docs/shared lookup="visualizations/datalink-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ### Value mappings
 
