@@ -1,9 +1,9 @@
 import { useMemo } from 'react';
 
-import { Stack, Box, Text, LinkButton, Card, TextLink, InteractiveTable } from '@grafana/ui';
-import { CellProps } from '@grafana/ui';
+import { CellProps, Stack, Box, Text, LinkButton, Card, TextLink, InteractiveTable } from '@grafana/ui';
 
 import { CheckRepository } from './CheckRepository';
+import { RecentJobs } from './RecentJobs';
 import { RepositoryHealth } from './RepositoryHealth';
 import { StatusBadge } from './StatusBadge';
 import { SyncRepository } from './SyncRepository';
@@ -155,6 +155,9 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
             <SyncRepository repository={repo} />
           </Card.Actions>
         </Card>
+      </Stack>
+      <Stack>
+        <RecentJobs repo={repo} />
       </Stack>
     </Box>
   );
