@@ -1786,6 +1786,12 @@ var (
 			HideFromDocs:      true,
 			RequiresRestart:   true,
 		},
+		{
+			Name:        "pluginsCDNSyncLoader",
+			Description: "Load plugins from CDN synchronously",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaPluginsPlatformSquad,
+		},
 	}
 )
 

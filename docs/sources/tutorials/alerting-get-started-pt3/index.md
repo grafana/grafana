@@ -10,10 +10,10 @@ labels:
     - cloud
 tags:
   - intermediate
-title: Get started with Grafana Alerting - Part 3 of 4
+title: Get started with Grafana Alerting - Part 3
 weight: 60
 killercoda:
-  title: Get started with Grafana Alerting - Part 3 of 4
+  title: Get started with Grafana Alerting - Part 3
   description: Learn how to group alert notifications effectively to reduce noise and streamline communication in Grafana Alerting — Part 3.
   backend:
     imageid: ubuntu
@@ -37,7 +37,7 @@ refs:
 
 <!-- INTERACTIVE page intro.md START -->
 
-# Get started with Grafana Alerting - Part 3 of 4
+# Get started with Grafana Alerting - Part 3
 
 The Get started with Grafana Alerting tutorial Part 3 is a continuation of [Get started with Grafana Alerting tutorial Part 2](http://www.grafana.com/tutorials/alerting-get-started-pt2/).
 

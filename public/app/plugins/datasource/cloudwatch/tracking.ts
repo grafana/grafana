@@ -8,6 +8,7 @@ import {
   CloudWatchLogsQuery,
   CloudWatchMetricsQuery,
   CloudWatchQuery,
+  LogsQueryLanguage,
   MetricEditorMode,
   MetricQueryType,
 } from './types';
@@ -20,6 +21,15 @@ type CloudWatchOnDashboardLoadedTrackingEvent = {
 
   /* The number of CloudWatch logs queries present in the dashboard*/
   logs_queries_count: number;
+
+  /* The number of Logs queries that use Logs Insights query language */
+  logs_cwli_queries_count: number;
+
+  /* The number of Logs queries that use SQL language */
+  logs_sql_queries_count: number;
+
+  /* The number of Logs queries that use PPL language */
+  logs_ppl_queries_count: number;
 
   /* The number of CloudWatch metrics queries present in the dashboard*/
   metrics_queries_count: number;
@@ -88,6 +98,11 @@ export const onDashboardLoadedHandler = ({
       dashboard_id: dashboardId,
       org_id: orgId,
       logs_queries_count: logsQueries?.length,
+      logs_cwli_queries_count: logsQueries?.filter(
+        (q) => !q.queryLanguage || q.queryLanguage === LogsQueryLanguage.CWLI
+      ).length,
+      logs_sql_queries_count: logsQueries?.filter((q) => q.queryLanguage === LogsQueryLanguage.SQL).length,
+      logs_ppl_queries_count: logsQueries?.filter((q) => q.queryLanguage === LogsQueryLanguage.PPL).length,
       metrics_queries_count: metricsQueries?.length,
       metrics_search_count: 0,
       metrics_search_builder_count: 0,
@@ -122,6 +137,16 @@ export const onDashboardLoadedHandler = ({
   } catch (error) {
     console.error('error in cloudwatch tracking handler', error);
   }
+};
+
+type SampleQueryTrackingEvent = {
+  queryLanguage: LogsQueryLanguage;
+  queryCategory: string;
+};
+
+export const trackSampleQuerySelection = (props: SampleQueryTrackingEvent) => {
+  const { queryLanguage, queryCategory } = props;
+  reportInteraction('cloudwatch-logs-cheat-sheet-query-clicked', { queryLanguage, queryCategory });
 };
 
 const isMetricSearchBuilder = (q: CloudWatchMetricsQuery) =>
