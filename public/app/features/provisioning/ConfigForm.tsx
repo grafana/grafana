@@ -167,7 +167,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
                   message: 'Please enter a valid GitHub repository URL',
                 },
               })}
-              placeholder={'https://github.com/username/repo-name/'}
+              placeholder={'https://github.com/username/repo-name'}
             />
           </Field>
           <Field label={'Branch'}>
