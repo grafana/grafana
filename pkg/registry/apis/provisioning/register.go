@@ -508,6 +508,7 @@ func (b *APIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, err
 		sub.Post.Description = "Check if the configuration is valid"
 		sub.Post.RequestBody = &spec3.RequestBody{
 			RequestBodyProps: spec3.RequestBodyProps{
+				Required: false,
 				Content: map[string]*spec3.MediaType{
 					"application/json": {
 						MediaTypeProps: spec3.MediaTypeProps{
