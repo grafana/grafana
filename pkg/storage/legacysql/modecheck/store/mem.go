@@ -37,6 +37,7 @@ func (m *memDB) Set(ctx context.Context, status modecheck.StorageStatus) (modech
 		Group:    status.Group,
 		Resource: status.Resource,
 	}
+	status.UpdateKey = status.UpdateKey + 1
 	m.db[gr.String()] = status
 	return status, nil
 }

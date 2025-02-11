@@ -12,21 +12,13 @@ import (
 type StorageStatus struct {
 	Group     string `xorm:"group"`
 	Resource  string `xorm:"resource"`
-	Primary   string `xorm:"primary"`    // legacy | unified
-	DualWrite bool   `xorm:"dual_write"` // write both
-	Migrated  int64  `xorm:"migrated"`   // means we can safely use unified as the "source of truth"
-	Migrating int64  `xorm:"migrating"`  // something checked it out
+	Primary   string `xorm:"primary"`   // legacy | unified
+	Secondary string `xorm:"secondary"` // legacy | unified | ""
+	Migrated  int64  `xorm:"migrated"`  // unified can be primary
+	Migrating int64  `xorm:"migrating"` // Writes are blocked while migrating
+	Startup   bool   `xorm:"startup"`   // Pick a fixed mode at startup
 	UpdateKey int64  `xorm:"update_key"`
 }
-
-// ManagedStorage
-// * dualWrute = bool
-// * read = legacy | unified
-// * migrating (will lock writes)
-// * migrated (finished)
-
-// Mode2 -- dual write, read from legacy
-// Mode3 -- dual write, read from unified (unified is key)
 
 type Service interface {
 	Status(ctx context.Context, gr schema.GroupResource) (StorageStatus, bool)
@@ -46,11 +38,6 @@ func ProvideModeChecker(db StatusStorage) Service {
 
 type service struct {
 	db StatusStorage
-}
-
-func (m *service) IsMigrated(ctx context.Context, gr schema.GroupResource) bool {
-	v, ok := m.db.Get(ctx, gr)
-	return ok && v.Migrated > 0
 }
 
 // Status implements Service.
@@ -88,19 +75,16 @@ func (m *service) StartMigration(ctx context.Context, gr schema.GroupResource, k
 }
 
 // FinishMigration implements Service.
-func (m *service) FinishMigration(ctx context.Context, gr schema.GroupResource, key int64, migrated bool) (StorageStatus, error) {
-	v, ok := m.db.Get(ctx, gr)
+func (m *service) Update(ctx context.Context, status StorageStatus) (StorageStatus, error) {
+	v, ok := m.db.Get(ctx, schema.GroupResource{Group: status.Group, Resource: status.Resource})
 	if !ok {
 		return StorageStatus{}, fmt.Errorf("no running status")
 	}
-	if key != v.UpdateKey {
+	if status.UpdateKey != v.UpdateKey {
 		return v, fmt.Errorf("key mismatch")
 	}
-
-	if migrated {
-		v.Migrated = time.Now().UnixMilli()
-	} else {
-		v.Migrated = 0
+	if status.Migrating > 0 {
+		return v, fmt.Errorf("update can not set migrating status")
 	}
 	return m.db.Set(ctx, v)
 }
