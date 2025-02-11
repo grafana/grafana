@@ -64,9 +64,9 @@ import {
   getLibraryPanelBehavior,
   getPanelIdForVizPanel,
   getQueryRunnerFor,
-  getVizPanelKeyForPanelId,
   isLibraryPanel,
   calculateGridItemDimensions,
+  getDashboardSceneFor,
 } from '../utils/utils';
 
 import { GRID_ROW_HEIGHT } from './const';
@@ -299,8 +299,11 @@ export function gridItemToGridLayoutItemKind(
   width = gridItem_.state.width ?? 0;
   const repeatVar = gridItem_.state.variableName;
 
-  // FIXME: which name should we use for the element reference, key or something else ?
-  const elementName = gridItem_.state.body.state.key ?? 'DefaultName';
+  // FIXME: after layout registry refactor this will have conflicts
+  const scene = getDashboardSceneFor(gridItem);
+  const panelId = getPanelIdForVizPanel(gridItem_.state.body);
+  const elementKey = scene.state.elementPanelMapping?.getElementIdentifier(panelId) ?? 'DefaultName';
+
   elementGridItem = {
     kind: 'GridLayoutItem',
     spec: {
@@ -310,7 +313,7 @@ export function gridItemToGridLayoutItemKind(
       height: height,
       element: {
         kind: 'ElementReference',
-        name: elementName,
+        name: elementKey,
       },
     },
   };
@@ -453,7 +456,7 @@ function getElements(state: DashboardSceneState) {
       return elementSpec;
     }
   });
-  return createElements(panelsArray);
+  return createElements(panelsArray, state);
 }
 
 function getPanelLinks(panel: VizPanel): DataLink[] {
@@ -570,9 +573,10 @@ function getVizPanelQueryOptions(vizPanel: VizPanel): QueryOptionsSpec {
   return queryOptions;
 }
 
-function createElements(panels: Element[]): Record<string, Element> {
+function createElements(panels: Element[], sceneDash: DashboardSceneState): Record<string, Element> {
   return panels.reduce<Record<string, Element>>((elements, panel) => {
-    elements[getVizPanelKeyForPanelId(panel.spec.id)] = panel;
+    const elementKey = sceneDash.elementPanelMapping?.getElementIdentifier(panel.spec.id);
+    elements[elementKey!] = panel;
     return elements;
   }, {});
 }
