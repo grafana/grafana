@@ -10,8 +10,8 @@ import { RepeatRowSelect2 } from 'app/features/dashboard/components/RepeatRowSel
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
-import { getDashboardSceneFor, getQueryRunnerFor } from '../../utils/utils';
-import { DashboardScene } from '../DashboardScene';
+import { useConditionalRenderingEditor } from '../../conditional-rendering/ConditionalRenderingEditor';
+import { getQueryRunnerFor, useDashboard } from '../../utils/utils';
 import { useLayoutCategory } from '../layouts-shared/DashboardLayoutSelector';
 
 import { RowItem } from './RowItem';
@@ -44,8 +44,6 @@ export function getEditOptions(model: RowItem): OptionsPaneCategoryDescriptor[] 
   }, [model]);
 
   const rowRepeatOptions = useMemo(() => {
-    const dashboard = getDashboardSceneFor(model);
-
     return new OptionsPaneCategoryDescriptor({
       title: t('dashboard.rows-layout.row-options.repeat.title', 'Repeat options'),
       id: 'row-repeat-options',
@@ -53,15 +51,21 @@ export function getEditOptions(model: RowItem): OptionsPaneCategoryDescriptor[] 
     }).addItem(
       new OptionsPaneItemDescriptor({
         title: t('dashboard.rows-layout.row-options.repeat.variable.title', 'Variable'),
-        render: () => <RowRepeatSelect row={model} dashboard={dashboard} />,
+        render: () => <RowRepeatSelect row={model} />,
       })
     );
   }, [model]);
 
   const { layout } = model.useState();
   const layoutOptions = useLayoutCategory(layout);
+  const options = [rowOptions, rowRepeatOptions, layoutOptions];
+  const rowConditionalRenderingOptions = useConditionalRenderingEditor(model);
 
-  return [rowOptions, rowRepeatOptions, layoutOptions];
+  if (rowConditionalRenderingOptions) {
+    options.push(rowConditionalRenderingOptions);
+  }
+
+  return options;
 }
 
 export function renderActions(model: RowItem) {
@@ -96,8 +100,9 @@ function RowHeightSelect({ row }: { row: RowItem }) {
   return <RadioButtonGroup options={options} value={height} onChange={(option) => row.onChangeHeight(option)} />;
 }
 
-function RowRepeatSelect({ row, dashboard }: { row: RowItem; dashboard: DashboardScene }) {
+function RowRepeatSelect({ row }: { row: RowItem }) {
   const { layout } = row.useState();
+  const dashboard = useDashboard(row);
 
   const isAnyPanelUsingDashboardDS = layout.getVizPanels().some((vizPanel) => {
     const runner = getQueryRunnerFor(vizPanel);

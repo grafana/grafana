@@ -1,9 +1,10 @@
 import { ReactNode } from 'react';
 
-import { SceneObjectState, SceneObjectBase, sceneGraph, VariableDependencyConfig, SceneObject } from '@grafana/scenes';
+import { sceneGraph, SceneObject, SceneObjectBase, SceneObjectState, VariableDependencyConfig } from '@grafana/scenes';
 import { t } from 'app/core/internationalization';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 
+import { ConditionalRenderingGroup } from '../../conditional-rendering/ConditionalRenderingGroup';
 import { ResponsiveGridLayoutManager } from '../layout-responsive-grid/ResponsiveGridLayoutManager';
 import { BulkActionElement } from '../types/BulkActionElement';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
@@ -22,6 +23,7 @@ export interface RowItemState extends SceneObjectState {
   isCollapsed?: boolean;
   isHeaderHidden?: boolean;
   height?: 'expand' | 'min';
+  conditionalRendering?: ConditionalRenderingGroup;
 }
 
 export class RowItem

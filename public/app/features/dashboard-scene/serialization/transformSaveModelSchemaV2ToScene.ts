@@ -72,6 +72,7 @@ import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSou
 import { DashboardMeta } from 'app/types';
 
 import { addPanelsOnLoadBehavior } from '../addToDashboard/addPanelsOnLoadBehavior';
+import { ConditionalRendering } from '../conditional-rendering/ConditionalRendering';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
@@ -297,6 +298,7 @@ function createLayoutManager(dashboard: DashboardV2Spec): DashboardLayoutManager
           title: row.spec.title,
           isCollapsed: row.spec.collapsed,
           layout: layout,
+          $behaviors: [ConditionalRendering.createEmpty()],
         });
       }),
     });
@@ -329,6 +331,7 @@ function createResponsiveGridItems(
     return new ResponsiveGridItem({
       key: getGridItemKeyForPanelId(panel.spec.id),
       body: buildVizPanel(panel),
+      $behaviors: [ConditionalRendering.createEmpty()],
     });
   });
 }

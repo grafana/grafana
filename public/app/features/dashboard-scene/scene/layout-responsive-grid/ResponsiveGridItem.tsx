@@ -8,7 +8,6 @@ import { ResponsiveGridItemRenderer } from './ResponsiveGridItemRenderer';
 
 export interface ResponsiveGridItemState extends SceneObjectState {
   body: VizPanel;
-  hideWhenNoData?: boolean;
 }
 
 export class ResponsiveGridItem extends SceneObjectBase<ResponsiveGridItemState> implements DashboardLayoutItem {
@@ -18,9 +17,5 @@ export class ResponsiveGridItem extends SceneObjectBase<ResponsiveGridItemState>
 
   public getOptions(): OptionsPaneCategoryDescriptor {
     return getOptions(this);
-  }
-
-  public toggleHideWhenNoData() {
-    this.setState({ hideWhenNoData: !this.state.hideWhenNoData });
   }
 }

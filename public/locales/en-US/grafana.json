@@ -895,6 +895,38 @@
       "redirect-link": "List in Grafana Alerting",
       "subtitle": "Alert rules related to this dashboard"
     },
+    "conditional-rendering": {
+      "after": {
+        "label": "After"
+      },
+      "before": {
+        "label": "Before"
+      },
+      "data": {
+        "label": "Data"
+      },
+      "group": {
+        "add": {
+          "between": "Between",
+          "button": "Add",
+          "data": "Data",
+          "from": "From",
+          "group": "Group",
+          "to": "To"
+        },
+        "condition": {
+          "and": "And",
+          "label": "Condition",
+          "or": "Or"
+        },
+        "label": "Group"
+      },
+      "title": "Conditional rendering options",
+      "variable": {
+        "label": "Variable",
+        "placeholder": "Here it should be variable editor"
+      }
+    },
     "default-layout": {
       "description": "The default grid layout",
       "item-options": {
@@ -1050,10 +1082,6 @@
     },
     "responsive-layout": {
       "description": "CSS layout that adjusts to the available space",
-      "item-options": {
-        "hide-no-data": "Hide when no data",
-        "title": "Layout options"
-      },
       "name": "Responsive grid",
       "options": {
         "columns": "Columns",

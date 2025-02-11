@@ -2,6 +2,7 @@ import { SceneComponentProps, SceneCSSGridLayout, SceneObjectBase, SceneObjectSt
 import { t } from 'app/core/internationalization';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
+import { ConditionalRendering } from '../../conditional-rendering/ConditionalRendering';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { getDashboardSceneFor, getGridItemKeyForPanelId, getVizPanelKeyForPanelId } from '../../utils/utils';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
@@ -55,7 +56,13 @@ export class ResponsiveGridLayoutManager
     vizPanel.clearParent();
 
     this.state.layout.setState({
-      children: [new ResponsiveGridItem({ body: vizPanel }), ...this.state.layout.state.children],
+      children: [
+        new ResponsiveGridItem({
+          body: vizPanel,
+          $behaviors: [ConditionalRendering.createEmpty()],
+        }),
+        ...this.state.layout.state.children,
+      ],
     });
   }
 
@@ -161,7 +168,12 @@ export class ResponsiveGridLayoutManager
     const children: ResponsiveGridItem[] = [];
 
     for (let panel of panels) {
-      children.push(new ResponsiveGridItem({ body: panel.clone() }));
+      children.push(
+        new ResponsiveGridItem({
+          body: panel.clone(),
+          $behaviors: [ConditionalRendering.createEmpty()],
+        })
+      );
     }
 
     const layoutManager = ResponsiveGridLayoutManager.createEmpty();

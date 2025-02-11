@@ -73,5 +73,13 @@ export function getDashboardGridStyles(theme: GrafanaTheme2) {
       outlineOffset: '0px',
       borderRadius: '2px',
     },
+
+    '.dashboard-visible-hidden-element': {
+      opacity: 0.6,
+
+      '&:hover': {
+        opacity: 1,
+      },
+    },
   });
 }
