@@ -3,7 +3,6 @@ package rest
 import (
 	"context"
 	"errors"
-	"fmt"
 	"testing"
 	"time"
 
@@ -170,7 +169,7 @@ func TestMode1_Get(t *testing.T) {
 			},
 			{
 				name:  "error when getting an object in the legacy store fails",
-				input: objectFailName("get"),
+				input: "foo",
 				setupLegacyFn: func(m *mock.Mock, name string) {
 					m.On("Get", mock.Anything, name, mock.Anything).Return(nil, errors.New("error"))
 				},
@@ -402,7 +401,7 @@ func TestMode1_Delete(t *testing.T) {
 			},
 			{
 				name:  "error when deleting an object in the legacy store",
-				input: objectFailName("delete"),
+				input: "foo",
 				setupLegacyFn: func(m *mock.Mock, name string) {
 					m.On("Delete", mock.Anything, name, mock.Anything, mock.Anything).Return(nil, false, errors.New("error"))
 				},
@@ -644,7 +643,7 @@ func TestMode1_Update(t *testing.T) {
 			},
 			{
 				name:  "error updating an object in legacy",
-				input: objectFailName("update"),
+				input: "foo",
 				setupLegacyFn: func(m *mock.Mock, input string) {
 					m.On("Update", mock.Anything, input, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, false, errors.New("error"))
 				},
@@ -753,8 +752,4 @@ func TestMode1_UpdateOnUnifiedStorage(t *testing.T) {
 			require.NoError(t, err)
 		})
 	}
-}
-
-func objectFailName(prefix string) string {
-	return fmt.Sprintf("%s/%s", prefix, failingObject)
 }
