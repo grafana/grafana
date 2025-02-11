@@ -209,7 +209,7 @@ func (d *DualWriterMode2) Delete(ctx context.Context, name string, deleteValidat
 
 	// We should delete from Unified storage first so we can retry if legacy fails.
 	startStorage := time.Now()
-	deletedS, async, err := d.Storage.Delete(ctx, name, deleteValidation, options)
+	deletedS, _, err := d.Storage.Delete(ctx, name, deleteValidation, options)
 	d.recordStorageDuration(err != nil, mode2Str, d.resource, method, startStorage)
 	if err != nil {
 		if !apierrors.IsNotFound(err) {
