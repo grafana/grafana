@@ -467,7 +467,7 @@ TimeSettingsSpec: {
   // Whether timepicker is visible or not.
   hideTimepicker: bool // v1: timepicker.hidden
   // Day when the week starts. Expressed by the name of the day in lowercase, e.g. "monday".
-  weekStart: string
+  weekStart?: "saturday" | "monday" | "sunday"
   // The month that the fiscal year starts on. 0 = January, 11 = December
   fiscalYearStartMonth: int
   // Override the now time by entering a time delay. Use this option to accommodate known delays in data aggregation to avoid null values.

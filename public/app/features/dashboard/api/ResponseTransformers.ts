@@ -41,6 +41,7 @@ import {
   GridLayoutItemKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import { DashboardLink, DataTransformerConfig } from '@grafana/schema/src/raw/dashboard/x/dashboard_types.gen';
+import { WeekStart } from '@grafana/ui';
 import {
   AnnoKeyCreatedBy,
   AnnoKeyDashboardGnetId,
@@ -160,7 +161,8 @@ export function ensureV2Response(
       fiscalYearStartMonth: dashboard.fiscalYearStartMonth || timeSettingsDefaults.fiscalYearStartMonth,
       hideTimepicker: dashboard.timepicker?.hidden || timeSettingsDefaults.hideTimepicker,
       quickRanges: dashboard.timepicker?.time_options || timeSettingsDefaults.quickRanges,
-      weekStart: dashboard.weekStart || timeSettingsDefaults.weekStart,
+      // casting WeekStart here to avoid editing old schema
+      weekStart: (dashboard.weekStart as WeekStart) || timeSettingsDefaults.weekStart,
       nowDelay: dashboard.timepicker?.nowDelay || timeSettingsDefaults.nowDelay,
     },
     links: dashboard.links || [],

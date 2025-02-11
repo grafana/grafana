@@ -663,7 +663,6 @@ const customHomeDashboardV2Spec = {
     autoRefreshIntervals: ['5s', '10s', '30s', '1m', '5m', '15m', '30m', '1h', '2h', '1d'],
     quickRanges: ['5m', '15m', '1h', '6h', '12h', '24h', '2d', '7d', '30d'],
     hideTimepicker: false,
-    weekStart: '',
     fiscalYearStartMonth: 0,
   },
   variables: [],
