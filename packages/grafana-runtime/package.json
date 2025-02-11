@@ -62,7 +62,7 @@
     "@types/react": "18.3.18",
     "@types/react-dom": "18.3.5",
     "@types/systemjs": "6.15.1",
-    "esbuild": "0.24.2",
+    "esbuild": "0.25.0",
     "lodash": "4.17.21",
     "react": "18.3.1",
     "react-dom": "18.3.1",
