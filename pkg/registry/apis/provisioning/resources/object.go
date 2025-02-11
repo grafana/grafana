@@ -4,6 +4,7 @@ import (
 	"context"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/k8sctx"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
@@ -25,6 +26,12 @@ func NewResourceLister(index resource.RepositoryIndexClient) ResourceLister {
 
 // List implements ResourceLister.
 func (o *ResourceListerFromSearch) List(ctx context.Context, namespace, repository string) (*provisioning.ResourceList, error) {
+	ctx, cancel, err := k8sctx.Fork(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer cancel()
+
 	objects, err := o.index.ListRepositoryObjects(ctx, &resource.ListRepositoryObjectsRequest{
 		Namespace: namespace,
 		Name:      repository,
@@ -54,6 +61,12 @@ func (o *ResourceListerFromSearch) List(ctx context.Context, namespace, reposito
 
 // Stats implements ResourceLister.
 func (o *ResourceListerFromSearch) Stats(ctx context.Context, namespace, repository string) (*provisioning.ResourceStats, error) {
+	ctx, cancel, err := k8sctx.Fork(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer cancel()
+
 	counts, err := o.index.CountRepositoryObjects(ctx, &resource.CountRepositoryObjectsRequest{
 		Namespace: namespace,
 		Name:      repository,
