@@ -388,6 +388,15 @@ export function getAppRoutes(): RouteDescriptor[] {
         () => import(/* webpackChunkName: "MigrateToCloud" */ 'app/features/migrate-to-cloud/MigrateToCloud')
       ),
     },
+    config.featureToggles.secretsManagementAppPlatform && {
+      path: '/admin/secrets',
+      // roles: () => contextSrv.evaluatePermission([AccessControlAction.SecretsManagementRead]),
+      component: config.featureToggles.grafanaAPIServerWithExperimentalAPIs
+        ? SafeDynamicImport(
+          () => import(/* webpackChunkName: "SecretsManagementPage" */ 'app/features/secrets-management/SecretsManagementPage')
+        )
+        : () => <Navigate replace to="/admin" />,
+    },
     // LOGIN / SIGNUP
     {
       path: '/login',
