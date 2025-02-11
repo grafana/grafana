@@ -7,7 +7,7 @@ import { Combobox } from '../Combobox/Combobox';
 import { ComboboxOption } from '../Combobox/types';
 
 export interface Props {
-  onChange: (weekStart: string) => void;
+  onChange: (weekStart: WeekStart) => void;
   value: string;
   width?: number;
   autoFocus?: boolean;
@@ -57,7 +57,7 @@ export const WeekStartPicker = (props: Props) => {
   const onChangeWeekStart = useCallback(
     (selectable: ComboboxOption | null) => {
       if (selectable && selectable.value !== undefined) {
-        onChange(selectable.value);
+        onChange(selectable.value as WeekStart);
       }
     },
     [onChange]

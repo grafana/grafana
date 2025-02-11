@@ -4,13 +4,13 @@ import * as React from 'react';
 
 import { rangeUtil, TimeZone } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { CollapsableSection, Field, Input, Switch, TimeZonePicker, WeekStartPicker } from '@grafana/ui';
+import { CollapsableSection, Field, Input, Switch, TimeZonePicker, WeekStart, WeekStartPicker } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
 import { AutoRefreshIntervals } from './AutoRefreshIntervals';
 
 interface Props {
-  onWeekStartChange: (weekStart: string) => void;
+  onWeekStartChange: (weekStart: WeekStart) => void;
   onTimeZoneChange: (timeZone: TimeZone) => void;
   onRefreshIntervalChange: (interval: string[]) => void;
   onNowDelayChange: (nowDelay: string) => void;
@@ -62,7 +62,7 @@ export class TimePickerSettings extends PureComponent<Props, State> {
     this.props.onTimeZoneChange(timeZone);
   };
 
-  onWeekStartChange = (weekStart: string) => {
+  onWeekStartChange = (weekStart: WeekStart) => {
     this.props.onWeekStartChange(weekStart);
   };
 
