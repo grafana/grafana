@@ -28,3 +28,11 @@ export interface ImageCellProps extends CellNGProps {
 }
 
 export interface SparklineCellProps extends BarGaugeCellProps {}
+
+export interface CellColors {
+  textColor?: string;
+  bgColor?: string;
+  bgHoverColor?: string;
+}
+
+export type TableRow = Record<string, unknown>;
