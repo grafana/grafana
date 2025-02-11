@@ -5,16 +5,14 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { TableCellDisplayMode } from '@grafana/schema';
 
 import { useStyles2 } from '../../../../themes';
-import { getCellOptions } from '../../utils';
 import { ImageCellProps } from '../types';
 
 const DATALINKS_HEIGHT_OFFSET = 10;
 
-export const ImageCell = ({ field, height, justifyContent, value }: ImageCellProps) => {
+export const ImageCell = ({ cellOptions, field, height, justifyContent, value }: ImageCellProps) => {
   const calculatedHeight = height - DATALINKS_HEIGHT_OFFSET;
   const styles = useStyles2(getStyles, calculatedHeight, justifyContent);
 
-  const cellOptions = getCellOptions(field);
   const { text } = field.display!(value);
   const { alt, title } =
     cellOptions.type === TableCellDisplayMode.Image ? cellOptions : { alt: undefined, title: undefined };
@@ -25,7 +23,7 @@ export const ImageCell = ({ field, height, justifyContent, value }: ImageCellPro
   return <div className={styles.imageContainer}>{img}</div>;
 };
 
-const getStyles = (theme: GrafanaTheme2, height: number, justifyContent: Property.JustifyContent | undefined) => ({
+const getStyles = (theme: GrafanaTheme2, height: number, justifyContent: Property.JustifyContent) => ({
   image: css({
     height,
     width: 'auto',

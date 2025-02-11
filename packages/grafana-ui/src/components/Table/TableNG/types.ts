@@ -1,6 +1,7 @@
 import { Property } from 'csstype';
 
 import { Field, GrafanaTheme2, TimeRange } from '@grafana/data';
+import { TableCellOptions } from '@grafana/schema';
 
 export interface CellNGProps {
   value: any;
@@ -24,6 +25,7 @@ export interface BarGaugeCellProps extends CellNGProps {
 }
 
 export interface ImageCellProps extends CellNGProps {
+  cellOptions: TableCellOptions;
   height: number;
 }
 

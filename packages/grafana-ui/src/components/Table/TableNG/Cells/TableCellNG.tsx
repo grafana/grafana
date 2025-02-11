@@ -96,7 +96,15 @@ export function TableCellNG(props: any) {
       );
       break;
     case TableCellDisplayMode.Image:
-      cell = <ImageCell field={field} height={height} justifyContent={justifyContent} value={value} />;
+      cell = (
+        <ImageCell
+          cellOptions={fieldConfig.custom.cellOptions}
+          field={field}
+          height={height}
+          justifyContent={justifyContent}
+          value={value}
+        />
+      );
       break;
     case TableCellDisplayMode.JSONView:
       cell = <JSONCell value={value} justifyContent={justifyContent} />;
