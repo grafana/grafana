@@ -17,12 +17,13 @@ export function VersionHistoryTable({
   onVersionsChecked,
   ruleVersions,
   disableSelection,
+  checkedVersions,
 }: {
-  onVersionsChecked: (value: Map<string, boolean>) => void;
+  onVersionsChecked(id: string): void
   ruleVersions: Array<RulerGrafanaRuleDTO<GrafanaRuleDefinition>>;
   disableSelection: boolean;
+  checkedVersions: Map<string, boolean>;
 }) {
-  const [checkedVersions, setCheckedVersions] = useState<Map<string, boolean>>(new Map());
 
   //----> restore code : no need to review as it's behind a feature flag
   const [confirmRestore, setConfirmRestore] = useState(false);
@@ -60,12 +61,7 @@ export function VersionHistoryTable({
               checked={thisValue}
               disabled={disableSelection && !thisValue}
               onChange={() => {
-                setCheckedVersions((prevState) => {
-                  const newState = new Map(prevState);
-                  newState.set(String(id), !prevState.get(String(id)));
-                  onVersionsChecked(newState);
-                  return newState;
-                });
+                onVersionsChecked(id);
               }}
             />
           </Stack>

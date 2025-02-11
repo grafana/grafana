@@ -1,4 +1,4 @@
-import { ComponentProps, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { config } from '@grafana/runtime';
 import { Alert, Box, Button, Drawer, EmptyState, LoadingPlaceholder, Stack, Text, Tooltip } from '@grafana/ui';
@@ -97,8 +97,12 @@ export function AlertVersionHistory({ ruleUid }: AlertVersionHistoryProps) {
     setShowDrawer(true);
   };
 
-  const handleCheckedVersionChange: ComponentProps<typeof VersionHistoryTable>['onVersionsChecked'] = (versions) => {
-    setCheckedVersions(versions);
+  function handleCheckedVersionChange(id: string) {
+    setCheckedVersions((prevState) => {
+      const newState = new Map(prevState);
+      newState.set(String(id), !prevState.get(String(id)));
+      return newState;
+    });
     setOldVersion(undefined);
     setNewVersion(undefined);
   };
@@ -151,6 +155,7 @@ export function AlertVersionHistory({ ruleUid }: AlertVersionHistoryProps) {
         onVersionsChecked={handleCheckedVersionChange}
         ruleVersions={ruleVersions}
         disableSelection={canCompare}
+        checkedVersions={checkedVersions}
       />
     </Stack>
   );
