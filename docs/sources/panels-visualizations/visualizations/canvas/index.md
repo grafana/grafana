@@ -407,10 +407,7 @@ Use the following options to set the border of the element:
 
 #### Data links and actions
 
-Canvases support [data links](ref:data-links) and actions.
-Data links are supported for all elements except drone and button elements and actions are supported for all elements.
-
-<!-- confirm if actions work on drone elements -->
+Canvases support [data links](ref:data-links) and actions for all elements.
 
 If you add multiple data links or actions to an element, you can control the order in which they appear in the element tooltip.
 To do this, click and drag the link or action to the desired position.
@@ -454,6 +451,7 @@ To add a data link, follow these steps:
 
    This is a human-readable label for the action displayed in the UI.
 
+1. In the **Confirmation message** field, enter a descriptive prompt to confirm or cancel the action.
 1. If you want the action to start with a single click on the element, toggle the **One click** switch.
 
    Only one data link or action can have **One click** enabled at a time.
@@ -461,13 +459,13 @@ To add a data link, follow these steps:
 1. Select one of the following **Method** options: **POST**, **PUT**, or **GET**.
 1. In the **URL** field, enter the request URL or variable to which you want to link.
 
-   To add a data link variable, click in the **URL** field and enter `$` or press Ctrl+Space or Cmd+Space to see a list of available variables. This is a required field.
+   To add a variable, click in the **URL** field and enter `$` or press Ctrl+Space or Cmd+Space to see a list of available variables.
 
 1. Under **Query parameters** and **Headers**, enter pairs in the **Key** and **Value** fields.
 
    Click the **+** icon to add as many key-value pairs as you need.
 
-1. Select one of the following **Content-Type** options: **application/json**, **text/plain**, **application/javascript**, **text/html**, **application/XML**, **application/x-www-form-urlencoded**.
+1. Select one of the following **Content-Type** options: **application/json**, **text/plain**,  **application/XML**, and **application/x-www-form-urlencoded**.
 1. In the **Body**, enter the body of the request.
 1. Click **Save** to save changes and close the dialog box.
 1. Disable inline editing.
