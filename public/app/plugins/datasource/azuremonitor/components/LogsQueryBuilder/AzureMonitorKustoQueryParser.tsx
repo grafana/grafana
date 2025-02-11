@@ -1,6 +1,6 @@
 import { AzureLogAnalyticsMetadataColumn } from '../../types';
 
-export class AzureMonitorQueryParser {
+export class AzureMonitorKustoQueryParser {
   static updateQuery(
     selectedTable: string,
     selectedColumns: string[],
@@ -24,16 +24,18 @@ export class AzureMonitorQueryParser {
     const hasSelectedTimeColumn = selectedColumns.includes(datetimeColumn);
     const shouldApplyTimeFilter = selectedColumns.length === 0 || hasSelectedTimeColumn;
 
-    // ✅ **Step 3: Ensure $__timeFilter is added ONLY ONCE**
+    // ✅ **Step 3: Ensure $__timeFilter is added ONLY when necessary**
     if (shouldApplyTimeFilter) {
       whereConditions.add(`$__timeFilter(${datetimeColumn})`);
     }
 
-    // ✅ **Step 4: Remove Filters Referencing Removed Columns**
+    // ✅ **Step 4: Ensure Filters Are Retained**
     if (filters && filters.trim()) {
       const validFilters = filters.split(' and ').filter((filter) => {
         const filterColumn = filter.split(' ')[0]; // Extract column name
-        return selectedColumns.includes(filterColumn);
+        return (
+          selectedColumns.includes(filterColumn) || columns.some((col) => col.name === filterColumn)
+        ); // ✅ Check if column exists
       });
 
       if (validFilters.length > 0) {
@@ -41,7 +43,7 @@ export class AzureMonitorQueryParser {
       }
     }
 
-    // ✅ **Step 5: Ensure `where` clause is only added when necessary**
+    // ✅ **Step 5: Ensure `where` is added BEFORE `project`**
     if (whereConditions.size > 0) {
       updatedQuery += `\n| where ${Array.from(whereConditions).join(' and ')}`;
     }
@@ -50,33 +52,19 @@ export class AzureMonitorQueryParser {
     let finalGroupBy = new Set(groupBy || []);
 
     if (aggregation && aggregation.trim()) {
-      // 🚀 **Ensure only selected columns are aggregated**
-      const validAggregation = aggregation
-        .split(',')
-        .filter((agg) => selectedColumns.some((col) => agg.includes(col)))
-        .join(', ');
-
-      if (validAggregation) {
-        // ✅ **Ensure bin() is added only once**
-        if (hasSelectedTimeColumn && ![...finalGroupBy].some((g) => g.startsWith('bin('))) {
-          finalGroupBy.add(`bin(${datetimeColumn}, 1m)`);
-        }
-
-        updatedQuery += `\n| summarize ${validAggregation}${
-          finalGroupBy.size > 0 ? ` by ${Array.from(finalGroupBy).join(', ')}` : ''
-        }`;
+      if (hasSelectedTimeColumn) {
+        finalGroupBy.add(`bin(${datetimeColumn}, 1m)`);
       }
+
+      updatedQuery += `\n| summarize ${aggregation}${
+        finalGroupBy.size > 0 ? ` by ${Array.from(finalGroupBy).join(', ')}` : ''
+      }`;
     }
     // ✅ **Apply Group By without aggregation**
     else if (finalGroupBy.size > 0) {
-      // 🚀 **Ensure group-by columns exist in selected columns**
-      const validGroupBy = [...finalGroupBy].filter((g) => selectedColumns.includes(g));
-
-      if (validGroupBy.length > 0) {
-        updatedQuery += `\n| summarize count() by ${validGroupBy.join(', ')}`;
-      }
+      updatedQuery += `\n| summarize count() by ${Array.from(finalGroupBy).join(', ')}`;
     }
-    // ✅ **Ensure selected columns are projected when no aggregation or group by exists**
+    // ✅ **Ensure selected columns are projected AFTER filters**
     else if (selectedColumns.length > 0) {
       updatedQuery += `\n| project ${selectedColumns.join(', ')}`;
     }

@@ -13,10 +13,10 @@ import {
 } from '../../types';
 
 import { AggregateSection } from './AggregationSection';
+import { AzureMonitorKustoQueryParser } from './AzureMonitorKustoQueryParser';
 import { FilterSection } from './FilterSection';
 import { GroupBySection } from './GroupBySection';
 import KQLPreview from './KQLPreview';
-import { AzureMonitorQueryParser } from './KustoExpressionQueryParser';
 import { TableSection } from './TableSection';
 import { parseQuery } from './utils';
 
@@ -33,6 +33,7 @@ export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
   const tables: AzureLogAnalyticsMetadataTable[] = useMemo(() => {
     return schema?.database?.tables || [];
   }, [schema?.database]);
+
   const [selectedTable, setSelectedTable] = useState<string | null>(null);
   const [columns, setColumns] = useState<AzureLogAnalyticsMetadataColumn[]>([]);
   const [selectedColumns, setSelectedColumns] = useState<Array<SelectableValue<string>>>([]);
@@ -42,11 +43,7 @@ export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
     if (selectedTable) {
       const tableDetails = tables.find((table) => table.name === selectedTable);
       setSelectedColumns([]);
-      if (tableDetails && tableDetails.columns) {
-        setColumns(tableDetails.columns || []);
-      } else {
-        setColumns([]);
-      }
+      setColumns(tableDetails?.columns || []);
     }
   }, [selectedTable, tables]);
 
@@ -67,80 +64,67 @@ export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
   }) => {
     let tableName = selectedTable;
     let columnList = selectedColumns.map((c) => c.value!);
-
+  
     const prevQuery = query.azureLogAnalytics?.query || '';
     const { prevFilters, prevAggregates, prevGroupBy } = parseQuery(prevQuery);
-
+  
     const isNewTable = newTable && newTable.name !== selectedTable;
-
+  
+    // ✅ **Reset when switching tables**
     if (isNewTable) {
       tableName = newTable.name;
       setSelectedTable(newTable.name);
       setSelectedColumns([]); // ✅ Clear selected columns
-
+  
       // ✅ **Ensure $__timeFilter is included**
       const timeFilter = `$__timeFilter(TimeGenerated)`;
-
+  
       onQueryChange({
         ...query,
         azureLogAnalytics: {
           ...query.azureLogAnalytics,
-          query: `${tableName}\n| where ${timeFilter}\n| order by TimeGenerated asc`, // ✅ Ensure time filter and ordering
+          query: `${tableName}\n| where ${timeFilter}\n| order by TimeGenerated asc`,
         },
       });
-
-      return; // ✅ Prevent further execution since everything is reset
+  
+      return;
     }
-
+  
     if (newColumns) {
       setSelectedColumns(newColumns);
       columnList = [...new Set(newColumns.map((c) => c.label!))];
-    } else {
-      columnList = selectedColumns.map((c) => c.value!);
     }
-
-    // ✅ **Step 1: Identify Removed Columns**
-    const removedColumns =
-      prevQuery
-        .match(/\| project (.+)/)?.[1]
-        ?.split(', ')
-        .filter((col) => !columnList.includes(col)) || [];
-
-    // ✅ **Step 2: Ensure Filters Are Removed If Needed**
-    const updatedFilters =
-      isNewTable || removedColumns.length > 0
-        ? `$__timeFilter(TimeGenerated)` // ✅ Ensure time filter is applied
-        : filters !== undefined
-          ? filters
-          : prevFilters;
-
-    // ✅ **Step 3: Ensure Aggregates Are Preserved Unless Reset**
-    const updatedAggregates =
-      isNewTable || removedColumns.length > 0
-        ? '' // ✅ Clear aggregates if switching tables OR removing a referenced column
-        : aggregates !== undefined
-          ? aggregates
-          : prevAggregates;
-
-    // ✅ **Step 4: Ensure Group Bys Are Preserved Unless Reset**
-    const updatedGroupBy =
-      isNewTable || removedColumns.length > 0
-        ? [] // ✅ Clear groupBys if switching tables OR removing a referenced column
-        : groupBy !== undefined
-          ? groupBy
-          : prevGroupBy;
-
-    // ✅ **Step 5: Call `updateQuery` with Cleaned Values**
-    const formattedQuery = AzureMonitorQueryParser.updateQuery(
+  
+    // ✅ **Preserve previous filters if not explicitly updated**
+    let updatedFilters = filters !== undefined ? filters : prevFilters;
+  
+    // ✅ **Determine if the selected column is a datetime**
+    const hasSelectedDatetime = columnList.some(
+      (col) => columns.find((c) => c.name === col)?.type === 'datetime'
+    );
+  
+    if (hasSelectedDatetime) {
+      // ✅ **Ensure Time Filter Exists**
+      if (!updatedFilters.includes(`$__timeFilter(TimeGenerated)`)) {
+        updatedFilters = `$__timeFilter(TimeGenerated) and ${updatedFilters}`.trim();
+      }
+    } else {
+      // ✅ **Remove Time Filter If No Datetime Columns Are Selected**
+      updatedFilters = updatedFilters.replace(`$__timeFilter(TimeGenerated) and `, '').trim();
+      updatedFilters = updatedFilters.replace(`$__timeFilter(TimeGenerated)`, '').trim();
+    }
+  
+    // ✅ **Rebuild the query using the cleaned filters**
+    const formattedQuery = AzureMonitorKustoQueryParser.updateQuery(
       tableName!,
       columnList,
       columns,
       updatedFilters,
-      updatedAggregates,
-      updatedGroupBy,
+      aggregates !== undefined ? aggregates : prevAggregates,
+      groupBy !== undefined ? groupBy : prevGroupBy,
       limit
     );
-
+  
     onQueryChange({
       ...query,
       azureLogAnalytics: {
@@ -149,7 +133,7 @@ export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
       },
     });
   };
-
+  
   return (
     <span data-testid={selectors.components.queryEditor.logsQueryEditor.container.input}>
       <EditorRows>
@@ -164,7 +148,7 @@ export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
           table={selectedTable}
           tables={tables}
         />
-        <FilterSection {...props} onQueryUpdate={handleQueryUpdate} selectedColumns={selectedColumns} />
+        <FilterSection {...props} onQueryUpdate={handleQueryUpdate} selectedTable={selectedTable!} columns={columns} selectedColumns={selectedColumns} />
         <AggregateSection {...props} selectedColumns={selectedColumns} onQueryUpdate={handleQueryUpdate} />
         <GroupBySection {...props} selectedColumns={selectedColumns} onQueryUpdate={handleQueryUpdate} />
         <EditorRow>

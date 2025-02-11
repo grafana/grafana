@@ -1,24 +1,38 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { EditorField, EditorFieldGroup, EditorRow, InputGroup } from '@grafana/plugin-ui';
 import { Button, Input, Label, Select, useStyles2 } from '@grafana/ui';
 
+import { AzureLogAnalyticsMetadataColumn } from '../../types';
+
 import { toOperatorOptions, valueToDefinition } from './utils';
 
 interface FilterSectionProps {
   selectedColumns: Array<SelectableValue<string>>;
+  selectedTable: string;
+  columns: AzureLogAnalyticsMetadataColumn[]; 
   onQueryUpdate: (params: { filters?: string }) => void;
 }
 
-export const FilterSection: React.FC<FilterSectionProps> = ({ onQueryUpdate, selectedColumns }) => {
+export const FilterSection: React.FC<FilterSectionProps> = ({ onQueryUpdate, selectedTable, selectedColumns, columns }) => {
   const styles = useStyles2(getStyles);
   const [filters, setFilters] = useState<Array<{ column: string; operator: string; value: string }>>([]);
 
+  const selectableColumns: Array<SelectableValue<string>> = useMemo(
+    () => columns.map((col) => ({ label: col.name, value: col.name })),
+    [columns]
+  );
+
   useEffect(() => {
-    setFilters((prevFilters) => prevFilters.filter((f) => selectedColumns.some((col) => col.value === f.column)));
-  }, [selectedColumns]);
+    setFilters((prevFilters) => {
+      if (!selectedTable) {
+        return [];
+      }
+      return prevFilters;
+    });
+  }, [selectedTable]);  
 
   const formatFilters = (filters: Array<{ column: string; operator: string; value: string }>): string => {
     return filters
@@ -29,6 +43,7 @@ export const FilterSection: React.FC<FilterSectionProps> = ({ onQueryUpdate, sel
 
   const updateFilters = (newFilters: Array<{ column: string; operator: string; value: string }>) => {
     setFilters(newFilters);
+
     const formattedFilters = formatFilters(newFilters);
     if (formattedFilters) {
       onQueryUpdate({ filters: formattedFilters });
@@ -63,7 +78,7 @@ export const FilterSection: React.FC<FilterSectionProps> = ({ onQueryUpdate, sel
                       aria-label="column"
                       width={30}
                       value={filter.column ? valueToDefinition(filter.column) : null}
-                      options={selectedColumns}
+                      options={selectedColumns.length > 0 ? selectedColumns : selectableColumns} // ✅ Updated logic
                       onChange={(e) => e.value && onChangeFilter(index, 'column', e.value)}
                     />
                     <Select
