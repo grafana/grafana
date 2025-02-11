@@ -4,6 +4,8 @@ import { CSSProperties, useEffect, useRef } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useTheme2 } from '@grafana/ui';
 
+import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
+
 import { LogListModel } from './processing';
 import { hasUnderOrOverflow } from './virtualization';
 
@@ -46,13 +48,42 @@ export const LogLine = ({
   return (
     <div style={style} className={`${styles.logLine} ${variant}`} ref={onOverflow ? logLineRef : undefined}>
       <div className={wrapLogMessage ? styles.wrappedLogLine : styles.unwrappedLogLine}>
-        {showTime && <span className={`${styles.timestamp} level-${log.logLevel}`}>{log.timestamp}</span>}
-        {log.logLevel && <span className={`${styles.level} level-${log.logLevel}`}>{log.logLevel}</span>}
-        {log.body}
+        <Log displayedFields={displayedFields} log={log} showTime={showTime} styles={styles} />
       </div>
     </div>
   );
 };
+
+interface LogProps {
+  displayedFields: string[];
+  log: LogListModel;
+  showTime: boolean;
+  styles: ReturnType<typeof getStyles>;
+}
+
+const Log = ({ displayedFields, log, showTime, styles }: LogProps) => {
+  return (
+    <>
+      {showTime && <span className={`${styles.timestamp} level-${log.logLevel}`}>{log.timestamp}</span>}
+      {log.logLevel && <span className={`${styles.level} level-${log.logLevel}`}>{log.logLevel}</span>}
+      {displayedFields.length > 0 ? displayedFields.map((field) => <span>{getFieldValue(field, log)}</span>) : log.body}
+    </>
+  );
+};
+
+function getFieldValue(fieldName: string, log: LogListModel) {
+  if (fieldName === LOG_LINE_BODY_FIELD_NAME) {
+    return log.body;
+  }
+  if (log.labels[fieldName] != null) {
+    return log.labels[fieldName];
+  }
+  const field = log.fields.find((field) => {
+    return field.keys[0] === fieldName;
+  });
+
+  return field ? field.values : '';
+}
 
 export const getStyles = (theme: GrafanaTheme2) => {
   const colors = {
