@@ -4,15 +4,11 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	k8sUser "k8s.io/apiserver/pkg/authentication/user"
-	k8sRequest "k8s.io/apiserver/pkg/endpoints/request"
 
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 
 	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
@@ -383,42 +379,6 @@ func toFolderLegacyCounts(u *unstructured.Unstructured) (*folder.DescendantCount
 		}
 	}
 	return &out, nil
-}
-
-func (ss *FolderUnifiedStoreImpl) getK8sContext(ctx context.Context) (context.Context, context.CancelFunc, error) {
-	requester, requesterErr := identity.GetRequester(ctx)
-	if requesterErr != nil {
-		return nil, nil, requesterErr
-	}
-
-	user, exists := k8sRequest.UserFrom(ctx)
-	if !exists {
-		// add in k8s user if not there yet
-		var ok bool
-		user, ok = requester.(k8sUser.Info)
-		if !ok {
-			return nil, nil, fmt.Errorf("could not convert user to k8s user")
-		}
-	}
-
-	newCtx := k8sRequest.WithUser(context.Background(), user)
-	newCtx = log.WithContextualAttributes(newCtx, log.FromContext(ctx))
-	// TODO: after GLSA token workflow is removed, make this return early
-	// and move the else below to be unconditional
-	if requesterErr == nil {
-		newCtxWithRequester := identity.WithRequester(newCtx, requester)
-		newCtx = newCtxWithRequester
-	}
-
-	// inherit the deadline from the original context, if it exists
-	deadline, ok := ctx.Deadline()
-	if ok {
-		var newCancel context.CancelFunc
-		newCtx, newCancel = context.WithTimeout(newCtx, time.Until(deadline))
-		return newCtx, newCancel, nil
-	}
-
-	return newCtx, nil, nil
 }
 
 func computeFullPath(parents []*folder.Folder) (string, string) {

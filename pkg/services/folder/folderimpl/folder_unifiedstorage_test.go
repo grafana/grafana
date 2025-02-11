@@ -186,7 +186,8 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 	features := featuremgmt.WithFeatures(featuresArr...)
 
 	dashboardStore := dashboards.NewFakeDashboardStore(t)
-	unified.ProvideUnifiedStorageClient(cfg, features, db, tracing.InitializeTracerForTest(), prometheus.DefaultRegisterer, types.FixedAccessClient(true), &search.StandardDocumentBuilders{})
+	_, err := unified.ProvideUnifiedStorageClient(cfg, features, db, tracing.InitializeTracerForTest(), prometheus.DefaultRegisterer, types.FixedAccessClient(true), &search.StandardDocumentBuilders{})
+	require.NoError(t, err)
 	k8sCli := client.NewK8sHandler(cfg, request.GetNamespaceMapper(cfg), v0alpha1.FolderResourceInfo.GroupVersionResource(), restCfgProvider.GetRestConfig, dashboardStore, userService)
 	unifiedStore := ProvideUnifiedStore(k8sCli, userService)
 
