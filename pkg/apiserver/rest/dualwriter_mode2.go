@@ -207,28 +207,25 @@ func (d *DualWriterMode2) Delete(ctx context.Context, name string, deleteValidat
 	log := d.Log.WithValues("name", name, "method", method)
 	ctx = klog.NewContext(ctx, log)
 
+	// We should delete from Unified storage first so we can retry if legacy fails.
+	startStorage := time.Now()
+	deletedS, _, err := d.Storage.Delete(ctx, name, deleteValidation, options)
+	d.recordStorageDuration(err != nil, mode2Str, d.resource, method, startStorage)
+	if err != nil {
+		if !apierrors.IsNotFound(err) {
+			log.WithValues("objectList", deletedS).Error(err, "could not delete from unified storage")
+			return nil, false, err
+		}
+	}
+
 	startLegacy := time.Now()
 	deletedLS, async, err := d.Legacy.Delete(ctx, name, deleteValidation, options)
-
+	d.recordLegacyDuration(err != nil, mode2Str, d.resource, method, startLegacy)
+	// Deleting from legacy should always work in mode two, as legacy is still the primary database and
+	// needs to have all the data.
 	if err != nil {
-		if !apierrors.IsNotFound(err) {
-			log.WithValues("objectList", deletedLS).Error(err, "could not delete from legacy store")
-			d.recordLegacyDuration(true, mode2Str, d.resource, method, startLegacy)
-			return deletedLS, async, err
-		}
+		return nil, false, err
 	}
-	d.recordLegacyDuration(false, mode2Str, d.resource, method, startLegacy)
-
-	startStorage := time.Now()
-	deletedS, async, err := d.Storage.Delete(ctx, name, deleteValidation, options)
-	if err != nil {
-		if !apierrors.IsNotFound(err) {
-			log.WithValues("objectList", deletedS).Error(err, "could not delete from duplicate storage")
-			d.recordStorageDuration(true, mode2Str, d.resource, method, startStorage)
-		}
-		return deletedS, async, err
-	}
-	d.recordStorageDuration(false, mode2Str, d.resource, method, startStorage)
 
 	go func() {
 		areEqual := Compare(deletedS, deletedLS)
