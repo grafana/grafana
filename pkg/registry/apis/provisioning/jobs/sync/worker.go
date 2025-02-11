@@ -156,6 +156,9 @@ func (r *SyncWorker) sync(ctx context.Context,
 	if repo.Config().Namespace != dynamicClient.GetNamespace() {
 		return nil, nil, fmt.Errorf("namespace mismatch")
 	}
+
+	logger := logging.FromContext(ctx)
+
 	job := &syncJob{
 		summary: provisioning.JobResourceSummary{
 			Resource: "all",
@@ -168,7 +171,6 @@ func (r *SyncWorker) sync(ctx context.Context,
 		progressLast:     time.Now(),
 		parser:           parser,
 		lister:           r.lister,
-		logger:           logging.FromContext(ctx),
 		jobStatus: &provisioning.JobStatus{
 			State: provisioning.JobStateWorking,
 		},
@@ -188,7 +190,7 @@ func (r *SyncWorker) sync(ctx context.Context,
 	// Execute the job
 	err = job.run(ctx)
 	if err != nil {
-		job.logger.Warn("error running job", "err", err)
+		logger.Warn("error running job", "err", err)
 		job.jobStatus.State = provisioning.JobStateError
 		job.jobStatus.Message = "Sync error: " + err.Error()
 		job.syncStatus.State = job.jobStatus.State
@@ -212,7 +214,6 @@ type syncJob struct {
 	progress         jobs.ProgressFn
 	progressInterval time.Duration
 	progressLast     time.Time
-	logger           logging.Logger
 
 	parser       *resources.Parser
 	lister       resources.ResourceLister
@@ -301,6 +302,7 @@ func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange
 		return len(changes[i].Path) > len(changes[j].Path)
 	})
 
+	logger := logging.FromContext(ctx)
 	// Create folder structure first
 	for _, change := range changes {
 		if len(r.jobStatus.Errors) > 20 {
@@ -308,11 +310,14 @@ func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange
 			r.jobStatus.State = provisioning.JobStateError
 			return nil
 		}
-		r.maybeNotify(ctx)
+
+		if err := r.maybeNotify(ctx); err != nil {
+			logger.Warn("error notifying progress", "err", err)
+		}
 
 		if change.Action == repository.FileActionDeleted {
 			if change.Existing == nil || change.Existing.Name == "" {
-				r.logger.Error("deleted file is missing existing reference", "file", change.Path)
+				logger.Error("deleted file is missing existing reference", "file", change.Path)
 				r.jobStatus.Errors = append(r.jobStatus.Errors,
 					fmt.Sprintf("unable to delete resource from: %s", change.Path))
 				continue
@@ -320,14 +325,14 @@ func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange
 
 			client, err := r.client(change.Existing.Resource)
 			if err != nil {
-				r.logger.Warn("unable to get client for deleted object", "file", change.Path, "err", err, "obj", change.Existing)
+				logger.Warn("unable to get client for deleted object", "file", change.Path, "err", err, "obj", change.Existing)
 				r.jobStatus.Errors = append(r.jobStatus.Errors,
 					fmt.Sprintf("unsupported object: %s / %s", change.Path, change.Existing.Resource))
 				continue
 			}
 			err = client.Delete(ctx, change.Existing.Name, metav1.DeleteOptions{})
 			if err != nil {
-				r.logger.Warn("deleting error", "file", change.Path, "err", err)
+				logger.Warn("deleting error", "file", change.Path, "err", err)
 				r.jobStatus.Errors = append(r.jobStatus.Errors,
 					fmt.Sprintf("error deleting %s: %s // %s", change.Existing.Resource, change.Existing.Name, change.Path))
 			} else {
@@ -339,7 +344,7 @@ func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange
 		// Write the resource file
 		err := r.writeResourceFromFile(ctx, change.Path, "", change.Action)
 		if err != nil {
-			r.logger.Warn("write resource error", "file", change.Path, "err", err)
+			logger.Warn("write resource error", "file", change.Path, "err", err)
 			r.jobStatus.Errors = append(r.jobStatus.Errors,
 				fmt.Sprintf("error writing: %s // %s", change.Path, err.Error()))
 		}
@@ -347,14 +352,13 @@ func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange
 	return nil
 }
 
-// Convert git changes into resource file changes
-func (r *syncJob) maybeNotify(ctx context.Context) {
-	if time.Since(r.progressLast) > r.progressInterval {
-		err := r.progress(ctx, *r.jobStatus)
-		if err != nil {
-			r.logger.Warn("unable to send progress", "err", err)
-		}
+// maybeNotify sends a progress update if the interval has passed
+func (r *syncJob) maybeNotify(ctx context.Context) error {
+	if time.Since(r.progressLast) < r.progressInterval {
+		return nil
 	}
+
+	return r.progress(ctx, *r.jobStatus)
 }
 
 // Convert git changes into resource file changes
@@ -373,18 +377,22 @@ func (r *syncJob) applyVersionedChanges(ctx context.Context, repo repository.Ver
 		return nil
 	}
 
+	logger := logging.FromContext(ctx)
 	for _, change := range diff {
 		if len(r.jobStatus.Errors) > 20 {
 			r.jobStatus.Errors = append(r.jobStatus.Errors, "too many errors to continue")
 			return nil
 		}
-		r.maybeNotify(ctx)
+
+		if err := r.maybeNotify(ctx); err != nil {
+			logger.Warn("error notifying progress", "err", err)
+		}
 
 		switch change.Action {
 		case repository.FileActionCreated, repository.FileActionUpdated:
 			err = r.writeResourceFromFile(ctx, change.Path, change.Ref, change.Action)
 			if err != nil {
-				r.logger.Warn("error writing", "change", change, "err", err)
+				logger.Warn("error writing", "change", change, "err", err)
 				r.jobStatus.Errors = append(r.jobStatus.Errors,
 					fmt.Sprintf("error loading: %s / %s", change.Path, err.Error()))
 			}
@@ -409,7 +417,7 @@ func (r *syncJob) applyVersionedChanges(ctx context.Context, repo repository.Ver
 			// 2. Create
 			err = r.writeResourceFromFile(ctx, change.Path, change.Ref, repository.FileActionCreated)
 			if err != nil {
-				r.logger.Warn("error writing", "change", change, "err", err)
+				logger.Warn("error writing", "change", change, "err", err)
 				r.jobStatus.Errors = append(r.jobStatus.Errors,
 					fmt.Sprintf("error loading: %s / %s", change.Path, err.Error()))
 			}
