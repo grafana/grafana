@@ -92,7 +92,7 @@ function getLegend(props: Props, displayValues: FieldDisplay[]) {
       } else if (isNaN(b.display.numeric)) {
         return -1;
       } else {
-        return b.display.numeric - a.display.numeric;
+        return (a.colIndex ?? Infinity) - (b.colIndex ?? Infinity);
       }
     })
     .map<VizLegendItem | undefined>((value: FieldDisplay, idx: number) => {
