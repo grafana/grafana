@@ -1,6 +1,6 @@
-import { Spinner, Card, Alert, Tag, Text } from '@grafana/ui';
+import { Spinner, Alert, Tag, InteractiveTable, Button, Card, Tooltip, IconButton } from '@grafana/ui';
 import { formatTimestamp } from './utils/time';
-import { Repository, useListJobQuery } from './api';
+import { Repository, useListJobQuery, Job } from './api';
 
 interface Props {
   repo: Repository;
@@ -31,46 +31,74 @@ export function RecentJobs({ repo }: Props) {
     );
   }
 
+  const columns = [
+    {
+      id: 'status',
+      header: 'Status',
+      cell: ({ row: { original: job } }: { row: { original: Job } }) => (
+        <Tag
+          name={job.status?.state || ''}
+          color={
+            job.status?.state === 'success'
+              ? 'success'
+              : job.status?.state === 'working'
+                ? 'warning'
+                : job.status?.state === 'pending'
+                  ? 'warning'
+                  : job.status?.state === 'error'
+                    ? 'error'
+                    : 'secondary'
+          }
+          icon={job.status?.state === 'working' ? 'spinner' : undefined}
+        />
+      ),
+    },
+    {
+      id: 'action',
+      header: 'Action',
+      cell: ({ row: { original: job } }: { row: { original: Job } }) => job.spec?.action,
+    },
+    {
+      id: 'started',
+      header: 'Started',
+      cell: ({ row: { original: job } }: { row: { original: Job } }) => formatTimestamp(job.status?.started),
+    },
+    {
+      id: 'finished',
+      header: 'Finished',
+      cell: ({ row: { original: job } }: { row: { original: Job } }) => formatTimestamp(job.status?.finished),
+    },
+    {
+      id: 'message',
+      header: 'Message',
+      cell: ({ row: { original: job } }: { row: { original: Job } }) => (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span>{job.status?.message}</span>
+          {job.status?.errors && (
+            <Tooltip content={<pre style={{ whiteSpace: 'pre-wrap' }}>{job.status.errors}</pre>}>
+              <IconButton name="exclamation-triangle" variant="destructive" tooltip="View error details" />
+            </Tooltip>
+          )}
+        </div>
+      ),
+    },
+  ];
+
   return (
-    <div>
-      {items.slice(0, 10).map((item) => {
-        return (
-          <Card key={item.metadata?.resourceVersion}>
-            <Card.Heading>{item.spec?.action}</Card.Heading>
-            <Card.Tags>
-              <Tag
-                name={item.status?.state || ''}
-                color={
-                  item.status?.state === 'success'
-                    ? 'success'
-                    : item.status?.state === 'working'
-                      ? 'warning'
-                      : item.status?.state === 'pending'
-                        ? 'warning'
-                        : item.status?.state === 'error'
-                          ? 'error'
-                          : 'secondary'
-                }
-                icon={item.status?.state === 'working' ? 'spinner' : undefined}
-              />
-            </Card.Tags>
-            <Card.Description>
-              <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '8px' }}>
-                <Text color="secondary">Started:</Text>
-                <Text>{formatTimestamp(item.status?.started)}</Text>
-                <Text color="secondary">Ended:</Text>
-                <Text>{formatTimestamp(item.status?.finished)}</Text>
-                {item.status?.message && (
-                  <>
-                    <Text color="secondary">Message:</Text>
-                    <Text>{item.status.message}</Text>
-                  </>
-                )}
-              </div>
-            </Card.Description>
-          </Card>
-        );
-      })}
-    </div>
+    <Card>
+      <Card.Heading>Recent Jobs</Card.Heading>
+      <Card.Actions>
+        <Button icon="sync" variant="secondary" onClick={() => query.refetch()} disabled={query.isFetching}>
+          Refresh
+        </Button>
+      </Card.Actions>
+      <Card.Description>
+        <InteractiveTable
+          data={items.slice(0, 10)}
+          columns={columns}
+          getRowId={(item) => item.metadata?.resourceVersion || ''}
+        />
+      </Card.Description>
+    </Card>
   );
 }
