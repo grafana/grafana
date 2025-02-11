@@ -210,7 +210,7 @@ Set the color used to show exemplar data.
 
 ### Data links
 
-{{< docs/shared lookup="visualizations/datalink-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+{{< docs/shared lookup="visualizations/datalink-options-1.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ### Field overrides
 
