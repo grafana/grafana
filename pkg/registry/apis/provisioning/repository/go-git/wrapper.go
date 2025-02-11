@@ -301,6 +301,9 @@ func (g *GoGitRepo) Read(ctx context.Context, path string, ref string) (*reposit
 			return nil, err
 		}
 		info.Data, err = io.ReadAll(f)
+		if err != nil {
+			return nil, err
+		}
 	}
 	return info, err
 }

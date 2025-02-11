@@ -244,7 +244,7 @@ func (r *exportJob) add(ctx context.Context, summary *provisioning.JobResourceSu
 		}
 	}
 
-	// Add the author in context (if avaliable)
+	// Add the author in context (if available)
 	ctx = r.withAuthorSignature(ctx, item)
 
 	// Write the file
