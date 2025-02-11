@@ -129,9 +129,9 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
       let itemsToSet = items;
       logOptions(itemsToSet.length, RECOMMENDED_ITEMS_AMOUNT, id, ariaLabelledBy);
       if (inputValue && createCustomValue) {
-        const optionMatchingInput = items.find(
-          (opt) => opt.label === 'Custom value: ' + inputValue || opt.value === inputValue
-        );
+        //Since the label of a normal option does not have to match its value and a custom option has the same value and label,
+        //we just focus on the value to check if the option already exists
+        const optionMatchingInput = items.find((opt) => opt.value === inputValue);
 
         if (!optionMatchingInput) {
           const customValueOption = {
