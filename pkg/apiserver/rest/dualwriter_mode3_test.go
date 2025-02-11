@@ -306,16 +306,6 @@ func TestMode3_Delete(t *testing.T) {
 				},
 			},
 			{
-				name:  "should not return an error when deleting an object in the LegacyStorage is not found in UnifiedStorage",
-				input: "foo",
-				setupLegacyFn: func(m *mock.Mock, input string) {
-					m.On("Delete", mock.Anything, input, mock.Anything, mock.Anything).Return(exampleObj, false, nil)
-				},
-				setupStorageFn: func(m *mock.Mock, input string) {
-					m.On("Delete", mock.Anything, input, mock.Anything, mock.Anything).Return(nil, false, apierrors.NewNotFound(schema.GroupResource{Group: "", Resource: "pods"}, input))
-				},
-			},
-			{
 				name:  "should return an error when deleting an object in the LegacyStorage and UnifiedStorage is failing",
 				input: "foo",
 				setupLegacyFn: func(m *mock.Mock, input string) {

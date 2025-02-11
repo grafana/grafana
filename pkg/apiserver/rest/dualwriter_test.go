@@ -57,13 +57,16 @@ func TestSetDualWritingMode(t *testing.T) {
 	for _, tt := range tests {
 		l := (LegacyStorage)(nil)
 		s := (Storage)(nil)
-		m := &mock.Mock{}
 
-		m.On("List", mock.Anything, mock.Anything).Return(exampleList, nil)
-		m.On("List", mock.Anything, mock.Anything).Return(anotherList, nil)
+		sm := &mock.Mock{}
+		sm.On("List", mock.Anything, mock.Anything).Return(anotherList, nil)
+		sm.On("Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(exampleObj, false, nil)
+		sm.On("Delete", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(exampleObj, false, nil)
+		us := storageMock{sm, s}
 
-		ls := legacyStoreMock{m, l}
-		us := storageMock{m, s}
+		lm := &mock.Mock{}
+		lm.On("List", mock.Anything, mock.Anything).Return(exampleList, nil)
+		ls := legacyStoreMock{lm, l}
 
 		dwMode, err := SetDualWritingMode(context.Background(), tt.kvStore, &SyncerConfig{
 			LegacyStorage:     ls,

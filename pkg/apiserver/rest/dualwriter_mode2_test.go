@@ -289,7 +289,7 @@ func TestMode2_Delete(t *testing.T) {
 						apierrors.NewNotFound(schema.GroupResource{Group: "", Resource: "pods"}, input))
 				},
 				setupStorageFn: func(m *mock.Mock, input string) {
-					m.On("Delete", mock.Anything, input, mock.Anything, mock.Anything).Return(nil, false, nil)
+					m.On("Delete", mock.Anything, input, mock.Anything, mock.Anything).Return(exampleObj, false, nil)
 				},
 				wantErr: true,
 			},
