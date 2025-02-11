@@ -39,14 +39,6 @@ type ZanzanaReconciler struct {
 	globalReconcilers []resourceReconciler
 }
 
-// Run implements registry.BackgroundService
-func (r *ZanzanaReconciler) Run(ctx context.Context) error {
-	if r.features.IsEnabledGlobally(featuremgmt.FlagZanzana) {
-		return r.Reconcile(ctx)
-	}
-	return nil
-}
-
 func ProvideZanzanaReconciler(cfg *setting.Cfg, features featuremgmt.FeatureToggles, client zanzana.Client, store db.DB, lock *serverlock.ServerLockService, folderService folder.Service) *ZanzanaReconciler {
 	zanzanaReconciler := &ZanzanaReconciler{
 		cfg:      cfg,
@@ -127,6 +119,14 @@ func ProvideZanzanaReconciler(cfg *setting.Cfg, features featuremgmt.FeatureTogg
 	}
 
 	return zanzanaReconciler
+}
+
+// Run implements registry.BackgroundService
+func (r *ZanzanaReconciler) Run(ctx context.Context) error {
+	if r.features.IsEnabledGlobally(featuremgmt.FlagZanzana) {
+		return r.Reconcile(ctx)
+	}
+	return nil
 }
 
 // Reconcile schedules as job that will run and reconcile resources between
