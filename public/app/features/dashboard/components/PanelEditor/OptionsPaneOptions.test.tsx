@@ -143,6 +143,29 @@ describe('OptionsPaneOptions', () => {
     expect(screen.queryByLabelText(OptionsPaneSelector.fieldLabel('TestPanel HiddenFromDef'))).not.toBeInTheDocument();
   });
 
+  it('should render options that are specifically not marked as hidden from defaults', () => {
+    const scenario = new OptionsPaneOptionsTestScenario();
+
+    scenario.plugin = getPanelPlugin({
+      id: 'TestPanel',
+    }).useFieldConfig({
+      standardOptions: {},
+      useCustomConfig: (b) => {
+        b.addBooleanSwitch({
+          name: 'CustomBool',
+          path: 'CustomBool',
+        }).addBooleanSwitch({
+          name: 'HiddenFromDef',
+          path: 'HiddenFromDef',
+          hideFromDefaults: false,
+        });
+      },
+    });
+
+    scenario.render();
+    expect(screen.queryByLabelText(OptionsPaneSelector.fieldLabel('TestPanel HiddenFromDef'))).toBeInTheDocument();
+  });
+
   it('should create categories for field options with category', () => {
     const scenario = new OptionsPaneOptionsTestScenario();
     scenario.render();
@@ -284,5 +307,26 @@ describe('OptionsPaneOptions', () => {
 
     scenario.render();
     expect(screen.getByLabelText(overrideRuleTooltipDescription)).toBeInTheDocument();
+  });
+
+  it('should not render categories with hidden fields only', () => {
+    const scenario = new OptionsPaneOptionsTestScenario();
+
+    scenario.plugin = getPanelPlugin({
+      id: 'TestPanel',
+    }).useFieldConfig({
+      standardOptions: {},
+      useCustomConfig: (b) => {
+        b.addBooleanSwitch({
+          name: 'CustomBool',
+          path: 'CustomBool',
+          hideFromDefaults: true,
+          category: ['Axis'],
+        });
+      },
+    });
+
+    scenario.render();
+    expect(screen.queryByRole('heading', { name: /Axis/ })).not.toBeInTheDocument();
   });
 });
