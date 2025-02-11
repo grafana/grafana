@@ -3478,5 +3478,12 @@
       "renamed-or-missing-variables": "Renamed or missing variables",
       "variable": "Variable"
     }
+  },
+  "secrets-management": {
+    "empty-state": {
+      "button-title": "Add secret",
+      "more-info": "Remember, you can provide specific permissions for API access to other applications",
+      "title": "You haven't created any secrets yet"
+    }
   }
 }

@@ -205,6 +205,19 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 		})
 	}
 
+	// FIXME: This needs to be verified and probably refactored (usage of `hasAccess(toWhat?)` should probably be added)
+	if s.features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) ||
+		s.features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) {
+		configNodes = append(configNodes, &navtree.NavLink{
+			Text:      "Secrets management",
+			Id:        "secrets-management",
+			SubTitle:  "Manage secrets for use in Grafana",
+			Icon:      "lock",
+			IsSection: true,
+			Url:       s.cfg.AppSubURL + "/admin/secrets",
+		})
+	}
+
 	configNode := &navtree.NavLink{
 		Id:         navtree.NavIDCfg,
 		Text:       "Administration",
