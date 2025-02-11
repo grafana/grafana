@@ -69,6 +69,9 @@ func (m legacyStoreMock) List(ctx context.Context, options *metainternalversion.
 	if options.Kind == "fail" {
 		return nil, args.Error(1)
 	}
+	if err := args.Get(1); err != nil {
+		return nil, err.(error)
+	}
 	return args.Get(0).(runtime.Object), args.Error(1)
 }
 
@@ -86,6 +89,9 @@ func (m legacyStoreMock) Update(ctx context.Context, name string, objInfo rest.U
 	if strings.Contains(name, failingObject) {
 		return nil, false, args.Error(2)
 	}
+	if err := args.Get(2); err != nil {
+		return nil, false, err.(error)
+	}
 	return args.Get(0).(runtime.Object), args.Bool(1), args.Error(2)
 }
 
@@ -102,6 +108,9 @@ func (m legacyStoreMock) Delete(ctx context.Context, name string, deleteValidati
 	}
 	if name == "not-found-legacy" {
 		return nil, false, args.Error(2)
+	}
+	if err := args.Get(2); err != nil {
+		return nil, false, err.(error)
 	}
 	return args.Get(0).(runtime.Object), args.Bool(1), args.Error(2)
 }
@@ -133,6 +142,9 @@ func (m storageMock) Get(ctx context.Context, name string, options *metav1.GetOp
 	}
 	if name == "not-found" {
 		return nil, args.Error(1)
+	}
+	if err := args.Get(1); err != nil {
+		return nil, err.(error)
 	}
 	return args.Get(0).(runtime.Object), args.Error(1)
 }
@@ -167,6 +179,9 @@ func (m storageMock) List(ctx context.Context, options *metainternalversion.List
 	if options.Kind == "fail" {
 		return nil, args.Error(1)
 	}
+	if err := args.Get(1); err != nil {
+		return nil, err.(error)
+	}
 	return args.Get(0).(runtime.Object), args.Error(1)
 }
 
@@ -185,6 +200,9 @@ func (m storageMock) Update(ctx context.Context, name string, objInfo rest.Updat
 	if strings.Contains(name, failingObject) {
 		return nil, false, args.Error(2)
 	}
+	if err := args.Get(2); err != nil {
+		return nil, false, err.(error)
+	}
 	return args.Get(0).(runtime.Object), args.Bool(1), args.Error(2)
 }
 
@@ -199,6 +217,9 @@ func (m storageMock) Delete(ctx context.Context, name string, deleteValidation r
 	if strings.Contains(name, failingObject) {
 		return nil, false, args.Error(2)
 	}
+	if err := args.Get(2); err != nil {
+		return nil, false, err.(error)
+	}
 	return args.Get(0).(runtime.Object), args.Bool(1), args.Error(2)
 }
 
@@ -212,6 +233,9 @@ func (m storageMock) DeleteCollection(ctx context.Context, deleteValidation rest
 	args := m.Called(ctx, deleteValidation, options, listOptions)
 	if options.Kind == "fail" {
 		return nil, args.Error(1)
+	}
+	if err := args.Get(1); err != nil {
+		return nil, err.(error)
 	}
 	return args.Get(0).(runtime.Object), args.Error(1)
 }
