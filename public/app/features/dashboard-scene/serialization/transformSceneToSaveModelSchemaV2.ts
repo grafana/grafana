@@ -381,6 +381,7 @@ function getElements(state: DashboardSceneState) {
         kind: 'LibraryPanel',
         spec: {
           id: getPanelIdForVizPanel(vizPanel),
+          uid: vizPanel.state.key ?? '', // this is the element_identifier
           title: vizPanel.state.title,
           libraryPanel: {
             uid: behavior.state.uid,
@@ -429,6 +430,7 @@ function getElements(state: DashboardSceneState) {
         kind: 'Panel',
         spec: {
           id: getPanelIdForVizPanel(vizPanel),
+          uid: vizPanel.state.key ?? '', // this is the element_identifier
           title: vizPanel.state.title,
           description: vizPanel.state.description ?? '',
           links: getPanelLinks(vizPanel),
@@ -572,7 +574,7 @@ function getVizPanelQueryOptions(vizPanel: VizPanel): QueryOptionsSpec {
 
 function createElements(panels: Element[]): Record<string, Element> {
   return panels.reduce<Record<string, Element>>((elements, panel) => {
-    elements[getVizPanelKeyForPanelId(panel.spec.id)] = panel;
+    elements[panel.spec.uid] = panel;
     return elements;
   }, {});
 }

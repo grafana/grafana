@@ -69,6 +69,8 @@ export const defaultLibraryPanelKind = (): LibraryPanelKind => ({
 export interface LibraryPanelSpec {
 	// Panel ID for the library panel in the dashboard
 	id: number;
+	// Panel UID for the library panel
+	uid: string;
 	// Title for the library panel in the dashboard
 	title: string;
 	libraryPanel: LibraryPanelRef;
@@ -76,6 +78,7 @@ export interface LibraryPanelSpec {
 
 export const defaultLibraryPanelSpec = (): LibraryPanelSpec => ({
 	id: 0,
+	uid: "",
 	title: "",
 	libraryPanel: defaultLibraryPanelRef(),
 });
@@ -874,6 +877,8 @@ export const defaultResponsiveGridLayoutItemSpec = (): ResponsiveGridLayoutItemS
 
 export interface PanelSpec {
 	id: number;
+	// this will be the arbitrary uid element_identifier. Needed for transforming scene to schema v2
+	uid: string;
 	title: string;
 	description: string;
 	links: DataLink[];
@@ -884,6 +889,7 @@ export interface PanelSpec {
 
 export const defaultPanelSpec = (): PanelSpec => ({
 	id: 0,
+	uid: "",
 	title: "",
 	description: "",
 	links: [],
