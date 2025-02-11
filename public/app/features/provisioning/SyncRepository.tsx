@@ -40,7 +40,7 @@ export function SyncRepository({ repository }: Props) {
     if (!name) {
       return;
     }
-    syncResource({ name, body: { incremental: true } }); // will queue a full resync job
+    syncResource({ name, body: { incremental: false } }); // will queue a full resync job
     setIsModalOpen(false);
   };
 
@@ -53,6 +53,7 @@ export function SyncRepository({ repository }: Props) {
   return (
     <>
       <Button
+        icon="sync"
         variant={'secondary'}
         tooltip={isHealthy ? undefined : 'Unable to sync an unhealthy repository'}
         disabled={syncQuery.isLoading || !name || !isHealthy}
@@ -65,7 +66,7 @@ export function SyncRepository({ repository }: Props) {
           isOpen={isModalOpen}
           title={'Synchronize resources from repository'}
           body={`This will trigger a job that will import everything from the repository into grafana. Proceed?`}
-          confirmText={syncQuery.isLoading ? 'Importing...' : 'Import'}
+          confirmText={syncQuery.isLoading ? 'Syncing...' : 'Sync'}
           onConfirm={onClick}
           onDismiss={() => setIsModalOpen(false)}
         />

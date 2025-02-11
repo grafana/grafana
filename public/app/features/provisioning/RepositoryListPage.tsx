@@ -131,13 +131,13 @@ function RepositoryListPageContent({ items }: { items?: Repository[] }) {
                 </Card.Description>
                 <Card.Meta>{meta}</Card.Meta>
                 <Card.Actions>
-                  <LinkButton href={`${PROVISIONING_URL}/${name}`} variant="secondary">
-                    Manage
-                  </LinkButton>
-                  <LinkButton href={`${PROVISIONING_URL}/${name}/edit`} variant="secondary">
-                    Edit
+                  <LinkButton icon="eye" href={`${PROVISIONING_URL}/${name}`} variant="secondary">
+                    View
                   </LinkButton>
                   <SyncRepository repository={item} />
+                  <LinkButton variant="secondary" icon="cog" href={`${PROVISIONING_URL}/${name}/edit`}>
+                    Settings
+                  </LinkButton>
                 </Card.Actions>
                 <Card.SecondaryActions>
                   <DeleteRepositoryButton name={name} />
