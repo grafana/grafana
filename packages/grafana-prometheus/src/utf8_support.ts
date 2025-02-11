@@ -82,6 +82,7 @@ const isValidCodePoint = (codePoint: number): boolean => {
 
 export const wrapUtf8Filters = (filterStr: string): string => {
   const resultArray: string[] = [];
+  const operatorRegex = /(=~|!=|!~|=)/; // NOTE: the order of the operators is important here
   let currentKey = '';
   let currentValue = '';
   let inQuotes = false;
@@ -94,8 +95,12 @@ export const wrapUtf8Filters = (filterStr: string): string => {
       temp += char;
     } else if (char === ',' && !inQuotes) {
       // When outside quotes and encountering ',', finalize the current pair
-      [currentKey, currentValue] = temp.split('=');
-      resultArray.push(`${utf8Support(currentKey.trim())}="${currentValue.slice(1, -1)}"`);
+      const operatorMatch = temp.match(operatorRegex);
+      if (operatorMatch) {
+        const operator = operatorMatch[0];
+        [currentKey, currentValue] = temp.split(operator);
+        resultArray.push(`${utf8Support(currentKey.trim())}${operator}"${currentValue.slice(1, -1)}"`);
+      }
       temp = ''; // Reset for the next pair
     } else {
       // Collect characters
@@ -105,9 +110,12 @@ export const wrapUtf8Filters = (filterStr: string): string => {
 
   // Handle the last key-value pair
   if (temp) {
-    [currentKey, currentValue] = temp.split('=');
-    resultArray.push(`${utf8Support(currentKey.trim())}="${currentValue.slice(1, -1)}"`);
+    const operatorMatch = temp.match(operatorRegex);
+    if (operatorMatch) {
+      const operator = operatorMatch[0];
+      [currentKey, currentValue] = temp.split(operator);
+      resultArray.push(`${utf8Support(currentKey.trim())}${operator}"${currentValue.slice(1, -1)}"`);
+    }
   }
-
   return resultArray.join(',');
 };
