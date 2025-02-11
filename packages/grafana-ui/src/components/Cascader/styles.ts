@@ -72,8 +72,8 @@ export const getCascaderStyles = (theme: GrafanaTheme2) => ({
     '.rc-cascader': {
       '&-menus': {
         overflow: 'hidden',
-        background: theme.colors.background.canvas,
-        border: `1px solid ${theme.colors.border.weak}`,
+        background: theme.colors.background.elevated,
+        border: `none`,
         borderRadius: theme.shape.radius.default,
         boxShadow: theme.shadows.z3,
         whiteSpace: 'nowrap',

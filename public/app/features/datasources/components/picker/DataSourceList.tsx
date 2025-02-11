@@ -136,14 +136,12 @@ function getDataSourceVariableIDs() {
     .map((v) => `\${${v.id}}`);
 }
 
-function getStyles(theme: GrafanaTheme2, selectedItemCssSelector: string) {
+function getStyles(theme: GrafanaTheme2) {
   return {
     container: css({
       display: 'flex',
       flexDirection: 'column',
-      [`${selectedItemCssSelector}`]: {
-        backgroundColor: theme.colors.background.secondary,
-      },
+      padding: theme.spacing(0.5),
     }),
     emptyState: css({
       height: '100%',
