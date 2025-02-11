@@ -2462,6 +2462,8 @@
     "history-wrapper": {
       "collapse": "Cőľľäpşę",
       "expand": "Ēχpäŉđ",
+      "icon-selected": "Ŝęľęčŧęđ Ēŉŧřy",
+      "icon-unselected": "Ńőřmäľ Ēŉŧřy",
       "show-more": "Ŝĥőŵ mőřę",
       "today": "Ŧőđäy",
       "yesterday": "Ÿęşŧęřđäy"
