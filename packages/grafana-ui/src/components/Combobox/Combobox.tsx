@@ -407,7 +407,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
           })}
         >
           {isOpen && (
-            <ScrollContainer showScrollIndicators maxHeight="inherit" ref={scrollRef}>
+            <ScrollContainer showScrollIndicators maxHeight="inherit" ref={scrollRef} padding={0.5}>
               {!asyncError && (
                 <ul style={{ height: rowVirtualizer.getTotalSize() }} className={styles.menuUlContainer}>
                   {rowVirtualizer.getVirtualItems().map((virtualRow) => {
