@@ -37,13 +37,16 @@ export function ExportToRepository({ repo }: Props) {
     <Box paddingTop={2}>
       <form onSubmit={handleSubmit(onSubmit)}>
         <FieldSet label="Export from grafana into repository">
-          <Field label={'Source folder'} description="Select where we should read data (or empty for everything)">
-            <Controller
-              control={control}
-              name={'folder'}
-              render={({ field: { ref, ...field } }) => <FolderPicker {...field} />}
-            />
-          </Field>
+          {/** For the initial release, we will not support selecting a single folder */}
+          {false && (
+            <Field label={'Source folder'} description="Select where we should read data (or empty for everything)">
+              <Controller
+                control={control}
+                name={'folder'}
+                render={({ field: { ref, ...field } }) => <FolderPicker {...field} />}
+              />
+            </Field>
+          )}
 
           {isGit && (
             <Field label="Target Branch" description={'The target branch.  This will be created and emptied first'}>

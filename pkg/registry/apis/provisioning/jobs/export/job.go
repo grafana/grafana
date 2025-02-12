@@ -32,11 +32,11 @@ type exportJob struct {
 	progressInterval time.Duration
 	progressLast     time.Time
 	foldersTree      *resources.FolderTree
+	userInfo         map[string]repository.CommitSignature
 
 	prefix         string // from options (now clean+safe)
 	ref            string // from options (only git)
 	keepIdentifier bool
-	addAuthorInfo  bool
 	withHistory    bool
 
 	jobStatus *provisioning.JobStatus
@@ -65,7 +65,6 @@ func newExportJob(ctx context.Context,
 		prefix:         prefix,
 		ref:            options.Branch,
 		keepIdentifier: options.Identifier,
-		addAuthorInfo:  options.History,
 		withHistory:    options.History,
 
 		jobStatus: &provisioning.JobStatus{
@@ -135,18 +134,20 @@ func (r *exportJob) add(ctx context.Context, summary *provisioning.JobResourceSu
 	}
 	folder := item.GetFolder()
 
+	// Add the author in context (if available)
+	ctx = r.withAuthorSignature(ctx, item)
+
 	// Get the absolute path of the folder
 	fid, ok := r.foldersTree.DirPath(folder, "")
 	if !ok {
-		// continue, but keep metadata
 		fid = resources.Folder{
-			Path: "__folder_not_found",
+			Path: "__folder_not_found/" + slugify.Slugify(folder),
 		}
 		r.logger.Error("folder of item was not in tree of repository")
-		// return fmt.Errorf("folder of item was not in tree of repository")
-	} else {
-		delete(obj.Object, "metadata")
 	}
+
+	// Clear the metadata
+	delete(obj.Object, "metadata")
 
 	if r.keepIdentifier {
 		item.SetName(name) // keep the identifier in the metadata
@@ -171,9 +172,6 @@ func (r *exportJob) add(ctx context.Context, summary *provisioning.JobResourceSu
 		}
 	}
 
-	// Add the author in context (if available)
-	ctx = r.withAuthorSignature(ctx, item)
-
 	// Write the file
 	err = r.target.Write(ctx, fileName, r.ref, body, commitMessage)
 	if err != nil {
@@ -190,24 +188,29 @@ func (r *exportJob) add(ctx context.Context, summary *provisioning.JobResourceSu
 }
 
 func (r *exportJob) withAuthorSignature(ctx context.Context, item utils.GrafanaMetaAccessor) context.Context {
-	if !r.addAuthorInfo {
+	if r.userInfo == nil {
 		return ctx
 	}
+	id := item.GetUpdatedBy()
+	if id == "" {
+		id = item.GetCreatedBy()
+	}
+	if id == "" {
+		id = "grafana"
+	}
 
-	sig := repository.CommitSignature{
-		Name: item.GetUpdatedBy(),
-		When: item.GetCreationTimestamp().Time,
-	}
+	sig := r.userInfo[id] // lookup
 	if sig.Name == "" {
-		sig.Name = item.GetCreatedBy()
+		sig.Name = id
 	}
-	if sig.Name == "" {
-		return ctx // no user info
+	if sig.Email == "" {
+		sig.Name = id
 	}
-	// TODO: convert internal id to name+email
-	updated, _ := item.GetUpdatedTimestamp()
-	if updated != nil {
-		sig.When = *updated
+	t, err := item.GetUpdatedTimestamp()
+	if err == nil && t != nil {
+		sig.When = *t
+	} else {
+		sig.When = item.GetCreationTimestamp().Time
 	}
 	return repository.WithAuthorSignature(ctx, sig)
 }

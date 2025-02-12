@@ -111,6 +111,8 @@ var serviceIdentityPermissions = getWildcardPermissions(
 	"datasources:delete",
 	"alert.provisioning:write",
 	"alert.provisioning.secrets:read",
+	"users:read",    // ???
+	"users:read:id", // ???
 )
 
 func IsServiceIdentity(ctx context.Context) bool {

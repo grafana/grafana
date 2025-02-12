@@ -87,19 +87,21 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 
 	dynamicClient, _, err := r.clients.New(repo.Config().Namespace)
 	if err != nil {
-		return nil, fmt.Errorf("namespace mismatch")
+		return nil, fmt.Errorf("error getting client %w", err)
 	}
 
 	worker := newExportJob(ctx, repo, *options, dynamicClient, progress)
 
+	if options.History {
+		err = worker.loadUsers(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("error loading users %w", err)
+		}
+	}
+
 	// Read from legacy if not yet using unified storage
 	if !r.storageStatus.ReadFromUnified(ctx, folders.FolderResourceInfo.GroupResource()) {
 		worker.legacy = r.legacyMigrator
-	}
-
-	if options.History {
-		// TODO. load user info (for commits)
-		fmt.Printf("TODO... load history")
 	}
 
 	// Load and write all folders
