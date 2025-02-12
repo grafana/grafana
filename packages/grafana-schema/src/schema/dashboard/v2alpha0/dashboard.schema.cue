@@ -585,7 +585,7 @@ TabItemKind: {
 }
 
 TabItemSpec: {
-  title: string
+  title?: string
   layout: GridLayoutKind | RowsLayoutKind | ResponsiveGridLayoutKind
 }
 

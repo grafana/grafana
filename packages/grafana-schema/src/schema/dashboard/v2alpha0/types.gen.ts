@@ -900,12 +900,11 @@ export const defaultTabItemKind = (): TabItemKind => ({
 });
 
 export interface TabItemSpec {
-	title: string;
+	title?: string;
 	layout: GridLayoutKind | RowsLayoutKind | ResponsiveGridLayoutKind;
 }
 
 export const defaultTabItemSpec = (): TabItemSpec => ({
-	title: "",
 	layout: defaultGridLayoutKind(),
 });
 

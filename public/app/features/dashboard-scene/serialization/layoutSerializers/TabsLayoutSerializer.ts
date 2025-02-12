@@ -20,7 +20,7 @@ export class TabsLayoutSerializer implements LayoutManagerSerializer {
           return {
             kind: 'TabItem',
             spec: {
-              title: tab.state.title ?? '',
+              title: tab.state.title,
               layout: layout,
             },
           };
