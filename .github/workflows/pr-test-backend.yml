@@ -116,13 +116,13 @@ jobs:
         ports:
           - 8080:8080
         options: >-
+          --entrypoint "/bin/mimir"
           --health-cmd "wget -q --spider http://localhost:8080/ready || exit 1"
           --health-interval 10s
           --health-timeout 5s 
           --health-retries 5
-          --entrypoint /bin/mimir
         env:
-          MIMIR_ARGS: "-target=backend -alertmanager.grafana-alertmanager-compatibility-enabled -alertmanager.utf8-strict-mode-enabled"
+          MIMIR_ARGS: "-target=backend -common.storage.backend=filesystem -common.storage.filesystem.dir=/tmp/mimir"
 
     steps:
       - name: Identify Runner
