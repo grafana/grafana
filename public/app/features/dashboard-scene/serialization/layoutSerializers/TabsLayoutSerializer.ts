@@ -1,12 +1,11 @@
 import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 
+import { TabItem } from '../../scene/layout-tabs/TabItem';
 import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
 import { LayoutManagerSerializer } from '../../scene/types/DashboardLayoutManager';
 
 import { layoutSerializerRegistry } from './layoutSerializerRegistry';
 import { getLayout } from './utils';
-import { TabItem } from '../../scene/layout-tabs/TabItem';
-import { tab } from '@testing-library/user-event/dist/cjs/convenience/tab.js';
 
 export class TabsLayoutSerializer implements LayoutManagerSerializer {
   serialize(layoutManager: TabsLayoutManager): DashboardV2Spec['layout'] {
