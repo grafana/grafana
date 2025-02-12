@@ -1,10 +1,8 @@
-import { PropsWithChildren, useState, createContext, useContext, useCallback, useMemo } from 'react';
+import { createContext, ReactNode, useContext } from 'react';
 
 import { DataQuery } from '@grafana/schema';
 
-import { AddToQueryLibraryModal } from './AddToQueryLibraryModal';
-import { QueryLibraryDrawer } from './QueryLibraryDrawer';
-import { QueryActionButton, QueryActionButtonProps } from './types';
+import { QueryActionButton } from './types';
 
 /**
  * Context with state and action to interact with Query Library. The Query Library feature consists of a drawer
@@ -19,17 +17,33 @@ export type QueryLibraryContextType = {
    * @param datasourceFilters Data source names that will be used for initial filter in the library.
    * @param queryActionButton Action button will be shown in the library next to the query and can implement context
    *   specific actions with the library, like running the query or updating some query in the current app.
+   * @param options.context Used for tracking. Should identify the context this is called from, like 'explore' or
+   *   'dashboard'.
    */
-  openDrawer: (datasourceFilters: string[], queryActionButton: QueryActionButton) => void;
+  openDrawer: (
+    datasourceFilters: string[],
+    queryActionButton: QueryActionButton,
+    options?: { context?: string }
+  ) => void;
   closeDrawer: () => void;
   isDrawerOpen: boolean;
 
   /**
    * Opens a modal for adding a query to the library.
+   * @param query Query to be saved
+   * @param options.onSave Callback that will be called after the query is saved.
+   * @param options.context Used for tracking. Should identify the context this is called from, like 'explore' or
+   *   'dashboard'.
+   */
+  openAddQueryModal: (query: DataQuery, options?: { onSave?: () => void; context?: string }) => void;
+  closeAddQueryModal: () => void;
+
+  /**
+   * Returns a predefined small button that can be used to save a query to the library.
    * @param query
    */
-  openAddQueryModal: (query: DataQuery) => void;
-  closeAddQueryModal: () => void;
+  renderSaveQueryButton: (query: DataQuery) => ReactNode;
+  queryLibraryEnabled: boolean;
 };
 
 export const QueryLibraryContext = createContext<QueryLibraryContextType>({
@@ -39,80 +53,14 @@ export const QueryLibraryContext = createContext<QueryLibraryContextType>({
 
   openAddQueryModal: () => {},
   closeAddQueryModal: () => {},
+
+  renderSaveQueryButton: () => {
+    return null;
+  },
+
+  queryLibraryEnabled: false,
 });
 
 export function useQueryLibraryContext() {
   return useContext(QueryLibraryContext);
-}
-
-export function QueryLibraryContextProvider({ children }: PropsWithChildren) {
-  const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(false);
-  const [activeDatasources, setActiveDatasources] = useState<string[]>([]);
-  const [isAddQueryModalOpen, setIsAddQueryModalOpen] = useState<boolean>(false);
-  const [activeQuery, setActiveQuery] = useState<DataQuery | undefined>(undefined);
-  const [queryActionButton, setQueryActionButton] = useState<QueryActionButton | undefined>(undefined);
-
-  const openDrawer = useCallback((datasourceFilters: string[], queryActionButton: QueryActionButton) => {
-    setActiveDatasources(datasourceFilters);
-    // Because the queryActionButton can be a function component it would be called as a callback if just passed in.
-    setQueryActionButton(() => queryActionButton);
-    setIsDrawerOpen(true);
-  }, []);
-
-  const closeDrawer = useCallback(() => {
-    setActiveDatasources([]);
-    setQueryActionButton(undefined);
-    setIsDrawerOpen(false);
-  }, []);
-
-  const openAddQueryModal = useCallback((query: DataQuery) => {
-    setActiveQuery(query);
-    setIsAddQueryModalOpen(true);
-  }, []);
-
-  const closeAddQueryModal = useCallback(() => {
-    setActiveQuery(undefined);
-    setIsAddQueryModalOpen(false);
-  }, []);
-
-  // We wrap the action button one time to add the closeDrawer behaviour. This way whoever injects the action button
-  // does not need to remember to do it nor the query table inside that renders it needs to know about the drawer.
-  const finalActionButton = useMemo(() => {
-    if (!queryActionButton) {
-      return queryActionButton;
-    }
-    return (props: QueryActionButtonProps) => {
-      const QButton = queryActionButton;
-      return (
-        <QButton
-          {...props}
-          onClick={() => {
-            props.onClick();
-            closeDrawer();
-          }}
-        />
-      );
-    };
-  }, [closeDrawer, queryActionButton]);
-
-  return (
-    <QueryLibraryContext.Provider
-      value={{
-        isDrawerOpen,
-        openDrawer,
-        closeDrawer,
-        openAddQueryModal,
-        closeAddQueryModal,
-      }}
-    >
-      {children}
-      <QueryLibraryDrawer
-        isOpen={isDrawerOpen}
-        close={closeDrawer}
-        activeDatasources={activeDatasources}
-        queryActionButton={finalActionButton}
-      />
-      <AddToQueryLibraryModal isOpen={isAddQueryModalOpen} close={closeAddQueryModal} query={activeQuery} />
-    </QueryLibraryContext.Provider>
-  );
 }

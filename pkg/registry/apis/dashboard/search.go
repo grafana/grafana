@@ -1,6 +1,7 @@
 package dashboard
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/url"
@@ -9,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/storage/unified"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"go.opentelemetry.io/otel/trace"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -32,12 +34,12 @@ import (
 // The DTO returns everything the UI needs in a single request
 type SearchHandler struct {
 	log    log.Logger
-	client resource.ResourceIndexClient
+	client func(context.Context) resource.ResourceIndexClient
 	tracer trace.Tracer
 }
 
-func NewSearchHandler(client resource.ResourceIndexClient, tracer trace.Tracer, cfg *setting.Cfg, legacyDashboardSearcher resource.ResourceIndexClient) *SearchHandler {
-	searchClient := resource.NewSearchClient(cfg, setting.UnifiedStorageConfigKeyDashboard, client, legacyDashboardSearcher)
+func NewSearchHandler(tracer trace.Tracer, cfg *setting.Cfg, legacyDashboardSearcher resource.ResourceIndexClient) *SearchHandler {
+	searchClient := resource.NewSearchClient(cfg, setting.UnifiedStorageConfigKeyDashboard, unified.GetResourceClient, legacyDashboardSearcher)
 	return &SearchHandler{
 		client: searchClient,
 		log:    log.New("grafana-apiserver.dashboards.search"),
@@ -221,11 +223,14 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	// get limit and offset from query params
 	limit := 50
 	offset := 0
+	page := 1
 	if queryParams.Has("limit") {
 		limit, _ = strconv.Atoi(queryParams.Get("limit"))
 	}
 	if queryParams.Has("offset") {
 		offset, _ = strconv.Atoi(queryParams.Get("offset"))
+	} else if queryParams.Has("page") {
+		page, _ = strconv.Atoi(queryParams.Get("page"))
 	}
 
 	searchRequest := &resource.ResourceSearchRequest{
@@ -233,7 +238,7 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		Query:   queryParams.Get("query"),
 		Limit:   int64(limit),
 		Offset:  int64(offset),
-		Page:    int64(offset), // on modes 0-2 (legacy) we use "Page" instead of "Offset"
+		Page:    int64(page), // for modes 0-2 (legacy)
 		Explain: queryParams.Has("explain") && queryParams.Get("explain") != "false",
 	}
 	fields := []string{"title", "folder", "tags"}
@@ -336,7 +341,7 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		searchRequest.Options.Fields = append(searchRequest.Options.Fields, namesFilter...)
 	}
 
-	result, err := s.client.Search(ctx, searchRequest)
+	result, err := s.client(ctx).Search(ctx, searchRequest)
 	if err != nil {
 		errhttp.Write(ctx, err, w)
 		return
@@ -348,7 +353,7 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if parsedResults != nil && len(searchRequest.SortBy) == 0 {
+	if len(searchRequest.SortBy) == 0 {
 		// default sort by resource descending ( folders then dashboards ) then title
 		sort.Slice(parsedResults.Hits, func(i, j int) bool {
 			return parsedResults.Hits[i].Resource > parsedResults.Hits[j].Resource ||
