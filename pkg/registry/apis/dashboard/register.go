@@ -16,6 +16,7 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
+	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -46,8 +47,10 @@ import (
 )
 
 var (
-	_ builder.APIGroupBuilder      = (*DashboardsAPIBuilder)(nil)
-	_ builder.OpenAPIPostProcessor = (*DashboardsAPIBuilder)(nil)
+	_ builder.APIGroupBuilder          = (*DashboardsAPIBuilder)(nil)
+	_ builder.APIGroupVersionsProvider = (*DashboardsAPIBuilder)(nil)
+	_ builder.OpenAPIPostProcessor     = (*DashboardsAPIBuilder)(nil)
+	_ builder.APIGroupRouteProvider    = (*DashboardsAPIBuilder)(nil)
 )
 
 // This is used just so wire has something unique to return
@@ -59,14 +62,16 @@ type DashboardsAPIBuilder struct {
 	legacy                       *DashboardStorage
 	unified                      resource.ResourceClient
 	dashboardProvisioningService dashboards.DashboardProvisioningService
-	search                       *SearchHandler
 	scheme                       *runtime.Scheme
+	search                       *SearchHandler
 
 	log log.Logger
 	reg prometheus.Registerer
 }
 
-func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
+func RegisterAPIService(
+	cfg *setting.Cfg,
+	features featuremgmt.FeatureToggles,
 	apiregistration builder.APIRegistrar,
 	dashboardService dashboards.DashboardService,
 	provisioningDashboardService dashboards.DashboardProvisioningService,
@@ -331,6 +336,11 @@ func (b *DashboardsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 	}
 
 	return oas, nil
+}
+
+func (b *DashboardsAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
+	defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
+	return b.search.GetAPIRoutes(defs)
 }
 
 var _ genericregistry.RESTOptionsGetter = &dashboardOptsGetter{}
