@@ -215,7 +215,6 @@ var wireBasicSet = wire.NewSet(
 	mssql.ProvideService,
 	store.ProvideEntityEventsService,
 	unified.ProvideClientServiceImpl,
-	wire.Bind(new(unified.ClientService), new(*unified.ClientServiceImpl)),
 	httpclientprovider.New,
 	wire.Bind(new(httpclient.Provider), new(*sdkhttpclient.Provider)),
 	serverlock.ProvideService,
