@@ -126,7 +126,9 @@ func (s *service) start(ctx context.Context) error {
 
 	srv := s.handler.GetServer()
 	resource.RegisterResourceStoreServer(srv, server)
+	resource.RegisterBatchStoreServer(srv, server)
 	resource.RegisterResourceIndexServer(srv, server)
+	resource.RegisterRepositoryIndexServer(srv, server)
 	resource.RegisterBlobStoreServer(srv, server)
 	resource.RegisterDiagnosticsServer(srv, server)
 	grpc_health_v1.RegisterHealthServer(srv, healthService)
