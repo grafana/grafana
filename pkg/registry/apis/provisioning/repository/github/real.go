@@ -282,26 +282,38 @@ func (r *realImpl) Commits(ctx context.Context, owner, repository, path, branch 
 }
 
 func (r *realImpl) CompareCommits(ctx context.Context, owner, repository, base, head string) ([]CommitFile, error) {
-	// FIXME: we may have to paginate the results if there are too many files
-	compare, _, err := r.gh.Repositories.CompareCommits(ctx, owner, repository, base, head, nil)
-	if err != nil {
-		var ghErr *github.ErrorResponse
-		if !errors.As(err, &ghErr) {
+	var allFiles []CommitFile
+	opts := &github.ListOptions{
+		PerPage: 100,
+	}
+
+	for {
+		compare, resp, err := r.gh.Repositories.CompareCommits(ctx, owner, repository, base, head, opts)
+		if err != nil {
+			var ghErr *github.ErrorResponse
+			if !errors.As(err, &ghErr) {
+				return nil, err
+			}
+			if ghErr.Response.StatusCode == http.StatusServiceUnavailable {
+				return nil, ErrServiceUnavailable
+			}
+			if ghErr.Response.StatusCode == http.StatusNotFound {
+				return nil, ErrResourceNotFound
+			}
 			return nil, err
 		}
-		if ghErr.Response.StatusCode == http.StatusServiceUnavailable {
-			return nil, ErrServiceUnavailable
+
+		for _, f := range compare.Files {
+			allFiles = append(allFiles, f)
 		}
-		if ghErr.Response.StatusCode == http.StatusNotFound {
-			return nil, ErrResourceNotFound
+
+		if resp.NextPage == 0 {
+			break
 		}
-		return nil, err
+		opts.Page = resp.NextPage
 	}
-	ret := make([]CommitFile, 0, len(compare.Files))
-	for _, f := range compare.Files {
-		ret = append(ret, f)
-	}
-	return ret, nil
+
+	return allFiles, nil
 }
 
 func (r *realImpl) GetBranch(ctx context.Context, owner, repository, branchName string) (Branch, error) {
@@ -364,17 +376,31 @@ func (r *realImpl) BranchExists(ctx context.Context, owner, repository, branchNa
 }
 
 func (r *realImpl) ListWebhooks(ctx context.Context, owner, repository string) ([]WebhookConfig, error) {
-	hooks, _, err := r.gh.Repositories.ListHooks(ctx, owner, repository, nil)
-	if err != nil {
-		var ghErr *github.ErrorResponse
-		if errors.As(err, &ghErr) && ghErr.Response.StatusCode == http.StatusServiceUnavailable {
-			return nil, ErrServiceUnavailable
-		}
-		return nil, err
+	var allHooks []*github.Hook
+	opts := &github.ListOptions{
+		PerPage: 100,
 	}
 
-	ret := make([]WebhookConfig, 0, len(hooks))
-	for _, h := range hooks {
+	for {
+		hooks, resp, err := r.gh.Repositories.ListHooks(ctx, owner, repository, opts)
+		if err != nil {
+			var ghErr *github.ErrorResponse
+			if errors.As(err, &ghErr) && ghErr.Response.StatusCode == http.StatusServiceUnavailable {
+				return nil, ErrServiceUnavailable
+			}
+			return nil, err
+		}
+
+		allHooks = append(allHooks, hooks...)
+
+		if resp.NextPage == 0 {
+			break
+		}
+		opts.Page = resp.NextPage
+	}
+
+	ret := make([]WebhookConfig, 0, len(allHooks))
+	for _, h := range allHooks {
 		contentType := h.GetConfig().GetContentType()
 		if contentType == "" {
 			contentType = "form"
@@ -493,17 +519,31 @@ func (r *realImpl) EditWebhook(ctx context.Context, owner, repository string, cf
 }
 
 func (r *realImpl) ListPullRequestFiles(ctx context.Context, owner, repository string, number int) ([]CommitFile, error) {
-	commitFiles, _, err := r.gh.PullRequests.ListFiles(ctx, owner, repository, number, nil)
-	if err != nil {
-		var ghErr *github.ErrorResponse
-		if errors.As(err, &ghErr) && ghErr.Response.StatusCode == http.StatusServiceUnavailable {
-			return nil, ErrServiceUnavailable
-		}
-		return nil, err
+	var allFiles []*github.CommitFile
+	opts := &github.ListOptions{
+		PerPage: 100,
 	}
 
-	ret := make([]CommitFile, 0, len(commitFiles))
-	for _, f := range commitFiles {
+	for {
+		files, resp, err := r.gh.PullRequests.ListFiles(ctx, owner, repository, number, opts)
+		if err != nil {
+			var ghErr *github.ErrorResponse
+			if errors.As(err, &ghErr) && ghErr.Response.StatusCode == http.StatusServiceUnavailable {
+				return nil, ErrServiceUnavailable
+			}
+			return nil, err
+		}
+
+		allFiles = append(allFiles, files...)
+
+		if resp.NextPage == 0 {
+			break
+		}
+		opts.Page = resp.NextPage
+	}
+
+	ret := make([]CommitFile, 0, len(allFiles))
+	for _, f := range allFiles {
 		ret = append(ret, f)
 	}
 
@@ -547,13 +587,29 @@ func (r *realImpl) CreatePullRequestFileComment(ctx context.Context, owner, repo
 }
 
 func (r *realImpl) ClearAllPullRequestFileComments(ctx context.Context, owner, repository string, number int) error {
-	comments, _, err := r.gh.PullRequests.ListComments(ctx, owner, repository, number, nil)
-	if err != nil {
-		var ghErr *github.ErrorResponse
-		if errors.As(err, &ghErr) && ghErr.Response.StatusCode == http.StatusServiceUnavailable {
-			return ErrServiceUnavailable
+	var allComments []*github.PullRequestComment
+	opts := &github.PullRequestListCommentsOptions{
+		ListOptions: github.ListOptions{
+			PerPage: 100,
+		},
+	}
+
+	for {
+		comments, resp, err := r.gh.PullRequests.ListComments(ctx, owner, repository, number, opts)
+		if err != nil {
+			var ghErr *github.ErrorResponse
+			if errors.As(err, &ghErr) && ghErr.Response.StatusCode == http.StatusServiceUnavailable {
+				return ErrServiceUnavailable
+			}
+			return err
 		}
-		return err
+
+		allComments = append(allComments, comments...)
+
+		if resp.NextPage == 0 {
+			break
+		}
+		opts.Page = resp.NextPage
 	}
 
 	userLogin, _, err := r.gh.Users.Get(ctx, "")
@@ -561,7 +617,7 @@ func (r *realImpl) ClearAllPullRequestFileComments(ctx context.Context, owner, r
 		return fmt.Errorf("get user: %w", err)
 	}
 
-	for _, c := range comments {
+	for _, c := range allComments {
 		// skip if comments were not created by us
 		if c.User.GetLogin() != userLogin.GetLogin() {
 			continue
