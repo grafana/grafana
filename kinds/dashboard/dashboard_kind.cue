@@ -74,7 +74,7 @@ lineage: schemas: [{
 
 			// Version of the JSON schema, incremented each time a Grafana update brings
 			// changes to said schema.
-			schemaVersion: uint16 | *39
+			schemaVersion: uint16 | *41
 
 			// Version of the dashboard, incremented each time the dashboard is updated.
 			version?: uint32
