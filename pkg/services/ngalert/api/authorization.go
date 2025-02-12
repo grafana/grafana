@@ -126,29 +126,48 @@ func (api *API) authorize(method, path string) web.Handler {
 	// convert/prometheus API paths
 	case http.MethodGet + "/api/convert/prometheus/config/v1/rules/{NamespaceTitle}/{Group}",
 		http.MethodGet + "/api/convert/prometheus/config/v1/rules/{NamespaceTitle}":
-		eval = ac.EvalAll(
-			ac.EvalPermission(ac.ActionAlertingRuleRead),
-			ac.EvalPermission(dashboards.ActionFoldersRead),
+		eval = ac.EvalAny(
+			ac.EvalPermission(ac.ActionAlertingProvisioningRead),
+			ac.EvalPermission(ac.ActionAlertingRulesProvisioningRead),
+			ac.EvalPermission(ac.ActionAlertingProvisioningReadSecrets),
+			ac.EvalAll(
+				ac.EvalPermission(ac.ActionAlertingRuleRead),
+				ac.EvalPermission(dashboards.ActionFoldersRead),
+			),
 		)
 
 	case http.MethodGet + "/api/convert/prometheus/config/v1/rules":
-		eval = ac.EvalPermission(ac.ActionAlertingRuleRead)
+		eval = ac.EvalAny(
+			ac.EvalPermission(ac.ActionAlertingProvisioningWrite),
+			ac.EvalPermission(ac.ActionAlertingRulesProvisioningWrite),
+			ac.EvalAll(
+				ac.EvalPermission(ac.ActionAlertingRuleCreate),
+				ac.EvalPermission(ac.ActionAlertingProvisioningSetStatus),
+			),
+		)
 
 	case http.MethodPost + "/api/convert/prometheus/config/v1/rules/{NamespaceTitle}":
 		eval = ac.EvalAll(
-			ac.EvalPermission(dashboards.ActionFoldersWrite),
-			ac.EvalPermission(ac.ActionAlertingRuleRead),
-			ac.EvalPermission(ac.ActionAlertingRuleUpdate),
-			ac.EvalPermission(ac.ActionAlertingRuleCreate),
-			ac.EvalPermission(ac.ActionAlertingRuleDelete),
+			ac.EvalPermission(ac.ActionAlertingProvisioningWrite),
+			ac.EvalPermission(ac.ActionAlertingRulesProvisioningWrite),
+			ac.EvalAll(
+				ac.EvalPermission(ac.ActionAlertingRuleCreate),
+				ac.EvalPermission(ac.ActionAlertingProvisioningSetStatus),
+			),
+			ac.EvalPermission(dashboards.ActionFoldersCreate),
 		)
 
 	case http.MethodDelete + "/api/convert/prometheus/config/v1/rules/{NamespaceTitle}/{Group}",
 		http.MethodDelete + "/api/convert/prometheus/config/v1/rules/{NamespaceTitle}":
-		eval = ac.EvalAll(
-			ac.EvalPermission(ac.ActionAlertingRuleDelete),
-			ac.EvalPermission(ac.ActionAlertingRuleRead),
-			ac.EvalPermission(dashboards.ActionFoldersRead),
+		eval = ac.EvalAny(
+			ac.EvalPermission(ac.ActionAlertingProvisioningWrite),
+			ac.EvalPermission(ac.ActionAlertingRulesProvisioningWrite),
+			ac.EvalAll(
+				ac.EvalPermission(ac.ActionAlertingRuleDelete),
+				ac.EvalPermission(ac.ActionAlertingRuleRead),
+				ac.EvalPermission(dashboards.ActionFoldersRead),
+				ac.EvalPermission(ac.ActionAlertingProvisioningSetStatus),
+			),
 		)
 
 	// Alert Instances and Silences

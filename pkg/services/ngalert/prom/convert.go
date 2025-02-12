@@ -12,8 +12,11 @@ import (
 )
 
 type Config struct {
-	DatasourceUID    string
-	DatasourceType   string
+	DatasourceUID  string
+	DatasourceType string
+	// DefaultInterval is the default interval for rules in the groups that
+	// don't have Interval set.
+	DefaultInterval  time.Duration
 	FromTimeRange    *time.Duration
 	EvaluationOffset *time.Duration
 	ExecErrState     models.ExecutionErrorState
@@ -49,6 +52,9 @@ func NewConverter(cfg Config) (*Converter, error) {
 	if cfg.DatasourceType == "" {
 		return nil, fmt.Errorf("datasource type is required")
 	}
+	if cfg.DefaultInterval == 0 {
+		return nil, fmt.Errorf("default evaluation interval is required")
+	}
 	if cfg.FromTimeRange == nil {
 		cfg.FromTimeRange = defaultConfig.FromTimeRange
 	}
@@ -74,9 +80,8 @@ func NewConverter(cfg Config) (*Converter, error) {
 // PrometheusRulesToGrafana converts a Prometheus rule group into Grafana Alerting rule group.
 func (p *Converter) PrometheusRulesToGrafana(orgID int64, namespaceUID string, group PrometheusRuleGroup) (*models.AlertRuleGroup, error) {
 	for _, rule := range group.Rules {
-		err := validatePrometheusRule(rule)
-		if err != nil {
-			return nil, fmt.Errorf("invalid Prometheus rule '%s': %w", rule.Alert, err)
+		if err := rule.Validate(); err != nil {
+			return nil, err
 		}
 	}
 
@@ -88,18 +93,15 @@ func (p *Converter) PrometheusRulesToGrafana(orgID int64, namespaceUID string, g
 	return grafanaGroup, nil
 }
 
-func validatePrometheusRule(rule PrometheusRule) error {
-	if rule.KeepFiringFor != nil {
-		return fmt.Errorf("keep_firing_for is not supported")
-	}
-
-	return nil
-}
-
 func (p *Converter) convertRuleGroup(orgID int64, namespaceUID string, promGroup PrometheusRuleGroup) (*models.AlertRuleGroup, error) {
 	uniqueNames := map[string]int{}
 	rules := make([]models.AlertRule, 0, len(promGroup.Rules))
+
 	interval := time.Duration(promGroup.Interval)
+	if interval == 0 {
+		interval = p.cfg.DefaultInterval
+	}
+
 	for i, rule := range promGroup.Rules {
 		gr, err := p.convertRule(orgID, namespaceUID, promGroup.Name, rule)
 		if err != nil {

@@ -10,10 +10,11 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func TestPrometheusRulesToGrafana(t *testing.T) {
-	fiveMin := prommodel.Duration(5 * time.Minute)
+	defaultInterval := 2 * time.Minute
 
 	testCases := []struct {
 		name        string
@@ -34,7 +35,7 @@ func TestPrometheusRulesToGrafana(t *testing.T) {
 					{
 						Alert: "alert-1",
 						Expr:  "cpu_usage > 80",
-						For:   &fiveMin,
+						For:   util.Pointer(prommodel.Duration(5 * time.Minute)),
 						Labels: map[string]string{
 							"severity": "critical",
 						},
@@ -57,14 +58,14 @@ func TestPrometheusRulesToGrafana(t *testing.T) {
 					{
 						Alert:         "alert-1",
 						Expr:          "up == 0",
-						KeepFiringFor: &fiveMin,
+						KeepFiringFor: util.Pointer(prommodel.Duration(5 * time.Minute)),
 					},
 				},
 			},
 			expectError: true,
 		},
 		{
-			name:      "rule with empty interval",
+			name:      "rule group with empty interval",
 			orgID:     1,
 			namespace: "namespaceUID",
 			promGroup: PrometheusRuleGroup{
@@ -83,7 +84,8 @@ func TestPrometheusRulesToGrafana(t *testing.T) {
 			orgID:     1,
 			namespace: "namespaceUID",
 			promGroup: PrometheusRuleGroup{
-				Name: "test-group-1",
+				Name:     "test-group-1",
+				Interval: prommodel.Duration(10 * time.Second),
 				Rules: []PrometheusRule{
 					{
 						Record: "some_metric",
@@ -99,6 +101,7 @@ func TestPrometheusRulesToGrafana(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			tc.config.DatasourceUID = "datasource-uid"
 			tc.config.DatasourceType = datasources.DS_PROMETHEUS
+			tc.config.DefaultInterval = defaultInterval
 			converter, err := NewConverter(tc.config)
 			require.NoError(t, err)
 
@@ -111,7 +114,11 @@ func TestPrometheusRulesToGrafana(t *testing.T) {
 			require.NoError(t, err, tc.name)
 
 			require.Equal(t, tc.promGroup.Name, grafanaGroup.Title, tc.name)
+
 			expectedInterval := int64(time.Duration(tc.promGroup.Interval).Seconds())
+			if expectedInterval == 0 {
+				expectedInterval = int64(defaultInterval.Seconds())
+			}
 			require.Equal(t, expectedInterval, grafanaGroup.Interval, tc.name)
 
 			require.Equal(t, len(tc.promGroup.Rules), len(grafanaGroup.Rules), tc.name)
@@ -151,8 +158,9 @@ func TestPrometheusRulesToGrafana(t *testing.T) {
 
 func TestPrometheusRulesToGrafanaWithDuplicateRuleNames(t *testing.T) {
 	cfg := Config{
-		DatasourceUID:  "datasource-uid",
-		DatasourceType: datasources.DS_PROMETHEUS,
+		DatasourceUID:   "datasource-uid",
+		DatasourceType:  datasources.DS_PROMETHEUS,
+		DefaultInterval: 2 * time.Minute,
 	}
 	converter, err := NewConverter(cfg)
 	require.NoError(t, err)
