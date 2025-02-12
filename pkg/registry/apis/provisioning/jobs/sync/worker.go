@@ -168,7 +168,7 @@ func (r *SyncWorker) patchStatus(ctx context.Context, repo *provisioning.Reposit
 		return fmt.Errorf("unable to marshal patch data: %w", err)
 	}
 
-	repo, err = r.client.Repositories(repo.Namespace).
+	_, err = r.client.Repositories(repo.Namespace).
 		Patch(ctx, repo.Name, types.MergePatchType, patch, metav1.PatchOptions{}, "status")
 	if err != nil {
 		return fmt.Errorf("unable to update repo with job status: %w", err)
@@ -353,6 +353,11 @@ func (r *syncJob) applyVersionedChanges(ctx context.Context, repo repository.Ver
 
 			// 2. Create
 			r.progress.Record(ctx, r.writeResourceFromFile(ctx, change.Path, change.Ref, repository.FileActionCreated))
+		case repository.FileActionIgnored:
+			r.progress.Record(ctx, jobs.JobResourceResult{
+				Path:   change.Path,
+				Action: repository.FileActionIgnored,
+			})
 		}
 	}
 
