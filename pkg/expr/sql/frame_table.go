@@ -85,7 +85,7 @@ func (ri *rowIter) Next(_ *mysql.Context) (mysql.Row, error) {
 	// the value from each column at the current row index.
 	row := make(mysql.Row, len(ri.ft.Frame.Fields))
 	for colIndex, field := range ri.ft.Frame.Fields {
-		if nilAt(*field, ri.row) {
+		if field.NilAt(ri.row) {
 			continue
 		}
 		row[colIndex], _ = field.ConcreteAt(ri.row)

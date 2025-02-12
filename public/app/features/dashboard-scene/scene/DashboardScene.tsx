@@ -502,7 +502,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   }
 
   public duplicatePanel(vizPanel: VizPanel) {
-    getLayoutManagerFor(vizPanel).duplicatePanel(vizPanel);
+    getLayoutManagerFor(vizPanel).duplicatePanel?.(vizPanel);
   }
 
   public copyPanel(vizPanel: VizPanel) {
@@ -536,7 +536,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   }
 
   public removePanel(panel: VizPanel) {
-    getLayoutManagerFor(panel).removePanel(panel);
+    getLayoutManagerFor(panel).removePanel?.(panel);
   }
 
   public unlinkLibraryPanel(panel: VizPanel) {
@@ -593,6 +593,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
   public onCreateNewRow() {
     this.state.body.addNewRow();
+  }
+
+  public onCreateNewTab() {
+    this.state.body.addNewTab();
   }
 
   public onCreateNewPanel(): VizPanel {

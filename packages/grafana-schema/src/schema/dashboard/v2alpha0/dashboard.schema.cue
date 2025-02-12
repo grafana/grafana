@@ -43,7 +43,7 @@ DashboardV2Spec: {
 
   annotations: [...AnnotationQueryKind]
 
-  layout: GridLayoutKind
+  layout: GridLayoutKind | RowsLayoutKind | ResponsiveGridLayoutKind
 
 
   // Plugins only. The version of the dashboard installed together with the plugin.
@@ -467,7 +467,7 @@ TimeSettingsSpec: {
   // Whether timepicker is visible or not.
   hideTimepicker: bool // v1: timepicker.hidden
   // Day when the week starts. Expressed by the name of the day in lowercase, e.g. "monday".
-  weekStart: string
+  weekStart?: "saturday" | "monday" | "sunday"
   // The month that the fiscal year starts on. 0 = January, 11 = December
   fiscalYearStartMonth: int
   // Override the now time by entering a time delay. Use this option to accommodate known delays in data aggregation to avoid null values.
@@ -485,6 +485,11 @@ RepeatOptions: {
 
 RowRepeatOptions: {
   mode: RepeatMode,
+  value: string
+}
+
+ResponsiveGridRepeatOptions: {
+  mode: RepeatMode
   value: string
 }
 
@@ -522,6 +527,47 @@ GridLayoutSpec: {
 GridLayoutKind: {
   kind: "GridLayout"
   spec: GridLayoutSpec
+}
+
+RowsLayoutKind: {
+  kind: "RowsLayout"
+  spec: RowsLayoutSpec
+}
+
+RowsLayoutSpec: {
+  rows: [...RowsLayoutRowKind]
+}
+
+RowsLayoutRowKind: {
+  kind: "RowsLayoutRow"
+  spec: RowsLayoutRowSpec
+}
+
+RowsLayoutRowSpec: {
+  title?: string
+  collapsed: bool
+  repeat?: RowRepeatOptions
+  layout: GridLayoutKind | ResponsiveGridLayoutKind
+}
+
+ResponsiveGridLayoutKind: {
+  kind: "ResponsiveGridLayout"
+  spec: ResponsiveGridLayoutSpec
+}
+
+ResponsiveGridLayoutSpec: {
+  row: string,
+  col: string,
+  items: [...ResponsiveGridLayoutItemKind]
+}
+
+ResponsiveGridLayoutItemKind: {
+  kind: "ResponsiveGridLayoutItem"
+  spec: ResponsiveGridLayoutItemSpec
+}
+
+ResponsiveGridLayoutItemSpec: {
+  element: ElementReference
 }
 
 PanelSpec: {

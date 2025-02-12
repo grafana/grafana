@@ -148,8 +148,6 @@ You can toggle between the two options. Once you have created an alert rule, the
 
 Switching from advanced to default may result in queries and expressions that cannot be converted. In this case, a warning message asks if you want to continue to reset to default settings.
 
-Default and advanced options are enabled by default for Grafana Cloud users and this feature is being rolled out progressively. OSS users can enable them via the [`alertingQueryAndExpressionsStepMode` feature toggle](/setup-grafana/configure-grafana/feature-toggles/).
-
 {{< docs/shared lookup="alerts/configure-alert-rule-name.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ## Define query and condition

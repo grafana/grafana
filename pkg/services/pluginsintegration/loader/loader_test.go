@@ -1575,7 +1575,7 @@ func newLoader(t *testing.T, cfg *config.PluginManagementCfg, reg registry.Servi
 	terminate, err := pipeline.ProvideTerminationStage(cfg, reg, proc)
 	require.NoError(t, err)
 
-	return ProvideService(pipeline.ProvideDiscoveryStage(cfg,
+	return ProvideService(cfg, pipeline.ProvideDiscoveryStage(cfg,
 		finder.NewLocalFinder(false), reg),
 		pipeline.ProvideBootstrapStage(cfg, signature.DefaultCalculator(cfg), assets),
 		pipeline.ProvideValidationStage(cfg, signature.NewValidator(signature.NewUnsignedAuthorizer(cfg)), angularInspector),
@@ -1607,7 +1607,7 @@ func newLoaderWithOpts(t *testing.T, cfg *config.PluginManagementCfg, opts loade
 		backendFactoryProvider = fakes.NewFakeBackendProcessProvider()
 	}
 
-	return ProvideService(pipeline.ProvideDiscoveryStage(cfg,
+	return ProvideService(cfg, pipeline.ProvideDiscoveryStage(cfg,
 		finder.NewLocalFinder(false), reg),
 		pipeline.ProvideBootstrapStage(cfg, signature.DefaultCalculator(cfg), assets),
 		pipeline.ProvideValidationStage(cfg, signature.NewValidator(signature.NewUnsignedAuthorizer(cfg)), angularInspector),

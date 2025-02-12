@@ -59,11 +59,17 @@ func TestLargeDashboardSupport(t *testing.T) {
 	}`, string(small))
 
 	// Now make it big again
-	err = largeObject.RebuildSpec(dash, f)
+	rehydratedDash := &dashboardv0alpha1.Dashboard{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      "test",
+			Namespace: "test",
+		},
+	}
+	err = largeObject.RebuildSpec(rehydratedDash, f)
 	require.NoError(t, err)
 
 	// check that all panels exist again
-	panels, found, err = unstructured.NestedSlice(dash.Spec.Object, "panels")
+	panels, found, err = unstructured.NestedSlice(rehydratedDash.Spec.Object, "panels")
 	require.NoError(t, err)
 	require.True(t, found)
 	require.Len(t, panels, expectedPanelCount)

@@ -62,6 +62,8 @@ export function useOptions<T extends string | number>(rawOptions: AsyncOptions<T
     (opts: Array<ComboboxOption<T>>) => {
       let currentOptions: Array<ComboboxOption<T>> = opts;
       if (createCustomValue && userTypedSearch) {
+        //Since the label of a normal option does not have to match its value and a custom option has the same value and label,
+        //we just focus on the value to check if the option already exists
         const customValueExists = opts.some((opt) => opt.value === userTypedSearch);
         if (!customValueExists) {
           currentOptions = [
@@ -93,16 +95,39 @@ export function useOptions<T extends string | number>(rawOptions: AsyncOptions<T
     [debouncedLoadOptions, isAsync]
   );
 
-  const finalOptions = useMemo(() => {
-    let currentOptions = [];
-    if (isAsync) {
-      currentOptions = addCustomValue(asyncOptions);
-    } else {
-      currentOptions = addCustomValue(rawOptions.filter(itemFilter(userTypedSearch)));
+  const organizeOptionsByGroup = useCallback((options: Array<ComboboxOption<T>>) => {
+    const groupedOptions = new Map<string | undefined, Array<ComboboxOption<T>>>();
+    for (const option of options) {
+      const groupExists = groupedOptions.has(option.group);
+      if (groupExists) {
+        groupedOptions.get(option.group)?.push(option);
+      } else {
+        groupedOptions.set(option.group, [option]);
+      }
     }
 
-    return currentOptions;
-  }, [isAsync, addCustomValue, asyncOptions, rawOptions, userTypedSearch]);
+    // Reorganize options to have groups first, then undefined group
+    const reorganizeOptions = [];
+    for (const [group, groupOptions] of groupedOptions) {
+      if (!group) {
+        continue;
+      }
+      reorganizeOptions.push(...groupOptions);
+    }
+
+    const undefinedGroupOptions = groupedOptions.get(undefined);
+    if (undefinedGroupOptions) {
+      reorganizeOptions.push(...undefinedGroupOptions);
+    }
+    return reorganizeOptions;
+  }, []);
+
+  const finalOptions = useMemo(() => {
+    const currentOptions = isAsync ? asyncOptions : rawOptions.filter(itemFilter(userTypedSearch));
+    const currentOptionsOrganised = organizeOptionsByGroup(currentOptions);
+
+    return addCustomValue(currentOptionsOrganised);
+  }, [isAsync, organizeOptionsByGroup, addCustomValue, asyncOptions, rawOptions, userTypedSearch]);
 
   return { options: finalOptions, updateOptions, asyncLoading, asyncError };
 }

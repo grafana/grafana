@@ -19,6 +19,7 @@ import (
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/annotations/testutil"
+	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	dashboardsservice "github.com/grafana/grafana/pkg/services/dashboards/service"
@@ -63,7 +64,7 @@ func TestIntegrationAnnotationListingWithRBAC(t *testing.T) {
 		fStore, accesscontrolmock.New(), bus.ProvideBus(tracing.InitializeTracerForTest()), dashStore, folderStore,
 		nil, sql, featuremgmt.WithFeatures(), supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest())
 	dashSvc, err := dashboardsservice.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, featuremgmt.WithFeatures(), accesscontrolmock.NewMockedPermissionsService(),
-		ac, folderSvc, fStore, nil, nil, nil, nil, quotatest.New(false, nil), nil, nil)
+		ac, folderSvc, fStore, nil, client.MockTestRestConfig{}, nil, quotatest.New(false, nil), nil, nil)
 	require.NoError(t, err)
 	dashSvc.RegisterDashboardPermissions(accesscontrolmock.NewMockedPermissionsService())
 	repo := ProvideService(sql, cfg, features, tagService, tracing.InitializeTracerForTest(), ruleStore, dashSvc)
@@ -246,7 +247,7 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 			fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashStore, folderStore,
 			nil, sql, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest())
 		dashSvc, err := dashboardsservice.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, features, accesscontrolmock.NewMockedPermissionsService(),
-			ac, folderSvc, fStore, nil, nil, nil, nil, quotatest.New(false, nil), nil, nil)
+			ac, folderSvc, fStore, nil, client.MockTestRestConfig{}, nil, quotatest.New(false, nil), nil, nil)
 		require.NoError(t, err)
 		dashSvc.RegisterDashboardPermissions(accesscontrolmock.NewMockedPermissionsService())
 		cfg.AnnotationMaximumTagsLength = 60

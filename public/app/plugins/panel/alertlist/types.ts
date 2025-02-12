@@ -6,11 +6,6 @@ export enum SortOrder {
   TimeDesc,
 }
 
-export enum ShowOption {
-  Current = 'current',
-  RecentChanges = 'changes',
-}
-
 export enum GroupMode {
   Default = 'default',
   Custom = 'custom',
@@ -19,26 +14,6 @@ export enum GroupMode {
 export enum ViewMode {
   List = 'list',
   Stat = 'stat',
-}
-
-export interface AlertListOptions {
-  showOptions: ShowOption;
-  maxItems: number;
-  sortOrder: SortOrder;
-  dashboardAlerts: boolean;
-  alertName: string;
-  dashboardTitle: string;
-  tags: string[];
-  stateFilter: {
-    ok: boolean;
-    paused: boolean;
-    no_data: boolean;
-    execution_error: boolean;
-    alerting: boolean;
-    pending: boolean;
-  };
-  folderId: number;
-  showInactiveAlerts: boolean;
 }
 
 export interface StateFilter {

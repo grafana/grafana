@@ -71,7 +71,8 @@ export function QueryEditor(props: Props) {
         <TempoQueryBuilderOptions
           query={query}
           onChange={props.onChange}
-          isStreaming={props.datasource.isStreamingSearchEnabled() ?? false}
+          searchStreaming={props.datasource.isStreamingSearchEnabled() ?? false}
+          metricsStreaming={props.datasource.isStreamingMetricsEnabled() ?? false}
         />
       </div>
     </>
