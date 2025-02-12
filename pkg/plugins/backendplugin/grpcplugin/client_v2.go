@@ -185,6 +185,11 @@ func (c *ClientV2) QueryData(ctx context.Context, req *backend.QueryDataRequest)
 
 	protoReq := backend.ToProto().QueryDataRequest(req)
 	protoResp, err := c.DataClient.QueryData(ctx, protoReq)
+	// Here we get timeout error and not response with error and error source
+	// Idea for a quick fix:
+	// This is temporary until we figure out how to properly get where timeout happened #ISSUE
+	// if timeout and alerting query
+	// err := backend.DownstreamError(err)
 
 	if err != nil {
 		if status.Code(err) == codes.Unimplemented {

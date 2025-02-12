@@ -69,69 +69,7 @@ func (fs *FS) Extract(ctx context.Context, pluginID string, dirNameFunc DirNameG
 func (fs *FS) extractFiles(_ context.Context, pluginArchive *zip.ReadCloser, pluginID string, dirNameFunc DirNameGeneratorFunc) (string, error) {
 	pluginDirName := dirNameFunc(pluginID)
 	installDir := filepath.Join(fs.pluginsDir, pluginDirName)
-	if _, err := os.Stat(installDir); !os.IsNotExist(err) {
-		fs.log.Debugf("Removing existing installation of plugin %s", installDir)
-		err = os.RemoveAll(installDir)
-		if err != nil {
-			return "", err
-		}
-	}
-
-	defer func() {
-		if err := pluginArchive.Close(); err != nil {
-			fs.log.Warn("Failed to close zip file", "error", err)
-		}
-	}()
-
-	for _, zf := range pluginArchive.File {
-		// We can ignore gosec G305 here since we check for the ZipSlip vulnerability below
-		// nolint:gosec
-		fullPath := filepath.Join(fs.pluginsDir, zf.Name)
-
-		// Check for ZipSlip. More Info: http://bit.ly/2MsjAWE
-		if filepath.IsAbs(zf.Name) ||
-			!strings.HasPrefix(fullPath, filepath.Clean(fs.pluginsDir)+string(os.PathSeparator)) ||
-			strings.HasPrefix(zf.Name, ".."+string(os.PathSeparator)) {
-			return "", fmt.Errorf(
-				"archive member %q tries to write outside of plugin directory: %q, this can be a security risk",
-				zf.Name, fs.pluginsDir)
-		}
-
-		dstPath := filepath.Clean(filepath.Join(fs.pluginsDir, removeGitBuildFromName(zf.Name, pluginDirName))) // lgtm[go/zipslip]
-
-		if zf.FileInfo().IsDir() {
-			// We can ignore gosec G304 here since it makes sense to give all users read access
-			// nolint:gosec
-			if err := os.MkdirAll(dstPath, 0755); err != nil {
-				if os.IsPermission(err) {
-					return "", ErrPermissionDenied{Path: dstPath}
-				}
-
-				return "", err
-			}
-			continue
-		}
-
-		// Create needed directories to extract file
-		// We can ignore gosec G304 here since it makes sense to give all users read access
-		// nolint:gosec
-		if err := os.MkdirAll(filepath.Dir(dstPath), 0755); err != nil {
-			return "", fmt.Errorf("%v: %w", "failed to create directory to extract plugin files", err)
-		}
-
-		if isSymlink(zf) {
-			if err := extractSymlink(installDir, zf, dstPath); err != nil {
-				fs.log.Warn("Failed to extract symlink", "error", err)
-				continue
-			}
-			continue
-		}
-
-		if err := extractFile(zf, dstPath); err != nil {
-			return "", fmt.Errorf("%v: %w", "failed to extract file", err)
-		}
-	}
-
+	// Er don't need the rest when running data sources in api server locally
 	return installDir, nil
 }
 
