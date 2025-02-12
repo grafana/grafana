@@ -678,8 +678,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
       [0, 0, 0, "Do not use any type assertions.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "4"]
+      [0, 0, 0, "React Hook useCallback has an unnecessary dependency: \'DEFAULT_CELL_PADDING\'. Either exclude it or remove the dependency array. Outer scope values like \'DEFAULT_CELL_PADDING\' aren\'t valid dependencies because mutating them doesn\'t re-render the component.", "3"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "5"]
     ],
     "packages/grafana-ui/src/components/Table/TableNG/types.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
