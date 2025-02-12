@@ -81,13 +81,13 @@ func (r *SyncWorker) Process(ctx context.Context,
 	}
 
 	// Create job
-	syncJob, err := r.createJob(ctx, repo, *job.Spec.Sync, progress)
+	syncJob, err := r.createJob(ctx, repo, progress)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create sync job: %w", err)
 	}
 
 	// Execute the job
-	results, syncError := syncJob.run(ctx)
+	results, syncError := syncJob.run(ctx, *job.Spec.Sync)
 	// Initialize base job status
 	jobStatus := provisioning.JobStatus{
 		Started:  job.Status.Started,
@@ -156,7 +156,6 @@ func (r *SyncWorker) Process(ctx context.Context,
 // start a job and run it
 func (r *SyncWorker) createJob(ctx context.Context,
 	repo repository.Repository,
-	options provisioning.SyncJobOptions,
 	progress jobs.ProgressFn,
 ) (*syncJob, error) {
 	cfg := repo.Config()
@@ -176,7 +175,6 @@ func (r *SyncWorker) createJob(ctx context.Context,
 
 	job := &syncJob{
 		repository: repo,
-		options:    options,
 		progress:   progress,
 		parser:     parser,
 		lister:     r.lister,
@@ -213,7 +211,6 @@ func (r *SyncWorker) patchStatus(ctx context.Context, repo *provisioning.Reposit
 // created once for each sync execution
 type syncJob struct {
 	repository repository.Repository
-	options    provisioning.SyncJobOptions
 	progress   jobs.ProgressFn
 
 	parser       *resources.Parser
@@ -223,7 +220,7 @@ type syncJob struct {
 	folderLookup *resources.FolderTree
 }
 
-func (r *syncJob) run(ctx context.Context) (*ResultsRecorder, error) {
+func (r *syncJob) run(ctx context.Context, options provisioning.SyncJobOptions) (*ResultsRecorder, error) {
 	// Ensure the configured folder exists and is managed by the repository
 	cfg := r.repository.Config()
 	rootFolder := resources.RootFolder(cfg)
@@ -246,7 +243,7 @@ func (r *syncJob) run(ctx context.Context) (*ResultsRecorder, error) {
 			return nil, fmt.Errorf("getting latest ref: %w", err)
 		}
 
-		if cfg.Status.Sync.Hash != "" && r.options.Incremental {
+		if cfg.Status.Sync.Hash != "" && options.Incremental {
 			if currentRef == cfg.Status.Sync.Hash {
 				return &ResultsRecorder{Message: "same commit as last sync"}, nil
 			}
