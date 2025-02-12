@@ -109,6 +109,10 @@ func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (stri
 			idClaims.Rest.DisplayName = id.GetName()
 		}
 
+		if id.GetOrgRole().IsValid() {
+			idClaims.Rest.Role = string(id.GetOrgRole())
+		}
+
 		token, err := s.signer.SignIDToken(ctx, idClaims)
 		if err != nil {
 			s.metrics.failedTokenSigningCounter.Inc()

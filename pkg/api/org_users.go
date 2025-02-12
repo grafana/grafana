@@ -7,9 +7,11 @@ import (
 	"net/http"
 	"strconv"
 
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/authn"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -430,6 +432,10 @@ func (hs *HTTPServer) updateOrgUserHelper(c *contextmodel.ReqContext, cmd org.Up
 		if hs.isExternallySynced(hs.Cfg, authInfo.AuthModule) {
 			return response.Err(org.ErrCannotChangeRoleForExternallySyncedUser.Errorf("Cannot change role for externally synced user"))
 		}
+	}
+
+	if err := hs.idService.RemoveIDToken(c.Req.Context(), &authn.Identity{ID: strconv.FormatInt(cmd.UserID, 10), Type: claims.TypeUser, OrgID: cmd.OrgID}); err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to invalidate the ID token cache", err)
 	}
 
 	if err := hs.orgService.UpdateOrgUser(c.Req.Context(), &cmd); err != nil {
