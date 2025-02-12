@@ -116,7 +116,11 @@ jobs:
         ports:
           - 8080:8080
         options: >-
-          --command "/bin/mimir -target=backend -alertmanager.grafana-alertmanager-compatibility-enabled -alertmanager.utf8-strict-mode-enabled"
+          --entrypoint "/bin/mimir"
+          --
+          -target=backend
+          -alertmanager.grafana-alertmanager-compatibility-enabled
+          -alertmanager.utf8-strict-mode-enabled
 
     steps:
       - name: Identify Runner
