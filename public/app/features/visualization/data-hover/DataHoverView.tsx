@@ -23,7 +23,7 @@ export interface Props {
   mode?: TooltipDisplayMode | null;
   header?: string;
   padding?: number;
-  maxHeight?: string;
+  maxHeight?: number;
 }
 
 export interface DisplayValue {

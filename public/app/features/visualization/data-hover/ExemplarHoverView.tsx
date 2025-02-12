@@ -11,7 +11,7 @@ export interface Props {
   displayValues: DisplayValue[];
   links?: LinkModel[];
   header?: string;
-  maxHeight?: string;
+  maxHeight?: number;
 }
 
 export const ExemplarHoverView = ({ displayValues, links, header = 'Exemplar', maxHeight}: Props) => {
@@ -50,7 +50,7 @@ export const ExemplarHoverView = ({ displayValues, links, header = 'Exemplar', m
   );
 };
 
-const getStyles = (theme: GrafanaTheme2, padding = 0, maxHeight = 'none') => {
+const getStyles = (theme: GrafanaTheme2, padding = 0, maxHeight = 200) => {
   return {
     exemplarWrapper: css({
       display: 'flex',
@@ -80,7 +80,7 @@ const getStyles = (theme: GrafanaTheme2, padding = 0, maxHeight = 'none') => {
       gap: 4,
       borderTop: `1px solid ${theme.colors.border.medium}`,
       padding: theme.spacing(1),
-      overflowY: 'scroll',
+      overflowY: 'auto',
       maxHeight: maxHeight
     }),
     exemplarFooter: css({
