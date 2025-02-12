@@ -6,6 +6,7 @@ import { browseDashboardsAPI } from 'app/features/browse-dashboards/api/browseDa
 import { publicDashboardApi } from 'app/features/dashboard/api/publicDashboardApi';
 import { cloudMigrationAPI } from 'app/features/migrate-to-cloud/api';
 import { userPreferencesAPI } from 'app/features/preferences/api';
+import { provisioningAPI } from 'app/features/provisioning/api';
 import { StoreState } from 'app/types/store';
 
 import { buildInitialState } from '../core/reducers/navModel';
@@ -42,6 +43,7 @@ export function configureStore(initialState?: Partial<StoreState>) {
         cloudMigrationAPI.middleware,
         queryLibraryApi.middleware,
         userPreferencesAPI.middleware,
+        provisioningAPI.middleware,
         iamApi.middleware,
         ...extraMiddleware
       ),

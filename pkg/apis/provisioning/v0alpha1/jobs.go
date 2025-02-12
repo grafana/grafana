@@ -119,7 +119,18 @@ type JobStatus struct {
 	Progress float64 `json:"progress,omitempty"`
 
 	// Summary of processed actions
-	Summary []JobResourceSummary `json:"summary,omitempty"`
+	Summary []*JobResourceSummary `json:"summary,omitempty"`
+}
+
+// Convert a JOB to a
+func (in *JobStatus) ToSyncStatus(jobId string) SyncStatus {
+	return SyncStatus{
+		JobID:    jobId,
+		State:    in.State,
+		Started:  in.Started,
+		Finished: in.Finished,
+		Message:  in.Errors,
+	}
 }
 
 type JobResourceSummary struct {

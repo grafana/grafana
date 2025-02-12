@@ -7,12 +7,12 @@
     "spec": {
         "title": "Load devenv dashboards",
         "description": "Load /devenv/dev-dashboards (from root of repository)",
-        "readOnly": false,
         "sync": {
-            "enabled": true,
-            "target": "mirror",
+            "enabled": false,
+            "target": "folder",
             "intervalSeconds": 60
         },
+        "readOnly": false,
         "type": "local",
         "local": {
             "path": "devenv/dev-dashboards"
