@@ -27,6 +27,7 @@ import {
   FieldNamePickerConfigSettings,
   booleanOverrideProcessor,
   Action,
+  DataLinksFieldConfigSettings,
 } from '@grafana/data';
 import { actionsOverrideProcessor } from '@grafana/data/src/field/overrides/processors';
 import { config } from '@grafana/runtime';
@@ -350,7 +351,7 @@ export const getAllStandardFieldConfigs = () => {
 
   const dataLinksCategory = config.featureToggles.vizActions ? 'Data links and actions' : 'Data links';
 
-  const links: FieldConfigPropertyItem<FieldConfig, DataLink[], StringFieldConfigSettings> = {
+  const links: FieldConfigPropertyItem<FieldConfig, DataLink[], DataLinksFieldConfigSettings> = {
     id: 'links',
     path: 'links',
     name: 'Data links',
@@ -358,14 +359,14 @@ export const getAllStandardFieldConfigs = () => {
     override: standardEditorsRegistry.get('links').editor,
     process: dataLinksOverrideProcessor,
     settings: {
-      placeholder: '-',
+      showOneClick: false,
     },
     shouldApply: () => true,
     category: [dataLinksCategory],
     getItemsCount: (value) => (value ? value.length : 0),
   };
 
-  const actions: FieldConfigPropertyItem<FieldConfig, Action[], StringFieldConfigSettings> = {
+  const actions: FieldConfigPropertyItem<FieldConfig, Action[], DataLinksFieldConfigSettings> = {
     id: 'actions',
     path: 'actions',
     name: 'Actions',
@@ -373,12 +374,13 @@ export const getAllStandardFieldConfigs = () => {
     override: standardEditorsRegistry.get('actions').editor,
     process: actionsOverrideProcessor,
     settings: {
-      placeholder: '-',
+      showOneClick: false,
     },
     shouldApply: () => true,
     category: [dataLinksCategory],
     getItemsCount: (value) => (value ? value.length : 0),
     showIf: () => config.featureToggles.vizActions,
+    hideFromDefaults: true,
   };
 
   const color: FieldConfigPropertyItem<FieldConfig, FieldColor | undefined, FieldColorConfigSettings> = {
