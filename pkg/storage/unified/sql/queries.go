@@ -44,6 +44,7 @@ var (
 	sqlResourceHistoryPoll       = mustTemplate("resource_history_poll.sql")
 	sqlResourceHistoryGet        = mustTemplate("resource_history_get.sql")
 	sqlResourceHistoryDelete     = mustTemplate("resource_history_delete.sql")
+	sqlResourceInsertFromHistory = mustTemplate("resource_insert_from_history.sql")
 
 	// sqlResourceLabelsInsert = mustTemplate("resource_labels_insert.sql")
 	sqlResourceVersionGet    = mustTemplate("resource_version_get.sql")
@@ -53,10 +54,6 @@ var (
 
 	sqlResourceBlobInsert = mustTemplate("resource_blob_insert.sql")
 	sqlResourceBlobQuery  = mustTemplate("resource_blob_query.sql")
-
-	sqlMigratorGetDeletionMarkers  = mustTemplate("migrator_get_deletion_markers.sql")
-	sqlMigratorGetValueFromRV      = mustTemplate("migrator_get_value_from_rv.sql")
-	sqlMigratorUpdateValueWithGUID = mustTemplate("migrator_update_value_with_guid.sql")
 )
 
 // TxOptions.
@@ -78,15 +75,32 @@ type sqlResourceRequest struct {
 	GUID       string
 	WriteEvent resource.WriteEvent
 	Folder     string
+
+	// Useful when batch writing
+	ResourceVersion int64
 }
 
 func (r sqlResourceRequest) Validate() error {
 	return nil // TODO
 }
 
+type sqlResourceInsertFromHistoryRequest struct {
+	sqltemplate.SQLTemplate
+	Key *resource.ResourceKey
+}
+
+func (r sqlResourceInsertFromHistoryRequest) Validate() error {
+	if r.Key == nil {
+		return fmt.Errorf("missing key")
+	}
+	return nil
+}
+
 type sqlStatsRequest struct {
 	sqltemplate.SQLTemplate
 	Namespace string
+	Group     string
+	Resource  string
 	Folder    string
 	MinCount  int
 }
@@ -206,11 +220,25 @@ func (r sqlResourceHistoryListRequest) Results() (*resource.ResourceWrapper, err
 type sqlResourceHistoryDeleteRequest struct {
 	sqltemplate.SQLTemplate
 	GUID string
-	// TODO, add other constraints
+
+	Namespace string
+	Group     string
+	Resource  string
 }
 
 func (r *sqlResourceHistoryDeleteRequest) Validate() error {
-	return nil // TODO
+	if r.Namespace == "" {
+		return fmt.Errorf("missing namespace")
+	}
+	if r.GUID == "" {
+		if r.Group == "" {
+			return fmt.Errorf("missing group")
+		}
+		if r.Resource == "" {
+			return fmt.Errorf("missing resource")
+		}
+	}
+	return nil
 }
 
 type sqlGetHistoryRequest struct {
@@ -329,20 +357,4 @@ func (r *sqlResourceVersionListRequest) Validate() error {
 func (r *sqlResourceVersionListRequest) Results() (*groupResourceVersion, error) {
 	x := *r.groupResourceVersion
 	return &x, nil
-}
-
-// This holds all the variables used in migration queries
-
-type sqlMigrationQueryRequest struct {
-	sqltemplate.SQLTemplate
-	MarkerQuery string //
-	Group       string
-	Resource    string
-	RV          int64
-	GUID        string
-	Value       string
-}
-
-func (r sqlMigrationQueryRequest) Validate() error {
-	return nil // TODO
 }

@@ -47,7 +47,6 @@ export interface FeatureToggles {
   nestedFolders?: boolean;
   alertingBacktesting?: boolean;
   editPanelCSVDragAndDrop?: boolean;
-  alertingNoNormalState?: boolean;
   logsContextDatasourceUi?: boolean;
   lokiShardSplitting?: boolean;
   lokiQuerySplitting?: boolean;
@@ -112,9 +111,7 @@ export interface FeatureToggles {
   kubernetesDashboards?: boolean;
   kubernetesCliDashboards?: boolean;
   kubernetesRestore?: boolean;
-  kubernetesFolders?: boolean;
   kubernetesFoldersServiceV2?: boolean;
-  grafanaAPIServerTestingWithExperimentalAPIs?: boolean;
   datasourceQueryTypes?: boolean;
   queryService?: boolean;
   queryServiceRewrite?: boolean;
@@ -124,7 +121,6 @@ export interface FeatureToggles {
   lokiStructuredMetadata?: boolean;
   teamHttpHeaders?: boolean;
   cachingOptimizeSerializationMemoryUsage?: boolean;
-  panelTitleSearchInV1?: boolean;
   managedPluginsInstall?: boolean;
   prometheusPromQAIL?: boolean;
   prometheusCodeModeMetricNamesSearch?: boolean;
@@ -156,8 +152,8 @@ export interface FeatureToggles {
   newFolderPicker?: boolean;
   jitterAlertRulesWithinGroups?: boolean;
   onPremToCloudMigrations?: boolean;
-  onPremToCloudMigrationsAuthApiMig?: boolean;
   alertingSaveStatePeriodic?: boolean;
+  alertingSaveStateCompressed?: boolean;
   scopeApi?: boolean;
   promQLScope?: boolean;
   logQLScope?: boolean;
@@ -169,7 +165,6 @@ export interface FeatureToggles {
   kubernetesAggregator?: boolean;
   expressionParser?: boolean;
   groupByVariable?: boolean;
-  authAPIAccessTokenAuth?: boolean;
   scopeFilters?: boolean;
   ssoSettingsSAML?: boolean;
   oauthRequireSubClaim?: boolean;
@@ -192,7 +187,6 @@ export interface FeatureToggles {
   azureMonitorPrometheusExemplars?: boolean;
   pinNavItems?: boolean;
   authZGRPCServer?: boolean;
-  openSearchBackendFlowEnabled?: boolean;
   ssoSettingsLDAP?: boolean;
   failWrongDSUID?: boolean;
   zanzana?: boolean;
@@ -219,6 +213,7 @@ export interface FeatureToggles {
   rolePickerDrawer?: boolean;
   unifiedStorageSearch?: boolean;
   unifiedStorageSearchSprinkles?: boolean;
+  unifiedStorageSearchPermissionFiltering?: boolean;
   pluginsSriChecks?: boolean;
   unifiedStorageBigObjectsSupport?: boolean;
   timeRangeProvider?: boolean;
@@ -231,7 +226,6 @@ export interface FeatureToggles {
   exploreMetricsRelatedLogs?: boolean;
   prometheusSpecialCharsInLabelValues?: boolean;
   enableExtensionsAdminPage?: boolean;
-  zipkinBackendMigration?: boolean;
   enableSCIM?: boolean;
   crashDetection?: boolean;
   jaegerBackendMigration?: boolean;
@@ -251,7 +245,18 @@ export interface FeatureToggles {
   improvedExternalSessionHandlingSAML?: boolean;
   teamHttpHeadersMimir?: boolean;
   ABTestFeatureToggleA?: boolean;
+  templateVariablesUsesCombobox?: boolean;
   ABTestFeatureToggleB?: boolean;
   queryLibraryDashboards?: boolean;
+  grafanaAdvisor?: boolean;
   elasticsearchImprovedParsing?: boolean;
+  exploreMetricsUseExternalAppPlugin?: boolean;
+  datasourceConnectionsTab?: boolean;
+  fetchRulesUsingPost?: boolean;
+  alertingConversionAPI?: boolean;
+  alertingAlertmanagerExtraDedupStage?: boolean;
+  alertingAlertmanagerExtraDedupStageStopPipeline?: boolean;
+  newLogsPanel?: boolean;
+  grafanaconThemes?: boolean;
+  pluginsCDNSyncLoader?: boolean;
 }

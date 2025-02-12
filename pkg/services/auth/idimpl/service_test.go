@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/authlib/claims"
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/idtest"
@@ -34,7 +34,7 @@ func Test_ProvideService(t *testing.T) {
 }
 
 func TestService_SignIdentity(t *testing.T) {
-	signer := &idtest.MockSigner{
+	signer := &idtest.FakeSigner{
 		SignIDTokenFn: func(_ context.Context, claims *auth.IDClaims) (string, error) {
 			key := []byte("key")
 			s, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.HS256, Key: key}, nil)

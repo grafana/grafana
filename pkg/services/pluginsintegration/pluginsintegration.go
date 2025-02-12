@@ -107,8 +107,6 @@ var WireSet = wire.NewSet(
 	wire.Bind(new(repo.Service), new(*repo.Manager)),
 	licensing.ProvideLicensing,
 	wire.Bind(new(plugins.Licensing), new(*licensing.Service)),
-	wire.Bind(new(sources.Registry), new(*sources.Service)),
-	sources.ProvideService,
 	pluginSettings.ProvideService,
 	wire.Bind(new(pluginsettings.Service), new(*pluginSettings.Service)),
 	filestore.ProvideService,
@@ -129,6 +127,8 @@ var WireSet = wire.NewSet(
 	wire.Bind(new(plugincontext.BasePluginContextProvider), new(*plugincontext.BaseProvider)),
 	plugininstaller.ProvideService,
 	pluginassets.ProvideService,
+	plugininstaller.ProvidePreinstall,
+	wire.Bind(new(plugininstaller.Preinstall), new(*plugininstaller.PreinstallImpl)),
 )
 
 // WireExtensionSet provides a wire.ProviderSet of plugin providers that can be
@@ -144,6 +144,8 @@ var WireExtensionSet = wire.NewSet(
 	wire.Bind(new(plugins.Client), new(*backend.MiddlewareHandler)),
 	managedplugins.NewNoop,
 	wire.Bind(new(managedplugins.Manager), new(*managedplugins.Noop)),
+	sources.ProvideService,
+	wire.Bind(new(sources.Registry), new(*sources.Service)),
 )
 
 func ProvideClientWithMiddlewares(

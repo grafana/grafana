@@ -99,6 +99,8 @@ In this tutorial, you will learn:
 
 There are different ways you can follow along with this tutorial.
 
+> Note: Some of the templating features in Grafana Alerting discussed in this tutorial are currently available in Grafana Cloud but have not yet been released to the Open Source (OSS) version.
+
 - **Grafana Cloud**
 
   - As a Grafana Cloud user, you don't have to install anything. [Create your free account](http://www.grafana.com/auth/sign-up/create-user).
@@ -417,5 +419,23 @@ To deepen your understanding of Grafana’s templating, explore the following re
 
 - [**Notification template reference**](https://grafana.com/docs/grafana/latest/alerting/configure-notifications/template-notifications/reference/): Lists the data available for use in notification templates and explores specific functions.
 - [**Alert rule template reference**](https://grafana.com/docs/grafana/latest/alerting/alerting-rules/templates/reference/): Covers the specifics of creating dynamic labels and annotations for alert rules using elements such as variables and functions.
+
+## Learn more in [Grafana Alerting Part 5](http://www.grafana.com/tutorials/alerting-get-started-pt5/)
+
+<!-- INTERACTIVE ignore START -->
+
+{{< admonition type="tip" >}}
+
+In [Get started with Grafana Alerting - Part 5](http://www.grafana.com/tutorials/alerting-get-started-pt5/) you learn how to dynamically route alerts and link them to dashboards.
+
+{{< /admonition >}}
+
+<!-- INTERACTIVE ignore END -->
+
+{{< docs/ignore >}}
+
+In [Get started with Grafana Alerting - Part 5](http://www.grafana.com/tutorials/alerting-get-started-pt5/) you learn how to dynamically route alerts and link them to dashboards.
+
+{{< /docs/ignore >}}
 
 <!-- INTERACTIVE page finish.md END -->

@@ -4,9 +4,9 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/authlib/claims"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
 func TestIDTokenExtractor(t *testing.T) {
@@ -15,11 +15,8 @@ func TestIDTokenExtractor(t *testing.T) {
 		assert.Error(t, err)
 		assert.Empty(t, token)
 	})
-	t.Run("should return an empty token for static requester of type service account as grafana admin ", func(t *testing.T) {
-		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
-			Type:           claims.TypeServiceAccount,
-			IsGrafanaAdmin: true,
-		})
+	t.Run("should return an empty token when grafana identity is set", func(t *testing.T) {
+		ctx, _ := identity.WithServiceIdentity(context.Background(), 0)
 		token, err := idTokenExtractor(ctx)
 		assert.NoError(t, err)
 		assert.Empty(t, token)

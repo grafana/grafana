@@ -34,10 +34,9 @@ type Backend interface {
 }
 
 type BackendOptions struct {
-	DBProvider        db.DBProvider
-	Tracer            trace.Tracer
-	PollingInterval   time.Duration
-	SkipDataMigration bool
+	DBProvider      db.DBProvider
+	Tracer          trace.Tracer
+	PollingInterval time.Duration
 }
 
 func NewBackend(opts BackendOptions) (Backend, error) {
@@ -54,13 +53,13 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 		pollingInterval = defaultPollingInterval
 	}
 	return &backend{
-		done:              ctx.Done(),
-		cancel:            cancel,
-		log:               log.New("sql-resource-server"),
-		tracer:            opts.Tracer,
-		dbProvider:        opts.DBProvider,
-		pollingInterval:   pollingInterval,
-		skipDataMigration: opts.SkipDataMigration,
+		done:            ctx.Done(),
+		cancel:          cancel,
+		log:             log.New("sql-resource-server"),
+		tracer:          opts.Tracer,
+		dbProvider:      opts.DBProvider,
+		pollingInterval: pollingInterval,
+		batchLock:       &batchLock{running: make(map[string]bool)},
 	}, nil
 }
 
@@ -76,10 +75,10 @@ type backend struct {
 	tracer trace.Tracer
 
 	// database
-	dbProvider        db.DBProvider
-	db                db.DB
-	dialect           sqltemplate.Dialect
-	skipDataMigration bool
+	dbProvider db.DBProvider
+	db         db.DB
+	dialect    sqltemplate.Dialect
+	batchLock  *batchLock
 
 	// watch streaming
 	//stream chan *resource.WatchEvent
@@ -104,12 +103,6 @@ func (b *backend) initLocked(ctx context.Context) error {
 	b.dialect = sqltemplate.DialectForDriver(driverName)
 	if b.dialect == nil {
 		return fmt.Errorf("no dialect for driver %q", driverName)
-	}
-
-	// Process any data manipulation migrations
-	err = b.runStartupDataMigrations(ctx)
-	if err != nil {
-		return err
 	}
 
 	return b.db.PingContext(ctx)
@@ -528,6 +521,10 @@ func (l *listIter) ContinueToken() string {
 	return ContinueToken{ResourceVersion: l.listRV, StartOffset: l.offset}.String()
 }
 
+func (l *listIter) ContinueTokenWithCurrentRV() string {
+	return ContinueToken{ResourceVersion: l.rv, StartOffset: l.offset}.String()
+}
+
 func (l *listIter) Error() error {
 	return l.err
 }
@@ -706,7 +703,7 @@ func (b *backend) WatchWriteEvents(ctx context.Context) (<-chan *resource.Writte
 	// Get the latest RV
 	since, err := b.listLatestRVs(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("get the latest resource version: %w", err)
+		return nil, fmt.Errorf("watch, get latest resource version: %w", err)
 	}
 	// Start the poller
 	stream := make(chan *resource.WrittenEvent)
@@ -718,17 +715,23 @@ func (b *backend) poller(ctx context.Context, since groupResourceRV, stream chan
 	t := time.NewTicker(b.pollingInterval)
 	defer close(stream)
 	defer t.Stop()
+	isSQLite := b.dialect.DialectName() == "sqlite"
 
 	for {
 		select {
 		case <-b.done:
 			return
 		case <-t.C:
+			// Block polling duffing import to avoid database locked issues
+			if isSQLite && b.batchLock.Active() {
+				continue
+			}
+
 			ctx, span := b.tracer.Start(ctx, tracePrefix+"poller")
 			// List the latest RVs
 			grv, err := b.listLatestRVs(ctx)
 			if err != nil {
-				b.log.Error("get the latest resource version", "err", err)
+				b.log.Error("poller get latest resource version", "err", err)
 				t.Reset(b.pollingInterval)
 				continue
 			}
@@ -810,6 +813,8 @@ func fetchLatestRV(ctx context.Context, x db.ContextExecer, d sqltemplate.Dialec
 func (b *backend) poll(ctx context.Context, grp string, res string, since int64, stream chan<- *resource.WrittenEvent) (int64, error) {
 	ctx, span := b.tracer.Start(ctx, tracePrefix+"poll")
 	defer span.End()
+
+	start := time.Now()
 	var records []*historyPollResponse
 	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
 		var err error
@@ -825,6 +830,8 @@ func (b *backend) poll(ctx context.Context, grp string, res string, since int64,
 	if err != nil {
 		return 0, fmt.Errorf("poll history: %w", err)
 	}
+	end := time.Now()
+	resource.NewStorageMetrics().PollerLatency.Observe(end.Sub(start).Seconds())
 
 	var nextRV int64
 	for _, rec := range records {
@@ -852,6 +859,7 @@ func (b *backend) poll(ctx context.Context, grp string, res string, since int64,
 			ResourceVersion: rec.ResourceVersion,
 			// Timestamp:  , // TODO: add timestamp
 		}
+		b.log.Debug("poller sent event to stream", "namespace", rec.Key.Namespace, "group", rec.Key.Group, "resource", rec.Key.Resource, "name", rec.Key.Name, "action", rec.Action, "rv", rec.ResourceVersion)
 	}
 
 	return nextRV, nil

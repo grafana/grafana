@@ -155,8 +155,10 @@ func (s *Service) performTraceRequest(ctx context.Context, dsInfo *Datasource, a
 	}
 
 	defer func() {
-		if err := resp.Body.Close(); err != nil {
-			ctxLogger.Error("Failed to close response body", "error", err, "function", logEntrypoint())
+		if resp != nil && resp.Body != nil {
+			if err := resp.Body.Close(); err != nil {
+				ctxLogger.Error("Failed to close response body", "error", err, "function", logEntrypoint())
+			}
 		}
 	}()
 

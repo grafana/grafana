@@ -7,10 +7,11 @@ import (
 	"time"
 
 	"github.com/go-jose/go-jose/v3/jwt"
-	authnlib "github.com/grafana/authlib/authn"
-	"github.com/grafana/authlib/claims"
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/sync/singleflight"
+
+	authnlib "github.com/grafana/authlib/authn"
+	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -106,6 +107,10 @@ func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (stri
 			idClaims.Rest.AuthenticatedBy = id.GetAuthenticatedBy()
 			idClaims.Rest.Username = id.GetLogin()
 			idClaims.Rest.DisplayName = id.GetName()
+		}
+
+		if id.GetOrgRole().IsValid() {
+			idClaims.Rest.Role = string(id.GetOrgRole())
 		}
 
 		token, err := s.signer.SignIDToken(ctx, idClaims)
