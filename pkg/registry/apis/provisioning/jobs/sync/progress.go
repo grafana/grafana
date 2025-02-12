@@ -2,6 +2,7 @@ package sync
 
 import (
 	"context"
+	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
@@ -149,4 +150,35 @@ func (r *JobProgressRecorder) UpdateProgress(ctx context.Context) {
 	if err := r.progressFn(ctx, jobStatus); err != nil {
 		logger.Warn("error notifying progress", "err", err)
 	}
+}
+
+func (r *JobProgressRecorder) Complete(ctx context.Context, err error) *provisioning.JobStatus {
+	// Initialize base job status
+	jobStatus := provisioning.JobStatus{
+		// Started:  job.Status.Started,
+		Finished: time.Now().UnixMilli(),
+		State:    provisioning.JobStateSuccess,
+		Message:  "completed successfully",
+	}
+
+	if err != nil {
+		jobStatus.State = provisioning.JobStateError
+		jobStatus.Message = err.Error()
+	}
+
+	jobStatus.Summary = r.Summary()
+	jobStatus.Errors = r.Errors()
+
+	// Check for errors during execution
+	if len(jobStatus.Errors) > 0 && jobStatus.State != provisioning.JobStateError {
+		jobStatus.State = provisioning.JobStateError
+		jobStatus.Message = "completed with errors"
+	}
+
+	// Override message if progress have a more explicit message
+	if r.message != "" && jobStatus.State != provisioning.JobStateError {
+		jobStatus.Message = r.message
+	}
+
+	return &jobStatus
 }

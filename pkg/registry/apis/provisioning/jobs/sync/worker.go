@@ -90,38 +90,12 @@ func (r *SyncWorker) Process(ctx context.Context,
 
 	// Execute the job
 	syncError := syncJob.run(ctx, *job.Spec.Sync, progress)
-	// Initialize base job status
-	jobStatus := provisioning.JobStatus{
-		Started:  job.Status.Started,
-		Finished: time.Now().UnixMilli(),
-		State:    provisioning.JobStateSuccess,
-		Message:  "sync completed successfully",
-	}
-
-	// Handle sync error
-	if syncError != nil {
-		jobStatus.State = provisioning.JobStateError
-		jobStatus.Message = syncError.Error()
-	}
-
-	jobStatus.Summary = progress.Summary()
-	jobStatus.Errors = progress.Errors()
-
-	// Check for errors during execution
-	if len(jobStatus.Errors) > 0 && jobStatus.State != provisioning.JobStateError {
-		jobStatus.State = provisioning.JobStateError
-		jobStatus.Message = "sync completed with errors"
-	}
-
-	// Override message if progress have a more explicit message
-	if progress.message != "" && jobStatus.State != provisioning.JobStateError {
-		jobStatus.Message = progress.message
-	}
+	jobStatus := progress.Complete(ctx, syncError)
 
 	// Create sync status and set hash if successful
 	syncStatus := jobStatus.ToSyncStatus(job.Name)
 	if syncStatus.State == provisioning.JobStateSuccess {
-		syncStatus.Hash = progress.ref
+		syncStatus.Hash = progress.GetRef()
 	}
 
 	// Update the resource stats -- give the index some time to catch up
@@ -149,7 +123,7 @@ func (r *SyncWorker) Process(ctx context.Context,
 		return nil, syncError
 	}
 
-	return &jobStatus, nil
+	return jobStatus, nil
 }
 
 // start a job and run it
