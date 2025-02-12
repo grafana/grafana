@@ -1325,7 +1325,7 @@ func TestBuildAnonymousUser(t *testing.T) {
 	require.NoError(t, err)
 	dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, "", true, []map[string]interface{}{}, nil)
 
-	t.Run("will add datasource read and query permissions to user for each datasource in dashboard", func(t *testing.T) {
+	t.Run("the grafana service identity has access to annotations dashboards and datasources", func(t *testing.T) {
 		_, user := identity.WithServiceIdentity(context.Background(), dashboard.OrgID)
 
 		require.Equal(t, dashboard.OrgID, user.GetOrgID())

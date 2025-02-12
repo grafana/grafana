@@ -82,8 +82,8 @@ var serviceIdentityPermissions = getWildcardPermissions(
 	"dashboards:read",
 	"dashboards:write",
 	"dashboards:create",
-	"datasources:read",
 	"datasources:query",
+	"datasources:read",
 	"alert.provisioning:write",
 	"alert.provisioning.secrets:read",
 )
