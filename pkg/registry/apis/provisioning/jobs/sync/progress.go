@@ -35,7 +35,7 @@ func (r *JobProgressRecorder) Record(ctx context.Context, result JobResourceResu
 	logger := logging.FromContext(ctx)
 
 	if result.Error != nil {
-		logger.Warn("job resource operation failed", "err", result.Error, "path", result.Path, "resource", result.Resource, "group", result.Group, "action", result.Action, "name", result.Name)
+		logger.Error("job resource operation failed", "err", result.Error, "path", result.Path, "resource", result.Resource, "group", result.Group, "action", result.Action, "name", result.Name)
 	}
 
 	r.UpdateProgress(ctx)
