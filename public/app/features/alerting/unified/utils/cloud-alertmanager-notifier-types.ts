@@ -87,7 +87,7 @@ const jiraNotifier: NotifierDTO<CloudNotifierType> = {
     option('priority', 'Priority', 'Priority of the issue.', {
       placeholder: '{{ template "jira.default.priority" . }}',
     }),
-    option('issue_type', 'IssueType', 'Type of the issue (e.g. Bug).'),
+    option('issue_type', 'Issue Type', 'Type of the issue (e.g. Bug).'),
     option(
       'reopen_transition',
       'Reopen transition',

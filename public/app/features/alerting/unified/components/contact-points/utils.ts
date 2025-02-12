@@ -51,7 +51,7 @@ export function getReceiverDescription(receiver: ReceiverConfigWithMetadata): Re
       return settings.url;
     }
     case 'jira': {
-      return settings.project;
+      return `Creates a "${settings.issue_type}" issue in the "${settings.project}" project`;
     }
     case ReceiverTypes.OnCall: {
       return receiver[RECEIVER_PLUGIN_META_KEY]?.description;
