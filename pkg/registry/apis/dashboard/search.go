@@ -438,7 +438,7 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 			}},
 		},
 	}
-	// get all dashboards user has access to, along with their parent folder
+	// get all dashboards user has access to, along with their parent folder uid
 	dashboardResult, err := s.client(ctx).Search(ctx, dashboardSearchRequest)
 	if err != nil {
 		return sharedDashboards, err
