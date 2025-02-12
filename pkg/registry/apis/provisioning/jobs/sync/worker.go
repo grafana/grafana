@@ -445,134 +445,93 @@ func (r *syncJob) applyVersionedChanges(ctx context.Context, repo repository.Ver
 
 func (r *syncJob) deleteObject(ctx context.Context, path string, ref string) Result {
 	info, err := r.repository.Read(ctx, path, ref)
+	result := Result{
+		Path:   path,
+		Action: repository.FileActionDeleted,
+	}
+
 	if err != nil {
-		return Result{
-			Path:  path,
-			Error: fmt.Errorf("failed to read file: %w", err),
-		}
+		result.Error = fmt.Errorf("failed to read file: %w", err)
+		return result
 	}
 
 	obj, gvk, _ := resources.DecodeYAMLObject(bytes.NewBuffer(info.Data))
 	if obj == nil {
-		return Result{
-			Path:  path,
-			Error: errors.New("no object found"),
-		}
+		result.Error = errors.New("no object found")
+		return result
 	}
 
 	// Find the referenced file
 	objName, _ := resources.NamesFromHashedRepoPath(r.repository.Config().Name, path)
+	result.Name = objName
+	result.Resource = gvk.Kind
+	result.Group = gvk.Group
 
 	client, err := r.client(gvk.Kind)
 	if err != nil {
-		return Result{
-			Name:     objName,
-			Resource: "",        // TODO: is this correct?
-			Group:    gvk.Group, // TODO: is this correct?
-			Path:     path,
-			Action:   repository.FileActionDeleted,
-			Error:    fmt.Errorf("unable to get client for deleted object: %w", err),
-		}
-	}
-	err = client.Delete(ctx, objName, metav1.DeleteOptions{})
-	if err != nil {
-		return Result{
-			Name:     objName,
-			Resource: "",        // TODO: is this correct?
-			Group:    gvk.Group, // TODO: is this correct?
-			Path:     path,
-			Action:   repository.FileActionDeleted,
-			Error:    fmt.Errorf("failed to delete: %w", err),
-		}
+		result.Error = fmt.Errorf("unable to get client for deleted object: %w", err)
+		return result
 	}
 
-	return Result{
-		Name:     objName,
-		Resource: "",        // TODO: is this correct?
-		Group:    gvk.Group, // TODO: is this correct?
-		Path:     path,
-		Action:   repository.FileActionDeleted,
-		Error:    err,
+	err = client.Delete(ctx, objName, metav1.DeleteOptions{})
+	if err != nil {
+		result.Error = fmt.Errorf("failed to delete: %w", err)
+		return result
 	}
+
+	return result
 }
 
 func (r *syncJob) writeResourceFromFile(ctx context.Context, path string, ref string, action repository.FileAction) Result {
+	result := Result{
+		Path:   path,
+		Action: action,
+	}
+
 	if resources.ShouldIgnorePath(path) {
-		return Result{
-			// TODO: should we use a specific error for the ignored?
-			Path:   path,
-			Action: repository.FileActionIgnored,
-			Error:  nil,
-		}
+		result.Action = repository.FileActionIgnored
+		return result
 	}
 
 	// Read the referenced file
 	fileInfo, err := r.repository.Read(ctx, path, ref)
 	if err != nil {
-		return Result{
-			Path:   path,
-			Action: action,
-			Error:  fmt.Errorf("failed to read file: %w", err),
-		}
+		result.Error = fmt.Errorf("failed to read file: %w", err)
+		return result
 	}
 
 	parsed, err := r.parser.Parse(ctx, fileInfo, false) // no validation
 	if err != nil {
-		return Result{
-			Path:   path,
-			Action: action,
-			Error:  fmt.Errorf("failed to parse file: %w", err),
-		}
+		result.Error = fmt.Errorf("failed to parse file: %w", err)
+		return result
 	}
 
 	// Make sure the parent folders exist
 	folder, err := r.ensureFolderPathExists(ctx, path)
 	if err != nil {
-		return Result{
-			Name:     parsed.Obj.GetName(),
-			Resource: parsed.GVR.Resource, // TODO: is this correct?
-			Group:    parsed.GVK.Group,    // TODO: is this correct?
-			Path:     path,
-			Action:   action,
-			Error:    fmt.Errorf("failed to ensure folder exists: %w", err),
-		}
+		result.Error = fmt.Errorf("failed to ensure folder path exists: %w", err)
+		return result
 	}
 
 	parsed.Meta.SetFolder(folder)
 	parsed.Meta.SetUID("")             // clear identifiers
 	parsed.Meta.SetResourceVersion("") // clear identifiers
 
+	result.Name = parsed.Obj.GetName()
+	result.Resource = parsed.GVR.Resource
+	result.Group = parsed.GVK.Group
+
 	switch action {
 	case repository.FileActionCreated:
 		_, err = parsed.Client.Create(ctx, parsed.Obj, metav1.CreateOptions{})
-		return Result{
-			Name:     parsed.Obj.GetName(),
-			Resource: parsed.GVR.Resource, // TODO: is this correct?
-			Group:    parsed.GVK.Group,    // TODO: is this correct?
-			Path:     path,
-			Action:   action,
-			Error:    err,
-		}
+		result.Error = err
 	case repository.FileActionUpdated:
 		_, err = parsed.Client.Update(ctx, parsed.Obj, metav1.UpdateOptions{})
-		return Result{
-			Name:     parsed.Obj.GetName(),
-			Resource: parsed.GVR.Resource, // TODO: is this correct?
-			Group:    parsed.GVK.Group,    // TODO: is this correct?
-			Path:     path,
-			Action:   action,
-			Error:    err,
-		}
+		result.Error = err
 	default:
-		return Result{
-			Name:     parsed.Obj.GetName(),
-			Resource: parsed.GVR.Resource, // TODO: is this correct?
-			Group:    parsed.GVK.Group,    // TODO: is this correct?
-			Path:     path,
-			Action:   action,
-			Error:    errors.New("unexpected action"),
-		}
+		result.Error = fmt.Errorf("unsupported action: %s", action)
 	}
+	return result
 }
 
 // ensureFolderPathExists creates the folder structure in the cluster.
