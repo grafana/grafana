@@ -680,6 +680,81 @@ func (alertRule *AlertRule) Type() RuleType {
 	return RuleTypeAlerting
 }
 
+// Copy creates and returns a deep copy of the AlertRule instance, duplicating all fields and nested data structures.
+func (alertRule *AlertRule) Copy() *AlertRule {
+	if alertRule == nil {
+		return nil
+	}
+	result := AlertRule{
+		ID:              alertRule.ID,
+		OrgID:           alertRule.OrgID,
+		Title:           alertRule.Title,
+		Condition:       alertRule.Condition,
+		Updated:         alertRule.Updated,
+		UpdatedBy:       alertRule.UpdatedBy,
+		IntervalSeconds: alertRule.IntervalSeconds,
+		Version:         alertRule.Version,
+		UID:             alertRule.UID,
+		NamespaceUID:    alertRule.NamespaceUID,
+		RuleGroup:       alertRule.RuleGroup,
+		RuleGroupIndex:  alertRule.RuleGroupIndex,
+		NoDataState:     alertRule.NoDataState,
+		ExecErrState:    alertRule.ExecErrState,
+		For:             alertRule.For,
+		Record:          alertRule.Record,
+		IsPaused:        alertRule.IsPaused,
+		Metadata:        alertRule.Metadata,
+	}
+
+	if alertRule.DashboardUID != nil {
+		dash := *alertRule.DashboardUID
+		result.DashboardUID = &dash
+	}
+	if alertRule.PanelID != nil {
+		p := *alertRule.PanelID
+		result.PanelID = &p
+	}
+
+	for _, d := range alertRule.Data {
+		q := AlertQuery{
+			RefID:             d.RefID,
+			QueryType:         d.QueryType,
+			RelativeTimeRange: d.RelativeTimeRange,
+			DatasourceUID:     d.DatasourceUID,
+		}
+		q.Model = make([]byte, 0, cap(d.Model))
+		q.Model = append(q.Model, d.Model...)
+		result.Data = append(result.Data, q)
+	}
+
+	if alertRule.Annotations != nil {
+		result.Annotations = make(map[string]string, len(alertRule.Annotations))
+		for s, s2 := range alertRule.Annotations {
+			result.Annotations[s] = s2
+		}
+	}
+
+	if alertRule.Labels != nil {
+		result.Labels = make(map[string]string, len(alertRule.Labels))
+		for s, s2 := range alertRule.Labels {
+			result.Labels[s] = s2
+		}
+	}
+
+	if alertRule.Record != nil {
+		result.Record = &Record{
+			From:   alertRule.Record.From,
+			Metric: alertRule.Record.Metric,
+		}
+	}
+
+	for _, s := range alertRule.NotificationSettings {
+		result.NotificationSettings = append(result.NotificationSettings, CopyNotificationSettings(s))
+	}
+
+	return &result
+}
+
 func ClearRecordingRuleIgnoredFields(rule *AlertRule) {
 	rule.NoDataState = ""
 	rule.ExecErrState = ""
