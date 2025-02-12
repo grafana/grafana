@@ -224,7 +224,6 @@ export const HeatmapPanel = ({
                   );
                 }}
                 maxWidth={options.tooltip.maxWidth}
-                maxHeight={"50%"}
               />
             )}
             <AnnotationsPlugin2

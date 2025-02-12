@@ -57,7 +57,6 @@ interface TooltipPlugin2Props {
   ) => React.ReactNode;
 
   maxWidth?: number;
-  maxHeight?: string;
 }
 
 interface TooltipContainerState {
@@ -122,7 +121,6 @@ export const TooltipPlugin2 = ({
   queryZoom,
   onSelectRange,
   maxWidth,
-  maxHeight,
   syncMode = DashboardCursorSync.Off,
   syncScope = 'global', // eventsScope
   getDataLinks = getDataLinksFallback,
@@ -137,7 +135,7 @@ export const TooltipPlugin2 = ({
   const [{ plot, isHovering, isPinned, contents, style, dismiss }, setState] = useReducer(mergeState, null, initState);
 
   const sizeRef = useRef<TooltipContainerSize>();
-  const styles = useStyles2(getStyles, maxWidth, maxHeight);
+  const styles = useStyles2(getStyles, maxWidth);
 
   const renderRef = useRef(render);
   renderRef.current = render;
@@ -726,7 +724,7 @@ export const TooltipPlugin2 = ({
   return null;
 };
 
-const getStyles = (theme: GrafanaTheme2, maxWidth?: number, maxHeight?: string) => ({
+const getStyles = (theme: GrafanaTheme2, maxWidth?: number) => ({
   tooltipWrapper: css({
     top: 0,
     left: 0,
@@ -739,8 +737,6 @@ const getStyles = (theme: GrafanaTheme2, maxWidth?: number, maxHeight?: string) 
     boxShadow: theme.shadows.z2,
     userSelect: 'text',
     maxWidth: maxWidth ?? 'none',
-    maxHeight: maxHeight ?? 'none',
-    overflowY: "scroll"
   }),
   pinned: css({
     boxShadow: theme.shadows.z3,
