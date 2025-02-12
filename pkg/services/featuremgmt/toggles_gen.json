@@ -217,6 +217,20 @@
     },
     {
       "metadata": {
+        "name": "alertingConversionAPI",
+        "resourceVersion": "1739207762746",
+        "creationTimestamp": "2025-02-10T17:16:02Z"
+      },
+      "spec": {
+        "description": "Enable the alerting conversion API",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingDisableSendAlertsExternal",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2024-05-23T12:29:19Z"

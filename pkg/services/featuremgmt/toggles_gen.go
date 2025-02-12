@@ -947,6 +947,10 @@ const (
 	// Use a POST request to list rules by passing down the namespaces user has access to
 	FlagFetchRulesUsingPost = "fetchRulesUsingPost"
 
+	// FlagAlertingConversionAPI
+	// Enable the alerting conversion API
+	FlagAlertingConversionAPI = "alertingConversionAPI"
+
 	// FlagAlertingAlertmanagerExtraDedupStage
 	// enables extra deduplication stage in alertmanager that checks that timestamps of the pipeline and the current state are matching
 	FlagAlertingAlertmanagerExtraDedupStage = "alertingAlertmanagerExtraDedupStage"

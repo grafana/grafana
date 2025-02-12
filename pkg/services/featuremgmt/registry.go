@@ -1761,6 +1761,14 @@ var (
 			HideFromDocs:      true,
 		},
 		{
+			Name:              "alertingConversionAPI",
+			Description:       "Enable the alerting conversion API",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaAlertingSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+		},
+		{
 			Name:              "alertingAlertmanagerExtraDedupStage",
 			Description:       "enables extra deduplication stage in alertmanager that checks that timestamps of the pipeline and the current state are matching",
 			Stage:             FeatureStageExperimental,
