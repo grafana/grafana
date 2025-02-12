@@ -160,13 +160,13 @@ export function getLogLineSize(
   if (storedSize) {
     return storedSize;
   }
-  const gap = gridSize;
+  const gap = gridSize * 1.5;
   let optionsWidth = 0;
   if (showTime) {
-    optionsWidth += logs[index].dimensions.timestampWidth + gap;
+    optionsWidth += logs[index].dimensions[0].width + gap;
   }
   if (logs[index].logLevel) {
-    optionsWidth += logs[index].dimensions.levelWidth + gap;
+    optionsWidth += logs[index].dimensions[1].width + gap;
   }
   const { height } = measureTextHeight(logs[index].body, getLogContainerWidth(container), optionsWidth);
   return height;

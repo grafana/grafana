@@ -47,7 +47,10 @@ export const LogLine = ({
 
   return (
     <div style={style} className={`${styles.logLine} ${variant}`} ref={onOverflow ? logLineRef : undefined}>
-      <div className={wrapLogMessage ? styles.wrappedLogLine : styles.unwrappedLogLine}>
+      <div
+        style={wrapLogMessage ? undefined : getFieldStyles(log)}
+        className={`${wrapLogMessage ? styles.wrappedLogLine : styles.unwrappedLogLine}`}
+      >
         <Log displayedFields={displayedFields} log={log} showTime={showTime} styles={styles} />
       </div>
     </div>
@@ -64,11 +67,13 @@ interface LogProps {
 const Log = ({ displayedFields, log, showTime, styles }: LogProps) => {
   return (
     <>
-      {showTime && <span className={`${styles.timestamp} level-${log.logLevel}`}>{log.timestamp}</span>}
-      {log.logLevel && <span className={`${styles.level} level-${log.logLevel}`}>{log.logLevel}</span>}
-      {displayedFields.length > 0
-        ? displayedFields.map((field) => <span>{getDisplayedFieldValue(field, log)}</span>)
-        : log.body}
+      {showTime && <span className={`${styles.timestamp} level-${log.logLevel} field`}>{log.timestamp}</span>}
+      {log.logLevel && <span className={`${styles.level} level-${log.logLevel} field`}>{log.logLevel}</span>}
+      {displayedFields.length > 0 ? (
+        displayedFields.map((field) => <span className="field">{getDisplayedFieldValue(field, log)}</span>)
+      ) : (
+        <span className="field">{log.body}</span>
+      )}
     </>
   );
 };
@@ -85,6 +90,12 @@ export function getDisplayedFieldValue(fieldName: string, log: LogListModel): st
   });
 
   return field ? field.values.toString() : '';
+}
+
+function getFieldStyles(log: LogListModel) {
+  return {
+    gridTemplateColumns: `${log.dimensions[0].width}px ${log.dimensions[1].width}px 1fr`,
+  };
 }
 
 export const getStyles = (theme: GrafanaTheme2) => {
@@ -125,7 +136,6 @@ export const getStyles = (theme: GrafanaTheme2) => {
     timestamp: css({
       color: theme.colors.text.secondary,
       display: 'inline-block',
-      marginRight: theme.spacing(1),
       '&.level-critical': {
         color: colors.critical,
       },
@@ -146,7 +156,6 @@ export const getStyles = (theme: GrafanaTheme2) => {
       color: theme.colors.text.secondary,
       fontWeight: theme.typography.fontWeightBold,
       display: 'inline-block',
-      marginRight: theme.spacing(1),
       '&.level-critical': {
         color: colors.critical,
       },
@@ -172,12 +181,17 @@ export const getStyles = (theme: GrafanaTheme2) => {
       outline: 'solid 1px red',
     }),
     unwrappedLogLine: css({
+      display: 'grid',
+      gridColumnGap: theme.spacing(1.5),
       whiteSpace: 'pre',
       paddingBottom: theme.spacing(0.75),
     }),
     wrappedLogLine: css({
       whiteSpace: 'pre-wrap',
       paddingBottom: theme.spacing(0.75),
+      '& .field:not(:last-child)': {
+        marginRight: theme.spacing(1.5),
+      },
     }),
   };
 };
