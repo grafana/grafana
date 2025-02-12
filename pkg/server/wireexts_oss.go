@@ -119,7 +119,6 @@ var wireExtsBasicSet = wire.NewSet(
 	wire.Bind(new(sandbox.Sandbox), new(*sandbox.Service)),
 	wire.Struct(new(unified.Options), "*"),
 	unified.ProvideUnifiedStorageClient,
-	builder.ProvideDefaultBuildHandlerChainFunc,
 	builder.ProvideDefaultBuildHandlerChainFuncFromBuilders,
 )
 
