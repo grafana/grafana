@@ -2,6 +2,7 @@ package provisioning
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"path/filepath"
@@ -316,7 +317,7 @@ func (b *APIBuilder) AsRepository(ctx context.Context, r *provisioning.Repositor
 	case provisioning.S3RepositoryType:
 		return repository.NewS3(r), nil
 	default:
-		return repository.NewUnknown(r), nil
+		return nil, errors.New("unknown repository type")
 	}
 }
 
