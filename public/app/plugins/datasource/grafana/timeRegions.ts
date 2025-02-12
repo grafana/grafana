@@ -19,12 +19,12 @@ export function doTimeRegionQuery(
     config.duration = cronConfig?.duration;
   }
 
-  if (config.duration?.length && config.cronExpr) {
+  if (config.cronExpr) {
     try {
       let job = new Cron(config.cronExpr);
 
       // get previous run that may overlap with start of timerange
-      let durationMs = durationToMilliseconds(parseDuration(config.duration));
+      let durationMs = (config.duration ?? '') !== '' ? durationToMilliseconds(parseDuration(config.duration!)) : 0;
       let fromDate: Date | null = new Date(range.from.valueOf() - durationMs);
 
       let toMs = range.to.valueOf();

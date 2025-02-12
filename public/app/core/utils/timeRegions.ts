@@ -1,12 +1,6 @@
-import { Day, Duration, isAfter, nextDay, setHours, setMinutes } from 'date-fns';
+import { add, Duration } from 'date-fns';
 
-import {
-  AbsoluteTimeRange,
-  dateTime,
-  TimeRange,
-  reverseParseDuration,
-  intervalToAbbreviatedDurationString,
-} from '@grafana/data';
+import { AbsoluteTimeRange, dateTime, TimeRange, reverseParseDuration } from '@grafana/data';
 
 export type TimeRegionMode = 'simple' | 'cron';
 export interface TimeRegionConfig {
@@ -31,41 +25,94 @@ interface ParsedTime {
   s?: number; // 0-59
 }
 
+// random from the interwebs
+function convertSecondsToTime(seconds: number): Duration {
+  const secondsInYear = 31536000;
+  const secondsInMonth = 2628000;
+  const secondsInDay = 86400;
+  const secondsInHour = 3600;
+  const secondsInMinute = 60;
+
+  let years = Math.floor(seconds / secondsInYear);
+  let remainingSeconds = seconds % secondsInYear;
+
+  let months = Math.floor(remainingSeconds / secondsInMonth);
+  remainingSeconds %= secondsInMonth;
+
+  let days = Math.floor(remainingSeconds / secondsInDay);
+  remainingSeconds %= secondsInDay;
+
+  let hours = Math.floor(remainingSeconds / secondsInHour);
+  remainingSeconds %= secondsInHour;
+
+  let minutes = Math.floor(remainingSeconds / secondsInMinute);
+  let finalSeconds = remainingSeconds % secondsInMinute;
+
+  return {
+    years,
+    months,
+    days,
+    hours,
+    minutes,
+    seconds: finalSeconds,
+  };
+}
+
+const secsInDay = 24 * 3600;
+
+// should be ran after normalization when we are sure all values are filled
+function getDuration(range: { from: ParsedTime; to: ParsedTime }) {
+  if (
+    range.from.dayOfWeek === range.to.dayOfWeek &&
+    range.from.h === range.to.h &&
+    range.from.m === range.to.m &&
+    range.from.s === range.to.s
+  ) {
+    return {
+      years: 0,
+      months: 0,
+      days: 0,
+      hours: 0,
+      minutes: 0,
+      seconds: 0,
+    };
+  } else {
+    let days = range.to.dayOfWeek! - range.from.dayOfWeek!;
+
+    // account for rollover through day 0
+    // TODO this does not account for rollover where duration is 1 day or under
+    if (days < 0) {
+      days = -days + 1;
+    }
+
+    let daysSecs = days * secsInDay;
+    let fromSecs = range.from.h! * 3600 + range.from.m! * 60;
+    let toSecs = range.to.h! * 3600 + range.to.m! * 60;
+
+    let durSecs = 0;
+
+    // account for toTime < fromTime on same day
+    if (days === 0 && toSecs <= fromSecs) {
+      durSecs = 7 * secsInDay - (fromSecs - toSecs);
+    } else {
+      durSecs = daysSecs - fromSecs + toSecs;
+    }
+
+    return convertSecondsToTime(durSecs);
+  }
+}
+
 export function convertToCron(cfg: TimeRegionConfig): { cron: string; duration: string } | undefined {
   const hRange = normalizeRange(cfg);
-  let duration = '';
   if (hRange !== undefined) {
-    // we use an actual timestamp here to make the diff between dates easier.
-    const sameDay = (hRange.from.dayOfWeek ?? 1 - 1) === (hRange.to.dayOfWeek ?? 1 - 1);
-    let aRange = { ...hRange };
-    let fromDate = nextDay(new Date(1970, 0, 1), (aRange!.from.dayOfWeek ?? 1 - 1) as Day);
-    let toDate = nextDay(new Date(1970, 0, 1), (aRange!.to.dayOfWeek ?? 1 - 1) as Day);
+    const duration = getDuration(hRange);
+    const dow = hRange.from.dayOfWeek !== undefined ? hRange.from.dayOfWeek! - 1 : '*';
+    const cronString = `${hRange.from.m} ${hRange.from.h} * * ${dow}`;
 
-    fromDate = setHours(fromDate, aRange.from.h ?? 0);
-    fromDate = setMinutes(fromDate, aRange.from.h ?? 0);
-    toDate = setHours(toDate, aRange.to.h ?? 0);
-    toDate = setMinutes(toDate, aRange.to.h ?? 0);
-
-    duration = intervalToAbbreviatedDurationString({ start: fromDate, end: toDate }, false);
-
-    // if the DOW is the same and the from time is after to dow, duration is 6 days + to time
-    //TODO - COMPLETE SAME DAY LOGIC, THIS DOES NOT WORK
-    if (sameDay && isAfter(toDate, fromDate)) {
-      let durationObj: Duration = {};
-      durationObj.days = 6;
-      durationObj.hours = toDate.getHours();
-      durationObj.minutes = toDate.getMinutes();
-      duration = reverseParseDuration(durationObj, false);
-    } else {
-      duration = intervalToAbbreviatedDurationString({ start: fromDate, end: toDate }, false);
-    }
+    return { cron: cronString, duration: reverseParseDuration(duration, false) };
   } else {
     return undefined;
   }
-
-  const cronString = `${hRange.from.m} ${hRange.from.h} * * ${hRange.from.dayOfWeek! - 1}`;
-
-  return { cron: cronString, duration };
 }
 
 function normalizeRange(cfg: TimeRegionConfig): { from: ParsedTime; to: ParsedTime } | undefined {
@@ -146,6 +193,8 @@ export function calculateTimesWithin(cfg: TimeRegionConfig, tRange: TimeRange): 
     fromStart.add(hRange.from.m, 'minutes');
     fromStart.add(hRange.from.s, 'seconds');
 
+    const duration = getDuration(hRange);
+
     while (fromStart.unix() <= tRange.to.unix()) {
       while (hRange.from.dayOfWeek && hRange.from.dayOfWeek !== fromStart.isoWeekday()) {
         fromStart.add(24, 'hours');
@@ -155,30 +204,7 @@ export function calculateTimesWithin(cfg: TimeRegionConfig, tRange: TimeRange): 
         break;
       }
 
-      const fromEnd = dateTime(fromStart).utc();
-
-      if (fromEnd.hour) {
-        if (hRange.from.h! <= hRange.to.h!) {
-          fromEnd.add(hRange.to.h! - hRange.from.h!, 'hours');
-        } else if (hRange.from.h! > hRange.to.h!) {
-          while (fromEnd.hour() !== hRange.to.h) {
-            fromEnd.add(1, 'hours');
-          }
-        } else {
-          fromEnd.add(24 - hRange.from.h!, 'hours');
-
-          while (fromEnd.hour() !== hRange.to.h) {
-            fromEnd.add(1, 'hours');
-          }
-        }
-      }
-
-      fromEnd.set('minute', hRange.to.m ?? 0);
-      fromEnd.set('second', hRange.to.s ?? 0);
-
-      while (hRange.to.dayOfWeek && hRange.to.dayOfWeek !== fromEnd.isoWeekday()) {
-        fromEnd.add(24, 'hours');
-      }
+      const fromEnd = dateTime(add(fromStart.toDate(), duration));
 
       const outsideRange =
         (fromStart.unix() < tRange.from.unix() && fromEnd.unix() < tRange.from.unix()) ||
@@ -216,17 +242,4 @@ export function parseTimeOfDay(str?: string): ParsedTime {
     }
   }
   return result;
-}
-
-export function formatTimeOfDayString(t?: ParsedTime): string {
-  if (!t || (t.h == null && t.m == null && t.s == null)) {
-    return '';
-  }
-
-  let str = String(t.h ?? 0).padStart(2, '0') + ':' + String(t.m ?? 0).padStart(2, '0');
-  if (t.s != null) {
-    str += String(t.s ?? 0).padStart(2, '0');
-  }
-
-  return str;
 }
