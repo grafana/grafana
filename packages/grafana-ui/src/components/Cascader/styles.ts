@@ -128,10 +128,9 @@ export const getCascaderStyles = (theme: GrafanaTheme2) => ({
         height: '192px',
         listStyle: 'none',
         margin: 0,
-        padding: 0,
+        padding: theme.spacing(0.5),
         borderRight: `1px solid ${theme.colors.border.weak}`,
         overflow: 'auto',
-        padding: theme.spacing(0.5),
 
         '&:last-child': {
           borderRight: 0,
