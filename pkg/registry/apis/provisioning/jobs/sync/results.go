@@ -15,6 +15,7 @@ type Result struct {
 }
 
 type ResultsRecorder struct {
+	Total   int
 	Ref     string
 	Message string
 	results []Result
@@ -85,6 +86,10 @@ func (r *ResultsRecorder) Summary() []*provisioning.JobResourceSummary {
 	}
 
 	return summaries
+}
+
+func (r *ResultsRecorder) Progress() float64 {
+	return float64(r.Total - len(r.results)/r.Total*100)
 }
 
 func (r *ResultsRecorder) Errors() []string {

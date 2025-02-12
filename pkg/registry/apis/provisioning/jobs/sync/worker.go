@@ -291,12 +291,10 @@ func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange
 		return len(changes[i].Path) > len(changes[j].Path)
 	})
 
-	results := &ResultsRecorder{}
-
+	results := &ResultsRecorder{Total: len(changes)}
 	logger := logging.FromContext(ctx)
-	total := len(changes)
 	// Create folder structure first
-	for i, change := range changes {
+	for _, change := range changes {
 		if len(results.Errors()) > 20 {
 			results.Record(Result{
 				Name:     change.Existing.Name,
@@ -314,7 +312,7 @@ func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange
 			State:    provisioning.JobStateWorking,
 			Message:  "replicating changes",
 			Errors:   results.Errors(),
-			Progress: float64((total - i) / total * 100),
+			Progress: results.Progress(),
 			Summary:  results.Summary(),
 		}
 
@@ -375,15 +373,14 @@ func (r *syncJob) applyVersionedChanges(ctx context.Context, repo repository.Ver
 		return nil, fmt.Errorf("compare files error: %w", err)
 	}
 
-	results := &ResultsRecorder{}
+	results := &ResultsRecorder{Total: len(diff)}
 	if len(diff) < 1 {
 		results.Message = "no changes detected between commits"
 		return nil, nil
 	}
 
 	logger := logging.FromContext(ctx)
-	total := len(diff)
-	for i, change := range diff {
+	for _, change := range diff {
 		if len(results.Errors()) > 20 {
 			results.Record(Result{
 				Path: change.Path,
@@ -398,7 +395,7 @@ func (r *syncJob) applyVersionedChanges(ctx context.Context, repo repository.Ver
 			State:    provisioning.JobStateWorking,
 			Message:  "replicating versioned changes",
 			Errors:   results.Errors(),
-			Progress: float64((total - i) / total * 100),
+			Progress: results.Progress(),
 			Summary:  results.Summary(),
 		}
 
