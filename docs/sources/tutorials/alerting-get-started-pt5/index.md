@@ -201,7 +201,7 @@ The time-series visualization supports alert rules to provide more context in th
 
    {{< figure src="/media/docs/alerting/time-series_cpu_mem_usage_metrics.png" max-width="1200px" caption="Time-series panel displaying CPU and memory usage metrics in production." >}}
 
-     Both metrics return labels that we’ll use later to link alert instances with the appropriate routing. These labels help define how alerts are routed based on their environment or other criteria.
+   Both metrics return labels that we’ll use later to link alert instances with the appropriate routing. These labels help define how alerts are routed based on their environment or other criteria.
 
 1. Click **Save dashboard**.
 
@@ -354,7 +354,7 @@ Now that we've set up notification policies, we can demonstrate how to mute aler
 Mute timings are useful for suppressing alerts with certain labels during maintenance windows or weekends.
 
 1. Navigate to **Alerts & IRM > Alerting > Notification Policies**.
-   - Enter a name, e.g. `Planned downtime`  or `Non-business hours`.
+   - Enter a name, e.g. `Planned downtime` or `Non-business hours`.
    - Select **Sat** and **Sun**, to apply the mute timing to all Saturdays and Sundays.
    - Click **Save mute timing**.
 1. Add mute timing to the desired policy:
