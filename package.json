@@ -19,7 +19,8 @@
     "e2e:enterprise": "./e2e/start-and-run-suite enterprise",
     "e2e:enterprise:dev": "./e2e/start-and-run-suite enterprise dev",
     "e2e:enterprise:debug": "./e2e/start-and-run-suite enterprise debug",
-    "e2e:playwright": "yarn playwright test",
+    "e2e:playwright": "yarn playwright test --grep-invert @viz_regression",
+    "e2e:playwright:vizregression": "npx playwright test --project=visual_regression",
     "e2e:playwright:server": "yarn e2e:plugin:build && ./e2e/plugin-e2e/start-and-run-suite",
     "e2e:storybook": "PORT=9001 ./e2e/run-suite storybook true",
     "e2e:plugin:build": "nx run-many -t build --projects='@test-plugins/*'",
@@ -416,6 +417,7 @@
     "uplot": "1.6.31",
     "uuid": "11.0.5",
     "visjs-network": "4.25.0",
+    "wait-on": "8.0.2",
     "whatwg-fetch": "3.6.20"
   },
   "resolutions": {
