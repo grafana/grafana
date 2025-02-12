@@ -286,7 +286,6 @@ func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange
 	})
 
 	progress.SetMessage("replicating changes")
-	logger := logging.FromContext(ctx)
 
 	// Create folder structure first
 	for _, change := range changes {
@@ -313,7 +312,6 @@ func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange
 			}
 
 			if change.Existing == nil || change.Existing.Name == "" {
-				logger.Error("deleted file is missing existing reference", "file", change.Path)
 				result.Error = errors.New("missing existing reference")
 				progress.Record(ctx, result)
 				continue
@@ -321,28 +319,18 @@ func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange
 
 			client, err := r.client(change.Existing.Resource)
 			if err != nil {
-				logger.Error("unable to get client for deleted object", "file", change.Path, "err", err, "obj", change.Existing)
 				result.Error = fmt.Errorf("unable to get client for deleted object: %w", err)
 				progress.Record(ctx, result)
 				continue
 			}
 
-			err = client.Delete(ctx, change.Existing.Name, metav1.DeleteOptions{})
-			if err != nil {
-				logger.Error("deleting error", "file", change.Path, "err", err)
-			}
-
-			result.Error = err
+			result.Error = client.Delete(ctx, change.Existing.Name, metav1.DeleteOptions{})
 			progress.Record(ctx, result)
 			continue
 		}
 
 		// Write the resource file
-		result := r.writeResourceFromFile(ctx, change.Path, "", change.Action)
-		if result.Error != nil {
-			logger.Error("write resource error", "file", change.Path, "err", result.Error)
-		}
-		progress.Record(ctx, result)
+		progress.Record(ctx, r.writeResourceFromFile(ctx, change.Path, "", change.Action))
 	}
 }
 
@@ -358,7 +346,6 @@ func (r *syncJob) applyVersionedChanges(ctx context.Context, repo repository.Ver
 		return nil
 	}
 
-	logger := logging.FromContext(ctx)
 	progress.SetMessage("replicating versioned changes")
 
 	for _, change := range diff {
@@ -374,32 +361,19 @@ func (r *syncJob) applyVersionedChanges(ctx context.Context, repo repository.Ver
 
 		switch change.Action {
 		case repository.FileActionCreated, repository.FileActionUpdated:
-			result := r.writeResourceFromFile(ctx, change.Path, change.Ref, change.Action)
-			if result.Error != nil {
-				logger.Error("error writing", "change", change, "err", err)
-			}
-			progress.Record(ctx, result)
+			progress.Record(ctx, r.writeResourceFromFile(ctx, change.Path, change.Ref, change.Action))
 		case repository.FileActionDeleted:
-			result := r.deleteObject(ctx, change.Path, change.PreviousRef)
-			if result.Error != nil {
-				logger.Error("error deleting", "change", change, "err", result.Error)
-			}
-			progress.Record(ctx, result)
+			progress.Record(ctx, r.deleteObject(ctx, change.Path, change.PreviousRef))
 		case repository.FileActionRenamed:
 			// 1. Delete
 			result := r.deleteObject(ctx, change.Path, change.PreviousRef)
 			if result.Error != nil {
-				logger.Error("error deleting", "change", change, "err", result.Error)
 				progress.Record(ctx, result)
 				continue
 			}
 
 			// 2. Create
-			result = r.writeResourceFromFile(ctx, change.Path, change.Ref, repository.FileActionCreated)
-			if result.Error != nil {
-				logger.Warn("error writing", "change", change, "err", result.Error)
-			}
-			progress.Record(ctx, result)
+			progress.Record(ctx, r.writeResourceFromFile(ctx, change.Path, change.Ref, repository.FileActionCreated))
 		}
 	}
 
