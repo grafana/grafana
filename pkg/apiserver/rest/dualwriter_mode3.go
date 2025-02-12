@@ -176,28 +176,22 @@ func (d *DualWriterMode3) Delete(ctx context.Context, name string, deleteValidat
 	// we want to delete from legacy first, otherwise if the delete from unistore was successful,
 	// but legacy failed, the user would get a failure, but not be able to retry the delete
 	// as they would not be able to see the object in unistore anymore.
-
 	startLegacy := time.Now()
 	objFromLegacy, asyncLegacy, err := d.Legacy.Delete(ctx, name, deleteValidation, options)
+	d.recordLegacyDuration(err != nil && !apierrors.IsNotFound(err), mode3Str, d.resource, method, startLegacy)
 	if err != nil {
 		if !apierrors.IsNotFound(err) {
 			log.WithValues("object", objFromLegacy).Error(err, "could not delete from legacy store")
-			d.recordLegacyDuration(true, mode3Str, d.resource, method, startLegacy)
 			return objFromLegacy, asyncLegacy, err
 		}
 	}
-	d.recordLegacyDuration(false, mode3Str, d.resource, method, startLegacy)
 
 	startStorage := time.Now()
 	objFromStorage, asyncStorage, err := d.Storage.Delete(ctx, name, deleteValidation, options)
+	d.recordStorageDuration(err != nil && !apierrors.IsNotFound(err), mode3Str, d.resource, method, startStorage)
 	if err != nil {
-		if !apierrors.IsNotFound(err) {
-			log.WithValues("object", objFromStorage).Error(err, "could not delete from storage")
-			d.recordStorageDuration(true, mode3Str, d.resource, method, startStorage)
-		}
-		return objFromStorage, asyncStorage, err
+		return nil, false, err
 	}
-	d.recordStorageDuration(false, mode3Str, d.resource, method, startStorage)
 
 	areEqual := Compare(objFromStorage, objFromLegacy)
 	d.recordOutcome(mode3Str, name, areEqual, method)
