@@ -6,7 +6,7 @@ import { ComponentProps } from 'react';
 import { Field } from '../Forms/Field';
 
 import { MultiCombobox } from './MultiCombobox';
-import { generateOptions, fakeSearchAPI } from './storyUtils';
+import { generateOptions, fakeSearchAPI, generateGroupingOptions } from './storyUtils';
 import { ComboboxOption } from './types';
 
 const meta: Meta<typeof MultiCombobox> = {
@@ -105,6 +105,40 @@ export const ManyOptions: StoryObj<ManyOptionsArgs> = {
     value: undefined,
   },
   render: ManyOptionsStory,
+};
+
+const ManyOptionsGroupedStory: StoryFn<ManyOptionsArgs> = ({ numberOfOptions = 1e5, ...args }) => {
+  const [dynamicArgs, setArgs] = useArgs();
+
+  const [options, setOptions] = useState<ComboboxOption[]>([]);
+
+  useEffect(() => {
+    setTimeout(async () => {
+      const options = await generateGroupingOptions(numberOfOptions);
+      setOptions(options);
+    }, 1000);
+  }, [numberOfOptions]);
+  const { onChange, ...rest } = args;
+  return (
+    <MultiCombobox
+      {...rest}
+      {...dynamicArgs}
+      options={options}
+      onChange={(opts) => {
+        setArgs({ value: opts });
+        onChangeAction(opts);
+      }}
+    />
+  );
+};
+
+export const ManyOptionsGrouped: StoryObj<ManyOptionsArgs> = {
+  args: {
+    numberOfOptions: 1e4,
+    options: undefined,
+    value: undefined,
+  },
+  render: ManyOptionsGroupedStory,
 };
 
 function loadOptionsWithLabels(inputValue: string) {
