@@ -72,9 +72,10 @@ export const browseDashboardsAPI = createApi({
   baseQuery: createBaseQuery({ baseURL: '/api' }),
   endpoints: (builder) => ({
     listFolders: builder.query<FolderListItemDTO[], ListFolderQueryArgs>({
-      providesTags: (result) => result && result.length > 0
-        ? result.map((folder) => ({ type: 'getFolder', id: folder.uid }))
-        : [{ type: 'getFolder', id: 'EMPTY_RESULT' }],
+      providesTags: (result) =>
+        result && result.length > 0
+          ? result.map((folder) => ({ type: 'getFolder', id: folder.uid }))
+          : [{ type: 'getFolder', id: 'EMPTY_RESULT' }],
       query: ({ parentUid, limit, page, permission }) => ({
         url: '/folders',
         params: { parentUid, limit, page, permission },
