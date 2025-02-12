@@ -34,13 +34,13 @@ export class TabsLayoutSerializer implements LayoutManagerSerializer {
     elements: DashboardV2Spec['elements'],
     preload: boolean
   ): TabsLayoutManager {
-    if (layout.kind !== 'RowsLayout') {
+    if (layout.kind !== 'TabsLayout') {
       throw new Error('Invalid layout kind');
     }
-    const tabs = layout.spec.rows.map((row) => {
-      const layout = row.spec.layout;
+    const tabs = layout.spec.tabs.map((tab) => {
+      const layout = tab.spec.layout;
       return new TabItem({
-        title: row.spec.title,
+        title: tab.spec.title,
         layout: layoutSerializerRegistry.get(layout.kind).serializer.deserialize(layout, elements, preload),
       });
     });
