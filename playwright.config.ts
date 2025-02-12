@@ -10,7 +10,7 @@ export default defineConfig<PluginOptions>({
   webServer: {
     command: 'make run & yarn start && npx wait-on http://localhost:3000',
     url: `http://${process.env.HOST || 'localhost'}:${process.env.PORT || 3000}`,
-    timeout: 120 * 1000,
+    timeout: 5 * 60 * 1000,
     reuseExistingServer: !process.env.CI,
   },
   /* Retry on CI only */
