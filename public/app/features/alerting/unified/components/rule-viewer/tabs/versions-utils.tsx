@@ -22,10 +22,7 @@ interface SpecialUidsDisplayMapEntry {
  * Used for mapping cases where provisioning or the alerting system is listed as responsible for a version history entry.
  */
 
-export const getSpecialUidsDisplayMap: () => Record<
-  string,
-  SpecialUidsDisplayMapEntry
-> = () => {
+export const getSpecialUidsDisplayMap: () => Record<string, SpecialUidsDisplayMapEntry> = () => {
   const provisioning = {
     name: t('alerting.alertVersionHistory.provisioning', 'Provisioning'),
     tooltipContent: t(

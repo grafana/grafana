@@ -19,12 +19,11 @@ export function VersionHistoryTable({
   disableSelection,
   checkedVersions,
 }: {
-  onVersionsChecked(id: string): void
+  onVersionsChecked(id: string): void;
   ruleVersions: Array<RulerGrafanaRuleDTO<GrafanaRuleDefinition>>;
   disableSelection: boolean;
   checkedVersions: Map<string, boolean>;
 }) {
-
   //----> restore code : no need to review as it's behind a feature flag
   const [confirmRestore, setConfirmRestore] = useState(false);
   const [restoreDiff, setRestoreDiff] = useState<Diffs | undefined>();

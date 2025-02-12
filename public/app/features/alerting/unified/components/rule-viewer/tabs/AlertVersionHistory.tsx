@@ -105,7 +105,7 @@ export function AlertVersionHistory({ ruleUid }: AlertVersionHistoryProps) {
     });
     setOldVersion(undefined);
     setNewVersion(undefined);
-  };
+  }
 
   return (
     <Stack direction="column" gap={2}>
@@ -140,7 +140,7 @@ export function AlertVersionHistory({ ruleUid }: AlertVersionHistoryProps) {
           {config.featureToggles.alertingRuleVersionHistoryRestore && (
             <Box paddingTop={2}>
               <Stack justifyContent="flex-end">
-                <Button variant="destructive" onClick={() => { }}>
+                <Button variant="destructive" onClick={() => {}}>
                   <Trans i18nKey="alerting.alertVersionHistory.reset">
                     Reset to version {{ version: oldVersion.grafana_alert.version }}
                   </Trans>
@@ -190,5 +190,4 @@ function parseVersionInfoToSummary(version: RulerGrafanaRuleDTO<GrafanaRuleDefin
     createdBy,
     version: version.grafana_alert.version || unknown,
   };
-};
-
+}
