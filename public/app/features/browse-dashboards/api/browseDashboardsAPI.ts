@@ -72,7 +72,10 @@ export const browseDashboardsAPI = createApi({
   baseQuery: createBaseQuery({ baseURL: '/api' }),
   endpoints: (builder) => ({
     listFolders: builder.query<FolderListItemDTO[], ListFolderQueryArgs>({
-      providesTags: (result) => result?.map((folder) => ({ type: 'getFolder', id: folder.uid })) ?? [],
+      providesTags: (result) =>
+        result && result.length > 0
+          ? result.map((folder) => ({ type: 'getFolder', id: folder.uid }))
+          : [{ type: 'getFolder', id: 'EMPTY_RESULT' }],
       query: ({ parentUid, limit, page, permission }) => ({
         url: '/folders',
         params: { parentUid, limit, page, permission },
@@ -87,6 +90,7 @@ export const browseDashboardsAPI = createApi({
 
     // create a new folder
     newFolder: builder.mutation<FolderDTO, { title: string; parentUid?: string }>({
+      invalidatesTags: ['getFolder'],
       query: ({ title, parentUid }) => ({
         method: 'POST',
         url: '/folders',
@@ -276,6 +280,7 @@ export const browseDashboardsAPI = createApi({
 
     // delete *multiple* items (folders and dashboards). used in the delete modal.
     deleteItems: builder.mutation<void, DeleteItemsArgs>({
+      invalidatesTags: ['getFolder'],
       queryFn: async ({ selectedItems }, _api, _extraOptions, baseQuery) => {
         const selectedDashboards = Object.keys(selectedItems.dashboard).filter((uid) => selectedItems.dashboard[uid]);
         const selectedFolders = Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid]);
