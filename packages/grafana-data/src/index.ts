@@ -403,6 +403,7 @@ export { type DateTimeOptionsWhenParsing, dateTimeParse } from './datetime/parse
 export {
   intervalToAbbreviatedDurationString,
   parseDuration,
+  reverseParseDuration,
   addDurationToDate,
   durationToMilliseconds,
   isValidDate,

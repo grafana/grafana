@@ -1,4 +1,12 @@
-import { AbsoluteTimeRange, dateTime, TimeRange } from '@grafana/data';
+import { Day, Duration, isAfter, nextDay, setHours, setMinutes } from 'date-fns';
+
+import {
+  AbsoluteTimeRange,
+  dateTime,
+  TimeRange,
+  reverseParseDuration,
+  intervalToAbbreviatedDurationString,
+} from '@grafana/data';
 
 export type TimeRegionMode = 'simple' | 'cron';
 export interface TimeRegionConfig {
@@ -23,11 +31,44 @@ interface ParsedTime {
   s?: number; // 0-59
 }
 
-export function calculateTimesWithin(cfg: TimeRegionConfig, tRange: TimeRange): AbsoluteTimeRange[] {
-  if (!(cfg.fromDayOfWeek || cfg.from) && !(cfg.toDayOfWeek || cfg.to)) {
-    return [];
+export function convertToCron(cfg: TimeRegionConfig): { cron: string; duration: string } | undefined {
+  const hRange = normalizeRange(cfg);
+  let duration = '';
+  if (hRange !== undefined) {
+    // we use an actual timestamp here to make the diff between dates easier.
+    const sameDay = (hRange.from.dayOfWeek ?? 1 - 1) === (hRange.to.dayOfWeek ?? 1 - 1);
+    let aRange = { ...hRange };
+    let fromDate = nextDay(new Date(1970, 0, 1), (aRange!.from.dayOfWeek ?? 1 - 1) as Day);
+    let toDate = nextDay(new Date(1970, 0, 1), (aRange!.to.dayOfWeek ?? 1 - 1) as Day);
+
+    fromDate = setHours(fromDate, aRange.from.h ?? 0);
+    fromDate = setMinutes(fromDate, aRange.from.h ?? 0);
+    toDate = setHours(toDate, aRange.to.h ?? 0);
+    toDate = setMinutes(toDate, aRange.to.h ?? 0);
+
+    duration = intervalToAbbreviatedDurationString({ start: fromDate, end: toDate }, false);
+
+    // if the DOW is the same and the from time is after to dow, duration is 6 days + to time
+    if (sameDay && isAfter(toDate, fromDate)) {
+      let durationObj: Duration = {};
+      durationObj.days = 6;
+      durationObj.hours = toDate.getHours();
+      durationObj.minutes = toDate.getMinutes();
+      duration = reverseParseDuration(durationObj, false);
+    } else {
+      //TODO - COMPLETE LOGIC, THIS DOES NOT WORK
+      duration = intervalToAbbreviatedDurationString({ start: fromDate, end: toDate }, false);
+    }
+  } else {
+    return undefined;
   }
 
+  const cronString = `${hRange.from.m} ${hRange.from.h} * * ${hRange.from.dayOfWeek! - 1}`;
+
+  return { cron: cronString, duration };
+}
+
+function normalizeRange(cfg: TimeRegionConfig): { from: ParsedTime; to: ParsedTime } | undefined {
   // So we can mutate
   const timeRegion = { ...cfg };
 
@@ -73,7 +114,7 @@ export function calculateTimesWithin(cfg: TimeRegionConfig, tRange: TimeRange): 
   }
 
   if (!hRange.from || !hRange.to) {
-    return [];
+    return undefined;
   }
 
   if (hRange.from.h == null) {
@@ -84,63 +125,76 @@ export function calculateTimesWithin(cfg: TimeRegionConfig, tRange: TimeRange): 
     hRange.to.h = 23;
   }
 
-  const regions: AbsoluteTimeRange[] = [];
+  return hRange;
+}
 
-  const fromStart = dateTime(tRange.from).utc();
-  fromStart.set('hour', 0);
-  fromStart.set('minute', 0);
-  fromStart.set('second', 0);
-  fromStart.set('millisecond', 0);
-  fromStart.add(hRange.from.h, 'hours');
-  fromStart.add(hRange.from.m, 'minutes');
-  fromStart.add(hRange.from.s, 'seconds');
+export function calculateTimesWithin(cfg: TimeRegionConfig, tRange: TimeRange): AbsoluteTimeRange[] {
+  if (!(cfg.fromDayOfWeek || cfg.from) && !(cfg.toDayOfWeek || cfg.to)) {
+    return [];
+  }
 
-  while (fromStart.unix() <= tRange.to.unix()) {
-    while (hRange.from.dayOfWeek && hRange.from.dayOfWeek !== fromStart.isoWeekday()) {
+  const hRange = normalizeRange(cfg);
+
+  if (hRange !== undefined) {
+    const regions: AbsoluteTimeRange[] = [];
+    const fromStart = dateTime(tRange.from).utc();
+    fromStart.set('hour', 0);
+    fromStart.set('minute', 0);
+    fromStart.set('second', 0);
+    fromStart.set('millisecond', 0);
+    fromStart.add(hRange.from.h, 'hours');
+    fromStart.add(hRange.from.m, 'minutes');
+    fromStart.add(hRange.from.s, 'seconds');
+
+    while (fromStart.unix() <= tRange.to.unix()) {
+      while (hRange.from.dayOfWeek && hRange.from.dayOfWeek !== fromStart.isoWeekday()) {
+        fromStart.add(24, 'hours');
+      }
+
+      if (fromStart.unix() > tRange.to.unix()) {
+        break;
+      }
+
+      const fromEnd = dateTime(fromStart).utc();
+
+      if (fromEnd.hour) {
+        if (hRange.from.h! <= hRange.to.h!) {
+          fromEnd.add(hRange.to.h! - hRange.from.h!, 'hours');
+        } else if (hRange.from.h! > hRange.to.h!) {
+          while (fromEnd.hour() !== hRange.to.h) {
+            fromEnd.add(1, 'hours');
+          }
+        } else {
+          fromEnd.add(24 - hRange.from.h!, 'hours');
+
+          while (fromEnd.hour() !== hRange.to.h) {
+            fromEnd.add(1, 'hours');
+          }
+        }
+      }
+
+      fromEnd.set('minute', hRange.to.m ?? 0);
+      fromEnd.set('second', hRange.to.s ?? 0);
+
+      while (hRange.to.dayOfWeek && hRange.to.dayOfWeek !== fromEnd.isoWeekday()) {
+        fromEnd.add(24, 'hours');
+      }
+
+      const outsideRange =
+        (fromStart.unix() < tRange.from.unix() && fromEnd.unix() < tRange.from.unix()) ||
+        (fromStart.unix() > tRange.to.unix() && fromEnd.unix() > tRange.to.unix());
+
+      if (!outsideRange) {
+        regions.push({ from: fromStart.valueOf(), to: fromEnd.valueOf() });
+      }
+
       fromStart.add(24, 'hours');
     }
 
-    if (fromStart.unix() > tRange.to.unix()) {
-      break;
-    }
-
-    const fromEnd = dateTime(fromStart).utc();
-
-    if (fromEnd.hour) {
-      if (hRange.from.h <= hRange.to.h) {
-        fromEnd.add(hRange.to.h - hRange.from.h, 'hours');
-      } else if (hRange.from.h > hRange.to.h) {
-        while (fromEnd.hour() !== hRange.to.h) {
-          fromEnd.add(1, 'hours');
-        }
-      } else {
-        fromEnd.add(24 - hRange.from.h, 'hours');
-
-        while (fromEnd.hour() !== hRange.to.h) {
-          fromEnd.add(1, 'hours');
-        }
-      }
-    }
-
-    fromEnd.set('minute', hRange.to.m ?? 0);
-    fromEnd.set('second', hRange.to.s ?? 0);
-
-    while (hRange.to.dayOfWeek && hRange.to.dayOfWeek !== fromEnd.isoWeekday()) {
-      fromEnd.add(24, 'hours');
-    }
-
-    const outsideRange =
-      (fromStart.unix() < tRange.from.unix() && fromEnd.unix() < tRange.from.unix()) ||
-      (fromStart.unix() > tRange.to.unix() && fromEnd.unix() > tRange.to.unix());
-
-    if (!outsideRange) {
-      regions.push({ from: fromStart.valueOf(), to: fromEnd.valueOf() });
-    }
-
-    fromStart.add(24, 'hours');
+    return regions;
+  } else {
+    return [];
   }
-
-  return regions;
 }
 
 export function parseTimeOfDay(str?: string): ParsedTime {

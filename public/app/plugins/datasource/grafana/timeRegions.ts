@@ -1,7 +1,7 @@
 import { Cron } from 'croner';
 
-import { TimeRange, DataFrame, FieldType, getTimeZoneInfo, durationToMilliseconds, parseDuration } from '@grafana/data';
-import { TimeRegionConfig, calculateTimesWithin } from 'app/core/utils/timeRegions';
+import { TimeRange, DataFrame, FieldType, durationToMilliseconds, parseDuration } from '@grafana/data';
+import { TimeRegionConfig, convertToCron } from 'app/core/utils/timeRegions';
 
 export function doTimeRegionQuery(
   name: string,
@@ -13,75 +13,50 @@ export function doTimeRegionQuery(
     return undefined;
   }
 
-  if (config.mode === 'cron') {
-    if (config.duration?.length && config.cronExpr) {
-      try {
-        let job = new Cron(config.cronExpr);
+  if (config.mode === 'simple') {
+    const cronConfig = convertToCron(config);
+    config.cronExpr = cronConfig?.cron;
+    config.duration = cronConfig?.duration;
+  }
 
-        // get previous run that may overlap with start of timerange
-        let durationMs = durationToMilliseconds(parseDuration(config.duration));
-        let fromDate: Date | null = new Date(range.from.valueOf() - durationMs);
+  if (config.duration?.length && config.cronExpr) {
+    try {
+      let job = new Cron(config.cronExpr);
 
-        let toMs = range.to.valueOf();
-        let nextDate = job.nextRun(fromDate);
+      // get previous run that may overlap with start of timerange
+      let durationMs = durationToMilliseconds(parseDuration(config.duration));
+      let fromDate: Date | null = new Date(range.from.valueOf() - durationMs);
 
-        const times: number[] = [];
-        const timesEnd: number[] = [];
-        const texts: string[] = [];
+      let toMs = range.to.valueOf();
+      let nextDate = job.nextRun(fromDate);
 
-        while (nextDate != null) {
-          let nextMs = +nextDate;
+      const times: number[] = [];
+      const timesEnd: number[] = [];
+      const texts: string[] = [];
 
-          if (nextMs > toMs) {
-            break;
-          } else {
-            times.push(nextMs);
-            nextDate = job.nextRun(nextDate);
-          }
+      while (nextDate != null) {
+        let nextMs = +nextDate;
+
+        if (nextMs > toMs) {
+          break;
+        } else {
+          times.push(nextMs);
+          nextDate = job.nextRun(nextDate);
         }
-
-        if (times.length > 0) {
-          times.forEach((t) => {
-            timesEnd.push(t + durationMs);
-            texts.push(name);
-          });
-
-          return toFrame(times, timesEnd, texts);
-        }
-      } catch (e) {
-        // invalid expression
-        console.error(e);
-      }
-    }
-  } else {
-    const regions = calculateTimesWithin(config, range); // UTC
-    if (!regions.length) {
-      return undefined;
-    }
-
-    const times: number[] = [];
-    const timesEnd: number[] = [];
-    const texts: string[] = [];
-
-    const regionTimezone = config.timezone ?? tz;
-
-    for (const region of regions) {
-      let from = region.from;
-      let to = region.to;
-
-      const info = getTimeZoneInfo(regionTimezone, from);
-      if (info) {
-        const offset = info.offsetInMins * 60 * 1000;
-        from += offset;
-        to += offset;
       }
 
-      times.push(from);
-      timesEnd.push(to);
-      texts.push(name);
-    }
+      if (times.length > 0) {
+        times.forEach((t) => {
+          timesEnd.push(t + durationMs);
+          texts.push(name);
+        });
 
-    return toFrame(times, timesEnd, texts);
+        return toFrame(times, timesEnd, texts);
+      }
+    } catch (e) {
+      // invalid expression
+      console.error(e);
+    }
   }
 
   return undefined;
