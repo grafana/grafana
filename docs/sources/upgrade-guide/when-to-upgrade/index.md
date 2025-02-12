@@ -99,6 +99,7 @@ Here is an overview of projected version support through 2024:
 | 11.2                      | August 2024      | May 2025                               |
 | 11.3                      | October 2024     | July 2025                              |
 | 11.4                      | December 2024    | September 2025                         |
+| 11.5                      | January 2025     | October 2025                           |
 
 {{< admonition type="note" >}}
 Grafana 9.5.x was the last supported minor for the 9.0 major release and is no longer supported as of July 2024.
