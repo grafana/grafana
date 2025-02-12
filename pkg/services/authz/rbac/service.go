@@ -18,7 +18,6 @@ import (
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	"github.com/grafana/authlib/cache"
 	"github.com/grafana/authlib/types"
-	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -540,7 +539,7 @@ func (s *Service) checkInheritedPermissions(ctx context.Context, scopeMap map[st
 	return false, nil
 }
 
-func (s *Service) buildFolderTree(ctx context.Context, ns claims.NamespaceInfo) (folderTree, error) {
+func (s *Service) buildFolderTree(ctx context.Context, ns types.NamespaceInfo) (folderTree, error) {
 	ctx, span := s.tracer.Start(ctx, "authz_direct_db.service.buildFolderTree")
 	defer span.End()
 
