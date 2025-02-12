@@ -12,15 +12,16 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacysearcher"
-	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	k8sUser "k8s.io/apiserver/pkg/authentication/user"
 	k8sRequest "k8s.io/apiserver/pkg/endpoints/request"
@@ -42,22 +43,25 @@ type K8sHandler interface {
 var _ K8sHandler = (*k8sHandler)(nil)
 
 type k8sHandler struct {
-	namespacer         request.NamespaceMapper
-	gvr                schema.GroupVersionResource
-	restConfigProvider apiserver.RestConfigProvider
-	searcher           resource.ResourceIndexClient
-	userService        user.Service
+	namespacer  request.NamespaceMapper
+	gvr         schema.GroupVersionResource
+	restConfig  func(context.Context) *rest.Config
+	searcher    func(context.Context) resource.ResourceIndexClient
+	userService user.Service
 }
 
-func NewK8sHandler(cfg *setting.Cfg, namespacer request.NamespaceMapper, gvr schema.GroupVersionResource, restConfigProvider apiserver.RestConfigProvider, searcher resource.ResourceIndexClient, dashStore dashboards.Store, userSvc user.Service) K8sHandler {
+func NewK8sHandler(cfg *setting.Cfg, namespacer request.NamespaceMapper, gvr schema.GroupVersionResource,
+	restConfig func(context.Context) *rest.Config, dashStore dashboards.Store, userSvc user.Service) K8sHandler {
 	legacySearcher := legacysearcher.NewDashboardSearchClient(dashStore)
-	searchClient := resource.NewSearchClient(cfg, setting.UnifiedStorageConfigKeyDashboard, searcher, legacySearcher)
+	key := gvr.Resource + "." + gvr.Group // the unified storage key in the config.ini is resource + group
+	searchClient := resource.NewSearchClient(cfg, key, unified.GetResourceClient, legacySearcher)
+
 	return &k8sHandler{
-		namespacer:         namespacer,
-		gvr:                gvr,
-		restConfigProvider: restConfigProvider,
-		searcher:           searchClient,
-		userService:        userSvc,
+		namespacer:  namespacer,
+		gvr:         gvr,
+		restConfig:  restConfig,
+		searcher:    searchClient,
+		userService: userSvc,
 	}
 }
 
@@ -187,12 +191,12 @@ func (h *k8sHandler) Search(ctx context.Context, orgID int64, in *resource.Resou
 		}
 	}
 
-	return h.searcher.Search(ctx, in)
+	return h.searcher(ctx).Search(ctx, in)
 }
 
 func (h *k8sHandler) GetStats(ctx context.Context, orgID int64) (*resource.ResourceStatsResponse, error) {
 	// goes directly through grpc, so doesn't need the new context
-	return h.searcher.GetStats(ctx, &resource.ResourceStatsRequest{
+	return h.searcher(ctx).GetStats(ctx, &resource.ResourceStatsRequest{
 		Namespace: h.GetNamespace(orgID),
 		Kinds: []string{
 			h.gvr.Group + "/" + h.gvr.Resource,
@@ -223,7 +227,7 @@ func (h *k8sHandler) GetUserFromMeta(ctx context.Context, userMeta string) (*use
 }
 
 func (h *k8sHandler) getClient(ctx context.Context, orgID int64) (dynamic.ResourceInterface, bool) {
-	cfg := h.restConfigProvider.GetRestConfig(ctx)
+	cfg := h.restConfig(ctx)
 	if cfg == nil {
 		return nil, false
 	}

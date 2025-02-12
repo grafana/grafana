@@ -123,6 +123,7 @@ func (g *AlertRuleGenerator) Generate() AlertRule {
 		Annotations:          annotations,
 		Labels:               labels,
 		NotificationSettings: ns,
+		Metadata:             GenerateMetadata(),
 	}
 
 	for _, mutator := range g.mutators {
@@ -569,6 +570,12 @@ func (a *AlertRuleMutators) WithVersion(version int64) AlertRuleMutator {
 	}
 }
 
+func (a *AlertRuleMutators) WithMetadata(meta AlertRuleMetadata) AlertRuleMutator {
+	return func(r *AlertRule) {
+		r.Metadata = meta
+	}
+}
+
 func (g *AlertRuleGenerator) GenerateLabels(min, max int, prefix string) data.Labels {
 	count := max
 	if min > max {
@@ -643,79 +650,13 @@ func GenerateGroupKey(orgID int64) AlertRuleGroupKey {
 
 // CopyRule creates a deep copy of AlertRule
 func CopyRule(r *AlertRule, mutators ...AlertRuleMutator) *AlertRule {
-	result := AlertRule{
-		ID:              r.ID,
-		OrgID:           r.OrgID,
-		Title:           r.Title,
-		Condition:       r.Condition,
-		Updated:         r.Updated,
-		UpdatedBy:       r.UpdatedBy,
-		IntervalSeconds: r.IntervalSeconds,
-		Version:         r.Version,
-		UID:             r.UID,
-		NamespaceUID:    r.NamespaceUID,
-		RuleGroup:       r.RuleGroup,
-		RuleGroupIndex:  r.RuleGroupIndex,
-		NoDataState:     r.NoDataState,
-		ExecErrState:    r.ExecErrState,
-		For:             r.For,
-		Record:          r.Record,
-		IsPaused:        r.IsPaused,
-	}
-
-	if r.DashboardUID != nil {
-		dash := *r.DashboardUID
-		result.DashboardUID = &dash
-	}
-	if r.PanelID != nil {
-		p := *r.PanelID
-		result.PanelID = &p
-	}
-
-	for _, d := range r.Data {
-		q := AlertQuery{
-			RefID:             d.RefID,
-			QueryType:         d.QueryType,
-			RelativeTimeRange: d.RelativeTimeRange,
-			DatasourceUID:     d.DatasourceUID,
-		}
-		q.Model = make([]byte, 0, cap(d.Model))
-		q.Model = append(q.Model, d.Model...)
-		result.Data = append(result.Data, q)
-	}
-
-	if r.Annotations != nil {
-		result.Annotations = make(map[string]string, len(r.Annotations))
-		for s, s2 := range r.Annotations {
-			result.Annotations[s] = s2
-		}
-	}
-
-	if r.Labels != nil {
-		result.Labels = make(map[string]string, len(r.Labels))
-		for s, s2 := range r.Labels {
-			result.Labels[s] = s2
-		}
-	}
-
-	if r.Record != nil {
-		result.Record = &Record{
-			From:   r.Record.From,
-			Metric: r.Record.Metric,
-		}
-	}
-
-	for _, s := range r.NotificationSettings {
-		result.NotificationSettings = append(result.NotificationSettings, CopyNotificationSettings(s))
-	}
-
+	result := r.Copy()
 	if len(mutators) > 0 {
 		for _, mutator := range mutators {
-			mutator(&result)
+			mutator(result)
 		}
 	}
-
-	return &result
+	return result
 }
 
 func CreateClassicConditionExpression(refID string, inputRefID string, reducer string, operation string, threshold int) AlertQuery {
@@ -860,6 +801,15 @@ func CreateHysteresisExpression(t *testing.T, refID string, inputRefID string, t
 	require.NoError(t, err)
 	require.Truef(t, h, "test model is expected to be a hysteresis expression")
 	return q
+}
+
+func GenerateMetadata() AlertRuleMetadata {
+	return AlertRuleMetadata{
+		EditorSettings: EditorSettings{
+			SimplifiedQueryAndExpressionsSection: rand.Int()%2 == 0,
+			SimplifiedNotificationsSection:       rand.Int()%2 == 0,
+		},
+	}
 }
 
 type AlertInstanceMutator func(*AlertInstance)
