@@ -75,6 +75,11 @@ func TestDDInterval(t *testing.T) {
 			promRateInterval:   15 * time.Second,
 			expectedDDInterval: 30 * time.Hour,
 		},
+		{
+			timeRange:          2 * 24 * time.Hour,
+			promRateInterval:   40 * time.Minute,
+			expectedDDInterval: 30 * time.Minute,
+		},
 	}
 
 	for _, tc := range testCases {

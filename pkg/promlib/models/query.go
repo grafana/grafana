@@ -203,14 +203,15 @@ func Parse(span trace.Span, query backend.DataQuery, dsScrapeInterval string, in
 	}
 	span.SetAttributes(attribute.String("rawExpr", model.Expr))
 
+	// Interpolate variables in expr
+	timeRange := query.TimeRange.To.Sub(query.TimeRange.From)
+
 	// Final step value for prometheus
-	calculatedStep, err := calculatePrometheusInterval(model.Interval, dsScrapeInterval, int64(model.IntervalMS), model.IntervalFactor, query, intervalCalculator)
+	calculatedStep, err := calculatePrometheusInterval(&model.Interval, dsScrapeInterval, int64(model.IntervalMS), model.IntervalFactor, query, intervalCalculator, timeRange)
 	if err != nil {
 		return nil, err
 	}
 
-	// Interpolate variables in expr
-	timeRange := query.TimeRange.To.Sub(query.TimeRange.From)
 	expr := InterpolateVariables(
 		model.Expr,
 		query.Interval,
@@ -307,11 +308,14 @@ func (query *Query) TimeRange() TimeRange {
 }
 
 func calculatePrometheusInterval(
-	queryInterval, dsScrapeInterval string,
+	queryIntervalIn *string,
+	dsScrapeInterval string,
 	intervalMs, intervalFactor int64,
 	query backend.DataQuery,
 	intervalCalculator intervalv2.Calculator,
+	timeRange time.Duration,
 ) (time.Duration, error) {
+	queryInterval := *queryIntervalIn
 	// we need to compare the original query model after it is overwritten below to variables so that we can
 	// calculate the rateInterval if it is equal to $__rate_interval or ${__rate_interval}
 	originalQueryInterval := queryInterval
@@ -336,7 +340,13 @@ func calculatePrometheusInterval(
 	// here is where we compare for $__rate_interval or ${__rate_interval}
 	if originalQueryInterval == varRateInterval || originalQueryInterval == varRateIntervalAlt {
 		// Rate interval is final and is not affected by resolution
-		return calculateRateInterval(adjustedInterval, dsScrapeInterval), nil
+		resInterval := calculateRateInterval(adjustedInterval, dsScrapeInterval)
+		return resInterval, nil
+	} else if originalQueryInterval == varDDInterval {
+		resInterval := CalculateDDInterval(timeRange, calculateRateInterval(adjustedInterval, dsScrapeInterval))
+		// The below fix is only applied to DD interval to avoid changing behavior of default grafana.
+		*queryIntervalIn = resInterval.String()
+		return resInterval, nil
 	} else {
 		queryIntervalFactor := intervalFactor
 		if queryIntervalFactor == 0 {
@@ -381,6 +391,43 @@ func roundIntervalUp(
 	return interval + roundTo - balance
 }
 
+func roundIntervalNearest(
+	interval time.Duration,
+	roundTo time.Duration,
+) time.Duration {
+	balance := interval % roundTo
+	if balance == 0 {
+		return interval
+	}
+
+	if balance < roundTo/2 {
+		return interval - balance
+	}
+
+	return interval + roundTo - balance
+}
+
+func roundDownPromInterval(
+	interval time.Duration,
+) time.Duration {
+	if interval < 5*time.Minute {
+		// Already rounded to the nearest minute.
+		return interval
+	}
+
+	if interval < 30*time.Minute {
+		// Round up to the nearest 5 minutes.
+		return roundIntervalNearest(interval, 5*time.Minute)
+	}
+
+	if interval < 2*time.Hour {
+		// Round up to the nearest 10 minutes.
+		return roundIntervalNearest(interval, 30*time.Minute)
+	}
+
+	return roundIntervalNearest(interval, time.Hour)
+}
+
 func CalculateDDInterval(
 	timeRange time.Duration,
 	promRateInterval time.Duration,
@@ -388,7 +435,10 @@ func CalculateDDInterval(
 	// Round up to number of minutes.
 	ddInterval := (timeRange / numDDTargetParts / time.Minute) * time.Minute
 	if ddInterval < promRateInterval {
-		return promRateInterval
+		roundedPromInterval := roundDownPromInterval(promRateInterval)
+		if ddInterval < roundedPromInterval {
+			return roundedPromInterval
+		}
 	}
 
 	if ddInterval < 5*time.Minute {
@@ -461,7 +511,11 @@ func InterpolateVariables(
 }
 
 func isVariableInterval(interval string) bool {
-	if interval == varInterval || interval == varIntervalMs || interval == varRateInterval || interval == varRateIntervalMs {
+	if interval == varInterval ||
+		interval == varIntervalMs ||
+		interval == varRateInterval ||
+		interval == varRateIntervalMs ||
+		interval == varDDInterval {
 		return true
 	}
 	// Repetitive code, we should have functionality to unify these
