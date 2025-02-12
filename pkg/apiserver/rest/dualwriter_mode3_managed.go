@@ -54,10 +54,11 @@ func NewManagedDualWriter(service modecheck.Service,
 	}
 
 	return &dualWriterMode3Managed{
-		legacy: legacy,
-		target: newDualWriterMode3(legacy, storage, metrics, gr.String()),
-		status: service,
-		gr:     gr,
+		status:  service,
+		legacy:  legacy,
+		unified: storage,
+		target:  newDualWriterMode3(legacy, storage, metrics, gr.String()),
+		gr:      gr,
 	}, nil
 }
 
@@ -65,9 +66,8 @@ type dualWriterMode3Managed struct {
 	status  modecheck.Service
 	legacy  LegacyStorage
 	unified Storage
-
-	target *DualWriterMode3
-	gr     schema.GroupResource
+	target  *DualWriterMode3
+	gr      schema.GroupResource
 }
 
 func (d *dualWriterMode3Managed) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {

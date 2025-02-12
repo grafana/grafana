@@ -10,15 +10,15 @@ import (
 
 // For *legacy* services, this will indicate if we have transitioned to Unified storage yet
 type StorageStatus struct {
-	Group        string `xorm:"group"`
-	Resource     string `xorm:"resource"`
-	WriteLegacy  bool   `xorm:"write_legacy"`
-	WriteUnified bool   `xorm:"write_unified"`
-	ReadUnified  bool   `xorm:"read_unified"`
-	Migrated     int64  `xorm:"migrated"`  // required to read unified
-	Migrating    int64  `xorm:"migrating"` // Writes are blocked while migrating
-	Runtime      bool   `xorm:"runtime"`   // Support chaning the storage at runtime
-	UpdateKey    int64  `xorm:"update_key"`
+	Group        string `json:"group" xorm:"group"`
+	Resource     string `json:"resource" xorm:"resource"`
+	WriteLegacy  bool   `json:"write_legacy" xorm:"write_legacy"`
+	WriteUnified bool   `json:"write_unified" xorm:"write_unified"`
+	ReadUnified  bool   `json:"read_unified" xorm:"read_unified"`
+	Migrated     int64  `json:"migrated" xorm:"migrated"`   // required to read unified
+	Migrating    int64  `json:"migrating" xorm:"migrating"` // Writes are blocked while migrating
+	Runtime      bool   `json:"runtime" xorm:"runtime"`     // Support chaning the storage at runtime
+	UpdateKey    int64  `json:"update_key" xorm:"update_key"`
 }
 
 type Service interface {
@@ -49,7 +49,23 @@ func (m *service) ReadUnified(ctx context.Context, gr schema.GroupResource) bool
 
 // Status implements Service.
 func (m *service) Status(ctx context.Context, gr schema.GroupResource) (StorageStatus, bool) {
-	return m.db.Get(ctx, gr)
+	v, found := m.db.Get(ctx, gr)
+	if !found {
+		v = StorageStatus{
+			Group:        gr.Group,
+			Resource:     gr.Resource,
+			WriteLegacy:  true,
+			WriteUnified: true,
+			ReadUnified:  false,
+			Migrated:     0,
+			Migrating:    0,
+			Runtime:      true, // need to explicitly ask for not runtime
+			UpdateKey:    1,
+		}
+		v, _ = m.db.Set(ctx, v) // write the value
+		return v, false
+	}
+	return v, found
 }
 
 // StartMigration implements Service.
@@ -109,5 +125,5 @@ func (m *service) Update(ctx context.Context, status StorageStatus) (StorageStat
 		return v, fmt.Errorf("must write either legacy or unified")
 	}
 
-	return m.db.Set(ctx, v)
+	return m.db.Set(ctx, status)
 }
