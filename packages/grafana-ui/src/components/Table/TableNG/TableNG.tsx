@@ -137,6 +137,7 @@ export function TableNG(props: TableNGProps) {
   // setSortColumns is still used to trigger re-render
   const sortColumnsRef = useRef(sortColumns);
   const [expandedRows, setExpandedRows] = useState<number[]>([]);
+  const [isNestedTable, setIsNestedTable] = useState(false);
 
   function getDefaultRowHeight(): number {
     const bodyFontSize = theme.typography.fontSize;
@@ -486,8 +487,16 @@ export function TableNG(props: TableNGProps) {
 
   const columns = useMemo(
     () => mapFrameToDataGrid(props.data, calcsRef),
-    [props.data, calcsRef, filter, expandedRows, footerOptions] // eslint-disable-line react-hooks/exhaustive-deps
+    [props.data, calcsRef, filter, expandedRows, expandedRows.length, footerOptions] // eslint-disable-line react-hooks/exhaustive-deps
   );
+
+  useEffect(() => {
+    const nestedDataField = props.data.fields.find(({ type }) => type === FieldType.nestedFrames);
+    const hasNestedData = nestedDataField !== undefined;
+    if (hasNestedData) {
+      setIsNestedTable(true);
+    }
+  }, [props.data.fields]);
 
   // This effect needed to set header cells refs before row height calculation
   useLayoutEffect(() => {
@@ -543,7 +552,7 @@ export function TableNG(props: TableNGProps) {
           sortable: true,
           resizable: true,
         }}
-        rowHeight={textWrap ? calculateRowHeight : defaultRowHeight}
+        rowHeight={textWrap || isNestedTable ? calculateRowHeight : defaultRowHeight}
         // TODO: This doesn't follow current table behavior
         style={{ width, height }}
         renderers={{ renderRow: myRowRenderer }}
