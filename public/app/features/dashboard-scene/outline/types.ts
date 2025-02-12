@@ -31,7 +31,7 @@ export interface DashboardOutlineGridRowItem {
 export interface DashboardOutlinePanelItem {
   type: DashboardOutlineItemType.PANEL;
   item: VizPanel;
-  children: never;
+  children: never[];
 }
 
 export type DashboardOutlineItem =

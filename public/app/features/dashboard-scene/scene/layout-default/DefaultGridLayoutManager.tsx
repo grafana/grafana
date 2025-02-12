@@ -248,13 +248,14 @@ export class DefaultGridLayoutManager
               ...(child.state.repeatedPanels?.map<DashboardOutlinePanelItem>((panel) => ({
                 type: DashboardOutlineItemType.PANEL,
                 item: panel,
+                children: [],
               })) ?? [])
             );
 
             return acc;
           }
 
-          acc.push({ type: DashboardOutlineItemType.PANEL, item: child.state.body });
+          acc.push({ type: DashboardOutlineItemType.PANEL, item: child.state.body, children: [] });
           return acc;
         } else if (child instanceof SceneGridRow) {
           acc.push({
@@ -270,13 +271,14 @@ export class DefaultGridLayoutManager
                   ...(child.state.repeatedPanels?.map<DashboardOutlinePanelItem>((panel) => ({
                     type: DashboardOutlineItemType.PANEL,
                     item: panel,
+                    children: [],
                   })) ?? [])
                 );
 
                 return acc;
               }
 
-              acc.push({ type: DashboardOutlineItemType.PANEL, item: child.state.body });
+              acc.push({ type: DashboardOutlineItemType.PANEL, item: child.state.body, children: [] });
               return acc;
             }, []),
           });

@@ -4,6 +4,7 @@ import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/Pan
 
 import { ConditionalRendering } from '../../conditional-rendering/ConditionalRendering';
 import { DashboardOutlineItemType, DashboardOutlinePanelItem } from '../../outline/types';
+import { joinCloneKeys } from '../../utils/clone';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { getDashboardSceneFor, getGridItemKeyForPanelId, getVizPanelKeyForPanelId } from '../../utils/utils';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
@@ -151,6 +152,7 @@ export class ResponsiveGridLayoutManager
         acc.push({
           type: DashboardOutlineItemType.PANEL,
           item: child.state.body,
+          children: [],
         });
       }
 
@@ -160,6 +162,35 @@ export class ResponsiveGridLayoutManager
 
   public getOptions(): OptionsPaneItemDescriptor[] {
     return getEditOptions(this);
+  }
+
+  public cloneLayout(ancestorKey: string): DashboardLayoutManager {
+    return this.clone({
+      layout: this.state.layout.clone({
+        children: this.state.layout.state.children.reduce<{ panelId: number; children: ResponsiveGridItem[] }>(
+          (acc, child) => {
+            if (child instanceof ResponsiveGridItem) {
+              const gridItemKey = joinCloneKeys(ancestorKey, getGridItemKeyForPanelId(acc.panelId));
+
+              acc.children.push(
+                child.clone({
+                  key: gridItemKey,
+                  body: child.state.body.clone({
+                    key: joinCloneKeys(gridItemKey, getVizPanelKeyForPanelId(acc.panelId++)),
+                  }),
+                  $behaviors: [ConditionalRendering.createEmpty()],
+                })
+              );
+
+              return acc;
+            }
+
+            return acc;
+          },
+          { panelId: 0, children: [] }
+        ).children,
+      }),
+    });
   }
 
   public changeColumns(columns: string) {
