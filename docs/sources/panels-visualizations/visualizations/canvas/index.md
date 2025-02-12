@@ -434,7 +434,7 @@ To add a data link, follow these steps:
 1. If you want the link to open in a new tab, toggle the **Open in a new tab** switch.
 1. If you want the data link to open with a single click on the element, toggle the **One click** switch.
 
-   Only one data link can have **One click** enabled at a time.
+   Only one data link or action can have **One click** enabled at a time.
 
 1. Click **Save** to save changes and close the dialog box.
 1. Disable inline editing.
