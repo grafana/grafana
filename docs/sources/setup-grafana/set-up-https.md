@@ -48,13 +48,13 @@ This section shows you how to use `openssl` tooling to generate all necessary fi
 1. Run the following command to generate a 2048-bit RSA private key, which is used to decrypt traffic:
 
    ```bash
-   $ sudo openssl genrsa -out /etc/grafana/grafana.key 2048
+   sudo openssl genrsa -out /etc/grafana/grafana.key 2048
    ```
 
 1. Run the following command to generate a certificate, using the private key from the previous step.
 
    ```bash
-   $ sudo openssl req -new -key /etc/grafana/grafana.key -out /etc/grafana/grafana.csr
+   sudo openssl req -new -key /etc/grafana/grafana.key -out /etc/grafana/grafana.csr
    ```
 
    When prompted, answer the questions, which might include your fully-qualified domain name, email address, country code, and others. The following example is similar to the prompts you will see.
