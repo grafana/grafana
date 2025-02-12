@@ -12,11 +12,16 @@ import { toOperatorOptions, valueToDefinition } from './utils';
 interface FilterSectionProps {
   selectedColumns: Array<SelectableValue<string>>;
   selectedTable: string;
-  columns: AzureLogAnalyticsMetadataColumn[]; 
+  columns: AzureLogAnalyticsMetadataColumn[];
   onQueryUpdate: (params: { filters?: string }) => void;
 }
 
-export const FilterSection: React.FC<FilterSectionProps> = ({ onQueryUpdate, selectedTable, selectedColumns, columns }) => {
+export const FilterSection: React.FC<FilterSectionProps> = ({
+  onQueryUpdate,
+  selectedTable,
+  selectedColumns,
+  columns,
+}) => {
   const styles = useStyles2(getStyles);
   const [filters, setFilters] = useState<Array<{ column: string; operator: string; value: string }>>([]);
 
@@ -30,7 +35,6 @@ export const FilterSection: React.FC<FilterSectionProps> = ({ onQueryUpdate, sel
       return [];
     });
   }, [selectedTable]);
-  
 
   const formatFilters = (filters: Array<{ column: string; operator: string; value: string }>): string => {
     return filters

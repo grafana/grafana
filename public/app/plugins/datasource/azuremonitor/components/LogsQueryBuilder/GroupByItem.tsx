@@ -17,9 +17,10 @@ interface GroupByItemProps {
 }
 
 export const GroupByItem: React.FC<GroupByItemProps> = ({ groupBy, onChange, onDelete, columns }) => {
-  const columnOptions = columns.length > 0
-    ? columns.map((c) => ({ label: c.label, value: c.value }))
-    : [{ label: 'No columns available', value: '' }];
+  const columnOptions =
+    columns.length > 0
+      ? columns.map((c) => ({ label: c.label, value: c.value }))
+      : [{ label: 'No columns available', value: '' }];
 
   return (
     <InputGroup>

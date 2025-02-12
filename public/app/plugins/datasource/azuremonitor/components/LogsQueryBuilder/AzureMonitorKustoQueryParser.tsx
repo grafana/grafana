@@ -1,41 +1,66 @@
-import { AzureLogAnalyticsMetadataColumn } from "../../types";
+import { AzureLogAnalyticsMetadataColumn } from '../../types';
 
 export class AzureMonitorKustoQueryParser {
-  static updateQuery(
-    selectedTable: string,
-    selectedColumns: string[],
-    columns: AzureLogAnalyticsMetadataColumn[],
-    filters?: string,
-    aggregation?: string,
-    groupBy?: string[],
-    limit?: number
-  ): string {
+  constructor() {}
+
+  static toQuery(params: {
+    selectedTable: string;
+    selectedColumns: string[];
+    columns: AzureLogAnalyticsMetadataColumn[];
+    filters?: string;
+    aggregation?: string;
+    groupBy?: string[];
+    limit?: number;
+  }): string {
+    const { selectedTable, selectedColumns, columns, filters, aggregation, groupBy, limit } = params;
+
     if (!selectedTable) {
-      return ''; 
+      return '';
     }
 
-    let updatedQuery = selectedTable;
-    let whereConditions = new Set<string>();
+    const parts: string[] = [];
+    const datetimeColumn = this.getDatetimeColumn(columns);
+    const shouldApplyTimeFilter = this.shouldApplyTimeFilter(selectedColumns, datetimeColumn);
 
-    // **Step 1: Detect first datetime column (Do NOT assume TimeGenerated)**
-    const datetimeColumn = columns.find((col) => col.type === 'datetime')?.name || 'TimeGenerated';
+    this.appendFrom(selectedTable, parts);
+    this.appendWhere(selectedColumns, filters, datetimeColumn, shouldApplyTimeFilter, columns, parts);
+    this.appendSummarize(selectedColumns, aggregation, groupBy, datetimeColumn, parts);
+    this.appendOrderBy(datetimeColumn, selectedColumns, groupBy, shouldApplyTimeFilter, parts);
+    this.appendLimit(limit, parts);
 
-    // **Step 2: Determine if time filter should be applied**
-    const hasSelectedTimeColumn = selectedColumns.includes(datetimeColumn);
-    const shouldApplyTimeFilter = selectedColumns.length === 0 || hasSelectedTimeColumn;
+    return parts.join('\n| ');
+  }
 
-    // **Step 3: Ensure $__timeFilter is added ONLY when necessary**
+  private static getDatetimeColumn(columns: AzureLogAnalyticsMetadataColumn[]): string {
+    return columns.find((col) => col.type === 'datetime')?.name || 'TimeGenerated';
+  }
+
+  private static shouldApplyTimeFilter(selectedColumns: string[], datetimeColumn: string): boolean {
+    return selectedColumns.length === 0 || selectedColumns.includes(datetimeColumn);
+  }
+
+  private static appendFrom(selectedTable: string, parts: string[]) {
+    parts.push(selectedTable);
+  }
+
+  private static appendWhere(
+    selectedColumns: string[],
+    filters: string | undefined,
+    datetimeColumn: string,
+    shouldApplyTimeFilter: boolean,
+    columns: AzureLogAnalyticsMetadataColumn[],
+    parts: string[]
+  ) {
+    const whereConditions = new Set<string>();
+
     if (shouldApplyTimeFilter) {
       whereConditions.add(`$__timeFilter(${datetimeColumn})`);
     }
 
-    // **Step 4: Ensure Filters Are Retained**
-    if (filters && filters.trim()) {
+    if (filters) {
       const validFilters = filters.split(' and ').filter((filter) => {
-        const filterColumn = filter.split(' ')[0]; 
-        return (
-          selectedColumns.includes(filterColumn) || columns.some((col) => col.name === filterColumn)
-        ); 
+        const filterColumn = filter.split(' ')[0];
+        return selectedColumns.includes(filterColumn) || columns.some((col) => col.name === filterColumn);
       });
 
       if (validFilters.length > 0) {
@@ -43,48 +68,57 @@ export class AzureMonitorKustoQueryParser {
       }
     }
 
-    // **Step 5: Ensure `where` is added BEFORE `project`**
     if (whereConditions.size > 0) {
-      updatedQuery += `\n| where ${Array.from(whereConditions).join(' and ')}`;
+      parts.push(`where ${Array.from(whereConditions).join(' and ')}`);
     }
+  }
 
-    // **Step 6: Handle Aggregation and Group By Correctly**
-    let finalGroupBy = new Set<string>();
-
-    if (groupBy && groupBy.length > 0) {
-      finalGroupBy = new Set(groupBy);
-
-      if (hasSelectedTimeColumn) {
-        finalGroupBy.add(`bin(${datetimeColumn}, 1m)`);
+  private static appendSummarize(
+    selectedColumns: string[],
+    aggregation: string | undefined,
+    groupBy: string[] | undefined,
+    datetimeColumn: string,
+    parts: string[]
+  ) {
+    const groupByParts = new Set<string>();
+    if (groupBy) {
+      groupBy.forEach((col) => groupByParts.add(col));
+      if (selectedColumns.includes(datetimeColumn)) {
+        groupByParts.add(`bin(${datetimeColumn}, 1m)`);
       }
     }
 
-    // 🔥 **Ensure Group By is Completely Removed When Undefined**
-    const hasValidGroupBy = finalGroupBy.size > 0;
-    const hasValidAggregation = aggregation && aggregation.trim() !== "";
+    const hasValidGroupBy = groupByParts.size > 0;
+    const hasValidAggregation = !!(aggregation && aggregation.trim());
 
-    // 🔥 **REMOVE `summarize` if neither aggregation nor groupBy exist**
     if (hasValidAggregation || hasValidGroupBy) {
-      updatedQuery += `\n| summarize ${aggregation || "count()"}${
-        hasValidGroupBy ? ` by ${Array.from(finalGroupBy).join(', ')}` : ""
-      }`;
+      parts.push(
+        `summarize ${aggregation || 'count()'}${hasValidGroupBy ? ` by ${Array.from(groupByParts).join(', ')}` : ''}`
+      );
     } else if (selectedColumns.length > 0) {
-      updatedQuery += `\n| project ${selectedColumns.join(', ')}`;
+      parts.push(`project ${selectedColumns.join(', ')}`);
     }
+  }
 
-    // **Step 7: Ensure `order by` is only added when needed**
-    const hasDatetimeGroupBy = groupBy?.some((col) => col.startsWith("bin("));
-    const isTimeSelected = selectedColumns.includes(datetimeColumn);
-
-    if (shouldApplyTimeFilter && !hasDatetimeGroupBy && !isTimeSelected) {
-      updatedQuery += `\n| order by ${datetimeColumn} asc`;
+  private static appendOrderBy(
+    datetimeColumn: string,
+    selectedColumns: string[],
+    groupBy: string[] | undefined,
+    shouldApplyTimeFilter: boolean,
+    parts: string[]
+  ) {
+    if (
+      shouldApplyTimeFilter &&
+      !groupBy?.some((col) => col.startsWith('bin(')) &&
+      !selectedColumns.includes(datetimeColumn)
+    ) {
+      parts.push(`order by ${datetimeColumn} asc`);
     }
+  }
 
-    // **Step 8: Add limit if provided**
+  private static appendLimit(limit: number | undefined, parts: string[]) {
     if (limit && limit > 0) {
-      updatedQuery += `\n| limit ${limit}`;
+      parts.push(`limit ${limit}`);
     }
-
-    return updatedQuery;
   }
 }

@@ -185,6 +185,10 @@ export interface AzureLogsQuery {
    */
   basicLogsQuery?: boolean;
   /**
+   * Builder query to be executed.
+   */
+  builderQuery?: BuilderQueryExpression;
+  /**
    * If set to true the dashboard time range will be used as a filter for the query. Otherwise the query time ranges will be used. Defaults to false.
    */
   dashboardTime?: boolean;
@@ -291,6 +295,125 @@ export enum ResultFormat {
 export enum LogsEditorMode {
   Builder = 'builder',
   Raw = 'raw',
+}
+
+export enum BuilderQueryEditorExpressionType {
+  And = 'and',
+  Function_parameter = 'function_parameter',
+  Group_by = 'group_by',
+  Operator = 'operator',
+  Or = 'or',
+  Property = 'property',
+  Reduce = 'reduce',
+}
+
+export enum BuilderQueryEditorPropertyType {
+  Boolean = 'boolean',
+  Datetime = 'datetime',
+  Function = 'function',
+  Interval = 'interval',
+  Number = 'number',
+  String = 'string',
+  Time_span = 'time_span',
+}
+
+export interface BuilderQueryEditorProperty {
+  name: string;
+  type: BuilderQueryEditorPropertyType;
+}
+
+export interface BuilderQueryEditorPropertyExpression {
+  property: BuilderQueryEditorProperty;
+  type: BuilderQueryEditorExpressionType;
+}
+
+export interface BuilderQueryEditorColumnsExpression {
+  columns?: Array<string>;
+  type: BuilderQueryEditorExpressionType;
+}
+
+export const defaultBuilderQueryEditorColumnsExpression: Partial<BuilderQueryEditorColumnsExpression> = {
+  columns: [],
+};
+
+export interface SelectableValue {
+  label: string;
+  value: string;
+}
+
+export interface BuilderQueryEditorOperator {
+  labelValue?: string;
+  name: string;
+  value: (Record<string, unknown> | '#BuilderQueryEditorOperatorValueType');
+}
+
+export interface BuilderQueryEditorOperatorExpression {
+  operator: BuilderQueryEditorOperator;
+  property: BuilderQueryEditorProperty;
+  type: BuilderQueryEditorExpressionType;
+}
+
+export interface BuilerQueryEditorWhereArrayExpression {
+  expressions: Array<(BuilderQueryEditorOperatorExpression | {
+      expressions: Array<BuilderQueryEditorOperatorExpression>;
+      type: BuilderQueryEditorExpressionType;
+    })>;
+  type: BuilderQueryEditorExpressionType;
+}
+
+export const defaultBuilerQueryEditorWhereArrayExpression: Partial<BuilerQueryEditorWhereArrayExpression> = {
+  expressions: [],
+};
+
+export interface BuilderQueryEditorFunctionParameterExpression {
+  fieldType: BuilderQueryEditorPropertyType;
+  type: BuilderQueryEditorExpressionType;
+  value: string;
+}
+
+export interface QueryEditorReduceExpression {
+  focus?: boolean;
+  parameters?: Array<BuilderQueryEditorFunctionParameterExpression>;
+  property: BuilderQueryEditorProperty;
+  reduce: BuilderQueryEditorProperty;
+}
+
+export const defaultQueryEditorReduceExpression: Partial<QueryEditorReduceExpression> = {
+  parameters: [],
+};
+
+export interface BuilderQueryEditorReduceExpressionArray {
+  expressions: Array<QueryEditorReduceExpression>;
+  type: BuilderQueryEditorExpressionType;
+}
+
+export const defaultBuilderQueryEditorReduceExpressionArray: Partial<BuilderQueryEditorReduceExpressionArray> = {
+  expressions: [],
+};
+
+export interface BuilderQueryEditorGroupByExpression {
+  focus?: boolean;
+  interval?: BuilderQueryEditorProperty;
+  property: BuilderQueryEditorProperty;
+  type: BuilderQueryEditorExpressionType;
+}
+
+export interface BuilderQueryEditorGroupByExpressionArray {
+  expressions: Array<BuilderQueryEditorGroupByExpression>;
+  type: BuilderQueryEditorExpressionType;
+}
+
+export const defaultBuilderQueryEditorGroupByExpressionArray: Partial<BuilderQueryEditorGroupByExpressionArray> = {
+  expressions: [],
+};
+
+export interface BuilderQueryExpression {
+  columns?: BuilderQueryEditorColumnsExpression;
+  from?: BuilderQueryEditorPropertyExpression;
+  groupBy: BuilderQueryEditorGroupByExpressionArray;
+  limit?: number;
+  reduce: BuilderQueryEditorReduceExpressionArray;
+  where: BuilerQueryEditorWhereArrayExpression;
 }
 
 export interface AzureResourceGraphQuery {

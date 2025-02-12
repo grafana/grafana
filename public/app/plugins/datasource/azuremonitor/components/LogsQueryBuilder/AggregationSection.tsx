@@ -11,7 +11,7 @@ import { QueryEditorExpressionType, QueryEditorReduceExpression } from './expres
 interface AggregateSectionProps {
   selectedColumns: Array<SelectableValue<string>>;
   selectedTable: string;
-  columns: AzureLogAnalyticsMetadataColumn[]; 
+  columns: AzureLogAnalyticsMetadataColumn[];
   onQueryUpdate: (params: { aggregates?: string; aggregateColumns?: Array<{ name: string; type: string }> }) => void;
   templateVariableOptions?: SelectableValue<string>;
 }
@@ -26,18 +26,18 @@ export const AggregateSection: React.FC<AggregateSectionProps> = ({
   const [aggregates, setAggregates] = useState<QueryEditorReduceExpression[]>([]);
 
   const selectableColumns: Array<SelectableValue<string>> = useMemo(
-    () => columns.map((col) => ({ label: col.name, value: col.name })), 
+    () => columns.map((col) => ({ label: col.name, value: col.name })),
     [columns]
   );
 
-  const availableColumns: Array<SelectableValue<string>> = selectedColumns.length > 0 ? selectedColumns : selectableColumns;
-  
+  const availableColumns: Array<SelectableValue<string>> =
+    selectedColumns.length > 0 ? selectedColumns : selectableColumns;
+
   useEffect(() => {
     setAggregates(() => {
-        return [];
-
+      return [];
     });
-  }, [selectedTable]); 
+  }, [selectedTable]);
 
   const updateQueryWithAggregates = (newAggregates: QueryEditorReduceExpression[]) => {
     const validAggregates = newAggregates.filter((agg) => agg.property?.name && agg.reduce?.name);
@@ -58,13 +58,15 @@ export const AggregateSection: React.FC<AggregateSectionProps> = ({
   };
 
   const onChange = (newItems: Array<Partial<QueryEditorReduceExpression>>) => {
-    const cleaned = newItems.map((v): QueryEditorReduceExpression => ({
-      type: QueryEditorExpressionType.Reduce,
-      property: v.property ?? { type: QueryEditorPropertyType.String, name: '' },
-      reduce: v.reduce ?? { name: '', type: QueryEditorPropertyType.String },
-      parameters: v.parameters,
-      focus: Object.keys(v).length === 0, 
-    }));
+    const cleaned = newItems.map(
+      (v): QueryEditorReduceExpression => ({
+        type: QueryEditorExpressionType.Reduce,
+        property: v.property ?? { type: QueryEditorPropertyType.String, name: '' },
+        reduce: v.reduce ?? { name: '', type: QueryEditorPropertyType.String },
+        parameters: v.parameters,
+        focus: Object.keys(v).length === 0,
+      })
+    );
 
     setAggregates(cleaned);
     updateQueryWithAggregates(cleaned);
@@ -104,7 +106,7 @@ export const AggregateSection: React.FC<AggregateSectionProps> = ({
 };
 
 function makeRenderAggregate(
-  availableColumns: Array<SelectableValue<string>>, 
+  availableColumns: Array<SelectableValue<string>>,
   onDeleteAggregate: (aggregate: Partial<QueryEditorReduceExpression>) => void
 ) {
   return function renderAggregate(
@@ -116,7 +118,7 @@ function makeRenderAggregate(
         aggregate={item}
         onChange={onChange}
         onDelete={() => onDeleteAggregate(item)}
-        columns={availableColumns} 
+        columns={availableColumns}
       />
     );
   };

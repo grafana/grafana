@@ -4,33 +4,91 @@ import { SelectableValue } from '@grafana/data';
 import { EditorField, EditorFieldGroup, EditorRow } from '@grafana/plugin-ui';
 import { Select } from '@grafana/ui';
 
-import { AzureLogAnalyticsMetadataColumn, AzureLogAnalyticsMetadataTable, QueryEditorPropertyType } from '../../types';
+import {
+  BuilderQueryEditorExpressionType,
+  BuilderQueryEditorPropertyType,
+  BuilderQueryExpression,
+} from '../../dataquery.gen';
+import { AzureMonitorQuery, AzureLogAnalyticsMetadataColumn, AzureLogAnalyticsMetadataTable } from '../../types';
+
+import { AzureMonitorKustoQueryParser } from './AzureMonitorKustoQueryParser';
 
 interface TableSectionProps {
-  columns: AzureLogAnalyticsMetadataColumn[];
-  onQueryUpdate: (params: {
-    newTable?: AzureLogAnalyticsMetadataTable;
-    newColumns?: Array<SelectableValue<string>>;
-  }) => void;
-  selectedColumns: SelectableValue<string>;
-  table?: string | null;
+  allColumns: AzureLogAnalyticsMetadataColumn[];
   tables: AzureLogAnalyticsMetadataTable[];
+  query: AzureMonitorQuery;
+  onQueryUpdate: (newQuery: AzureMonitorQuery) => void;
 }
 
 export const TableSection: React.FC<TableSectionProps> = (props) => {
-  const { columns, onQueryUpdate, selectedColumns, table, tables } = props;
+  const { allColumns, query, tables, onQueryUpdate } = props;
+
   const tableOptions: Array<SelectableValue<string>> = tables.map((t) => ({
     label: t.name,
     value: t.name,
   }));
 
-  const columnOptions: Array<SelectableValue<string>> = Array.isArray(columns)
-    ? columns.map((col) => ({
-        label: col.name,
-        value: col.name,
-        type: col.type || QueryEditorPropertyType.String,
-      }))
-    : [];
+  const columnOptions: Array<SelectableValue<string>> = allColumns.map((col) => ({
+    label: col.name,
+    value: col.name,
+    type: col.type,
+  }));
+
+  const handleTableChange = (selected: SelectableValue<string>) => {
+    const selectedTable = tables.find((t) => t.name === selected.value);
+    if (selectedTable) {
+      const updatedBuilderQuery: BuilderQueryExpression = {
+        ...query,
+        groupBy: query.azureLogAnalytics?.builderQuery?.groupBy!,
+        where: query.azureLogAnalytics?.builderQuery?.where!,
+        reduce: query.azureLogAnalytics?.builderQuery?.reduce!,
+        from: {
+          property: { name: selectedTable.name, type: BuilderQueryEditorPropertyType.String },
+          type: BuilderQueryEditorExpressionType.Property,
+        },
+      };
+
+      const updatedQueryString = AzureMonitorKustoQueryParser.toQuery({
+        selectedTable: selectedTable.name,
+        selectedColumns: [],
+        columns: allColumns,
+      });
+
+      onQueryUpdate({
+        ...query,
+        azureLogAnalytics: {
+          builderQuery: updatedBuilderQuery,
+          query: updatedQueryString,
+        },
+      });
+    }
+  };
+
+  const handleColumnsChange = (selected: SelectableValue<string> | Array<SelectableValue<string>>) => {
+    const selectedArray = Array.isArray(selected) ? selected.map((col) => col.value!) : [selected.value!];
+    console.log("selectedArray", selectedArray)
+    console.log("query", query.azureLogAnalytics?.builderQuery)
+    const updatedBuilderQuery: BuilderQueryExpression = {
+      ...query,
+      groupBy: query.azureLogAnalytics?.builderQuery?.groupBy!,
+      where: query.azureLogAnalytics?.builderQuery?.where!,
+      reduce: query.azureLogAnalytics?.builderQuery?.reduce!,
+      columns: { columns: selectedArray, type: BuilderQueryEditorExpressionType.Property }
+    }
+    const updatedQuery = AzureMonitorKustoQueryParser.toQuery({
+      selectedTable: query.azureLogAnalytics?.builderQuery?.from?.property.name || '',
+      selectedColumns: selectedArray,
+      columns: allColumns,
+    });
+
+    onQueryUpdate({
+      ...query,
+      azureLogAnalytics: {
+        builderQuery: updatedBuilderQuery,
+        query: updatedQuery,
+      },
+    });
+  };
 
   return (
     <EditorRow>
@@ -38,29 +96,24 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
         <EditorField label="Table">
           <Select
             aria-label="Table"
-            value={table}
+            value={query.azureLogAnalytics?.builderQuery?.from?.property.name}
             options={tableOptions}
             placeholder="Select a table"
-            onChange={(selected) => {
-              const selectedTable = tables.find((t) => t.name === selected.value);
-              if (selectedTable) {
-                onQueryUpdate({ newTable: selectedTable });
-              }
-            }}
+            onChange={handleTableChange}
           />
         </EditorField>
         <EditorField label="Columns">
           <Select
             aria-label="Columns"
             isMulti
-            value={selectedColumns}
+            value={query.azureLogAnalytics?.builderQuery?.columns}
             options={columnOptions}
             placeholder="Select columns"
-            onChange={(selected: SelectableValue<string> | Array<SelectableValue<string>>) => {
-              const selectedArray = Array.isArray(selected) ? selected : [selected];
-              onQueryUpdate({ newColumns: selectedArray });
+            onChange={(e) => {
+              console.log(e)
+              handleColumnsChange(e)
             }}
-            isDisabled={!table}
+            isDisabled={!query.azureLogAnalytics?.builderQuery?.from?.property.name}
           />
         </EditorField>
       </EditorFieldGroup>

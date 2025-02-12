@@ -16,17 +16,25 @@ interface GroupBySectionProps {
   onQueryUpdate: (params: { groupBy?: string[] }) => void;
 }
 
-export const GroupBySection: React.FC<GroupBySectionProps> = ({ selectedColumns, selectedTable, onQueryUpdate, columns }) => {
+export const GroupBySection: React.FC<GroupBySectionProps> = ({
+  selectedColumns,
+  selectedTable,
+  onQueryUpdate,
+  columns,
+}) => {
   const [groupBys, setGroupBys] = useState<QueryEditorGroupByExpression[]>([]);
 
-  const availableColumns = selectedColumns.length > 0 ? selectedColumns : columns.map((col) => ({
-    label: col.name,
-    value: col.name,
-  }));
+  const availableColumns =
+    selectedColumns.length > 0
+      ? selectedColumns
+      : columns.map((col) => ({
+          label: col.name,
+          value: col.name,
+        }));
 
   useEffect(() => {
     setGroupBys(() => {
-        return [];
+      return [];
     });
   }, [selectedTable]);
 
@@ -39,15 +47,15 @@ export const GroupBySection: React.FC<GroupBySectionProps> = ({ selectedColumns,
         interval: g.interval,
         focus: g.focus ?? false,
       }));
-  
+
     setGroupBys(cleaned);
-  
+
     let groupByClauses: string[] = [];
-  
+
     cleaned.forEach((gb) => {
       if (gb.property?.name) {
         const isDatetime = columns.find((col) => col.name === gb.property?.name)?.type === 'datetime';
-  
+
         // 🔥 **Replace raw datetime with bin() if it's in groupBy**
         if (isDatetime) {
           groupByClauses.push(`bin(${gb.property.name}, 1m)`);
@@ -56,37 +64,40 @@ export const GroupBySection: React.FC<GroupBySectionProps> = ({ selectedColumns,
         }
       }
     });
-  
+
     onQueryUpdate({ groupBy: groupByClauses });
-  };  
-  
+  };
+
   const onDeleteGroupBy = (propertyName: string) => {
     setGroupBys((prevGroupBys) => {
       const updatedGroupBys = prevGroupBys.filter((gb) => gb.property.name !== propertyName);
 
       let hasSelectedDatetime = updatedGroupBys.some((g) => g.property?.type === QueryEditorPropertyType.DateTime);
       let shouldIncludeTime = selectedColumns.length === 0 || hasSelectedDatetime;
-      
+
       let groupByClauses = updatedGroupBys.map((gb) => gb.property.name);
-      
+
       if (updatedGroupBys.length === 0) {
-        groupByClauses = []; 
+        groupByClauses = [];
       } else {
         if (!shouldIncludeTime) {
           groupByClauses = groupByClauses.filter((g) => g !== `bin(TimeGenerated, 1m)`);
         }
       }
 
-      console.log("groupByClauses.length > 0 ? groupByClauses : undefined", groupByClauses.length > 0 ? groupByClauses : undefined)
-      
+      console.log(
+        'groupByClauses.length > 0 ? groupByClauses : undefined',
+        groupByClauses.length > 0 ? groupByClauses : undefined
+      );
+
       onQueryUpdate({
         groupBy: groupByClauses.length > 0 ? groupByClauses : undefined,
       });
-      
-      console.log("updatedGroupBys", updatedGroupBys)
+
+      console.log('updatedGroupBys', updatedGroupBys);
       return updatedGroupBys;
     });
-  };  
+  };
 
   const addGroupBy = () => {
     setGroupBys([

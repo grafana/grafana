@@ -2,9 +2,12 @@ import { escapeRegExp } from 'lodash';
 
 import { SelectableValue } from '@grafana/data';
 
-import { AggregateFunctions, QueryEditorPropertyType } from '../../types';
-
-import { QueryEditorExpression } from './expressions';
+import {
+  BuilderQueryExpression,
+  BuilderQueryEditorExpressionType,
+  BuilderQueryEditorPropertyType,
+} from '../../dataquery.gen';
+import { QueryEditorPropertyType } from '../../types';
 
 const DYNAMIC_TYPE_ARRAY_DELIMITER = '["`indexer`"]';
 export const valueToDefinition = (name: string) => {
@@ -12,6 +15,14 @@ export const valueToDefinition = (name: string) => {
     value: name,
     label: name.replace(new RegExp(escapeRegExp(DYNAMIC_TYPE_ARRAY_DELIMITER), 'g'), '[ ]'),
   };
+};
+
+export const DEFAULT_LOGS_BUILDER_QUERY: BuilderQueryExpression = {
+  columns: { columns: [], type: BuilderQueryEditorExpressionType.Property },
+  from: undefined,
+  groupBy: { expressions: [], type: BuilderQueryEditorExpressionType.Group_by },
+  reduce: { expressions: [], type: BuilderQueryEditorExpressionType.Reduce },
+  where: { expressions: [], type: BuilderQueryEditorExpressionType.And },
 };
 
 export const OPERATORS_BY_TYPE: Record<string, Array<SelectableValue<string>>> = {
@@ -86,47 +97,79 @@ export const toPropertyType = (kustoType: string): QueryEditorPropertyType => {
   }
 };
 
-export const parseQuery = (query: string) => {
-  let prevFilters: string | undefined = undefined;
-  let prevAggregates: string | undefined = undefined;
-  let prevGroupBy: string[] | undefined = undefined;
+export const parseQueryToExpression = (query: string): BuilderQueryExpression => {
+  const expression: BuilderQueryExpression = {
+    columns: { columns: [], type: BuilderQueryEditorExpressionType.Property },
+    from: undefined,
+    groupBy: { expressions: [], type: BuilderQueryEditorExpressionType.Group_by },
+    reduce: { expressions: [], type: BuilderQueryEditorExpressionType.Reduce },
+    where: { expressions: [], type: BuilderQueryEditorExpressionType.And },
+  };
 
-  const whereMatch = query.match(/\| where (.+)/);
-  if (whereMatch) {
-    prevFilters = whereMatch[1].split('|')[0].trim();
-  }
+  const lines = query.split('\n');
 
-  const summarizeMatch = query.match(/\| summarize (.+)/);
-  if (summarizeMatch) {
-    const summarizeContent = summarizeMatch[1].trim();
-    const parts = summarizeContent.split(" by ");
-
-    if (parts.length > 1) {
-      // 🔥 There is a `by` clause → Treat as GroupBy
-      prevGroupBy = parts[1]
-        .split(",")
-        .map((g) => g.trim())
-        .filter((g) => g !== ""); // Remove empty values
-
-      // ✅ Only set prevAggregates if it contains an actual function (not just count())
-      prevAggregates = parts[0].trim();
-      if (prevAggregates === "count()") {
-        prevAggregates = undefined; // ✅ `count()` in GroupBy is NOT an aggregate
-      }
-    } else {
-      // 🔥 No `by` clause → This is an actual aggregation
-      prevAggregates = summarizeContent.trim() || undefined;
-      prevGroupBy = undefined; // ✅ No groupBy in this case
+  lines.forEach((line, index) => {
+    if (index === 0 && !line.startsWith('|')) {
+      const tableName = line.trim();
+      expression.from = {
+        property: { name: tableName, type: BuilderQueryEditorPropertyType.String },
+        type: BuilderQueryEditorExpressionType.Property,
+      };
+    } else if (line.startsWith('| from ')) {
+      const tableName = line.replace('| from ', '').trim();
+      expression.from = {
+        property: { name: tableName, type: BuilderQueryEditorPropertyType.String },
+        type: BuilderQueryEditorExpressionType.Property,
+      };
     }
-  }
 
-  // 🔥 Ensure `prevGroupBy` is undefined if it's empty
-  if (prevGroupBy && prevGroupBy.length === 0) {
-    prevGroupBy = undefined;
-  }
+    if (line.startsWith('| project ')) {
+      const columns = line
+        .replace('| project ', '')
+        .split(',')
+        .map((col) => col.trim());
+      expression.columns = {
+        columns,
+        type: BuilderQueryEditorExpressionType.Property,
+      };
+    }
 
-  console.log("Parsed Query:", { prevFilters, prevAggregates, prevGroupBy });
+    if (line.startsWith('| where ')) {
+      const conditions = line.replace('| where ', '').split(' and ');
+      expression.where = {
+        type: BuilderQueryEditorExpressionType.And,
+        expressions: conditions.map((condition) => {
+          const [property, operator, value] = condition.split(/\s+/);
+          return {
+            property: { name: property, type: BuilderQueryEditorPropertyType.String },
+            operator: { name: operator, value: { value } },
+            type: BuilderQueryEditorExpressionType.Operator,
+          };
+        }),
+      };
+    }
 
-  return { prevFilters, prevAggregates, prevGroupBy };
+    if (line.startsWith('| summarize ')) {
+      const groupByColumns = line
+        .replace('| summarize ', '')
+        .split(',')
+        .map((col) => col.trim());
+      expression.groupBy = {
+        type: BuilderQueryEditorExpressionType.Group_by,
+        expressions: groupByColumns.map((col) => ({
+          property: { name: col, type: BuilderQueryEditorPropertyType.String },
+          type: BuilderQueryEditorExpressionType.Group_by,
+        })),
+      };
+    }
+
+    if (line.startsWith('| limit ')) {
+      const limitValue = parseInt(line.replace('| limit ', '').trim(), 10);
+      if (!isNaN(limitValue)) {
+        expression.limit = limitValue;
+      }
+    }
+  });
+
+  return expression;
 };
-

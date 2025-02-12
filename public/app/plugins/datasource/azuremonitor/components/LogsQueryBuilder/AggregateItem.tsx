@@ -54,8 +54,8 @@ export const AggregateItem: React.FC<AggregateItemProps> = ({ aggregate, onChang
     ];
 
     if (!selectedColumn) {
-      return allAggregates
-    }; 
+      return allAggregates;
+    }
 
     return allAggregates.filter((agg) => {
       const aggValue = agg.value as string;
