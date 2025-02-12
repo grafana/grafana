@@ -753,6 +753,11 @@ func (alertRule *AlertRule) Copy() *AlertRule {
 		}
 	}
 
+	if alertRule.Metadata.PrometheusStyleRule != nil {
+		prometheusStyleRule := *alertRule.Metadata.PrometheusStyleRule
+		result.Metadata.PrometheusStyleRule = &prometheusStyleRule
+	}
+
 	for _, s := range alertRule.NotificationSettings {
 		result.NotificationSettings = append(result.NotificationSettings, CopyNotificationSettings(s))
 	}
