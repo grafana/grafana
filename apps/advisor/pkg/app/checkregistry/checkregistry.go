@@ -57,3 +57,8 @@ func (s *Service) Checks() []checks.Check {
 		),
 	}
 }
+
+type SpecificConfig struct {
+	CheckRegistry CheckService
+	PluginConfig  map[string]string
+}

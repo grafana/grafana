@@ -133,10 +133,11 @@ func TestRunner_cleanupChecks_WithinMax(t *testing.T) {
 }
 
 func TestRunner_cleanupChecks_ErrorOnDelete(t *testing.T) {
+	maxHistory := 10
 	mockClient := &MockClient{
 		listFunc: func(ctx context.Context, namespace string, options resource.ListOptions) (resource.ListObject, error) {
-			items := make([]advisorv0alpha1.Check, 0, maxChecks+1)
-			for i := 0; i < maxChecks+1; i++ {
+			items := make([]advisorv0alpha1.Check, 0, maxHistory+1)
+			for i := 0; i < maxHistory+1; i++ {
 				item := advisorv0alpha1.Check{}
 				item.ObjectMeta.SetLabels(map[string]string{
 					checks.TypeLabel: "mock",
@@ -153,16 +154,18 @@ func TestRunner_cleanupChecks_ErrorOnDelete(t *testing.T) {
 	}
 
 	runner := &Runner{
-		client: mockClient,
+		client:     mockClient,
+		maxHistory: maxHistory,
 	}
 	err := runner.cleanupChecks(context.Background())
 	assert.ErrorContains(t, err, "delete error")
 }
 
 func TestRunner_cleanupChecks_Success(t *testing.T) {
+	maxHistory := 10
 	itemsDeleted := []string{}
-	items := make([]advisorv0alpha1.Check, 0, maxChecks+1)
-	for i := 0; i < maxChecks+1; i++ {
+	items := make([]advisorv0alpha1.Check, 0, maxHistory+1)
+	for i := 0; i < maxHistory+1; i++ {
 		item := advisorv0alpha1.Check{}
 		item.ObjectMeta.SetName(fmt.Sprintf("check-%d", i))
 		item.ObjectMeta.SetLabels(map[string]string{
@@ -187,11 +190,52 @@ func TestRunner_cleanupChecks_Success(t *testing.T) {
 	}
 
 	runner := &Runner{
-		client: mockClient,
+		client:     mockClient,
+		maxHistory: maxHistory,
 	}
 	err := runner.cleanupChecks(context.Background())
 	assert.NoError(t, err)
 	assert.Equal(t, []string{"check-0"}, itemsDeleted)
+}
+
+func Test_getEvaluationInterval(t *testing.T) {
+	t.Run("default", func(t *testing.T) {
+		interval, err := getEvaluationInterval(map[string]string{})
+		assert.NoError(t, err)
+		assert.Equal(t, 24*time.Hour, interval)
+	})
+
+	t.Run("invalid", func(t *testing.T) {
+		interval, err := getEvaluationInterval(map[string]string{"evaluation_interval": "invalid"})
+		assert.Error(t, err)
+		assert.Zero(t, interval)
+	})
+
+	t.Run("custom", func(t *testing.T) {
+		interval, err := getEvaluationInterval(map[string]string{"evaluation_interval": "1h"})
+		assert.NoError(t, err)
+		assert.Equal(t, time.Hour, interval)
+	})
+}
+
+func Test_getMaxHistory(t *testing.T) {
+	t.Run("default", func(t *testing.T) {
+		history, err := getMaxHistory(map[string]string{})
+		assert.NoError(t, err)
+		assert.Equal(t, 10, history)
+	})
+
+	t.Run("invalid", func(t *testing.T) {
+		history, err := getMaxHistory(map[string]string{"max_history": "invalid"})
+		assert.Error(t, err)
+		assert.Zero(t, history)
+	})
+
+	t.Run("custom", func(t *testing.T) {
+		history, err := getMaxHistory(map[string]string{"max_history": "5"})
+		assert.NoError(t, err)
+		assert.Equal(t, 5, history)
+	})
 }
 
 type MockCheckService struct {
