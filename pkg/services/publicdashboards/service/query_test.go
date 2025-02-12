@@ -13,7 +13,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/infra/db"
 	dashboard2 "github.com/grafana/grafana/pkg/kinds/dashboard"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -732,7 +731,7 @@ func TestGetQueryDataResponse(t *testing.T) {
 func TestFindAnnotations(t *testing.T) {
 	color := "red"
 	name := "annoName"
-	t.Run("service identity has correct permissions to get annotations", func(t *testing.T) {
+	t.Run("service identity has correct permissions to get annotations dashboards and query datasources", func(t *testing.T) {
 		fakeStore := &FakePublicDashboardStore{}
 		fakeStore.On("FindByAccessToken", mock.Anything, mock.AnythingOfType("string")).
 			Return(&PublicDashboard{Uid: "uid1", IsEnabled: true}, nil)
@@ -751,7 +750,9 @@ func TestFindAnnotations(t *testing.T) {
 		assert.Len(t, items, 0)
 
 		_, svcIdent := identity.WithServiceIdentity(context.Background(), dash.OrgID)
-		assert.Equal(t, "*", svcIdent.GetPermissions()["annotations:read"][0])
+		require.Equal(t, "*", svcIdent.GetPermissions()["datasources:query"][0])
+		require.Equal(t, "*", svcIdent.GetPermissions()["dashboards:read"][0])
+		require.Equal(t, "*", svcIdent.GetPermissions()["annotations:read"][0])
 	})
 
 	t.Run("Test events from tag queries overwrite built-in annotation queries and duplicate events are not returned", func(t *testing.T) {
@@ -1316,22 +1317,6 @@ func TestBuildMetricRequest(t *testing.T) {
 			simplejson.NewFromAny(nonHiddenQuery),
 			reqDTO.Queries[0],
 		)
-	})
-}
-
-func TestBuildAnonymousUser(t *testing.T) {
-	sqlStore, cfg := db.InitTestDBWithCfg(t)
-	dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore))
-	require.NoError(t, err)
-	dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, "", true, []map[string]interface{}{}, nil)
-
-	t.Run("the grafana service identity has access to annotations dashboards and datasources", func(t *testing.T) {
-		_, user := identity.WithServiceIdentity(context.Background(), dashboard.OrgID)
-
-		require.Equal(t, dashboard.OrgID, user.GetOrgID())
-		require.Equal(t, "*", user.GetPermissions()["datasources:query"][0])
-		require.Equal(t, "*", user.GetPermissions()["dashboards:read"][0])
-		require.Equal(t, "*", user.GetPermissions()["annotations:read"][0])
 	})
 }
 
