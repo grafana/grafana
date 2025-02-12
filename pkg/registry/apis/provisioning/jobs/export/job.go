@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -31,10 +30,8 @@ type exportJob struct {
 	client *resources.DynamicClient // Read from
 	target repository.Repository    // Write to
 
-	progress         jobs.ProgressFn
-	progressInterval time.Duration
-	progressLast     time.Time
-	foldersTree      *resources.FolderTree
+	progress    jobs.ProgressFn
+	foldersTree *resources.FolderTree
 
 	prefix         string // from options (now clean+safe)
 	ref            string // from options (only git)
@@ -56,13 +53,10 @@ func newExportJob(ctx context.Context,
 		prefix = safepath.Clean(prefix)
 	}
 	return &exportJob{
-		target:           target,
-		client:           client,
-		logger:           logging.FromContext(ctx),
-		progress:         progress,
-		progressLast:     time.Now(),
-		progressInterval: time.Second * 10,
-
+		target:         target,
+		client:         client,
+		logger:         logging.FromContext(ctx),
+		progress:       progress,
 		prefix:         prefix,
 		ref:            options.Branch,
 		keepIdentifier: options.Identifier,
@@ -72,16 +66,6 @@ func newExportJob(ctx context.Context,
 			State: provisioning.JobStateWorking,
 		},
 		summary: make(map[string]*provisioning.JobResourceSummary),
-	}
-}
-
-// Send progress messages to any listeners
-func (r *exportJob) maybeNotify(ctx context.Context) {
-	if time.Since(r.progressLast) > r.progressInterval {
-		err := r.progress(ctx, *r.jobStatus)
-		if err != nil {
-			r.logger.Warn("unable to send progress", "err", err)
-		}
 	}
 }
 
@@ -159,7 +143,10 @@ func (r *exportJob) export(ctx context.Context, kind schema.GroupVersionResource
 	defer cancel()
 
 	r.jobStatus.Message = "Exporting " + kind.Resource + "..."
-	r.maybeNotify(ctx)
+	if err := r.progress(ctx, *r.jobStatus); err != nil {
+		r.logger.Warn("failed to notify progress", "error", err)
+	}
+
 	client := r.client.Resource(kind)
 	summary := r.getSummary(kind.GroupResource())
 
@@ -189,7 +176,10 @@ func (r *exportJob) add(ctx context.Context, summary *provisioning.JobResourceSu
 	if err := ctx.Err(); err != nil {
 		return err
 	}
-	r.maybeNotify(ctx)
+
+	if err := r.progress(ctx, *r.jobStatus); err != nil {
+		r.logger.Warn("failed to notify progress", "error", err)
+	}
 
 	item, err := utils.MetaAccessor(obj)
 	if err != nil {

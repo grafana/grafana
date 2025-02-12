@@ -9,6 +9,7 @@ import (
 
 	dashboards "github.com/grafana/grafana/pkg/apis/dashboard"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	gogit "github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/go-git"
@@ -101,7 +102,10 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 	status := worker.jobStatus
 	if buffered != nil && status.State != provisioning.JobStateError {
 		status.Message = "pushing changes..."
-		worker.maybeNotify(ctx) // force notify?
+		if err := progress(ctx, *status); err != nil {
+			logger.Error("error notifying progress", "error", err)
+		}
+
 		err = buffered.Push(ctx, os.Stdout)
 		status.Message = ""
 	}
