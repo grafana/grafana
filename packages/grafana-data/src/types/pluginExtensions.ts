@@ -39,7 +39,6 @@ export type PluginExtensionComponent<Props = {}> = PluginExtensionBase & {
 
 export type PluginExtensionFunction<Signature = () => void> = PluginExtensionBase & {
   type: PluginExtensionTypes.function;
-  title: string;
   fn: Signature;
 };
 
