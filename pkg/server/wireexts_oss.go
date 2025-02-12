@@ -117,6 +117,7 @@ var wireExtsBasicSet = wire.NewSet(
 	search2.ProvideDocumentBuilders,
 	sandbox.ProvideService,
 	wire.Bind(new(sandbox.Sandbox), new(*sandbox.Service)),
+	unified.ProvideClientServiceImpl,
 	wire.Bind(new(unified.ClientService), new(*unified.ClientServiceImpl)),
 )
 
