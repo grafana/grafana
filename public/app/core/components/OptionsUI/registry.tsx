@@ -380,6 +380,7 @@ export const getAllStandardFieldConfigs = () => {
     category: [dataLinksCategory],
     getItemsCount: (value) => (value ? value.length : 0),
     showIf: () => config.featureToggles.vizActions,
+    hideFromDefaults: true,
   };
 
   const color: FieldConfigPropertyItem<FieldConfig, FieldColor | undefined, FieldColorConfigSettings> = {

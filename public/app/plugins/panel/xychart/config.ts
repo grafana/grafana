@@ -35,7 +35,6 @@ export function getScatterFieldConfig(cfg: FieldConfig): SetFieldConfigOptionsAr
       [FieldConfigProperty.DisplayName]: {
         hideFromDefaults: true,
       },
-
       // TODO: this still leaves Color series by: [ Last | Min | Max ]
       // because item.settings?.bySeriesSupport && colorMode.isByValue
       [FieldConfigProperty.Color]: {
@@ -48,11 +47,13 @@ export function getScatterFieldConfig(cfg: FieldConfig): SetFieldConfigOptionsAr
           mode: FieldColorModeId.PaletteClassic,
         },
       },
-
       [FieldConfigProperty.Links]: {
         settings: {
           showOneClick: true,
         },
+      },
+      [FieldConfigProperty.Actions]: {
+        hideFromDefaults: false,
       },
     },
 

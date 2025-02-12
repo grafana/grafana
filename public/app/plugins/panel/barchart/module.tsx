@@ -37,6 +37,9 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(BarChartPanel)
           showOneClick: true,
         },
       },
+      [FieldConfigProperty.Actions]: {
+        hideFromDefaults: false,
+      },
     },
     useCustomConfig: (builder) => {
       const cfg = defaultFieldConfig;

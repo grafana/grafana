@@ -34,6 +34,9 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(StateTimelinePanel)
           showOneClick: true,
         },
       },
+      [FieldConfigProperty.Actions]: {
+        hideFromDefaults: false,
+      },
     },
     useCustomConfig: (builder) => {
       builder

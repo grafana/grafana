@@ -64,6 +64,9 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig, isTime = true): SetFi
           showOneClick: true,
         },
       },
+      [FieldConfigProperty.Actions]: {
+        hideFromDefaults: false,
+      },
     },
     useCustomConfig: (builder) => {
       builder

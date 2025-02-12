@@ -22,6 +22,9 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(StatusHistoryPanel)
           showOneClick: true,
         },
       },
+      [FieldConfigProperty.Actions]: {
+        hideFromDefaults: false,
+      },
     },
     useCustomConfig: (builder) => {
       builder
