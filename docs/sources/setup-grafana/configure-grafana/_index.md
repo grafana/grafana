@@ -1821,7 +1821,7 @@ The timeout string is a possibly signed sequence of decimal numbers, followed by
 
 #### `max_attempts`
 
-Sets a maximum number of times Grafana attempts to evaluate an alert rule before giving up on that evaluation. The default value is `1`.
+Sets a maximum number of times Grafana attempts to evaluate an alert rule before giving up on that evaluation. The default value is `3`.
 
 #### `min_interval`
 
