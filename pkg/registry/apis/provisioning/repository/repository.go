@@ -105,6 +105,7 @@ const (
 	FileActionCreated FileAction = "created"
 	FileActionUpdated FileAction = "updated"
 	FileActionDeleted FileAction = "deleted"
+	FileActionIgnored FileAction = "ignored"
 
 	// Renamed actions may be reconstructed as delete then create
 	FileActionRenamed FileAction = "renamed"
