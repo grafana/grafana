@@ -71,7 +71,7 @@ refs:
 
 # Tempo data source
 
-Grafana ships with built-in support for [Tempo](https://grafana.com/docs/tempo/latest/), a high-volume, minimal-dependency trace storage, open source tracing solution from Grafana Labs.
+Grafana ships with built-in support for [Tempo](https://grafana.com/docs/tempo/<TEMPO_VERSION>/), a high-volume, minimal-dependency trace storage, open source tracing solution from Grafana Labs.
 
 To learn more about traces, refer to [Introduction to tracing](https://grafana.com/docs/tempo/<TEMPO_VERSION>/introduction/).
 
@@ -90,6 +90,6 @@ This video explains how to add data sources, including Loki, Tempo, and Mimir, t
 
 ## Learn more
 
-Once you've added the data source, you can [configure it](./configure-tempo-data-source/) so that your Grafana instance's users can create queries in its [query editor](./query-editor/) when they [build dashboards](ref:build-dashboards) and use [Explore](ref:explore).
+After you've added the data source, you can [configure it](./configure-tempo-data-source/) so that your Grafana instance's users can create queries in its [query editor](./query-editor/) when they [build dashboards](ref:build-dashboards) and use [Explore](ref:explore).
 
 {{< section withDescriptions="true">}}
