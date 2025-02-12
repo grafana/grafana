@@ -31,7 +31,7 @@ const resourceStoreAudience = "resourceStore"
 
 var (
 	// internal provider of the package level resource client
-	pkgResourceClient resource.ResourceClient // Remove this
+	pkgResourceClient resource.ResourceClient // TODO: remove this once we have a proper provider
 	ready             = make(chan struct{})
 )
 
