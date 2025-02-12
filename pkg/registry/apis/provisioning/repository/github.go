@@ -17,22 +17,20 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
+	"github.com/google/uuid"
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	pgh "github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 )
 
 var subscribedEvents = []string{"push", "pull_request"}
-
-type SecretsService interface {
-	Encrypt(ctx context.Context, data string) (string, error)
-}
 
 // Make sure all public functions of this struct call the (*githubRepository).logger function, to ensure the GH repo details are included.
 type githubRepository struct {
 	config     *provisioning.Repository
 	gh         pgh.Client // assumes github.com base URL
-	secrets    SecretsService
+	secrets    *secrets.Service
 	webhookURL string
 
 	owner string
@@ -45,12 +43,13 @@ func NewGitHub(
 	ctx context.Context,
 	config *provisioning.Repository,
 	factory pgh.ClientFactory,
-	secrets SecretsService,
+	secrets *secrets.Service,
 	webhookURL string,
 ) *githubRepository {
 	owner, repo, _ := parseOwnerRepo(config.Spec.GitHub.URL)
 	return &githubRepository{
-		config:     config,
+		config: config,
+		// TODO: Decrypt token somehow
 		gh:         factory.New(ctx, config.Spec.GitHub.Token), // TODO -- base from URL
 		secrets:    secrets,
 		webhookURL: webhookURL,
@@ -86,6 +85,7 @@ func (r *githubRepository) Validate() (list field.ErrorList) {
 	if !isValidGitBranchName(gh.Branch) {
 		list = append(list, field.Invalid(field.NewPath("spec", "github", "branch"), gh.Branch, "invalid branch name"))
 	}
+	// TODO: Use two fields for token
 	if gh.Token == "" {
 		list = append(list, field.Required(field.NewPath("spec", "github", "token"), "a github access token is required"))
 	}
