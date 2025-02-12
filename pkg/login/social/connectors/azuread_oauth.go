@@ -93,7 +93,6 @@ func NewAzureADProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper 
 	allowedOrganizations, err := util.SplitStringWithError(info.Extra[allowedOrganizationsKey])
 	if err != nil {
 		s.log.Error("Invalid settings for allowed_organizations in AzureAD OAuth", "config", allowedOrganizationsKey, "error", err)
-		// TODO: Think if we want to add a metric
 	}
 
 	provider := &SocialAzureAD{
@@ -244,7 +243,7 @@ func (s *SocialAzureAD) managedIdentityCallback(ctx context.Context) (string, er
 }
 
 func (s *SocialAzureAD) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {
-	newInfo, err := CreateOAuthInfoFromKeyValues(settings.Settings)
+	newInfo, err := CreateOAuthInfoFromKeyValues(settings.Settings, nil)
 	if err != nil {
 		return ssosettings.ErrInvalidSettings.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
 	}
@@ -258,25 +257,19 @@ func (s *SocialAzureAD) Reload(ctx context.Context, settings ssoModels.SSOSettin
 		appendUniqueScope(s.Config, social.OfflineAccessScope)
 	}
 
-	allowedOrganizations, err := util.SplitStringWithError(newInfo.Extra[allowedOrganizationsKey])
-	if err != nil {
-		s.log.Error("Invalid settings for allowed_organizations in AzureAD OAuth", "config", allowedOrganizationsKey, "error", err)
-		// TODO: Think if we want to add a metric
-	}
-
-	s.allowedOrganizations = allowedOrganizations
+	s.allowedOrganizations = util.SplitString(newInfo.Extra[allowedOrganizationsKey])
 	s.forceUseGraphAPI = MustBool(newInfo.Extra[forceUseGraphAPIKey], false)
 
 	return nil
 }
 
 func (s *SocialAzureAD) Validate(ctx context.Context, newSettings ssoModels.SSOSettings, oldSettings ssoModels.SSOSettings, requester identity.Requester) error {
-	info, err := CreateOAuthInfoFromKeyValues(newSettings.Settings)
+	info, err := CreateOAuthInfoFromKeyValues(newSettings.Settings, nil)
 	if err != nil {
 		return ssosettings.ErrInvalidSettings.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
 	}
 
-	oldInfo, err := CreateOAuthInfoFromKeyValues(oldSettings.Settings)
+	oldInfo, err := CreateOAuthInfoFromKeyValues(oldSettings.Settings, nil)
 	if err != nil {
 		oldInfo = &social.OAuthInfo{}
 	}
@@ -284,12 +277,6 @@ func (s *SocialAzureAD) Validate(ctx context.Context, newSettings ssoModels.SSOS
 	err = validateInfo(info, oldInfo, requester)
 	if err != nil {
 		return err
-	}
-
-	_, err = util.SplitStringWithError(info.Extra[allowedOrganizationsKey])
-	if err != nil {
-		s.log.Error("Invalid settings for allowed_organizations in AzureAD OAuth", "config", allowedOrganizationsKey, "error", err)
-		// TODO: Think if we want to add a metric
 	}
 
 	return validation.Validate(info, requester,

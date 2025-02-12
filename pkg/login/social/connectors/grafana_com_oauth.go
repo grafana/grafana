@@ -49,7 +49,6 @@ func NewGrafanaComProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapp
 	allowedOrganizations, err := util.SplitStringWithError(info.Extra[allowedOrganizationsKey])
 	if err != nil {
 		s.log.Error("Invalid settings for allowed_organizations in Grafana Com OAuth", "config", allowedOrganizationsKey, "error", err)
-		// TODO: Think if we want to add a metric
 	}
 
 	provider := &SocialGrafanaCom{
@@ -66,12 +65,12 @@ func NewGrafanaComProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapp
 }
 
 func (s *SocialGrafanaCom) Validate(ctx context.Context, newSettings ssoModels.SSOSettings, oldSettings ssoModels.SSOSettings, requester identity.Requester) error {
-	info, err := CreateOAuthInfoFromKeyValues(newSettings.Settings)
+	info, err := CreateOAuthInfoFromKeyValues(newSettings.Settings, nil)
 	if err != nil {
 		return ssosettings.ErrInvalidSettings.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
 	}
 
-	oldInfo, err := CreateOAuthInfoFromKeyValues(oldSettings.Settings)
+	oldInfo, err := CreateOAuthInfoFromKeyValues(oldSettings.Settings, nil)
 	if err != nil {
 		oldInfo = &social.OAuthInfo{}
 	}
@@ -81,12 +80,6 @@ func (s *SocialGrafanaCom) Validate(ctx context.Context, newSettings ssoModels.S
 		return err
 	}
 
-	_, err = util.SplitStringWithError(info.Extra[allowedOrganizationsKey])
-	if err != nil {
-		s.log.Error("Invalid settings for allowed_organizations in Grafana Com OAuth", "config", allowedOrganizationsKey, "error", err)
-		// TODO: Think if we want to add a metric
-	}
-
 	return validation.Validate(info, requester,
 		validation.MustBeEmptyValidator(info.AuthUrl, "Auth URL"),
 		validation.MustBeEmptyValidator(info.TokenUrl, "Token URL"),
@@ -94,7 +87,7 @@ func (s *SocialGrafanaCom) Validate(ctx context.Context, newSettings ssoModels.S
 }
 
 func (s *SocialGrafanaCom) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {
-	newInfo, err := CreateOAuthInfoFromKeyValues(settings.Settings)
+	newInfo, err := CreateOAuthInfoFromKeyValues(settings.Settings, nil)
 	if err != nil {
 		return ssosettings.ErrInvalidSettings.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
 	}
@@ -110,13 +103,7 @@ func (s *SocialGrafanaCom) Reload(ctx context.Context, settings ssoModels.SSOSet
 	s.updateInfo(ctx, social.GrafanaComProviderName, newInfo)
 
 	s.url = s.cfg.GrafanaComURL
-
-	allowedOrganizations, err := util.SplitStringWithError(newInfo.Extra[allowedOrganizationsKey])
-	if err != nil {
-		s.log.Error("Invalid settings for allowed_organizations in Grafana Com OAuth", "config", allowedOrganizationsKey, "error", err)
-		// TODO: Think if we want to add a metric
-	}
-	s.allowedOrganizations = allowedOrganizations
+	s.allowedOrganizations = util.SplitString(newInfo.Extra[allowedOrganizationsKey])
 
 	return nil
 }

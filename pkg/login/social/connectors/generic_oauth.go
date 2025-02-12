@@ -58,13 +58,11 @@ func NewGenericOAuthProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMa
 	teamIds, err := util.SplitStringWithError(info.Extra[teamIdsKey])
 	if err != nil {
 		s.log.Error("Invalid settings for team_ids in Generic OAuth", "config", teamIdsKey, "error", err)
-		// TODO: Think if we want to add a metric
 	}
 
 	allowedOrganizations, err := util.SplitStringWithError(info.Extra[allowedOrganizationsKey])
 	if err != nil {
 		s.log.Error("Invalid settings for allowed_organizations in Generic OAuth", "config", allowedOrganizationsKey, "error", err)
-		// TODO: Think if we want to add a metric
 	}
 
 	provider := &SocialGenericOAuth{
@@ -89,12 +87,12 @@ func NewGenericOAuthProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMa
 }
 
 func (s *SocialGenericOAuth) Validate(ctx context.Context, newSettings ssoModels.SSOSettings, oldSettings ssoModels.SSOSettings, requester identity.Requester) error {
-	info, err := CreateOAuthInfoFromKeyValues(newSettings.Settings)
+	info, err := CreateOAuthInfoFromKeyValues(newSettings.Settings, nil)
 	if err != nil {
 		return ssosettings.ErrInvalidSettings.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
 	}
 
-	oldInfo, err := CreateOAuthInfoFromKeyValues(oldSettings.Settings)
+	oldInfo, err := CreateOAuthInfoFromKeyValues(oldSettings.Settings, nil)
 	if err != nil {
 		oldInfo = &social.OAuthInfo{}
 	}
@@ -120,17 +118,6 @@ func (s *SocialGenericOAuth) Validate(ctx context.Context, newSettings ssoModels
 	if len(info.AllowedGroups) > 0 && info.GroupsAttributePath == "" {
 		return ssosettings.ErrInvalidOAuthConfig("If Allowed groups is configured then Groups attribute path must be configured.")
 	}
-	_, err = util.SplitStringWithError(info.Extra[teamIdsKey])
-	if err != nil {
-		s.log.Error("Invalid settings for team_ids in Generic OAuth", "config", teamIdsKey, "error", err)
-		// TODO: Think if we want to add a metric
-	}
-
-	_, err = util.SplitStringWithError(info.Extra[allowedOrganizationsKey])
-	if err != nil {
-		s.log.Error("Invalid settings for allowed_organizations in Generic OAuth", "config", allowedOrganizationsKey, "error", err)
-		// TODO: Think if we want to add a metric
-	}
 
 	return nil
 }
@@ -143,21 +130,9 @@ func validateTeamsUrlWhenNotEmpty(info *social.OAuthInfo, requester identity.Req
 }
 
 func (s *SocialGenericOAuth) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {
-	newInfo, err := CreateOAuthInfoFromKeyValues(settings.Settings)
+	newInfo, err := CreateOAuthInfoFromKeyValues(settings.Settings, nil)
 	if err != nil {
 		return ssosettings.ErrInvalidSettings.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
-	}
-
-	teamIds, err := util.SplitStringWithError(newInfo.Extra[teamIdsKey])
-	if err != nil {
-		s.log.Error("Invalid settings for team_ids in Generic OAuth", "config", teamIdsKey, "error", err)
-		// TODO: Think if we want to add a metric
-	}
-
-	allowedOrganizations, err := util.SplitStringWithError(newInfo.Extra[allowedOrganizationsKey])
-	if err != nil {
-		s.log.Error("Invalid settings for allowed_organizations in Generic OAuth", "config", allowedOrganizationsKey, "error", err)
-		// TODO: Think if we want to add a metric
 	}
 
 	s.reloadMutex.Lock()
@@ -173,8 +148,8 @@ func (s *SocialGenericOAuth) Reload(ctx context.Context, settings ssoModels.SSOS
 	s.loginAttributePath = newInfo.Extra[loginAttributePathKey]
 	s.idTokenAttributeName = newInfo.Extra[idTokenAttributeNameKey]
 	s.teamIdsAttributePath = newInfo.TeamIdsAttributePath
-	s.teamIds = teamIds
-	s.allowedOrganizations = allowedOrganizations
+	s.teamIds = util.SplitString(newInfo.Extra[teamIdsKey])
+	s.allowedOrganizations = util.SplitString(newInfo.Extra[allowedOrganizationsKey])
 
 	return nil
 }

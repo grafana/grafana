@@ -304,7 +304,7 @@ signout_redirect_url = https://oauth.com/signout?post_logout_redirect_uri=https:
 	}
 
 	settingsKVs := convertIniSectionToMap(iniFile.Section("test"))
-	oauthInfo, err := connectors.CreateOAuthInfoFromKeyValues(settingsKVs)
+	oauthInfo, err := connectors.CreateOAuthInfoFromKeyValues(settingsKVs, nil)
 	require.NoError(t, err)
 
 	require.Equal(t, expectedOAuthInfo, oauthInfo)

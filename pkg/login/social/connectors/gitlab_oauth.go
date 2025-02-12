@@ -65,12 +65,12 @@ func NewGitLabProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper *
 }
 
 func (s *SocialGitlab) Validate(ctx context.Context, newSettings ssoModels.SSOSettings, oldSettings ssoModels.SSOSettings, requester identity.Requester) error {
-	info, err := CreateOAuthInfoFromKeyValues(newSettings.Settings)
+	info, err := CreateOAuthInfoFromKeyValues(newSettings.Settings, nil)
 	if err != nil {
 		return ssosettings.ErrInvalidSettings.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
 	}
 
-	oldInfo, err := CreateOAuthInfoFromKeyValues(oldSettings.Settings)
+	oldInfo, err := CreateOAuthInfoFromKeyValues(oldSettings.Settings, nil)
 	if err != nil {
 		oldInfo = &social.OAuthInfo{}
 	}
@@ -87,7 +87,7 @@ func (s *SocialGitlab) Validate(ctx context.Context, newSettings ssoModels.SSOSe
 }
 
 func (s *SocialGitlab) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {
-	newInfo, err := CreateOAuthInfoFromKeyValues(settings.Settings)
+	newInfo, err := CreateOAuthInfoFromKeyValues(settings.Settings, nil)
 	if err != nil {
 		return ssosettings.ErrInvalidSettings.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
 	}

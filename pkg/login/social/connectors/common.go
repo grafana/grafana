@@ -167,7 +167,8 @@ func MustBool(value any, defaultValue bool) bool {
 
 // CreateOAuthInfoFromKeyValues creates an OAuthInfo struct from a map[string]any using mapstructure
 // it puts all extra key values into OAuthInfo's Extra map
-func CreateOAuthInfoFromKeyValues(settingsKV map[string]any) (*social.OAuthInfo, error) {
+// It can optionally track non-critical parsing errors by adding them to a provided error slice.
+func CreateOAuthInfoFromKeyValues(settingsKV map[string]any, parsingWarns *[]error) (*social.OAuthInfo, error) {
 	emptyStrToSliceDecodeHook := func(from reflect.Type, to reflect.Type, data any) (any, error) {
 		if from.Kind() == reflect.String && to.Kind() == reflect.Slice {
 			strData, ok := data.(string)
@@ -178,7 +179,12 @@ func CreateOAuthInfoFromKeyValues(settingsKV map[string]any) (*social.OAuthInfo,
 			if strData == "" {
 				return []string{}, nil
 			}
-			return util.SplitString(strData), nil
+
+			splitStr, err := util.SplitStringWithError(strData)
+			if err != nil && parsingWarns != nil {
+				*parsingWarns = append(*parsingWarns, err)
+			}
+			return splitStr, nil
 		}
 		return data, nil
 	}
