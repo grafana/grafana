@@ -21,7 +21,7 @@ export function NativeHistogramBanner(props: NativeHistogramInfoProps) {
   const [showHistogramExamples, setShowHistogramExamples] = useState(false);
   const styles = useStyles2(getStyles, 0);
 
-  if (!histogramsLoaded || nativeHistograms.length === 0 || !histogramMessage) {
+  if (bannerHasBeenShown() || !histogramsLoaded || nativeHistograms.length === 0 || !histogramMessage) {
     return null;
   }
 
@@ -32,6 +32,8 @@ export function NativeHistogramBanner(props: NativeHistogramInfoProps) {
           title={'Native Histogram Support'}
           severity={'info'}
           onRemove={() => {
+            // when a user explicitly closes the banner, save that it has been closed in local storage to not show again
+            setBannerHasBeenShown();
             setHistogramMessage(false);
           }}
           className={styles.banner}
@@ -274,4 +276,12 @@ function getStyles(theme: GrafanaTheme2, _chromeHeaderHeight: number) {
       paddingLeft: '16px',
     }),
   };
+}
+
+export function setBannerHasBeenShown() {
+  localStorage.setItem('nativeHistogramBanner', 'true');
+}
+
+export function bannerHasBeenShown() {
+  return localStorage.getItem('nativeHistogramBanner') ?? false;
 }
