@@ -380,8 +380,10 @@ function getStylesPickerContent(theme: GrafanaTheme2) {
     container: css({
       display: 'flex',
       flexDirection: 'column',
-      background: theme.colors.background.primary,
+      background: theme.colors.background.elevated,
+      borderRadius: theme.shape.radius.default,
       boxShadow: theme.shadows.z3,
+      overflow: 'hidden',
     }),
     picker: css({
       background: theme.colors.background.secondary,
