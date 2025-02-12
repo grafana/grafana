@@ -62,11 +62,14 @@ export default class UrlBuilder {
       const { subscription, resourceGroup, metricNamespace, resourceName } = query;
       resourceUri = UrlBuilder.buildResourceUri(templateSrv, {
         subscription,
-        resourceGroup,
+        resourceGroup, // if resourceGroup is not present use the original endpoint
         metricNamespace,
         resourceName,
       });
     }
+    // JUST MAKE RESOURCE GROUPS BEHAVIOR CHANGE NOT AT THE SUB OR RESOURCE LEVEL
+    // toggle this on or off?
+    // need distinct to filter out namespaces with metrics? resources endpoint supports filtering? use resourcegraph query
     return `${baseUrl}${resourceUri}/resources?api-version=${apiVersion}${
       region ? `&region=${region}` : globalRegion ? '&region=global' : ''
     }`;
