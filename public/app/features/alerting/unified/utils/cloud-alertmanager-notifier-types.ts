@@ -267,6 +267,37 @@ export const cloudNotifierTypes: Array<NotifierDTO<CloudNotifierType>> = [
     ],
   },
   {
+    name: 'Jira', 
+    description: 'Send notifications to Jira',
+    type: 'jira',
+    info: '',
+    heading: 'Jira settings',
+    options: [
+      option('api_url', 'API URL', 'The host to send Jira API requests to.'),
+      option('project', 'Project', 'The project key where issues are created.'),
+      option('summary', 'Summary', 'Issue summary template.',
+        { placeholder: '{{ template "jira.default.summary" . }}' }),
+      option('description', 'Description', 'Issue description template.',
+        { placeholder: '{{ template "jira.default.description" . }}' }),
+      option('labels', 'Labels', ' Labels to be added to the issue.', {element: 'string_array'}),
+      option('priority', 'Priority', 'Priority of the issue.',
+        { placeholder: '{{ template "jira.default.priority" . }}' }),
+      option(
+        'issue_type',
+        'IssueType',
+        'Type of the issue (e.g. Bug).'
+      ),
+      option('reopen_transition', 'Reopen transition', 'Name of the workflow transition to reopen an issue. The target status should not have the category "done".'),
+      option('resolve_transition', 'Resolve transition', 'Name of the workflow transition to resolve an issue. The target status must have the category "done".'),
+      option('wont_fix_resolution', 'Wont fix resolution', 'If reopen_transition is defined, ignore issues with that resolution.'),
+      option('reopen_duration', 'Reopen duration', 'If reopen_transition is defined, reopen the issue when it is not older than this value (rounded down to the nearest minute).'),
+      option('fields', 'Fields', 'Other issue and custom fields.', {
+        element: 'key_value_map',
+      }),
+      httpConfigOption,
+    ],
+  },
+  {
     name: 'OpsGenie',
     description: 'Send notifications to OpsGenie',
     type: 'opsgenie',
