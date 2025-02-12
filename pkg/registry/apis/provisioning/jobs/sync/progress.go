@@ -27,6 +27,12 @@ type JobProgressRecorder struct {
 	progressFn jobs.ProgressFn
 }
 
+func NewJobProgressRecorder(progressFn jobs.ProgressFn) *JobProgressRecorder {
+	return &JobProgressRecorder{
+		progressFn: progressFn,
+	}
+}
+
 func (r *JobProgressRecorder) Record(ctx context.Context, result JobResourceResult) {
 	if r.results == nil {
 		r.results = make([]JobResourceResult, 0)
@@ -56,6 +62,10 @@ func (r *JobProgressRecorder) SetRef(ref string) {
 
 func (r *JobProgressRecorder) GetRef() string {
 	return r.ref
+}
+
+func (r *JobProgressRecorder) SetTotal(total int) {
+	r.total = total
 }
 
 func (r *JobProgressRecorder) Summary() []*provisioning.JobResourceSummary {

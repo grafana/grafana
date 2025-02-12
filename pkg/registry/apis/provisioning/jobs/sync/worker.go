@@ -86,7 +86,7 @@ func (r *SyncWorker) Process(ctx context.Context,
 		return nil, fmt.Errorf("failed to create sync job: %w", err)
 	}
 
-	progress := &JobProgressRecorder{message: "sync job started", progressFn: progressFn}
+	progress := NewJobProgressRecorder(progressFn)
 
 	// Execute the job
 	syncError := syncJob.run(ctx, *job.Spec.Sync, progress)
@@ -259,6 +259,7 @@ func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange
 		return len(changes[i].Path) > len(changes[j].Path)
 	})
 
+	progress.SetTotal(len(changes))
 	progress.SetMessage("replicating changes")
 
 	// Create folder structure first
@@ -320,6 +321,7 @@ func (r *syncJob) applyVersionedChanges(ctx context.Context, repo repository.Ver
 		return nil
 	}
 
+	progress.SetTotal(len(diff))
 	progress.SetMessage("replicating versioned changes")
 
 	for _, change := range diff {
