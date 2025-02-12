@@ -9,22 +9,21 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
+	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 )
 
-/*
-Search Fallback was returning both Folders and Dashboards which resulted
-in issues with rendering the Folder UI. Also, filters are not implemented
-yet. For those reasons, we will be disabling Search Fallback for now
 func TestSearchFallback(t *testing.T) {
 	t.Run("should hit legacy search handler on mode 0", func(t *testing.T) {
 		mockClient := &MockClient{}
+		mockUnifiedCtxclient := func(context.Context) resource.ResourceClient { return mockClient }
 		mockLegacyClient := &MockClient{}
 
 		cfg := &setting.Cfg{
@@ -32,7 +31,8 @@ func TestSearchFallback(t *testing.T) {
 				"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode0},
 			},
 		}
-		searchHandler := NewSearchHandler(mockClient, tracing.NewNoopTracerService(), cfg, mockLegacyClient)
+		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), cfg, mockLegacyClient)
+		searchHandler.client = resource.NewSearchClient(cfg, setting.UnifiedStorageConfigKeyDashboard, mockUnifiedCtxclient, mockLegacyClient)
 
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/search", nil)
@@ -51,6 +51,7 @@ func TestSearchFallback(t *testing.T) {
 
 	t.Run("should hit legacy search handler on mode 1", func(t *testing.T) {
 		mockClient := &MockClient{}
+		mockUnifiedCtxclient := func(context.Context) resource.ResourceClient { return mockClient }
 		mockLegacyClient := &MockClient{}
 
 		cfg := &setting.Cfg{
@@ -58,7 +59,8 @@ func TestSearchFallback(t *testing.T) {
 				"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode1},
 			},
 		}
-		searchHandler := NewSearchHandler(mockClient, tracing.NewNoopTracerService(), cfg, mockLegacyClient)
+		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), cfg, mockLegacyClient)
+		searchHandler.client = resource.NewSearchClient(cfg, setting.UnifiedStorageConfigKeyDashboard, mockUnifiedCtxclient, mockLegacyClient)
 
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/search", nil)
@@ -77,6 +79,7 @@ func TestSearchFallback(t *testing.T) {
 
 	t.Run("should hit legacy search handler on mode 2", func(t *testing.T) {
 		mockClient := &MockClient{}
+		mockUnifiedCtxclient := func(context.Context) resource.ResourceClient { return mockClient }
 		mockLegacyClient := &MockClient{}
 
 		cfg := &setting.Cfg{
@@ -84,7 +87,8 @@ func TestSearchFallback(t *testing.T) {
 				"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode2},
 			},
 		}
-		searchHandler := NewSearchHandler(mockClient, tracing.NewNoopTracerService(), cfg, mockLegacyClient)
+		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), cfg, mockLegacyClient)
+		searchHandler.client = resource.NewSearchClient(cfg, setting.UnifiedStorageConfigKeyDashboard, mockUnifiedCtxclient, mockLegacyClient)
 
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/search", nil)
@@ -103,6 +107,7 @@ func TestSearchFallback(t *testing.T) {
 
 	t.Run("should hit unified storage search handler on mode 3", func(t *testing.T) {
 		mockClient := &MockClient{}
+		mockUnifiedCtxclient := func(context.Context) resource.ResourceClient { return mockClient }
 		mockLegacyClient := &MockClient{}
 
 		cfg := &setting.Cfg{
@@ -110,7 +115,8 @@ func TestSearchFallback(t *testing.T) {
 				"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode3},
 			},
 		}
-		searchHandler := NewSearchHandler(mockClient, tracing.NewNoopTracerService(), cfg, mockLegacyClient)
+		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), cfg, mockLegacyClient)
+		searchHandler.client = resource.NewSearchClient(cfg, setting.UnifiedStorageConfigKeyDashboard, mockUnifiedCtxclient, mockLegacyClient)
 
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/search", nil)
@@ -129,6 +135,7 @@ func TestSearchFallback(t *testing.T) {
 
 	t.Run("should hit unified storage search handler on mode 4", func(t *testing.T) {
 		mockClient := &MockClient{}
+		mockUnifiedCtxclient := func(context.Context) resource.ResourceClient { return mockClient }
 		mockLegacyClient := &MockClient{}
 
 		cfg := &setting.Cfg{
@@ -136,7 +143,8 @@ func TestSearchFallback(t *testing.T) {
 				"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode4},
 			},
 		}
-		searchHandler := NewSearchHandler(mockClient, tracing.NewNoopTracerService(), cfg, mockLegacyClient)
+		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), cfg, mockLegacyClient)
+		searchHandler.client = resource.NewSearchClient(cfg, setting.UnifiedStorageConfigKeyDashboard, mockUnifiedCtxclient, mockLegacyClient)
 
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/search", nil)
@@ -155,6 +163,7 @@ func TestSearchFallback(t *testing.T) {
 
 	t.Run("should hit unified storage search handler on mode 5", func(t *testing.T) {
 		mockClient := &MockClient{}
+		mockUnifiedCtxclient := func(context.Context) resource.ResourceClient { return mockClient }
 		mockLegacyClient := &MockClient{}
 
 		cfg := &setting.Cfg{
@@ -162,7 +171,8 @@ func TestSearchFallback(t *testing.T) {
 				"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode5},
 			},
 		}
-		searchHandler := NewSearchHandler(mockClient, tracing.NewNoopTracerService(), cfg, mockLegacyClient)
+		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), cfg, mockLegacyClient)
+		searchHandler.client = resource.NewSearchClient(cfg, setting.UnifiedStorageConfigKeyDashboard, mockUnifiedCtxclient, mockLegacyClient)
 
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/search", nil)
@@ -179,7 +189,6 @@ func TestSearchFallback(t *testing.T) {
 		}
 	})
 }
-*/
 
 func TestSearchHandler(t *testing.T) {
 	// Create a mock client
@@ -188,7 +197,7 @@ func TestSearchHandler(t *testing.T) {
 	// Initialize the search handler with the mock client
 	searchHandler := SearchHandler{
 		log:    log.New("test", "test"),
-		client: mockClient,
+		client: func(context.Context) resource.ResourceIndexClient { return mockClient },
 		tracer: tracing.NewNoopTracerService(),
 	}
 
@@ -274,6 +283,7 @@ func TestSearchHandler(t *testing.T) {
 // MockClient implements the ResourceIndexClient interface for testing
 type MockClient struct {
 	resource.ResourceIndexClient
+	resource.ResourceIndex
 
 	// Capture the last SearchRequest for assertions
 	LastSearchRequest *resource.ResourceSearchRequest
@@ -333,7 +343,45 @@ func (m *MockClient) Search(ctx context.Context, in *resource.ResourceSearchRequ
 		},
 	}, nil
 }
-
 func (m *MockClient) GetStats(ctx context.Context, in *resource.ResourceStatsRequest, opts ...grpc.CallOption) (*resource.ResourceStatsResponse, error) {
+	return nil, nil
+}
+func (m *MockClient) CountRepositoryObjects(ctx context.Context, in *resource.CountRepositoryObjectsRequest, opts ...grpc.CallOption) (*resource.CountRepositoryObjectsResponse, error) {
+	return nil, nil
+}
+func (m *MockClient) Watch(ctx context.Context, in *resource.WatchRequest, opts ...grpc.CallOption) (resource.ResourceStore_WatchClient, error) {
+	return nil, nil
+}
+func (m *MockClient) Delete(ctx context.Context, in *resource.DeleteRequest, opts ...grpc.CallOption) (*resource.DeleteResponse, error) {
+	return nil, nil
+}
+func (m *MockClient) Create(ctx context.Context, in *resource.CreateRequest, opts ...grpc.CallOption) (*resource.CreateResponse, error) {
+	return nil, nil
+}
+func (m *MockClient) Update(ctx context.Context, in *resource.UpdateRequest, opts ...grpc.CallOption) (*resource.UpdateResponse, error) {
+	return nil, nil
+}
+func (m *MockClient) Read(ctx context.Context, in *resource.ReadRequest, opts ...grpc.CallOption) (*resource.ReadResponse, error) {
+	return nil, nil
+}
+func (m *MockClient) Restore(ctx context.Context, in *resource.RestoreRequest, opts ...grpc.CallOption) (*resource.RestoreResponse, error) {
+	return nil, nil
+}
+func (m *MockClient) GetBlob(ctx context.Context, in *resource.GetBlobRequest, opts ...grpc.CallOption) (*resource.GetBlobResponse, error) {
+	return nil, nil
+}
+func (m *MockClient) PutBlob(ctx context.Context, in *resource.PutBlobRequest, opts ...grpc.CallOption) (*resource.PutBlobResponse, error) {
+	return nil, nil
+}
+func (m *MockClient) List(ctx context.Context, in *resource.ListRequest, opts ...grpc.CallOption) (*resource.ListResponse, error) {
+	return nil, nil
+}
+func (m *MockClient) ListRepositoryObjects(ctx context.Context, in *resource.ListRepositoryObjectsRequest, opts ...grpc.CallOption) (*resource.ListRepositoryObjectsResponse, error) {
+	return nil, nil
+}
+func (m *MockClient) IsHealthy(ctx context.Context, in *resource.HealthCheckRequest, opts ...grpc.CallOption) (*resource.HealthCheckResponse, error) {
+	return nil, nil
+}
+func (m *MockClient) BatchProcess(ctx context.Context, opts ...grpc.CallOption) (resource.BatchStore_BatchProcessClient, error) {
 	return nil, nil
 }
