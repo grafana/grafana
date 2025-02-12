@@ -50,6 +50,7 @@ describe('addedFunctionsRegistry', () => {
     },
     extensions: {
       addedFunctions: [],
+      addedLinks: [],
       addedComponents: [],
       exposedComponents: [],
       extensionPoints: [],
