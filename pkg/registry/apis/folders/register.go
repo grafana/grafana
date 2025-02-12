@@ -65,17 +65,12 @@ func RegisterAPIService(cfg *setting.Cfg,
 	accessControl accesscontrol.AccessControl,
 	registerer prometheus.Registerer,
 	unifiedClientService unified.ClientService,
-) (*FolderAPIBuilder, error) {
+) *FolderAPIBuilder {
 	if !featuremgmt.AnyEnabled(features,
 		featuremgmt.FlagKubernetesFoldersServiceV2,
 		featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
 		featuremgmt.FlagProvisioning) {
-		return nil, nil // skip registration unless opting into Kubernetes folders or unless we want to customize registration when testing
-	}
-
-	resourceClient, err := unifiedClientService.GetResourceClient()
-	if err != nil {
-		return nil, err
+		return nil // skip registration unless opting into Kubernetes folders or unless we want to customize registration when testing
 	}
 
 	builder := &FolderAPIBuilder{
@@ -86,10 +81,10 @@ func RegisterAPIService(cfg *setting.Cfg,
 		folderPermissionsSvc: folderPermissionsSvc,
 		cfg:                  cfg,
 		accessControl:        accessControl,
-		searcher:             resourceClient,
+		searcher:             unifiedClientService.GetResourceClient(),
 	}
 	apiregistration.RegisterAPI(builder)
-	return builder, nil
+	return builder
 }
 
 func NewAPIService() *FolderAPIBuilder {

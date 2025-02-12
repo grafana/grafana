@@ -162,10 +162,6 @@ func ProvideService(
 	pluginStore pluginstore.Store,
 	unifiedClientService unified.ClientService,
 ) (*service, error) {
-	resourceClient, err := unifiedClientService.GetResourceClient()
-	if err != nil {
-		return nil, err
-	}
 	s := &service{
 		log:               log.New(modules.GrafanaAPIServer),
 		cfg:               cfg,
@@ -183,7 +179,7 @@ func ProvideService(
 		contextProvider:   contextProvider,
 		pluginStore:       pluginStore,
 		serverLockService: serverLockService,
-		unified:           resourceClient,
+		unified:           unifiedClientService.GetResourceClient(),
 	}
 	// This will be used when running as a dskit service
 	service := services.NewBasicService(s.start, s.running, nil).WithName(modules.GrafanaAPIServer)

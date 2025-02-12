@@ -28,11 +28,6 @@ func ProvideTestEnv(
 	unifiedClientService unified.ClientService,
 	idService auth.IDService,
 ) (*TestEnv, error) {
-	resourceClient, err := unifiedClientService.GetResourceClient()
-	if err != nil {
-		return nil, err
-	}
-
 	return &TestEnv{
 		Server:              server,
 		SQLStore:            db,
@@ -43,7 +38,7 @@ func ProvideTestEnv(
 		HTTPClientProvider:  httpClientProvider,
 		OAuthTokenService:   oAuthTokenService,
 		FeatureToggles:      featureMgmt,
-		ResourceClient:      resourceClient,
+		ResourceClient:      unifiedClientService.GetResourceClient(),
 		IDService:           idService,
 	}, nil
 }

@@ -195,7 +195,7 @@ func newUnifiedClient(cfg *setting.Cfg, sqlStore db.DB) (resource.ResourceClient
 		authlib.FixedAccessClient(true), // always true!
 		nil,                             // document supplier
 	)
-	return unifiedClientService.GetResourceClient()
+	return unifiedClientService.GetResourceClient(), nil
 }
 
 func newParquetClient(file *os.File) (resource.BatchStoreClient, error) {

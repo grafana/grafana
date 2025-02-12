@@ -69,11 +69,7 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 	sql db.DB,
 	tracing *tracing.TracingService,
 	unifiedClientService unified.ClientService,
-) (*DashboardsAPIBuilder, error) {
-	resourceClient, err := unifiedClientService.GetResourceClient()
-	if err != nil {
-		return nil, err
-	}
+) *DashboardsAPIBuilder {
 	softDelete := features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore)
 	dbp := legacysql.NewDatabaseProvider(sql)
 	namespacer := request.GetNamespaceMapper(cfg)
@@ -86,7 +82,7 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 		dashboardService: dashboardService,
 		features:         features,
 		accessControl:    accessControl,
-		unified:          resourceClient,
+		unified:          unifiedClientService.GetResourceClient(),
 		search:           dashboard.NewSearchHandler(tracing, cfg, legacyDashboardSearcher),
 
 		legacy: &dashboard.DashboardStorage{
@@ -98,7 +94,7 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 		reg: reg,
 	}
 	apiregistration.RegisterAPI(builder)
-	return builder, nil
+	return builder
 }
 
 func (b *DashboardsAPIBuilder) GetGroupVersion() schema.GroupVersion {
