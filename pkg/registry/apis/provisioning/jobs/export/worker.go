@@ -5,27 +5,35 @@ import (
 	"fmt"
 	"os"
 
+	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	gogit "github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/go-git"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 )
 
 type ExportWorker struct {
-	// When exporting from legacy
-	legacyMigrator legacy.LegacyMigrator
+	// Tempdir for repo clones
+	clonedir string
 
 	// When exporting from apiservers
 	clients *resources.ClientFactory
 
-	// Tempdir for repo clones
-	clonedir string
+	// Check where values are currently saved
+	storageStatus dualwrite.Service
+
+	// Support reading from history
+	legacyMigrator legacy.LegacyMigrator
 }
 
-func NewExportWorker(clients *resources.ClientFactory, legacyMigrator legacy.LegacyMigrator, clonedir string) *ExportWorker {
-	return &ExportWorker{legacyMigrator, clients, clonedir}
+func NewExportWorker(clients *resources.ClientFactory,
+	legacyMigrator legacy.LegacyMigrator,
+	storageStatus dualwrite.Service,
+	clonedir string) *ExportWorker {
+	return &ExportWorker{clonedir, clients, storageStatus, legacyMigrator}
 }
 
 func (r *ExportWorker) IsSupported(ctx context.Context, job provisioning.Job) bool {
@@ -83,7 +91,9 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 	}
 
 	worker := newExportJob(ctx, repo, *options, dynamicClient, progress)
-	if options.Legacy || true { // <<<<<<<<< ALWAYS LEGACY FOR NOW
+
+	// Read from legacy if not yet using unified storage
+	if !r.storageStatus.ReadFromUnified(ctx, folders.FolderResourceInfo.GroupResource()) {
 		worker.legacy = r.legacyMigrator
 	}
 

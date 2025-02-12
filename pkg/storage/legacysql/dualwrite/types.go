@@ -22,7 +22,7 @@ type StorageStatus struct {
 	Migrated int64 `json:"migrated" xorm:"migrated"`
 
 	// Timestamp when a migration *started* this should be cleared when finished
-	// While migrating all write commands will be unavaliable
+	// While migrating all write commands will be unavailable
 	Migrating int64 `json:"migrating" xorm:"migrating"`
 
 	// When false, the behavior will not change at runtime

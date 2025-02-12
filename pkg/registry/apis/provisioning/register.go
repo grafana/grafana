@@ -46,6 +46,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/blob"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
@@ -79,6 +80,7 @@ type APIBuilder struct {
 	resourceLister    resources.ResourceLister
 	repositoryLister  listers.RepositoryLister
 	legacyMigrator    legacy.LegacyMigrator
+	storageStatus     dualwrite.Service
 }
 
 // NewAPIBuilder creates an API builder.
@@ -96,6 +98,7 @@ func NewAPIBuilder(
 	configProvider apiserver.RestConfigProvider,
 	ghFactory github.ClientFactory,
 	legacyMigrator legacy.LegacyMigrator,
+	storageStatus dualwrite.Service,
 ) *APIBuilder {
 	clientFactory := resources.NewFactory(configProvider)
 	return &APIBuilder{
@@ -113,6 +116,7 @@ func NewAPIBuilder(
 		resourceLister: resources.NewResourceLister(index),
 		blobstore:      blobstore,
 		legacyMigrator: legacyMigrator,
+		storageStatus:  storageStatus,
 	}
 }
 
@@ -129,6 +133,7 @@ func RegisterAPIService(
 	configProvider apiserver.RestConfigProvider,
 	ghFactory github.ClientFactory,
 	legacyMigrator legacy.LegacyMigrator,
+	storageStatus dualwrite.Service,
 ) (*APIBuilder, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagProvisioning) &&
 		!features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
@@ -152,7 +157,7 @@ func RegisterAPIService(
 	builder := NewAPIBuilder(folderResolver, urlProvider, cfg.SecretKey, features,
 		render, client, store,
 		filepath.Join(cfg.DataPath, "clone"), // where repositories are cloned (temporarialy for now)
-		configProvider, ghFactory, legacyMigrator)
+		configProvider, ghFactory, legacyMigrator, storageStatus)
 	apiregistration.RegisterAPI(builder)
 	return builder, nil
 }
@@ -458,7 +463,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			}
 			b.repositoryLister = repoInformer.Lister()
 
-			b.jobs.Register(export.NewExportWorker(b.client, b.legacyMigrator, b.clonedir))
+			b.jobs.Register(export.NewExportWorker(b.client, b.legacyMigrator, b.storageStatus, b.clonedir))
 			b.jobs.Register(sync.NewSyncWorker(
 				c.ProvisioningV0alpha1(),
 				b.parsers,

@@ -6,10 +6,13 @@ import (
 	"net/http"
 
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	authlib "github.com/grafana/authlib/types"
+	dashboard "github.com/grafana/grafana/pkg/apis/dashboard"
+	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/util/errhttp"
@@ -147,6 +150,12 @@ func (b *APIBuilder) handleSettings(w http.ResponseWriter, r *http.Request) {
 
 	settings := provisioning.RepositoryViewList{
 		Items: make([]provisioning.RepositoryView, len(all)),
+		LegacyStorage: !( // make sure both folders and dashboards are using unified storage
+		b.storageStatus.ReadFromUnified(ctx, folders.FolderResourceInfo.GroupResource()) &&
+			b.storageStatus.ReadFromUnified(ctx, schema.GroupResource{
+				Group:    dashboard.GROUP,
+				Resource: dashboard.DASHBOARD_RESOURCE,
+			})),
 	}
 	for i, val := range all {
 		settings.Items[i] = provisioning.RepositoryView{

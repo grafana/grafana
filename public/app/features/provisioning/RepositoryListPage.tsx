@@ -11,6 +11,7 @@ import {
   Stack,
   TextLink,
   Text,
+  Alert,
 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
@@ -18,17 +19,23 @@ import { DeleteRepositoryButton } from './DeleteRepositoryButton';
 import { SetupWarnings } from './SetupWarnings';
 import { StatusBadge } from './StatusBadge';
 import { SyncRepository } from './SyncRepository';
-import { Repository, ResourceCount } from './api';
+import { Repository, ResourceCount, useGetFrontendSettingsQuery } from './api';
 import { NEW_URL, PROVISIONING_URL } from './constants';
 import { useRepositoryList } from './hooks';
 
 export default function RepositoryListPage() {
   const [items, isLoading] = useRepositoryList({ watch: true });
+  const settings = useGetFrontendSettingsQuery();
 
   return (
     <Page navId="provisioning" subTitle="View and manage your configured repositories">
       <Page.Contents isLoading={isLoading}>
         <SetupWarnings />
+        {settings.data?.legacyStorage && (
+          <Alert title="Legacy Storage" severity="error">
+            Require running the onboarding wizard to convert from legacy to unified
+          </Alert>
+        )}
         <RepositoryListPageContent items={items} />
       </Page.Contents>
     </Page>

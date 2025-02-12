@@ -92,13 +92,6 @@ func schema_pkg_apis_provisioning_v0alpha1_ExportJobOptions(ref common.Reference
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
-					"legacy": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Export from legacy SQL -- important for initial onboarding",
-							Type:        []string{"boolean"},
-							Format:      "",
-						},
-					},
 					"folder": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The source folder (or empty) to export",
@@ -562,6 +555,12 @@ func schema_pkg_apis_provisioning_v0alpha1_JobResourceSummary(ref common.Referen
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
 							Format: "",
+						},
+					},
+					"total": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int64",
 						},
 					},
 					"create": {
@@ -1148,6 +1147,13 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryViewList(ref common.Referen
 						SchemaProps: spec.SchemaProps{
 							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
 							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"legacyStorage": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The backend is using legacy storage FIXME: Not sure where this should be exposed... but we need it somewhere The UI should force the onboarding workflow when this is true",
+							Type:        []string{"boolean"},
 							Format:      "",
 						},
 					},
