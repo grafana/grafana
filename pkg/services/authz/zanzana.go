@@ -18,6 +18,7 @@ import (
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/services"
+
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -28,8 +29,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
 	"github.com/grafana/grafana/pkg/setting"
 )
-
-const zanzanaAudience = "zanzana"
 
 // ProvideZanzana used to register ZanzanaClient.
 // It will also start an embedded ZanzanaSever if mode is set to "embedded".
@@ -179,7 +178,7 @@ func (z *Zanzana) start(ctx context.Context) error {
 	authenticator := authnlib.NewAccessTokenAuthenticator(
 		authnlib.NewAccessTokenVerifier(
 			authnlib.VerifierConfig{
-				AllowedAudiences: []string{zanzanaAudience},
+				AllowedAudiences: []string{authzServiceAudience},
 			},
 			authnlib.NewKeyRetriever(authnlib.KeyRetrieverConfig{
 				SigningKeysURL: z.cfg.ZanzanaServer.SigningKeysURL,
@@ -255,7 +254,7 @@ type tokenAuth struct {
 func (t *tokenAuth) GetRequestMetadata(ctx context.Context, _ ...string) (map[string]string, error) {
 	token, err := t.tokenClient.Exchange(ctx, authnlib.TokenExchangeRequest{
 		Namespace: t.namespace,
-		Audiences: []string{zanzanaAudience},
+		Audiences: []string{authzServiceAudience},
 	})
 	if err != nil {
 		return nil, err
