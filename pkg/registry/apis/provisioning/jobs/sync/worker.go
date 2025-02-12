@@ -495,8 +495,7 @@ func (r *syncJob) ensureFolderPathExists(ctx context.Context, filePath string) (
 		return f.ID, nil
 	}
 
-	traverse := ""
-
+	var traverse string
 	for i, part := range strings.Split(f.Path, "/") {
 		if i == 0 {
 			traverse = part
@@ -519,6 +518,7 @@ func (r *syncJob) ensureFolderPathExists(ctx context.Context, filePath string) (
 		r.folderLookup.Add(f, parent)
 		parent = f.ID
 	}
+
 	return f.ID, err
 }
 
