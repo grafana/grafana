@@ -10,17 +10,10 @@ import (
 
 	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/k8sctx"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
 func readFolders(ctx context.Context, client dynamic.ResourceInterface, skip string) (*resources.FolderTree, error) {
-	ctx, cancel, err := k8sctx.Fork(ctx)
-	if err != nil {
-		return nil, err
-	}
-	defer cancel()
-
 	// TODO: handle pagination
 	rawList, err := client.List(ctx, metav1.ListOptions{Limit: 10000})
 	if err != nil {

@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/k8sctx"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
@@ -152,12 +151,6 @@ func (r *exportJob) loadFolders(ctx context.Context) error {
 }
 
 func (r *exportJob) export(ctx context.Context, kind schema.GroupVersionResource) error {
-	ctx, cancel, err := k8sctx.Fork(ctx)
-	if err != nil {
-		return err
-	}
-	defer cancel()
-
 	r.jobStatus.Message = "Exporting " + kind.Resource + "..."
 	r.maybeNotify(ctx)
 	client := r.client.Resource(kind)

@@ -25,7 +25,6 @@ import (
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	client "github.com/grafana/grafana/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/k8sctx"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
@@ -60,12 +59,6 @@ func (r *SyncWorker) Process(ctx context.Context,
 	job provisioning.Job,
 	progress jobs.ProgressFn,
 ) (*provisioning.JobStatus, error) {
-	ctx, cancel, err := k8sctx.Fork(ctx)
-	if err != nil {
-		return nil, err
-	}
-	defer cancel()
-
 	cfg := repo.Config()
 
 	logger := logging.FromContext(ctx).With("job", job.GetName(), "namespace", job.GetNamespace())
