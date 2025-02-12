@@ -131,6 +131,7 @@ export const getCascaderStyles = (theme: GrafanaTheme2) => ({
         padding: 0,
         borderRight: `1px solid ${theme.colors.border.weak}`,
         overflow: 'auto',
+        padding: theme.spacing(0.5),
 
         '&:last-child': {
           borderRight: 0,
@@ -140,6 +141,7 @@ export const getCascaderStyles = (theme: GrafanaTheme2) => ({
           height: theme.spacing(4),
           lineHeight: theme.spacing(4),
           padding: theme.spacing(0, 4, 0, 2),
+          borderRadius: theme.shape.radius.default,
           cursor: 'pointer',
           whiteSpace: 'nowrap',
           overflow: 'hidden',

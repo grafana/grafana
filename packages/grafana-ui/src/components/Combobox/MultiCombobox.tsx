@@ -334,7 +334,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
           {...getMenuProps({ ref: floatingRef })}
         >
           {isOpen && (
-            <ScrollContainer showScrollIndicators maxHeight="inherit" ref={scrollRef}>
+            <ScrollContainer showScrollIndicators maxHeight="inherit" ref={scrollRef} padding={0.5}>
               <ul style={{ height: rowVirtualizer.getTotalSize() }} className={styles.menuUlContainer}>
                 {rowVirtualizer.getVirtualItems().map((virtualRow) => {
                   const index = virtualRow.index;

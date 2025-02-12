@@ -15,7 +15,6 @@ export const getSelectStyles = stylesFactory((theme: GrafanaTheme2) => {
       minWidth: '100%',
       overflow: 'hidden',
       zIndex: 1,
-      padding: theme.spacing(0.5),
     }),
     option: css({
       label: 'grafana-select-option',

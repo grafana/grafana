@@ -27,6 +27,9 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
       position: 'relative',
       borderRadius: theme.shape.radius.default,
       overflow: 'hidden',
+    }),
+    scrollContainer: css({
+      label: 'scroll-container',
       padding: theme.spacing(0.5),
     }),
     menuUlContainer: css({
