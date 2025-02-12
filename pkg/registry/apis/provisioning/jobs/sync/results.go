@@ -22,3 +22,7 @@ func (r *ResultsRecorder) Record(result Result) {
 func (r *ResultsRecorder) Summary() []*provisioning.JobResourceSummary {
 	return nil
 }
+
+func (r *ResultsRecorder) Errors() []string {
+	return nil
+}

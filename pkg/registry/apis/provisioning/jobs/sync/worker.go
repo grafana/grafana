@@ -88,9 +88,6 @@ func (r *SyncWorker) Process(ctx context.Context,
 
 	// Execute the job
 	ref, syncError := syncJob.run(ctx)
-	if len(syncJob.jobStatus.Errors) > 0 {
-		syncJob.jobStatus.State = provisioning.JobStateError
-	}
 
 	if syncError != nil {
 		syncJob.jobStatus = &provisioning.JobStatus{
@@ -98,11 +95,16 @@ func (r *SyncWorker) Process(ctx context.Context,
 			Started:  job.Status.Started,
 			Finished: time.Now().UnixMilli(),
 			Message:  syncError.Error(),
-			Errors:   syncJob.jobStatus.Errors,
+			Errors:   syncJob.results.Errors(),
 		}
 	}
 
 	syncJob.jobStatus.Summary = syncJob.results.Summary()
+
+	syncJob.jobStatus.Errors = syncJob.results.Errors()
+	if len(syncJob.jobStatus.Errors) > 0 {
+		syncJob.jobStatus.State = provisioning.JobStateError
+	}
 
 	syncStatus := syncJob.jobStatus.ToSyncStatus(job.Name)
 	if syncStatus.State == provisioning.JobStateSuccess {
@@ -288,7 +290,17 @@ func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange
 	// Create folder structure first
 	for _, change := range changes {
 		if len(r.jobStatus.Errors) > 20 {
-			return errors.New("too many errors")
+			r.results.Record(Result{
+				// TODO: this is probably having an unknown resource for Create
+				Name:     change.Existing.Name,
+				Resource: change.Existing.Resource,
+				Group:    change.Existing.Group,
+				Path:     change.Path,
+				// TODO: should we use a skipped action instead? or a different action type?
+				Action: repository.FileActionIgnored,
+				Error:  errors.New("too many errors"),
+			})
+			continue
 		}
 
 		if err := r.progress(ctx, *r.jobStatus); err != nil {
@@ -297,37 +309,44 @@ func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange
 		}
 
 		if change.Action == repository.FileActionDeleted {
+			result := Result{
+				Name:     change.Existing.Name,
+				Resource: change.Existing.Resource,
+				Group:    change.Existing.Group,
+				Path:     change.Path,
+				Action:   change.Action,
+			}
+
 			if change.Existing == nil || change.Existing.Name == "" {
 				logger.Error("deleted file is missing existing reference", "file", change.Path)
-				r.jobStatus.Errors = append(r.jobStatus.Errors,
-					fmt.Sprintf("unable to delete resource from: %s", change.Path))
+				result.Error = errors.New("missing existing reference")
+				r.results.Record(result)
 				continue
 			}
 
 			client, err := r.client(change.Existing.Resource)
 			if err != nil {
-				logger.Warn("unable to get client for deleted object", "file", change.Path, "err", err, "obj", change.Existing)
-				r.jobStatus.Errors = append(r.jobStatus.Errors,
-					fmt.Sprintf("unsupported object: %s / %s", change.Path, change.Existing.Resource))
+				logger.Error("unable to get client for deleted object", "file", change.Path, "err", err, "obj", change.Existing)
+				result.Error = fmt.Errorf("unable to get client for deleted object: %w", err)
+				r.results.Record(result)
 				continue
 			}
+
 			err = client.Delete(ctx, change.Existing.Name, metav1.DeleteOptions{})
 			if err != nil {
-				logger.Warn("deleting error", "file", change.Path, "err", err)
-				r.jobStatus.Errors = append(r.jobStatus.Errors,
-					fmt.Sprintf("error deleting %s: %s // %s", change.Existing.Resource, change.Existing.Name, change.Path))
-			} else {
-				// r.results.Delete++
+				logger.Error("deleting error", "file", change.Path, "err", err)
 			}
+
+			result.Error = err
+			r.results.Record(result)
+
 			continue
 		}
 
 		// Write the resource file
 		err := r.writeResourceFromFile(ctx, change.Path, "", change.Action)
 		if err != nil {
-			logger.Warn("write resource error", "file", change.Path, "err", err)
-			r.jobStatus.Errors = append(r.jobStatus.Errors,
-				fmt.Sprintf("error writing: %s // %s", change.Path, err.Error()))
+			logger.Error("write resource error", "file", change.Path, "err", err)
 		}
 	}
 
@@ -349,7 +368,13 @@ func (r *syncJob) applyVersionedChanges(ctx context.Context, repo repository.Ver
 	logger := logging.FromContext(ctx)
 	for _, change := range diff {
 		if len(r.jobStatus.Errors) > 20 {
-			return fmt.Errorf("too many errors")
+			r.results.Record(Result{
+				Path: change.Path,
+				// TODO: should we use a skipped action instead? or a different action type?
+				Action: repository.FileActionIgnored,
+				Error:  errors.New("too many errors"),
+			})
+			continue
 		}
 
 		if err := r.progress(ctx, *r.jobStatus); err != nil {
@@ -360,34 +385,24 @@ func (r *syncJob) applyVersionedChanges(ctx context.Context, repo repository.Ver
 		case repository.FileActionCreated, repository.FileActionUpdated:
 			err = r.writeResourceFromFile(ctx, change.Path, change.Ref, change.Action)
 			if err != nil {
-				logger.Warn("error writing", "change", change, "err", err)
-				r.jobStatus.Errors = append(r.jobStatus.Errors,
-					fmt.Sprintf("error loading: %s / %s", change.Path, err.Error()))
+				logger.Error("error writing", "change", change, "err", err)
 			}
-
 		case repository.FileActionDeleted:
 			err = r.deleteObject(ctx, change.Path, change.PreviousRef)
 			if err != nil {
-				r.jobStatus.Errors = append(r.jobStatus.Errors,
-					fmt.Sprintf("error deleting file: %s / %s", change.Path, err.Error()))
-				continue
+				logger.Error("error deleting", "change", change, "err", err)
 			}
-
 		case repository.FileActionRenamed:
 			// 1. Delete
 			err = r.deleteObject(ctx, change.Path, change.PreviousRef)
 			if err != nil {
-				r.jobStatus.Errors = append(r.jobStatus.Errors,
-					fmt.Sprintf("error deleting renamed file: %s / %s", change.Path, err.Error()))
+				logger.Error("error deleting", "change", change, "err", err)
 				continue
 			}
-
 			// 2. Create
 			err = r.writeResourceFromFile(ctx, change.Path, change.Ref, repository.FileActionCreated)
 			if err != nil {
 				logger.Warn("error writing", "change", change, "err", err)
-				r.jobStatus.Errors = append(r.jobStatus.Errors,
-					fmt.Sprintf("error loading: %s / %s", change.Path, err.Error()))
 			}
 		}
 	}
