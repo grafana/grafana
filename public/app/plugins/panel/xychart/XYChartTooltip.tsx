@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 
-import { DataFrame, InterpolateFunction } from '@grafana/data';
+import { DataFrame, InterpolateFunction, LinkModel } from '@grafana/data';
 import { alpha } from '@grafana/data/src/themes/colorManipulator';
 import { VizTooltipContent } from '@grafana/ui/src/components/VizTooltip/VizTooltipContent';
 import { VizTooltipFooter } from '@grafana/ui/src/components/VizTooltip/VizTooltipFooter';
@@ -8,7 +8,7 @@ import { VizTooltipHeader } from '@grafana/ui/src/components/VizTooltip/VizToolt
 import { VizTooltipWrapper } from '@grafana/ui/src/components/VizTooltip/VizTooltipWrapper';
 import { ColorIndicator, VizTooltipItem } from '@grafana/ui/src/components/VizTooltip/types';
 
-import { getDataLinks, getFieldActions } from '../status-history/utils';
+import { getFieldActions } from '../status-history/utils';
 
 import { XYSeries } from './types2';
 import { fmt } from './utils';
@@ -21,6 +21,7 @@ export interface Props {
   data: DataFrame[];
   xySeries: XYSeries[];
   replaceVariables: InterpolateFunction;
+  dataLinks: LinkModel[];
 }
 
 function stripSeriesName(fieldName: string, seriesName: string) {
@@ -31,7 +32,16 @@ function stripSeriesName(fieldName: string, seriesName: string) {
   return fieldName;
 }
 
-export const XYChartTooltip = ({ dataIdxs, seriesIdx, data, xySeries, dismiss, isPinned, replaceVariables }: Props) => {
+export const XYChartTooltip = ({
+  dataIdxs,
+  seriesIdx,
+  data,
+  xySeries,
+  dismiss,
+  isPinned,
+  replaceVariables,
+  dataLinks,
+}: Props) => {
   const rowIndex = dataIdxs.find((idx) => idx !== null)!;
 
   const series = xySeries[seriesIdx! - 1];
@@ -93,12 +103,15 @@ export const XYChartTooltip = ({ dataIdxs, seriesIdx, data, xySeries, dismiss, i
 
   let footer: ReactNode;
 
-  if (isPinned && seriesIdx != null) {
-    const links = getDataLinks(yField, rowIndex);
-    const yFieldFrame = data.find((frame) => frame.fields.includes(yField))!;
-    const actions = getFieldActions(yFieldFrame, yField, replaceVariables, rowIndex);
+  if (seriesIdx != null) {
+    const hasOneClickLink = dataLinks?.some((dataLink) => dataLink.oneClick === true);
 
-    footer = <VizTooltipFooter dataLinks={links} actions={actions} />;
+    if (isPinned || hasOneClickLink) {
+      const yFieldFrame = data.find((frame) => frame.fields.includes(yField))!;
+      const actions = getFieldActions(yFieldFrame, yField, replaceVariables, rowIndex);
+
+      footer = <VizTooltipFooter dataLinks={dataLinks} actions={actions} />;
+    }
   }
 
   return (

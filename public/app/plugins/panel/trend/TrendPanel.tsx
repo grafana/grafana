@@ -119,8 +119,8 @@ export const TrendPanel = ({
                 hoverMode={
                   options.tooltip.mode === TooltipDisplayMode.Single ? TooltipHoverMode.xOne : TooltipHoverMode.xAll
                 }
-                getDataLinks={(seriesIdx: number, dataIdx: number) =>
-                  alignedDataFrame.fields[seriesIdx]!.getLinks?.({ valueRowIndex: dataIdx }) ?? []
+                getDataLinks={(seriesIdx, dataIdx) =>
+                  alignedDataFrame.fields[seriesIdx].getLinks?.({ valueRowIndex: dataIdx }) ?? []
                 }
                 render={(u, dataIdxs, seriesIdx, isPinned = false, dismiss, timeRange, viaSync, dataLinks) => {
                   return (
