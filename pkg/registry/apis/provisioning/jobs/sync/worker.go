@@ -89,37 +89,38 @@ func (r *SyncWorker) Process(ctx context.Context,
 	// Execute the job
 	ref, results, syncError := syncJob.run(ctx)
 
-	var jobStatus provisioning.JobStatus
-	// TODO: Simplify construction of this
-	if syncError != nil {
-		jobStatus = provisioning.JobStatus{
-			State:    provisioning.JobStateError,
-			Started:  job.Status.Started,
-			Finished: time.Now().UnixMilli(),
-			Message:  syncError.Error(),
-		}
-	} else {
-		jobStatus = provisioning.JobStatus{
-			State:    provisioning.JobStateSuccess,
-			Started:  job.Status.Started,
-			Finished: time.Now().UnixMilli(),
-			Message:  "sync completed successfully",
-		}
+	// Initialize base job status
+	jobStatus := provisioning.JobStatus{
+		Started:  job.Status.Started,
+		Finished: time.Now().UnixMilli(),
+		State:    provisioning.JobStateSuccess,
+		Message:  "sync completed successfully",
 	}
 
+	// Handle sync error
+	if syncError != nil {
+		jobStatus.State = provisioning.JobStateError
+		jobStatus.Message = syncError.Error()
+	}
+
+	// Process results if available
 	if results != nil {
 		jobStatus.Summary = results.Summary()
 		jobStatus.Errors = results.Errors()
-		if results.Message != "" {
+
+		// Check for errors in results
+		if len(jobStatus.Errors) > 0 && jobStatus.State != provisioning.JobStateError {
+			jobStatus.State = provisioning.JobStateError
+			jobStatus.Message = "sync completed with errors"
+		}
+
+		// Override message if results have a custom message
+		if results.Message != "" && jobStatus.State != provisioning.JobStateError {
 			jobStatus.Message = results.Message
 		}
 	}
 
-	if len(jobStatus.Errors) > 0 {
-		jobStatus.State = provisioning.JobStateError
-		jobStatus.Message = "sync completed with errors"
-	}
-
+	// Create sync status and set hash if successful
 	syncStatus := jobStatus.ToSyncStatus(job.Name)
 	if syncStatus.State == provisioning.JobStateSuccess {
 		syncStatus.Hash = ref
