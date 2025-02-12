@@ -12,7 +12,7 @@ labels:
     - oss
 menuTitle: Write TraceQL queries
 title: Write TraceQL queries with the editor
-weight: 300
+weight: 400
 refs:
   explore:
     - pattern: /docs/grafana/
