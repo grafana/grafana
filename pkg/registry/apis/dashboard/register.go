@@ -328,11 +328,18 @@ func (b *DashboardsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 	// The plugin description
 	oas.Info.Description = "Grafana dashboards as resources"
 
-	// Hide cluster-scoped resources
-	for i := 0; i < 3; i++ {
-		version := fmt.Sprintf("v%dalpha1", i)
-		p := path.Join("/apis/", dashboardinternal.GROUP, version, "dashboards")
-		delete(oas.Paths.Paths, p)
+	for _, gv := range b.GetGroupVersions() {
+		version := gv.Version
+		// Hide cluster-scoped resources
+		root := path.Join("/apis/", dashboardinternal.GROUP, version)
+		delete(oas.Paths.Paths, path.Join(root, "dashboards"))
+		delete(oas.Paths.Paths, path.Join(root, "watch", "dashboards"))
+
+		if version == dashboardv0alpha1.VERSION {
+			sub := oas.Paths.Paths[path.Join(root, "search", "{name}")]
+			oas.Paths.Paths[path.Join(root, "search")] = sub
+			delete(oas.Paths.Paths, path.Join(root, "search", "{name}"))
+		}
 	}
 
 	return oas, nil
