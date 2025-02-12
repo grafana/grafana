@@ -34,6 +34,9 @@ def rgm_artifacts_step(name = "rgm-package", artifacts = ["targz:grafana:linux/a
             "_EXPERIMENTAL_DAGGER_CLOUD_TOKEN": from_secret(rgm_dagger_token),
         },
         "commands": [
+            "docker run --privileged --rm tonistiigi/binfmt:qemu-v7.0.0-28 --version",
+            "docker run --privileged --rm tonistiigi/binfmt:qemu-v7.0.0-28 --uninstall 'qemu-*'",
+            "docker run --privileged --rm tonistiigi/binfmt:qemu-v7.0.0-28 --install all",
             cmd +
             "--go-version={} ".format(golang_version) +
             "--yarn-cache=$$YARN_CACHE_FOLDER " +
