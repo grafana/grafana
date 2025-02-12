@@ -49,6 +49,7 @@ export function convertToCron(cfg: TimeRegionConfig): { cron: string; duration: 
     duration = intervalToAbbreviatedDurationString({ start: fromDate, end: toDate }, false);
 
     // if the DOW is the same and the from time is after to dow, duration is 6 days + to time
+    //TODO - COMPLETE SAME DAY LOGIC, THIS DOES NOT WORK
     if (sameDay && isAfter(toDate, fromDate)) {
       let durationObj: Duration = {};
       durationObj.days = 6;
@@ -56,7 +57,6 @@ export function convertToCron(cfg: TimeRegionConfig): { cron: string; duration: 
       durationObj.minutes = toDate.getMinutes();
       duration = reverseParseDuration(durationObj, false);
     } else {
-      //TODO - COMPLETE LOGIC, THIS DOES NOT WORK
       duration = intervalToAbbreviatedDurationString({ start: fromDate, end: toDate }, false);
     }
   } else {
