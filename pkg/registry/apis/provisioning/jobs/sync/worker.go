@@ -110,7 +110,9 @@ func (r *SyncWorker) Process(ctx context.Context,
 	if results != nil {
 		jobStatus.Summary = results.Summary()
 		jobStatus.Errors = results.Errors()
-		jobStatus.Message = results.Message
+		if results.Message != "" {
+			jobStatus.Message = results.Message
+		}
 	}
 
 	if len(jobStatus.Errors) > 0 {
