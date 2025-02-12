@@ -195,7 +195,6 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
     "from": "now-1h",
     "hideTimepicker": false,
     "nowDelay": "1m",
-    "quickRanges": [],
     "timezone": "UTC",
     "to": "now",
     "weekStart": "monday",

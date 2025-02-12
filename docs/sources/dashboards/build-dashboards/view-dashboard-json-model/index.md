@@ -138,12 +138,12 @@ The grid has a negative gravity that moves panels up if there is empty space abo
     "nowDelay": "",
     "quick_ranges": [
       {
-        "display": "Last 6 hours"
+        "display": "Last 6 hours",
         "from": "now-6h",
         "to": "now"
       },
       {
-        "display": "Last 7 days"
+        "display": "Last 7 days",
         "from": "now-7d",
         "to": "now"
       }

@@ -74,7 +74,7 @@ lineage: schemas: [{
 
 			// Version of the JSON schema, incremented each time a Grafana update brings
 			// changes to said schema.
-			schemaVersion: uint16 | *39
+			schemaVersion: uint16 | *41
 
 			// Version of the dashboard, incremented each time the dashboard is updated.
 			version?: uint32
@@ -473,8 +473,6 @@ lineage: schemas: [{
 			hidden?: bool | *false
 			// Interval options available in the refresh picker dropdown.
 			refresh_intervals?: [...string] | *["5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"]
-			// Selectable options available in the time picker dropdown. Has no effect on provisioned dashboard.
-			time_options?: [...string] | *["5m", "15m", "1h", "6h", "12h", "24h", "2d", "7d", "30d"]
 			// Quick ranges for time picker.
 			quick_ranges?: [...#TimeOption]
 			// Override the now time by entering a time delay. Use this option to accommodate known delays in data aggregation to avoid null values.
