@@ -131,6 +131,6 @@
     "title": "New dashboard",
     "version": 0,
     "weekStart": "",
-    "refresh": true,
-    "schemaVersion": 39
+    "refresh": "",
+    "schemaVersion": 40
   }
