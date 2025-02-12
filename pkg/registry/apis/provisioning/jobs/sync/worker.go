@@ -86,8 +86,7 @@ func (r *SyncWorker) Process(ctx context.Context,
 		return nil, fmt.Errorf("failed to create sync job: %w", err)
 	}
 
-	// FIXME: ProgressRecorder should be moved to jobs package and initialized in the queue
-	progress := NewJobProgressRecorder(progressFn)
+	progress := jobs.NewJobProgressRecorder(progressFn)
 
 	// Execute the job
 	syncError := syncJob.run(ctx, *job.Spec.Sync, progress)
@@ -188,7 +187,7 @@ type syncJob struct {
 	folderLookup *resources.FolderTree
 }
 
-func (r *syncJob) run(ctx context.Context, options provisioning.SyncJobOptions, progress *JobProgressRecorder) error {
+func (r *syncJob) run(ctx context.Context, options provisioning.SyncJobOptions, progress *jobs.JobProgressRecorder) error {
 	// Ensure the configured folder exists and is managed by the repository
 	cfg := r.repository.Config()
 	rootFolder := resources.RootFolder(cfg)
@@ -254,7 +253,7 @@ func (r *syncJob) run(ctx context.Context, options provisioning.SyncJobOptions, 
 	return nil
 }
 
-func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange, progress *JobProgressRecorder) {
+func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange, progress *jobs.JobProgressRecorder) {
 	// Do the longest paths first (important for delete)
 	sort.Slice(changes, func(i, j int) bool {
 		return len(changes[i].Path) > len(changes[j].Path)
@@ -266,7 +265,7 @@ func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange
 	// Create folder structure first
 	for _, change := range changes {
 		if len(progress.Errors()) > 20 {
-			progress.Record(ctx, JobResourceResult{
+			progress.Record(ctx, jobs.JobResourceResult{
 				Name:     change.Existing.Name,
 				Resource: change.Existing.Resource,
 				Group:    change.Existing.Group,
@@ -279,7 +278,7 @@ func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange
 		}
 
 		if change.Action == repository.FileActionDeleted {
-			result := JobResourceResult{
+			result := jobs.JobResourceResult{
 				Name:     change.Existing.Name,
 				Resource: change.Existing.Resource,
 				Group:    change.Existing.Group,
@@ -311,7 +310,7 @@ func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange
 }
 
 // Convert git changes into resource file changes
-func (r *syncJob) applyVersionedChanges(ctx context.Context, repo repository.VersionedRepository, previousRef, currentRef string, progress *JobProgressRecorder) error {
+func (r *syncJob) applyVersionedChanges(ctx context.Context, repo repository.VersionedRepository, previousRef, currentRef string, progress *jobs.JobProgressRecorder) error {
 	diff, err := repo.CompareFiles(ctx, previousRef, currentRef)
 	if err != nil {
 		return fmt.Errorf("compare files error: %w", err)
@@ -327,7 +326,7 @@ func (r *syncJob) applyVersionedChanges(ctx context.Context, repo repository.Ver
 
 	for _, change := range diff {
 		if len(progress.Errors()) > 20 {
-			progress.Record(ctx, JobResourceResult{
+			progress.Record(ctx, jobs.JobResourceResult{
 				Path: change.Path,
 				// FIXME: should we use a skipped action instead? or a different action type?
 				Action: repository.FileActionIgnored,
@@ -357,9 +356,9 @@ func (r *syncJob) applyVersionedChanges(ctx context.Context, repo repository.Ver
 	return nil
 }
 
-func (r *syncJob) deleteObject(ctx context.Context, path string, ref string) JobResourceResult {
+func (r *syncJob) deleteObject(ctx context.Context, path string, ref string) jobs.JobResourceResult {
 	info, err := r.repository.Read(ctx, path, ref)
-	result := JobResourceResult{
+	result := jobs.JobResourceResult{
 		Path:   path,
 		Action: repository.FileActionDeleted,
 	}
@@ -396,8 +395,8 @@ func (r *syncJob) deleteObject(ctx context.Context, path string, ref string) Job
 	return result
 }
 
-func (r *syncJob) writeResourceFromFile(ctx context.Context, path string, ref string, action repository.FileAction) JobResourceResult {
-	result := JobResourceResult{
+func (r *syncJob) writeResourceFromFile(ctx context.Context, path string, ref string, action repository.FileAction) jobs.JobResourceResult {
+	result := jobs.JobResourceResult{
 		Path:   path,
 		Action: action,
 	}

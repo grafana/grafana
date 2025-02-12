@@ -1,4 +1,4 @@
-package sync
+package jobs
 
 import (
 	"context"
@@ -6,7 +6,6 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 )
 
@@ -27,10 +26,10 @@ type JobProgressRecorder struct {
 	message    string
 	results    []JobResourceResult
 	errors     []string
-	progressFn jobs.ProgressFn
+	progressFn ProgressFn
 }
 
-func NewJobProgressRecorder(progressFn jobs.ProgressFn) *JobProgressRecorder {
+func NewJobProgressRecorder(progressFn ProgressFn) *JobProgressRecorder {
 	return &JobProgressRecorder{
 		progressFn: progressFn,
 	}
