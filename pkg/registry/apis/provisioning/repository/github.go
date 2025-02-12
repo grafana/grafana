@@ -766,7 +766,7 @@ func (r *githubRepository) createWebhook(ctx context.Context) (pgh.WebhookConfig
 // updateWebhook checks if the webhook needs to be updated and updates it if necessary.
 // if the webhook does not exist, it will create it.
 func (r *githubRepository) updateWebhook(ctx context.Context) (pgh.WebhookConfig, bool, error) {
-	if r.config.Status.Webhook == nil {
+	if r.config.Status.Webhook == nil || r.config.Status.Webhook.ID == 0 {
 		hook, err := r.createWebhook(ctx)
 		if err != nil {
 			return pgh.WebhookConfig{}, false, err

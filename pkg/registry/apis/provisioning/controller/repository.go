@@ -282,8 +282,11 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	}
 
 	// Test configuration before anything else
-	health := obj.Status.Health
-	statusPatch := make(map[string]any)
+	statusPatch := provisioning.RepositoryStatus{
+		ObservedGeneration: obj.Generation,
+	}
+	var hasChanges bool
+
 	if obj.DeletionTimestamp == nil && healthAge > 350*time.Millisecond {
 		logger.Info("running health check")
 		res, err := rc.tester.TestRepository(ctx, repo)
@@ -297,12 +300,20 @@ func (rc *RepositoryController) process(item *queueItem) error {
 			}
 		}
 
-		health = provisioning.HealthStatus{
+		statusPatch.Health = provisioning.HealthStatus{
 			Healthy: res.Success,
 			Checked: time.Now().UnixMilli(),
 			Message: res.Errors,
 		}
-		statusPatch["health"] = health
+		hasChanges = true
+
+		// If health check fails, set sync state to error
+		if !res.Success {
+			statusPatch.Sync = provisioning.SyncStatus{
+				State:   provisioning.JobStateError,
+				Message: res.Errors,
+			}
+		}
 	}
 
 	var sync *provisioning.SyncJobOptions
@@ -315,7 +326,8 @@ func (rc *RepositoryController) process(item *queueItem) error {
 			if err != nil {
 				return fmt.Errorf("error running OnCreate: %w", err)
 			}
-			statusPatch["webhook"] = webhookStatus
+			statusPatch.Webhook = webhookStatus
+			hasChanges = true
 		}
 		sync = &provisioning.SyncJobOptions{}
 	case hasSpecChanged:
@@ -325,9 +337,9 @@ func (rc *RepositoryController) process(item *queueItem) error {
 			if err != nil {
 				return fmt.Errorf("error running OnCreate: %w", err)
 			}
-			statusPatch["webhook"] = webhookStatus
+			statusPatch.Webhook = webhookStatus
+			hasChanges = true
 		}
-		statusPatch["observedGeneration"] = obj.Generation
 		sync = &provisioning.SyncJobOptions{}
 	case shouldResync:
 		if obj.Spec.Sync.Enabled {
@@ -339,7 +351,7 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	}
 
 	if obj.Spec.Sync.Enabled && sync != nil &&
-		obj.Generation > 0 && !isSyncJobPendingOrRunning && health.Healthy {
+		obj.Generation > 0 && !isSyncJobPendingOrRunning && obj.Status.Health.Healthy {
 		job, err := rc.jobs.Add(ctx, &provisioning.Job{
 			ObjectMeta: v1.ObjectMeta{
 				Namespace: obj.Namespace,
@@ -358,17 +370,21 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	}
 
 	// The one place we update status (triggers another controller loop!)
-	if len(statusPatch) > 0 {
-		statusPatch["observedGeneration"] = obj.Generation
+	if hasChanges {
+		// Preserve error state if not explicitly setting a new state
+		if statusPatch.Sync.State == "" && obj.Status.Sync.State == provisioning.JobStateError {
+			statusPatch.Sync = obj.Status.Sync
+		}
+
 		patch, err := json.Marshal(map[string]any{
 			"status": statusPatch,
 		})
 		if err != nil {
-			return fmt.Errorf("error encoding health patch: %w", err)
+			return fmt.Errorf("error encoding status patch: %w", err)
 		}
 		if _, err := rc.client.Repositories(obj.GetNamespace()).
 			Patch(ctx, obj.GetName(), types.MergePatchType, patch, v1.PatchOptions{}, "status"); err != nil {
-			return fmt.Errorf("update health status: %w", err)
+			return fmt.Errorf("update status: %w", err)
 		}
 	}
 	return nil
