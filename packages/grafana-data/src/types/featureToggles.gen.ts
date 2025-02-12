@@ -253,6 +253,7 @@ export interface FeatureToggles {
   exploreMetricsUseExternalAppPlugin?: boolean;
   datasourceConnectionsTab?: boolean;
   fetchRulesUsingPost?: boolean;
+  alertingConversionAPI?: boolean;
   alertingAlertmanagerExtraDedupStage?: boolean;
   alertingAlertmanagerExtraDedupStageStopPipeline?: boolean;
   newLogsPanel?: boolean;
