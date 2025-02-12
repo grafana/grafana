@@ -71,8 +71,8 @@ const httpConfigOption: NotificationChannelOption = option(
 );
 
 const jiraNotifier: NotifierDTO<CloudNotifierType> = {
-  name: 'Jira', 
-  description: 'Send notifications to Jira',
+  name: 'Jira Service Management', 
+  description: 'Send notifications to Jira Service Management',
   type: 'jira',
   info: '',
   heading: 'Jira settings',
