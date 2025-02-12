@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 )
 
 type RepoGetter interface {
@@ -57,6 +58,7 @@ type RepositoryController struct {
 	repoSynced     cache.InformerSynced
 	parsers        *resources.ParserFactory
 	logger         logging.Logger
+	secrets        *secrets.Service
 
 	jobs      jobs.JobQueue
 	finalizer *finalizer
@@ -81,6 +83,7 @@ func NewRepositoryController(
 	parsers *resources.ParserFactory,
 	tester RepositoryTester,
 	jobs jobs.JobQueue,
+	secrets *secrets.Service,
 ) (*RepositoryController, error) {
 	rc := &RepositoryController{
 		client:         provisioningClient,
@@ -99,9 +102,10 @@ func NewRepositoryController(
 			lister: resourceLister,
 			client: parsers.Client,
 		},
-		tester: tester,
-		jobs:   jobs,
-		logger: logging.DefaultLogger.With("logger", loggerName),
+		tester:  tester,
+		jobs:    jobs,
+		logger:  logging.DefaultLogger.With("logger", loggerName),
+		secrets: secrets,
 	}
 
 	_, err := repoInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
@@ -229,6 +233,16 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		return err
 	}
 
+	ctx, _, err := identity.WithProvisioningIdentitiy(context.Background(), namespace)
+	if err != nil {
+		return err
+	}
+	logger = logger.WithContext(ctx)
+
+	if err := rc.encryptSecrets(ctx, obj); err != nil {
+		return fmt.Errorf("failed to encrypt repository secrets: %w")
+	}
+
 	healthAge := time.Since(time.UnixMilli(obj.Status.Health.Checked))
 	syncAge := time.Since(time.UnixMilli(obj.Status.Sync.Finished))
 	syncInterval := time.Duration(obj.Spec.Sync.IntervalSeconds) * time.Second
@@ -243,12 +257,6 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	} else {
 		logger.Info("conditions met", "status", obj.Status, "generation", obj.Generation, "deletion_timestamp", obj.DeletionTimestamp, "sync_spec", obj.Spec.Sync)
 	}
-
-	ctx, _, err := identity.WithProvisioningIdentitiy(context.Background(), namespace)
-	if err != nil {
-		return err
-	}
-	logger = logger.WithContext(ctx)
 
 	repo, err := rc.repoGetter.AsRepository(ctx, obj)
 	if err != nil {
@@ -383,6 +391,39 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		if _, err := rc.client.Repositories(obj.GetNamespace()).
 			Patch(ctx, obj.GetName(), types.MergePatchType, patch, v1.PatchOptions{}, "status"); err != nil {
 			return fmt.Errorf("update status: %w", err)
+		}
+	}
+	return nil
+}
+
+// TODO: Find a better home.
+func (rc *RepositoryController) encryptSecrets(ctx context.Context, repo *provisioning.Repository) error {
+	specPatch := map[string]any{}
+
+	var err error
+	if repo.Spec.GitHub != nil &&
+		repo.Spec.GitHub.Token != "" {
+		repo.Spec.GitHub.EncryptedToken, err = rc.secrets.Encrypt(ctx, []byte(repo.Spec.GitHub.Token))
+		if err != nil {
+			return err
+		}
+		repo.Spec.GitHub.Token = ""
+		specPatch["github"] = map[string]any{
+			"token":          "",
+			"encryptedToken": repo.Spec.GitHub.EncryptedToken,
+		}
+	}
+
+	if len(specPatch) > 0 {
+		patch, err := json.Marshal(map[string]any{
+			"spec": specPatch,
+		})
+		if err != nil {
+			return err
+		}
+		if _, err := rc.client.Repositories(repo.GetNamespace()).
+			Patch(ctx, repo.GetName(), types.MergePatchType, patch, v1.PatchOptions{}); err != nil {
+			return err
 		}
 	}
 	return nil

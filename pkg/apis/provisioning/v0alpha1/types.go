@@ -51,9 +51,12 @@ type GitHubRepositoryConfig struct {
 	// By default, this is the main branch.
 	Branch string `json:"branch,omitempty"`
 
-	// Token for accessing the repository.
+	// Token for accessing the repository. If set, it will be encrypted into encryptedToken, then set to an empty string again.
 	// TODO: this should be part of secrets and a simple reference.
-	Token string `json:"token,omitempty"`
+	Token string `json:"token"`
+
+	// Token for accessing the repository, but encrypted. This is not possible to read back to a user decrypted.
+	EncryptedToken []byte `json:"encryptedToken"`
 
 	// Workflow allowed for changes to the repository.
 	// The order is relevant for defining the precedence of the workflows.

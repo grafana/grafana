@@ -317,7 +317,7 @@ func (b *APIBuilder) AsRepository(ctx context.Context, r *provisioning.Repositor
 			gvr.Resource,
 			r.GetName(),
 		)
-		return repository.NewGitHub(ctx, r, b.ghFactory, b.secrets, webhookURL), nil
+		return repository.NewGitHub(ctx, r, b.ghFactory, b.secrets, webhookURL)
 	case provisioning.S3RepositoryType:
 		return repository.NewS3(r), nil
 	default:
@@ -480,6 +480,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.parsers,
 				&repository.Tester{},
 				b.jobs,
+				b.secrets,
 			)
 			if err != nil {
 				return err

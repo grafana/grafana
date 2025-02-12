@@ -45,17 +45,27 @@ func NewGitHub(
 	factory pgh.ClientFactory,
 	secrets *secrets.Service,
 	webhookURL string,
-) *githubRepository {
+) (*githubRepository, error) {
 	owner, repo, _ := parseOwnerRepo(config.Spec.GitHub.URL)
+	token, encrypted := config.Spec.GitHub.EncryptedToken, true
+	if t := config.Spec.GitHub.Token; t != "" {
+		token, encrypted = []byte(t), false
+	}
+	if encrypted && len(token) > 0 {
+		var err error
+		token, err = secrets.Decrypt(ctx, config.Spec.GitHub.EncryptedToken)
+		if err != nil {
+			return nil, err
+		}
+	}
 	return &githubRepository{
-		config: config,
-		// TODO: Decrypt token somehow
-		gh:         factory.New(ctx, config.Spec.GitHub.Token), // TODO -- base from URL
+		config:     config,
+		gh:         factory.New(ctx, string(token)), // TODO -- base from URL
 		secrets:    secrets,
 		webhookURL: webhookURL,
 		owner:      owner,
 		repo:       repo,
-	}
+	}, nil
 }
 
 func (r *githubRepository) Config() *provisioning.Repository {
@@ -86,7 +96,7 @@ func (r *githubRepository) Validate() (list field.ErrorList) {
 		list = append(list, field.Invalid(field.NewPath("spec", "github", "branch"), gh.Branch, "invalid branch name"))
 	}
 	// TODO: Use two fields for token
-	if gh.Token == "" {
+	if gh.Token == "" && len(gh.EncryptedToken) == 0 {
 		list = append(list, field.Required(field.NewPath("spec", "github", "token"), "a github access token is required"))
 	}
 
