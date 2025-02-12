@@ -89,25 +89,35 @@ func (r *SyncWorker) Process(ctx context.Context,
 	// Execute the job
 	ref, results, syncError := syncJob.run(ctx)
 
+	var jobStatus provisioning.JobStatus
+	// TODO: Simplify construction of this
 	if syncError != nil {
-		syncJob.jobStatus = &provisioning.JobStatus{
+		jobStatus = provisioning.JobStatus{
 			State:    provisioning.JobStateError,
 			Started:  job.Status.Started,
 			Finished: time.Now().UnixMilli(),
 			Message:  syncError.Error(),
 		}
+	} else {
+		jobStatus = provisioning.JobStatus{
+			State:    provisioning.JobStateSuccess,
+			Started:  job.Status.Started,
+			Finished: time.Now().UnixMilli(),
+			Message:  "sync completed successfully",
+		}
 	}
 
 	if results != nil {
-		syncJob.jobStatus.Summary = results.Summary()
-		syncJob.jobStatus.Errors = results.Errors()
+		jobStatus.Summary = results.Summary()
+		jobStatus.Errors = results.Errors()
 	}
 
-	if len(syncJob.jobStatus.Errors) > 0 {
-		syncJob.jobStatus.State = provisioning.JobStateError
+	if len(jobStatus.Errors) > 0 {
+		jobStatus.State = provisioning.JobStateError
+		jobStatus.Message = "sync completed with errors"
 	}
 
-	syncStatus := syncJob.jobStatus.ToSyncStatus(job.Name)
+	syncStatus := jobStatus.ToSyncStatus(job.Name)
 	if syncStatus.State == provisioning.JobStateSuccess {
 		syncStatus.Hash = ref
 	}
@@ -137,7 +147,7 @@ func (r *SyncWorker) Process(ctx context.Context,
 		return nil, syncError
 	}
 
-	return syncJob.jobStatus, nil
+	return &jobStatus, nil
 }
 
 // start a job and run it
@@ -167,9 +177,6 @@ func (r *SyncWorker) createJob(ctx context.Context,
 		progress:   progress,
 		parser:     parser,
 		lister:     r.lister,
-		jobStatus: &provisioning.JobStatus{
-			State: provisioning.JobStateWorking,
-		},
 		folders: dynamicClient.Resource(schema.GroupVersionResource{
 			Group:    folders.GROUP,
 			Version:  folders.VERSION,
@@ -211,8 +218,6 @@ type syncJob struct {
 	folders      dynamic.ResourceInterface
 	dashboards   dynamic.ResourceInterface
 	folderLookup *resources.FolderTree
-
-	jobStatus *provisioning.JobStatus
 }
 
 func (r *syncJob) run(ctx context.Context) (string, *ResultsRecorder, error) {
@@ -240,9 +245,10 @@ func (r *syncJob) run(ctx context.Context) (string, *ResultsRecorder, error) {
 
 		if cfg.Status.Sync.Hash != "" && r.options.Incremental {
 			if currentRef == cfg.Status.Sync.Hash {
-				message := "same commit as last sync"
-				r.jobStatus.Message = message
-				return currentRef, nil, nil
+				// TODO: Pass this to the applyed changes or build empty?
+				results := &ResultsRecorder{}
+				results.Message = "same commit as last sync"
+				return currentRef, results, nil
 			}
 
 			results, err := r.applyVersionedChanges(ctx, versionedRepo, cfg.Status.Sync.Hash, currentRef)
@@ -269,8 +275,11 @@ func (r *syncJob) run(ctx context.Context) (string, *ResultsRecorder, error) {
 	}
 
 	if len(changes) == 0 {
-		r.jobStatus.Message = "no changes to sync"
-		return currentRef, nil, nil
+		// TODO: Pass this to the applyed changes or build empty?
+		results := &ResultsRecorder{}
+		results.Message = "no changes to sync"
+
+		return currentRef, results, nil
 	}
 
 	// Load any existing folder information
@@ -305,7 +314,17 @@ func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange
 			continue
 		}
 
-		if err := r.progress(ctx, *r.jobStatus); err != nil {
+		jobStatus := provisioning.JobStatus{
+			State:    provisioning.JobStateWorking,
+			Started:  0, // TODO: how to do this one?
+			Finished: 0,
+			Message:  "replicating changes",
+			Errors:   results.Errors(),
+			Progress: 0, // How to report progress?
+			Summary:  results.Summary(),
+		}
+
+		if err := r.progress(ctx, jobStatus); err != nil {
 			logger.Warn("error notifying progress", "err", err)
 		}
 
@@ -362,12 +381,11 @@ func (r *syncJob) applyVersionedChanges(ctx context.Context, repo repository.Ver
 		return nil, fmt.Errorf("compare files error: %w", err)
 	}
 
+	results := &ResultsRecorder{}
 	if len(diff) < 1 {
-		r.jobStatus.Message = "no changes detected between commits"
+		results.Message = "no changes detected between commits"
 		return nil, nil
 	}
-
-	results := &ResultsRecorder{}
 
 	logger := logging.FromContext(ctx)
 	for _, change := range diff {
@@ -381,7 +399,17 @@ func (r *syncJob) applyVersionedChanges(ctx context.Context, repo repository.Ver
 			continue
 		}
 
-		if err := r.progress(ctx, *r.jobStatus); err != nil {
+		jobStatus := provisioning.JobStatus{
+			State:    provisioning.JobStateWorking,
+			Started:  0, // TODO: how to do this one?
+			Finished: 0,
+			Message:  "replicating versioned changes",
+			Errors:   results.Errors(),
+			Progress: 0, // How to report progress?
+			Summary:  results.Summary(),
+		}
+
+		if err := r.progress(ctx, jobStatus); err != nil {
 			logger.Warn("error notifying progress", "err", err)
 		}
 

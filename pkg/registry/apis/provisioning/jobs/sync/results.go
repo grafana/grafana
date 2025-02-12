@@ -15,7 +15,9 @@ type Result struct {
 }
 
 type ResultsRecorder struct {
-	Ref string
+	Ref     string
+	Message string
+	// TODO: Add progress here
 }
 
 func (r *ResultsRecorder) Record(result Result) {
