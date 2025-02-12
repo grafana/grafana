@@ -1,8 +1,9 @@
 import { useMemo } from 'react';
 
-import { Spinner, Alert, Badge, InteractiveTable, Button, Card, Box, Stack, Icon, Text } from '@grafana/ui';
+import { Spinner, Alert, Badge, InteractiveTable, Card, Box, Stack, Icon, Text } from '@grafana/ui';
 
-import { Repository, JobResourceSummary, useListJobQuery, Job, SyncStatus } from './api';
+import { Repository, JobResourceSummary, Job, SyncStatus } from './api';
+import { useRepositoryJobs } from './hooks';
 import { formatTimestamp } from './utils/time';
 
 interface Props {
@@ -166,10 +167,7 @@ function EmptyState() {
 }
 
 export function RecentJobs({ repo }: Props) {
-  const name = repo.metadata?.name;
-  const query = useListJobQuery({ labelSelector: `repository=${name}` });
-  const items = query?.data?.items ?? [];
-
+  const [items, query] = useRepositoryJobs({ name: repo.metadata?.name, watch: true });
   const jobColumns = useMemo(() => getJobColumns(), []);
 
   if (query.isLoading) {
@@ -187,21 +185,16 @@ export function RecentJobs({ repo }: Props) {
   return (
     <Card>
       <Card.Heading>Recent jobs</Card.Heading>
-      <Card.Actions>
-        <Button icon="sync" variant="secondary" onClick={query.refetch} disabled={query.isFetching}>
-          Refresh
-        </Button>
-      </Card.Actions>
       <Card.Description>
         {!items?.length ? (
           <EmptyState />
         ) : (
           <InteractiveTable
-            data={items.slice(0, 10)}
+            key={items?.length}
+            data={items.slice(0, 20)}
             columns={jobColumns}
             getRowId={(item) => item.metadata?.resourceVersion || ''}
             renderExpandedRow={(row) => <ExpandedRow row={row} />}
-            pageSize={30}
           />
         )}
       </Card.Description>

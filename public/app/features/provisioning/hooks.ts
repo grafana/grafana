@@ -15,6 +15,8 @@ import {
   useListRepositoryQuery,
   useReplaceRepositoryFilesWithPathMutation,
   useReplaceRepositoryMutation,
+  useListJobQuery,
+  Job,
 } from './api';
 
 export function useCreateOrUpdateRepository(name?: string) {
@@ -112,3 +114,32 @@ export const useGetResourceRepository = ({ name, folderUid }: GetResourceReposit
 
   return items.find((repo) => repo.metadata?.name === repoName);
 };
+
+interface RepositoryJobsArgs {
+  name?: string;
+  watch?: boolean;
+}
+
+export function useRepositoryJobs({ name, watch = true }: RepositoryJobsArgs = {}): [
+  Job[] | undefined,
+  ReturnType<typeof useListJobQuery>,
+] {
+  const query = useListJobQuery(
+    name
+      ? {
+          labelSelector: `repository=${name}`,
+          watch,
+        }
+      : skipToken
+  );
+
+  const collator = new Intl.Collator(undefined, { numeric: true });
+
+  const sortedItems = query.data?.items?.slice().sort((a, b) => {
+    const aTime = a.metadata?.creationTimestamp ?? '';
+    const bTime = b.metadata?.creationTimestamp ?? '';
+    return collator.compare(bTime, aTime); // Reverse order for newest first
+  });
+
+  return [sortedItems, query];
+}
