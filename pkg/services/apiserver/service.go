@@ -47,6 +47,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
@@ -159,8 +160,12 @@ func ProvideService(
 	datasources datasource.ScopedPluginDatasourceProvider,
 	contextProvider datasource.PluginContextWrapper,
 	pluginStore pluginstore.Store,
-	unified resource.ResourceClient,
+	unifiedClientService unified.ClientService,
 ) (*service, error) {
+	resourceClient, err := unifiedClientService.GetResourceClient()
+	if err != nil {
+		return nil, err
+	}
 	s := &service{
 		log:               log.New(modules.GrafanaAPIServer),
 		cfg:               cfg,
@@ -178,7 +183,7 @@ func ProvideService(
 		contextProvider:   contextProvider,
 		pluginStore:       pluginStore,
 		serverLockService: serverLockService,
-		unified:           unified,
+		unified:           resourceClient,
 	}
 	// This will be used when running as a dskit service
 	service := services.NewBasicService(s.start, s.running, nil).WithName(modules.GrafanaAPIServer)

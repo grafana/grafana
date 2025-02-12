@@ -30,6 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
@@ -63,13 +64,18 @@ func RegisterAPIService(cfg *setting.Cfg,
 	folderPermissionsSvc accesscontrol.FolderPermissionsService,
 	accessControl accesscontrol.AccessControl,
 	registerer prometheus.Registerer,
-	unified resource.ResourceClient,
-) *FolderAPIBuilder {
+	unifiedClientService unified.ClientService,
+) (*FolderAPIBuilder, error) {
 	if !featuremgmt.AnyEnabled(features,
 		featuremgmt.FlagKubernetesFoldersServiceV2,
 		featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
 		featuremgmt.FlagProvisioning) {
-		return nil // skip registration unless opting into Kubernetes folders or unless we want to customize registration when testing
+		return nil, nil // skip registration unless opting into Kubernetes folders or unless we want to customize registration when testing
+	}
+
+	resourceClient, err := unifiedClientService.GetResourceClient()
+	if err != nil {
+		return nil, err
 	}
 
 	builder := &FolderAPIBuilder{
@@ -80,10 +86,10 @@ func RegisterAPIService(cfg *setting.Cfg,
 		folderPermissionsSvc: folderPermissionsSvc,
 		cfg:                  cfg,
 		accessControl:        accessControl,
-		searcher:             unified,
+		searcher:             resourceClient,
 	}
 	apiregistration.RegisterAPI(builder)
-	return builder
+	return builder, nil
 }
 
 func NewAPIService() *FolderAPIBuilder {

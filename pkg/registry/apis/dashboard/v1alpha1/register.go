@@ -31,6 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
+	"github.com/grafana/grafana/pkg/storage/unified"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
@@ -64,8 +65,12 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 	reg prometheus.Registerer,
 	sql db.DB,
 	tracing *tracing.TracingService,
-	unified resource.ResourceClient,
-) *DashboardsAPIBuilder {
+	unifiedClientService unified.ClientService,
+) (*DashboardsAPIBuilder, error) {
+	resourceClient, err := unifiedClientService.GetResourceClient()
+	if err != nil {
+		return nil, err
+	}
 	softDelete := features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore)
 	dbp := legacysql.NewDatabaseProvider(sql)
 	namespacer := request.GetNamespaceMapper(cfg)
@@ -77,7 +82,7 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 		dashboardService: dashboardService,
 		features:         features,
 		accessControl:    accessControl,
-		unified:          unified,
+		unified:          resourceClient,
 
 		legacy: &dashboard.DashboardStorage{
 			Resource:       dashboardv1alpha1.DashboardResourceInfo,
@@ -88,7 +93,7 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 		reg: reg,
 	}
 	apiregistration.RegisterAPI(builder)
-	return builder
+	return builder, nil
 }
 
 func (b *DashboardsAPIBuilder) GetGroupVersion() schema.GroupVersion {

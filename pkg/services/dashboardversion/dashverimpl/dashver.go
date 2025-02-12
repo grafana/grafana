@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
@@ -40,7 +39,7 @@ type Service struct {
 }
 
 func ProvideService(cfg *setting.Cfg, db db.DB, dashboardService dashboards.DashboardService, dashboardStore dashboards.Store, features featuremgmt.FeatureToggles,
-	restConfigProvider apiserver.RestConfigProvider, userService user.Service, unified resource.ResourceClient) dashver.Service {
+	restConfigProvider apiserver.RestConfigProvider, userService user.Service) dashver.Service {
 	return &Service{
 		cfg: cfg,
 		store: &sqlStore{

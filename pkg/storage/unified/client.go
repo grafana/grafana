@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
+	"sync"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
@@ -30,7 +31,7 @@ const resourceStoreAudience = "resourceStore"
 
 var (
 	// internal provider of the package level resource client
-	pkgResourceClient resource.ResourceClient
+	pkgResourceClient resource.ResourceClient // Remove this
 	ready             = make(chan struct{})
 )
 
@@ -39,29 +40,63 @@ func GetResourceClient(ctx context.Context) resource.ResourceClient {
 	return pkgResourceClient
 }
 
-// This adds a UnifiedStorage client into the wire dependency tree
-func ProvideUnifiedStorageClient(
-	cfg *setting.Cfg,
+type ClientService interface {
+	GetResourceClient() (resource.ResourceClient, error)
+}
+
+func ProvideClientServiceImpl(cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	db infraDB.DB,
 	tracer tracing.Tracer,
 	reg prometheus.Registerer,
 	authzc types.AccessClient,
-	docs resource.DocumentBuilderSupplier,
-) (resource.ResourceClient, error) {
+	docs resource.DocumentBuilderSupplier) *ClientServiceImpl {
+	return &ClientServiceImpl{
+		cfg:      cfg,
+		features: features,
+		db:       db,
+		tracer:   tracer,
+		reg:      reg,
+		authzc:   authzc,
+		docs:     docs,
+	}
+}
+
+type ClientServiceImpl struct {
+	cfg      *setting.Cfg
+	features featuremgmt.FeatureToggles
+	db       infraDB.DB
+	tracer   tracing.Tracer
+	reg      prometheus.Registerer
+	authzc   types.AccessClient
+	docs     resource.DocumentBuilderSupplier
+	once     sync.Once
+	client   resource.ResourceClient
+	err      error
+}
+
+func (s *ClientServiceImpl) GetResourceClient() (resource.ResourceClient, error) {
+	s.once.Do(func() {
+		s.client, s.err = s.init()
+	})
+	return s.client, s.err
+}
+
+// This adds a UnifiedStorage client into the wire dependency tree
+func (s *ClientServiceImpl) init() (resource.ResourceClient, error) {
 	// See: apiserver.ApplyGrafanaConfig(cfg, features, o)
-	apiserverCfg := cfg.SectionWithEnvOverrides("grafana-apiserver")
+	apiserverCfg := s.cfg.SectionWithEnvOverrides("grafana-apiserver")
 	client, err := newClient(options.StorageOptions{
 		StorageType:  options.StorageType(apiserverCfg.Key("storage_type").MustString(string(options.StorageTypeUnified))),
-		DataPath:     apiserverCfg.Key("storage_path").MustString(filepath.Join(cfg.DataPath, "grafana-apiserver")),
+		DataPath:     apiserverCfg.Key("storage_path").MustString(filepath.Join(s.cfg.DataPath, "grafana-apiserver")),
 		Address:      apiserverCfg.Key("address").MustString(""), // client address
 		BlobStoreURL: apiserverCfg.Key("blob_url").MustString(""),
-	}, cfg, features, db, tracer, reg, authzc, docs)
+	}, s.cfg, s.features, s.db, s.tracer, s.reg, s.authzc, s.docs)
 	if err == nil {
 		// Used to get the folder stats
 		client = federated.NewFederatedClient(
 			client, // The original
-			legacysql.NewDatabaseProvider(db),
+			legacysql.NewDatabaseProvider(s.db),
 		)
 	}
 
@@ -70,7 +105,6 @@ func ProvideUnifiedStorageClient(
 		pkgResourceClient = client
 		close(ready)
 	}
-
 	return client, err
 }
 
