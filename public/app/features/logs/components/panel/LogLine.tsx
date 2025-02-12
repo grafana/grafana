@@ -2,11 +2,10 @@ import { css } from '@emotion/css';
 import { CSSProperties, useEffect, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useTheme2 } from '@grafana/ui';
 
 import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
 
-import { LogListModel } from './processing';
+import { LogFieldDimension, LogListModel } from './processing';
 import { hasUnderOrOverflow } from './virtualization';
 
 interface Props {
@@ -46,11 +45,8 @@ export const LogLine = ({
   }, [index, log.uid, onOverflow, style.height]);
 
   return (
-    <div style={style} className={`${styles.logLine} ${variant}`} ref={onOverflow ? logLineRef : undefined}>
-      <div
-        style={wrapLogMessage ? undefined : getFieldStyles(log)}
-        className={`${wrapLogMessage ? styles.wrappedLogLine : styles.unwrappedLogLine}`}
-      >
+    <div style={style} className={`${styles.logLine} ${variant ?? ''}`} ref={onOverflow ? logLineRef : undefined}>
+      <div className={`${wrapLogMessage ? styles.wrappedLogLine : `${styles.unwrappedLogLine} unwrapped-log-line`}`}>
         <Log displayedFields={displayedFields} log={log} showTime={showTime} styles={styles} />
       </div>
     </div>
@@ -92,10 +88,9 @@ export function getDisplayedFieldValue(fieldName: string, log: LogListModel): st
   return field ? field.values.toString() : '';
 }
 
-function getFieldStyles(log: LogListModel) {
-  return {
-    gridTemplateColumns: `${log.dimensions[0].width}px ${log.dimensions[1].width}px 1fr`,
-  };
+export function getGridTemplateColumns(dimensions: LogFieldDimension[]) {
+  const columns = dimensions.map((dimension) => dimension.width).join('px ');
+  return `${columns}px 1fr`;
 }
 
 export type LogLineStyles = ReturnType<typeof getStyles>;

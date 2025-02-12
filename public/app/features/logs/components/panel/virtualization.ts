@@ -1,6 +1,6 @@
 import { BusEventWithPayload, GrafanaTheme2 } from '@grafana/data';
 
-import { LogListModel } from './processing';
+import { LogFieldDimension, LogListModel } from './processing';
 
 let ctx: CanvasRenderingContext2D | null = null;
 let gridSize = 8;
@@ -146,6 +146,7 @@ interface DisplayOptions {
 export function getLogLineSize(
   logs: LogListModel[],
   container: HTMLDivElement | null,
+  fieldDimensions: LogFieldDimension[],
   { wrap, showTime }: DisplayOptions,
   index: number
 ) {
@@ -163,10 +164,10 @@ export function getLogLineSize(
   const gap = gridSize * 1.5;
   let optionsWidth = 0;
   if (showTime) {
-    optionsWidth += logs[index].dimensions[0].width + gap;
+    optionsWidth += fieldDimensions[0].width + gap;
   }
   if (logs[index].logLevel) {
-    optionsWidth += logs[index].dimensions[1].width + gap;
+    optionsWidth += fieldDimensions[1].width + gap;
   }
   const { height } = measureTextHeight(logs[index].body, getLogContainerWidth(container), optionsWidth);
   return height;

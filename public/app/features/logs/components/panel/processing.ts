@@ -1,8 +1,10 @@
 import { dateTimeFormat, LogRowModel, LogsSortOrder } from '@grafana/data';
 
 import { escapeUnescapedString, sortLogRows } from '../../utils';
+import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
 import { FieldDef, getAllFields } from '../logParser';
 
+import { getDisplayedFieldValue } from './LogLine';
 import { GetFieldLinksFn } from './LogList';
 import { measureTextWidth } from './virtualization';
 
@@ -10,10 +12,9 @@ export interface LogListModel extends LogRowModel {
   body: string;
   fields: FieldDef[];
   timestamp: string;
-  dimensions: LogDimension[];
 }
 
-export interface LogDimension {
+export interface LogFieldDimension {
   field: string;
   width: number;
 }
@@ -31,12 +32,7 @@ export const preProcessLogs = (
   { escape, getFieldLinks, order, timeZone, wrap }: PreProcessOptions
 ): LogListModel[] => {
   const orderedLogs = sortLogRows(logs, order);
-  const processedLogs = orderedLogs.map((log) =>
-    preProcessLog(log, { escape, expanded: false, getFieldLinks, timeZone, wrap })
-  );
-  const dimensions = calculateFieldDimensions(processedLogs);
-  processedLogs.forEach((log) => (log.dimensions = dimensions));
-  return processedLogs;
+  return orderedLogs.map((log) => preProcessLog(log, { escape, expanded: false, getFieldLinks, timeZone, wrap }));
 };
 
 interface PreProcessLogOptions {
@@ -69,7 +65,6 @@ const preProcessLog = (
     body,
     fields: getAllFields(log, getFieldLinks),
     timestamp,
-    dimensions: [],
   };
 };
 
@@ -79,6 +74,7 @@ export const calculateFieldDimensions = (logs: LogListModel[], displayedFields: 
   }
   let timestampWidth = 0;
   let levelWidth = 0;
+  const fieldWidths: Record<string, number> = {};
   for (let i = 0; i < logs.length; i++) {
     let width = measureTextWidth(logs[i].timestamp);
     if (width > timestampWidth) {
@@ -88,8 +84,12 @@ export const calculateFieldDimensions = (logs: LogListModel[], displayedFields: 
     if (width > levelWidth) {
       levelWidth = Math.round(width);
     }
+    for (const field of displayedFields) {
+      width = measureTextWidth(getDisplayedFieldValue(field, logs[i]));
+      fieldWidths[field] = !fieldWidths[field] || width > fieldWidths[field] ? Math.round(width) : fieldWidths[field];
+    }
   }
-  const dimensions: LogDimension[] = [
+  const dimensions: LogFieldDimension[] = [
     {
       field: 'timestamp',
       width: timestampWidth,
@@ -99,5 +99,15 @@ export const calculateFieldDimensions = (logs: LogListModel[], displayedFields: 
       width: levelWidth,
     },
   ];
+  for (const field in fieldWidths) {
+    // Skip the log line when it's a displayed field
+    if (field === LOG_LINE_BODY_FIELD_NAME) {
+      continue;
+    }
+    dimensions.push({
+      field,
+      width: fieldWidths[field],
+    });
+  }
   return dimensions;
 };
