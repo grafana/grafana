@@ -6,7 +6,6 @@ import (
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/storage/legacysql/modecheck"
 )
 
@@ -16,7 +15,7 @@ type memDB struct {
 	mu sync.RWMutex
 }
 
-func ProvideStorage(db db.DB) modecheck.StatusStorage {
+func ProvideStorage() modecheck.StatusStorage {
 	return &memDB{
 		db: make(map[string]modecheck.StorageStatus),
 	}

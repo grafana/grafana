@@ -26,6 +26,7 @@ import (
 	k8sscheme "k8s.io/client-go/kubernetes/scheme"
 	k8stracing "k8s.io/component-base/tracing"
 	utilversion "k8s.io/component-base/version"
+	"k8s.io/klog/v2"
 	"k8s.io/kube-openapi/pkg/common"
 
 	"github.com/grafana/grafana/pkg/apiserver/endpoints/filters"
@@ -272,8 +273,9 @@ func InstallAPIs(
 	storageOpts *options.StorageOptions,
 	reg prometheus.Registerer,
 	namespaceMapper request.NamespaceMapper,
-	migrationStatus modecheck.Service,
+	kvStore grafanarest.NamespacedKVStore,
 	serverLock ServerLockService,
+	storageStatus modecheck.Service,
 	optsregister apistore.StorageOptionsRegister,
 ) error {
 	// dual writing is only enabled when the storage type is not legacy.
@@ -284,46 +286,80 @@ func InstallAPIs(
 	// nolint:staticcheck
 	if storageOpts.StorageType != options.StorageTypeLegacy {
 		dualWrite = func(gr schema.GroupResource, legacy grafanarest.LegacyStorage, storage grafanarest.Storage) (grafanarest.Storage, error) {
+			// Dashboards + Folders may be managed (depends on feature toggles and database state)
+			if storageStatus != nil && grafanarest.ShouldManageDualWriter(gr) {
+				return grafanarest.NewManagedDualWriter(storageStatus, gr, legacy, storage, reg)
+			}
+
 			key := gr.String() // ${resource}.{group} eg playlists.playlist.grafana.app
 
 			// Get the option from custom.ini/command line
 			// when missing this will default to mode zero (legacy only)
-			mode := grafanarest.DualWriterMode(0)
-			requiresMigration := false
+			var mode = grafanarest.DualWriterMode(0)
+
+			var (
+				dualWriterPeriodicDataSyncJobEnabled bool
+				dataSyncerInterval                   = time.Hour
+				dataSyncerRecordsLimit               = 1000
+			)
 
 			resourceConfig, resourceExists := storageOpts.UnifiedStorageConfig[key]
 			if resourceExists {
 				mode = resourceConfig.DualWriterMode
+				dualWriterPeriodicDataSyncJobEnabled = resourceConfig.DualWriterPeriodicDataSyncJobEnabled
+				dataSyncerInterval = resourceConfig.DataSyncerInterval
+				dataSyncerRecordsLimit = resourceConfig.DataSyncerRecordsLimit
 			}
 
-			switch mode {
+			// Force using storage only -- regardless of internal synchronization state
+			if mode == grafanarest.Mode5 {
+				return storage, nil
+			}
+
+			// TODO: inherited context from main Grafana process
+			ctx := context.Background()
+
+			// Moving from one version to the next can only happen after the previous step has
+			// successfully synchronized.
+			requestInfo := getRequestInfo(gr, namespaceMapper)
+
+			syncerCfg := &grafanarest.SyncerConfig{
+				Kind:                   key,
+				RequestInfo:            requestInfo,
+				Mode:                   mode,
+				LegacyStorage:          legacy,
+				Storage:                storage,
+				ServerLockService:      serverLock,
+				DataSyncerInterval:     dataSyncerInterval,
+				DataSyncerRecordsLimit: dataSyncerRecordsLimit,
+				Reg:                    reg,
+			}
+
+			// This also sets the currentMode on the syncer config.
+			currentMode, err := grafanarest.SetDualWritingMode(ctx, kvStore, syncerCfg)
+			if err != nil {
+				return nil, err
+			}
+			switch currentMode {
 			case grafanarest.Mode0:
 				return legacy, nil
-			case grafanarest.Mode1: // legacy... with dual write (respect the config)
-				return grafanarest.NewDualWriter(mode, legacy, storage, reg, key), nil
-			case grafanarest.Mode2:
-				requiresMigration = false
-			case grafanarest.Mode3, grafanarest.Mode4:
-				requiresMigration = true
-			case grafanarest.Mode5:
-				return storage, nil // ignore any settings
+			case grafanarest.Mode4, grafanarest.Mode5:
+				return storage, nil
 			default:
-				return legacy, nil
+			}
+			if dualWriterPeriodicDataSyncJobEnabled {
+				// The mode might have changed in SetDualWritingMode, so apply current mode first.
+				syncerCfg.Mode = currentMode
+				if err := grafanarest.StartPeriodicDataSyncer(ctx, syncerCfg); err != nil {
+					return nil, err
+				}
 			}
 
-			migrated := migrationStatus.IsMigrated(context.Background(), gr)
-			if migrated && requiresMigration {
-				return grafanarest.NewDualWriter(mode, legacy, storage, reg, key), nil
+			// when unable to use
+			if currentMode != mode {
+				klog.Warningf("Requested DualWrite mode: %d, but using %d for %+v", mode, currentMode, gr)
 			}
-
-			// use pending checker
-			if requiresMigration {
-				// TODO... OSS start migration?  that will then restart the service
-				return grafanarest.NewAlmostMode3(migrationStatus, gr, legacy, storage, reg, key), nil
-			}
-
-			// Only mode 2
-			return grafanarest.NewDualWriter(mode, legacy, storage, reg, key), nil
+			return grafanarest.NewDualWriter(currentMode, legacy, storage, reg, key), nil
 		}
 	}
 
