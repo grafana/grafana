@@ -330,8 +330,10 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		statusPatch["observedGeneration"] = obj.Generation
 		sync = &provisioning.SyncJobOptions{}
 	case shouldResync:
-		logger.Info("handle repository resync")
-		sync = &provisioning.SyncJobOptions{Incremental: true}
+		if obj.Spec.Sync.Enabled {
+			logger.Info("handle repository resync")
+			sync = &provisioning.SyncJobOptions{Incremental: true}
+		}
 	default:
 		logger.Info("handle unknown repository situation")
 	}

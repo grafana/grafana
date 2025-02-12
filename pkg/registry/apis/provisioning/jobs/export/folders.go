@@ -12,7 +12,6 @@ import (
 
 	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/k8sctx"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/storage/unified/parquet"
@@ -52,6 +51,7 @@ func (r *exportJob) loadFolders(ctx context.Context) error {
 	logger := r.logger
 	status := r.jobStatus
 	status.Message = "reading folder tree"
+	r.maybeNotify(ctx)
 
 	reader := &folderReader{
 		tree:           resources.NewEmptyFolderTree(),
@@ -71,12 +71,6 @@ func (r *exportJob) loadFolders(ctx context.Context) error {
 			return fmt.Errorf("unable to read folders from legacy storage %w", err)
 		}
 	} else {
-		ctx, cancel, err := k8sctx.Fork(ctx)
-		if err != nil {
-			return err
-		}
-		defer cancel()
-
 		client := r.client.Resource(schema.GroupVersionResource{
 			Group:    folders.GROUP,
 			Version:  folders.VERSION,
