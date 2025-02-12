@@ -86,6 +86,7 @@ func (r *SyncWorker) Process(ctx context.Context,
 		return nil, fmt.Errorf("failed to create sync job: %w", err)
 	}
 
+	// FIXME: ProgressRecorder should be moved to jobs package and initialized in the queue
 	progress := NewJobProgressRecorder(progressFn)
 
 	// Execute the job

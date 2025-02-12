@@ -10,6 +10,8 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 )
 
+// FIXME: ProgressRecorder should be moved to jobs package and initialized in the queue
+
 type JobResourceResult struct {
 	Name     string
 	Resource string
@@ -24,6 +26,7 @@ type JobProgressRecorder struct {
 	ref        string
 	message    string
 	results    []JobResourceResult
+	errors     []string
 	progressFn jobs.ProgressFn
 }
 
@@ -40,12 +43,12 @@ func (r *JobProgressRecorder) Record(ctx context.Context, result JobResourceResu
 	r.results = append(r.results, result)
 
 	logger := logging.FromContext(ctx)
-
 	if result.Error != nil {
 		logger.Error("job resource operation failed", "err", result.Error, "path", result.Path, "resource", result.Resource, "group", result.Group, "action", result.Action, "name", result.Name)
+		r.errors = append(r.errors, result.Error.Error())
 	}
 
-	r.UpdateProgress(ctx)
+	r.notify(ctx)
 }
 
 func (r *JobProgressRecorder) SetMessage(msg string) {
@@ -68,7 +71,11 @@ func (r *JobProgressRecorder) SetTotal(total int) {
 	r.total = total
 }
 
-func (r *JobProgressRecorder) Summary() []*provisioning.JobResourceSummary {
+func (r *JobProgressRecorder) Errors() []string {
+	return r.errors
+}
+
+func (r *JobProgressRecorder) summary() []*provisioning.JobResourceSummary {
 	if len(r.results) == 0 {
 		return nil
 	}
@@ -128,32 +135,21 @@ func (r *JobProgressRecorder) Summary() []*provisioning.JobResourceSummary {
 	return summaries
 }
 
-func (r *JobProgressRecorder) Progress() float64 {
+func (r *JobProgressRecorder) progress() float64 {
+	if r.total == 0 {
+		return 0
+	}
+
 	return float64(r.total - len(r.results)/r.total*100)
 }
 
-func (r *JobProgressRecorder) Errors() []string {
-	if len(r.results) == 0 {
-		return nil
-	}
-
-	errors := make([]string, 0)
-	for _, result := range r.results {
-		if result.Error != nil {
-			errors = append(errors, result.Error.Error())
-		}
-	}
-
-	return errors
-}
-
-func (r *JobProgressRecorder) UpdateProgress(ctx context.Context) {
+func (r *JobProgressRecorder) notify(ctx context.Context) {
 	jobStatus := provisioning.JobStatus{
 		State:    provisioning.JobStateWorking,
 		Message:  r.message,
 		Errors:   r.Errors(),
-		Progress: r.Progress(),
-		Summary:  r.Summary(),
+		Progress: r.progress(),
+		Summary:  r.summary(),
 	}
 
 	logger := logging.FromContext(ctx)
@@ -178,7 +174,7 @@ func (r *JobProgressRecorder) Complete(ctx context.Context, err error) *provisio
 		jobStatus.Message = err.Error()
 	}
 
-	jobStatus.Summary = r.Summary()
+	jobStatus.Summary = r.summary()
 	jobStatus.Errors = r.Errors()
 
 	// Check for errors during execution
