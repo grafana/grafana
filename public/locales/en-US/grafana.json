@@ -724,6 +724,9 @@
     "custom-value": {
       "description": "Use custom value"
     },
+    "group": {
+      "undefined": "No group"
+    },
     "options": {
       "no-found": "No options found."
     }
