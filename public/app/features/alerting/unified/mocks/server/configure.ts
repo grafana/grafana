@@ -1,6 +1,5 @@
-import { HttpResponse, http } from 'msw';
+import { HttpResponse, HttpResponseResolver, http } from 'msw';
 
-import { DataSourceInstanceSettings } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import server from 'app/features/alerting/unified/mockApi';
 import { mockDataSource, mockFolder } from 'app/features/alerting/unified/mocks';
@@ -21,7 +20,7 @@ import { clearPluginSettingsCache } from 'app/features/plugins/pluginSettings';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { FolderDTO } from 'app/types';
 import { RulerDataSourceConfig } from 'app/types/unified-alerting';
-import { PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
+import { PromRuleGroupDTO, RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { setupDataSources } from '../../testSetup/datasources';
 import { DataSourceType } from '../../utils/datasource';
@@ -62,6 +61,17 @@ export const setFolderResponse = (response: Partial<FolderDTO>) => {
   server.use(handler);
 };
 
+export const setUpdateRulerRuleNamespaceResolver = (
+  resolver: HttpResponseResolver<{ folderUid: string }, RulerRuleGroupDTO, undefined>
+) => {
+  server.use(
+    http.post<{ folderUid: string }, RulerRuleGroupDTO, undefined>(
+      `/api/ruler/grafana/api/v1/rules/:folderUid`,
+      resolver
+    )
+  );
+};
+
 /**
  * Makes the mock server respond with different responses for updating a ruler namespace
  */
@@ -72,6 +82,16 @@ export const setUpdateRulerRuleNamespaceHandler = (options?: HandlerOptions) => 
   return handler;
 };
 
+export const setRulerRuleGroupResolver = (
+  resolver: HttpResponseResolver<{ folderUid: string; groupName: string }, RulerRuleGroupDTO, undefined>
+) => {
+  server.use(
+    http.get<{ folderUid: string; groupName: string }, RulerRuleGroupDTO, undefined>(
+      `/api/ruler/grafana/api/v1/rules/:folderUid/:groupName`,
+      resolver
+    )
+  );
+};
 /**
  * Makes the mock server respond with different responses for a ruler rule group
  */

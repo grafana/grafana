@@ -4,7 +4,7 @@ import { byRole } from 'testing-library-selector';
 
 import { AccessControlAction } from 'app/types';
 
-import { mockFolderApi, setupMswServer } from '../mockApi';
+import { setupMswServer } from '../mockApi';
 import { grantUserPermissions } from '../mocks';
 import { mimirDataSource, setFolderResponse, setPrometheusRules } from '../mocks/server/configure';
 import { alertingFactory } from '../mocks/server/db';

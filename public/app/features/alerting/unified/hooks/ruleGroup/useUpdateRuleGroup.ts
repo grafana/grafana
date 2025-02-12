@@ -34,7 +34,7 @@ export function useUpdateRuleGroup() {
   const [deleteRuleGroup] = alertRuleApi.endpoints.deleteRuleGroupFromNamespace.useMutation();
 
   // @TODO maybe add where we moved it from and to for additional peace of mind
-  const successMessage = t('alerting.rule-groups.move.success', 'Successfully moved rule group');
+  const successMessage = t('alerting.rule-groups.move.success', 'Successfully updated the rule group');
 
   return useAsync(async (ruleGroup: RuleGroupIdentifier, delta: UpdateGroupDelta) => {
     const updateActions: Action[] = [];

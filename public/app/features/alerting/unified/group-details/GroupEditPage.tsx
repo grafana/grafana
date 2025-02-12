@@ -28,7 +28,7 @@ import { SwapOperation, swapItems } from '../reducers/ruler/ruleGroups';
 import { DEFAULT_GROUP_EVALUATION_INTERVAL } from '../rule-editor/formDefaults';
 import { ruleGroupIdentifierV2toV1 } from '../utils/groupIdentifier';
 import { stringifyErrorLike } from '../utils/misc';
-import { createListFilterLink } from '../utils/navigation';
+import { createListFilterLink, groups } from '../utils/navigation';
 import { hashRulerRule } from '../utils/rule-id';
 import {
   getNumberEvaluationsToStartAlerting,
@@ -73,7 +73,7 @@ function GroupEditForm({ rulerGroup, groupIdentifier }: GroupEditFormProps) {
     });
   }, []);
 
-  const onSubmit: SubmitHandler<GroupEditFormData> = (data) => {
+  const onSubmit: SubmitHandler<GroupEditFormData> = async (data) => {
     const changeDelta: UpdateGroupDelta = {
       namespaceName: dirtyFields.namespace ? data.namespace : undefined,
       groupName: dirtyFields.name ? data.name : undefined,
@@ -81,7 +81,16 @@ function GroupEditForm({ rulerGroup, groupIdentifier }: GroupEditFormProps) {
       ruleSwaps: operations.length ? operations : undefined,
     };
 
-    return updateRuleGroup.execute(ruleGroupIdentifierV2toV1(groupIdentifier), changeDelta);
+    await updateRuleGroup.execute(ruleGroupIdentifierV2toV1(groupIdentifier), changeDelta);
+    if (groupIdentifier.groupOrigin === 'datasource') {
+      const groupName = changeDelta.groupName ?? groupIdentifier.groupName;
+      const namespaceName = changeDelta.namespaceName ?? groupIdentifier.namespace.name;
+      locationService.replace(groups.editPageLink(groupIdentifier.rulesSource.uid, namespaceName, groupName));
+    } else {
+      if (changeDelta.groupName) {
+        locationService.replace(groups.editPageLink('grafana', groupIdentifier.namespace.uid, changeDelta.groupName));
+      }
+    }
   };
 
   return (
@@ -229,7 +238,7 @@ const ListItem = forwardRef<HTMLDivElement, ListItemProps>(
     const styles = useStyles2(getStyles);
 
     return (
-      <div className={cx(styles.listItem, className)} data-testid="reorder-alert-rule" ref={ref} {...props}>
+      <div className={cx(styles.listItem, className)} ref={ref} {...props}>
         <Stack flex="0 0 24px">{dragHandle}</Stack>
         <Stack flex={1}>{ruleName}</Stack>
         <Stack basis="30%">{pendingPeriod}</Stack>
