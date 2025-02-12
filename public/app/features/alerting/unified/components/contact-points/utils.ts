@@ -50,6 +50,9 @@ export function getReceiverDescription(receiver: ReceiverConfigWithMetadata): Re
     case 'webhook': {
       return settings.url;
     }
+    case 'jira': {
+      return settings.project;
+    }
     case ReceiverTypes.OnCall: {
       return receiver[RECEIVER_PLUGIN_META_KEY]?.description;
     }
