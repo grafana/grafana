@@ -30,7 +30,7 @@ export interface DashboardV2Spec {
 	variables: VariableKind[];
 	elements: Record<string, Element>;
 	annotations: AnnotationQueryKind[];
-	layout: GridLayoutKind | RowsLayoutKind | ResponsiveGridLayoutKind;
+	layout: GridLayoutKind | RowsLayoutKind | ResponsiveGridLayoutKind | TabsLayoutKind;
 	// Plugins only. The version of the dashboard installed together with the plugin.
 	// This is used to determine if the dashboard should be updated when the plugin is updated.
 	revision?: number;
@@ -823,7 +823,7 @@ export interface RowsLayoutRowSpec {
 	title?: string;
 	collapsed: boolean;
 	repeat?: RowRepeatOptions;
-	layout: GridLayoutKind | ResponsiveGridLayoutKind;
+	layout: GridLayoutKind | ResponsiveGridLayoutKind | TabsLayoutKind;
 }
 
 export const defaultRowsLayoutRowSpec = (): RowsLayoutRowSpec => ({
@@ -869,6 +869,44 @@ export interface ResponsiveGridLayoutItemSpec {
 
 export const defaultResponsiveGridLayoutItemSpec = (): ResponsiveGridLayoutItemSpec => ({
 	element: defaultElementReference(),
+});
+
+export interface TabsLayoutKind {
+	kind: "TabsLayout";
+	spec: TabsLayoutSpec;
+}
+
+export const defaultTabsLayoutKind = (): TabsLayoutKind => ({
+	kind: "TabsLayout",
+	spec: defaultTabsLayoutSpec(),
+});
+
+export interface TabsLayoutSpec {
+	tabs: TabItemKind[];
+}
+
+export const defaultTabsLayoutSpec = (): TabsLayoutSpec => ({
+	tabs: [],
+});
+
+export interface TabItemKind {
+	kind: "TabItem";
+	spec: TabItemSpec;
+}
+
+export const defaultTabItemKind = (): TabItemKind => ({
+	kind: "TabItem",
+	spec: defaultTabItemSpec(),
+});
+
+export interface TabItemSpec {
+	title: string;
+	layout: GridLayoutKind | RowsLayoutKind | ResponsiveGridLayoutKind;
+}
+
+export const defaultTabItemSpec = (): TabItemSpec => ({
+	title: "",
+	layout: defaultGridLayoutKind(),
 });
 
 export interface PanelSpec {

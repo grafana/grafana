@@ -43,7 +43,7 @@ DashboardV2Spec: {
 
   annotations: [...AnnotationQueryKind]
 
-  layout: GridLayoutKind | RowsLayoutKind | ResponsiveGridLayoutKind
+  layout: GridLayoutKind | RowsLayoutKind | ResponsiveGridLayoutKind | TabsLayoutKind
 
 
   // Plugins only. The version of the dashboard installed together with the plugin.
@@ -547,7 +547,7 @@ RowsLayoutRowSpec: {
   title?: string
   collapsed: bool
   repeat?: RowRepeatOptions
-  layout: GridLayoutKind | ResponsiveGridLayoutKind
+  layout: GridLayoutKind | ResponsiveGridLayoutKind | TabsLayoutKind
 }
 
 ResponsiveGridLayoutKind: {
@@ -568,6 +568,25 @@ ResponsiveGridLayoutItemKind: {
 
 ResponsiveGridLayoutItemSpec: {
   element: ElementReference
+}
+
+TabsLayoutKind: {
+  kind: "TabsLayout"
+  spec: TabsLayoutSpec
+}
+
+TabsLayoutSpec: {
+  tabs: [...TabItemKind]
+}
+
+TabItemKind: {
+  kind: "TabItem"
+  spec: TabItemSpec
+}
+
+TabItemSpec: {
+  title: string
+  layout: GridLayoutKind | RowsLayoutKind | ResponsiveGridLayoutKind
 }
 
 PanelSpec: {

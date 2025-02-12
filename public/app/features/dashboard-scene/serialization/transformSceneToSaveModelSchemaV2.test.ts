@@ -26,6 +26,7 @@ import {
 } from '@grafana/schema/dist/esm/index.gen';
 
 import {
+  GridLayoutSpec,
   ResponsiveGridLayoutSpec,
   RowsLayoutSpec,
 } from '../../../../../packages/grafana-schema/src/schema/dashboard/v2alpha0';
@@ -492,10 +493,12 @@ describe('dynamic layouts', () => {
     expect(rowsLayout.rows.length).toBe(2);
     expect(rowsLayout.rows[0].kind).toBe('RowsLayoutRow');
     expect(rowsLayout.rows[0].spec.layout.kind).toBe('ResponsiveGridLayout');
-    expect(rowsLayout.rows[0].spec.layout.spec.items[0].kind).toBe('ResponsiveGridLayoutItem');
+    const layout1 = rowsLayout.rows[0].spec.layout.spec as ResponsiveGridLayoutSpec;
+    expect(layout1.items[0].kind).toBe('ResponsiveGridLayoutItem');
 
     expect(rowsLayout.rows[1].spec.layout.kind).toBe('GridLayout');
-    expect(rowsLayout.rows[1].spec.layout.spec.items[0].kind).toBe('GridLayoutItem');
+    const layout2 = rowsLayout.rows[1].spec.layout.spec as GridLayoutSpec;
+    expect(layout2.items[0].kind).toBe('GridLayoutItem');
   });
 
   it('should transform scene with responsive grid layout to schema v2', () => {
