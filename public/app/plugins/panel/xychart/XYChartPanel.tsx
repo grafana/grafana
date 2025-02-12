@@ -115,8 +115,8 @@ export const XYChartPanel2 = (props: Props2) => {
             <TooltipPlugin2
               config={builder!}
               hoverMode={TooltipHoverMode.xyOne}
-              getDataLinks={(seriesIdx: number, dataIdx: number) => {
-                const xySeries = series[seriesIdx! - 1];
+              getDataLinks={(seriesIdx, dataIdx) => {
+                const xySeries = series[seriesIdx - 1];
                 return getDataLinks(xySeries.y.field, dataIdx);
               }}
               render={(u, dataIdxs, seriesIdx, isPinned, dismiss, timeRange2, viaSync, dataLinks) => {
