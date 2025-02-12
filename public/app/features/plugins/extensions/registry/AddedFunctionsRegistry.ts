@@ -1,3 +1,4 @@
+import { isFunction } from 'lodash';
 import { ReplaySubject } from 'rxjs';
 
 import { PluginExtensionAddedFunctionConfig } from '@grafana/data';
@@ -38,6 +39,11 @@ export class AddedFunctionsRegistry extends Registry<AddedFunctionsRegistryItem[
 
       if (!config.title) {
         configLog.error(`${logPrefix} ${errors.TITLE_MISSING}`);
+        continue;
+      }
+
+      if (!isFunction(config.fn)) {
+        configLog.error(`${logPrefix} ${errors.INVALID_EXTENSION_FUNCTION}`);
         continue;
       }
 

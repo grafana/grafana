@@ -8,6 +8,8 @@ export const TITLE_MISSING = 'Title is missing.';
 
 export const DESCRIPTION_MISSING = 'Description is missing.';
 
+export const INVALID_EXTENSION_FUNCTION = 'The "fn" argument is invalid, it should be a function.';
+
 export const INVALID_CONFIGURE_FUNCTION = 'The "configure" function is invalid. It should be a function.';
 
 export const INVALID_PATH_OR_ON_CLICK = 'Either "path" or "onClick" is required.';
