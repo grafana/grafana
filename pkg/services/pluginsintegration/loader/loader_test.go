@@ -1146,10 +1146,10 @@ func TestLoader_AngularClass(t *testing.T) {
 			})
 			p, err := l.Load(context.Background(), fakePluginSource)
 			require.NoError(t, err)
-			require.Len(t, p, 1, "should load 1 plugin")
 			if tc.expAngularDetectionRun {
-				require.True(t, p[0].Angular.Detected, "angular detection should run")
+				require.Empty(t, p, "plugin shouldn't have been loaded")
 			} else {
+				require.Len(t, p, 1, "should load 1 plugin")
 				require.False(t, p[0].Angular.Detected, "angular detection should not run")
 			}
 		})
@@ -1216,19 +1216,18 @@ func TestLoader_HideAngularDeprecation(t *testing.T) {
 		},
 	}
 	for _, tc := range []struct {
-		name                      string
-		cfg                       *config.PluginManagementCfg
-		expHideAngularDeprecation bool
+		name string
+		cfg  *config.PluginManagementCfg
 	}{
 		{name: "with plugin id in HideAngularDeprecation list", cfg: &config.PluginManagementCfg{
 			HideAngularDeprecation: []string{"one-app", "two-panel", "test-datasource", "three-datasource"},
-		}, expHideAngularDeprecation: true},
+		}},
 		{name: "without plugin id in HideAngularDeprecation list", cfg: &config.PluginManagementCfg{
 			HideAngularDeprecation: []string{"one-app", "two-panel", "three-datasource"},
-		}, expHideAngularDeprecation: false},
+		}},
 		{name: "with empty HideAngularDeprecation", cfg: &config.PluginManagementCfg{
 			HideAngularDeprecation: nil,
-		}, expHideAngularDeprecation: false},
+		}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			l := newLoaderWithOpts(t, tc.cfg, loaderDepOpts{
@@ -1236,8 +1235,7 @@ func TestLoader_HideAngularDeprecation(t *testing.T) {
 			})
 			p, err := l.Load(context.Background(), fakePluginSource)
 			require.NoError(t, err)
-			require.Len(t, p, 1, "should load 1 plugin")
-			require.Equal(t, tc.expHideAngularDeprecation, p[0].Angular.HideDeprecation)
+			require.Empty(t, p, "plugin shouldn't have been loaded")
 		})
 	}
 }
