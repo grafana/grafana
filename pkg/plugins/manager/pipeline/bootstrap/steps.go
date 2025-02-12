@@ -52,7 +52,7 @@ func (c *DefaultConstructor) Construct(ctx context.Context, src plugins.PluginSo
 		c.log.Warn("Could not calculate plugin signature state", "pluginId", bundle.Primary.JSONData.ID, "error", err)
 		return nil, err
 	}
-	plugin, err := c.pluginFactoryFunc(bundle, src.PluginClass(ctx), sig)
+	plugin, err := c.pluginFactoryFunc(bundle, src.PluginClass(), sig)
 	if err != nil {
 		c.log.Error("Could not create primary plugin base", "pluginId", bundle.Primary.JSONData.ID, "error", err)
 		return nil, err

@@ -18,7 +18,7 @@ func TestStore_ProvideService(t *testing.T) {
 		var addedPaths []string
 		l := &fakes.FakeLoader{
 			LoadFunc: func(ctx context.Context, src plugins.PluginSource) ([]*plugins.Plugin, error) {
-				addedPaths = append(addedPaths, src.PluginURIs(ctx)...)
+				addedPaths = append(addedPaths, src.PluginURIs()...)
 				return nil, nil
 			},
 		}
@@ -26,18 +26,18 @@ func TestStore_ProvideService(t *testing.T) {
 		srcs := &fakes.FakeSourceRegistry{ListFunc: func(_ context.Context) []plugins.PluginSource {
 			return []plugins.PluginSource{
 				&fakes.FakePluginSource{
-					PluginClassFunc: func(ctx context.Context) plugins.Class {
+					PluginClassFunc: func() plugins.Class {
 						return "foobar"
 					},
-					PluginURIsFunc: func(ctx context.Context) []string {
+					PluginURIsFunc: func() []string {
 						return []string{"path1"}
 					},
 				},
 				&fakes.FakePluginSource{
-					PluginClassFunc: func(ctx context.Context) plugins.Class {
+					PluginClassFunc: func() plugins.Class {
 						return plugins.ClassExternal
 					},
-					PluginURIsFunc: func(ctx context.Context) []string {
+					PluginURIsFunc: func() []string {
 						return []string{"path2", "path3"}
 					},
 				},

@@ -39,11 +39,11 @@ func ProvideLocalFinder(cfg *config.PluginManagementCfg) *Local {
 }
 
 func (l *Local) Find(ctx context.Context, src plugins.PluginSource) ([]*plugins.FoundBundle, error) {
-	if len(src.PluginURIs(ctx)) == 0 {
+	if len(src.PluginURIs()) == 0 {
 		return []*plugins.FoundBundle{}, nil
 	}
 
-	pluginURIs := src.PluginURIs(ctx)
+	pluginURIs := src.PluginURIs()
 	pluginJSONPaths := make([]string, 0, len(pluginURIs))
 	for _, path := range pluginURIs {
 		exists, err := fs.Exists(path)

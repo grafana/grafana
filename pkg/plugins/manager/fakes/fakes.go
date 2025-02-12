@@ -475,30 +475,22 @@ func (s *FakeSourceRegistry) List(ctx context.Context) []plugins.PluginSource {
 }
 
 type FakePluginSource struct {
-	PluginClassFunc      func(ctx context.Context) plugins.Class
-	PluginURIsFunc       func(ctx context.Context) []string
-	DefaultSignatureFunc func(ctx context.Context) (plugins.Signature, bool)
+	PluginClassFunc func() plugins.Class
+	PluginURIsFunc  func() []string
 }
 
-func (s *FakePluginSource) PluginClass(ctx context.Context) plugins.Class {
+func (s *FakePluginSource) PluginClass() plugins.Class {
 	if s.PluginClassFunc != nil {
-		return s.PluginClassFunc(ctx)
+		return s.PluginClassFunc()
 	}
 	return ""
 }
 
-func (s *FakePluginSource) PluginURIs(ctx context.Context) []string {
+func (s *FakePluginSource) PluginURIs() []string {
 	if s.PluginURIsFunc != nil {
-		return s.PluginURIsFunc(ctx)
+		return s.PluginURIsFunc()
 	}
 	return []string{}
-}
-
-func (s *FakePluginSource) DefaultSignature(ctx context.Context) (plugins.Signature, bool) {
-	if s.DefaultSignatureFunc != nil {
-		return s.DefaultSignatureFunc(ctx)
-	}
-	return plugins.Signature{}, false
 }
 
 type FakePluginFileStore struct {

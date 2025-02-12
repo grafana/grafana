@@ -64,7 +64,7 @@ func (d *Discovery) Discover(ctx context.Context, src plugins.PluginSource) ([]*
 	}
 
 	for _, filter := range d.findFilterSteps {
-		discoveredPlugins, err = filter(ctx, src.PluginClass(ctx), discoveredPlugins)
+		discoveredPlugins, err = filter(ctx, src.PluginClass(), discoveredPlugins)
 		if err != nil {
 			return nil, err
 		}

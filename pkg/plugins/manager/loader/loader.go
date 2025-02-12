@@ -68,7 +68,7 @@ func (l *Loader) Load(ctx context.Context, src plugins.PluginSource) ([]*plugins
 	if err != nil {
 		return nil, err
 	}
-	l.log.Debug("Discovered", "class", src.PluginClass(ctx), "duration", time.Since(st))
+	l.log.Debug("Discovered", "class", src.PluginClass(), "duration", time.Since(st))
 
 	st = time.Now()
 	bootstrappedPlugins := []*plugins.Plugin{}
@@ -83,7 +83,7 @@ func (l *Loader) Load(ctx context.Context, src plugins.PluginSource) ([]*plugins
 		}
 		bootstrappedPlugins = append(bootstrappedPlugins, bootstrappedPlugin...)
 	}
-	l.log.Debug("Bootstrapped", "class", src.PluginClass(ctx), "duration", time.Since(st))
+	l.log.Debug("Bootstrapped", "class", src.PluginClass(), "duration", time.Since(st))
 
 	st = time.Now()
 	validatedPlugins := []*plugins.Plugin{}
@@ -96,7 +96,7 @@ func (l *Loader) Load(ctx context.Context, src plugins.PluginSource) ([]*plugins
 	// If the PluginsCDNSyncLoaderEnabled feature is enabled, validate plugins in parallel.
 	// Otherwise, validate plugins sequentially.
 	var limitSize int
-	if l.cfg.Features.PluginsCDNSyncLoaderEnabled && src.PluginClass(ctx) == plugins.ClassCDN {
+	if l.cfg.Features.PluginsCDNSyncLoaderEnabled && src.PluginClass() == plugins.ClassCDN {
 		limitSize = min(len(bootstrappedPlugins), concurrencyLimit)
 	} else {
 		limitSize = 1
@@ -121,7 +121,7 @@ func (l *Loader) Load(ctx context.Context, src plugins.PluginSource) ([]*plugins
 		}
 		validatedPlugins = append(validatedPlugins, r.bootstrappedPlugin)
 	}
-	l.log.Debug("Validated", "class", src.PluginClass(ctx), "duration", time.Since(st), "total", len(validatedPlugins))
+	l.log.Debug("Validated", "class", src.PluginClass(), "duration", time.Since(st), "total", len(validatedPlugins))
 
 	st = time.Now()
 	initializedPlugins := []*plugins.Plugin{}
@@ -133,7 +133,7 @@ func (l *Loader) Load(ctx context.Context, src plugins.PluginSource) ([]*plugins
 		}
 		initializedPlugins = append(initializedPlugins, initializedPlugin)
 	}
-	l.log.Debug("Initialized", "class", src.PluginClass(ctx), "duration", time.Since(st))
+	l.log.Debug("Initialized", "class", src.PluginClass(), "duration", time.Since(st))
 
 	// Clean errors from registry for initialized plugins
 	for _, p := range initializedPlugins {
@@ -151,7 +151,7 @@ func (l *Loader) Unload(ctx context.Context, p *plugins.Plugin) (*plugins.Plugin
 
 func (l *Loader) instrumentLoad(ctx context.Context, src plugins.PluginSource) func([]*plugins.Plugin) {
 	start := time.Now()
-	sourceLogger := l.log.New("source", src.PluginClass(ctx)).FromContext(ctx)
+	sourceLogger := l.log.New("source", src.PluginClass()).FromContext(ctx)
 	sourceLogger.Debug("Loading plugin source...")
 
 	return func(logger log.Logger, start time.Time) func([]*plugins.Plugin) {

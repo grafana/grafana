@@ -21,9 +21,9 @@ func TestRenderer(t *testing.T) {
 		numUnloaded := 0
 		loader := &fakes.FakeLoader{
 			LoadFunc: func(ctx context.Context, src plugins.PluginSource) ([]*plugins.Plugin, error) {
-				require.True(t, src.PluginClass(ctx) == plugins.ClassExternal)
-				require.Len(t, src.PluginURIs(ctx), 1)
-				require.True(t, strings.HasPrefix(src.PluginURIs(ctx)[0], testdataDir))
+				require.True(t, src.PluginClass() == plugins.ClassExternal)
+				require.Len(t, src.PluginURIs(), 1)
+				require.True(t, strings.HasPrefix(src.PluginURIs()[0], testdataDir))
 
 				numLoaded++
 				return []*plugins.Plugin{}, nil

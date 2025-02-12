@@ -40,7 +40,7 @@ func ProvideService(pluginRegistry registry.Service, pluginSources sources.Regis
 	for _, ps := range pluginSources.List(ctx) {
 		loadedPlugins, err := pluginLoader.Load(ctx, ps)
 		if err != nil {
-			logger.Error("Loading plugin source failed", "source", ps.PluginClass(ctx), "error", err)
+			logger.Error("Loading plugin source failed", "source", ps.PluginClass(), "error", err)
 			return nil, err
 		}
 

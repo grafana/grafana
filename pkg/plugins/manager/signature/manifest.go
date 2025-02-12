@@ -162,11 +162,11 @@ func (s *Signature) calculateCDN(plugin plugins.FoundPlugin) plugins.Signature {
 }
 
 func (s *Signature) Calculate(ctx context.Context, src plugins.PluginSource, plugin plugins.FoundPlugin) (plugins.Signature, error) {
-	if src.PluginClass(ctx) == plugins.ClassCDN {
+	switch src.PluginClass() {
+	case plugins.ClassCDN:
 		return s.calculateCDN(plugin), nil
-	}
-	if defaultSignature, exists := src.DefaultSignature(ctx); exists {
-		return defaultSignature, nil
+	case plugins.ClassCore:
+		return plugins.Signature{Status: plugins.SignatureStatusInternal}, nil
 	}
 
 	manifest, err := s.ReadPluginManifestFromFS(ctx, plugin.FS)

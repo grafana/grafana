@@ -1,7 +1,6 @@
 package sources
 
 import (
-	"context"
 	"errors"
 	"os"
 	"path/filepath"
@@ -22,23 +21,12 @@ func NewLocalSource(class plugins.Class, paths []string) *LocalSource {
 	}
 }
 
-func (s *LocalSource) PluginClass(_ context.Context) plugins.Class {
+func (s *LocalSource) PluginClass() plugins.Class {
 	return s.class
 }
 
-func (s *LocalSource) PluginURIs(_ context.Context) []string {
+func (s *LocalSource) PluginURIs() []string {
 	return s.paths
-}
-
-func (s *LocalSource) DefaultSignature(_ context.Context) (plugins.Signature, bool) {
-	switch s.class {
-	case plugins.ClassCore:
-		return plugins.Signature{
-			Status: plugins.SignatureStatusInternal,
-		}, true
-	default:
-		return plugins.Signature{}, false
-	}
 }
 
 func DirAsLocalSources(pluginsPath string, class plugins.Class) ([]*LocalSource, error) {

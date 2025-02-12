@@ -441,9 +441,6 @@ func TestLoader_Load(t *testing.T) {
 			PluginURIsFunc: func(ctx context.Context) []string {
 				return []string{"http://example.com"}
 			},
-			DefaultSignatureFunc: func(ctx context.Context) (plugins.Signature, bool) {
-				return plugins.Signature{}, false
-			},
 		}
 		et := pluginerrs.ProvideErrorTracker()
 		pluginJSON := plugins.JSONData{ID: "test-datasource", Type: plugins.TypeDataSource, Info: plugins.Info{Version: "1.0.0"}}
@@ -498,9 +495,6 @@ func TestLoader_Load(t *testing.T) {
 			},
 			PluginURIsFunc: func(ctx context.Context) []string {
 				return []string{"http://example.com"}
-			},
-			DefaultSignatureFunc: func(ctx context.Context) (plugins.Signature, bool) {
-				return plugins.Signature{}, false
 			},
 		}
 		et := pluginerrs.ProvideErrorTracker()
@@ -560,9 +554,6 @@ func TestLoader_Load(t *testing.T) {
 			},
 			PluginURIsFunc: func(ctx context.Context) []string {
 				return []string{"http://example.com"}
-			},
-			DefaultSignatureFunc: func(ctx context.Context) (plugins.Signature, bool) {
-				return plugins.Signature{}, false
 			},
 		}
 		et := pluginerrs.ProvideErrorTracker()

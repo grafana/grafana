@@ -18,9 +18,8 @@ type Installer interface {
 }
 
 type PluginSource interface {
-	PluginClass(ctx context.Context) Class
-	PluginURIs(ctx context.Context) []string
-	DefaultSignature(ctx context.Context) (Signature, bool)
+	PluginClass() Class
+	PluginURIs() []string
 }
 
 type FileStore interface {

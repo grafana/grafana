@@ -36,8 +36,8 @@ func TestSources_List(t *testing.T) {
 
 		require.Len(t, srcs, 5)
 
-		require.Equal(t, srcs[0].PluginClass(ctx), plugins.ClassCore)
-		require.Equal(t, srcs[0].PluginURIs(ctx), []string{
+		require.Equal(t, srcs[0].PluginClass(), plugins.ClassCore)
+		require.Equal(t, srcs[0].PluginURIs(), []string{
 			filepath.Join(testdata, "app", "plugins", "datasource"),
 			filepath.Join(testdata, "app", "plugins", "panel"),
 		})
@@ -47,24 +47,24 @@ func TestSources_List(t *testing.T) {
 		require.Equal(t, plugins.SignatureType(""), sig.Type)
 		require.Equal(t, "", sig.SigningOrg)
 
-		require.Equal(t, srcs[1].PluginClass(ctx), plugins.ClassExternal)
-		require.Equal(t, srcs[1].PluginURIs(ctx), []string{
+		require.Equal(t, srcs[1].PluginClass(), plugins.ClassExternal)
+		require.Equal(t, srcs[1].PluginURIs(), []string{
 			filepath.Join(testdata, "pluginRootWithDist", "datasource"),
 		})
 		sig, exists = srcs[1].DefaultSignature(ctx)
 		require.False(t, exists)
 		require.Equal(t, plugins.Signature{}, sig)
 
-		require.Equal(t, srcs[2].PluginClass(ctx), plugins.ClassExternal)
-		require.Equal(t, srcs[2].PluginURIs(ctx), []string{
+		require.Equal(t, srcs[2].PluginClass(), plugins.ClassExternal)
+		require.Equal(t, srcs[2].PluginURIs(), []string{
 			filepath.Join(testdata, "pluginRootWithDist", "dist"),
 		})
 		sig, exists = srcs[2].DefaultSignature(ctx)
 		require.False(t, exists)
 		require.Equal(t, plugins.Signature{}, sig)
 
-		require.Equal(t, srcs[3].PluginClass(ctx), plugins.ClassExternal)
-		require.Equal(t, srcs[3].PluginURIs(ctx), []string{
+		require.Equal(t, srcs[3].PluginClass(), plugins.ClassExternal)
+		require.Equal(t, srcs[3].PluginURIs(), []string{
 			filepath.Join(testdata, "pluginRootWithDist", "panel"),
 		})
 		sig, exists = srcs[3].DefaultSignature(ctx)
@@ -85,11 +85,11 @@ func TestSources_List(t *testing.T) {
 		srcs := s.List(ctx)
 		uris := map[plugins.Class]map[string]struct{}{}
 		for _, s := range srcs {
-			class := s.PluginClass(ctx)
+			class := s.PluginClass()
 			if _, exists := uris[class]; !exists {
 				uris[class] = map[string]struct{}{}
 			}
-			for _, uri := range s.PluginURIs(ctx) {
+			for _, uri := range s.PluginURIs() {
 				uris[class][uri] = struct{}{}
 			}
 		}

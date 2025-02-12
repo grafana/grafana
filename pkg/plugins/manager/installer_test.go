@@ -39,8 +39,8 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 		var loadedPaths []string
 		loader := &fakes.FakeLoader{
 			LoadFunc: func(ctx context.Context, src plugins.PluginSource) ([]*plugins.Plugin, error) {
-				loadedPaths = append(loadedPaths, src.PluginURIs(ctx)...)
-				require.Equal(t, []string{zipNameV1}, src.PluginURIs(ctx))
+				loadedPaths = append(loadedPaths, src.PluginURIs()...)
+				require.Equal(t, []string{zipNameV1}, src.PluginURIs())
 				return []*plugins.Plugin{pluginV1}, nil
 			},
 			UnloadFunc: func(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
@@ -113,8 +113,8 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 				FileHeader: zip.FileHeader{Name: zipNameV2},
 			}}}}
 			loader.LoadFunc = func(ctx context.Context, src plugins.PluginSource) ([]*plugins.Plugin, error) {
-				require.Equal(t, plugins.ClassExternal, src.PluginClass(ctx))
-				require.Equal(t, []string{zipNameV2}, src.PluginURIs(ctx))
+				require.Equal(t, plugins.ClassExternal, src.PluginClass())
+				require.Equal(t, []string{zipNameV2}, src.PluginURIs())
 				return []*plugins.Plugin{pluginV2}, nil
 			}
 			pluginRepo.GetPluginArchiveInfoFunc = func(_ context.Context, _, _ string, _ repo.CompatOpts) (*repo.PluginArchiveInfo, error) {
@@ -153,8 +153,8 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 				FileHeader: zip.FileHeader{Name: zipNameV2},
 			}}}}
 			loader.LoadFunc = func(ctx context.Context, src plugins.PluginSource) ([]*plugins.Plugin, error) {
-				require.Equal(t, plugins.ClassExternal, src.PluginClass(ctx))
-				require.Equal(t, []string{zipNameV2}, src.PluginURIs(ctx))
+				require.Equal(t, plugins.ClassExternal, src.PluginClass())
+				require.Equal(t, []string{zipNameV2}, src.PluginURIs())
 				return []*plugins.Plugin{pluginV2}, nil
 			}
 			pluginRepo.GetPluginArchiveInfoFunc = func(_ context.Context, _, _ string, _ repo.CompatOpts) (*repo.PluginArchiveInfo, error) {
@@ -246,7 +246,7 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 		var loadedPaths []string
 		loader := &fakes.FakeLoader{
 			LoadFunc: func(ctx context.Context, src plugins.PluginSource) ([]*plugins.Plugin, error) {
-				loadedPaths = append(loadedPaths, src.PluginURIs(ctx)...)
+				loadedPaths = append(loadedPaths, src.PluginURIs()...)
 				return []*plugins.Plugin{}, nil
 			},
 		}
@@ -300,7 +300,7 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 		var loadedPaths []string
 		loader := &fakes.FakeLoader{
 			LoadFunc: func(ctx context.Context, src plugins.PluginSource) ([]*plugins.Plugin, error) {
-				loadedPaths = append(loadedPaths, src.PluginURIs(ctx)...)
+				loadedPaths = append(loadedPaths, src.PluginURIs()...)
 				return []*plugins.Plugin{}, nil
 			},
 		}
@@ -351,7 +351,7 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 		var loadedPaths []string
 		loader := &fakes.FakeLoader{
 			LoadFunc: func(ctx context.Context, src plugins.PluginSource) ([]*plugins.Plugin, error) {
-				loadedPaths = append(loadedPaths, src.PluginURIs(ctx)...)
+				loadedPaths = append(loadedPaths, src.PluginURIs()...)
 				return []*plugins.Plugin{}, nil
 			},
 		}
