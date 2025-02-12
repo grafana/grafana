@@ -100,13 +100,13 @@ const jiraNotifier: NotifierDTO<CloudNotifierType> = {
     ),
     option(
       'wont_fix_resolution',
-      'Wont fix resolution',
-      'If reopen_transition is defined, ignore issues with that resolution.'
+      "Won't fix resolution",
+      'If "Reopen transition" is defined, ignore issues with that resolution.'
     ),
     option(
       'reopen_duration',
       'Reopen duration',
-      'If reopen_transition is defined, reopen the issue when it is not older than this value (rounded down to the nearest minute).'
+      'If "Reopen transition" is defined, reopen the issue when it is not older than this value (rounded down to the nearest minute).'
     ),
     option('fields', 'Fields', 'Other issue and custom fields.', {
       element: 'key_value_map',
