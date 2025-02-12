@@ -6,7 +6,7 @@ import { TextLink } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 
 import { ServerDiscoveryField } from './components/ServerDiscoveryField';
-import { FieldData, SSOProvider, SSOProviderDTO, SSOSettingsField } from './types';
+import { FieldData, SSOProvider, SSOSettingsField } from './types';
 import { isSelectableValue } from './utils/guards';
 import { isUrlValid } from './utils/url';
 
@@ -621,7 +621,21 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       allowCustomValue: true,
       options: [],
       placeholder: 'Enter Team Ids and press Enter to add',
-      validation: validateTeamIds(provider),
+      validation:
+        provider === 'github'
+          ? {
+              validate: (value) => {
+                if (typeof value === 'string') {
+                  return isNumeric(value);
+                }
+                if (isSelectableValue(value)) {
+                  return value.every((v) => v?.value && isNumeric(v.value));
+                }
+                return true;
+              },
+              message: 'Team Ids must be numbers.',
+            }
+          : undefined,
     },
     hostedDomain: {
       label: 'Hosted domain',
@@ -643,49 +657,6 @@ export function fieldMap(provider: string): Record<string, FieldData> {
     },
   };
 }
-
-const validateTeamIds = (provider: string) => {
-  if (provider === 'github') {
-    return {
-      validate: (value: SSOProviderDTO[keyof SSOProviderDTO]) => {
-        if (typeof value === 'string') {
-          return isNumeric(value);
-        }
-        if (isSelectableValue(value)) {
-          return value.every((v) => v?.value && isNumeric(v.value));
-        }
-        return true;
-      },
-      message: 'Team Ids must be numbers.',
-    };
-  } else if (provider === 'generic_oauth') {
-    return {
-      validate: (value: SSOProviderDTO[keyof SSOProviderDTO]) => {
-        const validateTeamId = (v: string) => {
-          // Stored as JSON Array
-          if (v.startsWith('[') && v.endsWith(']')) {
-            try {
-              JSON.parse(v);
-              return true;
-            } catch {
-              return false;
-            }
-          }
-          return true;
-        };
-        if (isSelectableValue(value)) {
-          return value.every((v) => v?.value && validateTeamId(v.value));
-        }
-        if (typeof value === 'string') {
-          return validateTeamId(value);
-        }
-        return true;
-      },
-      message: 'Team Ids is invalid JSON.',
-    };
-  }
-  return undefined;
-};
 
 // Check if a string contains only numeric values
 function isNumeric(value: string) {
