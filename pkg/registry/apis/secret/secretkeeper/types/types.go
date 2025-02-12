@@ -9,7 +9,7 @@ import (
 
 var (
 	ErrSecretNotFound = errors.New("secret not found")
-	DefaultKeeper     = "default-sql-keeper"
+	DefaultSQLKeeper  = "default-sql-keeper"
 )
 
 type KeeperType string

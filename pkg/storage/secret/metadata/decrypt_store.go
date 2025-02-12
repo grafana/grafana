@@ -52,9 +52,9 @@ func (s *decryptStorage) Decrypt(ctx context.Context, namespace xkube.Namespace,
 }
 
 func (s *decryptStorage) decryptFromKeeper(ctx context.Context, namespace xkube.Namespace, name string) (secretv0alpha1.ExposedSecureValue, error) {
-	row := &secureValueDB{Namespace: namespace.String(), Name: name}
+	sv := &secureValueDB{Namespace: namespace.String(), Name: name}
 	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		found, err := sess.Get(row)
+		found, err := sess.Get(sv)
 		if err != nil {
 			return fmt.Errorf("could not get row: %w", err)
 		}
@@ -68,22 +68,53 @@ func (s *decryptStorage) decryptFromKeeper(ctx context.Context, namespace xkube.
 		return "", fmt.Errorf("db failure: %w", err)
 	}
 
-	// Check if keeper is default.
-	if row.Keeper == keepertypes.DefaultKeeper {
+	// Check if keeper is default sql.
+	if sv.Keeper == keepertypes.DefaultSQLKeeper {
 		keeper, exists := s.keepers[keepertypes.SQLKeeperType]
 		if !exists {
 			return "", fmt.Errorf("could not find default keeper")
 		}
-		exposedValue, err := keeper.Expose(ctx, nil, namespace.String(), keepertypes.ExternalID(row.ExternalID))
+		exposedValue, err := keeper.Expose(ctx, nil, namespace.String(), keepertypes.ExternalID(sv.ExternalID))
 		if err != nil {
 			return "", fmt.Errorf("failed to store in default keeper: %w", err)
 		}
 		return exposedValue, err
 	}
 
-	// TODO:
-	// Load keeper config from metadata store.
+	// Load keeper config from metadata store, or TODO: keeper cache.
+	keeperType, keeperConfig, err := s.getKeeperConfig(ctx, namespace.String(), sv.Keeper)
+	if err != nil {
+		return "", fmt.Errorf("get keeper config: %w", err)
+	}
+
 	// Decrypt from keeper.
-	// Returns dummy secret for now.
-	return secretv0alpha1.ExposedSecureValue("TODO"), nil
+	keeper, ok := s.keepers[keeperType]
+	if !ok {
+		return "", fmt.Errorf("could not find keeper: %s", keeperType)
+	}
+	return keeper.Expose(ctx, keeperConfig, namespace.String(), keepertypes.ExternalID(sv.ExternalID))
+}
+
+func (s *decryptStorage) getKeeperConfig(ctx context.Context, namespace string, name string) (keepertypes.KeeperType, secretv0alpha1.KeeperConfig, error) {
+	kp := &keeperDB{Namespace: namespace, Name: name}
+	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		found, err := sess.Get(kp)
+		if err != nil {
+			return fmt.Errorf("failed to get row: %w", err)
+		}
+		if !found {
+			return contracts.ErrKeeperNotFound
+		}
+
+		return nil
+	})
+	if err != nil {
+		return "", nil, fmt.Errorf("db failure: %w", err)
+	}
+
+	keeperConfig := toProvider(kp.Type, kp.Payload)
+	// TODO: do mapping between keeperDB.Type and KeeperType, but work towards unifing these types
+	keeperType := keepertypes.SQLKeeperType
+
+	return keeperType, keeperConfig, nil
 }
