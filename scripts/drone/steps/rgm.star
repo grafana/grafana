@@ -47,6 +47,8 @@ def rgm_artifacts_step(
             "_EXPERIMENTAL_DAGGER_CLOUD_TOKEN": from_secret(rgm_dagger_token),
         },
         "commands": [
+            "docker run --privileged --rm tonistiigi/binfmt --version",
+            "docker run --privileged --rm tonistiigi/binfmt:qemu-v7.0.0-28 --uninstall 'qemu-*'",
             "docker run --privileged --rm tonistiigi/binfmt:qemu-v7.0.0-28 --install all",
             cmd +
             "--go-version={} ".format(golang_version) +
