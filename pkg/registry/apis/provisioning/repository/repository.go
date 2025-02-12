@@ -47,6 +47,7 @@ type FileTreeEntry struct {
 	Blob bool
 }
 
+//go:generate mockery --name Repository --structname MockRepository --inpackage --filename repository_mock.go
 type Repository interface {
 	// The saved Kubernetes object.
 	Config() *provisioning.Repository
