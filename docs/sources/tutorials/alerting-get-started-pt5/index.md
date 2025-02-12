@@ -2,7 +2,7 @@
 Feedback Link: https://github.com/grafana/tutorials/issues/new
 categories:
   - alerting
-description: Learn how to dinamically route alerts and link them to dashboards  — Part 5.
+description: Learn how to dynamically route alerts and link them to dashboards  — Part 5.
 labels:
   products:
     - enterprise
@@ -14,7 +14,7 @@ title: Get started with Grafana Alerting - Part 5
 weight: 60
 killercoda:
   title: Get started with Grafana Alerting - Part 5
-  description: Learn how to dinamically route alerts and link them to dashboards  — Part 5.
+  description: Learn how to dynamically route alerts and link them to dashboards  — Part 5.
   backend:
     imageid: ubuntu
 ---
@@ -30,7 +30,7 @@ In this tutorial, we focus on optimizing your alerting strategy using Grafana fo
 In this tutorial you will learn how to:
 
 - Leverage notification policies for **dynamic routing based on query values**: Use notification policies to route alerts based on dynamically generated labels, in a way that critical alerts reach the on-call team and less urgent ones go to a general monitoring channel.
-- Set **mute timings** to suppress certain alerts during maintenance, or weekends.
+- Set **mute timings** to suppress certain alerts during maintenance or weekends.
 - **Link alerts to dashboards** to provide more context to resolve issues.
 
 <!-- INTERACTIVE page intro.md END -->
@@ -53,7 +53,7 @@ In this tutorial you will learn how to:
 
 ### Set up the Grafana stack
 
-To demonstrate the observation of data using the Grafana stack, download and run the following files.
+To observe data using the Grafana stack, download and run the following files.
 
 1. Clone the [tutorial environment repository](https://github.com/tonypowa/grafana-prometheus-alerting-demo.git).
 
@@ -199,9 +199,9 @@ The time-series visualization supports alert rules to provide more context in th
      flask_app_memory_usage{environment="prod"}
      ```
 
-     {{< figure src="/media/docs/alerting/time-series_cpu_mem_usage_metrics.png" max-width="1200px" caption="Time-series panel displaying CPU and memory usage metrics in production." >}}
+   {{< figure src="/media/docs/alerting/time-series_cpu_mem_usage_metrics.png" max-width="1200px" caption="Time-series panel displaying CPU and memory usage metrics in production." >}}
 
-     Both metrics return labels that we’ll use later to link alert instances with the appropriate routing. These labels help define how alerts are routed based on their environment or other criteria.
+   Both metrics return labels that we’ll use later to link alert instances with the appropriate routing. These labels help define how alerts are routed based on their environment or other criteria.
 
 1. Click **Save dashboard**.
 
@@ -252,11 +252,11 @@ Follow these steps to manually create alert rules and link them to a visualizati
 ## Create an alert rule for CPU usage
 
 1. Navigate to **Alerts & IRM > Alerting > Alert rules** from the Grafana sidebar.
-1. Click **+ New alert** rule to create a new alert.
+1. Click **+ New alert rule** rule to create a new alert.
 
 ### Enter alert rule name
 
-Make it short and descriptive as this will appear in your alert notification. For instance, `CPU usage` .
+Make it short and descriptive, as this will appear in your alert notification. For instance, `CPU usage` .
 
 ### Define query and alert condition
 
@@ -354,7 +354,7 @@ Now that we've set up notification policies, we can demonstrate how to mute aler
 Mute timings are useful for suppressing alerts with certain labels during maintenance windows or weekends.
 
 1. Navigate to **Alerts & IRM > Alerting > Notification Policies**.
-   - Enter a name. E.g., `Planned downtime` , or `Non-business hours`.
+   - Enter a name, e.g. `Planned downtime` or `Non-business hours`.
    - Select **Sat** and **Sun**, to apply the mute timing to all Saturdays and Sundays.
    - Click **Save mute timing**.
 1. Add mute timing to the desired policy:
