@@ -15,6 +15,7 @@ interface Props {
   log: LogListModel;
   showTime: boolean;
   style: CSSProperties;
+  styles: LogLineStyles;
   onOverflow?: (index: number, id: string, height: number) => void;
   variant?: 'infinite-scroll';
   wrapLogMessage: boolean;
@@ -25,13 +26,12 @@ export const LogLine = ({
   index,
   log,
   style,
+  styles,
   onOverflow,
   showTime,
   variant,
   wrapLogMessage,
 }: Props) => {
-  const theme = useTheme2();
-  const styles = getStyles(theme);
   const logLineRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -98,6 +98,7 @@ function getFieldStyles(log: LogListModel) {
   };
 }
 
+export type LogLineStyles = ReturnType<typeof getStyles>;
 export const getStyles = (theme: GrafanaTheme2) => {
   const colors = {
     critical: '#B877D9',
