@@ -50,7 +50,7 @@ export const ExemplarHoverView = ({ displayValues, links, header = 'Exemplar', m
   );
 };
 
-const getStyles = (theme: GrafanaTheme2, padding = 0, maxHeight = 200) => {
+const getStyles = (theme: GrafanaTheme2, padding = 0, maxHeight = 250) => {
   return {
     exemplarWrapper: css({
       display: 'flex',
