@@ -5,10 +5,6 @@ import (
 )
 
 DashboardV2Spec: {
-  // Unique numeric identifier for the dashboard.
-  // `id` is internal to a specific Grafana instance. `uid` should be used to identify a dashboard across Grafana instances.
-  id?: int64
-
   // Title of dashboard.
   title: string
 
@@ -43,11 +39,11 @@ DashboardV2Spec: {
   // Configured template variables.
   variables: [...VariableKind]
 
-  elements: [ElementReference.name]: Element 
+  elements: [ElementReference.name]: Element
 
   annotations: [...AnnotationQueryKind]
 
-  layout: GridLayoutKind
+  layout: GridLayoutKind | RowsLayoutKind | ResponsiveGridLayoutKind
 
 
   // Plugins only. The version of the dashboard installed together with the plugin.
@@ -68,7 +64,7 @@ LibraryPanelSpec: {
   id: number
   // Title for the library panel in the dashboard
   title: string
-  
+
   libraryPanel: LibraryPanelRef
 }
 
@@ -471,7 +467,7 @@ TimeSettingsSpec: {
   // Whether timepicker is visible or not.
   hideTimepicker: bool // v1: timepicker.hidden
   // Day when the week starts. Expressed by the name of the day in lowercase, e.g. "monday".
-  weekStart: string
+  weekStart?: "saturday" | "monday" | "sunday"
   // The month that the fiscal year starts on. 0 = January, 11 = December
   fiscalYearStartMonth: int
   // Override the now time by entering a time delay. Use this option to accommodate known delays in data aggregation to avoid null values.
@@ -485,6 +481,16 @@ RepeatOptions: {
   value: string
   direction?: "h" | "v"
   maxPerRow?: int
+}
+
+RowRepeatOptions: {
+  mode: RepeatMode,
+  value: string
+}
+
+ResponsiveGridRepeatOptions: {
+  mode: RepeatMode
+  value: string
 }
 
 GridLayoutItemSpec: {
@@ -501,13 +507,67 @@ GridLayoutItemKind: {
   spec: GridLayoutItemSpec
 }
 
+GridLayoutRowKind: {
+  kind: "GridLayoutRow"
+  spec: GridLayoutRowSpec 
+}
+
+GridLayoutRowSpec: {
+  y: int
+  collapsed: bool
+  title: string
+  elements: [...GridLayoutItemKind] // Grid items in the row will have their Y value be relative to the rows Y value. This means a panel positioned at Y: 0 in a row with Y: 10 will be positioned at Y: 11 (row header has a heigh of 1) in the dashboard.
+  repeat?: RowRepeatOptions
+}
+
 GridLayoutSpec: {
-  items: [...GridLayoutItemKind]
+  items: [...GridLayoutItemKind | GridLayoutRowKind]
 }
 
 GridLayoutKind: {
   kind: "GridLayout"
   spec: GridLayoutSpec
+}
+
+RowsLayoutKind: {
+  kind: "RowsLayout"
+  spec: RowsLayoutSpec
+}
+
+RowsLayoutSpec: {
+  rows: [...RowsLayoutRowKind]
+}
+
+RowsLayoutRowKind: {
+  kind: "RowsLayoutRow"
+  spec: RowsLayoutRowSpec
+}
+
+RowsLayoutRowSpec: {
+  title?: string
+  collapsed: bool
+  repeat?: RowRepeatOptions
+  layout: GridLayoutKind | ResponsiveGridLayoutKind
+}
+
+ResponsiveGridLayoutKind: {
+  kind: "ResponsiveGridLayout"
+  spec: ResponsiveGridLayoutSpec
+}
+
+ResponsiveGridLayoutSpec: {
+  row: string,
+  col: string,
+  items: [...ResponsiveGridLayoutItemKind]
+}
+
+ResponsiveGridLayoutItemKind: {
+  kind: "ResponsiveGridLayoutItem"
+  spec: ResponsiveGridLayoutItemSpec
+}
+
+ResponsiveGridLayoutItemSpec: {
+  element: ElementReference
 }
 
 PanelSpec: {
@@ -637,7 +697,7 @@ QueryVariableSpec: {
   skipUrlSync: bool | *false
   description?: string
   datasource?: DataSourceRef
-  query: string | DataQueryKind | *""
+  query: DataQueryKind
   regex: string | *""
   sort: VariableSort
   definition?: string

@@ -29,6 +29,18 @@ const (
 	DashboardCursorSyncTooltip   DashboardCursorSync = 2
 )
 
+// Counterpart for TypeScript's TimeOption type.
+type TimeOption struct {
+	Display string `json:"display"`
+	From    string `json:"from"`
+	To      string `json:"to"`
+}
+
+// NewTimeOption creates a new TimeOption object.
+func NewTimeOption() *TimeOption {
+	return &TimeOption{}
+}
+
 // Time picker configuration
 // It defines the default config for the time picker and the refresh picker for the specific dashboard.
 type TimePickerConfig struct {
@@ -38,6 +50,8 @@ type TimePickerConfig struct {
 	RefreshIntervals []string `json:"refresh_intervals,omitempty"`
 	// Selectable options available in the time picker dropdown. Has no effect on provisioned dashboard.
 	TimeOptions []string `json:"time_options,omitempty"`
+	// Quick ranges for time picker.
+	QuickRanges []TimeOption `json:"quick_ranges,omitempty"`
 	// Override the now time by entering a time delay. Use this option to accommodate known delays in data aggregation to avoid null values.
 	NowDelay *string `json:"nowDelay,omitempty"`
 }

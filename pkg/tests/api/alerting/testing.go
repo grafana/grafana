@@ -475,6 +475,13 @@ func (a apiClient) PostRulesGroupWithStatus(t *testing.T, folder string, group *
 	return m, resp.StatusCode, string(b)
 }
 
+func (a apiClient) PostRulesGroup(t *testing.T, folder string, group *apimodels.PostableRuleGroupConfig) apimodels.UpdateRuleGroupResponse {
+	t.Helper()
+	m, status, raw := a.PostRulesGroupWithStatus(t, folder, group)
+	requireStatusCode(t, http.StatusAccepted, status, raw)
+	return m
+}
+
 func (a apiClient) PostRulesExportWithStatus(t *testing.T, folder string, group *apimodels.PostableRuleGroupConfig, params *apimodels.ExportQueryParams) (int, string) {
 	t.Helper()
 	buf := bytes.Buffer{}
@@ -575,10 +582,9 @@ func (a apiClient) DeleteSilence(t *testing.T, id string) (any, int, string) {
 	return sendRequest[dynamic](t, req, http.StatusOK)
 }
 
-func (a apiClient) GetRulesGroup(t *testing.T, folder string, group string) apimodels.RuleGroupConfigResponse {
+func (a apiClient) GetRulesGroup(t *testing.T, folder string, group string) (apimodels.RuleGroupConfigResponse, int) {
 	result, status, _ := a.GetRulesGroupWithStatus(t, folder, group)
-	require.Equal(t, http.StatusAccepted, status)
-	return result
+	return result, status
 }
 
 func (a apiClient) GetRulesGroupWithStatus(t *testing.T, folder string, group string) (apimodels.RuleGroupConfigResponse, int, []byte) {
@@ -679,6 +685,30 @@ func (a apiClient) ExportRulesWithStatus(t *testing.T, params *apimodels.AlertRu
 	require.NoError(t, err)
 
 	return resp.StatusCode, string(b)
+}
+
+func (a apiClient) GetRuleGroupProvisioning(t *testing.T, folderUID string, groupName string) (apimodels.AlertRuleGroup, int, string) {
+	t.Helper()
+
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/v1/provisioning/folder/%s/rule-groups/%s", a.url, folderUID, groupName), nil)
+	require.NoError(t, err)
+
+	return sendRequest[apimodels.AlertRuleGroup](t, req, http.StatusOK)
+}
+
+func (a apiClient) CreateOrUpdateRuleGroupProvisioning(t *testing.T, group apimodels.AlertRuleGroup) (apimodels.AlertRuleGroup, int, string) {
+	t.Helper()
+
+	buf := bytes.Buffer{}
+	enc := json.NewEncoder(&buf)
+	err := enc.Encode(group)
+	require.NoError(t, err)
+
+	req, err := http.NewRequest(http.MethodPut, fmt.Sprintf("%s/api/v1/provisioning/folder/%s/rule-groups/%s", a.url, group.FolderUID, group.Title), &buf)
+	require.NoError(t, err)
+	req.Header.Add("Content-Type", "application/json")
+
+	return sendRequest[apimodels.AlertRuleGroup](t, req, http.StatusOK)
 }
 
 func (a apiClient) SubmitRuleForBacktesting(t *testing.T, config apimodels.BacktestConfig) (int, string) {
@@ -1046,6 +1076,22 @@ func (a apiClient) GetActiveAlertsWithStatus(t *testing.T) (apimodels.AlertGroup
 	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/alertmanager/grafana/api/v2/alerts/groups", a.url), nil)
 	require.NoError(t, err)
 	return sendRequest[apimodels.AlertGroups](t, req, http.StatusOK)
+}
+
+func (a apiClient) GetRuleVersionsWithStatus(t *testing.T, ruleUID string) (apimodels.GettableRuleVersions, int, string) {
+	t.Helper()
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/ruler/grafana/api/v1/rule/%s/versions", a.url, ruleUID), nil)
+	require.NoError(t, err)
+	return sendRequest[apimodels.GettableRuleVersions](t, req, http.StatusOK)
+}
+
+func (a apiClient) GetRuleByUID(t *testing.T, ruleUID string) apimodels.GettableExtendedRuleNode {
+	t.Helper()
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/ruler/grafana/api/v1/rule/%s", a.url, ruleUID), nil)
+	require.NoError(t, err)
+	rule, status, raw := sendRequest[apimodels.GettableExtendedRuleNode](t, req, http.StatusOK)
+	requireStatusCode(t, http.StatusOK, status, raw)
+	return rule
 }
 
 func sendRequest[T any](t *testing.T, req *http.Request, successStatusCode int) (T, int, string) {

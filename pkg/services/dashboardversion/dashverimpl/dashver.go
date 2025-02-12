@@ -52,8 +52,7 @@ func ProvideService(cfg *setting.Cfg, db db.DB, dashboardService dashboards.Dash
 			cfg,
 			request.GetNamespaceMapper(cfg),
 			v0alpha1.DashboardResourceInfo.GroupVersionResource(),
-			restConfigProvider,
-			unified,
+			restConfigProvider.GetRestConfig,
 			dashboardStore,
 			userService,
 		),
@@ -281,6 +280,15 @@ func (s *Service) UnstructuredToLegacyDashboardVersion(ctx context.Context, item
 	createdBy, err := s.k8sclient.GetUserFromMeta(ctx, obj.GetCreatedBy())
 	if err != nil {
 		return nil, err
+	}
+
+	// if updated by is set, then this version of the dashboard was "created"
+	// by that user
+	if obj.GetUpdatedBy() != "" {
+		updatedBy, err := s.k8sclient.GetUserFromMeta(ctx, obj.GetUpdatedBy())
+		if err == nil && updatedBy != nil {
+			createdBy = updatedBy
+		}
 	}
 
 	id, err := obj.GetResourceVersionInt64()

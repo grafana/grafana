@@ -10,18 +10,18 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
 	keepertypes "github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/types"
-	secretStorage "github.com/grafana/grafana/pkg/storage/secret"
+	encryptionstorage "github.com/grafana/grafana/pkg/storage/secret/encryption"
 )
 
 type SQLKeeper struct {
 	tracer            tracing.Tracer
 	encryptionManager *manager.EncryptionManager
-	store             secretStorage.EncryptedValueStorage
+	store             encryptionstorage.EncryptedValueStorage
 }
 
 var _ keepertypes.Keeper = (*SQLKeeper)(nil)
 
-func NewSQLKeeper(tracer tracing.Tracer, encryptionManager *manager.EncryptionManager, store secretStorage.EncryptedValueStorage) (*SQLKeeper, error) {
+func NewSQLKeeper(tracer tracing.Tracer, encryptionManager *manager.EncryptionManager, store encryptionstorage.EncryptedValueStorage) (*SQLKeeper, error) {
 	return &SQLKeeper{
 		tracer:            tracer,
 		encryptionManager: encryptionManager,
@@ -52,7 +52,7 @@ func (s *SQLKeeper) Expose(ctx context.Context, cfg secretv0alpha1.KeeperConfig,
 
 	encryptedValue, err := s.store.Get(ctx, externalID.String())
 	if err != nil {
-		if errors.Is(err, secretStorage.ErrEncryptedValueNotFound) {
+		if errors.Is(err, encryptionstorage.ErrEncryptedValueNotFound) {
 			return "", keepertypes.ErrSecretNotFound
 		}
 		return "", fmt.Errorf("unable to get encrypted value: %w", err)
@@ -74,6 +74,17 @@ func (s *SQLKeeper) Delete(ctx context.Context, cfg secretv0alpha1.KeeperConfig,
 	err := s.store.Delete(ctx, externalID.String())
 	if err != nil {
 		return fmt.Errorf("failed to delete encrypted value: %w", err)
+	}
+	return nil
+}
+
+func (s *SQLKeeper) Update(ctx context.Context, cfg secretv0alpha1.KeeperConfig, namespace string, externalID keepertypes.ExternalID, exposedValueOrRef string) error {
+	ctx, span := s.tracer.Start(ctx, "sqlKeeper.Update")
+	defer span.End()
+
+	err := s.store.Update(ctx, externalID.String(), []byte(exposedValueOrRef))
+	if err != nil {
+		return fmt.Errorf("failed to update encrypted value: %w", err)
 	}
 	return nil
 }

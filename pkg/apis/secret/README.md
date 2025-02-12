@@ -12,3 +12,9 @@ In order to regenerate the codegen files (those prefixed by `zz_`), you can run:
 ```
 
 More details [here](https://github.com/grafana/grafana/tree/main/hack#kubernetes-hack-alert).
+
+## Regenerating Protobuf files
+
+```sh
+make protobuf
+```

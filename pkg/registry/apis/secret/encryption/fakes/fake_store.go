@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
-	"github.com/grafana/grafana/pkg/storage/secret"
+	encryptionstorage "github.com/grafana/grafana/pkg/storage/secret/encryption"
 )
 
 type FakeEncryptionStore struct {
@@ -18,7 +18,7 @@ func NewFakeEncryptionStore() FakeEncryptionStore {
 func (f FakeEncryptionStore) GetDataKey(_ context.Context, id string) (*encryption.DataKey, error) {
 	key, ok := f.store[id]
 	if !ok {
-		return nil, secret.ErrDataKeyNotFound
+		return nil, encryptionstorage.ErrDataKeyNotFound
 	}
 
 	return key, nil
@@ -31,7 +31,7 @@ func (f FakeEncryptionStore) GetCurrentDataKey(_ context.Context, label string) 
 		}
 	}
 
-	return nil, secret.ErrDataKeyNotFound
+	return nil, encryptionstorage.ErrDataKeyNotFound
 }
 
 func (f FakeEncryptionStore) GetAllDataKeys(_ context.Context) ([]*encryption.DataKey, error) {

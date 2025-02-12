@@ -18,7 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/kmsproviders/osskmsproviders"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/storage/secret"
+	encryptionstorage "github.com/grafana/grafana/pkg/storage/secret/encryption"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
@@ -106,7 +106,7 @@ func Test_SQLKeeperSetup(t *testing.T) {
 		assert.Empty(t, exposedVal)
 	})
 
-	t.Run("deleting an existing secure value does not return error", func(t *testing.T) {
+	t.Run("deleting an existing encrypted value does not return error", func(t *testing.T) {
 		externalID, err := sqlKeeper.Store(ctx, nil, namespace1, plaintext1)
 		require.NoError(t, err)
 		require.NotEmpty(t, externalID)
@@ -120,9 +120,33 @@ func Test_SQLKeeperSetup(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	t.Run("deleting an non existing secure value does not return error", func(t *testing.T) {
+	t.Run("deleting an non existing encrypted value does not return error", func(t *testing.T) {
 		err = sqlKeeper.Delete(ctx, nil, namespace1, nonExistentID)
 		require.NoError(t, err)
+	})
+
+	t.Run("updating an existent encrypted value returns no error", func(t *testing.T) {
+		externalId1, err := sqlKeeper.Store(ctx, nil, namespace1, plaintext1)
+		require.NoError(t, err)
+		require.NotEmpty(t, externalId1)
+
+		err = sqlKeeper.Update(ctx, nil, namespace1, externalId1, plaintext2)
+		require.NoError(t, err)
+
+		exposedVal, err := sqlKeeper.Expose(ctx, nil, namespace1, externalId1)
+		require.Error(t, err)
+		assert.Empty(t, exposedVal)
+
+		assert.NotEqual(t, plaintext1, exposedVal)
+	})
+
+	t.Run("updating a non existent encrypted value returns error", func(t *testing.T) {
+		externalId1, err := sqlKeeper.Store(ctx, nil, namespace1, plaintext1)
+		require.NoError(t, err)
+		require.NotEmpty(t, externalId1)
+
+		err = sqlKeeper.Update(ctx, nil, namespace1, nonExistentID, plaintext2)
+		require.Error(t, err)
 	})
 }
 
@@ -135,7 +159,7 @@ func setupTestService(t *testing.T, config string) (*SQLKeeper, error) {
 	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
 
 	// Initialize the encryption manager
-	dataKeyStore, err := secret.ProvideDataKeyStorageStorage(testDB, cfg, features)
+	dataKeyStore, err := encryptionstorage.ProvideDataKeyStorageStorage(testDB, cfg, features)
 	require.NoError(t, err)
 
 	encProvider := encryptionprovider.Provider{}
@@ -154,7 +178,7 @@ func setupTestService(t *testing.T, config string) (*SQLKeeper, error) {
 	require.NoError(t, err)
 
 	// Initialize encrypted value storage with a fake db
-	encValueStore, err := secret.ProvideEncryptedValueStorage(testDB, cfg, features)
+	encValueStore, err := encryptionstorage.ProvideEncryptedValueStorage(testDB, cfg, features)
 	require.NoError(t, err)
 
 	// Initialize the SQLKeeper

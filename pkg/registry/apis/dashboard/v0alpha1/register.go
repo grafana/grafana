@@ -82,7 +82,7 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 		features:         features,
 		accessControl:    accessControl,
 		unified:          unified,
-		search:           dashboard.NewSearchHandler(unified, tracing, cfg, legacyDashboardSearcher),
+		search:           dashboard.NewSearchHandler(tracing, cfg, legacyDashboardSearcher),
 
 		legacy: &dashboard.DashboardStorage{
 			Resource:       dashboardv0alpha1.DashboardResourceInfo,
@@ -219,11 +219,6 @@ func (b *DashboardsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 	oas.Paths.Paths[root+"search"] = sub
 	delete(oas.Paths.Paths, root+"search/{name}")
 
-	// The root API discovery list
-	sub = oas.Paths.Paths[root]
-	if sub != nil && sub.Get != nil {
-		sub.Get.Tags = []string{"API Discovery"} // sorts first in the list
-	}
 	return oas, nil
 }
 
