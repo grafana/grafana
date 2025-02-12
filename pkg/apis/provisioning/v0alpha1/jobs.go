@@ -140,7 +140,6 @@ type JobResourceSummary struct {
 	Create int64 `json:"create,omitempty"`
 	Update int64 `json:"update,omitempty"`
 	Delete int64 `json:"delete,omitempty"`
-	Ignore int64 `json:"ignore,omitempty"`
 	Write  int64 `json:"write,omitempty"` // Create or update (export)
 	Error  int64 `json:"error,omitempty"` // The error count
 

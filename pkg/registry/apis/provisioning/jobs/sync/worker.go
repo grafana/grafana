@@ -110,6 +110,7 @@ func (r *SyncWorker) Process(ctx context.Context,
 	if results != nil {
 		jobStatus.Summary = results.Summary()
 		jobStatus.Errors = results.Errors()
+		jobStatus.Message = results.Message
 	}
 
 	if len(jobStatus.Errors) > 0 {
@@ -245,10 +246,7 @@ func (r *syncJob) run(ctx context.Context) (string, *ResultsRecorder, error) {
 
 		if cfg.Status.Sync.Hash != "" && r.options.Incremental {
 			if currentRef == cfg.Status.Sync.Hash {
-				// TODO: Pass this to the applyed changes or build empty?
-				results := &ResultsRecorder{}
-				results.Message = "same commit as last sync"
-				return currentRef, results, nil
+				return currentRef, &ResultsRecorder{Message: "same commit as last sync"}, nil
 			}
 
 			results, err := r.applyVersionedChanges(ctx, versionedRepo, cfg.Status.Sync.Hash, currentRef)
@@ -275,11 +273,7 @@ func (r *syncJob) run(ctx context.Context) (string, *ResultsRecorder, error) {
 	}
 
 	if len(changes) == 0 {
-		// TODO: Pass this to the applyed changes or build empty?
-		results := &ResultsRecorder{}
-		results.Message = "no changes to sync"
-
-		return currentRef, results, nil
+		return currentRef, &ResultsRecorder{Message: "no changes to sync"}, nil
 	}
 
 	// Load any existing folder information
@@ -510,16 +504,6 @@ func (r *syncJob) writeResourceFromFile(ctx context.Context, path string, ref st
 		}
 	}
 
-	// Make sure the parent folders exist
-	folder, err := r.ensureFolderPathExists(ctx, path)
-	if err != nil {
-		return Result{
-			Path:   path,
-			Action: action,
-			Error:  fmt.Errorf("failed to ensure folder exists: %w", err),
-		}
-	}
-
 	// Read the referenced file
 	fileInfo, err := r.repository.Read(ctx, path, ref)
 	if err != nil {
@@ -539,6 +523,19 @@ func (r *syncJob) writeResourceFromFile(ctx context.Context, path string, ref st
 		}
 	}
 
+	// Make sure the parent folders exist
+	folder, err := r.ensureFolderPathExists(ctx, path)
+	if err != nil {
+		return Result{
+			Name:     parsed.Obj.GetName(),
+			Resource: parsed.GVR.Resource, // TODO: is this correct?
+			Group:    parsed.GVK.Group,    // TODO: is this correct?
+			Path:     path,
+			Action:   action,
+			Error:    fmt.Errorf("failed to ensure folder exists: %w", err),
+		}
+	}
+
 	parsed.Meta.SetFolder(folder)
 	parsed.Meta.SetUID("")             // clear identifiers
 	parsed.Meta.SetResourceVersion("") // clear identifiers
@@ -548,7 +545,7 @@ func (r *syncJob) writeResourceFromFile(ctx context.Context, path string, ref st
 		_, err = parsed.Client.Create(ctx, parsed.Obj, metav1.CreateOptions{})
 		return Result{
 			Name:     parsed.Obj.GetName(),
-			Resource: parsed.GVR.String(), // TODO: is this correct?
+			Resource: parsed.GVR.Resource, // TODO: is this correct?
 			Group:    parsed.GVK.Group,    // TODO: is this correct?
 			Path:     path,
 			Action:   action,
@@ -558,7 +555,7 @@ func (r *syncJob) writeResourceFromFile(ctx context.Context, path string, ref st
 		_, err = parsed.Client.Update(ctx, parsed.Obj, metav1.UpdateOptions{})
 		return Result{
 			Name:     parsed.Obj.GetName(),
-			Resource: parsed.GVR.String(), // TODO: is this correct?
+			Resource: parsed.GVR.Resource, // TODO: is this correct?
 			Group:    parsed.GVK.Group,    // TODO: is this correct?
 			Path:     path,
 			Action:   action,
@@ -567,7 +564,7 @@ func (r *syncJob) writeResourceFromFile(ctx context.Context, path string, ref st
 	default:
 		return Result{
 			Name:     parsed.Obj.GetName(),
-			Resource: parsed.GVR.String(), // TODO: is this correct?
+			Resource: parsed.GVR.Resource, // TODO: is this correct?
 			Group:    parsed.GVK.Group,    // TODO: is this correct?
 			Path:     path,
 			Action:   action,
