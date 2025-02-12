@@ -741,14 +741,14 @@ func (r *githubRepository) CommentPullRequestFile(ctx context.Context, prNumber 
 }
 
 func (r *githubRepository) createWebhook(ctx context.Context) (pgh.WebhookConfig, error) {
-	secret, err := r.secrets.Encrypt(ctx, r.config.Spec.GitHub.Token)
+	secret, err := uuid.NewRandom()
 	if err != nil {
-		return pgh.WebhookConfig{}, fmt.Errorf("encrypt webhook secret: %w", err)
+		return pgh.WebhookConfig{}, fmt.Errorf("could not generate secret: %w", err)
 	}
 
 	cfg := pgh.WebhookConfig{
 		URL:         r.webhookURL,
-		Secret:      secret,
+		Secret:      secret.String(),
 		ContentType: "json",
 		Events:      subscribedEvents,
 		Active:      true,
@@ -758,6 +758,9 @@ func (r *githubRepository) createWebhook(ctx context.Context) (pgh.WebhookConfig
 	if err != nil {
 		return pgh.WebhookConfig{}, err
 	}
+
+	// HACK: GitHub does not return the secret, so we need to update it manually
+	hook.Secret = cfg.Secret
 
 	logging.FromContext(ctx).Info("webhook created", "url", cfg.URL, "id", hook.ID)
 	return hook, nil
@@ -786,18 +789,9 @@ func (r *githubRepository) updateWebhook(ctx context.Context) (pgh.WebhookConfig
 		return pgh.WebhookConfig{}, false, fmt.Errorf("get webhook: %w", err)
 	}
 
+	hook.Secret = r.config.Status.Webhook.Secret // we always random gen this, so don't use it for mustUpdate below.
+
 	var mustUpdate bool
-
-	secret, err := r.secrets.Encrypt(ctx, r.config.Spec.GitHub.Token)
-	if err != nil {
-		return pgh.WebhookConfig{}, false, fmt.Errorf("encrypt webhook secret: %w", err)
-	}
-
-	// Compare with status secret as we cannot get the screen from the webhook
-	if secret != r.config.Status.Webhook.Secret {
-		mustUpdate = true
-		hook.Secret = r.config.Status.Webhook.Secret
-	}
 
 	if hook.URL != r.config.Status.Webhook.URL {
 		mustUpdate = true
@@ -813,12 +807,16 @@ func (r *githubRepository) updateWebhook(ctx context.Context) (pgh.WebhookConfig
 		return hook, false, nil
 	}
 
+	// If we need a new webhook, always update the secret as well.
+	secret, err := uuid.NewRandom()
+	if err != nil {
+		return pgh.WebhookConfig{}, false, fmt.Errorf("could not generate secret: %w", err)
+	}
+	hook.Secret = secret.String()
+
 	if err := r.gh.EditWebhook(ctx, r.owner, r.repo, hook); err != nil {
 		return pgh.WebhookConfig{}, false, fmt.Errorf("edit webhook: %w", err)
 	}
-
-	// HACK: GitHub does not return the secret, so we need to update it manually
-	hook.Secret = secret
 
 	return hook, true, nil
 }
