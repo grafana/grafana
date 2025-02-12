@@ -1,0 +1,43 @@
+name: Create next release branch
+on:
+  workflow_call:
+    inputs:
+      ownerRepo:
+        type: string
+        description: Owner/repo of the repository where the branch is created (e.g. 'grafana/grafana')
+        required: true
+      source:
+        description: The release branch to increment (eg providing `release-11.2.3` will result in `release-11.2.4` being created)
+        type: string
+        required: true
+    secrets:
+      token:
+        required: true
+    outputs:
+      branch:
+        description: The new branch that was created
+        value: ${{ jobs.main.outputs.branch }}
+  workflow_dispatch:
+    inputs:
+      ownerRepo:
+        description: Owner/repo of the repository where the branch is created (e.g. 'grafana/grafana')
+      source:
+        description: The release branch to increment (eg providing `release-11.2.3` will result in `release-11.2.4` being created)
+        type: string
+        required: true
+    secrets:
+      token:
+        required: true
+jobs:
+  main:
+    runs-on: ubuntu-latest
+    outputs:
+      branch: ${{ steps.branch.outputs.branch }}
+    steps:
+      - name: Create release branch
+        id: branch
+        uses: grafana/grafana-github-actions-go/bump-release@main
+        with:
+          ownerRepo: ${{ inputs.ownerRepo }}
+          source: ${{ inputs.source }}
+          token: ${{ secrets.token }}

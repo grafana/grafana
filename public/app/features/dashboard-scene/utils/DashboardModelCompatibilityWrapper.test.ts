@@ -1,7 +1,7 @@
 import { TimeRangeUpdatedEvent } from '@grafana/runtime';
 import { behaviors, SceneQueryRunner, SceneTimeRange, VizPanel, SceneDataTransformer } from '@grafana/scenes';
 import { DashboardCursorSync } from '@grafana/schema';
-import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
+import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
@@ -26,7 +26,7 @@ describe('DashboardModelCompatibilityWrapper', () => {
     expect(wrapper.links).toEqual([NEW_LINK]);
     expect(wrapper.time.from).toBe('now-6h');
     expect(wrapper.timezone).toBe('America/New_York');
-    expect(wrapper.weekStart).toBe('friday');
+    expect(wrapper.weekStart).toBe('saturday');
     expect(wrapper.timepicker.refresh_intervals![0]).toEqual('5s');
     expect(wrapper.timepicker.hidden).toEqual(true);
     expect(wrapper.panels).toHaveLength(5);
@@ -141,7 +141,7 @@ function setup() {
       },
     },
     $timeRange: new SceneTimeRange({
-      weekStart: 'friday',
+      weekStart: 'saturday',
       timeZone: 'America/New_York',
     }),
     $data: new DashboardDataLayerSet({

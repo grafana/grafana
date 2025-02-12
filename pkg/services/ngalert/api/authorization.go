@@ -41,7 +41,8 @@ func (api *API) authorize(method, path string) web.Handler {
 	case http.MethodGet + "/api/ruler/grafana/api/v1/rules",
 		http.MethodGet + "/api/ruler/grafana/api/v1/export/rules":
 		eval = ac.EvalPermission(ac.ActionAlertingRuleRead)
-	case http.MethodGet + "/api/ruler/grafana/api/v1/rule/{RuleUID}":
+	case http.MethodGet + "/api/ruler/grafana/api/v1/rule/{RuleUID}",
+		http.MethodGet + "/api/ruler/grafana/api/v1/rule/{RuleUID}/versions":
 		eval = ac.EvalAll(
 			ac.EvalPermission(ac.ActionAlertingRuleRead),
 			ac.EvalPermission(dashboards.ActionFoldersRead),
@@ -121,6 +122,34 @@ func (api *API) authorize(method, path string) web.Handler {
 	// Lotex Rules testing
 	case http.MethodPost + "/api/v1/rule/test/{DatasourceUID}":
 		eval = ac.EvalPermission(ac.ActionAlertingRuleExternalRead, datasources.ScopeProvider.GetResourceScopeUID(ac.Parameter(":DatasourceUID")))
+
+	// convert/prometheus API paths
+	case http.MethodGet + "/api/convert/prometheus/config/v1/rules/{NamespaceTitle}/{Group}",
+		http.MethodGet + "/api/convert/prometheus/config/v1/rules/{NamespaceTitle}":
+		eval = ac.EvalAll(
+			ac.EvalPermission(ac.ActionAlertingRuleRead),
+			ac.EvalPermission(dashboards.ActionFoldersRead),
+		)
+
+	case http.MethodGet + "/api/convert/prometheus/config/v1/rules":
+		eval = ac.EvalPermission(ac.ActionAlertingRuleRead)
+
+	case http.MethodPost + "/api/convert/prometheus/config/v1/rules/{NamespaceTitle}":
+		eval = ac.EvalAll(
+			ac.EvalPermission(dashboards.ActionFoldersWrite),
+			ac.EvalPermission(ac.ActionAlertingRuleRead),
+			ac.EvalPermission(ac.ActionAlertingRuleUpdate),
+			ac.EvalPermission(ac.ActionAlertingRuleCreate),
+			ac.EvalPermission(ac.ActionAlertingRuleDelete),
+		)
+
+	case http.MethodDelete + "/api/convert/prometheus/config/v1/rules/{NamespaceTitle}/{Group}",
+		http.MethodDelete + "/api/convert/prometheus/config/v1/rules/{NamespaceTitle}":
+		eval = ac.EvalAll(
+			ac.EvalPermission(ac.ActionAlertingRuleDelete),
+			ac.EvalPermission(ac.ActionAlertingRuleRead),
+			ac.EvalPermission(dashboards.ActionFoldersRead),
+		)
 
 	// Alert Instances and Silences
 

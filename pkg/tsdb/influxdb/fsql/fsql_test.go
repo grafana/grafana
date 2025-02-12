@@ -7,10 +7,10 @@ import (
 	"net"
 	"testing"
 
-	"github.com/apache/arrow/go/v15/arrow/flight"
-	"github.com/apache/arrow/go/v15/arrow/flight/flightsql"
-	"github.com/apache/arrow/go/v15/arrow/flight/flightsql/example"
-	"github.com/apache/arrow/go/v15/arrow/memory"
+	"github.com/apache/arrow-go/v18/arrow/flight"
+	"github.com/apache/arrow-go/v18/arrow/flight/flightsql"
+	"github.com/apache/arrow-go/v18/arrow/flight/flightsql/example"
+	"github.com/apache/arrow-go/v18/arrow/memory"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -126,4 +126,28 @@ func freeport(t *testing.T) (addr string, err error) {
 	}()
 	a := l.Addr().(*net.TCPAddr)
 	return a.String(), nil
+}
+
+func TestInvalidSchema(t *testing.T) {
+	resp, _ := Query(
+		context.Background(),
+		&models.DatasourceInfo{
+			HTTPClient:   nil,
+			Token:        "secret",
+			URL:          "http://127.0.0.1:1234",
+			DbName:       "influxdb",
+			Version:      "test",
+			HTTPMode:     "proxy",
+			InsecureGrpc: true,
+		},
+		backend.QueryDataRequest{
+			Queries: []backend.DataQuery{
+				{
+					RefID: "A",
+					JSON:  []byte(`this is not valid JSON`),
+				},
+			},
+		},
+	)
+	require.Equal(t, backend.ErrorSourceDownstream, resp.Responses["A"].ErrorSource)
 }

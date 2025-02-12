@@ -25,6 +25,9 @@ type DashboardQuery struct {
 	GetHistory bool
 	Version    int64
 
+	// Only folders
+	GetFolders bool
+
 	// The label requirements
 	Labels []*resource.Requirement
 }
@@ -46,6 +49,7 @@ type LibraryPanelQuery struct {
 type DashboardAccess interface {
 	resource.StorageBackend
 	resource.ResourceIndexServer
+	LegacyMigrator
 
 	GetDashboard(ctx context.Context, orgId int64, uid string, version int64) (*dashboard.Dashboard, int64, error)
 	SaveDashboard(ctx context.Context, orgId int64, dash *dashboard.Dashboard) (*dashboard.Dashboard, bool, error)

@@ -23,13 +23,13 @@ import { Page } from 'app/core/components/Page/Page';
 import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
 import { Trans, t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction, Role, StoreState, Team } from 'app/types';
+import { AccessControlAction, Role, StoreState, TeamWithRoles } from 'app/types';
 
 import { TeamRolePicker } from '../../core/components/RolePicker/TeamRolePicker';
 
 import { deleteTeam, loadTeams, changePage, changeQuery, changeSort } from './state/actions';
 
-type Cell<T extends keyof Team = keyof Team> = CellProps<Team, Team[T]>;
+type Cell<T extends keyof TeamWithRoles = keyof TeamWithRoles> = CellProps<TeamWithRoles, TeamWithRoles[T]>;
 export interface OwnProps {}
 
 export interface State {
@@ -37,13 +37,12 @@ export interface State {
 }
 
 // this is dummy data to pass to the table while the real data is loading
-const skeletonData: Team[] = new Array(3).fill(null).map((_, index) => ({
+const skeletonData: TeamWithRoles[] = new Array(3).fill(null).map((_, index) => ({
   id: index,
   uid: '',
   memberCount: 0,
   name: '',
   orgId: 0,
-  permission: 0,
 }));
 
 export const TeamList = ({
@@ -76,7 +75,7 @@ export const TeamList = ({
   const canCreate = contextSrv.hasPermission(AccessControlAction.ActionTeamsCreate);
   const displayRolePicker = shouldDisplayRolePicker();
 
-  const columns: Array<Column<Team>> = useMemo(
+  const columns: Array<Column<TeamWithRoles>> = useMemo(
     () => [
       {
         id: 'avatarUrl',

@@ -79,6 +79,8 @@ export interface CatalogPluginDetails {
   iam?: IdentityAccessManagement;
   changelog?: string;
   lastCommitDate?: string;
+  signatureType?: PluginSignatureType;
+  signature?: PluginSignatureStatus;
 }
 
 export interface CatalogPluginInfo {
@@ -256,6 +258,8 @@ export enum PluginTabLabels {
   USAGE = 'Usage',
   IAM = 'IAM',
   CHANGELOG = 'Changelog',
+  PLUGINDETAILS = 'Plugin details',
+  DATASOURCE_CONNECTIONS = 'Data source connections',
 }
 
 export enum PluginTabIds {
@@ -266,6 +270,8 @@ export enum PluginTabIds {
   USAGE = 'usage',
   IAM = 'iam',
   CHANGELOG = 'changelog',
+  PLUGINDETAILS = 'right-panel',
+  DATASOURCE_CONNECTIONS = 'datasource-connections',
 }
 
 export enum RequestStatus {

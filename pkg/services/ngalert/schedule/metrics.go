@@ -73,11 +73,17 @@ func (sch *schedule) updateRulesMetrics(alertRules []*models.AlertRule) {
 		}
 
 		// Count rules with simplified editor settings per org
-		if rule.Metadata.EditorSettings.SimplifiedQueryAndExpressionsSection {
-			if _, ok := simplifiedEditorSettingsPerOrg[rule.OrgID]; !ok {
-				simplifiedEditorSettingsPerOrg[rule.OrgID] = make(map[string]int64)
+		editorSettingsMap := map[string]bool{
+			"simplified_query_and_expressions_section": rule.Metadata.EditorSettings.SimplifiedQueryAndExpressionsSection,
+			"simplified_notifications_section":         rule.Metadata.EditorSettings.SimplifiedNotificationsSection,
+		}
+		for key, value := range editorSettingsMap {
+			if value {
+				if _, ok := simplifiedEditorSettingsPerOrg[rule.OrgID]; !ok {
+					simplifiedEditorSettingsPerOrg[rule.OrgID] = make(map[string]int64)
+				}
+				simplifiedEditorSettingsPerOrg[rule.OrgID][key]++
 			}
-			simplifiedEditorSettingsPerOrg[rule.OrgID]["simplified_query_and_expressions_section"]++
 		}
 
 		// Count groups per org

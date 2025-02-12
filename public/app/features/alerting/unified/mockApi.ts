@@ -1,7 +1,6 @@
 import { HttpResponse, http } from 'msw';
 import { SetupServer, setupServer } from 'msw/node';
 
-import { DataSourceInstanceSettings } from '@grafana/data';
 import { setBackendSrv } from '@grafana/runtime';
 import { AlertGroupUpdated } from 'app/features/alerting/unified/api/alertRuleApi';
 import allHandlers from 'app/features/alerting/unified/mocks/server/all-handlers';
@@ -12,7 +11,6 @@ import {
 import { resetRoutingTreeMap } from 'app/features/alerting/unified/mocks/server/entities/k8s/routingtrees';
 import { DashboardDTO, FolderDTO, OrgUser } from 'app/types';
 import {
-  PromBuildInfoResponse,
   PromRulesResponse,
   RulerGrafanaRuleDTO,
   RulerRuleGroupDTO,
@@ -185,22 +183,6 @@ export function mockAlertRuleApi(server: SetupServer) {
     },
     getAlertRule: (uid: string, response: RulerGrafanaRuleDTO) => {
       server.use(http.get(`/api/ruler/grafana/api/v1/rule/${uid}`, () => HttpResponse.json(response)));
-    },
-  };
-}
-
-/**
- * Used to mock the response from the /api/v1/status/buildinfo endpoint
- */
-export function mockFeatureDiscoveryApi(server: SetupServer) {
-  return {
-    /**
-     *
-     * @param dsSettings Use `mockDataSource` to create a faks data source settings
-     * @param response Use `buildInfoResponse` to get a pre-defined response for Prometheus and Mimir
-     */
-    discoverDsFeatures: (dsSettings: DataSourceInstanceSettings, response: PromBuildInfoResponse) => {
-      server.use(http.get(`${dsSettings.url}/api/v1/status/buildinfo`, () => HttpResponse.json(response)));
     },
   };
 }

@@ -1,9 +1,10 @@
 import init from '@bsull/augurs/outlier';
 import { css } from '@emotion/css';
 import { isNumber, max, min, throttle } from 'lodash';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 import { DataFrame, FieldType, GrafanaTheme2, PanelData, SelectableValue } from '@grafana/data';
+import { isValidLegacyName, utf8Support } from '@grafana/prometheus';
 import { config } from '@grafana/runtime';
 import {
   ConstantVariable,
@@ -26,16 +27,16 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 import { DataQuery, SortOrder, TooltipDisplayMode } from '@grafana/schema';
-import { Button, Field, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Field, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 
-import { getAutoQueriesForMetric } from '../AutomaticMetricQueries/AutoQueryEngine';
-import { AutoQueryDef } from '../AutomaticMetricQueries/types';
 import { BreakdownLabelSelector } from '../BreakdownLabelSelector';
 import { DataTrail } from '../DataTrail';
+import { PanelMenu } from '../Menu/PanelMenu';
 import { MetricScene } from '../MetricScene';
-import { AddToExplorationButton } from '../MetricSelect/AddToExplorationsButton';
 import { StatusWrapper } from '../StatusWrapper';
+import { getAutoQueriesForMetric } from '../autoQuery/getAutoQueriesForMetric';
+import { AutoQueryDef } from '../autoQuery/types';
 import { reportExploreMetrics } from '../interactions';
 import { updateOtelJoinWithGroupLeft } from '../otel/util';
 import { getSortByPreference } from '../services/store';
@@ -47,6 +48,7 @@ import {
   VAR_FILTERS,
   VAR_GROUP_BY,
   VAR_GROUP_BY_EXP,
+  VAR_MISSING_OTEL_TARGETS,
   VAR_OTEL_GROUP_LEFT,
 } from '../shared';
 import { getColorByIndex, getTrailFor } from '../utils';
@@ -312,7 +314,14 @@ export class LabelBreakdownScene extends SceneObjectBase<LabelBreakdownSceneStat
       return [];
     }
 
-    const attributeArray: SelectableValue[] = resourceAttributes.split(',').map((el) => ({ label: el, value: el }));
+    const attributeArray: SelectableValue[] = resourceAttributes.split(',').map((el) => {
+      let label = el;
+      if (!isValidLegacyName(el)) {
+        // remove '' from label
+        label = el.slice(1, -1);
+      }
+      return { label, value: el };
+    });
     // shift ALL value to the front
     const all: SelectableValue = [{ label: 'All', value: ALL_VARIABLE_VALUE }];
     const firstGroup = all.concat(attributeArray);
@@ -336,6 +345,14 @@ export class LabelBreakdownScene extends SceneObjectBase<LabelBreakdownSceneStat
       // All value moves to the middle because it is part of the label options variable
       const all: SelectableValue = [{ label: 'All', value: ALL_VARIABLE_VALUE }];
       allLabelOptions.filter((option) => option.value !== ALL_VARIABLE_VALUE).unshift(all);
+    }
+
+    const [dismissOtelWarning, updateDismissOtelWarning] = useState(false);
+    const missingOtelTargets = sceneGraph.lookupVariable(VAR_MISSING_OTEL_TARGETS, trail)?.getValue();
+    if (missingOtelTargets && !dismissOtelWarning) {
+      reportExploreMetrics('missing_otel_labels_by_truncating_job_and_instance', {
+        metric: trail.state.metric,
+      });
     }
 
     useEffect(() => {
@@ -369,6 +386,22 @@ export class LabelBreakdownScene extends SceneObjectBase<LabelBreakdownSceneStat
               </Field>
             )}
           </div>
+          {missingOtelTargets && !dismissOtelWarning && (
+            <Alert
+              title={`Warning: There may be missing Open Telemetry resource attributes.`}
+              severity={'warning'}
+              key={'warning'}
+              onRemove={() => updateDismissOtelWarning(true)}
+              className={styles.truncatedOTelResources}
+            >
+              <Trans i18nKey={'explore-metrics.breakdown.missing-otel-labels'}>
+                This metric has too many job and instance label values to call the Prometheus label_values endpoint with
+                the match[] parameter. These label values are used to join the metric with target_info, which contains
+                the resource attributes. Please include more resource attributes filters.
+              </Trans>
+            </Alert>
+          )}
+
           <div className={styles.content}>{body && <body.Component model={body} />}</div>
         </StatusWrapper>
       </div>
@@ -400,6 +433,10 @@ function getStyles(theme: GrafanaTheme2) {
       gap: theme.spacing(2),
       justifyContent: 'space-between',
     }),
+    truncatedOTelResources: css({
+      minWidth: '30vw',
+      flexGrow: 0,
+    }),
   };
 }
 
@@ -420,7 +457,7 @@ export function buildAllLayout(
       break;
     }
 
-    const expr = queryDef.queries[0].expr.replaceAll(VAR_GROUP_BY_EXP, String(option.value));
+    const expr = queryDef.queries[0].expr.replaceAll(VAR_GROUP_BY_EXP, utf8Support(String(option.value)));
     const unit = queryDef.unit;
 
     const vizPanel = PanelBuilders.timeseries()
@@ -436,14 +473,14 @@ export function buildAllLayout(
               refId: `A-${option.label}`,
               expr,
               legendFormat: `{{${option.label}}}`,
+              fromExploreMetrics: true,
             },
           ],
         })
       )
-      .setHeaderActions([
-        new SelectLabelAction({ labelName: String(option.value) }),
-        new AddToExplorationButton({ labelName: String(option.value) }),
-      ])
+      .setHeaderActions([new SelectLabelAction({ labelName: String(option.value) })])
+      .setShowMenuAlways(true)
+      .setMenu(new PanelMenu({ labelName: String(option.value) }))
       .setUnit(unit)
       .setBehaviors([fixLegendForUnspecifiedLabelValueBehavior])
       .build();
@@ -494,10 +531,9 @@ function buildNormalLayout(
       .setTitle(getLabelValue(frame))
       .setData(new SceneDataNode({ data: { ...data, series: [frame] } }))
       .setColor({ mode: 'fixed', fixedColor: getColorByIndex(frameIndex) })
-      .setHeaderActions([
-        new AddToFiltersGraphAction({ frame }),
-        new AddToExplorationButton({ labelName: getLabelValue(frame) }),
-      ])
+      .setHeaderActions([new AddToFiltersGraphAction({ frame })])
+      .setShowMenuAlways(true)
+      .setMenu(new PanelMenu({ labelName: getLabelValue(frame) }))
       .setUnit(unit)
       .build();
 

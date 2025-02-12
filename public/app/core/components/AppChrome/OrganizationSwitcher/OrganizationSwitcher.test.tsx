@@ -81,30 +81,6 @@ describe('OrganisationSwitcher', () => {
     expect(screen.queryByRole('combobox', { name: 'Change organization' })).not.toBeInTheDocument();
   });
 
-  it('should render a picker in mobile screen', () => {
-    jest.spyOn(window, 'matchMedia').mockImplementation(
-      () =>
-        ({
-          addEventListener: jest.fn(),
-          removeEventListener: jest.fn(),
-          matches: false,
-        }) as unknown as MediaQueryList
-    );
-    renderWithProvider({
-      initialState: {
-        organization: {
-          organization: { name: 'test', id: 1 },
-          userOrgs: [
-            { orgId: 1, name: 'test', role: OrgRole.Admin },
-            { orgId: 2, name: 'test2', role: OrgRole.Admin },
-          ],
-        },
-      },
-    });
-
-    expect(screen.getByTestId('data-testid Value picker button Change organization')).toBeInTheDocument();
-  });
-
   it('should not render and not try to get user organizations if not signed in', () => {
     const contextSrv = new ContextSrv();
     contextSrv.user.isSignedIn = false;

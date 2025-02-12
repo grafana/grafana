@@ -66,22 +66,31 @@ export function logError(err: Error, contexts?: LogContext) {
 export type MeasurementValues = Record<string, number>;
 export function logMeasurement(type: string, values: MeasurementValues, context?: LogContext) {
   if (config.grafanaJavascriptAgent.enabled) {
-    faro.api.pushMeasurement({
-      type,
-      values,
-      context,
-    });
+    faro.api.pushMeasurement(
+      {
+        type,
+        values,
+      },
+      { context: context }
+    );
   }
 }
 
+export interface MonitoringLogger {
+  logDebug: (message: string, contexts?: LogContext) => void;
+  logInfo: (message: string, contexts?: LogContext) => void;
+  logWarning: (message: string, contexts?: LogContext) => void;
+  logError: (error: Error, contexts?: LogContext) => void;
+  logMeasurement: (type: string, measurement: MeasurementValues, contexts?: LogContext) => void;
+}
 /**
- * Creates a monitoring logger with four levels of logging methods: `logDebug`, `logInfo`, `logWarning`, and `logError`.
+ * Creates a monitoring logger with five levels of logging methods: `logDebug`, `logInfo`, `logWarning`, `logError`, and `logMeasurement`.
  * These methods use `faro.api.pushX` web SDK methods to report these logs or errors to the Faro collector.
  *
  * @param {string} source - Identifier for the source of the log messages.
  * @param {LogContext} [defaultContext] - Context to be included in every log message.
  *
- * @returns {Object} Logger object with four methods:
+ * @returns {MonitoringLogger} Logger object with five methods:
  * - `logDebug(message: string, contexts?: LogContext)`: Logs a debug message.
  * - `logInfo(message: string, contexts?: LogContext)`: Logs an informational message.
  * - `logWarning(message: string, contexts?: LogContext)`: Logs a warning message.
@@ -89,7 +98,7 @@ export function logMeasurement(type: string, values: MeasurementValues, context?
  * - `logMeasurement(measurement: Omit<MeasurementEvent, 'timestamp'>, contexts?: LogContext)`: Logs a measurement.
  * Each method combines the `defaultContext` (if provided), the `source`, and an optional `LogContext` parameter into a full context that is included with the log message.
  */
-export function createMonitoringLogger(source: string, defaultContext?: LogContext) {
+export function createMonitoringLogger(source: string, defaultContext?: LogContext): MonitoringLogger {
   const createFullContext = (contexts?: LogContext) => ({
     source: source,
     ...defaultContext,

@@ -135,7 +135,7 @@ On visualizations that support thresholds, Grafana has the following default thr
 - 80 = red
 - Base = green
 - Mode = Absolute
-- Show thresholds = Off (for some visualizations); for more information, see the [Show thresholds](#show-threshold) option.
+- Show thresholds = Off (for some visualizations); for more information, see the [Show thresholds](#show-thresholds) option.
 
 ## Thresholds options
 

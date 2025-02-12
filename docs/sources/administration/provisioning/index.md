@@ -39,7 +39,7 @@ packages, then your configuration file is located at
 
 You can use environment variable interpolation in all three provisioning configuration types.
 The allowed syntax is either `$ENV_VAR_NAME` or `${ENV_VAR_NAME}`, and it can be used only for values, not for keys or larger parts
-of the configurations.
+of the configurations. If the environment variable value has a `$` (e.g. `Pa$sw0rd`), use the `$ENV_VAR_NAME` syntax to avoid double expansion.
 It's not available in the dashboard's definition files, just the dashboard provisioning
 configuration.
 
@@ -479,6 +479,7 @@ The following sections detail the supported settings and secure settings for eac
 | mentionGroups  |                |
 | mentionChannel |                |
 | token          | yes            |
+| color          |                |
 
 #### Alert notification `victorops`
 

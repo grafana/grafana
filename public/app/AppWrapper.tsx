@@ -1,5 +1,6 @@
 import { Action, KBarProvider } from 'kbar';
-import { Component, ComponentType, Fragment } from 'react';
+import { Component, ComponentType, Fragment, ReactNode } from 'react';
+import CacheProvider from 'react-inlinesvg/provider';
 import { Provider } from 'react-redux';
 import { Route, Routes } from 'react-router-dom-v5-compat';
 
@@ -36,6 +37,11 @@ interface AppWrapperState {
 /** Used by enterprise */
 let bodyRenderHooks: ComponentType[] = [];
 let pageBanners: ComponentType[] = [];
+const enterpriseProviders: Array<ComponentType<{ children: ReactNode }>> = [];
+
+export function addEnterpriseProviders(provider: ComponentType<{ children: ReactNode }>) {
+  enterpriseProviders.push(provider);
+}
 
 export function addBodyRenderHook(fn: ComponentType) {
   bodyRenderHooks.push(fn);
@@ -46,6 +52,8 @@ export function addPageBanner(fn: ComponentType) {
 }
 
 export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
+  private iconCacheID = `grafana-icon-cache-${config.buildInfo.commit}`;
+
   constructor(props: AppWrapperProps) {
     super(props);
     this.state = {};
@@ -55,6 +63,14 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
     await loadAndInitAngularIfEnabled();
     this.setState({ ready: true });
     $('.preloader').remove();
+
+    // clear any old icon caches
+    const cacheKeys = await window.caches.keys();
+    for (const key of cacheKeys) {
+      if (key.startsWith('grafana-icon-cache') && key !== this.iconCacheID) {
+        window.caches.delete(key);
+      }
+    }
   }
 
   renderRoute = (route: RouteDescriptor) => {
@@ -89,6 +105,7 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
       routes: ready && this.renderRoutes(),
       pageBanners,
       bodyRenderHooks,
+      providers: enterpriseProviders,
     };
 
     const MaybeTimeRangeProvider = config.featureToggles.timeRangeProvider ? TimeRangeProvider : Fragment;
@@ -98,27 +115,29 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
         <ErrorBoundaryAlert style="page">
           <GrafanaContext.Provider value={app.context}>
             <ThemeProvider value={config.theme2}>
-              <KBarProvider
-                actions={[]}
-                options={{ enableHistory: true, callbacks: { onSelectAction: commandPaletteActionSelected } }}
-              >
-                <GlobalStyles />
-                <MaybeTimeRangeProvider>
-                  <SidecarContext_EXPERIMENTAL.Provider value={sidecarServiceSingleton_EXPERIMENTAL}>
-                    <ExtensionRegistriesProvider registries={pluginExtensionRegistries}>
-                      <div className="grafana-app">
-                        {config.featureToggles.appSidecar ? (
-                          <ExperimentalSplitPaneRouterWrapper {...routerWrapperProps} />
-                        ) : (
-                          <RouterWrapper {...routerWrapperProps} />
-                        )}
-                        <LiveConnectionWarning />
-                        <PortalContainer />
-                      </div>
-                    </ExtensionRegistriesProvider>
-                  </SidecarContext_EXPERIMENTAL.Provider>
-                </MaybeTimeRangeProvider>
-              </KBarProvider>
+              <CacheProvider name={this.iconCacheID}>
+                <KBarProvider
+                  actions={[]}
+                  options={{ enableHistory: true, callbacks: { onSelectAction: commandPaletteActionSelected } }}
+                >
+                  <GlobalStyles />
+                  <MaybeTimeRangeProvider>
+                    <SidecarContext_EXPERIMENTAL.Provider value={sidecarServiceSingleton_EXPERIMENTAL}>
+                      <ExtensionRegistriesProvider registries={pluginExtensionRegistries}>
+                        <div className="grafana-app">
+                          {config.featureToggles.appSidecar ? (
+                            <ExperimentalSplitPaneRouterWrapper {...routerWrapperProps} />
+                          ) : (
+                            <RouterWrapper {...routerWrapperProps} />
+                          )}
+                          <LiveConnectionWarning />
+                          <PortalContainer />
+                        </div>
+                      </ExtensionRegistriesProvider>
+                    </SidecarContext_EXPERIMENTAL.Provider>
+                  </MaybeTimeRangeProvider>
+                </KBarProvider>
+              </CacheProvider>
             </ThemeProvider>
           </GrafanaContext.Provider>
         </ErrorBoundaryAlert>

@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/codejen"
 	tsast "github.com/grafana/cuetsy/ts/ast"
 	"github.com/grafana/grafana/pkg/codegen"
-	"github.com/grafana/grafana/pkg/plugins/pfs"
+	"github.com/grafana/grafana/pkg/plugins/codegen/pfs"
 )
 
 var versionedPluginPath = filepath.Join("packages", "grafana-schema", "src", "raw", "composable")

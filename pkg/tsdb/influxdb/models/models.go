@@ -1,6 +1,10 @@
 package models
 
-import "time"
+import (
+	"time"
+
+	"github.com/influxdata/influxql"
+)
 
 type Query struct {
 	Measurement  string
@@ -18,6 +22,7 @@ type Query struct {
 	OrderByTime  string
 	RefID        string
 	ResultFormat string
+	Statement    influxql.Statement
 }
 
 type Tag struct {

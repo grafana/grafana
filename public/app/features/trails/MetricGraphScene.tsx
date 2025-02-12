@@ -13,9 +13,9 @@ import {
 } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 
-import { AutoVizPanel } from './AutomaticMetricQueries/AutoVizPanel';
 import { MetricActionBar } from './MetricScene';
-import { getTrailSettings } from './utils';
+import { AutoVizPanel } from './autoQuery/components/AutoVizPanel';
+import { getTrailFor, getTrailSettings } from './utils';
 
 export const MAIN_PANEL_MIN_HEIGHT = 280;
 export const MAIN_PANEL_MAX_HEIGHT = '40%';
@@ -37,7 +37,8 @@ export class MetricGraphScene extends SceneObjectBase<MetricGraphSceneState> {
     const { topView, selectedTab } = model.useState();
     const { stickyMainGraph } = getTrailSettings(model).useState();
     const chromeHeaderHeight = useChromeHeaderHeight();
-    const styles = useStyles2(getStyles, chromeHeaderHeight ?? 0);
+    const trail = getTrailFor(model);
+    const styles = useStyles2(getStyles, trail.state.embedded ? 0 : (chromeHeaderHeight ?? 0));
 
     return (
       <div className={styles.container}>

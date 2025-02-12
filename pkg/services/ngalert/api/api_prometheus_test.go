@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -315,9 +314,12 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 		"groups": [{
 			"name": "rule-group",
 			"file": "%s",
+			"folderUid": "namespaceUID",
 			"rules": [{
 				"state": "inactive",
 				"name": "AlwaysFiring",
+				"folderUid": "namespaceUID",
+				"uid": "RuleUID",
 				"query": "vector(1)",
 				"alerts": [{
 					"labels": {
@@ -378,10 +380,13 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 		"groups": [{
 			"name": "rule-group",
 			"file": "%s",
+			"folderUid": "namespaceUID",
 			"rules": [{
 				"state": "inactive",
 				"name": "AlwaysFiring",
 				"query": "vector(1)",
+				"folderUid": "namespaceUID",
+				"uid": "RuleUID",
 				"alerts": [{
 					"labels": {
 						"job": "prometheus",
@@ -440,10 +445,13 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 		"groups": [{
 			"name": "rule-group",
 			"file": "%s",
+			"folderUid": "namespaceUID",
 			"rules": [{
 				"state": "inactive",
 				"name": "AlwaysFiring",
 				"query": "vector(1) | vector(1)",
+				"folderUid": "namespaceUID",
+				"uid": "RuleUID",
 				"alerts": [{
 					"labels": {
 						"job": "prometheus"
@@ -562,7 +570,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			manager: fakeAIM,
 			status:  newFakeSchedulerReader(t).setupStates(fakeAIM),
 			store:   ruleStore,
-			authz:   accesscontrol.NewRuleService(acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())),
+			authz:   accesscontrol.NewRuleService(acimpl.ProvideAccessControl(featuremgmt.WithFeatures())),
 		}
 
 		permissions := createPermissionsForRules(slices.Concat(rulesInGroup1, rulesInGroup2, rulesInGroup3), orgID)
@@ -688,7 +696,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			manager: fakeAIM,
 			status:  newFakeSchedulerReader(t).setupStates(fakeAIM),
 			store:   ruleStore,
-			authz:   accesscontrol.NewRuleService(acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())),
+			authz:   accesscontrol.NewRuleService(acimpl.ProvideAccessControl(featuremgmt.WithFeatures())),
 		}
 
 		permissions := createPermissionsForRules(allRules, orgID)
@@ -782,8 +790,8 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			}
 		})
 
-		t.Run("bad token should return no results", func(t *testing.T) {
-			r, err := http.NewRequest("GET", "/api/v1/rules?group_limit=10&group_next_token=foobar", nil)
+		t.Run("bad token should return first group_limit results", func(t *testing.T) {
+			r, err := http.NewRequest("GET", "/api/v1/rules?group_limit=1&group_next_token=foobar", nil)
 			require.NoError(t, err)
 
 			c.Context = &web.Context{Req: r}
@@ -793,7 +801,14 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			result := &apimodels.RuleResponse{}
 			require.NoError(t, json.Unmarshal(resp.Body(), result))
 
-			require.Len(t, result.Data.RuleGroups, 0)
+			require.Len(t, result.Data.RuleGroups, 1)
+			require.Len(t, result.Data.Totals, 0)
+			require.NotEmpty(t, result.Data.NextToken)
+
+			folder, err := api.store.GetNamespaceByUID(context.Background(), "namespace_0", orgID, user)
+			require.NoError(t, err)
+			require.Equal(t, folder.Fullpath, result.Data.RuleGroups[0].File)
+			require.Equal(t, "rule_group_0", result.Data.RuleGroups[0].Name)
 		})
 
 		t.Run("should return nothing when using group_limit=0", func(t *testing.T) {
@@ -825,7 +840,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 				manager: fakeAIM,
 				status:  newFakeSchedulerReader(t).setupStates(fakeAIM),
 				store:   ruleStore,
-				authz:   accesscontrol.NewRuleService(acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())),
+				authz:   accesscontrol.NewRuleService(acimpl.ProvideAccessControl(featuremgmt.WithFeatures())),
 			}
 
 			c := &contextmodel.ReqContext{Context: &web.Context{Req: req}, SignedInUser: &user.SignedInUser{OrgID: orgID, Permissions: createPermissionsForRules(rules, orgID)}}

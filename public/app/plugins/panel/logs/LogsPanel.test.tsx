@@ -13,7 +13,9 @@ import {
   LogsDedupStrategy,
   EventBusSrv,
   DataFrameType,
+  LogSortOrderChangeEvent,
 } from '@grafana/data';
+import { getAppEvents } from '@grafana/runtime';
 import * as grafanaUI from '@grafana/ui';
 import * as styles from 'app/features/logs/components/getLogRowStyles';
 import { LogRowContextModal } from 'app/features/logs/components/log-context/LogRowContextModal';
@@ -39,6 +41,7 @@ const datasourceSrv = new DatasourceSrvMock(defaultDs, {
 const getDataSourceSrvMock = jest.fn().mockReturnValue(datasourceSrv);
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
+  getAppEvents: jest.fn(),
   getDataSourceSrv: () => getDataSourceSrvMock(),
 }));
 
@@ -69,7 +72,35 @@ const defaultProps = {
       scopedVars: {},
       startTime: 1,
     },
-    series: [],
+    series: [
+      createDataFrame({
+        refId: 'A',
+        fields: [
+          {
+            name: 'timestamp',
+            type: FieldType.time,
+            values: ['2019-04-26T09:28:11.352440161Z'],
+          },
+          {
+            name: 'body',
+            type: FieldType.string,
+            values: ['logline text'],
+          },
+          {
+            name: 'labels',
+            type: FieldType.other,
+            values: [
+              {
+                app: 'common_app',
+              },
+            ],
+          },
+        ],
+        meta: {
+          type: DataFrameType.LogLines,
+        },
+      }),
+    ],
     state: LoadingState.Done,
     timeRange: getDefaultTimeRange(),
   },
@@ -103,7 +134,32 @@ const defaultProps = {
   onChangeTimeRange: jest.fn(),
 };
 
+const publishMock = jest.fn();
+beforeAll(() => {
+  jest.mocked(getAppEvents).mockReturnValue({
+    publish: publishMock,
+    getStream: jest.fn(),
+    subscribe: jest.fn(),
+    removeAllListeners: jest.fn(),
+    newScopedBus: jest.fn(),
+  });
+});
+
 describe('LogsPanel', () => {
+  it('publishes an event with the current sort order', async () => {
+    publishMock.mockClear();
+    setup();
+
+    await screen.findByText('logline text');
+
+    expect(publishMock).toHaveBeenCalledTimes(1);
+    expect(publishMock).toHaveBeenCalledWith(
+      new LogSortOrderChangeEvent({
+        order: LogsSortOrder.Descending,
+      })
+    );
+  });
+
   describe('when returned series include common labels', () => {
     const seriesWithCommonLabels = [
       createDataFrame({
@@ -358,7 +414,7 @@ describe('LogsPanel', () => {
         await userEvent.click(screen.getByLabelText(/show context/i));
 
         const getRowContextCb = logRowContextModalMock.mock.calls[0][0].getRowContext;
-        getRowContextCb();
+        getRowContextCb({}, {});
         expect(showContextDs.getLogRowContext).toBeCalled();
       });
     });
@@ -461,6 +517,22 @@ describe('LogsPanel', () => {
 
       expect(await screen.findByRole('row')).toBeInTheDocument();
       expect(jest.mocked(styles.getLogRowStyles).mock.calls.length).toBeGreaterThan(3);
+    });
+
+    it('does not re-render when data is loading', async () => {
+      const { rerender, props } = setup({
+        data: {
+          ...defaultProps.data,
+          series,
+        },
+      });
+
+      expect(await screen.findByRole('row')).toBeInTheDocument();
+
+      rerender(<LogsPanel {...props} data={{ ...props.data, state: LoadingState.Loading }} />);
+
+      expect(await screen.findByRole('row')).toBeInTheDocument();
+      expect(styles.getLogRowStyles).toHaveBeenCalledTimes(3);
     });
   });
 

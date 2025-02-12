@@ -29,11 +29,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/state-and-health/#alert-instance-state
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation/state-and-health/#alert-instance-state
-  modify-the-no-data-and-error-state:
+  modify-the-no-data-or-error-state:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/state-and-health/#modify-the-no-data-and-error-state
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/state-and-health/#modify-the-no-data-or-error-state
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation/state-and-health/#modify-the-no-data-and-error-state
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation/state-and-health/#modify-the-no-data-or-error-state
   pending-period:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/#pending-period
@@ -148,8 +148,6 @@ You can toggle between the two options. Once you have created an alert rule, the
 
 Switching from advanced to default may result in queries and expressions that cannot be converted. In this case, a warning message asks if you want to continue to reset to default settings.
 
-Default and advanced options are enabled by default for Grafana Cloud users and this feature is being rolled out progressively. OSS users can enable them via the [`alertingQueryAndExpressionsStepMode` feature toggle](/setup-grafana/configure-grafana/feature-toggles/).
-
 {{< docs/shared lookup="alerts/configure-alert-rule-name.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ## Define query and condition
@@ -241,7 +239,7 @@ To do this, you need to make sure that your alert rule is in the right evaluatio
 
    {{< docs/shared lookup="alerts/table-configure-no-data-and-error.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-   For more details, refer to [alert instance states](ref:alert-instance-state) and [modify the no data and error state](ref:modify-the-no-data-and-error-state).
+   For more details, refer to [alert instance states](ref:alert-instance-state) and [modify the no data or error state](ref:modify-the-no-data-or-error-state).
 
 ## Configure notifications
 

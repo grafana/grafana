@@ -63,11 +63,12 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
         background: rowStyled ? 'inherit' : (backgroundHover ?? theme.colors.background.primary),
         zIndex: 1,
         '.cellActions': {
-          color: '#FFF',
+          background: theme.components.tooltip.background,
+          color: theme.components.tooltip.text,
           visibility: 'visible',
           opacity: 1,
           width: 'auto',
-          background: 'rgba(0, 0, 0, 0.6)',
+          borderRadius: theme.shape.radius.default,
         },
       },
 
@@ -80,27 +81,20 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
         position: overflowOnHover ? undefined : 'absolute',
         top: overflowOnHover ? undefined : '1px',
         right: overflowOnHover ? undefined : 0,
-        margin: overflowOnHover ? theme.spacing(0, -0.5, 0, 0.5) : 'auto',
+        margin: overflowOnHover ? theme.spacing(0, 0, 0, 1) : 'auto',
         visibility: 'hidden',
         opacity: 0,
         width: 0,
         alignItems: 'center',
         height: '100%',
-        padding: theme.spacing(1, 0.5, 1, 1),
-        background: background ? 'none' : 'rgba(0, 0, 0, 0.5)',
-
-        svg: {
-          color,
-        },
+        padding: theme.spacing(0.5, 0, 0.5, 0.5),
+        background: theme.components.tooltip.background,
+        color: theme.components.tooltip.text,
       },
 
       '.cellActionsLeft': {
         right: 'auto !important',
         left: 0,
-      },
-
-      '.cellActionsTransparent': {
-        background: 'none',
       },
     });
   };

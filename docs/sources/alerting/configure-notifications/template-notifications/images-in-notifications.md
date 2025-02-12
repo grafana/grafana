@@ -1,6 +1,6 @@
 ---
 aliases:
-  - ../manage-notifications/images-in-notifications/ # /docs/grafana/<GRAFANA_VERSION>/alerting/manage-notifications/images-in-notifications/
+  - ../../manage-notifications/images-in-notifications/ # /docs/grafana/<GRAFANA_VERSION>/alerting/manage-notifications/images-in-notifications/
 canonical: https://grafana.com/docs/grafana/latest/alerting/configure-notifications/template-notifications/images-in-notifications/
 description: Use images in notifications to help users better understand why alerts are firing or have been resolved
 keywords:

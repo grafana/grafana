@@ -108,6 +108,10 @@ export function createAnnotationResponse() {
               schema: {
                 name: 'bar',
                 refId: 'X',
+                meta: {
+                  typeVersion: [0, 0],
+                  executedQueryString: 'Expr: ALERTS{}\nStep: 1m0s',
+                },
                 fields: [
                   {
                     name: 'Time',
