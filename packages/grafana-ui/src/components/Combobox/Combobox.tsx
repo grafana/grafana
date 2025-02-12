@@ -416,6 +416,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
                         key={`${items[virtualRow.index].value}-${virtualRow.index}`}
                         data-index={virtualRow.index}
                         className={cx(
+                          styles.optionBasic,
                           styles.option,
                           selectedItem && items[virtualRow.index].value === selectedItem.value && styles.optionSelected,
                           highlightedIndex === virtualRow.index && styles.optionFocused
