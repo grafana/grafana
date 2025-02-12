@@ -13,6 +13,7 @@ import { getCellColors } from '../utils';
 
 import AutoCell from './AutoCell';
 import { BarGaugeCell } from './BarGaugeCell';
+import { ImageCell } from './ImageCell';
 import { JSONCell } from './JSONCell';
 import { SparklineCell } from './SparklineCell';
 
@@ -91,6 +92,17 @@ export function TableCellNG(props: any) {
           timeRange={timeRange}
           height={height}
           width={divWidth}
+        />
+      );
+      break;
+    case TableCellDisplayMode.Image:
+      cell = (
+        <ImageCell
+          cellOptions={fieldConfig.custom.cellOptions}
+          field={field}
+          height={height}
+          justifyContent={justifyContent}
+          value={value}
         />
       );
       break;
