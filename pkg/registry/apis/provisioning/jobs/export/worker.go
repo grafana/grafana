@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 
-	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -71,7 +70,7 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 			}, nil
 		}
 
-		// New empty branch
+		// New empty branch (same on main???)
 		if options.Branch != "" {
 			_, err := buffered.NewEmptyBranch(ctx, options.Branch)
 			if err != nil {
@@ -100,7 +99,7 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 	}
 
 	// Read from legacy if not yet using unified storage
-	if !r.storageStatus.ReadFromUnified(ctx, folders.FolderResourceInfo.GroupResource()) {
+	if dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, r.storageStatus) {
 		worker.legacy = r.legacyMigrator
 	}
 

@@ -20,11 +20,10 @@ func ProvideService(features featuremgmt.FeatureToggles, reg prometheus.Register
 	}
 
 	return &service{
-		db:      newFileDB(path),
-		reg:     reg,
-		enabled: features.IsEnabledGlobally(featuremgmt.FlagManagedDualWriter),
-		// TODO: when we can "export" from legacy, this can enabled along with provisioning
-		//	|| features.IsEnabledGlobally(featuremgmt.FlagProvisioning), // required for git provisioning
+		db:  newFileDB(path),
+		reg: reg,
+		enabled: features.IsEnabledGlobally(featuremgmt.FlagManagedDualWriter) ||
+			features.IsEnabledGlobally(featuremgmt.FlagProvisioning), // required for git provisioning
 	}
 }
 
