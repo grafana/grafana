@@ -3957,6 +3957,20 @@
         },
         "type": "array"
       },
+      "ConvertPrometheusResponse": {
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "errorType": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "CookiePreferences": {
         "properties": {
           "analytics": {},
@@ -8626,31 +8640,31 @@
       },
       "PrometheusRule": {
         "properties": {
-          "alert": {
+          "Alert": {
             "type": "string"
           },
-          "annotations": {
+          "Annotations": {
             "additionalProperties": {
               "type": "string"
             },
             "type": "object"
           },
-          "expr": {
+          "Expr": {
             "type": "string"
           },
-          "for": {
+          "For": {
             "type": "string"
           },
-          "keep_firing_for": {
+          "KeepFiringFor": {
             "type": "string"
           },
-          "labels": {
+          "Labels": {
             "additionalProperties": {
               "type": "string"
             },
             "type": "object"
           },
-          "record": {
+          "Record": {
             "type": "string"
           }
         },
@@ -8658,10 +8672,13 @@
       },
       "PrometheusRuleGroup": {
         "properties": {
-          "name": {
+          "Interval": {
+            "$ref": "#/components/schemas/Duration"
+          },
+          "Name": {
             "type": "string"
           },
-          "rules": {
+          "Rules": {
             "items": {
               "$ref": "#/components/schemas/PrometheusRule"
             },
@@ -12055,17 +12072,6 @@
         },
         "type": "object"
       },
-      "UpdatePrometheusRuleGroupResponse": {
-        "properties": {
-          "errorType": {
-            "type": "string"
-          },
-          "status": {
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
       "UpdateQuotaCmd": {
         "properties": {
           "limit": {
@@ -12832,6 +12838,7 @@
         "type": "object"
       },
       "gettableAlerts": {
+        "description": "GettableAlerts gettable alerts",
         "items": {
           "$ref": "#/components/schemas/gettableAlert"
         },
@@ -12955,6 +12962,7 @@
         "type": "object"
       },
       "gettableSilences": {
+        "description": "GettableSilences gettable silences",
         "items": {
           "$ref": "#/components/schemas/gettableSilence"
         },

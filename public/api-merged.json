@@ -13882,6 +13882,20 @@
         "$ref": "#/definitions/EmbeddedContactPoint"
       }
     },
+    "ConvertPrometheusResponse": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "string"
+        },
+        "errorType": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        }
+      }
+    },
     "CookiePreferences": {
       "type": "object",
       "properties": {
@@ -18552,31 +18566,31 @@
     "PrometheusRule": {
       "type": "object",
       "properties": {
-        "alert": {
+        "Alert": {
           "type": "string"
         },
-        "annotations": {
+        "Annotations": {
           "type": "object",
           "additionalProperties": {
             "type": "string"
           }
         },
-        "expr": {
+        "Expr": {
           "type": "string"
         },
-        "for": {
+        "For": {
           "type": "string"
         },
-        "keep_firing_for": {
+        "KeepFiringFor": {
           "type": "string"
         },
-        "labels": {
+        "Labels": {
           "type": "object",
           "additionalProperties": {
             "type": "string"
           }
         },
-        "record": {
+        "Record": {
           "type": "string"
         }
       }
@@ -18584,10 +18598,13 @@
     "PrometheusRuleGroup": {
       "type": "object",
       "properties": {
-        "name": {
+        "Interval": {
+          "$ref": "#/definitions/Duration"
+        },
+        "Name": {
           "type": "string"
         },
-        "rules": {
+        "Rules": {
           "type": "array",
           "items": {
             "$ref": "#/definitions/PrometheusRule"
@@ -21981,17 +21998,6 @@
         }
       }
     },
-    "UpdatePrometheusRuleGroupResponse": {
-      "type": "object",
-      "properties": {
-        "errorType": {
-          "type": "string"
-        },
-        "status": {
-          "type": "string"
-        }
-      }
-    },
     "UpdateQuotaCmd": {
       "type": "object",
       "properties": {
@@ -22759,6 +22765,7 @@
       }
     },
     "gettableAlerts": {
+      "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
         "type": "object",
@@ -22883,6 +22890,7 @@
       }
     },
     "gettableSilences": {
+      "description": "GettableSilences gettable silences",
       "type": "array",
       "items": {
         "type": "object",

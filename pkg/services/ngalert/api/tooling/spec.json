@@ -1198,11 +1198,6 @@
             "in": "header"
           },
           {
-            "type": "string",
-            "name": "x-datasource-type",
-            "in": "header"
-          },
-          {
             "type": "boolean",
             "name": "x-recording-rules-paused",
             "in": "header"
@@ -1222,9 +1217,9 @@
         ],
         "responses": {
           "202": {
-            "description": "UpdatePrometheusRuleGroupResponse",
+            "description": "ConvertPrometheusResponse",
             "schema": {
-              "$ref": "#/definitions/UpdatePrometheusRuleGroupResponse"
+              "$ref": "#/definitions/ConvertPrometheusResponse"
             }
           },
           "403": {
@@ -1255,8 +1250,10 @@
         ],
         "responses": {
           "202": {
-            "description": "rule groups in the namespace were deleted successfully.",
-            "$ref": "#/responses/The"
+            "description": "ConvertPrometheusResponse",
+            "schema": {
+              "$ref": "#/definitions/ConvertPrometheusResponse"
+            }
           },
           "403": {
             "description": "ForbiddenError",
@@ -1337,8 +1334,10 @@
         ],
         "responses": {
           "202": {
-            "description": "rule group was deleted successfully.",
-            "$ref": "#/responses/The"
+            "description": "ConvertPrometheusResponse",
+            "schema": {
+              "$ref": "#/definitions/ConvertPrometheusResponse"
+            }
           },
           "403": {
             "description": "ForbiddenError",
@@ -1879,6 +1878,12 @@
             "description": "ForbiddenError",
             "schema": {
               "$ref": "#/definitions/ForbiddenError"
+            }
+          },
+          "404": {
+            "description": "NotFound",
+            "schema": {
+              "$ref": "#/definitions/NotFound"
             }
           }
         }
@@ -4667,6 +4672,20 @@
         "$ref": "#/definitions/EmbeddedContactPoint"
       }
     },
+    "ConvertPrometheusResponse": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "string"
+        },
+        "errorType": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        }
+      }
+    },
     "CounterResetHint": {
       "description": "or alternatively that we are dealing with a gauge histogram, where counter resets do not apply.",
       "type": "integer",
@@ -6893,31 +6912,31 @@
     "PrometheusRule": {
       "type": "object",
       "properties": {
-        "alert": {
+        "Alert": {
           "type": "string"
         },
-        "annotations": {
+        "Annotations": {
           "type": "object",
           "additionalProperties": {
             "type": "string"
           }
         },
-        "expr": {
+        "Expr": {
           "type": "string"
         },
-        "for": {
+        "For": {
           "type": "string"
         },
-        "keep_firing_for": {
+        "KeepFiringFor": {
           "type": "string"
         },
-        "labels": {
+        "Labels": {
           "type": "object",
           "additionalProperties": {
             "type": "string"
           }
         },
-        "record": {
+        "Record": {
           "type": "string"
         }
       }
@@ -6925,10 +6944,13 @@
     "PrometheusRuleGroup": {
       "type": "object",
       "properties": {
-        "name": {
+        "Interval": {
+          "$ref": "#/definitions/Duration"
+        },
+        "Name": {
           "type": "string"
         },
-        "rules": {
+        "Rules": {
           "type": "array",
           "items": {
             "$ref": "#/definitions/PrometheusRule"
@@ -8411,9 +8433,8 @@
       }
     },
     "URL": {
-      "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nThe Host field contains the host and port subcomponents of the URL.\nWhen the port is present, it is separated from the host with a colon.\nWhen the host is an IPv6 address, it must be enclosed in square brackets:\n\"[fe80::1]:80\". The [net.JoinHostPort] function combines a host and port\ninto a string suitable for the Host field, adding square brackets to\nthe host when necessary.\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use the [URL.EscapedPath] method, which preserves\nthe original encoding of Path.\n\nThe RawPath field is an optional field which is only set when the default\nencoding of Path is different from the escaped path. See the EscapedPath method\nfor more details.\n\nURL's String method uses the EscapedPath method to obtain the path.",
       "type": "object",
-      "title": "A URL represents a parsed URL (technically, a URI reference).",
+      "title": "URL is a custom URL type that allows validation at configuration load time.",
       "properties": {
         "ForceQuery": {
           "type": "boolean"
@@ -8447,17 +8468,6 @@
         },
         "User": {
           "$ref": "#/definitions/Userinfo"
-        }
-      }
-    },
-    "UpdatePrometheusRuleGroupResponse": {
-      "type": "object",
-      "properties": {
-        "errorType": {
-          "type": "string"
-        },
-        "status": {
-          "type": "string"
         }
       }
     },
@@ -8700,6 +8710,7 @@
       }
     },
     "alertGroups": {
+      "description": "AlertGroups alert groups",
       "type": "array",
       "items": {
         "type": "object",
@@ -8861,7 +8872,6 @@
       }
     },
     "gettableAlerts": {
-      "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
         "type": "object",

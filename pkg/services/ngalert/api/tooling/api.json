@@ -734,6 +734,20 @@
    },
    "type": "array"
   },
+  "ConvertPrometheusResponse": {
+   "properties": {
+    "error": {
+     "type": "string"
+    },
+    "errorType": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
   "CounterResetHint": {
    "description": "or alternatively that we are dealing with a gauge histogram, where counter resets do not apply.",
    "format": "uint8",
@@ -2957,31 +2971,31 @@
   },
   "PrometheusRule": {
    "properties": {
-    "alert": {
+    "Alert": {
      "type": "string"
     },
-    "annotations": {
+    "Annotations": {
      "additionalProperties": {
       "type": "string"
      },
      "type": "object"
     },
-    "expr": {
+    "Expr": {
      "type": "string"
     },
-    "for": {
+    "For": {
      "type": "string"
     },
-    "keep_firing_for": {
+    "KeepFiringFor": {
      "type": "string"
     },
-    "labels": {
+    "Labels": {
      "additionalProperties": {
       "type": "string"
      },
      "type": "object"
     },
-    "record": {
+    "Record": {
      "type": "string"
     }
    },
@@ -2989,10 +3003,13 @@
   },
   "PrometheusRuleGroup": {
    "properties": {
-    "name": {
+    "Interval": {
+     "$ref": "#/definitions/Duration"
+    },
+    "Name": {
      "type": "string"
     },
-    "rules": {
+    "Rules": {
      "items": {
       "$ref": "#/definitions/PrometheusRule"
      },
@@ -4514,17 +4531,6 @@
    "title": "URL is a custom URL type that allows validation at configuration load time.",
    "type": "object"
   },
-  "UpdatePrometheusRuleGroupResponse": {
-   "properties": {
-    "errorType": {
-     "type": "string"
-    },
-    "status": {
-     "type": "string"
-    }
-   },
-   "type": "object"
-  },
   "UpdateRuleGroupResponse": {
    "properties": {
     "created": {
@@ -4925,6 +4931,7 @@
    "type": "object"
   },
   "gettableAlerts": {
+   "description": "GettableAlerts gettable alerts",
    "items": {
     "$ref": "#/definitions/gettableAlert",
     "type": "object"
@@ -5049,6 +5056,7 @@
    "type": "object"
   },
   "gettableSilences": {
+   "description": "GettableSilences gettable silences",
    "items": {
     "$ref": "#/definitions/gettableSilence",
     "type": "object"

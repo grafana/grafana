@@ -51,7 +51,7 @@ import (
 //     - application/json
 //
 //     Responses:
-//       202: UpdatePrometheusRuleGroupResponse
+//       202: ConvertPrometheusResponse
 //       403: ForbiddenError
 //
 //     Extensions:
@@ -65,7 +65,7 @@ import (
 //     - application/json
 //
 //     Responses:
-//       202: The rule groups in the namespace were deleted successfully.
+//       202: ConvertPrometheusResponse
 //       403: ForbiddenError
 
 // swagger:route DELETE /convert/prometheus/config/v1/rules/{NamespaceTitle}/{Group} convert_prometheus RouteConvertPrometheusDeleteRuleGroup
@@ -76,7 +76,7 @@ import (
 //     - application/json
 //
 //     Responses:
-//       202: The rule group was deleted successfully.
+//       202: ConvertPrometheusResponse
 //       403: ForbiddenError
 
 // swagger:parameters RouteConvertPrometheusPostRuleGroup
@@ -85,8 +85,6 @@ type RouteConvertPrometheusPostRuleGroupParams struct {
 	NamespaceTitle string
 	// in: header
 	DatasourceUID string `json:"x-datasource-uid"`
-	// in: header
-	DatasourceType string `json:"x-datasource-type"`
 	// in: header
 	RecordingRulesPaused bool `json:"x-recording-rules-paused"`
 	// in: header
@@ -110,13 +108,13 @@ type PrometheusRuleGroup struct {
 
 // swagger:model
 type PrometheusRule struct {
-	Alert         string            `yaml:"alert"`
+	Alert         string            `yaml:"alert,omitempty"`
 	Expr          string            `yaml:"expr"`
 	For           *model.Duration   `yaml:"for,omitempty"`
 	KeepFiringFor *model.Duration   `yaml:"keep_firing_for,omitempty"`
-	Labels        map[string]string `yaml:"labels"`
-	Annotations   map[string]string `yaml:"annotations"`
-	Record        string            `yaml:"record"`
+	Labels        map[string]string `yaml:"labels,omitempty"`
+	Annotations   map[string]string `yaml:"annotations,omitempty"`
+	Record        string            `yaml:"record,omitempty"`
 }
 
 // swagger:parameters RouteConvertPrometheusDeleteRuleGroup RouteConvertPrometheusGetRuleGroup
@@ -134,7 +132,8 @@ type RouteConvertPrometheusDeleteNamespaceParams struct {
 }
 
 // swagger:model
-type UpdatePrometheusRuleGroupResponse struct {
+type ConvertPrometheusResponse struct {
 	Status    string `json:"status"`
 	ErrorType string `json:"errorType"`
+	Error     string `json:"error"`
 }
