@@ -32,6 +32,14 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(BarChartPanel)
           mode: FieldColorModeId.PaletteClassic,
         },
       },
+      [FieldConfigProperty.Links]: {
+        settings: {
+          showOneClick: true,
+        },
+      },
+      [FieldConfigProperty.Actions]: {
+        hideFromDefaults: false,
+      },
     },
     useCustomConfig: (builder) => {
       const cfg = defaultFieldConfig;
