@@ -861,7 +861,9 @@ steps:
   image: grafana/docker-puppeteer:1.1.0
   name: test-a11y-frontend
 - commands:
-  - docker run --privileged --rm tonistiigi/binfmt --install all
+  - docker run --privileged --rm tonistiigi/binfmt:qemu-v7.0.0-28 --version
+  - docker run --privileged --rm tonistiigi/binfmt:qemu-v7.0.0-28 --uninstall 'qemu-*'
+  - docker run --privileged --rm tonistiigi/binfmt:qemu-v7.0.0-28 --install all
   - /src/grafana-build artifacts -a docker:grafana:linux/amd64 -a docker:grafana:linux/amd64:ubuntu
     -a docker:grafana:linux/arm64 -a docker:grafana:linux/arm64:ubuntu -a docker:grafana:linux/arm/v7
     -a docker:grafana:linux/arm/v7:ubuntu --yarn-cache=$$YARN_CACHE_FOLDER --build-id=$$DRONE_BUILD_NUMBER
@@ -2288,7 +2290,9 @@ steps:
     repo:
     - grafana/grafana
 - commands:
-  - docker run --privileged --rm tonistiigi/binfmt --install all
+  - docker run --privileged --rm tonistiigi/binfmt:qemu-v7.0.0-28 --version
+  - docker run --privileged --rm tonistiigi/binfmt:qemu-v7.0.0-28 --uninstall 'qemu-*'
+  - docker run --privileged --rm tonistiigi/binfmt:qemu-v7.0.0-28 --install all
   - /src/grafana-build artifacts -a docker:grafana:linux/amd64 -a docker:grafana:linux/amd64:ubuntu
     -a docker:grafana:linux/arm64 -a docker:grafana:linux/arm64:ubuntu -a docker:grafana:linux/arm/v7
     -a docker:grafana:linux/arm/v7:ubuntu --yarn-cache=$$YARN_CACHE_FOLDER --build-id=$$DRONE_BUILD_NUMBER
@@ -5000,6 +5004,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 96089968975cb4a38935a6743e1bf3b9f3625127a817411fe8cbeceab8551a47
+hmac: 7cad4bbb4ba1e5e566c6bac3271dd13dae3d6d5324593c3bfe60e9c09a106a43
 
 ...
