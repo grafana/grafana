@@ -155,7 +155,9 @@ func (r *JobProgressRecorder) UpdateProgress(ctx context.Context) {
 func (r *JobProgressRecorder) Complete(ctx context.Context, err error) *provisioning.JobStatus {
 	// Initialize base job status
 	jobStatus := provisioning.JobStatus{
+		// TODO: do we really need to set this one here?
 		// Started:  job.Status.Started,
+		// TODO: do we really need to set this one here?
 		Finished: time.Now().UnixMilli(),
 		State:    provisioning.JobStateSuccess,
 		Message:  "completed successfully",
