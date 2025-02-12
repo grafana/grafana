@@ -650,6 +650,9 @@ steps:
     token:
       from_secret: drone_token
 - commands:
+  - docker run --privileged --rm tonistiigi/binfmt:qemu-v7.0.0-28 --version
+  - docker run --privileged --rm tonistiigi/binfmt:qemu-v7.0.0-28 --uninstall 'qemu-*'
+  - docker run --privileged --rm tonistiigi/binfmt:qemu-v7.0.0-28 --install all
   - /src/grafana-build artifacts -a targz:grafana:linux/amd64 -a targz:grafana:linux/arm64
     -a targz:grafana:linux/arm/v7 --go-version=1.22.11 --yarn-cache=$$YARN_CACHE_FOLDER
     --build-id=$$DRONE_BUILD_NUMBER --grafana-dir=$$PWD > packages.txt
@@ -1994,6 +1997,9 @@ steps:
   image: node:20.9.0-alpine
   name: build-frontend-packages
 - commands:
+  - docker run --privileged --rm tonistiigi/binfmt:qemu-v7.0.0-28 --version
+  - docker run --privileged --rm tonistiigi/binfmt:qemu-v7.0.0-28 --uninstall 'qemu-*'
+  - docker run --privileged --rm tonistiigi/binfmt:qemu-v7.0.0-28 --install all
   - /src/grafana-build artifacts -a targz:grafana:linux/amd64 -a targz:grafana:linux/arm64
     -a targz:grafana:linux/arm/v7 --go-version=1.22.11 --yarn-cache=$$YARN_CACHE_FOLDER
     --build-id=$$DRONE_BUILD_NUMBER --grafana-dir=$$PWD > packages.txt
@@ -4895,6 +4901,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 78dc88af52a246961ce60b997eda5e5fb1fbe0b621a26fab42b500b30fd8fa5d
+hmac: f187922c027237a33c123475dd49a7ecc8db73d49eae4340a74e1031586da8e8
 
 ...
