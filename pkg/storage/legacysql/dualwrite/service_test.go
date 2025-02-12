@@ -1,4 +1,4 @@
-package dualwrite_test
+package dualwrite
 
 import (
 	"context"
@@ -8,18 +8,17 @@ import (
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
-	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite/store"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 func TestService(t *testing.T) {
 	ctx := context.Background()
-	mode := dualwrite.ProvideModeChecker(store.ProvideStorage(nil))
+	mode := ProvideService(featuremgmt.WithFeatures(), nil, nil)
 
 	gr := schema.GroupResource{Group: "ggg", Resource: "rrr"}
 	status, found := mode.Status(ctx, gr)
 	require.False(t, found, "initially not found")
-	require.Equal(t, dualwrite.StorageStatus{
+	require.Equal(t, StorageStatus{
 		Group:        "ggg",
 		Resource:     "rrr",
 		WriteLegacy:  true,

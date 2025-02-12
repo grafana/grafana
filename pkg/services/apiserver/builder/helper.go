@@ -275,7 +275,7 @@ func InstallAPIs(
 	namespaceMapper request.NamespaceMapper,
 	kvStore grafanarest.NamespacedKVStore,
 	serverLock ServerLockService,
-	storageStatus dualwrite.Service,
+	dualWriteService dualwrite.Service,
 	optsregister apistore.StorageOptionsRegister,
 ) error {
 	// dual writing is only enabled when the storage type is not legacy.
@@ -287,8 +287,8 @@ func InstallAPIs(
 	if storageOpts.StorageType != options.StorageTypeLegacy {
 		dualWrite = func(gr schema.GroupResource, legacy grafanarest.LegacyStorage, storage grafanarest.Storage) (grafanarest.Storage, error) {
 			// Dashboards + Folders may be managed (depends on feature toggles and database state)
-			if storageStatus != nil && dualwrite.ShouldManageDualWriter(gr) {
-				return dualwrite.NewManagedDualWriter(storageStatus, gr, legacy, storage, reg)
+			if dualWriteService.ShouldManage(gr) {
+				return dualWriteService.NewStorage(gr, legacy, storage) // eventually this can replace this whole function
 			}
 
 			key := gr.String() // ${resource}.{group} eg playlists.playlist.grafana.app

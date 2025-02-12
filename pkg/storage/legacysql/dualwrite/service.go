@@ -3,20 +3,57 @@ package dualwrite
 import (
 	"context"
 	"fmt"
+	"path/filepath"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
-func ProvideModeChecker(db StatusStorage) Service {
-	return &service{db}
+func ProvideService(features featuremgmt.FeatureToggles, reg prometheus.Registerer, cfg *setting.Cfg) Service {
+	path := "" // storage path
+	if cfg != nil {
+		path = filepath.Join(cfg.DataPath, "dualwrite.json")
+	}
+
+	return &service{
+		db:  newFileDB(path),
+		reg: reg,
+		enabled: features.IsEnabledGlobally(featuremgmt.FlagManagedDualWriter) ||
+			features.IsEnabledGlobally(featuremgmt.FlagProvisioning), // required for git provisioning
+	}
 }
 
 type service struct {
-	db StatusStorage
+	db      statusStorage
+	reg     prometheus.Registerer
+	enabled bool
 }
 
-func (m *service) ReadUnified(ctx context.Context, gr schema.GroupResource) bool {
+// The storage interface has zero business logic and simply writes values to a database
+type statusStorage interface {
+	Get(ctx context.Context, gr schema.GroupResource) (StorageStatus, bool)
+	Set(ctx context.Context, status StorageStatus) error
+}
+
+// Hardcoded list of resources that should be controlled by the database (eventually everything?)
+func (m *service) ShouldManage(gr schema.GroupResource) bool {
+	if !m.enabled {
+		return false
+	}
+	switch gr.String() {
+	case "folders.folder.grafana.app":
+		return true
+	case "dashboards.dashboard.grafana.app":
+		return true
+	}
+	return false
+}
+
+func (m *service) ReadFromUnified(ctx context.Context, gr schema.GroupResource) bool {
 	v, ok := m.db.Get(ctx, gr)
 	return ok && v.ReadUnified
 }
@@ -36,7 +73,7 @@ func (m *service) Status(ctx context.Context, gr schema.GroupResource) (StorageS
 			Runtime:      true, // need to explicitly ask for not runtime
 			UpdateKey:    1,
 		}
-		v, _ = m.db.Set(ctx, v) // write the value
+		_ = m.db.Set(ctx, v) // write the value
 		return v, false
 	}
 	return v, found
@@ -58,21 +95,22 @@ func (m *service) StartMigration(ctx context.Context, gr schema.GroupResource, k
 		}
 
 		v.Migrating = now
-		v.UpdateKey = v.UpdateKey + 1
-		return m.db.Set(ctx, v)
+		v.UpdateKey++
+	} else {
+		v = StorageStatus{
+			Group:        gr.Group,
+			Resource:     gr.Resource,
+			Runtime:      true,
+			WriteLegacy:  true,
+			WriteUnified: true,
+			ReadUnified:  false,
+			Migrating:    now,
+			Migrated:     0, // timestamp
+			UpdateKey:    1,
+		}
 	}
-
-	return m.db.Set(ctx, StorageStatus{
-		Group:        gr.Group,
-		Resource:     gr.Resource,
-		Runtime:      true,
-		WriteLegacy:  true,
-		WriteUnified: true,
-		ReadUnified:  false,
-		Migrating:    now,
-		Migrated:     0, // timestamp
-		UpdateKey:    1,
-	})
+	err := m.db.Set(ctx, v)
+	return v, err
 }
 
 // FinishMigration implements Service.
@@ -98,6 +136,6 @@ func (m *service) Update(ctx context.Context, status StorageStatus) (StorageStat
 	if !status.WriteLegacy && !status.WriteUnified {
 		return v, fmt.Errorf("must write either legacy or unified")
 	}
-
-	return m.db.Set(ctx, status)
+	status.UpdateKey++
+	return status, m.db.Set(ctx, status)
 }
