@@ -223,6 +223,7 @@ const ServicesTable: FC<ServicesTableProps> = ({
       getRowId={useCallback((row: FlattenService) => row.serviceId, [])}
       showFilter
       tableKey={tableKey}
+      autoResetExpanded={false}
     />
   );
 };

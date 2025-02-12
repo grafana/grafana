@@ -15,7 +15,7 @@ const Clusters: FC<ClustersProps> = ({ services, onDelete, onSelectionChange }) 
   const [filtered, setFiltered] = useState(services);
   const clusters = useMemo(() => getClustersFromServices(filtered), [filtered]);
   const [selection, setSelection] = useState({});
-  const filterEnabled = filtered !== services;
+  const [filterEnabled, setFilterEnabled] = useState(false);
 
   const handleSelectionChange = useCallback(
     (cluster: ServicesCluster, selectedServices: Array<Row<FlattenService>>) => {
@@ -31,9 +31,13 @@ const Clusters: FC<ClustersProps> = ({ services, onDelete, onSelectionChange }) 
     [onSelectionChange]
   );
 
-  const handleFiltering = useCallback((rows: FlattenService[]) => {
-    setFiltered(rows);
-  }, []);
+  const handleFiltering = useCallback(
+    (rows: FlattenService[]) => {
+      setFilterEnabled(rows !== services);
+      setFiltered(rows);
+    },
+    [services]
+  );
 
   return (
     <div>
