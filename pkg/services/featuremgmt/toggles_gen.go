@@ -595,10 +595,6 @@ const (
 	// Enable groupBy variable support in scenes dashboards
 	FlagGroupByVariable = "groupByVariable"
 
-	// FlagAuthAPIAccessTokenAuth
-	// Enables the use of Auth API access tokens for authentication
-	FlagAuthAPIAccessTokenAuth = "authAPIAccessTokenAuth"
-
 	// FlagScopeFilters
 	// Enables the use of scope filters in Grafana
 	FlagScopeFilters = "scopeFilters"
@@ -951,6 +947,10 @@ const (
 	// Use a POST request to list rules by passing down the namespaces user has access to
 	FlagFetchRulesUsingPost = "fetchRulesUsingPost"
 
+	// FlagAlertingConversionAPI
+	// Enable the alerting conversion API
+	FlagAlertingConversionAPI = "alertingConversionAPI"
+
 	// FlagAlertingAlertmanagerExtraDedupStage
 	// enables extra deduplication stage in alertmanager that checks that timestamps of the pipeline and the current state are matching
 	FlagAlertingAlertmanagerExtraDedupStage = "alertingAlertmanagerExtraDedupStage"
@@ -958,4 +958,16 @@ const (
 	// FlagAlertingAlertmanagerExtraDedupStageStopPipeline
 	// works together with alertingAlertmanagerExtraDedupStage, if enabled, it will stop the pipeline if the timestamps are not matching. Otherwise, it will emit a warning
 	FlagAlertingAlertmanagerExtraDedupStageStopPipeline = "alertingAlertmanagerExtraDedupStageStopPipeline"
+
+	// FlagNewLogsPanel
+	// Enables the new logs panel in Explore
+	FlagNewLogsPanel = "newLogsPanel"
+
+	// FlagGrafanaconThemes
+	// Enables the temporary themes for GrafanaCon
+	FlagGrafanaconThemes = "grafanaconThemes"
+
+	// FlagPluginsCDNSyncLoader
+	// Load plugins from CDN synchronously
+	FlagPluginsCDNSyncLoader = "pluginsCDNSyncLoader"
 )

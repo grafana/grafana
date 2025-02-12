@@ -105,7 +105,6 @@ func (c *Passwordless) RedirectURL(ctx context.Context, r *authn.Request) (*auth
 		return nil, err
 	}
 
-	// TODO: add IP address validation
 	ok, err := c.loginAttempts.Validate(ctx, form.Email)
 	if err != nil {
 		return nil, err
@@ -113,6 +112,15 @@ func (c *Passwordless) RedirectURL(ctx context.Context, r *authn.Request) (*auth
 
 	if !ok {
 		return nil, errPasswordlessClientTooManyLoginAttempts.Errorf("too many consecutive incorrect login attempts for user - login for user temporarily blocked")
+	}
+
+	ok, err = c.loginAttempts.ValidateIPAddress(ctx, web.RemoteAddr(r.HTTPRequest))
+	if err != nil {
+		return nil, err
+	}
+
+	if !ok {
+		return nil, errPasswordlessClientTooManyLoginAttempts.Errorf("too many consecutive incorrect login attempts for IP address - login for IP address temporarily blocked")
 	}
 
 	err = c.loginAttempts.Add(ctx, form.Email, web.RemoteAddr(r.HTTPRequest))

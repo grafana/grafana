@@ -133,6 +133,10 @@ func newInProcLegacyClient(server *rbac.Service, tracer tracing.Tracer) (authlib
 		authzlib.WithGrpcConnectionClientOption(channel),
 		authzlib.WithDisableAccessTokenClientOption(),
 		authzlib.WithTracerClientOption(tracer),
+		authzlib.WithCacheClientOption(cache.NewLocalCache(cache.Config{
+			Expiry:          30 * time.Second,
+			CleanupInterval: 2 * time.Minute,
+		})),
 	)
 }
 
@@ -156,6 +160,10 @@ func newGrpcLegacyClient(authCfg *Cfg, tracer tracing.Tracer) (authlib.AccessCli
 			grpc.WithStreamInterceptor(clientInterceptor.StreamClientInterceptor),
 		),
 		authzlib.WithTracerClientOption(tracer),
+		authzlib.WithCacheClientOption(cache.NewLocalCache(cache.Config{
+			Expiry:          30 * time.Second,
+			CleanupInterval: 2 * time.Minute,
+		})),
 		// TODO: remove this once access tokens are supported on-prem
 		authzlib.WithDisableAccessTokenClientOption(),
 	)
@@ -190,6 +198,10 @@ func newCloudLegacyClient(authCfg *Cfg, tracer tracing.Tracer) (authlib.AccessCl
 			grpc.WithUnaryInterceptor(clientInterceptor.UnaryClientInterceptor),
 			grpc.WithStreamInterceptor(clientInterceptor.StreamClientInterceptor),
 		),
+		authzlib.WithCacheClientOption(cache.NewLocalCache(cache.Config{
+			Expiry:          30 * time.Second,
+			CleanupInterval: 2 * time.Minute,
+		})),
 		authzlib.WithTracerClientOption(tracer),
 	)
 	if err != nil {

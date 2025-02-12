@@ -23,17 +23,13 @@ import {
   isClonedKey,
 } from '../../utils/clone';
 import { getMultiVariableValues } from '../../utils/utils';
-import { DashboardRepeatsProcessedEvent } from '../types';
+import { DashboardRepeatsProcessedEvent } from '../types/DashboardRepeatsProcessedEvent';
 
 import { DashboardGridItem } from './DashboardGridItem';
 
 interface RowRepeaterBehaviorState extends SceneObjectState {
   variableName: string;
 }
-
-/**
- * This behavior will run an effect function when specified variables change
- */
 
 export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorState> {
   protected _variableDependency = new VariableDependencyConfig(this, {
