@@ -28,7 +28,7 @@ func TestMain(m *testing.M) {
 
 func Test_OSSKeeperService_GetKeepers(t *testing.T) {
 	cfg := `
-	[security]
+	[secrets_manager]
 	secret_key = sdDkslslld
 	encryption_provider = secretKey.v1
 	available_encryption_providers = secretKey.v1
