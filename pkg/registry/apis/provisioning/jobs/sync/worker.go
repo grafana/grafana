@@ -87,8 +87,7 @@ func (r *SyncWorker) Process(ctx context.Context,
 	}
 
 	// Execute the job
-	ref, results, syncError := syncJob.run(ctx)
-
+	results, syncError := syncJob.run(ctx)
 	// Initialize base job status
 	jobStatus := provisioning.JobStatus{
 		Started:  job.Status.Started,
@@ -122,8 +121,8 @@ func (r *SyncWorker) Process(ctx context.Context,
 
 	// Create sync status and set hash if successful
 	syncStatus := jobStatus.ToSyncStatus(job.Name)
-	if syncStatus.State == provisioning.JobStateSuccess {
-		syncStatus.Hash = ref
+	if syncStatus.State == provisioning.JobStateSuccess && results != nil {
+		syncStatus.Hash = results.Ref
 	}
 
 	// Update the resource stats -- give the index some time to catch up
@@ -224,7 +223,7 @@ type syncJob struct {
 	folderLookup *resources.FolderTree
 }
 
-func (r *syncJob) run(ctx context.Context) (string, *ResultsRecorder, error) {
+func (r *syncJob) run(ctx context.Context) (*ResultsRecorder, error) {
 	// Ensure the configured folder exists and is managed by the repository
 	cfg := r.repository.Config()
 	rootFolder := resources.RootFolder(cfg)
@@ -233,7 +232,7 @@ func (r *syncJob) run(ctx context.Context) (string, *ResultsRecorder, error) {
 			ID:    rootFolder, // will not change if exists
 			Title: cfg.Spec.Title,
 		}, ""); err != nil {
-			return "", nil, fmt.Errorf("unable to create root folder: %w", err)
+			return nil, fmt.Errorf("unable to create root folder: %w", err)
 		}
 	}
 
@@ -244,46 +243,49 @@ func (r *syncJob) run(ctx context.Context) (string, *ResultsRecorder, error) {
 	if versionedRepo != nil {
 		currentRef, err = versionedRepo.LatestRef(ctx)
 		if err != nil {
-			return "", nil, fmt.Errorf("getting latest ref: %w", err)
+			return nil, fmt.Errorf("getting latest ref: %w", err)
 		}
 
 		if cfg.Status.Sync.Hash != "" && r.options.Incremental {
 			if currentRef == cfg.Status.Sync.Hash {
-				return currentRef, &ResultsRecorder{Message: "same commit as last sync"}, nil
+				return &ResultsRecorder{Message: "same commit as last sync"}, nil
 			}
 
 			results, err := r.applyVersionedChanges(ctx, versionedRepo, cfg.Status.Sync.Hash, currentRef)
 			if err != nil {
-				return "", nil, fmt.Errorf("apply versioned changes: %w", err)
+				return nil, fmt.Errorf("apply versioned changes: %w", err)
 			}
-
-			return currentRef, results, nil
+			results.Ref = currentRef
+			return results, nil
 		}
 	}
 
 	// Read the complete change set
 	target, err := r.lister.List(ctx, cfg.Namespace, cfg.Name)
 	if err != nil {
-		return "", nil, fmt.Errorf("error listing current: %w", err)
+		return nil, fmt.Errorf("error listing current: %w", err)
 	}
 	source, err := r.repository.ReadTree(ctx, currentRef)
 	if err != nil {
-		return "", nil, fmt.Errorf("error reading tree: %w", err)
+		return nil, fmt.Errorf("error reading tree: %w", err)
 	}
 	changes, err := Changes(source, target)
 	if err != nil {
-		return "", nil, fmt.Errorf("error calculating changes: %w", err)
+		return nil, fmt.Errorf("error calculating changes: %w", err)
 	}
 
 	if len(changes) == 0 {
-		return currentRef, &ResultsRecorder{Message: "no changes to sync"}, nil
+		return &ResultsRecorder{Message: "no changes to sync", Ref: currentRef}, nil
 	}
 
 	// Load any existing folder information
 	r.folderLookup = resources.NewFolderTreeFromResourceList(target)
 
 	// Now apply the changes
-	return currentRef, r.applyChanges(ctx, changes), nil
+	results := r.applyChanges(ctx, changes)
+	results.Ref = currentRef
+
+	return results, nil
 }
 
 func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange) *ResultsRecorder {
@@ -295,16 +297,16 @@ func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange
 	results := &ResultsRecorder{}
 
 	logger := logging.FromContext(ctx)
+	total := len(changes)
 	// Create folder structure first
-	for _, change := range changes {
+	for i, change := range changes {
 		if len(results.Errors()) > 20 {
 			results.Record(Result{
-				// TODO: this is probably having an unknown resource for Create
 				Name:     change.Existing.Name,
 				Resource: change.Existing.Resource,
 				Group:    change.Existing.Group,
 				Path:     change.Path,
-				// TODO: should we use a skipped action instead? or a different action type?
+				// FIXME: should we use a skipped action instead? or a different action type?
 				Action: repository.FileActionIgnored,
 				Error:  errors.New("too many errors"),
 			})
@@ -313,11 +315,9 @@ func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange
 
 		jobStatus := provisioning.JobStatus{
 			State:    provisioning.JobStateWorking,
-			Started:  0, // TODO: how to do this one?
-			Finished: 0,
 			Message:  "replicating changes",
 			Errors:   results.Errors(),
-			Progress: 0, // How to report progress?
+			Progress: float64((total - i) / total * 100),
 			Summary:  results.Summary(),
 		}
 
@@ -385,11 +385,12 @@ func (r *syncJob) applyVersionedChanges(ctx context.Context, repo repository.Ver
 	}
 
 	logger := logging.FromContext(ctx)
-	for _, change := range diff {
+	total := len(diff)
+	for i, change := range diff {
 		if len(results.Errors()) > 20 {
 			results.Record(Result{
 				Path: change.Path,
-				// TODO: should we use a skipped action instead? or a different action type?
+				// FIXME: should we use a skipped action instead? or a different action type?
 				Action: repository.FileActionIgnored,
 				Error:  errors.New("too many errors"),
 			})
@@ -398,11 +399,9 @@ func (r *syncJob) applyVersionedChanges(ctx context.Context, repo repository.Ver
 
 		jobStatus := provisioning.JobStatus{
 			State:    provisioning.JobStateWorking,
-			Started:  0, // TODO: how to do this one?
-			Finished: 0,
 			Message:  "replicating versioned changes",
 			Errors:   results.Errors(),
-			Progress: 0, // How to report progress?
+			Progress: float64((total - i) / total * 100),
 			Summary:  results.Summary(),
 		}
 
