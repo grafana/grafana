@@ -207,6 +207,7 @@ type HTTPServer struct {
 	tempUserService      tempUser.Service
 	loginAttemptService  loginAttempt.Service
 	orgService           org.Service
+	idService            auth.IDService
 	orgDeletionService   org.DeletionService
 	TeamService          team.Service
 	accesscontrolService accesscontrol.Service
@@ -272,7 +273,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	annotationRepo annotations.Repository, tagService tag.Service, searchv2HTTPService searchV2.SearchHTTPService, oauthTokenService oauthtoken.OAuthTokenService,
 	statsService stats.Service, authnService authn.Service, pluginsCDNService *pluginscdn.Service, promGatherer prometheus.Gatherer,
 	starApi *starApi.API, promRegister prometheus.Registerer, clientConfigProvider grafanaapiserver.DirectRestConfigProvider, anonService anonymous.Service,
-	userVerifier user.Verifier, pluginPreinstall plugininstaller.Preinstall,
+	userVerifier user.Verifier, pluginPreinstall plugininstaller.Preinstall, idService auth.IDService,
 ) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
@@ -360,6 +361,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		tempUserService:              tempUserService,
 		loginAttemptService:          loginAttemptService,
 		orgService:                   orgService,
+		idService:                    idService,
 		orgDeletionService:           orgDeletionService,
 		TeamService:                  teamService,
 		navTreeService:               navTreeService,
@@ -796,13 +798,9 @@ func (hs *HTTPServer) getDefaultCiphers(tlsVersion uint16, protocol string) []ui
 			tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
 			tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
 			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
-			tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,
 			tls.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,
-			tls.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
 			tls.TLS_RSA_WITH_AES_128_GCM_SHA256,
 			tls.TLS_RSA_WITH_AES_256_GCM_SHA384,
-			tls.TLS_RSA_WITH_AES_128_CBC_SHA,
-			tls.TLS_RSA_WITH_AES_256_CBC_SHA,
 		}
 	}
 	if protocol == "h2" {

@@ -72,7 +72,7 @@ func schema_pkg_apis_iam_v0alpha1_Display(ref common.ReferenceCallback) common.O
 					},
 					"internalId": {
 						SchemaProps: spec.SchemaProps{
-							Description: "InternalID is the legacy numreric id for identity, this is deprecated and should be phased out",
+							Description: "InternalID is the legacy numeric id for identity, Deprecated: use the identityRef where possible",
 							Type:        []string{"integer"},
 							Format:      "int64",
 						},
@@ -188,7 +188,7 @@ func schema_pkg_apis_iam_v0alpha1_IdentityRef(ref common.ReferenceCallback) comm
 				Properties: map[string]spec.Schema{
 					"type": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Type of identity e.g. \"user\". For a full list see https://github.com/grafana/authlib/blob/2f8d13a83ca3e82da08b53726de1697ee5b5b4cc/claims/type.go#L15-L24",
+							Description: "Type of identity e.g. \"user\". For a full list see https://github.com/grafana/authlib/blob/d6737a7dc8f55e9d42834adb83b5da607ceed293/types/type.go#L15",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
@@ -196,7 +196,7 @@ func schema_pkg_apis_iam_v0alpha1_IdentityRef(ref common.ReferenceCallback) comm
 					},
 					"name": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Name is the unique identifier for identity, guaranteed jo be a unique value for the type within a namespace.",
+							Description: "Name is the unique identifier for identity, guaranteed to be a unique value for the type within a namespace.",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
@@ -763,7 +763,7 @@ func schema_pkg_apis_iam_v0alpha1_TeamMember(ref common.ReferenceCallback) commo
 					},
 					"internalId": {
 						SchemaProps: spec.SchemaProps{
-							Description: "InternalID is the legacy numreric id for identity, this is deprecated and should be phased out",
+							Description: "InternalID is the legacy numeric id for identity, Deprecated: use the identityRef where possible",
 							Type:        []string{"integer"},
 							Format:      "int64",
 						},

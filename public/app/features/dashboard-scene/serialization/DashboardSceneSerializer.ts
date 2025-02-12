@@ -64,7 +64,7 @@ export class V1DashboardSerializer implements DashboardSceneSerializerLike<Dashb
       id: null,
       uid: '',
       title: options.title || '',
-      description: options.description || '',
+      description: options.description || undefined,
       tags: options.isNew || options.copyTags ? saveModel.tags : [],
     };
   }
@@ -172,7 +172,6 @@ export class V2DashboardSerializer
   onSaveComplete(saveModel: DashboardV2Spec, result: SaveDashboardResponseDTO): void {
     this.initialSaveModel = {
       ...saveModel,
-      id: result.id,
     };
   }
 

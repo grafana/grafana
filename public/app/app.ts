@@ -4,7 +4,6 @@ import 'regenerator-runtime/runtime';
 import 'whatwg-fetch'; // fetch polyfill needed for PhantomJs rendering
 import 'file-saver';
 import 'jquery';
-import 'vendor/bootstrap/bootstrap';
 
 import _ from 'lodash'; // eslint-disable-line lodash/import-scope
 import { createElement } from 'react';
@@ -403,6 +402,11 @@ function reportMetricPerformanceMark(metricName: string, prefix = '', suffix = '
 function handleRedirectTo(): void {
   const queryParams = locationService.getSearch();
   const redirectToParamKey = 'redirectTo';
+
+  if (queryParams.has('auth_token')) {
+    // URL Login should not be redirected
+    window.sessionStorage.removeItem(RedirectToUrlKey);
+  }
 
   if (queryParams.has(redirectToParamKey) && window.location.pathname !== '/') {
     const rawRedirectTo = queryParams.get(redirectToParamKey)!;

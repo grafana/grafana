@@ -108,6 +108,8 @@ const maybeZoomAction = (e?: MouseEvent | null) => e != null && !e.ctrlKey && !e
 
 const getDataLinksFallback: GetDataLinksCallback = () => [];
 
+const userAgentIsMobile = /Android|iPhone|iPad/i.test(navigator.userAgent);
+
 /**
  * @alpha
  */
@@ -666,8 +668,9 @@ export const TooltipPlugin2 = ({
 
       // if not viaSync, re-dispatch real event
       if (event != null) {
-        // we expect to re-dispatch mousemove, but on mobile we'll get mouseup or click
-        const isMobile = event.type !== 'mousemove';
+        // we expect to re-dispatch mousemove, but may have a different event type, so create a mousemove event and fire that instead
+        // this doesn't work for every mobile device, so fall back to checking the useragent as well
+        const isMobile = event.type !== 'mousemove' || userAgentIsMobile;
 
         if (isMobile) {
           event = new MouseEvent('mousemove', {
@@ -729,7 +732,7 @@ const getStyles = (theme: GrafanaTheme2, maxWidth?: number) => ({
     whiteSpace: 'pre',
     borderRadius: theme.shape.radius.default,
     position: 'fixed',
-    background: theme.colors.background.primary,
+    background: theme.colors.background.elevated,
     border: `1px solid ${theme.colors.border.weak}`,
     boxShadow: theme.shadows.z2,
     userSelect: 'text',

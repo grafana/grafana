@@ -30,6 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
+	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
@@ -743,10 +744,10 @@ func TestDashboardVersionsAPIEndpoint(t *testing.T) {
 			}).callGetDashboardVersions(sc)
 
 			assert.Equal(t, http.StatusOK, sc.resp.Code)
-			var versions []dashver.DashboardVersionMeta
+			var versions dashver.DashboardVersionResponseMeta
 			err := json.NewDecoder(sc.resp.Body).Decode(&versions)
 			require.NoError(t, err)
-			for _, v := range versions {
+			for _, v := range versions.Versions {
 				assert.Equal(t, "test-user", v.CreatedBy)
 			}
 		}, mockSQLStore)
@@ -769,10 +770,10 @@ func TestDashboardVersionsAPIEndpoint(t *testing.T) {
 			}).callGetDashboardVersions(sc)
 
 			assert.Equal(t, http.StatusOK, sc.resp.Code)
-			var versions []dashver.DashboardVersionMeta
+			var versions dashver.DashboardVersionResponseMeta
 			err := json.NewDecoder(sc.resp.Body).Decode(&versions)
 			require.NoError(t, err)
-			for _, v := range versions {
+			for _, v := range versions.Versions {
 				assert.Equal(t, anonString, v.CreatedBy)
 			}
 		}, mockSQLStore)
@@ -795,10 +796,10 @@ func TestDashboardVersionsAPIEndpoint(t *testing.T) {
 			}).callGetDashboardVersions(sc)
 
 			assert.Equal(t, http.StatusOK, sc.resp.Code)
-			var versions []dashver.DashboardVersionMeta
+			var versions dashver.DashboardVersionResponseMeta
 			err := json.NewDecoder(sc.resp.Body).Decode(&versions)
 			require.NoError(t, err)
-			for _, v := range versions {
+			for _, v := range versions.Versions {
 				assert.Equal(t, anonString, v.CreatedBy)
 			}
 		}, mockSQLStore)
@@ -835,7 +836,7 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 	if dashboardService == nil {
 		dashboardService, err = service.ProvideDashboardServiceImpl(
 			cfg, dashboardStore, folderStore, features, folderPermissions,
-			ac, folderSvc, fStore, nil, nil, nil, nil, quotaService, nil, nil,
+			ac, folderSvc, fStore, nil, client.MockTestRestConfig{}, nil, quotaService, nil, nil,
 		)
 		require.NoError(t, err)
 		dashboardService.(dashboards.PermissionsRegistrationService).RegisterDashboardPermissions(dashboardPermissions)
@@ -843,7 +844,7 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 
 	dashboardProvisioningService, err := service.ProvideDashboardServiceImpl(
 		cfg, dashboardStore, folderStore, features, folderPermissions,
-		ac, folderSvc, fStore, nil, nil, nil, nil, quotaService, nil, nil,
+		ac, folderSvc, fStore, nil, client.MockTestRestConfig{}, nil, quotaService, nil, nil,
 	)
 	require.NoError(t, err)
 
