@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { PropsWithChildren, ReactNode, useState } from 'react';
+import { PropsWithChildren, ReactNode } from 'react';
 import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -38,7 +38,6 @@ export const DataSourceSection = ({
   const configureLink = (() => {
     if (uid === GrafanaRulesSourceSymbol) {
       const userIsAdmin = isAdmin();
-      debugger;
       if (!userIsAdmin) {
         return;
       }
