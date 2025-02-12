@@ -66,12 +66,14 @@ const Log = ({ displayedFields, log, showTime, styles }: LogProps) => {
     <>
       {showTime && <span className={`${styles.timestamp} level-${log.logLevel}`}>{log.timestamp}</span>}
       {log.logLevel && <span className={`${styles.level} level-${log.logLevel}`}>{log.logLevel}</span>}
-      {displayedFields.length > 0 ? displayedFields.map((field) => <span>{getFieldValue(field, log)}</span>) : log.body}
+      {displayedFields.length > 0
+        ? displayedFields.map((field) => <span>{getDisplayedFieldValue(field, log)}</span>)
+        : log.body}
     </>
   );
 };
 
-function getFieldValue(fieldName: string, log: LogListModel) {
+export function getDisplayedFieldValue(fieldName: string, log: LogListModel): string {
   if (fieldName === LOG_LINE_BODY_FIELD_NAME) {
     return log.body;
   }
@@ -82,7 +84,7 @@ function getFieldValue(fieldName: string, log: LogListModel) {
     return field.keys[0] === fieldName;
   });
 
-  return field ? field.values : '';
+  return field ? field.values.toString() : '';
 }
 
 export const getStyles = (theme: GrafanaTheme2) => {
