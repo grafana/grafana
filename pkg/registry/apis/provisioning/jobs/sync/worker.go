@@ -218,7 +218,7 @@ func (r *syncJob) run(ctx context.Context, options provisioning.SyncJobOptions) 
 				return nil
 			}
 
-			if err := r.applyVersionedChanges(ctx, versionedRepo, cfg.Status.Sync.Hash, currentRef, r.progress); err != nil {
+			if err := r.applyVersionedChanges(ctx, versionedRepo, cfg.Status.Sync.Hash, currentRef); err != nil {
 				return fmt.Errorf("apply versioned changes: %w", err)
 			}
 
