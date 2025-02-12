@@ -81,13 +81,15 @@ func (r *SyncWorker) Process(ctx context.Context,
 	}
 
 	// Create job
-	syncJob, err := r.createJob(ctx, repo, progress)
+	syncJob, err := r.createJob(ctx, repo)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create sync job: %w", err)
 	}
 
+	results := &ResultsRecorder{message: "sync job started", progressFn: progress}
+
 	// Execute the job
-	results, syncError := syncJob.run(ctx, *job.Spec.Sync)
+	syncError := syncJob.run(ctx, *job.Spec.Sync, results)
 	// Initialize base job status
 	jobStatus := provisioning.JobStatus{
 		Started:  job.Status.Started,
@@ -102,27 +104,24 @@ func (r *SyncWorker) Process(ctx context.Context,
 		jobStatus.Message = syncError.Error()
 	}
 
-	// Process results if available
-	if results != nil {
-		jobStatus.Summary = results.Summary()
-		jobStatus.Errors = results.Errors()
+	jobStatus.Summary = results.Summary()
+	jobStatus.Errors = results.Errors()
 
-		// Check for errors in results
-		if len(jobStatus.Errors) > 0 && jobStatus.State != provisioning.JobStateError {
-			jobStatus.State = provisioning.JobStateError
-			jobStatus.Message = "sync completed with errors"
-		}
+	// Check for errors in results
+	if len(jobStatus.Errors) > 0 && jobStatus.State != provisioning.JobStateError {
+		jobStatus.State = provisioning.JobStateError
+		jobStatus.Message = "sync completed with errors"
+	}
 
-		// Override message if results have a custom message
-		if results.Message != "" && jobStatus.State != provisioning.JobStateError {
-			jobStatus.Message = results.Message
-		}
+	// Override message if results have a custom message
+	if results.message != "" && jobStatus.State != provisioning.JobStateError {
+		jobStatus.Message = results.message
 	}
 
 	// Create sync status and set hash if successful
 	syncStatus := jobStatus.ToSyncStatus(job.Name)
-	if syncStatus.State == provisioning.JobStateSuccess && results != nil {
-		syncStatus.Hash = results.Ref
+	if syncStatus.State == provisioning.JobStateSuccess {
+		syncStatus.Hash = results.ref
 	}
 
 	// Update the resource stats -- give the index some time to catch up
@@ -154,10 +153,7 @@ func (r *SyncWorker) Process(ctx context.Context,
 }
 
 // start a job and run it
-func (r *SyncWorker) createJob(ctx context.Context,
-	repo repository.Repository,
-	progress jobs.ProgressFn,
-) (*syncJob, error) {
+func (r *SyncWorker) createJob(ctx context.Context, repo repository.Repository) (*syncJob, error) {
 	cfg := repo.Config()
 	if !cfg.Spec.Sync.Enabled {
 		return nil, errors.New("sync is not enabled")
@@ -175,7 +171,6 @@ func (r *SyncWorker) createJob(ctx context.Context,
 
 	job := &syncJob{
 		repository: repo,
-		progress:   progress,
 		parser:     parser,
 		lister:     r.lister,
 		folders: dynamicClient.Resource(schema.GroupVersionResource{
@@ -210,9 +205,7 @@ func (r *SyncWorker) patchStatus(ctx context.Context, repo *provisioning.Reposit
 
 // created once for each sync execution
 type syncJob struct {
-	repository repository.Repository
-	progress   jobs.ProgressFn
-
+	repository   repository.Repository
 	parser       *resources.Parser
 	lister       resources.ResourceLister
 	folders      dynamic.ResourceInterface
@@ -220,7 +213,7 @@ type syncJob struct {
 	folderLookup *resources.FolderTree
 }
 
-func (r *syncJob) run(ctx context.Context, options provisioning.SyncJobOptions) (*ResultsRecorder, error) {
+func (r *syncJob) run(ctx context.Context, options provisioning.SyncJobOptions, results *ResultsRecorder) error {
 	// Ensure the configured folder exists and is managed by the repository
 	cfg := r.repository.Config()
 	rootFolder := resources.RootFolder(cfg)
@@ -229,7 +222,7 @@ func (r *syncJob) run(ctx context.Context, options provisioning.SyncJobOptions) 
 			ID:    rootFolder, // will not change if exists
 			Title: cfg.Spec.Title,
 		}, ""); err != nil {
-			return nil, fmt.Errorf("unable to create root folder: %w", err)
+			return fmt.Errorf("unable to create root folder: %w", err)
 		}
 	}
 
@@ -240,59 +233,61 @@ func (r *syncJob) run(ctx context.Context, options provisioning.SyncJobOptions) 
 	if versionedRepo != nil {
 		currentRef, err = versionedRepo.LatestRef(ctx)
 		if err != nil {
-			return nil, fmt.Errorf("getting latest ref: %w", err)
+			return fmt.Errorf("getting latest ref: %w", err)
 		}
+		results.SetRef(currentRef)
 
 		if cfg.Status.Sync.Hash != "" && options.Incremental {
 			if currentRef == cfg.Status.Sync.Hash {
-				return &ResultsRecorder{Message: "same commit as last sync"}, nil
+				results.SetMessage("same commit as last sync")
+				return nil
 			}
 
-			results, err := r.applyVersionedChanges(ctx, versionedRepo, cfg.Status.Sync.Hash, currentRef)
-			if err != nil {
-				return nil, fmt.Errorf("apply versioned changes: %w", err)
+			if err := r.applyVersionedChanges(ctx, versionedRepo, cfg.Status.Sync.Hash, currentRef, results); err != nil {
+				return fmt.Errorf("apply versioned changes: %w", err)
 			}
-			results.Ref = currentRef
-			return results, nil
+
+			return nil
 		}
 	}
 
 	// Read the complete change set
 	target, err := r.lister.List(ctx, cfg.Namespace, cfg.Name)
 	if err != nil {
-		return nil, fmt.Errorf("error listing current: %w", err)
+		return fmt.Errorf("error listing current: %w", err)
 	}
 	source, err := r.repository.ReadTree(ctx, currentRef)
 	if err != nil {
-		return nil, fmt.Errorf("error reading tree: %w", err)
+		return fmt.Errorf("error reading tree: %w", err)
 	}
 	changes, err := Changes(source, target)
 	if err != nil {
-		return nil, fmt.Errorf("error calculating changes: %w", err)
+		return fmt.Errorf("error calculating changes: %w", err)
 	}
 
 	if len(changes) == 0 {
-		return &ResultsRecorder{Message: "no changes to sync", Ref: currentRef}, nil
+		results.SetMessage("no changes to sync")
+		return nil
 	}
 
 	// Load any existing folder information
 	r.folderLookup = resources.NewFolderTreeFromResourceList(target)
 
 	// Now apply the changes
-	results := r.applyChanges(ctx, changes)
-	results.Ref = currentRef
+	r.applyChanges(ctx, changes, results)
 
-	return results, nil
+	return nil
 }
 
-func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange) *ResultsRecorder {
+func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange, results *ResultsRecorder) {
 	// Do the longest paths first (important for delete)
 	sort.Slice(changes, func(i, j int) bool {
 		return len(changes[i].Path) > len(changes[j].Path)
 	})
 
-	results := &ResultsRecorder{Total: len(changes)}
+	results.SetMessage("replicating changes")
 	logger := logging.FromContext(ctx)
+
 	// Create folder structure first
 	for _, change := range changes {
 		if len(results.Errors()) > 20 {
@@ -306,18 +301,6 @@ func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange
 				Error:  errors.New("too many errors"),
 			})
 			continue
-		}
-
-		jobStatus := provisioning.JobStatus{
-			State:    provisioning.JobStateWorking,
-			Message:  "replicating changes",
-			Errors:   results.Errors(),
-			Progress: results.Progress(),
-			Summary:  results.Summary(),
-		}
-
-		if err := r.progress(ctx, jobStatus); err != nil {
-			logger.Warn("error notifying progress", "err", err)
 		}
 
 		if change.Action == repository.FileActionDeleted {
@@ -362,24 +345,23 @@ func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange
 		}
 		results.Record(result)
 	}
-
-	return results
 }
 
 // Convert git changes into resource file changes
-func (r *syncJob) applyVersionedChanges(ctx context.Context, repo repository.VersionedRepository, previousRef, currentRef string) (*ResultsRecorder, error) {
+func (r *syncJob) applyVersionedChanges(ctx context.Context, repo repository.VersionedRepository, previousRef, currentRef string, results *ResultsRecorder) error {
 	diff, err := repo.CompareFiles(ctx, previousRef, currentRef)
 	if err != nil {
-		return nil, fmt.Errorf("compare files error: %w", err)
+		return fmt.Errorf("compare files error: %w", err)
 	}
 
-	results := &ResultsRecorder{Total: len(diff)}
 	if len(diff) < 1 {
-		results.Message = "no changes detected between commits"
-		return nil, nil
+		results.SetMessage("no changes detected between commits")
+		return nil
 	}
 
 	logger := logging.FromContext(ctx)
+	results.SetMessage("replicating versioned changes")
+
 	for _, change := range diff {
 		if len(results.Errors()) > 20 {
 			results.Record(Result{
@@ -389,18 +371,6 @@ func (r *syncJob) applyVersionedChanges(ctx context.Context, repo repository.Ver
 				Error:  errors.New("too many errors"),
 			})
 			continue
-		}
-
-		jobStatus := provisioning.JobStatus{
-			State:    provisioning.JobStateWorking,
-			Message:  "replicating versioned changes",
-			Errors:   results.Errors(),
-			Progress: results.Progress(),
-			Summary:  results.Summary(),
-		}
-
-		if err := r.progress(ctx, jobStatus); err != nil {
-			logger.Warn("error notifying progress", "err", err)
 		}
 
 		switch change.Action {
@@ -434,7 +404,7 @@ func (r *syncJob) applyVersionedChanges(ctx context.Context, repo repository.Ver
 		}
 	}
 
-	return results, nil
+	return nil
 }
 
 func (r *syncJob) deleteObject(ctx context.Context, path string, ref string) Result {

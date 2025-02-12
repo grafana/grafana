@@ -1,7 +1,10 @@
 package sync
 
 import (
+	"context"
+
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 )
 
@@ -15,10 +18,11 @@ type Result struct {
 }
 
 type ResultsRecorder struct {
-	Total   int
-	Ref     string
-	Message string
-	results []Result
+	Total      int
+	ref        string
+	message    string
+	results    []Result
+	progressFn jobs.ProgressFn
 }
 
 func (r *ResultsRecorder) Record(result Result) {
@@ -26,6 +30,25 @@ func (r *ResultsRecorder) Record(result Result) {
 		r.results = make([]Result, 0)
 	}
 	r.results = append(r.results, result)
+
+	// TODO: merge the notifier with this logic
+	r.UpdateProgress()
+}
+
+func (r *ResultsRecorder) SetMessage(msg string) {
+	r.message = msg
+}
+
+func (r *ResultsRecorder) GetMessage() string {
+	return r.message
+}
+
+func (r *ResultsRecorder) SetRef(ref string) {
+	r.ref = ref
+}
+
+func (r *ResultsRecorder) GetRef() string {
+	return r.ref
 }
 
 func (r *ResultsRecorder) Summary() []*provisioning.JobResourceSummary {
@@ -105,4 +128,22 @@ func (r *ResultsRecorder) Errors() []string {
 	}
 
 	return errors
+}
+
+func (r *ResultsRecorder) UpdateProgress() {
+	jobStatus := provisioning.JobStatus{
+		State:    provisioning.JobStateWorking,
+		Message:  r.message,
+		Errors:   r.Errors(),
+		Progress: r.Progress(),
+		Summary:  r.Summary(),
+	}
+
+	// TODO: Solve logger issue
+
+	r.progressFn(context.Background(), jobStatus)
+	// err != nil{
+	// if _ := r.progress(ctx, jobStatus); err != nil {
+	// logger.Warn("error notifying progress", "err", err)
+	// }
 }
