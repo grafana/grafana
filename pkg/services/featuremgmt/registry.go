@@ -1810,7 +1810,7 @@ var (
 		},
 		{
 			Name:         "alertingJiraIntegration",
-			Description:  "Enables the new Jira integration for conteact points in cloud alert managers.",
+			Description:  "Enables the new Jira integration for contact points in cloud alert managers.",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaAlertingSquad,
 			FrontendOnly: true,
