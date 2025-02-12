@@ -22,6 +22,7 @@ import { AngularDeprecation } from '../../scene/angular/AngularDeprecation';
 import { setDashboardPanelContext } from '../../scene/setDashboardPanelContext';
 import { DashboardLayoutManager } from '../../scene/types/DashboardLayoutManager';
 import { getDashboardSceneFor, getPanelIdForVizPanel, getVizPanelKeyForPanelId } from '../../utils/utils';
+import { ElementPanelMappingService } from '../ElementPanelMappingService';
 import { transformMappingsToV1 } from '../transformToV1TypesUtils';
 
 import { layoutSerializerRegistry } from './layoutSerializerRegistry';
@@ -153,10 +154,30 @@ export function getLayout(sceneState: DashboardLayoutManager): DashboardV2Spec['
   return registryItem.serializer.serialize(sceneState);
 }
 
+// Functions to manage the lookup table in dashboard scene that will hold element_identifer : panel_id
 export function getElementIdentifierForVizPanel(vizPanel: VizPanel): string {
-  const scene = getDashboardSceneFor(vizPanel);
-  const panelId = getPanelIdForVizPanel(vizPanel);
-  const elementKey = scene.state.elementPanelMapping?.getElementIdentifier(panelId) ?? 'DefaultName';
+  try {
+    const scene = getDashboardSceneFor(vizPanel);
+    const panelId = getPanelIdForVizPanel(vizPanel);
+    const elementKey = scene.state.elementPanelMapping?.getElementIdentifier(panelId);
+    if (!elementKey) {
+      throw new Error(`Identifier ${panelId} not found`);
+    }
+    return elementKey;
+  } catch (error) {
+    return `error in getElementIdentifierForVizPanel: ${error}`;
+  }
+}
 
-  return elementKey;
+export function setElementIdentifierForVizPanel(panelId: number): void {
+  const elementKey = 'element-panel-' + panelId;
+  const mapping = ElementPanelMappingService.getInstance();
+
+  mapping.set(elementKey, panelId);
+}
+
+export function removeElementIdentifierForVizPanel(vizPanel: VizPanel): void {
+  const elementKey = getElementIdentifierForVizPanel(vizPanel);
+  const mapping = ElementPanelMappingService.getInstance();
+  mapping.remove(elementKey);
 }
