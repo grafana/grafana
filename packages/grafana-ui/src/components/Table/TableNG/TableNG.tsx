@@ -543,7 +543,7 @@ export function TableNG(props: TableNGProps) {
           sortable: true,
           resizable: true,
         }}
-        rowHeight={(row) => (textWrap ? calculateRowHeight(row) : defaultRowHeight)}
+        rowHeight={!textWrap ? defaultRowHeight : (row) => calculateRowHeight(row)}
         // TODO: This doesn't follow current table behavior
         style={{ width, height }}
         renderers={{ renderRow: myRowRenderer }}
