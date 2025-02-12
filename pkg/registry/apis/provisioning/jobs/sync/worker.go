@@ -81,15 +81,14 @@ func (r *SyncWorker) Process(ctx context.Context,
 	}
 
 	// Create job
-	syncJob, err := r.createJob(ctx, repo)
+	progress := jobs.NewJobProgressRecorder(progressFn)
+	syncJob, err := r.createJob(ctx, repo, progress)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create sync job: %w", err)
 	}
 
-	progress := jobs.NewJobProgressRecorder(progressFn)
-
 	// Execute the job
-	syncError := syncJob.run(ctx, *job.Spec.Sync, progress)
+	syncError := syncJob.run(ctx, *job.Spec.Sync)
 	jobStatus := progress.Complete(ctx, syncError)
 
 	// Create sync status and set hash if successful
@@ -127,7 +126,7 @@ func (r *SyncWorker) Process(ctx context.Context,
 }
 
 // start a job and run it
-func (r *SyncWorker) createJob(ctx context.Context, repo repository.Repository) (*syncJob, error) {
+func (r *SyncWorker) createJob(ctx context.Context, repo repository.Repository, progress *jobs.JobProgressRecorder) (*syncJob, error) {
 	cfg := repo.Config()
 	if !cfg.Spec.Sync.Enabled {
 		return nil, errors.New("sync is not enabled")
@@ -145,6 +144,7 @@ func (r *SyncWorker) createJob(ctx context.Context, repo repository.Repository) 
 
 	job := &syncJob{
 		repository: repo,
+		progress:   progress,
 		parser:     parser,
 		lister:     r.lister,
 		folders: dynamicClient.Resource(schema.GroupVersionResource{
@@ -180,6 +180,7 @@ func (r *SyncWorker) patchStatus(ctx context.Context, repo *provisioning.Reposit
 // created once for each sync execution
 type syncJob struct {
 	repository   repository.Repository
+	progress     *jobs.JobProgressRecorder
 	parser       *resources.Parser
 	lister       resources.ResourceLister
 	folders      dynamic.ResourceInterface
@@ -187,7 +188,7 @@ type syncJob struct {
 	folderLookup *resources.FolderTree
 }
 
-func (r *syncJob) run(ctx context.Context, options provisioning.SyncJobOptions, progress *jobs.JobProgressRecorder) error {
+func (r *syncJob) run(ctx context.Context, options provisioning.SyncJobOptions) error {
 	// Ensure the configured folder exists and is managed by the repository
 	cfg := r.repository.Config()
 	rootFolder := resources.RootFolder(cfg)
@@ -209,15 +210,15 @@ func (r *syncJob) run(ctx context.Context, options provisioning.SyncJobOptions, 
 		if err != nil {
 			return fmt.Errorf("getting latest ref: %w", err)
 		}
-		progress.SetRef(currentRef)
+		r.progress.SetRef(currentRef)
 
 		if cfg.Status.Sync.Hash != "" && options.Incremental {
 			if currentRef == cfg.Status.Sync.Hash {
-				progress.SetMessage("same commit as last sync")
+				r.progress.SetMessage("same commit as last sync")
 				return nil
 			}
 
-			if err := r.applyVersionedChanges(ctx, versionedRepo, cfg.Status.Sync.Hash, currentRef, progress); err != nil {
+			if err := r.applyVersionedChanges(ctx, versionedRepo, cfg.Status.Sync.Hash, currentRef, r.progress); err != nil {
 				return fmt.Errorf("apply versioned changes: %w", err)
 			}
 
@@ -240,7 +241,7 @@ func (r *syncJob) run(ctx context.Context, options provisioning.SyncJobOptions, 
 	}
 
 	if len(changes) == 0 {
-		progress.SetMessage("no changes to sync")
+		r.progress.SetMessage("no changes to sync")
 		return nil
 	}
 
@@ -248,24 +249,24 @@ func (r *syncJob) run(ctx context.Context, options provisioning.SyncJobOptions, 
 	r.folderLookup = resources.NewFolderTreeFromResourceList(target)
 
 	// Now apply the changes
-	r.applyChanges(ctx, changes, progress)
+	r.applyChanges(ctx, changes)
 
 	return nil
 }
 
-func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange, progress *jobs.JobProgressRecorder) {
+func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange) {
 	// Do the longest paths first (important for delete)
 	sort.Slice(changes, func(i, j int) bool {
 		return len(changes[i].Path) > len(changes[j].Path)
 	})
 
-	progress.SetTotal(len(changes))
-	progress.SetMessage("replicating changes")
+	r.progress.SetTotal(len(changes))
+	r.progress.SetMessage("replicating changes")
 
 	// Create folder structure first
 	for _, change := range changes {
-		if len(progress.Errors()) > 20 {
-			progress.Record(ctx, jobs.JobResourceResult{
+		if len(r.progress.Errors()) > 20 {
+			r.progress.Record(ctx, jobs.JobResourceResult{
 				Name:     change.Existing.Name,
 				Resource: change.Existing.Resource,
 				Group:    change.Existing.Group,
@@ -288,45 +289,47 @@ func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange
 
 			if change.Existing == nil || change.Existing.Name == "" {
 				result.Error = errors.New("missing existing reference")
-				progress.Record(ctx, result)
+				r.progress.Record(ctx, result)
 				continue
 			}
 
 			client, err := r.client(change.Existing.Resource)
 			if err != nil {
 				result.Error = fmt.Errorf("unable to get client for deleted object: %w", err)
-				progress.Record(ctx, result)
+				r.progress.Record(ctx, result)
 				continue
 			}
 
 			result.Error = client.Delete(ctx, change.Existing.Name, metav1.DeleteOptions{})
-			progress.Record(ctx, result)
+			r.progress.Record(ctx, result)
 			continue
 		}
 
 		// Write the resource file
-		progress.Record(ctx, r.writeResourceFromFile(ctx, change.Path, "", change.Action))
+		r.progress.Record(ctx, r.writeResourceFromFile(ctx, change.Path, "", change.Action))
 	}
+
+	r.progress.SetMessage("changes replicated")
 }
 
 // Convert git changes into resource file changes
-func (r *syncJob) applyVersionedChanges(ctx context.Context, repo repository.VersionedRepository, previousRef, currentRef string, progress *jobs.JobProgressRecorder) error {
+func (r *syncJob) applyVersionedChanges(ctx context.Context, repo repository.VersionedRepository, previousRef, currentRef string) error {
 	diff, err := repo.CompareFiles(ctx, previousRef, currentRef)
 	if err != nil {
 		return fmt.Errorf("compare files error: %w", err)
 	}
 
 	if len(diff) < 1 {
-		progress.SetMessage("no changes detected between commits")
+		r.progress.SetMessage("no changes detected between commits")
 		return nil
 	}
 
-	progress.SetTotal(len(diff))
-	progress.SetMessage("replicating versioned changes")
+	r.progress.SetTotal(len(diff))
+	r.progress.SetMessage("replicating versioned changes")
 
 	for _, change := range diff {
-		if len(progress.Errors()) > 20 {
-			progress.Record(ctx, jobs.JobResourceResult{
+		if len(r.progress.Errors()) > 20 {
+			r.progress.Record(ctx, jobs.JobResourceResult{
 				Path: change.Path,
 				// FIXME: should we use a skipped action instead? or a different action type?
 				Action: repository.FileActionIgnored,
@@ -337,21 +340,23 @@ func (r *syncJob) applyVersionedChanges(ctx context.Context, repo repository.Ver
 
 		switch change.Action {
 		case repository.FileActionCreated, repository.FileActionUpdated:
-			progress.Record(ctx, r.writeResourceFromFile(ctx, change.Path, change.Ref, change.Action))
+			r.progress.Record(ctx, r.writeResourceFromFile(ctx, change.Path, change.Ref, change.Action))
 		case repository.FileActionDeleted:
-			progress.Record(ctx, r.deleteObject(ctx, change.Path, change.PreviousRef))
+			r.progress.Record(ctx, r.deleteObject(ctx, change.Path, change.PreviousRef))
 		case repository.FileActionRenamed:
 			// 1. Delete
 			result := r.deleteObject(ctx, change.Path, change.PreviousRef)
 			if result.Error != nil {
-				progress.Record(ctx, result)
+				r.progress.Record(ctx, result)
 				continue
 			}
 
 			// 2. Create
-			progress.Record(ctx, r.writeResourceFromFile(ctx, change.Path, change.Ref, repository.FileActionCreated))
+			r.progress.Record(ctx, r.writeResourceFromFile(ctx, change.Path, change.Ref, repository.FileActionCreated))
 		}
 	}
+
+	r.progress.SetMessage("versioned changes replicated")
 
 	return nil
 }
@@ -537,9 +542,22 @@ func (r *syncJob) ensureFolderExists(ctx context.Context, folder resources.Folde
 		Timestamp: nil, // ???&info.Modified.Time,
 	})
 
+	result := jobs.JobResourceResult{
+		Name:     folder.ID,
+		Resource: folders.RESOURCE,
+		Group:    folders.GROUP,
+		Path:     folder.Path,
+		Action:   repository.FileActionCreated,
+		Error:    err,
+	}
+
 	if _, err := r.folders.Create(ctx, obj, metav1.CreateOptions{}); err != nil {
+		result.Error = fmt.Errorf("failed to create folder: %w", err)
+		r.progress.Record(ctx, result)
 		return fmt.Errorf("failed to create folder: %w", err)
 	}
+
+	r.progress.Record(ctx, result)
 
 	return nil
 }
