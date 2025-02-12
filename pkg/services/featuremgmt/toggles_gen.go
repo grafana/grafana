@@ -972,6 +972,6 @@ const (
 	FlagPluginsCDNSyncLoader = "pluginsCDNSyncLoader"
 
 	// FlagAlertingJiraIntegration
-	// Enables the new Jira integration for conteact points in cloud alert managers.
+	// Enables the new Jira integration for contact points in cloud alert managers.
 	FlagAlertingJiraIntegration = "alertingJiraIntegration"
 )
