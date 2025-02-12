@@ -47,7 +47,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/storage/legacysql/modecheck"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
@@ -138,7 +138,7 @@ type service struct {
 
 	authorizer        *authorizer.GrafanaAuthorizer
 	serverLockService builder.ServerLockService
-	storageStatus     modecheck.Service
+	storageStatus     dualwrite.Service
 	kvStore           kvstore.KVStore
 
 	pluginClient    plugins.Client
@@ -161,7 +161,7 @@ func ProvideService(
 	datasources datasource.ScopedPluginDatasourceProvider,
 	contextProvider datasource.PluginContextWrapper,
 	pluginStore pluginstore.Store,
-	storageStatus modecheck.Service,
+	storageStatus dualwrite.Service,
 	unified resource.ResourceClient,
 ) (*service, error) {
 	s := &service{

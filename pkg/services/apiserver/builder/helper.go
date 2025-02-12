@@ -33,7 +33,7 @@ import (
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
-	"github.com/grafana/grafana/pkg/storage/legacysql/modecheck"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 )
 
@@ -275,7 +275,7 @@ func InstallAPIs(
 	namespaceMapper request.NamespaceMapper,
 	kvStore grafanarest.NamespacedKVStore,
 	serverLock ServerLockService,
-	storageStatus modecheck.Service,
+	storageStatus dualwrite.Service,
 	optsregister apistore.StorageOptionsRegister,
 ) error {
 	// dual writing is only enabled when the storage type is not legacy.
@@ -287,8 +287,8 @@ func InstallAPIs(
 	if storageOpts.StorageType != options.StorageTypeLegacy {
 		dualWrite = func(gr schema.GroupResource, legacy grafanarest.LegacyStorage, storage grafanarest.Storage) (grafanarest.Storage, error) {
 			// Dashboards + Folders may be managed (depends on feature toggles and database state)
-			if storageStatus != nil && grafanarest.ShouldManageDualWriter(gr) {
-				return grafanarest.NewManagedDualWriter(storageStatus, gr, legacy, storage, reg)
+			if storageStatus != nil && dualwrite.ShouldManageDualWriter(gr) {
+				return dualwrite.NewManagedDualWriter(storageStatus, gr, legacy, storage, reg)
 			}
 
 			key := gr.String() // ${resource}.{group} eg playlists.playlist.grafana.app

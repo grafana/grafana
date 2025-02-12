@@ -155,8 +155,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/storage/legacysql/modecheck"
-	modecheckstore "github.com/grafana/grafana/pkg/storage/legacysql/modecheck/store"
+	legacydualwrite "github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
+	legacydualwritestore "github.com/grafana/grafana/pkg/storage/legacysql/dualwrite/store"
 	"github.com/grafana/grafana/pkg/storage/unified"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	unifiedsearch "github.com/grafana/grafana/pkg/storage/unified/search"
@@ -215,8 +215,8 @@ var wireBasicSet = wire.NewSet(
 	mssql.ProvideService,
 	store.ProvideEntityEventsService,
 	unified.ProvideUnifiedStorageClient,
-	modecheck.ProvideModeChecker,
-	modecheckstore.ProvideStorage,
+	legacydualwrite.ProvideModeChecker,
+	legacydualwritestore.ProvideStorage,
 	httpclientprovider.New,
 	wire.Bind(new(httpclient.Provider), new(*sdkhttpclient.Provider)),
 	serverlock.ProvideService,
