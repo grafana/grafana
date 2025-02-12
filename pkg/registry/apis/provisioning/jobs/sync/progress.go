@@ -3,12 +3,13 @@ package sync
 import (
 	"context"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 )
 
-type Result struct {
+type JobResourceResult struct {
 	Name     string
 	Resource string
 	Group    string
@@ -17,47 +18,46 @@ type Result struct {
 	Error    error
 }
 
-type ResultsRecorder struct {
-	Total      int
+type JobProgressRecorder struct {
+	total      int
 	ref        string
 	message    string
-	results    []Result
+	results    []JobResourceResult
 	progressFn jobs.ProgressFn
 }
 
-func (r *ResultsRecorder) Record(result Result) {
+func (r *JobProgressRecorder) Record(ctx context.Context, result JobResourceResult) {
 	if r.results == nil {
-		r.results = make([]Result, 0)
+		r.results = make([]JobResourceResult, 0)
 	}
 	r.results = append(r.results, result)
 
-	// TODO: merge the notifier with this logic
-	r.UpdateProgress()
+	r.UpdateProgress(ctx)
 }
 
-func (r *ResultsRecorder) SetMessage(msg string) {
+func (r *JobProgressRecorder) SetMessage(msg string) {
 	r.message = msg
 }
 
-func (r *ResultsRecorder) GetMessage() string {
+func (r *JobProgressRecorder) GetMessage() string {
 	return r.message
 }
 
-func (r *ResultsRecorder) SetRef(ref string) {
+func (r *JobProgressRecorder) SetRef(ref string) {
 	r.ref = ref
 }
 
-func (r *ResultsRecorder) GetRef() string {
+func (r *JobProgressRecorder) GetRef() string {
 	return r.ref
 }
 
-func (r *ResultsRecorder) Summary() []*provisioning.JobResourceSummary {
+func (r *JobProgressRecorder) Summary() []*provisioning.JobResourceSummary {
 	if len(r.results) == 0 {
 		return nil
 	}
 
 	// Group results by resource+group
-	groupedResults := make(map[string][]Result)
+	groupedResults := make(map[string][]JobResourceResult)
 	for _, result := range r.results {
 		key := result.Resource + ":" + result.Group
 		groupedResults[key] = append(groupedResults[key], result)
@@ -111,11 +111,11 @@ func (r *ResultsRecorder) Summary() []*provisioning.JobResourceSummary {
 	return summaries
 }
 
-func (r *ResultsRecorder) Progress() float64 {
-	return float64(r.Total - len(r.results)/r.Total*100)
+func (r *JobProgressRecorder) Progress() float64 {
+	return float64(r.total - len(r.results)/r.total*100)
 }
 
-func (r *ResultsRecorder) Errors() []string {
+func (r *JobProgressRecorder) Errors() []string {
 	if len(r.results) == 0 {
 		return nil
 	}
@@ -130,7 +130,7 @@ func (r *ResultsRecorder) Errors() []string {
 	return errors
 }
 
-func (r *ResultsRecorder) UpdateProgress() {
+func (r *JobProgressRecorder) UpdateProgress(ctx context.Context) {
 	jobStatus := provisioning.JobStatus{
 		State:    provisioning.JobStateWorking,
 		Message:  r.message,
@@ -139,11 +139,8 @@ func (r *ResultsRecorder) UpdateProgress() {
 		Summary:  r.Summary(),
 	}
 
-	// TODO: Solve logger issue
-
-	r.progressFn(context.Background(), jobStatus)
-	// err != nil{
-	// if _ := r.progress(ctx, jobStatus); err != nil {
-	// logger.Warn("error notifying progress", "err", err)
-	// }
+	logger := logging.FromContext(ctx)
+	if err := r.progressFn(ctx, jobStatus); err != nil {
+		logger.Warn("error notifying progress", "err", err)
+	}
 }

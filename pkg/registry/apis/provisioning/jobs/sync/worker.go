@@ -58,7 +58,7 @@ func (r *SyncWorker) IsSupported(ctx context.Context, job provisioning.Job) bool
 func (r *SyncWorker) Process(ctx context.Context,
 	repo repository.Repository,
 	job provisioning.Job,
-	progress jobs.ProgressFn,
+	progressFn jobs.ProgressFn,
 ) (*provisioning.JobStatus, error) {
 	ctx, cancel, err := k8sctx.Fork(ctx)
 	if err != nil {
@@ -86,10 +86,10 @@ func (r *SyncWorker) Process(ctx context.Context,
 		return nil, fmt.Errorf("failed to create sync job: %w", err)
 	}
 
-	results := &ResultsRecorder{message: "sync job started", progressFn: progress}
+	progress := &JobProgressRecorder{message: "sync job started", progressFn: progressFn}
 
 	// Execute the job
-	syncError := syncJob.run(ctx, *job.Spec.Sync, results)
+	syncError := syncJob.run(ctx, *job.Spec.Sync, progress)
 	// Initialize base job status
 	jobStatus := provisioning.JobStatus{
 		Started:  job.Status.Started,
@@ -104,24 +104,24 @@ func (r *SyncWorker) Process(ctx context.Context,
 		jobStatus.Message = syncError.Error()
 	}
 
-	jobStatus.Summary = results.Summary()
-	jobStatus.Errors = results.Errors()
+	jobStatus.Summary = progress.Summary()
+	jobStatus.Errors = progress.Errors()
 
-	// Check for errors in results
+	// Check for errors during execution
 	if len(jobStatus.Errors) > 0 && jobStatus.State != provisioning.JobStateError {
 		jobStatus.State = provisioning.JobStateError
 		jobStatus.Message = "sync completed with errors"
 	}
 
-	// Override message if results have a custom message
-	if results.message != "" && jobStatus.State != provisioning.JobStateError {
-		jobStatus.Message = results.message
+	// Override message if progress have a more explicit message
+	if progress.message != "" && jobStatus.State != provisioning.JobStateError {
+		jobStatus.Message = progress.message
 	}
 
 	// Create sync status and set hash if successful
 	syncStatus := jobStatus.ToSyncStatus(job.Name)
 	if syncStatus.State == provisioning.JobStateSuccess {
-		syncStatus.Hash = results.ref
+		syncStatus.Hash = progress.ref
 	}
 
 	// Update the resource stats -- give the index some time to catch up
@@ -213,7 +213,7 @@ type syncJob struct {
 	folderLookup *resources.FolderTree
 }
 
-func (r *syncJob) run(ctx context.Context, options provisioning.SyncJobOptions, results *ResultsRecorder) error {
+func (r *syncJob) run(ctx context.Context, options provisioning.SyncJobOptions, progress *JobProgressRecorder) error {
 	// Ensure the configured folder exists and is managed by the repository
 	cfg := r.repository.Config()
 	rootFolder := resources.RootFolder(cfg)
@@ -235,15 +235,15 @@ func (r *syncJob) run(ctx context.Context, options provisioning.SyncJobOptions, 
 		if err != nil {
 			return fmt.Errorf("getting latest ref: %w", err)
 		}
-		results.SetRef(currentRef)
+		progress.SetRef(currentRef)
 
 		if cfg.Status.Sync.Hash != "" && options.Incremental {
 			if currentRef == cfg.Status.Sync.Hash {
-				results.SetMessage("same commit as last sync")
+				progress.SetMessage("same commit as last sync")
 				return nil
 			}
 
-			if err := r.applyVersionedChanges(ctx, versionedRepo, cfg.Status.Sync.Hash, currentRef, results); err != nil {
+			if err := r.applyVersionedChanges(ctx, versionedRepo, cfg.Status.Sync.Hash, currentRef, progress); err != nil {
 				return fmt.Errorf("apply versioned changes: %w", err)
 			}
 
@@ -266,7 +266,7 @@ func (r *syncJob) run(ctx context.Context, options provisioning.SyncJobOptions, 
 	}
 
 	if len(changes) == 0 {
-		results.SetMessage("no changes to sync")
+		progress.SetMessage("no changes to sync")
 		return nil
 	}
 
@@ -274,24 +274,24 @@ func (r *syncJob) run(ctx context.Context, options provisioning.SyncJobOptions, 
 	r.folderLookup = resources.NewFolderTreeFromResourceList(target)
 
 	// Now apply the changes
-	r.applyChanges(ctx, changes, results)
+	r.applyChanges(ctx, changes, progress)
 
 	return nil
 }
 
-func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange, results *ResultsRecorder) {
+func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange, progress *JobProgressRecorder) {
 	// Do the longest paths first (important for delete)
 	sort.Slice(changes, func(i, j int) bool {
 		return len(changes[i].Path) > len(changes[j].Path)
 	})
 
-	results.SetMessage("replicating changes")
+	progress.SetMessage("replicating changes")
 	logger := logging.FromContext(ctx)
 
 	// Create folder structure first
 	for _, change := range changes {
-		if len(results.Errors()) > 20 {
-			results.Record(Result{
+		if len(progress.Errors()) > 20 {
+			progress.Record(ctx, JobResourceResult{
 				Name:     change.Existing.Name,
 				Resource: change.Existing.Resource,
 				Group:    change.Existing.Group,
@@ -304,7 +304,7 @@ func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange
 		}
 
 		if change.Action == repository.FileActionDeleted {
-			result := Result{
+			result := JobResourceResult{
 				Name:     change.Existing.Name,
 				Resource: change.Existing.Resource,
 				Group:    change.Existing.Group,
@@ -315,7 +315,7 @@ func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange
 			if change.Existing == nil || change.Existing.Name == "" {
 				logger.Error("deleted file is missing existing reference", "file", change.Path)
 				result.Error = errors.New("missing existing reference")
-				results.Record(result)
+				progress.Record(ctx, result)
 				continue
 			}
 
@@ -323,7 +323,7 @@ func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange
 			if err != nil {
 				logger.Error("unable to get client for deleted object", "file", change.Path, "err", err, "obj", change.Existing)
 				result.Error = fmt.Errorf("unable to get client for deleted object: %w", err)
-				results.Record(result)
+				progress.Record(ctx, result)
 				continue
 			}
 
@@ -333,8 +333,7 @@ func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange
 			}
 
 			result.Error = err
-			results.Record(result)
-
+			progress.Record(ctx, result)
 			continue
 		}
 
@@ -343,28 +342,28 @@ func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange
 		if result.Error != nil {
 			logger.Error("write resource error", "file", change.Path, "err", result.Error)
 		}
-		results.Record(result)
+		progress.Record(ctx, result)
 	}
 }
 
 // Convert git changes into resource file changes
-func (r *syncJob) applyVersionedChanges(ctx context.Context, repo repository.VersionedRepository, previousRef, currentRef string, results *ResultsRecorder) error {
+func (r *syncJob) applyVersionedChanges(ctx context.Context, repo repository.VersionedRepository, previousRef, currentRef string, progress *JobProgressRecorder) error {
 	diff, err := repo.CompareFiles(ctx, previousRef, currentRef)
 	if err != nil {
 		return fmt.Errorf("compare files error: %w", err)
 	}
 
 	if len(diff) < 1 {
-		results.SetMessage("no changes detected between commits")
+		progress.SetMessage("no changes detected between commits")
 		return nil
 	}
 
 	logger := logging.FromContext(ctx)
-	results.SetMessage("replicating versioned changes")
+	progress.SetMessage("replicating versioned changes")
 
 	for _, change := range diff {
-		if len(results.Errors()) > 20 {
-			results.Record(Result{
+		if len(progress.Errors()) > 20 {
+			progress.Record(ctx, JobResourceResult{
 				Path: change.Path,
 				// FIXME: should we use a skipped action instead? or a different action type?
 				Action: repository.FileActionIgnored,
@@ -379,19 +378,19 @@ func (r *syncJob) applyVersionedChanges(ctx context.Context, repo repository.Ver
 			if result.Error != nil {
 				logger.Error("error writing", "change", change, "err", err)
 			}
-			results.Record(result)
+			progress.Record(ctx, result)
 		case repository.FileActionDeleted:
 			result := r.deleteObject(ctx, change.Path, change.PreviousRef)
 			if result.Error != nil {
 				logger.Error("error deleting", "change", change, "err", result.Error)
 			}
-			results.Record(result)
+			progress.Record(ctx, result)
 		case repository.FileActionRenamed:
 			// 1. Delete
 			result := r.deleteObject(ctx, change.Path, change.PreviousRef)
 			if result.Error != nil {
 				logger.Error("error deleting", "change", change, "err", result.Error)
-				results.Record(result)
+				progress.Record(ctx, result)
 				continue
 			}
 
@@ -400,16 +399,16 @@ func (r *syncJob) applyVersionedChanges(ctx context.Context, repo repository.Ver
 			if result.Error != nil {
 				logger.Warn("error writing", "change", change, "err", result.Error)
 			}
-			results.Record(result)
+			progress.Record(ctx, result)
 		}
 	}
 
 	return nil
 }
 
-func (r *syncJob) deleteObject(ctx context.Context, path string, ref string) Result {
+func (r *syncJob) deleteObject(ctx context.Context, path string, ref string) JobResourceResult {
 	info, err := r.repository.Read(ctx, path, ref)
-	result := Result{
+	result := JobResourceResult{
 		Path:   path,
 		Action: repository.FileActionDeleted,
 	}
@@ -446,8 +445,8 @@ func (r *syncJob) deleteObject(ctx context.Context, path string, ref string) Res
 	return result
 }
 
-func (r *syncJob) writeResourceFromFile(ctx context.Context, path string, ref string, action repository.FileAction) Result {
-	result := Result{
+func (r *syncJob) writeResourceFromFile(ctx context.Context, path string, ref string, action repository.FileAction) JobResourceResult {
+	result := JobResourceResult{
 		Path:   path,
 		Action: action,
 	}
