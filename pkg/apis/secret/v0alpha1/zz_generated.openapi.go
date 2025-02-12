@@ -674,14 +674,14 @@ func schema_pkg_apis_secret_v0alpha1_SecureValueSpec(ref common.ReferenceCallbac
 							Format:      "",
 						},
 					},
-					"audiences": {
+					"decrypters": {
 						VendorExtensible: spec.VendorExtensible{
 							Extensions: spec.Extensions{
 								"x-kubernetes-list-type": "atomic",
 							},
 						},
 						SchemaProps: spec.SchemaProps{
-							Description: "The Audiences that are allowed to decrypt this secret Support and behavior is still TBD, but could likely look like: * testdata.grafana.app/{name1} * testdata.grafana.app/{name2} * runner.k6.grafana.app/*  -- allow any k6 test runner Rather than a string pattern, we may want a more explicit object: [{ group:\"testdata.grafana.app\", name=\"name1\"},\n { group:\"runner.k6.grafana.app\"}]",
+							Description: "The Decrypters that are allowed to decrypt this secret Support and behavior is still TBD, but could likely look like: * testdata.grafana.app/{name1} * testdata.grafana.app/{name2} * runner.k6.grafana.app/*  -- allow any k6 test runner Rather than a string pattern, we may want a more explicit object: [{ group:\"testdata.grafana.app\", name=\"name1\"},\n { group:\"runner.k6.grafana.app\"}]",
 							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
@@ -695,7 +695,7 @@ func schema_pkg_apis_secret_v0alpha1_SecureValueSpec(ref common.ReferenceCallbac
 						},
 					},
 				},
-				Required: []string{"title", "audiences"},
+				Required: []string{"title", "decrypters"},
 			},
 		},
 	}

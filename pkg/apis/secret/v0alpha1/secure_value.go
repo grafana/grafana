@@ -32,7 +32,7 @@ type SecureValueSpec struct {
 	// Name of the keeper, being the actual storage of the secure value.
 	Keeper string `json:"keeper,omitempty"`
 
-	// The Audiences that are allowed to decrypt this secret
+	// The Decrypters that are allowed to decrypt this secret
 	// Support and behavior is still TBD, but could likely look like:
 	// * testdata.grafana.app/{name1}
 	// * testdata.grafana.app/{name2}
@@ -41,8 +41,7 @@ type SecureValueSpec struct {
 	// [{ group:"testdata.grafana.app", name="name1"},
 	//  { group:"runner.k6.grafana.app"}]
 	// +listType=atomic
-	// TODO: look into making this a set
-	Audiences []string `json:"audiences"`
+	Decrypters []string `json:"decrypters"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
