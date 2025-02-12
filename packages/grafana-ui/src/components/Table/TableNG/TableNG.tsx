@@ -527,7 +527,7 @@ export function TableNG(props: TableNGProps) {
         DEFAULT_CELL_PADDING
       );
     },
-    [expandedRows, defaultRowHeight, columnTypes, headerCellRefs, osContext, defaultLineHeight, DEFAULT_CELL_PADDING]
+    [expandedRows, defaultRowHeight, columnTypes, headerCellRefs, osContext, defaultLineHeight]
   );
 
   // Return the data grid
