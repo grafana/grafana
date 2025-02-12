@@ -291,7 +291,7 @@ func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange
 	logger := logging.FromContext(ctx)
 	// Create folder structure first
 	for _, change := range changes {
-		if len(r.jobStatus.Errors) > 20 {
+		if len(results.Errors()) > 20 {
 			results.Record(Result{
 				// TODO: this is probably having an unknown resource for Create
 				Name:     change.Existing.Name,
@@ -307,7 +307,6 @@ func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange
 
 		if err := r.progress(ctx, *r.jobStatus); err != nil {
 			logger.Warn("error notifying progress", "err", err)
-			r.jobStatus.Errors = append(r.jobStatus.Errors, fmt.Errorf("error notifying progress: %w", err).Error())
 		}
 
 		if change.Action == repository.FileActionDeleted {
@@ -372,7 +371,7 @@ func (r *syncJob) applyVersionedChanges(ctx context.Context, repo repository.Ver
 
 	logger := logging.FromContext(ctx)
 	for _, change := range diff {
-		if len(r.jobStatus.Errors) > 20 {
+		if len(results.Errors()) > 20 {
 			results.Record(Result{
 				Path: change.Path,
 				// TODO: should we use a skipped action instead? or a different action type?
