@@ -620,6 +620,18 @@ export const defaultQueryGroupKind = (): QueryGroupKind => ({
 	spec: defaultQueryGroupSpec(),
 });
 
+export interface TimeRangeOption {
+	display: string;
+	from: string;
+	to: string;
+}
+
+export const defaultTimeRangeOption = (): TimeRangeOption => ({
+	display: "Last 6 hours",
+	from: "now-6h",
+	to: "now",
+});
+
 // Time configuration
 // It defines the default time config for the time picker, the refresh picker for the specific dashboard.
 export interface TimeSettingsSpec {
@@ -638,13 +650,13 @@ export interface TimeSettingsSpec {
 	// v1: timepicker.refresh_intervals
 	autoRefreshIntervals: string[];
 	// Selectable options available in the time picker dropdown. Has no effect on provisioned dashboard.
-	// v1: timepicker.time_options , not exposed in the UI
-	quickRanges: string[];
+	// v1: timepicker.quick_ranges , not exposed in the UI
+	quickRanges?: TimeRangeOption[];
 	// Whether timepicker is visible or not.
 	// v1: timepicker.hidden
 	hideTimepicker: boolean;
 	// Day when the week starts. Expressed by the name of the day in lowercase, e.g. "monday".
-	weekStart: string;
+	weekStart?: "saturday" | "monday" | "sunday";
 	// The month that the fiscal year starts on. 0 = January, 11 = December
 	fiscalYearStartMonth: number;
 	// Override the now time by entering a time delay. Use this option to accommodate known delays in data aggregation to avoid null values.
@@ -669,19 +681,7 @@ export const defaultTimeSettingsSpec = (): TimeSettingsSpec => ({
 "2h",
 "1d",
 ],
-	quickRanges: [
-"5m",
-"15m",
-"1h",
-"6h",
-"12h",
-"24h",
-"2d",
-"7d",
-"30d",
-],
 	hideTimepicker: false,
-	weekStart: "",
 	fiscalYearStartMonth: 0,
 });
 
