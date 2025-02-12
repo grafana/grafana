@@ -4,6 +4,8 @@ import { ReplaySubject } from 'rxjs';
 import { PluginExtensionAddedFunctionConfig } from '@grafana/data';
 
 import * as errors from '../errors';
+import { isGrafanaDevMode } from '../utils';
+import { isAddedFunctionMetaInfoMissing } from '../validators';
 
 import { PluginExtensionConfigs, Registry, RegistryType } from './Registry';
 
@@ -47,6 +49,10 @@ export class AddedFunctionsRegistry extends Registry<AddedFunctionsRegistryItem[
         continue;
       }
 
+      if (pluginId !== 'grafana' && isGrafanaDevMode() && isAddedFunctionMetaInfoMissing(pluginId, config, configLog)) {
+        continue;
+      }
+
       const extensionPointIds = Array.isArray(config.targets) ? config.targets : [config.targets];
       for (const extensionPointId of extensionPointIds) {
         const pointIdLog = configLog.child({ extensionPointId });
@@ -56,6 +62,7 @@ export class AddedFunctionsRegistry extends Registry<AddedFunctionsRegistryItem[
           fn: config.fn,
           description: config.description,
           title: config.title,
+          extensionPointId,
         };
 
         pointIdLog.debug('Added function extension successfully registered');
