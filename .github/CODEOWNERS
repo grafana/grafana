@@ -803,6 +803,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/trivy-scan.yml @grafana/grafana-backend-services-squad
 /.github/workflows/changelog.yml @zserge
 /.github/workflows/actions/changelog @zserge
+/.github/workflows/visual-regression-testing.yml @grafana/dataviz-squad
 
 # Generated files not requiring owner approval
 /packages/grafana-data/src/types/featureToggles.gen.ts @grafanabot
