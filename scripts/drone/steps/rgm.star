@@ -47,7 +47,7 @@ def rgm_artifacts_step(
             "_EXPERIMENTAL_DAGGER_CLOUD_TOKEN": from_secret(rgm_dagger_token),
         },
         "commands": [
-            "docker run --privileged --rm tonistiigi/binfmt --install all",
+            "docker run --privileged --rm tonistiigi/binfmt:qemu-v9.2.0-46 --install all",
             cmd +
             "--go-version={} ".format(golang_version) +
             "--yarn-cache=$$YARN_CACHE_FOLDER " +
@@ -78,7 +78,7 @@ def rgm_build_docker_step(ubuntu, alpine, depends_on = ["yarn-install"], file = 
             "_EXPERIMENTAL_DAGGER_CLOUD_TOKEN": from_secret(rgm_dagger_token),
         },
         "commands": [
-            "docker run --privileged --rm tonistiigi/binfmt --install all",
+            "docker run --privileged --rm tonistiigi/binfmt:qemu-v9.2.0-46 --install all",
             "/src/grafana-build artifacts " +
             "-a docker:grafana:linux/amd64 " +
             "-a docker:grafana:linux/amd64:ubuntu " +
