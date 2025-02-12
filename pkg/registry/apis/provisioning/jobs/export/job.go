@@ -6,18 +6,15 @@ import (
 	"fmt"
 	"time"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/k8sctx"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
@@ -63,13 +60,13 @@ func newExportJob(ctx context.Context,
 		logger:           logging.FromContext(ctx),
 		progress:         progress,
 		progressLast:     time.Now(),
-		progressInterval: time.Second * 10,
+		progressInterval: time.Second * 5,
 
 		prefix:         prefix,
 		ref:            options.Branch,
 		keepIdentifier: options.Identifier,
 		addAuthorInfo:  options.History,
-		withHistory:    options.History,
+		withHistory:    false, // options.History,
 
 		jobStatus: &provisioning.JobStatus{
 			State: provisioning.JobStateWorking,
@@ -81,6 +78,7 @@ func newExportJob(ctx context.Context,
 // Send progress messages to any listeners
 func (r *exportJob) maybeNotify(ctx context.Context) {
 	if time.Since(r.progressLast) > r.progressInterval {
+		r.progressLast = time.Now()
 		err := r.progress(ctx, *r.jobStatus)
 		if err != nil {
 			r.logger.Warn("unable to send progress", "err", err)
@@ -100,40 +98,6 @@ func (r *exportJob) getSummary(gr schema.GroupResource) *provisioning.JobResourc
 		r.jobStatus.Summary = append(r.jobStatus.Summary, summary)
 	}
 	return summary
-}
-
-func (r *exportJob) export(ctx context.Context, kind schema.GroupVersionResource) error {
-	ctx, cancel, err := k8sctx.Fork(ctx)
-	if err != nil {
-		return err
-	}
-	defer cancel()
-
-	r.jobStatus.Message = "Exporting " + kind.Resource + "..."
-	r.maybeNotify(ctx)
-	client := r.client.Resource(kind)
-	summary := r.getSummary(kind.GroupResource())
-
-	continueToken := ""
-	for {
-		list, err := client.List(ctx, metav1.ListOptions{Limit: 100, Continue: continueToken})
-		if err != nil {
-			return fmt.Errorf("error executing list: %w", err)
-		}
-
-		for _, item := range list.Items {
-			if err = r.add(ctx, summary, &item); err != nil {
-				return fmt.Errorf("error adding value: %w", err)
-			}
-		}
-
-		continueToken = list.GetContinue()
-		if continueToken == "" {
-			break
-		}
-	}
-
-	return nil
 }
 
 func (r *exportJob) add(ctx context.Context, summary *provisioning.JobResourceSummary, obj *unstructured.Unstructured) error {
@@ -174,11 +138,16 @@ func (r *exportJob) add(ctx context.Context, summary *provisioning.JobResourceSu
 	// Get the absolute path of the folder
 	fid, ok := r.foldersTree.DirPath(folder, "")
 	if !ok {
-		logger.Error("folder of item was not in tree of repository")
-		return fmt.Errorf("folder of item was not in tree of repository")
+		// continue, but keep metadata
+		fid = resources.Folder{
+			Path: "__folder_not_found",
+		}
+		r.logger.Error("folder of item was not in tree of repository")
+		// return fmt.Errorf("folder of item was not in tree of repository")
+	} else {
+		delete(obj.Object, "metadata")
 	}
 
-	delete(obj.Object, "metadata")
 	if r.keepIdentifier {
 		item.SetName(name) // keep the identifier in the metadata
 	}
@@ -209,7 +178,7 @@ func (r *exportJob) add(ctx context.Context, summary *provisioning.JobResourceSu
 	err = r.target.Write(ctx, fileName, r.ref, body, commitMessage)
 	if err != nil {
 		summary.Error++
-		logger.Error("failed to write a file in repository", "error", err)
+		r.logger.Error("failed to write a file in repository", "error", err)
 		if len(summary.Errors) < 20 {
 			summary.Errors = append(summary.Errors, fmt.Sprintf("error writing: %s", fileName))
 		}

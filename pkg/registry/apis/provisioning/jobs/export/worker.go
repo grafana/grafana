@@ -8,6 +8,7 @@ import (
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/k8sctx"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	gogit "github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/go-git"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -41,6 +42,15 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 		}, nil
 	}
 
+	ctx, cancel, err := k8sctx.Fork(ctx)
+	if err != nil {
+		return &provisioning.JobStatus{
+			State:  provisioning.JobStateError,
+			Errors: []string{"Exporting to a read only repository is not supported"},
+		}, nil
+	}
+	defer cancel()
+
 	options := job.Spec.Export
 	if options == nil {
 		return &provisioning.JobStatus{
@@ -49,7 +59,6 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 		}, nil
 	}
 
-	var err error
 	var buffered *gogit.GoGitRepo
 	if repo.Config().Spec.GitHub != nil {
 		buffered, err = gogit.Clone(ctx, repo.Config(), gogit.GoGitCloneOptions{

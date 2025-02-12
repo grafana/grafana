@@ -8,7 +8,7 @@ import (
 )
 
 var ErrValidation = fmt.Errorf("invalid object specification")
-var ErrNotFound = fmt.Errorf("object not found")
+var ErrNotFound = fmt.Errorf("object not found (ngalert)")
 
 var (
 	ErrVersionConflict = errutil.Conflict("alerting.notifications.conflict")
