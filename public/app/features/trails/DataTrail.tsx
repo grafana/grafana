@@ -669,6 +669,11 @@ function getVariableSet(
         // since we only support prometheus datasources, this is always true
         supportsMultiValueOperators: true,
         allowCustomValue: true,
+        expressionBuilder: (filters: AdHocVariableFilter[]) => {
+          return [...getBaseFiltersForMetric(metric), ...filters]
+            .map((filter) => `${filter.key}${filter.operator}"${filter.value}"`)
+            .join(',');
+        },
       }),
       ...getVariablesWithOtelJoinQueryConstant(otelJoinQuery ?? ''),
       new ConstantVariable({
