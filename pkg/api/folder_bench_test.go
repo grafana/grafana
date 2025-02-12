@@ -27,7 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/permreg"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana"
+	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -465,7 +465,7 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 		nil, sc.db, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest())
 	acSvc := acimpl.ProvideOSSService(
 		sc.cfg, acdb.ProvideService(sc.db), actionSets, localcache.ProvideService(),
-		features, tracing.InitializeTracerForTest(), zanzana.NewNoopClient(), sc.db, permreg.ProvidePermissionRegistry(), nil, folderServiceWithFlagOn,
+		features, tracing.InitializeTracerForTest(), sc.db, permreg.ProvidePermissionRegistry(), nil, folderServiceWithFlagOn,
 	)
 	folderPermissions, err := ossaccesscontrol.ProvideFolderPermissions(
 		cfg, features, routing.NewRouteRegister(), sc.db, ac, license, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc, actionSets)
@@ -473,7 +473,7 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 	dashboardSvc, err := dashboardservice.ProvideDashboardServiceImpl(
 		sc.cfg, dashStore, folderStore,
 		features, folderPermissions, ac,
-		folderServiceWithFlagOn, fStore, nil, nil, nil, nil, quotaSrv, nil, nil,
+		folderServiceWithFlagOn, fStore, nil, client.MockTestRestConfig{}, nil, quotaSrv, nil, nil,
 	)
 	require.NoError(b, err)
 

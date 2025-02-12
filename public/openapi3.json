@@ -3957,6 +3957,20 @@
         },
         "type": "array"
       },
+      "ConvertPrometheusResponse": {
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "errorType": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "CookiePreferences": {
         "properties": {
           "analytics": {},
@@ -8595,6 +8609,21 @@
         },
         "type": "object"
       },
+      "PrometheusNamespace": {
+        "properties": {
+          "Body": {
+            "additionalProperties": {
+              "items": {
+                "$ref": "#/components/schemas/PrometheusRuleGroup"
+              },
+              "type": "array"
+            },
+            "description": "in: body",
+            "type": "object"
+          }
+        },
+        "type": "object"
+      },
       "PrometheusRemoteWriteTargetJSON": {
         "properties": {
           "data_source_uid": {
@@ -8605,6 +8634,55 @@
           },
           "remote_write_path": {
             "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "PrometheusRule": {
+        "properties": {
+          "Alert": {
+            "type": "string"
+          },
+          "Annotations": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "Expr": {
+            "type": "string"
+          },
+          "For": {
+            "type": "string"
+          },
+          "KeepFiringFor": {
+            "type": "string"
+          },
+          "Labels": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "Record": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "PrometheusRuleGroup": {
+        "properties": {
+          "Interval": {
+            "$ref": "#/components/schemas/Duration"
+          },
+          "Name": {
+            "type": "string"
+          },
+          "Rules": {
+            "items": {
+              "$ref": "#/components/schemas/PrometheusRule"
+            },
+            "type": "array"
           }
         },
         "type": "object"
@@ -12557,7 +12635,6 @@
         "type": "object"
       },
       "alertGroups": {
-        "description": "AlertGroups alert groups",
         "items": {
           "$ref": "#/components/schemas/alertGroup"
         },
