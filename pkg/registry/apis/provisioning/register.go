@@ -81,6 +81,7 @@ type APIBuilder struct {
 	repositoryLister  listers.RepositoryLister
 	legacyMigrator    legacy.LegacyMigrator
 	storageStatus     dualwrite.Service
+	unified           resource.ResourceClient
 }
 
 // NewAPIBuilder creates an API builder.
@@ -92,7 +93,7 @@ func NewAPIBuilder(
 	webhookSecretKey string,
 	features featuremgmt.FeatureToggles,
 	render rendering.Service,
-	index resource.RepositoryIndexClient,
+	unified resource.ResourceClient,
 	blobstore blob.PublicBlobStore,
 	clonedir string, // where repo clones are managed
 	configProvider apiserver.RestConfigProvider,
@@ -113,10 +114,11 @@ func NewAPIBuilder(
 		},
 		render:         render,
 		clonedir:       clonedir,
-		resourceLister: resources.NewResourceLister(index),
+		resourceLister: resources.NewResourceLister(unified),
 		blobstore:      blobstore,
 		legacyMigrator: legacyMigrator,
 		storageStatus:  storageStatus,
+		unified:        unified,
 	}
 }
 
@@ -463,11 +465,18 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			}
 			b.repositoryLister = repoInformer.Lister()
 
-			b.jobs.Register(export.NewExportWorker(b.client, b.legacyMigrator, b.storageStatus, b.clonedir))
+			b.jobs.Register(export.NewExportWorker(
+				b.client,
+				b.legacyMigrator,
+				b.storageStatus,
+				b.clonedir,
+			))
 			b.jobs.Register(sync.NewSyncWorker(
 				c.ProvisioningV0alpha1(),
 				b.parsers,
 				b.resourceLister,
+				b.storageStatus,
+				b.unified,
 			))
 
 			renderer := pullrequest.NewRenderer(b.render, b.blobstore)
