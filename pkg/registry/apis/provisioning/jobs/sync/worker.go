@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"path"
-	"reflect"
 	"sort"
 	"strings"
 	"time"
@@ -103,9 +102,7 @@ func (r *SyncWorker) Process(ctx context.Context,
 		}
 	}
 
-	if !reflect.DeepEqual(syncJob.summary, provisioning.JobResourceSummary{}) {
-		syncJob.jobStatus.Summary = []*provisioning.JobResourceSummary{&syncJob.summary}
-	}
+	syncJob.jobStatus.Summary = syncJob.results.Summary()
 
 	syncStatus := syncJob.jobStatus.ToSyncStatus(job.Name)
 	if syncStatus.State == provisioning.JobStateSuccess {
@@ -162,10 +159,7 @@ func (r *SyncWorker) createJob(ctx context.Context,
 	}
 
 	job := &syncJob{
-		summary: provisioning.JobResourceSummary{
-			Resource: "all",
-			Group:    "all",
-		},
+		results:    &ResultsRecorder{},
 		repository: repo,
 		options:    options,
 		progress:   progress,
@@ -218,8 +212,7 @@ type syncJob struct {
 
 	jobStatus *provisioning.JobStatus
 
-	// FIXME: generic summary for now (not typed)
-	summary provisioning.JobResourceSummary
+	results *ResultsRecorder
 }
 
 func (r *syncJob) run(ctx context.Context) (string, error) {
@@ -324,7 +317,7 @@ func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange
 				r.jobStatus.Errors = append(r.jobStatus.Errors,
 					fmt.Sprintf("error deleting %s: %s // %s", change.Existing.Resource, change.Existing.Name, change.Path))
 			} else {
-				r.summary.Delete++
+				// r.results.Delete++
 			}
 			continue
 		}
@@ -424,7 +417,15 @@ func (r *syncJob) deleteObject(ctx context.Context, path string, ref string) err
 	if err != nil {
 		return fmt.Errorf("deleting error: %s, %w", path, err)
 	}
-	r.summary.Delete++
+
+	r.results.Record(Result{
+		Name:     objName,
+		Resource: "",        // TODO: is this correct?
+		Group:    gvk.Group, // TODO: is this correct?
+		Path:     path,
+		Action:   repository.FileActionDeleted,
+		Error:    err,
+	})
 
 	return nil
 }
@@ -458,18 +459,32 @@ func (r *syncJob) writeResourceFromFile(ctx context.Context, path string, ref st
 	switch action {
 	case repository.FileActionCreated:
 		_, err = parsed.Client.Create(ctx, parsed.Obj, metav1.CreateOptions{})
+		r.results.Record(Result{
+			Name:     parsed.Obj.GetName(),
+			Resource: parsed.GVR.String(), // TODO: is this correct?
+			Group:    parsed.GVK.Group,    // TODO: is this correct?
+			Path:     path,
+			Action:   action,
+			Error:    err,
+		})
+
 		if err != nil {
 			return err
 		}
-		r.summary.Create++
-
 	case repository.FileActionUpdated:
 		_, err = parsed.Client.Update(ctx, parsed.Obj, metav1.UpdateOptions{})
+		r.results.Record(Result{
+			Name:     parsed.Obj.GetName(),
+			Resource: parsed.GVR.String(), // TODO: is this correct?
+			Group:    parsed.GVK.Group,    // TODO: is this correct?
+			Path:     path,
+			Action:   action,
+			Error:    err,
+		})
+
 		if err != nil {
 			return err
 		}
-		r.summary.Update++
-
 	default:
 		return fmt.Errorf("unexpected action: %s", action)
 	}
