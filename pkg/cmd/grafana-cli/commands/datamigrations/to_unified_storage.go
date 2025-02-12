@@ -187,7 +187,7 @@ func promptYesNo(prompt string) (bool, error) {
 }
 
 func newUnifiedClient(cfg *setting.Cfg, sqlStore db.DB) (resource.ResourceClient, error) {
-	return unified.ProvideUnifiedStorageClient(cfg,
+	unifiedClientService := unified.ProvideClientServiceImpl(cfg,
 		featuremgmt.WithFeatures(), // none??
 		sqlStore,
 		tracing.NewNoopTracerService(),
@@ -195,6 +195,7 @@ func newUnifiedClient(cfg *setting.Cfg, sqlStore db.DB) (resource.ResourceClient
 		authlib.FixedAccessClient(true), // always true!
 		nil,                             // document supplier
 	)
+	return unifiedClientService.GetResourceClient()
 }
 
 func newParquetClient(file *os.File) (resource.BatchStoreClient, error) {
