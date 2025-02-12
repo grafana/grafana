@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/query"
 	"github.com/grafana/grafana/pkg/registry/apis/scope"
 	"github.com/grafana/grafana/pkg/registry/apis/secret"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/decrypt"
 	"github.com/grafana/grafana/pkg/registry/apis/service"
 	"github.com/grafana/grafana/pkg/registry/apis/userstorage"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
@@ -30,6 +31,9 @@ var WireSet = wire.NewSet(
 	plugincontext.ProvideService,
 	wire.Bind(new(datasource.PluginContextWrapper), new(*plugincontext.Provider)),
 	datasource.ProvideDefaultPluginConfigs,
+
+	// Provides a secret decryption client for single tenants to depend on.
+	decrypt.ProvideDecryptClientFunc,
 
 	// Each must be added here *and* in the ServiceSink above
 	dashboardinternal.RegisterAPIService,

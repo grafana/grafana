@@ -42,12 +42,12 @@ func (s *fakeKeeperStorage) Create(ctx context.Context, k *secretv0alpha1.Keeper
 	return &v, nil
 }
 
-func (s *fakeKeeperStorage) Read(ctx context.Context, nn xkube.NameNamespace) (*secretv0alpha1.Keeper, error) {
-	ns, ok := s.values[nn.Namespace.String()]
+func (s *fakeKeeperStorage) Read(ctx context.Context, namespace xkube.Namespace, name string) (*secretv0alpha1.Keeper, error) {
+	ns, ok := s.values[namespace.String()]
 	if !ok {
 		return nil, contracts.ErrSecureValueNotFound
 	}
-	v, ok := ns[nn.Name]
+	v, ok := ns[name]
 	if !ok {
 		return nil, contracts.ErrSecureValueNotFound
 	}
@@ -73,17 +73,17 @@ func (s *fakeKeeperStorage) Update(ctx context.Context, nk *secretv0alpha1.Keepe
 	return &v, nil
 }
 
-func (s *fakeKeeperStorage) Delete(ctx context.Context, nn xkube.NameNamespace) error {
-	ns, ok := s.values[nn.Namespace.String()]
+func (s *fakeKeeperStorage) Delete(ctx context.Context, namespace xkube.Namespace, name string) error {
+	ns, ok := s.values[namespace.String()]
 	if !ok {
 		return contracts.ErrSecureValueNotFound
 	}
-	_, ok = ns[nn.Name]
+	_, ok = ns[name]
 	if !ok {
 		return contracts.ErrSecureValueNotFound
 	}
 	time.AfterFunc(s.latency, func() {
-		delete(ns, nn.Name)
+		delete(ns, name)
 	})
 
 	return nil

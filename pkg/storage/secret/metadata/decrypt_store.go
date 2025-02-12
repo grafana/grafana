@@ -36,14 +36,14 @@ type decryptStorage struct {
 	keepers map[keepertypes.KeeperType]keepertypes.Keeper
 }
 
-func (s *decryptStorage) Decrypt(ctx context.Context, nn xkube.NameNamespace) (secretv0alpha1.ExposedSecureValue, error) {
+func (s *decryptStorage) Decrypt(ctx context.Context, namespace xkube.Namespace, name string) (secretv0alpha1.ExposedSecureValue, error) {
 	// TODO: do proper checks here.
 	_, ok := claims.AuthInfoFrom(ctx)
 	if !ok {
 		return "", fmt.Errorf("missing auth info in context")
 	}
 
-	exposedValue, err := s.decryptFromKeeper(ctx, nn)
+	exposedValue, err := s.decryptFromKeeper(ctx, namespace, name)
 	if err != nil {
 		return "", fmt.Errorf("decrypt from keeper: %w", err)
 	}
@@ -51,8 +51,8 @@ func (s *decryptStorage) Decrypt(ctx context.Context, nn xkube.NameNamespace) (s
 	return exposedValue, nil
 }
 
-func (s *decryptStorage) decryptFromKeeper(ctx context.Context, nn xkube.NameNamespace) (secretv0alpha1.ExposedSecureValue, error) {
-	row := &secureValueDB{Name: nn.Name, Namespace: nn.Namespace.String()}
+func (s *decryptStorage) decryptFromKeeper(ctx context.Context, namespace xkube.Namespace, name string) (secretv0alpha1.ExposedSecureValue, error) {
+	row := &secureValueDB{Namespace: namespace.String(), Name: name}
 	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		found, err := sess.Get(row)
 		if err != nil {
@@ -74,7 +74,7 @@ func (s *decryptStorage) decryptFromKeeper(ctx context.Context, nn xkube.NameNam
 		if !exists {
 			return "", fmt.Errorf("could not find default keeper")
 		}
-		exposedValue, err := keeper.Expose(ctx, nil, nn.Namespace.String(), keepertypes.ExternalID(row.ExternalID))
+		exposedValue, err := keeper.Expose(ctx, nil, namespace.String(), keepertypes.ExternalID(row.ExternalID))
 		if err != nil {
 			return "", fmt.Errorf("failed to store in default keeper: %w", err)
 		}
