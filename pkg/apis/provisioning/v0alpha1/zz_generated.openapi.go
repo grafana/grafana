@@ -575,12 +575,6 @@ func schema_pkg_apis_provisioning_v0alpha1_JobResourceSummary(ref common.Referen
 							Format: "int64",
 						},
 					},
-					"ignore": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"integer"},
-							Format: "int64",
-						},
-					},
 					"write": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"integer"},
