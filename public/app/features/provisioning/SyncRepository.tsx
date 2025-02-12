@@ -5,9 +5,7 @@ import { AppEvents } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
 import { Button, ConfirmModal } from '@grafana/ui';
 
-import { Loader } from '../plugins/admin/components/Loader';
-
-import { Repository, useCreateRepositorySyncMutation, useListRepositoryQuery } from './api';
+import { Repository, useCreateRepositorySyncMutation } from './api';
 import { PROVISIONING_URL } from './constants';
 
 interface Props {
@@ -15,7 +13,6 @@ interface Props {
 }
 
 export function SyncRepository({ repository }: Props) {
-  const query = useListRepositoryQuery({});
   const [syncResource, syncQuery] = useCreateRepositorySyncMutation();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const navigate = useNavigate();
@@ -43,10 +40,6 @@ export function SyncRepository({ repository }: Props) {
     syncResource({ name, body: { incremental: false } }); // will queue a full resync job
     setIsModalOpen(false);
   };
-
-  if (query.isLoading) {
-    return <Loader />;
-  }
 
   const isHealthy = Boolean(repository.status?.health.healthy);
 
