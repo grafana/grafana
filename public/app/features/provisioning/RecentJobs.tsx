@@ -167,10 +167,7 @@ function EmptyState() {
 }
 
 export function RecentJobs({ repo }: Props) {
-  const [items, query] = useRepositoryJobs({
-    name: repo.metadata?.name,
-    watch: true,
-  });
+  const [items, query] = useRepositoryJobs({ name: repo.metadata?.name, watch: true });
   const jobColumns = useMemo(() => getJobColumns(), []);
 
   if (query.isLoading) {
