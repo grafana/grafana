@@ -66,7 +66,7 @@ func newExportJob(ctx context.Context,
 		ref:            options.Branch,
 		keepIdentifier: options.Identifier,
 		addAuthorInfo:  options.History,
-		withHistory:    false, // options.History,
+		withHistory:    options.History,
 
 		jobStatus: &provisioning.JobStatus{
 			State: provisioning.JobStateWorking,
