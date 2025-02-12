@@ -14,7 +14,9 @@ type Result struct {
 	Error    error
 }
 
-type ResultsRecorder struct{}
+type ResultsRecorder struct {
+	Ref string
+}
 
 func (r *ResultsRecorder) Record(result Result) {
 }

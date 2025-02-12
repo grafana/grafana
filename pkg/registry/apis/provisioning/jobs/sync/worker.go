@@ -87,7 +87,7 @@ func (r *SyncWorker) Process(ctx context.Context,
 	}
 
 	// Execute the job
-	ref, syncError := syncJob.run(ctx)
+	ref, results, syncError := syncJob.run(ctx)
 
 	if syncError != nil {
 		syncJob.jobStatus = &provisioning.JobStatus{
@@ -95,13 +95,14 @@ func (r *SyncWorker) Process(ctx context.Context,
 			Started:  job.Status.Started,
 			Finished: time.Now().UnixMilli(),
 			Message:  syncError.Error(),
-			Errors:   syncJob.results.Errors(),
 		}
 	}
 
-	syncJob.jobStatus.Summary = syncJob.results.Summary()
+	if results != nil {
+		syncJob.jobStatus.Summary = results.Summary()
+		syncJob.jobStatus.Errors = results.Errors()
+	}
 
-	syncJob.jobStatus.Errors = syncJob.results.Errors()
 	if len(syncJob.jobStatus.Errors) > 0 {
 		syncJob.jobStatus.State = provisioning.JobStateError
 	}
@@ -161,7 +162,6 @@ func (r *SyncWorker) createJob(ctx context.Context,
 	}
 
 	job := &syncJob{
-		results:    &ResultsRecorder{},
 		repository: repo,
 		options:    options,
 		progress:   progress,
@@ -213,11 +213,9 @@ type syncJob struct {
 	folderLookup *resources.FolderTree
 
 	jobStatus *provisioning.JobStatus
-
-	results *ResultsRecorder
 }
 
-func (r *syncJob) run(ctx context.Context) (string, error) {
+func (r *syncJob) run(ctx context.Context) (string, *ResultsRecorder, error) {
 	// Ensure the configured folder exists and is managed by the repository
 	cfg := r.repository.Config()
 	rootFolder := resources.RootFolder(cfg)
@@ -226,7 +224,7 @@ func (r *syncJob) run(ctx context.Context) (string, error) {
 			ID:    rootFolder, // will not change if exists
 			Title: cfg.Spec.Title,
 		}, ""); err != nil {
-			return "", fmt.Errorf("unable to create root folder: %w", err)
+			return "", nil, fmt.Errorf("unable to create root folder: %w", err)
 		}
 	}
 
@@ -237,60 +235,64 @@ func (r *syncJob) run(ctx context.Context) (string, error) {
 	if versionedRepo != nil {
 		currentRef, err = versionedRepo.LatestRef(ctx)
 		if err != nil {
-			return "", fmt.Errorf("getting latest ref: %w", err)
+			return "", nil, fmt.Errorf("getting latest ref: %w", err)
 		}
 
 		if cfg.Status.Sync.Hash != "" && r.options.Incremental {
 			if currentRef == cfg.Status.Sync.Hash {
 				message := "same commit as last sync"
 				r.jobStatus.Message = message
-				return currentRef, nil
+				return currentRef, nil, nil
 			}
-			return currentRef, r.applyVersionedChanges(ctx, versionedRepo, cfg.Status.Sync.Hash, currentRef)
+
+			results, err := r.applyVersionedChanges(ctx, versionedRepo, cfg.Status.Sync.Hash, currentRef)
+			if err != nil {
+				return "", nil, fmt.Errorf("apply versioned changes: %w", err)
+			}
+
+			return currentRef, results, nil
 		}
 	}
 
 	// Read the complete change set
 	target, err := r.lister.List(ctx, cfg.Namespace, cfg.Name)
 	if err != nil {
-		return "", fmt.Errorf("error listing current: %w", err)
+		return "", nil, fmt.Errorf("error listing current: %w", err)
 	}
 	source, err := r.repository.ReadTree(ctx, currentRef)
 	if err != nil {
-		return "", fmt.Errorf("error reading tree: %w", err)
+		return "", nil, fmt.Errorf("error reading tree: %w", err)
 	}
 	changes, err := Changes(source, target)
 	if err != nil {
-		return "", fmt.Errorf("error calculating changes: %w", err)
+		return "", nil, fmt.Errorf("error calculating changes: %w", err)
 	}
 
 	if len(changes) == 0 {
 		r.jobStatus.Message = "no changes to sync"
-		return currentRef, nil
+		return currentRef, nil, nil
 	}
 
 	// Load any existing folder information
 	r.folderLookup = resources.NewFolderTreeFromResourceList(target)
 
 	// Now apply the changes
-	if err := r.applyChanges(ctx, changes); err != nil {
-		return "", fmt.Errorf("apply changes: %w", err)
-	}
-
-	return currentRef, nil
+	return currentRef, r.applyChanges(ctx, changes), nil
 }
 
-func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange) error {
+func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange) *ResultsRecorder {
 	// Do the longest paths first (important for delete)
 	sort.Slice(changes, func(i, j int) bool {
 		return len(changes[i].Path) > len(changes[j].Path)
 	})
 
+	results := &ResultsRecorder{}
+
 	logger := logging.FromContext(ctx)
 	// Create folder structure first
 	for _, change := range changes {
 		if len(r.jobStatus.Errors) > 20 {
-			r.results.Record(Result{
+			results.Record(Result{
 				// TODO: this is probably having an unknown resource for Create
 				Name:     change.Existing.Name,
 				Resource: change.Existing.Resource,
@@ -320,7 +322,7 @@ func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange
 			if change.Existing == nil || change.Existing.Name == "" {
 				logger.Error("deleted file is missing existing reference", "file", change.Path)
 				result.Error = errors.New("missing existing reference")
-				r.results.Record(result)
+				results.Record(result)
 				continue
 			}
 
@@ -328,7 +330,7 @@ func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange
 			if err != nil {
 				logger.Error("unable to get client for deleted object", "file", change.Path, "err", err, "obj", change.Existing)
 				result.Error = fmt.Errorf("unable to get client for deleted object: %w", err)
-				r.results.Record(result)
+				results.Record(result)
 				continue
 			}
 
@@ -338,37 +340,40 @@ func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange
 			}
 
 			result.Error = err
-			r.results.Record(result)
+			results.Record(result)
 
 			continue
 		}
 
 		// Write the resource file
-		err := r.writeResourceFromFile(ctx, change.Path, "", change.Action)
-		if err != nil {
-			logger.Error("write resource error", "file", change.Path, "err", err)
+		result := r.writeResourceFromFile(ctx, change.Path, "", change.Action)
+		if result.Error != nil {
+			logger.Error("write resource error", "file", change.Path, "err", result.Error)
 		}
+		results.Record(result)
 	}
 
-	return nil
+	return results
 }
 
 // Convert git changes into resource file changes
-func (r *syncJob) applyVersionedChanges(ctx context.Context, repo repository.VersionedRepository, previousRef, currentRef string) error {
+func (r *syncJob) applyVersionedChanges(ctx context.Context, repo repository.VersionedRepository, previousRef, currentRef string) (*ResultsRecorder, error) {
 	diff, err := repo.CompareFiles(ctx, previousRef, currentRef)
 	if err != nil {
-		return fmt.Errorf("compare files error: %w", err)
+		return nil, fmt.Errorf("compare files error: %w", err)
 	}
 
 	if len(diff) < 1 {
 		r.jobStatus.Message = "no changes detected between commits"
-		return nil
+		return nil, nil
 	}
+
+	results := &ResultsRecorder{}
 
 	logger := logging.FromContext(ctx)
 	for _, change := range diff {
 		if len(r.jobStatus.Errors) > 20 {
-			r.results.Record(Result{
+			results.Record(Result{
 				Path: change.Path,
 				// TODO: should we use a skipped action instead? or a different action type?
 				Action: repository.FileActionIgnored,
@@ -383,42 +388,53 @@ func (r *syncJob) applyVersionedChanges(ctx context.Context, repo repository.Ver
 
 		switch change.Action {
 		case repository.FileActionCreated, repository.FileActionUpdated:
-			err = r.writeResourceFromFile(ctx, change.Path, change.Ref, change.Action)
-			if err != nil {
+			result := r.writeResourceFromFile(ctx, change.Path, change.Ref, change.Action)
+			if result.Error != nil {
 				logger.Error("error writing", "change", change, "err", err)
 			}
+			results.Record(result)
 		case repository.FileActionDeleted:
-			err = r.deleteObject(ctx, change.Path, change.PreviousRef)
-			if err != nil {
-				logger.Error("error deleting", "change", change, "err", err)
+			result := r.deleteObject(ctx, change.Path, change.PreviousRef)
+			if result.Error != nil {
+				logger.Error("error deleting", "change", change, "err", result.Error)
 			}
+			results.Record(result)
 		case repository.FileActionRenamed:
 			// 1. Delete
-			err = r.deleteObject(ctx, change.Path, change.PreviousRef)
-			if err != nil {
-				logger.Error("error deleting", "change", change, "err", err)
+			result := r.deleteObject(ctx, change.Path, change.PreviousRef)
+			if result.Error != nil {
+				logger.Error("error deleting", "change", change, "err", result.Error)
+				results.Record(result)
 				continue
 			}
+
 			// 2. Create
-			err = r.writeResourceFromFile(ctx, change.Path, change.Ref, repository.FileActionCreated)
-			if err != nil {
-				logger.Warn("error writing", "change", change, "err", err)
+			result = r.writeResourceFromFile(ctx, change.Path, change.Ref, repository.FileActionCreated)
+			if result.Error != nil {
+				logger.Warn("error writing", "change", change, "err", result.Error)
 			}
+			results.Record(result)
 		}
 	}
 
-	return nil
+	return results, nil
 }
 
-func (r *syncJob) deleteObject(ctx context.Context, path string, ref string) error {
+func (r *syncJob) deleteObject(ctx context.Context, path string, ref string) Result {
 	info, err := r.repository.Read(ctx, path, ref)
 	if err != nil {
-		return err
+		return Result{
+			Path:  path,
+			Error: fmt.Errorf("failed to read file: %w", err),
+		}
 	}
 
 	obj, gvk, _ := resources.DecodeYAMLObject(bytes.NewBuffer(info.Data))
 	if obj == nil {
-		return fmt.Errorf("no object found in: %s", path)
+		return Result{
+			Path:  path,
+			Error: errors.New("no object found"),
+		}
 	}
 
 	// Find the referenced file
@@ -426,45 +442,74 @@ func (r *syncJob) deleteObject(ctx context.Context, path string, ref string) err
 
 	client, err := r.client(gvk.Kind)
 	if err != nil {
-		return err
+		return Result{
+			Name:     objName,
+			Resource: "",        // TODO: is this correct?
+			Group:    gvk.Group, // TODO: is this correct?
+			Path:     path,
+			Action:   repository.FileActionDeleted,
+			Error:    fmt.Errorf("unable to get client for deleted object: %w", err),
+		}
 	}
 	err = client.Delete(ctx, objName, metav1.DeleteOptions{})
 	if err != nil {
-		return fmt.Errorf("deleting error: %s, %w", path, err)
+		return Result{
+			Name:     objName,
+			Resource: "",        // TODO: is this correct?
+			Group:    gvk.Group, // TODO: is this correct?
+			Path:     path,
+			Action:   repository.FileActionDeleted,
+			Error:    fmt.Errorf("failed to delete: %w", err),
+		}
 	}
 
-	r.results.Record(Result{
+	return Result{
 		Name:     objName,
 		Resource: "",        // TODO: is this correct?
 		Group:    gvk.Group, // TODO: is this correct?
 		Path:     path,
 		Action:   repository.FileActionDeleted,
 		Error:    err,
-	})
-
-	return nil
+	}
 }
 
-func (r *syncJob) writeResourceFromFile(ctx context.Context, path string, ref string, action repository.FileAction) error {
+func (r *syncJob) writeResourceFromFile(ctx context.Context, path string, ref string, action repository.FileAction) Result {
 	if resources.ShouldIgnorePath(path) {
-		return nil // skip
+		return Result{
+			// TODO: should we use a specific error for the ignored?
+			Path:   path,
+			Action: repository.FileActionIgnored,
+			Error:  nil,
+		}
 	}
 
 	// Make sure the parent folders exist
 	folder, err := r.ensureFolderPathExists(ctx, path)
 	if err != nil {
-		return err // fail when we can not make folders
+		return Result{
+			Path:   path,
+			Action: action,
+			Error:  fmt.Errorf("failed to ensure folder exists: %w", err),
+		}
 	}
 
 	// Read the referenced file
 	fileInfo, err := r.repository.Read(ctx, path, ref)
 	if err != nil {
-		return err
+		return Result{
+			Path:   path,
+			Action: action,
+			Error:  fmt.Errorf("failed to read file: %w", err),
+		}
 	}
 
 	parsed, err := r.parser.Parse(ctx, fileInfo, false) // no validation
 	if err != nil {
-		return err
+		return Result{
+			Path:   path,
+			Action: action,
+			Error:  fmt.Errorf("failed to parse file: %w", err),
+		}
 	}
 
 	parsed.Meta.SetFolder(folder)
@@ -474,36 +519,34 @@ func (r *syncJob) writeResourceFromFile(ctx context.Context, path string, ref st
 	switch action {
 	case repository.FileActionCreated:
 		_, err = parsed.Client.Create(ctx, parsed.Obj, metav1.CreateOptions{})
-		r.results.Record(Result{
+		return Result{
 			Name:     parsed.Obj.GetName(),
 			Resource: parsed.GVR.String(), // TODO: is this correct?
 			Group:    parsed.GVK.Group,    // TODO: is this correct?
 			Path:     path,
 			Action:   action,
 			Error:    err,
-		})
-
-		if err != nil {
-			return err
 		}
 	case repository.FileActionUpdated:
 		_, err = parsed.Client.Update(ctx, parsed.Obj, metav1.UpdateOptions{})
-		r.results.Record(Result{
+		return Result{
 			Name:     parsed.Obj.GetName(),
 			Resource: parsed.GVR.String(), // TODO: is this correct?
 			Group:    parsed.GVK.Group,    // TODO: is this correct?
 			Path:     path,
 			Action:   action,
 			Error:    err,
-		})
-
-		if err != nil {
-			return err
 		}
 	default:
-		return fmt.Errorf("unexpected action: %s", action)
+		return Result{
+			Name:     parsed.Obj.GetName(),
+			Resource: parsed.GVR.String(), // TODO: is this correct?
+			Group:    parsed.GVK.Group,    // TODO: is this correct?
+			Path:     path,
+			Action:   action,
+			Error:    errors.New("unexpected action"),
+		}
 	}
-	return nil
 }
 
 // ensureFolderPathExists creates the folder structure in the cluster.
