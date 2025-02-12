@@ -63,6 +63,10 @@ export function getCellHeight(
   return defaultRowHeight;
 }
 
+/**
+ * getRowHeight determines cell height based on cell width + text length. Used
+ * for when textWrap is enabled.
+ */
 export function getRowHeight(
   row: Record<string, string>,
   columnTypes: Record<string, string>,
@@ -70,12 +74,8 @@ export function getRowHeight(
   osContext: OffscreenCanvasRenderingContext2D | null,
   lineHeight: number,
   defaultRowHeight: number,
-  padding: number,
-  textWrap: boolean
+  padding: number
 ): number {
-  if (!textWrap) {
-    return defaultRowHeight;
-  }
   /**
    * 0. loop through all cells in row
    * 1. find text cell in row

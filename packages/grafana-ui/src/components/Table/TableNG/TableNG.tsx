@@ -508,6 +508,28 @@ export function TableNG(props: TableNGProps) {
     );
   };
 
+  const calculateRowHeight = useCallback(
+    (row: TableRow) => {
+      // Logic for sub-tables
+      if (Number(row.__depth) === 1 && !expandedRows.includes(Number(row.__index))) {
+        return 0;
+      } else if (Number(row.__depth) === 1 && expandedRows.includes(Number(row.__index))) {
+        const headerCount = row.data.meta?.custom?.noHeader ? 0 : 1;
+        return defaultRowHeight * (row.data.length + headerCount); // TODO this probably isn't very robust
+      }
+      return getRowHeight(
+        row,
+        columnTypes,
+        headerCellRefs,
+        osContext,
+        defaultLineHeight,
+        defaultRowHeight,
+        DEFAULT_CELL_PADDING
+      );
+    },
+    [expandedRows, defaultRowHeight, columnTypes, headerCellRefs, osContext, defaultLineHeight]
+  );
+
   // Return the data grid
   return (
     <>
@@ -521,24 +543,7 @@ export function TableNG(props: TableNGProps) {
           sortable: true,
           resizable: true,
         }}
-        rowHeight={(row) => {
-          if (Number(row.__depth) === 1 && !expandedRows.includes(Number(row.__index))) {
-            return 0;
-          } else if (Number(row.__depth) === 1 && expandedRows.includes(Number(row.__index))) {
-            const headerCount = row.data.meta?.custom?.noHeader ? 0 : 1;
-            return defaultRowHeight * (row.data.length + headerCount); // TODO this probably isn't very robust
-          }
-          return getRowHeight(
-            row,
-            columnTypes,
-            headerCellRefs,
-            osContext,
-            defaultLineHeight,
-            defaultRowHeight,
-            DEFAULT_CELL_PADDING,
-            textWrap
-          );
-        }}
+        rowHeight={textWrap ? calculateRowHeight : defaultRowHeight}
         // TODO: This doesn't follow current table behavior
         style={{ width, height }}
         renderers={{ renderRow: myRowRenderer }}
