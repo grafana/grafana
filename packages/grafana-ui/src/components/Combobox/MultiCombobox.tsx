@@ -27,6 +27,7 @@ import { useComboboxFloat } from './useComboboxFloat';
 import { MAX_SHOWN_ITEMS, useMeasureMulti } from './useMeasureMulti';
 import { useMultiInputAutoSize } from './useMultiInputAutoSize';
 import { useOptions } from './useOptions';
+import { isNewGroup } from './utils';
 
 interface MultiComboboxBaseProps<T extends string | number> extends Omit<ComboboxBaseProps<T>, 'value' | 'onChange'> {
   value?: T[] | Array<ComboboxOption<T>>;
@@ -373,7 +374,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
                           <div className={styles.optionGroup}>
                             <OptionListItem
                               label={item.group ?? t('combobox.group.undefined', 'No group')}
-                              id={id}
+                              id={id} // TODO: uses same ID twice
                               isGroup={true}
                             />
                           </div>
@@ -453,17 +454,3 @@ function isComboboxOptions<T extends string | number>(
 ): value is Array<ComboboxOption<T>> {
   return typeof value[0] === 'object';
 }
-
-const isNewGroup = <T extends string | number>(option: ComboboxOption<T>, prevOption?: ComboboxOption<T>) => {
-  const currentGroup = option.group;
-
-  if (!currentGroup) {
-    return prevOption?.group ? true : false;
-  }
-
-  if (!prevOption) {
-    return true;
-  }
-
-  return prevOption.group !== currentGroup;
-};
