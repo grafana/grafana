@@ -1,6 +1,8 @@
 import { debounce } from 'lodash';
 import { useState, useCallback, useMemo } from 'react';
 
+import { t } from '../../utils/i18n';
+
 import { itemFilter } from './filter';
 import { ComboboxOption } from './types';
 import { StaleResultError, useLatestAsyncCall } from './useLatestAsyncCall';
@@ -20,7 +22,7 @@ const asyncNoop = () => Promise.resolve([]);
  *  - function to call when user types (to filter, or call async fn)
  *  - loading and error states
  */
-export function useOptions<T extends string | number>(rawOptions: AsyncOptions<T>) {
+export function useOptions<T extends string | number>(rawOptions: AsyncOptions<T>, createCustomValue: boolean) {
   const isAsync = typeof rawOptions === 'function';
 
   const loadOptions = useLatestAsyncCall(isAsync ? rawOptions : asyncNoop);
@@ -56,6 +58,29 @@ export function useOptions<T extends string | number>(rawOptions: AsyncOptions<T
   // told it for async options loading anyway.
   const [userTypedSearch, setUserTypedSearch] = useState('');
 
+  const addCustomValue = useCallback(
+    (opts: Array<ComboboxOption<T>>) => {
+      let currentOptions: Array<ComboboxOption<T>> = opts;
+      if (createCustomValue && userTypedSearch) {
+        //Since the label of a normal option does not have to match its value and a custom option has the same value and label,
+        //we just focus on the value to check if the option already exists
+        const customValueExists = opts.some((opt) => opt.value === userTypedSearch);
+        if (!customValueExists) {
+          currentOptions = [
+            {
+              label: userTypedSearch,
+              value: userTypedSearch as T,
+              description: t('combobox.custom-value.description', 'Use custom value'),
+            },
+            ...currentOptions,
+          ];
+        }
+      }
+      return currentOptions;
+    },
+    [createCustomValue, userTypedSearch]
+  );
+
   const updateOptions = useCallback(
     (inputValue: string) => {
       if (!isAsync) {
@@ -70,13 +95,39 @@ export function useOptions<T extends string | number>(rawOptions: AsyncOptions<T
     [debouncedLoadOptions, isAsync]
   );
 
-  const finalOptions = useMemo(() => {
-    if (isAsync) {
-      return asyncOptions;
-    } else {
-      return rawOptions.filter(itemFilter(userTypedSearch));
+  const organizeOptionsByGroup = useCallback((options: Array<ComboboxOption<T>>) => {
+    const groupedOptions = new Map<string | undefined, Array<ComboboxOption<T>>>();
+    for (const option of options) {
+      const groupExists = groupedOptions.has(option.group);
+      if (groupExists) {
+        groupedOptions.get(option.group)?.push(option);
+      } else {
+        groupedOptions.set(option.group, [option]);
+      }
     }
-  }, [rawOptions, asyncOptions, isAsync, userTypedSearch]);
+
+    // Reorganize options to have groups first, then undefined group
+    const reorganizeOptions = [];
+    for (const [group, groupOptions] of groupedOptions) {
+      if (!group) {
+        continue;
+      }
+      reorganizeOptions.push(...groupOptions);
+    }
+
+    const undefinedGroupOptions = groupedOptions.get(undefined);
+    if (undefinedGroupOptions) {
+      reorganizeOptions.push(...undefinedGroupOptions);
+    }
+    return reorganizeOptions;
+  }, []);
+
+  const finalOptions = useMemo(() => {
+    const currentOptions = isAsync ? asyncOptions : rawOptions.filter(itemFilter(userTypedSearch));
+    const currentOptionsOrganised = organizeOptionsByGroup(currentOptions);
+
+    return addCustomValue(currentOptionsOrganised);
+  }, [isAsync, organizeOptionsByGroup, addCustomValue, asyncOptions, rawOptions, userTypedSearch]);
 
   return { options: finalOptions, updateOptions, asyncLoading, asyncError };
 }

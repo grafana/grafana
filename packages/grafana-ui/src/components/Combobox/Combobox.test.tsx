@@ -2,6 +2,8 @@ import { act, render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
+import { Field } from '../Forms/Field';
+
 import { Combobox } from './Combobox';
 import { ComboboxOption } from './types';
 
@@ -237,11 +239,23 @@ describe('Combobox', () => {
       const onChangeHandler = jest.fn();
       render(<Combobox options={options} value={null} onChange={onChangeHandler} createCustomValue />);
       const input = screen.getByRole('combobox');
-      await userEvent.type(input, 'custom value');
+      await userEvent.type(input, 'Use custom value');
       await userEvent.keyboard('{Enter}');
 
-      expect(screen.getByDisplayValue('custom value')).toBeInTheDocument();
-      expect(onChangeHandler).toHaveBeenCalledWith(expect.objectContaining({ value: 'custom value' }));
+      expect(screen.getByDisplayValue('Use custom value')).toBeInTheDocument();
+      expect(onChangeHandler).toHaveBeenCalledWith(expect.objectContaining({ description: 'Use custom value' }));
+    });
+
+    it('should not allow creating a custom value when it is an existing value', async () => {
+      const onChangeHandler = jest.fn();
+      render(<Combobox options={options} value={null} onChange={onChangeHandler} createCustomValue />);
+      const input = screen.getByRole('combobox');
+      await userEvent.type(input, '4');
+      await userEvent.keyboard('{Enter}');
+      expect(screen.queryByDisplayValue('Use custom value')).not.toBeInTheDocument();
+      expect(screen.getByDisplayValue('Option 4')).toBeInTheDocument();
+      expect(onChangeHandler).toHaveBeenCalledWith(expect.objectContaining({ value: '4' }));
+      expect(onChangeHandler).not.toHaveBeenCalledWith(expect.objectContaining({ description: 'Use custom value' }));
     });
 
     it('should provide custom string when all options are numbers', async () => {
@@ -256,10 +270,10 @@ describe('Combobox', () => {
       render(<Combobox options={options} value={null} onChange={onChangeHandler} createCustomValue />);
       const input = screen.getByRole('combobox');
 
-      await userEvent.type(input, 'custom value');
+      await userEvent.type(input, 'Use custom value');
       await userEvent.keyboard('{Enter}');
 
-      expect(screen.getByDisplayValue('custom value')).toBeInTheDocument();
+      expect(screen.getByDisplayValue('Use custom value')).toBeInTheDocument();
       expect(typeof onChangeHandler.mock.calls[0][0].value === 'string').toBeTruthy();
       expect(typeof onChangeHandler.mock.calls[0][0].value === 'number').toBeFalsy();
 
@@ -411,9 +425,12 @@ describe('Combobox', () => {
         jest.advanceTimersByTime(500); // Custom value while typing
       });
 
-      const customItem = screen.queryByRole('option', { name: 'Custom value: fir' });
-
+      const customItem = screen.getByRole('option');
+      const customValue = customItem.getElementsByTagName('span')[0].textContent;
+      const customDescription = customItem.getElementsByTagName('span')[1].textContent;
       expect(customItem).toBeInTheDocument();
+      expect(customValue).toBe('fir');
+      expect(customDescription).toBe('Use custom value');
     });
 
     it('should display message when there is an error loading async options', async () => {
@@ -486,6 +503,44 @@ describe('Combobox', () => {
         expect(onChangeHandler).not.toHaveBeenCalled();
         expect(input).toHaveValue('Option 1');
       });
+    });
+  });
+
+  describe('with RTL selectors', () => {
+    it('can be selected by label with HTML <label>', () => {
+      render(
+        <>
+          <label htmlFor="country-dropdown">Country</label>
+          <Combobox id="country-dropdown" options={options} value={null} onChange={onChangeHandler} />
+        </>
+      );
+
+      const inputByLabelText = screen.getByLabelText('Country');
+      expect(inputByLabelText).toBeInTheDocument();
+
+      const inputByRole = screen.getByRole('combobox', { name: 'Country' });
+      expect(inputByRole).toBeInTheDocument();
+    });
+
+    it('can be selected by label with @grafana/ui <Field>', () => {
+      render(
+        <Field label="Country">
+          <Combobox id="country-dropdown" options={options} value={null} onChange={onChangeHandler} />
+        </Field>
+      );
+
+      const inputByLabelText = screen.getByLabelText('Country');
+      expect(inputByLabelText).toBeInTheDocument();
+
+      const inputByRole = screen.getByRole('combobox', { name: 'Country' });
+      expect(inputByRole).toBeInTheDocument();
+    });
+
+    it('can be selected by placeholder', () => {
+      render(<Combobox placeholder="Country" options={options} value={null} onChange={onChangeHandler} />);
+
+      const inputByPlaceholderText = screen.getByPlaceholderText('Country');
+      expect(inputByPlaceholderText).toBeInTheDocument();
     });
   });
 });

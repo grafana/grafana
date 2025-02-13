@@ -25,6 +25,7 @@ type ResourceClient interface {
 	ResourceStoreClient
 	ResourceIndexClient
 	RepositoryIndexClient
+	BatchStoreClient
 	BlobStoreClient
 	DiagnosticsClient
 }
@@ -34,6 +35,7 @@ type resourceClient struct {
 	ResourceStoreClient
 	ResourceIndexClient
 	RepositoryIndexClient
+	BatchStoreClient
 	BlobStoreClient
 	DiagnosticsClient
 }
@@ -44,6 +46,7 @@ func NewLegacyResourceClient(channel *grpc.ClientConn) ResourceClient {
 		ResourceStoreClient:   NewResourceStoreClient(cc),
 		ResourceIndexClient:   NewResourceIndexClient(cc),
 		RepositoryIndexClient: NewRepositoryIndexClient(cc),
+		BatchStoreClient:      NewBatchStoreClient(cc),
 		BlobStoreClient:       NewBlobStoreClient(cc),
 		DiagnosticsClient:     NewDiagnosticsClient(cc),
 	}
@@ -59,6 +62,7 @@ func NewLocalResourceClient(server ResourceServer) ResourceClient {
 		&ResourceIndex_ServiceDesc,
 		&RepositoryIndex_ServiceDesc,
 		&BlobStore_ServiceDesc,
+		&BatchStore_ServiceDesc,
 		&Diagnostics_ServiceDesc,
 	} {
 		channel.RegisterService(
@@ -82,6 +86,7 @@ func NewLocalResourceClient(server ResourceServer) ResourceClient {
 		ResourceStoreClient:   NewResourceStoreClient(cc),
 		ResourceIndexClient:   NewResourceIndexClient(cc),
 		RepositoryIndexClient: NewRepositoryIndexClient(cc),
+		BatchStoreClient:      NewBatchStoreClient(cc),
 		BlobStoreClient:       NewBlobStoreClient(cc),
 		DiagnosticsClient:     NewDiagnosticsClient(cc),
 	}
@@ -101,10 +106,12 @@ func NewGRPCResourceClient(tracer tracing.Tracer, conn *grpc.ClientConn) (Resour
 
 	cc := grpchan.InterceptClientConn(conn, clientInt.UnaryClientInterceptor, clientInt.StreamClientInterceptor)
 	return &resourceClient{
-		ResourceStoreClient: NewResourceStoreClient(cc),
-		ResourceIndexClient: NewResourceIndexClient(cc),
-		BlobStoreClient:     NewBlobStoreClient(cc),
-		DiagnosticsClient:   NewDiagnosticsClient(cc),
+		ResourceStoreClient:   NewResourceStoreClient(cc),
+		ResourceIndexClient:   NewResourceIndexClient(cc),
+		BlobStoreClient:       NewBlobStoreClient(cc),
+		BatchStoreClient:      NewBatchStoreClient(cc),
+		RepositoryIndexClient: NewRepositoryIndexClient(cc),
+		DiagnosticsClient:     NewDiagnosticsClient(cc),
 	}, nil
 }
 
@@ -126,10 +133,12 @@ func NewCloudResourceClient(tracer tracing.Tracer, conn *grpc.ClientConn, cfg au
 
 	cc := grpchan.InterceptClientConn(conn, clientInt.UnaryClientInterceptor, clientInt.StreamClientInterceptor)
 	return &resourceClient{
-		ResourceStoreClient: NewResourceStoreClient(cc),
-		ResourceIndexClient: NewResourceIndexClient(cc),
-		BlobStoreClient:     NewBlobStoreClient(cc),
-		DiagnosticsClient:   NewDiagnosticsClient(cc),
+		ResourceStoreClient:   NewResourceStoreClient(cc),
+		ResourceIndexClient:   NewResourceIndexClient(cc),
+		BlobStoreClient:       NewBlobStoreClient(cc),
+		BatchStoreClient:      NewBatchStoreClient(cc),
+		RepositoryIndexClient: NewRepositoryIndexClient(cc),
+		DiagnosticsClient:     NewDiagnosticsClient(cc),
 	}, nil
 }
 
