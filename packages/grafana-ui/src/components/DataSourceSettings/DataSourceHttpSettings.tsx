@@ -39,9 +39,11 @@ const ACCESS_OPTIONS: Array<ComboboxOption<string>> = [
 
 const DEFAULT_ACCESS_OPTION = ACCESS_OPTIONS[0];
 
+const ACCESS_HELP_ID = 'grafana-http-access-help';
+
 const HttpAccessHelp = () => {
   return (
-    <Alert severity="info" title="" topSpacing={3}>
+    <Alert severity="info" title="" topSpacing={3} id={ACCESS_HELP_ID}>
       <p>
         <Trans i18nKey="grafana-ui.data-source-http-settings.access-help-details">
           Access mode controls how requests to the data source will be handled.
@@ -219,7 +221,11 @@ export const DataSourceHttpSettings = (props: HttpSettingsProps) => {
                 >
                   <Trans i18nKey="grafana-ui.data-source-http-settings.access-help">
                     Help&nbsp;
-                    <Icon name={isAccessHelpVisible ? 'angle-down' : 'angle-right'} />
+                    <Icon
+                      name={isAccessHelpVisible ? 'angle-down' : 'angle-right'}
+                      aria-expanded={isAccessHelpVisible}
+                      aria-controls={ACCESS_HELP_ID}
+                    />
                   </Trans>
                 </Button>
               </Stack>
