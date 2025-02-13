@@ -35,27 +35,7 @@ func stringsFallback(vals ...string) string {
 // It supports quoted strings with spaces, e.g. "foo bar", "baz".
 // It will return an empty list if it fails to parse the string.
 func SplitString(str string) []string {
-	if len(str) == 0 {
-		return []string{}
-	}
-
-	// JSON list syntax support
-	if strings.Index(strings.TrimSpace(str), "[") == 0 {
-		var res []string
-		err := json.Unmarshal([]byte(str), &res)
-		if err != nil {
-			return []string{}
-		}
-		return res
-	}
-
-	matches := stringListItemMatcher.FindAllString(str, -1)
-
-	result := make([]string, len(matches))
-	for i, match := range matches {
-		result[i] = strings.Trim(match, "\"")
-	}
-
+	result, _ := SplitStringWithError(str)
 	return result
 }
 
