@@ -594,8 +594,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "8"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "9"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "10"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "11"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "12"]
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "11"]
     ],
     "packages/grafana-ui/src/components/DataSourceSettings/HttpProxySettings.tsx:5381": [
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
@@ -8140,9 +8139,6 @@ exports[`no gf-form usage`] = {
     "packages/grafana-ui/src/components/DataSourceSettings/CustomHeadersSettings.tsx:5381": [
       [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
       [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"]
-    ],
-    "packages/grafana-ui/src/components/DataSourceSettings/DataSourceHttpSettings.tsx:5381": [
       [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"]
     ],
     "packages/grafana-ui/src/components/DataSourceSettings/SecureSocksProxySettings.tsx:5381": [

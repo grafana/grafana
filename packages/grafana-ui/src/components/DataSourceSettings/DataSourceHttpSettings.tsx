@@ -1,7 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { useState, useCallback, useId } from 'react';
 
-import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { useTheme2 } from '../../themes';
@@ -16,7 +15,6 @@ import { InlineField } from '../Forms/InlineField';
 import { Input } from '../Forms/Legacy/Input/Input';
 import { Icon } from '../Icon/Icon';
 import { Stack } from '../Layout/Stack/Stack';
-import { Select } from '../Select/Select';
 import { InlineSwitch } from '../Switch/Switch';
 import { TagsInput } from '../TagsInput/TagsInput';
 import { Text } from '../Text/Text';
@@ -212,7 +210,7 @@ export const DataSourceHttpSettings = (props: HttpSettingsProps) => {
           {showAccessOptions && (
             <>
               <Stack direction="row" gap={0.5}>
-                <InlineField label="Access" labelWidth={13} disabled={dataSourceConfig.readOnly}>
+                <InlineField label="Access" labelWidth={26} disabled={dataSourceConfig.readOnly}>
                   <Combobox
                     width={40}
                     options={ACCESS_OPTIONS}
