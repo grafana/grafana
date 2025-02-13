@@ -1,7 +1,6 @@
 package dashboard
 
 import (
-	"context"
 	"encoding/json"
 	"net/http"
 	"net/url"
@@ -10,14 +9,17 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/storage/unified"
-	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"go.opentelemetry.io/otel/trace"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
+
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
+	"github.com/grafana/grafana/pkg/storage/unified"
+	"github.com/grafana/grafana/pkg/storage/unified/search"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apis/dashboard"
@@ -26,7 +28,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	dashboardsearch "github.com/grafana/grafana/pkg/services/dashboards/service/search"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 )
@@ -34,12 +35,15 @@ import (
 // The DTO returns everything the UI needs in a single request
 type SearchHandler struct {
 	log    log.Logger
-	client func(context.Context) resource.ResourceIndexClient
+	client resource.ResourceIndexClient
 	tracer trace.Tracer
 }
 
-func NewSearchHandler(tracer trace.Tracer, cfg *setting.Cfg, legacyDashboardSearcher resource.ResourceIndexClient) *SearchHandler {
-	searchClient := resource.NewSearchClient(cfg, setting.UnifiedStorageConfigKeyDashboard, unified.GetResourceClient, legacyDashboardSearcher)
+func NewSearchHandler(tracer trace.Tracer, dual dualwrite.Service, legacyDashboardSearcher resource.ResourceIndexClient) *SearchHandler {
+	searchClient := resource.NewSearchClient(dual, schema.GroupResource{
+		Group:    dashboard.GROUP,
+		Resource: dashboard.DASHBOARD_RESOURCE,
+	}, unified.GetResourceClient, legacyDashboardSearcher)
 	return &SearchHandler{
 		client: searchClient,
 		log:    log.New("grafana-apiserver.dashboards.search"),
@@ -341,7 +345,7 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		searchRequest.Options.Fields = append(searchRequest.Options.Fields, namesFilter...)
 	}
 
-	result, err := s.client(ctx).Search(ctx, searchRequest)
+	result, err := s.client.Search(ctx, searchRequest)
 	if err != nil {
 		errhttp.Write(ctx, err, w)
 		return

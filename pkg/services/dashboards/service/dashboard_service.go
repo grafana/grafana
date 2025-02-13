@@ -53,6 +53,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/util"
@@ -94,9 +95,10 @@ func ProvideDashboardServiceImpl(
 	features featuremgmt.FeatureToggles, folderPermissionsService accesscontrol.FolderPermissionsService,
 	ac accesscontrol.AccessControl, folderSvc folder.Service, fStore folder.Store, r prometheus.Registerer,
 	restConfigProvider apiserver.RestConfigProvider, userService user.Service,
-	quotaService quota.Service, orgService org.Service, publicDashboardService publicdashboards.ServiceWrapper,
+	quotaService quota.Service, orgService org.Service,
+	publicDashboardService publicdashboards.ServiceWrapper, dual dualwrite.Service,
 ) (*DashboardServiceImpl, error) {
-	k8sHandler := client.NewK8sHandler(cfg, request.GetNamespaceMapper(cfg), dashboardv0alpha1.DashboardResourceInfo.GroupVersionResource(), restConfigProvider.GetRestConfig, dashboardStore, userService)
+	k8sHandler := client.NewK8sHandler(dual, request.GetNamespaceMapper(cfg), dashboardv0alpha1.DashboardResourceInfo.GroupVersionResource(), restConfigProvider.GetRestConfig, dashboardStore, userService)
 
 	dashSvc := &DashboardServiceImpl{
 		cfg:                       cfg,
