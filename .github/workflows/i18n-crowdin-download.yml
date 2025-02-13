@@ -12,6 +12,7 @@ jobs:
     permissions:
       contents: write # needed to commit changes into the PR
       pull-requests: write # needed to update PR description, labels, etc
+      id-token: write # needed to get vault secrets
 
     steps:
       - name: Generate token
