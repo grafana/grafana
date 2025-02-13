@@ -114,13 +114,22 @@ jobs:
           pr: ${{ steps.crowdin-download.outputs.pull_request_number }}
           token: ${{ steps.generate_token.outputs.token }}
 
+      - name: Get vault secrets
+        id: vault-secrets
+        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+        with:
+          # Secrets placed in ci/repo/grafana/grafana/grafana-pr-approver
+          repo_secrets: |
+            GRAFANA_PR_APPROVER_APP_ID=grafana-pr-approver:app-id
+            GRAFANA_PR_APPROVER_APP_PEM=grafana-pr-approver:private-key
+
       - name: Generate approver token
         if: steps.crowdin-download.outputs.pull_request_url
         id: generate_approver_token
         uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
         with:
-          app_id: ${{ secrets.GRAFANA_PR_APPROVER_APP_ID }}
-          private_key: ${{ secrets.GRAFANA_PR_APPROVER_APP_PEM }}
+          app_id: ${{ env.GRAFANA_PR_APPROVER_APP_ID }}
+          private_key: ${{ env.GRAFANA_PR_APPROVER_APP_PEM }}
 
       - name: Approve and automerge PR
         if: steps.crowdin-download.outputs.pull_request_url
