@@ -30,7 +30,7 @@ var subscribedEvents = []string{"push", "pull_request"}
 type githubRepository struct {
 	config     *provisioning.Repository
 	gh         pgh.Client // assumes github.com base URL
-	secrets    *secrets.Service
+	secrets    secrets.Service
 	webhookURL string
 
 	owner string
@@ -43,7 +43,7 @@ func NewGitHub(
 	ctx context.Context,
 	config *provisioning.Repository,
 	factory pgh.ClientFactory,
-	secrets *secrets.Service,
+	secrets secrets.Service,
 	webhookURL string,
 ) (*githubRepository, error) {
 	owner, repo, _ := parseOwnerRepo(config.Spec.GitHub.URL)

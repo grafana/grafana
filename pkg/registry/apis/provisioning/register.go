@@ -78,7 +78,7 @@ type APIBuilder struct {
 	tester            *RepositoryTester
 	resourceLister    resources.ResourceLister
 	repositoryLister  listers.RepositoryLister
-	secrets           *secrets.Service
+	secrets           secrets.Service
 }
 
 // NewAPIBuilder creates an API builder.
@@ -95,7 +95,7 @@ func NewAPIBuilder(
 	clonedir string, // where repo clones are managed
 	configProvider apiserver.RestConfigProvider,
 	ghFactory github.ClientFactory,
-	secrets *secrets.Service,
+	secrets secrets.Service,
 ) *APIBuilder {
 	clientFactory := resources.NewFactory(configProvider)
 	return &APIBuilder{
@@ -153,7 +153,7 @@ func RegisterAPIService(
 	builder := NewAPIBuilder(folderResolver, urlProvider, cfg.SecretKey, features,
 		render, client, store,
 		filepath.Join(cfg.DataPath, "clone"), // where repositories are cloned (temporarialy for now)
-		configProvider, ghFactory, secrets.NewService(secretssvc))
+		configProvider, ghFactory, secrets.NewSingleTenant(secretssvc))
 	apiregistration.RegisterAPI(builder)
 	return builder, nil
 }

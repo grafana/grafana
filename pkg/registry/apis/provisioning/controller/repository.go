@@ -58,7 +58,7 @@ type RepositoryController struct {
 	repoSynced     cache.InformerSynced
 	parsers        *resources.ParserFactory
 	logger         logging.Logger
-	secrets        *secrets.Service
+	secrets        secrets.Service
 
 	jobs      jobs.JobQueue
 	finalizer *finalizer
@@ -83,7 +83,7 @@ func NewRepositoryController(
 	parsers *resources.ParserFactory,
 	tester RepositoryTester,
 	jobs jobs.JobQueue,
-	secrets *secrets.Service,
+	secrets secrets.Service,
 ) (*RepositoryController, error) {
 	rc := &RepositoryController{
 		client:         provisioningClient,

@@ -11,18 +11,25 @@ import (
 //
 // FIXME: this is a temporary service/package until we can make use of
 // the new secrets service in app platform
-type Service struct {
+type Service interface {
+	Encrypt(ctx context.Context, data []byte) ([]byte, error)
+	Decrypt(ctx context.Context, data []byte) ([]byte, error)
+}
+
+var _ Service = (*singleTenant)(nil)
+
+type singleTenant struct {
 	inner secrets.Service
 }
 
-func NewService(svc secrets.Service) *Service {
-	return &Service{svc}
+func NewSingleTenant(svc secrets.Service) *singleTenant {
+	return &singleTenant{svc}
 }
 
-func (s *Service) Encrypt(ctx context.Context, data []byte) ([]byte, error) {
+func (s *singleTenant) Encrypt(ctx context.Context, data []byte) ([]byte, error) {
 	return s.inner.Encrypt(ctx, data, secrets.WithoutScope())
 }
 
-func (s *Service) Decrypt(ctx context.Context, data []byte) ([]byte, error) {
+func (s *singleTenant) Decrypt(ctx context.Context, data []byte) ([]byte, error) {
 	return s.inner.Decrypt(ctx, data)
 }
