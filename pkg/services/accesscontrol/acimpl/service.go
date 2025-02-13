@@ -54,7 +54,7 @@ func ProvideService(
 	cfg *setting.Cfg, db db.DB, routeRegister routing.RouteRegister, cache *localcache.CacheService,
 	accessControl accesscontrol.AccessControl, userService user.Service, actionResolver accesscontrol.ActionResolver,
 	features featuremgmt.FeatureToggles, tracer tracing.Tracer, permRegistry permreg.PermissionRegistry,
-	lock *serverlock.ServerLockService, folderService folder.Service,
+	lock *serverlock.ServerLockService,
 ) (*Service, error) {
 	service := ProvideOSSService(
 		cfg,
@@ -66,7 +66,6 @@ func ProvideService(
 		db,
 		permRegistry,
 		lock,
-		folderService,
 	)
 
 	api.NewAccessControlAPI(routeRegister, accessControl, service, userService, features).RegisterAPIEndpoints()
@@ -89,7 +88,6 @@ func ProvideOSSService(
 	cfg *setting.Cfg, store accesscontrol.Store, actionResolver accesscontrol.ActionResolver,
 	cache *localcache.CacheService, features featuremgmt.FeatureToggles, tracer tracing.Tracer,
 	db db.DB, permRegistry permreg.PermissionRegistry, lock *serverlock.ServerLockService,
-	folderService folder.Service,
 ) *Service {
 	s := &Service{
 		actionResolver: actionResolver,

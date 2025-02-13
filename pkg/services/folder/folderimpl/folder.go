@@ -44,6 +44,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/supportbundles"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -85,6 +86,7 @@ func ProvideService(
 	cfg *setting.Cfg,
 	r prometheus.Registerer,
 	tracer tracing.Tracer,
+	resourceClient resource.ResourceClient,
 ) *Service {
 	srv := &Service{
 		log:                    slog.Default().With("logger", "folder-service"),
@@ -115,6 +117,7 @@ func ProvideService(
 			apiserver.GetRestConfig,
 			dashboardStore,
 			userService,
+			resourceClient,
 		)
 
 		unifiedStore := ProvideUnifiedStore(k8sHandler, userService)
@@ -131,6 +134,7 @@ func ProvideService(
 			apiserver.GetRestConfig,
 			dashboardStore,
 			userService,
+			resourceClient,
 		)
 		srv.dashboardK8sClient = dashHandler
 	}
