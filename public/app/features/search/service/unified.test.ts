@@ -115,9 +115,6 @@ describe('Unified Storage Searcher', () => {
       .mockResolvedValueOnce(mockResults)
       .mockResolvedValueOnce(mockFolders);
 
-    const consoleWarn = jest.fn();
-    jest.spyOn(console, 'warn').mockImplementationOnce(consoleWarn);
-
     const query: SearchQuery = {
       query: 'test',
       limit: 50,
@@ -127,14 +124,15 @@ describe('Unified Storage Searcher', () => {
 
     const response = await searcher.search(query);
 
-    expect(response.view.length).toBe(1);
-    expect(response.view.get(0).title).toBe('DB 2');
+    expect(response.view.length).toBe(2);
+    expect(response.view.get(0).title).toBe('DB 1');
+    expect(response.view.get(0).folder).toBe('sharedwithme');
+    expect(response.view.get(1).title).toBe('DB 2');
 
     const df = response.view.dataFrame;
     const locationInfo = df.meta?.custom?.locationInfo;
     expect(locationInfo).toBeDefined();
     expect(locationInfo?.folder2.name).toBe('Folder 2');
-    expect(consoleWarn).toHaveBeenCalled();
     expect(mockSearcher.search).toHaveBeenCalledTimes(3);
   });
 

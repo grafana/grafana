@@ -65,7 +65,7 @@ func ProvideService(cfg *setting.Cfg,
 				continue
 			}
 
-			info, err := connectors.CreateOAuthInfoFromKeyValues(ssoSetting.Settings)
+			info, err := connectors.CreateOAuthInfoFromKeyValuesWithLogging(ss.log, ssoSetting.Provider, ssoSetting.Settings)
 			if err != nil {
 				ss.log.Error("Failed to create OAuthInfo for provider", "error", err, "provider", ssoSetting.Provider)
 				continue
@@ -85,7 +85,7 @@ func ProvideService(cfg *setting.Cfg,
 
 			settingsKVs := convertIniSectionToMap(sec)
 
-			info, err := connectors.CreateOAuthInfoFromKeyValues(settingsKVs)
+			info, err := connectors.CreateOAuthInfoFromKeyValuesWithLogging(ss.log, name, settingsKVs)
 			if err != nil {
 				ss.log.Error("Failed to create OAuthInfo for provider", "error", err, "provider", name)
 				continue

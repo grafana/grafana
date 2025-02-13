@@ -36,6 +36,26 @@ jest.mock('@grafana/runtime', () => ({
       getInstanceSettings: jest.fn(),
     };
   },
+  config: {
+    ...jest.requireActual('@grafana/runtime').config,
+    bootData: {
+      settings: {
+        defaultDatasource: '-- Grafana --',
+        datasources: {
+          '-- Grafana --': {
+            name: 'Grafana',
+            meta: { id: 'grafana' },
+            type: 'datasource',
+          },
+          prometheus: {
+            name: 'prometheus',
+            meta: { id: 'prometheus' },
+            type: 'datasource',
+          },
+        },
+      },
+    },
+  },
 }));
 
 describe('DashboardSceneSerializer', () => {
@@ -584,7 +604,6 @@ describe('DashboardSceneSerializer', () => {
             to: '',
             autoRefresh: '',
             autoRefreshIntervals: [],
-            quickRanges: [],
             hideTimepicker: false,
             fiscalYearStartMonth: 0,
             timezone: '',
@@ -646,7 +665,6 @@ describe('DashboardSceneSerializer', () => {
           from: 'now-1h',
           hideTimepicker: false,
           nowDelay: undefined,
-          quickRanges: [],
           timezone: 'browser',
           to: 'now',
         });
