@@ -699,6 +699,18 @@ func (m *grafanaMetaAccessor) FindTitle(defaultTitle string) string {
 		}
 	}
 
+	obj, ok := m.obj.(*unstructured.Unstructured)
+	if ok {
+		title, ok, _ := unstructured.NestedString(obj.Object, "spec", "title")
+		if ok && title != "" {
+			return title
+		}
+		title, ok, _ = unstructured.NestedString(obj.Object, "spec", "name")
+		if ok && title != "" {
+			return title
+		}
+	}
+
 	title := m.r.FieldByName("Title")
 	if title.IsValid() && title.Kind() == reflect.String {
 		return title.String()
