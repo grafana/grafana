@@ -1,7 +1,7 @@
 import { Store } from 'redux';
 
 import { PanelMenuItem, PluginExtensionLink, PluginExtensionTypes } from '@grafana/data';
-import { AngularComponent, usePluginLinks } from '@grafana/runtime';
+import { usePluginLinks } from '@grafana/runtime';
 import config from 'app/core/config';
 import { grantUserPermissions } from 'app/features/alerting/unified/mocks';
 import * as actions from 'app/features/explore/state/main';
@@ -303,16 +303,12 @@ describe('getPanelMenu()', () => {
   });
 
   describe('when panel is in view mode', () => {
-    it.skip('should return the correct panel menu items', () => {
-      const getExtendedMenu = () => [{ text: 'Toggle legend', shortcut: 'p l', click: jest.fn() }];
-      const ctrl = { getExtendedMenu };
-      const scope = { $$childHead: { ctrl } };
-      const angularComponent = { getScope: () => scope } as AngularComponent;
+    it('should return the correct panel menu items', () => {
       const panel = new PanelModel({ isViewing: true });
       const dashboard = createDashboardModelFixture({});
       const extensions: PluginExtensionLink[] = [];
 
-      const menuItems = getPanelMenu(dashboard, panel, extensions, angularComponent);
+      const menuItems = getPanelMenu(dashboard, panel, extensions);
       expect(menuItems).toMatchInlineSnapshot(`
         [
           {
@@ -349,19 +345,6 @@ describe('getPanelMenu()', () => {
               },
             ],
             "text": "Inspect",
-            "type": "submenu",
-          },
-          {
-            "iconClassName": "cube",
-            "subMenu": [
-              {
-                "href": undefined,
-                "onClick": [Function],
-                "shortcut": "p l",
-                "text": "Toggle legend",
-              },
-            ],
-            "text": "More...",
             "type": "submenu",
           },
         ]

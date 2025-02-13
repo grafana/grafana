@@ -33,8 +33,7 @@ import { getTimeSrv } from '../services/TimeSrv';
 export function getPanelMenu(
   dashboard: DashboardModel,
   panel: PanelModel,
-  extensions: PluginExtensionLink[],
-  angularComponent?: AngularComponent | null
+  extensions: PluginExtensionLink[]
 ): PanelMenuItem[] {
   const onViewPanel = (event: React.MouseEvent) => {
     event.preventDefault();
