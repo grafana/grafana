@@ -5,6 +5,8 @@ import { grafanaAlertNotifiers, grafanaAlertNotifiersMock } from '../mockGrafana
 import { CloudChannelValues, GrafanaChannelValues, ReceiverFormValues } from '../types/receiver-form';
 
 import {
+  convertJiraFieldToJson,
+  convertJsonToJiraField,
   formValuesToCloudReceiver,
   formValuesToGrafanaReceiver,
   grafanaReceiverToFormValues,
@@ -325,5 +327,121 @@ describe('grafanaReceiverToFormValues', () => {
     const [formValues, _] = grafanaReceiverToFormValues(googleChatReceiver, grafanaAlertNotifiersMock);
     expect(formValues.items[0].secureSettings.url).toBe('https://googlechat.example.com/');
     expect(formValues.items[0].settings.url).toBeUndefined();
+  });
+});
+
+describe('convertJsonToJiraField', () => {
+  it('should return the object unchanged if type is not jira', () => {
+    const input = { fields: { key1: 'value1', key2: 'value2' } };
+    const result = convertJsonToJiraField(input, 'slack');
+    expect(result).toEqual(input);
+  });
+
+  it('should convert nested objects to JSON strings for jira type', () => {
+    const input = {
+      fields: {
+        key1: { nestedKey1: 'nestedValue1' },
+        key2: { nestedKey2: 'nestedValue2' },
+      },
+    };
+    const expectedOutput = {
+      fields: {
+        key1: '{"nestedKey1":"nestedValue1"}',
+        key2: '{"nestedKey2":"nestedValue2"}',
+      },
+    };
+    const result = convertJsonToJiraField(input, 'jira');
+    expect(result).toEqual(expectedOutput);
+  });
+
+  it('should leave non-object values unchanged for jira type', () => {
+    const input = {
+      fields: {
+        key1: 'value1',
+        key2: 123,
+        key3: true,
+      },
+    };
+    const result = convertJsonToJiraField(input, 'jira');
+    expect(result).toEqual(input);
+  });
+
+  it('should handle fields object with mixed types for jira type', () => {
+    const input = {
+      fields: {
+        key1: 'value1',
+        key2: { nestedKey2: 'nestedValue2' },
+        key3: 123,
+        key4: true,
+      },
+    };
+    const expectedOutput = {
+      fields: {
+        key1: 'value1',
+        key2: '{"nestedKey2":"nestedValue2"}',
+        key3: 123,
+        key4: true,
+      },
+    };
+    const result = convertJsonToJiraField(input, 'jira');
+    expect(result).toEqual(expectedOutput);
+  });
+});
+
+describe('convertJiraFieldToJson', () => {
+  it('should return the object unchanged if type is not jira', () => {
+    const input = { fields: { key1: 'value1', key2: '{"a":2}' } };
+    const result = convertJiraFieldToJson(input, 'slack');
+    expect(result).toEqual(input);
+  });
+
+  it('should convert stringified objects to nested objects for jira type', () => {
+    const input = {
+      fields: {
+        key1: '{"nestedKey1":{"a":2,"c":[1,2,3 ]}}',
+        key2: '{"nestedKey2":"nestedValue2"}',
+      },
+    };
+    const expectedOutput = {
+      fields: {
+        key1: { nestedKey1: { a: 2, c: [1, 2, 3] } },
+        key2: { nestedKey2: 'nestedValue2' },
+      },
+    };
+    const result = convertJiraFieldToJson(input, 'jira');
+    expect(result).toEqual(expectedOutput);
+  });
+
+  it('should leave non-stringified values unchanged for jira type', () => {
+    const input = {
+      fields: {
+        key1: 'value1',
+        key2: 123,
+        key3: true,
+      },
+    };
+    const result = convertJiraFieldToJson(input, 'jira');
+    expect(result).toEqual(input);
+  });
+
+  it('should handle fields object with mixed types for jira type', () => {
+    const input = {
+      fields: {
+        key1: 'value1',
+        key2: '{"nestedKey2":"nestedValue2"}',
+        key3: 123,
+        key4: true,
+      },
+    };
+    const expectedOutput = {
+      fields: {
+        key1: 'value1',
+        key2: { nestedKey2: 'nestedValue2' },
+        key3: 123,
+        key4: true,
+      },
+    };
+    const result = convertJiraFieldToJson(input, 'jira');
+    expect(result).toEqual(expectedOutput);
   });
 });

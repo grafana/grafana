@@ -123,7 +123,7 @@ export function formValuesToCloudReceiver(
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function convertJiraFieldToJson(object: Record<string, any>, type: string) {
+export function convertJiraFieldToJson(object: Record<string, any>, type: string) {
   // Only for cloud alert manager. Jira fields option can be a nested object. We need to convert it to JSON.
   if (type !== 'jira') {
     return object;
@@ -148,7 +148,7 @@ function convertJiraFieldToJson(object: Record<string, any>, type: string) {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function convertJsonToJiraField(object: Record<string, any>, type: string) {
+export function convertJsonToJiraField(object: Record<string, any>, type: string) {
   // Only for cloud alert manager. Convert JSON back to nested Jira fields option.
   if (type !== 'jira') {
     return object;
