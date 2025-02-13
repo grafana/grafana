@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
-	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -66,14 +65,10 @@ func ProvideService(cfg *setting.Cfg,
 				continue
 			}
 
-			parsingWarns := []error{}
-			info, err := connectors.CreateOAuthInfoFromKeyValues(ssoSetting.Settings, &parsingWarns)
+			info, err := connectors.CreateOAuthInfoFromKeyValuesWithLogging(ss.log, ssoSetting.Provider, ssoSetting.Settings)
 			if err != nil {
 				ss.log.Error("Failed to create OAuthInfo for provider", "error", err, "provider", ssoSetting.Provider)
 				continue
-			}
-			if len(parsingWarns) > 0 {
-				ss.log.Error("Invalid auth configuration setting", "error", errors.Join(parsingWarns...), "provider", ssoSetting.Provider)
 			}
 
 			conn, err := createOAuthConnector(ssoSetting.Provider, info, cfg, orgRoleMapper, ssoSettings, features, cache)
@@ -90,14 +85,10 @@ func ProvideService(cfg *setting.Cfg,
 
 			settingsKVs := convertIniSectionToMap(sec)
 
-			parsingWarns := []error{}
-			info, err := connectors.CreateOAuthInfoFromKeyValues(settingsKVs, &parsingWarns)
+			info, err := connectors.CreateOAuthInfoFromKeyValuesWithLogging(ss.log, name, settingsKVs)
 			if err != nil {
 				ss.log.Error("Failed to create OAuthInfo for provider", "error", err, "provider", name)
 				continue
-			}
-			if len(parsingWarns) > 0 {
-				ss.log.Error("Invalid auth configuration setting", "error", errors.Join(parsingWarns...), "provider", name)
 			}
 
 			if !info.Enabled {

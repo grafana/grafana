@@ -66,11 +66,11 @@ func NewGoogleProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper *
 }
 
 func (s *SocialGoogle) Validate(ctx context.Context, newSettings ssoModels.SSOSettings, oldSettings ssoModels.SSOSettings, requester identity.Requester) error {
-	info, err := CreateOAuthInfoFromKeyValues(newSettings.Settings, nil)
+	info, err := CreateOAuthInfoFromKeyValues(newSettings.Settings)
 	if err != nil {
 		return ssosettings.ErrInvalidSettings.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
 	}
-	oldInfo, err := CreateOAuthInfoFromKeyValues(oldSettings.Settings, nil)
+	oldInfo, err := CreateOAuthInfoFromKeyValues(oldSettings.Settings)
 	if err != nil {
 		oldInfo = &social.OAuthInfo{}
 	}
@@ -87,7 +87,7 @@ func (s *SocialGoogle) Validate(ctx context.Context, newSettings ssoModels.SSOSe
 }
 
 func (s *SocialGoogle) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {
-	newInfo, err := CreateOAuthInfoFromKeyValues(settings.Settings, nil)
+	newInfo, err := CreateOAuthInfoFromKeyValuesWithLogging(s.log, social.GoogleProviderName, settings.Settings)
 	if err != nil {
 		return ssosettings.ErrInvalidSettings.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
 	}
