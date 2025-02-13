@@ -293,7 +293,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
     expect(getQueryRunnerFor(vizPanels[0])?.state.datasource?.uid).toBe(MIXED_DATASOURCE_NAME);
   });
 
-  it('should set panel ds as undefined if it is not mixed DS', () => {
+  it('should set ds if it is not mixed DS', () => {
     const dashboard = cloneDeep(defaultDashboard);
     getPanelElement(dashboard.spec, 'panel-1')?.spec.data.spec.queries.push({
       kind: 'PanelQuery',
@@ -317,10 +317,13 @@ describe('transformSaveModelSchemaV2ToScene', () => {
 
     const vizPanels = (scene.state.body as DashboardLayoutManager).getVizPanels();
     expect(vizPanels.length).toBe(3);
-    expect(getQueryRunnerFor(vizPanels[0])?.state.datasource).toBeUndefined();
+    expect(getQueryRunnerFor(vizPanels[0])?.state.queries[0].datasource).toEqual({
+      type: 'prometheus',
+      uid: 'datasource1',
+    });
   });
 
-  it('should set panel ds as mixed if one ds is undefined', () => {
+  it('should set panel ds as mixed if no panels have ds defined', () => {
     const dashboard = cloneDeep(defaultDashboard);
 
     getPanelElement(dashboard.spec, 'panel-1')?.spec.data.spec.queries.push({
