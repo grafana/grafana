@@ -17,6 +17,7 @@ export type NodeDatum = SimulationNodeDatum & {
   icon?: IconName;
   nodeRadius?: Field;
   highlighted: boolean;
+  isInstrumented?: boolean;
 };
 
 export type NodeDatumFromEdge = NodeDatum & { mainStatNumeric?: number; secondaryStatNumeric?: number };
