@@ -181,6 +181,9 @@ export const getStyles = (theme: GrafanaTheme2) => {
       gridColumnGap: theme.spacing(1.5),
       whiteSpace: 'pre',
       paddingBottom: theme.spacing(0.75),
+      '& .field': {
+        textAlign: 'center',
+      },
     }),
     wrappedLogLine: css({
       whiteSpace: 'pre-wrap',
