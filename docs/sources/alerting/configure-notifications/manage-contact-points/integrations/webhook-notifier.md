@@ -73,6 +73,12 @@ For more details on contact points, including how to test them and enable notifi
 | Max Alerts                        | Maximum number of alerts to include in a notification. Any alerts exceeding this limit are ignored. `0` means no limit. |
 | TLS                               | TLS configuration options, including CA certificate, client certificate, and client key.                                |
 
+{{< admonition type="note" >}}
+
+You can configure either HTTP Basic Authentication or the Authorization request header, but not both.
+
+{{< /admonition >}}
+
 #### Optional settings using templates
 
 Use the following settings to include custom data within the [JSON payload](#body). Both options support using [notification templates](ref:notification-templates).
