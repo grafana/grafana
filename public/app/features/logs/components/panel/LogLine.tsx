@@ -6,7 +6,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
 
 import { LogFieldDimension, LogListModel } from './processing';
-import { hasUnderOrOverflow } from './virtualization';
+import { FIELD_GAP_MULTIPLIER, hasUnderOrOverflow } from './virtualization';
 
 interface Props {
   displayedFields: string[];
@@ -66,7 +66,11 @@ const Log = ({ displayedFields, log, showTime, styles }: LogProps) => {
       {showTime && <span className={`${styles.timestamp} level-${log.logLevel} field`}>{log.timestamp}</span>}
       {log.logLevel && <span className={`${styles.level} level-${log.logLevel} field`}>{log.logLevel}</span>}
       {displayedFields.length > 0 ? (
-        displayedFields.map((field) => <span className="field">{getDisplayedFieldValue(field, log)}</span>)
+        displayedFields.map((field) => (
+          <span className="field" title={field}>
+            {getDisplayedFieldValue(field, log)}
+          </span>
+        ))
       ) : (
         <span className="field">{log.body}</span>
       )}
@@ -178,7 +182,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
     }),
     unwrappedLogLine: css({
       display: 'grid',
-      gridColumnGap: theme.spacing(1.5),
+      gridColumnGap: theme.spacing(FIELD_GAP_MULTIPLIER),
       whiteSpace: 'pre',
       paddingBottom: theme.spacing(0.75),
       '& .field': {
@@ -189,7 +193,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
       whiteSpace: 'pre-wrap',
       paddingBottom: theme.spacing(0.75),
       '& .field:not(:last-child)': {
-        marginRight: theme.spacing(1.5),
+        marginRight: theme.spacing(FIELD_GAP_MULTIPLIER),
       },
     }),
   };
