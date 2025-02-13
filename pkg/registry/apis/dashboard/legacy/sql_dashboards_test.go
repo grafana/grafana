@@ -54,7 +54,7 @@ func TestScanRow(t *testing.T) {
 			Object: map[string]interface{}{"key": "value"},
 		}, row.Dash.Spec)
 		require.Equal(t, "default", row.Dash.Namespace)
-		require.Equal(t, row.token, &continueToken{orgId: int64(1), id: id})
+		require.Equal(t, &continueToken{orgId: int64(1), id: id}, row.token)
 
 		meta, err := utils.MetaAccessor(row.Dash)
 		require.NoError(t, err)
