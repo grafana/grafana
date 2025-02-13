@@ -51,6 +51,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/
+  templates:
+    - pattern: /docs/grafana/
+      destination: docs/grafana/<GRAFANA_VERSION>/dashboards/variables/#templates
+    - pattern: /docs/grafana-cloud/
+      destination: //docs/grafana-cloud/visualizations/dashboards/variables/#templates
 ---
 
 # PostgreSQL query editor
@@ -60,20 +65,6 @@ Grafana’s query editors are unique for each data source. For general informati
 The PostgreSQL query editor is located on the [Explore page](ref:explore). You can also access the PostgreSQL query editor from a dashboard panel. Click the ellipsis in the upper right of the panel and select **Edit**.
 
 {{< figure src="/static/img/docs/screenshot-postgres-query-editor.png" class="docs-image--no-shadow" caption="PostgreSQL query builder" >}}
-
-{{< admonition type="note" >}}
-Ensure the database user you specify has only SELECT permissions on the relevant database and tables. Grafana does not validate the safety of queries, which means they can include potentially harmful SQL statements, such as `USE otherdb;` or `DROP TABLE user;`, which could potentially get executed. To minimize this risk, Grafana strongly recommends creating a dedicated PostgreSQL user with restricted permissions.
-{{< /admonition >}}
-
-Example:
-
-```sql
- CREATE USER grafanareader WITH PASSWORD 'password';
- GRANT USAGE ON SCHEMA schema TO grafanareader;
- GRANT SELECT ON schema.table TO grafanareader;
-```
-
-Ensure the user does not inherit any unintended privileges from the `public` role.
 
 ## PostgreSQL query editor components
 
@@ -86,14 +77,12 @@ Builder mode helps you build a query using a visual interface. Code mode allows 
 The following components will help you build a PostgreSQL query:
 
 - **Format** - Select a format response from the drop-down for the PostgreSQL query. The default is **Table**. If you use the **Time series** format option, one of the columns must be `time`. Refer to [Time series queries](#time-series-queries) for more information.
-- **Dataset** - Select a database to query from the drop-down.
 - **Table** - Select a table from the drop-down. Tables correspond to the chosen database.
 - **Data operations** - _Optional_ Select an aggregation from the drop-down. You can add multiple data operations by clicking the **+ sign**. Click the **garbage can icon** to remove data operations.
 - **Column** - Select a column on which to run the aggregation.
 - **Alias** - _Optional_ Add an alias from the drop-down. You can also add your own alias by typing it in the box and clicking **Enter**. Remove an alias by clicking the **X**.
 - **Filter** - Toggle to add filters.
-- **Filter by column value** - _Optional_ If you toggle **Filter** you can add a column to filter by from the drop-down. Use the first dropdown to choose whether all of the filters need to match (`AND`), or if only one of the filters needs to match (`OR`).
-  Use the second dropdown to choose a filter. To filter on more columns, click the **+ sign** to the right of the condition drop-down. You can choose a variety of operators from the drop-down next to the condition. To remove a filter, click the `X` button next to that filter's dropdown. After selecting a date type column, you can choose **Macros** from the operators list and select `timeFilter` which will add the `$\_\_timeFilter` macro to the query with the selected date column.
+- **Filter by column value** - _Optional_ If you toggle **Filter** you can add a column to filter by from the drop-down. To filter on more columns, click the **+ sign** to the right of the condition drop-down. You can choose a variety of operators from the drop-down next to the condition. When multiple filters are added you can add an `AND` operator to display all true conditions or an `OR` operator to display any true conditions. Use the second drop-down to choose a filter. To remove a filter, click the `X` button next to that filter's drop-down. After selecting a date type column, you can choose **Macros** from the operators list and select `timeFilter` which will add the `$\_\_timeFilter` macro to the query with the selected date column.
 - **Group** - Toggle to add **Group by column**.
 - **Group by column** - Select a column to filter by from the drop-down. Click the **+sign** to filter by multiple columns. Click the **X** to remove a filter.
 - **Order** - Toggle to add an ORDER BY statement.
@@ -111,7 +100,7 @@ Select **Table** or **Time Series** as the format. Click the **{}** in the botto
 {{% admonition type="warning" %}}
 Changes made to a query in Code mode will not transfer to Builder mode and will be discarded. You will be prompted to copy your code to the clipboard to save any changes.
 {{% /admonition %}}
-
+<!-- vale Grafana.Spelling = NO -->
 ## Macros
 
 You can add macros to your queries to simplify the syntax and enable dynamic elements, such as date range filters.
@@ -160,12 +149,28 @@ WHERE $__timeFilter(dashboard.created)
 Set the **Format** option to **Time series** to create and run time series queries.
 
 {{% admonition type="note" %}}
-To run a time series query you must include a column named `time` that returns either a SQL datetime value or a numeric datatype representing the UNIX epoch time in seconds. Additionally, the query results must be sorted by the `time` column for proper visualization in panels.
+To run a time series query you must include a column named `time` that returns either a SQL `datetime` value or a numeric datatype representing the UNIX epoch time in seconds. Additionally, the query results must be sorted by the `time` column for proper visualization in panels.
 {{% /admonition %}}
+
+The examples in this section refer to the data in the following table:
+
+```text
++---------------------+--------------+---------------------+----------+
+| time_date_time      | value_double | CreatedAt           | hostname |
++---------------------+--------------+---------------------+----------+
+| 2020-01-02 03:05:00 | 3.0          | 2020-01-02 03:05:00 | 10.0.1.1 |
+| 2020-01-02 03:06:00 | 4.0          | 2020-01-02 03:06:00 | 10.0.1.2 |
+| 2020-01-02 03:10:00 | 6.0          | 2020-01-02 03:10:00 | 10.0.1.1 |
+| 2020-01-02 03:11:00 | 7.0          | 2020-01-02 03:11:00 | 10.0.1.2 |
+| 2020-01-02 03:20:00 | 5.0          | 2020-01-02 03:20:00 | 10.0.1.2 |
++---------------------+--------------+---------------------+----------+
+```
 
 Time series query results are returned in [wide data frame format](https://grafana.com/developers/plugin-tools/key-concepts/data-frames#wide-format). In the data frame query result, any column, except for time or string-type columns, transforms into value fields. String columns, on the other hand, become field labels.
 
+{{% admonition type="note" %}}
 For backward compatibility, an exception to this rule applies to queries that return three columns, one of which is a string column named `metric`. Instead of converting the metric column into field labels, it is used as the field name, while the series name is set to its value. See the following example for reference.
+{{% /admonition %}}
 
 **Example with `metric` column:**
 
@@ -211,7 +216,7 @@ GROUP BY time, hostname
 ORDER BY time
 ```
 
-Based on the data frame result in the following example, the graph panel will generate two series named _value 10.0.1.1_ and _value 10.0.1.2_. To display the series names as _10.0.1.1_ and _10.0.1.2_, use the [Standard options definitions](ref:configure-standard-options-display-name) display value `${__field.labels.hostname}`.
+Based on the data frame result in the following example, the time series panel will generate two series named _value 10.0.1.1_ and _value 10.0.1.2_. To display the series names as _10.0.1.1_ and _10.0.1.2_, use the [Standard options definitions](ref:configure-standard-options-display-name) display value `${__field.labels.hostname}`.
 
 Data frame result:
 
@@ -251,18 +256,12 @@ Data frame result:
 | 2020-01-02 03:05:00 | 6               | 7               |
 +---------------------+-----------------+-----------------+
 ```
-
-### Macros and time series queries
-
-You can enable macro support in the `SELECT` clause to create time-series queries. Use the **Data operations** drop-down to select a macro such as `$__timeGroup` or `$__timeGroupAlias`. Select a time column from the **Column** drop-down and a time interval from the **Interval** drop-down to create a time-series query.
-
-You can also add custom value under **Data operations**, such as a function that’s not in the drop-down list. This allows you to add any number of parameters.
-
+<!-- vale Grafana.Spelling = YES -->
 ## Templating
 
-Instead of hardcoding values like server, application, or sensor names in your metric queries, you can use variables. Variables appear as drop-down select boxes at the top of the dashboard. These dropdowns make it easy to change the data being displayed in your dashboard.
+Instead of hardcoding values like server, application, or sensor names in your metric queries, you can use variables. Variables appear as drop-down select boxes at the top of the dashboard. These drop-downs make it easy to change the data being displayed in your dashboard.
 
-Refer to [Templates](ref:variables) for an introduction to creating template variables as well as the different types.
+Refer to [Templates](ref:templates) for an introduction to creating template variables as well as the different types.
 
 <!-- vale Grafana.GooglePassive = NO -->
 
@@ -282,7 +281,7 @@ A query can return multiple columns, and Grafana will automatically generate a l
 SELECT host.hostname, other_host.hostname2 FROM host JOIN other_host ON host.city = other_host.city
 ```
 
-To use time range-dependent macros like `$__timeFilter(column)` in your query,you must set the template variable's refresh mode to _On Time Range Change_.
+To use time range dependent macros like `$__timeFilter(column)` in your query, you must set the template variable's refresh mode to _On Time Range Change_.
 
 ```sql
 SELECT event_name FROM event_log WHERE $__timeFilter(time_column)
@@ -352,9 +351,9 @@ Read more about variable formatting options in the [Variables](ref:variable-synt
 
 ## Annotations
 
-[Annotations](ref:annotate-visualizations) allow you to overlay rich event information on top of graphs. Add annotation queries via the **Dashboard menu > Annotations view**.
+[Annotations](ref:annotate-visualizations) allow you to overlay rich event information on top of graphs. Add annotation queries via the **Dashboard settings > Annotations view**.
 
-**Example query using a`time` column with epoch values:**
+**Example query using a `time` column with epoch values:**
 
 ```sql
 SELECT
@@ -408,4 +407,4 @@ Use time series queries to create alerts. Table formatted queries aren't yet sup
 For more information regarding alerting refer to the following:
 
 - [Alert rules](ref:alert-rules)
-- [Template annotations and labels](ref:(ref:template-annotations-and-labels)
+- [Template annotations and labels](ref:template-annotations-and-labels)

@@ -51,6 +51,7 @@ refs:
 # Configure the PostgreSQL data source
 
 This document provides instructions for configuring the PostgreSQL data source and explains available configuration options. For general information on managing data sources refer to [Data source management](ref:data-source-management).
+<!-- vale Grafana.ProductPossessives = NO -->
 
 ## Before you begin
 
@@ -92,7 +93,7 @@ Following is a list of PostgreSQL configuration options:
 
 **Connection section:**
 
-- **Host URL** - The IP address/hostname and optional port of your PostgreSQL instance. This does not include the database name. The connection string for connecting to Postgres will not be correct and it may cause errors.
+- **Host URL** - The IP address/hostname and optional port of your PostgreSQL instance. 
 - **Database name** - The name of your PostgreSQL database.
 
 **Authentication section:**
@@ -189,10 +190,7 @@ datasources:
       timescaledb: false
 ```
 
-{{% admonition type="note" %}}
-In the preceding example, the `postgresVersion` value of `10` indicates PostgreSQL version 10 or later.
-{{% /admonition %}}
-
+<!-- vale Grafana.ProductPossessives = YES -->
 #### Troubleshoot provisioning issues
 
 If you encounter metric request errors or other issues:
