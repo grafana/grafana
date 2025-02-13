@@ -276,73 +276,75 @@ export const DataSourceHttpSettings = (props: HttpSettingsProps) => {
           <Trans i18nKey="grafana-ui.data-source-http-settings.auth">Auth</Trans>
         </h3>
         <Stack direction="column" gap={4}>
-          <div className={gridLayout}>
-            <InlineField label="Basic auth" labelWidth={LABEL_WIDTH} disabled={dataSourceConfig.readOnly}>
-              <InlineSwitch
-                id="http-settings-basic-auth"
-                value={dataSourceConfig.basicAuth}
-                onChange={(event) => {
-                  onSettingsChange({ basicAuth: event!.currentTarget.checked });
-                }}
-              />
-            </InlineField>
+          <div>
+            <div className={gridLayout}>
+              <InlineField label="Basic auth" labelWidth={LABEL_WIDTH} disabled={dataSourceConfig.readOnly}>
+                <InlineSwitch
+                  id="http-settings-basic-auth"
+                  value={dataSourceConfig.basicAuth}
+                  onChange={(event) => {
+                    onSettingsChange({ basicAuth: event!.currentTarget.checked });
+                  }}
+                />
+              </InlineField>
 
-            <InlineField
-              label="With Credentials"
-              tooltip="Whether credentials such as cookies or auth headers should be sent with cross-site requests."
-              labelWidth={LABEL_WIDTH}
-              disabled={dataSourceConfig.readOnly}
-            >
-              <InlineSwitch
-                id="http-settings-with-credentials"
-                value={dataSourceConfig.withCredentials}
-                onChange={(event) => {
-                  onSettingsChange({ withCredentials: event!.currentTarget.checked });
-                }}
-              />
-            </InlineField>
-
-            {azureAuthSettings?.azureAuthSupported && (
               <InlineField
-                label="Azure Authentication"
-                tooltip="Use Azure authentication for Azure endpoint."
+                label="With Credentials"
+                tooltip="Whether credentials such as cookies or auth headers should be sent with cross-site requests."
                 labelWidth={LABEL_WIDTH}
                 disabled={dataSourceConfig.readOnly}
               >
                 <InlineSwitch
-                  id="http-settings-azure-auth"
-                  value={azureAuthEnabled}
+                  id="http-settings-with-credentials"
+                  value={dataSourceConfig.withCredentials}
                   onChange={(event) => {
-                    onSettingsChange(
-                      azureAuthSettings.setAzureAuthEnabled(dataSourceConfig, event!.currentTarget.checked)
-                    );
+                    onSettingsChange({ withCredentials: event!.currentTarget.checked });
                   }}
                 />
               </InlineField>
-            )}
 
-            {sigV4AuthToggleEnabled && (
-              <InlineField label="SigV4 auth" labelWidth={LABEL_WIDTH} disabled={dataSourceConfig.readOnly}>
-                <InlineSwitch
-                  id="http-settings-sigv4-auth"
-                  value={dataSourceConfig.jsonData.sigV4Auth || false}
-                  onChange={(event) => {
-                    onSettingsChange({
-                      jsonData: { ...dataSourceConfig.jsonData, sigV4Auth: event!.currentTarget.checked },
-                    });
-                  }}
-                />
-              </InlineField>
+              {azureAuthSettings?.azureAuthSupported && (
+                <InlineField
+                  label="Azure Authentication"
+                  tooltip="Use Azure authentication for Azure endpoint."
+                  labelWidth={LABEL_WIDTH}
+                  disabled={dataSourceConfig.readOnly}
+                >
+                  <InlineSwitch
+                    id="http-settings-azure-auth"
+                    value={azureAuthEnabled}
+                    onChange={(event) => {
+                      onSettingsChange(
+                        azureAuthSettings.setAzureAuthEnabled(dataSourceConfig, event!.currentTarget.checked)
+                      );
+                    }}
+                  />
+                </InlineField>
+              )}
+
+              {sigV4AuthToggleEnabled && (
+                <InlineField label="SigV4 auth" labelWidth={LABEL_WIDTH} disabled={dataSourceConfig.readOnly}>
+                  <InlineSwitch
+                    id="http-settings-sigv4-auth"
+                    value={dataSourceConfig.jsonData.sigV4Auth || false}
+                    onChange={(event) => {
+                      onSettingsChange({
+                        jsonData: { ...dataSourceConfig.jsonData, sigV4Auth: event!.currentTarget.checked },
+                      });
+                    }}
+                  />
+                </InlineField>
+              )}
+            </div>
+
+            {dataSourceConfig.access === 'proxy' && (
+              <HttpProxySettings
+                dataSourceConfig={dataSourceConfig}
+                onChange={(jsonData) => onSettingsChange({ jsonData })}
+                showForwardOAuthIdentityOption={azureAuthEnabled ? false : showForwardOAuthIdentityOption}
+              />
             )}
           </div>
-
-          {dataSourceConfig.access === 'proxy' && (
-            <HttpProxySettings
-              dataSourceConfig={dataSourceConfig}
-              onChange={(jsonData) => onSettingsChange({ jsonData })}
-              showForwardOAuthIdentityOption={azureAuthEnabled ? false : showForwardOAuthIdentityOption}
-            />
-          )}
 
           {dataSourceConfig.basicAuth && (
             <section>
