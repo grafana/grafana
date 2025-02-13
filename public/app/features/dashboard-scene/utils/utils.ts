@@ -21,7 +21,7 @@ import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DashboardLayoutManager, isDashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 
-import { getOriginalKey, isClonedKey } from './clone';
+import { getOriginalKey, isInCloneChain } from './clone';
 
 export const NEW_PANEL_HEIGHT = 8;
 export const NEW_PANEL_WIDTH = 12;
@@ -68,12 +68,33 @@ function findVizPanelInternal(scene: SceneObject, key: string | undefined): VizP
       return true;
     }
 
-    // It might be possible to have the keys changed in the meantime from `panel-2` to `panel-2-clone-0`
-    // We need to check this as well
-    const originalObjectKey = !isClonedKey(objKey) ? getOriginalKey(objKey) : objKey;
-    const originalKey = !isClonedKey(key) ? getOriginalKey(key) : key;
+    if (!(obj instanceof VizPanel)) {
+      return false;
+    }
 
-    if (originalObjectKey === originalKey) {
+    return false;
+  });
+
+  if (panel) {
+    if (panel instanceof VizPanel) {
+      return panel;
+    } else {
+      throw new Error(`Found panel with key ${key} but it was not a VizPanel`);
+    }
+  }
+
+  return null;
+}
+
+function findOriginalVizPanelInternal(scene: SceneObject, key: string | undefined): VizPanel | null {
+  if (!key) {
+    return null;
+  }
+
+  const panel = sceneGraph.findObject(scene, (obj) => {
+    const objKey = obj.state.key!;
+
+    if (objKey === key || (!isInCloneChain(objKey) && getOriginalKey(objKey) === getOriginalKey(key))) {
       return true;
     }
 
@@ -93,6 +114,35 @@ function findVizPanelInternal(scene: SceneObject, key: string | undefined): VizP
   }
 
   return null;
+}
+
+export function findOriginalPanelByKey(scene: SceneObject, key: string | undefined): VizPanel | null {
+  if (!key) {
+    return null;
+  }
+
+  let panel: VizPanel | null = findOriginalVizPanelInternal(scene, key);
+
+  if (panel) {
+    return panel;
+  }
+
+  // Also try to find by panel id
+  const id = parseInt(key, 10);
+  if (isNaN(id)) {
+    return null;
+  }
+
+  const panelId = getVizPanelKeyForPanelId(id);
+  panel = findVizPanelInternal(scene, panelId);
+
+  if (panel) {
+    return panel;
+  }
+
+  panel = findOriginalVizPanelInternal(scene, panelId);
+
+  return panel;
 }
 
 /**
