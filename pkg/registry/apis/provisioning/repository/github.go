@@ -525,7 +525,12 @@ func (r *githubRepository) Webhook(ctx context.Context, req *http.Request) (*pro
 		return nil, fmt.Errorf("unexpected webhook request")
 	}
 
-	payload, err := github.ValidatePayload(req, []byte(r.config.Status.Webhook.Secret))
+	secret, err := r.secrets.Decrypt(ctx, r.config.Status.Webhook.EncryptedSecret)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decrypt secret: %w", err)
+	}
+
+	payload, err := github.ValidatePayload(req, secret)
 	if err != nil {
 		return nil, apierrors.NewUnauthorized("invalid signature")
 	}
