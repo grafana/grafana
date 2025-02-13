@@ -82,7 +82,7 @@ export const setUpdateRulerRuleNamespaceHandler = (options?: HandlerOptions) => 
   return handler;
 };
 
-export const setRulerRuleGroupResolver = (
+export const setGrafanaRulerRuleGroupResolver = (
   resolver: HttpResponseResolver<{ folderUid: string; groupName: string }, RulerRuleGroupDTO, undefined>
 ) => {
   server.use(
@@ -92,6 +92,22 @@ export const setRulerRuleGroupResolver = (
     )
   );
 };
+
+export const setRulerRuleGroupResolver = (
+  resolver: HttpResponseResolver<
+    { dataSourceUid: string; namespace: string; groupName: string },
+    RulerRuleGroupDTO,
+    undefined
+  >
+) => {
+  server.use(
+    http.get<{ dataSourceUid: string; namespace: string; groupName: string }, RulerRuleGroupDTO, undefined>(
+      `/api/ruler/:dataSourceUid/api/v1/rules/:namespace/:groupName`,
+      resolver
+    )
+  );
+};
+
 /**
  * Makes the mock server respond with different responses for a ruler rule group
  */

@@ -10,7 +10,9 @@ import { AccessControlAction } from 'app/types';
 import { setupMswServer } from '../mockApi';
 import { grantUserPermissions } from '../mocks';
 import {
+  mimirDataSource,
   setFolderResponse,
+  setGrafanaRulerRuleGroupResolver,
   setRulerRuleGroupResolver,
   setUpdateRulerRuleNamespaceResolver,
 } from '../mocks/server/configure';
@@ -20,6 +22,7 @@ import GroupEditPage from './GroupEditPage';
 
 const ui = {
   header: byRole('heading', { level: 1 }),
+  namespaceInput: byRole('textbox', { name: /Namespace/ }),
   nameInput: byRole('textbox', { name: /Evaluation group name/ }),
   intervalInput: byRole('textbox', { name: /Evaluation interval/ }),
   saveButton: byRole('button', { name: /Save/ }),
@@ -35,6 +38,8 @@ grantUserPermissions([
   AccessControlAction.AlertingRuleExternalWrite,
 ]);
 
+const { dataSource: mimirDs } = mimirDataSource();
+
 describe('GroupEditPage', () => {
   const group = alertingFactory.ruler.group.build({
     name: 'test-group-cpu',
@@ -45,84 +50,121 @@ describe('GroupEditPage', () => {
     ],
   });
 
-  beforeEach(() => {
-    setRulerRuleGroupResolver(async ({ params: { groupName, folderUid } }) => {
-      if (groupName === 'test-group-cpu' && folderUid === 'test-folder-uid') {
-        return HttpResponse.json(group);
-      }
+  describe('Grafana Managed Rules', () => {
+    beforeEach(() => {
+      setGrafanaRulerRuleGroupResolver(async ({ params: { groupName, folderUid } }) => {
+        if (groupName === 'test-group-cpu' && folderUid === 'test-folder-uid') {
+          return HttpResponse.json(group);
+        }
 
-      return HttpResponse.json(null, { status: 404 });
-    });
-    setFolderResponse({ uid: 'test-folder-uid', canSave: true });
-  });
-
-  it('should render grafana rules group with form fields', async () => {
-    renderGroupEditPage('grafana', 'test-folder-uid', 'test-group-cpu');
-
-    const header = await ui.header.find();
-
-    const nameInput = await ui.nameInput.find();
-    const intervalInput = await ui.intervalInput.find();
-    const saveButton = await ui.saveButton.find();
-    const rules = await ui.rules.findAll();
-
-    expect(header).toHaveTextContent('Edit rule group');
-    expect(nameInput).toHaveValue('test-group-cpu');
-    expect(intervalInput).toHaveValue('4m30s');
-    expect(saveButton).toBeInTheDocument();
-    expect(rules).toHaveLength(2);
-    expect(rules[0]).toHaveTextContent('first-rule');
-    expect(rules[1]).toHaveTextContent('second-rule');
-  });
-
-  it('should save updated interval', async () => {
-    setUpdateRulerRuleNamespaceResolver(async ({ request }) => {
-      const body = await request.json();
-      if (body.interval === '1m20s') {
-        return HttpResponse.json({}, { status: 202 });
-      }
-
-      return HttpResponse.json(null, { status: 400 });
+        return HttpResponse.json(null, { status: 404 });
+      });
+      setFolderResponse({ uid: 'test-folder-uid', canSave: true });
     });
 
-    const { user } = renderGroupEditPage('grafana', 'test-folder-uid', 'test-group-cpu');
+    it('should render grafana rules group with form fields', async () => {
+      renderGroupEditPage('grafana', 'test-folder-uid', 'test-group-cpu');
 
-    const intervalInput = await ui.intervalInput.find();
-    const saveButton = await ui.saveButton.find();
+      const header = await ui.header.find();
 
-    await user.clear(intervalInput);
-    await user.type(intervalInput, '1m20s');
+      const nameInput = await ui.nameInput.find();
+      const intervalInput = await ui.intervalInput.find();
+      const saveButton = await ui.saveButton.find();
+      const rules = await ui.rules.findAll();
 
-    await user.click(saveButton);
-
-    expect(await ui.successMessage.find()).toBeInTheDocument();
-  });
-
-  it('should save a new group and remove the old when renaming', async () => {
-    setUpdateRulerRuleNamespaceResolver(async ({ request }) => {
-      const body = await request.json();
-      if (body.name === 'new-group-name') {
-        return HttpResponse.json({}, { status: 202 });
-      }
-
-      return HttpResponse.json(null, { status: 400 });
+      expect(header).toHaveTextContent('Edit rule group');
+      expect(nameInput).toHaveValue('test-group-cpu');
+      expect(intervalInput).toHaveValue('4m30s');
+      expect(saveButton).toBeInTheDocument();
+      expect(rules).toHaveLength(2);
+      expect(rules[0]).toHaveTextContent('first-rule');
+      expect(rules[1]).toHaveTextContent('second-rule');
+      // Changing folder is not supported for Grafana Managed Rules
+      expect(ui.namespaceInput.query()).not.toBeInTheDocument();
     });
 
-    const { user } = renderGroupEditPage('grafana', 'test-folder-uid', 'test-group-cpu');
+    it('should save updated interval', async () => {
+      setUpdateRulerRuleNamespaceResolver(async ({ request }) => {
+        const body = await request.json();
+        if (body.interval === '1m20s') {
+          return HttpResponse.json({}, { status: 202 });
+        }
 
-    const nameInput = await ui.nameInput.find();
-    const saveButton = await ui.saveButton.find();
+        return HttpResponse.json(null, { status: 400 });
+      });
 
-    await user.clear(nameInput);
-    await user.type(nameInput, 'new-group-name');
+      const { user } = renderGroupEditPage('grafana', 'test-folder-uid', 'test-group-cpu');
 
-    await user.click(saveButton);
+      const intervalInput = await ui.intervalInput.find();
+      const saveButton = await ui.saveButton.find();
 
-    expect(await ui.successMessage.find()).toBeInTheDocument();
+      await user.clear(intervalInput);
+      await user.type(intervalInput, '1m20s');
 
-    expect(locationService.getLocation().pathname).toBe(
-      '/alerting/grafana/namespaces/test-folder-uid/groups/new-group-name/edit'
-    );
+      await user.click(saveButton);
+
+      expect(await ui.successMessage.find()).toBeInTheDocument();
+    });
+
+    it('should save a new group and remove the old when renaming', async () => {
+      setUpdateRulerRuleNamespaceResolver(async ({ request }) => {
+        const body = await request.json();
+        if (body.name === 'new-group-name') {
+          return HttpResponse.json({}, { status: 202 });
+        }
+
+        return HttpResponse.json(null, { status: 400 });
+      });
+
+      const { user } = renderGroupEditPage('grafana', 'test-folder-uid', 'test-group-cpu');
+
+      const nameInput = await ui.nameInput.find();
+      const saveButton = await ui.saveButton.find();
+
+      await user.clear(nameInput);
+      await user.type(nameInput, 'new-group-name');
+
+      await user.click(saveButton);
+
+      expect(await ui.successMessage.find()).toBeInTheDocument();
+      expect(locationService.getLocation().pathname).toBe(
+        '/alerting/grafana/namespaces/test-folder-uid/groups/new-group-name/edit'
+      );
+    });
+  });
+
+  describe('Mimir Rules', () => {
+    it('should save a new group and remove the old when changing the namespace', async () => {
+      setRulerRuleGroupResolver(async ({ params: { groupName, namespace } }) => {
+        if (groupName === 'test-group-cpu' && namespace === 'test-mimir-namespace') {
+          return HttpResponse.json(group);
+        }
+
+        return HttpResponse.json(null, { status: 404 });
+      });
+      setUpdateRulerRuleNamespaceResolver(async ({ request, params }) => {
+        if (params.folderUid === 'new-namespace-name') {
+          return HttpResponse.json({}, { status: 202 });
+        }
+
+        return HttpResponse.json(null, { status: 400 });
+      });
+
+      const { user } = renderGroupEditPage(mimirDs.uid, 'test-mimir-namespace', 'test-group-cpu');
+
+      const namespaceInput = await ui.namespaceInput.find();
+      const saveButton = await ui.saveButton.find();
+
+      await user.clear(namespaceInput);
+      await user.type(namespaceInput, 'new-namespace-name');
+
+      await user.click(saveButton);
+
+      expect(await ui.successMessage.find()).toBeInTheDocument();
+      expect(locationService.getLocation().pathname).toBe(
+        '/alerting/mimir/namespaces/new-namespace-name/groups/test-group-cpu/edit'
+      );
+    });
   });
 });
 
