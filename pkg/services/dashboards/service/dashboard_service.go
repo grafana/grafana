@@ -1696,6 +1696,7 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 		for i := range query.FolderUIDs {
 			if query.FolderUIDs[i] == folder.GeneralFolderUID {
 				query.FolderUIDs[i] = ""
+				break
 			}
 		}
 
