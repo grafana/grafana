@@ -381,6 +381,11 @@
 
 /crowdin.yml @grafana/grafana-frontend-platform
 /public/locales/ @grafana/grafana-frontend-platform
+/public/locales/de-DE @grafanabot
+/public/locales/es-ES @grafanabot
+/public/locales/fr-FR @grafanabot
+/public/locales/pt-BR @grafanabot
+/public/locales/zh-Hans @grafanabot
 /public/app/core/internationalization/ @grafana/grafana-frontend-platform
 /e2e/ @grafana/grafana-frontend-platform
 /e2e/cloud-plugins-suite/ @grafana/partner-datasources
