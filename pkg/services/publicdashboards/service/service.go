@@ -13,6 +13,7 @@ import (
 	"go.opentelemetry.io/otel"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -136,7 +137,11 @@ func (pd *PublicDashboardServiceImpl) Find(ctx context.Context, uid string) (*Pu
 func (pd *PublicDashboardServiceImpl) FindDashboard(ctx context.Context, orgId int64, dashboardUid string) (*dashboards.Dashboard, error) {
 	ctx, span := tracer.Start(ctx, "publicdashboards.FindDashboard")
 	defer span.End()
-	dash, err := pd.dashboardService.GetDashboard(ctx, &dashboards.GetDashboardQuery{UID: dashboardUid, OrgID: orgId})
+
+	// We don't have a signed in user for public dashboards. We are using Grafana's Identity to query the dashboard.
+	dash, err := identity.WithServiceIdentityFn(ctx, orgId, func(ctx context.Context) (*dashboards.Dashboard, error) {
+		return pd.dashboardService.GetDashboard(ctx, &dashboards.GetDashboardQuery{UID: dashboardUid, OrgID: orgId})
+	})
 	if err != nil {
 		var dashboardErr dashboards.DashboardErr
 		if ok := errors.As(err, &dashboardErr); ok {
