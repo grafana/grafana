@@ -31,7 +31,10 @@
             "mode": "palette-classic"
           },
           "custom": {
-            "displayMode": "basic"
+            "cellOptions": {
+              "mode": "basic",
+              "type": "gauge"
+            }
           },
           "mappings": [],
           "thresholds": {
@@ -84,7 +87,10 @@
             "mode": "palette-classic"
           },
           "custom": {
-            "displayMode": "gradient-gauge"
+            "cellOptions": {
+              "mode": "gradient",
+              "type": "gauge"
+            }
           },
           "mappings": [],
           "thresholds": {
@@ -137,7 +143,10 @@
             "mode": "palette-classic"
           },
           "custom": {
-            "displayMode": "lcd-gauge"
+            "cellOptions": {
+              "mode": "lcd",
+              "type": "gauge"
+            }
           },
           "mappings": [],
           "thresholds": {
@@ -190,7 +199,10 @@
             "mode": "palette-classic"
           },
           "custom": {
-            "displayMode": "color-background"
+            "cellOptions": {
+              "mode": "gradient",
+              "type": "color-background"
+            }
           },
           "mappings": [],
           "thresholds": {
@@ -243,7 +255,10 @@
             "mode": "palette-classic"
           },
           "custom": {
-            "displayMode": "color-background-solid"
+            "cellOptions": {
+              "mode": "basic",
+              "type": "color-background"
+            }
           },
           "mappings": [],
           "thresholds": {
@@ -296,7 +311,9 @@
             "mode": "palette-classic"
           },
           "custom": {
-            "displayMode": "some-other-mode"
+            "cellOptions": {
+              "type": "some-other-mode"
+            }
           },
           "mappings": [],
           "thresholds": {
@@ -340,8 +357,8 @@
     }
   ],
   "preload": false,
-  "refresh": true,
-  "schemaVersion": 37,
+  "refresh": "",
+  "schemaVersion": 41,
   "tags": [],
   "templating": {
     "list": []
