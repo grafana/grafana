@@ -393,6 +393,7 @@ function handleRedirectTo(): void {
   if (queryParams.has('auth_token')) {
     // URL Login should not be redirected
     window.sessionStorage.removeItem(RedirectToUrlKey);
+    return;
   }
 
   if (queryParams.has(redirectToParamKey) && window.location.pathname !== '/') {
