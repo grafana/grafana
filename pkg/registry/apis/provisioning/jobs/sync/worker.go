@@ -41,7 +41,7 @@ type SyncWorker struct {
 	// Lists the values saved in grafana database
 	lister resources.ResourceLister
 
-	// Parses fiels saved in remore repository
+	// Parses fields saved in remore repository
 	parsers *resources.ParserFactory
 
 	// Check if the system is using unified storage

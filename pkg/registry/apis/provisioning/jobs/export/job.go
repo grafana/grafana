@@ -200,10 +200,7 @@ func (r *exportJob) withAuthorSignature(ctx context.Context, item utils.GrafanaM
 	}
 
 	sig := r.userInfo[id] // lookup
-	if sig.Name == "" {
-		sig.Name = id
-	}
-	if sig.Email == "" {
+	if sig.Name == "" && sig.Email == "" {
 		sig.Name = id
 	}
 	t, err := item.GetUpdatedTimestamp()

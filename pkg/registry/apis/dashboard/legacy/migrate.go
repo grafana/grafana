@@ -38,9 +38,11 @@ type LegacyMigrator interface {
 	Migrate(ctx context.Context, opts MigrateOptions) (*resource.BatchResponse, error)
 }
 
-// This will migrate Folders and the dashboard apiserver
-func ProvideLegacyMigrator(sql db.DB,
-	provisioning provisioning.ProvisioningService) LegacyMigrator {
+// This can migrate Folders, Dashboards and LibraryPanels
+func ProvideLegacyMigrator(
+	sql db.DB, // direct access to tables
+	provisioning provisioning.ProvisioningService, // only needed for dashboard settings
+) LegacyMigrator {
 	dbp := legacysql.NewDatabaseProvider(sql)
 	return NewDashboardAccess(dbp, authlib.OrgNamespaceFormatter, nil, provisioning, false)
 }

@@ -82,10 +82,15 @@ func (r *exportJob) loadResources(ctx context.Context) error {
 				return fmt.Errorf("unable to count legacy items %w", err)
 			}
 			if len(stats.Summary) > 0 {
-				reader.summary.Total = stats.Summary[0].Count
+				count := stats.Summary[0].Count
+				history := stats.Summary[0].History
+				if history > count {
+					count = history // the number of items we will process
+				}
+				reader.summary.Total = count
 			}
 
-			opts.OnlyCount = false // this time actualy write
+			opts.OnlyCount = false // this time actually write
 			_, err = r.legacy.Migrate(ctx, opts)
 			if err != nil {
 				return fmt.Errorf("error running legacy migrate %s %w", kind.Resource, err)

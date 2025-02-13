@@ -11,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
+	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -25,6 +26,7 @@ var (
 type folderReader struct {
 	tree           *resources.FolderTree
 	targetRepoName string
+	summary        *provisioning.JobResourceSummary
 }
 
 // Close implements resource.BatchResourceWriter.
@@ -44,7 +46,11 @@ func (f *folderReader) Write(ctx context.Context, key *resource.ResourceKey, val
 	if err != nil {
 		return err
 	}
-	return f.tree.AddUnstructured(item, f.targetRepoName)
+	err = f.tree.AddUnstructured(item, f.targetRepoName)
+	if err != nil {
+		f.summary.Errors = append(f.summary.Errors, err.Error())
+	}
+	return nil
 }
 
 func (r *exportJob) loadFolders(ctx context.Context) error {
@@ -53,9 +59,15 @@ func (r *exportJob) loadFolders(ctx context.Context) error {
 	status.Message = "reading folder tree"
 	r.maybeNotify(ctx)
 
+	summary := r.getSummary(schema.GroupResource{
+		Group:    folders.GROUP,
+		Resource: folders.RESOURCE,
+	})
+
 	reader := &folderReader{
 		tree:           resources.NewEmptyFolderTree(),
 		targetRepoName: r.target.Config().Name,
+		summary:        summary,
 	}
 
 	if r.legacy != nil {
@@ -85,14 +97,12 @@ func (r *exportJob) loadFolders(ctx context.Context) error {
 			return fmt.Errorf("unable to list all folders in one request: %s", rawList.GetContinue())
 		}
 		for _, item := range rawList.Items {
-			reader.tree.AddUnstructured(&item, reader.targetRepoName)
+			err = reader.tree.AddUnstructured(&item, reader.targetRepoName)
+			if err != nil {
+				summary.Errors = append(summary.Errors, err.Error())
+			}
 		}
 	}
-
-	summary := r.getSummary(schema.GroupResource{
-		Group:    folders.GROUP,
-		Resource: folders.RESOURCE,
-	})
 
 	// first create folders
 	// NOTE: this is required so that empty folders exist when finished

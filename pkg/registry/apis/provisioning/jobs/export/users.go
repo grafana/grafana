@@ -3,6 +3,7 @@ package export
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -43,6 +44,15 @@ func (r *exportJob) loadUsers(ctx context.Context) error {
 		if !ok || err != nil {
 			continue
 		}
+
+		if sig.Name == sig.Email {
+			if sig.Name == "" {
+				sig.Name = item.GetName()
+			} else if strings.Contains(sig.Email, "@") {
+				sig.Email = "" // don't use the same value for name+email
+			}
+		}
+
 		r.userInfo["user:"+item.GetName()] = sig
 	}
 
