@@ -63,6 +63,7 @@ export interface LoadDashboardOptions {
   uid: string;
   route: DashboardRoutes;
   type?: string;
+  slug?: string;
   urlFolderUid?: string;
   params?: {
     version: number;
@@ -266,6 +267,8 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
   }
 
   public async fetchDashboard({
+    type,
+    slug,
     uid,
     route,
     urlFolderUid,
@@ -323,7 +326,7 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
               }
             : undefined;
 
-          rsp = await dashboardLoaderSrv.loadDashboard('db', '', uid, queryParams);
+          rsp = await dashboardLoaderSrv.loadDashboard(type || 'db', slug || '', uid, queryParams);
 
           if (route === DashboardRoutes.Embedded) {
             rsp.meta.isEmbedded = true;
@@ -477,6 +480,8 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
   }
 
   public async fetchDashboard({
+    type,
+    slug,
     uid,
     route,
     urlFolderUid,
@@ -529,7 +534,7 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
                 ...params.variables,
               }
             : undefined;
-          rsp = await this.dashboardLoader.loadDashboard('db', '', uid, queryParams);
+          rsp = await this.dashboardLoader.loadDashboard(type || 'db', slug || '', uid, queryParams);
           if (route === DashboardRoutes.Embedded) {
             throw new Error('Method not implemented.');
             // rsp.meta.isEmbedded = true;

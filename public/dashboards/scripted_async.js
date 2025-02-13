@@ -17,7 +17,7 @@
 'use strict';
 
 // accessible variables in this scope
-let window, document, ARGS, $, jQuery, moment, kbn;
+// let window, document, ARGS, $, jQuery, moment, kbn;
 
 return function (callback) {
   // Setup some variables
@@ -60,6 +60,7 @@ return function (callback) {
       height: '300px',
       panels: [
         {
+          id: 1,
           title: 'Async dashboard test',
           type: 'text',
           span: 12,
