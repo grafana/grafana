@@ -222,10 +222,9 @@ func TestGetEngineMySQLTLS(t *testing.T) {
 }
 
 type testCerts struct {
-	caFile      string
-	certFile    string
-	keyFile     string
-	cleanupFunc func()
+	caFile   string
+	certFile string
+	keyFile  string
 }
 
 func generateTestCerts(t *testing.T) testCerts {
@@ -288,8 +287,10 @@ func generateTestCerts(t *testing.T) testCerts {
 
 func writePEMFile(t *testing.T, filename string, blockType string, bytes []byte) {
 	t.Helper()
+	//nolint:gosec
 	file, err := os.Create(filename)
 	require.NoError(t, err)
+	//nolint:errcheck
 	defer file.Close()
 
 	err = pem.Encode(file, &pem.Block{
