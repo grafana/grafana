@@ -17,7 +17,7 @@
 'use strict';
 
 // accessible variables in this scope
-let window, document, ARGS, $, jQuery, moment, kbn;
+// let window, document, ARGS, $, jQuery, moment, kbn;
 
 return function (callback) {
   // Setup some variables
