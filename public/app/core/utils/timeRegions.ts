@@ -60,46 +60,43 @@ function convertSecondsToTime(seconds: number): Duration {
 
 const secsInDay = 24 * 3600;
 
+interface Range {
+  from: ParsedTime;
+  to: ParsedTime;
+}
+
 // should be ran after normalization when we are sure all values are filled
-function getDuration(range: { from: ParsedTime; to: ParsedTime }) {
-  if (
-    range.from.dayOfWeek === range.to.dayOfWeek &&
-    range.from.h === range.to.h &&
-    range.from.m === range.to.m &&
-    range.from.s === range.to.s
-  ) {
-    return {
-      years: 0,
-      months: 0,
-      days: 0,
-      hours: 0,
-      minutes: 0,
-      seconds: 0,
-    };
-  } else {
-    let days = range.to.dayOfWeek! - range.from.dayOfWeek!;
+function getDuration({ from, to }: Range) {
+  const fromDay = from.dayOfWeek ?? 0;
+  const fromHour = from.h ?? 0;
+  const fromMin = from.m ?? 0;
 
-    // account for rollover through day 0
-    // TODO this does not account for rollover where duration is 1 day or under
-    if (days < 0) {
-      days = -days + 1;
-    }
+  const toDay = to.dayOfWeek ?? fromDay;
+  const toHour = to.h ?? fromHour;
+  const toMin = to.m ?? fromMin;
 
-    let daysSecs = days * secsInDay;
-    let fromSecs = range.from.h! * 3600 + range.from.m! * 60;
-    let toSecs = range.to.h! * 3600 + range.to.m! * 60;
+  let days = toDay - fromDay;
 
-    let durSecs = 0;
-
-    // account for toTime < fromTime on same day
-    if (days === 0 && toSecs <= fromSecs) {
-      durSecs = 7 * secsInDay - (fromSecs - toSecs);
-    } else {
-      durSecs = daysSecs - fromSecs + toSecs;
-    }
-
-    return convertSecondsToTime(durSecs);
+  // account for rollover through day 0
+  // TODO this does not account for rollover where duration is 1 day or under
+  if (days < 0) {
+    days = -days + 1;
   }
+
+  let daysSecs = days * secsInDay;
+  let fromSecs = fromHour * 3600 + fromMin * 60;
+  let toSecs = toHour * 3600 + toMin * 60;
+
+  let durSecs = 0;
+
+  // account for toTime < fromTime on same day
+  if (days === 0 && toSecs < fromSecs) {
+    durSecs = 7 * secsInDay - (fromSecs - toSecs);
+  } else {
+    durSecs = daysSecs - fromSecs + toSecs;
+  }
+
+  return convertSecondsToTime(durSecs);
 }
 
 export function convertToCron(cfg: TimeRegionConfig): { cron: string; duration: string } | undefined {
