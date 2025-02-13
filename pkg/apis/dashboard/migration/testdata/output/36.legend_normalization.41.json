@@ -114,8 +114,8 @@
     }
   ],
   "preload": false,
-  "refresh": true,
-  "schemaVersion": 37,
+  "refresh": "",
+  "schemaVersion": 41,
   "tags": [],
   "templating": {
     "list": []
@@ -124,19 +124,7 @@
     "from": "now-6h",
     "to": "now"
   },
-  "timepicker": {
-    "time_options": [
-      "5m",
-      "15m",
-      "1h",
-      "6h",
-      "12h",
-      "24h",
-      "2d",
-      "7d",
-      "30d"
-    ]
-  },
+  "timepicker": {},
   "timezone": "utc",
   "title": "New dashboard",
   "version": 0,
