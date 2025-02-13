@@ -3,6 +3,8 @@ package authz
 import (
 	"context"
 	"errors"
+	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/fullstorydev/grpchan"
@@ -11,6 +13,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"k8s.io/client-go/rest"
 
 	authnlib "github.com/grafana/authlib/authn"
 	authzlib "github.com/grafana/authlib/authz"
@@ -22,6 +25,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apiserver"
+	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/rbac"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/store"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -64,6 +69,10 @@ func ProvideAuthZClient(
 		// Register the server
 		server := rbac.NewService(
 			sql,
+			// When running in-proc we get a injection cycle between
+			// authz client, resource client and apiserver so we need to use
+			// package level function to get rest config
+			store.NewAPIFolderStore(tracer, apiserver.GetRestConfig),
 			legacy.NewLegacySQLStores(sql),
 			store.NewUnionPermissionStore(
 				store.NewStaticPermissionStore(acService),
@@ -200,4 +209,68 @@ func newCloudLegacyClient(authCfg *Cfg, tracer tracing.Tracer) (authlib.AccessCl
 	}
 
 	return client, nil
+}
+
+func RegisterRBACAuthZService(
+	handler grpcserver.Provider,
+	db legacysql.LegacyDatabaseProvider,
+	tracer tracing.Tracer,
+	reg prometheus.Registerer,
+	cache cache.Cache,
+	exchangeClient authnlib.TokenExchanger,
+	folderAPIURL string,
+) {
+	var folderStore store.FolderStore
+	// FIXME: for now we default to using database read proxy for folders if the api url is not configured.
+	// we should remove this and the sql implementation once we have verified that is works correctly
+	if folderAPIURL == "" {
+		folderStore = store.NewSQLFolderStore(db, tracer)
+	} else {
+		folderStore = store.NewAPIFolderStore(tracer, func(ctx context.Context) *rest.Config {
+			return &rest.Config{
+				Host: folderAPIURL,
+				WrapTransport: func(rt http.RoundTripper) http.RoundTripper {
+					return &tokenExhangeRoundTripper{te: exchangeClient, rt: rt}
+				},
+				QPS:   50,
+				Burst: 100,
+			}
+		})
+	}
+
+	server := rbac.NewService(
+		db,
+		folderStore,
+		legacy.NewLegacySQLStores(db),
+		store.NewSQLPermissionStore(db, tracer),
+		log.New("authz-grpc-server"),
+		tracer,
+		reg,
+		cache,
+	)
+
+	srv := handler.GetServer()
+	authzv1.RegisterAuthzServiceServer(srv, server)
+	authzextv1.RegisterAuthzExtentionServiceServer(srv, server)
+}
+
+var _ http.RoundTripper = tokenExhangeRoundTripper{}
+
+type tokenExhangeRoundTripper struct {
+	te authnlib.TokenExchanger
+	rt http.RoundTripper
+}
+
+func (t tokenExhangeRoundTripper) RoundTrip(r *http.Request) (*http.Response, error) {
+	res, err := t.te.Exchange(r.Context(), authnlib.TokenExchangeRequest{
+		Namespace: "*",
+		Audiences: []string{"folder.grafana.app"},
+	})
+
+	if err != nil {
+		return nil, fmt.Errorf("create access token: %w", err)
+	}
+
+	r.Header.Set("X-Access-Token", "Bearer "+res.Token)
+	return t.rt.RoundTrip(r)
 }

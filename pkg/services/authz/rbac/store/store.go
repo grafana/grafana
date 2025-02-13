@@ -15,7 +15,6 @@ import (
 type Store interface {
 	GetUserIdentifiers(ctx context.Context, query UserIdentifierQuery) (*UserIdentifiers, error)
 	GetBasicRoles(ctx context.Context, ns claims.NamespaceInfo, query BasicRoleQuery) (*BasicRole, error)
-	GetFolders(ctx context.Context, ns claims.NamespaceInfo) ([]Folder, error)
 }
 
 type StoreImpl struct {
@@ -103,42 +102,4 @@ func (s *StoreImpl) GetBasicRoles(ctx context.Context, ns claims.NamespaceInfo, 
 	}
 
 	return &role, nil
-}
-
-func (s *StoreImpl) GetFolders(ctx context.Context, ns claims.NamespaceInfo) ([]Folder, error) {
-	ctx, span := s.tracer.Start(ctx, "authz_direct_db.database.GetFolders")
-	defer span.End()
-
-	sql, err := s.sql(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	query := FolderQuery{OrgID: ns.OrgID}
-	req := newGetFolders(sql, &query)
-	q, err := sqltemplate.Execute(sqlFolders, req)
-	if err != nil {
-		return nil, err
-	}
-
-	rows, err := sql.DB.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
-	defer func() {
-		if rows != nil {
-			_ = rows.Close()
-		}
-	}()
-	if err != nil {
-		return nil, err
-	}
-
-	var folders []Folder
-	for rows.Next() {
-		var folder Folder
-		if err := rows.Scan(&folder.UID, &folder.ParentUID); err != nil {
-			return nil, err
-		}
-		folders = append(folders, folder)
-	}
-
-	return folders, nil
 }
