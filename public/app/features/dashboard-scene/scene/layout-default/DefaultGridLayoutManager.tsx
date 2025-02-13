@@ -15,6 +15,10 @@ import { GRID_COLUMN_COUNT } from 'app/core/constants';
 import { t } from 'app/core/internationalization';
 import DashboardEmpty from 'app/features/dashboard/dashgrid/DashboardEmpty';
 
+import {
+  schemaV2RemoveElementIdentifierForVizPanel,
+  schemaV2SetElementIdentifierForVizPanel,
+} from '../../serialization/layoutSerializers/utils';
 import { isClonedKey, joinCloneKeys } from '../../utils/clone';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import {
@@ -66,6 +70,9 @@ export class DefaultGridLayoutManager
     vizPanel.setState({ key: getVizPanelKeyForPanelId(panelId) });
     vizPanel.clearParent();
 
+    // set panel id in the elementPanel mapping
+    schemaV2SetElementIdentifierForVizPanel(panelId);
+
     const newGridItem = new DashboardGridItem({
       height: NEW_PANEL_HEIGHT,
       width: NEW_PANEL_WIDTH,
@@ -106,6 +113,8 @@ export class DefaultGridLayoutManager
     this.state.grid.setState({
       children: layout.state.children.filter((child) => child !== gridItem),
     });
+
+    schemaV2RemoveElementIdentifierForVizPanel(panel);
   }
 
   public duplicatePanel(vizPanel: VizPanel) {

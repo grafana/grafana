@@ -71,6 +71,7 @@ import { DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 import { preserveDashboardSceneStateInLocalStorage } from '../utils/dashboardSessionState';
 import { getIntervalsFromQueryString } from '../utils/utils';
 
+import { ElementPanelMappingService } from './ElementPanelMappingService';
 import { SnapshotVariable } from './custom-variables/SnapshotVariable';
 import { layoutSerializerRegistry } from './layoutSerializers/layoutSerializerRegistry';
 import { registerPanelInteractionsReporter } from './transformSaveModelToScene';
@@ -156,6 +157,9 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
 
   //createLayoutManager(dashboard);
 
+  // create element panel mapping
+  const elementPanelMapping = createElementPanelMapping(dashboard);
+
   const dashboardScene = new DashboardScene({
     description: dashboard.description,
     editable: dashboard.editable,
@@ -211,6 +215,7 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
       }),
       hideTimeControls: dashboard.timeSettings.hideTimepicker,
     }),
+    elementPanelMapping,
   });
 
   dashboardScene.setInitialSaveModel(dto.spec, dto.metadata);
@@ -565,4 +570,20 @@ export function getPanelElement(dashboard: DashboardV2Spec, elementName: string)
 
 export function getLibraryPanelElement(dashboard: DashboardV2Spec, elementName: string): LibraryPanelKind | undefined {
   return dashboard.elements[elementName].kind === 'LibraryPanel' ? dashboard.elements[elementName] : undefined;
+}
+
+function createElementPanelMapping(dashboard: DashboardV2Spec) {
+  const mapping = ElementPanelMappingService.getInstance();
+
+  const elementsKeys = Object.keys(dashboard.elements);
+  elementsKeys.forEach((element) => {
+    const dashboardElement = dashboard.elements[element];
+    if (dashboardElement.kind === 'Panel') {
+      // TODO: what happens if the id is null?
+      // What happens if the id is not unique?
+      mapping.set(element, dashboardElement.spec.id);
+    }
+  });
+  console.log('lookup table', mapping);
+  return mapping;
 }

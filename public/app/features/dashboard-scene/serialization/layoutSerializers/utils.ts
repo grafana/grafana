@@ -21,7 +21,8 @@ import { PanelTimeRange } from '../../scene/PanelTimeRange';
 import { AngularDeprecation } from '../../scene/angular/AngularDeprecation';
 import { setDashboardPanelContext } from '../../scene/setDashboardPanelContext';
 import { DashboardLayoutManager } from '../../scene/types/DashboardLayoutManager';
-import { getVizPanelKeyForPanelId } from '../../utils/utils';
+import { getDashboardSceneFor, getPanelIdForVizPanel, getVizPanelKeyForPanelId } from '../../utils/utils';
+import { ElementPanelMappingService } from '../ElementPanelMappingService';
 import { transformMappingsToV1 } from '../transformToV1TypesUtils';
 
 import { layoutSerializerRegistry } from './layoutSerializerRegistry';
@@ -151,4 +152,37 @@ export function getLayout(sceneState: DashboardLayoutManager): DashboardV2Spec['
     throw new Error(`Layout serializer not found for kind: ${sceneState.descriptor.kind}`);
   }
   return registryItem.serializer.serialize(sceneState);
+}
+
+// Functions to manage the lookup table in dashboard scene that will hold element_identifer : panel_id
+export function getElementIdentifierForVizPanel(vizPanel: VizPanel): string {
+  try {
+    const scene = getDashboardSceneFor(vizPanel);
+    const panelId = getPanelIdForVizPanel(vizPanel);
+    const elementKey = scene.state.elementPanelMapping?.getElementIdentifier(panelId);
+    if (!elementKey) {
+      throw new Error(`Identifier ${panelId} not found`);
+    }
+    return elementKey;
+  } catch (error) {
+    return `error in getElementIdentifierForVizPanel: ${error}`;
+  }
+}
+
+export function schemaV2SetElementIdentifierForVizPanel(panelId: number): void {
+  const elementKey = 'element-panel-' + panelId;
+  const mapping = ElementPanelMappingService.getInstance();
+
+  mapping.set(elementKey, panelId);
+}
+
+export function schemaV2RemoveElementIdentifierForVizPanel(vizPanel: VizPanel): void {
+  // This function is only for V2 dashboards
+  if (config.featureToggles.useV2DashboardsAPI) {
+    const elementKey = getElementIdentifierForVizPanel(vizPanel);
+    console.log('removeElementIdentifierForVizPanel', elementKey);
+    const mapping = ElementPanelMappingService.getInstance();
+    mapping.remove(elementKey);
+    console.log('mapping after removing', mapping.getAll());
+  }
 }

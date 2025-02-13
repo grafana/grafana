@@ -369,6 +369,10 @@ function yOffsetInRows(p: Panel, rowY: number): number {
 }
 
 function buildElement(p: Panel): [PanelKind | LibraryPanelKind, string] {
+  // Use arbitrary random string for element_identifier, this is what the user will be arbitrary setting when creating a
+  // dashboard in the api
+  const element_identifier = `element-panel-${p.id}`;
+
   if (p.libraryPanel) {
     // LibraryPanelKind
     const panelKind: LibraryPanelKind = {
@@ -383,7 +387,7 @@ function buildElement(p: Panel): [PanelKind | LibraryPanelKind, string] {
       },
     };
 
-    return [panelKind, p.id!.toString()];
+    return [panelKind, element_identifier];
   } else {
     // PanelKind
 
@@ -433,7 +437,7 @@ function buildElement(p: Panel): [PanelKind | LibraryPanelKind, string] {
       },
     };
 
-    return [panelKind, p.id!.toString()];
+    return [panelKind, element_identifier];
   }
 }
 

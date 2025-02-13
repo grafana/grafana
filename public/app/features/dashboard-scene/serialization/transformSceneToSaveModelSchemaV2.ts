@@ -44,13 +44,7 @@ import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
-import {
-  getLibraryPanelBehavior,
-  getPanelIdForVizPanel,
-  getQueryRunnerFor,
-  getVizPanelKeyForPanelId,
-  isLibraryPanel,
-} from '../utils/utils';
+import { getLibraryPanelBehavior, getPanelIdForVizPanel, getQueryRunnerFor, isLibraryPanel } from '../utils/utils';
 
 import { getLayout } from './layoutSerializers/utils';
 import { sceneVariablesSetToSchemaV2Variables } from './sceneVariablesSetToVariables';
@@ -226,7 +220,7 @@ function getElements(state: DashboardSceneState) {
       return elementSpec;
     }
   });
-  return createElements(panelsArray);
+  return createElements(panelsArray, state);
 }
 
 function getPanelLinks(panel: VizPanel): DataLink[] {
@@ -343,9 +337,10 @@ function getVizPanelQueryOptions(vizPanel: VizPanel): QueryOptionsSpec {
   return queryOptions;
 }
 
-function createElements(panels: Element[]): Record<string, Element> {
+function createElements(panels: Element[], sceneDash: DashboardSceneState): Record<string, Element> {
   return panels.reduce<Record<string, Element>>((elements, panel) => {
-    elements[getVizPanelKeyForPanelId(panel.spec.id)] = panel;
+    const elementKey = sceneDash.elementPanelMapping?.getElementIdentifier(panel.spec.id);
+    elements[elementKey!] = panel;
     return elements;
   }, {});
 }
