@@ -709,7 +709,6 @@
       "success": "Dashboard {{name}} moved to Recently deleted"
     }
   },
-  "Browser": "grafana-ui.data-source-http-settings.browser-mode-title",
   "clipboard-button": {
     "inline-toast": {
       "success": "Copied"
@@ -1624,12 +1623,15 @@
       "auth": "Auth",
       "basic-auth": "Basic Auth Details",
       "browser-mode-description": "All requests will be made from the browser directly to the data source and may be subject to Cross-Origin Resource Sharing (CORS) requirements. The URL needs to be accessible from the browser if you select this access mode.",
+      "browser-mode-label": "Browser",
       "browser-mode-title": "<0>Browser access mode:</0>",
       "default-url-tooltip": "Specify a complete HTTP URL (for example http://your_server:8080)",
       "direct-url-tooltip": "Your access method is <1>Browser</1>, this means the URL needs to be accessible from the browser.",
       "heading": "HTTP",
+      "invalid-url-error": "Invalid URL",
       "proxy-url-tooltip": "Your access method is <1>Server</1>, this means the URL needs to be accessible from the grafana backend/server.",
       "server-mode-description": "All requests will be made from the browser to Grafana backend/server which in turn will forward the requests to the data source and by that circumvent possible Cross-Origin Resource Sharing (CORS) requirements. The URL needs to be accessible from the grafana backend/server if you select this access mode.",
+      "server-mode-label": "Server (default)",
       "server-mode-title": "<0>Server access mode (Default):</0>"
     },
     "data-source-settings": {
@@ -3199,7 +3201,6 @@
       "selected-count": "Selected "
     }
   },
-  "Server (default)": "grafana-ui.data-source-http-settings.server-mode-title",
   "service-account-create-page": {
     "create": {
       "button": "Create"

@@ -12,8 +12,8 @@ import { ComboboxOption } from '../Combobox/types';
 import { FormField } from '../FormField/FormField';
 import { InlineFormLabel } from '../FormLabel/FormLabel';
 import { InlineField } from '../Forms/InlineField';
-import { Input } from '../Forms/Legacy/Input/Input';
 import { Icon } from '../Icon/Icon';
+import { Input } from '../Input/Input';
 import { Stack } from '../Layout/Stack/Stack';
 import { InlineSwitch } from '../Switch/Switch';
 import { TagsInput } from '../TagsInput/TagsInput';
@@ -28,11 +28,11 @@ import { HttpSettingsProps } from './types';
 
 const ACCESS_OPTIONS: Array<ComboboxOption<string>> = [
   {
-    label: t('Server (default)', 'grafana-ui.data-source-http-settings.server-mode-title'),
+    label: t('grafana-ui.data-source-http-settings.server-mode-label', 'Server (default)'),
     value: 'proxy',
   },
   {
-    label: t('Browser', 'grafana-ui.data-source-http-settings.browser-mode-title'),
+    label: t('grafana-ui.data-source-http-settings.browser-mode-label', 'Browser'),
     value: 'direct',
   },
 ];
@@ -162,31 +162,13 @@ export const DataSourceHttpSettings = (props: HttpSettingsProps) => {
     dataSourceConfig.url
   );
 
-  const notValidStyle = css({
-    boxShadow: `inset 0 0px 5px ${theme.v1.palette.red}`,
-  });
-
   const gridLayout = css({
     display: 'grid',
     gridTemplateColumns: 'auto 1fr',
     gap: theme.spacing(0.5),
   });
 
-  const inputStyle = cx({ [`width-20`]: true, [notValidStyle]: !isValidUrl });
-
   const fromFieldId = useId();
-
-  const urlInput = (
-    <Input
-      id={fromFieldId}
-      className={inputStyle}
-      placeholder={defaultUrl}
-      value={dataSourceConfig.url}
-      data-testid={selectors.components.DataSource.DataSourceHttpSettings.urlInput}
-      onChange={(event) => onSettingsChange({ url: event.currentTarget.value })}
-      disabled={dataSourceConfig.readOnly}
-    />
-  );
 
   return (
     <Stack direction="column" gap={5}>
@@ -196,13 +178,23 @@ export const DataSourceHttpSettings = (props: HttpSettingsProps) => {
         </h3>
 
         <Stack direction="column" gap={0.5}>
-          <FormField
-            interactive={urlDocs ? true : false}
+          <InlineField
             label={urlLabel ?? 'URL'}
-            labelWidth={13}
+            labelWidth={26}
             tooltip={urlTooltip}
-            inputEl={urlInput}
-          />
+            invalid={!isValidUrl}
+            error={!isValidUrl && t('grafana-ui.data-source-http-settings.invalid-url-error', 'Invalid URL')}
+          >
+            <Input
+              id={fromFieldId}
+              width={40}
+              placeholder={defaultUrl}
+              value={dataSourceConfig.url}
+              data-testid={selectors.components.DataSource.DataSourceHttpSettings.urlInput}
+              onChange={(event) => onSettingsChange({ url: event.currentTarget.value })}
+              disabled={dataSourceConfig.readOnly}
+            />
+          </InlineField>
 
           {showAccessOptions && (
             <>
