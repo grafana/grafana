@@ -212,7 +212,7 @@ export class UnifiedSearcher implements GrafanaSearcher {
       }
 
       // this means user has permission to see this dashboard, but not the folder contents
-      if (locationInfo[hit.folder] == null) {
+      if (locationInfo[hit.folder] === undefined) {
         return { ...hit, location: 'sharedwithme', folder: 'sharedwithme' };
       }
 
