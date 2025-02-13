@@ -71,8 +71,7 @@ func (r *conditionEvaluator) EvaluateRaw(ctx context.Context, now time.Time) (re
 
 	execCtx := ctx
 	if r.evalTimeout >= 0 {
-		// DEBUG: 7ms is time out that helps reproducing the issue locally
-		timeoutCtx, cancel := context.WithTimeout(ctx, 7 * time.Millisecond)
+		timeoutCtx, cancel := context.WithTimeout(ctx, r.evalTimeout)
 		defer cancel()
 		execCtx = timeoutCtx
 	}
