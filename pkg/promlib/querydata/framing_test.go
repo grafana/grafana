@@ -149,6 +149,6 @@ func runQuery(response []byte, q *backend.QueryDataRequest) (*backend.QueryDataR
 		StatusCode: 200,
 		Body:       io.NopCloser(bytes.NewReader(response)),
 	}
-	tCtx.httpProvider.setResponse(res)
+	tCtx.httpProvider.setResponse(res, res)
 	return tCtx.queryData.Execute(context.Background(), q)
 }

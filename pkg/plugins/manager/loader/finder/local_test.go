@@ -57,6 +57,7 @@ func TestFinder_Find(t *testing.T) {
 							Extensions: plugins.Extensions{
 								AddedLinks:        []plugins.AddedLink{},
 								AddedComponents:   []plugins.AddedComponent{},
+								AddedFunctions:    []plugins.AddedFunction{},
 								ExposedComponents: []plugins.ExposedComponent{},
 								ExtensionPoints:   []plugins.ExtensionPoint{},
 							},
@@ -96,8 +97,10 @@ func TestFinder_Find(t *testing.T) {
 								},
 							},
 							Extensions: plugins.Extensions{
-								AddedLinks:        []plugins.AddedLink{},
-								AddedComponents:   []plugins.AddedComponent{},
+								AddedLinks:      []plugins.AddedLink{},
+								AddedComponents: []plugins.AddedComponent{},
+								AddedFunctions:  []plugins.AddedFunction{},
+
 								ExposedComponents: []plugins.ExposedComponent{},
 								ExtensionPoints:   []plugins.ExtensionPoint{},
 							},
@@ -127,8 +130,10 @@ func TestFinder_Find(t *testing.T) {
 									},
 								},
 								Extensions: plugins.Extensions{
-									AddedLinks:        []plugins.AddedLink{},
-									AddedComponents:   []plugins.AddedComponent{},
+									AddedLinks:      []plugins.AddedLink{},
+									AddedComponents: []plugins.AddedComponent{},
+									AddedFunctions:  []plugins.AddedFunction{},
+
 									ExposedComponents: []plugins.ExposedComponent{},
 									ExtensionPoints:   []plugins.ExtensionPoint{},
 								},
@@ -200,8 +205,10 @@ func TestFinder_Find(t *testing.T) {
 								{Name: "Nginx Datasource", Type: "datasource", Role: "Viewer", Action: "plugins.app:access"},
 							},
 							Extensions: plugins.Extensions{
-								AddedLinks:        []plugins.AddedLink{},
-								AddedComponents:   []plugins.AddedComponent{},
+								AddedLinks:      []plugins.AddedLink{},
+								AddedComponents: []plugins.AddedComponent{},
+								AddedFunctions:  []plugins.AddedFunction{},
+
 								ExposedComponents: []plugins.ExposedComponent{},
 								ExtensionPoints:   []plugins.ExtensionPoint{},
 							},
@@ -238,8 +245,10 @@ func TestFinder_Find(t *testing.T) {
 								},
 							},
 							Extensions: plugins.Extensions{
-								AddedLinks:        []plugins.AddedLink{},
-								AddedComponents:   []plugins.AddedComponent{},
+								AddedLinks:      []plugins.AddedLink{},
+								AddedComponents: []plugins.AddedComponent{},
+								AddedFunctions:  []plugins.AddedFunction{},
+
 								ExposedComponents: []plugins.ExposedComponent{},
 								ExtensionPoints:   []plugins.ExtensionPoint{},
 							},
@@ -269,8 +278,10 @@ func TestFinder_Find(t *testing.T) {
 									},
 								},
 								Extensions: plugins.Extensions{
-									AddedLinks:        []plugins.AddedLink{},
-									AddedComponents:   []plugins.AddedComponent{},
+									AddedLinks:      []plugins.AddedLink{},
+									AddedComponents: []plugins.AddedComponent{},
+									AddedFunctions:  []plugins.AddedFunction{},
+
 									ExposedComponents: []plugins.ExposedComponent{},
 									ExtensionPoints:   []plugins.ExtensionPoint{},
 								},
@@ -300,8 +311,10 @@ func TestFinder_Find(t *testing.T) {
 								},
 							},
 							Extensions: plugins.Extensions{
-								AddedLinks:        []plugins.AddedLink{},
-								AddedComponents:   []plugins.AddedComponent{},
+								AddedLinks:      []plugins.AddedLink{},
+								AddedComponents: []plugins.AddedComponent{},
+								AddedFunctions:  []plugins.AddedFunction{},
+
 								ExposedComponents: []plugins.ExposedComponent{},
 								ExtensionPoints:   []plugins.ExtensionPoint{},
 							},
@@ -340,8 +353,10 @@ func TestFinder_Find(t *testing.T) {
 								},
 							},
 							Extensions: plugins.Extensions{
-								AddedLinks:        []plugins.AddedLink{},
-								AddedComponents:   []plugins.AddedComponent{},
+								AddedLinks:      []plugins.AddedLink{},
+								AddedComponents: []plugins.AddedComponent{},
+								AddedFunctions:  []plugins.AddedFunction{},
+
 								ExposedComponents: []plugins.ExposedComponent{},
 								ExtensionPoints:   []plugins.ExtensionPoint{},
 							},

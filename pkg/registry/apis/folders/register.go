@@ -53,6 +53,7 @@ type FolderAPIBuilder struct {
 	accessControl        accesscontrol.AccessControl
 	searcher             resource.ResourceIndexClient
 	cfg                  *setting.Cfg
+	ignoreLegacy         bool // skip legacy storage and only use unified storage
 }
 
 func RegisterAPIService(cfg *setting.Cfg,
@@ -65,9 +66,7 @@ func RegisterAPIService(cfg *setting.Cfg,
 	unified resource.ResourceClient,
 ) *FolderAPIBuilder {
 	if !featuremgmt.AnyEnabled(features,
-		featuremgmt.FlagKubernetesFolders,
 		featuremgmt.FlagKubernetesFoldersServiceV2,
-		featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
 		featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
 		featuremgmt.FlagProvisioning) {
 		return nil // skip registration unless opting into Kubernetes folders or unless we want to customize registration when testing
@@ -85,6 +84,14 @@ func RegisterAPIService(cfg *setting.Cfg,
 	}
 	apiregistration.RegisterAPI(builder)
 	return builder
+}
+
+func NewAPIService() *FolderAPIBuilder {
+	return &FolderAPIBuilder{
+		gv:           resourceInfo.GroupVersion(),
+		namespacer:   request.GetNamespaceMapper(nil),
+		ignoreLegacy: true,
+	}
 }
 
 func (b *FolderAPIBuilder) GetGroupVersion() schema.GroupVersion {
@@ -124,6 +131,18 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 	scheme := opts.Scheme
 	optsGetter := opts.OptsGetter
 	dualWriteBuilder := opts.DualWriteBuilder
+	storage := map[string]rest.Storage{}
+
+	if b.ignoreLegacy {
+		store, err := grafanaregistry.NewRegistryStore(opts.Scheme, resourceInfo, opts.OptsGetter)
+		if err != nil {
+			return err
+		}
+		storage[resourceInfo.StoragePath()] = store
+		apiGroupInfo.VersionedResourcesStorageMap[v0alpha1.VERSION] = storage
+		b.storage = storage[resourceInfo.StoragePath()].(grafanarest.Storage)
+		return nil
+	}
 
 	legacyStore := &legacyStorage{
 		service:              b.folderSvc,
@@ -137,7 +156,6 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 	opts.StorageOptions(resourceInfo.GroupResource(), apistore.StorageOptions{
 		RequireDeprecatedInternalID: true})
 
-	storage := map[string]rest.Storage{}
 	storage[resourceInfo.StoragePath()] = legacyStore
 	if optsGetter != nil && dualWriteBuilder != nil {
 		store, err := grafanaregistry.NewRegistryStore(scheme, resourceInfo, optsGetter)
@@ -173,13 +191,7 @@ func (b *FolderAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAP
 
 	// Hide the ability to list or watch across all tenants
 	delete(oas.Paths.Paths, root+v0alpha1.FolderResourceInfo.GroupResource().Resource)
-	delete(oas.Paths.Paths, root+"watch/"+v0alpha1.FolderResourceInfo.GroupResource().Resource)
 
-	// The root API discovery list
-	sub := oas.Paths.Paths[root]
-	if sub != nil && sub.Get != nil {
-		sub.Get.Tags = []string{"API Discovery"} // sorts first in the list
-	}
 	return oas, nil
 }
 

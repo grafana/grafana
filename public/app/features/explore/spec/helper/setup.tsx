@@ -4,6 +4,7 @@ import { createMemoryHistory } from 'history';
 import { KBarProvider } from 'kbar';
 import { fromPairs } from 'lodash';
 import { stringify } from 'querystring';
+import { ComponentType, ReactNode } from 'react';
 import { Provider } from 'react-redux';
 // eslint-disable-next-line no-restricted-imports
 import { Route, Router } from 'react-router-dom';
@@ -59,6 +60,7 @@ type SetupOptions = {
   failAddToLibrary?: boolean;
   // Use AppChrome wrapper around ExplorePage - needed to test query library/history
   withAppChrome?: boolean;
+  provider?: ComponentType<{ children: ReactNode }>;
 };
 
 type TearDownOptions = {
@@ -178,28 +180,38 @@ export function setupExplore(options?: SetupOptions): {
 
   const contextMock = getGrafanaContextMock({ location });
 
+  const FinalProvider =
+    options?.provider ||
+    (({ children }) => {
+      return children;
+    });
+
   const { unmount, container } = render(
     <Provider store={storeState}>
       <GrafanaContext.Provider value={contextMock}>
         <Router history={history}>
           <QueriesDrawerContextProvider>
-            {options?.withAppChrome ? (
-              <KBarProvider>
-                <AppChrome>
-                  <Route
-                    path="/explore"
-                    exact
-                    render={(props) => <GrafanaRoute {...props} route={{ component: ExplorePage, path: '/explore' }} />}
-                  />
-                </AppChrome>
-              </KBarProvider>
-            ) : (
-              <Route
-                path="/explore"
-                exact
-                render={(props) => <GrafanaRoute {...props} route={{ component: ExplorePage, path: '/explore' }} />}
-              />
-            )}
+            <FinalProvider>
+              {options?.withAppChrome ? (
+                <KBarProvider>
+                  <AppChrome>
+                    <Route
+                      path="/explore"
+                      exact
+                      render={(props) => (
+                        <GrafanaRoute {...props} route={{ component: ExplorePage, path: '/explore' }} />
+                      )}
+                    />
+                  </AppChrome>
+                </KBarProvider>
+              ) : (
+                <Route
+                  path="/explore"
+                  exact
+                  render={(props) => <GrafanaRoute {...props} route={{ component: ExplorePage, path: '/explore' }} />}
+                />
+              )}
+            </FinalProvider>
           </QueriesDrawerContextProvider>
         </Router>
       </GrafanaContext.Provider>
