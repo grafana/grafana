@@ -82,6 +82,8 @@ func MySQLColToFieldType(col *mysql.Column) (data.FieldType, error) {
 		fT = data.FieldTypeInt64
 	case types.Uint64:
 		fT = data.FieldTypeUint64
+	case types.Float32:
+		fT = data.FieldTypeFloat32
 	case types.Float64:
 		fT = data.FieldTypeFloat64
 	case types.Timestamp:
@@ -233,21 +235,14 @@ func fieldValFromRowVal(fieldType data.FieldType, val interface{}) (interface{},
 		return nil, fmt.Errorf("unexpected value type %v of type %T, expected uint64", val, val)
 
 	case data.FieldTypeFloat32, data.FieldTypeNullableFloat32:
-		if fv, ok := val.(float64); ok {
-			f32 := float32(fv)
+		v, ok := val.(float32)
+		if ok {
 			if fieldType.Nullable() {
-				return &f32, nil
+				return &v, nil
 			}
-			return f32, nil
+			return v, nil
 		}
-		if d, ok := val.(decimal.Decimal); ok {
-			f32 := float32(d.InexactFloat64())
-			if fieldType.Nullable() {
-				return &f32, nil
-			}
-			return f32, nil
-		}
-		return nil, fmt.Errorf("unexpected value type %v of type %T, expected float64 or decimal.Decimal", val, val)
+		return nil, fmt.Errorf("unexpected value type %v of type %T, expected float32", val, val)
 
 	case data.FieldTypeFloat64, data.FieldTypeNullableFloat64:
 		if fv, ok := val.(float64); ok {

@@ -85,21 +85,41 @@ func TestQueryFramesInOut(t *testing.T) {
 			data.NewField("string", nil, []string{"cat", "dog"}),
 			data.NewField("null_nullable", nil, []*string{p("cat"), nil}),
 
-			// TODO
-			//data.NewField("float32", nil, []float32{1, 3}),
-			//data.NewField("float32_nullable", nil, []*float32{p(float32(2.0)), nil}),
+			data.NewField("bool", nil, []bool{true, false}),
+			data.NewField("bool_nullable", nil, []*bool{p(true), nil}),
+
+			// Floats
+			data.NewField("float32", nil, []float32{1, 3}),
+			data.NewField("float32_nullable", nil, []*float32{p(float32(2.0)), nil}),
 
 			data.NewField("float64", nil, []float64{1, 3}),
 			data.NewField("float64_nullable", nil, []*float64{p(2.0), nil}),
 
+			// Ints
 			data.NewField("int8", nil, []int8{1, 3}),
 			data.NewField("int8_nullable", nil, []*int8{p(int8(2)), nil}),
+
+			data.NewField("int16", nil, []int16{1, 3}),
+			data.NewField("int16_nullable", nil, []*int16{p(int16(2)), nil}),
+
+			data.NewField("int32", nil, []int32{1, 3}),
+			data.NewField("int32_nullable", nil, []*int32{p(int32(2)), nil}),
 
 			data.NewField("int64", nil, []int64{1, 3}),
 			data.NewField("int64_nullable", nil, []*int64{p(int64(2)), nil}),
 
-			data.NewField("bool", nil, []bool{true, false}),
-			data.NewField("bool_nullable", nil, []*bool{p(true), nil}),
+			// Unsigned Ints
+			data.NewField("uint8", nil, []uint8{1, 3}),
+			data.NewField("uint8_nullable", nil, []*uint8{p(uint8(2)), nil}),
+
+			data.NewField("uint16", nil, []uint16{1, 3}),
+			data.NewField("uint16_nullable", nil, []*uint16{p(uint16(2)), nil}),
+
+			data.NewField("uint32", nil, []uint32{1, 3}),
+			data.NewField("uint32_nullable", nil, []*uint32{p(uint32(2)), nil}),
+
+			data.NewField("uint64", nil, []uint64{1, 3}),
+			data.NewField("uint64_nullable", nil, []*uint64{p(uint64(2)), nil}),
 		},
 	}
 
