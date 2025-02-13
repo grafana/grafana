@@ -10,6 +10,8 @@ import (
 	"sync"
 	"time"
 
+	dashboardv0alpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
+	folderv0alpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/hashicorp/golang-lru/v2/expirable"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -104,6 +106,9 @@ func newSearchSupport(opts SearchOptions, storage StorageBackend, access types.A
 	// No backend search support
 	if opts.Backend == nil {
 		return nil, nil
+	}
+	if tracer == nil {
+		return nil, fmt.Errorf("missing tracer")
 	}
 
 	if opts.WorkerThreads < 1 {
@@ -382,6 +387,11 @@ func (s *searchSupport) init(ctx context.Context) error {
 		for {
 			v := <-events
 
+			// Skip events during batch updates
+			if v.PreviousRV < 0 {
+				continue
+			}
+
 			s.handleEvent(watchctx, v)
 		}
 	}()
@@ -429,15 +439,19 @@ func (s *searchSupport) handleEvent(ctx context.Context, evt *WrittenEvent) {
 		return
 	}
 
+	_, buildDocSpan := s.tracer.Start(ctx, tracingPrexfixSearch+"BuildDocument")
 	doc, err := builder.BuildDocument(ctx, evt.Key, evt.ResourceVersion, evt.Value)
 	if err != nil {
 		s.log.Warn("error building document watch event", "error", err)
 		return
 	}
+	buildDocSpan.End()
 
 	switch evt.Type {
 	case WatchEvent_ADDED, WatchEvent_MODIFIED:
+		_, writeSpan := s.tracer.Start(ctx, tracingPrexfixSearch+"WriteDocument")
 		err = index.Write(doc)
+		writeSpan.End()
 		if err != nil {
 			s.log.Warn("error writing document watch event", "error", err)
 			return
@@ -446,7 +460,9 @@ func (s *searchSupport) handleEvent(ctx context.Context, evt *WrittenEvent) {
 			IndexMetrics.IndexedKinds.WithLabelValues(evt.Key.Resource).Inc()
 		}
 	case WatchEvent_DELETED:
+		_, deleteSpan := s.tracer.Start(ctx, tracingPrexfixSearch+"DeleteDocument")
 		err = index.Delete(evt.Key)
+		deleteSpan.End()
 		if err != nil {
 			s.log.Warn("error deleting document watch event", "error", err)
 			return
@@ -488,7 +504,7 @@ func (s *searchSupport) getOrCreateIndex(ctx context.Context, key NamespacedReso
 	if idx == nil {
 		idx, _, err = s.build(ctx, key, 10, 0) // unknown size and RV
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error building search index, %w", err)
 		}
 		if idx == nil {
 			return nil, fmt.Errorf("nil index after build")
@@ -533,7 +549,8 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 				// Convert it to an indexable document
 				doc, err := builder.BuildDocument(ctx, key, iter.ResourceVersion(), iter.Value())
 				if err != nil {
-					return err
+					s.log.Error("error building search document", "key", key.SearchID(), "err", err)
+					continue
 				}
 
 				// And finally write it to the index
@@ -650,4 +667,35 @@ func (s *builderCache) get(ctx context.Context, key NamespacedResource) (Documen
 		}
 	}
 	return s.defaultBuilder, nil
+}
+
+// AsResourceKey converts the given namespace and type to a search key
+func AsResourceKey(ns string, t string) (*ResourceKey, error) {
+	if ns == "" {
+		return nil, fmt.Errorf("missing namespace")
+	}
+	switch t {
+	case "folders", "folder":
+		return &ResourceKey{
+			Namespace: ns,
+			Group:     folderv0alpha1.GROUP,
+			Resource:  folderv0alpha1.RESOURCE,
+		}, nil
+	case "dashboards", "dashboard":
+		return &ResourceKey{
+			Namespace: ns,
+			Group:     dashboardv0alpha1.GROUP,
+			Resource:  dashboardv0alpha1.RESOURCE,
+		}, nil
+
+	// NOT really supported in the dashboard search UI, but useful for manual testing
+	case "playlist", "playlists":
+		return &ResourceKey{
+			Namespace: ns,
+			Group:     "playlist.grafana.app",
+			Resource:  "playlists",
+		}, nil
+	}
+
+	return nil, fmt.Errorf("unknown resource type")
 }
