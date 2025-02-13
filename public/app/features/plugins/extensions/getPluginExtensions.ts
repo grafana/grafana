@@ -1,8 +1,8 @@
 import { isString } from 'lodash';
 
 import {
-  type PluginExtension,
   PluginExtensionTypes,
+  type PluginExtension,
   type PluginExtensionLink,
   type PluginExtensionComponent,
 } from '@grafana/data';

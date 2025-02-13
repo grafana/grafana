@@ -475,6 +475,7 @@ describe('Plugin Extensions / Utils', () => {
       extensions: {
         addedLinks: [],
         addedComponents: [],
+        addedFunctions: [],
         exposedComponents: [],
         extensionPoints: [],
       },
@@ -553,6 +554,7 @@ describe('Plugin Extensions / Utils', () => {
       extensions: {
         addedLinks: [],
         addedComponents: [],
+        addedFunctions: [],
         exposedComponents: [],
         extensionPoints: [],
       },
@@ -584,6 +586,7 @@ describe('Plugin Extensions / Utils', () => {
             addedComponents: [],
             exposedComponents: [],
             extensionPoints: [],
+            addedFunctions: [],
           },
         },
         'myorg-third-app': {
@@ -623,6 +626,7 @@ describe('Plugin Extensions / Utils', () => {
             ],
             exposedComponents: [],
             extensionPoints: [],
+            addedFunctions: [],
           },
         },
       };
@@ -679,6 +683,7 @@ describe('Plugin Extensions / Utils', () => {
             ],
             exposedComponents: [],
             extensionPoints: [],
+            addedFunctions: [],
           },
           dependencies: {
             ...genereicAppPluginConfig.dependencies,
@@ -705,6 +710,7 @@ describe('Plugin Extensions / Utils', () => {
               },
             ],
             extensionPoints: [],
+            addedFunctions: [],
           },
           dependencies: {
             ...genereicAppPluginConfig.dependencies,
@@ -726,6 +732,7 @@ describe('Plugin Extensions / Utils', () => {
               },
             ],
             extensionPoints: [],
+            addedFunctions: [],
           },
         },
         'myorg-sixth-app': {
@@ -763,6 +770,7 @@ describe('Plugin Extensions / Utils', () => {
         addedComponents: [],
         exposedComponents: [],
         extensionPoints: [],
+        addedFunctions: [],
       },
     };
 
@@ -791,6 +799,7 @@ describe('Plugin Extensions / Utils', () => {
               },
             ],
             extensionPoints: [],
+            addedFunctions: [],
           },
         },
         'myorg-third-app': {
@@ -825,6 +834,7 @@ describe('Plugin Extensions / Utils', () => {
               },
             ],
             extensionPoints: [],
+            addedFunctions: [],
           },
           dependencies: {
             ...genereicAppPluginConfig.dependencies,
@@ -850,6 +860,7 @@ describe('Plugin Extensions / Utils', () => {
               },
             ],
             extensionPoints: [],
+            addedFunctions: [],
           },
           dependencies: {
             ...genereicAppPluginConfig.dependencies,
@@ -871,6 +882,7 @@ describe('Plugin Extensions / Utils', () => {
               },
             ],
             extensionPoints: [],
+            addedFunctions: [],
           },
         },
       };
@@ -902,6 +914,7 @@ describe('Plugin Extensions / Utils', () => {
       extensions: {
         addedLinks: [],
         addedComponents: [],
+        addedFunctions: [],
         exposedComponents: [],
         extensionPoints: [],
       },

@@ -163,6 +163,7 @@ export function pluginMetaToPluginConfig(pluginMeta: PluginMeta): AppPluginConfi
       addedComponents: [],
       extensionPoints: [],
       exposedComponents: [],
+      addedFunctions: [],
     },
   };
 }

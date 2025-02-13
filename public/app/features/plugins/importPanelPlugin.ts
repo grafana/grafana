@@ -82,7 +82,6 @@ function getPanelPlugin(meta: PanelPluginMeta): Promise<PanelPlugin> {
       if (!plugin.panel && plugin.angularPanelCtrl) {
         plugin.panel = getAngularPanelReactWrapper(plugin);
       }
-
       return plugin;
     })
     .catch((err) => {

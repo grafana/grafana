@@ -1,6 +1,7 @@
 import { act, renderHook } from '@testing-library/react';
 
 import { AddedComponentsRegistry } from './registry/AddedComponentsRegistry';
+import { AddedFunctionsRegistry } from './registry/AddedFunctionsRegistry';
 import { AddedLinksRegistry } from './registry/AddedLinksRegistry';
 import { ExposedComponentsRegistry } from './registry/ExposedComponentsRegistry';
 import { PluginExtensionRegistries } from './registry/types';
@@ -19,6 +20,7 @@ describe('usePluginExtensions()', () => {
       addedComponentsRegistry: new AddedComponentsRegistry(),
       addedLinksRegistry: new AddedLinksRegistry(),
       exposedComponentsRegistry: new ExposedComponentsRegistry(),
+      addedFunctionsRegistry: new AddedFunctionsRegistry(),
     };
     jest.mocked(useLoadAppPlugins).mockReturnValue({ isLoading: false });
   });
