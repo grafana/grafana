@@ -23,7 +23,6 @@ func convertToDataFrame(ctx *mysql.Context, iter mysql.RowIter, schema mysql.Sch
 		if err != nil {
 			return nil, err
 		}
-
 		field := data.NewFieldFromFieldType(fT, 0)
 		field.Name = col.Name
 		f.Fields = append(f.Fields, field)
@@ -40,10 +39,18 @@ func convertToDataFrame(ctx *mysql.Context, iter mysql.RowIter, schema mysql.Sch
 		}
 
 		for i, val := range row {
-			v, err := fieldValFromRowVal(f.Fields[i].Type(), val)
+			// Run val through mysql.Type.Convert to normalize underlying value
+			// of the interface
+			cv, _, err := schema[i].Type.Convert(val)
+
+			// Run the normalized value through fieldValeToRow to normalize
+			// the interface type to the dataframe value type, and make nullable
+			// values pointers as dataframe expects.
+			v, err := fieldValFromRowVal(f.Fields[i].Type(), cv)
 			if err != nil {
 				return nil, fmt.Errorf("unexpected type for column %s: %w", schema[i].Name, err)
 			}
+
 			f.Fields[i].Append(v)
 		}
 	}
@@ -74,9 +81,6 @@ func MySQLColToFieldType(col *mysql.Column) (data.FieldType, error) {
 		fT = data.FieldTypeUint64
 	case types.Float64:
 		fT = data.FieldTypeFloat64
-	// StringType represents all string types, including VARCHAR and BLOB.
-	case types.Text, types.LongText:
-		fT = data.FieldTypeString
 	case types.Timestamp:
 		fT = data.FieldTypeTime
 	case types.Datetime:
@@ -84,9 +88,12 @@ func MySQLColToFieldType(col *mysql.Column) (data.FieldType, error) {
 	case types.Boolean:
 		fT = data.FieldTypeBool
 	default:
-		if types.IsDecimal(col.Type) {
+		switch {
+		case types.IsDecimal(col.Type):
 			fT = data.FieldTypeFloat64
-		} else {
+		case types.IsText(col.Type):
+			fT = data.FieldTypeString
+		default:
 			return fT, fmt.Errorf("unsupported type for column %s of type %v", col.Name, col.Type)
 		}
 	}
@@ -137,275 +144,155 @@ func convertDataType(fieldType data.FieldType) mysql.Type {
 //
 //nolint:gocyclo
 func fieldValFromRowVal(fieldType data.FieldType, val interface{}) (interface{}, error) {
-	// the input val may be nil, it also may not be a pointer even if the fieldtype is a nullable pointer type
 	if val == nil {
 		return nil, nil
 	}
 
 	switch fieldType {
-	// ----------------------------
-	// Int8 / Nullable Int8
-	// ----------------------------
-	case data.FieldTypeInt8:
-		v, ok := val.(int8)
-		if !ok {
-			return nil, fmt.Errorf("unexpected value type for interface %v of type %T, expected int8", val, val)
-		}
-		return v, nil
-
-	case data.FieldTypeNullableInt8:
-		vP, ok := val.(*int8)
-		if ok {
-			return vP, nil
-		}
+	case data.FieldTypeInt8, data.FieldTypeNullableInt8:
 		v, ok := val.(int8)
 		if ok {
-			return &v, nil
-		}
-		return nil, fmt.Errorf("unexpected value type for interface %v of type %T, expected int8 or *int8", val, val)
-
-	// ----------------------------
-	// Uint8 / Nullable Uint8
-	// ----------------------------
-	case data.FieldTypeUint8:
-		v, ok := val.(uint8)
-		if !ok {
-			return nil, fmt.Errorf("unexpected value type for interface %v of type %T, expected uint8", val, val)
-		}
-		return v, nil
-
-	case data.FieldTypeNullableUint8:
-		vP, ok := val.(*uint8)
-		if ok {
-			return vP, nil
-		}
-		v, ok := val.(uint8)
-		if ok {
-			return &v, nil
-		}
-		return nil, fmt.Errorf("unexpected value type for interface %v of type %T, expected uint8 or *uint8", val, val)
-
-	// ----------------------------
-	// Int16 / Nullable Int16
-	// ----------------------------
-	case data.FieldTypeInt16:
-		v, ok := val.(int16)
-		if !ok {
-			return nil, fmt.Errorf("unexpected value type for interface %v of type %T, expected int16", val, val)
-		}
-		return v, nil
-
-	case data.FieldTypeNullableInt16:
-		vP, ok := val.(*int16)
-		if ok {
-			return vP, nil
-		}
-		v, ok := val.(int16)
-		if ok {
-			return &v, nil
-		}
-		return nil, fmt.Errorf("unexpected value type for interface %v of type %T, expected int16 or *int16", val, val)
-
-	// ----------------------------
-	// Uint16 / Nullable Uint16
-	// ----------------------------
-	case data.FieldTypeUint16:
-		v, ok := val.(uint16)
-		if !ok {
-			return nil, fmt.Errorf("unexpected value type for interface %v of type %T, expected uint16", val, val)
-		}
-		return v, nil
-
-	case data.FieldTypeNullableUint16:
-		vP, ok := val.(*uint16)
-		if ok {
-			return vP, nil
-		}
-		v, ok := val.(uint16)
-		if ok {
-			return &v, nil
-		}
-		return nil, fmt.Errorf("unexpected value type for interface %v of type %T, expected uint16 or *uint16", val, val)
-
-	// ----------------------------
-	// Int32 / Nullable Int32
-	// ----------------------------
-	case data.FieldTypeInt32:
-		v, ok := val.(int32)
-		if !ok {
-			return nil, fmt.Errorf("unexpected value type for interface %v of type %T, expected int32", val, val)
-		}
-		return v, nil
-
-	case data.FieldTypeNullableInt32:
-		vP, ok := val.(*int32)
-		if ok {
-			return vP, nil
-		}
-		v, ok := val.(int32)
-		if ok {
-			return &v, nil
-		}
-		return nil, fmt.Errorf("unexpected value type for interface %v of type %T, expected int32 or *int32", val, val)
-
-	// ----------------------------
-	// Uint32 / Nullable Uint32
-	// ----------------------------
-	case data.FieldTypeUint32:
-		v, ok := val.(uint32)
-		if !ok {
-			return nil, fmt.Errorf("unexpected value type for interface %v of type %T, expected uint32", val, val)
-		}
-		return v, nil
-
-	case data.FieldTypeNullableUint32:
-		vP, ok := val.(*uint32)
-		if ok {
-			return vP, nil
-		}
-		v, ok := val.(uint32)
-		if ok {
-			return &v, nil
-		}
-		return nil, fmt.Errorf("unexpected value type for interface %v of type %T, expected uint32 or *uint32", val, val)
-
-	// ----------------------------
-	// Int64 / Nullable Int64
-	// ----------------------------
-	case data.FieldTypeInt64:
-		v, ok := val.(int64)
-		if !ok {
-			return nil, fmt.Errorf("unexpected value type for interface %v of type %T, expected int64", val, val)
-		}
-		return v, nil
-
-	case data.FieldTypeNullableInt64:
-		vP, ok := val.(*int64)
-		if ok {
-			return vP, nil
-		}
-		v, ok := val.(int64)
-		if ok {
-			return &v, nil
-		}
-		return nil, fmt.Errorf("unexpected value type for interface %v of type %T, expected int64 or *int64", val, val)
-
-	// ----------------------------
-	// Uint64 / Nullable Uint64
-	// ----------------------------
-	case data.FieldTypeUint64:
-		v, ok := val.(uint64)
-		if !ok {
-			return nil, fmt.Errorf("unexpected value type for interface %v of type %T, expected uint64", val, val)
-		}
-		return v, nil
-
-	case data.FieldTypeNullableUint64:
-		vP, ok := val.(*uint64)
-		if ok {
-			return vP, nil
-		}
-		v, ok := val.(uint64)
-		if ok {
-			return &v, nil
-		}
-		return nil, fmt.Errorf("unexpected value type for interface %v of type %T, expected uint64 or *uint64", val, val)
-
-	// ----------------------------
-	// Float64 / Nullable Float64
-	// ----------------------------
-	case data.FieldTypeFloat64:
-		// Accept float64 or decimal.Decimal, convert decimal.Decimal -> float64
-		if v, ok := val.(float64); ok {
+			if fieldType.Nullable() {
+				return &v, nil
+			}
 			return v, nil
 		}
+		return nil, fmt.Errorf("unexpected value type %v of type %T, expected int8", val, val)
+
+	case data.FieldTypeUint8, data.FieldTypeNullableUint8:
+		v, ok := val.(uint8)
+		if ok {
+			if fieldType.Nullable() {
+				return &v, nil
+			}
+			return v, nil
+		}
+		return nil, fmt.Errorf("unexpected value type %v of type %T, expected uint8", val, val)
+
+	case data.FieldTypeInt16, data.FieldTypeNullableInt16:
+		v, ok := val.(int16)
+		if ok {
+			if fieldType.Nullable() {
+				return &v, nil
+			}
+			return v, nil
+		}
+		return nil, fmt.Errorf("unexpected value type %v of type %T, expected int16", val, val)
+
+	case data.FieldTypeUint16, data.FieldTypeNullableUint16:
+		v, ok := val.(uint16)
+		if ok {
+			if fieldType.Nullable() {
+				return &v, nil
+			}
+			return v, nil
+		}
+		return nil, fmt.Errorf("unexpected value type %v of type %T, expected uint16", val, val)
+
+	case data.FieldTypeInt32, data.FieldTypeNullableInt32:
+		v, ok := val.(int32)
+		if ok {
+			if fieldType.Nullable() {
+				return &v, nil
+			}
+			return v, nil
+		}
+		return nil, fmt.Errorf("unexpected value type %v of type %T, expected int32", val, val)
+
+	case data.FieldTypeUint32, data.FieldTypeNullableUint32:
+		v, ok := val.(uint32)
+		if ok {
+			if fieldType.Nullable() {
+				return &v, nil
+			}
+			return v, nil
+		}
+		return nil, fmt.Errorf("unexpected value type %v of type %T, expected uint32", val, val)
+
+	case data.FieldTypeInt64, data.FieldTypeNullableInt64:
+		v, ok := val.(int64)
+		if ok {
+			if fieldType.Nullable() {
+				return &v, nil
+			}
+			return v, nil
+		}
+		return nil, fmt.Errorf("unexpected value type %v of type %T, expected int64", val, val)
+
+	case data.FieldTypeUint64, data.FieldTypeNullableUint64:
+		v, ok := val.(uint64)
+		if ok {
+			if fieldType.Nullable() {
+				return &v, nil
+			}
+			return v, nil
+		}
+		return nil, fmt.Errorf("unexpected value type %v of type %T, expected uint64", val, val)
+
+	case data.FieldTypeFloat32, data.FieldTypeNullableFloat32:
+		if fv, ok := val.(float64); ok {
+			f32 := float32(fv)
+			if fieldType.Nullable() {
+				return &f32, nil
+			}
+			return f32, nil
+		}
 		if d, ok := val.(decimal.Decimal); ok {
-			return d.InexactFloat64(), nil
+			f32 := float32(d.InexactFloat64())
+			if fieldType.Nullable() {
+				return &f32, nil
+			}
+			return f32, nil
 		}
-		return nil, fmt.Errorf("unexpected value type for interface %v of type %T, expected float64 or decimal.Decimal", val, val)
+		return nil, fmt.Errorf("unexpected value type %v of type %T, expected float64 or decimal.Decimal", val, val)
 
-	case data.FieldTypeNullableFloat64:
-		// Possibly already *float64
-		if vP, ok := val.(*float64); ok {
-			return vP, nil
+	case data.FieldTypeFloat64, data.FieldTypeNullableFloat64:
+		if fv, ok := val.(float64); ok {
+			if fieldType.Nullable() {
+				return &fv, nil
+			}
+			return fv, nil
 		}
-		// Possibly float64
-		if v, ok := val.(float64); ok {
-			return &v, nil
-		}
-		// Possibly decimal.Decimal
 		if d, ok := val.(decimal.Decimal); ok {
-			f := d.InexactFloat64()
-			return &f, nil
+			f64 := d.InexactFloat64()
+			if fieldType.Nullable() {
+				return &f64, nil
+			}
+			return f64, nil
 		}
-		return nil, fmt.Errorf("unexpected value type for interface %v of type %T, expected float64, *float64, or decimal.Decimal", val, val)
+		return nil, fmt.Errorf("unexpected value type %v of type %T, expected float64 or decimal.Decimal", val, val)
 
-	// ----------------------------
-	// Time / Nullable Time
-	// ----------------------------
-	case data.FieldTypeTime:
-		v, ok := val.(time.Time)
-		if !ok {
-			return nil, fmt.Errorf("unexpected value type for interface %v of type %T, expected time.Time", val, val)
-		}
-		return v, nil
-
-	case data.FieldTypeNullableTime:
-		vP, ok := val.(*time.Time)
-		if ok {
-			return vP, nil
-		}
+	case data.FieldTypeTime, data.FieldTypeNullableTime:
 		v, ok := val.(time.Time)
 		if ok {
-			return &v, nil
+			if fieldType.Nullable() {
+				return &v, nil
+			}
+			return v, nil
 		}
-		return nil, fmt.Errorf("unexpected value type for interface %v of type %T, expected time.Time or *time.Time", val, val)
+		return nil, fmt.Errorf("unexpected value type %v of type %T, expected time.Time", val, val)
 
-	// ----------------------------
-	// String / Nullable String
-	// ----------------------------
-	case data.FieldTypeString:
-		v, ok := val.(string)
-		if !ok {
-			return nil, fmt.Errorf("unexpected value type for interface %v of type %T, expected string", val, val)
-		}
-		return v, nil
-
-	case data.FieldTypeNullableString:
-		vP, ok := val.(*string)
-		if ok {
-			return vP, nil
-		}
+	case data.FieldTypeString, data.FieldTypeNullableString:
 		v, ok := val.(string)
 		if ok {
-			return &v, nil
+			if fieldType.Nullable() {
+				return &v, nil
+			}
+			return v, nil
 		}
-		return nil, fmt.Errorf("unexpected value type for interface %v of type %T, expected string or *string", val, val)
+		return nil, fmt.Errorf("unexpected value type %v of type %T, expected string", val, val)
 
-	// ----------------------------
-	// Bool / Nullable Bool
-	// ----------------------------
-	case data.FieldTypeBool:
-		v, ok := val.(bool)
+	case data.FieldTypeBool, data.FieldTypeNullableBool:
+		v, ok := val.(int8)
 		if !ok {
-			return nil, fmt.Errorf("unexpected value type for interface %v of type %T, expected bool", val, val)
+			return nil, fmt.Errorf("unexpected value type %v of type %T, expected int8 (for bool)", val, val)
 		}
-		return v, nil
+		b := v != 0
+		if fieldType.Nullable() {
+			return &b, nil
+		}
+		return b, nil
 
-	case data.FieldTypeNullableBool:
-		vP, ok := val.(*bool)
-		if ok {
-			return vP, nil
-		}
-		v, ok := val.(bool)
-		if ok {
-			return &v, nil
-		}
-		return nil, fmt.Errorf("unexpected value type for interface %v of type %T, expected bool or *bool", val, val)
-
-	// ----------------------------
-	// Fallback / Unsupported
-	// ----------------------------
 	default:
 		return nil, fmt.Errorf("unsupported field type %s for val %v", fieldType, val)
 	}

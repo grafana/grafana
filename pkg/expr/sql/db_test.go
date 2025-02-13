@@ -79,14 +79,21 @@ func TestQueryFramesInOut(t *testing.T) {
 		RefID: "a",
 		Name:  "a",
 		Fields: []*data.Field{
-			data.NewField("time", nil, []time.Time{time.Now(), time.Now()}),
-			data.NewField("time_nullable", nil, []*time.Time{p(time.Now()), nil}),
+			data.NewField("time", nil, []time.Time{time.Date(2025, 1, 2, 3, 4, 5, 0, time.UTC), time.Date(2025, 1, 2, 3, 4, 5, 0, time.UTC)}),
+			data.NewField("time_nullable", nil, []*time.Time{p(time.Date(2025, 1, 2, 3, 4, 5, 0, time.UTC)), nil}),
 
 			data.NewField("string", nil, []string{"cat", "dog"}),
 			data.NewField("null_nullable", nil, []*string{p("cat"), nil}),
 
+			// TODO
+			//data.NewField("float32", nil, []float32{1, 3}),
+			//data.NewField("float32_nullable", nil, []*float32{p(float32(2.0)), nil}),
+
 			data.NewField("float64", nil, []float64{1, 3}),
 			data.NewField("float64_nullable", nil, []*float64{p(2.0), nil}),
+
+			data.NewField("int8", nil, []int8{1, 3}),
+			data.NewField("int8_nullable", nil, []*int8{p(int8(2)), nil}),
 
 			data.NewField("int64", nil, []int64{1, 3}),
 			data.NewField("int64_nullable", nil, []*int64{p(int64(2)), nil}),
