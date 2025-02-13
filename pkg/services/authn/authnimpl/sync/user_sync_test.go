@@ -460,7 +460,6 @@ func TestUserSync_SyncUserRetryFetch(t *testing.T) {
 		&authinfotest.FakeService{},
 		&quotatest.FakeQuotaService{},
 		tracing.NewNoopTracerService(),
-		featuremgmt.WithFeatures(),
 	)
 
 	email := "test@test.com"
