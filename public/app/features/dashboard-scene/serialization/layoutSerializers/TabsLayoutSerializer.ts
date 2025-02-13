@@ -18,7 +18,7 @@ export class TabsLayoutSerializer implements LayoutManagerSerializer {
             throw new Error('Nested TabsLayout is not supported');
           }
           return {
-            kind: 'TabItem',
+            kind: 'TabsLayoutTab',
             spec: {
               title: tab.state.title,
               layout: layout,

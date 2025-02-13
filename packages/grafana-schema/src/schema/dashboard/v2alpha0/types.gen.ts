@@ -882,29 +882,29 @@ export const defaultTabsLayoutKind = (): TabsLayoutKind => ({
 });
 
 export interface TabsLayoutSpec {
-	tabs: TabItemKind[];
+	tabs: TabsLayoutTabKind[];
 }
 
 export const defaultTabsLayoutSpec = (): TabsLayoutSpec => ({
 	tabs: [],
 });
 
-export interface TabItemKind {
-	kind: "TabItem";
-	spec: TabItemSpec;
+export interface TabsLayoutTabKind {
+	kind: "TabsLayoutTab";
+	spec: TabsLayoutTabSpec;
 }
 
-export const defaultTabItemKind = (): TabItemKind => ({
-	kind: "TabItem",
-	spec: defaultTabItemSpec(),
+export const defaultTabsLayoutTabKind = (): TabsLayoutTabKind => ({
+	kind: "TabsLayoutTab",
+	spec: defaultTabsLayoutTabSpec(),
 });
 
-export interface TabItemSpec {
+export interface TabsLayoutTabSpec {
 	title?: string;
 	layout: GridLayoutKind | RowsLayoutKind | ResponsiveGridLayoutKind;
 }
 
-export const defaultTabItemSpec = (): TabItemSpec => ({
+export const defaultTabsLayoutTabSpec = (): TabsLayoutTabSpec => ({
 	layout: defaultGridLayoutKind(),
 });
 

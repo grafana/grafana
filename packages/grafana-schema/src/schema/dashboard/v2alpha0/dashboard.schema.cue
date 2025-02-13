@@ -576,15 +576,15 @@ TabsLayoutKind: {
 }
 
 TabsLayoutSpec: {
-  tabs: [...TabItemKind]
+  tabs: [...TabsLayoutTabKind]
 }
 
-TabItemKind: {
-  kind: "TabItem"
-  spec: TabItemSpec
+TabsLayoutTabKind: {
+  kind: "TabsLayoutTab"
+  spec: TabsLayoutTabSpec
 }
 
-TabItemSpec: {
+TabsLayoutTabSpec: {
   title?: string
   layout: GridLayoutKind | RowsLayoutKind | ResponsiveGridLayoutKind
 }
