@@ -118,7 +118,7 @@ export const DashboardInteractions = {
   },
 
   // Dashboards versions interactions
-  versionRestoreClicked: (properties: { version: number; index?: number; confirm: boolean }) => {
+  versionRestoreClicked: (properties: { version: number; index?: number; confirm: boolean; timestamp?: Date }) => {
     reportDashboardInteraction('version_restore_clicked', properties);
   },
   showMoreVersionsClicked: () => {
