@@ -94,7 +94,7 @@ function HistoryEntryAppView({ entry, isSelected, onClick }: ItemProps) {
   return (
     <span className={styles.marginBottom}>
       <Stack direction="column" gap={1}>
-        <Stack>
+        <Stack alignItems="baseline">
           {views.length > 0 ? (
             <IconButton
               name={isExpanded ? 'angle-down' : 'angle-right'}
@@ -108,9 +108,6 @@ function HistoryEntryAppView({ entry, isSelected, onClick }: ItemProps) {
           <IconButton
             size="sm"
             name={isSelected ? 'circle-mono' : 'circle'}
-            onClick={(e) => {
-              e.preventDefault();
-            }}
             aria-label={entryIconLabel}
             className={styles.iconButtonCircle}
           />
@@ -219,7 +216,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       margin: 0,
       color: theme.colors.primary.main,
       cursor: 'default',
-      '&:hover': {
+      '&:hover:before': {
         background: 'none',
       },
     }),
