@@ -2,8 +2,18 @@ import * as React from 'react';
 import { CSSProperties } from 'react';
 import { OnDrag, OnResize, OnRotate } from 'react-moveable/declaration/types';
 
-import { FieldType, getLinksSupplier, LinkModel, ScopedVars, ValueLinkConfig, OneClickMode } from '@grafana/data';
+import {
+  FieldType,
+  getLinksSupplier,
+  LinkModel,
+  ScopedVars,
+  ValueLinkConfig,
+  OneClickMode,
+  ActionModel,
+} from '@grafana/data';
+import { ConfirmModal } from '@grafana/ui';
 import { LayerElement } from 'app/core/components/Layers/types';
+import { t } from 'app/core/internationalization';
 import { notFoundItem } from 'app/features/canvas/elements/notFound';
 import { DimensionContext } from 'app/features/dimensions';
 import {
@@ -48,6 +58,7 @@ export class ElementState implements LayerElement {
 
   // cached for tooltips/mousemove
   oneClickMode = OneClickMode.Off;
+  showConfirmation = false;
 
   constructor(
     public item: CanvasElementItem,
@@ -694,10 +705,8 @@ export class ElementState implements LayerElement {
         window.open(primaryDataLink.href, primaryDataLink.target ?? '_self');
       }
     } else if (this.oneClickMode === OneClickMode.Action) {
-      let primaryAction = this.getPrimaryAction();
-      if (primaryAction && primaryAction.onClick) {
-        primaryAction.onClick(event);
-      }
+      this.showConfirmation = true;
+      this.forceUpdate();
     } else {
       this.handleTooltip(event);
       this.onTooltipCallback();
@@ -725,29 +734,68 @@ export class ElementState implements LayerElement {
     }
   };
 
+  forceUpdate = () => {
+    const scene = this.getScene();
+    if (scene?.actionConfirmationCallback) {
+      scene.actionConfirmationCallback();
+    }
+  };
+
+  renderActionsConfirmModal = (action: ActionModel | undefined) => {
+    if (!action) {
+      return;
+    }
+
+    return (
+      <>
+        {this.showConfirmation && action && (
+          <ConfirmModal
+            isOpen={true}
+            title={t('grafana-ui.action-editor.button.confirm-action', 'Confirm action')}
+            body={action.confirmation}
+            confirmText={t('grafana-ui.action-editor.button.confirm', 'Confirm')}
+            confirmButtonVariant="primary"
+            onConfirm={() => {
+              this.showConfirmation = false;
+              action.onClick(new MouseEvent('click'));
+              this.forceUpdate();
+            }}
+            onDismiss={() => {
+              this.showConfirmation = false;
+              this.forceUpdate();
+            }}
+          />
+        )}
+      </>
+    );
+  };
+
   render() {
     const { item, div } = this;
     const scene = this.getScene();
     const isSelected = div && scene && scene.selecto && scene.selecto.getSelectedTargets().includes(div);
 
     return (
-      <div
-        key={this.UID}
-        ref={this.initElement}
-        onMouseEnter={(e: React.MouseEvent) => this.handleMouseEnter(e, isSelected)}
-        onMouseLeave={!scene?.isEditingEnabled ? this.handleMouseLeave : undefined}
-        onClick={!scene?.isEditingEnabled ? this.onElementClick : undefined}
-        onKeyDown={!scene?.isEditingEnabled ? this.onElementKeyDown : undefined}
-        role="button"
-        tabIndex={0}
-      >
-        <item.display
-          key={`${this.UID}/${this.revId}`}
-          config={this.options.config}
-          data={this.data}
-          isSelected={isSelected}
-        />
-      </div>
+      <>
+        <div
+          key={this.UID}
+          ref={this.initElement}
+          onMouseEnter={(e: React.MouseEvent) => this.handleMouseEnter(e, isSelected)}
+          onMouseLeave={!scene?.isEditingEnabled ? this.handleMouseLeave : undefined}
+          onClick={!scene?.isEditingEnabled ? this.onElementClick : undefined}
+          onKeyDown={!scene?.isEditingEnabled ? this.onElementKeyDown : undefined}
+          role="button"
+          tabIndex={0}
+        >
+          <item.display
+            key={`${this.UID}/${this.revId}`}
+            config={this.options.config}
+            data={this.data}
+            isSelected={isSelected}
+          />
+        </div>
+        {this.showConfirmation && this.renderActionsConfirmModal(this.getPrimaryAction())}
+      </>
     );
   }
 }
