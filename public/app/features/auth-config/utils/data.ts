@@ -51,6 +51,14 @@ const strToValue = (val: string | string[]): SelectableValue[] => {
   if (Array.isArray(val)) {
     return val.map((v) => ({ label: v, value: v }));
   }
+  // Stored as JSON Array
+  if (val.startsWith('[') && val.endsWith(']')) {
+    // Fallback to parsing it like a non-json string if it is not valid json, instead of crashing.
+    try {
+      return JSON.parse(val).map((v: string) => ({ label: v, value: v }));
+    } catch {}
+  }
+
   return val.split(/[\s,]/).map((s) => ({ label: s, value: s }));
 };
 
