@@ -184,7 +184,7 @@ The JSON payload of webhook notifications includes the following key-value pairs
 | commonLabels      | object                    | Labels that all alarms have in common, map of string keys to string values.      |
 | commonAnnotations | object                    | Annotations that all alarms have in common, map of string keys to string values. |
 | externalURL       | string                    | External URL to the Grafana instance sending this webhook.                       |
-| version           | string                    | Version of the payload.                                                          |
+| version           | string                    | Version of the payload structure.                                                          |
 | groupKey          | string                    | Key that is used for grouping.                                                   |
 | truncatedAlerts   | number                    | Number of alerts that were truncated.                                            |
 | state             | string                    | State of the alert group (either `alerting` or `ok`).                            |
