@@ -32,7 +32,7 @@ const settingsMock: HttpSettingsProps['dataSourceConfig'] = {
     password: true,
   },
   secureJsonFields: {},
-  readOnly: false,
+  readOnly: true,
 };
 
 const meta: Meta<typeof DataSourceHttpSettings> = {

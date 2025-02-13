@@ -8,12 +8,13 @@ import { useTheme2 } from '../../themes';
 import { Trans } from '../../utils/i18n';
 import { Alert } from '../Alert/Alert';
 import { Button } from '../Button';
+import { Combobox } from '../Combobox/Combobox';
+import { ComboboxOption } from '../Combobox/types';
 import { FormField } from '../FormField/FormField';
 import { InlineFormLabel } from '../FormLabel/FormLabel';
 import { InlineField } from '../Forms/InlineField';
 import { Input } from '../Forms/Legacy/Input/Input';
 import { Icon } from '../Icon/Icon';
-import { Grid } from '../Layout/Grid/Grid';
 import { Stack } from '../Layout/Stack/Stack';
 import { Select } from '../Select/Select';
 import { InlineSwitch } from '../Switch/Switch';
@@ -27,7 +28,7 @@ import { SecureSocksProxySettings } from './SecureSocksProxySettings';
 import { TLSAuthSettings } from './TLSAuthSettings';
 import { HttpSettingsProps } from './types';
 
-const ACCESS_OPTIONS: Array<SelectableValue<string>> = [
+const ACCESS_OPTIONS: Array<ComboboxOption<string>> = [
   {
     label: 'Server (default)',
     value: 'proxy',
@@ -162,17 +163,6 @@ export const DataSourceHttpSettings = (props: HttpSettingsProps) => {
       );
   }
 
-  const accessSelect = (
-    <Select
-      aria-label="Access"
-      className="width-20 gf-form-input"
-      options={ACCESS_OPTIONS}
-      value={ACCESS_OPTIONS.filter((o) => o.value === dataSourceConfig.access)[0] || DEFAULT_ACCESS_OPTION}
-      onChange={(selectedValue) => onSettingsChange({ access: selectedValue.value })}
-      disabled={dataSourceConfig.readOnly}
-    />
-  );
-
   const isValidUrl = /^(ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?$/.test(
     dataSourceConfig.url
   );
@@ -222,7 +212,16 @@ export const DataSourceHttpSettings = (props: HttpSettingsProps) => {
           {showAccessOptions && (
             <>
               <Stack direction="row" gap={0.5}>
-                <FormField label="Access" labelWidth={13} inputWidth={20} inputEl={accessSelect} />
+                <InlineField label="Access" labelWidth={13} disabled={dataSourceConfig.readOnly}>
+                  <Combobox
+                    width={40}
+                    options={ACCESS_OPTIONS}
+                    value={
+                      ACCESS_OPTIONS.filter((o) => o.value === dataSourceConfig.access)[0] || DEFAULT_ACCESS_OPTION
+                    }
+                    onChange={(selectedValue) => onSettingsChange({ access: selectedValue.value })}
+                  />
+                </InlineField>
 
                 <Button
                   type="button"
