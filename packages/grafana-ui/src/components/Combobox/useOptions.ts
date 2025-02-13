@@ -3,7 +3,7 @@ import { useState, useCallback, useMemo } from 'react';
 
 import { t } from '../../utils/i18n';
 
-import { itemFilter } from './filter';
+import { fuzzyFind, itemToString } from './filter';
 import { ComboboxOption } from './types';
 import { StaleResultError, useLatestAsyncCall } from './useLatestAsyncCall';
 
@@ -95,16 +95,21 @@ export function useOptions<T extends string | number>(rawOptions: AsyncOptions<T
     [debouncedLoadOptions, isAsync]
   );
 
+  const stringifiedOptions = useMemo(() => {
+    return isAsync ? [] : rawOptions.map(itemToString);
+  }, [isAsync, rawOptions]);
+
   const finalOptions = useMemo(() => {
     let currentOptions = [];
     if (isAsync) {
       currentOptions = addCustomValue(asyncOptions);
     } else {
-      currentOptions = addCustomValue(rawOptions.filter(itemFilter(userTypedSearch)));
+      const filteredItems = fuzzyFind(rawOptions, stringifiedOptions, userTypedSearch);
+      currentOptions = addCustomValue(filteredItems);
     }
 
     return currentOptions;
-  }, [isAsync, addCustomValue, asyncOptions, rawOptions, userTypedSearch]);
+  }, [isAsync, addCustomValue, asyncOptions, rawOptions, userTypedSearch, stringifiedOptions]);
 
   return { options: finalOptions, updateOptions, asyncLoading, asyncError };
 }

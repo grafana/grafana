@@ -1,11 +1,9 @@
 import { cx } from '@emotion/css';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useCombobox } from 'downshift';
-import { debounce } from 'lodash';
-import { useCallback, useId, useMemo, useRef, useState } from 'react';
+import { useId, useMemo } from 'react';
 
 import { useStyles2 } from '../../themes';
-import { logOptions } from '../../utils';
 import { t } from '../../utils/i18n';
 import { Icon } from '../Icon/Icon';
 import { AutoSizeInput } from '../Input/AutoSizeInput';
@@ -14,11 +12,10 @@ import { Portal } from '../Portal/Portal';
 import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
 
 import { AsyncError, NotFoundError } from './MessageRows';
-import { fuzzyFind, itemToString } from './filter';
+import { itemToString } from './filter';
 import { getComboboxStyles, MENU_OPTION_HEIGHT, MENU_OPTION_HEIGHT_DESCRIPTION } from './getComboboxStyles';
 import { ComboboxOption } from './types';
 import { useComboboxFloat } from './useComboboxFloat';
-import { StaleResultError, useLatestAsyncCall } from './useLatestAsyncCall';
 import { useOptions } from './useOptions';
 
 // TODO: It would be great if ComboboxOption["label"] was more generic so that if consumers do pass it in (for async),
@@ -49,8 +46,6 @@ export interface ComboboxBaseProps<T extends string | number>
   width?: number | 'auto';
   onBlur?: () => void;
 }
-
-const RECOMMENDED_ITEMS_AMOUNT = 100_000;
 
 type ClearableConditionals<T extends number | string> =
   | {
@@ -85,7 +80,6 @@ export type ComboboxProps<T extends string | number> = ComboboxBaseProps<T> &
   ClearableConditionals<T>;
 
 const noop = () => {};
-const asyncNoop = () => Promise.resolve([]);
 
 export const VIRTUAL_OVERSCAN_ITEMS = 4;
 
@@ -118,17 +112,17 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
   // get a consistent Value from it
   const value = typeof valueProp === 'object' ? valueProp?.value : valueProp;
 
-  const newOptionsAll = props.options;
+  const allOptions = props.options;
   const {
-    options: newOptionsFiltered,
+    options: filteredOptions,
     updateOptions,
     asyncLoading,
     asyncError,
   } = useOptions(props.options, createCustomValue);
-  const isAsyncDoWeNeedThis = typeof newOptionsAll === 'function';
+  const isAsync = typeof allOptions === 'function';
 
   const selectedItemIndex = useMemo(() => {
-    if (isAsyncDoWeNeedThis) {
+    if (isAsync) {
       return null;
     }
 
@@ -136,39 +130,25 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
       return null;
     }
 
-    const index = newOptionsAll.findIndex((option) => option.value === value);
+    const index = allOptions.findIndex((option) => option.value === value);
     if (index === -1) {
       return null;
     }
 
     return index;
-  }, [valueProp, newOptionsAll, value, isAsyncDoWeNeedThis]);
+  }, [valueProp, allOptions, value, isAsync]);
 
   const selectedItem = useMemo(() => {
     if (valueProp === undefined || valueProp === null) {
       return null;
     }
 
-    if (selectedItemIndex !== null && !isAsyncDoWeNeedThis) {
-      return newOptionsAll[selectedItemIndex];
+    if (selectedItemIndex !== null && !isAsync) {
+      return allOptions[selectedItemIndex];
     }
 
     return typeof valueProp === 'object' ? valueProp : { value: valueProp, label: valueProp.toString() };
-  }, [selectedItemIndex, isAsyncDoWeNeedThis, valueProp, newOptionsAll]);
-
-  // --- debug
-  const selectedItemIndexRef = useRef<any>();
-  if (selectedItemIndex !== selectedItemIndexRef.current) {
-    console.log('[Combobox], selectedItemIndex changed', selectedItemIndex);
-    selectedItemIndexRef.current = selectedItemIndex;
-  }
-
-  const selectedItemRef = useRef<any>();
-  if (selectedItem !== selectedItemRef.current) {
-    console.log('[Combobox], selectedItem changed', selectedItem);
-    selectedItemRef.current = selectedItem;
-  }
-  // debug ---
+  }, [selectedItemIndex, isAsync, valueProp, allOptions]);
 
   const menuId = `downshift-${useId().replace(/:/g, '--')}-menu`;
   const labelId = `downshift-${useId().replace(/:/g, '--')}-label`;
@@ -176,10 +156,10 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
   const styles = useStyles2(getComboboxStyles);
 
   const virtualizerOptions = {
-    count: newOptionsFiltered.length,
+    count: filteredOptions.length,
     getScrollElement: () => scrollRef.current,
     estimateSize: (index: number) =>
-      newOptionsFiltered[index].description ? MENU_OPTION_HEIGHT_DESCRIPTION : MENU_OPTION_HEIGHT,
+      filteredOptions[index].description ? MENU_OPTION_HEIGHT_DESCRIPTION : MENU_OPTION_HEIGHT,
     overscan: VIRTUAL_OVERSCAN_ITEMS,
   };
 
@@ -198,7 +178,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     menuId,
     labelId,
     inputId: id,
-    items: newOptionsFiltered,
+    items: filteredOptions,
     itemToString,
     selectedItem,
 
@@ -271,7 +251,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     },
   });
 
-  const { inputRef, floatingRef, floatStyles, scrollRef } = useComboboxFloat(newOptionsFiltered, isOpen);
+  const { inputRef, floatingRef, floatStyles, scrollRef } = useComboboxFloat(filteredOptions, isOpen);
 
   const isAutoSize = width === 'auto';
 
@@ -347,7 +327,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
               {!asyncError && (
                 <ul style={{ height: rowVirtualizer.getTotalSize() }} className={styles.menuUlContainer}>
                   {rowVirtualizer.getVirtualItems().map((virtualRow) => {
-                    const item = newOptionsFiltered[virtualRow.index];
+                    const item = filteredOptions[virtualRow.index];
 
                     return (
                       <li
@@ -378,7 +358,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
               )}
               <div aria-live="polite">
                 {asyncError && <AsyncError />}
-                {newOptionsFiltered.length === 0 && !asyncError && <NotFoundError />}
+                {filteredOptions.length === 0 && !asyncError && <NotFoundError />}
               </div>
             </ScrollContainer>
           )}
