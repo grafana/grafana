@@ -538,7 +538,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
           spec: {
             tabs: [
               {
-                kind: 'TabItem',
+                kind: 'TabsLayoutTab',
                 spec: {
                   title: 'tab1',
                   layout: {
