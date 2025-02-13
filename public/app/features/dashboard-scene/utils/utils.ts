@@ -86,19 +86,13 @@ function findVizPanelInternal(scene: SceneObject, key: string | undefined): VizP
   return null;
 }
 
-/**
- * Finds the original panel by key
- * This ignores any clones, including the clone chains
- * @param scene
- * @param key
- */
 export function findOriginalPanelByKey(scene: SceneObject, key: string | undefined): VizPanel | null {
   if (!key) {
     return null;
   }
 
-  // Try to find the panel by key
-  const panel = findOriginalVizPanelInternal(scene, key);
+  let panel: VizPanel | null = findOriginalVizPanelInternal(scene, key);
+
   if (panel) {
     return panel;
   }
@@ -108,7 +102,17 @@ export function findOriginalPanelByKey(scene: SceneObject, key: string | undefin
   if (isNaN(id)) {
     return null;
   }
-  return findOriginalVizPanelInternal(scene, getVizPanelKeyForPanelId(id));
+
+  const panelId = getVizPanelKeyForPanelId(id);
+  panel = findVizPanelInternal(scene, panelId);
+
+  if (panel) {
+    return panel;
+  }
+
+  panel = findOriginalVizPanelInternal(scene, panelId);
+
+  return panel;
 }
 
 function findOriginalVizPanelInternal(scene: SceneObject, key: string | undefined): VizPanel | null {
@@ -119,12 +123,8 @@ function findOriginalVizPanelInternal(scene: SceneObject, key: string | undefine
   const panel = sceneGraph.findObject(scene, (obj) => {
     const objKey = obj.state.key!;
 
-    if (isInCloneChain(objKey)) {
-      return false;
-    }
-
     // Compare the original keys
-    if (getOriginalKey(objKey) === getOriginalKey(key)) {
+    if (objKey === key || (!isInCloneChain(objKey) && getOriginalKey(objKey) === getOriginalKey(key))) {
       return true;
     }
 
