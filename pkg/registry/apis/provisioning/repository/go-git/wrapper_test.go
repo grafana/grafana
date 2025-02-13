@@ -45,6 +45,7 @@ func TestGoGitWrapper(t *testing.T) {
 			// one commit (not 11)
 			SingleCommitBeforePush: true,
 		},
+		nil, // TODO: add a mock
 		os.Stdout)
 	require.NoError(t, err)
 

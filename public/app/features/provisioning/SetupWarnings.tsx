@@ -25,12 +25,6 @@ kubernetesFoldersServiceV2 = true
 # If you want easy kubectl setup development mode
 grafanaAPIServerEnsureKubectlAccess = true
 
-[unified_storage.dashboards.dashboard.grafana.app]
-dualWriterMode = 5
-
-[unified_storage.folders.folder.grafana.app]
-dualWriterMode = 5
-
 # For Github webhook support, you will need something like:
 [server]
 root_url = https://supreme-exact-beetle.ngrok-free.app`;

@@ -569,6 +569,12 @@ func schema_pkg_apis_provisioning_v0alpha1_JobResourceSummary(ref common.Referen
 							Format: "",
 						},
 					},
+					"total": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int64",
+						},
+					},
 					"create": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"integer"},
@@ -1153,6 +1159,13 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryViewList(ref common.Referen
 						SchemaProps: spec.SchemaProps{
 							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
 							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"legacyStorage": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The backend is using legacy storage FIXME: Not sure where this should be exposed... but we need it somewhere The UI should force the onboarding workflow when this is true",
+							Type:        []string{"boolean"},
 							Format:      "",
 						},
 					},

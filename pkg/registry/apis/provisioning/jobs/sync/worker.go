@@ -28,25 +28,42 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 // SyncWorker synchronizes the external repo with grafana database
 // this function updates the status for both the job and the referenced repository
 type SyncWorker struct {
-	client  client.ProvisioningV0alpha1Interface
+	// Used to update the repository status with sync info
+	client client.ProvisioningV0alpha1Interface
+
+	// Lists the values saved in grafana database
+	lister resources.ResourceLister
+
+	// Parses fields saved in remore repository
 	parsers *resources.ParserFactory
-	lister  resources.ResourceLister
+
+	// Check if the system is using unified storage
+	storageStatus dualwrite.Service
+
+	// Direct access to unified storage... to wipe any existing values!
+	batch resource.BatchStoreClient
 }
 
 func NewSyncWorker(
 	client client.ProvisioningV0alpha1Interface,
 	parsers *resources.ParserFactory,
 	lister resources.ResourceLister,
+	storageStatus dualwrite.Service,
+	batch resource.BatchStoreClient,
 ) *SyncWorker {
 	return &SyncWorker{
-		client:  client,
-		parsers: parsers,
-		lister:  lister,
+		client:        client,
+		parsers:       parsers,
+		lister:        lister,
+		storageStatus: storageStatus,
+		batch:         batch,
 	}
 }
 
@@ -78,6 +95,16 @@ func (r *SyncWorker) Process(ctx context.Context,
 	syncJob, err := r.createJob(ctx, repo, progress)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create sync job: %w", err)
+	}
+
+	// Check if we are onboarding from legacy storage
+	if dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, r.storageStatus) {
+		if job.Spec.Sync.Incremental {
+			return nil, fmt.Errorf("incremental sync not suppored from legacy state")
+		}
+		if err = r.wipeUnifiedAndSetMigratedFlag(ctx, job.Namespace); err != nil {
+			return nil, err
+		}
 	}
 
 	// Execute the job

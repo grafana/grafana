@@ -37,20 +37,20 @@ func (m *service) NewStorage(gr schema.GroupResource,
 	}
 
 	return &mangedMode3{
-		service: m,
-		legacy:  legacy,
-		unified: storage,
-		target:  grafanarest.NewDualWriter(grafanarest.Mode3, legacy, storage, m.reg, gr.String()),
-		gr:      gr,
+		service:   m,
+		legacy:    legacy,
+		unified:   storage,
+		dualwrite: grafanarest.NewDualWriter(grafanarest.Mode3, legacy, storage, m.reg, gr.String()),
+		gr:        gr,
 	}, nil
 }
 
 type mangedMode3 struct {
-	service Service
-	legacy  grafanarest.LegacyStorage
-	unified grafanarest.Storage
-	target  grafanarest.Storage
-	gr      schema.GroupResource
+	service   Service
+	legacy    grafanarest.LegacyStorage
+	unified   grafanarest.Storage
+	dualwrite grafanarest.Storage
+	gr        schema.GroupResource
 }
 
 func (d *mangedMode3) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
@@ -67,68 +67,78 @@ func (d *mangedMode3) List(ctx context.Context, options *metainternalversion.Lis
 	return d.legacy.List(ctx, options)
 }
 
-func (d *mangedMode3) isMigrating(ctx context.Context) error {
+func (d *mangedMode3) getWriter(ctx context.Context) (grafanarest.Storage, error) {
 	status, ok := d.service.Status(ctx, d.gr)
 	if ok && status.Migrating > 0 {
-		return &apierrors.StatusError{
+		return nil, &apierrors.StatusError{
 			ErrStatus: metav1.Status{
 				Code:    http.StatusServiceUnavailable,
 				Message: "the system is migrating",
 			},
 		}
 	}
-	return nil
+	if status.WriteLegacy {
+		if status.WriteUnified {
+			return d.dualwrite, nil
+		}
+		return d.legacy, nil // only write legacy (mode0)
+	}
+	return d.unified, nil // only write unified (mode4)
 }
 
 func (d *mangedMode3) Create(ctx context.Context, in runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
-	if err := d.isMigrating(ctx); err != nil {
+	store, err := d.getWriter(ctx)
+	if err != nil {
 		return nil, err
 	}
-	return d.target.Create(ctx, in, createValidation, options)
+	return store.Create(ctx, in, createValidation, options)
 }
 
 func (d *mangedMode3) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
-	if err := d.isMigrating(ctx); err != nil {
+	store, err := d.getWriter(ctx)
+	if err != nil {
 		return nil, false, err
 	}
-	return d.target.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
+	return store.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
 }
 
 func (d *mangedMode3) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
-	if err := d.isMigrating(ctx); err != nil {
+	store, err := d.getWriter(ctx)
+	if err != nil {
 		return nil, false, err
 	}
-	return d.target.Delete(ctx, name, deleteValidation, options)
+	return store.Delete(ctx, name, deleteValidation, options)
 }
 
 // DeleteCollection overrides the behavior of the generic DualWriter and deletes from both LegacyStorage and Storage.
 func (d *mangedMode3) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *metainternalversion.ListOptions) (runtime.Object, error) {
-	if err := d.isMigrating(ctx); err != nil {
+	store, err := d.getWriter(ctx)
+	if err != nil {
 		return nil, err
 	}
-	return d.target.DeleteCollection(ctx, deleteValidation, options, listOptions)
+	return store.DeleteCollection(ctx, deleteValidation, options, listOptions)
 }
 
 func (d *mangedMode3) Destroy() {
-	d.target.Destroy()
+	d.dualwrite.Destroy()
 }
 
 func (d *mangedMode3) GetSingularName() string {
-	return d.target.GetSingularName()
+	return d.unified.GetSingularName()
 }
 
 func (d *mangedMode3) NamespaceScoped() bool {
-	return d.target.NamespaceScoped()
+	return d.unified.NamespaceScoped()
 }
 
 func (d *mangedMode3) New() runtime.Object {
-	return d.target.New()
+	return d.unified.New()
 }
 
 func (d *mangedMode3) NewList() runtime.Object {
-	return d.target.NewList()
+	return d.unified.NewList()
 }
 
 func (d *mangedMode3) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
-	return d.target.ConvertToTable(ctx, object, tableOptions)
+	return d.unified.ConvertToTable(ctx, object, tableOptions)
 }

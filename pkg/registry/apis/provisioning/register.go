@@ -30,6 +30,7 @@ import (
 	clientset "github.com/grafana/grafana/pkg/generated/clientset/versioned"
 	informers "github.com/grafana/grafana/pkg/generated/informers/externalversions"
 	listers "github.com/grafana/grafana/pkg/generated/listers/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/export"
@@ -46,6 +47,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/rendering"
 	grafanasecrets "github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/blob"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
@@ -78,6 +80,9 @@ type APIBuilder struct {
 	tester            *RepositoryTester
 	resourceLister    resources.ResourceLister
 	repositoryLister  listers.RepositoryLister
+	legacyMigrator    legacy.LegacyMigrator
+	storageStatus     dualwrite.Service
+	unified           resource.ResourceClient
 	secrets           secrets.Service
 }
 
@@ -90,11 +95,13 @@ func NewAPIBuilder(
 	webhookSecretKey string,
 	features featuremgmt.FeatureToggles,
 	render rendering.Service,
-	index resource.RepositoryIndexClient,
+	unified resource.ResourceClient,
 	blobstore blob.PublicBlobStore,
 	clonedir string, // where repo clones are managed
 	configProvider apiserver.RestConfigProvider,
 	ghFactory github.ClientFactory,
+	legacyMigrator legacy.LegacyMigrator,
+	storageStatus dualwrite.Service,
 	secrets secrets.Service,
 ) *APIBuilder {
 	clientFactory := resources.NewFactory(configProvider)
@@ -110,8 +117,11 @@ func NewAPIBuilder(
 		},
 		render:         render,
 		clonedir:       clonedir,
-		resourceLister: resources.NewResourceLister(index),
+		resourceLister: resources.NewResourceLister(unified),
 		blobstore:      blobstore,
+		legacyMigrator: legacyMigrator,
+		storageStatus:  storageStatus,
+		unified:        unified,
 		secrets:        secrets,
 	}
 }
@@ -128,6 +138,8 @@ func RegisterAPIService(
 	client resource.ResourceClient, // implements resource.RepositoryClient
 	configProvider apiserver.RestConfigProvider,
 	ghFactory github.ClientFactory,
+	legacyMigrator legacy.LegacyMigrator,
+	storageStatus dualwrite.Service,
 	// FIXME: use multi-tenant service when one exists. In this state, we can't make this a multi-tenant service!
 	secretssvc grafanasecrets.Service,
 ) (*APIBuilder, error) {
@@ -153,7 +165,9 @@ func RegisterAPIService(
 	builder := NewAPIBuilder(folderResolver, urlProvider, cfg.SecretKey, features,
 		render, client, store,
 		filepath.Join(cfg.DataPath, "clone"), // where repositories are cloned (temporarialy for now)
-		configProvider, ghFactory, secrets.NewSingleTenant(secretssvc))
+		configProvider, ghFactory,
+		legacyMigrator, storageStatus,
+		secrets.NewSingleTenant(secretssvc))
 	apiregistration.RegisterAPI(builder)
 	return builder, nil
 }
@@ -462,11 +476,19 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			}
 			b.repositoryLister = repoInformer.Lister()
 
-			b.jobs.Register(export.NewExportWorker(b.client, b.clonedir))
+			b.jobs.Register(export.NewExportWorker(
+				b.client,
+				b.legacyMigrator,
+				b.storageStatus,
+				b.secrets,
+				b.clonedir,
+			))
 			b.jobs.Register(sync.NewSyncWorker(
 				c.ProvisioningV0alpha1(),
 				b.parsers,
 				b.resourceLister,
+				b.storageStatus,
+				b.unified,
 			))
 
 			renderer := pullrequest.NewRenderer(b.render, b.blobstore)

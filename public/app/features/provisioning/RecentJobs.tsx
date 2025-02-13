@@ -193,7 +193,7 @@ export function RecentJobs({ repo }: Props) {
             key={items?.length}
             data={items.slice(0, 20)}
             columns={jobColumns}
-            getRowId={(item) => item.metadata?.resourceVersion || ''}
+            getRowId={(item) => `${item.metadata?.name}`}
             renderExpandedRow={(row) => <ExpandedRow row={row} />}
           />
         )}

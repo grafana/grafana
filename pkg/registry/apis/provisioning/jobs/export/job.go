@@ -3,21 +3,17 @@ package export
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"time"
 
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/infra/slugify"
+	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -26,19 +22,22 @@ import (
 
 // ExportJob holds all context for a running job
 type exportJob struct {
-	logger logging.Logger
-	client *resources.DynamicClient // Read from
-	target repository.Repository    // Write to
+	logger    logging.Logger
+	client    *resources.DynamicClient // Read from
+	target    repository.Repository    // Write to
+	legacy    legacy.LegacyMigrator
+	namespace string
 
 	progress         jobs.ProgressFn
 	progressInterval time.Duration
 	progressLast     time.Time
 	foldersTree      *resources.FolderTree
+	userInfo         map[string]repository.CommitSignature
 
 	prefix         string // from options (now clean+safe)
 	ref            string // from options (only git)
 	keepIdentifier bool
-	addAuthorInfo  bool
+	withHistory    bool
 
 	jobStatus *provisioning.JobStatus
 	summary   map[string]*provisioning.JobResourceSummary
@@ -55,17 +54,18 @@ func newExportJob(ctx context.Context,
 		prefix = safepath.Clean(prefix)
 	}
 	return &exportJob{
+		namespace:        target.Config().Namespace,
 		target:           target,
 		client:           client,
 		logger:           logging.FromContext(ctx),
 		progress:         progress,
 		progressLast:     time.Now(),
-		progressInterval: time.Second * 10,
+		progressInterval: time.Second * 5,
 
 		prefix:         prefix,
 		ref:            options.Branch,
 		keepIdentifier: options.Identifier,
-		addAuthorInfo:  options.History,
+		withHistory:    options.History,
 
 		jobStatus: &provisioning.JobStatus{
 			State: provisioning.JobStateWorking,
@@ -77,6 +77,7 @@ func newExportJob(ctx context.Context,
 // Send progress messages to any listeners
 func (r *exportJob) maybeNotify(ctx context.Context) {
 	if time.Since(r.progressLast) > r.progressInterval {
+		r.progressLast = time.Now()
 		err := r.progress(ctx, *r.jobStatus)
 		if err != nil {
 			r.logger.Warn("unable to send progress", "err", err)
@@ -98,86 +99,6 @@ func (r *exportJob) getSummary(gr schema.GroupResource) *provisioning.JobResourc
 	return summary
 }
 
-func (r *exportJob) loadFolders(ctx context.Context) error {
-	logger := r.logger
-	targetRepoName := r.target.Config().Name
-	status := r.jobStatus
-	status.Message = "reading folder tree"
-	foldersTree, err := readFolders(ctx, r.client.Resource(schema.GroupVersionResource{
-		Group:    folders.GROUP,
-		Version:  folders.VERSION,
-		Resource: folders.RESOURCE,
-	}), targetRepoName)
-
-	summary := r.getSummary(schema.GroupResource{
-		Group:    folders.GROUP,
-		Resource: folders.RESOURCE,
-	})
-
-	// first create folders
-	// TODO! this should not be necessary if writing to a path also makes the parents
-	status.Message = "writing folders"
-	err = foldersTree.Walk(ctx, func(ctx context.Context, folder resources.Folder) error {
-		p := folder.Path + "/"
-		if r.prefix != "" {
-			p = r.prefix + "/" + p
-		}
-		logger := logger.With("path", p)
-
-		_, err = r.target.Read(ctx, p, r.ref)
-		if err != nil && !(errors.Is(err, repository.ErrFileNotFound) || apierrors.IsNotFound(err)) {
-			logger.Error("failed to check if folder exists before writing", "error", err)
-			return fmt.Errorf("failed to check if folder exists before writing: %w", err)
-		} else if err == nil {
-			logger.Info("folder already exists")
-			summary.Noop++
-			return nil
-		}
-
-		// Create with an empty body will make a folder (or .keep file if unsupported)
-		if err := r.target.Create(ctx, p, r.ref, nil, "export folder `"+p+"`"); err != nil {
-			logger.Error("failed to write a folder in repository", "error", err)
-			return fmt.Errorf("failed to write folder in repo: %w", err)
-		}
-		summary.Create++
-		logger.Debug("successfully exported folder")
-		return nil
-	})
-	if err != nil {
-		return fmt.Errorf("failed to write folders: %w", err)
-	}
-	r.foldersTree = foldersTree
-	return nil
-}
-
-func (r *exportJob) export(ctx context.Context, kind schema.GroupVersionResource) error {
-	r.jobStatus.Message = "Exporting " + kind.Resource + "..."
-	r.maybeNotify(ctx)
-	client := r.client.Resource(kind)
-	summary := r.getSummary(kind.GroupResource())
-
-	continueToken := ""
-	for {
-		list, err := client.List(ctx, metav1.ListOptions{Limit: 100, Continue: continueToken})
-		if err != nil {
-			return fmt.Errorf("error executing list: %w", err)
-		}
-
-		for _, item := range list.Items {
-			if err = r.add(ctx, summary, &item); err != nil {
-				return fmt.Errorf("error adding value: %w", err)
-			}
-		}
-
-		continueToken = list.GetContinue()
-		if continueToken == "" {
-			break
-		}
-	}
-
-	return nil
-}
-
 func (r *exportJob) add(ctx context.Context, summary *provisioning.JobResourceSummary, obj *unstructured.Unstructured) error {
 	if err := ctx.Err(); err != nil {
 		return err
@@ -194,7 +115,7 @@ func (r *exportJob) add(ctx context.Context, summary *provisioning.JobResourceSu
 	if commitMessage == "" {
 		g := item.GetGeneration()
 		if g > 0 {
-			commitMessage = fmt.Sprintf("Generation: %d, ResourceVersion: %s", g, item.GetResourceVersion())
+			commitMessage = fmt.Sprintf("Generation: %d", g)
 		} else {
 			commitMessage = "exported from grafana"
 		}
@@ -213,14 +134,21 @@ func (r *exportJob) add(ctx context.Context, summary *provisioning.JobResourceSu
 	}
 	folder := item.GetFolder()
 
+	// Add the author in context (if available)
+	ctx = r.withAuthorSignature(ctx, item)
+
 	// Get the absolute path of the folder
 	fid, ok := r.foldersTree.DirPath(folder, "")
 	if !ok {
-		logger.Error("folder of item was not in tree of repository")
-		return fmt.Errorf("folder of item was not in tree of repository")
+		fid = resources.Folder{
+			Path: "__folder_not_found/" + slugify.Slugify(folder),
+		}
+		r.logger.Error("folder of item was not in tree of repository")
 	}
 
+	// Clear the metadata
 	delete(obj.Object, "metadata")
+
 	if r.keepIdentifier {
 		item.SetName(name) // keep the identifier in the metadata
 	}
@@ -244,14 +172,11 @@ func (r *exportJob) add(ctx context.Context, summary *provisioning.JobResourceSu
 		}
 	}
 
-	// Add the author in context (if available)
-	ctx = r.withAuthorSignature(ctx, item)
-
 	// Write the file
 	err = r.target.Write(ctx, fileName, r.ref, body, commitMessage)
 	if err != nil {
 		summary.Error++
-		logger.Error("failed to write a file in repository", "error", err)
+		r.logger.Error("failed to write a file in repository", "error", err)
 		if len(summary.Errors) < 20 {
 			summary.Errors = append(summary.Errors, fmt.Sprintf("error writing: %s", fileName))
 		}
@@ -263,24 +188,26 @@ func (r *exportJob) add(ctx context.Context, summary *provisioning.JobResourceSu
 }
 
 func (r *exportJob) withAuthorSignature(ctx context.Context, item utils.GrafanaMetaAccessor) context.Context {
-	if !r.addAuthorInfo {
+	if r.userInfo == nil {
 		return ctx
 	}
+	id := item.GetUpdatedBy()
+	if id == "" {
+		id = item.GetCreatedBy()
+	}
+	if id == "" {
+		id = "grafana"
+	}
 
-	sig := repository.CommitSignature{
-		Name: item.GetUpdatedBy(),
-		When: item.GetCreationTimestamp().Time,
+	sig := r.userInfo[id] // lookup
+	if sig.Name == "" && sig.Email == "" {
+		sig.Name = id
 	}
-	if sig.Name == "" {
-		sig.Name = item.GetCreatedBy()
-	}
-	if sig.Name == "" {
-		return ctx // no user info
-	}
-	// TODO: convert internal id to name+email
-	updated, _ := item.GetUpdatedTimestamp()
-	if updated != nil {
-		sig.When = *updated
+	t, err := item.GetUpdatedTimestamp()
+	if err == nil && t != nil {
+		sig.When = *t
+	} else {
+		sig.When = item.GetCreationTimestamp().Time
 	}
 	return repository.WithAuthorSignature(ctx, sig)
 }

@@ -5,23 +5,45 @@ import (
 	"fmt"
 	"os"
 
-	"k8s.io/apimachinery/pkg/runtime/schema"
-
-	dashboards "github.com/grafana/grafana/pkg/apis/dashboard"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	gogit "github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/go-git"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 )
 
 type ExportWorker struct {
-	clients  *resources.ClientFactory
+	// Tempdir for repo clones
 	clonedir string
+
+	// When exporting from apiservers
+	clients *resources.ClientFactory
+
+	// Check where values are currently saved
+	storageStatus dualwrite.Service
+
+	// Support reading from history
+	legacyMigrator legacy.LegacyMigrator
+
+	secrets secrets.Service
 }
 
-func NewExportWorker(clients *resources.ClientFactory, clonedir string) *ExportWorker {
-	return &ExportWorker{clients, clonedir}
+func NewExportWorker(clients *resources.ClientFactory,
+	legacyMigrator legacy.LegacyMigrator,
+	storageStatus dualwrite.Service,
+	secrets secrets.Service,
+	clonedir string,
+) *ExportWorker {
+	return &ExportWorker{
+		clonedir,
+		clients,
+		storageStatus,
+		legacyMigrator,
+		secrets,
+	}
 }
 
 func (r *ExportWorker) IsSupported(ctx context.Context, job provisioning.Job) bool {
@@ -51,7 +73,7 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 		buffered, err = gogit.Clone(ctx, repo.Config(), gogit.GoGitCloneOptions{
 			Root:                   r.clonedir,
 			SingleCommitBeforePush: !options.History,
-		}, os.Stdout)
+		}, r.secrets, os.Stdout)
 		if err != nil {
 			return &provisioning.JobStatus{
 				State:  provisioning.JobStateError,
@@ -59,7 +81,7 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 			}, nil
 		}
 
-		// New empty branch
+		// New empty branch (same on main???)
 		if options.Branch != "" {
 			_, err := buffered.NewEmptyBranch(ctx, options.Branch)
 			if err != nil {
@@ -75,10 +97,22 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 
 	dynamicClient, _, err := r.clients.New(repo.Config().Namespace)
 	if err != nil {
-		return nil, fmt.Errorf("namespace mismatch")
+		return nil, fmt.Errorf("error getting client %w", err)
 	}
 
 	worker := newExportJob(ctx, repo, *options, dynamicClient, progress)
+
+	if options.History {
+		err = worker.loadUsers(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("error loading users %w", err)
+		}
+	}
+
+	// Read from legacy if not yet using unified storage
+	if dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, r.storageStatus) {
+		worker.legacy = r.legacyMigrator
+	}
 
 	// Load and write all folders
 	err = worker.loadFolders(ctx)
@@ -86,16 +120,9 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 		return worker.jobStatus, err
 	}
 
-	kinds := []schema.GroupVersionResource{{
-		Group:    dashboards.GROUP,
-		Version:  "v1alpha1",
-		Resource: dashboards.DASHBOARD_RESOURCE,
-	}}
-	for _, kind := range kinds {
-		err = worker.export(ctx, kind)
-		if err != nil {
-			return worker.jobStatus, err
-		}
+	err = worker.loadResources(ctx)
+	if err != nil {
+		return worker.jobStatus, err
 	}
 
 	status := worker.jobStatus
