@@ -52,7 +52,7 @@ func SplitStringWithError(str string) ([]string, error) {
 		var res []string
 		err := json.Unmarshal([]byte(str), &res)
 		if err != nil {
-			return []string{}, fmt.Errorf("failed to parse json array: %w", err)
+			return []string{}, fmt.Errorf("incorrect format: %s", str)
 		}
 		return res, nil
 	}
