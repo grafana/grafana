@@ -101,8 +101,8 @@ func RegisterAccessControlRoles(service accesscontrol.Service) error {
 	keepersWriter := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
 			Name:        "fixed:secrets-manager.keepers:writer",
-			DisplayName: "Secrets Manager keepers reader",
-			Description: "Read keepers.",
+			DisplayName: "Secrets Manager keepers writer",
+			Description: "Create, update and delete keepers.",
 			Group:       "Secrets Manager",
 			Permissions: []accesscontrol.Permission{
 				{

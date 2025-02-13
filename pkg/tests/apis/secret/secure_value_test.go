@@ -196,7 +196,7 @@ func TestIntegrationSecureValue(t *testing.T) {
 	})
 
 	t.Run("creating securevalues in multiple namespaces", func(t *testing.T) {
-		usersOrgA := mustCreateUsers(t, helper, []string{
+		usersOrgA := mustCreateUsers(t, helper, []string{"secrets-manager.securevalues", "secrets-manager.keepers"}, []string{
 			secret.ActionSecretsManagerSecureValuesWrite,
 			secret.ActionSecretsManagerSecureValuesList,
 			secret.ActionSecretsManagerSecureValuesDelete,
@@ -207,7 +207,7 @@ func TestIntegrationSecureValue(t *testing.T) {
 			secret.ActionSecretsManagerKeepersDelete,
 		})
 
-		usersOrgB := mustCreateUsers(t, helper, []string{
+		usersOrgB := mustCreateUsers(t, helper, []string{"secrets-manager.securevalues", "secrets-manager.keepers"}, []string{
 			secret.ActionSecretsManagerSecureValuesWrite,
 			secret.ActionSecretsManagerSecureValuesList,
 			secret.ActionSecretsManagerSecureValuesDelete,

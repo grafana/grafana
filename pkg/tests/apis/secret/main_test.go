@@ -59,17 +59,19 @@ func TestIntegrationDiscoveryClient(t *testing.T) {
 	})
 }
 
-func mustCreateUsers(t *testing.T, helper *apis.K8sTestHelper, actions []string) apis.OrgUsers {
+func mustCreateUsers(t *testing.T, helper *apis.K8sTestHelper, resources []string, actions []string) apis.OrgUsers {
 	t.Helper()
 
 	var permissions []resourcepermissions.SetResourcePermissionCommand
-	if len(actions) > 0 {
-		permissions = append(permissions, resourcepermissions.SetResourcePermissionCommand{
-			Actions:           actions,
-			Resource:          "secrets-manager",
-			ResourceAttribute: "name",
-			ResourceID:        "*",
-		})
+	if len(resources) > 0 && len(actions) > 0 {
+		for _, resource := range resources {
+			permissions = append(permissions, resourcepermissions.SetResourcePermissionCommand{
+				Actions:           actions,
+				Resource:          resource,
+				ResourceAttribute: "name",
+				ResourceID:        "*",
+			})
+		}
 	}
 
 	orgID := rand.Int64() + 2 // if it is 0, becomes 2 and not 1.
