@@ -368,6 +368,11 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 		// dashboardSearchRequest
 		mockResponse1 := &resource.ResourceSearchResponse{
 			Results: &resource.ResourceTable{
+				Columns: []*resource.ResourceTableColumnDefinition{
+					{
+						Name: "folder",
+					},
+				},
 				Rows: []*resource.ResourceTableRow{
 					{
 						Key: &resource.ResourceKey{
@@ -401,6 +406,11 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 		// folderSearchRequest
 		mockResponse2 := &resource.ResourceSearchResponse{
 			Results: &resource.ResourceTable{
+				Columns: []*resource.ResourceTableColumnDefinition{
+					{
+						Name: "folder",
+					},
+				},
 				Rows: []*resource.ResourceTableRow{
 					{
 						Key: &resource.ResourceKey{
