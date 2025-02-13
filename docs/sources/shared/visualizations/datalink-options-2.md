@@ -31,4 +31,4 @@ For each action, set the following options:
 
 <!-- prettier-ignore-end -->
 
-To learn more, refer to [Configure data links and actions](../../configure-data-links-and-actions/).
+To learn more, refer to [Configure data links and actions](../../configure-data-links/).

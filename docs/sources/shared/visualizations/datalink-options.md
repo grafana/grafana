@@ -17,4 +17,4 @@ For each data link, set the following options:
 - **URL**
 - **Open in new tab**
 
-To learn more, refer to [Configure data links and actions](../../configure-data-links-and-actions/).
+To learn more, refer to [Configure data links and actions](../../configure-data-links/).
