@@ -709,6 +709,7 @@
       "success": "Dashboard {{name}} moved to Recently deleted"
     }
   },
+  "Browser": "grafana-ui.data-source-http-settings.browser-mode-title",
   "clipboard-button": {
     "inline-toast": {
       "success": "Copied"
@@ -3198,6 +3199,7 @@
       "selected-count": "Selected "
     }
   },
+  "Server (default)": "grafana-ui.data-source-http-settings.server-mode-title",
   "service-account-create-page": {
     "create": {
       "button": "Create"

@@ -709,6 +709,7 @@
       "success": "Đäşĥþőäřđ {{name}} mővęđ ŧő Ŗęčęŉŧľy đęľęŧęđ"
     }
   },
+  "Browser": "ģřäƒäŉä-ūį.đäŧä-şőūřčę-ĥŧŧp-şęŧŧįŉģş.þřőŵşęř-mőđę-ŧįŧľę",
   "clipboard-button": {
     "inline-toast": {
       "success": "Cőpįęđ"
@@ -3198,6 +3199,7 @@
       "selected-count": "Ŝęľęčŧęđ "
     }
   },
+  "Server (default)": "ģřäƒäŉä-ūį.đäŧä-şőūřčę-ĥŧŧp-şęŧŧįŉģş.şęřvęř-mőđę-ŧįŧľę",
   "service-account-create-page": {
     "create": {
       "button": "Cřęäŧę"

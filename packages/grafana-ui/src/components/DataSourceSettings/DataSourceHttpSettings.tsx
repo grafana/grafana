@@ -4,7 +4,7 @@ import { useState, useCallback, useId } from 'react';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { useTheme2 } from '../../themes';
-import { Trans } from '../../utils/i18n';
+import { t, Trans } from '../../utils/i18n';
 import { Alert } from '../Alert/Alert';
 import { Button } from '../Button';
 import { Combobox } from '../Combobox/Combobox';
@@ -28,19 +28,16 @@ import { HttpSettingsProps } from './types';
 
 const ACCESS_OPTIONS: Array<ComboboxOption<string>> = [
   {
-    label: 'Server (default)',
+    label: t('Server (default)', 'grafana-ui.data-source-http-settings.server-mode-title'),
     value: 'proxy',
   },
   {
-    label: 'Browser',
+    label: t('Browser', 'grafana-ui.data-source-http-settings.browser-mode-title'),
     value: 'direct',
   },
 ];
 
-const DEFAULT_ACCESS_OPTION = {
-  label: 'Server (default)',
-  value: 'proxy',
-};
+const DEFAULT_ACCESS_OPTION = ACCESS_OPTIONS[0];
 
 const HttpAccessHelp = () => {
   return (
