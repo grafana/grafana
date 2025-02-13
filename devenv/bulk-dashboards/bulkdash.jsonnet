@@ -1118,18 +1118,6 @@
       "1d"
     ],
     "status": "Stable",
-    "time_options": [
-      "5m",
-      "15m",
-      "1h",
-      "2h",
-      " 6h",
-      "12h",
-      "24h",
-      "2d",
-      "7d",
-      "30d"
-    ],
     "type": "timepicker"
   },
   "timezone": "browser",
