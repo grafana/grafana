@@ -158,7 +158,7 @@ func TestIntegrationKeeper(t *testing.T) {
 		rawAWS := mustGenerateKeeper(t, helper, helper.Org1.Admin, nil, "")
 
 		testDataKeeperGCP := rawAWS.DeepCopy()
-		testDataKeeperGCP.Object["spec"].(map[string]any)["sql"] = nil
+		testDataKeeperGCP.Object["spec"].(map[string]any)["aws"] = nil
 		testDataKeeperGCP.Object["spec"].(map[string]any)["gcp"] = map[string]any{
 			"projectId":       "project-id",
 			"credentialsFile": "/path/to/file.json",

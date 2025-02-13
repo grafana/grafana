@@ -66,7 +66,7 @@ func mustGenerateSecureValue(t *testing.T, helper *apis.K8sTestHelper, user apis
 		GVR:  gvrSecureValues,
 	})
 
-	testSecureValue := helper.LoadYAMLOrJSONFile("testdata/secure-value-default-generate.yaml")
+	testSecureValue := helper.LoadYAMLOrJSONFile("testdata/secure-value-generate.yaml")
 	testSecureValue.Object["spec"].(map[string]any)["keeper"] = keeperName
 
 	raw, err := secureValueClient.Resource.Create(ctx, testSecureValue, metav1.CreateOptions{})
@@ -93,7 +93,7 @@ func mustGenerateKeeper(t *testing.T, helper *apis.K8sTestHelper, user apis.User
 	})
 
 	if testFile == "" {
-		testFile = "testdata/keeper-sql-generate.yaml"
+		testFile = "testdata/keeper-aws-generate.yaml"
 	}
 	testKeeper := helper.LoadYAMLOrJSONFile(testFile)
 	if specType != nil {
