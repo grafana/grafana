@@ -283,6 +283,9 @@
       "no-delivery-attempts": "No delivery attempts",
       "no-integrations": "No integrations configured",
       "only-firing": "Delivering <1>only firing</1> notifications",
+      "receiver-summary": {
+        "jira": "Creates a \"{{issueType}}\" issue in the \"{{project}}\" project"
+      },
       "telegram": {
         "parse-mode-warning-body": "If you use a <1>parse_mode</1> option other than <3>None</3>, truncation may result in an invalid message, causing the notification to fail. For longer messages, we recommend using an alternative contact method.",
         "parse-mode-warning-title": "Telegram messages are limited to 4096 UTF-8 characters."
