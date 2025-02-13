@@ -9,7 +9,7 @@ replace github.com/docker/docker => github.com/moby/moby v26.0.0+incompatible
 
 require (
 	cloud.google.com/go/storage v1.43.0 // @grafana/grafana-backend-group
-	github.com/Masterminds/semver/v3 v3.3.0 // @grafana/grafana-developer-enablement-squad
+	github.com/Masterminds/semver/v3 v3.3.1 // @grafana/grafana-developer-enablement-squad
 	github.com/aws/aws-sdk-go v1.55.5 // @grafana/aws-datasources
 	github.com/docker/docker v27.4.1+incompatible // @grafana/grafana-developer-enablement-squad
 	github.com/drone/drone-cli v1.8.0 // @grafana/grafana-developer-enablement-squad
