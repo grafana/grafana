@@ -110,7 +110,7 @@ func SecretAuthorizer(accessControl accesscontrol.AccessControl) authorizer.Auth
 		// TODO: Scope the permission based on the resource name for `Update`, `Read` and `Delete`.
 		// Currently the scope granted for all actions are '*' (all), within the boundaries of a `namespace`.
 		// This would allow fine-grained secret access with RBAC, but we need some way of granting it.
-		scope := ScopeSecretsManagerProvider.GetResourceScopeName(attr.GetName())
+		scope := ScopeSecretsManagerProvider.GetResourceScopeName(name)
 
 		switch verb {
 		case utils.VerbCreate:
