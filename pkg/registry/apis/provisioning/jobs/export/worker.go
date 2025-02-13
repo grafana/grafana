@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	gogit "github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/go-git"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 )
 
@@ -26,13 +27,23 @@ type ExportWorker struct {
 
 	// Support reading from history
 	legacyMigrator legacy.LegacyMigrator
+
+	secrets secrets.Service
 }
 
 func NewExportWorker(clients *resources.ClientFactory,
 	legacyMigrator legacy.LegacyMigrator,
 	storageStatus dualwrite.Service,
-	clonedir string) *ExportWorker {
-	return &ExportWorker{clonedir, clients, storageStatus, legacyMigrator}
+	secrets secrets.Service,
+	clonedir string,
+) *ExportWorker {
+	return &ExportWorker{
+		clonedir,
+		clients,
+		storageStatus,
+		legacyMigrator,
+		secrets,
+	}
 }
 
 func (r *ExportWorker) IsSupported(ctx context.Context, job provisioning.Job) bool {
@@ -62,7 +73,7 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 		buffered, err = gogit.Clone(ctx, repo.Config(), gogit.GoGitCloneOptions{
 			Root:                   r.clonedir,
 			SingleCommitBeforePush: !options.History,
-		}, os.Stdout)
+		}, r.secrets, os.Stdout)
 		if err != nil {
 			return &provisioning.JobStatus{
 				State:  provisioning.JobStateError,

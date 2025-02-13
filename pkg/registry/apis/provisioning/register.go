@@ -480,6 +480,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.client,
 				b.legacyMigrator,
 				b.storageStatus,
+				b.secrets,
 				b.clonedir,
 			))
 			b.jobs.Register(sync.NewSyncWorker(
