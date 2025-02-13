@@ -35,11 +35,20 @@ func ProvideService(httpClientProvider httpclient.Provider) *Service {
 }
 
 type datasourceInfo struct {
-	HTTPClient *http.Client
-	URL        string
+	HTTPClient     *http.Client
+	URL            string
+	TSDBVersion    float32
+	TSDBResolution int32
+	LookupLimit    int32
 }
 
 type DsAccess string
+
+type JSONData struct {
+	TSDBVersion    float32 `json:"tsdbVersion"`
+	TSDBResolution int32   `json:"tsdbResolution"`
+	LookupLimit    int32   `json:"lookupLimit"`
+}
 
 func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
 	return func(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
@@ -53,9 +62,18 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			return nil, err
 		}
 
+		jsonData := JSONData{}
+		err = json.Unmarshal(settings.JSONData, &jsonData)
+		if err != nil {
+			return nil, fmt.Errorf("error reading settings: %w", err)
+		}
+
 		model := &datasourceInfo{
-			HTTPClient: client,
-			URL:        settings.URL,
+			HTTPClient:     client,
+			URL:            settings.URL,
+			TSDBVersion:    jsonData.TSDBVersion,
+			TSDBResolution: jsonData.TSDBResolution,
+			LookupLimit:    jsonData.LookupLimit,
 		}
 
 		return model, nil
