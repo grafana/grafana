@@ -233,7 +233,7 @@ export const DataSourceHttpSettings = (props: HttpSettingsProps) => {
             </>
           )}
           {dataSourceConfig.access === 'proxy' && (
-            <>
+            <Stack direction="column" gap={1}>
               <Stack direction="row" gap={0}>
                 <InlineFormLabel
                   width={13}
@@ -266,7 +266,7 @@ export const DataSourceHttpSettings = (props: HttpSettingsProps) => {
                 }}
                 disabled={dataSourceConfig.readOnly}
               />
-            </>
+            </Stack>
           )}
         </Stack>
       </section>
