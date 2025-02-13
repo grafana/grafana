@@ -65,8 +65,7 @@ interface Range {
   to: ParsedTime;
 }
 
-// should be ran after normalization when we are sure all values are filled
-function getDuration({ from, to }: Range) {
+export function getDuration({ from, to }: Range) {
   const fromDay = from.dayOfWeek ?? 0;
   const fromHour = from.h ?? 0;
   const fromMin = from.m ?? 0;
@@ -77,13 +76,11 @@ function getDuration({ from, to }: Range) {
 
   let days = toDay - fromDay;
 
-  // account for rollover through day 0
-  // TODO this does not account for rollover where duration is 1 day or under
+  // account for rollover
   if (days < 0) {
-    days = -days + 1;
+    days += 7;
   }
 
-  let daysSecs = days * secsInDay;
   let fromSecs = fromHour * 3600 + fromMin * 60;
   let toSecs = toHour * 3600 + toMin * 60;
 
@@ -93,6 +90,7 @@ function getDuration({ from, to }: Range) {
   if (days === 0 && toSecs < fromSecs) {
     durSecs = 7 * secsInDay - (fromSecs - toSecs);
   } else {
+    let daysSecs = days * secsInDay;
     durSecs = daysSecs - fromSecs + toSecs;
   }
 

@@ -1,5 +1,5 @@
 import { dateTime, TimeRange } from '@grafana/data';
-import { convertToCron, TimeRegionConfig } from 'app/core/utils/timeRegions';
+import { convertToCron, getDuration, TimeRegionConfig } from 'app/core/utils/timeRegions';
 
 import { calculateTimesWithin } from './timeRegions';
 
@@ -171,6 +171,7 @@ describe('timeRegions', () => {
       from       | fromDOW | to         | toDOW | timezone     | expectedCron   | expectedDuration
       ${'03:03'} | ${1}    | ${'03:03'} | ${2}  | ${'browser'} | ${'3 3 * * 0'} | ${'1d'}
       ${'03:03'} | ${7}    | ${'03:03'} | ${1}  | ${'browser'} | ${'3 3 * * 6'} | ${'1d'}
+      ${'09:03'} | ${7}    | ${'03:03'} | ${1}  | ${'browser'} | ${'3 9 * * 6'} | ${'18h'}
       ${'03:03'} | ${7}    | ${'04:03'} | ${7}  | ${'browser'} | ${'3 3 * * 6'} | ${'1h'}
       ${'03:03'} | ${7}    | ${'02:03'} | ${7}  | ${'browser'} | ${'3 3 * * 6'} | ${'6d 23h'}
       ${'03:03'} | ${7}    | ${'3:03'}  | ${7}  | ${'browser'} | ${'3 3 * * 6'} | ${''}
