@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/secret"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -265,50 +266,61 @@ func TestIntegrationKeeper(t *testing.T) {
 	})
 
 	t.Run("creating keepers in multiple namespaces", func(t *testing.T) {
-		adminOrg1 := helper.Org1.Admin
-		adminOrg2 := helper.OrgB.Admin
+		usersOrgA := mustCreateUsers(t, helper, []string{
+			secret.ActionSecretsManagerWrite,
+			secret.ActionSecretsManagerList,
+			secret.ActionSecretsManagerDelete,
+			secret.ActionSecretsManagerDescribe,
+		})
 
-		keeperOrg1 := mustGenerateKeeper(t, helper, adminOrg1, nil)
-		keeperOrg2 := mustGenerateKeeper(t, helper, adminOrg2, nil)
+		usersOrgB := mustCreateUsers(t, helper, []string{
+			secret.ActionSecretsManagerWrite,
+			secret.ActionSecretsManagerList,
+			secret.ActionSecretsManagerDelete,
+			secret.ActionSecretsManagerDescribe,
+		})
 
-		clientOrg1 := helper.GetResourceClient(apis.ResourceClientArgs{User: adminOrg1, GVR: gvrKeepers})
-		clientOrg2 := helper.GetResourceClient(apis.ResourceClientArgs{User: adminOrg2, GVR: gvrKeepers})
+		keeperOrgA := mustGenerateKeeper(t, helper, usersOrgA.Admin, nil)
+		keeperOrgB := mustGenerateKeeper(t, helper, usersOrgB.Admin, nil)
+
+		clientOrgA := helper.GetResourceClient(apis.ResourceClientArgs{User: usersOrgA.Admin, GVR: gvrKeepers})
+		clientOrgB := helper.GetResourceClient(apis.ResourceClientArgs{User: usersOrgB.Admin, GVR: gvrKeepers})
 
 		// Create
 		t.Run("creating a keeper with the same name as one from another namespace does not return an error", func(t *testing.T) {
-			// Org1 creating a keeper with the same name from Org2.
+			// OrgA creating a keeper with the same name from OrgB.
 			testData := helper.LoadYAMLOrJSONFile("testdata/keeper-aws-generate.yaml")
-			testData.SetName(keeperOrg2.GetName())
+			testData.SetName(keeperOrgB.GetName())
 
-			raw, err := clientOrg1.Resource.Create(ctx, testData, metav1.CreateOptions{})
+			raw, err := clientOrgA.Resource.Create(ctx, testData, metav1.CreateOptions{})
 			require.NoError(t, err)
 			require.NotNil(t, raw)
 
-			// Org2 creating a keeper with the same name from Org1.
+			// OrgA creating a keeper with the same name from OrgB.
 			testData = helper.LoadYAMLOrJSONFile("testdata/keeper-aws-generate.yaml")
-			testData.SetName(keeperOrg1.GetName())
+			testData.SetName(keeperOrgA.GetName())
 
-			raw, err = clientOrg2.Resource.Create(ctx, testData, metav1.CreateOptions{})
+			raw, err = clientOrgB.Resource.Create(ctx, testData, metav1.CreateOptions{})
 			require.NoError(t, err)
 			require.NotNil(t, raw)
 
-			require.NoError(t, clientOrg1.Resource.Delete(ctx, keeperOrg2.GetName(), metav1.DeleteOptions{}))
-			require.NoError(t, clientOrg2.Resource.Delete(ctx, keeperOrg1.GetName(), metav1.DeleteOptions{}))
+			require.NoError(t, clientOrgA.Resource.Delete(ctx, keeperOrgB.GetName(), metav1.DeleteOptions{}))
+			require.NoError(t, clientOrgB.Resource.Delete(ctx, keeperOrgA.GetName(), metav1.DeleteOptions{}))
 		})
 
 		// Read
 		t.Run("fetching a keeper from another namespace returns not found", func(t *testing.T) {
 			var statusErr *apierrors.StatusError
 
-			// Org1 trying to fetch keeper from Org2.
-			raw, err := clientOrg1.Resource.Get(ctx, keeperOrg2.GetName(), metav1.GetOptions{})
+			// OrgA trying to fetch keeper from OrgB.
+			raw, err := clientOrgA.Resource.Get(ctx, keeperOrgB.GetName(), metav1.GetOptions{})
 			require.Error(t, err)
 			require.Nil(t, raw)
 			require.True(t, errors.As(err, &statusErr))
 			require.Equal(t, http.StatusNotFound, int(statusErr.Status().Code))
 
-			// Org2 trying to fetch keeper from Org1.
-			raw, err = clientOrg2.Resource.Get(ctx, keeperOrg1.GetName(), metav1.GetOptions{})
+			// OrgB trying to fetch keeper from OrgA.
+			raw, err = clientOrgB.Resource.Get(ctx, keeperOrgA.GetName(), metav1.GetOptions{})
 			require.Error(t, err)
 			require.Nil(t, raw)
 			require.True(t, errors.As(err, &statusErr))
@@ -319,23 +331,23 @@ func TestIntegrationKeeper(t *testing.T) {
 		t.Run("updating a keeper from another namespace returns not found", func(t *testing.T) {
 			var statusErr *apierrors.StatusError
 
-			// Org1 trying to update securevalue from Org2.
+			// OrgA trying to update securevalue from OrgB.
 			testData := helper.LoadYAMLOrJSONFile("testdata/keeper-aws-generate.yaml")
-			testData.SetName(keeperOrg2.GetName())
+			testData.SetName(keeperOrgB.GetName())
 			testData.Object["spec"].(map[string]any)["title"] = "New title"
 
-			raw, err := clientOrg1.Resource.Update(ctx, testData, metav1.UpdateOptions{})
+			raw, err := clientOrgA.Resource.Update(ctx, testData, metav1.UpdateOptions{})
 			require.Error(t, err)
 			require.Nil(t, raw)
 			require.True(t, errors.As(err, &statusErr))
 			require.Equal(t, http.StatusNotFound, int(statusErr.Status().Code))
 
-			// Org2 trying to update keeper from Org1.
+			// OrgB trying to update keeper from OrgA.
 			testData = helper.LoadYAMLOrJSONFile("testdata/keeper-aws-generate.yaml")
-			testData.SetName(keeperOrg1.GetName())
+			testData.SetName(keeperOrgA.GetName())
 			testData.Object["spec"].(map[string]any)["title"] = "New title"
 
-			raw, err = clientOrg2.Resource.Update(ctx, testData, metav1.UpdateOptions{})
+			raw, err = clientOrgB.Resource.Update(ctx, testData, metav1.UpdateOptions{})
 			require.Error(t, err)
 			require.Nil(t, raw)
 			require.True(t, errors.As(err, &statusErr))
@@ -344,40 +356,40 @@ func TestIntegrationKeeper(t *testing.T) {
 
 		// Delete
 		t.Run("deleting a keeper from another namespace does not return an error but does not delete it", func(t *testing.T) {
-			// Org1 trying to delete keeper from Org2.
-			err := clientOrg1.Resource.Delete(ctx, keeperOrg2.GetName(), metav1.DeleteOptions{})
+			// OrgA trying to delete keeper from OrgB.
+			err := clientOrgA.Resource.Delete(ctx, keeperOrgB.GetName(), metav1.DeleteOptions{})
 			require.NoError(t, err)
 
-			// Check that it still exists from the perspective of Org2.
-			raw, err := clientOrg2.Resource.Get(ctx, keeperOrg2.GetName(), metav1.GetOptions{})
+			// Check that it still exists from the perspective of OrgB.
+			raw, err := clientOrgB.Resource.Get(ctx, keeperOrgB.GetName(), metav1.GetOptions{})
 			require.NoError(t, err)
 			require.NotNil(t, raw)
 
-			// Org2 trying to delete keeper from Org1.
-			err = clientOrg2.Resource.Delete(ctx, keeperOrg1.GetName(), metav1.DeleteOptions{})
+			// OrgB trying to delete keeper from OrgA.
+			err = clientOrgB.Resource.Delete(ctx, keeperOrgA.GetName(), metav1.DeleteOptions{})
 			require.NoError(t, err)
 
-			// Check that it still exists from the perspective of Org1.
-			raw, err = clientOrg1.Resource.Get(ctx, keeperOrg1.GetName(), metav1.GetOptions{})
+			// Check that it still exists from the perspective of OrgA.
+			raw, err = clientOrgA.Resource.Get(ctx, keeperOrgA.GetName(), metav1.GetOptions{})
 			require.NoError(t, err)
 			require.NotNil(t, raw)
 		})
 
 		// List
 		t.Run("listing keeper from a namespace does not return the ones from another namespace", func(t *testing.T) {
-			// Org1 listing keeper.
-			listOrg1, err := clientOrg1.Resource.List(ctx, metav1.ListOptions{})
+			// OrgA listing keeper.
+			listOrgA, err := clientOrgA.Resource.List(ctx, metav1.ListOptions{})
 			require.NoError(t, err)
-			require.NotNil(t, listOrg1)
-			require.Len(t, listOrg1.Items, 1)
-			require.Equal(t, *keeperOrg1, listOrg1.Items[0])
+			require.NotNil(t, listOrgA)
+			require.Len(t, listOrgA.Items, 1)
+			require.Equal(t, *keeperOrgA, listOrgA.Items[0])
 
-			// Org2 listing keeper.
-			listOrg2, err := clientOrg2.Resource.List(ctx, metav1.ListOptions{})
+			// OrgB listing keeper.
+			listOrgB, err := clientOrgB.Resource.List(ctx, metav1.ListOptions{})
 			require.NoError(t, err)
-			require.NotNil(t, listOrg2)
-			require.Len(t, listOrg2.Items, 1)
-			require.Equal(t, *keeperOrg2, listOrg2.Items[0])
+			require.NotNil(t, listOrgB)
+			require.Len(t, listOrgB.Items, 1)
+			require.Equal(t, *keeperOrgB, listOrgB.Items[0])
 		})
 	})
 }

@@ -3,9 +3,14 @@ package secret
 import (
 	"context"
 	"encoding/json"
+	"math/rand/v2"
+	"strconv"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
@@ -52,6 +57,39 @@ func TestIntegrationDiscoveryClient(t *testing.T) {
 		require.True(t, ok)
 		require.Len(t, apiResources, 3) // securevalue + keeper + (subresources...)
 	})
+}
+
+func mustCreateUsers(t *testing.T, helper *apis.K8sTestHelper, actions []string) apis.OrgUsers {
+	t.Helper()
+
+	var permissions []resourcepermissions.SetResourcePermissionCommand
+	if len(actions) > 0 {
+		permissions = append(permissions, resourcepermissions.SetResourcePermissionCommand{
+			Actions:           actions,
+			Resource:          "secrets-manager",
+			ResourceAttribute: "name",
+			ResourceID:        "*",
+		})
+	}
+
+	orgID := rand.Int64() + 2 // if it is 0, becomes 2 and not 1.
+	orgName := "org-" + strconv.FormatInt(orgID, 10)
+
+	userSuffix := strconv.FormatInt(rand.Int64(), 10)
+
+	admin := helper.CreateUser("admin-"+userSuffix, orgName, org.RoleAdmin, permissions)
+	editor := helper.CreateUser("editor-"+userSuffix, orgName, org.RoleEditor, permissions)
+
+	staff := helper.CreateTeam("staff-"+userSuffix, "staff-"+userSuffix+"@"+orgName, admin.Identity.GetOrgID())
+
+	helper.AddOrUpdateTeamMember(admin, staff.ID, team.PermissionTypeAdmin)
+	helper.AddOrUpdateTeamMember(editor, staff.ID, team.PermissionTypeMember)
+
+	return apis.OrgUsers{
+		Admin:  admin,
+		Editor: editor,
+		Staff:  staff,
+	}
 }
 
 func mustGenerateSecureValue(t *testing.T, helper *apis.K8sTestHelper, user apis.User, keeperName string) *unstructured.Unstructured {
