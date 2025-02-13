@@ -116,8 +116,8 @@
     }
   ],
   "preload": false,
-  "refresh": true,
-  "schemaVersion": 39,
+  "refresh": "",
+  "schemaVersion": 41,
   "tags": [],
   "templating": {
     "list": []
