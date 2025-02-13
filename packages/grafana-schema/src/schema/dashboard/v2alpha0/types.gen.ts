@@ -5,49 +5,50 @@ import * as common from '@grafana/schema';
 
 export interface DashboardV2Spec {
 	// Title of dashboard.
-	title: string;
-	// Description of dashboard.
-	description?: string;
+	annotations: AnnotationQueryKind[];
 	// Configuration of dashboard cursor sync behavior.
 	// "Off" for no shared crosshair or tooltip (default).
 	// "Crosshair" for shared crosshair.
 	// "Tooltip" for shared crosshair AND shared tooltip.
 	cursorSync: DashboardCursorSync;
+	// Description of dashboard.
+	description?: string;
+	// Whether a dashboard is editable or not.
+	editable?: boolean;
+	elements: Record<string, Element>;
+	layout: GridLayoutKind | RowsLayoutKind | ResponsiveGridLayoutKind;
+	// Links with references to other dashboards or external websites.
+	links: DashboardLink[];
 	// When set to true, the dashboard will redraw panels at an interval matching the pixel width.
 	// This will keep data "moving left" regardless of the query refresh rate. This setting helps
 	// avoid dashboards presenting stale live data.
 	liveNow?: boolean;
 	// When set to true, the dashboard will load all panels in the dashboard when it's loaded.
 	preload: boolean;
-	// Whether a dashboard is editable or not.
-	editable?: boolean;
-	// Links with references to other dashboards or external websites.
-	links: DashboardLink[];
-	// Tags associated with dashboard.
-	tags: string[];
-	timeSettings: TimeSettingsSpec;
-	// Configured template variables.
-	variables: VariableKind[];
-	elements: Record<string, Element>;
-	annotations: AnnotationQueryKind[];
-	layout: GridLayoutKind | RowsLayoutKind | ResponsiveGridLayoutKind;
 	// Plugins only. The version of the dashboard installed together with the plugin.
 	// This is used to determine if the dashboard should be updated when the plugin is updated.
 	revision?: number;
+	// Tags associated with dashboard.
+	tags: string[];
+	timeSettings: TimeSettingsSpec;
+	// Title of dashboard.
+	title: string;
+	// Configured template variables.
+	variables: VariableKind[];
 }
 
 export const defaultDashboardV2Spec = (): DashboardV2Spec => ({
-	title: "",
+	annotations: [],
 	cursorSync: "Off",
-	preload: false,
 	editable: true,
+	elements: {},
+	layout: defaultGridLayoutKind(),
 	links: [],
+	preload: false,
 	tags: [],
 	timeSettings: defaultTimeSettingsSpec(),
+	title: "",
 	variables: [],
-	elements: {},
-	annotations: [],
-	layout: defaultGridLayoutKind(),
 });
 
 // Supported dashboard elements
