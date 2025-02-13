@@ -7,6 +7,7 @@ describe('objects', () => {
       deeper: 10,
       foo: null,
       arr: [null, 1, 'hello'],
+      value: -Infinity,
     },
     bar: undefined,
     simple: 'A',
