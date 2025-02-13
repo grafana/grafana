@@ -455,16 +455,16 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 		return sharedDashboards, fmt.Errorf("Error retrieving folder information")
 	}
 
-	// populate list of unique folder UIDs in the list of shared dashboards
-	folders := make([]string, 0)
+	// populate list of unique folder UIDs in the list of dashboards user has read permissions
+	allFolders := make([]string, 0)
 	for _, dash := range dashboardResult.Results.Rows {
 		folderUid := string(dash.Cells[folderUidIdx])
-		if folderUid != "" && !slices.Contains(folders, folderUid) {
-			folders = append(folders, folderUid)
+		if folderUid != "" && !slices.Contains(allFolders, folderUid) {
+			allFolders = append(allFolders, folderUid)
 		}
 	}
 
-	// get folder list. only folders the user has access to will be returned here
+	// only folders the user has access to will be returned here
 	folderKey, err := asResourceKey(user.GetNamespace(), folderv0alpha1.RESOURCE)
 	if err != nil {
 		return sharedDashboards, err
@@ -472,13 +472,13 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 
 	folderSearchRequest := &resource.ResourceSearchRequest{
 		Fields: []string{"folder"},
-		Limit:  int64(len(folders)),
+		Limit:  int64(len(allFolders)),
 		Options: &resource.ListOptions{
 			Key: folderKey,
 			Fields: []*resource.Requirement{{
 				Key:      "name",
 				Operator: "in",
-				Values:   folders,
+				Values:   allFolders,
 			}},
 		},
 	}
@@ -487,21 +487,16 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 		return sharedDashboards, err
 	}
 
-	// go over list of folders user HAS access to, and remove it from the original folder list
+	foldersWithAccess := make([]string, 0, len(foldersResult.Results.Rows))
 	for _, fold := range foldersResult.Results.Rows {
-		folderUid := fold.Key.Name
-		i := slices.Index(folders, folderUid)
-		if i > -1 {
-			folders[i] = folders[len(folders)-1]
-			folders = folders[:len(folders)-1]
-		}
+		foldersWithAccess = append(foldersWithAccess, fold.Key.Name)
 	}
 
 	// add to sharedDashboards dashboards user has access to, but does NOT have access to it's parent folder
 	for _, dash := range dashboardResult.Results.Rows {
 		dashboardUid := dash.Key.Name
 		folderUid := string(dash.Cells[folderUidIdx])
-		if slices.Contains(folders, folderUid) {
+		if folderUid != "" && !slices.Contains(foldersWithAccess, folderUid) {
 			sharedDashboards = append(sharedDashboards, dashboardUid)
 		}
 	}
