@@ -50,7 +50,6 @@ func ProvideClientServiceImpl(cfg *setting.Cfg,
 	reg prometheus.Registerer,
 	authzc types.AccessClient,
 	docs resource.DocumentBuilderSupplier) *ClientServiceImpl {
-
 	apiserverCfg := cfg.SectionWithEnvOverrides("grafana-apiserver")
 	client, err := newClient(options.StorageOptions{
 		StorageType:  options.StorageType(apiserverCfg.Key("storage_type").MustString(string(options.StorageTypeUnified))),
