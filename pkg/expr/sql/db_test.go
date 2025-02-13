@@ -28,7 +28,7 @@ func TestQueryFrames(t *testing.T) {
 			expected: data.NewFrame(
 				"sqlExpressionRefId",
 				data.NewField("n", nil, []string{"1"}),
-			),
+			).SetRefID("sqlExpressionRefId"),
 		},
 		{
 			name:         "valid query with no input frames, one row two columns",
@@ -38,7 +38,7 @@ func TestQueryFrames(t *testing.T) {
 				"sqlExpressionRefId",
 				data.NewField("name", nil, []string{"sam"}),
 				data.NewField("age", nil, []int8{40}),
-			),
+			).SetRefID("sqlExpressionRefId"),
 		},
 		{
 			// TODO: Also ORDER BY to ensure the order is preserved
@@ -54,7 +54,7 @@ func TestQueryFrames(t *testing.T) {
 			expected: data.NewFrame(
 				"sqlExpressionRefId",
 				data.NewField("OSS Projects with Typos", nil, []string{"Garfana"}),
-			),
+			).SetRefID("sqlExpressionRefId"),
 		},
 	}
 
@@ -62,13 +62,9 @@ func TestQueryFrames(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			frame, err := db.QueryFrames(context.Background(), "sqlExpressionRefId", tt.query, tt.input_frames)
 			require.NoError(t, err)
-			require.NotNil(t, frame.Fields)
 
-			require.Equal(t, tt.expected.Name, frame.RefID)
-			require.Equal(t, len(tt.expected.Fields), len(frame.Fields))
-			for i := range tt.expected.Fields {
-				require.Equal(t, tt.expected.Fields[i].Name, frame.Fields[i].Name)
-				require.Equal(t, tt.expected.Fields[i].At(0), frame.Fields[i].At(0))
+			if diff := cmp.Diff(tt.expected, frame, data.FrameTestCompareOptions()...); diff != "" {
+				require.FailNowf(t, "Result mismatch (-want +got):%s\n", diff)
 			}
 		})
 	}
