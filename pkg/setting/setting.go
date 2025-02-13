@@ -618,6 +618,7 @@ func RedactedValue(key, value string) string {
 		"ENTERPRISE_LICENSE",
 		"API_DB_PASS",
 		"ID_FORWARDING_TOKEN$",
+		"ACCESS_TOKEN_SIGNING_TOKEN$",
 		"AUTHENTICATION_TOKEN$",
 		"AUTH_TOKEN$",
 		"RENDERER_TOKEN$",
