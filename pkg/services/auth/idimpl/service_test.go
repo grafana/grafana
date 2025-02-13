@@ -129,6 +129,7 @@ func TestService_SignIdentity(t *testing.T) {
 
 		ident.OrgRoles[1] = org.RoleEditor
 		third, _, err := s.SignIdentity(context.Background(), ident)
+		require.NoError(t, err)
 		assert.NotEqual(t, first, third)
 	})
 
