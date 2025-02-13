@@ -54,6 +54,7 @@ const sapphireDuskTheme: NewThemeOptions = {
       canvas: '#1e273d',
       primary: '#12192e',
       secondary: '#212c47',
+      elevated: '#212c47',
     },
     action: {
       hover: '#364057',

@@ -17,7 +17,7 @@ import (
 
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	"github.com/grafana/authlib/cache"
-	claims "github.com/grafana/authlib/types"
+	"github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -26,7 +26,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/store"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
 
@@ -42,6 +41,7 @@ type Service struct {
 	authzextv1.UnimplementedAuthzExtentionServiceServer
 
 	store           store.Store
+	folderStore     store.FolderStore
 	permissionStore store.PermissionStore
 	identityStore   legacy.LegacyIdentityStore
 
@@ -59,11 +59,12 @@ type Service struct {
 	permCache      *cacheWrap[map[string]bool]
 	teamCache      *cacheWrap[[]int64]
 	basicRoleCache *cacheWrap[store.BasicRole]
-	folderCache    *cacheWrap[map[string]FolderNode]
+	folderCache    *cacheWrap[folderTree]
 }
 
 func NewService(
 	sql legacysql.LegacyDatabaseProvider,
+	folderStore store.FolderStore,
 	identityStore legacy.LegacyIdentityStore,
 	permissionStore store.PermissionStore,
 	logger log.Logger,
@@ -73,6 +74,7 @@ func NewService(
 ) *Service {
 	return &Service{
 		store:           store.NewStore(sql, tracer),
+		folderStore:     folderStore,
 		permissionStore: permissionStore,
 		identityStore:   identityStore,
 		logger:          logger,
@@ -83,7 +85,7 @@ func NewService(
 		permCache:       newCacheWrap[map[string]bool](cache, logger, shortCacheTTL),
 		teamCache:       newCacheWrap[[]int64](cache, logger, shortCacheTTL),
 		basicRoleCache:  newCacheWrap[store.BasicRole](cache, logger, shortCacheTTL),
-		folderCache:     newCacheWrap[map[string]FolderNode](cache, logger, shortCacheTTL),
+		folderCache:     newCacheWrap[folderTree](cache, logger, shortCacheTTL),
 		sf:              new(singleflight.Group),
 	}
 }
@@ -210,40 +212,42 @@ func (s *Service) validateListRequest(ctx context.Context, req *authzv1.ListRequ
 	return listReq, nil
 }
 
-func validateNamespace(ctx context.Context, nameSpace string) (claims.NamespaceInfo, error) {
+func validateNamespace(ctx context.Context, nameSpace string) (types.NamespaceInfo, error) {
 	if nameSpace == "" {
-		return claims.NamespaceInfo{}, status.Error(codes.InvalidArgument, "namespace is required")
+		return types.NamespaceInfo{}, status.Error(codes.InvalidArgument, "namespace is required")
 	}
-	authInfo, has := claims.AuthInfoFrom(ctx)
+	authInfo, has := types.AuthInfoFrom(ctx)
 	if !has {
-		return claims.NamespaceInfo{}, status.Error(codes.Internal, "could not get auth info from context")
+		return types.NamespaceInfo{}, status.Error(codes.Internal, "could not get auth info from context")
 	}
-	if !claims.NamespaceMatches(authInfo.GetNamespace(), nameSpace) {
-		return claims.NamespaceInfo{}, status.Error(codes.PermissionDenied, "namespace does not match")
+	if !types.NamespaceMatches(authInfo.GetNamespace(), nameSpace) {
+		return types.NamespaceInfo{}, status.Error(codes.PermissionDenied, "namespace does not match")
 	}
 
-	ns, err := claims.ParseNamespace(nameSpace)
+	ns, err := types.ParseNamespace(nameSpace)
 	if err != nil {
-		return claims.NamespaceInfo{}, err
+		return types.NamespaceInfo{}, err
 	}
 	return ns, nil
 }
 
-func (s *Service) validateSubject(ctx context.Context, subject string) (string, claims.IdentityType, error) {
+func (s *Service) validateSubject(ctx context.Context, subject string) (string, types.IdentityType, error) {
 	if subject == "" {
 		return "", "", status.Error(codes.InvalidArgument, "subject is required")
 	}
 
 	ctxLogger := s.logger.FromContext(ctx)
-	identityType, userUID, err := claims.ParseTypeID(subject)
+	identityType, userUID, err := types.ParseTypeID(subject)
 	if err != nil {
 		return "", "", err
 	}
+
 	// Permission check currently only checks user, anonymous user, service account and renderer permissions
-	if !(identityType == claims.TypeUser || identityType == claims.TypeServiceAccount || identityType == claims.TypeAnonymous || identityType == claims.TypeRenderService) {
+	if !types.IsIdentityType(identityType, types.TypeUser, types.TypeServiceAccount, types.TypeAnonymous, types.TypeRenderService) {
 		ctxLogger.Error("unsupported identity type", "type", identityType)
 		return "", "", status.Error(codes.PermissionDenied, "unsupported identity type")
 	}
+
 	return userUID, identityType, nil
 }
 
@@ -265,30 +269,29 @@ func (s *Service) validateAction(ctx context.Context, group, resource, verb stri
 	return action, nil
 }
 
-func (s *Service) getIdentityPermissions(ctx context.Context, ns claims.NamespaceInfo, idType claims.IdentityType, userID, action string) (map[string]bool, error) {
+func (s *Service) getIdentityPermissions(ctx context.Context, ns types.NamespaceInfo, idType types.IdentityType, userID, action string) (map[string]bool, error) {
 	ctx, span := s.tracer.Start(ctx, "authz_direct_db.service.getIdentityPermissions")
 	defer span.End()
 
 	// When checking folder creation permissions, also check edit and admin action sets for folder, as the scoped folder create actions aren't stored in the DB separately
 	var actionSets []string
 	if action == "folders:create" {
-		actionSets = append(actionSets, "folders:edit")
-		actionSets = append(actionSets, "folders:admin")
+		actionSets = append(actionSets, "folders:edit", "folders:admin")
 	}
 
 	switch idType {
-	case claims.TypeAnonymous:
+	case types.TypeAnonymous:
 		return s.getAnonymousPermissions(ctx, ns, action, actionSets)
-	case claims.TypeRenderService:
+	case types.TypeRenderService:
 		return s.getRendererPermissions(ctx, action)
-	case claims.TypeUser, claims.TypeServiceAccount:
+	case types.TypeUser, types.TypeServiceAccount:
 		return s.getUserPermissions(ctx, ns, userID, action, actionSets)
 	default:
 		return nil, fmt.Errorf("unsupported identity type: %s", idType)
 	}
 }
 
-func (s *Service) getUserPermissions(ctx context.Context, ns claims.NamespaceInfo, userID, action string, actionSets []string) (map[string]bool, error) {
+func (s *Service) getUserPermissions(ctx context.Context, ns types.NamespaceInfo, userID, action string, actionSets []string) (map[string]bool, error) {
 	ctx, span := s.tracer.Start(ctx, "authz_direct_db.service.getUserPermissions")
 	defer span.End()
 
@@ -343,7 +346,7 @@ func (s *Service) getUserPermissions(ctx context.Context, ns claims.NamespaceInf
 	return res.(map[string]bool), nil
 }
 
-func (s *Service) getAnonymousPermissions(ctx context.Context, ns claims.NamespaceInfo, action string, actionSets []string) (map[string]bool, error) {
+func (s *Service) getAnonymousPermissions(ctx context.Context, ns types.NamespaceInfo, action string, actionSets []string) (map[string]bool, error) {
 	ctx, span := s.tracer.Start(ctx, "authz_direct_db.service.getAnonymousPermissions")
 	defer span.End()
 
@@ -379,7 +382,7 @@ func (s *Service) getRendererPermissions(ctx context.Context, action string) (ma
 	return map[string]bool{}, nil
 }
 
-func (s *Service) GetUserIdentifiers(ctx context.Context, ns claims.NamespaceInfo, userUID string) (*store.UserIdentifiers, error) {
+func (s *Service) GetUserIdentifiers(ctx context.Context, ns types.NamespaceInfo, userUID string) (*store.UserIdentifiers, error) {
 	uidCacheKey := userIdentifierCacheKey(ns.Value, userUID)
 	if cached, ok := s.idCache.Get(ctx, uidCacheKey); ok {
 		return &cached, nil
@@ -398,7 +401,7 @@ func (s *Service) GetUserIdentifiers(ctx context.Context, ns claims.NamespaceInf
 		userIDQuery = store.UserIdentifierQuery{UserUID: userUID}
 	}
 	userIdentifiers, err := s.store.GetUserIdentifiers(ctx, userIDQuery)
-	if err != nil || userIdentifiers == nil {
+	if err != nil {
 		return nil, fmt.Errorf("could not get user internal id: %w", err)
 	}
 
@@ -408,7 +411,7 @@ func (s *Service) GetUserIdentifiers(ctx context.Context, ns claims.NamespaceInf
 	return userIdentifiers, nil
 }
 
-func (s *Service) getUserTeams(ctx context.Context, ns claims.NamespaceInfo, userIdentifiers *store.UserIdentifiers) ([]int64, error) {
+func (s *Service) getUserTeams(ctx context.Context, ns types.NamespaceInfo, userIdentifiers *store.UserIdentifiers) ([]int64, error) {
 	ctx, span := s.tracer.Start(ctx, "authz_direct_db.service.getUserTeams")
 	defer span.End()
 
@@ -442,7 +445,7 @@ func (s *Service) getUserTeams(ctx context.Context, ns claims.NamespaceInfo, use
 	return teamIDs, nil
 }
 
-func (s *Service) getUserBasicRole(ctx context.Context, ns claims.NamespaceInfo, userIdentifiers *store.UserIdentifiers) (store.BasicRole, error) {
+func (s *Service) getUserBasicRole(ctx context.Context, ns types.NamespaceInfo, userIdentifiers *store.UserIdentifiers) (store.BasicRole, error) {
 	ctx, span := s.tracer.Start(ctx, "authz_direct_db.service.getUserBasicRole")
 	defer span.End()
 
@@ -517,31 +520,26 @@ func (s *Service) checkInheritedPermissions(ctx context.Context, scopeMap map[st
 	defer span.End()
 	ctxLogger := s.logger.FromContext(ctx)
 
-	folderMap, err := s.buildFolderTree(ctx, req.Namespace)
+	tree, err := s.buildFolderTree(ctx, req.Namespace)
 	if err != nil {
 		ctxLogger.Error("could not build folder and dashboard tree", "error", err)
 		return false, err
 	}
 
-	currentUID := req.ParentFolder
-	for {
-		if node, has := folderMap[currentUID]; has {
-			scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(node.UID)
-			if scopeMap[scope] {
-				return true, nil
-			}
-			if node.ParentUID == nil {
-				break
-			}
-			currentUID = *node.ParentUID
-		} else {
-			break
+	if scopeMap["folders:uid:"+req.ParentFolder] {
+		return true, nil
+	}
+
+	for n := range tree.Ancestors(req.ParentFolder) {
+		if scopeMap["folders:uid:"+n.UID] {
+			return true, nil
 		}
 	}
+
 	return false, nil
 }
 
-func (s *Service) buildFolderTree(ctx context.Context, ns claims.NamespaceInfo) (map[string]FolderNode, error) {
+func (s *Service) buildFolderTree(ctx context.Context, ns types.NamespaceInfo) (folderTree, error) {
 	ctx, span := s.tracer.Start(ctx, "authz_direct_db.service.buildFolderTree")
 	defer span.End()
 
@@ -551,47 +549,22 @@ func (s *Service) buildFolderTree(ctx context.Context, ns claims.NamespaceInfo) 
 	}
 
 	res, err, _ := s.sf.Do(ns.Value+"_buildFolderTree", func() (interface{}, error) {
-		folders, err := s.store.GetFolders(ctx, ns)
+		folders, err := s.folderStore.ListFolders(ctx, ns)
 		if err != nil {
 			return nil, fmt.Errorf("could not get folders: %w", err)
 		}
 		span.SetAttributes(attribute.Int("num_folders", len(folders)))
 
-		folderMap := make(map[string]FolderNode, len(folders))
-		for _, folder := range folders {
-			if node, has := folderMap[folder.UID]; !has {
-				folderMap[folder.UID] = FolderNode{
-					UID:       folder.UID,
-					ParentUID: folder.ParentUID,
-				}
-			} else {
-				node.ParentUID = folder.ParentUID
-				folderMap[folder.UID] = node
-			}
-			// Register that the parent has this child node
-			if folder.ParentUID == nil {
-				continue
-			}
-			if parent, has := folderMap[*folder.ParentUID]; has {
-				parent.ChildrenUIDs = append(parent.ChildrenUIDs, folder.UID)
-				folderMap[*folder.ParentUID] = parent
-			} else {
-				folderMap[*folder.ParentUID] = FolderNode{
-					UID:          *folder.ParentUID,
-					ChildrenUIDs: []string{folder.UID},
-				}
-			}
-		}
-
-		s.folderCache.Set(ctx, key, folderMap)
-		return folderMap, nil
+		tree := newFolderTree(folders)
+		s.folderCache.Set(ctx, key, tree)
+		return tree, nil
 	})
 
 	if err != nil {
-		return nil, err
+		return folderTree{}, err
 	}
 
-	return res.(map[string]FolderNode), nil
+	return res.(folderTree), nil
 }
 
 func (s *Service) listPermission(ctx context.Context, scopeMap map[string]bool, req *ListRequest) (*authzv1.ListResponse, error) {
@@ -609,10 +582,10 @@ func (s *Service) listPermission(ctx context.Context, scopeMap map[string]bool, 
 		return nil, status.Error(codes.NotFound, "unsupported resource")
 	}
 
-	var folderMap map[string]FolderNode
+	var tree folderTree
 	if t.folderSupport {
 		var err error
-		folderMap, err = s.buildFolderTree(ctx, req.Namespace)
+		tree, err = s.buildFolderTree(ctx, req.Namespace)
 		if err != nil {
 			ctxLogger.Error("could not build folder and dashboard tree", "error", err)
 			return nil, err
@@ -621,16 +594,16 @@ func (s *Service) listPermission(ctx context.Context, scopeMap map[string]bool, 
 
 	var res *authzv1.ListResponse
 	if strings.HasPrefix(req.Action, "folders:") {
-		res = buildFolderList(scopeMap, folderMap)
+		res = buildFolderList(scopeMap, tree)
 	} else {
-		res = buildItemList(scopeMap, folderMap, t.prefix())
+		res = buildItemList(scopeMap, tree, t.prefix())
 	}
 
 	span.SetAttributes(attribute.Int("num_folders", len(res.Folders)), attribute.Int("num_items", len(res.Items)))
 	return res, nil
 }
 
-func buildFolderList(scopes map[string]bool, tree map[string]FolderNode) *authzv1.ListResponse {
+func buildFolderList(scopes map[string]bool, tree folderTree) *authzv1.ListResponse {
 	itemSet := make(map[string]struct{}, len(scopes))
 
 	for scope := range scopes {
@@ -640,7 +613,9 @@ func buildFolderList(scopes map[string]bool, tree map[string]FolderNode) *authzv
 		}
 
 		itemSet[identifier] = struct{}{}
-		getChildren(tree, identifier, itemSet)
+		for n := range tree.Children(identifier) {
+			itemSet[n.UID] = struct{}{}
+		}
 	}
 
 	itemList := make([]string, 0, len(itemSet))
@@ -651,7 +626,7 @@ func buildFolderList(scopes map[string]bool, tree map[string]FolderNode) *authzv
 	return &authzv1.ListResponse{Items: itemList}
 }
 
-func buildItemList(scopes map[string]bool, tree map[string]FolderNode, prefix string) *authzv1.ListResponse {
+func buildItemList(scopes map[string]bool, tree folderTree, prefix string) *authzv1.ListResponse {
 	folderSet := make(map[string]struct{}, len(scopes))
 	itemSet := make(map[string]struct{}, len(scopes))
 
@@ -661,7 +636,9 @@ func buildItemList(scopes map[string]bool, tree map[string]FolderNode, prefix st
 				continue
 			}
 			folderSet[identifier] = struct{}{}
-			getChildren(tree, identifier, folderSet)
+			for n := range tree.Children(identifier) {
+				folderSet[n.UID] = struct{}{}
+			}
 		} else {
 			identifier := strings.TrimPrefix(scope, prefix)
 			itemSet[identifier] = struct{}{}
@@ -677,19 +654,4 @@ func buildItemList(scopes map[string]bool, tree map[string]FolderNode, prefix st
 	}
 
 	return &authzv1.ListResponse{Folders: folderList, Items: itemList}
-}
-
-func getChildren(folderMap map[string]FolderNode, folderUID string, folderSet map[string]struct{}) {
-	folder, has := folderMap[folderUID]
-	if !has {
-		return
-	}
-	for _, child := range folder.ChildrenUIDs {
-		// We have already processed all the children of this folder
-		if _, ok := folderSet[child]; ok {
-			return
-		}
-		folderSet[child] = struct{}{}
-		getChildren(folderMap, child, folderSet)
-	}
 }

@@ -1,11 +1,12 @@
 import { action } from '@storybook/addon-actions';
 import { useArgs, useEffect, useState } from '@storybook/preview-api';
 import type { Meta, StoryFn, StoryObj } from '@storybook/react';
+import { ComponentProps } from 'react';
 
 import { Field } from '../Forms/Field';
 
 import { MultiCombobox } from './MultiCombobox';
-import { generateOptions, fakeSearchAPI } from './storyUtils';
+import { generateOptions, fakeSearchAPI, generateGroupingOptions } from './storyUtils';
 import { ComboboxOption } from './types';
 
 const meta: Meta<typeof MultiCombobox> = {
@@ -30,7 +31,7 @@ const commonArgs = {
 
 export default meta;
 
-type storyArgs = React.ComponentProps<typeof MultiCombobox>;
+type storyArgs = ComponentProps<typeof MultiCombobox>;
 type ManyOptionsArgs = storyArgs & { numberOfOptions?: number };
 
 type Story = StoryObj<typeof MultiCombobox>;
@@ -106,6 +107,40 @@ export const ManyOptions: StoryObj<ManyOptionsArgs> = {
   render: ManyOptionsStory,
 };
 
+const ManyOptionsGroupedStory: StoryFn<ManyOptionsArgs> = ({ numberOfOptions = 1e5, ...args }) => {
+  const [dynamicArgs, setArgs] = useArgs();
+
+  const [options, setOptions] = useState<ComboboxOption[]>([]);
+
+  useEffect(() => {
+    setTimeout(async () => {
+      const options = await generateGroupingOptions(numberOfOptions);
+      setOptions(options);
+    }, 1000);
+  }, [numberOfOptions]);
+  const { onChange, ...rest } = args;
+  return (
+    <MultiCombobox
+      {...rest}
+      {...dynamicArgs}
+      options={options}
+      onChange={(opts) => {
+        setArgs({ value: opts });
+        onChangeAction(opts);
+      }}
+    />
+  );
+};
+
+export const ManyOptionsGrouped: StoryObj<ManyOptionsArgs> = {
+  args: {
+    numberOfOptions: 1e4,
+    options: undefined,
+    value: undefined,
+  },
+  render: ManyOptionsGroupedStory,
+};
+
 function loadOptionsWithLabels(inputValue: string) {
   loadOptionsAction(inputValue);
   return fakeSearchAPI(`http://example.com/search?errorOnQuery=break&query=${inputValue}`);
@@ -123,7 +158,7 @@ export const AsyncOptionsWithLabels: Story = {
 
     return (
       <Field
-        label='Asynbc options fn returns objects like { label: "Option 69", value: "69" }'
+        label='Async options fn returns objects like { label: "Option 69", value: "69" }'
         description="Search for 'break' to see an error"
       >
         <MultiCombobox

@@ -3,10 +3,13 @@ import { t } from 'app/core/internationalization';
 
 import { isClonedKey } from '../../utils/clone';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
+import { getDashboardSceneFor } from '../../utils/utils';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
 import { RowRepeaterBehavior } from '../layout-default/RowRepeaterBehavior';
+import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
+import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
 import { RowItem } from './RowItem';
 import { RowItemRepeaterBehavior } from './RowItemRepeaterBehavior';
@@ -21,7 +24,7 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
 
   public readonly isDashboardLayoutManager = true;
 
-  public static readonly descriptor = {
+  public static readonly descriptor: LayoutRegistryItem = {
     get name() {
       return t('dashboard.rows-layout.name', 'Rows');
     },
@@ -30,6 +33,8 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
     },
     id: 'rows-layout',
     createFromLayout: RowsLayoutManager.createFromLayout,
+
+    kind: 'RowsLayout',
   };
 
   public readonly descriptor = RowsLayoutManager.descriptor;
@@ -62,8 +67,29 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
     return panels;
   }
 
+  public hasVizPanels(): boolean {
+    for (const row of this.state.rows) {
+      if (row.getLayout().hasVizPanels()) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   public addNewRow() {
     this.setState({ rows: [...this.state.rows, new RowItem()] });
+  }
+
+  public addNewTab() {
+    const shouldAddTab = this.hasVizPanels();
+    const tabsLayout = TabsLayoutManager.createFromLayout(this);
+
+    if (shouldAddTab) {
+      tabsLayout.addNewTab();
+    }
+
+    getDashboardSceneFor(this).switchLayout(tabsLayout);
   }
 
   public editModeChanged(isEditing: boolean) {
@@ -87,9 +113,8 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
   }
 
   public removeRow(row: RowItem) {
-    this.setState({
-      rows: this.state.rows.filter((r) => r !== row),
-    });
+    const rows = this.state.rows.filter((r) => r !== row);
+    this.setState({ rows: rows.length === 0 ? [new RowItem()] : rows });
   }
 
   public static createEmpty(): RowsLayoutManager {

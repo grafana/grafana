@@ -12,6 +12,7 @@ import {
   defaultDashboardV2Spec,
   defaultPanelSpec,
   defaultTimeSettingsSpec,
+  GridLayoutKind,
   PanelSpec,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import { AnnoKeyDashboardSnapshotOriginalUrl } from 'app/features/apiserver/types';
@@ -583,9 +584,7 @@ describe('DashboardSceneSerializer', () => {
             to: '',
             autoRefresh: '',
             autoRefreshIntervals: [],
-            quickRanges: [],
             hideTimepicker: false,
-            weekStart: '',
             fiscalYearStartMonth: 0,
             timezone: '',
           },
@@ -646,10 +645,8 @@ describe('DashboardSceneSerializer', () => {
           from: 'now-1h',
           hideTimepicker: false,
           nowDelay: undefined,
-          quickRanges: [],
           timezone: 'browser',
           to: 'now',
-          weekStart: '',
         });
       });
 
@@ -736,7 +733,8 @@ describe('DashboardSceneSerializer', () => {
         const saveAsModel = serializer.getSaveAsModel(emptyDashboard, baseOptions);
 
         expect(saveAsModel.elements).toEqual({});
-        expect(saveAsModel.layout.spec.items).toEqual([]);
+        expect(saveAsModel.layout.kind).toBe('GridLayout');
+        expect((saveAsModel.layout as GridLayoutKind).spec.items).toEqual([]);
         expect(saveAsModel.variables).toEqual([]);
       });
 
