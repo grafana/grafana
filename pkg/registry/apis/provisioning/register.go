@@ -45,6 +45,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/rendering"
+	grafanasecrets "github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/blob"
@@ -82,6 +83,7 @@ type APIBuilder struct {
 	legacyMigrator    legacy.LegacyMigrator
 	storageStatus     dualwrite.Service
 	unified           resource.ResourceClient
+	secrets           secrets.Service
 }
 
 // NewAPIBuilder creates an API builder.
@@ -100,6 +102,7 @@ func NewAPIBuilder(
 	ghFactory github.ClientFactory,
 	legacyMigrator legacy.LegacyMigrator,
 	storageStatus dualwrite.Service,
+	secrets secrets.Service,
 ) *APIBuilder {
 	clientFactory := resources.NewFactory(configProvider)
 	return &APIBuilder{
@@ -119,6 +122,7 @@ func NewAPIBuilder(
 		legacyMigrator: legacyMigrator,
 		storageStatus:  storageStatus,
 		unified:        unified,
+		secrets:        secrets,
 	}
 }
 
@@ -136,6 +140,8 @@ func RegisterAPIService(
 	ghFactory github.ClientFactory,
 	legacyMigrator legacy.LegacyMigrator,
 	storageStatus dualwrite.Service,
+	// FIXME: use multi-tenant service when one exists. In this state, we can't make this a multi-tenant service!
+	secretssvc grafanasecrets.Service,
 ) (*APIBuilder, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagProvisioning) &&
 		!features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
@@ -159,7 +165,9 @@ func RegisterAPIService(
 	builder := NewAPIBuilder(folderResolver, urlProvider, cfg.SecretKey, features,
 		render, client, store,
 		filepath.Join(cfg.DataPath, "clone"), // where repositories are cloned (temporarialy for now)
-		configProvider, ghFactory, legacyMigrator, storageStatus)
+		configProvider, ghFactory,
+		legacyMigrator, storageStatus,
+		secrets.NewSingleTenant(secretssvc))
 	apiregistration.RegisterAPI(builder)
 	return builder, nil
 }
@@ -323,8 +331,7 @@ func (b *APIBuilder) AsRepository(ctx context.Context, r *provisioning.Repositor
 			gvr.Resource,
 			r.GetName(),
 		)
-		secretsSvc := secrets.NewService(b.webhookSecretKey)
-		return repository.NewGitHub(ctx, r, b.ghFactory, secretsSvc, webhookURL), nil
+		return repository.NewGitHub(ctx, r, b.ghFactory, b.secrets, webhookURL)
 	case provisioning.S3RepositoryType:
 		return repository.NewS3(r), nil
 	default:
@@ -376,6 +383,10 @@ func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admis
 				provisioning.PushWorkflow,
 			}
 		}
+	}
+
+	if err := b.encryptSecrets(ctx, r); err != nil {
+		return fmt.Errorf("failed to encrypt secrets: %w", err)
 	}
 
 	return nil
@@ -494,6 +505,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.parsers,
 				&repository.Tester{},
 				b.jobs,
+				b.secrets,
 			)
 			if err != nil {
 				return err
@@ -779,4 +791,17 @@ spec:
 	oas.Components.Schemas[compBase+"RepositoryViewList"].Properties["items"] = schema
 
 	return oas, nil
+}
+
+func (b *APIBuilder) encryptSecrets(ctx context.Context, repo *provisioning.Repository) error {
+	var err error
+	if repo.Spec.GitHub != nil &&
+		repo.Spec.GitHub.Token != "" {
+		repo.Spec.GitHub.EncryptedToken, err = b.secrets.Encrypt(ctx, []byte(repo.Spec.GitHub.Token))
+		if err != nil {
+			return err
+		}
+		repo.Spec.GitHub.Token = ""
+	}
+	return nil
 }

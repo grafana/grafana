@@ -228,7 +228,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
           />
         </Field>
         <Field label={'Interval (seconds)'}>
-          <Input {...register('sync.intervalSeconds')} type={'number'} placeholder={'60'} />
+          <Input {...register('sync.intervalSeconds', { valueAsNumber: true })} type={'number'} placeholder={'60'} />
         </Field>
       </FieldSet>
       <FieldSet label="Advanced Settings">
