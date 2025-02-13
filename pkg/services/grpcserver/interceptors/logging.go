@@ -2,27 +2,34 @@ package interceptors
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
 	"google.golang.org/grpc"
 )
 
-func LoggingUnaryInterceptor(logger log.Logger, enabled bool) grpc.UnaryServerInterceptor {
-	return func(
-		ctx context.Context,
-		req any,
-		info *grpc.UnaryServerInfo,
-		handler grpc.UnaryHandler,
-	) (resp any, err error) {
-		resp, err = handler(ctx, req)
-		if enabled {
-			ctxLogger := logger.FromContext(ctx)
-			if err != nil {
-				ctxLogger.Error("gRPC call", "method", info.FullMethod, "req", req, "err", err)
-			} else {
-				ctxLogger.Info("gRPC call", "method", info.FullMethod, "req", req, "resp", resp)
-			}
+func InterceptorLogger(l log.Logger, enabled bool) logging.Logger {
+	return logging.LoggerFunc(func(ctx context.Context, lvl logging.Level, msg string, fields ...any) {
+		if !enabled {
+			return
 		}
-		return resp, err
-	}
+		l := l.FromContext(ctx)
+		switch lvl {
+		case logging.LevelDebug:
+			l.Debug(msg, fields...)
+		case logging.LevelInfo:
+			l.Info(msg, fields...)
+		case logging.LevelWarn:
+			l.Warn(msg, fields...)
+		case logging.LevelError:
+			l.Error(msg, fields...)
+		default:
+			panic(fmt.Sprintf("unknown level %v", lvl))
+		}
+	})
+}
+
+func LoggingUnaryInterceptor(logger log.Logger, enabled bool) grpc.UnaryServerInterceptor {
+	return logging.UnaryServerInterceptor(InterceptorLogger(logger, enabled))
 }
