@@ -13,7 +13,6 @@ import {
   LoadingState,
   PanelData,
   QueryResultMetaNotice,
-  TimeRange,
   getDataSourceRef,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -31,8 +30,6 @@ import {
 } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import { Trans, t } from 'app/core/internationalization';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
-import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 
 import { useQueryLibraryContext } from '../../explore/QueryLibrary/QueryLibraryContext';
 
@@ -466,19 +463,6 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
       </div>
     );
   }
-}
-
-export interface AngularQueryComponentScope<TQuery extends DataQuery> {
-  target: TQuery;
-  panel: PanelModel;
-  dashboard: DashboardModel;
-  events: EventBusExtended;
-  refresh: () => void;
-  render: () => void;
-  datasource: DataSourceApi<TQuery> | null;
-  toggleEditorMode?: () => void;
-  getCollapsedText?: () => string;
-  range: TimeRange;
 }
 
 /**

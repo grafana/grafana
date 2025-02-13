@@ -5381,10 +5381,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not re-export imported variable (\`./remotePlugin.mock\`)", "1"],
       [0, 0, 0, "Do not use export all (\`export * from ...\`)", "2"]
     ],
-    "public/app/features/plugins/admin/components/Badges/PluginAngularBadge.tsx:5381": [
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"]
-    ],
     "public/app/features/plugins/admin/components/Badges/PluginDeprecatedBadge.tsx:5381": [
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"]
@@ -5405,12 +5401,11 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
     ],
     "public/app/features/plugins/admin/components/Badges/index.ts:5381": [
-      [0, 0, 0, "Do not re-export imported variable (\`./PluginAngularBadge\`)", "0"],
-      [0, 0, 0, "Do not re-export imported variable (\`./PluginDeprecatedBadge\`)", "1"],
-      [0, 0, 0, "Do not re-export imported variable (\`./PluginDisabledBadge\`)", "2"],
-      [0, 0, 0, "Do not re-export imported variable (\`./PluginEnterpriseBadge\`)", "3"],
-      [0, 0, 0, "Do not re-export imported variable (\`./PluginInstallBadge\`)", "4"],
-      [0, 0, 0, "Do not re-export imported variable (\`./PluginUpdateAvailableBadge\`)", "5"]
+      [0, 0, 0, "Do not re-export imported variable (\`./PluginDeprecatedBadge\`)", "0"],
+      [0, 0, 0, "Do not re-export imported variable (\`./PluginDisabledBadge\`)", "1"],
+      [0, 0, 0, "Do not re-export imported variable (\`./PluginEnterpriseBadge\`)", "2"],
+      [0, 0, 0, "Do not re-export imported variable (\`./PluginInstallBadge\`)", "3"],
+      [0, 0, 0, "Do not re-export imported variable (\`./PluginUpdateAvailableBadge\`)", "4"]
     ],
     "public/app/features/plugins/admin/components/GetStartedWithPlugin/GetStartedWithApp.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
