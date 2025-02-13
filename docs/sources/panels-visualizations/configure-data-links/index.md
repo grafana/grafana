@@ -132,12 +132,12 @@ refs:
 
 # Configure data links and actions
 
-Data links allow you to link to other panels, dashboards, and external resources and actions let you trigger basic, unauthenticated, API calls.
-Both of these let you do these things while maintaining the context of the source panel.
+_Data links_ allow you to link to other panels, dashboards, and external resources and _actions_ let you trigger basic, unauthenticated, API calls.
+In both cases, you can carry out these tasks while maintaining the context of the source panel.
 
 ## Data links
 
-You can create links that include the series name or even the value under the cursor. For example, if your visualization shows four servers, you can add a data link to one or two of them.
+With data links, you can create links that include the series name or even the value under the cursor. For example, if your visualization shows four servers, you can add a data link to one or two of them.
 
 The link itself is accessible in different ways depending on the visualization. For the time series visualization you need to click a data point or line:
 
@@ -176,7 +176,7 @@ You can configure data links for the following visualizations:
 
 ## Actions
 
-[API settings](ref:api-settings) are found in the **Add action** dialog box. You can also pass template variables in the API editor.
+Using actions, you can trigger processes like starting or shutting down a server, directly from a dashboard panel. [API settings](ref:api-settings) are configured in the **Add action** dialog box. You can also pass variables in the API editor.
 
 ### Supported visualizations
 
@@ -311,7 +311,7 @@ To add a data link, follow these steps:
    {{< tab-content name="Add actions" >}}
    To add an action, by follow these steps:
 
-1. Navigate to the panel to which you want to add the data link.
+1. Navigate to the panel to which you want to add the action.
 1. Hover over any part of the panel to display the menu icon in the upper-right corner.
 1. Click the menu icon and select **Edit** to open the panel editor.
 1. Scroll down to the **Data links and actions** section and expand it.
