@@ -95,21 +95,43 @@ export function useOptions<T extends string | number>(rawOptions: AsyncOptions<T
     [debouncedLoadOptions, isAsync]
   );
 
+  const organizeOptionsByGroup = useCallback((options: Array<ComboboxOption<T>>) => {
+    const groupedOptions = new Map<string | undefined, Array<ComboboxOption<T>>>();
+    for (const option of options) {
+      const groupExists = groupedOptions.has(option.group);
+      if (groupExists) {
+        groupedOptions.get(option.group)?.push(option);
+      } else {
+        groupedOptions.set(option.group, [option]);
+      }
+    }
+
+    // Reorganize options to have groups first, then undefined group
+    const reorganizeOptions = [];
+    for (const [group, groupOptions] of groupedOptions) {
+      if (!group) {
+        continue;
+      }
+      reorganizeOptions.push(...groupOptions);
+    }
+
+    const undefinedGroupOptions = groupedOptions.get(undefined);
+    if (undefinedGroupOptions) {
+      reorganizeOptions.push(...undefinedGroupOptions);
+    }
+    return reorganizeOptions;
+  }, []);
+
   const stringifiedOptions = useMemo(() => {
     return isAsync ? [] : rawOptions.map(itemToString);
   }, [isAsync, rawOptions]);
 
   const finalOptions = useMemo(() => {
-    let currentOptions = [];
-    if (isAsync) {
-      currentOptions = addCustomValue(asyncOptions);
-    } else {
-      const filteredItems = fuzzyFind(rawOptions, stringifiedOptions, userTypedSearch);
-      currentOptions = addCustomValue(filteredItems);
-    }
+    const currentOptions = isAsync ? asyncOptions : fuzzyFind(rawOptions, stringifiedOptions, userTypedSearch);
+    const currentOptionsOrganised = organizeOptionsByGroup(currentOptions);
 
-    return currentOptions;
-  }, [isAsync, addCustomValue, asyncOptions, rawOptions, userTypedSearch, stringifiedOptions]);
+    return addCustomValue(currentOptionsOrganised);
+  }, [isAsync, organizeOptionsByGroup, addCustomValue, asyncOptions, rawOptions, userTypedSearch, stringifiedOptions]);
 
   return { options: finalOptions, updateOptions, asyncLoading, asyncError };
 }
