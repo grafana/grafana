@@ -99,7 +99,7 @@ While using OpenTSDB 2.2 data source, make sure you use either Filters or Tags a
 {{% /admonition %}}
 
 {{% admonition type="note" %}}
-When using OpenTSDB 2.4 with alerting the query will be executed with the parameter `arrays=true`. This will return the data points from OpenTSDB as an array of arrays rather than a map of key-value pairs. Grafana will then convert this data into the appropriate dataframe format.
+When using OpenTSDB 2.4 with alerting the query will be executed with the parameter `arrays=true`. This will return the data points from OpenTSDB as an array of arrays rather than a map of key-value pairs. Grafana will then convert this data into the appropriate data frame format.
 {{% /admonition %}}
 
 ### Auto complete suggestions
