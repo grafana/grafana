@@ -53,10 +53,10 @@ type GitHubRepositoryConfig struct {
 
 	// Token for accessing the repository. If set, it will be encrypted into encryptedToken, then set to an empty string again.
 	// TODO: this should be part of secrets and a simple reference.
-	Token string `json:"token"`
+	Token string `json:"token,omitempty"`
 
 	// Token for accessing the repository, but encrypted. This is not possible to read back to a user decrypted.
-	EncryptedToken []byte `json:"encryptedToken"`
+	EncryptedToken []byte `json:"encryptedToken,omitempty"`
 
 	// Workflow allowed for changes to the repository.
 	// The order is relevant for defining the precedence of the workflows.
