@@ -1,6 +1,6 @@
 import { Observable, from, retry, catchError, filter, map, mergeMap } from 'rxjs';
 
-import { config, getBackendSrv } from '@grafana/runtime';
+import { BackendSrvRequest, config, getBackendSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/core';
 
 import { getAPINamespace } from '../../api/utils';
@@ -40,18 +40,26 @@ export class ScopedResourceClient<T = object, S = object, K = string> implements
     return getBackendSrv().get<Resource<T, S, K>>(`${this.url}/${name}`);
   }
 
-  public watch(opts?: WatchOptions): Observable<ResourceEvent<T, S, K>> {
+  public watch(
+    params?: WatchOptions,
+    config?: Pick<BackendSrvRequest, 'data' | 'method'>
+  ): Observable<ResourceEvent<T, S, K>> {
     const decoder = new TextDecoder();
-    const params = {
-      ...opts,
+    const { name, ...rest } = params ?? {}; // name needs to be added to fieldSelector
+    const requestParams = {
+      ...rest,
       watch: true,
-      labelSelector: this.parseListOptionsSelector(opts?.labelSelector),
-      fieldSelector: this.parseListOptionsSelector(opts?.fieldSelector),
+      labelSelector: this.parseListOptionsSelector(params?.labelSelector),
+      fieldSelector: this.parseListOptionsSelector(params?.fieldSelector),
     };
+    if (name) {
+      requestParams.fieldSelector = `metadata.name=${name}`;
+    }
     return getBackendSrv()
       .chunked({
-        url: params.name ? `${this.url}/${params.name}` : this.url,
-        params,
+        url: this.url,
+        params: requestParams,
+        ...config,
       })
       .pipe(
         filter((response) => response.ok && response.data instanceof Uint8Array),
