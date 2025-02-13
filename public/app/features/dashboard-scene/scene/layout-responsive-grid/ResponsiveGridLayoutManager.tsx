@@ -3,8 +3,8 @@ import { t } from 'app/core/internationalization';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import {
-  removeElementIdentifierForVizPanel,
-  setElementIdentifierForVizPanel,
+  schemaV2RemoveElementIdentifierForVizPanel,
+  schemaV2SetElementIdentifierForVizPanel,
 } from '../../serialization/layoutSerializers/utils';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { getDashboardSceneFor, getGridItemKeyForPanelId, getVizPanelKeyForPanelId } from '../../utils/utils';
@@ -62,7 +62,7 @@ export class ResponsiveGridLayoutManager
     vizPanel.clearParent();
 
     // set panel id in the elementPanel mapping
-    setElementIdentifierForVizPanel(panelId);
+    schemaV2SetElementIdentifierForVizPanel(panelId);
 
     this.state.layout.setState({
       children: [new ResponsiveGridItem({ body: vizPanel }), ...this.state.layout.state.children],
@@ -73,8 +73,7 @@ export class ResponsiveGridLayoutManager
     const element = panel.parent;
     this.state.layout.setState({ children: this.state.layout.state.children.filter((child) => child !== element) });
 
-    // remove panel id from the elementPanel mapping
-    removeElementIdentifierForVizPanel(panel);
+    schemaV2RemoveElementIdentifierForVizPanel(panel);
   }
 
   public duplicatePanel(panel: VizPanel) {

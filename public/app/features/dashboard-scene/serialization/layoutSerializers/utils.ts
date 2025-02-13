@@ -169,15 +169,20 @@ export function getElementIdentifierForVizPanel(vizPanel: VizPanel): string {
   }
 }
 
-export function setElementIdentifierForVizPanel(panelId: number): void {
+export function schemaV2SetElementIdentifierForVizPanel(panelId: number): void {
   const elementKey = 'element-panel-' + panelId;
   const mapping = ElementPanelMappingService.getInstance();
 
   mapping.set(elementKey, panelId);
 }
 
-export function removeElementIdentifierForVizPanel(vizPanel: VizPanel): void {
-  const elementKey = getElementIdentifierForVizPanel(vizPanel);
-  const mapping = ElementPanelMappingService.getInstance();
-  mapping.remove(elementKey);
+export function schemaV2RemoveElementIdentifierForVizPanel(vizPanel: VizPanel): void {
+  // This function is only for V2 dashboards
+  if (config.featureToggles.useV2DashboardsAPI) {
+    const elementKey = getElementIdentifierForVizPanel(vizPanel);
+    console.log('removeElementIdentifierForVizPanel', elementKey);
+    const mapping = ElementPanelMappingService.getInstance();
+    mapping.remove(elementKey);
+    console.log('mapping after removing', mapping.getAll());
+  }
 }

@@ -21,8 +21,6 @@ export class ElementPanelMappingService {
   // Add or update a mapping
   public set(elementIdentifier: string, panelId: number): void {
     this.mapping[elementIdentifier] = panelId;
-    console.log('adding or updating mapping', elementIdentifier, panelId);
-    console.log('new mapping in set:', this.mapping);
   }
 
   // Get panel ID for an element identifier
@@ -38,9 +36,6 @@ export class ElementPanelMappingService {
   // Remove a mapping
   public remove(elementIdentifier: string): void {
     delete this.mapping[elementIdentifier];
-    console.log('removing element identifier', elementIdentifier);
-
-    console.log('new mapping in remove:', this.mapping);
   }
 
   // Clear all mappings
