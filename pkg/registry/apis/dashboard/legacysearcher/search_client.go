@@ -125,9 +125,10 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 			query.FolderUIDs = folders
 		case resource.SEARCH_FIELD_REPOSITORY_PATH:
 			// only one value is supported in legacy search
-			if len(vals) == 1 {
-				query.ProvisionedPath = vals[0]
+			if len(vals) != 1 {
+				return nil, fmt.Errorf("only one repo path query is supported")
 			}
+			query.ProvisionedPath = vals[0]
 		case resource.SEARCH_FIELD_REPOSITORY_NAME:
 			if field.Operator == string(selection.NotIn) {
 				for _, val := range vals {
@@ -139,7 +140,7 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 
 			// only one value is supported in legacy search
 			if len(vals) != 1 {
-				continue
+				return nil, fmt.Errorf("only one repo name is supported")
 			}
 
 			query.ProvisionedRepo, _ = dashboard.GetProvisionedFileNameFromMeta(vals[0])
