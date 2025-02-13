@@ -176,7 +176,7 @@ The JSON payload of webhook notifications includes the following key-value pairs
 
 | Key               | Type                      | Description                                                                      |
 | ----------------- | ------------------------- | -------------------------------------------------------------------------------- |
-| receiver          | string                    | Name of the webhook.                                                             |
+| receiver          | string                    | Name of the contact point.                                                             |
 | status            | string                    | Current status of the alert, `firing` or `resolved`.                             |
 | orgId             | number                    | ID of the organization related to the payload.                                   |
 | alerts            | array of [alerts](#alert) | Alerts that are triggering.                                                      |
