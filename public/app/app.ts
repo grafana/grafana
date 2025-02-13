@@ -40,6 +40,7 @@ import {
   setChromeHeaderHeightHook,
   setPluginLinksHook,
   setCorrelationsService,
+  setPluginFunctionsHook,
 } from '@grafana/runtime';
 import { setPanelDataErrorView } from '@grafana/runtime/src/components/PanelDataErrorView';
 import { setPanelRenderer } from '@grafana/runtime/src/components/PanelRenderer';
@@ -89,6 +90,7 @@ import { pluginExtensionRegistries } from './features/plugins/extensions/registr
 import { usePluginComponent } from './features/plugins/extensions/usePluginComponent';
 import { usePluginComponents } from './features/plugins/extensions/usePluginComponents';
 import { createUsePluginExtensions } from './features/plugins/extensions/usePluginExtensions';
+import { usePluginFunctions } from './features/plugins/extensions/usePluginFunctions';
 import { usePluginLinks } from './features/plugins/extensions/usePluginLinks';
 import { getAppPluginsToAwait, getAppPluginsToPreload } from './features/plugins/extensions/utils';
 import { importPanelPlugin, syncGetPanelPlugin } from './features/plugins/importPanelPlugin';
@@ -229,6 +231,7 @@ export class GrafanaApp {
       setPluginLinksHook(usePluginLinks);
       setPluginComponentHook(usePluginComponent);
       setPluginComponentsHook(usePluginComponents);
+      setPluginFunctionsHook(usePluginFunctions);
 
       // initialize chrome service
       const queryParams = locationService.getSearchObject();
