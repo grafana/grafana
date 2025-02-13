@@ -48,7 +48,7 @@ func NewGrafanaComProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapp
 
 	allowedOrganizations, err := util.SplitStringWithError(info.Extra[allowedOrganizationsKey])
 	if err != nil {
-		s.log.Error("Invalid settings for allowed_organizations in Grafana Com OAuth", "config", allowedOrganizationsKey, "error", err)
+		s.log.Error("Invalid auth configuration setting", "config", allowedOrganizationsKey, "provider", social.GrafanaComProviderName, "error", err)
 	}
 
 	provider := &SocialGrafanaCom{

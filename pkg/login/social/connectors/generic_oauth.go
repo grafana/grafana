@@ -57,12 +57,12 @@ func NewGenericOAuthProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMa
 
 	teamIds, err := util.SplitStringWithError(info.Extra[teamIdsKey])
 	if err != nil {
-		s.log.Error("Invalid settings for team_ids in Generic OAuth", "config", teamIdsKey, "error", err)
+		s.log.Error("Invalid auth configuration setting", "config", teamIdsKey, "provider", social.GenericOAuthProviderName, "error", err)
 	}
 
 	allowedOrganizations, err := util.SplitStringWithError(info.Extra[allowedOrganizationsKey])
 	if err != nil {
-		s.log.Error("Invalid settings for allowed_organizations in Generic OAuth", "config", allowedOrganizationsKey, "error", err)
+		s.log.Error("Invalid auth configuration setting", "config", allowedOrganizationsKey, "provider", social.GenericOAuthProviderName, "error", err)
 	}
 
 	provider := &SocialGenericOAuth{

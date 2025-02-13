@@ -66,13 +66,13 @@ func NewGitHubProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper *
 
 	teamIdsSplitted, err := util.SplitStringWithError(info.Extra[teamIdsKey])
 	if err != nil {
-		s.log.Error("Invalid settings for team_ids in Github OAuth", "config", teamIdsKey, "error", err)
+		s.log.Error("Invalid auth configuration setting", "config", teamIdsKey, "provider", social.GitHubProviderName, "error", err)
 	}
 	teamIds := mustInts(teamIdsSplitted)
 
 	allowedOrganizations, err := util.SplitStringWithError(info.Extra[allowedOrganizationsKey])
 	if err != nil {
-		s.log.Error("Invalid settings for allowed_organizations in Github OAuth", "config", allowedOrganizationsKey, "error", err)
+		s.log.Error("Invalid auth configuration setting", "config", allowedOrganizationsKey, "provider", social.GitHubProviderName, "error", err)
 	}
 
 	provider := &SocialGithub{

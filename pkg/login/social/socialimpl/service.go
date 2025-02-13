@@ -73,7 +73,7 @@ func ProvideService(cfg *setting.Cfg,
 				continue
 			}
 			if len(parsingWarns) > 0 {
-				ss.log.Error("Invalid setting in OAuthInfo provider", "error", errors.Join(parsingWarns...), "provider", ssoSetting.Provider)
+				ss.log.Error("Invalid auth configuration setting", "error", errors.Join(parsingWarns...), "provider", ssoSetting.Provider)
 			}
 
 			conn, err := createOAuthConnector(ssoSetting.Provider, info, cfg, orgRoleMapper, ssoSettings, features, cache)
@@ -97,7 +97,7 @@ func ProvideService(cfg *setting.Cfg,
 				continue
 			}
 			if len(parsingWarns) > 0 {
-				ss.log.Error("Invalid setting in OAuthInfo provider", "error", errors.Join(parsingWarns...), "provider", name)
+				ss.log.Error("Invalid auth configuration setting", "error", errors.Join(parsingWarns...), "provider", name)
 			}
 
 			if !info.Enabled {

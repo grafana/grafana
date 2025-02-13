@@ -92,7 +92,7 @@ func NewAzureADProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper 
 
 	allowedOrganizations, err := util.SplitStringWithError(info.Extra[allowedOrganizationsKey])
 	if err != nil {
-		s.log.Error("Invalid settings for allowed_organizations in AzureAD OAuth", "config", allowedOrganizationsKey, "error", err)
+		s.log.Error("Invalid auth configuration setting", "config", allowedOrganizationsKey, "provider", social.AzureADProviderName, "error", err)
 	}
 
 	provider := &SocialAzureAD{
