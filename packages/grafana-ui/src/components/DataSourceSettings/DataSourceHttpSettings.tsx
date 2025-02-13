@@ -7,11 +7,14 @@ import { selectors } from '@grafana/e2e-selectors';
 import { useTheme2 } from '../../themes';
 import { Trans } from '../../utils/i18n';
 import { Alert } from '../Alert/Alert';
+import { Button } from '../Button';
 import { FormField } from '../FormField/FormField';
 import { InlineFormLabel } from '../FormLabel/FormLabel';
 import { InlineField } from '../Forms/InlineField';
 import { Input } from '../Forms/Legacy/Input/Input';
 import { Icon } from '../Icon/Icon';
+import { Grid } from '../Layout/Grid/Grid';
+import { Stack } from '../Layout/Stack/Stack';
 import { Select } from '../Select/Select';
 import { InlineSwitch } from '../Switch/Switch';
 import { TagsInput } from '../TagsInput/TagsInput';
@@ -178,6 +181,12 @@ export const DataSourceHttpSettings = (props: HttpSettingsProps) => {
     boxShadow: `inset 0 0px 5px ${theme.v1.palette.red}`,
   });
 
+  const gridLayout = css({
+    display: 'grid',
+    gridTemplateColumns: 'auto 1fr',
+    gap: theme.spacing(0.5),
+  });
+
   const inputStyle = cx({ [`width-20`]: true, [notValidStyle]: !isValidUrl });
 
   const fromFieldId = useId();
@@ -195,47 +204,45 @@ export const DataSourceHttpSettings = (props: HttpSettingsProps) => {
   );
 
   return (
-    <div className="gf-form-group">
-      <>
+    <Stack direction="column" gap={5}>
+      <section>
         <h3 className="page-heading">
           <Trans i18nKey="grafana-ui.data-source-http-settings.heading">HTTP</Trans>
         </h3>
-        <div className="gf-form-group">
-          <div className="gf-form">
-            <FormField
-              interactive={urlDocs ? true : false}
-              label={urlLabel ?? 'URL'}
-              labelWidth={13}
-              tooltip={urlTooltip}
-              inputEl={urlInput}
-            />
-          </div>
+
+        <Stack direction="column" gap={0.5}>
+          <FormField
+            interactive={urlDocs ? true : false}
+            label={urlLabel ?? 'URL'}
+            labelWidth={13}
+            tooltip={urlTooltip}
+            inputEl={urlInput}
+          />
 
           {showAccessOptions && (
             <>
-              <div className="gf-form-inline">
-                <div className="gf-form">
-                  <FormField label="Access" labelWidth={13} inputWidth={20} inputEl={accessSelect} />
-                </div>
-                <div className="gf-form">
-                  <button
-                    type="button"
-                    className="gf-form-label query-keyword pointer"
-                    onClick={() => setIsAccessHelpVisible((isVisible) => !isVisible)}
-                  >
-                    <Trans i18nKey="grafana-ui.data-source-http-settings.access-help">
-                      Help&nbsp;
-                      <Icon name={isAccessHelpVisible ? 'angle-down' : 'angle-right'} style={{ marginBottom: 0 }} />
-                    </Trans>
-                  </button>
-                </div>
-              </div>
+              <Stack direction="row" gap={0.5}>
+                <FormField label="Access" labelWidth={13} inputWidth={20} inputEl={accessSelect} />
+
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="md"
+                  fill="outline"
+                  onClick={() => setIsAccessHelpVisible((isVisible) => !isVisible)}
+                >
+                  <Trans i18nKey="grafana-ui.data-source-http-settings.access-help">
+                    Help&nbsp;
+                    <Icon name={isAccessHelpVisible ? 'angle-down' : 'angle-right'} />
+                  </Trans>
+                </Button>
+              </Stack>
               {isAccessHelpVisible && <HttpAccessHelp />}
             </>
           )}
           {dataSourceConfig.access === 'proxy' && (
-            <div className="gf-form-group">
-              <div className="gf-form">
+            <>
+              <Stack direction="row" gap={0}>
                 <InlineFormLabel
                   width={13}
                   tooltip="Grafana proxy deletes forwarded cookies by default. Specify cookies by name that should be forwarded to the data source."
@@ -250,36 +257,34 @@ export const DataSourceHttpSettings = (props: HttpSettingsProps) => {
                   }
                   disabled={dataSourceConfig.readOnly}
                 />
-              </div>
-              <div className="gf-form">
-                <FormField
-                  label="Timeout"
-                  type="number"
-                  labelWidth={13}
-                  inputWidth={20}
-                  tooltip="HTTP request timeout in seconds"
-                  placeholder="Timeout in seconds"
-                  aria-label="Timeout in seconds"
-                  value={dataSourceConfig.jsonData.timeout}
-                  onChange={(event) => {
-                    onSettingsChange({
-                      jsonData: { ...dataSourceConfig.jsonData, timeout: parseInt(event.currentTarget.value, 10) },
-                    });
-                  }}
-                  disabled={dataSourceConfig.readOnly}
-                />
-              </div>
-            </div>
+              </Stack>
+              <FormField
+                label="Timeout"
+                type="number"
+                labelWidth={13}
+                inputWidth={20}
+                tooltip="HTTP request timeout in seconds"
+                placeholder="Timeout in seconds"
+                aria-label="Timeout in seconds"
+                value={dataSourceConfig.jsonData.timeout}
+                onChange={(event) => {
+                  onSettingsChange({
+                    jsonData: { ...dataSourceConfig.jsonData, timeout: parseInt(event.currentTarget.value, 10) },
+                  });
+                }}
+                disabled={dataSourceConfig.readOnly}
+              />
+            </>
           )}
-        </div>
-      </>
+        </Stack>
+      </section>
 
-      <>
+      <section>
         <h3 className="page-heading">
           <Trans i18nKey="grafana-ui.data-source-http-settings.auth">Auth</Trans>
         </h3>
-        <div className="gf-form-group">
-          <div className="gf-form-inline">
+        <Stack direction="column" gap={4}>
+          <div className={gridLayout}>
             <InlineField label="Basic auth" labelWidth={LABEL_WIDTH} disabled={dataSourceConfig.readOnly}>
               <InlineSwitch
                 id="http-settings-basic-auth"
@@ -304,10 +309,8 @@ export const DataSourceHttpSettings = (props: HttpSettingsProps) => {
                 }}
               />
             </InlineField>
-          </div>
 
-          {azureAuthSettings?.azureAuthSupported && (
-            <div className="gf-form-inline">
+            {azureAuthSettings?.azureAuthSupported && (
               <InlineField
                 label="Azure Authentication"
                 tooltip="Use Azure authentication for Azure endpoint."
@@ -324,11 +327,9 @@ export const DataSourceHttpSettings = (props: HttpSettingsProps) => {
                   }}
                 />
               </InlineField>
-            </div>
-          )}
+            )}
 
-          {sigV4AuthToggleEnabled && (
-            <div className="gf-form-inline">
+            {sigV4AuthToggleEnabled && (
               <InlineField label="SigV4 auth" labelWidth={LABEL_WIDTH} disabled={dataSourceConfig.readOnly}>
                 <InlineSwitch
                   id="http-settings-sigv4-auth"
@@ -340,8 +341,8 @@ export const DataSourceHttpSettings = (props: HttpSettingsProps) => {
                   }}
                 />
               </InlineField>
-            </div>
-          )}
+            )}
+          </div>
 
           {dataSourceConfig.access === 'proxy' && (
             <HttpProxySettings
@@ -350,32 +351,32 @@ export const DataSourceHttpSettings = (props: HttpSettingsProps) => {
               showForwardOAuthIdentityOption={azureAuthEnabled ? false : showForwardOAuthIdentityOption}
             />
           )}
-        </div>
-        {dataSourceConfig.basicAuth && (
-          <>
-            <h6>
-              <Trans i18nKey="grafana-ui.data-source-http-settings.basic-auth">Basic Auth Details</Trans>
-            </h6>
-            <div className="gf-form-group">
+
+          {dataSourceConfig.basicAuth && (
+            <section>
+              <Text variant="h6" element="h4">
+                <Trans i18nKey="grafana-ui.data-source-http-settings.basic-auth">Basic Auth Details</Trans>
+              </Text>
+
               <BasicAuthSettings {...props} />
-            </div>
-          </>
-        )}
+            </section>
+          )}
 
-        {azureAuthSettings?.azureAuthSupported && azureAuthEnabled && azureAuthSettings.azureSettingsUI && (
-          <azureAuthSettings.azureSettingsUI dataSourceConfig={dataSourceConfig} onChange={onChange} />
-        )}
+          {azureAuthSettings?.azureAuthSupported && azureAuthEnabled && azureAuthSettings.azureSettingsUI && (
+            <azureAuthSettings.azureSettingsUI dataSourceConfig={dataSourceConfig} onChange={onChange} />
+          )}
 
-        {dataSourceConfig.jsonData.sigV4Auth && sigV4AuthToggleEnabled && renderSigV4Editor}
-        {(dataSourceConfig.jsonData.tlsAuth || dataSourceConfig.jsonData.tlsAuthWithCACert) && (
-          <TLSAuthSettings dataSourceConfig={dataSourceConfig} onChange={onChange} />
-        )}
+          {dataSourceConfig.jsonData.sigV4Auth && sigV4AuthToggleEnabled && renderSigV4Editor}
+          {(dataSourceConfig.jsonData.tlsAuth || dataSourceConfig.jsonData.tlsAuthWithCACert) && (
+            <TLSAuthSettings dataSourceConfig={dataSourceConfig} onChange={onChange} />
+          )}
 
-        {dataSourceConfig.access === 'proxy' && (
-          <CustomHeadersSettings dataSourceConfig={dataSourceConfig} onChange={onChange} />
-        )}
-      </>
+          {dataSourceConfig.access === 'proxy' && (
+            <CustomHeadersSettings dataSourceConfig={dataSourceConfig} onChange={onChange} />
+          )}
+        </Stack>
+      </section>
       {secureSocksDSProxyEnabled && <SecureSocksProxySettings options={dataSourceConfig} onOptionsChange={onChange} />}
-    </div>
+    </Stack>
   );
 };
