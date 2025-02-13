@@ -3,6 +3,7 @@ package dashboard
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/url"
 	"slices"
@@ -443,10 +444,21 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 		return sharedDashboards, err
 	}
 
+	folderUidIdx := -1
+	for i, col := range dashboardResult.Results.Columns {
+		if col.Name == "folder" {
+			folderUidIdx = i
+		}
+	}
+
+	if folderUidIdx == -1 {
+		return sharedDashboards, fmt.Errorf("Error retrieving folder information")
+	}
+
 	// populate list of unique folder UIDs in the list of shared dashboards
 	folders := make([]string, 0)
 	for _, dash := range dashboardResult.Results.Rows {
-		folderUid := string(dash.Cells[0])
+		folderUid := string(dash.Cells[folderUidIdx])
 		if folderUid != "" && !slices.Contains(folders, folderUid) {
 			folders = append(folders, folderUid)
 		}
@@ -488,7 +500,7 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 	// add to sharedDashboards dashboards user has access to, but does NOT have access to it's parent folder
 	for _, dash := range dashboardResult.Results.Rows {
 		dashboardUid := dash.Key.Name
-		folderUid := string(dash.Cells[0])
+		folderUid := string(dash.Cells[folderUidIdx])
 		if slices.Contains(folders, folderUid) {
 			sharedDashboards = append(sharedDashboards, dashboardUid)
 		}
