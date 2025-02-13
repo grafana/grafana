@@ -18,18 +18,18 @@ interface VizTooltipFooterProps {
 export const ADD_ANNOTATION_ID = 'add-annotation-button';
 
 type RenderOneClickTrans = (title: string) => React.ReactNode;
-type RenderItem<T = LinkModel | ActionModel> = (
+type RenderItem<T extends LinkModel | ActionModel> = (
   item: T,
   idx: number,
   styles: ReturnType<typeof getStyles>
 ) => React.ReactNode;
 
-function makeRenderLinksOrActions<T>(
+function makeRenderLinksOrActions<T extends LinkModel | ActionModel>(
   renderOneClickTrans: RenderOneClickTrans,
   renderItem: RenderItem<T>,
   itemGap?: ResponsiveProp<ThemeSpacingTokens>
 ) {
-  const renderLinksOrActions = (items: Array<LinkModel | ActionModel>, styles: ReturnType<typeof getStyles>) => {
+  const renderLinksOrActions = (items: T[], styles: ReturnType<typeof getStyles>) => {
     if (items.length === 0) {
       return;
     }
@@ -52,7 +52,7 @@ function makeRenderLinksOrActions<T>(
     return (
       <div className={styles.dataLinks}>
         <Stack direction="column" justifyContent="flex-start" gap={itemGap}>
-          {items.map((item, i) => renderItem(item as T, i, styles))}
+          {items.map((item, i) => renderItem(item, i, styles))}
         </Stack>
       </div>
     );
