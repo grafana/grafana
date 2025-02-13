@@ -185,7 +185,9 @@ function normalizeRange(cfg: TimeRegionConfig): Range | undefined {
 export function calculateTimesWithin(cfg: TimeRegionConfig, tRange: TimeRange, timezone?: string): AbsoluteTimeRange[] {
   const ranges: AbsoluteTimeRange[] = [];
 
-  if (cfg.mode === 'simple') {
+  const mode = cfg.mode ?? 'simple';
+
+  if (mode === 'simple') {
     const cronConfig = convertToCron(cfg);
     cfg.cronExpr = cronConfig?.cron;
     cfg.duration = cronConfig?.duration;
@@ -193,7 +195,7 @@ export function calculateTimesWithin(cfg: TimeRegionConfig, tRange: TimeRange, t
 
   if (cfg.cronExpr) {
     try {
-      let job = new Cron(cfg.cronExpr);
+      let job = new Cron(cfg.cronExpr, { timezone: "UTC" });
 
       // get previous run that may overlap with start of timerange
       let durationMs = (cfg.duration ?? '') !== '' ? durationToMilliseconds(parseDuration(cfg.duration!)) : 0;
