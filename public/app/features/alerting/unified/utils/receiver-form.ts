@@ -105,13 +105,13 @@ export function formValuesToCloudReceiver(
     name: values.name,
   };
   values.items.forEach(({ __id, type, settings, sendResolved }) => {
-    const channel = convertJiraFieldToJson(
-      omitEmptyValues({
-        ...omitTemporaryIdentifiers(settings),
-        send_resolved: sendResolved ?? defaults.sendResolved,
-      }),
-      type
-    );
+    const channelWithOmmitedIdentifiers = omitEmptyValues({
+      ...omitTemporaryIdentifiers(settings),
+      send_resolved: sendResolved ?? defaults.sendResolved,
+    });
+
+    const channel =
+      type === 'jira' ? convertJiraFieldToJson(channelWithOmmitedIdentifiers) : channelWithOmmitedIdentifiers;
 
     if (!(`${type}_configs` in recv)) {
       recv[`${type}_configs`] = [channel];
@@ -123,11 +123,8 @@ export function formValuesToCloudReceiver(
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function convertJiraFieldToJson(object: Record<string, any>, type: string) {
+export function convertJiraFieldToJson(object: Record<string, any>) {
   // Only for cloud alert manager. Jira fields option can be a nested object. We need to convert it to JSON.
-  if (type !== 'jira') {
-    return object;
-  }
 
   const objectCopy = structuredClone(object);
 
@@ -148,11 +145,8 @@ export function convertJiraFieldToJson(object: Record<string, any>, type: string
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function convertJsonToJiraField(object: Record<string, any>, type: string) {
+export function convertJsonToJiraField(object: Record<string, any>) {
   // Only for cloud alert manager. Convert JSON back to nested Jira fields option.
-  if (type !== 'jira') {
-    return object;
-  }
 
   const objectCopy = structuredClone(object);
 
@@ -180,7 +174,7 @@ function cloudChannelConfigToFormChannelValues(
     __id: id,
     type,
     settings: {
-      ...convertJsonToJiraField(channel, type),
+      ...(type === 'jira' ? convertJsonToJiraField(channel) : channel),
     },
     secureFields: {},
     secureSettings: {},

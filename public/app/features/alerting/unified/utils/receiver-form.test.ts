@@ -331,13 +331,7 @@ describe('grafanaReceiverToFormValues', () => {
 });
 
 describe('convertJsonToJiraField', () => {
-  it('should return the object unchanged if type is not jira', () => {
-    const input = { fields: { key1: 'value1', key2: 'value2' } };
-    const result = convertJsonToJiraField(input, 'slack');
-    expect(result).toEqual(input);
-  });
-
-  it('should convert nested objects to JSON strings for jira type', () => {
+  it('should convert nested objects to JSON strings ', () => {
     const input = {
       fields: {
         key1: { nestedKey1: 'nestedValue1' },
@@ -350,11 +344,11 @@ describe('convertJsonToJiraField', () => {
         key2: '{"nestedKey2":"nestedValue2"}',
       },
     };
-    const result = convertJsonToJiraField(input, 'jira');
+    const result = convertJsonToJiraField(input);
     expect(result).toEqual(expectedOutput);
   });
 
-  it('should leave non-object values unchanged for jira type', () => {
+  it('should leave non-object values unchanged ', () => {
     const input = {
       fields: {
         key1: 'value1',
@@ -362,11 +356,11 @@ describe('convertJsonToJiraField', () => {
         key3: true,
       },
     };
-    const result = convertJsonToJiraField(input, 'jira');
+    const result = convertJsonToJiraField(input);
     expect(result).toEqual(input);
   });
 
-  it('should handle fields object with mixed types for jira type', () => {
+  it('should handle fields object with mixed types', () => {
     const input = {
       fields: {
         key1: 'value1',
@@ -383,19 +377,13 @@ describe('convertJsonToJiraField', () => {
         key4: true,
       },
     };
-    const result = convertJsonToJiraField(input, 'jira');
+    const result = convertJsonToJiraField(input);
     expect(result).toEqual(expectedOutput);
   });
 });
 
 describe('convertJiraFieldToJson', () => {
-  it('should return the object unchanged if type is not jira', () => {
-    const input = { fields: { key1: 'value1', key2: '{"a":2}' } };
-    const result = convertJiraFieldToJson(input, 'slack');
-    expect(result).toEqual(input);
-  });
-
-  it('should convert stringified objects to nested objects for jira type', () => {
+  it('should convert stringified objects to nested objects ', () => {
     const input = {
       fields: {
         key1: '{"nestedKey1":{"a":2,"c":[1,2,3 ]}}',
@@ -408,11 +396,11 @@ describe('convertJiraFieldToJson', () => {
         key2: { nestedKey2: 'nestedValue2' },
       },
     };
-    const result = convertJiraFieldToJson(input, 'jira');
+    const result = convertJiraFieldToJson(input);
     expect(result).toEqual(expectedOutput);
   });
 
-  it('should leave non-stringified values unchanged for jira type', () => {
+  it('should leave non-stringified values unchanged ', () => {
     const input = {
       fields: {
         key1: 'value1',
@@ -420,11 +408,11 @@ describe('convertJiraFieldToJson', () => {
         key3: true,
       },
     };
-    const result = convertJiraFieldToJson(input, 'jira');
+    const result = convertJiraFieldToJson(input);
     expect(result).toEqual(input);
   });
 
-  it('should handle fields object with mixed types for jira type', () => {
+  it('should handle fields object with mixed types ', () => {
     const input = {
       fields: {
         key1: 'value1',
@@ -441,7 +429,7 @@ describe('convertJiraFieldToJson', () => {
         key4: true,
       },
     };
-    const result = convertJiraFieldToJson(input, 'jira');
+    const result = convertJiraFieldToJson(input);
     expect(result).toEqual(expectedOutput);
   });
 });
