@@ -37,11 +37,12 @@ func WrapHandler(handler http.Handler) func(req *http.Request) (*http.Response, 
 		if err != nil {
 			return nil, err
 		}
-		defer cancel()
+		// The cancel happens in the goroutine we spawn, so as to not cancel it too early.
 		req = req.WithContext(ctx) // returns a shallow copy, so we can't do it as part of the adapter.
 
 		w := NewAdapter(req)
 		go func() {
+			defer cancel()
 			handler.ServeHTTP(w, req)
 			if err := w.CloseWriter(); err != nil {
 				klog.Errorf("error closing writer: %v", err)
