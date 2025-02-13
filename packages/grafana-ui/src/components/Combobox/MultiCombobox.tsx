@@ -79,8 +79,8 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
       return [];
     }
 
-    return getSelectedItemsFromValue<T>(value, baseOptions);
-  }, [value, baseOptions]);
+    return getSelectedItemsFromValue<T>(value, typeof props.options !== 'function' ? props.options : baseOptions);
+  }, [value, props.options, baseOptions]);
 
   const { measureRef, counterMeasureRef, suffixMeasureRef, shownItems } = useMeasureMulti(
     selectedItems,
