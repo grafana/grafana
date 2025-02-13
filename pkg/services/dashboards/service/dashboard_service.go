@@ -958,7 +958,7 @@ func (dr *DashboardServiceImpl) GetDashboardsByPluginID(ctx context.Context, que
 	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesCliDashboards) {
 		dashs, err := dr.searchDashboardsThroughK8s(ctx, &dashboards.FindPersistedDashboardsQuery{
 			OrgId:           query.OrgID,
-			ProvisionedRepo: pluginIDRepoName,
+			ProvisionedRepo: dashboard.PluginIDRepoName,
 			ProvisionedPath: query.PluginID,
 		})
 		if err != nil {
@@ -1559,7 +1559,7 @@ func (dr *DashboardServiceImpl) saveProvisionedDashboardThroughK8s(ctx context.C
 		delete(annotations, utils.AnnoKeyRepoHash)
 		delete(annotations, utils.AnnoKeyRepoTimestamp)
 	} else {
-		annotations[utils.AnnoKeyRepoName] = provisionedFileNameWithPrefix(provisioning.Name)
+		annotations[utils.AnnoKeyRepoName] = dashboard.ProvisionedFileNameWithPrefix(provisioning.Name)
 		annotations[utils.AnnoKeyRepoPath] = provisioning.ExternalID
 		annotations[utils.AnnoKeyRepoHash] = provisioning.CheckSum
 		annotations[utils.AnnoKeyRepoTimestamp] = time.Unix(provisioning.Updated, 0).UTC().Format(time.RFC3339)
@@ -1580,7 +1580,7 @@ func (dr *DashboardServiceImpl) saveDashboardThroughK8s(ctx context.Context, cmd
 		return nil, err
 	}
 
-	setPluginID(obj, cmd.PluginID)
+	dashboard.SetPluginIDMeta(obj, cmd.PluginID)
 
 	out, err := dr.createOrUpdateDash(ctx, obj, orgID)
 	if err != nil {
@@ -1827,13 +1827,13 @@ func (dr *DashboardServiceImpl) searchProvisionedDashboardsThroughK8s(ctx contex
 	ctx, _ = identity.WithServiceIdentity(ctx, query.OrgId)
 
 	if query.ProvisionedRepo != "" {
-		query.ProvisionedRepo = provisionedFileNameWithPrefix(query.ProvisionedRepo)
+		query.ProvisionedRepo = dashboard.ProvisionedFileNameWithPrefix(query.ProvisionedRepo)
 	}
 
 	if len(query.ProvisionedReposNotIn) > 0 {
 		repos := make([]string, len(query.ProvisionedReposNotIn))
 		for i, v := range query.ProvisionedReposNotIn {
-			repos[i] = provisionedFileNameWithPrefix(v)
+			repos[i] = dashboard.ProvisionedFileNameWithPrefix(v)
 		}
 		query.ProvisionedReposNotIn = repos
 	}
@@ -1865,7 +1865,7 @@ func (dr *DashboardServiceImpl) searchProvisionedDashboardsThroughK8s(ctx contex
 				}
 
 				// ensure the repo is set due to file provisioning, otherwise skip it
-				fileRepo, found := getProvisionedFileNameFromMeta(meta)
+				fileRepo, found := dashboard.GetProvisionedFileNameFromMeta(meta.GetRepositoryName())
 				if !found {
 					return nil
 				}
@@ -1967,7 +1967,7 @@ func (dr *DashboardServiceImpl) UnstructuredToLegacyDashboard(ctx context.Contex
 		out.Deleted = obj.GetDeletionTimestamp().Time
 	}
 
-	out.PluginID = GetPluginIDFromMeta(obj)
+	out.PluginID = dashboard.GetPluginIDFromMeta(obj)
 
 	creator, err := dr.k8sclient.GetUserFromMeta(ctx, obj.GetCreatedBy())
 	if err != nil {
@@ -2010,42 +2010,6 @@ func (dr *DashboardServiceImpl) UnstructuredToLegacyDashboard(ctx context.Contex
 	}
 
 	return &out, nil
-}
-
-var pluginIDRepoName = "plugin"
-var fileProvisionedRepoPrefix = "file:"
-
-func setPluginID(obj unstructured.Unstructured, pluginID string) {
-	if pluginID == "" {
-		return
-	}
-
-	annotations := obj.GetAnnotations()
-	if annotations == nil {
-		annotations = map[string]string{}
-	}
-	annotations[utils.AnnoKeyRepoName] = pluginIDRepoName
-	annotations[utils.AnnoKeyRepoPath] = pluginID
-	obj.SetAnnotations(annotations)
-}
-
-func provisionedFileNameWithPrefix(name string) string {
-	if name == "" {
-		return ""
-	}
-
-	return fileProvisionedRepoPrefix + name
-}
-
-func getProvisionedFileNameFromMeta(obj utils.GrafanaMetaAccessor) (string, bool) {
-	return strings.CutPrefix(obj.GetRepositoryName(), fileProvisionedRepoPrefix)
-}
-
-func GetPluginIDFromMeta(obj utils.GrafanaMetaAccessor) string {
-	if obj.GetRepositoryName() == pluginIDRepoName {
-		return obj.GetRepositoryPath()
-	}
-	return ""
 }
 
 func LegacySaveCommandToUnstructured(cmd *dashboards.SaveDashboardCommand, namespace string) (unstructured.Unstructured, error) {

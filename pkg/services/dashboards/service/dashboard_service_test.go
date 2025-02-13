@@ -15,6 +15,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/apis/dashboard"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
@@ -547,7 +548,7 @@ func TestGetProvisionedDashboardData(t *testing.T) {
 					utils.LabelKeyDeprecatedInternalID: "1", // nolint:staticcheck
 				},
 				"annotations": map[string]any{
-					utils.AnnoKeyRepoName:      fileProvisionedRepoPrefix + "test",
+					utils.AnnoKeyRepoName:      dashboard.ProvisionedFileNameWithPrefix("test"),
 					utils.AnnoKeyRepoHash:      "hash",
 					utils.AnnoKeyRepoPath:      "path/to/file",
 					utils.AnnoKeyRepoTimestamp: "2025-01-01T00:00:00Z",
@@ -563,7 +564,7 @@ func TestGetProvisionedDashboardData(t *testing.T) {
 		k8sCliMock.On("Search", mock.Anything, int64(1),
 			mock.MatchedBy(func(req *resource.ResourceSearchRequest) bool {
 				// ensure the prefix is added to the query
-				return req.Options.Fields[0].Values[0] == provisionedFileNameWithPrefix(repo)
+				return req.Options.Fields[0].Values[0] == dashboard.ProvisionedFileNameWithPrefix(repo)
 			})).Return(&resource.ResourceSearchResponse{
 			Results: &resource.ResourceTable{
 				Columns: []*resource.ResourceTableColumnDefinition{},
@@ -573,7 +574,7 @@ func TestGetProvisionedDashboardData(t *testing.T) {
 		}, nil).Once()
 		k8sCliMock.On("Search", mock.Anything, int64(2), mock.MatchedBy(func(req *resource.ResourceSearchRequest) bool {
 			// ensure the prefix is added to the query
-			return req.Options.Fields[0].Values[0] == provisionedFileNameWithPrefix(repo)
+			return req.Options.Fields[0].Values[0] == dashboard.ProvisionedFileNameWithPrefix(repo)
 		})).Return(&resource.ResourceSearchResponse{
 			Results: &resource.ResourceTable{
 				Columns: []*resource.ResourceTableColumnDefinition{
@@ -646,7 +647,7 @@ func TestGetProvisionedDashboardDataByDashboardID(t *testing.T) {
 					utils.LabelKeyDeprecatedInternalID: "1", // nolint:staticcheck
 				},
 				"annotations": map[string]any{
-					utils.AnnoKeyRepoName:      fileProvisionedRepoPrefix + "test",
+					utils.AnnoKeyRepoName:      dashboard.ProvisionedFileNameWithPrefix("test"),
 					utils.AnnoKeyRepoHash:      "hash",
 					utils.AnnoKeyRepoPath:      "path/to/file",
 					utils.AnnoKeyRepoTimestamp: "2025-01-01T00:00:00Z",
@@ -736,7 +737,7 @@ func TestGetProvisionedDashboardDataByDashboardUID(t *testing.T) {
 					utils.LabelKeyDeprecatedInternalID: "1", // nolint:staticcheck
 				},
 				"annotations": map[string]any{
-					utils.AnnoKeyRepoName:      fileProvisionedRepoPrefix + "test",
+					utils.AnnoKeyRepoName:      dashboard.ProvisionedFileNameWithPrefix("test"),
 					utils.AnnoKeyRepoHash:      "hash",
 					utils.AnnoKeyRepoPath:      "path/to/file",
 					utils.AnnoKeyRepoTimestamp: "2025-01-01T00:00:00Z",
@@ -825,7 +826,7 @@ func TestDeleteOrphanedProvisionedDashboards(t *testing.T) {
 			"metadata": map[string]any{
 				"name": "uid",
 				"annotations": map[string]any{
-					utils.AnnoKeyRepoName:      fileProvisionedRepoPrefix + "orphaned",
+					utils.AnnoKeyRepoName:      dashboard.ProvisionedFileNameWithPrefix("orphaned"),
 					utils.AnnoKeyRepoHash:      "hash",
 					utils.AnnoKeyRepoPath:      "path/to/file",
 					utils.AnnoKeyRepoTimestamp: "2025-01-01T00:00:00Z",
@@ -838,7 +839,7 @@ func TestDeleteOrphanedProvisionedDashboards(t *testing.T) {
 			"metadata": map[string]any{
 				"name": "uid2",
 				"annotations": map[string]any{
-					utils.AnnoKeyRepoName: "plugin",
+					utils.AnnoKeyRepoName: dashboard.PluginIDRepoName,
 					utils.AnnoKeyRepoHash: "app",
 				},
 			},
@@ -849,7 +850,7 @@ func TestDeleteOrphanedProvisionedDashboards(t *testing.T) {
 			"metadata": map[string]any{
 				"name": "uid3",
 				"annotations": map[string]any{
-					utils.AnnoKeyRepoName:      fileProvisionedRepoPrefix + "orphaned",
+					utils.AnnoKeyRepoName:      dashboard.ProvisionedFileNameWithPrefix("orphaned"),
 					utils.AnnoKeyRepoHash:      "hash",
 					utils.AnnoKeyRepoPath:      "path/to/file",
 					utils.AnnoKeyRepoTimestamp: "2025-01-01T00:00:00Z",
@@ -858,7 +859,7 @@ func TestDeleteOrphanedProvisionedDashboards(t *testing.T) {
 			"spec": map[string]any{},
 		}}, nil).Once()
 		k8sCliMock.On("Search", mock.Anything, int64(1), mock.MatchedBy(func(req *resource.ResourceSearchRequest) bool {
-			return req.Options.Fields[0].Key == "repo.name" && req.Options.Fields[0].Values[0] == provisionedFileNameWithPrefix("test") && req.Options.Fields[0].Operator == "notin"
+			return req.Options.Fields[0].Key == "repo.name" && req.Options.Fields[0].Values[0] == dashboard.ProvisionedFileNameWithPrefix("test") && req.Options.Fields[0].Operator == "notin"
 		})).Return(&resource.ResourceSearchResponse{
 			Results: &resource.ResourceTable{
 				Columns: []*resource.ResourceTableColumnDefinition{
@@ -888,7 +889,7 @@ func TestDeleteOrphanedProvisionedDashboards(t *testing.T) {
 		}, nil).Once()
 
 		k8sCliMock.On("Search", mock.Anything, int64(2), mock.MatchedBy(func(req *resource.ResourceSearchRequest) bool {
-			return req.Options.Fields[0].Key == "repo.name" && req.Options.Fields[0].Values[0] == provisionedFileNameWithPrefix("test") && req.Options.Fields[0].Operator == "notin"
+			return req.Options.Fields[0].Key == "repo.name" && req.Options.Fields[0].Values[0] == dashboard.ProvisionedFileNameWithPrefix("test") && req.Options.Fields[0].Operator == "notin"
 		})).Return(&resource.ResourceSearchResponse{
 			Results: &resource.ResourceTable{
 				Columns: []*resource.ResourceTableColumnDefinition{
@@ -959,7 +960,7 @@ func TestUnprovisionDashboard(t *testing.T) {
 			"metadata": map[string]any{
 				"name": "uid",
 				"annotations": map[string]any{
-					utils.AnnoKeyRepoName:      fileProvisionedRepoPrefix + "test",
+					utils.AnnoKeyRepoName:      dashboard.ProvisionedFileNameWithPrefix("test"),
 					utils.AnnoKeyRepoHash:      "hash",
 					utils.AnnoKeyRepoPath:      "path/to/file",
 					utils.AnnoKeyRepoTimestamp: "2025-01-01T00:00:00Z",
@@ -1053,7 +1054,7 @@ func TestGetDashboardsByPluginID(t *testing.T) {
 		k8sCliMock.On("Get", mock.Anything, "uid", mock.Anything, mock.Anything, mock.Anything).Return(uidUnstructured, nil)
 		k8sCliMock.On("GetUserFromMeta", mock.Anything, mock.Anything).Return(&user.User{}, nil)
 		k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.MatchedBy(func(req *resource.ResourceSearchRequest) bool {
-			return req.Options.Fields[0].Key == "repo.name" && req.Options.Fields[0].Values[0] == "plugin" &&
+			return req.Options.Fields[0].Key == "repo.name" && req.Options.Fields[0].Values[0] == dashboard.PluginIDRepoName &&
 				req.Options.Fields[1].Key == "repo.path" && req.Options.Fields[1].Values[0] == "testing"
 		})).Return(&resource.ResourceSearchResponse{
 			Results: &resource.ResourceTable{
@@ -1983,7 +1984,7 @@ func TestSearchProvisionedDashboardsThroughK8sRaw(t *testing.T) {
 		"metadata": map[string]any{
 			"name": "uid",
 			"annotations": map[string]any{
-				utils.AnnoKeyRepoName:      fileProvisionedRepoPrefix + "test",
+				utils.AnnoKeyRepoName:      dashboard.ProvisionedFileNameWithPrefix("test"),
 				utils.AnnoKeyRepoHash:      "hash",
 				utils.AnnoKeyRepoPath:      "path/to/file",
 				utils.AnnoKeyRepoTimestamp: "2025-01-01T00:00:00Z",
