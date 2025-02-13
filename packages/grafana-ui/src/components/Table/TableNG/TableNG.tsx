@@ -45,6 +45,13 @@ export type FilterType = {
   };
 };
 
+/**
+ * getIsNestedTable is a helper function that takes a DataFrame and returns a
+ * boolean value based on the presence of nested frames
+ */
+const getIsNestedTable = (dataFrame: DataFrame): boolean =>
+  dataFrame.fields.some(({ type }) => type === FieldType.nestedFrames);
+
 export function TableNG(props: TableNGProps) {
   const { height, width, timeRange, cellHeight, noHeader, fieldConfig, footerOptions, onColumnResize } = props;
 
@@ -210,12 +217,10 @@ export function TableNG(props: TableNGProps) {
   const mapFrameToDataGrid = (main: DataFrame, calcsRef: React.MutableRefObject<string[]>, subTable?: boolean) => {
     const columns: TableColumn[] = [];
 
-    // Check for nestedFrames
-    const nestedDataField = main.fields.find((f) => f.type === FieldType.nestedFrames);
-    const hasNestedData = nestedDataField !== undefined;
+    const isNestedTable = getIsNestedTable(main);
 
     // If nested frames, add expansion control column
-    if (hasNestedData) {
+    if (isNestedTable) {
       const expanderField: Field = {
         name: '',
         type: FieldType.other,
@@ -491,12 +496,9 @@ export function TableNG(props: TableNGProps) {
   );
 
   useEffect(() => {
-    const nestedDataField = props.data.fields.find(({ type }) => type === FieldType.nestedFrames);
-    const hasNestedData = nestedDataField !== undefined;
-    if (hasNestedData) {
-      setIsNestedTable(true);
-    }
-  }, [props.data.fields]);
+    const isNestedTable = getIsNestedTable(props.data);
+    setIsNestedTable(isNestedTable);
+  }, [props.data]);
 
   // This effect needed to set header cells refs before row height calculation
   useLayoutEffect(() => {
