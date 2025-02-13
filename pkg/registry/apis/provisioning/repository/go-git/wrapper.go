@@ -61,9 +61,9 @@ func Clone(
 		return nil, fmt.Errorf("missing root config")
 	}
 
-	decrypted, err := secrets.Decrypt(ctx, []byte(gitcfg.Token))
+	decrypted, err := secrets.Decrypt(ctx, []byte(gitcfg.EncryptedToken))
 	if err != nil {
-		return nil, fmt.Errorf("error decrypting token %w", err)
+		return nil, fmt.Errorf("error decrypting token: %w", err)
 	}
 
 	err = os.MkdirAll(opts.Root, 0700)
