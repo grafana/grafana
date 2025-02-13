@@ -13,10 +13,10 @@ func TestValidateSecureValue(t *testing.T) {
 	t.Run("when creating a new securevalue", func(t *testing.T) {
 		validSecureValue := &secretv0alpha1.SecureValue{
 			Spec: secretv0alpha1.SecureValueSpec{
-				Title:     "title",
-				Value:     "value",
-				Keeper:    "keeper",
-				Audiences: []string{"group1/*", "group2/name"},
+				Title:      "title",
+				Value:      "value",
+				Keeper:     "keeper",
+				Decrypters: []string{"group1/*", "group2/name"},
 			},
 		}
 
@@ -55,13 +55,13 @@ func TestValidateSecureValue(t *testing.T) {
 			require.Equal(t, "spec", errs[0].Field)
 		})
 
-		t.Run("`audiences` must be present", func(t *testing.T) {
+		t.Run("`decrypters` must be present", func(t *testing.T) {
 			sv := validSecureValue.DeepCopy()
-			sv.Spec.Audiences = make([]string, 0)
+			sv.Spec.Decrypters = make([]string, 0)
 
 			errs := ValidateSecureValue(sv, nil, admission.Create)
 			require.Len(t, errs, 1)
-			require.Equal(t, "spec.audiences", errs[0].Field)
+			require.Equal(t, "spec.decrypters", errs[0].Field)
 		})
 	})
 
@@ -157,13 +157,13 @@ func TestValidateSecureValue(t *testing.T) {
 		})
 	})
 
-	t.Run("`audiences` must have unique items", func(t *testing.T) {
+	t.Run("`decrypters` must have unique items", func(t *testing.T) {
 		t.Run("with regular group-names", func(t *testing.T) {
 			sv := &secretv0alpha1.SecureValue{
 				Spec: secretv0alpha1.SecureValueSpec{
 					Title: "title", Keeper: "keeper", Ref: "ref",
 
-					Audiences: []string{
+					Decrypters: []string{
 						"my.grafana.app/app-1",
 						"my.grafana.app/app-1",
 						"my.grafana.app/app-2",
@@ -173,7 +173,7 @@ func TestValidateSecureValue(t *testing.T) {
 
 			errs := ValidateSecureValue(sv, nil, admission.Create)
 			require.Len(t, errs, 1)
-			require.Equal(t, "spec.audiences.[1]", errs[0].Field)
+			require.Equal(t, "spec.decrypters.[1]", errs[0].Field)
 		})
 
 		t.Run("with the wildcard name", func(t *testing.T) {
@@ -181,7 +181,7 @@ func TestValidateSecureValue(t *testing.T) {
 				Spec: secretv0alpha1.SecureValueSpec{
 					Title: "title", Keeper: "keeper", Ref: "ref",
 
-					Audiences: []string{
+					Decrypters: []string{
 						"my.grafana.app/*",
 						"my.grafana.app/*",
 					},
@@ -190,16 +190,16 @@ func TestValidateSecureValue(t *testing.T) {
 
 			errs := ValidateSecureValue(sv, nil, admission.Create)
 			require.Len(t, errs, 1)
-			require.Equal(t, "spec.audiences.[1]", errs[0].Field)
+			require.Equal(t, "spec.decrypters.[1]", errs[0].Field)
 		})
 	})
 
-	t.Run("`audiences` must match the expected format", func(t *testing.T) {
+	t.Run("`decrypters` must match the expected format", func(t *testing.T) {
 		sv := &secretv0alpha1.SecureValue{
 			Spec: secretv0alpha1.SecureValueSpec{
 				Title: "title", Keeper: "keeper", Ref: "ref",
 
-				Audiences: []string{
+				Decrypters: []string{
 					"/app-name",       // Missing Group
 					"my.grafana.app/", // Missing Name
 					"my.grafana.app",  // Missing Name + /
@@ -211,16 +211,16 @@ func TestValidateSecureValue(t *testing.T) {
 		require.Len(t, errs, 3)
 
 		for i, err := range errs {
-			require.Equal(t, fmt.Sprintf("spec.audiences.[%d]", i), err.Field)
+			require.Equal(t, fmt.Sprintf("spec.decrypters.[%d]", i), err.Field)
 		}
 	})
 
-	t.Run("`audiences` with redundant group-names are reported", func(t *testing.T) {
+	t.Run("`decrypters` with redundant group-names are reported", func(t *testing.T) {
 		sv := &secretv0alpha1.SecureValue{
 			Spec: secretv0alpha1.SecureValueSpec{
 				Title: "title", Keeper: "keeper", Ref: "ref",
 
-				Audiences: []string{
+				Decrypters: []string{
 					// "app-1" and "app-2" lines are not needed as "*" takes precedence for the whole group.
 					"my.grafana.app/app-1",
 					"my.grafana.app/*",
