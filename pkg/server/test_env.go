@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/oauthtoken/oauthtokentest"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/storage/unified"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -25,7 +24,7 @@ func ProvideTestEnv(
 	httpClientProvider httpclient.Provider,
 	oAuthTokenService *oauthtokentest.Service,
 	featureMgmt featuremgmt.FeatureToggles,
-	unifiedClientService unified.ClientService,
+	unifiedClientService resource.ClientService,
 	idService auth.IDService,
 ) (*TestEnv, error) {
 	return &TestEnv{

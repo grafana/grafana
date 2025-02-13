@@ -39,10 +39,6 @@ func GetResourceClient(ctx context.Context) resource.ResourceClient {
 	return pkgResourceClient
 }
 
-type ClientService interface {
-	GetResourceClient() resource.ResourceClient
-}
-
 func ProvideClientServiceImpl(cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	db infraDB.DB,

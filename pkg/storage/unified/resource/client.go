@@ -14,12 +14,17 @@ import (
 
 	authnlib "github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/authn/grpcutils"
 	grpcUtils "github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
 )
+
+type ClientService interface {
+	GetResourceClient() ResourceClient
+}
 
 type ResourceClient interface {
 	ResourceStoreClient

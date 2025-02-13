@@ -30,7 +30,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/storage/unified"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
@@ -64,7 +63,7 @@ func RegisterAPIService(cfg *setting.Cfg,
 	folderPermissionsSvc accesscontrol.FolderPermissionsService,
 	accessControl accesscontrol.AccessControl,
 	registerer prometheus.Registerer,
-	unifiedClientService unified.ClientService,
+	unifiedClientService resource.ClientService,
 ) *FolderAPIBuilder {
 	if !featuremgmt.AnyEnabled(features,
 		featuremgmt.FlagKubernetesFoldersServiceV2,

@@ -8,6 +8,7 @@ import (
 	"github.com/google/wire"
 
 	"github.com/grafana/grafana/pkg/storage/unified"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	search2 "github.com/grafana/grafana/pkg/storage/unified/search"
 
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -118,7 +119,7 @@ var wireExtsBasicSet = wire.NewSet(
 	sandbox.ProvideService,
 	wire.Bind(new(sandbox.Sandbox), new(*sandbox.Service)),
 	unified.ProvideClientServiceImpl,
-	wire.Bind(new(unified.ClientService), new(*unified.ClientServiceImpl)),
+	wire.Bind(new(resource.ClientService), new(*unified.ClientServiceImpl)),
 )
 
 var wireExtsSet = wire.NewSet(
