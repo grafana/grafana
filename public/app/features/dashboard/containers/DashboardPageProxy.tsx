@@ -46,7 +46,12 @@ function DashboardPageProxy(props: DashboardPageProxyProps) {
       return null;
     }
 
-    return stateManager.fetchDashboard({ route: props.route.routeName as DashboardRoutes, uid: params.uid ?? '' });
+    return stateManager.fetchDashboard({
+      route: props.route.routeName as DashboardRoutes,
+      uid: params.uid ?? '',
+      type: params.type,
+      slug: params.slug,
+    });
   }, [params.uid, props.route.routeName]);
 
   if (dashboard.loading) {
