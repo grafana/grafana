@@ -417,5 +417,4 @@ func TestIntegrationSecureValue(t *testing.T) {
 			require.Nil(t, updatedRaw)
 		})
 	})
-
 }

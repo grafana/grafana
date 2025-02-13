@@ -63,7 +63,7 @@ func (s *secureValueStorage) updateInKeeper(ctx context.Context, currRow *secure
 
 	err = keeper.Update(ctx, keeperConfig, currRow.Namespace, keepertypes.ExternalID(currRow.ExternalID), string(newSV.Spec.Value))
 	if err != nil {
-		return fmt.Errorf("update in keeper: %s", keeperType)
+		return fmt.Errorf("update in keeper: %s", err)
 	}
 
 	return nil
