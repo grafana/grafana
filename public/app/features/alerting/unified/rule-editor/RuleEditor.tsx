@@ -2,7 +2,6 @@ import { useCallback } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { NavModelItem } from '@grafana/data';
-import { withErrorBoundary } from '@grafana/ui';
 import { RuleIdentifier } from 'app/types/unified-alerting';
 
 import { AlertWarning } from '../AlertWarning';
@@ -11,6 +10,7 @@ import { AlertRuleForm } from '../components/rule-editor/alert-rule-form/AlertRu
 import { useURLSearchParams } from '../hooks/useURLSearchParams';
 import { useRulesAccess } from '../utils/accessControlHooks';
 import * as ruleId from '../utils/rule-id';
+import { withPageErrorBoundary } from '../withPageErrorBoundary';
 
 import { CloneRuleEditor } from './CloneRuleEditor';
 import { ExistingRuleEditor } from './ExistingRuleEditor';
@@ -78,7 +78,9 @@ const RuleEditor = () => {
   );
 };
 
-export default withErrorBoundary(RuleEditor, { style: 'page' });
+// The pageNav property makes it difficult to only rely on AlertingPageWrapper
+// to catch errors.
+export default withPageErrorBoundary(RuleEditor);
 
 function useRuleEditorPathParams() {
   const params = useParams<RuleEditorPathParams>();
