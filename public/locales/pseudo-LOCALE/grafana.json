@@ -2781,17 +2781,30 @@
       },
       "labels": {
         "contactGrafanaLabs": "Cőŉŧäčŧ Ğřäƒäŉä Ŀäþş",
+        "customLinks": "Cūşŧőm ľįŉĸş ",
+        "customLinksTooltip": "Ŧĥęşę ľįŉĸş äřę přővįđęđ þy ŧĥę pľūģįŉ đęvęľőpęř ŧő őƒƒęř äđđįŧįőŉäľ, đęvęľőpęř-şpęčįƒįč řęşőūřčęş äŉđ įŉƒőřmäŧįőŉ",
         "dependencies": "Đępęŉđęŉčįęş",
+        "documentation": "Đőčūmęŉŧäŧįőŉ",
         "downloads": "Đőŵŉľőäđş",
         "from": "Fřőm",
         "installedVersion": "Ĩŉşŧäľľęđ Vęřşįőŉ",
         "lastCommitDate": "Ŀäşŧ čőmmįŧ đäŧę:",
         "latestVersion": "Ŀäŧęşŧ Vęřşįőŉ",
-        "links": "Ŀįŉĸş ",
+        "license": "Ŀįčęŉşę",
+        "raiseAnIssue": "Ŗäįşę äŉ įşşūę",
         "reportAbuse": "Ŗępőřŧ ä čőŉčęřŉ ",
+        "reportAbuseTooltip": "Ŗępőřŧ įşşūęş řęľäŧęđ ŧő mäľįčįőūş őř ĥäřmƒūľ pľūģįŉş đįřęčŧľy ŧő Ğřäƒäŉä Ŀäþş.",
+        "repository": "Ŗępőşįŧőřy",
         "signature": "Ŝįģŉäŧūřę",
         "status": "Ŝŧäŧūş",
         "updatedAt": "Ŀäşŧ ūpđäŧęđ:"
+      },
+      "modal": {
+        "cancel": "Cäŉčęľ",
+        "copyEmail": "Cőpy ęmäįľ äđđřęşş",
+        "description": "Ŧĥįş ƒęäŧūřę įş ƒőř řępőřŧįŉģ mäľįčįőūş őř ĥäřmƒūľ þęĥävįőūř ŵįŧĥįŉ pľūģįŉş. Főř pľūģįŉ čőŉčęřŉş, ęmäįľ ūş äŧ: ",
+        "node": "Ńőŧę: Főř ģęŉęřäľ pľūģįŉ įşşūęş ľįĸę þūģş őř ƒęäŧūřę řęqūęşŧş, pľęäşę čőŉŧäčŧ ŧĥę pľūģįŉ äūŧĥőř ūşįŉģ ŧĥę přővįđęđ ľįŉĸş. ",
+        "title": "Ŗępőřŧ ä pľūģįŉ čőŉčęřŉ"
       }
     },
     "empty-state": {
