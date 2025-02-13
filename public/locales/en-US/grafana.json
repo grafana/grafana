@@ -1699,6 +1699,7 @@
       "actions-confirmation-label": "Confirmation message",
       "actions-confirmation-message": "Provide a descriptive prompt to confirm or cancel the action.",
       "footer-add-annotation": "Add annotation",
+      "footer-click-to-action": "Click to {{actionTitle}}",
       "footer-click-to-navigate": "Click to open {{linkTitle}}"
     }
   },
