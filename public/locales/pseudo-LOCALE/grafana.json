@@ -1699,6 +1699,7 @@
       "actions-confirmation-label": "Cőŉƒįřmäŧįőŉ męşşäģę",
       "actions-confirmation-message": "Přővįđę ä đęşčřįpŧįvę přőmpŧ ŧő čőŉƒįřm őř čäŉčęľ ŧĥę äčŧįőŉ.",
       "footer-add-annotation": "Åđđ äŉŉőŧäŧįőŉ",
+      "footer-click-to-action": "Cľįčĸ ŧő {{actionTitle}}",
       "footer-click-to-navigate": "Cľįčĸ ŧő őpęŉ {{linkTitle}}"
     }
   },
