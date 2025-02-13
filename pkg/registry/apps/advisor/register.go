@@ -21,7 +21,7 @@ func RegisterApp(
 ) *AdvisorAppProvider {
 	provider := &AdvisorAppProvider{}
 	pluginConfig := cfg.PluginSettings["grafana-advisor-app"]
-	specificConfig := checkregistry.SpecificConfig{
+	specificConfig := checkregistry.AdvisorAppConfig{
 		CheckRegistry: checkRegistry,
 		PluginConfig:  pluginConfig,
 	}

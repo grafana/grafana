@@ -18,6 +18,9 @@ import (
 	"k8s.io/klog/v2"
 )
 
+const defaultEvaluationInterval = 24 * time.Hour
+const defaultMaxHistory = 10
+
 // Runner is a "runnable" app used to be able to expose and API endpoint
 // with the existing checks types. This does not need to be a CRUD resource, but it is
 // the only way existing at the moment to expose the check types.
@@ -31,7 +34,7 @@ type Runner struct {
 // NewRunner creates a new Runner.
 func New(cfg app.Config) (app.Runnable, error) {
 	// Read config
-	specificConfig, ok := cfg.SpecificConfig.(checkregistry.SpecificConfig)
+	specificConfig, ok := cfg.SpecificConfig.(checkregistry.AdvisorAppConfig)
 	if !ok {
 		return nil, fmt.Errorf("invalid config type")
 	}
@@ -190,9 +193,7 @@ func (r *Runner) cleanupChecks(ctx context.Context) error {
 }
 
 func getEvaluationInterval(pluginConfig map[string]string) (time.Duration, error) {
-	// Default value
-	evaluationInterval := 24 * time.Hour
-
+	evaluationInterval := defaultEvaluationInterval
 	configEvaluationInterval, ok := pluginConfig["evaluation_interval"]
 	if ok {
 		var err error
@@ -205,9 +206,7 @@ func getEvaluationInterval(pluginConfig map[string]string) (time.Duration, error
 }
 
 func getMaxHistory(pluginConfig map[string]string) (int, error) {
-	// Default value
-	maxHistory := 10
-
+	maxHistory := defaultMaxHistory
 	configMaxHistory, ok := pluginConfig["max_history"]
 	if ok {
 		var err error

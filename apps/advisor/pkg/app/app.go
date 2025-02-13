@@ -19,7 +19,7 @@ import (
 
 func New(cfg app.Config) (app.App, error) {
 	// Read config
-	specificConfig, ok := cfg.SpecificConfig.(checkregistry.SpecificConfig)
+	specificConfig, ok := cfg.SpecificConfig.(checkregistry.AdvisorAppConfig)
 	if !ok {
 		return nil, fmt.Errorf("invalid config type")
 	}

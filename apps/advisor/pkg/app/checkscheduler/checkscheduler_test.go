@@ -133,11 +133,10 @@ func TestRunner_cleanupChecks_WithinMax(t *testing.T) {
 }
 
 func TestRunner_cleanupChecks_ErrorOnDelete(t *testing.T) {
-	maxHistory := 10
 	mockClient := &MockClient{
 		listFunc: func(ctx context.Context, namespace string, options resource.ListOptions) (resource.ListObject, error) {
-			items := make([]advisorv0alpha1.Check, 0, maxHistory+1)
-			for i := 0; i < maxHistory+1; i++ {
+			items := make([]advisorv0alpha1.Check, 0, defaultMaxHistory+1)
+			for i := 0; i < defaultMaxHistory+1; i++ {
 				item := advisorv0alpha1.Check{}
 				item.ObjectMeta.SetLabels(map[string]string{
 					checks.TypeLabel: "mock",
@@ -155,17 +154,16 @@ func TestRunner_cleanupChecks_ErrorOnDelete(t *testing.T) {
 
 	runner := &Runner{
 		client:     mockClient,
-		maxHistory: maxHistory,
+		maxHistory: defaultMaxHistory,
 	}
 	err := runner.cleanupChecks(context.Background())
 	assert.ErrorContains(t, err, "delete error")
 }
 
 func TestRunner_cleanupChecks_Success(t *testing.T) {
-	maxHistory := 10
 	itemsDeleted := []string{}
-	items := make([]advisorv0alpha1.Check, 0, maxHistory+1)
-	for i := 0; i < maxHistory+1; i++ {
+	items := make([]advisorv0alpha1.Check, 0, defaultMaxHistory+1)
+	for i := 0; i < defaultMaxHistory+1; i++ {
 		item := advisorv0alpha1.Check{}
 		item.ObjectMeta.SetName(fmt.Sprintf("check-%d", i))
 		item.ObjectMeta.SetLabels(map[string]string{
@@ -191,7 +189,7 @@ func TestRunner_cleanupChecks_Success(t *testing.T) {
 
 	runner := &Runner{
 		client:     mockClient,
-		maxHistory: maxHistory,
+		maxHistory: defaultMaxHistory,
 	}
 	err := runner.cleanupChecks(context.Background())
 	assert.NoError(t, err)

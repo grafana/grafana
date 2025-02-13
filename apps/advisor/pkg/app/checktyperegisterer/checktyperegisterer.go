@@ -24,7 +24,7 @@ type Runner struct {
 // NewRunner creates a new Runner.
 func New(cfg app.Config) (app.Runnable, error) {
 	// Read config
-	specificConfig, ok := cfg.SpecificConfig.(checkregistry.SpecificConfig)
+	specificConfig, ok := cfg.SpecificConfig.(checkregistry.AdvisorAppConfig)
 	if !ok {
 		return nil, fmt.Errorf("invalid config type")
 	}
