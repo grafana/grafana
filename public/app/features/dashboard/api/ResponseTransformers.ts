@@ -383,7 +383,7 @@ function buildElement(p: Panel): [PanelKind | LibraryPanelKind, string] {
       },
     };
 
-    return [panelKind, p.id!.toString()];
+    return [panelKind, `panel-${p.id}`];
   } else {
     // PanelKind
 
@@ -433,7 +433,7 @@ function buildElement(p: Panel): [PanelKind | LibraryPanelKind, string] {
       },
     };
 
-    return [panelKind, p.id!.toString()];
+    return [panelKind, `panel-${p.id}`];
   }
 }
 
