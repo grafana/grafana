@@ -1,5 +1,5 @@
 ---
-title: Data link options
+title: Data links and actions options
 comments: |
   This file is used in the following visualizations: bar chart, candlestick, state timeline, status history, time series, trend, xy chart
 ---
