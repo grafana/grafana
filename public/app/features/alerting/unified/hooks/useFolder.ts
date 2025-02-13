@@ -1,35 +1,32 @@
 import { useEffect } from 'react';
 
-import { FolderDTO, useDispatch } from 'app/types';
-
-import { fetchFolderIfNotFetchedAction } from '../state/actions';
-import { initialAsyncRequestState } from '../utils/redux';
-
-import { useUnifiedAlertingSelector } from './useUnifiedAlertingSelector';
+import { browseDashboardsAPI } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
+import { FolderDTO } from 'app/types';
 
 interface ReturnBag {
   folder?: FolderDTO;
   loading: boolean;
 }
 
+const { useLazyGetFolderQuery } = browseDashboardsAPI;
+const PREFER_CACHED_VALUES = true;
+
+/**
+ * Returns a folderDTO for the given uid – uses cached values
+ * @TODO propagate error state
+ */
 export function useFolder(uid?: string): ReturnBag {
-  const dispatch = useDispatch();
-  const folderRequests = useUnifiedAlertingSelector((state) => state.folders);
+  const [fetchFolder, fetchFolderState] = useLazyGetFolderQuery();
+
   useEffect(() => {
     if (uid) {
-      dispatch(fetchFolderIfNotFetchedAction(uid));
+      fetchFolder(uid, PREFER_CACHED_VALUES);
     }
-  }, [dispatch, uid]);
+  }, [fetchFolder, uid]);
 
-  if (uid) {
-    const request = folderRequests[uid] || initialAsyncRequestState;
-    return {
-      folder: request.result,
-      loading: request.loading,
-    };
-  }
   return {
-    loading: false,
+    loading: fetchFolderState.isLoading,
+    folder: fetchFolderState.data,
   };
 }
 
