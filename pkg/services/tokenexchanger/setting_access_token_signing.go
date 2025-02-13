@@ -12,8 +12,9 @@ const (
 	configKeyToken = "token"
 )
 
+// This service purely exists for centralizing the exchange config reading from grafana.ini
 type Service struct {
-	exchanger authlib.TokenExchanger
+	Exchanger authlib.TokenExchanger
 }
 
 func ProvideAccessTokenSigner(settings setting.Provider, clientProvider sdkhttpclient.Provider) (*Service, error) {
@@ -25,12 +26,14 @@ func ProvideAccessTokenSigner(settings setting.Provider, clientProvider sdkhttpc
 		return nil, err
 	}
 
-	exchanger, err := authlib.NewTokenExchangeClient(*cfg, authlib.WithHTTPClient(client))
-	if err != nil {
-		return nil, err
+	if len(cfg.Token) > 0 && len(cfg.TokenExchangeURL) > 0 {
+		exchanger, err := authlib.NewTokenExchangeClient(*cfg, authlib.WithHTTPClient(client))
+		if err != nil {
+			return nil, err
+		}
+		signer.Exchanger = exchanger
 	}
 
-	signer.exchanger = exchanger
 	return signer, nil
 }
 
