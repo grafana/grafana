@@ -1,5 +1,6 @@
 import { PluginExtensionAddedLinkConfig, PluginExtensionPoints } from '@grafana/data';
 import { contextSrv } from 'app/core/core';
+import { DataSourceTestSuccessExploreLinkContextV1 } from 'app/features/datasources/components/DataSourceTestingStatus';
 import { dispatch } from 'app/store/store';
 import { AccessControlAction } from 'app/types';
 
@@ -52,6 +53,23 @@ export function getExploreExtensionConfigs(): PluginExtensionAddedLinkConfig[] {
           dispatch(changeCorrelationEditorDetails({ editorMode: true }));
           dispatch(runQueries({ exploreId: context!.exploreId }));
         },
+      }),
+      createAddedLinkConfig<DataSourceTestSuccessExploreLinkContextV1>({
+        title: 'Explore logs',
+        description: 'Explore logs from this data source',
+        targets: [PluginExtensionPoints.DataSourceConfigTestSuccessfulExploreLink],
+        configure: (context) => {
+          switch (context?.dataSource?.type) {
+            case 'loki':
+              // if you want to override the path property of the link you can do it here by returning an object with a new path property.
+              return {
+                path: '/explore?ds=loki',
+              };
+            default:
+              return undefined;
+          }
+        },
+        path: '/explore',
       }),
     ];
   } catch (error) {

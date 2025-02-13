@@ -1,9 +1,9 @@
 import { css, cx } from '@emotion/css';
-import { HTMLAttributes } from 'react';
+import { HTMLAttributes, useMemo } from 'react';
 
-import { DataSourceSettings as DataSourceSettingsType, GrafanaTheme2 } from '@grafana/data';
+import { DataSourceSettings as DataSourceSettingsType, GrafanaTheme2, PluginExtensionPoints } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { TestingStatus, config } from '@grafana/runtime';
+import { TestingStatus, config, usePluginLinks } from '@grafana/runtime';
 import { AlertVariant, Alert, useTheme2, Link, useStyles2 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 
@@ -20,7 +20,7 @@ interface AlertMessageProps extends HTMLAttributes<HTMLDivElement> {
   title: string;
   severity?: AlertVariant;
   exploreUrl: string;
-  dataSourceId: string;
+  dataSource: DataSourceSettingsType;
   onDashboardLinkClicked: () => void;
 }
 
@@ -39,11 +39,10 @@ const getStyles = (theme: GrafanaTheme2, hasTitle: boolean) => {
   };
 };
 
-const AlertSuccessMessage = ({ title, exploreUrl, dataSourceId, onDashboardLinkClicked }: AlertMessageProps) => {
+const AlertSuccessMessage = ({ title, exploreUrl, dataSource, onDashboardLinkClicked }: AlertMessageProps) => {
   const theme = useTheme2();
   const hasTitle = Boolean(title);
   const styles = getStyles(theme, hasTitle);
-  const canExploreDataSources = contextSrv.hasAccessToExplore();
 
   return (
     <div className={styles.content}>
@@ -51,30 +50,82 @@ const AlertSuccessMessage = ({ title, exploreUrl, dataSourceId, onDashboardLinkC
         Next, you can start to visualize data by{' '}
         <Link
           aria-label={`Create a dashboard`}
-          href={`/dashboard/new-with-ds/${dataSourceId}`}
+          href={`/dashboard/new-with-ds/${dataSource.uid}`}
           className="external-link"
           onClick={onDashboardLinkClicked}
         >
           building a dashboard
         </Link>
-        , or by querying data in the{' '}
-        <Link
-          aria-label={`Explore data`}
-          className={cx('external-link', {
-            [`${styles.disabled}`]: !canExploreDataSources,
-            'test-disabled': !canExploreDataSources,
-          })}
-          href={exploreUrl}
-        >
-          Explore view
-        </Link>
-        .
+        , or by querying data in the <AlertSuccessExploreLink exploreUrl={exploreUrl} dataSource={dataSource} />.
       </Trans>
     </div>
   );
 };
 
 AlertSuccessMessage.displayName = 'AlertSuccessMessage';
+
+type AlertSuccessExploreLinkProps = {
+  exploreUrl: string;
+  dataSource: DataSourceSettingsType;
+};
+
+export type DataSourceTestSuccessExploreLinkContextV1 = {
+  dataSource: DataSourceSettingsType;
+};
+
+function AlertSuccessExploreLink(props: AlertSuccessExploreLinkProps): React.ReactElement {
+  const { exploreUrl, dataSource } = props;
+  const theme = useTheme2();
+  const styles = getStyles(theme, false);
+  const canExploreDataSources = contextSrv.hasAccessToExplore();
+  const extensionContext = useMemo<DataSourceTestSuccessExploreLinkContextV1>(() => ({ dataSource }), [dataSource]);
+
+  const { isLoading, links } = usePluginLinks({
+    extensionPointId: PluginExtensionPoints.DataSourceConfigTestSuccessfulExploreLink,
+    context: extensionContext,
+  });
+
+  if (isLoading) {
+    return <div>return some kind of loading state..</div>;
+  }
+
+  const exploreLink = useMemo(() => {
+    // maybe have some kind of sorting that select link to use based on
+    // some criteria. Maybe use the explore-logs if it is available but select
+    // another link if it is not available.
+    return links.find((link) => link.pluginId === 'explore-logs');
+  }, [links]);
+
+  if (!exploreLink) {
+    // This is the default case. But maybe we should hide the link if no link is available?
+    return (
+      <Link
+        aria-label={`Explore data`}
+        className={cx('external-link', {
+          [`${styles.disabled}`]: !canExploreDataSources,
+          'test-disabled': !canExploreDataSources,
+        })}
+        href={exploreUrl}
+      >
+        Explore view
+      </Link>
+    );
+  }
+
+  return (
+    <Link
+      aria-label={exploreLink.title}
+      className={cx('external-link', {
+        [`${styles.disabled}`]: !canExploreDataSources,
+        'test-disabled': !canExploreDataSources,
+      })}
+      href={exploreLink.path}
+      onClick={exploreLink.onClick}
+    >
+      {exploreLink.title}
+    </Link>
+  );
+}
 
 interface ErrorDetailsLinkProps extends HTMLAttributes<HTMLDivElement> {
   link?: string;
@@ -154,7 +205,7 @@ export function DataSourceTestingStatus({ testingStatus, exploreUrl, dataSource 
                 <AlertSuccessMessage
                   title={message}
                   exploreUrl={exploreUrl}
-                  dataSourceId={dataSource.uid}
+                  dataSource={dataSource}
                   onDashboardLinkClicked={onDashboardLinkClicked}
                 />
               ) : null}
