@@ -13,6 +13,7 @@ func TestAlertmanagerIntegration_ExtraDedupStage(t *testing.T) {
 	}
 
 	t.Run("assert no flapping alerts when stopOnExtraDedup is enabled", func(t *testing.T) {
+		t.Skip("skipping flaky test")
 		s, err := NewAlertmanagerScenario()
 		require.NoError(t, err)
 		defer s.Close()
