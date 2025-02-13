@@ -199,7 +199,7 @@ func createOAuthInfoFromKeyValues(settingsKV map[string]any, parsingWarns *[]err
 
 			splitStr, err := util.SplitStringWithError(strData)
 			if err != nil && parsingWarns != nil {
-				*parsingWarns = append(*parsingWarns, err)
+				*parsingWarns = append(*parsingWarns, fmt.Errorf("incorrect format: %s", data))
 			}
 			return splitStr, nil
 		}
