@@ -14,10 +14,6 @@ import (
 )
 
 func (r *exportJob) loadUsers(ctx context.Context) error {
-	status := r.jobStatus
-	status.Message = "reading user info"
-	r.maybeNotify(ctx)
-
 	client := r.client.Resource(schema.GroupVersionResource{
 		Group:    iam.GROUP,
 		Version:  iam.VERSION,
@@ -32,6 +28,7 @@ func (r *exportJob) loadUsers(ctx context.Context) error {
 		return fmt.Errorf("unable to list all users in one request: %s", rawList.GetContinue())
 	}
 
+	// FIXME: should we improve logging here?
 	var ok bool
 	r.userInfo = make(map[string]repository.CommitSignature)
 	for _, item := range rawList.Items {

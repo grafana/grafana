@@ -51,58 +51,69 @@ func (r *ExportWorker) IsSupported(ctx context.Context, job provisioning.Job) bo
 }
 
 // Process will start a job
-func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, job provisioning.Job, progress jobs.ProgressFn) (*provisioning.JobStatus, error) {
+func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, job provisioning.Job, progressFn jobs.ProgressFn) (*provisioning.JobStatus, error) {
 	if repo.Config().Spec.ReadOnly {
 		return &provisioning.JobStatus{
-			State:  provisioning.JobStateError,
-			Errors: []string{"Exporting to a read only repository is not supported"},
+			State:   provisioning.JobStateError,
+			Message: "Exporting to a read only repository is not supported",
 		}, nil
 	}
 
 	options := job.Spec.Export
 	if options == nil {
 		return &provisioning.JobStatus{
-			State:  provisioning.JobStateError,
-			Errors: []string{"Export job missing export settings"},
+			State:   provisioning.JobStateError,
+			Message: "Export job missing export settings",
 		}, nil
 	}
 
-	var err error
-	var buffered *gogit.GoGitRepo
+	progress := jobs.NewJobProgressRecorder(progressFn)
+	var (
+		err      error
+		buffered *gogit.GoGitRepo
+	)
+
 	if repo.Config().Spec.GitHub != nil {
+		progress.SetMessage("clone target")
 		buffered, err = gogit.Clone(ctx, repo.Config(), gogit.GoGitCloneOptions{
 			Root:                   r.clonedir,
 			SingleCommitBeforePush: !options.History,
 		}, r.secrets, os.Stdout)
 		if err != nil {
 			return &provisioning.JobStatus{
-				State:  provisioning.JobStateError,
-				Errors: []string{"Unable to clone target", err.Error()},
+				State:   provisioning.JobStateError,
+				Message: "Unable to clone target",
+				Errors:  []string{err.Error()},
 			}, nil
 		}
 
 		// New empty branch (same on main???)
 		if options.Branch != "" {
+			progress.SetMessage("create empty branch")
 			_, err := buffered.NewEmptyBranch(ctx, options.Branch)
 			if err != nil {
 				return &provisioning.JobStatus{
-					State:  provisioning.JobStateError,
-					Errors: []string{"Unable to create empty branch", err.Error()},
+					State:   provisioning.JobStateError,
+					Message: "Unable to create empty branch",
+					Errors:  []string{err.Error()},
 				}, nil
 			}
 		}
+
 		repo = buffered     // send all writes to the buffered repo
 		options.Branch = "" // :( the branch is now baked into the repo
 	}
 
 	dynamicClient, _, err := r.clients.New(repo.Config().Namespace)
 	if err != nil {
+		// TODO: how do we really want to return errors?
 		return nil, fmt.Errorf("error getting client %w", err)
 	}
 
 	worker := newExportJob(ctx, repo, *options, dynamicClient, progress)
 
 	if options.History {
+		progress.SetMessage("load users")
 		err = worker.loadUsers(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("error loading users %w", err)
@@ -115,28 +126,27 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 	}
 
 	// Load and write all folders
+	progress.SetMessage("start folder export")
 	err = worker.loadFolders(ctx)
 	if err != nil {
-		return worker.jobStatus, err
+		// TODO: handle better
+		return progress.Complete(ctx, err), err
 	}
 
+	progress.SetMessage("start resource export")
 	err = worker.loadResources(ctx)
 	if err != nil {
-		return worker.jobStatus, err
+		// TODO: handle better
+		return progress.Complete(ctx, err), err
 	}
 
-	status := worker.jobStatus
-	if buffered != nil && status.State != provisioning.JobStateError {
-		status.Message = "pushing changes..."
-		worker.maybeNotify(ctx) // force notify?
-		err = buffered.Push(ctx, os.Stdout)
-		status.Message = ""
+	// TODO: handle the errors properly
+	if buffered != nil {
+		progress.SetMessage("push changes")
+		if err := buffered.Push(ctx, os.Stdout); err != nil {
+			return progress.Complete(ctx, err), err
+		}
 	}
 
-	// Add summary info to response
-	if !status.State.Finished() && err == nil {
-		status.State = provisioning.JobStateSuccess
-		status.Message = ""
-	}
-	return status, err
+	return progress.Complete(ctx, nil), err
 }

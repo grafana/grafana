@@ -10,20 +10,16 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	dashboards "github.com/grafana/grafana/pkg/apis/dashboard"
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/storage/unified/parquet"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-var (
-	_ resource.BatchResourceWriter = (*resourceReader)(nil)
-)
+var _ resource.BatchResourceWriter = (*resourceReader)(nil)
 
 type resourceReader struct {
-	job     *exportJob
-	summary *provisioning.JobResourceSummary
-	logger  logging.Logger
+	job    *exportJob
+	logger logging.Logger
 }
 
 // Close implements resource.BatchResourceWriter.
@@ -43,13 +39,13 @@ func (f *resourceReader) Write(ctx context.Context, key *resource.ResourceKey, v
 	if err != nil {
 		return err
 	}
-	err = f.job.add(ctx, f.summary, item)
+	err = f.job.add(ctx, item)
 	if err != nil {
 		f.logger.Warn("error adding from legacy", "name", key.Name, "err", err)
-		f.summary.Errors = append(f.summary.Errors, fmt.Sprintf("%s: %s", key.Name, err.Error()))
-		if len(f.summary.Errors) > 50 {
-			return err
-		}
+		// f.summary.Errors = append(f.summary.Errors, fmt.Sprintf("%s: %s", key.Name, err.Error()))
+		// if len(f.summary.Errors) > 50 {
+		// 	return err
+		// }
 	}
 	return nil
 }
@@ -62,13 +58,13 @@ func (r *exportJob) loadResources(ctx context.Context) error {
 	}}
 
 	for _, kind := range kinds {
-		r.jobStatus.Message = "Exporting " + kind.Resource + "..."
+		r.progress.SetMessage(fmt.Sprintf("exporting %s resource", kind.Resource))
 		if r.legacy != nil {
+			r.progress.SetMessage(fmt.Sprintf("migrate %s resource", kind.Resource))
 			gr := kind.GroupResource()
 			reader := &resourceReader{
-				summary: r.getSummary(gr),
-				job:     r,
-				logger:  r.logger,
+				job:    r,
+				logger: r.logger,
 			}
 			opts := legacy.MigrateOptions{
 				Namespace:   r.namespace,
@@ -77,18 +73,19 @@ func (r *exportJob) loadResources(ctx context.Context) error {
 				Store:       parquet.NewBatchResourceWriterClient(reader),
 				OnlyCount:   true, // first get the count
 			}
-			stats, err := r.legacy.Migrate(ctx, opts)
+			_, err := r.legacy.Migrate(ctx, opts)
 			if err != nil {
 				return fmt.Errorf("unable to count legacy items %w", err)
 			}
-			if len(stats.Summary) > 0 {
-				count := stats.Summary[0].Count
-				history := stats.Summary[0].History
-				if history > count {
-					count = history // the number of items we will process
-				}
-				reader.summary.Total = count
-			}
+
+			// if len(stats.Summary) > 0 {
+			// 	count := stats.Summary[0].Count
+			// 	history := stats.Summary[0].History
+			// 	if history > count {
+			// 		count = history // the number of items we will process
+			// 	}
+			// 	reader.summary.Total = count
+			// }
 
 			opts.OnlyCount = false // this time actually write
 			_, err = r.legacy.Migrate(ctx, opts)
@@ -97,6 +94,7 @@ func (r *exportJob) loadResources(ctx context.Context) error {
 			}
 		}
 
+		r.progress.SetMessage(fmt.Sprintf("reading %s resource", kind.Resource))
 		if err := r.loadResourcesFromAPIServer(ctx, kind); err != nil {
 			return fmt.Errorf("error loading %s %w", kind.Resource, err)
 		}
@@ -105,9 +103,7 @@ func (r *exportJob) loadResources(ctx context.Context) error {
 }
 
 func (r *exportJob) loadResourcesFromAPIServer(ctx context.Context, kind schema.GroupVersionResource) error {
-	r.maybeNotify(ctx)
 	client := r.client.Resource(kind)
-	summary := r.getSummary(kind.GroupResource())
 
 	continueToken := ""
 	for {
@@ -117,7 +113,7 @@ func (r *exportJob) loadResourcesFromAPIServer(ctx context.Context, kind schema.
 		}
 
 		for _, item := range list.Items {
-			if err = r.add(ctx, summary, &item); err != nil {
+			if err = r.add(ctx, &item); err != nil {
 				return fmt.Errorf("error adding value: %w", err)
 			}
 		}
