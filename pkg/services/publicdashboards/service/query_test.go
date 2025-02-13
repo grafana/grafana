@@ -1123,47 +1123,6 @@ func TestGetMetricRequest(t *testing.T) {
 	})
 }
 
-func TestGetUniqueDashboardDatasourceUids(t *testing.T) {
-	t.Run("can get unique datasource ids from dashboard", func(t *testing.T) {
-		json, err := simplejson.NewJson([]byte(dashboardWithDuplicateDatasources))
-		require.NoError(t, err)
-
-		uids := getUniqueDashboardDatasourceUids(json)
-		require.Len(t, uids, 2)
-		require.Equal(t, "abc123", uids[0])
-		require.Equal(t, "_yxMP8Ynk", uids[1])
-	})
-
-	t.Run("can get unique datasource ids from dashboard with a mixed datasource", func(t *testing.T) {
-		json, err := simplejson.NewJson([]byte(dashboardWithMixedDatasource))
-		require.NoError(t, err)
-
-		uids := getUniqueDashboardDatasourceUids(json)
-		require.Len(t, uids, 3)
-		require.Equal(t, "abc123", uids[0])
-		require.Equal(t, "6SOeCRrVk", uids[1])
-		require.Equal(t, "_yxMP8Ynk", uids[2])
-	})
-
-	t.Run("can get no datasource uids from empty dashboard", func(t *testing.T) {
-		json, err := simplejson.NewJson([]byte(`{"panels": {}}`))
-		require.NoError(t, err)
-
-		uids := getUniqueDashboardDatasourceUids(json)
-		require.Len(t, uids, 0)
-	})
-
-	t.Run("can get unique datasource ids from dashboard with rows", func(t *testing.T) {
-		json, err := simplejson.NewJson([]byte(dashboardWithCollapsedRows))
-		require.NoError(t, err)
-
-		uids := getUniqueDashboardDatasourceUids(json)
-		require.Len(t, uids, 2)
-		require.Equal(t, "qCbTUC37k", uids[0])
-		require.Equal(t, "P49A45DF074423DFB", uids[1])
-	})
-}
-
 func TestBuildMetricRequest(t *testing.T) {
 	fakeDashboardService := &dashboards.FakeDashboardService{}
 	service, sqlStore, cfg := newPublicDashboardServiceImpl(t, nil, nil, nil, fakeDashboardService, nil)

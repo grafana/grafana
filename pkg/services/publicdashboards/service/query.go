@@ -178,55 +178,6 @@ func (pd *PublicDashboardServiceImpl) buildMetricRequest(dashboard *dashboards.D
 	}, nil
 }
 
-func getUniqueDashboardDatasourceUids(dashboard *simplejson.Json) []string {
-	var datasourceUids []string
-	exists := map[string]bool{}
-
-	// collapsed rows contain panels in a nested structure, so we need to flatten them before calculate unique uids
-	flattenedPanels := getFlattenedPanels(dashboard)
-
-	for _, panelObj := range flattenedPanels {
-		panel := simplejson.NewFromAny(panelObj)
-		uid := getDataSourceUidFromJson(panel)
-
-		// if uid is for a mixed datasource, get the datasource uids from the targets
-		if uid == "-- Mixed --" {
-			for _, targetObj := range panel.Get("targets").MustArray() {
-				target := simplejson.NewFromAny(targetObj)
-				datasourceUid := getDataSourceUidFromJson(target)
-				if _, ok := exists[datasourceUid]; !ok {
-					datasourceUids = append(datasourceUids, datasourceUid)
-					exists[datasourceUid] = true
-				}
-			}
-		} else {
-			if _, ok := exists[uid]; !ok {
-				datasourceUids = append(datasourceUids, uid)
-				exists[uid] = true
-			}
-		}
-	}
-
-	return datasourceUids
-}
-
-func getFlattenedPanels(dashboard *simplejson.Json) []any {
-	var flatPanels []any
-	for _, panelObj := range dashboard.Get("panels").MustArray() {
-		panel := simplejson.NewFromAny(panelObj)
-		// if the panel is a row and it is collapsed, get the queries from the panels inside the row
-		// if it is not collapsed, the row does not have any panels
-		if panel.Get("type").MustString() == "row" {
-			if panel.Get("collapsed").MustBool() {
-				flatPanels = append(flatPanels, panel.Get("panels").MustArray()...)
-			}
-		} else {
-			flatPanels = append(flatPanels, panelObj)
-		}
-	}
-	return flatPanels
-}
-
 func groupQueriesByPanelId(dashboard *simplejson.Json) map[int64][]*simplejson.Json {
 	result := make(map[int64][]*simplejson.Json)
 
