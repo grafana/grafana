@@ -83,7 +83,7 @@ Use the following settings to include custom data within the [JSON payload](#bod
 | Message | Sends the value as a string in the `message` field of the [JSON payload](#body). Supports [notification templates](ref:notification-templates). |
 
 {{< admonition type="note" >}}
-You can customize the `title` and `message` options to include custom messages and notification data using notification templates. These fiels are always sent as strings in the JSON payload.
+You can customize the `title` and `message` options to include custom messages and notification data using notification templates. These fields are always sent as strings in the JSON payload.
 
 However, you cannot customize the webhook data structure, such as adding or changing other JSON fields and HTTP headers, or sending data in a different format like XML.
 
