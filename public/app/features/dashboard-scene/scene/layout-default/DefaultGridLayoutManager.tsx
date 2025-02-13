@@ -252,6 +252,14 @@ export class DefaultGridLayoutManager
   }
 
   public activateRepeaters() {
+    if (!this.isActive) {
+      this.activate();
+    }
+
+    if (!this.state.grid.isActive) {
+      this.state.grid.activate();
+    }
+
     this.state.grid.forEachChild((child) => {
       if (child instanceof DashboardGridItem && !child.isActive) {
         child.activate();
