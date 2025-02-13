@@ -6,8 +6,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/grafana/dskit/instrument"
 	"github.com/prometheus/client_golang/prometheus"
+
+	"github.com/grafana/dskit/instrument"
 )
 
 var (
@@ -103,11 +104,12 @@ func NewIndexMetrics(indexDir string, searchBackend SearchBackend) *BleveIndexMe
 }
 
 func (s *SprinklesMetrics) Collect(ch chan<- prometheus.Metric) {
-	s.SprinklesLatency.Collect(ch)
+	// s.SprinklesLatency.Collect(ch)
 }
 
 func (s *SprinklesMetrics) Describe(ch chan<- *prometheus.Desc) {
-	s.SprinklesLatency.Describe(ch)
+	// avoid starup panic
+	//	s.SprinklesLatency.Describe(ch)
 }
 
 func (s *BleveIndexMetrics) Collect(ch chan<- prometheus.Metric) {
