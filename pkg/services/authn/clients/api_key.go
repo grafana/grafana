@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
-	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -29,9 +28,8 @@ var (
 )
 
 var (
-	_ authn.HookClient             = new(APIKey)
-	_ authn.ContextAwareClient     = new(APIKey)
-	_ authn.IdentityResolverClient = new(APIKey)
+	_ authn.HookClient         = new(APIKey)
+	_ authn.ContextAwareClient = new(APIKey)
 )
 
 const (
@@ -74,15 +72,16 @@ func (s *APIKey) Authenticate(ctx context.Context, r *authn.Request) (*authn.Ide
 
 	// Set keyID so we can use it in last used hook
 	r.SetMeta(metaKeyID, strconv.FormatInt(key.ID, 10))
+
 	if !shouldUpdateLastUsedAt(key) {
 		// Hack to just have some value, we will check this key in the hook
 		// and if its not an empty string we will not update last used.
 		r.SetMeta(metaKeySkipLastUsed, "true")
 	}
 
-	// if the api key don't belong to a service account construct the identity and return it
+	// we no longer support plain api keys we should return an error if its not attached to a service account
 	if key.ServiceAccountId == nil || *key.ServiceAccountId < 1 {
-		return newAPIKeyIdentity(key), nil
+		return nil, errAPIKeyInvalid.Errorf("api key are not attached to a service account")
 	}
 
 	return newServiceAccountIdentity(key), nil
@@ -152,38 +151,6 @@ func (s *APIKey) Priority() uint {
 	return 30
 }
 
-func (s *APIKey) IdentityType() claims.IdentityType {
-	return claims.TypeAPIKey
-}
-
-func (s *APIKey) ResolveIdentity(ctx context.Context, orgID int64, typ claims.IdentityType, id string) (*authn.Identity, error) {
-	if !claims.IsIdentityType(typ, claims.TypeAPIKey) {
-		return nil, errAPIKeyInvalidType.Errorf("got unexpected type: %s", typ)
-	}
-
-	apiKeyID, err := strconv.ParseInt(id, 10, 64)
-	if err != nil {
-		return nil, err
-	}
-
-	key, err := s.apiKeyService.GetApiKeyById(ctx, &apikey.GetByIDQuery{
-		ApiKeyID: apiKeyID,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	if err := validateApiKey(orgID, key); err != nil {
-		return nil, err
-	}
-
-	if key.ServiceAccountId != nil && *key.ServiceAccountId >= 1 {
-		return nil, errAPIKeyInvalidType.Errorf("api key belongs to service account")
-	}
-
-	return newAPIKeyIdentity(key), nil
-}
-
 func (s *APIKey) Hook(ctx context.Context, identity *authn.Identity, r *authn.Request) error {
 	if r.GetMeta(metaKeySkipLastUsed) != "" {
 		return nil
@@ -249,17 +216,6 @@ func validateApiKey(orgID int64, key *apikey.APIKey) error {
 	}
 
 	return nil
-}
-
-func newAPIKeyIdentity(key *apikey.APIKey) *authn.Identity {
-	return &authn.Identity{
-		ID:              strconv.FormatInt(key.ID, 10),
-		Type:            claims.TypeAPIKey,
-		OrgID:           key.OrgID,
-		OrgRoles:        map[int64]org.RoleType{key.OrgID: key.Role},
-		ClientParams:    authn.ClientParams{SyncPermissions: true},
-		AuthenticatedBy: login.APIKeyAuthModule,
-	}
 }
 
 func newServiceAccountIdentity(key *apikey.APIKey) *authn.Identity {
