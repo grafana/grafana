@@ -1,7 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 import { PanelPlugin } from '@grafana/data';
-import { AngularComponent } from '@grafana/runtime';
 import { defaultDashboard } from '@grafana/schema';
 import { DashboardInitError, DashboardInitPhase, DashboardState } from 'app/types';
 
@@ -56,11 +55,6 @@ const dashboardSlice = createSlice({
 export interface PanelModelAndPluginReadyPayload {
   panelId: number;
   plugin: PanelPlugin;
-}
-
-export interface SetPanelAngularComponentPayload {
-  panelId: number;
-  angularComponent: AngularComponent | null;
 }
 
 export interface SetPanelInstanceStatePayload {

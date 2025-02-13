@@ -1,13 +1,11 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 import { PanelPlugin } from '@grafana/data';
-import { AngularComponent } from '@grafana/runtime';
 
 export type RootPanelsState = Record<string, PanelState>;
 
 export interface PanelState {
   plugin?: PanelPlugin;
-  angularComponent?: AngularComponent;
   instanceState?: unknown | null;
 }
 
@@ -35,10 +33,6 @@ const panelsSlice = createSlice({
     setPanelInstanceState: (state, action: PayloadAction<SetPanelInstanceStatePayload>) => {
       state[action.payload.key].instanceState = action.payload.value;
     },
-    setPanelAngularComponent: (state, action: PayloadAction<SetPanelAngularComponentPayload>) => {
-      const panelState = state[action.payload.key];
-      panelState.angularComponent = action.payload.angularComponent;
-    },
   },
 });
 
@@ -47,24 +41,13 @@ export interface PanelModelAndPluginReadyPayload {
   plugin: PanelPlugin;
 }
 
-export interface SetPanelAngularComponentPayload {
-  key: string;
-  angularComponent: AngularComponent;
-}
-
 export interface SetPanelInstanceStatePayload {
   key: string;
   value: unknown;
 }
 
-export const {
-  panelModelAndPluginReady,
-  setPanelAngularComponent,
-  setPanelInstanceState,
-  changePanelKey,
-  removePanel,
-  removeAllPanels,
-} = panelsSlice.actions;
+export const { panelModelAndPluginReady, setPanelInstanceState, changePanelKey, removePanel, removeAllPanels } =
+  panelsSlice.actions;
 
 export const panelsReducer = panelsSlice.reducer;
 

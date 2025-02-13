@@ -28,19 +28,6 @@ const promDatasource = mockDataSource({
   type: 'prometheus',
 });
 
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getAngularLoader: () => ({
-    load: () => ({
-      destroy: jest.fn(),
-      digest: jest.fn(),
-      getScope: () => ({
-        $watch: jest.fn(),
-      }),
-    }),
-  }),
-}));
-
 jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => ({
   ...jest.requireActual('@grafana/runtime/src/services/dataSourceSrv'),
   getDataSourceSrv: () => ({

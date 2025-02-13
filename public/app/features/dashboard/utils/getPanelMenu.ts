@@ -1,5 +1,5 @@
 import { PanelMenuItem, urlUtil, PluginExtensionLink } from '@grafana/data';
-import { AngularComponent, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import config from 'app/core/config';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { t } from 'app/core/internationalization';
