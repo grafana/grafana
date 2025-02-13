@@ -89,7 +89,6 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
       to: timeRange.to,
       autoRefresh: refreshPicker?.state.refresh || '',
       autoRefreshIntervals: refreshPicker?.state.intervals,
-      quickRanges: [], //FIXME is coming timepicker.time_options,
       hideTimepicker: controlsState?.hideTimeControls ?? false,
       weekStart: timeRange.weekStart,
       fiscalYearStartMonth: timeRange.fiscalYearStartMonth,
@@ -502,7 +501,11 @@ function validateDashboardSchemaV2(dash: unknown): dash is DashboardV2Spec {
   if (!('autoRefreshIntervals' in dash.timeSettings) || !Array.isArray(dash.timeSettings.autoRefreshIntervals)) {
     throw new Error('AutoRefreshIntervals is not an array');
   }
-  if (!('quickRanges' in dash.timeSettings) || !Array.isArray(dash.timeSettings.quickRanges)) {
+  if (
+    'quickRanges' in dash.timeSettings &&
+    dash.timeSettings.quickRanges &&
+    !Array.isArray(dash.timeSettings.quickRanges)
+  ) {
     throw new Error('QuickRanges is not an array');
   }
   if (!('hideTimepicker' in dash.timeSettings) || typeof dash.timeSettings.hideTimepicker !== 'boolean') {

@@ -706,7 +706,9 @@ steps:
     token:
       from_secret: drone_token
 - commands:
-  - docker run --privileged --rm tonistiigi/binfmt --install all
+  - docker run --privileged --rm tonistiigi/binfmt:qemu-v7.0.0-28 --version
+  - docker run --privileged --rm tonistiigi/binfmt:qemu-v7.0.0-28 --uninstall 'qemu-*'
+  - docker run --privileged --rm tonistiigi/binfmt:qemu-v7.0.0-28 --install all
   - /src/grafana-build artifacts -a targz:grafana:linux/amd64 -a targz:grafana:linux/arm64
     -a targz:grafana:linux/arm/v7 -a docker:grafana:linux/amd64 -a docker:grafana:linux/amd64:ubuntu
     -a docker:grafana:linux/arm64 -a docker:grafana:linux/arm64:ubuntu -a docker:grafana:linux/arm/v7
@@ -2124,7 +2126,9 @@ steps:
   image: node:22.11.0-alpine
   name: build-frontend-packages
 - commands:
-  - docker run --privileged --rm tonistiigi/binfmt --install all
+  - docker run --privileged --rm tonistiigi/binfmt:qemu-v7.0.0-28 --version
+  - docker run --privileged --rm tonistiigi/binfmt:qemu-v7.0.0-28 --uninstall 'qemu-*'
+  - docker run --privileged --rm tonistiigi/binfmt:qemu-v7.0.0-28 --install all
   - /src/grafana-build artifacts -a targz:grafana:linux/amd64 -a targz:grafana:linux/arm64
     -a targz:grafana:linux/arm/v7 -a docker:grafana:linux/amd64 -a docker:grafana:linux/amd64:ubuntu
     -a docker:grafana:linux/arm64 -a docker:grafana:linux/arm64:ubuntu -a docker:grafana:linux/arm/v7
@@ -5601,6 +5605,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 39572225832c2de6e648b6a4d66a36d212777390bf6fd4643f9cfaad21182df3
+hmac: ed11784cafc81bbb617e931f1aa392a9de8bde04dd5d14e51baf856a3942dd91
 
 ...

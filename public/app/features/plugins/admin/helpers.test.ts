@@ -217,6 +217,7 @@ describe('Plugins/Helpers', () => {
         updatedAt: '2021-05-18T14:53:01.000Z',
         isFullyInstalled: false,
         angularDetected: false,
+        url: 'https://github.com/alexanderzobnin/grafana-zabbix',
       });
     });
 
@@ -354,6 +355,7 @@ describe('Plugins/Helpers', () => {
         installedVersion: '4.2.2',
         isFullyInstalled: true,
         angularDetected: false,
+        url: 'https://github.com/alexanderzobnin/grafana-zabbix',
       });
     });
 
