@@ -132,5 +132,4 @@ func TestService_SignIdentity(t *testing.T) {
 		require.NoError(t, err)
 		assert.NotEqual(t, first, third)
 	})
-
 }
