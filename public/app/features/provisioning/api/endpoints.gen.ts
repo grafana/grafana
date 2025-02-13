@@ -828,6 +828,7 @@ export type SyncStatus = {
   state: 'error' | 'pending' | 'success' | 'working';
 };
 export type WebhookStatus = {
+  encryptedSecret?: string;
   id?: number;
   secret?: string;
   subscribedEvents?: string[];
