@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
 	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -100,5 +101,35 @@ func TestService_SignIdentity(t *testing.T) {
 		assert.Equal(t, "U1", gotClaims.Rest.Username)
 		assert.Equal(t, claims.TypeUser, gotClaims.Rest.Type)
 		assert.Equal(t, "edpu3nnt61se8e", gotClaims.Rest.Identifier)
+	})
+
+	t.Run("should sign new token if org role has changed", func(t *testing.T) {
+		s := ProvideService(
+			setting.NewCfg(), signer, remotecache.NewFakeCacheStorage(),
+			&authntest.FakeService{}, nil,
+		)
+
+		ident := &authn.Identity{
+			ID:              "1",
+			Type:            claims.TypeUser,
+			AuthenticatedBy: login.AzureADAuthModule,
+			Login:           "U1",
+			UID:             "edpu3nnt61se8e",
+			OrgID:           1,
+			OrgRoles:        map[int64]org.RoleType{1: org.RoleAdmin},
+		}
+
+		first, _, err := s.SignIdentity(context.Background(), ident)
+		require.NoError(t, err)
+
+		second, _, err := s.SignIdentity(context.Background(), ident)
+		require.NoError(t, err)
+
+		assert.Equal(t, first, second)
+
+		ident.OrgRoles[1] = org.RoleEditor
+		third, _, err := s.SignIdentity(context.Background(), ident)
+		require.NoError(t, err)
+		assert.NotEqual(t, first, third)
 	})
 }
