@@ -156,8 +156,8 @@ describe('MultiCombobox', () => {
     await user.type(input, 'D');
     await user.keyboard('{arrowdown}{enter}');
     expect(onChange).toHaveBeenCalledWith([
-      { value: 'a' },
-      { value: 'c' },
+      { label: 'A', value: 'a' },
+      { label: 'C', value: 'c' },
       { label: 'D', value: 'D', description: 'Use custom value' },
     ]);
   });
