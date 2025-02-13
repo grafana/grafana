@@ -25,7 +25,7 @@ import { useCreateOrUpdateRepository } from './hooks';
 import { RepositoryFormData, WorkflowOption } from './types';
 import { dataToSpec, specToData } from './utils/data';
 
-const typeOptions = ['GitHub', 'Local', 'S3'].map((label) => ({ label, value: label.toLowerCase() }));
+const typeOptions = ['GitHub', 'Local'].map((label) => ({ label, value: label.toLowerCase() }));
 const targetOptions = [
   { value: 'instance', label: 'Entire instance' },
   { value: 'folder', label: 'Managed folder' },
@@ -201,16 +201,6 @@ export function ConfigForm({ data }: ConfigFormProps) {
         </Field>
       )}
 
-      {type === 's3' && (
-        <FieldSet label="local">
-          <Field label={'S3 bucket'} error={errors?.bucket?.message} invalid={!!errors?.bucket}>
-            <Input {...register('bucket', { required: 'This field is required.' })} placeholder={'bucket-name'} />
-          </Field>
-          <Field label={'S3 region'} error={errors?.region?.message} invalid={!!errors?.region}>
-            <Input {...register('region', { required: 'This field is required.' })} placeholder={'us-west-2'} />
-          </Field>
-        </FieldSet>
-      )}
       <FieldSet label="Sync Settings">
         <Field label={'Enabled'} description={'Once sync is enabled, the target cannot be changed.'}>
           <Switch {...register('sync.enabled')} id={'sync.enabled'} />

@@ -751,10 +751,6 @@ export type GitHubRepositoryConfig = {
 export type LocalRepositoryConfig = {
   path?: string;
 };
-export type S3RepositoryConfig = {
-  bucket?: string;
-  region?: string;
-};
 export type SyncOptions = {
   /** Enabled must be saved as true before any sync job will run */
   enabled: boolean;
@@ -770,14 +766,12 @@ export type SyncOptions = {
 export type RepositorySpec = {
   /** Repository description */
   description?: string;
-  /** The repository on GitHub. Mutually exclusive with local | s3 | github. */
+  /** The repository on GitHub. Mutually exclusive with local | github. */
   github?: GitHubRepositoryConfig;
-  /** The repository on the local file system. Mutually exclusive with local | s3 | github. */
+  /** The repository on the local file system. Mutually exclusive with local | github. */
   local?: LocalRepositoryConfig;
   /** ReadOnly  repository does not allow any write commands */
   readOnly: boolean;
-  /** The repository in an S3 bucket. Mutually exclusive with local | s3 | github. */
-  s3?: S3RepositoryConfig;
   /** Sync settings -- how values are pulled from the repository into grafana */
   sync: SyncOptions;
   /** The repository display name (shown in the UI) */
@@ -786,9 +780,8 @@ export type RepositorySpec = {
     
     Possible enum values:
      - `"github"`
-     - `"local"`
-     - `"s3"` */
-  type: 'github' | 'local' | 's3';
+     - `"local"` */
+  type: 'github' | 'local';
 };
 export type HealthStatus = {
   /** When the health was checked last time */
@@ -1059,9 +1052,8 @@ export type RepositoryView = {
     
     Possible enum values:
      - `"github"`
-     - `"local"`
-     - `"s3"` */
-  type: 'github' | 'local' | 's3';
+     - `"local"` */
+  type: 'github' | 'local';
 };
 export type RepositoryViewList = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */

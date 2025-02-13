@@ -23,15 +23,6 @@ type LocalRepositoryConfig struct {
 	Path string `json:"path,omitempty"`
 }
 
-type S3RepositoryConfig struct {
-	Region string `json:"region,omitempty"`
-	Bucket string `json:"bucket,omitempty"`
-
-	// TODO: Add ACL?
-	// TODO: Encryption??
-	// TODO: How do we define access? Secrets?
-}
-
 // Workflow used for changes in the repository.
 // +enum
 type Workflow string
@@ -76,7 +67,6 @@ type RepositoryType string
 // RepositoryType values
 const (
 	LocalRepositoryType  RepositoryType = "local"
-	S3RepositoryType     RepositoryType = "s3"
 	GitHubRepositoryType RepositoryType = "github"
 )
 
@@ -97,15 +87,11 @@ type RepositorySpec struct {
 	Type RepositoryType `json:"type"`
 
 	// The repository on the local file system.
-	// Mutually exclusive with local | s3 | github.
+	// Mutually exclusive with local | github.
 	Local *LocalRepositoryConfig `json:"local,omitempty"`
 
-	// The repository in an S3 bucket.
-	// Mutually exclusive with local | s3 | github.
-	S3 *S3RepositoryConfig `json:"s3,omitempty"`
-
 	// The repository on GitHub.
-	// Mutually exclusive with local | s3 | github.
+	// Mutually exclusive with local | github.
 	// TODO: github or just 'git'??
 	GitHub *GitHubRepositoryConfig `json:"github,omitempty"`
 }

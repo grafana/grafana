@@ -39,8 +39,6 @@ var RepositoryResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 			switch m.Spec.Type {
 			case LocalRepositoryType:
 				target = m.Spec.Local.Path
-			case S3RepositoryType:
-				target = m.Spec.S3.Bucket
 			case GitHubRepositoryType:
 				target = m.Spec.GitHub.URL
 			}
