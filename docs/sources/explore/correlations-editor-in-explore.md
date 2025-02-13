@@ -100,7 +100,7 @@ You can apply the same steps to any data source. Correlations allow you to creat
 
 In this example, you will create a correlation to demonstrate how to use transformations to extract values from the log line and another field.
 
-To follow this example, make sure you have set up [a test data source]((/docs/grafana/<GRAFANA_VERSION>/datasources/testdata/#testdata-data-source)).
+To follow this example, make sure you have set up [a test data source](/docs/grafana/<GRAFANA_VERSION>/datasources/testdata/#testdata-data-source).
 
 1. In Grafana, navigate to **Explore**.
 1. Select the **test data source** from the dropdown menu at the top left of the page.
