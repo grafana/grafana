@@ -11,6 +11,7 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 import { DataSourceRef } from '@grafana/schema';
+import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
 
 import {
   DashboardV2Spec,
@@ -73,7 +74,7 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
   const dashboardSchemaV2: DeepPartial<DashboardV2Spec> = {
     //dashboard settings
     title: sceneDash.title,
-    description: sceneDash.description ?? '',
+    description: sceneDash.description,
     cursorSync: getCursorSync(sceneDash),
     liveNow: getLiveNow(sceneDash),
     preload: sceneDash.preload,
@@ -116,7 +117,7 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
   try {
     // validateDashboardSchemaV2 will throw an error if the dashboard is not valid
     if (validateDashboardSchemaV2(dashboardSchemaV2)) {
-      return dashboardSchemaV2;
+      return sortedDeepCloneWithoutNulls(dashboardSchemaV2);
     }
     // should never reach this point, validation should throw an error
     throw new Error('Error we could transform the dashboard to schema v2: ' + dashboardSchemaV2);
@@ -241,7 +242,7 @@ function getVizPanelQueries(vizPanel: VizPanel): PanelQueryKind[] {
   const queries: PanelQueryKind[] = [];
   const queryRunner = getQueryRunnerFor(vizPanel);
   const vizPanelQueries = queryRunner?.state.queries;
-  const datasource = queryRunner?.state.datasource;
+  const datasource = queryRunner?.state.datasource ?? getDefaultDataSourceRef();
 
   if (vizPanelQueries) {
     vizPanelQueries.forEach((query) => {
@@ -250,7 +251,7 @@ function getVizPanelQueries(vizPanel: VizPanel): PanelQueryKind[] {
         spec: omit(query, 'datasource', 'refId', 'hide'),
       };
       const querySpec: PanelQuerySpec = {
-        datasource: datasource ?? getDefaultDataSourceRef(),
+        datasource: query.datasource ?? datasource,
         query: dataQuery,
         refId: query.refId,
         hidden: Boolean(query.hide),
@@ -446,7 +447,7 @@ function validateDashboardSchemaV2(dash: unknown): dash is DashboardV2Spec {
   if ('title' in dash && typeof dash.title !== 'string') {
     throw new Error('Title is not a string');
   }
-  if ('description' in dash && typeof dash.description !== 'string') {
+  if ('description' in dash && dash.description !== undefined && typeof dash.description !== 'string') {
     throw new Error('Description is not a string');
   }
   if ('cursorSync' in dash && typeof dash.cursorSync !== 'string') {
