@@ -44,14 +44,6 @@ describe('DataTrail', () => {
     let trail: DataTrail;
     const preTrailUrl = '/';
 
-    function getFilterVar() {
-      const variable = sceneGraph.lookupVariable(VAR_FILTERS, trail);
-      if (variable instanceof AdHocFiltersVariable) {
-        return variable;
-      }
-      throw new Error('getFilterVar failed');
-    }
-
     function getStepFilterVar(step: number) {
       const variable = trail.state.history.state.steps[step].trailState.$variables?.getByName(VAR_FILTERS);
       if (variable instanceof AdHocFiltersVariable) {
@@ -226,12 +218,12 @@ describe('DataTrail', () => {
       });
 
       it('Should have default empty filter', () => {
-        expect(getFilterVar().state.filters.length).toBe(0);
+        expect(getFilterVar(trail).state.filters.length).toBe(0);
       });
 
       describe('And when changing the filter to zone=a', () => {
         beforeEach(() => {
-          getFilterVar().setState({ filters: [{ key: 'zone', operator: '=', value: 'a' }] });
+          getFilterVar(trail).setState({ filters: [{ key: 'zone', operator: '=', value: 'a' }] });
         });
 
         it('should add history step', () => {
@@ -247,8 +239,8 @@ describe('DataTrail', () => {
         });
 
         it('Should have filter be updated to "zone=a"', () => {
-          expect(getFilterVar().state.filters[0].key).toBe('zone');
-          expect(getFilterVar().state.filters[0].value).toBe('a');
+          expect(getFilterVar(trail).state.filters[0].key).toBe('zone');
+          expect(getFilterVar(trail).state.filters[0].value).toBe('a');
         });
 
         it('Previous history step should have empty filter', () => {
@@ -274,12 +266,12 @@ describe('DataTrail', () => {
           });
 
           it('Should have filters set back to empty', () => {
-            expect(getFilterVar().state.filters.length).toBe(0);
+            expect(getFilterVar(trail).state.filters.length).toBe(0);
           });
 
           describe('And when changing the filter to zone=b', () => {
             beforeEach(() => {
-              getFilterVar().setState({ filters: [{ key: 'zone', operator: '=', value: 'b' }] });
+              getFilterVar(trail).setState({ filters: [{ key: 'zone', operator: '=', value: 'b' }] });
             });
 
             it('should add history step', () => {
@@ -295,8 +287,8 @@ describe('DataTrail', () => {
             });
 
             it('Should have filter be updated to "zone=b"', () => {
-              expect(getFilterVar().state.filters[0].key).toBe('zone');
-              expect(getFilterVar().state.filters[0].value).toBe('b');
+              expect(getFilterVar(trail).state.filters[0].key).toBe('zone');
+              expect(getFilterVar(trail).state.filters[0].value).toBe('b');
             });
 
             it('Parent history step 1 should still have empty filter', () => {
@@ -327,7 +319,7 @@ describe('DataTrail', () => {
               });
 
               it('Should have filters set back to empty', () => {
-                expect(getFilterVar().state.filters.length).toBe(0);
+                expect(getFilterVar(trail).state.filters.length).toBe(0);
               });
 
               it('History step 1 should still have empty filter', () => {
@@ -417,12 +409,12 @@ describe('DataTrail', () => {
 
     describe('And filter is added zone=a', () => {
       beforeEach(() => {
-        getFilterVar().setState({ filters: [{ key: 'zone', operator: '=', value: 'a' }] });
+        getFilterVar(trail).setState({ filters: [{ key: 'zone', operator: '=', value: 'a' }] });
       });
 
       it('Filter of trail should be zone=a', () => {
-        expect(getFilterVar().state.filters[0].key).toBe('zone');
-        expect(getFilterVar().state.filters[0].value).toBe('a');
+        expect(getFilterVar(trail).state.filters[0].key).toBe('zone');
+        expect(getFilterVar(trail).state.filters[0].value).toBe('a');
       });
 
       it('Filter of step 2 should be zone=a', () => {
@@ -440,7 +432,7 @@ describe('DataTrail', () => {
         });
 
         it('Filter of trail should be empty', () => {
-          expect(getFilterVar().state.filters.length).toBe(0);
+          expect(getFilterVar(trail).state.filters.length).toBe(0);
         });
       });
     });
@@ -518,14 +510,6 @@ describe('DataTrail', () => {
       throw new Error('getOtelGroupLeftVar failed');
     }
 
-    function getFilterVar() {
-      const variable = sceneGraph.lookupVariable(VAR_FILTERS, trail);
-      if (variable instanceof AdHocFiltersVariable) {
-        return variable;
-      }
-      throw new Error('getFilterVar failed');
-    }
-
     beforeEach(() => {
       trail = new DataTrail({
         nonPromotedOtelResources,
@@ -540,7 +524,7 @@ describe('DataTrail', () => {
     it('clicking start button should start with OTel off and showing var filters', () => {
       trail.setState({ startButtonClicked: true });
       const otelResourcesHide = getOtelResourcesVar(trail).state.hide;
-      const varFiltersHide = getFilterVar().state.hide;
+      const varFiltersHide = getFilterVar(trail).state.hide;
       expect(otelResourcesHide).toBe(VariableHide.hideVariable);
       expect(varFiltersHide).toBe(VariableHide.hideLabel);
     });
@@ -557,7 +541,7 @@ describe('DataTrail', () => {
     describe('resetting the OTel experience', () => {
       it('should display with hideLabel var filters and hide VAR_OTEL_AND_METRIC_FILTERS when resetting otel experience', () => {
         trail.resetOtelExperience();
-        expect(getFilterVar().state.hide).toBe(VariableHide.hideLabel);
+        expect(getFilterVar(trail).state.hide).toBe(VariableHide.hideLabel);
         expect(getOtelAndMetricsVar(trail).state.hide).toBe(VariableHide.hideVariable);
       });
 
@@ -589,7 +573,7 @@ describe('DataTrail', () => {
 
       it('should automatically update the var filters when a promoted resource has been selected from VAR_OTEL_AND_METRICS', () => {
         getOtelAndMetricsVar(trail).setState({ filters: [{ key: 'promoted', operator: '=', value: 'resource' }] });
-        const varFilters = getFilterVar().state.filters[0];
+        const varFilters = getFilterVar(trail).state.filters[0];
         expect(varFilters.key).toBe('promoted');
         expect(varFilters.value).toBe('resource');
       });
@@ -600,4 +584,26 @@ describe('DataTrail', () => {
       });
     });
   });
+
+  describe('Label filters', () => {
+    let trail: DataTrail;
+
+    beforeEach(() => {
+      trail = new DataTrail({});
+    });
+
+    it('should not escape regex metacharacters in label values', () => {
+      const filterVar = getFilterVar(trail);
+      filterVar.setState({ filters: [{ key: 'app', operator: '=~', value: '.*end' }] }); // matches app=frontend, app=backend, etc.
+      expect(filterVar.getValue()).toBe('app=~".*end"');
+    });
+  });
 });
+
+function getFilterVar(trail: DataTrail) {
+  const variable = sceneGraph.lookupVariable(VAR_FILTERS, trail);
+  if (variable instanceof AdHocFiltersVariable) {
+    return variable;
+  }
+  throw new Error('getFilterVar failed');
+}

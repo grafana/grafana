@@ -35,7 +35,7 @@ func RequestStatusFromError(err error) RequestStatus {
 		status = RequestStatusError
 		if errors.Is(err, context.Canceled) {
 			status = RequestStatusCancelled
-		} else if s, ok := grpcstatus.FromError(err); ok && s.Code() == grpccodes.Canceled {
+		} else if s, ok := grpcstatus.FromError(err); ok && s.Code() == grpccodes.Canceled || s.Code() == grpccodes.DeadlineExceeded {
 			status = RequestStatusCancelled
 		}
 	}
