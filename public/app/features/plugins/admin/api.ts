@@ -37,6 +37,8 @@ export async function getPluginDetails(id: string): Promise<CatalogPluginDetails
     iam: remote?.json?.iam,
     lastCommitDate: remote?.lastCommitDate,
     changelog: remote?.changelog || localChangelog,
+    licenseUrl: remote?.licenseUrl,
+    documentationUrl: remote?.documentationUrl,
     signatureType: local?.signatureType || (remote?.signatureType !== '' ? remote?.signatureType : undefined),
     signature: local?.signature,
   };
