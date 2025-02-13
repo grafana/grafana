@@ -140,13 +140,13 @@ Each contact point integration has its own configuration options and setup proce
 - [Discord](ref:discord)
 - [Email](ref:email)
 - [Google Chat](ref:gchat)
-- [Grafana Oncall](ref:oncall)
+- [Grafana OnCall](ref:oncall)
 - Kafka REST Proxy
 - Line
 - [Microsoft Teams](ref:teams)
 - [MQTT](ref:mqtt)
 - [Opsgenie](ref:opsgenie)
-- [Pagerduty](ref:pagerduty)
+- [PagerDuty](ref:pagerduty)
 - Pushover
 - Sensu Go
 - [Slack](ref:slack)
