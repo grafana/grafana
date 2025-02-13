@@ -423,10 +423,6 @@ const (
 	// Install managed plugins directly from plugins catalog
 	FlagManagedPluginsInstall = "managedPluginsInstall"
 
-	// FlagPrometheusPromQAIL
-	// Prometheus and AI/ML to assist users in creating a query
-	FlagPrometheusPromQAIL = "prometheusPromQAIL"
-
 	// FlagPrometheusCodeModeMetricNamesSearch
 	// Enables search for metric names in Code Mode, to improve performance when working with an enormous number of metric names
 	FlagPrometheusCodeModeMetricNamesSearch = "prometheusCodeModeMetricNamesSearch"

@@ -108,28 +108,6 @@ describe('PromQueryBuilder', () => {
     await waitFor(() => expect(datasource.getVariables).toBeCalled());
   });
 
-  it('checks if the LLM plugin is enabled when the `prometheusPromQAIL` feature is enabled', async () => {
-    jest.replaceProperty(config, 'featureToggles', {
-      prometheusPromQAIL: true,
-    });
-    const mockIsLLMPluginEnabled = jest.fn();
-    mockIsLLMPluginEnabled.mockResolvedValue(true);
-    jest.spyOn(require('./promQail/state/helpers'), 'isLLMPluginEnabled').mockImplementation(mockIsLLMPluginEnabled);
-    setup();
-    await waitFor(() => expect(mockIsLLMPluginEnabled).toHaveBeenCalledTimes(1));
-  });
-
-  it('does not check if the LLM plugin is enabled when the `prometheusPromQAIL` feature is disabled', async () => {
-    jest.replaceProperty(config, 'featureToggles', {
-      prometheusPromQAIL: false,
-    });
-    const mockIsLLMPluginEnabled = jest.fn();
-    mockIsLLMPluginEnabled.mockResolvedValue(true);
-    jest.spyOn(require('./promQail/state/helpers'), 'isLLMPluginEnabled').mockImplementation(mockIsLLMPluginEnabled);
-    setup();
-    await waitFor(() => expect(mockIsLLMPluginEnabled).toHaveBeenCalledTimes(0));
-  });
-
   // <LegacyPrometheus>
   it('tries to load labels when metric selected', async () => {
     const { languageProvider } = setup();

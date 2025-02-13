@@ -122,7 +122,6 @@ export interface FeatureToggles {
   teamHttpHeaders?: boolean;
   cachingOptimizeSerializationMemoryUsage?: boolean;
   managedPluginsInstall?: boolean;
-  prometheusPromQAIL?: boolean;
   prometheusCodeModeMetricNamesSearch?: boolean;
   addFieldFromCalculationStatFunctions?: boolean;
   alertmanagerRemoteSecondary?: boolean;
