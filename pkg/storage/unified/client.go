@@ -49,7 +49,8 @@ func ProvideClientServiceImpl(cfg *setting.Cfg,
 	tracer tracing.Tracer,
 	reg prometheus.Registerer,
 	authzc types.AccessClient,
-	docs resource.DocumentBuilderSupplier) *ClientServiceImpl {
+	docs resource.DocumentBuilderSupplier,
+) (*ClientServiceImpl, error) {
 	apiserverCfg := cfg.SectionWithEnvOverrides("grafana-apiserver")
 	client, err := newClient(options.StorageOptions{
 		StorageType:  options.StorageType(apiserverCfg.Key("storage_type").MustString(string(options.StorageTypeUnified))),
@@ -57,22 +58,22 @@ func ProvideClientServiceImpl(cfg *setting.Cfg,
 		Address:      apiserverCfg.Key("address").MustString(""), // client address
 		BlobStoreURL: apiserverCfg.Key("blob_url").MustString(""),
 	}, cfg, features, db, tracer, reg, authzc, docs)
-	if err == nil {
-		// Used to get the folder stats
-		client = federated.NewFederatedClient(
-			client, // The original
-			legacysql.NewDatabaseProvider(db),
-		)
+	if err != nil {
+		return nil, err
 	}
+
+	// Used to get the folder stats
+	client = federated.NewFederatedClient(
+		client, // The original
+		legacysql.NewDatabaseProvider(db),
+	)
 
 	// only set the package level restConfig once
 	if pkgResourceClient == nil {
 		pkgResourceClient = client
 		close(ready)
 	}
-	return &ClientServiceImpl{
-		client: client,
-	}
+	return &ClientServiceImpl{client: client}, nil
 }
 
 type ClientServiceImpl struct {

@@ -15,6 +15,7 @@ import (
 	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 
 	authlib "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -187,7 +188,7 @@ func promptYesNo(prompt string) (bool, error) {
 }
 
 func newUnifiedClient(cfg *setting.Cfg, sqlStore db.DB) (resource.ResourceClient, error) {
-	unifiedClientService := unified.ProvideClientServiceImpl(cfg,
+	unifiedClientService, err := unified.ProvideClientServiceImpl(cfg,
 		featuremgmt.WithFeatures(), // none??
 		sqlStore,
 		tracing.NewNoopTracerService(),
@@ -195,6 +196,9 @@ func newUnifiedClient(cfg *setting.Cfg, sqlStore db.DB) (resource.ResourceClient
 		authlib.FixedAccessClient(true), // always true!
 		nil,                             // document supplier
 	)
+	if err != nil {
+		return nil, err
+	}
 	return unifiedClientService.GetResourceClient(), nil
 }
 
