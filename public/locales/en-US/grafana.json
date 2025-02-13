@@ -2781,17 +2781,30 @@
       },
       "labels": {
         "contactGrafanaLabs": "Contact Grafana Labs",
+        "customLinks": "Custom links ",
+        "customLinksTooltip": "These links are provided by the plugin developer to offer additional, developer-specific resources and information",
         "dependencies": "Dependencies",
+        "documentation": "Documentation",
         "downloads": "Downloads",
         "from": "From",
         "installedVersion": "Installed Version",
         "lastCommitDate": "Last commit date:",
         "latestVersion": "Latest Version",
-        "links": "Links ",
+        "license": "License",
+        "raiseAnIssue": "Raise an issue",
         "reportAbuse": "Report a concern ",
+        "reportAbuseTooltip": "Report issues related to malicious or harmful plugins directly to Grafana Labs.",
+        "repository": "Repository",
         "signature": "Signature",
         "status": "Status",
         "updatedAt": "Last updated:"
+      },
+      "modal": {
+        "cancel": "Cancel",
+        "copyEmail": "Copy email address",
+        "description": "This feature is for reporting malicious or harmful behaviour within plugins. For plugin concerns, email us at: ",
+        "node": "Note: For general plugin issues like bugs or feature requests, please contact the plugin author using the provided links. ",
+        "title": "Report a plugin concern"
       }
     },
     "empty-state": {
