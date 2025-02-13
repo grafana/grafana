@@ -1,14 +1,16 @@
 import { css } from '@emotion/css';
 import { PropsWithChildren, ReactNode } from 'react';
+import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
+import { IconButton, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
-import { RulesSourceIdentifier } from 'app/types/unified-alerting';
+import { GrafanaRulesSourceSymbol, RulesSourceIdentifier } from 'app/types/unified-alerting';
 import { RulesSourceApplication } from 'app/types/unified-alerting-dto';
 
 import { Spacer } from '../../components/Spacer';
 import { WithReturnButton } from '../../components/WithReturnButton';
+import { isAdmin } from '../../utils/misc';
 
 import { DataSourceIcon } from './Namespace';
 import { LoadingIndicator } from './RuleGroup';
@@ -32,7 +34,17 @@ export const DataSourceSection = ({
   description = null,
 }: DataSourceSectionProps) => {
   const styles = useStyles2(getStyles);
-
+  const [isCollapsed, toggleCollapsed] = useToggle(false);
+  const configureLink = (() => {
+    if (uid === GrafanaRulesSourceSymbol) {
+      const userIsAdmin = isAdmin();
+      if (!userIsAdmin) {
+        return;
+      }
+      return '/alerting/admin';
+    }
+    return `/connections/datasources/edit/${String(uid)}`;
+  })();
   return (
     <section aria-labelledby={`datasource-${String(uid)}-heading`} role="listitem">
       <Stack direction="column" gap={1}>
@@ -41,7 +53,13 @@ export const DataSourceSection = ({
           <div className={styles.dataSourceSectionTitle}>
             {loader ?? (
               <Stack alignItems="center">
+                <IconButton
+                  name={isCollapsed ? 'angle-right' : 'angle-down'}
+                  onClick={toggleCollapsed}
+                  aria-label={t('common.collapse', 'Collapse')}
+                />
                 {application && <DataSourceIcon application={application} />}
+
                 <Text variant="body" weight="bold" element="h2" id={`datasource-${String(uid)}-heading`}>
                   {name}
                 </Text>
@@ -52,19 +70,21 @@ export const DataSourceSection = ({
                   </>
                 )}
                 <Spacer />
-                <WithReturnButton
-                  title={t('alerting.rule-list.return-button.title', 'Alert rules')}
-                  component={
-                    <LinkButton variant="secondary" size="sm" href={`/connections/datasources/edit/${String(uid)}`}>
-                      <Trans i18nKey="alerting.rule-list.configure-datasource">Configure</Trans>
-                    </LinkButton>
-                  }
-                />
+                {configureLink && (
+                  <WithReturnButton
+                    title={t('alerting.rule-list.return-button.title', 'Alert rules')}
+                    component={
+                      <LinkButton variant="secondary" size="sm" href={configureLink}>
+                        <Trans i18nKey="alerting.rule-list.configure-datasource">Configure</Trans>
+                      </LinkButton>
+                    }
+                  />
+                )}
               </Stack>
             )}
           </div>
         </Stack>
-        <div className={styles.itemsWrapper}>{children}</div>
+        {!isCollapsed && <div className={styles.itemsWrapper}>{children}</div>}
       </Stack>
     </section>
   );

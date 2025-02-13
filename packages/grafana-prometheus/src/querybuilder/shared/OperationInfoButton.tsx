@@ -94,8 +94,8 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     docBox: css({
       overflow: 'hidden',
-      background: theme.colors.background.primary,
-      border: `1px solid ${theme.colors.border.strong}`,
+      background: theme.colors.background.elevated,
+      border: `1px solid ${theme.colors.border.weak}`,
       boxShadow: theme.shadows.z3,
       maxWidth: '600px',
       padding: theme.spacing(1),
