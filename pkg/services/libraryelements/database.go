@@ -250,14 +250,17 @@ func (l *LibraryElementService) deleteLibraryElement(c context.Context, signedIn
 			return err
 		}
 
-		// then find the dashboards that were supposed to be connected to this element
-		_, requester := identity.WithServiceIdentity(c, signedInUser.GetOrgID())
-		dashs, err := l.dashboardsService.FindDashboards(c, &dashboards.FindPersistedDashboardsQuery{
+		// then find the dashboards that were supposed to be connected to this element.
+		// A identity may be able to delete a library element but not read all dashboards so we fetch then as the
+		// service user so we can prevent deletion of those connections
+		serviceCtx, serviceIdent := identity.WithServiceIdentity(c, signedInUser.GetOrgID())
+		dashs, err := l.dashboardsService.FindDashboards(serviceCtx, &dashboards.FindPersistedDashboardsQuery{
 			Type:         searchstore.TypeDashboard,
-			OrgId:        signedInUser.GetOrgID(),
+			OrgId:        serviceIdent.GetOrgID(),
 			DashboardIds: dashboardIDs,
-			SignedInUser: requester, // a user may be able to delete a library element but not read all dashboards. We still need to run this check, so we don't allow deleting elements if dashboards are connected
+			SignedInUser: serviceIdent,
 		})
+
 		if err != nil {
 			return err
 		}
