@@ -6,7 +6,7 @@ import (
 	"os/exec"
 	"sync"
 
-	"github.com/grafana/grafana/pkg/services/ngalert/testutil"
+	amtests "github.com/grafana/grafana/pkg/tests/alertmanager"
 )
 
 func docker(args []string) {
@@ -23,9 +23,9 @@ func main() {
 	var wg sync.WaitGroup
 
 	for _, cmd := range [][]string{
-		{"pull", testutil.GetGrafanaImage()},
-		{"pull", testutil.GetLokiImage()},
-		{"pull", testutil.GetPostgresImage()},
+		{"pull", amtests.GetGrafanaImage()},
+		{"pull", amtests.GetLokiImage()},
+		{"pull", amtests.GetPostgresImage()},
 		{"build", "-t", "webhook-receiver", "devenv/docker/blocks/stateful_webhook"},
 	} {
 		wg.Add(1)

@@ -1,4 +1,4 @@
-package testutil
+package alertmanager
 
 import (
 	"encoding/json"
