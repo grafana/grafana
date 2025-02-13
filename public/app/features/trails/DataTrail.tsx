@@ -653,7 +653,6 @@ function getVariableSet(
         layout: 'vertical',
         defaultKeys: [],
         applyMode: 'manual',
-        supportsMultiValueOperators: true,
         allowCustomValue: true,
       }),
       new AdHocFiltersVariable({
@@ -666,8 +665,6 @@ function getVariableSet(
         filters: initialFilters ?? [],
         baseFilters: getBaseFiltersForMetric(metric),
         applyMode: 'manual',
-        // since we only support prometheus datasources, this is always true
-        supportsMultiValueOperators: true,
         allowCustomValue: true,
         expressionBuilder: (filters: AdHocVariableFilter[]) => {
           return [...getBaseFiltersForMetric(metric), ...filters]
@@ -695,8 +692,6 @@ function getVariableSet(
         filters: initialFilters ?? [],
         baseFilters: getBaseFiltersForMetric(metric),
         applyMode: 'manual',
-        // since we only support prometheus datasources, this is always true
-        supportsMultiValueOperators: true,
         allowCustomValue: true,
         // skipUrlSync: true
       }),
