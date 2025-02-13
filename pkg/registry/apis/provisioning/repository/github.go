@@ -810,7 +810,7 @@ func (r *githubRepository) updateWebhook(ctx context.Context) (pgh.WebhookConfig
 		return hook, false, nil
 	}
 
-	// If we need a new webhook, always update the secret as well.
+	// Something has changed in the webhook. Let's rotate the secret as well, so as to ensure we end up with a 100% correct webhook.
 	secret, err := uuid.NewRandom()
 	if err != nil {
 		return pgh.WebhookConfig{}, false, fmt.Errorf("could not generate secret: %w", err)
