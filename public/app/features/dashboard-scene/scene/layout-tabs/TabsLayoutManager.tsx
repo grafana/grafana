@@ -6,6 +6,7 @@ import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 
 import { TabItem } from './TabItem';
 import { TabsLayoutManagerRenderer } from './TabsLayoutManagerRenderer';
+import { TabsLayoutTransitionManager } from './TabsLayoutTransitionManager';
 
 interface TabsLayoutManagerState extends SceneObjectState {
   tabs: TabItem[];
@@ -29,6 +30,8 @@ export class TabsLayoutManager
     },
     id: 'tabs-layout',
     createFromLayout: TabsLayoutManager.createFromLayout,
+    //create correct transition manager
+    transitionManager: new TabsLayoutTransitionManager(),
   };
 
   public readonly descriptor = TabsLayoutManager.descriptor;

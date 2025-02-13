@@ -14,6 +14,7 @@ import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { RowItem } from './RowItem';
 import { RowItemRepeaterBehavior } from './RowItemRepeaterBehavior';
 import { RowLayoutManagerRenderer } from './RowsLayoutManagerRenderer';
+import { RowsLayoutTransitionManager } from './RowsLayoutTransitionManager';
 
 interface RowsLayoutManagerState extends SceneObjectState {
   rows: RowItem[];
@@ -36,6 +37,8 @@ export class RowsLayoutManager
     },
     id: 'rows-layout',
     createFromLayout: RowsLayoutManager.createFromLayout,
+    //create correct transition manager
+    transitionManager: new RowsLayoutTransitionManager(),
   };
 
   public readonly descriptor = RowsLayoutManager.descriptor;

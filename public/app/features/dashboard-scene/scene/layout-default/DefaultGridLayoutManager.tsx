@@ -31,6 +31,7 @@ import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 
 import { DashboardGridItem } from './DashboardGridItem';
+import { DefaultGridLayoutTransitionManager } from './DefaultGridLayoutTransitionManager';
 import { RowRepeaterBehavior } from './RowRepeaterBehavior';
 import { RowActions } from './row-actions/RowActions';
 
@@ -55,6 +56,7 @@ export class DefaultGridLayoutManager
     },
     id: 'default-grid',
     createFromLayout: DefaultGridLayoutManager.createFromLayout,
+    transitionManager: new DefaultGridLayoutTransitionManager(),
   };
 
   public readonly descriptor = DefaultGridLayoutManager.descriptor;
