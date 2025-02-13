@@ -3,6 +3,7 @@ import type {
   PluginExtensionLink,
   PluginExtensionComponent,
   PluginExtensionFunction,
+  PluginExtensionComponentMeta,
 } from '@grafana/data';
 
 import { isPluginExtensionComponent, isPluginExtensionLink } from './utils';
@@ -42,7 +43,7 @@ export type UsePluginComponentResult<Props = {}> = {
 };
 
 export type UsePluginComponentsResult<Props = {}> = {
-  components: Array<React.ComponentType<Props>>;
+  components: Array<React.ComponentType<Props> & { meta: PluginExtensionComponentMeta }>;
   isLoading: boolean;
 };
 
