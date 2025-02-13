@@ -3,12 +3,14 @@ package api
 import (
 	"errors"
 	"fmt"
+	"net/http"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/prom"
+	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 )
 
 var (
@@ -35,14 +37,17 @@ func errorToResponse(err error) response.Response {
 		return response.Err(err)
 	}
 	if errors.Is(err, datasources.ErrDataSourceNotFound) {
-		return ErrResp(404, err, "")
+		return ErrResp(http.StatusNotFound, err, "")
+	}
+	if errors.Is(err, provisioning.ErrProvenanceMismatch) {
+		return ErrResp(http.StatusConflict, err, "")
 	}
 	var validationErr *prom.ValidationError
 	if errors.Is(err, errUnexpectedDatasourceType) || errors.As(err, &validationErr) || errors.Is(err, errInvalidHeaderValue) {
-		return ErrResp(400, err, "")
+		return ErrResp(http.StatusBadRequest, err, "")
 	}
 	if errors.Is(err, errFolderAccess) {
 		return toNamespaceErrorResponse(err)
 	}
-	return ErrResp(500, err, "")
+	return ErrResp(http.StatusInternalServerError, err, "")
 }

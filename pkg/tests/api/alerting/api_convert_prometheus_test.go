@@ -169,6 +169,35 @@ func TestIntegrationConvertPrometheusEndpoints(t *testing.T) {
 		_, status, raw := viewerClient.ConvertPrometheusPostRuleGroup(t, namespace1, ds.Body.Datasource.UID, promGroup1, nil)
 		requireStatusCode(t, http.StatusForbidden, status, raw)
 	})
+
+	t.Run("delete one rule group", func(t *testing.T) {
+		_, status, body := apiClient.ConvertPrometheusPostRuleGroup(t, namespace1, ds.Body.Datasource.UID, promGroup1, nil)
+		requireStatusCode(t, http.StatusAccepted, status, body)
+		_, status, body = apiClient.ConvertPrometheusPostRuleGroup(t, namespace1, ds.Body.Datasource.UID, promGroup2, nil)
+		requireStatusCode(t, http.StatusAccepted, status, body)
+		_, status, body = apiClient.ConvertPrometheusPostRuleGroup(t, namespace2, ds.Body.Datasource.UID, promGroup3, nil)
+		requireStatusCode(t, http.StatusAccepted, status, body)
+
+		apiClient.ConvertPrometheusDeleteRuleGroup(t, namespace1, promGroup1.Name)
+
+		// Check that the promGroup2 and promGroup3 are still there
+		namespaces := apiClient.ConvertPrometheusGetAllRules(t)
+		expectedNamespaces := map[string][]apimodels.PrometheusRuleGroup{
+			namespace1: {promGroup2},
+			namespace2: {promGroup3},
+		}
+		require.Equal(t, expectedNamespaces, namespaces)
+
+		// Delete the second namespace
+		apiClient.ConvertPrometheusDeleteNamespace(t, namespace2)
+
+		// Check that only the first namespace is left
+		namespaces = apiClient.ConvertPrometheusGetAllRules(t)
+		expectedNamespaces = map[string][]apimodels.PrometheusRuleGroup{
+			namespace1: {promGroup2},
+		}
+		require.Equal(t, expectedNamespaces, namespaces)
+	})
 }
 
 func TestIntegrationConvertPrometheusEndpoints_CreatePausedRules(t *testing.T) {
