@@ -179,13 +179,14 @@ export const DataSourceHttpSettings = (props: HttpSettingsProps) => {
           <Trans i18nKey="grafana-ui.data-source-http-settings.heading">HTTP</Trans>
         </h3>
 
-        <Stack direction="column" gap={0.5}>
+        <Stack direction="column" gap={0}>
           <InlineField
             label={urlLabel ?? 'URL'}
             labelWidth={26}
             tooltip={urlTooltip}
             invalid={!isValidUrl}
             error={!isValidUrl && t('grafana-ui.data-source-http-settings.invalid-url-error', 'Invalid URL')}
+            disabled={dataSourceConfig.readOnly}
           >
             <Input
               id={fromFieldId}
@@ -194,7 +195,6 @@ export const DataSourceHttpSettings = (props: HttpSettingsProps) => {
               value={dataSourceConfig.url}
               data-testid={selectors.components.DataSource.DataSourceHttpSettings.urlInput}
               onChange={(event) => onSettingsChange({ url: event.currentTarget.value })}
-              disabled={dataSourceConfig.readOnly}
             />
           </InlineField>
 
