@@ -106,7 +106,10 @@ const jiraNotifier: NotifierDTO<CloudNotifierType> = {
     option(
       'reopen_duration',
       'Reopen duration',
-      'If "Reopen transition" is defined, reopen the issue when it is not older than this value (rounded down to the nearest minute)'
+      'If "Reopen transition" is defined, reopen the issue when it is not older than this value (rounded down to the nearest minute)',
+      {
+        placeholder: 'Use duration format, for example: 1.2s, 100ms',
+      }
     ),
     option('fields', 'Fields', 'Other issue and custom fields', {
       element: 'key_value_map',
