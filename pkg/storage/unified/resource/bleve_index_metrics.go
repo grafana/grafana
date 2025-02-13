@@ -6,13 +6,13 @@ import (
 	"sync"
 	"time"
 
-	"github.com/prometheus/client_golang/prometheus"
-
 	"github.com/grafana/dskit/instrument"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 var (
 	onceIndex             sync.Once
+	onceSprinkles         sync.Once
 	IndexMetrics          *BleveIndexMetrics
 	SprinklesIndexMetrics *SprinklesMetrics
 )
@@ -37,7 +37,7 @@ type SprinklesMetrics struct {
 var IndexCreationBuckets = []float64{1, 5, 10, 25, 50, 75, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000}
 
 func NewSprinklesMetrics() *SprinklesMetrics {
-	onceIndex.Do(func() {
+	onceSprinkles.Do(func() {
 		SprinklesIndexMetrics = &SprinklesMetrics{
 			SprinklesLatency: prometheus.NewHistogram(prometheus.HistogramOpts{
 				Namespace:                       "index_server",
@@ -104,12 +104,11 @@ func NewIndexMetrics(indexDir string, searchBackend SearchBackend) *BleveIndexMe
 }
 
 func (s *SprinklesMetrics) Collect(ch chan<- prometheus.Metric) {
-	// s.SprinklesLatency.Collect(ch)
+	s.SprinklesLatency.Collect(ch)
 }
 
 func (s *SprinklesMetrics) Describe(ch chan<- *prometheus.Desc) {
-	// avoid starup panic
-	//	s.SprinklesLatency.Describe(ch)
+	s.SprinklesLatency.Describe(ch)
 }
 
 func (s *BleveIndexMetrics) Collect(ch chan<- prometheus.Metric) {

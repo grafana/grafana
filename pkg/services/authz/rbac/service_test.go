@@ -620,6 +620,7 @@ func setupService() *Service {
 		folderCache:     newCacheWrap[folderTree](cache, logger, shortCacheTTL),
 		store:           fStore,
 		permissionStore: fStore,
+		folderStore:     fStore,
 		identityStore:   &fakeIdentityStore{},
 		sf:              new(singleflight.Group),
 	}
@@ -663,7 +664,7 @@ func (f *fakeStore) GetUserPermissions(ctx context.Context, namespace claims.Nam
 	return f.userPermissions, nil
 }
 
-func (f *fakeStore) GetFolders(ctx context.Context, namespace claims.NamespaceInfo) ([]store.Folder, error) {
+func (f *fakeStore) ListFolders(ctx context.Context, namespace claims.NamespaceInfo) ([]store.Folder, error) {
 	f.calls++
 	if f.err {
 		return nil, fmt.Errorf("store error")
