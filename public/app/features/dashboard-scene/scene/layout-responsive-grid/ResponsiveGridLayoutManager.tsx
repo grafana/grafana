@@ -11,6 +11,7 @@ import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 
 import { ResponsiveGridItem } from './ResponsiveGridItem';
 import { getEditOptions } from './ResponsiveGridLayoutManagerEditor';
+import { ResponsiveGridLayoutTransitionManager } from './ResponsiveGridLayoutTransitionManager';
 
 interface ResponsiveGridLayoutManagerState extends SceneObjectState {
   layout: SceneCSSGridLayout;
@@ -33,6 +34,8 @@ export class ResponsiveGridLayoutManager
     },
     id: 'responsive-grid',
     createFromLayout: ResponsiveGridLayoutManager.createFromLayout,
+    //create correct transition manager
+    transitionManager: new ResponsiveGridLayoutTransitionManager(),
   };
 
   public readonly descriptor = ResponsiveGridLayoutManager.descriptor;

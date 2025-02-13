@@ -75,6 +75,7 @@ export function useLayoutCategory(layoutManager: DashboardLayoutManager) {
 function changeLayoutTo(currentLayout: DashboardLayoutManager, newLayoutDescriptor: LayoutRegistryItem) {
   const layoutParent = currentLayout.parent;
   if (layoutParent && isLayoutParent(layoutParent)) {
-    layoutParent.switchLayout(newLayoutDescriptor.createFromLayout(currentLayout));
+    // layoutParent.switchLayout(newLayoutDescriptor.createFromLayout(currentLayout));
+    layoutParent.switchLayout(newLayoutDescriptor.transitionManager.transitionFrom(currentLayout));
   }
 }

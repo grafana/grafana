@@ -92,3 +92,7 @@ export interface DashboardLayoutManager<S = {}, O = DashboardOutlineItem> extend
 export function isDashboardLayoutManager(obj: SceneObject): obj is DashboardLayoutManager {
   return 'isDashboardLayoutManager' in obj;
 }
+
+export interface TransitionManager {
+  transitionFrom(layout: DashboardLayoutManager): DashboardLayoutManager;
+}
