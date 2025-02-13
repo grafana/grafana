@@ -236,7 +236,7 @@ describe('MultiCombobox', () => {
       expect(onChange).toHaveBeenCalledWith([]);
     });
 
-    it.only('should keep label names on selected items when searching', async () => {
+    it('should keep label names on selected items when searching', async () => {
       const options = [
         { label: 'A', value: 'a' },
         { label: 'B', value: 'b' },
