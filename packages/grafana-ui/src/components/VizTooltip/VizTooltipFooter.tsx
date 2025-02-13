@@ -1,12 +1,13 @@
 import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
-import { ActionModel, Field, GrafanaTheme2, LinkModel } from '@grafana/data';
+import { ActionModel, Field, GrafanaTheme2, LinkModel, ThemeSpacingTokens } from '@grafana/data';
 
 import { Button, DataLinkButton, Icon, Stack } from '..';
 import { useStyles2 } from '../../themes';
 import { Trans } from '../../utils/i18n';
 import { ActionButton } from '../Actions/ActionButton';
+import { ResponsiveProp } from '../Layout/utils/responsiveness';
 
 interface VizTooltipFooterProps {
   dataLinks: Array<LinkModel<Field>>;
@@ -16,71 +17,64 @@ interface VizTooltipFooterProps {
 
 export const ADD_ANNOTATION_ID = 'add-annotation-button';
 
-const renderDataLinks = (dataLinks: LinkModel[], styles: ReturnType<typeof getStyles>) => {
-  if (dataLinks.length === 0) {
-    return;
-  }
+type RenderOneClickTrans = (title: string) => React.ReactNode;
+type RenderItem<T = LinkModel | ActionModel> = (
+  item: T,
+  idx: number,
+  styles: ReturnType<typeof getStyles>
+) => React.ReactNode;
 
-  const oneClickLink = dataLinks.find((link) => link.oneClick === true);
+function makeRenderLinksOrActions<T>(
+  renderOneClickTrans: RenderOneClickTrans,
+  renderItem: RenderItem<T>,
+  itemGap?: ResponsiveProp<ThemeSpacingTokens>
+) {
+  const renderLinksOrActions = (items: Array<LinkModel | ActionModel>, styles: ReturnType<typeof getStyles>) => {
+    if (items.length === 0) {
+      return;
+    }
 
-  if (oneClickLink != null) {
+    const oneClickItem = items.find((item) => item.oneClick === true);
+
+    if (oneClickItem != null) {
+      return (
+        <div className={styles.dataLinks}>
+          <Stack direction="column" justifyContent="flex-start" gap={0.5}>
+            <span className={styles.oneClickWrapper}>
+              <Icon name="info-circle" size="lg" className={styles.infoIcon} />
+              {renderOneClickTrans(oneClickItem.title)}
+            </span>
+          </Stack>
+        </div>
+      );
+    }
+
     return (
       <div className={styles.dataLinks}>
-        <Stack direction="column" justifyContent="flex-start" gap={0.5}>
-          <span className={styles.oneClickWrapper}>
-            <Icon name="info-circle" size="lg" className={styles.infoIcon} />
-            <Trans i18nKey="grafana-ui.viz-tooltip.footer-click-to-navigate">
-              Click to open {{ linkTitle: oneClickLink.title }}
-            </Trans>
-          </span>
+        <Stack direction="column" justifyContent="flex-start" gap={itemGap}>
+          {items.map((item, i) => renderItem(item as T, i, styles))}
         </Stack>
       </div>
     );
-  }
+  };
 
-  return (
-    <div className={styles.dataLinks}>
-      <Stack direction="column" justifyContent="flex-start" gap={0.5}>
-        {dataLinks.map((link, i) => (
-          <DataLinkButton link={link} key={i} buttonProps={{ className: styles.dataLinkButton, fill: 'text' }} />
-        ))}
-      </Stack>
-    </div>
-  );
-};
+  return renderLinksOrActions;
+}
 
-const renderActions = (actions: ActionModel[], styles: ReturnType<typeof getStyles>) => {
-  if (actions.length === 0) {
-    return;
-  }
+const renderDataLinks = makeRenderLinksOrActions<LinkModel>(
+  (title) => (
+    <Trans i18nKey="grafana-ui.viz-tooltip.footer-click-to-navigate">Click to open {{ linkTitle: title }}</Trans>
+  ),
+  (item, i, styles) => (
+    <DataLinkButton link={item} key={i} buttonProps={{ className: styles.dataLinkButton, fill: 'text' }} />
+  ),
+  0.5
+);
 
-  const oneClickAction = actions.find((action) => action.oneClick === true);
-
-  if (oneClickAction != null) {
-    return (
-      <div className={styles.dataLinks}>
-        <Stack direction="column" justifyContent="flex-start" gap={0.5}>
-          <span className={styles.oneClickWrapper}>
-            <Icon name="info-circle" size="lg" className={styles.infoIcon} />
-            <Trans i18nKey="grafana-ui.viz-tooltip.footer-click-to-action">
-              Click to {{ actionTitle: oneClickAction.title }}
-            </Trans>
-          </span>
-        </Stack>
-      </div>
-    );
-  }
-
-  return (
-    <div className={styles.dataLinks}>
-      <Stack direction="column" justifyContent="flex-start">
-        {actions.map((action, i) => (
-          <ActionButton key={i} action={action} variant="secondary" />
-        ))}
-      </Stack>
-    </div>
-  );
-};
+const renderActions = makeRenderLinksOrActions<ActionModel>(
+  (title) => <Trans i18nKey="grafana-ui.viz-tooltip.footer-click-to-action">Click to {{ actionTitle: title }}</Trans>,
+  (item, i, styles) => <ActionButton key={i} action={item} variant="secondary" />
+);
 
 export const VizTooltipFooter = ({ dataLinks, actions = [], annotate }: VizTooltipFooterProps) => {
   const styles = useStyles2(getStyles);
