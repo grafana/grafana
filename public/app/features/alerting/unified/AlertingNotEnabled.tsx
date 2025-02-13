@@ -1,7 +1,9 @@
 import { NavModel } from '@grafana/data';
 import { Page } from 'app/core/components/Page/Page';
 
-export default function FeatureTogglePage() {
+import { withPageErrorBoundary } from './withPageErrorBoundary';
+
+function FeatureTogglePage() {
   const navModel: NavModel = {
     node: {
       text: 'Alerting is not enabled',
@@ -25,3 +27,5 @@ enabled = true
     </Page>
   );
 }
+
+export default withPageErrorBoundary(FeatureTogglePage);

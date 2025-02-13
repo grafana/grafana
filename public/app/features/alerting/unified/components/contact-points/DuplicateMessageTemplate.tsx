@@ -8,13 +8,15 @@ import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { generateCopiedName } from '../../utils/duplicate';
 import { stringifyErrorLike } from '../../utils/misc';
 import { updateDefinesWithUniqueValue } from '../../utils/templates';
+import { withPageErrorBoundary } from '../../withPageErrorBoundary';
+import { AlertmanagerPageWrapper } from '../AlertingPageWrapper';
 import { TemplateForm } from '../receivers/TemplateForm';
 
 import { useGetNotificationTemplate, useNotificationTemplates } from './useNotificationTemplates';
 
 const notFoundComponent = <EntityNotFound entity="Notification template" />;
 
-const DuplicateMessageTemplate = () => {
+const DuplicateMessageTemplateComponent = () => {
   const { selectedAlertmanager } = useAlertmanager();
   const { name } = useParams<{ name: string }>();
   const templateUid = name ? decodeURIComponent(name) : undefined;
@@ -63,4 +65,12 @@ const DuplicateMessageTemplate = () => {
   );
 };
 
-export default DuplicateMessageTemplate;
+function DuplicateMessageTemplate() {
+  return (
+    <AlertmanagerPageWrapper navId="receivers" accessType="notification">
+      <DuplicateMessageTemplateComponent />
+    </AlertmanagerPageWrapper>
+  );
+}
+
+export default withPageErrorBoundary(DuplicateMessageTemplate);

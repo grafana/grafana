@@ -1,16 +1,16 @@
-import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
-
 import { useAlertmanager } from '../../state/AlertmanagerContext';
+import { withPageErrorBoundary } from '../../withPageErrorBoundary';
+import { AlertmanagerPageWrapper } from '../AlertingPageWrapper';
 import { TemplateForm } from '../receivers/TemplateForm';
 
-const NewMessageTemplate = () => {
+function NewMessageTemplate() {
   const { selectedAlertmanager } = useAlertmanager();
 
-  if (!selectedAlertmanager) {
-    return <EntityNotFound entity="Alertmanager" />;
-  }
+  return (
+    <AlertmanagerPageWrapper navId="receivers" accessType="notification">
+      <TemplateForm alertmanager={selectedAlertmanager ?? ''} />
+    </AlertmanagerPageWrapper>
+  );
+}
 
-  return <TemplateForm alertmanager={selectedAlertmanager} />;
-};
-
-export default NewMessageTemplate;
+export default withPageErrorBoundary(NewMessageTemplate);
