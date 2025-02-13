@@ -59,7 +59,7 @@ refs:
 ---
 
 # PostgreSQL query editor
-
+<!-- vale Grafana.Spelling = NO -->
 Grafana’s query editors are unique for each data source. For general information on Grafana query editors, refer to [Query editors](ref:query-editor). For general information on querying data sources in Grafana, refer to [Query and transform data](ref:query-transform-data).
 
 The PostgreSQL query editor is located on the [Explore page](ref:explore). You can also access the PostgreSQL query editor from a dashboard panel. Click the ellipsis in the upper right of the panel and select **Edit**.
@@ -100,7 +100,7 @@ Select **Table** or **Time Series** as the format. Click the **{}** in the botto
 {{% admonition type="warning" %}}
 Changes made to a query in Code mode will not transfer to Builder mode and will be discarded. You will be prompted to copy your code to the clipboard to save any changes.
 {{% /admonition %}}
-<!-- vale Grafana.Spelling = NO -->
+
 ## Macros
 
 You can add macros to your queries to simplify the syntax and enable dynamic elements, such as date range filters.
@@ -256,14 +256,12 @@ Data frame result:
 | 2020-01-02 03:05:00 | 6               | 7               |
 +---------------------+-----------------+-----------------+
 ```
-<!-- vale Grafana.Spelling = YES -->
+
 ## Templating
 
 Instead of hardcoding values like server, application, or sensor names in your metric queries, you can use variables. Variables appear as drop-down select boxes at the top of the dashboard. These drop-downs make it easy to change the data being displayed in your dashboard.
 
 Refer to [Templates](ref:templates) for an introduction to creating template variables as well as the different types.
-
-<!-- vale Grafana.GooglePassive = NO -->
 
 ### Query variable
 
@@ -408,3 +406,4 @@ For more information regarding alerting refer to the following:
 
 - [Alert rules](ref:alert-rules)
 - [Template annotations and labels](ref:template-annotations-and-labels)
+<!-- vale Grafana.Spelling = YES -->
