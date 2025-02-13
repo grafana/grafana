@@ -150,7 +150,7 @@ export const LogList = ({
     >
       {({ getItemKey, itemCount, onItemsRendered, Renderer }) => (
         <VariableSizeList
-          className={styles.unwrappedLogLine}
+          className={styles.logList}
           height={listHeight}
           itemCount={itemCount}
           itemSize={getLogLineSize.bind(null, processedLogs, containerElement, dimensions, {
@@ -174,7 +174,7 @@ export const LogList = ({
 
 function getStyles(dimensions: LogFieldDimension[]) {
   return {
-    unwrappedLogLine: css({
+    logList: css({
       '& .unwrapped-log-line': {
         display: 'grid',
         gridTemplateColumns: getGridTemplateColumns(dimensions),
