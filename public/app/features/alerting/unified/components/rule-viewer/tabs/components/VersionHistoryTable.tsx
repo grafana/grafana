@@ -1,17 +1,52 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Badge, Button, Checkbox, Column, ConfirmModal, InteractiveTable, Stack, Text } from '@grafana/ui';
+import { Alert, Badge, Button, Checkbox, Column, ConfirmModal, InteractiveTable, Stack, Text } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
+import { useUpdateRuleInRuleGroup } from 'app/features/alerting/unified/hooks/ruleGroup/useUpsertRuleFromRuleGroup';
+import { useRuleWithLocation } from 'app/features/alerting/unified/hooks/useCombinedRule';
+import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { computeVersionDiff } from 'app/features/alerting/unified/utils/diff';
+import { stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
+import { fromRulerRuleAndRuleGroupIdentifier } from 'app/features/alerting/unified/utils/rule-id';
+import { getRuleGroupLocationFromRuleWithLocation } from 'app/features/alerting/unified/utils/rules';
 import { DiffGroup } from 'app/features/dashboard-scene/settings/version-history/DiffGroup';
 import { Diffs, jsonDiff } from 'app/features/dashboard-scene/settings/version-history/utils';
+import { RuleIdentifier } from 'app/types/unified-alerting';
 import { GrafanaRuleDefinition, RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { UpdatedByUser } from './UpdatedBy';
 
 const VERSIONS_PAGE_SIZE = 20;
+
+function useRestoreVersion(ruleIdentifier: RuleIdentifier, newVersion?: RulerGrafanaRuleDTO<GrafanaRuleDefinition>) {
+  const { loading: loadingAlertRule, result: ruleWithLocation, error } = useRuleWithLocation({ ruleIdentifier });
+
+  const [updateRuleInRuleGroup] = useUpdateRuleInRuleGroup();
+
+  const onRestoreVersion = async (newVersion: RulerGrafanaRuleDTO<GrafanaRuleDefinition>) => {
+    if (!newVersion) {
+      return;
+    }
+    if (
+      !loadingAlertRule &&
+      ruleWithLocation &&
+      !error &&
+      newVersion.grafana_alert.rule_group === newVersion.grafana_alert.rule_group
+    ) {
+      const ruleGroupIdentifier = getRuleGroupLocationFromRuleWithLocation(ruleWithLocation);
+      const ruleIdentifier = fromRulerRuleAndRuleGroupIdentifier(ruleGroupIdentifier, newVersion);
+      // restore version
+      await updateRuleInRuleGroup.execute(ruleGroupIdentifier, ruleIdentifier, newVersion, {
+        dataSourceName: GRAFANA_RULES_SOURCE_NAME,
+        namespaceName: newVersion.grafana_alert.namespace_uid,
+        groupName: newVersion.grafana_alert.rule_group,
+      });
+    }
+  };
+  return onRestoreVersion;
+}
 
 export function VersionHistoryTable({
   onVersionsChecked,
@@ -27,22 +62,43 @@ export function VersionHistoryTable({
   //----> restore code : no need to review as it's behind a feature flag
   const [confirmRestore, setConfirmRestore] = useState(false);
   const [restoreDiff, setRestoreDiff] = useState<Diffs | undefined>();
+  const [ruleToRestore, setRuleToRestore] = useState<RulerGrafanaRuleDTO<GrafanaRuleDefinition>>();
+  const ruleIdentifier: RuleIdentifier = useMemo(
+    () => ({ ruleSourceName: GRAFANA_RULES_SOURCE_NAME, uid: ruleToRestore?.grafana_alert?.uid ?? '' }),
+    [ruleToRestore]
+  );
+  const restoreFn = useRestoreVersion(ruleIdentifier, ruleToRestore);
+  const [restoreError, setRestoreError] = useState<Error | undefined>();
 
-  const showConfirmation = (id: string) => {
+  const showConfirmation = (ruleToRestore: RulerGrafanaRuleDTO<GrafanaRuleDefinition>) => {
     const currentVersion = ruleVersions[0];
-    const restoreVersion = ruleVersions.find((rule) => String(rule.grafana_alert.version) === id);
-    if (!restoreVersion) {
-      return;
-    }
-
     setConfirmRestore(true);
-    setRestoreDiff(jsonDiff(currentVersion, restoreVersion));
+    setRuleToRestore(ruleToRestore);
+    setRestoreDiff(jsonDiff(currentVersion, ruleToRestore));
   };
 
   const hideConfirmation = () => {
     setConfirmRestore(false);
   };
-  //----> end of restore code
+
+  function onRestoreConfirm() {
+    if (restoreError) {
+      setRestoreError(undefined);
+      hideConfirmation();
+      return;
+    }
+    if (ruleToRestore) {
+      restoreFn(ruleToRestore)
+        .then(() => {
+          setRestoreError(undefined);
+          hideConfirmation();
+        })
+        .catch((err) => {
+          setRestoreError(err);
+        });
+    }
+  }
+
   const unknown = t('alerting.alertVersionHistory.unknown', 'Unknown');
 
   const columns: Array<Column<(typeof ruleVersions)[0]>> = [
@@ -127,7 +183,7 @@ export function VersionHistoryTable({
                 size="sm"
                 icon="history"
                 onClick={() => {
-                  showConfirmation(row.values.id);
+                  row.original.grafana_alert.version && showConfirmation(row.original);
                 }}
               >
                 <Trans i18nKey="alerting.alertVersionHistory.restore">Restore</Trans>
@@ -147,16 +203,18 @@ export function VersionHistoryTable({
         data={ruleVersions}
         getRowId={(row) => `${row.grafana_alert.version}`}
       />
-      {/* ---------------------> restore code: no need to review for this pr as it's behind a feature flag */}
       <ConfirmModal
         isOpen={confirmRestore}
         title={t('alerting.alertVersionHistory.restore-modal.title', 'Restore Version')}
+        disabled={Boolean(restoreError)}
         body={
           <Stack direction="column" gap={2}>
-            <Trans i18nKey="alerting.alertVersionHistory.restore-modal.body">
-              Are you sure you want to restore the alert rule definition to this version? All unsaved changes will be
-              lost.
-            </Trans>
+            {!restoreError && (
+              <Trans i18nKey="alerting.alertVersionHistory.restore-modal.body">
+                Are you sure you want to restore the alert rule definition to this version? All unsaved changes will be
+                lost.
+              </Trans>
+            )}
             <Text variant="h6">
               <Trans i18nKey="alerting.alertVersionHistory.restore-modal.summary">
                 Summary of changes to be applied:
@@ -171,15 +229,20 @@ export function VersionHistoryTable({
                 </>
               )}
             </div>
+            {restoreError && (
+              <Alert severity="error" title={t('alerting.alertVersionHistory.restore-modal.error', 'Error')}>
+                {stringifyErrorLike(restoreError)}
+              </Alert>
+            )}
           </Stack>
         }
         confirmText={'Yes, restore configuration'}
-        onConfirm={() => {
+        onConfirm={onRestoreConfirm}
+        onDismiss={() => {
           hideConfirmation();
+          setRestoreError(undefined);
         }}
-        onDismiss={() => hideConfirmation()}
       />
-      {/* ------------------------------------> END OF RESTORING CODE */}
     </>
   );
 }
