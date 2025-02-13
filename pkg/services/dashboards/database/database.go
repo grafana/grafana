@@ -146,6 +146,38 @@ func (d *dashboardStore) GetProvisionedDashboardData(ctx context.Context, name s
 	return result, err
 }
 
+func (d *dashboardStore) GetProvisionedDashboardsByName(ctx context.Context, name string) ([]*dashboards.Dashboard, error) {
+	ctx, span := tracer.Start(ctx, "dashboards.database.GetProvisionedDashboardsByName")
+	defer span.End()
+
+	dashes := []*dashboards.Dashboard{}
+	err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
+		return sess.Table(`dashboard`).
+			Join(`INNER`, `dashboard_provisioning`, `dashboard.id = dashboard_provisioning.dashboard_id`).
+			Where(`dashboard_provisioning.name = ?`, name).Find(&dashes)
+	})
+	if err != nil {
+		return nil, err
+	}
+	return dashes, nil
+}
+
+func (d *dashboardStore) GetOrphanedProvisionedDashboards(ctx context.Context, notIn []string) ([]*dashboards.Dashboard, error) {
+	ctx, span := tracer.Start(ctx, "dashboards.database.GetOrphanedProvisionedDashboards")
+	defer span.End()
+
+	dashes := []*dashboards.Dashboard{}
+	err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
+		return sess.Table(`dashboard`).
+			Join(`INNER`, `dashboard_provisioning`, `dashboard.id = dashboard_provisioning.dashboard_id`).
+			NotIn(`dashboard_provisioning.name`, notIn).Find(&dashes)
+	})
+	if err != nil {
+		return nil, err
+	}
+	return dashes, nil
+}
+
 func (d *dashboardStore) SaveProvisionedDashboard(ctx context.Context, dash *dashboards.Dashboard, provisioning *dashboards.DashboardProvisioning) error {
 	ctx, span := tracer.Start(ctx, "dashboards.database.SaveProvisionedDashboard")
 	defer span.End()

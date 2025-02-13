@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"google.golang.org/grpc"
+	"k8s.io/apimachinery/pkg/selection"
 )
 
 type DashboardSearchClient struct {
@@ -28,6 +29,7 @@ func NewDashboardSearchClient(dashboardStore dashboards.Store) *DashboardSearchC
 	return &DashboardSearchClient{dashboardStore: dashboardStore}
 }
 
+// nolint:gocyclo
 func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.ResourceSearchRequest, opts ...grpc.CallOption) (*resource.ResourceSearchResponse, error) {
 	user, err := identity.GetRequester(ctx)
 	if err != nil {
@@ -101,6 +103,8 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 	}
 
 	for _, field := range req.Options.Fields {
+		vals := field.GetValues()
+
 		switch field.Key {
 		case resource.SEARCH_FIELD_TAGS:
 			query.Tags = field.GetValues()
@@ -108,7 +112,6 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 			query.DashboardUIDs = field.GetValues()
 			query.DashboardIds = nil
 		case resource.SEARCH_FIELD_FOLDER:
-			vals := field.GetValues()
 			folders := make([]string, len(vals))
 
 			for i, val := range vals {
@@ -120,7 +123,68 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 			}
 
 			query.FolderUIDs = folders
+		case resource.SEARCH_FIELD_REPOSITORY_PATH:
+			// only one value is supported in legacy search
+			if len(vals) == 1 {
+				query.ProvisionedPath = vals[0]
+			}
+		case resource.SEARCH_FIELD_REPOSITORY_NAME:
+			if field.Operator == string(selection.NotIn) {
+				for _, val := range vals {
+					name, _ := dashboard.GetProvisionedFileNameFromMeta(val)
+					query.ProvisionedReposNotIn = append(query.ProvisionedReposNotIn, name)
+				}
+				continue
+			}
+
+			// only one value is supported in legacy search
+			if len(vals) != 1 {
+				continue
+			}
+
+			query.ProvisionedRepo, _ = dashboard.GetProvisionedFileNameFromMeta(vals[0])
 		}
+	}
+
+	searchFields := resource.StandardSearchFields()
+	list := &resource.ResourceSearchResponse{
+		Results: &resource.ResourceTable{
+			Columns: []*resource.ResourceTableColumnDefinition{
+				searchFields.Field(resource.SEARCH_FIELD_TITLE),
+				searchFields.Field(resource.SEARCH_FIELD_FOLDER),
+				searchFields.Field(resource.SEARCH_FIELD_TAGS),
+			},
+		},
+	}
+
+	// if we are querying for provisioning information, we need to use a different
+	// legacy sql query, since legacy search does not support this
+	if query.ProvisionedRepo != "" || len(query.ProvisionedReposNotIn) > 0 {
+		var dashes []*dashboards.Dashboard
+		if query.ProvisionedRepo == dashboard.PluginIDRepoName {
+			dashes, err = c.dashboardStore.GetDashboardsByPluginID(ctx, &dashboards.GetDashboardsByPluginIDQuery{
+				PluginID: query.ProvisionedPath,
+				OrgID:    user.GetOrgID(),
+			})
+		} else if query.ProvisionedRepo != "" {
+			dashes, err = c.dashboardStore.GetProvisionedDashboardsByName(ctx, query.ProvisionedRepo)
+		} else if len(query.ProvisionedReposNotIn) > 0 {
+			dashes, err = c.dashboardStore.GetOrphanedProvisionedDashboards(ctx, query.ProvisionedReposNotIn)
+		}
+		if err != nil {
+			return nil, err
+		}
+
+		for _, dashboard := range dashes {
+			list.Results.Rows = append(list.Results.Rows, &resource.ResourceTableRow{
+				Key: getResourceKey(&dashboards.DashboardSearchProjection{
+					UID: dashboard.UID,
+				}, req.Options.Key.Namespace),
+				Cells: [][]byte{[]byte(dashboard.Title), []byte(dashboard.FolderUID), []byte{}},
+			})
+		}
+
+		return list, nil
 	}
 
 	// TODO need to test this
@@ -138,17 +202,6 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 	}
 
 	// TODO sort if query.Sort == "" see sortedHits in services/search/service.go
-
-	searchFields := resource.StandardSearchFields()
-	list := &resource.ResourceSearchResponse{
-		Results: &resource.ResourceTable{
-			Columns: []*resource.ResourceTableColumnDefinition{
-				searchFields.Field(resource.SEARCH_FIELD_TITLE),
-				searchFields.Field(resource.SEARCH_FIELD_FOLDER),
-				searchFields.Field(resource.SEARCH_FIELD_TAGS),
-			},
-		},
-	}
 
 	hits := formatQueryResult(res)
 
