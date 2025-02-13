@@ -55,6 +55,7 @@ func (r *SyncWorker) wipeUnifiedAndSetMigratedFlag(ctx context.Context, ns strin
 
 		status.Migrated = time.Now().UnixMilli() // but not really... since the sync is starting
 		status.ReadUnified = true
+		status.WriteLegacy = false // keep legacy "clean"
 		_, err = r.storageStatus.Update(ctx, status)
 		if err != nil {
 			return err
