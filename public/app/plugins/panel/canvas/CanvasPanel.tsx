@@ -85,6 +85,7 @@ export class CanvasPanel extends Component<Props, State> {
     this.scene.setBackgroundCallback = this.openSetBackground;
     this.scene.tooltipCallback = this.tooltipCallback;
     this.scene.moveableActionCallback = this.moveableActionCallback;
+    this.scene.actionConfirmationCallback = this.actionConfirmationCallback;
 
     this.subs.add(
       this.props.eventBus.subscribe(PanelEditEnteredEvent, (evt: PanelEditEnteredEvent) => {
@@ -299,6 +300,10 @@ export class CanvasPanel extends Component<Props, State> {
 
   moveableActionCallback = (updated: boolean) => {
     this.setState({ moveableAction: updated });
+    this.forceUpdate();
+  };
+
+  actionConfirmationCallback = () => {
     this.forceUpdate();
   };
 

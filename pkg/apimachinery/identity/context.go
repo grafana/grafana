@@ -100,6 +100,7 @@ func getWildcardPermissions(actions ...string) map[string][]string {
 // serviceIdentityPermissions is a list of wildcard permissions for provided actions.
 // We should add every action required "internally" here.
 var serviceIdentityPermissions = getWildcardPermissions(
+	"annotations:read",
 	"folders:read",
 	"folders:write",
 	"folders:create",
@@ -107,6 +108,7 @@ var serviceIdentityPermissions = getWildcardPermissions(
 	"dashboards:read",
 	"dashboards:write",
 	"dashboards:create",
+	"datasources:query",
 	"datasources:read",
 	"datasources:delete",
 	"alert.provisioning:write",

@@ -3,7 +3,7 @@ name: Crowdin Download Action
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 * * * *"
+    - cron: "0 0 * * *"
 
 jobs:
   download-sources-from-crowdin:
@@ -12,6 +12,7 @@ jobs:
     permissions:
       contents: write # needed to commit changes into the PR
       pull-requests: write # needed to update PR description, labels, etc
+      id-token: write # needed to get vault secrets
 
     steps:
       - name: Generate token
@@ -41,17 +42,11 @@ jobs:
           pull_request_body:  |
             :robot: Automatic download of translations from Crowdin.
 
-            Steps for merging:
-              1. A quick sanity check of the changes and approve. Things to look out for:
-                - No changes in the English file. The source of truth is in the main branch, NOT in Crowdin.
-                - Translations maybe be removed if the English phrase was removed, but there should not be many of these
-                - Anything else that looks 'funky'. Ask if you're not sure.
-              2. Approve & (Auto-)merge. :tada:
+            This runs once per day and will merge automatically if all the required checks pass.
 
-            If there's a conflict, close the pull request and **delete the branch**. A GH action will recreate the pull request.
-            Remember, the longer this pull request is open, the more likely it is that it'll get conflicts.
+            If there's a conflict, close the pull request and **delete the branch**.
+            You can then either wait for the schedule to trigger a new PR, or rerun the action manually.
           pull_request_labels: 'area/frontend, area/internationalization, no-changelog, no-backport'
-          pull_request_reviewers: 'grafana-frontend-platform'
           pull_request_base_branch_name: 'main'
           base_url: 'https://grafana.api.crowdin.com'
           config: 'crowdin.yml'
@@ -119,3 +114,45 @@ jobs:
         with:
           pr: ${{ steps.crowdin-download.outputs.pull_request_number }}
           token: ${{ steps.generate_token.outputs.token }}
+
+      - name: Get vault secrets
+        id: vault-secrets
+        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+        with:
+          # Secrets placed in ci/repo/grafana/grafana/grafana-pr-approver
+          repo_secrets: |
+            GRAFANA_PR_APPROVER_APP_ID=grafana-pr-approver:app-id
+            GRAFANA_PR_APPROVER_APP_PEM=grafana-pr-approver:private-key
+
+      - name: Generate approver token
+        if: steps.crowdin-download.outputs.pull_request_url
+        id: generate_approver_token
+        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+        with:
+          app_id: ${{ env.GRAFANA_PR_APPROVER_APP_ID }}
+          private_key: ${{ env.GRAFANA_PR_APPROVER_APP_PEM }}
+
+      - name: Approve and automerge PR
+        if: steps.crowdin-download.outputs.pull_request_url
+        shell: bash
+        # Only approve if:
+        # - the PR does not modify files other than json files under the public/locales/ directory
+        # - the PR does not modify the en-US locale
+        run: |
+          filesChanged=$(gh pr diff --name-only ${{ steps.crowdin-download.outputs.pull_request_url }})
+
+          if [[ $(echo $filesChanged | grep -v 'public/locales/[a-zA-Z\-]*/grafana.json' | wc -l) -ne 0 ]]; then
+            echo "Non-i18n changes detected, not approving"
+            exit 1
+          fi
+
+          if [[ $(echo $filesChanged | grep "public/locales/en-US" | wc -l) -ne 0 ]]; then
+            echo "public/locales/en-US changes detected, not approving"
+            exit 1
+          fi
+
+          echo "Approving and enabling automerge"
+          gh pr review ${{ steps.crowdin-download.outputs.pull_request_url }} --approve
+          gh pr merge --auto --squash ${{ steps.crowdin-download.outputs.pull_request_url }}
+        env:
+          GITHUB_TOKEN: ${{ steps.generate_approver_token.outputs.token }}

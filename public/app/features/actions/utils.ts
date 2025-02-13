@@ -62,6 +62,7 @@ export const getActions = (
       onClick: (evt: MouseEvent, origin: Field) => {
         buildActionOnClick(action, boundReplaceVariables);
       },
+      oneClick: action.oneClick ?? false,
     };
 
     return actionModel;
