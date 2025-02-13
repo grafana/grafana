@@ -548,7 +548,7 @@ function checkLabelPromotion(filters: AdHocVariableFilter[], nonPromotedOtelReso
  * Once we know this, we can add the selected filter to either the
  * VAR_OTEL_RESOURCES or VAR_FILTERS variable.
  *
- * When the correct variable is updated, the rest of the explore metrics behavior will remain the same.
+ * When the correct variable is updated, the rest of the Metrics Drilldown behavior will remain the same.
  *
  * @param newStateFilters
  * @param prevStateFilters
