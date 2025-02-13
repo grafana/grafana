@@ -38,7 +38,7 @@ export class ServiceAccountPicker extends Component<Props, State> {
     }
 
     return getBackendSrv()
-      .get(`/api/serviceaccounts/search`)
+      .get(`/api/serviceaccounts/search?query=${query}&perpage=100`)
       .then((result: ServiceAccountsState) => {
         return result.serviceAccounts.map((sa) => ({
           id: sa.id,
