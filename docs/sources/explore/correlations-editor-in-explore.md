@@ -3,6 +3,7 @@ labels:
   products:
     - enterprise
     - oss
+    - cloud
 title: Correlations Editor in Explore
 weight: 20
 ---
