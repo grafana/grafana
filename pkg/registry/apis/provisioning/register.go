@@ -332,8 +332,6 @@ func (b *APIBuilder) AsRepository(ctx context.Context, r *provisioning.Repositor
 			r.GetName(),
 		)
 		return repository.NewGitHub(ctx, r, b.ghFactory, b.secrets, webhookURL)
-	case provisioning.S3RepositoryType:
-		return repository.NewS3(r), nil
 	default:
 		return repository.NewUnknown(r), nil
 	}

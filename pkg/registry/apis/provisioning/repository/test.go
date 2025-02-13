@@ -70,9 +70,5 @@ func ValidateRepository(repo Repository) field.ErrorList {
 			cfg.Spec.GitHub, "Github config only valid when type is github"))
 	}
 
-	if cfg.Spec.Type != provisioning.S3RepositoryType && cfg.Spec.S3 != nil {
-		list = append(list, field.Invalid(field.NewPath("spec", "s3"),
-			cfg.Spec.GitHub, "S3 config only valid when type is s3"))
-	}
 	return list
 }
