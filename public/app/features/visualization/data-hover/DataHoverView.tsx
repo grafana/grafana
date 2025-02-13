@@ -93,7 +93,16 @@ export function getDisplayValuesAndLinks(
   return { displayValues, links };
 }
 
-export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode, header, padding = 0, maxHeight }: Props) => {
+export const DataHoverView = ({
+  data,
+  rowIndex,
+  columnIndex,
+  sortOrder,
+  mode,
+  header,
+  padding = 0,
+  maxHeight,
+}: Props) => {
   const styles = useStyles2(getStyles, padding);
 
   if (!data || rowIndex == null) {
@@ -109,7 +118,7 @@ export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode, he
   const { displayValues, links } = dispValuesAndLinks;
 
   if (header === 'Exemplar') {
-    return <ExemplarHoverView displayValues={displayValues} links={links} header={header} maxHeight={maxHeight}/>;
+    return <ExemplarHoverView displayValues={displayValues} links={links} header={header} maxHeight={maxHeight} />;
   }
 
   return (
