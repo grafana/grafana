@@ -193,8 +193,8 @@ The following key-value pairs are also included in the JSON payload and can be c
 
 | Key     | Type   | Description                                                                                                          |
 | ------- | ------ | -------------------------------------------------------------------------------------------------------------------- |
-| title   | string | Custom title. Configurable in [wehbook settings using notification templates](#optional-settings-using-templates).   |
-| message | string | Custom message. Configurable in [wehbook settings using notification templates](#optional-settings-using-templates). |
+| title   | string | Custom title. Configurable in [webhook settings using notification templates](#optional-settings-using-templates).   |
+| message | string | Custom message. Configurable in [webhook settings using notification templates](#optional-settings-using-templates). |
 
 ### Alert
 
