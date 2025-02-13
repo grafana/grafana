@@ -6,6 +6,7 @@ import { t, Trans } from 'app/core/internationalization';
 import { useSelector } from 'app/types';
 
 import { createDatasourcesList } from '../../core/utils/richHistory';
+import { MIXED_DATASOURCE_NAME } from '../../plugins/datasource/mixed/MixedDataSource';
 
 import { useQueryLibraryContext } from './QueryLibrary/QueryLibraryContext';
 import { type OnSelectQueryType } from './QueryLibrary/types';
@@ -51,7 +52,7 @@ export function SecondaryActions({
     .map((eDs) => {
       return listOfDatasources.find((ds) => ds.uid === eDs.datasource?.uid)?.name;
     })
-    .filter((name): name is string => !!name);
+    .filter((name): name is string => !!name && name !== MIXED_DATASOURCE_NAME);
 
   const { queryLibraryEnabled, openDrawer: openQueryLibraryDrawer } = useQueryLibraryContext();
 

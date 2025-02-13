@@ -25,7 +25,9 @@ import { updateQueries } from 'app/features/query/state/updateQueries';
 import { isSharedDashboardQuery } from 'app/plugins/datasource/dashboard/runSharedRequest';
 import { QueryGroupOptions } from 'app/types';
 
+import { MIXED_DATASOURCE_NAME } from '../../../../plugins/datasource/mixed/MixedDataSource';
 import { useQueryLibraryContext } from '../../../explore/QueryLibrary/QueryLibraryContext';
+import { getDatasourceSrv } from '../../../plugins/datasource_srv';
 import { PanelTimeRange } from '../../scene/PanelTimeRange';
 import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor } from '../../utils/utils';
 import { getUpdatedHoverHeader } from '../getPanelFrameOptions';
@@ -350,11 +352,28 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
             {queryLibraryEnabled && (
               <Button
                 icon="plus"
-                onClick={() => {
-                  openQueryLibraryDrawer(getDatasourceNames(datasource, queries), (query) =>
-                    model.onQueriesChange(addQuery(model.getQueries(), query))
-                  );
-                }}
+                onClick={() =>
+                  openQueryLibraryDrawer(getDatasourceNames(datasource, queries), async (query) => {
+                    // filter out queries without datasource
+                    const filteredQueries = queries.filter((q) => q.datasource);
+                    const newQueries = addQuery(filteredQueries, query);
+                    model.onQueriesChange(newQueries);
+                    if (query.datasource?.uid) {
+                      const uniqueDatasources = new Set(newQueries.map((q) => q.datasource?.uid));
+                      const isMixed = uniqueDatasources.size > 1;
+                      const newDatasourceRef = {
+                        uid: isMixed ? MIXED_DATASOURCE_NAME : query.datasource.uid,
+                      };
+                      const shouldChangeDatasource = datasource.uid !== newDatasourceRef.uid;
+                      if (shouldChangeDatasource) {
+                        const newDatasource = getDatasourceSrv().getInstanceSettings(newDatasourceRef);
+                        if (newDatasource) {
+                          await model.onChangeDataSource(newDatasource);
+                        }
+                      }
+                    }
+                  })
+                }
                 variant="secondary"
                 data-testid={selectors.components.QueryTab.addQuery}
               >

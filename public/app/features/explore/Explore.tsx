@@ -608,21 +608,26 @@ export class Explore extends PureComponent<Props, ExploreState> {
                           onClickAddQueryRowButton={this.onClickAddQueryRowButton}
                           onClickQueryInspectorButton={() => setShowQueryInspector(!showQueryInspector)}
                           onSelectQueryFromLibrary={async (query) => {
-                            if (query.datasource?.uid) {
-                              const isDifferentDatasource = !this.props.exploreActiveDS.dsToExplore
-                                .find((di) => di.datasource.uid === query.datasource?.uid)
-                                ?.exploreIds.includes(exploreId);
-                              if (isDifferentDatasource) {
-                                await this.props.changeDatasource({ exploreId, datasource: query.datasource.uid });
-                              }
-                            }
-                            this.props.setQueries(exploreId, [
-                              ...this.props.queries,
+                            const { changeDatasource, queries, setQueries } = this.props;
+                            const newQueries = [
+                              ...queries,
                               {
                                 ...query,
-                                refId: getNextRefId(this.props.queries),
+                                refId: getNextRefId(queries),
                               },
-                            ]);
+                            ];
+                            setQueries(exploreId, newQueries);
+                            if (query.datasource?.uid) {
+                              const uniqueDatasources = new Set(newQueries.map((q) => q.datasource?.uid));
+                              const isMixed = uniqueDatasources.size > 1;
+                              const newDatasourceRef = {
+                                uid: isMixed ? MIXED_DATASOURCE_NAME : query.datasource.uid,
+                              };
+                              const shouldChangeDatasource = datasourceInstance.uid !== newDatasourceRef.uid;
+                              if (shouldChangeDatasource) {
+                                await changeDatasource({ exploreId, datasource: newDatasourceRef });
+                              }
+                            }
                           }}
                         />
                         <ResponseErrorContainer exploreId={exploreId} />
