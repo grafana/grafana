@@ -64,7 +64,16 @@ function findVizPanelInternal(scene: SceneObject, key: string | undefined): VizP
   const panel = sceneGraph.findObject(scene, (obj) => {
     const objKey = obj.state.key!;
 
-    if (objKey === key || (!isClonedKey(objKey) && getOriginalKey(objKey) === key)) {
+    if (objKey === key) {
+      return true;
+    }
+
+    // It might be possible to have the keys changed in the meantime from `panel-2` to `panel-2-clone-0`
+    // We need to check this as well
+    const originalObjectKey = !isClonedKey(objKey) ? getOriginalKey(objKey) : objKey;
+    const originalKey = !isClonedKey(key) ? getOriginalKey(key) : key;
+
+    if (originalObjectKey === originalKey) {
       return true;
     }
 
