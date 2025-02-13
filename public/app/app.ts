@@ -5,7 +5,6 @@ import 'whatwg-fetch'; // fetch polyfill needed for PhantomJs rendering
 import 'file-saver';
 import 'jquery';
 
-import _ from 'lodash'; // eslint-disable-line lodash/import-scope
 import { createElement } from 'react';
 import { createRoot } from 'react-dom/client';
 
@@ -46,7 +45,6 @@ import { setPanelDataErrorView } from '@grafana/runtime/src/components/PanelData
 import { setPanelRenderer } from '@grafana/runtime/src/components/PanelRenderer';
 import { setPluginPage } from '@grafana/runtime/src/components/PluginPage';
 import config, { updateConfig } from 'app/core/config';
-import { arrayMove } from 'app/core/utils/arrayMove';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 
 import getDefaultMonacoLanguages from '../lib/monaco-languages';
@@ -67,13 +65,6 @@ import { backendSrv } from './core/services/backend_srv';
 import { contextSrv, RedirectToUrlKey } from './core/services/context_srv';
 import { Echo } from './core/services/echo/Echo';
 import { reportPerformance } from './core/services/echo/EchoSrv';
-import { PerformanceBackend } from './core/services/echo/backends/PerformanceBackend';
-import { ApplicationInsightsBackend } from './core/services/echo/backends/analytics/ApplicationInsightsBackend';
-import { BrowserConsoleBackend } from './core/services/echo/backends/analytics/BrowseConsoleBackend';
-import { GA4EchoBackend } from './core/services/echo/backends/analytics/GA4Backend';
-import { GAEchoBackend } from './core/services/echo/backends/analytics/GABackend';
-import { RudderstackBackend } from './core/services/echo/backends/analytics/RudderstackBackend';
-import { GrafanaJavascriptAgentBackend } from './core/services/echo/backends/grafana-javascript-agent/GrafanaJavascriptAgentBackend';
 import { KeybindingSrv } from './core/services/keybindingSrv';
 import { startMeasure, stopMeasure } from './core/utils/metrics';
 import { initDevFeatures } from './dev';
@@ -113,10 +104,6 @@ import { createSystemVariableAdapter } from './features/variables/system/adapter
 import { createTextBoxVariableAdapter } from './features/variables/textbox/adapter';
 import { configureStore } from './store/configureStore';
 
-// add move to lodash for backward compatabilty with plugins
-// @ts-ignore
-_.move = arrayMove;
-
 // import symlinked extensions
 const extensionsIndex = require.context('.', true, /extensions\/index.ts/);
 const extensionsExports = extensionsIndex.keys().map((key) => {
@@ -139,7 +126,7 @@ export class GrafanaApp {
       initI18nPromise.then(({ language }) => updateConfig({ language }));
 
       setBackendSrv(backendSrv);
-      initEchoSrv();
+      await initEchoSrv();
       // This needs to be done after the `initEchoSrv` since it is being used under the hood.
       startMeasure('frontend_app_init');
 
@@ -295,7 +282,7 @@ function initExtensions() {
   }
 }
 
-function initEchoSrv() {
+async function initEchoSrv() {
   setEchoSrv(new Echo({ debug: process.env.NODE_ENV === 'development' }));
 
   window.addEventListener('load', (e) => {
@@ -315,6 +302,7 @@ function initEchoSrv() {
   });
 
   if (contextSrv.user.orgRole !== '') {
+    const { PerformanceBackend } = await import('./core/services/echo/backends/PerformanceBackend');
     registerEchoBackend(new PerformanceBackend({}));
   }
 
@@ -327,6 +315,10 @@ function initEchoSrv() {
     ]
       .filter(Boolean)
       .map((url) => new RegExp(`${url}.*.`));
+
+    const { GrafanaJavascriptAgentBackend } = await import(
+      './core/services/echo/backends/grafana-javascript-agent/GrafanaJavascriptAgentBackend'
+    );
 
     registerEchoBackend(
       new GrafanaJavascriptAgentBackend({
@@ -346,6 +338,7 @@ function initEchoSrv() {
   }
 
   if (config.googleAnalyticsId) {
+    const { GAEchoBackend } = await import('./core/services/echo/backends/analytics/GABackend');
     registerEchoBackend(
       new GAEchoBackend({
         googleAnalyticsId: config.googleAnalyticsId,
@@ -354,6 +347,7 @@ function initEchoSrv() {
   }
 
   if (config.googleAnalytics4Id) {
+    const { GA4EchoBackend } = await import('./core/services/echo/backends/analytics/GA4Backend');
     registerEchoBackend(
       new GA4EchoBackend({
         googleAnalyticsId: config.googleAnalytics4Id,
@@ -363,6 +357,7 @@ function initEchoSrv() {
   }
 
   if (config.rudderstackWriteKey && config.rudderstackDataPlaneUrl) {
+    const { RudderstackBackend } = await import('./core/services/echo/backends/analytics/RudderstackBackend');
     registerEchoBackend(
       new RudderstackBackend({
         writeKey: config.rudderstackWriteKey,
@@ -377,6 +372,9 @@ function initEchoSrv() {
   }
 
   if (config.applicationInsightsConnectionString) {
+    const { ApplicationInsightsBackend } = await import(
+      './core/services/echo/backends/analytics/ApplicationInsightsBackend'
+    );
     registerEchoBackend(
       new ApplicationInsightsBackend({
         connectionString: config.applicationInsightsConnectionString,
@@ -386,6 +384,7 @@ function initEchoSrv() {
   }
 
   if (config.analyticsConsoleReporting) {
+    const { BrowserConsoleBackend } = await import('./core/services/echo/backends/analytics/BrowseConsoleBackend');
     registerEchoBackend(new BrowserConsoleBackend());
   }
 }
@@ -395,7 +394,7 @@ function initEchoSrv() {
  * like PerformanceMark or PerformancePaintTiming (e.g. created with performance.mark, or first-contentful-paint)
  */
 function reportMetricPerformanceMark(metricName: string, prefix = '', suffix = ''): void {
-  const metric = _.first(performance.getEntriesByName(metricName));
+  const metric = performance.getEntriesByName(metricName).at(0);
   if (metric) {
     const metricName = metric.name.replace(/-/g, '_');
     reportPerformance(`${prefix}${metricName}${suffix}`, Math.round(metric.startTime) / 1000);
