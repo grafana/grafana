@@ -6,70 +6,130 @@ import (
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 )
 
 const (
-	ActionSecretsManagerWrite    = "secrets-manager:write"    // CREATE + UPDATE.
-	ActionSecretsManagerDescribe = "secrets-manager:describe" // GET.
-	ActionSecretsManagerList     = "secrets-manager:list"     // LIST.
-	ActionSecretsManagerDelete   = "secrets-manager:delete"   // DELETE.
+	// SecureValues
+	ActionSecretsManagerSecureValuesWrite    = "secrets-manager.securevalues:write"    // CREATE + UPDATE.
+	ActionSecretsManagerSecureValuesDescribe = "secrets-manager.securevalues:describe" // GET.
+	ActionSecretsManagerSecureValuesList     = "secrets-manager.securevalues:list"     // LIST.
+	ActionSecretsManagerSecureValuesDelete   = "secrets-manager.securevalues:delete"   // DELETE.
+
+	// Keepers
+	ActionSecretsManagerKeepersWrite    = "secrets-manager.keepers:write"    // CREATE + UPDATE.
+	ActionSecretsManagerKeepersDescribe = "secrets-manager.keepers:describe" // GET.
+	ActionSecretsManagerKeepersList     = "secrets-manager.keepers:list"     // LIST.
+	ActionSecretsManagerKeepersDelete   = "secrets-manager.keepers:delete"   // DELETE.
 )
 
 const (
-	ScopeAll = "secrets-manager:*"
+	ScopeAllSecureValues = "secrets-manager.securevalues:*"
+	ScopeAllKeepers      = "secrets-manager.keepers:*"
 )
 
 var (
-	ScopeSecretsManagerProvider = accesscontrol.NewScopeProvider("secrets-manager")
+	ScopeProviderSecretsManagerSecureValues = accesscontrol.NewScopeProvider("secrets-manager.securevalues")
+	ScopeProviderSecretsManagerKeepers      = accesscontrol.NewScopeProvider("secrets-manager.keepers")
 )
 
 func RegisterAccessControlRoles(service accesscontrol.Service) error {
-	reader := accesscontrol.RoleRegistration{
+	// SecureValues
+	secureValuesReader := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
-			Name:        "fixed:secrets-manager:reader",
-			DisplayName: "Secrets Manager reader",
-			Description: "Read secure values and keepers metadata.",
+			Name:        "fixed:secrets-manager.securevalues:reader",
+			DisplayName: "Secrets Manager secure values reader",
+			Description: "Read secure values.",
 			Group:       "Secrets Manager",
 			Permissions: []accesscontrol.Permission{
 				{
-					Action: ActionSecretsManagerList,
-					Scope:  ScopeAll,
+					Action: ActionSecretsManagerSecureValuesList,
+					Scope:  ScopeAllSecureValues,
 				},
 				{
-					Action: ActionSecretsManagerDescribe,
-					Scope:  ScopeAll,
+					Action: ActionSecretsManagerSecureValuesDescribe,
+					Scope:  ScopeAllSecureValues,
 				},
 			},
 		},
 		Grants: []string{string(accesscontrol.RoleGrafanaAdmin)},
 	}
 
-	writer := accesscontrol.RoleRegistration{
+	secureValuesWriter := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
-			Name:        "fixed:secrets-manager:writer",
-			DisplayName: "Secrets Manager writer",
-			Description: "Create, update and delete secure values and keepers.",
+			Name:        "fixed:secrets-manager.securevalues:writer",
+			DisplayName: "Secrets Manager secure values writer",
+			Description: "Create, update and delete secure values.",
 			Group:       "Secrets Manager",
 			Permissions: []accesscontrol.Permission{
 				{
-					Action: ActionSecretsManagerWrite,
-					Scope:  ScopeAll,
+					Action: ActionSecretsManagerSecureValuesWrite,
+					Scope:  ScopeAllSecureValues,
 				},
 				{
-					Action: ActionSecretsManagerDelete,
-					Scope:  ScopeAll,
+					Action: ActionSecretsManagerSecureValuesDelete,
+					Scope:  ScopeAllSecureValues,
 				},
 			},
 		},
 		Grants: []string{string(accesscontrol.RoleGrafanaAdmin)},
 	}
 
-	return service.DeclareFixedRoles(reader, writer)
+	// Keepers
+	keepersReader := accesscontrol.RoleRegistration{
+		Role: accesscontrol.RoleDTO{
+			Name:        "fixed:secrets-manager.keepers:reader",
+			DisplayName: "Secrets Manager keepers reader",
+			Description: "Read keepers.",
+			Group:       "Secrets Manager",
+			Permissions: []accesscontrol.Permission{
+				{
+					Action: ActionSecretsManagerKeepersList,
+					Scope:  ScopeAllKeepers,
+				},
+				{
+					Action: ActionSecretsManagerKeepersDescribe,
+					Scope:  ScopeAllKeepers,
+				},
+			},
+		},
+		Grants: []string{string(accesscontrol.RoleGrafanaAdmin)},
+	}
+
+	keepersWriter := accesscontrol.RoleRegistration{
+		Role: accesscontrol.RoleDTO{
+			Name:        "fixed:secrets-manager.keepers:writer",
+			DisplayName: "Secrets Manager keepers reader",
+			Description: "Read keepers.",
+			Group:       "Secrets Manager",
+			Permissions: []accesscontrol.Permission{
+				{
+					Action: ActionSecretsManagerKeepersWrite,
+					Scope:  ScopeAllKeepers,
+				},
+				{
+					Action: ActionSecretsManagerKeepersDelete,
+					Scope:  ScopeAllKeepers,
+				},
+			},
+		},
+		Grants: []string{string(accesscontrol.RoleGrafanaAdmin)},
+	}
+
+	return service.DeclareFixedRoles(
+		secureValuesReader, secureValuesWriter,
+		keepersReader, keepersWriter,
+	)
 }
 
 func SecretAuthorizer(accessControl accesscontrol.AccessControl) authorizer.AuthorizerFunc {
+	var (
+		resourceSecureValues = secretv0alpha1.SecureValuesResourceInfo.GetName()
+		resourceKeepers      = secretv0alpha1.KeeperResourceInfo.GetName()
+	)
+
 	return func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
 		if !attr.IsResourceRequest() {
 			return authorizer.DecisionNoOpinion, "", nil
@@ -78,12 +138,18 @@ func SecretAuthorizer(accessControl accesscontrol.AccessControl) authorizer.Auth
 		var (
 			name      = attr.GetName()
 			verb      = attr.GetVerb()
+			resource  = attr.GetResource()
 			namespace = attr.GetNamespace()
 		)
 
 		// Anything but CREATE and LIST requires the resource `name` to be populated.
 		if name == "" && (verb != utils.VerbCreate && verb != utils.VerbList) {
-			return authorizer.DecisionDeny, "no name", nil
+			return authorizer.DecisionDeny, "name required", nil
+		}
+
+		// GET will also match for sub-resources, but since we don't support any, deny it for now.
+		if verb == utils.VerbGet && attr.GetSubresource() != "" {
+			return authorizer.DecisionDeny, "subresources unsupported", nil
 		}
 
 		// Parse namespace exists and has valid format.
@@ -93,7 +159,7 @@ func SecretAuthorizer(accessControl accesscontrol.AccessControl) authorizer.Auth
 
 		namespaceInfo, err := claims.ParseNamespace(namespace)
 		if err != nil {
-			return authorizer.DecisionDeny, "error parsing namespace", err
+			return authorizer.DecisionDeny, "invalid namespace format", err
 		}
 
 		// User is required.
@@ -107,60 +173,52 @@ func SecretAuthorizer(accessControl accesscontrol.AccessControl) authorizer.Auth
 			return authorizer.DecisionDeny, "mismatch org", nil
 		}
 
-		// TODO: Scope the permission based on the resource name for `Update`, `Read` and `Delete`.
-		// Currently the scope granted for all actions are '*' (all), within the boundaries of a `namespace`.
-		// This would allow fine-grained secret access with RBAC, but we need some way of granting it.
-		scope := ScopeSecretsManagerProvider.GetResourceScopeName(name)
+		// Based on the `kind` being requested, we use different evaluators with scopes and actions.
+		var evaluatorForVerb map[string]accesscontrol.Evaluator
 
-		switch verb {
-		case utils.VerbCreate:
-			ok, err := accessControl.Evaluate(ctx, user, accesscontrol.EvalPermission(ActionSecretsManagerWrite))
-			if ok {
-				return authorizer.DecisionAllow, "", nil
+		switch resource {
+		case resourceSecureValues:
+			// TODO: Scope the permission based on the resource name for `Update`, `Read` and `Delete`.
+			// Currently the scope granted for all actions are '*' (all), within the boundaries of a `namespace`.
+			// This would allow fine-grained secret access with RBAC, but we need some way of granting it.
+			scope := ScopeProviderSecretsManagerSecureValues.GetResourceScopeName(name)
+
+			evaluatorForVerb = map[string]accesscontrol.Evaluator{
+				utils.VerbCreate: accesscontrol.EvalPermission(ActionSecretsManagerSecureValuesWrite),
+				utils.VerbGet:    accesscontrol.EvalPermission(ActionSecretsManagerSecureValuesDescribe, scope),
+				utils.VerbList:   accesscontrol.EvalPermission(ActionSecretsManagerSecureValuesList),
+				utils.VerbUpdate: accesscontrol.EvalPermission(ActionSecretsManagerSecureValuesWrite, scope),
+				utils.VerbDelete: accesscontrol.EvalPermission(ActionSecretsManagerSecureValuesDelete, scope),
 			}
 
-			return authorizer.DecisionDeny, "insufficient permissions", err
+		case resourceKeepers:
+			// TODO: Scope the permission based on the resource name for `Update`, `Read` and `Delete`.
+			// Currently the scope granted for all actions are '*' (all), within the boundaries of a `namespace`.
+			// This would allow fine-grained secret access with RBAC, but we need some way of granting it.
+			scope := ScopeProviderSecretsManagerKeepers.GetResourceScopeName(name)
 
-		case utils.VerbGet:
-			// GET will also match for sub-resources, but since we don't support any, deny it for now.
-			if attr.GetSubresource() != "" {
-				return authorizer.DecisionDeny, "subresources unsupported", nil
+			evaluatorForVerb = map[string]accesscontrol.Evaluator{
+				utils.VerbCreate: accesscontrol.EvalPermission(ActionSecretsManagerKeepersWrite),
+				utils.VerbGet:    accesscontrol.EvalPermission(ActionSecretsManagerKeepersDescribe, scope),
+				utils.VerbList:   accesscontrol.EvalPermission(ActionSecretsManagerKeepersList),
+				utils.VerbUpdate: accesscontrol.EvalPermission(ActionSecretsManagerKeepersWrite, scope),
+				utils.VerbDelete: accesscontrol.EvalPermission(ActionSecretsManagerKeepersDelete, scope),
 			}
-
-			ok, err := accessControl.Evaluate(ctx, user, accesscontrol.EvalPermission(ActionSecretsManagerDescribe, scope))
-			if ok {
-				return authorizer.DecisionAllow, "", nil
-			}
-
-			return authorizer.DecisionDeny, "insufficient permissions", err
-
-		case utils.VerbList:
-			ok, err := accessControl.Evaluate(ctx, user, accesscontrol.EvalPermission(ActionSecretsManagerList))
-			if ok {
-				return authorizer.DecisionAllow, "", nil
-			}
-
-			return authorizer.DecisionDeny, "insufficient permissions", err
-
-		case utils.VerbUpdate:
-			ok, err := accessControl.Evaluate(ctx, user, accesscontrol.EvalPermission(ActionSecretsManagerWrite, scope))
-			if ok {
-				return authorizer.DecisionAllow, "", nil
-			}
-
-			return authorizer.DecisionDeny, "insufficient permissions", err
-
-		case utils.VerbDelete:
-			ok, err := accessControl.Evaluate(ctx, user, accesscontrol.EvalPermission(ActionSecretsManagerDelete, scope))
-			if ok {
-				return authorizer.DecisionAllow, "", nil
-			}
-
-			return authorizer.DecisionDeny, "insufficient permissions", err
 
 		default:
-			// Deny everything else.
+			return authorizer.DecisionDeny, "unknown resource " + resource, nil
+		}
+
+		evaluator, ok := evaluatorForVerb[verb]
+		if !ok {
 			return authorizer.DecisionDeny, "forbidden action: " + verb, nil
 		}
+
+		allowed, err := accessControl.Evaluate(ctx, user, evaluator)
+		if allowed {
+			return authorizer.DecisionAllow, "", nil
+		}
+
+		return authorizer.DecisionDeny, "insufficient permissions: " + resource, err
 	}
 }

@@ -267,17 +267,17 @@ func TestIntegrationKeeper(t *testing.T) {
 
 	t.Run("creating keepers in multiple namespaces", func(t *testing.T) {
 		usersOrgA := mustCreateUsers(t, helper, []string{
-			secret.ActionSecretsManagerWrite,
-			secret.ActionSecretsManagerList,
-			secret.ActionSecretsManagerDelete,
-			secret.ActionSecretsManagerDescribe,
+			secret.ActionSecretsManagerKeepersWrite,
+			secret.ActionSecretsManagerKeepersList,
+			secret.ActionSecretsManagerKeepersDelete,
+			secret.ActionSecretsManagerKeepersDescribe,
 		})
 
 		usersOrgB := mustCreateUsers(t, helper, []string{
-			secret.ActionSecretsManagerWrite,
-			secret.ActionSecretsManagerList,
-			secret.ActionSecretsManagerDelete,
-			secret.ActionSecretsManagerDescribe,
+			secret.ActionSecretsManagerKeepersWrite,
+			secret.ActionSecretsManagerKeepersList,
+			secret.ActionSecretsManagerKeepersDelete,
+			secret.ActionSecretsManagerKeepersDescribe,
 		})
 
 		keeperOrgA := mustGenerateKeeper(t, helper, usersOrgA.Admin, nil)

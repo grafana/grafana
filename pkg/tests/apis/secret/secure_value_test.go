@@ -197,17 +197,25 @@ func TestIntegrationSecureValue(t *testing.T) {
 
 	t.Run("creating securevalues in multiple namespaces", func(t *testing.T) {
 		usersOrgA := mustCreateUsers(t, helper, []string{
-			secret.ActionSecretsManagerWrite,
-			secret.ActionSecretsManagerList,
-			secret.ActionSecretsManagerDelete,
-			secret.ActionSecretsManagerDescribe,
+			secret.ActionSecretsManagerSecureValuesWrite,
+			secret.ActionSecretsManagerSecureValuesList,
+			secret.ActionSecretsManagerSecureValuesDelete,
+			secret.ActionSecretsManagerSecureValuesDescribe,
+			secret.ActionSecretsManagerKeepersWrite,
+			secret.ActionSecretsManagerKeepersList,
+			secret.ActionSecretsManagerKeepersDescribe,
+			secret.ActionSecretsManagerKeepersDelete,
 		})
 
 		usersOrgB := mustCreateUsers(t, helper, []string{
-			secret.ActionSecretsManagerWrite,
-			secret.ActionSecretsManagerList,
-			secret.ActionSecretsManagerDelete,
-			secret.ActionSecretsManagerDescribe,
+			secret.ActionSecretsManagerSecureValuesWrite,
+			secret.ActionSecretsManagerSecureValuesList,
+			secret.ActionSecretsManagerSecureValuesDelete,
+			secret.ActionSecretsManagerSecureValuesDescribe,
+			secret.ActionSecretsManagerKeepersWrite,
+			secret.ActionSecretsManagerKeepersList,
+			secret.ActionSecretsManagerKeepersDescribe,
+			secret.ActionSecretsManagerKeepersDelete,
 		})
 
 		keeperOrgA := mustGenerateKeeper(t, helper, usersOrgA.Admin, nil)
