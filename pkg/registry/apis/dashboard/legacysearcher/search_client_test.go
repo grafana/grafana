@@ -54,6 +54,7 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 		require.NotNil(t, resp)
 		searchFields := resource.StandardSearchFields()
 		require.Equal(t, &resource.ResourceSearchResponse{
+			TotalHits: 2,
 			Results: &resource.ResourceTable{
 				Columns: []*resource.ResourceTableColumnDefinition{
 					searchFields.Field(resource.SEARCH_FIELD_TITLE),
