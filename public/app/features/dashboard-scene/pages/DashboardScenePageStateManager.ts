@@ -46,6 +46,8 @@ interface DashboardCacheEntry {
 export interface LoadDashboardOptions {
   uid: string;
   route: DashboardRoutes;
+  type?: string;
+  slug?: string;
   urlFolderUid?: string;
   // A temporary approach not to clean the dashboard from local storage when navigating from Explore to Dashboard
   // We currently need it as there are two flows of fetching dashboard. The legacy one (initDashboard), uses the new one(DashboardScenePageStateManager.fetch) where the
@@ -64,6 +66,8 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
   // To eventualy replace the fetchDashboard function from Dashboard redux state management.
   // For now it's a simplistic version to support Home and Normal dashboard routes.
   public async fetchDashboard({
+    type,
+    slug,
     uid,
     route,
     urlFolderUid,
@@ -111,7 +115,7 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
           return await dashboardLoaderSrv.loadDashboard('public', '', uid);
         }
         default:
-          rsp = await dashboardLoaderSrv.loadDashboard('db', '', uid);
+          rsp = await dashboardLoaderSrv.loadDashboard(type || 'db', slug || '', uid);
 
           if (route === DashboardRoutes.Embedded) {
             rsp.meta.isEmbedded = true;
