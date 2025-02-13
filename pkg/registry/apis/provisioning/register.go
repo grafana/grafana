@@ -371,6 +371,10 @@ func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admis
 		}
 	}
 
+	if err := b.encryptSecrets(ctx, r); err != nil {
+		return fmt.Errorf("failed to encrypt secrets: %w", err)
+	}
+
 	return nil
 }
 
@@ -766,4 +770,17 @@ spec:
 	oas.Components.Schemas[compBase+"RepositoryViewList"].Properties["items"] = schema
 
 	return oas, nil
+}
+
+func (b *APIBuilder) encryptSecrets(ctx context.Context, repo *provisioning.Repository) error {
+	var err error
+	if repo.Spec.GitHub != nil &&
+		repo.Spec.GitHub.Token != "" {
+		repo.Spec.GitHub.EncryptedToken, err = b.secrets.Encrypt(ctx, []byte(repo.Spec.GitHub.Token))
+		if err != nil {
+			return err
+		}
+		repo.Spec.GitHub.Token = ""
+	}
+	return nil
 }

@@ -239,10 +239,6 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	}
 	logger = logger.WithContext(ctx)
 
-	if err := rc.encryptSecrets(ctx, obj); err != nil {
-		return fmt.Errorf("failed to encrypt repository secrets: %w")
-	}
-
 	healthAge := time.Since(time.UnixMilli(obj.Status.Health.Checked))
 	syncAge := time.Since(time.UnixMilli(obj.Status.Sync.Finished))
 	syncInterval := time.Duration(obj.Spec.Sync.IntervalSeconds) * time.Second
@@ -391,39 +387,6 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		if _, err := rc.client.Repositories(obj.GetNamespace()).
 			Patch(ctx, obj.GetName(), types.MergePatchType, patch, v1.PatchOptions{}, "status"); err != nil {
 			return fmt.Errorf("update status: %w", err)
-		}
-	}
-	return nil
-}
-
-// TODO: Find a better home.
-func (rc *RepositoryController) encryptSecrets(ctx context.Context, repo *provisioning.Repository) error {
-	specPatch := map[string]any{}
-
-	var err error
-	if repo.Spec.GitHub != nil &&
-		repo.Spec.GitHub.Token != "" {
-		repo.Spec.GitHub.EncryptedToken, err = rc.secrets.Encrypt(ctx, []byte(repo.Spec.GitHub.Token))
-		if err != nil {
-			return err
-		}
-		repo.Spec.GitHub.Token = ""
-		specPatch["github"] = map[string]any{
-			"token":          "",
-			"encryptedToken": repo.Spec.GitHub.EncryptedToken,
-		}
-	}
-
-	if len(specPatch) > 0 {
-		patch, err := json.Marshal(map[string]any{
-			"spec": specPatch,
-		})
-		if err != nil {
-			return err
-		}
-		if _, err := rc.client.Repositories(repo.GetNamespace()).
-			Patch(ctx, repo.GetName(), types.MergePatchType, patch, v1.PatchOptions{}); err != nil {
-			return err
 		}
 	}
 	return nil
