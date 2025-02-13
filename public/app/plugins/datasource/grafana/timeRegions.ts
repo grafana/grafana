@@ -1,7 +1,5 @@
-import { Cron } from 'croner';
-
-import { TimeRange, DataFrame, FieldType, durationToMilliseconds, parseDuration } from '@grafana/data';
-import { TimeRegionConfig, convertToCron } from 'app/core/utils/timeRegions';
+import { TimeRange, DataFrame, FieldType } from '@grafana/data';
+import { TimeRegionConfig, calculateTimesWithin } from 'app/core/utils/timeRegions';
 
 export function doTimeRegionQuery(
   name: string,
@@ -13,62 +11,20 @@ export function doTimeRegionQuery(
     return undefined;
   }
 
-  if (config.mode === 'simple') {
-    const cronConfig = convertToCron(config);
-    config.cronExpr = cronConfig?.cron;
-    config.duration = cronConfig?.duration;
-  }
+  const ranges = calculateTimesWithin(config, range, tz);
 
-  if (config.cronExpr) {
-    try {
-      let job = new Cron(config.cronExpr);
+  if (ranges.length > 0) {
+    const frame: DataFrame = {
+      fields: [
+        { name: 'time', type: FieldType.time, values: ranges.map((r) => r.from), config: {} },
+        { name: 'timeEnd', type: FieldType.time, values: ranges.map((r) => r.to), config: {} },
+        { name: 'text', type: FieldType.string, values: Array(ranges.length).fill(name), config: {} },
+      ],
+      length: ranges.length,
+    };
 
-      // get previous run that may overlap with start of timerange
-      let durationMs = (config.duration ?? '') !== '' ? durationToMilliseconds(parseDuration(config.duration!)) : 0;
-      let fromDate: Date | null = new Date(range.from.valueOf() - durationMs);
-
-      let toMs = range.to.valueOf();
-      let nextDate = job.nextRun(fromDate);
-
-      const times: number[] = [];
-      const timesEnd: number[] = [];
-      const texts: string[] = [];
-
-      while (nextDate != null) {
-        let nextMs = +nextDate;
-
-        if (nextMs > toMs) {
-          break;
-        } else {
-          times.push(nextMs);
-          nextDate = job.nextRun(nextDate);
-        }
-      }
-
-      if (times.length > 0) {
-        times.forEach((t) => {
-          timesEnd.push(t + durationMs);
-          texts.push(name);
-        });
-
-        return toFrame(times, timesEnd, texts);
-      }
-    } catch (e) {
-      // invalid expression
-      console.error(e);
-    }
+    return frame;
   }
 
   return undefined;
-}
-
-function toFrame(times: number[], timesEnd: number[], texts: string[]) {
-  return {
-    fields: [
-      { name: 'time', type: FieldType.time, values: times, config: {} },
-      { name: 'timeEnd', type: FieldType.time, values: timesEnd, config: {} },
-      { name: 'text', type: FieldType.string, values: texts, config: {} },
-    ],
-    length: times.length,
-  };
 }

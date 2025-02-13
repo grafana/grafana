@@ -1,6 +1,13 @@
-import { add, Duration } from 'date-fns';
+import { Cron } from 'croner';
+import { Duration } from 'date-fns';
 
-import { AbsoluteTimeRange, dateTime, TimeRange, reverseParseDuration } from '@grafana/data';
+import {
+  AbsoluteTimeRange,
+  TimeRange,
+  reverseParseDuration,
+  durationToMilliseconds,
+  parseDuration,
+} from '@grafana/data';
 
 export type TimeRegionMode = 'simple' | 'cron';
 export interface TimeRegionConfig {
@@ -65,7 +72,8 @@ interface Range {
   to: ParsedTime;
 }
 
-export function getDuration({ from, to }: Range) {
+// inclusive "to" means if the "to" time is undefined, it means 00:00 on the day after the "to" day
+function getDuration({ from, to }: Range) {
   const fromDay = from.dayOfWeek ?? 0;
   const fromHour = from.h ?? 0;
   const fromMin = from.m ?? 0;
@@ -110,7 +118,7 @@ export function convertToCron(cfg: TimeRegionConfig): { cron: string; duration: 
   }
 }
 
-function normalizeRange(cfg: TimeRegionConfig): { from: ParsedTime; to: ParsedTime } | undefined {
+function normalizeRange(cfg: TimeRegionConfig): Range | undefined {
   // So we can mutate
   const timeRegion = { ...cfg };
 
@@ -150,9 +158,12 @@ function normalizeRange(cfg: TimeRegionConfig): { from: ParsedTime; to: ParsedTi
   }
 
   if (hRange.to.dayOfWeek && hRange.to.h == null && hRange.to.m == null) {
-    hRange.to.h = 23;
-    hRange.to.m = 59;
-    hRange.to.s = 59;
+    // roll to next day 00:00
+    hRange.to.dayOfWeek += hRange.to.dayOfWeek === 7 ? -6 : 1;
+
+    hRange.to.h = 0;
+    hRange.to.m = 0;
+    hRange.to.s = 0;
   }
 
   if (!hRange.from || !hRange.to) {
@@ -170,52 +181,47 @@ function normalizeRange(cfg: TimeRegionConfig): { from: ParsedTime; to: ParsedTi
   return hRange;
 }
 
-export function calculateTimesWithin(cfg: TimeRegionConfig, tRange: TimeRange): AbsoluteTimeRange[] {
-  if (!(cfg.fromDayOfWeek || cfg.from) && !(cfg.toDayOfWeek || cfg.to)) {
-    return [];
+// TODO: tz support
+export function calculateTimesWithin(cfg: TimeRegionConfig, tRange: TimeRange, timezone?: string): AbsoluteTimeRange[] {
+  const ranges: AbsoluteTimeRange[] = [];
+
+  if (cfg.mode === 'simple') {
+    const cronConfig = convertToCron(cfg);
+    cfg.cronExpr = cronConfig?.cron;
+    cfg.duration = cronConfig?.duration;
   }
 
-  const hRange = normalizeRange(cfg);
+  if (cfg.cronExpr) {
+    try {
+      let job = new Cron(cfg.cronExpr);
 
-  if (hRange !== undefined) {
-    const regions: AbsoluteTimeRange[] = [];
-    const fromStart = dateTime(tRange.from).utc();
-    fromStart.set('hour', 0);
-    fromStart.set('minute', 0);
-    fromStart.set('second', 0);
-    fromStart.set('millisecond', 0);
-    fromStart.add(hRange.from.h, 'hours');
-    fromStart.add(hRange.from.m, 'minutes');
-    fromStart.add(hRange.from.s, 'seconds');
+      // get previous run that may overlap with start of timerange
+      let durationMs = (cfg.duration ?? '') !== '' ? durationToMilliseconds(parseDuration(cfg.duration!)) : 0;
+      let fromDate: Date | null = new Date(tRange.from.valueOf() - durationMs);
 
-    const duration = getDuration(hRange);
+      let toMs = tRange.to.valueOf();
+      let nextDate = job.nextRun(fromDate);
 
-    while (fromStart.unix() <= tRange.to.unix()) {
-      while (hRange.from.dayOfWeek && hRange.from.dayOfWeek !== fromStart.isoWeekday()) {
-        fromStart.add(24, 'hours');
+      while (nextDate != null) {
+        let nextMs = +nextDate;
+
+        if (nextMs > toMs) {
+          break;
+        } else {
+          ranges.push({
+            from: nextMs,
+            to: nextMs + durationMs,
+          });
+          nextDate = job.nextRun(nextDate);
+        }
       }
-
-      if (fromStart.unix() > tRange.to.unix()) {
-        break;
-      }
-
-      const fromEnd = dateTime(add(fromStart.toDate(), duration));
-
-      const outsideRange =
-        (fromStart.unix() < tRange.from.unix() && fromEnd.unix() < tRange.from.unix()) ||
-        (fromStart.unix() > tRange.to.unix() && fromEnd.unix() > tRange.to.unix());
-
-      if (!outsideRange) {
-        regions.push({ from: fromStart.valueOf(), to: fromEnd.valueOf() });
-      }
-
-      fromStart.add(24, 'hours');
+    } catch (e) {
+      // invalid expression
+      console.error(e);
     }
-
-    return regions;
-  } else {
-    return [];
   }
+
+  return ranges;
 }
 
 export function parseTimeOfDay(str?: string): ParsedTime {

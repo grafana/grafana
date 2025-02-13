@@ -1,5 +1,5 @@
 import { dateTime, TimeRange } from '@grafana/data';
-import { convertToCron, getDuration, TimeRegionConfig } from 'app/core/utils/timeRegions';
+import { convertToCron, TimeRegionConfig } from 'app/core/utils/timeRegions';
 
 import { calculateTimesWithin } from './timeRegions';
 
@@ -160,11 +160,6 @@ describe('timeRegions', () => {
       `);
     });
   });
-
-  /*
-  from, from dow, to, to dow, timezone, duration
-    
-  */
 
   describe('convert simple time region config to cron string and duration', () => {
     it.each`
