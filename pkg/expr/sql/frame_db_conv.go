@@ -41,17 +41,20 @@ func convertToDataFrame(ctx *mysql.Context, iter mysql.RowIter, schema mysql.Sch
 		for i, val := range row {
 			// Run val through mysql.Type.Convert to normalize underlying value
 			// of the interface
-			cv, _, err := schema[i].Type.Convert(val)
+			nV, _, err := schema[i].Type.Convert(val)
+			if err != nil {
+				return nil, err
+			}
 
 			// Run the normalized value through fieldValeToRow to normalize
 			// the interface type to the dataframe value type, and make nullable
 			// values pointers as dataframe expects.
-			v, err := fieldValFromRowVal(f.Fields[i].Type(), cv)
+			fV, err := fieldValFromRowVal(f.Fields[i].Type(), nV)
 			if err != nil {
 				return nil, fmt.Errorf("unexpected type for column %s: %w", schema[i].Name, err)
 			}
 
-			f.Fields[i].Append(v)
+			f.Fields[i].Append(fV)
 		}
 	}
 
