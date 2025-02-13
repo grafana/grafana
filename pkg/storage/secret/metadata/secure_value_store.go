@@ -138,7 +138,7 @@ func (s *secureValueStorage) Update(ctx context.Context, newSecureValue *secretv
 		return nil, fmt.Errorf("db failure: %w", err)
 	}
 
-	// Update in keeper at value updates.
+	// Update in keeper.
 	err = s.updateInKeeper(ctx, currentRow, newSecureValue)
 	if err != nil {
 		return nil, fmt.Errorf("failed to update in keeper: %w", err)
@@ -180,13 +180,15 @@ func (s *secureValueStorage) Delete(ctx context.Context, namespace xkube.Namespa
 	}
 
 	// Delete from the keeper.
-	// TODO: log any errors, but do not inform the caller what the errors are.
-	_ = s.deleteFromKeeper(ctx, namespace, name)
+	err := s.deleteFromKeeper(ctx, namespace, name)
+	if err != nil {
+		return fmt.Errorf("failed to delete from keeper: %w", err)
+	}
 
 	// TODO: do we need to delete by GUID? name+namespace is a unique index. It would avoid doing a fetch.
 	row := &secureValueDB{Name: name, Namespace: namespace.String()}
 
-	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err = s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		// TODO: because this is a securevalue, do we care to inform the caller if a row was delete (existed) or not?
 		if _, err := sess.Delete(row); err != nil {
 			return fmt.Errorf("delete row: %w", err)

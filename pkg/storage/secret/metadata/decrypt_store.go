@@ -68,20 +68,6 @@ func (s *decryptStorage) decryptFromKeeper(ctx context.Context, namespace xkube.
 		return "", fmt.Errorf("db failure: %w", err)
 	}
 
-	// Check if keeper is default sql.
-	if sv.Keeper == keepertypes.DefaultSQLKeeper {
-		keeper, exists := s.keepers[keepertypes.SQLKeeperType]
-		if !exists {
-			return "", fmt.Errorf("could not find default keeper")
-		}
-		exposedValue, err := keeper.Expose(ctx, nil, namespace.String(), keepertypes.ExternalID(sv.ExternalID))
-		if err != nil {
-			return "", fmt.Errorf("failed to store in default keeper: %w", err)
-		}
-		return exposedValue, err
-	}
-
-	// Load keeper config from metadata store, or TODO: keeper cache.
 	keeperType, keeperConfig, err := s.getKeeperConfig(ctx, namespace.String(), sv.Keeper)
 	if err != nil {
 		return "", fmt.Errorf("get keeper config: %w", err)
@@ -96,6 +82,12 @@ func (s *decryptStorage) decryptFromKeeper(ctx context.Context, namespace xkube.
 }
 
 func (s *decryptStorage) getKeeperConfig(ctx context.Context, namespace string, name string) (keepertypes.KeeperType, secretv0alpha1.KeeperConfig, error) {
+	// Check if keeper is default sql.
+	if name == keepertypes.DefaultSQLKeeper {
+		return keepertypes.SQLKeeperType, nil, nil
+	}
+
+	// Load keeper config from metadata store, or TODO: keeper cache.
 	kp := &keeperDB{Namespace: namespace, Name: name}
 	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		found, err := sess.Get(kp)
@@ -113,8 +105,9 @@ func (s *decryptStorage) getKeeperConfig(ctx context.Context, namespace string, 
 	}
 
 	keeperConfig := toProvider(kp.Type, kp.Payload)
-	// TODO: do mapping between keeperDB.Type and KeeperType, but work towards unifing these types
-	keeperType := keepertypes.SQLKeeperType
+	keeperType := toType(kp.Type)
+
+	// TODO: this would be a good place to check if credentials are secure values and load them.
 
 	return keeperType, keeperConfig, nil
 }
