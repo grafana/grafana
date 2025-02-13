@@ -217,10 +217,10 @@ export function TableNG(props: TableNGProps) {
   const mapFrameToDataGrid = (main: DataFrame, calcsRef: React.MutableRefObject<string[]>, subTable?: boolean) => {
     const columns: TableColumn[] = [];
 
-    const isNestedTable = getIsNestedTable(main);
+    const hasNestedFrames = getIsNestedTable(main);
 
     // If nested frames, add expansion control column
-    if (isNestedTable) {
+    if (hasNestedFrames) {
       const expanderField: Field = {
         name: '',
         type: FieldType.other,
@@ -496,8 +496,8 @@ export function TableNG(props: TableNGProps) {
   );
 
   useEffect(() => {
-    const isNestedTable = getIsNestedTable(props.data);
-    setIsNestedTable(isNestedTable);
+    const hasNestedFrames = getIsNestedTable(props.data);
+    setIsNestedTable(hasNestedFrames);
   }, [props.data]);
 
   // This effect needed to set header cells refs before row height calculation
