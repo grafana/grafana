@@ -12,7 +12,7 @@ import { forceActivateFullSceneObjectTree } from '../utils/utils';
 import { DashboardScene } from './DashboardScene';
 import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
-import { DashboardRepeatsProcessedEvent } from './types/DashboardRepeatsProcessedEvent';
+import { DashboardRepeatsProcessedEvent } from './types';
 
 export interface Props {
   dashboard: DashboardScene;
