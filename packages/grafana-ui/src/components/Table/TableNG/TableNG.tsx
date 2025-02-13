@@ -71,6 +71,7 @@ export function TableNG(props: TableNGProps) {
   const theme = useTheme2();
   const styles = useStyles2(getStyles, textWrap);
 
+  const isFooterVisible = footerOptions?.show && footerOptions.reducer.length;
   const isCountRowsSet = Boolean(
     footerOptions?.countRows &&
       footerOptions.reducer &&
@@ -497,6 +498,10 @@ export function TableNG(props: TableNGProps) {
     headerCellHeight = headerCellRefs.current[Object.keys(headerCellRefs.current)[0]].getBoundingClientRect().height;
   }
   let rowsPerPage = Math.floor((height - headerCellHeight - SCROLL_BAR_WIDTH - paginationHeight) / defaultRowHeight);
+  // if footer calcs are on, remove one row per page
+  if (isFooterVisible) {
+    rowsPerPage -= 1;
+  }
   if (rowsPerPage < 1) {
     // avoid 0 or negative rowsPerPage
     rowsPerPage = 1;
@@ -609,7 +614,7 @@ export function TableNG(props: TableNGProps) {
         sortColumns={sortColumns}
         // footer
         // TODO figure out exactly how this works - some array needs to be here for it to render regardless of renderSummaryCell()
-        bottomSummaryRows={footerOptions?.show && footerOptions.reducer.length ? [{}] : undefined}
+        bottomSummaryRows={isFooterVisible ? [{}] : undefined}
         onColumnResize={() => {
           // NOTE: This method is called continuously during the column resize drag operation,
           // providing the current column width. There is no separate event for the end of the drag operation.
