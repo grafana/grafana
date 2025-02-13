@@ -57,6 +57,7 @@ const plugin: CatalogPlugin = {
     ],
     grafanaDependency: '>=9.0.0',
     statusContext: 'stable',
+    changelog: 'Test changelog',
   },
   angularDetected: false,
   isFullyInstalled: true,
@@ -153,5 +154,29 @@ describe('PluginDetailsPage', () => {
     mockUsePluginConfig.mockReturnValue({ value: {}, loading: false });
     render(<PluginDetailsPage pluginId={plugin.id} />);
     expect(screen.getByRole('tab', { name: 'Data source connections' })).toBeVisible();
+  });
+
+  it('should not show version and changelog tabs when plugin is core', () => {
+    mockUseGetSingle.mockReturnValue({ ...plugin, isCore: true });
+    render(<PluginDetailsPage pluginId={plugin.id} />);
+    expect(screen.queryByRole('tab', { name: 'Version history' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: 'Changelog' })).not.toBeInTheDocument();
+  });
+
+  it('should not show last version in plugin details panel when plugin is core', () => {
+    config.featureToggles.pluginsDetailsRightPanel = true;
+    window.matchMedia = jest.fn().mockImplementation((query) => ({
+      matches: query !== '(max-width: 600px)',
+      media: query,
+      onchange: null,
+      addEventListener: jest.fn(),
+      removeEventListener: jest.fn(),
+      dispatchEvent: jest.fn(),
+    }));
+
+    mockUseGetSingle.mockReturnValue({ ...plugin, isCore: true, latestVersion: '1.2.0' });
+
+    render(<PluginDetailsPage pluginId={plugin.id} />);
+    expect(screen.queryByText('Latest Version:')).not.toBeInTheDocument();
   });
 });
