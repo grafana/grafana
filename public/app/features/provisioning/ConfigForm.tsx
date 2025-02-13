@@ -94,8 +94,13 @@ export function ConfigForm({ data }: ConfigFormProps) {
     }
   }, [request.isSuccess, reset, getValues, navigate]);
 
-  const onSubmit = (data: RepositoryFormData) => {
-    const spec = dataToSpec(data);
+  const onSubmit = (form: RepositoryFormData) => {
+    const spec = dataToSpec(form);
+    if (spec.github) {
+      spec.github.token = form.token || data?.spec?.github?.token;
+      // If we're still keeping this as GitHub, persist the old token. If we set a new one, it'll be re-encrypted into here.
+      spec.github.encryptedToken = data?.spec?.github?.encryptedToken;
+    }
     submitData(spec);
   };
 
