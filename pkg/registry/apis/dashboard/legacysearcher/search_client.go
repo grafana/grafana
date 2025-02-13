@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/apis/dashboard"
 	folderv0alpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -40,15 +41,16 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 		req.Query = strings.ReplaceAll(req.Query, "*", "")
 	}
 
-	// TODO add missing support for the following query params:
-	// - folderIds (won't support, must use folderUIDs)
-	// - permission
 	query := &dashboards.FindPersistedDashboardsQuery{
 		Title:        req.Query,
 		Limit:        req.Limit,
 		Page:         req.Page,
 		SignedInUser: user,
 		IsDeleted:    req.IsDeleted,
+	}
+
+	if req.Permission == int64(dashboardaccess.PERMISSION_EDIT) {
+		query.Permission = dashboardaccess.PERMISSION_EDIT
 	}
 
 	var queryType string
@@ -123,21 +125,10 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 		}
 	}
 
-	// TODO need to test this
-	// emptyResponse, err := a.dashService.GetSharedDashboardUIDsQuery(ctx, query)
-
-	// if err != nil {
-	// 	return nil, err
-	// } else if emptyResponse {
-	// 	return nil, nil
-	// }
-
 	res, err := c.dashboardStore.FindDashboards(ctx, query)
 	if err != nil {
 		return nil, err
 	}
-
-	// TODO sort if query.Sort == "" see sortedHits in services/search/service.go
 
 	searchFields := resource.StandardSearchFields()
 	list := &resource.ResourceSearchResponse{
