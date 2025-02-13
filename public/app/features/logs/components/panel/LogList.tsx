@@ -116,7 +116,6 @@ export const LogList = ({
 
   const handleOverflow = useCallback(
     (index: number, id: string, height: number) => {
-      console.log('overflow');
       if (containerElement) {
         storeLogLineSize(id, containerElement, height);
         listRef.current?.resetAfterIndex(index);
@@ -153,7 +152,7 @@ export const LogList = ({
           className={styles.logList}
           height={listHeight}
           itemCount={itemCount}
-          itemSize={getLogLineSize.bind(null, processedLogs, containerElement, dimensions, {
+          itemSize={getLogLineSize.bind(null, processedLogs, containerElement, displayedFields, {
             wrap: wrapLogMessage,
             showTime,
           })}
