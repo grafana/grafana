@@ -235,6 +235,19 @@ describe('MultiCombobox', () => {
       await user.click(await screen.findByRole('option', { name: 'All' }));
       expect(onChange).toHaveBeenCalledWith([]);
     });
+
+    it.only('should keep label names on selected items when searching', async () => {
+      const options = [
+        { label: 'A', value: 'a' },
+        { label: 'B', value: 'b' },
+        { label: 'C', value: 'c' },
+      ];
+      render(<MultiCombobox width={200} options={options} value={['a']} onChange={jest.fn()} enableAllOption />);
+      const input = screen.getByRole('combobox');
+      await user.click(input);
+      await user.type(input, 'b');
+      expect(screen.getByText('A')).toBeInTheDocument();
+    });
   });
 
   describe('async', () => {
