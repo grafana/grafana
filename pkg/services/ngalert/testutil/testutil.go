@@ -32,7 +32,7 @@ func SetupFolderService(tb testing.TB, cfg *setting.Cfg, db db.DB, dashboardStor
 	tb.Helper()
 	fStore := folderimpl.ProvideStore(db)
 	return folderimpl.ProvideService(fStore, ac, bus, dashboardStore, folderStore, nil, db,
-		features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest())
+		features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil)
 }
 
 func SetupDashboardService(tb testing.TB, sqlStore db.DB, fs *folderimpl.DashboardFolderStoreImpl, cfg *setting.Cfg) (*dashboardservice.DashboardServiceImpl, dashboards.Store) {
@@ -63,7 +63,7 @@ func SetupDashboardService(tb testing.TB, sqlStore db.DB, fs *folderimpl.Dashboa
 		cfg, dashboardStore, fs,
 		features, folderPermissions, ac,
 		foldertest.NewFakeService(), folder.NewFakeStore(),
-		nil, client.MockTestRestConfig{}, nil, quotaService, nil, nil,
+		nil, client.MockTestRestConfig{}, nil, quotaService, nil, nil, nil,
 	)
 	require.NoError(tb, err)
 	dashboardService.RegisterDashboardPermissions(dashboardPermissions)

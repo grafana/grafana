@@ -131,7 +131,7 @@ func TestDashboardFileReader(t *testing.T) {
 	folderStore := folderimpl.ProvideDashboardFolderStore(sql)
 	folderSvc := folderimpl.ProvideService(fStore, actest.FakeAccessControl{}, bus.ProvideBus(tracing.InitializeTracerForTest()),
 		dashStore, folderStore, nil, sql, featuremgmt.WithFeatures(),
-		supportbundlestest.NewFakeBundleService(), nil, cfgT, nil, tracing.InitializeTracerForTest())
+		supportbundlestest.NewFakeBundleService(), nil, cfgT, nil, tracing.InitializeTracerForTest(), nil)
 
 	t.Run("Reading dashboards from disk", func(t *testing.T) {
 		t.Run("Can read default dashboard", func(t *testing.T) {
