@@ -71,7 +71,7 @@ export function TableNG(props: TableNGProps) {
   const theme = useTheme2();
   const styles = useStyles2(getStyles, textWrap);
 
-  const isFooterVisible = footerOptions?.show && footerOptions.reducer.length;
+  const isFooterVisible = Boolean(footerOptions?.show && footerOptions.reducer.length);
   const isCountRowsSet = Boolean(
     footerOptions?.countRows &&
       footerOptions.reducer &&
