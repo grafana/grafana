@@ -60,7 +60,7 @@ export function HistoryContainer() {
         <Drawer
           title={t('nav.history-container.drawer-tittle', 'History')}
           onClose={onToggleShowHistoryDrawer}
-          size="md"
+          size="sm"
         >
           <HistoryWrapper onClose={() => onToggleShowHistoryDrawer(false)} />
         </Drawer>
