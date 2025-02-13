@@ -160,6 +160,51 @@ describe('RowRepeaterBehavior', () => {
     });
   });
 
+  describe('Given scene with variable with 15 values', () => {
+    let scene: DashboardScene, grid: SceneGridLayout;
+    let gridStateUpdates: unknown[];
+
+    beforeEach(async () => {
+      ({ scene, grid } = buildScene({ variableQueryTime: 0 }, [
+        { label: 'A', value: 'A1' },
+        { label: 'B', value: 'B1' },
+        { label: 'C', value: 'C1' },
+        { label: 'D', value: 'D1' },
+        { label: 'E', value: 'E1' },
+        { label: 'F', value: 'F1' },
+        { label: 'G', value: 'G1' },
+        { label: 'H', value: 'H1' },
+        { label: 'I', value: 'I1' },
+        { label: 'J', value: 'J1' },
+        { label: 'K', value: 'K1' },
+        { label: 'L', value: 'L1' },
+        { label: 'M', value: 'M1' },
+        { label: 'N', value: 'N1' },
+        { label: 'O', value: 'O1' },
+      ]));
+
+      gridStateUpdates = [];
+      grid.subscribeToState((state) => gridStateUpdates.push(state));
+
+      activateFullSceneTree(scene);
+      await new Promise((r) => setTimeout(r, 1));
+    });
+
+    it('Should handle second repeat cycle and update remove old repeats', async () => {
+      // should have 15 repeated rows (and the panel above + the row at the bottom)
+      expect(grid.state.children.length).toBe(17);
+
+      // trigger another repeat cycle by changing the variable
+      const variable = scene.state.$variables!.state.variables[0] as TestVariable;
+      variable.changeValueTo(['B1', 'C1']);
+
+      await new Promise((r) => setTimeout(r, 1));
+
+      // should now only have 2 repeated rows (and the panel above + the row at the bottom)
+      expect(grid.state.children.length).toBe(4);
+    });
+  });
+
   describe('Given scene empty row', () => {
     let scene: DashboardScene;
     let grid: SceneGridLayout;
