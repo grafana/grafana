@@ -140,6 +140,15 @@ func (s *SocialGenericOAuth) Reload(ctx context.Context, settings ssoModels.SSOS
 
 	s.updateInfo(ctx, social.GenericOAuthProviderName, newInfo)
 
+	teamIds, err := util.SplitStringWithError(newInfo.Extra[teamIdsKey])
+	if err != nil {
+		s.log.Error("Invalid auth configuration setting", "config", teamIdsKey, "provider", social.GenericOAuthProviderName, "error", err)
+	}
+	allowedOrganizations, err := util.SplitStringWithError(newInfo.Extra[allowedOrganizationsKey])
+	if err != nil {
+		s.log.Error("Invalid auth configuration setting", "config", allowedOrganizationsKey, "provider", social.GenericOAuthProviderName, "error", err)
+	}
+
 	s.teamsUrl = newInfo.TeamsUrl
 	s.emailAttributeName = newInfo.EmailAttributeName
 	s.emailAttributePath = newInfo.EmailAttributePath
@@ -148,8 +157,8 @@ func (s *SocialGenericOAuth) Reload(ctx context.Context, settings ssoModels.SSOS
 	s.loginAttributePath = newInfo.Extra[loginAttributePathKey]
 	s.idTokenAttributeName = newInfo.Extra[idTokenAttributeNameKey]
 	s.teamIdsAttributePath = newInfo.TeamIdsAttributePath
-	s.teamIds = util.SplitString(newInfo.Extra[teamIdsKey])
-	s.allowedOrganizations = util.SplitString(newInfo.Extra[allowedOrganizationsKey])
+	s.teamIds = teamIds
+	s.allowedOrganizations = allowedOrganizations
 
 	return nil
 }

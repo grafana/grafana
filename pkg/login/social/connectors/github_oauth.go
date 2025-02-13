@@ -132,8 +132,16 @@ func (s *SocialGithub) Reload(ctx context.Context, settings ssoModels.SSOSetting
 		return ssosettings.ErrInvalidSettings.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
 	}
 
-	teamIdsSplitted := util.SplitString(newInfo.Extra[teamIdsKey])
+	teamIdsSplitted, err := util.SplitStringWithError(newInfo.Extra[teamIdsKey])
+	if err != nil {
+		s.log.Error("Invalid auth configuration setting", "config", teamIdsKey, "provider", social.GitHubProviderName, "error", err)
+	}
 	teamIds := mustInts(teamIdsSplitted)
+
+	allowedOrganizations, err := util.SplitStringWithError(newInfo.Extra[allowedOrganizationsKey])
+	if err != nil {
+		s.log.Error("Invalid auth configuration setting", "config", allowedOrganizationsKey, "provider", social.GitHubProviderName, "error", err)
+	}
 
 	if len(teamIdsSplitted) != len(teamIds) {
 		s.log.Warn("Failed to parse team ids. Team ids must be a list of numbers.", "teamIds", teamIdsSplitted)
@@ -145,7 +153,7 @@ func (s *SocialGithub) Reload(ctx context.Context, settings ssoModels.SSOSetting
 	s.updateInfo(ctx, social.GitHubProviderName, newInfo)
 
 	s.teamIds = teamIds
-	s.allowedOrganizations = util.SplitString(newInfo.Extra[allowedOrganizationsKey])
+	s.allowedOrganizations = allowedOrganizations
 
 	return nil
 }
