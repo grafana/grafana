@@ -46,6 +46,7 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
     option: css({
       padding: MENU_ITEM_PADDING,
       cursor: 'pointer',
+      borderRadius: theme.shape.radius.default,
       width: '100%',
       '&:hover': {
         background: theme.colors.action.hover,
