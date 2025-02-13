@@ -94,9 +94,6 @@ export function PluginDetailsPanel(props: Props): React.ReactElement | null {
           <>
             <Box padding={2} borderColor="medium" borderStyle="solid">
               <Stack direction="column" gap={2}>
-                <Text color="secondary">
-                  <Trans i18nKey="plugins.details.labels.links">Links </Trans>
-                </Text>
                 {plugin.url && (
                   <LinkButton href={plugin.url} variant="secondary" fill="solid" icon="code-branch" target="_blank">
                     <Trans i18nKey="plugins.details.labels.repository">Repository</Trans>

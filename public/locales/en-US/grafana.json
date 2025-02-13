@@ -2791,7 +2791,6 @@
         "lastCommitDate": "Last commit date:",
         "latestVersion": "Latest Version",
         "license": "License",
-        "links": "Links ",
         "raiseAnIssue": "Raise an issue",
         "reportAbuse": "Report a concern ",
         "reportAbuseTooltip": "Report issues related to malicious or harmful plugins directly to Grafana Labs.",
