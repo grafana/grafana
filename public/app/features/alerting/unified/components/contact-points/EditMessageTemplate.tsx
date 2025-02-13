@@ -6,13 +6,15 @@ import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound'
 import { isNotFoundError } from '../../api/util';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { stringifyErrorLike } from '../../utils/misc';
+import { withPageErrorBoundary } from '../../withPageErrorBoundary';
+import { AlertmanagerPageWrapper } from '../AlertingPageWrapper';
 import { TemplateForm } from '../receivers/TemplateForm';
 
 import { useGetNotificationTemplate } from './useNotificationTemplates';
 
 const notFoundComponent = <EntityNotFound entity="Notification template" />;
 
-const EditMessageTemplate = () => {
+const EditMessageTemplateComponent = () => {
   const { name } = useParams<{ name: string }>();
   const templateUid = name ? decodeURIComponent(name) : undefined;
 
@@ -47,4 +49,12 @@ const EditMessageTemplate = () => {
   return <TemplateForm alertmanager={selectedAlertmanager ?? ''} originalTemplate={currentData} />;
 };
 
-export default EditMessageTemplate;
+function EditMessageTemplate() {
+  return (
+    <AlertmanagerPageWrapper navId="receivers" accessType="notification">
+      <EditMessageTemplateComponent />
+    </AlertmanagerPageWrapper>
+  );
+}
+
+export default withPageErrorBoundary(EditMessageTemplate);
