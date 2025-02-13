@@ -56,6 +56,7 @@ type GitHubRepositoryConfig struct {
 	Token string `json:"token,omitempty"`
 
 	// Token for accessing the repository, but encrypted. This is not possible to read back to a user decrypted.
+	// +listType=atomic
 	EncryptedToken []byte `json:"encryptedToken,omitempty"`
 
 	// Workflow allowed for changes to the repository.

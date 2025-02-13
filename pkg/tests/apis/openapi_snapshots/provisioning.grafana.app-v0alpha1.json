@@ -2788,12 +2788,18 @@
             "description": "The branch to use in the repository. By default, this is the main branch.",
             "type": "string"
           },
+          "encryptedToken": {
+            "description": "Token for accessing the repository, but encrypted. This is not possible to read back to a user decrypted.",
+            "type": "string",
+            "format": "byte",
+            "x-kubernetes-list-type": "atomic"
+          },
           "generateDashboardPreviews": {
             "description": "Whether we should show dashboard previews for pull requests By default, this is false (i.e. we will not create previews).",
             "type": "boolean"
           },
           "token": {
-            "description": "Token for accessing the repository.",
+            "description": "Token for accessing the repository. If set, it will be encrypted into encryptedToken, then set to an empty string again.",
             "type": "string"
           },
           "url": {

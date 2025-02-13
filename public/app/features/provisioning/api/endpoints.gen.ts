@@ -736,9 +736,11 @@ export type JobList = {
 export type GitHubRepositoryConfig = {
   /** The branch to use in the repository. By default, this is the main branch. */
   branch?: string;
+  /** Token for accessing the repository, but encrypted. This is not possible to read back to a user decrypted. */
+  encryptedToken?: string;
   /** Whether we should show dashboard previews for pull requests By default, this is false (i.e. we will not create previews). */
   generateDashboardPreviews?: boolean;
-  /** Token for accessing the repository. */
+  /** Token for accessing the repository. If set, it will be encrypted into encryptedToken, then set to an empty string again. */
   token?: string;
   /** The repository URL `https://github.com/example/test`). */
   url: string;
