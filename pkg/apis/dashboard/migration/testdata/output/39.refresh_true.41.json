@@ -109,34 +109,15 @@
           },
           "queryType": "randomWalk",
           "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "datasource",
-            "uid": "grafana"
-          },
-          "queryType": "randomWalk",
-          "refId": "B"
         }
       ],
       "title": "Panel Title",
-      "transformations": [
-        {
-          "id": "timeSeriesTable",
-          "options": {
-            "refIdToStat": {
-              "A": "mean",
-              "B": "max"
-            }
-          }
-        }
-      ],
       "type": "timeseries"
     }
   ],
   "preload": false,
-  "refresh": true,
-  "schemaVersion": 38,
+  "refresh": "",
+  "schemaVersion": 41,
   "tags": [],
   "templating": {
     "list": []
