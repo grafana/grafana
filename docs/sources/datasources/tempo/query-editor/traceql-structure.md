@@ -15,7 +15,6 @@ weight: 200
 
 # TraceQL query structure
 
-
 [//]: # 'Shared content for best practices for traces'
 [//]: # 'This content is located in /tempo/docs/sources/shared/trace-structure.md'
 
