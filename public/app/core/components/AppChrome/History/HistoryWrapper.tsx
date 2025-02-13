@@ -9,7 +9,7 @@ import { t } from 'app/core/internationalization';
 import { HISTORY_LOCAL_STORAGE_KEY } from '../AppChromeService';
 import { HistoryEntry } from '../types';
 
-import { clickUnifiedHistoryEntry } from './eventsTracking';
+import { clickUnifiedHistoryEntry, interactWithUnifiedHistoryShowMore } from './eventsTracking';
 
 export function HistoryWrapper({ onClose }: { onClose: () => void }) {
   const history = store.getObject<HistoryEntry[]>(HISTORY_LOCAL_STORAGE_KEY, []).filter((entry) => {
@@ -62,7 +62,14 @@ export function HistoryWrapper({ onClose }: { onClose: () => void }) {
       </Box>
       {history.length > numItemsToShow && (
         <span className={styles.paddingLeft}>
-          <Button variant="secondary" fill="text" onClick={() => setNumItemsToShow(numItemsToShow + 5)}>
+          <Button
+            variant="secondary"
+            fill="text"
+            onClick={() => {
+              setNumItemsToShow(numItemsToShow + 5);
+              interactWithUnifiedHistoryShowMore();
+            }}
+          >
             {t('nav.history-wrapper.show-more', 'Show more')}
           </Button>
         </span>

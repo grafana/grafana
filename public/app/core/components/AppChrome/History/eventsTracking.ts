@@ -7,7 +7,9 @@ const UNIFIED_HISTORY_ENTRY_DUPLICATED = 'grafana_unified_history_entry_duplicat
 //in short term, we could add 'templateVariables' for example
 type subEntryTypes = 'timeRange';
 
-//Event triggered when a user clicks on an entry of the `HistoryDrawer`
+//Whether the user opens or closes the `HistoryDrawer`
+type UnifiedHistoryDrawerInteraction = 'open' | 'close';
+
 interface UnifiedHistoryEntryClicked {
   //We will also work with the current URL but we will get this from Rudderstack data
   //URL to return to
@@ -16,8 +18,6 @@ interface UnifiedHistoryEntryClicked {
   subEntry?: subEntryTypes;
 }
 
-//Event triggered when history entry name matches the previous one
-//so we keep track of duplicated entries and be able to analyze them
 interface UnifiedHistoryEntryDuplicated {
   // Common name of the history entries
   entryName: string;
@@ -27,6 +27,7 @@ interface UnifiedHistoryEntryDuplicated {
   newEntryURL: string;
 }
 
+//Event triggered when a user clicks on an entry of the `HistoryDrawer`
 export const clickUnifiedHistoryEntry = ({ entryURL, subEntry }: UnifiedHistoryEntryClicked) => {
   reportInteraction(UNIFIED_HISTORY_ENTRY_CLICKED, {
     entryURL,
@@ -34,6 +35,8 @@ export const clickUnifiedHistoryEntry = ({ entryURL, subEntry }: UnifiedHistoryE
   });
 };
 
+//Event triggered when history entry name matches the previous one
+//so we keep track of duplicated entries and be able to analyze them
 export const duplicateUnifiedHistoryEntry = ({
   entryName,
   lastEntryName,
@@ -44,4 +47,16 @@ export const duplicateUnifiedHistoryEntry = ({
     lastEntryName,
     newEntryURL,
   });
+};
+
+//We keep track of users open and closing the drawer
+export const interactWithUnifiedHistoryDrawer = ({ type }: { type: UnifiedHistoryDrawerInteraction }) => {
+  reportInteraction('grafana_unified_history_drawer_opened', {
+    type,
+  });
+};
+
+//We keep track of users clicking on the `Show more` button
+export const interactWithUnifiedHistoryShowMore = () => {
+  reportInteraction('grafana_unified_history_drawer_opened');
 };
