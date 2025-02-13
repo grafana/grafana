@@ -354,9 +354,16 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
                 icon="plus"
                 onClick={() =>
                   openQueryLibraryDrawer(getDatasourceNames(datasource, queries), async (query) => {
-                    // filter out queries without datasource
-                    const filteredQueries = queries.filter((q) => q.datasource);
-                    const newQueries = addQuery(filteredQueries, query);
+                    // ensure all queries explicitly define a datasource
+                    const enrichedQueries = queries.map((q) =>
+                      q.datasource
+                        ? q
+                        : {
+                            ...q,
+                            datasource: datasource.getRef(),
+                          }
+                    );
+                    const newQueries = addQuery(enrichedQueries, query);
                     model.onQueriesChange(newQueries);
                     if (query.datasource?.uid) {
                       const uniqueDatasources = new Set(newQueries.map((q) => q.datasource?.uid));
