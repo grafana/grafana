@@ -27,10 +27,9 @@ func (s *secureValueStorage) storeInKeeper(ctx context.Context, sv *secretv0alph
 	if !ok {
 		return "", fmt.Errorf("could not find keeper: %s", keeperType)
 	}
-
 	externalID, err := keeper.Store(ctx, keeperConfig, sv.Namespace, string(sv.Spec.Value))
 	if err != nil {
-		return "", fmt.Errorf("failed to store in keeper: %w", err)
+		return "", fmt.Errorf("store in keeper: %w", err)
 	}
 
 	return externalID, err
@@ -39,7 +38,7 @@ func (s *secureValueStorage) storeInKeeper(ctx context.Context, sv *secretv0alph
 func (s *secureValueStorage) updateInKeeper(ctx context.Context, currRow *secureValueDB, newSV *secretv0alpha1.SecureValue) error {
 	// TODO: Implement update by ref
 	if newSV.Spec.Ref != "" {
-		return fmt.Errorf("store by ref in keeper")
+		return fmt.Errorf("update by ref in keeper")
 	}
 
 	// If value did not change, an update in keeper is not needed.
@@ -48,7 +47,7 @@ func (s *secureValueStorage) updateInKeeper(ctx context.Context, currRow *secure
 	}
 
 	if currRow.Keeper != newSV.Spec.Keeper {
-		return fmt.Errorf("keeper change not supported")
+		return fmt.Errorf("keeper change not allowed")
 	}
 
 	keeperType, keeperConfig, err := s.getKeeperConfig(ctx, currRow.Namespace, currRow.Keeper)
@@ -62,7 +61,12 @@ func (s *secureValueStorage) updateInKeeper(ctx context.Context, currRow *secure
 		return fmt.Errorf("could not find keeper: %s", keeperType)
 	}
 
-	return keeper.Update(ctx, keeperConfig, currRow.Namespace, keepertypes.ExternalID(currRow.ExternalID), string(newSV.Spec.Value))
+	err = keeper.Update(ctx, keeperConfig, currRow.Namespace, keepertypes.ExternalID(currRow.ExternalID), string(newSV.Spec.Value))
+	if err != nil {
+		return fmt.Errorf("update in keeper: %s", keeperType)
+	}
+
+	return nil
 }
 
 func (s *secureValueStorage) deleteFromKeeper(ctx context.Context, namespace xkube.Namespace, name string) error {
@@ -93,7 +97,11 @@ func (s *secureValueStorage) deleteFromKeeper(ctx context.Context, namespace xku
 	if !ok {
 		return fmt.Errorf("could not find keeper: %s", keeperType)
 	}
-	return keeper.Delete(ctx, keeperConfig, namespace.String(), keepertypes.ExternalID(sv.ExternalID))
+	err = keeper.Delete(ctx, keeperConfig, namespace.String(), keepertypes.ExternalID(sv.ExternalID))
+	if err != nil {
+		return fmt.Errorf("delete in keeper: %w", err)
+	}
+	return nil
 }
 
 func (s *secureValueStorage) getKeeperConfig(ctx context.Context, namespace string, name string) (keepertypes.KeeperType, secretv0alpha1.KeeperConfig, error) {

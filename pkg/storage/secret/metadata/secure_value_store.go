@@ -180,15 +180,13 @@ func (s *secureValueStorage) Delete(ctx context.Context, namespace xkube.Namespa
 	}
 
 	// Delete from the keeper.
-	err := s.deleteFromKeeper(ctx, namespace, name)
-	if err != nil {
-		return fmt.Errorf("failed to delete from keeper: %w", err)
-	}
+	// TODO: do we care to inform the caller if there is any error?
+	_ = s.deleteFromKeeper(ctx, namespace, name)
 
 	// TODO: do we need to delete by GUID? name+namespace is a unique index. It would avoid doing a fetch.
 	row := &secureValueDB{Name: name, Namespace: namespace.String()}
 
-	err = s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		// TODO: because this is a securevalue, do we care to inform the caller if a row was delete (existed) or not?
 		if _, err := sess.Delete(row); err != nil {
 			return fmt.Errorf("delete row: %w", err)

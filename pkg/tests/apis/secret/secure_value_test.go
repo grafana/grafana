@@ -49,7 +49,7 @@ func TestIntegrationSecureValue(t *testing.T) {
 	})
 
 	t.Run("creating a secure value returns it without any of the value or ref", func(t *testing.T) {
-		keeper := mustGenerateKeeper(t, helper, helper.Org1.Admin, nil)
+		keeper := mustGenerateKeeper(t, helper, helper.Org1.Admin, nil, "")
 		raw := mustGenerateSecureValue(t, helper, helper.Org1.Admin, keeper.GetName())
 
 		secureValue := new(secretv0alpha1.SecureValue)
@@ -64,7 +64,7 @@ func TestIntegrationSecureValue(t *testing.T) {
 		require.NotEmpty(t, secureValue.Spec.Decrypters)
 
 		t.Run("and creating another secure value with the same name in the same namespace returns an error", func(t *testing.T) {
-			testSecureValue := helper.LoadYAMLOrJSONFile("testdata/secure-value-generate.yaml")
+			testSecureValue := helper.LoadYAMLOrJSONFile("testdata/secure-value-default-generate.yaml")
 			testSecureValue.SetName(raw.GetName())
 
 			raw, err := client.Resource.Create(ctx, testSecureValue, metav1.CreateOptions{})
@@ -94,13 +94,11 @@ func TestIntegrationSecureValue(t *testing.T) {
 		})
 
 		t.Run("and updating the secure value replaces the spec fields and returns them", func(t *testing.T) {
-			newKeeper := mustGenerateKeeper(t, helper, helper.Org1.Admin, nil)
-
-			newRaw := helper.LoadYAMLOrJSONFile("testdata/secure-value-generate.yaml")
+			newRaw := helper.LoadYAMLOrJSONFile("testdata/secure-value-default-generate.yaml")
 			newRaw.SetName(raw.GetName())
 			newRaw.Object["spec"].(map[string]any)["title"] = "New title"
-			newRaw.Object["spec"].(map[string]any)["keeper"] = newKeeper.GetName()
 			newRaw.Object["spec"].(map[string]any)["value"] = "New secure value"
+			newRaw.Object["spec"].(map[string]any)["keeper"] = keeper.GetName()
 			newRaw.Object["spec"].(map[string]any)["decrypters"] = []string{"decrypter1/name1", "decrypter2/*"}
 			newRaw.Object["metadata"].(map[string]any)["annotations"] = map[string]any{"newAnnotation": "newValue"}
 
@@ -115,10 +113,24 @@ func TestIntegrationSecureValue(t *testing.T) {
 
 			require.NotEqualValues(t, updatedSecureValue.Spec, secureValue.Spec)
 		})
+
+		t.Run("and updating the secure value keeper returns error", func(t *testing.T) {
+			newKeeper := mustGenerateKeeper(t, helper, helper.Org1.Admin, nil, "")
+
+			newRaw := helper.LoadYAMLOrJSONFile("testdata/secure-value-default-generate.yaml")
+			newRaw.SetName(raw.GetName())
+			newRaw.Object["spec"].(map[string]any)["title"] = "New title"
+			newRaw.Object["spec"].(map[string]any)["keeper"] = newKeeper.GetName()
+			newRaw.Object["spec"].(map[string]any)["value"] = "New secure value"
+
+			updatedRaw, err := client.Resource.Update(ctx, newRaw, metav1.UpdateOptions{})
+			require.Error(t, err)
+			require.Nil(t, updatedRaw)
+		})
 	})
 
 	t.Run("creating a secure value with a `value` then updating it to a `ref` returns an error", func(t *testing.T) {
-		keeper := mustGenerateKeeper(t, helper, helper.Org1.Admin, nil)
+		keeper := mustGenerateKeeper(t, helper, helper.Org1.Admin, nil, "")
 		svWithValue := mustGenerateSecureValue(t, helper, helper.Org1.Admin, keeper.GetName())
 
 		testData := svWithValue.DeepCopy()
@@ -131,7 +143,7 @@ func TestIntegrationSecureValue(t *testing.T) {
 	})
 
 	t.Run("creating an invalid secure value fails validation and returns an error", func(t *testing.T) {
-		testData := helper.LoadYAMLOrJSONFile("testdata/secure-value-generate.yaml")
+		testData := helper.LoadYAMLOrJSONFile("testdata/secure-value-default-generate.yaml")
 		testData.Object["spec"].(map[string]any)["title"] = ""
 
 		raw, err := client.Resource.Create(ctx, testData, metav1.CreateOptions{})
@@ -160,9 +172,9 @@ func TestIntegrationSecureValue(t *testing.T) {
 	t.Run("deleting a secure value that exists does not return an error", func(t *testing.T) {
 		generatePrefix := "generated-"
 
-		keeper := mustGenerateKeeper(t, helper, helper.Org1.Admin, nil)
+		keeper := mustGenerateKeeper(t, helper, helper.Org1.Admin, nil, "")
 
-		testData := helper.LoadYAMLOrJSONFile("testdata/secure-value-generate.yaml")
+		testData := helper.LoadYAMLOrJSONFile("testdata/secure-value-default-generate.yaml")
 		testData.SetGenerateName(generatePrefix)
 		testData.Object["spec"].(map[string]any)["keeper"] = keeper.GetName()
 
@@ -198,8 +210,8 @@ func TestIntegrationSecureValue(t *testing.T) {
 		adminOrg1 := helper.Org1.Admin
 		adminOrg2 := helper.OrgB.Admin
 
-		keeperOrg1 := mustGenerateKeeper(t, helper, adminOrg1, nil)
-		keeperOrg2 := mustGenerateKeeper(t, helper, adminOrg2, nil)
+		keeperOrg1 := mustGenerateKeeper(t, helper, adminOrg1, nil, "")
+		keeperOrg2 := mustGenerateKeeper(t, helper, adminOrg2, nil, "")
 
 		secureValueOrg1 := mustGenerateSecureValue(t, helper, adminOrg1, keeperOrg1.GetName())
 		secureValueOrg2 := mustGenerateSecureValue(t, helper, adminOrg2, keeperOrg2.GetName())
@@ -210,7 +222,7 @@ func TestIntegrationSecureValue(t *testing.T) {
 		// Create
 		t.Run("creating a securevalue with the same name as one from another namespace does not return an error", func(t *testing.T) {
 			// Org1 creating a securevalue with the same name from Org2.
-			testData := helper.LoadYAMLOrJSONFile("testdata/secure-value-generate.yaml")
+			testData := helper.LoadYAMLOrJSONFile("testdata/secure-value-default-generate.yaml")
 			testData.SetName(secureValueOrg2.GetName())
 			testData.Object["spec"].(map[string]any)["keeper"] = keeperOrg1.GetName()
 
@@ -219,7 +231,7 @@ func TestIntegrationSecureValue(t *testing.T) {
 			require.NotNil(t, raw)
 
 			// Org2 creating a securevalue with the same name from Org1.
-			testData = helper.LoadYAMLOrJSONFile("testdata/secure-value-generate.yaml")
+			testData = helper.LoadYAMLOrJSONFile("testdata/secure-value-default-generate.yaml")
 			testData.SetName(secureValueOrg1.GetName())
 			testData.Object["spec"].(map[string]any)["keeper"] = keeperOrg2.GetName()
 
@@ -255,7 +267,7 @@ func TestIntegrationSecureValue(t *testing.T) {
 			var statusErr *apierrors.StatusError
 
 			// Org1 trying to update securevalue from Org2.
-			testData := helper.LoadYAMLOrJSONFile("testdata/secure-value-generate.yaml")
+			testData := helper.LoadYAMLOrJSONFile("testdata/secure-value-default-generate.yaml")
 			testData.SetName(secureValueOrg2.GetName())
 			testData.Object["spec"].(map[string]any)["title"] = "New title"
 
@@ -266,7 +278,7 @@ func TestIntegrationSecureValue(t *testing.T) {
 			require.Equal(t, http.StatusNotFound, int(statusErr.Status().Code))
 
 			// Org2 trying to update securevalue from Org1.
-			testData = helper.LoadYAMLOrJSONFile("testdata/secure-value-generate.yaml")
+			testData = helper.LoadYAMLOrJSONFile("testdata/secure-value-default-generate.yaml")
 			testData.SetName(secureValueOrg1.GetName())
 			testData.Object["spec"].(map[string]any)["title"] = "New title"
 

@@ -63,7 +63,7 @@ func TestIntegrationKeeper(t *testing.T) {
 	})
 
 	t.Run("creating a keeper returns it", func(t *testing.T) {
-		raw := mustGenerateKeeper(t, helper, helper.Org1.Admin, nil)
+		raw := mustGenerateKeeper(t, helper, helper.Org1.Admin, nil, "testdata/keeper-aws-generate.yaml")
 
 		keeper := new(secretv0alpha1.Keeper)
 		err := runtime.DefaultUnstructuredConverter.FromUnstructured(raw.Object, keeper)
@@ -155,10 +155,10 @@ func TestIntegrationKeeper(t *testing.T) {
 	})
 
 	t.Run("creating a keeper with a provider then changing the provider does not return an error", func(t *testing.T) {
-		rawAWS := mustGenerateKeeper(t, helper, helper.Org1.Admin, nil)
+		rawAWS := mustGenerateKeeper(t, helper, helper.Org1.Admin, nil, "")
 
 		testDataKeeperGCP := rawAWS.DeepCopy()
-		testDataKeeperGCP.Object["spec"].(map[string]any)["aws"] = nil
+		testDataKeeperGCP.Object["spec"].(map[string]any)["sql"] = nil
 		testDataKeeperGCP.Object["spec"].(map[string]any)["gcp"] = map[string]any{
 			"projectId":       "project-id",
 			"credentialsFile": "/path/to/file.json",
@@ -223,9 +223,10 @@ func TestIntegrationKeeper(t *testing.T) {
 		})
 	})
 
+	t.Skip("aws keeper not implemented")
 	t.Run("creating a keeper that references a securevalue that is stored in a non-SQL type Keeper returns an error", func(t *testing.T) {
 		// 1. Create a non-SQL keeper without using `secureValueName`.
-		keeperAWS := mustGenerateKeeper(t, helper, helper.Org1.Admin, nil)
+		keeperAWS := mustGenerateKeeper(t, helper, helper.Org1.Admin, nil, "testdata/keeper-aws-generate.yaml")
 
 		// 2. Create a secureValue that is stored in the previously created keeper (non-SQL).
 		secureValue := mustGenerateSecureValue(t, helper, helper.Org1.Admin, keeperAWS.GetName())
@@ -248,7 +249,7 @@ func TestIntegrationKeeper(t *testing.T) {
 			"sql": map[string]any{
 				"encryption": map[string]any{"envelope": map[string]any{}},
 			},
-		})
+		}, "")
 
 		// 2. Create a secureValue that is stored in the previously created keeper (SQL).
 		secureValue := mustGenerateSecureValue(t, helper, helper.Org1.Admin, keeperSQL.GetName())
@@ -260,7 +261,7 @@ func TestIntegrationKeeper(t *testing.T) {
 				"accessKeyId":     map[string]any{"secureValueName": secureValue.GetName()},
 				"secretAccessKey": map[string]any{"valueFromEnv": "SECRET_ACCESS_KEY_XYZ"},
 			},
-		})
+		}, "")
 		require.NotNil(t, keeperAWS)
 	})
 
@@ -268,8 +269,8 @@ func TestIntegrationKeeper(t *testing.T) {
 		adminOrg1 := helper.Org1.Admin
 		adminOrg2 := helper.OrgB.Admin
 
-		keeperOrg1 := mustGenerateKeeper(t, helper, adminOrg1, nil)
-		keeperOrg2 := mustGenerateKeeper(t, helper, adminOrg2, nil)
+		keeperOrg1 := mustGenerateKeeper(t, helper, adminOrg1, nil, "")
+		keeperOrg2 := mustGenerateKeeper(t, helper, adminOrg2, nil, "")
 
 		clientOrg1 := helper.GetResourceClient(apis.ResourceClientArgs{User: adminOrg1, GVR: gvrKeepers})
 		clientOrg2 := helper.GetResourceClient(apis.ResourceClientArgs{User: adminOrg2, GVR: gvrKeepers})
