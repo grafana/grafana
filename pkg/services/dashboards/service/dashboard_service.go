@@ -1755,6 +1755,10 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 		request.IsDeleted = query.IsDeleted
 	}
 
+	if query.Permission > 0 {
+		request.Permission = int64(query.Permission)
+	}
+
 	if query.Limit < 1 {
 		query.Limit = 1000
 	}
