@@ -804,5 +804,14 @@ func (b *APIBuilder) encryptSecrets(ctx context.Context, repo *provisioning.Repo
 		}
 		repo.Spec.GitHub.Token = ""
 	}
+
+	if repo.Status.Webhook != nil &&
+		repo.Status.Webhook.Secret != "" {
+		repo.Status.Webhook.EncryptedSecret, err = b.secrets.Encrypt(ctx, []byte(repo.Status.Webhook.Secret))
+		if err != nil {
+			return err
+		}
+		repo.Status.Webhook.Secret = ""
+	}
 	return nil
 }

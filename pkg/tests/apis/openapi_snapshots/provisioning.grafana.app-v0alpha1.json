@@ -4007,6 +4007,10 @@
       "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.WebhookStatus": {
         "type": "object",
         "properties": {
+          "encryptedSecret": {
+            "type": "string",
+            "format": "byte"
+          },
           "id": {
             "type": "integer",
             "format": "int64"

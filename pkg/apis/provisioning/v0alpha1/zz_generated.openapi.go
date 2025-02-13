@@ -1909,6 +1909,12 @@ func schema_pkg_apis_provisioning_v0alpha1_WebhookStatus(ref common.ReferenceCal
 							Format: "",
 						},
 					},
+					"encryptedSecret": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "byte",
+						},
+					},
 					"subscribedEvents": {
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"array"},

@@ -207,6 +207,7 @@ type WebhookStatus struct {
 	ID               int64    `json:"id,omitempty"`
 	URL              string   `json:"url,omitempty"`
 	Secret           string   `json:"secret,omitempty"`
+	EncryptedSecret  []byte   `json:"encryptedSecret,omitempty"`
 	SubscribedEvents []string `json:"subscribedEvents,omitempty"`
 }
 
