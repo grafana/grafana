@@ -149,6 +149,7 @@ func convertDataType(fieldType data.FieldType) mysql.Type {
 //
 //nolint:gocyclo
 func fieldValFromRowVal(fieldType data.FieldType, val interface{}) (interface{}, error) {
+	// if the input interface is nil, we can return an untyped nil
 	if val == nil {
 		return nil, nil
 	}
