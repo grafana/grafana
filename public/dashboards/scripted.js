@@ -51,6 +51,7 @@ for (let i = 0; i < rows; i++) {
     height: '300px',
     panels: [
       {
+        id: 1,
         title: 'Events',
         type: 'graph',
         span: 12,

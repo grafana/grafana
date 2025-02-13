@@ -60,6 +60,7 @@ return function (callback) {
       height: '300px',
       panels: [
         {
+          id: 1,
           title: 'Async dashboard test',
           type: 'text',
           span: 12,
