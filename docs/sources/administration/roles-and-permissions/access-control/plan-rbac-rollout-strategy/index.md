@@ -372,7 +372,7 @@ Here are two ways to achieve this:
     -X PUT -d @/tmp/basic_viewer.json '<grafana_url>/api/access-control/roles/basic_viewer'
   ```
 
-  The token that is used in this request is [service account token](ref:service-accounts).
+  The token that is used in this request is the [service account token](ref:service-accounts).
 
 - Or use the `role > from` list and `permission > state` option of your provisioning file:
 
@@ -396,7 +396,7 @@ Here are two ways to achieve this:
           state: 'present'
   ```
 
-  If your goal is to remove an access to an app you should remove it from the role ad update it. For example:
+  If your goal is to remove an access to an app you should remove it from the role and update it. For example:
 
   ```bash
   # Fetch the role, modify it to remove permissions to kentik-connect-app and increment role version
