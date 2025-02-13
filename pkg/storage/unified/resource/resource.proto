@@ -457,6 +457,8 @@ message ResourceSearchRequest {
   bool is_deleted = 10;
 
   int64 page = 11;
+
+  int64 permission = 12;
 }
 
 message ResourceSearchResponse {
