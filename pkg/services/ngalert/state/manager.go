@@ -444,9 +444,16 @@ func (st *Manager) setNextStateForRule(ctx context.Context, alertRule *ngModels.
 	}
 	transitions := make([]StateTransition, 0, len(results))
 	for _, result := range results {
-		currentState := st.cache.create(ctx, logger, alertRule, result, extraLabels, st.externalURL)
-		s := st.setNextState(alertRule, currentState, result, nil, logger, takeImageFn)
-		st.cache.set(currentState) // replace the existing state with the new one
+		newState := newState(ctx, logger, alertRule, result, extraLabels, st.externalURL)
+		if curState := st.cache.get(alertRule.OrgID, alertRule.UID, newState.CacheID); curState != nil {
+			patch(newState, curState, result)
+		}
+		start := st.clock.Now()
+		s := newState.transition(alertRule, result, nil, logger, takeImageFn)
+		if st.metrics != nil {
+			st.metrics.StateUpdateDuration.Observe(st.clock.Now().Sub(start).Seconds())
+		}
+		st.cache.set(newState) // replace the existing state with the new one
 		transitions = append(transitions, s)
 	}
 	return transitions
@@ -459,122 +466,17 @@ func (st *Manager) setNextStateForAll(alertRule *ngModels.AlertRule, result eval
 		states: make(map[data.Fingerprint]*State, len(currentStates)),
 	}
 	for _, currentState := range currentStates {
+		start := st.clock.Now()
 		newState := currentState.Copy()
-		t := st.setNextState(alertRule, newState, result, extraAnnotations, logger, takeImageFn)
+		t := newState.transition(alertRule, result, extraAnnotations, logger, takeImageFn)
+		if st.metrics != nil {
+			st.metrics.StateUpdateDuration.Observe(st.clock.Now().Sub(start).Seconds())
+		}
 		updated.states[newState.CacheID] = newState
 		transitions = append(transitions, t)
 	}
 	st.cache.setRuleStates(alertRule.GetKey(), updated)
 	return transitions
-}
-
-// Set the current state based on evaluation results
-func (st *Manager) setNextState(alertRule *ngModels.AlertRule, currentState *State, result eval.Result, extraAnnotations data.Labels, logger log.Logger, takeImageFn takeImageFn) StateTransition {
-	start := st.clock.Now()
-
-	currentState.LastEvaluationTime = result.EvaluatedAt
-	currentState.EvaluationDuration = result.EvaluationDuration
-	currentState.SetNextValues(result)
-	currentState.LatestResult = &Evaluation{
-		EvaluationTime:  result.EvaluatedAt,
-		EvaluationState: result.State,
-		Values:          currentState.Values,
-		Condition:       alertRule.Condition,
-	}
-	currentState.LastEvaluationString = result.EvaluationString
-	oldState := currentState.State
-	oldReason := currentState.StateReason
-
-	// Add the instance to the log context to help correlate log lines for a state
-	logger = logger.New("instance", result.Instance)
-
-	// if the current state is Error but the result is different, then we need o clean up the extra labels
-	// that were added after the state key was calculated
-	// https://github.com/grafana/grafana/blob/1df4d332c982dc5e394201bb2ef35b442727ce63/pkg/services/ngalert/state/state.go#L298-L311
-	// Usually, it happens in the case of classic conditions when the evalResult does not have labels.
-	//
-	// This is temporary change to make sure that the labels are not persistent in the state after it was in Error state
-	// TODO yuri. Remove it when correct Error result with labels is provided
-	if currentState.State == eval.Error && result.State != eval.Error {
-		// This is possible because state was updated after the CacheID was calculated.
-		_, curOk := currentState.Labels["ref_id"]
-		_, resOk := result.Instance["ref_id"]
-		if curOk && !resOk {
-			delete(currentState.Labels, "ref_id")
-		}
-		_, curOk = currentState.Labels["datasource_uid"]
-		_, resOk = result.Instance["datasource_uid"]
-		if curOk && !resOk {
-			delete(currentState.Labels, "datasource_uid")
-		}
-	}
-
-	switch result.State {
-	case eval.Normal:
-		logger.Debug("Setting next state", "handler", "resultNormal")
-		resultNormal(currentState, alertRule, result, logger, "")
-	case eval.Alerting:
-		logger.Debug("Setting next state", "handler", "resultAlerting")
-		resultAlerting(currentState, alertRule, result, logger, "")
-	case eval.Error:
-		logger.Debug("Setting next state", "handler", "resultError")
-		resultError(currentState, alertRule, result, logger)
-	case eval.NoData:
-		logger.Debug("Setting next state", "handler", "resultNoData")
-		resultNoData(currentState, alertRule, result, logger)
-	case eval.Pending: // we do not emit results with this state
-		logger.Debug("Ignoring set next state as result is pending")
-	}
-
-	// Set reason iff: result and state are different, reason is not Alerting or Normal
-	currentState.StateReason = ""
-
-	if currentState.State != result.State &&
-		result.State != eval.Normal &&
-		result.State != eval.Alerting {
-		currentState.StateReason = resultStateReason(result, alertRule)
-	}
-
-	// Set Resolved property so the scheduler knows to send a postable alert
-	// to Alertmanager.
-	newlyResolved := false
-	if oldState == eval.Alerting && currentState.State == eval.Normal {
-		currentState.ResolvedAt = &result.EvaluatedAt
-		newlyResolved = true
-	} else if currentState.State != eval.Normal && currentState.State != eval.Pending { // Retain the last resolved time for Normal->Normal and Normal->Pending.
-		currentState.ResolvedAt = nil
-	}
-
-	if reason := shouldTakeImage(currentState.State, oldState, currentState.Image, newlyResolved); reason != "" {
-		image := takeImageFn(reason)
-		if image != nil {
-			currentState.Image = image
-		}
-	}
-
-	for key, val := range extraAnnotations {
-		currentState.Annotations[key] = val
-	}
-
-	nextState := StateTransition{
-		State:               currentState,
-		PreviousState:       oldState,
-		PreviousStateReason: oldReason,
-	}
-
-	if st.metrics != nil {
-		st.metrics.StateUpdateDuration.Observe(st.clock.Now().Sub(start).Seconds())
-	}
-
-	return nextState
-}
-
-func resultStateReason(result eval.Result, rule *ngModels.AlertRule) string {
-	if rule.ExecErrState == ngModels.KeepLastErrState || rule.NoDataState == ngModels.KeepLast {
-		return ngModels.ConcatReasons(result.State.String(), ngModels.StateReasonKeepLast)
-	}
-
-	return result.State.String()
 }
 
 func (st *Manager) GetAll(orgID int64) []*State {
