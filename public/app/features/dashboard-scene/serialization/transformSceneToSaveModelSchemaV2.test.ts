@@ -561,7 +561,7 @@ describe('dynamic layouts', () => {
     expect(result.layout.kind).toBe('TabsLayout');
     const tabsLayout = result.layout.spec as TabsLayoutSpec;
     expect(tabsLayout.tabs.length).toBe(1);
-    expect(tabsLayout.tabs[0].kind).toBe('TabItem');
+    expect(tabsLayout.tabs[0].kind).toBe('TabsLayoutTab');
     expect(tabsLayout.tabs[0].spec.layout.kind).toBe('GridLayout');
   });
 });
