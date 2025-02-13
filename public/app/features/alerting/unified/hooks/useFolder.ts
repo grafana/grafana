@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 
-import { browseDashboardsAPI } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
+import { useLazyGetFolderQuery } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { FolderDTO } from 'app/types';
 
 interface ReturnBag {
@@ -8,7 +8,6 @@ interface ReturnBag {
   loading: boolean;
 }
 
-const { useLazyGetFolderQuery } = browseDashboardsAPI;
 const PREFER_CACHED_VALUES = true;
 
 /**
