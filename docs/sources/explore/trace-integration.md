@@ -157,7 +157,8 @@ The node graph requires data to be returned from the data source in a specific f
 
 ## Service graph
 
-A service graph visualizes span metrics, including rates, error rates, and durations (RED), along with service relationships. Once the requirements are configured, this pre-configured view is immediately available.
+A service graph visualizes rates, error rates, and durations (RED), along with service relationships.
+After the requirements are configured, this pre-configured view is immediately available.
 
 For additional information refer to the following documentation:
 
