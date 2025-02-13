@@ -64,7 +64,7 @@ const Log = ({ displayedFields, log, showTime, styles }: LogProps) => {
   return (
     <>
       {showTime && <span className={`${styles.timestamp} level-${log.logLevel} field`}>{log.timestamp}</span>}
-      {log.logLevel && <span className={`${styles.level} level-${log.logLevel} field`}>{log.logLevel}</span>}
+      <span className={`${styles.level} level-${log.logLevel} field`}>{log.displayLevel}</span>
       {displayedFields.length > 0 ? (
         displayedFields.map((field) => (
           <span className="field" title={field}>
@@ -185,9 +185,6 @@ export const getStyles = (theme: GrafanaTheme2) => {
       gridColumnGap: theme.spacing(FIELD_GAP_MULTIPLIER),
       whiteSpace: 'pre',
       paddingBottom: theme.spacing(0.75),
-      '& .field': {
-        textAlign: 'center',
-      },
     }),
     wrappedLogLine: css({
       whiteSpace: 'pre-wrap',

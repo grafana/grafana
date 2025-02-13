@@ -1,4 +1,4 @@
-import { dateTimeFormat, LogRowModel, LogsSortOrder } from '@grafana/data';
+import { dateTimeFormat, LogLevel, LogRowModel, LogsSortOrder } from '@grafana/data';
 
 import { escapeUnescapedString, sortLogRows } from '../../utils';
 import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
@@ -10,6 +10,7 @@ import { measureTextWidth } from './virtualization';
 
 export interface LogListModel extends LogRowModel {
   body: string;
+  displayLevel: string;
   fields: FieldDef[];
   timestamp: string;
 }
@@ -63,10 +64,24 @@ const preProcessLog = (
   return {
     ...log,
     body,
+    displayLevel: logLevelToDisplayLevel(log.logLevel),
     fields: getAllFields(log, getFieldLinks),
     timestamp,
   };
 };
+
+function logLevelToDisplayLevel(level = '') {
+  switch (level) {
+    case LogLevel.critical:
+      return 'crit';
+    case LogLevel.warning:
+      return 'warn';
+    case LogLevel.unknown:
+      return '';
+    default:
+      return level;
+  }
+}
 
 export const calculateFieldDimensions = (logs: LogListModel[], displayedFields: string[] = []) => {
   if (!logs.length) {
@@ -80,7 +95,7 @@ export const calculateFieldDimensions = (logs: LogListModel[], displayedFields: 
     if (width > timestampWidth) {
       timestampWidth = Math.round(width);
     }
-    width = measureTextWidth(logs[i].logLevel);
+    width = measureTextWidth(logs[i].displayLevel);
     if (width > levelWidth) {
       levelWidth = Math.round(width);
     }
