@@ -225,7 +225,7 @@ func TestSearchHandler(t *testing.T) {
 		// Initialize the search handler with the mock client
 		searchHandler := SearchHandler{
 			log:      log.New("test", "test"),
-			client:   func(context.Context) resource.ResourceIndexClient { return mockClient },
+			client:   mockClient,
 			tracer:   tracing.NewNoopTracerService(),
 			features: features,
 		}
@@ -254,7 +254,7 @@ func TestSearchHandler(t *testing.T) {
 		// Initialize the search handler with the mock client
 		searchHandler := SearchHandler{
 			log:      log.New("test", "test"),
-			client:   func(context.Context) resource.ResourceIndexClient { return mockClient },
+			client:   mockClient,
 			tracer:   tracing.NewNoopTracerService(),
 			features: features,
 		}
@@ -306,7 +306,7 @@ func TestSearchHandler(t *testing.T) {
 		// Initialize the search handler with the mock client
 		searchHandler := SearchHandler{
 			log:      log.New("test", "test"),
-			client:   func(context.Context) resource.ResourceIndexClient { return mockClient },
+			client:   mockClient,
 			tracer:   tracing.NewNoopTracerService(),
 			features: features,
 		}
@@ -345,7 +345,7 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 		features := featuremgmt.WithFeatures()
 		searchHandler := SearchHandler{
 			log:      log.New("test", "test"),
-			client:   func(context.Context) resource.ResourceIndexClient { return mockClient },
+			client:   mockClient,
 			tracer:   tracing.NewNoopTracerService(),
 			features: features,
 		}
@@ -427,7 +427,7 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 		features := featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorageSearchPermissionFiltering)
 		searchHandler := SearchHandler{
 			log:      log.New("test", "test"),
-			client:   func(context.Context) resource.ResourceIndexClient { return mockClient },
+			client:   mockClient,
 			tracer:   tracing.NewNoopTracerService(),
 			features: features,
 		}
