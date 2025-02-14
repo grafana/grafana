@@ -242,12 +242,12 @@ describe('timeRegions', () => {
   describe('convert simple time region config to cron string and duration', () => {
     it.each`
       from       | fromDOW | to         | toDOW | timezone     | expectedCron   | expectedDuration
-      ${'03:03'} | ${1}    | ${'03:03'} | ${2}  | ${'browser'} | ${'3 3 * * 0'} | ${'1d'}
-      ${'03:03'} | ${7}    | ${'03:03'} | ${1}  | ${'browser'} | ${'3 3 * * 6'} | ${'1d'}
-      ${'09:03'} | ${7}    | ${'03:03'} | ${1}  | ${'browser'} | ${'3 9 * * 6'} | ${'18h'}
-      ${'03:03'} | ${7}    | ${'04:03'} | ${7}  | ${'browser'} | ${'3 3 * * 6'} | ${'1h'}
-      ${'03:03'} | ${7}    | ${'02:03'} | ${7}  | ${'browser'} | ${'3 3 * * 6'} | ${'6d 23h'}
-      ${'03:03'} | ${7}    | ${'3:03'}  | ${7}  | ${'browser'} | ${'3 3 * * 6'} | ${''}
+      ${'03:03'} | ${1}    | ${'03:03'} | ${2}  | ${'browser'} | ${'3 3 * * 1'} | ${'1d'}
+      ${'03:03'} | ${7}    | ${'03:03'} | ${1}  | ${'browser'} | ${'3 3 * * 7'} | ${'1d'}
+      ${'09:03'} | ${7}    | ${'03:03'} | ${1}  | ${'browser'} | ${'3 9 * * 7'} | ${'18h'}
+      ${'03:03'} | ${7}    | ${'04:03'} | ${7}  | ${'browser'} | ${'3 3 * * 7'} | ${'1h'}
+      ${'03:03'} | ${7}    | ${'02:03'} | ${7}  | ${'browser'} | ${'3 3 * * 7'} | ${'6d 23h'}
+      ${'03:03'} | ${7}    | ${'3:03'}  | ${7}  | ${'browser'} | ${'3 3 * * 7'} | ${''}
     `(
       "time region config with from time '$from' and DOW '$fromDOW', to: '$to' and DOW '$toDOW' should generate a cron string of '$expectedCron' and '$expectedDuration'",
       ({ from, fromDOW, to, toDOW, timezone, expectedCron, expectedDuration }) => {
