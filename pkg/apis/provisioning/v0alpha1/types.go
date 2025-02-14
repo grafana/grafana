@@ -41,9 +41,11 @@ type GitHubRepositoryConfig struct {
 	// The branch to use in the repository.
 	// By default, this is the main branch.
 	Branch string `json:"branch,omitempty"`
-	// Token for accessing the repository.
-	// TODO: this should be part of secrets and a simple reference.
+	// Token for accessing the repository. If set, it will be encrypted into encryptedToken, then set to an empty string again.
 	Token string `json:"token,omitempty"`
+	// Token for accessing the repository, but encrypted. This is not possible to read back to a user decrypted.
+	// +listType=atomic
+	EncryptedToken []byte `json:"encryptedToken,omitempty"`
 
 	// Workflow allowed for changes to the repository.
 	// The order is relevant for defining the precedence of the workflows.
@@ -192,6 +194,7 @@ type WebhookStatus struct {
 	ID               int64    `json:"id,omitempty"`
 	URL              string   `json:"url,omitempty"`
 	Secret           string   `json:"secret,omitempty"`
+	EncryptedSecret  []byte   `json:"encryptedSecret,omitempty"`
 	SubscribedEvents []string `json:"subscribedEvents,omitempty"`
 }
 
