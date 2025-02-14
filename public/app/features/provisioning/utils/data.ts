@@ -23,12 +23,6 @@ export const dataToSpec = (data: RepositoryFormData): RepositorySpec => {
         path: data.path,
       };
       break;
-    case 's3':
-      spec.s3 = {
-        bucket: data.bucket,
-        region: data.region,
-      };
-      break;
   }
 
   return spec;
@@ -39,7 +33,6 @@ export const specToData = (spec: RepositorySpec): RepositoryFormData => {
     ...spec,
     ...spec.github,
     ...spec.local,
-    ...spec.s3,
     url: spec.github?.url || '',
   };
 };
