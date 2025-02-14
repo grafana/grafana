@@ -30,6 +30,10 @@ on:
       - 'devenv/**'
       - 'apps/**'
 
+permissions:
+  contents: read
+  id-token: write
+
 env:
   EDITION: 'oss'
 
@@ -56,19 +60,26 @@ jobs:
       - name: Get runner name
         run: echo ${{ runner.name }}
 
-      - name: Generate GitHub App Token
-        id: generate-token
-        uses: tibdex/github-app-token@v2
+      - name: Retrieve GitHub App secrets
+        id: get-secrets
+        uses: grafana/shared-workflows/actions/get-vault-secrets@get-vault-secrets-v1.0.1
         with:
-          app_id: ${{ secrets.GITHUB_APP_ID }}
-          private_key: ${{ secrets.GITHUB_APP_PRIVATE_KEY }}
-          repositories: >-
-            ["grafana/grafana-enterprise"]
+          repo_secrets: |
+            APP_ID=github-app:app-id
+            APP_INSTALLATION_ID=github-app:app-installation-id
+            PRIVATE_KEY=github-app:private-key
+
+      - name: Generate GitHub App token
+        id: generate_token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ env.APP_ID }}
+          private-key: ${{ env.PRIVATE_KEY }}
 
       - name: Setup Enterprise (PR only)
         if: github.event_name == 'pull_request'
         env:
-          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
+          GH_TOKEN: ${{ steps.generate_token.outputs.token }}
         run: |
           # Check if PR is from a fork
           IS_FORK="${{ github.event.pull_request.head.repo.fork }}"
@@ -103,9 +114,7 @@ jobs:
         run: CODEGEN_VERIFY=1 make gen-jsonnet
 
       - name: Wire install
-        run: |
-          apk add --update make
-          make gen-go
+        run: make gen-go
 
       - name: Run backend tests
         run: |
