@@ -4,7 +4,7 @@ import { byTestId } from 'testing-library-selector';
 
 import { DataSourceApi } from '@grafana/data';
 import { PromOptions, PrometheusDatasource } from '@grafana/prometheus';
-import { locationService, setDataSourceSrv, setPluginLinksHook } from '@grafana/runtime';
+import { config, locationService, setDataSourceSrv, setPluginLinksHook } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
 import * as ruler from 'app/features/alerting/unified/api/ruler';
 import * as ruleActionButtons from 'app/features/alerting/unified/components/rules/RuleActionsButtons';
@@ -21,7 +21,7 @@ import {
   mockRulerRuleGroup,
 } from 'app/features/alerting/unified/mocks';
 import { RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
-import * as config from 'app/features/alerting/unified/utils/config';
+import * as configDS from 'app/features/alerting/unified/utils/config';
 import { Annotation } from 'app/features/alerting/unified/utils/constants';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
@@ -44,7 +44,7 @@ import { PanelDataAlertingTab, PanelDataAlertingTabRendered } from './PanelDataA
 jest.mock('app/features/alerting/unified/api/prometheus');
 jest.mock('app/features/alerting/unified/api/ruler');
 
-jest.spyOn(config, 'getAllDataSources');
+jest.spyOn(configDS, 'getAllDataSources');
 jest.spyOn(ruleActionButtons, 'matchesWidth').mockReturnValue(false);
 jest.spyOn(ruler, 'rulerUrlBuilder');
 jest.spyOn(alertingAbilities, 'useAlertRuleAbility');
@@ -70,7 +70,7 @@ dataSources.prometheus.meta.alerting = true;
 dataSources.default.meta.alerting = true;
 
 const mocks = {
-  getAllDataSources: jest.mocked(config.getAllDataSources),
+  getAllDataSources: jest.mocked(configDS.getAllDataSources),
   useAlertRuleAbilityMock: jest.mocked(alertingAbilities.useAlertRuleAbility),
   rulerBuilderMock: jest.mocked(ruler.rulerUrlBuilder),
 };
@@ -309,7 +309,7 @@ describe('PanelAlertTabContent', () => {
   // after updating to RTKQ, the response is already returning the alerts belonging to the panel
   it('Will render alerts belonging to panel and a button to create alert from panel queries', async () => {
     dashboard.panels = [panel];
-
+    config.unifiedAlertingEnabled = true;
     renderAlertTab(dashboard, dashboard);
 
     const rows = await ui.row.findAll();

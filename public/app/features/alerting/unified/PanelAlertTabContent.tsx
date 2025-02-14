@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { config } from '@grafana/runtime';
 import { Alert, LoadingPlaceholder, ScrollContainer, useStyles2 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -27,7 +28,7 @@ export const PanelAlertTabContent = ({ dashboard, panel }: Props) => {
     poll: true,
   });
   const permissions = getRulesPermissions('grafana');
-  const canCreateRules = contextSrv.hasPermission(permissions.create);
+  const canCreateRules = config.unifiedAlertingEnabled && contextSrv.hasPermission(permissions.create);
 
   const alert = errors.length ? (
     <Alert title="Errors loading rules" severity="error">
