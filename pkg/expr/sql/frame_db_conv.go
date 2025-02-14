@@ -242,12 +242,11 @@ func fieldValFromRowVal(fieldType data.FieldType, val interface{}) (interface{},
 
 	case data.FieldTypeBool, data.FieldTypeNullableBool:
 		v, ok := val.(int8)
-		if !ok {
-			return nil, fmt.Errorf("unexpected value type %v of type %T, expected int8 (for bool)", val, val)
+		if ok {
+			b := v != 0
+			return ptrIfNull(b, nullable), nil
 		}
-
-		b := v != 0
-		return ptrIfNull(b, nullable), nil
+		return nil, fmt.Errorf("unexpected value type %v of type %T, expected int8 (for bool)", val, val)
 
 	default:
 		return nil, fmt.Errorf("unsupported field type %s for val %v", fieldType, val)
