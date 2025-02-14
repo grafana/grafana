@@ -8,6 +8,12 @@
 # [Semantic versioning](https://semver.org/) is used to help the reader identify the significance of changes.
 # Changes are relevant to this script and the support docs.mk GNU Make interface.
 #
+# ## 8.5.0 (2025-02-13)
+#
+# ### Added
+#
+# - make topic/<KIND> TOPIC_PATH=<PATH> target to create a new topic from the Writers' Toolkit templates.
+#
 # ## 8.4.0 (2025-01-27)
 #
 # ### Fixed
