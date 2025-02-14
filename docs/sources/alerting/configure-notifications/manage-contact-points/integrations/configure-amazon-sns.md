@@ -78,8 +78,8 @@ For more details on contact points, including how to test them and enable notifi
 - **SNS topic ARN**: (Optional) If you don't specify this value, you must specify a value for the `Phone number` or `Target ARN`. If you are using a FIFO SNS topic you should set a message group interval longer than 5 minutes to prevent messages with the same group key being deduplicated by the SNS default deduplication window.
 - **Phone number**: (Optional) Phone number if message is delivered via SMS in E.164 format. If you don't specify this value, you must specify a value for the `SNS topic ARN` or `Target ARN`.
 - **Target ARN**: (Optional) The mobile platform endpoint ARN if message is delivered via mobile notifications. If you don't specify this value, you must specify a value for the `SNS topic ARN` or `Phone number`.
-- **Subject**: (Optional) Customize the subject line or use the default template. This field is templateable.
-- **Message**: (Optional) Customize the message content or use the default template. This field is templateable.
+- **Subject**: (Optional) Customize the subject. This field supports [notification templates](ref:notification-templates) and, by default, uses the default message template (`default.title`). It **cannot be an empty string**.
+- **Message**: (Optional) Customize the message. This field supports [notification templates](ref:notification-templates) and, by default, uses the default message template (`default.message`).
 - **Attributes**: (Optional) Add any SNS message attributes.
 
 ## Example using an Access Key
