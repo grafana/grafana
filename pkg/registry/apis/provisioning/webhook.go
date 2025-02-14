@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/endpoints/request"
@@ -14,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 )
 
 // This only works for github right now
@@ -64,7 +66,13 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 		logger := logging.FromContext(r.Context()).With("logger", "webhook-connector", "repo", name)
 		ctx := logging.Context(r.Context(), logger)
 
-		rsp, err := repo.Webhook(ctx, r)
+		hooks, ok := repo.(repository.RepositoryHooks)
+		if !ok {
+			responder.Error(errors.NewBadRequest("the repository does not support webhooks"))
+			return
+		}
+
+		rsp, err := hooks.Webhook(ctx, r)
 		if err != nil {
 			responder.Error(err)
 			return
