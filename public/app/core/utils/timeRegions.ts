@@ -78,6 +78,8 @@ export function convertToCron(cfg: TimeRegionConfig) {
       duration: durationSecs,
     };
   }
+
+  return undefined;
 }
 
 function normalizeRange(cfg: TimeRegionConfig): Range | undefined {
