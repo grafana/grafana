@@ -180,43 +180,43 @@ The following example shows the payload of a webhook notification containing inf
 
 The JSON payload of webhook notifications includes the following key-value pairs:
 
-| Key               | Type                      | Description                                                                      |
-| ----------------- | ------------------------- | -------------------------------------------------------------------------------- |
-| receiver          | string                    | Name of the contact point.                                                       |
-| status            | string                    | Current status of the alert, `firing` or `resolved`.                             |
-| orgId             | number                    | ID of the organization related to the payload.                                   |
-| alerts            | array of [alerts](#alert) | Alerts that are triggering.                                                      |
-| groupLabels       | object                    | Labels that are used for grouping, map of string keys to string values.          |
-| commonLabels      | object                    | Labels that all alarms have in common, map of string keys to string values.      |
-| commonAnnotations | object                    | Annotations that all alarms have in common, map of string keys to string values. |
-| externalURL       | string                    | External URL to the Grafana instance sending this webhook.                       |
-| version           | string                    | Version of the payload structure.                                                |
-| groupKey          | string                    | Key that is used for grouping.                                                   |
-| truncatedAlerts   | number                    | Number of alerts that were truncated.                                            |
-| state             | string                    | State of the alert group (either `alerting` or `ok`).                            |
+| Key                 | Type                      | Description                                                                      |
+| ------------------- | ------------------------- | -------------------------------------------------------------------------------- |
+| `receiver`          | string                    | Name of the contact point.                                                       |
+| `status`            | string                    | Current status of the alert, `firing` or `resolved`.                             |
+| `orgId`             | number                    | ID of the organization related to the payload.                                   |
+| `alerts`            | array of [alerts](#alert) | Alerts that are triggering.                                                      |
+| `groupLabels`       | object                    | Labels that are used for grouping, map of string keys to string values.          |
+| `commonLabels`      | object                    | Labels that all alarms have in common, map of string keys to string values.      |
+| `commonAnnotations` | object                    | Annotations that all alarms have in common, map of string keys to string values. |
+| `externalURL`       | string                    | External URL to the Grafana instance sending this webhook.                       |
+| `version`           | string                    | Version of the payload structure.                                                |
+| `groupKey`          | string                    | Key that is used for grouping.                                                   |
+| `truncatedAlerts`   | number                    | Number of alerts that were truncated.                                            |
+| `state`             | string                    | State of the alert group (either `alerting` or `ok`).                            |
 
 The following key-value pairs are also included in the JSON payload and can be configured in the [webhook settings using notification templates](#optional-settings-using-templates).
 
-| Key     | Type   | Description                                                                                                          |
-| ------- | ------ | -------------------------------------------------------------------------------------------------------------------- |
-| title   | string | Custom title. Configurable in [webhook settings using notification templates](#optional-settings-using-templates).   |
-| message | string | Custom message. Configurable in [webhook settings using notification templates](#optional-settings-using-templates). |
+| Key       | Type   | Description                                                                                                          |
+| --------- | ------ | -------------------------------------------------------------------------------------------------------------------- |
+| `title`   | string | Custom title. Configurable in [webhook settings using notification templates](#optional-settings-using-templates).   |
+| `message` | string | Custom message. Configurable in [webhook settings using notification templates](#optional-settings-using-templates). |
 
 ### Alert
 
 The Alert object represents an alert included in the notification group, as provided by the [`alerts` field](#body).
 
-| Key          | Type   | Description                                                                         |
-| ------------ | ------ | ----------------------------------------------------------------------------------- |
-| status       | string | Current status of the alert, `firing` or `resolved`.                                |
-| labels       | object | Labels that are part of this alert, map of string keys to string values.            |
-| annotations  | object | Annotations that are part of this alert, map of string keys to string values.       |
-| startsAt     | string | Start time of the alert.                                                            |
-| endsAt       | string | End time of the alert, default value when not resolved is `0001-01-01T00:00:00Z`.   |
-| values       | object | Values that triggered the current status.                                           |
-| generatorURL | string | URL of the alert rule in the Grafana UI.                                            |
-| fingerprint  | string | The labels fingerprint, alarms with the same labels will have the same fingerprint. |
-| silenceURL   | string | URL to silence the alert rule in the Grafana UI.                                    |
-| dashboardURL | string | A link to the Grafana Dashboard if the alert has a Dashboard UID annotation.        |
-| panelURL     | string | A link to the panel if the alert has a Panel ID annotation.                         |
-| imageURL     | string | URL of a screenshot of a panel assigned to the rule that created this notification. |
+| Key            | Type   | Description                                                                         |
+| -------------- | ------ | ----------------------------------------------------------------------------------- |
+| `status`       | string | Current status of the alert, `firing` or `resolved`.                                |
+| `labels`       | object | Labels that are part of this alert, map of string keys to string values.            |
+| `annotations`  | object | Annotations that are part of this alert, map of string keys to string values.       |
+| `startsAt`     | string | Start time of the alert.                                                            |
+| `endsAt`       | string | End time of the alert, default value when not resolved is `0001-01-01T00:00:00Z`.   |
+| `values`       | object | Values that triggered the current status.                                           |
+| `generatorURL` | string | URL of the alert rule in the Grafana UI.                                            |
+| `fingerprint`  | string | The labels fingerprint, alarms with the same labels will have the same fingerprint. |
+| `silenceURL`   | string | URL to silence the alert rule in the Grafana UI.                                    |
+| `dashboardURL` | string | A link to the Grafana Dashboard if the alert has a Dashboard UID annotation.        |
+| `panelURL`     | string | A link to the panel if the alert has a Panel ID annotation.                         |
+| `imageURL`     | string | URL of a screenshot of a panel assigned to the rule that created this notification. |
