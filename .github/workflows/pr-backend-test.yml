@@ -56,18 +56,32 @@ jobs:
       - name: Get runner name
         run: echo ${{ runner.name }}
 
+      - name: Generate GitHub App Token
+        id: generate-token
+        uses: tibdex/github-app-token@v2
+        with:
+          app_id: ${{ secrets.GITHUB_APP_ID }}
+          private_key: ${{ secrets.GITHUB_APP_PRIVATE_KEY }}
+          repositories: >-
+            ["grafana/grafana-enterprise"]
+
       - name: Setup Enterprise (PR only)
         if: github.event_name == 'pull_request'
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
         run: |
-          PR_REPO_FORK=$(gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }} --jq .head.repo.fork)
-          if [ "$PR_REPO_FORK" != "false" ]; then
+          # Check if PR is from a fork
+          IS_FORK="${{ github.event.pull_request.head.repo.fork }}"
+          if [ "$IS_FORK" = "true" ]; then
             echo "Skipping enterprise setup for fork"
             exit 0
           fi
-          git clone https://$GH_TOKEN@github.com/grafana/grafana-enterprise.git ../grafana-enterprise
+          
+          # Clone enterprise repo using the GitHub App token
+          git clone https://x-access-token:${GH_TOKEN}@github.com/grafana/grafana-enterprise.git ../grafana-enterprise
           cd ../grafana-enterprise
+          
+          # Try to checkout the PR branch first, then base branch, then fall back to main
           if git checkout ${GITHUB_HEAD_REF}; then
             echo "checked out ${GITHUB_HEAD_REF}"
           elif git checkout ${GITHUB_BASE_REF}; then
@@ -75,6 +89,8 @@ jobs:
           else
             git checkout main
           fi
+          
+          # Setup symlink and build
           cd ../grafana
           ln -s . grafana
           cd ../grafana-enterprise
