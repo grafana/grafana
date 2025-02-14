@@ -50,6 +50,7 @@ func (s *secureValueStorage) Create(ctx context.Context, sv *secretv0alpha1.Secu
 	}
 
 	// Store in keeper.
+	// TODO: here temporary, the moment of storing will change in the async flow.
 	externalID, err := s.storeInKeeper(ctx, sv)
 	if err != nil {
 		return nil, fmt.Errorf("failed to store in keeper: %w", err)
@@ -139,6 +140,7 @@ func (s *secureValueStorage) Update(ctx context.Context, newSecureValue *secretv
 	}
 
 	// Update in keeper.
+	// TODO: here temporary, the moment of update will change in the async flow.
 	err = s.updateInKeeper(ctx, currentRow, newSecureValue)
 	if err != nil {
 		return nil, fmt.Errorf("failed to update in keeper: %w", err)
@@ -180,6 +182,7 @@ func (s *secureValueStorage) Delete(ctx context.Context, namespace xkube.Namespa
 	}
 
 	// Delete from the keeper.
+	// TODO: here temporary, the moment of deletion will change in the async flow.
 	// TODO: do we care to inform the caller if there is any error?
 	_ = s.deleteFromKeeper(ctx, namespace, name)
 

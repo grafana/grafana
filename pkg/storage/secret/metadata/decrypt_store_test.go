@@ -27,26 +27,29 @@ import (
 )
 
 func Test_DecryptStore_DecryptFromKeeper(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	t.Cleanup(cancel)
+	ctx := types.WithAuthInfo(context.Background(), authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
+		Claims: jwt.Claims{
+			Subject: "testuser",
+		},
+	}))
 
 	s := setupDecryptTestService(t).(*decryptStorage)
 
 	t.Run("decrypt an existent secure value returns no error", func(t *testing.T) {
-		exposedValue, err := s.decryptFromKeeper(ctx, xkube.Namespace("default"), "sv-test")
+		exposedValue, err := s.Decrypt(ctx, xkube.Namespace("default"), "sv-test")
 		require.NoError(t, err)
 		require.NotNil(t, exposedValue)
 		require.Equal(t, "value", exposedValue.DangerouslyExposeAndConsumeValue())
 	})
 
 	t.Run("decrypt a non existent secure value returns error", func(t *testing.T) {
-		exposedValue, err := s.decryptFromKeeper(ctx, xkube.Namespace("default"), "non-existent")
+		exposedValue, err := s.Decrypt(ctx, xkube.Namespace("default"), "non-existent")
 		require.Error(t, err)
 		require.Equal(t, "[REDACTED]", exposedValue.String())
 	})
 
 	t.Run("decrypt a non existent secure value from another namespace returns error", func(t *testing.T) {
-		exposedValue, err := s.decryptFromKeeper(ctx, xkube.Namespace("another"), "sv-test")
+		exposedValue, err := s.Decrypt(ctx, xkube.Namespace("another"), "sv-test")
 		require.Error(t, err)
 		require.Equal(t, "[REDACTED]", exposedValue.String())
 	})

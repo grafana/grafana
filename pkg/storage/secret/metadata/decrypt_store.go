@@ -43,15 +43,6 @@ func (s *decryptStorage) Decrypt(ctx context.Context, namespace xkube.Namespace,
 		return "", fmt.Errorf("missing auth info in context")
 	}
 
-	exposedValue, err := s.decryptFromKeeper(ctx, namespace, name)
-	if err != nil {
-		return "", fmt.Errorf("decrypt from keeper: %w", err)
-	}
-
-	return exposedValue, nil
-}
-
-func (s *decryptStorage) decryptFromKeeper(ctx context.Context, namespace xkube.Namespace, name string) (secretv0alpha1.ExposedSecureValue, error) {
 	sv := &secureValueDB{Namespace: namespace.String(), Name: name}
 	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		found, err := sess.Get(sv)
@@ -78,5 +69,10 @@ func (s *decryptStorage) decryptFromKeeper(ctx context.Context, namespace xkube.
 	if !ok {
 		return "", fmt.Errorf("could not find keeper: %s", keeperType)
 	}
-	return keeper.Expose(ctx, keeperConfig, namespace.String(), keepertypes.ExternalID(sv.ExternalID))
+	exposedValue, err := keeper.Expose(ctx, keeperConfig, namespace.String(), keepertypes.ExternalID(sv.ExternalID))
+	if err != nil {
+		return "", fmt.Errorf("decrypt from keeper: %w", err)
+	}
+
+	return exposedValue, nil
 }

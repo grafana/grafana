@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	keepertypes "github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/types"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -114,7 +115,7 @@ func TestIntegrationSecureValue(t *testing.T) {
 			require.NotEqualValues(t, updatedSecureValue.Spec, secureValue.Spec)
 		})
 
-		t.Run("and updating the secure value keeper returns error", func(t *testing.T) {
+		t.Run("and updating the secure value keeper is not allowed and returns error", func(t *testing.T) {
 			newKeeper := mustGenerateKeeper(t, helper, helper.Org1.Admin, nil, "testdata/keeper-sql-generate.yaml")
 
 			newRaw := helper.LoadYAMLOrJSONFile("testdata/secure-value-generate.yaml")
@@ -339,7 +340,7 @@ func TestIntegrationSecureValue(t *testing.T) {
 	})
 
 	t.Run("creating a secure value in default sql keeper returns it", func(t *testing.T) {
-		raw := mustGenerateSecureValue(t, helper, helper.Org1.Admin, "kp-default-sql")
+		raw := mustGenerateSecureValue(t, helper, helper.Org1.Admin, keepertypes.DefaultSQLKeeper)
 
 		secureValue := new(secretv0alpha1.SecureValue)
 		err := runtime.DefaultUnstructuredConverter.FromUnstructured(raw.Object, secureValue)
@@ -387,7 +388,7 @@ func TestIntegrationSecureValue(t *testing.T) {
 			newRaw.SetName(raw.GetName())
 			newRaw.Object["spec"].(map[string]any)["title"] = "New title"
 			newRaw.Object["spec"].(map[string]any)["value"] = "New secure value"
-			newRaw.Object["spec"].(map[string]any)["keeper"] = "kp-default-sql"
+			newRaw.Object["spec"].(map[string]any)["keeper"] = keepertypes.DefaultSQLKeeper
 			newRaw.Object["spec"].(map[string]any)["decrypters"] = []string{"decrypter1/name1", "decrypter2/*"}
 			newRaw.Object["metadata"].(map[string]any)["annotations"] = map[string]any{"newAnnotation": "newValue"}
 
@@ -403,7 +404,7 @@ func TestIntegrationSecureValue(t *testing.T) {
 			require.NotEqualValues(t, updatedSecureValue.Spec, secureValue.Spec)
 		})
 
-		t.Run("and updating the secure value keeper returns error", func(t *testing.T) {
+		t.Run("and updating the secure value keeper is not allowed and returns error", func(t *testing.T) {
 			newKeeper := mustGenerateKeeper(t, helper, helper.Org1.Admin, nil, "testdata/keeper-sql-generate.yaml")
 
 			newRaw := helper.LoadYAMLOrJSONFile("testdata/secure-value-generate.yaml")
