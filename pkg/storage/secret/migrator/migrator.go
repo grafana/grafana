@@ -49,7 +49,7 @@ func initSecretStore(mg *migrator.Migrator) string {
 			// Spec
 			{Name: "title", Type: migrator.DB_Text, Nullable: false},
 			{Name: "keeper", Type: migrator.DB_Text, Nullable: false},
-			{Name: "decrypters", Type: migrator.DB_Text, Nullable: false},
+			{Name: "decrypters", Type: migrator.DB_Text, Nullable: true},
 			{Name: "ref", Type: migrator.DB_Text, Nullable: true}, // Reference to third-party storage secret path.
 			{Name: "external_id", Type: migrator.DB_Text, Nullable: false},
 		},

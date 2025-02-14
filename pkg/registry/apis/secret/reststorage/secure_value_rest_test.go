@@ -54,15 +54,6 @@ func TestValidateSecureValue(t *testing.T) {
 			require.Len(t, errs, 1)
 			require.Equal(t, "spec", errs[0].Field)
 		})
-
-		t.Run("`decrypters` must be present", func(t *testing.T) {
-			sv := validSecureValue.DeepCopy()
-			sv.Spec.Decrypters = make([]string, 0)
-
-			errs := ValidateSecureValue(sv, nil, admission.Create)
-			require.Len(t, errs, 1)
-			require.Equal(t, "spec.decrypters", errs[0].Field)
-		})
 	})
 
 	t.Run("when updating a securevalue", func(t *testing.T) {

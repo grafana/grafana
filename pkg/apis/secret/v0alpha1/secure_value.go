@@ -32,7 +32,8 @@ type SecureValueSpec struct {
 	// Name of the keeper, being the actual storage of the secure value.
 	Keeper string `json:"keeper,omitempty"`
 
-	// The Decrypters that are allowed to decrypt this secret
+	// The Decrypters that are allowed to decrypt this secret.
+	// An empty list means no service can decrypt it.
 	// Support and behavior is still TBD, but could likely look like:
 	// * testdata.grafana.app/{name1}
 	// * testdata.grafana.app/{name2}
@@ -41,6 +42,7 @@ type SecureValueSpec struct {
 	// [{ group:"testdata.grafana.app", name="name1"},
 	//  { group:"runner.k6.grafana.app"}]
 	// +listType=atomic
+	// +optional
 	Decrypters []string `json:"decrypters"`
 }
 
