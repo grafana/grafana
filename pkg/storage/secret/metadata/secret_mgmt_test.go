@@ -158,14 +158,14 @@ func Test_SecretMgmt_GetKeeperConfig(t *testing.T) {
 	s := setupTestService(t).(*secureValueStorage)
 
 	t.Run("get default sql keeper config", func(t *testing.T) {
-		keeperType, keeperConfig, err := s.getKeeperConfig(ctx, "default", "kp-default-sql")
+		keeperType, keeperConfig, err := getKeeperConfig(ctx, s.db, "default", "kp-default-sql")
 		require.NoError(t, err)
 		require.Equal(t, keepertypes.SQLKeeperType, keeperType)
 		require.Nil(t, keeperConfig)
 	})
 
 	t.Run("get test keeper config", func(t *testing.T) {
-		keeperType, keeperConfig, err := s.getKeeperConfig(ctx, "default", "kp-test")
+		keeperType, keeperConfig, err := getKeeperConfig(ctx, s.db, "default", "kp-test")
 		require.NoError(t, err)
 		require.Equal(t, keepertypes.SQLKeeperType, keeperType)
 		require.NotNil(t, keeperConfig)

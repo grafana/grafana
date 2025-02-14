@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	keepertypes "github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/types"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
@@ -17,7 +18,7 @@ func (s *secureValueStorage) storeInKeeper(ctx context.Context, sv *secretv0alph
 		return "", fmt.Errorf("store by ref in keeper")
 	}
 
-	keeperType, keeperConfig, err := s.getKeeperConfig(ctx, sv.Namespace, sv.Spec.Keeper)
+	keeperType, keeperConfig, err := getKeeperConfig(ctx, s.db, sv.Namespace, sv.Spec.Keeper)
 	if err != nil {
 		return "", fmt.Errorf("get keeper config: %w", err)
 	}
@@ -50,7 +51,7 @@ func (s *secureValueStorage) updateInKeeper(ctx context.Context, currRow *secure
 		return fmt.Errorf("keeper change not allowed")
 	}
 
-	keeperType, keeperConfig, err := s.getKeeperConfig(ctx, currRow.Namespace, currRow.Keeper)
+	keeperType, keeperConfig, err := getKeeperConfig(ctx, s.db, currRow.Namespace, currRow.Keeper)
 	if err != nil {
 		return fmt.Errorf("get keeper config: %w", err)
 	}
@@ -87,7 +88,7 @@ func (s *secureValueStorage) deleteFromKeeper(ctx context.Context, namespace xku
 		return fmt.Errorf("db failure: %w", err)
 	}
 
-	keeperType, keeperConfig, err := s.getKeeperConfig(ctx, namespace.String(), sv.Keeper)
+	keeperType, keeperConfig, err := getKeeperConfig(ctx, s.db, namespace.String(), sv.Keeper)
 	if err != nil {
 		return fmt.Errorf("get keeper config: %w", err)
 	}
@@ -104,7 +105,7 @@ func (s *secureValueStorage) deleteFromKeeper(ctx context.Context, namespace xku
 	return nil
 }
 
-func (s *secureValueStorage) getKeeperConfig(ctx context.Context, namespace string, name string) (keepertypes.KeeperType, secretv0alpha1.KeeperConfig, error) {
+func getKeeperConfig(ctx context.Context, db db.DB, namespace string, name string) (keepertypes.KeeperType, secretv0alpha1.KeeperConfig, error) {
 	// Check if keeper is default sql.
 	if name == keepertypes.DefaultSQLKeeper {
 		return keepertypes.SQLKeeperType, nil, nil
@@ -112,7 +113,7 @@ func (s *secureValueStorage) getKeeperConfig(ctx context.Context, namespace stri
 
 	// Load keeper config from metadata store, or TODO: keeper cache.
 	kp := &keeperDB{Namespace: namespace, Name: name}
-	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err := db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		found, err := sess.Get(kp)
 		if err != nil {
 			return fmt.Errorf("failed to get row: %w", err)
