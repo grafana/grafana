@@ -14,7 +14,7 @@ For each data link, set the following options:
 - **Open in new tab**
 - **One click** - Opens the data link with a single click. Only one data link can have **One click** enabled at a time.
 
-For each action, set the following options:
+For each action, define the following API call settings:
 
 <!-- prettier-ignore-start -->
 
@@ -23,7 +23,7 @@ For each action, set the following options:
 | Title                | A human-readable label for the action that's displayed in the UI. |
 | Confirmation message | A descriptive prompt to confirm or cancel the action. |
 | Method               | Select from **POST**, **PUT**, or **GET**. |
-| URL                  | The request URL or variable to which you want to link.</p><p>To add a variable, click in the **URL** field and enter `$` or press Ctrl+Space or Cmd+Space to see a list of available variables. |
+| URL                  | The request URL.</p><p>To add a variable, click in the **URL** field and enter `$` or press Ctrl+Space or Cmd+Space to see a list of available variables. |
 | Query parameters     | **Key** and **Value** pairs. Click the **+** icon to add as many key/value pairs as you need. |
 | Headers              | Comprised of **Key** and **Value** pairs and a **Content-Type**.</p><p>Click the **+** icon to add as many key/value pairs as you need. |
 | Content-Type         | Select from the following: **application/json**, **text/plain**, **application/XML**, and **application/x-www-form-urlencoded**. |
