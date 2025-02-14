@@ -17,8 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apikey"
-	"github.com/grafana/grafana/pkg/services/auth"
-	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/database"
@@ -44,7 +42,6 @@ type ServiceAccountsService struct {
 	secretScanService secretscan.Checker
 	orgService        org.Service
 	serverLock        *serverlock.ServerLockService
-	idService         auth.IDService
 
 	secretScanEnabled  bool
 	secretScanInterval time.Duration
@@ -61,7 +58,6 @@ func ProvideServiceAccountsService(
 	acService accesscontrol.Service,
 	permissions accesscontrol.ServiceAccountPermissionsService,
 	serverLockService *serverlock.ServerLockService,
-	idService auth.IDService,
 ) (*ServiceAccountsService, error) {
 	serviceAccountsStore := database.ProvideServiceAccountsStore(
 		cfg,
@@ -81,7 +77,6 @@ func ProvideServiceAccountsService(
 		backgroundLog: log.New("serviceaccounts.background"),
 		orgService:    orgService,
 		serverLock:    serverLockService,
-		idService:     idService,
 	}
 
 	if err := RegisterRoles(acService); err != nil {
@@ -268,10 +263,6 @@ func (sa *ServiceAccountsService) UpdateServiceAccount(ctx context.Context, orgI
 		return nil, err
 	}
 	if err := validServiceAccountID(serviceAccountID); err != nil {
-		return nil, err
-	}
-
-	if err := sa.idService.RemoveIDToken(ctx, &authn.Identity{ID: strconv.FormatInt(serviceAccountID, 10), Type: claims.TypeServiceAccount, OrgID: orgID}); err != nil {
 		return nil, err
 	}
 
