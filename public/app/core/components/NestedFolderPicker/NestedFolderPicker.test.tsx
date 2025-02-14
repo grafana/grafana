@@ -6,7 +6,6 @@ import { TestProvider } from 'test/helpers/TestProvider';
 
 import { config } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { PermissionLevelString } from 'app/types';
 
 import {
   treeViewersCanEdit,
@@ -187,7 +186,7 @@ describe('NestedFolderPicker', () => {
   });
 
   it('shows items the user can view, with the prop', async () => {
-    render(<NestedFolderPicker permission={PermissionLevelString.View} onChange={mockOnChange} />);
+    render(<NestedFolderPicker permission="view" onChange={mockOnChange} />);
 
     const button = await screen.findByRole('button', { name: 'Select folder' });
     await userEvent.click(button);
@@ -209,7 +208,7 @@ describe('NestedFolderPicker', () => {
     });
 
     it('can expand and collapse a folder to show its children', async () => {
-      render(<NestedFolderPicker permission={PermissionLevelString.View} onChange={mockOnChange} />);
+      render(<NestedFolderPicker permission="view" onChange={mockOnChange} />);
 
       // Open the picker and wait for children to load
       const button = await screen.findByRole('button', { name: 'Select folder' });
@@ -240,7 +239,7 @@ describe('NestedFolderPicker', () => {
     });
 
     it('can expand and collapse a folder to show its children with the keyboard', async () => {
-      render(<NestedFolderPicker permission={PermissionLevelString.View} onChange={mockOnChange} />);
+      render(<NestedFolderPicker permission="view" onChange={mockOnChange} />);
       const button = await screen.findByRole('button', { name: 'Select folder' });
 
       await userEvent.click(button);

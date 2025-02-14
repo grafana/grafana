@@ -1,10 +1,11 @@
 import { useParams } from 'react-router-dom-v5-compat';
 
-import { Alert, LoadingPlaceholder, withErrorBoundary } from '@grafana/ui';
+import { Alert, LoadingPlaceholder } from '@grafana/ui';
 import { useGetContactPoint } from 'app/features/alerting/unified/components/contact-points/useContactPoints';
 import { stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
 
 import { useAlertmanager } from '../../state/AlertmanagerContext';
+import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { AlertmanagerPageWrapper } from '../AlertingPageWrapper';
 import { EditReceiverView } from '../receivers/EditReceiverView';
 
@@ -50,4 +51,4 @@ function EditContactPointPage() {
   );
 }
 
-export default withErrorBoundary(EditContactPointPage, { style: 'page' });
+export default withPageErrorBoundary(EditContactPointPage);

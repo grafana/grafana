@@ -19,7 +19,9 @@ import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
-import { DashboardLayoutManager, isDashboardLayoutManager } from '../scene/types';
+import { DashboardLayoutManager, isDashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
+
+import { getOriginalKey, isClonedKey } from './clone';
 
 export const NEW_PANEL_HEIGHT = 8;
 export const NEW_PANEL_WIDTH = 12;
@@ -29,7 +31,7 @@ export function getVizPanelKeyForPanelId(panelId: number) {
 }
 
 export function getPanelIdForVizPanel(panel: SceneObject): number {
-  return parseInt(panel.state.key!.replace('panel-', ''), 10);
+  return parseInt(getOriginalKey(panel.state.key!).replace('panel-', ''), 10);
 }
 
 /**
@@ -63,6 +65,15 @@ function findVizPanelInternal(scene: SceneObject, key: string | undefined): VizP
     const objKey = obj.state.key!;
 
     if (objKey === key) {
+      return true;
+    }
+
+    // It might be possible to have the keys changed in the meantime from `panel-2` to `panel-2-clone-0`
+    // We need to check this as well
+    const originalObjectKey = !isClonedKey(objKey) ? getOriginalKey(objKey) : objKey;
+    const originalKey = !isClonedKey(key) ? getOriginalKey(key) : key;
+
+    if (originalObjectKey === originalKey) {
       return true;
     }
 
@@ -212,30 +223,6 @@ export function getClosestVizPanel(sceneObject: SceneObject): VizPanel | null {
   return null;
 }
 
-export function isPanelClone(key: string) {
-  return key.includes('clone');
-}
-
-/**
- * Recursivly check the scene graph up until it finds a read only clone.
- * If the key contains clone-0 it is the reference object and can be edited
- */
-export function isReadOnlyClone(sceneObject: SceneObject): boolean {
-  const key = sceneObject.state.key!;
-
-  // Regular expression to match 'clone-' followed by a number, but not 'clone-0' as the is the reference object
-  const pattern = /clone-(?!0)/;
-  if (pattern.test(key)) {
-    return true;
-  }
-
-  if (sceneObject.parent) {
-    return isReadOnlyClone(sceneObject.parent);
-  }
-
-  return false;
-}
-
 export function getDefaultVizPanel(): VizPanel {
   return new VizPanel({
     title: 'Panel Title',
@@ -350,4 +337,8 @@ export function getLayoutManagerFor(sceneObject: SceneObject): DashboardLayoutMa
   }
 
   throw new Error('Could not find layout manager for scene object');
+}
+
+export function getGridItemKeyForPanelId(panelId: number): string {
+  return `grid-item-${panelId}`;
 }

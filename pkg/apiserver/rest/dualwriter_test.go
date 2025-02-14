@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/apis/example"
@@ -57,13 +57,16 @@ func TestSetDualWritingMode(t *testing.T) {
 	for _, tt := range tests {
 		l := (LegacyStorage)(nil)
 		s := (Storage)(nil)
-		m := &mock.Mock{}
 
-		m.On("List", mock.Anything, mock.Anything).Return(exampleList, nil)
-		m.On("List", mock.Anything, mock.Anything).Return(anotherList, nil)
+		sm := &mock.Mock{}
+		sm.On("List", mock.Anything, mock.Anything).Return(anotherList, nil)
+		sm.On("Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(exampleObj, false, nil)
+		sm.On("Delete", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(exampleObj, false, nil)
+		us := storageMock{sm, s}
 
-		ls := legacyStoreMock{m, l}
-		us := storageMock{m, s}
+		lm := &mock.Mock{}
+		lm.On("List", mock.Anything, mock.Anything).Return(exampleList, nil)
+		ls := legacyStoreMock{lm, l}
 
 		dwMode, err := SetDualWritingMode(context.Background(), tt.kvStore, &SyncerConfig{
 			LegacyStorage:     ls,
@@ -77,8 +80,8 @@ func TestSetDualWritingMode(t *testing.T) {
 			DataSyncerRecordsLimit: 1000,
 			DataSyncerInterval:     time.Hour,
 		})
-		assert.NoError(t, err)
-		assert.Equal(t, tt.expectedMode, dwMode)
+		require.NoError(t, err)
+		require.Equal(t, tt.expectedMode, dwMode)
 	}
 }
 
@@ -121,7 +124,7 @@ func TestCompare(t *testing.T) {
 	}
 	for _, tt := range testCase {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.expected, Compare(tt.input1, tt.input2))
+			require.Equal(t, tt.expected, Compare(tt.input1, tt.input2))
 		})
 	}
 }

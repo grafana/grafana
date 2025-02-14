@@ -285,6 +285,7 @@ const getExemplarMarkerStyles = (theme: GrafanaTheme2) => {
       padding: 0,
       overflowY: 'auto',
       maxHeight: '95vh',
+      boxShadow: theme.shadows.z2,
     }),
     header: css({
       background: headerBg,

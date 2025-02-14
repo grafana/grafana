@@ -117,6 +117,11 @@ module.exports = [
               importNames: ['Trans', 't'],
               message: 'Please import from app/core/internationalization instead',
             },
+            {
+              name: 'i18next',
+              importNames: ['t'],
+              message: 'Please import from app/core/internationalization instead',
+            },
           ],
         },
       ],

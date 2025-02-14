@@ -301,6 +301,10 @@ Path to the certificate file (if `protocol` is set to `https` or `h2`).
 
 Path to the certificate key file (if `protocol` is set to `https` or `h2`).
 
+#### `cert_pass`
+
+Optional. Password to decrypt encrypted certificates.
+
 #### `certs_watch_interval`
 
 Controls whether `cert_key` and `cert_file` are periodically watched for changes.
@@ -695,6 +699,10 @@ An existing user's account is unable to login for five minutes if all login atte
 
 Configure how many login attempts a user can have within a five minute window before their account is locked.
 Default is `5`.
+
+#### `disable_ip_address_login_protection`
+
+Set to `true` to disable [brute force login protection by IP address](https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html#account-lockout). Default is `true`. Anyone from the IP address will be unable to login for 5 minutes if all login attempts are spent within a 5 minute window.
 
 #### `cookie_secure`
 
@@ -1361,7 +1369,13 @@ Override token URL for Azure Active Directory.
 
 By default is the same as token URL configured for AAD authentication settings.
 
-#### `user_identity_client_id`
+### `user_identity_client_authentication`
+
+Override client authentication method for Azure Active Directory. Currently supported values are `client_secret_post` and `managed_identity`.
+
+By default is the same as client authentication method configured for AAD authentication settings.
+
+### `user_identity_client_id`
 
 Override ADD application ID which would be used to exchange users token to an access token for the data source.
 
@@ -1373,7 +1387,19 @@ Override the AAD application client secret.
 
 By default is the same as used in AAD authentication or can be set to another application (for OBO flow).
 
-#### `forward_settings_to_plugins`
+### `user_identity_managed_identity_client_id`
+
+Override the AAD application managed identity client ID of the federated credential configured as a user-assigned managed identity.
+
+By default is the same as used in AAD authentication or can be set to another managed identity (for OBO flow).
+
+### `user_identity_federated_credential_audience`
+
+Override the AAD federated credential audience of the federated credential configured as a user-assigned managed identity.
+
+By default is the same as used in AAD authentication or can be set to another audience (for OBO flow).
+
+### `forward_settings_to_plugins`
 
 Set plugins to receive Azure settings via plugin context.
 
@@ -1795,7 +1821,7 @@ The timeout string is a possibly signed sequence of decimal numbers, followed by
 
 #### `max_attempts`
 
-Sets a maximum number of times Grafana attempts to evaluate an alert rule before giving up on that evaluation. The default value is `1`.
+Sets a maximum number of times Grafana attempts to evaluate an alert rule before giving up on that evaluation. The default value is `3`.
 
 #### `min_interval`
 
@@ -1915,6 +1941,10 @@ Enable or disable the Explore section. Default is `enabled`.
 
 Set a default time offset from now on the time picker. Default is 1 hour.
 This setting should be expressed as a duration. Examples: 1h (hour), 1d (day), 1w (week), 1M (month).
+
+#### `hide_logs_download`
+
+Show or hide the button to download logs in Explore. Default is `false`, so that the button will be visible.
 
 ### `[help]`
 
@@ -2329,6 +2359,8 @@ URL to a remote HTTP image renderer service, for example, `http://localhost:8081
 #### `callback_url`
 
 If the remote HTTP image renderer service runs on a different server than the Grafana server you may have to configure this to a URL where Grafana is reachable, for example, http://grafana.domain/.
+
+The `callback_url` can also be configured to support usage of the image renderer running as a plugin with support for SSL / HTTPS. For example https://localhost:3000/.
 
 #### `concurrent_render_request_limit`
 

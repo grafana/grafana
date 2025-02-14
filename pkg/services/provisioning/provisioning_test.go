@@ -13,7 +13,11 @@ import (
 	dashboardstore "github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
+	prov_alerting "github.com/grafana/grafana/pkg/services/provisioning/alerting"
 	"github.com/grafana/grafana/pkg/services/provisioning/dashboards"
+	"github.com/grafana/grafana/pkg/services/provisioning/datasources"
 	"github.com/grafana/grafana/pkg/services/provisioning/utils"
 	"github.com/grafana/grafana/pkg/services/searchV2"
 )
@@ -159,10 +163,17 @@ func setup(t *testing.T) *serviceTestStruct {
 			serviceTest.dashboardProvisionerInstantiations++
 			return serviceTest.mock, nil
 		},
-		nil,
-		nil,
+		func(context.Context, string, datasources.BaseDataSourceService, datasources.CorrelationsStore, org.Service) error {
+			return nil
+		},
+		func(context.Context, string, pluginstore.Store, pluginsettings.Service, org.Service) error {
+			return nil
+		},
 		searchStub,
 	)
+	service.provisionAlerting = func(context.Context, prov_alerting.ProvisionerConfig) error {
+		return nil
+	}
 	serviceTest.service = service
 	require.NoError(t, err)
 

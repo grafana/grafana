@@ -19,6 +19,7 @@ import { NOTIFICATIONS_POLL_INTERVAL_MS } from './utils/constants';
 import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 import { getFiltersFromUrlParams } from './utils/misc';
 import { initialAsyncRequestState } from './utils/redux';
+import { withPageErrorBoundary } from './withPageErrorBoundary';
 
 const AlertGroups = () => {
   const { selectedAlertmanager } = useAlertmanager();
@@ -89,10 +90,12 @@ const AlertGroups = () => {
   );
 };
 
-const AlertGroupsPage = () => (
-  <AlertmanagerPageWrapper navId="groups" accessType="instance">
-    <AlertGroups />
-  </AlertmanagerPageWrapper>
-);
+function AlertGroupsPage() {
+  return (
+    <AlertmanagerPageWrapper navId="groups" accessType="instance">
+      <AlertGroups />
+    </AlertmanagerPageWrapper>
+  );
+}
 
-export default AlertGroupsPage;
+export default withPageErrorBoundary(AlertGroupsPage);

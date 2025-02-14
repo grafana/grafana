@@ -8,6 +8,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -17,7 +19,7 @@ import (
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/search")
 
-func ProvideService(cfg *setting.Cfg, sqlstore db.DB, starService star.Service, dashboardService dashboards.DashboardService) *SearchService {
+func ProvideService(cfg *setting.Cfg, sqlstore db.DB, starService star.Service, dashboardService dashboards.DashboardService, folderService folder.Service, features featuremgmt.FeatureToggles) *SearchService {
 	s := &SearchService{
 		Cfg: cfg,
 		sortOptions: map[string]model.SortOption{
@@ -26,6 +28,8 @@ func ProvideService(cfg *setting.Cfg, sqlstore db.DB, starService star.Service, 
 		},
 		sqlstore:         sqlstore,
 		starService:      starService,
+		folderService:    folderService,
+		features:         features,
 		dashboardService: dashboardService,
 	}
 	return s
@@ -61,6 +65,8 @@ type SearchService struct {
 	sqlstore         db.DB
 	starService      star.Service
 	dashboardService dashboards.DashboardService
+	folderService    folder.Service
+	features         featuremgmt.FeatureToggles
 }
 
 func (s *SearchService) SearchHandler(ctx context.Context, query *Query) (model.HitList, error) {

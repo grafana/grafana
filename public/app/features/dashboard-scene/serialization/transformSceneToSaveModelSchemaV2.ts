@@ -11,6 +11,7 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 import { DataSourceRef } from '@grafana/schema';
+import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
 
 import {
   DashboardV2Spec,
@@ -23,7 +24,6 @@ import {
   DataTransformerConfig,
   PanelQuerySpec,
   DataQueryKind,
-  GridLayoutItemKind,
   QueryOptionsSpec,
   QueryVariableKind,
   TextVariableKind,
@@ -37,7 +37,6 @@ import {
   DataLink,
   LibraryPanelKind,
   Element,
-  RepeatOptions,
   DashboardCursorSync,
   FieldConfig,
   FieldColor,
@@ -45,8 +44,6 @@ import {
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
-import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
-import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import {
   getLibraryPanelBehavior,
@@ -54,9 +51,9 @@ import {
   getQueryRunnerFor,
   getVizPanelKeyForPanelId,
   isLibraryPanel,
-  calculateGridItemDimensions,
 } from '../utils/utils';
 
+import { getLayout } from './layoutSerializers/utils';
 import { sceneVariablesSetToSchemaV2Variables } from './sceneVariablesSetToVariables';
 import { colorIdEnumToColorIdV2, transformCursorSynctoEnum } from './transformToV2TypesUtils';
 
@@ -68,23 +65,22 @@ type DeepPartial<T> = T extends object
   : T;
 
 export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnapshot = false): DashboardV2Spec {
-  const oldDash = scene.state;
-  const timeRange = oldDash.$timeRange!.state;
+  const sceneDash = scene.state;
+  const timeRange = sceneDash.$timeRange!.state;
 
-  const controlsState = oldDash.controls?.state;
+  const controlsState = sceneDash.controls?.state;
   const refreshPicker = controlsState?.refreshPicker;
 
   const dashboardSchemaV2: DeepPartial<DashboardV2Spec> = {
     //dashboard settings
-    id: oldDash.id ? oldDash.id : undefined,
-    title: oldDash.title,
-    description: oldDash.description ?? '',
-    cursorSync: getCursorSync(oldDash),
-    liveNow: getLiveNow(oldDash),
-    preload: oldDash.preload,
-    editable: oldDash.editable,
-    links: oldDash.links,
-    tags: oldDash.tags,
+    title: sceneDash.title,
+    description: sceneDash.description,
+    cursorSync: getCursorSync(sceneDash),
+    liveNow: getLiveNow(sceneDash),
+    preload: sceneDash.preload,
+    editable: sceneDash.editable,
+    links: sceneDash.links,
+    tags: sceneDash.tags,
     // EOF dashboard settings
 
     // time settings
@@ -94,7 +90,6 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
       to: timeRange.to,
       autoRefresh: refreshPicker?.state.refresh || '',
       autoRefreshIntervals: refreshPicker?.state.intervals,
-      quickRanges: [], //FIXME is coming timepicker.time_options,
       hideTimepicker: controlsState?.hideTimeControls ?? false,
       weekStart: timeRange.weekStart,
       fiscalYearStartMonth: timeRange.fiscalYearStartMonth,
@@ -103,30 +98,29 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
     // EOF time settings
 
     // variables
-    variables: getVariables(oldDash),
+    variables: getVariables(sceneDash),
     // EOF variables
 
     // elements
-    elements: getElements(oldDash),
+    elements: getElements(sceneDash),
     // EOF elements
 
     // annotations
-    annotations: getAnnotations(oldDash),
+    annotations: getAnnotations(sceneDash),
     // EOF annotations
 
     // layout
-    layout: {
-      kind: 'GridLayout',
-      spec: {
-        items: getGridLayoutItems(oldDash, isSnapshot),
-      },
-    },
+    layout: getLayout(sceneDash.body),
     // EOF layout
   };
 
   try {
-    validateDashboardSchemaV2(dashboardSchemaV2);
-    return dashboardSchemaV2 as DashboardV2Spec;
+    // validateDashboardSchemaV2 will throw an error if the dashboard is not valid
+    if (validateDashboardSchemaV2(dashboardSchemaV2)) {
+      return sortedDeepCloneWithoutNulls(dashboardSchemaV2);
+    }
+    // should never reach this point, validation should throw an error
+    throw new Error('Error we could transform the dashboard to schema v2: ' + dashboardSchemaV2);
   } catch (reason) {
     console.error('Error transforming dashboard to schema v2: ' + reason, dashboardSchemaV2);
     throw new Error('Error transforming dashboard to schema v2: ' + reason);
@@ -151,94 +145,6 @@ function getLiveNow(state: DashboardSceneState) {
   return Boolean(liveNow);
 }
 
-function getGridLayoutItems(state: DashboardSceneState, isSnapshot?: boolean): GridLayoutItemKind[] {
-  const body = state.body;
-  let elements: GridLayoutItemKind[] = [];
-  if (body instanceof DefaultGridLayoutManager) {
-    for (const child of body.state.grid.state.children) {
-      if (child instanceof DashboardGridItem) {
-        // TODO: handle panel repeater scenario
-        if (child.state.variableName) {
-          elements = elements.concat(repeaterToLayoutItems(child, isSnapshot));
-        } else {
-          elements.push(gridItemToGridLayoutItemKind(child, isSnapshot));
-        }
-      }
-
-      // TODO: OLD transformer code
-      // if (child instanceof SceneGridRow) {
-      //   // Skip repeat clones or when generating a snapshot
-      //   if (child.state.key!.indexOf('-clone-') > 0 && !isSnapshot) {
-      //     continue;
-      //   }
-      //   gridRowToSaveModel(child, panels, isSnapshot);
-      // }
-    }
-  }
-
-  return elements;
-}
-
-export function gridItemToGridLayoutItemKind(gridItem: DashboardGridItem, isSnapshot = false): GridLayoutItemKind {
-  let elementGridItem: GridLayoutItemKind | undefined;
-  let x = 0,
-    y = 0,
-    width = 0,
-    height = 0;
-
-  let gridItem_ = gridItem;
-
-  if (!(gridItem_.state.body instanceof VizPanel)) {
-    throw new Error('DashboardGridItem body expected to be VizPanel');
-  }
-
-  // Get the grid position and size
-  height = (gridItem_.state.variableName ? gridItem_.state.itemHeight : gridItem_.state.height) ?? 0;
-  x = gridItem_.state.x ?? 0;
-  y = gridItem_.state.y ?? 0;
-  width = gridItem_.state.width ?? 0;
-  const repeatVar = gridItem_.state.variableName;
-
-  // FIXME: which name should we use for the element reference, key or something else ?
-  const elementName = gridItem_.state.body.state.key ?? 'DefaultName';
-  elementGridItem = {
-    kind: 'GridLayoutItem',
-    spec: {
-      x,
-      y,
-      width: width,
-      height: height,
-      element: {
-        kind: 'ElementReference',
-        name: elementName,
-      },
-    },
-  };
-
-  if (repeatVar) {
-    const repeat: RepeatOptions = {
-      mode: 'variable',
-      value: repeatVar,
-    };
-
-    if (gridItem_.state.maxPerRow) {
-      repeat.maxPerRow = gridItem_.getMaxPerRow();
-    }
-
-    if (gridItem_.state.repeatDirection) {
-      repeat.direction = gridItem_.getRepeatDirection();
-    }
-
-    elementGridItem.spec.repeat = repeat;
-  }
-
-  if (!elementGridItem) {
-    throw new Error('Unsupported grid item type');
-  }
-
-  return elementGridItem;
-}
-
 function getElements(state: DashboardSceneState) {
   const panels = state.body.getVizPanels() ?? [];
 
@@ -248,8 +154,12 @@ function getElements(state: DashboardSceneState) {
       const elementSpec: LibraryPanelKind = {
         kind: 'LibraryPanel',
         spec: {
-          name: behavior.state.name,
-          uid: behavior.state.uid,
+          id: getPanelIdForVizPanel(vizPanel),
+          title: vizPanel.state.title,
+          libraryPanel: {
+            uid: behavior.state.uid,
+            name: behavior.state.name,
+          },
         },
       };
       return elementSpec;
@@ -332,7 +242,7 @@ function getVizPanelQueries(vizPanel: VizPanel): PanelQueryKind[] {
   const queries: PanelQueryKind[] = [];
   const queryRunner = getQueryRunnerFor(vizPanel);
   const vizPanelQueries = queryRunner?.state.queries;
-  const datasource = queryRunner?.state.datasource;
+  const datasource = queryRunner?.state.datasource ?? getDefaultDataSourceRef();
 
   if (vizPanelQueries) {
     vizPanelQueries.forEach((query) => {
@@ -341,7 +251,7 @@ function getVizPanelQueries(vizPanel: VizPanel): PanelQueryKind[] {
         spec: omit(query, 'datasource', 'refId', 'hide'),
       };
       const querySpec: PanelQuerySpec = {
-        datasource: datasource ?? getDefaultDataSourceRef(),
+        datasource: query.datasource ?? datasource,
         query: dataQuery,
         refId: query.refId,
         hidden: Boolean(query.hide),
@@ -355,8 +265,11 @@ function getVizPanelQueries(vizPanel: VizPanel): PanelQueryKind[] {
   return queries;
 }
 
-export function getDataQueryKind(query: SceneDataQuery): string {
-  // If the query has a datasource, use the datasource type, otherwise return empty kind
+export function getDataQueryKind(query: SceneDataQuery | string): string {
+  if (typeof query === 'string') {
+    return getDefaultDataSourceRef()?.type ?? '';
+  }
+
   return query.datasource?.type ?? getDefaultDataSourceRef()?.type ?? '';
 }
 
@@ -432,68 +345,10 @@ function getVizPanelQueryOptions(vizPanel: VizPanel): QueryOptionsSpec {
 }
 
 function createElements(panels: Element[]): Record<string, Element> {
-  const elements: Record<string, Element> = {};
-
-  for (const panel of panels) {
-    const key = panel.kind === 'Panel' ? getVizPanelKeyForPanelId(panel.spec.id) : panel.spec.uid;
-    elements[key] = panel;
-  }
-
-  return elements;
-}
-
-function repeaterToLayoutItems(repeater: DashboardGridItem, isSnapshot = false): GridLayoutItemKind[] {
-  if (!isSnapshot) {
-    return [gridItemToGridLayoutItemKind(repeater)];
-  } else {
-    if (repeater.state.body instanceof VizPanel && isLibraryPanel(repeater.state.body)) {
-      // TODO: implement
-      // const { x = 0, y = 0, width: w = 0, height: h = 0 } = repeater.state;
-      // return [vizPanelToPanel(repeater.state.body, { x, y, w, h }, isSnapshot)];
-      return [];
-    }
-
-    if (repeater.state.repeatedPanels) {
-      const { h, w, columnCount } = calculateGridItemDimensions(repeater);
-      const panels = repeater.state.repeatedPanels!.map((panel, index) => {
-        let x = 0,
-          y = 0;
-        if (repeater.state.repeatDirection === 'v') {
-          x = repeater.state.x!;
-          y = index * h;
-        } else {
-          x = (index % columnCount) * w;
-          y = repeater.state.y! + Math.floor(index / columnCount) * h;
-        }
-
-        const gridPos = { x, y, w, h };
-
-        const result: GridLayoutItemKind = {
-          kind: 'GridLayoutItem',
-          spec: {
-            x: gridPos.x,
-            y: gridPos.y,
-            width: gridPos.w,
-            height: gridPos.h,
-            repeat: {
-              mode: 'variable',
-              value: repeater.state.variableName!,
-              maxPerRow: repeater.getMaxPerRow(),
-              direction: repeater.state.repeatDirection,
-            },
-            element: {
-              kind: 'ElementReference',
-              name: panel.state.key!,
-            },
-          },
-        };
-        return result;
-      });
-
-      return panels;
-    }
-    return [];
-  }
+  return panels.reduce<Record<string, Element>>((elements, panel) => {
+    elements[getVizPanelKeyForPanelId(panel.spec.id)] = panel;
+    return elements;
+  }, {});
 }
 
 function getVariables(oldDash: DashboardSceneState) {
@@ -572,19 +427,15 @@ export function getAnnotationQueryKind(annotationQuery: AnnotationQuery): string
   }
 }
 
-export function getDefaultDataSourceRef(): DataSourceRef | undefined {
+export function getDefaultDataSourceRef(): DataSourceRef {
   // we need to return the default datasource configured in the BootConfig
   const defaultDatasource = config.bootData.settings.defaultDatasource;
 
   // get default datasource type
-  const dsList = config.bootData.settings.datasources ?? {};
+  const dsList = config.bootData.settings.datasources;
   const ds = dsList[defaultDatasource];
 
-  if (ds) {
-    return { type: ds.meta.id, uid: ds.name }; // in the datasource list from bootData "id" is the type
-  }
-
-  return undefined;
+  return { type: ds.meta.id, uid: ds.name }; // in the datasource list from bootData "id" is the type
 }
 
 // Function to know if the dashboard transformed is a valid DashboardV2Spec
@@ -596,7 +447,7 @@ function validateDashboardSchemaV2(dash: unknown): dash is DashboardV2Spec {
   if ('title' in dash && typeof dash.title !== 'string') {
     throw new Error('Title is not a string');
   }
-  if ('description' in dash && typeof dash.description !== 'string') {
+  if ('description' in dash && dash.description !== undefined && typeof dash.description !== 'string') {
     throw new Error('Description is not a string');
   }
   if ('cursorSync' in dash && typeof dash.cursorSync !== 'string') {
@@ -651,14 +502,22 @@ function validateDashboardSchemaV2(dash: unknown): dash is DashboardV2Spec {
   if (!('autoRefreshIntervals' in dash.timeSettings) || !Array.isArray(dash.timeSettings.autoRefreshIntervals)) {
     throw new Error('AutoRefreshIntervals is not an array');
   }
-  if (!('quickRanges' in dash.timeSettings) || !Array.isArray(dash.timeSettings.quickRanges)) {
+  if (
+    'quickRanges' in dash.timeSettings &&
+    dash.timeSettings.quickRanges &&
+    !Array.isArray(dash.timeSettings.quickRanges)
+  ) {
     throw new Error('QuickRanges is not an array');
   }
   if (!('hideTimepicker' in dash.timeSettings) || typeof dash.timeSettings.hideTimepicker !== 'boolean') {
     throw new Error('HideTimepicker is not a boolean');
   }
-  if (!('weekStart' in dash.timeSettings) || typeof dash.timeSettings.weekStart !== 'string') {
-    throw new Error('WeekStart is not a string');
+  if (
+    'weekStart' in dash.timeSettings &&
+    typeof dash.timeSettings.weekStart === 'string' &&
+    !['saturday', 'sunday', 'monday'].includes(dash.timeSettings.weekStart)
+  ) {
+    throw new Error('WeekStart should be one of "saturday", "sunday" or "monday"');
   }
   if (!('fiscalYearStartMonth' in dash.timeSettings) || typeof dash.timeSettings.fiscalYearStartMonth !== 'number') {
     throw new Error('FiscalYearStartMonth is not a number');
@@ -686,15 +545,44 @@ function validateDashboardSchemaV2(dash: unknown): dash is DashboardV2Spec {
   if (!('layout' in dash) || typeof dash.layout !== 'object' || dash.layout === null) {
     throw new Error('Layout is not an object or is null');
   }
-  if (!('kind' in dash.layout) || dash.layout.kind !== 'GridLayout') {
-    throw new Error('Layout kind is not GridLayout');
+
+  if (!('kind' in dash.layout) || dash.layout.kind === 'GridLayout') {
+    validateGridLayout(dash.layout);
   }
-  if (!('spec' in dash.layout) || typeof dash.layout.spec !== 'object' || dash.layout.spec === null) {
-    throw new Error('Layout spec is not an object or is null');
-  }
-  if (!('items' in dash.layout.spec) || !Array.isArray(dash.layout.spec.items)) {
-    throw new Error('Layout spec items is not an array');
+
+  if (!('kind' in dash.layout) || dash.layout.kind === 'RowsLayout') {
+    validateRowsLayout(dash.layout);
   }
 
   return true;
+}
+
+function validateGridLayout(layout: unknown) {
+  if (typeof layout !== 'object' || layout === null) {
+    throw new Error('Layout is not an object or is null');
+  }
+  if (!('kind' in layout) || layout.kind !== 'GridLayout') {
+    throw new Error('Layout kind is not GridLayout');
+  }
+  if (!('spec' in layout) || typeof layout.spec !== 'object' || layout.spec === null) {
+    throw new Error('Layout spec is not an object or is null');
+  }
+  if (!('items' in layout.spec) || !Array.isArray(layout.spec.items)) {
+    throw new Error('Layout spec items is not an array');
+  }
+}
+
+function validateRowsLayout(layout: unknown) {
+  if (typeof layout !== 'object' || layout === null) {
+    throw new Error('Layout is not an object or is null');
+  }
+  if (!('kind' in layout) || layout.kind !== 'RowsLayout') {
+    throw new Error('Layout kind is not RowsLayout');
+  }
+  if (!('spec' in layout) || typeof layout.spec !== 'object' || layout.spec === null) {
+    throw new Error('Layout spec is not an object or is null');
+  }
+  if (!('rows' in layout.spec) || !Array.isArray(layout.spec.rows)) {
+    throw new Error('Layout spec items is not an array');
+  }
 }

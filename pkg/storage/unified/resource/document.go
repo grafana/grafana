@@ -63,7 +63,7 @@ type IndexableDocument struct {
 	Title string `json:"title,omitempty"`
 
 	// internal sort field for title ( don't set this directly )
-	TitleSort string `json:"title_sort,omitempty"`
+	TitlePhrase string `json:"title_phrase,omitempty"`
 
 	// A generic description -- helpful in global search
 	Description string `json:"description,omitempty"`
@@ -163,15 +163,15 @@ func NewIndexableDocument(key *ResourceKey, rv int64, obj utils.GrafanaMetaAcces
 		}
 	}
 	doc := &IndexableDocument{
-		Key:       key,
-		RV:        rv,
-		Name:      key.Name,
-		Title:     title,                  // We always want *something* to display
-		TitleSort: strings.ToLower(title), // Lowercase for case-insensitive sorting
-		Labels:    obj.GetLabels(),
-		Folder:    obj.GetFolder(),
-		CreatedBy: obj.GetCreatedBy(),
-		UpdatedBy: obj.GetUpdatedBy(),
+		Key:         key,
+		RV:          rv,
+		Name:        key.Name,
+		Title:       title,                  // We always want *something* to display
+		TitlePhrase: strings.ToLower(title), // Lowercase for case-insensitive sorting
+		Labels:      obj.GetLabels(),
+		Folder:      obj.GetFolder(),
+		CreatedBy:   obj.GetCreatedBy(),
+		UpdatedBy:   obj.GetUpdatedBy(),
 	}
 	doc.RepoInfo, _ = obj.GetRepositoryInfo()
 	ts := obj.GetCreationTimestamp()
@@ -253,7 +253,7 @@ const SEARCH_FIELD_NAMESPACE = "namespace"
 const SEARCH_FIELD_NAME = "name"
 const SEARCH_FIELD_RV = "rv"
 const SEARCH_FIELD_TITLE = "title"
-const SEARCH_FIELD_TITLE_SORT = "title_sort"
+const SEARCH_FIELD_TITLE_PHRASE = "title_phrase" // filtering/sorting on title by full phrase
 const SEARCH_FIELD_DESCRIPTION = "description"
 const SEARCH_FIELD_TAGS = "tags"
 const SEARCH_FIELD_LABELS = "labels" // All labels, not a specific one
