@@ -51,7 +51,7 @@ func (r *ExportWorker) IsSupported(ctx context.Context, job provisioning.Job) bo
 }
 
 // Process will start a job
-func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, job provisioning.Job, progress *jobs.JobProgressRecorder) (*provisioning.JobStatus, error) {
+func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, job provisioning.Job, progress jobs.JobProgressRecorder) (*provisioning.JobStatus, error) {
 	if repo.Config().Spec.ReadOnly {
 		return &provisioning.JobStatus{
 			State:   provisioning.JobStateError,

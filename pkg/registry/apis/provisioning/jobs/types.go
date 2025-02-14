@@ -29,9 +29,20 @@ type JobQueue interface {
 	Register(worker Worker)
 }
 
+type JobProgressRecorder interface {
+	Record(ctx context.Context, result JobResourceResult)
+	SetMessage(msg string)
+	GetMessage() string
+	SetRef(ref string)
+	GetRef() string
+	SetTotal(total int)
+	TooManyErrors() error
+	Complete(ctx context.Context, err error) *provisioning.JobStatus
+}
+
 type Worker interface {
 	IsSupported(ctx context.Context, job provisioning.Job) bool
-	Process(ctx context.Context, repo repository.Repository, job provisioning.Job, progress *JobProgressRecorder) (*provisioning.JobStatus, error)
+	Process(ctx context.Context, repo repository.Repository, job provisioning.Job, progress JobProgressRecorder) (*provisioning.JobStatus, error)
 }
 
 // ProgressFn is a function that can be called to update the progress of a job

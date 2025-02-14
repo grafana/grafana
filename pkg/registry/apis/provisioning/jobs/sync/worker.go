@@ -74,7 +74,7 @@ func (r *SyncWorker) IsSupported(ctx context.Context, job provisioning.Job) bool
 func (r *SyncWorker) Process(ctx context.Context,
 	repo repository.Repository,
 	job provisioning.Job,
-	progress *jobs.JobProgressRecorder,
+	progress jobs.JobProgressRecorder,
 ) (*provisioning.JobStatus, error) {
 	progress.SetMessage("starting sync processing")
 	cfg := repo.Config()
@@ -147,7 +147,7 @@ func (r *SyncWorker) Process(ctx context.Context,
 }
 
 // start a job and run it
-func (r *SyncWorker) createJob(ctx context.Context, repo repository.Repository, progress *jobs.JobProgressRecorder) (*syncJob, error) {
+func (r *SyncWorker) createJob(ctx context.Context, repo repository.Repository, progress jobs.JobProgressRecorder) (*syncJob, error) {
 	cfg := repo.Config()
 	if !cfg.Spec.Sync.Enabled {
 		return nil, errors.New("sync is not enabled")
@@ -201,7 +201,7 @@ func (r *SyncWorker) patchStatus(ctx context.Context, repo *provisioning.Reposit
 // created once for each sync execution
 type syncJob struct {
 	repository   repository.Repository
-	progress     *jobs.JobProgressRecorder
+	progress     jobs.JobProgressRecorder
 	parser       *resources.Parser
 	lister       resources.ResourceLister
 	folders      dynamic.ResourceInterface
