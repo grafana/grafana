@@ -721,11 +721,9 @@ const getStyles = (theme: GrafanaTheme2, textWrap: boolean) => ({
 
     'div[role=columnheader]': {
       '&:hover': {
-        // The margin is to offset the border, eliminating element text from slightly
-        // moving on hover.
+        // Adjust margin to prevent text shift caused by border on hover.
         margin: '0px 0px 1px -2px',
-        // There is some depth built into datagrid that we need to eliminate by giving
-        // each cell border it's on zIndex.
+        // Set a zIndex to eliminate depth built into datagrid cells.
         zIndex: theme.zIndex.tooltip,
         borderBottom: 'none', // override default react-data-grid border behavior
         borderInlineStart: `2px solid ${theme.colors.text.link}`,
@@ -753,12 +751,10 @@ const getStyles = (theme: GrafanaTheme2, textWrap: boolean) => ({
     },
 
     '&:hover': {
-      // The margin is to offset the border, eliminating element text from slightly
-      // moving on hover.
+      // Adjust margin to prevent text shift caused by border on hover.
       margin: '-1px -1px 0px -1px',
       border: `1px solid ${theme.colors.text.link}`,
-      // There is some depth built into datagrid that we need to eliminate by giving
-      // each cell border it's on zIndex.
+      // Set a zIndex to eliminate depth built into datagrid cells.
       zIndex: theme.zIndex.tooltip,
       backgroundColor: theme.colors.background.primary,
     },
