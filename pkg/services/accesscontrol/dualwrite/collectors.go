@@ -5,12 +5,11 @@ import (
 
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -71,18 +70,11 @@ func folderTreeCollector(folderService folder.Service) legacyTupleCollector {
 		ctx, span := tracer.Start(ctx, "accesscontrol.migrator.folderTreeCollector")
 		defer span.End()
 
-		user := &user.SignedInUser{
-			Login:            "folder-tree-collector",
-			OrgRole:          "Admin",
-			IsGrafanaAdmin:   true,
-			IsServiceAccount: true,
-			Permissions:      map[int64]map[string][]string{orgID: {dashboards.ActionFoldersRead: {dashboards.ScopeFoldersAll}}},
-			OrgID:            orgID,
-		}
+		ctx, ident := identity.WithServiceIdentity(ctx, orgID)
 
 		q := folder.GetFoldersQuery{
 			OrgID:        orgID,
-			SignedInUser: user,
+			SignedInUser: ident,
 		}
 
 		folders, err := folderService.GetFolders(ctx, q)
@@ -359,6 +351,7 @@ func rolePermissionsCollector(store db.DB) legacyTupleCollector {
 			LEFT JOIN builtin_role br ON r.id  = br.role_id
 			WHERE (r.org_id = 0 OR r.org_id = ?)
 			AND r.name NOT LIKE 'managed:%'
+			AND r.name NOT LIKE 'fixed:%'
 		`
 
 		type Permission struct {
@@ -391,6 +384,81 @@ func rolePermissionsCollector(store db.DB) legacyTupleCollector {
 
 			if tuples[tuple.Object] == nil {
 				tuples[tuple.Object] = make(map[string]*openfgav1.TupleKey)
+			}
+
+			// For resource actions on folders we need to merge the tuples into one with combined
+			// group_resources.
+			if zanzana.IsFolderResourceTuple(tuple) {
+				key := tupleStringWithoutCondition(tuple)
+				if t, ok := tuples[tuple.Object][key]; ok {
+					zanzana.MergeFolderResourceTuples(t, tuple)
+				} else {
+					tuples[tuple.Object][key] = tuple
+				}
+
+				continue
+			}
+
+			tuples[tuple.Object][tuple.String()] = tuple
+		}
+
+		return tuples, nil
+	}
+}
+
+func fixedRolePermissionsCollector(store db.DB) legacyTupleCollector {
+	return func(ctx context.Context, _ int64) (map[string]map[string]*openfgav1.TupleKey, error) {
+		var query = `
+			SELECT r.uid as role_uid, p.action, p.kind, p.identifier
+			FROM permission p
+			INNER JOIN role r ON p.role_id = r.id
+			LEFT JOIN builtin_role br ON r.id  = br.role_id
+			WHERE r.org_id = 0
+			AND r.name LIKE 'fixed:%'
+		`
+
+		type Permission struct {
+			Action     string `xorm:"action"`
+			Kind       string
+			Identifier string
+			RoleUID    string `xorm:"role_uid"`
+		}
+
+		var permissions []Permission
+		err := store.WithDbSession(ctx, func(sess *db.Session) error {
+			return sess.SQL(query).Find(&permissions)
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		tuples := make(map[string]map[string]*openfgav1.TupleKey)
+
+		for _, p := range permissions {
+			tuple, ok := zanzana.TranslateToResourceTuple(
+				zanzana.NewTupleEntry(zanzana.TypeRole, p.RoleUID, zanzana.RelationAssignee),
+				p.Action,
+				p.Kind,
+				p.Identifier,
+			)
+			if !ok {
+				continue
+			}
+
+			if tuples[tuple.Object] == nil {
+				tuples[tuple.Object] = make(map[string]*openfgav1.TupleKey)
+			}
+
+			// For resource actions on folders we need to merge the tuples into one with combined
+			// group_resources.
+			if zanzana.IsFolderResourceTuple(tuple) {
+				key := tupleStringWithoutCondition(tuple)
+				if t, ok := tuples[tuple.Object][key]; ok {
+					zanzana.MergeFolderResourceTuples(t, tuple)
+				} else {
+					tuples[tuple.Object][key] = tuple
+				}
+				continue
 			}
 
 			tuples[tuple.Object][tuple.String()] = tuple

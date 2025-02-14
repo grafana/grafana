@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"net/mail"
@@ -54,6 +53,18 @@ type SocialGenericOAuth struct {
 }
 
 func NewGenericOAuthProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper *OrgRoleMapper, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles) *SocialGenericOAuth {
+	s := newSocialBase(social.GenericOAuthProviderName, orgRoleMapper, info, features, cfg)
+
+	teamIds, err := util.SplitStringWithError(info.Extra[teamIdsKey])
+	if err != nil {
+		s.log.Error("Invalid auth configuration setting", "config", teamIdsKey, "provider", social.GenericOAuthProviderName, "error", err)
+	}
+
+	allowedOrganizations, err := util.SplitStringWithError(info.Extra[allowedOrganizationsKey])
+	if err != nil {
+		s.log.Error("Invalid auth configuration setting", "config", allowedOrganizationsKey, "provider", social.GenericOAuthProviderName, "error", err)
+	}
+
 	provider := &SocialGenericOAuth{
 		SocialBase:           newSocialBase(social.GenericOAuthProviderName, orgRoleMapper, info, features, cfg),
 		teamsUrl:             info.TeamsUrl,
@@ -64,8 +75,8 @@ func NewGenericOAuthProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMa
 		loginAttributePath:   info.Extra[loginAttributePathKey],
 		idTokenAttributeName: info.Extra[idTokenAttributeNameKey],
 		teamIdsAttributePath: info.TeamIdsAttributePath,
-		teamIds:              util.SplitString(info.Extra[teamIdsKey]),
-		allowedOrganizations: util.SplitString(info.Extra[allowedOrganizationsKey]),
+		teamIds:              teamIds,
+		allowedOrganizations: allowedOrganizations,
 	}
 
 	if features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsApi) {
@@ -119,7 +130,7 @@ func validateTeamsUrlWhenNotEmpty(info *social.OAuthInfo, requester identity.Req
 }
 
 func (s *SocialGenericOAuth) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {
-	newInfo, err := CreateOAuthInfoFromKeyValues(settings.Settings)
+	newInfo, err := CreateOAuthInfoFromKeyValuesWithLogging(s.log, social.GenericOAuthProviderName, settings.Settings)
 	if err != nil {
 		return ssosettings.ErrInvalidSettings.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
 	}
@@ -129,6 +140,15 @@ func (s *SocialGenericOAuth) Reload(ctx context.Context, settings ssoModels.SSOS
 
 	s.updateInfo(ctx, social.GenericOAuthProviderName, newInfo)
 
+	teamIds, err := util.SplitStringWithError(newInfo.Extra[teamIdsKey])
+	if err != nil {
+		s.log.Error("Invalid auth configuration setting", "config", teamIdsKey, "provider", social.GenericOAuthProviderName, "error", err)
+	}
+	allowedOrganizations, err := util.SplitStringWithError(newInfo.Extra[allowedOrganizationsKey])
+	if err != nil {
+		s.log.Error("Invalid auth configuration setting", "config", allowedOrganizationsKey, "provider", social.GenericOAuthProviderName, "error", err)
+	}
+
 	s.teamsUrl = newInfo.TeamsUrl
 	s.emailAttributeName = newInfo.EmailAttributeName
 	s.emailAttributePath = newInfo.EmailAttributePath
@@ -137,8 +157,8 @@ func (s *SocialGenericOAuth) Reload(ctx context.Context, settings ssoModels.SSOS
 	s.loginAttributePath = newInfo.Extra[loginAttributePathKey]
 	s.idTokenAttributeName = newInfo.Extra[idTokenAttributeNameKey]
 	s.teamIdsAttributePath = newInfo.TeamIdsAttributePath
-	s.teamIds = util.SplitString(newInfo.Extra[teamIdsKey])
-	s.allowedOrganizations = util.SplitString(newInfo.Extra[allowedOrganizationsKey])
+	s.teamIds = teamIds
+	s.allowedOrganizations = allowedOrganizations
 
 	return nil
 }
@@ -320,11 +340,11 @@ func (s *SocialGenericOAuth) UserInfo(ctx context.Context, client *http.Client, 
 	}
 
 	if !s.isTeamMember(ctx, client) {
-		return nil, errors.New("user not a member of one of the required teams")
+		return nil, &SocialError{"User not a member of one of the required teams"}
 	}
 
 	if !s.isOrganizationMember(ctx, client) {
-		return nil, errors.New("user not a member of one of the required organizations")
+		return nil, &SocialError{"User not a member of one of the required organizations"}
 	}
 
 	if !s.isGroupMember(userInfo.Groups) {

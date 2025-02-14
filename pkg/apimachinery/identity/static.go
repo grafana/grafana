@@ -5,7 +5,7 @@ import (
 	"strconv"
 
 	authnlib "github.com/grafana/authlib/authn"
-	"github.com/grafana/authlib/claims"
+	claims "github.com/grafana/authlib/types"
 )
 
 var _ Requester = (*StaticRequester)(nil)

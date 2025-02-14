@@ -25,7 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana"
+	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
@@ -36,8 +36,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
+	ngstore "github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
+	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
@@ -100,7 +102,7 @@ func TestDeleteLibraryPanelsInFolder(t *testing.T) {
 	scenarioWithPanel(t, "When an admin tries to delete a folder uid that doesn't exist, it should fail",
 		func(t *testing.T, sc scenarioContext) {
 			err := sc.service.DeleteLibraryElementsInFolder(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, sc.folder.UID+"xxxx")
-			require.EqualError(t, err, dashboards.ErrFolderNotFound.Error())
+			require.EqualError(t, err, guardian.ErrGuardianFolderNotFound.Errorf("failed to get folder by UID: %w", dashboards.ErrFolderNotFound).Error())
 		})
 
 	scenarioWithPanel(t, "When an admin tries to delete a folder that contains disconnected elements, it should delete all disconnected elements too",
@@ -168,6 +170,10 @@ func TestGetLibraryPanelConnections(t *testing.T) {
 			err := sc.service.ConnectElementsToDashboard(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, []string{sc.initialResult.Result.UID}, dashInDB.ID)
 			require.NoError(t, err)
 
+			// add a connection where the dashboard doesn't exist. Shouldn't be returned in the list
+			err = sc.service.ConnectElementsToDashboard(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, []string{sc.initialResult.Result.UID}, 99999999)
+			require.NoError(t, err)
+
 			var expected = func(res model.LibraryElementConnectionsResponse) model.LibraryElementConnectionsResponse {
 				return model.LibraryElementConnectionsResponse{
 					Result: []model.LibraryElementConnectionDTO{
@@ -195,6 +201,39 @@ func TestGetLibraryPanelConnections(t *testing.T) {
 			if diff := cmp.Diff(expected(result), result, getCompareOptions()...); diff != "" {
 				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
 			}
+		})
+
+	scenarioWithPanel(t, "When an admin tries to create a connection with an element that exists, but the original folder does not, it should still succeed",
+		func(t *testing.T, sc scenarioContext) {
+			b, err := json.Marshal(map[string]string{"test": "test"})
+			require.NoError(t, err)
+			newFolder := createFolder(t, sc, "NewFolder", nil)
+			sc.reqContext.SignedInUser.Permissions[sc.reqContext.OrgID][dashboards.ActionFoldersRead] = []string{dashboards.ScopeFoldersAll}
+			sc.reqContext.SignedInUser.Permissions[sc.reqContext.OrgID][dashboards.ActionFoldersDelete] = []string{dashboards.ScopeFoldersAll}
+			_, err = sc.service.createLibraryElement(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, model.CreateLibraryElementCommand{
+				FolderID:  newFolder.ID, // nolint:staticcheck
+				FolderUID: &newFolder.UID,
+				Name:      "Testing Library Panel With Deleted Folder",
+				Kind:      1,
+				Model:     b,
+				UID:       "panel-with-deleted-folder",
+			})
+			require.NoError(t, err)
+			err = sc.service.folderService.Delete(sc.reqContext.Req.Context(), &folder.DeleteFolderCommand{
+				UID:          newFolder.UID,
+				OrgID:        sc.reqContext.OrgID,
+				SignedInUser: sc.reqContext.SignedInUser,
+			})
+			require.NoError(t, err)
+
+			dash := dashboards.Dashboard{
+				Title: "Testing create element",
+				Data:  simplejson.NewFromAny(map[string]any{}),
+			}
+			// nolint:staticcheck
+			dashInDB := createDashboard(t, sc.sqlStore, sc.user, &dash, sc.folder.ID, sc.folder.UID)
+			err = sc.service.ConnectElementsToDashboard(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, []string{sc.initialResult.Result.UID}, dashInDB.ID)
+			require.NoError(t, err)
 		})
 }
 
@@ -297,49 +336,61 @@ func createDashboard(t *testing.T, sqlStore db.DB, user user.SignedInUser, dash 
 	features := featuremgmt.WithFeatures()
 	cfg := setting.NewCfg()
 	quotaService := quotatest.New(false, nil)
-	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore), quotaService)
+	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore))
 	require.NoError(t, err)
 	ac := actest.FakeAccessControl{ExpectedEvaluate: true}
 	folderPermissions := acmock.NewMockedPermissionsService()
+	folderPermissions.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
 	dashboardPermissions := acmock.NewMockedPermissionsService()
 	dashboardPermissions.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
+	fStore := folderimpl.ProvideStore(sqlStore)
+	folderSvc := folderimpl.ProvideService(
+		fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore,
+		nil, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil)
+	_, err = folderSvc.Create(context.Background(), &folder.CreateFolderCommand{UID: folderUID, SignedInUser: &user, Title: folderUID + "-title"})
+	require.NoError(t, err)
 	service, err := dashboardservice.ProvideDashboardServiceImpl(
 		cfg, dashboardStore, folderStore,
-		features, folderPermissions, dashboardPermissions, ac,
-		foldertest.NewFakeService(),
+		features, folderPermissions, ac,
+		folderSvc,
 		folder.NewFakeStore(),
 		nil,
-		zanzana.NewNoopClient(),
+		client.MockTestRestConfig{},
+		nil,
+		quotaService,
 		nil,
 		nil,
 		nil,
 	)
 	require.NoError(t, err)
+	service.RegisterDashboardPermissions(dashboardPermissions)
 	dashboard, err := service.SaveDashboard(context.Background(), dashItem, true)
 	require.NoError(t, err)
 
 	return dashboard
 }
 
-func createFolder(t *testing.T, sc scenarioContext, title string) *folder.Folder {
+func createFolder(t *testing.T, sc scenarioContext, title string, folderSvc folder.Service) *folder.Folder {
 	t.Helper()
 
-	features := featuremgmt.WithFeatures()
-	cfg := setting.NewCfg()
-	ac := actest.FakeAccessControl{ExpectedEvaluate: true}
-	quotaService := quotatest.New(false, nil)
-	dashboardStore, err := database.ProvideDashboardStore(sc.sqlStore, cfg, features, tagimpl.ProvideService(sc.sqlStore), quotaService)
-	require.NoError(t, err)
+	if folderSvc == nil {
+		features := featuremgmt.WithFeatures()
+		cfg := setting.NewCfg()
+		ac := actest.FakeAccessControl{ExpectedEvaluate: true}
+		dashboardStore, err := database.ProvideDashboardStore(sc.sqlStore, cfg, features, tagimpl.ProvideService(sc.sqlStore))
+		require.NoError(t, err)
 
-	folderStore := folderimpl.ProvideDashboardFolderStore(sc.sqlStore)
-	store := folderimpl.ProvideStore(sc.sqlStore)
-	s := folderimpl.ProvideService(store, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore, sc.sqlStore,
-		features, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
-	t.Logf("Creating folder with title and UID %q", title)
+		folderStore := folderimpl.ProvideDashboardFolderStore(sc.sqlStore)
+		store := folderimpl.ProvideStore(sc.sqlStore)
+		folderSvc = folderimpl.ProvideService(
+			store, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore,
+			nil, sc.sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil)
+		t.Logf("Creating folder with title %q and UID uid_for_%s", title, title)
+	}
 	ctx := identity.WithRequester(context.Background(), &sc.user)
-	folder, err := s.Create(ctx, &folder.CreateFolderCommand{
-		OrgID: sc.user.OrgID, Title: title, UID: title, SignedInUser: &sc.user,
+	folder, err := folderSvc.Create(ctx, &folder.CreateFolderCommand{
+		OrgID: sc.user.OrgID, Title: title, UID: "uid_for_" + title, SignedInUser: &sc.user,
 	})
 	require.NoError(t, err)
 
@@ -390,22 +441,24 @@ func scenarioWithPanel(t *testing.T, desc string, fn func(t *testing.T, sc scena
 	sqlStore, cfg := db.InitTestDBWithCfg(t)
 	ac := actest.FakeAccessControl{}
 	quotaService := quotatest.New(false, nil)
-	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore), quotaService)
+	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore))
 	require.NoError(t, err)
 	folderPermissions := acmock.NewMockedPermissionsService()
 	dashboardPermissions := acmock.NewMockedPermissionsService()
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
+	fStore := folderimpl.ProvideStore(sqlStore)
+	folderSvc := folderimpl.ProvideService(
+		fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore,
+		nil, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil)
 	dashboardService, svcErr := dashboardservice.ProvideDashboardServiceImpl(
 		cfg, dashboardStore, folderStore,
-		features, folderPermissions, dashboardPermissions, ac,
-		foldertest.NewFakeService(), folder.NewFakeStore(),
-		nil, zanzana.NewNoopClient(),
-		nil,
-		nil,
-		nil,
+		features, folderPermissions, ac,
+		folderSvc, fStore,
+		nil, client.MockTestRestConfig{}, nil, quotaService, nil, nil, nil,
 	)
 	require.NoError(t, svcErr)
-	guardian.InitAccessControlGuardian(cfg, ac, dashboardService)
+	dashboardService.RegisterDashboardPermissions(dashboardPermissions)
+	guardian.InitAccessControlGuardian(cfg, ac, dashboardService, folderSvc, log.NewNopLogger())
 
 	testScenario(t, desc, func(t *testing.T, sc scenarioContext) {
 		// nolint:staticcheck
@@ -453,29 +506,38 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		tracer := tracing.InitializeTracerForTest()
 		sqlStore, cfg := db.InitTestDBWithCfg(t)
 		quotaService := quotatest.New(false, nil)
-		dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore), quotaService)
+		dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore))
 		require.NoError(t, err)
-		ac := acimpl.ProvideAccessControl(features, zanzana.NewNoopClient())
+		ac := acimpl.ProvideAccessControl(features)
 		folderPermissions := acmock.NewMockedPermissionsService()
 		folderPermissions.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
 		dashboardPermissions := acmock.NewMockedPermissionsService()
 		folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
+		fStore := folderimpl.ProvideStore(sqlStore)
+		publicDash := &publicdashboards.FakePublicDashboardServiceWrapper{}
+		publicDash.On("DeleteByDashboardUIDs", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+		folderSvc := folderimpl.ProvideService(
+			fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore,
+			nil, sqlStore, features, supportbundlestest.NewFakeBundleService(), publicDash, cfg, nil, tracing.InitializeTracerForTest(), nil)
+		alertStore, err := ngstore.ProvideDBStore(cfg, features, sqlStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac, bus.ProvideBus(tracing.InitializeTracerForTest()))
+		require.NoError(t, err)
+		err = folderSvc.RegisterService(alertStore)
+		require.NoError(t, err)
 		dashService, dashSvcErr := dashboardservice.ProvideDashboardServiceImpl(
 			cfg, dashboardStore, folderStore,
-			features, folderPermissions, dashboardPermissions, ac,
-			foldertest.NewFakeService(), folder.NewFakeStore(),
-			nil, zanzana.NewNoopClient(), nil, nil, nil,
+			features, folderPermissions, ac,
+			folderSvc, fStore,
+			nil, client.MockTestRestConfig{}, nil, quotaService, nil, nil, nil,
 		)
 		require.NoError(t, dashSvcErr)
-		guardian.InitAccessControlGuardian(cfg, ac, dashService)
-		fStore := folderimpl.ProvideStore(sqlStore)
-		folderSrv := folderimpl.ProvideService(fStore, ac, bus.ProvideBus(tracer), dashboardStore, folderStore, sqlStore,
-			features, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
+		dashService.RegisterDashboardPermissions(dashboardPermissions)
+		guardian.InitAccessControlGuardian(cfg, ac, dashService, folderSvc, log.NewNopLogger())
 		service := LibraryElementService{
-			Cfg:           cfg,
-			features:      featuremgmt.WithFeatures(),
-			SQLStore:      sqlStore,
-			folderService: folderSrv,
+			Cfg:               cfg,
+			features:          featuremgmt.WithFeatures(),
+			SQLStore:          sqlStore,
+			folderService:     folderSvc,
+			dashboardsService: dashService,
 		}
 
 		// deliberate difference between signed in user and user in db to make it crystal clear
@@ -507,7 +569,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			},
 		}
 
-		sc.folder = createFolder(t, sc, "ScenarioFolder")
+		sc.folder = createFolder(t, sc, "ScenarioFolder", folderSvc)
 
 		fn(t, sc)
 	})

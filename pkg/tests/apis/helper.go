@@ -8,10 +8,12 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strconv"
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -19,10 +21,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer/yaml"
-	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/apimachinery/pkg/util/version"
 	yamlutil "k8s.io/apimachinery/pkg/util/yaml"
-	apimachineryversion "k8s.io/apimachinery/pkg/version"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
@@ -223,6 +222,11 @@ func (c *K8sResourceClient) sanitizeObject(v *unstructured.Unstructured, replace
 
 	replaceMeta = append(replaceMeta, "creationTimestamp", "resourceVersion", "uid")
 	for _, key := range replaceMeta {
+		if key == "labels" {
+			delete(meta, key)
+			continue
+		}
+
 		old, ok := meta[key]
 		if ok {
 			require.NotEmpty(c.t, old)
@@ -603,31 +607,6 @@ func (c *K8sTestHelper) NewDiscoveryClient() *discovery.DiscoveryClient {
 	return client
 }
 
-func (c *K8sTestHelper) GetVersionInfo() apimachineryversion.Info {
-	c.t.Helper()
-
-	disco := c.NewDiscoveryClient()
-	req := disco.RESTClient().Get().
-		Prefix("version").
-		SetHeader("Accept", "application/json")
-
-	result := req.Do(context.Background())
-	require.NoError(c.t, result.Error())
-
-	raw, err := result.Raw()
-	require.NoError(c.t, err)
-	info := apimachineryversion.Info{}
-	err = json.Unmarshal(raw, &info)
-	require.NoError(c.t, err)
-
-	// Make sure the gitVersion is parsable
-	v, err := version.Parse(info.GitVersion)
-	require.NoError(c.t, err)
-	require.Equal(c.t, info.Major, fmt.Sprintf("%d", v.Major()))
-	require.Equal(c.t, info.Minor, fmt.Sprintf("%d", v.Minor()))
-	return info
-}
-
 func (c *K8sTestHelper) GetGroupVersionInfoJSON(group string) string {
 	c.t.Helper()
 
@@ -683,86 +662,49 @@ func (c *K8sTestHelper) CreateTeam(name, email string, orgID int64) team.Team {
 	return team
 }
 
-// TypedClient is the struct that implements a typed interface for resource operations
-type TypedClient[T any, L any] struct {
-	Client dynamic.ResourceInterface
-}
+// Compare the OpenAPI schema from one api against a cached snapshot
+func VerifyOpenAPISnapshots(t *testing.T, dir string, gv schema.GroupVersion, h *K8sTestHelper) {
+	if gv.Group == "" {
+		return // skip invalid groups
+	}
+	path := fmt.Sprintf("/openapi/v3/apis/%s/%s", gv.Group, gv.Version)
+	t.Run(path, func(t *testing.T) {
+		rsp := DoRequest(h, RequestParams{
+			Method: http.MethodGet,
+			Path:   path,
+			User:   h.Org1.Admin,
+		}, &AnyResource{})
 
-func (c *TypedClient[T, L]) Create(ctx context.Context, resource *T, opts metav1.CreateOptions) (*T, error) {
-	unstructuredObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(resource)
-	if err != nil {
-		return nil, err
-	}
-	u := &unstructured.Unstructured{Object: unstructuredObj}
-	result, err := c.Client.Create(ctx, u, opts)
-	if err != nil {
-		return nil, err
-	}
-	createdObj := new(T)
-	err = runtime.DefaultUnstructuredConverter.FromUnstructured(result.Object, createdObj)
-	if err != nil {
-		return nil, err
-	}
-	return createdObj, nil
-}
+		require.NotNil(t, rsp.Response)
+		require.Equal(t, 200, rsp.Response.StatusCode, path)
 
-func (c *TypedClient[T, L]) Update(ctx context.Context, resource *T, opts metav1.UpdateOptions) (*T, error) {
-	unstructuredObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(resource)
-	if err != nil {
-		return nil, err
-	}
-	u := &unstructured.Unstructured{Object: unstructuredObj}
-	result, err := c.Client.Update(ctx, u, opts)
-	if err != nil {
-		return nil, err
-	}
-	updatedObj := new(T)
-	err = runtime.DefaultUnstructuredConverter.FromUnstructured(result.Object, updatedObj)
-	if err != nil {
-		return nil, err
-	}
-	return updatedObj, nil
-}
+		var prettyJSON bytes.Buffer
+		err := json.Indent(&prettyJSON, rsp.Body, "", "  ")
+		require.NoError(t, err)
+		pretty := prettyJSON.String()
 
-func (c *TypedClient[T, L]) Delete(ctx context.Context, name string, opts metav1.DeleteOptions) error {
-	return c.Client.Delete(ctx, name, opts)
-}
+		write := false
+		fpath := filepath.Join(dir, fmt.Sprintf("%s-%s.json", gv.Group, gv.Version))
 
-func (c *TypedClient[T, L]) Get(ctx context.Context, name string, opts metav1.GetOptions) (*T, error) {
-	result, err := c.Client.Get(ctx, name, opts)
-	if err != nil {
-		return nil, err
-	}
-	retrievedObj := new(T)
-	err = runtime.DefaultUnstructuredConverter.FromUnstructured(result.Object, retrievedObj)
-	if err != nil {
-		return nil, err
-	}
-	return retrievedObj, nil
-}
+		// nolint:gosec
+		// We can ignore the gosec G304 warning since this is a test and the function is only called with explicit paths
+		body, err := os.ReadFile(fpath)
+		if err == nil {
+			if !assert.JSONEq(t, string(body), pretty) {
+				t.Logf("openapi spec has changed: %s", path)
+				t.Fail()
+				write = true
+			}
+		} else {
+			t.Errorf("missing openapi spec for: %s", path)
+			write = true
+		}
 
-func (c *TypedClient[T, L]) List(ctx context.Context, opts metav1.ListOptions) (*L, error) {
-	result, err := c.Client.List(ctx, opts)
-	if err != nil {
-		return nil, err
-	}
-	listObj := new(L)
-	err = runtime.DefaultUnstructuredConverter.FromUnstructured(result.UnstructuredContent(), listObj)
-	if err != nil {
-		return nil, err
-	}
-	return listObj, nil
-}
-
-func (c *TypedClient[T, L]) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (*T, error) {
-	result, err := c.Client.Patch(ctx, name, pt, data, opts, subresources...)
-	if err != nil {
-		return nil, err
-	}
-	patchedObj := new(T)
-	err = runtime.DefaultUnstructuredConverter.FromUnstructured(result.Object, patchedObj)
-	if err != nil {
-		return nil, err
-	}
-	return patchedObj, nil
+		if write {
+			e2 := os.WriteFile(fpath, []byte(pretty), 0644)
+			if e2 != nil {
+				t.Errorf("error writing file: %s", e2.Error())
+			}
+		}
+	})
 }

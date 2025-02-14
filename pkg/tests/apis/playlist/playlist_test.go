@@ -49,9 +49,6 @@ func TestIntegrationPlaylist(t *testing.T) {
 			EnableFeatureToggles: []string{},
 		}))
 
-		// Ensure the k8s version is valid
-		_ = h.GetVersionInfo()
-
 		// The accepted verbs will change when dual write is enabled
 		disco := h.GetGroupVersionInfoJSON("playlist.grafana.app")
 		// fmt.Printf("%s", disco)
@@ -523,17 +520,17 @@ func doPlaylistTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelp
 		k8sList, err := client.Resource.List(context.Background(), metav1.ListOptions{})
 		require.NoError(t, err)
 		require.Equal(t, 1, len(k8sList.Items))
-		require.JSONEq(t, expectedResult, client.SanitizeJSON(&k8sList.Items[0]))
+		require.JSONEq(t, expectedResult, client.SanitizeJSON(&k8sList.Items[0], "labels"))
 
 		// Get should return the same result
 		found, err := client.Resource.Get(context.Background(), uid, metav1.GetOptions{})
 		require.NoError(t, err)
-		require.JSONEq(t, expectedResult, client.SanitizeJSON(found))
+		require.JSONEq(t, expectedResult, client.SanitizeJSON(found, "labels"))
 
 		// Now modify the interval
 		updatedInterval := `"interval": "10m"`
 		legacyPayload = strings.Replace(legacyPayload, `"interval": "20s"`, updatedInterval, 1)
-		require.JSONEq(t, expectedResult, client.SanitizeJSON(&k8sList.Items[0]))
+		require.JSONEq(t, expectedResult, client.SanitizeJSON(&k8sList.Items[0], "labels"))
 		dtoResponse := apis.DoRequest(helper, apis.RequestParams{
 			User:   client.Args.User,
 			Method: http.MethodPut,

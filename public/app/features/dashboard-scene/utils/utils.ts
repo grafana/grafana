@@ -18,7 +18,10 @@ import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
-import { DashboardLayoutManager, isDashboardLayoutManager } from '../scene/types';
+import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
+import { DashboardLayoutManager, isDashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
+
+import { getOriginalKey, isClonedKey } from './clone';
 
 export const NEW_PANEL_HEIGHT = 8;
 export const NEW_PANEL_WIDTH = 12;
@@ -28,7 +31,7 @@ export function getVizPanelKeyForPanelId(panelId: number) {
 }
 
 export function getPanelIdForVizPanel(panel: SceneObject): number {
-  return parseInt(panel.state.key!.replace('panel-', ''), 10);
+  return parseInt(getOriginalKey(panel.state.key!).replace('panel-', ''), 10);
 }
 
 /**
@@ -62,6 +65,15 @@ function findVizPanelInternal(scene: SceneObject, key: string | undefined): VizP
     const objKey = obj.state.key!;
 
     if (objKey === key) {
+      return true;
+    }
+
+    // It might be possible to have the keys changed in the meantime from `panel-2` to `panel-2-clone-0`
+    // We need to check this as well
+    const originalObjectKey = !isClonedKey(objKey) ? getOriginalKey(objKey) : objKey;
+    const originalKey = !isClonedKey(key) ? getOriginalKey(key) : key;
+
+    if (originalObjectKey === originalKey) {
       return true;
     }
 
@@ -211,10 +223,6 @@ export function getClosestVizPanel(sceneObject: SceneObject): VizPanel | null {
   return null;
 }
 
-export function isPanelClone(key: string) {
-  return key.includes('clone');
-}
-
 export function getDefaultVizPanel(): VizPanel {
   return new VizPanel({
     title: 'Panel Title',
@@ -250,6 +258,14 @@ export function getLibraryPanelBehavior(vizPanel: VizPanel): LibraryPanelBehavio
   return undefined;
 }
 
+export function calculateGridItemDimensions(repeater: DashboardGridItem) {
+  const rowCount = Math.ceil(repeater.state.repeatedPanels!.length / repeater.getMaxPerRow());
+  const columnCount = Math.ceil(repeater.state.repeatedPanels!.length / rowCount);
+  const w = 24 / columnCount;
+  const h = repeater.state.itemHeight ?? 10;
+  return { h, w, columnCount };
+}
+
 /**
  * Activates any inactive ancestors of the scene object.
  * Useful when rendering a scene object out of context of it's parent
@@ -276,6 +292,34 @@ export function activateSceneObjectAndParentTree(so: SceneObject): CancelActivat
 }
 
 /**
+ * Adaptation of activateSceneObjectAndParentTree specific for PanelSearchLayout use case with
+ *   with panelSearch and panelsPerRow custom panel filtering logic.
+ *
+ * Activating the whole tree because dashboard does not react to variable updates such as panel repeats
+ */
+export function forceActivateFullSceneObjectTree(so: SceneObject): CancelActivationHandler | undefined {
+  let cancel: CancelActivationHandler | undefined;
+  let parentCancel: CancelActivationHandler | undefined;
+
+  if (so.parent) {
+    parentCancel = forceActivateFullSceneObjectTree(so.parent);
+  }
+
+  if (!so.isActive) {
+    cancel = so.activate();
+    return () => {
+      parentCancel?.();
+      cancel?.();
+    };
+  }
+
+  return () => {
+    parentCancel?.();
+    cancel?.();
+  };
+}
+
+/**
  * @deprecated use activateSceneObjectAndParentTree instead.
  * Activates any inactive ancestors of the scene object.
  * Useful when rendering a scene object out of context of it's parent
@@ -293,4 +337,8 @@ export function getLayoutManagerFor(sceneObject: SceneObject): DashboardLayoutMa
   }
 
   throw new Error('Could not find layout manager for scene object');
+}
+
+export function getGridItemKeyForPanelId(panelId: number): string {
+  return `grid-item-${panelId}`;
 }

@@ -2,7 +2,7 @@ import { action } from '@storybook/addon-actions';
 import { useArgs } from '@storybook/preview-api';
 import { Meta, StoryFn } from '@storybook/react';
 
-import { WeekStartPicker } from '@grafana/ui';
+import { WeekStartPicker } from './WeekStartPicker';
 
 const meta: Meta<typeof WeekStartPicker> = {
   title: 'Pickers and Editors/TimePickers/WeekStartPicker',

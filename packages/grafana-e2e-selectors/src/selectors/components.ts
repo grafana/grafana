@@ -661,6 +661,12 @@ export const versionedComponents = {
     newEvaluationGroupCreate: {
       '11.1.0': 'data-testid alert-rule new-evaluation-group-create-button',
     },
+    step: {
+      '11.5.0': (stepNo: string) => `data-testid alert-rule step-${stepNo}`,
+    },
+    stepAdvancedModeSwitch: {
+      '11.5.0': (stepNo: string) => `data-testid advanced-mode-switch step-${stepNo}`,
+    },
   },
   Alert: {
     alertV2: {
@@ -788,7 +794,7 @@ export const versionedComponents = {
       '9.4.0': 'data-testid Nav toolbar',
     },
     commandPaletteTrigger: {
-      '11.4.0': 'data-testid Command palette trigger',
+      '11.5.0': 'data-testid Command palette trigger',
     },
     shareDashboard: {
       '11.1.0': 'data-testid Share dashboard',
@@ -880,7 +886,8 @@ export const versionedComponents = {
   },
   Select: {
     menu: {
-      '11.4.0': 'data-testid Select menu',
+      '11.5.0': 'data-testid Select menu',
+      [MIN_GRAFANA_VERSION]: 'Select options menu',
     },
     option: {
       '11.1.0': 'data-testid Select option',
@@ -1232,6 +1239,11 @@ export const versionedComponents = {
   EntityNotFound: {
     container: {
       '11.2.0': 'data-testid entity-not-found',
+    },
+  },
+  Portal: {
+    container: {
+      '11.5.0': 'data-testid portal-container',
     },
   },
 } satisfies VersionedSelectorGroup;

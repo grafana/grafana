@@ -14,6 +14,7 @@ import {
   normalizeMatchers,
   parsePromQLStyleMatcherLoose,
   parsePromQLStyleMatcherLooseSafe,
+  unquoteIfRequired,
 } from '../../utils/matchers';
 
 interface NotificationPoliciesFilterProps {
@@ -174,10 +175,19 @@ export function findRoutesMatchingPredicate(
 }
 
 export function findRoutesByMatchers(route: RouteWithID, labelMatchersFilter: ObjectMatcher[]): boolean {
-  const routeMatchers = normalizeMatchers(route);
-
-  return labelMatchersFilter.every((filter) => routeMatchers.some((matcher) => isEqual(filter, matcher)));
+  const filters = labelMatchersFilter.map(unquoteMatchersIfRequired);
+  const routeMatchers = normalizeMatchers(route).map(unquoteMatchersIfRequired);
+  return filters.every((filter) => routeMatchers.some((matcher) => isEqual(filter, matcher)));
 }
+
+/**
+ * This function is mostly used for decoding matchers like "test"="test" into test=test to remove quotes when they're not needed.
+ * This mimicks the behaviour in Alertmanager where it decodes the label matchers in the same way and makes searching for policies
+ * easier in case the label keys or values are quoted when they shouldn't really be.
+ */
+const unquoteMatchersIfRequired = ([key, operator, value]: ObjectMatcher): ObjectMatcher => {
+  return [unquoteIfRequired(key), operator, unquoteIfRequired(value)];
+};
 
 const getNotificationPoliciesFilters = (searchParams: URLSearchParams) => ({
   queryString: searchParams.get('queryString') ?? undefined,

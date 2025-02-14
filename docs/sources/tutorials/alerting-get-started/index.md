@@ -11,10 +11,10 @@ labels:
     - cloud
 tags:
   - beginner
-title: Get started with Grafana Alerting - Part 1 of 3
+title: Get started with Grafana Alerting - Part 1
 weight: 50
 killercoda:
-  title: Get started with Grafana Alerting - Part 1 of 3
+  title: Get started with Grafana Alerting - Part 1
   description: Get started with Grafana Alerting by creating your first alert rule, sending notifications to a webhook, and generating data to test it live — Part 1.
   backend:
     imageid: ubuntu
@@ -22,7 +22,7 @@ killercoda:
 
 <!-- INTERACTIVE page intro.md START -->
 
-# Get started with Grafana Alerting - Part 1 of 3
+# Get started with Grafana Alerting - Part 1
 
 In this guide, we walk you through the process of setting up your first alert in just a few minutes. You'll witness your alert in action with real-time data, as well as sending alert notifications.
 
@@ -181,7 +181,7 @@ We have created a dummy Webhook endpoint and created a new Alerting contact poin
 
 Next, we establish an [alert rule](https://grafana.com/docs/grafana/latest/alerting/alerting-rules/create-grafana-managed-rule/) within Grafana Alerting to notify us whenever alert rules are triggered and resolved.
 
-1. In Grafana, **navigate to Alerting** > **Alert rules**. Click on **New alert rule**.
+1. In Grafana, navigate to **Alerts & IRM > Alerting > Alert rules**. Click on **New alert rule**.
 
 1. Enter alert rule name for your alert rule. Make it short and descriptive as this appears in your alert notification. For instance, **database-metrics**
 
@@ -203,6 +203,10 @@ Grafana includes a [test data source](https://grafana.com/docs/grafana/latest/da
 
    {{< figure src="/media/docs/alerting/random-walk-firing-alert-rule.png" max-width="1200px" caption="A preview of a firing alert" >}}
 
+### Add folders and labels
+
+1. In **Folder**, click **+ New folder** and enter a name. For example: `metric-alerts` . This folder contains our alert rules.
+
 ### Set evaluation behavior
 
 The [alert rule evaluation](https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/rule-evaluation/) defines the conditions under which an alert rule triggers, based on the following settings:
@@ -213,13 +217,12 @@ The [alert rule evaluation](https://grafana.com/docs/grafana/latest/alerting/fun
 
 To set up the evaluation:
 
-1. In **Folder**, click **+ New folder** and enter a name. For example: _metric-alerts_. This folder contains our alerts.
-1. In the **Evaluation group**, repeat the above step to create a new evaluation group. Name it _1m-evaluation_.
+1. In the **Evaluation group and interval**, repeat the above step to create a new evaluation group. Name it _1m-evaluation_.
 1. Choose an **Evaluation interval** (how often the alert are evaluated).
    For example, every `1m` (1 minute).
-1. Set the pending period to, `0s` (zero seconds), so the alert rule fires the moment the condition is met.
+1. Set the **pending period** to, `0s` (zero seconds), so the alert rule fires the moment the condition is met.
 
-### Configure labels and notifications
+### Configure notifications
 
 Choose the contact point where you want to receive your alert notifications.
 

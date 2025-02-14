@@ -3,7 +3,9 @@ package sql
 import (
 	"testing"
 	"text/template"
+	"time"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate/mocks"
 )
@@ -205,6 +207,46 @@ func TestUnifiedStorageQueries(t *testing.T) {
 				},
 			},
 
+			sqlResourceHistoryGet: {
+				{
+					Name: "read object history",
+					Data: &sqlGetHistoryRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Key: &resource.ResourceKey{
+							Namespace: "nn",
+							Group:     "gg",
+							Resource:  "rr",
+							Name:      "name",
+						},
+					},
+				},
+				{
+					Name: "read trash",
+					Data: &sqlGetHistoryRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Key: &resource.ResourceKey{
+							Namespace: "nn",
+							Group:     "gg",
+							Resource:  "rr",
+						},
+						Trash: true,
+					},
+				},
+				{
+					Name: "read trash second page",
+					Data: &sqlGetHistoryRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Key: &resource.ResourceKey{
+							Namespace: "nn",
+							Group:     "gg",
+							Resource:  "rr",
+						},
+						Trash:   true,
+						StartRV: 123456,
+					},
+				},
+			},
+
 			sqlResourceVersionGet: {
 				{
 					Name: "single path",
@@ -242,14 +284,14 @@ func TestUnifiedStorageQueries(t *testing.T) {
 
 			sqlResourceStats: {
 				{
-					Name: "query",
+					Name: "global",
 					Data: &sqlStatsRequest{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
 						MinCount:    10, // Not yet used in query (only response filter)
 					},
 				},
 				{
-					Name: "query-namespace",
+					Name: "namespace",
 					Data: &sqlStatsRequest{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
 						Namespace:   "default",
@@ -257,12 +299,102 @@ func TestUnifiedStorageQueries(t *testing.T) {
 					},
 				},
 				{
-					Name: "query-folder",
+					Name: "folder",
 					Data: &sqlStatsRequest{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
 						Namespace:   "default",
 						Folder:      "folder",
 						MinCount:    10, // Not yet used in query (only response filter)
+					},
+				},
+				{
+					Name: "resource",
+					Data: &sqlStatsRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Namespace:   "default",
+						Group:       "dashboard.grafana.app",
+						Resource:    "dashboards",
+					},
+				},
+			},
+			sqlResourceBlobInsert: {
+				{
+					Name: "basic",
+					Data: &sqlResourceBlobInsertRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Key: &resource.ResourceKey{
+							Namespace: "x",
+							Group:     "g",
+							Resource:  "r",
+							Name:      "name",
+						},
+						Now: time.UnixMilli(1704056400000).UTC(),
+						Info: &utils.BlobInfo{
+							UID:  "abc",
+							Hash: "xxx",
+							Size: 1234,
+						},
+						ContentType: "text/plain",
+						Value:       []byte("abcdefg"),
+					},
+				},
+			},
+
+			sqlResourceBlobQuery: {
+				{
+					Name: "basic",
+					Data: &sqlResourceBlobQueryRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Key: &resource.ResourceKey{
+							Namespace: "x",
+							Group:     "g",
+							Resource:  "r",
+							Name:      "name",
+						},
+						UID: "abc",
+					},
+				},
+				{
+					Name: "resource", // NOTE: this returns multiple values
+					Data: &sqlResourceBlobQueryRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Key: &resource.ResourceKey{
+							Namespace: "x",
+							Group:     "g",
+							Resource:  "r",
+						},
+					},
+				},
+			},
+			sqlResourceHistoryDelete: {
+				{
+					Name: "guid",
+					Data: &sqlResourceHistoryDeleteRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						GUID:        `xxxx`,
+						Namespace:   "ns",
+					},
+				},
+				{
+					Name: "wipe",
+					Data: &sqlResourceHistoryDeleteRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Namespace:   "ns",
+						Group:       "ggg",
+						Resource:    "rrr",
+					},
+				},
+			},
+			sqlResourceInsertFromHistory: {
+				{
+					Name: "update",
+					Data: &sqlResourceInsertFromHistoryRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Key: &resource.ResourceKey{
+							Namespace: "default",
+							Group:     "dashboard.grafana.app",
+							Resource:  "dashboards",
+						},
 					},
 				},
 			},

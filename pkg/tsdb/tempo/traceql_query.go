@@ -14,6 +14,7 @@ import (
 	//nolint:all
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/grafana/grafana/pkg/tsdb/tempo/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/tsdb/tempo/traceql"
@@ -70,8 +71,10 @@ func (s *Service) runTraceQlQueryMetrics(ctx context.Context, pCtx backend.Plugi
 
 	resp, responseBody, err := s.performMetricsQuery(ctx, dsInfo, tempoQuery, backendQuery, span)
 	defer func() {
-		if err := resp.Body.Close(); err != nil {
-			ctxLogger.Error("Failed to close response body", "error", err, "function", logEntrypoint())
+		if resp != nil && resp.Body != nil {
+			if err := resp.Body.Close(); err != nil {
+				ctxLogger.Error("Failed to close response body", "error", err, "function", logEntrypoint())
+			}
 		}
 	}()
 	if err != nil {
@@ -86,21 +89,40 @@ func (s *Service) runTraceQlQueryMetrics(ctx context.Context, pCtx backend.Plugi
 		return result, nil
 	}
 
-	var queryResponse tempopb.QueryRangeResponse
-	err = jsonpb.Unmarshal(bytes.NewReader(responseBody), &queryResponse)
+	if isInstantQuery(tempoQuery.MetricsQueryType) {
+		var queryResponse tempopb.QueryInstantResponse
+		err = jsonpb.Unmarshal(bytes.NewReader(responseBody), &queryResponse)
 
+		if res, err := handleConversionError(ctxLogger, span, err); err != nil {
+			return res, err
+		}
+
+		frames := traceql.TransformInstantMetricsResponse(tempoQuery, queryResponse)
+		result.Frames = frames
+	} else {
+		var queryResponse tempopb.QueryRangeResponse
+		err = jsonpb.Unmarshal(bytes.NewReader(responseBody), &queryResponse)
+
+		if res, err := handleConversionError(ctxLogger, span, err); err != nil {
+			return res, err
+		}
+
+		frames := traceql.TransformMetricsResponse(*tempoQuery.Query, queryResponse)
+		result.Frames = frames
+	}
+
+	ctxLogger.Debug("Successfully performed TraceQL query", "function", logEntrypoint())
+	return result, nil
+}
+
+func handleConversionError(ctxLogger log.Logger, span trace.Span, err error) (*backend.DataResponse, error) {
 	if err != nil {
 		ctxLogger.Error("Failed to convert response to type", "error", err, "function", logEntrypoint())
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return &backend.DataResponse{}, fmt.Errorf("failed to convert response to type: %w", err)
 	}
-
-	frames := traceql.TransformMetricsResponse(queryResponse)
-
-	result.Frames = frames
-	ctxLogger.Debug("Successfully performed TraceQL query", "function", logEntrypoint())
-	return result, nil
+	return nil, nil
 }
 
 func (s *Service) performMetricsQuery(ctx context.Context, dsInfo *Datasource, model *dataquery.TempoQuery, query backend.DataQuery, span trace.Span) (*http.Response, []byte, error) {
@@ -133,7 +155,12 @@ func (s *Service) performMetricsQuery(ctx context.Context, dsInfo *Datasource, m
 func (s *Service) createMetricsQuery(ctx context.Context, dsInfo *Datasource, query *dataquery.TempoQuery, start int64, end int64) (*http.Request, error) {
 	ctxLogger := s.logger.FromContext(ctx)
 
-	rawUrl := fmt.Sprintf("%s/api/metrics/query_range", dsInfo.URL)
+	queryType := "query_range"
+	if isInstantQuery(query.MetricsQueryType) {
+		queryType = "query"
+	}
+
+	rawUrl := fmt.Sprintf("%s/api/metrics/%s", dsInfo.URL, queryType)
 	searchUrl, err := url.Parse(rawUrl)
 	if err != nil {
 		ctxLogger.Error("Failed to parse URL", "url", rawUrl, "error", err, "function", logEntrypoint())
@@ -151,6 +178,9 @@ func (s *Service) createMetricsQuery(ctx context.Context, dsInfo *Datasource, qu
 	if query.Step != nil {
 		q.Set("step", *query.Step)
 	}
+	if query.Exemplars != nil {
+		q.Set("exemplars", strconv.FormatInt(*query.Exemplars, 10))
+	}
 
 	searchUrl.RawQuery = q.Encode()
 
@@ -162,6 +192,13 @@ func (s *Service) createMetricsQuery(ctx context.Context, dsInfo *Datasource, qu
 
 	req.Header.Set("Accept", "application/json")
 	return req, nil
+}
+
+func isInstantQuery(metricQueryType *dataquery.MetricsQueryType) bool {
+	if metricQueryType == nil {
+		return false
+	}
+	return *metricQueryType == dataquery.MetricsQueryTypeInstant
 }
 
 func isMetricsQuery(query string) bool {

@@ -124,7 +124,14 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		logger.Warn("Found query models without targets", "models without targets", strings.Join(emptyQueries, "\n"))
 		// If no queries had a valid target, return an error; otherwise, attempt with the targets we have
 		if len(emptyQueries) == len(req.Queries) {
-			return &result, errors.New("no query target found for the alert rule")
+			if result.Responses == nil {
+				result.Responses = make(map[string]backend.DataResponse)
+			}
+			// marking this downstream error as it is a user error, but arguably this is a plugin error
+			// since the plugin should have frontend validation that prevents us from getting into this state
+			missingQueryResponse := backend.ErrDataResponseWithSource(400, backend.ErrorSourceDownstream, "no query target found for the alert rule")
+			result.Responses["A"] = missingQueryResponse
+			return &result, nil
 		}
 	}
 	formData["target"] = targetList

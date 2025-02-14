@@ -4,6 +4,8 @@ import { DataFrame, DataFrameView, getDisplayProcessor, SelectableValue, toDataF
 import { config, getBackendSrv } from '@grafana/runtime';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 
+import { getAPINamespace } from '../../../api/utils';
+
 import {
   DashboardQueryResult,
   GrafanaSearcher,
@@ -18,9 +20,9 @@ import { replaceCurrentFolderQuery } from './utils';
 // and that it can not serve any search requests. We are temporarily using the old SQL Search API as a fallback when that happens.
 const loadingFrameName = 'Loading';
 
-const searchURI = `apis/dashboard.grafana.app/v0alpha1/namespaces/${config.namespace}/search`;
+const searchURI = `apis/dashboard.grafana.app/v0alpha1/namespaces/${getAPINamespace()}/search`;
 
-type SearchHit = {
+export type SearchHit = {
   resource: string; // dashboards | folders
   name: string;
   title: string;
@@ -28,11 +30,13 @@ type SearchHit = {
   folder: string;
   tags: string[];
 
+  field: Record<string, string | number>; // extra fields from the backend - sort fields included here as well
+
   // calculated in the frontend
   url: string;
 };
 
-type SearchAPIResponse = {
+export type SearchAPIResponse = {
   totalHits: number;
   hits: SearchHit[];
   facets?: {
@@ -58,12 +62,6 @@ export class UnifiedSearcher implements GrafanaSearcher {
     if (query.facet?.length) {
       throw new Error('facets not supported!');
     }
-
-    if (query.kind?.length === 1 && query.kind[0] === 'dashboard') {
-      // TODO: this is browse mode, so skip the search
-      return noDataResponse();
-    }
-
     return this.doSearchQuery(query);
   }
 
@@ -72,10 +70,11 @@ export class UnifiedSearcher implements GrafanaSearcher {
       throw new Error('facets not supported!');
     }
     // get the starred dashboards
-    const starsUIDS = await getBackendSrv().get('api/user/stars');
-    if (starsUIDS?.length) {
+    const starsIds = await getBackendSrv().get('api/user/stars');
+    if (starsIds?.length) {
       return this.doSearchQuery({
-        uid: starsUIDS,
+        ...query,
+        name: starsIds,
         query: query.query ?? '*',
       });
     }
@@ -113,20 +112,14 @@ export class UnifiedSearcher implements GrafanaSearcher {
 
   async doSearchQuery(query: SearchQuery): Promise<QueryResponse> {
     const uri = await this.newRequest(query);
-    const rsp = await getBackendSrv().get<SearchAPIResponse>(uri);
+    const rsp = await this.fetchResponse(uri);
 
-    const first = toDashboardResults(rsp);
+    const first = toDashboardResults(rsp, query.sort ?? '');
     if (first.name === loadingFrameName) {
       return this.fallbackSearcher.search(query);
     }
 
     const meta = first.meta?.custom || ({} as SearchResultMeta);
-    const locationInfo = await this.locationInfo;
-    const hasMissing = rsp.hits.some((hit) => !locationInfo[hit.folder]);
-    if (hasMissing) {
-      // sync the location info ( folders )
-      this.locationInfo = loadLocationInfo();
-    }
     meta.locationInfo = await this.locationInfo;
 
     // Set the field name to a better display name
@@ -142,15 +135,14 @@ export class UnifiedSearcher implements GrafanaSearcher {
     let loadMax = 0;
     let pending: Promise<void> | undefined = undefined;
     const getNextPage = async () => {
-      // TODO: implement this correctly
       while (loadMax > view.dataFrame.length) {
         const offset = view.dataFrame.length;
         if (offset >= meta.count) {
           return;
         }
         const nextPageUrl = `${uri}&offset=${offset}`;
-        const resp = await getBackendSrv().get<SearchAPIResponse>(nextPageUrl);
-        const frame = toDashboardResults(resp);
+        const resp = await this.fetchResponse(nextPageUrl);
+        const frame = toDashboardResults(resp, query.sort ?? '');
         if (!frame) {
           console.log('no results', frame);
           return;
@@ -199,6 +191,44 @@ export class UnifiedSearcher implements GrafanaSearcher {
     };
   }
 
+  async fetchResponse(uri: string) {
+    const rsp = await getBackendSrv().get<SearchAPIResponse>(uri);
+    const isFolderCacheStale = await this.isFolderCacheStale(rsp.hits);
+    if (!isFolderCacheStale) {
+      return rsp;
+    }
+    // sync the location info ( folders )
+    this.locationInfo = loadLocationInfo();
+    // recheck for missing folders
+    const hasMissing = await this.isFolderCacheStale(rsp.hits);
+    if (!hasMissing) {
+      return rsp;
+    }
+
+    const locationInfo = await this.locationInfo;
+    const hits = rsp.hits.map((hit) => {
+      if (hit.folder === undefined) {
+        return { ...hit, location: 'general', folder: 'general' };
+      }
+
+      // this means user has permission to see this dashboard, but not the folder contents
+      if (locationInfo[hit.folder] === undefined) {
+        return { ...hit, location: 'sharedwithme', folder: 'sharedwithme' };
+      }
+
+      return hit;
+    });
+    const totalHits = rsp.totalHits - (rsp.hits.length - hits.length);
+    return { ...rsp, hits, totalHits };
+  }
+
+  async isFolderCacheStale(hits: SearchHit[]): Promise<boolean> {
+    const locationInfo = await this.locationInfo;
+    return hits.some((hit) => {
+      return hit.folder !== undefined && locationInfo[hit.folder] === undefined;
+    });
+  }
+
   private async newRequest(query: SearchQuery): Promise<string> {
     query = await replaceCurrentFolderQuery(query);
 
@@ -222,6 +252,18 @@ export class UnifiedSearcher implements GrafanaSearcher {
     if (query.sort) {
       const sort = query.sort.replace('_sort', '').replace('name', 'title');
       uri += `&sort=${sort}`;
+      const sortField = sort.startsWith('-') ? sort.substring(1) : sort;
+
+      uri += `&field=${sortField}`; // we want to the sort field to be included in the response
+    }
+
+    if (query.name?.length) {
+      uri += '&' + query.name.map((name) => `name=${encodeURIComponent(name)}`).join('&');
+    }
+
+    if (query.uid?.length) {
+      // legacy support for filtering by dashboard uid
+      uri += '&' + query.uid.map((name) => `name=${encodeURIComponent(name)}`).join('&');
     }
     return uri;
   }
@@ -275,7 +317,7 @@ function getSortFieldDisplayName(name: string) {
   return name;
 }
 
-function toDashboardResults(rsp: SearchAPIResponse): DataFrame {
+export function toDashboardResults(rsp: SearchAPIResponse, sort: string): DataFrame {
   const hits = rsp.hits;
   if (hits.length < 1) {
     return { fields: [], length: 0 };
@@ -286,6 +328,11 @@ function toDashboardResults(rsp: SearchAPIResponse): DataFrame {
       location = 'general';
     }
 
+    // display null field values as "-"
+    const field = Object.fromEntries(
+      Object.entries(hit.field ?? {}).map(([key, value]) => [key, value == null ? '-' : value])
+    );
+
     return {
       ...hit,
       uid: hit.name,
@@ -295,6 +342,7 @@ function toDashboardResults(rsp: SearchAPIResponse): DataFrame {
       location,
       name: hit.title, // 🤯 FIXME hit.name is k8s name, eg grafana dashboards UID
       kind: hit.resource.substring(0, hit.resource.length - 1), // dashboard "kind" is not plural
+      ...field,
     };
   });
   const frame = toDataFrame(dashboardHits);
@@ -304,6 +352,11 @@ function toDashboardResults(rsp: SearchAPIResponse): DataFrame {
       max_score: 1,
     },
   };
+  if (sort && frame.meta.custom) {
+    // trim the "-" from sort if it exists
+    frame.meta.custom.sortBy = sort.startsWith('-') ? sort.substring(1) : sort;
+  }
+
   for (const field of frame.fields) {
     field.display = getDisplayProcessor({ field, theme: config.theme2 });
   }
@@ -321,6 +374,11 @@ async function loadLocationInfo(): Promise<Record<string, LocationInfo>> {
           name: 'Dashboards',
           url: '/dashboards',
         }, // share location info with everyone
+        sharedwithme: {
+          kind: 'sharedwithme',
+          name: 'Shared with me',
+          url: '',
+        },
       };
       for (const hit of rsp.hits) {
         locationInfo[hit.name] = {

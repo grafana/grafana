@@ -12,12 +12,12 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 
 	authnlib "github.com/grafana/authlib/authn"
+	"github.com/grafana/authlib/types"
 
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/authn/grpcutils"
-	"github.com/grafana/grafana/pkg/services/authz"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
@@ -28,31 +28,34 @@ import (
 
 const resourceStoreAudience = "resourceStore"
 
+type Options struct {
+	Cfg      *setting.Cfg
+	Features featuremgmt.FeatureToggles
+	DB       infraDB.DB
+	Tracer   tracing.Tracer
+	Reg      prometheus.Registerer
+	Authzc   types.AccessClient
+	Docs     resource.DocumentBuilderSupplier
+}
+
 // This adds a UnifiedStorage client into the wire dependency tree
-func ProvideUnifiedStorageClient(
-	cfg *setting.Cfg,
-	features featuremgmt.FeatureToggles,
-	db infraDB.DB,
-	tracer tracing.Tracer,
-	reg prometheus.Registerer,
-	authzc authz.Client,
-	docs resource.DocumentBuilderSupplier,
-) (resource.ResourceClient, error) {
+func ProvideUnifiedStorageClient(opts *Options) (resource.ResourceClient, error) {
 	// See: apiserver.ApplyGrafanaConfig(cfg, features, o)
-	apiserverCfg := cfg.SectionWithEnvOverrides("grafana-apiserver")
+	apiserverCfg := opts.Cfg.SectionWithEnvOverrides("grafana-apiserver")
 	client, err := newClient(options.StorageOptions{
 		StorageType:  options.StorageType(apiserverCfg.Key("storage_type").MustString(string(options.StorageTypeUnified))),
-		DataPath:     apiserverCfg.Key("storage_path").MustString(filepath.Join(cfg.DataPath, "grafana-apiserver")),
+		DataPath:     apiserverCfg.Key("storage_path").MustString(filepath.Join(opts.Cfg.DataPath, "grafana-apiserver")),
 		Address:      apiserverCfg.Key("address").MustString(""), // client address
 		BlobStoreURL: apiserverCfg.Key("blob_url").MustString(""),
-	}, cfg, features, db, tracer, reg, authzc, docs)
+	}, opts.Cfg, opts.Features, opts.DB, opts.Tracer, opts.Reg, opts.Authzc, opts.Docs)
 	if err == nil {
 		// Used to get the folder stats
 		client = federated.NewFederatedClient(
 			client, // The original
-			legacysql.NewDatabaseProvider(db),
+			legacysql.NewDatabaseProvider(opts.DB),
 		)
 	}
+
 	return client, err
 }
 
@@ -62,7 +65,7 @@ func newClient(opts options.StorageOptions,
 	db infraDB.DB,
 	tracer tracing.Tracer,
 	reg prometheus.Registerer,
-	authzc authz.Client,
+	authzc types.AccessClient,
 	docs resource.DocumentBuilderSupplier,
 ) (resource.ResourceClient, error) {
 	ctx := context.Background()

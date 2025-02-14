@@ -157,8 +157,8 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
               hoverMode={
                 options.tooltip.mode === TooltipDisplayMode.Single ? TooltipHoverMode.xOne : TooltipHoverMode.xAll
               }
-              getDataLinks={(seriesIdx: number, dataIdx: number) =>
-                vizSeries[0].fields[seriesIdx]!.getLinks?.({ valueRowIndex: dataIdx }) ?? []
+              getDataLinks={(seriesIdx, dataIdx) =>
+                vizSeries[0].fields[seriesIdx].getLinks?.({ valueRowIndex: dataIdx }) ?? []
               }
               render={(u, dataIdxs, seriesIdx, isPinned, dismiss, timeRange2, viaSync, dataLinks) => {
                 return (
@@ -173,6 +173,7 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
                     maxHeight={options.tooltip.maxHeight}
                     replaceVariables={replaceVariables}
                     dataLinks={dataLinks}
+                    hideZeros={options.tooltip.hideZeros}
                   />
                 );
               }}

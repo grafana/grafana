@@ -6,7 +6,7 @@ import { sceneGraph, SceneTimeRangeLike, VizPanel } from '@grafana/scenes';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification, createSuccessNotification } from 'app/core/copy/appNotification';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
-import { getDashboardUrl } from 'app/features/dashboard-scene/utils/urlBuilders';
+import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
 import { dispatch } from 'app/store/store';
 
 import { ShareLinkConfiguration } from '../../features/dashboard-scene/sharing/ShareButton/utils';
@@ -70,7 +70,7 @@ export const createDashboardShareUrl = (dashboard: DashboardScene, opts: ShareLi
     slug: dashboard.state.meta.slug,
     currentQueryParams: location.search,
     updateQuery: urlParamsUpdate,
-    absolute: true,
+    absolute: !opts.useShortUrl,
   });
 };
 
