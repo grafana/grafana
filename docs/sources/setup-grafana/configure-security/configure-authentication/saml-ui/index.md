@@ -113,8 +113,26 @@ Sign in to Grafana and navigate to **Administration > Authentication > Configure
 
 1. If you wish to [map user information from SAML assertions]({{< relref "../saml#assertion-mapping" >}}), complete the **Assertion attributes mappings** section.
 
-   You also need to configure the **Groups attribute** field if you want to use group synchronization. Group sync allows you to automatically map users to Grafana teams or role-based access control roles based on their SAML group membership.
-   To learn more about how to configure group synchronization, refer to [Configure team sync]({{< relref "../../configure-team-sync" >}}) and [Configure group attribute sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-group-attribute-sync) documentation.
+If Azure is the Identity Provider over SAML there are caveats for the assertion attribute mappings. Due to how Azure interprets these attributes the full URL will need to be entered in the corresponding fields within the UI, which should match the URLs from the metadata XML. There are differences depending on whether it's a Role or Group claim vs other assertions which Microsoft has [documented](https://learn.microsoft.com/en-us/entra/identity-platform/reference-claims-customization#table-2-saml-restricted-claim-set).
+
+Group and Role:
+
+```
+http://schemas.microsoft.com/ws/2008/06/identity/claims/role
+http://schemas.microsoft.com/ws/2008/06/identity/claims/groups
+http://schemas.microsoft.com/identity/claims/displayname
+```
+
+Other Assertions:
+
+```
+http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress
+```
+
+![image](https://github.com/user-attachments/assets/23910ab8-20ec-4dfd-8ef6-7dbaec51ac90)
+
+You also need to configure the **Groups attribute** field if you want to use group synchronization. Group sync allows you to automatically map users to Grafana teams or role-based access control roles based on their SAML group membership.
+To learn more about how to configure group synchronization, refer to [Configure team sync]({{< relref "../../configure-team-sync" >}}) and [Configure group attribute sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-group-attribute-sync) documentation.
 
 1. If you want to automatically assign users' roles based on their SAML roles, complete the **Role mapping** section.
 
