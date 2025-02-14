@@ -2,6 +2,7 @@ import { ComponentType } from 'react';
 
 import { PanelPlugin, PanelPluginMeta, PanelProps, PluginLoadingStrategy } from '@grafana/data';
 import config from 'app/core/config';
+import { throwIfAngularPlugin } from 'app/core/utils/throwIfAngularPlugin';
 
 import { getPanelPluginLoadError } from '../panel/components/PanelPluginError';
 
@@ -56,11 +57,12 @@ export function syncGetPanelPlugin(id: string): PanelPlugin | undefined {
 }
 
 function getPanelPlugin(meta: PanelPluginMeta): Promise<PanelPlugin> {
+  throwIfAngularPlugin(meta);
+
   const fallbackLoadingStrategy = meta.loadingStrategy ?? PluginLoadingStrategy.fetch;
   return importPluginModule({
     path: meta.module,
     version: meta.info?.version,
-    isAngular: meta.angular?.detected,
     loadingStrategy: fallbackLoadingStrategy,
     pluginId: meta.id,
     moduleHash: meta.moduleHash,
