@@ -126,7 +126,7 @@ export const OptionsPaneCategory = React.memo(
           <Button
             data-testid={selectors.components.OptionsGroup.toggle(id)}
             type="button"
-            fill="texs"
+            fill="text"
             size="md"
             variant="secondary"
             aria-expanded={isExpanded}
