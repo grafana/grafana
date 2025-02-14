@@ -31,6 +31,9 @@ func TestIntegrationSecureValue(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		AppModeProduction: false, // required for experimental APIs
 		EnableFeatureToggles: []string{
@@ -40,18 +43,25 @@ func TestIntegrationSecureValue(t *testing.T) {
 		},
 	})
 
-	ctx, cancel := context.WithCancel(context.Background())
-	t.Cleanup(cancel)
+	permissions := map[string][]string{
+		ResourceSecureValues: ActionsAllSecureValues,
+		// in order to create securevalues, we need to first create keepers (and delete them to clean it up).
+		ResourceKeepers: []string{
+			secret.ActionSecretsManagerKeepersWrite,
+			secret.ActionSecretsManagerKeepersDelete,
+		},
+	}
+
+	genericUserEditor := mustCreateUsers(t, helper, permissions).Editor
 
 	client := helper.GetResourceClient(apis.ResourceClientArgs{
-		// #TODO: figure out permissions topic
-		User: helper.Org1.Admin,
+		User: genericUserEditor,
 		GVR:  gvrSecureValues,
 	})
 
 	t.Run("creating a secure value returns it without any of the value or ref", func(t *testing.T) {
-		keeper := mustGenerateKeeper(t, helper, helper.Org1.Admin, nil)
-		raw := mustGenerateSecureValue(t, helper, helper.Org1.Admin, keeper.GetName())
+		keeper := mustGenerateKeeper(t, helper, genericUserEditor, nil)
+		raw := mustGenerateSecureValue(t, helper, genericUserEditor, keeper.GetName())
 
 		secureValue := new(secretv0alpha1.SecureValue)
 		err := runtime.DefaultUnstructuredConverter.FromUnstructured(raw.Object, secureValue)
@@ -95,7 +105,7 @@ func TestIntegrationSecureValue(t *testing.T) {
 		})
 
 		t.Run("and updating the secure value replaces the spec fields and returns them", func(t *testing.T) {
-			newKeeper := mustGenerateKeeper(t, helper, helper.Org1.Admin, nil)
+			newKeeper := mustGenerateKeeper(t, helper, genericUserEditor, nil)
 
 			newRaw := helper.LoadYAMLOrJSONFile("testdata/secure-value-generate.yaml")
 			newRaw.SetName(raw.GetName())
@@ -119,8 +129,8 @@ func TestIntegrationSecureValue(t *testing.T) {
 	})
 
 	t.Run("creating a secure value with a `value` then updating it to a `ref` returns an error", func(t *testing.T) {
-		keeper := mustGenerateKeeper(t, helper, helper.Org1.Admin, nil)
-		svWithValue := mustGenerateSecureValue(t, helper, helper.Org1.Admin, keeper.GetName())
+		keeper := mustGenerateKeeper(t, helper, genericUserEditor, nil)
+		svWithValue := mustGenerateSecureValue(t, helper, genericUserEditor, keeper.GetName())
 
 		testData := svWithValue.DeepCopy()
 		testData.Object["spec"].(map[string]any)["value"] = nil
@@ -161,7 +171,7 @@ func TestIntegrationSecureValue(t *testing.T) {
 	t.Run("deleting a secure value that exists does not return an error", func(t *testing.T) {
 		generatePrefix := "generated-"
 
-		keeper := mustGenerateKeeper(t, helper, helper.Org1.Admin, nil)
+		keeper := mustGenerateKeeper(t, helper, genericUserEditor, nil)
 
 		testData := helper.LoadYAMLOrJSONFile("testdata/secure-value-generate.yaml")
 		testData.SetGenerateName(generatePrefix)
@@ -196,36 +206,22 @@ func TestIntegrationSecureValue(t *testing.T) {
 	})
 
 	t.Run("creating securevalues in multiple namespaces", func(t *testing.T) {
-		usersOrgA := mustCreateUsers(t, helper, []string{"secrets-manager.securevalues", "secrets-manager.keepers"}, []string{
-			secret.ActionSecretsManagerSecureValuesWrite,
-			secret.ActionSecretsManagerSecureValuesList,
-			secret.ActionSecretsManagerSecureValuesDelete,
-			secret.ActionSecretsManagerSecureValuesDescribe,
-			secret.ActionSecretsManagerKeepersWrite,
-			secret.ActionSecretsManagerKeepersList,
-			secret.ActionSecretsManagerKeepersDescribe,
-			secret.ActionSecretsManagerKeepersDelete,
-		})
+		permissions := map[string][]string{
+			ResourceSecureValues: ActionsAllSecureValues,
+			ResourceKeepers:      ActionsAllKeepers,
+		}
 
-		usersOrgB := mustCreateUsers(t, helper, []string{"secrets-manager.securevalues", "secrets-manager.keepers"}, []string{
-			secret.ActionSecretsManagerSecureValuesWrite,
-			secret.ActionSecretsManagerSecureValuesList,
-			secret.ActionSecretsManagerSecureValuesDelete,
-			secret.ActionSecretsManagerSecureValuesDescribe,
-			secret.ActionSecretsManagerKeepersWrite,
-			secret.ActionSecretsManagerKeepersList,
-			secret.ActionSecretsManagerKeepersDescribe,
-			secret.ActionSecretsManagerKeepersDelete,
-		})
+		editorOrgA := mustCreateUsers(t, helper, permissions).Editor
+		editorOrgB := mustCreateUsers(t, helper, permissions).Editor
 
-		keeperOrgA := mustGenerateKeeper(t, helper, usersOrgA.Admin, nil)
-		keeperOrgB := mustGenerateKeeper(t, helper, usersOrgB.Admin, nil)
+		keeperOrgA := mustGenerateKeeper(t, helper, editorOrgA, nil)
+		keeperOrgB := mustGenerateKeeper(t, helper, editorOrgB, nil)
 
-		secureValueOrgA := mustGenerateSecureValue(t, helper, usersOrgA.Admin, keeperOrgA.GetName())
-		secureValueOrgB := mustGenerateSecureValue(t, helper, usersOrgB.Admin, keeperOrgB.GetName())
+		secureValueOrgA := mustGenerateSecureValue(t, helper, editorOrgA, keeperOrgA.GetName())
+		secureValueOrgB := mustGenerateSecureValue(t, helper, editorOrgB, keeperOrgB.GetName())
 
-		clientOrgA := helper.GetResourceClient(apis.ResourceClientArgs{User: usersOrgA.Admin, GVR: gvrSecureValues})
-		clientOrgB := helper.GetResourceClient(apis.ResourceClientArgs{User: usersOrgB.Admin, GVR: gvrSecureValues})
+		clientOrgA := helper.GetResourceClient(apis.ResourceClientArgs{User: editorOrgA, GVR: gvrSecureValues})
+		clientOrgB := helper.GetResourceClient(apis.ResourceClientArgs{User: editorOrgB, GVR: gvrSecureValues})
 
 		// Create
 		t.Run("creating a securevalue with the same name as one from another namespace does not return an error", func(t *testing.T) {
@@ -338,7 +334,7 @@ func TestIntegrationSecureValue(t *testing.T) {
 
 	t.Run("securevalue actions without having required permissions", func(t *testing.T) {
 		// Create users on a random org without specifying secrets-related permissions.
-		editorP := mustCreateUsers(t, helper, nil, nil).Editor
+		editorP := mustCreateUsers(t, helper, nil).Editor
 
 		clientP := helper.GetResourceClient(apis.ResourceClientArgs{
 			User: editorP,

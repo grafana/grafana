@@ -42,9 +42,10 @@ func TestIntegrationKeeper(t *testing.T) {
 		},
 	})
 
+	genericUserEditor := mustCreateUsers(t, helper, map[string][]string{ResourceKeepers: ActionsAllKeepers}).Editor
+
 	client := helper.GetResourceClient(apis.ResourceClientArgs{
-		// #TODO: figure out permissions topic
-		User: helper.Org1.Admin,
+		User: genericUserEditor,
 		GVR:  gvrKeepers,
 	})
 
@@ -64,7 +65,7 @@ func TestIntegrationKeeper(t *testing.T) {
 	})
 
 	t.Run("creating a keeper returns it", func(t *testing.T) {
-		raw := mustGenerateKeeper(t, helper, helper.Org1.Admin, nil)
+		raw := mustGenerateKeeper(t, helper, genericUserEditor, nil)
 
 		keeper := new(secretv0alpha1.Keeper)
 		err := runtime.DefaultUnstructuredConverter.FromUnstructured(raw.Object, keeper)
@@ -156,7 +157,7 @@ func TestIntegrationKeeper(t *testing.T) {
 	})
 
 	t.Run("creating a keeper with a provider then changing the provider does not return an error", func(t *testing.T) {
-		rawAWS := mustGenerateKeeper(t, helper, helper.Org1.Admin, nil)
+		rawAWS := mustGenerateKeeper(t, helper, genericUserEditor, nil)
 
 		testDataKeeperGCP := rawAWS.DeepCopy()
 		testDataKeeperGCP.Object["spec"].(map[string]any)["aws"] = nil
@@ -225,11 +226,28 @@ func TestIntegrationKeeper(t *testing.T) {
 	})
 
 	t.Run("creating a keeper that references a securevalue that is stored in a non-SQL type Keeper returns an error", func(t *testing.T) {
+		// 0. Create user with required permissions.
+		permissions := map[string][]string{
+			ResourceKeepers: ActionsAllKeepers,
+			// needed for this test to create (and delete for cleanup) securevalues.
+			ResourceSecureValues: []string{
+				secret.ActionSecretsManagerSecureValuesWrite,
+				secret.ActionSecretsManagerSecureValuesDelete,
+			},
+		}
+
+		editor := mustCreateUsers(t, helper, permissions).Editor
+
+		clientP := helper.GetResourceClient(apis.ResourceClientArgs{
+			User: editor,
+			GVR:  gvrKeepers,
+		})
+
 		// 1. Create a non-SQL keeper without using `secureValueName`.
-		keeperAWS := mustGenerateKeeper(t, helper, helper.Org1.Admin, nil)
+		keeperAWS := mustGenerateKeeper(t, helper, editor, nil)
 
 		// 2. Create a secureValue that is stored in the previously created keeper (non-SQL).
-		secureValue := mustGenerateSecureValue(t, helper, helper.Org1.Admin, keeperAWS.GetName())
+		secureValue := mustGenerateSecureValue(t, helper, editor, keeperAWS.GetName())
 
 		// 3. Create another keeper that uses the secureValue, which fails.
 		testDataAnotherKeeper := keeperAWS.DeepCopy()
@@ -237,14 +255,26 @@ func TestIntegrationKeeper(t *testing.T) {
 			"secureValueName": secureValue.GetName(),
 		}
 
-		keeperAnother, err := client.Resource.Create(ctx, testDataAnotherKeeper, metav1.CreateOptions{})
+		keeperAnother, err := clientP.Resource.Create(ctx, testDataAnotherKeeper, metav1.CreateOptions{})
 		require.Error(t, err)
 		require.Nil(t, keeperAnother)
 	})
 
 	t.Run("creating a keeper that references a securevalue that is stored in a SQL type Keeper returns no error", func(t *testing.T) {
+		// 0. Create user with required permissions.
+		permissions := map[string][]string{
+			ResourceKeepers: ActionsAllKeepers,
+			// needed for this test to create (and delete for cleanup) securevalues.
+			ResourceSecureValues: []string{
+				secret.ActionSecretsManagerSecureValuesWrite,
+				secret.ActionSecretsManagerSecureValuesDelete,
+			},
+		}
+
+		editor := mustCreateUsers(t, helper, permissions).Editor
+
 		// 1. Create a SQL keeper.
-		keeperSQL := mustGenerateKeeper(t, helper, helper.Org1.Admin, map[string]any{
+		keeperSQL := mustGenerateKeeper(t, helper, editor, map[string]any{
 			"title": "SQL Keeper",
 			"sql": map[string]any{
 				"encryption": map[string]any{"envelope": map[string]any{}},
@@ -252,10 +282,10 @@ func TestIntegrationKeeper(t *testing.T) {
 		})
 
 		// 2. Create a secureValue that is stored in the previously created keeper (SQL).
-		secureValue := mustGenerateSecureValue(t, helper, helper.Org1.Admin, keeperSQL.GetName())
+		secureValue := mustGenerateSecureValue(t, helper, editor, keeperSQL.GetName())
 
 		// 3. Create a non-SQL keeper that uses the secureValue.
-		keeperAWS := mustGenerateKeeper(t, helper, helper.Org1.Admin, map[string]any{
+		keeperAWS := mustGenerateKeeper(t, helper, editor, map[string]any{
 			"title": "AWS Keeper",
 			"aws": map[string]any{
 				"accessKeyId":     map[string]any{"secureValueName": secureValue.GetName()},
@@ -266,25 +296,14 @@ func TestIntegrationKeeper(t *testing.T) {
 	})
 
 	t.Run("creating keepers in multiple namespaces", func(t *testing.T) {
-		usersOrgA := mustCreateUsers(t, helper, []string{"secrets-manager.keepers"}, []string{
-			secret.ActionSecretsManagerKeepersWrite,
-			secret.ActionSecretsManagerKeepersList,
-			secret.ActionSecretsManagerKeepersDelete,
-			secret.ActionSecretsManagerKeepersDescribe,
-		})
+		editorOrgA := mustCreateUsers(t, helper, map[string][]string{ResourceKeepers: ActionsAllKeepers}).Editor
+		editorOrgB := mustCreateUsers(t, helper, map[string][]string{ResourceKeepers: ActionsAllKeepers}).Editor
 
-		usersOrgB := mustCreateUsers(t, helper, []string{"secrets-manager.keepers"}, []string{
-			secret.ActionSecretsManagerKeepersWrite,
-			secret.ActionSecretsManagerKeepersList,
-			secret.ActionSecretsManagerKeepersDelete,
-			secret.ActionSecretsManagerKeepersDescribe,
-		})
+		keeperOrgA := mustGenerateKeeper(t, helper, editorOrgA, nil)
+		keeperOrgB := mustGenerateKeeper(t, helper, editorOrgB, nil)
 
-		keeperOrgA := mustGenerateKeeper(t, helper, usersOrgA.Admin, nil)
-		keeperOrgB := mustGenerateKeeper(t, helper, usersOrgB.Admin, nil)
-
-		clientOrgA := helper.GetResourceClient(apis.ResourceClientArgs{User: usersOrgA.Admin, GVR: gvrKeepers})
-		clientOrgB := helper.GetResourceClient(apis.ResourceClientArgs{User: usersOrgB.Admin, GVR: gvrKeepers})
+		clientOrgA := helper.GetResourceClient(apis.ResourceClientArgs{User: editorOrgA, GVR: gvrKeepers})
+		clientOrgB := helper.GetResourceClient(apis.ResourceClientArgs{User: editorOrgB, GVR: gvrKeepers})
 
 		// Create
 		t.Run("creating a keeper with the same name as one from another namespace does not return an error", func(t *testing.T) {
@@ -395,7 +414,7 @@ func TestIntegrationKeeper(t *testing.T) {
 
 	t.Run("keeper actions without having required permissions", func(t *testing.T) {
 		// Create users on a random org without specifying secrets-related permissions.
-		editorP := mustCreateUsers(t, helper, nil, nil).Editor
+		editorP := mustCreateUsers(t, helper, nil).Editor
 
 		clientP := helper.GetResourceClient(apis.ResourceClientArgs{
 			User: editorP,

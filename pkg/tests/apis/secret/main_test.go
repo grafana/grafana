@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/registry/apis/secret"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -17,6 +18,24 @@ import (
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+)
+
+var (
+	ResourceSecureValues = "secrets-manager.securevalues"
+	ResourceKeepers      = "secrets-manager.keepers"
+
+	ActionsAllKeepers = []string{
+		secret.ActionSecretsManagerKeepersWrite,
+		secret.ActionSecretsManagerKeepersList,
+		secret.ActionSecretsManagerKeepersDelete,
+		secret.ActionSecretsManagerKeepersDescribe,
+	}
+	ActionsAllSecureValues = []string{
+		secret.ActionSecretsManagerSecureValuesWrite,
+		secret.ActionSecretsManagerSecureValuesList,
+		secret.ActionSecretsManagerSecureValuesDelete,
+		secret.ActionSecretsManagerSecureValuesDescribe,
+	}
 )
 
 func TestMain(m *testing.M) {
@@ -59,19 +78,17 @@ func TestIntegrationDiscoveryClient(t *testing.T) {
 	})
 }
 
-func mustCreateUsers(t *testing.T, helper *apis.K8sTestHelper, resources []string, actions []string) apis.OrgUsers {
+func mustCreateUsers(t *testing.T, helper *apis.K8sTestHelper, permissionMap map[string][]string) apis.OrgUsers {
 	t.Helper()
 
 	var permissions []resourcepermissions.SetResourcePermissionCommand
-	if len(resources) > 0 && len(actions) > 0 {
-		for _, resource := range resources {
-			permissions = append(permissions, resourcepermissions.SetResourcePermissionCommand{
-				Actions:           actions,
-				Resource:          resource,
-				ResourceAttribute: "name",
-				ResourceID:        "*",
-			})
-		}
+	for resource, actions := range permissionMap {
+		permissions = append(permissions, resourcepermissions.SetResourcePermissionCommand{
+			Actions:           actions,
+			Resource:          resource,
+			ResourceAttribute: "name",
+			ResourceID:        "*",
+		})
 	}
 
 	orgID := rand.Int64() + 2 // if it is 0, becomes 2 and not 1.
@@ -79,16 +96,15 @@ func mustCreateUsers(t *testing.T, helper *apis.K8sTestHelper, resources []strin
 
 	userSuffix := strconv.FormatInt(rand.Int64(), 10)
 
-	admin := helper.CreateUser("admin-"+userSuffix, orgName, org.RoleAdmin, permissions)
+	// Add here admin or viewer if necessary.
 	editor := helper.CreateUser("editor-"+userSuffix, orgName, org.RoleEditor, permissions)
 
-	staff := helper.CreateTeam("staff-"+userSuffix, "staff-"+userSuffix+"@"+orgName, admin.Identity.GetOrgID())
+	staff := helper.CreateTeam("staff-"+userSuffix, "staff-"+userSuffix+"@"+orgName, editor.Identity.GetOrgID())
 
-	helper.AddOrUpdateTeamMember(admin, staff.ID, team.PermissionTypeAdmin)
+	// Also call this method for each new user.
 	helper.AddOrUpdateTeamMember(editor, staff.ID, team.PermissionTypeMember)
 
 	return apis.OrgUsers{
-		Admin:  admin,
 		Editor: editor,
 		Staff:  staff,
 	}
@@ -101,7 +117,6 @@ func mustGenerateSecureValue(t *testing.T, helper *apis.K8sTestHelper, user apis
 	t.Cleanup(cancel)
 
 	secureValueClient := helper.GetResourceClient(apis.ResourceClientArgs{
-		// #TODO: figure out permissions topic
 		User: user,
 		GVR:  gvrSecureValues,
 	})
@@ -127,7 +142,6 @@ func mustGenerateKeeper(t *testing.T, helper *apis.K8sTestHelper, user apis.User
 	t.Cleanup(cancel)
 
 	keeperClient := helper.GetResourceClient(apis.ResourceClientArgs{
-		// #TODO: figure out permissions topic
 		User: user,
 		GVR:  gvrKeepers,
 	})
