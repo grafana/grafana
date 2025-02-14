@@ -41,7 +41,7 @@ func RegisterAccessControlRoles(service accesscontrol.Service) error {
 		Role: accesscontrol.RoleDTO{
 			Name:        "fixed:secrets-manager.securevalues:reader",
 			DisplayName: "Secrets Manager secure values reader",
-			Description: "Read secure values.",
+			Description: "Read and list secure values.",
 			Group:       "Secrets Manager",
 			Permissions: []accesscontrol.Permission{
 				{
@@ -82,7 +82,7 @@ func RegisterAccessControlRoles(service accesscontrol.Service) error {
 		Role: accesscontrol.RoleDTO{
 			Name:        "fixed:secrets-manager.keepers:reader",
 			DisplayName: "Secrets Manager keepers reader",
-			Description: "Read keepers.",
+			Description: "Read and list keepers.",
 			Group:       "Secrets Manager",
 			Permissions: []accesscontrol.Permission{
 				{
@@ -169,6 +169,7 @@ func SecretAuthorizer(accessControl accesscontrol.AccessControl) authorizer.Auth
 		}
 
 		// TODO: is this correct?
+		// If the namespace the resource's in differs from the namespace of the user identity, deny.
 		if namespaceInfo.OrgID != user.GetOrgID() {
 			return authorizer.DecisionDeny, "mismatched org", nil
 		}
