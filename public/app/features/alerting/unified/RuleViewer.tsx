@@ -36,7 +36,7 @@ const RuleViewer = (): JSX.Element => {
   }, [id]);
 
   // we then fetch the rule from the correct API endpoint(s)
-  const { loading, error, result: rule, uninitialized } = useCombinedRule({ ruleIdentifier: identifier, limitAlerts });
+  const { loading, error, result: rule } = useCombinedRule({ ruleIdentifier: identifier, limitAlerts });
 
   if (error) {
     return (
@@ -46,7 +46,7 @@ const RuleViewer = (): JSX.Element => {
     );
   }
 
-  if (loading || uninitialized) {
+  if (loading) {
     return (
       <AlertingPageWrapper pageNav={defaultPageNav} navId="alert-list" isLoading={true}>
         <></>

@@ -16,21 +16,18 @@ interface ResultBag {
 }
 
 export function useIsRuleEditable(rulesSourceName: string, rule?: RulerRuleDTO): ResultBag {
-  const { currentData: dsFeatures, isLoading: loadingDataSourceFeatures } =
-    featureDiscoveryApi.endpoints.discoverDsFeatures.useQuery({
-      uid: getDatasourceAPIUid(rulesSourceName),
-    });
+  const { currentData: dsFeatures, isLoading } = featureDiscoveryApi.endpoints.discoverDsFeatures.useQuery({
+    uid: getDatasourceAPIUid(rulesSourceName),
+  });
 
   const folderUID = rule && isGrafanaRulerRule(rule) ? rule.grafana_alert.namespace_uid : undefined;
-  const rulePermission = getRulesPermissions(rulesSourceName);
 
-  const { folder, loading: loadingFolder } = useFolder(folderUID);
+  const rulePermission = getRulesPermissions(rulesSourceName);
+  const { folder, loading } = useFolder(folderUID);
 
   if (!rule) {
     return { isEditable: false, isRemovable: false, loading: false };
   }
-
-  const loading = loadingFolder || loadingDataSourceFeatures;
 
   // Grafana rules can be edited if user can edit the folder they're in
   // When RBAC is disabled access to a folder is the only requirement for managing rules
@@ -42,23 +39,13 @@ export function useIsRuleEditable(rulesSourceName: string, rule?: RulerRuleDTO):
       );
     }
 
-    // loading folder information
-    if (loadingFolder) {
-      return {
-        isRulerAvailable: true,
-        isEditable: false,
-        isRemovable: false,
-        loading: true,
-      };
-    }
-
-    // invalid folder UID
     if (!folder) {
+      // Loading or invalid folder UID
       return {
         isRulerAvailable: true,
         isEditable: false,
         isRemovable: false,
-        loading: false,
+        loading,
       };
     }
 
@@ -69,7 +56,7 @@ export function useIsRuleEditable(rulesSourceName: string, rule?: RulerRuleDTO):
       isRulerAvailable: true,
       isEditable: canEditGrafanaRules,
       isRemovable: canRemoveGrafanaRules,
-      loading: loading,
+      loading: loading || isLoading,
     };
   }
 
@@ -82,6 +69,6 @@ export function useIsRuleEditable(rulesSourceName: string, rule?: RulerRuleDTO):
     isRulerAvailable,
     isEditable: canEditCloudRules && isRulerAvailable,
     isRemovable: canRemoveCloudRules && isRulerAvailable,
-    loading: loading,
+    loading: isLoading,
   };
 }

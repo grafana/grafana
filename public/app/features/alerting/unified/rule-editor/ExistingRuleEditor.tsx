@@ -1,5 +1,4 @@
 import { Alert, LoadingPlaceholder } from '@grafana/ui';
-import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 import { RuleIdentifier } from 'app/types/unified-alerting';
 
 import { AlertWarning } from '../AlertWarning';
@@ -14,21 +13,17 @@ interface ExistingRuleEditorProps {
 }
 
 export function ExistingRuleEditor({ identifier }: ExistingRuleEditorProps) {
-  const ruleSourceName = ruleId.ruleIdentifierToRuleSourceName(identifier);
-
   const {
     loading: loadingAlertRule,
     result: ruleWithLocation,
     error,
-    uninitialized,
   } = useRuleWithLocation({ ruleIdentifier: identifier });
+
+  const ruleSourceName = ruleId.ruleIdentifierToRuleSourceName(identifier);
 
   const { isEditable, loading: loadingEditable } = useIsRuleEditable(ruleSourceName, ruleWithLocation?.rule);
 
-  // the loading of the editable state only happens once we've got a rule with location loaded, so we set it to true by default here
-  const loadingEditableState = Boolean(ruleWithLocation) ? loadingEditable : true;
-  const loading = loadingAlertRule || loadingEditableState || uninitialized;
-  const ruleNotFound = !Boolean(ruleWithLocation);
+  const loading = loadingAlertRule || loadingEditable;
 
   if (loading) {
     return <LoadingPlaceholder text="Loading rule..." />;
@@ -42,11 +37,11 @@ export function ExistingRuleEditor({ identifier }: ExistingRuleEditorProps) {
     );
   }
 
-  if (ruleNotFound) {
-    return <EntityNotFound entity="Rule" />;
+  if (!ruleWithLocation) {
+    return <AlertWarning title="Rule not found">Sorry! This rule does not exist.</AlertWarning>;
   }
 
-  if (isEditable === false && !loadingEditable) {
+  if (isEditable === false) {
     return <AlertWarning title="Cannot edit rule">Sorry! You do not have permission to edit this rule.</AlertWarning>;
   }
 
