@@ -46,7 +46,7 @@ func convertToDataFrame(ctx *mysql.Context, iter mysql.RowIter, schema mysql.Sch
 				return nil, err
 			}
 
-			// Run the normalized value through fieldValeToRow to normalize
+			// Run the normalized value through fieldValFromRowVal to normalize
 			// the interface type to the dataframe value type, and make nullable
 			// values pointers as dataframe expects.
 			fV, err := fieldValFromRowVal(f.Fields[i].Type(), nV)
