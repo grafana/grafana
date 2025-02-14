@@ -69,6 +69,7 @@ export interface SelectCommonProps<T> {
    * Setting to false will prevent the menu from portalling to the body.
    */
   menuShouldPortal?: boolean;
+  menuShouldBlockScroll?: boolean;
   /** The message to display when no options could be found */
   noOptionsMessage?: string;
   onBlur?: () => void;
