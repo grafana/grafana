@@ -183,7 +183,7 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 				Key: getResourceKey(&dashboards.DashboardSearchProjection{
 					UID: dashboard.UID,
 				}, req.Options.Key.Namespace),
-				Cells: [][]byte{[]byte(dashboard.Title), []byte(dashboard.FolderUID), {}},
+				Cells: [][]byte{[]byte(dashboard.Title), []byte(dashboard.FolderUID), []byte{}},
 			})
 		}
 
