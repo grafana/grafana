@@ -213,7 +213,7 @@
       "comparing-versions": "Comparing versions",
       "condition": "Alert condition",
       "contactPointRouting": "Contact point routing",
-      "description": "Each time you edit the alert rule a new version is created. You can restore an older version. Select two versions below and compare their differences.",
+      "description": "Each time you edit the alert rule, a new version is created. Select two versions below and compare their differences.",
       "errorloading": "Failed to load alert rule versions",
       "execErrorState": "Alert state when execution error",
       "intervalSeconds": "Evaluation interval",

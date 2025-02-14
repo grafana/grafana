@@ -111,8 +111,8 @@ export function AlertVersionHistory({ ruleUid }: AlertVersionHistoryProps) {
     <Stack direction="column" gap={2}>
       <Text variant="body">
         <Trans i18nKey="alerting.alertVersionHistory.description">
-          Each time you edit the alert rule a new version is created. You can restore an older version. Select two
-          versions below and compare their differences.
+          Each time you edit the alert rule, a new version is created. Select two versions below and compare their
+          differences.
         </Trans>
       </Text>
       <Stack>
