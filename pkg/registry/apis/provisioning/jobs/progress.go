@@ -35,13 +35,13 @@ type JobResourceResult struct {
 }
 
 type JobProgressRecorder struct {
-	total      int
-	ref        string
-	message    string
-	results    []JobResourceResult
-	errors     []string
-	progressFn ProgressFn
-	summaries  map[string]*provisioning.JobResourceSummary
+	total       int
+	ref         string
+	message     string
+	resultCount int
+	errors      []string
+	progressFn  ProgressFn
+	summaries   map[string]*provisioning.JobResourceSummary
 }
 
 func NewJobProgressRecorder(progressFn ProgressFn) *JobProgressRecorder {
@@ -52,10 +52,7 @@ func NewJobProgressRecorder(progressFn ProgressFn) *JobProgressRecorder {
 }
 
 func (r *JobProgressRecorder) Record(ctx context.Context, result JobResourceResult) {
-	if r.results == nil {
-		r.results = make([]JobResourceResult, 0)
-	}
-	r.results = append(r.results, result)
+	r.resultCount++
 
 	if result.Error != nil {
 		logger := logging.FromContext(ctx)
@@ -140,7 +137,7 @@ func (r *JobProgressRecorder) progress() float64 {
 		return 0
 	}
 
-	return float64(r.total - len(r.results)/r.total*100)
+	return float64(r.resultCount) / float64(r.total) * 100
 }
 
 func (r *JobProgressRecorder) notify(ctx context.Context) {
