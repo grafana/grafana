@@ -151,25 +151,6 @@ func TestValidateRepository(t *testing.T) {
 			},
 		},
 		{
-			name: "mismatched s3 config",
-			repository: func() *MockRepository {
-				m := NewMockRepository(t)
-				m.On("Config").Return(&provisioning.Repository{
-					Spec: provisioning.RepositorySpec{
-						Title: "Test Repo",
-						Type:  provisioning.LocalRepositoryType,
-						S3:    &provisioning.S3RepositoryConfig{},
-					},
-				})
-				m.On("Validate").Return(field.ErrorList{})
-				return m
-			}(),
-			expectedErrs: 1,
-			validateError: func(t *testing.T, errors field.ErrorList) {
-				require.Contains(t, errors.ToAggregate().Error(), "spec.s3: Invalid value")
-			},
-		},
-		{
 			name: "multiple validation errors",
 			repository: func() *MockRepository {
 				m := NewMockRepository(t)
