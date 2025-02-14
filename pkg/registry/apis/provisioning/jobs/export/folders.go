@@ -11,22 +11,19 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/storage/unified/parquet"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-var (
-	_ resource.BatchResourceWriter = (*folderReader)(nil)
-)
+var _ resource.BatchResourceWriter = (*folderReader)(nil)
 
 type folderReader struct {
 	tree           *resources.FolderTree
 	targetRepoName string
-	summary        *provisioning.JobResourceSummary
 }
 
 // Close implements resource.BatchResourceWriter.
@@ -44,33 +41,25 @@ func (f *folderReader) Write(ctx context.Context, key *resource.ResourceKey, val
 	item := &unstructured.Unstructured{}
 	err := item.UnmarshalJSON(value)
 	if err != nil {
-		return err
+		return fmt.Errorf("unmarshal unstructured to JSON: %w", err)
 	}
-	err = f.tree.AddUnstructured(item, f.targetRepoName)
-	if err != nil {
-		f.summary.Errors = append(f.summary.Errors, err.Error())
-	}
-	return nil
+
+	return f.tree.AddUnstructured(item, f.targetRepoName)
 }
 
+// FIXME: revise logging in this method
 func (r *exportJob) loadFolders(ctx context.Context) error {
 	logger := r.logger
-	status := r.jobStatus
-	status.Message = "reading folder tree"
-	r.maybeNotify(ctx)
+	r.progress.SetMessage("reading folder tree")
 
-	summary := r.getSummary(schema.GroupResource{
-		Group:    folders.GROUP,
-		Resource: folders.RESOURCE,
-	})
-
-	reader := &folderReader{
-		tree:           resources.NewEmptyFolderTree(),
-		targetRepoName: r.target.Config().Name,
-		summary:        summary,
-	}
+	repoName := r.target.Config().Name
 
 	if r.legacy != nil {
+		r.progress.SetMessage("migrate folder tree from legacy")
+		reader := &folderReader{
+			tree:           r.folderTree,
+			targetRepoName: repoName,
+		}
 		_, err := r.legacy.Migrate(ctx, legacy.MigrateOptions{
 			Namespace: r.namespace,
 			Resources: []schema.GroupResource{{
@@ -83,6 +72,8 @@ func (r *exportJob) loadFolders(ctx context.Context) error {
 			return fmt.Errorf("unable to read folders from legacy storage %w", err)
 		}
 	} else {
+		// TODO: should this be logging or message or both?
+		r.progress.SetMessage("read folder tree from unified storage")
 		client := r.client.Resource(schema.GroupVersionResource{
 			Group:    folders.GROUP,
 			Version:  folders.VERSION,
@@ -96,46 +87,63 @@ func (r *exportJob) loadFolders(ctx context.Context) error {
 		if rawList.GetContinue() != "" {
 			return fmt.Errorf("unable to list all folders in one request: %s", rawList.GetContinue())
 		}
+
 		for _, item := range rawList.Items {
-			err = reader.tree.AddUnstructured(&item, reader.targetRepoName)
+			err = r.folderTree.AddUnstructured(&item, repoName)
 			if err != nil {
-				summary.Errors = append(summary.Errors, err.Error())
+				r.progress.Record(ctx, jobs.JobResourceResult{
+					Name:     item.GetName(),
+					Resource: folders.RESOURCE,
+					Group:    folders.GROUP,
+					Error:    err,
+				})
 			}
 		}
 	}
 
-	// first create folders
-	// NOTE: this is required so that empty folders exist when finished
-	status.Message = "writing folders"
-	err := reader.tree.Walk(ctx, func(ctx context.Context, folder resources.Folder) error {
+	// create folders first is required so that empty folders exist when finished
+	r.progress.SetMessage("write folders")
+
+	err := r.folderTree.Walk(ctx, func(ctx context.Context, folder resources.Folder) error {
 		p := folder.Path + "/"
 		if r.prefix != "" {
 			p = r.prefix + "/" + p
 		}
 		logger := logger.With("path", p)
 
+		result := jobs.JobResourceResult{
+			Name:     folder.ID,
+			Resource: folders.RESOURCE,
+			Group:    folders.GROUP,
+			Path:     p,
+		}
+
 		_, err := r.target.Read(ctx, p, r.ref)
 		if err != nil && !(errors.Is(err, repository.ErrFileNotFound) || apierrors.IsNotFound(err)) {
-			logger.Error("failed to check if folder exists before writing", "error", err)
-			return fmt.Errorf("failed to check if folder exists before writing: %w", err)
+			result.Error = fmt.Errorf("failed to check if folder exists before writing: %w", err)
+			return result.Error
 		} else if err == nil {
 			logger.Info("folder already exists")
-			summary.Noop++
+			result.Action = repository.FileActionIgnored
+			r.progress.Record(ctx, result)
 			return nil
 		}
 
+		result.Action = repository.FileActionCreated
+		msg := fmt.Sprintf("export folder %s", p)
 		// Create with an empty body will make a folder (or .keep file if unsupported)
-		if err := r.target.Create(ctx, p, r.ref, nil, "export folder `"+p+"`"); err != nil {
-			logger.Error("failed to write a folder in repository", "error", err)
-			return fmt.Errorf("failed to write folder in repo: %w", err)
+		if err := r.target.Create(ctx, p, r.ref, nil, msg); err != nil {
+			result.Error = fmt.Errorf("failed to write folder in repo: %w", err)
+			r.progress.Record(ctx, result)
+			return result.Error
 		}
-		summary.Create++
-		logger.Debug("successfully exported folder")
+
+		r.progress.Record(ctx, result)
 		return nil
 	})
 	if err != nil {
 		return fmt.Errorf("failed to write folders: %w", err)
 	}
-	r.foldersTree = reader.tree
+
 	return nil
 }

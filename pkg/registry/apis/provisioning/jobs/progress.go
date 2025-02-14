@@ -24,8 +24,7 @@ func MaybeNotifyProgress(threshold time.Duration, fn ProgressFn) ProgressFn {
 	}
 }
 
-// FIXME: ProgressRecorder should be moved to jobs package and initialized in the queue
-
+// FIXME: ProgressRecorder should be initialized in the queue
 type JobResourceResult struct {
 	Name     string
 	Resource string
@@ -36,32 +35,34 @@ type JobResourceResult struct {
 }
 
 type JobProgressRecorder struct {
-	total      int
-	ref        string
-	message    string
-	results    []JobResourceResult
-	errors     []string
-	progressFn ProgressFn
+	total       int
+	ref         string
+	message     string
+	resultCount int
+	errors      []string
+	progressFn  ProgressFn
+	summaries   map[string]*provisioning.JobResourceSummary
 }
 
 func NewJobProgressRecorder(progressFn ProgressFn) *JobProgressRecorder {
 	return &JobProgressRecorder{
 		progressFn: MaybeNotifyProgress(15*time.Second, progressFn),
+		summaries:  make(map[string]*provisioning.JobResourceSummary),
 	}
 }
 
 func (r *JobProgressRecorder) Record(ctx context.Context, result JobResourceResult) {
-	if r.results == nil {
-		r.results = make([]JobResourceResult, 0)
-	}
-	r.results = append(r.results, result)
+	r.resultCount++
 
 	if result.Error != nil {
 		logger := logging.FromContext(ctx)
 		logger.Error("job resource operation failed", "err", result.Error, "path", result.Path, "resource", result.Resource, "group", result.Group, "action", result.Action, "name", result.Name)
-		r.errors = append(r.errors, result.Error.Error())
+		if len(r.errors) < 20 {
+			r.errors = append(r.errors, result.Error.Error())
+		}
 	}
 
+	r.updateSummary(result)
 	r.notify(ctx)
 }
 
@@ -90,63 +91,45 @@ func (r *JobProgressRecorder) Errors() []string {
 }
 
 func (r *JobProgressRecorder) summary() []*provisioning.JobResourceSummary {
-	if len(r.results) == 0 {
+	if len(r.summaries) == 0 {
 		return nil
 	}
 
-	// Group results by resource+group
-	groupedResults := make(map[string][]JobResourceResult)
-	for _, result := range r.results {
-		key := result.Resource + ":" + result.Group
-		groupedResults[key] = append(groupedResults[key], result)
-	}
-
-	summaries := make([]*provisioning.JobResourceSummary, 0)
-	for _, results := range groupedResults {
-		if len(results) == 0 {
-			continue
-		}
-
-		// Count actions
-		actions := make(map[repository.FileAction]int64)
-		var errors []string
-		for _, result := range results {
-			if result.Error != nil {
-				errors = append(errors, result.Error.Error())
-			} else {
-				actions[result.Action]++
-			}
-		}
-
-		// Create summary for this group
-
-		// Default to unknown if resource or group is empty
-		resource := results[0].Resource
-		if resource == "" {
-			resource = "unknown"
-		}
-
-		group := results[0].Group
-		if group == "" {
-			group = "unknown"
-		}
-
-		summary := &provisioning.JobResourceSummary{
-			Resource: resource,
-			Group:    group,
-			Delete:   actions[repository.FileActionDeleted],
-			Update:   actions[repository.FileActionUpdated],
-			Create:   actions[repository.FileActionCreated],
-			Write:    actions[repository.FileActionCreated] + actions[repository.FileActionUpdated],
-			Error:    int64(len(errors)),
-			Noop:     actions[repository.FileActionIgnored],
-			Errors:   errors,
-		}
-
+	summaries := make([]*provisioning.JobResourceSummary, 0, len(r.summaries))
+	for _, summary := range r.summaries {
 		summaries = append(summaries, summary)
 	}
 
 	return summaries
+}
+
+func (r *JobProgressRecorder) updateSummary(result JobResourceResult) {
+	key := result.Resource + ":" + result.Group
+	summary, exists := r.summaries[key]
+	if !exists {
+		summary = &provisioning.JobResourceSummary{
+			Resource: result.Resource,
+			Group:    result.Group,
+		}
+		r.summaries[key] = summary
+	}
+
+	if result.Error != nil {
+		summary.Errors = append(summary.Errors, result.Error.Error())
+		summary.Error++
+	} else {
+		switch result.Action {
+		case repository.FileActionDeleted:
+			summary.Delete++
+		case repository.FileActionUpdated:
+			summary.Update++
+		case repository.FileActionCreated:
+			summary.Create++
+		case repository.FileActionIgnored:
+			summary.Noop++
+		}
+		summary.Write = summary.Create + summary.Update
+	}
 }
 
 func (r *JobProgressRecorder) progress() float64 {
@@ -154,7 +137,7 @@ func (r *JobProgressRecorder) progress() float64 {
 		return 0
 	}
 
-	return float64(r.total - len(r.results)/r.total*100)
+	return float64(r.resultCount) / float64(r.total) * 100
 }
 
 func (r *JobProgressRecorder) notify(ctx context.Context) {

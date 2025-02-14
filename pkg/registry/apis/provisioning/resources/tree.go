@@ -2,6 +2,7 @@ package resources
 
 import (
 	"context"
+	"fmt"
 	"path"
 	"sort"
 	"strings"
@@ -101,7 +102,7 @@ func NewEmptyFolderTree() *FolderTree {
 func (t *FolderTree) AddUnstructured(item *unstructured.Unstructured, skipRepo string) error {
 	meta, err := utils.MetaAccessor(item)
 	if err != nil {
-		return err
+		return fmt.Errorf("extract meta accessor: %w", err)
 	}
 	if meta.GetRepositoryName() == skipRepo {
 		return nil // skip it... already in tree?

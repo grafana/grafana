@@ -14,10 +14,6 @@ import (
 )
 
 func (r *exportJob) loadUsers(ctx context.Context) error {
-	status := r.jobStatus
-	status.Message = "reading user info"
-	r.maybeNotify(ctx)
-
 	client := r.client.Resource(schema.GroupVersionResource{
 		Group:    iam.GROUP,
 		Version:  iam.VERSION,
@@ -36,6 +32,7 @@ func (r *exportJob) loadUsers(ctx context.Context) error {
 	r.userInfo = make(map[string]repository.CommitSignature)
 	for _, item := range rawList.Items {
 		sig := repository.CommitSignature{}
+		// FIXME: should we improve logging here?
 		sig.Name, ok, err = unstructured.NestedString(item.Object, "spec", "login")
 		if !ok || err != nil {
 			continue
