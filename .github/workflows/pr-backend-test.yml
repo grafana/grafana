@@ -69,6 +69,12 @@ jobs:
             APP_INSTALLATION_ID=github-app:app-installation-id
             PRIVATE_KEY=github-app:private-key
 
+      - name: Debug secrets (redacted)
+        run: |
+          if [ -n "${{ env.APP_ID }}" ]; then echo "APP_ID is set"; else echo "APP_ID is not set"; fi
+          if [ -n "${{ env.APP_INSTALLATION_ID }}" ]; then echo "APP_INSTALLATION_ID is set"; else echo "APP_INSTALLATION_ID is not set"; fi
+          if [ -n "${{ env.PRIVATE_KEY }}" ]; then echo "PRIVATE_KEY is set"; else echo "PRIVATE_KEY is not set"; fi
+
       - name: Generate GitHub App token
         id: generate_token
         uses: actions/create-github-app-token@v1
@@ -76,10 +82,15 @@ jobs:
           app-id: ${{ env.APP_ID }}
           private-key: ${{ env.PRIVATE_KEY }}
 
+      - name: Debug token (redacted)
+        run: |
+          if [ -n "${{ steps.generate_token.outputs.token }}" ]; then echo "Token was generated"; else echo "Token was not generated"; fi
+
       - name: Setup Enterprise (PR only)
         if: github.event_name == 'pull_request'
         env:
           GH_TOKEN: ${{ steps.generate_token.outputs.token }}
+        continue-on-error: true
         run: |
           # Check if PR is from a fork
           IS_FORK="${{ github.event.pull_request.head.repo.fork }}"
@@ -89,7 +100,11 @@ jobs:
           fi
           
           # Clone enterprise repo using the GitHub App token
-          git clone https://x-access-token:${GH_TOKEN}@github.com/grafana/grafana-enterprise.git ../grafana-enterprise
+          if ! git clone https://x-access-token:${GH_TOKEN}@github.com/grafana/grafana-enterprise.git ../grafana-enterprise; then
+            echo "Failed to clone enterprise repository - this is expected for non-enterprise contributors"
+            exit 0
+          fi
+          
           cd ../grafana-enterprise
           
           # Try to checkout the PR branch first, then base branch, then fall back to main
