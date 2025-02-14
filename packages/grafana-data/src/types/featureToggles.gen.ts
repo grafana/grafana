@@ -247,7 +247,6 @@ export interface FeatureToggles {
   ABTestFeatureToggleA?: boolean;
   templateVariablesUsesCombobox?: boolean;
   ABTestFeatureToggleB?: boolean;
-  queryLibraryDashboards?: boolean;
   grafanaAdvisor?: boolean;
   elasticsearchImprovedParsing?: boolean;
   exploreMetricsUseExternalAppPlugin?: boolean;
