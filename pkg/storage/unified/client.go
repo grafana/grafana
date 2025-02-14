@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/federated"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 )
 
@@ -121,7 +122,11 @@ func newClient(opts options.StorageOptions,
 
 	// Use the local SQL
 	default:
-		server, err := sql.NewResourceServer(ctx, db, cfg, features, docs, tracer, reg, authzc)
+		searchOptions, err := search.NewSearchOptions(features, cfg, tracer, docs, reg)
+		if err != nil {
+			return nil, err
+		}
+		server, err := sql.NewResourceServer(db, cfg, tracer, reg, authzc, searchOptions)
 		if err != nil {
 			return nil, err
 		}
