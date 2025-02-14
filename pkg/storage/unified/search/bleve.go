@@ -218,7 +218,7 @@ func (b *bleveBackend) cleanOldIndexes(dir string, skip string) {
 			if err != nil {
 				b.log.Error("Unable to remove old index folder", "directory", fpath, "error", err)
 			} else {
-				b.log.Error("Removed old index folder", "directory", fpath)
+				b.log.Info("Removed old index folder", "directory", fpath)
 			}
 		}
 	}
