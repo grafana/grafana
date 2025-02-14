@@ -31,7 +31,7 @@ func NewSQLCommand(refID, rawSQL string) (*SQLCommand, error) {
 	if err != nil {
 		logger.Warn("invalid sql query", "sql", rawSQL, "error", err)
 		return nil, errutil.BadRequest("sql-invalid-sql",
-			errutil.WithPublicMessage("error reading SQL command"),
+			errutil.WithPublicMessage(fmt.Sprintf("invalid SQL query: %s", err)),
 		)
 	}
 	if len(tables) == 0 {

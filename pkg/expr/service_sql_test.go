@@ -92,6 +92,23 @@ func TestSQLService(t *testing.T) {
 		require.Error(t, rsp.Responses["B"].Error, "should return invalid sql error")
 		require.ErrorContains(t, rsp.Responses["B"].Error, "blocked function load_file")
 	})
+
+	t.Run("parse error should be returned", func(t *testing.T) {
+		s, req := newMockQueryService(resp,
+			newABSQLQueries(`SELECT * FROM A LIMIT sloth`),
+		)
+
+		s.features = featuremgmt.WithFeatures(featuremgmt.FlagSqlExpressions)
+
+		pl, err := s.BuildPipeline(req)
+		require.NoError(t, err)
+
+		rsp, err := s.ExecutePipeline(context.Background(), time.Now(), pl)
+		require.NoError(t, err)
+
+		require.Error(t, rsp.Responses["B"].Error, "should return sql error on parsing")
+		require.ErrorContains(t, rsp.Responses["B"].Error, "limit expression expected to be numeric")
+	})
 }
 
 func jsonEscape(input string) (string, error) {
