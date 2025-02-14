@@ -3,7 +3,9 @@ package secret
 import (
 	"context"
 	"errors"
+	"math/rand/v2"
 	"net/http"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -42,7 +44,9 @@ func TestIntegrationKeeper(t *testing.T) {
 		},
 	})
 
-	genericUserEditor := mustCreateUsers(t, helper, map[string][]string{ResourceKeepers: ActionsAllKeepers}).Editor
+	permissions := map[string]ResourcePermission{ResourceKeepers: {Actions: ActionsAllKeepers}}
+
+	genericUserEditor := mustCreateUsers(t, helper, permissions).Editor
 
 	client := helper.GetResourceClient(apis.ResourceClientArgs{
 		User: genericUserEditor,
@@ -227,12 +231,14 @@ func TestIntegrationKeeper(t *testing.T) {
 
 	t.Run("creating a keeper that references a securevalue that is stored in a non-SQL type Keeper returns an error", func(t *testing.T) {
 		// 0. Create user with required permissions.
-		permissions := map[string][]string{
-			ResourceKeepers: ActionsAllKeepers,
+		permissions := map[string]ResourcePermission{
+			ResourceKeepers: {Actions: ActionsAllKeepers},
 			// needed for this test to create (and delete for cleanup) securevalues.
-			ResourceSecureValues: []string{
-				secret.ActionSecretsManagerSecureValuesWrite,
-				secret.ActionSecretsManagerSecureValuesDelete,
+			ResourceSecureValues: {
+				Actions: []string{
+					secret.ActionSecretsManagerSecureValuesWrite,
+					secret.ActionSecretsManagerSecureValuesDelete,
+				},
 			},
 		}
 
@@ -262,12 +268,14 @@ func TestIntegrationKeeper(t *testing.T) {
 
 	t.Run("creating a keeper that references a securevalue that is stored in a SQL type Keeper returns no error", func(t *testing.T) {
 		// 0. Create user with required permissions.
-		permissions := map[string][]string{
-			ResourceKeepers: ActionsAllKeepers,
+		permissions := map[string]ResourcePermission{
+			ResourceKeepers: {Actions: ActionsAllKeepers},
 			// needed for this test to create (and delete for cleanup) securevalues.
-			ResourceSecureValues: []string{
-				secret.ActionSecretsManagerSecureValuesWrite,
-				secret.ActionSecretsManagerSecureValuesDelete,
+			ResourceSecureValues: {
+				Actions: []string{
+					secret.ActionSecretsManagerSecureValuesWrite,
+					secret.ActionSecretsManagerSecureValuesDelete,
+				},
 			},
 		}
 
@@ -296,8 +304,12 @@ func TestIntegrationKeeper(t *testing.T) {
 	})
 
 	t.Run("creating keepers in multiple namespaces", func(t *testing.T) {
-		editorOrgA := mustCreateUsers(t, helper, map[string][]string{ResourceKeepers: ActionsAllKeepers}).Editor
-		editorOrgB := mustCreateUsers(t, helper, map[string][]string{ResourceKeepers: ActionsAllKeepers}).Editor
+		permissions := map[string]ResourcePermission{
+			ResourceKeepers: {Actions: ActionsAllKeepers},
+		}
+
+		editorOrgA := mustCreateUsers(t, helper, permissions).Editor
+		editorOrgB := mustCreateUsers(t, helper, permissions).Editor
 
 		keeperOrgA := mustGenerateKeeper(t, helper, editorOrgA, nil)
 		keeperOrgB := mustGenerateKeeper(t, helper, editorOrgB, nil)
@@ -466,5 +478,152 @@ func TestIntegrationKeeper(t *testing.T) {
 		var statusDeleteErr *apierrors.StatusError
 		require.True(t, errors.As(err, &statusDeleteErr))
 		require.EqualValues(t, http.StatusForbidden, statusDeleteErr.Status().Code)
+	})
+
+	t.Run("keeper actions with permissions but with limited scope", func(t *testing.T) {
+		suffix := strconv.FormatInt(rand.Int64(), 10)
+
+		// Fix the Keeper names.
+		keeperName := "kp-" + suffix
+		testKeeper := helper.LoadYAMLOrJSONFile("testdata/keeper-gcp-generate.yaml")
+		testKeeper.SetName(keeperName)
+
+		keeperNameAnother := "kp-another-" + suffix
+		testKeeperAnother := helper.LoadYAMLOrJSONFile("testdata/keeper-gcp-generate.yaml")
+		testKeeperAnother.SetName(keeperNameAnother)
+
+		// Fix the org ID because we will create another user with scope "all" permissions on the same org, to compare.
+		orgID := rand.Int64() + 2
+
+		// Permissions which allow any action, but scoped actions (get, update, delete) only on `keeperName` and NO OTHER Keeper.
+		scopedLimitedPermissions := map[string]ResourcePermission{
+			ResourceKeepers: {
+				Actions: ActionsAllKeepers,
+				Name:    keeperName,
+			},
+		}
+
+		// Create users (+ client) with permission to manage ONLY the Keeper `keeperName`.
+		editorLimited := mustCreateUsersWithOrg(t, helper, orgID, scopedLimitedPermissions).Editor
+
+		clientScopedLimited := helper.GetResourceClient(apis.ResourceClientArgs{
+			User: editorLimited,
+			GVR:  gvrKeepers,
+		})
+
+		// Create users (+ client) with permission to manage ANY Keepers.
+		scopedAllPermissions := map[string]ResourcePermission{
+			ResourceKeepers: {
+				Actions: ActionsAllKeepers,
+				Name:    "*", // this or not sending a `Name` have the same effect.
+			},
+		}
+
+		editorAll := mustCreateUsersWithOrg(t, helper, orgID, scopedAllPermissions).Editor
+
+		clientScopedAll := helper.GetResourceClient(apis.ResourceClientArgs{
+			User: editorAll,
+			GVR:  gvrKeepers,
+		})
+
+		t.Run("CREATE", func(t *testing.T) {
+			// Create the Keeper with the limited client.
+			rawCreateLimited, err := clientScopedLimited.Resource.Create(ctx, testKeeper, metav1.CreateOptions{})
+			require.NoError(t, err)
+			require.NotNil(t, rawCreateLimited)
+
+			// Create another Keeper with the limited client, because the action is not scoped (no `name` available).
+			rawCreateLimited, err = clientScopedLimited.Resource.Create(ctx, testKeeperAnother, metav1.CreateOptions{})
+			require.NoError(t, err)
+			require.NotNil(t, rawCreateLimited)
+		})
+
+		t.Run("READ", func(t *testing.T) {
+			// Retrieve `keeperName` from the limited client.
+			rawGetLimited, err := clientScopedLimited.Resource.Get(ctx, keeperName, metav1.GetOptions{})
+			require.NoError(t, err)
+			require.NotNil(t, rawGetLimited)
+			require.Equal(t, rawGetLimited.GetUID(), rawGetLimited.GetUID())
+
+			// Retrieve `keeperName` from the scope-all client.
+			rawGetAll, err := clientScopedAll.Resource.Get(ctx, keeperName, metav1.GetOptions{})
+			require.NoError(t, err)
+			require.NotNil(t, rawGetAll)
+			require.Equal(t, rawGetAll.GetUID(), rawGetLimited.GetUID())
+
+			// Even though we can create it, we cannot retrieve `keeperNameAnother` from the limited client.
+			rawGetLimited, err = clientScopedLimited.Resource.Get(ctx, keeperNameAnother, metav1.GetOptions{})
+			require.Error(t, err)
+			require.Nil(t, rawGetLimited)
+
+			var statusGetErr *apierrors.StatusError
+			require.True(t, errors.As(err, &statusGetErr))
+			require.EqualValues(t, http.StatusForbidden, statusGetErr.Status().Code)
+
+			// Retrieve `keeperNameAnother` from the scope-all client.
+			rawGetAll, err = clientScopedAll.Resource.Get(ctx, keeperNameAnother, metav1.GetOptions{})
+			require.NoError(t, err)
+			require.NotNil(t, rawGetAll)
+		})
+
+		t.Run("LIST", func(t *testing.T) {
+			// List Keepers from the limited client should return only 1, but it doesn't.
+			rawList, err := clientScopedLimited.Resource.List(ctx, metav1.ListOptions{})
+			require.NoError(t, err)
+			require.NotNil(t, rawList)
+			require.Len(t, rawList.Items, 1) // TODO: Can view both Keepers. How can we limit that?
+
+			// List Keepers from the scope-all client should return all of them.
+			rawList, err = clientScopedAll.Resource.List(ctx, metav1.ListOptions{})
+			require.NoError(t, err)
+			require.NotNil(t, rawList)
+			require.Len(t, rawList.Items, 2)
+		})
+
+		t.Run("UPDATE", func(t *testing.T) {
+			// Update `keeperName` from the limited client.
+			testKeeperUpdate := testKeeper.DeepCopy()
+			testKeeperUpdate.Object["spec"].(map[string]any)["title"] = "keeper-title-1234"
+
+			rawUpdate, err := clientScopedLimited.Resource.Update(ctx, testKeeperUpdate, metav1.UpdateOptions{})
+			require.NoError(t, err)
+			require.NotNil(t, rawUpdate)
+
+			// Try to update `keeperNameAnother` from the limited client.
+			testKeeperAnotherUpdate := testKeeperAnother.DeepCopy()
+			testKeeperAnotherUpdate.Object["spec"].(map[string]any)["title"] = "keeper-title-5678"
+
+			rawUpdate, err = clientScopedLimited.Resource.Update(ctx, testKeeperAnotherUpdate, metav1.UpdateOptions{})
+			require.Error(t, err)
+			require.Nil(t, rawUpdate)
+
+			var statusUpdateErr *apierrors.StatusError
+			require.True(t, errors.As(err, &statusUpdateErr))
+			require.EqualValues(t, http.StatusForbidden, statusUpdateErr.Status().Code)
+
+			// Update `keeperNameAnother` from the scope-all client.
+			rawUpdate, err = clientScopedAll.Resource.Update(ctx, testKeeperAnotherUpdate, metav1.UpdateOptions{})
+			require.NoError(t, err)
+			require.NotNil(t, rawUpdate)
+		})
+
+		// Keep this last for cleaning up the resources.
+		t.Run("DELETE", func(t *testing.T) {
+			// Try to delete `keeperNameAnother` from the limited client.
+			err := clientScopedLimited.Resource.Delete(ctx, keeperNameAnother, metav1.DeleteOptions{})
+			require.Error(t, err)
+
+			var statusDeleteErr *apierrors.StatusError
+			require.True(t, errors.As(err, &statusDeleteErr))
+			require.EqualValues(t, http.StatusForbidden, statusDeleteErr.Status().Code)
+
+			// Delete `keeperNameAnother` from the scope-all client.
+			err = clientScopedAll.Resource.Delete(ctx, keeperNameAnother, metav1.DeleteOptions{})
+			require.NoError(t, err)
+
+			// Delete `keeperName` from the limited client.
+			err = clientScopedLimited.Resource.Delete(ctx, keeperName, metav1.DeleteOptions{})
+			require.NoError(t, err)
+		})
 	})
 }

@@ -3,7 +3,9 @@ package secret
 import (
 	"context"
 	"errors"
+	"math/rand/v2"
 	"net/http"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -43,12 +45,14 @@ func TestIntegrationSecureValue(t *testing.T) {
 		},
 	})
 
-	permissions := map[string][]string{
-		ResourceSecureValues: ActionsAllSecureValues,
+	permissions := map[string]ResourcePermission{
+		ResourceSecureValues: {Actions: ActionsAllSecureValues},
 		// in order to create securevalues, we need to first create keepers (and delete them to clean it up).
-		ResourceKeepers: []string{
-			secret.ActionSecretsManagerKeepersWrite,
-			secret.ActionSecretsManagerKeepersDelete,
+		ResourceKeepers: {
+			Actions: []string{
+				secret.ActionSecretsManagerKeepersWrite,
+				secret.ActionSecretsManagerKeepersDelete,
+			},
 		},
 	}
 
@@ -206,9 +210,9 @@ func TestIntegrationSecureValue(t *testing.T) {
 	})
 
 	t.Run("creating securevalues in multiple namespaces", func(t *testing.T) {
-		permissions := map[string][]string{
-			ResourceSecureValues: ActionsAllSecureValues,
-			ResourceKeepers:      ActionsAllKeepers,
+		permissions := map[string]ResourcePermission{
+			ResourceSecureValues: {Actions: ActionsAllSecureValues},
+			ResourceKeepers:      {Actions: ActionsAllKeepers},
 		}
 
 		editorOrgA := mustCreateUsers(t, helper, permissions).Editor
@@ -386,5 +390,164 @@ func TestIntegrationSecureValue(t *testing.T) {
 		var statusDeleteErr *apierrors.StatusError
 		require.True(t, errors.As(err, &statusDeleteErr))
 		require.EqualValues(t, http.StatusForbidden, statusDeleteErr.Status().Code)
+	})
+
+	t.Run("securevalue actions with permissions but with limited scope", func(t *testing.T) {
+		suffix := strconv.FormatInt(rand.Int64(), 10)
+
+		// Fix the SecureValue names.
+		secureValueName := "sv-" + suffix
+		testSecureValue := helper.LoadYAMLOrJSONFile("testdata/secure-value-generate.yaml")
+		testSecureValue.SetName(secureValueName)
+
+		secureValueNameAnother := "sv-another-" + suffix
+		testSecureValueAnother := helper.LoadYAMLOrJSONFile("testdata/secure-value-generate.yaml")
+		testSecureValueAnother.SetName(secureValueNameAnother)
+
+		// Fix the org ID because we will create another user with scope "all" permissions on the same org, to compare.
+		orgID := rand.Int64() + 2
+
+		// Permissions which allow any action, but scoped actions (get, update, delete) only on `secureValueName` and NO OTHER SecureValue.
+		scopedLimitedPermissions := map[string]ResourcePermission{
+			ResourceSecureValues: {
+				Actions: ActionsAllSecureValues,
+				Name:    secureValueName,
+			},
+			// we need to have a Keeper before creating SecureValues.
+			ResourceKeepers: {
+				Actions: []string{
+					secret.ActionSecretsManagerKeepersWrite,
+					secret.ActionSecretsManagerKeepersDelete,
+				},
+			},
+		}
+
+		// Create users (+ client) with permission to manage ONLY the SecureValue `secureValueName`.
+		editorLimited := mustCreateUsersWithOrg(t, helper, orgID, scopedLimitedPermissions).Editor
+
+		clientScopedLimited := helper.GetResourceClient(apis.ResourceClientArgs{
+			User: editorLimited,
+			GVR:  gvrSecureValues,
+		})
+
+		// Create users (+ client) with permission to manage ANY SecureValues.
+		scopedAllPermissions := map[string]ResourcePermission{
+			ResourceSecureValues: {
+				Actions: ActionsAllSecureValues,
+				Name:    "*", // this or not sending a `Name` have the same effect.
+			},
+		}
+
+		editorAll := mustCreateUsersWithOrg(t, helper, orgID, scopedAllPermissions).Editor
+
+		clientScopedAll := helper.GetResourceClient(apis.ResourceClientArgs{
+			User: editorAll,
+			GVR:  gvrSecureValues,
+		})
+
+		// Create an initial Keeper to be able to start creating SecureValues.
+		keeper := mustGenerateKeeper(t, helper, editorLimited, nil)
+		testSecureValue.Object["spec"].(map[string]any)["keeper"] = keeper.GetName()
+		testSecureValueAnother.Object["spec"].(map[string]any)["keeper"] = keeper.GetName()
+
+		t.Run("CREATE", func(t *testing.T) {
+			// Create the SecureValue with the limited client.
+			rawCreateLimited, err := clientScopedLimited.Resource.Create(ctx, testSecureValue, metav1.CreateOptions{})
+			require.NoError(t, err)
+			require.NotNil(t, rawCreateLimited)
+
+			// Create another SecureValue with the limited client, because the action is not scoped (no `name` available).
+			rawCreateLimited, err = clientScopedLimited.Resource.Create(ctx, testSecureValueAnother, metav1.CreateOptions{})
+			require.NoError(t, err)
+			require.NotNil(t, rawCreateLimited)
+		})
+
+		t.Run("READ", func(t *testing.T) {
+			// Retrieve `secureValueName` from the limited client.
+			rawGetLimited, err := clientScopedLimited.Resource.Get(ctx, secureValueName, metav1.GetOptions{})
+			require.NoError(t, err)
+			require.NotNil(t, rawGetLimited)
+			require.Equal(t, rawGetLimited.GetUID(), rawGetLimited.GetUID())
+
+			// Retrieve `secureValueName` from the scope-all client.
+			rawGetAll, err := clientScopedAll.Resource.Get(ctx, secureValueName, metav1.GetOptions{})
+			require.NoError(t, err)
+			require.NotNil(t, rawGetAll)
+			require.Equal(t, rawGetAll.GetUID(), rawGetLimited.GetUID())
+
+			// Even though we can create it, we cannot retrieve `secureValueNameAnother` from the limited client.
+			rawGetLimited, err = clientScopedLimited.Resource.Get(ctx, secureValueNameAnother, metav1.GetOptions{})
+			require.Error(t, err)
+			require.Nil(t, rawGetLimited)
+
+			var statusGetErr *apierrors.StatusError
+			require.True(t, errors.As(err, &statusGetErr))
+			require.EqualValues(t, http.StatusForbidden, statusGetErr.Status().Code)
+
+			// Retrieve `secureValueNameAnother` from the scope-all client.
+			rawGetAll, err = clientScopedAll.Resource.Get(ctx, secureValueNameAnother, metav1.GetOptions{})
+			require.NoError(t, err)
+			require.NotNil(t, rawGetAll)
+		})
+
+		t.Run("LIST", func(t *testing.T) {
+			// List SecureValues from the limited client should return only 1, but it doesn't.
+			rawList, err := clientScopedLimited.Resource.List(ctx, metav1.ListOptions{})
+			require.NoError(t, err)
+			require.NotNil(t, rawList)
+			require.Len(t, rawList.Items, 1) // TODO: Can view both SecureValues. How can we limit that?
+
+			// List SecureValues from the scope-all client should return all of them.
+			rawList, err = clientScopedAll.Resource.List(ctx, metav1.ListOptions{})
+			require.NoError(t, err)
+			require.NotNil(t, rawList)
+			require.Len(t, rawList.Items, 2)
+		})
+
+		t.Run("UPDATE", func(t *testing.T) {
+			// Update `secureValueName` from the limited client.
+			testSecureValueUpdate := testSecureValue.DeepCopy()
+			testSecureValueUpdate.Object["spec"].(map[string]any)["title"] = "sv-title-1234"
+
+			rawUpdate, err := clientScopedLimited.Resource.Update(ctx, testSecureValueUpdate, metav1.UpdateOptions{})
+			require.NoError(t, err)
+			require.NotNil(t, rawUpdate)
+
+			// Try to update `secureValueNameAnother` from the limited client.
+			testSecureValueAnotherUpdate := testSecureValueAnother.DeepCopy()
+			testSecureValueAnotherUpdate.Object["spec"].(map[string]any)["title"] = "sv-title-5678"
+
+			rawUpdate, err = clientScopedLimited.Resource.Update(ctx, testSecureValueAnotherUpdate, metav1.UpdateOptions{})
+			require.Error(t, err)
+			require.Nil(t, rawUpdate)
+
+			var statusUpdateErr *apierrors.StatusError
+			require.True(t, errors.As(err, &statusUpdateErr))
+			require.EqualValues(t, http.StatusForbidden, statusUpdateErr.Status().Code)
+
+			// Update `secureValueNameAnother` from the scope-all client.
+			rawUpdate, err = clientScopedAll.Resource.Update(ctx, testSecureValueAnotherUpdate, metav1.UpdateOptions{})
+			require.NoError(t, err)
+			require.NotNil(t, rawUpdate)
+		})
+
+		// Keep this last for cleaning up the resources.
+		t.Run("DELETE", func(t *testing.T) {
+			// Try to delete `secureValueNameAnother` from the limited client.
+			err := clientScopedLimited.Resource.Delete(ctx, secureValueNameAnother, metav1.DeleteOptions{})
+			require.Error(t, err)
+
+			var statusDeleteErr *apierrors.StatusError
+			require.True(t, errors.As(err, &statusDeleteErr))
+			require.EqualValues(t, http.StatusForbidden, statusDeleteErr.Status().Code)
+
+			// Delete `secureValueNameAnother` from the scope-all client.
+			err = clientScopedAll.Resource.Delete(ctx, secureValueNameAnother, metav1.DeleteOptions{})
+			require.NoError(t, err)
+
+			// Delete `secureValueName` from the limited client.
+			err = clientScopedLimited.Resource.Delete(ctx, secureValueName, metav1.DeleteOptions{})
+			require.NoError(t, err)
+		})
 	})
 }

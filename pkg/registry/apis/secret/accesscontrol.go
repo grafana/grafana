@@ -25,14 +25,12 @@ const (
 	ActionSecretsManagerKeepersDelete   = "secrets-manager.keepers:delete"   // DELETE.
 )
 
-const (
-	ScopeAllSecureValues = "secrets-manager.securevalues:*"
-	ScopeAllKeepers      = "secrets-manager.keepers:*"
-)
-
 var (
 	ScopeProviderSecretsManagerSecureValues = accesscontrol.NewScopeProvider("secrets-manager.securevalues")
 	ScopeProviderSecretsManagerKeepers      = accesscontrol.NewScopeProvider("secrets-manager.keepers")
+
+	ScopeAllSecureValues = ScopeProviderSecretsManagerSecureValues.GetResourceAllScope()
+	ScopeAllKeepers      = ScopeProviderSecretsManagerKeepers.GetResourceAllScope()
 )
 
 func RegisterAccessControlRoles(service accesscontrol.Service) error {
@@ -210,6 +208,8 @@ func SecretAuthorizer(accessControl accesscontrol.AccessControl) authorizer.Auth
 			return authorizer.DecisionDeny, "unknown resource: " + resource, nil
 		}
 
+		// TODO: when using the LIST verb, how can we filter by only those they have access to?! Need to do it in storage?
+		// TODO: when using the CREATE verb, how can we restrict the scope as well?
 		evaluator, ok := evaluatorForVerb[verb]
 		if !ok {
 			return authorizer.DecisionDeny, "forbidden action: " + verb, nil
