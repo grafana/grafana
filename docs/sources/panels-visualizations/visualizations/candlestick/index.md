@@ -136,7 +136,7 @@ The candlestick visualization is based on the time series visualization. It can 
 
 {{< docs/shared lookup="visualizations/tooltip-options-2.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-### Data links and actions {#data-links}
+## Data links and actions {#data-links}
 
 {{< docs/shared lookup="visualizations/datalink-options-2.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
