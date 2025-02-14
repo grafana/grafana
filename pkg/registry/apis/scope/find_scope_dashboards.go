@@ -99,7 +99,7 @@ func (f *findScopeDashboardsREST) Connect(ctx context.Context, name string, opts
 			return strings.Compare(i.Status.DashboardTitle, j.Status.DashboardTitle)
 		})
 
-		logger.FromContext(req.Context()).Debug("find scopedashboardbinding", "raw", len(all.Items), "filtered", len(results.Items))
+		logger.FromContext(req.Context()).Debug("find scopedashboardbinding", "raw", len(all.Items), "filtered", len(results.Items), "scopeQueryParams", strings.Join(scopes, ","))
 
 		responder.Object(200, results)
 	}), nil
