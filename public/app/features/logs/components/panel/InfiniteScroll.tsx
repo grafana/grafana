@@ -86,6 +86,22 @@ export const InfiniteScroll = ({
     }
   }, [autoScroll, setInitialScrollPosition]);
 
+  const onLoadMore = useCallback(() => {
+    const newRange = canScrollBottom(getVisibleRange(logs), timeRange, timeZone, sortOrder);
+    if (!newRange) {
+      setInfiniteLoaderState('out-of-bounds');
+      return;
+    }
+    lastLogOfPage.current.push(logs[logs.length - 1].uid);
+    setInfiniteLoaderState('loading');
+    loadMore?.(newRange);
+
+    reportInteraction('grafana_logs_infinite_scrolling', {
+      direction: 'bottom',
+      sort_order: sortOrder,
+    });
+  }, [loadMore, logs, sortOrder, timeRange, timeZone]);
+
   useEffect(() => {
     if (!scrollElement || !loadMore || !config.featureToggles.logsInfiniteScrolling) {
       return;
@@ -99,24 +115,8 @@ export const InfiniteScroll = ({
       lastEvent.current = event;
       lastScroll.current = scrollElement.scrollTop;
       if (scrollDirection === ScrollDirection.Bottom) {
-        scrollBottom();
+        onLoadMore();
       }
-    }
-
-    function scrollBottom() {
-      const newRange = canScrollBottom(getVisibleRange(logs), timeRange, timeZone, sortOrder);
-      if (!newRange) {
-        setInfiniteLoaderState('out-of-bounds');
-        return;
-      }
-      lastLogOfPage.current.push(logs[logs.length - 1].uid);
-      setInfiniteLoaderState('loading');
-      loadMore?.(newRange);
-
-      reportInteraction('grafana_logs_infinite_scrolling', {
-        direction: 'bottom',
-        sort_order: sortOrder,
-      });
     }
 
     scrollElement.addEventListener('scroll', handleScroll);
@@ -126,13 +126,13 @@ export const InfiniteScroll = ({
       scrollElement.removeEventListener('scroll', handleScroll);
       scrollElement.removeEventListener('wheel', handleScroll);
     };
-  }, [infiniteLoaderState, loadMore, logs, scrollElement, sortOrder, timeRange, timeZone]);
+  }, [infiniteLoaderState, loadMore, logs.length, onLoadMore, scrollElement]);
 
   const Renderer = useCallback(
     ({ index, style }: ListChildComponentProps) => {
       if (!logs[index] && infiniteLoaderState !== 'idle') {
         return (
-          <LogLineMessage style={style}>
+          <LogLineMessage style={style} onClick={infiniteLoaderState === 'pre-scroll' ? onLoadMore : undefined}>
             {getMessageFromInfiniteLoaderState(infiniteLoaderState, sortOrder)}
           </LogLineMessage>
         );
@@ -149,7 +149,7 @@ export const InfiniteScroll = ({
         />
       );
     },
-    [handleOverflow, infiniteLoaderState, logs, showTime, sortOrder, wrapLogMessage]
+    [handleOverflow, infiniteLoaderState, logs, onLoadMore, showTime, sortOrder, wrapLogMessage]
   );
 
   const onItemsRendered = useCallback(

@@ -76,6 +76,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
       },
     }),
     logLineMessage: css({
+      fontFamily: theme.typography.fontFamily,
       textAlign: 'center',
     }),
     timestamp: css({
@@ -118,6 +119,11 @@ export const getStyles = (theme: GrafanaTheme2) => {
       '&.level-debug': {
         color: colors.debug,
       },
+    }),
+    loadMoreButton: css({
+      background: 'transparent',
+      border: 'none',
+      display: 'inline',
     }),
     overflows: css({
       outline: 'solid 1px red',

@@ -6,15 +6,22 @@ import { getStyles } from './LogLine';
 
 interface Props {
   children: ReactNode;
+  onClick?: () => void;
   style: CSSProperties;
 }
 
-export const LogLineMessage = ({ children, style }: Props) => {
+export const LogLineMessage = ({ children, onClick, style }: Props) => {
   const theme = useTheme2();
   const styles = getStyles(theme);
   return (
     <div style={style} className={`${styles.logLine} ${styles.logLineMessage}`}>
-      {children}
+      {onClick ? (
+        <button className={styles.loadMoreButton} onClick={onClick}>
+          {children}
+        </button>
+      ) : (
+        children
+      )}
     </div>
   );
 };
