@@ -64,7 +64,15 @@ export const getStyles = (theme: GrafanaTheme2) => {
         opacity: 0.7,
       },
       '&.infinite-scroll': {
-        borderTop: `solid 1px ${theme.colors.border.strong}`,
+        '&::before': {
+          borderTop: `solid 1px ${theme.colors.border.strong}`,
+          content: '""',
+          height: 0,
+          left: 0,
+          position: 'absolute',
+          top: -3,
+          width: '100%',
+        },
       },
     }),
     logLineMessage: css({
