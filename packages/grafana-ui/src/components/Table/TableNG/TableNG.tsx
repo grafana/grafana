@@ -718,6 +718,20 @@ const getStyles = (theme: GrafanaTheme2, textWrap: boolean) => ({
       '--rdg-row-hover-background-color': theme.colors.action.hover,
       overflow: 'scroll',
     },
+
+    'div[role=columnheader]': {
+      '&:hover': {
+        // The margin is to offset the border, eliminating element text from slightly
+        // moving on hover.
+        margin: '0px 0px 1px -2px',
+        // There is some depth built into datagrid that we need to eliminate by giving
+        // each cell border it's on zIndex.
+        zIndex: theme.zIndex.tooltip,
+        borderBottom: 'none', // override default react-data-grid border behavior
+        borderInlineStart: `2px solid ${theme.colors.text.link}`,
+        borderInlineEnd: `2px solid ${theme.colors.text.link}`,
+      },
+    },
   }),
   menuItem: css({
     maxWidth: '200px',
@@ -733,9 +747,19 @@ const getStyles = (theme: GrafanaTheme2, textWrap: boolean) => ({
     // Reset default cell styles for custom cell component styling
     paddingInline: '0',
 
+    // There are datagrid styles overriding our custom hover styles.
+    div: {
+      background: 'none',
+    },
+
     '&:hover': {
-      // TODO: border was replaced with boxShadow, because it was causing cell shift on hover
-      boxShadow: 'rgb(61, 113, 217) 0px 0px 2px',
+      // The margin is to offset the border, eliminating element text from slightly
+      // moving on hover.
+      margin: '-1px -1px 0px -1px',
+      border: `1px solid ${theme.colors.text.link}`,
+      // There is some depth built into datagrid that we need to eliminate by giving
+      // each cell border it's on zIndex.
+      zIndex: theme.zIndex.tooltip,
       backgroundColor: theme.colors.background.primary,
     },
   }),
