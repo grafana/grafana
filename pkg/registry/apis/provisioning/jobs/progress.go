@@ -54,12 +54,14 @@ func NewJobProgressRecorder(progressFn ProgressFn) *JobProgressRecorder {
 func (r *JobProgressRecorder) Record(ctx context.Context, result JobResourceResult) {
 	r.resultCount++
 
+	logger := logging.FromContext(ctx).With("path", result.Path, "resource", result.Resource, "group", result.Group, "action", result.Action, "name", result.Name)
 	if result.Error != nil {
-		logger := logging.FromContext(ctx)
-		logger.Error("job resource operation failed", "err", result.Error, "path", result.Path, "resource", result.Resource, "group", result.Group, "action", result.Action, "name", result.Name)
+		logger.Error("job resource operation failed", "err", result.Error)
 		if len(r.errors) < 20 {
 			r.errors = append(r.errors, result.Error.Error())
 		}
+	} else {
+		logger.Info("job resource operation succeeded")
 	}
 
 	r.updateSummary(result)
