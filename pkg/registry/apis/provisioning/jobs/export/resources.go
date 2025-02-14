@@ -13,6 +13,8 @@ import (
 	dashboards "github.com/grafana/grafana/pkg/apis/dashboard"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 	"github.com/grafana/grafana/pkg/storage/unified/parquet"
@@ -40,11 +42,15 @@ func (f *resourceReader) Write(ctx context.Context, key *resource.ResourceKey, v
 	item := &unstructured.Unstructured{}
 	err := item.UnmarshalJSON(value)
 	if err != nil {
+		// TODO: should we fail here?
 		return fmt.Errorf("failed to unmarshal unstructured: %w", err)
 	}
 
-	if err := f.job.write(ctx, item); err != nil {
-		return fmt.Errorf("write legacy item: %w", err)
+	if result := f.job.write(ctx, item); result.Error != nil {
+		f.job.progress.Record(ctx, result)
+		if len(f.job.progress.Errors()) > 20 {
+			return fmt.Errorf("stopping execution due to too many errors")
+		}
 	}
 
 	return nil
@@ -110,9 +116,9 @@ func (r *exportJob) loadResourcesFromAPIServer(ctx context.Context, kind schema.
 		}
 
 		for _, item := range list.Items {
-			// TODO: when to stop execution?
-			if err = r.write(ctx, &item); err != nil {
-				return fmt.Errorf("error adding value: %w", err)
+			r.progress.Record(ctx, r.write(ctx, &item))
+			if len(r.progress.Errors()) > 20 {
+				return fmt.Errorf("stopping execution due to too many errors")
 			}
 		}
 
@@ -125,14 +131,24 @@ func (r *exportJob) loadResourcesFromAPIServer(ctx context.Context, kind schema.
 	return nil
 }
 
-func (r *exportJob) write(ctx context.Context, obj *unstructured.Unstructured) error {
+func (r *exportJob) write(ctx context.Context, obj *unstructured.Unstructured) jobs.JobResourceResult {
+	result := jobs.JobResourceResult{
+		Name:     obj.GetName(),
+		Resource: obj.GetKind(),
+		Group:    "", // TODO
+		Path:     "",
+		Action:   repository.FileActionCreated,
+	}
+
 	if err := ctx.Err(); err != nil {
-		return fmt.Errorf("context error: %w", err)
+		result.Error = fmt.Errorf("context error: %w", err)
+		return result
 	}
 
 	meta, err := utils.MetaAccessor(obj)
 	if err != nil {
-		return fmt.Errorf("extract meta accessor: %w", err)
+		result.Error = fmt.Errorf("extract meta accessor: %w", err)
+		return result
 	}
 
 	// Message from annotations
@@ -149,9 +165,8 @@ func (r *exportJob) write(ctx context.Context, obj *unstructured.Unstructured) e
 	name := meta.GetName()
 	repoName := meta.GetRepositoryName()
 	if repoName == r.target.Config().GetName() {
-		r.logger.Info("skip dashboard since it is already in repository", "dashboard", name)
-		// TODO: add ignore
-		return nil
+		result.Action = repository.FileActionIgnored
+		return result
 	}
 
 	title := meta.FindTitle("")
@@ -173,6 +188,8 @@ func (r *exportJob) write(ctx context.Context, obj *unstructured.Unstructured) e
 		r.logger.Error("folder of item was not in tree of repository")
 	}
 
+	result.Path = fid.Path
+
 	// Clear the metadata
 	delete(obj.Object, "metadata")
 
@@ -182,34 +199,28 @@ func (r *exportJob) write(ctx context.Context, obj *unstructured.Unstructured) e
 
 	body, err := json.MarshalIndent(obj.Object, "", "  ")
 	if err != nil {
-		return fmt.Errorf("failed to marshal dashboard %s: %w", name, err)
+		result.Error = fmt.Errorf("failed to marshal dashboard: %w", err)
+		return result
 	}
 
 	fileName := slugify.Slugify(title) + ".json"
 	if fid.Path != "" {
 		fileName, err = safepath.Join(fid.Path, fileName)
 		if err != nil {
-			return fmt.Errorf("error adding file path %s: %w", title, err)
+			result.Error = fmt.Errorf("error adding file path: %w", err)
+			return result
 		}
 	}
 	if r.prefix != "" {
 		fileName, err = safepath.Join(r.prefix, fileName)
 		if err != nil {
-			return fmt.Errorf("error adding path prefix %s: %w", r.prefix, err)
+			result.Error = fmt.Errorf("error adding path prefix: %w", err)
+			return result
 		}
 	}
 
-	// Write the file
 	err = r.target.Write(ctx, fileName, r.ref, body, commitMessage)
-	if err != nil {
-		// summary.Error++
-		r.logger.Error("failed to write a file in repository", "error", err)
-		// if len(summary.Errors) < 20 {
-		// 	summary.Errors = append(summary.Errors, fmt.Sprintf("error writing: %s", fileName))
-		// }
-	} else {
-		// summary.Write++
-	}
+	result.Error = fmt.Errorf("failed to write file: %w", err)
 
-	return nil
+	return result
 }
