@@ -161,7 +161,9 @@ func (r *Parser) Parse(ctx context.Context, info *repository.FileInfo, validate 
 	})
 
 	objName, folderName := NamesFromHashedRepoPath(cfg.Name, info.Path)
-	obj.SetName(objName)
+	if obj.GetName() == "" {
+		obj.SetName(objName) // use the name saved in config
+	}
 	obj.SetUID("")             // clear identifiers
 	obj.SetResourceVersion("") // clear identifiers
 	parsed.Meta.SetFolder(folderName)
