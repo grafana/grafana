@@ -2,7 +2,6 @@ package authz
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -52,10 +51,6 @@ func ProvideAuthZClient(
 		return nil, err
 	}
 
-	if !features.IsEnabledGlobally(featuremgmt.FlagAuthZGRPCServer) && authCfg.mode == clientModeCloud {
-		return nil, errors.New("authZGRPCServer feature toggle is required for cloud and grpc mode")
-	}
-
 	switch authCfg.mode {
 	case clientModeCloud:
 		return newRemoteRBACClient(authCfg, tracer)
@@ -99,9 +94,6 @@ func ProvideAuthZClient(
 func ProvideStandaloneAuthZClient(
 	cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer tracing.Tracer,
 ) (authlib.AccessClient, error) {
-	if !features.IsEnabledGlobally(featuremgmt.FlagAuthZGRPCServer) {
-		return nil, nil
-	}
 
 	authCfg, err := readAuthzClientSettings(cfg)
 	if err != nil {
