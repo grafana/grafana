@@ -220,7 +220,9 @@ func (r *exportJob) write(ctx context.Context, obj *unstructured.Unstructured) j
 	}
 
 	err = r.target.Write(ctx, fileName, r.ref, body, commitMessage)
-	result.Error = fmt.Errorf("failed to write file: %w", err)
+	if err != nil {
+		result.Error = fmt.Errorf("failed to write file: %w", err)
+	}
 
 	return result
 }
