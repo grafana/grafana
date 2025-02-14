@@ -116,13 +116,14 @@ jobs:
         ports:
           - 8080:8080
         options: >-
-          --entrypoint "/bin/mimir"
-          --health-cmd "wget -q --spider http://localhost:8080/ready || exit 1"
+          --health-cmd "curl -f http://localhost:8080/ready || exit 1"
           --health-interval 10s
           --health-timeout 5s 
           --health-retries 5
         env:
-          MIMIR_ARGS: "-target=all -blocks-storage.backend=filesystem -blocks-storage.filesystem.dir=/tmp/mimir"
+          MIMIR_ARGS: "-target=backend -blocks.storage.backend=filesystem -blocks.storage.filesystem.dir=/tmp/mimir"
+        volumes:
+          - /tmp/mimir:/tmp/mimir
 
     steps:
       - name: Identify Runner
