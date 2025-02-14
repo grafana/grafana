@@ -70,11 +70,7 @@ func getEngineMySQL(getter confGetter) (*xorm.Engine, error) {
 func configureTLS(getter confGetter, config *mysql.Config) error {
 	sslMode := getter.String("ssl_mode")
 
-	if sslMode == "skip-verify" || sslMode == "preferred" {
-		config.Params["tls"] = "preferred"
-	}
-
-	if sslMode == "true" {
+	if sslMode == "true" || sslMode == "skip-verify" {
 		tlsCfg := tls.ClientConfig{
 			CAPath:     getter.String("ca_cert_path"),
 			CertPath:   getter.String("client_cert_path"),
@@ -85,6 +81,10 @@ func configureTLS(getter confGetter, config *mysql.Config) error {
 		rawTLSCfg, err := tlsCfg.GetTLSConfig()
 		if err != nil {
 			return fmt.Errorf("failed to get TLS config for mysql: %w", err)
+		}
+
+		if sslMode == "skip-verify" {
+			rawTLSCfg.InsecureSkipVerify = true
 		}
 
 		if err := mysql.RegisterTLSConfig(tlsConfigName, rawTLSCfg); err != nil {
