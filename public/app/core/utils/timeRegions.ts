@@ -1,13 +1,6 @@
 import { Cron } from 'croner';
-import { Duration } from 'date-fns';
 
-import {
-  AbsoluteTimeRange,
-  TimeRange,
-  reverseParseDuration,
-  durationToMilliseconds,
-  parseDuration,
-} from '@grafana/data';
+import { AbsoluteTimeRange, TimeRange, durationToMilliseconds, parseDuration } from '@grafana/data';
 
 export type TimeRegionMode = 'simple' | 'cron';
 export interface TimeRegionConfig {
@@ -32,39 +25,6 @@ interface ParsedTime {
   s?: number; // 0-59
 }
 
-// random from the interwebs
-function convertSecondsToTime(seconds: number): Duration {
-  const secondsInYear = 31536000;
-  const secondsInMonth = 2628000;
-  const secondsInDay = 86400;
-  const secondsInHour = 3600;
-  const secondsInMinute = 60;
-
-  let years = Math.floor(seconds / secondsInYear);
-  let remainingSeconds = seconds % secondsInYear;
-
-  let months = Math.floor(remainingSeconds / secondsInMonth);
-  remainingSeconds %= secondsInMonth;
-
-  let days = Math.floor(remainingSeconds / secondsInDay);
-  remainingSeconds %= secondsInDay;
-
-  let hours = Math.floor(remainingSeconds / secondsInHour);
-  remainingSeconds %= secondsInHour;
-
-  let minutes = Math.floor(remainingSeconds / secondsInMinute);
-  let finalSeconds = remainingSeconds % secondsInMinute;
-
-  return {
-    years,
-    months,
-    days,
-    hours,
-    minutes,
-    seconds: finalSeconds,
-  };
-}
-
 const secsInDay = 24 * 3600;
 
 interface Range {
@@ -73,7 +33,7 @@ interface Range {
 }
 
 // inclusive "to" means if the "to" time is undefined, it means 00:00 on the day after the "to" day
-function getDuration({ from, to }: Range) {
+function getDurationSecs({ from, to }: Range) {
   const fromDay = from.dayOfWeek ?? 0;
   const fromHour = from.h ?? 0;
   const fromMin = from.m ?? 0;
@@ -102,19 +62,21 @@ function getDuration({ from, to }: Range) {
     durSecs = daysSecs - fromSecs + toSecs;
   }
 
-  return convertSecondsToTime(durSecs);
+  return durSecs;
 }
 
-export function convertToCron(cfg: TimeRegionConfig): { cron: string; duration: string } | undefined {
+export function convertToCron(cfg: TimeRegionConfig) {
   const hRange = normalizeRange(cfg);
+
   if (hRange !== undefined) {
-    const duration = getDuration(hRange);
+    const durationSecs = getDurationSecs(hRange);
     const dow = hRange.from.dayOfWeek !== undefined ? hRange.from.dayOfWeek! - 1 : '*';
     const cronString = `${hRange.from.m} ${hRange.from.h} * * ${dow}`;
 
-    return { cron: cronString, duration: reverseParseDuration(duration, false) };
-  } else {
-    return undefined;
+    return {
+      cronExpr: cronString,
+      duration: durationSecs,
+    };
   }
 }
 
@@ -187,40 +149,46 @@ export function calculateTimesWithin(cfg: TimeRegionConfig, tRange: TimeRange, t
 
   const mode = cfg.mode ?? 'simple';
 
+  let cronExpr = '';
+  let durationMs = 0;
+
   if (mode === 'simple') {
-    const cronConfig = convertToCron(cfg);
-    cfg.cronExpr = cronConfig?.cron;
-    cfg.duration = cronConfig?.duration;
+    const cron = convertToCron(cfg);
+
+    if (cron != null) {
+      cronExpr = cron?.cronExpr;
+      durationMs = cron?.duration * 1e3;
+    }
+  } else if (mode === 'cron') {
+    cronExpr = cfg.cronExpr!;
+    durationMs = (cfg.duration ?? '') !== '' ? durationToMilliseconds(parseDuration(cfg.duration!)) : 0;
   }
 
-  if (cfg.cronExpr) {
-    try {
-      let job = new Cron(cfg.cronExpr, { timezone: "UTC" });
+  try {
+    let job = new Cron(cronExpr, { timezone: 'Etc/UTC' });
 
-      // get previous run that may overlap with start of timerange
-      let durationMs = (cfg.duration ?? '') !== '' ? durationToMilliseconds(parseDuration(cfg.duration!)) : 0;
-      let fromDate: Date | null = new Date(tRange.from.valueOf() - durationMs);
+    // get previous run that may overlap with start of timerange
+    let fromDate: Date | null = new Date(tRange.from.valueOf() - durationMs);
 
-      let toMs = tRange.to.valueOf();
-      let nextDate = job.nextRun(fromDate);
+    let toMs = tRange.to.valueOf();
+    let nextDate = job.nextRun(fromDate);
 
-      while (nextDate != null) {
-        let nextMs = +nextDate;
+    while (nextDate != null) {
+      let nextMs = +nextDate;
 
-        if (nextMs > toMs) {
-          break;
-        } else {
-          ranges.push({
-            from: nextMs,
-            to: nextMs + durationMs,
-          });
-          nextDate = job.nextRun(nextDate);
-        }
+      if (nextMs > toMs) {
+        break;
+      } else {
+        ranges.push({
+          from: nextMs,
+          to: nextMs + durationMs,
+        });
+        nextDate = job.nextRun(nextDate);
       }
-    } catch (e) {
-      // invalid expression
-      console.error(e);
     }
+  } catch (e) {
+    // invalid expression
+    console.error(e);
   }
 
   return ranges;

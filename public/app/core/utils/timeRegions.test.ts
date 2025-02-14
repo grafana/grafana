@@ -1,7 +1,42 @@
-import { dateTime, TimeRange } from '@grafana/data';
+import { Duration } from 'date-fns';
+
+import { dateTime, reverseParseDuration, TimeRange } from '@grafana/data';
 import { convertToCron, TimeRegionConfig } from 'app/core/utils/timeRegions';
 
 import { calculateTimesWithin } from './timeRegions';
+
+// random from the interwebs
+function durationFromSeconds(seconds: number): Duration {
+  const secondsInYear = 31536000;
+  const secondsInMonth = 2628000;
+  const secondsInDay = 86400;
+  const secondsInHour = 3600;
+  const secondsInMinute = 60;
+
+  let years = Math.floor(seconds / secondsInYear);
+  let remainingSeconds = seconds % secondsInYear;
+
+  let months = Math.floor(remainingSeconds / secondsInMonth);
+  remainingSeconds %= secondsInMonth;
+
+  let days = Math.floor(remainingSeconds / secondsInDay);
+  remainingSeconds %= secondsInDay;
+
+  let hours = Math.floor(remainingSeconds / secondsInHour);
+  remainingSeconds %= secondsInHour;
+
+  let minutes = Math.floor(remainingSeconds / secondsInMinute);
+  let finalSeconds = remainingSeconds % secondsInMinute;
+
+  return {
+    years,
+    months,
+    days,
+    hours,
+    minutes,
+    seconds: finalSeconds,
+  };
+}
 
 // note: calculateTimesWithin always returns time ranges in UTC
 describe('timeRegions', () => {
@@ -174,10 +209,10 @@ describe('timeRegions', () => {
       "time region config with from time '$from' and DOW '$fromDOW', to: '$to' and DOW '$toDOW' should generate a cron string of '$expectedCron' and '$expectedDuration'",
       ({ from, fromDOW, to, toDOW, timezone, expectedCron, expectedDuration }) => {
         const timeConfig: TimeRegionConfig = { from, fromDayOfWeek: fromDOW, to, toDayOfWeek: toDOW, timezone };
-        const convertedCron = convertToCron(timeConfig);
+        const convertedCron = convertToCron(timeConfig)!;
         expect(convertedCron).not.toBeUndefined();
-        expect(convertedCron!.cron).toEqual(expectedCron);
-        expect(convertedCron!.duration).toEqual(expectedDuration);
+        expect(convertedCron.cronExpr).toEqual(expectedCron);
+        expect(reverseParseDuration(durationFromSeconds(convertedCron.duration), false)).toEqual(expectedDuration);
       }
     );
   });
