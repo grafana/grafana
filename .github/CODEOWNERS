@@ -515,7 +515,6 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/features/playlist/ @grafana/dashboards-squad
 /public/app/features/plugins/ @grafana/plugins-platform-frontend
 /public/app/features/profile/ @grafana/grafana-frontend-platform
-/public/app/features/query-library/ @grafana/grafana-frontend-platform
 /public/app/features/runtime/ @ryantxu
 /public/app/features/query/ @grafana/dashboards-squad
 /public/app/features/sandbox/ @grafana/grafana-frontend-platform
@@ -593,6 +592,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/features/explore/NodeGraph/ @grafana/observability-traces-and-profiling
 /public/app/features/explore/FlameGraph/ @grafana/observability-traces-and-profiling
 /public/app/features/explore/TraceView/ @grafana/observability-traces-and-profiling
+/public/app/features/explore/QueryLibrary/ @grafana/grafana-frontend-platform
 
 /public/api-merged.json @grafana/grafana-backend-group
 /public/api-enterprise-spec.json @grafana/grafana-backend-group
