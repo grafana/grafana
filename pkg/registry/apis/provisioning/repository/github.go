@@ -37,7 +37,11 @@ type githubRepository struct {
 	repo  string
 }
 
-var _ Repository = (*githubRepository)(nil)
+var (
+	_ Repository      = (*githubRepository)(nil)
+	_ RepositoryHooks = (*githubRepository)(nil)
+	_ Historical      = (*githubRepository)(nil)
+)
 
 func NewGitHub(
 	ctx context.Context,

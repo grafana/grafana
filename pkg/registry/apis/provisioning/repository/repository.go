@@ -85,9 +85,6 @@ type Repository interface {
 
 	// Delete a file in the remote repository
 	Delete(ctx context.Context, path, ref, message string) error
-
-	// History of changes for a path
-	History(ctx context.Context, path, ref string) ([]provisioning.HistoryItem, error)
 }
 
 // Hooks called after the repository has been created, updated or deleted
@@ -97,6 +94,11 @@ type RepositoryHooks interface {
 	OnCreate(ctx context.Context) (*provisioning.WebhookStatus, error)
 	OnUpdate(ctx context.Context) (*provisioning.WebhookStatus, error)
 	OnDelete(ctx context.Context) error
+}
+
+type Historical interface {
+	// History of changes for a path
+	History(ctx context.Context, path, ref string) ([]provisioning.HistoryItem, error)
 }
 
 type FileAction string
