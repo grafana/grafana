@@ -3,7 +3,9 @@ package cloudmonitoring
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"net/url"
+	"path"
 	"strings"
 	"time"
 
@@ -14,6 +16,47 @@ import (
 
 	"github.com/grafana/grafana/pkg/tsdb/cloud-monitoring/kinds/dataquery"
 )
+
+func (timeSeriesFilter *cloudMonitoringTimeSeriesList) getFrameGenerator(ctx context.Context, req *backend.QueryDataRequest,
+	s *Service, dsInfo datasourceInfo, logger log.Logger) backend.FrameGenerator {
+	morePages := true
+	timeSeriesMethod := "timeSeries"
+	params := timeSeriesFilter.params
+
+	var r *http.Request
+	projectName, setupErr := s.ensureProject(ctx, dsInfo, timeSeriesFilter.parameters.ProjectName)
+	if setupErr == nil {
+		r, setupErr = createRequest(ctx, &dsInfo, path.Join("/v3/projects", projectName, timeSeriesMethod), nil)
+	}
+
+	logger.Info("getFrameGenerator() setup complete.")
+
+	return func() (data.Frames, error) {
+		if setupErr != nil {
+			return nil, setupErr
+		}
+		if !morePages {
+			return nil, backend.ErrFrameGeneratorEOF
+		}
+		logger.Info("getFrameGenerator() more pages.")
+
+		clmResponse, err := doRequestPage(ctx, r, dsInfo, params, nil, logger)
+		if err != nil {
+			return nil, err
+		}
+		morePages = clmResponse.NextPageToken != ""
+		params["pageToken"] = []string{clmResponse.NextPageToken}
+		logger.Info("getFrameGenerator() set next page token", "pageToken", clmResponse.NextPageToken)
+
+		dr := &backend.DataResponse{}
+		err = parseTimeSeriesResponse(dr, clmResponse, r.URL.RawQuery, timeSeriesFilter, params, timeSeriesFilter.parameters.GroupBys, logger)
+
+		if len(dr.Frames) > 0 {
+			return dr.Frames, err
+		}
+		return nil, err
+	}
+}
 
 func (timeSeriesFilter *cloudMonitoringTimeSeriesList) run(ctx context.Context, req *backend.QueryDataRequest,
 	s *Service, dsInfo datasourceInfo, logger log.Logger) (*backend.DataResponse, any, string, error) {

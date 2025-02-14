@@ -3,6 +3,8 @@ package cloudmonitoring
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"path"
 	"strings"
 	"time"
 
@@ -11,6 +13,55 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	gcmTime "github.com/grafana/grafana/pkg/tsdb/cloud-monitoring/time"
 )
+
+func (timeSeriesQuery *cloudMonitoringTimeSeriesQuery) getFrameGenerator(ctx context.Context, req *backend.QueryDataRequest,
+	s *Service, dsInfo datasourceInfo, logger log.Logger) backend.FrameGenerator {
+
+	morePages := true
+	timeSeriesMethod := "timeSeries"
+	timeSeriesQuery.parameters.Query += timeSeriesQuery.appendGraphPeriod(req)
+	from := timeSeriesQuery.timeRange.From
+	to := timeSeriesQuery.timeRange.To
+	timeFormat := "2006/01/02-15:04:05"
+	timeSeriesQuery.parameters.Query += fmt.Sprintf(" | within d'%s', d'%s'", from.UTC().Format(timeFormat), to.UTC().Format(timeFormat))
+	requestBody := map[string]any{
+		"query": timeSeriesQuery.parameters.Query,
+	}
+
+	var r *http.Request
+	projectName, setupErr := s.ensureProject(ctx, dsInfo, timeSeriesQuery.parameters.ProjectName)
+	if setupErr == nil {
+		r, setupErr = createRequest(ctx, &dsInfo, path.Join("/v3/projects", projectName, timeSeriesMethod), nil)
+	}
+
+	logger.Info("getFrameGenerator(timeSeriesQuery) setup complete.")
+
+	return func() (data.Frames, error) {
+		if setupErr != nil {
+			return nil, setupErr
+		}
+		if !morePages {
+			return nil, backend.ErrFrameGeneratorEOF
+		}
+		logger.Info("getFrameGenerator(timeSeriesQuery) more pages.")
+
+		clmResponse, err := doRequestPage(ctx, r, dsInfo, nil, requestBody, logger)
+		if err != nil {
+			return nil, err
+		}
+		morePages = clmResponse.NextPageToken != ""
+		requestBody["pageToken"] = clmResponse.NextPageToken
+		logger.Info("getFrameGenerator(timeSeriesQuery) set next page token", "pageToken", clmResponse.NextPageToken)
+
+		dr := &backend.DataResponse{}
+		err = timeSeriesQuery.parseResponse(dr, clmResponse, r.URL.RawQuery, logger)
+
+		if len(dr.Frames) > 0 {
+			return dr.Frames, err
+		}
+		return nil, err
+	}
+}
 
 func (timeSeriesQuery *cloudMonitoringTimeSeriesQuery) appendGraphPeriod(req *backend.QueryDataRequest) string {
 	// GraphPeriod needs to be explicitly disabled.

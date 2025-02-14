@@ -112,6 +112,7 @@ require (
 	github.com/jmespath/go-jmespath v0.4.0 // indirect; // @grafana/grafana-backend-group
 	github.com/jmoiron/sqlx v1.3.5 // @grafana/grafana-backend-group
 	github.com/json-iterator/go v1.1.12 // @grafana/grafana-backend-group
+	github.com/launchdarkly/go-jsonstream/v3 v3.1.0 // @grafana/grafana-backend-group
 	github.com/lib/pq v1.10.9 // @grafana/grafana-backend-group
 	github.com/m3db/prometheus_remote_client_golang v0.4.4 // @grafana/grafana-backend-group
 	github.com/madflojo/testcerts v1.1.1 // @grafana/alerting-backend
@@ -593,3 +594,9 @@ exclude k8s.io/client-go v12.0.0+incompatible
 
 // k8s.io/apiserver fails due to incompatibility with cel-go 0.23, can be removed once apiserver v0.32.3 is released.
 replace github.com/google/cel-go => github.com/google/cel-go v0.22.1
+
+// Use development branch justinrandell/chunked-resultset-processing.
+// To make changes locally, use a filesystem path, and update the path
+// to point at your local copy, I use:
+// replace github.com/grafana/grafana-plugin-sdk-go => /home/justin/code/grafana/local/grafana-plugin-sdk-go
+replace github.com/grafana/grafana-plugin-sdk-go => github.com/grafana/grafana-plugin-sdk-go v0.0.0-20250310133005-b7e45f05d357

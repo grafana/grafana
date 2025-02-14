@@ -18,13 +18,14 @@ import (
 
 type (
 	cloudMonitoringQueryExecutor interface {
-		run(ctx context.Context, req *backend.QueryDataRequest, s *Service, dsInfo datasourceInfo, logger log.Logger) (
+		run(context.Context, *backend.QueryDataRequest, *Service, datasourceInfo, log.Logger) (
 			*backend.DataResponse, any, string, error)
 		parseResponse(dr *backend.DataResponse, data any, executedQueryString string, logger log.Logger) error
 		buildDeepLink() string
 		getRefID() string
 		getAliasBy() string
 		getParameter(i string) string
+		getFrameGenerator(context.Context, *backend.QueryDataRequest, *Service, datasourceInfo, log.Logger) backend.FrameGenerator
 	}
 
 	// Plugin API query data request used to generate

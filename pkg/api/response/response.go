@@ -8,8 +8,12 @@ import (
 	"fmt"
 	"net/http"
 	"reflect"
+	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	jsoniter "github.com/json-iterator/go"
+	"github.com/launchdarkly/go-jsonstream/v3/jwriter"
 	"gopkg.in/yaml.v3"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
@@ -131,9 +135,10 @@ func (r *NormalResponse) SetHeader(key, value string) *NormalResponse {
 
 // StreamingResponse is a response that streams itself back to the client.
 type StreamingResponse struct {
-	body   any
-	status int
-	header http.Header
+	body          any
+	status        int
+	header        http.Header
+	queryResponse *backend.QueryDataResponse
 }
 
 // Status gets the response's status.
@@ -148,6 +153,157 @@ func (r StreamingResponse) Body() []byte {
 	return nil
 }
 
+func (r StreamingResponse) WriteToJSONWriter(jsonWriter *jwriter.Writer) error {
+	topLevel := jsonWriter.Object()
+	topLevel.Name("results")
+	resO := jsonWriter.Object()
+	for refid, res := range r.queryResponse.Responses {
+		resO.Name(refid)
+
+		res1 := jsonWriter.Object()
+		res1.Name("status").Int(r.status)
+		res1.Name("frames")
+
+		jsonFrames := jsonWriter.Array()
+		if r.queryResponse.PagedResponses {
+			for {
+				frames, err := r.queryResponse.FrameGenerator()
+				if err == nil || err == backend.ErrFrameGeneratorEOF {
+					for _, frame := range frames {
+						r.processFrame(frame, &jsonFrames, jsonWriter)
+					}
+				}
+				if err != nil {
+					break
+				}
+			}
+		} else {
+			for _, frame := range res.Frames {
+				r.processFrame(frame, &jsonFrames, jsonWriter)
+			}
+		}
+
+		jsonFrames.End()
+		res1.End()
+	}
+	resO.End()
+
+	topLevel.End()
+	jsonWriter.Flush()
+	return jsonWriter.Error()
+}
+
+func (r StreamingResponse) processFrame(frame *data.Frame, frames *jwriter.ArrayState, jsonWriter *jwriter.Writer) {
+	f := frames.Object()
+	f.Name("schema")
+	s := jsonWriter.Object()
+
+	if frame.Meta != nil {
+		s.Name("meta")
+		m := jsonWriter.Object()
+		if frame.Meta.ExecutedQueryString != "" {
+			m.Name("executedQueryString").String(frame.Meta.ExecutedQueryString)
+		}
+		if customBytes, err := json.Marshal(frame.Meta.Custom); err == nil {
+			m.Name("custom").Raw(customBytes)
+		}
+		m.Name("type").String(string(frame.Meta.Type))
+		tv := m.Name("typeVersion").Array()
+		tv.Int(int(frame.Meta.TypeVersion[0]))
+		tv.Int(int(frame.Meta.TypeVersion[1]))
+		tv.End()
+		m.End()
+	}
+	s.Name("refId").String(frame.RefID)
+	s.Name("fields")
+	fs := jsonWriter.Array()
+	for _, field := range frame.Fields {
+		fj := jsonWriter.Object()
+		fj.Name("name").String(field.Name)
+
+		if len(field.Labels) > 0 {
+			l := fj.Name("labels").Object()
+			for k, v := range field.Labels {
+				l.Name(k).String(v)
+			}
+			l.End()
+		}
+
+		if field.Config != nil {
+			c := fj.Name("config").Object()
+			if field.Config.Interval > 0 {
+				c.Name("interval").Float64(field.Config.Interval)
+			}
+			if len(field.Config.Links) > 0 {
+				ls := c.Name("links").Array()
+				for _, link := range field.Config.Links {
+					lj := jsonWriter.Object()
+					lj.Name("url").String(link.URL)
+					lj.Name("targetBlank").Bool(link.TargetBlank)
+					lj.Name("title").String(link.Title)
+					lj.End()
+				}
+				ls.End()
+			}
+			if field.Config.DisplayNameFromDS != "" {
+				c.Name("displayNameFromDS").String(field.Config.DisplayNameFromDS)
+			}
+			if len(field.Config.Custom) > 0 {
+				if customBytes, err := json.Marshal(field.Config.Custom); err == nil {
+					c.Name("custom").Raw(customBytes)
+				}
+			}
+			c.End()
+		}
+
+		typeString := "string"
+		switch true {
+		case field.Type().Numeric():
+			typeString = "number"
+		case field.Type().Time():
+			typeString = "time"
+		}
+		fj.Name("type").String(typeString)
+		ti := fj.Name("typeInfo").Object()
+		ti.Name("frame").String(field.Type().ItemTypeString())
+		if field.Type().Nullable() {
+			ti.Name("nullable").Bool(true)
+		}
+		ti.End()
+		fj.End()
+	}
+	fs.End()
+	s.End()
+	f.Name("data")
+	v := jsonWriter.Object()
+	v.Name("values")
+	vOuter := jsonWriter.Array()
+	for _, field := range frame.Fields {
+		vInner := jsonWriter.Array()
+		for i := 0; i < field.Len(); i++ {
+			val, ok := field.ConcreteAt(i)
+			switch {
+			case field.Type().Numeric():
+				if intVal, intOk := val.(int64); intOk {
+					vInner.Int(int(intVal))
+				} else if floatVal, floatOk := val.(float64); floatOk {
+					vInner.Float64(floatVal)
+				}
+			case field.Type().Time():
+				vInner.Int(int(val.(time.Time).UnixMilli()))
+			case !ok:
+				vInner.Null()
+			default:
+				vInner.String(val.(string))
+			}
+		}
+		vInner.End()
+	}
+	vOuter.End()
+	v.End()
+	f.End()
+}
+
 // WriteTo writes the response to the provided context.
 // Required to implement api.Response.
 func (r StreamingResponse) WriteTo(ctx *contextmodel.ReqContext) {
@@ -157,12 +313,20 @@ func (r StreamingResponse) WriteTo(ctx *contextmodel.ReqContext) {
 	}
 	ctx.Resp.WriteHeader(r.status)
 
-	// Use a configuration that's compatible with the standard library
-	// to minimize the risk of introducing bugs. This will make sure
-	// that map keys is ordered.
-	jsonCfg := jsoniter.ConfigCompatibleWithStandardLibrary
-	enc := jsonCfg.NewEncoder(ctx.Resp)
-	if err := enc.Encode(r.body); err != nil {
+	var err error
+	if r.queryResponse != nil {
+		ctx.Logger.Info("Using json v2 response writer")
+		w := jwriter.NewStreamingWriter(ctx.Resp, 1024)
+		err = r.WriteToJSONWriter(&w)
+	} else {
+		// Use a configuration that's compatible with the standard library
+		// to minimize the risk of introducing bugs. This will make sure
+		// that map keys is ordered.
+		jsonCfg := jsoniter.ConfigCompatibleWithStandardLibrary
+		enc := jsonCfg.NewEncoder(ctx.Resp)
+		err = enc.Encode(r.body)
+	}
+	if err != nil {
 		ctx.Logger.Error("Error writing to response", "err", err)
 	}
 }
@@ -193,6 +357,17 @@ func (r *RedirectResponse) Body() []byte {
 func JSON(status int, body any) *NormalResponse {
 	return Respond(status, body).
 		SetHeader("Content-Type", "application/json")
+}
+
+// JSONStreamingV2 creates a streaming JSON response.
+func JSONStreamingV2(status int, queryData *backend.QueryDataResponse) StreamingResponse {
+	header := make(http.Header)
+	header.Set("Content-Type", "application/json")
+	return StreamingResponse{
+		status:        status,
+		queryResponse: queryData,
+		header:        header,
+	}
 }
 
 // JSONStreaming creates a streaming JSON response.

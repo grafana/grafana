@@ -219,6 +219,10 @@ const (
 	// Enables previous SQL data source dataset dropdown behavior
 	FlagSqlDatasourceDatabaseSelection = "sqlDatasourceDatabaseSelection"
 
+	// FlagJsonStreamingV2
+	// Use the new json streaming plumbing
+	FlagJsonStreamingV2 = "jsonStreamingV2"
+
 	// FlagRecordedQueriesMulti
 	// Enables writing multiple items from a single query within Recorded Queries
 	FlagRecordedQueriesMulti = "recordedQueriesMulti"
@@ -966,4 +970,13 @@ const (
 	// FlagInviteUserExperimental
 	// Renders invite user button along the app
 	FlagInviteUserExperimental = "inviteUserExperimental"
+
+	// FlagResponseFramePerPage
+	// When decoding result sets to data.Frames, we can paginate in many cases.
+	// For example, by reading a subset of rows from sql.Rows, reading from a
+	// paginated http API, etc. In those cases, write out a frame per page/chunk
+	// of the result, encode it as JSON, and flush it to the client before reading
+	// the next page. This allows us to set a memory bound on requests that doesn't
+	// scale with the response size.
+	FlagResponseFramePerPage = "responseFramePerPage"
 )
