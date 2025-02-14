@@ -35,17 +35,32 @@ export interface ComboboxBaseProps<T extends string | number>
    * Allows the user to set a value which is not in the list of options.
    */
   createCustomValue?: boolean;
-  options: Array<ComboboxOption<T>> | ((inputValue: string) => Promise<Array<ComboboxOption<T>>>);
-  onChange: (option: ComboboxOption<T>) => void;
+
   /**
-   * Most consumers should pass value in as a scalar string | number. However, sometimes with Async because we don't
-   * have the full options loaded to match the value to, consumers may also pass in an Option with a label to display.
+   * An array of options, or a function that returns a promise resolving to an array of options.
+   * If a function, it will be called when the menu is opened and on keypress with the current search query.
+   */
+  options: Array<ComboboxOption<T>> | ((inputValue: string) => Promise<Array<ComboboxOption<T>>>);
+
+  /**
+   * onChange handler is called with the newly selected option.
+   */
+  onChange: (option: ComboboxOption<T>) => void;
+
+  /**
+   * Current selected value. Most consumers should pass a scalar value (string | number). However, sometimes with Async
+   * it may be better to pass in an Option with a label to display.
    */
   value?: T | ComboboxOption<T> | null;
+
   /**
-   * Defaults to 100%. Number is a multiple of 8px. 'auto' will size the input to the content.
+   * Defaults to full width of container. Number is a multiple of the spacing unit. 'auto' will size the input to the content.
    * */
   width?: number | 'auto';
+
+  /**
+   * Called when the input loses focus.
+   */
   onBlur?: () => void;
 }
 
@@ -53,6 +68,9 @@ const RECOMMENDED_ITEMS_AMOUNT = 100_000;
 
 type ClearableConditionals<T extends number | string> =
   | {
+      /**
+       * Allow the user to clear the selected value. `null` is emitted from the onChange handler
+       */
       isClearable: true;
       /**
        * The onChange handler is called with `null` when clearing the Combobox.
