@@ -84,6 +84,7 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+          --network-alias postgres
       mysql:
         image: mysql:8.0
         env:
@@ -98,6 +99,7 @@ jobs:
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
+          --network-alias mysql
       redis:
         image: redis:alpine
         ports:
@@ -107,23 +109,25 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+          --network-alias redis
       memcached:
         image: memcached:alpine
         ports:
           - 11211:11211
-      mimir:
+        options: >-
+          --network-alias memcached
+      mimir_backend:
         image: grafana/mimir:latest
         ports:
           - 8080:8080
         options: >-
-          --health-cmd "curl -f http://localhost:8080/ready || exit 1"
-          --health-interval 10s
-          --health-timeout 5s 
-          --health-retries 5
-        env:
-          MIMIR_ARGS: "-target=backend -blocks.storage.backend=filesystem -blocks.storage.filesystem.dir=/tmp/mimir"
-        volumes:
-          - /tmp/mimir:/tmp/mimir
+          --health-cmd "wget --no-verbose --tries=1 --spider http://localhost:8080/-/ready || exit 1"
+          --health-interval 30s
+          --health-timeout 10s 
+          --health-retries 3
+          --health-start-period 30s
+          --network-alias mimir_backend
+          --command "/bin/mimir -target=all -blocks-storage.backend=filesystem -blocks-storage.filesystem.dir=/tmp/mimir"
 
     steps:
       - name: Identify Runner
@@ -152,12 +156,19 @@ jobs:
 
       - name: Run Integration Tests
         env:
-          GRAFANA_TEST_DB: postgres
-          POSTGRES_HOST: localhost
+          # From postgres_integration_tests_steps
           PGPASSWORD: grafanatest
-          REDIS_URL: redis://localhost:6379/0
+          GRAFANA_TEST_DB: postgres
+          POSTGRES_HOST: postgres
+          # From redis_integration_tests_steps
+          REDIS_URL: redis://redis:6379/0
+          # From remote_alertmanager_integration_tests_steps
           AM_TENANT_ID: test
-          AM_URL: http://localhost:8080/prometheus
+          AM_URL: http://mimir_backend:8080
+          # From mysql_integration_tests_steps
+          MYSQL_HOST: mysql
+          # From memcached_integration_tests_steps
+          MEMCACHED_HOSTS: memcached:11211
         run: |
           sudo apt-get install -y postgresql-client
           psql -h localhost -p 5432 -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
