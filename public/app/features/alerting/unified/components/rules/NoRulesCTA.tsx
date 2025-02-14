@@ -21,7 +21,7 @@ export const NoRulesSplash = () => {
                 </LinkButton>
               )}
               {canCreateCloudRules && (
-                <LinkButton variant="primary" icon="plus" size="lg" href="alerting/new/recording">
+                <LinkButton variant="primary" icon="plus" size="lg" href="alerting/new/grafana-recording">
                   <Trans i18nKey="alerting.list-view.empty.new-recording-rule">New recording rule</Trans>
                 </LinkButton>
               )}
