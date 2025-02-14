@@ -2,14 +2,11 @@ import { escapeRegExp } from 'lodash';
 
 import { SelectableValue } from '@grafana/data';
 
-import {
-  BuilderQueryExpression,
-  BuilderQueryEditorExpressionType,
-  BuilderQueryEditorPropertyType,
-} from '../../dataquery.gen';
+import { BuilderQueryExpression, BuilderQueryEditorExpressionType, BuilderQueryEditorPropertyType, BuilderQueryEditorOperatorExpression, BuilderQueryEditorOperatorType } from '../../dataquery.gen';
 import { QueryEditorPropertyType } from '../../types';
 
 const DYNAMIC_TYPE_ARRAY_DELIMITER = '["`indexer`"]';
+
 export const valueToDefinition = (name: string) => {
   return {
     value: name,
@@ -19,7 +16,10 @@ export const valueToDefinition = (name: string) => {
 
 export const DEFAULT_LOGS_BUILDER_QUERY: BuilderQueryExpression = {
   columns: { columns: [], type: BuilderQueryEditorExpressionType.Property },
-  from: undefined,
+  from: {
+    type: BuilderQueryEditorExpressionType.Property,
+    property: { type: BuilderQueryEditorPropertyType.String, name: '' },
+  },
   groupBy: { expressions: [], type: BuilderQueryEditorExpressionType.Group_by },
   reduce: { expressions: [], type: BuilderQueryEditorExpressionType.Reduce },
   where: { expressions: [], type: BuilderQueryEditorExpressionType.And },
@@ -140,14 +140,25 @@ export const parseQueryToExpression = (query: string): BuilderQueryExpression =>
         type: BuilderQueryEditorExpressionType.And,
         expressions: conditions.map((condition) => {
           const [property, operator, value] = condition.split(/\s+/);
+    
+          let parsedValue: BuilderQueryEditorOperatorType;
+    
+          if (value === 'true' || value === 'false') {
+            parsedValue = value === 'true'; 
+          } else if (!isNaN(Number(value))) {
+            parsedValue = Number(value); 
+          } else {
+            parsedValue = value; 
+          }
+    
           return {
             property: { name: property, type: BuilderQueryEditorPropertyType.String },
-            operator: { name: operator, value: { value } },
+            operator: { name: operator, value: parsedValue },
             type: BuilderQueryEditorExpressionType.Operator,
-          };
+          } as BuilderQueryEditorOperatorExpression; // ✅ Type assertion
         }),
       };
-    }
+    }    
 
     if (line.startsWith('| summarize ')) {
       const groupByColumns = line

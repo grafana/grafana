@@ -339,10 +339,12 @@ export interface SelectableValue {
   value: string;
 }
 
+export type BuilderQueryEditorOperatorType = (string | boolean | number | SelectableValue);
+
 export interface BuilderQueryEditorOperator {
   labelValue?: string;
   name: string;
-  value: (Record<string, unknown> | '#BuilderQueryEditorOperatorValueType');
+  value: BuilderQueryEditorOperatorType;
 }
 
 export interface BuilderQueryEditorOperatorExpression {
@@ -351,7 +353,7 @@ export interface BuilderQueryEditorOperatorExpression {
   type: BuilderQueryEditorExpressionType;
 }
 
-export interface BuilerQueryEditorWhereArrayExpression {
+export interface BuilderQueryEditorWhereArrayExpression {
   expressions: Array<(BuilderQueryEditorOperatorExpression | {
       expressions: Array<BuilderQueryEditorOperatorExpression>;
       type: BuilderQueryEditorExpressionType;
@@ -359,7 +361,7 @@ export interface BuilerQueryEditorWhereArrayExpression {
   type: BuilderQueryEditorExpressionType;
 }
 
-export const defaultBuilerQueryEditorWhereArrayExpression: Partial<BuilerQueryEditorWhereArrayExpression> = {
+export const defaultBuilderQueryEditorWhereArrayExpression: Partial<BuilderQueryEditorWhereArrayExpression> = {
   expressions: [],
 };
 
@@ -369,19 +371,19 @@ export interface BuilderQueryEditorFunctionParameterExpression {
   value: string;
 }
 
-export interface QueryEditorReduceExpression {
+export interface BuilderQueryEditorReduceExpression {
   focus?: boolean;
   parameters?: Array<BuilderQueryEditorFunctionParameterExpression>;
   property: BuilderQueryEditorProperty;
   reduce: BuilderQueryEditorProperty;
 }
 
-export const defaultQueryEditorReduceExpression: Partial<QueryEditorReduceExpression> = {
+export const defaultBuilderQueryEditorReduceExpression: Partial<BuilderQueryEditorReduceExpression> = {
   parameters: [],
 };
 
 export interface BuilderQueryEditorReduceExpressionArray {
-  expressions: Array<QueryEditorReduceExpression>;
+  expressions: Array<BuilderQueryEditorReduceExpression>;
   type: BuilderQueryEditorExpressionType;
 }
 
@@ -408,10 +410,10 @@ export const defaultBuilderQueryEditorGroupByExpressionArray: Partial<BuilderQue
 export interface BuilderQueryExpression {
   columns?: BuilderQueryEditorColumnsExpression;
   from?: BuilderQueryEditorPropertyExpression;
-  groupBy: BuilderQueryEditorGroupByExpressionArray;
+  groupBy?: BuilderQueryEditorGroupByExpressionArray;
   limit?: number;
-  reduce: BuilderQueryEditorReduceExpressionArray;
-  where: BuilerQueryEditorWhereArrayExpression;
+  reduce?: BuilderQueryEditorReduceExpressionArray;
+  where?: BuilderQueryEditorWhereArrayExpression;
 }
 
 export interface AzureResourceGraphQuery {

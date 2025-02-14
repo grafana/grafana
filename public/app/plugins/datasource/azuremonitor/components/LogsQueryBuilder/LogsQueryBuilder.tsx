@@ -1,4 +1,4 @@
-import React, { useMemo} from 'react';
+import React, { useMemo, useState} from 'react';
 
 import { EditorRows } from '@grafana/plugin-ui';
 import { Alert } from '@grafana/ui';
@@ -24,38 +24,45 @@ interface LogsQueryBuilderProps {
 
 export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
   const { query, onQueryChange, schema } = props;
+  const [isKQLPreviewHidden, setIsKQLPreviewHidden] = useState<boolean>(true);
 
   const tables: AzureLogAnalyticsMetadataTable[] = useMemo(() => {
     return schema?.database?.tables || [];
   }, [schema?.database]);
 
-  const parsedQuery: BuilderQueryExpression = query.azureLogAnalytics?.builderQuery
-    ? parseQueryToExpression(query.azureLogAnalytics.query!)
+
+  const builderQuery: BuilderQueryExpression = query.azureLogAnalytics?.query
+    ? parseQueryToExpression(query.azureLogAnalytics.query)
     : DEFAULT_LOGS_BUILDER_QUERY;
 
   const allColumns = useMemo(() => {
-    if (!parsedQuery.from?.property.name || !tables) {
+    if (!builderQuery.from?.property.name || !tables) {
       return [];
     }
-    const selectedTable = tables.find((table) => table.name === parsedQuery!.from?.property.name);
+    const selectedTable = tables.find((table) => table.name === builderQuery!.from?.property.name);
     return selectedTable?.columns || [];
-  }, [parsedQuery, tables]);
-
+  }, [builderQuery, tables]);
+  
   return (
     <span data-testid={selectors.components.queryEditor.logsQueryEditor.container.input}>
       <EditorRows>
         {schema && tables.length === 0 && (
           <Alert severity="warning" title="Resource loaded successfully but without any tables" />
         )}
-        <TableSection {...props} tables={tables} allColumns={allColumns} query={query} onQueryUpdate={onQueryChange} />
+        <TableSection 
+          {...props} 
+          tables={tables} 
+          allColumns={allColumns} 
+          query={query}
+          onQueryUpdate={onQueryChange} 
+        />
         {/* <FilterSection 
           {...props} 
-          onQueryUpdate={onQueryChange} 
-          selectedTable={selectedTable!} 
-          columns={columns} 
-          selectedColumns={selectedColumns} 
-        />
-        <AggregateSection 
+          onQueryUpdate={onQueryChange}
+          allColumns={allColumns}  
+          query={query}
+        /> */}
+        {/* <AggregateSection 
           {...props} 
           selectedTable={selectedTable!} 
           columns={columns} 
@@ -86,7 +93,11 @@ export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
             </EditorField>
           </EditorFieldGroup>
         </EditorRow> */}
-        <KQLPreview query={query.azureLogAnalytics?.query || ''} />
+        <KQLPreview 
+          query={query.azureLogAnalytics?.query || ''} 
+          hidden={isKQLPreviewHidden}
+          setHidden={setIsKQLPreviewHidden}
+        />
       </EditorRows>
     </span>
   );

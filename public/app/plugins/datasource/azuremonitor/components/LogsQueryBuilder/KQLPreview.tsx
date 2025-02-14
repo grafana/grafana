@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import Prism from 'prismjs';
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { EditorField, EditorFieldGroup, EditorRow } from '@grafana/plugin-ui';
@@ -11,11 +11,12 @@ import 'prismjs/themes/prism-tomorrow.min.css';
 
 interface KQLPreviewProps {
   query: string;
+  hidden: boolean;
+  setHidden: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-const KQLPreview: React.FC<KQLPreviewProps> = ({ query }) => {
+const KQLPreview: React.FC<KQLPreviewProps> = ({ query, hidden, setHidden }) => {
   const styles = useStyles2(getStyles);
-  const [hidden, setHidden] = useState(true);
 
   useEffect(() => {
     Prism.highlightAll();

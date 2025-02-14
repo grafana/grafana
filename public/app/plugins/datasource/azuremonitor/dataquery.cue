@@ -190,13 +190,11 @@ composableKinds: DataQuery: {
 					value: string
 				} @cuetsy(kind="interface")
 
-				#BuilderQueryEditorOperatorType: "string" | "boolean" | "number" | #SelectableValue 
-
-				#BuilderQueryEditorOperatorValueType: #BuilderQueryEditorOperatorType | [...#BuilderQueryEditorOperatorType]
+				#BuilderQueryEditorOperatorType: string | bool | number | #SelectableValue @cuetsy(kind="type")
 
 				#BuilderQueryEditorOperator: {
 					name: string
-					value: #BuilderQueryEditorOperatorValueType
+					value: #BuilderQueryEditorOperatorType
 					labelValue?: string
 				} @cuetsy(kind="interface")
 
@@ -211,7 +209,7 @@ composableKinds: DataQuery: {
 					type: #BuilderQueryEditorExpressionType
 				}
 
-				#BuilerQueryEditorWhereArrayExpression: {
+				#BuilderQueryEditorWhereArrayExpression: {
 					expressions: [...(#BuilderQueryEditorOperatorExpression | #BuilderQueryEditorWhereExpression)] 
 					type: #BuilderQueryEditorExpressionType
 				} @cuetsy(kind="interface")
@@ -222,7 +220,7 @@ composableKinds: DataQuery: {
 					type: #BuilderQueryEditorExpressionType
 				} @cuetsy(kind="interface")
 
-				#QueryEditorReduceExpression: {
+				#BuilderQueryEditorReduceExpression: {
 					property: #BuilderQueryEditorProperty
 					reduce: #BuilderQueryEditorProperty
 					parameters?: [...#BuilderQueryEditorFunctionParameterExpression]
@@ -230,7 +228,7 @@ composableKinds: DataQuery: {
 				} @cuetsy(kind="interface")
 
 				#BuilderQueryEditorReduceExpressionArray: {
-					expressions: [...#QueryEditorReduceExpression]
+					expressions: [...#BuilderQueryEditorReduceExpression]
 					type: #BuilderQueryEditorExpressionType
 				} @cuetsy(kind="interface")
 
@@ -249,7 +247,7 @@ composableKinds: DataQuery: {
 				#BuilderQueryExpression: {
 					from?: #BuilderQueryEditorPropertyExpression
 					columns?: #BuilderQueryEditorColumnsExpression
-					where?: #BuilerQueryEditorWhereArrayExpression
+					where?: #BuilderQueryEditorWhereArrayExpression
 					reduce?: #BuilderQueryEditorReduceExpressionArray
 					groupBy?: #BuilderQueryEditorGroupByExpressionArray
 					limit?: int
