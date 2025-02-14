@@ -534,16 +534,18 @@ type Cfg struct {
 	ShortLinkExpiration int
 
 	// Unified Storage
-	UnifiedStorage              map[string]UnifiedStorageConfig
-	IndexPath                   string
-	IndexWorkers                int
-	IndexMaxBatchSize           int
-	IndexFileThreshold          int
-	IndexMinCount               int
-	SprinklesApiServer          string
-	SprinklesApiServerPageLimit int
-	CACertPath                  string
-	HttpsSkipVerify             bool
+	UnifiedStorage                   map[string]UnifiedStorageConfig
+	IndexPath                        string
+	IndexWorkers                     int
+	IndexMaxBatchSize                int
+	IndexFileThreshold               int
+	IndexMinCount                    int
+	SprinklesApiServer               string
+	SprinklesApiServerPageLimit      int
+	CACertPath                       string
+	HttpsSkipVerify                  bool
+	UnistorServerCAPToken            string
+	UnistorServerCAPTokenExchangeURL string
 }
 
 const UnifiedStorageConfigKeyDashboard = "dashboards.dashboard.grafana.app"

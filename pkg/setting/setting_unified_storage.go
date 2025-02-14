@@ -56,4 +56,6 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.SprinklesApiServerPageLimit = section.Key("sprinkles_api_server_page_limit").MustInt(100)
 	cfg.CACertPath = section.Key("ca_cert_path").String()
 	cfg.HttpsSkipVerify = section.Key("https_skip_verify").MustBool(false)
+	cfg.UnistorServerCAPToken = section.Key("cap_token").MustString("")
+	cfg.UnistorServerCAPTokenExchangeURL = section.Key("cap_token_exchange_url").MustString("")
 }
