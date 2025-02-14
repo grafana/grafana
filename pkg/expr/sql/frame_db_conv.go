@@ -153,106 +153,85 @@ func fieldValFromRowVal(fieldType data.FieldType, val interface{}) (interface{},
 	}
 
 	nullable := fieldType.Nullable()
+
 	switch fieldType {
 	case data.FieldTypeInt8, data.FieldTypeNullableInt8:
-		v, ok := val.(int8)
-		if ok {
-			return ptrIfNull(v, nullable), nil
-		}
-		return nil, fmt.Errorf("unexpected value type %v of type %T, expected int8", val, val)
+		return parseVal[int8](val, "int8", nullable)
 
 	case data.FieldTypeUint8, data.FieldTypeNullableUint8:
-		v, ok := val.(uint8)
-		if ok {
-			return ptrIfNull(v, nullable), nil
-		}
-		return nil, fmt.Errorf("unexpected value type %v of type %T, expected uint8", val, val)
+		return parseVal[uint8](val, "uint8", nullable)
 
 	case data.FieldTypeInt16, data.FieldTypeNullableInt16:
-		v, ok := val.(int16)
-		if ok {
-			return ptrIfNull(v, nullable), nil
-		}
-		return nil, fmt.Errorf("unexpected value type %v of type %T, expected int16", val, val)
+		return parseVal[int16](val, "int16", nullable)
 
 	case data.FieldTypeUint16, data.FieldTypeNullableUint16:
-		v, ok := val.(uint16)
-		if ok {
-			return ptrIfNull(v, nullable), nil
-		}
-		return nil, fmt.Errorf("unexpected value type %v of type %T, expected uint16", val, val)
+		return parseVal[uint16](val, "uint16", nullable)
 
 	case data.FieldTypeInt32, data.FieldTypeNullableInt32:
-		v, ok := val.(int32)
-		if ok {
-			return ptrIfNull(v, nullable), nil
-		}
-		return nil, fmt.Errorf("unexpected value type %v of type %T, expected int32", val, val)
+		return parseVal[int32](val, "int32", nullable)
 
 	case data.FieldTypeUint32, data.FieldTypeNullableUint32:
-		v, ok := val.(uint32)
-		if ok {
-			return ptrIfNull(v, nullable), nil
-		}
-		return nil, fmt.Errorf("unexpected value type %v of type %T, expected uint32", val, val)
+		return parseVal[uint32](val, "uint32", nullable)
 
 	case data.FieldTypeInt64, data.FieldTypeNullableInt64:
-		v, ok := val.(int64)
-		if ok {
-			return ptrIfNull(v, nullable), nil
-		}
-		return nil, fmt.Errorf("unexpected value type %v of type %T, expected int64", val, val)
+		return parseVal[int64](val, "int64", nullable)
 
 	case data.FieldTypeUint64, data.FieldTypeNullableUint64:
-		v, ok := val.(uint64)
-		if ok {
-			return ptrIfNull(v, nullable), nil
-		}
-		return nil, fmt.Errorf("unexpected value type %v of type %T, expected uint64", val, val)
+		return parseVal[uint64](val, "uint64", nullable)
 
 	case data.FieldTypeFloat32, data.FieldTypeNullableFloat32:
-		v, ok := val.(float32)
-		if ok {
-			return ptrIfNull(v, nullable), nil
-		}
-		return nil, fmt.Errorf("unexpected value type %v of type %T, expected float32", val, val)
+		return parseVal[float32](val, "float32", nullable)
 
 	case data.FieldTypeFloat64, data.FieldTypeNullableFloat64:
-		if v, ok := val.(float64); ok {
-			return ptrIfNull(v, nullable), nil
-		}
-		if vD, ok := val.(decimal.Decimal); ok {
-			return ptrIfNull(vD.InexactFloat64(), nullable), nil
-		}
-		return nil, fmt.Errorf("unexpected value type %v of type %T, expected float64 or decimal.Decimal", val, val)
+		return parseFloat64OrDecimal(val, nullable)
 
 	case data.FieldTypeTime, data.FieldTypeNullableTime:
-		v, ok := val.(time.Time)
-		if ok {
-			return ptrIfNull(v, nullable), nil
-		}
-		return nil, fmt.Errorf("unexpected value type %v of type %T, expected time.Time", val, val)
+		return parseVal[time.Time](val, "time.Time", nullable)
 
 	case data.FieldTypeString, data.FieldTypeNullableString:
-		v, ok := val.(string)
-		if ok {
-			return ptrIfNull(v, nullable), nil
-		}
-		return nil, fmt.Errorf("unexpected value type %v of type %T, expected string", val, val)
+		return parseVal[string](val, "string", nullable)
 
 	case data.FieldTypeBool, data.FieldTypeNullableBool:
-		v, ok := val.(int8)
-		if ok {
-			b := v != 0
-			return ptrIfNull(b, nullable), nil
-		}
-		return nil, fmt.Errorf("unexpected value type %v of type %T, expected int8 (for bool)", val, val)
+		return parseBoolFromInt8(val, nullable)
 
 	default:
 		return nil, fmt.Errorf("unsupported field type %s for val %v", fieldType, val)
 	}
 }
 
+// parseVal attempts to assert `val` as type T. If successful, it returns either
+// the value or a pointer, depending on `isNullable`. If not, returns an error.
+func parseVal[T any](val interface{}, typeName string, isNullable bool) (interface{}, error) {
+	v, ok := val.(T)
+	if !ok {
+		return nil, fmt.Errorf("unexpected value type %v of type %T, expected %s", val, val, typeName)
+	}
+	return ptrIfNull(v, isNullable), nil
+}
+
+// parseFloat64OrDecimal handles the special case where val can be float64 or decimal.Decimal.
+func parseFloat64OrDecimal(val interface{}, isNullable bool) (interface{}, error) {
+	if fv, ok := val.(float64); ok {
+		return ptrIfNull(fv, isNullable), nil
+	}
+	if d, ok := val.(decimal.Decimal); ok {
+		return ptrIfNull(d.InexactFloat64(), isNullable), nil
+	}
+	return nil, fmt.Errorf("unexpected value type %v of type %T, expected float64 or decimal.Decimal", val, val)
+}
+
+// parseBoolFromInt8 asserts val as an int8, converts non-zero to true.
+// Returns pointer if isNullable, otherwise the bool value.
+func parseBoolFromInt8(val interface{}, isNullable bool) (interface{}, error) {
+	v, ok := val.(int8)
+	if !ok {
+		return nil, fmt.Errorf("unexpected value type %v of type %T, expected int8 (for bool)", val, val)
+	}
+	b := (v != 0)
+	return ptrIfNull(b, isNullable), nil
+}
+
+// ptrIfNull returns a pointer to val if isNullable is true; otherwise, returns val.
 func ptrIfNull[T any](val T, isNullable bool) interface{} {
 	if isNullable {
 		return &val
