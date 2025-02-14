@@ -27,6 +27,7 @@ import { QueryGroupOptions } from 'app/types';
 
 import { MIXED_DATASOURCE_NAME } from '../../../../plugins/datasource/mixed/MixedDataSource';
 import { useQueryLibraryContext } from '../../../explore/QueryLibrary/QueryLibraryContext';
+import { ExpressionDatasourceUID } from '../../../expressions/types';
 import { getDatasourceSrv } from '../../../plugins/datasource_srv';
 import { PanelTimeRange } from '../../scene/PanelTimeRange';
 import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor } from '../../utils/utils';
@@ -329,7 +330,9 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
     const newQueries = addQuery(enrichedQueries, query);
     model.onQueriesChange(newQueries);
     if (query.datasource?.uid) {
-      const uniqueDatasources = new Set(newQueries.map((q) => q.datasource?.uid));
+      const uniqueDatasources = new Set(
+        newQueries.map((q) => q.datasource?.uid).filter((uid) => uid !== ExpressionDatasourceUID)
+      );
       const isMixed = uniqueDatasources.size > 1;
       const newDatasourceRef = {
         uid: isMixed ? MIXED_DATASOURCE_NAME : query.datasource.uid,
