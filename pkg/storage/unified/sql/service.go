@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
+	"github.com/grafana/grafana/pkg/storage/unified/search"
 )
 
 var (
@@ -110,7 +111,12 @@ func (s *service) start(ctx context.Context) error {
 		return err
 	}
 
-	server, err := NewResourceServer(ctx, s.db, s.cfg, s.features, s.docBuilders, s.tracing, s.reg, authzClient)
+	searchOptions, err := search.NewSearchOptions(s.features, s.cfg, s.tracing, s.docBuilders, s.reg)
+	if err != nil {
+		return err
+	}
+
+	server, err := NewResourceServer(s.db, s.cfg, s.tracing, s.reg, authzClient, searchOptions)
 	if err != nil {
 		return err
 	}
