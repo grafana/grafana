@@ -11,7 +11,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/admission"
-	genericregistry "k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/kube-openapi/pkg/common"
@@ -199,11 +198,6 @@ func (b *DashboardsAPIBuilder) Mutate(ctx context.Context, a admission.Attribute
 func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
 	internalDashResourceInfo := dashboardinternal.DashboardResourceInfo
 
-	// wrap the optsGetter to add encode versioner
-	opts.OptsGetter = &dashboardOptsGetter{
-		optsGetter: opts.OptsGetter,
-	}
-
 	legacyStore, err := b.legacy.NewStore(opts.Scheme, opts.OptsGetter, b.reg)
 	if err != nil {
 		return err
@@ -348,24 +342,4 @@ func (b *DashboardsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 func (b *DashboardsAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 	defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
 	return b.search.GetAPIRoutes(defs)
-}
-
-var _ genericregistry.RESTOptionsGetter = &dashboardOptsGetter{}
-
-type dashboardOptsGetter struct {
-	optsGetter genericregistry.RESTOptionsGetter
-}
-
-func (d *dashboardOptsGetter) GetRESTOptions(resource schema.GroupResource, example runtime.Object) (genericregistry.RESTOptions, error) {
-	opts, err := d.optsGetter.GetRESTOptions(resource, example)
-	if err != nil {
-		return genericregistry.RESTOptions{}, err
-	}
-	// this ensures that the dashboard resource is encoded at v0alpha1
-	opts.StorageConfig.EncodeVersioner = runtime.NewMultiGroupVersioner(
-		dashboardv0alpha1.DashboardResourceInfo.GroupVersion(),
-		dashboardv0alpha1.DashboardResourceInfo.GroupVersionKind().GroupKind(),
-		dashboardv0alpha1.LibraryPanelResourceInfo.GroupVersionKind().GroupKind(),
-	)
-	return opts, nil
 }
