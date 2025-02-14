@@ -42,7 +42,7 @@ func (f *resourceReader) Write(ctx context.Context, key *resource.ResourceKey, v
 	item := &unstructured.Unstructured{}
 	err := item.UnmarshalJSON(value)
 	if err != nil {
-		// TODO: should we fail here?
+		// TODO: should we fail the entire execution?
 		return fmt.Errorf("failed to unmarshal unstructured: %w", err)
 	}
 
@@ -132,11 +132,11 @@ func (r *exportJob) loadResourcesFromAPIServer(ctx context.Context, kind schema.
 }
 
 func (r *exportJob) write(ctx context.Context, obj *unstructured.Unstructured) jobs.JobResourceResult {
+	gvk := obj.GroupVersionKind()
 	result := jobs.JobResourceResult{
 		Name:     obj.GetName(),
-		Resource: obj.GetKind(),
-		Group:    "", // TODO
-		Path:     "",
+		Resource: gvk.Kind,
+		Group:    gvk.Group,
 		Action:   repository.FileActionCreated,
 	}
 
