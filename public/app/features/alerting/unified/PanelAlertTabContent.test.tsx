@@ -213,6 +213,7 @@ describe('PanelAlertTabContent', () => {
 
     mockAlertRuleApi(server).prometheusRuleNamespaces(GRAFANA_RULES_SOURCE_NAME, promResponse);
     mockAlertRuleApi(server).rulerRules(GRAFANA_RULES_SOURCE_NAME, rulerResponse);
+    config.unifiedAlertingEnabled = true;
   });
 
   it('Will take into account panel maxDataPoints', async () => {
