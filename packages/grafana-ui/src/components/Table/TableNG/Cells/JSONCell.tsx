@@ -1,14 +1,18 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { Property } from 'csstype';
 import { isString } from 'lodash';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../../../themes';
+import { Button, clearLinkButtonStyles } from '../../../Button';
+import { DataLinksContextMenu } from '../../../DataLinks/DataLinksContextMenu';
 import { CellNGProps } from '../types';
+import { getCellLinks } from '../utils';
 
-export const JSONCell = ({ value, justifyContent }: Omit<CellNGProps, 'theme' | 'field'>) => {
+export const JSONCell = ({ value, justifyContent, field, rowIdx }: Omit<CellNGProps, 'theme'>) => {
   const styles = useStyles2(getStyles, justifyContent);
+  const clearButtonStyle = useStyles2(clearLinkButtonStyles);
 
   let localValue = value;
   let displayValue = localValue;
@@ -21,8 +25,30 @@ export const JSONCell = ({ value, justifyContent }: Omit<CellNGProps, 'theme' | 
     displayValue = JSON.stringify(localValue, null, ' ');
   }
 
-  // TODO: Implement DataLinksContextMenu + actions
-  return <div className={styles.jsonText}>{displayValue}</div>;
+  const hasLinks = Boolean(getCellLinks(field, rowIdx)?.length);
+
+  // TODO: Implement actions
+  return (
+    <div className={styles.jsonText}>
+      {hasLinks ? (
+        <DataLinksContextMenu links={() => getCellLinks(field, rowIdx) || []}>
+          {(api) => {
+            if (api.openMenu) {
+              return (
+                <Button className={cx(clearButtonStyle)} onClick={api.openMenu}>
+                  {displayValue}
+                </Button>
+              );
+            } else {
+              return <>{displayValue}</>;
+            }
+          }}
+        </DataLinksContextMenu>
+      ) : (
+        displayValue
+      )}
+    </div>
+  );
 };
 
 const getStyles = (theme: GrafanaTheme2, justifyContent: Property.JustifyContent) => ({
