@@ -335,4 +335,60 @@ func TestIntegrationSecureValue(t *testing.T) {
 			require.Equal(t, *secureValueOrgB, listOrgB.Items[0])
 		})
 	})
+
+	t.Run("securevalue actions without having required permissions", func(t *testing.T) {
+		// Create users on a random org without specifying secrets-related permissions.
+		editorP := mustCreateUsers(t, helper, nil, nil).Editor
+
+		clientP := helper.GetResourceClient(apis.ResourceClientArgs{
+			User: editorP,
+			GVR:  gvrSecureValues,
+		})
+
+		// GET
+		rawGet, err := clientP.Resource.Get(ctx, "some-securevalue", metav1.GetOptions{})
+		require.Error(t, err)
+		require.Nil(t, rawGet)
+
+		var statusGetErr *apierrors.StatusError
+		require.True(t, errors.As(err, &statusGetErr))
+		require.EqualValues(t, http.StatusForbidden, statusGetErr.Status().Code)
+
+		// LIST
+		rawList, err := clientP.Resource.List(ctx, metav1.ListOptions{})
+		require.Error(t, err)
+		require.Nil(t, rawList)
+
+		var statusListErr *apierrors.StatusError
+		require.True(t, errors.As(err, &statusListErr))
+		require.EqualValues(t, http.StatusForbidden, statusListErr.Status().Code)
+
+		// CREATE
+		testSecureValue := helper.LoadYAMLOrJSONFile("testdata/secure-value-generate.yaml") // to pass validation before authz.
+		rawCreate, err := clientP.Resource.Create(ctx, testSecureValue, metav1.CreateOptions{})
+		require.Error(t, err)
+		require.Nil(t, rawCreate)
+
+		var statusCreateErr *apierrors.StatusError
+		require.True(t, errors.As(err, &statusCreateErr))
+		require.EqualValues(t, http.StatusForbidden, statusCreateErr.Status().Code)
+
+		// UPDATE
+		testSecureValue.SetName("test") // to pass validation before authz.
+		rawUpdate, err := clientP.Resource.Update(ctx, testSecureValue, metav1.UpdateOptions{})
+		require.Error(t, err)
+		require.Nil(t, rawUpdate)
+
+		var statusUpdateErr *apierrors.StatusError
+		require.True(t, errors.As(err, &statusUpdateErr))
+		require.EqualValues(t, http.StatusForbidden, statusUpdateErr.Status().Code)
+
+		// DELETE
+		err = clientP.Resource.Delete(ctx, "some-securevalue", metav1.DeleteOptions{})
+		require.Error(t, err)
+
+		var statusDeleteErr *apierrors.StatusError
+		require.True(t, errors.As(err, &statusDeleteErr))
+		require.EqualValues(t, http.StatusForbidden, statusDeleteErr.Status().Code)
+	})
 }
