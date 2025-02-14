@@ -123,7 +123,7 @@ type JobStatus struct {
 }
 
 // Convert a JOB to a
-func (in *JobStatus) ToSyncStatus(jobId string) SyncStatus {
+func (in JobStatus) ToSyncStatus(jobId string) SyncStatus {
 	return SyncStatus{
 		JobID:    jobId,
 		State:    in.State,

@@ -37,7 +37,7 @@ type JobProgressRecorder interface {
 	GetRef() string
 	SetTotal(total int)
 	TooManyErrors() error
-	Complete(ctx context.Context, err error) *provisioning.JobStatus
+	Complete(ctx context.Context, err error) provisioning.JobStatus
 }
 
 type Worker interface {

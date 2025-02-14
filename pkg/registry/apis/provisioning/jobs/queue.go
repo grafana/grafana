@@ -143,7 +143,7 @@ func (s *jobStore) drainPending() {
 
 		started := time.Now()
 		var (
-			status      *provisioning.JobStatus
+			status      provisioning.JobStatus
 			foundWorker bool
 		)
 
@@ -153,30 +153,12 @@ func (s *jobStore) drainPending() {
 			}
 
 			foundWorker = true
-			recorder := NewJobProgressRecorder(func(ctx context.Context, j provisioning.JobStatus) error {
+			recorder := newJobProgressRecorder(func(ctx context.Context, j provisioning.JobStatus) error {
 				return s.Update(ctx, job.Namespace, job.Name, j)
 			})
 
 			err = s.processByWorker(ctx, worker, *job, recorder)
-			status := recorder.Complete(ctx, err)
-			if err != nil {
-				logger.Error("error processing job", "error", err)
-				if status == nil {
-					status = &provisioning.JobStatus{}
-				}
-				status.State = provisioning.JobStateError
-				status.Errors = append(status.Errors, err.Error())
-			}
-			if status == nil {
-				status = &provisioning.JobStatus{
-					State:  provisioning.JobStateError,
-					Errors: []string{"no status response from worker"},
-				}
-			}
-			if !status.State.Finished() {
-				status.State = provisioning.JobStateSuccess
-				status.Message = ""
-			}
+			status = recorder.Complete(ctx, err)
 			logger.Debug("job processing finished", "status", status.State)
 
 			// Already found a worker, no need to continue
@@ -184,7 +166,7 @@ func (s *jobStore) drainPending() {
 		}
 
 		if !foundWorker {
-			status = &provisioning.JobStatus{
+			status = provisioning.JobStatus{
 				State: provisioning.JobStateError,
 				Errors: []string{
 					"no registered worker supports this job",
@@ -195,7 +177,7 @@ func (s *jobStore) drainPending() {
 		status.Started = started.UnixMilli()
 		status.Finished = time.Now().UnixMilli()
 
-		err = s.Update(ctx, job.Namespace, job.Name, *status)
+		err = s.Update(ctx, job.Namespace, job.Name, status)
 		if err != nil {
 			logger.Error("error running job", "error", err)
 		}

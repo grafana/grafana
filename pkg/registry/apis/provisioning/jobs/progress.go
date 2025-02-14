@@ -167,7 +167,7 @@ func (r *jobProgressRecorder) notify(ctx context.Context) {
 	}
 }
 
-func (r *jobProgressRecorder) Complete(ctx context.Context, err error) *provisioning.JobStatus {
+func (r *jobProgressRecorder) Complete(ctx context.Context, err error) provisioning.JobStatus {
 	// Initialize base job status
 	jobStatus := provisioning.JobStatus{
 		// TODO: do we really need to set this one here?
@@ -197,5 +197,5 @@ func (r *jobProgressRecorder) Complete(ctx context.Context, err error) *provisio
 		jobStatus.Message = r.message
 	}
 
-	return &jobStatus
+	return jobStatus
 }
