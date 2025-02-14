@@ -51,8 +51,7 @@ describe('PanelModel', () => {
       {
         id: 'table',
       },
-      null as unknown as ComponentClass<PanelProps>, // react
-      {} // angular
+      getPanelPlugin({ id: 'react-base' }) as unknown as ComponentClass<PanelProps> // react
     );
 
     tablePlugin.setPanelOptions((builder) => {
@@ -388,32 +387,6 @@ describe('PanelModel', () => {
       });
     });
 
-    describe('when changing to react panel from angular panel', () => {
-      let panelQueryRunner: PanelQueryRunner;
-
-      const onPanelTypeChanged = jest.fn();
-      const reactPlugin = getPanelPlugin({ id: 'react' }).setPanelChangeHandler(
-        onPanelTypeChanged as PanelTypeChangedHandler
-      );
-
-      beforeEach(() => {
-        model.changePlugin(reactPlugin);
-        panelQueryRunner = model.getQueryRunner();
-      });
-
-      it('should call react onPanelTypeChanged', () => {
-        expect(onPanelTypeChanged.mock.calls.length).toBe(1);
-        expect(onPanelTypeChanged.mock.calls[0][1]).toBe('table');
-        expect(onPanelTypeChanged.mock.calls[0][2].angular).toBeDefined();
-      });
-
-      it('getQueryRunner() should return same instance after changing to another react panel', () => {
-        model.changePlugin(getPanelPlugin({ id: 'react2' }));
-        const sameQueryRunner = model.getQueryRunner();
-        expect(panelQueryRunner).toBe(sameQueryRunner);
-      });
-    });
-
     describe('when autoMigrateFrom angular to react', () => {
       const onPanelTypeChanged: PanelTypeChangedHandler = (panel, prevPluginId, prevOptions) => {
         panel.fieldConfig = { defaults: { unit: 'bytes' }, overrides: [] };
@@ -468,7 +441,6 @@ describe('PanelModel', () => {
       it('should call react onPanelTypeChanged', () => {
         expect(onPanelTypeChanged.mock.calls.length).toBe(1);
         expect(onPanelTypeChanged.mock.calls[0][1]).toBe('table');
-        expect(onPanelTypeChanged.mock.calls[0][2].angular).toBeDefined();
       });
 
       it('getQueryRunner() should return same instance after changing to another react panel', () => {
