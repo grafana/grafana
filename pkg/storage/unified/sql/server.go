@@ -83,9 +83,14 @@ func NewResourceServer(ctx context.Context, db infraDB.DB, cfg *setting.Cfg,
 			InitMinCount:  cfg.IndexMinCount,
 		}
 
+		// Register indexer metrics
 		err = reg.Register(resource.NewIndexMetrics(cfg.IndexPath, opts.Search.Backend))
 		if err != nil {
 			slog.Warn("Failed to register indexer metrics", "error", err)
+		}
+		err = reg.Register(resource.NewSprinklesMetrics())
+		if err != nil {
+			slog.Warn("Failed to register sprinkles metrics", "error", err)
 		}
 	}
 

@@ -687,6 +687,7 @@ export type JobResourceSummary = {
   /** No action required (useful for sync) */
   noop?: number;
   resource?: string;
+  total?: number;
   update?: number;
   write?: number;
 };
@@ -736,9 +737,11 @@ export type JobList = {
 export type GitHubRepositoryConfig = {
   /** The branch to use in the repository. By default, this is the main branch. */
   branch?: string;
+  /** Token for accessing the repository, but encrypted. This is not possible to read back to a user decrypted. */
+  encryptedToken?: string;
   /** Whether we should show dashboard previews for pull requests By default, this is false (i.e. we will not create previews). */
   generateDashboardPreviews?: boolean;
-  /** Token for accessing the repository. */
+  /** Token for accessing the repository. If set, it will be encrypted into encryptedToken, then set to an empty string again. */
   token?: string;
   /** The repository URL `https://github.com/example/test`). */
   url: string;
@@ -747,10 +750,6 @@ export type GitHubRepositoryConfig = {
 };
 export type LocalRepositoryConfig = {
   path?: string;
-};
-export type S3RepositoryConfig = {
-  bucket?: string;
-  region?: string;
 };
 export type SyncOptions = {
   /** Enabled must be saved as true before any sync job will run */
@@ -767,14 +766,12 @@ export type SyncOptions = {
 export type RepositorySpec = {
   /** Repository description */
   description?: string;
-  /** The repository on GitHub. Mutually exclusive with local | s3 | github. */
+  /** The repository on GitHub. Mutually exclusive with local | github. */
   github?: GitHubRepositoryConfig;
-  /** The repository on the local file system. Mutually exclusive with local | s3 | github. */
+  /** The repository on the local file system. Mutually exclusive with local | github. */
   local?: LocalRepositoryConfig;
   /** ReadOnly  repository does not allow any write commands */
   readOnly: boolean;
-  /** The repository in an S3 bucket. Mutually exclusive with local | s3 | github. */
-  s3?: S3RepositoryConfig;
   /** Sync settings -- how values are pulled from the repository into grafana */
   sync: SyncOptions;
   /** The repository display name (shown in the UI) */
@@ -783,9 +780,8 @@ export type RepositorySpec = {
     
     Possible enum values:
      - `"github"`
-     - `"local"`
-     - `"s3"` */
-  type: 'github' | 'local' | 's3';
+     - `"local"` */
+  type: 'github' | 'local';
 };
 export type HealthStatus = {
   /** When the health was checked last time */
@@ -826,6 +822,7 @@ export type SyncStatus = {
   state: 'error' | 'pending' | 'success' | 'working';
 };
 export type WebhookStatus = {
+  encryptedSecret?: string;
   id?: number;
   secret?: string;
   subscribedEvents?: string[];
@@ -1055,9 +1052,8 @@ export type RepositoryView = {
     
     Possible enum values:
      - `"github"`
-     - `"local"`
-     - `"s3"` */
-  type: 'github' | 'local' | 's3';
+     - `"local"` */
+  type: 'github' | 'local';
 };
 export type RepositoryViewList = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
@@ -1065,6 +1061,8 @@ export type RepositoryViewList = {
   items: RepositoryView[];
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
+  /** The backend is using legacy storage FIXME: Not sure where this should be exposed... but we need it somewhere The UI should force the onboarding workflow when this is true */
+  legacyStorage?: boolean;
 };
 export type ResourceStats = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */

@@ -136,7 +136,6 @@ func TestIntegrationProvisioning(t *testing.T) {
 			"testdata/local-devenv.json",
 			"testdata/local-tmp.json",
 			"testdata/local-xxx.json",
-			"testdata/s3-example.json",
 		} {
 			t.Run(inputFilePath, func(t *testing.T) {
 				input := helper.LoadYAMLOrJSONFile(inputFilePath)

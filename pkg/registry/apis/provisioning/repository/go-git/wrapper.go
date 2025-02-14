@@ -22,11 +22,10 @@ import (
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 )
 
-var (
-	_ repository.Repository = (*GoGitRepo)(nil)
-)
+var _ repository.Repository = (*GoGitRepo)(nil)
 
 type GoGitCloneOptions struct {
 	Root string // tempdir (when empty, memory??)
@@ -36,8 +35,9 @@ type GoGitCloneOptions struct {
 }
 
 type GoGitRepo struct {
-	config *provisioning.Repository
-	opts   GoGitCloneOptions
+	config            *provisioning.Repository
+	opts              GoGitCloneOptions
+	decryptedPassword string
 
 	repo *git.Repository
 	tree *git.Worktree
@@ -50,6 +50,7 @@ func Clone(
 	ctx context.Context,
 	config *provisioning.Repository,
 	opts GoGitCloneOptions,
+	secrets secrets.Service,
 	progress io.Writer, // os.Stdout
 ) (*GoGitRepo, error) {
 	gitcfg := config.Spec.GitHub
@@ -59,7 +60,13 @@ func Clone(
 	if opts.Root == "" {
 		return nil, fmt.Errorf("missing root config")
 	}
-	err := os.MkdirAll(opts.Root, 0700)
+
+	decrypted, err := secrets.Decrypt(ctx, []byte(gitcfg.EncryptedToken))
+	if err != nil {
+		return nil, fmt.Errorf("error decrypting token: %w", err)
+	}
+
+	err = os.MkdirAll(opts.Root, 0700)
 	if err != nil {
 		return nil, err
 	}
@@ -68,8 +75,7 @@ func Clone(
 		return nil, err
 	}
 
-	url := fmt.Sprintf("/%s.git", gitcfg.URL)
-
+	url := fmt.Sprintf("%s.git", gitcfg.URL)
 	repo, err := git.PlainOpen(dir)
 	if err != nil {
 		if !errors.Is(err, git.ErrRepositoryNotExists) {
@@ -78,8 +84,8 @@ func Clone(
 
 		repo, err = git.PlainCloneContext(ctx, dir, false, &git.CloneOptions{
 			Auth: &githttp.BasicAuth{
-				Username: "grafana",    // this can be anything except an empty string for PAT
-				Password: gitcfg.Token, // TODO... will need to get from a service!
+				Username: "grafana",         // this can be anything except an empty string for PAT
+				Password: string(decrypted), // TODO... will need to get from a service!
 			},
 			URL:           url,
 			ReferenceName: plumbing.ReferenceName(gitcfg.Branch),
@@ -117,11 +123,12 @@ func Clone(
 	}
 
 	return &GoGitRepo{
-		config: config,
-		opts:   opts,
-		tree:   worktree,
-		repo:   repo,
-		dir:    dir,
+		config:            config,
+		opts:              opts,
+		tree:              worktree,
+		decryptedPassword: string(decrypted),
+		repo:              repo,
+		dir:               dir,
 	}, nil
 }
 
@@ -174,7 +181,7 @@ func (g *GoGitRepo) Push(ctx context.Context, progress io.Writer) error {
 		Progress: progress,
 		Auth: &githttp.BasicAuth{ // reuse logic from clone?
 			Username: "grafana",
-			Password: g.config.Spec.GitHub.Token,
+			Password: g.decryptedPassword,
 		},
 	})
 }
@@ -204,7 +211,6 @@ func (g *GoGitRepo) ReadTree(ctx context.Context, ref string) ([]repository.File
 		entries = append(entries, entry)
 		return err
 	})
-
 	if err != nil {
 		return nil, err
 	}

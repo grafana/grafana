@@ -2788,12 +2788,18 @@
             "description": "The branch to use in the repository. By default, this is the main branch.",
             "type": "string"
           },
+          "encryptedToken": {
+            "description": "Token for accessing the repository, but encrypted. This is not possible to read back to a user decrypted.",
+            "type": "string",
+            "format": "byte",
+            "x-kubernetes-list-type": "atomic"
+          },
           "generateDashboardPreviews": {
             "description": "Whether we should show dashboard previews for pull requests By default, this is false (i.e. we will not create previews).",
             "type": "boolean"
           },
           "token": {
-            "description": "Token for accessing the repository.",
+            "description": "Token for accessing the repository. If set, it will be encrypted into encryptedToken, then set to an empty string again.",
             "type": "string"
           },
           "url": {
@@ -3025,6 +3031,10 @@
           },
           "resource": {
             "type": "string"
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
           },
           "update": {
             "type": "integer",
@@ -3298,7 +3308,7 @@
             "type": "string"
           },
           "github": {
-            "description": "The repository on GitHub. Mutually exclusive with local | s3 | github.",
+            "description": "The repository on GitHub. Mutually exclusive with local | github.",
             "allOf": [
               {
                 "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.GitHubRepositoryConfig"
@@ -3306,7 +3316,7 @@
             ]
           },
           "local": {
-            "description": "The repository on the local file system. Mutually exclusive with local | s3 | github.",
+            "description": "The repository on the local file system. Mutually exclusive with local | github.",
             "allOf": [
               {
                 "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.LocalRepositoryConfig"
@@ -3317,14 +3327,6 @@
             "description": "ReadOnly  repository does not allow any write commands",
             "type": "boolean",
             "default": false
-          },
-          "s3": {
-            "description": "The repository in an S3 bucket. Mutually exclusive with local | s3 | github.",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.S3RepositoryConfig"
-              }
-            ]
           },
           "sync": {
             "description": "Sync settings -- how values are pulled from the repository into grafana",
@@ -3341,13 +3343,12 @@
             "default": ""
           },
           "type": {
-            "description": "The repository type.  When selected oneOf the values below should be non-nil\n\nPossible enum values:\n - `\"github\"`\n - `\"local\"`\n - `\"s3\"`",
+            "description": "The repository type.  When selected oneOf the values below should be non-nil\n\nPossible enum values:\n - `\"github\"`\n - `\"local\"`",
             "type": "string",
             "default": "",
             "enum": [
               "github",
-              "local",
-              "s3"
+              "local"
             ]
           }
         }
@@ -3444,13 +3445,12 @@
             "default": ""
           },
           "type": {
-            "description": "The repository type\n\nPossible enum values:\n - `\"github\"`\n - `\"local\"`\n - `\"s3\"`",
+            "description": "The repository type\n\nPossible enum values:\n - `\"github\"`\n - `\"local\"`",
             "type": "string",
             "default": "",
             "enum": [
               "github",
-              "local",
-              "s3"
+              "local"
             ]
           }
         }
@@ -3480,6 +3480,10 @@
           "kind": {
             "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
             "type": "string"
+          },
+          "legacyStorage": {
+            "description": "The backend is using legacy storage FIXME: Not sure where this should be exposed... but we need it somewhere The UI should force the onboarding workflow when this is true",
+            "type": "boolean"
           }
         }
       },
@@ -3783,17 +3787,6 @@
           }
         ]
       },
-      "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.S3RepositoryConfig": {
-        "type": "object",
-        "properties": {
-          "bucket": {
-            "type": "string"
-          },
-          "region": {
-            "type": "string"
-          }
-        }
-      },
       "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.SyncJobOptions": {
         "type": "object",
         "required": [
@@ -3993,6 +3986,10 @@
       "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.WebhookStatus": {
         "type": "object",
         "properties": {
+          "encryptedSecret": {
+            "type": "string",
+            "format": "byte"
+          },
           "id": {
             "type": "integer",
             "format": "int64"

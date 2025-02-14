@@ -25,7 +25,7 @@ import { useCreateOrUpdateRepository } from './hooks';
 import { RepositoryFormData, WorkflowOption } from './types';
 import { dataToSpec, specToData } from './utils/data';
 
-const typeOptions = ['GitHub', 'Local', 'S3'].map((label) => ({ label, value: label.toLowerCase() }));
+const typeOptions = ['GitHub', 'Local'].map((label) => ({ label, value: label.toLowerCase() }));
 const targetOptions = [
   { value: 'instance', label: 'Entire instance' },
   { value: 'folder', label: 'Managed folder' },
@@ -94,8 +94,13 @@ export function ConfigForm({ data }: ConfigFormProps) {
     }
   }, [request.isSuccess, reset, getValues, navigate]);
 
-  const onSubmit = (data: RepositoryFormData) => {
-    const spec = dataToSpec(data);
+  const onSubmit = (form: RepositoryFormData) => {
+    const spec = dataToSpec(form);
+    if (spec.github) {
+      spec.github.token = form.token || data?.spec?.github?.token;
+      // If we're still keeping this as GitHub, persist the old token. If we set a new one, it'll be re-encrypted into here.
+      spec.github.encryptedToken = data?.spec?.github?.encryptedToken;
+    }
     submitData(spec);
   };
 
@@ -196,16 +201,6 @@ export function ConfigForm({ data }: ConfigFormProps) {
         </Field>
       )}
 
-      {type === 's3' && (
-        <FieldSet label="local">
-          <Field label={'S3 bucket'} error={errors?.bucket?.message} invalid={!!errors?.bucket}>
-            <Input {...register('bucket', { required: 'This field is required.' })} placeholder={'bucket-name'} />
-          </Field>
-          <Field label={'S3 region'} error={errors?.region?.message} invalid={!!errors?.region}>
-            <Input {...register('region', { required: 'This field is required.' })} placeholder={'us-west-2'} />
-          </Field>
-        </FieldSet>
-      )}
       <FieldSet label="Sync Settings">
         <Field label={'Enabled'} description={'Once sync is enabled, the target cannot be changed.'}>
           <Switch {...register('sync.enabled')} id={'sync.enabled'} />
@@ -228,7 +223,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
           />
         </Field>
         <Field label={'Interval (seconds)'}>
-          <Input {...register('sync.intervalSeconds')} type={'number'} placeholder={'60'} />
+          <Input {...register('sync.intervalSeconds', { valueAsNumber: true })} type={'number'} placeholder={'60'} />
         </Field>
       </FieldSet>
       <FieldSet label="Advanced Settings">

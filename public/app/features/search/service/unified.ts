@@ -204,15 +204,19 @@ export class UnifiedSearcher implements GrafanaSearcher {
     if (!hasMissing) {
       return rsp;
     }
-    // we still have results here with folders we can't find
-    // filter the results since we probably don't have access to that folder
+
     const locationInfo = await this.locationInfo;
-    const hits = rsp.hits.filter((hit) => {
-      if (hit.folder === undefined || locationInfo[hit.folder] !== undefined) {
-        return true;
+    const hits = rsp.hits.map((hit) => {
+      if (hit.folder === undefined) {
+        return { ...hit, location: 'general', folder: 'general' };
       }
-      console.warn('Dropping search hit with missing folder', hit);
-      return false;
+
+      // this means user has permission to see this dashboard, but not the folder contents
+      if (locationInfo[hit.folder] === undefined) {
+        return { ...hit, location: 'sharedwithme', folder: 'sharedwithme' };
+      }
+
+      return hit;
     });
     const totalHits = rsp.totalHits - (rsp.hits.length - hits.length);
     return { ...rsp, hits, totalHits };
@@ -370,6 +374,11 @@ async function loadLocationInfo(): Promise<Record<string, LocationInfo>> {
           name: 'Dashboards',
           url: '/dashboards',
         }, // share location info with everyone
+        sharedwithme: {
+          kind: 'sharedwithme',
+          name: 'Shared with me',
+          url: '',
+        },
       };
       for (const hit of rsp.hits) {
         locationInfo[hit.name] = {

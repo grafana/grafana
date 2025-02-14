@@ -17,22 +17,20 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
+	"github.com/google/uuid"
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	pgh "github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 )
 
 var subscribedEvents = []string{"push", "pull_request"}
-
-type SecretsService interface {
-	Encrypt(ctx context.Context, data string) (string, error)
-}
 
 // Make sure all public functions of this struct call the (*githubRepository).logger function, to ensure the GH repo details are included.
 type githubRepository struct {
 	config     *provisioning.Repository
 	gh         pgh.Client // assumes github.com base URL
-	secrets    SecretsService
+	secrets    secrets.Service
 	webhookURL string
 
 	owner string
@@ -45,18 +43,22 @@ func NewGitHub(
 	ctx context.Context,
 	config *provisioning.Repository,
 	factory pgh.ClientFactory,
-	secrets SecretsService,
+	secrets secrets.Service,
 	webhookURL string,
-) *githubRepository {
+) (*githubRepository, error) {
 	owner, repo, _ := parseOwnerRepo(config.Spec.GitHub.URL)
+	decrypted, err := secrets.Decrypt(ctx, config.Spec.GitHub.EncryptedToken)
+	if err != nil {
+		return nil, err
+	}
 	return &githubRepository{
 		config:     config,
-		gh:         factory.New(ctx, config.Spec.GitHub.Token), // TODO -- base from URL
+		gh:         factory.New(ctx, string(decrypted)), // TODO -- base from URL
 		secrets:    secrets,
 		webhookURL: webhookURL,
 		owner:      owner,
 		repo:       repo,
-	}
+	}, nil
 }
 
 func (r *githubRepository) Config() *provisioning.Repository {
@@ -86,7 +88,8 @@ func (r *githubRepository) Validate() (list field.ErrorList) {
 	if !isValidGitBranchName(gh.Branch) {
 		list = append(list, field.Invalid(field.NewPath("spec", "github", "branch"), gh.Branch, "invalid branch name"))
 	}
-	if gh.Token == "" {
+	// TODO: Use two fields for token
+	if gh.Token == "" && len(gh.EncryptedToken) == 0 {
 		list = append(list, field.Required(field.NewPath("spec", "github", "token"), "a github access token is required"))
 	}
 
@@ -522,7 +525,12 @@ func (r *githubRepository) Webhook(ctx context.Context, req *http.Request) (*pro
 		return nil, fmt.Errorf("unexpected webhook request")
 	}
 
-	payload, err := github.ValidatePayload(req, []byte(r.config.Status.Webhook.Secret))
+	secret, err := r.secrets.Decrypt(ctx, r.config.Status.Webhook.EncryptedSecret)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decrypt secret: %w", err)
+	}
+
+	payload, err := github.ValidatePayload(req, secret)
 	if err != nil {
 		return nil, apierrors.NewUnauthorized("invalid signature")
 	}
@@ -741,14 +749,14 @@ func (r *githubRepository) CommentPullRequestFile(ctx context.Context, prNumber 
 }
 
 func (r *githubRepository) createWebhook(ctx context.Context) (pgh.WebhookConfig, error) {
-	secret, err := r.secrets.Encrypt(ctx, r.config.Spec.GitHub.Token)
+	secret, err := uuid.NewRandom()
 	if err != nil {
-		return pgh.WebhookConfig{}, fmt.Errorf("encrypt webhook secret: %w", err)
+		return pgh.WebhookConfig{}, fmt.Errorf("could not generate secret: %w", err)
 	}
 
 	cfg := pgh.WebhookConfig{
 		URL:         r.webhookURL,
-		Secret:      secret,
+		Secret:      secret.String(),
 		ContentType: "json",
 		Events:      subscribedEvents,
 		Active:      true,
@@ -758,6 +766,9 @@ func (r *githubRepository) createWebhook(ctx context.Context) (pgh.WebhookConfig
 	if err != nil {
 		return pgh.WebhookConfig{}, err
 	}
+
+	// HACK: GitHub does not return the secret, so we need to update it manually
+	hook.Secret = cfg.Secret
 
 	logging.FromContext(ctx).Info("webhook created", "url", cfg.URL, "id", hook.ID)
 	return hook, nil
@@ -786,18 +797,9 @@ func (r *githubRepository) updateWebhook(ctx context.Context) (pgh.WebhookConfig
 		return pgh.WebhookConfig{}, false, fmt.Errorf("get webhook: %w", err)
 	}
 
+	hook.Secret = r.config.Status.Webhook.Secret // we always random gen this, so don't use it for mustUpdate below.
+
 	var mustUpdate bool
-
-	secret, err := r.secrets.Encrypt(ctx, r.config.Spec.GitHub.Token)
-	if err != nil {
-		return pgh.WebhookConfig{}, false, fmt.Errorf("encrypt webhook secret: %w", err)
-	}
-
-	// Compare with status secret as we cannot get the screen from the webhook
-	if secret != r.config.Status.Webhook.Secret {
-		mustUpdate = true
-		hook.Secret = r.config.Status.Webhook.Secret
-	}
 
 	if hook.URL != r.config.Status.Webhook.URL {
 		mustUpdate = true
@@ -813,12 +815,16 @@ func (r *githubRepository) updateWebhook(ctx context.Context) (pgh.WebhookConfig
 		return hook, false, nil
 	}
 
+	// Something has changed in the webhook. Let's rotate the secret as well, so as to ensure we end up with a 100% correct webhook.
+	secret, err := uuid.NewRandom()
+	if err != nil {
+		return pgh.WebhookConfig{}, false, fmt.Errorf("could not generate secret: %w", err)
+	}
+	hook.Secret = secret.String()
+
 	if err := r.gh.EditWebhook(ctx, r.owner, r.repo, hook); err != nil {
 		return pgh.WebhookConfig{}, false, fmt.Errorf("edit webhook: %w", err)
 	}
-
-	// HACK: GitHub does not return the secret, so we need to update it manually
-	hook.Secret = secret
 
 	return hook, true, nil
 }

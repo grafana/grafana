@@ -271,6 +271,14 @@ test-go-integration-alertmanager: ## Run integration tests for the remote alertm
 	AM_URL=http://localhost:8080 AM_TENANT_ID=test \
 	$(GO) test $(GO_RACE_FLAG) -count=1 -run "^TestIntegrationRemoteAlertmanager" -covermode=atomic -timeout=5m ./pkg/services/ngalert/...
 
+.PHONY: test-go-integration-grafana-alertmanager
+test-go-integration-grafana-alertmanager: ## Run integration tests for the grafana alertmanager
+	@echo "test grafana alertmanager integration tests"
+	@export GRAFANA_VERSION=11.5.0-81938; \
+	$(GO) run tools/setup_grafana_alertmanager_integration_test_images.go; \
+	$(GO) clean -testcache; \
+	$(GO) test $(GO_RACE_FLAG) -count=1 -run "^TestAlertmanagerIntegration" -covermode=atomic -timeout=10m ./pkg/tests/alertmanager/...
+
 .PHONY: test-go-integration-postgres
 test-go-integration-postgres: devenv-postgres ## Run integration tests for postgres backend with flags.
 	@echo "test backend integration postgres tests"

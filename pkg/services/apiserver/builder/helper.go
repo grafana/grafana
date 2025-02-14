@@ -289,7 +289,7 @@ func InstallAPIs(
 	if storageOpts.StorageType != options.StorageTypeLegacy {
 		dualWrite = func(gr schema.GroupResource, legacy grafanarest.LegacyStorage, storage grafanarest.Storage) (grafanarest.Storage, error) {
 			// Dashboards + Folders may be managed (depends on feature toggles and database state)
-			if dualWriteService.ShouldManage(gr) {
+			if dualWriteService != nil && dualWriteService.ShouldManage(gr) {
 				return dualWriteService.NewStorage(gr, legacy, storage) // eventually this can replace this whole function
 			}
 

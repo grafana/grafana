@@ -40,7 +40,8 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
     } else {
       stateManager.loadDashboard({
         uid: (route.routeName === DashboardRoutes.Provisioning ? path : uid) ?? '',
-        slug: slug,
+        type,
+        slug,
         route: route.routeName as DashboardRoutes,
         urlFolderUid: queryParams.folderUid,
       });

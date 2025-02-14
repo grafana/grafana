@@ -34,12 +34,6 @@
       "save-button": ""
     }
   },
-  "actions-editor": {
-    "inline": {
-      "add-button": "",
-      "one-click-link": ""
-    }
-  },
   "admin": {
     "anon-users": {
       "not-found": ""
@@ -174,6 +168,24 @@
     }
   },
   "alerting": {
+    "alert": {
+      "alert-state": "",
+      "annotations": "",
+      "evaluation": "",
+      "evaluation-paused": "",
+      "evaluation-paused-description": "",
+      "last-evaluated": "",
+      "last-evaluation-duration": "",
+      "last-updated-at": "",
+      "last-updated-by": "",
+      "no-annotations": "",
+      "pending-period": "",
+      "rule": "",
+      "rule-identifier": "",
+      "rule-type": "",
+      "state-error-timeout": "",
+      "state-no-data": ""
+    },
     "alert-recording-rule-form": {
       "evaluation-behaviour": {
         "description": {
@@ -281,6 +293,7 @@
     "contactPointFilter": {
       "label": ""
     },
+    "copy-to-clipboard": "",
     "export": {
       "subtitle": {
         "formats": "",
@@ -296,6 +309,13 @@
           }
         }
       }
+    },
+    "group-actions": {
+      "actions-trigger": "",
+      "delete": "",
+      "edit": "",
+      "export": "",
+      "reorder": ""
     },
     "list-view": {
       "empty": {
@@ -480,11 +500,23 @@
     },
     "rule-list": {
       "configure-datasource": "",
+      "ds-error-boundary": {
+        "description": "",
+        "title": ""
+      },
       "filter-view": {
         "no-more-results": "",
         "no-rules-found": ""
       },
-      "new-alert-rule": ""
+      "new-alert-rule": "",
+      "pagination": {
+        "next-page": "",
+        "previous-page": ""
+      },
+      "return-button": {
+        "title": ""
+      },
+      "rulerrule-loading-error": ""
     },
     "rule-state": {
       "creating": "",
@@ -681,7 +713,10 @@
       "title": ""
     },
     "custom-value": {
-      "label": ""
+      "description": ""
+    },
+    "group": {
+      "undefined": ""
     },
     "options": {
       "no-found": ""
@@ -854,6 +889,82 @@
       "redirect-link": "Grafana Alerting 中的列表",
       "subtitle": "与此仪表板相关的警报规则"
     },
+    "default-layout": {
+      "description": "",
+      "item-options": {
+        "repeat": {
+          "direction": {
+            "horizontal": "",
+            "title": "",
+            "vertical": ""
+          },
+          "max": "",
+          "title": "",
+          "variable": {
+            "description": "",
+            "title": ""
+          }
+        }
+      },
+      "name": "",
+      "row-actions": {
+        "delete": "",
+        "modal": {
+          "alt-action": "",
+          "text": "",
+          "title": ""
+        }
+      },
+      "row-options": {
+        "button": {
+          "label": ""
+        },
+        "form": {
+          "cancel": "",
+          "repeat-for": {
+            "label": "",
+            "learn-more": "",
+            "warning": {
+              "text": ""
+            }
+          },
+          "title": "",
+          "update": ""
+        },
+        "modal": {
+          "title": ""
+        }
+      }
+    },
+    "edit-pane": {
+      "objects": {
+        "multi-select": {
+          "selection-number": ""
+        }
+      },
+      "open": "",
+      "panels": {
+        "multi-select": {
+          "selection-number": ""
+        }
+      },
+      "row": {
+        "header": {
+          "hide": "",
+          "title": ""
+        },
+        "multi-select": {
+          "options-header": "",
+          "selection-number": ""
+        }
+      },
+      "tab": {
+        "multi-select": {
+          "options-header": "",
+          "selection-number": ""
+        }
+      }
+    },
     "empty": {
       "add-library-panel-body": "添加与其他仪表板共享的可视化。",
       "add-library-panel-button": "添加库面板",
@@ -864,6 +975,9 @@
       "import-a-dashboard-body": "",
       "import-a-dashboard-header": "导入仪表板",
       "import-dashboard-button": "导入仪表板"
+    },
+    "errors": {
+      "failed-to-load": ""
     },
     "inspect": {
       "data-tab": "数据",
@@ -917,19 +1031,130 @@
       "rows": "总行数",
       "table-title": "统计信息"
     },
+    "options": {
+      "description": "",
+      "title": "",
+      "title-option": ""
+    },
+    "panel-edit": {
+      "alerting-tab": {
+        "dashboard-not-saved": "",
+        "no-rules": ""
+      }
+    },
+    "responsive-layout": {
+      "description": "",
+      "item-options": {
+        "hide-no-data": "",
+        "title": ""
+      },
+      "name": "",
+      "options": {
+        "columns": "",
+        "fixed": "",
+        "min": "",
+        "one-column": "",
+        "rows": "",
+        "three-columns": "",
+        "two-columns": ""
+      }
+    },
+    "rows-layout": {
+      "description": "",
+      "name": "",
+      "row": {
+        "collapse": "",
+        "expand": "",
+        "new": "",
+        "repeat": {
+          "learn-more": "",
+          "warning": ""
+        }
+      },
+      "row-options": {
+        "height": {
+          "expand": "",
+          "hide-row-header": "",
+          "min": "",
+          "title": ""
+        },
+        "repeat": {
+          "title": "",
+          "variable": {
+            "title": ""
+          }
+        },
+        "title": "",
+        "title-option": ""
+      }
+    },
+    "tabs-layout": {
+      "description": "",
+      "name": "",
+      "tab": {
+        "new": ""
+      },
+      "tab-options": {
+        "title": "",
+        "title-option": ""
+      }
+    },
     "toolbar": {
       "add": "添加",
+      "add-panel": "",
+      "add-panel-lib": "",
+      "add-row": "",
+      "add-tab": "",
       "alert-rules": "警报规则",
+      "back-to-dashboard": "",
+      "dashboard-settings": {
+        "label": "",
+        "tooltip": ""
+      },
+      "discard-library-panel-changes": "",
+      "discard-panel": "",
+      "discard-panel-new": "",
+      "edit": {
+        "label": "",
+        "tooltip": ""
+      },
+      "edit-dashboard-v2-schema": "",
+      "enter-edit-mode": {
+        "label": "",
+        "tooltip": ""
+      },
+      "exit-edit-mode": {
+        "label": "",
+        "tooltip": ""
+      },
       "mark-favorite": "标记为收藏",
+      "more-save-options": "",
       "open-original": "打开原始仪表板",
       "playlist-next": "前往下一个仪表板",
       "playlist-previous": "前往上一个仪表板",
       "playlist-stop": "停止播放列表",
+      "public-dashboard": "",
       "refresh": "刷新仪表板",
       "save": "保存仪表板",
+      "save-dashboard": {
+        "label": "",
+        "tooltip": ""
+      },
+      "save-dashboard-copy": {
+        "label": "",
+        "tooltip": ""
+      },
+      "save-dashboard-short": "",
+      "save-library-panel": "",
       "settings": "仪表板设置",
-      "share": "分享仪表板或面板",
+      "share": {
+        "label": "",
+        "tooltip": ""
+      },
       "share-button": "分享",
+      "show-hidden-elements": "",
+      "switch-old-dashboard": "",
+      "unlink-library-panel": "",
       "unmark-favorite": "取消标记为收藏"
     },
     "validation": {
@@ -937,6 +1162,14 @@
       "invalid-json": "无有效的 JSON",
       "tags-expected-array": "标签预期数组",
       "tags-expected-strings": "标签预期字符串数组"
+    },
+    "viz-panel": {
+      "options": {
+        "description": "",
+        "title": "",
+        "title-option": "",
+        "transparent-background": ""
+      }
     }
   },
   "dashboard-import": {
@@ -1039,6 +1272,12 @@
       "angular-deprecation-description": "",
       "angular-deprecation-heading": ""
     },
+    "panel-queries": {
+      "add-query-from-library": ""
+    },
+    "query-library": {
+      "add-query-button": ""
+    },
     "settings": {
       "variables": {
         "dependencies": {
@@ -1116,40 +1355,11 @@
       "scan-for-older-logs": "",
       "stop-scan": ""
     },
-    "query-library": {
-      "add-edit-description": "",
-      "cancel": "",
-      "default-description": "",
-      "delete-query": "",
-      "delete-query-text": "",
-      "delete-query-title": "",
-      "private": "",
-      "public": "",
-      "query-deleted": "",
-      "query-template-add-error": "",
-      "query-template-added": "",
-      "query-template-edit-error": "",
-      "query-template-edited": "",
-      "save": ""
-    },
-    "query-template-modal": {
-      "add-info": "",
-      "add-title": "",
-      "auto-star": "",
-      "data-source-name": "",
-      "description": "",
-      "edit-info": "",
-      "edit-title": "",
-      "query": "",
-      "visibility": ""
-    },
-    "query-template-modall": {
-      "data-source-type": ""
-    },
     "rich-history": {
       "close-tooltip": "关闭查询历史记录",
       "datasource-a-z": "数据源 A-Z",
       "datasource-z-a": "数据源 Z-A",
+      "library-history-dropdown": "",
       "newest-first": "最新在前",
       "oldest-first": "最早在前",
       "query-history": "查询历史记录",
@@ -1296,10 +1506,9 @@
       "sortBy": ""
     },
     "related-logs": {
-      "docsLink": "",
+      "LrrDocsLink": "",
       "openExploreLogs": "",
-      "relatedLogsUnavailableAfterDocsLink": "",
-      "relatedLogsUnavailableBeforeDocsLink": "",
+      "relatedLogsUnavailable": "",
       "warnExperimentalFeature": ""
     },
     "viewBy": ""
@@ -1348,6 +1557,24 @@
     "send-custom-feedback": ""
   },
   "grafana-ui": {
+    "action-editor": {
+      "button": {
+        "confirm": "",
+        "confirm-action": ""
+      },
+      "inline": {
+        "add-action": "",
+        "edit-action": ""
+      },
+      "modal": {
+        "action-body": "",
+        "action-method": "",
+        "action-query-params": "",
+        "action-title": "",
+        "action-title-placeholder": "",
+        "one-click-description": ""
+      }
+    },
     "auto-save-field": {
       "saved": "",
       "saving": ""
@@ -1364,11 +1591,21 @@
     },
     "data-link-editor-modal": {
       "cancel": "",
+      "one-click-description": "",
       "save": ""
+    },
+    "data-link-inline-editor": {
+      "one-click": ""
     },
     "data-links-inline-editor": {
       "add-link": "",
-      "one-click-link": ""
+      "edit-link": "",
+      "one-click": "",
+      "one-click-enabled": "",
+      "title-not-provided": "",
+      "tooltip-edit": "",
+      "tooltip-remove": "",
+      "url-not-provided": ""
     },
     "data-source-http-settings": {
       "access-help": "",
@@ -1449,7 +1686,12 @@
       "right-axis-indicator": ""
     },
     "viz-tooltip": {
-      "footer-add-annotation": ""
+      "actions-confirmation-input-placeholder": "",
+      "actions-confirmation-label": "",
+      "actions-confirmation-message": "",
+      "footer-add-annotation": "",
+      "footer-click-to-action": "",
+      "footer-click-to-navigate": ""
     }
   },
   "graph": {
@@ -1770,7 +2012,8 @@
     },
     "log-row-message": {
       "ellipsis": "",
-      "more": ""
+      "more": "",
+      "see-details": ""
     },
     "log-rows": {
       "disable-popover": {
@@ -1781,6 +2024,13 @@
       "disable-popover-message": {
         "shortcut": ""
       }
+    },
+    "logs-navigation": {
+      "newer-logs": "",
+      "older-logs": "",
+      "scroll-bottom": "",
+      "scroll-top": "",
+      "start-of-range": ""
     },
     "popover-menu": {
       "copy": "",
@@ -1871,6 +2121,7 @@
       "title": ""
     },
     "migrated-counts": {
+      "alert_rule_groups": "",
       "alert_rules": "",
       "contact_points": "",
       "dashboards": "",
@@ -1931,9 +2182,8 @@
     "public-preview": {
       "button-text": "",
       "message": "",
-      "message-plugins": "",
-      "title": "",
-      "title-plugins": ""
+      "message-cloud": "",
+      "title": ""
     },
     "resource-details": {
       "dismiss-button": "",
@@ -1976,6 +2226,7 @@
     },
     "resource-type": {
       "alert_rule": "",
+      "alert_rule_group": "",
       "contact_point": "",
       "dashboard": "仪表板",
       "datasource": "数据源",
@@ -2019,6 +2270,15 @@
       "body": "除了托管的便利性外，Grafana Cloud 还包括许多云专属功能，如 SLO、事件管理、机器学习和强大的观测能力集成。",
       "link-title": "还有问题？咨询专家",
       "title": "为什么使用 Grafana 托管？"
+    }
+  },
+  "multicombobox": {
+    "all": {
+      "title": "",
+      "title-filtered": ""
+    },
+    "clear": {
+      "title": ""
     }
   },
   "nav": {
@@ -2374,7 +2634,8 @@
       "list-label": "导航",
       "open": "",
       "undock": "取消停靠菜单"
-    }
+    },
+    "rss-button": ""
   },
   "news": {
     "drawer": {
@@ -2506,19 +2767,35 @@
       }
     },
     "details": {
+      "connections-tab": {
+        "description": ""
+      },
       "labels": {
         "contactGrafanaLabs": "",
+        "customLinks": "",
+        "customLinksTooltip": "",
         "dependencies": "",
+        "documentation": "",
         "downloads": "",
         "from": "",
         "installedVersion": "",
         "lastCommitDate": "",
         "latestVersion": "",
-        "links": "",
+        "license": "",
+        "raiseAnIssue": "",
         "reportAbuse": "",
+        "reportAbuseTooltip": "",
+        "repository": "",
         "signature": "",
         "status": "",
         "updatedAt": ""
+      },
+      "modal": {
+        "cancel": "",
+        "copyEmail": "",
+        "description": "",
+        "node": "",
+        "title": ""
       }
     },
     "empty-state": {
@@ -2732,14 +3009,6 @@
       "role-label": "角色"
     }
   },
-  "query-library": {
-    "datasource-names": "",
-    "delete-query-button": "",
-    "query-template-get-error": "",
-    "search": "",
-    "user-info-get-error": "",
-    "user-names": ""
-  },
   "query-operation": {
     "header": {
       "collapse-row": "折叠查询行",
@@ -2749,7 +3018,6 @@
       "expand-row": "展开查询行",
       "hide-response": "",
       "remove-query": "删除查询",
-      "save-to-query-library": "",
       "show-response": "",
       "toggle-edit-mode": "切换文本编辑模式"
     },
@@ -2848,6 +3116,10 @@
     "title": ""
   },
   "save-dashboards": {
+    "message-length": {
+      "info": "",
+      "title": ""
+    },
     "name-exists": {
       "message-info": "",
       "message-suggestion": "",
@@ -3131,6 +3403,7 @@
       "home-dashboard-placeholder": "默认仪表板",
       "locale-label": "语言",
       "locale-placeholder": "选择语言",
+      "theme-description": "",
       "theme-label": "UI 主题",
       "week-start-label": "每周开始日"
     },
@@ -3201,6 +3474,13 @@
     },
     "url-column-header": "快照网址",
     "view-button": "查看"
+  },
+  "table": {
+    "container": {
+      "content": "",
+      "show-all-series": "",
+      "show-only-series": ""
+    }
   },
   "tag-filter": {
     "clear-button": "",
@@ -3295,19 +3575,25 @@
       "start-your-metrics-exploration": "",
       "subtitle": ""
     },
-    "metric-overview": {
-      "description-label": "",
-      "labels": "",
-      "metric-attributes": "",
-      "no-description": "",
-      "type-label": "",
-      "unit-label": "",
-      "unknown-type": ""
-    },
     "metric-select": {
       "filter-by": "",
+      "native-histogram": "",
       "new-badge": "",
       "otel-switch": ""
+    },
+    "native-histogram-banner": {
+      "ch-heatmap": "",
+      "ch-histogram": "",
+      "click-histogram": "",
+      "hide-examples": "",
+      "learn-more": "",
+      "metric-examples": "",
+      "nh-heatmap": "",
+      "nh-histogram": "",
+      "now": "",
+      "previously": "",
+      "see-examples": "",
+      "sentence": ""
     },
     "recent-metrics": {
       "or-view-a-recent-exploration": ""

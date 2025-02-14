@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 )
 
 type RepoGetter interface {
@@ -57,6 +58,7 @@ type RepositoryController struct {
 	repoSynced     cache.InformerSynced
 	parsers        *resources.ParserFactory
 	logger         logging.Logger
+	secrets        secrets.Service
 
 	jobs      jobs.JobQueue
 	finalizer *finalizer
@@ -81,6 +83,7 @@ func NewRepositoryController(
 	parsers *resources.ParserFactory,
 	tester RepositoryTester,
 	jobs jobs.JobQueue,
+	secrets secrets.Service,
 ) (*RepositoryController, error) {
 	rc := &RepositoryController{
 		client:         provisioningClient,
@@ -99,9 +102,10 @@ func NewRepositoryController(
 			lister: resourceLister,
 			client: parsers.Client,
 		},
-		tester: tester,
-		jobs:   jobs,
-		logger: logging.DefaultLogger.With("logger", loggerName),
+		tester:  tester,
+		jobs:    jobs,
+		logger:  logging.DefaultLogger.With("logger", loggerName),
+		secrets: secrets,
 	}
 
 	_, err := repoInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
@@ -229,6 +233,12 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		return err
 	}
 
+	ctx, _, err := identity.WithProvisioningIdentitiy(context.Background(), namespace)
+	if err != nil {
+		return err
+	}
+	logger = logger.WithContext(ctx)
+
 	healthAge := time.Since(time.UnixMilli(obj.Status.Health.Checked))
 	syncAge := time.Since(time.UnixMilli(obj.Status.Sync.Finished))
 	syncInterval := time.Duration(obj.Spec.Sync.IntervalSeconds) * time.Second
@@ -243,12 +253,6 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	} else {
 		logger.Info("conditions met", "status", obj.Status, "generation", obj.Generation, "deletion_timestamp", obj.DeletionTimestamp, "sync_spec", obj.Spec.Sync)
 	}
-
-	ctx, _, err := identity.WithProvisioningIdentitiy(context.Background(), namespace)
-	if err != nil {
-		return err
-	}
-	logger = logger.WithContext(ctx)
 
 	repo, err := rc.repoGetter.AsRepository(ctx, obj)
 	if err != nil {
@@ -342,8 +346,10 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		}
 		sync = &provisioning.SyncJobOptions{}
 	case shouldResync:
-		logger.Info("handle repository resync")
-		sync = &provisioning.SyncJobOptions{Incremental: true}
+		if obj.Spec.Sync.Enabled {
+			logger.Info("handle repository resync")
+			sync = &provisioning.SyncJobOptions{Incremental: true}
+		}
 	default:
 		logger.Info("handle unknown repository situation")
 	}

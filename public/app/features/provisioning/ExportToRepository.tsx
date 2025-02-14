@@ -1,7 +1,6 @@
-import { Controller, useForm } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 
 import { Box, Button, Field, FieldSet, Input, Stack, Switch, Text } from '@grafana/ui';
-import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 
 import ProgressBar from './ProgressBar';
 import { Repository, useCreateRepositoryExportMutation, useListJobQuery, ExportJobOptions } from './api';
@@ -14,7 +13,7 @@ export function ExportToRepository({ repo }: Props) {
   const [exportRepo, exportQuery] = useCreateRepositoryExportMutation();
   const exportName = exportQuery.data?.metadata?.name;
 
-  const { register, control, formState, handleSubmit } = useForm<ExportJobOptions>({
+  const { register, formState, handleSubmit } = useForm<ExportJobOptions>({
     defaultValues: {
       history: true,
       prefix: '',
@@ -37,14 +36,6 @@ export function ExportToRepository({ repo }: Props) {
     <Box paddingTop={2}>
       <form onSubmit={handleSubmit(onSubmit)}>
         <FieldSet label="Export from grafana into repository">
-          <Field label={'Source folder'} description="Select where we should read data (or empty for everything)">
-            <Controller
-              control={control}
-              name={'folder'}
-              render={({ field: { ref, ...field } }) => <FolderPicker {...field} />}
-            />
-          </Field>
-
           {isGit && (
             <Field label="Target Branch" description={'The target branch.  This will be created and emptied first'}>
               <Input placeholder={repo.spec?.github?.branch} {...register('branch')} />

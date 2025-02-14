@@ -12,6 +12,7 @@ import (
 	authlib "github.com/grafana/authlib/types"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 )
 
@@ -146,7 +147,8 @@ func (b *APIBuilder) handleSettings(w http.ResponseWriter, r *http.Request) {
 	}
 
 	settings := provisioning.RepositoryViewList{
-		Items: make([]provisioning.RepositoryView, len(all)),
+		Items:         make([]provisioning.RepositoryView, len(all)),
+		LegacyStorage: dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, b.storageStatus),
 	}
 	for i, val := range all {
 		settings.Items[i] = provisioning.RepositoryView{
