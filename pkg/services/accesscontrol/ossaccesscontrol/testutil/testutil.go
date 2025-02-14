@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/permreg"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
@@ -52,7 +51,7 @@ func ProvideFolderPermissions(
 
 	acSvc := acimpl.ProvideOSSService(
 		cfg, acdb.ProvideService(sqlStore), actionSets, localcache.ProvideService(),
-		features, tracing.InitializeTracerForTest(), zanzana.NewNoopClient(), sqlStore, permreg.ProvidePermissionRegistry(),
+		features, tracing.InitializeTracerForTest(), sqlStore, permreg.ProvidePermissionRegistry(),
 		nil, fService,
 	)
 

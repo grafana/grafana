@@ -51,11 +51,10 @@ export class AlertingQueryRunner {
   }
 
   async run(queries: AlertQuery[], condition: string) {
-    const empty = initialState(queries, LoadingState.Done);
     const queriesToRun = await this.prepareQueries(queries);
 
     if (queriesToRun.length === 0) {
-      return this.subject.next(empty);
+      return;
     }
 
     this.subscription = runRequest(this.backendSrv, queriesToRun, condition).subscribe({

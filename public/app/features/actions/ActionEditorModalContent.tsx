@@ -14,6 +14,7 @@ interface ActionEditorModalContentProps {
   onSave: (index: number, action: Action) => void;
   onCancel: (index: number) => void;
   getSuggestions: () => VariableSuggestion[];
+  showOneClick: boolean;
 }
 
 export const ActionEditorModalContent = ({
@@ -22,6 +23,7 @@ export const ActionEditorModalContent = ({
   onSave,
   onCancel,
   getSuggestions,
+  showOneClick,
 }: ActionEditorModalContentProps) => {
   const [dirtyAction, setDirtyAction] = useState(action);
 
@@ -34,6 +36,7 @@ export const ActionEditorModalContent = ({
           setDirtyAction(action);
         }}
         suggestions={getSuggestions()}
+        showOneClick={showOneClick}
       />
       <Modal.ButtonRow>
         <Button variant="secondary" onClick={() => onCancel(index)} fill="outline">

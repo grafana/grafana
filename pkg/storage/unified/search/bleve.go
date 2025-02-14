@@ -18,6 +18,7 @@ import (
 	"github.com/blevesearch/bleve/v2/search/query"
 	bleveSearch "github.com/blevesearch/bleve/v2/search/searcher"
 	index "github.com/blevesearch/bleve_index_api"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"go.opentelemetry.io/otel/trace"
 	"k8s.io/apimachinery/pkg/selection"
@@ -611,11 +612,16 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resource.Res
 		if !ok {
 			return nil, resource.AsErrorResult(fmt.Errorf("missing auth info"))
 		}
+		verb := utils.VerbList
+		if req.Permission == int64(dashboardaccess.PERMISSION_EDIT) {
+			verb = utils.VerbPatch
+		}
+
 		checker, err := access.Compile(ctx, auth, authlib.ListRequest{
 			Namespace: b.key.Namespace,
 			Group:     b.key.Group,
 			Resource:  b.key.Resource,
-			Verb:      utils.VerbList,
+			Verb:      verb,
 		})
 		if err != nil {
 			return nil, resource.AsErrorResult(err)
