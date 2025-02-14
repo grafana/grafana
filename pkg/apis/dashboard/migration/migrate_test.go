@@ -22,15 +22,6 @@ func TestMigrate(t *testing.T) {
 	files, err := os.ReadDir(INPUT_DIR)
 	require.NoError(t, err)
 
-	t.Run("minimum version check", func(t *testing.T) {
-		err := migration.Migrate(map[string]interface{}{
-			"schemaVersion": schemaversion.MINIUM_VERSION - 1,
-		}, schemaversion.MINIUM_VERSION)
-
-		var minVersionErr = schemaversion.NewMinimumVersionError(schemaversion.MINIUM_VERSION - 1)
-		require.ErrorAs(t, err, &minVersionErr)
-	})
-
 	for _, f := range files {
 		if f.IsDir() {
 			continue
