@@ -10,9 +10,9 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 )
 
-// MaybeNotifyProgress will only notify if a certain amount of time has passed
+// maybeNotifyProgress will only notify if a certain amount of time has passed
 // or if the job completed
-func MaybeNotifyProgress(threshold time.Duration, fn ProgressFn) ProgressFn {
+func maybeNotifyProgress(threshold time.Duration, fn ProgressFn) ProgressFn {
 	var last time.Time
 
 	return func(ctx context.Context, status provisioning.JobStatus) error {
@@ -48,7 +48,7 @@ type JobProgressRecorder struct {
 
 func NewJobProgressRecorder(progressFn ProgressFn) *JobProgressRecorder {
 	return &JobProgressRecorder{
-		progressFn: MaybeNotifyProgress(15*time.Second, progressFn),
+		progressFn: maybeNotifyProgress(15*time.Second, progressFn),
 		summaries:  make(map[string]*provisioning.JobResourceSummary),
 	}
 }

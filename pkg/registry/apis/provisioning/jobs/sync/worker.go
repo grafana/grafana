@@ -74,12 +74,13 @@ func (r *SyncWorker) IsSupported(ctx context.Context, job provisioning.Job) bool
 func (r *SyncWorker) Process(ctx context.Context,
 	repo repository.Repository,
 	job provisioning.Job,
-	progressFn jobs.ProgressFn,
+	progress *jobs.JobProgressRecorder,
 ) (*provisioning.JobStatus, error) {
+	progress.SetMessage("starting sync processing")
 	cfg := repo.Config()
 	logger := logging.FromContext(ctx).With("job", job.GetName(), "namespace", job.GetNamespace())
 
-	// Update sync status at the start
+	progress.SetMessage("starting sync processing")
 	data := map[string]any{
 		"status": map[string]any{
 			"sync": job.Status.ToSyncStatus(job.Name),
@@ -91,7 +92,7 @@ func (r *SyncWorker) Process(ctx context.Context,
 	}
 
 	// Create job
-	progress := jobs.NewJobProgressRecorder(progressFn)
+	progress.SetMessage("starting sync processing")
 	syncJob, err := r.createJob(ctx, repo, progress)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create sync job: %w", err)

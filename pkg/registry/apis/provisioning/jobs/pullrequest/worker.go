@@ -108,7 +108,7 @@ func (c *PullRequestWorker) IsSupported(ctx context.Context, job provisioning.Jo
 func (c *PullRequestWorker) Process(ctx context.Context,
 	repo repository.Repository,
 	job provisioning.Job,
-	progress jobs.ProgressFn,
+	progress *jobs.JobProgressRecorder,
 ) (*provisioning.JobStatus, error) {
 	cfg := repo.Config().Spec
 
