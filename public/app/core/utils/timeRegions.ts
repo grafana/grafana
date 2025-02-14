@@ -66,16 +66,15 @@ function getDurationSecs({ from, to }: Range) {
 }
 
 export function convertToCron(cfg: TimeRegionConfig) {
-  const hRange = normalizeRange(cfg);
+  const range = normalizeRange(cfg);
 
-  if (hRange !== undefined) {
-    const durationSecs = getDurationSecs(hRange);
-    const dow = hRange.from.dayOfWeek !== undefined ? hRange.from.dayOfWeek! - 1 : '*';
-    const cronString = `${hRange.from.m} ${hRange.from.h} * * ${dow}`;
+  if (range != null) {
+    let { m, h, dayOfWeek } = range.from;
+    let dow = dayOfWeek != null ? dayOfWeek - 1 : '*';
 
     return {
-      cronExpr: cronString,
-      duration: durationSecs,
+      cronExpr: `${m} ${h} * * ${dow}`,
+      duration: getDurationSecs(range),
     };
   }
 
