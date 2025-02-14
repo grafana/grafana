@@ -55,8 +55,7 @@ func setupTestEnv(t *testing.T) *TestEnv {
 		acSvc: acimpl.ProvideOSSService(
 			cfg, env.AcStore, &resourcepermissions.FakeActionSetSvc{},
 			localcache.New(0, 0), fmgt, tracing.InitializeTracerForTest(), nil,
-			permreg.ProvidePermissionRegistry(), nil, nil,
-		),
+			permreg.ProvidePermissionRegistry(), nil),
 		defaultOrgID: autoAssignOrgID,
 		logger:       logger,
 		metrics:      newMetrics(nil, autoAssignOrgID, env.SaSvc, logger),
