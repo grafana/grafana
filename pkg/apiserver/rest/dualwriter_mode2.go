@@ -137,7 +137,7 @@ func (d *DualWriterMode2) Get(ctx context.Context, name string, options *metav1.
 		}
 	}()
 
-	return objLegacy, err
+	return objLegacy, nil
 }
 
 // List overrides the behavior of the generic DualWriter.

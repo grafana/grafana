@@ -122,7 +122,6 @@ func TestMode2_Get(t *testing.T) {
 					m.On("Get", mock.Anything, input, mock.Anything).Return(nil, apierrors.NewNotFound(
 						schema.GroupResource{Group: "", Resource: "pods"}, "not-found"))
 				},
-				wantErr: true,
 			},
 			{
 				name:  "should return an error when getting an object from both the LegacyStorage and Storage fails",
