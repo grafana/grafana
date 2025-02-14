@@ -1,6 +1,5 @@
-import { PanelPlugin, PanelPluginMeta, PluginLoadingStrategy } from '@grafana/data';
+import { PanelPlugin, PanelPluginMeta, PluginLoadingStrategy, throwIfAngular } from '@grafana/data';
 import config from 'app/core/config';
-import { throwIfAngularPlugin } from 'app/core/utils/throwIfAngularPlugin';
 
 import { getPanelPluginLoadError } from '../panel/components/PanelPluginError';
 
@@ -55,7 +54,7 @@ export function syncGetPanelPlugin(id: string): PanelPlugin | undefined {
 }
 
 function getPanelPlugin(meta: PanelPluginMeta): Promise<PanelPlugin> {
-  throwIfAngularPlugin(meta);
+  throwIfAngular(meta);
 
   const fallbackLoadingStrategy = meta.loadingStrategy ?? PluginLoadingStrategy.fetch;
   return importPluginModule({
@@ -70,7 +69,7 @@ function getPanelPlugin(meta: PanelPluginMeta): Promise<PanelPlugin> {
         return pluginExports.plugin;
       }
 
-      throwIfAngularPlugin(pluginExports);
+      throwIfAngular(pluginExports);
       throw new Error('missing export: plugin');
     })
     .then((plugin: PanelPlugin) => {

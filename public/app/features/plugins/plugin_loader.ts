@@ -6,10 +6,10 @@ import {
   DataSourcePluginMeta,
   PluginLoadingStrategy,
   PluginMeta,
+  throwIfAngular,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
-import { throwIfAngularPlugin } from 'app/core/utils/throwIfAngularPlugin';
 
 import { GenericDataSourcePlugin } from '../datasources/types';
 
@@ -142,7 +142,7 @@ export async function importPluginModule({
 }
 
 export function importDataSourcePlugin(meta: DataSourcePluginMeta): Promise<GenericDataSourcePlugin> {
-  throwIfAngularPlugin(meta);
+  throwIfAngular(meta);
 
   const fallbackLoadingStrategy = meta.loadingStrategy ?? PluginLoadingStrategy.fetch;
   return importPluginModule({
@@ -182,7 +182,7 @@ export async function importAppPlugin(meta: PluginMeta): Promise<AppPlugin> {
     return importedAppPlugins[pluginId];
   }
 
-  throwIfAngularPlugin(meta);
+  throwIfAngular(meta);
 
   const pluginExports = await importPluginModule({
     path: meta.module,
