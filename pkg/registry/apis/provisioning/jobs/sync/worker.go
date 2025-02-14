@@ -285,7 +285,7 @@ func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange
 
 	// Create folder structure first
 	for _, change := range changes {
-		if len(r.progress.Errors()) > 20 {
+		if r.progress.TooManyErrors() {
 			r.progress.Record(ctx, jobs.JobResourceResult{
 				Name:     change.Existing.Name,
 				Resource: change.Existing.Resource,
@@ -348,7 +348,7 @@ func (r *syncJob) applyVersionedChanges(ctx context.Context, repo repository.Ver
 	r.progress.SetMessage("replicating versioned changes")
 
 	for _, change := range diff {
-		if len(r.progress.Errors()) > 20 {
+		if r.progress.TooManyErrors() {
 			r.progress.Record(ctx, jobs.JobResourceResult{
 				Path: change.Path,
 				// FIXME: should we use a skipped action instead? or a different action type?

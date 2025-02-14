@@ -39,6 +39,7 @@ type JobProgressRecorder struct {
 	ref         string
 	message     string
 	resultCount int
+	errorCount  int
 	errors      []string
 	progressFn  ProgressFn
 	summaries   map[string]*provisioning.JobResourceSummary
@@ -60,6 +61,7 @@ func (r *JobProgressRecorder) Record(ctx context.Context, result JobResourceResu
 		if len(r.errors) < 20 {
 			r.errors = append(r.errors, result.Error.Error())
 		}
+		r.errorCount++
 	} else {
 		logger.Info("job resource operation succeeded")
 	}
@@ -88,8 +90,8 @@ func (r *JobProgressRecorder) SetTotal(total int) {
 	r.total = total
 }
 
-func (r *JobProgressRecorder) Errors() []string {
-	return r.errors
+func (r *JobProgressRecorder) TooManyErrors() bool {
+	return r.errorCount > 20
 }
 
 func (r *JobProgressRecorder) summary() []*provisioning.JobResourceSummary {
@@ -146,7 +148,7 @@ func (r *JobProgressRecorder) notify(ctx context.Context) {
 	jobStatus := provisioning.JobStatus{
 		State:    provisioning.JobStateWorking,
 		Message:  r.message,
-		Errors:   r.Errors(),
+		Errors:   r.errors,
 		Progress: r.progress(),
 		Summary:  r.summary(),
 	}
@@ -174,7 +176,7 @@ func (r *JobProgressRecorder) Complete(ctx context.Context, err error) *provisio
 	}
 
 	jobStatus.Summary = r.summary()
-	jobStatus.Errors = r.Errors()
+	jobStatus.Errors = r.errors
 
 	// Check for errors during execution
 	if len(jobStatus.Errors) > 0 && jobStatus.State != provisioning.JobStateError {

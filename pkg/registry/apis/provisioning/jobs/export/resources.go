@@ -48,7 +48,7 @@ func (f *resourceReader) Write(ctx context.Context, key *resource.ResourceKey, v
 
 	if result := f.job.write(ctx, item); result.Error != nil {
 		f.job.progress.Record(ctx, result)
-		if len(f.job.progress.Errors()) > 20 {
+		if f.job.progress.TooManyErrors() {
 			return fmt.Errorf("stopping execution due to too many errors")
 		}
 	}
@@ -117,7 +117,7 @@ func (r *exportJob) loadResourcesFromAPIServer(ctx context.Context, kind schema.
 
 		for _, item := range list.Items {
 			r.progress.Record(ctx, r.write(ctx, &item))
-			if len(r.progress.Errors()) > 20 {
+			if r.progress.TooManyErrors() {
 				return fmt.Errorf("stopping execution due to too many errors")
 			}
 		}
