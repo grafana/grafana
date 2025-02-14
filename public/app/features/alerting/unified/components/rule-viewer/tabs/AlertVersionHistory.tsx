@@ -39,11 +39,8 @@ export function AlertVersionHistory({ ruleUid }: AlertVersionHistoryProps) {
   const [newVersion, setNewVersion] = useState<RulerGrafanaRuleDTO<GrafanaRuleDefinition>>();
   const [showDrawer, setShowDrawer] = useState(false);
   // checked versions for comparison. key is the version number, value is whether it's checked
-  const [checkedVersions, setCheckedVersions] = useState<Map<string, boolean>>(new Map());
-  const canCompare = useMemo(
-    () => Array.from(checkedVersions.values()).filter((value) => value).length > 1,
-    [checkedVersions]
-  );
+  const [checkedVersions, setCheckedVersions] = useState(new Set<string>());
+  const canCompare = useMemo(() => checkedVersions.size > 1, [checkedVersions]);
 
   if (error) {
     return (
@@ -75,7 +72,7 @@ export function AlertVersionHistory({ ruleUid }: AlertVersionHistoryProps) {
         if (!version && version !== 0) {
           return;
         }
-        return checkedVersions.get(String(rule.grafana_alert.version));
+        return checkedVersions.has(String(rule.grafana_alert.version));
       })
       .sort((a, b) => {
         const aVersion = a.grafana_alert.version;
@@ -99,8 +96,8 @@ export function AlertVersionHistory({ ruleUid }: AlertVersionHistoryProps) {
 
   function handleCheckedVersionChange(id: string) {
     setCheckedVersions((prevState) => {
-      const newState = new Map(prevState);
-      newState.set(String(id), !prevState.get(String(id)));
+      const newState = new Set(prevState);
+      newState.has(id) ? newState.delete(id) : newState.add(id);
       return newState;
     });
     setOldVersion(undefined);

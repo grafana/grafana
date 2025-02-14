@@ -22,7 +22,7 @@ export function VersionHistoryTable({
   onVersionsChecked(id: string): void;
   ruleVersions: Array<RulerGrafanaRuleDTO<GrafanaRuleDefinition>>;
   disableSelection: boolean;
-  checkedVersions: Map<string, boolean>;
+  checkedVersions: Set<string>;
 }) {
   //----> restore code : no need to review as it's behind a feature flag
   const [confirmRestore, setConfirmRestore] = useState(false);
@@ -52,7 +52,7 @@ export function VersionHistoryTable({
       header: t('core.versionHistory.table.version', 'Version'),
       cell: ({ row }) => {
         const id = String(row.original.grafana_alert.version);
-        const thisValue = checkedVersions.get(String(id ?? false)) ?? false;
+        const thisValue = checkedVersions.has(String(id ?? false)) ?? false;
         return (
           <Stack direction="row">
             <Checkbox
