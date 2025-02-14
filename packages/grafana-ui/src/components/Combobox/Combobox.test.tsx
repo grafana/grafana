@@ -395,7 +395,9 @@ describe('Combobox', () => {
       const input = screen.getByRole('combobox');
       await user.click(input);
 
-      expect(asyncSpy).toHaveBeenCalledTimes(1); // Called on open
+      expect(asyncSpy).not.toHaveBeenCalledTimes(1); // Not called yet
+      act(() => jest.advanceTimersByTime(200)); // Add the debounce time
+      expect(asyncSpy).toHaveBeenCalledTimes(1); // Then check if called on open
       asyncSpy.mockClear();
 
       await user.keyboard('a');
