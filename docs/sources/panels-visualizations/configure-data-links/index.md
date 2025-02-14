@@ -196,7 +196,7 @@ You can configure actions for the following visualizations:
 
 ## Data link and action variables {#data-link-variables}
 
-Variables in data links and actions let you send people to a detailed dashboard with preserved data filters. For example, you could use variables to specify a label, time range, series, or variable selection.
+Variables in data links and actions let you send people to a detailed dashboard or trigger an API call with preserved data filters. For example, you could use variables to specify a label, time range, series, or variable selection.
 
 To see a list of available variables, enter `$` in the data link or action **URL** field.
 
@@ -210,7 +210,7 @@ You can also use template variables in your data links or actions URLs. For more
 
 ### Time range panel variables
 
-These variables allow you to include the current time range in the data link URL:
+These variables allow you to include the current time range in the data link or action URL:
 
 | Variable           | Description                                                              |
 | ------------------ | ------------------------------------------------------------------------ |
@@ -218,7 +218,7 @@ These variables allow you to include the current time range in the data link URL
 | `__from`           | For more information, refer to [Global variables](ref:global-variables). |
 | `__to`             | For more information, refer to [Global variables](ref:global-variables). |
 
-When you create data links using time range variables like `__url_time_range` in the URL, you have to form the query parameter syntax yourself; that is, you must format the URL by appending query parameters using the question mark (`?`) and ampersand (`&`) syntax. These characters aren't automatically generated.
+When you create data links and actions using time range variables like `__url_time_range` in the URL, you have to form the query parameter syntax yourself; that is, you must format the URL by appending query parameters using the question mark (`?`) and ampersand (`&`) syntax. These characters aren't automatically generated.
 
 ### Series variables
 
@@ -249,9 +249,9 @@ Value-specific variables are available under `__value` namespace:
 | `__value.text`    | Text representation of a value                                                    |
 | `__value.calc`    | Calculation name if the value is result of calculation                            |
 
-Using value-specific variables in data links can show different results depending on the set option of Tooltip mode.
+Using value-specific variables in data links and actions can show different results depending on the set option of Tooltip mode.
 
-When you create data links using time range variables like `__value.time` in the URL, you have to form the query parameter syntax yourself; that is, you must add the question mark (`?`) and ampersand (`&`). These characters aren't automatically generated.
+When you create data links and actions using time range variables like `__value.time` in the URL, you have to form the query parameter syntax yourself; that is, you must add the question mark (`?`) and ampersand (`&`). These characters aren't automatically generated.
 
 ### Data variables
 
@@ -294,12 +294,12 @@ To add a data link, follow these steps:
 
    This is a human-readable label for the link displayed in the UI. This is a required field.
 
-1. Enter the **URL** or variable to which you want to link.
+1. Enter the **URL** to which you want to link.
 
    To add a data link variable, click in the **URL** field and enter `$` or press Ctrl+Space or Cmd+Space to see a list of available variables. This is a required field.
 
 1. If you want the link to open in a new tab, toggle the **Open in a new tab** switch.
-1. If you want the data link to open with a single click on the element, toggle the **One click** switch.
+1. If you want the data link to open with a single click on the visualization, toggle the **One click** switch.
 
    Only one data link can have **One click** enabled at a time. **One click** is only supported for some visualizations.
 
@@ -316,18 +316,18 @@ To add a data link, follow these steps:
 1. Click the menu icon and select **Edit** to open the panel editor.
 1. Scroll down to the **Data links and actions** section and expand it.
 1. Click **+ Add action**.
-1. In the dialog box that opens, set the action options:
+1. In the dialog box that opens, define the API call settings:
 
-   | Option               | Description                                                                                                                                                                                     |
-   | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-   | Title                | A human-readable label for the action that's displayed in the UI.                                                                                                                               |
-   | Confirmation message | A descriptive prompt to confirm or cancel the action.                                                                                                                                           |
-   | Method               | Select from **POST**, **PUT**, or **GET**.                                                                                                                                                      |
-   | URL                  | The request URL or variable to which you want to link.</p><p>To add a variable, click in the **URL** field and enter `$` or press Ctrl+Space or Cmd+Space to see a list of available variables. |
-   | Query parameters     | **Key** and **Value** pairs. Click the **+** icon to add as many key/value pairs as you need.                                                                                                   |
-   | Headers              | Comprised of **Key** and **Value** pairs and a **Content-Type**.</p><p>Click the **+** icon to add as many key/value pairs as you need.                                                         |
-   | Content-Type         | Select from the following: **application/json**, **text/plain**, **application/XML**, and **application/x-www-form-urlencoded**.                                                                |
-   | Body                 | The body of the request.                                                                                                                                                                        |
+   | Option               | Description                                                                                                                                               |
+   | -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+   | Title                | A human-readable label for the action that's displayed in the UI.                                                                                         |
+   | Confirmation message | A descriptive prompt to confirm or cancel the action.                                                                                                     |
+   | Method               | Select from **POST**, **PUT**, or **GET**.                                                                                                                |
+   | URL                  | The request URL.</p><p>To add a variable, click in the **URL** field and enter `$` or press Ctrl+Space or Cmd+Space to see a list of available variables. |
+   | Query parameters     | **Key** and **Value** pairs. Click the **+** icon to add as many key/value pairs as you need.                                                             |
+   | Headers              | Comprised of **Key** and **Value** pairs and a **Content-Type**.</p><p>Click the **+** icon to add as many key/value pairs as you need.                   |
+   | Content-Type         | Select from the following: **application/json**, **text/plain**, **application/XML**, and **application/x-www-form-urlencoded**.                          |
+   | Body                 | The body of the request.                                                                                                                                  |
 
 1. Click **Save** to save changes and close the dialog box.
 1. Click **Save dashboard**.
@@ -335,4 +335,4 @@ To add a data link, follow these steps:
    {{< /tab-content >}}
    {{< /tabs >}}
 
-If you add multiple data links, you can control the order in which they appear in the visualization. To do this, click and drag the data link to the desired position.
+If you add multiple data links or actions, you can control the order in which they appear in the visualization. To do this, click and drag the data link or action to the desired position.
