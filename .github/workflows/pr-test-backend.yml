@@ -116,13 +116,13 @@ jobs:
         ports:
           - 8080:8080
         options: >-
-          --entrypoint "/bin/mimir"
+          --command "/bin/mimir"
           --health-cmd "wget -q --spider http://localhost:8080/ready || exit 1"
           --health-interval 10s
           --health-timeout 5s 
           --health-retries 5
         env:
-          MIMIR_ARGS: "-target=backend -common.storage.backend=filesystem -common.storage.filesystem.dir=/tmp/mimir"
+          MIMIR_BACKEND_ARGS: "-target=all -blocks-storage.backend=filesystem -blocks-storage.filesystem.dir=/tmp/mimir"
 
     steps:
       - name: Identify Runner
@@ -156,7 +156,7 @@ jobs:
           PGPASSWORD: grafanatest
           REDIS_URL: redis://localhost:6379/0
           AM_TENANT_ID: test
-          AM_URL: http://localhost:8080
+          AM_URL: http://localhost:8080/prometheus
         run: |
           sudo apt-get install -y postgresql-client
           psql -h localhost -p 5432 -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
