@@ -219,6 +219,11 @@ export function EditDataSourceView({
                     ...dataSource,
                     jsonData: { ...dataSource.jsonData, ...jsonData },
                   }),
+                setSecureJsonData: (secureJsonData) =>
+                  onOptionsChange({
+                    ...dataSource,
+                    secureJsonData: { ...dataSource.secureJsonData, ...secureJsonData },
+                  }),
               }}
             />
           </div>
