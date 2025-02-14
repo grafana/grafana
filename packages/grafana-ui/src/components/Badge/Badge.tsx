@@ -12,7 +12,7 @@ import { SkeletonComponent, attachSkeleton } from '../../utils/skeleton';
 import { Icon } from '../Icon/Icon';
 import { Tooltip } from '../Tooltip/Tooltip';
 
-export type BadgeColor = 'blue' | 'red' | 'green' | 'orange' | 'purple';
+export type BadgeColor = 'blue' | 'red' | 'green' | 'orange' | 'purple' | 'darkgrey';
 
 export interface BadgeProps extends HTMLAttributes<HTMLDivElement> {
   text: React.ReactNode;
