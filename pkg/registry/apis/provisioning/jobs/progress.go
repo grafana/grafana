@@ -39,6 +39,7 @@ type JobResourceResult struct {
 }
 
 type jobProgressRecorder struct {
+	started     time.Time
 	total       int
 	ref         string
 	message     string
@@ -49,8 +50,9 @@ type jobProgressRecorder struct {
 	summaries   map[string]*provisioning.JobResourceSummary
 }
 
-func NewJobProgressRecorder(progressFn progressFn) JobProgressRecorder {
+func newJobProgressRecorder(progressFn progressFn) JobProgressRecorder {
 	return &jobProgressRecorder{
+		started:    time.Now(),
 		progressFn: maybeNotifyProgress(15*time.Second, progressFn),
 		summaries:  make(map[string]*provisioning.JobResourceSummary),
 	}
@@ -170,9 +172,9 @@ func (r *jobProgressRecorder) notify(ctx context.Context) {
 func (r *jobProgressRecorder) Complete(ctx context.Context, err error) provisioning.JobStatus {
 	// Initialize base job status
 	jobStatus := provisioning.JobStatus{
-		// TODO: do we really need to set this one here?
-		// Started:  job.Status.Started,
-		// TODO: do we really need to set this one here?
+		Started: r.started.UnixMilli(),
+		// FIXME: if we call this method twice, the state will be different
+		// This results in sync status to be different from job status
 		Finished: time.Now().UnixMilli(),
 		State:    provisioning.JobStateSuccess,
 		Message:  "completed successfully",

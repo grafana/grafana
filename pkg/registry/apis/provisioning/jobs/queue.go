@@ -141,42 +141,27 @@ func (s *jobStore) drainPending() {
 		logger := logger.With("job", job.GetName(), "namespace", job.GetNamespace())
 		ctx := logging.Context(ctx, logger)
 
-		started := time.Now()
-		var (
-			status      provisioning.JobStatus
-			foundWorker bool
-		)
+		var foundWorker bool
+		recorder := newJobProgressRecorder(func(ctx context.Context, j provisioning.JobStatus) error {
+			return s.Update(ctx, job.Namespace, job.Name, j)
+		})
 
 		for _, worker := range s.workers {
 			if !worker.IsSupported(ctx, *job) {
 				continue
 			}
 
-			foundWorker = true
-			recorder := newJobProgressRecorder(func(ctx context.Context, j provisioning.JobStatus) error {
-				return s.Update(ctx, job.Namespace, job.Name, j)
-			})
-
-			err = s.processByWorker(ctx, worker, *job, recorder)
-			status = recorder.Complete(ctx, err)
-			logger.Debug("job processing finished", "status", status.State)
-
 			// Already found a worker, no need to continue
+			foundWorker = true
+			err = s.processByWorker(ctx, worker, *job, recorder)
 			break
 		}
 
 		if !foundWorker {
-			status = provisioning.JobStatus{
-				State: provisioning.JobStateError,
-				Errors: []string{
-					"no registered worker supports this job",
-				},
-			}
+			err = errors.New("no registered worker supports this job")
 		}
 
-		status.Started = started.UnixMilli()
-		status.Finished = time.Now().UnixMilli()
-
+		status := recorder.Complete(ctx, err)
 		err = s.Update(ctx, job.Namespace, job.Name, status)
 		if err != nil {
 			logger.Error("error running job", "error", err)
