@@ -165,7 +165,7 @@ export function calculateTimesWithin(cfg: TimeRegionConfig, tRange: TimeRange, t
   }
 
   try {
-    let tz = timezone === 'browser' ? undefined : timezone === 'utc' ? 'Etc/UTC' : timezone;
+    let tz = cfg.timezone === 'browser' ? undefined : cfg.timezone === 'utc' ? 'Etc/UTC' : cfg.timezone;
 
     let job = new Cron(cronExpr, { timezone: tz });
 

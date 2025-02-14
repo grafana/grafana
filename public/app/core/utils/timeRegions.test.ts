@@ -87,11 +87,11 @@ describe('timeRegions', () => {
       };
 
       const regions = calculateTimesWithin(cfg, tr);
-      const formatted = regions.map((r) => formatAbsoluteRange(r));
+      const formatted = regions.map((r) => formatAbsoluteRange(r, regionsTz));
       expect(formatted).toEqual([
         {
-          fr: 'Mon | 2023-03-06 00:00:00 GMT-5',
-          to: 'Tue | 2023-03-07 00:00:00 GMT-5',
+          fr: 'Mon | 2023-03-06 00:00:00 GMT-6',
+          to: 'Tue | 2023-03-07 00:00:00 GMT-6',
         },
         {
           fr: 'Mon | 2023-03-13 00:00:00 GMT-5',
@@ -129,11 +129,11 @@ describe('timeRegions', () => {
       };
 
       const regions = calculateTimesWithin(cfg, tr);
-      const formatted = regions.map((r) => formatAbsoluteRange(r));
+      const formatted = regions.map((r) => formatAbsoluteRange(r, regionsTz));
       expect(formatted).toEqual([
         {
-          fr: 'Mon | 2023-03-06 20:00:00 GMT-5',
-          to: 'Mon | 2023-03-06 20:00:00 GMT-5',
+          fr: 'Mon | 2023-03-06 20:00:00 GMT-6',
+          to: 'Mon | 2023-03-06 20:00:00 GMT-6',
         },
         {
           fr: 'Mon | 2023-03-13 20:00:00 GMT-5',
@@ -171,7 +171,52 @@ describe('timeRegions', () => {
       };
 
       const regions = calculateTimesWithin(cfg, tr);
-      const formatted = regions.map((r) => formatAbsoluteRange(r));
+      const formatted = regions.map((r) => formatAbsoluteRange(r, regionsTz));
+      expect(formatted).toEqual([
+        {
+          fr: 'Mon | 2023-02-27 00:00:00 GMT-6',
+          to: 'Thu | 2023-03-02 00:00:00 GMT-6',
+        },
+        {
+          fr: 'Mon | 2023-03-06 00:00:00 GMT-6',
+          to: 'Thu | 2023-03-09 00:00:00 GMT-6',
+        },
+        {
+          fr: 'Mon | 2023-03-13 00:00:00 GMT-5',
+          to: 'Thu | 2023-03-16 00:00:00 GMT-5',
+        },
+        {
+          fr: 'Mon | 2023-03-20 00:00:00 GMT-5',
+          to: 'Thu | 2023-03-23 00:00:00 GMT-5',
+        },
+        {
+          fr: 'Mon | 2023-03-27 00:00:00 GMT-5',
+          to: 'Thu | 2023-03-30 00:00:00 GMT-5',
+        },
+      ]);
+    });
+
+    it('returns regions with days range (browser time zone)', () => {
+      const dashboardTz = process.env.TZ;
+      const regionsTz = dashboardTz;
+
+      const cfg: TimeRegionConfig = {
+        timezone: regionsTz,
+        fromDayOfWeek: 1,
+        toDayOfWeek: 3,
+      };
+
+      const tr: TimeRange = {
+        from: dateTimeForTimeZone(dashboardTz, '2023-03-01'),
+        to: dateTimeForTimeZone(dashboardTz, '2023-03-31'),
+        raw: {
+          to: '',
+          from: '',
+        },
+      };
+
+      const regions = calculateTimesWithin(cfg, tr);
+      const formatted = regions.map((r) => formatAbsoluteRange(r, regionsTz));
       expect(formatted).toEqual([
         {
           fr: 'Mon | 2023-02-27 00:00:00 GMT-5',
@@ -195,6 +240,7 @@ describe('timeRegions', () => {
         },
       ]);
     });
+
     it('returns regions with days/times range', () => {
       const dashboardTz = 'America/Chicago';
       const regionsTz = dashboardTz;
@@ -217,11 +263,11 @@ describe('timeRegions', () => {
       };
 
       const regions = calculateTimesWithin(cfg, tr);
-      const formatted = regions.map((r) => formatAbsoluteRange(r));
+      const formatted = regions.map((r) => formatAbsoluteRange(r, regionsTz));
       expect(formatted).toEqual([
         {
-          fr: 'Mon | 2023-03-06 20:00:00 GMT-5',
-          to: 'Tue | 2023-03-07 10:00:00 GMT-5',
+          fr: 'Mon | 2023-03-06 20:00:00 GMT-6',
+          to: 'Tue | 2023-03-07 10:00:00 GMT-6',
         },
         {
           fr: 'Mon | 2023-03-13 20:00:00 GMT-5',
