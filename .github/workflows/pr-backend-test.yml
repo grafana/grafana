@@ -1,0 +1,210 @@
+name: Test Backend
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'Makefile'
+      - 'pkg/**'
+      - 'packaging/**'
+      - '.github/workflows/**'
+      - 'conf/**'
+      - 'go.sum'
+      - 'go.mod'
+      - 'public/app/plugins/**/plugin.json'
+      - 'docs/sources/setup-grafana/configure-grafana/feature-toggles/**'
+      - 'devenv/**'
+      - 'apps/**'
+      - '!*.md'     # Exclude markdown files
+      - '!docs/**'  # Exclude docs directory
+      - '!latest.json' # Exclude latest.json
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - '*.md'
+      - 'docs/**'
+      - 'latest.json'
+
+env:
+  EDITION: oss
+
+jobs:
+  verify-gen:
+    name: Verify Generated Code
+    runs-on: ubuntu-latest
+    concurrency:
+      group: ${{ github.workflow }}-verify-gen-${{ github.ref }}
+      cancel-in-progress: false
+    steps:
+      - name: Identify Runner
+        run: echo ${{ runner.name }}
+      
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.23.5'
+          cache: true
+      
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y make
+      
+      - name: Verify CUE Generation
+        run: |
+          CODEGEN_VERIFY=1 make gen-cue
+      
+      - name: Verify Jsonnet Generation
+        run: |
+          CODEGEN_VERIFY=1 make gen-jsonnet
+
+  test-backend:
+    name: Test Backend
+    runs-on: ubuntu-latest
+    needs: verify-gen
+    services:
+      postgres:
+        image: postgres:alpine
+        env:
+          POSTGRES_USER: grafanatest
+          POSTGRES_PASSWORD: grafanatest
+          POSTGRES_DB: grafanatest
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: rootpass
+          MYSQL_DATABASE: grafana_tests
+          MYSQL_USER: grafana
+          MYSQL_PASSWORD: password
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+      redis:
+        image: redis:alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      memcached:
+        image: memcached:alpine
+        ports:
+          - 11211:11211
+      mimir:
+        image: grafana/mimir:latest
+        ports:
+          - 8080:8080
+        options: >-
+          --entrypoint "/bin/mimir"
+          --health-cmd "wget -q --spider http://localhost:8080/ready || exit 1"
+          --health-interval 10s
+          --health-timeout 5s 
+          --health-retries 5
+        env:
+          MIMIR_ARGS: "-target=all -blocks-storage.backend=filesystem -blocks-storage.filesystem.dir=/tmp/mimir"
+
+    steps:
+      - name: Identify Runner
+        run: echo ${{ runner.name }}
+      
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23.5'
+          cache: true
+
+      - name: Generate Wire Code
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y make
+          make gen-go
+
+      - name: Run Backend Tests
+        run: |
+          sudo apt-get install -y build-essential shared-mime-info shared-mime-info-lang
+          go list -f '{{.Dir}}/...' -m  | xargs go test -short -covermode=atomic -timeout=5m
+
+      - name: Run Integration Tests
+        env:
+          GRAFANA_TEST_DB: postgres
+          POSTGRES_HOST: localhost
+          PGPASSWORD: grafanatest
+          REDIS_URL: redis://localhost:6379/0
+          AM_TENANT_ID: test
+          AM_URL: http://localhost:8080/prometheus
+        run: |
+          sudo apt-get install -y postgresql-client
+          psql -h localhost -p 5432 -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
+          go test -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+' | grep -o '\(.*\)/' | sort -u)
+
+  enterprise-tests:
+    name: Enterprise Tests
+    runs-on: ubuntu-latest
+    needs: verify-gen
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Identify Runner
+        run: echo ${{ runner.name }}
+      
+      - uses: actions/checkout@v4
+        with:
+          path: src
+          fetch-depth: 0
+          
+      - name: Generate GitHub App Token
+        id: generate_token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.ENTERPRISE_BOT_APP_ID }}
+          private-key: ${{ secrets.ENTERPRISE_BOT_PRIVATE_KEY }}
+          owner: grafana
+          repositories: "grafana-enterprise"
+          
+      - name: Clone and Check Enterprise
+        run: |
+          cd $GITHUB_WORKSPACE
+          is_fork=$(curl -H "Authorization: Bearer ${{ steps.generate_token.outputs.token }}" \
+            "https://api.github.com/repos/grafana/grafana/pulls/${{ github.event.pull_request.number }}" | \
+            jq .head.repo.fork)
+          if [ "$is_fork" = "true" ]; then
+            echo "Skipping enterprise tests for fork"
+            exit 0
+          fi
+          git clone "https://x-access-token:${{ steps.generate_token.outputs.token }}@github.com/grafana/grafana-enterprise.git"
+          cd grafana-enterprise
+          if git checkout ${GITHUB_HEAD_REF}; then
+            echo "checked out ${GITHUB_HEAD_REF}"
+          elif git checkout ${GITHUB_BASE_REF}; then
+            echo "checked out ${GITHUB_BASE_REF}"
+          else
+            git checkout main
+          fi
+          cd ..
+          ln -s src grafana
+          cd grafana-enterprise
+          ./build.sh
