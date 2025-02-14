@@ -360,7 +360,10 @@ func InstallAPIs(
 	// in other places, working with a flat []APIGroupBuilder list is much nicer
 	buildersGroupMap := make(map[string][]APIGroupBuilder, 0)
 	for _, b := range builders {
-		group := b.GetGroupVersion().Group
+		group, err := getGroup(b)
+		if err != nil {
+			return err
+		}
 		if _, ok := buildersGroupMap[group]; !ok {
 			buildersGroupMap[group] = make([]APIGroupBuilder, 0)
 		}
