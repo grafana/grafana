@@ -23,6 +23,17 @@ type LocalRepositoryConfig struct {
 	Path string `json:"path,omitempty"`
 }
 
+// Workflow used for changes in the repository.
+// +enum
+type Workflow string
+
+const (
+	// BranchWorkflow creates a branch for changes
+	BranchWorkflow Workflow = "branch"
+	// PushWorkflow pushes changes directly the configured branch
+	PushWorkflow Workflow = "push"
+)
+
 type GitHubRepositoryConfig struct {
 	// The repository URL (e.g. `https://github.com/example/test`).
 	URL string `json:"url,omitempty"`
@@ -34,13 +45,17 @@ type GitHubRepositoryConfig struct {
 	// TODO: this should be part of secrets and a simple reference.
 	Token string `json:"token,omitempty"`
 
+	// Workflow allowed for changes to the repository.
+	// The order is relevant for defining the precedence of the workflows.
+	// Possible values: pull-request, branch, push.
+	Workflows []Workflow `json:"workflows,omitempty"`
+
 	// Whether we should commit to change branches and use a Pull Request flow to achieve this.
 	// By default, this is false (i.e. we will commit straight to the main branch).
 	BranchWorkflow bool `json:"branchWorkflow,omitempty"`
 
-	// Whether we should show dashboard previews in the pull requests caused by the BranchWorkflow option.
+	// Whether we should show dashboard previews for pull requests.
 	// By default, this is false (i.e. we will not create previews).
-	// This option is a no-op if BranchWorkflow is `false` or default.
 	GenerateDashboardPreviews bool `json:"generateDashboardPreviews,omitempty"`
 }
 
