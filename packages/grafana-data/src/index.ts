@@ -550,6 +550,7 @@ export {
   type PluginExtensionLink,
   type PluginExtensionComponent,
   type PluginExtensionConfig,
+  type PluginExtensionFunction,
   type PluginExtensionLinkConfig,
   type PluginExtensionComponentConfig,
   type PluginExtensionEventHelpers,
@@ -560,6 +561,7 @@ export {
   type PluginExtensionExposedComponentConfig,
   type PluginExtensionAddedComponentConfig,
   type PluginExtensionAddedLinkConfig,
+  type PluginExtensionAddedFunctionConfig,
 } from './types/pluginExtensions';
 export {
   type ScopeDashboardBindingSpec,
