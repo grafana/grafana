@@ -81,7 +81,7 @@ func TestIntegrationDiscoveryClient(t *testing.T) {
 func mustCreateUsers(t *testing.T, helper *apis.K8sTestHelper, permissionMap map[string][]string) apis.OrgUsers {
 	t.Helper()
 
-	var permissions []resourcepermissions.SetResourcePermissionCommand
+	permissions := make([]resourcepermissions.SetResourcePermissionCommand, 0, len(permissionMap))
 	for resource, actions := range permissionMap {
 		permissions = append(permissions, resourcepermissions.SetResourcePermissionCommand{
 			Actions:           actions,
