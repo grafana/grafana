@@ -24,7 +24,7 @@ export function useFolder(uid?: string): ReturnBag {
   }, [fetchFolder, uid]);
 
   return {
-    loading: fetchFolderState.isLoading,
+    loading: fetchFolderState.isLoading || fetchFolderState.isUninitialized,
     folder: fetchFolderState.data,
   };
 }
