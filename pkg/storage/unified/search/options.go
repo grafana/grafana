@@ -49,7 +49,6 @@ func NewSearchOptions(features featuremgmt.FeatureToggles, cfg *setting.Cfg, tra
 			WorkerThreads: cfg.IndexWorkers,
 			InitMinCount:  cfg.IndexMinCount,
 		}, nil
-
 	}
 	return resource.SearchOptions{}, nil
 }
