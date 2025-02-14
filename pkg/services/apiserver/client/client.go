@@ -14,6 +14,9 @@ import (
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
 
+	k8sUser "k8s.io/apiserver/pkg/authentication/user"
+	k8sRequest "k8s.io/apiserver/pkg/endpoints/request"
+
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacysearcher"
@@ -21,10 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/storage/unified"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	k8sUser "k8s.io/apiserver/pkg/authentication/user"
-	k8sRequest "k8s.io/apiserver/pkg/endpoints/request"
 )
 
 type K8sHandler interface {
@@ -46,15 +46,15 @@ type k8sHandler struct {
 	namespacer  request.NamespaceMapper
 	gvr         schema.GroupVersionResource
 	restConfig  func(context.Context) *rest.Config
-	searcher    func(context.Context) resource.ResourceIndexClient
+	searcher    resource.ResourceIndexClient
 	userService user.Service
 }
 
 func NewK8sHandler(cfg *setting.Cfg, namespacer request.NamespaceMapper, gvr schema.GroupVersionResource,
-	restConfig func(context.Context) *rest.Config, dashStore dashboards.Store, userSvc user.Service) K8sHandler {
+	restConfig func(context.Context) *rest.Config, dashStore dashboards.Store, userSvc user.Service, resourceClient resource.ResourceClient) K8sHandler {
 	legacySearcher := legacysearcher.NewDashboardSearchClient(dashStore)
 	key := gvr.Resource + "." + gvr.Group // the unified storage key in the config.ini is resource + group
-	searchClient := resource.NewSearchClient(cfg, key, unified.GetResourceClient, legacySearcher)
+	searchClient := resource.NewSearchClient(cfg, key, resourceClient, legacySearcher)
 
 	return &k8sHandler{
 		namespacer:  namespacer,
@@ -191,12 +191,12 @@ func (h *k8sHandler) Search(ctx context.Context, orgID int64, in *resource.Resou
 		}
 	}
 
-	return h.searcher(ctx).Search(ctx, in)
+	return h.searcher.Search(ctx, in)
 }
 
 func (h *k8sHandler) GetStats(ctx context.Context, orgID int64) (*resource.ResourceStatsResponse, error) {
 	// goes directly through grpc, so doesn't need the new context
-	return h.searcher(ctx).GetStats(ctx, &resource.ResourceStatsRequest{
+	return h.searcher.GetStats(ctx, &resource.ResourceStatsRequest{
 		Namespace: h.GetNamespace(orgID),
 		Kinds: []string{
 			h.gvr.Group + "/" + h.gvr.Resource,

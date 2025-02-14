@@ -28,17 +28,6 @@ import (
 
 const resourceStoreAudience = "resourceStore"
 
-var (
-	// internal provider of the package level resource client
-	pkgResourceClient resource.ResourceClient
-	ready             = make(chan struct{})
-)
-
-func GetResourceClient(ctx context.Context) resource.ResourceClient {
-	<-ready
-	return pkgResourceClient
-}
-
 type Options struct {
 	Cfg      *setting.Cfg
 	Features featuremgmt.FeatureToggles
@@ -65,12 +54,6 @@ func ProvideUnifiedStorageClient(opts *Options) (resource.ResourceClient, error)
 			client, // The original
 			legacysql.NewDatabaseProvider(opts.DB),
 		)
-	}
-
-	// only set the package level restConfig once
-	if pkgResourceClient == nil {
-		pkgResourceClient = client
-		close(ready)
 	}
 
 	return client, err
