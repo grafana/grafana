@@ -170,7 +170,7 @@ func SecretAuthorizer(accessControl accesscontrol.AccessControl) authorizer.Auth
 
 		// TODO: is this correct?
 		if namespaceInfo.OrgID != user.GetOrgID() {
-			return authorizer.DecisionDeny, "mismatch org", nil
+			return authorizer.DecisionDeny, "mismatched org", nil
 		}
 
 		// Based on the `kind` being requested, we use different evaluators with scopes and actions.
@@ -206,7 +206,7 @@ func SecretAuthorizer(accessControl accesscontrol.AccessControl) authorizer.Auth
 			}
 
 		default:
-			return authorizer.DecisionDeny, "unknown resource " + resource, nil
+			return authorizer.DecisionDeny, "unknown resource: " + resource, nil
 		}
 
 		evaluator, ok := evaluatorForVerb[verb]
@@ -219,6 +219,6 @@ func SecretAuthorizer(accessControl accesscontrol.AccessControl) authorizer.Auth
 			return authorizer.DecisionAllow, "", nil
 		}
 
-		return authorizer.DecisionDeny, "insufficient permissions: " + resource, err
+		return authorizer.DecisionDeny, "insufficient permissions", err
 	}
 }
