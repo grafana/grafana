@@ -265,24 +265,29 @@ func (s *service) RegisterAPI(b builder.APIGroupBuilder) {
 func (s *service) start(ctx context.Context) error {
 	// Get the list of groups the server will support
 	builders := s.builders
-
 	groupVersions := make([]schema.GroupVersion, 0, len(builders))
+
 	// Install schemas
 	initialSize := len(kubeaggregator.APIVersionPriorities)
 	for i, b := range builders {
-		groupVersions = append(groupVersions, b.GetGroupVersion())
+		gvs := builder.GetGroupVersions(b)
+		groupVersions = append(groupVersions, gvs...)
 		if err := b.InstallSchema(Scheme); err != nil {
 			return err
 		}
 
-		if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAggregator) {
-			// set the priority for the group+version
-			kubeaggregator.APIVersionPriorities[b.GetGroupVersion()] = kubeaggregator.Priority{Group: 15000, Version: int32(i + initialSize)}
-		}
+		for _, gv := range gvs {
+			if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAggregator) {
+				// set the priority for the group+version
+				kubeaggregator.APIVersionPriorities[gv] = kubeaggregator.Priority{Group: 15000, Version: int32(i + initialSize)}
+			}
 
-		auth := b.GetAuthorizer()
-		if auth != nil {
-			s.authorizer.Register(b.GetGroupVersion(), auth)
+			if a, ok := b.(builder.APIGroupAuthorizer); ok {
+				auth := a.GetAuthorizer()
+				if auth != nil {
+					s.authorizer.Register(gv, auth)
+				}
+			}
 		}
 	}
 
