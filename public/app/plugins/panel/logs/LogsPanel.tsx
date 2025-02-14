@@ -563,7 +563,7 @@ async function copyDashboardUrl(row: LogRowModel, rows: LogRowModel[], timeRange
   return Promise.resolve();
 }
 
-async function requestMoreLogs(
+export async function requestMoreLogs(
   dataSourcesMap: Map<string, DataSourceApi>,
   panelData: PanelData,
   timeRange: AbsoluteTimeRange,

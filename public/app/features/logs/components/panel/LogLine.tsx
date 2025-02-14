@@ -4,19 +4,20 @@ import { CSSProperties, useEffect, useRef } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useTheme2 } from '@grafana/ui';
 
-import { ProcessedLogModel } from './processing';
+import { LogListModel } from './processing';
 import { hasUnderOrOverflow } from './virtualization';
 
 interface Props {
   index: number;
-  log: ProcessedLogModel;
+  log: LogListModel;
   showTime: boolean;
   style: CSSProperties;
   onOverflow?: (index: number, id: string, height: number) => void;
+  variant?: 'infinite-scroll';
   wrapLogMessage: boolean;
 }
 
-export const LogLine = ({ index, log, style, onOverflow, showTime, wrapLogMessage }: Props) => {
+export const LogLine = ({ index, log, style, onOverflow, showTime, variant, wrapLogMessage }: Props) => {
   const theme = useTheme2();
   const styles = getStyles(theme);
   const logLineRef = useRef<HTMLDivElement | null>(null);
@@ -33,7 +34,7 @@ export const LogLine = ({ index, log, style, onOverflow, showTime, wrapLogMessag
   }, [index, log.uid, onOverflow, style.height]);
 
   return (
-    <div style={style} className={styles.logLine} ref={onOverflow ? logLineRef : undefined}>
+    <div style={style} className={`${styles.logLine} ${variant}`} ref={onOverflow ? logLineRef : undefined}>
       <div className={wrapLogMessage ? styles.wrappedLogLine : styles.unwrappedLogLine}>
         {showTime && <span className={`${styles.timestamp} level-${log.logLevel}`}>{log.timestamp}</span>}
         {log.logLevel && <span className={`${styles.level} level-${log.logLevel}`}>{log.logLevel}</span>}
@@ -43,7 +44,7 @@ export const LogLine = ({ index, log, style, onOverflow, showTime, wrapLogMessag
   );
 };
 
-const getStyles = (theme: GrafanaTheme2) => {
+export const getStyles = (theme: GrafanaTheme2) => {
   const colors = {
     critical: '#B877D9',
     error: '#FF5286',
@@ -60,8 +61,23 @@ const getStyles = (theme: GrafanaTheme2) => {
       fontSize: theme.typography.fontSize,
       wordBreak: 'break-all',
       '&:hover': {
-        opacity: 0.9,
+        opacity: 0.7,
       },
+      '&.infinite-scroll': {
+        '&::before': {
+          borderTop: `solid 1px ${theme.colors.border.strong}`,
+          content: '""',
+          height: 0,
+          left: 0,
+          position: 'absolute',
+          top: -3,
+          width: '100%',
+        },
+      },
+    }),
+    logLineMessage: css({
+      fontFamily: theme.typography.fontFamily,
+      textAlign: 'center',
     }),
     timestamp: css({
       color: theme.colors.text.secondary,
@@ -72,6 +88,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       },
       '&.level-error': {
         color: colors.error,
+      },
+      '&.level-info': {
+        color: colors.info,
       },
       '&.level-warning': {
         color: colors.warning,
@@ -101,16 +120,21 @@ const getStyles = (theme: GrafanaTheme2) => {
         color: colors.debug,
       },
     }),
+    loadMoreButton: css({
+      background: 'transparent',
+      border: 'none',
+      display: 'inline',
+    }),
     overflows: css({
       outline: 'solid 1px red',
     }),
     unwrappedLogLine: css({
       whiteSpace: 'pre',
-      paddingBottom: theme.spacing(0.5),
+      paddingBottom: theme.spacing(0.75),
     }),
     wrappedLogLine: css({
       whiteSpace: 'pre-wrap',
-      paddingBottom: theme.spacing(0.5),
+      paddingBottom: theme.spacing(0.75),
     }),
   };
 };

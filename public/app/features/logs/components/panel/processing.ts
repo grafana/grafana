@@ -4,7 +4,7 @@ import { escapeUnescapedString, sortLogRows } from '../../utils';
 
 import { measureTextWidth } from './virtualization';
 
-export interface ProcessedLogModel extends LogRowModel {
+export interface LogListModel extends LogRowModel {
   body: string;
   timestamp: string;
   dimensions: LogDimensions;
@@ -25,7 +25,7 @@ interface PreProcessOptions {
 export const preProcessLogs = (
   logs: LogRowModel[],
   { escape, order, timeZone, wrap }: PreProcessOptions
-): ProcessedLogModel[] => {
+): LogListModel[] => {
   const orderedLogs = sortLogRows(logs, order);
   return orderedLogs.map((log) => preProcessLog(log, { wrap, escape, timeZone, expanded: false }));
 };
@@ -36,10 +36,7 @@ interface PreProcessLogOptions {
   timeZone: string;
   wrap: boolean;
 }
-const preProcessLog = (
-  log: LogRowModel,
-  { escape, expanded, timeZone, wrap }: PreProcessLogOptions
-): ProcessedLogModel => {
+const preProcessLog = (log: LogRowModel, { escape, expanded, timeZone, wrap }: PreProcessLogOptions): LogListModel => {
   let body = log.entry;
   const timestamp = dateTimeFormat(log.timeEpochMs, {
     timeZone,
