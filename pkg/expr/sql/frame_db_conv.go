@@ -146,138 +146,97 @@ func convertDataType(fieldType data.FieldType) mysql.Type {
 }
 
 // fieldValFromRowVal converts a go-mysql-server row value to a data.field value
-//
-//nolint:gocyclo
 func fieldValFromRowVal(fieldType data.FieldType, val interface{}) (interface{}, error) {
 	// if the input interface is nil, we can return an untyped nil
 	if val == nil {
 		return nil, nil
 	}
 
+	nullable := fieldType.Nullable()
 	switch fieldType {
 	case data.FieldTypeInt8, data.FieldTypeNullableInt8:
 		v, ok := val.(int8)
 		if ok {
-			if fieldType.Nullable() {
-				return &v, nil
-			}
-			return v, nil
+			return ptrIfNull(v, nullable), nil
 		}
 		return nil, fmt.Errorf("unexpected value type %v of type %T, expected int8", val, val)
 
 	case data.FieldTypeUint8, data.FieldTypeNullableUint8:
 		v, ok := val.(uint8)
 		if ok {
-			if fieldType.Nullable() {
-				return &v, nil
-			}
-			return v, nil
+			return ptrIfNull(v, nullable), nil
 		}
 		return nil, fmt.Errorf("unexpected value type %v of type %T, expected uint8", val, val)
 
 	case data.FieldTypeInt16, data.FieldTypeNullableInt16:
 		v, ok := val.(int16)
 		if ok {
-			if fieldType.Nullable() {
-				return &v, nil
-			}
-			return v, nil
+			return ptrIfNull(v, nullable), nil
 		}
 		return nil, fmt.Errorf("unexpected value type %v of type %T, expected int16", val, val)
 
 	case data.FieldTypeUint16, data.FieldTypeNullableUint16:
 		v, ok := val.(uint16)
 		if ok {
-			if fieldType.Nullable() {
-				return &v, nil
-			}
-			return v, nil
+			return ptrIfNull(v, nullable), nil
 		}
 		return nil, fmt.Errorf("unexpected value type %v of type %T, expected uint16", val, val)
 
 	case data.FieldTypeInt32, data.FieldTypeNullableInt32:
 		v, ok := val.(int32)
 		if ok {
-			if fieldType.Nullable() {
-				return &v, nil
-			}
-			return v, nil
+			return ptrIfNull(v, nullable), nil
 		}
 		return nil, fmt.Errorf("unexpected value type %v of type %T, expected int32", val, val)
 
 	case data.FieldTypeUint32, data.FieldTypeNullableUint32:
 		v, ok := val.(uint32)
 		if ok {
-			if fieldType.Nullable() {
-				return &v, nil
-			}
-			return v, nil
+			return ptrIfNull(v, nullable), nil
 		}
 		return nil, fmt.Errorf("unexpected value type %v of type %T, expected uint32", val, val)
 
 	case data.FieldTypeInt64, data.FieldTypeNullableInt64:
 		v, ok := val.(int64)
 		if ok {
-			if fieldType.Nullable() {
-				return &v, nil
-			}
-			return v, nil
+			return ptrIfNull(v, nullable), nil
 		}
 		return nil, fmt.Errorf("unexpected value type %v of type %T, expected int64", val, val)
 
 	case data.FieldTypeUint64, data.FieldTypeNullableUint64:
 		v, ok := val.(uint64)
 		if ok {
-			if fieldType.Nullable() {
-				return &v, nil
-			}
-			return v, nil
+			return ptrIfNull(v, nullable), nil
 		}
 		return nil, fmt.Errorf("unexpected value type %v of type %T, expected uint64", val, val)
 
 	case data.FieldTypeFloat32, data.FieldTypeNullableFloat32:
 		v, ok := val.(float32)
 		if ok {
-			if fieldType.Nullable() {
-				return &v, nil
-			}
-			return v, nil
+			return ptrIfNull(v, nullable), nil
 		}
 		return nil, fmt.Errorf("unexpected value type %v of type %T, expected float32", val, val)
 
 	case data.FieldTypeFloat64, data.FieldTypeNullableFloat64:
-		if fv, ok := val.(float64); ok {
-			if fieldType.Nullable() {
-				return &fv, nil
-			}
-			return fv, nil
+		if v, ok := val.(float64); ok {
+			return ptrIfNull(v, nullable), nil
 		}
-		if d, ok := val.(decimal.Decimal); ok {
-			f64 := d.InexactFloat64()
-			if fieldType.Nullable() {
-				return &f64, nil
-			}
-			return f64, nil
+		if vD, ok := val.(decimal.Decimal); ok {
+			return ptrIfNull(vD.InexactFloat64(), nullable), nil
 		}
 		return nil, fmt.Errorf("unexpected value type %v of type %T, expected float64 or decimal.Decimal", val, val)
 
 	case data.FieldTypeTime, data.FieldTypeNullableTime:
 		v, ok := val.(time.Time)
 		if ok {
-			if fieldType.Nullable() {
-				return &v, nil
-			}
-			return v, nil
+			return ptrIfNull(v, nullable), nil
 		}
 		return nil, fmt.Errorf("unexpected value type %v of type %T, expected time.Time", val, val)
 
 	case data.FieldTypeString, data.FieldTypeNullableString:
 		v, ok := val.(string)
 		if ok {
-			if fieldType.Nullable() {
-				return &v, nil
-			}
-			return v, nil
+			return ptrIfNull(v, nullable), nil
 		}
 		return nil, fmt.Errorf("unexpected value type %v of type %T, expected string", val, val)
 
@@ -286,13 +245,18 @@ func fieldValFromRowVal(fieldType data.FieldType, val interface{}) (interface{},
 		if !ok {
 			return nil, fmt.Errorf("unexpected value type %v of type %T, expected int8 (for bool)", val, val)
 		}
+
 		b := v != 0
-		if fieldType.Nullable() {
-			return &b, nil
-		}
-		return b, nil
+		return ptrIfNull(b, nullable), nil
 
 	default:
 		return nil, fmt.Errorf("unsupported field type %s for val %v", fieldType, val)
 	}
+}
+
+func ptrIfNull[T any](val T, isNullable bool) interface{} {
+	if isNullable {
+		return &val
+	}
+	return val
 }
