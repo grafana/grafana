@@ -260,4 +260,5 @@ export interface FeatureToggles {
   grafanaconThemes?: boolean;
   pluginsCDNSyncLoader?: boolean;
   alertingJiraIntegration?: boolean;
+  newShareReportDrawer?: boolean;
 }

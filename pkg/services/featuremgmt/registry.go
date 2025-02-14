@@ -1816,6 +1816,14 @@ var (
 			FrontendOnly: true,
 			HideFromDocs: true,
 		},
+		{
+			Name:              "newShareReportDrawer",
+			Description:       "Enables the report creation drawer in a dashboard",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaSharingSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+		},
 	}
 )
 
