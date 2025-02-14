@@ -32,7 +32,6 @@ interface Range {
   to: ParsedTime;
 }
 
-// inclusive "to" means if the "to" time is undefined, it means 00:00 on the day after the "to" day
 function getDurationSecs({ from, to }: Range) {
   const fromDay = from.dayOfWeek ?? 0;
   const fromHour = from.h ?? 0;
@@ -120,6 +119,7 @@ function normalizeRange(cfg: TimeRegionConfig): Range | undefined {
     hRange.from.s = 0;
   }
 
+  // when "to" time is undefined it implies the end "to" dayOfWeek ¯\_(ツ)_/¯
   if (hRange.to.dayOfWeek && hRange.to.h == null && hRange.to.m == null) {
     // roll to next day 00:00
     hRange.to.dayOfWeek += hRange.to.dayOfWeek === 7 ? -6 : 1;
