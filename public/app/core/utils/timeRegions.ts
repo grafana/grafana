@@ -70,7 +70,7 @@ export function convertToCron(cfg: TimeRegionConfig) {
 
   if (range != null) {
     let { m, h, dayOfWeek } = range.from;
-    let dow = dayOfWeek != null ? dayOfWeek - 1 : '*';
+    let dow = dayOfWeek != null ? dayOfWeek : '*';
 
     return {
       cronExpr: `${m} ${h} * * ${dow}`,
@@ -144,7 +144,6 @@ function normalizeRange(cfg: TimeRegionConfig): Range | undefined {
   return hRange;
 }
 
-// TODO: tz support
 export function calculateTimesWithin(cfg: TimeRegionConfig, tRange: TimeRange, timezone?: string): AbsoluteTimeRange[] {
   const ranges: AbsoluteTimeRange[] = [];
 
@@ -166,7 +165,9 @@ export function calculateTimesWithin(cfg: TimeRegionConfig, tRange: TimeRange, t
   }
 
   try {
-    let job = new Cron(cronExpr, { timezone: 'Etc/UTC' });
+    let tz = timezone === 'browser' ? undefined : timezone === 'utc' ? 'Etc/UTC' : timezone;
+
+    let job = new Cron(cronExpr, { timezone: tz });
 
     // get previous run that may overlap with start of timerange
     let fromDate: Date | null = new Date(tRange.from.valueOf() - durationMs);

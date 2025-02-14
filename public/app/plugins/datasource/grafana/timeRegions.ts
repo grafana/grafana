@@ -11,7 +11,7 @@ export function doTimeRegionQuery(
     return undefined;
   }
 
-  const ranges = calculateTimesWithin(config, range, tz);
+  const ranges = calculateTimesWithin(config, range, config.timezone);
 
   if (ranges.length > 0) {
     const frame: DataFrame = {
