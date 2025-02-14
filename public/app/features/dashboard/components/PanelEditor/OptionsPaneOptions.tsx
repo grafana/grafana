@@ -53,15 +53,6 @@ export const OptionsPaneOptions = (props: OptionPaneRenderProps) => {
 
   if (isSearching) {
     mainBoxElements.push(renderSearchHits(allOptions, justOverrides, searchQuery));
-
-    // If searching for angular panel, then we need to add notice that results are limited
-    if (props.plugin.angularPanelCtrl) {
-      mainBoxElements.push(
-        <div className={styles.searchNotice} key="Search notice">
-          This is an old visualization type that does not support searching all options.
-        </div>
-      );
-    }
   } else {
     switch (listMode) {
       case OptionFilter.All:
