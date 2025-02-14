@@ -12,6 +12,7 @@ import { stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
 
 import { getDashboardSceneFor, getPanelIdForVizPanel } from '../../utils/utils';
 
+import { config } from '@grafana/runtime';
 import { ScenesNewRuleFromPanelButton } from './NewAlertRuleButton';
 import { PanelDataPaneTab, PanelDataTabHeaderProps, TabId } from './types';
 
@@ -46,7 +47,11 @@ export class PanelDataAlertingTab extends SceneObjectBase<PanelDataAlertingTabSt
 
   public getCanCreateRules() {
     const rulesPermissions = getRulesPermissions('grafana');
-    return this.getDashboard().state.meta.canSave && contextSrv.hasPermission(rulesPermissions.create);
+    return (
+      config.unifiedAlerting &&
+      this.getDashboard().state.meta.canSave &&
+      contextSrv.hasPermission(rulesPermissions.create)
+    );
   }
 }
 
