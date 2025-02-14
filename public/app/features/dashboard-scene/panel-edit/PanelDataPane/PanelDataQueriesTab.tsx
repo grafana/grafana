@@ -316,6 +316,33 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
     return null;
   }
   const showAddButton = !isSharedDashboardQuery(dsSettings.name);
+  const onSelectQueryFromLibrary = async (query: DataQuery) => {
+    // ensure all queries explicitly define a datasource
+    const enrichedQueries = queries.map((q) =>
+      q.datasource
+        ? q
+        : {
+            ...q,
+            datasource: datasource.getRef(),
+          }
+    );
+    const newQueries = addQuery(enrichedQueries, query);
+    model.onQueriesChange(newQueries);
+    if (query.datasource?.uid) {
+      const uniqueDatasources = new Set(newQueries.map((q) => q.datasource?.uid));
+      const isMixed = uniqueDatasources.size > 1;
+      const newDatasourceRef = {
+        uid: isMixed ? MIXED_DATASOURCE_NAME : query.datasource.uid,
+      };
+      const shouldChangeDatasource = datasource.uid !== newDatasourceRef.uid;
+      if (shouldChangeDatasource) {
+        const newDatasource = getDatasourceSrv().getInstanceSettings(newDatasourceRef);
+        if (newDatasource) {
+          await model.onChangeDataSource(newDatasource);
+        }
+      }
+    }
+  };
 
   return (
     <div data-testid={selectors.components.QueryTab.content}>
@@ -353,33 +380,7 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
               <Button
                 icon="plus"
                 onClick={() =>
-                  openQueryLibraryDrawer(getDatasourceNames(datasource, queries), async (query) => {
-                    // ensure all queries explicitly define a datasource
-                    const enrichedQueries = queries.map((q) =>
-                      q.datasource
-                        ? q
-                        : {
-                            ...q,
-                            datasource: datasource.getRef(),
-                          }
-                    );
-                    const newQueries = addQuery(enrichedQueries, query);
-                    model.onQueriesChange(newQueries);
-                    if (query.datasource?.uid) {
-                      const uniqueDatasources = new Set(newQueries.map((q) => q.datasource?.uid));
-                      const isMixed = uniqueDatasources.size > 1;
-                      const newDatasourceRef = {
-                        uid: isMixed ? MIXED_DATASOURCE_NAME : query.datasource.uid,
-                      };
-                      const shouldChangeDatasource = datasource.uid !== newDatasourceRef.uid;
-                      if (shouldChangeDatasource) {
-                        const newDatasource = getDatasourceSrv().getInstanceSettings(newDatasourceRef);
-                        if (newDatasource) {
-                          await model.onChangeDataSource(newDatasource);
-                        }
-                      }
-                    }
-                  })
+                  openQueryLibraryDrawer(getDatasourceNames(datasource, queries), onSelectQueryFromLibrary)
                 }
                 variant="secondary"
                 data-testid={selectors.components.QueryTab.addQuery}
