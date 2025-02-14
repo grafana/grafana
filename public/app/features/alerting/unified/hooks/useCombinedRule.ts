@@ -80,6 +80,7 @@ interface RequestState<T> {
   result?: T;
   loading: boolean;
   error?: unknown;
+  uninitialized: boolean;
 }
 
 interface Props {
@@ -99,6 +100,7 @@ export function useCombinedRule({ ruleIdentifier, limitAlerts }: Props): Request
     loading: isLoadingRuleLocation,
     error: ruleLocationError,
     result: ruleLocation,
+    uninitialized,
   } = useRuleLocation(ruleIdentifier);
 
   const {
@@ -125,7 +127,12 @@ export function useCombinedRule({ ruleIdentifier, limitAlerts }: Props): Request
 
   const [
     fetchRulerRuleGroup,
-    { currentData: rulerRuleGroup, isLoading: isLoadingRulerGroup, error: rulerRuleGroupError },
+    {
+      currentData: rulerRuleGroup,
+      isLoading: isLoadingRulerGroup,
+      error: rulerRuleGroupError,
+      isUninitialized: ruleGroupUninitialized,
+    },
   ] = alertRuleApi.endpoints.getRuleGroupForNamespace.useLazyQuery();
 
   useEffect(() => {
@@ -158,9 +165,10 @@ export function useCombinedRule({ ruleIdentifier, limitAlerts }: Props): Request
   }, [ruleIdentifier, ruleSourceName, promRuleNs, rulerRuleGroup, ruleSource, ruleLocation, namespaceName]);
 
   return {
-    loading: isLoadingDsFeatures || isLoadingPromRules || isLoadingRulerGroup,
+    loading: isLoadingDsFeatures || isLoadingPromRules || isLoadingRulerGroup || ruleGroupUninitialized,
     error: ruleLocationError ?? promRuleNsError ?? rulerRuleGroupError,
     result: rule,
+    uninitialized,
   };
 }
 
@@ -187,17 +195,19 @@ export function useRuleLocation(ruleIdentifier: RuleIdentifier): RequestState<Ru
           ruleName: ruleIdentifier.ruleName,
         },
         loading: false,
+        uninitialized: isUninitialized,
       };
     }
 
     if (isGrafanaRuleIdentifier(ruleIdentifier)) {
-      if (isLoading || isUninitialized) {
-        return { loading: true };
+      if (isLoading) {
+        return { loading: isLoading, uninitialized: isUninitialized };
       }
 
       if (error) {
-        return { loading: false, error };
+        return { loading: false, error, uninitialized: isUninitialized };
       }
+
       if (currentData) {
         return {
           result: {
@@ -207,6 +217,7 @@ export function useRuleLocation(ruleIdentifier: RuleIdentifier): RequestState<Ru
             ruleName: currentData.grafana_alert.title,
           },
           loading: false,
+          uninitialized: isUninitialized,
         };
       }
 
@@ -214,14 +225,16 @@ export function useRuleLocation(ruleIdentifier: RuleIdentifier): RequestState<Ru
       return {
         loading: false,
         error: new Error(`Unable to obtain rule location for rule ${ruleIdentifier.uid}`),
+        uninitialized: isUninitialized,
       };
     }
 
     return {
       loading: false,
+      uninitialized: isUninitialized,
       error: new Error('Unsupported rule identifier'),
     };
-  }, [ruleIdentifier, isLoading, isUninitialized, error, currentData]);
+  }, [ruleIdentifier, isUninitialized, isLoading, error, currentData]);
 }
 
 function getRulesSourceFromIdentifier(ruleIdentifier: RuleIdentifier): RulesSource | undefined {
@@ -249,16 +262,12 @@ export function useRuleWithLocation({
     loading: isLoadingRuleLocation,
     error: ruleLocationError,
     result: ruleLocation,
+    uninitialized,
   } = useRuleLocation(ruleIdentifier);
 
   const [
     fetchRulerRuleGroup,
-    {
-      currentData: rulerRuleGroup,
-      isLoading: isLoadingRulerGroup,
-      isUninitialized: isUninitializedRulerGroup,
-      error: rulerRuleGroupError,
-    },
+    { currentData: rulerRuleGroup, isLoading: isLoadingRulerGroup, error: rulerRuleGroupError },
   ] = alertRuleApi.endpoints.getRuleGroupForNamespace.useLazyQuery();
 
   useEffect(() => {
@@ -297,9 +306,10 @@ export function useRuleWithLocation({
   }, [ruleIdentifier, rulerRuleGroup, ruleSource, ruleLocation]);
 
   return {
-    loading: isLoadingRuleLocation || isLoadingDsFeatures || isLoadingRulerGroup || isUninitializedRulerGroup,
+    loading: isLoadingRuleLocation || isLoadingDsFeatures || isLoadingRulerGroup,
     error: ruleLocationError ?? rulerRuleGroupError,
     result: ruleWithLocation,
+    uninitialized,
   };
 }
 
