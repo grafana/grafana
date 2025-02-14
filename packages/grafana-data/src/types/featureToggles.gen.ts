@@ -260,4 +260,5 @@ export interface FeatureToggles {
   newLogsPanel?: boolean;
   grafanaconThemes?: boolean;
   pluginsCDNSyncLoader?: boolean;
+  alertingJiraIntegration?: boolean;
 }
