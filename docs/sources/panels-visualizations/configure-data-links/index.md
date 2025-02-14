@@ -309,6 +309,11 @@ To add a data link, follow these steps:
 
    {{< /tab-content >}}
    {{< tab-content name="Add actions" >}}
+
+   {{< admonition type="note">}}
+   Actions are not supported for all visualizations. For the list of supported visualizations, refer to [Supported visualizations](#supported-visualizations-1).
+   {{< /admonition >}}
+
    To add an action, by follow these steps:
 
 1. Navigate to the panel to which you want to add the action.
