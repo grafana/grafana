@@ -42,7 +42,7 @@ type JobProgressRecorder interface {
 
 type Worker interface {
 	IsSupported(ctx context.Context, job provisioning.Job) bool
-	Process(ctx context.Context, repo repository.Repository, job provisioning.Job, progress JobProgressRecorder) (*provisioning.JobStatus, error)
+	Process(ctx context.Context, repo repository.Repository, job provisioning.Job, progress JobProgressRecorder) error
 }
 
 // ProgressFn is a function that can be called to update the progress of a job

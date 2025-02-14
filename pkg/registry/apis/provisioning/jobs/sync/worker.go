@@ -71,63 +71,60 @@ func (r *SyncWorker) IsSupported(ctx context.Context, job provisioning.Job) bool
 	return job.Spec.Action == provisioning.JobActionSync
 }
 
-func (r *SyncWorker) Process(ctx context.Context,
-	repo repository.Repository,
-	job provisioning.Job,
-	progress jobs.JobProgressRecorder,
-) (*provisioning.JobStatus, error) {
-	progress.SetMessage("starting sync processing")
+func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, job provisioning.Job, progress jobs.JobProgressRecorder) error {
 	cfg := repo.Config()
 	logger := logging.FromContext(ctx).With("job", job.GetName(), "namespace", job.GetNamespace())
 
-	progress.SetMessage("starting sync processing")
 	data := map[string]any{
 		"status": map[string]any{
 			"sync": job.Status.ToSyncStatus(job.Name),
 		},
 	}
 
+	progress.SetMessage("update sync status at start")
 	if err := r.patchStatus(ctx, cfg, data); err != nil {
-		return nil, fmt.Errorf("update repo with job status at start: %w", err)
-	}
-
-	// Create job
-	progress.SetMessage("starting sync processing")
-	syncJob, err := r.createJob(ctx, repo, progress)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create sync job: %w", err)
+		return fmt.Errorf("update repo with job status at start: %w", err)
 	}
 
 	// Check if we are onboarding from legacy storage
 	if dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, r.storageStatus) {
 		if job.Spec.Sync.Incremental {
-			return nil, fmt.Errorf("incremental sync not suppored from legacy state")
+			return nil
 		}
-		if err = r.wipeUnifiedAndSetMigratedFlag(ctx, job.Namespace); err != nil {
-			return nil, err
+
+		progress.SetMessage("wipe unified and set migrated flag")
+		if err := r.wipeUnifiedAndSetMigratedFlag(ctx, job.Namespace); err != nil {
+			return fmt.Errorf("failed to wipe unified and set migrated flag: %w", err)
 		}
 	}
 
-	// Execute the job
+	progress.SetMessage("execute sync job")
+	syncJob, err := r.createJob(ctx, repo, progress)
+	if err != nil {
+		return fmt.Errorf("failed to create sync job: %w", err)
+	}
+
 	syncError := syncJob.run(ctx, *job.Spec.Sync)
-	jobStatus := progress.Complete(ctx, syncError)
 
 	// Create sync status and set hash if successful
-	syncStatus := jobStatus.ToSyncStatus(job.Name)
-	if syncStatus.State == provisioning.JobStateSuccess {
+	syncStatus := progress.Complete(ctx, syncError).ToSyncStatus(job.Name)
+	if syncError != nil && syncStatus.State == provisioning.JobStateSuccess {
 		syncStatus.Hash = progress.GetRef()
 	}
 
-	// Update the resource stats -- give the index some time to catch up
+	progress.SetMessage("get resource stats")
+	// HACK: this is a hack to give the index some time to catch up
 	time.Sleep(1 * time.Second)
 	stats, err := r.lister.Stats(ctx, cfg.Namespace, cfg.Name)
 	if err != nil {
-		logger.Warn("unable to read stats", "error", err)
+		logger.Error("unable to read stats", "error", err)
 	}
+
 	if stats == nil {
 		stats = &provisioning.ResourceStats{}
 	}
 
+	progress.SetMessage("update sync amd stats status at end")
 	data = map[string]any{
 		"status": map[string]any{
 			"sync":  syncStatus,
@@ -136,14 +133,10 @@ func (r *SyncWorker) Process(ctx context.Context,
 	}
 
 	if err := r.patchStatus(ctx, cfg, data); err != nil {
-		return nil, fmt.Errorf("update repo with job final status: %w", err)
+		return fmt.Errorf("update repo with job final status: %w", err)
 	}
 
-	if syncError != nil {
-		return nil, syncError
-	}
-
-	return jobStatus, nil
+	return syncError
 }
 
 // start a job and run it

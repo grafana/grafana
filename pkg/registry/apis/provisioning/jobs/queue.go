@@ -153,7 +153,12 @@ func (s *jobStore) drainPending() {
 			}
 
 			foundWorker = true
-			status, err = s.processByWorker(ctx, worker, *job)
+			recorder := NewJobProgressRecorder(func(ctx context.Context, j provisioning.JobStatus) error {
+				return s.Update(ctx, job.Namespace, job.Name, j)
+			})
+
+			err = s.processByWorker(ctx, worker, *job, recorder)
+			status := recorder.Complete(ctx, err)
 			if err != nil {
 				logger.Error("error processing job", "error", err)
 				if status == nil {
@@ -198,11 +203,11 @@ func (s *jobStore) drainPending() {
 	}
 }
 
-func (s *jobStore) processByWorker(ctx context.Context, worker Worker, job provisioning.Job) (*provisioning.JobStatus, error) {
+func (s *jobStore) processByWorker(ctx context.Context, worker Worker, job provisioning.Job, recorder JobProgressRecorder) error {
 	ctx = request.WithNamespace(ctx, job.Namespace)
 	ctx, _, err := identity.WithProvisioningIdentitiy(ctx, job.Namespace)
 	if err != nil {
-		return nil, fmt.Errorf("get worker identity: %w", err)
+		return fmt.Errorf("get worker identity: %w", err)
 	}
 	repoName := job.Spec.Repository
 
@@ -212,18 +217,15 @@ func (s *jobStore) processByWorker(ctx context.Context, worker Worker, job provi
 
 	repo, err := s.getter.GetRepository(ctx, repoName)
 	if err != nil {
-		return nil, fmt.Errorf("get repository: %w", err)
+		return fmt.Errorf("get repository: %w", err)
 	}
 
 	// TODO: does this really happen?
 	if repo == nil {
-		return nil, errors.New("unknown repository")
+		return errors.New("unknown repository")
 	}
 
-	progressRecorder := NewJobProgressRecorder(func(ctx context.Context, j provisioning.JobStatus) error {
-		return s.Update(ctx, job.Namespace, job.Name, j)
-	})
-	return worker.Process(ctx, repo, job, progressRecorder)
+	return worker.Process(ctx, repo, job, recorder)
 }
 
 // Checkout the next "pending" job

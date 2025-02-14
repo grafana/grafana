@@ -2,6 +2,7 @@ package export
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 
@@ -51,23 +52,16 @@ func (r *ExportWorker) IsSupported(ctx context.Context, job provisioning.Job) bo
 }
 
 // Process will start a job
-func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, job provisioning.Job, progress jobs.JobProgressRecorder) (*provisioning.JobStatus, error) {
+func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, job provisioning.Job, progress jobs.JobProgressRecorder) error {
 	if repo.Config().Spec.ReadOnly {
-		return &provisioning.JobStatus{
-			State:   provisioning.JobStateError,
-			Message: "Exporting to a read only repository is not supported",
-		}, nil
+		return errors.New("read only repository")
 	}
 
 	options := job.Spec.Export
 	if options == nil {
-		return &provisioning.JobStatus{
-			State:   provisioning.JobStateError,
-			Message: "Export job missing export settings",
-		}, nil
+		return errors.New("missing export settings")
 	}
 
-	progress.SetMessage("starting export processing")
 	var (
 		err      error
 		buffered *gogit.GoGitRepo
@@ -80,11 +74,7 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 			SingleCommitBeforePush: !options.History,
 		}, r.secrets, os.Stdout)
 		if err != nil {
-			return &provisioning.JobStatus{
-				State:   provisioning.JobStateError,
-				Message: "Unable to clone target",
-				Errors:  []string{err.Error()},
-			}, nil
+			return fmt.Errorf("unable to clone target: %w", err)
 		}
 
 		// New empty branch (same on main???)
@@ -92,11 +82,7 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 			progress.SetMessage("create empty branch")
 			_, err := buffered.NewEmptyBranch(ctx, options.Branch)
 			if err != nil {
-				return &provisioning.JobStatus{
-					State:   provisioning.JobStateError,
-					Message: "Unable to create empty branch",
-					Errors:  []string{err.Error()},
-				}, nil
+				return fmt.Errorf("unable to create empty branch: %w", err)
 			}
 		}
 
@@ -106,8 +92,7 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 
 	dynamicClient, _, err := r.clients.New(repo.Config().Namespace)
 	if err != nil {
-		// TODO: how do we really want to return errors?
-		return nil, fmt.Errorf("error getting client %w", err)
+		return fmt.Errorf("error getting client: %w", err)
 	}
 
 	worker := newExportJob(ctx, repo, *options, dynamicClient, progress)
@@ -116,7 +101,7 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 		progress.SetMessage("load users")
 		err = worker.loadUsers(ctx)
 		if err != nil {
-			return nil, fmt.Errorf("error loading users %w", err)
+			return fmt.Errorf("error loading users: %w", err)
 		}
 	}
 
@@ -129,24 +114,21 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 	progress.SetMessage("start folder export")
 	err = worker.loadFolders(ctx)
 	if err != nil {
-		// TODO: handle better
-		return progress.Complete(ctx, err), err
+		return err
 	}
 
 	progress.SetMessage("start resource export")
 	err = worker.loadResources(ctx)
 	if err != nil {
-		// TODO: handle better
-		return progress.Complete(ctx, err), err
+		return err
 	}
 
-	// TODO: handle the errors properly
 	if buffered != nil {
 		progress.SetMessage("push changes")
 		if err := buffered.Push(ctx, os.Stdout); err != nil {
-			return progress.Complete(ctx, err), err
+			return fmt.Errorf("error pushing changes: %w", err)
 		}
 	}
 
-	return progress.Complete(ctx, nil), err
+	return nil
 }
