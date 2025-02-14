@@ -2,6 +2,7 @@ package jobs
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -9,9 +10,12 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 )
 
-// MaybeNotifyProgress will only notify if a certain amount of time has passed
+// progressFn is a function that can be called to update the progress of a job
+type progressFn func(ctx context.Context, status provisioning.JobStatus) error
+
+// maybeNotifyProgress will only notify if a certain amount of time has passed
 // or if the job completed
-func MaybeNotifyProgress(threshold time.Duration, fn ProgressFn) ProgressFn {
+func maybeNotifyProgress(threshold time.Duration, fn progressFn) progressFn {
 	var last time.Time
 
 	return func(ctx context.Context, status provisioning.JobStatus) error {
@@ -34,63 +38,73 @@ type JobResourceResult struct {
 	Error    error
 }
 
-type JobProgressRecorder struct {
+type jobProgressRecorder struct {
+	started     time.Time
 	total       int
 	ref         string
 	message     string
 	resultCount int
+	errorCount  int
 	errors      []string
-	progressFn  ProgressFn
+	progressFn  progressFn
 	summaries   map[string]*provisioning.JobResourceSummary
 }
 
-func NewJobProgressRecorder(progressFn ProgressFn) *JobProgressRecorder {
-	return &JobProgressRecorder{
-		progressFn: MaybeNotifyProgress(15*time.Second, progressFn),
+func newJobProgressRecorder(progressFn progressFn) JobProgressRecorder {
+	return &jobProgressRecorder{
+		started:    time.Now(),
+		progressFn: maybeNotifyProgress(15*time.Second, progressFn),
 		summaries:  make(map[string]*provisioning.JobResourceSummary),
 	}
 }
 
-func (r *JobProgressRecorder) Record(ctx context.Context, result JobResourceResult) {
+func (r *jobProgressRecorder) Record(ctx context.Context, result JobResourceResult) {
 	r.resultCount++
 
+	logger := logging.FromContext(ctx).With("path", result.Path, "resource", result.Resource, "group", result.Group, "action", result.Action, "name", result.Name)
 	if result.Error != nil {
-		logger := logging.FromContext(ctx)
-		logger.Error("job resource operation failed", "err", result.Error, "path", result.Path, "resource", result.Resource, "group", result.Group, "action", result.Action, "name", result.Name)
+		logger.Error("job resource operation failed", "err", result.Error)
 		if len(r.errors) < 20 {
 			r.errors = append(r.errors, result.Error.Error())
 		}
+		r.errorCount++
+	} else {
+		logger.Info("job resource operation succeeded")
 	}
 
 	r.updateSummary(result)
 	r.notify(ctx)
 }
 
-func (r *JobProgressRecorder) SetMessage(msg string) {
+func (r *jobProgressRecorder) SetMessage(msg string) {
 	r.message = msg
 }
 
-func (r *JobProgressRecorder) GetMessage() string {
+func (r *jobProgressRecorder) GetMessage() string {
 	return r.message
 }
 
-func (r *JobProgressRecorder) SetRef(ref string) {
+func (r *jobProgressRecorder) SetRef(ref string) {
 	r.ref = ref
 }
 
-func (r *JobProgressRecorder) GetRef() string {
+func (r *jobProgressRecorder) GetRef() string {
 	return r.ref
 }
 
-func (r *JobProgressRecorder) SetTotal(total int) {
+func (r *jobProgressRecorder) SetTotal(total int) {
 	r.total = total
 }
 
-func (r *JobProgressRecorder) Errors() []string {
-	return r.errors
+func (r *jobProgressRecorder) TooManyErrors() error {
+	if r.errorCount > 20 {
+		return fmt.Errorf("too many errors: %d", r.errorCount)
+	}
+
+	return nil
 }
 
-func (r *JobProgressRecorder) summary() []*provisioning.JobResourceSummary {
+func (r *jobProgressRecorder) summary() []*provisioning.JobResourceSummary {
 	if len(r.summaries) == 0 {
 		return nil
 	}
@@ -103,7 +117,7 @@ func (r *JobProgressRecorder) summary() []*provisioning.JobResourceSummary {
 	return summaries
 }
 
-func (r *JobProgressRecorder) updateSummary(result JobResourceResult) {
+func (r *jobProgressRecorder) updateSummary(result JobResourceResult) {
 	key := result.Resource + ":" + result.Group
 	summary, exists := r.summaries[key]
 	if !exists {
@@ -132,7 +146,7 @@ func (r *JobProgressRecorder) updateSummary(result JobResourceResult) {
 	}
 }
 
-func (r *JobProgressRecorder) progress() float64 {
+func (r *jobProgressRecorder) progress() float64 {
 	if r.total == 0 {
 		return 0
 	}
@@ -140,11 +154,11 @@ func (r *JobProgressRecorder) progress() float64 {
 	return float64(r.resultCount) / float64(r.total) * 100
 }
 
-func (r *JobProgressRecorder) notify(ctx context.Context) {
+func (r *jobProgressRecorder) notify(ctx context.Context) {
 	jobStatus := provisioning.JobStatus{
 		State:    provisioning.JobStateWorking,
 		Message:  r.message,
-		Errors:   r.Errors(),
+		Errors:   r.errors,
 		Progress: r.progress(),
 		Summary:  r.summary(),
 	}
@@ -155,12 +169,12 @@ func (r *JobProgressRecorder) notify(ctx context.Context) {
 	}
 }
 
-func (r *JobProgressRecorder) Complete(ctx context.Context, err error) *provisioning.JobStatus {
+func (r *jobProgressRecorder) Complete(ctx context.Context, err error) provisioning.JobStatus {
 	// Initialize base job status
 	jobStatus := provisioning.JobStatus{
-		// TODO: do we really need to set this one here?
-		// Started:  job.Status.Started,
-		// TODO: do we really need to set this one here?
+		Started: r.started.UnixMilli(),
+		// FIXME: if we call this method twice, the state will be different
+		// This results in sync status to be different from job status
 		Finished: time.Now().UnixMilli(),
 		State:    provisioning.JobStateSuccess,
 		Message:  "completed successfully",
@@ -172,7 +186,7 @@ func (r *JobProgressRecorder) Complete(ctx context.Context, err error) *provisio
 	}
 
 	jobStatus.Summary = r.summary()
-	jobStatus.Errors = r.Errors()
+	jobStatus.Errors = r.errors
 
 	// Check for errors during execution
 	if len(jobStatus.Errors) > 0 && jobStatus.State != provisioning.JobStateError {
@@ -185,5 +199,5 @@ func (r *JobProgressRecorder) Complete(ctx context.Context, err error) *provisio
 		jobStatus.Message = r.message
 	}
 
-	return &jobStatus
+	return jobStatus
 }

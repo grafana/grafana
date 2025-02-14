@@ -71,62 +71,60 @@ func (r *SyncWorker) IsSupported(ctx context.Context, job provisioning.Job) bool
 	return job.Spec.Action == provisioning.JobActionSync
 }
 
-func (r *SyncWorker) Process(ctx context.Context,
-	repo repository.Repository,
-	job provisioning.Job,
-	progressFn jobs.ProgressFn,
-) (*provisioning.JobStatus, error) {
+func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, job provisioning.Job, progress jobs.JobProgressRecorder) error {
 	cfg := repo.Config()
 	logger := logging.FromContext(ctx).With("job", job.GetName(), "namespace", job.GetNamespace())
 
-	// Update sync status at the start
 	data := map[string]any{
 		"status": map[string]any{
 			"sync": job.Status.ToSyncStatus(job.Name),
 		},
 	}
 
+	progress.SetMessage("update sync status at start")
 	if err := r.patchStatus(ctx, cfg, data); err != nil {
-		return nil, fmt.Errorf("update repo with job status at start: %w", err)
-	}
-
-	// Create job
-	progress := jobs.NewJobProgressRecorder(progressFn)
-	syncJob, err := r.createJob(ctx, repo, progress)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create sync job: %w", err)
+		return fmt.Errorf("update repo with job status at start: %w", err)
 	}
 
 	// Check if we are onboarding from legacy storage
 	if dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, r.storageStatus) {
 		if job.Spec.Sync.Incremental {
-			return nil, fmt.Errorf("incremental sync not suppored from legacy state")
+			return nil
 		}
-		if err = r.wipeUnifiedAndSetMigratedFlag(ctx, job.Namespace); err != nil {
-			return nil, err
+
+		progress.SetMessage("wipe unified and set migrated flag")
+		if err := r.wipeUnifiedAndSetMigratedFlag(ctx, job.Namespace); err != nil {
+			return fmt.Errorf("failed to wipe unified and set migrated flag: %w", err)
 		}
 	}
 
-	// Execute the job
+	progress.SetMessage("execute sync job")
+	syncJob, err := r.createJob(ctx, repo, progress)
+	if err != nil {
+		return fmt.Errorf("failed to create sync job: %w", err)
+	}
+
 	syncError := syncJob.run(ctx, *job.Spec.Sync)
-	jobStatus := progress.Complete(ctx, syncError)
 
 	// Create sync status and set hash if successful
-	syncStatus := jobStatus.ToSyncStatus(job.Name)
-	if syncStatus.State == provisioning.JobStateSuccess {
+	syncStatus := progress.Complete(ctx, syncError).ToSyncStatus(job.Name)
+	if syncError != nil && syncStatus.State == provisioning.JobStateSuccess {
 		syncStatus.Hash = progress.GetRef()
 	}
 
-	// Update the resource stats -- give the index some time to catch up
+	progress.SetMessage("get resource stats")
+	// HACK: this is a hack to give the index some time to catch up
 	time.Sleep(1 * time.Second)
 	stats, err := r.lister.Stats(ctx, cfg.Namespace, cfg.Name)
 	if err != nil {
-		logger.Warn("unable to read stats", "error", err)
+		logger.Error("unable to read stats", "error", err)
 	}
+
 	if stats == nil {
 		stats = &provisioning.ResourceStats{}
 	}
 
+	progress.SetMessage("update sync amd stats status at end")
 	data = map[string]any{
 		"status": map[string]any{
 			"sync":  syncStatus,
@@ -135,18 +133,14 @@ func (r *SyncWorker) Process(ctx context.Context,
 	}
 
 	if err := r.patchStatus(ctx, cfg, data); err != nil {
-		return nil, fmt.Errorf("update repo with job final status: %w", err)
+		return fmt.Errorf("update repo with job final status: %w", err)
 	}
 
-	if syncError != nil {
-		return nil, syncError
-	}
-
-	return jobStatus, nil
+	return syncError
 }
 
 // start a job and run it
-func (r *SyncWorker) createJob(ctx context.Context, repo repository.Repository, progress *jobs.JobProgressRecorder) (*syncJob, error) {
+func (r *SyncWorker) createJob(ctx context.Context, repo repository.Repository, progress jobs.JobProgressRecorder) (*syncJob, error) {
 	cfg := repo.Config()
 	if !cfg.Spec.Sync.Enabled {
 		return nil, errors.New("sync is not enabled")
@@ -200,7 +194,7 @@ func (r *SyncWorker) patchStatus(ctx context.Context, repo *provisioning.Reposit
 // created once for each sync execution
 type syncJob struct {
 	repository   repository.Repository
-	progress     *jobs.JobProgressRecorder
+	progress     jobs.JobProgressRecorder
 	parser       *resources.Parser
 	lister       resources.ResourceLister
 	folders      dynamic.ResourceInterface
@@ -238,11 +232,7 @@ func (r *syncJob) run(ctx context.Context, options provisioning.SyncJobOptions) 
 				return nil
 			}
 
-			if err := r.applyVersionedChanges(ctx, versionedRepo, cfg.Status.Sync.Hash, currentRef); err != nil {
-				return fmt.Errorf("apply versioned changes: %w", err)
-			}
-
-			return nil
+			return r.applyVersionedChanges(ctx, versionedRepo, cfg.Status.Sync.Hash, currentRef)
 		}
 	}
 
@@ -269,12 +259,10 @@ func (r *syncJob) run(ctx context.Context, options provisioning.SyncJobOptions) 
 	r.folderLookup = resources.NewFolderTreeFromResourceList(target)
 
 	// Now apply the changes
-	r.applyChanges(ctx, changes)
-
-	return nil
+	return r.applyChanges(ctx, changes)
 }
 
-func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange) {
+func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange) error {
 	// Do the longest paths first (important for delete)
 	sort.Slice(changes, func(i, j int) bool {
 		return len(changes[i].Path) > len(changes[j].Path)
@@ -285,17 +273,8 @@ func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange
 
 	// Create folder structure first
 	for _, change := range changes {
-		if len(r.progress.Errors()) > 20 {
-			r.progress.Record(ctx, jobs.JobResourceResult{
-				Name:     change.Existing.Name,
-				Resource: change.Existing.Resource,
-				Group:    change.Existing.Group,
-				Path:     change.Path,
-				// FIXME: should we use a skipped action instead? or a different action type?
-				Action: repository.FileActionIgnored,
-				Error:  errors.New("too many errors"),
-			})
-			continue
+		if err := r.progress.TooManyErrors(); err != nil {
+			return err
 		}
 
 		if change.Action == repository.FileActionDeleted {
@@ -330,6 +309,8 @@ func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange
 	}
 
 	r.progress.SetMessage("changes replicated")
+
+	return nil
 }
 
 // Convert git changes into resource file changes
@@ -348,14 +329,8 @@ func (r *syncJob) applyVersionedChanges(ctx context.Context, repo repository.Ver
 	r.progress.SetMessage("replicating versioned changes")
 
 	for _, change := range diff {
-		if len(r.progress.Errors()) > 20 {
-			r.progress.Record(ctx, jobs.JobResourceResult{
-				Path: change.Path,
-				// FIXME: should we use a skipped action instead? or a different action type?
-				Action: repository.FileActionIgnored,
-				Error:  errors.New("too many errors"),
-			})
-			continue
+		if err := r.progress.TooManyErrors(); err != nil {
+			return err
 		}
 
 		switch change.Action {

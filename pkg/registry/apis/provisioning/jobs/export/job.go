@@ -21,7 +21,7 @@ type exportJob struct {
 	legacy    legacy.LegacyMigrator
 	namespace string
 
-	progress *jobs.JobProgressRecorder
+	progress jobs.JobProgressRecorder
 
 	userInfo   map[string]repository.CommitSignature
 	folderTree *resources.FolderTree
@@ -36,7 +36,7 @@ func newExportJob(ctx context.Context,
 	target repository.Repository,
 	options provisioning.ExportJobOptions,
 	client *resources.DynamicClient,
-	progress *jobs.JobProgressRecorder,
+	progress jobs.JobProgressRecorder,
 ) *exportJob {
 	prefix := options.Prefix
 	if prefix != "" {
