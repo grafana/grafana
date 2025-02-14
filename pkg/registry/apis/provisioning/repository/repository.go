@@ -88,13 +88,12 @@ type Repository interface {
 
 	// History of changes for a path
 	History(ctx context.Context, path, ref string) ([]provisioning.HistoryItem, error)
-
-	// For repositories that support webhooks
-	Webhook(ctx context.Context, req *http.Request) (*provisioning.WebhookResponse, error)
 }
 
 // Hooks called after the repository has been created, updated or deleted
 type RepositoryHooks interface {
+	// For repositories that support webhooks
+	Webhook(ctx context.Context, req *http.Request) (*provisioning.WebhookResponse, error)
 	OnCreate(ctx context.Context) (*provisioning.WebhookStatus, error)
 	OnUpdate(ctx context.Context) (*provisioning.WebhookStatus, error)
 	OnDelete(ctx context.Context) error

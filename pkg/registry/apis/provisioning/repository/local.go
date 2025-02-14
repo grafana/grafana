@@ -392,14 +392,3 @@ func (r *localRepository) History(ctx context.Context, path string, ref string) 
 		},
 	}
 }
-
-// Webhook implements Repository.
-func (r *localRepository) Webhook(ctx context.Context, req *http.Request) (*provisioning.WebhookResponse, error) {
-	return &provisioning.WebhookResponse{
-		Code: http.StatusAccepted,
-		Job: &provisioning.JobSpec{
-			Repository: r.Config().GetName(),
-			Action:     provisioning.JobActionSync, // sync the latest changes
-		},
-	}, nil
-}
