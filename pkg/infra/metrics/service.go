@@ -26,12 +26,13 @@ func (lw *logWrapper) Println(v ...any) {
 	lw.logger.Info("graphite metric bridge", v...)
 }
 
-func ProvideService(cfg *setting.Cfg, reg prometheus.Registerer) (*InternalMetricsService, error) {
+func ProvideService(cfg *setting.Cfg, reg prometheus.Registerer, gatherer prometheus.Gatherer) (*InternalMetricsService, error) {
 	initMetricVars(reg)
 	initFrontendMetrics(reg)
 
 	s := &InternalMetricsService{
-		Cfg: cfg,
+		Cfg:      cfg,
+		gatherer: gatherer,
 	}
 	return s, s.readSettings()
 }
@@ -41,6 +42,7 @@ type InternalMetricsService struct {
 
 	intervalSeconds int64
 	graphiteCfg     *graphitebridge.Config
+	gatherer        prometheus.Gatherer
 }
 
 func (im *InternalMetricsService) Run(ctx context.Context) error {
