@@ -379,7 +379,8 @@
     "list-view": {
       "empty": {
         "new-alert-rule": "New alert rule",
-        "new-recording-rule": "New recording rule",
+        "new-grafana-recording-rule": "New Grafana recording rule",
+        "new-recording-rule": "New data source recording rule",
         "provisioning": "You can also define rules through file provisioning or Terraform. <2>Learn more</2>"
       },
       "section": {

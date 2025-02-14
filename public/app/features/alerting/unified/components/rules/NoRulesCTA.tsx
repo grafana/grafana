@@ -1,3 +1,4 @@
+import { config } from '@grafana/runtime';
 import { EmptyState, LinkButton, Stack, TextLink } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 
@@ -6,6 +7,7 @@ import { useRulesAccess } from '../../utils/accessControlHooks';
 export const NoRulesSplash = () => {
   const { canCreateGrafanaRules, canCreateCloudRules } = useRulesAccess();
   const canCreateAnything = canCreateGrafanaRules || canCreateCloudRules;
+  const grafanaRecordingRulesEnabled = config.featureToggles.grafanaManagedRecordingRules;
 
   return (
     <div>
@@ -14,15 +16,22 @@ export const NoRulesSplash = () => {
         variant="call-to-action"
         button={
           canCreateAnything ? (
-            <Stack direction="row" alignItems="center" justifyContent="center">
+            <Stack direction="column" alignItems="center" justifyContent="center">
               {canCreateAnything && (
                 <LinkButton variant="primary" icon="plus" size="lg" href="alerting/new/alerting">
                   <Trans i18nKey="alerting.list-view.empty.new-alert-rule">New alert rule</Trans>
                 </LinkButton>
               )}
-              {canCreateCloudRules && (
+              {canCreateGrafanaRules && grafanaRecordingRulesEnabled && (
                 <LinkButton variant="primary" icon="plus" size="lg" href="alerting/new/grafana-recording">
-                  <Trans i18nKey="alerting.list-view.empty.new-recording-rule">New recording rule</Trans>
+                  <Trans i18nKey="alerting.list-view.empty.new-grafana-recording-rule">
+                    New Grafana recording rule
+                  </Trans>
+                </LinkButton>
+              )}
+              {canCreateCloudRules && (
+                <LinkButton variant="primary" icon="plus" size="lg" href="alerting/new/recording">
+                  <Trans i18nKey="alerting.list-view.empty.new-recording-rule">New data source recording rule</Trans>
                 </LinkButton>
               )}
             </Stack>
