@@ -7,10 +7,16 @@ import (
 	"time"
 
 	"github.com/go-sql-driver/mysql"
+	"github.com/grafana/dskit/crypto/tls"
+
 	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 )
+
+// tlsConfigName is the name of the TLS config that we register with the MySQL
+// driver.
+const tlsConfigName = "db_engine_tls"
 
 func getEngineMySQL(getter confGetter) (*xorm.Engine, error) {
 	config := mysql.NewConfig()
@@ -25,28 +31,21 @@ func getEngineMySQL(getter confGetter) (*xorm.Engine, error) {
 		// See: https://dev.mysql.com/doc/refman/en/sql-mode.html
 		"@@SESSION.sql_mode": "ANSI",
 	}
-	sslMode := getter.String("ssl_mode")
-	if sslMode == "true" || sslMode == "skip-verify" {
-		config.Params["tls"] = "preferred"
-	}
-	tls := getter.String("tls")
-	if tls != "" {
-		config.Params["tls"] = tls
-	}
 	config.Collation = "utf8mb4_unicode_ci"
 	config.Loc = time.UTC
 	config.AllowNativePasswords = true
 	config.ClientFoundRows = true
 	config.ParseTime = true
 
+	// Setup TLS for the database connection if configured.
+	if err := configureTLS(getter, config); err != nil {
+		return nil, fmt.Errorf("failed to configure TLS: %w", err)
+	}
+
 	// allow executing multiple SQL statements in a single roundtrip, and also
 	// enable executing the CALL statement to run stored procedures that execute
 	// multiple SQL statements.
 	//config.MultiStatements = true
-
-	// TODO: do we want to support these?
-	//	config.ServerPubKey = getter.String("server_pub_key")
-	//	config.TLSConfig = getter.String("tls_config_name")
 
 	if err := getter.Err(); err != nil {
 		return nil, fmt.Errorf("config error: %w", err)
@@ -56,7 +55,6 @@ func getEngineMySQL(getter confGetter) (*xorm.Engine, error) {
 		config.Net = "unix"
 	}
 
-	// FIXME: get rid of xorm
 	engine, err := xorm.NewEngine(db.DriverMySQL, config.FormatDSN())
 	if err != nil {
 		return nil, fmt.Errorf("open database: %w", err)
@@ -67,6 +65,47 @@ func getEngineMySQL(getter confGetter) (*xorm.Engine, error) {
 	engine.SetConnMaxLifetime(4 * time.Hour)
 
 	return engine, nil
+}
+
+func configureTLS(getter confGetter, config *mysql.Config) error {
+	sslMode := getter.String("ssl_mode")
+
+	if sslMode == "true" || sslMode == "skip-verify" {
+		tlsCfg := tls.ClientConfig{
+			CAPath:     getter.String("ca_cert_path"),
+			CertPath:   getter.String("client_cert_path"),
+			KeyPath:    getter.String("client_key_path"),
+			ServerName: getter.String("server_cert_name"),
+		}
+
+		rawTLSCfg, err := tlsCfg.GetTLSConfig()
+		if err != nil {
+			return fmt.Errorf("failed to get TLS config for mysql: %w", err)
+		}
+
+		if sslMode == "skip-verify" {
+			rawTLSCfg.InsecureSkipVerify = true
+		}
+
+		if err := mysql.RegisterTLSConfig(tlsConfigName, rawTLSCfg); err != nil {
+			return fmt.Errorf("failed to register TLS config for mysql: %w", err)
+		}
+
+		config.TLSConfig = tlsConfigName
+	}
+
+	// If the TLS mode is set in the database config, we need to set it here.
+	if tls := getter.String("tls"); tls != "" {
+		// If the user has provided TLS certs, we don't want to use the tls=<value>, as
+		// they would override the TLS config that we set above. They both use the same
+		// parameter, so we need to check for that.
+		if sslMode == "true" {
+			return fmt.Errorf("cannot provide tls certs and tls=<value> at the same time")
+		}
+		config.Params["tls"] = tls
+	}
+
+	return nil
 }
 
 func getEnginePostgres(getter confGetter) (*xorm.Engine, error) {
