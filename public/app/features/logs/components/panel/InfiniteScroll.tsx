@@ -136,7 +136,11 @@ export const InfiniteScroll = ({
     ({ index, style }: ListChildComponentProps) => {
       if (!logs[index] && infiniteLoaderState !== 'idle') {
         return (
-          <LogLineMessage style={style} onClick={infiniteLoaderState === 'pre-scroll' ? onLoadMore : undefined}>
+          <LogLineMessage
+            style={style}
+            styles={styles}
+            onClick={infiniteLoaderState === 'pre-scroll' ? onLoadMore : undefined}
+          >
             {getMessageFromInfiniteLoaderState(infiniteLoaderState, sortOrder)}
           </LogLineMessage>
         );
@@ -155,7 +159,17 @@ export const InfiniteScroll = ({
         />
       );
     },
-    [displayedFields, handleOverflow, infiniteLoaderState, logs, onLoadMore, showTime, sortOrder, styles, wrapLogMessage]
+    [
+      displayedFields,
+      handleOverflow,
+      infiniteLoaderState,
+      logs,
+      onLoadMore,
+      showTime,
+      sortOrder,
+      styles,
+      wrapLogMessage,
+    ]
   );
 
   const onItemsRendered = useCallback(
