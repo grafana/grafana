@@ -18,6 +18,8 @@ import (
 func ForKind(kind schema.GroupVersionKind) interface{} {
 	switch kind {
 	// Group=aggregation.grafana.app, Version=v0alpha1
+	case v0alpha1.SchemeGroupVersion.WithKind("Backend"):
+		return &aggregationv0alpha1.BackendApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("DataPlaneService"):
 		return &aggregationv0alpha1.DataPlaneServiceApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("DataPlaneServiceCondition"):

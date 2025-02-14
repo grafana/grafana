@@ -17,16 +17,39 @@ type DataPlaneService struct {
 }
 
 type DataPlaneServiceSpec struct {
-	PluginID   string     `json:"pluginID"`
-	PluginType PluginType `json:"pluginType"`
-	Group      string     `json:"group"`
-	Version    string     `json:"version"`
+	Group   string `json:"group"`
+	Version string `json:"version"`
 	// Services is a list of services that the proxied service provides.
 	// +optional
 	// +listType=map
 	// +listMapKey=type
 	Services []Service `json:"services"`
+	// Backend is the backend to use for the proxied service.
+	Backend Backend `json:"backend"`
 }
+
+type Backend struct {
+	// Type is the type of backend to use.
+	Type BackendType `json:"type"`
+	// PluginID is the ID of the plugin to use.
+	// +optional
+	PluginID string `json:"pluginID"`
+	// PluginType is the type of plugin to use.
+	// +optional
+	PluginType PluginType `json:"pluginType"`
+	// BaseURL is the URL prefix to use with the HTTP reverse proxy backend.
+	// +optional
+	BaseURL string `json:"baseURL"`
+}
+
+// BackendType defines the type of backend to use.
+// +enum
+type BackendType string
+
+const (
+	BackendTypePlugin BackendType = "plugin"
+	BackendTypeHTTP   BackendType = "http"
+)
 
 // Service defines the type of service the proxied service provides.
 type Service struct {
@@ -35,7 +58,7 @@ type Service struct {
 	// Method is the HTTP method to use when proxying the service.
 	// +optional
 	Method string `json:"method,omitempty"`
-	// Path is used by the CustomRouteServiceType and SubResourceServiceType to specify the path to the endpoint.
+	// Path is used by the RouteServiceType specify the path to the endpoint.
 	// +optional
 	Path string `json:"path,omitempty"`
 }
