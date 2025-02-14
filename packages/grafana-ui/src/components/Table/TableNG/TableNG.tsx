@@ -718,18 +718,6 @@ const getStyles = (theme: GrafanaTheme2, textWrap: boolean) => ({
       '--rdg-row-hover-background-color': theme.colors.action.hover,
       overflow: 'scroll',
     },
-
-    'div[role=columnheader]': {
-      '&:hover': {
-        // Adjust margin to prevent text shift caused by border on hover.
-        margin: '0px 0px 1px -2px',
-        // Set a zIndex to eliminate depth built into datagrid cells.
-        zIndex: theme.zIndex.tooltip,
-        borderBottom: 'none', // override default react-data-grid border behavior
-        borderInlineStart: `2px solid ${theme.colors.text.link}`,
-        borderInlineEnd: `2px solid ${theme.colors.text.link}`,
-      },
-    },
   }),
   menuItem: css({
     maxWidth: '200px',
