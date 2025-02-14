@@ -2,6 +2,7 @@ package jobs
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -90,8 +91,12 @@ func (r *JobProgressRecorder) SetTotal(total int) {
 	r.total = total
 }
 
-func (r *JobProgressRecorder) TooManyErrors() bool {
-	return r.errorCount > 20
+func (r *JobProgressRecorder) TooManyErrors() error {
+	if r.errorCount > 20 {
+		return fmt.Errorf("too many errors: %d", r.errorCount)
+	}
+
+	return nil
 }
 
 func (r *JobProgressRecorder) summary() []*provisioning.JobResourceSummary {

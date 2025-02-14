@@ -238,11 +238,7 @@ func (r *syncJob) run(ctx context.Context, options provisioning.SyncJobOptions) 
 				return nil
 			}
 
-			if err := r.applyVersionedChanges(ctx, versionedRepo, cfg.Status.Sync.Hash, currentRef); err != nil {
-				return fmt.Errorf("apply versioned changes: %w", err)
-			}
-
-			return nil
+			return r.applyVersionedChanges(ctx, versionedRepo, cfg.Status.Sync.Hash, currentRef)
 		}
 	}
 
@@ -269,12 +265,10 @@ func (r *syncJob) run(ctx context.Context, options provisioning.SyncJobOptions) 
 	r.folderLookup = resources.NewFolderTreeFromResourceList(target)
 
 	// Now apply the changes
-	r.applyChanges(ctx, changes)
-
-	return nil
+	return r.applyChanges(ctx, changes)
 }
 
-func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange) {
+func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange) error {
 	// Do the longest paths first (important for delete)
 	sort.Slice(changes, func(i, j int) bool {
 		return len(changes[i].Path) > len(changes[j].Path)
@@ -285,17 +279,8 @@ func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange
 
 	// Create folder structure first
 	for _, change := range changes {
-		if r.progress.TooManyErrors() {
-			r.progress.Record(ctx, jobs.JobResourceResult{
-				Name:     change.Existing.Name,
-				Resource: change.Existing.Resource,
-				Group:    change.Existing.Group,
-				Path:     change.Path,
-				// FIXME: should we use a skipped action instead? or a different action type?
-				Action: repository.FileActionIgnored,
-				Error:  errors.New("too many errors"),
-			})
-			continue
+		if err := r.progress.TooManyErrors(); err != nil {
+			return err
 		}
 
 		if change.Action == repository.FileActionDeleted {
@@ -330,6 +315,8 @@ func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange
 	}
 
 	r.progress.SetMessage("changes replicated")
+
+	return nil
 }
 
 // Convert git changes into resource file changes
@@ -348,14 +335,8 @@ func (r *syncJob) applyVersionedChanges(ctx context.Context, repo repository.Ver
 	r.progress.SetMessage("replicating versioned changes")
 
 	for _, change := range diff {
-		if r.progress.TooManyErrors() {
-			r.progress.Record(ctx, jobs.JobResourceResult{
-				Path: change.Path,
-				// FIXME: should we use a skipped action instead? or a different action type?
-				Action: repository.FileActionIgnored,
-				Error:  errors.New("too many errors"),
-			})
-			continue
+		if err := r.progress.TooManyErrors(); err != nil {
+			return err
 		}
 
 		switch change.Action {
