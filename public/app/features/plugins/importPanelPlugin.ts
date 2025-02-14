@@ -1,6 +1,4 @@
-import { ComponentType } from 'react';
-
-import { PanelPlugin, PanelPluginMeta, PanelProps, PluginLoadingStrategy } from '@grafana/data';
+import { PanelPlugin, PanelPluginMeta, PluginLoadingStrategy } from '@grafana/data';
 import config from 'app/core/config';
 import { throwIfAngularPlugin } from 'app/core/utils/throwIfAngularPlugin';
 
@@ -70,20 +68,14 @@ function getPanelPlugin(meta: PanelPluginMeta): Promise<PanelPlugin> {
     .then((pluginExports) => {
       if (pluginExports.plugin) {
         return pluginExports.plugin;
-      } else if (pluginExports.PanelCtrl) {
-        const plugin = new PanelPlugin(null);
-        plugin.angularPanelCtrl = pluginExports.PanelCtrl;
-        return plugin;
       }
-      throw new Error('missing export: plugin or PanelCtrl');
+
+      throwIfAngularPlugin(pluginExports);
+      throw new Error('missing export: plugin');
     })
     .then((plugin: PanelPlugin) => {
       plugin.meta = meta;
       panelPluginCache[meta.id] = plugin;
-
-      if (!plugin.panel && plugin.angularPanelCtrl) {
-        plugin.panel = getAngularPanelReactWrapper(plugin);
-      }
       return plugin;
     })
     .catch((err) => {
@@ -91,10 +83,4 @@ function getPanelPlugin(meta: PanelPluginMeta): Promise<PanelPlugin> {
       console.warn('Error loading panel plugin: ' + meta.id, err);
       return getPanelPluginLoadError(meta, err);
     });
-}
-
-let getAngularPanelReactWrapper = (plugin: PanelPlugin): ComponentType<PanelProps> | null => null;
-
-export function setAngularPanelReactWrapper(wrapper: typeof getAngularPanelReactWrapper) {
-  getAngularPanelReactWrapper = wrapper;
 }
