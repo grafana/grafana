@@ -176,8 +176,7 @@ func execute(ctx context.Context, tracer trace.Tracer, dsInfo *models.Datasource
 	res, err := dsInfo.HTTPClient.Do(request)
 	if err != nil {
 		return backend.DataResponse{
-			Error:       err,
-			ErrorSource: backend.ErrorSourceFromHTTPStatus(res.StatusCode),
+			Error: err,
 		}, err
 	}
 	defer func() {
