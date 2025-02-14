@@ -9,7 +9,10 @@ import { SSOProviderDTO, SSOSettingsField } from './types';
 import { isSelectableValue } from './utils/guards';
 
 interface FieldRendererProps
-  extends Pick<UseFormReturn<SSOProviderDTO>, 'register' | 'control' | 'watch' | 'setValue' | 'unregister'> {
+  extends Pick<
+    UseFormReturn<SSOProviderDTO>,
+    'register' | 'control' | 'watch' | 'setValue' | 'getValues' | 'unregister'
+  > {
   field: SSOSettingsField;
   errors: UseFormReturn['formState']['errors'];
   secretConfigured: boolean;
@@ -22,6 +25,7 @@ export const FieldRenderer = ({
   errors,
   watch,
   setValue,
+  getValues,
   control,
   unregister,
   secretConfigured,
@@ -44,7 +48,13 @@ export const FieldRenderer = ({
 
   useEffect(() => {
     if (fieldData.defaultValue) {
-      setValue(name, fieldData.defaultValue.value);
+      const current = getValues(name);
+      const obj = fieldData.options?.find(
+        (option) =>
+          option.value ===
+          (Array.isArray(current) && current.length && 'value' in current[0] ? current[0].value : undefined)
+      );
+      setValue(name, obj?.value || fieldData.defaultValue.value);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
