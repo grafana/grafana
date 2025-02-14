@@ -3,7 +3,7 @@ import moment from 'moment';
 import { useState } from 'react';
 
 import { FieldType, GrafanaTheme2, store } from '@grafana/data';
-import { Button, Card, IconButton, Space, Stack, Text, useStyles2, Box, Sparkline, useTheme2 } from '@grafana/ui';
+import { Button, Card, IconButton, Space, Stack, Text, useStyles2, Box, Sparkline, useTheme2, Icon } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
 import { HISTORY_LOCAL_STORAGE_KEY } from '../AppChromeService';
@@ -105,11 +105,11 @@ function HistoryEntryAppView({ entry, isSelected, onClick }: ItemProps) {
           ) : (
             <Space h={2} />
           )}
-          <IconButton
+          <Icon
             size="sm"
             name={isSelected ? 'circle-mono' : 'circle'}
             aria-label={entryIconLabel}
-            className={styles.iconButtonCircle}
+            className={isExpanded ? styles.iconButtonDot : styles.iconButtonCircle}
           />
           <Card
             onClick={() => {
@@ -212,13 +212,28 @@ const getStyles = (theme: GrafanaTheme2) => {
       margin: 0,
     }),
     iconButtonCircle: css({
-      label: 'blue-circle-button',
+      label: 'blue-circle-icon',
       margin: 0,
-      color: theme.colors.primary.main,
+      background: theme.colors.background.primary,
+      fill: theme.colors.primary.main,
       cursor: 'default',
       '&:hover:before': {
         background: 'none',
       },
+      //Need this to place the icon on the line, otherwise the line will appear on top of the icon
+      zIndex: 0,
+    }),
+    iconButtonDot: css({
+      label: 'blue-dot-icon',
+      margin: 0,
+      color: theme.colors.primary.main,
+      border: theme.shape.radius.circle,
+      cursor: 'default',
+      '&:hover:before': {
+        background: 'none',
+      },
+      //Need this to place the icon on the line, otherwise the line will appear on top of the icon
+      zIndex: 0,
     }),
     expanded: css({
       label: 'expanded',
@@ -246,7 +261,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       '&:before': {
         content: '""',
         position: 'absolute',
-        left: theme.spacing(6),
+        left: theme.spacing(5.75),
         top: 0,
         height: '100%',
         width: '1px',
