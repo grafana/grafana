@@ -187,14 +187,15 @@ func promptYesNo(prompt string) (bool, error) {
 }
 
 func newUnifiedClient(cfg *setting.Cfg, sqlStore db.DB) (resource.ResourceClient, error) {
-	return unified.ProvideUnifiedStorageClient(cfg,
-		featuremgmt.WithFeatures(), // none??
-		sqlStore,
-		tracing.NewNoopTracerService(),
-		prometheus.NewPedanticRegistry(),
-		authlib.FixedAccessClient(true), // always true!
-		nil,                             // document supplier
-	)
+	return unified.ProvideUnifiedStorageClient(&unified.Options{
+		Cfg:      cfg,
+		Features: featuremgmt.WithFeatures(), // none??
+		DB:       sqlStore,
+		Tracer:   tracing.NewNoopTracerService(),
+		Reg:      prometheus.NewPedanticRegistry(),
+		Authzc:   authlib.FixedAccessClient(true), // always true!
+		Docs:     nil,                             // document supplier
+	})
 }
 
 func newParquetClient(file *os.File) (resource.BatchStoreClient, error) {
