@@ -63,11 +63,15 @@ const RuleViewer = (): JSX.Element => {
   }
 
   // if we get here assume we can't find the rule
-  return (
-    <AlertingPageWrapper pageNav={defaultPageNav} navId="alert-list">
-      <EntityNotFound entity="Rule" />
-    </AlertingPageWrapper>
-  );
+  if (!rule && !loading) {
+    return (
+      <AlertingPageWrapper pageNav={defaultPageNav} navId="alert-list">
+        <EntityNotFound entity="Rule" />
+      </AlertingPageWrapper>
+    );
+  }
+
+  return <>something went wrong</>;
 };
 
 export const defaultPageNav: NavModelItem = {
