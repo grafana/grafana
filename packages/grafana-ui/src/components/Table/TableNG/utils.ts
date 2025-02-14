@@ -1,6 +1,14 @@
 import tinycolor from 'tinycolor2';
 
-import { FieldType, Field, formattedValueToString, reduceField, GrafanaTheme2, DisplayValue } from '@grafana/data';
+import {
+  FieldType,
+  Field,
+  formattedValueToString,
+  reduceField,
+  GrafanaTheme2,
+  DisplayValue,
+  LinkModel,
+} from '@grafana/data';
 import { TableCellBackgroundDisplayMode, TableCellDisplayMode, TableCellOptions } from '@grafana/schema';
 
 import { getTextColorForAlphaBackground } from '../../../utils';
@@ -207,3 +215,38 @@ export function getCellColors(
 
   return { textColor, bgColor, bgHoverColor };
 }
+
+/**
+ * @internal
+ */
+export const getCellLinks = (field: Field, rowIdx: number) => {
+  let links: Array<LinkModel<unknown>> | undefined;
+  if (field.getLinks) {
+    links = field.getLinks({
+      valueRowIndex: rowIdx,
+    });
+  }
+
+  if (!links) {
+    return;
+  }
+
+  for (let i = 0; i < links?.length; i++) {
+    if (links[i].onClick) {
+      const origOnClick = links[i].onClick;
+
+      links[i].onClick = (event) => {
+        // Allow opening in new tab
+        if (!(event.ctrlKey || event.metaKey || event.shiftKey)) {
+          event.preventDefault();
+          origOnClick!(event, {
+            field,
+            rowIndex: rowIdx,
+          });
+        }
+      };
+    }
+  }
+
+  return links;
+};
