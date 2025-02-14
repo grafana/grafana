@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase, SceneObjectRef, SceneObjectState, VizPanel } from '@grafana/scenes';
 import { Alert, LoadingPlaceholder, Tab, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
@@ -12,7 +13,6 @@ import { stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
 
 import { getDashboardSceneFor, getPanelIdForVizPanel } from '../../utils/utils';
 
-import { config } from '@grafana/runtime';
 import { ScenesNewRuleFromPanelButton } from './NewAlertRuleButton';
 import { PanelDataPaneTab, PanelDataTabHeaderProps, TabId } from './types';
 
