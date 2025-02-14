@@ -8,6 +8,7 @@ import {
   AbsoluteTimeRange,
   DataFrame,
   EventBus,
+  getNextRefId,
   GrafanaTheme2,
   hasToggleableQueryFiltersSupport,
   LoadingState,
@@ -54,6 +55,7 @@ import { ResponseErrorContainer } from './ResponseErrorContainer';
 import { SecondaryActions } from './SecondaryActions';
 import TableContainer from './Table/TableContainer';
 import { TraceViewContainer } from './TraceView/TraceViewContainer';
+import { changeDatasource } from './state/datasource';
 import { changeSize } from './state/explorePane';
 import { splitOpen } from './state/main';
 import {
@@ -65,7 +67,7 @@ import {
   setQueries,
   setSupplementaryQueryEnabled,
 } from './state/query';
-import { isSplit } from './state/selectors';
+import { isSplit, selectExploreDSMaps } from './state/selectors';
 import { updateTimeRange } from './state/time';
 
 const getStyles = (theme: GrafanaTheme2) => {
@@ -605,6 +607,28 @@ export class Explore extends PureComponent<Props, ExploreState> {
                           queryInspectorButtonActive={showQueryInspector}
                           onClickAddQueryRowButton={this.onClickAddQueryRowButton}
                           onClickQueryInspectorButton={() => setShowQueryInspector(!showQueryInspector)}
+                          onSelectQueryFromLibrary={async (query) => {
+                            const { changeDatasource, queries, setQueries } = this.props;
+                            const newQueries = [
+                              ...queries,
+                              {
+                                ...query,
+                                refId: getNextRefId(queries),
+                              },
+                            ];
+                            setQueries(exploreId, newQueries);
+                            if (query.datasource?.uid) {
+                              const uniqueDatasources = new Set(newQueries.map((q) => q.datasource?.uid));
+                              const isMixed = uniqueDatasources.size > 1;
+                              const newDatasourceRef = {
+                                uid: isMixed ? MIXED_DATASOURCE_NAME : query.datasource.uid,
+                              };
+                              const shouldChangeDatasource = datasourceInstance.uid !== newDatasourceRef.uid;
+                              if (shouldChangeDatasource) {
+                                await changeDatasource({ exploreId, datasource: newDatasourceRef });
+                              }
+                            }
+                          }}
                         />
                         <ResponseErrorContainer exploreId={exploreId} />
                       </PanelContainer>
@@ -716,10 +740,12 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     showLogsSample,
     correlationEditorHelperData,
     correlationEditorDetails: explore.correlationEditorDetails,
+    exploreActiveDS: selectExploreDSMaps(state),
   };
 }
 
 const mapDispatchToProps = {
+  changeDatasource,
   changeSize,
   modifyQueries,
   scanStart,

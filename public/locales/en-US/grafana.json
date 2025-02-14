@@ -1287,9 +1287,6 @@
     "panel-queries": {
       "add-query-from-library": "Add query from library"
     },
-    "query-library": {
-      "add-query-button": "Add query"
-    },
     "settings": {
       "variables": {
         "dependencies": {
@@ -1371,7 +1368,6 @@
       "close-tooltip": "Close query history",
       "datasource-a-z": "Data source A-Z",
       "datasource-z-a": "Data source Z-A",
-      "library-history-dropdown": "Open query library or query history",
       "newest-first": "Newest first",
       "oldest-first": "Oldest first",
       "query-history": "Query history",
@@ -1475,6 +1471,7 @@
       "switch-datasource-button": "Switch data source and run query"
     },
     "secondary-actions": {
+      "add-from-query-library": "Add query from library",
       "query-add-button": "Add query",
       "query-add-button-aria-label": "Add query",
       "query-history-button": "Query history",

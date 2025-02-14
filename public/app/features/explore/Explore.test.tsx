@@ -103,6 +103,11 @@ const dummyProps: Props = {
   setSupplementaryQueryEnabled: jest.fn(),
   correlationEditorDetails: undefined,
   correlationEditorHelperData: undefined,
+  exploreActiveDS: {
+    exploreToDS: [],
+    dsToExplore: [],
+  },
+  changeDatasource: jest.fn(),
 };
 
 jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => {

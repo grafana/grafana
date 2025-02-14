@@ -1287,9 +1287,6 @@
     "panel-queries": {
       "add-query-from-library": "Åđđ qūęřy ƒřőm ľįþřäřy"
     },
-    "query-library": {
-      "add-query-button": "Åđđ qūęřy"
-    },
     "settings": {
       "variables": {
         "dependencies": {
@@ -1371,7 +1368,6 @@
       "close-tooltip": "Cľőşę qūęřy ĥįşŧőřy",
       "datasource-a-z": "Đäŧä şőūřčę Å-Ż",
       "datasource-z-a": "Đäŧä şőūřčę Ż-Å",
-      "library-history-dropdown": "Øpęŉ qūęřy ľįþřäřy őř qūęřy ĥįşŧőřy",
       "newest-first": "Ńęŵęşŧ ƒįřşŧ",
       "oldest-first": "Øľđęşŧ ƒįřşŧ",
       "query-history": "Qūęřy ĥįşŧőřy",
@@ -1475,6 +1471,7 @@
       "switch-datasource-button": "Ŝŵįŧčĥ đäŧä şőūřčę äŉđ řūŉ qūęřy"
     },
     "secondary-actions": {
+      "add-from-query-library": "Åđđ qūęřy ƒřőm ľįþřäřy",
       "query-add-button": "Åđđ qūęřy",
       "query-add-button-aria-label": "Åđđ qūęřy",
       "query-history-button": "Qūęřy ĥįşŧőřy",
