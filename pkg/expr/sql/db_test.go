@@ -89,7 +89,7 @@ func TestQueryFramesInOut(t *testing.T) {
 			data.NewField("float32_nullable", nil, []*float32{p(float32(2.0)), nil}),
 
 			data.NewField("float64", nil, []float64{1, 3}),
-			data.NewField("float64_nullable", nil, []*float64{p(2.0), nil}),
+			data.NewField("float64_nullable", nil, []*float64{p(float64(2.0)), nil}),
 
 			// Ints
 			data.NewField("int8", nil, []int8{1, 3}),
