@@ -404,8 +404,12 @@ func (r *syncJob) deleteObject(ctx context.Context, path string, ref string) job
 		return result
 	}
 
-	// Find the referenced file
-	objName, _ := resources.NamesFromHashedRepoPath(r.repository.Config().Name, path)
+	objName := obj.GetName()
+	if objName == "" {
+		// Find the referenced file
+		objName, _ = resources.NamesFromHashedRepoPath(r.repository.Config().Name, path)
+	}
+
 	result.Name = objName
 	result.Resource = gvk.Kind
 	result.Group = gvk.Group
