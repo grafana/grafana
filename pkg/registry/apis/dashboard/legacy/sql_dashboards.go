@@ -23,7 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -312,7 +311,7 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows, history bool) (*dashboardRo
 			ts := time.Unix(origin_ts.Int64, 0)
 
 			repo := &utils.ResourceRepositoryInfo{
-				Name:      origin_name.String,
+				Name:      dashboard.ProvisionedFileNameWithPrefix(origin_name.String),
 				Hash:      origin_hash.String,
 				Timestamp: &ts,
 			}
@@ -331,7 +330,7 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows, history bool) (*dashboardRo
 			meta.SetRepositoryInfo(repo)
 		} else if plugin_id.String != "" {
 			meta.SetRepositoryInfo(&utils.ResourceRepositoryInfo{
-				Name: "plugin",
+				Name: dashboard.PluginIDRepoName,
 				Path: plugin_id.String,
 			})
 		}
@@ -427,7 +426,7 @@ func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, das
 	out, err := a.dashStore.SaveDashboard(ctx, dashboards.SaveDashboardCommand{
 		OrgID:     orgId,
 		Message:   meta.GetMessage(),
-		PluginID:  service.GetPluginIDFromMeta(meta),
+		PluginID:  dashboard.GetPluginIDFromMeta(meta),
 		Dashboard: simplejson.NewFromAny(dash.Spec.UnstructuredContent()),
 		FolderUID: meta.GetFolder(),
 		Overwrite: true, // already passed the revisionVersion checks!

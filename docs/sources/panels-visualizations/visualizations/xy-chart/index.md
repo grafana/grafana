@@ -310,7 +310,7 @@ To learn more, refer to [Configure standard options](ref:configure-standard-opti
 
 ## Data links
 
-{{< docs/shared lookup="visualizations/datalink-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+{{< docs/shared lookup="visualizations/datalink-options-2.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ## Field overrides
 
