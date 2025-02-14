@@ -354,6 +354,14 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 
 func (s *Service) executeTimeSeriesQuery(ctx context.Context, req *backend.QueryDataRequest, dsInfo datasourceInfo, queries []cloudMonitoringQueryExecutor, logger log.Logger) (
 	*backend.QueryDataResponse, error) {
+
+	if req.PagedResponses && len(queries) == 1 {
+		query := queries[0]
+		resp := backend.NewQueryDataResponseWithFrameGenerator(query.getFrameGenerator(ctx, req, s, dsInfo, logger))
+		resp.Responses[query.getRefID()] = backend.DataResponse{}
+		return resp, nil
+	}
+
 	resp := backend.NewQueryDataResponse()
 	for _, queryExecutor := range queries {
 		dr, queryRes, executedQueryString, err := queryExecutor.run(ctx, req, s, dsInfo, logger)
@@ -369,7 +377,6 @@ func (s *Service) executeTimeSeriesQuery(ctx context.Context, req *backend.Query
 				dr.ErrorSource = backend.ErrorSourceDownstream
 			}
 		}
-
 		resp.Responses[queryExecutor.getRefID()] = *dr
 	}
 
