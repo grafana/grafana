@@ -217,6 +217,20 @@
     },
     {
       "metadata": {
+        "name": "alertingConversionAPI",
+        "resourceVersion": "1739207762746",
+        "creationTimestamp": "2025-02-10T17:16:02Z"
+      },
+      "spec": {
+        "description": "Enable the alerting conversion API",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingDisableSendAlertsExternal",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2024-05-23T12:29:19Z"
@@ -373,23 +387,27 @@
     {
       "metadata": {
         "name": "alertingSaveStateCompressed",
-        "resourceVersion": "1737472824047",
+        "resourceVersion": "1738604435531",
         "creationTimestamp": "2025-01-17T18:17:20Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2025-01-21 15:20:24.047499 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2025-02-03 17:40:35.53174 +0000 UTC"
         }
       },
       "spec": {
         "description": "Enables the compressed protobuf-based alert state storage",
-        "stage": "experimental",
-        "codeowner": "@grafana/alerting-squad"
+        "stage": "preview",
+        "codeowner": "@grafana/alerting-squad",
+        "expression": "false"
       }
     },
     {
       "metadata": {
         "name": "alertingSaveStatePeriodic",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2024-01-23T16:03:30Z"
+        "resourceVersion": "1738604155684",
+        "creationTimestamp": "2024-01-23T16:03:30Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-02-03 17:35:55.684572 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Writes the state periodically to the database, asynchronous to rule evaluation",
@@ -1867,6 +1885,21 @@
     },
     {
       "metadata": {
+        "name": "grafanaconThemes",
+        "resourceVersion": "1738661140740",
+        "creationTimestamp": "2025-02-04T09:25:40Z"
+      },
+      "spec": {
+        "description": "Enables the temporary themes for GrafanaCon",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "requiresRestart": true,
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "groupAttributeSync",
         "resourceVersion": "1731087176211",
         "creationTimestamp": "2024-09-09T15:29:43Z",
@@ -3017,6 +3050,18 @@
     },
     {
       "metadata": {
+        "name": "pluginsCDNSyncLoader",
+        "resourceVersion": "1737026684018",
+        "creationTimestamp": "2025-01-16T11:24:44Z"
+      },
+      "spec": {
+        "description": "Load plugins from CDN synchronously",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend"
+      }
+    },
+    {
+      "metadata": {
         "name": "pluginsDetailsRightPanel",
         "resourceVersion": "1720788722220",
         "creationTimestamp": "2024-08-13T09:55:30Z",
@@ -3643,13 +3688,16 @@
     {
       "metadata": {
         "name": "sqlExpressions",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2024-02-27T21:16:00Z"
+        "resourceVersion": "1738589190784",
+        "creationTimestamp": "2024-02-27T21:16:00Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-02-03 13:26:30.784245615 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables using SQL and DuckDB functions as Expressions.",
         "stage": "experimental",
-        "codeowner": "@grafana/grafana-app-platform-squad"
+        "codeowner": "@grafana/grafana-datasources-core-services"
       }
     },
     {

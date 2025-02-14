@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { CoreApp, LogSortOrderChangeEvent, LogsSortOrder, store } from '@grafana/data';
@@ -214,42 +214,42 @@ describe('LokiQueryBuilderOptions', () => {
   });
 
   describe('Query direction', () => {
-    it("initializes query direction when it's empty", async () => {
+    it("initializes query direction when it's empty in Explore or Dashboards", () => {
       const onChange = jest.fn();
-      setup({ expr: '{foo="bar"}' }, onChange);
-      await waitFor(() =>
-        expect(onChange).toHaveBeenCalledWith({
-          expr: '{foo="bar"}',
-          refId: 'A',
-          direction: LokiQueryDirection.Backward,
-        })
-      );
+      setup({ expr: '{foo="bar"}' }, onChange, { app: CoreApp.Explore });
+      expect(onChange).toHaveBeenCalledWith({
+        expr: '{foo="bar"}',
+        refId: 'A',
+        direction: LokiQueryDirection.Backward,
+      });
     });
 
-    it('uses backward as default in Explore with no previous stored preference', async () => {
+    it('does not change direction on initialization elsewhere', () => {
+      const onChange = jest.fn();
+      setup({ expr: '{foo="bar"}' }, onChange, { app: undefined });
+      expect(onChange).not.toHaveBeenCalled();
+    });
+
+    it('uses backward as default in Explore with no previous stored preference', () => {
       const onChange = jest.fn();
       store.delete('grafana.explore.logs.sortOrder');
       setup({ expr: '{foo="bar"}' }, onChange, { app: CoreApp.Explore });
-      await waitFor(() =>
-        expect(onChange).toHaveBeenCalledWith({
-          expr: '{foo="bar"}',
-          refId: 'A',
-          direction: LokiQueryDirection.Backward,
-        })
-      );
+      expect(onChange).toHaveBeenCalledWith({
+        expr: '{foo="bar"}',
+        refId: 'A',
+        direction: LokiQueryDirection.Backward,
+      });
     });
 
-    it('uses the stored sorting option to determine direction in Explore', async () => {
+    it('uses the stored sorting option to determine direction in Explore', () => {
       store.set('grafana.explore.logs.sortOrder', LogsSortOrder.Ascending);
       const onChange = jest.fn();
       setup({ expr: '{foo="bar"}' }, onChange, { app: CoreApp.Explore });
-      await waitFor(() =>
-        expect(onChange).toHaveBeenCalledWith({
-          expr: '{foo="bar"}',
-          refId: 'A',
-          direction: LokiQueryDirection.Forward,
-        })
-      );
+      expect(onChange).toHaveBeenCalledWith({
+        expr: '{foo="bar"}',
+        refId: 'A',
+        direction: LokiQueryDirection.Forward,
+      });
       store.delete('grafana.explore.logs.sortOrder');
     });
 

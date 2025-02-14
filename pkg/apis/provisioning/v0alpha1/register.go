@@ -66,7 +66,7 @@ var JobResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 			{Name: "Created At", Type: "date"},
 			{Name: "Action", Type: "string"},
 			{Name: "State", Type: "string"},
-			{Name: "Repository", Type: "string"},
+			{Name: "Message", Type: "string"},
 		},
 		Reader: func(obj any) ([]interface{}, error) {
 			m, ok := obj.(*Job)
@@ -79,7 +79,7 @@ var JobResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 				m.CreationTimestamp.UTC().Format(time.RFC3339),
 				m.Spec.Action,
 				m.Status.State,
-				m.Labels["repository"],
+				m.Status.Message,
 			}, nil
 		},
 	})
@@ -111,12 +111,13 @@ func AddKnownTypes(gv schema.GroupVersion, scheme *runtime.Scheme) error {
 	scheme.AddKnownTypes(gv,
 		&Repository{},
 		&RepositoryList{},
-		&HelloWorld{},
 		&WebhookResponse{},
 		&ResourceWrapper{},
 		&FileList{},
 		&HistoryList{},
 		&TestResults{},
+		&ResourceList{},
+		&ResourceStats{},
 		&Job{},
 		&JobList{},
 	)

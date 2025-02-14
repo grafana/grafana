@@ -87,5 +87,10 @@ func (d *directResourceClient) Update(ctx context.Context, in *resource.UpdateRe
 
 // Watch implements ResourceClient.
 func (d *directResourceClient) Watch(ctx context.Context, in *resource.WatchRequest, opts ...grpc.CallOption) (resource.ResourceStore_WatchClient, error) {
-	return nil, fmt.Errorf("watch not yet supported with direct resource client")
+	return nil, fmt.Errorf("watch not supported with direct resource client")
+}
+
+// BatchProcess implements resource.ResourceClient.
+func (d *directResourceClient) BatchProcess(ctx context.Context, opts ...grpc.CallOption) (resource.BatchStore_BatchProcessClient, error) {
+	return nil, fmt.Errorf("BatchProcess not supported with direct resource client")
 }

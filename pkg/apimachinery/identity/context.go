@@ -32,7 +32,7 @@ func checkNilRequester(r Requester) bool {
 
 const serviceName = "service"
 
-// WithServiceIdentity sets creates an identity representing the service itself in provided org and store it in context.
+// WithServiceIdentity sets an identity representing the service itself in provided org and store it in context.
 // This is useful for background tasks that has to communicate with unfied storage. It also returns a Requester with
 // static permissions so it can be used in legacy code paths.
 func WithServiceIdentity(ctx context.Context, orgID int64) (context.Context, Requester) {
@@ -53,6 +53,17 @@ func WithServiceIdentity(ctx context.Context, orgID int64) (context.Context, Req
 	return WithRequester(ctx, r), r
 }
 
+// WithServiceIdentityContext sets an identity representing the service itself in context.
+func WithServiceIdentityContext(ctx context.Context, orgID int64) context.Context {
+	ctx, _ = WithServiceIdentity(ctx, orgID)
+	return ctx
+}
+
+// WithServiceIdentityFN calls provided closure with an context contaning the identity of the service.
+func WithServiceIdentityFn[T any](ctx context.Context, orgID int64, fn func(ctx context.Context) (T, error)) (T, error) {
+	return fn(WithServiceIdentityContext(ctx, orgID))
+}
+
 func getWildcardPermissions(actions ...string) map[string][]string {
 	permissions := make(map[string][]string, len(actions))
 	for _, a := range actions {
@@ -64,12 +75,14 @@ func getWildcardPermissions(actions ...string) map[string][]string {
 // serviceIdentityPermissions is a list of wildcard permissions for provided actions.
 // We should add every action required "internally" here.
 var serviceIdentityPermissions = getWildcardPermissions(
+	"annotations:read",
 	"folders:read",
 	"folders:write",
 	"folders:create",
 	"dashboards:read",
 	"dashboards:write",
 	"dashboards:create",
+	"datasources:query",
 	"datasources:read",
 	"alert.provisioning:write",
 	"alert.provisioning.secrets:read",

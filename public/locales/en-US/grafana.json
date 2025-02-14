@@ -34,12 +34,6 @@
       "save-button": "Save"
     }
   },
-  "actions-editor": {
-    "inline": {
-      "add-button": "Add action",
-      "one-click-action": "One-click action"
-    }
-  },
   "admin": {
     "anon-users": {
       "not-found": "No anonymous users found."
@@ -730,6 +724,9 @@
     "custom-value": {
       "description": "Use custom value"
     },
+    "group": {
+      "undefined": "No group"
+    },
     "options": {
       "no-found": "No options found."
     }
@@ -925,12 +922,6 @@
           "alt-action": "Delete row only",
           "text": "Are you sure you want to remove this row and all its panels?",
           "title": "Delete row"
-        },
-        "repeat": {
-          "warning": {
-            "learn-more": "Learn more",
-            "text": "Panels in this row use the {{SHARED_DASHBOARD_QUERY}} data source. These panels will reference the panel in the original row, not the ones in the repeated rows."
-          }
         }
       },
       "row-options": {
@@ -939,7 +930,13 @@
         },
         "form": {
           "cancel": "Cancel",
-          "repeat-for": "Repeat for",
+          "repeat-for": {
+            "label": "Repeat for",
+            "learn-more": "Learn more",
+            "warning": {
+              "text": "Panels in this row use the {{SHARED_DASHBOARD_QUERY}} data source. These panels will reference the panel in the original row, not the ones in the repeated rows."
+            }
+          },
           "title": "Title",
           "update": "Update"
         },
@@ -951,20 +948,29 @@
     "edit-pane": {
       "objects": {
         "multi-select": {
-          "selection-number": "No. of objects selected: "
+          "selection-number": "No. of objects selected: {{length}}"
         }
       },
       "open": "Open options pane",
       "panels": {
         "multi-select": {
-          "selection-number": "No. of panels selected: "
+          "selection-number": "No. of panels selected: {{length}}"
         }
       },
       "row": {
-        "hide": "Hide row header",
+        "header": {
+          "hide": "Hide",
+          "title": "Row header"
+        },
         "multi-select": {
           "options-header": "Multi-selected Row options",
-          "selection-number": "No. of rows selected: "
+          "selection-number": "No. of rows selected: {{length}}"
+        }
+      },
+      "tab": {
+        "multi-select": {
+          "options-header": "Multi-selected Tab options",
+          "selection-number": "No. of tabs selected: "
         }
       }
     },
@@ -1091,11 +1097,23 @@
         "title-option": "Title"
       }
     },
+    "tabs-layout": {
+      "description": "Tabs layout",
+      "name": "Tabs",
+      "tab": {
+        "new": "New tab"
+      },
+      "tab-options": {
+        "title": "Tab options",
+        "title-option": "Title"
+      }
+    },
     "toolbar": {
       "add": "Add",
       "add-panel": "Panel",
       "add-panel-lib": "Import",
       "add-row": "Row",
+      "add-tab": "Tab",
       "alert-rules": "Alert rules",
       "back-to-dashboard": "Back to dashboard",
       "dashboard-settings": {
@@ -1346,36 +1364,6 @@
       "scan-for-older-logs": "Scan for older logs",
       "stop-scan": "Stop scan"
     },
-    "query-library": {
-      "add-edit-description": "Add/edit description",
-      "cancel": "Cancel",
-      "default-description": "Public",
-      "delete-query": "Delete query",
-      "delete-query-text": "You're about to remove this query from the query library. This action cannot be undone. Do you want to continue?",
-      "delete-query-title": "Delete query",
-      "private": "Private",
-      "public": "Public",
-      "query-deleted": "Query deleted",
-      "query-template-add-error": "Error attempting to save this query to the library",
-      "query-template-added": "Query successfully saved to the library",
-      "query-template-edit-error": "Error attempting to edit this query",
-      "query-template-edited": "Query template successfully edited",
-      "save": "Save"
-    },
-    "query-template-modal": {
-      "add-info": "You're about to save this query. Once saved, you can easily access it in the Query Library tab for future use and reference.",
-      "add-title": "Add query to Query Library",
-      "auto-star": "Auto-star this query to add it to your starred list in the Query Library.",
-      "data-source-name": "Data source name",
-      "description": "Description",
-      "edit-info": "You're about to edit this query. Once saved, you can easily access it in the Query Library tab for future use and reference.",
-      "edit-title": "Edit query",
-      "query": "Query",
-      "visibility": "Visibility"
-    },
-    "query-template-modall": {
-      "data-source-type": "Data source type"
-    },
     "rich-history": {
       "close-tooltip": "Close query history",
       "datasource-a-z": "Data source A-Z",
@@ -1578,6 +1566,24 @@
     "send-custom-feedback": "Send"
   },
   "grafana-ui": {
+    "action-editor": {
+      "button": {
+        "confirm": "Confirm",
+        "confirm-action": "Confirm action"
+      },
+      "inline": {
+        "add-action": "Add action",
+        "edit-action": "Edit action"
+      },
+      "modal": {
+        "action-body": "Body",
+        "action-method": "Method",
+        "action-query-params": "Query parameters",
+        "action-title": "Title",
+        "action-title-placeholder": "Action title",
+        "one-click-description": "Only one link {{ action }} can have one click enabled at a time"
+      }
+    },
     "auto-save-field": {
       "saved": "Saved!",
       "saving": "Saving <1></1>"
@@ -1602,9 +1608,13 @@
     },
     "data-links-inline-editor": {
       "add-link": "Add link",
+      "edit-link": "Edit link",
       "one-click": "One click",
       "one-click-enabled": "One click enabled",
-      "one-click-link": "One-click link"
+      "title-not-provided": "Title not provided",
+      "tooltip-edit": "Edit",
+      "tooltip-remove": "Remove",
+      "url-not-provided": "Data link url not provided"
     },
     "data-source-http-settings": {
       "access-help": "Help <1></1>",
@@ -1685,7 +1695,11 @@
       "right-axis-indicator": "(right y-axis)"
     },
     "viz-tooltip": {
+      "actions-confirmation-input-placeholder": "Are you sure you want to {{ actionTitle }}?",
+      "actions-confirmation-label": "Confirmation message",
+      "actions-confirmation-message": "Provide a descriptive prompt to confirm or cancel the action.",
       "footer-add-annotation": "Add annotation",
+      "footer-click-to-action": "Click to {{actionTitle}}",
       "footer-click-to-navigate": "Click to open {{linkTitle}}"
     }
   },
@@ -2117,6 +2131,7 @@
       "title": "Let us help you migrate to this stack"
     },
     "migrated-counts": {
+      "alert_rule_groups": "alert rule groups",
       "alert_rules": "alert rules",
       "contact_points": "contact points",
       "dashboards": "dashboards",
@@ -2221,6 +2236,7 @@
     },
     "resource-type": {
       "alert_rule": "Alert Rule",
+      "alert_rule_group": "Alert Rule Group",
       "contact_point": "Contact Point",
       "dashboard": "Dashboard",
       "datasource": "Data source",
@@ -2766,17 +2782,30 @@
       },
       "labels": {
         "contactGrafanaLabs": "Contact Grafana Labs",
+        "customLinks": "Custom links ",
+        "customLinksTooltip": "These links are provided by the plugin developer to offer additional, developer-specific resources and information",
         "dependencies": "Dependencies",
+        "documentation": "Documentation",
         "downloads": "Downloads",
         "from": "From",
         "installedVersion": "Installed Version",
         "lastCommitDate": "Last commit date:",
         "latestVersion": "Latest Version",
-        "links": "Links ",
+        "license": "License",
+        "raiseAnIssue": "Raise an issue",
         "reportAbuse": "Report a concern ",
+        "reportAbuseTooltip": "Report issues related to malicious or harmful plugins directly to Grafana Labs.",
+        "repository": "Repository",
         "signature": "Signature",
         "status": "Status",
         "updatedAt": "Last updated:"
+      },
+      "modal": {
+        "cancel": "Cancel",
+        "copyEmail": "Copy email address",
+        "description": "This feature is for reporting malicious or harmful behaviour within plugins. For plugin concerns, email us at: ",
+        "node": "Note: For general plugin issues like bugs or feature requests, please contact the plugin author using the provided links. ",
+        "title": "Report a plugin concern"
       }
     },
     "empty-state": {
@@ -2991,14 +3020,6 @@
       "role-label": "Role"
     }
   },
-  "query-library": {
-    "datasource-names": "Datasource name(s):",
-    "delete-query-button": "Delete query",
-    "query-template-get-error": "Error attempting to load query template metadata: {{error}}",
-    "search": "Search by data source, query content or description",
-    "user-info-get-error": "Error attempting to get user info from the library: {{error}}",
-    "user-names": "User name(s):"
-  },
   "query-operation": {
     "header": {
       "collapse-row": "Collapse query row",
@@ -3008,8 +3029,6 @@
       "expand-row": "Expand query row",
       "hide-response": "Hide response",
       "remove-query": "Remove query",
-      "save-to-query-library": "Save to query library",
-      "save-to-query-library-new": "New: Save to query library",
       "show-response": "Show response",
       "toggle-edit-mode": "Toggle text edit mode"
     },
@@ -3398,6 +3417,7 @@
       "home-dashboard-placeholder": "Default dashboard",
       "locale-label": "Language",
       "locale-placeholder": "Choose language",
+      "theme-description": "Enjoying the limited edition themes? Tell us what you'd like to see <2>here.</2>",
       "theme-label": "Interface theme",
       "week-start-label": "Week start"
     },

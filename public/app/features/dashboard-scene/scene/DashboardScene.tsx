@@ -30,6 +30,7 @@ import { ScrollRefElement } from 'app/core/components/NativeScrollbar';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import { getNavModel } from 'app/core/selectors/navModel';
 import store from 'app/core/store';
+import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { SaveDashboardAsOptions } from 'app/features/dashboard/components/SaveDashboard/types';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
@@ -58,7 +59,13 @@ import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { djb2Hash } from '../utils/djb2Hash';
 import { getDashboardUrl } from '../utils/getDashboardUrl';
 import { getViewPanelUrl } from '../utils/urlBuilders';
-import { getClosestVizPanel, getDashboardSceneFor, getDefaultVizPanel, getPanelIdForVizPanel } from '../utils/utils';
+import {
+  getClosestVizPanel,
+  getDashboardSceneFor,
+  getDefaultVizPanel,
+  getLayoutManagerFor,
+  getPanelIdForVizPanel,
+} from '../utils/utils';
 import { SchemaV2EditorDrawer } from '../v2schema/SchemaV2EditorDrawer';
 
 import { AddLibraryPanelDrawer } from './AddLibraryPanelDrawer';
@@ -122,8 +129,6 @@ export interface DashboardSceneState extends SceneObjectState {
   editPanel?: PanelEditor;
   /** Scene object that handles the current drawer or modal */
   overlay?: SceneObject;
-  /** The dashboard doesn't have panels */
-  isEmpty?: boolean;
   /** Kiosk mode */
   kioskMode?: KioskMode;
   /** Share view */
@@ -475,10 +480,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     return this._initialState;
   }
 
-  public getNextPanelId(): number {
-    return this.state.body.getMaxPanelId() + 1;
-  }
-
   public addPanel(vizPanel: VizPanel): void {
     if (!this.state.isEditing) {
       this.onEnterEditMode();
@@ -502,7 +503,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   }
 
   public duplicatePanel(vizPanel: VizPanel) {
-    this.state.body.duplicatePanel(vizPanel);
+    getLayoutManagerFor(vizPanel).duplicatePanel?.(vizPanel);
   }
 
   public copyPanel(vizPanel: VizPanel) {
@@ -536,7 +537,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   }
 
   public removePanel(panel: VizPanel) {
-    this.state.body.removePanel(panel);
+    getLayoutManagerFor(panel).removePanel?.(panel);
   }
 
   public unlinkLibraryPanel(panel: VizPanel) {
@@ -593,6 +594,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
   public onCreateNewRow() {
     this.state.body.addNewRow();
+  }
+
+  public onCreateNewTab() {
+    this.state.body.addNewTab();
   }
 
   public onCreateNewPanel(): VizPanel {
@@ -670,7 +675,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     saveModel?: Dashboard | DashboardV2Spec,
     meta?: DashboardMeta | DashboardWithAccessInfo<DashboardV2Spec>['metadata']
   ): void {
-    this._serializer.initialSaveModel = saveModel;
+    this._serializer.initialSaveModel = sortedDeepCloneWithoutNulls(saveModel);
     this._serializer.metadata = meta;
   }
 

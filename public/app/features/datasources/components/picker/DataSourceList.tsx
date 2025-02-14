@@ -141,6 +141,7 @@ function getStyles(theme: GrafanaTheme2, selectedItemCssSelector: string) {
     container: css({
       display: 'flex',
       flexDirection: 'column',
+      padding: theme.spacing(0.5),
       [`${selectedItemCssSelector}`]: {
         backgroundColor: theme.colors.background.secondary,
       },
