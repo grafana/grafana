@@ -6,7 +6,7 @@ toolchain go1.23.6
 
 require (
 	github.com/grafana/dskit v0.0.0-20241105154643-a6b453a88040
-	github.com/grafana/grafana-plugin-sdk-go v0.265.0
+	github.com/grafana/grafana-plugin-sdk-go v0.266.0
 	github.com/json-iterator/go v1.1.12
 	github.com/prometheus/client_golang v1.20.5
 	github.com/prometheus/common v0.62.0
@@ -111,7 +111,7 @@ require (
 	golang.org/x/mod v0.22.0 // indirect
 	golang.org/x/net v0.34.0 // indirect
 	golang.org/x/sync v0.11.0 // indirect
-	golang.org/x/sys v0.29.0 // indirect
+	golang.org/x/sys v0.30.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
 	golang.org/x/tools v0.29.0 // indirect
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da // indirect
