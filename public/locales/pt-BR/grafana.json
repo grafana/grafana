@@ -34,12 +34,6 @@
       "save-button": ""
     }
   },
-  "actions-editor": {
-    "inline": {
-      "add-button": "",
-      "one-click-link": ""
-    }
-  },
   "admin": {
     "anon-users": {
       "not-found": ""
@@ -174,6 +168,24 @@
     }
   },
   "alerting": {
+    "alert": {
+      "alert-state": "",
+      "annotations": "",
+      "evaluation": "",
+      "evaluation-paused": "",
+      "evaluation-paused-description": "",
+      "last-evaluated": "",
+      "last-evaluation-duration": "",
+      "last-updated-at": "",
+      "last-updated-by": "",
+      "no-annotations": "",
+      "pending-period": "",
+      "rule": "",
+      "rule-identifier": "",
+      "rule-type": "",
+      "state-error-timeout": "",
+      "state-no-data": ""
+    },
     "alert-recording-rule-form": {
       "evaluation-behaviour": {
         "description": {
@@ -283,6 +295,7 @@
     "contactPointFilter": {
       "label": ""
     },
+    "copy-to-clipboard": "",
     "export": {
       "subtitle": {
         "formats": "",
@@ -298,6 +311,13 @@
           }
         }
       }
+    },
+    "group-actions": {
+      "actions-trigger": "",
+      "delete": "",
+      "edit": "",
+      "export": "",
+      "reorder": ""
     },
     "list-view": {
       "empty": {
@@ -484,11 +504,23 @@
     },
     "rule-list": {
       "configure-datasource": "",
+      "ds-error-boundary": {
+        "description": "",
+        "title": ""
+      },
       "filter-view": {
         "no-more-results": "",
         "no-rules-found": ""
       },
-      "new-alert-rule": ""
+      "new-alert-rule": "",
+      "pagination": {
+        "next-page": "",
+        "previous-page": ""
+      },
+      "return-button": {
+        "title": ""
+      },
+      "rulerrule-loading-error": ""
     },
     "rule-state": {
       "creating": "",
@@ -690,7 +722,10 @@
       "title": ""
     },
     "custom-value": {
-      "label": ""
+      "description": ""
+    },
+    "group": {
+      "undefined": ""
     },
     "options": {
       "no-found": ""
@@ -863,6 +898,82 @@
       "redirect-link": "Lista no alerta do Grafana",
       "subtitle": "Regras de alerta relacionadas a este painel de controle"
     },
+    "default-layout": {
+      "description": "",
+      "item-options": {
+        "repeat": {
+          "direction": {
+            "horizontal": "",
+            "title": "",
+            "vertical": ""
+          },
+          "max": "",
+          "title": "",
+          "variable": {
+            "description": "",
+            "title": ""
+          }
+        }
+      },
+      "name": "",
+      "row-actions": {
+        "delete": "",
+        "modal": {
+          "alt-action": "",
+          "text": "",
+          "title": ""
+        }
+      },
+      "row-options": {
+        "button": {
+          "label": ""
+        },
+        "form": {
+          "cancel": "",
+          "repeat-for": {
+            "label": "",
+            "learn-more": "",
+            "warning": {
+              "text": ""
+            }
+          },
+          "title": "",
+          "update": ""
+        },
+        "modal": {
+          "title": ""
+        }
+      }
+    },
+    "edit-pane": {
+      "objects": {
+        "multi-select": {
+          "selection-number": ""
+        }
+      },
+      "open": "",
+      "panels": {
+        "multi-select": {
+          "selection-number": ""
+        }
+      },
+      "row": {
+        "header": {
+          "hide": "",
+          "title": ""
+        },
+        "multi-select": {
+          "options-header": "",
+          "selection-number": ""
+        }
+      },
+      "tab": {
+        "multi-select": {
+          "options-header": "",
+          "selection-number": ""
+        }
+      }
+    },
     "empty": {
       "add-library-panel-body": "Adicione visualizações que são compartilhadas com outros painéis de controle.",
       "add-library-panel-button": "Adicionar painel de biblioteca",
@@ -873,6 +984,9 @@
       "import-a-dashboard-body": "",
       "import-a-dashboard-header": "Importar um painel de controle",
       "import-dashboard-button": "Importar painel de controle"
+    },
+    "errors": {
+      "failed-to-load": ""
     },
     "inspect": {
       "data-tab": "Dados",
@@ -926,19 +1040,130 @@
       "rows": "Número total de linhas",
       "table-title": "Estatísticas"
     },
+    "options": {
+      "description": "",
+      "title": "",
+      "title-option": ""
+    },
+    "panel-edit": {
+      "alerting-tab": {
+        "dashboard-not-saved": "",
+        "no-rules": ""
+      }
+    },
+    "responsive-layout": {
+      "description": "",
+      "item-options": {
+        "hide-no-data": "",
+        "title": ""
+      },
+      "name": "",
+      "options": {
+        "columns": "",
+        "fixed": "",
+        "min": "",
+        "one-column": "",
+        "rows": "",
+        "three-columns": "",
+        "two-columns": ""
+      }
+    },
+    "rows-layout": {
+      "description": "",
+      "name": "",
+      "row": {
+        "collapse": "",
+        "expand": "",
+        "new": "",
+        "repeat": {
+          "learn-more": "",
+          "warning": ""
+        }
+      },
+      "row-options": {
+        "height": {
+          "expand": "",
+          "hide-row-header": "",
+          "min": "",
+          "title": ""
+        },
+        "repeat": {
+          "title": "",
+          "variable": {
+            "title": ""
+          }
+        },
+        "title": "",
+        "title-option": ""
+      }
+    },
+    "tabs-layout": {
+      "description": "",
+      "name": "",
+      "tab": {
+        "new": ""
+      },
+      "tab-options": {
+        "title": "",
+        "title-option": ""
+      }
+    },
     "toolbar": {
       "add": "Adicionar",
+      "add-panel": "",
+      "add-panel-lib": "",
+      "add-row": "",
+      "add-tab": "",
       "alert-rules": "Regras de alerta",
+      "back-to-dashboard": "",
+      "dashboard-settings": {
+        "label": "",
+        "tooltip": ""
+      },
+      "discard-library-panel-changes": "",
+      "discard-panel": "",
+      "discard-panel-new": "",
+      "edit": {
+        "label": "",
+        "tooltip": ""
+      },
+      "edit-dashboard-v2-schema": "",
+      "enter-edit-mode": {
+        "label": "",
+        "tooltip": ""
+      },
+      "exit-edit-mode": {
+        "label": "",
+        "tooltip": ""
+      },
       "mark-favorite": "Marcar como favorito",
+      "more-save-options": "",
       "open-original": "Abrir painel de controle original",
       "playlist-next": "Ir para o próximo painel de controle",
       "playlist-previous": "Ir para o painel de controle anterior",
       "playlist-stop": "Parar lista de reprodução",
+      "public-dashboard": "",
       "refresh": "Atualizar painel de controle",
       "save": "Salvar painel de controle",
+      "save-dashboard": {
+        "label": "",
+        "tooltip": ""
+      },
+      "save-dashboard-copy": {
+        "label": "",
+        "tooltip": ""
+      },
+      "save-dashboard-short": "",
+      "save-library-panel": "",
       "settings": "Configurações do painel de controle",
-      "share": "Compartilhar painel de controle",
+      "share": {
+        "label": "",
+        "tooltip": ""
+      },
       "share-button": "Compartilhar",
+      "show-hidden-elements": "",
+      "switch-old-dashboard": "",
+      "unlink-library-panel": "",
       "unmark-favorite": "Desmarcar como favorito"
     },
     "validation": {
@@ -946,6 +1171,14 @@
       "invalid-json": "JSON inválido",
       "tags-expected-array": "matriz de tags esperada",
       "tags-expected-strings": "matriz de strings de tags esperada"
+    },
+    "viz-panel": {
+      "options": {
+        "description": "",
+        "title": "",
+        "title-option": "",
+        "transparent-background": ""
+      }
     }
   },
   "dashboard-import": {
@@ -1048,6 +1281,12 @@
       "angular-deprecation-description": "",
       "angular-deprecation-heading": ""
     },
+    "panel-queries": {
+      "add-query-from-library": ""
+    },
+    "query-library": {
+      "add-query-button": ""
+    },
     "settings": {
       "variables": {
         "dependencies": {
@@ -1125,40 +1364,11 @@
       "scan-for-older-logs": "",
       "stop-scan": ""
     },
-    "query-library": {
-      "add-edit-description": "",
-      "cancel": "",
-      "default-description": "",
-      "delete-query": "",
-      "delete-query-text": "",
-      "delete-query-title": "",
-      "private": "",
-      "public": "",
-      "query-deleted": "",
-      "query-template-add-error": "",
-      "query-template-added": "",
-      "query-template-edit-error": "",
-      "query-template-edited": "",
-      "save": ""
-    },
-    "query-template-modal": {
-      "add-info": "",
-      "add-title": "",
-      "auto-star": "",
-      "data-source-name": "",
-      "description": "",
-      "edit-info": "",
-      "edit-title": "",
-      "query": "",
-      "visibility": ""
-    },
-    "query-template-modall": {
-      "data-source-type": ""
-    },
     "rich-history": {
       "close-tooltip": "Fechar histórico de consultas",
       "datasource-a-z": "Fonte de dados A-Z",
       "datasource-z-a": "Fonte de dados Z-A",
+      "library-history-dropdown": "",
       "newest-first": "Mais recentes primeiro",
       "oldest-first": "Mais antigos primeiro",
       "query-history": "Histórico de consultas",
@@ -1305,10 +1515,9 @@
       "sortBy": ""
     },
     "related-logs": {
-      "docsLink": "",
+      "LrrDocsLink": "",
       "openExploreLogs": "",
-      "relatedLogsUnavailableAfterDocsLink": "",
-      "relatedLogsUnavailableBeforeDocsLink": "",
+      "relatedLogsUnavailable": "",
       "warnExperimentalFeature": ""
     },
     "viewBy": ""
@@ -1357,6 +1566,24 @@
     "send-custom-feedback": ""
   },
   "grafana-ui": {
+    "action-editor": {
+      "button": {
+        "confirm": "",
+        "confirm-action": ""
+      },
+      "inline": {
+        "add-action": "",
+        "edit-action": ""
+      },
+      "modal": {
+        "action-body": "",
+        "action-method": "",
+        "action-query-params": "",
+        "action-title": "",
+        "action-title-placeholder": "",
+        "one-click-description": ""
+      }
+    },
     "auto-save-field": {
       "saved": "",
       "saving": ""
@@ -1373,11 +1600,21 @@
     },
     "data-link-editor-modal": {
       "cancel": "",
+      "one-click-description": "",
       "save": ""
+    },
+    "data-link-inline-editor": {
+      "one-click": ""
     },
     "data-links-inline-editor": {
       "add-link": "",
-      "one-click-link": ""
+      "edit-link": "",
+      "one-click": "",
+      "one-click-enabled": "",
+      "title-not-provided": "",
+      "tooltip-edit": "",
+      "tooltip-remove": "",
+      "url-not-provided": ""
     },
     "data-source-http-settings": {
       "access-help": "",
@@ -1458,7 +1695,12 @@
       "right-axis-indicator": ""
     },
     "viz-tooltip": {
-      "footer-add-annotation": ""
+      "actions-confirmation-input-placeholder": "",
+      "actions-confirmation-label": "",
+      "actions-confirmation-message": "",
+      "footer-add-annotation": "",
+      "footer-click-to-action": "",
+      "footer-click-to-navigate": ""
     }
   },
   "graph": {
@@ -1780,7 +2022,8 @@
     },
     "log-row-message": {
       "ellipsis": "",
-      "more": ""
+      "more": "",
+      "see-details": ""
     },
     "log-rows": {
       "disable-popover": {
@@ -1791,6 +2034,13 @@
       "disable-popover-message": {
         "shortcut": ""
       }
+    },
+    "logs-navigation": {
+      "newer-logs": "",
+      "older-logs": "",
+      "scroll-bottom": "",
+      "scroll-top": "",
+      "start-of-range": ""
     },
     "popover-menu": {
       "copy": "",
@@ -1881,6 +2131,7 @@
       "title": ""
     },
     "migrated-counts": {
+      "alert_rule_groups": "",
       "alert_rules": "",
       "contact_points": "",
       "dashboards": "",
@@ -1941,9 +2192,8 @@
     "public-preview": {
       "button-text": "",
       "message": "",
-      "message-plugins": "",
-      "title": "",
-      "title-plugins": ""
+      "message-cloud": "",
+      "title": ""
     },
     "resource-details": {
       "dismiss-button": "",
@@ -1986,6 +2236,7 @@
     },
     "resource-type": {
       "alert_rule": "",
+      "alert_rule_group": "",
       "contact_point": "",
       "dashboard": "Painel de controle",
       "datasource": "Fonte de dados",
@@ -2029,6 +2280,15 @@
       "body": "Além da conveniência da hospedagem gerenciada, o Grafana Cloud inclui muitos recursos exclusivos na nuvem, como SLOs, gestão de incidentes, aprendizado de máquina e eficientes integrações de observabilidade.",
       "link-title": "Tem mais perguntas? Fale com um especialista",
       "title": "Por que hospedar com o Grafana?"
+    }
+  },
+  "multicombobox": {
+    "all": {
+      "title": "",
+      "title-filtered": ""
+    },
+    "clear": {
+      "title": ""
     }
   },
   "nav": {
@@ -2384,7 +2644,8 @@
       "list-label": "Navegação",
       "open": "",
       "undock": "Desacoplar menu"
-    }
+    },
+    "rss-button": ""
   },
   "news": {
     "drawer": {
@@ -2516,19 +2777,35 @@
       }
     },
     "details": {
+      "connections-tab": {
+        "description": ""
+      },
       "labels": {
         "contactGrafanaLabs": "",
+        "customLinks": "",
+        "customLinksTooltip": "",
         "dependencies": "",
+        "documentation": "",
         "downloads": "",
         "from": "",
         "installedVersion": "",
         "lastCommitDate": "",
         "latestVersion": "",
-        "links": "",
+        "license": "",
+        "raiseAnIssue": "",
         "reportAbuse": "",
+        "reportAbuseTooltip": "",
+        "repository": "",
         "signature": "",
         "status": "",
         "updatedAt": ""
+      },
+      "modal": {
+        "cancel": "",
+        "copyEmail": "",
+        "description": "",
+        "node": "",
+        "title": ""
       }
     },
     "empty-state": {
@@ -2743,14 +3020,6 @@
       "role-label": "Função"
     }
   },
-  "query-library": {
-    "datasource-names": "",
-    "delete-query-button": "",
-    "query-template-get-error": "",
-    "search": "",
-    "user-info-get-error": "",
-    "user-names": ""
-  },
   "query-operation": {
     "header": {
       "collapse-row": "Recolher linha de consulta",
@@ -2760,7 +3029,6 @@
       "expand-row": "Expandir linha de consulta",
       "hide-response": "",
       "remove-query": "Remover consulta",
-      "save-to-query-library": "",
       "show-response": "",
       "toggle-edit-mode": "Alternar modo de edição de texto"
     },
@@ -2862,6 +3130,10 @@
     "title": ""
   },
   "save-dashboards": {
+    "message-length": {
+      "info": "",
+      "title": ""
+    },
     "name-exists": {
       "message-info": "",
       "message-suggestion": "",
@@ -3145,6 +3417,7 @@
       "home-dashboard-placeholder": "Painel de controle padrão",
       "locale-label": "Idioma",
       "locale-placeholder": "Escolher idioma",
+      "theme-description": "",
       "theme-label": "Tema da interface",
       "week-start-label": "Início da semana"
     },
@@ -3215,6 +3488,13 @@
     },
     "url-column-header": "URL da captura",
     "view-button": "Visualizar"
+  },
+  "table": {
+    "container": {
+      "content": "",
+      "show-all-series": "",
+      "show-only-series": ""
+    }
   },
   "tag-filter": {
     "clear-button": "",
@@ -3309,19 +3589,25 @@
       "start-your-metrics-exploration": "",
       "subtitle": ""
     },
-    "metric-overview": {
-      "description-label": "",
-      "labels": "",
-      "metric-attributes": "",
-      "no-description": "",
-      "type-label": "",
-      "unit-label": "",
-      "unknown-type": ""
-    },
     "metric-select": {
       "filter-by": "",
+      "native-histogram": "",
       "new-badge": "",
       "otel-switch": ""
+    },
+    "native-histogram-banner": {
+      "ch-heatmap": "",
+      "ch-histogram": "",
+      "click-histogram": "",
+      "hide-examples": "",
+      "learn-more": "",
+      "metric-examples": "",
+      "nh-heatmap": "",
+      "nh-histogram": "",
+      "now": "",
+      "previously": "",
+      "see-examples": "",
+      "sentence": ""
     },
     "recent-metrics": {
       "or-view-a-recent-exploration": ""
