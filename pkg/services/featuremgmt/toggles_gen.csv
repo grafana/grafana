@@ -234,6 +234,7 @@ elasticsearchImprovedParsing,experimental,@grafana/aws-datasources,false,false,f
 exploreMetricsUseExternalAppPlugin,experimental,@grafana/observability-metrics,false,true,true
 datasourceConnectionsTab,experimental,@grafana/plugins-platform-backend,false,false,true
 fetchRulesUsingPost,experimental,@grafana/alerting-squad,false,false,false
+alertingConversionAPI,experimental,@grafana/alerting-squad,false,false,false
 alertingAlertmanagerExtraDedupStage,experimental,@grafana/alerting-squad,false,true,false
 alertingAlertmanagerExtraDedupStageStopPipeline,experimental,@grafana/alerting-squad,false,true,false
 newLogsPanel,experimental,@grafana/observability-logs,false,false,true

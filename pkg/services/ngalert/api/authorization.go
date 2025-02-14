@@ -123,6 +123,34 @@ func (api *API) authorize(method, path string) web.Handler {
 	case http.MethodPost + "/api/v1/rule/test/{DatasourceUID}":
 		eval = ac.EvalPermission(ac.ActionAlertingRuleExternalRead, datasources.ScopeProvider.GetResourceScopeUID(ac.Parameter(":DatasourceUID")))
 
+	// convert/prometheus API paths
+	case http.MethodGet + "/api/convert/prometheus/config/v1/rules/{NamespaceTitle}/{Group}",
+		http.MethodGet + "/api/convert/prometheus/config/v1/rules/{NamespaceTitle}":
+		eval = ac.EvalAll(
+			ac.EvalPermission(ac.ActionAlertingRuleRead),
+			ac.EvalPermission(dashboards.ActionFoldersRead),
+		)
+
+	case http.MethodGet + "/api/convert/prometheus/config/v1/rules":
+		eval = ac.EvalPermission(ac.ActionAlertingRuleRead)
+
+	case http.MethodPost + "/api/convert/prometheus/config/v1/rules/{NamespaceTitle}":
+		eval = ac.EvalAll(
+			ac.EvalPermission(dashboards.ActionFoldersWrite),
+			ac.EvalPermission(ac.ActionAlertingRuleRead),
+			ac.EvalPermission(ac.ActionAlertingRuleUpdate),
+			ac.EvalPermission(ac.ActionAlertingRuleCreate),
+			ac.EvalPermission(ac.ActionAlertingRuleDelete),
+		)
+
+	case http.MethodDelete + "/api/convert/prometheus/config/v1/rules/{NamespaceTitle}/{Group}",
+		http.MethodDelete + "/api/convert/prometheus/config/v1/rules/{NamespaceTitle}":
+		eval = ac.EvalAll(
+			ac.EvalPermission(ac.ActionAlertingRuleDelete),
+			ac.EvalPermission(ac.ActionAlertingRuleRead),
+			ac.EvalPermission(dashboards.ActionFoldersRead),
+		)
+
 	// Alert Instances and Silences
 
 	// Silences for Grafana paths.

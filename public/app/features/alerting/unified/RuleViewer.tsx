@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom-v5-compat';
 
 import { NavModelItem } from '@grafana/data';
 import { isFetchError } from '@grafana/runtime';
-import { Alert, withErrorBoundary } from '@grafana/ui';
+import { Alert } from '@grafana/ui';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
@@ -12,6 +12,7 @@ import DetailView, { ActiveTab, useActiveTab } from './components/rule-viewer/Ru
 import { useCombinedRule } from './hooks/useCombinedRule';
 import { stringifyErrorLike } from './utils/misc';
 import { getRuleIdFromPathname, parse as parseRuleId } from './utils/rule-id';
+import { withPageErrorBoundary } from './withPageErrorBoundary';
 
 const RuleViewer = (): JSX.Element => {
   const params = useParams();
@@ -35,7 +36,7 @@ const RuleViewer = (): JSX.Element => {
   }, [id]);
 
   // we then fetch the rule from the correct API endpoint(s)
-  const { loading, error, result: rule } = useCombinedRule({ ruleIdentifier: identifier, limitAlerts });
+  const { loading, error, result: rule, uninitialized } = useCombinedRule({ ruleIdentifier: identifier, limitAlerts });
 
   if (error) {
     return (
@@ -45,7 +46,7 @@ const RuleViewer = (): JSX.Element => {
     );
   }
 
-  if (loading) {
+  if (loading || uninitialized) {
     return (
       <AlertingPageWrapper pageNav={defaultPageNav} navId="alert-list" isLoading={true}>
         <></>
@@ -86,4 +87,4 @@ function ErrorMessage({ error }: ErrorMessageProps) {
   return <Alert title={'Something went wrong loading the rule'}>{stringifyErrorLike(error)}</Alert>;
 }
 
-export default withErrorBoundary(RuleViewer, { style: 'page' });
+export default withPageErrorBoundary(RuleViewer);

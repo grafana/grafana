@@ -6,6 +6,7 @@ import { ExtensionRegistriesProvider } from './ExtensionRegistriesContext';
 import { log } from './logs/log';
 import { resetLogMock } from './logs/testUtils';
 import { AddedComponentsRegistry } from './registry/AddedComponentsRegistry';
+import { AddedFunctionsRegistry } from './registry/AddedFunctionsRegistry';
 import { AddedLinksRegistry } from './registry/AddedLinksRegistry';
 import { ExposedComponentsRegistry } from './registry/ExposedComponentsRegistry';
 import { PluginExtensionRegistries } from './registry/types';
@@ -60,6 +61,7 @@ describe('usePluginComponents()', () => {
       addedComponentsRegistry: new AddedComponentsRegistry(),
       exposedComponentsRegistry: new ExposedComponentsRegistry(),
       addedLinksRegistry: new AddedLinksRegistry(),
+      addedFunctionsRegistry: new AddedFunctionsRegistry(),
     };
 
     jest.mocked(wrapWithPluginContext).mockClear();
@@ -89,6 +91,7 @@ describe('usePluginComponents()', () => {
         addedComponents: [],
         exposedComponents: [],
         extensionPoints: [],
+        addedFunctions: [],
       },
       dependencies: {
         grafanaVersion: '8.0.0',

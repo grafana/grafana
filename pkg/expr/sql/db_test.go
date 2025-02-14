@@ -45,11 +45,11 @@ func TestQueryFrames(t *testing.T) {
 			name:  "query all rows from single input frame",
 			query: `SELECT * FROM inputFrameRefId LIMIT 1;`,
 			input_frames: []*data.Frame{
-				setRefID(data.NewFrame(
+				data.NewFrame(
 					"",
 					//nolint:misspell
 					data.NewField("OSS Projects with Typos", nil, []string{"Garfana", "Pormetheus"}),
-				), "inputFrameRefId"),
+				).SetRefID("inputFrameRefId"),
 			},
 			expected: data.NewFrame(
 				"sqlExpressionRefId",
@@ -173,9 +173,4 @@ func TestQueryFramesDateTimeSelect(t *testing.T) {
 // p is a utility for pointers from constants
 func p[T any](v T) *T {
 	return &v
-}
-
-func setRefID(f *data.Frame, refID string) *data.Frame {
-	f.RefID = refID
-	return f
 }

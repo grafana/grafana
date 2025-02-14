@@ -4,6 +4,7 @@ import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alp
 import { AnnoKeyDashboardSnapshotOriginalUrl } from 'app/features/apiserver/types';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { SaveDashboardAsOptions } from 'app/features/dashboard/components/SaveDashboard/types';
+import { DASHBOARD_SCHEMA_VERSION } from 'app/features/dashboard/state/DashboardMigrator';
 import {
   getPanelPluginCounts,
   getV1SchemaVariables,
@@ -185,7 +186,7 @@ export class V2DashboardSerializer
 
     if (this.initialSaveModel) {
       return {
-        schemaVersion: 40,
+        schemaVersion: DASHBOARD_SCHEMA_VERSION,
         uid: s.state.uid,
         title: this.initialSaveModel.title,
         panels_count: panelPluginIds.length || 0,

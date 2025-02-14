@@ -7,11 +7,11 @@ import {
   dataLayers,
   SceneDataQuery,
   SceneDataTransformer,
-  SceneGridRow,
   SceneVariableSet,
   VizPanel,
 } from '@grafana/scenes';
 import { DataSourceRef } from '@grafana/schema';
+import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
 
 import {
   DashboardV2Spec,
@@ -24,7 +24,6 @@ import {
   DataTransformerConfig,
   PanelQuerySpec,
   DataQueryKind,
-  GridLayoutItemKind,
   QueryOptionsSpec,
   QueryVariableKind,
   TextVariableKind,
@@ -38,27 +37,13 @@ import {
   DataLink,
   LibraryPanelKind,
   Element,
-  RepeatOptions,
-  GridLayoutRowKind,
   DashboardCursorSync,
   FieldConfig,
   FieldColor,
-  GridLayoutKind,
-  RowsLayoutKind,
-  ResponsiveGridLayoutKind,
-  ResponsiveGridLayoutItemKind,
 } from '../../../../../packages/grafana-schema/src/schema/dashboard/v2alpha0';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
-import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
-import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
-import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior';
-import { ResponsiveGridItem } from '../scene/layout-responsive-grid/ResponsiveGridItem';
-import { ResponsiveGridLayoutManager } from '../scene/layout-responsive-grid/ResponsiveGridLayoutManager';
-import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
-import { DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
-import { isClonedKey } from '../utils/clone';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import {
   getLibraryPanelBehavior,
@@ -66,10 +51,9 @@ import {
   getQueryRunnerFor,
   getVizPanelKeyForPanelId,
   isLibraryPanel,
-  calculateGridItemDimensions,
 } from '../utils/utils';
 
-import { GRID_ROW_HEIGHT } from './const';
+import { getLayout } from './layoutSerializers/utils';
 import { sceneVariablesSetToSchemaV2Variables } from './sceneVariablesSetToVariables';
 import { colorIdEnumToColorIdV2, transformCursorSynctoEnum } from './transformToV2TypesUtils';
 
@@ -90,7 +74,7 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
   const dashboardSchemaV2: DeepPartial<DashboardV2Spec> = {
     //dashboard settings
     title: sceneDash.title,
-    description: sceneDash.description ?? '',
+    description: sceneDash.description,
     cursorSync: getCursorSync(sceneDash),
     liveNow: getLiveNow(sceneDash),
     preload: sceneDash.preload,
@@ -106,7 +90,6 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
       to: timeRange.to,
       autoRefresh: refreshPicker?.state.refresh || '',
       autoRefreshIntervals: refreshPicker?.state.intervals,
-      quickRanges: [], //FIXME is coming timepicker.time_options,
       hideTimepicker: controlsState?.hideTimeControls ?? false,
       weekStart: timeRange.weekStart,
       fiscalYearStartMonth: timeRange.fiscalYearStartMonth,
@@ -127,14 +110,14 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
     // EOF annotations
 
     // layout
-    layout: getLayout(sceneDash.body, isSnapshot),
+    layout: getLayout(sceneDash.body),
     // EOF layout
   };
 
   try {
     // validateDashboardSchemaV2 will throw an error if the dashboard is not valid
     if (validateDashboardSchemaV2(dashboardSchemaV2)) {
-      return dashboardSchemaV2;
+      return sortedDeepCloneWithoutNulls(dashboardSchemaV2);
     }
     // should never reach this point, validation should throw an error
     throw new Error('Error we could transform the dashboard to schema v2: ' + dashboardSchemaV2);
@@ -142,75 +125,6 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
     console.error('Error transforming dashboard to schema v2: ' + reason, dashboardSchemaV2);
     throw new Error('Error transforming dashboard to schema v2: ' + reason);
   }
-}
-
-function getLayout(
-  layoutManager: DashboardLayoutManager,
-  isSnapshot?: boolean
-): GridLayoutKind | RowsLayoutKind | ResponsiveGridLayoutKind {
-  if (layoutManager instanceof DefaultGridLayoutManager) {
-    return getGridLayout(layoutManager, isSnapshot);
-  } else if (layoutManager instanceof RowsLayoutManager) {
-    return {
-      kind: 'RowsLayout',
-      spec: {
-        rows: layoutManager.state.rows.map((row) => {
-          if (row.state.layout instanceof RowsLayoutManager) {
-            throw new Error('Nesting row layouts is not supported');
-          }
-          let layout: GridLayoutKind | ResponsiveGridLayoutKind | undefined = undefined;
-          if (row.state.layout instanceof DefaultGridLayoutManager) {
-            layout = getGridLayout(row.state.layout, isSnapshot);
-          } else if (row.state.layout instanceof ResponsiveGridLayoutManager) {
-            layout = {
-              kind: 'ResponsiveGridLayout',
-              spec: {
-                items: getResponsiveGridLayoutItems(row.state.layout),
-                col:
-                  row.state.layout.state.layout.state.templateColumns?.toString() ??
-                  ResponsiveGridLayoutManager.defaultCSS.templateColumns,
-                row:
-                  row.state.layout.state.layout.state.autoRows?.toString() ??
-                  ResponsiveGridLayoutManager.defaultCSS.autoRows,
-              },
-            };
-          }
-          if (!layout) {
-            throw new Error('Unsupported layout type');
-          }
-          return {
-            kind: 'RowsLayoutRow',
-            spec: {
-              title: row.state.title,
-              collapsed: row.state.isCollapsed ?? false,
-              layout: layout,
-            },
-          };
-        }),
-      },
-    };
-  } else if (layoutManager instanceof ResponsiveGridLayoutManager) {
-    return {
-      kind: 'ResponsiveGridLayout',
-      spec: {
-        items: getResponsiveGridLayoutItems(layoutManager),
-        col:
-          layoutManager.state.layout.state.templateColumns?.toString() ??
-          ResponsiveGridLayoutManager.defaultCSS.templateColumns,
-        row: layoutManager.state.layout.state.autoRows?.toString() ?? ResponsiveGridLayoutManager.defaultCSS.autoRows,
-      },
-    };
-  }
-  throw new Error('Unsupported layout type');
-}
-
-function getGridLayout(layoutManager: DefaultGridLayoutManager, isSnapshot?: boolean): GridLayoutKind {
-  return {
-    kind: 'GridLayout',
-    spec: {
-      items: getGridLayoutItems(layoutManager, isSnapshot),
-    },
-  };
 }
 
 function getCursorSync(state: DashboardSceneState) {
@@ -229,146 +143,6 @@ function getLiveNow(state: DashboardSceneState) {
     return Boolean(defaultDashboardV2Spec().liveNow);
   }
   return Boolean(liveNow);
-}
-
-function getGridLayoutItems(
-  body: DefaultGridLayoutManager,
-  isSnapshot?: boolean
-): Array<GridLayoutItemKind | GridLayoutRowKind> {
-  let elements: Array<GridLayoutItemKind | GridLayoutRowKind> = [];
-  for (const child of body.state.grid.state.children) {
-    if (child instanceof DashboardGridItem) {
-      // TODO: handle panel repeater scenario
-      if (child.state.variableName) {
-        elements = elements.concat(repeaterToLayoutItems(child, isSnapshot));
-      } else {
-        elements.push(gridItemToGridLayoutItemKind(child, isSnapshot));
-      }
-    } else if (child instanceof SceneGridRow) {
-      if (isClonedKey(child.state.key!) && !isSnapshot) {
-        // Skip repeat rows
-        continue;
-      }
-      elements.push(gridRowToLayoutRowKind(child, isSnapshot));
-    }
-  }
-
-  return elements;
-}
-
-function getResponsiveGridLayoutItems(body: ResponsiveGridLayoutManager): ResponsiveGridLayoutItemKind[] {
-  const items: ResponsiveGridLayoutItemKind[] = [];
-
-  for (const child of body.state.layout.state.children) {
-    if (child instanceof ResponsiveGridItem) {
-      items.push({
-        kind: 'ResponsiveGridLayoutItem',
-        spec: {
-          element: {
-            kind: 'ElementReference',
-            name: child.state?.body?.state.key ?? 'DefaultName',
-          },
-        },
-      });
-    }
-  }
-  return items;
-}
-
-export function gridItemToGridLayoutItemKind(
-  gridItem: DashboardGridItem,
-  isSnapshot = false,
-  yOverride?: number
-): GridLayoutItemKind {
-  let elementGridItem: GridLayoutItemKind | undefined;
-  let x = 0,
-    y = 0,
-    width = 0,
-    height = 0;
-
-  let gridItem_ = gridItem;
-
-  if (!(gridItem_.state.body instanceof VizPanel)) {
-    throw new Error('DashboardGridItem body expected to be VizPanel');
-  }
-
-  // Get the grid position and size
-  height = (gridItem_.state.variableName ? gridItem_.state.itemHeight : gridItem_.state.height) ?? 0;
-  x = gridItem_.state.x ?? 0;
-  y = gridItem_.state.y ?? 0;
-  width = gridItem_.state.width ?? 0;
-  const repeatVar = gridItem_.state.variableName;
-
-  // FIXME: which name should we use for the element reference, key or something else ?
-  const elementName = gridItem_.state.body.state.key ?? 'DefaultName';
-  elementGridItem = {
-    kind: 'GridLayoutItem',
-    spec: {
-      x,
-      y: yOverride ?? y,
-      width: width,
-      height: height,
-      element: {
-        kind: 'ElementReference',
-        name: elementName,
-      },
-    },
-  };
-
-  if (repeatVar) {
-    const repeat: RepeatOptions = {
-      mode: 'variable',
-      value: repeatVar,
-    };
-
-    if (gridItem_.state.maxPerRow) {
-      repeat.maxPerRow = gridItem_.getMaxPerRow();
-    }
-
-    if (gridItem_.state.repeatDirection) {
-      repeat.direction = gridItem_.getRepeatDirection();
-    }
-
-    elementGridItem.spec.repeat = repeat;
-  }
-
-  if (!elementGridItem) {
-    throw new Error('Unsupported grid item type');
-  }
-
-  return elementGridItem;
-}
-
-function getRowRepeat(row: SceneGridRow): RepeatOptions | undefined {
-  if (row.state.$behaviors) {
-    for (const behavior of row.state.$behaviors) {
-      if (behavior instanceof RowRepeaterBehavior) {
-        return { value: behavior.state.variableName, mode: 'variable' };
-      }
-    }
-  }
-  return undefined;
-}
-
-function gridRowToLayoutRowKind(row: SceneGridRow, isSnapshot = false): GridLayoutRowKind {
-  const children = row.state.children.map((child) => {
-    if (!(child instanceof DashboardGridItem)) {
-      throw new Error('Unsupported row child type');
-    }
-    const y = (child.state.y ?? 0) - (row.state.y ?? 0) - GRID_ROW_HEIGHT;
-    return gridItemToGridLayoutItemKind(child, isSnapshot, y);
-  });
-
-  return {
-    kind: 'GridLayoutRow',
-    spec: {
-      title: row.state.title,
-      y: row.state.y ?? 0,
-      collapsed: Boolean(row.state.isCollapsed),
-      elements: children,
-      repeat: getRowRepeat(row),
-    },
-  };
 }
 
 function getElements(state: DashboardSceneState) {
@@ -468,7 +242,7 @@ function getVizPanelQueries(vizPanel: VizPanel): PanelQueryKind[] {
   const queries: PanelQueryKind[] = [];
   const queryRunner = getQueryRunnerFor(vizPanel);
   const vizPanelQueries = queryRunner?.state.queries;
-  const datasource = queryRunner?.state.datasource;
+  const datasource = queryRunner?.state.datasource ?? getDefaultDataSourceRef();
 
   if (vizPanelQueries) {
     vizPanelQueries.forEach((query) => {
@@ -477,7 +251,7 @@ function getVizPanelQueries(vizPanel: VizPanel): PanelQueryKind[] {
         spec: omit(query, 'datasource', 'refId', 'hide'),
       };
       const querySpec: PanelQuerySpec = {
-        datasource: datasource ?? getDefaultDataSourceRef(),
+        datasource: query.datasource ?? datasource,
         query: dataQuery,
         refId: query.refId,
         hidden: Boolean(query.hide),
@@ -577,60 +351,6 @@ function createElements(panels: Element[]): Record<string, Element> {
   }, {});
 }
 
-function repeaterToLayoutItems(repeater: DashboardGridItem, isSnapshot = false): GridLayoutItemKind[] {
-  if (!isSnapshot) {
-    return [gridItemToGridLayoutItemKind(repeater)];
-  } else {
-    if (repeater.state.body instanceof VizPanel && isLibraryPanel(repeater.state.body)) {
-      // TODO: implement
-      // const { x = 0, y = 0, width: w = 0, height: h = 0 } = repeater.state;
-      // return [vizPanelToPanel(repeater.state.body, { x, y, w, h }, isSnapshot)];
-      return [];
-    }
-
-    if (repeater.state.repeatedPanels) {
-      const { h, w, columnCount } = calculateGridItemDimensions(repeater);
-      const panels = repeater.state.repeatedPanels!.map((panel, index) => {
-        let x = 0,
-          y = 0;
-        if (repeater.state.repeatDirection === 'v') {
-          x = repeater.state.x!;
-          y = index * h;
-        } else {
-          x = (index % columnCount) * w;
-          y = repeater.state.y! + Math.floor(index / columnCount) * h;
-        }
-
-        const gridPos = { x, y, w, h };
-
-        const result: GridLayoutItemKind = {
-          kind: 'GridLayoutItem',
-          spec: {
-            x: gridPos.x,
-            y: gridPos.y,
-            width: gridPos.w,
-            height: gridPos.h,
-            repeat: {
-              mode: 'variable',
-              value: repeater.state.variableName!,
-              maxPerRow: repeater.getMaxPerRow(),
-              direction: repeater.state.repeatDirection,
-            },
-            element: {
-              kind: 'ElementReference',
-              name: panel.state.key!,
-            },
-          },
-        };
-        return result;
-      });
-
-      return panels;
-    }
-    return [];
-  }
-}
-
 function getVariables(oldDash: DashboardSceneState) {
   const variablesSet = oldDash.$variables;
 
@@ -727,7 +447,7 @@ function validateDashboardSchemaV2(dash: unknown): dash is DashboardV2Spec {
   if ('title' in dash && typeof dash.title !== 'string') {
     throw new Error('Title is not a string');
   }
-  if ('description' in dash && typeof dash.description !== 'string') {
+  if ('description' in dash && dash.description !== undefined && typeof dash.description !== 'string') {
     throw new Error('Description is not a string');
   }
   if ('cursorSync' in dash && typeof dash.cursorSync !== 'string') {
@@ -782,14 +502,22 @@ function validateDashboardSchemaV2(dash: unknown): dash is DashboardV2Spec {
   if (!('autoRefreshIntervals' in dash.timeSettings) || !Array.isArray(dash.timeSettings.autoRefreshIntervals)) {
     throw new Error('AutoRefreshIntervals is not an array');
   }
-  if (!('quickRanges' in dash.timeSettings) || !Array.isArray(dash.timeSettings.quickRanges)) {
+  if (
+    'quickRanges' in dash.timeSettings &&
+    dash.timeSettings.quickRanges &&
+    !Array.isArray(dash.timeSettings.quickRanges)
+  ) {
     throw new Error('QuickRanges is not an array');
   }
   if (!('hideTimepicker' in dash.timeSettings) || typeof dash.timeSettings.hideTimepicker !== 'boolean') {
     throw new Error('HideTimepicker is not a boolean');
   }
-  if (!('weekStart' in dash.timeSettings) || typeof dash.timeSettings.weekStart !== 'string') {
-    throw new Error('WeekStart is not a string');
+  if (
+    'weekStart' in dash.timeSettings &&
+    typeof dash.timeSettings.weekStart === 'string' &&
+    !['saturday', 'sunday', 'monday'].includes(dash.timeSettings.weekStart)
+  ) {
+    throw new Error('WeekStart should be one of "saturday", "sunday" or "monday"');
   }
   if (!('fiscalYearStartMonth' in dash.timeSettings) || typeof dash.timeSettings.fiscalYearStartMonth !== 'number') {
     throw new Error('FiscalYearStartMonth is not a number');
