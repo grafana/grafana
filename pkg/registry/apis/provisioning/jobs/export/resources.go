@@ -37,8 +37,9 @@ func (f *resourceReader) Write(ctx context.Context, key *resource.ResourceKey, v
 	item := &unstructured.Unstructured{}
 	err := item.UnmarshalJSON(value)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to unmarshal unstructured: %w", err)
 	}
+
 	err = f.job.add(ctx, item)
 	if err != nil {
 		f.logger.Warn("error adding from legacy", "name", key.Name, "err", err)

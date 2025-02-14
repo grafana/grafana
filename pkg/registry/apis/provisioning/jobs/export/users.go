@@ -28,11 +28,11 @@ func (r *exportJob) loadUsers(ctx context.Context) error {
 		return fmt.Errorf("unable to list all users in one request: %s", rawList.GetContinue())
 	}
 
-	// FIXME: should we improve logging here?
 	var ok bool
 	r.userInfo = make(map[string]repository.CommitSignature)
 	for _, item := range rawList.Items {
 		sig := repository.CommitSignature{}
+		// FIXME: should we improve logging here?
 		sig.Name, ok, err = unstructured.NestedString(item.Object, "spec", "login")
 		if !ok || err != nil {
 			continue

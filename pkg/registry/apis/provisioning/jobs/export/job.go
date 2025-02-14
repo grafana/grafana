@@ -66,15 +66,15 @@ func (r *exportJob) add(ctx context.Context, obj *unstructured.Unstructured) err
 		return err
 	}
 
-	item, err := utils.MetaAccessor(obj)
+	meta, err := utils.MetaAccessor(obj)
 	if err != nil {
-		return err
+		return fmt.Errorf("extract meta accessor: %w", err)
 	}
 
 	// Message from annotations
-	commitMessage := item.GetMessage()
+	commitMessage := meta.GetMessage()
 	if commitMessage == "" {
-		g := item.GetGeneration()
+		g := meta.GetGeneration()
 		if g > 0 {
 			commitMessage = fmt.Sprintf("Generation: %d", g)
 		} else {
@@ -82,25 +82,27 @@ func (r *exportJob) add(ctx context.Context, obj *unstructured.Unstructured) err
 		}
 	}
 
-	name := item.GetName()
-	repoName := item.GetRepositoryName()
+	name := meta.GetName()
+	repoName := meta.GetRepositoryName()
 	if repoName == r.target.Config().GetName() {
 		r.logger.Info("skip dashboard since it is already in repository", "dashboard", name)
+		// TODO: add ignore
 		return nil
 	}
 
-	title := item.FindTitle("")
+	title := meta.FindTitle("")
 	if title == "" {
 		title = name
 	}
-	folder := item.GetFolder()
+	folder := meta.GetFolder()
 
 	// Add the author in context (if available)
-	ctx = r.withAuthorSignature(ctx, item)
+	ctx = r.withAuthorSignature(ctx, meta)
 
 	// Get the absolute path of the folder
 	fid, ok := r.folderTree.DirPath(folder, "")
 	if !ok {
+		// FIXME: Shouldn't this fail instead?
 		fid = resources.Folder{
 			Path: "__folder_not_found/" + slugify.Slugify(folder),
 		}
@@ -111,7 +113,7 @@ func (r *exportJob) add(ctx context.Context, obj *unstructured.Unstructured) err
 	delete(obj.Object, "metadata")
 
 	if r.keepIdentifier {
-		item.SetName(name) // keep the identifier in the metadata
+		meta.SetName(name) // keep the identifier in the metadata
 	}
 
 	body, err := json.MarshalIndent(obj.Object, "", "  ")
@@ -170,5 +172,6 @@ func (r *exportJob) withAuthorSignature(ctx context.Context, item utils.GrafanaM
 	} else {
 		sig.When = item.GetCreationTimestamp().Time
 	}
+
 	return repository.WithAuthorSignature(ctx, sig)
 }

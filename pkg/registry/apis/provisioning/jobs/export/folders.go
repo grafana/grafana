@@ -101,9 +101,8 @@ func (r *exportJob) loadFolders(ctx context.Context) error {
 		}
 	}
 
-	// first create folders
-	// NOTE: this is required so that empty folders exist when finished
-	r.progress.SetMessage("writing folders")
+	// create folders first is required so that empty folders exist when finished
+	r.progress.SetMessage("write folders")
 
 	err := r.folderTree.Walk(ctx, func(ctx context.Context, folder resources.Folder) error {
 		p := folder.Path + "/"
@@ -122,7 +121,6 @@ func (r *exportJob) loadFolders(ctx context.Context) error {
 		_, err := r.target.Read(ctx, p, r.ref)
 		if err != nil && !(errors.Is(err, repository.ErrFileNotFound) || apierrors.IsNotFound(err)) {
 			result.Error = fmt.Errorf("failed to check if folder exists before writing: %w", err)
-			// TODO: what should we do here? Should we stop execution?
 			return result.Error
 		} else if err == nil {
 			logger.Info("folder already exists")
@@ -137,12 +135,10 @@ func (r *exportJob) loadFolders(ctx context.Context) error {
 		if err := r.target.Create(ctx, p, r.ref, nil, msg); err != nil {
 			result.Error = fmt.Errorf("failed to write folder in repo: %w", err)
 			r.progress.Record(ctx, result)
-			// TODO: should we stop execution here?
 			return result.Error
 		}
 
 		r.progress.Record(ctx, result)
-		logger.Debug("successfully exported folder")
 		return nil
 	})
 	if err != nil {
