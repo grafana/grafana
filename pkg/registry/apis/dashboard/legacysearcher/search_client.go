@@ -112,6 +112,35 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 	// most sorting will. Without this, the title will be set to sortMeta (0)
 	if sortByField == resource.SEARCH_FIELD_TITLE {
 		sortByField = ""
+  }
+
+	// if searching for tags, get those instead of the dashboards or folders
+	for facet, _ := range req.Facet {
+		if facet == resource.SEARCH_FIELD_TAGS {
+			tags, err := c.dashboardStore.GetDashboardTags(ctx, &dashboards.GetDashboardTagsQuery{
+				OrgID: user.GetOrgID(),
+			})
+			if err != nil {
+				return nil, err
+			}
+			list := &resource.ResourceSearchResponse{
+				Results: &resource.ResourceTable{},
+				Facet: map[string]*resource.ResourceSearchResponse_Facet{
+					"tags": &resource.ResourceSearchResponse_Facet{
+						Terms: []*resource.ResourceSearchResponse_TermFacet{},
+					},
+				},
+			}
+
+			for _, tag := range tags {
+				list.Facet["tags"].Terms = append(list.Facet["tags"].Terms, &resource.ResourceSearchResponse_TermFacet{
+					Term:  tag.Term,
+					Count: int64(tag.Count),
+				})
+			}
+
+			return list, nil
+		}
 	}
 
 	// handle deprecated dashboardIds query param
