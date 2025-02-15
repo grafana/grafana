@@ -89,13 +89,13 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 	}
 
 	sortByField := ""
-	if req.SortBy != nil && len(req.SortBy) > 0 {
+	if len(req.SortBy) != 0 {
 		if len(req.SortBy) > 1 {
 			return nil, fmt.Errorf("only one sort field is supported")
 		}
 		sort := req.SortBy[0]
 		sortByField = strings.TrimPrefix(sort.Field, resource.SEARCH_FIELD_PREFIX)
-		sorterName, _ := sortByMapping[sortByField]
+		sorterName := sortByMapping[sortByField]
 
 		if sort.Desc {
 			sorterName += "desc"
@@ -112,7 +112,7 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 	// most sorting will. Without this, the title will be set to sortMeta (0)
 	if sortByField == resource.SEARCH_FIELD_TITLE {
 		sortByField = ""
-  }
+	}
 
 	// if searching for tags, get those instead of the dashboards or folders
 	for facet, _ := range req.Facet {
