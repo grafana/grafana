@@ -14,18 +14,19 @@ interface AutoCellProps extends CellNGProps {
   cellOptions: TableCellOptions;
 }
 
-export default function AutoCell({ value, field, justifyContent, cellOptions, rowIdx }: AutoCellProps) {
+export default function AutoCell({ value, field, justifyContent, cellOptions, rowIdx, actions }: AutoCellProps) {
   const styles = useStyles2(getStyles, justifyContent);
 
   const displayValue = field.display!(value);
   const formattedValue = formattedValueToString(displayValue);
   const hasLinks = Boolean(getCellLinks(field, rowIdx)?.length);
+  const hasActions = Boolean(actions?.length);
   const clearButtonStyle = useStyles2(clearLinkButtonStyles);
 
   return (
     <div className={styles.cell}>
-      {hasLinks ? (
-        <DataLinksContextMenu links={() => getCellLinks(field, rowIdx) || []}>
+      {hasLinks || hasActions ? (
+        <DataLinksContextMenu links={() => getCellLinks(field, rowIdx) || []} actions={actions}>
           {(api) => {
             if (api.openMenu) {
               return (

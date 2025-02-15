@@ -25,6 +25,7 @@ import { SparklineCell } from './SparklineCell';
 export function TableCellNG(props: any) {
   const {
     field,
+    frame,
     value,
     theme,
     timeRange,
@@ -35,6 +36,7 @@ export function TableCellNG(props: any) {
     setIsInspecting,
     setContextMenuProps,
     cellInspect,
+    getActions,
   } = props;
   const { config: fieldConfig } = field;
   const { type: cellType } = fieldConfig.custom.cellOptions;
@@ -54,6 +56,8 @@ export function TableCellNG(props: any) {
   const divWidthRef = useRef<HTMLDivElement>(null);
   const [divWidth, setDivWidth] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
+
+  const actions = getActions ? getActions(frame, field) : [];
 
   useLayoutEffect(() => {
     if (divWidthRef.current && divWidthRef.current.clientWidth !== 0) {
@@ -93,6 +97,7 @@ export function TableCellNG(props: any) {
           height={height}
           width={divWidth}
           rowIdx={rowIdx}
+          actions={actions}
         />
       );
       break;
@@ -105,11 +110,12 @@ export function TableCellNG(props: any) {
           justifyContent={justifyContent}
           value={value}
           rowIdx={rowIdx}
+          actions={actions}
         />
       );
       break;
     case TableCellDisplayMode.JSONView:
-      cell = <JSONCell value={value} justifyContent={justifyContent} field={field} rowIdx={rowIdx} />;
+      cell = <JSONCell value={value} justifyContent={justifyContent} field={field} rowIdx={rowIdx} actions={actions} />;
       break;
     case TableCellDisplayMode.Auto:
     default:
@@ -121,6 +127,7 @@ export function TableCellNG(props: any) {
           justifyContent={justifyContent}
           cellOptions={fieldConfig.custom.cellOptions}
           rowIdx={rowIdx}
+          actions={actions}
         />
       );
   }

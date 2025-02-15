@@ -12,10 +12,11 @@ import { getCellLinks } from '../utils';
 
 const DATALINKS_HEIGHT_OFFSET = 10;
 
-export const ImageCell = ({ cellOptions, field, height, justifyContent, value, rowIdx }: ImageCellProps) => {
+export const ImageCell = ({ cellOptions, field, height, justifyContent, value, rowIdx, actions }: ImageCellProps) => {
   const calculatedHeight = height - DATALINKS_HEIGHT_OFFSET;
   const styles = useStyles2(getStyles, calculatedHeight, justifyContent);
   const hasLinks = Boolean(getCellLinks(field, rowIdx)?.length);
+  const hasActions = Boolean(actions?.length);
 
   const { text } = field.display!(value);
   const { alt, title } =
@@ -26,8 +27,8 @@ export const ImageCell = ({ cellOptions, field, height, justifyContent, value, r
   // TODO: Implement actions
   return (
     <div className={styles.imageContainer}>
-      {hasLinks ? (
-        <DataLinksContextMenu links={() => getCellLinks(field, rowIdx) || []}>
+      {hasLinks || hasActions ? (
+        <DataLinksContextMenu links={() => getCellLinks(field, rowIdx) || []} actions={actions}>
           {(api) => {
             if (api.openMenu) {
               return (

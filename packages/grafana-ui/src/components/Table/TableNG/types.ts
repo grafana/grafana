@@ -1,6 +1,6 @@
 import { Property } from 'csstype';
 
-import { Field, GrafanaTheme2, TimeRange } from '@grafana/data';
+import { ActionModel, Field, GrafanaTheme2, TimeRange } from '@grafana/data';
 import { TableCellOptions } from '@grafana/schema';
 
 export interface CellNGProps {
@@ -10,6 +10,7 @@ export interface CellNGProps {
   height?: number;
   justifyContent: Property.JustifyContent;
   rowIdx: number;
+  actions?: ActionModel[];
 }
 
 export interface RowExpanderNGProps {

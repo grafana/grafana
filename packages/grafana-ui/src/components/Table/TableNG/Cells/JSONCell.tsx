@@ -10,7 +10,7 @@ import { DataLinksContextMenu } from '../../../DataLinks/DataLinksContextMenu';
 import { CellNGProps } from '../types';
 import { getCellLinks } from '../utils';
 
-export const JSONCell = ({ value, justifyContent, field, rowIdx }: Omit<CellNGProps, 'theme'>) => {
+export const JSONCell = ({ value, justifyContent, field, rowIdx, actions }: Omit<CellNGProps, 'theme'>) => {
   const styles = useStyles2(getStyles, justifyContent);
   const clearButtonStyle = useStyles2(clearLinkButtonStyles);
 
@@ -26,12 +26,13 @@ export const JSONCell = ({ value, justifyContent, field, rowIdx }: Omit<CellNGPr
   }
 
   const hasLinks = Boolean(getCellLinks(field, rowIdx)?.length);
+  const hasActions = Boolean(actions?.length);
 
   // TODO: Implement actions
   return (
     <div className={styles.jsonText}>
-      {hasLinks ? (
-        <DataLinksContextMenu links={() => getCellLinks(field, rowIdx) || []}>
+      {hasLinks || hasActions ? (
+        <DataLinksContextMenu links={() => getCellLinks(field, rowIdx) || []} actions={actions}>
           {(api) => {
             if (api.openMenu) {
               return (

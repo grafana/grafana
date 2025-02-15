@@ -21,7 +21,7 @@ const defaultScale: ThresholdsConfig = {
   ],
 };
 
-export const BarGaugeCell = ({ value, field, theme, height, width, rowIdx }: BarGaugeCellProps) => {
+export const BarGaugeCell = ({ value, field, theme, height, width, rowIdx, actions }: BarGaugeCellProps) => {
   const displayValue = field.display!(value);
   const cellOptions = getCellOptions(field);
 
@@ -45,6 +45,7 @@ export const BarGaugeCell = ({ value, field, theme, height, width, rowIdx }: Bar
   }
 
   const hasLinks = Boolean(getCellLinks(field, rowIdx)?.length);
+  const hasActions = Boolean(actions?.length);
 
   const alignmentFactors = getAlignmentFactor(field, displayValue, rowIdx!);
 
@@ -74,9 +75,10 @@ export const BarGaugeCell = ({ value, field, theme, height, width, rowIdx }: Bar
   // @TODO: Actions
   return (
     <>
-      {hasLinks ? (
+      {hasLinks || hasActions ? (
         <DataLinksContextMenu
           links={() => getCellLinks(field, rowIdx) || []}
+          actions={actions}
           style={{ display: 'flex', width: '100%' }}
         >
           {(api) => renderComponent(api)}
