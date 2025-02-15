@@ -23,7 +23,7 @@
   "devDependencies": {
     "@grafana/e2e-selectors": "11.6.0-pre",
     "@grafana/plugin-configs": "11.6.0-pre",
-    "@rspack/cli": "1.2.0-beta.0",
+    "@rspack/cli": "1.2.3",
     "@testing-library/dom": "10.4.0",
     "@testing-library/react": "16.2.0",
     "@testing-library/user-event": "14.6.1",

@@ -8,8 +8,8 @@
   },
   "devDependencies": {
     "@grafana/tsconfig": "^2.0.0",
-    "@rspack/cli": "1.2.0-beta.0",
-    "@rspack/core": "1.2.0-beta.0",
+    "@rspack/cli": "1.2.3",
+    "@rspack/core": "1.2.3",
     "@swc/core": "1.10.12",
     "@types/eslint": "9.6.1",
     "eslint": "9.19.0",
