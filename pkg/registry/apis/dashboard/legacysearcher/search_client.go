@@ -88,7 +88,7 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 		query.Type = queryType
 	}
 
-	sortByField := "sortBy"
+	sortByField := ""
 	if req.SortBy != nil && len(req.SortBy) > 0 {
 		if len(req.SortBy) > 1 {
 			return nil, fmt.Errorf("only one sort field is supported")
@@ -107,6 +107,13 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 			query.Sort = sorter
 		}
 	}
+
+	// the title search will not return any sortMeta (an int64), like
+	// most sorting will. Without this, the title will be set to sortMeta (0)
+	if sortByField == resource.SEARCH_FIELD_TITLE {
+		sortByField = ""
+	}
+
 	// handle deprecated dashboardIds query param
 	for _, field := range req.Options.Labels {
 		if field.Key == utils.LabelKeyDeprecatedInternalID {

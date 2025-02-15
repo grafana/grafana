@@ -36,9 +36,11 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 	}
 
 	t.Run("Should parse results into GRPC", func(t *testing.T) {
+		sorter, _ := sortSvc.GetSortOption("alpha-asc")
 		mockStore.On("FindDashboards", mock.Anything, &dashboards.FindPersistedDashboardsQuery{
 			SignedInUser: user,      // user from context should be used
 			Type:         "dash-db", // should set type based off of key
+			Sort:         sorter,
 		}).Return([]dashboards.DashboardSearchProjection{
 			{UID: "uid", Title: "Test Dashboard", FolderUID: "folder1", Term: "term"},
 			{UID: "uid2", Title: "Test Dashboard2", FolderUID: "folder2"},
@@ -47,6 +49,11 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 		req := &resource.ResourceSearchRequest{
 			Options: &resource.ListOptions{
 				Key: dashboardKey,
+			},
+			SortBy: []*resource.ResourceSearchRequest_Sort{
+				{
+					Field: resource.SEARCH_FIELD_TITLE,
+				},
 			},
 		}
 		resp, err := client.Search(ctx, req)
@@ -65,7 +72,7 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 					searchFields.Field(resource.SEARCH_FIELD_FOLDER),
 					searchFields.Field(resource.SEARCH_FIELD_TAGS),
 					&resource.ResourceTableColumnDefinition{
-						Name: "sortBy",
+						Name: "", // sort by should be empty if title is what we sorted by
 						Type: resource.ResourceTableColumnDefinition_INT64,
 					},
 				},
