@@ -283,6 +283,9 @@
       "no-delivery-attempts": "",
       "no-integrations": "",
       "only-firing": "",
+      "receiver-summary": {
+        "jira": ""
+      },
       "telegram": {
         "parse-mode-warning-body": "",
         "parse-mode-warning-title": ""
@@ -1284,9 +1287,6 @@
     "panel-queries": {
       "add-query-from-library": ""
     },
-    "query-library": {
-      "add-query-button": ""
-    },
     "settings": {
       "variables": {
         "dependencies": {
@@ -1368,7 +1368,6 @@
       "close-tooltip": "Cerrar el historial de consultas",
       "datasource-a-z": "Fuente de datos A-Z",
       "datasource-z-a": "Fuente de datos Z-A",
-      "library-history-dropdown": "",
       "newest-first": "El más reciente primero",
       "oldest-first": "El más antiguo primero",
       "query-history": "Historial de consultas",
@@ -1472,6 +1471,7 @@
       "switch-datasource-button": ""
     },
     "secondary-actions": {
+      "add-from-query-library": "",
       "query-add-button": "Añadir consulta",
       "query-add-button-aria-label": "Añadir consulta",
       "query-history-button": "Historial de consultas",
@@ -2012,6 +2012,10 @@
   },
   "logs": {
     "infinite-scroll": {
+      "end-of-range": "",
+      "load-more": "",
+      "load-newer": "",
+      "load-older": "",
       "older-logs": ""
     },
     "log-details": {
