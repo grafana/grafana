@@ -144,6 +144,8 @@ type service struct {
 	contextProvider datasource.PluginContextWrapper
 	pluginStore     pluginstore.Store
 	unified         resource.ResourceClient
+
+	buildHandlerChainFuncFromBuilders builder.BuildHandlerChainFuncFromBuilders
 }
 
 func ProvideService(
@@ -160,25 +162,27 @@ func ProvideService(
 	contextProvider datasource.PluginContextWrapper,
 	pluginStore pluginstore.Store,
 	unified resource.ResourceClient,
+	buildHandlerChainFuncFromBuilders builder.BuildHandlerChainFuncFromBuilders,
 ) (*service, error) {
 	s := &service{
-		log:               log.New(modules.GrafanaAPIServer),
-		cfg:               cfg,
-		features:          features,
-		rr:                rr,
-		stopCh:            make(chan struct{}),
-		builders:          []builder.APIGroupBuilder{},
-		authorizer:        authorizer.NewGrafanaAuthorizer(cfg, orgService),
-		tracing:           tracing,
-		db:                db, // For Unified storage
-		metrics:           metrics.ProvideRegisterer(),
-		kvStore:           kvStore,
-		pluginClient:      pluginClient,
-		datasources:       datasources,
-		contextProvider:   contextProvider,
-		pluginStore:       pluginStore,
-		serverLockService: serverLockService,
-		unified:           unified,
+		log:                               log.New(modules.GrafanaAPIServer),
+		cfg:                               cfg,
+		features:                          features,
+		rr:                                rr,
+		stopCh:                            make(chan struct{}),
+		builders:                          []builder.APIGroupBuilder{},
+		authorizer:                        authorizer.NewGrafanaAuthorizer(cfg, orgService),
+		tracing:                           tracing,
+		db:                                db, // For Unified storage
+		metrics:                           metrics.ProvideRegisterer(),
+		kvStore:                           kvStore,
+		pluginClient:                      pluginClient,
+		datasources:                       datasources,
+		contextProvider:                   contextProvider,
+		pluginStore:                       pluginStore,
+		serverLockService:                 serverLockService,
+		unified:                           unified,
+		buildHandlerChainFuncFromBuilders: buildHandlerChainFuncFromBuilders,
 	}
 	// This will be used when running as a dskit service
 	service := services.NewBasicService(s.start, s.running, nil).WithName(modules.GrafanaAPIServer)
@@ -349,7 +353,7 @@ func (s *service) start(ctx context.Context) error {
 		s.cfg.BuildVersion,
 		s.cfg.BuildCommit,
 		s.cfg.BuildBranch,
-		nil,
+		s.buildHandlerChainFuncFromBuilders,
 	)
 	if err != nil {
 		return err
