@@ -50,7 +50,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/anonymous/anonimpl/anonstore"
 	"github.com/grafana/grafana/pkg/services/apikey/apikeyimpl"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/apiserver"
-	builder "github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/idimpl"
@@ -401,7 +400,6 @@ var wireBasicSet = wire.NewSet(
 	grafanaapiserver.WireSet,
 	apiregistry.WireSet,
 	appregistry.WireSet,
-	builder.ProvideDefaultBuildHandlerChainFuncFromBuilders,
 )
 
 var wireSet = wire.NewSet(
