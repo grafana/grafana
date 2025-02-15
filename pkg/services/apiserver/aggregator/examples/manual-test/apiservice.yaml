@@ -2,14 +2,14 @@
 apiVersion: apiregistration.k8s.io/v1
 kind: APIService
 metadata:
-  name: v0alpha1.cloudconfig.grafana.app
+  name: v0alpha1.example.grafana.app
 spec:
   version: v0alpha1
   insecureSkipTLSVerify: true
-  group: cloudconfig.grafana.app
+  group: example.grafana.app
   groupPriorityMinimum: 1000
   versionPriority: 15
   service:
-    name: cloudconfig-apiserver
+    name: example-apiserver
     namespace: grafana
-    port: 6445
+    port: 7443
