@@ -18,29 +18,16 @@ export interface TimeRegionConfig {
   duration?: string; // 8h
 }
 
-interface ParsedTime {
-  dayOfWeek?: number; // 1-7
-  h?: number; // 0-23
-  m?: number; // 0-59
-  s?: number; // 0-59
-}
-
 const secsInDay = 24 * 3600;
 
-interface Range {
-  from: ParsedTime;
-  to: ParsedTime;
-}
-
-function getDurationSecs({ from, to }: Range) {
-  const fromDay = from.dayOfWeek ?? 0;
-  const fromHour = from.h ?? 0;
-  const fromMin = from.m ?? 0;
-
-  const toDay = to.dayOfWeek ?? fromDay;
-  const toHour = to.h ?? fromHour;
-  const toMin = to.m ?? fromMin;
-
+function getDurationSecs(
+  fromDay: number,
+  fromHour: number,
+  fromMin: number,
+  toDay: number,
+  toHour: number,
+  toMin: number
+) {
   let days = toDay - fromDay;
 
   // account for rollover
@@ -64,84 +51,81 @@ function getDurationSecs({ from, to }: Range) {
   return durSecs;
 }
 
-export function convertToCron(cfg: TimeRegionConfig) {
-  const range = normalizeRange(cfg);
-
-  if (range != null) {
-    let { m, h, dayOfWeek } = range.from;
-    let dow = dayOfWeek != null ? dayOfWeek : '*';
-
-    return {
-      cronExpr: `${m} ${h} * * ${dow}`,
-      duration: getDurationSecs(range),
+export function convertToCron(
+  fromDay?: number | null,
+  from?: string | null,
+  toDay?: number | null,
+  to?: string | null
+) {
+  // valid defs must have a "from"
+  if (fromDay != null || from != null) {
+    const cronCfg = {
+      cronExpr: '',
+      duration: 0,
     };
+
+    // point annos (duration = 0) must have absent "to" or "to" == "from"
+    if ((toDay == null || toDay === fromDay) && (to == null || to === from)) {
+      from ??= '00:00';
+
+      let [fromHour, fromMin] = from.split(':').map((v) => +v);
+
+      let fromDoW = fromDay ?? '*';
+      cronCfg.cronExpr = `${fromMin} ${fromHour} * * ${fromDoW}`;
+
+      return cronCfg;
+    }
+    // region annos (duration > 0) must have a "to"
+    else if (toDay != null || to != null) {
+      let isEveryDay = false;
+
+      from ??= '00:00';
+
+      // if fromDay is every day, toDay must be every day
+      if (fromDay == null) {
+        toDay = null;
+        isEveryDay = true;
+      }
+
+      if (toDay != null) {
+        // default inclusive to end of day (start of next day)
+        // (this could become a point anno for wrap cases like from: Mon to: Sun)
+        if (to == null) {
+          to = '00:00';
+          toDay += toDay === 7 ? -6 : 1;
+        }
+      }
+
+      // (this could become a point anno)
+      to ??= from;
+
+      // parse from/to times
+      let [fromHour, fromMin] = from.split(':').map((v) => +v);
+      let [toHour, toMin] = to.split(':').map((v) => +v);
+
+      let fromSecs = fromHour * 3600 + fromMin * 60;
+      let toSecs = toHour * 3600 + toMin * 60;
+
+      let fromDoW = fromDay ?? '*';
+      cronCfg.cronExpr = `${fromMin} ${fromHour} * * ${fromDoW}`;
+
+      // for duration calc, we fall back to same day
+      fromDay ??= 1;
+
+      // if every day and to < from (every day from 22:00 to 02:00), then set toDayOfWeek to next day
+      if (isEveryDay && fromSecs < toSecs) {
+        toDay = fromDay + (fromDay === 7 ? -6 : 1);
+      }
+
+      toDay ??= fromDay;
+
+      cronCfg.duration = getDurationSecs(fromDay, fromHour, fromMin, toDay, toHour, toMin);
+
+      return cronCfg;
+    }
   }
 
   return undefined;
-}
-
-function normalizeRange(cfg: TimeRegionConfig): Range | undefined {
-  // So we can mutate
-  const timeRegion = { ...cfg };
-
-  if (timeRegion.from && !timeRegion.to) {
-    timeRegion.to = timeRegion.from;
-  }
-
-  if (!timeRegion.from && timeRegion.to) {
-    timeRegion.from = timeRegion.to;
-  }
-
-  const hRange = {
-    from: parseTimeOfDay(timeRegion.from),
-    to: parseTimeOfDay(timeRegion.to),
-  };
-
-  if (!timeRegion.fromDayOfWeek && timeRegion.toDayOfWeek) {
-    timeRegion.fromDayOfWeek = timeRegion.toDayOfWeek;
-  }
-
-  if (!timeRegion.toDayOfWeek && timeRegion.fromDayOfWeek) {
-    timeRegion.toDayOfWeek = timeRegion.fromDayOfWeek;
-  }
-
-  if (timeRegion.fromDayOfWeek) {
-    hRange.from.dayOfWeek = Number(timeRegion.fromDayOfWeek);
-  }
-
-  if (timeRegion.toDayOfWeek) {
-    hRange.to.dayOfWeek = Number(timeRegion.toDayOfWeek);
-  }
-
-  if (hRange.from.dayOfWeek && hRange.from.h == null && hRange.from.m == null) {
-    hRange.from.h = 0;
-    hRange.from.m = 0;
-    hRange.from.s = 0;
-  }
-
-  // when "to" time is undefined it implies the end "to" dayOfWeek ¯\_(ツ)_/¯
-  if (hRange.to.dayOfWeek && hRange.to.h == null && hRange.to.m == null) {
-    // roll to next day 00:00
-    hRange.to.dayOfWeek += hRange.to.dayOfWeek === 7 ? -6 : 1;
-
-    hRange.to.h = 0;
-    hRange.to.m = 0;
-    hRange.to.s = 0;
-  }
-
-  if (!hRange.from || !hRange.to) {
-    return undefined;
-  }
-
-  if (hRange.from.h == null) {
-    hRange.from.h = 0;
-  }
-
-  if (hRange.to.h == null) {
-    hRange.to.h = 23;
-  }
-
-  return hRange;
 }
 
 export function calculateTimesWithin(cfg: TimeRegionConfig, tRange: TimeRange, timezone?: string): AbsoluteTimeRange[] {
@@ -153,7 +137,7 @@ export function calculateTimesWithin(cfg: TimeRegionConfig, tRange: TimeRange, t
   let durationMs = 0;
 
   if (mode === 'simple') {
-    const cron = convertToCron(cfg);
+    const cron = convertToCron(cfg.fromDayOfWeek, cfg.from, cfg.toDayOfWeek, cfg.to);
 
     if (cron != null) {
       cronExpr = cron?.cronExpr;
@@ -196,23 +180,3 @@ export function calculateTimesWithin(cfg: TimeRegionConfig, tRange: TimeRange, t
   return ranges;
 }
 
-export function parseTimeOfDay(str?: string): ParsedTime {
-  const result: ParsedTime = {};
-  if (!str?.length) {
-    return result;
-  }
-
-  const match = str.split(':');
-  if (!match?.length) {
-    return result;
-  }
-
-  result.h = Math.min(23, Math.max(0, Number(match[0])));
-  if (match.length > 1) {
-    result.m = Math.min(60, Math.max(0, Number(match[1])));
-    if (match.length > 2) {
-      result.s = Math.min(60, Math.max(0, Number(match[2])));
-    }
-  }
-  return result;
-}

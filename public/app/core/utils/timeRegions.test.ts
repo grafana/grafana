@@ -65,7 +65,6 @@ function formatAbsoluteRange(range: AbsoluteTimeRange, tz?: string) {
   };
 }
 
-// note: calculateTimesWithin always returns time ranges in UTC
 describe('timeRegions', () => {
   describe('day of week', () => {
     it('returns regions with 4 Mondays in March 2023', () => {
@@ -91,19 +90,19 @@ describe('timeRegions', () => {
       expect(formatted).toEqual([
         {
           fr: 'Mon | 2023-03-06 00:00:00 GMT-6',
-          to: 'Tue | 2023-03-07 00:00:00 GMT-6',
+          to: 'Mon | 2023-03-06 00:00:00 GMT-6',
         },
         {
           fr: 'Mon | 2023-03-13 00:00:00 GMT-5',
-          to: 'Tue | 2023-03-14 00:00:00 GMT-5',
+          to: 'Mon | 2023-03-13 00:00:00 GMT-5',
         },
         {
           fr: 'Mon | 2023-03-20 00:00:00 GMT-5',
-          to: 'Tue | 2023-03-21 00:00:00 GMT-5',
+          to: 'Mon | 2023-03-20 00:00:00 GMT-5',
         },
         {
           fr: 'Mon | 2023-03-27 00:00:00 GMT-5',
-          to: 'Tue | 2023-03-28 00:00:00 GMT-5',
+          to: 'Mon | 2023-03-27 00:00:00 GMT-5',
         },
       ]);
     });
@@ -298,7 +297,7 @@ describe('timeRegions', () => {
       "time region config with from time '$from' and DOW '$fromDOW', to: '$to' and DOW '$toDOW' should generate a cron string of '$expectedCron' and '$expectedDuration'",
       ({ from, fromDOW, to, toDOW, timezone, expectedCron, expectedDuration }) => {
         const timeConfig: TimeRegionConfig = { from, fromDayOfWeek: fromDOW, to, toDayOfWeek: toDOW, timezone };
-        const convertedCron = convertToCron(timeConfig)!;
+        const convertedCron = convertToCron(timeConfig.fromDayOfWeek, timeConfig.from, timeConfig.toDayOfWeek, timeConfig.to)!;
         expect(convertedCron).not.toBeUndefined();
         expect(convertedCron.cronExpr).toEqual(expectedCron);
         expect(reverseParseDuration(durationFromSeconds(convertedCron.duration), false)).toEqual(expectedDuration);
