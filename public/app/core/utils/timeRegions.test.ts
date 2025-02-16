@@ -65,6 +65,43 @@ function formatAbsoluteRange(range: AbsoluteTimeRange, tz?: string) {
   };
 }
 
+/*
+// valid test scenarios
+
+with tz / without tz
+tz-matches / tz-mismatches
+
+point annos
+  from every day (no time)
+  from every day (time)
+  from tues      (no time)
+  from tues      (time)
+
+  // matching times
+  from every day (time)        to every day (time)
+  from tues      (time)        to tues      (time)
+
+region annos
+  from every day (time before) to every day (time after)
+  from every day (time after)  to every day (time before)
+  from every day (no time)     to every day (time)
+  from every day (time)        to every day (no time)
+
+  // "to" should assume every day
+  from every day               to tues
+
+  from fri (no time)           to tues (no time)
+  from fri (no time)           to tues (time)
+  from fri (time)              to tues (no time)
+  from fri (time)              to tues (time)
+
+  // "to" should assume Fri
+  from fri (time before)       to every day (time after)
+
+  from fri (time before)       to fri (time after)
+  from fri (time after)        to fri (time before)
+*/
+
 describe('timeRegions', () => {
   describe('day of week', () => {
     it('returns regions with 4 Mondays in March 2023', () => {
