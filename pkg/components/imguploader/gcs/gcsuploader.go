@@ -20,21 +20,22 @@ import (
 )
 
 // NewUploader returns a new Uploader.
-func NewUploader(keyFile, bucket, path string, enableSignedURLs bool, signedURLExpiration time.Duration) (*Uploader, error) {
+func NewUploader(keyFile, bucket, path string, enableSignedURLs bool, uniformBucketLevelAccess bool, signedURLExpiration time.Duration) (*Uploader, error) {
 	if signedURLExpiration <= 0 {
 		return nil, fmt.Errorf("invalid signed URL expiration: %q", signedURLExpiration)
 	}
 	uploader := &Uploader{
-		KeyFile:             keyFile,
-		Bucket:              bucket,
-		path:                path,
-		log:                 log.New("gcsuploader"),
-		enableSignedURLs:    enableSignedURLs,
-		signedURLExpiration: signedURLExpiration,
+		KeyFile:                  keyFile,
+		Bucket:                   bucket,
+		path:                     path,
+		log:                      log.New("gcsuploader"),
+		enableSignedURLs:         enableSignedURLs,
+		uniformBucketLevelAccess: uniformBucketLevelAccess,
+		signedURLExpiration:      signedURLExpiration,
 	}
 
 	uploader.log.Debug("Created uploader", "key", keyFile, "bucket", bucket, "path", path, "enableSignedUrls",
-		enableSignedURLs, "signedUrlExpiration", signedURLExpiration.String())
+		enableSignedURLs, "uniformBucketLevelAccess", uniformBucketLevelAccess, "signedUrlExpiration", signedURLExpiration.String())
 
 	return uploader, nil
 }
@@ -48,12 +49,13 @@ var newClient = func(ctx context.Context, opts ...option.ClientOption) (gcsiface
 
 // Uploader supports uploading images to GCS.
 type Uploader struct {
-	KeyFile             string
-	Bucket              string
-	path                string
-	log                 log.Logger
-	enableSignedURLs    bool
-	signedURLExpiration time.Duration
+	KeyFile                  string
+	Bucket                   string
+	path                     string
+	log                      log.Logger
+	enableSignedURLs         bool
+	uniformBucketLevelAccess bool
+	signedURLExpiration      time.Duration
 }
 
 // Upload uploads an image to GCS.
@@ -170,7 +172,7 @@ func (u *Uploader) uploadFile(
 	uri := fmt.Sprintf("gs://%s/%s", u.Bucket, key)
 
 	wc := client.Bucket(u.Bucket).Object(key).NewWriter(ctx)
-	if pubAcc {
+	if pubAcc && !u.uniformBucketLevelAccess {
 		wc.SetACL("publicRead")
 	}
 	if _, err := io.Copy(wc, fileReader); err != nil {

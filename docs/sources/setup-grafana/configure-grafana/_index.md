@@ -2312,6 +2312,11 @@ Optional extra path inside bucket.
 If set to true, Grafana creates a [signed URL](https://cloud.google.com/storage/docs/access-control/signed-urls) for
 the image uploaded to Google Cloud Storage.
 
+#### `uniform_bucket_level_access`
+
+Whether or not the bucket uses uniform bucket level access. If set to true, Grafana will not attempt to update ACL
+for images uploaded to Google Cloud Storage.
+
 #### `signed_url_expiration`
 
 Sets the signed URL expiration, which defaults to seven days.
