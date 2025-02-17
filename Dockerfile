@@ -163,7 +163,8 @@ RUN if grep -i -q alpine /etc/issue && [ `arch` = "x86_64" ]; then \
         usr/glibc-compat/lib/libdl.so.2 \
         usr/glibc-compat/lib/libm.so.6 \
         usr/glibc-compat/lib/libpthread.so.0 \
-        usr/glibc-compat/lib/librt.so.1 && \
+        usr/glibc-compat/lib/librt.so.1 \
+        usr/glibc-compat/lib/libresolv.so.2 && \
       mkdir /lib64 && \
       ln -s /usr/glibc-compat/lib/ld-linux-x86-64.so.2 /lib64; \
     fi

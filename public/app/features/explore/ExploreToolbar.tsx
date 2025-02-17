@@ -28,8 +28,6 @@ import { getFiscalYearStartMonth, getTimeZone } from '../profile/state/selectors
 import { ExploreTimeControls } from './ExploreTimeControls';
 import { LiveTailButton } from './LiveTailButton';
 import { useQueriesDrawerContext } from './QueriesDrawer/QueriesDrawerContext';
-import { QueriesDrawerDropdown } from './QueriesDrawer/QueriesDrawerDropdown';
-import { useQueryLibraryContext } from './QueryLibrary/QueryLibraryContext';
 import { ShortLinkButtonMenu } from './ShortLinkButtonMenu';
 import { ToolbarExtensionPoint } from './extensions/ToolbarExtensionPoint';
 import { changeDatasource } from './state/datasource';
@@ -93,7 +91,6 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
   const isCorrelationsEditorMode = correlationDetails?.editorMode || false;
   const isLeftPane = useSelector(isLeftPaneSelector(exploreId));
   const { drawerOpened, setDrawerOpened } = useQueriesDrawerContext();
-  const { queryLibraryEnabled } = useQueryLibraryContext();
 
   const shouldRotateSplitIcon = useMemo(
     () => (isLeftPane && isLargerPane) || (!isLeftPane && !isLargerPane),
@@ -206,23 +203,18 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
     dispatch(changeRefreshInterval({ exploreId, refreshInterval }));
   };
 
-  const navBarActions = [<ShortLinkButtonMenu key="share" />];
-
-  if (queryLibraryEnabled) {
-    navBarActions.unshift(<QueriesDrawerDropdown key="queryLibrary" variant="full" />);
-  } else {
-    navBarActions.unshift(
-      <ToolbarButton
-        variant={drawerOpened ? 'active' : 'canvas'}
-        aria-label={t('explore.secondary-actions.query-history-button-aria-label', 'Query history')}
-        onClick={() => setDrawerOpened(!drawerOpened)}
-        data-testid={Components.QueryTab.queryHistoryButton}
-        icon="history"
-      >
-        <Trans i18nKey="explore.secondary-actions.query-history-button">Query history</Trans>
-      </ToolbarButton>
-    );
-  }
+  const navBarActions = [
+    <ToolbarButton
+      variant={drawerOpened ? 'active' : 'canvas'}
+      aria-label={t('explore.secondary-actions.query-history-button-aria-label', 'Query history')}
+      onClick={() => setDrawerOpened(!drawerOpened)}
+      data-testid={Components.QueryTab.queryHistoryButton}
+      icon="history"
+    >
+      <Trans i18nKey="explore.secondary-actions.query-history-button">Query history</Trans>
+    </ToolbarButton>,
+    <ShortLinkButtonMenu key="share" />,
+  ];
 
   return (
     <div>

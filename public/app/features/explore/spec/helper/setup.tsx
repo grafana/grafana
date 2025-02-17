@@ -37,7 +37,6 @@ import { GrafanaContext } from 'app/core/context/GrafanaContext';
 import { GrafanaRoute } from 'app/core/navigation/GrafanaRoute';
 import { Echo } from 'app/core/services/echo/Echo';
 import { setLastUsedDatasourceUID } from 'app/core/utils/explore';
-import { IdentityServiceMocks, QueryLibraryMocks } from 'app/features/query-library';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { configureStore } from 'app/store/configureStore';
 
@@ -48,6 +47,16 @@ import { ExploreQueryParams } from '../../../../types';
 import { initialUserState } from '../../../profile/state/reducers';
 import ExplorePage from '../../ExplorePage';
 import { QueriesDrawerContextProvider } from '../../QueriesDrawer/QueriesDrawerContext';
+
+import { mockData } from './mocks';
+
+export const QueryLibraryMocks = {
+  data: mockData.all,
+};
+
+export const IdentityServiceMocks = {
+  data: mockData.identityDisplay,
+};
 
 type DatasourceSetup = { settings: DataSourceInstanceSettings; api: DataSourceApi };
 

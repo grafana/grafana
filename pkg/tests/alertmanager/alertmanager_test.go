@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestAlertmanagerIntegration_ExtraDedupStage(t *testing.T) {
+func TestAlertmanager_ExtraDedupStage(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}

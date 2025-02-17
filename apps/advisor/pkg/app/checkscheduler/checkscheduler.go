@@ -4,11 +4,13 @@ import (
 	"context"
 	"fmt"
 	"sort"
+	"strconv"
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/k8s"
 	"github.com/grafana/grafana-app-sdk/resource"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	advisorv0alpha1 "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checkregistry"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
@@ -16,23 +18,34 @@ import (
 	"k8s.io/klog/v2"
 )
 
-const evaluateChecksInterval = 24 * time.Hour
-const maxChecks = 10
+const defaultEvaluationInterval = 24 * time.Hour
+const defaultMaxHistory = 10
 
 // Runner is a "runnable" app used to be able to expose and API endpoint
 // with the existing checks types. This does not need to be a CRUD resource, but it is
 // the only way existing at the moment to expose the check types.
 type Runner struct {
-	checkRegistry checkregistry.CheckService
-	client        resource.Client
+	checkRegistry      checkregistry.CheckService
+	client             resource.Client
+	evaluationInterval time.Duration
+	maxHistory         int
 }
 
 // NewRunner creates a new Runner.
 func New(cfg app.Config) (app.Runnable, error) {
 	// Read config
-	checkRegistry, ok := cfg.SpecificConfig.(checkregistry.CheckService)
+	specificConfig, ok := cfg.SpecificConfig.(checkregistry.AdvisorAppConfig)
 	if !ok {
 		return nil, fmt.Errorf("invalid config type")
+	}
+	checkRegistry := specificConfig.CheckRegistry
+	evalInterval, err := getEvaluationInterval(specificConfig.PluginConfig)
+	if err != nil {
+		return nil, err
+	}
+	maxHistory, err := getMaxHistory(specificConfig.PluginConfig)
+	if err != nil {
+		return nil, err
 	}
 
 	// Prepare storage client
@@ -43,8 +56,10 @@ func New(cfg app.Config) (app.Runnable, error) {
 	}
 
 	return &Runner{
-		checkRegistry: checkRegistry,
-		client:        client,
+		checkRegistry:      checkRegistry,
+		client:             client,
+		evaluationInterval: evalInterval,
+		maxHistory:         maxHistory,
 	}, nil
 }
 
@@ -64,7 +79,7 @@ func (r *Runner) Run(ctx context.Context) error {
 		}
 	}
 
-	nextSendInterval := time.Until(lastCreated.Add(evaluateChecksInterval))
+	nextSendInterval := time.Until(lastCreated.Add(r.evaluationInterval))
 	if nextSendInterval < time.Minute {
 		nextSendInterval = 1 * time.Minute
 	}
@@ -85,8 +100,8 @@ func (r *Runner) Run(ctx context.Context) error {
 				klog.Error("Error cleaning up old check reports", "error", err)
 			}
 
-			if nextSendInterval != evaluateChecksInterval {
-				nextSendInterval = evaluateChecksInterval
+			if nextSendInterval != r.evaluationInterval {
+				nextSendInterval = r.evaluationInterval
 			}
 			ticker.Reset(nextSendInterval)
 		case <-ctx.Done():
@@ -155,7 +170,7 @@ func (r *Runner) cleanupChecks(ctx context.Context) error {
 	}
 
 	for _, checks := range checksByType {
-		if len(checks) > maxChecks {
+		if len(checks) > r.maxHistory {
 			// Sort checks by creation time
 			sort.Slice(checks, func(i, j int) bool {
 				ti := checks[i].GetCreationTimestamp().Time
@@ -163,7 +178,7 @@ func (r *Runner) cleanupChecks(ctx context.Context) error {
 				return ti.Before(tj)
 			})
 			// Delete the oldest checks
-			for i := 0; i < len(checks)-maxChecks; i++ {
+			for i := 0; i < len(checks)-r.maxHistory; i++ {
 				check := checks[i]
 				id := check.GetStaticMetadata().Identifier()
 				err := r.client.Delete(ctx, id, resource.DeleteOptions{})
@@ -175,4 +190,30 @@ func (r *Runner) cleanupChecks(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func getEvaluationInterval(pluginConfig map[string]string) (time.Duration, error) {
+	evaluationInterval := defaultEvaluationInterval
+	configEvaluationInterval, ok := pluginConfig["evaluation_interval"]
+	if ok {
+		var err error
+		evaluationInterval, err = gtime.ParseDuration(configEvaluationInterval)
+		if err != nil {
+			return 0, fmt.Errorf("invalid evaluation interval: %w", err)
+		}
+	}
+	return evaluationInterval, nil
+}
+
+func getMaxHistory(pluginConfig map[string]string) (int, error) {
+	maxHistory := defaultMaxHistory
+	configMaxHistory, ok := pluginConfig["max_history"]
+	if ok {
+		var err error
+		maxHistory, err = strconv.Atoi(configMaxHistory)
+		if err != nil {
+			return 0, fmt.Errorf("invalid max history: %w", err)
+		}
+	}
+	return maxHistory, nil
 }
