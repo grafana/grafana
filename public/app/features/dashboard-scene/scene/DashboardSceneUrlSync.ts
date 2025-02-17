@@ -13,7 +13,7 @@ import { createDashboardEditViewFor } from '../settings/utils';
 import { ShareDrawer } from '../sharing/ShareDrawer/ShareDrawer';
 import { ShareModal } from '../sharing/ShareModal';
 import { containsCloneKey } from '../utils/clone';
-import { findVizPanelByKey, getLibraryPanelBehavior } from '../utils/utils';
+import { findEditPanel, findVizPanelByKey, getLibraryPanelBehavior } from '../utils/utils';
 
 import { DashboardScene, DashboardSceneState } from './DashboardScene';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
@@ -124,7 +124,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
 
     // Handle edit panel state
     if (typeof values.editPanel === 'string') {
-      const panel = findVizPanelByKey(this._scene, values.editPanel);
+      const panel = findEditPanel(this._scene, values.editPanel);
 
       if (!panel) {
         console.warn(`Panel ${values.editPanel} not found`);

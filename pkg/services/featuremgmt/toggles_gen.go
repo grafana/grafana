@@ -327,10 +327,6 @@ const (
 	// Enable format string transformer
 	FlagFormatString = "formatString"
 
-	// FlagTransformationsVariableSupport
-	// Allows using variables in transformations
-	FlagTransformationsVariableSupport = "transformationsVariableSupport"
-
 	// FlagKubernetesPlaylists
 	// Use the kubernetes API in the frontend for playlists, and route /api/playlist requests to k8s
 	FlagKubernetesPlaylists = "kubernetesPlaylists"
@@ -895,10 +891,6 @@ const (
 	// Test feature toggle to see how cohorts could be set up AB testing
 	FlagABTestFeatureToggleB = "ABTestFeatureToggleB"
 
-	// FlagQueryLibraryDashboards
-	// Enables Query Library feature in Dashboards
-	FlagQueryLibraryDashboards = "queryLibraryDashboards"
-
 	// FlagGrafanaAdvisor
 	// Enables Advisor app
 	FlagGrafanaAdvisor = "grafanaAdvisor"
@@ -942,4 +934,12 @@ const (
 	// FlagPluginsCDNSyncLoader
 	// Load plugins from CDN synchronously
 	FlagPluginsCDNSyncLoader = "pluginsCDNSyncLoader"
+
+	// FlagAlertingJiraIntegration
+	// Enables the new Jira integration for contact points in cloud alert managers.
+	FlagAlertingJiraIntegration = "alertingJiraIntegration"
+
+	// FlagAlertingRuleVersionHistoryRestore
+	// Enables the alert rule version history restore feature
+	FlagAlertingRuleVersionHistoryRestore = "alertingRuleVersionHistoryRestore"
 )

@@ -106,6 +106,7 @@ describe('getContactPointsFromDTO', () => {
   it('should return undefined if notification_settings is not defined', () => {
     const ga: GrafanaRuleDefinition = {
       uid: '123',
+      version: 1,
       title: 'myalert',
       namespace_uid: '123',
       rule_group: 'my-group',
@@ -130,6 +131,7 @@ describe('getContactPointsFromDTO', () => {
   it('should return routingSettings with correct props if notification_settings is defined', () => {
     const ga: GrafanaRuleDefinition = {
       uid: '123',
+      version: 1,
       title: 'myalert',
       namespace_uid: '123',
       rule_group: 'my-group',

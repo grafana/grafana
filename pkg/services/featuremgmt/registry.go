@@ -609,14 +609,6 @@ var (
 			Expression:   "true", // enabled by default
 		},
 		{
-			Name:         "transformationsVariableSupport",
-			Description:  "Allows using variables in transformations",
-			FrontendOnly: true,
-			Stage:        FeatureStageGeneralAvailability,
-			Owner:        grafanaDatavizSquad,
-			Expression:   "true", // Enabled by default
-		},
-		{
 			Name:            "kubernetesPlaylists",
 			Description:     "Use the kubernetes API in the frontend for playlists, and route /api/playlist requests to k8s",
 			Stage:           FeatureStageGeneralAvailability,
@@ -1667,13 +1659,6 @@ var (
 			HideFromDocs: true,
 		},
 		{
-			Name:           "queryLibraryDashboards",
-			Description:    "Enables Query Library feature in Dashboards",
-			Stage:          FeatureStageExperimental,
-			Owner:          grafanaFrontendPlatformSquad,
-			AllowSelfServe: false,
-		},
-		{
 			Name:        "grafanaAdvisor",
 			Description: "Enables Advisor app",
 			Stage:       FeatureStageExperimental,
@@ -1757,6 +1742,23 @@ var (
 			Description: "Load plugins from CDN synchronously",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaPluginsPlatformSquad,
+		},
+		{
+			Name:         "alertingJiraIntegration",
+			Description:  "Enables the new Jira integration for contact points in cloud alert managers.",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			FrontendOnly: true,
+			HideFromDocs: true,
+		},
+		{
+			Name:              "alertingRuleVersionHistoryRestore",
+			Description:       "Enables the alert rule version history restore feature",
+			FrontendOnly:      true,
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaAlertingSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
 		},
 	}
 )
