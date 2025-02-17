@@ -966,4 +966,8 @@ const (
 	// FlagAlertingRuleVersionHistoryRestore
 	// Enables the alert rule version history restore feature
 	FlagAlertingRuleVersionHistoryRestore = "alertingRuleVersionHistoryRestore"
+
+	// FlagNewShareReportDrawer
+	// Enables the report creation drawer in a dashboard
+	FlagNewShareReportDrawer = "newShareReportDrawer"
 )
