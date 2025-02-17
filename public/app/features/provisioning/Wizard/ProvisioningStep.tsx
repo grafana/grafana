@@ -20,7 +20,6 @@ export function ProvisioningStep() {
     await submitData(
       dataToSpec({
         ...formData.repository,
-        url: formData.repository.url ?? '',
         sync: {
           ...formData.repository.sync,
           enabled: true,
@@ -57,9 +56,6 @@ export function ProvisioningStep() {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  description: css({
-    marginBottom: theme.spacing(3),
-  }),
   list: css({
     margin: theme.spacing(1, 0),
     paddingLeft: theme.spacing(4),
