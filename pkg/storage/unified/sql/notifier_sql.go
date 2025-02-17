@@ -21,6 +21,7 @@ var (
 	errInvalidWatchBufferSize = fmt.Errorf("watchBufferSize must be greater than 0")
 	errInvalidPollingInterval = fmt.Errorf("pollingInterval must be greater than 0")
 	errDoneRequired           = fmt.Errorf("done is required")
+	errDialectRequired        = fmt.Errorf("dialect is required")
 )
 
 // pollingNotifier is a notifier that polls the database for new events.
@@ -78,6 +79,9 @@ func (cfg *pollingNotifierConfig) validate() error {
 	}
 	if cfg.done == nil {
 		return errDoneRequired
+	}
+	if cfg.dialect == nil {
+		return errDialectRequired
 	}
 	return nil
 }

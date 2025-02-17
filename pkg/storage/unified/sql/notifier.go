@@ -46,7 +46,8 @@ func newNotifier(b *backend, isHA bool) (eventNotifier, error) {
 				})
 				return records, err
 			},
-			done: b.done,
+			done:    b.done,
+			dialect: b.dialect,
 		})
 		if err != nil {
 			return nil, err
@@ -83,8 +84,10 @@ func (n *channelNotifier) notify(ctx context.Context) (<-chan *resource.WrittenE
 	go func() {
 		<-ctx.Done()
 		n.mu.Lock()
-		delete(n.subscribers, events)
-		close(events)
+		if n.subscribers[events] {
+			delete(n.subscribers, events)
+			close(events)
+		}
 		n.mu.Unlock()
 	}()
 
