@@ -25,7 +25,13 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-var _ builder.APIGroupBuilder = (*SecretAPIBuilder)(nil)
+var (
+	_ builder.APIGroupBuilder               = (*SecretAPIBuilder)(nil)
+	_ builder.APIGroupMutation              = (*SecretAPIBuilder)(nil)
+	_ builder.APIGroupValidation            = (*SecretAPIBuilder)(nil)
+	_ builder.APIGroupRouteProvider         = (*SecretAPIBuilder)(nil)
+	_ builder.APIGroupPostStartHookProvider = (*SecretAPIBuilder)(nil)
+)
 
 type SecretAPIBuilder struct {
 	tracer             tracing.Tracer
@@ -228,5 +234,23 @@ func (b *SecretAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, o
 		}
 	}
 
+	// On any mutation to a `SecureValue`, override the `phase` as `Pending` and an empty `message`.
+	if operation == admission.Create || operation == admission.Update {
+		sv, ok := obj.(*secretv0alpha1.SecureValue)
+		if ok && sv != nil {
+			sv.Status.Phase = secretv0alpha1.SecureValuePhasePending
+			sv.Status.Message = ""
+		}
+	}
+
 	return nil
+}
+
+// TODO: use this for starting the outbox queue async process?
+func (b *SecretAPIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartHookFunc, error) {
+	return map[string]genericapiserver.PostStartHookFunc{
+		"start-outbox-queue-workers": func(context genericapiserver.PostStartHookContext) error {
+			return nil
+		},
+	}, nil
 }
