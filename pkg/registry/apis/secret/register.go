@@ -15,11 +15,13 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/kube-openapi/pkg/common"
 
+	claims "github.com/grafana/authlib/types"
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/reststorage"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	authsvc "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
@@ -33,7 +35,7 @@ type SecretAPIBuilder struct {
 	secureValueStorage contracts.SecureValueStorage
 	keeperStorage      contracts.KeeperStorage
 	decryptStorage     contracts.DecryptStorage
-	accessControl      accesscontrol.AccessControl
+	accessClient       claims.AccessClient
 }
 
 func NewSecretAPIBuilder(
@@ -41,9 +43,9 @@ func NewSecretAPIBuilder(
 	secureValueStorage contracts.SecureValueStorage,
 	keeperStorage contracts.KeeperStorage,
 	decryptStorage contracts.DecryptStorage,
-	accessControl accesscontrol.AccessControl,
+	accessClient claims.AccessClient,
 ) *SecretAPIBuilder {
-	return &SecretAPIBuilder{tracer, secureValueStorage, keeperStorage, decryptStorage, accessControl}
+	return &SecretAPIBuilder{tracer, secureValueStorage, keeperStorage, decryptStorage, accessClient}
 }
 
 func RegisterAPIService(
@@ -54,7 +56,7 @@ func RegisterAPIService(
 	secureValueStorage contracts.SecureValueStorage,
 	keeperStorage contracts.KeeperStorage,
 	decryptStorage contracts.DecryptStorage,
-	accessControl accesscontrol.AccessControl,
+	accessClient claims.AccessClient,
 	accessControlService accesscontrol.Service,
 ) (*SecretAPIBuilder, error) {
 	// Skip registration unless opting into experimental apis and the secrets management app platform flag.
@@ -76,7 +78,7 @@ func RegisterAPIService(
 		return nil, fmt.Errorf("register secret access control roles: %w", err)
 	}
 
-	builder := NewSecretAPIBuilder(tracer, secureValueStorage, keeperStorage, decryptStorage, accessControl)
+	builder := NewSecretAPIBuilder(tracer, secureValueStorage, keeperStorage, decryptStorage, accessClient)
 	apiregistration.RegisterAPI(builder)
 	return builder, nil
 }
@@ -141,7 +143,7 @@ func (b *SecretAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions 
 
 // GetAuthorizer decides whether the request is allowed, denied or no opinion based on credentials and request attributes.
 func (b *SecretAPIBuilder) GetAuthorizer() authorizer.Authorizer {
-	return SecretAuthorizer(b.accessControl)
+	return authsvc.NewResourceAuthorizer(b.accessClient)
 }
 
 // Register additional routes with the server.

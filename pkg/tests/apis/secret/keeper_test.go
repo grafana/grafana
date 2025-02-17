@@ -236,7 +236,7 @@ func TestIntegrationKeeper(t *testing.T) {
 			// needed for this test to create (and delete for cleanup) securevalues.
 			ResourceSecureValues: {
 				Actions: []string{
-					secret.ActionSecretsManagerSecureValuesWrite,
+					secret.ActionSecretsManagerSecureValuesCreate,
 					secret.ActionSecretsManagerSecureValuesDelete,
 				},
 			},
@@ -273,7 +273,7 @@ func TestIntegrationKeeper(t *testing.T) {
 			// needed for this test to create (and delete for cleanup) securevalues.
 			ResourceSecureValues: {
 				Actions: []string{
-					secret.ActionSecretsManagerSecureValuesWrite,
+					secret.ActionSecretsManagerSecureValuesCreate,
 					secret.ActionSecretsManagerSecureValuesDelete,
 				},
 			},

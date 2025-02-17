@@ -63,6 +63,10 @@ func newMapper() mapper {
 		"iam.grafana.app": {
 			"teams": newResourceTranslation("teams", "id", false),
 		},
+		"secret.grafana.app": {
+			"securevalues": newResourceTranslation("secrets-manager.securevalues", "name", false),
+			"keepers":      newResourceTranslation("secrets-manager.keepers", "name", false),
+		},
 	}
 }
 

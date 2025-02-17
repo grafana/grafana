@@ -26,11 +26,13 @@ var (
 	ResourceKeepers      = "secrets-manager.keepers"
 
 	ActionsAllKeepers = []string{
+		secret.ActionSecretsManagerKeepersCreate,
 		secret.ActionSecretsManagerKeepersWrite,
 		secret.ActionSecretsManagerKeepersRead,
 		secret.ActionSecretsManagerKeepersDelete,
 	}
 	ActionsAllSecureValues = []string{
+		secret.ActionSecretsManagerSecureValuesCreate,
 		secret.ActionSecretsManagerSecureValuesWrite,
 		secret.ActionSecretsManagerSecureValuesRead,
 		secret.ActionSecretsManagerSecureValuesDelete,
