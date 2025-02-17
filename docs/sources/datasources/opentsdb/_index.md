@@ -104,7 +104,7 @@ When using OpenTSDB 2.4 with alerting, queries are executed with the parameter `
 
 ### Auto complete suggestions
 
-As soon as you start typing metric names, tag names and tag values , you should see highlighted auto complete suggestions for them.
+As you begin typing metric names, tag names, or tag values, highlighted autocomplete suggestions will appear.
 The autocomplete only works if the OpenTSDB suggest API is enabled.
 
 ## Templating queries
