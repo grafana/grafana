@@ -115,7 +115,7 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 	}
 
 	// if searching for tags, get those instead of the dashboards or folders
-	for facet, _ := range req.Facet {
+	for facet := range req.Facet {
 		if facet == resource.SEARCH_FIELD_TAGS {
 			tags, err := c.dashboardStore.GetDashboardTags(ctx, &dashboards.GetDashboardTagsQuery{
 				OrgID: user.GetOrgID(),
@@ -126,7 +126,7 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 			list := &resource.ResourceSearchResponse{
 				Results: &resource.ResourceTable{},
 				Facet: map[string]*resource.ResourceSearchResponse_Facet{
-					"tags": &resource.ResourceSearchResponse_Facet{
+					"tags": {
 						Terms: []*resource.ResourceSearchResponse_TermFacet{},
 					},
 				},
@@ -240,7 +240,7 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 				Key: getResourceKey(&dashboards.DashboardSearchProjection{
 					UID: dashboard.UID,
 				}, req.Options.Key.Namespace),
-				Cells: [][]byte{[]byte(dashboard.Title), []byte(dashboard.FolderUID), []byte{}, []byte{}},
+        Cells: [][]byte{[]byte(dashboard.Title), []byte(dashboard.FolderUID), {}, {}},
 			})
 		}
 
