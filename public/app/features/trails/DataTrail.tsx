@@ -59,7 +59,7 @@ import {
   VAR_OTEL_JOIN_QUERY,
   VAR_OTEL_RESOURCES,
 } from './shared';
-import { getScopesBridgeFor, getTrailFor, limitAdhocProviders } from './utils';
+import { getTrailFor, limitAdhocProviders } from './utils';
 
 export interface DataTrailState extends SceneObjectState {
   topScene?: SceneObject;

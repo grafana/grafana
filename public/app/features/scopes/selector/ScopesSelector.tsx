@@ -3,7 +3,7 @@ import { useObservable } from 'react-use';
 import { Observable } from 'rxjs';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { config, useScopes } from '@grafana/runtime';
+import { useScopes } from '@grafana/runtime';
 import { Button, Drawer, IconButton, Spinner, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { t, Trans } from 'app/core/internationalization';
@@ -98,10 +98,6 @@ const getStyles = (theme: GrafanaTheme2, menuDockedAndOpen: boolean) => {
       display: 'flex',
       flexDirection: 'row',
       paddingLeft: menuDockedAndOpen ? theme.spacing(2) : 'unset',
-      ...(!config.featureToggles.singleTopNav && {
-        paddingLeft: theme.spacing(2),
-        borderLeft: `1px solid ${theme.colors.border.weak}`,
-      }),
     }),
     dashboards: css({
       color: theme.colors.text.secondary,
