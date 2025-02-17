@@ -28,6 +28,7 @@ export const LogMessages = {
   grafanaRecording: 'creating Grafana recording rule from scratch',
   loadedCentralAlertStateHistory: 'loaded central alert state history',
   exportNewGrafanaRule: 'exporting new Grafana rule',
+  noAlertRuleVersionsFound: 'no alert rule versions found',
 };
 
 const { logInfo, logError, logMeasurement, logWarning } = createMonitoringLogger('features.alerting', {
@@ -212,6 +213,16 @@ export const trackInsightsFeedback = async (props: { useful: boolean; panel: str
     user_id: contextSrv.user.id,
   };
   reportInteraction('grafana_alerting_insights', { ...defaults, ...props });
+};
+
+interface RuleVersionComparisonProps {
+  latest: boolean;
+  oldVersion: number;
+  newVersion: number;
+}
+
+export const trackRuleVersionsComparisonClick = async (payload: RuleVersionComparisonProps) => {
+  reportInteraction('grafana_alerting_rule_versions_comparison_click', { ...payload });
 };
 
 interface RulesSearchInteractionPayload {
