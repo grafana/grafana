@@ -25,7 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver"
-	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/rbac"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/store"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -185,7 +184,6 @@ func RegisterRBACAuthZService(
 
 	srv := handler.GetServer()
 	authzv1.RegisterAuthzServiceServer(srv, server)
-	authzextv1.RegisterAuthzExtentionServiceServer(srv, server)
 }
 
 var _ http.RoundTripper = tokenExhangeRoundTripper{}
