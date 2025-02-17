@@ -132,7 +132,6 @@ func newRemoteRBACClient(clientCfg *authzClientSettings, tracer tracing.Tracer) 
 	}
 
 	return newRBACClient(conn, tracer), nil
-
 }
 
 func newRBACClient(conn grpc.ClientConnInterface, tracer tracing.Tracer) authlib.AccessClient {
