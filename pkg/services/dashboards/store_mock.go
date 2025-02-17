@@ -123,6 +123,7 @@ func (_m *FakeDashboardStore) CountInOrg(ctx context.Context, orgID int64) (int6
 
 	return r0, r1
 }
+
 // DeleteAllDashboards provides a mock function with given fields: ctx, orgID
 func (_m *FakeDashboardStore) DeleteAllDashboards(ctx context.Context, orgID int64) error {
 	ret := _m.Called(ctx, orgID)
