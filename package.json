@@ -195,7 +195,7 @@
     "html-loader": "5.1.0",
     "html-webpack-plugin": "5.6.3",
     "http-server": "14.1.1",
-    "i18next-parser": "9.1.0",
+    "i18next-parser": "9.3.0",
     "ini": "^5.0.0",
     "jest": "29.7.0",
     "jest-canvas-mock": "2.5.2",
