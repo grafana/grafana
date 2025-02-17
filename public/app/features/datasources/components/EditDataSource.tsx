@@ -211,7 +211,7 @@ export function EditDataSourceView({
           <div key={extension.id}>
             <Component
               context={{
-                dataSource: omit(dataSource, ['secureJsonData']),
+                dataSource: dataSource,
                 dataSourceMeta: dataSourceMeta,
                 testingStatus,
                 setJsonData: (jsonData) =>
