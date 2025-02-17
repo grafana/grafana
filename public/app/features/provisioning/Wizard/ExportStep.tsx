@@ -1,21 +1,20 @@
-import { css } from '@emotion/css';
+import { skipToken } from '@reduxjs/toolkit/query/react';
 import { useFormContext } from 'react-hook-form';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { Button, FieldSet, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Button, FieldSet, Stack, Text } from '@grafana/ui';
 
 import { ExportJobStatus } from '../ExportToRepository';
-import { useCreateRepositoryExportMutation } from '../api';
+import { useCreateRepositoryExportMutation, useGetRepositoryQuery } from '../api';
 
 import { WizardFormData } from './types';
 
 export function ExportStep() {
-  const styles = useStyles2(getStyles);
   const [exportRepo, exportQuery] = useCreateRepositoryExportMutation();
   const { watch } = useFormContext<WizardFormData>();
   const [repositoryName, branch] = watch(['repositoryName', 'repository.branch']);
   const exportName = exportQuery.data?.metadata?.name;
-
+  const repositoryQuery = useGetRepositoryQuery(repositoryName ? { name: repositoryName } : skipToken);
+  const stats = repositoryQuery?.data?.status?.stats || [];
   const handleExport = () => {
     if (!repositoryName) {
       return;
@@ -38,19 +37,23 @@ export function ExportStep() {
   return (
     <FieldSet label="3. Export dashboards">
       <Stack direction={'column'} gap={2}>
-        <div className={styles.description}>
-          <Text color="secondary">
-            Export all dashboards from this instance to your repository. After this one-time export, all future updates
-            will be automatically saved to the repository.
-          </Text>
-        </div>
+        <Text color="secondary">
+          Export all dashboards from this instance to your repository. After this one-time export, all future updates
+          will be automatically saved to the repository.
+        </Text>
 
-        <div className={styles.exportInfo}>
-          <div>
-            <Text>All dashboards and folders in instance</Text>
-            <Text color="secondary">28</Text>
-          </div>
-        </div>
+        <Stack direction={'column'} width={'300px'}>
+          <Text>Resources to export:</Text>
+          {Boolean(stats.length) &&
+            stats.map((stat) => {
+              return (
+                <Stack justifyContent={'space-between'} key={stat.group}>
+                  <Text>{stat.resource}:</Text>
+                  <Text>{stat.count}</Text>
+                </Stack>
+              );
+            })}
+        </Stack>
         <Stack alignItems={'flex-start'}>
           <Button
             onClick={handleExport}
@@ -64,18 +67,3 @@ export function ExportStep() {
     </FieldSet>
   );
 }
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  description: css({
-    marginBottom: theme.spacing(3),
-  }),
-  exportInfo: css({
-    marginTop: theme.spacing(3),
-    padding: theme.spacing(2),
-    background: theme.colors.background.secondary,
-    borderRadius: theme.shape.radius.default,
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  }),
-});
