@@ -2,6 +2,7 @@ package sql
 
 import (
 	"context"
+	"sync"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -14,7 +15,7 @@ type eventNotifier interface {
 	notify(ctx context.Context) (<-chan *resource.WrittenEvent, error)
 	// send will forward an event to all subscribers who want to be notified.
 	//
-	// Note: depending on the implementation send might be noop and new events
+	// Note: depending on the implementation, send might be noop and new events
 	//       will be fetched from an external source.
 	send(ctx context.Context, event *resource.WrittenEvent)
 	close()
@@ -58,45 +59,57 @@ func newNotifier(b *backend) (eventNotifier, error) {
 }
 
 type channelNotifier struct {
-	events chan *resource.WrittenEvent
-	log    log.Logger
+	subscribers map[chan *resource.WrittenEvent]bool
+	mu          sync.RWMutex
+	log         log.Logger
+	bufferSize  int
 }
 
 func newChannelNotifier(bufferSize int, log log.Logger) *channelNotifier {
 	return &channelNotifier{
-		events: make(chan *resource.WrittenEvent, bufferSize),
-		log:    log,
+		subscribers: make(map[chan *resource.WrittenEvent]bool),
+		log:         log,
+		bufferSize:  bufferSize,
 	}
 }
 
 func (n *channelNotifier) notify(ctx context.Context) (<-chan *resource.WrittenEvent, error) {
-	events := make(chan *resource.WrittenEvent, cap(n.events))
+	events := make(chan *resource.WrittenEvent, n.bufferSize)
+
+	n.mu.Lock()
+	n.subscribers[events] = true
+	n.mu.Unlock()
+
 	go func() {
-		defer close(events)
-		for {
-			select {
-			case event := <-n.events:
-				select {
-				case events <- event:
-				case <-ctx.Done():
-					return
-				}
-			case <-ctx.Done():
-				return
-			}
-		}
+		<-ctx.Done()
+		n.mu.Lock()
+		delete(n.subscribers, events)
+		close(events)
+		n.mu.Unlock()
 	}()
+
 	return events, nil
 }
 
 func (n *channelNotifier) send(_ context.Context, event *resource.WrittenEvent) {
-	select {
-	case n.events <- event:
-	default:
-		n.log.Warn("Dropped event notification - channel full")
+	n.mu.RLock()
+	defer n.mu.RUnlock()
+
+	for ch := range n.subscribers {
+		select {
+		case ch <- event:
+		default:
+			n.log.Warn("Dropped event notification for subscriber - channel full")
+		}
 	}
 }
 
 func (n *channelNotifier) close() {
-	close(n.events)
+	n.mu.Lock()
+	defer n.mu.Unlock()
+
+	for ch := range n.subscribers {
+		close(ch)
+	}
+	n.subscribers = make(map[chan *resource.WrittenEvent]bool)
 }
