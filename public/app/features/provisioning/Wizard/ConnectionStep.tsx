@@ -7,7 +7,6 @@ import { WizardFormData } from './types';
 const typeOptions = [
   { label: 'GitHub', value: 'github' },
   { label: 'Local', value: 'local' },
-  { label: 'S3', value: 's3' },
 ];
 
 const modeOptions = [
@@ -77,7 +76,6 @@ export function ConnectionStep() {
           <Controller
             name="repository.sync.target"
             control={control}
-            rules={{ required: true }}
             render={({ field: { onChange, value } }) => (
               <>
                 {modeOptions.map((option) => (
