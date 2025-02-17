@@ -383,12 +383,3 @@ func (r *localRepository) Delete(ctx context.Context, path string, ref string, c
 
 	return os.Remove(path)
 }
-
-func (r *localRepository) History(ctx context.Context, path string, ref string) ([]provisioning.HistoryItem, error) {
-	return nil, &apierrors.StatusError{
-		ErrStatus: metav1.Status{
-			Message: "history is not yet implemented",
-			Code:    http.StatusNotImplemented,
-		},
-	}
-}

@@ -85,9 +85,6 @@ type Repository interface {
 
 	// Delete a file in the remote repository
 	Delete(ctx context.Context, path, ref, message string) error
-
-	// History of changes for a path
-	History(ctx context.Context, path, ref string) ([]provisioning.HistoryItem, error)
 }
 
 // Hooks called after the repository has been created, updated or deleted
@@ -124,6 +121,8 @@ type VersionedFileChange struct {
 // this inferface may be extended to make the the original Repository interface
 // more agnostic to the underlying storage system
 type VersionedRepository interface {
+	// History of changes for a path
+	History(ctx context.Context, path, ref string) ([]provisioning.HistoryItem, error)
 	LatestRef(ctx context.Context) (string, error)
 	CompareFiles(ctx context.Context, base, ref string) ([]VersionedFileChange, error)
 }
