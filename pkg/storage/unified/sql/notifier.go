@@ -12,6 +12,10 @@ import (
 
 type eventNotifier interface {
 	notify(ctx context.Context) (<-chan *resource.WrittenEvent, error)
+	// send will forward an event to all subscribers who want to be notified.
+	//
+	// Note: depending on the implementation send might be noop and new events
+	//       will be fetched from an external source.
 	send(ctx context.Context, event *resource.WrittenEvent)
 	close()
 }
