@@ -322,7 +322,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<
         // Run the ARG query
         const observableQuery = await this.runAzureResourceGraphQuery(subscriptionId, resourceGroup);
         const resourcesWithMetrics = await lastValueFrom(observableQuery);
-
+  
         // Extract valid resource IDs from the query results
         const validResourceIds = new Set(
           resourcesWithMetrics.data.flatMap((frame: DataFrame) =>
@@ -346,9 +346,12 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<
               result.value = result.value.filter((namespace) => namespace.classification === 'Custom');
             }
   
-            // Filter namespaces based on valid resource IDs
-            result.value = result.value.filter((namespace) => validResourceIds.has(namespace.id));
-            // Deduplicate by type 
+            // Only filter by valid resource IDs if resourceGroup is present
+            if (resourceGroup) {
+              result.value = result.value.filter((namespace) => validResourceIds.has(namespace.id));
+            }
+  
+            // Deduplicate by type
             result.value = Array.from(
               new Map(result.value.map((namespace) => [namespace.type.toLowerCase(), namespace])).values()
             );
