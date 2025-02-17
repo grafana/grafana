@@ -86,5 +86,4 @@ const QueryResults = ({ rule }: Props) => {
   );
 };
 
-
 export { QueryResults };

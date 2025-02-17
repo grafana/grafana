@@ -298,10 +298,6 @@
     "contactPointFilter": {
       "label": "Contact point"
     },
-    "dag": {
-      "missing-reference": "Failed to find query or expression named \"{{target}}\"",
-      "self-reference": "You can't link an expression to itself"
-    },
     "copy-to-clipboard": "Copy \"{{label}}\" to clipboard",
     "dag": {
       "missing-reference": "Expression \"{{source}}\" failed to run because \"{{target}}\" is missing or also failed.",

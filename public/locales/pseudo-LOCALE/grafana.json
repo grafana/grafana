@@ -298,10 +298,6 @@
     "contactPointFilter": {
       "label": "Cőŉŧäčŧ pőįŉŧ"
     },
-    "dag": {
-      "missing-reference": "Fäįľęđ ŧő ƒįŉđ qūęřy őř ęχpřęşşįőŉ ŉämęđ \"{{target}}\"",
-      "self-reference": "Ÿőū čäŉ'ŧ ľįŉĸ äŉ ęχpřęşşįőŉ ŧő įŧşęľƒ"
-    },
     "copy-to-clipboard": "Cőpy \"{{label}}\" ŧő čľįpþőäřđ",
     "dag": {
       "missing-reference": "Ēχpřęşşįőŉ \"{{source}}\" ƒäįľęđ ŧő řūŉ þęčäūşę \"{{target}}\" įş mįşşįŉģ őř äľşő ƒäįľęđ.",
