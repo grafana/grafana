@@ -114,8 +114,7 @@ func (b *backend) initLocked(ctx context.Context) error {
 	}
 
 	// Initialize notifier after dialect is set up
-	// TODO(JPQ): I don't want this circular dependency.
-	notifier, err := newNotifier(b, b.watchBufferSize, b.pollingInterval, b.log)
+	notifier, err := newNotifier(b)
 	if err != nil {
 		return fmt.Errorf("failed to create notifier: %w", err)
 	}
