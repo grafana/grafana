@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/annotations/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/ngalert"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -297,17 +296,11 @@ func useStore(cfg setting.UnifiedAlertingStateHistorySettings, ft featuremgmt.Fe
 		return false
 	}
 
-	// Override config based on feature toggles.
-	// We pass in a no-op logger here since this function is also called during ngalert init,
-	// and we don't want to log the same info twice.
-	ngalert.ApplyStateHistoryFeatureToggles(&cfg, ft, log.NewNopLogger())
-
 	backend, err := historian.ParseBackendType(cfg.Backend)
 	if err != nil {
 		return false
 	}
 
 	// We should only query Loki if annotations do not exist in the database.
-	// To be doubly sure, ensure that the feature toggle to only use Loki is enabled.
-	return backend == historian.BackendTypeLoki && ft.IsEnabledGlobally(featuremgmt.FlagAlertStateHistoryLokiOnly)
+	return backend == historian.BackendTypeLoki
 }
