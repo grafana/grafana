@@ -1,4 +1,4 @@
-import { compact, isArray, memoize, reject, uniq } from 'lodash';
+import { compact, memoize, reject, uniq } from 'lodash';
 
 import { Edge, Graph, Node } from 'app/core/utils/dag';
 import { isExpressionQuery } from 'app/features/expressions/guards';
@@ -71,17 +71,11 @@ export function createDAGFromQueriesSafe(
   return [new Graph(), collectedLinkErrors];
 }
 
-// determine if input error is a DAGError
-export function isDagError(error: unknown): error is DAGError {
-  return isArray((error as DAGError).cause) && (error as DAGError).cause.every((e) => 'source' in e && 'target' in e);
-}
-
 interface LinkError {
   source: string;
   target: string;
   error: unknown;
 }
-
 
 /** DAGError subclass, this is just a regular error but with LinkError[] as the cause */
 export class DAGError extends Error {
