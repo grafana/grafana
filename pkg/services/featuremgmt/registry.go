@@ -659,14 +659,6 @@ var (
 			Expression:   "true", // enabled by default
 		},
 		{
-			Name:         "transformationsVariableSupport",
-			Description:  "Allows using variables in transformations",
-			FrontendOnly: true,
-			Stage:        FeatureStageGeneralAvailability,
-			Owner:        grafanaDatavizSquad,
-			Expression:   "true", // Enabled by default
-		},
-		{
 			Name:            "kubernetesPlaylists",
 			Description:     "Use the kubernetes API in the frontend for playlists, and route /api/playlist requests to k8s",
 			Stage:           FeatureStageGeneralAvailability,
