@@ -27,12 +27,12 @@ export function AppChrome({ children }: Props) {
   const { chrome } = useGrafana();
   const state = chrome.useState();
   const theme = useTheme2();
-  const styles = useStyles2(getStyles, Boolean(state.actions));
+  const scopes = useScopes();
+  const styles = useStyles2(getStyles, Boolean(state.actions) || !!scopes?.state.enabled);
 
   const dockedMenuBreakpoint = theme.breakpoints.values.xl;
   const dockedMenuLocalStorageState = store.getBool(DOCKED_LOCAL_STORAGE_KEY, true);
   const menuDockedAndOpen = !state.chromeless && state.megaMenuDocked && state.megaMenuOpen;
-  const scopes = useScopes();
   const isScopesDashboardsOpen = Boolean(
     scopes?.state.enabled && scopes?.state.drawerOpened && !scopes?.state.readOnly
   );
@@ -101,7 +101,7 @@ export function AppChrome({ children }: Props) {
               onToggleMegaMenu={handleMegaMenu}
               onToggleKioskMode={chrome.onToggleKioskMode}
             />
-            {state.actions && <SingleTopBarActions>{state.actions}</SingleTopBarActions>}
+            {(state.actions || scopes?.state.enabled) && <SingleTopBarActions>{state.actions}</SingleTopBarActions>}
           </header>
         </>
       )}
