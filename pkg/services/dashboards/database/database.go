@@ -400,7 +400,7 @@ func saveDashboard(sess *db.Session, cmd *dashboards.SaveDashboardCommand, emitE
 		userId = -1
 	}
 
-	if dash.FolderUID != "" && dash.FolderID == 0 { // nolint:staticcheck
+	if !dash.IsFolder && dash.FolderUID != "" && dash.FolderID == 0 { // nolint:staticcheck
 		var existing dashboards.Dashboard
 		folderIdFound, err := sess.Where("uid=? AND org_id=?", dash.FolderUID, dash.OrgID).Get(&existing)
 		if err != nil {
