@@ -2,7 +2,6 @@ package sql
 
 import (
 	"context"
-	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -17,17 +16,17 @@ type eventNotifier interface {
 	close()
 }
 
-func newNotifier(b *backend, bufferSize int, pollingInterval time.Duration, log log.Logger) (eventNotifier, error) {
+func newNotifier(b *backend) (eventNotifier, error) {
 	// TODO(JPQ): Use better HA detection.
 	if b.dialect.DialectName() == sqltemplate.SQLite.DialectName() {
-		log.Info("Using channel notifier")
-		return newChannelNotifier(bufferSize, log), nil
+		b.log.Info("Using channel notifier")
+		return newChannelNotifier(b.watchBufferSize, b.log), nil
 	}
-	log.Info("Using polling notifier")
+	b.log.Info("Using polling notifier")
 	notifier, err := newPollingNotifier(&pollingNotifierConfig{
-		pollingInterval: pollingInterval,
-		watchBufferSize: bufferSize,
-		log:             log,
+		pollingInterval: b.pollingInterval,
+		watchBufferSize: b.watchBufferSize,
+		log:             b.log,
 		tracer:          b.tracer,
 		batchLock:       b.batchLock,
 		listLatestRVs:   b.listLatestRVs,
