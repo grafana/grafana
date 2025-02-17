@@ -12,7 +12,7 @@ export function getWorkflowOptions(config?: RepositorySpec) {
 
   const availableOptions: Array<{ label: string; value: WorkflowOption }> = [
     { label: `Push to ${config.github?.branch}`, value: 'push' },
-    { label: 'Push to Different Branch', value: 'branch' },
+    { label: 'Push to different branch', value: 'branch' },
   ];
 
   // Filter options based on the workflows in the config

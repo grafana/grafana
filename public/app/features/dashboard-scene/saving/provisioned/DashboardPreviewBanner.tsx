@@ -10,15 +10,16 @@ interface DashboardPreviewBannerProps {
 
 export function DashboardPreviewBanner({ queryParams, route, path }: DashboardPreviewBannerProps) {
   const hasPrLink = Boolean(queryParams.prLink);
-  const isProvisioned = route === DashboardRoutes.Provisioning && path;
+  const isProvisioned = Boolean(route === DashboardRoutes.Provisioning && path);
 
   if ('kiosk' in queryParams || (!queryParams.isPreview && !isProvisioned)) {
     return null;
   }
 
+  const title = getTitle({ isProvisioned, hasPR: hasPrLink });
   return (
     <Alert
-      title={isProvisioned ? 'This dashboard is loaded from an external repository' : 'Dashboard preview'}
+      title={title}
       severity={isProvisioned ? 'info' : 'success'}
       style={{ flex: 0 }}
       buttonContent={
@@ -35,9 +36,21 @@ export function DashboardPreviewBanner({ queryParams, route, path }: DashboardPr
         <>
           The value is <strong>not</strong> saved in the grafana database.
         </>
-      ) : (
-        queryParams.prLink && <>Branch successfully created.</>
-      )}
+      ) : null}
     </Alert>
   );
+}
+
+type Opts = {
+  isProvisioned?: boolean;
+  hasPR: boolean;
+};
+function getTitle({ isProvisioned, hasPR }: Opts) {
+  if (isProvisioned) {
+    return 'This dashboard is loaded from an external repository';
+  }
+  if (hasPR) {
+    return "This dashboard is a draft. The changes aren't live yet. You can review them in GitHub.";
+  }
+  return 'This dashboard is a draft. The changes aren’t live yet. Submit a pull request for review.';
 }
