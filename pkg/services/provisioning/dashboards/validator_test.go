@@ -50,7 +50,7 @@ func TestDuplicatesValidator(t *testing.T) {
 	folderStore := folderimpl.ProvideDashboardFolderStore(sql)
 	folderSvc := folderimpl.ProvideService(fStore, actest.FakeAccessControl{}, bus.ProvideBus(tracing.InitializeTracerForTest()),
 		dashStore, folderStore, nil, sql, featuremgmt.WithFeatures(),
-		supportbundlestest.NewFakeBundleService(), nil, cfgT, nil, tracing.InitializeTracerForTest())
+		supportbundlestest.NewFakeBundleService(), nil, cfgT, nil, tracing.InitializeTracerForTest(), nil)
 
 	t.Run("Duplicates validator should collect info about duplicate UIDs and titles within folders", func(t *testing.T) {
 		const folderName = "duplicates-validator-folder"
