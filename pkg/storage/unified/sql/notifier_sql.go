@@ -23,6 +23,7 @@ var (
 	errDoneRequired           = fmt.Errorf("done is required")
 )
 
+// pollingNotifier is a notifier that polls the database for new events.
 type pollingNotifier struct {
 	dialect         sqltemplate.Dialect
 	pollingInterval time.Duration
