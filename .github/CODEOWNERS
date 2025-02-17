@@ -444,6 +444,7 @@
 /.betterer.eslint.config.js @grafana/frontend-ops
 /.gitattributes @grafana/frontend-ops
 /.gitignore @grafana/frontend-ops
+/.ignore @grafana/frontend-ops
 /.nvmrc @grafana/frontend-ops
 /.prettierignore @grafana/frontend-ops
 /.yarn @grafana/frontend-ops
