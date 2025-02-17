@@ -60,7 +60,7 @@ func (h *historySubresource) Connect(ctx context.Context, name string, opts runt
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		hist, ok := repo.(repository.Historical)
+		versioned, ok := repo.(repository.VersionedRepository)
 		if !ok {
 			responder.Error(errors.NewBadRequest("this repository does not support history"))
 			return
@@ -79,7 +79,7 @@ func (h *historySubresource) Connect(ctx context.Context, name string, opts runt
 		logger := logger.With("ref", ref, "path", filePath)
 		ctx := logging.Context(r.Context(), logger)
 
-		commits, err := hist.History(ctx, filePath, ref)
+		commits, err := versioned.History(ctx, filePath, ref)
 		if err != nil {
 			logger.Debug("failed to get history", "error", err)
 			responder.Error(err)

@@ -96,11 +96,6 @@ type RepositoryHooks interface {
 	OnDelete(ctx context.Context) error
 }
 
-type Historical interface {
-	// History of changes for a path
-	History(ctx context.Context, path, ref string) ([]provisioning.HistoryItem, error)
-}
-
 type FileAction string
 
 const (
@@ -126,6 +121,8 @@ type VersionedFileChange struct {
 // this inferface may be extended to make the the original Repository interface
 // more agnostic to the underlying storage system
 type VersionedRepository interface {
+	// History of changes for a path
+	History(ctx context.Context, path, ref string) ([]provisioning.HistoryItem, error)
 	LatestRef(ctx context.Context) (string, error)
 	CompareFiles(ctx context.Context, base, ref string) ([]VersionedFileChange, error)
 }
