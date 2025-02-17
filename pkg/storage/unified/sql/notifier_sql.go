@@ -171,7 +171,7 @@ func (p *pollingNotifier) poll(ctx context.Context, grp string, res string, sinc
 	if err != nil {
 		return 0, fmt.Errorf("poll history: %w", err)
 	}
-	resource.NewStorageMetrics().PollerLatency.Observe(time.Now().Sub(start).Seconds())
+	resource.NewStorageMetrics().PollerLatency.Observe(time.Since(start).Seconds())
 
 	var nextRV int64
 	for _, rec := range records {
