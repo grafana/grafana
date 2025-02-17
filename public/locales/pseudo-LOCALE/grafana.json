@@ -205,6 +205,41 @@
         "recording": "Åđđ ľäþęľş ŧő yőūř řūľę."
       }
     },
+    "alertVersionHistory": {
+      "alerting": "Åľęřŧįŉģ",
+      "alerting-change-description": "Ŧĥįş ūpđäŧę ŵäş mäđę þy ŧĥę äľęřŧįŉģ şyşŧęm đūę ŧő őŧĥęř čĥäŉģęş. Főř ęχämpľę, ŵĥęŉ řęŉämįŉģ ä čőŉŧäčŧ pőįŉŧ ŧĥäŧ įş ūşęđ ƒőř şįmpľįƒįęđ řőūŧįŉģ, ŧĥįş ŵįľľ ūpđäŧę äƒƒęčŧęđ řūľęş",
+      "annotations": "Åŉŉőŧäŧįőŉş",
+      "compareVersions": "Cőmpäřę vęřşįőŉş",
+      "comparing-versions": "Cőmpäřįŉģ vęřşįőŉş",
+      "condition": "Åľęřŧ čőŉđįŧįőŉ",
+      "contactPointRouting": "Cőŉŧäčŧ pőįŉŧ řőūŧįŉģ",
+      "description": "Ēäčĥ ŧįmę yőū ęđįŧ ŧĥę äľęřŧ řūľę, ä ŉęŵ vęřşįőŉ įş čřęäŧęđ. Ŝęľęčŧ ŧŵő vęřşįőŉş þęľőŵ äŉđ čőmpäřę ŧĥęįř đįƒƒęřęŉčęş.",
+      "errorloading": "Fäįľęđ ŧő ľőäđ äľęřŧ řūľę vęřşįőŉş",
+      "execErrorState": "Åľęřŧ şŧäŧę ŵĥęŉ ęχęčūŧįőŉ ęřřőř",
+      "intervalSeconds": "Ēväľūäŧįőŉ įŉŧęřväľ",
+      "labels": "Ŀäþęľş",
+      "latest": "Ŀäŧęşŧ",
+      "name": "Ńämę",
+      "namespace_uid": "Főľđęř ŮĨĐ",
+      "noDataState": "Åľęřŧ şŧäŧę ŵĥęŉ ŉő đäŧä",
+      "noVersionsFound": "Ńő vęřşįőŉş ƒőūŉđ ƒőř ŧĥįş řūľę",
+      "paused": "Päūşęđ şŧäŧę",
+      "pendingPeriod": "Pęŉđįŉģ pęřįőđ",
+      "provisioning": "Přővįşįőŉįŉģ",
+      "provisioning-change-description": "Vęřşįőŉ ūpđäŧę ŵäş mäđę vįä přővįşįőŉįŉģ",
+      "queryAndAlertCondition": "Qūęřy äŉđ äľęřŧ čőŉđįŧįőŉ",
+      "reset": "Ŗęşęŧ ŧő vęřşįőŉ {{version}}",
+      "restore": "Ŗęşŧőřę",
+      "restore-modal": {
+        "body": "Åřę yőū şūřę yőū ŵäŉŧ ŧő řęşŧőřę ŧĥę äľęřŧ řūľę đęƒįŉįŧįőŉ ŧő ŧĥįş vęřşįőŉ? Åľľ ūŉşävęđ čĥäŉģęş ŵįľľ þę ľőşŧ.",
+        "summary": "Ŝūmmäřy őƒ čĥäŉģęş ŧő þę äppľįęđ:",
+        "title": "Ŗęşŧőřę Vęřşįőŉ"
+      },
+      "rule_group": "Ŗūľę ģřőūp",
+      "unknown": "Ůŉĸŉőŵŉ",
+      "unknown-change-description": "Ŧĥįş ūpđäŧę ŵäş mäđę přįőř ŧő ŧĥę įmpľęmęŉŧäŧįőŉ őƒ äľęřŧ řūľę vęřşįőŉ ĥįşŧőřy. Ŧĥę ūşęř ŵĥő mäđę ŧĥę čĥäŉģę įş ŉőŧ ŧřäčĸęđ, þūŧ ƒūŧūřę čĥäŉģęş ŵįľľ įŉčľūđę ŧĥę ūşęř",
+      "user-id": "Ůşęř ĨĐ {{uid}}"
+    },
     "annotations": {
       "description": "Åđđ mőřę čőŉŧęχŧ ŧő yőūř äľęřŧ ŉőŧįƒįčäŧįőŉş.",
       "title": "Cőŉƒįģūřę ŉőŧįƒįčäŧįőŉ męşşäģę"
@@ -784,6 +819,25 @@
     },
     "search": {
       "placeholder": "Ŝęäřčĥ äľľ"
+    }
+  },
+  "core": {
+    "versionHistory": {
+      "comparison": {
+        "header": {
+          "hide-json-diff": "Ħįđę ĴŜØŃ đįƒƒ ",
+          "show-json-diff": "Ŝĥőŵ ĴŜØŃ đįƒƒ ",
+          "text": "Vęřşįőŉ {{version}} ūpđäŧęđ þy {{createdBy}} ({{ageString}}) {{message}}"
+        },
+        "select": "Ŝęľęčŧ ŧŵő vęřşįőŉş ŧő şŧäřŧ čőmpäřįŉģ"
+      },
+      "no-properties-changed": "Ńő řęľęväŉŧ přőpęřŧįęş čĥäŉģęđ",
+      "table": {
+        "updated": "Đäŧę",
+        "updatedBy": "Ůpđäŧęđ ßy",
+        "version": "Vęřşįőŉ"
+      },
+      "view-json-diff": "Vįęŵ ĴŜØŃ đįƒƒ ŧő şęę äľľ čĥäŉģęş"
     }
   },
   "correlations": {

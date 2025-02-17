@@ -18,6 +18,8 @@ import { isNullDate } from '../../../utils/time';
 import { Tokenize } from '../../Tokenize';
 import { DetailText } from '../../common/DetailText';
 
+import { UpdatedByUser } from './components/UpdatedBy';
+
 enum RuleType {
   GrafanaManagedAlertRule = 'Grafana-managed alert rule',
   GrafanaManagedRecordingRule = 'Grafana-managed recording rule',
@@ -65,14 +67,6 @@ export const Details = ({ rule }: DetailsProps) => {
 
   const hasEvaluationDuration = Number.isFinite(evaluationDuration);
 
-  const lastUpdatedBy = (() => {
-    if (!isGrafanaRulerRule(rule.rulerRule)) {
-      return null;
-    }
-
-    return rule.rulerRule.grafana_alert.updated_by?.name || `User ID: ${rule.rulerRule.grafana_alert.updated_by?.uid}`;
-  })();
-
   const updated = isGrafanaRulerRule(rule.rulerRule) ? rule.rulerRule.grafana_alert.updated : undefined;
   const isPaused = isGrafanaAlertingRule(rule.rulerRule) && rule.rulerRule.grafana_alert.is_paused;
   const pausedIcon = (
@@ -102,7 +96,7 @@ export const Details = ({ rule }: DetailsProps) => {
             <DetailText
               id="last-updated-by"
               label={t('alerting.alert.last-updated-by', 'Last updated by')}
-              value={lastUpdatedBy}
+              value={<UpdatedByUser user={rule.rulerRule.grafana_alert.updated_by} />}
             />
             {updated && (
               <DetailText

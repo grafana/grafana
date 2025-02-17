@@ -258,4 +258,5 @@ export interface FeatureToggles {
   grafanaconThemes?: boolean;
   pluginsCDNSyncLoader?: boolean;
   alertingJiraIntegration?: boolean;
+  alertingRuleVersionHistoryRestore?: boolean;
 }
