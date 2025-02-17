@@ -64,7 +64,21 @@ func (s *secureValueStorage) Create(ctx context.Context, sv *secretv0alpha1.Secu
 		return nil, fmt.Errorf("to create row: %w", err)
 	}
 
-	err = s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err = s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		if row.Keeper != keepertypes.DefaultSQLKeeper {
+			// Validate before inserting that the chosen `keeper` exists.
+			keeperRow := &keeperDB{Name: row.Keeper, Namespace: row.Namespace}
+
+			keeperExists, err := sess.Table(keeperRow.TableName()).ForUpdate().Exist(keeperRow)
+			if err != nil {
+				return fmt.Errorf("check keeper existence: %w", err)
+			}
+
+			if !keeperExists {
+				return contracts.ErrKeeperNotFound
+			}
+		}
+
 		if _, err := sess.Insert(row); err != nil {
 			return fmt.Errorf("insert row: %w", err)
 		}
@@ -154,7 +168,21 @@ func (s *secureValueStorage) Update(ctx context.Context, newSecureValue *secretv
 		return nil, fmt.Errorf("to update row: %w", err)
 	}
 
-	err = s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err = s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		if newRow.Keeper != keepertypes.DefaultSQLKeeper {
+			// Validate before updating that the new `keeper` exists.
+			keeperRow := &keeperDB{Name: newRow.Keeper, Namespace: newRow.Namespace}
+
+			keeperExists, err := sess.Table(keeperRow.TableName()).ForUpdate().Exist(keeperRow)
+			if err != nil {
+				return fmt.Errorf("check keeper existence: %w", err)
+			}
+
+			if !keeperExists {
+				return contracts.ErrKeeperNotFound
+			}
+		}
+
 		cond := &secureValueDB{Name: newSecureValue.Name, Namespace: newSecureValue.Namespace}
 
 		if _, err := sess.Update(newRow, cond); err != nil {
