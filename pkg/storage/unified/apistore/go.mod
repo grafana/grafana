@@ -54,7 +54,6 @@ require (
 	github.com/Masterminds/semver/v3 v3.3.0 // indirect
 	github.com/Masterminds/sprig/v3 v3.3.0 // indirect
 	github.com/Masterminds/squirrel v1.5.4 // indirect
-	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/NYTimes/gziphandler v1.1.1 // indirect
 	github.com/ProtonMail/go-crypto v0.0.0-20230828082145-3c4c8a2d2371 // indirect
 	github.com/RoaringBitmap/roaring v1.9.3 // indirect
@@ -125,7 +124,6 @@ require (
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/dennwc/varint v1.0.0 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
-	github.com/distribution/reference v0.6.0 // indirect
 	github.com/dlmiddlecote/sqlstats v1.0.2 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/dolthub/flatbuffers/v23 v23.3.3-dh.2 // indirect
@@ -173,7 +171,7 @@ require (
 	github.com/gogo/status v1.1.1 // indirect
 	github.com/golang-jwt/jwt/v4 v4.5.1 // indirect
 	github.com/golang-jwt/jwt/v5 v5.2.1 // indirect
-	github.com/golang-migrate/migrate/v4 v4.7.0 // indirect
+	github.com/golang-migrate/migrate/v4 v4.18.2 // indirect
 	github.com/golang/geo v0.0.0-20210211234256-740aa86cb551 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/mock v1.7.0-rc.1 // indirect
