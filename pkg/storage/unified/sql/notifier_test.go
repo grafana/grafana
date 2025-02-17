@@ -48,13 +48,16 @@ func TestChannelNotifier(t *testing.T) {
 		n := newChannelNotifier(bufferSize, log.NewNopLogger())
 		defer n.close()
 
+		events, err := n.notify(context.Background())
+		require.NoError(t, err)
+
 		for i := 0; i < bufferSize+1; i++ {
 			n.send(context.Background(), &resource.WrittenEvent{
 				ResourceVersion: int64(i),
 			})
 		}
 
-		require.Equal(t, bufferSize, len(n.events))
+		require.Equal(t, bufferSize, len(events))
 	})
 
 	t.Run("should close subscriber channels when context cancelled", func(t *testing.T) {

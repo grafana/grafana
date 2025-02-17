@@ -21,41 +21,41 @@ type eventNotifier interface {
 	close()
 }
 
-func newNotifier(b *backend) (eventNotifier, error) {
-	// TODO(JPQ): Use better HA detection.
-	if b.dialect.DialectName() == sqltemplate.SQLite.DialectName() {
-		b.log.Info("Using channel notifier")
-		return newChannelNotifier(b.watchBufferSize, b.log), nil
-	}
-	b.log.Info("Using polling notifier")
-	notifier, err := newPollingNotifier(&pollingNotifierConfig{
-		pollingInterval: b.pollingInterval,
-		watchBufferSize: b.watchBufferSize,
-		log:             b.log,
-		tracer:          b.tracer,
-		batchLock:       b.batchLock,
-		listLatestRVs:   b.listLatestRVs,
-		historyPoll: func(ctx context.Context, grp string, res string, since int64) ([]*historyPollResponse, error) {
-			var records []*historyPollResponse
-			err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
-				var err error
-				records, err = dbutil.Query(ctx, tx, sqlResourceHistoryPoll, &sqlResourceHistoryPollRequest{
-					SQLTemplate:          sqltemplate.New(b.dialect),
-					Resource:             res,
-					Group:                grp,
-					SinceResourceVersion: since,
-					Response:             &historyPollResponse{},
+func newNotifier(b *backend, isHA bool) (eventNotifier, error) {
+	if isHA {
+		b.log.Info("Using polling notifier")
+		notifier, err := newPollingNotifier(&pollingNotifierConfig{
+			pollingInterval: b.pollingInterval,
+			watchBufferSize: b.watchBufferSize,
+			log:             b.log,
+			tracer:          b.tracer,
+			batchLock:       b.batchLock,
+			listLatestRVs:   b.listLatestRVs,
+			historyPoll: func(ctx context.Context, grp string, res string, since int64) ([]*historyPollResponse, error) {
+				var records []*historyPollResponse
+				err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
+					var err error
+					records, err = dbutil.Query(ctx, tx, sqlResourceHistoryPoll, &sqlResourceHistoryPollRequest{
+						SQLTemplate:          sqltemplate.New(b.dialect),
+						Resource:             res,
+						Group:                grp,
+						SinceResourceVersion: since,
+						Response:             &historyPollResponse{},
+					})
+					return err
 				})
-				return err
-			})
-			return records, err
-		},
-		done: b.done,
-	})
-	if err != nil {
-		return nil, err
+				return records, err
+			},
+			done: b.done,
+		})
+		if err != nil {
+			return nil, err
+		}
+		return notifier, nil
 	}
-	return notifier, nil
+
+	b.log.Info("Using channel notifier")
+	return newChannelNotifier(b.watchBufferSize, b.log), nil
 }
 
 type channelNotifier struct {

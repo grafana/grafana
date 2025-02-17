@@ -39,6 +39,7 @@ type BackendOptions struct {
 	Tracer          trace.Tracer
 	PollingInterval time.Duration
 	WatchBufferSize int
+	IsHA            bool
 }
 
 func NewBackend(opts BackendOptions) (Backend, error) {
@@ -58,6 +59,7 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 		opts.WatchBufferSize = defaultWatchBufferSize
 	}
 	return &backend{
+		isHA:            opts.IsHA,
 		done:            ctx.Done(),
 		cancel:          cancel,
 		log:             log.New("sql-resource-server"),
@@ -70,6 +72,9 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 }
 
 type backend struct {
+	//general
+	isHA bool
+
 	// server lifecycle
 	done     <-chan struct{}
 	cancel   context.CancelFunc
@@ -114,7 +119,7 @@ func (b *backend) initLocked(ctx context.Context) error {
 	}
 
 	// Initialize notifier after dialect is set up
-	notifier, err := newNotifier(b)
+	notifier, err := newNotifier(b, b.isHA)
 	if err != nil {
 		return fmt.Errorf("failed to create notifier: %w", err)
 	}
