@@ -6,9 +6,9 @@ import { ScopesService } from '../ScopesService';
 import { enterEditMode, openSelector, toggleDashboards } from './utils/actions';
 import {
   expectDashboardsClosed,
-  expectDashboardsNotInDocument,
+  expectDashboardsDisabled,
   expectScopesSelectorClosed,
-  expectScopesSelectorNotInDocument,
+  expectScopesSelectorDisabled,
 } from './utils/assertions';
 import { getDatasource, getInstanceSettings, getMock } from './utils/mocks';
 import { renderDashboard, resetScenes } from './utils/render';
@@ -58,11 +58,11 @@ describe('View mode', () => {
 
   it('Does not show selector when view mode is active', async () => {
     await enterEditMode(dashboardScene);
-    expectScopesSelectorNotInDocument();
+    expectScopesSelectorDisabled();
   });
 
   it('Does not show the expand button when view mode is active', async () => {
     await enterEditMode(dashboardScene);
-    expectDashboardsNotInDocument();
+    expectDashboardsDisabled();
   });
 });

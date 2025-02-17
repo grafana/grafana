@@ -20,7 +20,6 @@ import {
   queryDashboard,
   queryDashboardFolderExpand,
   queryDashboardsContainer,
-  queryDashboardsExpand,
   queryDashboardsSearch,
   queryPersistedApplicationsGrafanaSelect,
   queryPersistedApplicationsMimirSelect,
@@ -28,7 +27,6 @@ import {
   queryResultApplicationsGrafanaSelect,
   queryResultApplicationsMimirSelect,
   querySelectorApply,
-  querySelectorInput,
 } from './selectors';
 
 const expectInDocument = (selector: () => HTMLElement) => expect(selector()).toBeInTheDocument();
@@ -41,7 +39,7 @@ const expectTextContent = (selector: () => HTMLElement, text: string) => expect(
 const expectDisabled = (selector: () => HTMLElement) => expect(selector()).toBeDisabled();
 
 export const expectScopesSelectorClosed = () => expectNotInDocument(querySelectorApply);
-export const expectScopesSelectorNotInDocument = () => expectNotInDocument(querySelectorInput);
+export const expectScopesSelectorDisabled = () => expectDisabled(getSelectorInput);
 export const expectScopesSelectorValue = (value: string) => expectValue(getSelectorInput, value);
 export const expectScopesHeadline = (value: string) => expectTextContent(getTreeHeadline, value);
 export const expectPersistedApplicationsGrafanaNotPresent = () =>
@@ -64,7 +62,6 @@ export const expectResultCloudOpsSelected = () => expectRadioChecked(getResultCl
 export const expectResultCloudOpsNotSelected = () => expectRadioNotChecked(getResultCloudOpsRadio);
 
 export const expectDashboardsDisabled = () => expectDisabled(getDashboardsExpand);
-export const expectDashboardsNotInDocument = () => expectNotInDocument(queryDashboardsExpand);
 export const expectDashboardsClosed = () => expectNotInDocument(queryDashboardsContainer);
 export const expectDashboardsOpen = () => expectInDocument(getDashboardsContainer);
 export const expectNoDashboardsSearch = () => expectNotInDocument(queryDashboardsSearch);
