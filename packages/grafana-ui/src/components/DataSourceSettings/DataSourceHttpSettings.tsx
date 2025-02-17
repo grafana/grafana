@@ -1,17 +1,16 @@
 import { css } from '@emotion/css';
 import { useState, useCallback, useId } from 'react';
 
+import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { useTheme2 } from '../../themes';
 import { t, Trans } from '../../utils/i18n';
 import { Alert } from '../Alert/Alert';
 import { Button } from '../Button';
-import { Combobox } from '../Combobox/Combobox';
-import { ComboboxOption } from '../Combobox/types';
-import { FormField } from '../FormField/FormField';
-import { InlineFormLabel } from '../FormLabel/FormLabel';
+import { Field } from '../Forms/Field';
 import { InlineField } from '../Forms/InlineField';
+import { RadioButtonGroup } from '../Forms/RadioButtonGroup/RadioButtonGroup';
 import { Icon } from '../Icon/Icon';
 import { Input } from '../Input/Input';
 import { Stack } from '../Layout/Stack/Stack';
@@ -26,7 +25,7 @@ import { SecureSocksProxySettings } from './SecureSocksProxySettings';
 import { TLSAuthSettings } from './TLSAuthSettings';
 import { HttpSettingsProps } from './types';
 
-const ACCESS_OPTIONS: Array<ComboboxOption<string>> = [
+const ACCESS_OPTIONS: Array<SelectableValue<string>> = [
   {
     label: t('grafana-ui.data-source-http-settings.server-mode-label', 'Server (default)'),
     value: 'proxy',
@@ -179,96 +178,90 @@ export const DataSourceHttpSettings = (props: HttpSettingsProps) => {
           <Trans i18nKey="grafana-ui.data-source-http-settings.heading">HTTP</Trans>
         </h3>
 
-        <Stack direction="column" gap={0}>
-          <InlineField
-            label={urlLabel ?? 'URL'}
-            labelWidth={26}
-            tooltip={urlTooltip}
-            invalid={!isValidUrl}
-            error={!isValidUrl && t('grafana-ui.data-source-http-settings.invalid-url-error', 'Invalid URL')}
-            disabled={dataSourceConfig.readOnly}
-          >
-            <Input
-              id={fromFieldId}
-              width={40}
-              placeholder={defaultUrl}
-              value={dataSourceConfig.url}
-              data-testid={selectors.components.DataSource.DataSourceHttpSettings.urlInput}
-              onChange={(event) => onSettingsChange({ url: event.currentTarget.value })}
-            />
-          </InlineField>
+        <Field
+          label={urlLabel ?? 'URL'}
+          description={urlTooltip}
+          invalid={!isValidUrl}
+          error={!isValidUrl && t('grafana-ui.data-source-http-settings.invalid-url-error', 'Invalid URL')}
+          disabled={dataSourceConfig.readOnly}
+        >
+          <Input
+            id={fromFieldId}
+            width={40}
+            placeholder={defaultUrl}
+            value={dataSourceConfig.url}
+            data-testid={selectors.components.DataSource.DataSourceHttpSettings.urlInput}
+            onChange={(event) => onSettingsChange({ url: event.currentTarget.value })}
+          />
+        </Field>
 
-          {showAccessOptions && (
-            <>
+        {showAccessOptions && (
+          <>
+            <Field label="Access" disabled={dataSourceConfig.readOnly}>
               <Stack direction="row" gap={0.5}>
-                <InlineField label="Access" labelWidth={26} disabled={dataSourceConfig.readOnly}>
-                  <Combobox
-                    width={40}
-                    options={ACCESS_OPTIONS}
-                    value={
-                      ACCESS_OPTIONS.filter((o) => o.value === dataSourceConfig.access)[0] || DEFAULT_ACCESS_OPTION
-                    }
-                    onChange={(selectedValue) => onSettingsChange({ access: selectedValue.value })}
-                  />
-                </InlineField>
-
+                <RadioButtonGroup
+                  aria-label="Access"
+                  options={ACCESS_OPTIONS}
+                  value={
+                    ACCESS_OPTIONS.find((o) => o.value === dataSourceConfig.access)?.value ||
+                    DEFAULT_ACCESS_OPTION.value
+                  }
+                  onChange={(selectedValue) => onSettingsChange({ access: selectedValue })}
+                />
                 <Button
                   type="button"
                   variant="secondary"
                   size="md"
                   fill="outline"
                   onClick={() => setIsAccessHelpVisible((isVisible) => !isVisible)}
+                  aria-expanded={isAccessHelpVisible}
+                  aria-controls={ACCESS_HELP_ID}
                 >
                   <Trans i18nKey="grafana-ui.data-source-http-settings.access-help">
                     Help&nbsp;
-                    <Icon
-                      name={isAccessHelpVisible ? 'angle-down' : 'angle-right'}
-                      aria-expanded={isAccessHelpVisible}
-                      aria-controls={ACCESS_HELP_ID}
-                    />
+                    <Icon name={isAccessHelpVisible ? 'angle-down' : 'angle-right'} />
                   </Trans>
                 </Button>
               </Stack>
-              {isAccessHelpVisible && <HttpAccessHelp />}
-            </>
-          )}
-          {dataSourceConfig.access === 'proxy' && (
-            <Stack direction="column" gap={1}>
-              <Stack direction="row" gap={0}>
-                <InlineFormLabel
-                  width={13}
-                  tooltip="Grafana proxy deletes forwarded cookies by default. Specify cookies by name that should be forwarded to the data source."
-                >
-                  <Trans i18nKey="grafana-ui.data-source-http-settings.allowed-cookies">Allowed cookies</Trans>
-                </InlineFormLabel>
-                <TagsInput
-                  tags={dataSourceConfig.jsonData.keepCookies}
-                  width={40}
-                  onChange={(cookies) =>
-                    onSettingsChange({ jsonData: { ...dataSourceConfig.jsonData, keepCookies: cookies } })
-                  }
-                  disabled={dataSourceConfig.readOnly}
-                />
-              </Stack>
-              <FormField
-                label="Timeout"
+            </Field>
+
+            {isAccessHelpVisible && <HttpAccessHelp />}
+          </>
+        )}
+        {dataSourceConfig.access === 'proxy' && (
+          <>
+            <Field
+              label={t('grafana-ui.data-source-http-settings.allowed-cookies', 'Allowed cookies')}
+              description={t(
+                'grafana-ui.data-source-http-settings.allowed-cookies-description',
+                'Grafana proxy deletes forwarded cookies by default. Specify cookies by name that should be forwarded to the data source.'
+              )}
+            >
+              <TagsInput
+                tags={dataSourceConfig.jsonData.keepCookies}
+                width={40}
+                onChange={(cookies) =>
+                  onSettingsChange({ jsonData: { ...dataSourceConfig.jsonData, keepCookies: cookies } })
+                }
+                disabled={dataSourceConfig.readOnly}
+              />
+            </Field>
+
+            <Field label="Timeout" description="HTTP request timeout in seconds" disabled={dataSourceConfig.readOnly}>
+              <Input
                 type="number"
-                labelWidth={13}
-                inputWidth={20}
-                tooltip="HTTP request timeout in seconds"
+                width={40}
                 placeholder="Timeout in seconds"
-                aria-label="Timeout in seconds"
                 value={dataSourceConfig.jsonData.timeout}
                 onChange={(event) => {
                   onSettingsChange({
                     jsonData: { ...dataSourceConfig.jsonData, timeout: parseInt(event.currentTarget.value, 10) },
                   });
                 }}
-                disabled={dataSourceConfig.readOnly}
               />
-            </Stack>
-          )}
-        </Stack>
+            </Field>
+          </>
+        )}
       </section>
 
       <section>
