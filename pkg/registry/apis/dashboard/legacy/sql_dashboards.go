@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -419,18 +420,20 @@ func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, das
 		}
 	}
 
+	apiVersion := strings.TrimPrefix(dash.APIVersion, dashboard.GROUP+"/")
 	meta, err := utils.MetaAccessor(dash)
 	if err != nil {
 		return nil, false, err
 	}
 	out, err := a.dashStore.SaveDashboard(ctx, dashboards.SaveDashboardCommand{
-		OrgID:     orgId,
-		Message:   meta.GetMessage(),
-		PluginID:  dashboard.GetPluginIDFromMeta(meta),
-		Dashboard: simplejson.NewFromAny(dash.Spec.UnstructuredContent()),
-		FolderUID: meta.GetFolder(),
-		Overwrite: true, // already passed the revisionVersion checks!
-		UserID:    userID,
+		OrgID:      orgId,
+		Message:    meta.GetMessage(),
+		PluginID:   dashboard.GetPluginIDFromMeta(meta),
+		Dashboard:  simplejson.NewFromAny(dash.Spec.UnstructuredContent()),
+		FolderUID:  meta.GetFolder(),
+		Overwrite:  true, // already passed the revisionVersion checks!
+		UserID:     userID,
+		APIVersion: apiVersion,
 	})
 	if err != nil {
 		return nil, false, err
