@@ -66,14 +66,14 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusGetRuleGroup(c *contextmo
 func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostRuleGroup(c *contextmodel.ReqContext, namespaceTitle string, promGroup apimodels.PrometheusRuleGroup) response.Response {
 	logger := srv.logger.FromContext(c.Req.Context())
 
-	logger.Debug("Received request to convert Prometheus rule group", "namespace", namespaceTitle, "group", promGroup.Name)
+	logger.Info("Converting Prometheus rule group", "folder_title", namespaceTitle, "group", promGroup.Name, "rules", len(promGroup.Rules))
 
 	ns, errResp := srv.getOrCreateNamespace(c, namespaceTitle, logger)
 	if errResp != nil {
 		return errResp
 	}
 
-	logger.Debug("Found folder", "folder", ns.Title, "folder_uid", ns.UID)
+	logger.Debug("Found folder", "folder_title", ns.Title, "folder_uid", ns.UID)
 
 	datasourceUID := strings.TrimSpace(c.Req.Header.Get(datasourceUIDHeader))
 	if datasourceUID == "" {
@@ -81,7 +81,7 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostRuleGroup(c *contextm
 	}
 	ds, err := srv.datasourceCache.GetDatasourceByUID(c.Req.Context(), datasourceUID, c.SignedInUser, c.SkipDSCache)
 	if err != nil {
-		logger.Error("Failed to get datasource", "error", err)
+		logger.Error("Failed to get datasource", "datasource_uid", datasourceUID, "error", err)
 		return errorToResponse(err)
 	}
 
@@ -92,7 +92,7 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostRuleGroup(c *contextm
 
 	err = srv.alertRuleService.ReplaceRuleGroup(c.Req.Context(), c.SignedInUser, *group, models.ProvenanceConvertedPrometheus)
 	if err != nil {
-		srv.logger.Error("Failed to replace rule group", "error", err)
+		logger.Error("Failed to replace rule group", "folder_title", namespaceTitle, "group", promGroup.Name, "error", err)
 		return errorToResponse(err)
 	}
 
@@ -100,7 +100,7 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostRuleGroup(c *contextm
 }
 
 func (srv *ConvertPrometheusSrv) getOrCreateNamespace(c *contextmodel.ReqContext, title string, logger log.Logger) (*folder.Folder, response.Response) {
-	logger.Debug("Getting or creating a new namespace", "title", title)
+	logger.Debug("Getting or creating a new folder", "folder_title", title)
 	ns, err := srv.ruleStore.GetOrCreateNamespaceInRootByTitle(
 		c.Req.Context(),
 		title,
@@ -108,14 +108,14 @@ func (srv *ConvertPrometheusSrv) getOrCreateNamespace(c *contextmodel.ReqContext
 		c.SignedInUser,
 	)
 	if err != nil {
-		logger.Error("Failed to get or create a new namespace", "error", err)
+		logger.Error("Failed to get or create a new folder", "error", err)
 		return nil, toNamespaceErrorResponse(err)
 	}
 	return ns, nil
 }
 
 func (srv *ConvertPrometheusSrv) convertToGrafanaRuleGroup(c *contextmodel.ReqContext, ds *datasources.DataSource, namespaceUID string, promGroup apimodels.PrometheusRuleGroup, logger log.Logger) (*models.AlertRuleGroup, error) {
-	logger.Debug("Converting Prometheus rules to Grafana rules", "group", promGroup.Name, "rules", len(promGroup.Rules))
+	logger.Info("Converting Prometheus rules to Grafana rules", "group", promGroup.Name, "rules", len(promGroup.Rules), "folder_uid", namespaceUID, "datasource_uid", ds.UID, "datasource_type", ds.Type)
 
 	rules := make([]prom.PrometheusRule, len(promGroup.Rules))
 	for i, r := range promGroup.Rules {
@@ -159,7 +159,7 @@ func (srv *ConvertPrometheusSrv) convertToGrafanaRuleGroup(c *contextmodel.ReqCo
 		},
 	)
 	if err != nil {
-		logger.Error("Failed to create Prometheus converter", "error", err)
+		logger.Error("Failed to create Prometheus converter", "datasource_uid", ds.UID, "datasource_type", ds.Type, "error", err)
 		return nil, err
 	}
 
