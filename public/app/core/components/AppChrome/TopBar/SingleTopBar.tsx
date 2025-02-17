@@ -16,7 +16,6 @@ import { Breadcrumbs } from '../../Breadcrumbs/Breadcrumbs';
 import { buildBreadcrumbs } from '../../Breadcrumbs/utils';
 import { HistoryContainer } from '../History/HistoryContainer';
 import { enrichHelpItem } from '../MegaMenu/utils';
-import { QuickAdd } from '../QuickAdd/QuickAdd';
 import { TOP_BAR_LEVEL_HEIGHT } from '../types';
 
 import { ProfileButton } from './ProfileButton';
@@ -74,7 +73,6 @@ export const SingleTopBar = memo(function SingleTopBar({
       <Stack gap={0.5} alignItems="center">
         <TopSearchBarCommandPaletteTrigger />
         {unifiedHistoryEnabled && <HistoryContainer />}
-        <QuickAdd />
         {enrichedHelpNode && (
           <Dropdown overlay={() => <TopNavBarMenu node={enrichedHelpNode} />} placement="bottom-end">
             <ToolbarButton iconOnly icon="question-circle" aria-label="Help" />
