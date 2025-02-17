@@ -150,10 +150,10 @@ func TestIntegrationConvertPrometheusEndpoints(t *testing.T) {
 			t.Run(tc.name, func(t *testing.T) {
 				headers := map[string]string{}
 				if tc.recordingPaused {
-					headers["X-Recording-Rules-Paused"] = "true"
+					headers["X-Grafana-Alerting-Recording-Rules-Paused"] = "true"
 				}
 				if tc.alertPaused {
-					headers["X-Alert-Rules-Paused"] = "true"
+					headers["X-Grafana-Alerting-Alert-Rules-Paused"] = "true"
 				}
 				apiClient.ConvertPrometheusPostRuleGroup(t, namespace, ds.Body.Datasource.UID, promGroup1, headers)
 

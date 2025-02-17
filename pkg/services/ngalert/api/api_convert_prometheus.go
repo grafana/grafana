@@ -19,9 +19,9 @@ import (
 )
 
 const (
-	datasourceUIDHeader        = "X-Datasource-UID"
-	recordingRulesPausedHeader = "X-Recording-Rules-Paused"
-	alertRulesPausedHeader     = "X-Alert-Rules-Paused"
+	datasourceUIDHeader        = "X-Grafana-Alerting-Datasource-UID"
+	recordingRulesPausedHeader = "X-Grafana-Alerting-Recording-Rules-Paused"
+	alertRulesPausedHeader     = "X-Grafana-Alerting-Alert-Rules-Paused"
 )
 
 type ConvertPrometheusSrv struct {
@@ -59,6 +59,7 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusGetNamespace(c *contextmo
 }
 
 func (srv *ConvertPrometheusSrv) RouteConvertPrometheusGetRuleGroup(c *contextmodel.ReqContext, namespaceTitle string, group string) response.Response {
+	// Just to make the mimirtool rules load work. It first checks if the group exists, and if the endpoint returns 501 it fails.
 	return response.YAML(http.StatusOK, apimodels.PrometheusRuleGroup{})
 }
 
@@ -134,8 +135,15 @@ func (srv *ConvertPrometheusSrv) convertToGrafanaRuleGroup(c *contextmodel.ReqCo
 		Rules:    rules,
 	}
 
-	pauseRecordingRules, _ := strconv.ParseBool(c.Req.Header.Get(recordingRulesPausedHeader))
-	pauseAlertRules, _ := strconv.ParseBool(c.Req.Header.Get(alertRulesPausedHeader))
+	pauseRecordingRules, err := parseBooleanHeader(c.Req.Header.Get(recordingRulesPausedHeader), recordingRulesPausedHeader)
+	if err != nil {
+		return nil, err
+	}
+
+	pauseAlertRules, err := parseBooleanHeader(c.Req.Header.Get(alertRulesPausedHeader), alertRulesPausedHeader)
+	if err != nil {
+		return nil, err
+	}
 
 	converter, err := prom.NewConverter(
 		prom.Config{
@@ -162,4 +170,17 @@ func (srv *ConvertPrometheusSrv) convertToGrafanaRuleGroup(c *contextmodel.ReqCo
 	}
 
 	return grafanaGroup, nil
+}
+
+// parseBooleanHeader parses a boolean header value, returning an error if the header
+// is present but invalid. If the header is not present, returns (false, nil).
+func parseBooleanHeader(header string, headerName string) (bool, error) {
+	if header == "" {
+		return false, nil
+	}
+	val, err := strconv.ParseBool(header)
+	if err != nil {
+		return false, fmt.Errorf("%w: invalid value for header %s: must be 'true' or 'false'", errInvalidHeaderValue, headerName)
+	}
+	return val, nil
 }

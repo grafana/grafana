@@ -13,6 +13,7 @@ import (
 
 var (
 	errUnexpectedDatasourceType = errors.New("unexpected datasource type")
+	errInvalidHeaderValue       = errors.New("invalid header value")
 
 	// errFolderAccess is used as a wrapper to propagate folder related errors and correctly map to the response status
 	errFolderAccess = errors.New("cannot get folder")
@@ -37,7 +38,7 @@ func errorToResponse(err error) response.Response {
 		return ErrResp(404, err, "")
 	}
 	var validationErr *prom.ValidationError
-	if errors.Is(err, errUnexpectedDatasourceType) || errors.As(err, &validationErr) {
+	if errors.Is(err, errUnexpectedDatasourceType) || errors.As(err, &validationErr) || errors.Is(err, errInvalidHeaderValue) {
 		return ErrResp(400, err, "")
 	}
 	if errors.Is(err, errFolderAccess) {
