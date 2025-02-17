@@ -151,11 +151,5 @@ func newResourceClient(conn *grpc.ClientConn, cfg *setting.Cfg, features feature
 	if !features.IsEnabledGlobally(featuremgmt.FlagAppPlatformGrpcClientAuth) {
 		return resource.NewLegacyResourceClient(conn), nil
 	}
-	if cfg.StackID == "" {
-		return resource.NewGRPCResourceClient(tracer, conn)
-	}
-
-	grpcClientCfg := grpcutils.ReadGrpcClientConfig(cfg)
-
-	return resource.NewCloudResourceClient(tracer, conn, clientCfgMapping(grpcClientCfg), cfg.Env == setting.Dev)
+	return resource.NewRemoteResourceClient(tracer, conn, clientCfgMapping(grpcutils.ReadGrpcClientConfig(cfg)), cfg.Env == setting.Dev)
 }

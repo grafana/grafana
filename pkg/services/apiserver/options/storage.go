@@ -133,7 +133,7 @@ func (o *StorageOptions) ApplyTo(serverConfig *genericapiserver.RecommendedConfi
 			Namespace: o.GrpcClientAuthenticationTokenNamespace,
 		},
 	}
-	unified, err := resource.NewCloudResourceClient(tracer, conn, authCfg, o.GrpcClientAuthenticationAllowInsecure)
+	unified, err := resource.NewRemoteResourceClient(tracer, conn, authCfg, o.GrpcClientAuthenticationAllowInsecure)
 	if err != nil {
 		return err
 	}

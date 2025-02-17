@@ -512,7 +512,7 @@ func TestClientServer(t *testing.T) {
 	t.Run("Create a client", func(t *testing.T) {
 		conn, err := grpc.NewClient(svc.GetAddress(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 		require.NoError(t, err)
-		client, err = resource.NewGRPCResourceClient(tracing.NewNoopTracerService(), conn)
+		client, err = resource.NewRemoteResourceClient(tracing.NewNoopTracerService(), conn, authn.GrpcClientConfig{}, true)
 		require.NoError(t, err)
 	})
 
