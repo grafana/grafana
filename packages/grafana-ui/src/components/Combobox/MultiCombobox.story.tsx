@@ -6,12 +6,18 @@ import { ComponentProps } from 'react';
 import { Field } from '../Forms/Field';
 
 import { MultiCombobox } from './MultiCombobox';
+import mdx from './MultiCombobox.mdx';
 import { generateOptions, fakeSearchAPI, generateGroupingOptions } from './storyUtils';
 import { ComboboxOption } from './types';
 
 const meta: Meta<typeof MultiCombobox> = {
   title: 'Forms/MultiCombobox',
   component: MultiCombobox,
+  parameters: {
+    docs: {
+      page: mdx,
+    },
+  },
 };
 
 const loadOptionsAction = action('options called');
