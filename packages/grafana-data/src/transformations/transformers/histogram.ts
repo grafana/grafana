@@ -11,7 +11,6 @@ import { roundDecimals } from '../../utils/numbers';
 import { DataTransformerID } from './ids';
 import { AlignedData, join } from './joinDataFrames';
 import { nullToValueField } from './nulls/nullToValue';
-import { transformationsVariableSupport } from './utils';
 
 /**
  * @internal
@@ -112,9 +111,6 @@ export const histogramTransformer: SynchronousDataTransformerInfo<HistogramTrans
       bucketOffset: number | undefined = undefined;
 
     if (options.bucketSize) {
-      if (transformationsVariableSupport()) {
-        options.bucketSize = ctx.interpolate(options.bucketSize.toString());
-      }
       if (typeof options.bucketSize === 'string') {
         bucketSize = parseFloat(options.bucketSize);
       } else {
@@ -127,9 +123,6 @@ export const histogramTransformer: SynchronousDataTransformerInfo<HistogramTrans
     }
 
     if (options.bucketOffset) {
-      if (transformationsVariableSupport()) {
-        options.bucketOffset = ctx.interpolate(options.bucketOffset.toString());
-      }
       if (typeof options.bucketOffset === 'string') {
         bucketOffset = parseFloat(options.bucketOffset);
       } else {

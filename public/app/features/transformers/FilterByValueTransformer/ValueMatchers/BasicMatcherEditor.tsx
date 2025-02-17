@@ -1,51 +1,20 @@
 import { useCallback, useState } from 'react';
 import * as React from 'react';
 
-import { ValueMatcherID, BasicValueMatcherOptions, VariableOrigin } from '@grafana/data';
-import { getTemplateSrv, config as cfg } from '@grafana/runtime';
-import { Input } from '@grafana/ui';
+import { ValueMatcherID, BasicValueMatcherOptions } from '@grafana/data';
 
 import { SuggestionsInput } from '../../suggestionsInput/SuggestionsInput';
-import { numberOrVariableValidator } from '../../utils';
+import { getVariableSuggestions, numberOrVariableValidator } from '../../utils';
 
 import { ValueMatcherEditorConfig, ValueMatcherUIProps, ValueMatcherUIRegistryItem } from './types';
-import { convertToType } from './utils';
 
 export function basicMatcherEditor<T = any>(
   config: ValueMatcherEditorConfig
 ): React.FC<ValueMatcherUIProps<BasicValueMatcherOptions>> {
-  return function Render({ options, onChange, field }) {
-    const { validator, converter = convertToType } = config;
+  return function Render({ options, onChange }) {
+    const { validator } = config;
     const { value } = options;
     const [isInvalid, setInvalid] = useState(!validator(value));
-
-    const templateSrv = getTemplateSrv();
-    const variables = templateSrv.getVariables().map((v) => {
-      return { value: v.name, label: v.label || v.name, origin: VariableOrigin.Template };
-    });
-
-    const onChangeValue = useCallback(
-      (event: React.FormEvent<HTMLInputElement>) => {
-        setInvalid(!validator(event.currentTarget.value));
-      },
-      [setInvalid, validator]
-    );
-
-    const onChangeOptions = useCallback(
-      (event: React.FocusEvent<HTMLInputElement>) => {
-        if (isInvalid) {
-          return;
-        }
-
-        const { value } = event.currentTarget;
-
-        onChange({
-          ...options,
-          value: converter(value, field),
-        });
-      },
-      [options, onChange, isInvalid, field, converter]
-    );
 
     const onChangeVariableValue = useCallback(
       (value: string) => {
@@ -58,29 +27,16 @@ export function basicMatcherEditor<T = any>(
       [setInvalid, validator, onChange, options]
     );
 
-    if (cfg.featureToggles.transformationsVariableSupport) {
-      return (
-        <SuggestionsInput
-          invalid={isInvalid}
-          value={value}
-          error={'Value needs to be an integer or a variable'}
-          onChange={onChangeVariableValue}
-          placeholder="Value or variable"
-          suggestions={variables}
-        ></SuggestionsInput>
-      );
-    } else {
-      return (
-        <Input
-          className="flex-grow-1"
-          invalid={isInvalid}
-          defaultValue={String(options.value)}
-          placeholder="Value"
-          onChange={onChangeValue}
-          onBlur={onChangeOptions}
-        />
-      );
-    }
+    return (
+      <SuggestionsInput
+        invalid={isInvalid}
+        value={value}
+        error={'Value needs to be a number or a variable'}
+        onChange={onChangeVariableValue}
+        placeholder="Value or variable"
+        suggestions={getVariableSuggestions()}
+      />
+    );
   };
 }
 

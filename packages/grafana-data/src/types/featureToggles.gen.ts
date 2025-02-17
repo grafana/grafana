@@ -105,7 +105,6 @@ export interface FeatureToggles {
   enableNativeHTTPHistogram?: boolean;
   disableClassicHTTPHistogram?: boolean;
   formatString?: boolean;
-  transformationsVariableSupport?: boolean;
   kubernetesPlaylists?: boolean;
   kubernetesSnapshots?: boolean;
   kubernetesDashboards?: boolean;
