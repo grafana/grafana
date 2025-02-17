@@ -7,6 +7,12 @@ const testDirRoot = 'e2e/plugin-e2e/';
 
 export default defineConfig<PluginOptions>({
   fullyParallel: true,
+  webServer: {
+    command: 'make run & yarn start && npx wait-on http://localhost:3000',
+    port: 3000,
+    timeout: 10 * 60 * 1000,
+    reuseExistingServer: !process.env.CI,
+  },
   /* Retry on CI only */
   retries: process.env.CI ? 2 : 0,
   /* Opt out of parallel tests on CI. */
@@ -181,6 +187,16 @@ export default defineConfig<PluginOptions>({
     {
       name: 'zipkin',
       testDir: path.join(testDirRoot, '/zipkin'),
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: 'playwright/.auth/admin.json',
+      },
+      dependencies: ['authenticate'],
+    },
+    // Run only visual regression tests
+    {
+      name: 'visual_regression',
+      testDir: 'e2e/visual-regression',
       use: {
         ...devices['Desktop Chrome'],
         storageState: 'playwright/.auth/admin.json',
