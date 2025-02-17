@@ -3945,6 +3945,7 @@
         "name": "transformationsVariableSupport",
         "resourceVersion": "1720021873452",
         "creationTimestamp": "2023-10-04T14:28:46Z",
+        "deletionTimestamp": "2025-02-06T20:19:53Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-07-03 15:51:13.452477 +0000 UTC"
         }
