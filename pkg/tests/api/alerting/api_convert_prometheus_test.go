@@ -1,6 +1,7 @@
 package alerting
 
 import (
+	"net/http"
 	"testing"
 	"time"
 
@@ -15,31 +16,8 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func TestIntegrationConvertPrometheusEndpoints(t *testing.T) {
-	testinfra.SQLiteIntegrationTest(t)
-
-	// Setup Grafana and its Database
-	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		DisableLegacyAlerting: true,
-		EnableUnifiedAlerting: true,
-		DisableAnonymous:      true,
-		AppModeProduction:     true,
-		EnableFeatureToggles:  []string{"alertingConversionAPI"},
-	})
-
-	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
-
-	// Create a user to make authenticated requests
-	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       "password",
-		Login:          "admin",
-	})
-
-	apiClient := newAlertingApiClient(grafanaListedAddr, "admin", "password")
-	namespace := "test-namespace"
-
-	promGroup1 := apimodels.PrometheusRuleGroup{
+var (
+	promGroup1 = apimodels.PrometheusRuleGroup{
 		Name:     "test-group-1",
 		Interval: prommodel.Duration(60 * time.Second),
 		Rules: []apimodels.PrometheusRule{
@@ -80,7 +58,7 @@ func TestIntegrationConvertPrometheusEndpoints(t *testing.T) {
 		},
 	}
 
-	promGroup2 := apimodels.PrometheusRuleGroup{
+	promGroup2 = apimodels.PrometheusRuleGroup{
 		Name:     "test-group-2",
 		Interval: prommodel.Duration(60 * time.Second),
 		Rules: []apimodels.PrometheusRule{
@@ -99,24 +77,128 @@ func TestIntegrationConvertPrometheusEndpoints(t *testing.T) {
 		},
 	}
 
+	promGroup3 = apimodels.PrometheusRuleGroup{
+		Name:     "test-group-3",
+		Interval: prommodel.Duration(60 * time.Second),
+		Rules: []apimodels.PrometheusRule{
+			{
+				Alert: "ServiceDown",
+				Expr:  "up == 0",
+				For:   util.Pointer(prommodel.Duration(2 * time.Minute)),
+				Labels: map[string]string{
+					"severity": "critical",
+				},
+				Annotations: map[string]string{
+					"annotation-1": "value-1",
+				},
+			},
+		},
+	}
+)
+
+func TestIntegrationConvertPrometheusEndpoints(t *testing.T) {
+	testinfra.SQLiteIntegrationTest(t)
+
+	// Setup Grafana and its Database
+	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+		DisableLegacyAlerting: true,
+		EnableUnifiedAlerting: true,
+		DisableAnonymous:      true,
+		AppModeProduction:     true,
+		EnableFeatureToggles:  []string{"alertingConversionAPI"},
+	})
+
+	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
+
+	// Create users to make authenticated requests
+	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+		DefaultOrgRole: string(org.RoleAdmin),
+		Password:       "password",
+		Login:          "admin",
+	})
+	apiClient := newAlertingApiClient(grafanaListedAddr, "admin", "password")
+
+	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+		DefaultOrgRole: string(org.RoleViewer),
+		Password:       "password",
+		Login:          "viewer",
+	})
+	viewerClient := newAlertingApiClient(grafanaListedAddr, "viewer", "password")
+
+	namespace1 := "test-namespace-1"
+	namespace2 := "test-namespace-2"
+
 	ds := apiClient.CreateDatasource(t, datasources.DS_PROMETHEUS)
 
-	t.Run("create two rule groups and get them back", func(t *testing.T) {
-		apiClient.ConvertPrometheusPostRuleGroup(t, namespace, ds.Body.Datasource.UID, promGroup1, nil)
-		apiClient.ConvertPrometheusPostRuleGroup(t, namespace, ds.Body.Datasource.UID, promGroup2, nil)
+	t.Run("create rule groups and get them back", func(t *testing.T) {
+		_, status, body := apiClient.ConvertPrometheusPostRuleGroup(t, namespace1, ds.Body.Datasource.UID, promGroup1, nil)
+		requireStatusCode(t, http.StatusAccepted, status, body)
+		_, status, body = apiClient.ConvertPrometheusPostRuleGroup(t, namespace1, ds.Body.Datasource.UID, promGroup2, nil)
+		requireStatusCode(t, http.StatusAccepted, status, body)
 
-		ns, _, _ := apiClient.GetAllRulesWithStatus(t)
+		// create a third group in a different namespace
+		_, status, body = apiClient.ConvertPrometheusPostRuleGroup(t, namespace2, ds.Body.Datasource.UID, promGroup3, nil)
+		requireStatusCode(t, http.StatusAccepted, status, body)
 
-		require.Len(t, ns[namespace], 2)
+		// And a non-provisioned rule in another namespace
+		namespace3UID := util.GenerateShortUID()
+		apiClient.CreateFolder(t, namespace3UID, "folder")
+		createRule(t, apiClient, namespace3UID)
 
-		rulesByGroupName := map[string][]apimodels.GettableExtendedRuleNode{}
-		for _, group := range ns[namespace] {
-			rulesByGroupName[group.Name] = append(rulesByGroupName[group.Name], group.Rules...)
+		// Now get the first group
+		group1 := apiClient.ConvertPrometheusGetRuleGroupRules(t, namespace1, promGroup1.Name)
+		require.Equal(t, promGroup1, group1)
+
+		// Get namespace1
+		ns1 := apiClient.ConvertPrometheusGetNamespaceRules(t, namespace1)
+		expectedNs1 := map[string][]apimodels.PrometheusRuleGroup{
+			namespace1: {promGroup1, promGroup2},
 		}
+		require.Equal(t, expectedNs1, ns1)
 
-		require.Len(t, rulesByGroupName[promGroup1.Name], 3)
-		require.Len(t, rulesByGroupName[promGroup2.Name], 1)
+		// Get all namespaces
+		namespaces := apiClient.ConvertPrometheusGetAllRules(t)
+		expectedNamespaces := map[string][]apimodels.PrometheusRuleGroup{
+			namespace1: {promGroup1, promGroup2},
+			namespace2: {promGroup3},
+		}
+		require.Equal(t, expectedNamespaces, namespaces)
 	})
+
+	t.Run("without permissions to create folders cannot create rule groups either", func(t *testing.T) {
+		_, status, raw := viewerClient.ConvertPrometheusPostRuleGroup(t, namespace1, ds.Body.Datasource.UID, promGroup1, nil)
+		requireStatusCode(t, http.StatusForbidden, status, raw)
+	})
+}
+
+func TestIntegrationConvertPrometheusEndpoints_CreatePausedRules(t *testing.T) {
+	testinfra.SQLiteIntegrationTest(t)
+
+	// Setup Grafana and its Database
+	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+		DisableLegacyAlerting: true,
+		EnableUnifiedAlerting: true,
+		DisableAnonymous:      true,
+		AppModeProduction:     true,
+		EnableFeatureToggles:  []string{"alertingConversionAPI"},
+	})
+
+	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
+
+	// Create users to make authenticated requests
+	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+		DefaultOrgRole: string(org.RoleAdmin),
+		Password:       "password",
+		Login:          "admin",
+	})
+	apiClient := newAlertingApiClient(grafanaListedAddr, "admin", "password")
+
+	ds := apiClient.CreateDatasource(t, datasources.DS_PROMETHEUS)
+
+	namespace1 := "test-namespace-1"
+
+	namespace1UID := util.GenerateShortUID()
+	apiClient.CreateFolder(t, namespace1UID, namespace1)
 
 	t.Run("when pausing header is set, rules should be paused", func(t *testing.T) {
 		tests := []struct {
@@ -155,21 +237,17 @@ func TestIntegrationConvertPrometheusEndpoints(t *testing.T) {
 				if tc.alertPaused {
 					headers["X-Grafana-Alerting-Alert-Rules-Paused"] = "true"
 				}
-				apiClient.ConvertPrometheusPostRuleGroup(t, namespace, ds.Body.Datasource.UID, promGroup1, headers)
 
-				ns, _, _ := apiClient.GetAllRulesWithStatus(t)
+				apiClient.ConvertPrometheusPostRuleGroup(t, namespace1, ds.Body.Datasource.UID, promGroup1, headers)
 
-				rulesByGroupName := map[string][]apimodels.GettableExtendedRuleNode{}
-				for _, group := range ns[namespace] {
-					rulesByGroupName[group.Name] = append(rulesByGroupName[group.Name], group.Rules...)
-				}
+				gr, _, _ := apiClient.GetRulesGroupWithStatus(t, namespace1UID, promGroup1.Name)
 
-				require.Len(t, rulesByGroupName[promGroup1.Name], 3)
+				require.Len(t, gr.Rules, 3)
 
 				pausedRecordingRules := 0
 				pausedAlertRules := 0
 
-				for _, rule := range rulesByGroupName[promGroup1.Name] {
+				for _, rule := range gr.Rules {
 					if rule.GrafanaManagedAlert.IsPaused {
 						if rule.GrafanaManagedAlert.Record != nil {
 							pausedRecordingRules++

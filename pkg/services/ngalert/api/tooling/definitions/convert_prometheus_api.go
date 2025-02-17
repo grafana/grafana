@@ -6,10 +6,10 @@ import (
 
 // swagger:route GET /convert/prometheus/config/v1/rules convert_prometheus RouteConvertPrometheusGetRules
 //
-// Gets all namespaces with their rule groups in Prometheus format.
+// Gets all Grafana-managed alert rules that were imported from Prometheus-compatible sources, grouped by namespace.
 //
 //     Produces:
-//     - application/json
+//     - application/yaml
 //
 //     Responses:
 //       200: PrometheusNamespace
@@ -18,10 +18,10 @@ import (
 
 // swagger:route GET /convert/prometheus/config/v1/rules/{NamespaceTitle} convert_prometheus RouteConvertPrometheusGetNamespace
 //
-// Gets rules in prometheus format for a given namespace.
+// Gets Grafana-managed alert rules that were imported from Prometheus-compatible sources for a specified namespace (folder).
 //
 //     Produces:
-//     - application/json
+//     - application/yaml
 //
 //     Responses:
 //       200: PrometheusNamespace
@@ -30,10 +30,10 @@ import (
 
 // swagger:route GET /convert/prometheus/config/v1/rules/{NamespaceTitle}/{Group} convert_prometheus RouteConvertPrometheusGetRuleGroup
 //
-// Gets a rule group in Prometheus format.
+// Gets a single rule group in Prometheus-compatible format if it was imported from a Prometheus-compatible source.
 //
 //     Produces:
-//     - application/json
+//     - application/yaml
 //
 //     Responses:
 //       200: PrometheusRuleGroup
@@ -42,7 +42,9 @@ import (
 
 // swagger:route POST /convert/prometheus/config/v1/rules/{NamespaceTitle} convert_prometheus RouteConvertPrometheusPostRuleGroup
 //
-// Creates or updates a rule group in Prometheus format.
+// Converts a Prometheus rule group into a Grafana rule group and creates or updates it within the specified namespace.
+// If the group already exists and was not imported from a Prometheus-compatible source initially,
+// it will not be replaced and an error will be returned.
 //
 //     Consumes:
 //     - application/yaml
@@ -59,7 +61,7 @@ import (
 
 // swagger:route DELETE /convert/prometheus/config/v1/rules/{NamespaceTitle} convert_prometheus RouteConvertPrometheusDeleteNamespace
 //
-// Deletes all rule groups in the given namespace.
+// Deletes all rule groups that were imported from Prometheus-compatible sources within the specified namespace.
 //
 //     Produces:
 //     - application/json
@@ -70,7 +72,7 @@ import (
 
 // swagger:route DELETE /convert/prometheus/config/v1/rules/{NamespaceTitle}/{Group} convert_prometheus RouteConvertPrometheusDeleteRuleGroup
 //
-// Deletes a rule group in Prometheus format.
+// Deletes a specific rule group if it was imported from a Prometheus-compatible source.
 //
 //     Produces:
 //     - application/json

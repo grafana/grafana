@@ -1105,12 +1105,12 @@
     "/convert/prometheus/config/v1/rules": {
       "get": {
         "produces": [
-          "application/json"
+          "application/yaml"
         ],
         "tags": [
           "convert_prometheus"
         ],
-        "summary": "Gets all namespaces with their rule groups in Prometheus format.",
+        "summary": "Gets all Grafana-managed alert rules that were imported from Prometheus-compatible sources, grouped by namespace.",
         "operationId": "RouteConvertPrometheusGetRules",
         "responses": {
           "200": {
@@ -1137,12 +1137,12 @@
     "/convert/prometheus/config/v1/rules/{NamespaceTitle}": {
       "get": {
         "produces": [
-          "application/json"
+          "application/yaml"
         ],
         "tags": [
           "convert_prometheus"
         ],
-        "summary": "Gets rules in prometheus format for a given namespace.",
+        "summary": "Gets Grafana-managed alert rules that were imported from Prometheus-compatible sources for a specified namespace (folder).",
         "operationId": "RouteConvertPrometheusGetNamespace",
         "parameters": [
           {
@@ -1174,6 +1174,7 @@
         }
       },
       "post": {
+        "description": "If the group already exists and was not imported from a Prometheus-compatible source initially,\nit will not be replaced and an error will be returned.",
         "consumes": [
           "application/yaml"
         ],
@@ -1183,7 +1184,7 @@
         "tags": [
           "convert_prometheus"
         ],
-        "summary": "Creates or updates a rule group in Prometheus format.",
+        "summary": "Converts a Prometheus rule group into a Grafana rule group and creates or updates it within the specified namespace.",
         "operationId": "RouteConvertPrometheusPostRuleGroup",
         "parameters": [
           {
@@ -1238,7 +1239,7 @@
         "tags": [
           "convert_prometheus"
         ],
-        "summary": "Deletes all rule groups in the given namespace.",
+        "summary": "Deletes all rule groups that were imported from Prometheus-compatible sources within the specified namespace.",
         "operationId": "RouteConvertPrometheusDeleteNamespace",
         "parameters": [
           {
@@ -1267,12 +1268,12 @@
     "/convert/prometheus/config/v1/rules/{NamespaceTitle}/{Group}": {
       "get": {
         "produces": [
-          "application/json"
+          "application/yaml"
         ],
         "tags": [
           "convert_prometheus"
         ],
-        "summary": "Gets a rule group in Prometheus format.",
+        "summary": "Gets a single rule group in Prometheus-compatible format if it was imported from a Prometheus-compatible source.",
         "operationId": "RouteConvertPrometheusGetRuleGroup",
         "parameters": [
           {
@@ -1316,7 +1317,7 @@
         "tags": [
           "convert_prometheus"
         ],
-        "summary": "Deletes a rule group in Prometheus format.",
+        "summary": "Deletes a specific rule group if it was imported from a Prometheus-compatible source.",
         "operationId": "RouteConvertPrometheusDeleteRuleGroup",
         "parameters": [
           {
@@ -8710,7 +8711,6 @@
       }
     },
     "alertGroups": {
-      "description": "AlertGroups alert groups",
       "type": "array",
       "items": {
         "type": "object",
