@@ -51,9 +51,8 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 
-	pollingInterval := opts.PollingInterval
-	if pollingInterval == 0 {
-		pollingInterval = defaultPollingInterval
+	if opts.PollingInterval == 0 {
+		opts.PollingInterval = defaultPollingInterval
 	}
 	if opts.WatchBufferSize == 0 {
 		opts.WatchBufferSize = defaultWatchBufferSize
@@ -65,7 +64,7 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 		log:             log.New("sql-resource-server"),
 		tracer:          opts.Tracer,
 		dbProvider:      opts.DBProvider,
-		pollingInterval: pollingInterval,
+		pollingInterval: opts.PollingInterval,
 		watchBufferSize: opts.WatchBufferSize,
 		batchLock:       &batchLock{running: make(map[string]bool)},
 	}, nil
