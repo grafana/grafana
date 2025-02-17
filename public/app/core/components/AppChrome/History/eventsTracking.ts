@@ -1,7 +1,7 @@
 import { reportInteraction } from '@grafana/runtime';
 
 const UNIFIED_HISTORY_ENTRY_CLICKED = 'grafana_unified_history_entry_clicked';
-const UNIFIED_HISTORY_ENTRY_DUPLICATED = 'grafana_unified_history_entry_duplicated';
+const UNIFIED_HISTORY_ENTRY_DUPLICATED = 'grafana_unified_history_duplicated_entry_rendered';
 
 //Currently just 'timeRange' is supported
 //in short term, we could add 'templateVariables' for example
