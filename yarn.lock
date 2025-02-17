@@ -11433,34 +11433,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"angular-bindonce@npm:0.3.1":
-  version: 0.3.1
-  resolution: "angular-bindonce@npm:0.3.1"
-  checksum: 10/c756ded4a920191c953732050095b2ef3f9faf42342a40c1e6f23b08ca730e57c9d30fd7b432bc74a950de162495707540cac865aa4a93a3486fc507d382d006
-  languageName: node
-  linkType: hard
-
-"angular-route@npm:1.8.3":
-  version: 1.8.3
-  resolution: "angular-route@npm:1.8.3"
-  checksum: 10/c55bcdb75ce0ecb131642aa51a9ebc49638f60e627902af0914b52fc80467ddba514eb96c0f252e4e327699893417fcbf18f5c617b1a69ada5a9dd7a4f7f8878
-  languageName: node
-  linkType: hard
-
-"angular-sanitize@npm:1.8.3":
-  version: 1.8.3
-  resolution: "angular-sanitize@npm:1.8.3"
-  checksum: 10/50227cd12259bc12b91d53f23bab9a026831d56f0b4cb74ddb3571c6da602720041e9238857837d014ef2beccf4a9565a19aa01cb2ec8ba2d3111b6c05af93e8
-  languageName: node
-  linkType: hard
-
-"angular@npm:1.8.3":
-  version: 1.8.3
-  resolution: "angular@npm:1.8.3"
-  checksum: 10/4a21f1f74790dc2cdceb582386abdc7b55a0463f86aaa59573c940295cb51ed61b8fa610011134280ae0da7f97fbbc660f3a4e4491b24c92b2c32a547073a1c2
-  languageName: node
-  linkType: hard
-
 "ansi-colors@npm:^4.1.1":
   version: 4.1.1
   resolution: "ansi-colors@npm:4.1.1"
@@ -18242,10 +18214,6 @@ __metadata:
     "@visx/shape": "npm:3.12.0"
     "@visx/tooltip": "npm:3.12.0"
     "@welldone-software/why-did-you-render": "npm:8.0.3"
-    angular: "npm:1.8.3"
-    angular-bindonce: "npm:0.3.1"
-    angular-route: "npm:1.8.3"
-    angular-sanitize: "npm:1.8.3"
     ansicolor: "npm:2.0.3"
     autoprefixer: "npm:10.4.20"
     babel-loader: "npm:9.2.1"
