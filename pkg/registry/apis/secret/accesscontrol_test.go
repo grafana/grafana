@@ -125,15 +125,15 @@ func TestSecretAuthorizerVerbs(t *testing.T) {
 			verb:         utils.VerbGet,
 			resourceName: "resource-name",
 			permissions: map[string][]string{
-				ActionSecretsManagerSecureValuesDescribe: {ScopeAllSecureValues},
-				ActionSecretsManagerKeepersDescribe:      {ScopeAllKeepers},
+				ActionSecretsManagerSecureValuesRead: {ScopeAllSecureValues},
+				ActionSecretsManagerKeepersRead:      {ScopeAllKeepers},
 			},
 		},
 		{
 			verb: utils.VerbList,
 			permissions: map[string][]string{
-				ActionSecretsManagerSecureValuesList: {ScopeAllSecureValues},
-				ActionSecretsManagerKeepersList:      {ScopeAllKeepers},
+				ActionSecretsManagerSecureValuesRead: {ScopeAllSecureValues},
+				ActionSecretsManagerKeepersRead:      {ScopeAllKeepers},
 			},
 		},
 		{

@@ -13,16 +13,14 @@ import (
 
 const (
 	// SecureValues
-	ActionSecretsManagerSecureValuesWrite    = "secrets-manager.securevalues:write"    // CREATE + UPDATE.
-	ActionSecretsManagerSecureValuesDescribe = "secrets-manager.securevalues:describe" // GET.
-	ActionSecretsManagerSecureValuesList     = "secrets-manager.securevalues:list"     // LIST.
-	ActionSecretsManagerSecureValuesDelete   = "secrets-manager.securevalues:delete"   // DELETE.
+	ActionSecretsManagerSecureValuesWrite  = "secrets-manager.securevalues:write"  // CREATE + UPDATE.
+	ActionSecretsManagerSecureValuesRead   = "secrets-manager.securevalues:read"   // GET + LIST.
+	ActionSecretsManagerSecureValuesDelete = "secrets-manager.securevalues:delete" // DELETE.
 
 	// Keepers
-	ActionSecretsManagerKeepersWrite    = "secrets-manager.keepers:write"    // CREATE + UPDATE.
-	ActionSecretsManagerKeepersDescribe = "secrets-manager.keepers:describe" // GET.
-	ActionSecretsManagerKeepersList     = "secrets-manager.keepers:list"     // LIST.
-	ActionSecretsManagerKeepersDelete   = "secrets-manager.keepers:delete"   // DELETE.
+	ActionSecretsManagerKeepersWrite  = "secrets-manager.keepers:write"  // CREATE + UPDATE.
+	ActionSecretsManagerKeepersRead   = "secrets-manager.keepers:read"   // GET + LIST.
+	ActionSecretsManagerKeepersDelete = "secrets-manager.keepers:delete" // DELETE.
 )
 
 var (
@@ -43,11 +41,7 @@ func RegisterAccessControlRoles(service accesscontrol.Service) error {
 			Group:       "Secrets Manager",
 			Permissions: []accesscontrol.Permission{
 				{
-					Action: ActionSecretsManagerSecureValuesList,
-					Scope:  ScopeAllSecureValues,
-				},
-				{
-					Action: ActionSecretsManagerSecureValuesDescribe,
+					Action: ActionSecretsManagerSecureValuesRead,
 					Scope:  ScopeAllSecureValues,
 				},
 			},
@@ -84,11 +78,7 @@ func RegisterAccessControlRoles(service accesscontrol.Service) error {
 			Group:       "Secrets Manager",
 			Permissions: []accesscontrol.Permission{
 				{
-					Action: ActionSecretsManagerKeepersList,
-					Scope:  ScopeAllKeepers,
-				},
-				{
-					Action: ActionSecretsManagerKeepersDescribe,
+					Action: ActionSecretsManagerKeepersRead,
 					Scope:  ScopeAllKeepers,
 				},
 			},
@@ -184,8 +174,8 @@ func SecretAuthorizer(accessControl accesscontrol.AccessControl) authorizer.Auth
 
 			evaluatorForVerb = map[string]accesscontrol.Evaluator{
 				utils.VerbCreate: accesscontrol.EvalPermission(ActionSecretsManagerSecureValuesWrite),
-				utils.VerbGet:    accesscontrol.EvalPermission(ActionSecretsManagerSecureValuesDescribe, scope),
-				utils.VerbList:   accesscontrol.EvalPermission(ActionSecretsManagerSecureValuesList),
+				utils.VerbGet:    accesscontrol.EvalPermission(ActionSecretsManagerSecureValuesRead, scope),
+				utils.VerbList:   accesscontrol.EvalPermission(ActionSecretsManagerSecureValuesRead),
 				utils.VerbUpdate: accesscontrol.EvalPermission(ActionSecretsManagerSecureValuesWrite, scope),
 				utils.VerbDelete: accesscontrol.EvalPermission(ActionSecretsManagerSecureValuesDelete, scope),
 			}
@@ -198,8 +188,8 @@ func SecretAuthorizer(accessControl accesscontrol.AccessControl) authorizer.Auth
 
 			evaluatorForVerb = map[string]accesscontrol.Evaluator{
 				utils.VerbCreate: accesscontrol.EvalPermission(ActionSecretsManagerKeepersWrite),
-				utils.VerbGet:    accesscontrol.EvalPermission(ActionSecretsManagerKeepersDescribe, scope),
-				utils.VerbList:   accesscontrol.EvalPermission(ActionSecretsManagerKeepersList),
+				utils.VerbGet:    accesscontrol.EvalPermission(ActionSecretsManagerKeepersRead, scope),
+				utils.VerbList:   accesscontrol.EvalPermission(ActionSecretsManagerKeepersRead),
 				utils.VerbUpdate: accesscontrol.EvalPermission(ActionSecretsManagerKeepersWrite, scope),
 				utils.VerbDelete: accesscontrol.EvalPermission(ActionSecretsManagerKeepersDelete, scope),
 			}

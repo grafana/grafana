@@ -27,15 +27,13 @@ var (
 
 	ActionsAllKeepers = []string{
 		secret.ActionSecretsManagerKeepersWrite,
-		secret.ActionSecretsManagerKeepersList,
+		secret.ActionSecretsManagerKeepersRead,
 		secret.ActionSecretsManagerKeepersDelete,
-		secret.ActionSecretsManagerKeepersDescribe,
 	}
 	ActionsAllSecureValues = []string{
 		secret.ActionSecretsManagerSecureValuesWrite,
-		secret.ActionSecretsManagerSecureValuesList,
+		secret.ActionSecretsManagerSecureValuesRead,
 		secret.ActionSecretsManagerSecureValuesDelete,
-		secret.ActionSecretsManagerSecureValuesDescribe,
 	}
 )
 
