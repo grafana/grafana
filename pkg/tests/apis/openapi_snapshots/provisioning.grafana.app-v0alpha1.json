@@ -2780,9 +2780,6 @@
       },
       "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.GitHubRepositoryConfig": {
         "type": "object",
-        "required": [
-          "url"
-        ],
         "properties": {
           "branch": {
             "description": "The branch to use in the repository. By default, this is the main branch.",
@@ -2795,7 +2792,7 @@
             "x-kubernetes-list-type": "atomic"
           },
           "generateDashboardPreviews": {
-            "description": "Whether we should show dashboard previews for pull requests By default, this is false (i.e. we will not create previews).",
+            "description": "Whether we should show dashboard previews for pull requests. By default, this is false (i.e. we will not create previews).",
             "type": "boolean"
           },
           "token": {
@@ -2803,9 +2800,8 @@
             "type": "string"
           },
           "url": {
-            "description": "The repository URL `https://github.com/example/test`).",
-            "type": "string",
-            "default": ""
+            "description": "The repository URL (e.g. `https://github.com/example/test`).",
+            "type": "string"
           },
           "workflows": {
             "description": "Workflow allowed for changes to the repository. The order is relevant for defining the precedence of the workflows. Possible values: pull-request, branch, push.",
