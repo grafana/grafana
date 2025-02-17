@@ -293,4 +293,21 @@ describe('filterRules', function () {
 
     expect(() => filterRules([ns], getFilter({ freeFormWords: ['.+'] }))).not.toThrow();
   });
+
+  it.each(['[square-bracket]', '[5m]', '(bracket-test)', 'aste-risk*', 'with+ plus'])(
+    'should apply filters when expression contains special characters = "%s"',
+    (expression) => {
+      const rules = [mockCombinedRule({ name: expression })];
+
+      const ns = mockCombinedRuleNamespace({
+        name: 'namespace',
+        groups: [mockCombinedRuleGroup('group', rules)],
+      });
+
+      const filtered = filterRules([ns], getFilter({ freeFormWords: [expression] }));
+
+      expect(filtered[0]?.groups[0]?.rules).toHaveLength(1);
+      expect(filtered[0]?.groups[0]?.rules[0]?.name).toBe(expression);
+    }
+  );
 });
