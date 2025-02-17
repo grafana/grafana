@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Alert, Button, FieldSet, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Button, FieldSet, Stack, Text, useStyles2 } from '@grafana/ui';
 
 import { ExportJobStatus } from '../ExportToRepository';
 import { useCreateRepositoryExportMutation } from '../api';
@@ -44,10 +44,6 @@ export function ExportStep() {
             will be automatically saved to the repository.
           </Text>
         </div>
-
-        <Alert severity="info" title="Note">
-          Dashboards app/Grafana will not be unavailable when starting this process
-        </Alert>
 
         <div className={styles.exportInfo}>
           <div>

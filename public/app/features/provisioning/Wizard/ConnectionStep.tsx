@@ -1,6 +1,6 @@
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { Field, Input, Combobox, Stack, Card, FieldSet } from '@grafana/ui';
+import { Field, Input, Combobox, Stack, Card, FieldSet, Alert } from '@grafana/ui';
 
 import { WizardFormData } from './types';
 
@@ -59,6 +59,10 @@ export function ConnectionStep() {
             )}
           />
         </Field>
+
+        <Alert severity="info" title="Note">
+          Dashboards app/Grafana will be unavailable when starting this process.
+        </Alert>
 
         <Field
           label="Display name"
