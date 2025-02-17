@@ -200,7 +200,6 @@ func (b *backend) create(ctx context.Context, event resource.WriteEvent) (int64,
 		folder = event.Object.GetFolder()
 	}
 	err := b.db.WithTx(ctx, ReadCommitted, func(ctx context.Context, tx db.Tx) error {
-
 		// 1. Insert into resource
 		if _, err := dbutil.Exec(ctx, tx, sqlResourceInsert, sqlResourceRequest{
 			SQLTemplate: sqltemplate.New(b.dialect),
