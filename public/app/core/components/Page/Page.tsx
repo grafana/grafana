@@ -27,6 +27,7 @@ export const Page: PageType = ({
   info,
   layout = PageLayoutType.Standard,
   onSetScrollRef,
+  background,
   ...otherProps
 }) => {
   const styles = useStyles2(getStyles);
