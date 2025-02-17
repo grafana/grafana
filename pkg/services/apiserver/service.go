@@ -184,7 +184,7 @@ func ProvideService(
 		contextProvider:                   contextProvider,
 		pluginStore:                       pluginStore,
 		serverLockService:                 serverLockService,
-		storageStatus:     storageStatus,
+		storageStatus:                     storageStatus,
 		unified:                           unified,
 		buildHandlerChainFuncFromBuilders: buildHandlerChainFuncFromBuilders,
 	}
