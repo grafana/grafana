@@ -71,7 +71,7 @@
 
 /apps/alerting/ @grafana/alerting-backend
 /apps/playlist/ @grafana/grafana-app-platform-squad
-/apps/investigation/ @fcjack @matryer
+/apps/investigations/ @fcjack @matryer @svennergr
 /apps/advisor/ @grafana/plugins-platform-backend
 /pkg/api/ @grafana/grafana-backend-group
 /pkg/apis/ @grafana/grafana-app-platform-squad

@@ -73,7 +73,7 @@ COPY pkg/storage/unified/apistore pkg/storage/unified/apistore
 COPY pkg/semconv pkg/semconv
 COPY pkg/aggregator pkg/aggregator
 COPY apps/playlist apps/playlist
-COPY apps/investigation apps/investigation
+COPY apps/investigations apps/investigations
 COPY apps/advisor apps/advisor
 COPY apps apps
 COPY kindsv2 kindsv2
