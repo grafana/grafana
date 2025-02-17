@@ -1551,8 +1551,6 @@ github.com/grafana/grafana/apps/advisor v0.0.0-20250123151950-b066a6313173 h1:uO
 github.com/grafana/grafana/apps/advisor v0.0.0-20250123151950-b066a6313173/go.mod h1:goSDiy3jtC2cp8wjpPZdUHRENcoSUHae1/Px/MDfddA=
 github.com/grafana/grafana/apps/alerting/notifications v0.0.0-20250121113133-e747350fee2d h1:NRVOtiG1aUwOazBj9KM7X2o2shsM6TchqisezzoH1gw=
 github.com/grafana/grafana/apps/alerting/notifications v0.0.0-20250121113133-e747350fee2d/go.mod h1:AvleS6icyPmcBjihtx5jYEvdzLmHGBp66NuE0AMR57A=
-github.com/grafana/grafana/apps/investigation v0.0.0-20250121113133-e747350fee2d h1:oNc/aDfDucQxLbRZK25yz3Cwc+dGo1C0Xmm2LaliWUQ=
-github.com/grafana/grafana/apps/investigation v0.0.0-20250121113133-e747350fee2d/go.mod h1:HQprw3MmiYj5OUV9CZnkwA1FKDZBmYACuAB3oDvUOmI=
 github.com/grafana/grafana/apps/playlist v0.0.0-20250121113133-e747350fee2d h1:cJ+9jgHw8Z17rM+DCdxvyWxPqH9OB9fkPLbnWEO+QGg=
 github.com/grafana/grafana/apps/playlist v0.0.0-20250121113133-e747350fee2d/go.mod h1:DjJe5osrW/BKrzN9hAAOSElNWutj1bcriExa7iDP7kA=
 github.com/grafana/grafana/pkg/aggregator v0.0.0-20250121113133-e747350fee2d h1:aBD5kzsIAh50vjNqUkWK9mNpLGIBYAnKkWtUepGNAiQ=
