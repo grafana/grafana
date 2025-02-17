@@ -228,7 +228,6 @@ teamHttpHeadersMimir,experimental,@grafana/identity-access-team,false,false,fals
 ABTestFeatureToggleA,experimental,@grafana/sharing-squad,false,false,false
 templateVariablesUsesCombobox,experimental,@grafana/grafana-frontend-platform,false,false,true
 ABTestFeatureToggleB,experimental,@grafana/sharing-squad,false,false,false
-queryLibraryDashboards,experimental,@grafana/grafana-frontend-platform,false,false,false
 grafanaAdvisor,experimental,@grafana/plugins-platform-backend,false,false,false
 elasticsearchImprovedParsing,experimental,@grafana/aws-datasources,false,false,false
 exploreMetricsUseExternalAppPlugin,experimental,@grafana/observability-metrics,false,true,true
