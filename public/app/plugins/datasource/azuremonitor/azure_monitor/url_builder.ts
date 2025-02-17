@@ -67,12 +67,20 @@ export default class UrlBuilder {
         resourceName,
       });
     }
+
+    if (resourceUri.includes('resourceGroups')) {
+      return `${baseUrl}${resourceUri}/resources?api-version=${apiVersion}${
+        region ? `&region=${region}` : globalRegion ? '&region=global' : ''
+      }`;
+    } else {
+      apiVersion = "2017-12-01-preview"
+      return `${baseUrl}${resourceUri}/providers/microsoft.insights/metricNamespaces?api-version=${apiVersion}${
+        region ? `&region=${region}` : globalRegion ? '&region=global' : ''
+      }`;
+    }
     // JUST MAKE RESOURCE GROUPS BEHAVIOR CHANGE NOT AT THE SUB OR RESOURCE LEVEL
     // toggle this on or off?
     // need distinct to filter out namespaces with metrics? resources endpoint supports filtering? use resourcegraph query
-    return `${baseUrl}${resourceUri}/resources?api-version=${apiVersion}${
-      region ? `&region=${region}` : globalRegion ? '&region=global' : ''
-    }`;
   }
 
   static buildAzureMonitorGetMetricNamesUrl(
