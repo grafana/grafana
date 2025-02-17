@@ -68,7 +68,7 @@ export function ExportToRepository({ repo }: Props) {
   );
 }
 
-function ExportJobStatus({ name }: { name: string }) {
+export function ExportJobStatus({ name }: { name: string }) {
   const jobQuery = useListJobQuery({ watch: true, fieldSelector: `metadata.name=${name}` });
   const job = jobQuery.data?.items?.[0];
 

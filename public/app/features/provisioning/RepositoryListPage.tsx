@@ -82,7 +82,7 @@ function RepositoryListPageContent({ items }: { items?: Repository[] }) {
                 const url = item.spec.github?.url ?? '';
                 let branch = url;
                 if (spec?.branch) {
-                  branch += `tree/` + spec?.branch;
+                  branch += `/tree/` + spec?.branch;
                 }
                 meta.push(
                   <TextLink key={'link'} external style={{ color: 'inherit' }} href={branch}>
@@ -91,7 +91,7 @@ function RepositoryListPageContent({ items }: { items?: Repository[] }) {
                 );
 
                 if (item.status?.webhook?.id) {
-                  const hook = url + `settings/hooks/${item.status?.webhook?.id}`;
+                  const hook = url + `/settings/hooks/${item.status?.webhook?.id}`;
                   meta.push(
                     <TextLink key={'webhook'} style={{ color: 'inherit' }} href={hook}>
                       Webhook <Icon name={'check'} />
