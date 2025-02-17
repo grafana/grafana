@@ -24,7 +24,6 @@ import (
 	folder "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
@@ -192,41 +191,6 @@ func TestIntegrationProvisioning(t *testing.T) {
 	t.Run("creating GitHub repository syncs from branch selected", func(t *testing.T) {
 		cleanSlate(t)
 
-		treeEntry := func(fpath string, content []byte) *gh.TreeEntry {
-			sha := sha256.Sum256(content)
-			typ := "blob"
-			mode := "100644"
-			if strings.HasSuffix(fpath, "/") {
-				typ = "tree"
-				mode = "040000"
-			}
-
-			return &gh.TreeEntry{
-				SHA:     gh.String(hex.EncodeToString(sha[:])),
-				Path:    &fpath,
-				Size:    gh.Int(len(content)),
-				Type:    &typ,
-				Mode:    &mode,
-				Content: gh.String(string(content)),
-			}
-		}
-		repoContent := func(fpath string, content []byte) *gh.RepositoryContent {
-			sha := sha256.Sum256(content)
-			typ := "blob"
-			if strings.HasSuffix(fpath, "/") {
-				typ = "tree"
-			}
-
-			return &gh.RepositoryContent{
-				SHA:      gh.String(hex.EncodeToString(sha[:])),
-				Name:     gh.String(path.Base(fpath)),
-				Path:     &fpath,
-				Size:     gh.Int(len(content)),
-				Type:     &typ,
-				Content:  gh.String(string(content)),
-				Encoding: gh.String("UTF-8"),
-			}
-		}
 		helper.GetEnv().GitHubFactory.Client = ghmock.NewMockedHTTPClient(
 			ghmock.WithRequestMatch(ghmock.GetUser, gh.User{Name: gh.String("github-user")}),
 			ghmock.WithRequestMatch(ghmock.GetReposHooksByOwnerByRepo, []*gh.Hook{}),
@@ -433,51 +397,39 @@ func randomAsciiStr(n int) string {
 	return b.String()
 }
 
-func mockRepositoryContent(path string, content string) github.RepositoryContent {
-	hash := sha256.Sum256([]byte(content))
+func treeEntry(fpath string, content []byte) *gh.TreeEntry {
+	sha := sha256.Sum256(content)
+	typ := "blob"
+	mode := "100644"
+	if strings.HasSuffix(fpath, "/") {
+		typ = "tree"
+		mode = "040000"
+	}
 
-	return mockContent{
-		isDir:       strings.HasSuffix(path, "/"),
-		fileContent: content,
-		isSymlink:   false,
-		path:        path,
-		sha:         hex.EncodeToString(hash[:]),
-		size:        int64(len(content)),
+	return &gh.TreeEntry{
+		SHA:     gh.String(hex.EncodeToString(sha[:])),
+		Path:    &fpath,
+		Size:    gh.Int(len(content)),
+		Type:    &typ,
+		Mode:    &mode,
+		Content: gh.String(string(content)),
 	}
 }
 
-type mockContent struct {
-	isDir          bool
-	fileContent    string
-	fileContentErr error
-	isSymlink      bool
-	path           string
-	sha            string
-	size           int64
-}
+func repoContent(fpath string, content []byte) *gh.RepositoryContent {
+	sha := sha256.Sum256(content)
+	typ := "blob"
+	if strings.HasSuffix(fpath, "/") {
+		typ = "tree"
+	}
 
-func (c mockContent) IsDirectory() bool {
-	return c.isDir
+	return &gh.RepositoryContent{
+		SHA:      gh.String(hex.EncodeToString(sha[:])),
+		Name:     gh.String(path.Base(fpath)),
+		Path:     &fpath,
+		Size:     gh.Int(len(content)),
+		Type:     &typ,
+		Content:  gh.String(string(content)),
+		Encoding: gh.String("UTF-8"),
+	}
 }
-
-func (c mockContent) GetFileContent() (string, error) {
-	return c.fileContent, c.fileContentErr
-}
-
-func (c mockContent) IsSymlink() bool {
-	return c.isSymlink
-}
-
-func (c mockContent) GetPath() string {
-	return c.path
-}
-
-func (c mockContent) GetSHA() string {
-	return c.path
-}
-
-func (c mockContent) GetSize() int64 {
-	return c.size
-}
-
-var _ github.RepositoryContent = mockContent{}
