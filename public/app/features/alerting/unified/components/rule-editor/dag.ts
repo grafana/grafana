@@ -1,4 +1,4 @@
-import { compact, memoize, uniq } from 'lodash';
+import { compact, memoize, reject, uniq } from 'lodash';
 
 import { Edge, Graph, Node } from 'app/core/utils/dag';
 import { isExpressionQuery } from 'app/features/expressions/guards';
@@ -11,6 +11,9 @@ import { AlertQuery } from 'app/types/unified-alerting-dto';
  */
 export function createDagFromQueries(queries: AlertQuery[]): Graph {
   const graph = new Graph();
+
+  // collect link errors in here so we can throw a single error with all nodes that failed to link
+  const linkErrors: LinkError[] = [];
 
   const nodes = queries.map((query) => query.refId);
   graph.createNodes(nodes);
@@ -25,18 +28,66 @@ export function createDagFromQueries(queries: AlertQuery[]): Graph {
     const targets = getTargets(query.model);
 
     targets.forEach((target) => {
-      const isSelf = source === target;
-
-      if (source && target && !isSelf) {
-        graph.link(target, source);
+      if (source && target) {
+        try {
+          graph.link(target, source);
+        } catch (error) {
+          linkErrors.push({ source, target, error });
+        }
       }
     });
   });
 
+  if (linkErrors.length > 0) {
+    throw new DAGError('failed to create DAG from queries', { cause: linkErrors });
+  }
+
   return graph;
 }
 
-function getTargets(model: ExpressionQuery) {
+/**
+ * This function attempts to create a "clean" DAG where only the nodes that successfully link are left
+ * ⚠️ This is a recursive function and very expensive for larger DAGs or large amount of queries
+ */
+export function createDAGFromQueriesSafe(
+  queries: AlertQuery[],
+  collectedLinkErrors: LinkError[] = []
+): [Graph, LinkError[]] {
+  try {
+    return [createDagFromQueries(queries), collectedLinkErrors];
+  } catch (error) {
+    if (error instanceof DAGError) {
+      const linkErrors = error.cause;
+      collectedLinkErrors.push(...linkErrors);
+
+      const updatedQueries = reject(queries, (query) =>
+        linkErrors.some((linkError) => linkError.source === query.refId)
+      );
+
+      return createDAGFromQueriesSafe(updatedQueries, collectedLinkErrors);
+    }
+  }
+
+  return [new Graph(), collectedLinkErrors];
+}
+
+export interface LinkError {
+  source: string;
+  target: string;
+  error: unknown;
+}
+
+/** DAGError subclass, this is just a regular error but with LinkError[] as the cause */
+export class DAGError extends Error {
+  constructor(message: string, options: { cause: LinkError[] }) {
+    super(message, options);
+    this.cause = options?.cause ?? [];
+  }
+
+  cause: LinkError[];
+}
+
+export function getTargets(model: ExpressionQuery) {
   const isMathExpression = model.type === ExpressionQueryType.math;
   const isClassicCondition = model.type === ExpressionQueryType.classic;
 
