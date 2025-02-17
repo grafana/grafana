@@ -139,10 +139,6 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
       ? ensureColumnsTransformer.operator(null, ctx)
       : noopTransformer.operator({}, ctx);
 
-    if (options.alias != null) {
-      options.alias = ctx.interpolate(options.alias);
-    }
-
     return outerSource.pipe(
       operator,
       map((data) => {
@@ -573,7 +569,8 @@ function findFieldValuesWithNameOrConstant(
   }
 
   if (value.matcher && value.matcher.id === FieldMatcherID.byName) {
-    const name = ctx.interpolate(value.matcher.options ?? '');
+    const name = value.matcher.options ?? '';
+
     for (const f of frame.fields) {
       if (name === getFieldDisplayName(f, frame, allFrames)) {
         if (f.type === FieldType.boolean) {
@@ -584,7 +581,7 @@ function findFieldValuesWithNameOrConstant(
     }
   }
 
-  const v = parseFloat(value.fixed ?? ctx.interpolate(value.matcher?.options ?? ''));
+  const v = parseFloat(value.fixed ?? value.matcher?.options ?? '');
   if (!isNaN(v)) {
     return new Array(frame.length).fill(v);
   }

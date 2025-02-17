@@ -276,6 +276,23 @@
     },
     {
       "metadata": {
+        "name": "alertingJiraIntegration",
+        "resourceVersion": "1739362088655",
+        "creationTimestamp": "2025-02-12T10:45:07Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-02-12 12:08:08.655259 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables the new Jira integration for contact points in cloud alert managers.",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "frontend": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingListViewV2",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2024-05-24T14:40:49Z"
@@ -382,6 +399,24 @@
         "stage": "GA",
         "codeowner": "@grafana/alerting-squad",
         "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "alertingRuleVersionHistoryRestore",
+        "resourceVersion": "1738831836776",
+        "creationTimestamp": "2025-01-16T14:08:12Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-02-06 08:50:36.776739 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables the alert rule version history restore feature",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "frontend": true,
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
       }
     },
     {
@@ -3408,6 +3443,7 @@
         "name": "queryLibraryDashboards",
         "resourceVersion": "1736850377404",
         "creationTimestamp": "2025-01-14T11:01:15Z",
+        "deletionTimestamp": "2025-02-14T16:06:41Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2025-01-14 10:26:17.404592 +0000 UTC"
         }
@@ -3928,6 +3964,7 @@
         "name": "transformationsVariableSupport",
         "resourceVersion": "1720021873452",
         "creationTimestamp": "2023-10-04T14:28:46Z",
+        "deletionTimestamp": "2025-02-06T20:19:53Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-07-03 15:51:13.452477 +0000 UTC"
         }
