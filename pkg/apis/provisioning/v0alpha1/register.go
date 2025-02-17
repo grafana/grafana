@@ -2,7 +2,6 @@ package v0alpha1
 
 import (
 	"errors"
-	"fmt"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -40,10 +39,8 @@ var RepositoryResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 			switch m.Spec.Type {
 			case LocalRepositoryType:
 				target = m.Spec.Local.Path
-			case S3RepositoryType:
-				target = m.Spec.S3.Bucket
 			case GitHubRepositoryType:
-				target = fmt.Sprintf("%s/%s", m.Spec.GitHub.Owner, m.Spec.GitHub.Repository)
+				target = m.Spec.GitHub.URL
 			}
 
 			return []interface{}{
