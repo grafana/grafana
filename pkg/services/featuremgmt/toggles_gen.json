@@ -2651,6 +2651,7 @@
         "name": "managedPluginsInstall",
         "resourceVersion": "1720021873452",
         "creationTimestamp": "2023-10-18T13:17:03Z",
+        "deletionTimestamp": "2025-02-11T11:13:57Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-07-03 15:51:13.452477 +0000 UTC"
         }
@@ -2802,6 +2803,20 @@
         "stage": "GA",
         "codeowner": "@grafana/sharing-squad",
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "newShareReportDrawer",
+        "resourceVersion": "1739544763554",
+        "creationTimestamp": "2025-02-14T14:52:43Z"
+      },
+      "spec": {
+        "description": "Enables the report creation drawer in a dashboard",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
       }
     },
     {

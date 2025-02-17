@@ -16053,7 +16053,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"esbuild@npm:^0.18.0 || ^0.19.0 || ^0.20.0 || ^0.21.0 || ^0.22.0 || ^0.23.0 || ^0.24.0, esbuild@npm:^0.24.0":
+"esbuild@npm:^0.18.0 || ^0.19.0 || ^0.20.0 || ^0.21.0 || ^0.22.0 || ^0.23.0 || ^0.24.0":
   version: 0.24.2
   resolution: "esbuild@npm:0.24.2"
   dependencies:
@@ -18307,7 +18307,7 @@ __metadata:
     http-server: "npm:14.1.1"
     i18next: "npm:^24.0.0"
     i18next-browser-languagedetector: "npm:^8.0.0"
-    i18next-parser: "npm:9.1.0"
+    i18next-parser: "npm:9.3.0"
     immer: "npm:10.1.1"
     immutable: "npm:5.0.3"
     ini: "npm:^5.0.0"
@@ -19155,9 +19155,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"i18next-parser@npm:9.1.0":
-  version: 9.1.0
-  resolution: "i18next-parser@npm:9.1.0"
+"i18next-parser@npm:9.3.0":
+  version: 9.3.0
+  resolution: "i18next-parser@npm:9.3.0"
   dependencies:
     "@babel/runtime": "npm:^7.25.0"
     broccoli-plugin: "npm:^4.0.7"
@@ -19165,12 +19165,12 @@ __metadata:
     colors: "npm:^1.4.0"
     commander: "npm:^12.1.0"
     eol: "npm:^0.9.1"
-    esbuild: "npm:^0.24.0"
+    esbuild: "npm:^0.25.0"
     fs-extra: "npm:^11.2.0"
     gulp-sort: "npm:^2.0.0"
     i18next: "npm:^23.5.1 || ^24.2.0"
     js-yaml: "npm:^4.1.0"
-    lilconfig: "npm:^3.1.2"
+    lilconfig: "npm:^3.1.3"
     rsvp: "npm:^4.8.5"
     sort-keys: "npm:^5.0.0"
     typescript: "npm:^5.0.4"
@@ -19178,7 +19178,7 @@ __metadata:
     vinyl-fs: "npm:^4.0.0"
   bin:
     i18next: bin/cli.js
-  checksum: 10/7582daba05ae2ef0878cb63e805cb6302bbcf03b17dd2d150594fd5aa220e1431e558611616b8b2f7d8c6c318d085822cd5db108b6b837dcfa0a1d7ff28d3bd7
+  checksum: 10/32b81864aa9cc27b7db41fde6fdf2c686c985e07a9b62a8dd10b4e86c8c0db7fe6ef3e569461a593521932265b31d12c091a6dda461406e54ebb0fc9ff6a55d0
   languageName: node
   linkType: hard
 
@@ -21626,7 +21626,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"lilconfig@npm:^3.1.2":
+"lilconfig@npm:^3.1.2, lilconfig@npm:^3.1.3":
   version: 3.1.3
   resolution: "lilconfig@npm:3.1.3"
   checksum: 10/b932ce1af94985f0efbe8896e57b1f814a48c8dbd7fc0ef8469785c6303ed29d0090af3ccad7e36b626bfca3a4dc56cc262697e9a8dd867623cf09a39d54e4c3
