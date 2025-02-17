@@ -1110,7 +1110,7 @@ func (a apiClient) ConvertPrometheusPostRuleGroup(t *testing.T, namespaceTitle, 
 
 	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/api/convert/prometheus/config/v1/rules/%s", a.url, namespaceTitle), buf)
 	require.NoError(t, err)
-	req.Header.Add("X-Datasource-UID", datasourceUID)
+	req.Header.Add("X-Grafana-Alerting-Datasource-UID", datasourceUID)
 
 	for key, value := range headers {
 		req.Header.Add(key, value)

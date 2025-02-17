@@ -29,6 +29,21 @@ const (
 )
 
 func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
+	simpleGroup := apimodels.PrometheusRuleGroup{
+		Name:     "Test Group",
+		Interval: prommodel.Duration(1 * time.Minute),
+		Rules: []apimodels.PrometheusRule{
+			{
+				Alert: "TestAlert",
+				Expr:  "up == 0",
+				For:   util.Pointer(prommodel.Duration(5 * time.Minute)),
+				Labels: map[string]string{
+					"severity": "critical",
+				},
+			},
+		},
+	}
+
 	t.Run("without datasource UID header should return 400", func(t *testing.T) {
 		srv, _ := createConvertPrometheusSrv(t)
 		rc := createRequestCtx()
@@ -54,46 +69,89 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 		srv, _ := createConvertPrometheusSrv(t)
 		rc := createRequestCtx()
 
-		group := apimodels.PrometheusRuleGroup{
-			Name: "Test Group",
-			Rules: []apimodels.PrometheusRule{
-				{
-					Alert: "TestAlert",
-					Expr:  "up == 0",
-					For:   util.Pointer(prommodel.Duration(5 * time.Minute)),
-					Labels: map[string]string{
-						"severity": "critical",
-					},
-				},
+		response := srv.RouteConvertPrometheusPostRuleGroup(rc, "test", simpleGroup)
+		require.Equal(t, http.StatusAccepted, response.Status())
+	})
+
+	t.Run("with valid pause header values should return 202", func(t *testing.T) {
+		testCases := []struct {
+			name        string
+			headerName  string
+			headerValue string
+		}{
+			{
+				name:        "true recording rules pause value",
+				headerName:  recordingRulesPausedHeader,
+				headerValue: "true",
+			},
+			{
+				name:        "false recording rules pause value",
+				headerName:  recordingRulesPausedHeader,
+				headerValue: "false",
+			},
+			{
+				name:        "true alert rules pause value",
+				headerName:  alertRulesPausedHeader,
+				headerValue: "true",
+			},
+			{
+				name:        "false alert rules pause value",
+				headerName:  alertRulesPausedHeader,
+				headerValue: "false",
 			},
 		}
 
-		response := srv.RouteConvertPrometheusPostRuleGroup(rc, "test", group)
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				srv, _ := createConvertPrometheusSrv(t)
+				rc := createRequestCtx()
+				rc.Req.Header.Set(tc.headerName, tc.headerValue)
 
-		require.Equal(t, http.StatusAccepted, response.Status())
+				response := srv.RouteConvertPrometheusPostRuleGroup(rc, "test", simpleGroup)
+				require.Equal(t, http.StatusAccepted, response.Status())
+			})
+		}
+	})
+
+	t.Run("with invalid pause header values should return 400", func(t *testing.T) {
+		testCases := []struct {
+			name          string
+			headerName    string
+			headerValue   string
+			expectedError string
+		}{
+			{
+				name:          "invalid recording rules pause value",
+				headerName:    recordingRulesPausedHeader,
+				headerValue:   "invalid",
+				expectedError: "invalid value for header X-Grafana-Alerting-Recording-Rules-Paused: must be 'true' or 'false'",
+			},
+			{
+				name:          "invalid alert rules pause value",
+				headerName:    alertRulesPausedHeader,
+				headerValue:   "invalid",
+				expectedError: "invalid value for header X-Grafana-Alerting-Alert-Rules-Paused: must be 'true' or 'false'",
+			},
+		}
+
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				srv, _ := createConvertPrometheusSrv(t)
+				rc := createRequestCtx()
+				rc.Req.Header.Set(tc.headerName, tc.headerValue)
+
+				response := srv.RouteConvertPrometheusPostRuleGroup(rc, "test", simpleGroup)
+				require.Equal(t, http.StatusBadRequest, response.Status())
+				require.Contains(t, string(response.Body()), tc.expectedError)
+			})
+		}
 	})
 
 	t.Run("with valid request should return 202", func(t *testing.T) {
 		srv, _ := createConvertPrometheusSrv(t)
 		rc := createRequestCtx()
 
-		group := apimodels.PrometheusRuleGroup{
-			Name:     "Test Group",
-			Interval: prommodel.Duration(1 * time.Minute),
-			Rules: []apimodels.PrometheusRule{
-				{
-					Alert: "TestAlert",
-					Expr:  "up == 0",
-					For:   util.Pointer(prommodel.Duration(5 * time.Minute)),
-					Labels: map[string]string{
-						"severity": "critical",
-					},
-				},
-			},
-		}
-
-		response := srv.RouteConvertPrometheusPostRuleGroup(rc, "test", group)
-
+		response := srv.RouteConvertPrometheusPostRuleGroup(rc, "test", simpleGroup)
 		require.Equal(t, http.StatusAccepted, response.Status())
 	})
 }
