@@ -71,7 +71,7 @@ export function createDAGFromQueriesSafe(
   return [new Graph(), collectedLinkErrors];
 }
 
-interface LinkError {
+export interface LinkError {
   source: string;
   target: string;
   error: unknown;
