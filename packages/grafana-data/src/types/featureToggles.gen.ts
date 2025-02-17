@@ -246,7 +246,6 @@ export interface FeatureToggles {
   ABTestFeatureToggleA?: boolean;
   templateVariablesUsesCombobox?: boolean;
   ABTestFeatureToggleB?: boolean;
-  queryLibraryDashboards?: boolean;
   grafanaAdvisor?: boolean;
   elasticsearchImprovedParsing?: boolean;
   exploreMetricsUseExternalAppPlugin?: boolean;
@@ -258,4 +257,5 @@ export interface FeatureToggles {
   newLogsPanel?: boolean;
   grafanaconThemes?: boolean;
   pluginsCDNSyncLoader?: boolean;
+  alertingJiraIntegration?: boolean;
 }
