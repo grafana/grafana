@@ -43,14 +43,13 @@ export function ProvisioningWizard({ data, onSubmit }: WizardProps) {
   const handleNext = async () => {
     const currentStepIndex = steps.findIndex((s) => s.id === activeStep);
     if (currentStepIndex < steps.length - 1) {
-      // Validate current step before proceeding
-      // const isValid = await methods.trigger(
-      //   //@ts-expect-error
-      //   ['connection', 'repository'].includes(activeStep) ? 'repository' : activeStep
-      // );
-      // if (!isValid) {
-      //   return;
-      // }
+      if (['connection', 'repository'].includes(activeStep)) {
+        // Validate repository form data before proceeding
+        const isValid = await methods.trigger('repository');
+        if (!isValid) {
+          return;
+        }
+      }
 
       setCompletedSteps([...completedSteps, activeStep]);
       setActiveStep(steps[currentStepIndex + 1].id);
