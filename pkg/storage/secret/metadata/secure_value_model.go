@@ -26,6 +26,10 @@ type secureValueDB struct {
 	Updated     int64  `xorm:"updated"`
 	UpdatedBy   string `xorm:"updated_by"`
 
+	// Kubernetes Status
+	Phase   string  `xorm:"status_phase"`
+	Message *string `xorm:"status_message"`
+
 	// Spec
 	Title      string  `xorm:"title"`
 	Keeper     string  `xorm:"keeper"`
@@ -187,6 +191,11 @@ func toRow(sv *secretv0alpha1.SecureValue, externalID string) (*secureValueDB, e
 		ref = &sv.Spec.Ref
 	}
 
+	var statusMessage *string
+	if sv.Status.Message != "" {
+		statusMessage = &sv.Status.Message
+	}
+
 	return &secureValueDB{
 		GUID:        string(sv.UID),
 		Name:        sv.Name,
@@ -197,6 +206,9 @@ func toRow(sv *secretv0alpha1.SecureValue, externalID string) (*secureValueDB, e
 		CreatedBy:   meta.GetCreatedBy(),
 		Updated:     updatedTimestamp,
 		UpdatedBy:   meta.GetUpdatedBy(),
+
+		Phase:   string(sv.Status.Phase),
+		Message: statusMessage,
 
 		Title:      sv.Spec.Title,
 		Keeper:     sv.Spec.Keeper,
