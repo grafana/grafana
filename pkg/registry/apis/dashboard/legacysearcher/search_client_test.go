@@ -92,6 +92,46 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 		mockStore.AssertExpectations(t)
 	})
 
+	t.Run("Query for tags should return facet properly", func(t *testing.T) {
+		mockStore.On("GetDashboardTags", mock.Anything, &dashboards.GetDashboardTagsQuery{OrgID: 2}).Return([]*dashboards.DashboardTagCloudItem{
+			{Term: "tag1", Count: 1},
+			{Term: "tag2", Count: 5},
+		}, nil).Once()
+
+		req := &resource.ResourceSearchRequest{
+			Facet: map[string]*resource.ResourceSearchRequest_Facet{
+				"tags": {
+					Field: "tags",
+				},
+			},
+			Options: &resource.ListOptions{
+				Key: dashboardKey,
+			},
+		}
+		resp, err := client.Search(ctx, req)
+
+		require.NoError(t, err)
+		require.NotNil(t, resp)
+		require.Equal(t, &resource.ResourceSearchResponse{
+			Results: &resource.ResourceTable{},
+			Facet: map[string]*resource.ResourceSearchResponse_Facet{
+				"tags": &resource.ResourceSearchResponse_Facet{
+					Terms: []*resource.ResourceSearchResponse_TermFacet{
+						{
+							Term:  "tag1",
+							Count: 1,
+						},
+						{
+							Term:  "tag2",
+							Count: 5,
+						},
+					},
+				},
+			},
+		}, resp)
+		mockStore.AssertExpectations(t)
+	})
+
 	t.Run("Query should be set as the title, and * should be removed", func(t *testing.T) {
 		mockStore.On("FindDashboards", mock.Anything, &dashboards.FindPersistedDashboardsQuery{
 			Title:        "test",

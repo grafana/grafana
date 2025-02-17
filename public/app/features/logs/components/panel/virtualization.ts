@@ -1,10 +1,10 @@
 import { BusEventWithPayload, GrafanaTheme2 } from '@grafana/data';
 
-import { ProcessedLogModel } from './processing';
+import { LogListModel } from './processing';
 
 let ctx: CanvasRenderingContext2D | null = null;
 let gridSize = 8;
-let paddingBottom = gridSize * 0.5;
+let paddingBottom = gridSize * 0.75;
 let lineHeight = 22;
 let measurementMode: 'canvas' | 'dom' = 'canvas';
 
@@ -16,7 +16,7 @@ export function init(theme: GrafanaTheme2) {
   initCanvasMeasurement(font, letterSpacing);
 
   gridSize = theme.spacing.gridSize;
-  paddingBottom = gridSize * 0.5;
+  paddingBottom = gridSize * 0.75;
   lineHeight = theme.typography.fontSize * theme.typography.body.lineHeight;
 
   widthMap = new Map<number, number>();
@@ -144,7 +144,7 @@ interface DisplayOptions {
 }
 
 export function getLogLineSize(
-  logs: ProcessedLogModel[],
+  logs: LogListModel[],
   container: HTMLDivElement | null,
   { wrap, showTime }: DisplayOptions,
   index: number
@@ -152,7 +152,8 @@ export function getLogLineSize(
   if (!container) {
     return 0;
   }
-  if (!wrap) {
+  // !logs[index] means the line is not yet loaded by infinite scrolling
+  if (!wrap || !logs[index]) {
     return lineHeight + paddingBottom;
   }
   const storedSize = retrieveLogLineSize(logs[index].uid, container);
