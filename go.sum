@@ -1531,10 +1531,10 @@ github.com/grafana/gomemcache v0.0.0-20240805133030-fdaf6a95408e h1:UlEET0InuoFa
 github.com/grafana/gomemcache v0.0.0-20240805133030-fdaf6a95408e/go.mod h1:IGRj8oOoxwJbHBYl1+OhS9UjQR0dv6SQOep7HqmtyFU=
 github.com/grafana/grafana-api-golang-client v0.27.0 h1:zIwMXcbCB4n588i3O2N6HfNcQogCNTd/vPkEXTr7zX8=
 github.com/grafana/grafana-api-golang-client v0.27.0/go.mod h1:uNLZEmgKtTjHBtCQMwNn3qsx2mpMb8zU+7T4Xv3NR9Y=
-github.com/grafana/grafana-app-sdk v0.31.0 h1:/mFCcx+YqG8cWAi9hePDJQxIdtXDClDIDRgZwHkksFk=
-github.com/grafana/grafana-app-sdk v0.31.0/go.mod h1:Xw00NL7qpRLo5r3Gn48Bl1Xn2n4eUDI5pYf/wMufKWs=
-github.com/grafana/grafana-app-sdk/logging v0.30.0 h1:K/P/bm7Cp7Di4tqIJ3EQz2+842JozQGRaz62r95ApME=
-github.com/grafana/grafana-app-sdk/logging v0.30.0/go.mod h1:xy6ZyVXl50Z3DBDLybvBPphbykPhuVNed/VNmen9DQM=
+github.com/grafana/grafana-app-sdk v0.32.0 h1:NowMRbOkNq4sSFtaxtyhJz7eKpx/qCKnTOAjcc9/2Xs=
+github.com/grafana/grafana-app-sdk v0.32.0/go.mod h1:gyQoJiM7BOLFlHz45iWb0m6mPlwDCDyhXppk56n0PTQ=
+github.com/grafana/grafana-app-sdk/logging v0.31.1 h1:pnByYw8UtYczXC5pMXgSMw80pQzZmn2R6GARiUVfTng=
+github.com/grafana/grafana-app-sdk/logging v0.31.1/go.mod h1:n1PIV2bImMAgjfJsRC5rLZQP0mpAOouG7iQ4idedJgk=
 github.com/grafana/grafana-aws-sdk v0.31.5 h1:4HpMQx7n4Qqoi7Bgu8KHQ2QKT9fYYdHilX/Gh3FZKBE=
 github.com/grafana/grafana-aws-sdk v0.31.5/go.mod h1:5p4Cjyr5ZiR6/RT2nFWkJ8XpIKgX4lAUmUMu70m2yCM=
 github.com/grafana/grafana-azure-sdk-go/v2 v2.1.6 h1:OfCkitCuomzZKW1WYHrG8MxKwtMhALb7jqoj+487eTg=
@@ -1551,6 +1551,8 @@ github.com/grafana/grafana/apps/advisor v0.0.0-20250123151950-b066a6313173 h1:uO
 github.com/grafana/grafana/apps/advisor v0.0.0-20250123151950-b066a6313173/go.mod h1:goSDiy3jtC2cp8wjpPZdUHRENcoSUHae1/Px/MDfddA=
 github.com/grafana/grafana/apps/alerting/notifications v0.0.0-20250121113133-e747350fee2d h1:NRVOtiG1aUwOazBj9KM7X2o2shsM6TchqisezzoH1gw=
 github.com/grafana/grafana/apps/alerting/notifications v0.0.0-20250121113133-e747350fee2d/go.mod h1:AvleS6icyPmcBjihtx5jYEvdzLmHGBp66NuE0AMR57A=
+github.com/grafana/grafana/apps/investigations v0.0.0-20250217181922-ff7ba54cbcd1 h1:gXY3nsnkb0Xx9MqyBHnnNzg1nfYe5SvVjuvwwXf1z4A=
+github.com/grafana/grafana/apps/investigations v0.0.0-20250217181922-ff7ba54cbcd1/go.mod h1:ygFcJP2McdSeMJVj/3YrKafZMc/lZBsp54HO51MtJYw=
 github.com/grafana/grafana/apps/playlist v0.0.0-20250121113133-e747350fee2d h1:cJ+9jgHw8Z17rM+DCdxvyWxPqH9OB9fkPLbnWEO+QGg=
 github.com/grafana/grafana/apps/playlist v0.0.0-20250121113133-e747350fee2d/go.mod h1:DjJe5osrW/BKrzN9hAAOSElNWutj1bcriExa7iDP7kA=
 github.com/grafana/grafana/pkg/aggregator v0.0.0-20250121113133-e747350fee2d h1:aBD5kzsIAh50vjNqUkWK9mNpLGIBYAnKkWtUepGNAiQ=
