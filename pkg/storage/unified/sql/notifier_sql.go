@@ -24,7 +24,6 @@ var (
 )
 
 type pollingNotifier struct {
-	backend         *backend
 	dialect         sqltemplate.Dialect
 	pollingInterval time.Duration
 	watchBufferSize int
