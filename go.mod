@@ -80,8 +80,8 @@ require (
 	github.com/grafana/e2e v0.1.1 // @grafana-app-platform-squad
 	github.com/grafana/gofpdf v0.0.0-20231002120153-857cc45be447 // @grafana/sharing-squad
 	github.com/grafana/gomemcache v0.0.0-20240805133030-fdaf6a95408e // @grafana/grafana-operator-experience-squad
-	github.com/grafana/grafana-app-sdk v0.31.0 // @grafana/grafana-app-platform-squad
-	github.com/grafana/grafana-app-sdk/logging v0.30.0 // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana-app-sdk v0.32.0 // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana-app-sdk/logging v0.31.1 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana-aws-sdk v0.31.5 // @grafana/aws-datasources
 	github.com/grafana/grafana-azure-sdk-go/v2 v2.1.6 // @grafana/partner-datasources
 	github.com/grafana/grafana-cloud-migration-snapshot v1.6.0 // @grafana/grafana-operator-experience-squad
@@ -544,6 +544,8 @@ require (
 	sigs.k8s.io/json v0.0.0-20241010143419-9aa6b5e7a4b3 // indirect
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
+
+require github.com/grafana/grafana/apps/investigations v0.0.0-20250217181922-ff7ba54cbcd1
 
 require (
 	github.com/oasdiff/yaml v0.0.0-20241210131133-6b86fb107d80 // indirect
