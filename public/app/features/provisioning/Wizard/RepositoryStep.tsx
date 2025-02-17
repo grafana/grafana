@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { AppEvents } from '@grafana/data';
@@ -16,6 +16,8 @@ const workflowOptions = [
   { label: 'Branch', value: 'branch' },
 ];
 
+const appEvents = getAppEvents();
+
 export function RepositoryStep() {
   const {
     register,
@@ -26,39 +28,34 @@ export function RepositoryStep() {
     formState: { errors },
   } = useFormContext<WizardFormData>();
   const [submitData, request] = useCreateOrUpdateRepository();
-  const appEvents = getAppEvents();
 
   const type = watch('repository.type');
   const [tokenConfigured, setTokenConfigured] = useState(false);
 
   const handleConnect = async () => {
     const formData = getValues();
-    const response = await submitData(
-      dataToSpec({
-        ...formData.repository,
-        url: formData.repository.url ?? '',
-      })
-    );
+    const response = await submitData(dataToSpec(formData.repository));
 
     if (response.data?.metadata?.name) {
       setValue('repositoryName', response.data.metadata.name);
     }
   };
 
-  // Handle success/error states
-  if (request.isSuccess) {
-    appEvents.publish({
-      type: AppEvents.alertSuccess.name,
-      payload: ['Repository settings saved'],
-    });
-  }
+  useEffect(() => {
+    if (request.isSuccess) {
+      appEvents.publish({
+        type: AppEvents.alertSuccess.name,
+        payload: ['Repository settings saved'],
+      });
+    }
 
-  if (request.isError) {
-    appEvents.publish({
-      type: AppEvents.alertError.name,
-      payload: ['Failed to save repository settings', request.error],
-    });
-  }
+    if (request.isError) {
+      appEvents.publish({
+        type: AppEvents.alertError.name,
+        payload: ['Failed to save repository settings', request.error],
+      });
+    }
+  }, [request.error, request.isError, request.isSuccess]);
 
   if (type === 'github') {
     return (
