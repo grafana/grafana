@@ -31,6 +31,7 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 			featuremgmt.FlagKubernetesFoldersServiceV2, // Will be default on by G12
 			featuremgmt.FlagQueryService,               // Query Library
 			featuremgmt.FlagProvisioning,
+			featuremgmt.FlagInvestigationsBackend,
 		},
 	})
 
