@@ -358,6 +358,7 @@ describe('<EditDataSource>', () => {
       expect(props.context.dataSource).toBeDefined();
       expect(props.context.dataSourceMeta).toBeDefined();
       expect(props.context.setJsonData).toBeDefined();
+      expect(props.context.setSecureJsonData).toBeDefined();
       expect(props.context.testingStatus).toBeDefined();
     });
   });
