@@ -48,21 +48,18 @@ func ProvideAuthZClient(
 	db db.DB,
 	acService accesscontrol.Service,
 ) (authlib.AccessClient, error) {
-	authCfg, err := ReadCfg(cfg)
+	authCfg, err := readAuthzClientSettings(cfg)
 	if err != nil {
 		return nil, err
 	}
 
-	isRemoteServer := authCfg.mode == ModeCloud || authCfg.mode == ModeGRPC
-	if !features.IsEnabledGlobally(featuremgmt.FlagAuthZGRPCServer) && isRemoteServer {
+	if !features.IsEnabledGlobally(featuremgmt.FlagAuthZGRPCServer) && authCfg.mode == clientModeCloud {
 		return nil, errors.New("authZGRPCServer feature toggle is required for cloud and grpc mode")
 	}
 
 	switch authCfg.mode {
-	case ModeGRPC:
-		return newGrpcLegacyClient(authCfg, tracer)
-	case ModeCloud:
-		return newCloudLegacyClient(authCfg, tracer)
+	case clientModeCloud:
+		return newRemoteLegacyClient(authCfg, tracer)
 	default:
 		sql := legacysql.NewDatabaseProvider(db)
 
@@ -96,15 +93,12 @@ func ProvideStandaloneAuthZClient(
 		return nil, nil
 	}
 
-	authCfg, err := ReadCfg(cfg)
+	authCfg, err := readAuthzClientSettings(cfg)
 	if err != nil {
 		return nil, err
 	}
 
-	if authCfg.mode == ModeGRPC {
-		return newGrpcLegacyClient(authCfg, tracer)
-	}
-	return newCloudLegacyClient(authCfg, tracer)
+	return newRemoteLegacyClient(authCfg, tracer)
 }
 
 func newInProcLegacyClient(server *rbac.Service, tracer tracing.Tracer) (authlib.AccessClient, error) {
@@ -131,7 +125,6 @@ func newInProcLegacyClient(server *rbac.Service, tracer tracing.Tracer) (authlib
 	return authzlib.NewClient(
 		&authzlib.ClientConfig{},
 		authzlib.WithGrpcConnectionClientOption(channel),
-		authzlib.WithDisableAccessTokenClientOption(),
 		authzlib.WithTracerClientOption(tracer),
 		authzlib.WithCacheClientOption(cache.NewLocalCache(cache.Config{
 			Expiry:          30 * time.Second,
@@ -140,48 +133,14 @@ func newInProcLegacyClient(server *rbac.Service, tracer tracing.Tracer) (authlib
 	)
 }
 
-func newGrpcLegacyClient(authCfg *Cfg, tracer tracing.Tracer) (authlib.AccessClient, error) {
-	// This client interceptor is a noop, as we don't send an access token
-	clientConfig := authnlib.GrpcClientConfig{}
-	clientInterceptor, err := authnlib.NewGrpcClientInterceptor(
-		&clientConfig,
-		authnlib.WithDisableAccessTokenOption(),
-		authnlib.WithTracerOption(tracer),
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	cfg := authzlib.ClientConfig{RemoteAddress: authCfg.remoteAddress}
-	client, err := authzlib.NewClient(&cfg,
-		authzlib.WithGrpcDialOptionsClientOption(
-			grpc.WithTransportCredentials(insecure.NewCredentials()),
-			grpc.WithUnaryInterceptor(clientInterceptor.UnaryClientInterceptor),
-			grpc.WithStreamInterceptor(clientInterceptor.StreamClientInterceptor),
-		),
-		authzlib.WithTracerClientOption(tracer),
-		authzlib.WithCacheClientOption(cache.NewLocalCache(cache.Config{
-			Expiry:          30 * time.Second,
-			CleanupInterval: 2 * time.Minute,
-		})),
-		// TODO: remove this once access tokens are supported on-prem
-		authzlib.WithDisableAccessTokenClientOption(),
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	return client, nil
-}
-
-func newCloudLegacyClient(authCfg *Cfg, tracer tracing.Tracer) (authlib.AccessClient, error) {
+func newRemoteLegacyClient(clientCfg *authzClientSettings, tracer tracing.Tracer) (authlib.AccessClient, error) {
 	grpcClientConfig := authnlib.GrpcClientConfig{
 		TokenClientConfig: &authnlib.TokenExchangeConfig{
-			Token:            authCfg.token,
-			TokenExchangeURL: authCfg.tokenExchangeURL,
+			Token:            clientCfg.token,
+			TokenExchangeURL: clientCfg.tokenExchangeURL,
 		},
 		TokenRequest: &authnlib.TokenExchangeRequest{
-			Namespace: authCfg.tokenNamespace,
+			Namespace: clientCfg.tokenNamespace,
 			Audiences: []string{authzServiceAudience},
 		},
 	}
@@ -191,8 +150,8 @@ func newCloudLegacyClient(authCfg *Cfg, tracer tracing.Tracer) (authlib.AccessCl
 		return nil, err
 	}
 
-	clientCfg := authzlib.ClientConfig{RemoteAddress: authCfg.remoteAddress}
-	client, err := authzlib.NewClient(&clientCfg,
+	client, err := authzlib.NewClient(
+		&authzlib.ClientConfig{RemoteAddress: clientCfg.remoteAddress},
 		authzlib.WithGrpcDialOptionsClientOption(
 			grpc.WithTransportCredentials(insecure.NewCredentials()),
 			grpc.WithUnaryInterceptor(clientInterceptor.UnaryClientInterceptor),
