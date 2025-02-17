@@ -46,6 +46,8 @@ func (sch *schedule) updateRulesMetrics(alertRules []*models.AlertRule) {
 	orgsNfSettings := make(map[int64]int64)
 	// gauge for groups per org
 	groupsPerOrg := make(map[int64]map[string]struct{})
+	// gauge for rules imported from Prometheus per org
+	orgsRulesPrometheusImported := make(map[int64]int64)
 
 	simplifiedEditorSettingsPerOrg := make(map[int64]map[string]int64) // orgID -> setting -> count
 
@@ -86,6 +88,10 @@ func (sch *schedule) updateRulesMetrics(alertRules []*models.AlertRule) {
 			}
 		}
 
+		if rule.ImportedFromPrometheus() {
+			orgsRulesPrometheusImported[rule.OrgID]++
+		}
+
 		// Count groups per org
 		orgGroups, ok := groupsPerOrg[rule.OrgID]
 		if !ok {
@@ -100,6 +106,7 @@ func (sch *schedule) updateRulesMetrics(alertRules []*models.AlertRule) {
 	sch.metrics.SimpleNotificationRules.Reset()
 	sch.metrics.Groups.Reset()
 	sch.metrics.SimplifiedEditorRules.Reset()
+	sch.metrics.PrometheusImportedRules.Reset()
 
 	// Set metrics
 	for key, count := range buckets {
@@ -110,6 +117,9 @@ func (sch *schedule) updateRulesMetrics(alertRules []*models.AlertRule) {
 	}
 	for orgID, groups := range groupsPerOrg {
 		sch.metrics.Groups.WithLabelValues(fmt.Sprint(orgID)).Set(float64(len(groups)))
+	}
+	for orgID, count := range orgsRulesPrometheusImported {
+		sch.metrics.PrometheusImportedRules.WithLabelValues(fmt.Sprint(orgID)).Set(float64(count))
 	}
 	for orgID, settings := range simplifiedEditorSettingsPerOrg {
 		for setting, count := range settings {
