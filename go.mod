@@ -184,11 +184,11 @@ require (
 	gopkg.in/ini.v1 v1.67.0 // @grafana/alerting-backend
 	gopkg.in/mail.v2 v2.3.1 // @grafana/grafana-backend-group
 	gopkg.in/yaml.v3 v3.0.1 // @grafana/alerting-backend
-	k8s.io/api v0.32.1 // @grafana/grafana-app-platform-squad
-	k8s.io/apimachinery v0.32.1 // @grafana/grafana-app-platform-squad
-	k8s.io/apiserver v0.32.1 // @grafana/grafana-app-platform-squad
-	k8s.io/client-go v0.32.1 // @grafana/grafana-app-platform-squad
-	k8s.io/component-base v0.32.1 // @grafana/grafana-app-platform-squad
+	k8s.io/api v0.32.2 // @grafana/grafana-app-platform-squad
+	k8s.io/apimachinery v0.32.2 // @grafana/grafana-app-platform-squad
+	k8s.io/apiserver v0.32.2 // @grafana/grafana-app-platform-squad
+	k8s.io/client-go v0.32.2 // @grafana/grafana-app-platform-squad
+	k8s.io/component-base v0.32.2 // @grafana/grafana-app-platform-squad
 	k8s.io/klog/v2 v2.130.1 // @grafana/grafana-app-platform-squad
 	k8s.io/kube-aggregator v0.32.0 // @grafana/grafana-app-platform-squad
 	k8s.io/kube-openapi v0.0.0-20241105132330-32ad38e42d3f // @grafana/grafana-app-platform-squad
@@ -532,7 +532,7 @@ require (
 	gopkg.in/src-d/go-errors.v1 v1.0.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	k8s.io/apiextensions-apiserver v0.32.1 // indirect
-	k8s.io/kms v0.32.1 // indirect
+	k8s.io/kms v0.32.2 // indirect
 	modernc.org/gc/v3 v3.0.0-20240107210532-573471604cb6 // indirect
 	modernc.org/libc v1.55.3 // indirect
 	modernc.org/mathutil v1.6.0 // indirect
@@ -544,6 +544,8 @@ require (
 	sigs.k8s.io/json v0.0.0-20241010143419-9aa6b5e7a4b3 // indirect
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
+
+require github.com/grafana/grafana/apps/investigations v0.0.0-20250217181922-ff7ba54cbcd1
 
 require (
 	github.com/oasdiff/yaml v0.0.0-20241210131133-6b86fb107d80 // indirect
