@@ -90,6 +90,7 @@ type backend struct {
 	//stream chan *resource.WatchEvent
 	pollingInterval time.Duration
 	watchBufferSize int
+	notifier        eventNotifier
 }
 
 func (b *backend) Init(ctx context.Context) error {
@@ -111,6 +112,10 @@ func (b *backend) initLocked(ctx context.Context) error {
 	if b.dialect == nil {
 		return fmt.Errorf("no dialect for driver %q", driverName)
 	}
+
+	// Initialize notifier after dialect is set up
+	// TODO(JPQ): I don't want this circular dependency.
+	b.notifier = newNotifier(b, b.watchBufferSize, b.pollingInterval, b.log)
 
 	return b.db.PingContext(ctx)
 }
@@ -187,11 +192,12 @@ func (b *backend) create(ctx context.Context, event resource.WriteEvent) (int64,
 	defer span.End()
 	var newVersion int64
 	guid := uuid.New().String()
+	folder := ""
+	if event.Object != nil {
+		folder = event.Object.GetFolder()
+	}
 	err := b.db.WithTx(ctx, ReadCommitted, func(ctx context.Context, tx db.Tx) error {
-		folder := ""
-		if event.Object != nil {
-			folder = event.Object.GetFolder()
-		}
+
 		// 1. Insert into resource
 		if _, err := dbutil.Exec(ctx, tx, sqlResourceInsert, sqlResourceRequest{
 			SQLTemplate: sqltemplate.New(b.dialect),
@@ -240,7 +246,18 @@ func (b *backend) create(ctx context.Context, event resource.WriteEvent) (int64,
 
 		return nil
 	})
-	return newVersion, err
+
+	if err != nil {
+		return 0, err
+	}
+
+	b.notifier.send(ctx, &resource.WrittenEvent{
+		WriteEvent:      event,
+		ResourceVersion: newVersion,
+		Folder:          folder,
+	})
+
+	return newVersion, nil
 }
 
 func (b *backend) update(ctx context.Context, event resource.WriteEvent) (int64, error) {
@@ -248,11 +265,11 @@ func (b *backend) update(ctx context.Context, event resource.WriteEvent) (int64,
 	defer span.End()
 	var newVersion int64
 	guid := uuid.New().String()
+	folder := ""
+	if event.Object != nil {
+		folder = event.Object.GetFolder()
+	}
 	err := b.db.WithTx(ctx, ReadCommitted, func(ctx context.Context, tx db.Tx) error {
-		folder := ""
-		if event.Object != nil {
-			folder = event.Object.GetFolder()
-		}
 		// 1. Update resource
 		_, err := dbutil.Exec(ctx, tx, sqlResourceUpdate, sqlResourceRequest{
 			SQLTemplate: sqltemplate.New(b.dialect),
@@ -303,7 +320,17 @@ func (b *backend) update(ctx context.Context, event resource.WriteEvent) (int64,
 		return nil
 	})
 
-	return newVersion, err
+	if err != nil {
+		return 0, err
+	}
+
+	b.notifier.send(ctx, &resource.WrittenEvent{
+		WriteEvent:      event,
+		ResourceVersion: newVersion,
+		Folder:          folder,
+	})
+
+	return newVersion, nil
 }
 
 func (b *backend) delete(ctx context.Context, event resource.WriteEvent) (int64, error) {
@@ -311,12 +338,11 @@ func (b *backend) delete(ctx context.Context, event resource.WriteEvent) (int64,
 	defer span.End()
 	var newVersion int64
 	guid := uuid.New().String()
-
+	folder := ""
+	if event.Object != nil {
+		folder = event.Object.GetFolder()
+	}
 	err := b.db.WithTx(ctx, ReadCommitted, func(ctx context.Context, tx db.Tx) error {
-		folder := ""
-		if event.Object != nil {
-			folder = event.Object.GetFolder()
-		}
 		// 1. delete from resource
 		_, err := dbutil.Exec(ctx, tx, sqlResourceDelete, sqlResourceRequest{
 			SQLTemplate: sqltemplate.New(b.dialect),
@@ -358,7 +384,17 @@ func (b *backend) delete(ctx context.Context, event resource.WriteEvent) (int64,
 		return nil
 	})
 
-	return newVersion, err
+	if err != nil {
+		return 0, err
+	}
+
+	b.notifier.send(ctx, &resource.WrittenEvent{
+		WriteEvent:      event,
+		ResourceVersion: newVersion,
+		Folder:          folder,
+	})
+
+	return newVersion, nil
 }
 
 func (b *backend) restore(ctx context.Context, event resource.WriteEvent) (int64, error) {
@@ -366,12 +402,11 @@ func (b *backend) restore(ctx context.Context, event resource.WriteEvent) (int64
 	defer span.End()
 	var newVersion int64
 	guid := uuid.New().String()
+	folder := ""
+	if event.Object != nil {
+		folder = event.Object.GetFolder()
+	}
 	err := b.db.WithTx(ctx, ReadCommitted, func(ctx context.Context, tx db.Tx) error {
-		folder := ""
-		if event.Object != nil {
-			folder = event.Object.GetFolder()
-		}
-
 		// 1. Re-create resource
 		// Note: we may want to replace the write event with a create event, tbd.
 		if _, err := dbutil.Exec(ctx, tx, sqlResourceInsert, sqlResourceRequest{
@@ -435,7 +470,17 @@ func (b *backend) restore(ctx context.Context, event resource.WriteEvent) (int64
 		return nil
 	})
 
-	return newVersion, err
+	if err != nil {
+		return 0, err
+	}
+
+	b.notifier.send(ctx, &resource.WrittenEvent{
+		WriteEvent:      event,
+		ResourceVersion: newVersion,
+		Folder:          folder,
+	})
+
+	return newVersion, nil
 }
 
 func (b *backend) ReadResource(ctx context.Context, req *resource.ReadRequest) *resource.BackendReadResponse {
@@ -707,68 +752,7 @@ func (b *backend) getHistory(ctx context.Context, req *resource.ListRequest, cb 
 }
 
 func (b *backend) WatchWriteEvents(ctx context.Context) (<-chan *resource.WrittenEvent, error) {
-	// Get the latest RV
-	since, err := b.listLatestRVs(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("watch, get latest resource version: %w", err)
-	}
-	// Start the poller
-	stream := make(chan *resource.WrittenEvent, b.watchBufferSize)
-	go b.poller(ctx, since, stream)
-	return stream, nil
-}
-
-func (b *backend) poller(ctx context.Context, since groupResourceRV, stream chan<- *resource.WrittenEvent) {
-	t := time.NewTicker(b.pollingInterval)
-	defer close(stream)
-	defer t.Stop()
-	isSQLite := b.dialect.DialectName() == "sqlite"
-
-	for {
-		select {
-		case <-b.done:
-			return
-		case <-t.C:
-			// Block polling duffing import to avoid database locked issues
-			if isSQLite && b.batchLock.Active() {
-				continue
-			}
-
-			ctx, span := b.tracer.Start(ctx, tracePrefix+"poller")
-			// List the latest RVs
-			grv, err := b.listLatestRVs(ctx)
-			if err != nil {
-				b.log.Error("poller get latest resource version", "err", err)
-				t.Reset(b.pollingInterval)
-				continue
-			}
-			for group, items := range grv {
-				for resource := range items {
-					// If we haven't seen this resource before, we start from 0
-					if _, ok := since[group]; !ok {
-						since[group] = make(map[string]int64)
-					}
-					if _, ok := since[group][resource]; !ok {
-						since[group][resource] = 0
-					}
-
-					// Poll for new events
-					next, err := b.poll(ctx, group, resource, since[group][resource], stream)
-					if err != nil {
-						b.log.Error("polling for resource", "err", err)
-						t.Reset(b.pollingInterval)
-						continue
-					}
-					if next > since[group][resource] {
-						since[group][resource] = next
-					}
-				}
-			}
-
-			t.Reset(b.pollingInterval)
-			span.End()
-		}
-	}
+	return b.notifier.notify(ctx)
 }
 
 // listLatestRVs returns the latest resource version for each (Group, Resource) pair.
@@ -815,59 +799,6 @@ func fetchLatestRV(ctx context.Context, x db.ContextExecer, d sqltemplate.Dialec
 		return 0, fmt.Errorf("get resource version: %w", err)
 	}
 	return res.ResourceVersion, nil
-}
-
-func (b *backend) poll(ctx context.Context, grp string, res string, since int64, stream chan<- *resource.WrittenEvent) (int64, error) {
-	ctx, span := b.tracer.Start(ctx, tracePrefix+"poll")
-	defer span.End()
-
-	start := time.Now()
-	var records []*historyPollResponse
-	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
-		var err error
-		records, err = dbutil.Query(ctx, tx, sqlResourceHistoryPoll, &sqlResourceHistoryPollRequest{
-			SQLTemplate:          sqltemplate.New(b.dialect),
-			Resource:             res,
-			Group:                grp,
-			SinceResourceVersion: since,
-			Response:             &historyPollResponse{},
-		})
-		return err
-	})
-	if err != nil {
-		return 0, fmt.Errorf("poll history: %w", err)
-	}
-	end := time.Now()
-	resource.NewStorageMetrics().PollerLatency.Observe(end.Sub(start).Seconds())
-
-	var nextRV int64
-	for _, rec := range records {
-		if rec.Key.Group == "" || rec.Key.Resource == "" || rec.Key.Name == "" {
-			return nextRV, fmt.Errorf("missing key in response")
-		}
-		nextRV = rec.ResourceVersion
-		prevRV := rec.PreviousRV
-		if prevRV == nil {
-			prevRV = new(int64)
-		}
-		stream <- &resource.WrittenEvent{
-			Value: rec.Value,
-			Key: &resource.ResourceKey{
-				Namespace: rec.Key.Namespace,
-				Group:     rec.Key.Group,
-				Resource:  rec.Key.Resource,
-				Name:      rec.Key.Name,
-			},
-			Type:            resource.WatchEvent_Type(rec.Action),
-			PreviousRV:      *prevRV,
-			Folder:          rec.Folder,
-			ResourceVersion: rec.ResourceVersion,
-			// Timestamp:  , // TODO: add timestamp
-		}
-		b.log.Debug("poller sent event to stream", "namespace", rec.Key.Namespace, "group", rec.Key.Group, "resource", rec.Key.Resource, "name", rec.Key.Name, "action", rec.Action, "rv", rec.ResourceVersion)
-	}
-
-	return nextRV, nil
 }
 
 // resourceVersionAtomicInc atomically increases the version of a kind within a transaction.
