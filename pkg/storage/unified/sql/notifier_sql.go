@@ -211,10 +211,10 @@ func (p *pollingNotifier) poll(ctx context.Context, grp string, res string, sinc
 	return nextRV, nil
 }
 
-func (n *pollingNotifier) send(_ context.Context, _ *resource.WrittenEvent) {
+func (p *pollingNotifier) send(_ context.Context, _ *resource.WrittenEvent) {
 	// No-op for polling strategy - changes are detected via polling.
 }
 
-func (n *pollingNotifier) close() {
+func (p *pollingNotifier) close() {
 	// No-op for polling strategy.
 }
