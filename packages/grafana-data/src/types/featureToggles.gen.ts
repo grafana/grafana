@@ -258,4 +258,5 @@ export interface FeatureToggles {
   pluginsCDNSyncLoader?: boolean;
   alertingJiraIntegration?: boolean;
   alertingRuleVersionHistoryRestore?: boolean;
+  newShareReportDrawer?: boolean;
 }
