@@ -560,6 +560,7 @@ require (
 )
 
 require (
+	github.com/migueleliasweb/go-github-mock v1.1.0 // indirect
 	github.com/oasdiff/yaml v0.0.0-20241210131133-6b86fb107d80 // indirect
 	github.com/oasdiff/yaml3 v0.0.0-20241210130736-a94c01f36349 // indirect
 )

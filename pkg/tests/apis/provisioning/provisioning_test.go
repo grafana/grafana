@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"net/http"
 	"os"
 	"path"
 	"strings"
@@ -12,13 +13,13 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/exp/rand"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	gh "github.com/google/go-github/v66/github"
 	dashboard "github.com/grafana/grafana/pkg/apis/dashboard/v1alpha1"
 	folder "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
@@ -29,6 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	ghmock "github.com/migueleliasweb/go-github-mock/src/mock"
 )
 
 func TestMain(m *testing.M) {
@@ -93,18 +95,50 @@ func TestIntegrationProvisioning(t *testing.T) {
 	_ = restClient
 
 	cleanSlate := func(t *testing.T) {
-		helper.GetEnv().GitHubMockFactory.Constructor = func(ttc github.TestingTWithCleanup) github.Client {
-			client := github.NewMockClient(ttc)
-			client.On("IsAuthenticated", mock.Anything).Maybe().Return(nil)
-			client.On("ListWebhooks", mock.Anything, mock.Anything, mock.Anything).Maybe().Return(nil, nil)
-			client.On("CreateWebhook", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Maybe().Return(github.WebhookConfig{}, nil)
-			client.On("RepoExists", mock.Anything, mock.Anything, mock.Anything).Maybe().Return(true, nil)
-			client.On("BranchExists", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Maybe().Return(true, nil)
-			client.On("GetBranch", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Maybe().Return(github.Branch{Sha: "testing"}, nil)
-			client.On("GetTree", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Maybe().Return(nil, false, nil)
-			client.On("DeleteWebhook", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Maybe().Return(nil)
-			return client
-		}
+		helper.GetEnv().GitHubFactory.Client = ghmock.NewMockedHTTPClient(
+			ghmock.WithRequestMatchHandler(
+				ghmock.GetUser,
+				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+					w.Write(ghmock.MustMarshal(&gh.User{}))
+				}),
+			),
+			ghmock.WithRequestMatchHandler(
+				ghmock.GetReposHooksByOwnerByRepo,
+				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+					w.Write(ghmock.MustMarshal([]*gh.Hook{}))
+				}),
+			),
+			ghmock.WithRequestMatchHandler(
+				ghmock.PostReposHooksByOwnerByRepo,
+				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+					w.Write(ghmock.MustMarshal(&gh.Hook{}))
+				}),
+			),
+			ghmock.WithRequestMatchHandler(
+				ghmock.GetReposByOwnerByRepo,
+				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+					w.Write(ghmock.MustMarshal(&gh.Repository{}))
+				}),
+			),
+			ghmock.WithRequestMatchHandler(
+				ghmock.GetReposBranchesByOwnerByRepoByBranch,
+				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+					w.Write(ghmock.MustMarshal(&gh.Branch{}))
+				}),
+			),
+			ghmock.WithRequestMatchHandler(
+				ghmock.GetReposGitTreesByOwnerByRepoByTreeSha,
+				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+					w.Write(ghmock.MustMarshal(&gh.Tree{}))
+				}),
+			),
+			ghmock.WithRequestMatchHandler(
+				ghmock.DeleteReposHooksByOwnerByRepoByHookId,
+				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+					w.WriteHeader(http.StatusOK)
+				}),
+			),
+		)
 
 		deleteAll := func(client *apis.K8sResourceClient) error {
 			list, err := client.Resource.List(ctx, metav1.ListOptions{})
@@ -158,44 +192,72 @@ func TestIntegrationProvisioning(t *testing.T) {
 	t.Run("creating GitHub repository syncs from branch selected", func(t *testing.T) {
 		cleanSlate(t)
 
-		var githubClient *github.MockClient
-		helper.GetEnv().GitHubMockFactory.Constructor = func(ttc github.TestingTWithCleanup) github.Client {
-			if githubClient != nil {
-				return githubClient
+		treeEntry := func(fpath string, content []byte) *gh.TreeEntry {
+			sha := sha256.Sum256(content)
+			typ := "blob"
+			mode := "100644"
+			if strings.HasSuffix(fpath, "/") {
+				typ = "tree"
+				mode = "040000"
 			}
-			githubClient = github.NewMockClient(ttc)
 
-			isCtx := mock.Anything // mock.IsType(context.Background())
-			owner := "grafana"
-			repo := "git-ui-sync-demo"
-			branch := "dummy-branch"
-			sha := "24a55f601e33048d2267943279fc7f1b39b35e58"
-
-			// Possible remnants of cleanSlate
-			githubClient.On("DeleteWebhook", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Maybe().Return(nil)
-
-			// Ensuring we pass Test
-			githubClient.On("IsAuthenticated", isCtx).Return(nil)
-			githubClient.On("RepoExists", isCtx, owner, repo).Return(true, nil)
-			githubClient.On("BranchExists", isCtx, owner, repo, branch).Return(true, nil)
-
-			// Ensuring we can set up the webhook (even if it doesn't really... do anything here)
-			githubClient.On("CreateWebhook", isCtx, owner, repo, mock.Anything /* cfg */).Return(github.WebhookConfig{ID: 123}, nil)
-
-			// Ensuring we can successfully sync two files
-			githubClient.On("GetBranch", isCtx, owner, repo, branch).Return(github.Branch{Name: branch, Sha: sha}, nil)
-			githubClient.On("GetTree", isCtx, owner, repo, sha /* ref */, mock.IsType(false) /* recursive */).
-				Return([]github.RepositoryContent{
-					mockRepositoryContent("README.md", "# Hello, World!"),
-					mockRepositoryContent("dashboard.json", string(helper.LoadFile("testdata/all-panels.json"))),
-					mockRepositoryContent("subdir/dashboard2.yaml", string(helper.LoadFile("testdata/text-options.json"))),
-				}, /* truncated */ false /* err */, nil)
-			githubClient.On("GetContents", isCtx /* ctx */, owner, repo, "dashboard.json" /* filePath */, sha /* ref */).
-				Return(mockRepositoryContent("dashboard.json", string(helper.LoadFile("testdata/all-panels.json"))) /* content */, nil /* dirContent */, nil /* err */)
-			githubClient.On("GetContents", isCtx /* ctx */, owner, repo, "subdir/dashboard2.yaml" /* filePath */, sha /* ref */).
-				Return(mockRepositoryContent("subdir/dashboard2.yaml", string(helper.LoadFile("testdata/text-options.json"))) /* content */, nil /* dirContent */, nil /* err */)
-			return githubClient
+			return &gh.TreeEntry{
+				SHA:     gh.String(hex.EncodeToString(sha[:])),
+				Path:    &fpath,
+				Size:    gh.Int(len(content)),
+				Type:    &typ,
+				Mode:    &mode,
+				Content: gh.String(string(content)),
+			}
 		}
+		repoContent := func(fpath string, content []byte) *gh.RepositoryContent {
+			sha := sha256.Sum256(content)
+			typ := "blob"
+			if strings.HasSuffix(fpath, "/") {
+				typ = "tree"
+			}
+
+			return &gh.RepositoryContent{
+				SHA:      gh.String(hex.EncodeToString(sha[:])),
+				Name:     gh.String(path.Base(fpath)),
+				Path:     &fpath,
+				Size:     gh.Int(len(content)),
+				Type:     &typ,
+				Content:  gh.String(string(content)),
+				Encoding: gh.String("UTF-8"),
+			}
+		}
+		helper.GetEnv().GitHubFactory.Client = ghmock.NewMockedHTTPClient(
+			ghmock.WithRequestMatch(ghmock.GetUser, gh.User{Name: gh.String("github-user")}),
+			ghmock.WithRequestMatch(ghmock.GetReposHooksByOwnerByRepo, []*gh.Hook{}),
+			ghmock.WithRequestMatch(ghmock.PostReposHooksByOwnerByRepo, gh.Hook{ID: gh.Int64(123)}),
+			ghmock.WithRequestMatch(ghmock.GetReposByOwnerByRepo, gh.Repository{ID: gh.Int64(234)}),
+			ghmock.WithRequestMatch(ghmock.GetReposBranchesByOwnerByRepoByBranch, gh.Branch{}),
+			ghmock.WithRequestMatch(ghmock.GetReposGitTreesByOwnerByRepoByTreeSha, gh.Tree{
+				SHA:       gh.String("deadbeef"),
+				Truncated: gh.Bool(false),
+				Entries: []*gh.TreeEntry{
+					treeEntry("README.md", []byte("# Hello, World!")),
+					treeEntry("dashboard.json", helper.LoadFile("testdata/all-panels.json")),
+					treeEntry("subdir/dashboard2.yaml", helper.LoadFile("testdata/text-options.json")),
+				},
+			}),
+			ghmock.WithRequestMatchHandler(
+				ghmock.GetReposContentsByOwnerByRepoByPath,
+				http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					var err error
+					switch r.PathValue("path") {
+					case "README.md":
+						_, err = w.Write(ghmock.MustMarshal(repoContent("README.md", []byte("# Hello, World"))))
+					case "dashboard.json":
+						_, err = w.Write(ghmock.MustMarshal(repoContent("dashboard.json", helper.LoadFile("testdata/all-panels.json"))))
+					case "subdir/dashboard2.yaml":
+						_, err = w.Write(ghmock.MustMarshal(repoContent("subdir/dashboard2.yaml", helper.LoadFile("testdata/text-options.json"))))
+					}
+					require.NoError(t, err)
+				}),
+			),
+		)
 
 		_, err := client.Resource.Update(ctx,
 			helper.LoadYAMLOrJSONFile("testdata/github-example.json"),
