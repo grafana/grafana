@@ -15,7 +15,7 @@ func TestChannelNotifier(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 		defer cancel()
 
-		n := newChannelNotifier(5, log.New("test"))
+		n := newChannelNotifier(5, log.NewNopLogger())
 		defer n.close()
 
 		events, err := n.notify(ctx)
@@ -45,7 +45,7 @@ func TestChannelNotifier(t *testing.T) {
 
 	t.Run("should drop events when buffer is full", func(t *testing.T) {
 		bufferSize := 2
-		n := newChannelNotifier(bufferSize, log.New("test"))
+		n := newChannelNotifier(bufferSize, log.NewNopLogger())
 		defer n.close()
 
 		for i := 0; i < bufferSize+1; i++ {
@@ -59,7 +59,7 @@ func TestChannelNotifier(t *testing.T) {
 
 	t.Run("should close subscriber channels when context cancelled", func(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
-		n := newChannelNotifier(5, log.New("test"))
+		n := newChannelNotifier(5, log.NewNopLogger())
 		defer n.close()
 
 		events, err := n.notify(ctx)

@@ -5,61 +5,137 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
-	"github.com/grafana/grafana/pkg/storage/unified/sql/dbutil"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
+	"go.opentelemetry.io/otel/trace"
+)
+
+var (
+	// Validation errors.
+	errHistoryPollRequired    = fmt.Errorf("historyPoll is required")
+	errListLatestRVsRequired  = fmt.Errorf("listLatestRVs is required")
+	errBatchLockRequired      = fmt.Errorf("batchLock is required")
+	errTracerRequired         = fmt.Errorf("tracer is required")
+	errLogRequired            = fmt.Errorf("log is required")
+	errInvalidWatchBufferSize = fmt.Errorf("watchBufferSize must be greater than 0")
+	errInvalidPollingInterval = fmt.Errorf("pollingInterval must be greater than 0")
+	errDoneRequired           = fmt.Errorf("done is required")
 )
 
 type pollingNotifier struct {
 	backend         *backend
+	dialect         sqltemplate.Dialect
 	pollingInterval time.Duration
+	watchBufferSize int
+
+	log    log.Logger
+	tracer trace.Tracer
+
+	batchLock     *batchLock
+	listLatestRVs func(ctx context.Context) (groupResourceRV, error)
+	historyPoll   func(ctx context.Context, grp string, res string, since int64) ([]*historyPollResponse, error)
+
+	done <-chan struct{}
 }
 
-func newPollingNotifier(backend *backend, interval time.Duration) *pollingNotifier {
-	return &pollingNotifier{
-		backend:         backend,
-		pollingInterval: interval,
+type pollingNotifierConfig struct {
+	dialect         sqltemplate.Dialect
+	pollingInterval time.Duration
+	watchBufferSize int
+
+	log    log.Logger
+	tracer trace.Tracer
+
+	batchLock     *batchLock
+	listLatestRVs func(ctx context.Context) (groupResourceRV, error)
+	historyPoll   func(ctx context.Context, grp string, res string, since int64) ([]*historyPollResponse, error)
+
+	done <-chan struct{}
+}
+
+func (cfg *pollingNotifierConfig) validate() error {
+	if cfg.historyPoll == nil {
+		return errHistoryPollRequired
 	}
+	if cfg.listLatestRVs == nil {
+		return errListLatestRVsRequired
+	}
+	if cfg.batchLock == nil {
+		return errBatchLockRequired
+	}
+	if cfg.tracer == nil {
+		return errTracerRequired
+	}
+	if cfg.log == nil {
+		return errLogRequired
+	}
+	if cfg.watchBufferSize <= 0 {
+		return errInvalidWatchBufferSize
+	}
+	if cfg.pollingInterval <= 0 {
+		return errInvalidPollingInterval
+	}
+	if cfg.done == nil {
+		return errDoneRequired
+	}
+	return nil
 }
 
-func (n *pollingNotifier) notify(ctx context.Context) (<-chan *resource.WrittenEvent, error) {
-	since, err := n.backend.listLatestRVs(ctx)
+func newPollingNotifier(cfg *pollingNotifierConfig) (*pollingNotifier, error) {
+	if err := cfg.validate(); err != nil {
+		return nil, fmt.Errorf("invalid polling notifier config: %w", err)
+	}
+	return &pollingNotifier{
+		dialect:         cfg.dialect,
+		pollingInterval: cfg.pollingInterval,
+		watchBufferSize: cfg.watchBufferSize,
+		log:             cfg.log,
+		tracer:          cfg.tracer,
+		batchLock:       cfg.batchLock,
+		listLatestRVs:   cfg.listLatestRVs,
+		historyPoll:     cfg.historyPoll,
+		done:            cfg.done,
+	}, nil
+}
+
+func (p *pollingNotifier) notify(ctx context.Context) (<-chan *resource.WrittenEvent, error) {
+	since, err := p.listLatestRVs(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("watch, get latest resource version: %w", err)
 	}
-	stream := make(chan *resource.WrittenEvent, n.backend.watchBufferSize)
-	go n.poller(ctx, since, stream)
+	stream := make(chan *resource.WrittenEvent, p.watchBufferSize)
+	go p.poller(ctx, since, stream)
 	return stream, nil
 }
 
-func (n *pollingNotifier) poller(ctx context.Context, since groupResourceRV, stream chan<- *resource.WrittenEvent) {
-	t := time.NewTicker(n.pollingInterval)
+func (p *pollingNotifier) poller(ctx context.Context, since groupResourceRV, stream chan<- *resource.WrittenEvent) {
+	t := time.NewTicker(p.pollingInterval)
 	defer close(stream)
 	defer t.Stop()
-	isSQLite := n.backend.dialect.DialectName() == "sqlite"
+	isSQLite := p.dialect.DialectName() == sqltemplate.SQLite.DialectName()
 
 	for {
 		select {
-		case <-n.backend.done:
+		case <-p.done:
 			return
 		case <-t.C:
 			// Block polling during import to avoid database locked issues.
-			if isSQLite && n.backend.batchLock.Active() {
+			if isSQLite && p.batchLock.Active() {
 				continue
 			}
 
-			ctx, span := n.backend.tracer.Start(ctx, tracePrefix+"poller")
-			// List the latest RVs ?why?
-			grv, err := n.backend.listLatestRVs(ctx)
+			ctx, span := p.tracer.Start(ctx, tracePrefix+"poller")
+			// List the latest RVs to see if any of those are not have been seen before.
+			grv, err := p.listLatestRVs(ctx)
 			if err != nil {
-				n.backend.log.Error("poller get latest resource version", "err", err)
-				t.Reset(n.backend.pollingInterval)
+				p.log.Error("poller get latest resource version", "err", err)
+				t.Reset(p.pollingInterval)
 				continue
 			}
 			for group, items := range grv {
 				for resource := range items {
-					// If we haven't seen this resource before, we start from 0
+					// If we haven't seen this resource before, we start from 0.
 					if _, ok := since[group]; !ok {
 						since[group] = make(map[string]int64)
 					}
@@ -67,11 +143,11 @@ func (n *pollingNotifier) poller(ctx context.Context, since groupResourceRV, str
 						since[group][resource] = 0
 					}
 
-					// Poll for new events
-					next, err := n.poll(ctx, group, resource, since[group][resource], stream)
+					// Poll for new events.
+					next, err := p.poll(ctx, group, resource, since[group][resource], stream)
 					if err != nil {
-						n.backend.log.Error("polling for resource", "err", err)
-						t.Reset(n.pollingInterval)
+						p.log.Error("polling for resource", "err", err)
+						t.Reset(p.pollingInterval)
 						continue
 					}
 					if next > since[group][resource] {
@@ -80,34 +156,22 @@ func (n *pollingNotifier) poller(ctx context.Context, since groupResourceRV, str
 				}
 			}
 
-			t.Reset(n.pollingInterval)
+			t.Reset(p.pollingInterval)
 			span.End()
 		}
 	}
 }
 
-func (n *pollingNotifier) poll(ctx context.Context, grp string, res string, since int64, stream chan<- *resource.WrittenEvent) (int64, error) {
-	ctx, span := n.backend.tracer.Start(ctx, tracePrefix+"poll")
+func (p *pollingNotifier) poll(ctx context.Context, grp string, res string, since int64, stream chan<- *resource.WrittenEvent) (int64, error) {
+	ctx, span := p.tracer.Start(ctx, tracePrefix+"poll")
 	defer span.End()
 
 	start := time.Now()
-	var records []*historyPollResponse
-	err := n.backend.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
-		var err error
-		records, err = dbutil.Query(ctx, tx, sqlResourceHistoryPoll, &sqlResourceHistoryPollRequest{
-			SQLTemplate:          sqltemplate.New(n.backend.dialect),
-			Resource:             res,
-			Group:                grp,
-			SinceResourceVersion: since,
-			Response:             &historyPollResponse{},
-		})
-		return err
-	})
+	records, err := p.historyPoll(ctx, grp, res, since)
 	if err != nil {
 		return 0, fmt.Errorf("poll history: %w", err)
 	}
-	end := time.Now()
-	resource.NewStorageMetrics().PollerLatency.Observe(end.Sub(start).Seconds())
+	resource.NewStorageMetrics().PollerLatency.Observe(time.Now().Sub(start).Seconds())
 
 	var nextRV int64
 	for _, rec := range records {
@@ -135,16 +199,22 @@ func (n *pollingNotifier) poll(ctx context.Context, grp string, res string, sinc
 			ResourceVersion: rec.ResourceVersion,
 			// Timestamp:  , // TODO: add timestamp
 		}
-		n.backend.log.Debug("poller sent event to stream", "namespace", rec.Key.Namespace, "group", rec.Key.Group, "resource", rec.Key.Resource, "name", rec.Key.Name, "action", rec.Action, "rv", rec.ResourceVersion)
+		p.log.Debug("poller sent event to stream",
+			"namespace", rec.Key.Namespace,
+			"group", rec.Key.Group,
+			"resource", rec.Key.Resource,
+			"name", rec.Key.Name,
+			"action", rec.Action,
+			"rv", rec.ResourceVersion)
 	}
 
 	return nextRV, nil
 }
 
 func (n *pollingNotifier) send(_ context.Context, _ *resource.WrittenEvent) {
-	// No-op for polling strategy - changes are detected via polling
+	// No-op for polling strategy - changes are detected via polling.
 }
 
 func (n *pollingNotifier) close() {
-	// No-op for polling strategy
+	// No-op for polling strategy.
 }
