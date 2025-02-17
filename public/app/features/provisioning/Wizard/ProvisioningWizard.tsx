@@ -24,8 +24,8 @@ const steps: Array<Step<WizardStep>> = [
 
 const nextButtonText = {
   connection: 'Connect to your repository',
-  repository: 'Next',
-  export: 'Next',
+  repository: 'Export dashboards to repository',
+  export: 'Start provisioning',
   provisioning: 'Finish',
 } as const;
 
@@ -65,7 +65,8 @@ export function ProvisioningWizard({ data, onSubmit }: WizardProps) {
   };
 
   const handleSubmit = (data: WizardFormData) => {
-    onSubmit({} as any);
+    // TODO: Redirect somewhere?
+    // onSubmit();
   };
 
   return (
@@ -100,7 +101,6 @@ export function ProvisioningWizard({ data, onSubmit }: WizardProps) {
           <Button
             type={activeStep === 'provisioning' ? 'submit' : 'button'}
             onClick={activeStep === 'provisioning' ? undefined : handleNext}
-            icon={activeStep === 'provisioning' ? undefined : 'arrow-right'}
           >
             {nextButtonText[activeStep]}
           </Button>
