@@ -156,7 +156,11 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
       // when creating a new rule, we save the manual routing setting , and editorSettings.simplifiedQueryEditor to the local storage
       storeInLocalStorageValues(values);
       await addRuleToRuleGroup.execute(ruleGroupIdentifier, ruleDefinition, evaluateEvery);
-      grafanaTypeRule && trackNewGrafanaAlertRuleFormSavedSuccess(); // new Grafana-managed rule
+      grafanaTypeRule &&
+        trackNewGrafanaAlertRuleFormSavedSuccess({
+          simplifiedQueryEditor: values.editorSettings?.simplifiedQueryEditor ?? false,
+          simplifiedNotificationEditor: values.editorSettings?.simplifiedNotificationEditor ?? false,
+        }); // new Grafana-managed rule
     } else {
       const ruleIdentifier = fromRulerRuleAndRuleGroupIdentifier(ruleGroupIdentifier, existing.rule);
       await updateRuleInRuleGroup.execute(
