@@ -355,10 +355,6 @@ const (
 	// Enable format string transformer
 	FlagFormatString = "formatString"
 
-	// FlagTransformationsVariableSupport
-	// Allows using variables in transformations
-	FlagTransformationsVariableSupport = "transformationsVariableSupport"
-
 	// FlagKubernetesPlaylists
 	// Use the kubernetes API in the frontend for playlists, and route /api/playlist requests to k8s
 	FlagKubernetesPlaylists = "kubernetesPlaylists"
@@ -970,6 +966,10 @@ const (
 	// FlagAlertingJiraIntegration
 	// Enables the new Jira integration for contact points in cloud alert managers.
 	FlagAlertingJiraIntegration = "alertingJiraIntegration"
+
+	// FlagAlertingRuleVersionHistoryRestore
+	// Enables the alert rule version history restore feature
+	FlagAlertingRuleVersionHistoryRestore = "alertingRuleVersionHistoryRestore"
 
 	// FlagNewShareReportDrawer
 	// Enables the report creation drawer in a dashboard

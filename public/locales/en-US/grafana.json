@@ -205,6 +205,41 @@
         "recording": "Add labels to your rule."
       }
     },
+    "alertVersionHistory": {
+      "alerting": "Alerting",
+      "alerting-change-description": "This update was made by the alerting system due to other changes. For example, when renaming a contact point that is used for simplified routing, this will update affected rules",
+      "annotations": "Annotations",
+      "compareVersions": "Compare versions",
+      "comparing-versions": "Comparing versions",
+      "condition": "Alert condition",
+      "contactPointRouting": "Contact point routing",
+      "description": "Each time you edit the alert rule, a new version is created. Select two versions below and compare their differences.",
+      "errorloading": "Failed to load alert rule versions",
+      "execErrorState": "Alert state when execution error",
+      "intervalSeconds": "Evaluation interval",
+      "labels": "Labels",
+      "latest": "Latest",
+      "name": "Name",
+      "namespace_uid": "Folder UID",
+      "noDataState": "Alert state when no data",
+      "noVersionsFound": "No versions found for this rule",
+      "paused": "Paused state",
+      "pendingPeriod": "Pending period",
+      "provisioning": "Provisioning",
+      "provisioning-change-description": "Version update was made via provisioning",
+      "queryAndAlertCondition": "Query and alert condition",
+      "reset": "Reset to version {{version}}",
+      "restore": "Restore",
+      "restore-modal": {
+        "body": "Are you sure you want to restore the alert rule definition to this version? All unsaved changes will be lost.",
+        "summary": "Summary of changes to be applied:",
+        "title": "Restore Version"
+      },
+      "rule_group": "Rule group",
+      "unknown": "Unknown",
+      "unknown-change-description": "This update was made prior to the implementation of alert rule version history. The user who made the change is not tracked, but future changes will include the user",
+      "user-id": "User ID {{uid}}"
+    },
     "annotations": {
       "description": "Add more context to your alert notifications.",
       "title": "Configure notification message"
@@ -784,6 +819,25 @@
     },
     "search": {
       "placeholder": "Search all"
+    }
+  },
+  "core": {
+    "versionHistory": {
+      "comparison": {
+        "header": {
+          "hide-json-diff": "Hide JSON diff ",
+          "show-json-diff": "Show JSON diff ",
+          "text": "Version {{version}} updated by {{createdBy}} ({{ageString}}) {{message}}"
+        },
+        "select": "Select two versions to start comparing"
+      },
+      "no-properties-changed": "No relevant properties changed",
+      "table": {
+        "updated": "Date",
+        "updatedBy": "Updated By",
+        "version": "Version"
+      },
+      "view-json-diff": "View JSON diff to see all changes"
     }
   },
   "correlations": {

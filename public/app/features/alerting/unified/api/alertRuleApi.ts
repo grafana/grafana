@@ -329,20 +329,28 @@ export const alertRuleApi = alertingApi.injectEndpoints({
           },
         };
       },
-      invalidatesTags: (result, _error, { namespace, payload, rulerConfig }) => [
-        { type: 'RuleNamespace', id: `${rulerConfig.dataSourceUid}/${namespace}` },
-        { type: 'RuleGroup', id: `${rulerConfig.dataSourceUid}/${namespace}/${payload.name}` },
-        ...payload.rules
-          .filter((rule) => isGrafanaRulerRule(rule))
-          .map((rule) => ({ type: 'GrafanaRulerRule', id: rule.grafana_alert.uid }) as const),
-      ],
-    }),
+      invalidatesTags: (result, _error, { namespace, payload, rulerConfig }) => {
+        const grafanaRulerRules = payload.rules.filter((rule) => isGrafanaRulerRule(rule));
 
+        return [
+          { type: 'RuleNamespace', id: `${rulerConfig.dataSourceUid}/${namespace}` },
+          { type: 'RuleGroup', id: `${rulerConfig.dataSourceUid}/${namespace}/${payload.name}` },
+          ...grafanaRulerRules.flatMap((rule) => [
+            { type: 'GrafanaRulerRule', id: rule.grafana_alert.uid } as const,
+            { type: 'GrafanaRulerRuleVersion', id: rule.grafana_alert.uid } as const,
+          ]),
+        ];
+      },
+    }),
     getAlertRule: build.query<RulerGrafanaRuleDTO, { uid: string }>({
       // TODO: In future, if supported in other rulers, parametrize ruler source name
       // For now, to make the consumption of this hook clearer, only support Grafana ruler
       query: ({ uid }) => ({ url: `/api/ruler/${GRAFANA_RULES_SOURCE_NAME}/api/v1/rule/${uid}` }),
       providesTags: (_result, _error, { uid }) => [{ type: 'GrafanaRulerRule', id: uid }],
+    }),
+    getAlertVersionHistory: build.query<RulerGrafanaRuleDTO[], { uid: string }>({
+      query: ({ uid }) => ({ url: `/api/ruler/${GRAFANA_RULES_SOURCE_NAME}/api/v1/rule/${uid}/versions` }),
+      providesTags: (_result, _error, { uid }) => [{ type: 'GrafanaRulerRuleVersion', id: uid }],
     }),
 
     exportRules: build.query<string, ExportRulesParams>({
