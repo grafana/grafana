@@ -1306,21 +1306,35 @@
             "description": "Whether we should commit to change branches and use a Pull Request flow to achieve this. By default, this is false (i.e. we will commit straight to the main branch).",
             "type": "boolean"
           },
+          "encryptedToken": {
+            "description": "Token for accessing the repository, but encrypted. This is not possible to read back to a user decrypted.",
+            "type": "string",
+            "format": "byte",
+            "x-kubernetes-list-type": "atomic"
+          },
           "generateDashboardPreviews": {
-            "description": "Whether we should show dashboard previews in the pull requests caused by the BranchWorkflow option. By default, this is false (i.e. we will not create previews). This option is a no-op if BranchWorkflow is `false` or default.",
+            "description": "Whether we should show dashboard previews for pull requests. By default, this is false (i.e. we will not create previews).",
             "type": "boolean"
           },
-          "owner": {
-            "description": "The owner of the repository (e.g. example in `example/test` or `https://github.com/example/test`).",
-            "type": "string"
-          },
-          "repository": {
-            "description": "The name of the repository (e.g. test in `example/test` or `https://github.com/example/test`).",
-            "type": "string"
-          },
           "token": {
-            "description": "Token for accessing the repository.",
+            "description": "Token for accessing the repository. If set, it will be encrypted into encryptedToken, then set to an empty string again.",
             "type": "string"
+          },
+          "url": {
+            "description": "The repository URL (e.g. `https://github.com/example/test`).",
+            "type": "string"
+          },
+          "workflows": {
+            "description": "Workflow allowed for changes to the repository. The order is relevant for defining the precedence of the workflows. Possible values: pull-request, branch, push.",
+            "type": "array",
+            "items": {
+              "type": "string",
+              "default": "",
+              "enum": [
+                "branch",
+                "push"
+              ]
+            }
           }
         }
       },
@@ -1468,7 +1482,7 @@
             "type": "string"
           },
           "github": {
-            "description": "The repository on GitHub. Mutually exclusive with local | s3 | github.",
+            "description": "The repository on GitHub. Mutually exclusive with local | github.",
             "allOf": [
               {
                 "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.GitHubRepositoryConfig"
@@ -1476,7 +1490,7 @@
             ]
           },
           "local": {
-            "description": "The repository on the local file system. Mutually exclusive with local | s3 | github.",
+            "description": "The repository on the local file system. Mutually exclusive with local | github.",
             "allOf": [
               {
                 "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.LocalRepositoryConfig"
@@ -1487,14 +1501,6 @@
             "description": "ReadOnly  repository does not allow any write commands",
             "type": "boolean",
             "default": false
-          },
-          "s3": {
-            "description": "The repository in an S3 bucket. Mutually exclusive with local | s3 | github.",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.S3RepositoryConfig"
-              }
-            ]
           },
           "sync": {
             "description": "Sync settings -- how values are pulled from the repository into grafana",
@@ -1511,13 +1517,12 @@
             "default": ""
           },
           "type": {
-            "description": "The repository type.  When selected oneOf the values below should be non-nil\n\nPossible enum values:\n - `\"github\"`\n - `\"local\"`\n - `\"s3\"`",
+            "description": "The repository type.  When selected oneOf the values below should be non-nil\n\nPossible enum values:\n - `\"github\"`\n - `\"local\"`",
             "type": "string",
             "default": "",
             "enum": [
               "github",
-              "local",
-              "s3"
+              "local"
             ]
           }
         }
@@ -1602,17 +1607,6 @@
           "resource": {
             "type": "string",
             "default": ""
-          }
-        }
-      },
-      "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.S3RepositoryConfig": {
-        "type": "object",
-        "properties": {
-          "bucket": {
-            "type": "string"
-          },
-          "region": {
-            "type": "string"
           }
         }
       },
@@ -1703,6 +1697,10 @@
       "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.WebhookStatus": {
         "type": "object",
         "properties": {
+          "encryptedSecret": {
+            "type": "string",
+            "format": "byte"
+          },
           "id": {
             "type": "integer",
             "format": "int64"
