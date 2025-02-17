@@ -35,6 +35,9 @@ export const INTERVAL_FACTOR_OPTIONS: Array<SelectableValue<number>> = map([1, 2
   label: '1/' + value,
 }));
 
+const eventSourceOodleGrafana = 'oodle';
+const eventTypeUpdateThresholds = 'updateThresholds';
+
 type Props = PromQueryEditorProps;
 
 class DelayedTriggerState {
@@ -90,6 +93,34 @@ export const PromQueryEditorSelector = memo<Props>((props) => {
   const query = getQueryWithDefaults(props.query, app, defaultEditor);
   // This should be filled in from the defaults by now.
   const editorMode = query.editorMode!;
+  useEffect(() => {
+    const handleEvent = (event: { data: any; origin: string }) => {
+      const { type, payload } = event.data;
+      if (type !== 'message') {
+        return
+      }
+      if (payload?.source !== eventSourceOodleGrafana) {
+        return
+      }
+      if (payload?.eventType !== eventTypeUpdateThresholds) {
+        return
+      }
+
+      if (query.expr !== payload?.query) {
+        onChange({
+          ...query,
+          expr: payload?.query,
+        });
+        onRunQuery();
+      }
+    };
+
+    window.addEventListener('message', handleEvent, false);
+
+    return () => {
+      window.removeEventListener('message', handleEvent);
+    };
+  }, []);
 
   const onEditorModeChange = useCallback(
     (newMetricEditorMode: QueryEditorMode) => {
