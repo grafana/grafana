@@ -43,7 +43,12 @@ func NewResourceServer(db infraDB.DB, cfg *setting.Cfg,
 	if err != nil {
 		return nil, err
 	}
-	store, err := NewBackend(BackendOptions{DBProvider: eDB, Tracer: tracer})
+
+	// compute isHA by checking if alerting or live HA is enabled, or if the dialect is sqlite.
+	isHA := len(cfg.UnifiedAlerting.HAPeers) > 0 ||
+		cfg.LiveHAEngine != ""
+
+	store, err := NewBackend(BackendOptions{DBProvider: eDB, Tracer: tracer, IsHA: isHA})
 	if err != nil {
 		return nil, err
 	}
