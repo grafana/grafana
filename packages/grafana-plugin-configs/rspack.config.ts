@@ -31,6 +31,7 @@ __webpack_public_path__ =
 
 const config = async (env: Record<string, unknown>): Promise<Configuration> => {
   const baseConfig: Configuration = {
+    amd: {},
     context: process.cwd(),
 
     devtool: 'source-map',
@@ -100,17 +101,17 @@ const config = async (env: Record<string, unknown>): Promise<Configuration> => {
         // HACKS: Workaround for rspack not outputting UMD modules as webpack does.
         // We have systemjs amd define which doesn't work like standard amd define so we need to disable it,
         // in any umd module otherwise it will break at runtime.
-        {
-          test: [require.resolve('json-logic-js'), require.resolve('classnames')],
-          use: [
-            {
-              loader: require.resolve('imports-loader'),
-              options: {
-                additionalCode: 'var define = false; /* Disable AMD for misbehaving libraries */',
-              },
-            },
-          ],
-        },
+        // {
+        //   test: [require.resolve('json-logic-js'), require.resolve('classnames')],
+        //   use: [
+        //     {
+        //       loader: require.resolve('imports-loader'),
+        //       options: {
+        //         additionalCode: 'var define = false; /* Disable AMD for misbehaving libraries */',
+        //       },
+        //     },
+        //   ],
+        // },
         {
           exclude: /(node_modules)/,
           test: /\.[tj]sx?$/,
