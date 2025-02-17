@@ -1847,11 +1847,13 @@ func (cfg *Cfg) readServerSettings(iniFile *ini.File) error {
 	}
 
 	cfg.AppURL = AppUrl
-	cfg.AppSubURL = AppSubUrl
 	cfg.Protocol = HTTPScheme
-	cfg.ServeFromSubPath = server.Key("serve_from_sub_path").MustBool(false)
 	cfg.CertWatchInterval = server.Key("certs_watch_interval").MustDuration(0)
-
+	cfg.ServeFromSubPath = server.Key("serve_from_sub_path").MustBool(false)
+	if !cfg.ServeFromSubPath {
+		AppSubUrl = ""
+	}
+	cfg.AppSubURL = AppSubUrl
 	protocolStr := valueAsString(server, "protocol", "http")
 
 	if protocolStr == "https" {
