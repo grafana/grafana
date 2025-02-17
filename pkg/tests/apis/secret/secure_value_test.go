@@ -50,8 +50,8 @@ func TestIntegrationSecureValue(t *testing.T) {
 		// in order to create securevalues, we need to first create keepers (and delete them to clean it up).
 		ResourceKeepers: {
 			Actions: []string{
-				secret.ActionSecretsManagerKeepersCreate,
-				secret.ActionSecretsManagerKeepersDelete,
+				secret.ActionSecretKeepersCreate,
+				secret.ActionSecretKeepersDelete,
 			},
 		},
 	}
@@ -416,8 +416,8 @@ func TestIntegrationSecureValue(t *testing.T) {
 			// we need to have a Keeper before creating SecureValues.
 			ResourceKeepers: {
 				Actions: []string{
-					secret.ActionSecretsManagerKeepersCreate,
-					secret.ActionSecretsManagerKeepersDelete,
+					secret.ActionSecretKeepersCreate,
+					secret.ActionSecretKeepersDelete,
 				},
 			},
 		}

@@ -6,37 +6,37 @@ import (
 
 const (
 	// SecureValues
-	ActionSecretsManagerSecureValuesCreate = "secrets-manager.securevalues:create" // CREATE.
-	ActionSecretsManagerSecureValuesWrite  = "secrets-manager.securevalues:write"  // CREATE + UPDATE.
-	ActionSecretsManagerSecureValuesRead   = "secrets-manager.securevalues:read"   // GET + LIST.
-	ActionSecretsManagerSecureValuesDelete = "secrets-manager.securevalues:delete" // DELETE.
+	ActionSecretSecureValuesCreate = "secret.securevalues:create" // CREATE.
+	ActionSecretSecureValuesWrite  = "secret.securevalues:write"  // CREATE + UPDATE.
+	ActionSecretSecureValuesRead   = "secret.securevalues:read"   // GET + LIST.
+	ActionSecretSecureValuesDelete = "secret.securevalues:delete" // DELETE.
 
 	// Keepers
-	ActionSecretsManagerKeepersCreate = "secrets-manager.keepers:create" // CREATE.
-	ActionSecretsManagerKeepersWrite  = "secrets-manager.keepers:write"  // UPDATE.
-	ActionSecretsManagerKeepersRead   = "secrets-manager.keepers:read"   // GET + LIST.
-	ActionSecretsManagerKeepersDelete = "secrets-manager.keepers:delete" // DELETE.
+	ActionSecretKeepersCreate = "secret.keepers:create" // CREATE.
+	ActionSecretKeepersWrite  = "secret.keepers:write"  // UPDATE.
+	ActionSecretKeepersRead   = "secret.keepers:read"   // GET + LIST.
+	ActionSecretKeepersDelete = "secret.keepers:delete" // DELETE.
 )
 
 var (
-	ScopeProviderSecretsManagerSecureValues = accesscontrol.NewScopeProvider("secrets-manager.securevalues")
-	ScopeProviderSecretsManagerKeepers      = accesscontrol.NewScopeProvider("secrets-manager.keepers")
+	ScopeProviderSecretSecureValues = accesscontrol.NewScopeProvider("secret.securevalues")
+	ScopeProviderSecretKeepers      = accesscontrol.NewScopeProvider("secret.keepers")
 
-	ScopeAllSecureValues = ScopeProviderSecretsManagerSecureValues.GetResourceAllScope()
-	ScopeAllKeepers      = ScopeProviderSecretsManagerKeepers.GetResourceAllScope()
+	ScopeAllSecureValues = ScopeProviderSecretSecureValues.GetResourceAllScope()
+	ScopeAllKeepers      = ScopeProviderSecretKeepers.GetResourceAllScope()
 )
 
 func RegisterAccessControlRoles(service accesscontrol.Service) error {
 	// SecureValues
 	secureValuesReader := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
-			Name:        "fixed:secrets-manager.securevalues:reader",
+			Name:        "fixed:secret.securevalues:reader",
 			DisplayName: "Secrets Manager secure values reader",
 			Description: "Read and list secure values.",
 			Group:       "Secrets Manager",
 			Permissions: []accesscontrol.Permission{
 				{
-					Action: ActionSecretsManagerSecureValuesRead,
+					Action: ActionSecretSecureValuesRead,
 					Scope:  ScopeAllSecureValues,
 				},
 			},
@@ -46,21 +46,21 @@ func RegisterAccessControlRoles(service accesscontrol.Service) error {
 
 	secureValuesWriter := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
-			Name:        "fixed:secrets-manager.securevalues:writer",
+			Name:        "fixed:secret.securevalues:writer",
 			DisplayName: "Secrets Manager secure values writer",
 			Description: "Create, update and delete secure values.",
 			Group:       "Secrets Manager",
 			Permissions: []accesscontrol.Permission{
 				{
-					Action: ActionSecretsManagerSecureValuesCreate,
+					Action: ActionSecretSecureValuesCreate,
 					Scope:  ScopeAllSecureValues,
 				},
 				{
-					Action: ActionSecretsManagerSecureValuesWrite,
+					Action: ActionSecretSecureValuesWrite,
 					Scope:  ScopeAllSecureValues,
 				},
 				{
-					Action: ActionSecretsManagerSecureValuesDelete,
+					Action: ActionSecretSecureValuesDelete,
 					Scope:  ScopeAllSecureValues,
 				},
 			},
@@ -71,13 +71,13 @@ func RegisterAccessControlRoles(service accesscontrol.Service) error {
 	// Keepers
 	keepersReader := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
-			Name:        "fixed:secrets-manager.keepers:reader",
+			Name:        "fixed:secret.keepers:reader",
 			DisplayName: "Secrets Manager keepers reader",
 			Description: "Read and list keepers.",
 			Group:       "Secrets Manager",
 			Permissions: []accesscontrol.Permission{
 				{
-					Action: ActionSecretsManagerKeepersRead,
+					Action: ActionSecretKeepersRead,
 					Scope:  ScopeAllKeepers,
 				},
 			},
@@ -87,21 +87,21 @@ func RegisterAccessControlRoles(service accesscontrol.Service) error {
 
 	keepersWriter := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
-			Name:        "fixed:secrets-manager.keepers:writer",
+			Name:        "fixed:secret.keepers:writer",
 			DisplayName: "Secrets Manager keepers writer",
 			Description: "Create, update and delete keepers.",
 			Group:       "Secrets Manager",
 			Permissions: []accesscontrol.Permission{
 				{
-					Action: ActionSecretsManagerKeepersCreate,
+					Action: ActionSecretKeepersCreate,
 					Scope:  ScopeAllKeepers,
 				},
 				{
-					Action: ActionSecretsManagerKeepersWrite,
+					Action: ActionSecretKeepersWrite,
 					Scope:  ScopeAllKeepers,
 				},
 				{
-					Action: ActionSecretsManagerKeepersDelete,
+					Action: ActionSecretKeepersDelete,
 					Scope:  ScopeAllKeepers,
 				},
 			},

@@ -22,20 +22,20 @@ import (
 )
 
 var (
-	ResourceSecureValues = "secrets-manager.securevalues"
-	ResourceKeepers      = "secrets-manager.keepers"
+	ResourceSecureValues = "secret.securevalues"
+	ResourceKeepers      = "secret.keepers"
 
 	ActionsAllKeepers = []string{
-		secret.ActionSecretsManagerKeepersCreate,
-		secret.ActionSecretsManagerKeepersWrite,
-		secret.ActionSecretsManagerKeepersRead,
-		secret.ActionSecretsManagerKeepersDelete,
+		secret.ActionSecretKeepersCreate,
+		secret.ActionSecretKeepersWrite,
+		secret.ActionSecretKeepersRead,
+		secret.ActionSecretKeepersDelete,
 	}
 	ActionsAllSecureValues = []string{
-		secret.ActionSecretsManagerSecureValuesCreate,
-		secret.ActionSecretsManagerSecureValuesWrite,
-		secret.ActionSecretsManagerSecureValuesRead,
-		secret.ActionSecretsManagerSecureValuesDelete,
+		secret.ActionSecretSecureValuesCreate,
+		secret.ActionSecretSecureValuesWrite,
+		secret.ActionSecretSecureValuesRead,
+		secret.ActionSecretSecureValuesDelete,
 	}
 )
 
@@ -92,7 +92,7 @@ func mustCreateUsersWithOrg(t *testing.T, helper *apis.K8sTestHelper, orgID int6
 		permissions = append(permissions, resourcepermissions.SetResourcePermissionCommand{
 			Actions:           permission.Actions,
 			Resource:          resource,
-			ResourceAttribute: "name",
+			ResourceAttribute: "uid",
 			ResourceID:        cmp.Or(permission.Name, "*"),
 		})
 	}
