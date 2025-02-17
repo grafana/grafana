@@ -26,8 +26,10 @@ import {
 } from '@grafana/schema/dist/esm/index.gen';
 
 import {
+  GridLayoutSpec,
   ResponsiveGridLayoutSpec,
   RowsLayoutSpec,
+  TabsLayoutSpec,
 } from '../../../../../packages/grafana-schema/src/schema/dashboard/v2alpha0';
 import { DashboardEditPane } from '../edit-pane/DashboardEditPane';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
@@ -42,6 +44,8 @@ import { ResponsiveGridItem } from '../scene/layout-responsive-grid/ResponsiveGr
 import { ResponsiveGridLayoutManager } from '../scene/layout-responsive-grid/ResponsiveGridLayoutManager';
 import { RowItem } from '../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
+import { TabItem } from '../scene/layout-tabs/TabItem';
+import { TabsLayoutManager } from '../scene/layout-tabs/TabsLayoutManager';
 import { DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 
 import { transformSceneToSaveModelSchemaV2 } from './transformSceneToSaveModelSchemaV2';
@@ -492,10 +496,12 @@ describe('dynamic layouts', () => {
     expect(rowsLayout.rows.length).toBe(2);
     expect(rowsLayout.rows[0].kind).toBe('RowsLayoutRow');
     expect(rowsLayout.rows[0].spec.layout.kind).toBe('ResponsiveGridLayout');
-    expect(rowsLayout.rows[0].spec.layout.spec.items[0].kind).toBe('ResponsiveGridLayoutItem');
+    const layout1 = rowsLayout.rows[0].spec.layout.spec as ResponsiveGridLayoutSpec;
+    expect(layout1.items[0].kind).toBe('ResponsiveGridLayoutItem');
 
     expect(rowsLayout.rows[1].spec.layout.kind).toBe('GridLayout');
-    expect(rowsLayout.rows[1].spec.layout.spec.items[0].kind).toBe('GridLayoutItem');
+    const layout2 = rowsLayout.rows[1].spec.layout.spec as GridLayoutSpec;
+    expect(layout2.items[0].kind).toBe('GridLayoutItem');
   });
 
   it('should transform scene with responsive grid layout to schema v2', () => {
@@ -524,6 +530,39 @@ describe('dynamic layouts', () => {
     expect(respGridLayout.row).toBe('rowString');
     expect(respGridLayout.items.length).toBe(2);
     expect(respGridLayout.items[0].kind).toBe('ResponsiveGridLayoutItem');
+  });
+
+  it('should transform scene with tabs layout to schema v2', () => {
+    const tabs = [
+      new TabItem({
+        layout: new DefaultGridLayoutManager({
+          grid: new SceneGridLayout({
+            children: [
+              new DashboardGridItem({
+                y: 0,
+                height: 10,
+                body: new VizPanel({}),
+              }),
+            ],
+          }),
+        }),
+      }),
+    ];
+
+    const scene = setupDashboardScene(
+      getMinimalSceneState(
+        new TabsLayoutManager({
+          currentTab: tabs[0],
+          tabs,
+        })
+      )
+    );
+    const result = transformSceneToSaveModelSchemaV2(scene);
+    expect(result.layout.kind).toBe('TabsLayout');
+    const tabsLayout = result.layout.spec as TabsLayoutSpec;
+    expect(tabsLayout.tabs.length).toBe(1);
+    expect(tabsLayout.tabs[0].kind).toBe('TabsLayoutTab');
+    expect(tabsLayout.tabs[0].spec.layout.kind).toBe('GridLayout');
   });
 });
 

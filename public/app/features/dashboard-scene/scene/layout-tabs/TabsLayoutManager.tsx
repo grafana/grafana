@@ -2,6 +2,7 @@ import { SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
 import { t } from 'app/core/internationalization';
 
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
+import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
 import { TabItem } from './TabItem';
 import { TabsLayoutManagerRenderer } from './TabsLayoutManagerRenderer';
@@ -16,7 +17,7 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
 
   public readonly isDashboardLayoutManager = true;
 
-  public static readonly descriptor = {
+  public static readonly descriptor: LayoutRegistryItem = {
     get name() {
       return t('dashboard.tabs-layout.name', 'Tabs');
     },
@@ -25,6 +26,8 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     },
     id: 'tabs-layout',
     createFromLayout: TabsLayoutManager.createFromLayout,
+
+    kind: 'TabsLayout',
   };
 
   public readonly descriptor = TabsLayoutManager.descriptor;
