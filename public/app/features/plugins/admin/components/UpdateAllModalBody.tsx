@@ -194,7 +194,7 @@ export const UpdateModalBody = ({
               {`${errorMap.size} ${t('plugins.catalog.update-all.error-status-text', 'failed - see error messages')}`}
             </div>
           )}
-          {config.pluginAdminExternalManageEnabled && config.featureToggles.managedPluginsInstall && (
+          {config.pluginAdminExternalManageEnabled && (
             <footer className={styles.footer}>
               <Trans i18nKey="plugins.catalog.update-all.cloud-update-message">
                 * It may take a few minutes for the plugins to be available for usage.
