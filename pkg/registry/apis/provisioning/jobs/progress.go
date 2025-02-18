@@ -141,6 +141,9 @@ func (r *jobProgressRecorder) updateSummary(result JobResourceResult) {
 			summary.Create++
 		case repository.FileActionIgnored:
 			summary.Noop++
+		case repository.FileActionRenamed:
+			summary.Delete++
+			summary.Create++
 		}
 		summary.Write = summary.Create + summary.Update
 	}

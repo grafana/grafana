@@ -32,7 +32,7 @@ func ProvideTestEnv(
 	featureMgmt featuremgmt.FeatureToggles,
 	resourceClient resource.ResourceClient,
 	idService auth.IDService,
-	githubMockFactory *github.MockFactory,
+	githubFactory *github.Factory,
 ) (*TestEnv, error) {
 	return &TestEnv{
 		TestingT:            testingT,
@@ -47,7 +47,7 @@ func ProvideTestEnv(
 		FeatureToggles:      featureMgmt,
 		ResourceClient:      resourceClient,
 		IDService:           idService,
-		GitHubMockFactory:   githubMockFactory,
+		GitHubFactory:       githubFactory,
 	}, nil
 }
 
@@ -68,5 +68,5 @@ type TestEnv struct {
 	FeatureToggles      featuremgmt.FeatureToggles
 	ResourceClient      resource.ResourceClient
 	IDService           auth.IDService
-	GitHubMockFactory   *github.MockFactory
+	GitHubFactory       *github.Factory
 }

@@ -25,7 +25,10 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apis/dashboard"
+	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	clientset "github.com/grafana/grafana/pkg/generated/clientset/versioned"
@@ -75,7 +78,7 @@ type APIBuilder struct {
 	blobstore         blob.PublicBlobStore
 	client            *resources.ClientFactory
 	parsers           *resources.ParserFactory
-	ghFactory         github.ClientFactory
+	ghFactory         *github.Factory
 	clonedir          string // where repo clones are managed
 	jobs              jobs.JobQueue
 	tester            *RepositoryTester
@@ -100,7 +103,7 @@ func NewAPIBuilder(
 	blobstore blob.PublicBlobStore,
 	clonedir string, // where repo clones are managed
 	configProvider apiserver.RestConfigProvider,
-	ghFactory github.ClientFactory,
+	ghFactory *github.Factory,
 	legacyMigrator legacy.LegacyMigrator,
 	storageStatus dualwrite.Service,
 	secrets secrets.Service,
@@ -138,7 +141,7 @@ func RegisterAPIService(
 	render rendering.Service,
 	client resource.ResourceClient, // implements resource.RepositoryClient
 	configProvider apiserver.RestConfigProvider,
-	ghFactory github.ClientFactory,
+	ghFactory *github.Factory,
 	legacyMigrator legacy.LegacyMigrator,
 	storageStatus dualwrite.Service,
 	// FIXME: use multi-tenant service when one exists. In this state, we can't make this a multi-tenant service!
@@ -459,6 +462,12 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 	postStartHooks := map[string]genericapiserver.PostStartHookFunc{
 		"grafana-provisioning": func(postStartHookCtx genericapiserver.PostStartHookContext) error {
 			c, err := clientset.NewForConfig(postStartHookCtx.LoopbackClientConfig)
+			if err != nil {
+				return err
+			}
+
+			// When starting with an empty instance -- swith to "mode 4+"
+			err = b.tryRunningOnlyUnifiedStorage()
 			if err != nil {
 				return err
 			}
@@ -811,6 +820,59 @@ func (b *APIBuilder) encryptSecrets(ctx context.Context, repo *provisioning.Repo
 			return err
 		}
 		repo.Status.Webhook.Secret = ""
+	}
+	return nil
+}
+
+// FIXME: This logic does not belong in provisioning! (but required for now)
+// When starting an empty instance, we shift so that we never reference legacy storage
+// This should run somewhere else at startup by default (dual writer? dashboards?)
+func (b *APIBuilder) tryRunningOnlyUnifiedStorage() error {
+	ctx := context.Background()
+	if !dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, b.storageStatus) {
+		return nil
+	}
+
+	// Count how many things exist
+	rsp, err := b.legacyMigrator.Migrate(ctx, legacy.MigrateOptions{
+		Namespace: "default", // FIXME! this works for single org, but need to check multi-org
+		Resources: []schema.GroupResource{{
+			Group: dashboard.GROUP, Resource: dashboard.DASHBOARD_RESOURCE,
+		}, {
+			Group: folders.GROUP, Resource: folders.RESOURCE,
+		}},
+		OnlyCount: true,
+	})
+	if err != nil {
+		return fmt.Errorf("error getting legacy count %w", err)
+	}
+	for _, stats := range rsp.Summary {
+		if stats.Count > 0 {
+			return nil // something exists we can not just switch
+		}
+	}
+
+	logger := logging.DefaultLogger.With("logger", "provisioning startup")
+	mode5 := func(gr schema.GroupResource) error {
+		status, _ := b.storageStatus.Status(ctx, gr)
+		if !status.ReadUnified {
+			status.ReadUnified = true
+			status.WriteLegacy = false
+			status.WriteUnified = true
+			status.Runtime = false
+			status.Migrated = time.Now().UnixMilli()
+			_, err = b.storageStatus.Update(ctx, status)
+			logger.Info("set unified storage access", "group", gr.Group, "resource", gr.Resource)
+			return err
+		}
+		return nil // already reading unified
+	}
+
+	if err = mode5(dashboard.DashboardResourceInfo.GroupResource()); err != nil {
+		return err
+	}
+	if err = mode5(folders.FolderResourceInfo.GroupResource()); err != nil {
+		return err
 	}
 	return nil
 }

@@ -13,17 +13,17 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-type realImpl struct {
+type githubClient struct {
 	gh *github.Client
 }
 
-var _ Client = (*realImpl)(nil)
+var _ Client = (*githubClient)(nil)
 
-func NewRealClient(client *github.Client) *realImpl {
-	return &realImpl{client}
+func NewClient(client *github.Client) *githubClient {
+	return &githubClient{client}
 }
 
-func (r *realImpl) IsAuthenticated(ctx context.Context) error {
+func (r *githubClient) IsAuthenticated(ctx context.Context) error {
 	if _, _, err := r.gh.Users.Get(ctx, ""); err != nil {
 		var ghErr *github.ErrorResponse
 		if errors.As(err, &ghErr) {
@@ -50,7 +50,7 @@ func (r *realImpl) IsAuthenticated(ctx context.Context) error {
 	return nil
 }
 
-func (r *realImpl) RepoExists(ctx context.Context, owner, repository string) (bool, error) {
+func (r *githubClient) RepoExists(ctx context.Context, owner, repository string) (bool, error) {
 	_, resp, err := r.gh.Repositories.Get(ctx, owner, repository)
 	if err == nil {
 		return true, nil
@@ -62,7 +62,7 @@ func (r *realImpl) RepoExists(ctx context.Context, owner, repository string) (bo
 	return false, err
 }
 
-func (r *realImpl) GetContents(ctx context.Context, owner, repository, path, ref string) (fileContents RepositoryContent, dirContents []RepositoryContent, err error) {
+func (r *githubClient) GetContents(ctx context.Context, owner, repository, path, ref string) (fileContents RepositoryContent, dirContents []RepositoryContent, err error) {
 	if strings.Contains(path, "..") {
 		return nil, nil, ErrPathTraversalDisallowed
 	}
@@ -93,7 +93,7 @@ func (r *realImpl) GetContents(ctx context.Context, owner, repository, path, ref
 	}
 }
 
-func (r *realImpl) GetTree(ctx context.Context, owner, repository, ref string, recursive bool) ([]RepositoryContent, bool, error) {
+func (r *githubClient) GetTree(ctx context.Context, owner, repository, ref string, recursive bool) ([]RepositoryContent, bool, error) {
 	tree, _, err := r.gh.Git.GetTree(ctx, owner, repository, ref, recursive)
 	if err != nil {
 		var ghErr *github.ErrorResponse
@@ -128,7 +128,7 @@ func (r *realImpl) GetTree(ctx context.Context, owner, repository, ref string, r
 	return entries, tree.GetTruncated(), nil
 }
 
-func (r *realImpl) CreateFile(ctx context.Context, owner, repository, path, branch, message string, content []byte) error {
+func (r *githubClient) CreateFile(ctx context.Context, owner, repository, path, branch, message string, content []byte) error {
 	if strings.Contains(path, "..") {
 		return ErrPathTraversalDisallowed
 	}
@@ -156,7 +156,7 @@ func (r *realImpl) CreateFile(ctx context.Context, owner, repository, path, bran
 	return err
 }
 
-func (r *realImpl) UpdateFile(ctx context.Context, owner, repository, path, branch, message, hash string, content []byte) error {
+func (r *githubClient) UpdateFile(ctx context.Context, owner, repository, path, branch, message, hash string, content []byte) error {
 	if strings.Contains(path, "..") {
 		return ErrPathTraversalDisallowed
 	}
@@ -191,7 +191,7 @@ func (r *realImpl) UpdateFile(ctx context.Context, owner, repository, path, bran
 	return err
 }
 
-func (r *realImpl) DeleteFile(ctx context.Context, owner, repository, path, branch, message, hash string) error {
+func (r *githubClient) DeleteFile(ctx context.Context, owner, repository, path, branch, message, hash string) error {
 	if strings.Contains(path, "..") {
 		return ErrPathTraversalDisallowed
 	}
@@ -225,7 +225,7 @@ func (r *realImpl) DeleteFile(ctx context.Context, owner, repository, path, bran
 	return err
 }
 
-func (r *realImpl) Commits(ctx context.Context, owner, repository, path, branch string) ([]Commit, error) {
+func (r *githubClient) Commits(ctx context.Context, owner, repository, path, branch string) ([]Commit, error) {
 	commits, _, err := r.gh.Repositories.ListCommits(ctx, owner, repository, &github.CommitsListOptions{
 		Path: path,
 		SHA:  branch,
@@ -281,7 +281,7 @@ func (r *realImpl) Commits(ctx context.Context, owner, repository, path, branch 
 	return ret, nil
 }
 
-func (r *realImpl) CompareCommits(ctx context.Context, owner, repository, base, head string) ([]CommitFile, error) {
+func (r *githubClient) CompareCommits(ctx context.Context, owner, repository, base, head string) ([]CommitFile, error) {
 	var allFiles []CommitFile
 	opts := &github.ListOptions{
 		PerPage: 100,
@@ -316,7 +316,7 @@ func (r *realImpl) CompareCommits(ctx context.Context, owner, repository, base, 
 	return allFiles, nil
 }
 
-func (r *realImpl) GetBranch(ctx context.Context, owner, repository, branchName string) (Branch, error) {
+func (r *githubClient) GetBranch(ctx context.Context, owner, repository, branchName string) (Branch, error) {
 	branch, _, err := r.gh.Repositories.GetBranch(ctx, owner, repository, branchName, 0)
 	if err != nil {
 		var ghErr *github.ErrorResponse
@@ -338,7 +338,7 @@ func (r *realImpl) GetBranch(ctx context.Context, owner, repository, branchName 
 	}, nil
 }
 
-func (r *realImpl) CreateBranch(ctx context.Context, owner, repository, sourceBranch, branchName string) error {
+func (r *githubClient) CreateBranch(ctx context.Context, owner, repository, sourceBranch, branchName string) error {
 	// Fail if the branch already exists
 	if _, _, err := r.gh.Repositories.GetBranch(ctx, owner, repository, branchName, 0); err == nil {
 		return ErrResourceAlreadyExists
@@ -362,7 +362,7 @@ func (r *realImpl) CreateBranch(ctx context.Context, owner, repository, sourceBr
 	return nil
 }
 
-func (r *realImpl) BranchExists(ctx context.Context, owner, repository, branchName string) (bool, error) {
+func (r *githubClient) BranchExists(ctx context.Context, owner, repository, branchName string) (bool, error) {
 	_, resp, err := r.gh.Repositories.GetBranch(ctx, owner, repository, branchName, 0)
 	if err == nil {
 		return true, nil
@@ -375,7 +375,7 @@ func (r *realImpl) BranchExists(ctx context.Context, owner, repository, branchNa
 	return false, err
 }
 
-func (r *realImpl) ListWebhooks(ctx context.Context, owner, repository string) ([]WebhookConfig, error) {
+func (r *githubClient) ListWebhooks(ctx context.Context, owner, repository string) ([]WebhookConfig, error) {
 	var allHooks []*github.Hook
 	opts := &github.ListOptions{
 		PerPage: 100,
@@ -418,7 +418,7 @@ func (r *realImpl) ListWebhooks(ctx context.Context, owner, repository string) (
 	return ret, nil
 }
 
-func (r *realImpl) CreateWebhook(ctx context.Context, owner, repository string, cfg WebhookConfig) (WebhookConfig, error) {
+func (r *githubClient) CreateWebhook(ctx context.Context, owner, repository string, cfg WebhookConfig) (WebhookConfig, error) {
 	if cfg.ContentType == "" {
 		cfg.ContentType = "form"
 	}
@@ -452,7 +452,7 @@ func (r *realImpl) CreateWebhook(ctx context.Context, owner, repository string, 
 	}, nil
 }
 
-func (r *realImpl) GetWebhook(ctx context.Context, owner, repository string, webhookID int64) (WebhookConfig, error) {
+func (r *githubClient) GetWebhook(ctx context.Context, owner, repository string, webhookID int64) (WebhookConfig, error) {
 	hook, _, err := r.gh.Repositories.GetHook(ctx, owner, repository, webhookID)
 	if err != nil {
 		var ghErr *github.ErrorResponse
@@ -480,7 +480,7 @@ func (r *realImpl) GetWebhook(ctx context.Context, owner, repository string, web
 	}, nil
 }
 
-func (r *realImpl) DeleteWebhook(ctx context.Context, owner, repository string, webhookID int64) error {
+func (r *githubClient) DeleteWebhook(ctx context.Context, owner, repository string, webhookID int64) error {
 	_, err := r.gh.Repositories.DeleteHook(ctx, owner, repository, webhookID)
 	var ghErr *github.ErrorResponse
 	if !errors.As(err, &ghErr) {
@@ -495,7 +495,7 @@ func (r *realImpl) DeleteWebhook(ctx context.Context, owner, repository string, 
 	return err
 }
 
-func (r *realImpl) EditWebhook(ctx context.Context, owner, repository string, cfg WebhookConfig) error {
+func (r *githubClient) EditWebhook(ctx context.Context, owner, repository string, cfg WebhookConfig) error {
 	if cfg.ContentType == "" {
 		cfg.ContentType = "form"
 	}
@@ -518,7 +518,7 @@ func (r *realImpl) EditWebhook(ctx context.Context, owner, repository string, cf
 	return err
 }
 
-func (r *realImpl) ListPullRequestFiles(ctx context.Context, owner, repository string, number int) ([]CommitFile, error) {
+func (r *githubClient) ListPullRequestFiles(ctx context.Context, owner, repository string, number int) ([]CommitFile, error) {
 	var allFiles []*github.CommitFile
 	opts := &github.ListOptions{
 		PerPage: 100,
@@ -550,7 +550,7 @@ func (r *realImpl) ListPullRequestFiles(ctx context.Context, owner, repository s
 	return ret, nil
 }
 
-func (r *realImpl) CreatePullRequestComment(ctx context.Context, owner, repository string, number int, body string) error {
+func (r *githubClient) CreatePullRequestComment(ctx context.Context, owner, repository string, number int, body string) error {
 	comment := &github.IssueComment{
 		Body: &body,
 	}
@@ -566,7 +566,7 @@ func (r *realImpl) CreatePullRequestComment(ctx context.Context, owner, reposito
 	return nil
 }
 
-func (r *realImpl) CreatePullRequestFileComment(ctx context.Context, owner, repository string, number int, comment FileComment) error {
+func (r *githubClient) CreatePullRequestFileComment(ctx context.Context, owner, repository string, number int, comment FileComment) error {
 	commentRequest := &github.PullRequestComment{
 		Body:     &comment.Content,
 		CommitID: &comment.Ref,
@@ -586,7 +586,7 @@ func (r *realImpl) CreatePullRequestFileComment(ctx context.Context, owner, repo
 	return nil
 }
 
-func (r *realImpl) ClearAllPullRequestFileComments(ctx context.Context, owner, repository string, number int) error {
+func (r *githubClient) ClearAllPullRequestFileComments(ctx context.Context, owner, repository string, number int) error {
 	var allComments []*github.PullRequestComment
 	opts := &github.PullRequestListCommentsOptions{
 		ListOptions: github.ListOptions{

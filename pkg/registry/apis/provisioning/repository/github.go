@@ -46,7 +46,7 @@ var (
 func NewGitHub(
 	ctx context.Context,
 	config *provisioning.Repository,
-	factory pgh.ClientFactory,
+	factory *pgh.Factory,
 	secrets secrets.Service,
 	webhookURL string,
 ) (*githubRepository, error) {

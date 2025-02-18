@@ -26,13 +26,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 )
 
 func SetupFolderService(tb testing.TB, cfg *setting.Cfg, db db.DB, dashboardStore dashboards.Store, folderStore *folderimpl.DashboardFolderStoreImpl, bus *bus.InProcBus, features featuremgmt.FeatureToggles, ac accesscontrol.AccessControl) folder.Service {
 	tb.Helper()
 	fStore := folderimpl.ProvideStore(db)
 	return folderimpl.ProvideService(fStore, ac, bus, dashboardStore, folderStore, nil, db,
-		features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil)
+		features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService())
 }
 
 func SetupDashboardService(tb testing.TB, sqlStore db.DB, fs *folderimpl.DashboardFolderStoreImpl, cfg *setting.Cfg) (*dashboardservice.DashboardServiceImpl, dashboards.Store) {
@@ -63,7 +64,7 @@ func SetupDashboardService(tb testing.TB, sqlStore db.DB, fs *folderimpl.Dashboa
 		cfg, dashboardStore, fs,
 		features, folderPermissions, ac,
 		foldertest.NewFakeService(), folder.NewFakeStore(),
-		nil, client.MockTestRestConfig{}, nil, quotaService, nil, nil, nil,
+		nil, client.MockTestRestConfig{}, nil, quotaService, nil, nil, nil, dualwrite.ProvideTestService(),
 	)
 	require.NoError(tb, err)
 	dashboardService.RegisterDashboardPermissions(dashboardPermissions)
