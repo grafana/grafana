@@ -126,6 +126,12 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
       '> div > div:last-child': {
         pointerEvents: 'none',
       },
+      '& input': {
+        cursor: 'pointer',
+      },
+      '& input:focus': {
+        cursor: 'text',
+      },
     }),
     addaptToParent: css({
       label: 'combobox-addapt-to-parent',
