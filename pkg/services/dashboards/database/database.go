@@ -700,7 +700,7 @@ func (d *dashboardStore) deleteDashboard(cmd *dashboards.DeleteDashboardCommand,
 	}
 
 	for _, stmnt := range sqlStatements {
-		_, err := sess.Exec(append([]any{stmnt.SQL}, stmnt.args...)...)
+		_, err := sess.Exec(stmnt.SQL, stmnt.args)
 		if err != nil {
 			return err
 		}
