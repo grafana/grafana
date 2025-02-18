@@ -101,10 +101,6 @@ export class UnifiedSearcher implements GrafanaSearcher {
         opts.push({ value: `-${sf.name}`, label: `${sf.display} (most)` });
         opts.push({ value: `${sf.name}`, label: `${sf.display} (least)` });
       }
-      for (const sf of sortTimeFields) {
-        opts.push({ value: `-${sf.name}`, label: `${sf.display} (recent)` });
-        opts.push({ value: `${sf.name}`, label: `${sf.display} (oldest)` });
-      }
     }
 
     return Promise.resolve(opts);
@@ -283,12 +279,6 @@ const sortFields = [
   { name: 'errors_last_30_days', display: 'Errors 30 days' },
 ];
 
-// Enterprise only time sort field values for dashboards
-const sortTimeFields = [
-  { name: 'created_at', display: 'Created time' },
-  { name: 'updated_at', display: 'Updated time' },
-];
-
 function noDataResponse(): QueryResponse | PromiseLike<QueryResponse> {
   return {
     view: new DataFrameView({ length: 0, fields: [] }),
@@ -305,11 +295,6 @@ function noDataResponse(): QueryResponse | PromiseLike<QueryResponse> {
 /** Given the internal field name, this gives a reasonable display name for the table colum header */
 function getSortFieldDisplayName(name: string) {
   for (const sf of sortFields) {
-    if (sf.name === name) {
-      return sf.display;
-    }
-  }
-  for (const sf of sortTimeFields) {
     if (sf.name === name) {
       return sf.display;
     }
