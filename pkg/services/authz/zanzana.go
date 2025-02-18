@@ -53,18 +53,13 @@ func ProvideZanzana(cfg *setting.Cfg, db db.DB, features featuremgmt.FeatureTogg
 		if cfg.StackID == "" {
 			return nil, fmt.Errorf("missing stack ID")
 		}
-		namespace := fmt.Sprintf("stacks-%s", cfg.StackID)
-
-		tokenAuthCred := &tokenAuth{
-			cfg:         cfg,
-			namespace:   namespace,
-			tokenClient: tokenClient,
-		}
 
 		dialOptions := []grpc.DialOption{
 			// TODO: add TLS support
 			grpc.WithTransportCredentials(insecure.NewCredentials()),
-			grpc.WithPerRPCCredentials(tokenAuthCred),
+			grpc.WithPerRPCCredentials(
+				newGRPCTokenAuth(authzServiceAudience, fmt.Sprintf("stacks-%s", cfg.StackID), tokenClient),
+			),
 		}
 
 		conn, err := grpc.NewClient(cfg.ZanzanaClient.Addr, dialOptions...)
@@ -243,28 +238,4 @@ func (z *Zanzana) stopping(err error) error {
 		z.logger.Error("Stopping zanzana due to unexpected error", "err", err)
 	}
 	return nil
-}
-
-type tokenAuth struct {
-	cfg         *setting.Cfg
-	namespace   string
-	tokenClient *authnlib.TokenExchangeClient
-}
-
-func (t *tokenAuth) GetRequestMetadata(ctx context.Context, _ ...string) (map[string]string, error) {
-	token, err := t.tokenClient.Exchange(ctx, authnlib.TokenExchangeRequest{
-		Namespace: t.namespace,
-		Audiences: []string{authzServiceAudience},
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return map[string]string{
-		authnlib.DefaultAccessTokenMetadataKey: token.Token,
-	}, nil
-}
-
-func (t *tokenAuth) RequireTransportSecurity() bool {
-	return false
 }
