@@ -14,6 +14,7 @@ import {
   AdHocFiltersVariable,
   SceneDataTransformer,
   SceneGridRow,
+  SceneGridItem,
 } from '@grafana/scenes';
 import {
   AdhocVariableKind,
@@ -34,6 +35,10 @@ import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSou
 
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
+import { ResponsiveGridItem } from '../scene/layout-responsive-grid/ResponsiveGridItem';
+import { ResponsiveGridLayoutManager } from '../scene/layout-responsive-grid/ResponsiveGridLayoutManager';
+import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
+import { TabsLayoutManager } from '../scene/layout-tabs/TabsLayoutManager';
 import { DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getQueryRunnerFor } from '../utils/utils';
@@ -289,7 +294,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
     expect(getQueryRunnerFor(vizPanels[0])?.state.datasource?.uid).toBe(MIXED_DATASOURCE_NAME);
   });
 
-  it('should set panel ds as undefined if it is not mixed DS', () => {
+  it('should set ds if it is not mixed DS', () => {
     const dashboard = cloneDeep(defaultDashboard);
     getPanelElement(dashboard.spec, 'panel-1')?.spec.data.spec.queries.push({
       kind: 'PanelQuery',
@@ -313,10 +318,13 @@ describe('transformSaveModelSchemaV2ToScene', () => {
 
     const vizPanels = (scene.state.body as DashboardLayoutManager).getVizPanels();
     expect(vizPanels.length).toBe(3);
-    expect(getQueryRunnerFor(vizPanels[0])?.state.datasource).toBeUndefined();
+    expect(getQueryRunnerFor(vizPanels[0])?.state.queries[0].datasource).toEqual({
+      type: 'prometheus',
+      uid: 'datasource1',
+    });
   });
 
-  it('should set panel ds as mixed if one ds is undefined', () => {
+  it('should set panel ds as mixed if no panels have ds defined', () => {
     const dashboard = cloneDeep(defaultDashboard);
 
     getPanelElement(dashboard.spec, 'panel-1')?.spec.data.spec.queries.push({
@@ -493,6 +501,159 @@ describe('transformSaveModelSchemaV2ToScene', () => {
         expect(scene.state.meta.canSave).toBe(true);
         expect(scene.state.meta.canEdit).toBe(true);
         expect(scene.state.meta.canDelete).toBe(true);
+      });
+    });
+    describe('dynamic dashboard layouts', () => {
+      it('should build a dashboard scene with a responsive grid layout', () => {
+        const dashboard = cloneDeep(defaultDashboard);
+        dashboard.spec.layout = {
+          kind: 'ResponsiveGridLayout',
+          spec: {
+            col: 'colString',
+            row: 'rowString',
+            items: [
+              {
+                kind: 'ResponsiveGridLayoutItem',
+                spec: {
+                  element: {
+                    kind: 'ElementReference',
+                    name: 'panel-1',
+                  },
+                },
+              },
+            ],
+          },
+        };
+        const scene = transformSaveModelSchemaV2ToScene(dashboard);
+        const layoutManager = scene.state.body as ResponsiveGridLayoutManager;
+        expect(layoutManager.descriptor.kind).toBe('ResponsiveGridLayout');
+        expect(layoutManager.state.layout.state.templateColumns).toBe('colString');
+        expect(layoutManager.state.layout.state.autoRows).toBe('rowString');
+        expect(layoutManager.state.layout.state.children.length).toBe(1);
+        const gridItem = layoutManager.state.layout.state.children[0] as ResponsiveGridItem;
+        expect(gridItem.state.body.state.key).toBe('panel-1');
+      });
+
+      it('should build a dashboard scene with a tabs layout', () => {
+        const dashboard = cloneDeep(defaultDashboard);
+        dashboard.spec.layout = {
+          kind: 'TabsLayout',
+          spec: {
+            tabs: [
+              {
+                kind: 'TabsLayoutTab',
+                spec: {
+                  title: 'tab1',
+                  layout: {
+                    kind: 'ResponsiveGridLayout',
+                    spec: {
+                      col: 'colString',
+                      row: 'rowString',
+                      items: [
+                        {
+                          kind: 'ResponsiveGridLayoutItem',
+                          spec: {
+                            element: {
+                              kind: 'ElementReference',
+                              name: 'panel-1',
+                            },
+                          },
+                        },
+                      ],
+                    },
+                  },
+                },
+              },
+            ],
+          },
+        };
+        const scene = transformSaveModelSchemaV2ToScene(dashboard);
+        const layoutManager = scene.state.body as TabsLayoutManager;
+        expect(layoutManager.descriptor.kind).toBe('TabsLayout');
+        expect(layoutManager.state.tabs.length).toBe(1);
+        expect(layoutManager.state.tabs[0].state.title).toBe('tab1');
+        const gridLayoutManager = layoutManager.state.tabs[0].state.layout as ResponsiveGridLayoutManager;
+        expect(gridLayoutManager.state.layout.state.templateColumns).toBe('colString');
+        expect(gridLayoutManager.state.layout.state.autoRows).toBe('rowString');
+        expect(gridLayoutManager.state.layout.state.children.length).toBe(1);
+        const gridItem = gridLayoutManager.state.layout.state.children[0] as ResponsiveGridItem;
+        expect(gridItem.state.body.state.key).toBe('panel-1');
+      });
+
+      it('should build a dashboard scene with rows layout', () => {
+        const dashboard = cloneDeep(defaultDashboard);
+        dashboard.spec.layout = {
+          kind: 'RowsLayout',
+          spec: {
+            rows: [
+              {
+                kind: 'RowsLayoutRow',
+                spec: {
+                  title: 'row1',
+                  collapsed: false,
+                  layout: {
+                    kind: 'ResponsiveGridLayout',
+                    spec: {
+                      col: 'colString',
+                      row: 'rowString',
+                      items: [
+                        {
+                          kind: 'ResponsiveGridLayoutItem',
+                          spec: {
+                            element: {
+                              kind: 'ElementReference',
+                              name: 'panel-1',
+                            },
+                          },
+                        },
+                      ],
+                    },
+                  },
+                },
+              },
+              {
+                kind: 'RowsLayoutRow',
+                spec: {
+                  title: 'row2',
+                  collapsed: true,
+                  layout: {
+                    kind: 'GridLayout',
+                    spec: {
+                      items: [
+                        {
+                          kind: 'GridLayoutItem',
+                          spec: {
+                            y: 0,
+                            x: 0,
+                            height: 10,
+                            width: 10,
+                            element: {
+                              kind: 'ElementReference',
+                              name: 'panel-2',
+                            },
+                          },
+                        },
+                      ],
+                    },
+                  },
+                },
+              },
+            ],
+          },
+        };
+        const scene = transformSaveModelSchemaV2ToScene(dashboard);
+        const layoutManager = scene.state.body as RowsLayoutManager;
+        expect(layoutManager.descriptor.kind).toBe('RowsLayout');
+        expect(layoutManager.state.rows.length).toBe(2);
+        const row1Manager = layoutManager.state.rows[0].state.layout as ResponsiveGridLayoutManager;
+        expect(row1Manager.descriptor.kind).toBe('ResponsiveGridLayout');
+        const row1GridItem = row1Manager.state.layout.state.children[0] as ResponsiveGridItem;
+        expect(row1GridItem.state.body.state.key).toBe('panel-1');
+
+        const row2Manager = layoutManager.state.rows[1].state.layout as DefaultGridLayoutManager;
+        expect(row2Manager.descriptor.kind).toBe('GridLayout');
+        const row2GridItem = row2Manager.state.grid.state.children[0] as SceneGridItem;
+        expect(row2GridItem.state.body!.state.key).toBe('panel-2');
       });
     });
   });

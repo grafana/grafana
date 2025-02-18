@@ -144,6 +144,11 @@ var adminCommands = []*cli.Command{
 				Usage:  "Migrates passwords from unsecured fields to secure_json_data field. Return ok unless there is an error. Safe to execute multiple times.",
 				Action: runDbCommand(datamigrations.EncryptDatasourcePasswords),
 			},
+			{
+				Name:   "to-unified-storage",
+				Usage:  "Migrates classic SQL data into unified storage",
+				Action: runDbCommand(datamigrations.ToUnifiedStorage),
+			},
 		},
 	},
 	{

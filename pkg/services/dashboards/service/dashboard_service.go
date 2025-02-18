@@ -14,6 +14,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
 
+	"golang.org/x/exp/maps"
 	"golang.org/x/exp/slices"
 	"golang.org/x/sync/errgroup"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -92,10 +93,11 @@ func ProvideDashboardServiceImpl(
 	cfg *setting.Cfg, dashboardStore dashboards.Store, folderStore folder.FolderStore,
 	features featuremgmt.FeatureToggles, folderPermissionsService accesscontrol.FolderPermissionsService,
 	ac accesscontrol.AccessControl, folderSvc folder.Service, fStore folder.Store, r prometheus.Registerer,
-	restConfigProvider apiserver.RestConfigProvider, userService user.Service, unified resource.ResourceClient,
+	restConfigProvider apiserver.RestConfigProvider, userService user.Service,
 	quotaService quota.Service, orgService org.Service, publicDashboardService publicdashboards.ServiceWrapper,
+	resourceClient resource.ResourceClient,
 ) (*DashboardServiceImpl, error) {
-	k8sHandler := client.NewK8sHandler(cfg, request.GetNamespaceMapper(cfg), dashboardv0alpha1.DashboardResourceInfo.GroupVersionResource(), restConfigProvider, unified, dashboardStore, userService)
+	k8sHandler := client.NewK8sHandler(cfg, request.GetNamespaceMapper(cfg), dashboardv0alpha1.DashboardResourceInfo.GroupVersionResource(), restConfigProvider.GetRestConfig, dashboardStore, userService, resourceClient)
 
 	dashSvc := &DashboardServiceImpl{
 		cfg:                       cfg,
@@ -957,7 +959,7 @@ func (dr *DashboardServiceImpl) GetDashboardsByPluginID(ctx context.Context, que
 	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesCliDashboards) {
 		dashs, err := dr.searchDashboardsThroughK8s(ctx, &dashboards.FindPersistedDashboardsQuery{
 			OrgId:           query.OrgID,
-			ProvisionedRepo: pluginIDRepoName,
+			ProvisionedRepo: dashboard.PluginIDRepoName,
 			ProvisionedPath: query.PluginID,
 		})
 		if err != nil {
@@ -1248,26 +1250,13 @@ func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *dashb
 			return nil, err
 		}
 
+		folderNames, err := dr.fetchFolderNames(ctx, query, response.Hits)
+		if err != nil {
+			return nil, err
+		}
+
 		finalResults := make([]dashboards.DashboardSearchProjection, len(response.Hits))
-		// Create a small runtime cache for folders to avoid extra calls to the folder service
-		foldersMap := make(map[string]*folder.Folder)
-		serviceCtx, serviceIdent := identity.WithServiceIdentity(ctx, query.OrgId)
 		for i, hit := range response.Hits {
-			f, ok := foldersMap[hit.Folder]
-			if !ok {
-				// We can get search result where user don't have access to parents. If that happens this thi
-				// will fail if we call it as the requesting user. To resolve this we call this as the service so we can
-				// garantuee that we can fetch the parent.
-				f, err = dr.folderService.Get(serviceCtx, &folder.GetFolderQuery{
-					UID:          &hit.Folder,
-					OrgID:        query.OrgId,
-					SignedInUser: serviceIdent,
-				})
-				if err != nil {
-					return nil, err
-				}
-				foldersMap[hit.Folder] = f
-			}
 			result := dashboards.DashboardSearchProjection{
 				ID:          hit.Field.GetNestedInt64(search.DASHBOARD_LEGACY_ID),
 				UID:         hit.Name,
@@ -1276,7 +1265,7 @@ func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *dashb
 				Slug:        slugify.Slugify(hit.Title),
 				IsFolder:    false,
 				FolderUID:   hit.Folder,
-				FolderTitle: f.Title,
+				FolderTitle: folderNames[hit.Folder],
 				Tags:        hit.Tags,
 			}
 
@@ -1291,6 +1280,28 @@ func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *dashb
 	}
 
 	return dr.dashboardStore.FindDashboards(ctx, query)
+}
+
+func (dr *DashboardServiceImpl) fetchFolderNames(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery, hits []dashboardv0alpha1.DashboardHit) (map[string]string, error) {
+	// call this with elevated permissions so we can get folder names where user does not have access
+	// some dashboards are shared directly with user, but the folder is not accessible via the folder permissions
+	serviceCtx, serviceIdent := identity.WithServiceIdentity(ctx, query.OrgId)
+	search := folder.SearchFoldersQuery{
+		UIDs:         getFolderUIDs(hits),
+		OrgID:        query.OrgId,
+		SignedInUser: serviceIdent,
+	}
+
+	folders, err := dr.folderService.SearchFolders(serviceCtx, search)
+	if err != nil {
+		return nil, folder.ErrInternal.Errorf("failed to fetch parent folders: %w", err)
+	}
+
+	folderNames := make(map[string]string)
+	for _, f := range folders {
+		folderNames[f.UID] = f.Title
+	}
+	return folderNames, nil
 }
 
 func (dr *DashboardServiceImpl) SearchDashboards(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) (model.HitList, error) {
@@ -1549,7 +1560,7 @@ func (dr *DashboardServiceImpl) saveProvisionedDashboardThroughK8s(ctx context.C
 		delete(annotations, utils.AnnoKeyRepoHash)
 		delete(annotations, utils.AnnoKeyRepoTimestamp)
 	} else {
-		annotations[utils.AnnoKeyRepoName] = provisionedFileNameWithPrefix(provisioning.Name)
+		annotations[utils.AnnoKeyRepoName] = dashboard.ProvisionedFileNameWithPrefix(provisioning.Name)
 		annotations[utils.AnnoKeyRepoPath] = provisioning.ExternalID
 		annotations[utils.AnnoKeyRepoHash] = provisioning.CheckSum
 		annotations[utils.AnnoKeyRepoTimestamp] = time.Unix(provisioning.Updated, 0).UTC().Format(time.RFC3339)
@@ -1570,7 +1581,7 @@ func (dr *DashboardServiceImpl) saveDashboardThroughK8s(ctx context.Context, cmd
 		return nil, err
 	}
 
-	setPluginID(obj, cmd.PluginID)
+	dashboard.SetPluginIDMeta(obj, cmd.PluginID)
 
 	out, err := dr.createOrUpdateDash(ctx, obj, orgID)
 	if err != nil {
@@ -1652,7 +1663,7 @@ func (dr *DashboardServiceImpl) listDashboardsThroughK8s(ctx context.Context, or
 	return dashboards, nil
 }
 
-func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) (*dashboardv0alpha1.SearchResults, error) {
+func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) (dashboardv0alpha1.SearchResults, error) {
 	request := &resource.ResourceSearchRequest{
 		Options: &resource.ListOptions{
 			Fields: []*resource.Requirement{},
@@ -1680,12 +1691,33 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 	}
 
 	if len(query.FolderUIDs) > 0 {
+		// Grafana frontend issues a call to search for dashboards in "general" folder. General folder doesn't exists and
+		// should return all dashboards without a parent folder.
+		// We do something similar in the old sql search query https://github.com/grafana/grafana/blob/a58564a35efe8c05a21d8190b283af5bc0979d2a/pkg/services/sqlstore/searchstore/filters.go#L103
+		for i := range query.FolderUIDs {
+			if query.FolderUIDs[i] == folder.GeneralFolderUID {
+				query.FolderUIDs[i] = ""
+				break
+			}
+		}
+
 		req := []*resource.Requirement{{
 			Key:      resource.SEARCH_FIELD_FOLDER,
 			Operator: string(selection.In),
 			Values:   query.FolderUIDs,
 		}}
 		request.Options.Fields = append(request.Options.Fields, req...)
+	} else if len(query.FolderIds) > 0 { // nolint:staticcheck
+		values := make([]string, len(query.FolderIds)) // nolint:staticcheck
+		for i, id := range query.FolderIds {           // nolint:staticcheck
+			values[i] = strconv.FormatInt(id, 10)
+		}
+
+		request.Options.Labels = append(request.Options.Labels, &resource.Requirement{
+			Key:      utils.LabelKeyDeprecatedInternalID, // nolint:staticcheck
+			Operator: string(selection.In),
+			Values:   values,
+		})
 	}
 
 	if query.ProvisionedRepo != "" {
@@ -1734,6 +1766,10 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 		request.IsDeleted = query.IsDeleted
 	}
 
+	if query.Permission > 0 {
+		request.Permission = int64(query.Permission)
+	}
+
 	if query.Limit < 1 {
 		query.Limit = 1000
 	}
@@ -1744,7 +1780,7 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 
 	request.Limit = query.Limit
 	request.Page = query.Page
-	request.Offset = query.Page - 1 // bleve's offset is 0 indexed
+	request.Offset = (query.Page - 1) * query.Limit // only relevant when running in modes 3+
 
 	namespace := dr.k8sclient.GetNamespace(query.OrgId)
 	var err error
@@ -1766,7 +1802,7 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 	}
 
 	if err != nil {
-		return nil, err
+		return dashboardv0alpha1.SearchResults{}, err
 	}
 
 	if federate != nil {
@@ -1783,7 +1819,7 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 
 	res, err := dr.k8sclient.Search(ctx, query.OrgId, request)
 	if err != nil {
-		return nil, err
+		return dashboardv0alpha1.SearchResults{}, err
 	}
 
 	return dashboardsearch.ParseResults(res, 0)
@@ -1802,13 +1838,13 @@ func (dr *DashboardServiceImpl) searchProvisionedDashboardsThroughK8s(ctx contex
 	ctx, _ = identity.WithServiceIdentity(ctx, query.OrgId)
 
 	if query.ProvisionedRepo != "" {
-		query.ProvisionedRepo = provisionedFileNameWithPrefix(query.ProvisionedRepo)
+		query.ProvisionedRepo = dashboard.ProvisionedFileNameWithPrefix(query.ProvisionedRepo)
 	}
 
 	if len(query.ProvisionedReposNotIn) > 0 {
 		repos := make([]string, len(query.ProvisionedReposNotIn))
 		for i, v := range query.ProvisionedReposNotIn {
-			repos[i] = provisionedFileNameWithPrefix(v)
+			repos[i] = dashboard.ProvisionedFileNameWithPrefix(v)
 		}
 		query.ProvisionedReposNotIn = repos
 	}
@@ -1840,7 +1876,7 @@ func (dr *DashboardServiceImpl) searchProvisionedDashboardsThroughK8s(ctx contex
 				}
 
 				// ensure the repo is set due to file provisioning, otherwise skip it
-				fileRepo, found := getProvisionedFileNameFromMeta(meta)
+				fileRepo, found := dashboard.GetProvisionedFileNameFromMeta(meta.GetRepositoryName())
 				if !found {
 					return nil
 				}
@@ -1942,7 +1978,7 @@ func (dr *DashboardServiceImpl) UnstructuredToLegacyDashboard(ctx context.Contex
 		out.Deleted = obj.GetDeletionTimestamp().Time
 	}
 
-	out.PluginID = GetPluginIDFromMeta(obj)
+	out.PluginID = dashboard.GetPluginIDFromMeta(obj)
 
 	creator, err := dr.k8sclient.GetUserFromMeta(ctx, obj.GetCreatedBy())
 	if err != nil {
@@ -1985,42 +2021,6 @@ func (dr *DashboardServiceImpl) UnstructuredToLegacyDashboard(ctx context.Contex
 	}
 
 	return &out, nil
-}
-
-var pluginIDRepoName = "plugin"
-var fileProvisionedRepoPrefix = "file:"
-
-func setPluginID(obj unstructured.Unstructured, pluginID string) {
-	if pluginID == "" {
-		return
-	}
-
-	annotations := obj.GetAnnotations()
-	if annotations == nil {
-		annotations = map[string]string{}
-	}
-	annotations[utils.AnnoKeyRepoName] = pluginIDRepoName
-	annotations[utils.AnnoKeyRepoPath] = pluginID
-	obj.SetAnnotations(annotations)
-}
-
-func provisionedFileNameWithPrefix(name string) string {
-	if name == "" {
-		return ""
-	}
-
-	return fileProvisionedRepoPrefix + name
-}
-
-func getProvisionedFileNameFromMeta(obj utils.GrafanaMetaAccessor) (string, bool) {
-	return strings.CutPrefix(obj.GetRepositoryName(), fileProvisionedRepoPrefix)
-}
-
-func GetPluginIDFromMeta(obj utils.GrafanaMetaAccessor) string {
-	if obj.GetRepositoryName() == pluginIDRepoName {
-		return obj.GetRepositoryPath()
-	}
-	return ""
 }
 
 func LegacySaveCommandToUnstructured(cmd *dashboards.SaveDashboardCommand, namespace string) (unstructured.Unstructured, error) {
@@ -2071,4 +2071,14 @@ func LegacySaveCommandToUnstructured(cmd *dashboards.SaveDashboardCommand, names
 	}
 
 	return finalObj, nil
+}
+
+func getFolderUIDs(hits []dashboardv0alpha1.DashboardHit) []string {
+	folderSet := map[string]bool{}
+	for _, hit := range hits {
+		if hit.Folder != "" && !folderSet[hit.Folder] {
+			folderSet[hit.Folder] = true
+		}
+	}
+	return maps.Keys(folderSet)
 }

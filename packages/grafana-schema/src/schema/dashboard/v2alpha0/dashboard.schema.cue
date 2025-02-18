@@ -6,16 +6,26 @@ import (
 
 DashboardV2Spec: {
   // Title of dashboard.
-  title: string
-
-  // Description of dashboard.
-  description?: string
+  annotations: [...AnnotationQueryKind]
 
   // Configuration of dashboard cursor sync behavior.
   // "Off" for no shared crosshair or tooltip (default).
   // "Crosshair" for shared crosshair.
   // "Tooltip" for shared crosshair AND shared tooltip.
   cursorSync: DashboardCursorSync
+
+  // Description of dashboard.
+  description?: string
+
+  // Whether a dashboard is editable or not.
+  editable?: bool | *true
+
+  elements: [ElementReference.name]: Element
+
+  layout: GridLayoutKind | RowsLayoutKind | ResponsiveGridLayoutKind | TabsLayoutKind
+
+  // Links with references to other dashboards or external websites.
+  links: [...DashboardLink]
 
   // When set to true, the dashboard will redraw panels at an interval matching the pixel width.
   // This will keep data "moving left" regardless of the query refresh rate. This setting helps
@@ -25,30 +35,20 @@ DashboardV2Spec: {
   // When set to true, the dashboard will load all panels in the dashboard when it's loaded.
   preload: bool
 
-  // Whether a dashboard is editable or not.
-  editable?: bool | *true
-
-  // Links with references to other dashboards or external websites.
-  links: [...DashboardLink]
+  // Plugins only. The version of the dashboard installed together with the plugin.
+  // This is used to determine if the dashboard should be updated when the plugin is updated.
+  revision?: uint16
 
   // Tags associated with dashboard.
   tags: [...string]
 
   timeSettings: TimeSettingsSpec
 
+  // Title of dashboard.
+  title: string
+
   // Configured template variables.
   variables: [...VariableKind]
-
-  elements: [ElementReference.name]: Element
-
-  annotations: [...AnnotationQueryKind]
-
-  layout: GridLayoutKind | RowsLayoutKind | ResponsiveGridLayoutKind
-
-
-  // Plugins only. The version of the dashboard installed together with the plugin.
-  // This is used to determine if the dashboard should be updated when the plugin is updated.
-  revision?: uint16
 }
 
 // Supported dashboard elements
@@ -447,6 +447,12 @@ QueryGroupKind: {
   spec: QueryGroupSpec
 }
 
+TimeRangeOption: {
+  display: string | *"Last 6 hours"
+  from: string | *"now-6h"
+  to: string | *"now"
+}
+
 // Time configuration
 // It defines the default time config for the time picker, the refresh picker for the specific dashboard.
 TimeSettingsSpec: {
@@ -463,11 +469,11 @@ TimeSettingsSpec: {
   // Interval options available in the refresh picker dropdown.
   autoRefreshIntervals: [...string] | *["5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"] // v1: timepicker.refresh_intervals
   // Selectable options available in the time picker dropdown. Has no effect on provisioned dashboard.
-  quickRanges: [...string] | *["5m", "15m", "1h", "6h", "12h", "24h", "2d", "7d", "30d"] // v1: timepicker.time_options , not exposed in the UI
+  quickRanges?: [...TimeRangeOption] // v1: timepicker.quick_ranges , not exposed in the UI
   // Whether timepicker is visible or not.
   hideTimepicker: bool // v1: timepicker.hidden
   // Day when the week starts. Expressed by the name of the day in lowercase, e.g. "monday".
-  weekStart: string
+  weekStart?: "saturday" | "monday" | "sunday"
   // The month that the fiscal year starts on. 0 = January, 11 = December
   fiscalYearStartMonth: int
   // Override the now time by entering a time delay. Use this option to accommodate known delays in data aggregation to avoid null values.
@@ -547,7 +553,7 @@ RowsLayoutRowSpec: {
   title?: string
   collapsed: bool
   repeat?: RowRepeatOptions
-  layout: GridLayoutKind | ResponsiveGridLayoutKind
+  layout: GridLayoutKind | ResponsiveGridLayoutKind | TabsLayoutKind
 }
 
 ResponsiveGridLayoutKind: {
@@ -568,6 +574,25 @@ ResponsiveGridLayoutItemKind: {
 
 ResponsiveGridLayoutItemSpec: {
   element: ElementReference
+}
+
+TabsLayoutKind: {
+  kind: "TabsLayout"
+  spec: TabsLayoutSpec
+}
+
+TabsLayoutSpec: {
+  tabs: [...TabsLayoutTabKind]
+}
+
+TabsLayoutTabKind: {
+  kind: "TabsLayoutTab"
+  spec: TabsLayoutTabSpec
+}
+
+TabsLayoutTabSpec: {
+  title?: string
+  layout: GridLayoutKind | RowsLayoutKind | ResponsiveGridLayoutKind
 }
 
 PanelSpec: {
