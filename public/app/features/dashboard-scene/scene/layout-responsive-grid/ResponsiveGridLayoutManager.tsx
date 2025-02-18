@@ -129,7 +129,7 @@ export class ResponsiveGridLayoutManager
               }),
             });
           }
-          return gridItem;
+          throw new Error('Unexpected child type');
         }),
       }),
     });
