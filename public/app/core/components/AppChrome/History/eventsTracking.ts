@@ -30,7 +30,7 @@ interface UnifiedHistoryEntryDuplicated {
 }
 
 //Event triggered when a user clicks on an entry of the `HistoryDrawer`
-export const clickUnifiedHistoryEntryEvent = ({ entryURL, subEntry }: UnifiedHistoryEntryClicked) => {
+export const logClickUnifiedHistoryEntryEvent = ({ entryURL, subEntry }: UnifiedHistoryEntryClicked) => {
   reportInteraction(UNIFIED_HISTORY_ENTRY_CLICKED, {
     entryURL,
     subEntry,
@@ -39,7 +39,7 @@ export const clickUnifiedHistoryEntryEvent = ({ entryURL, subEntry }: UnifiedHis
 
 //Event triggered when history entry name matches the previous one
 //so we keep track of duplicated entries and be able to analyze them
-export const duplicateUnifiedHistoryEntryEvent = ({
+export const logDuplicateUnifiedHistoryEntryEvent = ({
   entryName,
   lastEntryName,
   newEntryURL,
@@ -52,13 +52,13 @@ export const duplicateUnifiedHistoryEntryEvent = ({
 };
 
 //We keep track of users open and closing the drawer
-export const interactWithUnifiedHistoryDrawerEvent = ({ type }: { type: UnifiedHistoryDrawerInteraction }) => {
+export const logUnifiedHistoryDrawerInteractionEvent = ({ type }: { type: UnifiedHistoryDrawerInteraction }) => {
   reportInteraction(UNIFIED_HISTORY_DRAWER_INTERACTION, {
     type,
   });
 };
 
 //We keep track of users clicking on the `Show more` button
-export const interactWithUnifiedHistoryShowMoreEvent = () => {
+export const logUnifiedHistoryShowMoreEvent = () => {
   reportInteraction(UNIFIED_HISTORY_DRAWER_SHOW_MORE);
 };
