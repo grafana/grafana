@@ -14,7 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-func (r *MigrationHandler) wipeUnifiedAndSetMigratedFlag(ctx context.Context, ns string) error {
+func (w *MigrationWorker) wipeUnifiedAndSetMigratedFlag(ctx context.Context, ns string) error {
 	kinds := []schema.GroupResource{{
 		Group:    folders.GROUP,
 		Resource: folders.RESOURCE,
@@ -24,7 +24,7 @@ func (r *MigrationHandler) wipeUnifiedAndSetMigratedFlag(ctx context.Context, ns
 	}}
 
 	for _, gr := range kinds {
-		status, _ := r.storageStatus.Status(ctx, gr)
+		status, _ := w.storageStatus.Status(ctx, gr)
 		if status.ReadUnified {
 			return fmt.Errorf("unexpected state - already using unified storage for: %s", gr)
 		}
@@ -42,7 +42,7 @@ func (r *MigrationHandler) wipeUnifiedAndSetMigratedFlag(ctx context.Context, ns
 			}},
 		}
 		ctx = metadata.NewOutgoingContext(ctx, settings.ToMD())
-		stream, err := r.batch.BatchProcess(ctx)
+		stream, err := w.batch.BatchProcess(ctx)
 		if err != nil {
 			return fmt.Errorf("error clearing unified %s / %w", gr, err)
 		}
@@ -56,7 +56,7 @@ func (r *MigrationHandler) wipeUnifiedAndSetMigratedFlag(ctx context.Context, ns
 		status.Migrated = time.Now().UnixMilli() // but not really... since the sync is starting
 		status.ReadUnified = true
 		status.WriteLegacy = false // keep legacy "clean"
-		_, err = r.storageStatus.Update(ctx, status)
+		_, err = w.storageStatus.Update(ctx, status)
 		if err != nil {
 			return err
 		}

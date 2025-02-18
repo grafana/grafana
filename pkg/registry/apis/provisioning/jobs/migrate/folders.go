@@ -25,17 +25,17 @@ type folderReader struct {
 	targetRepoName string
 }
 
-// Close implements resource.BatchResourceWritew.
+// Close implements resource.BatchResourceWritej.
 func (f *folderReader) Close() error {
 	return nil
 }
 
-// CloseWithResults implements resource.BatchResourceWritew.
+// CloseWithResults implements resource.BatchResourceWritej.
 func (f *folderReader) CloseWithResults() (*resource.BatchResponse, error) {
 	return &resource.BatchResponse{}, nil
 }
 
-// Write implements resource.BatchResourceWritew.
+// Write implements resource.BatchResourceWritej.
 func (f *folderReader) Write(ctx context.Context, key *resource.ResourceKey, value []byte) error {
 	item := &unstructured.Unstructured{}
 	err := item.UnmarshalJSON(value)
@@ -46,19 +46,19 @@ func (f *folderReader) Write(ctx context.Context, key *resource.ResourceKey, val
 	return f.tree.AddUnstructured(item, f.targetRepoName)
 }
 
-func (w *migrationWorker) loadFolders(ctx context.Context) error {
-	logger := w.logger
-	w.progress.SetMessage("reading folder tree")
+func (j *migrationJob) loadFolders(ctx context.Context) error {
+	logger := j.logger
+	j.progress.SetMessage("reading folder tree")
 
-	repoName := w.target.Config().Name
+	repoName := j.target.Config().Name
 
-	w.progress.SetMessage("migrate folder tree from legacy")
+	j.progress.SetMessage("migrate folder tree from legacy")
 	reader := &folderReader{
-		tree:           w.folderTree,
+		tree:           j.folderTree,
 		targetRepoName: repoName,
 	}
-	_, err := w.legacy.Migrate(ctx, legacy.MigrateOptions{
-		Namespace: w.namespace,
+	_, err := j.legacy.Migrate(ctx, legacy.MigrateOptions{
+		Namespace: j.namespace,
 		Resources: []schema.GroupResource{{
 			Group:    folders.GROUP,
 			Resource: folders.RESOURCE,
@@ -70,12 +70,12 @@ func (w *migrationWorker) loadFolders(ctx context.Context) error {
 	}
 
 	// create folders first is required so that empty folders exist when finished
-	w.progress.SetMessage("write folders")
+	j.progress.SetMessage("write folders")
 
-	err = w.folderTree.Walk(ctx, func(ctx context.Context, folder resources.Folder) error {
+	err = j.folderTree.Walk(ctx, func(ctx context.Context, folder resources.Folder) error {
 		p := folder.Path + "/"
-		if w.options.Prefix != "" {
-			p = w.options.Prefix + "/" + p
+		if j.options.Prefix != "" {
+			p = j.options.Prefix + "/" + p
 		}
 		logger = logger.With("path", p)
 
@@ -86,27 +86,27 @@ func (w *migrationWorker) loadFolders(ctx context.Context) error {
 			Path:     p,
 		}
 
-		_, err := w.target.Read(ctx, p, "")
+		_, err := j.target.Read(ctx, p, "")
 		if err != nil && !(errors.Is(err, repository.ErrFileNotFound) || apierrors.IsNotFound(err)) {
 			result.Error = fmt.Errorf("failed to check if folder exists before writing: %w", err)
 			return result.Error
 		} else if err == nil {
 			logger.Info("folder already exists")
 			result.Action = repository.FileActionIgnored
-			w.progress.Record(ctx, result)
+			j.progress.Record(ctx, result)
 			return nil
 		}
 
 		result.Action = repository.FileActionCreated
 		msg := fmt.Sprintf("export folder %s", p)
 		// Create with an empty body will make a folder (or .keep file if unsupported)
-		if err := w.target.Create(ctx, p, "", nil, msg); err != nil {
+		if err := j.target.Create(ctx, p, "", nil, msg); err != nil {
 			result.Error = fmt.Errorf("failed to write folder in repo: %w", err)
-			w.progress.Record(ctx, result)
+			j.progress.Record(ctx, result)
 			return result.Error
 		}
 
-		w.progress.Record(ctx, result)
+		j.progress.Record(ctx, result)
 		return nil
 	})
 	if err != nil {

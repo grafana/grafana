@@ -23,21 +23,21 @@ import (
 var _ resource.BatchResourceWriter = (*resourceReader)(nil)
 
 type resourceReader struct {
-	worker *migrationWorker
+	job *migrationJob
 }
 
 // Close implements resource.BatchResourceWriter.
-func (f *resourceReader) Close() error {
+func (r *resourceReader) Close() error {
 	return nil
 }
 
 // CloseWithResults implements resource.BatchResourceWriter.
-func (f *resourceReader) CloseWithResults() (*resource.BatchResponse, error) {
+func (r *resourceReader) CloseWithResults() (*resource.BatchResponse, error) {
 	return &resource.BatchResponse{}, nil
 }
 
 // Write implements resource.BatchResourceWriter.
-func (f *resourceReader) Write(ctx context.Context, key *resource.ResourceKey, value []byte) error {
+func (r *resourceReader) Write(ctx context.Context, key *resource.ResourceKey, value []byte) error {
 	item := &unstructured.Unstructured{}
 	err := item.UnmarshalJSON(value)
 	if err != nil {
@@ -45,9 +45,9 @@ func (f *resourceReader) Write(ctx context.Context, key *resource.ResourceKey, v
 		return fmt.Errorf("failed to unmarshal unstructured: %w", err)
 	}
 
-	if result := f.worker.write(ctx, item); result.Error != nil {
-		f.worker.progress.Record(ctx, result)
-		if err := f.worker.progress.TooManyErrors(); err != nil {
+	if result := r.job.write(ctx, item); result.Error != nil {
+		r.job.progress.Record(ctx, result)
+		if err := r.job.progress.TooManyErrors(); err != nil {
 			return err
 		}
 	}
@@ -55,7 +55,7 @@ func (f *resourceReader) Write(ctx context.Context, key *resource.ResourceKey, v
 	return nil
 }
 
-func (r *migrationWorker) loadResources(ctx context.Context) error {
+func (j *migrationJob) loadResources(ctx context.Context) error {
 	kinds := []schema.GroupVersionResource{{
 		Group:    dashboards.GROUP,
 		Resource: dashboards.DASHBOARD_RESOURCE,
@@ -63,32 +63,32 @@ func (r *migrationWorker) loadResources(ctx context.Context) error {
 	}}
 
 	for _, kind := range kinds {
-		r.progress.SetMessage(fmt.Sprintf("migrate %s resource", kind.Resource))
+		j.progress.SetMessage(fmt.Sprintf("migrate %s resource", kind.Resource))
 		gr := kind.GroupResource()
 		opts := legacy.MigrateOptions{
-			Namespace:   r.namespace,
-			WithHistory: r.options.History,
+			Namespace:   j.namespace,
+			WithHistory: j.options.History,
 			Resources:   []schema.GroupResource{gr},
-			Store:       parquet.NewBatchResourceWriterClient(&resourceReader{worker: r}),
+			Store:       parquet.NewBatchResourceWriterClient(&resourceReader{job: j}),
 			OnlyCount:   true, // first get the count
 		}
-		stats, err := r.legacy.Migrate(ctx, opts)
+		stats, err := j.legacy.Migrate(ctx, opts)
 		if err != nil {
 			return fmt.Errorf("unable to count legacy items %w", err)
 		}
 
 		// FIXME: explain why we calculate it in this way
 		if len(stats.Summary) > 0 {
-			count := stats.Summary[0].Count
+			count := stats.Summary[0].Count //
 			history := stats.Summary[0].History
 			if history > count {
 				count = history // the number of items we will process
 			}
-			r.progress.SetTotal(int(count))
+			j.progress.SetTotal(int(count))
 		}
 
 		opts.OnlyCount = false // this time actually write
-		_, err = r.legacy.Migrate(ctx, opts)
+		_, err = j.legacy.Migrate(ctx, opts)
 		if err != nil {
 			return fmt.Errorf("error running legacy migrate %s %w", kind.Resource, err)
 		}
@@ -96,7 +96,7 @@ func (r *migrationWorker) loadResources(ctx context.Context) error {
 	return nil
 }
 
-func (r *migrationWorker) write(ctx context.Context, obj *unstructured.Unstructured) jobs.JobResourceResult {
+func (j *migrationJob) write(ctx context.Context, obj *unstructured.Unstructured) jobs.JobResourceResult {
 	gvk := obj.GroupVersionKind()
 	result := jobs.JobResourceResult{
 		Name:     obj.GetName(),
@@ -129,7 +129,7 @@ func (r *migrationWorker) write(ctx context.Context, obj *unstructured.Unstructu
 
 	name := meta.GetName()
 	repoName := meta.GetRepositoryName()
-	if repoName == r.target.Config().GetName() {
+	if repoName == j.target.Config().GetName() {
 		result.Action = repository.FileActionIgnored
 		return result
 	}
@@ -141,16 +141,16 @@ func (r *migrationWorker) write(ctx context.Context, obj *unstructured.Unstructu
 	folder := meta.GetFolder()
 
 	// Add the author in context (if available)
-	ctx = r.withAuthorSignature(ctx, meta)
+	ctx = j.withAuthorSignature(ctx, meta)
 
 	// Get the absolute path of the folder
-	fid, ok := r.folderTree.DirPath(folder, "")
+	fid, ok := j.folderTree.DirPath(folder, "")
 	if !ok {
 		// FIXME: Shouldn't this fail instead?
 		fid = resources.Folder{
 			Path: "__folder_not_found/" + slugify.Slugify(folder),
 		}
-		r.logger.Error("folder of item was not in tree of repository")
+		j.logger.Error("folder of item was not in tree of repository")
 	}
 
 	result.Path = fid.Path
@@ -158,7 +158,7 @@ func (r *migrationWorker) write(ctx context.Context, obj *unstructured.Unstructu
 	// Clear the metadata
 	delete(obj.Object, "metadata")
 
-	if r.options.Identifier {
+	if j.options.Identifier {
 		meta.SetName(name) // keep the identifier in the metadata
 	}
 
@@ -176,15 +176,15 @@ func (r *migrationWorker) write(ctx context.Context, obj *unstructured.Unstructu
 			return result
 		}
 	}
-	if r.options.Prefix != "" {
-		fileName, err = safepath.Join(r.options.Prefix, fileName)
+	if j.options.Prefix != "" {
+		fileName, err = safepath.Join(j.options.Prefix, fileName)
 		if err != nil {
 			result.Error = fmt.Errorf("error adding path prefix: %w", err)
 			return result
 		}
 	}
 
-	err = r.target.Write(ctx, fileName, "", body, commitMessage)
+	err = j.target.Write(ctx, fileName, "", body, commitMessage)
 	if err != nil {
 		result.Error = fmt.Errorf("failed to write file: %w", err)
 	}
