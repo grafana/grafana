@@ -27,6 +27,7 @@ import (
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
@@ -117,6 +118,7 @@ func TestValidateDashboardExists(t *testing.T) {
 		nil,
 		nil,
 		nil,
+		dualwrite.ProvideTestService(),
 	)
 	require.NoError(t, err)
 	s := ProvideService(dsStore, secretsService, dashSvc)
