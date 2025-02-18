@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { useEffect, useState } from 'react';
 import { UseFormReturn, Controller } from 'react-hook-form';
 
+import { SelectableValue } from '@grafana/data';
 import { Checkbox, Field, Input, SecretInput, Select, Switch, useTheme2 } from '@grafana/ui';
 
 import { fieldMap } from './fields';
@@ -46,13 +47,17 @@ export const FieldRenderer = ({
     }
   }, [unregister, name, parentValue, isDependantField]);
 
+  const isNotEmptySelectableValueArray = (
+    current: string | boolean | Record<string, string> | Array<SelectableValue<string>> | undefined
+  ): current is Array<SelectableValue<string>> => {
+    return Array.isArray(current) && current.length > 0 && 'value' in current[0];
+  };
+
   useEffect(() => {
     if (fieldData.defaultValue) {
       const current = getValues(name);
       const obj = fieldData.options?.find(
-        (option) =>
-          option.value ===
-          (Array.isArray(current) && current.length && 'value' in current[0] ? current[0].value : undefined)
+        (option) => option.value === (isNotEmptySelectableValueArray(current) ? current[0].value : undefined)
       );
       setValue(name, obj?.value || fieldData.defaultValue.value);
     }
