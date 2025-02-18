@@ -44,6 +44,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
+	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
@@ -68,7 +69,7 @@ func TestIntegrationProvideFolderService(t *testing.T) {
 		store := ProvideStore(db)
 		ProvideService(
 			store, ac, bus.ProvideBus(tracing.InitializeTracerForTest()),
-			nil, nil, nil, db, featuremgmt.WithFeatures(), supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService())
+			nil, nil, nil, db, featuremgmt.WithFeatures(), supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService())
 
 		require.Len(t, ac.Calls.RegisterAttributeScopeResolver, 2)
 	})
@@ -497,7 +498,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 			publicDashboardFakeService.On("DeleteByDashboardUIDs", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 			dashSrv, err := dashboardservice.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, featuresFlagOn, folderPermissions, ac, serviceWithFlagOn, nestedFolderStore, nil,
-				client.MockTestRestConfig{}, nil, quotaService, nil, publicDashboardFakeService, nil, dualwrite.ProvideTestService())
+				client.MockTestRestConfig{}, nil, quotaService, nil, publicDashboardFakeService, nil, dualwrite.ProvideTestService(), sort.ProvideService())
 			require.NoError(t, err)
 			dashSrv.RegisterDashboardPermissions(dashboardPermissions)
 
@@ -583,7 +584,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 			publicDashboardFakeService.On("DeleteByDashboardUIDs", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 			dashSrv, err := dashboardservice.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, featuresFlagOff,
-				folderPermissions, ac, serviceWithFlagOff, nestedFolderStore, nil, client.MockTestRestConfig{}, nil, quotaService, nil, publicDashboardFakeService, nil, dualwrite.ProvideTestService())
+				folderPermissions, ac, serviceWithFlagOff, nestedFolderStore, nil, client.MockTestRestConfig{}, nil, quotaService, nil, publicDashboardFakeService, nil, dualwrite.ProvideTestService(), sort.ProvideService())
 			require.NoError(t, err)
 			dashSrv.RegisterDashboardPermissions(dashboardPermissions)
 			alertStore, err := ngstore.ProvideDBStore(cfg, featuresFlagOff, db, serviceWithFlagOff, dashSrv, ac, b)
@@ -726,8 +727,9 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 				tc.service.store = nestedFolderStore
 				publicDashboardFakeService.On("DeleteByDashboardUIDs", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
-				dashSrv, err := dashboardservice.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, tc.featuresFlag, folderPermissions, ac, tc.service, tc.service.store, nil,
-					client.MockTestRestConfig{}, nil, quotaService, nil, publicDashboardFakeService, nil, dualwrite.ProvideTestService())
+				dashSrv, err := dashboardservice.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, tc.featuresFlag, folderPermissions, ac, tc.service,
+					tc.service.store, nil, client.MockTestRestConfig{}, nil, quotaService, nil, publicDashboardFakeService, nil,
+					dualwrite.ProvideTestService(), sort.ProvideService())
 				require.NoError(t, err)
 				dashSrv.RegisterDashboardPermissions(dashboardPermissions)
 
@@ -1521,6 +1523,7 @@ func TestIntegrationNestedFolderSharedWithMe(t *testing.T) {
 		nil,
 		nil,
 		dualwrite.ProvideTestService(),
+		sort.ProvideService(),
 	)
 	require.NoError(t, err)
 	dashboardService.RegisterDashboardPermissions(dashboardPermissions)

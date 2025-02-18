@@ -37,6 +37,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/search/model"
+	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
@@ -89,6 +90,7 @@ func ProvideService(
 	tracer tracing.Tracer,
 	resourceClient resource.ResourceClient,
 	dual dualwrite.Service,
+	sorter sort.Service,
 ) *Service {
 	srv := &Service{
 		log:                    slog.Default().With("logger", "folder-service"),
@@ -120,6 +122,7 @@ func ProvideService(
 			dashboardStore,
 			userService,
 			resourceClient,
+			sorter,
 		)
 
 		unifiedStore := ProvideUnifiedStore(k8sHandler, userService)
@@ -137,6 +140,7 @@ func ProvideService(
 			dashboardStore,
 			userService,
 			resourceClient,
+			sorter,
 		)
 		srv.dashboardK8sClient = dashHandler
 	}
