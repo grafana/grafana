@@ -39,10 +39,10 @@ export function HistoryWrapper({ onClose }: { onClose: () => void }) {
         {Object.keys(hist).map((entries, date) => {
           return (
             <Stack key={date} direction="column" gap={1}>
-              <span className={styles.paddingLeft}>
+              <Box paddingLeft={2}>
                 <Text color="secondary">{entries}</Text>
-              </span>
-              <span className={styles.borderLeft}>
+              </Box>
+              <span className={styles.timeline}>
                 {hist[entries].map((entry, index) => {
                   return (
                     <HistoryEntryAppView
@@ -59,11 +59,11 @@ export function HistoryWrapper({ onClose }: { onClose: () => void }) {
         })}
       </Box>
       {history.length > numItemsToShow && (
-        <span className={styles.paddingLeft}>
+        <Box paddingLeft={2}>
           <Button variant="secondary" fill="text" onClick={() => setNumItemsToShow(numItemsToShow + 5)}>
             {t('nav.history-wrapper.show-more', 'Show more')}
           </Button>
-        </span>
+        </Box>
       )}
     </Stack>
   );
@@ -92,7 +92,7 @@ function HistoryEntryAppView({ entry, isSelected, onClick }: ItemProps) {
     })?.time;
 
   return (
-    <span className={styles.marginBottom}>
+    <Box marginBottom={1}>
       <Stack direction="column" gap={1}>
         <Stack alignItems="baseline">
           {views.length > 0 ? (
@@ -188,7 +188,7 @@ function HistoryEntryAppView({ entry, isSelected, onClick }: ItemProps) {
           </div>
         )}
       </Stack>
-    </span>
+    </Box>
   );
 }
 const getStyles = (theme: GrafanaTheme2) => {
@@ -252,7 +252,7 @@ const getStyles = (theme: GrafanaTheme2) => {
         background: theme.colors.border.weak,
       },
     }),
-    borderLeft: css({
+    timeline: css({
       label: 'border-left',
       position: 'relative',
       height: '100%',
@@ -265,22 +265,8 @@ const getStyles = (theme: GrafanaTheme2) => {
         top: 0,
         height: '100%',
         width: '1px',
-        background: `repeating-linear-gradient(
-          to bottom,
-          ${theme.colors.border.strong},
-          ${theme.colors.border.strong} 2px,
-          transparent 2px,
-          transparent 4px
-        )`,
+        borderLeft: `1px dashed ${theme.colors.border.strong}`,
       },
-    }),
-    paddingLeft: css({
-      label: 'padding-left',
-      paddingLeft: theme.spacing(2),
-    }),
-    marginBottom: css({
-      label: 'margin-bottom',
-      marginBottom: theme.spacing(1),
     }),
   };
 };
