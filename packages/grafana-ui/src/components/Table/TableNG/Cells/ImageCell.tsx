@@ -24,7 +24,6 @@ export const ImageCell = ({ cellOptions, field, height, justifyContent, value, r
 
   const img = <img alt={alt} src={text} className={styles.image} title={title} />;
 
-  // TODO: Implement actions
   return (
     <div className={styles.imageContainer}>
       {hasLinks || hasActions ? (

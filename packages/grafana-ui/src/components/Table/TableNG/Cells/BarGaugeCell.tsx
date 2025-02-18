@@ -72,7 +72,6 @@ export const BarGaugeCell = ({ value, field, theme, height, width, rowIdx, actio
     );
   };
 
-  // @TODO: Actions
   return (
     <>
       {hasLinks || hasActions ? (

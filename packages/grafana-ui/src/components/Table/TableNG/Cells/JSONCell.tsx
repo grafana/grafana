@@ -28,7 +28,6 @@ export const JSONCell = ({ value, justifyContent, field, rowIdx, actions }: Omit
   const hasLinks = Boolean(getCellLinks(field, rowIdx)?.length);
   const hasActions = Boolean(actions?.length);
 
-  // TODO: Implement actions
   return (
     <div className={styles.jsonText}>
       {hasLinks || hasActions ? (
