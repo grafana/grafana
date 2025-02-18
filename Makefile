@@ -248,8 +248,7 @@ test-go: test-go-unit test-go-integration
 .PHONY: test-go-unit
 test-go-unit: ## Run unit tests for backend with flags.
 	@echo "test backend unit tests"
-	printf '$(GO_TEST_FILES)' | xargs \
-	$(GO) test $(GO_RACE_FLAG) -short -covermode=atomic -timeout=30m
+	$(GO) test $(GO_RACE_FLAG) -short -covermode=atomic -coverprofile=unit.cov -timeout=30m $(GO_TEST_FILES)
 
 .PHONY: test-go-unit-pretty
 test-go-unit-pretty: check-tparse
@@ -262,7 +261,7 @@ test-go-unit-pretty: check-tparse
 .PHONY: test-go-integration
 test-go-integration: ## Run integration tests for backend with flags.
 	@echo "test backend integration tests"
-	$(GO) test $(GO_RACE_FLAG) -count=1 -run "^TestIntegration" -covermode=atomic -timeout=5m $(GO_INTEGRATION_TESTS)
+	$(GO) test $(GO_RACE_FLAG) -count=1 -run "^TestIntegration" -covermode=atomic -coverprofile=integration.cov -timeout=5m $(GO_INTEGRATION_TESTS)
 
 .PHONY: test-go-integration-alertmanager
 test-go-integration-alertmanager: ## Run integration tests for the remote alertmanager (config taken from the mimir_backend block).

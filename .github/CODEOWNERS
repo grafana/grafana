@@ -760,6 +760,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/auto-milestone.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/backport.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/bump-version.yml @grafana/grafana-developer-enablement-squad
+/.github/workflows/backend-coverage.yml @Proximyst
 /.github/workflows/close-milestone.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/release-pr.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/release-comms.yml @grafana/grafana-developer-enablement-squad
