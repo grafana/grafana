@@ -15,10 +15,11 @@ import (
 
 // ExportJob holds all context for a running job
 type migrationWorker struct {
-	logger    logging.Logger
-	target    repository.Repository
-	legacy    legacy.LegacyMigrator
-	client    *resources.DynamicClient // Read from
+	logger logging.Logger
+	target repository.Repository
+	legacy legacy.LegacyMigrator
+	client *resources.DynamicClient // Read from
+
 	namespace string
 
 	progress jobs.JobProgressRecorder

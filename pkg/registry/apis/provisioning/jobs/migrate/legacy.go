@@ -1,4 +1,4 @@
-package sync
+package migrate
 
 import (
 	"context"
@@ -14,7 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-func (r *SyncWorker) wipeUnifiedAndSetMigratedFlag(ctx context.Context, ns string) error {
+func (r *MigrationHandler) wipeUnifiedAndSetMigratedFlag(ctx context.Context, ns string) error {
 	kinds := []schema.GroupResource{{
 		Group:    folders.GROUP,
 		Resource: folders.RESOURCE,

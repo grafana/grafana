@@ -494,6 +494,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.client,
 				b.legacyMigrator,
 				b.storageStatus,
+				b.unified,
 				b.secrets,
 				b.clonedir,
 			))
@@ -508,7 +509,6 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.parsers,
 				b.resourceLister,
 				b.storageStatus,
-				b.unified,
 			))
 
 			renderer := pullrequest.NewRenderer(b.render, b.blobstore)
