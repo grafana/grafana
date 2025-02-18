@@ -23,6 +23,7 @@ type KubeAggregatorOptions struct {
 	AlternateDNS           []string
 	ProxyClientCertFile    string
 	ProxyClientKeyFile     string
+	LegacyClientCertAuth   bool
 	RemoteServicesFile     string
 	APIServiceCABundleFile string
 }
@@ -45,6 +46,9 @@ func (o *KubeAggregatorOptions) AddFlags(fs *pflag.FlagSet) {
 		"path to proxy client cert file")
 
 	fs.StringVar(&o.ProxyClientKeyFile, "proxy-client-key-file", o.ProxyClientKeyFile,
+		"path to proxy client key file")
+
+	fs.BoolVar(&o.LegacyClientCertAuth, "legacy-client-cert-auth", true,
 		"path to proxy client key file")
 }
 

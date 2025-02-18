@@ -57,7 +57,8 @@ import (
 // making sure we only register metrics once into legacy registry
 var registerIntoLegacyRegistryOnce sync.Once
 
-func readCABundlePEM(path string, devMode bool) ([]byte, error) {
+//nolint:unused
+func _readCABundlePEM(path string, devMode bool) ([]byte, error) {
 	if devMode {
 		return nil, nil
 	}
@@ -152,10 +153,6 @@ func CreateAggregatorConfig(commandOptions *options.Options, sharedConfig generi
 		return NewConfig(aggregatorConfig, sharedInformerFactory, []builder.APIGroupBuilder{serviceAPIBuilder}, nil), nil
 	}
 
-	_, err = readCABundlePEM(commandOptions.KubeAggregatorOptions.APIServiceCABundleFile, commandOptions.ExtraOptions.DevMode)
-	if err != nil {
-		return nil, err
-	}
 	remoteServices, err := ReadRemoteServices(commandOptions.KubeAggregatorOptions.RemoteServicesFile)
 	if err != nil {
 		return nil, err
