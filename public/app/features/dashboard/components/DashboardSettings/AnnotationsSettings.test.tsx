@@ -2,7 +2,7 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TestProvider } from 'test/helpers/TestProvider';
 
-import { locationService, setAngularLoader, setDataSourceSrv } from '@grafana/runtime';
+import { locationService, setDataSourceSrv } from '@grafana/runtime';
 import { mockDataSource, MockDataSourceSrv } from 'app/features/alerting/unified/mocks';
 
 import { DashboardModel } from '../../state/DashboardModel';
@@ -60,16 +60,6 @@ describe('AnnotationsSettings', () => {
 
   const getTableBody = () => screen.getAllByRole('rowgroup')[1];
   const getTableBodyRows = () => within(getTableBody()).getAllByRole('row');
-
-  beforeAll(() => {
-    setAngularLoader({
-      load: () => ({
-        destroy: jest.fn(),
-        digest: jest.fn(),
-        getScope: () => ({ $watch: () => {} }),
-      }),
-    });
-  });
 
   beforeEach(() => {
     // we have a default build-in annotation

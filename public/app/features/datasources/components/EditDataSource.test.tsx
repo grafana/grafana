@@ -2,7 +2,7 @@ import { screen, render } from '@testing-library/react';
 import { Provider } from 'react-redux';
 
 import { PluginExtensionTypes, PluginState } from '@grafana/data';
-import { setAngularLoader, setPluginExtensionsHook } from '@grafana/runtime';
+import { setPluginExtensionsHook } from '@grafana/runtime';
 import { configureStore } from 'app/store/configureStore';
 
 import { getMockDataSource, getMockDataSourceMeta, getMockDataSourceSettingsState } from '../__mocks__';
@@ -47,16 +47,6 @@ const setup = (props?: Partial<ViewProps>) => {
 };
 
 describe('<EditDataSource>', () => {
-  beforeAll(() => {
-    setAngularLoader({
-      load: () => ({
-        destroy: jest.fn(),
-        digest: jest.fn(),
-        getScope: () => ({ $watch: () => {} }),
-      }),
-    });
-  });
-
   beforeEach(() => {
     setPluginExtensionsHook(jest.fn().mockReturnValue({ extensions: [] }));
   });
