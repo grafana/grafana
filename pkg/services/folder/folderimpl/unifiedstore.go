@@ -9,6 +9,7 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 
 	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
@@ -260,7 +261,10 @@ func (ss *FolderUnifiedStoreImpl) GetFolders(ctx context.Context, q folder.GetFo
 			return nil, fmt.Errorf("unable to convert unstructured item to legacy folder %w", err)
 		}
 		if q.WithFullpath || q.WithFullpathUIDs {
-			parents, err := ss.GetParents(ctx, folder.GetParentsQuery{UID: f.UID, OrgID: q.OrgID})
+			// get parent with service identity
+			// as we the user might not have access to the parent folder
+			serviceCtx, _ := identity.WithServiceIdentity(ctx, q.OrgID)
+			parents, err := ss.GetParents(serviceCtx, folder.GetParentsQuery{UID: f.UID, OrgID: q.OrgID})
 			if err != nil {
 				return nil, fmt.Errorf("failed to get parents for folder %s: %w", f.UID, err)
 			}
