@@ -83,12 +83,18 @@ func (s *uidValidationStep) Run(ctx context.Context, obj *advisor.CheckSpec, i a
 	// Data source UID validation
 	err := util.ValidateUID(ds.UID)
 	if err != nil {
+		icon := "document-info"
 		return checks.NewCheckReportFailure(
 			advisor.CheckReportFailureSeverityLow,
-			fmt.Sprintf("Invalid UID '%s' for data source %s", ds.UID, ds.Name),
-			"Check the <a href='https://grafana.com/docs/grafana/latest/upgrade-guide/upgrade-v11.2/#grafana-data-source-uid-format-enforcement' target=_blank>documentation</a> for more information.",
 			s.ID(),
-			ds.UID,
+			fmt.Sprintf("%s (%s)", ds.Name, ds.UID),
+			[]advisor.CheckErrorLink{
+				{
+					Message: "More info",
+					Url:     "https://grafana.com/docs/grafana/latest/upgrade-guide/upgrade-v11.2/#grafana-data-source-uid-format-enforcement",
+					Icon:    &icon,
+				},
+			},
 		), nil
 	}
 	return nil, nil
@@ -132,14 +138,20 @@ func (s *healthCheckStep) Run(ctx context.Context, obj *advisor.CheckSpec, i any
 	}
 	resp, err := s.PluginClient.CheckHealth(ctx, req)
 	if err != nil || resp.Status != backend.HealthStatusOk {
+		icon := "wrench"
+		variant := advisor.CheckErrorLinkVariantPrimary
 		return checks.NewCheckReportFailure(
 			advisor.CheckReportFailureSeverityHigh,
-			fmt.Sprintf("Health check failed for %s", ds.Name),
-			fmt.Sprintf(
-				"Go to the <a href='/connections/datasources/edit/%s'>data source configuration</a>"+
-					" and address the issues reported.", ds.UID),
 			s.ID(),
-			ds.UID,
+			ds.Name,
+			[]advisor.CheckErrorLink{
+				{
+					Message: "Fix me",
+					Url:     fmt.Sprintf("/connections/datasources/edit/%s", ds.UID),
+					Icon:    &icon,
+					Variant: &variant,
+				},
+			},
 		), nil
 	}
 	return nil, nil

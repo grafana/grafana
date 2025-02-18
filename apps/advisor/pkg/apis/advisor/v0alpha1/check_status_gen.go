@@ -3,17 +3,32 @@
 package v0alpha1
 
 // +k8s:openapi-gen=true
+type CheckErrorLink struct {
+	// URL to a page with more information about the error
+	Url string `json:"url"`
+	// Human readable error message
+	Message string `json:"message"`
+	// Icon to display next to the error message
+	Icon *string `json:"icon,omitempty"`
+	// Variant of the button that will render the link
+	Variant *CheckErrorLinkVariant `json:"variant,omitempty"`
+}
+
+// NewCheckErrorLink creates a new CheckErrorLink object.
+func NewCheckErrorLink() *CheckErrorLink {
+	return &CheckErrorLink{}
+}
+
+// +k8s:openapi-gen=true
 type CheckReportFailure struct {
 	// Severity of the failure
 	Severity CheckReportFailureSeverity `json:"severity"`
-	// Human readable reason for the failure
-	Reason string `json:"reason"`
-	// Action to take to resolve the failure
-	Action string `json:"action"`
 	// Step ID that the failure is associated with
 	StepID string `json:"stepID"`
-	// Item ID that the failure is associated with
-	ItemID string `json:"itemID"`
+	// Human readable identifier of the item that failed
+	Item string `json:"item"`
+	// Links to actions that can be taken to resolve the failure
+	Links []CheckErrorLink `json:"links"`
 }
 
 // NewCheckReportFailure creates a new CheckReportFailure object.
@@ -55,6 +70,16 @@ func NewCheckStatus() *CheckStatus {
 		Report: *NewCheckV0alpha1StatusReport(),
 	}
 }
+
+// +k8s:openapi-gen=true
+type CheckErrorLinkVariant string
+
+const (
+	CheckErrorLinkVariantPrimary     CheckErrorLinkVariant = "primary"
+	CheckErrorLinkVariantSecondary   CheckErrorLinkVariant = "secondary"
+	CheckErrorLinkVariantDestructive CheckErrorLinkVariant = "destructive"
+	CheckErrorLinkVariantSuccess     CheckErrorLinkVariant = "success"
+)
 
 // +k8s:openapi-gen=true
 type CheckReportFailureSeverity string

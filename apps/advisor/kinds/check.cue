@@ -21,17 +21,25 @@ check: {
 					// Generic data input that a check can receive
 					data?: [string]: string
 				}
+				#ErrorLink: {
+					// URL to a page with more information about the error
+					url: string
+					// Human readable error message
+					message: string
+					// Icon to display next to the error message
+					icon?: string
+					// Variant of the button that will render the link
+					variant?: "primary" | "secondary" | "destructive" | "success"
+				}
 				#ReportFailure: {
 					// Severity of the failure
 					severity: "high" | "low"
-					// Human readable reason for the failure
-					reason: string
-					// Action to take to resolve the failure
-					action: string
 					// Step ID that the failure is associated with
 					stepID: string
-					// Item ID that the failure is associated with
-					itemID: string
+					// Human readable identifier of the item that failed
+					item: string
+					// Links to actions that can be taken to resolve the failure
+					links: [...#ErrorLink]
 				}	
 				#Report: {
 						// Number of elements analyzed
