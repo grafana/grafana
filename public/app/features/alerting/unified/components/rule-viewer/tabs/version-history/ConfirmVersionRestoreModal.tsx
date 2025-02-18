@@ -12,7 +12,7 @@ import { jsonDiff } from 'app/features/dashboard-scene/settings/version-history/
 import { GrafanaRuleIdentifier } from 'app/types/unified-alerting';
 import { GrafanaRuleDefinition, RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
-import { preprocessRuleForDiffDisplay, useRestoreVersion } from '../versions-utils';
+import { preprocessRuleForDiffDisplay, useRestoreVersion } from './versions-utils';
 
 type ModalProps = Pick<ComponentProps<typeof ConfirmModal>, 'isOpen' | 'onDismiss'> & {
   isOpen: boolean;

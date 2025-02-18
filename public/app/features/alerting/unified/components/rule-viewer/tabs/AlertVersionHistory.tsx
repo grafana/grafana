@@ -12,9 +12,9 @@ import { alertRuleApi } from '../../../api/alertRuleApi';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
 import { stringifyErrorLike } from '../../../utils/misc';
 
-import { ConfirmVersionRestoreModal } from './components/ConfirmVersionRestoreModal';
-import { VersionHistoryTable } from './components/VersionHistoryTable';
-import { getSpecialUidsDisplayMap, preprocessRuleForDiffDisplay } from './versions-utils';
+import { ConfirmVersionRestoreModal } from './version-history/ConfirmVersionRestoreModal';
+import { VersionHistoryTable } from './version-history/VersionHistoryTable';
+import { getSpecialUidsDisplayMap, preprocessRuleForDiffDisplay } from './version-history/versions-utils';
 
 const { useGetAlertVersionHistoryQuery } = alertRuleApi;
 

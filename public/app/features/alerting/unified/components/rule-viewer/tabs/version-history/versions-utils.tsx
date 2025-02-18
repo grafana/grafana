@@ -10,12 +10,11 @@ import {
   TopLevelGrafanaRuleDTOField,
 } from 'app/types/unified-alerting-dto';
 
-import { useUpdateRuleInRuleGroup } from '../../../hooks/ruleGroup/useUpsertRuleFromRuleGroup';
-import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
-import { fromRulerRuleAndRuleGroupIdentifier } from '../../../utils/rule-id';
-import { getRuleGroupLocationFromRuleWithLocation } from '../../../utils/rules';
-
-import { grafanaAlertPropertiesToIgnore } from './AlertVersionHistory';
+import { useUpdateRuleInRuleGroup } from '../../../../hooks/ruleGroup/useUpsertRuleFromRuleGroup';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../../../utils/datasource';
+import { fromRulerRuleAndRuleGroupIdentifier } from '../../../../utils/rule-id';
+import { getRuleGroupLocationFromRuleWithLocation } from '../../../../utils/rules';
+import { grafanaAlertPropertiesToIgnore } from '../AlertVersionHistory';
 
 interface SpecialUidsDisplayMapEntry {
   name: string;
