@@ -26,6 +26,8 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apis/dashboard"
+	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	clientset "github.com/grafana/grafana/pkg/generated/clientset/versioned"
@@ -463,6 +465,12 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				return err
 			}
 
+			// When starting with an empty instance -- swith to "mode 4+"
+			err = b.tryRunningOnlyUnifiedStorage()
+			if err != nil {
+				return err
+			}
+
 			// Informer with resync interval used for health check and reconciliation
 			sharedInformerFactory := informers.NewSharedInformerFactory(c, 10*time.Second)
 			repoInformer := sharedInformerFactory.Provisioning().V0alpha1().Repositories()
@@ -811,6 +819,52 @@ func (b *APIBuilder) encryptSecrets(ctx context.Context, repo *provisioning.Repo
 			return err
 		}
 		repo.Status.Webhook.Secret = ""
+	}
+	return nil
+}
+
+// When starting an empty instance -- switch to mode 5
+func (b *APIBuilder) tryRunningOnlyUnifiedStorage() error {
+	ctx := context.Background()
+	if !dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, b.storageStatus) {
+		return nil
+	}
+
+	rsp, err := b.legacyMigrator.Migrate(ctx, legacy.MigrateOptions{
+		OnlyCount: true,
+	})
+	if err != nil {
+		return fmt.Errorf("error getting legacy count %w", err)
+	}
+	for _, stats := range rsp.Summary {
+		if stats.Count > 0 {
+			return nil // something exists we can not just switch
+		}
+	}
+
+	status, _ := b.storageStatus.Status(ctx, dashboard.DashboardResourceInfo.GroupResource())
+	if !status.ReadUnified {
+		status.ReadUnified = true
+		status.WriteLegacy = false //
+		status.WriteUnified = true
+		status.Migrated = time.Now().UnixMilli()
+		_, err = b.storageStatus.Update(ctx, status)
+		if err != nil {
+			return err
+		}
+	}
+
+	status, _ = b.storageStatus.Status(ctx, folders.FolderResourceInfo.GroupResource())
+	if !status.ReadUnified {
+		status.ReadUnified = true
+		status.WriteLegacy = false //
+		status.WriteUnified = true
+		status.Migrated = time.Now().UnixMilli()
+		b.storageStatus.Update(ctx, status)
+		_, err = b.storageStatus.Update(ctx, status)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
