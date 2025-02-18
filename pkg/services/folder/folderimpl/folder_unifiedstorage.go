@@ -26,7 +26,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/search/model"
-	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
@@ -659,70 +658,42 @@ func (s *Service) deleteFromApiServer(ctx context.Context, cmd *folder.DeleteFol
 			return folder.ErrFolderNotEmpty.Errorf("folder contains %d alert rules", alertRulesInFolder)
 		}
 
-		// if dashboard restore is on we don't delete public dashboards, the hard delete will take care of it later
-		if !s.features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore) {
-			// We need a list of dashboard uids inside the folder to delete related dashboards & public dashboards
-			var dashboardUIDs []string
-			// we cannot use the dashboard service directly due to circular dependencies,
-			// so either use the search client if the feature is enabled or use the dashboard store
-			if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesCliDashboards) {
-				request := &resource.ResourceSearchRequest{
-					Options: &resource.ListOptions{
-						Labels: []*resource.Requirement{},
-						Fields: []*resource.Requirement{
-							{
-								Key:      resource.SEARCH_FIELD_FOLDER,
-								Operator: string(selection.In),
-								Values:   folders,
-							},
-						},
+		// We need a list of dashboard uids inside the folder to delete related dashboards & public dashboards -
+		// we cannot use the dashboard service directly due to circular dependencies, so use the search client to get the dashboards
+		request := &resource.ResourceSearchRequest{
+			Options: &resource.ListOptions{
+				Labels: []*resource.Requirement{},
+				Fields: []*resource.Requirement{
+					{
+						Key:      resource.SEARCH_FIELD_FOLDER,
+						Operator: string(selection.In),
+						Values:   folders,
 					},
-					Limit: 100000}
+				},
+			},
+			Limit: 100000}
 
-				res, err := s.dashboardK8sClient.Search(ctx, cmd.OrgID, request)
-				if err != nil {
-					return folder.ErrInternal.Errorf("failed to fetch dashboards: %w", err)
-				}
+		res, err := s.dashboardK8sClient.Search(ctx, cmd.OrgID, request)
+		if err != nil {
+			return folder.ErrInternal.Errorf("failed to fetch dashboards: %w", err)
+		}
 
-				hits, err := dashboardsearch.ParseResults(res, 0)
-				if err != nil {
-					return folder.ErrInternal.Errorf("failed to fetch dashboards: %w", err)
-				}
-				dashboardUIDs = make([]string, len(hits.Hits))
-				for i, dashboard := range hits.Hits {
-					dashboardUIDs[i] = dashboard.Name
-					err = s.dashboardK8sClient.Delete(ctx, dashboard.Name, cmd.OrgID, metav1.DeleteOptions{})
-					if err != nil {
-						return folder.ErrInternal.Errorf("failed to delete child dashboard: %w", err)
-					}
-				}
-			} else {
-				dashes, err := s.dashboardStore.FindDashboards(ctx, &dashboards.FindPersistedDashboardsQuery{
-					SignedInUser: cmd.SignedInUser,
-					FolderUIDs:   folders,
-					OrgId:        cmd.OrgID,
-					Type:         searchstore.TypeDashboard,
-				})
-				if err != nil {
-					return folder.ErrInternal.Errorf("failed to fetch dashboards: %w", err)
-				}
-				dashboardUIDs = make([]string, len(dashes))
-				for i, dashboard := range dashes {
-					dashboardUIDs[i] = dashboard.UID
-					err = s.dashboardStore.DeleteDashboard(ctx, &dashboards.DeleteDashboardCommand{
-						UID:   dashboard.UID,
-						OrgID: cmd.OrgID,
-					})
-					if err != nil {
-						return folder.ErrInternal.Errorf("failed to delete child dashboard: %w", err)
-					}
-				}
-			}
-			// Delete all public dashboards in the folders
-			err = s.publicDashboardService.DeleteByDashboardUIDs(ctx, cmd.OrgID, dashboardUIDs)
+		hits, err := dashboardsearch.ParseResults(res, 0)
+		if err != nil {
+			return folder.ErrInternal.Errorf("failed to fetch dashboards: %w", err)
+		}
+		dashboardUIDs := make([]string, len(hits.Hits))
+		for i, dashboard := range hits.Hits {
+			dashboardUIDs[i] = dashboard.Name
+			err = s.dashboardK8sClient.Delete(ctx, dashboard.Name, cmd.OrgID, metav1.DeleteOptions{})
 			if err != nil {
-				return folder.ErrInternal.Errorf("failed to delete public dashboards: %w", err)
+				return folder.ErrInternal.Errorf("failed to delete child dashboard: %w", err)
 			}
+		}
+		// Delete all public dashboards in the folders
+		err = s.publicDashboardService.DeleteByDashboardUIDs(ctx, cmd.OrgID, dashboardUIDs)
+		if err != nil {
+			return folder.ErrInternal.Errorf("failed to delete public dashboards: %w", err)
 		}
 	}
 

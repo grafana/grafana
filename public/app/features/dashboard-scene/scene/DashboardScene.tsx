@@ -373,7 +373,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
   public onRestore = async (version: DecoratedRevisionModel): Promise<boolean> => {
     let versionRsp;
-    if (config.featureToggles.kubernetesCliDashboards) {
+    if (config.featureToggles.kubernetesClientDashboardsFolders) {
       // the id here is the resource version in k8s, use this instead to get the specific version
       versionRsp = await historySrv.restoreDashboard(version.uid, version.id);
     } else {

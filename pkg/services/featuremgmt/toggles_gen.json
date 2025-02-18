@@ -2227,12 +2227,15 @@
     },
     {
       "metadata": {
-        "name": "kubernetesCliDashboards",
-        "resourceVersion": "1733520389522",
-        "creationTimestamp": "2024-12-13T22:55:43Z"
+        "name": "kubernetesClientDashboardsFolders",
+        "resourceVersion": "1739913583714",
+        "creationTimestamp": "2025-02-18T21:15:35Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-02-18 21:19:43.714638 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Use the k8s client to retrieve dashboards internally",
+        "description": "Route the folder and dashboard service requests to k8s",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-app-platform-squad"
       }
@@ -2262,34 +2265,6 @@
         "codeowner": "@grafana/grafana-operator-experience-squad",
         "frontend": true,
         "hideFromAdminPage": true
-      }
-    },
-    {
-      "metadata": {
-        "name": "kubernetesFolders",
-        "resourceVersion": "1725863636605",
-        "creationTimestamp": "2024-09-10T09:22:08Z",
-        "deletionTimestamp": "2025-01-22T20:49:15Z",
-        "annotations": {
-          "grafana.app/updatedTimestamp": "2024-09-09 06:33:56.605329 +0000 UTC"
-        }
-      },
-      "spec": {
-        "description": "Use the kubernetes API in the frontend for folders, and route /api/folders requests to k8s",
-        "stage": "experimental",
-        "codeowner": "@grafana/search-and-storage"
-      }
-    },
-    {
-      "metadata": {
-        "name": "kubernetesFoldersServiceV2",
-        "resourceVersion": "1735336477446",
-        "creationTimestamp": "2025-01-13T21:15:35Z"
-      },
-      "spec": {
-        "description": "Use the Folders Service V2, and route Folder Service requests to k8s",
-        "stage": "experimental",
-        "codeowner": "@grafana/search-and-storage"
       }
     },
     {
