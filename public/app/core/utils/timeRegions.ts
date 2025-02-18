@@ -64,65 +64,43 @@ export function convertToCron(
       duration: 0,
     };
 
-    // point annos (duration = 0) must have absent "to" or "to" == "from"
-    if ((toDay == null || toDay === fromDay) && (to == null || to === from)) {
-      from ??= '00:00';
+    const isEveryDay = fromDay == null && toDay == null;
+    // if the def contains only days of week, then they become end-day-inclusive
+    const toDayEnd = fromDay != null && from == null && to == null;
 
-      let [fromHour, fromMin] = from.split(':').map((v) => +v);
+    from ??= '00:00';
 
-      let fromDoW = fromDay ?? '*';
-      cronCfg.cronExpr = `${fromMin} ${fromHour} * * ${fromDoW}`;
+    // 1. create cron (only requires froms)
+    let [fromHour, fromMin] = from.split(':').map((v) => +v);
 
-      return cronCfg;
+    cronCfg.cronExpr = `${fromMin} ${fromHour} * * ${fromDay ?? '*'}`;
+
+    // 2. determine duration
+    fromDay ??= 1;
+    toDay ??= fromDay;
+
+    // e.g. from Wed to Fri (implies inclusive Fri)
+    if (toDayEnd) {
+      to = '00:00';
+      toDay += toDay === 7 ? -6 : 1;
     }
-    // region annos (duration > 0) must have a "to"
-    else if (toDay != null || to != null) {
-      let isEveryDay = false;
 
-      from ??= '00:00';
+    to ??= from;
 
-      // if fromDay is every day, toDay must be every day
-      if (fromDay == null) {
-        toDay = null;
-        isEveryDay = true;
-      }
+    let [toHour, toMin] = to.split(':').map((v) => +v);
 
-      if (toDay != null) {
-        // default inclusive to end of day (start of next day)
-        // (this could become a point anno for wrap cases like from: Mon to: Sun)
-        if (to == null) {
-          to = '00:00';
-          toDay += toDay === 7 ? -6 : 1;
-        }
-      }
+    let fromSecs = fromHour * 3600 + fromMin * 60;
+    let toSecs = toHour * 3600 + toMin * 60;
 
-      // (this could become a point anno)
-      to ??= from;
-
-      // parse from/to times
-      let [fromHour, fromMin] = from.split(':').map((v) => +v);
-      let [toHour, toMin] = to.split(':').map((v) => +v);
-
-      let fromSecs = fromHour * 3600 + fromMin * 60;
-      let toSecs = toHour * 3600 + toMin * 60;
-
-      let fromDoW = fromDay ?? '*';
-      cronCfg.cronExpr = `${fromMin} ${fromHour} * * ${fromDoW}`;
-
-      // for duration calc, we fall back to same day
-      fromDay ??= 1;
-
-      // if every day and to < from (every day from 22:00 to 02:00), then set toDayOfWeek to next day
-      if (isEveryDay && fromSecs < toSecs) {
-        toDay = fromDay + (fromDay === 7 ? -6 : 1);
-      }
-
-      toDay ??= fromDay;
-
-      cronCfg.duration = getDurationSecs(fromDay, fromHour, fromMin, toDay, toHour, toMin);
-
-      return cronCfg;
+    // e.g. every day from 22:00 to 02:00 (implied next day)
+    // NOTE: the odd wrap-around case of toSecs < fromSecs in same day is handled inside getDurationSecs()
+    if (isEveryDay && toSecs < fromSecs) {
+      toDay += toDay === 7 ? -6 : 1;
     }
+
+    cronCfg.duration = getDurationSecs(fromDay, fromHour, fromMin, toDay, toHour, toMin);
+
+    return cronCfg;
   }
 
   return undefined;
