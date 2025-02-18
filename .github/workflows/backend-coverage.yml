@@ -25,6 +25,7 @@ jobs:
         run: make gen-go test-go-unit
       - name: Upload coverage file
         uses: actions/upload-artifact@v4
+        if: success() || failure()
         with:
           name: unit-cov
           path: unit.cov
@@ -45,6 +46,7 @@ jobs:
         run: make gen-go test-go-integration
       - name: Upload coverage file
         uses: actions/upload-artifact@v4
+        if: success() || failure()
         with:
           name: integration-cov
           path: integration.cov
