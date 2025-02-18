@@ -9,6 +9,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -29,6 +30,7 @@ func ProvideService(features featuremgmt.FeatureToggles, reg prometheus.Register
 		db:      newFileDB(path),
 		reg:     reg,
 		enabled: enabled,
+		logger:  logging.DefaultLogger.With("logger", "dualwrite"),
 	}
 }
 
@@ -36,6 +38,7 @@ type service struct {
 	db      statusStorage
 	reg     prometheus.Registerer
 	enabled bool
+	logger  logging.Logger
 }
 
 // The storage interface has zero business logic and simply writes values to a database
@@ -78,7 +81,9 @@ func (m *service) Status(ctx context.Context, gr schema.GroupResource) (StorageS
 			Runtime:      true, // need to explicitly ask for not runtime
 			UpdateKey:    1,
 		}
-		_ = m.db.Set(ctx, v) // write the value
+		if err := m.db.Set(ctx, v); err != nil {
+			m.logger.Warn("error writing value", "err", err)
+		}
 		return v, false
 	}
 	return v, found
