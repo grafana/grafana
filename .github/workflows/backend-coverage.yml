@@ -88,7 +88,7 @@ jobs:
           retention-days: 30 # this is a pretty small file; 10MB or so. it is GZip compressed by the action, which makes it <1MB.
           compression-level: 9 # this is raw text, and includes a _lot_ of repetition. compressing it should yield pretty good results.
       - name: Set summary to total coverage
-        run:
+        run: |
           echo "# Coverage" >> $GITHUB_STEP_SUMMARY
           echo "```" >> $GITHUB_STEP_SUMMARY
           grep 'total:' /tmp/backend-funcs.log >> $GITHUB_STEP_SUMMARY
