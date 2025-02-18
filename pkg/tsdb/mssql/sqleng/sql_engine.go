@@ -647,12 +647,12 @@ func isDownstreamError(err error) bool {
 	if backend.IsDownstreamError(err) {
 		return true
 	}
-	downstreamErrors := []error{
+	resultProcessingDownstreamErrors := []error{
 		data.ErrorInputFieldsWithoutRows,
 		data.ErrorSeriesUnsorted,
 		data.ErrorNullTimeValues,
 	}
-	for _, e := range downstreamErrors {
+	for _, e := range resultProcessingDownstreamErrors {
 		if errors.Is(err, e) {
 			return true
 		}
