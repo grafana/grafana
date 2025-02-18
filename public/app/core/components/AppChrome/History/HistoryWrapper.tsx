@@ -42,7 +42,7 @@ export function HistoryWrapper({ onClose }: { onClose: () => void }) {
               <Box paddingLeft={2}>
                 <Text color="secondary">{entries}</Text>
               </Box>
-              <span className={styles.timeline}>
+              <div className={styles.timeline}>
                 {hist[entries].map((entry, index) => {
                   return (
                     <HistoryEntryAppView
@@ -53,7 +53,7 @@ export function HistoryWrapper({ onClose }: { onClose: () => void }) {
                     />
                   );
                 })}
-              </span>
+              </div>
             </Stack>
           );
         })}
@@ -253,7 +253,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       },
     }),
     timeline: css({
-      label: 'border-left',
+      label: 'timeline',
       position: 'relative',
       height: '100%',
       width: '100%',
