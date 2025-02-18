@@ -69,7 +69,7 @@ jobs:
       ownerRepo: 'grafana/grafana'
       source: ${{ needs.setup.outputs.release_branch }}
     secrets:
-      token: ${{ steps.generate_token.outputs.token }}
+      token: ${{ needs.setup.outputs.token }}
   create_next_release_branch_enterprise:
     name: Create next release branch (Grafana Enterprise)
     needs: setup
