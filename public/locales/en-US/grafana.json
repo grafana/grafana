@@ -349,9 +349,6 @@
       "used-by-rules_other": "Used by {{ count }} alert rule",
       "view-all": "View all contact points"
     },
-    "contactPointFilter": {
-      "label": "Contact point"
-    },
     "copy-to-clipboard": "Copy \"{{label}}\" to clipboard",
     "dag": {
       "missing-reference": "Expression \"{{source}}\" failed to run because \"{{target}}\" is missing or also failed.",

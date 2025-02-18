@@ -349,9 +349,6 @@
       "used-by-rules_other": "Ůşęđ þy {{ count }} äľęřŧ řūľę",
       "view-all": "Vįęŵ äľľ čőŉŧäčŧ pőįŉŧş"
     },
-    "contactPointFilter": {
-      "label": "Cőŉŧäčŧ pőįŉŧ"
-    },
     "copy-to-clipboard": "Cőpy \"{{label}}\" ŧő čľįpþőäřđ",
     "dag": {
       "missing-reference": "Ēχpřęşşįőŉ \"{{source}}\" ƒäįľęđ ŧő řūŉ þęčäūşę \"{{target}}\" įş mįşşįŉģ őř äľşő ƒäįľęđ.",
