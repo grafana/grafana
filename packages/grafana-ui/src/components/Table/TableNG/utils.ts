@@ -216,23 +216,14 @@ export function getCellColors(
   return { textColor, bgColor, bgHoverColor };
 }
 
-export const getLinks = (field: Field, rowIdx: number) => {
-  if (field.getLinks) {
-    return field.getLinks({ valueRowIndex: rowIdx });
-  }
-
-  return [];
-};
-
 /**
  * @internal
- * TODO: unify with the existing getCellLinks
  */
-export const getCellLinks = (field: Field, rowIndex: number) => {
+export const getCellLinks = (field: Field, rowIdx: number) => {
   let links: Array<LinkModel<unknown>> | undefined;
   if (field.getLinks) {
     links = field.getLinks({
-      valueRowIndex: rowIndex,
+      valueRowIndex: rowIdx,
     });
   }
 
@@ -250,7 +241,7 @@ export const getCellLinks = (field: Field, rowIndex: number) => {
           event.preventDefault();
           origOnClick!(event, {
             field,
-            rowIndex: rowIndex,
+            rowIndex: rowIdx,
           });
         }
       };

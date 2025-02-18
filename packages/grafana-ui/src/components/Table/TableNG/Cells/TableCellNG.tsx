@@ -13,6 +13,7 @@ import { getCellColors } from '../utils';
 
 import AutoCell from './AutoCell';
 import { BarGaugeCell } from './BarGaugeCell';
+import { DataLinksCell } from './DataLinksCell';
 import { ImageCell } from './ImageCell';
 import { JSONCell } from './JSONCell';
 import { SparklineCell } from './SparklineCell';
@@ -22,6 +23,7 @@ import { SparklineCell } from './SparklineCell';
 //     fieldDisplay: any?
 // }
 
+// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 export function TableCellNG(props: any) {
   const {
     field,
@@ -116,6 +118,9 @@ export function TableCellNG(props: any) {
       break;
     case TableCellDisplayMode.JSONView:
       cell = <JSONCell value={value} justifyContent={justifyContent} field={field} rowIdx={rowIdx} actions={actions} />;
+      break;
+    case TableCellDisplayMode.DataLinks:
+      cell = <DataLinksCell value={value} field={field} theme={theme} justifyContent={justifyContent} />;
       break;
     case TableCellDisplayMode.Auto:
     default:

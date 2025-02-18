@@ -51,6 +51,13 @@ export type FilterType = {
   };
 };
 
+/**
+ * getIsNestedTable is a helper function that takes a DataFrame and returns a
+ * boolean value based on the presence of nested frames
+ */
+const getIsNestedTable = (dataFrame: DataFrame): boolean =>
+  dataFrame.fields.some(({ type }) => type === FieldType.nestedFrames);
+
 export function TableNG(props: TableNGProps) {
   const {
     height,
@@ -158,6 +165,7 @@ export function TableNG(props: TableNGProps) {
   // setSortColumns is still used to trigger re-render
   const sortColumnsRef = useRef(sortColumns);
   const [expandedRows, setExpandedRows] = useState<number[]>([]);
+  const [isNestedTable, setIsNestedTable] = useState(false);
 
   function getDefaultRowHeight(): number {
     const bodyFontSize = theme.typography.fontSize;
@@ -230,12 +238,10 @@ export function TableNG(props: TableNGProps) {
   const mapFrameToDataGrid = (main: DataFrame, calcsRef: React.MutableRefObject<string[]>, subTable?: boolean) => {
     const columns: TableColumn[] = [];
 
-    // Check for nestedFrames
-    const nestedDataField = main.fields.find((f) => f.type === FieldType.nestedFrames);
-    const hasNestedData = nestedDataField !== undefined;
+    const hasNestedFrames = getIsNestedTable(main);
 
     // If nested frames, add expansion control column
-    if (hasNestedData) {
+    if (hasNestedFrames) {
       const expanderField: Field = {
         name: '',
         type: FieldType.other,
@@ -546,8 +552,13 @@ export function TableNG(props: TableNGProps) {
 
   const columns = useMemo(
     () => mapFrameToDataGrid(props.data, calcsRef),
-    [props.data, calcsRef, filter, expandedRows, footerOptions] // eslint-disable-line react-hooks/exhaustive-deps
+    [props.data, calcsRef, filter, expandedRows, expandedRows.length, footerOptions] // eslint-disable-line react-hooks/exhaustive-deps
   );
+
+  useEffect(() => {
+    const hasNestedFrames = getIsNestedTable(props.data);
+    setIsNestedTable(hasNestedFrames);
+  }, [props.data]);
 
   // This effect needed to set header cells refs before row height calculation
   useLayoutEffect(() => {
@@ -603,7 +614,7 @@ export function TableNG(props: TableNGProps) {
           sortable: true,
           resizable: true,
         }}
-        rowHeight={textWrap ? calculateRowHeight : defaultRowHeight}
+        rowHeight={textWrap || isNestedTable ? calculateRowHeight : defaultRowHeight}
         // TODO: This doesn't follow current table behavior
         style={{ width, height: height - (enablePagination ? paginationHeight : 0) }}
         renderers={{ renderRow: myRowRenderer }}
