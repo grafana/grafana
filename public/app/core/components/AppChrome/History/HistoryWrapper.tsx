@@ -9,7 +9,7 @@ import { t } from 'app/core/internationalization';
 import { HISTORY_LOCAL_STORAGE_KEY } from '../AppChromeService';
 import { HistoryEntry } from '../types';
 
-import { clickUnifiedHistoryEntry, interactWithUnifiedHistoryShowMore } from './eventsTracking';
+import { logClickUnifiedHistoryEntryEvent, logUnifiedHistoryShowMoreEvent } from './eventsTracking';
 
 export function HistoryWrapper({ onClose }: { onClose: () => void }) {
   const history = store.getObject<HistoryEntry[]>(HISTORY_LOCAL_STORAGE_KEY, []).filter((entry) => {
@@ -67,7 +67,7 @@ export function HistoryWrapper({ onClose }: { onClose: () => void }) {
             fill="text"
             onClick={() => {
               setNumItemsToShow(numItemsToShow + 5);
-              interactWithUnifiedHistoryShowMore();
+              logUnifiedHistoryShowMoreEvent();
             }}
           >
             {t('nav.history-wrapper.show-more', 'Show more')}
@@ -127,7 +127,7 @@ function HistoryEntryAppView({ entry, isSelected, onClick }: ItemProps) {
             onClick={() => {
               store.setObject('CLICKING_HISTORY', true);
               onClick();
-              clickUnifiedHistoryEntry({ entryURL: url });
+              logClickUnifiedHistoryEntryEvent({ entryURL: url });
             }}
             href={url}
             isCompact={true}
@@ -183,7 +183,7 @@ function HistoryEntryAppView({ entry, isSelected, onClick }: ItemProps) {
                   onClick={() => {
                     store.setObject('CLICKING_HISTORY', true);
                     onClick();
-                    clickUnifiedHistoryEntry({ entryURL: view.url, subEntry: 'timeRange' });
+                    logClickUnifiedHistoryEntryEvent({ entryURL: view.url, subEntry: 'timeRange' });
                   }}
                   isCompact={true}
                   className={view.time === selectedViewTime ? undefined : styles.subCard}
