@@ -308,6 +308,7 @@
       "view": "View"
     },
     "contact-points": {
+      "contact-point": "Contact point",
       "create": "Create contact point",
       "custom-template-value": "Custom template value",
       "delete-reasons": {
@@ -326,6 +327,7 @@
         "add": "Add",
         "confirm-add": "Confirm to add"
       },
+      "failed-loading": "Failed to load contact points",
       "last-delivery-attempt": "Last delivery attempt",
       "last-delivery-failed": "Last delivery attempt failed",
       "no-contact-points-found": "No contact points found",
@@ -336,6 +338,7 @@
       "receiver-summary": {
         "jira": "Creates a \"{{issueType}}\" issue in the \"{{project}}\" project"
       },
+      "refresh": "Refresh contact points",
       "telegram": {
         "parse-mode-warning-body": "If you use a <1>parse_mode</1> option other than <3>None</3>, truncation may result in an invalid message, causing the notification to fail. For longer messages, we recommend using an alternative contact method.",
         "parse-mode-warning-title": "Telegram messages are limited to 4096 UTF-8 characters."
@@ -416,7 +419,9 @@
       "alertmanager": "Alertmanager:",
       "error": "Could not load routing preview for {{alertmanager}}",
       "initialized": "Based on the labels added, alert instances are routed to the following notification policies. Expand each notification policy below to view more details.",
+      "loading": "Loading routing preview...",
       "preview-routing": "Preview routing",
+      "timing-options": "Muting, grouping and timings (optional)",
       "title": "Alert instance routing preview",
       "uninitialized": "When you have your folder selected and your query and labels are configured, click \"Preview routing\" to see the results here."
     },

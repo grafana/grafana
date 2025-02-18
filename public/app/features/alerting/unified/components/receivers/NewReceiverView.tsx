@@ -1,5 +1,4 @@
 import { locationService } from '@grafana/runtime';
-import { withErrorBoundary } from '@grafana/ui';
 import { useAlertmanager } from 'app/features/alerting/unified/state/AlertmanagerContext';
 
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
