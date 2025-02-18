@@ -57,3 +57,9 @@ func (s *Service) Checks() []checks.Check {
 		),
 	}
 }
+
+// AdvisorAppConfig is the configuration received from Grafana to run the app
+type AdvisorAppConfig struct {
+	CheckRegistry CheckService
+	PluginConfig  map[string]string
+}
