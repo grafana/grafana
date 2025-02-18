@@ -9,8 +9,7 @@
         "description": "load resources from github",
         "type": "github",
         "github": {
-            "owner": "grafana",
-            "repository": "git-ui-sync-demo",
+            "url": "https://github.com/grafana/git-ui-sync-demo",
             "branch": "dummy-branch",
             "branchWorkflow": true,
             "generateDashboardPreviews": true,

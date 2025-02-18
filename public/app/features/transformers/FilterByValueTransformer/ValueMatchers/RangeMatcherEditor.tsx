@@ -1,58 +1,25 @@
 import { useCallback, useState } from 'react';
 import * as React from 'react';
 
-import { ValueMatcherID, RangeValueMatcherOptions, VariableOrigin } from '@grafana/data';
-import { getTemplateSrv, config as cfg } from '@grafana/runtime';
-import { InlineLabel, Input } from '@grafana/ui';
+import { ValueMatcherID, RangeValueMatcherOptions } from '@grafana/data';
+import { InlineLabel } from '@grafana/ui';
 
 import { SuggestionsInput } from '../../suggestionsInput/SuggestionsInput';
-import { numberOrVariableValidator } from '../../utils';
+import { getVariableSuggestions, numberOrVariableValidator } from '../../utils';
 
 import { ValueMatcherEditorConfig, ValueMatcherUIProps, ValueMatcherUIRegistryItem } from './types';
-import { convertToType } from './utils';
 
 type PropNames = 'from' | 'to';
 
 export function rangeMatcherEditor<T = any>(
   config: ValueMatcherEditorConfig
 ): React.FC<ValueMatcherUIProps<RangeValueMatcherOptions<T>>> {
-  return function RangeMatcherEditor({ options, onChange, field }) {
+  return function RangeMatcherEditor({ options, onChange }) {
     const { validator } = config;
     const [isInvalid, setInvalid] = useState({
       from: !validator(options.from),
       to: !validator(options.to),
     });
-
-    const templateSrv = getTemplateSrv();
-    const variables = templateSrv.getVariables().map((v) => {
-      return { value: v.name, label: v.label || v.name, origin: VariableOrigin.Template };
-    });
-
-    const onChangeValue = useCallback(
-      (event: React.FormEvent<HTMLInputElement>, prop: PropNames) => {
-        setInvalid({
-          ...isInvalid,
-          [prop]: !validator(event.currentTarget.value),
-        });
-      },
-      [setInvalid, validator, isInvalid]
-    );
-
-    const onChangeOptions = useCallback(
-      (event: React.FocusEvent<HTMLInputElement>, prop: PropNames) => {
-        if (isInvalid[prop]) {
-          return;
-        }
-
-        const { value } = event.currentTarget;
-
-        onChange({
-          ...options,
-          [prop]: convertToType(value, field),
-        });
-      },
-      [options, onChange, isInvalid, field]
-    );
 
     const onChangeOptionsSuggestions = useCallback(
       (value: string, prop: PropNames) => {
@@ -74,45 +41,27 @@ export function rangeMatcherEditor<T = any>(
       },
       [options, onChange, isInvalid, setInvalid, validator]
     );
-    if (cfg.featureToggles.transformationsVariableSupport) {
-      return (
-        <>
-          <SuggestionsInput
-            value={String(options.from)}
-            invalid={isInvalid.from}
-            error={'Value needs to be an integer or a variable'}
-            placeholder="From"
-            onChange={(val) => onChangeOptionsSuggestions(val, 'from')}
-            suggestions={variables}
-          />
-          <InlineLabel>and</InlineLabel>
-          <SuggestionsInput
-            invalid={isInvalid.to}
-            error={'Value needs to be an integer or a variable'}
-            value={String(options.to)}
-            placeholder="To"
-            suggestions={variables}
-            onChange={(val) => onChangeOptionsSuggestions(val, 'to')}
-          />
-        </>
-      );
-    }
+
+    const suggestions = getVariableSuggestions();
+
     return (
       <>
-        <Input
-          invalid={isInvalid['from']}
-          defaultValue={String(options.from)}
+        <SuggestionsInput
+          value={String(options.from)}
+          invalid={isInvalid.from}
+          error={'Value needs to be a number or a variable'}
           placeholder="From"
-          onChange={(event) => onChangeValue(event, 'from')}
-          onBlur={(event) => onChangeOptions(event, 'from')}
+          onChange={(val) => onChangeOptionsSuggestions(val, 'from')}
+          suggestions={suggestions}
         />
         <InlineLabel>and</InlineLabel>
-        <Input
-          invalid={isInvalid['to']}
-          defaultValue={String(options.to)}
+        <SuggestionsInput
+          invalid={isInvalid.to}
+          error={'Value needs to be a number or a variable'}
+          value={String(options.to)}
           placeholder="To"
-          onChange={(event) => onChangeValue(event, 'to')}
-          onBlur={(event) => onChangeOptions(event, 'to')}
+          suggestions={suggestions}
+          onChange={(val) => onChangeOptionsSuggestions(val, 'to')}
         />
       </>
     );
