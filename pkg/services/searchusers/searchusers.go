@@ -112,7 +112,7 @@ func (s *OSSService) SearchUser(c *contextmodel.ReqContext) (*user.SearchUserQue
 
 	for _, user := range res.Users {
 		user.AvatarURL = dtos.GetGravatarUrl(s.cfg, user.Email)
-		user.AuthLabels = make([]string, len(user.AuthModule))
+		user.AuthLabels = make([]string, 0, len(user.AuthModule))
 		for _, authModule := range user.AuthModule {
 			user.AuthLabels = append(user.AuthLabels, login.GetAuthProviderLabel(authModule))
 		}

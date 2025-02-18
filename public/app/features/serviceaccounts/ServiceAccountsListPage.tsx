@@ -112,7 +112,7 @@ export const ServiceAccountsListPageUnconnected = ({
 
   const onServiceAccountRemove = async () => {
     if (currentServiceAccount) {
-      deleteServiceAccount(currentServiceAccount.id);
+      deleteServiceAccount(currentServiceAccount.uid);
     }
     onRemoveModalClose();
   };
@@ -140,7 +140,7 @@ export const ServiceAccountsListPageUnconnected = ({
 
   const onTokenCreate = async (token: ServiceAccountToken) => {
     if (currentServiceAccount) {
-      createServiceAccountToken(currentServiceAccount.id, token, setNewToken);
+      createServiceAccountToken(currentServiceAccount.uid, token, setNewToken);
     }
   };
 

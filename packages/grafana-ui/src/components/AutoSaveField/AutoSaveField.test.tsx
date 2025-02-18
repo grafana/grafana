@@ -391,7 +391,7 @@ describe('Switch, as AutoSaveField child, ', () => {
     setupSwitch();
     //Is there another way to find the switch element? Filtering by name doesn't work
     expect(
-      screen.getByRole('checkbox', {
+      screen.getByRole('switch', {
         checked: false,
       })
     ).toBeInTheDocument();

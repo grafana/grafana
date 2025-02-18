@@ -19,6 +19,7 @@ import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 import { fetchRoleOptions, updateUserRoles } from 'app/core/components/RolePicker/api';
 import { OrgPicker, OrgSelectItem } from 'app/core/components/Select/OrgPicker';
 import { contextSrv } from 'app/core/core';
+import { t, Trans } from 'app/core/internationalization';
 import { AccessControlAction, Organization, OrgRole, Role, UserDTO, UserOrg } from 'app/types';
 
 import { OrgRolePicker } from './OrgRolePicker';
@@ -60,7 +61,9 @@ export class UserOrgs extends PureComponent<Props, State> {
     const canAddToOrg = contextSrv.hasPermission(AccessControlAction.OrgUsersAdd) && !isExternalUser;
     return (
       <div>
-        <h3 className="page-heading">Organizations</h3>
+        <h3 className="page-heading">
+          <Trans i18nKey="admin.user-orgs.title">Organizations</Trans>
+        </h3>
         <Stack gap={1.5} direction="column">
           <table className="filter-table form-inline">
             <tbody>
@@ -80,7 +83,7 @@ export class UserOrgs extends PureComponent<Props, State> {
           <div>
             {canAddToOrg && (
               <Button variant="secondary" onClick={this.showOrgAddModal} ref={this.addToOrgButtonRef}>
-                Add user to organization
+                <Trans i18nKey="admin.user-orgs.add-button">Add user to organization</Trans>
               </Button>
             )}
           </div>
@@ -242,7 +245,7 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps> {
               onCancel={this.onCancelClick}
               onConfirm={this.onOrgRemove}
             >
-              Remove from organization
+              {t('admin.user-orgs.remove-button', 'Remove from organization')}
             </ConfirmButton>
           )}
         </td>
@@ -383,10 +386,10 @@ export class AddToOrgModal extends PureComponent<AddToOrgModalProps, AddToOrgMod
         <Modal.ButtonRow>
           <Stack gap={2} justifyContent="center">
             <Button variant="secondary" fill="outline" onClick={this.onCancel}>
-              Cancel
+              <Trans i18nKey="admin.user-orgs-modal.cancel-button">Cancel</Trans>
             </Button>
             <Button variant="primary" disabled={selectedOrg === null} onClick={this.onAddUserToOrg}>
-              Add to organization
+              <Trans i18nKey="admin.user-orgs-modal.add-button">Add to organization</Trans>
             </Button>
           </Stack>
         </Modal.ButtonRow>
@@ -438,17 +441,19 @@ export function ChangeOrgButton({
             interactive={true}
             content={
               <div>
-                This user&apos;s role is not editable because it is synchronized from your auth provider. Refer to
-                the&nbsp;
-                <a
-                  className={styles.tooltipItemLink}
-                  href={'https://grafana.com/docs/grafana/latest/auth'}
-                  rel="noreferrer"
-                  target="_blank"
-                >
-                  Grafana authentication docs
-                </a>
-                &nbsp;for details.
+                <Trans i18nKey="admin.user-orgs.role-not-editable">
+                  This user&apos;s role is not editable because it is synchronized from your auth provider. Refer to
+                  the&nbsp;
+                  <a
+                    className={styles.tooltipItemLink}
+                    href={'https://grafana.com/docs/grafana/latest/auth'}
+                    rel="noreferrer"
+                    target="_blank"
+                  >
+                    Grafana authentication docs
+                  </a>
+                  &nbsp;for details.
+                </Trans>
               </div>
             }
           >
@@ -465,7 +470,7 @@ export function ChangeOrgButton({
           onConfirm={onOrgRoleSave}
           disabled={isExternalUser}
         >
-          Change role
+          {t('admin.user-orgs.change-role-button', 'Change role')}
         </ConfirmButton>
       )}
     </div>
@@ -486,17 +491,19 @@ export const ExternalUserTooltip = ({ lockMessage }: ExternalUserTooltipProps) =
         interactive={true}
         content={
           <div>
-            This user&apos;s built-in role is not editable because it is synchronized from your auth provider. Refer to
-            the&nbsp;
-            <a
-              className={styles.tooltipItemLink}
-              href={'https://grafana.com/docs/grafana/latest/auth'}
-              rel="noreferrer noopener"
-              target="_blank"
-            >
-              Grafana authentication docs
-            </a>
-            &nbsp;for details.
+            <Trans i18nKey="admin.user-orgs.external-user-tooltip">
+              This user&apos;s built-in role is not editable because it is synchronized from your auth provider. Refer
+              to the&nbsp;
+              <a
+                className={styles.tooltipItemLink}
+                href={'https://grafana.com/docs/grafana/latest/auth'}
+                rel="noreferrer noopener"
+                target="_blank"
+              >
+                Grafana authentication docs
+              </a>
+              &nbsp;for details.
+            </Trans>
           </div>
         }
       >

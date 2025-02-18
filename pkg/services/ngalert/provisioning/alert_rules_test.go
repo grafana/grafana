@@ -16,6 +16,12 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/expr"
+	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
+	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
+	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/util"
+
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -25,23 +31,19 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
-	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
-	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/ngalert/testutil"
-	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 func TestAlertRuleService(t *testing.T) {
 	ruleService := createAlertRuleService(t, nil)
 	var orgID int64 = 1
 	u := &user.SignedInUser{
-		UserID: 1,
-		OrgID:  orgID,
+		UserUID: util.GenerateShortUID(),
+		UserID:  1,
+		OrgID:   orgID,
 	}
 
 	t.Run("group creation should set the right provenance", func(t *testing.T) {
@@ -181,6 +183,74 @@ func TestAlertRuleService(t *testing.T) {
 		require.Len(t, readGroup.Rules, 1)
 		require.Equal(t, "some-other-title-asdf", readGroup.Rules[0].Title)
 		require.Equal(t, int64(2), readGroup.Rules[0].Version)
+	})
+
+	t.Run("updating a group should not override its rules editor settings", func(t *testing.T) {
+		namespaceUID := "my-namespace"
+		groupTitle := "test-group-123"
+
+		// create the rule group via the rule store, to persist the editor settings
+		rule := createTestRule(util.GenerateShortUID(), groupTitle, orgID, namespaceUID)
+		ruleMetadata := models.AlertRuleMetadata{
+			EditorSettings: models.EditorSettings{
+				SimplifiedQueryAndExpressionsSection: true,
+			},
+		}
+		rule.Metadata = ruleMetadata
+		r, err := ruleService.ruleStore.InsertAlertRules(context.Background(), models.NewUserUID(u), []models.AlertRule{rule})
+		require.NoError(t, err)
+		require.Len(t, r, 1)
+
+		// Set the UID for the rule to update it
+		rule.UID = r[0].UID
+		// clear the metadata to check that the existing metadata is not overridden
+		rule.Metadata = models.AlertRuleMetadata{}
+
+		// Now update the rule group with the rule to update its metadata
+		group := models.AlertRuleGroup{
+			Title:     groupTitle,
+			Interval:  60,
+			FolderUID: namespaceUID,
+			Rules:     []models.AlertRule{rule},
+		}
+
+		err = ruleService.ReplaceRuleGroup(context.Background(), u, group, models.ProvenanceAPI)
+		require.NoError(t, err)
+
+		readGroup, err := ruleService.GetRuleGroup(context.Background(), u, namespaceUID, groupTitle)
+		require.NoError(t, err)
+		require.NotEmpty(t, readGroup.Rules)
+		require.Len(t, readGroup.Rules, 1)
+
+		// check that the metadata is still there
+		require.Equal(t, ruleMetadata, readGroup.Rules[0].Metadata)
+	})
+
+	t.Run("updating a rule should not override its editor settings", func(t *testing.T) {
+		rule := createTestRule(util.GenerateShortUID(), "my-group", orgID, "my-folder")
+		ruleMetadata := models.AlertRuleMetadata{
+			EditorSettings: models.EditorSettings{
+				SimplifiedQueryAndExpressionsSection: true,
+			},
+		}
+		rule.Metadata = ruleMetadata
+		r, err := ruleService.ruleStore.InsertAlertRules(context.Background(), models.NewUserUID(u), []models.AlertRule{rule})
+		require.NoError(t, err)
+		require.Len(t, r, 1)
+
+		// Set the UID for the rule to update it
+		rule.UID = r[0].UID
+		// clear the metadata to check that the existing metadata is not overridden
+		rule.Metadata = models.AlertRuleMetadata{}
+
+		// Update the rule
+		_, err = ruleService.UpdateAlertRule(context.Background(), u, rule, models.ProvenanceAPI)
+		require.NoError(t, err)
+
+		// Read the rule and check that the editor settings are preserved
+		readRule, _, err := ruleService.GetAlertRule(context.Background(), u, rule.UID)
+		require.NoError(t, err)
+		require.Equal(t, ruleMetadata, readRule.Metadata)
 	})
 
 	t.Run("updating a group to temporarily overlap rule names should not throw unique constraint", func(t *testing.T) {
@@ -555,7 +625,7 @@ func TestAlertRuleService(t *testing.T) {
 
 func TestCreateAlertRule(t *testing.T) {
 	orgID := rand.Int63()
-	u := &user.SignedInUser{OrgID: orgID}
+	u := &user.SignedInUser{OrgID: orgID, UserUID: util.GenerateShortUID()}
 	groupKey := models.GenerateGroupKey(orgID)
 	groupIntervalSeconds := int64(30)
 	gen := models.RuleGen
@@ -798,6 +868,37 @@ func TestCreateAlertRule(t *testing.T) {
 			require.NoError(t, err)
 		})
 	})
+	t.Run("when dashboard is specified", func(t *testing.T) {
+		t.Run("return no error when both specified", func(t *testing.T) {
+			rule := dummyRule("test#4", orgID)
+			dashboardUid := "oinwerfgiuac"
+			panelId := int64(42)
+			rule.Annotations = map[string]string{
+				models.DashboardUIDAnnotation: dashboardUid,
+				models.PanelIDAnnotation:      strconv.FormatInt(panelId, 10),
+			}
+			rule, err := ruleService.CreateAlertRule(context.Background(), u, rule, models.ProvenanceNone)
+			require.NoError(t, err)
+		})
+		t.Run("return 4xx error when missing dashboard uid", func(t *testing.T) {
+			rule := dummyRule("test#3", orgID)
+			panelId := int64(42)
+			rule.Annotations = map[string]string{
+				models.PanelIDAnnotation: strconv.FormatInt(panelId, 10),
+			}
+			rule, err := ruleService.CreateAlertRule(context.Background(), u, rule, models.ProvenanceNone)
+			require.ErrorIs(t, err, models.ErrAlertRuleFailedValidation)
+		})
+		t.Run("return 4xx error when missing panel id", func(t *testing.T) {
+			rule := dummyRule("test#3", orgID)
+			dashboardUid := "oinwerfgiuac"
+			rule.Annotations = map[string]string{
+				models.DashboardUIDAnnotation: dashboardUid,
+			}
+			rule, err := ruleService.CreateAlertRule(context.Background(), u, rule, models.ProvenanceNone)
+			require.ErrorIs(t, err, models.ErrAlertRuleFailedValidation)
+		})
+	})
 }
 
 func TestUpdateAlertRule(t *testing.T) {
@@ -893,6 +994,30 @@ func TestUpdateAlertRule(t *testing.T) {
 			require.Len(t, ac.Calls, 2)
 			assert.Equal(t, "CanWriteAllRules", ac.Calls[0].Method)
 			assert.Equal(t, "AuthorizeRuleGroupWrite", ac.Calls[1].Method)
+
+			updates := ruleStore.GetRecordedCommands(func(cmd any) (any, bool) {
+				a, ok := cmd.([]models.UpdateRule)
+				return a, ok
+			})
+			require.Empty(t, updates)
+		})
+
+		t.Run("when there are no changes it should be successful", func(t *testing.T) {
+			// For this test we will not change the rule, and we will not use "admin" (CanWriteAllRulesFunc)
+			// permissions. The response of the service should still be successful.
+			service, ruleStore, _, ac := initServiceWithData(t)
+
+			rule := models.CopyRule(rules[0])
+
+			_, err := service.ruleStore.InsertAlertRules(context.Background(), models.NewUserUID(u), []models.AlertRule{*rule})
+			require.NoError(t, err)
+
+			ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+				return false, nil
+			}
+
+			_, err = service.UpdateAlertRule(context.Background(), u, *rule, groupProvenance)
+			require.NoError(t, err)
 
 			updates := ruleStore.GetRecordedCommands(func(cmd any) (any, bool) {
 				a, ok := cmd.([]models.UpdateRule)
@@ -1473,13 +1598,15 @@ func TestDeleteRuleGroup(t *testing.T) {
 func TestProvisiongWithFullpath(t *testing.T) {
 	tracer := tracing.InitializeTracerForTest()
 	inProcBus := bus.ProvideBus(tracer)
-	sqlStore := db.InitTestReplDB(t)
-	cfg := setting.NewCfg()
+	sqlStore, cfg := db.InitTestDBWithCfg(t)
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
 	_, dashboardStore := testutil.SetupDashboardService(t, sqlStore, folderStore, cfg)
 	ac := acmock.New()
 	features := featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)
-	folderService := folderimpl.ProvideService(ac, inProcBus, dashboardStore, folderStore, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
+	fStore := folderimpl.ProvideStore(sqlStore)
+	folderService := folderimpl.ProvideService(
+		fStore, ac, inProcBus, dashboardStore, folderStore,
+		nil, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil)
 
 	ruleService := createAlertRuleService(t, folderService)
 	var orgID int64 = 1
@@ -1501,7 +1628,7 @@ func TestProvisiongWithFullpath(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("for a rule under a root folder should set the right fullpath", func(t *testing.T) {
-		r, err := ruleService.ruleStore.InsertAlertRules(context.Background(), []models.AlertRule{
+		r, err := ruleService.ruleStore.InsertAlertRules(context.Background(), models.NewUserUID(&signedInUser), []models.AlertRule{
 			createTestRule("my-cool-group", "my-cool-group", orgID, namespaceUID),
 		})
 		require.NoError(t, err)
@@ -1532,7 +1659,7 @@ func TestProvisiongWithFullpath(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		r, err := ruleService.ruleStore.InsertAlertRules(context.Background(), []models.AlertRule{
+		r, err := ruleService.ruleStore.InsertAlertRules(context.Background(), models.NewUserUID(&signedInUser), []models.AlertRule{
 			createTestRule("my-cool-group-2", "my-cool-group-2", orgID, otherNamespaceUID),
 		})
 		require.NoError(t, err)
@@ -1577,6 +1704,7 @@ func createAlertRuleService(t *testing.T, folderService folder.Service) AlertRul
 		},
 		Logger:        log.NewNopLogger(),
 		FolderService: folderService,
+		Bus:           bus.ProvideBus(tracing.InitializeTracerForTest()),
 	}
 	// store := fakes.NewRuleStore(t)
 	quotas := MockQuotaChecker{}

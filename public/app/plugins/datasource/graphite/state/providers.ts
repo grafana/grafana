@@ -168,7 +168,7 @@ async function getTagsAsSegments(state: GraphiteQueryEditorState, tagPrefix: str
         value: val.text,
         type: 'tag',
         expandable: false,
-      };
+      } as const;
     });
   } catch (err) {
     tagsAsSegments = [];

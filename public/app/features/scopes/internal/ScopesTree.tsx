@@ -1,11 +1,11 @@
-import { groupBy } from 'lodash';
+import { Dictionary, groupBy } from 'lodash';
 import { useMemo } from 'react';
 
 import { ScopesTreeHeadline } from './ScopesTreeHeadline';
 import { ScopesTreeItem } from './ScopesTreeItem';
 import { ScopesTreeLoading } from './ScopesTreeLoading';
 import { ScopesTreeSearch } from './ScopesTreeSearch';
-import { NodeReason, NodesMap, OnNodeSelectToggle, OnNodeUpdate, TreeScope } from './types';
+import { Node, NodeReason, NodesMap, OnNodeSelectToggle, OnNodeUpdate, TreeScope } from './types';
 
 export interface ScopesTreeProps {
   nodes: NodesMap;
@@ -30,7 +30,8 @@ export function ScopesTree({
   const isNodeLoading = loadingNodeName === nodeId;
   const scopeNames = scopes.map(({ scopeName }) => scopeName);
   const anyChildExpanded = childNodes.some(({ isExpanded }) => isExpanded);
-  const groupedNodes = useMemo(() => groupBy(childNodes, 'reason'), [childNodes]);
+  const groupedNodes: Dictionary<Node[]> = useMemo(() => groupBy(childNodes, 'reason'), [childNodes]);
+  const isLastExpandedNode = !anyChildExpanded && node.isExpanded;
 
   return (
     <>
@@ -44,11 +45,12 @@ export function ScopesTree({
       <ScopesTreeLoading isNodeLoading={isNodeLoading}>
         <ScopesTreeItem
           anyChildExpanded={anyChildExpanded}
-          isNodeLoading={isNodeLoading}
+          groupedNodes={groupedNodes}
+          isLastExpandedNode={isLastExpandedNode}
           loadingNodeName={loadingNodeName}
           node={node}
           nodePath={nodePath}
-          nodes={groupedNodes[NodeReason.Persisted] ?? []}
+          nodeReason={NodeReason.Persisted}
           scopes={scopes}
           scopeNames={scopeNames}
           type="persisted"
@@ -64,11 +66,12 @@ export function ScopesTree({
 
         <ScopesTreeItem
           anyChildExpanded={anyChildExpanded}
-          isNodeLoading={isNodeLoading}
+          groupedNodes={groupedNodes}
+          isLastExpandedNode={isLastExpandedNode}
           loadingNodeName={loadingNodeName}
           node={node}
           nodePath={nodePath}
-          nodes={groupedNodes[NodeReason.Result] ?? []}
+          nodeReason={NodeReason.Result}
           scopes={scopes}
           scopeNames={scopeNames}
           type="result"

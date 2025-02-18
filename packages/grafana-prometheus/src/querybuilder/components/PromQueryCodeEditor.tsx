@@ -33,7 +33,6 @@ export function PromQueryCodeEditor(props: PromQueryCodeEditorProps) {
         data={data}
         app={app}
       />
-
       {showExplain && <PromQueryBuilderExplained query={query.expr} />}
     </div>
   );

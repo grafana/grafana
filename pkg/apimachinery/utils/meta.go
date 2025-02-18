@@ -17,6 +17,18 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
+// LabelKeyGetHistory is used to select object history for an given resource
+const LabelKeyGetHistory = "grafana.app/get-history"
+
+// LabelKeyGetTrash is used to list objects that have been (soft) deleted
+const LabelKeyGetTrash = "grafana.app/get-trash"
+
+// AnnoKeyKubectlLastAppliedConfig is the annotation kubectl writes with the entire previous config
+const AnnoKeyKubectlLastAppliedConfig = "kubectl.kubernetes.io/last-applied-configuration"
+
+// DeletedGeneration is set on Resources that have been (soft) deleted
+const DeletedGeneration = int64(-999)
+
 // Annotation keys
 
 const AnnoKeyCreatedBy = "grafana.app/createdBy"
@@ -29,18 +41,30 @@ const AnnoKeyMessage = "grafana.app/message"
 
 // Identify where values came from
 
-const AnnoKeyOriginName = "grafana.app/originName"
-const AnnoKeyOriginPath = "grafana.app/originPath"
-const AnnoKeyOriginHash = "grafana.app/originHash"
-const AnnoKeyOriginTimestamp = "grafana.app/originTimestamp"
+const AnnoKeyRepoName = "grafana.app/repoName"
+const AnnoKeyRepoPath = "grafana.app/repoPath"
+const AnnoKeyRepoHash = "grafana.app/repoHash"
+const AnnoKeyRepoTimestamp = "grafana.app/repoTimestamp"
 
-// ResourceOriginInfo is saved in annotations.  This is used to identify where the resource came from
-// This object can model the same data as our existing provisioning table or a more general git sync
-type ResourceOriginInfo struct {
-	// Name of the origin/provisioning source
+// LabelKeyDeprecatedInternalID gives the deprecated internal ID of a resource
+// Deprecated: will be removed in grafana 13
+const LabelKeyDeprecatedInternalID = "grafana.app/deprecatedInternalID"
+
+// These can be removed once we verify that non of the dual-write sources
+// (for dashboards/playlists/etc) depend on the saved internal ID in SQL
+const oldAnnoKeyOriginName = "grafana.app/originName"
+const oldAnnoKeyOriginPath = "grafana.app/originPath"
+const oldAnnoKeyOriginHash = "grafana.app/originHash"
+const oldAnnoKeyOriginTimestamp = "grafana.app/originTimestamp"
+
+// ResourceRepositoryInfo is encoded into kubernetes metadata annotations.
+// This value identifies indicates the state of the resource in its provisioning source when
+// the spec was last saved.  Currently this is derived from the dashboards provisioning table.
+type ResourceRepositoryInfo struct {
+	// Name of the repository/provisioning source
 	Name string `json:"name,omitempty"`
 
-	// The path within the named origin above (external_id in the existing dashboard provisioing)
+	// The path within the named repository above (external_id in the existing dashboard provisioning)
 	Path string `json:"path,omitempty"`
 
 	// Verification/identification hash (check_sum in existing dashboard provisioning)
@@ -85,12 +109,18 @@ type GrafanaMetaAccessor interface {
 	SetBlob(v *BlobInfo)
 	GetBlob() *BlobInfo
 
-	GetOriginInfo() (*ResourceOriginInfo, error)
-	SetOriginInfo(info *ResourceOriginInfo)
-	GetOriginName() string
-	GetOriginPath() string
-	GetOriginHash() string
-	GetOriginTimestamp() (*time.Time, error)
+	// Deprecated: This will be removed in Grafana 13
+	GetDeprecatedInternalID() int64
+
+	// Deprecated: This will be removed in Grafana 13
+	SetDeprecatedInternalID(id int64)
+
+	GetRepositoryInfo() (*ResourceRepositoryInfo, error)
+	SetRepositoryInfo(info *ResourceRepositoryInfo)
+	GetRepositoryName() string
+	GetRepositoryPath() string
+	GetRepositoryHash() string
+	GetRepositoryTimestamp() (*time.Time, error)
 
 	GetSpec() (any, error)
 	SetSpec(any) error
@@ -225,8 +255,9 @@ func (m *grafanaMetaAccessor) GetBlob() *BlobInfo {
 func (m *grafanaMetaAccessor) SetBlob(info *BlobInfo) {
 	if info == nil {
 		m.SetAnnotation(AnnoKeyBlob, "") // delete
+	} else {
+		m.SetAnnotation(AnnoKeyBlob, info.String())
 	}
-	m.SetAnnotation(AnnoKeyBlob, info.String())
 }
 
 func (m *grafanaMetaAccessor) GetFolder() string {
@@ -253,7 +284,54 @@ func (m *grafanaMetaAccessor) SetSlug(v string) {
 	m.SetAnnotation(AnnoKeySlug, v)
 }
 
-func (m *grafanaMetaAccessor) SetOriginInfo(info *ResourceOriginInfo) {
+// This will be removed in Grafana 13. Do not add any new usage of it.
+func (m *grafanaMetaAccessor) GetDeprecatedInternalID() int64 {
+	labels := m.obj.GetLabels()
+	if labels == nil {
+		return 0
+	}
+
+	if internalID, ok := labels[LabelKeyDeprecatedInternalID]; ok {
+		id, err := strconv.ParseInt(internalID, 10, 64)
+		if err == nil {
+			return id
+		}
+	}
+
+	return 0
+}
+
+// This will be removed in Grafana 13. Do not add any new usage of it.
+func (m *grafanaMetaAccessor) SetDeprecatedInternalID(id int64) {
+	labels := m.obj.GetLabels()
+
+	// disallow setting it to 0
+	if id == 0 {
+		if labels != nil {
+			delete(labels, LabelKeyDeprecatedInternalID)
+			m.obj.SetLabels(labels)
+		}
+		return
+	}
+
+	if labels == nil {
+		labels = make(map[string]string)
+	}
+
+	labels[LabelKeyDeprecatedInternalID] = strconv.FormatInt(id, 10)
+	m.obj.SetLabels(labels)
+}
+
+// This allows looking up a primary and secondary key -- if either exist the value will be returned
+func (m *grafanaMetaAccessor) getAnnoValue(primary, secondary string) (string, bool) {
+	v, ok := m.obj.GetAnnotations()[primary]
+	if !ok {
+		v, ok = m.obj.GetAnnotations()[secondary]
+	}
+	return v, ok
+}
+
+func (m *grafanaMetaAccessor) SetRepositoryInfo(info *ResourceRepositoryInfo) {
 	anno := m.obj.GetAnnotations()
 	if anno == nil {
 		if info == nil {
@@ -262,53 +340,62 @@ func (m *grafanaMetaAccessor) SetOriginInfo(info *ResourceOriginInfo) {
 		anno = make(map[string]string, 0)
 	}
 
-	delete(anno, AnnoKeyOriginName)
-	delete(anno, AnnoKeyOriginPath)
-	delete(anno, AnnoKeyOriginHash)
-	delete(anno, AnnoKeyOriginTimestamp)
+	// remove legacy values
+	delete(anno, oldAnnoKeyOriginHash)
+	delete(anno, oldAnnoKeyOriginPath)
+	delete(anno, oldAnnoKeyOriginHash)
+	delete(anno, oldAnnoKeyOriginTimestamp)
+
+	delete(anno, AnnoKeyRepoName)
+	delete(anno, AnnoKeyRepoPath)
+	delete(anno, AnnoKeyRepoHash)
+	delete(anno, AnnoKeyRepoTimestamp)
 	if info != nil && info.Name != "" {
-		anno[AnnoKeyOriginName] = info.Name
+		anno[AnnoKeyRepoName] = info.Name
 		if info.Path != "" {
-			anno[AnnoKeyOriginPath] = info.Path
+			anno[AnnoKeyRepoPath] = info.Path
 		}
 		if info.Hash != "" {
-			anno[AnnoKeyOriginHash] = info.Hash
+			anno[AnnoKeyRepoHash] = info.Hash
 		}
 		if info.Timestamp != nil {
-			anno[AnnoKeyOriginTimestamp] = info.Timestamp.UTC().Format(time.RFC3339)
+			anno[AnnoKeyRepoTimestamp] = info.Timestamp.UTC().Format(time.RFC3339)
 		}
 	}
 	m.obj.SetAnnotations(anno)
 }
 
-func (m *grafanaMetaAccessor) GetOriginInfo() (*ResourceOriginInfo, error) {
-	v, ok := m.obj.GetAnnotations()[AnnoKeyOriginName]
+func (m *grafanaMetaAccessor) GetRepositoryInfo() (*ResourceRepositoryInfo, error) {
+	v, ok := m.getAnnoValue(AnnoKeyRepoName, oldAnnoKeyOriginName)
 	if !ok {
 		return nil, nil
 	}
-	t, err := m.GetOriginTimestamp()
-	return &ResourceOriginInfo{
+	t, err := m.GetRepositoryTimestamp()
+	return &ResourceRepositoryInfo{
 		Name:      v,
-		Path:      m.GetOriginPath(),
-		Hash:      m.GetOriginHash(),
+		Path:      m.GetRepositoryPath(),
+		Hash:      m.GetRepositoryHash(),
 		Timestamp: t,
 	}, err
 }
 
-func (m *grafanaMetaAccessor) GetOriginName() string {
-	return m.get(AnnoKeyOriginName)
+func (m *grafanaMetaAccessor) GetRepositoryName() string {
+	v, _ := m.getAnnoValue(AnnoKeyRepoName, oldAnnoKeyOriginName)
+	return v // will be empty string
 }
 
-func (m *grafanaMetaAccessor) GetOriginPath() string {
-	return m.get(AnnoKeyOriginPath)
+func (m *grafanaMetaAccessor) GetRepositoryPath() string {
+	v, _ := m.getAnnoValue(AnnoKeyRepoPath, oldAnnoKeyOriginPath)
+	return v // will be empty string
 }
 
-func (m *grafanaMetaAccessor) GetOriginHash() string {
-	return m.get(AnnoKeyOriginHash)
+func (m *grafanaMetaAccessor) GetRepositoryHash() string {
+	v, _ := m.getAnnoValue(AnnoKeyRepoHash, oldAnnoKeyOriginHash)
+	return v // will be empty string
 }
 
-func (m *grafanaMetaAccessor) GetOriginTimestamp() (*time.Time, error) {
-	v, ok := m.obj.GetAnnotations()[AnnoKeyOriginTimestamp]
+func (m *grafanaMetaAccessor) GetRepositoryTimestamp() (*time.Time, error) {
+	v, ok := m.getAnnoValue(AnnoKeyRepoTimestamp, oldAnnoKeyOriginTimestamp)
 	if !ok || v == "" {
 		return nil, nil
 	}
@@ -609,6 +696,18 @@ func (m *grafanaMetaAccessor) FindTitle(defaultTitle string) string {
 		name := spec.FieldByName("Name")
 		if name.IsValid() && name.Kind() == reflect.String {
 			return name.String()
+		}
+	}
+
+	obj, ok := m.obj.(*unstructured.Unstructured)
+	if ok {
+		title, ok, _ := unstructured.NestedString(obj.Object, "spec", "title")
+		if ok && title != "" {
+			return title
+		}
+		title, ok, _ = unstructured.NestedString(obj.Object, "spec", "name")
+		if ok && title != "" {
+			return title
 		}
 	}
 

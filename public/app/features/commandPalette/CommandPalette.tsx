@@ -15,6 +15,7 @@ import {
 import { useEffect, useMemo, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
 import { EmptyState, Icon, LoadingBar, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
@@ -27,7 +28,8 @@ import { CommandPaletteAction } from './types';
 import { useMatches } from './useMatches';
 
 export function CommandPalette() {
-  const styles = useStyles2(getSearchStyles);
+  const lateralSpace = getCommandPalettePosition();
+  const styles = useStyles2(getSearchStyles, lateralSpace);
 
   const { query, showing, searchQuery } = useKBar((state) => ({
     showing: state.visualState === VisualState.showing,
@@ -85,7 +87,8 @@ interface RenderResultsProps {
 
 const RenderResults = ({ isFetchingSearchResults, searchResults }: RenderResultsProps) => {
   const { results: kbarResults, rootActionId } = useMatches();
-  const styles = useStyles2(getSearchStyles);
+  const lateralSpace = getCommandPalettePosition();
+  const styles = useStyles2(getSearchStyles, lateralSpace);
   const dashboardsSectionTitle = t('command-palette.section.dashboard-search-results', 'Dashboards');
   const foldersSectionTitle = t('command-palette.section.folder-search-results', 'Folders');
   // because dashboard search results aren't registered as actions, we need to manually
@@ -119,6 +122,9 @@ const RenderResults = ({ isFetchingSearchResults, searchResults }: RenderResults
   }, [kbarResults, dashboardsSectionTitle, dashboardResultItems, foldersSectionTitle, folderResultItems]);
 
   const showEmptyState = !isFetchingSearchResults && items.length === 0;
+  useEffect(() => {
+    showEmptyState && reportInteraction('grafana_empty_state_shown', { source: 'command_palette' });
+  }, [showEmptyState]);
 
   return showEmptyState ? (
     <EmptyState
@@ -146,7 +152,15 @@ const RenderResults = ({ isFetchingSearchResults, searchResults }: RenderResults
   );
 };
 
-const getSearchStyles = (theme: GrafanaTheme2) => {
+const getCommandPalettePosition = () => {
+  const input = document.querySelector(`[data-testid="${selectors.components.NavToolbar.commandPaletteTrigger}"]`);
+  const inputRightPosition = input?.getBoundingClientRect().right ?? 0;
+  const screenWidth = document.body.clientWidth;
+  const lateralSpace = screenWidth - inputRightPosition;
+  return lateralSpace;
+};
+
+const getSearchStyles = (theme: GrafanaTheme2, lateralSpace: number) => {
   return {
     positioner: css({
       zIndex: theme.zIndex.portal,
@@ -164,14 +178,21 @@ const getSearchStyles = (theme: GrafanaTheme2) => {
       },
     }),
     animator: css({
-      maxWidth: theme.breakpoints.values.md,
       width: '100%',
+      maxWidth: theme.breakpoints.values.md,
       background: theme.colors.background.primary,
       color: theme.colors.text.primary,
       borderRadius: theme.shape.radius.default,
       border: `1px solid ${theme.colors.border.weak}`,
       overflow: 'hidden',
       boxShadow: theme.shadows.z3,
+      [theme.breakpoints.up('lg')]: {
+        position: 'fixed',
+        right: lateralSpace,
+        left: lateralSpace,
+        maxWidth: 'unset',
+        width: 'unset',
+      },
     }),
     loadingBarContainer: css({
       position: 'absolute',

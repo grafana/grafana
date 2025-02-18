@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { uniq } from 'lodash';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import useAsync from 'react-use/lib/useAsync';
 
 import { SelectableValue } from '@grafana/data';
@@ -10,15 +10,10 @@ import { Select, HorizontalGroup, useStyles2, InputActionMeta } from '@grafana/u
 
 import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
 import { TempoDatasource } from '../datasource';
+import { OPTIONS_LIMIT } from '../language_provider';
 import { operators as allOperators, stringOperators, numberOperators, keywordOperators } from '../traceql/traceql';
 
 import { filterScopedTag, operatorSelectableValue } from './utils';
-
-const getStyles = () => ({
-  dropdown: css({
-    boxShadow: 'none',
-  }),
-});
 
 interface Props {
   filter: TraceqlFilter;
@@ -53,12 +48,10 @@ const SearchField = ({
 }: Props) => {
   const styles = useStyles2(getStyles);
   const [alertText, setAlertText] = useState<string>();
-  const scopedTag = useMemo(() => filterScopedTag(filter), [filter]);
-  // We automatically change the operator to the regex op when users select 2 or more values
-  // However, they expect this to be automatically rolled back to the previous operator once
-  // there's only one value selected, so we store the previous operator and value
-  const [prevOperator, setPrevOperator] = useState(filter.operator);
-  const [prevValue, setPrevValue] = useState(filter.value);
+  const scopedTag = useMemo(
+    () => filterScopedTag(filter, datasource.languageProvider),
+    [datasource.languageProvider, filter]
+  );
   const [tagQuery, setTagQuery] = useState<string>('');
   const [tagValuesQuery, setTagValuesQuery] = useState<string>('');
 
@@ -91,27 +84,11 @@ const SearchField = ({
     options.push({ label: filter.value.toString(), value: filter.value.toString(), type: filter.valueType });
   }
 
-  useEffect(() => {
-    if (
-      Array.isArray(filter.value) &&
-      filter.value.length > 1 &&
-      filter.operator !== '=~' &&
-      filter.operator !== '!~'
-    ) {
-      setPrevOperator(filter.operator);
-      updateFilter({ ...filter, operator: '=~' });
-    }
-    if (Array.isArray(filter.value) && filter.value.length <= 1 && (prevValue?.length || 0) > 1) {
-      updateFilter({ ...filter, operator: prevOperator, value: filter.value[0] });
-    }
-  }, [prevValue, prevOperator, updateFilter, filter]);
-
-  useEffect(() => {
-    setPrevValue(filter.value);
-  }, [filter.value]);
-
   const scopeOptions = Object.values(TraceqlSearchScope)
-    .filter((s) => s !== TraceqlSearchScope.Intrinsic)
+    .filter((s) => {
+      // only add scope if it has tags
+      return datasource.languageProvider.getTags(s).length > 0;
+    })
     .map((t) => ({ label: t, value: t }));
 
   // If all values have type string or int/float use a focused list of operators instead of all operators
@@ -137,11 +114,11 @@ const SearchField = ({
 
   const tagOptions = useMemo(() => {
     if (tagQuery.length === 0) {
-      return formatTagOptions(tags.slice(0, maxOptions), filter.tag);
+      return formatTagOptions(tags.slice(0, OPTIONS_LIMIT), filter.tag);
     }
 
     const queryLowerCase = tagQuery.toLowerCase();
-    const filterdOptions = tags.filter((tag) => tag.toLowerCase().includes(queryLowerCase)).slice(0, maxOptions);
+    const filterdOptions = tags.filter((tag) => tag.toLowerCase().includes(queryLowerCase)).slice(0, OPTIONS_LIMIT);
     return formatTagOptions(filterdOptions, filter.tag);
   }, [filter.tag, tagQuery, tags]);
 
@@ -151,7 +128,7 @@ const SearchField = ({
     }
 
     if (tagValuesQuery.length === 0) {
-      return options.slice(0, maxOptions);
+      return options.slice(0, OPTIONS_LIMIT);
     }
 
     const queryLowerCase = tagValuesQuery.toLowerCase();
@@ -162,7 +139,7 @@ const SearchField = ({
         }
         return false;
       })
-      .slice(0, maxOptions);
+      .slice(0, OPTIONS_LIMIT);
   }, [tagValuesQuery, options]);
 
   return (
@@ -174,7 +151,7 @@ const SearchField = ({
             inputId={`${filter.id}-scope`}
             options={addVariablesToOptions ? withTemplateVariableOptions(scopeOptions) : scopeOptions}
             value={filter.scope}
-            onChange={(v) => updateFilter({ ...filter, scope: v?.value })}
+            onChange={(v) => updateFilter({ ...filter, scope: v?.value, tag: undefined, value: [] })}
             placeholder="Select scope"
             aria-label={`select ${filter.id} scope`}
           />
@@ -194,6 +171,7 @@ const SearchField = ({
             onCloseMenu={() => setTagQuery('')}
             onChange={(v) => updateFilter({ ...filter, tag: v?.value, value: [] })}
             value={filter.tag}
+            key={filter.tag}
             placeholder="Select tag"
             isClearable
             aria-label={`select ${filter.id} tag`}
@@ -256,6 +234,8 @@ const SearchField = ({
   );
 };
 
+export default SearchField;
+
 /**
  * Add to a list of options the current template variables.
  *
@@ -267,7 +247,8 @@ export const withTemplateVariableOptions = (options: SelectableValue[] | undefin
   return [...(options || []), ...templateVariables.map((v) => ({ label: `$${v.name}`, value: `$${v.name}` }))];
 };
 
-// Limit maximum options in select dropdowns for performance reasons
-export const maxOptions = 1000;
-
-export default SearchField;
+const getStyles = () => ({
+  dropdown: css({
+    boxShadow: 'none',
+  }),
+});

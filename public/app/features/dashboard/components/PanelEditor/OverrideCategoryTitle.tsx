@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 
 import { FieldConfigOptionsRegistry, GrafanaTheme2, ConfigOverrideRule } from '@grafana/data';
-import { HorizontalGroup, Icon, IconButton, useStyles2 } from '@grafana/ui';
+import { Button, HorizontalGroup, Icon, useStyles2 } from '@grafana/ui';
 import { FieldMatcherUIRegistryItem } from '@grafana/ui/src/components/MatchersUI/types';
 
 interface Props {
@@ -29,7 +29,14 @@ export const OverrideCategoryTitle = ({
     <div>
       <HorizontalGroup justify="space-between">
         <div>{overrideName}</div>
-        <IconButton name="trash-alt" onClick={onOverrideRemove} tooltip="Remove override" />
+        <Button
+          variant="secondary"
+          fill="text"
+          icon="trash-alt"
+          onClick={onOverrideRemove}
+          tooltip="Remove override"
+          aria-label="Remove override"
+        />
       </HorizontalGroup>
       {!isExpanded && (
         <div className={styles.overrideDetails}>

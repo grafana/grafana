@@ -1,11 +1,10 @@
-import { act, render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { TestProvider } from 'test/helpers/TestProvider';
+import { render } from 'test/test-utils';
 import { byTestId } from 'testing-library-selector';
 
 import { DataSourceApi } from '@grafana/data';
 import { PromOptions, PrometheusDatasource } from '@grafana/prometheus';
-import { locationService, setDataSourceSrv, setPluginLinksHook } from '@grafana/runtime';
+import { config, locationService, setDataSourceSrv, setPluginLinksHook } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
 import * as ruler from 'app/features/alerting/unified/api/ruler';
 import * as ruleActionButtons from 'app/features/alerting/unified/components/rules/RuleActionsButtons';
@@ -22,10 +21,11 @@ import {
   mockRulerRuleGroup,
 } from 'app/features/alerting/unified/mocks';
 import { RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
-import * as config from 'app/features/alerting/unified/utils/config';
+import * as configDS from 'app/features/alerting/unified/utils/config';
 import { Annotation } from 'app/features/alerting/unified/utils/constants';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
-import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { configureStore } from 'app/store/configureStore';
 import { AccessControlAction, DashboardDataDTO } from 'app/types';
@@ -34,7 +34,6 @@ import { AlertQuery, PromRulesResponse } from 'app/types/unified-alerting-dto';
 import { createDashboardSceneFromDashboardModel } from '../../serialization/transformSaveModelToScene';
 import * as utils from '../../utils/utils';
 import { findVizPanelByKey, getVizPanelKeyForPanelId } from '../../utils/utils';
-import { VizPanelManager } from '../VizPanelManager';
 
 import { PanelDataAlertingTab, PanelDataAlertingTabRendered } from './PanelDataAlertingTab';
 
@@ -45,7 +44,7 @@ import { PanelDataAlertingTab, PanelDataAlertingTabRendered } from './PanelDataA
 jest.mock('app/features/alerting/unified/api/prometheus');
 jest.mock('app/features/alerting/unified/api/ruler');
 
-jest.spyOn(config, 'getAllDataSources');
+jest.spyOn(configDS, 'getAllDataSources');
 jest.spyOn(ruleActionButtons, 'matchesWidth').mockReturnValue(false);
 jest.spyOn(ruler, 'rulerUrlBuilder');
 jest.spyOn(alertingAbilities, 'useAlertRuleAbility');
@@ -71,17 +70,13 @@ dataSources.prometheus.meta.alerting = true;
 dataSources.default.meta.alerting = true;
 
 const mocks = {
-  getAllDataSources: jest.mocked(config.getAllDataSources),
+  getAllDataSources: jest.mocked(configDS.getAllDataSources),
   useAlertRuleAbilityMock: jest.mocked(alertingAbilities.useAlertRuleAbility),
   rulerBuilderMock: jest.mocked(ruler.rulerUrlBuilder),
 };
 
 const renderAlertTabContent = (model: PanelDataAlertingTab, initialStore?: ReturnType<typeof configureStore>) => {
-  render(
-    <TestProvider store={initialStore}>
-      <PanelDataAlertingTabRendered model={model}></PanelDataAlertingTabRendered>
-    </TestProvider>
-  );
+  render(<PanelDataAlertingTabRendered model={model} />);
 };
 
 const promResponse: PromRulesResponse = {
@@ -242,7 +237,7 @@ describe('PanelAlertTabContent', () => {
       }),
     ];
 
-    renderAlertTab(dashboard);
+    renderAlertTab(dashboard, dashboard);
 
     const defaults = await clickNewButton();
 
@@ -269,7 +264,7 @@ describe('PanelAlertTabContent', () => {
       }),
     ];
 
-    renderAlertTab(dashboard);
+    renderAlertTab(dashboard, dashboard);
     const defaults = await clickNewButton();
 
     expect(defaults.queries[0].model).toEqual({
@@ -295,7 +290,7 @@ describe('PanelAlertTabContent', () => {
       }),
     ];
 
-    renderAlertTab(dashboard);
+    renderAlertTab(dashboard, dashboard);
     const defaults = await clickNewButton();
 
     expect(defaults.queries[0].model).toEqual({
@@ -314,8 +309,8 @@ describe('PanelAlertTabContent', () => {
   // after updating to RTKQ, the response is already returning the alerts belonging to the panel
   it('Will render alerts belonging to panel and a button to create alert from panel queries', async () => {
     dashboard.panels = [panel];
-
-    renderAlertTab(dashboard);
+    config.unifiedAlertingEnabled = true;
+    renderAlertTab(dashboard, dashboard);
 
     const rows = await ui.row.findAll();
     expect(rows).toHaveLength(2);
@@ -339,8 +334,8 @@ describe('PanelAlertTabContent', () => {
   });
 });
 
-function renderAlertTab(dashboard: DashboardModel) {
-  const model = createModel(dashboard);
+function renderAlertTab(dashboard: DashboardModel, dto: DashboardDataDTO) {
+  const model = createModel(dashboard, dto);
   renderAlertTabContent(model);
 }
 
@@ -349,19 +344,19 @@ async function clickNewButton() {
   const oldPush = locationService.push;
   locationService.push = pushMock;
   const button = await ui.createButton.find();
-  await act(async () => {
-    await userEvent.click(button);
-  });
+
+  await userEvent.click(button);
+
   const match = pushMock.mock.lastCall[0].match(/alerting\/new\?defaults=(.*)&returnTo=/);
   const defaults = JSON.parse(decodeURIComponent(match![1]));
   locationService.push = oldPush;
   return defaults;
 }
 
-function createModel(dashboard: DashboardModel) {
-  const scene = createDashboardSceneFromDashboardModel(dashboard, {} as DashboardDataDTO);
+function createModel(dashboard: DashboardModel, dto: DashboardDataDTO) {
+  const scene = createDashboardSceneFromDashboardModel(dashboard, dto);
   const vizPanel = findVizPanelByKey(scene, getVizPanelKeyForPanelId(34))!;
-  const model = new PanelDataAlertingTab(VizPanelManager.createFor(vizPanel));
+  const model = new PanelDataAlertingTab({ panelRef: vizPanel.getRef() });
   jest.spyOn(utils, 'getDashboardSceneFor').mockReturnValue(scene);
   return model;
 }

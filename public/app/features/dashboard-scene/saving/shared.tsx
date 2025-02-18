@@ -3,14 +3,15 @@ import * as React from 'react';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, isFetchError } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
+import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import { Alert, Box, Button, Stack } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 
 import { Diffs } from '../settings/version-history/utils';
 
 export interface DashboardChangeInfo {
-  changedSaveModel: Dashboard;
-  initialSaveModel: Dashboard;
+  changedSaveModel: Dashboard | DashboardV2Spec;
+  initialSaveModel: Dashboard | DashboardV2Spec;
   diffs: Diffs;
   diffCount: number;
   hasChanges: boolean;
@@ -39,7 +40,7 @@ export interface NameAlreadyExistsErrorProps {
 }
 
 export function NameAlreadyExistsError({ cancelButton, saveButton }: NameAlreadyExistsErrorProps) {
-  const isRestoreDashboardsEnabled = config.featureToggles.dashboardRestore && config.featureToggles.dashboardRestoreUI;
+  const isRestoreDashboardsEnabled = config.featureToggles.dashboardRestore;
   return isRestoreDashboardsEnabled ? (
     <Alert title={t('save-dashboards.name-exists.title', 'Dashboard name already exists')} severity="error">
       <p>

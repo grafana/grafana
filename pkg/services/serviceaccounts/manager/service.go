@@ -4,11 +4,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 	"time"
 
+	claims "github.com/grafana/authlib/types"
+
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apikey"
@@ -26,11 +31,17 @@ const (
 )
 
 type ServiceAccountsService struct {
-	acService         accesscontrol.Service
+	acService   accesscontrol.Service
+	permissions accesscontrol.ServiceAccountPermissionsService
+
+	cfg               *setting.Cfg
+	db                db.DB
 	store             store
 	log               log.Logger
 	backgroundLog     log.Logger
 	secretScanService secretscan.Checker
+	orgService        org.Service
+	serverLock        *serverlock.ServerLockService
 
 	secretScanEnabled  bool
 	secretScanInterval time.Duration
@@ -44,7 +55,9 @@ func ProvideServiceAccountsService(
 	kvStore kvstore.KVStore,
 	userService user.Service,
 	orgService org.Service,
-	accesscontrolService accesscontrol.Service,
+	acService accesscontrol.Service,
+	permissions accesscontrol.ServiceAccountPermissionsService,
+	serverLockService *serverlock.ServerLockService,
 ) (*ServiceAccountsService, error) {
 	serviceAccountsStore := database.ProvideServiceAccountsStore(
 		cfg,
@@ -55,13 +68,18 @@ func ProvideServiceAccountsService(
 		orgService,
 	)
 	s := &ServiceAccountsService{
-		acService:     accesscontrolService,
+		cfg:           cfg,
+		db:            store,
+		acService:     acService,
+		permissions:   permissions,
 		store:         serviceAccountsStore,
 		log:           log.New("serviceaccounts"),
 		backgroundLog: log.New("serviceaccounts.background"),
+		orgService:    orgService,
+		serverLock:    serverLockService,
 	}
 
-	if err := RegisterRoles(accesscontrolService); err != nil {
+	if err := RegisterRoles(acService); err != nil {
 		s.log.Error("Failed to register roles", "error", err)
 	}
 
@@ -88,6 +106,17 @@ func (sa *ServiceAccountsService) Run(ctx context.Context) error {
 
 	if _, err := sa.getUsageMetrics(ctx); err != nil {
 		sa.log.Warn("Failed to get usage metrics", "error", err.Error())
+	}
+
+	err := sa.serverLock.LockAndExecute(ctx, "migrate API keys to service accounts", time.Minute*30, func(context.Context) {
+		err := sa.migrateAPIKeysForAllOrgs(ctx)
+		if err != nil {
+			sa.log.Warn("Failed to migrate API keys", "error", err.Error())
+		}
+	})
+
+	if err != nil {
+		sa.log.Error("Failed to lock and execute the migration of API keys to service accounts", "error", err)
 	}
 
 	updateStatsTicker := time.NewTicker(metricsCollectionInterval)
@@ -146,17 +175,51 @@ func (sa *ServiceAccountsService) CreateServiceAccount(ctx context.Context, orgI
 	if err := validOrgID(orgID); err != nil {
 		return nil, err
 	}
-	return sa.store.CreateServiceAccount(ctx, orgID, saForm)
+
+	var serviceAccount *serviceaccounts.ServiceAccountDTO
+	err := sa.db.InTransaction(ctx, func(ctx context.Context) error {
+		var err error
+		serviceAccount, err = sa.store.CreateServiceAccount(ctx, orgID, saForm)
+		if err != nil {
+			return err
+		}
+
+		user, err := identity.GetRequester(ctx)
+		if err == nil && sa.cfg.RBAC.PermissionsOnCreation("service-account") {
+			if user.IsIdentityType(claims.TypeUser) {
+				userID, err := user.GetInternalID()
+				if err != nil {
+					return err
+				}
+
+				if _, err := sa.permissions.SetUserPermission(ctx,
+					orgID, accesscontrol.User{ID: userID},
+					strconv.FormatInt(serviceAccount.Id, 10), "Admin"); err != nil {
+					return err
+				}
+			}
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return serviceAccount, nil
 }
 
-func (sa *ServiceAccountsService) RetrieveServiceAccount(ctx context.Context, orgID int64, serviceAccountID int64) (*serviceaccounts.ServiceAccountProfileDTO, error) {
-	if err := validOrgID(orgID); err != nil {
+func (sa *ServiceAccountsService) RetrieveServiceAccount(ctx context.Context, query *serviceaccounts.GetServiceAccountQuery) (*serviceaccounts.ServiceAccountProfileDTO, error) {
+	if err := validOrgID(query.OrgID); err != nil {
 		return nil, err
 	}
-	if err := validServiceAccountID(serviceAccountID); err != nil {
-		return nil, err
+	if err := validServiceAccountID(query.ID); err != nil {
+		if err := validServiceAccountUID(query.UID); err != nil {
+			return nil, fmt.Errorf("invalid service account ID %d and UID %s has been specified", query.ID, query.UID)
+		}
 	}
-	return sa.store.RetrieveServiceAccount(ctx, orgID, serviceAccountID)
+	return sa.store.RetrieveServiceAccount(ctx, query)
 }
 
 func (sa *ServiceAccountsService) RetrieveServiceAccountIdByName(ctx context.Context, orgID int64, name string) (int64, error) {
@@ -179,7 +242,10 @@ func (sa *ServiceAccountsService) DeleteServiceAccount(ctx context.Context, orgI
 	if err := sa.store.DeleteServiceAccount(ctx, orgID, serviceAccountID); err != nil {
 		return err
 	}
-	return sa.acService.DeleteUserPermissions(ctx, orgID, serviceAccountID)
+	if err := sa.acService.DeleteUserPermissions(ctx, orgID, serviceAccountID); err != nil {
+		return err
+	}
+	return sa.permissions.DeleteResourcePermissions(ctx, orgID, fmt.Sprintf("%d", serviceAccountID))
 }
 
 func (sa *ServiceAccountsService) EnableServiceAccount(ctx context.Context, orgID, serviceAccountID int64, enable bool) error {
@@ -199,6 +265,7 @@ func (sa *ServiceAccountsService) UpdateServiceAccount(ctx context.Context, orgI
 	if err := validServiceAccountID(serviceAccountID); err != nil {
 		return nil, err
 	}
+
 	return sa.store.UpdateServiceAccount(ctx, orgID, serviceAccountID, saForm)
 }
 
@@ -250,18 +317,72 @@ func (sa *ServiceAccountsService) MigrateApiKeysToServiceAccounts(ctx context.Co
 	return sa.store.MigrateApiKeysToServiceAccounts(ctx, orgID)
 }
 
+func (sa *ServiceAccountsService) migrateAPIKeysForAllOrgs(ctx context.Context) error {
+	sa.log.Debug("Starting to migrate API keys to service accounts")
+
+	total := 0
+	migrated := 0
+	failed := 0
+	errorsTotal := 0
+
+	defer func() {
+		if total > 0 || errorsTotal > 0 {
+			sa.log.Info("API key migration finished", "total_keys", total, "successful_keys", migrated, "failed_keys", failed, "errors", errorsTotal)
+		}
+		setAPIKeyMigrationStats(total, migrated, failed)
+	}()
+
+	orgs, err := sa.orgService.Search(ctx, &org.SearchOrgsQuery{})
+	if err != nil {
+		return err
+	}
+
+	for _, o := range orgs {
+		sa.log.Debug("Migrating API keys for an org", "orgId", o.ID)
+
+		result, err := sa.store.MigrateApiKeysToServiceAccounts(ctx, o.ID)
+		if err != nil {
+			sa.log.Warn("Failed to migrate API keys", "error", err.Error(), "orgId", o.ID)
+			errorsTotal += 1
+			continue
+		}
+		if result.Failed > 0 {
+			sa.log.Warn("Some API keys failed to be migrated", "total_keys", result.Total, "failed_keys", result.Failed, "orgId", o.ID)
+		} else if result.Total > 0 {
+			sa.log.Info("API key migration was successful", "orgId", o.ID, "total_keys", result.Total)
+		} else {
+			sa.log.Debug("No API keys found to migrate", "orgId", o.ID)
+		}
+
+		total += result.Total
+		migrated += result.Migrated
+		failed += result.Failed
+	}
+
+	return nil
+}
+
 func validOrgID(orgID int64) error {
 	if orgID == 0 {
 		return serviceaccounts.ErrServiceAccountInvalidOrgID.Errorf("invalid org ID 0 has been specified")
 	}
 	return nil
 }
+
 func validServiceAccountID(serviceaccountID int64) error {
 	if serviceaccountID == 0 {
 		return serviceaccounts.ErrServiceAccountInvalidID.Errorf("invalid service account ID 0 has been specified")
 	}
 	return nil
 }
+
+func validServiceAccountUID(saUID string) error {
+	if saUID == "" {
+		return serviceaccounts.ErrServiceAccountInvalidID.Errorf("invalid service account UID has been specified")
+	}
+	return nil
+}
+
 func validServiceAccountTokenID(tokenID int64) error {
 	if tokenID == 0 {
 		return serviceaccounts.ErrServiceAccountInvalidTokenID.Errorf("invalid service account token ID 0 has been specified")

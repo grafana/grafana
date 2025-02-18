@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 import { createTheme } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { PanelModel } from '../../state';
+import { PanelModel } from '../../state/PanelModel';
 
 import { PanelHeaderCorner, Props } from './PanelHeaderCorner';
 

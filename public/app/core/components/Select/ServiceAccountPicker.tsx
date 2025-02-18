@@ -7,7 +7,7 @@ import { AsyncSelect } from '@grafana/ui';
 import { ServiceAccountDTO, ServiceAccountsState } from 'app/types';
 
 export interface Props {
-  onSelected: (user: SelectableValue<ServiceAccountDTO['id']>) => void;
+  onSelected: (user: SelectableValue<ServiceAccountDTO>) => void;
   className?: string;
   inputId?: string;
 }
@@ -38,11 +38,12 @@ export class ServiceAccountPicker extends Component<Props, State> {
     }
 
     return getBackendSrv()
-      .get(`/api/serviceaccounts/search`)
+      .get(`/api/serviceaccounts/search?query=${query}&perpage=100`)
       .then((result: ServiceAccountsState) => {
         return result.serviceAccounts.map((sa) => ({
           id: sa.id,
-          value: sa.id,
+          uid: sa.uid,
+          value: sa,
           label: sa.login,
           imgUrl: sa.avatarUrl,
           login: sa.login,

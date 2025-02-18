@@ -2413,6 +2413,43 @@ describe('when migrating table cell display mode to cell options', () => {
   });
 });
 
+describe('when migrating variable refresh to on dashboard load', () => {
+  let model: DashboardModel;
+
+  beforeEach(() => {
+    model = new DashboardModel({
+      //@ts-ignore
+      refresh: false,
+    });
+  });
+
+  it('should migrate to empty string', () => {
+    expect(model.refresh).toBe('');
+  });
+});
+
+describe('when migrating time_options in timepicker', () => {
+  let model: DashboardModel;
+
+  it('should remove the property', () => {
+    model = new DashboardModel({
+      timepicker: {
+        //@ts-expect-error
+        time_options: ['5m', '15m', '1h', '6h', '12h', '24h', '2d', '7d', '30d'],
+      },
+    });
+
+    expect(model.timepicker).not.toHaveProperty('time_options');
+  });
+
+  it('should not throw with empty timepicker', () => {
+    //@ts-expect-error
+    model = new DashboardModel({});
+
+    expect(model.timepicker).not.toHaveProperty('time_options');
+  });
+});
+
 function createRow(options: any, panelDescriptions: any[]) {
   const PANEL_HEIGHT_STEP = GRID_CELL_HEIGHT + GRID_CELL_VMARGIN;
   const { collapse, showTitle, title, repeat, repeatIteration } = options;

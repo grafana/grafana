@@ -4,7 +4,7 @@ import { Controller, FormProvider, useForm } from 'react-hook-form';
 import { connect } from 'react-redux';
 
 import { AppEvents, GrafanaTheme2, NavModelItem } from '@grafana/data';
-import { getBackendSrv, getAppEvents } from '@grafana/runtime';
+import { getBackendSrv, getAppEvents, locationService, reportInteraction } from '@grafana/runtime';
 import {
   useStyles2,
   Alert,
@@ -20,7 +20,9 @@ import {
   TextLink,
   Dropdown,
   MultiSelect,
+  SecretInput,
 } from '@grafana/ui';
+import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 import { Page } from 'app/core/components/Page/Page';
 import config from 'app/core/config';
 import { t, Trans } from 'app/core/internationalization';
@@ -46,6 +48,8 @@ const pageNav: NavModelItem = {
 };
 
 const serverConfig = 'settings.config.servers.0';
+
+const isOptionDefined = (option: string | undefined) => option !== undefined && option !== '';
 
 const emptySettings: LdapPayload = {
   id: '',
@@ -95,34 +99,38 @@ export const LdapSettingsPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
+  const [isBindPasswordConfigured, setBindPasswordConfigured] = useState(false);
   const [mapKeyCertConfigured, setMapKeyCertConfigured] = useState<MapKeyCertConfigured>({
-    // values
-    rootCaCertValue: false,
-    clientCertValue: false,
     clientKeyCertValue: false,
-    // paths
-    rootCaCertPath: false,
-    clientCertPath: false,
     clientKeyCertPath: false,
   });
 
   const methods = useForm<LdapPayload>({ defaultValues: emptySettings });
-  const { control, getValues, handleSubmit, register, reset, watch } = methods;
+  const {
+    control,
+    formState: { isDirty, errors },
+    getValues,
+    setValue,
+    handleSubmit,
+    register,
+    reset,
+    watch,
+  } = methods;
 
   const styles = useStyles2(getStyles);
 
   useEffect(() => {
     async function init() {
       const payload = await getSettings();
-      const serverConfig = payload.settings.config.servers[0];
+      let serverConfig = emptySettings.settings.config.servers[0];
+      if (payload.settings.config.servers?.length > 0) {
+        serverConfig = payload.settings.config.servers[0];
+      }
       setMapKeyCertConfigured({
-        rootCaCertValue: serverConfig.root_ca_cert_value?.length > 0,
-        clientCertValue: serverConfig.client_cert_value !== '',
-        clientKeyCertValue: serverConfig.client_key_value !== '',
-        rootCaCertPath: serverConfig.root_ca_cert !== '',
-        clientCertPath: serverConfig.client_cert !== '',
-        clientKeyCertPath: serverConfig.client_key !== '',
+        clientKeyCertValue: isOptionDefined(serverConfig.client_key_value),
+        clientKeyCertPath: isOptionDefined(serverConfig.client_key),
       });
+      setBindPasswordConfigured(isOptionDefined(serverConfig.bind_password));
 
       reset(payload);
       setIsLoading(false);
@@ -185,6 +193,11 @@ export const LdapSettingsPage = () => {
         payload: [t('ldap-settings-page.alert.saved', 'LDAP settings saved')],
       });
       reset(await getSettings());
+
+      // Delay redirect so the form state can update
+      setTimeout(() => {
+        locationService.push(`/admin/authentication`);
+      }, 300);
     } catch (error) {
       appEvents.publish({
         type: AppEvents.alertError.name,
@@ -203,12 +216,14 @@ export const LdapSettingsPage = () => {
   /**
    * Button's Actions
    */
-  const submitAndEnableLdapSettings = (payload: LdapPayload) => {
-    payload.settings.enabled = true;
-    putPayload(payload);
+  const submitFormAndToggleSettings = async (payload: LdapPayload) => {
+    payload.settings.enabled = !payload.settings.enabled;
+    await putPayload(payload);
+    reportInteraction('authentication_ldap_enabled');
   };
-  const saveForm = () => {
-    putPayload(getValues());
+  const saveForm = async () => {
+    await putPayload(getValues());
+    reportInteraction('authentication_ldap_saved');
   };
   const deleteLDAPConfig = async () => {
     try {
@@ -220,6 +235,11 @@ export const LdapSettingsPage = () => {
         payload: [t('ldap-settings-page.alert.discard-success', 'LDAP settings discarded')],
       });
       reset(payload);
+      reportInteraction('authentication_ldap_deleted');
+
+      setTimeout(() => {
+        locationService.push(`/admin/authentication`);
+      }, 300);
     } catch (error) {
       appEvents.publish({
         type: AppEvents.alertError.name,
@@ -228,6 +248,15 @@ export const LdapSettingsPage = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const onDiscard = () => {
+    reportInteraction('authentication_ldap_abandoned');
+  };
+
+  const isInvalidField = (field: string) => {
+    const err = errors?.settings?.config?.servers?.[0];
+    return typeof err === 'object' && field in err;
   };
 
   const subTitle = (
@@ -258,7 +287,8 @@ export const LdapSettingsPage = () => {
       <Page.Contents>
         {config.disableLoginForm && disabledFormAlert}
         <FormProvider {...methods}>
-          <form onSubmit={handleSubmit(submitAndEnableLdapSettings, onErrors)}>
+          <form onSubmit={handleSubmit(submitFormAndToggleSettings, onErrors)}>
+            <FormPrompt confirmRedirect={isDirty} onDiscard={onDiscard} />
             {isLoading && <Loader />}
             {!isLoading && (
               <section className={styles.form}>
@@ -267,6 +297,9 @@ export const LdapSettingsPage = () => {
                 </h3>
                 <Field
                   label={t('ldap-settings-page.host.label', 'Server host')}
+                  required={true}
+                  error={t('ldap-settings-page.host.error', 'Server host is a required field')}
+                  invalid={isInvalidField('host')}
                   description={t(
                     'ldap-settings-page.host.description',
                     'Hostname or IP address of the LDAP server you wish to connect to.'
@@ -294,14 +327,22 @@ export const LdapSettingsPage = () => {
                   />
                 </Field>
                 <Field label={t('ldap-settings-page.bind-password.label', 'Bind password')}>
-                  <Input
+                  <SecretInput
                     id="bind-password"
-                    type="text"
-                    {...register(`${serverConfig}.bind_password`, { required: false })}
+                    isConfigured={isBindPasswordConfigured}
+                    onReset={() => {
+                      setValue(`${serverConfig}.bind_password`, '');
+                      setBindPasswordConfigured(false);
+                    }}
+                    value={watch(`${serverConfig}.bind_password`)}
+                    onChange={({ currentTarget: { value } }) => setValue(`${serverConfig}.bind_password`, value)}
                   />
                 </Field>
                 <Field
-                  label={t('ldap-settings-page.search_filter.label', 'Search filter*')}
+                  label={t('ldap-settings-page.search_filter.label', 'Search filter')}
+                  required={true}
+                  invalid={isInvalidField('search_filter')}
+                  error={t('ldap-settings-page.search_filter.error', 'Search filter is a required field')}
                   description={t(
                     'ldap-settings-page.search_filter.description',
                     'LDAP search filter used to locate specific entries within the directory.'
@@ -315,23 +356,30 @@ export const LdapSettingsPage = () => {
                   />
                 </Field>
                 <Field
-                  label={t('ldap-settings-page.search-base-dns.label', 'Search base DNS *')}
+                  label={t('ldap-settings-page.search-base-dns.label', 'Search base DNS')}
+                  required={true}
+                  invalid={isInvalidField('search_base_dns')}
+                  error={t('ldap-settings-page.search-base-dns.error', 'Search base DNS is a required field')}
                   description={t(
                     'ldap-settings-page.search-base-dns.description',
                     'An array of base dns to search through.'
                   )}
                 >
                   <Controller
+                    rules={{ required: true, validate: (value) => !!value?.length }}
                     name={`${serverConfig}.search_base_dns`}
                     control={control}
-                    render={({ field: { onChange, ...field } }) => (
+                    render={({ field: { onChange, ref, ...field } }) => (
                       <MultiSelect
                         {...field}
                         allowCustomValue
+                        className={styles.multiSelect}
+                        noOptionsMessage=""
+                        placeholder={t('ldap-settings-page.search-base-dns.placeholder', 'example: dc=grafana,dc=org')}
                         onChange={(v) => onChange(v.map(({ value }) => String(value)))}
                       />
                     )}
-                  ></Controller>
+                  />
                 </Field>
                 <Box borderColor="strong" borderStyle="solid" padding={2} width={68}>
                   <Stack alignItems={'center'} direction={'row'} gap={2} justifyContent={'space-between'}>
@@ -346,20 +394,29 @@ export const LdapSettingsPage = () => {
                       </Text>
                     </Stack>
                     <Button variant="secondary" onClick={() => setIsDrawerOpen(true)}>
-                      <Trans i18nKey="ldap-settings-page.advanced-settings-section.edit.button">Edit</Trans>
+                      <Trans i18nKey="ldap-settings-page.advanced-settings-section.edit-button">Edit</Trans>
                     </Button>
                   </Stack>
                 </Box>
                 <Box display="flex" gap={2} marginTop={5}>
                   <Stack alignItems="center" gap={2}>
-                    <Button type="submit">
-                      <Trans i18nKey="ldap-settings-page.buttons-section.save-and-enable.button">Save and enable</Trans>
-                    </Button>
-                    <Button variant="secondary" onClick={saveForm}>
-                      <Trans i18nKey="ldap-settings-page.buttons-section.save.button">Save</Trans>
+                    {!watch('settings.enabled') && (
+                      <Button type="submit">
+                        <Trans i18nKey="ldap-settings-page.buttons-section.save-and-enable-button">
+                          Save and enable
+                        </Trans>
+                      </Button>
+                    )}
+                    {watch('settings.enabled') && (
+                      <Button variant="secondary" type="submit">
+                        <Trans i18nKey="ldap-settings-page.buttons-section.disable-button">Disable</Trans>
+                      </Button>
+                    )}
+                    <Button variant="secondary" onClick={handleSubmit(saveForm)}>
+                      <Trans i18nKey="ldap-settings-page.buttons-section.save-button">Save</Trans>
                     </Button>
                     <LinkButton href="/admin/authentication" variant="secondary">
-                      <Trans i18nKey="ldap-settings-page.buttons-section.discard.button">Discard</Trans>
+                      <Trans i18nKey="ldap-settings-page.buttons-section.discard-button">Discard</Trans>
                     </LinkButton>
                     <Dropdown
                       overlay={
@@ -400,6 +457,11 @@ function getStyles(theme: GrafanaTheme2) {
   return {
     form: css({
       width: theme.spacing(68),
+    }),
+    multiSelect: css({
+      'div:last-of-type > svg': {
+        display: 'none',
+      },
     }),
   };
 }

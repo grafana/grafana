@@ -144,10 +144,6 @@ bind_password = "${LDAP_ADMIN_PASSWORD}"
 
 ## LDAP debug view
 
-{{% admonition type="note" %}}
-Available in Grafana v6.4+
-{{% /admonition %}}
-
 Grafana has an LDAP debug view built-in which allows you to test your LDAP configuration directly within Grafana. Only Grafana admins can use the LDAP debug view.
 
 Within this view, you'll be able to see which LDAP servers are currently reachable and test your current configuration.
@@ -218,7 +214,7 @@ The first group mapping that an LDAP user is matched to will be used for the syn
 [[servers.group_mappings]]
 group_dn = "cn=superadmins,dc=grafana,dc=org"
 org_role = "Admin"
-grafana_admin = true # Available in Grafana v5.3 and above
+grafana_admin = true
 
 [[servers.group_mappings]]
 group_dn = "cn=admins,dc=grafana,dc=org"
@@ -233,12 +229,12 @@ group_dn = "*"
 org_role = "Viewer"
 ```
 
-| Setting         | Required | Description                                                                                                                                                              | Default              |
-| --------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------- |
-| `group_dn`      | Yes      | LDAP distinguished name (DN) of LDAP group. If you want to match all (or no LDAP groups) then you can use wildcard (`"*"`)                                               |
-| `org_role`      | Yes      | Assign users of `group_dn` the organization role `Admin`, `Editor`, or `Viewer`. The organization role name is case sensitive.                                           |
-| `org_id`        | No       | The Grafana organization database id. Setting this allows for multiple group_dn's to be assigned to the same `org_role` provided the `org_id` differs                    | `1` (default org id) |
-| `grafana_admin` | No       | When `true` makes user of `group_dn` Grafana server admin. A Grafana server admin has admin access over all organizations and users. Available in Grafana v5.3 and above | `false`              |
+| Setting         | Required | Description                                                                                                                                           | Default              |
+| --------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
+| `group_dn`      | Yes      | LDAP distinguished name (DN) of LDAP group. If you want to match all (or no LDAP groups) then you can use wildcard (`"*"`)                            |
+| `org_role`      | Yes      | Assign users of `group_dn` the organization role `Admin`, `Editor`, or `Viewer`. The organization role name is case sensitive.                        |
+| `org_id`        | No       | The Grafana organization database id. Setting this allows for multiple group_dn's to be assigned to the same `org_role` provided the `org_id` differs | `1` (default org id) |
+| `grafana_admin` | No       | When `true` makes user of `group_dn` Grafana server admin. A Grafana server admin has admin access over all organizations and users.                  | `false`              |
 
 {{% admonition type="note" %}}
 Commenting out a group mapping requires also commenting out the header of
@@ -254,7 +250,7 @@ Example:
 [[servers.group_mappings]]
 group_dn = "cn=superadmins,dc=grafana,dc=org"
 org_role = "Admin"
-grafana_admin = true # Available in Grafana v5.3 and above
+grafana_admin = true
 
 # [[servers.group_mappings]]
 # group_dn = "cn=admins,dc=grafana,dc=org"

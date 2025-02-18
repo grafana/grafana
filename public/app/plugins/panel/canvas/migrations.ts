@@ -1,5 +1,4 @@
-import { DataLink, DynamicConfigValue, FieldMatcherID, PanelModel, OneClickMode } from '@grafana/data';
-import { CanvasElementOptions } from 'app/features/canvas/element';
+import { PanelModel, OneClickMode } from '@grafana/data';
 
 import { Options } from './panelcfg.gen';
 
@@ -44,79 +43,38 @@ export const canvasMigrationHandler = (panel: PanelModel): Partial<Options> => {
   }
 
   if (parseFloat(pluginVersion) <= 11.3) {
-    // migrate links from field name overrides to elements
-    for (let idx = 0; idx < panel.fieldConfig.overrides.length; idx++) {
-      const override = panel.fieldConfig.overrides[idx];
-
-      if (override.matcher.id === FieldMatcherID.byName) {
-        let props: DynamicConfigValue[] = [];
-
-        // append override links to elements with dimensions mapped to same field name
-        for (const prop of override.properties) {
-          if (prop.id === 'links') {
-            addLinks(panel.options.root.elements, prop.value ?? [], override.matcher.options);
-          } else {
-            props.push(prop);
-          }
-        }
-
-        if (props.length > 0) {
-          override.properties = props;
-        } else {
-          panel.fieldConfig.overrides.splice(idx, 1);
-        }
-      }
-    }
-
-    // migrate oneClickLinks to oneClickMode
     const root = panel.options?.root;
     if (root?.elements) {
       for (const element of root.elements) {
-        if (element.oneClickLinks) {
-          element.oneClickMode = OneClickMode.Link;
-          delete element.oneClickLinks;
+        // migrate action options to new format (fetch)
+        if (element.actions) {
+          for (const action of element.actions) {
+            if (action.options) {
+              action.fetch = { ...action.options };
+              delete action.options;
+            }
+          }
         }
+      }
+    }
+  }
+
+  // migrate oneClickMode to first link/action oneClick
+  if (parseFloat(pluginVersion) <= 11.6) {
+    const root = panel.options?.root;
+    if (root?.elements) {
+      for (const element of root.elements) {
+        if (element.oneClickMode === OneClickMode.Link || element.oneClickLinks) {
+          element.links[0].oneClick = true;
+        } else if (element.oneClickMode === OneClickMode.Action) {
+          element.actions[0].oneClick = true;
+        }
+
+        delete element.oneClickMode;
+        delete element.oneClickLinks;
       }
     }
   }
 
   return panel.options;
 };
-
-function addLinks(elements: CanvasElementOptions[], links: DataLink[], fieldName?: string) {
-  const varsNamesRegex = /(\${__field.name})|(\${__field.labels.*?})|(\${__series.name})/g;
-
-  const linksCopy = [...links];
-  linksCopy.forEach((link) => {
-    const isFieldOrSeries = varsNamesRegex.test(link.url);
-    if (isFieldOrSeries) {
-      link.url = link.url.replace(varsNamesRegex, (match, fieldName1, fieldLabels1, seriesName1) => {
-        if (fieldName1 || seriesName1) {
-          return '${__data.fields["' + fieldName + '"]}';
-        }
-
-        if (fieldLabels1) {
-          const labels = fieldLabels1.match(new RegExp('.labels' + '(.*)' + '}'));
-          return '${__data.fields["' + fieldName + '"].labels' + labels[1] + '}';
-        }
-
-        return match;
-      });
-    }
-  });
-
-  elements.forEach((element) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let cfg: Record<string, any> = element.config;
-
-    for (let k in cfg) {
-      let dim = cfg[k];
-
-      // todo: getFieldDisplayName?
-      if (dim.field === fieldName) {
-        element.links ??= [];
-        element.links.push(...linksCopy);
-      }
-    }
-  });
-}

@@ -7,33 +7,37 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/grafana/authlib/claims"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	authlib "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
+	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
 
 func setupAuthMiddlewareTest(t *testing.T, identity *authn.Identity, authErr error) *contexthandler.ContextHandler {
-	return contexthandler.ProvideService(setting.NewCfg(), tracing.InitializeTracerForTest(), &authntest.FakeService{
+	return contexthandler.ProvideService(setting.NewCfg(), &authntest.FakeService{
 		ExpectedErr:      authErr,
 		ExpectedIdentity: identity,
-	})
+	}, featuremgmt.WithFeatures())
 }
 
 func TestAuth_Middleware(t *testing.T) {
+	ac := &actest.FakeAccessControl{}
+
 	type testCase struct {
 		desc           string
 		identity       *authn.Identity
@@ -63,7 +67,7 @@ func TestAuth_Middleware(t *testing.T) {
 			desc:           "ReqSignedIn should return 200 for anonymous user",
 			path:           "/api/secure",
 			authMiddleware: ReqSignedIn,
-			identity:       &authn.Identity{Type: claims.TypeAnonymous},
+			identity:       &authn.Identity{Type: authlib.TypeAnonymous},
 			expecedReached: true,
 			expectedCode:   http.StatusOK,
 		},
@@ -71,7 +75,7 @@ func TestAuth_Middleware(t *testing.T) {
 			desc:           "ReqSignedIn should return redirect anonymous user with forceLogin query string",
 			path:           "/secure?forceLogin=true",
 			authMiddleware: ReqSignedIn,
-			identity:       &authn.Identity{Type: claims.TypeAnonymous},
+			identity:       &authn.Identity{Type: authlib.TypeAnonymous},
 			expecedReached: false,
 			expectedCode:   http.StatusFound,
 		},
@@ -79,7 +83,7 @@ func TestAuth_Middleware(t *testing.T) {
 			desc:           "ReqSignedIn should return redirect anonymous user when orgId in query string is different from currently used",
 			path:           "/secure?orgId=2",
 			authMiddleware: ReqSignedIn,
-			identity:       &authn.Identity{Type: claims.TypeAnonymous},
+			identity:       &authn.Identity{Type: authlib.TypeAnonymous},
 			expecedReached: false,
 			expectedCode:   http.StatusFound,
 		},
@@ -87,7 +91,7 @@ func TestAuth_Middleware(t *testing.T) {
 			desc:           "ReqSignedInNoAnonymous should return 401 for anonymous user",
 			path:           "/api/secure",
 			authMiddleware: ReqSignedInNoAnonymous,
-			identity:       &authn.Identity{Type: claims.TypeAnonymous},
+			identity:       &authn.Identity{Type: authlib.TypeAnonymous},
 			expecedReached: false,
 			expectedCode:   http.StatusUnauthorized,
 		},
@@ -95,22 +99,22 @@ func TestAuth_Middleware(t *testing.T) {
 			desc:           "ReqSignedInNoAnonymous should return 200 for authenticated user",
 			path:           "/api/secure",
 			authMiddleware: ReqSignedInNoAnonymous,
-			identity:       &authn.Identity{ID: "1", Type: claims.TypeUser},
+			identity:       &authn.Identity{ID: "1", Type: authlib.TypeUser},
 			expecedReached: true,
 			expectedCode:   http.StatusOK,
 		},
 		{
 			desc:           "snapshot public mode disabled should return 200 for authenticated user",
 			path:           "/api/secure",
-			authMiddleware: SnapshotPublicModeOrSignedIn(&setting.Cfg{SnapshotPublicMode: false}),
-			identity:       &authn.Identity{ID: "1", Type: claims.TypeUser},
+			authMiddleware: SnapshotPublicModeOrCreate(&setting.Cfg{SnapshotPublicMode: false}, ac),
+			identity:       &authn.Identity{ID: "1", Type: authlib.TypeUser},
 			expecedReached: true,
 			expectedCode:   http.StatusOK,
 		},
 		{
 			desc:           "snapshot public mode disabled should return 401 for unauthenticated request",
 			path:           "/api/secure",
-			authMiddleware: SnapshotPublicModeOrSignedIn(&setting.Cfg{SnapshotPublicMode: false}),
+			authMiddleware: SnapshotPublicModeOrCreate(&setting.Cfg{SnapshotPublicMode: false}, ac),
 			authErr:        errors.New("no auth"),
 			expecedReached: false,
 			expectedCode:   http.StatusUnauthorized,
@@ -118,7 +122,7 @@ func TestAuth_Middleware(t *testing.T) {
 		{
 			desc:           "snapshot public mode enabled should return 200 for unauthenticated request",
 			path:           "/api/secure",
-			authMiddleware: SnapshotPublicModeOrSignedIn(&setting.Cfg{SnapshotPublicMode: true}),
+			authMiddleware: SnapshotPublicModeOrCreate(&setting.Cfg{SnapshotPublicMode: true}, ac),
 			authErr:        errors.New("no auth"),
 			expecedReached: true,
 			expectedCode:   http.StatusOK,
@@ -349,7 +353,91 @@ func TestRemoveForceLoginparams(t *testing.T) {
 	}
 	for i, tc := range tcs {
 		t.Run(fmt.Sprintf("testcase %d", i), func(t *testing.T) {
-			require.Equal(t, tc.exp, removeForceLoginParams(tc.inp))
+			require.Equal(t, tc.exp, RemoveForceLoginParams(tc.inp))
 		})
+	}
+}
+
+func TestCanAdminPlugin(t *testing.T) {
+	type testCase struct {
+		desc       string
+		url        string
+		isSignedIn bool
+		orgRole    org.RoleType
+		expCode    int
+		expReached bool
+	}
+
+	ac := &actest.FakeAccessControl{}
+	tests := []testCase{
+		{
+			desc:       "CanAdminPlugins should redirect to login when anonymous is enabled, no user signed in, and forceLogin is present in the query param",
+			url:        "/plugins/test-plugin?forceLogin=true",
+			isSignedIn: false,
+			orgRole:    org.RoleAdmin,
+			expCode:    http.StatusFound,
+			expReached: false,
+		},
+		{
+			desc:       "CanAdminPlugins should bypass when user is signed in",
+			url:        "/plugins/test-plugin",
+			expCode:    http.StatusOK,
+			orgRole:    org.RoleAdmin,
+			isSignedIn: true,
+			expReached: true,
+		},
+		{
+			desc:       "CanAdminPlugins should return forbidden error when role is not present",
+			url:        "/plugins/test",
+			isSignedIn: true,
+			orgRole:    org.RoleViewer,
+			expCode:    http.StatusFound, // it redirects to Home not 403 page.
+			expReached: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			var reached bool
+			server := web.New()
+			server.UseMiddleware(web.Renderer("../../public/views", "[[", "]]"))
+			server.Use(contextProvider(func(c *contextmodel.ReqContext) {
+				c.IsSignedIn = tt.isSignedIn
+				c.OrgRole = tt.orgRole
+				c.AllowAnonymous = true
+			}))
+			server.Use(CanAdminPlugins(&setting.Cfg{PluginAdminEnabled: true}, ac))
+			server.Get("/plugins/:id", func(c *contextmodel.ReqContext) {
+				reached = true
+				c.Resp.WriteHeader(http.StatusOK)
+			})
+
+			request, err := http.NewRequest(http.MethodGet, tt.url, nil)
+			assert.NoError(t, err)
+			recorder := httptest.NewRecorder()
+
+			server.ServeHTTP(recorder, request)
+
+			res := recorder.Result()
+			assert.Equal(t, tt.expCode, res.StatusCode)
+			assert.Equal(t, tt.expReached, reached)
+			require.NoError(t, res.Body.Close())
+		})
+	}
+}
+
+func contextProvider(modifiers ...func(c *contextmodel.ReqContext)) web.Handler {
+	return func(c *web.Context) {
+		reqCtx := &contextmodel.ReqContext{
+			Context:      c,
+			Logger:       log.New(""),
+			SignedInUser: &user.SignedInUser{},
+			IsSignedIn:   false,
+			SkipDSCache:  true,
+		}
+		for _, modifier := range modifiers {
+			modifier(reqCtx)
+		}
+		c.Req = c.Req.WithContext(ctxkey.Set(c.Req.Context(), reqCtx))
 	}
 }

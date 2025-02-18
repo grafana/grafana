@@ -26,7 +26,7 @@ func applyGrafanaConfig(cfg *setting.Cfg, features featuremgmt.FeatureToggles, o
 	if cfg.Env == setting.Dev {
 		defaultLogLevel = 10
 		port = 6443
-		ip = net.ParseIP("127.0.0.1")
+		ip = net.ParseIP("0.0.0.0")
 		apiURL = fmt.Sprintf("https://%s:%d", ip, port)
 	}
 
@@ -50,20 +50,17 @@ func applyGrafanaConfig(cfg *setting.Cfg, features featuremgmt.FeatureToggles, o
 	o.RecommendedOptions.Admission = nil
 	o.RecommendedOptions.CoreAPI = nil
 
-	o.StorageOptions.StorageType = options.StorageType(apiserverCfg.Key("storage_type").MustString(string(options.StorageTypeLegacy)))
+	// nolint:staticcheck
+	o.StorageOptions.StorageType = options.StorageType(apiserverCfg.Key("storage_type").MustString(string(options.StorageTypeUnified)))
 	o.StorageOptions.DataPath = apiserverCfg.Key("storage_path").MustString(filepath.Join(cfg.DataPath, "grafana-apiserver"))
 	o.StorageOptions.Address = apiserverCfg.Key("address").MustString(o.StorageOptions.Address)
+	o.StorageOptions.BlobStoreURL = apiserverCfg.Key("blob_url").MustString(o.StorageOptions.BlobStoreURL)
 
 	// unified storage configs look like
 	// [unified_storage.<group>.<resource>]
 	// config = <value>
 	unifiedStorageCfg := cfg.UnifiedStorage
 	o.StorageOptions.UnifiedStorageConfig = unifiedStorageCfg
-
-	o.StorageOptions.DualWriterDataSyncJobEnabled = map[string]bool{
-		// TODO: This will be enabled later, when we get a dedicated config section for unified_storage
-		// playlist.RESOURCE + "." + playlist.GROUP: true,
-	}
 
 	o.ExtraOptions.DevMode = features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerEnsureKubectlAccess)
 	o.ExtraOptions.ExternalAddress = host

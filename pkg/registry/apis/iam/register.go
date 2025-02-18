@@ -2,56 +2,85 @@ package iam
 
 import (
 	"context"
+	"strings"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
+	"k8s.io/apiserver/pkg/registry/rest"
+	genericapiserver "k8s.io/apiserver/pkg/server"
+	common "k8s.io/kube-openapi/pkg/common"
+	"k8s.io/kube-openapi/pkg/spec3"
+	"k8s.io/kube-openapi/pkg/validation/spec"
+
+	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	iamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
-	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/serviceaccount"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/sso"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/team"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/user"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/runtime/serializer"
-	"k8s.io/apiserver/pkg/authorization/authorizer"
-	"k8s.io/apiserver/pkg/registry/generic"
-	"k8s.io/apiserver/pkg/registry/rest"
-	genericapiserver "k8s.io/apiserver/pkg/server"
-	common "k8s.io/kube-openapi/pkg/common"
 )
 
 var _ builder.APIGroupBuilder = (*IdentityAccessManagementAPIBuilder)(nil)
 
 // This is used just so wire has something unique to return
 type IdentityAccessManagementAPIBuilder struct {
-	Store      legacy.LegacyIdentityStore
-	SSOService ssosettings.Service
+	store        legacy.LegacyIdentityStore
+	authorizer   authorizer.Authorizer
+	accessClient types.AccessClient
+
+	// non-k8s api route
+	display *user.LegacyDisplayREST
+
+	// Not set for multi-tenant deployment for now
+	sso ssosettings.Service
 }
 
 func RegisterAPIService(
-	features featuremgmt.FeatureToggles,
 	apiregistration builder.APIRegistrar,
 	ssoService ssosettings.Service,
 	sql db.DB,
+	ac accesscontrol.AccessControl,
 ) (*IdentityAccessManagementAPIBuilder, error) {
-	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
-		return nil, nil // skip registration unless opting into experimental apis
-	}
+	store := legacy.NewLegacySQLStores(legacysql.NewDatabaseProvider(sql))
+	authorizer, client := newLegacyAuthorizer(ac, store)
 
 	builder := &IdentityAccessManagementAPIBuilder{
-		Store:      legacy.NewLegacySQLStores(legacysql.NewDatabaseProvider(sql)),
-		SSOService: ssoService,
+		store:        store,
+		sso:          ssoService,
+		authorizer:   authorizer,
+		accessClient: client,
+		display:      user.NewLegacyDisplayREST(store),
 	}
 	apiregistration.RegisterAPI(builder)
 
 	return builder, nil
+}
+
+func NewAPIService(store legacy.LegacyIdentityStore) *IdentityAccessManagementAPIBuilder {
+	return &IdentityAccessManagementAPIBuilder{
+		store:   store,
+		display: user.NewLegacyDisplayREST(store),
+		authorizer: authorizer.AuthorizerFunc(
+			func(ctx context.Context, a authorizer.Attributes) (authorizer.Decision, string, error) {
+				user, err := identity.GetRequester(ctx)
+				if err != nil {
+					return authorizer.DecisionDeny, "no identity found", err
+				}
+				if user.GetIsGrafanaAdmin() {
+					return authorizer.DecisionAllow, "", nil
+				}
+				return authorizer.DecisionDeny, "only grafana admins have access for now", nil
+			}),
+	}
 }
 
 func (b *IdentityAccessManagementAPIBuilder) GetGroupVersion() schema.GroupVersion {
@@ -70,62 +99,94 @@ func (b *IdentityAccessManagementAPIBuilder) InstallSchema(scheme *runtime.Schem
 	return scheme.SetVersionPriority(iamv0.SchemeGroupVersion)
 }
 
-func (b *IdentityAccessManagementAPIBuilder) GetAPIGroupInfo(
-	scheme *runtime.Scheme,
-	codecs serializer.CodecFactory, // pointer?
-	optsGetter generic.RESTOptionsGetter,
-	dualWriteBuilder grafanarest.DualWriteBuilder,
-) (*genericapiserver.APIGroupInfo, error) {
-	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(iamv0.GROUP, scheme, metav1.ParameterCodec, codecs)
+func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, _ builder.APIGroupOptions) error {
 	storage := map[string]rest.Storage{}
 
 	teamResource := iamv0.TeamResourceInfo
-	storage[teamResource.StoragePath()] = team.NewLegacyStore(b.Store)
-	storage[teamResource.StoragePath("members")] = team.NewLegacyTeamMemberREST(b.Store)
+	storage[teamResource.StoragePath()] = team.NewLegacyStore(b.store, b.accessClient)
+	storage[teamResource.StoragePath("members")] = team.NewLegacyTeamMemberREST(b.store)
 
 	teamBindingResource := iamv0.TeamBindingResourceInfo
-	storage[teamBindingResource.StoragePath()] = team.NewLegacyBindingStore(b.Store)
+	storage[teamBindingResource.StoragePath()] = team.NewLegacyBindingStore(b.store)
 
 	userResource := iamv0.UserResourceInfo
-	storage[userResource.StoragePath()] = user.NewLegacyStore(b.Store)
-	storage[userResource.StoragePath("teams")] = user.NewLegacyTeamMemberREST(b.Store)
+	storage[userResource.StoragePath()] = user.NewLegacyStore(b.store, b.accessClient)
+	storage[userResource.StoragePath("teams")] = user.NewLegacyTeamMemberREST(b.store)
 
-	serviceaccountResource := iamv0.ServiceAccountResourceInfo
-	storage[serviceaccountResource.StoragePath()] = serviceaccount.NewLegacyStore(b.Store)
-	storage[serviceaccountResource.StoragePath("tokens")] = serviceaccount.NewLegacyTokenREST(b.Store)
+	serviceAccountResource := iamv0.ServiceAccountResourceInfo
+	storage[serviceAccountResource.StoragePath()] = serviceaccount.NewLegacyStore(b.store, b.accessClient)
+	storage[serviceAccountResource.StoragePath("tokens")] = serviceaccount.NewLegacyTokenREST(b.store)
 
-	if b.SSOService != nil {
+	if b.sso != nil {
 		ssoResource := iamv0.SSOSettingResourceInfo
-		storage[ssoResource.StoragePath()] = sso.NewLegacyStore(b.SSOService)
+		storage[ssoResource.StoragePath()] = sso.NewLegacyStore(b.sso)
 	}
 
-	// The display endpoint -- NOTE, this uses a rewrite hack to allow requests without a name parameter
-	storage["display"] = user.NewLegacyDisplayREST(b.Store)
-
 	apiGroupInfo.VersionedResourcesStorageMap[iamv0.VERSION] = storage
-	return &apiGroupInfo, nil
+	return nil
 }
 
 func (b *IdentityAccessManagementAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
 	return iamv0.GetOpenAPIDefinitions
 }
 
+func (b *IdentityAccessManagementAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
+	oas.Info.Description = "Identity and Access Management"
+
+	defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
+	defsBase := "github.com/grafana/grafana/pkg/apis/iam/v0alpha1."
+
+	// Add missing schemas
+	for k, v := range defs {
+		clean := strings.Replace(k, defsBase, "com.github.grafana.grafana.pkg.apis.iam.v0alpha1.", 1)
+		if oas.Components.Schemas[clean] == nil {
+			oas.Components.Schemas[clean] = &v.Schema
+		}
+	}
+	compBase := "com.github.grafana.grafana.pkg.apis.iam.v0alpha1."
+	schema := oas.Components.Schemas[compBase+"DisplayList"].Properties["display"]
+	schema.Items = &spec.SchemaOrArray{
+		Schema: &spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				AllOf: []spec.Schema{
+					{
+						SchemaProps: spec.SchemaProps{
+							Ref: spec.MustCreateRef("#/components/schemas/" + compBase + "Display"),
+						},
+					},
+				},
+			},
+		},
+	}
+	oas.Components.Schemas[compBase+"DisplayList"].Properties["display"] = schema
+	oas.Components.Schemas[compBase+"DisplayList"].Properties["metadata"] = spec.Schema{
+		SchemaProps: spec.SchemaProps{
+			AllOf: []spec.Schema{
+				{
+					SchemaProps: spec.SchemaProps{
+						Ref: spec.MustCreateRef("#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
+					},
+				},
+			}},
+	}
+	oas.Components.Schemas[compBase+"Display"].Properties["identity"] = spec.Schema{
+		SchemaProps: spec.SchemaProps{
+			AllOf: []spec.Schema{
+				{
+					SchemaProps: spec.SchemaProps{
+						Ref: spec.MustCreateRef("#/components/schemas/" + compBase + "IdentityRef"),
+					},
+				},
+			}},
+	}
+	return oas, nil
+}
+
 func (b *IdentityAccessManagementAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
-	// no custom API routes
-	return nil
+	defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
+	return b.display.GetAPIRoutes(defs)
 }
 
 func (b *IdentityAccessManagementAPIBuilder) GetAuthorizer() authorizer.Authorizer {
-	// TODO: handle authorization based in entity.
-	return authorizer.AuthorizerFunc(
-		func(ctx context.Context, a authorizer.Attributes) (authorizer.Decision, string, error) {
-			user, err := identity.GetRequester(ctx)
-			if err != nil {
-				return authorizer.DecisionDeny, "no identity found", err
-			}
-			if user.GetIsGrafanaAdmin() {
-				return authorizer.DecisionAllow, "", nil
-			}
-			return authorizer.DecisionDeny, "only grafana admins have access for now", nil
-		})
+	return b.authorizer
 }

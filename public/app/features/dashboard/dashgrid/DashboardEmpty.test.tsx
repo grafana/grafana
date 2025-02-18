@@ -2,7 +2,6 @@ import { act, fireEvent, render, screen } from '@testing-library/react';
 
 import { locationService, reportInteraction } from '@grafana/runtime';
 import { defaultDashboard } from '@grafana/schema';
-import config from 'app/core/config';
 
 import { createDashboardModelFixture } from '../state/__fixtures__/dashboardFixtures';
 import { onCreateNewPanel, onImportDashboard, onAddLibraryPanel } from '../utils/dashboard';
@@ -40,7 +39,6 @@ function setup(options?: Partial<Props>) {
 }
 
 beforeEach(() => {
-  config.featureToggles = { vizAndWidgetSplit: false };
   jest.clearAllMocks();
 });
 
@@ -109,14 +107,4 @@ it('renders page without Add Widget button when feature flag is disabled', () =>
   expect(screen.getByRole('button', { name: 'Import dashboard' })).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Add library panel' })).toBeInTheDocument();
   expect(screen.queryByRole('button', { name: 'Add widget' })).not.toBeInTheDocument();
-});
-
-it('renders page with Add Widget button when feature flag is enabled', () => {
-  config.featureToggles.vizAndWidgetSplit = true;
-  setup();
-
-  expect(screen.getByRole('button', { name: 'Add visualization' })).toBeInTheDocument();
-  expect(screen.getByRole('button', { name: 'Import dashboard' })).toBeInTheDocument();
-  expect(screen.getByRole('button', { name: 'Add library panel' })).toBeInTheDocument();
-  expect(screen.getByRole('button', { name: 'Add widget' })).toBeInTheDocument();
 });

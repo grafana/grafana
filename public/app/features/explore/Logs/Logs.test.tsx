@@ -14,10 +14,12 @@ import {
   toUtc,
   createDataFrame,
   ExploreLogsPanelState,
+  DataQuery,
 } from '@grafana/data';
 import { organizeFieldsTransformer } from '@grafana/data/src/transformations/transformers/organize';
 import { config } from '@grafana/runtime';
 import { extractFieldsTransformer } from 'app/features/transformers/extractFields/extractFields';
+import { LokiQueryDirection } from 'app/plugins/datasource/loki/dataquery.gen';
 import { configureStore } from 'app/store/configureStore';
 
 import { initialExploreState } from '../state/main';
@@ -45,6 +47,17 @@ jest.mock('../state/explorePane', () => ({
   ...jest.requireActual('../state/explorePane'),
   changePanelState: (exploreId: string, panel: 'logs', panelState: {} | ExploreLogsPanelState) => {
     return fakeChangePanelState(exploreId, panel, panelState);
+  },
+  changeQueries: (args: { queries: DataQuery[]; exploreId: string | undefined }) => {
+    return fakeChangeQueries(args);
+  },
+}));
+
+const fakeChangeQueries = jest.fn().mockReturnValue({ type: 'fakeChangeQueries' });
+jest.mock('../state/query', () => ({
+  ...jest.requireActual('../state/query'),
+  changeQueries: (args: { queries: DataQuery[]; exploreId: string | undefined }) => {
+    return fakeChangeQueries(args);
   },
 }));
 
@@ -150,12 +163,12 @@ describe('Logs', () => {
       },
     });
 
-    const { rerender } = render(
+    const rendered = render(
       <Provider store={fakeStore}>
         {getComponent(partialProps, dataFrame ? dataFrame : getMockLokiFrame(), logs)}
       </Provider>
     );
-    return { rerender, store: fakeStore };
+    return { ...rendered, store: fakeStore };
   };
 
   describe('scrolling behavior', () => {
@@ -377,6 +390,26 @@ describe('Logs', () => {
     expect(logRows[2].textContent).toContain('log message 3');
   });
 
+  it('should sync the query direction when changing the order of loki queries', async () => {
+    const query = { expr: '{a="b"}', refId: 'A', datasource: { type: 'loki' } };
+    setup({ logsQueries: [query] });
+    const oldestFirstSelection = screen.getByLabelText('Oldest first');
+    await userEvent.click(oldestFirstSelection);
+    expect(fakeChangeQueries).toHaveBeenCalledWith({
+      exploreId: 'left',
+      queries: [{ ...query, direction: LokiQueryDirection.Forward }],
+    });
+  });
+
+  it('should not change the query direction when changing the order of non-loki queries', async () => {
+    fakeChangeQueries.mockClear();
+    const query = { refId: 'B' };
+    setup({ logsQueries: [query] });
+    const oldestFirstSelection = screen.getByLabelText('Oldest first');
+    await userEvent.click(oldestFirstSelection);
+    expect(fakeChangeQueries).not.toHaveBeenCalled();
+  });
+
   describe('for permalinking', () => {
     it('should dispatch a `changePanelState` event without the id', () => {
       const panelState = { logs: { id: '1' } };
@@ -428,12 +461,14 @@ describe('Logs', () => {
     });
 
     it('should call createAndCopyShortLink on permalinkClick - logs', async () => {
-      const panelState: Partial<ExplorePanelsState> = { logs: { id: 'not-included', visualisationType: 'logs' } };
+      const panelState: Partial<ExplorePanelsState> = {
+        logs: { id: 'not-included', visualisationType: 'logs', displayedFields: ['field'] },
+      };
       const rows = [
-        makeLog({ uid: '1', rowId: 'id1', timeEpochMs: 1 }),
-        makeLog({ uid: '2', rowId: 'id2', timeEpochMs: 1 }),
-        makeLog({ uid: '3', rowId: 'id3', timeEpochMs: 2 }),
-        makeLog({ uid: '4', rowId: 'id3', timeEpochMs: 2 }),
+        makeLog({ uid: '1', rowId: 'id1', timeEpochMs: 1, labels: { field: '1' } }),
+        makeLog({ uid: '2', rowId: 'id2', timeEpochMs: 1, labels: { field: '2' } }),
+        makeLog({ uid: '3', rowId: 'id3', timeEpochMs: 2, labels: { field: '3' } }),
+        makeLog({ uid: '4', rowId: 'id3', timeEpochMs: 2, labels: { field: '4' } }),
       ];
       setup({ loading: false, panelState, logRows: rows });
 
@@ -449,6 +484,7 @@ describe('Logs', () => {
         )
       );
       expect(createAndCopyShortLink).toHaveBeenCalledWith(expect.stringMatching('visualisationType%22:%22logs'));
+      expect(createAndCopyShortLink).toHaveBeenCalledWith(expect.stringMatching('displayedFields%22:%5B%22field'));
     });
 
     it('should call createAndCopyShortLink on permalinkClick - with infinite scrolling', async () => {
@@ -477,6 +513,19 @@ describe('Logs', () => {
       );
       expect(createAndCopyShortLink).toHaveBeenCalledWith(expect.stringMatching('visualisationType%22:%22logs'));
       config.featureToggles.logsInfiniteScrolling = featureToggleValue;
+    });
+  });
+
+  describe('displayed fields', () => {
+    it('should sync displayed fields from the URL', async () => {
+      const panelState: Partial<ExplorePanelsState> = {
+        logs: { id: 'not-included', visualisationType: 'logs', displayedFields: ['field'] },
+      };
+      const rows = [makeLog({ uid: '1', rowId: 'id1', timeEpochMs: 1, labels: { field: 'field value' } })];
+      setup({ loading: false, panelState, logRows: rows });
+
+      expect(await screen.findByText('field=field value')).toBeInTheDocument();
+      expect(screen.queryByText(/log message/)).not.toBeInTheDocument();
     });
   });
 

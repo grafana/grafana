@@ -3,6 +3,7 @@ package scopes
 import (
 	"context"
 	"encoding/json"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -27,9 +28,9 @@ func TestIntegrationScopes(t *testing.T) {
 
 	ctx := context.Background()
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		AppModeProduction: false, // required for experimental APIs
+		AppModeProduction: true,
 		EnableFeatureToggles: []string{
-			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // Required to start the example service
+			featuremgmt.FlagScopeApi, // Required to register the API
 		},
 	})
 
@@ -155,6 +156,25 @@ func TestIntegrationScopes(t *testing.T) {
 
 		_, err = scopeClient.Resource.Create(ctx,
 			helper.LoadYAMLOrJSONFile("testdata/example-scope2.yaml"),
+			createOptions,
+		)
+		require.NoError(t, err)
+
+		// Name length test
+		scope3 := helper.LoadYAMLOrJSONFile("testdata/example-scope3.yaml")
+
+		// Name too long (>253)
+		scope3.SetName(strings.Repeat("0", 254))
+		_, err = scopeClient.Resource.Create(ctx,
+			scope3,
+			createOptions,
+		)
+		require.Error(t, err)
+
+		// Maximum allowed length for name (253)
+		scope3.SetName(strings.Repeat("0", 253))
+		_, err = scopeClient.Resource.Create(ctx,
+			scope3,
 			createOptions,
 		)
 		require.NoError(t, err)

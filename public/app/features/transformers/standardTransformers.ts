@@ -35,7 +35,7 @@ import { rowsToFieldsTransformRegistryItem } from './rowsToFields/RowsToFieldsTr
 import { spatialTransformRegistryItem } from './spatial/SpatialTransformerEditor';
 import { timeSeriesTableTransformRegistryItem } from './timeSeriesTable/TimeSeriesTableTransformEditor';
 
-export const getStandardTransformers = (): Array<TransformerRegistryItem<any>> => {
+export const getStandardTransformers = (): TransformerRegistryItem[] => {
   return [
     reduceTransformRegistryItem,
     filterFieldsByNameTransformRegistryItem,

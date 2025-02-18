@@ -123,6 +123,8 @@ func NewInstanceSettings(logger log.Logger) datasource.InstanceFactoryFunc {
 				return nil, err
 			}
 			cnnstr += "&tls=" + tlsConfigString
+		} else if tlsConfig.InsecureSkipVerify {
+			cnnstr += "&tls=skip-verify"
 		}
 
 		if dsInfo.JsonData.Timezone != "" {

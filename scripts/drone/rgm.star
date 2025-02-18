@@ -21,8 +21,9 @@ load(
     "whats_new_checker_pipeline",
 )
 load(
-    "scripts/drone/steps/lib_windows.star",
-    "get_windows_steps",
+    "scripts/drone/steps/github.star",
+    "github_app_generate_token_step",
+    "github_app_step_volumes",
 )
 load(
     "scripts/drone/utils/images.star",
@@ -46,7 +47,6 @@ load(
     "rgm_destination",
     "rgm_downloads_destination",
     "rgm_gcp_key_base64",
-    "rgm_github_token",
     "rgm_storybook_destination",
 )
 
@@ -115,7 +115,6 @@ def rgm_env_secrets(env):
     env["DOWNLOADS_DESTINATION"] = from_secret(rgm_downloads_destination)
 
     env["GCP_KEY_BASE64"] = from_secret(rgm_gcp_key_base64)
-    env["GITHUB_TOKEN"] = from_secret(rgm_github_token)
     env["_EXPERIMENTAL_DAGGER_CLOUD_TOKEN"] = from_secret(rgm_dagger_token)
     env["GPG_PRIVATE_KEY"] = from_secret("packages_gpg_private_key")
     env["GPG_PUBLIC_KEY"] = from_secret("packages_gpg_public_key")
@@ -146,12 +145,13 @@ def rgm_run(name, script):
         "pull": "always",
         "commands": [
             "export GRAFANA_DIR=$$(pwd)",
+            "export GITHUB_TOKEN=$(cat /github-app/token)",
             "cd /src && ./scripts/{}".format(script),
         ],
         "environment": rgm_env_secrets(env),
         # The docker socket is a requirement for running dagger programs
         # In the future we should find a way to use dagger without mounting the docker socket.
-        "volumes": [{"name": "docker", "path": "/var/run/docker.sock"}],
+        "volumes": [{"name": "docker", "path": "/var/run/docker.sock"}] + github_app_step_volumes(),
     }
 
     return [
@@ -226,19 +226,6 @@ def rgm_tag():
         name = "rgm-tag-prerelease",
         trigger = tag_trigger,
         steps = rgm_run("rgm-build", "drone_build_tag_grafana.sh"),
-        depends_on = ["release-test-backend", "release-test-frontend"],
-    )
-
-def rgm_tag_windows():
-    return pipeline(
-        name = "rgm-tag-prerelease-windows",
-        trigger = tag_trigger,
-        steps = get_windows_steps(
-            ver_mode = "release",
-            bucket = "grafana-prerelease",
-        ),
-        depends_on = ["rgm-tag-prerelease"],
-        platform = "windows",
     )
 
 def rgm_version_branch():
@@ -247,7 +234,6 @@ def rgm_version_branch():
         name = "rgm-version-branch-prerelease",
         trigger = version_branch_trigger,
         steps = rgm_run("rgm-build", "drone_build_tag_grafana.sh"),
-        depends_on = ["release-test-backend", "release-test-frontend"],
     )
 
 def rgm_nightly_build():
@@ -301,19 +287,17 @@ def rgm_nightly_pipeline():
     ]
 
 def rgm_tag_pipeline():
+    build = rgm_tag()
+
     return [
+        build,
         whats_new_checker_pipeline(tag_trigger),
-        test_frontend(tag_trigger, "release"),
-        test_backend(tag_trigger, "release"),
-        rgm_tag(),
-        rgm_tag_windows(),
         verify_release_pipeline(
             trigger = tag_trigger,
             name = "rgm-tag-verify-prerelease-assets",
             bucket = "grafana-prerelease",
             depends_on = [
-                "rgm-tag-prerelease",
-                "rgm-tag-prerelease-windows",
+                build["name"],
             ],
         ),
     ]
@@ -365,6 +349,7 @@ def rgm_promotion_pipeline():
         "image": "grafana/grafana-build:main",
         "pull": "always",
         "commands": [
+            "export GITHUB_TOKEN=$(cat /github-app/token)",
             "dagger run --silent /src/grafana-build artifacts " +
             "-a $${ARTIFACTS} " +
             "--grafana-ref=$${GRAFANA_REF} " +
@@ -376,12 +361,16 @@ def rgm_promotion_pipeline():
         "environment": rgm_env_secrets(env),
         # The docker socket is a requirement for running dagger programs
         # In the future we should find a way to use dagger without mounting the docker socket.
-        "volumes": [{"name": "docker", "path": "/var/run/docker.sock"}],
+        "volumes": [{"name": "docker", "path": "/var/run/docker.sock"}] + github_app_step_volumes(),
     }
 
+    generate_token_step = github_app_generate_token_step()
     publish_step = rgm_copy("dist/*", "$${UPLOAD_TO}")
-
+    build_step["depends_on"] = [
+        generate_token_step["name"],
+    ]
     steps = [
+        generate_token_step,
         build_step,
         publish_step,
     ]
@@ -391,6 +380,7 @@ def rgm_promotion_pipeline():
             name = "rgm-promotion",
             trigger = promotion_trigger,
             steps = steps,
+            volumes = github_app_step_volumes(),
         ),
     ]
 

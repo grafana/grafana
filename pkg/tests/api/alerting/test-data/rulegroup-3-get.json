@@ -12,8 +12,6 @@
         "annotation": "test-annotation"
       },
       "grafana_alert": {
-        "id": 1,
-        "orgId": 1,
         "title": "Rule1",
         "condition": "A",
         "data": [
@@ -41,7 +39,13 @@
         "rule_group": "Group3",
         "no_data_state": "NoData",
         "exec_err_state": "Alerting",
-        "is_paused": false
+        "is_paused": false,
+        "metadata": {
+          "editor_settings": {
+            "simplified_query_and_expressions_section": false,
+            "simplified_notifications_section": false
+          }
+        }
       }
     },
     {
@@ -54,8 +58,6 @@
         "annotation": "test-annotation"
       },
       "grafana_alert": {
-        "id": 2,
-        "orgId": 1,
         "title": "Rule2",
         "condition": "A",
         "data": [
@@ -83,7 +85,13 @@
         "rule_group": "Group3",
         "no_data_state": "NoData",
         "exec_err_state": "Alerting",
-        "is_paused": false
+        "is_paused": false,
+        "metadata": {
+          "editor_settings": {
+            "simplified_query_and_expressions_section": false,
+            "simplified_notifications_section": false
+          }
+        }
       }
     }
   ]

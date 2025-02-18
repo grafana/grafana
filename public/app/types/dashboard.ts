@@ -3,8 +3,11 @@ import { Dashboard, DataSourceRef } from '@grafana/schema';
 import { ObjectMeta } from 'app/features/apiserver/types';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 
+export interface HomeDashboardRedirectDTO {
+  redirectUri: string;
+}
+
 export interface DashboardDTO {
-  redirectUri?: string;
   dashboard: DashboardDataDTO;
   meta: DashboardMeta;
 }
@@ -56,6 +59,7 @@ export interface DashboardMeta {
   isSnapshot?: boolean;
   folderTitle?: string;
   folderUrl?: string;
+  folderId?: number;
   created?: string;
   createdBy?: string;
   updated?: string;
@@ -65,18 +69,18 @@ export interface DashboardMeta {
   hasUnsavedFolderChange?: boolean;
   annotationsPermissions?: AnnotationsPermissions;
   publicDashboardEnabled?: boolean;
-  dashboardNotFound?: boolean;
   isEmbedded?: boolean;
   isNew?: boolean;
+  version?: number;
 
   // When loaded from kubernetes, we stick the raw metadata here
   // yes weird, but this means all the editor structures can exist unchanged
   // until we use the resource as the main container
   k8s?: Partial<ObjectMeta>;
 
-  // This is a property added specifically for edge cases where dashboards should be reloaded on scopes changes
+  // This is a property added specifically for edge cases where dashboards should be reloaded on scopes, time range or variables changes
   // This property is not persisted in the DB but its existence is controlled by the API
-  reloadOnScopesChange?: boolean;
+  reloadOnParamsChange?: boolean;
 }
 
 export interface AnnotationActions {
@@ -101,7 +105,6 @@ export enum DashboardRoutes {
   Home = 'home-dashboard',
   New = 'new-dashboard',
   Normal = 'normal-dashboard',
-  Path = 'path-dashboard',
   Scripted = 'scripted-dashboard',
   Public = 'public-dashboard',
   Embedded = 'embedded-dashboard',
@@ -122,7 +125,6 @@ export interface DashboardInitError {
 }
 
 export enum KioskMode {
-  TV = 'tv',
   Full = 'full',
 }
 
@@ -138,4 +140,10 @@ export interface DashboardState {
   initPhase: DashboardInitPhase;
   initialDatasource?: DataSourceRef['uid'];
   initError: DashboardInitError | null;
+}
+
+export const DASHBOARD_FROM_LS_KEY = 'DASHBOARD_FROM_LS_KEY';
+
+export function isRedirectResponse(dto: DashboardDTO | HomeDashboardRedirectDTO): dto is HomeDashboardRedirectDTO {
+  return 'redirectUri' in dto;
 }

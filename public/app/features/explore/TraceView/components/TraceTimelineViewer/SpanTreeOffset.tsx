@@ -24,48 +24,48 @@ import { autoColor } from '../Theme';
 import { TraceSpan } from '../types';
 import spanAncestorIds from '../utils/span-ancestor-ids';
 
-export const getStyles = stylesFactory((theme: GrafanaTheme2) => {
-  return {
-    SpanTreeOffset: css`
-      label: SpanTreeOffset;
-      color: ${autoColor(theme, '#000')};
-      position: relative;
-    `,
-    SpanTreeOffsetParent: css`
-      label: SpanTreeOffsetParent;
-      &:hover {
-        cursor: pointer;
-      }
-    `,
-    indentGuide: css`
-      label: indentGuide;
-      /* The size of the indentGuide is based off of the iconWrapper */
-      padding-right: 1rem;
-      height: 100%;
-      display: inline-flex;
-      transition: padding 300ms ease-out;
-      &::before {
-        content: '';
-        padding-left: 1px;
-        background-color: ${autoColor(theme, 'lightgrey')};
-      }
-    `,
-    indentGuideActive: css`
-      label: indentGuideActive;
-      &::before {
-        background-color: ${autoColor(theme, '#777')};
-      }
-    `,
-    indentGuideThin: css`
-      padding-right: 0.3rem;
-    `,
-    iconWrapper: css`
-      label: iconWrapper;
-      position: absolute;
-      right: 0;
-    `,
-  };
-});
+export const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
+  SpanTreeOffset: css({
+    label: 'SpanTreeOffset',
+    color: autoColor(theme, '#000'),
+    position: 'relative',
+  }),
+  SpanTreeOffsetParent: css({
+    label: 'SpanTreeOffsetParent',
+    '&:hover': {
+      cursor: 'pointer',
+    },
+  }),
+  indentGuide: css({
+    label: 'indentGuide',
+    /* The size of the indentGuide is based off of the iconWrapper */
+    paddingRight: '1rem',
+    height: '100%',
+    display: 'inline-flex',
+    [theme.transitions.handleMotion('no-preference')]: {
+      transition: 'padding 300ms ease-out',
+    },
+    '&::before': {
+      content: '""',
+      paddingLeft: '1px',
+      backgroundColor: autoColor(theme, 'lightgrey'),
+    },
+  }),
+  indentGuideActive: css({
+    label: 'indentGuideActive',
+    '&::before': {
+      backgroundColor: autoColor(theme, '#777'),
+    },
+  }),
+  indentGuideThin: css({
+    paddingRight: '0.3rem',
+  }),
+  iconWrapper: css({
+    label: 'iconWrapper',
+    position: 'absolute',
+    right: 0,
+  }),
+}));
 
 export type TProps = {
   childrenVisible?: boolean;

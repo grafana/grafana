@@ -1,6 +1,5 @@
-import { t } from 'i18next';
-
-import { getBackendSrv } from '@grafana/runtime';
+import { t } from 'app/core/internationalization';
+import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 
 import { validationSrv } from '../services/ValidationSrv';
 
@@ -47,8 +46,8 @@ export const validateTitle = (newTitle: string, folderUid: string) => {
 };
 
 export const validateUid = (value: string) => {
-  return getBackendSrv()
-    .get(`/api/dashboards/uid/${value}`)
+  return getDashboardAPI()
+    .getDashboardDTO(value)
     .then((existingDashboard) => {
       return `Dashboard named '${existingDashboard?.dashboard.title}' in folder '${existingDashboard?.meta.folderTitle}' has the same UID`;
     })

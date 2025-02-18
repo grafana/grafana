@@ -1,6 +1,17 @@
-import type { PluginExtensionAddedLinkConfig, PluginExtension, PluginExtensionLink } from '@grafana/data';
+import type {
+  PluginExtensionAddedLinkConfig,
+  PluginExtension,
+  PluginExtensionLink,
+  PluginContextType,
+  PluginExtensionAddedComponentConfig,
+  PluginExtensionExposedComponentConfig,
+  PluginExtensionAddedFunctionConfig,
+} from '@grafana/data';
 import { PluginAddedLinksConfigureFunc, PluginExtensionPoints } from '@grafana/data/src/types/pluginExtensions';
-import { isPluginExtensionLink } from '@grafana/runtime';
+import { config, isPluginExtensionLink } from '@grafana/runtime';
+
+import * as errors from './errors';
+import { ExtensionsLog } from './logs/log';
 
 export function assertPluginExtensionLink(
   extension: PluginExtension | undefined,
@@ -53,12 +64,18 @@ export function isLinkPathValid(pluginId: string, path: string) {
   return Boolean(typeof path === 'string' && path.length > 0 && path.startsWith(`/a/${pluginId}/`));
 }
 
-export function isExtensionPointIdValid(pluginId: string, extensionPointId: string) {
-  return Boolean(
-    extensionPointId.startsWith('grafana/') ||
-      extensionPointId?.startsWith('plugins/') ||
-      extensionPointId?.startsWith(pluginId)
-  );
+export function isExtensionPointIdValid({
+  extensionPointId,
+  pluginId,
+}: {
+  extensionPointId: string;
+  pluginId: string;
+}) {
+  if (extensionPointId.startsWith('grafana/')) {
+    return true;
+  }
+
+  return Boolean(extensionPointId.startsWith(`plugins/${pluginId}/`) || extensionPointId.startsWith(`${pluginId}/`));
 }
 
 export function extensionPointEndsWithVersion(extensionPointId: string) {
@@ -97,3 +114,144 @@ export function isReactComponent(component: unknown): component is React.Compone
   // (The main reason is that we don't want to start depending on React implementation details.)
   return typeof component === 'function' || isReactMemoObject(component);
 }
+
+// Checks if the meta information is missing from the plugin's plugin.json file
+export const isExtensionPointMetaInfoMissing = (extensionPointId: string, pluginContext: PluginContextType) => {
+  const extensionPoints = pluginContext.meta?.extensions?.extensionPoints;
+
+  return !extensionPoints || !extensionPoints.some((ep) => ep.id === extensionPointId);
+};
+
+// Checks if an exposed component that the plugin is depending on is missing from the `dependencies` in the plugin.json file
+export const isExposedComponentDependencyMissing = (id: string, pluginContext: PluginContextType) => {
+  const exposedComponentsDependencies = pluginContext.meta?.dependencies?.extensions?.exposedComponents;
+
+  return !exposedComponentsDependencies || !exposedComponentsDependencies.includes(id);
+};
+
+export const isAddedLinkMetaInfoMissing = (
+  pluginId: string,
+  metaInfo: PluginExtensionAddedLinkConfig,
+  log: ExtensionsLog
+) => {
+  const logPrefix = 'Could not register link extension. Reason:';
+  const app = config.apps[pluginId];
+  const pluginJsonMetaInfo = app ? app.extensions.addedLinks.find(({ title }) => title === metaInfo.title) : null;
+
+  if (!app) {
+    log.error(`${logPrefix} ${errors.APP_NOT_FOUND(pluginId)}`);
+    return true;
+  }
+
+  if (!pluginJsonMetaInfo) {
+    log.error(`${logPrefix} ${errors.ADDED_LINK_META_INFO_MISSING}`);
+    return true;
+  }
+
+  const targets = Array.isArray(metaInfo.targets) ? metaInfo.targets : [metaInfo.targets];
+  if (!targets.every((target) => pluginJsonMetaInfo.targets.includes(target))) {
+    log.error(`${logPrefix} ${errors.TARGET_NOT_MATCHING_META_INFO}`);
+    return true;
+  }
+
+  if (pluginJsonMetaInfo.description !== metaInfo.description) {
+    log.warning(errors.DESCRIPTION_NOT_MATCHING_META_INFO);
+  }
+
+  return false;
+};
+
+export const isAddedFunctionMetaInfoMissing = (
+  pluginId: string,
+  metaInfo: PluginExtensionAddedFunctionConfig,
+  log: ExtensionsLog
+) => {
+  const logPrefix = 'Could not register function extension. Reason:';
+  const app = config.apps[pluginId];
+  const pluginJsonMetaInfo = app ? app.extensions.addedFunctions.find(({ title }) => title === metaInfo.title) : null;
+
+  if (!app) {
+    log.error(`${logPrefix} ${errors.APP_NOT_FOUND(pluginId)}`);
+    return true;
+  }
+
+  if (!pluginJsonMetaInfo) {
+    log.error(`${logPrefix} ${errors.ADDED_FUNCTION_META_INFO_MISSING}`);
+    return true;
+  }
+
+  const targets = Array.isArray(metaInfo.targets) ? metaInfo.targets : [metaInfo.targets];
+  if (!targets.every((target) => pluginJsonMetaInfo.targets.includes(target))) {
+    log.error(`${logPrefix} ${errors.TARGET_NOT_MATCHING_META_INFO}`);
+    return true;
+  }
+
+  if (pluginJsonMetaInfo.description !== metaInfo.description) {
+    log.warning(errors.DESCRIPTION_NOT_MATCHING_META_INFO);
+  }
+
+  return false;
+};
+
+export const isAddedComponentMetaInfoMissing = (
+  pluginId: string,
+  metaInfo: PluginExtensionAddedComponentConfig,
+  log: ExtensionsLog
+) => {
+  const logPrefix = 'Could not register component extension. Reason:';
+  const app = config.apps[pluginId];
+  const pluginJsonMetaInfo = app ? app.extensions.addedComponents.find(({ title }) => title === metaInfo.title) : null;
+
+  if (!app) {
+    log.error(`${logPrefix} ${errors.APP_NOT_FOUND(pluginId)}`);
+    return true;
+  }
+
+  if (!pluginJsonMetaInfo) {
+    log.error(`${logPrefix} ${errors.ADDED_COMPONENT_META_INFO_MISSING}`);
+    return true;
+  }
+
+  const targets = Array.isArray(metaInfo.targets) ? metaInfo.targets : [metaInfo.targets];
+  if (!targets.every((target) => pluginJsonMetaInfo.targets.includes(target))) {
+    log.error(`${logPrefix} ${errors.TARGET_NOT_MATCHING_META_INFO}`);
+    return true;
+  }
+
+  if (pluginJsonMetaInfo.description !== metaInfo.description) {
+    log.warning(errors.DESCRIPTION_NOT_MATCHING_META_INFO);
+  }
+
+  return false;
+};
+
+export const isExposedComponentMetaInfoMissing = (
+  pluginId: string,
+  metaInfo: PluginExtensionExposedComponentConfig,
+  log: ExtensionsLog
+) => {
+  const logPrefix = 'Could not register exposed component extension. Reason:';
+  const app = config.apps[pluginId];
+  const pluginJsonMetaInfo = app ? app.extensions.exposedComponents.find(({ id }) => id === metaInfo.id) : null;
+
+  if (!app) {
+    log.error(`${logPrefix} ${errors.APP_NOT_FOUND(pluginId)}`);
+    return true;
+  }
+
+  if (!pluginJsonMetaInfo) {
+    log.error(`${logPrefix} ${errors.EXPOSED_COMPONENT_META_INFO_MISSING}`);
+    return true;
+  }
+
+  if (pluginJsonMetaInfo.title !== metaInfo.title) {
+    log.error(`${logPrefix} ${errors.TITLE_NOT_MATCHING_META_INFO}`);
+    return true;
+  }
+
+  if (pluginJsonMetaInfo.description !== metaInfo.description) {
+    log.warning(errors.DESCRIPTION_NOT_MATCHING_META_INFO);
+  }
+
+  return false;
+};

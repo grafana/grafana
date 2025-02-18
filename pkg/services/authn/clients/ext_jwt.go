@@ -7,11 +7,11 @@ import (
 	"strings"
 
 	"github.com/go-jose/go-jose/v3/jwt"
+
 	authlib "github.com/grafana/authlib/authn"
-	"github.com/grafana/authlib/claims"
+	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/authn"
@@ -101,16 +101,16 @@ func (s *ExtendedJWT) authenticateAsUser(
 	accessTokenClaims authlib.Claims[authlib.AccessTokenClaims],
 ) (*authn.Identity, error) {
 	// Only allow id tokens signed for namespace configured for this instance.
-	if allowedNamespace := s.namespaceMapper(s.getDefaultOrgID()); !claims.NamespaceMatches(authlib.NewIdentityClaims(idTokenClaims), allowedNamespace) {
+	if allowedNamespace := s.namespaceMapper(s.cfg.DefaultOrgID()); !claims.NamespaceMatches(idTokenClaims.Rest.Namespace, allowedNamespace) {
 		return nil, errExtJWTDisallowedNamespaceClaim.Errorf("unexpected id token namespace: %s", idTokenClaims.Rest.Namespace)
 	}
 
 	// Allow access tokens with either the same namespace as the validated id token namespace or wildcard (`*`).
-	if !claims.NamespaceMatches(authlib.NewAccessClaims(accessTokenClaims), idTokenClaims.Rest.Namespace) {
+	if !claims.NamespaceMatches(accessTokenClaims.Rest.Namespace, idTokenClaims.Rest.Namespace) {
 		return nil, errExtJWTMisMatchedNamespaceClaims.Errorf("unexpected access token namespace: %s", accessTokenClaims.Rest.Namespace)
 	}
 
-	accessType, _, err := identity.ParseTypeAndID(accessTokenClaims.Subject)
+	accessType, _, err := claims.ParseTypeID(accessTokenClaims.Subject)
 	if err != nil {
 		return nil, errExtJWTInvalidSubject.Errorf("unexpected identity: %s", accessTokenClaims.Subject)
 	}
@@ -119,7 +119,7 @@ func (s *ExtendedJWT) authenticateAsUser(
 		return nil, errExtJWTInvalid.Errorf("unexpected identity: %s", accessTokenClaims.Subject)
 	}
 
-	t, id, err := identity.ParseTypeAndID(idTokenClaims.Subject)
+	t, id, err := claims.ParseTypeID(idTokenClaims.Subject)
 	if err != nil {
 		return nil, errExtJWTInvalid.Errorf("failed to parse id token subject: %w", err)
 	}
@@ -128,38 +128,32 @@ func (s *ExtendedJWT) authenticateAsUser(
 		return nil, errExtJWTInvalidSubject.Errorf("unexpected identity: %s", idTokenClaims.Subject)
 	}
 
-	// For use in service layer, allow higher privilege
-	allowedKubernetesNamespace := accessTokenClaims.Rest.Namespace
-	if len(s.cfg.StackID) > 0 {
-		// For single-tenant cloud use, choose the lower of the two (id token will always have the specific namespace)
-		allowedKubernetesNamespace = idTokenClaims.Rest.Namespace
-	}
-
 	return &authn.Identity{
-		ID:                         id,
-		Type:                       t,
-		OrgID:                      s.getDefaultOrgID(),
-		AccessTokenClaims:          &accessTokenClaims,
-		IDTokenClaims:              &idTokenClaims,
-		AuthenticatedBy:            login.ExtendedJWTModule,
-		AuthID:                     accessTokenClaims.Subject,
-		AllowedKubernetesNamespace: allowedKubernetesNamespace,
+		ID:                id,
+		Type:              t,
+		OrgID:             s.cfg.DefaultOrgID(),
+		AccessTokenClaims: &accessTokenClaims,
+		IDTokenClaims:     &idTokenClaims,
+		AuthenticatedBy:   login.ExtendedJWTModule,
+		AuthID:            accessTokenClaims.Subject,
+		Namespace:         idTokenClaims.Rest.Namespace,
 		ClientParams: authn.ClientParams{
 			SyncPermissions: true,
 			FetchPermissionsParams: authn.FetchPermissionsParams{
-				ActionsLookup: accessTokenClaims.Rest.DelegatedPermissions,
+				RestrictedActions: accessTokenClaims.Rest.DelegatedPermissions,
 			},
 			FetchSyncedUser: true,
-		}}, nil
+		},
+	}, nil
 }
 
 func (s *ExtendedJWT) authenticateAsService(accessTokenClaims authlib.Claims[authlib.AccessTokenClaims]) (*authn.Identity, error) {
 	// Allow access tokens with that has a wildcard namespace or a namespace matching this instance.
-	if allowedNamespace := s.namespaceMapper(s.getDefaultOrgID()); !claims.NamespaceMatches(authlib.NewAccessClaims(accessTokenClaims), allowedNamespace) {
+	if allowedNamespace := s.namespaceMapper(s.cfg.DefaultOrgID()); !claims.NamespaceMatches(accessTokenClaims.Rest.Namespace, allowedNamespace) {
 		return nil, errExtJWTDisallowedNamespaceClaim.Errorf("unexpected access token namespace: %s", accessTokenClaims.Rest.Namespace)
 	}
 
-	t, id, err := identity.ParseTypeAndID(accessTokenClaims.Subject)
+	t, id, err := claims.ParseTypeID(accessTokenClaims.Subject)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse access token subject: %w", err)
 	}
@@ -168,22 +162,34 @@ func (s *ExtendedJWT) authenticateAsService(accessTokenClaims authlib.Claims[aut
 		return nil, errExtJWTInvalidSubject.Errorf("unexpected identity: %s", accessTokenClaims.Subject)
 	}
 
+	permissions := accessTokenClaims.Rest.Permissions
+	fetchPermissionsParams := authn.FetchPermissionsParams{}
+	if len(permissions) > 0 {
+		fetchPermissionsParams.Roles = make([]string, 0, len(permissions))
+		fetchPermissionsParams.AllowedActions = make([]string, 0, len(permissions))
+		for i := range permissions {
+			if strings.HasPrefix(permissions[i], "fixed:") {
+				fetchPermissionsParams.Roles = append(fetchPermissionsParams.Roles, permissions[i])
+			} else {
+				fetchPermissionsParams.AllowedActions = append(fetchPermissionsParams.AllowedActions, permissions[i])
+			}
+		}
+	}
+
 	return &authn.Identity{
-		ID:                         id,
-		UID:                        id,
-		Type:                       t,
-		OrgID:                      s.getDefaultOrgID(),
-		AccessTokenClaims:          &accessTokenClaims,
-		IDTokenClaims:              nil,
-		AuthenticatedBy:            login.ExtendedJWTModule,
-		AuthID:                     accessTokenClaims.Subject,
-		AllowedKubernetesNamespace: accessTokenClaims.Rest.Namespace,
+		ID:                id,
+		UID:               id,
+		Name:              id,
+		Type:              t,
+		OrgID:             s.cfg.DefaultOrgID(),
+		AccessTokenClaims: &accessTokenClaims,
+		AuthenticatedBy:   login.ExtendedJWTModule,
+		AuthID:            accessTokenClaims.Subject,
+		Namespace:         accessTokenClaims.Rest.Namespace,
 		ClientParams: authn.ClientParams{
-			SyncPermissions: true,
-			FetchPermissionsParams: authn.FetchPermissionsParams{
-				Roles: accessTokenClaims.Rest.Permissions,
-			},
-			FetchSyncedUser: false,
+			SyncPermissions:        true,
+			FetchPermissionsParams: fetchPermissionsParams,
+			FetchSyncedUser:        false,
 		},
 	}, nil
 }
@@ -234,12 +240,4 @@ func (s *ExtendedJWT) retrieveAuthorizationToken(httpRequest *http.Request) stri
 
 	// Strip the 'Bearer' prefix if it exists.
 	return strings.TrimPrefix(jwtToken, "Bearer ")
-}
-
-func (s *ExtendedJWT) getDefaultOrgID() int64 {
-	orgID := int64(1)
-	if s.cfg.AutoAssignOrg && s.cfg.AutoAssignOrgId > 0 {
-		orgID = int64(s.cfg.AutoAssignOrgId)
-	}
-	return orgID
 }

@@ -2,16 +2,16 @@ package identity
 
 import (
 	"context"
-	"fmt"
 	"testing"
+
+	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
-	"github.com/stretchr/testify/require"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 var gvrTeams = schema.GroupVersionResource{
@@ -28,22 +28,6 @@ var gvrUsers = schema.GroupVersionResource{
 
 func TestMain(m *testing.M) {
 	testsuite.Run(m)
-}
-
-func TestIntegrationRequiresDevMode(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
-	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		AppModeProduction: true, // should fail
-		DisableAnonymous:  true,
-		EnableFeatureToggles: []string{
-			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // Required to start the example service
-		},
-	})
-
-	_, err := helper.NewDiscoveryClient().ServerResourcesForGroupVersion("iam.grafana.app/v0alpha1")
-	require.Error(t, err)
 }
 
 func TestIntegrationIdentity(t *testing.T) {
@@ -68,17 +52,13 @@ func TestIntegrationIdentity(t *testing.T) {
 		})
 		rsp, err := teamClient.Resource.List(ctx, metav1.ListOptions{})
 		require.NoError(t, err)
-		found := teamClient.SanitizeJSONList(rsp, "name")
+		found := teamClient.SanitizeJSONList(rsp, "name", "labels")
 		require.JSONEq(t, `{
       "items": [
         {
           "apiVersion": "iam.grafana.app/v0alpha1",
           "kind": "Team",
           "metadata": {
-            "annotations": {
-              "grafana.app/originName": "SQL",
-              "grafana.app/originPath": "${originPath}"
-            },
             "creationTimestamp": "${creationTimestamp}",
             "name": "${name}",
             "namespace": "default",
@@ -102,7 +82,6 @@ func TestIntegrationIdentity(t *testing.T) {
 
 		// Get just the specs (avoids values that change with each deployment)
 		found = teamClient.SpecJSON(rsp)
-		// fmt.Printf("%s", found) // NOTE the first value does not have an email or login
 		require.JSONEq(t, `[
 			{},
 			{
@@ -130,7 +109,6 @@ func TestIntegrationIdentity(t *testing.T) {
 
 		// Get just the specs (avoids values that change with each deployment)
 		found = teamClient.SpecJSON(rsp)
-		fmt.Printf("%s", found) // NOTE the first value does not have an email or login
 		require.JSONEq(t, `[
 			{
 				"email": "admin-3",

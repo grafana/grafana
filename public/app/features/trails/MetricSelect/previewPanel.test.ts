@@ -14,13 +14,13 @@ describe('getPreviewPanelFor', () => {
     }
 
     test('When there are no filters, replace the ${filters} variable', () => {
-      const expected = 'avg(${metric}{__ignore_usage__=""})';
+      const expected = 'avg(${metric}{__ignore_usage__=""} ${otel_join_query})';
       const expr = callAndGetExpr(0);
       expect(expr).toStrictEqual(expected);
     });
 
     test('When there are 1 or more filters, append to the ${filters} variable', () => {
-      const expected = 'avg(${metric}{${filters},__ignore_usage__=""})';
+      const expected = 'avg(${metric}{__ignore_usage__="",${filters}} ${otel_join_query})';
 
       for (let i = 1; i < 10; ++i) {
         const expr = callAndGetExpr(1);

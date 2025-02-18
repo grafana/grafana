@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/auth/authtest"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ldap"
 	"github.com/grafana/grafana/pkg/services/ldap/multildap"
@@ -40,8 +39,10 @@ type LDAPMock struct {
 	UserSearchError  error
 }
 
-var pingResult []*multildap.ServerStatus
-var pingError error
+var (
+	pingResult []*multildap.ServerStatus
+	pingError  error
+)
 
 func (m *LDAPMock) Ping() ([]*multildap.ServerStatus, error) {
 	return pingResult, pingError
@@ -68,7 +69,7 @@ func setupAPITest(t *testing.T, opts ...func(a *Service)) (*Service, *webtest.Se
 
 	a := ProvideService(cfg,
 		router,
-		acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient()),
+		acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
 		usertest.NewUserServiceFake(),
 		&authinfotest.FakeService{},
 		ldap.ProvideGroupsService(),
@@ -105,7 +106,8 @@ func TestGetUserFromLDAPAPIEndpoint_UserNotFound(t *testing.T) {
 	webtest.RequestWithSignedInUser(req, &user.SignedInUser{
 		OrgID: 1,
 		Permissions: map[int64]map[string][]string{
-			1: {"ldap.user:read": {"*"}}},
+			1: {"ldap.user:read": {"*"}},
+		},
 	})
 
 	res, err := server.Send(req)
@@ -170,7 +172,8 @@ func TestGetUserFromLDAPAPIEndpoint_OrgNotfound(t *testing.T) {
 	webtest.RequestWithSignedInUser(req, &user.SignedInUser{
 		OrgID: 1,
 		Permissions: map[int64]map[string][]string{
-			1: {"ldap.user:read": {"*"}}},
+			1: {"ldap.user:read": {"*"}},
+		},
 	})
 
 	res, err := server.Send(req)
@@ -239,7 +242,8 @@ func TestGetUserFromLDAPAPIEndpoint(t *testing.T) {
 	webtest.RequestWithSignedInUser(req, &user.SignedInUser{
 		OrgID: 1,
 		Permissions: map[int64]map[string][]string{
-			1: {"ldap.user:read": {"*"}}},
+			1: {"ldap.user:read": {"*"}},
+		},
 	})
 
 	res, err := server.Send(req)
@@ -324,7 +328,8 @@ func TestGetUserFromLDAPAPIEndpoint_WithTeamHandler(t *testing.T) {
 	webtest.RequestWithSignedInUser(req, &user.SignedInUser{
 		OrgID: 1,
 		Permissions: map[int64]map[string][]string{
-			1: {"ldap.user:read": {"*"}}},
+			1: {"ldap.user:read": {"*"}},
+		},
 	})
 
 	res, err := server.Send(req)
@@ -378,7 +383,8 @@ func TestGetLDAPStatusAPIEndpoint(t *testing.T) {
 	webtest.RequestWithSignedInUser(req, &user.SignedInUser{
 		OrgID: 1,
 		Permissions: map[int64]map[string][]string{
-			1: {"ldap.status:read": {}}},
+			1: {"ldap.status:read": {}},
+		},
 	})
 
 	res, err := server.Send(req)
@@ -417,7 +423,8 @@ func TestPostSyncUserWithLDAPAPIEndpoint_Success(t *testing.T) {
 	webtest.RequestWithSignedInUser(req, &user.SignedInUser{
 		OrgID: 1,
 		Permissions: map[int64]map[string][]string{
-			1: {"ldap.user:sync": {}}},
+			1: {"ldap.user:sync": {}},
+		},
 	})
 
 	res, err := server.Send(req)
@@ -452,7 +459,8 @@ func TestPostSyncUserWithLDAPAPIEndpoint_WhenUserNotFound(t *testing.T) {
 	webtest.RequestWithSignedInUser(req, &user.SignedInUser{
 		OrgID: 1,
 		Permissions: map[int64]map[string][]string{
-			1: {"ldap.user:sync": {}}},
+			1: {"ldap.user:sync": {}},
+		},
 	})
 
 	res, err := server.Send(req)
@@ -488,7 +496,8 @@ func TestPostSyncUserWithLDAPAPIEndpoint_WhenGrafanaAdmin(t *testing.T) {
 	webtest.RequestWithSignedInUser(req, &user.SignedInUser{
 		OrgID: 1,
 		Permissions: map[int64]map[string][]string{
-			1: {"ldap.user:sync": {}}},
+			1: {"ldap.user:sync": {}},
+		},
 	})
 
 	res, err := server.Send(req)
@@ -521,7 +530,8 @@ func TestPostSyncUserWithLDAPAPIEndpoint_WhenUserNotInLDAP(t *testing.T) {
 	webtest.RequestWithSignedInUser(req, &user.SignedInUser{
 		OrgID: 1,
 		Permissions: map[int64]map[string][]string{
-			1: {"ldap.user:sync": {}}},
+			1: {"ldap.user:sync": {}},
+		},
 	})
 
 	res, err := server.Send(req)

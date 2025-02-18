@@ -23,7 +23,8 @@ import { CloseButton } from '@grafana/ui/src/components/uPlot/plugins/CloseButto
 import { getActions, getActionsDefaultField } from 'app/features/actions/utils';
 import { Scene } from 'app/features/canvas/runtime/scene';
 
-import { getRowIndex } from '../utils';
+import { getDataLinks } from '../../status-history/utils';
+import { getElementFields, getRowIndex } from '../utils';
 
 interface Props {
   scene: Scene;
@@ -73,17 +74,24 @@ export const CanvasTooltip = ({ scene }: Props) => {
       : []),
   ];
 
+  // NOTE: almost identical to getDataLinks() helper
   const links: Array<LinkModel<Field>> = [];
-  const linkLookup = new Set<string>();
 
-  const elementHasLinks = (element.options.links?.length ?? 0) > 0;
-  if (elementHasLinks && element.getLinks) {
+  if ((element.options.links?.length ?? 0) > 0 && element.getLinks) {
+    const linkLookup = new Set<string>();
+
     element.getLinks({ valueRowIndex: getRowIndex(element.data.field, scene) }).forEach((link) => {
       const key = `${link.title}/${link.href}`;
       if (!linkLookup.has(key)) {
         links.push(link);
         linkLookup.add(key);
       }
+    });
+  }
+
+  if (scene.data?.series) {
+    getElementFields(scene.data?.series, element.options).forEach((field) => {
+      links.push(...getDataLinks(field, getRowIndex(element.data.field, scene)));
     });
   }
 
@@ -166,6 +174,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     boxShadow: theme.shadows.z2,
     userSelect: 'text',
     padding: 0,
+    fontSize: theme.typography.bodySmall.fontSize,
   }),
   pinned: css({
     boxShadow: theme.shadows.z3,

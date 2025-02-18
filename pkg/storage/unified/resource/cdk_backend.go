@@ -2,7 +2,7 @@ package resource
 
 import (
 	"bytes"
-	context "context"
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -21,11 +21,13 @@ import (
 	_ "gocloud.dev/blob/memblob"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 type CDKBackendOptions struct {
 	Tracer     trace.Tracer
-	Bucket     *blob.Bucket
+	Bucket     CDKBucket
 	RootFolder string
 }
 
@@ -60,7 +62,7 @@ func NewCDKBackend(ctx context.Context, opts CDKBackendOptions) (StorageBackend,
 
 type cdkBackend struct {
 	tracer trace.Tracer
-	bucket *blob.Bucket
+	bucket CDKBucket
 	root   string
 
 	mutex sync.Mutex
@@ -108,6 +110,11 @@ func (s *cdkBackend) getPath(key *ResourceKey, rv int64) string {
 	return buffer.String()
 }
 
+// GetResourceStats implements Backend.
+func (s *cdkBackend) GetResourceStats(ctx context.Context, namespace string, minCount int) ([]ResourceStats, error) {
+	return nil, fmt.Errorf("not implemented")
+}
+
 func (s *cdkBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv int64, err error) {
 	// Scope the lock
 	{
@@ -134,7 +141,7 @@ func (s *cdkBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv int64
 	return rv, err
 }
 
-func (s *cdkBackend) ReadResource(ctx context.Context, req *ReadRequest) *ReadResponse {
+func (s *cdkBackend) ReadResource(ctx context.Context, req *ReadRequest) *BackendReadResponse {
 	rv := req.ResourceVersion
 
 	path := s.getPath(req.Key, rv)
@@ -162,7 +169,7 @@ func (s *cdkBackend) ReadResource(ctx context.Context, req *ReadRequest) *ReadRe
 	raw, err := s.bucket.ReadAll(ctx, path)
 	if raw == nil && req.ResourceVersion > 0 {
 		if req.ResourceVersion > s.rv.Load() {
-			return &ReadResponse{
+			return &BackendReadResponse{
 				Error: &ErrorResult{
 					Code:    http.StatusGatewayTimeout,
 					Reason:  string(metav1.StatusReasonTimeout), // match etcd behavior
@@ -187,23 +194,25 @@ func (s *cdkBackend) ReadResource(ctx context.Context, req *ReadRequest) *ReadRe
 			err = nil
 		}
 	}
-	if err == nil && isDeletedMarker(raw) {
+	if err == nil && isDeletedValue(raw) {
 		raw = nil
 	}
 	if raw == nil {
-		return &ReadResponse{Error: NewNotFoundError(req.Key)}
+		return &BackendReadResponse{Error: NewNotFoundError(req.Key)}
 	}
-	return &ReadResponse{
+	return &BackendReadResponse{
+		Key:             req.Key,
+		Folder:          "", // TODO: implement this
 		ResourceVersion: rv,
 		Value:           raw,
 	}
 }
 
-func isDeletedMarker(raw []byte) bool {
-	if bytes.Contains(raw, []byte(`"DeletedMarker"`)) {
+func isDeletedValue(raw []byte) bool {
+	if bytes.Contains(raw, []byte(`"generation":-999`)) {
 		tmp := &unstructured.Unstructured{}
 		err := tmp.UnmarshalJSON(raw)
-		if err == nil && tmp.GetKind() == "DeletedMarker" {
+		if err == nil && tmp.GetGeneration() == utils.DeletedGeneration {
 			return true
 		}
 	}
@@ -211,6 +220,10 @@ func isDeletedMarker(raw []byte) bool {
 }
 
 func (s *cdkBackend) ListIterator(ctx context.Context, req *ListRequest, cb func(ListIterator) error) (int64, error) {
+	if req.Source != ListRequest_STORE {
+		return 0, fmt.Errorf("listing from history not supported in CDK backend")
+	}
+
 	resources, err := buildTree(ctx, s, req.Options.Key)
 	if err != nil {
 		return 0, err
@@ -247,7 +260,7 @@ type cdkVersion struct {
 }
 
 type cdkListIterator struct {
-	bucket *blob.Bucket
+	bucket CDKBucket
 	ctx    context.Context
 	err    error
 
@@ -279,7 +292,7 @@ func (c *cdkListIterator) Next() bool {
 			c.err = err
 			return false
 		}
-		if !isDeletedMarker(raw) {
+		if !isDeletedValue(raw) {
 			c.currentRV = latest.rv
 			c.currentKey = latest.key
 			c.currentVal = raw
@@ -308,6 +321,11 @@ func (c *cdkListIterator) ContinueToken() string {
 	return fmt.Sprintf("index:%d/key:%s", c.index, c.currentKey)
 }
 
+// ContinueTokenWithCurrentRV implements ListIterator.
+func (c *cdkListIterator) ContinueTokenWithCurrentRV() string {
+	return fmt.Sprintf("index:%d/key:%s", c.index, c.currentKey)
+}
+
 // Name implements ListIterator.
 func (c *cdkListIterator) Name() string {
 	return c.currentKey // TODO (parse name from key)
@@ -316,6 +334,10 @@ func (c *cdkListIterator) Name() string {
 // Namespace implements ListIterator.
 func (c *cdkListIterator) Namespace() string {
 	return c.currentKey // TODO (parse namespace from key)
+}
+
+func (c *cdkListIterator) Folder() string {
+	return "" // TODO: implement this
 }
 
 var _ ListIterator = (*cdkListIterator)(nil)

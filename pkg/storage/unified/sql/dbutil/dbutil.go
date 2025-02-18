@@ -10,9 +10,25 @@ import (
 	"strings"
 	"text/template"
 
+	"go.opentelemetry.io/otel/attribute"
+
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/db/otel"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
+
+const (
+	otelAttrBaseKey         = "dbutil_"
+	otelAttrTemplateNameKey = otelAttrBaseKey + "template"
+	otelAttrDialectKey      = otelAttrBaseKey + "dialect"
+)
+
+func withOtelAttrs(ctx context.Context, tmplName, dialectName string) context.Context {
+	return otel.SetAttributes(ctx,
+		attribute.String(otelAttrTemplateNameKey, tmplName),
+		attribute.String(otelAttrDialectKey, dialectName),
+	)
+}
 
 // SQLError is an error returned by the database, which includes additionally
 // debugging information about what was sent to the database.
@@ -79,7 +95,7 @@ func Debug(err error) error {
 
 // Exec uses `req` as input for a non-data returning query generated with
 // `tmpl`, and executed in `x`.
-func Exec(ctx context.Context, x db.ContextExecer, tmpl *template.Template, req sqltemplate.SQLTemplate) (sql.Result, error) {
+func Exec(ctx context.Context, x db.ContextExecer, tmpl *template.Template, req sqltemplate.SQLTemplate) (db.Result, error) {
 	if err := req.Validate(); err != nil {
 		return nil, fmt.Errorf("Exec: invalid request for template %q: %w",
 			tmpl.Name(), err)
@@ -91,13 +107,15 @@ func Exec(ctx context.Context, x db.ContextExecer, tmpl *template.Template, req 
 	}
 	query := sqltemplate.FormatSQL(rawQuery)
 
-	res, err := x.ExecContext(ctx, query, req.GetArgs()...)
+	args := req.GetArgs()
+	ctx = withOtelAttrs(ctx, tmpl.Name(), req.DialectName())
+	res, err := x.ExecContext(ctx, query, args...)
 	if err != nil {
 		return nil, SQLError{
 			Err:          err,
 			CallType:     "Exec",
 			TemplateName: tmpl.Name(),
-			arguments:    req.GetArgs(),
+			arguments:    args,
 			Query:        query,
 			RawQuery:     rawQuery,
 		}
@@ -108,7 +126,7 @@ func Exec(ctx context.Context, x db.ContextExecer, tmpl *template.Template, req 
 
 // Query uses `req` as input for a single-statement, set-returning query
 // generated with `tmpl`, and executed in `x`.
-func QueryRows(ctx context.Context, x db.ContextExecer, tmpl *template.Template, req sqltemplate.SQLTemplate) (*sql.Rows, error) {
+func QueryRows(ctx context.Context, x db.ContextExecer, tmpl *template.Template, req sqltemplate.SQLTemplate) (db.Rows, error) {
 	if err := req.Validate(); err != nil {
 		return nil, fmt.Errorf("Query: invalid request for template %q: %w",
 			tmpl.Name(), err)
@@ -120,13 +138,15 @@ func QueryRows(ctx context.Context, x db.ContextExecer, tmpl *template.Template,
 	}
 	query := sqltemplate.FormatSQL(rawQuery)
 
-	rows, err := x.QueryContext(ctx, query, req.GetArgs()...)
+	args := req.GetArgs()
+	ctx = withOtelAttrs(ctx, tmpl.Name(), req.DialectName())
+	rows, err := x.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, SQLError{
 			Err:          err,
 			CallType:     "Query",
 			TemplateName: tmpl.Name(),
-			arguments:    req.GetArgs(),
+			arguments:    args,
 			ScanDest:     req.GetScanDest(),
 			Query:        query,
 			RawQuery:     rawQuery,
@@ -144,6 +164,10 @@ func Query[T any](ctx context.Context, x db.ContextExecer, tmpl *template.Templa
 	if err != nil {
 		return nil, err
 	}
+
+	defer func() {
+		_ = rows.Close()
+	}()
 
 	var ret []T
 	for rows.Next() {
@@ -186,13 +210,13 @@ func QueryRow[T any](ctx context.Context, x db.ContextExecer, tmpl *template.Tem
 	}
 }
 
-// DiscardRows discards all the ResultSets in the given *sql.Rows and returns
+// DiscardRows discards all the ResultSets in the given db.Rows and returns
 // the final rows error and the number of times NextResultSet was called. This
 // is useful to check for errors in queries with multiple SQL statements where
 // there is no interesting output, since some drivers may omit an error returned
 // by a SQL statement found in a statement that is not the first one. Note that
 // not all drivers support multi-statement calls, though.
-func DiscardRows(rows *sql.Rows) (int, error) {
+func DiscardRows(rows db.Rows) (int, error) {
 	discardedResultSets := 1
 	for ; rows.NextResultSet(); discardedResultSets++ {
 	}
@@ -203,7 +227,7 @@ type scanner interface {
 	Scan(dest ...any) error
 }
 
-// scanRow is used on *sql.Row and *sql.Rows, and is factored out here not to
+// scanRow is used on db.Row and db.Rows, and is factored out here not to
 // improving code reuse, but rather for ease of testing.
 func scanRow[T any](sc scanner, req sqltemplate.WithResults[T]) (zero T, err error) {
 	if err = sc.Scan(req.GetScanDest()...); err != nil {

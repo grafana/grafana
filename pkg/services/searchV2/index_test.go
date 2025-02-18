@@ -21,7 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
-	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/store/entity"
@@ -72,7 +71,7 @@ func initTestIndexFromDashesExtended(t *testing.T, dashboards []dashboard, exten
 	dashboardLoader := &testDashboardLoader{
 		dashboards: dashboards,
 	}
-	index := newSearchIndex(dashboardLoader, &store.MockEntityEventsService{}, extender, func(ctx context.Context, folderId int64) (string, error) { return "x", nil }, tracing.InitializeTracerForTest(), featuremgmt.WithFeatures(), setting.SearchSettings{})
+	index := newSearchIndex(dashboardLoader, &store.MockEntityEventsService{}, extender, tracing.InitializeTracerForTest(), featuremgmt.WithFeatures(), setting.SearchSettings{})
 	require.NotNil(t, index)
 	numDashboards, err := index.buildOrgIndex(context.Background(), testOrgID)
 	require.NoError(t, err)
@@ -432,9 +431,10 @@ var dashboardsWithFolders = []dashboard{
 		},
 	},
 	{
-		id:       2,
-		uid:      "2",
-		folderID: 1,
+		id:        2,
+		uid:       "2",
+		folderID:  1,
+		folderUID: "1",
 		summary: &entity.EntitySummary{
 			Name: "Dashboard in folder 1",
 			Nested: []*entity.EntitySummary{
@@ -444,9 +444,10 @@ var dashboardsWithFolders = []dashboard{
 		},
 	},
 	{
-		id:       3,
-		uid:      "3",
-		folderID: 1,
+		id:        3,
+		uid:       "3",
+		folderID:  1,
+		folderUID: "1",
 		summary: &entity.EntitySummary{
 			Name: "Dashboard in folder 2",
 			Nested: []*entity.EntitySummary{
@@ -773,8 +774,7 @@ func TestIntegrationSoftDeletion(t *testing.T) {
 	// Set up search v2.
 	folderCount := 1
 	dashboardsPerFolder := 1
-	replStore, cfg := db.InitTestReplDBWithCfg(t)
-	sqlStore := replStore.DB()
+	sqlStore, cfg := db.InitTestDBWithCfg(t)
 	searchService, testUser, err := setupIntegrationEnv(t, folderCount, dashboardsPerFolder, sqlStore)
 	require.NoError(t, err)
 
@@ -790,13 +790,11 @@ func TestIntegrationSoftDeletion(t *testing.T) {
 	}
 
 	// Set up dashboard store.
-	quotaService := quotatest.New(false, nil)
 	featureToggles := featuremgmt.WithFeatures(
 		featuremgmt.FlagPanelTitleSearch,
 		featuremgmt.FlagDashboardRestore,
-		featuremgmt.FlagMysqlParseTime,
 	)
-	dashboardStore, err := database.ProvideDashboardStore(replStore, cfg, featureToggles, tagimpl.ProvideService(sqlStore), quotaService)
+	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, featureToggles, tagimpl.ProvideService(sqlStore))
 	require.NoError(t, err)
 
 	// Soft delete "dashboard2".

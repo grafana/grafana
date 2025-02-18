@@ -7,11 +7,12 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/grafana/authlib/claims"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
+
+	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -22,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/clients"
+	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
@@ -52,8 +54,8 @@ func ProvideIdentitySynchronizer(s *Service) authn.IdentitySynchronizer {
 }
 
 func ProvideService(
-	cfg *setting.Cfg, tracer tracing.Tracer,
-	sessionService auth.UserTokenService, usageStats usagestats.Service, registerer prometheus.Registerer,
+	cfg *setting.Cfg, tracer tracing.Tracer, sessionService auth.UserTokenService,
+	usageStats usagestats.Service, registerer prometheus.Registerer, authTokenService login.AuthInfoService,
 ) *Service {
 	s := &Service{
 		log:                    log.New("authn.service"),
@@ -64,6 +66,7 @@ func ProvideService(
 		tracer:                 tracer,
 		metrics:                newMetrics(registerer),
 		sessionService:         sessionService,
+		authTokenService:       authTokenService,
 		preLogoutHooks:         newQueue[authn.PreLogoutHookFn](),
 		postAuthHooks:          newQueue[authn.PostAuthHookFn](),
 		postLoginHooks:         newQueue[authn.PostLoginHookFn](),
@@ -85,7 +88,8 @@ type Service struct {
 	tracer  tracing.Tracer
 	metrics *metrics
 
-	sessionService auth.UserTokenService
+	sessionService   auth.UserTokenService
+	authTokenService login.AuthInfoService
 
 	// postAuthHooks are called after a successful authentication. They can modify the identity.
 	postAuthHooks *queue[authn.PostAuthHookFn]
@@ -150,12 +154,16 @@ func (s *Service) authenticate(ctx context.Context, c authn.Client, r *authn.Req
 		attribute.String("identity.AuthenticatedBy", identity.GetAuthenticatedBy()),
 	)
 
-	if len(identity.ClientParams.FetchPermissionsParams.ActionsLookup) > 0 {
-		span.SetAttributes(attribute.StringSlice("identity.ClientParams.FetchPermissionsParams.ActionsLookup", identity.ClientParams.FetchPermissionsParams.ActionsLookup))
+	if len(identity.ClientParams.FetchPermissionsParams.RestrictedActions) > 0 {
+		span.SetAttributes(attribute.StringSlice("identity.ClientParams.FetchPermissionsParams.RestrictedActions", identity.ClientParams.FetchPermissionsParams.RestrictedActions))
 	}
 
 	if len(identity.ClientParams.FetchPermissionsParams.Roles) > 0 {
 		span.SetAttributes(attribute.StringSlice("identity.ClientParams.FetchPermissionsParams.Roles", identity.ClientParams.FetchPermissionsParams.Roles))
+	}
+
+	if len(identity.ClientParams.FetchPermissionsParams.AllowedActions) > 0 {
+		span.SetAttributes(attribute.StringSlice("identity.ClientParams.FetchPermissionsParams.AllowedActions", identity.ClientParams.FetchPermissionsParams.AllowedActions))
 	}
 
 	if err := s.runPostAuthHooks(ctx, identity, r); err != nil {
@@ -234,7 +242,9 @@ func (s *Service) Login(ctx context.Context, client string, r *authn.Request) (i
 		s.log.FromContext(ctx).Debug("Failed to parse ip from address", "client", c.Name(), "id", id.ID, "addr", addr, "error", err)
 	}
 
-	sessionToken, err := s.sessionService.CreateToken(ctx, &user.User{ID: userID}, ip, r.HTTPRequest.UserAgent())
+	externalSession := s.resolveExternalSessionFromIdentity(ctx, id, userID)
+
+	sessionToken, err := s.sessionService.CreateToken(ctx, &auth.CreateTokenCommand{User: &user.User{ID: userID}, ClientIP: ip, UserAgent: r.HTTPRequest.UserAgent(), ExternalSession: externalSession})
 	if err != nil {
 		s.metrics.failedLogin.WithLabelValues(client).Inc()
 		s.log.FromContext(ctx).Error("Failed to create session", "client", client, "id", id.ID, "err", err)
@@ -313,7 +323,7 @@ func (s *Service) Logout(ctx context.Context, user identity.Requester, sessionTo
 			goto Default
 		}
 
-		clientRedirect, ok := logoutClient.Logout(ctx, user)
+		clientRedirect, ok := logoutClient.Logout(ctx, user, sessionToken)
 		if !ok {
 			goto Default
 		}
@@ -371,6 +381,20 @@ func (s *Service) IsClientEnabled(name string) bool {
 	return client.IsEnabled()
 }
 
+func (s *Service) GetClientConfig(name string) (authn.SSOClientConfig, bool) {
+	client, ok := s.clients[name]
+	if !ok {
+		return nil, false
+	}
+
+	ssoSettingsAwareClient, ok := client.(authn.SSOSettingsAwareClient)
+	if !ok {
+		return nil, false
+	}
+
+	return ssoSettingsAwareClient.GetConfig(), true
+}
+
 func (s *Service) SyncIdentity(ctx context.Context, identity *authn.Identity) error {
 	ctx, span := s.tracer.Start(ctx, "authn.SyncIdentity")
 	defer span.End()
@@ -385,7 +409,7 @@ func (s *Service) resolveIdenity(ctx context.Context, orgID int64, typedID strin
 	ctx, span := s.tracer.Start(ctx, "authn.resolveIdentity")
 	defer span.End()
 
-	t, i, err := identity.ParseTypeAndID(typedID)
+	t, i, err := claims.ParseTypeID(typedID)
 	if err != nil {
 		return nil, err
 	}
@@ -399,7 +423,8 @@ func (s *Service) resolveIdenity(ctx context.Context, orgID int64, typedID strin
 				AllowGlobalOrg:  true,
 				FetchSyncedUser: true,
 				SyncPermissions: true,
-			}}, nil
+			},
+		}, nil
 	}
 
 	if claims.IsIdentityType(t, claims.TypeServiceAccount) {
@@ -411,7 +436,8 @@ func (s *Service) resolveIdenity(ctx context.Context, orgID int64, typedID strin
 				AllowGlobalOrg:  true,
 				FetchSyncedUser: true,
 				SyncPermissions: true,
-			}}, nil
+			},
+		}, nil
 	}
 
 	resolver, ok := s.idenityResolverClients[string(t)]
@@ -477,4 +503,44 @@ func orgIDFromHeader(req *http.Request) int64 {
 		return 0
 	}
 	return id
+}
+
+func (s *Service) resolveExternalSessionFromIdentity(ctx context.Context, identity *authn.Identity, userID int64) *auth.ExternalSession {
+	if identity.OAuthToken == nil && identity.SAMLSession == nil {
+		return nil
+	}
+
+	info, err := s.authTokenService.GetAuthInfo(ctx, &login.GetAuthInfoQuery{AuthId: identity.GetAuthID(), UserId: userID})
+	if err != nil {
+		s.log.FromContext(ctx).Info("Failed to get auth info", "error", err, "authID", identity.GetAuthID(), "userID", userID)
+		return nil
+	}
+
+	extSession := &auth.ExternalSession{
+		AuthModule: identity.GetAuthenticatedBy(),
+		UserAuthID: info.Id,
+		UserID:     userID,
+	}
+
+	if identity.OAuthToken != nil {
+		extSession.AccessToken = identity.OAuthToken.AccessToken
+		extSession.RefreshToken = identity.OAuthToken.RefreshToken
+		extSession.ExpiresAt = identity.OAuthToken.Expiry
+
+		if idToken, ok := identity.OAuthToken.Extra("id_token").(string); ok && idToken != "" {
+			extSession.IDToken = idToken
+		}
+
+		// As of https://openid.net/specs/openid-connect-session-1_0.html
+		if sessionState, ok := identity.OAuthToken.Extra("session_state").(string); ok && sessionState != "" {
+			extSession.SessionID = sessionState
+		}
+
+		return extSession
+	}
+
+	extSession.SessionID = identity.SAMLSession.SessionIndex
+	extSession.NameID = identity.SAMLSession.NameID
+
+	return extSession
 }

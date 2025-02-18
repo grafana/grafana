@@ -20,7 +20,7 @@ import (
 var newProviderFunc = sdkhttpclient.NewProvider
 
 // New creates a new HTTP client provider with pre-configured middlewares.
-func New(cfg *setting.Cfg, validator validations.PluginRequestValidator, tracer tracing.Tracer) *sdkhttpclient.Provider {
+func New(cfg *setting.Cfg, validator validations.DataSourceRequestURLValidator, tracer tracing.Tracer) *sdkhttpclient.Provider {
 	logger := log.New("httpclient")
 
 	middlewares := []sdkhttpclient.Middleware{
@@ -41,6 +41,8 @@ func New(cfg *setting.Cfg, validator validations.PluginRequestValidator, tracer 
 	if cfg.IPRangeACEnabled {
 		middlewares = append(middlewares, GrafanaRequestIDHeaderMiddleware(cfg, logger))
 	}
+
+	middlewares = append(middlewares, sdkhttpclient.ErrorSourceMiddleware())
 
 	// SigV4 signing should be performed after all headers are added
 	if cfg.SigV4AuthEnabled {

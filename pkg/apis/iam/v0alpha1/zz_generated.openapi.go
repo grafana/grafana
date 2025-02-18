@@ -14,8 +14,8 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.IdentityDisplay":         schema_pkg_apis_iam_v0alpha1_IdentityDisplay(ref),
-		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.IdentityDisplayResults":  schema_pkg_apis_iam_v0alpha1_IdentityDisplayResults(ref),
+		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.Display":                 schema_pkg_apis_iam_v0alpha1_Display(ref),
+		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.DisplayList":             schema_pkg_apis_iam_v0alpha1_DisplayList(ref),
 		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.IdentityRef":             schema_pkg_apis_iam_v0alpha1_IdentityRef(ref),
 		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.SSOSetting":              schema_pkg_apis_iam_v0alpha1_SSOSetting(ref),
 		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.SSOSettingList":          schema_pkg_apis_iam_v0alpha1_SSOSettingList(ref),
@@ -43,7 +43,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 	}
 }
 
-func schema_pkg_apis_iam_v0alpha1_IdentityDisplay(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_iam_v0alpha1_Display(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -72,7 +72,7 @@ func schema_pkg_apis_iam_v0alpha1_IdentityDisplay(ref common.ReferenceCallback) 
 					},
 					"internalId": {
 						SchemaProps: spec.SchemaProps{
-							Description: "InternalID is the legacy numreric id for identity, this is deprecated and should be phased out",
+							Description: "InternalID is the legacy numeric id for identity, Deprecated: use the identityRef where possible",
 							Type:        []string{"integer"},
 							Format:      "int64",
 						},
@@ -86,7 +86,7 @@ func schema_pkg_apis_iam_v0alpha1_IdentityDisplay(ref common.ReferenceCallback) 
 	}
 }
 
-func schema_pkg_apis_iam_v0alpha1_IdentityDisplayResults(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_iam_v0alpha1_DisplayList(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -106,6 +106,12 @@ func schema_pkg_apis_iam_v0alpha1_IdentityDisplayResults(ref common.ReferenceCal
 							Format:      "",
 						},
 					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+						},
+					},
 					"keys": {
 						VendorExtensible: spec.VendorExtensible{
 							Extensions: spec.Extensions{
@@ -121,25 +127,6 @@ func schema_pkg_apis_iam_v0alpha1_IdentityDisplayResults(ref common.ReferenceCal
 										Default: "",
 										Type:    []string{"string"},
 										Format:  "",
-									},
-								},
-							},
-						},
-					},
-					"display": {
-						VendorExtensible: spec.VendorExtensible{
-							Extensions: spec.Extensions{
-								"x-kubernetes-list-type": "atomic",
-							},
-						},
-						SchemaProps: spec.SchemaProps{
-							Description: "Matching items (the caller may need to remap from keys to results)",
-							Type:        []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/pkg/apis/iam/v0alpha1.IdentityDisplay"),
 									},
 								},
 							},
@@ -165,12 +152,31 @@ func schema_pkg_apis_iam_v0alpha1_IdentityDisplayResults(ref common.ReferenceCal
 							},
 						},
 					},
+					"display": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Description: "Matching items (the caller may need to remap from keys to results)",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/pkg/apis/iam/v0alpha1.Display"),
+									},
+								},
+							},
+						},
+					},
 				},
 				Required: []string{"keys", "display"},
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.IdentityDisplay"},
+			"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.Display", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 
@@ -182,7 +188,7 @@ func schema_pkg_apis_iam_v0alpha1_IdentityRef(ref common.ReferenceCallback) comm
 				Properties: map[string]spec.Schema{
 					"type": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Type of identity e.g. \"user\". For a full list see https://github.com/grafana/authlib/blob/2f8d13a83ca3e82da08b53726de1697ee5b5b4cc/claims/type.go#L15-L24",
+							Description: "Type of identity e.g. \"user\". For a full list see https://github.com/grafana/authlib/blob/d6737a7dc8f55e9d42834adb83b5da607ceed293/types/type.go#L15",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
@@ -190,7 +196,7 @@ func schema_pkg_apis_iam_v0alpha1_IdentityRef(ref common.ReferenceCallback) comm
 					},
 					"name": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Name is the unique identifier for identity, guaranteed jo be a unique value for the type within a namespace.",
+							Description: "Name is the unique identifier for identity, guaranteed to be a unique value for the type within a namespace.",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
@@ -757,7 +763,7 @@ func schema_pkg_apis_iam_v0alpha1_TeamMember(ref common.ReferenceCallback) commo
 					},
 					"internalId": {
 						SchemaProps: spec.SchemaProps{
-							Description: "InternalID is the legacy numreric id for identity, this is deprecated and should be phased out",
+							Description: "InternalID is the legacy numeric id for identity, Deprecated: use the identityRef where possible",
 							Type:        []string{"integer"},
 							Format:      "int64",
 						},

@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/grafana/authlib/claims"
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -36,7 +36,7 @@ func (hs *HTTPServer) GetSignedInUser(c *contextmodel.ReqContext) response.Respo
 			IsGrafanaAdmin: c.SignedInUser.GetIsGrafanaAdmin(),
 			OrgID:          c.SignedInUser.GetOrgID(),
 			UID:            c.SignedInUser.GetID(),
-			Name:           c.SignedInUser.NameOrFallback(),
+			Name:           c.SignedInUser.GetName(),
 			Email:          c.SignedInUser.GetEmail(),
 			Login:          c.SignedInUser.GetLogin(),
 		})
@@ -86,12 +86,11 @@ func (hs *HTTPServer) getUserUserProfile(c *contextmodel.ReqContext, userID int6
 		userProfile.AuthLabels = append(userProfile.AuthLabels, authLabel)
 		userProfile.IsExternal = true
 
-		oauthInfo := hs.SocialService.GetOAuthInfoProvider(authInfo.AuthModule)
-		userProfile.IsExternallySynced = login.IsExternallySynced(hs.Cfg, authInfo.AuthModule, oauthInfo)
-		userProfile.IsGrafanaAdminExternallySynced = login.IsGrafanaAdminExternallySynced(hs.Cfg, oauthInfo, authInfo.AuthModule)
+		userProfile.IsExternallySynced = hs.isExternallySynced(hs.Cfg, authInfo.AuthModule)
+		userProfile.IsGrafanaAdminExternallySynced = hs.isGrafanaAdminExternallySynced(hs.Cfg, authInfo.AuthModule)
 	}
 
-	userProfile.AccessControl = hs.getAccessControlMetadata(c, "global.users:id:", strconv.FormatInt(userID, 10))
+	userProfile.AccessControl = getAccessControlMetadata(c, "global.users:id:", strconv.FormatInt(userID, 10))
 	userProfile.AvatarURL = dtos.GetGravatarUrl(hs.Cfg, userProfile.Email)
 
 	return response.JSON(http.StatusOK, userProfile)
@@ -281,7 +280,7 @@ func (hs *HTTPServer) StartEmailVerificaton(c *contextmodel.ReqContext) response
 		return response.Error(http.StatusBadRequest, "Only users can verify their email", nil)
 	}
 
-	if c.SignedInUser.IsEmailVerified() {
+	if c.SignedInUser.GetEmailVerified() {
 		// email is already verified so we don't need to trigger the flow.
 		return response.Respond(http.StatusNotModified, nil)
 	}

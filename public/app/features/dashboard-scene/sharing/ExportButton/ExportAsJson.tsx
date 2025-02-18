@@ -11,6 +11,7 @@ import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { t, Trans } from 'app/core/internationalization';
 import { dispatch } from 'app/store/store';
 
+import { DashboardInteractions } from '../../utils/interactions';
 import { ShareExportTab } from '../ShareExportTab';
 
 const selector = e2eSelectors.pages.ExportDashboardDrawer.ExportAsJson;
@@ -42,7 +43,7 @@ function ExportAsJsonRenderer({ model }: SceneComponentProps<ExportAsJson>) {
   const switchLabel = t('export.json.export-externally-label', 'Export the dashboard to use in another instance');
 
   return (
-    <div data-testid={selector.container}>
+    <div data-testid={selector.container} className={styles.container}>
       <p>
         <Trans i18nKey="export.json.info-text">
           Copy or download a JSON file containing the JSON of your dashboard
@@ -78,7 +79,7 @@ function ExportAsJsonRenderer({ model }: SceneComponentProps<ExportAsJson>) {
           }}
         </AutoSizer>
       </div>
-      <div className={styles.container}>
+      <div className={styles.buttonsContainer}>
         <Stack gap={1} flex={1} direction={{ xs: 'column', sm: 'row' }}>
           <Button
             data-testid={selector.saveToFileButton}
@@ -94,6 +95,9 @@ function ExportAsJsonRenderer({ model }: SceneComponentProps<ExportAsJson>) {
             icon="copy"
             disabled={dashboardJson.loading}
             getText={() => dashboardJson.value ?? ''}
+            onClipboardCopy={() => {
+              DashboardInteractions.exportCopyJsonClicked();
+            }}
           >
             <Trans i18nKey="export.json.copy-button">Copy to clipboard</Trans>
           </ClipboardButton>
@@ -113,11 +117,14 @@ function ExportAsJsonRenderer({ model }: SceneComponentProps<ExportAsJson>) {
 
 function getStyles(theme: GrafanaTheme2) {
   return {
+    container: css({
+      height: '100%',
+    }),
     codeEditorBox: css({
-      margin: `${theme.spacing(2)} 0`,
+      margin: `${theme.spacing(2, 0)}`,
       height: '75%',
     }),
-    container: css({
+    buttonsContainer: css({
       paddingBottom: theme.spacing(2),
     }),
   };

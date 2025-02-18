@@ -18,7 +18,7 @@ import { DashboardInitPhase, DashboardMeta, DashboardRoutes } from 'app/types';
 
 import { Props as LazyLoaderProps } from '../dashgrid/LazyLoader';
 import { DashboardSrv, setDashboardSrv } from '../services/DashboardSrv';
-import { DashboardModel } from '../state';
+import { DashboardModel } from '../state/DashboardModel';
 import { createDashboardModelFixture } from '../state/__fixtures__/dashboardFixtures';
 
 import { Props, UnthemedDashboardPage } from './DashboardPage';
@@ -100,9 +100,9 @@ function setup(propOverrides?: Partial<Props>) {
 
   const props: Props = {
     ...getRouteComponentProps({
-      match: { params: { slug: 'my-dash', uid: '11' }, isExact: false, path: '', url: '' },
       route: { routeName: DashboardRoutes.Normal } as RouteDescriptor,
     }),
+    params: { slug: 'my-dash', uid: '11' },
     navIndex: {
       'dashboards/browse': {
         text: 'Dashboards',
@@ -166,9 +166,9 @@ describe('DashboardPage', () => {
     it('only calls initDashboard once when wrapped in AppChrome', async () => {
       const props: Props = {
         ...getRouteComponentProps({
-          match: { params: { slug: 'my-dash', uid: '11' }, isExact: true, path: '', url: '' },
           route: { routeName: DashboardRoutes.Normal } as RouteDescriptor,
         }),
+        params: { slug: 'my-dash', uid: '11' },
         navIndex: {
           'dashboards/browse': {
             text: 'Dashboards',
@@ -204,6 +204,7 @@ describe('DashboardPage', () => {
   describe('When going into view mode', () => {
     beforeEach(() => {
       setDataSourceSrv({
+        registerRuntimeDataSource: jest.fn(),
         get: jest.fn().mockResolvedValue({ getRef: jest.fn(), query: jest.fn().mockResolvedValue([]) }),
         getInstanceSettings: jest.fn().mockReturnValue({ meta: {} }),
         getList: jest.fn(),
@@ -270,7 +271,7 @@ describe('DashboardPage', () => {
       const { rerender } = setup();
       rerender({ dashboard: getTestDashboard() });
       rerender({
-        match: { params: { uid: 'new-uid' }, isExact: false, path: '', url: '' },
+        params: { uid: 'new-uid' },
         dashboard: getTestDashboard({ title: 'Another dashboard' }),
       });
       await waitFor(() => {

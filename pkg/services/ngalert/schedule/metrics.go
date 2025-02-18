@@ -6,7 +6,7 @@ import (
 	"sort"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
-	models "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 // hashUIDs returns a fnv64 hash of the UIDs for all alert rules.
@@ -47,6 +47,8 @@ func (sch *schedule) updateRulesMetrics(alertRules []*models.AlertRule) {
 	// gauge for groups per org
 	groupsPerOrg := make(map[int64]map[string]struct{})
 
+	simplifiedEditorSettingsPerOrg := make(map[int64]map[string]int64) // orgID -> setting -> count
+
 	for _, rule := range alertRules {
 		// Count rules by org, type and state
 		state := metrics.AlertRuleActiveLabelValue
@@ -70,6 +72,20 @@ func (sch *schedule) updateRulesMetrics(alertRules []*models.AlertRule) {
 			orgsNfSettings[rule.OrgID]++
 		}
 
+		// Count rules with simplified editor settings per org
+		editorSettingsMap := map[string]bool{
+			"simplified_query_and_expressions_section": rule.Metadata.EditorSettings.SimplifiedQueryAndExpressionsSection,
+			"simplified_notifications_section":         rule.Metadata.EditorSettings.SimplifiedNotificationsSection,
+		}
+		for key, value := range editorSettingsMap {
+			if value {
+				if _, ok := simplifiedEditorSettingsPerOrg[rule.OrgID]; !ok {
+					simplifiedEditorSettingsPerOrg[rule.OrgID] = make(map[string]int64)
+				}
+				simplifiedEditorSettingsPerOrg[rule.OrgID][key]++
+			}
+		}
+
 		// Count groups per org
 		orgGroups, ok := groupsPerOrg[rule.OrgID]
 		if !ok {
@@ -83,6 +99,7 @@ func (sch *schedule) updateRulesMetrics(alertRules []*models.AlertRule) {
 	sch.metrics.GroupRules.Reset()
 	sch.metrics.SimpleNotificationRules.Reset()
 	sch.metrics.Groups.Reset()
+	sch.metrics.SimplifiedEditorRules.Reset()
 
 	// Set metrics
 	for key, count := range buckets {
@@ -93,6 +110,11 @@ func (sch *schedule) updateRulesMetrics(alertRules []*models.AlertRule) {
 	}
 	for orgID, groups := range groupsPerOrg {
 		sch.metrics.Groups.WithLabelValues(fmt.Sprint(orgID)).Set(float64(len(groups)))
+	}
+	for orgID, settings := range simplifiedEditorSettingsPerOrg {
+		for setting, count := range settings {
+			sch.metrics.SimplifiedEditorRules.WithLabelValues(fmt.Sprint(orgID), setting).Set(float64(count))
+		}
 	}
 	// While these are the rules that we iterate over, at the moment there's no 100% guarantee that they'll be
 	// scheduled as rules could be removed before we get a chance to evaluate them.

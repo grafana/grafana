@@ -3,13 +3,13 @@ package user
 import (
 	"context"
 	"fmt"
-	"strconv"
 
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	iamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
@@ -28,12 +28,13 @@ var (
 
 var resource = iamv0.UserResourceInfo
 
-func NewLegacyStore(store legacy.LegacyIdentityStore) *LegacyStore {
-	return &LegacyStore{store}
+func NewLegacyStore(store legacy.LegacyIdentityStore, ac claims.AccessClient) *LegacyStore {
+	return &LegacyStore{store, ac}
 }
 
 type LegacyStore struct {
 	store legacy.LegacyIdentityStore
+	ac    claims.AccessClient
 }
 
 func (s *LegacyStore) New() runtime.Object {
@@ -59,28 +60,38 @@ func (s *LegacyStore) ConvertToTable(ctx context.Context, object runtime.Object,
 }
 
 func (s *LegacyStore) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
-	ns, err := request.NamespaceInfoFrom(ctx, true)
+	res, err := common.List(
+		ctx, resource.GetName(), s.ac, common.PaginationFromListOptions(options),
+		func(ctx context.Context, ns claims.NamespaceInfo, p common.Pagination) (*common.ListResponse[iamv0.User], error) {
+			found, err := s.store.ListUsers(ctx, ns, legacy.ListUserQuery{
+				Pagination: p,
+			})
+
+			if err != nil {
+				return nil, err
+			}
+
+			users := make([]iamv0.User, 0, len(found.Users))
+			for _, u := range found.Users {
+				users = append(users, toUserItem(&u, ns.Value))
+			}
+
+			return &common.ListResponse[iamv0.User]{
+				Items:    users,
+				RV:       found.RV,
+				Continue: found.Continue,
+			}, nil
+		},
+	)
+
 	if err != nil {
 		return nil, err
 	}
 
-	found, err := s.store.ListUsers(ctx, ns, legacy.ListUserQuery{
-		OrgID:      ns.OrgID,
-		Pagination: common.PaginationFromListOptions(options),
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	list := &iamv0.UserList{}
-	for _, item := range found.Users {
-		list.Items = append(list.Items, *toUserItem(&item, ns.Value))
-	}
-
-	list.ListMeta.Continue = common.OptionalFormatInt(found.Continue)
-	list.ListMeta.ResourceVersion = common.OptionalFormatInt(found.RV)
-
-	return list, err
+	obj := &iamv0.UserList{Items: res.Items}
+	obj.ListMeta.Continue = common.OptionalFormatInt(res.Continue)
+	obj.ListMeta.ResourceVersion = common.OptionalFormatInt(res.RV)
+	return obj, nil
 }
 
 func (s *LegacyStore) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
@@ -88,22 +99,24 @@ func (s *LegacyStore) Get(ctx context.Context, name string, options *metav1.GetO
 	if err != nil {
 		return nil, err
 	}
-	query := legacy.ListUserQuery{
-		OrgID:      ns.OrgID,
-		Pagination: common.Pagination{Limit: 1},
-	}
 
-	found, err := s.store.ListUsers(ctx, ns, query)
+	found, err := s.store.ListUsers(ctx, ns, legacy.ListUserQuery{
+		OrgID:      ns.OrgID,
+		UID:        name,
+		Pagination: common.Pagination{Limit: 1},
+	})
 	if found == nil || err != nil {
 		return nil, resource.NewNotFound(name)
 	}
 	if len(found.Users) < 1 {
 		return nil, resource.NewNotFound(name)
 	}
-	return toUserItem(&found.Users[0], ns.Value), nil
+
+	obj := toUserItem(&found.Users[0], ns.Value)
+	return &obj, nil
 }
 
-func toUserItem(u *user.User, ns string) *iamv0.User {
+func toUserItem(u *user.User, ns string) iamv0.User {
 	item := &iamv0.User{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              u.UID,
@@ -117,13 +130,11 @@ func toUserItem(u *user.User, ns string) *iamv0.User {
 			Email:         u.Email,
 			EmailVerified: u.EmailVerified,
 			Disabled:      u.IsDisabled,
+			InternalID:    u.ID,
 		},
 	}
 	obj, _ := utils.MetaAccessor(item)
 	obj.SetUpdatedTimestamp(&u.Updated)
-	obj.SetOriginInfo(&utils.ResourceOriginInfo{
-		Name: "SQL",
-		Path: strconv.FormatInt(u.ID, 10),
-	})
-	return item
+	obj.SetDeprecatedInternalID(u.ID) // nolint:staticcheck
+	return *item
 }

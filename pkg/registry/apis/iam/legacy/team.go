@@ -3,16 +3,89 @@ package legacy
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"time"
 
-	"github.com/grafana/authlib/claims"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
+
+type GetTeamInternalIDQuery struct {
+	OrgID int64
+	UID   string
+}
+
+type GetTeamInternalIDResult struct {
+	ID int64
+}
+
+var sqlQueryTeamInternalIDTemplate = mustTemplate("team_internal_id.sql")
+
+func newGetTeamInternalID(sql *legacysql.LegacyDatabaseHelper, q *GetTeamInternalIDQuery) getTeamInternalIDQuery {
+	return getTeamInternalIDQuery{
+		SQLTemplate: sqltemplate.New(sql.DialectForDriver()),
+		TeamTable:   sql.Table("team"),
+		Query:       q,
+	}
+}
+
+type getTeamInternalIDQuery struct {
+	sqltemplate.SQLTemplate
+	TeamTable string
+	Query     *GetTeamInternalIDQuery
+}
+
+func (r getTeamInternalIDQuery) Validate() error { return nil }
+
+func (s *legacySQLStore) GetTeamInternalID(
+	ctx context.Context,
+	ns claims.NamespaceInfo,
+	query GetTeamInternalIDQuery,
+) (*GetTeamInternalIDResult, error) {
+	query.OrgID = ns.OrgID
+	if query.OrgID == 0 {
+		return nil, fmt.Errorf("expected non zero org id")
+	}
+
+	sql, err := s.sql(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	req := newGetTeamInternalID(sql, &query)
+	q, err := sqltemplate.Execute(sqlQueryTeamInternalIDTemplate, req)
+	if err != nil {
+		return nil, fmt.Errorf("execute template %q: %w", sqlQueryTeamInternalIDTemplate.Name(), err)
+	}
+
+	rows, err := sql.DB.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
+	defer func() {
+		if rows != nil {
+			_ = rows.Close()
+		}
+	}()
+
+	if err != nil {
+		return nil, err
+	}
+
+	if !rows.Next() {
+		return nil, errors.New("team not found")
+	}
+
+	var id int64
+	if err := rows.Scan(&id); err != nil {
+		return nil, err
+	}
+
+	return &GetTeamInternalIDResult{
+		id,
+	}, nil
+}
 
 type ListTeamQuery struct {
 	OrgID int64
@@ -132,7 +205,7 @@ type TeamMember struct {
 }
 
 func (m TeamMember) MemberID() string {
-	return identity.NewTypedIDString(claims.TypeUser, m.UserUID)
+	return claims.NewTypeID(claims.TypeUser, m.UserUID)
 }
 
 type TeamBinding struct {

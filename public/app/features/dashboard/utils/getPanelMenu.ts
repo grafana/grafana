@@ -24,7 +24,7 @@ import {
 import { InspectTab } from 'app/features/inspector/types';
 import { isPanelModelLibraryPanel } from 'app/features/library-panels/guard';
 import { createExtensionSubMenu } from 'app/features/plugins/extensions/utils';
-import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
+import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 import { dispatch, store } from 'app/store/store';
 
 import { getCreateAlertInMenuAvailability } from '../../alerting/unified/utils/access-control';
@@ -71,10 +71,6 @@ export function getPanelMenu(
       inspect: panel.id,
       inspectTab: tab,
     });
-  };
-
-  const onMore = (event: React.MouseEvent) => {
-    event.preventDefault();
   };
 
   const onDuplicatePanel = (event: React.MouseEvent) => {
@@ -176,17 +172,6 @@ export function getPanelMenu(
     type: 'submenu',
     text: t('panel.header-menu.inspect', `Inspect`),
     iconClassName: 'info-circle',
-    onClick: (e: React.MouseEvent<HTMLElement>) => {
-      const currentTarget = e.currentTarget;
-      const target = e.target;
-
-      if (
-        target === currentTarget ||
-        (target instanceof HTMLElement && target.closest('[role="menuitem"]') === currentTarget)
-      ) {
-        onInspectPanel();
-      }
-    },
     shortcut: 'i',
     subMenu: inspectMenu,
   });
@@ -323,7 +308,6 @@ export function getPanelMenu(
       text: t('panel.header-menu.more', `More...`),
       iconClassName: 'cube',
       subMenu,
-      onClick: onMore,
     });
   }
 

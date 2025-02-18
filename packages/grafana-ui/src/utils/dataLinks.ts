@@ -1,4 +1,4 @@
-import { LinkModel } from '@grafana/data';
+import { ActionModel, LinkModel } from '@grafana/data';
 
 import { MenuItemProps } from '../components/Menu/MenuItem';
 
@@ -19,7 +19,13 @@ export const linkModelToContextMenuItems: (links: () => LinkModel[]) => MenuItem
   });
 };
 
-export const isCompactUrl = (url: string) => {
-  const compactExploreUrlRegex = /\/explore\?.*&(left|right)=\[(.*\,){2,}(.*){1}\]/;
-  return compactExploreUrlRegex.test(url);
+export const actionModelToContextMenuItems: (actions: ActionModel[]) => MenuItemProps[] = (actions) => {
+  return actions.map((action) => {
+    return {
+      label: action.title,
+      ariaLabel: action.title,
+      icon: 'record-audio',
+      onClick: action.onClick,
+    };
+  });
 };

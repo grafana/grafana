@@ -42,7 +42,7 @@ interface RuleBase {
 
 export interface AlertingRule extends RuleBase {
   alerts?: Alert[];
-  labels: {
+  labels?: {
     [key: string]: string;
   };
   annotations?: {
@@ -70,6 +70,18 @@ export interface RecordingRule extends RuleBase {
 
 export type Rule = AlertingRule | RecordingRule;
 
+export interface GrafanaAlertingRule extends AlertingRule {
+  uid: string;
+  folderUid: string;
+}
+
+export interface GrafanaRecordingRule extends RecordingRule {
+  uid: string;
+  folderUid: string;
+}
+
+export type GrafanaRule = GrafanaAlertingRule | GrafanaRecordingRule;
+
 export type BaseRuleGroup = { name: string };
 
 type TotalsWithoutAlerting = Exclude<AlertInstanceTotalState, AlertInstanceTotalState.Alerting>;
@@ -84,6 +96,18 @@ export interface RuleGroup {
   totals?: Partial<Record<TotalsWithoutAlerting | FiringTotal, number>>;
 }
 
+export interface DataSourceRuleGroup {
+  id: DataSourceRuleGroupIdentifier;
+  interval: number;
+  rules: Rule[];
+}
+
+export interface DataSourceRuleNamespace {
+  rulesSource: DataSourceRulesSourceIdentifier;
+  id: DataSourceNamespaceIdentifier;
+  groups: DataSourceRuleGroup[];
+}
+
 export interface RuleNamespace {
   dataSourceName: string;
   name: string;
@@ -96,6 +120,7 @@ export interface RulesSourceResult {
   namespaces?: RuleNamespace[];
 }
 
+/** @deprecated use RulesSourceIdentifier instead */
 export type RulesSource = DataSourceInstanceSettings<PromOptions | LokiOptions> | 'grafana';
 
 // combined prom and ruler result
@@ -149,13 +174,54 @@ export interface RuleWithLocation<T = RulerRuleDTO> {
   rule: T;
 }
 
-// identifier for where we can find a RuleGroup
+export const GrafanaRulesSourceSymbol = Symbol('grafana');
+export type RulesSourceUid = string | typeof GrafanaRulesSourceSymbol;
+
+export interface DataSourceRulesSourceIdentifier {
+  uid: string;
+  name: string;
+  // discriminator
+  ruleSourceType: 'datasource';
+}
+export interface GrafanaRulesSourceIdentifier {
+  uid: typeof GrafanaRulesSourceSymbol;
+  name: 'grafana';
+  // discriminator
+  ruleSourceType: 'grafana';
+}
+
+export type RulesSourceIdentifier = DataSourceRulesSourceIdentifier | GrafanaRulesSourceIdentifier;
+
+/** @deprecated use RuleGroupIdentifierV2 instead */
 export interface RuleGroupIdentifier {
   dataSourceName: string;
   /** ⚠️ use the Grafana folder UID for Grafana-managed rules */
   namespaceName: string;
   groupName: string;
 }
+
+export interface GrafanaNamespaceIdentifier {
+  uid: string;
+}
+
+export interface DataSourceNamespaceIdentifier {
+  name: string;
+}
+
+export interface GrafanaRuleGroupIdentifier {
+  groupName: string;
+  namespace: GrafanaNamespaceIdentifier;
+  groupOrigin: 'grafana';
+}
+
+export interface DataSourceRuleGroupIdentifier {
+  rulesSource: DataSourceRulesSourceIdentifier;
+  groupName: string;
+  namespace: DataSourceNamespaceIdentifier;
+  groupOrigin: 'datasource';
+}
+
+export type RuleGroupIdentifierV2 = GrafanaRuleGroupIdentifier | DataSourceRuleGroupIdentifier;
 
 export type CombinedRuleWithLocation = CombinedRule & RuleGroupIdentifier;
 
@@ -243,6 +309,7 @@ export interface StateHistoryItem {
 
 export interface RulerDataSourceConfig {
   dataSourceName: string;
+  dataSourceUid: string;
   apiVersion: 'legacy' | 'config';
 }
 

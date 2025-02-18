@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/grafana/authlib/claims"
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -87,18 +87,25 @@ func (s *OrgSync) SyncOrgRolesHook(ctx context.Context, id *authn.Identity, _ *a
 	orgIDs := make([]int64, 0, len(id.OrgRoles))
 	// add any new org roles
 	for orgId, orgRole := range id.OrgRoles {
-		orgIDs = append(orgIDs, orgId)
 		if _, exists := handledOrgIds[orgId]; exists {
+			orgIDs = append(orgIDs, orgId)
 			continue
 		}
 
 		// add role
 		cmd := &org.AddOrgUserCommand{UserID: userID, Role: orgRole, OrgID: orgId}
 		err := s.orgService.AddOrgUser(ctx, cmd)
-		if err != nil && !errors.Is(err, org.ErrOrgNotFound) {
+
+		if errors.Is(err, org.ErrOrgNotFound) {
+			continue
+		}
+
+		if err != nil {
 			ctxLogger.Error("Failed to update active org for user", "error", err)
 			return err
 		}
+
+		orgIDs = append(orgIDs, orgId)
 	}
 
 	// delete any removed org roles

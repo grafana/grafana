@@ -3,16 +3,20 @@ import { of } from 'rxjs';
 import { FieldType, LoadingState, PanelData, getDefaultTimeRange, toDataFrame } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { setPluginImportUtils, setRunRequest } from '@grafana/runtime';
-import { SceneCanvasText, SceneGridLayout, VizPanel } from '@grafana/scenes';
+import { SceneCanvasText, sceneGraph, SceneGridLayout, VizPanel } from '@grafana/scenes';
 import { LibraryPanel } from '@grafana/schema';
 import * as libpanels from 'app/features/library-panels/state/api';
 
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
+import { NEW_LINK } from '../settings/links/utils';
 import { activateFullSceneTree } from '../utils/test-utils';
 
-import { DashboardGridItem } from './DashboardGridItem';
 import { DashboardScene } from './DashboardScene';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
+import { VizPanelLinks } from './PanelLinks';
+import { PanelTimeRange } from './PanelTimeRange';
+import { DashboardGridItem } from './layout-default/DashboardGridItem';
+import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 
 setPluginImportUtils({
   importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({})),
@@ -80,6 +84,40 @@ describe('LibraryPanelBehavior', () => {
     expect(spy).toHaveBeenCalled();
   });
 
+  it('should include panel links', async () => {
+    const { scene } = await buildTestSceneWithLibraryPanel();
+
+    const panel = sceneGraph.findByKey(scene, 'panel-1') as VizPanel;
+    expect(panel.state.titleItems).toBeDefined();
+    const items = panel.state.titleItems as VizPanelLinks[];
+    expect(items[0].state.rawLinks![0].title).toBe('link1');
+  });
+
+  it('should set panel timeRange if panel has query options set', async () => {
+    const { gridItem } = await buildTestSceneWithLibraryPanel();
+
+    const behavior = gridItem.state.body.state.$behaviors![0] as LibraryPanelBehavior;
+    expect(behavior).toBeDefined();
+    expect(gridItem.state.body.state.$timeRange).toBeUndefined();
+
+    const panel = vizPanelToPanel(gridItem.state.body.clone({ $behaviors: undefined }));
+    panel.timeFrom = '2h';
+    panel.timeShift = '3h';
+
+    const libraryPanelState = {
+      name: 'LibraryPanel B',
+      title: 'LibraryPanel B title',
+      uid: '222',
+      type: 'table',
+      version: 2,
+      model: panel,
+    };
+
+    behavior.setPanelFromLibPanel(libraryPanelState);
+
+    expect(gridItem.state.body.state.$timeRange).toBeInstanceOf(PanelTimeRange);
+  });
+
   it('should not update panel if version is the same', async () => {
     const { gridItem } = await buildTestSceneWithLibraryPanel();
 
@@ -129,7 +167,7 @@ describe('LibraryPanelBehavior', () => {
 });
 
 async function buildTestSceneWithLibraryPanel() {
-  const behavior = new LibraryPanelBehavior({ title: 'LibraryPanel A title', name: 'LibraryPanel A', uid: '111' });
+  const behavior = new LibraryPanelBehavior({ name: 'LibraryPanel A', uid: '111' });
 
   const vizPanel = new VizPanel({
     title: 'Panel A',
@@ -145,6 +183,7 @@ async function buildTestSceneWithLibraryPanel() {
     model: {
       title: 'LibraryPanel A title',
       type: 'table',
+      links: [{ ...NEW_LINK, title: 'link1' }],
       options: { showHeader: true },
       fieldConfig: { defaults: {}, overrides: [] },
       datasource: { uid: 'abcdef' },
@@ -170,8 +209,10 @@ async function buildTestSceneWithLibraryPanel() {
     meta: {
       canEdit: true,
     },
-    body: new SceneGridLayout({
-      children: [gridItem],
+    body: new DefaultGridLayoutManager({
+      grid: new SceneGridLayout({
+        children: [gridItem],
+      }),
     }),
   });
 

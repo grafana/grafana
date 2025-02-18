@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
@@ -23,15 +22,14 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationDashboardFolderStore(t *testing.T) {
-	var sqlStore db.ReplDB
+	var sqlStore db.DB
 	var cfg *setting.Cfg
 	var dashboardStore dashboards.Store
 
 	setup := func() {
-		sqlStore, cfg = db.InitTestReplDBWithCfg(t)
-		quotaService := quotatest.New(false, nil)
+		sqlStore, cfg = db.InitTestDBWithCfg(t)
 		var err error
-		dashboardStore, err = database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(featuremgmt.FlagPanelTitleSearch), tagimpl.ProvideService(sqlStore.DB()), quotaService)
+		dashboardStore, err = database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(featuremgmt.FlagPanelTitleSearch), tagimpl.ProvideService(sqlStore))
 		require.NoError(t, err)
 	}
 	t.Run("Given dashboard and folder with the same title", func(t *testing.T) {

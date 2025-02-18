@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/login/social/connectors"
+	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login"
@@ -60,8 +61,11 @@ func fromSocialErr(err *connectors.SocialError) error {
 	return errutil.Unauthorized("auth.oauth.userinfo.failed", errutil.WithPublicMessage(err.Error())).Errorf("%w", err)
 }
 
-var _ authn.LogoutClient = new(OAuth)
-var _ authn.RedirectClient = new(OAuth)
+var (
+	_ authn.LogoutClient           = new(OAuth)
+	_ authn.RedirectClient         = new(OAuth)
+	_ authn.SSOSettingsAwareClient = new(OAuth)
+)
 
 func ProvideOAuth(
 	name string, cfg *setting.Cfg, oauthService oauthtoken.OAuthTokenService,
@@ -203,6 +207,15 @@ func (c *OAuth) IsEnabled() bool {
 	return provider.Enabled
 }
 
+func (c *OAuth) GetConfig() authn.SSOClientConfig {
+	provider := c.socialService.GetOAuthInfoProvider(c.providerName)
+	if provider == nil {
+		return nil
+	}
+
+	return provider
+}
+
 func (c *OAuth) RedirectURL(ctx context.Context, r *authn.Request) (*authn.Redirect, error) {
 	var opts []oauth2.AuthCodeOption
 
@@ -245,8 +258,8 @@ func (c *OAuth) RedirectURL(ctx context.Context, r *authn.Request) (*authn.Redir
 	}, nil
 }
 
-func (c *OAuth) Logout(ctx context.Context, user identity.Requester) (*authn.Redirect, bool) {
-	token := c.oauthService.GetCurrentOAuthToken(ctx, user)
+func (c *OAuth) Logout(ctx context.Context, user identity.Requester, sessionToken *auth.UserToken) (*authn.Redirect, bool) {
+	token := c.oauthService.GetCurrentOAuthToken(ctx, user, sessionToken)
 
 	userID, err := identity.UserIdentifier(user.GetID())
 	if err != nil {
@@ -254,27 +267,25 @@ func (c *OAuth) Logout(ctx context.Context, user identity.Requester) (*authn.Red
 		return nil, false
 	}
 
-	if err := c.oauthService.InvalidateOAuthTokens(ctx, &login.UserAuth{
-		UserId:     userID,
-		AuthId:     user.GetAuthID(),
-		AuthModule: user.GetAuthenticatedBy(),
-	}); err != nil {
-		c.log.FromContext(ctx).Error("Failed to invalidate tokens", "id", user.GetID(), "error", err)
+	ctxLogger := c.log.FromContext(ctx).New("userID", userID)
+
+	if err := c.oauthService.InvalidateOAuthTokens(ctx, user, sessionToken); err != nil {
+		ctxLogger.Error("Failed to invalidate tokens", "error", err)
 	}
 
 	oauthCfg := c.socialService.GetOAuthInfoProvider(c.providerName)
 	if !oauthCfg.Enabled {
-		c.log.FromContext(ctx).Debug("OAuth client is disabled")
+		ctxLogger.Debug("OAuth client is disabled")
 		return nil, false
 	}
 
 	redirectURL := getOAuthSignoutRedirectURL(c.cfg, oauthCfg)
 	if redirectURL == "" {
-		c.log.FromContext(ctx).Debug("No signout redirect url configured")
+		ctxLogger.Debug("No signout redirect url configured")
 		return nil, false
 	}
 
-	if isOICDLogout(redirectURL) && token != nil && token.Valid() {
+	if isOIDCLogout(redirectURL) && token != nil && token.Valid() {
 		if idToken, ok := token.Extra("id_token").(string); ok {
 			redirectURL = withIDTokenHint(redirectURL, idToken)
 		}
@@ -346,7 +357,7 @@ func withIDTokenHint(redirectURL string, idToken string) string {
 	return u.String()
 }
 
-func isOICDLogout(redirectUrl string) bool {
+func isOIDCLogout(redirectUrl string) bool {
 	if redirectUrl == "" {
 		return false
 	}

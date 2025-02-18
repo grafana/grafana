@@ -4,15 +4,17 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/authlib/claims"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	permreg "github.com/grafana/grafana/pkg/services/accesscontrol/permreg/test"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -22,34 +24,155 @@ func TestRBACSync_SyncPermission(t *testing.T) {
 	type testCase struct {
 		name                string
 		identity            *authn.Identity
-		expectedPermissions []accesscontrol.Permission
+		expectedPermissions map[string][]string
 	}
 	testCases := []testCase{
 		{
 			name:     "enriches the identity successfully when SyncPermissions is true",
 			identity: &authn.Identity{ID: "2", Type: claims.TypeUser, OrgID: 1, ClientParams: authn.ClientParams{SyncPermissions: true}},
-			expectedPermissions: []accesscontrol.Permission{
-				{Action: accesscontrol.ActionUsersRead},
+			expectedPermissions: map[string][]string{
+				accesscontrol.ActionUsersRead:  {accesscontrol.ScopeUsersAll},
+				accesscontrol.ActionUsersWrite: {accesscontrol.ScopeUsersAll},
 			},
 		},
 		{
-			name:     "does not load the permissions when SyncPermissions is false",
-			identity: &authn.Identity{ID: "2", Type: claims.TypeUser, OrgID: 1, ClientParams: authn.ClientParams{SyncPermissions: true}},
-			expectedPermissions: []accesscontrol.Permission{
-				{Action: accesscontrol.ActionUsersRead},
+			name:                "does not load the permissions when SyncPermissions is false",
+			identity:            &authn.Identity{ID: "2", Type: claims.TypeUser, OrgID: 1, ClientParams: authn.ClientParams{SyncPermissions: false}},
+			expectedPermissions: nil,
+		},
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			s := setupTestEnv(t)
+
+			err := s.SyncPermissionsHook(context.Background(), tt.identity, &authn.Request{})
+			require.NoError(t, err)
+
+			require.Equal(t, len(tt.expectedPermissions), len(tt.identity.Permissions[tt.identity.OrgID]))
+			for action, scopes := range tt.expectedPermissions {
+				require.ElementsMatch(t, scopes, tt.identity.Permissions[tt.identity.OrgID][action])
+			}
+		})
+	}
+}
+
+func TestRBACSync_FetchPermissions(t *testing.T) {
+	type testCase struct {
+		name                string
+		identity            *authn.Identity
+		expectedPermissions map[string][]string
+	}
+	testCases := []testCase{
+		{
+			name: "restrict permissions from store",
+			identity: &authn.Identity{
+				ID: "2", Type: claims.TypeUser, OrgID: 1,
+				ClientParams: authn.ClientParams{
+					SyncPermissions: true,
+					FetchPermissionsParams: authn.FetchPermissionsParams{
+						RestrictedActions: []string{accesscontrol.ActionUsersRead},
+					},
+				},
+			},
+			expectedPermissions: map[string][]string{accesscontrol.ActionUsersRead: {accesscontrol.ScopeUsersAll}},
+		},
+		{
+			name: "fetch roles permissions",
+			identity: &authn.Identity{
+				ID: "2", Type: claims.TypeUser, OrgID: 1,
+				ClientParams: authn.ClientParams{
+					SyncPermissions: true,
+					FetchPermissionsParams: authn.FetchPermissionsParams{
+						Roles: []string{"fixed:teams:reader"},
+					},
+				},
+			},
+			expectedPermissions: map[string][]string{accesscontrol.ActionTeamsRead: {accesscontrol.ScopeTeamsAll}},
+		},
+		{
+			name: "robust to missing roles",
+			identity: &authn.Identity{
+				ID: "2", Type: claims.TypeUser, OrgID: 1,
+				ClientParams: authn.ClientParams{
+					SyncPermissions: true,
+					FetchPermissionsParams: authn.FetchPermissionsParams{
+						Roles: []string{"fixed:teams:reader", "fixed:unknown:role"},
+					},
+				},
+			},
+			expectedPermissions: map[string][]string{accesscontrol.ActionTeamsRead: {accesscontrol.ScopeTeamsAll}},
+		},
+		{
+			name: "fetch permissions from permissions registry",
+			identity: &authn.Identity{
+				ID: "2", Type: claims.TypeUser, OrgID: 1,
+				ClientParams: authn.ClientParams{
+					SyncPermissions: true,
+					FetchPermissionsParams: authn.FetchPermissionsParams{
+						AllowedActions: []string{"dashboards:read"},
+					},
+				},
+			},
+			expectedPermissions: map[string][]string{"dashboards:read": {"dashboards:uid:*", "folders:uid:*"}},
+		},
+		{
+			name: "fetch scopeless permissions from permissions registry",
+			identity: &authn.Identity{
+				ID: "2", Type: claims.TypeUser, OrgID: 1,
+				ClientParams: authn.ClientParams{
+					SyncPermissions: true,
+					FetchPermissionsParams: authn.FetchPermissionsParams{
+						AllowedActions: []string{"test-app:read"},
+					},
+				},
+			},
+			expectedPermissions: map[string][]string{"test-app:read": {""}},
+		},
+		{
+			name: "robust to unknown actions",
+			identity: &authn.Identity{
+				ID: "2", Type: claims.TypeUser, OrgID: 1,
+				ClientParams: authn.ClientParams{
+					SyncPermissions: true,
+					FetchPermissionsParams: authn.FetchPermissionsParams{
+						AllowedActions: []string{"unknown:read"},
+					},
+				},
+			},
+			expectedPermissions: map[string][]string{},
+		},
+		{
+			name: "restrict permissions from roles and registry",
+			identity: &authn.Identity{
+				ID: "2", Type: claims.TypeUser, OrgID: 1,
+				ClientParams: authn.ClientParams{
+					SyncPermissions: true,
+					FetchPermissionsParams: authn.FetchPermissionsParams{
+						RestrictedActions: []string{accesscontrol.ActionUsersWrite, accesscontrol.ActionTeamsWrite, "dashboards:read"},
+						AllowedActions:    []string{"dashboards:read"},
+						Roles:             []string{"fixed:teams:reader", "fixed:teams:writer"},
+					},
+				},
+			},
+			expectedPermissions: map[string][]string{
+				"dashboards:read":              {"dashboards:uid:*", "folders:uid:*"},
+				accesscontrol.ActionTeamsWrite: {accesscontrol.ScopeTeamsAll},
 			},
 		},
 	}
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			s := setupTestEnv()
+			s := setupTestEnv(t)
 
 			err := s.SyncPermissionsHook(context.Background(), tt.identity, &authn.Request{})
 			require.NoError(t, err)
 
-			assert.Equal(t, 1, len(tt.identity.Permissions))
-			assert.Equal(t, accesscontrol.GroupScopesByActionContext(context.Background(), tt.expectedPermissions), tt.identity.Permissions[tt.identity.OrgID])
+			require.Equal(t, len(tt.expectedPermissions), len(tt.identity.Permissions[tt.identity.OrgID]))
+			for action, scopes := range tt.expectedPermissions {
+				require.ElementsMatch(t, scopes, tt.identity.Permissions[tt.identity.OrgID][action])
+			}
 		})
 	}
 }
@@ -242,18 +365,36 @@ func TestRBACSync_cloudRolesToAddAndRemove(t *testing.T) {
 	}
 }
 
-func setupTestEnv() *RBACSync {
+func setupTestEnv(t *testing.T) *RBACSync {
 	acMock := &acmock.Mock{
 		GetUserPermissionsFunc: func(ctx context.Context, siu identity.Requester, o accesscontrol.Options) ([]accesscontrol.Permission, error) {
 			return []accesscontrol.Permission{
-				{Action: accesscontrol.ActionUsersRead},
+				{Action: accesscontrol.ActionUsersRead, Scope: accesscontrol.ScopeUsersAll},
+				{Action: accesscontrol.ActionUsersWrite, Scope: accesscontrol.ScopeUsersAll},
 			}, nil
 		},
+		GetRoleByNameFunc: func(ctx context.Context, i int64, s string) (*accesscontrol.RoleDTO, error) {
+			if s == "fixed:teams:reader" {
+				return &accesscontrol.RoleDTO{
+					ID: 1, Name: "fixed:teams:reader",
+					Permissions: []accesscontrol.Permission{{Action: accesscontrol.ActionTeamsRead, Scope: accesscontrol.ScopeTeamsAll}},
+				}, nil
+			}
+			if s == "fixed:teams:writer" {
+				return &accesscontrol.RoleDTO{
+					ID: 1, Name: "fixed:teams:writer",
+					Permissions: []accesscontrol.Permission{{Action: accesscontrol.ActionTeamsWrite, Scope: accesscontrol.ScopeTeamsAll}},
+				}, nil
+			}
+			return nil, accesscontrol.ErrRoleNotFound
+		},
 	}
+	permRegistry := permreg.ProvidePermissionRegistry(t)
 	s := &RBACSync{
-		ac:     acMock,
-		log:    log.NewNopLogger(),
-		tracer: tracing.InitializeTracerForTest(),
+		ac:           acMock,
+		log:          log.NewNopLogger(),
+		tracer:       tracing.InitializeTracerForTest(),
+		permRegistry: permRegistry,
 	}
 	return s
 }

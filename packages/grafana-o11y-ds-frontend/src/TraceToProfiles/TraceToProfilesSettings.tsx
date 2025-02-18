@@ -9,7 +9,7 @@ import {
   DataSourcePluginOptionsEditorProps,
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
-import { ConfigDescriptionLink, ConfigSection } from '@grafana/experimental';
+import { ConfigDescriptionLink, ConfigSection } from '@grafana/plugin-ui';
 import { DataSourcePicker, DataSourceWithBackend, getDataSourceSrv } from '@grafana/runtime';
 import { InlineField, InlineFieldRow, Input, InlineSwitch } from '@grafana/ui';
 
@@ -79,6 +79,12 @@ export function TraceToProfilesSettings({ options, onOptionsChange }: Props) {
               updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToProfiles', {
                 ...options.jsonData.tracesToProfiles,
                 datasourceUid: ds.uid,
+              });
+            }}
+            onClear={() => {
+              updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToProfiles', {
+                ...options.jsonData.tracesToProfiles,
+                datasourceUid: undefined,
               });
             }}
           />

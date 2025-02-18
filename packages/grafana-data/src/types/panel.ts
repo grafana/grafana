@@ -135,11 +135,31 @@ export interface PanelEditorProps<T = any> {
 }
 
 /**
+ * This type mirrors the required properties from PanelModel<TOptions> needed for migration handlers.
+ *
+ * By maintaining a separate type definition, we ensure that changes to PanelModel
+ * that would break third-party migration handlers are caught at compile time,
+ * rather than failing silently when third-party code attempts to use an incompatible panel.
+ *
+ * TOptions must be any to follow the same pattern as PanelModel<TOptions>
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export interface PanelMigrationModel<TOptions = any> {
+  id: number;
+  type: string;
+  title?: string;
+  options: TOptions;
+  fieldConfig: PanelModel<TOptions>['fieldConfig'];
+  pluginVersion?: string;
+  targets?: PanelModel<TOptions>['targets'];
+}
+
+/**
  * Called when a panel is first loaded with current panel model to migrate panel options if needed.
  * Can return panel options, or a Promise that resolves to panel options for async migrations
  */
 export type PanelMigrationHandler<TOptions = any> = (
-  panel: PanelModel<TOptions>
+  panel: PanelMigrationModel<TOptions>
 ) => Partial<TOptions> | Promise<Partial<TOptions>>;
 
 /**
@@ -169,7 +189,7 @@ export interface PanelMenuItem {
   type?: 'submenu' | 'divider' | 'group';
   text: string;
   iconClassName?: IconName;
-  onClick?: (event: React.MouseEvent<any>) => void;
+  onClick?: (event: React.MouseEvent) => void;
   shortcut?: string;
   href?: string;
   subMenu?: PanelMenuItem[];

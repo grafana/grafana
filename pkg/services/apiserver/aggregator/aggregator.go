@@ -33,6 +33,7 @@ import (
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/tools/cache"
+	"k8s.io/component-base/metrics/legacyregistry"
 	"k8s.io/klog/v2"
 	v1 "k8s.io/kube-aggregator/pkg/apis/apiregistration/v1"
 	v1helper "k8s.io/kube-aggregator/pkg/apis/apiregistration/v1/helper"
@@ -45,14 +46,16 @@ import (
 	"k8s.io/kube-aggregator/pkg/controllers/autoregister"
 
 	servicev0alpha1 "github.com/grafana/grafana/pkg/apis/service/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/service"
-
 	servicev0alpha1applyconfiguration "github.com/grafana/grafana/pkg/generated/applyconfiguration/service/v0alpha1"
 	serviceclientset "github.com/grafana/grafana/pkg/generated/clientset/versioned"
 	informersv0alpha1 "github.com/grafana/grafana/pkg/generated/informers/externalversions"
+	"github.com/grafana/grafana/pkg/registry/apis/service"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 )
+
+// making sure we only register metrics once into legacy registry
+var registerIntoLegacyRegistryOnce sync.Once
 
 func readCABundlePEM(path string, devMode bool) ([]byte, error) {
 	if devMode {
@@ -75,7 +78,7 @@ func readCABundlePEM(path string, devMode bool) ([]byte, error) {
 	return io.ReadAll(f)
 }
 
-func readRemoteServices(path string) ([]RemoteService, error) {
+func ReadRemoteServices(path string) ([]RemoteService, error) {
 	// We can ignore the gosec G304 warning on this one because `path` comes
 	// from Grafana configuration (commandOptions.AggregatorOptions.RemoteServicesFile)
 	//nolint:gosec
@@ -124,8 +127,9 @@ func CreateAggregatorConfig(commandOptions *options.Options, sharedConfig generi
 			ClientConfig:          sharedConfig.LoopbackClientConfig,
 		},
 		ExtraConfig: aggregatorapiserver.ExtraConfig{
-			ProxyClientCertFile: commandOptions.KubeAggregatorOptions.ProxyClientCertFile,
-			ProxyClientKeyFile:  commandOptions.KubeAggregatorOptions.ProxyClientKeyFile,
+			DisableRemoteAvailableConditionController: true,
+			ProxyClientCertFile:                       commandOptions.KubeAggregatorOptions.ProxyClientCertFile,
+			ProxyClientKeyFile:                        commandOptions.KubeAggregatorOptions.ProxyClientKeyFile,
 			// NOTE: while ProxyTransport can be skipped in the configuration, it allows honoring
 			// DISABLE_HTTP2, HTTPS_PROXY and NO_PROXY env vars as needed
 			ProxyTransport:  createProxyTransport(),
@@ -152,7 +156,7 @@ func CreateAggregatorConfig(commandOptions *options.Options, sharedConfig generi
 	if err != nil {
 		return nil, err
 	}
-	remoteServices, err := readRemoteServices(commandOptions.KubeAggregatorOptions.RemoteServicesFile)
+	remoteServices, err := ReadRemoteServices(commandOptions.KubeAggregatorOptions.RemoteServicesFile)
 	if err != nil {
 		return nil, err
 	}
@@ -260,6 +264,15 @@ func CreateAggregatorServer(config *Config, delegateAPIServer genericapiserver.D
 		}
 	}
 
+	metrics := newAvailabilityMetrics()
+
+	// create shared (remote and local) availability metrics
+	// TODO: decouple from legacyregistry
+	registerIntoLegacyRegistryOnce.Do(func() { err = metrics.Register(legacyregistry.Register, legacyregistry.CustomRegister) })
+	if err != nil {
+		return nil, err
+	}
+
 	availableController, err := NewAvailableConditionController(
 		aggregatorServer.APIRegistrationInformers.Apiregistration().V1().APIServices(),
 		externalNamesInformer,
@@ -267,6 +280,7 @@ func CreateAggregatorServer(config *Config, delegateAPIServer genericapiserver.D
 		nil,
 		proxyCurrentCertKeyContentFunc,
 		completedConfig.ExtraConfig.ServiceResolver,
+		metrics,
 	)
 	if err != nil {
 		return nil, err
@@ -284,19 +298,24 @@ func CreateAggregatorServer(config *Config, delegateAPIServer genericapiserver.D
 		return nil
 	})
 
+	serviceAPIGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(servicev0alpha1.GROUP, aggregatorscheme.Scheme, metav1.ParameterCodec, aggregatorscheme.Codecs)
 	for _, b := range config.Builders {
-		serviceAPIGroupInfo, err := b.GetAPIGroupInfo(
-			aggregatorscheme.Scheme,
-			aggregatorscheme.Codecs,
-			aggregatorConfig.GenericConfig.RESTOptionsGetter,
-			nil, // no dual writer
+		err := b.UpdateAPIGroupInfo(
+			&serviceAPIGroupInfo,
+			builder.APIGroupOptions{
+				Scheme:           aggregatorscheme.Scheme,
+				OptsGetter:       aggregatorConfig.GenericConfig.RESTOptionsGetter,
+				DualWriteBuilder: nil, // no dual writer
+				MetricsRegister:  reg,
+			},
 		)
 		if err != nil {
 			return nil, err
 		}
-		if err := aggregatorServer.GenericAPIServer.InstallAPIGroup(serviceAPIGroupInfo); err != nil {
-			return nil, err
-		}
+	}
+
+	if err := aggregatorServer.GenericAPIServer.InstallAPIGroup(&serviceAPIGroupInfo); err != nil {
+		return nil, err
 	}
 
 	return aggregatorServer, nil

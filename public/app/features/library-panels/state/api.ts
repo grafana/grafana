@@ -2,9 +2,8 @@ import { lastValueFrom } from 'rxjs';
 
 import { VizPanel } from '@grafana/scenes';
 import { LibraryPanel, defaultDashboard } from '@grafana/schema';
-import { DashboardModel } from 'app/features/dashboard/state';
-import { VizPanelManager } from 'app/features/dashboard-scene/panel-edit/VizPanelManager';
-import { DashboardGridItem } from 'app/features/dashboard-scene/scene/DashboardGridItem';
+import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { DashboardGridItem } from 'app/features/dashboard-scene/scene/layout-default/DashboardGridItem';
 import { vizPanelToPanel } from 'app/features/dashboard-scene/serialization/transformSceneToSaveModel';
 import { getLibraryPanelBehavior } from 'app/features/dashboard-scene/utils/utils';
 
@@ -145,10 +144,6 @@ export function libraryVizPanelToSaveModel(vizPanel: VizPanel) {
   const { uid, name, _loadedPanel } = libraryPanelBehavior!.state;
 
   let gridItem = vizPanel.parent;
-
-  if (gridItem instanceof VizPanelManager) {
-    gridItem = gridItem.state.sourcePanel.resolve().parent;
-  }
 
   if (!gridItem || !(gridItem instanceof DashboardGridItem)) {
     throw new Error('Trying to save a library panel that does not have a DashboardGridItem parent');

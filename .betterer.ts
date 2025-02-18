@@ -1,8 +1,6 @@
 import { BettererFileTest } from '@betterer/betterer';
+import { ESLint } from 'eslint';
 import { promises as fs } from 'fs';
-import { ESLint, Linter } from 'eslint';
-import path from 'path';
-import { glob } from 'glob';
 
 // Why are we ignoring these?
 // They're all deprecated/being removed so doesn't make sense to fix types
@@ -11,7 +9,6 @@ const eslintPathsToIgnore = [
   'public/app/angular', // will be removed in Grafana 12
   'public/app/plugins/panel/graph', // will be removed alongside angular in Grafana 12
   'public/app/plugins/panel/table-old', // will be removed alongside angular in Grafana 12
-  'e2e/test-plugins',
 ];
 
 // Avoid using functions that report the position of the issues, as this causes a lot of merge conflicts
@@ -75,88 +72,26 @@ function regexp(pattern: RegExp, issueMessage: string) {
 }
 
 function countEslintErrors() {
-  return new BettererFileTest(async (filePaths, fileTestResult, resolver) => {
+  return new BettererFileTest(async (filePaths, fileTestResult) => {
     // Just bail early if there's no files to test. Prevents trying to get the base config from failing
     if (filePaths.length === 0) {
       return;
     }
 
-    const { baseDirectory } = resolver;
-    const cli = new ESLint({ cwd: baseDirectory });
-
-    // Get the base config to set up parsing etc correctly
-    // this is by far the slowest part of this code. It takes eslint about 2 seconds just to find the config
-    const baseConfig = await cli.calculateConfigForFile(filePaths[0]);
-
-    const baseRules: Partial<Linter.RulesRecord> = {
-      '@emotion/syntax-preference': [2, 'object'],
-      '@typescript-eslint/no-explicit-any': 'error',
-      '@grafana/no-aria-label-selectors': 'error',
-      'no-restricted-imports': [
-        'error',
-        {
-          patterns: [
-            {
-              group: ['@grafana/ui*', '*/Layout/*'],
-              importNames: ['Layout', 'HorizontalGroup', 'VerticalGroup'],
-              message: 'Use Stack component instead.',
-            },
-          ],
-        },
-      ],
-    };
-
-    const config: Linter.Config = {
-      ...baseConfig,
-      rules: baseRules,
-
-      // Be careful when specifying overrides for the same rules as in baseRules - it will... override
-      // the same rule, not merge them with different configurations
-      overrides: [
-        {
-          files: ['**/*.{ts,tsx}'],
-          excludedFiles: ['*.{test,spec}.{ts,tsx}', '**/__mocks__/**', '**/public/test/**'],
-          rules: {
-            '@typescript-eslint/consistent-type-assertions': ['error', { assertionStyle: 'never' }],
-          },
-        },
-
-        {
-          files: ['public/app/**/*.{ts,tsx}'],
-          rules: {
-            'no-barrel-files/no-barrel-files': 'error',
-          },
-        },
-        {
-          files: ['public/**/*.tsx', 'packages/grafana-ui/**/*.tsx'],
-          excludedFiles: [
-            'public/app/plugins/**',
-            '*.story.tsx',
-            '*.{test,spec}.{ts,tsx}',
-            '**/__mocks__/**',
-            'public/test/**',
-          ],
-          rules: {
-            '@grafana/no-untranslated-strings': 'error',
-          },
-        },
-      ],
-    };
-
     const runner = new ESLint({
-      baseConfig: config,
-      useEslintrc: false,
-      cwd: baseDirectory,
+      overrideConfigFile: './.betterer.eslint.config.js',
+      warnIgnored: false,
     });
 
     const lintResults = await runner.lintFiles(Array.from(filePaths));
-    lintResults
-      .filter((lintResult) => lintResult.source)
-      .forEach(({ messages, filePath }) => {
-        const file = fileTestResult.addFile(filePath, '');
-        messages.forEach((message, index) => {
+
+    lintResults.forEach(({ messages, filePath }) => {
+      const file = fileTestResult.addFile(filePath, '');
+      messages
+        .sort((a, b) => (a.message > b.message ? 1 : -1))
+        .forEach((message, index) => {
           file.addIssue(0, 0, message.message, `${index}`);
         });
-      });
+    });
   });
 }

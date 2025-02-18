@@ -2,15 +2,9 @@ import { Unsubscribable } from 'rxjs';
 
 import { AppEvents } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
-import {
-  SceneGridLayout,
-  SceneObjectBase,
-  SceneObjectState,
-  SceneObjectUrlSyncHandler,
-  SceneObjectUrlValues,
-  VizPanel,
-} from '@grafana/scenes';
+import { SceneObjectUrlSyncHandler, SceneObjectUrlValues, VizPanel } from '@grafana/scenes';
 import appEvents from 'app/core/app_events';
+import { contextSrv } from 'app/core/core';
 import { KioskMode } from 'app/types';
 
 import { PanelInspectDrawer } from '../inspect/PanelInspectDrawer';
@@ -18,15 +12,18 @@ import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { createDashboardEditViewFor } from '../settings/utils';
 import { ShareDrawer } from '../sharing/ShareDrawer/ShareDrawer';
 import { ShareModal } from '../sharing/ShareModal';
-import { findVizPanelByKey, getDashboardSceneFor, getLibraryPanelBehavior, isPanelClone } from '../utils/utils';
+import { containsCloneKey } from '../utils/clone';
+import { findEditPanel, findVizPanelByKey, getLibraryPanelBehavior } from '../utils/utils';
 
 import { DashboardScene, DashboardSceneState } from './DashboardScene';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
 import { ViewPanelScene } from './ViewPanelScene';
-import { DashboardRepeatsProcessedEvent } from './types';
+import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
+import { DashboardRepeatsProcessedEvent } from './types/DashboardRepeatsProcessedEvent';
 
 export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
-  private _eventSub?: Unsubscribable;
+  private _viewEventSub?: Unsubscribable;
+  private _inspectEventSub?: Unsubscribable;
 
   constructor(private _scene: DashboardScene) {}
 
@@ -36,15 +33,25 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
 
   getUrlState(): SceneObjectUrlValues {
     const state = this._scene.state;
+
     return {
       inspect: state.inspectPanelKey,
-      autofitpanels: state.body instanceof SceneGridLayout && !!state.body.state.UNSAFE_fitPanels ? 'true' : undefined,
+      autofitpanels: this.getAutoFitPanels(),
       viewPanel: state.viewPanelScene?.getUrlKey(),
       editview: state.editview?.getUrlKey(),
       editPanel: state.editPanel?.getUrlKey() || undefined,
-      kiosk: state.kioskMode === KioskMode.Full ? '' : state.kioskMode === KioskMode.TV ? 'tv' : undefined,
+      kiosk: state.kioskMode === KioskMode.Full ? '' : undefined,
       shareView: state.shareView,
+      orgId: contextSrv.user.orgId.toString(),
     };
+  }
+
+  private getAutoFitPanels(): string | undefined {
+    if (this._scene.state.body instanceof DefaultGridLayoutManager) {
+      return this._scene.state.body.state.grid.state.UNSAFE_fitPanels ? 'true' : undefined;
+    }
+
+    return undefined;
   }
 
   updateFromUrl(values: SceneObjectUrlValues): void {
@@ -72,15 +79,21 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
     if (typeof values.inspect === 'string') {
       let panel = findVizPanelByKey(this._scene, values.inspect);
       if (!panel) {
+        // If we are trying to view a repeat clone that can't be found it might be that the repeats have not been processed yet
+        // Here we check if the key contains the clone key so we force the repeat processing
+        // It doesn't matter if the element or the ancestors are clones or not, just that the key contains the clone key
+        if (containsCloneKey(values.inspect)) {
+          this._handleInspectRepeatClone(values.inspect);
+          return;
+        }
+
         appEvents.emit(AppEvents.alertError, ['Panel not found']);
         locationService.partial({ inspect: null });
         return;
       }
 
       update.inspectPanelKey = values.inspect;
-      update.overlay = new PanelInspectDrawer({
-        $behaviors: [new ResolveInspectPanelByKey({ panelKey: values.inspect })],
-      });
+      update.overlay = new PanelInspectDrawer({ panelRef: panel.getRef() });
     } else if (inspectPanelKey) {
       update.inspectPanelKey = undefined;
       update.overlay = undefined;
@@ -91,8 +104,10 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
       const panel = findVizPanelByKey(this._scene, values.viewPanel);
 
       if (!panel) {
-        // // If we are trying to view a repeat clone that can't be found it might be that the repeats have not been processed yet
-        if (isPanelClone(values.viewPanel)) {
+        // If we are trying to view a repeat clone that can't be found it might be that the repeats have not been processed yet
+        // Here we check if the key contains the clone key so we force the repeat processing
+        // It doesn't matter if the element or the ancestors are clones or not, just that the key contains the clone key
+        if (containsCloneKey(values.viewPanel)) {
           this._handleViewRepeatClone(values.viewPanel);
           return;
         }
@@ -109,7 +124,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
 
     // Handle edit panel state
     if (typeof values.editPanel === 'string') {
-      const panel = findVizPanelByKey(this._scene, values.editPanel);
+      const panel = findEditPanel(this._scene, values.editPanel);
 
       if (!panel) {
         console.warn(`Panel ${values.editPanel} not found`);
@@ -151,19 +166,18 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
       update.shareView = undefined;
     }
 
-    if (this._scene.state.body instanceof SceneGridLayout) {
+    const layout = this._scene.state.body;
+    if (layout instanceof DefaultGridLayoutManager) {
       const UNSAFE_fitPanels = typeof values.autofitpanels === 'string';
 
-      if (!!this._scene.state.body.state.UNSAFE_fitPanels !== UNSAFE_fitPanels) {
-        this._scene.state.body.setState({ UNSAFE_fitPanels });
+      if (!!layout.state.grid.state.UNSAFE_fitPanels !== UNSAFE_fitPanels) {
+        layout.state.grid.setState({ UNSAFE_fitPanels });
       }
     }
 
     if (typeof values.kiosk === 'string') {
       if (values.kiosk === 'true' || values.kiosk === '') {
         update.kioskMode = KioskMode.Full;
-      } else if (values.kiosk === 'tv') {
-        update.kioskMode = KioskMode.TV;
       }
     }
 
@@ -172,12 +186,27 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
     }
   }
 
+  private _handleInspectRepeatClone(inspect: string) {
+    if (!this._inspectEventSub) {
+      this._inspectEventSub = this._scene.subscribeToEvent(DashboardRepeatsProcessedEvent, () => {
+        const panel = findVizPanelByKey(this._scene, inspect);
+        if (panel) {
+          this._inspectEventSub?.unsubscribe();
+          this._scene.setState({
+            inspectPanelKey: inspect,
+            overlay: new PanelInspectDrawer({ panelRef: panel.getRef() }),
+          });
+        }
+      });
+    }
+  }
+
   private _handleViewRepeatClone(viewPanel: string) {
-    if (!this._eventSub) {
-      this._eventSub = this._scene.subscribeToEvent(DashboardRepeatsProcessedEvent, () => {
+    if (!this._viewEventSub) {
+      this._viewEventSub = this._scene.subscribeToEvent(DashboardRepeatsProcessedEvent, () => {
         const panel = findVizPanelByKey(this._scene, viewPanel);
         if (panel) {
-          this._eventSub?.unsubscribe();
+          this._viewEventSub?.unsubscribe();
           this._scene.setState({ viewPanelScene: new ViewPanelScene({ panelRef: panel.getRef() }) });
         }
       });
@@ -195,38 +224,4 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
       }
     });
   }
-}
-
-interface ResolveInspectPanelByKeyState extends SceneObjectState {
-  panelKey: string;
-}
-
-class ResolveInspectPanelByKey extends SceneObjectBase<ResolveInspectPanelByKeyState> {
-  constructor(state: ResolveInspectPanelByKeyState) {
-    super(state);
-    this.addActivationHandler(this._onActivate);
-  }
-
-  private _onActivate = () => {
-    const parent = this.parent;
-
-    if (!parent || !(parent instanceof PanelInspectDrawer)) {
-      throw new Error('ResolveInspectPanelByKey must be attached to a PanelInspectDrawer');
-    }
-
-    const dashboard = getDashboardSceneFor(parent);
-    if (!dashboard) {
-      return;
-    }
-    const panelId = this.state.panelKey;
-    let panel = findVizPanelByKey(dashboard, panelId);
-
-    if (dashboard.state.editPanel) {
-      panel = dashboard.state.editPanel.state.vizManager.state.panel;
-    }
-
-    if (panel) {
-      parent.setState({ panelRef: panel.getRef() });
-    }
-  };
 }

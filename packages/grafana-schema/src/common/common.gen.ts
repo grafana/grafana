@@ -577,6 +577,10 @@ export type TimelineValueAlignment = ('center' | 'left' | 'right');
  */
 export interface VizTextDisplayOptions {
   /**
+   * Explicit percent text size
+   */
+  percentSize?: number;
+  /**
    * Explicit title text size
    */
   titleSize?: number;
@@ -675,6 +679,7 @@ export enum BarGaugeSizing {
  * TODO docs
  */
 export interface VizTooltipOptions {
+  hideZeros?: boolean;
   maxHeight?: number;
   maxWidth?: number;
   mode: TooltipDisplayMode;
@@ -690,6 +695,7 @@ export interface Labels {}
  * modes are deprecated in favor of new cell subOptions
  */
 export enum TableCellDisplayMode {
+  Actions = 'actions',
   Auto = 'auto',
   BasicGauge = 'basic',
   ColorBackground = 'color-background',
@@ -785,6 +791,13 @@ export interface TableDataLinksCellOptions {
 }
 
 /**
+ * Show actions in the cell
+ */
+export interface TableActionsCellOptions {
+  type: TableCellDisplayMode.Actions;
+}
+
+/**
  * Gauge cell options
  */
 export interface TableBarGaugeCellOptions {
@@ -825,7 +838,7 @@ export enum TableCellHeight {
  * Table cell options. Each cell has a display mode
  * and other potential options for that display.
  */
-export type TableCellOptions = (TableAutoCellOptions | TableSparklineCellOptions | TableBarGaugeCellOptions | TableColoredBackgroundCellOptions | TableColorTextCellOptions | TableImageCellOptions | TableDataLinksCellOptions | TableJsonViewCellOptions);
+export type TableCellOptions = (TableAutoCellOptions | TableSparklineCellOptions | TableBarGaugeCellOptions | TableColoredBackgroundCellOptions | TableColorTextCellOptions | TableImageCellOptions | TableDataLinksCellOptions | TableActionsCellOptions | TableJsonViewCellOptions);
 
 /**
  * Use UTC/GMT timezone

@@ -55,12 +55,12 @@ export const QueryEditorRow = ({
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    iconWrapper: css`
-      display: flex;
-    `,
-    icon: css`
-      color: ${theme.colors.text.secondary};
-      margin-left: ${theme.spacing(0.25)};
-    `,
+    iconWrapper: css({
+      display: 'flex',
+    }),
+    icon: css({
+      color: theme.colors.text.secondary,
+      marginLeft: theme.spacing(0.25),
+    }),
   };
 };

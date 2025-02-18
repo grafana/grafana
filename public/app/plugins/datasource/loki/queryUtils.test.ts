@@ -17,8 +17,10 @@ import {
   getNormalizedLokiQuery,
   getNodePositionsFromQuery,
   getLogQueryFromMetricsQueryAtPosition,
+  interpolateShardingSelector,
+  requestSupportsSharding,
 } from './queryUtils';
-import { LokiQuery, LokiQueryType } from './types';
+import { LokiQuery, LokiQueryDirection, LokiQueryType } from './types';
 
 describe('getHighlighterExpressionsFromQuery', () => {
   it('returns no expressions for empty query', () => {
@@ -487,5 +489,141 @@ describe('getNodePositionsFromQuery', () => {
     // LogQL, Expr, LogExpr, Selector, Matchers, Matcher, Identifier, Eq, String
     const nodePositions = getNodePositionsFromQuery('not loql', [String]);
     expect(nodePositions.length).toBe(0);
+  });
+});
+
+describe('interpolateShardingSelector', () => {
+  let queries: LokiQuery[] = [];
+  beforeEach(() => {
+    queries = [
+      {
+        refId: 'A',
+        expr: '{job="grafana"}',
+      },
+    ];
+  });
+
+  it('returns the original query when there are no shards to interpolate', () => {
+    expect(interpolateShardingSelector(queries, [])).toEqual(queries);
+  });
+
+  it('adds the empty shard to the query when -1 is passed', () => {
+    expect(interpolateShardingSelector(queries, [-1])).toEqual([
+      {
+        refId: 'A',
+        expr: '{job="grafana", __stream_shard__=""}',
+      },
+    ]);
+  });
+
+  it('uses an equality filter when a single shard is passed', () => {
+    expect(interpolateShardingSelector(queries, [13])).toEqual([
+      {
+        refId: 'A',
+        expr: '{job="grafana", __stream_shard__="13"}',
+      },
+    ]);
+  });
+
+  it('supports multiple shard values', () => {
+    expect(interpolateShardingSelector(queries, [1, 13, 667])).toEqual([
+      {
+        refId: 'A',
+        expr: '{job="grafana", __stream_shard__=~"1|13|667"}',
+      },
+    ]);
+  });
+
+  describe('For metric queries', () => {
+    let queries: LokiQuery[] = [];
+    beforeEach(() => {
+      queries = [
+        {
+          refId: 'A',
+          expr: 'count_over_time({job="grafana"} [5m])',
+        },
+      ];
+    });
+    it('returns the original query when there are no shards to interpolate', () => {
+      expect(interpolateShardingSelector(queries, [])).toEqual(queries);
+    });
+
+    it('adds the empty shard to the query when -1 is passed', () => {
+      expect(interpolateShardingSelector(queries, [-1])).toEqual([
+        {
+          refId: 'A',
+          expr: 'count_over_time({job="grafana", __stream_shard__=""} | drop __stream_shard__ [5m])',
+        },
+      ]);
+    });
+
+    it('uses an equality filter when a single shard is passed', () => {
+      expect(interpolateShardingSelector(queries, [13])).toEqual([
+        {
+          refId: 'A',
+          expr: 'count_over_time({job="grafana", __stream_shard__="13"} | drop __stream_shard__ [5m])',
+        },
+      ]);
+    });
+
+    it('supports multiple shard values', () => {
+      expect(interpolateShardingSelector(queries, [1, 13, 667])).toEqual([
+        {
+          refId: 'A',
+          expr: 'count_over_time({job="grafana", __stream_shard__=~"1|13|667"} | drop __stream_shard__ [5m])',
+        },
+      ]);
+    });
+
+    it('supports multiple metric queries values', () => {
+      const queries = [
+        {
+          refId: 'A',
+          expr: 'count_over_time({job="grafana"} [5m]) + count_over_time({job="grafana"} [5m])',
+        },
+      ];
+      expect(interpolateShardingSelector(queries, [1, 13, 667])).toEqual([
+        {
+          refId: 'A',
+          expr: 'count_over_time({job="grafana", __stream_shard__=~"1|13|667"} | drop __stream_shard__ [5m]) + count_over_time({job="grafana", __stream_shard__=~"1|13|667"} | drop __stream_shard__ [5m])',
+        },
+      ]);
+    });
+  });
+});
+
+describe('requestSupportsSharding', () => {
+  it('supports log queries with Scan direction', () => {
+    expect(requestSupportsSharding([{ refId: 'A', expr: '{place="luna"}', direction: LokiQueryDirection.Scan }])).toBe(
+      true
+    );
+  });
+
+  it('declines log queries without Scan direction', () => {
+    expect(
+      requestSupportsSharding([{ refId: 'A', expr: '{place="luna"}', direction: LokiQueryDirection.Backward }])
+    ).toBe(false);
+  });
+
+  it.each([
+    'count_over_time({place="luna"}[1m])',
+    'sum_over_time({place="luna"}[1m])',
+    'sum by (level) (count_over_time({place="luna"}[1m]))',
+    'sum by (level) (rate({place="luna"}[1m]))',
+    'sum(sum by (level) (avg_over_time({place="luna"}[1m])))',
+    'sum(rate({place="luna"}[1m]))',
+  ])('allows supported metric queries', (expr: string) => {
+    expect(requestSupportsSharding([{ refId: 'A', expr }])).toBe(true);
+  });
+
+  it.each([
+    'avg_over_time({place="luna"}[1m])',
+    'avg(sum_over_time({place="luna"}[1m]))',
+    'avg(rate({place="luna"}[1m]))',
+    'count_over_time({place="luna"}[1m]) / count_over_time({place="luna"}[1m])',
+    'avg(sum by (level) (avg_over_time({place="luna"}[1m])))',
+    'sum(rate({place="luna"}[1m])) / sum(rate({place="luna"}[1m]))',
+  ])('declines supported metric queries', (expr: string) => {
+    expect(requestSupportsSharding([{ refId: 'A', expr }])).toBe(false);
   });
 });

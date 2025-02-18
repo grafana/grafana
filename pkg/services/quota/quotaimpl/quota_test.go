@@ -20,14 +20,16 @@ import (
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/apikey/apikeyimpl"
+	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/authimpl"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashboardStore "github.com/grafana/grafana/pkg/services/dashboards/database"
+	dashService "github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	dsservice "github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -49,6 +51,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
+	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -69,7 +72,7 @@ func TestIntegrationQuotaCommandsAndQueries(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	sqlStore, cfg := db.InitTestReplDBWithCfg(t)
+	sqlStore, cfg := db.InitTestDBWithCfg(t)
 	cfg.Quota = setting.QuotaSettings{
 		Enabled: true,
 
@@ -479,15 +482,24 @@ func getQuotaBySrvTargetScope(t *testing.T, quotaService quota.Service, srv quot
 	return quota.QuotaDTO{}, err
 }
 
-func setupEnv(t *testing.T, replStore db.ReplDB, cfg *setting.Cfg, b bus.Bus, quotaService quota.Service) {
-	sqlStore := replStore.DB()
+func setupEnv(t *testing.T, sqlStore db.DB, cfg *setting.Cfg, b bus.Bus, quotaService quota.Service) {
 	tracer := tracing.InitializeTracerForTest()
 	_, err := apikeyimpl.ProvideService(sqlStore, cfg, quotaService)
 	require.NoError(t, err)
-	_, err = authimpl.ProvideUserAuthTokenService(sqlStore, nil, quotaService, cfg)
+	_, err = authimpl.ProvideUserAuthTokenService(sqlStore, nil, quotaService, fakes.NewFakeSecretsService(), cfg, tracing.InitializeTracerForTest())
 	require.NoError(t, err)
-	_, err = dashboardStore.ProvideDashboardStore(replStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore), quotaService)
+	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
+	fStore := folderimpl.ProvideStore(sqlStore)
+	dashStore, err := dashboardStore.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore))
 	require.NoError(t, err)
+	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
+	folderSvc := folderimpl.ProvideService(
+		fStore, acmock.New(), bus.ProvideBus(tracing.InitializeTracerForTest()), dashStore, folderStore,
+		nil, sqlStore, featuremgmt.WithFeatures(), supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil)
+	dashService, err := dashService.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, featuremgmt.WithFeatures(), acmock.NewMockedPermissionsService(),
+		ac, folderSvc, fStore, nil, client.MockTestRestConfig{}, nil, quotaService, nil, nil, nil)
+	require.NoError(t, err)
+	dashService.RegisterDashboardPermissions(acmock.NewMockedPermissionsService())
 	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 	secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 	_, err = dsservice.ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService(),
@@ -496,13 +508,13 @@ func setupEnv(t *testing.T, replStore db.ReplDB, cfg *setting.Cfg, b bus.Bus, qu
 	require.NoError(t, err)
 	m := metrics.NewNGAlert(prometheus.NewRegistry())
 
-	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())
-	ruleStore, err := ngstore.ProvideDBStore(cfg, featuremgmt.WithFeatures(), sqlStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac)
+	ruleStore, err := ngstore.ProvideDBStore(cfg, featuremgmt.WithFeatures(), sqlStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac, b)
 	require.NoError(t, err)
+	cfg.UnifiedAlerting.InitializationTimeout = 30 * time.Second
 	_, err = ngalert.ProvideService(
 		cfg, featuremgmt.WithFeatures(), nil, nil, routing.NewRouteRegister(), sqlStore, ngalertfakes.NewFakeKVStore(t), nil, nil, quotaService,
 		secretsService, nil, m, &foldertest.FakeService{}, &acmock.Mock{}, &dashboards.FakeDashboardService{}, nil, b, &acmock.Mock{},
-		annotationstest.NewFakeAnnotationsRepo(), &pluginstore.FakePluginStore{}, tracer, ruleStore, httpclient.NewProvider(),
+		annotationstest.NewFakeAnnotationsRepo(), &pluginstore.FakePluginStore{}, tracer, ruleStore, httpclient.NewProvider(), ngalertfakes.NewFakeReceiverPermissionsService(), usertest.NewUserServiceFake(),
 	)
 	require.NoError(t, err)
 	_, err = storesrv.ProvideService(sqlStore, featuremgmt.WithFeatures(), cfg, quotaService, storesrv.ProvideSystemUsersService())

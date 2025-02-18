@@ -1,20 +1,29 @@
 package zanzana
 
 import (
-	"github.com/openfga/openfga/pkg/server"
-	"github.com/openfga/openfga/pkg/storage"
+	"net/http"
+
+	openfgaserver "github.com/openfga/openfga/pkg/server"
+	openfgastorage "github.com/openfga/openfga/pkg/storage"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana/server"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/setting"
-
-	zserver "github.com/grafana/grafana/pkg/services/authz/zanzana/server"
 )
 
-func NewServer(store storage.OpenFGADatastore, logger log.Logger) (*server.Server, error) {
-	return zserver.New(store, logger)
+func NewServer(cfg setting.ZanzanaServerSettings, openfga server.OpenFGAServer, logger log.Logger) (*server.Server, error) {
+	return server.NewServer(cfg, openfga, logger)
 }
 
-func StartOpenFGAHttpSever(cfg *setting.Cfg, srv grpcserver.Provider, logger log.Logger) error {
-	return zserver.StartOpenFGAHttpSever(cfg, srv, logger)
+func NewHealthServer(target server.DiagnosticServer) *server.HealthServer {
+	return server.NewHealthServer(target)
+}
+
+func NewOpenFGAServer(cfg setting.ZanzanaServerSettings, store openfgastorage.OpenFGADatastore, logger log.Logger) (*openfgaserver.Server, error) {
+	return server.NewOpenFGAServer(cfg, store, logger)
+}
+
+func NewOpenFGAHttpServer(cfg setting.ZanzanaServerSettings, srv grpcserver.Provider) (*http.Server, error) {
+	return server.NewOpenFGAHttpServer(cfg, srv)
 }

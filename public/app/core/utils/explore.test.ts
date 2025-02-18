@@ -1,8 +1,11 @@
-import { DataSourceApi, dateTime, ExploreUrlState, LogsSortOrder } from '@grafana/data';
+import { DataSourceApi, dateTime, ExploreUrlState, GrafanaConfig, locationUtil, LogsSortOrder } from '@grafana/data';
 import { serializeStateToUrlParam } from '@grafana/data/src/utils/url';
+import { config } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { RefreshPicker } from '@grafana/ui';
-import { DEFAULT_RANGE } from 'app/features/explore/state/utils';
+import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { DEFAULT_RANGE } from 'app/features/explore/state/constants';
+import { getVariablesUrlParams } from 'app/features/variables/getAllVariableValuesForUrl';
 
 import { DatasourceSrvMock, MockDataSourceApi } from '../../../test/mocks/datasource_srv';
 
@@ -151,6 +154,27 @@ describe('getExploreUrl', () => {
     expect(url).toMatch(/replaced%20testDs2%20prom/g);
     expect(interpolateMockLoki).toBeCalled();
     expect(interpolateMockProm).toBeCalled();
+  });
+
+  describe('subpath', () => {
+    beforeAll(() => {
+      locationUtil.initialize({
+        config: { appSubUrl: '/subpath' } as GrafanaConfig,
+        getVariablesUrlParams: jest.fn(),
+        getTimeRangeForUrl: jest.fn(),
+      });
+    });
+    afterAll(() => {
+      // Reset locationUtil
+      locationUtil.initialize({
+        config,
+        getTimeRangeForUrl: getTimeSrv().timeRangeForUrl,
+        getVariablesUrlParams: getVariablesUrlParams,
+      });
+    });
+    it('should work with sub path', async () => {
+      expect(await getExploreUrl(args)).toMatch(/subpath\/explore/g);
+    });
   });
 });
 

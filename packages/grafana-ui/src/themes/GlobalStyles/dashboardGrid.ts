@@ -67,5 +67,11 @@ export function getDashboardGridStyles(theme: GrafanaTheme2) {
         },
       },
     },
+
+    '.dashboard-selected-element': {
+      outline: `2px dashed ${theme.colors.primary.border}`,
+      outlineOffset: '0px',
+      borderRadius: '2px',
+    },
   });
 }

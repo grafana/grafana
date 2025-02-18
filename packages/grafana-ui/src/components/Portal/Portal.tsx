@@ -4,6 +4,7 @@ import * as React from 'react';
 import ReactDOM from 'react-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2, useTheme2 } from '../../themes';
 
@@ -51,25 +52,23 @@ export function getPortalContainer() {
 /** @internal */
 export function PortalContainer() {
   const styles = useStyles2(getStyles);
-  return <div id="grafana-portal-container" className={styles.grafanaPortalContainer} />;
+  return (
+    <div
+      id="grafana-portal-container"
+      data-testid={selectors.components.Portal.container}
+      className={styles.grafanaPortalContainer}
+    />
+  );
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
-  const isBodyScrolling = window.grafanaBootData?.settings.featureToggles.bodyScrolling;
   return {
-    grafanaPortalContainer: css(
-      isBodyScrolling
-        ? {
-            position: 'fixed',
-            top: 0,
-            width: '100%',
-            zIndex: theme.zIndex.portal,
-          }
-        : {
-            position: 'absolute',
-            width: '100%',
-          }
-    ),
+    grafanaPortalContainer: css({
+      position: 'fixed',
+      top: 0,
+      width: '100%',
+      zIndex: theme.zIndex.portal,
+    }),
   };
 };
 

@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
@@ -291,7 +290,7 @@ func TestService_RegisterActionSets(t *testing.T) {
 			if tt.actionSetsEnabled {
 				features = featuremgmt.WithFeatures(featuremgmt.FlagAccessActionSets)
 			}
-			ac := acimpl.ProvideAccessControl(features, zanzana.NewNoopClient())
+			ac := acimpl.ProvideAccessControl(features)
 			actionSets := NewActionSetService(features)
 			_, err := New(
 				setting.NewCfg(), tt.options, features, routing.NewRouteRegister(), licensingtest.NewFakeLicensing(),
@@ -493,7 +492,7 @@ func setupTestEnvironment(t *testing.T, ops Options) (*Service, user.Service, te
 	cfg := setting.NewCfg()
 	tracer := tracing.InitializeTracerForTest()
 
-	teamSvc, err := teamimpl.ProvideService(db.FakeReplDBFromDB(sql), cfg, tracer)
+	teamSvc, err := teamimpl.ProvideService(sql, cfg, tracer)
 	require.NoError(t, err)
 
 	orgSvc, err := orgimpl.ProvideService(sql, cfg, quotatest.New(false, nil))
@@ -509,7 +508,7 @@ func setupTestEnvironment(t *testing.T, ops Options) (*Service, user.Service, te
 	license.On("FeatureEnabled", "accesscontrol.enforcement").Return(true).Maybe()
 	acService := &actest.FakeService{}
 	features := featuremgmt.WithFeatures()
-	ac := acimpl.ProvideAccessControl(features, zanzana.NewNoopClient())
+	ac := acimpl.ProvideAccessControl(features)
 	service, err := New(
 		cfg, ops, features, routing.NewRouteRegister(), license,
 		ac, acService, sql, teamSvc, userSvc, NewActionSetService(features),

@@ -16,7 +16,7 @@ import {
 import { selectors } from '@grafana/e2e-selectors';
 import { getDataSourceSrv, locationService } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
-import { Button, CustomScrollbar, HorizontalGroup, InlineFormLabel, Modal, stylesFactory } from '@grafana/ui';
+import { Button, HorizontalGroup, InlineFormLabel, Modal, ScrollContainer, stylesFactory } from '@grafana/ui';
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import config from 'app/core/config';
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -25,7 +25,7 @@ import { DataSourceModal } from 'app/features/datasources/components/picker/Data
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 import { AngularDeprecationPluginNotice } from 'app/features/plugins/angularDeprecation/AngularDeprecationPluginNotice';
-import { isSharedDashboardQuery } from 'app/plugins/datasource/dashboard';
+import { isSharedDashboardQuery } from 'app/plugins/datasource/dashboard/runSharedRequest';
 import { GrafanaQuery } from 'app/plugins/datasource/grafana/types';
 import { QueryGroupOptions } from 'app/types';
 
@@ -331,7 +331,7 @@ export class QueryGroup extends PureComponent<Props, State> {
     const styles = getStyles();
 
     return (
-      <CustomScrollbar autoHeightMin="100%" scrollRefCallback={this.setScrollRef}>
+      <ScrollContainer minHeight="100%" ref={this.setScrollRef}>
         <div className={styles.innerWrapper}>
           {this.renderTopSection(styles)}
           {dsSettings && (
@@ -346,7 +346,7 @@ export class QueryGroup extends PureComponent<Props, State> {
             </>
           )}
         </div>
-      </CustomScrollbar>
+      </ScrollContainer>
     );
   }
 }
@@ -355,29 +355,29 @@ const getStyles = stylesFactory(() => {
   const { theme } = config;
 
   return {
-    innerWrapper: css`
-      display: flex;
-      flex-direction: column;
-      padding: ${theme.spacing.md};
-    `,
-    dataSourceRow: css`
-      display: flex;
-      margin-bottom: ${theme.spacing.md};
-    `,
-    dataSourceRowItem: css`
-      margin-right: ${theme.spacing.inlineFormMargin};
-    `,
-    dataSourceRowItemOptions: css`
-      flex-grow: 1;
-      margin-right: ${theme.spacing.inlineFormMargin};
-    `,
-    queriesWrapper: css`
-      padding-bottom: 16px;
-    `,
-    expressionWrapper: css``,
-    expressionButton: css`
-      margin-right: ${theme.spacing.sm};
-    `,
+    innerWrapper: css({
+      display: 'flex',
+      flexDirection: 'column',
+      padding: theme.spacing.md,
+    }),
+    dataSourceRow: css({
+      display: 'flex',
+      marginBottom: theme.spacing.md,
+    }),
+    dataSourceRowItem: css({
+      marginRight: theme.spacing.inlineFormMargin,
+    }),
+    dataSourceRowItemOptions: css({
+      flexGrow: 1,
+      marginRight: theme.spacing.inlineFormMargin,
+    }),
+    queriesWrapper: css({
+      paddingBottom: '16px',
+    }),
+    expressionWrapper: css({}),
+    expressionButton: css({
+      marginRight: theme.spacing.sm,
+    }),
   };
 });
 

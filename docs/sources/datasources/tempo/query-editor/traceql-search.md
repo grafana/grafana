@@ -56,4 +56,4 @@ To enable the TraceQL query builder in self-hosted Grafana through version 10.1,
 
 [//]: # 'Shared content for the Search - TraceQL query builder'
 
-{{< docs/shared source="grafana" lookup="datasources/tempo-search-traceql.md" leveloffset="+1" version="<GRAFANA VERSION>" >}}
+{{< docs/shared source="grafana" lookup="datasources/tempo-search-traceql.md" leveloffset="+1" version="<GRAFANA_VERSION>" >}}

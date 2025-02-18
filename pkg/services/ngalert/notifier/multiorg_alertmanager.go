@@ -12,6 +12,7 @@ import (
 	alertingCluster "github.com/grafana/alerting/cluster"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 
 	alertingNotify "github.com/grafana/alerting/notify"
 
@@ -100,6 +101,8 @@ type MultiOrgAlertmanager struct {
 
 	metrics *metrics.MultiOrgAlertmanager
 	ns      notifications.Service
+
+	receiverResourcePermissions ac.ReceiverPermissionsService
 }
 
 type OrgAlertmanagerFactory func(ctx context.Context, orgID int64) (Alertmanager, error)
@@ -121,6 +124,7 @@ func NewMultiOrgAlertmanager(
 	decryptFn alertingNotify.GetDecryptedValueFn,
 	m *metrics.MultiOrgAlertmanager,
 	ns notifications.Service,
+	receiverResourcePermissions ac.ReceiverPermissionsService,
 	l log.Logger,
 	s secrets.Service,
 	featureManager featuremgmt.FeatureToggles,
@@ -130,17 +134,18 @@ func NewMultiOrgAlertmanager(
 		Crypto:    NewCrypto(s, configStore, l),
 		ProvStore: provStore,
 
-		logger:         l,
-		settings:       cfg,
-		featureManager: featureManager,
-		alertmanagers:  map[int64]Alertmanager{},
-		configStore:    configStore,
-		orgStore:       orgStore,
-		kvStore:        kvStore,
-		decryptFn:      decryptFn,
-		metrics:        m,
-		ns:             ns,
-		peer:           &NilPeer{},
+		logger:                      l,
+		settings:                    cfg,
+		featureManager:              featureManager,
+		alertmanagers:               map[int64]Alertmanager{},
+		configStore:                 configStore,
+		orgStore:                    orgStore,
+		kvStore:                     kvStore,
+		decryptFn:                   decryptFn,
+		receiverResourcePermissions: receiverResourcePermissions,
+		metrics:                     m,
+		ns:                          ns,
+		peer:                        &NilPeer{},
 	}
 
 	if cfg.UnifiedAlerting.SkipClustering {
@@ -155,7 +160,7 @@ func NewMultiOrgAlertmanager(
 	moa.factory = func(ctx context.Context, orgID int64) (Alertmanager, error) {
 		m := metrics.NewAlertmanagerMetrics(moa.metrics.GetOrCreateOrgRegistry(orgID), l)
 		stateStore := NewFileStore(orgID, kvStore)
-		return NewAlertmanager(ctx, orgID, moa.settings, moa.configStore, stateStore, moa.peer, moa.decryptFn, moa.ns, m, featureManager.IsEnabled(ctx, featuremgmt.FlagAlertingSimplifiedRouting))
+		return NewAlertmanager(ctx, orgID, moa.settings, moa.configStore, stateStore, moa.peer, moa.decryptFn, moa.ns, m, featureManager)
 	}
 
 	for _, opt := range opts {
@@ -249,7 +254,7 @@ func (moa *MultiOrgAlertmanager) Run(ctx context.Context) error {
 func (moa *MultiOrgAlertmanager) LoadAndSyncAlertmanagersForOrgs(ctx context.Context) error {
 	moa.logger.Debug("Synchronizing Alertmanagers for orgs")
 	// First, load all the organizations from the database.
-	orgIDs, err := moa.orgStore.GetOrgs(ctx)
+	orgIDs, err := moa.orgStore.FetchOrgIds(ctx)
 	if err != nil {
 		return err
 	}

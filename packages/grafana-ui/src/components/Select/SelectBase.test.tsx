@@ -267,9 +267,6 @@ describe('SelectBase', () => {
     });
 
     describe('toggle all', () => {
-      beforeEach(() => {
-        jest.resetAllMocks();
-      });
       it('renders menu with select all toggle', async () => {
         render(
           <SelectBase

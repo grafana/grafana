@@ -2,6 +2,7 @@ package alerting
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -20,10 +21,19 @@ import (
 
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/expr"
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/folder"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota"
+	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
+	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
+	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/user/userimpl"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -51,6 +61,11 @@ const defaultAlertmanagerConfigJSON = `
 	}
 }
 `
+
+type Response struct {
+	Message string `json:"message"`
+	TraceID string `json:"traceID"`
+}
 
 func getRequest(t *testing.T, url string, expStatusCode int) *http.Response {
 	t.Helper()
@@ -233,6 +248,7 @@ func convertGettableGrafanaRuleToPostable(gettable *apimodels.GettableGrafanaRul
 		ExecErrState:         gettable.ExecErrState,
 		IsPaused:             &gettable.IsPaused,
 		NotificationSettings: gettable.NotificationSettings,
+		Metadata:             gettable.Metadata,
 	}
 }
 
@@ -272,6 +288,42 @@ func (a apiClient) ReloadCachedPermissions(t *testing.T) {
 	require.Equalf(t, http.StatusOK, resp.StatusCode, "failed to reload permissions cache")
 }
 
+// AssignReceiverPermission sends a request to access control API to assign permissions to a user, role, or team on a receiver.
+func (a apiClient) AssignReceiverPermission(t *testing.T, receiverUID string, cmd accesscontrol.SetResourcePermissionCommand) (int, string) {
+	t.Helper()
+
+	var assignment string
+	var assignTo string
+	if cmd.UserID != 0 {
+		assignment = "users"
+		assignTo = fmt.Sprintf("%d", cmd.UserID)
+	} else if cmd.TeamID != 0 {
+		assignment = "teams"
+		assignTo = fmt.Sprintf("%d", cmd.TeamID)
+	} else {
+		assignment = "builtInRoles"
+		assignTo = cmd.BuiltinRole
+	}
+
+	body := strings.NewReader(fmt.Sprintf(`{"permission": "%s"}`, cmd.Permission))
+	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/api/access-control/receivers/%s/%s/%s", a.url, receiverUID, assignment, assignTo), body)
+	require.NoError(t, err)
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	require.NoError(t, err)
+	require.NotNil(t, resp)
+
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+	b, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+
+	return resp.StatusCode, string(b)
+}
+
 // CreateFolder creates a folder for storing our alerts, and then refreshes the permission cache to make sure that following requests will be accepted
 func (a apiClient) CreateFolder(t *testing.T, uID string, title string, parentUID ...string) {
 	t.Helper()
@@ -297,6 +349,19 @@ func (a apiClient) CreateFolder(t *testing.T, uID string, title string, parentUI
 	require.NoError(t, err)
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 	a.ReloadCachedPermissions(t)
+}
+
+func (a apiClient) ReloadAlertingFileProvisioning(t *testing.T) {
+	t.Helper()
+
+	u := fmt.Sprintf("%s/api/admin/provisioning/alerting/reload", a.url)
+	// nolint:gosec
+	resp, err := http.Post(u, "application/json", nil)
+	defer func() {
+		require.NoError(t, resp.Body.Close())
+	}()
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
 }
 
 func (a apiClient) GetOrgQuotaLimits(t *testing.T, orgID int64) (int64, int64) {
@@ -410,6 +475,13 @@ func (a apiClient) PostRulesGroupWithStatus(t *testing.T, folder string, group *
 	return m, resp.StatusCode, string(b)
 }
 
+func (a apiClient) PostRulesGroup(t *testing.T, folder string, group *apimodels.PostableRuleGroupConfig) apimodels.UpdateRuleGroupResponse {
+	t.Helper()
+	m, status, raw := a.PostRulesGroupWithStatus(t, folder, group)
+	requireStatusCode(t, http.StatusAccepted, status, raw)
+	return m
+}
+
 func (a apiClient) PostRulesExportWithStatus(t *testing.T, folder string, group *apimodels.PostableRuleGroupConfig, params *apimodels.ExportQueryParams) (int, string) {
 	t.Helper()
 	buf := bytes.Buffer{}
@@ -510,10 +582,9 @@ func (a apiClient) DeleteSilence(t *testing.T, id string) (any, int, string) {
 	return sendRequest[dynamic](t, req, http.StatusOK)
 }
 
-func (a apiClient) GetRulesGroup(t *testing.T, folder string, group string) apimodels.RuleGroupConfigResponse {
+func (a apiClient) GetRulesGroup(t *testing.T, folder string, group string) (apimodels.RuleGroupConfigResponse, int) {
 	result, status, _ := a.GetRulesGroupWithStatus(t, folder, group)
-	require.Equal(t, http.StatusAccepted, status)
-	return result
+	return result, status
 }
 
 func (a apiClient) GetRulesGroupWithStatus(t *testing.T, folder string, group string) (apimodels.RuleGroupConfigResponse, int, []byte) {
@@ -614,6 +685,30 @@ func (a apiClient) ExportRulesWithStatus(t *testing.T, params *apimodels.AlertRu
 	require.NoError(t, err)
 
 	return resp.StatusCode, string(b)
+}
+
+func (a apiClient) GetRuleGroupProvisioning(t *testing.T, folderUID string, groupName string) (apimodels.AlertRuleGroup, int, string) {
+	t.Helper()
+
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/v1/provisioning/folder/%s/rule-groups/%s", a.url, folderUID, groupName), nil)
+	require.NoError(t, err)
+
+	return sendRequest[apimodels.AlertRuleGroup](t, req, http.StatusOK)
+}
+
+func (a apiClient) CreateOrUpdateRuleGroupProvisioning(t *testing.T, group apimodels.AlertRuleGroup) (apimodels.AlertRuleGroup, int, string) {
+	t.Helper()
+
+	buf := bytes.Buffer{}
+	enc := json.NewEncoder(&buf)
+	err := enc.Encode(group)
+	require.NoError(t, err)
+
+	req, err := http.NewRequest(http.MethodPut, fmt.Sprintf("%s/api/v1/provisioning/folder/%s/rule-groups/%s", a.url, group.FolderUID, group.Title), &buf)
+	require.NoError(t, err)
+	req.Header.Add("Content-Type", "application/json")
+
+	return sendRequest[apimodels.AlertRuleGroup](t, req, http.StatusOK)
 }
 
 func (a apiClient) SubmitRuleForBacktesting(t *testing.T, config apimodels.BacktestConfig) (int, string) {
@@ -774,6 +869,32 @@ func (a apiClient) DeleteMuteTimingWithStatus(t *testing.T, name string) (int, s
 	return resp.StatusCode, string(body)
 }
 
+func (a apiClient) ExportMuteTiming(t *testing.T, name string, format string) string {
+	t.Helper()
+
+	u, err := url.Parse(fmt.Sprintf("%s/api/v1/provisioning/mute-timings/%s/export", a.url, name))
+	require.NoError(t, err)
+	q := url.Values{}
+	q.Set("format", format)
+	u.RawQuery = q.Encode()
+
+	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
+	require.NoError(t, err)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	require.NoError(t, err)
+
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+	body, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+
+	requireStatusCode(t, http.StatusOK, resp.StatusCode, string(body))
+	return string(body)
+}
+
 func (a apiClient) GetRouteWithStatus(t *testing.T) (apimodels.Route, int, string) {
 	t.Helper()
 
@@ -816,6 +937,32 @@ func (a apiClient) UpdateRouteWithStatus(t *testing.T, route apimodels.Route, no
 	require.NoError(t, err)
 
 	return resp.StatusCode, string(body)
+}
+
+func (a apiClient) ExportNotificationPolicy(t *testing.T, format string) string {
+	t.Helper()
+
+	u, err := url.Parse(fmt.Sprintf("%s/api/v1/provisioning/policies/export", a.url))
+	require.NoError(t, err)
+	q := url.Values{}
+	q.Set("format", format)
+	u.RawQuery = q.Encode()
+
+	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
+	require.NoError(t, err)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	require.NoError(t, err)
+
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+	body, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+
+	requireStatusCode(t, http.StatusOK, resp.StatusCode, string(body))
+	return string(body)
 }
 
 func (a apiClient) UpdateRoute(t *testing.T, route apimodels.Route, noProvenance bool) {
@@ -931,6 +1078,22 @@ func (a apiClient) GetActiveAlertsWithStatus(t *testing.T) (apimodels.AlertGroup
 	return sendRequest[apimodels.AlertGroups](t, req, http.StatusOK)
 }
 
+func (a apiClient) GetRuleVersionsWithStatus(t *testing.T, ruleUID string) (apimodels.GettableRuleVersions, int, string) {
+	t.Helper()
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/ruler/grafana/api/v1/rule/%s/versions", a.url, ruleUID), nil)
+	require.NoError(t, err)
+	return sendRequest[apimodels.GettableRuleVersions](t, req, http.StatusOK)
+}
+
+func (a apiClient) GetRuleByUID(t *testing.T, ruleUID string) apimodels.GettableExtendedRuleNode {
+	t.Helper()
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/ruler/grafana/api/v1/rule/%s", a.url, ruleUID), nil)
+	require.NoError(t, err)
+	rule, status, raw := sendRequest[apimodels.GettableExtendedRuleNode](t, req, http.StatusOK)
+	requireStatusCode(t, http.StatusOK, status, raw)
+	return rule
+}
+
 func sendRequest[T any](t *testing.T, req *http.Request, successStatusCode int) (T, int, string) {
 	t.Helper()
 	client := &http.Client{}
@@ -956,4 +1119,24 @@ func sendRequest[T any](t *testing.T, req *http.Request, successStatusCode int) 
 func requireStatusCode(t *testing.T, expected, actual int, response string) {
 	t.Helper()
 	require.Equalf(t, expected, actual, "Unexpected status. Response: %s", response)
+}
+
+func createUser(t *testing.T, db db.DB, cfg *setting.Cfg, cmd user.CreateUserCommand) int64 {
+	t.Helper()
+
+	cfg.AutoAssignOrg = true
+	cfg.AutoAssignOrgId = 1
+
+	quotaService := quotaimpl.ProvideService(db, cfg)
+	orgService, err := orgimpl.ProvideService(db, cfg, quotaService)
+	require.NoError(t, err)
+	usrSvc, err := userimpl.ProvideService(
+		db, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
+		quotaService, supportbundlestest.NewFakeBundleService(),
+	)
+	require.NoError(t, err)
+
+	u, err := usrSvc.Create(context.Background(), &cmd)
+	require.NoError(t, err)
+	return u.ID
 }

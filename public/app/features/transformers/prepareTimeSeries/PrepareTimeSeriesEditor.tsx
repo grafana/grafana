@@ -110,9 +110,9 @@ export function PrepareTimeSeriesEditor(props: TransformerUIProps<PrepareTimeSer
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  info: css`
-    margin-left: 20px;
-  `,
+  info: css({
+    marginLeft: '20px',
+  }),
 });
 
 export const prepareTimeseriesTransformerRegistryItem: TransformerRegistryItem<PrepareTimeSeriesOptions> = {

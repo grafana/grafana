@@ -1,21 +1,28 @@
-import { act } from '@testing-library/react';
-import { renderHook } from '@testing-library/react-hooks';
+import { act, renderHook } from '@testing-library/react';
 
 import { AddedComponentsRegistry } from './registry/AddedComponentsRegistry';
+import { AddedFunctionsRegistry } from './registry/AddedFunctionsRegistry';
 import { AddedLinksRegistry } from './registry/AddedLinksRegistry';
 import { ExposedComponentsRegistry } from './registry/ExposedComponentsRegistry';
 import { PluginExtensionRegistries } from './registry/types';
+import { useLoadAppPlugins } from './useLoadAppPlugins';
 import { createUsePluginExtensions } from './usePluginExtensions';
+
+jest.mock('./useLoadAppPlugins');
 
 describe('usePluginExtensions()', () => {
   let registries: PluginExtensionRegistries;
+  const pluginId = 'myorg-extensions-app';
+  const extensionPointId = `${pluginId}/extension-point/v1`;
 
   beforeEach(() => {
     registries = {
       addedComponentsRegistry: new AddedComponentsRegistry(),
       addedLinksRegistry: new AddedLinksRegistry(),
       exposedComponentsRegistry: new ExposedComponentsRegistry(),
+      addedFunctionsRegistry: new AddedFunctionsRegistry(),
     };
+    jest.mocked(useLoadAppPlugins).mockReturnValue({ isLoading: false });
   });
 
   it('should return an empty array if there are no extensions registered for the extension point', () => {
@@ -30,9 +37,6 @@ describe('usePluginExtensions()', () => {
   });
 
   it('should return the plugin link extensions from the registry', () => {
-    const extensionPointId = 'plugins/foo/bar/v1';
-    const pluginId = 'my-app-plugin';
-
     registries.addedLinksRegistry.register({
       pluginId,
       configs: [
@@ -60,21 +64,19 @@ describe('usePluginExtensions()', () => {
   });
 
   it('should return the plugin component extensions from the registry', () => {
-    const linkExtensionPointId = 'plugins/foo/bar/v1';
-    const componentExtensionPointId = 'plugins/component/bar/v1';
-    const pluginId = 'my-app-plugin';
+    const componentExtensionPointId = `${pluginId}/component/v1`;
 
     registries.addedLinksRegistry.register({
       pluginId,
       configs: [
         {
-          targets: linkExtensionPointId,
+          targets: extensionPointId,
           title: '1',
           description: '1',
           path: `/a/${pluginId}/2`,
         },
         {
-          targets: linkExtensionPointId,
+          targets: extensionPointId,
           title: '2',
           description: '2',
           path: `/a/${pluginId}/2`,
@@ -109,8 +111,6 @@ describe('usePluginExtensions()', () => {
   });
 
   it('should dynamically update the extensions registered for a certain extension point', () => {
-    const extensionPointId = 'plugins/foo/bar/v1';
-    const pluginId = 'my-app-plugin';
     const usePluginExtensions = createUsePluginExtensions(registries);
     let { result, rerender } = renderHook(() => usePluginExtensions({ extensionPointId }));
 
@@ -149,7 +149,6 @@ describe('usePluginExtensions()', () => {
   it('should only render the hook once', () => {
     const addedComponentsRegistrySpy = jest.spyOn(registries.addedComponentsRegistry, 'asObservable');
     const addedLinksRegistrySpy = jest.spyOn(registries.addedLinksRegistry, 'asObservable');
-    const extensionPointId = 'plugins/foo/bar/v1';
     const usePluginExtensions = createUsePluginExtensions(registries);
 
     renderHook(() => usePluginExtensions({ extensionPointId }));
@@ -158,8 +157,6 @@ describe('usePluginExtensions()', () => {
   });
 
   it('should return the same extensions object if the context object is the same', async () => {
-    const extensionPointId = 'plugins/foo/bar/v1';
-    const pluginId = 'my-app-plugin';
     const usePluginExtensions = createUsePluginExtensions(registries);
 
     // Add extensions to the registry
@@ -200,8 +197,6 @@ describe('usePluginExtensions()', () => {
   });
 
   it('should return a new extensions object if the context object is different', () => {
-    const extensionPointId = 'plugins/foo/bar/v1';
-    const pluginId = 'my-app-plugin';
     const usePluginExtensions = createUsePluginExtensions(registries);
 
     // Add extensions to the registry
@@ -232,8 +227,6 @@ describe('usePluginExtensions()', () => {
   });
 
   it('should return a new extensions object if the registry changes but the context object is the same', () => {
-    const extensionPointId = 'plugins/foo/bar/v1';
-    const pluginId = 'my-app-plugin';
     const context = {};
     const usePluginExtensions = createUsePluginExtensions(registries);
 

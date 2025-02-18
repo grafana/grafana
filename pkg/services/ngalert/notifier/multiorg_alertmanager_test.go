@@ -127,7 +127,7 @@ func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgsWithFailures(t *testing.T)
 		2: {AlertmanagerConfiguration: brokenConfig, OrgID: orgWithBadConfig},
 	})
 
-	orgs, err := mam.orgStore.GetOrgs(ctx)
+	orgs, err := mam.orgStore.FetchOrgIds(ctx)
 	require.NoError(t, err)
 	// No successfully applied configurations should be found at first.
 	{
@@ -383,7 +383,20 @@ func setupMam(t *testing.T, cfg *setting.Cfg) *MultiOrgAlertmanager {
 	decryptFn := secretsService.GetDecryptedValue
 	reg := prometheus.NewPedanticRegistry()
 	m := metrics.NewNGAlert(reg)
-	mam, err := NewMultiOrgAlertmanager(cfg, cs, orgStore, kvStore, provStore, decryptFn, m.GetMultiOrgAlertmanagerMetrics(), nil, log.New("testlogger"), secretsService, featuremgmt.WithFeatures())
+	mam, err := NewMultiOrgAlertmanager(
+		cfg,
+		cs,
+		orgStore,
+		kvStore,
+		provStore,
+		decryptFn,
+		m.GetMultiOrgAlertmanagerMetrics(),
+		nil,
+		ngfakes.NewFakeReceiverPermissionsService(),
+		log.New("testlogger"),
+		secretsService,
+		featuremgmt.WithFeatures(),
+	)
 	require.NoError(t, err)
 	return mam
 }

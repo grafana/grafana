@@ -59,7 +59,14 @@ export const UserListPublicDashboardPage = () => {
               <td className="max-width-10">{user.lastSeenAtAge}</td>
               <td className="max-width-10">
                 <Stack gap={2}>
-                  <span>{user.totalDashboards} dashboard(s)</span>
+                  <span>
+                    <Trans
+                      i18nKey="public-dashboard-users-access-list.table-body.dashboard-count"
+                      count={user.totalDashboards}
+                    >
+                      {{ count: user.totalDashboards }} dashboards
+                    </Trans>
+                  </span>
                   <DashboardsListModalButton email={user.email} />
                 </Stack>
               </td>

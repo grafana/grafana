@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2, Stack } from '@grafana/ui';
+import { Stack, useStyles2 } from '@grafana/ui';
 
 import { PopupCard } from '../HoverCard';
 
@@ -31,7 +31,11 @@ export function TemplateDataDocs() {
   return (
     <Stack gap={2}>
       <TemplateDataTable
-        caption={<h4 className={styles.header}>Template Data</h4>}
+        caption={
+          <h4 className={styles.header}>
+            Notification template data <span>Available in the context of a notification.</span>{' '}
+          </h4>
+        }
         dataItems={GlobalTemplateData}
         typeRenderer={(type) =>
           type === '[]Alert' ? (
@@ -51,7 +55,7 @@ export function TemplateDataDocs() {
   );
 }
 
-const getTemplateDataDocsStyles = (theme: GrafanaTheme2) => ({
+export const getTemplateDataDocsStyles = (theme: GrafanaTheme2) => ({
   header: css({
     color: theme.colors.text.primary,
 
@@ -131,7 +135,7 @@ function KeyValueTemplateDataTable() {
   );
 }
 
-const getTemplateDataTableStyles = (theme: GrafanaTheme2) => ({
+export const getTemplateDataTableStyles = (theme: GrafanaTheme2) => ({
   table: css({
     borderCollapse: 'collapse',
     width: '100%',

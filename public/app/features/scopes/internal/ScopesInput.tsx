@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { groupBy } from 'lodash';
 import { useEffect, useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -34,55 +33,46 @@ export function ScopesInput({
   }, [scopes]);
 
   const scopesPaths = useMemo(() => {
-    const pathsTitles = scopes.map(({ scope, path }) => {
+    const pathsScopesMap = scopes.reduce<Record<string, string>>((acc, { scope, path }) => {
       let currentLevel = nodes;
 
-      let titles: string[];
+      const titles = path.reduce<string[]>((acc, nodeName) => {
+        const cl = currentLevel?.[nodeName];
 
-      if (path.length > 0) {
-        titles = path.reduce<string[]>((acc, nodeName) => {
-          const cl = currentLevel[nodeName];
-
-          if (!cl) {
-            return acc;
-          }
-
-          const { title, nodes } = cl;
-
-          currentLevel = nodes;
-
-          acc.push(title);
-
+        if (!cl) {
           return acc;
-        }, []);
-
-        if (titles[0] === '') {
-          titles.splice(0, 1);
         }
-      } else {
-        titles = [scope.spec.title];
+
+        const { title, nodes } = cl;
+
+        currentLevel = nodes;
+
+        acc.push(title);
+
+        return acc;
+      }, []);
+
+      if (titles[0] === '') {
+        titles.splice(0, 1);
       }
 
-      const scopeName = titles.pop();
+      const scopeName = titles.length > 0 ? titles.pop()! : scope.spec.title;
+      const titlesString = titles.length > 0 ? titles.join(' > ') : '';
 
-      return [titles.join(' > '), scopeName];
-    });
+      acc[titlesString] = acc[titlesString] ? `${acc[titlesString]}, ${scopeName}` : scopeName;
 
-    const groupedByPath = groupBy(pathsTitles, ([path]) => path);
+      return acc;
+    }, {});
 
-    const scopesPaths = Object.entries(groupedByPath)
-      .map(([path, pathScopes]) => {
-        const scopesTitles = pathScopes.map(([, scopeTitle]) => scopeTitle).join(', ');
-
-        return (path ? [path, scopesTitles] : [scopesTitles]).join(' > ');
-      })
-      .map((path) => (
-        <p key={path} className={styles.scopePath}>
-          {path}
-        </p>
-      ));
-
-    return <>{scopesPaths}</>;
+    return (
+      <>
+        {Object.entries(pathsScopesMap).map(([path, scopesTitles]) => (
+          <p key={path} className={styles.scopePath}>
+            {path ? `${path} > ${scopesTitles}` : scopesTitles}
+          </p>
+        ))}
+      </>
+    );
   }, [nodes, scopes, styles]);
 
   const scopesTitles = useMemo(() => scopes.map(({ scope }) => scope.spec.title).join(', '), [scopes]);

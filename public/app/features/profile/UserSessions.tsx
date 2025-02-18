@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
-import { t } from 'i18next';
 import { PureComponent } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Button, Icon, LoadingPlaceholder } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
+import { t, Trans } from 'app/core/internationalization';
 import { formatDate } from 'app/core/internationalization/dates';
 import { UserSession } from 'app/types';
 
@@ -43,6 +43,9 @@ class UserSessions extends PureComponent<Props> {
                   <th>
                     <Trans i18nKey="user-session.browser-column">Browser & OS</Trans>
                   </th>
+                  <th>
+                    <Trans i18nKey="user-session.identity-provider-column">Identity Provider</Trans>
+                  </th>
                   <th></th>
                 </tr>
               </thead>
@@ -55,6 +58,9 @@ class UserSessions extends PureComponent<Props> {
                     <td>{session.clientIp}</td>
                     <td>
                       {session.browser} on {session.os} {session.osVersion}
+                    </td>
+                    <td>
+                      {session.authModule && <TagBadge label={session.authModule} removeIcon={false} count={0} />}
                     </td>
                     <td>
                       <Button

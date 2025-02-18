@@ -7,7 +7,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	"github.com/grafana/authlib/claims"
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	iamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
@@ -97,7 +97,7 @@ var cfg = &setting.Cfg{}
 
 func mapToTeamMember(m legacy.TeamMember) iamv0.TeamMember {
 	return iamv0.TeamMember{
-		IdentityDisplay: iamv0.IdentityDisplay{
+		Display: iamv0.Display{
 			Identity: iamv0.IdentityRef{
 				Type: claims.TypeUser,
 				Name: m.UserUID,

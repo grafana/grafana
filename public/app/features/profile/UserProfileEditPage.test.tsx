@@ -8,7 +8,6 @@ import * as useQueryParams from 'app/core/hooks/useQueryParams';
 
 import { TestProvider } from '../../../test/helpers/TestProvider';
 import { backendSrv } from '../../core/services/backend_srv';
-import { TeamPermissionLevel } from '../../types';
 import { getMockTeam } from '../teams/__mocks__/teamMocks';
 
 import { Props, UserProfileEditPage } from './UserProfileEditPage';
@@ -31,6 +30,7 @@ const defaultProps: Props = {
   ...initialUserState,
   user: {
     id: 1,
+    uid: 'aaaaaa',
     name: 'Test User',
     email: 'test@test.com',
     login: 'test',
@@ -39,12 +39,11 @@ const defaultProps: Props = {
     orgId: 0,
   },
   teams: [
-    getMockTeam(0, {
+    getMockTeam(0, 'aaaaaa', {
       name: 'Team One',
       email: 'team.one@test.com',
       avatarUrl: '/avatar/07d881f402480a2a511a9a15b5fa82c0',
       memberCount: 2000,
-      permission: TeamPermissionLevel.Admin,
     }),
   ],
   orgs: [

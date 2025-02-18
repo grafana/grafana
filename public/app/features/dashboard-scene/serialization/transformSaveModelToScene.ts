@@ -1,7 +1,7 @@
 import { uniqueId } from 'lodash';
 
 import { DataFrameDTO, DataFrameJSON } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, logMeasurement, reportInteraction } from '@grafana/runtime';
 import {
   VizPanel,
   SceneTimePicker,
@@ -19,16 +19,21 @@ import {
   SceneDataLayerProvider,
   SceneDataLayerControls,
   UserActionEvent,
+  SceneInteractionProfileEvent,
+  SceneObjectState,
 } from '@grafana/scenes';
-import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+import { contextSrv } from 'app/core/core';
+import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { DashboardDTO, DashboardDataDTO } from 'app/types';
 
+import { addPanelsOnLoadBehavior } from '../addToDashboard/addPanelsOnLoadBehavior';
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
-import { DashboardGridItem, RepeatDirection } from '../scene/DashboardGridItem';
 import { registerDashboardMacro } from '../scene/DashboardMacro';
+import { DashboardReloadBehavior } from '../scene/DashboardReloadBehavior';
 import { DashboardScene } from '../scene/DashboardScene';
 import { DashboardScopesFacade } from '../scene/DashboardScopesFacade';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
@@ -36,13 +41,16 @@ import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { panelLinksBehavior, panelMenuBehavior } from '../scene/PanelMenuBehavior';
 import { PanelNotices } from '../scene/PanelNotices';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
-import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
-import { RowActions } from '../scene/row-actions/RowActions';
+import { AngularDeprecation } from '../scene/angular/AngularDeprecation';
+import { DashboardGridItem, RepeatDirection } from '../scene/layout-default/DashboardGridItem';
+import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
+import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior';
+import { RowActions } from '../scene/layout-default/row-actions/RowActions';
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
 import { preserveDashboardSceneStateInLocalStorage } from '../utils/dashboardSessionState';
 import { DashboardInteractions } from '../utils/interactions';
-import { getDashboardSceneFor, getVizPanelKeyForPanelId } from '../utils/utils';
+import { getVizPanelKeyForPanelId } from '../utils/utils';
 import { createVariablesForDashboard, createVariablesForSnapshot } from '../utils/variables';
 
 import { getAngularPanelMigrationHandler } from './angularMigration';
@@ -168,6 +176,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
   let variables: SceneVariableSet | undefined;
   let annotationLayers: SceneDataLayerProvider[] = [];
   let alertStatesLayer: AlertStatesDataLayer | undefined;
+  const uid = dto.uid;
 
   if (oldModel.templating?.list?.length) {
     if (oldModel.meta.isSnapshot) {
@@ -209,7 +218,40 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
     });
   }
 
+  const scopeMeta =
+    config.featureToggles.scopeFilters && oldModel.scopeMeta
+      ? {
+          trait: oldModel.scopeMeta.trait,
+          groups: oldModel.scopeMeta.groups,
+        }
+      : undefined;
+
+  const behaviorList: SceneObjectState['$behaviors'] = [
+    new behaviors.CursorSync({
+      sync: oldModel.graphTooltip,
+    }),
+    new behaviors.SceneQueryController({
+      enableProfiling:
+        config.dashboardPerformanceMetrics.findIndex((uid) => uid === '*' || uid === oldModel.uid) !== -1,
+      onProfileComplete: getDashboardInteractionCallback(oldModel.uid, oldModel.title),
+    }),
+    registerDashboardMacro,
+    registerPanelInteractionsReporter,
+    new behaviors.LiveNowTimer({ enabled: oldModel.liveNow }),
+    preserveDashboardSceneStateInLocalStorage,
+    addPanelsOnLoadBehavior,
+    new DashboardScopesFacade({
+      reloadOnParamsChange: config.featureToggles.reloadDashboardsOnParamsChange && oldModel.meta.reloadOnParamsChange,
+      uid,
+    }),
+    new DashboardReloadBehavior({
+      reloadOnParamsChange: config.featureToggles.reloadDashboardsOnParamsChange && oldModel.meta.reloadOnParamsChange,
+      uid,
+      version: oldModel.version,
+    }),
+  ];
   const dashboardScene = new DashboardScene({
+    uid,
     description: oldModel.description,
     editable: oldModel.editable,
     preload: dto.preload ?? false,
@@ -219,12 +261,13 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
     meta: oldModel.meta,
     tags: oldModel.tags || [],
     title: oldModel.title,
-    uid: oldModel.uid,
     version: oldModel.version,
-    body: new SceneGridLayout({
-      isLazy: dto.preload ? false : true,
-      children: createSceneObjectsForPanels(oldModel.panels),
-      $behaviors: [trackIfEmpty],
+    scopeMeta,
+    body: new DefaultGridLayoutManager({
+      grid: new SceneGridLayout({
+        isLazy: !(dto.preload || contextSrv.user.authenticatedBy === 'render'),
+        children: createSceneObjectsForPanels(oldModel.panels),
+      }),
     }),
     $timeRange: new SceneTimeRange({
       from: oldModel.time.from,
@@ -235,20 +278,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
       UNSAFE_nowDelay: oldModel.timepicker?.nowDelay,
     }),
     $variables: variables,
-    $behaviors: [
-      new behaviors.CursorSync({
-        sync: oldModel.graphTooltip,
-      }),
-      new behaviors.SceneQueryController(),
-      registerDashboardMacro,
-      registerPanelInteractionsReporter,
-      new behaviors.LiveNowTimer({ enabled: oldModel.liveNow }),
-      preserveDashboardSceneStateInLocalStorage,
-      new DashboardScopesFacade({
-        reloadOnScopesChange: oldModel.meta.reloadOnScopesChange,
-        uid: oldModel.uid,
-      }),
-    ],
+    $behaviors: behaviorList,
     $data: new DashboardDataLayerSet({ annotationLayers, alertStatesLayer }),
     controls: new DashboardControls({
       variableControls: [new VariableValueSelectors({}), new SceneDataLayerControls()],
@@ -269,12 +299,15 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
   const repeatOptions: Partial<{ variableName: string; repeatDirection: RepeatDirection }> = panel.repeat
     ? {
         variableName: panel.repeat,
-        repeatDirection: panel.repeatDirection === 'h' ? 'h' : 'v',
+        repeatDirection: panel.repeatDirection === 'v' ? 'v' : 'h',
       }
     : {};
 
   const titleItems: SceneObject[] = [];
 
+  if (config.featureToggles.angularDeprecationUI) {
+    titleItems.push(new AngularDeprecation());
+  }
   titleItems.push(
     new VizPanelLinks({
       rawLinks: panel.links,
@@ -283,6 +316,8 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
   );
 
   titleItems.push(new PanelNotices());
+
+  const timeOverrideShown = (panel.timeFrom || panel.timeShift) && !panel.hideTimeOverride;
 
   const vizPanelState: VizPanelState = {
     key: getVizPanelKeyForPanelId(panel.id),
@@ -294,7 +329,7 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
     pluginVersion: panel.pluginVersion,
     displayMode: panel.transparent ? 'transparent' : undefined,
     // To be replaced with it's own option persited option instead derived
-    hoverHeader: !panel.title && !panel.timeFrom && !panel.timeShift,
+    hoverHeader: !panel.title && !timeOverrideShown,
     hoverHeaderOffset: 0,
     $data: createPanelDataProvider(panel),
     titleItems,
@@ -340,7 +375,7 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
   });
 }
 
-function registerPanelInteractionsReporter(scene: DashboardScene) {
+export function registerPanelInteractionsReporter(scene: DashboardScene) {
   // Subscriptions set with subscribeToEvent are automatically unsubscribed when the scene deactivated
   scene.subscribeToEvent(UserActionEvent, (e) => {
     const { interaction } = e.payload;
@@ -390,16 +425,39 @@ export const convertOldSnapshotToScenesSnapshot = (panel: PanelModel) => {
   }
 };
 
-function trackIfEmpty(grid: SceneGridLayout) {
-  getDashboardSceneFor(grid).setState({ isEmpty: grid.state.children.length === 0 });
+function getDashboardInteractionCallback(uid: string, title: string) {
+  return (e: SceneInteractionProfileEvent) => {
+    let interactionType = '';
 
-  const sub = grid.subscribeToState((n, p) => {
-    if (n.children.length !== p.children.length || n.children !== p.children) {
-      getDashboardSceneFor(grid).setState({ isEmpty: n.children.length === 0 });
+    if (e.origin === 'SceneTimeRange') {
+      interactionType = 'time-range-change';
+    } else if (e.origin === 'SceneRefreshPicker') {
+      interactionType = 'refresh';
+    } else if (e.origin === 'DashboardScene') {
+      interactionType = 'view';
+    } else if (e.origin.indexOf('Variable') > -1) {
+      interactionType = 'variable-change';
     }
-  });
+    reportInteraction('dashboard-render', {
+      interactionType,
+      duration: e.duration,
+      networkDuration: e.networkDuration,
+      totalJSHeapSize: e.totalJSHeapSize,
+      usedJSHeapSize: e.usedJSHeapSize,
+      jsHeapSizeLimit: e.jsHeapSizeLimit,
+    });
 
-  return () => {
-    sub.unsubscribe();
+    logMeasurement(
+      `dashboard.${interactionType}`,
+      {
+        duration: e.duration,
+        networkDuration: e.networkDuration,
+        totalJSHeapSize: e.totalJSHeapSize,
+        usedJSHeapSize: e.usedJSHeapSize,
+        jsHeapSizeLimit: e.jsHeapSizeLimit,
+        timeSinceBoot: performance.measure('time_since_boot', 'frontend_boot_js_done_time_seconds').duration,
+      },
+      { dashboard: uid, title: title }
+    );
   };
 }

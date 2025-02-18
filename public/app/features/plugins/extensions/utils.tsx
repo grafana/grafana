@@ -16,21 +16,17 @@ import {
   PanelMenuItem,
   PluginExtensionAddedLinkConfig,
   urlUtil,
+  PluginExtensionPoints,
 } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
+import { reportInteraction, config, AppPluginConfig } from '@grafana/runtime';
 import { Modal } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
-// TODO: instead of depending on the service as a singleton, inject it as an argument from the React context
-import { sidecarService } from 'app/core/services/SidecarService';
 import { getPluginSettings } from 'app/features/plugins/pluginSettings';
 import { ShowModalReactEvent } from 'app/types/events';
 
+import { ExtensionsLog, log } from './logs/log';
 import { AddedLinkRegistryItem } from './registry/AddedLinksRegistry';
 import { assertIsNotPromise, assertLinkPathIsValid, assertStringProps, isPromise } from './validators';
-
-export function logWarning(message: string) {
-  console.warn(`[Plugin Extensions] ${message}`);
-}
 
 export function isPluginExtensionLinkConfig(
   extension: PluginExtensionConfig | undefined
@@ -56,7 +52,11 @@ export function createOpenModalFunction(pluginId: string): PluginExtensionEventH
 
     appEvents.publish(
       new ShowModalReactEvent({
-        component: wrapWithPluginContext<ModalWrapperProps>(pluginId, getModalWrapper({ title, body, width, height })),
+        component: wrapWithPluginContext<ModalWrapperProps>(
+          pluginId,
+          getModalWrapper({ title, body, width, height }),
+          log
+        ),
       })
     );
   };
@@ -66,7 +66,7 @@ type ModalWrapperProps = {
   onDismiss: () => void;
 };
 
-export const wrapWithPluginContext = <T,>(pluginId: string, Component: React.ComponentType<T>) => {
+export const wrapWithPluginContext = <T,>(pluginId: string, Component: React.ComponentType<T>, log: ExtensionsLog) => {
   const WrappedExtensionComponent = (props: T & React.JSX.IntrinsicAttributes) => {
     const {
       error,
@@ -79,12 +79,15 @@ export const wrapWithPluginContext = <T,>(pluginId: string, Component: React.Com
     }
 
     if (error) {
-      logWarning(`Could not fetch plugin meta information for "${pluginId}", aborting. (${error.message})`);
+      log.error(`Could not fetch plugin meta information for "${pluginId}", aborting. (${error.message})`, {
+        stack: error.stack ?? '',
+        message: error.message,
+      });
       return null;
     }
 
     if (!pluginMeta) {
-      logWarning(`Fetched plugin meta information is empty for "${pluginId}", aborting.`);
+      log.error(`Fetched plugin meta information is empty for "${pluginId}", aborting.`);
       return null;
     }
 
@@ -295,9 +298,14 @@ export function createExtensionSubMenu(extensions: PluginExtensionLink[]): Panel
   return subMenu;
 }
 
-export function getLinkExtensionOverrides(pluginId: string, config: AddedLinkRegistryItem, context?: object) {
+export function getLinkExtensionOverrides(
+  pluginId: string,
+  config: AddedLinkRegistryItem,
+  log: ExtensionsLog,
+  context?: object
+) {
   try {
-    const overrides = config.configure?.(context, { isAppOpened: () => isAppOpened(pluginId) });
+    const overrides = config.configure?.(context);
 
     // Hiding the extension
     if (overrides === undefined) {
@@ -322,7 +330,7 @@ export function getLinkExtensionOverrides(pluginId: string, config: AddedLinkReg
     assertStringProps({ title, description }, ['title', 'description']);
 
     if (Object.keys(rest).length > 0) {
-      logWarning(
+      log.warning(
         `Extension "${config.title}", is trying to override restricted properties: ${Object.keys(rest).join(
           ', '
         )} which will be ignored.`
@@ -338,7 +346,10 @@ export function getLinkExtensionOverrides(pluginId: string, config: AddedLinkReg
     };
   } catch (error) {
     if (error instanceof Error) {
-      logWarning(error.message);
+      log.error(`Failed to configure link with title "${config.title}"`, {
+        stack: error.stack ?? '',
+        message: error.message,
+      });
     }
 
     // If there is an error, we hide the extension
@@ -351,6 +362,7 @@ export function getLinkExtensionOnClick(
   pluginId: string,
   extensionPointId: string,
   config: AddedLinkRegistryItem,
+  log: ExtensionsLog,
   context?: object
 ): ((event?: React.MouseEvent) => void) | undefined {
   const { onClick } = config;
@@ -371,23 +383,27 @@ export function getLinkExtensionOnClick(
       const helpers: PluginExtensionEventHelpers = {
         context,
         openModal: createOpenModalFunction(pluginId),
-        isAppOpened: () => isAppOpened(pluginId),
-        openAppInSideview: () => openAppInSideview(pluginId),
-        closeAppInSideview: () => closeAppInSideview(pluginId),
       };
 
+      log.debug(`onClick '${config.title}' at '${extensionPointId}'`);
       const result = onClick(event, helpers);
 
       if (isPromise(result)) {
-        result.catch((e) => {
-          if (e instanceof Error) {
-            logWarning(e.message);
+        result.catch((error) => {
+          if (error instanceof Error) {
+            log.error(error.message, {
+              message: error.message,
+              stack: error.stack ?? '',
+            });
           }
         });
       }
     } catch (error) {
       if (error instanceof Error) {
-        logWarning(error.message);
+        log.error(error.message, {
+          message: error.message,
+          stack: error.stack ?? '',
+        });
       }
     }
   };
@@ -403,8 +419,88 @@ export function getLinkExtensionPathWithTracking(pluginId: string, path: string,
   );
 }
 
-export const openAppInSideview = (pluginId: string) => sidecarService.openApp(pluginId);
+// Comes from the `app_mode` setting in the Grafana config (defaults to "development")
+// Can be set with the `GF_DEFAULT_APP_MODE` environment variable
+export const isGrafanaDevMode = () => config.buildInfo.env === 'development';
 
-export const closeAppInSideview = (pluginId: string) => sidecarService.closeApp(pluginId);
+export const getAppPluginConfigs = (pluginIds: string[] = []) =>
+  Object.values(config.apps).filter((app) => pluginIds.includes(app.id));
 
-export const isAppOpened = (pluginId: string) => sidecarService.isAppOpened(pluginId);
+export const getAppPluginIdFromExposedComponentId = (exposedComponentId: string) => {
+  return exposedComponentId.split('/')[0];
+};
+
+// Returns a list of app plugin ids that are registering extensions to this extension point.
+// (These plugins are necessary to be loaded to use the extension point.)
+// (The function also returns the plugin ids that the plugins - that extend the extension point - depend on.)
+export const getExtensionPointPluginDependencies = (extensionPointId: string): string[] => {
+  return Object.values(config.apps)
+    .filter(
+      (app) =>
+        app.extensions.addedLinks.some((link) => link.targets.includes(extensionPointId)) ||
+        app.extensions.addedComponents.some((component) => component.targets.includes(extensionPointId))
+    )
+    .map((app) => app.id)
+    .reduce((acc: string[], id: string) => {
+      return [...acc, id, ...getAppPluginDependencies(id)];
+    }, []);
+};
+
+// Returns a list of app plugin ids that are necessary to be loaded to use the exposed component.
+// (It is first the plugin that exposes the component, and then the ones that it depends on.)
+export const getExposedComponentPluginDependencies = (exposedComponentId: string) => {
+  const pluginId = getAppPluginIdFromExposedComponentId(exposedComponentId);
+
+  return [pluginId].reduce((acc: string[], pluginId: string) => {
+    return [...acc, pluginId, ...getAppPluginDependencies(pluginId)];
+  }, []);
+};
+
+// Returns a list of app plugin ids that are necessary to be loaded, based on the `dependencies.extensions`
+// metadata field. (For example the plugins that expose components that the app depends on.)
+// Heads up! This is a recursive function.
+export const getAppPluginDependencies = (pluginId: string, visited: string[] = []): string[] => {
+  if (!config.apps[pluginId]) {
+    return [];
+  }
+
+  // Prevent infinite recursion (it would happen if there is a circular dependency between app plugins)
+  if (visited.includes(pluginId)) {
+    return [];
+  }
+
+  const pluginIdDependencies = config.apps[pluginId].dependencies.extensions.exposedComponents.map(
+    getAppPluginIdFromExposedComponentId
+  );
+
+  return (
+    pluginIdDependencies
+      .reduce((acc, _pluginId) => {
+        return [...acc, ...getAppPluginDependencies(_pluginId, [...visited, pluginId])];
+      }, pluginIdDependencies)
+      // We don't want the plugin to "depend on itself"
+      .filter((id) => id !== pluginId)
+  );
+};
+
+// Returns a list of app plugins that has to be loaded before core Grafana could finish the initialization.
+export const getAppPluginsToAwait = () => {
+  const pluginIds = [
+    // The "cloud-home-app" is registering banners once it's loaded, and this can cause a rerender in the AppChrome if it's loaded after the Grafana app init.
+    'cloud-home-app',
+  ];
+
+  return Object.values(config.apps).filter((app) => pluginIds.includes(app.id));
+};
+
+// Returns a list of app plugins that has to be preloaded in parallel with the core Grafana initialization.
+export const getAppPluginsToPreload = () => {
+  // The DashboardPanelMenu extension point is using the `getPluginExtensions()` API in scenes at the moment, which means that it cannot yet benefit from dynamic plugin loading.
+  const dashboardPanelMenuPluginIds = getExtensionPointPluginDependencies(PluginExtensionPoints.DashboardPanelMenu);
+  const awaitedPluginIds = getAppPluginsToAwait().map((app) => app.id);
+  const isNotAwaited = (app: AppPluginConfig) => !awaitedPluginIds.includes(app.id);
+
+  return Object.values(config.apps).filter((app) => {
+    return isNotAwaited(app) && (app.preload || dashboardPanelMenuPluginIds.includes(app.id));
+  });
+};

@@ -17,30 +17,23 @@ export const MigrateToServiceAccountsCard = ({ onMigrate, apikeysCount, disabled
   const docsLink = (
     <a
       className="external-link"
-      href="https://grafana.com/docs/grafana/latest/administration/service-accounts/migrate-api-keys/)"
+      href="https://grafana.com/docs/grafana/latest/administration/service-accounts/migrate-api-keys/"
       target="_blank"
       rel="noopener noreferrer"
     >
       Find out more about the migration here.
     </a>
   );
-  const migrationBoxDesc = (
-    <span>
-      Migrating all API keys will hide the API keys tab.
-      <br></br>
-      <br></br>
-      The API keys API will remain available for you to create new API keys, but we strongly encourage you to use
-      Service accounts instead.
-    </span>
-  );
+  const migrationBoxDesc = <span>Migrating all API keys will hide the API keys tab.</span>;
 
   return (
     <>
       {apikeysCount > 0 && (
         <Alert title="Switch from API keys to service accounts" severity="warning">
           <div className={styles.text}>
-            We will soon deprecate API keys. Each API key will be migrated into a service account with a token and will
-            continue to work as they were. We encourage you to migrate your API keys to service accounts now. {docsLink}
+            API keys are deprecated and will be removed from Grafana on Jan 31, 2025. Each API key will be migrated into
+            a service account with a token and will continue to work as they were. We encourage you to migrate your API
+            keys to service accounts now. {docsLink}
           </div>
           <div className={styles.actionRow}>
             <Button className={styles.actionButton} onClick={() => setIsModalOpen(true)}>
@@ -63,8 +56,7 @@ export const MigrateToServiceAccountsCard = ({ onMigrate, apikeysCount, disabled
         <>
           <Alert title="No API keys found" severity="warning">
             <div className={styles.text}>
-              No API keys were found. If you reload the browser, this tab will be not available. If any API keys are
-              created, this tab will appear again.
+              No API keys were found. If you reload the browser, this page will not be available anymore.
             </div>
           </Alert>
         </>
@@ -74,14 +66,14 @@ export const MigrateToServiceAccountsCard = ({ onMigrate, apikeysCount, disabled
 };
 
 export const getStyles = (theme: GrafanaTheme2) => ({
-  text: css`
-    margin-bottom: ${theme.spacing(2)};
-  `,
-  actionRow: css`
-    display: flex;
-    align-items: center;
-  `,
-  actionButton: css`
-    margin-right: ${theme.spacing(2)};
-  `,
+  text: css({
+    marginBottom: theme.spacing(2),
+  }),
+  actionRow: css({
+    display: 'flex',
+    alignItems: 'center',
+  }),
+  actionButton: css({
+    marginRight: theme.spacing(2),
+  }),
 });

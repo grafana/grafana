@@ -2,7 +2,7 @@
 import { AnyAction, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { useCallback, useEffect, useMemo, useReducer } from 'react';
 import * as React from 'react';
-import { useLocation, useRouteMatch } from 'react-router-dom';
+import { useLocation, useParams } from 'react-router-dom-v5-compat';
 
 import {
   AppEvents,
@@ -29,6 +29,7 @@ import {
   useAddedLinksRegistry,
   useAddedComponentsRegistry,
   useExposedComponentsRegistry,
+  useAddedFunctionsRegistry,
 } from '../extensions/ExtensionRegistriesContext';
 import { getPluginSettings } from '../pluginSettings';
 import { importAppPlugin } from '../plugin_loader';
@@ -38,7 +39,7 @@ import { buildPluginPageContext, PluginPageContext } from './PluginPageContext';
 
 interface Props {
   // The ID of the plugin we would like to load and display
-  pluginId: string;
+  pluginId?: string;
   // The root navModelItem for the plugin (root = lives directly under 'home'). In case app does not need a nva model,
   // for example it's in some way embedded or shown in a sideview this can be undefined.
   pluginNavSection?: NavModelItem;
@@ -55,10 +56,12 @@ interface State {
 const initialState: State = { loading: true, loadingError: false, pluginNav: null, plugin: null };
 
 export function AppRootPage({ pluginId, pluginNavSection }: Props) {
+  const { pluginId: pluginIdParam = '' } = useParams();
+  pluginId = pluginId || pluginIdParam;
   const addedLinksRegistry = useAddedLinksRegistry();
   const addedComponentsRegistry = useAddedComponentsRegistry();
   const exposedComponentsRegistry = useExposedComponentsRegistry();
-  const match = useRouteMatch();
+  const addedFunctionsRegistry = useAddedFunctionsRegistry();
   const location = useLocation();
   const [state, dispatch] = useReducer(stateSlice.reducer, initialState);
   const currentUrl = config.appSubUrl + location.pathname + location.search;
@@ -103,11 +106,12 @@ export function AppRootPage({ pluginId, pluginNavSection }: Props) {
           addedLinksRegistry: addedLinksRegistry.readOnly(),
           addedComponentsRegistry: addedComponentsRegistry.readOnly(),
           exposedComponentsRegistry: exposedComponentsRegistry.readOnly(),
+          addedFunctionsRegistry: addedFunctionsRegistry.readOnly(),
         }}
       >
         <plugin.root
           meta={plugin.meta}
-          basename={match.url}
+          basename={location.pathname}
           onNavChanged={onNavChanged}
           query={queryParams}
           path={location.pathname}

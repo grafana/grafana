@@ -3,18 +3,18 @@ package authnimpl
 import (
 	"context"
 	"errors"
-	"net"
 	"net/http"
 	"net/url"
 	"slices"
 	"testing"
 
-	"github.com/grafana/authlib/claims"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/codes"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"go.opentelemetry.io/otel/sdk/trace/tracetest"
+
+	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -24,7 +24,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth/authtest"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -59,7 +58,7 @@ func TestService_Authenticate(t *testing.T) {
 						Type: claims.TypeUser,
 						ClientParams: authn.ClientParams{
 							FetchPermissionsParams: authn.FetchPermissionsParams{
-								ActionsLookup: []string{
+								RestrictedActions: []string{
 									"datasources:read",
 									"datasources:query",
 								},
@@ -76,12 +75,56 @@ func TestService_Authenticate(t *testing.T) {
 				Type: claims.TypeUser,
 				ClientParams: authn.ClientParams{
 					FetchPermissionsParams: authn.FetchPermissionsParams{
-						ActionsLookup: []string{
+						RestrictedActions: []string{
 							"datasources:read",
 							"datasources:query",
 						},
 						Roles: []string{
 							"fixed:datasources:reader",
+						},
+					},
+				},
+			},
+		},
+		{
+			desc: "should succeed with authentication for client with fetch permissions params made of roles and actions",
+			clients: []authn.Client{
+				&authntest.FakeClient{
+					ExpectedTest: true,
+					ExpectedIdentity: &authn.Identity{
+						ID:   "2",
+						Type: claims.TypeUser,
+						ClientParams: authn.ClientParams{
+							FetchPermissionsParams: authn.FetchPermissionsParams{
+								RestrictedActions: []string{
+									"datasources:read",
+									"datasources:query",
+								},
+								AllowedActions: []string{
+									"datasources:write",
+								},
+								Roles: []string{
+									"fixed:datasources:writer",
+								},
+							},
+						},
+					},
+				},
+			},
+			expectedIdentity: &authn.Identity{
+				ID:   "2",
+				Type: claims.TypeUser,
+				ClientParams: authn.ClientParams{
+					FetchPermissionsParams: authn.FetchPermissionsParams{
+						RestrictedActions: []string{
+							"datasources:read",
+							"datasources:query",
+						},
+						AllowedActions: []string{
+							"datasources:write",
+						},
+						Roles: []string{
+							"fixed:datasources:writer",
 						},
 					},
 				},
@@ -187,9 +230,13 @@ func TestService_Authenticate(t *testing.T) {
 						assert.Equal(t, tt.expectedIdentity.AuthID, attr.Value.AsString())
 					case "identity.AuthenticatedBy":
 						assert.Equal(t, tt.expectedIdentity.AuthenticatedBy, attr.Value.AsString())
-					case "identity.ClientParams.FetchPermissionsParams.ActionsLookup":
-						if len(tt.expectedIdentity.ClientParams.FetchPermissionsParams.ActionsLookup) > 0 {
-							assert.Equal(t, tt.expectedIdentity.ClientParams.FetchPermissionsParams.ActionsLookup, attr.Value.AsStringSlice())
+					case "identity.ClientParams.FetchPermissionsParams.RestrictedActions":
+						if len(tt.expectedIdentity.ClientParams.FetchPermissionsParams.RestrictedActions) > 0 {
+							assert.Equal(t, tt.expectedIdentity.ClientParams.FetchPermissionsParams.RestrictedActions, attr.Value.AsStringSlice())
+						}
+					case "identity.ClientParams.FetchPermissionsParams.AllowedActions":
+						if len(tt.expectedIdentity.ClientParams.FetchPermissionsParams.AllowedActions) > 0 {
+							assert.Equal(t, tt.expectedIdentity.ClientParams.FetchPermissionsParams.AllowedActions, attr.Value.AsStringSlice())
 						}
 					case "identity.ClientParams.FetchPermissionsParams.Roles":
 						if len(tt.expectedIdentity.ClientParams.FetchPermissionsParams.Roles) > 0 {
@@ -351,11 +398,11 @@ func TestService_Login(t *testing.T) {
 					ExpectedIdentity: tt.expectedClientIdentity,
 				})
 				svc.sessionService = &authtest.FakeUserAuthTokenService{
-					CreateTokenProvider: func(ctx context.Context, user *user.User, clientIP net.IP, userAgent string) (*auth.UserToken, error) {
+					CreateTokenProvider: func(ctx context.Context, cmd *auth.CreateTokenCommand) (*auth.UserToken, error) {
 						if tt.expectedSessionErr != nil {
 							return nil, tt.expectedSessionErr
 						}
-						return &auth.UserToken{UserId: user.ID}, nil
+						return &auth.UserToken{UserId: cmd.User.ID}, nil
 					},
 				}
 			})
@@ -461,7 +508,7 @@ func TestService_Logout(t *testing.T) {
 			expectedRedirect: &authn.Redirect{URL: "http://idp.com/logout"},
 			client: &authntest.MockClient{
 				NameFunc: func() string { return "auth.client.azuread" },
-				LogoutFunc: func(ctx context.Context, _ identity.Requester) (*authn.Redirect, bool) {
+				LogoutFunc: func(ctx context.Context, _ identity.Requester, sessionToken *usertoken.UserToken) (*authn.Redirect, bool) {
 					return &authn.Redirect{URL: "http://idp.com/logout"}, true
 				},
 			},

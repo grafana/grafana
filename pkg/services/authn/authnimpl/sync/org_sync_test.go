@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/grafana/authlib/claims"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+
+	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -24,7 +25,8 @@ import (
 )
 
 func TestOrgSync_SyncOrgRolesHook(t *testing.T) {
-	orgService := &orgtest.FakeOrgService{ExpectedUserOrgDTO: []*org.UserOrgDTO{
+	orgService := &orgtest.MockService{}
+	orgService.On("GetUserOrgList", mock.Anything, mock.Anything).Return([]*org.UserOrgDTO{
 		{
 			OrgID: 1,
 			Role:  org.RoleEditor,
@@ -33,14 +35,16 @@ func TestOrgSync_SyncOrgRolesHook(t *testing.T) {
 			OrgID: 3,
 			Role:  org.RoleViewer,
 		},
-	},
-		ExpectedOrgListResponse: orgtest.OrgListResponse{
-			{
-				OrgID:    3,
-				Response: nil,
-			},
-		},
-	}
+	}, nil)
+	orgService.On("RemoveOrgUser", mock.Anything, mock.MatchedBy(func(cmd *org.RemoveOrgUserCommand) bool {
+		return cmd.OrgID == 3 && cmd.UserID == 1
+	})).Return(nil)
+	orgService.On("UpdateOrgUser", mock.Anything, mock.MatchedBy(func(cmd *org.UpdateOrgUserCommand) bool {
+		return cmd.OrgID == 1 && cmd.UserID == 1 && cmd.Role == org.RoleAdmin
+	})).Return(nil)
+	orgService.On("AddOrgUser", mock.Anything, mock.MatchedBy(func(cmd *org.AddOrgUserCommand) bool {
+		return cmd.OrgID == 2 && cmd.UserID == 1 && cmd.Role == org.RoleEditor
+	})).Return(org.ErrOrgNotFound)
 	acService := &actest.FakeService{}
 	userService := &usertest.FakeUserService{ExpectedUser: &user.User{
 		ID:    1,
@@ -67,7 +71,7 @@ func TestOrgSync_SyncOrgRolesHook(t *testing.T) {
 		wantID  *authn.Identity
 	}{
 		{
-			name: "add user to multiple orgs",
+			name: "add user to multiple orgs, should not set the user's default orgID to an org that does not exist",
 			fields: fields{
 				userService:   userService,
 				orgService:    orgService,
@@ -100,7 +104,7 @@ func TestOrgSync_SyncOrgRolesHook(t *testing.T) {
 				Name:           "test",
 				Email:          "test",
 				OrgRoles:       map[int64]identity.RoleType{1: org.RoleAdmin, 2: org.RoleEditor},
-				OrgID:          1, //set using org
+				OrgID:          1, // set using org
 				IsGrafanaAdmin: ptrBool(false),
 				ClientParams: authn.ClientParams{
 					SyncOrgRoles: true,

@@ -1,46 +1,60 @@
-import { RouteChildrenProps } from 'react-router-dom';
+import { useParams } from 'react-router-dom-v5-compat';
 
-import { Alert } from '@grafana/ui';
+import { Alert, LoadingPlaceholder } from '@grafana/ui';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 
-import { useAlertmanagerConfig } from '../../hooks/useAlertmanagerConfig';
+import { isNotFoundError } from '../../api/util';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
-import { EditTemplateView } from '../receivers/EditTemplateView';
+import { stringifyErrorLike } from '../../utils/misc';
+import { withPageErrorBoundary } from '../../withPageErrorBoundary';
+import { AlertmanagerPageWrapper } from '../AlertingPageWrapper';
+import { TemplateForm } from '../receivers/TemplateForm';
 
-type Props = RouteChildrenProps<{ name: string }>;
+import { useGetNotificationTemplate } from './useNotificationTemplates';
 
-const EditMessageTemplate = ({ match }: Props) => {
+const notFoundComponent = <EntityNotFound entity="Notification template" />;
+
+const EditMessageTemplateComponent = () => {
+  const { name } = useParams<{ name: string }>();
+  const templateUid = name ? decodeURIComponent(name) : undefined;
+
   const { selectedAlertmanager } = useAlertmanager();
-  const { data, isLoading, error } = useAlertmanagerConfig(selectedAlertmanager);
+  const { currentData, isLoading, error } = useGetNotificationTemplate({
+    alertmanager: selectedAlertmanager ?? '',
+    uid: templateUid ?? '',
+  });
 
-  const name = match?.params.name;
-  if (!name) {
+  if (!templateUid) {
     return <EntityNotFound entity="Notification template" />;
   }
 
-  if (isLoading && !data) {
-    return 'loading...';
+  if (isLoading) {
+    return <LoadingPlaceholder text="Loading template..." />;
   }
 
   if (error) {
-    return (
+    return isNotFoundError(error) ? (
+      notFoundComponent
+    ) : (
       <Alert severity="error" title="Failed to fetch notification template">
-        {String(error)}
+        {stringifyErrorLike(error)}
       </Alert>
     );
   }
 
-  if (!data) {
-    return null;
+  if (!currentData) {
+    return notFoundComponent;
   }
 
-  return (
-    <EditTemplateView
-      alertManagerSourceName={selectedAlertmanager!}
-      config={data}
-      templateName={decodeURIComponent(name)}
-    />
-  );
+  return <TemplateForm alertmanager={selectedAlertmanager ?? ''} originalTemplate={currentData} />;
 };
 
-export default EditMessageTemplate;
+function EditMessageTemplate() {
+  return (
+    <AlertmanagerPageWrapper navId="receivers" accessType="notification">
+      <EditMessageTemplateComponent />
+    </AlertmanagerPageWrapper>
+  );
+}
+
+export default withPageErrorBoundary(EditMessageTemplate);

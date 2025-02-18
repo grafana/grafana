@@ -38,13 +38,13 @@ export type LinkToExploreOptions = {
 export function mapInternalLinkToExplore(options: LinkToExploreOptions): LinkModel<Field> {
   const { onClickFn, replaceVariables, link, scopedVars, range, field, internalLink } = options;
 
-  const interpolatedQuery = interpolateObject(link.internal?.query, scopedVars, replaceVariables);
+  const query =
+    typeof link.internal?.query === 'function'
+      ? link.internal.query({ replaceVariables, scopedVars })
+      : internalLink.query;
+  const interpolatedQuery = interpolateObject(query, scopedVars, replaceVariables);
   const interpolatedPanelsState = interpolateObject(link.internal?.panelsState, scopedVars, replaceVariables);
-  const interpolatedCorrelationData = interpolateObject(
-    link.internal?.meta?.correlationData,
-    scopedVars,
-    replaceVariables
-  );
+  const interpolatedCorrelationData = interpolateObject(link.meta?.correlationData, scopedVars, replaceVariables);
   const title = link.title ? link.title : internalLink.datasourceName;
 
   return {
@@ -78,7 +78,7 @@ export function mapInternalLinkToExplore(options: LinkToExploreOptions): LinkMod
 /**
  * Generates href for internal derived field link.
  */
-function generateInternalHref<T extends DataQuery = any>(
+function generateInternalHref<T extends DataQuery>(
   datasourceUid: string,
   query: T,
   range?: TimeRange,

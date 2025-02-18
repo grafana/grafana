@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/quota"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -63,6 +64,7 @@ type API struct {
 	DataProxy            *datasourceproxy.DataSourceProxyService
 	MultiOrgAlertmanager *notifier.MultiOrgAlertmanager
 	StateManager         *state.Manager
+	Scheduler            StatusReader
 	AccessControl        ac.AccessControl
 	Policies             *provisioning.NotificationPolicyService
 	ReceiverService      *notifier.ReceiverService
@@ -77,6 +79,7 @@ type API struct {
 	Historian            Historian
 	Tracer               tracing.Tracer
 	AppUrl               *url.URL
+	UserService          user.Service
 
 	// Hooks can be used to replace API handlers for specific paths.
 	Hooks *Hooks
@@ -109,13 +112,14 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 				api.RuleStore,
 				ruleAuthzService,
 			),
+			receiverAuthz: accesscontrol.NewReceiverAccess[ReceiverStatus](api.AccessControl, false),
 		},
 	), m)
 	// Register endpoints for proxying to Prometheus-compatible backends.
 	api.RegisterPrometheusApiEndpoints(NewForkingProm(
 		api.DatasourceCache,
 		NewLotexProm(proxy, logger),
-		&PrometheusSrv{log: logger, manager: api.StateManager, store: api.RuleStore, authz: ruleAuthzService},
+		&PrometheusSrv{log: logger, manager: api.StateManager, status: api.Scheduler, store: api.RuleStore, authz: ruleAuthzService},
 	), m)
 	// Register endpoints for proxying to Cortex Ruler-compatible backends.
 	api.RegisterRulerApiEndpoints(NewForkingRuler(
@@ -133,6 +137,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 			amConfigStore:      api.AlertingStore,
 			amRefresher:        api.MultiOrgAlertmanager,
 			featureManager:     api.FeatureManager,
+			userService:        api.UserService,
 		},
 	), m)
 	api.RegisterTestingApiEndpoints(NewTestingApi(
@@ -180,4 +185,10 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 		receiverService:   api.ReceiverService,
 		muteTimingService: api.MuteTimings,
 	}), m)
+
+	if api.FeatureManager.IsEnabledGlobally(featuremgmt.FlagAlertingConversionAPI) {
+		api.RegisterConvertPrometheusApiEndpoints(NewConvertPrometheusApi(&ConvertPrometheusSrv{
+			logger: logger,
+		}), m)
+	}
 }

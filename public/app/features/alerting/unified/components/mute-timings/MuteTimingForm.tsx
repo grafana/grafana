@@ -100,7 +100,7 @@ const MuteTimingForm = ({ muteTiming, showError, loading, provisioned, editMode 
       {provisioned && <ProvisioningAlert resource={ProvisionedResource.MuteTiming} />}
       <FormProvider {...formApi}>
         <form onSubmit={formApi.handleSubmit(onSubmit)} data-testid="mute-timing-form">
-          <FieldSet label={'Create mute timing'} disabled={provisioned || updating}>
+          <FieldSet disabled={provisioned || updating}>
             <Field
               required
               label="Name"

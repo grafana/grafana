@@ -15,6 +15,7 @@ import {
   useGetShapshotListQuery,
   useGetSnapshotQuery,
   useUploadSnapshotMutation,
+  useGetLocalPluginListQuery,
 } from '../api';
 import { AlertWithTraceID } from '../shared/AlertWithTraceID';
 
@@ -70,7 +71,9 @@ const PAGE_SIZE = 50;
 function useGetLatestSnapshot(sessionUid?: string, page = 1) {
   const [shouldPoll, setShouldPoll] = useState(false);
 
-  const listResult = useGetShapshotListQuery(sessionUid ? { uid: sessionUid } : skipToken);
+  const listResult = useGetShapshotListQuery(
+    sessionUid ? { uid: sessionUid, page: 1, limit: 1, sort: 'latest' } : skipToken
+  );
   const lastItem = listResult.currentData?.snapshots?.at(0);
 
   const getSnapshotQueryArgs =
@@ -119,6 +122,8 @@ export const Page = () => {
   const [performUploadSnapshot, uploadSnapshotResult] = useUploadSnapshotMutation();
   const [performCancelSnapshot, cancelSnapshotResult] = useCancelSnapshotMutation();
   const [performDisconnect, disconnectResult] = useDeleteSessionMutation();
+
+  const { currentData: localPlugins = [] } = useGetLocalPluginListQuery();
 
   useNotifySuccessful(snapshot.data);
 
@@ -238,6 +243,7 @@ export const Page = () => {
           <Stack gap={4} direction="column">
             <ResourcesTable
               resources={snapshot.data.results}
+              localPlugins={localPlugins}
               onChangePage={setPage}
               numberOfPages={Math.ceil((snapshot?.data?.stats?.total || 0) / PAGE_SIZE)}
               page={page}

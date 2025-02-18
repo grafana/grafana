@@ -15,6 +15,7 @@ export interface OrgUser extends WithAccessControlMetadata {
   // RBAC roles
   roles?: Role[];
   userId: number;
+  uid: string;
   isDisabled: boolean;
   authLabels?: string[];
   isExternallySynced?: boolean;
@@ -34,6 +35,7 @@ export type Unit = { name: string; url: string };
 
 export interface UserDTO extends WithAccessControlMetadata {
   id: number;
+  uid: string;
   login: string;
   email: string;
   name: string;
@@ -95,6 +97,7 @@ export interface UserSession {
   seenAt: string;
   browser: string;
   browserVersion: string;
+  authModule?: string;
   os: string;
   osVersion: string;
   device: string;

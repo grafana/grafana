@@ -208,6 +208,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       if (query.adhocFilters?.length) {
         const adhocFiltersToTags: InfluxQueryTag[] = (query.adhocFilters ?? []).map((af) => {
           const { condition, ...asTag } = af;
+          asTag.value = this.templateSrv.replace(asTag.value ?? '', variables);
           return asTag;
         });
         query.tags = [...(query.tags ?? []), ...adhocFiltersToTags];
@@ -546,7 +547,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     return getBackendSrv()
       .fetch(req)
       .pipe(
-        map((result: any) => {
+        map((result: FetchResponse) => {
           const { data } = result;
           if (data) {
             data.executedQueryString = q;

@@ -3,10 +3,20 @@ import { DataFrame, Field, ValueLinkConfig } from './dataFrame';
 import { InterpolateFunction } from './panel';
 import { SelectableValue } from './select';
 
-export interface Action<T = ActionType.Fetch, TOptions = FetchOptions> {
-  type: T;
+export enum ActionType {
+  Fetch = 'fetch',
+}
+
+export interface Action {
+  type: ActionType;
   title: string;
-  options: TOptions;
+
+  // Options for the selected type
+  // Currently this is required because there is only one valid type (fetch)
+  // once multiple types are valid, usage of this will need to be optional
+  [ActionType.Fetch]: FetchOptions;
+  confirmation?: string;
+  oneClick?: boolean;
 }
 
 /**
@@ -15,6 +25,8 @@ export interface Action<T = ActionType.Fetch, TOptions = FetchOptions> {
 export interface ActionModel<T = any> {
   title: string;
   onClick: (event: any, origin?: any) => void;
+  confirmation?: string;
+  oneClick?: boolean;
 }
 
 interface FetchOptions {
@@ -23,10 +35,6 @@ interface FetchOptions {
   body?: string;
   queryParams?: Array<[string, string]>;
   headers?: Array<[string, string]>;
-}
-
-export enum ActionType {
-  Fetch = 'fetch',
 }
 
 export enum HttpRequestMethod {
@@ -51,7 +59,7 @@ export const contentTypeOptions: SelectableValue[] = [
 export const defaultActionConfig: Action = {
   type: ActionType.Fetch,
   title: '',
-  options: {
+  fetch: {
     url: '',
     method: HttpRequestMethod.POST,
     body: '{}',

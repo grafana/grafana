@@ -7,6 +7,6 @@ INSERT INTO "resource_version"
     VALUES (
         '',
         '',
-        1
+        CAST((julianday('now') - 2440587.5) * 86400000000.0 AS BIGINT)
     )
 ;

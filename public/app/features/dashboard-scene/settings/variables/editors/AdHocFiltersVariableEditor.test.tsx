@@ -70,7 +70,12 @@ describe('AdHocFiltersVariableEditor', () => {
     const infoText = renderer.getByTestId(
       selectors.pages.Dashboard.Settings.Variables.Edit.AdHocFiltersVariable.infoText
     );
+    const allowCustomValueCheckbox = renderer.getByTestId(
+      selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsAllowCustomValueSwitch
+    );
 
+    expect(allowCustomValueCheckbox).toBeInTheDocument();
+    expect(allowCustomValueCheckbox).toBeChecked();
     expect(dataSourcePicker).toBeInTheDocument();
     expect(dataSourcePicker.getAttribute('placeholder')).toBe('Default Test Data Source');
     expect(infoText).toBeInTheDocument();
@@ -132,6 +137,7 @@ async function setup(props?: React.ComponentProps<typeof AdHocFiltersVariableEdi
         value: 'baseTestValue',
       },
     ],
+    allowCustomValue: true,
     defaultKeys: withDefaultKeys ? [{ text: 'A', value: 'A' }] : undefined,
   });
   return {

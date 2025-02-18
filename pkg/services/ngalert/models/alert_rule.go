@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/cmputil"
 )
 
@@ -45,6 +46,11 @@ var (
 	// ErrNoPanel is returned when the alert rule does not have a PanelID in its
 	// annotations.
 	ErrNoPanel = errors.New("no panel")
+)
+
+var (
+	FileProvisioningUserUID = UserUID("__provisioning__")
+	AlertingUserUID         = UserUID("__alerting__")
 )
 
 // swagger:enum NoDataState
@@ -243,6 +249,21 @@ func SortAlertRuleGroupWithFolderTitle(g []AlertRuleGroupWithFolderFullpath) {
 	})
 }
 
+type UserUID string
+
+func NewUserUID(requester interface{ GetIdentifier() string }) *UserUID {
+	// use anonymous interface to abstract from identity package, which is part of apimachinery
+	if requester == nil {
+		return nil
+	}
+	identifier := requester.GetIdentifier()
+	if identifier == "" {
+		return nil
+	}
+	userUID := UserUID(identifier)
+	return &userUID
+}
+
 // AlertRule is the model for alert rules in unified alerting.
 type AlertRule struct {
 	ID              int64
@@ -251,6 +272,7 @@ type AlertRule struct {
 	Condition       string
 	Data            []AlertQuery
 	Updated         time.Time
+	UpdatedBy       *UserUID
 	IntervalSeconds int64
 	Version         int64
 	UID             string
@@ -269,6 +291,21 @@ type AlertRule struct {
 	Labels               map[string]string
 	IsPaused             bool
 	NotificationSettings []NotificationSettings
+	Metadata             AlertRuleMetadata
+}
+
+type AlertRuleMetadata struct {
+	EditorSettings      EditorSettings       `json:"editor_settings"`
+	PrometheusStyleRule *PrometheusStyleRule `json:"prometheus_style_rule,omitempty"`
+}
+
+type EditorSettings struct {
+	SimplifiedQueryAndExpressionsSection bool `json:"simplified_query_and_expressions_section"`
+	SimplifiedNotificationsSection       bool `json:"simplified_notifications_section"`
+}
+
+type PrometheusStyleRule struct {
+	OriginalRuleDefinition string `json:"original_rule_definition,omitempty"`
 }
 
 // Namespaced describes a class of resources that are stored in a specific namespace.
@@ -290,7 +327,8 @@ type AlertRuleWithOptionals struct {
 	AlertRule
 	// This parameter is to know if an optional API field was sent and, therefore, patch it with the current field from
 	// DB in case it was not sent.
-	HasPause bool
+	HasPause    bool
+	HasMetadata bool
 }
 
 // AlertsRulesBy is a function that defines the ordering of alert rules.
@@ -425,13 +463,13 @@ func (alertRule *AlertRule) SetDashboardAndPanelFromAnnotations() error {
 	dashUID := alertRule.Annotations[DashboardUIDAnnotation]
 	panelID := alertRule.Annotations[PanelIDAnnotation]
 	if dashUID != "" && panelID == "" || dashUID == "" && panelID != "" {
-		return fmt.Errorf("both annotations %s and %s must be specified",
+		return fmt.Errorf("%w: both annotations %s and %s must be specified", ErrAlertRuleFailedValidation,
 			DashboardUIDAnnotation, PanelIDAnnotation)
 	}
 	if dashUID != "" {
 		panelIDValue, err := strconv.ParseInt(panelID, 10, 64)
 		if err != nil {
-			return fmt.Errorf("annotation %s must be a valid integer Panel ID",
+			return fmt.Errorf("%w: annotation %s must be a valid integer Panel ID", ErrAlertRuleFailedValidation,
 				PanelIDAnnotation)
 		}
 		alertRule.DashboardUID = &dashUID
@@ -452,6 +490,11 @@ func (k AlertRuleKey) LogContext() []any {
 
 type AlertRuleKeyWithVersion struct {
 	Version      int64
+	AlertRuleKey `xorm:"extends"`
+}
+
+type AlertRuleKeyWithGroup struct {
+	RuleGroup    string
 	AlertRuleKey `xorm:"extends"`
 }
 
@@ -508,13 +551,18 @@ func (alertRule *AlertRule) GetKey() AlertRuleKey {
 	return AlertRuleKey{OrgID: alertRule.OrgID, UID: alertRule.UID}
 }
 
+// GetKeyWithGroup returns the alert definitions identifier
+func (alertRule *AlertRule) GetKeyWithGroup() AlertRuleKeyWithGroup {
+	return AlertRuleKeyWithGroup{AlertRuleKey: alertRule.GetKey(), RuleGroup: alertRule.RuleGroup}
+}
+
 // GetGroupKey returns the identifier of a group the rule belongs to
 func (alertRule *AlertRule) GetGroupKey() AlertRuleGroupKey {
 	return AlertRuleGroupKey{OrgID: alertRule.OrgID, NamespaceUID: alertRule.NamespaceUID, RuleGroup: alertRule.RuleGroup}
 }
 
 // PreSave sets default values and loads the updated model for each alert query.
-func (alertRule *AlertRule) PreSave(timeNow func() time.Time) error {
+func (alertRule *AlertRule) PreSave(timeNow func() time.Time, userUID *UserUID) error {
 	for i, q := range alertRule.Data {
 		err := q.PreSave()
 		if err != nil {
@@ -523,11 +571,15 @@ func (alertRule *AlertRule) PreSave(timeNow func() time.Time) error {
 		alertRule.Data[i] = q
 	}
 	alertRule.Updated = timeNow()
+	alertRule.UpdatedBy = userUID
 	return nil
 }
 
 // ValidateAlertRule validates various alert rule fields.
 func (alertRule *AlertRule) ValidateAlertRule(cfg setting.UnifiedAlertingSettings) error {
+	if err := util.ValidateUID(alertRule.UID); err != nil {
+		return errors.Join(ErrAlertRuleFailedValidation, fmt.Errorf("cannot create rule with UID '%s': %w", alertRule.UID, err))
+	}
 	if len(alertRule.Data) == 0 {
 		return fmt.Errorf("%w: no queries or expressions are found", ErrAlertRuleFailedValidation)
 	}
@@ -601,6 +653,9 @@ func validateRecordingRuleFields(rule *AlertRule) error {
 	if !prommodels.IsValidMetricName(metricName) {
 		return fmt.Errorf("%w: %s", ErrAlertRuleFailedValidation, "metric name for recording rule must be a valid Prometheus metric name")
 	}
+
+	ClearRecordingRuleIgnoredFields(rule)
+
 	return nil
 }
 
@@ -628,6 +683,94 @@ func (alertRule *AlertRule) Type() RuleType {
 		return RuleTypeRecording
 	}
 	return RuleTypeAlerting
+}
+
+// Copy creates and returns a deep copy of the AlertRule instance, duplicating all fields and nested data structures.
+func (alertRule *AlertRule) Copy() *AlertRule {
+	if alertRule == nil {
+		return nil
+	}
+	result := AlertRule{
+		ID:              alertRule.ID,
+		OrgID:           alertRule.OrgID,
+		Title:           alertRule.Title,
+		Condition:       alertRule.Condition,
+		Updated:         alertRule.Updated,
+		UpdatedBy:       alertRule.UpdatedBy,
+		IntervalSeconds: alertRule.IntervalSeconds,
+		Version:         alertRule.Version,
+		UID:             alertRule.UID,
+		NamespaceUID:    alertRule.NamespaceUID,
+		RuleGroup:       alertRule.RuleGroup,
+		RuleGroupIndex:  alertRule.RuleGroupIndex,
+		NoDataState:     alertRule.NoDataState,
+		ExecErrState:    alertRule.ExecErrState,
+		For:             alertRule.For,
+		Record:          alertRule.Record,
+		IsPaused:        alertRule.IsPaused,
+		Metadata:        alertRule.Metadata,
+	}
+
+	if alertRule.DashboardUID != nil {
+		dash := *alertRule.DashboardUID
+		result.DashboardUID = &dash
+	}
+	if alertRule.PanelID != nil {
+		p := *alertRule.PanelID
+		result.PanelID = &p
+	}
+
+	for _, d := range alertRule.Data {
+		q := AlertQuery{
+			RefID:             d.RefID,
+			QueryType:         d.QueryType,
+			RelativeTimeRange: d.RelativeTimeRange,
+			DatasourceUID:     d.DatasourceUID,
+		}
+		q.Model = make([]byte, 0, cap(d.Model))
+		q.Model = append(q.Model, d.Model...)
+		result.Data = append(result.Data, q)
+	}
+
+	if alertRule.Annotations != nil {
+		result.Annotations = make(map[string]string, len(alertRule.Annotations))
+		for s, s2 := range alertRule.Annotations {
+			result.Annotations[s] = s2
+		}
+	}
+
+	if alertRule.Labels != nil {
+		result.Labels = make(map[string]string, len(alertRule.Labels))
+		for s, s2 := range alertRule.Labels {
+			result.Labels[s] = s2
+		}
+	}
+
+	if alertRule.Record != nil {
+		result.Record = &Record{
+			From:   alertRule.Record.From,
+			Metric: alertRule.Record.Metric,
+		}
+	}
+
+	if alertRule.Metadata.PrometheusStyleRule != nil {
+		prometheusStyleRule := *alertRule.Metadata.PrometheusStyleRule
+		result.Metadata.PrometheusStyleRule = &prometheusStyleRule
+	}
+
+	for _, s := range alertRule.NotificationSettings {
+		result.NotificationSettings = append(result.NotificationSettings, CopyNotificationSettings(s))
+	}
+
+	return &result
+}
+
+func ClearRecordingRuleIgnoredFields(rule *AlertRule) {
+	rule.NoDataState = ""
+	rule.ExecErrState = ""
+	rule.Condition = ""
+	rule.For = 0
+	rule.NotificationSettings = nil
 }
 
 // GetAlertRuleByUIDQuery is the query for retrieving/deleting an alert rule by UID and organisation ID.
@@ -775,6 +918,13 @@ func PatchPartialAlertRule(existingRule *AlertRule, ruleToPatch *AlertRuleWithOp
 	if !ruleToPatch.HasPause {
 		ruleToPatch.IsPaused = existingRule.IsPaused
 	}
+
+	// Currently metadata contains only editor settings, so we can just copy it.
+	// If we add more fields to metadata, we might need to handle them separately,
+	// and/or merge or update their values.
+	if !ruleToPatch.HasMetadata {
+		ruleToPatch.Metadata = existingRule.Metadata
+	}
 }
 
 func ValidateRuleGroupInterval(intervalSeconds, baseIntervalSeconds int64) error {
@@ -858,4 +1008,12 @@ func (r *Record) Fingerprint() data.Fingerprint {
 
 func hasAnyCondition(rule *AlertRuleWithOptionals) bool {
 	return rule.Condition != "" || (rule.Record != nil && rule.Record.From != "")
+}
+
+// RuleStatus contains info about a rule's current evaluation state.
+type RuleStatus struct {
+	Health              string
+	LastError           error
+	EvaluationTimestamp time.Time
+	EvaluationDuration  time.Duration
 }

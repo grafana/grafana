@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/e2e-selectors",
-  "version": "11.3.0-pre",
+  "version": "11.6.0-pre",
   "description": "Grafana End-to-End Test Selectors Library",
   "keywords": [
     "cli",
@@ -31,26 +31,28 @@
     "LICENSE_APACHE2"
   ],
   "scripts": {
-    "build": "tsc -p ./tsconfig.build.json && rollup -c rollup.config.ts",
-    "bundle": "rollup -c rollup.config.ts",
+    "build": "tsc -p ./tsconfig.build.json && rollup -c rollup.config.ts --configPlugin esbuild",
+    "bundle": "rollup -c rollup.config.ts --configPlugin esbuild",
     "clean": "rimraf ./dist ./compiled ./package.tgz",
     "typecheck": "tsc --emitDeclarationOnly false --noEmit",
     "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-packagejson.js",
     "postpack": "mv package.json.bak package.json"
   },
   "devDependencies": {
-    "@rollup/plugin-node-resolve": "15.2.3",
-    "@types/node": "20.16.5",
-    "esbuild": "0.20.2",
+    "@rollup/plugin-node-resolve": "16.0.0",
+    "@types/node": "22.12.0",
+    "@types/semver": "7.5.8",
+    "esbuild": "0.25.0",
     "rimraf": "6.0.1",
-    "rollup": "2.79.1",
-    "rollup-plugin-dts": "^5.0.0",
-    "rollup-plugin-esbuild": "5.0.0",
-    "rollup-plugin-node-externals": "^5.0.0"
+    "rollup": "^4.22.4",
+    "rollup-plugin-dts": "^6.1.1",
+    "rollup-plugin-esbuild": "6.2.0",
+    "rollup-plugin-node-externals": "^8.0.0"
   },
   "dependencies": {
     "@grafana/tsconfig": "^2.0.0",
-    "tslib": "2.7.0",
-    "typescript": "5.5.4"
+    "semver": "7.7.0",
+    "tslib": "2.8.1",
+    "typescript": "5.7.3"
   }
 }

@@ -1,11 +1,10 @@
 import { css } from '@emotion/css';
 import * as H from 'history';
 import { memo, useContext, useEffect, useMemo } from 'react';
-import { Prompt } from 'react-router';
 
 import { locationService } from '@grafana/runtime';
-import { Dashboard } from '@grafana/schema/dist/esm/index.gen';
 import { ModalsContext, Modal, Button, useStyles2 } from '@grafana/ui';
+import { Prompt } from 'app/core/components/FormPrompt/Prompt';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { SaveLibraryVizPanelModal } from '../panel-edit/SaveLibraryVizPanelModal';
@@ -23,7 +22,7 @@ export const DashboardPrompt = memo(({ dashboard }: DashboardPromptProps) => {
 
   useEffect(() => {
     const handleUnload = (event: BeforeUnloadEvent) => {
-      if (ignoreChanges(dashboard, dashboard.getInitialSaveModel())) {
+      if (ignoreChanges(dashboard)) {
         return;
       }
 
@@ -40,19 +39,12 @@ export const DashboardPrompt = memo(({ dashboard }: DashboardPromptProps) => {
   }, [dashboard]);
 
   const onHistoryBlock = (location: H.Location) => {
-    const panelInEdit = dashboard.state.editPanel;
-    const vizPanelManager = panelInEdit?.state.vizManager;
-    const vizPanel = vizPanelManager?.state.panel;
+    const panelEditor = dashboard.state.editPanel;
+    const vizPanel = panelEditor?.getPanel();
     const search = new URLSearchParams(location.search);
 
     // Are we leaving panel edit & library panel?
-    if (
-      panelInEdit &&
-      vizPanel &&
-      isLibraryPanel(vizPanel) &&
-      vizPanelManager.state.isDirty &&
-      !search.has('editPanel')
-    ) {
+    if (panelEditor && vizPanel && isLibraryPanel(vizPanel) && panelEditor.state.isDirty && !search.has('editPanel')) {
       const libPanelBehavior = getLibraryPanelBehavior(vizPanel);
 
       showModal(SaveLibraryVizPanelModal, {
@@ -60,12 +52,12 @@ export const DashboardPrompt = memo(({ dashboard }: DashboardPromptProps) => {
         isUnsavedPrompt: true,
         libraryPanel: libPanelBehavior!,
         onConfirm: () => {
-          panelInEdit.onConfirmSaveLibraryPanel();
+          panelEditor.onConfirmSaveLibraryPanel();
           hideModal();
           moveToBlockedLocationAfterReactStateUpdate(location);
         },
         onDiscard: () => {
-          panelInEdit.onDiscard();
+          panelEditor.onDiscard();
           hideModal();
           moveToBlockedLocationAfterReactStateUpdate(location);
         },
@@ -79,7 +71,7 @@ export const DashboardPrompt = memo(({ dashboard }: DashboardPromptProps) => {
       return true;
     }
 
-    if (ignoreChanges(dashboard, dashboard.getInitialSaveModel())) {
+    if (ignoreChanges(dashboard)) {
       return true;
     }
 
@@ -160,13 +152,15 @@ const getStyles = () => ({
 /**
  * For some dashboards and users changes should be ignored *
  */
-export function ignoreChanges(current: DashboardScene | null, original?: Dashboard) {
+export function ignoreChanges(scene: DashboardScene | null) {
+  const original = scene?.getInitialSaveModel();
+
   if (!original) {
     return true;
   }
 
   // Ignore changes if original is unsaved
-  if (original.version === 0) {
+  if (scene?.state.meta.version === 0) {
     return true;
   }
 
@@ -175,11 +169,11 @@ export function ignoreChanges(current: DashboardScene | null, original?: Dashboa
     return true;
   }
 
-  if (!current) {
+  if (!scene) {
     return true;
   }
 
-  const { canSave, fromScript, fromFile } = current.state.meta;
+  const { canSave, fromScript, fromFile } = scene.state.meta;
   if (!contextSrv.isEditor && !canSave) {
     return true;
   }

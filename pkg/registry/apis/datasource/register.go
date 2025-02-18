@@ -5,11 +5,21 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/prometheus/client_golang/prometheus"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/registry/rest"
+	genericapiserver "k8s.io/apiserver/pkg/server"
+	openapi "k8s.io/kube-openapi/pkg/common"
+	"k8s.io/kube-openapi/pkg/spec3"
+	"k8s.io/utils/strings/slices"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	datasource "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
-	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/promlib/models"
@@ -19,18 +29,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource/kinds"
-	"github.com/prometheus/client_golang/prometheus"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/runtime/serializer"
-	"k8s.io/apiserver/pkg/registry/generic"
-	"k8s.io/apiserver/pkg/registry/rest"
-	genericapiserver "k8s.io/apiserver/pkg/server"
-	openapi "k8s.io/kube-openapi/pkg/common"
-	"k8s.io/kube-openapi/pkg/spec3"
-	"k8s.io/utils/strings/slices"
 )
 
 var _ builder.APIGroupBuilder = (*DataSourceAPIBuilder)(nil)
@@ -80,6 +78,10 @@ func RegisterAPIService(
 			continue // skip this one
 		}
 
+		if !ds.JSONData.Backend {
+			continue // skip frontend only plugins
+		}
+
 		builder, err = NewDataSourceAPIBuilder(ds.JSONData,
 			pluginClient,
 			datasources.GetDatasourceProvider(ds.JSONData),
@@ -101,6 +103,7 @@ type PluginClient interface {
 	backend.QueryDataHandler
 	backend.CheckHealthHandler
 	backend.CallResourceHandler
+	backend.ConversionHandler
 }
 
 func NewDataSourceAPIBuilder(
@@ -200,12 +203,7 @@ func resourceFromPluginID(pluginID string) (utils.ResourceInfo, error) {
 	return datasource.GenericConnectionResourceInfo.WithGroupAndShortName(group, pluginID+"-connection"), nil
 }
 
-func (b *DataSourceAPIBuilder) GetAPIGroupInfo(
-	scheme *runtime.Scheme,
-	codecs serializer.CodecFactory, // pointer?
-	_ generic.RESTOptionsGetter,
-	_ grafanarest.DualWriteBuilder,
-) (*genericapiserver.APIGroupInfo, error) {
+func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, _ builder.APIGroupOptions) error {
 	storage := map[string]rest.Storage{}
 
 	conn := b.connectionResourceInfo
@@ -227,14 +225,14 @@ func (b *DataSourceAPIBuilder) GetAPIGroupInfo(
 
 	// Register hardcoded query schemas
 	err := queryschema.RegisterQueryTypes(b.queryTypes, storage)
+	if err != nil {
+		return err
+	}
 
-	// Create the group info
-	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(
-		conn.GroupResource().Group, scheme,
-		metav1.ParameterCodec, codecs)
+	registerQueryConvert(b.client, b.contextProvider, storage)
 
 	apiGroupInfo.VersionedResourcesStorageMap[conn.GroupVersion().Version] = storage
-	return &apiGroupInfo, err
+	return err
 }
 
 func (b *DataSourceAPIBuilder) getPluginContext(ctx context.Context, uid string) (backend.PluginContext, error) {
@@ -276,15 +274,5 @@ func (b *DataSourceAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 		QueryDescription: fmt.Sprintf("Query the %s datasources", b.pluginJSON.Name),
 	})
 
-	// The root API discovery list
-	sub := oas.Paths.Paths[root]
-	if sub != nil && sub.Get != nil {
-		sub.Get.Tags = []string{"API Discovery"} // sorts first in the list
-	}
 	return oas, err
-}
-
-// Register additional routes with the server
-func (b *DataSourceAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
-	return nil
 }

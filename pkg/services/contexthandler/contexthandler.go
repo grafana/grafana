@@ -9,8 +9,9 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
-	"github.com/grafana/authlib/claims"
+	claims "github.com/grafana/authlib/types"
 	authnClients "github.com/grafana/grafana/pkg/services/authn/clients"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -25,20 +26,20 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-func ProvideService(cfg *setting.Cfg, tracer tracing.Tracer, authenticator authn.Authenticator,
+func ProvideService(cfg *setting.Cfg, authenticator authn.Authenticator, features featuremgmt.FeatureToggles,
 ) *ContextHandler {
 	return &ContextHandler{
 		Cfg:           cfg,
-		tracer:        tracer,
 		authenticator: authenticator,
+		features:      features,
 	}
 }
 
 // ContextHandler is a middleware.
 type ContextHandler struct {
 	Cfg           *setting.Cfg
-	tracer        tracing.Tracer
 	authenticator authn.Authenticator
+	features      featuremgmt.FeatureToggles
 }
 
 type reqContextKey = ctxkey.Key
@@ -85,17 +86,19 @@ func CopyWithReqContext(ctx context.Context) context.Context {
 func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		_, span := h.tracer.Start(ctx, "Auth - Middleware")
+		// Don't modify context so that the auth middleware span doesn't get propagated as a parent elsewhere
+		_, span := tracing.Start(ctx, "Auth - Middleware")
 
 		reqContext := &contextmodel.ReqContext{
 			Context: web.FromContext(ctx),
 			SignedInUser: &user.SignedInUser{
 				Permissions: map[int64]map[string][]string{},
 			},
-			IsSignedIn:     false,
-			AllowAnonymous: false,
-			SkipDSCache:    false,
-			Logger:         log.New("context"),
+			IsSignedIn:                false,
+			AllowAnonymous:            false,
+			SkipDSCache:               false,
+			Logger:                    log.New("context"),
+			UseSessionStorageRedirect: h.features.IsEnabledGlobally(featuremgmt.FlagUseSessionStorageForRedirection),
 		}
 
 		// inject ReqContext in the context

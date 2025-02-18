@@ -68,8 +68,5 @@ export const muteTimingsReducer = createReducer(initialState, (builder) => {
 
       // remove the mute timing from all routes
       alertmanager_config.route = removeTimeIntervalFromRoute(name, alertmanager_config.route ?? {});
-    })
-    .addDefaultCase((_state, action) => {
-      throw new Error(`Unknown action for mute timing reducer: ${action.type}`);
     });
 });

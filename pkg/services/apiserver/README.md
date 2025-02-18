@@ -66,7 +66,8 @@ grafanaAPIServerEnsureKubectlAccess = true
 kubernetesPlaylists = true
 
 [unified_storage.playlists.playlist.grafana.app]
-DualWriterMode = 2
+dualWriterMode = 2
+dualWriterPeriodicDataSyncJobEnabled = true
 ```
 
 This will create a development kubeconfig and start a parallel ssl listener.  It can be registered by

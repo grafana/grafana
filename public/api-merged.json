@@ -228,7 +228,7 @@
     },
     "/access-control/roles/{roleUID}/assignments": {
       "get": {
-        "description": "Get role assignments for the role with the given UID.\n\nYou need to have a permission with action `teams.roles:list` and scope `teams:id:*` and `users.roles:list` and scope `users:id:*`.",
+        "description": "Get role assignments for the role with the given UID.\nDoes not include role assignments mapped through group attribute sync.\n\nYou need to have a permission with action `teams.roles:list` and scope `teams:id:*` and `users.roles:list` and scope `users:id:*`.",
         "tags": [
           "access_control",
           "enterprise"
@@ -582,7 +582,7 @@
         }
       },
       "put": {
-        "description": "Update the user’s role assignments to match the provided set of UIDs. This will remove any assigned roles that aren’t in the request and add roles that are in the set but are not already assigned to the user.\nIf you want to add or remove a single role, consider using Add a user role assignment or Remove a user role assignment instead.\n\nYou need to have a permission with action `users.roles:add` and `users.roles:remove` and scope `permissions:type:delegate` for each. `permissions:type:delegate`  scope ensures that users can only assign or unassign roles which have same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to assign or unassign a role which will allow to do that. This is done to prevent escalation of privileges.",
+        "description": "Update the user’s role assignments to match the provided set of UIDs. This will remove any assigned roles that aren’t in the request and add roles that are in the set but are not already assigned to the user.\nRoles mapped through group attribute sync are not impacted.\nIf you want to add or remove a single role, consider using Add a user role assignment or Remove a user role assignment instead.\n\nYou need to have a permission with action `users.roles:add` and `users.roles:remove` and scope `permissions:type:delegate` for each. `permissions:type:delegate`  scope ensures that users can only assign or unassign roles which have same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to assign or unassign a role which will allow to do that. This is done to prevent escalation of privileges.",
         "tags": [
           "access_control",
           "enterprise"
@@ -2326,41 +2326,6 @@
         }
       }
     },
-    "/cloudmigration/migration/run/{runUID}": {
-      "get": {
-        "tags": [
-          "migrations"
-        ],
-        "summary": "Get the result of a single migration run.",
-        "operationId": "getCloudMigrationRun",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "RunUID of a migration run",
-            "name": "runUID",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/cloudMigrationRunResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
     "/cloudmigration/migration/{uid}": {
       "get": {
         "tags": [
@@ -2411,75 +2376,6 @@
           }
         ],
         "responses": {
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
-    "/cloudmigration/migration/{uid}/run": {
-      "get": {
-        "tags": [
-          "migrations"
-        ],
-        "summary": "Get a list of migration runs for a migration.",
-        "operationId": "getCloudMigrationRunList",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "UID of a migration",
-            "name": "uid",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/cloudMigrationRunListResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      },
-      "post": {
-        "description": "It returns migrations that has been created.",
-        "tags": [
-          "migrations"
-        ],
-        "summary": "Trigger the run of a migration to the Grafana Cloud.",
-        "operationId": "runCloudMigration",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "UID of a migration",
-            "name": "uid",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/cloudMigrationRunResponse"
-          },
           "400": {
             "$ref": "#/responses/badRequestError"
           },
@@ -2704,6 +2600,12 @@
             "name": "uid",
             "in": "path",
             "required": true
+          },
+          {
+            "type": "string",
+            "description": "Sort with value latest to return results sorted in descending order.",
+            "name": "sort",
+            "in": "query"
           }
         ],
         "responses": {
@@ -4493,6 +4395,9 @@
           "403": {
             "$ref": "#/responses/forbiddenError"
           },
+          "409": {
+            "$ref": "#/responses/conflictError"
+          },
           "500": {
             "$ref": "#/responses/internalServerError"
           }
@@ -5502,6 +5407,188 @@
         "responses": {
           "200": {
             "$ref": "#/responses/okResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/groupsync/groups": {
+      "get": {
+        "tags": [
+          "group_attribute_sync",
+          "enterprise"
+        ],
+        "summary": "List groups that have mappings set. This endpoint is behind the feature flag `groupAttributeSync` and is considered experimental.",
+        "operationId": "getMappedGroups",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getGroupsResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/groupsync/groups/{group_id}": {
+      "put": {
+        "tags": [
+          "group_attribute_sync",
+          "enterprise"
+        ],
+        "summary": "Update mappings for a group. This endpoint is behind the feature flag `groupAttributeSync` and is considered experimental.",
+        "operationId": "updateGroupMappings",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/GroupAttributes"
+            }
+          },
+          {
+            "type": "string",
+            "name": "group_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "201": {
+            "$ref": "#/responses/apiResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "group_attribute_sync",
+          "enterprise"
+        ],
+        "summary": "Create mappings for a group. This endpoint is behind the feature flag `groupAttributeSync` and is considered experimental.",
+        "operationId": "createGroupMappings",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/GroupAttributes"
+            }
+          },
+          {
+            "type": "string",
+            "name": "group_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "201": {
+            "$ref": "#/responses/apiResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "group_attribute_sync",
+          "enterprise"
+        ],
+        "summary": "Delete mappings for a group. This endpoint is behind the feature flag `groupAttributeSync` and is considered experimental.",
+        "operationId": "deleteGroupMappings",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "group_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/groupsync/groups/{group_id}/roles": {
+      "get": {
+        "tags": [
+          "group_attribute_sync",
+          "enterprise"
+        ],
+        "summary": "Get roles mapped to a group. This endpoint is behind the feature flag `groupAttributeSync` and is considered experimental.",
+        "operationId": "getGroupRoles",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "group_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getGroupRolesResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
@@ -8288,13 +8375,14 @@
     },
     "/reports/{id}": {
       "get": {
-        "description": "Available to org admins only and with a valid or expired license.\n\nYou need to have a permission with action `reports:read` with scope `reports:id:\u003creport ID\u003e`.",
+        "description": "Available to org admins only and with a valid or expired license.\n\nYou need to have a permission with action `reports:read` with scope `reports:id:\u003creport ID\u003e`.\n\nRequesting reports using the internal id will stop workgin in the future\nUse the reporting apiserver to manage reports.  See: /apis/reporting.grafana.app/",
         "tags": [
           "reports",
           "enterprise"
         ],
         "summary": "Get a report.",
         "operationId": "getReport",
+        "deprecated": true,
         "parameters": [
           {
             "type": "integer",
@@ -8326,13 +8414,14 @@
         }
       },
       "put": {
-        "description": "Available to org admins only and with a valid or expired license.\n\nYou need to have a permission with action `reports.admin:write` with scope `reports:id:\u003creport ID\u003e`.",
+        "description": "Available to org admins only and with a valid or expired license.\n\nYou need to have a permission with action `reports.admin:write` with scope `reports:id:\u003creport ID\u003e`.\n\nRequesting reports using the internal id will stop workgin in the future\nUse the reporting apiserver to manage reports.  See: /apis/reporting.grafana.app/",
         "tags": [
           "reports",
           "enterprise"
         ],
         "summary": "Update a report.",
         "operationId": "updateReport",
+        "deprecated": true,
         "parameters": [
           {
             "name": "body",
@@ -8372,13 +8461,14 @@
         }
       },
       "delete": {
-        "description": "Available to org admins only and with a valid or expired license.\n\nYou need to have a permission with action `reports.delete` with scope `reports:id:\u003creport ID\u003e`.",
+        "description": "Available to org admins only and with a valid or expired license.\n\nYou need to have a permission with action `reports.delete` with scope `reports:id:\u003creport ID\u003e`.\n\nRequesting reports using the internal id will stop workgin in the future\nUse the reporting apiserver to manage reports.  See: /apis/reporting.grafana.app/",
         "tags": [
           "reports",
           "enterprise"
         ],
         "summary": "Delete a report.",
         "operationId": "deleteReport",
+        "deprecated": true,
         "parameters": [
           {
             "type": "integer",
@@ -11693,7 +11783,7 @@
         "tags": [
           "provisioning"
         ],
-        "summary": "Get all notification templates.",
+        "summary": "Get all notification template groups.",
         "operationId": "RouteGetTemplates",
         "responses": {
           "200": {
@@ -11710,12 +11800,12 @@
         "tags": [
           "provisioning"
         ],
-        "summary": "Get a notification template.",
+        "summary": "Get a notification template group.",
         "operationId": "RouteGetTemplate",
         "parameters": [
           {
             "type": "string",
-            "description": "Template Name",
+            "description": "Template group name",
             "name": "name",
             "in": "path",
             "required": true
@@ -11743,12 +11833,12 @@
         "tags": [
           "provisioning"
         ],
-        "summary": "Updates an existing notification template.",
+        "summary": "Updates an existing notification template group.",
         "operationId": "RoutePutTemplate",
         "parameters": [
           {
             "type": "string",
-            "description": "Template Name",
+            "description": "Template group name",
             "name": "name",
             "in": "path",
             "required": true
@@ -11791,12 +11881,12 @@
         "tags": [
           "provisioning"
         ],
-        "summary": "Delete a template.",
+        "summary": "Delete a notification template group.",
         "operationId": "RouteDeleteTemplate",
         "parameters": [
           {
             "type": "string",
-            "description": "Template name",
+            "description": "Template group name",
             "name": "name",
             "in": "path",
             "required": true
@@ -12216,6 +12306,9 @@
         },
         "message": {
           "type": "string"
+        },
+        "uid": {
+          "type": "string"
         }
       }
     },
@@ -12492,6 +12585,17 @@
         }
       }
     },
+    "AlertRuleEditorSettings": {
+      "type": "object",
+      "properties": {
+        "simplified_notifications_section": {
+          "type": "boolean"
+        },
+        "simplified_query_and_expressions_section": {
+          "type": "boolean"
+        }
+      }
+    },
     "AlertRuleExport": {
       "type": "object",
       "title": "AlertRuleExport is the provisioned file export of models.AlertRule.",
@@ -12612,6 +12716,14 @@
         "interval": {
           "type": "integer",
           "format": "int64"
+        }
+      }
+    },
+    "AlertRuleMetadata": {
+      "type": "object",
+      "properties": {
+        "editor_settings": {
+          "$ref": "#/definitions/AlertRuleEditorSettings"
         }
       }
     },
@@ -12749,7 +12861,9 @@
       "description": "adapted from cortex",
       "type": "object",
       "required": [
+        "uid",
         "name",
+        "folderUid",
         "query",
         "health",
         "type",
@@ -12778,6 +12892,9 @@
         "evaluationTime": {
           "type": "number",
           "format": "double"
+        },
+        "folderUid": {
+          "type": "string"
         },
         "health": {
           "type": "string"
@@ -12817,6 +12934,9 @@
           }
         },
         "type": {
+          "type": "string"
+        },
+        "uid": {
           "type": "string"
         }
       }
@@ -12971,7 +13091,6 @@
     },
     "AnnotationPanelFilter": {
       "type": "object",
-      "title": "AnnotationPanelFilter defines model for AnnotationPanelFilter.",
       "properties": {
         "exclude": {
           "description": "Should the specified panels be included or excluded",
@@ -12982,7 +13101,7 @@
           "type": "array",
           "items": {
             "type": "integer",
-            "format": "int64"
+            "format": "uint8"
           }
         }
       }
@@ -13005,7 +13124,7 @@
         "builtIn": {
           "description": "Set to 1 for the standard annotation query all dashboards have by default.",
           "type": "number",
-          "format": "float"
+          "format": "double"
         },
         "datasource": {
           "$ref": "#/definitions/DataSourceRef"
@@ -13763,22 +13882,26 @@
         "$ref": "#/definitions/EmbeddedContactPoint"
       }
     },
+    "ConvertPrometheusResponse": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "string"
+        },
+        "errorType": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        }
+      }
+    },
     "CookiePreferences": {
       "type": "object",
-      "title": "CookiePreferences defines model for CookiePreferences.",
       "properties": {
-        "analytics": {
-          "type": "object",
-          "additionalProperties": {}
-        },
-        "functional": {
-          "type": "object",
-          "additionalProperties": {}
-        },
-        "performance": {
-          "type": "object",
-          "additionalProperties": {}
-        }
+        "analytics": {},
+        "functional": {},
+        "performance": {}
       }
     },
     "CookieType": {
@@ -13897,6 +14020,7 @@
       }
     },
     "CorrelationType": {
+      "description": "the type of correlation, either query for containing query information, or external for containing an external URL\n+enum",
       "type": "string"
     },
     "CounterResetHint": {
@@ -14276,6 +14400,9 @@
           "type": "integer",
           "format": "int64"
         },
+        "teamUid": {
+          "type": "string"
+        },
         "title": {
           "type": "string"
         },
@@ -14300,6 +14427,9 @@
           "format": "int64"
         },
         "userLogin": {
+          "type": "string"
+        },
+        "userUid": {
           "type": "string"
         }
       }
@@ -14584,7 +14714,7 @@
           "type": "string"
         },
         "ErrorSource": {
-          "$ref": "#/definitions/ErrorSource"
+          "$ref": "#/definitions/Source"
         },
         "Frames": {
           "$ref": "#/definitions/Frames"
@@ -14951,23 +15081,23 @@
           "type": "string",
           "enum": [
             "alertmanager",
-            " dingding",
-            " discord",
-            " email",
-            " googlechat",
-            " kafka",
-            " line",
-            " opsgenie",
-            " pagerduty",
-            " pushover",
-            " sensugo",
-            " slack",
-            " teams",
-            " telegram",
-            " threema",
-            " victorops",
-            " webhook",
-            " wecom"
+            "dingding",
+            "discord",
+            "email",
+            "googlechat",
+            "kafka",
+            "line",
+            "opsgenie",
+            "pagerduty",
+            "pushover",
+            "sensugo",
+            "slack",
+            "teams",
+            "telegram",
+            "threema",
+            "victorops",
+            "webhook",
+            "wecom"
           ],
           "example": "webhook"
         },
@@ -15034,10 +15164,6 @@
           "type": "string"
         }
       }
-    },
-    "ErrorSource": {
-      "description": "ErrorSource type defines the source of the error",
-      "type": "string"
     },
     "ErrorType": {
       "type": "string",
@@ -15288,6 +15414,14 @@
         "CounterResetHint": {
           "$ref": "#/definitions/CounterResetHint"
         },
+        "CustomValues": {
+          "description": "Holds the custom (usually upper) bounds for bucket definitions, otherwise nil.\nThis slice is interned, to be treated as immutable and copied by reference.\nThese numbers should be strictly increasing. This field is only used when the\nschema is for custom buckets, and the ZeroThreshold, ZeroCount, NegativeSpans\nand NegativeBuckets fields are not used in that case.",
+          "type": "array",
+          "items": {
+            "type": "number",
+            "format": "double"
+          }
+        },
         "PositiveBuckets": {
           "description": "Observation counts in buckets. Each represents an absolute count and\nmust be zero or positive.",
           "type": "array",
@@ -15304,7 +15438,7 @@
           }
         },
         "Schema": {
-          "description": "Currently valid schema numbers are -4 \u003c= n \u003c= 8.  They are all for\nbase-2 bucket schemas, where 1 is a bucket boundary in each case, and\nthen each power of two is divided into 2^n logarithmic buckets.  Or\nin other words, each bucket boundary is the previous boundary times\n2^(2^-n).",
+          "description": "Currently valid schema numbers are -4 \u003c= n \u003c= 8 for exponential buckets.\nThey are all for base-2 bucket schemas, where 1 is a bucket boundary in\neach case, and then each power of two is divided into 2^n logarithmic buckets.\nOr in other words, each bucket boundary is the previous boundary times\n2^(2^-n). Another valid schema number is -53 for custom buckets, defined by\nthe CustomValues field.",
           "type": "integer",
           "format": "int32"
         },
@@ -15373,6 +15507,10 @@
             "$ref": "#/definitions/Folder"
           }
         },
+        "repository": {
+          "description": "When the folder belongs to a repository\nNOTE: this is only populated when folders are managed by unified storage",
+          "type": "string"
+        },
         "title": {
           "type": "string"
         },
@@ -15403,6 +15541,10 @@
           "format": "int64"
         },
         "parentUid": {
+          "type": "string"
+        },
+        "repository": {
+          "description": "When the folder belongs to a repository\nNOTE: this is only populated when folders are managed by unified storage",
           "type": "string"
         },
         "title": {
@@ -15885,16 +16027,15 @@
             "Error"
           ]
         },
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
         "intervalSeconds": {
           "type": "integer",
           "format": "int64"
         },
         "is_paused": {
           "type": "boolean"
+        },
+        "metadata": {
+          "$ref": "#/definitions/AlertRuleMetadata"
         },
         "namespace_uid": {
           "type": "string"
@@ -15909,10 +16050,6 @@
         },
         "notification_settings": {
           "$ref": "#/definitions/AlertRuleNotificationSettings"
-        },
-        "orgId": {
-          "type": "integer",
-          "format": "int64"
         },
         "provenance": {
           "$ref": "#/definitions/Provenance"
@@ -15932,6 +16069,9 @@
         "updated": {
           "type": "string",
           "format": "date-time"
+        },
+        "updated_by": {
+          "$ref": "#/definitions/UserInfo"
         },
         "version": {
           "type": "integer",
@@ -15983,10 +16123,23 @@
     "GettableRuleGroupConfig": {
       "type": "object",
       "properties": {
+        "align_evaluation_time_on_interval": {
+          "type": "boolean"
+        },
+        "evaluation_delay": {
+          "type": "string"
+        },
         "interval": {
           "$ref": "#/definitions/Duration"
         },
+        "limit": {
+          "type": "integer",
+          "format": "int64"
+        },
         "name": {
+          "type": "string"
+        },
+        "query_offset": {
           "type": "string"
         },
         "rules": {
@@ -16001,6 +16154,12 @@
             "type": "string"
           }
         }
+      }
+    },
+    "GettableRuleVersions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/GettableExtendedRuleNode"
       }
     },
     "GettableStatus": {
@@ -16149,6 +16308,26 @@
         }
       }
     },
+    "Group": {
+      "type": "object",
+      "properties": {
+        "groupID": {
+          "type": "string"
+        },
+        "mappings": {}
+      }
+    },
+    "GroupAttributes": {
+      "type": "object",
+      "properties": {
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
     "HTTPClientConfig": {
       "type": "object",
       "title": "HTTPClientConfig configures an HTTP client.",
@@ -16260,6 +16439,10 @@
         },
         "isStarred": {
           "type": "boolean"
+        },
+        "orgId": {
+          "type": "integer",
+          "format": "int64"
         },
         "permanentlyDeleteDate": {
           "type": "string",
@@ -16744,7 +16927,6 @@
     },
     "LibraryElementDTOMetaUser": {
       "type": "object",
-      "title": "LibraryElementDTOMetaUser defines model for LibraryElementDTOMetaUser.",
       "properties": {
         "avatarUrl": {
           "type": "string"
@@ -16968,7 +17150,29 @@
         "status"
       ],
       "properties": {
+        "errorCode": {
+          "type": "string",
+          "enum": [
+            "DATASOURCE_NAME_CONFLICT",
+            "DATASOURCE_INVALID_URL",
+            "DATASOURCE_ALREADY_MANAGED",
+            "FOLDER_NAME_CONFLICT",
+            "DASHBOARD_ALREADY_MANAGED",
+            "LIBRARY_ELEMENT_NAME_CONFLICT",
+            "UNSUPPORTED_DATA_TYPE",
+            "RESOURCE_CONFLICT",
+            "UNEXPECTED_STATUS_CODE",
+            "INTERNAL_SERVICE_ERROR",
+            "GENERIC_ERROR"
+          ]
+        },
         "message": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "parentName": {
           "type": "string"
         },
         "refId": {
@@ -16989,7 +17193,15 @@
           "enum": [
             "DASHBOARD",
             "DATASOURCE",
-            "FOLDER"
+            "FOLDER",
+            "LIBRARY_ELEMENT",
+            "ALERT_RULE",
+            "ALERT_RULE_GROUP",
+            "CONTACT_POINT",
+            "NOTIFICATION_POLICY",
+            "NOTIFICATION_TEMPLATE",
+            "MUTE_TIMING",
+            "PLUGIN"
           ]
         }
       }
@@ -17105,7 +17317,6 @@
     },
     "NavbarPreference": {
       "type": "object",
-      "title": "NavbarPreference defines model for NavbarPreference.",
       "properties": {
         "bookmarkUrls": {
           "type": "array",
@@ -17487,6 +17698,9 @@
           "format": "int64"
         },
         "role": {
+          "type": "string"
+        },
+        "uid": {
           "type": "string"
         },
         "userId": {
@@ -18180,6 +18394,9 @@
         "is_paused": {
           "type": "boolean"
         },
+        "metadata": {
+          "$ref": "#/definitions/AlertRuleMetadata"
+        },
         "no_data_state": {
           "type": "string",
           "enum": [
@@ -18218,16 +18435,35 @@
     "PostableRuleGroupConfig": {
       "type": "object",
       "properties": {
+        "align_evaluation_time_on_interval": {
+          "type": "boolean"
+        },
+        "evaluation_delay": {
+          "type": "string"
+        },
         "interval": {
           "$ref": "#/definitions/Duration"
         },
+        "limit": {
+          "type": "integer",
+          "format": "int64"
+        },
         "name": {
+          "type": "string"
+        },
+        "query_offset": {
           "type": "string"
         },
         "rules": {
           "type": "array",
           "items": {
             "$ref": "#/definitions/PostableExtendedRuleNode"
+          }
+        },
+        "source_tenants": {
+          "type": "array",
+          "items": {
+            "type": "string"
           }
         }
       }
@@ -18285,7 +18521,7 @@
           "$ref": "#/definitions/QueryHistoryPreference"
         },
         "theme": {
-          "description": "Theme light, dark, empty is default",
+          "description": "light, dark, empty is default",
           "type": "string"
         },
         "timezone": {
@@ -18293,8 +18529,23 @@
           "type": "string"
         },
         "weekStart": {
-          "description": "WeekStart day of the week (sunday, monday, etc)",
+          "description": "day of the week (sunday, monday, etc)",
           "type": "string"
+        }
+      }
+    },
+    "PrometheusNamespace": {
+      "type": "object",
+      "properties": {
+        "Body": {
+          "description": "in: body",
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/PrometheusRuleGroup"
+            }
+          }
         }
       }
     },
@@ -18309,6 +18560,55 @@
         },
         "remote_write_path": {
           "type": "string"
+        }
+      }
+    },
+    "PrometheusRule": {
+      "type": "object",
+      "properties": {
+        "Alert": {
+          "type": "string"
+        },
+        "Annotations": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "Expr": {
+          "type": "string"
+        },
+        "For": {
+          "type": "string"
+        },
+        "KeepFiringFor": {
+          "type": "string"
+        },
+        "Labels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "Record": {
+          "type": "string"
+        }
+      }
+    },
+    "PrometheusRuleGroup": {
+      "type": "object",
+      "properties": {
+        "Interval": {
+          "$ref": "#/definitions/Duration"
+        },
+        "Name": {
+          "type": "string"
+        },
+        "Rules": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PrometheusRule"
+          }
         }
       }
     },
@@ -18756,10 +19056,9 @@
     },
     "QueryHistoryPreference": {
       "type": "object",
-      "title": "QueryHistoryPreference defines model for QueryHistoryPreference.",
       "properties": {
         "homeTab": {
-          "description": "HomeTab one of: '' | 'query' | 'starred';",
+          "description": "one of: '' | 'query' | 'starred';",
           "type": "string"
         }
       }
@@ -19257,6 +19556,12 @@
         "orientation": {
           "type": "string"
         },
+        "pdfCombineOneFile": {
+          "type": "boolean"
+        },
+        "pdfShowTemplateVariables": {
+          "type": "boolean"
+        },
         "timeRange": {
           "$ref": "#/definitions/ReportTimeRange"
         }
@@ -19300,6 +19605,9 @@
         "branding": {
           "$ref": "#/definitions/ReportBrandingOptions"
         },
+        "embeddedImageTheme": {
+          "type": "string"
+        },
         "id": {
           "type": "integer",
           "format": "int64"
@@ -19307,6 +19615,9 @@
         "orgId": {
           "type": "integer",
           "format": "int64"
+        },
+        "pdfTheme": {
+          "type": "string"
         },
         "userId": {
           "type": "integer",
@@ -19419,6 +19730,9 @@
           "type": "string"
         },
         "hidden": {
+          "type": "boolean"
+        },
+        "mapped": {
           "type": "boolean"
         },
         "name": {
@@ -19592,7 +19906,9 @@
       "description": "adapted from cortex",
       "type": "object",
       "required": [
+        "uid",
         "name",
+        "folderUid",
         "query",
         "health",
         "type"
@@ -19601,6 +19917,9 @@
         "evaluationTime": {
           "type": "number",
           "format": "double"
+        },
+        "folderUid": {
+          "type": "string"
         },
         "health": {
           "type": "string"
@@ -19623,6 +19942,9 @@
         },
         "type": {
           "type": "string"
+        },
+        "uid": {
+          "type": "string"
         }
       }
     },
@@ -19632,6 +19954,9 @@
         "groups"
       ],
       "properties": {
+        "groupNextToken": {
+          "type": "string"
+        },
         "groups": {
           "type": "array",
           "items": {
@@ -19652,6 +19977,7 @@
       "required": [
         "name",
         "file",
+        "folderUid",
         "rules",
         "interval"
       ],
@@ -19661,6 +19987,9 @@
           "format": "double"
         },
         "file": {
+          "type": "string"
+        },
+        "folderUid": {
           "type": "string"
         },
         "interval": {
@@ -19693,10 +20022,23 @@
     "RuleGroupConfigResponse": {
       "type": "object",
       "properties": {
+        "align_evaluation_time_on_interval": {
+          "type": "boolean"
+        },
+        "evaluation_delay": {
+          "type": "string"
+        },
         "interval": {
           "$ref": "#/definitions/Duration"
         },
+        "limit": {
+          "type": "integer",
+          "format": "int64"
+        },
         "name": {
+          "type": "string"
+        },
+        "query_offset": {
           "type": "string"
         },
         "rules": {
@@ -19775,6 +20117,10 @@
       "description": "Sample is a single sample belonging to a metric. It represents either a float\nsample or a histogram sample. If H is nil, it is a float sample. Otherwise,\nit is a histogram sample.",
       "type": "object",
       "properties": {
+        "DropName": {
+          "description": "DropName is used to indicate whether the __name__ label should be dropped\nas part of the query evaluation.",
+          "type": "boolean"
+        },
         "F": {
           "type": "number",
           "format": "double"
@@ -20071,6 +20417,10 @@
           "type": "integer",
           "format": "int64",
           "example": 0
+        },
+        "uid": {
+          "type": "string",
+          "example": "fe1xejlha91xce"
         }
       }
     },
@@ -20136,6 +20486,10 @@
         "tokens": {
           "type": "integer",
           "format": "int64"
+        },
+        "uid": {
+          "type": "string",
+          "example": "fe1xejlha91xce"
         },
         "updatedAt": {
           "type": "string",
@@ -20493,6 +20847,10 @@
         }
       }
     },
+    "Source": {
+      "type": "string",
+      "title": "Source type defines the status source."
+    },
     "Span": {
       "type": "object",
       "title": "A Span defines a continuous sequence of buckets.",
@@ -20708,6 +21066,9 @@
           }
         },
         "teamId": {
+          "type": "string"
+        },
+        "teamUid": {
           "type": "string"
         }
       }
@@ -21783,6 +22144,18 @@
         }
       }
     },
+    "UserInfo": {
+      "type": "object",
+      "title": "UserInfo represents user-related information, including a unique identifier and a name.",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "uid": {
+          "type": "string"
+        }
+      }
+    },
     "UserLookupDTO": {
       "type": "object",
       "properties": {
@@ -21790,6 +22163,9 @@
           "type": "string"
         },
         "login": {
+          "type": "string"
+        },
+        "uid": {
           "type": "string"
         },
         "userId": {
@@ -21942,6 +22318,10 @@
           "type": "string"
         },
         "CreatedAt": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "ExternalSessionId": {
           "type": "integer",
           "format": "int64"
         },
@@ -22313,6 +22693,21 @@
         }
       }
     },
+    "getGroupsResponse": {
+      "type": "object",
+      "properties": {
+        "groups": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Group"
+          }
+        },
+        "total": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
     "gettableAlert": {
       "description": "GettableAlert gettable alert",
       "type": "object",
@@ -22370,6 +22765,7 @@
       }
     },
     "gettableAlerts": {
+      "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
         "type": "object",
@@ -22494,6 +22890,7 @@
       }
     },
     "gettableSilences": {
+      "description": "GettableSilences gettable silences",
       "type": "array",
       "items": {
         "type": "object",
@@ -22556,6 +22953,14 @@
       "type": "array",
       "items": {
         "$ref": "#/definitions/matcher"
+      }
+    },
+    "messageResponse": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string"
+        }
       }
     },
     "peerStatus": {
@@ -22742,6 +23147,9 @@
           "type": "integer",
           "format": "int64"
         },
+        "teamUid": {
+          "type": "string"
+        },
         "userAvatarUrl": {
           "type": "string"
         },
@@ -22750,6 +23158,9 @@
           "format": "int64"
         },
         "userLogin": {
+          "type": "string"
+        },
+        "userUid": {
           "type": "string"
         }
       }
@@ -22951,6 +23362,12 @@
         "items": {
           "$ref": "#/definitions/UserToken"
         }
+      }
+    },
+    "apiResponse": {
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/messageResponse"
       }
     },
     "badRequestError": {
@@ -23175,6 +23592,9 @@
           "teamId": {
             "type": "integer",
             "format": "int64"
+          },
+          "uid": {
+            "type": "string"
           }
         }
       }
@@ -23480,6 +23900,21 @@
         }
       }
     },
+    "getGroupRolesResponse": {
+      "description": "(empty)",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/RoleDTO"
+        }
+      }
+    },
+    "getGroupsResponse": {
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/getGroupsResponse"
+      }
+    },
     "getHomeDashboardResponse": {
       "description": "(empty)",
       "schema": {
@@ -23764,10 +24199,7 @@
     "getTeamLBACRulesResponse": {
       "description": "(empty)",
       "schema": {
-        "type": "array",
-        "items": {
-          "$ref": "#/definitions/TeamLBACRules"
-        }
+        "$ref": "#/definitions/TeamLBACRules"
       }
     },
     "getTeamMembersResponse": {
@@ -24289,14 +24721,17 @@
             "type": "integer",
             "format": "int64"
           },
-          "lbacRules": {
-            "$ref": "#/definitions/TeamLBACRules"
-          },
           "message": {
             "type": "string"
           },
           "name": {
             "type": "string"
+          },
+          "rules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/TeamLBACRule"
+            }
           },
           "uid": {
             "type": "string"

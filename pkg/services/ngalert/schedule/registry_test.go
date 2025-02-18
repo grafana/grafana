@@ -204,6 +204,12 @@ func TestRuleWithFolderFingerprint(t *testing.T) {
 			NotificationSettings: []models.NotificationSettings{
 				models.NotificationSettingsGen()(),
 			},
+			Metadata: models.AlertRuleMetadata{
+				EditorSettings: models.EditorSettings{
+					SimplifiedQueryAndExpressionsSection: false,
+					SimplifiedNotificationsSection:       false,
+				},
+			},
 		}
 		r2 := &models.AlertRule{
 			ID:        2,
@@ -243,13 +249,21 @@ func TestRuleWithFolderFingerprint(t *testing.T) {
 			NotificationSettings: []models.NotificationSettings{
 				models.NotificationSettingsGen()(),
 			},
+			Metadata: models.AlertRuleMetadata{
+				EditorSettings: models.EditorSettings{
+					SimplifiedQueryAndExpressionsSection: true,
+				},
+			},
 		}
 
 		excludedFields := map[string]struct{}{
 			"Version":         {},
 			"Updated":         {},
+			"UpdatedBy":       {},
 			"IntervalSeconds": {},
 			"Annotations":     {},
+			"ID":              {},
+			"OrgID":           {},
 		}
 
 		tp := reflect.TypeOf(rule).Elem()

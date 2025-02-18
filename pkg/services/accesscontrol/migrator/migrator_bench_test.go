@@ -10,7 +10,7 @@ import (
 )
 
 func benchScopeSplitConcurrent(b *testing.B, count int) {
-	store := db.InitTestReplDB(b)
+	store := db.InitTestDB(b)
 	// Populate permissions
 	require.NoError(b, batchInsertPermissions(count, store), "could not insert permissions")
 	logger := log.New("migrator.test")

@@ -9,7 +9,7 @@ import Creatable from 'react-select/creatable';
 // Components
 import { SelectableValue, ThemeContext } from '@grafana/data';
 
-import { CustomScrollbar } from '../../../CustomScrollbar/CustomScrollbar';
+import { ScrollContainer } from '../../../ScrollContainer/ScrollContainer';
 import { SingleValue } from '../../../Select/SingleValue';
 import resetSelectStyles from '../../../Select/resetSelectStyles';
 import { SelectCommonProps, SelectAsyncProps } from '../../../Select/types';
@@ -45,9 +45,9 @@ export interface LegacySelectProps<T> extends LegacyCommonProps<T> {
 export const MenuList = (props: MenuListProps) => {
   return (
     <components.MenuList {...props}>
-      <CustomScrollbar autoHide={false} autoHeightMax="inherit">
+      <ScrollContainer showScrollIndicators overflowX="hidden" maxHeight="inherit">
         {props.children}
-      </CustomScrollbar>
+      </ScrollContainer>
     </components.MenuList>
   );
 };
@@ -246,6 +246,7 @@ export class AsyncSelect<T> extends PureComponent<AsyncProps<T>> {
               //@ts-expect-error
               getOptionValue={getOptionValue}
               menuShouldScrollIntoView={false}
+              //@ts-expect-error
               onChange={onChange}
               loadOptions={loadOptions}
               isLoading={isLoading}

@@ -1,12 +1,10 @@
 import { get, has, isArray, isNil, omit, omitBy, reduce } from 'lodash';
 
 import {
-  AlertManagerCortexConfig,
   AlertmanagerReceiver,
   GrafanaManagedContactPoint,
   GrafanaManagedReceiverConfig,
   Receiver,
-  Route,
 } from 'app/plugins/datasource/alertmanager/types';
 import { CloudNotifierType, NotificationChannelOption, NotifierDTO, NotifierType } from 'app/types';
 
@@ -107,10 +105,13 @@ export function formValuesToCloudReceiver(
     name: values.name,
   };
   values.items.forEach(({ __id, type, settings, sendResolved }) => {
-    const channel = omitEmptyValues({
+    const channelWithOmmitedIdentifiers = omitEmptyValues({
       ...omitTemporaryIdentifiers(settings),
       send_resolved: sendResolved ?? defaults.sendResolved,
     });
+
+    const channel =
+      type === 'jira' ? convertJiraFieldToJson(channelWithOmmitedIdentifiers) : channelWithOmmitedIdentifiers;
 
     if (!(`${type}_configs` in recv)) {
       recv[`${type}_configs`] = [channel];
@@ -121,61 +122,47 @@ export function formValuesToCloudReceiver(
   return recv;
 }
 
-// will add new receiver, or replace exisitng one
-export function updateConfigWithReceiver(
-  config: AlertManagerCortexConfig,
-  receiver: Receiver,
-  existingReceiverName?: string
-): AlertManagerCortexConfig {
-  const existingReceivers = config.alertmanager_config.receivers ?? [];
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function convertJiraFieldToJson(object: Record<string, any>) {
+  // Only for cloud alert manager. Jira fields option can be a nested object. We need to convert it to JSON.
 
-  const receiverWasRenamed = existingReceiverName && receiver.name !== existingReceiverName;
+  const objectCopy = structuredClone(object);
 
-  // sanity check that name is not duplicated
-  if (!existingReceiverName && !!existingReceivers.find(({ name }) => name === receiver.name)) {
-    throw new Error(`Duplicate receiver name ${receiver.name}`);
+  if (typeof objectCopy.fields === 'object') {
+    for (const [optionName, optionValue] of Object.entries(objectCopy.fields)) {
+      let valueForField;
+      try {
+        // eslint-disable-next-line
+        valueForField = JSON.parse(optionValue as string); // is a stringified object
+      } catch {
+        valueForField = optionValue; // is not a stringified object
+      }
+      objectCopy.fields[optionName] = valueForField;
+    }
   }
 
-  // sanity check that existing receiver exists
-  if (existingReceiverName && !existingReceivers.find(({ name }) => name === existingReceiverName)) {
-    throw new Error(`Expected receiver ${existingReceiverName} to exist, but did not find it in the config`);
-  }
-
-  const updated: AlertManagerCortexConfig = {
-    ...config,
-    alertmanager_config: {
-      ...config.alertmanager_config,
-      receivers: existingReceiverName
-        ? existingReceivers.map((existingReceiver) =>
-            existingReceiver.name === existingReceiverName ? receiver : existingReceiver
-          )
-        : [...existingReceivers, receiver],
-    },
-  };
-
-  // if receiver was renamed, rename it in routes as well
-  if (updated.alertmanager_config.route && receiverWasRenamed) {
-    updated.alertmanager_config.route = renameReceiverInRoute(
-      updated.alertmanager_config.route,
-      existingReceiverName,
-      receiver.name
-    );
-  }
-
-  return updated;
+  return objectCopy;
 }
 
-function renameReceiverInRoute(route: Route, oldName: string, newName: string) {
-  const updated: Route = {
-    ...route,
-  };
-  if (updated.receiver === oldName) {
-    updated.receiver = newName;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function convertJsonToJiraField(object: Record<string, any>) {
+  // Only for cloud alert manager. Convert JSON back to nested Jira fields option.
+
+  const objectCopy = structuredClone(object);
+
+  if (typeof objectCopy.fields === 'object') {
+    for (const [optionName, optionValue] of Object.entries(objectCopy.fields)) {
+      let valueForField;
+      if (typeof optionValue === 'object') {
+        valueForField = JSON.stringify(optionValue);
+      } else {
+        valueForField = optionValue;
+      }
+      objectCopy.fields[optionName] = valueForField;
+    }
   }
-  if (updated.routes) {
-    updated.routes = updated.routes.map((route) => renameReceiverInRoute(route, oldName, newName));
-  }
-  return updated;
+
+  return objectCopy;
 }
 
 function cloudChannelConfigToFormChannelValues(
@@ -187,7 +174,7 @@ function cloudChannelConfigToFormChannelValues(
     __id: id,
     type,
     settings: {
-      ...channel,
+      ...(type === 'jira' ? convertJsonToJiraField(channel) : channel),
     },
     secureFields: {},
     secureSettings: {},
@@ -209,6 +196,13 @@ function grafanaChannelConfigToFormChannelValues(
     secureFields: { ...channel.secureFields },
     disableResolveMessage: channel.disableResolveMessage,
   };
+
+  notifier?.options.forEach((option) => {
+    if (option.secure && values.settings[option.propertyName]) {
+      values.secureSettings[option.propertyName] = values.settings[option.propertyName];
+      delete values.settings[option.propertyName];
+    }
+  });
 
   return values;
 }

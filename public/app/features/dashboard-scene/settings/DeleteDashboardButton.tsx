@@ -33,7 +33,7 @@ export function DeleteDashboardButton({ dashboard }: ButtonProps) {
         dashboard: 1,
       },
       source: 'dashboard_scene_settings',
-      restore_enabled: config.featureToggles.dashboardRestoreUI,
+      restore_enabled: Boolean(config.featureToggles.dashboardRestore),
     });
     toggleModal();
     if (dashboard.state.uid) {

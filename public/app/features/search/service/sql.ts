@@ -4,13 +4,11 @@ import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { PermissionLevelString } from 'app/types';
 
-import { DEFAULT_MAX_VALUES, TYPE_KIND_MAP } from '../constants';
+import { DEFAULT_MAX_VALUES, GENERAL_FOLDER_UID, TYPE_KIND_MAP } from '../constants';
 import { DashboardSearchHit, DashboardSearchItemType } from '../types';
 
-import { LocationInfo } from './types';
+import { DashboardQueryResult, GrafanaSearcher, LocationInfo, QueryResponse, SearchQuery } from './types';
 import { replaceCurrentFolderQuery } from './utils';
-
-import { DashboardQueryResult, GrafanaSearcher, QueryResponse, SearchQuery } from '.';
 
 interface APIQuery {
   query?: string;
@@ -175,7 +173,7 @@ export class SQLSearcher implements GrafanaSearcher {
 
       let v = hit.folderUid;
       if (!v && k === 'dashboard') {
-        v = 'general';
+        v = GENERAL_FOLDER_UID;
       }
       location.push(v!);
 

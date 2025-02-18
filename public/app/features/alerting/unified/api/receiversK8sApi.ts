@@ -1,3 +1,4 @@
+import { AlertingApiExtraOptions } from 'app/features/alerting/unified/api/alertingApi';
 import { generatedReceiversApi } from 'app/features/alerting/unified/openapi/receiversApi.gen';
 
 export const receiversApi = generatedReceiversApi.enhanceEndpoints({
@@ -17,6 +18,10 @@ export const receiversApi = generatedReceiversApi.enhanceEndpoints({
         };
         return baseQuery;
       };
+    },
+    readNamespacedReceiver: (endpoint) => {
+      const extraOptions: AlertingApiExtraOptions = { hideErrorMessage: true };
+      endpoint.extraOptions = extraOptions;
     },
   },
 });

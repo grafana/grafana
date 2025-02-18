@@ -1,29 +1,46 @@
 import { screen } from '@testing-library/react';
 import { render } from 'test/test-utils';
 
-import { selectors } from '@grafana/e2e-selectors';
+import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
+import { config, setPluginImportUtils } from '@grafana/runtime';
 
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
+
+setPluginImportUtils({
+  importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({})),
+  getPanelPluginFromCache: (id: string) => undefined,
+});
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   useChromeHeaderHeight: jest.fn(),
+  getDataSourceSrv: () => {
+    return {
+      getInstanceSettings: jest.fn().mockResolvedValue({ uid: 'ds1' }),
+    };
+  },
+  config: {
+    ...jest.requireActual('@grafana/runtime').config,
+    angularSupportEnabled: true,
+    panels: {
+      'briangann-datatable-panel': {
+        id: 'briangann-datatable-panel',
+        state: 'deprecated',
+        angular: { detected: true, hideDeprecation: false },
+      },
+    },
+  },
 }));
 
 describe('DashboardSceneRenderer', () => {
-  it('should render Not Found notice when dashboard is not found', async () => {
+  it('should render angular deprecation notice when dashboard contains angular components', async () => {
+    const noticeText = /This dashboard depends on Angular/i;
+    //enable feature flag angularDeprecationUI
+    config.featureToggles.angularDeprecationUI = true;
     const scene = transformSaveModelToScene({
-      meta: {
-        isSnapshot: true,
-        dashboardNotFound: true,
-        canStar: false,
-        canDelete: false,
-        canSave: false,
-        canEdit: false,
-        canShare: false,
-      },
+      meta: {},
       dashboard: {
-        title: 'Not found',
+        title: 'Angular dashboard',
         uid: 'uid',
         schemaVersion: 0,
         // Disabling build in annotations to avoid mocking Grafana data source
@@ -43,11 +60,26 @@ describe('DashboardSceneRenderer', () => {
             },
           ],
         },
+
+        panels: [
+          {
+            id: 1,
+            type: 'briangann-datatable-panel',
+            gridPos: { x: 0, y: 0, w: 12, h: 6 },
+            title: 'Angular component',
+            options: {
+              showHeader: true,
+            },
+            fieldConfig: { defaults: {}, overrides: [] },
+            datasource: { uid: 'abcdef' },
+            targets: [{ refId: 'A' }],
+          },
+        ],
       },
     });
 
     render(<scene.Component model={scene} />);
 
-    expect(await screen.findByTestId(selectors.components.EntityNotFound.container)).toBeInTheDocument();
+    expect(await screen.findByText(noticeText)).toBeInTheDocument();
   });
 });

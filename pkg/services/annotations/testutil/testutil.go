@@ -5,18 +5,16 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/require"
-
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashboardstore "github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/stretchr/testify/require"
 )
 
 func SetupRBACRole(t *testing.T, db db.DB, user *user.SignedInUser) *accesscontrol.Role {
@@ -79,15 +77,14 @@ func SetupRBACPermission(t *testing.T, db db.DB, role *accesscontrol.Role, user 
 	require.NoError(t, err)
 }
 
-func CreateDashboard(t *testing.T, db db.ReplDB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, cmd dashboards.SaveDashboardCommand) *dashboards.Dashboard {
+func CreateDashboard(t *testing.T, db db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, cmd dashboards.SaveDashboardCommand) *dashboards.Dashboard {
 	t.Helper()
 
 	dashboardStore, err := dashboardstore.ProvideDashboardStore(
 		db,
 		cfg,
 		features,
-		tagimpl.ProvideService(db.DB()),
-		quotatest.New(false, nil),
+		tagimpl.ProvideService(db),
 	)
 	require.NoError(t, err)
 

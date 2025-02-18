@@ -3,13 +3,13 @@ package serviceaccount
 import (
 	"context"
 	"fmt"
-	"strconv"
 
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	iamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
@@ -27,12 +27,13 @@ var (
 
 var resource = iamv0.ServiceAccountResourceInfo
 
-func NewLegacyStore(store legacy.LegacyIdentityStore) *LegacyStore {
-	return &LegacyStore{store}
+func NewLegacyStore(store legacy.LegacyIdentityStore, ac claims.AccessClient) *LegacyStore {
+	return &LegacyStore{store, ac}
 }
 
 type LegacyStore struct {
 	store legacy.LegacyIdentityStore
+	ac    claims.AccessClient
 }
 
 func (s *LegacyStore) New() runtime.Object {
@@ -58,28 +59,38 @@ func (s *LegacyStore) ConvertToTable(ctx context.Context, object runtime.Object,
 }
 
 func (s *LegacyStore) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
-	ns, err := request.NamespaceInfoFrom(ctx, true)
+	res, err := common.List(
+		ctx, resource.GetName(), s.ac, common.PaginationFromListOptions(options),
+		func(ctx context.Context, ns claims.NamespaceInfo, p common.Pagination) (*common.ListResponse[iamv0.ServiceAccount], error) {
+			found, err := s.store.ListServiceAccounts(ctx, ns, legacy.ListServiceAccountsQuery{
+				Pagination: p,
+			})
+
+			if err != nil {
+				return nil, err
+			}
+
+			items := make([]iamv0.ServiceAccount, 0, len(found.Items))
+			for _, sa := range found.Items {
+				items = append(items, toSAItem(sa, ns.Value))
+			}
+
+			return &common.ListResponse[iamv0.ServiceAccount]{
+				Items:    items,
+				RV:       found.RV,
+				Continue: found.Continue,
+			}, nil
+		},
+	)
+
 	if err != nil {
 		return nil, err
 	}
 
-	found, err := s.store.ListServiceAccounts(ctx, ns, legacy.ListServiceAccountsQuery{
-		OrgID:      ns.OrgID,
-		Pagination: common.PaginationFromListOptions(options),
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	list := &iamv0.ServiceAccountList{}
-	for _, item := range found.Items {
-		list.Items = append(list.Items, toSAItem(item, ns.Value))
-	}
-
-	list.ListMeta.Continue = common.OptionalFormatInt(found.Continue)
-	list.ListMeta.ResourceVersion = common.OptionalFormatInt(found.RV)
-
-	return list, err
+	obj := &iamv0.ServiceAccountList{Items: res.Items}
+	obj.ListMeta.Continue = common.OptionalFormatInt(res.Continue)
+	obj.ListMeta.ResourceVersion = common.OptionalFormatInt(res.RV)
+	return obj, nil
 }
 
 func toSAItem(sa legacy.ServiceAccount, ns string) iamv0.ServiceAccount {
@@ -97,10 +108,7 @@ func toSAItem(sa legacy.ServiceAccount, ns string) iamv0.ServiceAccount {
 	}
 	obj, _ := utils.MetaAccessor(&item)
 	obj.SetUpdatedTimestamp(&sa.Updated)
-	obj.SetOriginInfo(&utils.ResourceOriginInfo{
-		Name: "SQL",
-		Path: strconv.FormatInt(sa.ID, 10),
-	})
+	obj.SetDeprecatedInternalID(sa.ID) // nolint:staticcheck
 	return item
 }
 

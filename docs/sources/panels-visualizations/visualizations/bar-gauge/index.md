@@ -39,6 +39,12 @@ You can use a bar gauge visualization when you need to show:
 - Attendance
 - Process completion rates
 
+## Configure a bar gauge visualization
+
+The following video shows you how to create and configure a bar gauge visualization:
+
+{{< youtube id="7PhDysObEXA" >}}
+
 {{< docs/play title="Bar Gauge" url="https://play.grafana.org/d/vmie2cmWz/" >}}
 
 ## Supported data formats
@@ -207,7 +213,7 @@ This option only applies when bar size is set to manual.
 
 ## Data links
 
-{{< docs/shared lookup="visualizations/datalink-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+{{< docs/shared lookup="visualizations/datalink-options-1.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ## Value mappings
 

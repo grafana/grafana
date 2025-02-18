@@ -123,29 +123,24 @@ For additional information on setting up TLS encryption with Tempo, refer to [Co
 
 ## Streaming
 
-<!-- The traceQLStreaming toggle will be deprecated in Grafana 11.2 and removed in 11.3. -->
-
 Streaming enables TraceQL query results to be displayed as they become available.
 Without streaming, no results are displayed until all results have returned.
 
-{{< docs/public-preview product="TraceQL streaming results" >}}
-
 To use streaming, you need to:
 
-- Run Tempo version 2.2 or newer, or Grafana Enterprise Traces (GET) version 2.2 or newer, or use Grafana Cloud Traces.
-- For self-managed Tempo or GET instances: If your Tempo or GET instance is behind a load balancer or proxy that doesn't supporting gRPC or HTTP2, streaming may not work and should be disabled.
+- Run Tempo version 2.2 or later, or Grafana Enterprise Traces (GET) version 2.2 or later, or use Grafana Cloud Traces.
+- Tempo must have `stream_over_http_enabled: true` for streaming to work.
+
+  For more information, refer to [Tempo gRPC API](https://grafana.com/docs/tempo/<TEMPO_VERSION>/api_docs/#tempo-grpc-api).
+
+- For self-managed Tempo or GET instances: If your Tempo or GET instance is behind a load balancer or proxy that doesn't supporting gRPC or HTTP2, streaming may not work and should be deactivated.
 
 ### Activate streaming
 
-You can activate streaming by either setting the `traceQLStreaming` [feature toggle](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/) to true or by activating the **Streaming** toggle in the Tempo data source.
+Streaming is available in Grafana and Grafana Cloud.
+You can activate streaming by turning the **Streaming** toggle to on in the Tempo data source.
 
 ![Streaming section in Tempo data source](/media/docs/grafana/data-sources/tempo-data-source-streaming-v11.2.png)
-
-If you are using Grafana Cloud, the `traceQLStreaming` feature toggle is already set to `true` by default.
-
-If the Tempo data source is set to allow streaming but the `traceQLStreaming` feature toggle is set to `false` in Grafana, streaming occurs.
-
-If the data source has streaming disabled and `traceQLStreaming` is set to `true`, streaming happens for that data source.
 
 When streaming is active, it's shows as **Enabled** in **Explore**.
 To check the status, select Explore in the menu, select your Tempo data source, and expand the **Options** section.
@@ -159,21 +154,7 @@ Trace to logs can also be used with other tracing data sources, such as Jaeger a
 
 ![Trace to logs settings](/media/docs/grafana/data-sources/tempo/tempo-data-source-trace-to-logs.png)
 
-There are two ways to configure the trace to logs feature:
-
-- Use a simplified configuration with default query, or
-- Configure a custom query where you can use a [template language](ref:variable-syntax) to interpolate variables from the trace or span.
-
-### Use a simple configuration
-
-1. Select the target data source from the drop-down list.
-
-   You can also click **Open advanced data source picker** to see more options, including adding a data source.
-
-1. Set start and end time shift. As the logs timestamps may not exactly match the timestamps of the spans in trace it may be necessary to search in larger or shifted time range to find the desired logs.
-1. Select which tags to use in the logs query.
-   The tags you configure must be present in the span's attributes or resources for a trace to logs span link to appear. You can optionally configure a new name for the tag. This is useful, for example, if the tag has dots in the name and the target data source does not allow using dots in labels. In that case, you can for example remap `http.status` (the span attribute) to `http_status` (the data source field). "Data source" in this context can refer to Loki, or another log data source.
-1. Optional: If your logs consistently trace or span IDs, you can use one or both of the **Filter by trace ID** and **Filter by span ID** settings.
+You can configure a custom query where you can use a [template language](ref:variable-syntax) to interpolate variables from the trace or span.
 
 ### Configure a custom query
 
@@ -328,7 +309,9 @@ You can configure the **Hide search** setting to hide the search query option in
 
 ### TraceID query
 
-The **TraceID query** setting modifies how TraceID queries are run. The time range can be used when there are performance issues or timeouts since it will narrow down the search to the defined range. This setting is disabled by default.
+The **TraceID query** setting modifies how TraceID queries are run.
+The time range can be used when there are performance issues or timeouts since it narrows down the search to the defined range.
+This setting is disabled by default.
 
 You can configure this setting as follows:
 
@@ -349,6 +332,10 @@ You can choose one of three options:
 | **None**     | Adds nothing to the span bar row.                                                                                                |
 | **Duration** | _(Default)_ Displays the span duration on the span bar row.                                                                      |
 | **Tag**      | Displays the span tag on the span bar row. You must also specify which tag key to use to get the tag value, such as `component`. |
+
+### Tag limit
+
+The **Tag limit** setting modifies the max number of tags and tag values to retrieve from Tempo. Default: 5000
 
 ### Private data source connect
 
@@ -399,8 +386,8 @@ datasources:
         query: 'method="$${__span.tags.method}"'
       tracesToMetrics:
         datasourceUid: 'prom'
-        spanStartTimeShift: '1h'
-        spanEndTimeShift: '-1h'
+        spanStartTimeShift: '-1h'
+        spanEndTimeShift: '1h'
         tags: [{ key: 'service.name', value: 'service' }, { key: 'job' }]
         queries:
           - name: 'Sample query'
@@ -419,9 +406,11 @@ datasources:
         hide: false
       traceQuery:
         timeShiftEnabled: true
-        spanStartTimeShift: '1h'
-        spanEndTimeShift: '-1h'
+        spanStartTimeShift: '-1h'
+        spanEndTimeShift: '1h'
       spanBar:
         type: 'Tag'
         tag: 'http.path'
+      streamingEnabled:
+        search: true
 ```

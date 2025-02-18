@@ -52,8 +52,8 @@ func (d *PyroscopeDatasource) query(ctx context.Context, pCtx backend.PluginCont
 		return response
 	}
 
-	profileTypeId := depointerizer(qm.ProfileTypeId)
-	labelSelector := depointerizer(qm.LabelSelector)
+	profileTypeId := qm.ProfileTypeId
+	labelSelector := qm.LabelSelector
 
 	responseMutex := sync.Mutex{}
 	g, gCtx := errgroup.WithContext(ctx)
@@ -83,6 +83,7 @@ func (d *PyroscopeDatasource) query(ctx context.Context, pCtx backend.PluginCont
 				query.TimeRange.From.UnixMilli(),
 				query.TimeRange.To.UnixMilli(),
 				qm.GroupBy,
+				qm.Limit,
 				math.Max(query.Interval.Seconds(), parsedInterval.Seconds()),
 			)
 			if err != nil {
@@ -452,13 +453,4 @@ func seriesToDataFrames(resp *SeriesResponse) []*data.Frame {
 		frames = append(frames, frame)
 	}
 	return frames
-}
-
-func depointerizer[T any](v *T) T {
-	var emptyValue T
-	if v != nil {
-		emptyValue = *v
-	}
-
-	return emptyValue
 }

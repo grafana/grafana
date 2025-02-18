@@ -402,6 +402,7 @@ export const clearLinkButtonStyles = (theme: GrafanaTheme2) => {
     fontFamily: 'inherit',
     color: 'inherit',
     height: '100%',
+    cursor: 'context-menu',
     '&:hover': {
       background: 'transparent',
       color: 'inherit',

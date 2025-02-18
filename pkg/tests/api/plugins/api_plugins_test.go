@@ -100,7 +100,7 @@ func TestIntegrationPlugins(t *testing.T) {
 	t.Run("List", func(t *testing.T) {
 		testCases := []testCase{
 			{
-				desc:        "should return all loaded core and bundled plugins",
+				desc:        "should return all loaded core plugins",
 				url:         "http://%s/api/plugins",
 				expStatus:   http.StatusOK,
 				expRespPath: "expectedListResp.json",
@@ -193,17 +193,17 @@ func TestIntegrationPluginAssets(t *testing.T) {
 	})
 }
 
-func createUser(t *testing.T, store db.DB, cfg *setting.Cfg, cmd user.CreateUserCommand) {
+func createUser(t *testing.T, db db.DB, cfg *setting.Cfg, cmd user.CreateUserCommand) {
 	t.Helper()
 
 	cfg.AutoAssignOrg = true
 	cfg.AutoAssignOrgId = 1
 
-	quotaService := quotaimpl.ProvideService(db.FakeReplDBFromDB(store), cfg)
-	orgService, err := orgimpl.ProvideService(store, cfg, quotaService)
+	quotaService := quotaimpl.ProvideService(db, cfg)
+	orgService, err := orgimpl.ProvideService(db, cfg, quotaService)
 	require.NoError(t, err)
 	usrSvc, err := userimpl.ProvideService(
-		store, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
+		db, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
 		quotaService, supportbundlestest.NewFakeBundleService(),
 	)
 	require.NoError(t, err)

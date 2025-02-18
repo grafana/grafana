@@ -147,7 +147,7 @@ Status Codes:
 
 ## Add Team
 
-The Team `name` needs to be unique. `name` is required and `email`,`orgId` is optional.
+The Team `name` needs to be unique. `name` is required and `email` is optional.
 
 `POST /api/teams`
 
@@ -170,7 +170,6 @@ Authorization: Bearer glsa_kcVxDhZtu5ISOZIEt
 {
   "name": "MyTestTeam",
   "email": "email@test.com",
-  "orgId": 2
 }
 ```
 
@@ -180,7 +179,7 @@ Authorization: Bearer glsa_kcVxDhZtu5ISOZIEt
 HTTP/1.1 200
 Content-Type: application/json
 
-{"message":"Team created","teamId":2}
+{"message":"Team created","teamId":2,"uid":"ceaulqadfoav4e"}
 ```
 
 Status Codes:

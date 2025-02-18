@@ -8,6 +8,7 @@ const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const path = require('path');
 const { DefinePlugin, EnvironmentPlugin } = require('webpack');
 const WebpackAssetsManifest = require('webpack-assets-manifest');
+const LiveReloadPlugin = require('webpack-livereload-plugin');
 const { merge } = require('webpack-merge');
 const WebpackBar = require('webpackbar');
 
@@ -74,7 +75,7 @@ module.exports = (env = {}) => {
         },
         require('./sass.rule.js')({
           sourceMap: false,
-          preserveUrl: false,
+          preserveUrl: true,
         }),
       ],
     },
@@ -105,13 +106,24 @@ module.exports = (env = {}) => {
     },
 
     plugins: [
+      ...(parseInt(env.liveReload, 10)
+        ? [
+            new LiveReloadPlugin({
+              appendScriptTag: true,
+              useSourceHash: true,
+              hostname: 'localhost',
+              protocol: 'http',
+              port: 35750,
+            }),
+          ]
+        : []),
       parseInt(env.noTsCheck, 10)
         ? new DefinePlugin({}) // bogus plugin to satisfy webpack API
         : new ForkTsCheckerWebpackPlugin({
             async: true, // don't block webpack emit
             typescript: {
               mode: 'write-references',
-              memoryLimit: 4096,
+              memoryLimit: 5096,
               diagnosticOptions: {
                 semantic: true,
                 syntactic: true,
@@ -124,6 +136,7 @@ module.exports = (env = {}) => {
             cache: true,
             lintDirtyModulesOnly: true, // don't lint on start, only lint changed files
             extensions: ['.ts', '.tsx'],
+            configType: 'flat',
           }),
       new MiniCssExtractPlugin({
         filename: 'grafana.[name].[contenthash].css',

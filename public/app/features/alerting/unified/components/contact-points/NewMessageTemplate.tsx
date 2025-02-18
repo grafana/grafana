@@ -1,30 +1,16 @@
-import { Alert } from '@grafana/ui';
-
-import { useAlertmanagerConfig } from '../../hooks/useAlertmanagerConfig';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
-import { NewTemplateView } from '../receivers/NewTemplateView';
+import { withPageErrorBoundary } from '../../withPageErrorBoundary';
+import { AlertmanagerPageWrapper } from '../AlertingPageWrapper';
+import { TemplateForm } from '../receivers/TemplateForm';
 
-const NewMessageTemplate = () => {
+function NewMessageTemplate() {
   const { selectedAlertmanager } = useAlertmanager();
-  const { data, isLoading, error } = useAlertmanagerConfig(selectedAlertmanager);
 
-  if (isLoading && !data) {
-    return 'loading...';
-  }
+  return (
+    <AlertmanagerPageWrapper navId="receivers" accessType="notification">
+      <TemplateForm alertmanager={selectedAlertmanager ?? ''} />
+    </AlertmanagerPageWrapper>
+  );
+}
 
-  if (error) {
-    return (
-      <Alert severity="error" title="Failed to fetch notification template">
-        {String(error)}
-      </Alert>
-    );
-  }
-
-  if (!data) {
-    return null;
-  }
-
-  return <NewTemplateView alertManagerSourceName={selectedAlertmanager!} config={data} />;
-};
-
-export default NewMessageTemplate;
+export default withPageErrorBoundary(NewMessageTemplate);

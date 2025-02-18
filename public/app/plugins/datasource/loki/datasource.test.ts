@@ -269,7 +269,7 @@ describe('LokiDatasource', () => {
         },
       ];
       expect(ds.applyTemplateVariables(query, {}, adhocFilters).expr).toBe(
-        'rate({bar="baz", job="foo", k1=~"v.*", k2=~"v\\\\\'.*"} |= "bar" [5m])'
+        `rate({bar="baz", job="foo", k1=~"v.*", k2=~"v'.*"} |= "bar" [5m])`
       );
     });
 
@@ -325,8 +325,15 @@ describe('LokiDatasource', () => {
       variable = {} as unknown as CustomVariableModel;
     });
 
-    it('should only escape single quotes', () => {
-      expect(ds.interpolateQueryExpr("abc'$^*{}[]+?.()|", variable)).toEqual("abc\\\\'$^*{}[]+?.()|");
+    it('should not escape', () => {
+      expect(ds.interpolateQueryExpr("abc'$^*{}[]+?.()|", variable)).toEqual("abc'$^*{}[]+?.()|");
+    });
+
+    it('should not escape single quotes in line filters', () => {
+      expect(ds.interpolateQueryExpr("|= `abc'$^*{}[]+?.()|`", variable)).toEqual("|= `abc'$^*{}[]+?.()|`");
+      expect(ds.interpolateQueryExpr("|~ `abc'$^*{}[]+?.()|`", variable)).toEqual("|~ `abc'$^*{}[]+?.()|`");
+      expect(ds.interpolateQueryExpr("!= `abc'$^*{}[]+?.()|`", variable)).toEqual("!= `abc'$^*{}[]+?.()|`");
+      expect(ds.interpolateQueryExpr("!~ `abc'$^*{}[]+?.()|`", variable)).toEqual("!~ `abc'$^*{}[]+?.()|`");
     });
 
     it('should return a number', () => {
@@ -442,9 +449,74 @@ describe('LokiDatasource', () => {
       expect(res.length).toBe(2);
       expect(res[0].text).toBe('hello');
       expect(res[0].tags).toEqual(['value']);
+      expect(res[0].time).toEqual(1);
 
       expect(res[1].text).toBe('hello 2');
       expect(res[1].tags).toEqual(['value2']);
+      expect(res[1].time).toEqual(2);
+    });
+
+    it('should transform the loki dataplane data to annotation response', async () => {
+      const originalDataplaneState = config.featureToggles.lokiLogsDataplane;
+      config.featureToggles.lokiLogsDataplane = true;
+      const testFrame: DataFrame = {
+        refId: 'A',
+        fields: [
+          {
+            name: 'timestamp',
+            type: FieldType.time,
+            config: {},
+            values: [1, 2],
+          },
+          {
+            name: 'body',
+            type: FieldType.string,
+            config: {},
+            values: ['hello', 'hello 2'],
+          },
+          {
+            name: 'labels',
+            type: FieldType.other,
+            config: {},
+            values: [
+              {
+                label: 'value',
+                label2: 'value ',
+              },
+              {
+                label: '',
+                label2: 'value2',
+                label3: ' ',
+              },
+            ],
+          },
+          {
+            name: 'tsNs',
+            type: FieldType.string,
+            config: {},
+            values: ['1000000', '2000000'],
+          },
+          {
+            name: 'id',
+            type: FieldType.string,
+            config: {},
+            values: ['id1', 'id2'],
+          },
+        ],
+        length: 2,
+      };
+      const res = await getTestContext(testFrame, { stepInterval: '15s' });
+
+      expect(res.length).toBe(2);
+      expect(res[0].text).toBe('hello');
+      expect(res[0].tags).toEqual(['value']);
+      expect(res[0].time).toEqual(1);
+
+      expect(res[1].text).toBe('hello 2');
+      expect(res[1].tags).toEqual(['value2']);
+      expect(res[1].time).toEqual(2);
+
+      config.featureToggles.lokiLogsDataplane = originalDataplaneState;
     });
 
     describe('Formatting', () => {
@@ -1342,6 +1414,15 @@ describe('LokiDatasource', () => {
       expect(ds.getSupplementaryRequest(SupplementaryQueryType.LogsVolume, options)).toBeDefined();
     });
 
+    it('does not create provider for hidden logs query', () => {
+      const options: DataQueryRequest<LokiQuery> = {
+        ...baseRequestOptions,
+        targets: [{ expr: '{label="value"}', refId: 'A', queryType: LokiQueryType.Range, hide: true }],
+      };
+
+      expect(ds.getSupplementaryRequest(SupplementaryQueryType.LogsVolume, options)).not.toBeDefined();
+    });
+
     it('does not create provider for metrics query', () => {
       const options: DataQueryRequest<LokiQuery> = {
         ...baseRequestOptions,
@@ -1429,11 +1510,10 @@ describe('LokiDatasource', () => {
             }
           )
         ).toEqual({
-          expr: 'sum by (level) (count_over_time({label="value"} | drop __error__[$__auto]))',
+          expr: 'sum by (level, detected_level) (count_over_time({label="value"} | drop __error__[$__auto]))',
           queryType: LokiQueryType.Range,
           refId: 'log-volume-A',
           supportingQueryType: SupportingQueryType.LogsVolume,
-          legendFormat: '{{ level }}',
         });
       });
 
@@ -1448,15 +1528,28 @@ describe('LokiDatasource', () => {
             }
           )
         ).toEqual({
-          expr: 'sum by (level) (count_over_time({label="value"} | drop __error__[$__auto]))',
+          expr: 'sum by (level, detected_level) (count_over_time({label="value"} | drop __error__[$__auto]))',
           queryType: LokiQueryType.Range,
           refId: 'log-volume-A',
           supportingQueryType: SupportingQueryType.LogsVolume,
-          legendFormat: '{{ level }}',
         });
       });
 
-      it('does return logs volume query for instant log query', () => {
+      it('does not return logs volume query for hidden log query', () => {
+        expect(
+          ds.getSupplementaryQuery(
+            { type: SupplementaryQueryType.LogsVolume },
+            {
+              expr: '{label="value"}',
+              queryType: LokiQueryType.Range,
+              refId: 'A',
+              hide: true,
+            }
+          )
+        ).toEqual(undefined);
+      });
+
+      it('returns logs volume query for instant log query', () => {
         // we changed logic to automatically run logs queries as range queries, thus there's a volume query now
         expect(
           ds.getSupplementaryQuery(
@@ -1468,8 +1561,7 @@ describe('LokiDatasource', () => {
             }
           )
         ).toEqual({
-          expr: 'sum by (level) (count_over_time({label="value"} | drop __error__[$__auto]))',
-          legendFormat: '{{ level }}',
+          expr: 'sum by (level, detected_level) (count_over_time({label="value"} | drop __error__[$__auto]))',
           queryType: 'range',
           refId: 'log-volume-A',
           supportingQueryType: 'logsVolume',
@@ -1510,7 +1602,9 @@ describe('LokiDatasource', () => {
             refId: 'A',
           }
         );
-        expect(query?.expr).toEqual('sum by (level) (count_over_time({label="value"} | drop __error__[$__auto]))');
+        expect(query?.expr).toEqual(
+          'sum by (level, detected_level) (count_over_time({label="value"} | drop __error__[$__auto]))'
+        );
       });
     });
 
@@ -1532,6 +1626,20 @@ describe('LokiDatasource', () => {
           maxLines: 20,
           supportingQueryType: SupportingQueryType.LogsSample,
         });
+      });
+
+      it('does not return logs sample query for hidden query', () => {
+        expect(
+          ds.getSupplementaryQuery(
+            { type: SupplementaryQueryType.LogsSample },
+            {
+              expr: 'rate({label="value"}[5m]',
+              queryType: LokiQueryType.Range,
+              refId: 'A',
+              hide: true,
+            }
+          )
+        ).toEqual(undefined);
       });
 
       it('returns logs sample query for instant metric query', () => {

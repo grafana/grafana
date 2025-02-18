@@ -51,7 +51,7 @@
     depends_on:
       - oauthkeycloak
     extra_hosts:
-      - "env.grafana.local:host.containers.internal"
+      - "env.grafana.local:host-gateway"
     ports:
       - 8088:8088
     restart: unless-stopped

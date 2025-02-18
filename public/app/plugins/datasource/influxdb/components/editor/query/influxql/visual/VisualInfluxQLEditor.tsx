@@ -247,8 +247,8 @@ export const VisualInfluxQLEditor = (props: Props): JSX.Element => {
 
 function getStyles(theme: GrafanaTheme2) {
   return {
-    inlineLabel: css`
-      color: ${theme.colors.primary.text};
-    `,
+    inlineLabel: css({
+      color: theme.colors.primary.text,
+    }),
   };
 }

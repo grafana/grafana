@@ -50,7 +50,7 @@ You can now easily embed Grafana in other applications by adding a JWT token dir
 When the JWT token is passed through the request URL to Grafana, Grafana validates and authenticates the token linked to a specific user, allowing access to dashboards which that user can view.
 To see JWT URL embedding in action, see the [sample project](https://github.com/grafana/grafana-iframe-oauth-sample).
 
-> **Note:** JWT URL Embedding and `allow_embedding` are not available to Grafana Cloud users. For Grafana Cloud, use the [Public Dashboards]({{< relref "../dashboards/dashboard-public" >}}) feature. To enable that, [open a ticket with our Support team](/docs/grafana-cloud/account-management/support/).
+> **Note:** JWT URL Embedding and `allow_embedding` are not available to Grafana Cloud users. For Grafana Cloud, use [public dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/share-dashboards-panels/shared-dashboards/). To enable that, [open a ticket with our Support team](/docs/grafana-cloud/account-management/support/).
 
 {{< figure src="/static/img/docs/dashboards/jwt-url-embedding-9-1.png" max-width="750px" caption="A JWT token used to embed Grafana" >}}
 
@@ -156,7 +156,7 @@ The public view of a dashboard has a few restrictions:
 - The public dashboard is displayed in a read-only kiosk view.
 - The time range is fixed to the dashboard default time range.
 
-To learn more, see the [documentation]({{< relref "../dashboards/dashboard-public" >}}).
+To learn more, see the [documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/share-dashboards-panels/shared-dashboards/).
 
 #### Provisioning improvements for Grafana Alerting
 

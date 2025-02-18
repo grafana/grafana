@@ -21,9 +21,9 @@ weight: 600
 refs:
   state-history:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/manage-notifications/view-state-health/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/monitor-status/view-alert-state-history/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/manage-notifications/view-state-health/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/monitor-status/view-alert-state-history/
   meta-monitoring:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/monitor/
@@ -60,6 +60,7 @@ Since gossiping of notifications and silences uses both TCP and UDP port `9094`,
    You must have at least one (1) Grafana instance added to the `ha_peers` section.
 1. Set `[ha_listen_address]` to the instance IP address using a format of `host:port` (or the [Pod's](https://kubernetes.io/docs/concepts/workloads/pods/) IP in the case of using Kubernetes).
    By default, it is set to listen to all interfaces (`0.0.0.0`).
+1. Set `[ha_advertise_address]` to the instance's hostname or IP address in the format "host:port". Use this setting when the instance is behind NAT (Network Address Translation), such as in Docker Swarm or Kubernetes service, where external and internal addresses differ. This address helps other cluster instances communicate with it. The setting is optional.
 1. Set `[ha_peer_timeout]` in the `[unified_alerting]` section of the custom.ini to specify the time to wait for an instance to send a notification via the Alertmanager. The default value is 15s, but it may increase if Grafana servers are located in different geographic regions or if the network latency between them is high.
 
 For a demo, see this [example using Docker Compose](https://github.com/grafana/alerting-ha-docker-examples/tree/main/memberlist).
@@ -75,6 +76,7 @@ database for HA and cannot support the meshing of all Grafana servers.
 1. Optional: Set the username and password if authentication is enabled on the Redis server using `ha_redis_username` and `ha_redis_password`.
 1. Optional: Set `ha_redis_prefix` to something unique if you plan to share the Redis server with multiple Grafana instances.
 1. Optional: Set `ha_redis_tls_enabled` to `true` and configure the corresponding `ha_redis_tls_*` fields to secure communications between Grafana and Redis with Transport Layer Security (TLS).
+1. Set `[ha_advertise_address]` to `ha_advertise_address = "${POD_IP}:9094"` This is required if the instance doesn't have an IP address that is part of RFC 6890 with a default route.
 
 For a demo, see this [example using Docker Compose](https://github.com/grafana/alerting-ha-docker-examples/tree/main/redis).
 

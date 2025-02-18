@@ -12,4 +12,4 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export { TraceSpan, TraceResponse, Trace, TraceProcess, TraceLink, CriticalPathSection } from './trace';
+export type { TraceSpan, TraceResponse, Trace, TraceProcess, TraceLink, CriticalPathSection } from './trace';

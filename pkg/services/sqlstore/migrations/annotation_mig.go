@@ -183,6 +183,14 @@ func addAnnotationMig(mg *Migrator) {
 	mg.AddMigration("Increase tags column to length 4096", NewRawSQLMigration("").
 		Postgres("ALTER TABLE annotation ALTER COLUMN tags TYPE VARCHAR(4096);").
 		Mysql("ALTER TABLE annotation MODIFY tags VARCHAR(4096);"))
+
+	mg.AddMigration("Increase prev_state column to length 40 not null", NewRawSQLMigration("").
+		Postgres("ALTER TABLE annotation ALTER COLUMN prev_state TYPE VARCHAR(40);"). // Does not modify nullability.
+		Mysql("ALTER TABLE annotation MODIFY prev_state VARCHAR(40) NOT NULL;"))
+
+	mg.AddMigration("Increase new_state column to length 40 not null", NewRawSQLMigration("").
+		Postgres("ALTER TABLE annotation ALTER COLUMN new_state TYPE VARCHAR(40);"). // Does not modify nullability.
+		Mysql("ALTER TABLE annotation MODIFY new_state VARCHAR(40) NOT NULL;"))
 }
 
 type AddMakeRegionSingleRowMigration struct {

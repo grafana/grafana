@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 
 import { PluginExtensionPoints } from '@grafana/data';
 import { usePluginLinks } from '@grafana/runtime';
-import { CombinedRule } from 'app/types/unified-alerting';
+import { CombinedRule, Rule, RuleGroupIdentifierV2 } from 'app/types/unified-alerting';
 import { PromRuleType } from 'app/types/unified-alerting-dto';
 
 import { getRulePluginOrigin } from '../utils/rules';
@@ -21,12 +21,12 @@ export interface AlertingRuleExtensionContext extends BaseRuleExtensionContext {
 
 export interface RecordingRuleExtensionContext extends BaseRuleExtensionContext {}
 
-export function useRulePluginLinkExtension(rule: CombinedRule) {
-  const ruleExtensionPoint = useRuleExtensionPoint(rule);
+export function useRulePluginLinkExtension(rule: Rule, groupIdentifier: RuleGroupIdentifierV2) {
+  const ruleExtensionPoint = useRuleExtensionPoint(rule, groupIdentifier);
   const { links } = usePluginLinks(ruleExtensionPoint);
 
   const ruleOrigin = getRulePluginOrigin(rule);
-  const ruleType = rule.promRule?.type;
+  const ruleType = rule.type;
   if (!ruleOrigin || !ruleType) {
     return [];
   }
@@ -57,9 +57,11 @@ interface EmptyExtensionPoint {
 
 type RuleExtensionPoint = AlertingRuleExtensionPoint | RecordingRuleExtensionPoint | EmptyExtensionPoint;
 
-function useRuleExtensionPoint(rule: CombinedRule): RuleExtensionPoint {
-  return useMemo(() => {
-    const ruleType = rule.promRule?.type;
+function useRuleExtensionPoint(rule: Rule, groupIdentifier: RuleGroupIdentifierV2): RuleExtensionPoint {
+  return useMemo<RuleExtensionPoint>(() => {
+    const ruleType = rule.type;
+    const { namespace, groupName } = groupIdentifier;
+    const namespaceIdentifier = 'uid' in namespace ? namespace.uid : namespace.name;
 
     switch (ruleType) {
       case PromRuleType.Alerting:
@@ -67,11 +69,11 @@ function useRuleExtensionPoint(rule: CombinedRule): RuleExtensionPoint {
           extensionPointId: PluginExtensionPoints.AlertingAlertingRuleAction,
           context: {
             name: rule.name,
-            namespace: rule.namespace.name,
-            group: rule.group.name,
+            namespace: namespaceIdentifier,
+            group: groupName,
             expression: rule.query,
-            labels: rule.labels,
-            annotations: rule.annotations,
+            labels: rule.labels ?? {},
+            annotations: rule.annotations ?? {},
           },
         };
       case PromRuleType.Recording:
@@ -79,14 +81,14 @@ function useRuleExtensionPoint(rule: CombinedRule): RuleExtensionPoint {
           extensionPointId: PluginExtensionPoints.AlertingRecordingRuleAction,
           context: {
             name: rule.name,
-            namespace: rule.namespace.name,
-            group: rule.group.name,
+            namespace: namespaceIdentifier,
+            group: groupName,
             expression: rule.query,
-            labels: rule.labels,
+            labels: rule.labels ?? {},
           },
         };
       default:
         return { extensionPointId: '' };
     }
-  }, [rule]);
+  }, [groupIdentifier, rule]);
 }

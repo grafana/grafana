@@ -9,23 +9,23 @@ import { NodesMarker } from './types';
 const nodeR = 40;
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  mainGroup: css`
-    cursor: pointer;
-    font-size: 10px;
-  `,
+  mainGroup: css({
+    cursor: 'pointer',
+    fontSize: '10px',
+  }),
 
-  mainCircle: css`
-    fill: ${theme.components.panel.background};
-    stroke: ${theme.colors.border.strong};
-  `,
-  text: css`
-    width: 50px;
-    height: 50px;
-    text-align: center;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  `,
+  mainCircle: css({
+    fill: theme.components.panel.background,
+    stroke: theme.colors.border.strong,
+  }),
+  text: css({
+    width: '50px',
+    height: '50px',
+    textAlign: 'center',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  }),
 });
 
 export const Marker = memo(function Marker(props: {

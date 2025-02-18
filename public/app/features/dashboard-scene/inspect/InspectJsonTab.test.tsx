@@ -12,14 +12,15 @@ import {
 } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { setPluginImportUtils, setRunRequest } from '@grafana/runtime';
-import { SceneCanvasText, SceneDataTransformer, SceneGridLayout, SceneQueryRunner, VizPanel } from '@grafana/scenes';
+import { SceneCanvasText, SceneDataTransformer, SceneQueryRunner, VizPanel } from '@grafana/scenes';
 import * as libpanels from 'app/features/library-panels/state/api';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 
-import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
+import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
+import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
 import { activateFullSceneTree } from '../utils/test-utils';
 import { findVizPanelByKey } from '../utils/utils';
@@ -106,7 +107,7 @@ describe('InspectJsonTab', () => {
     const { tab } = await buildTestScene();
 
     const obj = JSON.parse(tab.state.jsonText);
-    expect(obj.gridPos).toEqual({ x: 0, y: 0, w: 10, h: 12 });
+    expect(obj.gridPos).toEqual({ x: 0, y: 0, w: 8, h: 10 });
     expect(tab.isEditable()).toBe(true);
   });
 
@@ -114,7 +115,7 @@ describe('InspectJsonTab', () => {
     const { tab } = await buildTestSceneWithLibraryPanel();
 
     const obj = JSON.parse(tab.state.jsonText);
-    expect(obj.gridPos).toEqual({ x: 0, y: 0, w: 10, h: 12 });
+    expect(obj.gridPos).toEqual({ x: 0, y: 0, w: 8, h: 10 });
     expect(obj.type).toEqual('table');
     expect(tab.isEditable()).toBe(false);
   });
@@ -202,18 +203,7 @@ async function buildTestScene() {
     meta: {
       canEdit: true,
     },
-    body: new SceneGridLayout({
-      children: [
-        new DashboardGridItem({
-          key: 'griditem-1',
-          x: 0,
-          y: 0,
-          width: 10,
-          height: 12,
-          body: panel,
-        }),
-      ],
-    }),
+    body: DefaultGridLayoutManager.fromVizPanels([panel]),
   });
 
   activateFullSceneTree(scene);
@@ -233,7 +223,7 @@ async function buildTestSceneWithLibraryPanel() {
     title: 'Panel A',
     pluginId: 'table',
     key: 'panel-12',
-    $behaviors: [new LibraryPanelBehavior({ title: 'LibraryPanel A title', name: 'LibraryPanel A', uid: '111' })],
+    $behaviors: [new LibraryPanelBehavior({ name: 'LibraryPanel A', uid: '111' })],
     titleItems: [new VizPanelLinks({ menu: new VizPanelLinksMenu({}) })],
     $data: new SceneDataTransformer({
       transformations: [
@@ -265,24 +255,13 @@ async function buildTestSceneWithLibraryPanel() {
 
   jest.spyOn(libpanels, 'getLibraryPanel').mockResolvedValue({ ...libraryPanelState, ...panel });
 
-  const gridItem = new DashboardGridItem({
-    key: 'griditem-1',
-    x: 0,
-    y: 0,
-    width: 10,
-    height: 12,
-    body: libraryPanel,
-  });
-
   const scene = new DashboardScene({
     title: 'hello',
     uid: 'dash-1',
     meta: {
       canEdit: true,
     },
-    body: new SceneGridLayout({
-      children: [gridItem],
-    }),
+    body: DefaultGridLayoutManager.fromVizPanels([libraryPanel]),
   });
 
   activateFullSceneTree(scene);

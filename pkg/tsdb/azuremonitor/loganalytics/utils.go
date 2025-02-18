@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/kinds/dataquery"
 )
 
@@ -47,39 +47,37 @@ func AddConfigLinks(frame data.Frame, dl string, title *string) data.Frame {
 // 4. the ds toggle is set to true
 func meetsBasicLogsCriteria(resources []string, fromAlert bool, basicLogsEnabled bool) (bool, error) {
 	if fromAlert {
-		return false, errorsource.DownstreamError(fmt.Errorf("basic Logs queries cannot be used for alerts"), false)
+		return false, backend.DownstreamError(fmt.Errorf("basic Logs queries cannot be used for alerts"))
 	}
 	if len(resources) != 1 {
-		return false, errorsource.DownstreamError(fmt.Errorf("basic logs queries cannot be run against multiple resources"), false)
+		return false, backend.DownstreamError(fmt.Errorf("basic logs queries cannot be run against multiple resources"))
 	}
 
 	if !strings.Contains(strings.ToLower(resources[0]), "microsoft.operationalinsights/workspaces") {
-		return false, errorsource.DownstreamError(fmt.Errorf("basic logs queries may only be run against Log Analytics workspaces"), false)
+		return false, backend.DownstreamError(fmt.Errorf("basic logs queries may only be run against Log Analytics workspaces"))
 	}
 
 	if !basicLogsEnabled {
-		return false, errorsource.DownstreamError(fmt.Errorf("basic Logs queries are disabled for this data source"), false)
+		return false, backend.DownstreamError(fmt.Errorf("basic Logs queries are disabled for this data source"))
 	}
 
 	return true, nil
 }
 
+// This function should be part of migration function
 func ParseResultFormat(queryResultFormat *dataquery.ResultFormat, queryType dataquery.AzureQueryType) dataquery.ResultFormat {
-	var resultFormat dataquery.ResultFormat
-	if queryResultFormat != nil {
-		resultFormat = *queryResultFormat
+	if queryResultFormat != nil && *queryResultFormat != "" {
+		return *queryResultFormat
 	}
-	if resultFormat == "" {
-		if queryType == dataquery.AzureQueryTypeAzureLogAnalytics {
-			// Default to logs format for logs queries
-			resultFormat = dataquery.ResultFormatLogs
-		}
-		if queryType == dataquery.AzureQueryTypeAzureTraces {
-			// Default to table format for traces queries as many traces may be returned
-			resultFormat = dataquery.ResultFormatTable
-		}
+	if queryType == dataquery.AzureQueryTypeLogAnalytics {
+		// Default to time series format for logs queries. It was time series before this change
+		return dataquery.ResultFormatTimeSeries
 	}
-	return resultFormat
+	if queryType == dataquery.AzureQueryTypeAzureTraces {
+		// Default to table format for traces queries as many traces may be returned
+		return dataquery.ResultFormatTable
+	}
+	return ""
 }
 
 func getApiURL(resourceOrWorkspace string, isAppInsightsQuery bool, basicLogsQuery bool) string {

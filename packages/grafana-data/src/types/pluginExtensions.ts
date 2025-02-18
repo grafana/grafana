@@ -14,6 +14,7 @@ import { RawTimeRange, TimeZone } from './time';
 export enum PluginExtensionTypes {
   link = 'link',
   component = 'component',
+  function = 'function',
 }
 
 type PluginExtensionBase = {
@@ -31,12 +32,19 @@ export type PluginExtensionLink = PluginExtensionBase & {
   category?: string;
 };
 
+export type PluginExtensionComponentMeta = Omit<PluginExtensionComponent, 'component'>;
+
 export type PluginExtensionComponent<Props = {}> = PluginExtensionBase & {
   type: PluginExtensionTypes.component;
   component: React.ComponentType<Props>;
 };
 
-export type PluginExtension = PluginExtensionLink | PluginExtensionComponent;
+export type PluginExtensionFunction<Signature = () => void> = PluginExtensionBase & {
+  type: PluginExtensionTypes.function;
+  fn: Signature;
+};
+
+export type PluginExtension = PluginExtensionLink | PluginExtensionComponent | PluginExtensionFunction;
 
 // Objects used for registering extensions (in app plugins)
 // --------------------------------------------------------
@@ -50,7 +58,7 @@ type PluginExtensionConfigBase = {
   /**
    * A short description
    */
-  description: string;
+  description?: string;
 };
 
 export type PluginExtensionAddedComponentConfig<Props = {}> = PluginExtensionConfigBase & {
@@ -74,11 +82,19 @@ export type PluginExtensionAddedComponentConfig<Props = {}> = PluginExtensionCon
    */
   component: React.ComponentType<Props>;
 };
+export type PluginExtensionAddedFunctionConfig<Signature = unknown> = PluginExtensionConfigBase & {
+  /**
+   * The target extension points where the component will be added
+   */
+  targets: string | string[];
 
-export type PluginAddedLinksConfigureFunc<Context extends object> = (
-  context: Readonly<Context> | undefined,
-  helpers: PluginExtensionHelpers
-) =>
+  /**
+   * The function to be executed
+   */
+  fn: Signature;
+};
+
+export type PluginAddedLinksConfigureFunc<Context extends object> = (context: Readonly<Context> | undefined) =>
   | Partial<{
       title: string;
       description: string;
@@ -145,27 +161,11 @@ export type PluginExtensionOpenModalOptions = {
   height?: string | number;
 };
 
-type PluginExtensionHelpers = {
-  /** Checks if the app plugin (that registers the extension) is currently visible (either in the main view or in the side view)
-   * @experimental
-   */
-  isAppOpened: () => boolean;
-};
-
 export type PluginExtensionEventHelpers<Context extends object = object> = {
   context?: Readonly<Context>;
   // Opens a modal dialog and renders the provided React component inside it
   openModal: (options: PluginExtensionOpenModalOptions) => void;
-
-  /** Opens the app plugin (that registers the extensions) in a side view
-   * @experimental
-   */
-  openAppInSideview: (context?: unknown) => void;
-  /** Closes the side view for the app plugin (that registers the extensions) in case it was open
-   * @experimental
-   */
-  closeAppInSideview: () => void;
-} & PluginExtensionHelpers;
+};
 
 // Extension Points & Contexts
 // --------------------------------------------------------
@@ -195,7 +195,10 @@ export type PluginExtensionPanelContext = {
   data?: PanelData;
 };
 
-export type PluginExtensionDataSourceConfigContext<JsonData extends DataSourceJsonData = DataSourceJsonData> = {
+export type PluginExtensionDataSourceConfigContext<
+  JsonData extends DataSourceJsonData = DataSourceJsonData,
+  SecureJsonData = {},
+> = {
   // The current datasource settings
   dataSource: DataSourceSettings<JsonData>;
 
@@ -211,6 +214,7 @@ export type PluginExtensionDataSourceConfigContext<JsonData extends DataSourceJs
   // Can be used to update the `jsonData` field on the datasource
   // (Only updates the form, it still needs to be saved by the user)
   setJsonData: (jsonData: JsonData) => void;
+  setSecureJsonData: (secureJsonData: SecureJsonData) => void;
 };
 
 export type PluginExtensionCommandPaletteContext = {};
@@ -223,7 +227,7 @@ type Dashboard = {
 
 // deprecated types
 
-/** @deprecated - use PluginAddedComponentConfig instead */
+/** @deprecated - use PluginExtensionAddedLinkConfig instead */
 export type PluginExtensionLinkConfig<Context extends object = object> = {
   type: PluginExtensionTypes.link;
   title: string;

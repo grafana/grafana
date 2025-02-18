@@ -13,6 +13,7 @@ import {
   FieldType,
   TimeRange,
   hasTimeField,
+  InterpolateFunction,
 } from '@grafana/data';
 import { TableCellDisplayMode, TableCellHeight } from '@grafana/schema';
 
@@ -23,7 +24,13 @@ import { usePanelContext } from '../PanelChrome';
 import { ExpandedRow, getExpandedRowHeight } from './ExpandedRow';
 import { TableCell } from './TableCell';
 import { TableStyles } from './styles';
-import { CellColors, TableFieldOptions, TableFilterActionCallback } from './types';
+import {
+  CellColors,
+  GetActionsFunction,
+  TableFieldOptions,
+  TableFilterActionCallback,
+  TableInspectCellCallback,
+} from './types';
 import {
   calculateAroundPointThreshold,
   getCellColors,
@@ -53,6 +60,10 @@ interface RowsListProps {
   initialRowIndex?: number;
   headerGroups: HeaderGroup[];
   longestField?: Field;
+  textWrapField?: Field;
+  getActions?: GetActionsFunction;
+  replaceVariables?: InterpolateFunction;
+  setInspectCell?: TableInspectCellCallback;
 }
 
 export const RowsList = (props: RowsListProps) => {
@@ -78,6 +89,10 @@ export const RowsList = (props: RowsListProps) => {
     initialRowIndex = undefined,
     headerGroups,
     longestField,
+    textWrapField,
+    getActions,
+    replaceVariables,
+    setInspectCell,
   } = props;
 
   const [rowHighlightIndex, setRowHighlightIndex] = useState<number | undefined>(initialRowIndex);
@@ -117,11 +132,15 @@ export const RowsList = (props: RowsListProps) => {
 
   const onRowHover = useCallback(
     (idx: number, frame: DataFrame) => {
-      if (!panelContext || !enableSharedCrosshair || !hasTimeField(frame)) {
+      if (!panelContext || !enableSharedCrosshair) {
         return;
       }
 
       const timeField: Field = frame!.fields.find((f) => f.type === FieldType.time)!;
+
+      if (!timeField) {
+        return;
+      }
 
       panelContext.eventBus.publish(
         new DataHoverEvent({
@@ -232,7 +251,7 @@ export const RowsList = (props: RowsListProps) => {
   );
 
   let rowBg: Function | undefined = undefined;
-  let textWrapField: Field | undefined = undefined;
+  let textWrapFinal: Field | undefined;
   for (const field of data.fields) {
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     const fieldOptions = field.config.custom as TableFieldOptions;
@@ -250,16 +269,10 @@ export const RowsList = (props: RowsListProps) => {
       };
     }
 
-    if (
-      cellOptionsExist &&
-      (fieldOptions.cellOptions.type === TableCellDisplayMode.Auto ||
-        fieldOptions.cellOptions.type === TableCellDisplayMode.ColorBackground ||
-        fieldOptions.cellOptions.type === TableCellDisplayMode.ColorText) &&
-      fieldOptions.cellOptions.wrapText
-    ) {
-      textWrapField = field;
+    if (textWrapField !== undefined) {
+      textWrapFinal = textWrapField;
     } else if (longestField !== undefined) {
-      textWrapField = longestField;
+      textWrapFinal = longestField;
     }
   }
 
@@ -285,19 +298,21 @@ export const RowsList = (props: RowsListProps) => {
         const { bgColor, textColor } = rowBg(row.index);
         style.background = bgColor;
         style.color = textColor;
+        style.borderLeft = `2px solid ${bgColor}`;
       }
 
       // If there's a text wrapping field we set the height of it here
-      if (textWrapField) {
+      if (textWrapFinal) {
         const visibleFields = data.fields.filter((field) => !Boolean(field.config.custom?.hidden));
-        const seriesIndex = visibleFields.findIndex((field) => field.name === textWrapField.name);
+        const seriesIndex = visibleFields.findIndex((field) => field.name === textWrapFinal.name);
         const pxLineHeight = theme.typography.body.lineHeight * theme.typography.fontSize;
         const bbox = guessTextBoundingBox(
-          textWrapField.values[index],
+          textWrapFinal.values[row.index],
           headerGroups[0].headers[seriesIndex],
           osContext,
           pxLineHeight,
-          tableStyles.rowHeight
+          tableStyles.rowHeight,
+          tableStyles.cellPadding
         );
         style.height = bbox.height;
       }
@@ -308,7 +323,7 @@ export const RowsList = (props: RowsListProps) => {
           key={key}
           {...rowProps}
           className={cx(tableStyles.row, expandedRowStyle)}
-          onMouseEnter={() => onRowHover(index, data)}
+          onMouseEnter={() => onRowHover(row.index, data)}
           onMouseLeave={onRowLeave}
         >
           {/*add the nested data to the DOM first to prevent a 1px border CSS issue on the last cell of the row*/}
@@ -335,34 +350,40 @@ export const RowsList = (props: RowsListProps) => {
               frame={data}
               rowStyled={rowBg !== undefined}
               rowExpanded={rowExpanded}
-              textWrapped={textWrapField !== undefined}
+              textWrapped={textWrapFinal !== undefined}
               height={Number(style.height)}
+              getActions={getActions}
+              replaceVariables={replaceVariables}
+              setInspectCell={setInspectCell}
             />
           ))}
         </div>
       );
     },
     [
-      cellHeight,
-      data,
-      nestedDataField,
-      onCellFilterAdded,
-      onRowHover,
-      onRowLeave,
-      prepareRow,
       rowIndexForPagination,
       rows,
+      prepareRow,
       tableState.expanded,
-      tableStyles,
-      textWrapField,
-      theme.components.table.rowSelected,
-      theme.typography.fontSize,
-      theme.typography.body.lineHeight,
-      timeRange,
-      width,
+      nestedDataField,
       rowBg,
+      textWrapFinal,
+      tableStyles,
+      onRowLeave,
+      width,
+      cellHeight,
+      theme.components.table.rowSelected,
+      theme.typography.body.lineHeight,
+      theme.typography.fontSize,
+      data,
       headerGroups,
       osContext,
+      onRowHover,
+      onCellFilterAdded,
+      timeRange,
+      getActions,
+      replaceVariables,
+      setInspectCell,
     ]
   );
 
@@ -374,16 +395,17 @@ export const RowsList = (props: RowsListProps) => {
       return getExpandedRowHeight(nestedDataField, row.index, tableStyles);
     }
 
-    if (textWrapField) {
+    if (textWrapFinal) {
       const visibleFields = data.fields.filter((field) => !Boolean(field.config.custom?.hidden));
-      const seriesIndex = visibleFields.findIndex((field) => field.name === textWrapField.name);
+      const seriesIndex = visibleFields.findIndex((field) => field.name === textWrapFinal.name);
       const pxLineHeight = theme.typography.fontSize * theme.typography.body.lineHeight;
       return guessTextBoundingBox(
-        textWrapField.values[index],
+        textWrapFinal.values[row.index],
         headerGroups[0].headers[seriesIndex],
         osContext,
         pxLineHeight,
-        tableStyles.rowHeight
+        tableStyles.rowHeight,
+        tableStyles.cellPadding
       ).height;
     }
 
@@ -401,22 +423,29 @@ export const RowsList = (props: RowsListProps) => {
   // Key the virtualizer for expanded rows
   const expandedKey = Object.keys(tableState.expanded).join('|');
 
+  // It's a hack for text wrapping.
+  // VariableSizeList component didn't know that we manually set row height.
+  // So we need to reset the list when the rows high changes.
+  useEffect(() => {
+    if (listRef.current) {
+      listRef.current.resetAfterIndex(0);
+    }
+  }, [rows, listRef]);
+
   return (
-    <>
-      <CustomScrollbar onScroll={handleScroll} hideHorizontalTrack={true} scrollTop={scrollTop}>
-        <VariableSizeList
-          // This component needs an unmount/remount when row height, page changes, or expanded rows change
-          key={`${rowHeight}${pageIndex}${expandedKey}`}
-          height={listHeight}
-          itemCount={itemCount}
-          itemSize={getItemSize}
-          width={'100%'}
-          ref={listRef}
-          style={{ overflow: undefined }}
-        >
-          {({ index, style }) => RenderRow({ index, style, rowHighlightIndex })}
-        </VariableSizeList>
-      </CustomScrollbar>
-    </>
+    <CustomScrollbar onScroll={handleScroll} hideHorizontalTrack={true} scrollTop={scrollTop}>
+      <VariableSizeList
+        // This component needs an unmount/remount when row height, page changes, or expanded rows change
+        key={`${rowHeight}${pageIndex}${expandedKey}`}
+        height={listHeight}
+        itemCount={itemCount}
+        itemSize={getItemSize}
+        width={'100%'}
+        ref={listRef}
+        style={{ overflow: undefined }}
+      >
+        {({ index, style }) => RenderRow({ index, style, rowHighlightIndex })}
+      </VariableSizeList>
+    </CustomScrollbar>
   );
 };

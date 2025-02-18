@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os/exec"
-	"strings"
+	"path/filepath"
 
 	"github.com/urfave/cli/v2"
 
@@ -17,6 +17,25 @@ const (
 	alpine = "alpine"
 	ubuntu = "ubuntu"
 )
+
+// GetImageFiles returns the list of image (.img, but should be .tar because they are tar archives) files that are
+// created in the 'tag' process and stored in the prerelease bucket, waiting to be released.
+func GetImageFiles(grafana string, version string, architectures []config.Architecture) []string {
+	bases := []string{alpine, ubuntu}
+	images := []string{}
+	for _, base := range bases {
+		for _, arch := range architectures {
+			image := fmt.Sprintf("%s-%s-%s.img", grafana, version, arch)
+			if base == "ubuntu" {
+				image = fmt.Sprintf("%s-%s-ubuntu-%s.img", grafana, version, arch)
+			}
+
+			images = append(images, image)
+		}
+	}
+
+	return images
+}
 
 func FetchImages(c *cli.Context) error {
 	if c.NArg() > 0 {
@@ -44,74 +63,65 @@ func FetchImages(c *cli.Context) error {
 		Tag:          metadata.GrafanaVersion,
 	}
 
-	edition := fmt.Sprintf("-%s", cfg.Edition)
+	grafana := "grafana"
+	if cfg.Edition == "enterprise" {
+		grafana = "grafana-enterprise"
+	}
+	if cfg.Edition == "enterprise2" {
+		grafana = "grafana-enterprise2"
+	}
+	if cfg.Edition == "grafana" || cfg.Edition == "oss" {
+		grafana = "grafana-oss"
+	}
 
-	err = gcloud.ActivateServiceAccount()
-	if err != nil {
+	baseURL := fmt.Sprintf("gs://%s/%s/", cfg.Bucket, cfg.Tag)
+	images := GetImageFiles(grafana, cfg.Tag, cfg.Archs)
+
+	log.Printf("Fetching images [%v]", images)
+
+	if err := gcloud.ActivateServiceAccount(); err != nil {
 		return err
 	}
-
-	var basesStr []string
-	for _, base := range cfg.Distribution {
-		switch base {
-		case alpine:
-			basesStr = append(basesStr, "")
-		case ubuntu:
-			basesStr = append(basesStr, "-ubuntu")
-		default:
-			return fmt.Errorf("unrecognized base %q", base)
-		}
-	}
-
-	err = downloadFromGCS(cfg, basesStr, edition)
-	if err != nil {
+	if err := DownloadImages(baseURL, images, "."); err != nil {
 		return err
 	}
-
-	err = loadImages(cfg, basesStr, edition)
-	if err != nil {
+	if err := LoadImages(images, "."); err != nil {
 		return err
 	}
 	return nil
 }
 
-func loadImages(cfg docker.Config, basesStr []string, edition string) error {
-	log.Println("Loading fetched image files to local docker registry...")
-	log.Printf("Number of images to be loaded: %d\n", len(basesStr)*len(cfg.Archs))
-	for _, base := range basesStr {
-		for _, arch := range cfg.Archs {
-			imageFilename := fmt.Sprintf("grafana%s-%s%s-%s.img", edition, cfg.Tag, base, arch)
-			log.Printf("image file name: %s\n", imageFilename)
-			//nolint:gosec
-			cmd := exec.Command("docker", "load", "-i", imageFilename)
-			cmd.Dir = "."
-			out, err := cmd.CombinedOutput()
-			if err != nil {
-				log.Printf("out: %s\n", out)
-				return fmt.Errorf("error loading image: %q", err)
-			}
-			log.Printf("Successfully loaded %s!\n %s\n", fmt.Sprintf("grafana%s-%s%s-%s", edition, cfg.Tag, base, arch), out)
+// LoadImages uses the `docker load -i` command to load the image tar file into the docker daemon so that it can be
+// tagged and pushed.
+func LoadImages(images []string, source string) error {
+	p := filepath.Clean(source)
+	for _, image := range images {
+		image := filepath.Join(p, image)
+		log.Println("Loading image", image)
+		//nolint:gosec
+		cmd := exec.Command("docker", "load", "-i", image)
+		cmd.Dir = "."
+		out, err := cmd.CombinedOutput()
+		if err != nil {
+			log.Printf("out: %s\n", out)
+			return fmt.Errorf("error loading image: %q", err)
 		}
+		log.Println("Loaded image", image)
 	}
 	log.Println("Images successfully loaded!")
 	return nil
 }
 
-func downloadFromGCS(cfg docker.Config, basesStr []string, edition string) error {
-	log.Printf("Downloading Docker images from GCS bucket: %s\n", cfg.Bucket)
-
-	for _, base := range basesStr {
-		for _, arch := range cfg.Archs {
-			src := fmt.Sprintf("gs://%s/%s/grafana%s-%s%s-%s.img", cfg.Bucket, cfg.Tag, edition, cfg.Tag, base, arch)
-			args := strings.Split(fmt.Sprintf("-m cp -r %s .", src), " ")
-			//nolint:gosec
-			cmd := exec.Command("gsutil", args...)
-			out, err := cmd.CombinedOutput()
-			if err != nil {
-				return fmt.Errorf("failed to download: %w\n%s", err, out)
-			}
+func DownloadImages(baseURL string, images []string, destination string) error {
+	for _, image := range images {
+		p := baseURL + image
+		log.Println("Downloading image", p)
+		//nolint:gosec
+		cmd := exec.Command("gsutil", "-m", "cp", "-r", p, destination)
+		out, err := cmd.CombinedOutput()
+		if err != nil {
+			return fmt.Errorf("failed to download: %w\n%s", err, out)
 		}
 	}
-	log.Printf("Successfully fetched image files from %s bucket!\n", cfg.Bucket)
 	return nil
 }

@@ -1,6 +1,7 @@
 import { of } from 'rxjs';
 
 import { DataQueryRequest, dateTime, LoadingState } from '@grafana/data';
+import { config } from '@grafana/runtime';
 
 import { createLokiDatasource } from './__mocks__/datasource';
 import { getMockFrames } from './__mocks__/frames';
@@ -9,12 +10,30 @@ import * as logsTimeSplit from './logsTimeSplitting';
 import * as metricTimeSplit from './metricTimeSplitting';
 import { runSplitQuery } from './querySplitting';
 import { trackGroupedQueries } from './tracking';
-import { LokiQuery, LokiQueryType } from './types';
+import { LokiQuery, LokiQueryDirection, LokiQueryType } from './types';
 
 jest.mock('./tracking');
 jest.mock('uuid', () => ({
   v4: jest.fn().mockReturnValue('uuid'),
 }));
+
+const originalShardingFlagState = config.featureToggles.lokiShardSplitting;
+const originalErr = console.error;
+beforeEach(() => {
+  jest.spyOn(console, 'error').mockImplementation(() => {});
+});
+beforeAll(() => {
+  // @ts-expect-error
+  jest.spyOn(global, 'setTimeout').mockImplementation((callback) => {
+    callback();
+  });
+  config.featureToggles.lokiShardSplitting = false;
+});
+afterAll(() => {
+  jest.mocked(global.setTimeout).mockReset();
+  config.featureToggles.lokiShardSplitting = originalShardingFlagState;
+  console.error = originalErr;
+});
 
 describe('runSplitQuery()', () => {
   let datasource: LokiDatasource;
@@ -45,9 +64,50 @@ describe('runSplitQuery()', () => {
   });
 
   test('Splits datasource queries', async () => {
-    await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
+    await expect(runSplitQuery(datasource, request)).toEmitValuesWith((emitted) => {
       // 3 days, 3 chunks, 3 requests.
       expect(datasource.runQuery).toHaveBeenCalledTimes(3);
+      // 3 sub-requests + complete
+      expect(emitted).toHaveLength(4);
+    });
+  });
+
+  test('Skips partial updates as an option', async () => {
+    await expect(runSplitQuery(datasource, request, { skipPartialUpdates: true })).toEmitValuesWith((emitted) => {
+      // 3 days, 3 chunks, 3 requests.
+      expect(datasource.runQuery).toHaveBeenCalledTimes(3);
+      // partial updates skipped
+      expect(emitted).toHaveLength(1);
+    });
+  });
+
+  test('Retries retriable failed requests', async () => {
+    jest
+      .mocked(datasource.runQuery)
+      .mockReturnValueOnce(of({ state: LoadingState.Error, errors: [{ refId: 'A', message: 'timeout' }], data: [] }));
+    await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
+      // 3 days, 3 chunks, 1 retry, 4 requests.
+      expect(datasource.runQuery).toHaveBeenCalledTimes(4);
+    });
+  });
+
+  test('Does not retry failed queries as an option', async () => {
+    jest
+      .mocked(datasource.runQuery)
+      .mockReturnValueOnce(of({ state: LoadingState.Error, errors: [{ refId: 'A', message: 'timeout' }], data: [] }));
+    await expect(runSplitQuery(datasource, request, { disableRetry: true })).toEmitValuesWith(() => {
+      // No retries
+      expect(datasource.runQuery).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  test('Does not retry on other errors', async () => {
+    jest
+      .mocked(datasource.runQuery)
+      .mockReturnValueOnce(of({ state: LoadingState.Error, errors: [{ refId: 'A', message: 'nope nope' }], data: [] }));
+    await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
+      // 3 days, 3 chunks, 3 requests.
+      expect(datasource.runQuery).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -285,9 +345,10 @@ describe('runSplitQuery()', () => {
 
   describe('Dynamic maxLines for logs requests', () => {
     const request = createRequest([{ expr: '{a="b"}', refId: 'A', maxLines: 4 }]);
-    const { logFrameA } = getMockFrames();
+    const { logFrameA, logFrameB } = getMockFrames();
     beforeEach(() => {
-      jest.spyOn(datasource, 'runQuery').mockReturnValue(of({ data: [logFrameA], refId: 'A' }));
+      jest.spyOn(datasource, 'runQuery').mockReturnValueOnce(of({ data: [logFrameA], refId: 'A' }));
+      jest.spyOn(datasource, 'runQuery').mockReturnValueOnce(of({ data: [logFrameB], refId: 'A' }));
     });
     test('Stops requesting once maxLines of logs have been received', async () => {
       await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
@@ -547,6 +608,41 @@ describe('runSplitQuery()', () => {
       await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
         // 3 * A, 3 * B, 3 * C, 3 * D, 1 * E, 3 * F+G
         expect(datasource.runQuery).toHaveBeenCalledTimes(16);
+      });
+    });
+  });
+
+  describe('Forward search queries', () => {
+    const request = createRequest([
+      { expr: '{a="b"}', refId: 'A', direction: LokiQueryDirection.Backward },
+      { expr: '{c="d"}', refId: 'A', direction: undefined },
+      { expr: '{e="f"}', refId: 'B', direction: LokiQueryDirection.Forward },
+    ]);
+    const { logFrameA } = getMockFrames();
+    beforeEach(() => {
+      jest.spyOn(datasource, 'runQuery').mockReturnValue(of({ data: [logFrameA], refId: 'A' }));
+    });
+    test('Sends forward and backward queries in different groups', async () => {
+      jest.spyOn(datasource, 'runQuery');
+      await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
+        // Forward
+        expect(jest.mocked(datasource.runQuery).mock.calls[1][0].targets[0].expr).toBe('{e="f"}');
+        expect(jest.mocked(datasource.runQuery).mock.calls[1][0].range.from.toString()).toContain('Feb 08 2023');
+        expect(jest.mocked(datasource.runQuery).mock.calls[3][0].targets[0].expr).toBe('{e="f"}');
+        expect(jest.mocked(datasource.runQuery).mock.calls[3][0].range.from.toString()).toContain('Feb 08 2023');
+        expect(jest.mocked(datasource.runQuery).mock.calls[5][0].targets[0].expr).toBe('{e="f"}');
+        expect(jest.mocked(datasource.runQuery).mock.calls[5][0].range.from.toString()).toContain('Feb 09 2023');
+
+        // Backward
+        expect(jest.mocked(datasource.runQuery).mock.calls[0][0].targets[0].expr).toBe('{a="b"}');
+        expect(jest.mocked(datasource.runQuery).mock.calls[0][0].range.from.toString()).toContain('Feb 09 2023');
+        expect(jest.mocked(datasource.runQuery).mock.calls[2][0].targets[0].expr).toBe('{a="b"}');
+        expect(jest.mocked(datasource.runQuery).mock.calls[2][0].range.from.toString()).toContain('Feb 08 2023');
+        expect(jest.mocked(datasource.runQuery).mock.calls[4][0].targets[0].expr).toBe('{a="b"}');
+        expect(jest.mocked(datasource.runQuery).mock.calls[4][0].range.from.toString()).toContain('Feb 08 2023');
+
+        // 3 days, 3 chunks, 2 groups logs, 6 requests
+        expect(datasource.runQuery).toHaveBeenCalledTimes(6);
       });
     });
   });

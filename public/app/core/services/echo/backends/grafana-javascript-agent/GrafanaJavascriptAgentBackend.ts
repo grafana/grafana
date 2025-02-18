@@ -1,4 +1,4 @@
-import { BuildInfo } from '@grafana/data';
+import { BuildInfo, escapeRegex } from '@grafana/data';
 import { BaseTransport, defaultInternalLoggerLevel } from '@grafana/faro-core';
 import {
   initializeFaro,
@@ -9,6 +9,8 @@ import {
   SessionInstrumentation,
   FetchTransport,
   type Instrumentation,
+  getWebInstrumentations,
+  Config,
 } from '@grafana/faro-web-sdk';
 import { TracingInstrumentation } from '@grafana/faro-web-tracing';
 import { EchoBackend, EchoEvent, EchoEventType } from '@grafana/runtime';
@@ -16,15 +18,31 @@ import { EchoBackend, EchoEvent, EchoEventType } from '@grafana/runtime';
 import { EchoSrvTransport } from './EchoSrvTransport';
 import { GrafanaJavascriptAgentEchoEvent, User } from './types';
 
+function isCrossOriginIframe() {
+  try {
+    return document.location.hostname !== window.parent.location.hostname;
+  } catch (e) {
+    return true;
+  }
+}
+
 export interface GrafanaJavascriptAgentBackendOptions extends BrowserConfig {
   buildInfo: BuildInfo;
   customEndpoint: string;
   user: User;
+  allInstrumentationsEnabled: boolean;
   errorInstrumentalizationEnabled: boolean;
   consoleInstrumentalizationEnabled: boolean;
   webVitalsInstrumentalizationEnabled: boolean;
   tracingInstrumentalizationEnabled: boolean;
+  ignoreUrls: RegExp[];
 }
+
+export const TRACKING_URLS = [
+  /\.(google-analytics|googletagmanager)\.com/,
+  /frontend-metrics/,
+  /\/collect(?:\/[\w]*)?$/,
+];
 
 export class GrafanaJavascriptAgentBackend
   implements EchoBackend<GrafanaJavascriptAgentEchoEvent, GrafanaJavascriptAgentBackendOptions>
@@ -36,9 +54,22 @@ export class GrafanaJavascriptAgentBackend
     // configure instrumentations.
     const instrumentations: Instrumentation[] = [];
 
-    const transports: BaseTransport[] = [new EchoSrvTransport()];
+    const ignoreUrls = [
+      new RegExp(`.*${escapeRegex(options.customEndpoint)}.*`),
+      ...TRACKING_URLS,
+      ...options.ignoreUrls,
+    ];
 
-    if (options.customEndpoint) {
+    const transports: BaseTransport[] = [new EchoSrvTransport({ ignoreUrls })];
+    const consoleInstrumentationOptions: Config['consoleInstrumentation'] =
+      options.allInstrumentationsEnabled || options.consoleInstrumentalizationEnabled
+        ? {
+            serializeErrors: true,
+          }
+        : {};
+
+    // If in cross origin iframe, default to writing to instance logging endpoint
+    if (options.customEndpoint && !isCrossOriginIframe()) {
       transports.push(new FetchTransport({ url: options.customEndpoint, apiKey: options.apiKey }));
     }
 
@@ -67,14 +98,18 @@ export class GrafanaJavascriptAgentBackend
         version: options.buildInfo.version,
         environment: options.buildInfo.env,
       },
-      instrumentations,
+      instrumentations: options.allInstrumentationsEnabled
+        ? instrumentations
+        : [...getWebInstrumentations(), new TracingInstrumentation()],
+      consoleInstrumentation: consoleInstrumentationOptions,
       transports,
       ignoreErrors: [
         'ResizeObserver loop limit exceeded',
         'ResizeObserver loop completed',
         'Non-Error exception captured with keys',
+        'Failed sending payload to the receiver',
       ],
-      ignoreUrls: [new RegExp(`/*${options.customEndpoint}/`), /frontend-metrics/],
+      ignoreUrls,
       sessionTracking: {
         persistent: true,
       },

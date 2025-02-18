@@ -1,17 +1,21 @@
 import { HttpResponse, http } from 'msw';
 
-import alertmanagerConfig from 'app/features/alerting/unified/components/contact-points/__mocks__/alertmanager.config.mock.json';
-import { GrafanaManagedContactPoint, MuteTimeInterval } from 'app/plugins/datasource/alertmanager/types';
+import { getAlertmanagerConfig } from 'app/features/alerting/unified/mocks/server/entities/alertmanagers';
+import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 
-const defaultReceiversResponse: GrafanaManagedContactPoint[] = alertmanagerConfig.alertmanager_config.receivers;
+const getNotificationReceiversHandler = () =>
+  http.get('/api/v1/notifications/receivers', () => {
+    const receivers = getAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME).alertmanager_config.receivers || [];
 
-const defaultTimeIntervalsResponse: MuteTimeInterval[] = alertmanagerConfig.alertmanager_config.time_intervals;
+    return HttpResponse.json(receivers);
+  });
 
-const getNotificationReceiversHandler = (response = defaultReceiversResponse) =>
-  http.get('/api/v1/notifications/receivers', () => HttpResponse.json(response));
+const getTimeIntervalsHandler = () =>
+  http.get('/api/v1/notifications/time-intervals', () => {
+    const intervals = getAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME).alertmanager_config.time_intervals;
 
-const getTimeIntervalsHandler = (response = defaultTimeIntervalsResponse) =>
-  http.get('/api/v1/notifications/time-intervals', () => HttpResponse.json(response));
+    return HttpResponse.json(intervals);
+  });
 
 const handlers = [getNotificationReceiversHandler(), getTimeIntervalsHandler()];
 

@@ -56,7 +56,7 @@ type EmailIntegration struct {
 type GooglechatIntegration struct {
 	DisableResolveMessage *bool `json:"-" yaml:"-" hcl:"disable_resolve_message"`
 
-	URL string `json:"url" yaml:"url" hcl:"url"`
+	URL Secret `json:"url" yaml:"url" hcl:"url"`
 
 	Title   *string `json:"title,omitempty" yaml:"title,omitempty" hcl:"title"`
 	Message *string `json:"message,omitempty" yaml:"message,omitempty" hcl:"message"`
@@ -227,6 +227,7 @@ type SlackIntegration struct {
 	MentionChannel *string `json:"mentionChannel,omitempty" yaml:"mentionChannel,omitempty" hcl:"mention_channel"`
 	MentionUsers   *string `json:"mentionUsers,omitempty" yaml:"mentionUsers,omitempty" hcl:"mention_users"`
 	MentionGroups  *string `json:"mentionGroups,omitempty" yaml:"mentionGroups,omitempty" hcl:"mention_groups"`
+	Color          *string `json:"color,omitempty" yaml:"color,omitempty" hcl:"color"`
 }
 
 type TelegramIntegration struct {
@@ -267,7 +268,7 @@ type ThreemaIntegration struct {
 type VictoropsIntegration struct {
 	DisableResolveMessage *bool `json:"-" yaml:"-" hcl:"disable_resolve_message"`
 
-	URL string `json:"url" yaml:"url" hcl:"url"`
+	URL Secret `json:"url" yaml:"url" hcl:"url"`
 
 	MessageType *string `json:"messageType,omitempty" yaml:"messageType,omitempty" hcl:"message_type"`
 	Title       *string `json:"title,omitempty" yaml:"title,omitempty" hcl:"title"`
@@ -289,14 +290,15 @@ type WebhookIntegration struct {
 
 	URL string `json:"url" yaml:"url" hcl:"url"`
 
-	HTTPMethod               *string `json:"httpMethod,omitempty" yaml:"httpMethod,omitempty" hcl:"http_method"`
-	MaxAlerts                *int64  `json:"maxAlerts,omitempty" yaml:"maxAlerts,omitempty" hcl:"max_alerts"`
-	AuthorizationScheme      *string `json:"authorization_scheme,omitempty" yaml:"authorization_scheme,omitempty" hcl:"authorization_scheme"`
-	AuthorizationCredentials *Secret `json:"authorization_credentials,omitempty" yaml:"authorization_credentials,omitempty" hcl:"authorization_credentials"`
-	User                     *string `json:"username,omitempty" yaml:"username,omitempty" hcl:"basic_auth_user"`
-	Password                 *Secret `json:"password,omitempty" yaml:"password,omitempty" hcl:"basic_auth_password"`
-	Title                    *string `json:"title,omitempty" yaml:"title,omitempty" hcl:"title"`
-	Message                  *string `json:"message,omitempty" yaml:"message,omitempty" hcl:"message"`
+	HTTPMethod               *string    `json:"httpMethod,omitempty" yaml:"httpMethod,omitempty" hcl:"http_method"`
+	MaxAlerts                *int64     `json:"maxAlerts,omitempty" yaml:"maxAlerts,omitempty" hcl:"max_alerts"`
+	AuthorizationScheme      *string    `json:"authorization_scheme,omitempty" yaml:"authorization_scheme,omitempty" hcl:"authorization_scheme"`
+	AuthorizationCredentials *Secret    `json:"authorization_credentials,omitempty" yaml:"authorization_credentials,omitempty" hcl:"authorization_credentials"`
+	User                     *string    `json:"username,omitempty" yaml:"username,omitempty" hcl:"basic_auth_user"`
+	Password                 *Secret    `json:"password,omitempty" yaml:"password,omitempty" hcl:"basic_auth_password"`
+	Title                    *string    `json:"title,omitempty" yaml:"title,omitempty" hcl:"title"`
+	Message                  *string    `json:"message,omitempty" yaml:"message,omitempty" hcl:"message"`
+	TLSConfig                *TLSConfig `json:"tlsConfig,omitempty" yaml:"tlsConfig,omitempty" hcl:"tlsConfig,block"`
 }
 
 type WecomIntegration struct {

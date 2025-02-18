@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 	"github.com/grafana/grafana/pkg/tsdb/cloud-monitoring/converter"
 	jsoniter "github.com/json-iterator/go"
 )
@@ -23,7 +22,8 @@ func (promQLQ *cloudMonitoringProm) run(ctx context.Context, req *backend.QueryD
 	dr := &backend.DataResponse{}
 	projectName, err := s.ensureProject(ctx, dsInfo, promQLQ.parameters.ProjectName)
 	if err != nil {
-		return dr, backend.DataResponse{}, "", err
+		dr.Error = err
+		return dr, backend.DataResponse{}, "", nil
 	}
 	r, err := createRequest(ctx, &dsInfo, path.Join("/v1/projects", projectName, "location/global/prometheus/api/v1/query_range"), nil)
 	if err != nil {
@@ -31,7 +31,7 @@ func (promQLQ *cloudMonitoringProm) run(ctx context.Context, req *backend.QueryD
 		return dr, backend.DataResponse{}, "", nil
 	}
 
-	span := traceReq(ctx, req, dsInfo, r, "")
+	span := traceReq(ctx, req, dsInfo, r, "", promQLQ.timeRange)
 	defer span.End()
 
 	requestBody := map[string]any{
@@ -43,12 +43,13 @@ func (promQLQ *cloudMonitoringProm) run(ctx context.Context, req *backend.QueryD
 
 	res, err := doRequestProm(r, dsInfo, requestBody)
 	if err != nil {
-		return dr, backend.DataResponse{}, "", err
+		dr.Error = err
+		return dr, backend.DataResponse{}, "", nil
 	}
 
 	defer func() {
 		if err := res.Body.Close(); err != nil {
-			s.logger.Error("Failed to close response body", "err", err)
+			s.logger.Error("Failed to close response body", "err", err, "statusSource", backend.ErrorSourceDownstream)
 		}
 	}()
 
@@ -66,7 +67,7 @@ func doRequestProm(r *http.Request, dsInfo datasourceInfo, body map[string]any) 
 	}
 	res, err := dsInfo.services[cloudMonitor].client.Do(r)
 	if err != nil {
-		return res, errorsource.DownstreamError(err, false)
+		return res, backend.DownstreamError(err)
 	}
 
 	return res, nil

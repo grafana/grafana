@@ -156,7 +156,7 @@ function findPathOption(paths: Array<SelectableValue<string>>, path?: string): S
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
-  dropWrap: css`
-    margin-bottom: ${theme.spacing(1)};
-  `,
+  dropWrap: css({
+    marginBottom: theme.spacing(1),
+  }),
 }));

@@ -10,9 +10,9 @@ import {
   DataSourceApi,
   DataSourceInstanceSettings,
 } from '@grafana/data';
+import { CorrelationData } from '@grafana/runtime';
 import { DataSourceJsonData, DataQuery } from '@grafana/schema';
 import TableModel from 'app/core/TableModel';
-import { CorrelationData } from 'app/features/correlations/useCorrelations';
 import { ExplorePanelData } from 'app/types';
 
 import {
@@ -482,6 +482,7 @@ describe('decorateWithCorrelations', () => {
         source: datasourceInstance,
         target: datasourceInstance,
         provisioned: true,
+        type: 'query',
         config: { field: panelData.series[0].fields[0].name },
       },
     ] as CorrelationData[];

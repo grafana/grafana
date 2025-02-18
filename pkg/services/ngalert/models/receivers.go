@@ -2,6 +2,7 @@ package models
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -130,6 +131,14 @@ func (r *Receiver) Validate(decryptFn DecryptFn) error {
 		}
 	}
 	return errors.Join(errs...)
+}
+
+func (r *Receiver) GetIntegrationTypes() []string {
+	result := make([]string, 0, len(r.Integrations))
+	for _, i := range r.Integrations {
+		result = append(result, i.Config.Type)
+	}
+	return result
 }
 
 // Integration is the domain model representation of an integration.
@@ -539,7 +548,7 @@ func ValidateIntegration(ctx context.Context, integration alertingNotify.Grafana
 		GrafanaIntegrations: alertingNotify.GrafanaIntegrations{
 			Integrations: []*alertingNotify.GrafanaIntegrationConfig{&integration},
 		},
-	}, decryptFunc)
+	}, alertingNotify.DecodeSecretsFromBase64, decryptFunc)
 	if err != nil {
 		return err
 	}
@@ -557,6 +566,10 @@ type Identified interface {
 
 func (r *Receiver) GetUID() string {
 	return r.UID
+}
+
+func NameToUid(name string) string {
+	return base64.RawURLEncoding.EncodeToString([]byte(name))
 }
 
 func (r *Receiver) Fingerprint() string {

@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/grafana/authlib/claims"
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -59,6 +59,7 @@ func (tapi *TeamAPI) createTeam(c *contextmodel.ReqContext) response.Response {
 
 	return response.JSON(http.StatusOK, &util.DynMap{
 		"teamId":  t.ID,
+		"uid":     t.UID,
 		"message": "Team created",
 	})
 }
@@ -230,7 +231,7 @@ func (tapi *TeamAPI) getTeamByID(c *contextmodel.ReqContext) response.Response {
 	}
 
 	// Add accesscontrol metadata
-	queryResult.AccessControl = tapi.getAccessControlMetadata(c, c.SignedInUser.GetOrgID(), "teams:id:", strconv.FormatInt(queryResult.ID, 10))
+	queryResult.AccessControl = tapi.getAccessControlMetadata(c, "teams:id:", strconv.FormatInt(queryResult.ID, 10))
 
 	queryResult.AvatarURL = dtos.GetGravatarUrlWithDefault(tapi.cfg, queryResult.Email, queryResult.Name)
 	return response.JSON(http.StatusOK, &queryResult)
@@ -362,6 +363,7 @@ type CreateTeamResponse struct {
 	// in: body
 	Body struct {
 		TeamId  int64  `json:"teamId"`
+		Uid     string `json:"uid"`
 		Message string `json:"message"`
 	} `json:"body"`
 }
@@ -384,7 +386,7 @@ func (tapi *TeamAPI) getMultiAccessControlMetadata(c *contextmodel.ReqContext,
 // Metadata helpers
 // getAccessControlMetadata returns the accesscontrol metadata associated with a given resource
 func (tapi *TeamAPI) getAccessControlMetadata(c *contextmodel.ReqContext,
-	orgID int64, prefix string, resourceID string) accesscontrol.Metadata {
+	prefix string, resourceID string) accesscontrol.Metadata {
 	ids := map[string]bool{resourceID: true}
 	return tapi.getMultiAccessControlMetadata(c, prefix, ids)[resourceID]
 }

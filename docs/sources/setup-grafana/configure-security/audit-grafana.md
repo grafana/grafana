@@ -26,7 +26,7 @@ To enable sending Grafana Cloud audit logs to your Grafana Cloud Logs instance, 
 Only API requests or UI actions that trigger an API request generate an audit log.
 
 {{% admonition type="note" %}}
-Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise" >}}) version 7.3 and later, and [Grafana Cloud](/docs/grafana-cloud).
+Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise" >}}) and [Grafana Cloud](/docs/grafana-cloud).
 {{% /admonition %}}
 
 ## Audit logs
@@ -48,7 +48,7 @@ Audit logs contain the following fields. The fields followed by **\*** are alway
 | `user.orgId`\*          | number  | Current organization of the user that made the request.                                                                                                                                                                  |
 | `user.orgRole`          | string  | Current role of the user that made the request.                                                                                                                                                                          |
 | `user.name`             | string  | Name of the Grafana user that made the request.                                                                                                                                                                          |
-| `user.tokenId`          | number  | ID of the user authentication token.                                                                                                                                                                                     |
+| `user.authTokenId`      | number  | ID of the user authentication token.                                                                                                                                                                                     |
 | `user.apiKeyId`         | number  | ID of the Grafana API key used to make the request.                                                                                                                                                                      |
 | `user.isAnonymous`\*    | boolean | If an anonymous user made the request, `true`. Otherwise, `false`.                                                                                                                                                       |
 | `action`\*              | string  | The request action. For example, `create`, `update`, or `manage-permissions`.                                                                                                                                            |
@@ -325,6 +325,17 @@ external group.
 | ------------------------ | ------------------------------------------------------------ |
 | Set licensing token      | `{"action": "create", "requestUri": "/api/licensing/token"}` |
 | Save billing information | `{"action": "billing-information"}`                          |
+
+#### Cloud migration management
+
+{{< docs/public-preview product="Cloud Migration Assistant" featureFlag="onPremToCloudMigrations" >}}
+
+| Action                           | Distinguishing fields                                       |
+| -------------------------------- | ----------------------------------------------------------- |
+| Connect to a cloud instance      | `{"action": "connect-instance"}`                            |
+| Disconnect from a cloud instance | `{"action": "disconnect-instance"}`                         |
+| Build a snapshot                 | `{"action": "build", "resources": [{"type": "snapshot"}]}`  |
+| Upload a snapshot                | `{"action": "upload", "resources": [{"type": "snapshot"}]}` |
 
 #### Generic actions
 

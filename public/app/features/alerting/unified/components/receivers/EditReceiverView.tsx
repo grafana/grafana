@@ -17,7 +17,6 @@ export const EditReceiverView = ({ contactPoint, alertmanagerName }: Props) => {
   const readOnly = !editSupported || !editAllowed;
 
   if (alertmanagerName === GRAFANA_RULES_SOURCE_NAME) {
-    console.log(contactPoint);
     return <GrafanaReceiverForm contactPoint={contactPoint} readOnly={readOnly} editMode />;
   } else {
     return (

@@ -16,7 +16,7 @@ import (
 
 // AlertRuleFromProvisionedAlertRule converts definitions.ProvisionedAlertRule to models.AlertRule
 func AlertRuleFromProvisionedAlertRule(a definitions.ProvisionedAlertRule) (models.AlertRule, error) {
-	return models.AlertRule{
+	rule := models.AlertRule{
 		ID:                   a.ID,
 		UID:                  a.UID,
 		OrgID:                a.OrgID,
@@ -34,7 +34,13 @@ func AlertRuleFromProvisionedAlertRule(a definitions.ProvisionedAlertRule) (mode
 		IsPaused:             a.IsPaused,
 		NotificationSettings: NotificationSettingsFromAlertRuleNotificationSettings(a.NotificationSettings),
 		Record:               ModelRecordFromApiRecord(a.Record),
-	}, nil
+	}
+
+	if rule.Type() == models.RuleTypeRecording {
+		models.ClearRecordingRuleIgnoredFields(&rule)
+	}
+
+	return rule, nil
 }
 
 // ProvisionedAlertRuleFromAlertRule converts models.AlertRule to definitions.ProvisionedAlertRule and sets provided provenance status
@@ -413,6 +419,21 @@ func MuteTimingIntervalToMuteTimeIntervalHclExport(m definitions.MuteTimeInterva
 	}
 	err = j.Unmarshal(mdata, &result)
 	return result, err
+}
+
+// AlertRuleEditorSettingsFromEditorSettings converts models.EditorSettings to definitions.AlertRuleEditorSettings
+func AlertRuleEditorSettingsFromModelEditorSettings(es models.EditorSettings) *definitions.AlertRuleEditorSettings {
+	return &definitions.AlertRuleEditorSettings{
+		SimplifiedQueryAndExpressionsSection: es.SimplifiedQueryAndExpressionsSection,
+		SimplifiedNotificationsSection:       es.SimplifiedNotificationsSection,
+	}
+}
+
+// AlertRuleMetadataFromMetadata converts models.AlertRuleMetadata to definitions.AlertRuleMetadata
+func AlertRuleMetadataFromModelMetadata(es models.AlertRuleMetadata) *definitions.AlertRuleMetadata {
+	return &definitions.AlertRuleMetadata{
+		EditorSettings: *AlertRuleEditorSettingsFromModelEditorSettings(es.EditorSettings),
+	}
 }
 
 // AlertRuleNotificationSettingsFromNotificationSettings converts []models.NotificationSettings to definitions.AlertRuleNotificationSettings

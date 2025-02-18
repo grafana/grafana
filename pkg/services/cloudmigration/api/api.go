@@ -8,11 +8,13 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/middleware"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
+
+	"go.opentelemetry.io/otel/codes"
 )
 
 type CloudMigrationAPI struct {
@@ -26,6 +28,7 @@ func RegisterApi(
 	rr routing.RouteRegister,
 	cms cloudmigration.Service,
 	tracer tracing.Tracer,
+	acHandler accesscontrol.AccessControl,
 ) *CloudMigrationAPI {
 	api := &CloudMigrationAPI{
 		log:                   log.New("cloudmigrations.api"),
@@ -33,12 +36,14 @@ func RegisterApi(
 		cloudMigrationService: cms,
 		tracer:                tracer,
 	}
-	api.registerEndpoints()
+	api.registerEndpoints(acHandler)
 	return api
 }
 
 // registerEndpoints Registers Endpoints on Grafana Router
-func (cma *CloudMigrationAPI) registerEndpoints() {
+func (cma *CloudMigrationAPI) registerEndpoints(acHandler accesscontrol.AccessControl) {
+	authorize := accesscontrol.Middleware(acHandler)
+
 	cma.routeRegister.Group("/api/cloudmigration", func(cloudMigrationRoute routing.RouteRegister) {
 		// destination instance endpoints for token management
 		cloudMigrationRoute.Get("/token", routing.Wrap(cma.GetToken))
@@ -51,18 +56,13 @@ func (cma *CloudMigrationAPI) registerEndpoints() {
 		cloudMigrationRoute.Get("/migration/:uid", routing.Wrap(cma.GetSession))
 		cloudMigrationRoute.Delete("/migration/:uid", routing.Wrap(cma.DeleteSession))
 
-		// sync approach to data migration
-		cloudMigrationRoute.Post("/migration/:uid/run", routing.Wrap(cma.RunMigration))
-		cloudMigrationRoute.Get("/migration/:uid/run", routing.Wrap(cma.GetMigrationRunList))
-		cloudMigrationRoute.Get("/migration/run/:runUID", routing.Wrap(cma.GetMigrationRun))
-
 		// async approach to data migration using snapshots
 		cloudMigrationRoute.Post("/migration/:uid/snapshot", routing.Wrap(cma.CreateSnapshot))
 		cloudMigrationRoute.Get("/migration/:uid/snapshot/:snapshotUid", routing.Wrap(cma.GetSnapshot))
 		cloudMigrationRoute.Get("/migration/:uid/snapshots", routing.Wrap(cma.GetSnapshotList))
 		cloudMigrationRoute.Post("/migration/:uid/snapshot/:snapshotUid/upload", routing.Wrap(cma.UploadSnapshot))
 		cloudMigrationRoute.Post("/migration/:uid/snapshot/:snapshotUid/cancel", routing.Wrap(cma.CancelSnapshot))
-	}, middleware.ReqOrgAdmin)
+	}, authorize(cloudmigration.MigrationAssistantAccess))
 }
 
 // swagger:route GET /cloudmigration/token migrations getCloudMigrationToken
@@ -83,6 +83,9 @@ func (cma *CloudMigrationAPI) GetToken(c *contextmodel.ReqContext) response.Resp
 
 	token, err := cma.cloudMigrationService.GetToken(ctx)
 	if err != nil {
+		span.SetStatus(codes.Error, "fetching cloud migration access token")
+		span.RecordError(err)
+
 		if !errors.Is(err, cloudmigration.ErrTokenNotFound) {
 			logger.Error("fetching cloud migration access token", "err", err.Error())
 		}
@@ -117,7 +120,10 @@ func (cma *CloudMigrationAPI) CreateToken(c *contextmodel.ReqContext) response.R
 
 	resp, err := cma.cloudMigrationService.CreateToken(ctx)
 	if err != nil {
+		span.SetStatus(codes.Error, "creating gcom access token")
+		span.RecordError(err)
 		logger.Error("creating gcom access token", "err", err.Error())
+
 		return response.ErrOrFallback(http.StatusInternalServerError, "creating gcom access token", err)
 	}
 
@@ -142,11 +148,17 @@ func (cma *CloudMigrationAPI) DeleteToken(c *contextmodel.ReqContext) response.R
 
 	uid := web.Params(c.Req)[":uid"]
 	if err := util.ValidateUID(uid); err != nil {
+		span.SetStatus(codes.Error, "invalid migration uid")
+		span.RecordError(err)
+
 		return response.Error(http.StatusBadRequest, "invalid migration uid", err)
 	}
 
 	if err := cma.cloudMigrationService.DeleteToken(ctx, uid); err != nil {
+		span.SetStatus(codes.Error, "deleting cloud migration token")
+		span.RecordError(err)
 		logger.Error("deleting cloud migration token", "err", err.Error())
+
 		return response.ErrOrFallback(http.StatusInternalServerError, "deleting cloud migration token", err)
 	}
 
@@ -166,8 +178,11 @@ func (cma *CloudMigrationAPI) GetSessionList(c *contextmodel.ReqContext) respons
 	ctx, span := cma.tracer.Start(c.Req.Context(), "MigrationAPI.GetSessionList")
 	defer span.End()
 
-	sl, err := cma.cloudMigrationService.GetSessionList(ctx)
+	sl, err := cma.cloudMigrationService.GetSessionList(ctx, c.OrgID)
 	if err != nil {
+		span.SetStatus(codes.Error, "session list error")
+		span.RecordError(err)
+
 		return response.ErrOrFallback(http.StatusInternalServerError, "session list error", err)
 	}
 
@@ -190,11 +205,17 @@ func (cma *CloudMigrationAPI) GetSession(c *contextmodel.ReqContext) response.Re
 
 	uid := web.Params(c.Req)[":uid"]
 	if err := util.ValidateUID(uid); err != nil {
+		span.SetStatus(codes.Error, "invalid session uid")
+		span.RecordError(err)
+
 		return response.Error(http.StatusBadRequest, "invalid session uid", err)
 	}
 
-	s, err := cma.cloudMigrationService.GetSession(ctx, uid)
+	s, err := cma.cloudMigrationService.GetSession(ctx, c.OrgID, uid)
 	if err != nil {
+		span.SetStatus(codes.Error, "session not found")
+		span.RecordError(err)
+
 		return response.ErrOrFallback(http.StatusNotFound, "session not found", err)
 	}
 
@@ -222,12 +243,19 @@ func (cma *CloudMigrationAPI) CreateSession(c *contextmodel.ReqContext) response
 
 	cmd := CloudMigrationSessionRequestDTO{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
+		span.SetStatus(codes.Error, "bad request data")
+		span.RecordError(err)
+
 		return response.ErrOrFallback(http.StatusBadRequest, "bad request data", err)
 	}
-	s, err := cma.cloudMigrationService.CreateSession(ctx, cloudmigration.CloudMigrationSessionRequest{
+	s, err := cma.cloudMigrationService.CreateSession(ctx, c.SignedInUser, cloudmigration.CloudMigrationSessionRequest{
 		AuthToken: cmd.AuthToken,
+		OrgID:     c.SignedInUser.OrgID,
 	})
 	if err != nil {
+		span.SetStatus(codes.Error, "session creation error")
+		span.RecordError(err)
+
 		return response.ErrOrFallback(http.StatusInternalServerError, "session creation error", err)
 	}
 
@@ -236,101 +264,6 @@ func (cma *CloudMigrationAPI) CreateSession(c *contextmodel.ReqContext) response
 		Slug:    s.Slug,
 		Created: s.Created,
 		Updated: s.Updated,
-	})
-}
-
-// swagger:route POST /cloudmigration/migration/{uid}/run migrations runCloudMigration
-//
-// Trigger the run of a migration to the Grafana Cloud.
-//
-// It returns migrations that has been created.
-//
-// Responses:
-// 200: cloudMigrationRunResponse
-// 400: badRequestError
-// 401: unauthorisedError
-// 403: forbiddenError
-// 500: internalServerError
-func (cma *CloudMigrationAPI) RunMigration(c *contextmodel.ReqContext) response.Response {
-	ctx, span := cma.tracer.Start(c.Req.Context(), "MigrationAPI.RunMigration")
-	defer span.End()
-
-	uid := web.Params(c.Req)[":uid"]
-	if err := util.ValidateUID(uid); err != nil {
-		return response.ErrOrFallback(http.StatusBadRequest, "invalid migration uid", err)
-	}
-
-	result, err := cma.cloudMigrationService.RunMigration(ctx, uid)
-	if err != nil {
-		return response.ErrOrFallback(http.StatusInternalServerError, "migration run error", err)
-	}
-
-	return response.JSON(http.StatusOK, convertMigrateDataResponseToDTO(*result))
-}
-
-// swagger:route GET /cloudmigration/migration/run/{runUID} migrations getCloudMigrationRun
-//
-// Get the result of a single migration run.
-//
-// Responses:
-// 200: cloudMigrationRunResponse
-// 400: badRequestError
-// 401: unauthorisedError
-// 403: forbiddenError
-// 500: internalServerError
-func (cma *CloudMigrationAPI) GetMigrationRun(c *contextmodel.ReqContext) response.Response {
-	ctx, span := cma.tracer.Start(c.Req.Context(), "MigrationAPI.GetMigrationRun")
-	defer span.End()
-
-	runUid := web.Params(c.Req)[":runUID"]
-	if err := util.ValidateUID(runUid); err != nil {
-		return response.ErrOrFallback(http.StatusBadRequest, "invalid runUID", err)
-	}
-
-	migrationStatus, err := cma.cloudMigrationService.GetMigrationStatus(ctx, runUid)
-	if err != nil {
-		return response.ErrOrFallback(http.StatusInternalServerError, "migration status error", err)
-	}
-
-	result, err := migrationStatus.GetResult()
-	if err != nil {
-		cma.log.Error("could not return migration run", "err", err)
-		return response.Error(http.StatusInternalServerError, "migration run get error", err)
-	}
-
-	return response.JSON(http.StatusOK, convertMigrateDataResponseToDTO(*result))
-}
-
-// swagger:route GET /cloudmigration/migration/{uid}/run migrations getCloudMigrationRunList
-//
-// Get a list of migration runs for a migration.
-//
-// Responses:
-// 200: cloudMigrationRunListResponse
-// 400: badRequestError
-// 401: unauthorisedError
-// 403: forbiddenError
-// 500: internalServerError
-func (cma *CloudMigrationAPI) GetMigrationRunList(c *contextmodel.ReqContext) response.Response {
-	ctx, span := cma.tracer.Start(c.Req.Context(), "MigrationAPI.GetMigrationRunList")
-	defer span.End()
-
-	uid := web.Params(c.Req)[":uid"]
-	if err := util.ValidateUID(uid); err != nil {
-		return response.ErrOrFallback(http.StatusBadRequest, "invalid migration uid", err)
-	}
-
-	runList, err := cma.cloudMigrationService.GetMigrationRunList(ctx, uid)
-	if err != nil {
-		return response.ErrOrFallback(http.StatusInternalServerError, "list migration status error", err)
-	}
-
-	runs := make([]MigrateDataResponseListDTO, len(runList.Runs))
-	for i := 0; i < len(runList.Runs); i++ {
-		runs[i] = MigrateDataResponseListDTO{runList.Runs[i].RunUID}
-	}
-	return response.JSON(http.StatusOK, CloudMigrationRunListDTO{
-		Runs: runs,
 	})
 }
 
@@ -350,11 +283,17 @@ func (cma *CloudMigrationAPI) DeleteSession(c *contextmodel.ReqContext) response
 
 	uid := web.Params(c.Req)[":uid"]
 	if err := util.ValidateUID(uid); err != nil {
+		span.SetStatus(codes.Error, "invalid session uid")
+		span.RecordError(err)
+
 		return response.ErrOrFallback(http.StatusBadRequest, "invalid session uid", err)
 	}
 
-	_, err := cma.cloudMigrationService.DeleteSession(ctx, uid)
+	_, err := cma.cloudMigrationService.DeleteSession(ctx, c.OrgID, c.SignedInUser, uid)
 	if err != nil {
+		span.SetStatus(codes.Error, "session delete error")
+		span.RecordError(err)
+
 		return response.ErrOrFallback(http.StatusInternalServerError, "session delete error", err)
 	}
 	return response.Empty(http.StatusOK)
@@ -378,11 +317,17 @@ func (cma *CloudMigrationAPI) CreateSnapshot(c *contextmodel.ReqContext) respons
 	uid := web.Params(c.Req)[":uid"]
 
 	if err := util.ValidateUID(uid); err != nil {
+		span.SetStatus(codes.Error, "invalid session uid")
+		span.RecordError(err)
+
 		return response.ErrOrFallback(http.StatusBadRequest, "invalid session uid", err)
 	}
 
 	ss, err := cma.cloudMigrationService.CreateSnapshot(ctx, c.SignedInUser, uid)
 	if err != nil {
+		span.SetStatus(codes.Error, "error creating snapshot")
+		span.RecordError(err)
+
 		return response.ErrOrFallback(http.StatusInternalServerError, "error creating snapshot", err)
 	}
 
@@ -407,9 +352,15 @@ func (cma *CloudMigrationAPI) GetSnapshot(c *contextmodel.ReqContext) response.R
 
 	sessUid, snapshotUid := web.Params(c.Req)[":uid"], web.Params(c.Req)[":snapshotUid"]
 	if err := util.ValidateUID(sessUid); err != nil {
+		span.SetStatus(codes.Error, "invalid session uid")
+		span.RecordError(err)
+
 		return response.ErrOrFallback(http.StatusBadRequest, "invalid session uid", err)
 	}
 	if err := util.ValidateUID(snapshotUid); err != nil {
+		span.SetStatus(codes.Error, "invalid snapshot uid")
+		span.RecordError(err)
+
 		return response.ErrOrFallback(http.StatusBadRequest, "invalid snapshot uid", err)
 	}
 
@@ -418,6 +369,7 @@ func (cma *CloudMigrationAPI) GetSnapshot(c *contextmodel.ReqContext) response.R
 		SessionUID:  sessUid,
 		ResultPage:  c.QueryInt("resultPage"),
 		ResultLimit: c.QueryInt("resultLimit"),
+		OrgID:       c.SignedInUser.OrgID,
 	}
 	if q.ResultLimit == 0 {
 		q.ResultLimit = 100
@@ -427,6 +379,9 @@ func (cma *CloudMigrationAPI) GetSnapshot(c *contextmodel.ReqContext) response.R
 	}
 	snapshot, err := cma.cloudMigrationService.GetSnapshot(ctx, q)
 	if err != nil {
+		span.SetStatus(codes.Error, "error retrieving snapshot")
+		span.RecordError(err)
+
 		return response.ErrOrFallback(http.StatusInternalServerError, "error retrieving snapshot", err)
 	}
 
@@ -435,10 +390,13 @@ func (cma *CloudMigrationAPI) GetSnapshot(c *contextmodel.ReqContext) response.R
 	dtoResults := make([]MigrateDataResponseItemDTO, len(results))
 	for i := 0; i < len(results); i++ {
 		dtoResults[i] = MigrateDataResponseItemDTO{
-			Type:    MigrateDataType(results[i].Type),
-			RefID:   results[i].RefID,
-			Status:  ItemStatus(results[i].Status),
-			Message: results[i].Error,
+			Name:       results[i].Name,
+			Type:       MigrateDataType(results[i].Type),
+			RefID:      results[i].RefID,
+			Status:     ItemStatus(results[i].Status),
+			Message:    results[i].Error,
+			ErrorCode:  ItemErrorCode(results[i].ErrorCode),
+			ParentName: results[i].ParentName,
 		}
 	}
 
@@ -485,12 +443,17 @@ func (cma *CloudMigrationAPI) GetSnapshotList(c *contextmodel.ReqContext) respon
 
 	uid := web.Params(c.Req)[":uid"]
 	if err := util.ValidateUID(uid); err != nil {
+		span.SetStatus(codes.Error, "invalid session uid")
+		span.RecordError(err)
+
 		return response.ErrOrFallback(http.StatusBadRequest, "invalid session uid", err)
 	}
 	q := cloudmigration.ListSnapshotsQuery{
 		SessionUID: uid,
 		Limit:      c.QueryInt("limit"),
 		Page:       c.QueryInt("page"),
+		Sort:       c.Query("sort"),
+		OrgID:      c.SignedInUser.OrgID,
 	}
 	if q.Limit == 0 {
 		q.Limit = 100
@@ -501,6 +464,9 @@ func (cma *CloudMigrationAPI) GetSnapshotList(c *contextmodel.ReqContext) respon
 
 	snapshotList, err := cma.cloudMigrationService.GetSnapshotList(ctx, q)
 	if err != nil {
+		span.SetStatus(codes.Error, "error retrieving snapshot list")
+		span.RecordError(err)
+
 		return response.ErrOrFallback(http.StatusInternalServerError, "error retrieving snapshot list", err)
 	}
 
@@ -536,13 +502,22 @@ func (cma *CloudMigrationAPI) UploadSnapshot(c *contextmodel.ReqContext) respons
 
 	sessUid, snapshotUid := web.Params(c.Req)[":uid"], web.Params(c.Req)[":snapshotUid"]
 	if err := util.ValidateUID(sessUid); err != nil {
+		span.SetStatus(codes.Error, "invalid session uid")
+		span.RecordError(err)
+
 		return response.ErrOrFallback(http.StatusBadRequest, "invalid session uid", err)
 	}
 	if err := util.ValidateUID(snapshotUid); err != nil {
+		span.SetStatus(codes.Error, "invalid snapshot uid")
+		span.RecordError(err)
+
 		return response.ErrOrFallback(http.StatusBadRequest, "invalid snapshot uid", err)
 	}
 
-	if err := cma.cloudMigrationService.UploadSnapshot(ctx, sessUid, snapshotUid); err != nil {
+	if err := cma.cloudMigrationService.UploadSnapshot(ctx, c.OrgID, c.SignedInUser, sessUid, snapshotUid); err != nil {
+		span.SetStatus(codes.Error, "error uploading snapshot")
+		span.RecordError(err)
+
 		return response.ErrOrFallback(http.StatusInternalServerError, "error uploading snapshot", err)
 	}
 
@@ -566,13 +541,22 @@ func (cma *CloudMigrationAPI) CancelSnapshot(c *contextmodel.ReqContext) respons
 
 	sessUid, snapshotUid := web.Params(c.Req)[":uid"], web.Params(c.Req)[":snapshotUid"]
 	if err := util.ValidateUID(sessUid); err != nil {
+		span.SetStatus(codes.Error, "invalid session uid")
+		span.RecordError(err)
+
 		return response.ErrOrFallback(http.StatusBadRequest, "invalid session uid", err)
 	}
 	if err := util.ValidateUID(snapshotUid); err != nil {
+		span.SetStatus(codes.Error, "invalid snapshot uid")
+		span.RecordError(err)
+
 		return response.ErrOrFallback(http.StatusBadRequest, "invalid snapshot uid", err)
 	}
 
 	if err := cma.cloudMigrationService.CancelSnapshot(ctx, sessUid, snapshotUid); err != nil {
+		span.SetStatus(codes.Error, "error canceling snapshot")
+		span.RecordError(err)
+
 		return response.ErrOrFallback(http.StatusInternalServerError, "error canceling snapshot", err)
 	}
 

@@ -8,13 +8,14 @@ import (
 
 	"github.com/ua-parser/uap-go/uaparser"
 
-	"github.com/grafana/authlib/claims"
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/network"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/authn"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -84,7 +85,15 @@ func (hs *HTTPServer) RotateUserAuthTokenRedirect(c *contextmodel.ReqContext) re
 		return response.Redirect(hs.Cfg.AppSubURL + "/login")
 	}
 
-	return response.Redirect(hs.GetRedirectURL(c))
+	if !c.UseSessionStorageRedirect {
+		return response.Redirect(hs.GetRedirectURL(c))
+	}
+
+	redirectTo := c.Query("redirectTo")
+	if err := hs.ValidateRedirectTo(redirectTo); err != nil {
+		return response.Redirect(hs.Cfg.AppSubURL + "/")
+	}
+	return response.Redirect(hs.Cfg.AppSubURL + redirectTo)
 }
 
 // swagger:route POST /user/auth-tokens/rotate
@@ -129,7 +138,6 @@ func (hs *HTTPServer) rotateToken(c *contextmodel.ReqContext) error {
 		IP:            ip,
 		UserAgent:     c.Req.UserAgent(),
 	})
-
 	if err != nil {
 		return err
 	}
@@ -217,6 +225,12 @@ func (hs *HTTPServer) getUserAuthTokensInternal(c *contextmodel.ReqContext, user
 			seenAt = createdAt
 		}
 
+		// Retrieve AuthModule from external session
+		authModule := ""
+		if externalSession, err := hs.AuthTokenService.GetExternalSession(c.Req.Context(), token.ExternalSessionId); err == nil {
+			authModule = login.GetAuthProviderLabel(externalSession.AuthModule)
+		}
+
 		result = append(result, &dtos.UserToken{
 			Id:                     token.Id,
 			IsActive:               isActive,
@@ -226,6 +240,7 @@ func (hs *HTTPServer) getUserAuthTokensInternal(c *contextmodel.ReqContext, user
 			OperatingSystemVersion: osVersion,
 			Browser:                client.UserAgent.Family,
 			BrowserVersion:         browserVersion,
+			AuthModule:             authModule,
 			CreatedAt:              createdAt,
 			SeenAt:                 seenAt,
 		})

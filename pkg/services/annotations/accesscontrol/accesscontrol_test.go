@@ -7,13 +7,25 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
+	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/annotations/testutil"
+	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/database"
+	dashboardsservice "github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
+	"github.com/grafana/grafana/pkg/services/guardian"
+	"github.com/grafana/grafana/pkg/services/quota/quotatest"
+	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
+	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
@@ -27,28 +39,48 @@ func TestIntegrationAuthorize(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	sql, cfg := db.InitTestReplDBWithCfg(t)
-
-	dash1 := testutil.CreateDashboard(t, sql, cfg, featuremgmt.WithFeatures(), dashboards.SaveDashboardCommand{
-		UserID: 1,
-		OrgID:  1,
-		Dashboard: simplejson.NewFromAny(map[string]any{
-			"title": "Dashboard 1",
-		}),
-	})
-
-	dash2 := testutil.CreateDashboard(t, sql, cfg, featuremgmt.WithFeatures(), dashboards.SaveDashboardCommand{
-		UserID: 1,
-		OrgID:  1,
-		Dashboard: simplejson.NewFromAny(map[string]any{
-			"title": "Dashboard 2",
-		}),
-	})
+	sql, cfg := db.InitTestDBWithCfg(t)
+	origNewDashboardGuardian := guardian.New
+	defer func() { guardian.New = origNewDashboardGuardian }()
+	guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true})
+	folderStore := folderimpl.ProvideDashboardFolderStore(sql)
+	fStore := folderimpl.ProvideStore(sql)
+	dashStore, err := database.ProvideDashboardStore(sql, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sql))
+	require.NoError(t, err)
+	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
+	folderSvc := folderimpl.ProvideService(
+		fStore, accesscontrolmock.New(), bus.ProvideBus(tracing.InitializeTracerForTest()), dashStore, folderStore,
+		nil, sql, featuremgmt.WithFeatures(), supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil)
+	dashSvc, err := dashboardsservice.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, featuremgmt.WithFeatures(), accesscontrolmock.NewMockedPermissionsService(),
+		ac, folderSvc, fStore, nil, client.MockTestRestConfig{}, nil, quotatest.New(false, nil), nil, nil, nil)
+	require.NoError(t, err)
+	dashSvc.RegisterDashboardPermissions(accesscontrolmock.NewMockedPermissionsService())
 
 	u := &user.SignedInUser{
 		UserID: 1,
 		OrgID:  1,
 	}
+
+	dash1, err := dashSvc.SaveDashboard(context.Background(), &dashboards.SaveDashboardDTO{
+		User:  u,
+		OrgID: 1,
+		Dashboard: &dashboards.Dashboard{
+			Title: "Dashboard 1",
+			Data:  simplejson.New(),
+		},
+	}, false)
+	require.NoError(t, err)
+
+	dash2, err := dashSvc.SaveDashboard(context.Background(), &dashboards.SaveDashboardDTO{
+		User:  u,
+		OrgID: 1,
+		Dashboard: &dashboards.Dashboard{
+			Title: "Dashboard 2",
+			Data:  simplejson.New(),
+		},
+	}, false)
+	require.NoError(t, err)
+
 	role := testutil.SetupRBACRole(t, sql, u)
 
 	type testCase struct {
@@ -172,11 +204,10 @@ func TestIntegrationAuthorize(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			u.Permissions = map[int64]map[string][]string{1: tc.permissions}
 			testutil.SetupRBACPermission(t, sql, role, u)
+			authz := NewAuthService(sql, featuremgmt.WithFeatures(tc.featureToggle), dashSvc)
 
-			authz := NewAuthService(sql, featuremgmt.WithFeatures(tc.featureToggle))
-
-			query := &annotations.ItemQuery{SignedInUser: u}
-			resources, err := authz.Authorize(context.Background(), 1, query)
+			query := annotations.ItemQuery{SignedInUser: u, OrgID: 1}
+			resources, err := authz.Authorize(context.Background(), query)
 			require.NoError(t, err)
 
 			if tc.expectedResources.Dashboards != nil {

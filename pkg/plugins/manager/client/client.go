@@ -7,10 +7,14 @@ import (
 	"net/textproto"
 	"strings"
 
+	grpccodes "google.golang.org/grpc/codes"
+	grpcstatus "google.golang.org/grpc/status"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
+	"github.com/grafana/grafana/pkg/util/proxyutil"
 )
 
 const (
@@ -60,6 +64,10 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 			return nil, plugins.ErrPluginRequestCanceledErrorBase.Errorf("client: query data request canceled: %w", err)
 		}
 
+		if s, ok := grpcstatus.FromError(err); ok && s.Code() == grpccodes.Canceled {
+			return nil, plugins.ErrPluginRequestCanceledErrorBase.Errorf("client: query data request canceled: %w", err)
+		}
+
 		return nil, plugins.ErrPluginDownstreamErrorBase.Errorf("client: failed to query data: %w", err)
 	}
 
@@ -101,8 +109,11 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 				removeConnectionHeaders(res.Headers)
 				removeHopByHopHeaders(res.Headers)
 				removeNonAllowedHeaders(res.Headers)
+			} else {
+				res.Headers = map[string][]string{}
 			}
 
+			proxyutil.SetProxyResponseHeaders(res.Headers)
 			ensureContentTypeHeader(res)
 		}
 

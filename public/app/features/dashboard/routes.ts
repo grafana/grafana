@@ -4,7 +4,7 @@ import { RouteDescriptor } from '../../core/navigation/types';
 import { DashboardRoutes } from '../../types';
 
 export const getPublicDashboardRoutes = (): RouteDescriptor[] => {
-  if (!config.publicDashboardsEnabled || !config.featureToggles.publicDashboards) {
+  if (!config.publicDashboardsEnabled) {
     return [];
   }
 

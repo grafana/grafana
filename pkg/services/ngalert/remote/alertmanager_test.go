@@ -125,8 +125,11 @@ func TestNewAlertmanager(t *testing.T) {
 }
 
 func TestApplyConfig(t *testing.T) {
+	const tenantID = "test"
 	// errorHandler returns an error response for the readiness check and state sync.
 	errorHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		require.Equal(t, tenantID, r.Header.Get(client.MimirTenantHeader))
+		require.Equal(t, "true", r.Header.Get(client.RemoteAlertmanagerHeader))
 		w.Header().Add("content-type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
 		require.NoError(t, json.NewEncoder(w).Encode(map[string]string{"status": "error"}))
@@ -135,6 +138,8 @@ func TestApplyConfig(t *testing.T) {
 	var configSent client.UserGrafanaConfig
 	var lastConfigSync, lastStateSync time.Time
 	okHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		require.Equal(t, tenantID, r.Header.Get(client.MimirTenantHeader))
+		require.Equal(t, "true", r.Header.Get(client.RemoteAlertmanagerHeader))
 		if r.Method == http.MethodPost {
 			if strings.Contains(r.URL.Path, "/config") {
 				require.NoError(t, json.NewDecoder(r.Body).Decode(&configSent))
@@ -166,7 +171,7 @@ func TestApplyConfig(t *testing.T) {
 	server := httptest.NewServer(errorHandler)
 	cfg := AlertmanagerConfig{
 		OrgID:         1,
-		TenantID:      "test",
+		TenantID:      tenantID,
 		URL:           server.URL,
 		DefaultConfig: defaultGrafanaConfig,
 		PromoteConfig: true,
@@ -228,6 +233,7 @@ func TestApplyConfig(t *testing.T) {
 }
 
 func TestCompareAndSendConfiguration(t *testing.T) {
+	const tenantID = "test"
 	cfgWithSecret, err := notifier.Load([]byte(testGrafanaConfigWithSecret))
 	require.NoError(t, err)
 	testValue := []byte("test")
@@ -240,6 +246,8 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 
 	var got string
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		require.Equal(t, tenantID, r.Header.Get(client.MimirTenantHeader))
+		require.Equal(t, "true", r.Header.Get(client.RemoteAlertmanagerHeader))
 		w.Header().Add("content-type", "application/json")
 
 		b, err := io.ReadAll(r.Body)
@@ -255,7 +263,7 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
 	cfg := AlertmanagerConfig{
 		OrgID:         1,
-		TenantID:      "test",
+		TenantID:      tenantID,
 		URL:           server.URL,
 		DefaultConfig: defaultGrafanaConfig,
 	}
@@ -333,6 +341,68 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 			require.Equal(tt, test.expErr, err.Error())
 		})
 	}
+}
+
+func Test_TestReceiversDecryptsSecureSettings(t *testing.T) {
+	const tenantID = "test"
+	const testKey = "test-key"
+	const testValue = "test-value"
+	decryptFn := func(_ context.Context, payload []byte) ([]byte, error) {
+		if string(payload) == testValue {
+			return []byte(testValue), nil
+		}
+		return nil, errTest
+	}
+
+	var got apimodels.TestReceiversConfigBodyParams
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		require.Equal(t, tenantID, r.Header.Get(client.MimirTenantHeader))
+		require.Equal(t, "true", r.Header.Get(client.RemoteAlertmanagerHeader))
+		w.Header().Add("Content-Type", "application/json")
+		require.NoError(t, json.NewDecoder(r.Body).Decode(&got))
+		require.NoError(t, r.Body.Close())
+		_, err := w.Write([]byte(`{"status": "success"}`))
+		require.NoError(t, err)
+	}))
+
+	fstore := notifier.NewFileStore(1, ngfakes.NewFakeKVStore(t))
+	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
+	cfg := AlertmanagerConfig{
+		OrgID:         1,
+		TenantID:      tenantID,
+		URL:           server.URL,
+		DefaultConfig: defaultGrafanaConfig,
+	}
+
+	am, err := NewAlertmanager(cfg,
+		fstore,
+		decryptFn,
+		NoopAutogenFn,
+		m,
+		tracing.InitializeTracerForTest(),
+	)
+
+	require.NoError(t, err)
+	params := apimodels.TestReceiversConfigBodyParams{
+		Alert: &apimodels.TestReceiversConfigAlertParams{},
+		Receivers: []*definition.PostableApiReceiver{
+			{
+				PostableGrafanaReceivers: apimodels.PostableGrafanaReceivers{
+					GrafanaManagedReceivers: []*apimodels.PostableGrafanaReceiver{
+						{
+							SecureSettings: map[string]string{
+								testKey: base64.StdEncoding.EncodeToString([]byte(testValue)),
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	_, _, err = am.TestReceivers(context.Background(), params)
+	require.NoError(t, err)
+	require.Equal(t, map[string]string{testKey: testValue}, got.Receivers[0].PostableGrafanaReceivers.GrafanaManagedReceivers[0].SecureSettings)
 }
 
 func Test_isDefaultConfiguration(t *testing.T) {
@@ -715,16 +785,18 @@ func TestIntegrationRemoteAlertmanagerAlerts(t *testing.T) {
 	require.Equal(t, 0, len(alertGroups))
 
 	// Let's create two active alerts and one expired one.
-	alert1 := genAlert(true, map[string]string{"test_1": "test_1", "empty": "", alertingModels.NamespaceUIDLabel: "test_1"})
-	alert2 := genAlert(true, map[string]string{"test_2": "test_2", "empty": "", alertingModels.NamespaceUIDLabel: "test_2"})
-	alert3 := genAlert(false, map[string]string{"test_3": "test_3", "empty": "", alertingModels.NamespaceUIDLabel: "test_3"})
+	// UTF-8 label names should be preserved.
+	utf8LabelName := "test utf-8 label 😳"
+	alert1 := genAlert(true, map[string]string{utf8LabelName: "test_1", "empty": "", alertingModels.NamespaceUIDLabel: "test_1"})
+	alert2 := genAlert(true, map[string]string{utf8LabelName: "test_2", "empty": "", alertingModels.NamespaceUIDLabel: "test_2"})
+	alert3 := genAlert(false, map[string]string{utf8LabelName: "test_3", "empty": "", alertingModels.NamespaceUIDLabel: "test_3"})
 	postableAlerts := apimodels.PostableAlerts{
 		PostableAlerts: []amv2.PostableAlert{alert1, alert2, alert3},
 	}
 	err = am.PutAlerts(context.Background(), postableAlerts)
 	require.NoError(t, err)
 
-	// We should have two alerts and one group now.
+	// We should eventually have two active alerts.
 	require.Eventually(t, func() bool {
 		alerts, err = am.GetAlerts(context.Background(), true, true, true, []string{}, "")
 		require.NoError(t, err)
@@ -736,15 +808,15 @@ func TestIntegrationRemoteAlertmanagerAlerts(t *testing.T) {
 	require.Equal(t, 1, len(alertGroups))
 
 	// Labels with empty values and the namespace UID label should be removed.
+	// UTF-8 label names should remain unchanged.
 	for _, a := range alertGroups {
-		require.NotContains(t, a.Labels, "empty")
-		require.NotContains(t, a.Labels, alertingModels.NamespaceUIDLabel)
+		require.Len(t, a.Alerts, 2)
+		for _, a := range a.Alerts {
+			require.NotContains(t, a.Labels, "empty")
+			require.NotContains(t, a.Labels, alertingModels.NamespaceUIDLabel)
+			require.Contains(t, a.Labels, utf8LabelName)
+		}
 	}
-
-	// Filtering by `test_1=test_1` should return one alert.
-	alerts, err = am.GetAlerts(context.Background(), true, true, true, []string{"test_1=test_1"}, "")
-	require.NoError(t, err)
-	require.Equal(t, 1, len(alerts))
 }
 
 func TestIntegrationRemoteAlertmanagerReceivers(t *testing.T) {

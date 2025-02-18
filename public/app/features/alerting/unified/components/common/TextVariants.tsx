@@ -6,3 +6,4 @@
 import { Text } from '@grafana/ui';
 
 export const PrimaryText = ({ content }: { content: string }) => <Text color="primary">{content}</Text>;
+export const CodeText = ({ content }: { content: string }) => <Text variant="code">{content}</Text>;

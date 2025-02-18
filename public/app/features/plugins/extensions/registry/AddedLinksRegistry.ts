@@ -3,22 +3,19 @@ import { ReplaySubject } from 'rxjs';
 import { IconName, PluginExtensionAddedLinkConfig } from '@grafana/data';
 import { PluginAddedLinksConfigureFunc, PluginExtensionEventHelpers } from '@grafana/data/src/types/pluginExtensions';
 
-import { logWarning } from '../utils';
-import {
-  extensionPointEndsWithVersion,
-  isConfigureFnValid,
-  isExtensionPointIdValid,
-  isGrafanaCoreExtensionPoint,
-  isLinkPathValid,
-} from '../validators';
+import * as errors from '../errors';
+import { isGrafanaDevMode } from '../utils';
+import { isAddedLinkMetaInfoMissing, isConfigureFnValid, isLinkPathValid } from '../validators';
 
 import { PluginExtensionConfigs, Registry, RegistryType } from './Registry';
+
+const logPrefix = 'Could not register link extension. Reason:';
 
 export type AddedLinkRegistryItem<Context extends object = object> = {
   pluginId: string;
   extensionPointId: string;
   title: string;
-  description: string;
+  description?: string;
   path?: string;
   onClick?: (event: React.MouseEvent | undefined, helpers: PluginExtensionEventHelpers<Context>) => void;
   configure?: PluginAddedLinksConfigureFunc<Context>;
@@ -44,55 +41,49 @@ export class AddedLinksRegistry extends Registry<AddedLinkRegistryItem[], Plugin
 
     for (const config of configs) {
       const { path, title, description, configure, onClick, targets } = config;
-      if (!title) {
-        logWarning(`Could not register added link with title '${title}'. Reason: Title is missing.`);
-        continue;
-      }
+      const configLog = this.logger.child({
+        path: path ?? '',
+        description: description ?? '',
+        title,
+        pluginId,
+        onClick: typeof onClick,
+      });
 
-      if (!description) {
-        logWarning(`Could not register added link with title '${title}'. Reason: Description is missing.`);
+      if (!title) {
+        configLog.error(`${logPrefix} ${errors.TITLE_MISSING}`);
         continue;
       }
 
       if (!isConfigureFnValid(configure)) {
-        logWarning(`Could not register added link with title '${title}'. Reason: configure is not a function.`);
+        configLog.error(`${logPrefix} ${errors.INVALID_CONFIGURE_FUNCTION}`);
         continue;
       }
 
       if (!path && !onClick) {
-        logWarning(
-          `Could not register added link with title '${title}'. Reason: Either "path" or "onClick" is required.`
-        );
+        configLog.error(`${logPrefix} ${errors.INVALID_PATH_OR_ON_CLICK}`);
         continue;
       }
 
       if (path && !isLinkPathValid(pluginId, path)) {
-        logWarning(
-          `Could not register added link with title '${title}'. Reason: The "path" is required and should start with "/a/${pluginId}/" (currently: "${path}"). Skipping the extension.`
-        );
+        configLog.error(`${logPrefix} ${errors.INVALID_PATH}`);
+        continue;
+      }
+
+      if (pluginId !== 'grafana' && isGrafanaDevMode() && isAddedLinkMetaInfoMissing(pluginId, config, configLog)) {
         continue;
       }
 
       const extensionPointIds = Array.isArray(targets) ? targets : [targets];
+
       for (const extensionPointId of extensionPointIds) {
-        if (!isExtensionPointIdValid(pluginId, extensionPointId)) {
-          logWarning(
-            `Could not register added link with id '${extensionPointId}'. Reason: Target extension point id must start with grafana, plugins or plugin id.`
-          );
-          continue;
-        }
-
-        if (!isGrafanaCoreExtensionPoint(extensionPointId) && !extensionPointEndsWithVersion(extensionPointId)) {
-          logWarning(
-            `Added component with id '${extensionPointId}' does not match the convention. It's recommended to suffix the id with the component version. e.g 'myorg-basic-app/my-component-id/v1'.`
-          );
-        }
-
+        const pointIdLog = configLog.child({ extensionPointId });
         const { targets, ...registryItem } = config;
 
         if (!(extensionPointId in registry)) {
           registry[extensionPointId] = [];
         }
+
+        pointIdLog.debug('Added link extension successfully registered');
 
         registry[extensionPointId].push({ ...registryItem, pluginId, extensionPointId });
       }

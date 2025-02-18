@@ -11,6 +11,8 @@ export function getNavTitle(navId: string | undefined) {
   switch (navId) {
     case 'home':
       return t('nav.home.title', 'Home');
+    case 'home-setup-guide':
+      return t('nav.setup-guide.title', 'Setup guide');
     case 'new':
       return t('nav.new.title', 'New');
     case 'create':
@@ -138,7 +140,7 @@ export function getNavTitle(navId: string | undefined) {
     case 'frontend':
       return t('nav.frontend.title', 'Frontend');
     case 'apps':
-      return t('nav.apps.title', 'Apps');
+      return t('nav.apps.title', 'More apps');
     case 'alerts-and-incidents':
       return t('nav.alerts-and-incidents.title', 'Alerts & IRM');
     case 'testing-and-synthetics':
@@ -151,10 +153,10 @@ export function getNavTitle(navId: string | undefined) {
       return t('nav.slo.title', 'SLO');
     case 'plugin-page-k6-app':
       return t('nav.k6.title', 'Performance');
-    case 'monitoring':
-      return t('nav.observability.title', 'Observability');
     case 'plugin-page-grafana-k8s-app':
       return t('nav.kubernetes.title', 'Kubernetes');
+    case 'plugin-page-grafana-dbo11y-app':
+      return t('nav.databases.title', 'Databases');
     case 'plugin-page-grafana-app-observability-app':
       return t('nav.application.title', 'Application');
     case 'plugin-page-grafana-pyroscope-app':
@@ -232,7 +234,10 @@ export function getNavSubTitle(navId: string | undefined) {
         'Upgrade your existing legacy alerts and notification channels to the new Grafana Alerting'
       );
     case 'alerting-admin':
-      return t('nav.alerting-admin.subtitle', 'Manage Alertmanager configurations');
+      return t(
+        'nav.alerting-admin.subtitle',
+        'Manage Alertmanager configurations and enable receiving Grafana-managed alerts'
+      );
     case 'alert-list':
       return t('nav.alerting-list.subtitle', 'Rules that determine whether an alert will fire');
     case 'receivers':
@@ -262,6 +267,8 @@ export function getNavSubTitle(navId: string | undefined) {
       return t('nav.api-keys.subtitle', 'Manage and create API keys that are used to interact with Grafana HTTP APIs');
     case 'serviceaccounts':
       return t('nav.service-accounts.subtitle', 'Use service accounts to run automated workloads in Grafana');
+    case 'groupsync':
+      return t('nav.groupsync.subtitle', 'Manage mappings of Identity Provider groups to Grafana Roles');
     case 'global-users':
       return t('nav.global-users.subtitle', 'Manage users in Grafana');
     case 'global-orgs':

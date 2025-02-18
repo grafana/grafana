@@ -4,7 +4,6 @@ import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import {
   CustomVariable,
   SceneDataTransformer,
-  SceneGridLayout,
   SceneQueryRunner,
   SceneTimeRange,
   SceneVariableSet,
@@ -12,8 +11,8 @@ import {
   VizPanelState,
 } from '@grafana/scenes';
 import { contextSrv } from 'app/core/core';
-import { DashboardGridItem } from 'app/features/dashboard-scene/scene/DashboardGridItem';
 import { DashboardScene, DashboardSceneState } from 'app/features/dashboard-scene/scene/DashboardScene';
+import { DefaultGridLayoutManager } from 'app/features/dashboard-scene/scene/layout-default/DefaultGridLayoutManager';
 
 import { ShareDrawerContext } from '../../ShareDrawer/ShareDrawerContext';
 
@@ -91,18 +90,7 @@ async function setup(panelState?: Partial<VizPanelState>, dashboardState?: Parti
     title: 'hello',
     uid: 'dash-1',
     $timeRange: new SceneTimeRange({}),
-    body: new SceneGridLayout({
-      children: [
-        new DashboardGridItem({
-          key: 'griditem-1',
-          x: 0,
-          y: 0,
-          width: 10,
-          height: 12,
-          body: panel,
-        }),
-      ],
-    }),
+    body: DefaultGridLayoutManager.fromVizPanels([panel]),
     ...dashboardState,
   });
 

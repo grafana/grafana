@@ -16,6 +16,9 @@ func (s *UserAuthTokenService) Run(ctx context.Context) error {
 		if _, err := s.deleteExpiredTokens(ctx, maxInactiveLifetime, maxLifetime); err != nil {
 			s.log.Error("An error occurred while deleting expired tokens", "err", err)
 		}
+		if err := s.deleteOrphanedExternalSessions(ctx); err != nil {
+			s.log.Error("An error occurred while deleting orphaned external sessions", "err", err)
+		}
 	})
 	if err != nil {
 		s.log.Error("Failed to lock and execute cleanup of expired auth token", "error", err)
@@ -27,6 +30,9 @@ func (s *UserAuthTokenService) Run(ctx context.Context) error {
 			err = s.serverLockService.LockAndExecute(ctx, "cleanup expired auth tokens", time.Hour*12, func(context.Context) {
 				if _, err := s.deleteExpiredTokens(ctx, maxInactiveLifetime, maxLifetime); err != nil {
 					s.log.Error("An error occurred while deleting expired tokens", "err", err)
+				}
+				if err := s.deleteOrphanedExternalSessions(ctx); err != nil {
+					s.log.Error("An error occurred while deleting orphaned external sessions", "err", err)
 				}
 			})
 			if err != nil {
@@ -65,4 +71,30 @@ func (s *UserAuthTokenService) deleteExpiredTokens(ctx context.Context, maxInact
 	})
 
 	return affected, err
+}
+
+func (s *UserAuthTokenService) deleteOrphanedExternalSessions(ctx context.Context) error {
+	s.log.Debug("Starting cleanup of external sessions")
+
+	var affected int64
+	err := s.sqlStore.WithDbSession(ctx, func(dbSession *db.Session) error {
+		sql := `DELETE FROM user_external_session WHERE NOT EXISTS (SELECT 1 FROM user_auth_token WHERE user_external_session.id = user_auth_token.external_session_id)`
+
+		res, err := dbSession.Exec(sql)
+		if err != nil {
+			return err
+		}
+
+		affected, err = res.RowsAffected()
+		if err != nil {
+			s.log.Error("Failed to cleanup orphaned external sessions", "error", err)
+			return nil
+		}
+
+		s.log.Debug("Cleanup of orphaned external sessions done", "count", affected)
+
+		return nil
+	})
+
+	return err
 }

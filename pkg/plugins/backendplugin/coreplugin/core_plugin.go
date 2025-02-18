@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
@@ -24,7 +25,7 @@ type corePlugin struct {
 
 // New returns a new backendplugin.PluginFactoryFunc for creating a core (built-in) backendplugin.Plugin.
 func New(opts backend.ServeOpts) backendplugin.PluginFactoryFunc {
-	return func(pluginID string, logger log.Logger, _ func() []string) (backendplugin.Plugin, error) {
+	return func(pluginID string, logger log.Logger, _ trace.Tracer, _ func() []string) (backendplugin.Plugin, error) {
 		return &corePlugin{
 			pluginID:            pluginID,
 			logger:              logger,

@@ -1,7 +1,8 @@
 import { e2e } from '../utils';
 const DASHBOARD_ID = 'ed155665';
 
-describe('Annotations filtering', () => {
+// Skipping due to race conditions with same old arch test e2e/various-suite/filter-annotations.spec.ts
+describe.skip('Annotations filtering', () => {
   beforeEach(() => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
   });
@@ -9,7 +10,9 @@ describe('Annotations filtering', () => {
   it('Tests switching filter type updates the UI accordingly', () => {
     e2e.flows.openDashboard({ uid: DASHBOARD_ID });
 
-    e2e.components.PageToolbar.item('Dashboard settings').click();
+    e2e.components.NavToolbar.editDashboard.editButton().should('be.visible').click();
+    e2e.components.NavToolbar.editDashboard.settingsButton().should('be.visible').click();
+
     e2e.components.Tab.title('Annotations').click();
     cy.contains('New query').click();
     e2e.pages.Dashboard.Settings.Annotations.Settings.name().clear().type('Red - Panel two');
@@ -35,20 +38,30 @@ describe('Annotations filtering', () => {
           .type('Panel two{enter}', { force: true });
       });
 
-    e2e.pages.Dashboard.Settings.Annotations.NewAnnotation.previewInDashboard().click({ force: true });
+    cy.get('body').click();
 
-    e2e.pages.Dashboard.SubMenu.Annotations.annotationsWrapper()
+    e2e.components.NavToolbar.editDashboard.backToDashboardButton().should('be.visible').click();
+
+    e2e.pages.Dashboard.Controls()
       .should('be.visible')
       .within(() => {
-        e2e.pages.Dashboard.SubMenu.Annotations.annotationLabel('Red - Panel two').should('be.visible');
-        e2e.pages.Dashboard.SubMenu.Annotations.annotationToggle('Red - Panel two')
-          .should('be.checked')
-          .uncheck({ force: true })
-          .should('not.be.checked')
-          .check({ force: true });
+        e2e.pages.Dashboard.SubMenu.submenuItemLabels('Red - Panel two')
+          .should('be.visible')
+          .parent()
+          .within((el) => {
+            cy.get('input')
+              .should('be.checked')
+              .uncheck({ force: true })
+              .should('not.be.checked')
+              .check({ force: true });
+          });
 
-        e2e.pages.Dashboard.SubMenu.Annotations.annotationLabel('Red, only panel 1').should('be.visible');
-        e2e.pages.Dashboard.SubMenu.Annotations.annotationToggle('Red, only panel 1').should('be.checked');
+        e2e.pages.Dashboard.SubMenu.submenuItemLabels('Red, only panel 1')
+          .should('be.visible')
+          .parent()
+          .within((el) => {
+            cy.get('input').should('be.checked');
+          });
       });
 
     e2e.components.Panels.Panel.title('Panel one')

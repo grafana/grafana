@@ -51,7 +51,10 @@ func validateInput(c utils.CommandLine) error {
 
 	fileInfo, err := os.Stat(pluginsDir)
 	if err != nil {
-		if err = os.MkdirAll(pluginsDir, 0o750); err != nil {
+		// If the directory does not exist, try to create it with permissions enough
+		// so the server running Grafana can write to it to install new plugins.
+		// nolint: gosec
+		if err = os.MkdirAll(pluginsDir, os.ModePerm); err != nil {
 			return fmt.Errorf("pluginsDir (%s) is not a writable directory", pluginsDir)
 		}
 		return nil
@@ -87,6 +90,7 @@ type pluginInstallOpts struct {
 	repoURL   string
 	pluginURL string
 	pluginDir string
+	gcomToken string
 }
 
 func newInstallPluginOpts(c utils.CommandLine) pluginInstallOpts {
@@ -95,6 +99,7 @@ func newInstallPluginOpts(c utils.CommandLine) pluginInstallOpts {
 		repoURL:   c.PluginRepoURL(),
 		pluginURL: c.PluginURL(),
 		pluginDir: c.PluginDirectory(),
+		gcomToken: c.GcomToken(),
 	}
 }
 
@@ -129,9 +134,10 @@ func doInstallPlugin(ctx context.Context, pluginID, version string, o pluginInst
 	}
 
 	repository := repo.NewManager(repo.ManagerCfg{
-		SkipTLSVerify: o.insecure,
-		BaseURL:       o.repoURL,
-		Logger:        services.Logger,
+		SkipTLSVerify:      o.insecure,
+		BaseURL:            o.repoURL,
+		Logger:             services.Logger,
+		GrafanaComAPIToken: o.gcomToken,
 	})
 
 	// FIXME: Re-enable grafanaVersion. This check was broken in 10.2 so disabling it for the moment.

@@ -1,6 +1,7 @@
 package notifications
 
 import (
+	"crypto/tls"
 	"errors"
 
 	"github.com/grafana/grafana/pkg/services/user"
@@ -17,15 +18,16 @@ type SendEmailAttachFile struct {
 
 // SendEmailCommand is the command for sending emails
 type SendEmailCommand struct {
-	To            []string
-	SingleEmail   bool
-	Template      string
-	Subject       string
-	Data          map[string]any
-	Info          string
-	ReplyTo       []string
-	EmbeddedFiles []string
-	AttachedFiles []*SendEmailAttachFile
+	To               []string
+	SingleEmail      bool
+	Template         string
+	Subject          string
+	Data             map[string]any
+	Info             string
+	ReplyTo          []string
+	EmbeddedFiles    []string
+	EmbeddedContents []EmbeddedContent
+	AttachedFiles    []*SendEmailAttachFile
 }
 
 // SendEmailCommandSync is the command for sending emails synchronously
@@ -42,6 +44,7 @@ type SendWebhookSync struct {
 	HttpHeader  map[string]string
 	ContentType string
 	Validation  func(body []byte, statusCode int) error
+	TLSConfig   *tls.Config
 }
 
 type SendResetPasswordEmailCommand struct {

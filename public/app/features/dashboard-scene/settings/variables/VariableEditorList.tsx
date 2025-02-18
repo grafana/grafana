@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import { DragDropContext, Droppable, DropResult } from '@hello-pangea/dnd';
+import classNames from 'classnames';
 import { ReactElement } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
@@ -9,11 +10,14 @@ import { useStyles2, Stack, Button, EmptyState, TextLink } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 
 import { VariablesDependenciesButton } from '../../variables/VariablesDependenciesButton';
+import { UsagesToNetwork, VariableUsageTree } from '../../variables/utils';
 
 import { VariableEditorListRow } from './VariableEditorListRow';
 
 export interface Props {
   variables: Array<SceneVariable<SceneVariableState>>;
+  usages: VariableUsageTree[];
+  usagesNetwork: UsagesToNetwork[];
   onAdd: () => void;
   onChangeOrder: (fromIndex: number, toIndex: number) => void;
   onDuplicate: (identifier: string) => void;
@@ -23,6 +27,8 @@ export interface Props {
 
 export function VariableEditorList({
   variables,
+  usages,
+  usagesNetwork,
   onChangeOrder,
   onDelete,
   onDuplicate,
@@ -30,76 +36,68 @@ export function VariableEditorList({
   onEdit,
 }: Props): ReactElement {
   const styles = useStyles2(getStyles);
+
   const onDragEnd = (result: DropResult) => {
     if (!result.destination || !result.source) {
       return;
     }
+
     reportInteraction('Variable drag and drop');
     onChangeOrder(result.source.index, result.destination.index);
   };
 
-  return (
-    <div>
-      <div>
-        {variables.length === 0 && <EmptyVariablesList onAdd={onAdd} />}
-
-        {variables.length > 0 && (
-          <Stack direction="column" gap={3}>
-            <div className={styles.tableContainer}>
-              <table
-                className="filter-table filter-table--hover"
-                data-testid={selectors.pages.Dashboard.Settings.Variables.List.table}
-                role="grid"
-              >
-                <thead>
-                  <tr>
-                    <th>Variable</th>
-                    <th>Definition</th>
-                    <th colSpan={5} />
-                  </tr>
-                </thead>
-                <DragDropContext onDragEnd={onDragEnd}>
-                  <Droppable droppableId="variables-list" direction="vertical">
-                    {(provided) => (
-                      <tbody ref={provided.innerRef} {...provided.droppableProps}>
-                        {variables.map((variableScene, index) => {
-                          const variableState = variableScene.state;
-                          return (
-                            <VariableEditorListRow
-                              index={index}
-                              key={`${variableState.name}-${index}`}
-                              variable={variableScene}
-                              onDelete={onDelete}
-                              onDuplicate={onDuplicate}
-                              onEdit={onEdit}
-                            />
-                          );
-                        })}
-                        {provided.placeholder}
-                      </tbody>
-                    )}
-                  </Droppable>
-                </DragDropContext>
-              </table>
-            </div>
-            <Stack>
-              <VariablesDependenciesButton variables={variables} />
-              <Button
-                data-testid={selectors.pages.Dashboard.Settings.Variables.List.newButton}
-                onClick={onAdd}
-                icon="plus"
-              >
-                New variable
-              </Button>
-            </Stack>
-          </Stack>
-        )}
-      </div>
-    </div>
+  return variables.length <= 0 ? (
+    <EmptyVariablesList onAdd={onAdd} />
+  ) : (
+    <Stack direction="column" gap={3}>
+      <table
+        className={classNames('filter-table', 'filter-table--hover', styles.tableContainer)}
+        data-testid={selectors.pages.Dashboard.Settings.Variables.List.table}
+        role="grid"
+      >
+        <thead>
+          <tr>
+            <th>Variable</th>
+            <th>Definition</th>
+            <th colSpan={5} />
+          </tr>
+        </thead>
+        <DragDropContext onDragEnd={onDragEnd}>
+          <Droppable droppableId="variables-list" direction="vertical">
+            {(provided) => (
+              <tbody ref={provided.innerRef} {...provided.droppableProps}>
+                {variables.map((variableScene, index) => {
+                  const variableState = variableScene.state;
+                  return (
+                    <VariableEditorListRow
+                      index={index}
+                      key={`${variableState.name}-${index}`}
+                      variable={variableScene}
+                      onDelete={onDelete}
+                      onDuplicate={onDuplicate}
+                      onEdit={onEdit}
+                      usageTree={usages}
+                      usagesNetwork={usagesNetwork}
+                    />
+                  );
+                })}
+                {provided.placeholder}
+              </tbody>
+            )}
+          </Droppable>
+        </DragDropContext>
+      </table>
+      <Stack>
+        <VariablesDependenciesButton variables={variables} />
+        <Button data-testid={selectors.pages.Dashboard.Settings.Variables.List.newButton} onClick={onAdd} icon="plus">
+          New variable
+        </Button>
+      </Stack>
+    </Stack>
   );
 }
 
-function EmptyVariablesList({ onAdd }: { onAdd: () => void }): ReactElement {
+function EmptyVariablesList({ onAdd }: { onAdd: () => void }) {
   return (
     <Stack direction="column">
       <EmptyState
@@ -138,7 +136,6 @@ function EmptyVariablesList({ onAdd }: { onAdd: () => void }): ReactElement {
 
 const getStyles = () => ({
   tableContainer: css({
-    overflow: 'scroll',
-    width: '100%',
+    overflow: 'auto',
   }),
 });

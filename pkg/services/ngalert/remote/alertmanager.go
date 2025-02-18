@@ -150,7 +150,12 @@ func NewAlertmanager(cfg AlertmanagerConfig, store stateStore, decryptFn Decrypt
 		return c.Do(req.WithContext(ctx))
 	}
 	senderLogger := log.New("ngalert.sender.external-alertmanager")
-	s, err := sender.NewExternalAlertmanagerSender(senderLogger, prometheus.NewRegistry(), sender.WithDoFunc(doFunc))
+	s, err := sender.NewExternalAlertmanagerSender(
+		senderLogger,
+		prometheus.NewRegistry(),
+		sender.WithDoFunc(doFunc),
+		sender.WithUTF8Labels(),
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -227,19 +232,15 @@ func (am *Alertmanager) ApplyConfig(ctx context.Context, config *models.AlertCon
 }
 
 func (am *Alertmanager) checkReadiness(ctx context.Context) error {
-	ready, err := am.amClient.IsReadyWithBackoff(ctx)
+	err := am.amClient.IsReadyWithBackoff(ctx)
 	if err != nil {
 		return err
 	}
 
-	if ready {
-		am.log.Debug("Alertmanager readiness check successful")
-		am.metrics.LastReadinessCheck.SetToCurrentTime()
-		am.ready = true
-		return nil
-	}
-
-	return notifier.ErrAlertmanagerNotReady
+	am.log.Debug("Alertmanager readiness check successful")
+	am.metrics.LastReadinessCheck.SetToCurrentTime()
+	am.ready = true
+	return nil
 }
 
 // CompareAndSendConfiguration checks whether a given configuration is being used by the remote Alertmanager.
@@ -527,17 +528,26 @@ func (am *Alertmanager) GetReceivers(ctx context.Context) ([]apimodels.Receiver,
 }
 
 func (am *Alertmanager) TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*alertingNotify.TestReceiversResult, int, error) {
+	fn := func(payload []byte) ([]byte, error) {
+		return am.decrypt(ctx, payload)
+	}
+
 	receivers := make([]*alertingNotify.APIReceiver, 0, len(c.Receivers))
 	for _, r := range c.Receivers {
 		integrations := make([]*alertingNotify.GrafanaIntegrationConfig, 0, len(r.GrafanaManagedReceivers))
 		for _, gr := range r.PostableGrafanaReceivers.GrafanaManagedReceivers {
+			decrypted, err := gr.DecryptSecureSettings(fn)
+			if err != nil {
+				return nil, 0, err
+			}
+
 			integrations = append(integrations, &alertingNotify.GrafanaIntegrationConfig{
 				UID:                   gr.UID,
 				Name:                  gr.Name,
 				Type:                  gr.Type,
 				DisableResolveMessage: gr.DisableResolveMessage,
 				Settings:              json.RawMessage(gr.Settings),
-				SecureSettings:        gr.SecureSettings,
+				SecureSettings:        decrypted,
 			})
 		}
 		receivers = append(receivers, &alertingNotify.APIReceiver{
@@ -628,7 +638,7 @@ func (am *Alertmanager) shouldSendConfig(ctx context.Context, config *apimodels.
 	rc, err := am.mimirClient.GetGrafanaAlertmanagerConfig(ctx)
 	if err != nil {
 		// Log the error and return true so we try to upload our config anyway.
-		am.log.Error("Unable to get the remote Alertmanager configuration for comparison", "err", err)
+		am.log.Warn("Unable to get the remote Alertmanager configuration for comparison, sending the configuration without comparing", "err", err)
 		return true
 	}
 
@@ -655,7 +665,7 @@ func (am *Alertmanager) shouldSendState(ctx context.Context, state string) bool 
 	rs, err := am.mimirClient.GetGrafanaAlertmanagerState(ctx)
 	if err != nil {
 		// Log the error and return true so we try to upload our state anyway.
-		am.log.Error("Unable to get the remote Alertmanager state for comparison", "err", err)
+		am.log.Warn("Unable to get the remote Alertmanager state for comparison, sending the state without comparing", "err", err)
 		return true
 	}
 

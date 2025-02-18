@@ -1,47 +1,61 @@
 import { css } from '@emotion/css';
-import * as H from 'history';
-import { ComponentType } from 'react';
+import { ComponentType, ReactNode } from 'react';
+// eslint-disable-next-line no-restricted-imports
 import { Router } from 'react-router-dom';
 import { CompatRouter } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2 } from '@grafana/data/';
-import { HistoryWrapper, locationService, LocationServiceProvider } from '@grafana/runtime';
+import {
+  locationService,
+  LocationServiceProvider,
+  useChromeHeaderHeight,
+  useSidecar_EXPERIMENTAL,
+} from '@grafana/runtime';
 import { GlobalStyles, IconButton, ModalRoot, Stack, useSplitter, useStyles2 } from '@grafana/ui';
 
 import { AngularRoot } from '../angular/AngularRoot';
 import { AppChrome } from '../core/components/AppChrome/AppChrome';
-import { TOP_BAR_LEVEL_HEIGHT } from '../core/components/AppChrome/types';
 import { AppNotificationList } from '../core/components/AppNotifications/AppNotificationList';
 import { ModalsContextProvider } from '../core/context/ModalsContextProvider';
-import { useSidecar } from '../core/context/SidecarContext';
-import AppRootPage from '../features/plugins/components/AppRootPage';
+import { QueriesDrawerContextProvider } from '../features/explore/QueriesDrawer/QueriesDrawerContext';
+
+function ExtraProviders(props: { children: ReactNode; providers: Array<ComponentType<{ children: ReactNode }>> }) {
+  return props.providers.reduce((tree, Provider): ReactNode => {
+    return <Provider>{tree}</Provider>;
+  }, props.children);
+}
 
 type RouterWrapperProps = {
   routes?: JSX.Element | false;
   bodyRenderHooks: ComponentType[];
   pageBanners: ComponentType[];
+  providers: Array<ComponentType<{ children: ReactNode }>>;
 };
 export function RouterWrapper(props: RouterWrapperProps) {
   return (
     <Router history={locationService.getHistory()}>
       <LocationServiceProvider service={locationService}>
         <CompatRouter>
-          <ModalsContextProvider>
-            <AppChrome>
-              <AngularRoot />
-              <AppNotificationList />
-              <Stack gap={0} grow={1} direction="column">
-                {props.pageBanners.map((Banner, index) => (
-                  <Banner key={index.toString()} />
-                ))}
-                {props.routes}
-              </Stack>
-              {props.bodyRenderHooks.map((Hook, index) => (
-                <Hook key={index.toString()} />
-              ))}
-            </AppChrome>
-            <ModalRoot />
-          </ModalsContextProvider>
+          <QueriesDrawerContextProvider>
+            <ExtraProviders providers={props.providers}>
+              <ModalsContextProvider>
+                <AppChrome>
+                  <AngularRoot />
+                  <AppNotificationList />
+                  <Stack gap={0} grow={1} direction="column">
+                    {props.pageBanners.map((Banner, index) => (
+                      <Banner key={index.toString()} />
+                    ))}
+                    {props.routes}
+                  </Stack>
+                  {props.bodyRenderHooks.map((Hook, index) => (
+                    <Hook key={index.toString()} />
+                  ))}
+                </AppChrome>
+                <ModalRoot />
+              </ModalsContextProvider>
+            </ExtraProviders>
+          </QueriesDrawerContextProvider>
         </CompatRouter>
       </LocationServiceProvider>
     </Router>
@@ -55,12 +69,13 @@ export function RouterWrapper(props: RouterWrapperProps) {
  * @constructor
  */
 export function ExperimentalSplitPaneRouterWrapper(props: RouterWrapperProps) {
-  const { activePluginId, closeApp } = useSidecar();
+  const { closeApp, locationService, activePluginId } = useSidecar_EXPERIMENTAL();
 
   let { containerProps, primaryProps, secondaryProps, splitterProps } = useSplitter({
     direction: 'row',
     initialSize: 0.6,
     dragPosition: 'end',
+    handleSize: 'sm',
   });
 
   // The style changes allow the resizing to be more flexible and not constrained by the content dimensions. In the
@@ -74,11 +89,12 @@ export function ExperimentalSplitPaneRouterWrapper(props: RouterWrapperProps) {
   primaryProps = alterStyles(primaryProps);
   secondaryProps = alterStyles(secondaryProps);
 
-  // TODO: this should be used to calculate the height of the header but right now results in a error loop when
-  //   navigating to explore "Cannot destructure property 'range' of 'itemState' as it is undefined."
-  // const headerHeight = useChromeHeaderHeight();
-  const styles = useStyles2(getStyles, TOP_BAR_LEVEL_HEIGHT * 2);
-  const memoryLocationService = new HistoryWrapper(H.createMemoryHistory({ initialEntries: ['/'] }));
+  const headerHeight = useChromeHeaderHeight();
+  const styles = useStyles2(getStyles, headerHeight);
+
+  // Right now we consider only app plugin to be opened here but in the future we might want to just open any kind
+  // of url and so this should check whether there is a location in the sidecar locationService.
+  const sidecarOpen = Boolean(activePluginId);
 
   return (
     // Why do we need these 2 wrappers here? We want for one app case to render very similar as if there was no split
@@ -86,30 +102,34 @@ export function ExperimentalSplitPaneRouterWrapper(props: RouterWrapperProps) {
     // time we don't want to rerender the main app when going from 2 apps render to single app render which would happen
     // if we removed the wrappers. So the solution is to keep those 2 divs but make them no actually do anything in
     // case we are rendering a single app.
-    <div {...(activePluginId ? containerProps : { className: styles.dummyWrapper })}>
-      <div {...(activePluginId ? primaryProps : { className: styles.dummyWrapper })}>
+    <div {...(sidecarOpen ? containerProps : { className: styles.dummyWrapper })}>
+      <div {...(sidecarOpen ? primaryProps : { className: styles.dummyWrapper })}>
         <RouterWrapper {...props} />
       </div>
       {/* Sidecar */}
-      {activePluginId && (
+      {sidecarOpen && (
         <>
           <div {...splitterProps} />
           <div {...secondaryProps}>
-            <Router history={memoryLocationService.getHistory()}>
-              <LocationServiceProvider service={memoryLocationService}>
+            <Router history={locationService.getHistory()}>
+              <LocationServiceProvider service={locationService}>
                 <CompatRouter>
                   <GlobalStyles />
-                  <div className={styles.secondAppWrapper}>
+                  <div className={styles.secondAppChrome}>
                     <div className={styles.secondAppToolbar}>
                       <IconButton
                         size={'lg'}
                         style={{ margin: '8px' }}
                         name={'times'}
                         aria-label={'close'}
-                        onClick={() => closeApp(activePluginId)}
+                        onClick={() => closeApp()}
                       />
                     </div>
-                    <AppRootPage pluginId={activePluginId} />
+                    <div className={styles.secondAppWrapper}>
+                      {/*We don't render anything other than app plugin but we want to keep the same routing layout so*/}
+                      {/*there are is no difference with matching relative routes between main and sidecar view.*/}
+                      {props.routes}
+                    </div>
                   </div>
                 </CompatRouter>
               </LocationServiceProvider>
@@ -123,10 +143,11 @@ export function ExperimentalSplitPaneRouterWrapper(props: RouterWrapperProps) {
 
 const getStyles = (theme: GrafanaTheme2, headerHeight: number | undefined) => {
   return {
-    secondAppWrapper: css({
-      label: 'secondAppWrapper',
+    secondAppChrome: css({
+      label: 'secondAppChrome',
       display: 'flex',
       height: '100%',
+      width: '100%',
       paddingTop: headerHeight || 0,
       flexGrow: 1,
       flexDirection: 'column',
@@ -136,6 +157,12 @@ const getStyles = (theme: GrafanaTheme2, headerHeight: number | undefined) => {
       label: 'secondAppToolbar',
       display: 'flex',
       justifyContent: 'flex-end',
+    }),
+
+    secondAppWrapper: css({
+      label: 'secondAppWrapper',
+      overflow: 'auto',
+      flex: '1',
     }),
 
     // This is basically the same as grafana-app class. This means the 2 additional wrapper divs that are in between

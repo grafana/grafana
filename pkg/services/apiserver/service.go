@@ -6,6 +6,17 @@ import (
 	"net/http"
 	"path"
 
+	"github.com/prometheus/client_golang/prometheus"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/runtime/serializer"
+	"k8s.io/apiserver/pkg/endpoints/responsewriter"
+	genericapiserver "k8s.io/apiserver/pkg/server"
+	clientrest "k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
+	aggregatorapiserver "k8s.io/kube-aggregator/pkg/apiserver"
+
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	dataplaneaggregator "github.com/grafana/grafana/pkg/aggregator/apiserver"
@@ -14,11 +25,13 @@ import (
 	grafanaresponsewriter "github.com/grafana/grafana/pkg/apiserver/endpoints/responsewriter"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/modules"
+	servicetracing "github.com/grafana/grafana/pkg/modules/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/registry/apis/datasource"
@@ -36,16 +49,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"github.com/prometheus/client_golang/prometheus"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/runtime/serializer"
-	"k8s.io/apiserver/pkg/endpoints/responsewriter"
-	genericapiserver "k8s.io/apiserver/pkg/server"
-	clientrest "k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/clientcmd"
-	aggregatorapiserver "k8s.io/kube-aggregator/pkg/apiserver"
 )
 
 var (
@@ -65,13 +68,30 @@ var (
 		&metav1.APIGroupList{},
 		&metav1.APIGroup{},
 		&metav1.APIResourceList{},
+		&metav1.PartialObjectMetadata{},
+		&metav1.PartialObjectMetadataList{},
 	}
+
+	// internal provider of the package level client Config
+	restConfig RestConfigProvider
+	ready      = make(chan struct{})
 )
 
 func init() {
 	// we need to add the options to empty v1
 	metav1.AddToGroupVersion(Scheme, schema.GroupVersion{Group: "", Version: "v1"})
 	Scheme.AddUnversionedTypes(unversionedVersion, unversionedTypes...)
+}
+
+// GetRestConfig return a client Config mounted at package level
+// This resolves circular dependency issues between apiserver, authz,
+// and Folder Service.
+// The client Config gets initialized during the first call to
+// ProvideService.
+// Any call to GetRestConfig will block until we have a restConfig available
+func GetRestConfig(ctx context.Context) *clientrest.Config {
+	<-ready
+	return restConfig.GetRestConfig(ctx)
 }
 
 type Service interface {
@@ -81,12 +101,12 @@ type Service interface {
 }
 
 type RestConfigProvider interface {
-	GetRestConfig() *clientrest.Config
+	GetRestConfig(context.Context) *clientrest.Config
 }
 
 type DirectRestConfigProvider interface {
 	// GetDirectRestConfig returns a k8s client configuration that will use the same
-	// logged logged in user as the current request context.  This is useful when
+	// logged in user as the current request context.  This is useful when
 	// creating clients that map legacy API handlers to k8s backed services
 	GetDirectRestConfig(c *contextmodel.ReqContext) *clientrest.Config
 
@@ -95,15 +115,15 @@ type DirectRestConfigProvider interface {
 }
 
 type service struct {
-	*services.BasicService
+	services.NamedService
 
 	options    *grafanaapiserveroptions.Options
 	restConfig *clientrest.Config
 
 	cfg      *setting.Cfg
 	features featuremgmt.FeatureToggles
+	log      log.Logger
 
-	startedCh chan struct{}
 	stopCh    chan struct{}
 	stoppedCh chan error
 
@@ -124,6 +144,8 @@ type service struct {
 	contextProvider datasource.PluginContextWrapper
 	pluginStore     pluginstore.Store
 	unified         resource.ResourceClient
+
+	buildHandlerChainFuncFromBuilders builder.BuildHandlerChainFuncFromBuilders
 }
 
 func ProvideService(
@@ -140,39 +162,46 @@ func ProvideService(
 	contextProvider datasource.PluginContextWrapper,
 	pluginStore pluginstore.Store,
 	unified resource.ResourceClient,
+	buildHandlerChainFuncFromBuilders builder.BuildHandlerChainFuncFromBuilders,
 ) (*service, error) {
 	s := &service{
-		cfg:               cfg,
-		features:          features,
-		rr:                rr,
-		startedCh:         make(chan struct{}),
-		stopCh:            make(chan struct{}),
-		builders:          []builder.APIGroupBuilder{},
-		authorizer:        authorizer.NewGrafanaAuthorizer(cfg, orgService),
-		tracing:           tracing,
-		db:                db, // For Unified storage
-		metrics:           metrics.ProvideRegisterer(),
-		kvStore:           kvStore,
-		pluginClient:      pluginClient,
-		datasources:       datasources,
-		contextProvider:   contextProvider,
-		pluginStore:       pluginStore,
-		serverLockService: serverLockService,
-		unified:           unified,
+		log:                               log.New(modules.GrafanaAPIServer),
+		cfg:                               cfg,
+		features:                          features,
+		rr:                                rr,
+		stopCh:                            make(chan struct{}),
+		builders:                          []builder.APIGroupBuilder{},
+		authorizer:                        authorizer.NewGrafanaAuthorizer(cfg, orgService),
+		tracing:                           tracing,
+		db:                                db, // For Unified storage
+		metrics:                           metrics.ProvideRegisterer(),
+		kvStore:                           kvStore,
+		pluginClient:                      pluginClient,
+		datasources:                       datasources,
+		contextProvider:                   contextProvider,
+		pluginStore:                       pluginStore,
+		serverLockService:                 serverLockService,
+		unified:                           unified,
+		buildHandlerChainFuncFromBuilders: buildHandlerChainFuncFromBuilders,
 	}
-
 	// This will be used when running as a dskit service
-	s.BasicService = services.NewBasicService(s.start, s.running, nil).WithName(modules.GrafanaAPIServer)
+	service := services.NewBasicService(s.start, s.running, nil).WithName(modules.GrafanaAPIServer)
+	s.NamedService = servicetracing.NewServiceTracer(tracing.GetTracerProvider(), service)
 
 	// TODO: this is very hacky
 	// We need to register the routes in ProvideService to make sure
 	// the routes are registered before the Grafana HTTP server starts.
 	proxyHandler := func(k8sRoute routing.RouteRegister) {
 		handler := func(c *contextmodel.ReqContext) {
-			<-s.startedCh
+			if err := s.NamedService.AwaitRunning(c.Req.Context()); err != nil {
+				c.Resp.WriteHeader(http.StatusInternalServerError)
+				_, _ = c.Resp.Write([]byte(http.StatusText(http.StatusInternalServerError)))
+				return
+			}
+
 			if s.handler == nil {
-				c.Resp.WriteHeader(404)
-				_, _ = c.Resp.Write([]byte("Not found"))
+				c.Resp.WriteHeader(http.StatusNotFound)
+				_, _ = c.Resp.Write([]byte(http.StatusText(http.StatusNotFound)))
 				return
 			}
 
@@ -200,10 +229,19 @@ func ProvideService(
 	s.rr.Group("/openapi", proxyHandler)
 	s.rr.Group("/version", proxyHandler)
 
+	// only set the package level restConfig once
+	if restConfig == nil {
+		restConfig = s
+		close(ready)
+	}
+
 	return s, nil
 }
 
-func (s *service) GetRestConfig() *clientrest.Config {
+func (s *service) GetRestConfig(ctx context.Context) *clientrest.Config {
+	if err := s.NamedService.AwaitRunning(ctx); err != nil {
+		return nil
+	}
 	return s.restConfig
 }
 
@@ -213,10 +251,14 @@ func (s *service) IsDisabled() bool {
 
 // Run is an adapter for the BackgroundService interface.
 func (s *service) Run(ctx context.Context) error {
-	if err := s.start(ctx); err != nil {
+	if err := s.NamedService.StartAsync(ctx); err != nil {
 		return err
 	}
-	return s.running(ctx)
+
+	if err := s.NamedService.AwaitRunning(ctx); err != nil {
+		return err
+	}
+	return s.AwaitTerminated(ctx)
 }
 
 func (s *service) RegisterAPI(b builder.APIGroupBuilder) {
@@ -225,28 +267,31 @@ func (s *service) RegisterAPI(b builder.APIGroupBuilder) {
 
 // nolint:gocyclo
 func (s *service) start(ctx context.Context) error {
-	defer close(s.startedCh)
-
 	// Get the list of groups the server will support
 	builders := s.builders
-
 	groupVersions := make([]schema.GroupVersion, 0, len(builders))
+
 	// Install schemas
 	initialSize := len(kubeaggregator.APIVersionPriorities)
 	for i, b := range builders {
-		groupVersions = append(groupVersions, b.GetGroupVersion())
+		gvs := builder.GetGroupVersions(b)
+		groupVersions = append(groupVersions, gvs...)
 		if err := b.InstallSchema(Scheme); err != nil {
 			return err
 		}
 
-		if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAggregator) {
-			// set the priority for the group+version
-			kubeaggregator.APIVersionPriorities[b.GetGroupVersion()] = kubeaggregator.Priority{Group: 15000, Version: int32(i + initialSize)}
-		}
+		for _, gv := range gvs {
+			if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAggregator) {
+				// set the priority for the group+version
+				kubeaggregator.APIVersionPriorities[gv] = kubeaggregator.Priority{Group: 15000, Version: int32(i + initialSize)}
+			}
 
-		auth := b.GetAuthorizer()
-		if auth != nil {
-			s.authorizer.Register(b.GetGroupVersion(), auth)
+			if a, ok := b.(builder.APIGroupAuthorizer); ok {
+				auth := a.GetAuthorizer()
+				if auth != nil {
+					s.authorizer.Register(gv, auth)
+				}
+			}
 		}
 	}
 
@@ -282,6 +327,8 @@ func (s *service) start(ctx context.Context) error {
 	serverConfig.LoopbackClientConfig.Transport = transport
 	serverConfig.LoopbackClientConfig.TLSClientConfig = clientrest.TLSClientConfig{}
 
+	var optsregister apistore.StorageOptionsRegister
+
 	if o.StorageOptions.StorageType == grafanaapiserveroptions.StorageTypeEtcd {
 		if err := o.RecommendedOptions.Etcd.Validate(); len(err) > 0 {
 			return err[0]
@@ -290,9 +337,11 @@ func (s *service) start(ctx context.Context) error {
 			return err
 		}
 	} else {
+		getter := apistore.NewRESTOptionsGetterForClient(s.unified, o.RecommendedOptions.Etcd.StorageConfig)
+		optsregister = getter.RegisterOptions
+
 		// Use unified storage client
-		serverConfig.Config.RESTOptionsGetter = apistore.NewRESTOptionsGetterForClient(
-			s.unified, o.RecommendedOptions.Etcd.StorageConfig)
+		serverConfig.Config.RESTOptionsGetter = getter
 	}
 
 	// Add OpenAPI specs for each group+version
@@ -304,7 +353,7 @@ func (s *service) start(ctx context.Context) error {
 		s.cfg.BuildVersion,
 		s.cfg.BuildCommit,
 		s.cfg.BuildBranch,
-		nil,
+		s.buildHandlerChainFuncFromBuilders,
 	)
 	if err != nil {
 		return err
@@ -319,7 +368,9 @@ func (s *service) start(ctx context.Context) error {
 	// Install the API group+version
 	err = builder.InstallAPIs(Scheme, Codecs, server, serverConfig.RESTOptionsGetter, builders, o.StorageOptions,
 		// Required for the dual writer initialization
-		s.metrics, request.GetNamespaceMapper(s.cfg), kvstore.WithNamespace(s.kvStore, 0, "storage.dualwriting"), s.serverLockService,
+		s.metrics, request.GetNamespaceMapper(s.cfg), kvstore.WithNamespace(s.kvStore, 0, "storage.dualwriting"),
+		s.serverLockService,
+		optsregister,
 	)
 	if err != nil {
 		return err
@@ -482,7 +533,9 @@ func (s *service) GetDirectRestConfig(c *contextmodel.ReqContext) *clientrest.Co
 	return &clientrest.Config{
 		Transport: &roundTripperFunc{
 			fn: func(req *http.Request) (*http.Response, error) {
-				<-s.startedCh
+				if err := s.NamedService.AwaitRunning(req.Context()); err != nil {
+					return nil, err
+				}
 				ctx := identity.WithRequester(req.Context(), c.SignedInUser)
 				wrapped := grafanaresponsewriter.WrapHandler(s.handler)
 				return wrapped(req.WithContext(ctx))
@@ -492,7 +545,9 @@ func (s *service) GetDirectRestConfig(c *contextmodel.ReqContext) *clientrest.Co
 }
 
 func (s *service) DirectlyServeHTTP(w http.ResponseWriter, r *http.Request) {
-	<-s.startedCh
+	if err := s.NamedService.AwaitRunning(r.Context()); err != nil {
+		return
+	}
 	s.handler.ServeHTTP(w, r)
 }
 

@@ -77,7 +77,7 @@ func (hs *HTTPServer) CreateDashboardSnapshot(c *contextmodel.ReqContext) {
 
 	// Do not check permissions when the instance snapshot public mode is enabled
 	if !hs.Cfg.SnapshotPublicMode {
-		evaluator := ac.EvalPermission(dashboards.ActionDashboardsWrite, dashboards.ScopeDashboardsProvider.GetResourceScopeUID(cmd.Dashboard.GetNestedString("uid")))
+		evaluator := ac.EvalAll(ac.EvalPermission(dashboards.ActionSnapshotsCreate), ac.EvalPermission(dashboards.ActionDashboardsRead, dashboards.ScopeDashboardsProvider.GetResourceScopeUID(cmd.Dashboard.GetNestedString("uid"))))
 		if canSave, err := hs.AccessControl.Evaluate(c.Req.Context(), c.SignedInUser, evaluator); err != nil || !canSave {
 			c.JsonApiErr(http.StatusForbidden, "forbidden", err)
 			return

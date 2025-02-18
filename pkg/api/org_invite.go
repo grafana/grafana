@@ -129,7 +129,7 @@ func (hs *HTTPServer) AddOrgInvite(c *contextmodel.ReqContext) response.Response
 				"OrgName":   c.SignedInUser.GetOrgName(),
 				"Email":     c.SignedInUser.GetEmail(),
 				"LinkUrl":   setting.ToAbsUrl("invite/" + cmd.Code),
-				"InvitedBy": c.SignedInUser.GetDisplayName(),
+				"InvitedBy": c.SignedInUser.GetName(),
 			},
 		}
 
@@ -169,7 +169,7 @@ func (hs *HTTPServer) inviteExistingUserToOrg(c *contextmodel.ReqContext, user *
 			Data: map[string]any{
 				"Name":      user.NameOrFallback(),
 				"OrgName":   c.SignedInUser.GetOrgName(),
-				"InvitedBy": c.SignedInUser.GetDisplayName(),
+				"InvitedBy": c.SignedInUser.GetName(),
 			},
 		}
 
@@ -195,6 +195,20 @@ func (hs *HTTPServer) inviteExistingUserToOrg(c *contextmodel.ReqContext, user *
 // 404: notFoundError
 // 500: internalServerError
 func (hs *HTTPServer) RevokeInvite(c *contextmodel.ReqContext) response.Response {
+	query := tempuser.GetTempUserByCodeQuery{Code: web.Params(c.Req)[":code"]}
+	queryResult, err := hs.tempUserService.GetTempUserByCode(c.Req.Context(), &query)
+	if err != nil {
+		if errors.Is(err, tempuser.ErrTempUserNotFound) {
+			return response.Error(http.StatusNotFound, "Invite not found", nil)
+		}
+		return response.Error(http.StatusInternalServerError, "Failed to get invite", err)
+	}
+
+	canRevoke := c.SignedInUser.GetOrgID() == queryResult.OrgID || c.SignedInUser.GetIsGrafanaAdmin()
+	if !canRevoke {
+		return response.Error(http.StatusForbidden, "Permission denied: not permitted to revoke invite", nil)
+	}
+
 	if ok, rsp := hs.updateTempUserStatus(c.Req.Context(), web.Params(c.Req)[":code"], tempuser.TmpUserRevoked); !ok {
 		return rsp
 	}
@@ -220,11 +234,22 @@ func (hs *HTTPServer) GetInviteInfoByCode(c *contextmodel.ReqContext) response.R
 		return response.Error(http.StatusNotFound, "Invite not found", nil)
 	}
 
+	orgResult, err := hs.orgService.GetByID(c.Req.Context(), &org.GetOrgByIDQuery{
+		ID: invite.OrgID,
+	})
+	if err != nil {
+		if errors.Is(err, org.ErrOrgNotFound) {
+			return response.Error(http.StatusNotFound, "org not found", nil)
+		}
+		return response.Error(http.StatusInternalServerError, "Failed to get org", err)
+	}
+
 	return response.JSON(http.StatusOK, dtos.InviteInfo{
 		Email:     invite.Email,
 		Name:      invite.Name,
 		Username:  invite.Email,
 		InvitedBy: util.StringsFallback3(invite.InvitedByName, invite.InvitedByLogin, invite.InvitedByEmail),
+		OrgName:   orgResult.Name,
 	})
 }
 

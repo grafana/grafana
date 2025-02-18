@@ -12,9 +12,9 @@ import { getRulesSourceByName } from './utils/datasource';
 
 jest.mock('./hooks/useCombinedRule');
 jest.mock('./utils/datasource');
-jest.mock('react-router-dom', () => ({
-  ...jest.requireActual('react-router-dom'),
-  Redirect: jest.fn(({}) => `Redirected`),
+jest.mock('react-router-dom-v5-compat', () => ({
+  ...jest.requireActual('react-router-dom-v5-compat'),
+  Navigate: jest.fn(({}) => `Redirected`),
 }));
 
 jest.mock('react-use', () => ({

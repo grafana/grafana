@@ -1,15 +1,15 @@
 import uFuzzy from '@leeoniya/ufuzzy';
 import { produce } from 'immer';
 import { chain, compact, isEmpty } from 'lodash';
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useDeferredValue, useEffect, useMemo } from 'react';
 
 import { getDataSourceSrv } from '@grafana/runtime';
 import { Matcher } from 'app/plugins/datasource/alertmanager/types';
 import { CombinedRuleGroup, CombinedRuleNamespace, Rule } from 'app/types/unified-alerting';
-import { isPromAlertingRuleState, PromRuleType, RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
+import { PromRuleType, RulerGrafanaRuleDTO, isPromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { logError } from '../Analytics';
-import { applySearchFilterToQuery, getSearchFilterFromQuery, RulesFilter } from '../search/rulesSearchParser';
+import { RulesFilter, applySearchFilterToQuery, getSearchFilterFromQuery } from '../search/rulesSearchParser';
 import { labelsMatchMatchers, matcherToMatcherField } from '../utils/alertmanager';
 import { Annotation } from '../utils/constants';
 import { isCloudRulesSource } from '../utils/datasource';
@@ -105,8 +105,11 @@ export function useRulesFilter() {
 }
 
 export const useFilteredRules = (namespaces: CombinedRuleNamespace[], filterState: RulesFilter) => {
+  const deferredNamespaces = useDeferredValue(namespaces);
+  const deferredFilterState = useDeferredValue(filterState);
+
   return useMemo(() => {
-    const filteredRules = filterRules(namespaces, filterState);
+    const filteredRules = filterRules(deferredNamespaces, deferredFilterState);
 
     // Totals recalculation is a workaround for the lack of server-side filtering
     filteredRules.forEach((namespace) => {
@@ -125,7 +128,7 @@ export const useFilteredRules = (namespaces: CombinedRuleNamespace[], filterStat
     });
 
     return filteredRules;
-  }, [namespaces, filterState]);
+  }, [deferredNamespaces, deferredFilterState]);
 };
 
 export const filterRules = (
@@ -189,7 +192,6 @@ const reduceNamespaces = (filterState: RulesFilter) => {
       const ufuzzy = getSearchInstance(groupNameFilter);
 
       const escapedQuery = escapeQueryRegex(groupNameFilter);
-
       const [idxs, info, order] = ufuzzy.search(
         groupsHaystack,
         escapedQuery,
@@ -269,7 +271,7 @@ const reduceGroups = (filterState: RulesFilter) => {
       }
 
       if ('plugins' in matchesFilterFor && filterState.plugins === 'hide') {
-        matchesFilterFor.plugins = !isPluginProvidedRule(rule);
+        matchesFilterFor.plugins = rule.rulerRule && !isPluginProvidedRule(rule.rulerRule);
       }
 
       if ('contactPoint' in matchesFilterFor) {

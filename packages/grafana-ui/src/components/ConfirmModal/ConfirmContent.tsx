@@ -77,11 +77,15 @@ export const ConfirmContent = ({
   }, [confirmPromptText, disabled]);
 
   const onConfirmClick = async () => {
-    setIsDisabled(true);
+    if (disabled === undefined) {
+      setIsDisabled(true);
+    }
     try {
       await onConfirm();
     } finally {
-      setIsDisabled(false);
+      if (disabled === undefined) {
+        setIsDisabled(false);
+      }
     }
   };
 

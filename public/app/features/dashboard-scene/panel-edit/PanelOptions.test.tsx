@@ -10,15 +10,15 @@ import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/compon
 import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
 import { overrideRuleTooltipDescription } from 'app/features/dashboard/components/PanelEditor/state/getOptionOverrides';
 
-import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
+import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
 import { activateFullSceneTree } from '../utils/test-utils';
 import * as utils from '../utils/utils';
 
 import { PanelOptions } from './PanelOptions';
-import { VizPanelManager } from './VizPanelManager';
+import { PanelOptionsPane } from './PanelOptionsPane';
 
 const OptionsPaneSelector = selectors.components.PanelEditor.OptionsPane;
 
@@ -92,43 +92,47 @@ function setup(options: SetupOptions = {}) {
   }
 
   // need to wait for plugin to load
-  const vizManager = VizPanelManager.createFor(panel);
+  const panelOptionsScene = new PanelOptionsPane({
+    panelRef: panel.getRef(),
+    searchQuery: '',
+    listMode: OptionFilter.All,
+  });
 
-  activateFullSceneTree(vizManager);
+  activateFullSceneTree(panelOptionsScene);
+  panel.activate();
 
-  const panelOptions = <PanelOptions vizManager={vizManager} searchQuery="" listMode={OptionFilter.All}></PanelOptions>;
-
+  const panelOptions = <PanelOptions panel={panel} searchQuery="" listMode={OptionFilter.All}></PanelOptions>;
   const renderResult = render(panelOptions);
 
-  return { renderResult, vizManager };
+  return { renderResult, panelOptionsScene, panel };
 }
 
 describe('PanelOptions', () => {
   describe('Can render and edit panel frame options', () => {
     it('Can edit title', async () => {
-      const { vizManager } = setup();
+      const { panel } = setup();
 
       expect(screen.getByLabelText(OptionsPaneSelector.fieldLabel('Panel options Title'))).toBeInTheDocument();
 
       const input = screen.getByTestId(selectors.components.PanelEditor.OptionsPane.fieldInput('Title'));
       fireEvent.change(input, { target: { value: 'New title' } });
 
-      expect(vizManager.state.panel.state.title).toBe('New title');
+      expect(panel.state.title).toBe('New title');
     });
 
     it('Clearing title should set hoverHeader to true', async () => {
-      const { vizManager } = setup();
+      const { panel } = setup();
 
       expect(screen.getByLabelText(OptionsPaneSelector.fieldLabel('Panel options Title'))).toBeInTheDocument();
 
       const input = screen.getByTestId(selectors.components.PanelEditor.OptionsPane.fieldInput('Title'));
       fireEvent.change(input, { target: { value: '' } });
 
-      expect(vizManager.state.panel.state.title).toBe('');
-      expect(vizManager.state.panel.state.hoverHeader).toBe(true);
+      expect(panel.state.title).toBe('');
+      expect(panel.state.hoverHeader).toBe(true);
 
       fireEvent.change(input, { target: { value: 'Muu' } });
-      expect(vizManager.state.panel.state.hoverHeader).toBe(false);
+      expect(panel.state.hoverHeader).toBe(false);
     });
   });
 
@@ -142,7 +146,7 @@ describe('PanelOptions', () => {
     it('Can update', async () => {
       const {} = setup();
 
-      await userEvent.click(screen.getByLabelText('Remove label'));
+      await userEvent.click(screen.getByLabelText('Remove property'));
 
       expect(screen.queryByLabelText(overrideRuleTooltipDescription)).not.toBeInTheDocument();
     });
@@ -173,19 +177,16 @@ describe('PanelOptions', () => {
 
     const libraryPanel = new LibraryPanelBehavior({
       isLoaded: true,
-      title: libraryPanelModel.title,
       uid: libraryPanelModel.uid,
       name: libraryPanelModel.name,
       _loadedPanel: libraryPanelModel,
     });
 
-    panel.setState({
-      $behaviors: [libraryPanel],
-    });
+    panel.setState({ $behaviors: [libraryPanel] });
 
     new DashboardGridItem({ body: panel });
 
-    const { renderResult, vizManager } = setup({ panel: panel });
+    const { renderResult } = setup({ panel: panel });
 
     const input = await renderResult.findByTestId('library panel name input');
 
@@ -193,8 +194,6 @@ describe('PanelOptions', () => {
       fireEvent.blur(input, { target: { value: 'new library panel name' } });
     });
 
-    expect((vizManager.state.panel.state.$behaviors![0] as LibraryPanelBehavior).state.name).toBe(
-      'new library panel name'
-    );
+    expect((panel.state.$behaviors![0] as LibraryPanelBehavior).state.name).toBe('new library panel name');
   });
 });

@@ -9,7 +9,7 @@ import { RuleNamespace } from '../../../types/unified-alerting';
 import { RulerRulesConfigDTO } from '../../../types/unified-alerting-dto';
 
 import { FilterType } from './components/rules/central-state-history/EventListSceneObject';
-import { getSearchFilterFromQuery, RulesFilter } from './search/rulesSearchParser';
+import { RulesFilter, getSearchFilterFromQuery } from './search/rulesSearchParser';
 import { RuleFormType } from './types/rule-form';
 
 export const USER_CREATION_MIN_DAYS = 7;
@@ -27,11 +27,15 @@ export const LogMessages = {
   unknownMessageFromError: 'unknown messageFromError',
   grafanaRecording: 'creating Grafana recording rule from scratch',
   loadedCentralAlertStateHistory: 'loaded central alert state history',
+  exportNewGrafanaRule: 'exporting new Grafana rule',
+  noAlertRuleVersionsFound: 'no alert rule versions found',
 };
 
-const { logInfo, logError, logMeasurement } = createMonitoringLogger('features.alerting', { module: 'Alerting' });
+const { logInfo, logError, logMeasurement, logWarning } = createMonitoringLogger('features.alerting', {
+  module: 'Alerting',
+});
 
-export { logError, logInfo, logMeasurement };
+export { logError, logInfo, logMeasurement, logWarning };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function withPerformanceLogging<TFunc extends (...args: any[]) => Promise<any>>(
@@ -190,6 +194,21 @@ export const trackAlertRuleFormError = (
   reportInteraction('grafana_alerting_rule_form_error', props);
 };
 
+export const trackNewGrafanaAlertRuleFormSavedSuccess = (payload: {
+  simplifiedQueryEditor: boolean;
+  simplifiedNotificationEditor: boolean;
+}) => {
+  reportInteraction('grafana_alerting_grafana_rule_creation_new_success', payload);
+};
+
+export const trackNewGrafanaAlertRuleFormCancelled = () => {
+  reportInteraction('grafana_alerting_grafana_rule_creation_new_aborted');
+};
+
+export const trackNewGrafanaAlertRuleFormError = () => {
+  reportInteraction('grafana_alerting_grafana_rule_creation_new_error');
+};
+
 export const trackInsightsFeedback = async (props: { useful: boolean; panel: string }) => {
   const defaults = {
     grafana_version: config.buildInfo.version,
@@ -197,6 +216,16 @@ export const trackInsightsFeedback = async (props: { useful: boolean; panel: str
     user_id: contextSrv.user.id,
   };
   reportInteraction('grafana_alerting_insights', { ...defaults, ...props });
+};
+
+interface RuleVersionComparisonProps {
+  latest: boolean;
+  oldVersion: number;
+  newVersion: number;
+}
+
+export const trackRuleVersionsComparisonClick = async (payload: RuleVersionComparisonProps) => {
+  reportInteraction('grafana_alerting_rule_versions_comparison_click', { ...payload });
 };
 
 interface RulesSearchInteractionPayload {

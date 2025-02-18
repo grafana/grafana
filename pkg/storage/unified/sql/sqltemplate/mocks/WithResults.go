@@ -171,6 +171,51 @@ func (_c *WithResults_ArgPlaceholder_Call[T]) RunAndReturn(run func(int) string)
 	return _c
 }
 
+// CurrentEpoch provides a mock function with given fields:
+func (_m *WithResults[T]) CurrentEpoch() string {
+	ret := _m.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for CurrentEpoch")
+	}
+
+	var r0 string
+	if rf, ok := ret.Get(0).(func() string); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+
+	return r0
+}
+
+// WithResults_CurrentEpoch_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CurrentEpoch'
+type WithResults_CurrentEpoch_Call[T interface{}] struct {
+	*mock.Call
+}
+
+// CurrentEpoch is a helper method to define mock.On call
+func (_e *WithResults_Expecter[T]) CurrentEpoch() *WithResults_CurrentEpoch_Call[T] {
+	return &WithResults_CurrentEpoch_Call[T]{Call: _e.mock.On("CurrentEpoch")}
+}
+
+func (_c *WithResults_CurrentEpoch_Call[T]) Run(run func()) *WithResults_CurrentEpoch_Call[T] {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *WithResults_CurrentEpoch_Call[T]) Return(_a0 string) *WithResults_CurrentEpoch_Call[T] {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *WithResults_CurrentEpoch_Call[T]) RunAndReturn(run func() string) *WithResults_CurrentEpoch_Call[T] {
+	_c.Call.Return(run)
+	return _c
+}
+
 // DialectName provides a mock function with given fields:
 func (_m *WithResults[T]) DialectName() string {
 	ret := _m.Called()

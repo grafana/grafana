@@ -45,10 +45,11 @@ const (
 	}
 }
 `
+	alertingDefaultInitializationTimeout    = 30 * time.Second
 	evaluatorDefaultEvaluationTimeout       = 30 * time.Second
 	schedulerDefaultAdminConfigPollInterval = time.Minute
 	schedulerDefaultExecuteAlerts           = true
-	schedulerDefaultMaxAttempts             = 1
+	schedulerDefaultMaxAttempts             = 3
 	schedulerDefaultLegacyMinInterval       = 1
 	screenshotsDefaultCapture               = false
 	screenshotsDefaultCaptureTimeout        = 10 * time.Second
@@ -90,6 +91,7 @@ type UnifiedAlertingSettings struct {
 	HARedisMaxConns                 int
 	HARedisTLSEnabled               bool
 	HARedisTLSConfig                dstls.ClientConfig
+	InitializationTimeout           time.Duration
 	MaxAttempts                     int64
 	MinInterval                     time.Duration
 	EvaluationTimeout               time.Duration
@@ -112,15 +114,21 @@ type UnifiedAlertingSettings struct {
 	RecordingRules                RecordingRuleSettings
 
 	// MaxStateSaveConcurrency controls the number of goroutines (per rule) that can save alert state in parallel.
-	MaxStateSaveConcurrency   int
-	StatePeriodicSaveInterval time.Duration
-	RulesPerRuleGroupLimit    int64
+	MaxStateSaveConcurrency    int
+	StatePeriodicSaveInterval  time.Duration
+	StatePeriodicSaveBatchSize int
+	RulesPerRuleGroupLimit     int64
 
 	// Retention period for Alertmanager notification log entries.
 	NotificationLogRetention time.Duration
 
 	// Duration for which a resolved alert state transition will continue to be sent to the Alertmanager.
 	ResolvedAlertRetention time.Duration
+
+	// RuleVersionRecordLimit defines the limit of how many alert rule versions
+	// should be stored in the database for each alert_rule in an organization including the current one.
+	// 0 value means no limit
+	RuleVersionRecordLimit int
 }
 
 type RecordingRuleSettings struct {
@@ -222,6 +230,11 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 			return err
 		}
 		uaCfg.DisabledOrgs[orgID] = struct{}{}
+	}
+
+	uaCfg.InitializationTimeout, err = gtime.ParseDuration(valueAsString(ua, "initialization_timeout", (alertingDefaultInitializationTimeout).String()))
+	if err != nil {
+		return err
 	}
 
 	uaCfg.AdminConfigPollInterval, err = gtime.ParseDuration(valueAsString(ua, "admin_config_poll_interval", (schedulerDefaultAdminConfigPollInterval).String()))
@@ -445,6 +458,8 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 		return err
 	}
 
+	uaCfg.StatePeriodicSaveBatchSize = ua.Key("state_periodic_save_batch_size").MustInt(1)
+
 	uaCfg.NotificationLogRetention, err = gtime.ParseDuration(valueAsString(ua, "notification_log_retention", (5 * 24 * time.Hour).String()))
 	if err != nil {
 		return err
@@ -453,6 +468,11 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	uaCfg.ResolvedAlertRetention, err = gtime.ParseDuration(valueAsString(ua, "resolved_alert_retention", (15 * time.Minute).String()))
 	if err != nil {
 		return err
+	}
+
+	uaCfg.RuleVersionRecordLimit = ua.Key("rule_version_record_limit").MustInt(0)
+	if uaCfg.RuleVersionRecordLimit < 0 {
+		return fmt.Errorf("setting 'rule_version_record_limit' is invalid, only 0 or a positive integer are allowed")
 	}
 
 	cfg.UnifiedAlerting = uaCfg

@@ -1,13 +1,18 @@
 name: "doc-validator"
 on:
-  pull_request:
-    paths: ["docs/sources/**"]
   workflow_dispatch:
+    inputs:
+      include:
+        description: |
+          Regular expression that matches paths to include in linting.
+
+          For example: docs/sources/(?:alerting|fundamentals)/.+\.md
+        required: true
 jobs:
   doc-validator:
     runs-on: "ubuntu-latest"
     container:
-      image: "grafana/doc-validator:v5.0.0"
+      image: "grafana/doc-validator:v5.2.0"
     steps:
       - name: "Checkout code"
         uses: "actions/checkout@v4"
@@ -15,15 +20,7 @@ jobs:
         # Only run doc-validator on specific directories.
         run: >
           doc-validator
-          '--include=^docs/sources/(?:alerting|fundamentals|getting-started|introduction|setup-grafana|upgrade-guide|whatsnew/whats-new-in-v(?:9|10))/.+\.md$'
+          '--include=${{ inputs.include }}'
           '--skip-checks=^(?:image.+|canonical-does-not-match-pretty-URL)$'
           ./docs/sources
           /docs/grafana/latest
-          | reviewdog
-          -f=rdjsonl
-          --fail-on-error
-          --filter-mode=nofilter
-          --name=doc-validator
-          --reporter=github-pr-review
-        env:
-          REVIEWDOG_GITHUB_API_TOKEN: "${{ secrets.GITHUB_TOKEN }}"

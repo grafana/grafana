@@ -120,9 +120,7 @@ describe('Loki Query Editor', () => {
   });
 
   beforeEach(() => {
-    cy.window().then((win) => {
-      win.localStorage.setItem('grafana.featureToggles', 'logsExploreTableVisualisation=1');
-    });
+    cy.setLocalStorage('grafana.featureToggles', 'logsExploreTableVisualisation=1');
   });
   it('Should be able to add explore table to dashboard', () => {
     addDataSource();
@@ -211,7 +209,7 @@ describe('Loki Query Editor', () => {
     openDashboardButton.should('be.visible');
     openDashboardButton.click();
 
-    const panel = cy.get('[data-panelid="1"]');
+    const panel = cy.get('[data-viz-panel-key="panel-1"]');
     panel.should('be.visible');
 
     const cells = panel.find('[role="table"] [role="cell"]');
@@ -221,6 +219,6 @@ describe('Loki Query Editor', () => {
     cells.contains('"wave":-0.5877852522916832');
 
     // column has correct value of "targetLabelValue", need to requery the DOM because of the .contains call above
-    cy.get('[data-panelid="1"]').find('[role="table"] [role="cell"]').contains('targetLabelValue');
+    cy.get('[data-viz-panel-key="panel-1"]').find('[role="table"] [role="cell"]').contains('targetLabelValue');
   });
 });

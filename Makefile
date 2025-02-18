@@ -8,7 +8,7 @@ WIRE_TAGS = "oss"
 include .bingo/Variables.mk
 
 GO = go
-GO_VERSION = 1.23.1
+GO_VERSION = 1.23.5
 GO_LINT_FILES ?= $(shell ./scripts/go-workspace/golangci-lint-includes.sh)
 GO_TEST_FILES ?= $(shell ./scripts/go-workspace/test-includes.sh)
 SH_FILES ?= $(shell find ./scripts -name *.sh)
@@ -17,6 +17,10 @@ GO_RACE_FLAG := $(if $(GO_RACE),-race)
 GO_BUILD_FLAGS += $(if $(GO_BUILD_DEV),-dev)
 GO_BUILD_FLAGS += $(if $(GO_BUILD_TAGS),-build-tags=$(GO_BUILD_TAGS))
 GO_BUILD_FLAGS += $(GO_RACE_FLAG)
+GIT_BASE = remotes/origin/main
+
+# GNU xargs has flag -r, and BSD xargs (e.g. MacOS) has that behaviour by default
+XARGSR = $(shell xargs --version 2>&1 | grep -q GNU && echo xargs -r || echo xargs)
 
 targets := $(shell echo '$(sources)' | tr "," " ")
 
@@ -142,6 +146,11 @@ gen-cue: ## Do all CUE/Thema code generation
 	go generate ./kinds/gen.go
 	go generate ./public/app/plugins/gen.go
 
+.PHONY: gen-cuev2
+gen-cuev2: ## Do all CUE code generation
+	@echo "generate code from .cue files (v2)"
+	@$(MAKE) -C ./kindsv2 all
+
 .PHONY: gen-feature-toggles
 gen-feature-toggles:
 ## First go test run fails because it will re-generate the feature toggles.
@@ -170,12 +179,16 @@ gen-jsonnet:
 	go generate ./devenv/jsonnet
 
 .PHONY: update-workspace
-update-workspace:
+update-workspace: gen-go
 	@echo "updating workspace"
 	bash scripts/go-workspace/update-workspace.sh
 
 .PHONY: build-go
 build-go: gen-go update-workspace ## Build all Go binaries.
+	@echo "build go files with updated workspace"
+	$(GO) run build.go $(GO_BUILD_FLAGS) build
+
+build-go-fast: gen-go ## Build all Go binaries.
 	@echo "build go files"
 	$(GO) run build.go $(GO_BUILD_FLAGS) build
 
@@ -198,7 +211,6 @@ build-cli: ## Build Grafana CLI application.
 build-js: ## Build frontend assets.
 	@echo "build frontend"
 	yarn run build
-	yarn run plugins:build-bundled
 
 PLUGIN_ID ?=
 
@@ -259,6 +271,14 @@ test-go-integration-alertmanager: ## Run integration tests for the remote alertm
 	AM_URL=http://localhost:8080 AM_TENANT_ID=test \
 	$(GO) test $(GO_RACE_FLAG) -count=1 -run "^TestIntegrationRemoteAlertmanager" -covermode=atomic -timeout=5m ./pkg/services/ngalert/...
 
+.PHONY: test-go-integration-grafana-alertmanager
+test-go-integration-grafana-alertmanager: ## Run integration tests for the grafana alertmanager
+	@echo "test grafana alertmanager integration tests"
+	@export GRAFANA_VERSION=11.5.0-81938; \
+	$(GO) run tools/setup_grafana_alertmanager_integration_test_images.go; \
+	$(GO) clean -testcache; \
+	$(GO) test $(GO_RACE_FLAG) -count=1 -run "^TestAlertmanagerIntegration" -covermode=atomic -timeout=10m ./pkg/tests/alertmanager/...
+
 .PHONY: test-go-integration-postgres
 test-go-integration-postgres: devenv-postgres ## Run integration tests for postgres backend with flags.
 	@echo "test backend integration postgres tests"
@@ -297,11 +317,20 @@ test: test-go test-js ## Run all tests.
 golangci-lint: $(GOLANGCI_LINT)
 	@echo "lint via golangci-lint"
 	$(GOLANGCI_LINT) run \
-		--config .golangci.toml \
+		--config .golangci.yml \
 		$(GO_LINT_FILES)
 
 .PHONY: lint-go
 lint-go: golangci-lint ## Run all code checks for backend. You can use GO_LINT_FILES to specify exact files to check
+
+.PHONY: lint-go-diff
+lint-go-diff: $(GOLANGCI_LINT)
+	git diff --name-only $(GIT_BASE) | \
+		grep '\.go$$' | \
+		$(XARGSR) dirname | \
+		sort -u | \
+		sed 's,^,./,' | \
+		$(XARGSR) $(GOLANGCI_LINT) run --config .golangci.toml
 
 # with disabled SC1071 we are ignored some TCL,Expect `/usr/bin/env expect` scripts
 .PHONY: shellcheck
@@ -399,6 +428,8 @@ protobuf: ## Compile protobuf definitions
 	buf generate pkg/plugins/backendplugin/pluginextensionv2 --template pkg/plugins/backendplugin/pluginextensionv2/buf.gen.yaml
 	buf generate pkg/plugins/backendplugin/secretsmanagerplugin --template pkg/plugins/backendplugin/secretsmanagerplugin/buf.gen.yaml
 	buf generate pkg/storage/unified/resource --template pkg/storage/unified/resource/buf.gen.yaml
+	buf generate pkg/services/authz/proto/v1 --template pkg/services/authz/proto/v1/buf.gen.yaml
+	buf generate pkg/services/ngalert/store/proto/v1 --template pkg/services/ngalert/store/proto/v1/buf.gen.yaml
 
 .PHONY: clean
 clean: ## Clean up intermediate build artifacts.

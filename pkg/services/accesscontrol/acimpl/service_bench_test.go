@@ -8,8 +8,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/authlib/claims"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -27,7 +25,7 @@ import (
 // - each managed role will have 3 permissions {"resources:action2", "resources:id:x"} where x belongs to [1, 3]
 func setupBenchEnv(b *testing.B, usersCount, resourceCount int) (accesscontrol.Service, *user.SignedInUser) {
 	now := time.Now()
-	sqlStore := db.InitTestReplDB(b)
+	sqlStore := db.InitTestDB(b)
 	store := database.ProvideService(sqlStore)
 	acService := &Service{
 		cfg:           setting.NewCfg(),
@@ -263,7 +261,7 @@ func benchSearchUserWithAction(b *testing.B, usersCount, resourceCount int) {
 
 	for n := 0; n < b.N; n++ {
 		usersPermissions, err := acService.SearchUsersPermissions(context.Background(), siu,
-			accesscontrol.SearchOptions{Action: "resources:action2", TypedID: identity.NewTypedID(claims.TypeUser, 14)})
+			accesscontrol.SearchOptions{Action: "resources:action2", UserID: 14})
 		require.NoError(b, err)
 		require.Len(b, usersPermissions, 1)
 		for _, permissions := range usersPermissions {

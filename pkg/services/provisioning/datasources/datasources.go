@@ -196,7 +196,7 @@ func makeCreateCorrelationCommand(correlation map[string]any, SourceUID string, 
 	// we ignore the legacy config.type value - the only valid value at that version was "query"
 	var corrType = correlation["type"]
 	if corrType == nil || corrType == "" {
-		corrType = correlations.TypeQuery
+		corrType = correlations.CorrelationType("query")
 	}
 
 	var json = jsoniter.ConfigCompatibleWithStandardLibrary
@@ -227,6 +227,11 @@ func makeCreateCorrelationCommand(correlation map[string]any, SourceUID string, 
 		config := correlations.CorrelationConfig{}
 		if err := json.Unmarshal(jsonbody, &config); err != nil {
 			return correlations.CreateCorrelationCommand{}, err
+		}
+
+		// config.type is a deprecated place for this value. We will default it to "query" for legacy purposes but non-query correlations should have type outside of config
+		if config.Type != correlations.CorrelationType("query") {
+			return correlations.CreateCorrelationCommand{}, correlations.ErrInvalidConfigType
 		}
 
 		createCommand.Config = config

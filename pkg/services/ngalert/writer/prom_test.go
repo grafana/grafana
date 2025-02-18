@@ -12,12 +12,13 @@ import (
 
 	"github.com/benbjohnson/clock"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/m3db/prometheus_remote_client_golang/promremote"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/prometheus/prompb"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -166,6 +167,7 @@ func TestPrometheusWriter_Write(t *testing.T) {
 		err := writer.Write(ctx, "test", now, frames, 1, map[string]string{})
 		require.Error(t, err)
 		require.ErrorIs(t, err, clientErr)
+		require.ErrorIs(t, err, ErrUnexpectedWriteFailure)
 	})
 
 	t.Run("writes expected points", func(t *testing.T) {
@@ -203,6 +205,54 @@ func TestPrometheusWriter_Write(t *testing.T) {
 				require.NoError(t, err)
 			})
 		}
+	})
+
+	t.Run("bad labels fit under the client error category", func(t *testing.T) {
+		msg := MimirInvalidLabelError
+		clientErr := testClientWriteError{
+			statusCode: http.StatusBadRequest,
+			msg:        &msg,
+		}
+		client.writeSeriesFunc = func(ctx context.Context, ts promremote.TSList, opts promremote.WriteOptions) (promremote.WriteResult, promremote.WriteError) {
+			return promremote.WriteResult{}, clientErr
+		}
+
+		err := writer.Write(ctx, "test", now, frames, 1, map[string]string{"extra": "label"})
+
+		require.Error(t, err)
+		require.ErrorIs(t, err, ErrRejectedWrite)
+	})
+
+	t.Run("max series limit fit under the client error category ", func(t *testing.T) {
+		msg := "send data to ingesters: failed pushing to ingester ingester-1: user=1: per-user series limit of 10 exceeded (err-mimir-max-series-per-user). To adjust the related per-tenant limit, configure -ingester.max-global-series-per-user, or contact your service administrator."
+		clientErr := testClientWriteError{
+			statusCode: http.StatusBadRequest,
+			msg:        &msg,
+		}
+		client.writeSeriesFunc = func(ctx context.Context, ts promremote.TSList, opts promremote.WriteOptions) (promremote.WriteResult, promremote.WriteError) {
+			return promremote.WriteResult{}, clientErr
+		}
+
+		err := writer.Write(ctx, "test", now, frames, 1, map[string]string{"extra": "label"})
+
+		require.Error(t, err)
+		require.ErrorIs(t, err, ErrRejectedWrite)
+	})
+
+	t.Run("too long labels fit under the client error category", func(t *testing.T) {
+		msg := "received a series whose label value length exceeds the limit, label: 'label-1', value: 'value-1' (truncated) series: 'some_series (err-mimir-label-value-too-long). To adjust the related per-tenant limit, configure -validation.max-length-label-value, or contact your service administrator."
+		clientErr := testClientWriteError{
+			statusCode: http.StatusBadRequest,
+			msg:        &msg,
+		}
+		client.writeSeriesFunc = func(ctx context.Context, ts promremote.TSList, opts promremote.WriteOptions) (promremote.WriteResult, promremote.WriteError) {
+			return promremote.WriteResult{}, clientErr
+		}
+
+		err := writer.Write(ctx, "test", now, frames, 1, map[string]string{"extra": "label"})
+
+		require.Error(t, err)
+		require.ErrorIs(t, err, ErrRejectedWrite)
 	})
 }
 

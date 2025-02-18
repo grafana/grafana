@@ -12,7 +12,6 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -121,14 +120,14 @@ func TestAddAppLinks(t *testing.T) {
 		},
 	}
 
-	t.Run("Should move apps to Apps category", func(t *testing.T) {
+	t.Run("Should move apps to 'More apps' category", func(t *testing.T) {
 		treeRoot := navtree.NavTreeRoot{}
 		err := service.addAppLinks(&treeRoot, reqCtx)
 		require.NoError(t, err)
 
 		appsNode := treeRoot.FindById(navtree.NavIDApps)
 		require.NotNil(t, appsNode)
-		require.Equal(t, "Apps", appsNode.Text)
+		require.Equal(t, "More apps", appsNode.Text)
 		require.Len(t, appsNode.Children, 3)
 		require.Equal(t, testApp1.Name, appsNode.Children[0].Text)
 	})
@@ -169,7 +168,7 @@ func TestAddAppLinks(t *testing.T) {
 		require.Len(t, treeRoot.Children, 2)
 		require.Equal(t, "plugin-page-test-app1", treeRoot.Children[0].Id)
 
-		// Check if it is not under the "Apps" section anymore
+		// Check if it is not under the "More apps" section anymore
 		appsNode := treeRoot.FindById(navtree.NavIDApps)
 		require.NotNil(t, appsNode)
 		require.Len(t, appsNode.Children, 2)
@@ -197,7 +196,7 @@ func TestAddAppLinks(t *testing.T) {
 		require.Len(t, adminNode.Children, 1)
 		require.Equal(t, "plugin-page-test-app1", adminNode.Children[0].Id)
 
-		// Check if it is not under the "Apps" section anymore
+		// Check if it is not under the "More apps" section anymore
 		appsNode := treeRoot.FindById(navtree.NavIDApps)
 		require.NotNil(t, appsNode)
 		require.Len(t, appsNode.Children, 2)
@@ -443,7 +442,7 @@ func TestAddAppLinksAccessControl(t *testing.T) {
 	service := ServiceImpl{
 		log:            log.New("navtree"),
 		cfg:            cfg,
-		accessControl:  acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient()),
+		accessControl:  acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
 		pluginSettings: &pluginSettings,
 		features:       featuremgmt.WithFeatures(),
 		pluginStore: &pluginstore.FakePluginStore{
