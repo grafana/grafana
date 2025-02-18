@@ -43,6 +43,8 @@ This view includes filters to simplify managing large volumes of alerts.
 
 You can filter by data sources, dashboards, and alert rule properties such as state, type, health, and contact points. The **Search** input allows you to filter by additional parameters like folders, evaluation groups, labels, and more.
 
+## Change alert rules list view
+
 You can also change how the rule list is displayed using the **View as** option.
 
 - **Grouped**: Displays Grafana rules grouped by folder and evaluation group, and data-source rules by namespace and evaluation group. This is the default view.
@@ -57,7 +59,7 @@ Select a group to expand it and view the list of alert rules within that group.
 
 For details on how rule states and alert instance states are displayed, refer to [View alert state](ref:view-alert-state).
 
-## View, compare, and restore previous alert rules
+## View and restore previous alert rules
 
 To view previous alert rules for an alert, complete the following steps.
 
@@ -66,5 +68,5 @@ To view previous alert rules for an alert, complete the following steps.
 1. Click the **Versions** tab.  
   The page displays a list of the previous rule versions. 
   
-  On the Alert rule's Versions page you can view the previous rule versions, or compare previous rule versions. To compare previous rule versions, select the checkboxes next to the rules you are comparing and then click **Compare versions**.  To restore a previous rule, click **Restore**.
+  On the Alert rule's Versions page you can view and restore the previous rule versions. To restore a previous rule, click **Restore**.
 
