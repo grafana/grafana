@@ -21,8 +21,8 @@ type eventNotifier interface {
 	close()
 }
 
-func newNotifier(b *backend, isHA bool) (eventNotifier, error) {
-	if isHA {
+func newNotifier(b *backend) (eventNotifier, error) {
+	if b.isHA {
 		b.log.Info("Using polling notifier")
 		notifier, err := newPollingNotifier(&pollingNotifierConfig{
 			pollingInterval: b.pollingInterval,

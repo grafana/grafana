@@ -118,7 +118,7 @@ func (b *backend) initLocked(ctx context.Context) error {
 	}
 
 	// Initialize notifier after dialect is set up
-	notifier, err := newNotifier(b, b.isHA)
+	notifier, err := newNotifier(b)
 	if err != nil {
 		return fmt.Errorf("failed to create notifier: %w", err)
 	}
