@@ -389,7 +389,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		}
 		dashboard, err := dashboardStore.SaveDashboard(context.Background(), cmd)
 		require.NoError(t, err)
-		require.EqualValues(t, dashboard.FolderID, savedFolder.ID)
+		require.EqualValues(t, dashboard.FolderID, savedFolder.ID) //nolint:staticcheck
 		require.EqualValues(t, dashboard.FolderUID, savedFolder.UID)
 	})
 
