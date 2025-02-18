@@ -830,7 +830,14 @@ func (b *APIBuilder) tryRunningOnlyUnifiedStorage() error {
 		return nil
 	}
 
+	// Count how many things exist
 	rsp, err := b.legacyMigrator.Migrate(ctx, legacy.MigrateOptions{
+		Namespace: "default", // FIXME!!
+		Resources: []schema.GroupResource{{
+			Group: dashboard.GROUP, Resource: dashboard.DASHBOARD_RESOURCE,
+		}, {
+			Group: folders.GROUP, Resource: folders.RESOURCE,
+		}},
 		OnlyCount: true,
 	})
 	if err != nil {
@@ -845,8 +852,9 @@ func (b *APIBuilder) tryRunningOnlyUnifiedStorage() error {
 	status, _ := b.storageStatus.Status(ctx, dashboard.DashboardResourceInfo.GroupResource())
 	if !status.ReadUnified {
 		status.ReadUnified = true
-		status.WriteLegacy = false //
+		status.WriteLegacy = false
 		status.WriteUnified = true
+		status.Runtime = false
 		status.Migrated = time.Now().UnixMilli()
 		_, err = b.storageStatus.Update(ctx, status)
 		if err != nil {
@@ -859,6 +867,7 @@ func (b *APIBuilder) tryRunningOnlyUnifiedStorage() error {
 		status.ReadUnified = true
 		status.WriteLegacy = false //
 		status.WriteUnified = true
+		status.Runtime = false
 		status.Migrated = time.Now().UnixMilli()
 		b.storageStatus.Update(ctx, status)
 		_, err = b.storageStatus.Update(ctx, status)
