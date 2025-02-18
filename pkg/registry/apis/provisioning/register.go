@@ -849,31 +849,25 @@ func (b *APIBuilder) tryRunningOnlyUnifiedStorage() error {
 		}
 	}
 
-	status, _ := b.storageStatus.Status(ctx, dashboard.DashboardResourceInfo.GroupResource())
-	if !status.ReadUnified {
-		status.ReadUnified = true
-		status.WriteLegacy = false
-		status.WriteUnified = true
-		status.Runtime = false
-		status.Migrated = time.Now().UnixMilli()
-		_, err = b.storageStatus.Update(ctx, status)
-		if err != nil {
+	mode5 := func(gr schema.GroupResource) error {
+		status, _ := b.storageStatus.Status(ctx, gr)
+		if !status.ReadUnified {
+			status.ReadUnified = true
+			status.WriteLegacy = false
+			status.WriteUnified = true
+			status.Runtime = false
+			status.Migrated = time.Now().UnixMilli()
+			_, err = b.storageStatus.Update(ctx, status)
 			return err
 		}
+		return nil // already reading unified
 	}
 
-	status, _ = b.storageStatus.Status(ctx, folders.FolderResourceInfo.GroupResource())
-	if !status.ReadUnified {
-		status.ReadUnified = true
-		status.WriteLegacy = false //
-		status.WriteUnified = true
-		status.Runtime = false
-		status.Migrated = time.Now().UnixMilli()
-		b.storageStatus.Update(ctx, status)
-		_, err = b.storageStatus.Update(ctx, status)
-		if err != nil {
-			return err
-		}
+	if err = mode5(dashboard.DashboardResourceInfo.GroupResource()); err != nil {
+		return err
+	}
+	if err = mode5(folders.FolderResourceInfo.GroupResource()); err != nil {
+		return err
 	}
 	return nil
 }
