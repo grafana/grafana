@@ -44,7 +44,8 @@ func NewResourceServer(db infraDB.DB, cfg *setting.Cfg,
 		return nil, err
 	}
 
-	// compute isHA by checking if alerting or live HA is enabled, or if the dialect is sqlite.
+	// compute isHA by checking if alerting or live HA is enabled.
+	// Eventually we want to have a flag to control this.
 	isHA := len(cfg.UnifiedAlerting.HAPeers) > 0 ||
 		cfg.LiveHAEngine != ""
 

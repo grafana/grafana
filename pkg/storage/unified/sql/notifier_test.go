@@ -21,14 +21,12 @@ func TestChannelNotifier(t *testing.T) {
 		require.NoError(t, err)
 
 		testEvent := &resource.WrittenEvent{
-			WriteEvent: resource.WriteEvent{
-				Type: resource.WatchEvent_ADDED,
-				Key: &resource.ResourceKey{
-					Group:     "test",
-					Resource:  "test",
-					Name:      "test1",
-					Namespace: "test",
-				},
+			Type: resource.WatchEvent_ADDED,
+			Key: &resource.ResourceKey{
+				Group:     "test",
+				Resource:  "test",
+				Name:      "test1",
+				Namespace: "test",
 			},
 			ResourceVersion: 1,
 		}

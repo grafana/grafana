@@ -258,7 +258,10 @@ func (b *backend) create(ctx context.Context, event resource.WriteEvent) (int64,
 	}
 
 	b.notifier.send(ctx, &resource.WrittenEvent{
-		WriteEvent:      event,
+		Type:            event.Type,
+		Key:             event.Key,
+		PreviousRV:      event.PreviousRV,
+		Value:           event.Value,
 		ResourceVersion: newVersion,
 		Folder:          folder,
 	})
@@ -331,7 +334,10 @@ func (b *backend) update(ctx context.Context, event resource.WriteEvent) (int64,
 	}
 
 	b.notifier.send(ctx, &resource.WrittenEvent{
-		WriteEvent:      event,
+		Type:            event.Type,
+		Key:             event.Key,
+		PreviousRV:      event.PreviousRV,
+		Value:           event.Value,
 		ResourceVersion: newVersion,
 		Folder:          folder,
 	})
@@ -395,7 +401,10 @@ func (b *backend) delete(ctx context.Context, event resource.WriteEvent) (int64,
 	}
 
 	b.notifier.send(ctx, &resource.WrittenEvent{
-		WriteEvent:      event,
+		Type:            event.Type,
+		Key:             event.Key,
+		PreviousRV:      event.PreviousRV,
+		Value:           event.Value,
 		ResourceVersion: newVersion,
 		Folder:          folder,
 	})
@@ -481,7 +490,10 @@ func (b *backend) restore(ctx context.Context, event resource.WriteEvent) (int64
 	}
 
 	b.notifier.send(ctx, &resource.WrittenEvent{
-		WriteEvent:      event,
+		Type:            event.Type,
+		Key:             event.Key,
+		PreviousRV:      event.PreviousRV,
+		Value:           event.Value,
 		ResourceVersion: newVersion,
 		Folder:          folder,
 	})
