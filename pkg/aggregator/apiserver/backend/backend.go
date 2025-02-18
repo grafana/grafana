@@ -52,8 +52,8 @@ func (h *BackendHandler) registerRoutes() {
 		case aggregationv0alpha1.QueryServiceType:
 			h.mux.Handle(proxyPath("/namespaces/{namespace}/connections/{uid}/query"), h.backend.QueryDataHandler(backend))
 		case aggregationv0alpha1.RouteServiceType:
-			h.mux.Handle(proxyPath("/namespaces/{namespace}/{suffix...}"), h.backend.QueryDataHandler(backend))
-			// TODO: implement in future PR
+			p := path.Join("namespaces", "{namespace}", service.Path)
+			h.mux.Handle(service.Method+" "+proxyPath(p), h.backend.RouteHandler(backend))
 		case aggregationv0alpha1.StreamServiceType:
 			// TODO: implement in future PR
 		}

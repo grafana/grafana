@@ -79,7 +79,7 @@ func (h *HTTPHandler) RouteHandler(b aggregationv0alpha1.Backend) http.Handler {
 			proxyError(w, req, "invalid backend URL", http.StatusInternalServerError)
 			return
 		}
-		location.Path = path.Join(location.Path, req.PathValue("suffix"))
+		location.Path = path.Join(location.Path, req.URL.Path)
 		h.handlerFor(location).ServeHTTP(w, req)
 	})
 }

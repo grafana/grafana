@@ -1,0 +1,15 @@
+apiVersion: aggregation.grafana.app/v0alpha1
+kind: DataPlaneService
+metadata:
+  name: v1.example.grafana.app
+spec:
+  group: example.grafana.app
+  version: v1 
+  backend:
+    type: http
+    baseURL: http://localhost:8080
+  services:
+    - type: route
+      method: GET
+      path: /foo
+
