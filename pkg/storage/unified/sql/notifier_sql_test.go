@@ -206,7 +206,6 @@ func TestPollingNotifier(t *testing.T) {
 		done := make(chan struct{})
 		defer close(done)
 
-		// Create test data
 		testEvent := &historyPollResponse{
 			Key: resource.ResourceKey{
 				Namespace: "test-ns",
@@ -220,7 +219,6 @@ func TestPollingNotifier(t *testing.T) {
 			Action:          1,
 		}
 
-		// Setup mock functions
 		var latestRVsCalled bool
 		listLatestRVs := func(ctx context.Context) (groupResourceRV, error) {
 			latestRVsCalled = true
@@ -240,7 +238,6 @@ func TestPollingNotifier(t *testing.T) {
 			return []*historyPollResponse{testEvent}, nil
 		}
 
-		// Create notifier
 		cfg := &pollingNotifierConfig{
 			dialect:         sqltemplate.SQLite,
 			pollingInterval: 10 * time.Millisecond,
@@ -257,12 +254,10 @@ func TestPollingNotifier(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, notifier)
 
-		// Start notification channel
 		events, err := notifier.notify(context.Background())
 		require.NoError(t, err)
 		require.NotNil(t, events)
 
-		// Wait for and verify event
 		select {
 		case event := <-events:
 			require.NotNil(t, event)
@@ -285,7 +280,6 @@ func TestPollingNotifier(t *testing.T) {
 		done := make(chan struct{})
 		defer close(done)
 
-		// Setup mock functions with error
 		listLatestRVs := func(ctx context.Context) (groupResourceRV, error) {
 			return groupResourceRV{
 				"test-group": map[string]int64{
@@ -298,7 +292,6 @@ func TestPollingNotifier(t *testing.T) {
 			return nil, errTest
 		}
 
-		// Create notifier
 		cfg := &pollingNotifierConfig{
 			dialect:         sqltemplate.SQLite,
 			pollingInterval: 10 * time.Millisecond,
@@ -333,7 +326,6 @@ func TestPollingNotifier(t *testing.T) {
 
 		done := make(chan struct{})
 
-		// Create notifier
 		cfg := &pollingNotifierConfig{
 			dialect:         sqltemplate.SQLite,
 			pollingInterval: 10 * time.Millisecond,
@@ -356,10 +348,8 @@ func TestPollingNotifier(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, events)
 
-		// Close done channel
 		close(done)
 
-		// Verify events channel is closed
 		select {
 		case _, ok := <-events:
 			require.False(t, ok, "events channel should be closed")
