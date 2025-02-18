@@ -34,6 +34,9 @@ const (
 
 	// Export from grafana into the remote repository
 	JobActionExport JobAction = "export"
+
+	// Migration task -- this will migrate an full instance from SQL > Git
+	JobActionMigrate JobAction = "migrate"
 )
 
 // +enum
@@ -71,6 +74,9 @@ type JobSpec struct {
 
 	// Required when the action is `sync`
 	Sync *SyncJobOptions `json:"sync,omitempty"`
+
+	// Required when the action is `migrate`
+	Migrate *MigrateJobOptions `json:"migrate,omitempty"`
 }
 
 type PullRequestJobOptions struct {
@@ -102,6 +108,14 @@ type ExportJobOptions struct {
 
 	// Target file prefix
 	Prefix string `json:"prefix,omitempty"`
+
+	// Include the identifier in the exported metadata
+	Identifier bool `json:"identifier"`
+}
+
+type MigrateJobOptions struct {
+	// Preserve history (if possible)
+	History bool `json:"history,omitempty"`
 
 	// Include the identifier in the exported metadata
 	Identifier bool `json:"identifier"`
