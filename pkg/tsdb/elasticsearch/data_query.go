@@ -88,7 +88,7 @@ func (e *elasticsearchDataQuery) execute() (*backend.QueryDataResponse, error) {
 			// Unsupported protocol scheme is a common error when the URL is not valid and should be treated as a downstream error
 			if urlErr.Err != nil && strings.HasPrefix(urlErr.Err.Error(), "unsupported protocol scheme") {
 				err = backend.DownstreamError(err)
-			}	
+			}
 		}
 		response.Responses[e.dataQueries[0].RefID] = backend.ErrorResponseWithErrorSource(err)
 		return response, nil
