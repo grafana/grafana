@@ -78,6 +78,9 @@ jobs:
           tail -n+2 integration.cov >> backend.cov
       - name: Convert coverage info to per-func stats
         run: go tool cover -func backend.cov > backend-funcs.log
+      # The HTML can be useful in some UI to browse the artifacts easily.
+      - name: Convert coverage info to HTML
+        run: go tool cover -html backend.cov -o backend.html
       - name: Upload coverage file
         uses: actions/upload-artifact@v4
         with:
@@ -85,8 +88,18 @@ jobs:
           path: |
             backend.cov
             backend-funcs.log
+            backend.html
           retention-days: 30
           compression-level: 9 # this is raw text, and includes a _lot_ of repetition. compressing it should yield pretty good results.
+      - name: Delete old coverage files
+        # This is a community tool, not one provided by GitHub. Hence it shall be pinned to a hash.
+        # https://github.com/GeekyEggo/delete-artifact/tree/v5
+        uses: GeekyEggo/delete-artifact@f275313e70c08f6120db482d7a6b98377786765b
+        with:
+          name: |
+            unit-cov
+            integration-cov
+          failOnError: false # oh well, we'll just have the extra artifacts...
       - name: Set summary to total coverage
         # We use single quotes here to disable the bash backtick behaviour of executing commands.
         run: |
