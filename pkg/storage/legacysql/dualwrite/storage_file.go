@@ -44,6 +44,19 @@ func (m *fileDB) Get(ctx context.Context, gr schema.GroupResource) (StorageStatu
 		if err != nil {
 			m.logger.Warn("error reading filedb", "err", err)
 		}
+		for k, v := range m.db {
+			// Must write to unified if we are reading unified
+			if v.ReadUnified && !v.WriteUnified {
+				v.WriteUnified = true
+				m.db[k] = v
+			}
+
+			// Make sure we are writing something!
+			if !(v.WriteLegacy || v.WriteUnified) {
+				v.WriteLegacy = true
+				m.db[k] = v
+			}
+		}
 	}
 
 	v, ok := m.db[gr.String()]

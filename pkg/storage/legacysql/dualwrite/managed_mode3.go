@@ -20,29 +20,29 @@ func (m *service) NewStorage(gr schema.GroupResource,
 ) (grafanarest.Storage, error) {
 	status, _ := m.Status(context.Background(), gr)
 
-	// Support startup modes without special
-	if !status.Runtime {
-		if status.ReadUnified {
-			if status.WriteLegacy {
-				// Write both, read unified
-				return grafanarest.NewDualWriter(grafanarest.Mode3, legacy, storage, m.reg, gr.String()), nil
-			}
-			return storage, nil
-		}
-		if status.WriteUnified {
-			// Write both, read legacy
-			return grafanarest.NewDualWriter(grafanarest.Mode2, legacy, storage, m.reg, gr.String()), nil
-		}
-		return legacy, nil
+	if m.enabled && status.Runtime {
+		// Dynamic storage behavior
+		return &mangedMode3{
+			service:   m,
+			legacy:    legacy,
+			unified:   storage,
+			dualwrite: grafanarest.NewDualWriter(grafanarest.Mode3, legacy, storage, m.reg, gr.String()),
+			gr:        gr,
+		}, nil
 	}
 
-	return &mangedMode3{
-		service:   m,
-		legacy:    legacy,
-		unified:   storage,
-		dualwrite: grafanarest.NewDualWriter(grafanarest.Mode3, legacy, storage, m.reg, gr.String()),
-		gr:        gr,
-	}, nil
+	if status.ReadUnified {
+		if status.WriteLegacy {
+			// Write both, read unified
+			return grafanarest.NewDualWriter(grafanarest.Mode3, legacy, storage, m.reg, gr.String()), nil
+		}
+		return storage, nil
+	}
+	if status.WriteUnified {
+		// Write both, read legacy
+		return grafanarest.NewDualWriter(grafanarest.Mode2, legacy, storage, m.reg, gr.String()), nil
+	}
+	return legacy, nil
 }
 
 type mangedMode3 struct {
