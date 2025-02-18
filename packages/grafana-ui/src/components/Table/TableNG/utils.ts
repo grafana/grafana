@@ -201,15 +201,19 @@ export function getCellColors(
     if (mode === TableCellBackgroundDisplayMode.Basic) {
       textColor = getTextColorForAlphaBackground(displayValue.color!, theme.isDark);
       bgColor = tinycolor(displayValue.color).toRgbString();
-      bgHoverColor = tinycolor(displayValue.color).setAlpha(1).toRgbString();
+      bgHoverColor = tinycolor(displayValue.color)
+        .darken(10 * darkeningFactor)
+        .toRgbString();
     } else if (mode === TableCellBackgroundDisplayMode.Gradient) {
-      const hoverColor = tinycolor(displayValue.color).setAlpha(1).toRgbString();
+      const hoverColor = tinycolor(displayValue.color)
+        .darken(15 * darkeningFactor)
+        .toRgbString();
       const bgColor2 = tinycolor(displayValue.color)
         .darken(10 * darkeningFactor)
         .spin(5);
       textColor = getTextColorForAlphaBackground(displayValue.color!, theme.isDark);
       bgColor = `linear-gradient(120deg, ${bgColor2.toRgbString()}, ${displayValue.color})`;
-      bgHoverColor = `linear-gradient(120deg, ${bgColor2.setAlpha(1).toRgbString()}, ${hoverColor})`;
+      bgHoverColor = `linear-gradient(120deg, ${bgColor2.toRgbString()}, ${hoverColor})`;
     }
   }
 

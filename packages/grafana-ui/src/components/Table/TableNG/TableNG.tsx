@@ -741,20 +741,6 @@ const getStyles = (theme: GrafanaTheme2, textWrap: boolean) => ({
 
     // Reset default cell styles for custom cell component styling
     paddingInline: '0',
-
-    // There are datagrid styles overriding our custom hover styles.
-    div: {
-      background: 'none',
-    },
-
-    '&:hover': {
-      // Prevent text shift caused by border on hover by translating the element.
-      transform: `translate(-1px, -0.5px)`,
-      border: `1px solid ${theme.colors.text.link}`,
-      // Set a zIndex to eliminate depth built into datagrid cells.
-      zIndex: theme.zIndex.tooltip,
-      backgroundColor: theme.colors.background.primary,
-    },
   }),
   paginationContainer: css({
     alignItems: 'center',
