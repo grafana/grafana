@@ -368,11 +368,13 @@ Depending on your environment, you may need to increase the number of file watch
 Edit the system config file to insert the new value for file watchers limit:
 
 On Linux:
+
 ```bash
 echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
 ```
 
 On macOS:
+
 ```bash
 sudo sysctl -w kern.maxfiles=524288
 ```
@@ -380,11 +382,13 @@ sudo sysctl -w kern.maxfiles=524288
 Check if the new value was applied. It must output `524288`:
 
 On Linux:
+
 ```bash
 cat /proc/sys/fs/inotify/max_user_watches
 ```
 
 On macOS:
+
 ```bash
 sysctl kern.maxfiles
 ```
