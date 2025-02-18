@@ -35,17 +35,14 @@ const (
 )
 
 type GitHubRepositoryConfig struct {
-	// The repository URL `https://github.com/example/test`).
-	URL string `json:"url"`
+	// The repository URL (e.g. `https://github.com/example/test`).
+	URL string `json:"url,omitempty"`
 
 	// The branch to use in the repository.
 	// By default, this is the main branch.
 	Branch string `json:"branch,omitempty"`
-
 	// Token for accessing the repository. If set, it will be encrypted into encryptedToken, then set to an empty string again.
-	// TODO: this should be part of secrets and a simple reference.
 	Token string `json:"token,omitempty"`
-
 	// Token for accessing the repository, but encrypted. This is not possible to read back to a user decrypted.
 	// +listType=atomic
 	EncryptedToken []byte `json:"encryptedToken,omitempty"`
@@ -55,7 +52,7 @@ type GitHubRepositoryConfig struct {
 	// Possible values: pull-request, branch, push.
 	Workflows []Workflow `json:"workflows,omitempty"`
 
-	// Whether we should show dashboard previews for pull requests
+	// Whether we should show dashboard previews for pull requests.
 	// By default, this is false (i.e. we will not create previews).
 	GenerateDashboardPreviews bool `json:"generateDashboardPreviews,omitempty"`
 }

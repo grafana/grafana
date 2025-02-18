@@ -739,12 +739,12 @@ export type GitHubRepositoryConfig = {
   branch?: string;
   /** Token for accessing the repository, but encrypted. This is not possible to read back to a user decrypted. */
   encryptedToken?: string;
-  /** Whether we should show dashboard previews for pull requests By default, this is false (i.e. we will not create previews). */
+  /** Whether we should show dashboard previews for pull requests. By default, this is false (i.e. we will not create previews). */
   generateDashboardPreviews?: boolean;
   /** Token for accessing the repository. If set, it will be encrypted into encryptedToken, then set to an empty string again. */
   token?: string;
-  /** The repository URL `https://github.com/example/test`). */
-  url: string;
+  /** The repository URL (e.g. `https://github.com/example/test`). */
+  url?: string;
   /** Workflow allowed for changes to the repository. The order is relevant for defining the precedence of the workflows. Possible values: pull-request, branch, push. */
   workflows?: ('branch' | 'push')[];
 };
