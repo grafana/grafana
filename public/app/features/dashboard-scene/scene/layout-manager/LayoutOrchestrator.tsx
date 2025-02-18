@@ -130,16 +130,6 @@ export class LayoutOrchestrator extends SceneObjectBase<LayoutOrchestratorState>
     }
   };
 
-  public refreshDropZones() {
-    const dropZones = [];
-    const layouts = sceneGraph.findAllObjects(this.getRoot(), isSceneLayout) as SceneLayout2[];
-    for (const l of layouts) {
-      dropZones.push(...l.getDropZones().map((v) => ({ ...v, layoutKey: l.state.key! })));
-    }
-
-    this.dropZones = dropZones;
-  }
-
   public onDragEnd = (e: PointerEvent) => {
     document.removeEventListener('pointermove', this.onDrag);
     document.removeEventListener('pointerup', this.onDragEnd);
@@ -178,6 +168,16 @@ export class LayoutOrchestrator extends SceneObjectBase<LayoutOrchestratorState>
     }
     document.body.classList.remove('dragging-active');
   };
+
+  public refreshDropZones() {
+    const dropZones = [];
+    const layouts = sceneGraph.findAllObjects(this.getRoot(), isSceneLayout) as SceneLayout2[];
+    for (const l of layouts) {
+      dropZones.push(...l.getDropZones().map((v) => ({ ...v, layoutKey: l.state.key! })));
+    }
+
+    this.dropZones = dropZones;
+  }
 
   // LayoutManager methods
   editModeChanged(isEditing: boolean): void {
