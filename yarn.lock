@@ -3689,7 +3689,6 @@ __metadata:
     "@testing-library/dom": "npm:10.4.0"
     "@testing-library/react": "npm:16.2.0"
     "@testing-library/user-event": "npm:14.6.1"
-    "@types/angular": "npm:1.8.9"
     "@types/history": "npm:4.7.11"
     "@types/jest": "npm:29.5.14"
     "@types/lodash": "npm:4.17.15"
@@ -9162,22 +9161,6 @@ __metadata:
   dependencies:
     tslib: "npm:^2.4.0"
   checksum: 10/aa58e64753a420ad1eefaf7bacef3dda61d74f9336925943d9244132d5b48d9242f734f1e707fd5ccfa6dd1d8ec8e6debc234b4dedb3a5b0d8486d1f373350b2
-  languageName: node
-  linkType: hard
-
-"@types/angular-route@npm:1.7.6":
-  version: 1.7.6
-  resolution: "@types/angular-route@npm:1.7.6"
-  dependencies:
-    "@types/angular": "npm:*"
-  checksum: 10/a7b8aede9584b948edefdbedb831aab60ae5b9dba9174f6dc5cbfe4bb75c761ed1fe339e450f4470f9cf6eb63fcd84dd51605da9d7442cf33a4c160c3b9fe5b6
-  languageName: node
-  linkType: hard
-
-"@types/angular@npm:*, @types/angular@npm:1.8.9":
-  version: 1.8.9
-  resolution: "@types/angular@npm:1.8.9"
-  checksum: 10/dc8823c30f4caafbd28333777b9232cb9e67b000c88741a718c911d33254e3affa706d7290851c22e4ee5dac2f675b8e2a93a5f0e3eab5180fa271d2673ffc50
   languageName: node
   linkType: hard
 
@@ -18151,8 +18134,6 @@ __metadata:
     "@testing-library/jest-dom": "npm:6.6.3"
     "@testing-library/react": "npm:16.2.0"
     "@testing-library/user-event": "npm:14.6.1"
-    "@types/angular": "npm:1.8.9"
-    "@types/angular-route": "npm:1.7.6"
     "@types/babel__core": "npm:^7"
     "@types/babel__preset-env": "npm:^7"
     "@types/chance": "npm:^1.1.3"
