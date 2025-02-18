@@ -35,6 +35,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/export"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/migrate"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/pullrequest"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
@@ -247,6 +248,11 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	storage[provisioning.RepositoryResourceInfo.StoragePath("export")] = &exportConnector{
 		repoGetter: b,
 		jobs:       b.jobs,
+	}
+	storage[provisioning.RepositoryResourceInfo.StoragePath("migrate")] = &migrateConnector{
+		repoGetter: b,
+		jobs:       b.jobs,
+		dual:       b.storageStatus,
 	}
 	apiGroupInfo.VersionedResourcesStorageMap[provisioning.VERSION] = storage
 	return nil
@@ -475,9 +481,15 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			}
 			b.repositoryLister = repoInformer.Lister()
 
-			b.jobs.Register(export.NewExportWorker(
+			b.jobs.Register(migrate.NewMigrationWorker(
 				b.client,
 				b.legacyMigrator,
+				b.storageStatus,
+				b.secrets,
+				b.clonedir,
+			))
+			b.jobs.Register(export.NewExportWorker(
+				b.client,
 				b.storageStatus,
 				b.secrets,
 				b.clonedir,
@@ -737,9 +749,29 @@ spec:
 						MediaTypeProps: spec3.MediaTypeProps{
 							Schema: &optionsSchema,
 							Example: &provisioning.ExportJobOptions{
-								Folder:  "grafan-folder-ref",
+								Folder: "grafan-folder-ref",
+								Branch: "target-branch",
+								Prefix: "prefix/in/repo/tree",
+							},
+						},
+					},
+				},
+			},
+		}
+	}
+
+	sub = oas.Paths.Paths[repoprefix+"/migrate"]
+	if sub != nil {
+		optionsSchema := defs[defsBase+"MigrateJobOptions"].Schema
+		sub.Post.Description = "Export from grafana into the remote repository"
+		sub.Post.RequestBody = &spec3.RequestBody{
+			RequestBodyProps: spec3.RequestBodyProps{
+				Content: map[string]*spec3.MediaType{
+					"application/json": {
+						MediaTypeProps: spec3.MediaTypeProps{
+							Schema: &optionsSchema,
+							Example: &provisioning.MigrateJobOptions{
 								History: true,
-								Branch:  "target-branch",
 								Prefix:  "prefix/in/repo/tree",
 							},
 						},

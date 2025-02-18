@@ -1,24 +1,61 @@
-package export
+package migrate
 
 import (
 	"context"
 	"encoding/json"
 	"fmt"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	dashboards "github.com/grafana/grafana/pkg/apis/dashboard"
 	"github.com/grafana/grafana/pkg/infra/slugify"
+	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
+	"github.com/grafana/grafana/pkg/storage/unified/parquet"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-func (r *exportJob) loadResources(ctx context.Context) error {
+var _ resource.BatchResourceWriter = (*resourceReader)(nil)
+
+type resourceReader struct {
+	worker *migrationWorker
+}
+
+// Close implements resource.BatchResourceWriter.
+func (f *resourceReader) Close() error {
+	return nil
+}
+
+// CloseWithResults implements resource.BatchResourceWriter.
+func (f *resourceReader) CloseWithResults() (*resource.BatchResponse, error) {
+	return &resource.BatchResponse{}, nil
+}
+
+// Write implements resource.BatchResourceWriter.
+func (f *resourceReader) Write(ctx context.Context, key *resource.ResourceKey, value []byte) error {
+	item := &unstructured.Unstructured{}
+	err := item.UnmarshalJSON(value)
+	if err != nil {
+		// TODO: should we fail the entire execution?
+		return fmt.Errorf("failed to unmarshal unstructured: %w", err)
+	}
+
+	if result := f.worker.write(ctx, item); result.Error != nil {
+		f.worker.progress.Record(ctx, result)
+		if err := f.worker.progress.TooManyErrors(); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (r *migrationWorker) loadResources(ctx context.Context) error {
 	kinds := []schema.GroupVersionResource{{
 		Group:    dashboards.GROUP,
 		Resource: dashboards.DASHBOARD_RESOURCE,
@@ -26,41 +63,40 @@ func (r *exportJob) loadResources(ctx context.Context) error {
 	}}
 
 	for _, kind := range kinds {
-		r.progress.SetMessage(fmt.Sprintf("reading %s resource", kind.Resource))
-		if err := r.loadResourcesFromAPIServer(ctx, kind); err != nil {
-			return fmt.Errorf("error loading %s %w", kind.Resource, err)
+		r.progress.SetMessage(fmt.Sprintf("migrate %s resource", kind.Resource))
+		gr := kind.GroupResource()
+		opts := legacy.MigrateOptions{
+			Namespace:   r.namespace,
+			WithHistory: r.options.History,
+			Resources:   []schema.GroupResource{gr},
+			Store:       parquet.NewBatchResourceWriterClient(&resourceReader{worker: r}),
+			OnlyCount:   true, // first get the count
 		}
-	}
-	return nil
-}
-
-func (r *exportJob) loadResourcesFromAPIServer(ctx context.Context, kind schema.GroupVersionResource) error {
-	client := r.client.Resource(kind)
-
-	var continueToken string
-	for {
-		list, err := client.List(ctx, metav1.ListOptions{Limit: 100, Continue: continueToken})
+		stats, err := r.legacy.Migrate(ctx, opts)
 		if err != nil {
-			return fmt.Errorf("error executing list: %w", err)
+			return fmt.Errorf("unable to count legacy items %w", err)
 		}
 
-		for _, item := range list.Items {
-			r.progress.Record(ctx, r.write(ctx, &item))
-			if err := r.progress.TooManyErrors(); err != nil {
-				return err
+		// FIXME: explain why we calculate it in this way
+		if len(stats.Summary) > 0 {
+			count := stats.Summary[0].Count
+			history := stats.Summary[0].History
+			if history > count {
+				count = history // the number of items we will process
 			}
+			r.progress.SetTotal(int(count))
 		}
 
-		continueToken = list.GetContinue()
-		if continueToken == "" {
-			break
+		opts.OnlyCount = false // this time actually write
+		_, err = r.legacy.Migrate(ctx, opts)
+		if err != nil {
+			return fmt.Errorf("error running legacy migrate %s %w", kind.Resource, err)
 		}
 	}
-
 	return nil
 }
 
-func (r *exportJob) write(ctx context.Context, obj *unstructured.Unstructured) jobs.JobResourceResult {
+func (r *migrationWorker) write(ctx context.Context, obj *unstructured.Unstructured) jobs.JobResourceResult {
 	gvk := obj.GroupVersionKind()
 	result := jobs.JobResourceResult{
 		Name:     obj.GetName(),
@@ -104,6 +140,9 @@ func (r *exportJob) write(ctx context.Context, obj *unstructured.Unstructured) j
 	}
 	folder := meta.GetFolder()
 
+	// Add the author in context (if available)
+	ctx = r.withAuthorSignature(ctx, meta)
+
 	// Get the absolute path of the folder
 	fid, ok := r.folderTree.DirPath(folder, "")
 	if !ok {
@@ -119,7 +158,7 @@ func (r *exportJob) write(ctx context.Context, obj *unstructured.Unstructured) j
 	// Clear the metadata
 	delete(obj.Object, "metadata")
 
-	if r.keepIdentifier {
+	if r.options.Identifier {
 		meta.SetName(name) // keep the identifier in the metadata
 	}
 
@@ -137,15 +176,15 @@ func (r *exportJob) write(ctx context.Context, obj *unstructured.Unstructured) j
 			return result
 		}
 	}
-	if r.prefix != "" {
-		fileName, err = safepath.Join(r.prefix, fileName)
+	if r.options.Prefix != "" {
+		fileName, err = safepath.Join(r.options.Prefix, fileName)
 		if err != nil {
 			result.Error = fmt.Errorf("error adding path prefix: %w", err)
 			return result
 		}
 	}
 
-	err = r.target.Write(ctx, fileName, r.ref, body, commitMessage)
+	err = r.target.Write(ctx, fileName, "", body, commitMessage)
 	if err != nil {
 		result.Error = fmt.Errorf("failed to write file: %w", err)
 	}

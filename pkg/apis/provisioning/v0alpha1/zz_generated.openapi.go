@@ -99,13 +99,6 @@ func schema_pkg_apis_provisioning_v0alpha1_ExportJobOptions(ref common.Reference
 							Format:      "",
 						},
 					},
-					"history": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Preserve history (if possible)",
-							Type:        []string{"boolean"},
-							Format:      "",
-						},
-					},
 					"branch": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Target branch for export (only git)",
@@ -115,7 +108,7 @@ func schema_pkg_apis_provisioning_v0alpha1_ExportJobOptions(ref common.Reference
 					},
 					"prefix": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Target file prefix",
+							Description: "Prefix in target file system",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -823,6 +816,13 @@ func schema_pkg_apis_provisioning_v0alpha1_MigrateJobOptions(ref common.Referenc
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
+					"prefix": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Target file prefix",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"history": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Preserve history (if possible)",

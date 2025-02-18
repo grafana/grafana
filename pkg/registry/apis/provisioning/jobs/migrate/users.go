@@ -1,4 +1,4 @@
-package export
+package migrate
 
 import (
 	"context"
@@ -13,7 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 )
 
-func (r *exportJob) loadUsers(ctx context.Context) error {
+func (r *migrationWorker) loadUsers(ctx context.Context) error {
 	client := r.client.Resource(schema.GroupVersionResource{
 		Group:    iam.GROUP,
 		Version:  iam.VERSION,

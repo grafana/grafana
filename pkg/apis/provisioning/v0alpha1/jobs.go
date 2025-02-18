@@ -100,13 +100,10 @@ type ExportJobOptions struct {
 	// The source folder (or empty) to export
 	Folder string `json:"folder,omitempty"`
 
-	// Preserve history (if possible)
-	History bool `json:"history,omitempty"`
-
 	// Target branch for export (only git)
 	Branch string `json:"branch,omitempty"`
 
-	// Target file prefix
+	// Prefix in target file system
 	Prefix string `json:"prefix,omitempty"`
 
 	// Include the identifier in the exported metadata
@@ -114,6 +111,9 @@ type ExportJobOptions struct {
 }
 
 type MigrateJobOptions struct {
+	// Target file prefix
+	Prefix string `json:"prefix,omitempty"`
+
 	// Preserve history (if possible)
 	History bool `json:"history,omitempty"`
 
