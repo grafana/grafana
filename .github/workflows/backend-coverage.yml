@@ -92,5 +92,5 @@ jobs:
         run: |
           echo '# Coverage' >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
-          grep 'total:' backend-funcs.log >> $GITHUB_STEP_SUMMARY
+          grep 'total:' backend-funcs.log | tr '\t' ' ' >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
