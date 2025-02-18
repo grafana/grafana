@@ -205,6 +205,41 @@
         "recording": "Åđđ ľäþęľş ŧő yőūř řūľę."
       }
     },
+    "alertVersionHistory": {
+      "alerting": "Åľęřŧįŉģ",
+      "alerting-change-description": "Ŧĥįş ūpđäŧę ŵäş mäđę þy ŧĥę äľęřŧįŉģ şyşŧęm đūę ŧő őŧĥęř čĥäŉģęş. Főř ęχämpľę, ŵĥęŉ řęŉämįŉģ ä čőŉŧäčŧ pőįŉŧ ŧĥäŧ įş ūşęđ ƒőř şįmpľįƒįęđ řőūŧįŉģ, ŧĥįş ŵįľľ ūpđäŧę äƒƒęčŧęđ řūľęş",
+      "annotations": "Åŉŉőŧäŧįőŉş",
+      "compareVersions": "Cőmpäřę vęřşįőŉş",
+      "comparing-versions": "Cőmpäřįŉģ vęřşįőŉş",
+      "condition": "Åľęřŧ čőŉđįŧįőŉ",
+      "contactPointRouting": "Cőŉŧäčŧ pőįŉŧ řőūŧįŉģ",
+      "description": "Ēäčĥ ŧįmę yőū ęđįŧ ŧĥę äľęřŧ řūľę, ä ŉęŵ vęřşįőŉ įş čřęäŧęđ. Ŝęľęčŧ ŧŵő vęřşįőŉş þęľőŵ äŉđ čőmpäřę ŧĥęįř đįƒƒęřęŉčęş.",
+      "errorloading": "Fäįľęđ ŧő ľőäđ äľęřŧ řūľę vęřşįőŉş",
+      "execErrorState": "Åľęřŧ şŧäŧę ŵĥęŉ ęχęčūŧįőŉ ęřřőř",
+      "intervalSeconds": "Ēväľūäŧįőŉ įŉŧęřväľ",
+      "labels": "Ŀäþęľş",
+      "latest": "Ŀäŧęşŧ",
+      "name": "Ńämę",
+      "namespace_uid": "Főľđęř ŮĨĐ",
+      "noDataState": "Åľęřŧ şŧäŧę ŵĥęŉ ŉő đäŧä",
+      "noVersionsFound": "Ńő vęřşįőŉş ƒőūŉđ ƒőř ŧĥįş řūľę",
+      "paused": "Päūşęđ şŧäŧę",
+      "pendingPeriod": "Pęŉđįŉģ pęřįőđ",
+      "provisioning": "Přővįşįőŉįŉģ",
+      "provisioning-change-description": "Vęřşįőŉ ūpđäŧę ŵäş mäđę vįä přővįşįőŉįŉģ",
+      "queryAndAlertCondition": "Qūęřy äŉđ äľęřŧ čőŉđįŧįőŉ",
+      "reset": "Ŗęşęŧ ŧő vęřşįőŉ {{version}}",
+      "restore": "Ŗęşŧőřę",
+      "restore-modal": {
+        "body": "Åřę yőū şūřę yőū ŵäŉŧ ŧő řęşŧőřę ŧĥę äľęřŧ řūľę đęƒįŉįŧįőŉ ŧő ŧĥįş vęřşįőŉ? Åľľ ūŉşävęđ čĥäŉģęş ŵįľľ þę ľőşŧ.",
+        "summary": "Ŝūmmäřy őƒ čĥäŉģęş ŧő þę äppľįęđ:",
+        "title": "Ŗęşŧőřę Vęřşįőŉ"
+      },
+      "rule_group": "Ŗūľę ģřőūp",
+      "unknown": "Ůŉĸŉőŵŉ",
+      "unknown-change-description": "Ŧĥįş ūpđäŧę ŵäş mäđę přįőř ŧő ŧĥę įmpľęmęŉŧäŧįőŉ őƒ äľęřŧ řūľę vęřşįőŉ ĥįşŧőřy. Ŧĥę ūşęř ŵĥő mäđę ŧĥę čĥäŉģę įş ŉőŧ ŧřäčĸęđ, þūŧ ƒūŧūřę čĥäŉģęş ŵįľľ įŉčľūđę ŧĥę ūşęř",
+      "user-id": "Ůşęř ĨĐ {{uid}}"
+    },
     "annotations": {
       "description": "Åđđ mőřę čőŉŧęχŧ ŧő yőūř äľęřŧ ŉőŧįƒįčäŧįőŉş.",
       "title": "Cőŉƒįģūřę ŉőŧįƒįčäŧįőŉ męşşäģę"
@@ -283,6 +318,9 @@
       "no-delivery-attempts": "Ńő đęľįvęřy äŧŧęmpŧş",
       "no-integrations": "Ńő įŉŧęģřäŧįőŉş čőŉƒįģūřęđ",
       "only-firing": "Đęľįvęřįŉģ <1>őŉľy ƒįřįŉģ</1> ŉőŧįƒįčäŧįőŉş",
+      "receiver-summary": {
+        "jira": "Cřęäŧęş ä \"{{issueType}}\" įşşūę įŉ ŧĥę \"{{project}}\" přőĵęčŧ"
+      },
       "telegram": {
         "parse-mode-warning-body": "Ĩƒ yőū ūşę ä <1>päřşę_mőđę</1> őpŧįőŉ őŧĥęř ŧĥäŉ <3>Ńőŉę</3>, ŧřūŉčäŧįőŉ mäy řęşūľŧ įŉ äŉ įŉväľįđ męşşäģę, čäūşįŉģ ŧĥę ŉőŧįƒįčäŧįőŉ ŧő ƒäįľ. Főř ľőŉģęř męşşäģęş, ŵę řęčőmmęŉđ ūşįŉģ äŉ äľŧęřŉäŧįvę čőŉŧäčŧ męŧĥőđ.",
         "parse-mode-warning-title": "Ŧęľęģřäm męşşäģęş äřę ľįmįŧęđ ŧő 4096 ŮŦF-8 čĥäřäčŧęřş."
@@ -296,6 +334,10 @@
       "label": "Cőŉŧäčŧ pőįŉŧ"
     },
     "copy-to-clipboard": "Cőpy \"{{label}}\" ŧő čľįpþőäřđ",
+    "dag": {
+      "missing-reference": "Ēχpřęşşįőŉ \"{{source}}\" ƒäįľęđ ŧő řūŉ þęčäūşę \"{{target}}\" įş mįşşįŉģ őř äľşő ƒäįľęđ.",
+      "self-reference": "Ÿőū čäŉ'ŧ ľįŉĸ äŉ ęχpřęşşįőŉ ŧő įŧşęľƒ"
+    },
     "export": {
       "subtitle": {
         "formats": "Ŝęľęčŧ ŧĥę ƒőřmäŧ äŉđ đőŵŉľőäđ ŧĥę ƒįľę őř čőpy ŧĥę čőŉŧęŉŧş ŧő čľįpþőäřđ",
@@ -527,6 +569,14 @@
       "deleting": "Đęľęŧįŉģ",
       "paused": "Päūşęđ",
       "recording-rule": "Ŗęčőřđįŉģ řūľę"
+    },
+    "rule-view": {
+      "query": {
+        "datasources-na": {
+          "description": "Cäŉŉőŧ đįşpľäy ŧĥę qūęřy přęvįęŵ. Ŝőmę őƒ ŧĥę đäŧä şőūřčęş ūşęđ įŉ ŧĥę qūęřįęş äřę ŉőŧ äväįľäþľę.",
+          "title": "Qūęřy ŉőŧ äväįľäþľę"
+        }
+      }
     },
     "rule-viewer": {
       "prometheus-consistency-check": {
@@ -781,6 +831,25 @@
     },
     "search": {
       "placeholder": "Ŝęäřčĥ äľľ"
+    }
+  },
+  "core": {
+    "versionHistory": {
+      "comparison": {
+        "header": {
+          "hide-json-diff": "Ħįđę ĴŜØŃ đįƒƒ ",
+          "show-json-diff": "Ŝĥőŵ ĴŜØŃ đįƒƒ ",
+          "text": "Vęřşįőŉ {{version}} ūpđäŧęđ þy {{createdBy}} ({{ageString}}) {{message}}"
+        },
+        "select": "Ŝęľęčŧ ŧŵő vęřşįőŉş ŧő şŧäřŧ čőmpäřįŉģ"
+      },
+      "no-properties-changed": "Ńő řęľęväŉŧ přőpęřŧįęş čĥäŉģęđ",
+      "table": {
+        "updated": "Đäŧę",
+        "updatedBy": "Ůpđäŧęđ ßy",
+        "version": "Vęřşįőŉ"
+      },
+      "view-json-diff": "Vįęŵ ĴŜØŃ đįƒƒ ŧő şęę äľľ čĥäŉģęş"
     }
   },
   "correlations": {
@@ -1284,9 +1353,6 @@
     "panel-queries": {
       "add-query-from-library": "Åđđ qūęřy ƒřőm ľįþřäřy"
     },
-    "query-library": {
-      "add-query-button": "Åđđ qūęřy"
-    },
     "settings": {
       "variables": {
         "dependencies": {
@@ -1368,7 +1434,6 @@
       "close-tooltip": "Cľőşę qūęřy ĥįşŧőřy",
       "datasource-a-z": "Đäŧä şőūřčę Å-Ż",
       "datasource-z-a": "Đäŧä şőūřčę Ż-Å",
-      "library-history-dropdown": "Øpęŉ qūęřy ľįþřäřy őř qūęřy ĥįşŧőřy",
       "newest-first": "Ńęŵęşŧ ƒįřşŧ",
       "oldest-first": "Øľđęşŧ ƒįřşŧ",
       "query-history": "Qūęřy ĥįşŧőřy",
@@ -1472,6 +1537,7 @@
       "switch-datasource-button": "Ŝŵįŧčĥ đäŧä şőūřčę äŉđ řūŉ qūęřy"
     },
     "secondary-actions": {
+      "add-from-query-library": "Åđđ qūęřy ƒřőm ľįþřäřy",
       "query-add-button": "Åđđ qūęřy",
       "query-add-button-aria-label": "Åđđ qūęřy",
       "query-history-button": "Qūęřy ĥįşŧőřy",
@@ -1699,6 +1765,7 @@
       "actions-confirmation-label": "Cőŉƒįřmäŧįőŉ męşşäģę",
       "actions-confirmation-message": "Přővįđę ä đęşčřįpŧįvę přőmpŧ ŧő čőŉƒįřm őř čäŉčęľ ŧĥę äčŧįőŉ.",
       "footer-add-annotation": "Åđđ äŉŉőŧäŧįőŉ",
+      "footer-click-to-action": "Cľįčĸ ŧő {{actionTitle}}",
       "footer-click-to-navigate": "Cľįčĸ ŧő őpęŉ {{linkTitle}}"
     }
   },
@@ -2011,6 +2078,10 @@
   },
   "logs": {
     "infinite-scroll": {
+      "end-of-range": "Ēŉđ őƒ ŧĥę şęľęčŧęđ ŧįmę řäŉģę.",
+      "load-more": "Ŝčřőľľ ŧő ľőäđ mőřę",
+      "load-newer": "Ŀőäđįŉģ ŉęŵęř ľőģş...",
+      "load-older": "Ŀőäđįŉģ őľđęř ľőģş...",
       "older-logs": "Øľđęř ľőģş"
     },
     "log-details": {
