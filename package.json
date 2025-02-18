@@ -58,6 +58,7 @@
     "betterer": "betterer --tsconfig ./scripts/cli/tsconfig.json",
     "betterer:stats": "ts-node --transpile-only --project ./scripts/cli/tsconfig.json ./scripts/cli/reportBettererStats.ts",
     "betterer:issues": "ts-node --transpile-only --project ./scripts/cli/tsconfig.json ./scripts/cli/generateBettererIssues.ts",
+    "betterer:ci": "betterer ci --tsconfig ./scripts/cli/tsconfig.json",
     "plugin:build": "nx run-many -t build --projects='tag:scope:plugin'",
     "plugin:build:commit": "nx run-many -t build:commit --projects='tag:scope:plugin'",
     "plugin:build:dev": "nx run-many -t dev --projects='tag:scope:plugin' --maxParallel=100",

@@ -611,7 +611,7 @@ def betterer_frontend_step():
         ],
         "commands": [
             "apk add --update git bash",
-            "yarn betterer ci",
+            "yarn betterer:ci",
         ],
     }
 
