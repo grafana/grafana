@@ -184,7 +184,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 	features := featuremgmt.WithFeatures(featuresArr...)
 
 	dashboardStore := dashboards.NewFakeDashboardStore(t)
-	k8sCli := client.NewK8sHandler(cfg, request.GetNamespaceMapper(cfg), v0alpha1.FolderResourceInfo.GroupVersionResource(), restCfgProvider.GetRestConfig, dashboardStore, userService, nil, dualwrite.ProvideTestService(), sort.ProvideService())
+	k8sCli := client.NewK8sHandler(dualwrite.ProvideTestService(), request.GetNamespaceMapper(cfg), v0alpha1.FolderResourceInfo.GroupVersionResource(), restCfgProvider.GetRestConfig, dashboardStore, userService, nil, sort.ProvideService())
 	unifiedStore := ProvideUnifiedStore(k8sCli, userService)
 
 	ctx := context.Background()

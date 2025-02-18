@@ -11,7 +11,7 @@ import (
 
 func NewSearchClient(dual dualwrite.Service, gr schema.GroupResource, unifiedClient ResourceIndexClient, legacyClient ResourceIndexClient) ResourceIndexClient {
 	status, _ := dual.Status(context.Background(), gr)
-	if status.Runtime {
+	if status.Runtime && dual.ShouldManage(gr) {
 		return &searchWrapper{
 			dual:          dual,
 			groupResource: gr,
