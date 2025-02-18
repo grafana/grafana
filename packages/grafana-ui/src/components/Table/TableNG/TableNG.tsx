@@ -69,6 +69,7 @@ export function TableNG(props: TableNGProps) {
     footerOptions,
     onColumnResize,
     enablePagination,
+    getActions,
   } = props;
 
   const textWrap = fieldConfig?.defaults?.custom?.cellOptions.wrapText ?? false;
@@ -332,6 +333,7 @@ export function TableNG(props: TableNGProps) {
                 <TableCellNG
                   key={key}
                   value={value}
+                  frame={main}
                   field={field}
                   theme={theme}
                   timeRange={timeRange}
@@ -355,6 +357,7 @@ export function TableNG(props: TableNGProps) {
                   setIsInspecting={setIsInspecting}
                   setContextMenuProps={setContextMenuProps}
                   cellInspect={cellInspect}
+                  getActions={getActions}
                 />
               );
             },
