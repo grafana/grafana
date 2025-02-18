@@ -115,7 +115,7 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 		require.Equal(t, &resource.ResourceSearchResponse{
 			Results: &resource.ResourceTable{},
 			Facet: map[string]*resource.ResourceSearchResponse_Facet{
-				"tags": &resource.ResourceSearchResponse_Facet{
+				"tags": {
 					Terms: []*resource.ResourceSearchResponse_TermFacet{
 						{
 							Term:  "tag1",

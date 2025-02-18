@@ -2,7 +2,7 @@ import uFuzzy from '@leeoniya/ufuzzy';
 
 import { PluginSignatureStatus, dateTimeParse, PluginError, PluginType, PluginErrorCode } from '@grafana/data';
 import { config, featureEnabled } from '@grafana/runtime';
-import configCore, { Settings } from 'app/core/config';
+import { Settings } from 'app/core/config';
 import { contextSrv } from 'app/core/core';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { AccessControlAction } from 'app/types';
@@ -63,7 +63,7 @@ export function mergeLocalsAndRemotes({
       const catalogPlugin = mergeLocalAndRemote(localCounterpart, remotePlugin, error);
 
       // for managed instances, check if plugin is installed, but not yet present in the current instance
-      if (configCore.featureToggles.managedPluginsInstall && config.pluginAdminExternalManageEnabled) {
+      if (config.pluginAdminExternalManageEnabled) {
         catalogPlugin.isFullyInstalled = catalogPlugin.isCore
           ? true
           : (instancesMap.has(remotePlugin.slug) || provisionedSet.has(remotePlugin.slug)) && catalogPlugin.isInstalled;
