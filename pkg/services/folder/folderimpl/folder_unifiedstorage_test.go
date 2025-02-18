@@ -179,7 +179,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 	}
 
 	featuresArr := []any{
-		featuremgmt.FlagKubernetesFoldersServiceV2}
+		featuremgmt.FlagKubernetesCliDashboardsFolders}
 	features := featuremgmt.WithFeatures(featuresArr...)
 
 	dashboardStore := dashboards.NewFakeDashboardStore(t)
@@ -526,7 +526,7 @@ func TestSearchFoldersFromApiServer(t *testing.T) {
 	}
 	service := Service{
 		k8sclient:    fakeK8sClient,
-		features:     featuremgmt.WithFeatures(featuremgmt.FlagKubernetesFoldersServiceV2),
+		features:     featuremgmt.WithFeatures(featuremgmt.FlagKubernetesCliDashboardsFolders),
 		unifiedStore: folderStore,
 	}
 	user := &user.SignedInUser{OrgID: 1}
@@ -779,7 +779,7 @@ func TestDeleteFoldersFromApiServer(t *testing.T) {
 		dashboardStore:         dashboardStore,
 		publicDashboardService: publicDashboardFakeService,
 		registry:               make(map[string]folder.RegistryService),
-		features:               featuremgmt.WithFeatures(featuremgmt.FlagKubernetesFoldersServiceV2),
+		features:               featuremgmt.WithFeatures(featuremgmt.FlagKubernetesCliDashboardsFolders),
 	}
 	user := &user.SignedInUser{OrgID: 1}
 	ctx := identity.WithRequester(context.Background(), user)
@@ -839,7 +839,7 @@ func TestDeleteFoldersFromApiServer(t *testing.T) {
 	})
 
 	// enable k8s ff for dashboards, retest
-	service.features = featuremgmt.WithFeatures(featuremgmt.FlagKubernetesFoldersServiceV2, featuremgmt.FlagKubernetesCliDashboards)
+	service.features = featuremgmt.WithFeatures(featuremgmt.FlagKubernetesCliDashboardsFolders)
 
 	t.Run("Should delete dashboards and public dashboards within the folder through k8s if the ff is enabled", func(t *testing.T) {
 		publicDashboardFakeService.On("DeleteByDashboardUIDs", mock.Anything, int64(1), []string{"uid1"}).Return(nil).Once()

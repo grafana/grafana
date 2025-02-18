@@ -35,8 +35,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagProvisioning,
 			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
-			featuremgmt.FlagKubernetesCliDashboards,
-			featuremgmt.FlagKubernetesFoldersServiceV2,
+			featuremgmt.FlagKubernetesCliDashboardsFolders,
 		},
 		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 			"dashboards.dashboard.grafana.app": {

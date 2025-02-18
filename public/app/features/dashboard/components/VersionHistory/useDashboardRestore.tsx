@@ -19,7 +19,7 @@ const restoreDashboard = async (version: number, dashboard: DashboardModel) => {
 export const useDashboardRestore = (id: number, version: number) => {
   const dashboard = useSelector((state) => state.dashboard.getModel());
   const [state, onRestoreDashboard] = useAsyncFn(
-    async () => await restoreDashboard(config.featureToggles.kubernetesCliDashboards ? id : version, dashboard!),
+    async () => await restoreDashboard(config.featureToggles.kubernetesCliDashboardsFolders ? id : version, dashboard!),
     []
   );
   const notifyApp = useAppNotification();

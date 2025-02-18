@@ -265,7 +265,7 @@ func TestDashboardService(t *testing.T) {
 func setupK8sDashboardTests(service *DashboardServiceImpl) (context.Context, *client.MockK8sHandler) {
 	mockCli := new(client.MockK8sHandler)
 	service.k8sclient = mockCli
-	service.features = featuremgmt.WithFeatures(featuremgmt.FlagKubernetesCliDashboards)
+	service.features = featuremgmt.WithFeatures(featuremgmt.FlagKubernetesCliDashboardsFolders)
 
 	ctx := context.Background()
 	userCtx := &user.SignedInUser{UserID: 1, OrgID: 1}
