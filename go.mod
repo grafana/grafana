@@ -1,6 +1,6 @@
 module github.com/grafana/grafana
 
-go 1.22.0
+go 1.23.1
 
 // Also, use our fork with fixes for unimplemented methods (required for Go 1.16).
 replace github.com/denisenkom/go-mssqldb => github.com/grafana/go-mssqldb v0.9.2
