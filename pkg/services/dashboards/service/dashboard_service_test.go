@@ -1096,7 +1096,13 @@ func TestSaveProvisionedDashboard(t *testing.T) {
 	service := &DashboardServiceImpl{
 		cfg:            setting.NewCfg(),
 		dashboardStore: &fakeStore,
-		log:            log.NewNopLogger(),
+		folderService: &foldertest.FakeService{
+			ExpectedFolder: &folder.Folder{
+				ID:  0,
+				UID: "general",
+			},
+		},
+		log: log.NewNopLogger(),
 	}
 
 	origNewDashboardGuardian := guardian.New
