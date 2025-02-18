@@ -823,7 +823,9 @@ func (b *APIBuilder) encryptSecrets(ctx context.Context, repo *provisioning.Repo
 	return nil
 }
 
-// When starting an empty instance -- switch to mode 5
+// FIXME: This logic does not belong in provisioning! (but required for now)
+// When starting an empty instance, we shift so that we never reference legacy storage
+// This should run somewhere else at startup by default (dual writer? dashboards?)
 func (b *APIBuilder) tryRunningOnlyUnifiedStorage() error {
 	ctx := context.Background()
 	if !dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, b.storageStatus) {
@@ -832,7 +834,7 @@ func (b *APIBuilder) tryRunningOnlyUnifiedStorage() error {
 
 	// Count how many things exist
 	rsp, err := b.legacyMigrator.Migrate(ctx, legacy.MigrateOptions{
-		Namespace: "default", // FIXME!!
+		Namespace: "default", // FIXME! this works for single org, but need to check multi-org
 		Resources: []schema.GroupResource{{
 			Group: dashboard.GROUP, Resource: dashboard.DASHBOARD_RESOURCE,
 		}, {
