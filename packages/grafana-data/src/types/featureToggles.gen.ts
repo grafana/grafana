@@ -212,6 +212,7 @@ export interface FeatureToggles {
   unifiedStorageSearch?: boolean;
   unifiedStorageSearchSprinkles?: boolean;
   unifiedStorageSearchPermissionFiltering?: boolean;
+  managedDualWriter?: boolean;
   pluginsSriChecks?: boolean;
   unifiedStorageBigObjectsSupport?: boolean;
   timeRangeProvider?: boolean;
