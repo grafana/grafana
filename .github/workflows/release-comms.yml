@@ -19,7 +19,7 @@ on:
     - closed
     branches:
     - 'main'
-    - 'v*.*.*'
+    - 'release-*.*.*'
 
 jobs:
   setup:
