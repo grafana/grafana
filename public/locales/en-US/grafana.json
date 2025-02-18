@@ -334,6 +334,10 @@
       "label": "Contact point"
     },
     "copy-to-clipboard": "Copy \"{{label}}\" to clipboard",
+    "dag": {
+      "missing-reference": "Expression \"{{source}}\" failed to run because \"{{target}}\" is missing or also failed.",
+      "self-reference": "You can't link an expression to itself"
+    },
     "export": {
       "subtitle": {
         "formats": "Select the format and download the file or copy the contents to clipboard",
@@ -565,6 +569,14 @@
       "deleting": "Deleting",
       "paused": "Paused",
       "recording-rule": "Recording rule"
+    },
+    "rule-view": {
+      "query": {
+        "datasources-na": {
+          "description": "Cannot display the query preview. Some of the data sources used in the queries are not available.",
+          "title": "Query not available"
+        }
+      }
     },
     "rule-viewer": {
       "prometheus-consistency-check": {

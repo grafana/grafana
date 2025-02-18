@@ -194,8 +194,11 @@ export const trackAlertRuleFormError = (
   reportInteraction('grafana_alerting_rule_form_error', props);
 };
 
-export const trackNewGrafanaAlertRuleFormSavedSuccess = () => {
-  reportInteraction('grafana_alerting_grafana_rule_creation_new_success');
+export const trackNewGrafanaAlertRuleFormSavedSuccess = (payload: {
+  simplifiedQueryEditor: boolean;
+  simplifiedNotificationEditor: boolean;
+}) => {
+  reportInteraction('grafana_alerting_grafana_rule_creation_new_success', payload);
 };
 
 export const trackNewGrafanaAlertRuleFormCancelled = () => {

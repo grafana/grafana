@@ -101,16 +101,13 @@ describe('InstallControlsButton', () => {
   });
 
   describe('update button on managed instance', () => {
-    const oldFeatureTogglesManagedPluginsInstall = config.featureToggles.managedPluginsInstall;
     const oldPluginAdminExternalManageEnabled = config.pluginAdminExternalManageEnabled;
 
     beforeAll(() => {
-      config.featureToggles.managedPluginsInstall = true;
       config.pluginAdminExternalManageEnabled = true;
     });
 
     afterAll(() => {
-      config.featureToggles.managedPluginsInstall = oldFeatureTogglesManagedPluginsInstall;
       config.pluginAdminExternalManageEnabled = oldPluginAdminExternalManageEnabled;
     });
 
@@ -176,16 +173,13 @@ describe('InstallControlsButton', () => {
   });
 
   describe('uninstall button on managed instance', () => {
-    const oldFeatureTogglesManagedPluginsInstall = config.featureToggles.managedPluginsInstall;
     const oldPluginAdminExternalManageEnabled = config.pluginAdminExternalManageEnabled;
 
     beforeAll(() => {
-      config.featureToggles.managedPluginsInstall = true;
       config.pluginAdminExternalManageEnabled = true;
     });
 
     afterAll(() => {
-      config.featureToggles.managedPluginsInstall = oldFeatureTogglesManagedPluginsInstall;
       config.pluginAdminExternalManageEnabled = oldPluginAdminExternalManageEnabled;
     });
 
