@@ -120,7 +120,6 @@ export interface FeatureToggles {
   lokiStructuredMetadata?: boolean;
   teamHttpHeaders?: boolean;
   cachingOptimizeSerializationMemoryUsage?: boolean;
-  managedPluginsInstall?: boolean;
   prometheusCodeModeMetricNamesSearch?: boolean;
   addFieldFromCalculationStatFunctions?: boolean;
   alertmanagerRemoteSecondary?: boolean;

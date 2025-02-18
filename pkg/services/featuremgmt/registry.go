@@ -766,14 +766,6 @@ var (
 			FrontendOnly: false,
 		},
 		{
-			Name:            "managedPluginsInstall",
-			Description:     "Install managed plugins directly from plugins catalog",
-			Stage:           FeatureStageGeneralAvailability,
-			RequiresDevMode: false,
-			Owner:           grafanaPluginsPlatformSquad,
-			Expression:      "true", // enabled by default
-		},
-		{
 			Name:         "prometheusCodeModeMetricNamesSearch",
 			Description:  "Enables search for metric names in Code Mode, to improve performance when working with an enormous number of metric names",
 			FrontendOnly: true,
