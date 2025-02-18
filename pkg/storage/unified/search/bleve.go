@@ -26,6 +26,7 @@ import (
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
@@ -238,7 +239,7 @@ func (b *bleveBackend) cleanOldIndexes(dir string, skip string) {
 			if err != nil {
 				b.log.Error("Unable to remove old index folder", "directory", fpath, "error", err)
 			} else {
-				b.log.Error("Removed old index folder", "directory", fpath)
+				b.log.Info("Removed old index folder", "directory", fpath)
 			}
 		}
 	}
@@ -612,7 +613,7 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resource.Res
 	fields := make([]string, 0, len(req.Fields))
 	for _, f := range req.Fields {
 		if slices.Contains(DashboardFields(), f) {
-			f = "fields." + f
+			f = resource.SEARCH_FIELD_PREFIX + f
 		}
 		fields = append(fields, f)
 	}
@@ -672,11 +673,16 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resource.Res
 		if !ok {
 			return nil, resource.AsErrorResult(fmt.Errorf("missing auth info"))
 		}
+		verb := utils.VerbList
+		if req.Permission == int64(dashboardaccess.PERMISSION_EDIT) {
+			verb = utils.VerbPatch
+		}
+
 		checker, err := access.Compile(ctx, auth, authlib.ListRequest{
 			Namespace: b.key.Namespace,
 			Group:     b.key.Group,
 			Resource:  b.key.Resource,
-			Verb:      utils.VerbList,
+			Verb:      verb,
 		})
 		if err != nil {
 			return nil, resource.AsErrorResult(err)
@@ -732,7 +738,7 @@ func getSortFields(req *resource.ResourceSearchRequest) []string {
 		}
 
 		if slices.Contains(DashboardFields(), input) {
-			input = "fields." + input
+			input = resource.SEARCH_FIELD_PREFIX + input
 		}
 
 		if sort.Desc {
@@ -902,7 +908,7 @@ func (b *bleveIndex) hitsToTable(ctx context.Context, selectFields []string, hit
 				v := match.Fields[fieldName]
 				// fields that are specific to the resource get stored as fields.<fieldName>, so we need to check for that
 				if v == nil {
-					v = match.Fields["fields."+fieldName]
+					v = match.Fields[resource.SEARCH_FIELD_PREFIX+fieldName]
 				}
 				if v != nil {
 					// Encode the value to protobuf

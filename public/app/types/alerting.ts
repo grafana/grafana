@@ -74,7 +74,8 @@ export type CloudNotifierType =
   | 'telegram'
   | 'sns'
   | 'discord'
-  | 'msteams';
+  | 'msteams'
+  | 'jira';
 
 export type NotifierType = GrafanaNotifierType | CloudNotifierType;
 export interface NotifierDTO<T = NotifierType> {

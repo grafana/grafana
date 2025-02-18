@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { render, renderHook } from '@testing-library/react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { createTheme, GrafanaTheme2 } from '@grafana/data';
 
 import { mockThemeContext, useStyles2 } from './ThemeContext';
 
@@ -45,7 +45,7 @@ describe('useStyles', () => {
     const { rerender, result } = renderHook(() => useStyles2(stylesCreator));
     const storedReference = result.current;
 
-    const restoreThemeContext = mockThemeContext({});
+    const restoreThemeContext = mockThemeContext(createTheme());
     rerender();
     expect(storedReference).not.toBe(result.current);
     restoreThemeContext();

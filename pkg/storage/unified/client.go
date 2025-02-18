@@ -23,52 +23,38 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/federated"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 )
 
 const resourceStoreAudience = "resourceStore"
 
-var (
-	// internal provider of the package level resource client
-	pkgResourceClient resource.ResourceClient
-	ready             = make(chan struct{})
-)
-
-func GetResourceClient(ctx context.Context) resource.ResourceClient {
-	<-ready
-	return pkgResourceClient
+type Options struct {
+	Cfg      *setting.Cfg
+	Features featuremgmt.FeatureToggles
+	DB       infraDB.DB
+	Tracer   tracing.Tracer
+	Reg      prometheus.Registerer
+	Authzc   types.AccessClient
+	Docs     resource.DocumentBuilderSupplier
 }
 
 // This adds a UnifiedStorage client into the wire dependency tree
-func ProvideUnifiedStorageClient(
-	cfg *setting.Cfg,
-	features featuremgmt.FeatureToggles,
-	db infraDB.DB,
-	tracer tracing.Tracer,
-	reg prometheus.Registerer,
-	authzc types.AccessClient,
-	docs resource.DocumentBuilderSupplier,
-) (resource.ResourceClient, error) {
+func ProvideUnifiedStorageClient(opts *Options) (resource.ResourceClient, error) {
 	// See: apiserver.ApplyGrafanaConfig(cfg, features, o)
-	apiserverCfg := cfg.SectionWithEnvOverrides("grafana-apiserver")
+	apiserverCfg := opts.Cfg.SectionWithEnvOverrides("grafana-apiserver")
 	client, err := newClient(options.StorageOptions{
 		StorageType:  options.StorageType(apiserverCfg.Key("storage_type").MustString(string(options.StorageTypeUnified))),
-		DataPath:     apiserverCfg.Key("storage_path").MustString(filepath.Join(cfg.DataPath, "grafana-apiserver")),
+		DataPath:     apiserverCfg.Key("storage_path").MustString(filepath.Join(opts.Cfg.DataPath, "grafana-apiserver")),
 		Address:      apiserverCfg.Key("address").MustString(""), // client address
 		BlobStoreURL: apiserverCfg.Key("blob_url").MustString(""),
-	}, cfg, features, db, tracer, reg, authzc, docs)
+	}, opts.Cfg, opts.Features, opts.DB, opts.Tracer, opts.Reg, opts.Authzc, opts.Docs)
 	if err == nil {
 		// Used to get the folder stats
 		client = federated.NewFederatedClient(
 			client, // The original
-			legacysql.NewDatabaseProvider(db),
+			legacysql.NewDatabaseProvider(opts.DB),
 		)
-	}
-
-	// only set the package level restConfig once
-	if pkgResourceClient == nil {
-		pkgResourceClient = client
-		close(ready)
 	}
 
 	return client, err
@@ -136,7 +122,11 @@ func newClient(opts options.StorageOptions,
 
 	// Use the local SQL
 	default:
-		server, err := sql.NewResourceServer(ctx, db, cfg, features, docs, tracer, reg, authzc)
+		searchOptions, err := search.NewSearchOptions(features, cfg, tracer, docs, reg)
+		if err != nil {
+			return nil, err
+		}
+		server, err := sql.NewResourceServer(db, cfg, tracer, reg, authzc, searchOptions)
 		if err != nil {
 			return nil, err
 		}
@@ -161,11 +151,5 @@ func newResourceClient(conn *grpc.ClientConn, cfg *setting.Cfg, features feature
 	if !features.IsEnabledGlobally(featuremgmt.FlagAppPlatformGrpcClientAuth) {
 		return resource.NewLegacyResourceClient(conn), nil
 	}
-	if cfg.StackID == "" {
-		return resource.NewGRPCResourceClient(tracer, conn)
-	}
-
-	grpcClientCfg := grpcutils.ReadGrpcClientConfig(cfg)
-
-	return resource.NewCloudResourceClient(tracer, conn, clientCfgMapping(grpcClientCfg), cfg.Env == setting.Dev)
+	return resource.NewRemoteResourceClient(tracer, conn, clientCfgMapping(grpcutils.ReadGrpcClientConfig(cfg)), cfg.Env == setting.Dev)
 }

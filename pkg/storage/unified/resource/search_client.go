@@ -5,7 +5,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func NewSearchClient(cfg *setting.Cfg, unifiedStorageConfigKey string, unifiedClient ResourceIndexClient, legacyClient ResourceIndexClient) ResourceIndexClient {
+func NewSearchClient(cfg *setting.Cfg, unifiedStorageConfigKey string, unifiedClient ResourceClient, legacyClient ResourceIndexClient) ResourceIndexClient {
 	config, ok := cfg.UnifiedStorage[unifiedStorageConfigKey]
 	if !ok {
 		return legacyClient
