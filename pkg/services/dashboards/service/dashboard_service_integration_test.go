@@ -897,7 +897,8 @@ func permissionScenario(t *testing.T, desc string, canSave bool, fn permissionSc
 			cfg,
 			nil,
 			tracer,
-			nil)
+			nil,
+			dualwrite.ProvideTestService())
 		dashboardPermissions := accesscontrolmock.NewMockedPermissionsService()
 		dashboardService, err := ProvideDashboardServiceImpl(
 			cfg, dashboardStore, folderStore,
@@ -986,7 +987,8 @@ func callSaveWithResult(t *testing.T, cmd dashboards.SaveDashboardCommand, sqlSt
 		cfg,
 		nil,
 		tracer,
-		nil)
+		nil,
+		dualwrite.ProvideTestService())
 	dashboardPermissions := accesscontrolmock.NewMockedPermissionsService()
 	dashboardPermissions.On("SetPermissions",
 		mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
@@ -1038,7 +1040,8 @@ func callSaveWithError(t *testing.T, cmd dashboards.SaveDashboardCommand, sqlSto
 		cfg,
 		nil,
 		tracer,
-		nil)
+		nil,
+		dualwrite.ProvideTestService())
 	service, err := ProvideDashboardServiceImpl(
 		cfg, dashboardStore, folderStore,
 		featuremgmt.WithFeatures(),
@@ -1106,7 +1109,8 @@ func saveTestDashboard(t *testing.T, title string, orgID int64, folderUID string
 		cfg,
 		nil,
 		tracer,
-		nil)
+		nil,
+		dualwrite.ProvideTestService())
 	service, err := ProvideDashboardServiceImpl(
 		cfg, dashboardStore, folderStore,
 		features,
@@ -1180,7 +1184,8 @@ func saveTestFolder(t *testing.T, title string, orgID int64, sqlStore db.DB) *da
 		cfg,
 		nil,
 		tracer,
-		nil)
+		nil,
+		dualwrite.ProvideTestService())
 	folderPermissions.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
 	service, err := ProvideDashboardServiceImpl(
 		cfg, dashboardStore, folderStore,
