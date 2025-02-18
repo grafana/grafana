@@ -46,6 +46,7 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
     option: css({
       padding: MENU_ITEM_PADDING,
       cursor: 'pointer',
+      borderRadius: theme.shape.radius.default,
       width: '100%',
       '&:hover': {
         background: theme.colors.action.hover,
@@ -124,6 +125,12 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
       label: 'combobox-input',
       '> div > div:last-child': {
         pointerEvents: 'none',
+      },
+      '& input': {
+        cursor: 'pointer',
+      },
+      '& input:focus': {
+        cursor: 'text',
       },
     }),
     addaptToParent: css({

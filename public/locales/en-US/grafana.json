@@ -205,6 +205,41 @@
         "recording": "Add labels to your rule."
       }
     },
+    "alertVersionHistory": {
+      "alerting": "Alerting",
+      "alerting-change-description": "This update was made by the alerting system due to other changes. For example, when renaming a contact point that is used for simplified routing, this will update affected rules",
+      "annotations": "Annotations",
+      "compareVersions": "Compare versions",
+      "comparing-versions": "Comparing versions",
+      "condition": "Alert condition",
+      "contactPointRouting": "Contact point routing",
+      "description": "Each time you edit the alert rule, a new version is created. Select two versions below and compare their differences.",
+      "errorloading": "Failed to load alert rule versions",
+      "execErrorState": "Alert state when execution error",
+      "intervalSeconds": "Evaluation interval",
+      "labels": "Labels",
+      "latest": "Latest",
+      "name": "Name",
+      "namespace_uid": "Folder UID",
+      "noDataState": "Alert state when no data",
+      "noVersionsFound": "No versions found for this rule",
+      "paused": "Paused state",
+      "pendingPeriod": "Pending period",
+      "provisioning": "Provisioning",
+      "provisioning-change-description": "Version update was made via provisioning",
+      "queryAndAlertCondition": "Query and alert condition",
+      "reset": "Reset to version {{version}}",
+      "restore": "Restore",
+      "restore-modal": {
+        "body": "Are you sure you want to restore the alert rule definition to this version? All unsaved changes will be lost.",
+        "summary": "Summary of changes to be applied:",
+        "title": "Restore Version"
+      },
+      "rule_group": "Rule group",
+      "unknown": "Unknown",
+      "unknown-change-description": "This update was made prior to the implementation of alert rule version history. The user who made the change is not tracked, but future changes will include the user",
+      "user-id": "User ID {{uid}}"
+    },
     "annotations": {
       "description": "Add more context to your alert notifications.",
       "title": "Configure notification message"
@@ -283,6 +318,9 @@
       "no-delivery-attempts": "No delivery attempts",
       "no-integrations": "No integrations configured",
       "only-firing": "Delivering <1>only firing</1> notifications",
+      "receiver-summary": {
+        "jira": "Creates a \"{{issueType}}\" issue in the \"{{project}}\" project"
+      },
       "telegram": {
         "parse-mode-warning-body": "If you use a <1>parse_mode</1> option other than <3>None</3>, truncation may result in an invalid message, causing the notification to fail. For longer messages, we recommend using an alternative contact method.",
         "parse-mode-warning-title": "Telegram messages are limited to 4096 UTF-8 characters."
@@ -296,6 +334,10 @@
       "label": "Contact point"
     },
     "copy-to-clipboard": "Copy \"{{label}}\" to clipboard",
+    "dag": {
+      "missing-reference": "Expression \"{{source}}\" failed to run because \"{{target}}\" is missing or also failed.",
+      "self-reference": "You can't link an expression to itself"
+    },
     "export": {
       "subtitle": {
         "formats": "Select the format and download the file or copy the contents to clipboard",
@@ -527,6 +569,14 @@
       "deleting": "Deleting",
       "paused": "Paused",
       "recording-rule": "Recording rule"
+    },
+    "rule-view": {
+      "query": {
+        "datasources-na": {
+          "description": "Cannot display the query preview. Some of the data sources used in the queries are not available.",
+          "title": "Query not available"
+        }
+      }
     },
     "rule-viewer": {
       "prometheus-consistency-check": {
@@ -781,6 +831,25 @@
     },
     "search": {
       "placeholder": "Search all"
+    }
+  },
+  "core": {
+    "versionHistory": {
+      "comparison": {
+        "header": {
+          "hide-json-diff": "Hide JSON diff ",
+          "show-json-diff": "Show JSON diff ",
+          "text": "Version {{version}} updated by {{createdBy}} ({{ageString}}) {{message}}"
+        },
+        "select": "Select two versions to start comparing"
+      },
+      "no-properties-changed": "No relevant properties changed",
+      "table": {
+        "updated": "Date",
+        "updatedBy": "Updated By",
+        "version": "Version"
+      },
+      "view-json-diff": "View JSON diff to see all changes"
     }
   },
   "correlations": {
@@ -1284,9 +1353,6 @@
     "panel-queries": {
       "add-query-from-library": "Add query from library"
     },
-    "query-library": {
-      "add-query-button": "Add query"
-    },
     "settings": {
       "variables": {
         "dependencies": {
@@ -1368,7 +1434,6 @@
       "close-tooltip": "Close query history",
       "datasource-a-z": "Data source A-Z",
       "datasource-z-a": "Data source Z-A",
-      "library-history-dropdown": "Open query library or query history",
       "newest-first": "Newest first",
       "oldest-first": "Oldest first",
       "query-history": "Query history",
@@ -1472,6 +1537,7 @@
       "switch-datasource-button": "Switch data source and run query"
     },
     "secondary-actions": {
+      "add-from-query-library": "Add query from library",
       "query-add-button": "Add query",
       "query-add-button-aria-label": "Add query",
       "query-history-button": "Query history",
@@ -1699,6 +1765,7 @@
       "actions-confirmation-label": "Confirmation message",
       "actions-confirmation-message": "Provide a descriptive prompt to confirm or cancel the action.",
       "footer-add-annotation": "Add annotation",
+      "footer-click-to-action": "Click to {{actionTitle}}",
       "footer-click-to-navigate": "Click to open {{linkTitle}}"
     }
   },
@@ -2011,6 +2078,10 @@
   },
   "logs": {
     "infinite-scroll": {
+      "end-of-range": "End of the selected time range.",
+      "load-more": "Scroll to load more",
+      "load-newer": "Loading newer logs...",
+      "load-older": "Loading older logs...",
       "older-logs": "Older logs"
     },
     "log-details": {
@@ -2781,17 +2852,30 @@
       },
       "labels": {
         "contactGrafanaLabs": "Contact Grafana Labs",
+        "customLinks": "Custom links ",
+        "customLinksTooltip": "These links are provided by the plugin developer to offer additional, developer-specific resources and information",
         "dependencies": "Dependencies",
+        "documentation": "Documentation",
         "downloads": "Downloads",
         "from": "From",
         "installedVersion": "Installed Version",
         "lastCommitDate": "Last commit date:",
         "latestVersion": "Latest Version",
-        "links": "Links ",
+        "license": "License",
+        "raiseAnIssue": "Raise an issue",
         "reportAbuse": "Report a concern ",
+        "reportAbuseTooltip": "Report issues related to malicious or harmful plugins directly to Grafana Labs.",
+        "repository": "Repository",
         "signature": "Signature",
         "status": "Status",
         "updatedAt": "Last updated:"
+      },
+      "modal": {
+        "cancel": "Cancel",
+        "copyEmail": "Copy email address",
+        "description": "This feature is for reporting malicious or harmful behaviour within plugins. For plugin concerns, email us at: ",
+        "node": "Note: For general plugin issues like bugs or feature requests, please contact the plugin author using the provided links. ",
+        "title": "Report a plugin concern"
       }
     },
     "empty-state": {

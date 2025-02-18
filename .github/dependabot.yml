@@ -8,7 +8,7 @@ updates:
     directories:
       - "/"
       - "/apps/playlist"
-      - "/apps/investigation"
+      - "/apps/investigations"
       - "/pkg/aggregator"
       - "/pkg/apimachinery"
       - "/pkg/apiserver"

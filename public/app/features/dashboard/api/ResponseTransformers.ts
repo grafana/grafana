@@ -160,7 +160,7 @@ export function ensureV2Response(
       autoRefreshIntervals: dashboard.timepicker?.refresh_intervals || timeSettingsDefaults.autoRefreshIntervals,
       fiscalYearStartMonth: dashboard.fiscalYearStartMonth || timeSettingsDefaults.fiscalYearStartMonth,
       hideTimepicker: dashboard.timepicker?.hidden || timeSettingsDefaults.hideTimepicker,
-      quickRanges: dashboard.timepicker?.time_options || timeSettingsDefaults.quickRanges,
+      quickRanges: dashboard.timepicker?.quick_ranges,
       // casting WeekStart here to avoid editing old schema
       weekStart: (dashboard.weekStart as WeekStart) || timeSettingsDefaults.weekStart,
       nowDelay: dashboard.timepicker?.nowDelay || timeSettingsDefaults.nowDelay,
@@ -252,7 +252,7 @@ export function ensureV1Response(
         timepicker: {
           refresh_intervals: spec.timeSettings.autoRefreshIntervals,
           hidden: spec.timeSettings.hideTimepicker,
-          time_options: spec.timeSettings.quickRanges,
+          quick_ranges: spec.timeSettings.quickRanges,
           nowDelay: spec.timeSettings.nowDelay,
         },
         fiscalYearStartMonth: spec.timeSettings.fiscalYearStartMonth,
@@ -383,7 +383,7 @@ function buildElement(p: Panel): [PanelKind | LibraryPanelKind, string] {
       },
     };
 
-    return [panelKind, p.id!.toString()];
+    return [panelKind, `panel-${p.id}`];
   } else {
     // PanelKind
 
@@ -433,7 +433,7 @@ function buildElement(p: Panel): [PanelKind | LibraryPanelKind, string] {
       },
     };
 
-    return [panelKind, p.id!.toString()];
+    return [panelKind, `panel-${p.id}`];
   }
 }
 
@@ -533,9 +533,7 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
             sort: transformSortVariableToEnum(v.sort),
             query: {
               kind: v.datasource?.type || getDefaultDatasourceType(),
-              spec: {
-                ...v.query,
-              },
+              spec: query,
             },
           },
         };
