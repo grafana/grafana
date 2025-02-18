@@ -375,9 +375,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "7"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "8"]
     ],
-    "packages/grafana-data/test/__mocks__/pluginMocks.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
     "packages/grafana-e2e-selectors/src/resolver.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
