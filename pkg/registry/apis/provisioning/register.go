@@ -25,6 +25,7 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apis/dashboard"
 	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
@@ -851,6 +852,7 @@ func (b *APIBuilder) tryRunningOnlyUnifiedStorage() error {
 		}
 	}
 
+	logger := logging.DefaultLogger.With("logger", "provisioning startup")
 	mode5 := func(gr schema.GroupResource) error {
 		status, _ := b.storageStatus.Status(ctx, gr)
 		if !status.ReadUnified {
@@ -860,6 +862,7 @@ func (b *APIBuilder) tryRunningOnlyUnifiedStorage() error {
 			status.Runtime = false
 			status.Migrated = time.Now().UnixMilli()
 			_, err = b.storageStatus.Update(ctx, status)
+			logger.Info("set unified storage access", "group", gr.Group, "resource", gr.Resource)
 			return err
 		}
 		return nil // already reading unified
