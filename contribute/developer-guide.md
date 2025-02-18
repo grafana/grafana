@@ -318,7 +318,7 @@ Previously, Grafana used Yarn PnP to install frontend dependencies, which requir
 
 ### Too many open files when running `make run`
 
-Depending on your environment, you may have to increase the maximum number of open files allowed. For the rest of this section, we will assume you are on a UNIX-like OS (for example, Linux or macOS), where you can control the maximum number of open files through the [ulimit](https://ss64.com/bash/ulimit.html) shell command.
+Depending on your environment, you may need to increase the maximum number of open files allowed. For the rest of this section, we will assume you are on a UNIX-like OS (for example, Linux or macOS), where you can control the maximum number of open files through the [ulimit](https://ss64.com/bash/ulimit.html) shell command.
 
 To see how many open files are allowed, run:
 
@@ -363,7 +363,7 @@ If that happens to you, chances are you've already set a lower limit and your sh
 
 ### System limit for number of file watchers reached while running `yarn start`
 
-Depending on your environment, you may have to increase the number of file watchers allowed by inotify package to watch the filesystem changes. You may encounter an error `Error: ENOSPC: System limit for number of file watchers reached` otherwise.
+Depending on your environment, you may need to increase the number of file watchers allowed by `inotify` package to monitor filesystem changes. You may encounter an error `Error: ENOSPC: System limit for number of file watchers reached` otherwise.
 
 Edit the system config file to insert the new value for file watchers limit:
 
