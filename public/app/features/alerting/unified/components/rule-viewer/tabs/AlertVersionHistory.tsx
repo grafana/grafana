@@ -110,6 +110,8 @@ export function AlertVersionHistory({ ruleUid }: AlertVersionHistoryProps) {
     setNewVersion(undefined);
   }
 
+  const isNewLatest = ruleVersions[0].grafana_alert.version === newVersion?.grafana_alert.version;
+
   return (
     <Stack direction="column" gap={2}>
       <Text variant="body">
@@ -141,7 +143,7 @@ export function AlertVersionHistory({ ruleUid }: AlertVersionHistoryProps) {
               newVersion={newVersion}
               preprocessVersion={preprocessRuleForDiffDisplay}
             />
-            {config.featureToggles.alertingRuleVersionHistoryRestore && (
+            {config.featureToggles.alertingRuleVersionHistoryRestore && isNewLatest && (
               <Box paddingTop={2}>
                 <Stack justifyContent="flex-end">
                   <Button
@@ -162,8 +164,8 @@ export function AlertVersionHistory({ ruleUid }: AlertVersionHistoryProps) {
           {showConfirmModal && (
             <ConfirmVersionRestoreModal
               ruleIdentifier={ruleIdentifier}
-              baseVersion={oldVersion}
-              versionToRestore={newVersion}
+              baseVersion={newVersion}
+              versionToRestore={oldVersion}
               isOpen={showConfirmModal}
               onDismiss={() => setShowConfirmModal(false)}
             />
