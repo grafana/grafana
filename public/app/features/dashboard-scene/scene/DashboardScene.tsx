@@ -604,10 +604,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     return vizPanel;
   }
 
-  public switchLayout(layout: DashboardLayoutManager) {
-    this.setState({ body: layout });
-  }
-
   /**
    * Called by the SceneQueryRunner to privide contextural parameters (tracking) props for the request
    */

@@ -66,8 +66,9 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
 
   return (
     <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Custom}>
-      {editPanel && <editPanel.Component model={editPanel} />}
-      {!editPanel && (
+      {editPanel ? (
+        <editPanel.Component model={editPanel} />
+      ) : (
         <DashboardEditPaneSplitter
           dashboard={model}
           isEditing={isEditing}

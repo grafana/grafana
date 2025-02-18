@@ -45,7 +45,7 @@ import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
 import { AngularDeprecation } from '../scene/angular/AngularDeprecation';
 import { DashboardGridItem, RepeatDirection } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
-import { DragManager } from '../scene/layout-responsive-grid/DragManager';
+import { LayoutOrchestrator } from '../scene/layout-manager/LayoutOrchestrator';
 import { RowActions } from '../scene/row-actions/RowActions';
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
@@ -250,7 +250,6 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
       uid,
       version: oldModel.version,
     }),
-    new DragManager({}),
   ];
   const dashboardScene = new DashboardScene({
     uid,
@@ -265,11 +264,13 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
     title: oldModel.title,
     version: oldModel.version,
     scopeMeta,
-    body: new DefaultGridLayoutManager({
-      grid: new SceneGridLayout({
-        isLazy: !(dto.preload || contextSrv.user.authenticatedBy === 'render'),
-        children: createSceneObjectsForPanels(oldModel.panels),
-        $behaviors: [trackIfEmpty],
+    body: new LayoutOrchestrator({
+      manager: new DefaultGridLayoutManager({
+        grid: new SceneGridLayout({
+          isLazy: !(dto.preload || contextSrv.user.authenticatedBy === 'render'),
+          children: createSceneObjectsForPanels(oldModel.panels),
+          $behaviors: [trackIfEmpty],
+        }),
       }),
     }),
     $timeRange: new SceneTimeRange({

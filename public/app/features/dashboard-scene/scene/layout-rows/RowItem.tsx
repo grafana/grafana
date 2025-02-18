@@ -7,10 +7,10 @@ import { SceneObjectState, SceneObjectBase, SceneComponentProps, sceneGraph } fr
 import { Button, Icon, Input, RadioButtonGroup, Switch, useElementSelection, useStyles2 } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
+import { getDefaultVizPanel, getDashboardSceneFor } from 'app/features/dashboard-scene/utils/utils';
 
-import { getDashboardSceneFor, getDefaultVizPanel } from '../../utils/utils';
 import { useLayoutCategory } from '../layouts-shared/DashboardLayoutSelector';
-import { DashboardLayoutManager, EditableDashboardElement, LayoutParent } from '../types';
+import { DashboardLayoutManager, LayoutParent, EditableDashboardElement } from '../types';
 
 import { RowsLayoutManager } from './RowsLayoutManager';
 

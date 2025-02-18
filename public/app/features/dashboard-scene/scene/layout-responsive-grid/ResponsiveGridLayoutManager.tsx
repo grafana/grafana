@@ -3,7 +3,9 @@ import { SceneComponentProps, SceneObjectBase, SceneObjectState, VizPanel } from
 import { Select } from '@grafana/ui';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
-import { getDashboardSceneFor, getPanelIdForVizPanel, getVizPanelKeyForPanelId } from '../../utils/utils';
+import { getPanelIdForVizPanel, getVizPanelKeyForPanelId } from '../../utils/utils';
+import { LayoutOrchestrator } from '../layout-manager/LayoutOrchestrator';
+import { getClosest } from '../layout-manager/utils';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
 import { DashboardLayoutManager, LayoutRegistryItem } from '../types';
 
@@ -36,7 +38,8 @@ export class ResponsiveGridLayoutManager
   public addNewRow(): void {
     const rowsLayout = RowsLayoutManager.createFromLayout(this);
     rowsLayout.addNewRow();
-    getDashboardSceneFor(this).switchLayout(rowsLayout);
+    const layoutOrchestrator = getClosest(this, (s) => (s instanceof LayoutOrchestrator ? s : undefined));
+    layoutOrchestrator?.switchLayout(rowsLayout);
   }
 
   public getNextPanelId(): number {

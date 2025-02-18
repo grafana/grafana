@@ -4,30 +4,24 @@ import { Select } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
-import { DashboardLayoutManager, isLayoutParent, LayoutRegistryItem } from '../types';
+import { LayoutOrchestrator } from '../layout-manager/LayoutOrchestrator';
+import { getClosest } from '../layout-manager/utils';
+import { DashboardLayoutManager, LayoutRegistryItem } from '../types';
 
 import { layoutRegistry } from './layoutRegistry';
-import { findParentLayout } from './utils';
 
 export interface Props {
-  layoutManager: DashboardLayoutManager;
+  layoutOrchestrator: LayoutOrchestrator;
 }
 
-export function DashboardLayoutSelector({ layoutManager }: Props) {
-  const options = useMemo(() => {
-    const parentLayout = findParentLayout(layoutManager);
-    const parentLayoutId = parentLayout?.getDescriptor().id;
+export function DashboardLayoutSelector({ layoutOrchestrator }: Props) {
+  const { manager } = layoutOrchestrator.useState();
+  const currentLayoutId = useMemo(() => manager.getDescriptor().id, [manager]);
+  const options = layoutRegistry.list().map((layout) => ({
+    label: layout.name,
+    value: layout,
+  }));
 
-    return layoutRegistry
-      .list()
-      .filter((layout) => layout.id !== parentLayoutId)
-      .map((layout) => ({
-        label: layout.name,
-        value: layout,
-      }));
-  }, [layoutManager]);
-
-  const currentLayoutId = layoutManager.getDescriptor().id;
   const currentOption = options.find((option) => option.value.id === currentLayoutId);
 
   return (
@@ -36,7 +30,7 @@ export function DashboardLayoutSelector({ layoutManager }: Props) {
       value={currentOption}
       onChange={(option) => {
         if (option.value?.id !== currentOption?.value.id) {
-          changeLayoutTo(layoutManager, option.value!);
+          changeLayoutTo(layoutOrchestrator, option.value!);
         }
       }}
     />
@@ -51,14 +45,20 @@ export function useLayoutCategory(layoutManager: DashboardLayoutManager) {
       isOpenDefault: true,
     });
 
-    layoutCategory.addItem(
-      new OptionsPaneItemDescriptor({
-        title: 'Type',
-        render: function renderTitle() {
-          return <DashboardLayoutSelector layoutManager={layoutManager} />;
-        },
-      })
-    );
+    console.log(layoutManager);
+    const layoutOrchestrator = getClosest(layoutManager, (s) => (s instanceof LayoutOrchestrator ? s : undefined));
+    console.log(`Layout orchestrator: ${layoutOrchestrator}`);
+    if (layoutOrchestrator) {
+      console.log('orchestrator found!');
+      layoutCategory.addItem(
+        new OptionsPaneItemDescriptor({
+          title: 'Type',
+          render: function renderTitle() {
+            return <DashboardLayoutSelector layoutOrchestrator={layoutOrchestrator} />;
+          },
+        })
+      );
+    }
 
     if (layoutManager.getOptions) {
       for (const option of layoutManager.getOptions()) {
@@ -70,9 +70,6 @@ export function useLayoutCategory(layoutManager: DashboardLayoutManager) {
   }, [layoutManager]);
 }
 
-function changeLayoutTo(currentLayout: DashboardLayoutManager, newLayoutDescriptor: LayoutRegistryItem) {
-  const layoutParent = currentLayout.parent;
-  if (layoutParent && isLayoutParent(layoutParent)) {
-    layoutParent.switchLayout(newLayoutDescriptor.createFromLayout(currentLayout));
-  }
+function changeLayoutTo(layoutOrchestrator: LayoutOrchestrator, newLayoutDescriptor: LayoutRegistryItem) {
+  layoutOrchestrator.switchLayout(newLayoutDescriptor.createFromLayout(layoutOrchestrator.state.manager));
 }

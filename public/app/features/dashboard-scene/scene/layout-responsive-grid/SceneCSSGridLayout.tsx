@@ -5,7 +5,10 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { SceneLayout, SceneObject, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 
-import { DragManager, DropZone } from './DragManager';
+import { DropZone } from '../layout-manager/DragManager';
+import { LayoutOrchestrator } from '../layout-manager/LayoutOrchestrator';
+import { getClosest } from '../layout-manager/utils';
+
 import { ResponsiveGridItem, ResponsiveGridItemRenderProps } from './ResponsiveGridItem';
 
 export interface SceneCSSGridLayoutState extends SceneObjectState, SceneCSSGridLayoutOptions {
@@ -48,9 +51,10 @@ export interface SceneCSSGridLayoutOptions {
 }
 
 export class SceneCSSGridLayout extends SceneObjectBase<SceneCSSGridLayoutState> implements SceneLayout {
+  public layoutManager: LayoutOrchestrator | undefined;
+
   public static Component = SceneCSSGridLayoutRenderer;
 
-  public dragManager: DragManager | undefined;
   public constructor(state: Partial<SceneCSSGridLayoutState>) {
     super({
       rowGap: 1,
@@ -65,11 +69,7 @@ export class SceneCSSGridLayout extends SceneObjectBase<SceneCSSGridLayoutState>
   }
 
   private activationHandler = () => {
-    const dragManager = findDragManager(this);
-    if (dragManager) {
-      this.dragManager = dragManager;
-      this.dragManager.registerLayout(this);
-    }
+    this.layoutManager = findLayoutManager(this);
   };
 
   public isDraggable(): boolean {
@@ -89,14 +89,21 @@ export class SceneCSSGridLayout extends SceneObjectBase<SceneCSSGridLayoutState>
   };
 
   public onPointerDown = (e: PointerEvent, panel: VizPanel) => {
-    if (!this.container || this.cannotDrag(e.target) || !this.dragManager) {
+    console.log('pointer down');
+    const noContainer = !this.container;
+    const cannotDrag = this.cannotDrag(e.target);
+    const noLayoutManager = !this.layoutManager;
+    if (noContainer || cannotDrag || !this.layoutManager) {
+      console.log(
+        `${noContainer ? 'No container, ' : ''}${cannotDrag ? 'Cannot drag, ' : ''}${noLayoutManager ? 'No layout manager' : ''}`
+      );
       return;
     }
 
     e.preventDefault();
     e.stopPropagation();
 
-    this.dragManager.onDragStart(e.nativeEvent, this, panel);
+    this.layoutManager.onDragStart(e.nativeEvent, this, panel);
   };
 
   private cannotDrag(el: EventTarget) {
@@ -137,16 +144,17 @@ export class SceneCSSGridLayout extends SceneObjectBase<SceneCSSGridLayoutState>
   }
 }
 
-const dragManagerDefaults = { activeItem: undefined, activeLayout: undefined, dropZone: undefined };
+const dragManagerDefaults = { activeItemRef: undefined, activeLayoutRef: undefined, dropZone: undefined };
 function SceneCSSGridLayoutRenderer({ model }: ResponsiveGridItemRenderProps<SceneCSSGridLayout>) {
   const { children, isHidden } = model.useState();
   const styles = useStyles2(getStyles, model.state);
   const containerRef = useRef<HTMLDivElement>(null);
   const oldDropZone = useRef<DropZone>();
-  // Probably a rules-of-hooks violation waiting to happen. Need to think of a better solution
-  const { activeItem, activeLayout, dropZone } = model.dragManager?.useState() ?? dragManagerDefaults;
 
-  const currentLayoutIsActive = model === activeLayout && activeItem;
+  // Probably a rules-of-hooks violation waiting to happen. Need to think of a better solution
+  const { activeItemRef, activeLayoutRef, dropZone } = model.layoutManager?.useState() ?? dragManagerDefaults;
+
+  const currentLayoutIsActive = model === activeLayoutRef?.resolve() && activeItemRef?.resolve();
 
   if (!currentLayoutIsActive && containerRef.current) {
     containerRef.current.style.overflow = '';
@@ -171,17 +179,17 @@ function SceneCSSGridLayoutRenderer({ model }: ResponsiveGridItemRenderProps<Sce
       className={styles.container}
       ref={containerRef}
       onPointerEnter={() => {
-        if (!containerRef.current || model === activeLayout || !model.dragManager) {
+        if (!containerRef.current || model === activeLayoutRef?.resolve() || !model.layoutManager) {
           return;
         }
 
-        model.dragManager.dropZones = [];
-        model.dragManager.setState({ activeLayout: model, dropZone: undefined });
+        model.layoutManager.dropZones = [];
+        model.layoutManager.setState({ activeLayoutRef: model.getRef(), dropZone: undefined });
 
         // Probably a better way of doing this, but we have to wait for react to add the new placeholder
         // before we calculate the drop zones
         setTimeout(() => {
-          model.dragManager?.refreshDropZones();
+          model.layoutManager?.refreshDropZones();
         }, 1);
       }}
     >
@@ -190,7 +198,7 @@ function SceneCSSGridLayoutRenderer({ model }: ResponsiveGridItemRenderProps<Sce
         // const Wrapper = isLazy ? LazyLoader : 'div';
         const Wrapper = 'div';
         const isHidden = 'isHidden' in item.state && typeof item.state.isHidden === 'boolean' && item.state.isHidden;
-        const isDragging = item === activeItem;
+        const isDragging = item === activeItemRef?.resolve();
         if (isDragging) {
           return null;
         }
@@ -323,15 +331,10 @@ function closestScroll(el?: HTMLElement | null): {
   return el ? closestScroll(el.parentElement) : { scrollTop: 0, scrollTopMax: 0, wrapper: el };
 }
 
-function findDragManager(root: SceneObject | undefined) {
+function findLayoutManager(root: SceneObject | undefined) {
   if (!root) {
     return undefined;
   }
 
-  const match = root.state.$behaviors?.find((b) => b instanceof DragManager);
-  if (match) {
-    return match;
-  }
-
-  return findDragManager(root.parent);
+  return getClosest(root, (s) => (s instanceof LayoutOrchestrator ? s : undefined));
 }

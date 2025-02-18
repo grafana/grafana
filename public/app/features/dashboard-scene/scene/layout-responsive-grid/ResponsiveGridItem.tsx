@@ -83,6 +83,7 @@ export class ResponsiveGridItem extends SceneObjectBase<ResponsiveGridItemState>
     const { body } = model.useState();
     const style = useStyles2(getStyles, model.state);
 
+    console.log(`Body?: ${!!body}`);
     if (!body) {
       return null;
     }

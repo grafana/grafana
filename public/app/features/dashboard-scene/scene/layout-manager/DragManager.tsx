@@ -4,8 +4,8 @@ import { createRoot, Root } from 'react-dom/client';
 import { sceneGraph, SceneObject, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 import { getPortalContainer } from '@grafana/ui';
 
-import { ResponsiveGridItem } from './ResponsiveGridItem';
-import { Rect, SceneCSSGridLayout } from './SceneCSSGridLayout';
+import { ResponsiveGridItem } from '../layout-responsive-grid/ResponsiveGridItem';
+import { Rect, SceneCSSGridLayout } from '../layout-responsive-grid/SceneCSSGridLayout';
 
 export type DropZone = Rect & { layoutKey: string };
 

@@ -5,6 +5,7 @@ import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { DashboardScene } from '../scene/DashboardScene';
+import { LayoutOrchestrator } from '../scene/layout-manager/LayoutOrchestrator';
 import { useLayoutCategory } from '../scene/layouts-shared/DashboardLayoutSelector';
 import { EditableDashboardElement } from '../scene/types';
 
@@ -43,7 +44,7 @@ export class DashboardEditableElement implements EditableDashboardElement {
         );
     }, [dashboard]);
 
-    const layoutCategory = useLayoutCategory(body);
+    const layoutCategory = useLayoutCategory((body as LayoutOrchestrator).state.manager);
 
     return [dashboardOptions, layoutCategory];
   }
