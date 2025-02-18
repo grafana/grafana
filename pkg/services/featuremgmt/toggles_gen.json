@@ -2228,14 +2228,14 @@
     {
       "metadata": {
         "name": "kubernetesCliDashboardsFolders",
-        "resourceVersion": "1739913074909",
+        "resourceVersion": "1739913583714",
         "creationTimestamp": "2025-02-18T21:15:35Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2025-02-18 21:11:14.90999 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2025-02-18 21:19:43.714638 +0000 UTC"
         }
       },
       "spec": {
-        "description": "Use the Folders Service V2, and route Folder Service requests to k8s",
+        "description": "Route the folder and dashboard service requests to k8s",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-app-platform-squad"
       }

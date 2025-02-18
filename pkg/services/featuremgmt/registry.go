@@ -688,7 +688,7 @@ var (
 		},
 		{
 			Name:        "kubernetesCliDashboardsFolders",
-			Description: "Use the Folders Service V2, and route Folder Service requests to k8s",
+			Description: "Route the folder and dashboard service requests to k8s",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaAppPlatformSquad,
 		},
