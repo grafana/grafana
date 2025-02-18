@@ -88,7 +88,7 @@ func (m *service) StartMigration(ctx context.Context, gr schema.GroupResource, k
 			return v, fmt.Errorf("already migrated")
 		}
 		if key != v.UpdateKey {
-			return v, fmt.Errorf("key mismatch")
+			return v, fmt.Errorf("migration key mismatch")
 		}
 		if v.Migrating > 0 {
 			return v, fmt.Errorf("migration in progress")
@@ -120,7 +120,7 @@ func (m *service) Update(ctx context.Context, status StorageStatus) (StorageStat
 		return v, fmt.Errorf("no running status")
 	}
 	if status.UpdateKey != v.UpdateKey {
-		return v, fmt.Errorf("key mismatch")
+		return v, fmt.Errorf("key mismatch (resource: %s, expected:%d, received: %d)", v.Resource, v.UpdateKey, status.UpdateKey)
 	}
 	if status.Migrating > 0 {
 		return v, fmt.Errorf("update can not change migrating status")
