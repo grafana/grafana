@@ -235,7 +235,7 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 		emptyFrame.SetMeta(&data.FrameMeta{
 			ExecutedQueryString: query,
 		})
-		if backend.IsDownstreamError(err) {
+		if backend.IsDownstreamError(err) || isProcessingDownstreamError(err) {
 			source = backend.ErrorSourceDownstream
 		}
 		queryResult.dataResponse.Error = fmt.Errorf("%s: %w", frameErr, err)
@@ -645,4 +645,18 @@ func epochPrecisionToMS(value float64) float64 {
 	}
 
 	return value
+}
+
+func isProcessingDownstreamError(err error) bool {
+	downstreamErrors := []error{
+		data.ErrorInputFieldsWithoutRows,
+		data.ErrorSeriesUnsorted,
+		data.ErrorNullTimeValues,
+	}
+	for _, e := range downstreamErrors {
+		if errors.Is(err, e) {
+			return true
+		}
+	}
+	return false
 }
