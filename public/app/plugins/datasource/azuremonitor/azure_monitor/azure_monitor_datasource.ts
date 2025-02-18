@@ -249,7 +249,14 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<
   async runAzureResourceGraphQuery(subscriptionId: string, resourceGroup?: string) {
     const datasources = await getDataSourceSrv().getList();
     const azureDs = datasources.find((ds) => ds.type === 'grafana-azure-monitor-datasource');
-    const ds = (await getDataSourceSrv().get(azureDs?.uid)) as Datasource;
+    const rawDs = await getDataSourceSrv().get(azureDs?.uid);
+    let ds;
+
+    if (rawDs instanceof Datasource) {
+      ds = rawDs;
+    } else {
+      throw new Error('Datasource is not of expected type.');
+    }
 
     const query = `
       Resources

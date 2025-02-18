@@ -62,7 +62,7 @@ export default class UrlBuilder {
       const { subscription, resourceGroup, metricNamespace, resourceName } = query;
       resourceUri = UrlBuilder.buildResourceUri(templateSrv, {
         subscription,
-        resourceGroup, 
+        resourceGroup,
         metricNamespace,
         resourceName,
       });
