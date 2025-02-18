@@ -2,6 +2,7 @@ import { SceneComponentProps, SceneCSSGridLayout, SceneObjectBase, SceneObjectSt
 import { t } from 'app/core/internationalization';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
+import { joinCloneKeys } from '../../utils/clone';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { getDashboardSceneFor, getGridItemKeyForPanelId, getVizPanelKeyForPanelId } from '../../utils/utils';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
@@ -11,7 +12,6 @@ import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
 import { ResponsiveGridItem } from './ResponsiveGridItem';
 import { getEditOptions } from './ResponsiveGridLayoutManagerEditor';
-import { joinCloneKeys } from '../../utils/clone';
 
 interface ResponsiveGridLayoutManagerState extends SceneObjectState {
   layout: SceneCSSGridLayout;
