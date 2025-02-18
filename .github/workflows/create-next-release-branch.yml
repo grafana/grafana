@@ -10,6 +10,9 @@ on:
         description: The release branch to increment (eg providing `release-11.2.3` will result in `release-11.2.4` being created)
         type: string
         required: true
+    secrets:
+      GRAFANA_MISC_STATS_API_KEY: ${{ secrets.GRAFANA_MISC_STATS_API_KEY }}
+      GRAFANABOT_FORUM_KEY: ${{ secrets.GRAFANABOT_FORUM_KEY }}
     outputs:
       branch:
         description: The new branch that was created
@@ -22,6 +25,9 @@ on:
         description: The release branch to increment (eg providing `release-11.2.3` will result in `release-11.2.4` being created)
         type: string
         required: true
+    secrets:
+      GRAFANA_MISC_STATS_API_KEY: ${{ secrets.GRAFANA_MISC_STATS_API_KEY }}
+      GRAFANABOT_FORUM_KEY: ${{ secrets.GRAFANABOT_FORUM_KEY }}
 jobs:
   main:
     runs-on: ubuntu-latest

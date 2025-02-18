@@ -15,6 +15,9 @@ on:
         description: Owner/repo of the repository where the branch is created (e.g. 'grafana/grafana')
         required: true
         type: string
+    secrets:
+      GRAFANA_MISC_STATS_API_KEY: ${{ secrets.GRAFANA_MISC_STATS_API_KEY }}
+      GRAFANABOT_FORUM_KEY: ${{ secrets.GRAFANABOT_FORUM_KEY }}
   workflow_dispatch:
     inputs:
       from:
@@ -29,6 +32,9 @@ on:
         description: Owner/repo of the repository where the branch is created (e.g. 'grafana/grafana')
         required: true
         type: string
+    secrets:
+      GRAFANA_MISC_STATS_API_KEY: ${{ secrets.GRAFANA_MISC_STATS_API_KEY }}
+      GRAFANABOT_FORUM_KEY: ${{ secrets.GRAFANABOT_FORUM_KEY }}
 
 jobs:
   main:
