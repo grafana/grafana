@@ -12,7 +12,7 @@ import { KioskMode } from 'app/types';
 import { RouteDescriptor } from '../../navigation/types';
 import { buildBreadcrumbs } from '../Breadcrumbs/utils';
 
-import { duplicateUnifiedHistoryEntry } from './History/eventsTracking';
+import { logDuplicateUnifiedHistoryEntryEvent } from './History/eventsTracking';
 import { ReturnToPreviousProps } from './ReturnToPrevious/ReturnToPrevious';
 import { HistoryEntry, TOP_BAR_LEVEL_HEIGHT } from './types';
 
@@ -155,7 +155,7 @@ export class AppChromeService {
       entries[0] = newEntry;
     } else {
       if (lastEntry && lastEntry.name === newEntry.name) {
-        duplicateUnifiedHistoryEntry({
+        logDuplicateUnifiedHistoryEntryEvent({
           entryName: newEntry.name,
           lastEntryName: lastEntry.name,
           newEntryURL: newEntry.url,
