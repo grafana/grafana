@@ -58,6 +58,9 @@ jobs:
     name: Create next release branch (Grafana)
     needs: setup
     uses: ./.github/workflows/create-next-release-branch.yml
+    secrets:
+      GRAFANA_MISC_STATS_API_KEY: ${{ secrets.GRAFANA_MISC_STATS_API_KEY }}
+      GRAFANABOT_FORUM_KEY: ${{ secrets.GRAFANABOT_FORUM_KEY }}
     with:
       ownerRepo: 'grafana/grafana'
       source: ${{ needs.setup.outputs.release_branch }}
@@ -65,6 +68,9 @@ jobs:
     name: Create next release branch (Grafana Enterprise)
     needs: setup
     uses: ./.github/workflows/create-next-release-branch.yml
+    secrets:
+      GRAFANA_MISC_STATS_API_KEY: ${{ secrets.GRAFANA_MISC_STATS_API_KEY }}
+      GRAFANABOT_FORUM_KEY: ${{ secrets.GRAFANABOT_FORUM_KEY }}
     with:
       ownerRepo: 'grafana/grafana'
       source: ${{ needs.setup.outputs.release_branch }}
@@ -73,6 +79,9 @@ jobs:
       - setup
       - create_next_release_branch_grafana
     uses: ./.github/workflows/migrate-prs.yml
+    secrets:
+      GRAFANA_MISC_STATS_API_KEY: ${{ secrets.GRAFANA_MISC_STATS_API_KEY }}
+      GRAFANABOT_FORUM_KEY: ${{ secrets.GRAFANABOT_FORUM_KEY }}
     with:
       ownerRepo: 'grafana/grafana'
       from: ${{ needs.setup.outputs.release_branch }}
@@ -82,6 +91,9 @@ jobs:
       - setup
       - create_next_release_branch_enterprise
     uses: ./.github/workflows/migrate-prs.yml
+    secrets:
+      GRAFANA_MISC_STATS_API_KEY: ${{ secrets.GRAFANA_MISC_STATS_API_KEY }}
+      GRAFANABOT_FORUM_KEY: ${{ secrets.GRAFANABOT_FORUM_KEY }}
     with:
       ownerRepo: 'grafana/grafana-enterprise'
       from: ${{ needs.setup.outputs.release_branch }}
