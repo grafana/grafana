@@ -59,6 +59,12 @@ jobs:
     # we don't do always() so as to not run even if the workflow is cancelled
     if: github.repository == 'grafana/grafana' && (success() || failure())
     steps:
+      - name: Check out repository
+        uses: actions/checkout@v4.2.2
+      - name: Setup Go environment
+        uses: actions/setup-go@v5.3.0
+        with:
+          go-version-file: go.work
       - uses: actions/download-artifact@v4
         with:
           pattern: '*-cov'
