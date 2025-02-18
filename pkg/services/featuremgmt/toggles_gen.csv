@@ -86,7 +86,6 @@ panelMonitoring,GA,@grafana/dataviz-squad,false,false,true
 enableNativeHTTPHistogram,experimental,@grafana/grafana-backend-services-squad,false,true,false
 disableClassicHTTPHistogram,experimental,@grafana/grafana-backend-services-squad,false,true,false
 formatString,GA,@grafana/dataviz-squad,false,false,true
-transformationsVariableSupport,GA,@grafana/dataviz-squad,false,false,true
 kubernetesPlaylists,GA,@grafana/grafana-app-platform-squad,false,true,false
 kubernetesSnapshots,experimental,@grafana/grafana-app-platform-squad,false,true,false
 kubernetesDashboards,experimental,@grafana/grafana-app-platform-squad,false,false,true
@@ -102,7 +101,6 @@ recoveryThreshold,GA,@grafana/alerting-squad,false,true,false
 lokiStructuredMetadata,GA,@grafana/observability-logs,false,false,false
 teamHttpHeaders,preview,@grafana/identity-access-team,false,false,false
 cachingOptimizeSerializationMemoryUsage,experimental,@grafana/grafana-operator-experience-squad,false,false,false
-managedPluginsInstall,GA,@grafana/plugins-platform-backend,false,false,false
 prometheusPromQAIL,experimental,@grafana/oss-big-tent,false,false,true
 prometheusCodeModeMetricNamesSearch,experimental,@grafana/oss-big-tent,false,false,true
 addFieldFromCalculationStatFunctions,GA,@grafana/dataviz-squad,false,false,true
@@ -229,7 +227,6 @@ teamHttpHeadersMimir,experimental,@grafana/identity-access-team,false,false,fals
 ABTestFeatureToggleA,experimental,@grafana/sharing-squad,false,false,false
 templateVariablesUsesCombobox,experimental,@grafana/grafana-frontend-platform,false,false,true
 ABTestFeatureToggleB,experimental,@grafana/sharing-squad,false,false,false
-queryLibraryDashboards,experimental,@grafana/grafana-frontend-platform,false,false,false
 grafanaAdvisor,experimental,@grafana/plugins-platform-backend,false,false,false
 elasticsearchImprovedParsing,experimental,@grafana/aws-datasources,false,false,false
 exploreMetricsUseExternalAppPlugin,experimental,@grafana/observability-metrics,false,true,true
@@ -241,3 +238,6 @@ alertingAlertmanagerExtraDedupStageStopPipeline,experimental,@grafana/alerting-s
 newLogsPanel,experimental,@grafana/observability-logs,false,false,true
 grafanaconThemes,experimental,@grafana/grafana-frontend-platform,false,true,false
 pluginsCDNSyncLoader,experimental,@grafana/plugins-platform-backend,false,false,false
+alertingJiraIntegration,experimental,@grafana/alerting-squad,false,false,true
+alertingRuleVersionHistoryRestore,experimental,@grafana/alerting-squad,false,false,true
+newShareReportDrawer,experimental,@grafana/sharing-squad,false,false,false

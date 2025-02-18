@@ -207,10 +207,9 @@ func ValidateSecureValue(sv, oldSv *secretv0alpha1.SecureValue, operation admiss
 	}
 
 	// General validations.
-
 	decrypterGroups := make(map[string]map[string]int, 0)
 
-	// Decrypters must match "{group}/{name OR *}" and must be unique.
+	// If populated, `Decrypters` must match "{group}/{name OR *}" and must be unique.
 	for i, decrypter := range sv.Spec.Decrypters {
 		group, name, found := strings.Cut(decrypter, "/")
 		if !found {
@@ -303,10 +302,6 @@ func validateSecureValueCreate(sv *secretv0alpha1.SecureValue) field.ErrorList {
 
 	if sv.Spec.Value != "" && sv.Spec.Ref != "" {
 		errs = append(errs, field.Required(field.NewPath("spec"), "only one of `value` or `ref` can be set"))
-	}
-
-	if len(sv.Spec.Decrypters) == 0 {
-		errs = append(errs, field.Required(field.NewPath("spec", "decrypters"), "`decrypters` is required"))
 	}
 
 	return errs

@@ -46,10 +46,14 @@ func initSecretStore(mg *migrator.Migrator) string {
 			{Name: "updated", Type: migrator.DB_BigInt, Nullable: false}, // Used as RV (ResourceVersion)
 			{Name: "updated_by", Type: migrator.DB_Text, Nullable: false},
 
+			// Kubernetes Status
+			{Name: "status_phase", Type: migrator.DB_Text, Nullable: false},
+			{Name: "status_message", Type: migrator.DB_Text, Nullable: true},
+
 			// Spec
 			{Name: "title", Type: migrator.DB_Text, Nullable: false},
 			{Name: "keeper", Type: migrator.DB_Text, Nullable: false},
-			{Name: "decrypters", Type: migrator.DB_Text, Nullable: false},
+			{Name: "decrypters", Type: migrator.DB_Text, Nullable: true},
 			{Name: "ref", Type: migrator.DB_Text, Nullable: true}, // Reference to third-party storage secret path.
 			{Name: "external_id", Type: migrator.DB_Text, Nullable: false},
 		},

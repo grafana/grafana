@@ -26,10 +26,14 @@ type secureValueDB struct {
 	Updated     int64  `xorm:"updated"`
 	UpdatedBy   string `xorm:"updated_by"`
 
+	// Kubernetes Status
+	Phase   string  `xorm:"status_phase"`
+	Message *string `xorm:"status_message"`
+
 	// Spec
 	Title      string  `xorm:"title"`
 	Keeper     string  `xorm:"keeper"`
-	Decrypters string  `xorm:"decrypters"`
+	Decrypters *string `xorm:"decrypters"`
 	Ref        *string `xorm:"ref"`
 	ExternalID string  `xorm:"external_id"`
 }
@@ -55,8 +59,8 @@ func (sv *secureValueDB) toKubernetes() (*secretv0alpha1.SecureValue, error) {
 	}
 
 	decrypters := make([]string, 0)
-	if sv.Decrypters != "" {
-		if err := json.Unmarshal([]byte(sv.Decrypters), &decrypters); err != nil {
+	if sv.Decrypters != nil && *sv.Decrypters != "" {
+		if err := json.Unmarshal([]byte(*sv.Decrypters), &decrypters); err != nil {
 			return nil, fmt.Errorf("failed to unmarshal decrypters: %w", err)
 		}
 	}
@@ -157,14 +161,15 @@ func toRow(sv *secretv0alpha1.SecureValue, externalID string) (*secureValueDB, e
 		labels = string(encodedLabels)
 	}
 
-	var decrypters string
+	var decrypters *string
 	if len(sv.Spec.Decrypters) > 0 {
 		encodedDecrypters, err := json.Marshal(sv.Spec.Decrypters)
 		if err != nil {
 			return nil, fmt.Errorf("failed to encode decrypters: %w", err)
 		}
 
-		decrypters = string(encodedDecrypters)
+		rawDecrypters := string(encodedDecrypters)
+		decrypters = &rawDecrypters
 	}
 
 	meta, err := utils.MetaAccessor(sv)
@@ -186,6 +191,11 @@ func toRow(sv *secretv0alpha1.SecureValue, externalID string) (*secureValueDB, e
 		ref = &sv.Spec.Ref
 	}
 
+	var statusMessage *string
+	if sv.Status.Message != "" {
+		statusMessage = &sv.Status.Message
+	}
+
 	return &secureValueDB{
 		GUID:        string(sv.UID),
 		Name:        sv.Name,
@@ -196,6 +206,9 @@ func toRow(sv *secretv0alpha1.SecureValue, externalID string) (*secureValueDB, e
 		CreatedBy:   meta.GetCreatedBy(),
 		Updated:     updatedTimestamp,
 		UpdatedBy:   meta.GetUpdatedBy(),
+
+		Phase:   string(sv.Status.Phase),
+		Message: statusMessage,
 
 		Title:      sv.Spec.Title,
 		Keeper:     sv.Spec.Keeper,

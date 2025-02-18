@@ -205,6 +205,41 @@
         "recording": ""
       }
     },
+    "alertVersionHistory": {
+      "alerting": "",
+      "alerting-change-description": "",
+      "annotations": "",
+      "compareVersions": "",
+      "comparing-versions": "",
+      "condition": "",
+      "contactPointRouting": "",
+      "description": "",
+      "errorloading": "",
+      "execErrorState": "",
+      "intervalSeconds": "",
+      "labels": "",
+      "latest": "",
+      "name": "",
+      "namespace_uid": "",
+      "noDataState": "",
+      "noVersionsFound": "",
+      "paused": "",
+      "pendingPeriod": "",
+      "provisioning": "",
+      "provisioning-change-description": "",
+      "queryAndAlertCondition": "",
+      "reset": "",
+      "restore": "",
+      "restore-modal": {
+        "body": "",
+        "summary": "",
+        "title": ""
+      },
+      "rule_group": "",
+      "unknown": "",
+      "unknown-change-description": "",
+      "user-id": ""
+    },
     "annotations": {
       "description": "",
       "title": ""
@@ -283,6 +318,9 @@
       "no-delivery-attempts": "",
       "no-integrations": "",
       "only-firing": "",
+      "receiver-summary": {
+        "jira": ""
+      },
       "telegram": {
         "parse-mode-warning-body": "",
         "parse-mode-warning-title": ""
@@ -294,6 +332,10 @@
       "label": ""
     },
     "copy-to-clipboard": "",
+    "dag": {
+      "missing-reference": "",
+      "self-reference": ""
+    },
     "export": {
       "subtitle": {
         "formats": "",
@@ -523,6 +565,14 @@
       "deleting": "",
       "paused": "",
       "recording-rule": ""
+    },
+    "rule-view": {
+      "query": {
+        "datasources-na": {
+          "description": "",
+          "title": ""
+        }
+      }
     },
     "rule-viewer": {
       "prometheus-consistency-check": {
@@ -772,6 +822,25 @@
     },
     "search": {
       "placeholder": "搜索全部"
+    }
+  },
+  "core": {
+    "versionHistory": {
+      "comparison": {
+        "header": {
+          "hide-json-diff": "",
+          "show-json-diff": "",
+          "text": ""
+        },
+        "select": ""
+      },
+      "no-properties-changed": "",
+      "table": {
+        "updated": "",
+        "updatedBy": "",
+        "version": ""
+      },
+      "view-json-diff": ""
     }
   },
   "correlations": {
@@ -1275,9 +1344,6 @@
     "panel-queries": {
       "add-query-from-library": ""
     },
-    "query-library": {
-      "add-query-button": ""
-    },
     "settings": {
       "variables": {
         "dependencies": {
@@ -1359,7 +1425,6 @@
       "close-tooltip": "关闭查询历史记录",
       "datasource-a-z": "数据源 A-Z",
       "datasource-z-a": "数据源 Z-A",
-      "library-history-dropdown": "",
       "newest-first": "最新在前",
       "oldest-first": "最早在前",
       "query-history": "查询历史记录",
@@ -1463,6 +1528,7 @@
       "switch-datasource-button": ""
     },
     "secondary-actions": {
+      "add-from-query-library": "",
       "query-add-button": "添加查询",
       "query-add-button-aria-label": "添加查询",
       "query-history-button": "查询历史记录",
@@ -2002,6 +2068,10 @@
   },
   "logs": {
     "infinite-scroll": {
+      "end-of-range": "",
+      "load-more": "",
+      "load-newer": "",
+      "load-older": "",
       "older-logs": ""
     },
     "log-details": {
