@@ -23,8 +23,10 @@ jobs:
       - name: Run tests
         run: make gen-go test-go
         continue-on-error: true # we're fine if some tests fail. that's a separate issue for another workflow...
-      - name: Generate coverage info
-        run: make test-go-cover
+      - name: Join coverage outputs
+        run: |
+          cp unit.cov backend.cov
+          tail -n+2 integration.cov >> backend.cov
       - name: Convert coverage info to per-func stats
         run: go tool cover -func backend.cov > /tmp/backend-funcs.log
       - name: Upload coverage file

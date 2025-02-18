@@ -263,12 +263,6 @@ test-go-integration: ## Run integration tests for backend with flags.
 	@echo "test backend integration tests"
 	$(GO) test $(GO_RACE_FLAG) -count=1 -run "^TestIntegration" -covermode=atomic -coverprofile=integration.cov -timeout=5m $(GO_INTEGRATION_TESTS)
 
-.PHONY: test-go-cover
-test-go-cover: test-go-unit test-go-integration ## Run unit and integration tests for backend with flags, collecting coverage.
-	cp unit.cov backend.cov
-	tail -n+2 integration.cov >> backend.cov
-	$(GO) tool cover -func backend.cov
-
 .PHONY: test-go-integration-alertmanager
 test-go-integration-alertmanager: ## Run integration tests for the remote alertmanager (config taken from the mimir_backend block).
 	@echo "test remote alertmanager integration tests"
