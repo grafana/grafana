@@ -64,6 +64,8 @@ export const backendSrvBaseQuery =
       const modifiedRequestOptions: BackendSrvRequest = {
         ...requestOptions,
         ...(body && { data: body }),
+        showErrorAlert,
+        showSuccessAlert,
         ...(successMessage && { showSuccessAlert: false }),
         ...((errorMessage || hideErrorMessage) && { showErrorAlert: false }),
       };

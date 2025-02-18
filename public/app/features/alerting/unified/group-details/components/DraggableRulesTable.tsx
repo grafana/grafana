@@ -11,7 +11,7 @@ import { produce } from 'immer';
 import { forwardRef, useCallback, useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Badge, Icon, Label, Stack, useStyles2 } from '@grafana/ui';
+import { Badge, Icon, Stack, useStyles2 } from '@grafana/ui';
 import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { SwapOperation, swapItems } from '../../reducers/ruler/ruleGroups';
@@ -59,7 +59,6 @@ export function DraggableRulesTable({ rules, groupInterval, onSwap }: DraggableR
 
   return (
     <div>
-      <Label description="Drag rules to reorder">Alerting and recording rules</Label>
       <ListItem
         ruleName="Rule name"
         pendingPeriod="Pending period"

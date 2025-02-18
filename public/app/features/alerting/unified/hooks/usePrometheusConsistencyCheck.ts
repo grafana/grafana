@@ -52,6 +52,8 @@ function useMatchingPromRuleExists() {
   return { matchingPromRuleExists };
 }
 
+const PREFER_CACHE_VALUE = true;
+
 export function useRuleGroupIsInSync() {
   const [discoverDsFeatures] = useLazyDiscoverDsFeaturesQuery();
   const [fetchPrometheusRuleGroups] = useLazyPrometheusRuleNamespacesQuery();
@@ -61,7 +63,7 @@ export function useRuleGroupIsInSync() {
     async (ruleIdentifier: RuleGroupIdentifierV2) => {
       const dsUid =
         ruleIdentifier.groupOrigin === 'datasource' ? ruleIdentifier.rulesSource.uid : GrafanaRulesSourceSymbol;
-      const dsFeatures = await discoverDsFeatures({ uid: dsUid }).unwrap();
+      const dsFeatures = await discoverDsFeatures({ uid: dsUid }, PREFER_CACHE_VALUE).unwrap();
 
       if (!dsFeatures.rulerConfig) {
         throw new Error('Datasource does not support ruler. Unable to determine group consistency');
@@ -164,6 +166,11 @@ export function useRuleGroupConsistencyCheck() {
     }
   };
 
+  /**
+   * Waits for the rule group to be consistent between Prometheus and the Ruler.
+   * It periodically fetches the group from the Prometheus and the Ruler and compares them.
+   * Times out after 90 seconds of waiting.
+   */
   async function waitForGroupConsistency(groupIdentifier: RuleGroupIdentifierV2) {
     // We can wait only for one rule group at a time
     clearConsistencyInterval();
@@ -179,7 +186,7 @@ export function useRuleGroupConsistencyCheck() {
       consistencyInterval.current = setInterval(() => {
         isGroupInSync(groupIdentifier)
           .then((inSync) => {
-            if (inSync === false) {
+            if (inSync) {
               clearConsistencyInterval();
               resolve();
             }

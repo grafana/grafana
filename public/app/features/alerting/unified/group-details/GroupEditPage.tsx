@@ -7,6 +7,8 @@ import { NavModelItem } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { Alert, Button, Field, Input, Stack, withErrorBoundary } from '@grafana/ui';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
+import { useAppNotification } from 'app/core/copy/appNotification';
+import { t } from 'app/core/internationalization';
 import { GrafanaRulesSourceSymbol, RuleGroupIdentifierV2 } from 'app/types/unified-alerting';
 import { RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
@@ -15,6 +17,7 @@ import { featureDiscoveryApi } from '../api/featureDiscoveryApi';
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
 import { UpdateGroupDelta, useUpdateRuleGroup } from '../hooks/ruleGroup/useUpdateRuleGroup';
 import { useFolder } from '../hooks/useFolder';
+import { useRuleGroupConsistencyCheck } from '../hooks/usePrometheusConsistencyCheck';
 import { SwapOperation } from '../reducers/ruler/ruleGroups';
 import { DEFAULT_GROUP_EVALUATION_INTERVAL } from '../rule-editor/formDefaults';
 import { ruleGroupIdentifierV2toV1 } from '../utils/groupIdentifier';
@@ -35,6 +38,8 @@ interface GroupEditFormData {
 }
 
 function GroupEditForm({ rulerGroup, groupIdentifier }: GroupEditFormProps) {
+  const appInfo = useAppNotification();
+  const { waitForGroupConsistency } = useRuleGroupConsistencyCheck();
   const [updateRuleGroup] = useUpdateRuleGroup();
   const groupIntervalOrDefault = rulerGroup?.interval ?? DEFAULT_GROUP_EVALUATION_INTERVAL;
   const [operations, setOperations] = useState<SwapOperation[]>([]);
@@ -42,7 +47,7 @@ function GroupEditForm({ rulerGroup, groupIdentifier }: GroupEditFormProps) {
   const {
     register,
     handleSubmit,
-    formState: { dirtyFields },
+    formState: { dirtyFields, isSubmitting },
   } = useForm<GroupEditFormData>({
     defaultValues: {
       name: rulerGroup.name,
@@ -67,20 +72,25 @@ function GroupEditForm({ rulerGroup, groupIdentifier }: GroupEditFormProps) {
       ruleSwaps: operations.length ? operations : undefined,
     };
 
-    await updateRuleGroup.execute(ruleGroupIdentifierV2toV1(groupIdentifier), changeDelta);
-    if (groupIdentifier.groupOrigin === 'datasource') {
-      const groupName = changeDelta.groupName ?? groupIdentifier.groupName;
-      const namespaceName = changeDelta.namespaceName ?? groupIdentifier.namespace.name;
-      locationService.replace(groups.editPageLink(groupIdentifier.rulesSource.uid, namespaceName, groupName));
-    } else {
-      if (changeDelta.groupName) {
-        locationService.replace(groups.editPageLink('grafana', groupIdentifier.namespace.uid, changeDelta.groupName));
+    const updatedGroupIdentifier = await updateRuleGroup.execute(
+      ruleGroupIdentifierV2toV1(groupIdentifier),
+      changeDelta,
+      {
+        // We need to update the URL before the old group is deleted
+        // Otherwise, RTKQ will refetch the old group after it's deleted
+        // and we'll end up with a blinking group not found error
+        beforeGroupCleanup: (newGroupIdentifier) => setMatchingGroupPageUrl(newGroupIdentifier),
       }
-    }
+    );
+
+    await waitForGroupConsistency(updatedGroupIdentifier);
+
+    const successMessage = t('alerting.rule-groups.move.success', 'Successfully updated the rule group');
+    appInfo.success(successMessage);
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} id="group-edit-form">
+    <form onSubmit={handleSubmit(onSubmit)}>
       {groupIdentifier.groupOrigin === 'datasource' && (
         <Field label="Namespace">
           <Input id="namespace" {...register('namespace')} />
@@ -92,22 +102,27 @@ function GroupEditForm({ rulerGroup, groupIdentifier }: GroupEditFormProps) {
       <Field label="Evaluation interval" description="How often is the group evaluated">
         <Input id="interval" {...register('interval')} />
       </Field>
-      <DraggableRulesTable rules={rulerGroup.rules} groupInterval={groupIntervalOrDefault} onSwap={onSwap} />
+      <Field label="Alerting and recording rules" description="Drag rules to reorder">
+        <DraggableRulesTable rules={rulerGroup.rules} groupInterval={groupIntervalOrDefault} onSwap={onSwap} />
+      </Field>
+
+      <Stack>
+        <Button type="submit" disabled={isSubmitting} icon={isSubmitting ? 'spinner' : undefined}>
+          Save
+        </Button>
+      </Stack>
     </form>
   );
 }
 
-function GroupActions() {
-  return (
-    <Stack>
-      <Button type="submit" form="group-edit-form">
-        Save
-      </Button>
-      <Button variant="secondary" onClick={() => locationService.getHistory().goBack()}>
-        Cancel
-      </Button>
-    </Stack>
-  );
+function setMatchingGroupPageUrl(groupIdentifier: RuleGroupIdentifierV2) {
+  if (groupIdentifier.groupOrigin === 'datasource') {
+    const { rulesSource, namespace, groupName } = groupIdentifier;
+    locationService.replace(groups.editPageLink(rulesSource.uid, namespace.name, groupName));
+  } else {
+    const { namespace, groupName } = groupIdentifier;
+    locationService.replace(groups.editPageLink('grafana', namespace.uid, groupName));
+  }
 }
 
 type GroupEditPageRouteParams = {
@@ -124,11 +139,12 @@ function GroupEditPage() {
 
   const { folder, loading: isFolderLoading } = useFolder(sourceId === 'grafana' ? namespaceId : '');
 
+  const ruleSourceUid = sourceId === 'grafana' ? GrafanaRulesSourceSymbol : sourceId;
   const {
     data: dsFeatures,
     isLoading: isDsFeaturesLoading,
     error: dsFeaturesError,
-  } = useDiscoverDsFeaturesQuery({ uid: sourceId === 'grafana' ? GrafanaRulesSourceSymbol : sourceId });
+  } = useDiscoverDsFeaturesQuery({ uid: ruleSourceUid });
 
   const {
     data: rulerGroup,
@@ -182,13 +198,7 @@ function GroupEditPage() {
         };
 
   return (
-    <AlertingPageWrapper
-      pageNav={pageNav}
-      title="Edit evaluation group"
-      navId="alert-list"
-      isLoading={isLoading}
-      actions={<GroupActions />}
-    >
+    <AlertingPageWrapper pageNav={pageNav} title="Edit evaluation group" navId="alert-list" isLoading={isLoading}>
       <>
         {dsFeaturesError && (
           <Alert title="Error loading data source details" bottomSpacing={0} topSpacing={2}>
