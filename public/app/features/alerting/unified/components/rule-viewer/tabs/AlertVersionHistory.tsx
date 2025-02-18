@@ -4,12 +4,15 @@ import { config } from '@grafana/runtime';
 import { Alert, Box, Button, Drawer, EmptyState, LoadingPlaceholder, Stack, Text, Tooltip } from '@grafana/ui';
 import { RevisionModel, VersionHistoryComparison } from 'app/core/components/VersionHistory/VersionHistoryComparison';
 import { Trans, t } from 'app/core/internationalization';
+import { RuleIdentifier } from 'app/types/unified-alerting';
 import { GrafanaRuleDefinition, RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { LogMessages, logInfo, trackRuleVersionsComparisonClick } from '../../../Analytics';
 import { alertRuleApi } from '../../../api/alertRuleApi';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
 import { stringifyErrorLike } from '../../../utils/misc';
 
+import { ConfirmVersionRestoreModal } from './components/ConfirmVersionRestoreModal';
 import { VersionHistoryTable } from './components/VersionHistoryTable';
 import { getSpecialUidsDisplayMap, preprocessRuleForDiffDisplay } from './versions-utils';
 
@@ -33,7 +36,10 @@ export const grafanaAlertPropertiesToIgnore: Array<keyof GrafanaRuleDefinition> 
  * and allowing to restore to a previous version.
  */
 export function AlertVersionHistory({ ruleUid }: AlertVersionHistoryProps) {
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const { isLoading, currentData: ruleVersions = [], error } = useGetAlertVersionHistoryQuery({ uid: ruleUid });
+
+  const ruleIdentifier: RuleIdentifier = { ruleSourceName: GRAFANA_RULES_SOURCE_NAME, uid: ruleUid };
 
   const [oldVersion, setOldVersion] = useState<RulerGrafanaRuleDTO<GrafanaRuleDefinition>>();
   const [newVersion, setNewVersion] = useState<RulerGrafanaRuleDTO<GrafanaRuleDefinition>>();
@@ -123,30 +129,50 @@ export function AlertVersionHistory({ ruleUid }: AlertVersionHistoryProps) {
         </Tooltip>
       </Stack>
       {showDrawer && oldVersion && newVersion && (
-        <Drawer
-          onClose={() => setShowDrawer(false)}
-          title={t('alerting.alertVersionHistory.comparing-versions', 'Comparing versions')}
-        >
-          <VersionHistoryComparison
-            oldSummary={parseVersionInfoToSummary(oldVersion)}
-            oldVersion={oldVersion}
-            newSummary={parseVersionInfoToSummary(newVersion)}
-            newVersion={newVersion}
-            preprocessVersion={preprocessRuleForDiffDisplay}
-          />
-          {config.featureToggles.alertingRuleVersionHistoryRestore && (
-            <Box paddingTop={2}>
-              <Stack justifyContent="flex-end">
-                <Button variant="destructive" onClick={() => {}}>
-                  <Trans i18nKey="alerting.alertVersionHistory.reset">
-                    Reset to version {{ version: oldVersion.grafana_alert.version }}
-                  </Trans>
-                </Button>
-              </Stack>
-            </Box>
+        <>
+          <Drawer
+            onClose={() => setShowDrawer(false)}
+            title={t('alerting.alertVersionHistory.comparing-versions', 'Comparing versions')}
+          >
+            <VersionHistoryComparison
+              oldSummary={parseVersionInfoToSummary(oldVersion)}
+              oldVersion={oldVersion}
+              newSummary={parseVersionInfoToSummary(newVersion)}
+              newVersion={newVersion}
+              preprocessVersion={preprocessRuleForDiffDisplay}
+            />
+            {config.featureToggles.alertingRuleVersionHistoryRestore && (
+              <Box paddingTop={2}>
+                <Stack justifyContent="flex-end">
+                  <Button
+                    variant="destructive"
+                    onClick={() => {
+                      setShowConfirmModal(true);
+                    }}
+                    icon="history"
+                  >
+                    <Trans i18nKey="alerting.alertVersionHistory.restore-version">
+                      Restore to version {{ version: oldVersion.grafana_alert.version }}
+                    </Trans>
+                  </Button>
+                </Stack>
+              </Box>
+            )}
+          </Drawer>
+          {showConfirmModal && (
+            <ConfirmVersionRestoreModal
+              ruleIdentifier={ruleIdentifier}
+              baseVersion={oldVersion}
+              versionToRestore={newVersion}
+              isOpen={showConfirmModal}
+              onDismiss={() => setShowConfirmModal(false)}
+            />
           )}
-        </Drawer>
+        </>
       )}
+      {/*
+      {oldVersion && newVersion && showConfirmModal && (
+      )} */}
 
       <VersionHistoryTable
         onVersionsChecked={handleCheckedVersionChange}
