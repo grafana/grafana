@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
+	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/supportbundles/bundleregistry"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
@@ -47,12 +48,12 @@ func ProvideFolderPermissions(
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
 	fService := folderimpl.ProvideService(
 		fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore,
-		nil, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest())
+		nil, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, sort.ProvideService())
 
 	acSvc := acimpl.ProvideOSSService(
 		cfg, acdb.ProvideService(sqlStore), actionSets, localcache.ProvideService(),
 		features, tracing.InitializeTracerForTest(), sqlStore, permreg.ProvidePermissionRegistry(),
-		nil, fService,
+		nil,
 	)
 
 	orgService, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
