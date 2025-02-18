@@ -120,7 +120,6 @@ export interface FeatureToggles {
   lokiStructuredMetadata?: boolean;
   teamHttpHeaders?: boolean;
   cachingOptimizeSerializationMemoryUsage?: boolean;
-  managedPluginsInstall?: boolean;
   prometheusPromQAIL?: boolean;
   prometheusCodeModeMetricNamesSearch?: boolean;
   addFieldFromCalculationStatFunctions?: boolean;
@@ -259,4 +258,5 @@ export interface FeatureToggles {
   pluginsCDNSyncLoader?: boolean;
   alertingJiraIntegration?: boolean;
   alertingRuleVersionHistoryRestore?: boolean;
+  newShareReportDrawer?: boolean;
 }
