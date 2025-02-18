@@ -77,19 +77,20 @@ jobs:
           cp unit.cov backend.cov
           tail -n+2 integration.cov >> backend.cov
       - name: Convert coverage info to per-func stats
-        run: go tool cover -func backend.cov > /tmp/backend-funcs.log
+        run: go tool cover -func backend.cov > backend-funcs.log
       - name: Upload coverage file
         uses: actions/upload-artifact@v4
         with:
           name: backend-cov
           path: |
             backend.cov
-            /tmp/backend-funcs.log
+            backend-funcs.log
           retention-days: 30 # this is a pretty small file; 10MB or so. it is GZip compressed by the action, which makes it <1MB.
           compression-level: 9 # this is raw text, and includes a _lot_ of repetition. compressing it should yield pretty good results.
       - name: Set summary to total coverage
+        # We use single quotes here to disable the bash backtick behaviour of executing commands.
         run: |
-          echo "# Coverage" >> $GITHUB_STEP_SUMMARY
-          echo "```" >> $GITHUB_STEP_SUMMARY
-          grep 'total:' /tmp/backend-funcs.log >> $GITHUB_STEP_SUMMARY
-          echo "```" >> $GITHUB_STEP_SUMMARY
+          echo '# Coverage' >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          grep 'total:' backend-funcs.log >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
