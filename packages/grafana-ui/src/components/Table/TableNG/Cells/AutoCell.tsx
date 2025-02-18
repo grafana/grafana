@@ -33,11 +33,11 @@ export default function AutoCell({ value, field, justifyContent, cellOptions, ro
                   className={cx(clearButtonStyle, getLinkStyle(styles, cellOptions, api.targetClassName))}
                   onClick={api.openMenu}
                 >
-                  {value}
+                  {formattedValue}
                 </button>
               );
             } else {
-              return <div className={getLinkStyle(styles, cellOptions, api.targetClassName)}>{value}</div>;
+              return <div className={getLinkStyle(styles, cellOptions, api.targetClassName)}>{formattedValue}</div>;
             }
           }}
         </DataLinksContextMenu>

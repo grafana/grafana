@@ -114,7 +114,9 @@ export function TableCellNG(props: any) {
       cell = <JSONCell value={value} justifyContent={justifyContent} field={field} rowIdx={rowIdx} />;
       break;
     case TableCellDisplayMode.DataLinks:
-      cell = <DataLinksCell value={value} field={field} theme={theme} justifyContent={justifyContent} />;
+      cell = (
+        <DataLinksCell value={value} field={field} theme={theme} justifyContent={justifyContent} rowIdx={rowIdx} />
+      );
       break;
     case TableCellDisplayMode.Auto:
     default:
