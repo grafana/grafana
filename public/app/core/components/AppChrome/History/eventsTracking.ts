@@ -2,6 +2,8 @@ import { reportInteraction } from '@grafana/runtime';
 
 const UNIFIED_HISTORY_ENTRY_CLICKED = 'grafana_unified_history_entry_clicked';
 const UNIFIED_HISTORY_ENTRY_DUPLICATED = 'grafana_unified_history_duplicated_entry_rendered';
+const UNIFIED_HISTORY_DRAWER_INTERACTION = 'grafana_unified_history_drawer_interaction';
+const UNIFIED_HISTORY_DRAWER_SHOW_MORE = 'grafana_unified_history_show_more';
 
 //Currently just 'timeRange' is supported
 //in short term, we could add 'templateVariables' for example
@@ -28,7 +30,7 @@ interface UnifiedHistoryEntryDuplicated {
 }
 
 //Event triggered when a user clicks on an entry of the `HistoryDrawer`
-export const clickUnifiedHistoryEntry = ({ entryURL, subEntry }: UnifiedHistoryEntryClicked) => {
+export const clickUnifiedHistoryEntryEvent = ({ entryURL, subEntry }: UnifiedHistoryEntryClicked) => {
   reportInteraction(UNIFIED_HISTORY_ENTRY_CLICKED, {
     entryURL,
     subEntry,
@@ -37,7 +39,7 @@ export const clickUnifiedHistoryEntry = ({ entryURL, subEntry }: UnifiedHistoryE
 
 //Event triggered when history entry name matches the previous one
 //so we keep track of duplicated entries and be able to analyze them
-export const duplicateUnifiedHistoryEntry = ({
+export const duplicateUnifiedHistoryEntryEvent = ({
   entryName,
   lastEntryName,
   newEntryURL,
@@ -50,13 +52,13 @@ export const duplicateUnifiedHistoryEntry = ({
 };
 
 //We keep track of users open and closing the drawer
-export const interactWithUnifiedHistoryDrawer = ({ type }: { type: UnifiedHistoryDrawerInteraction }) => {
-  reportInteraction('grafana_unified_history_drawer_opened', {
+export const interactWithUnifiedHistoryDrawerEvent = ({ type }: { type: UnifiedHistoryDrawerInteraction }) => {
+  reportInteraction(UNIFIED_HISTORY_DRAWER_INTERACTION, {
     type,
   });
 };
 
 //We keep track of users clicking on the `Show more` button
-export const interactWithUnifiedHistoryShowMore = () => {
-  reportInteraction('grafana_unified_history_drawer_opened');
+export const interactWithUnifiedHistoryShowMoreEvent = () => {
+  reportInteraction(UNIFIED_HISTORY_DRAWER_SHOW_MORE);
 };
