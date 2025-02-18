@@ -61,7 +61,7 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          pattern: '(unit|integration)-cov'
+          pattern: '*-cov'
           path: .
           merge-multiple: true
       - name: Join coverage outputs
