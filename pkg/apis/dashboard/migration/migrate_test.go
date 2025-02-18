@@ -22,6 +22,17 @@ func TestMigrate(t *testing.T) {
 	files, err := os.ReadDir(INPUT_DIR)
 	require.NoError(t, err)
 
+	migration.Initialize(&mockDataSourceInfoProvider{
+		dataSourceInfo: []schemaversion.DataSourceInfo{
+			{
+				Default: true,
+				UID:     "test",
+				ID:      1,
+				Name:    "Test",
+			},
+		},
+	})
+
 	for _, f := range files {
 		if f.IsDir() {
 			continue
@@ -90,4 +101,14 @@ func load(t *testing.T, path string) (dash map[string]interface{}, inputVersion 
 	require.NoError(t, json.Unmarshal(inputBytes, &dash), "failed to unmarshal dashboard JSON")
 	inputVersion, name = parseInputName(t, path)
 	return dash, inputVersion, name
+}
+
+var _ schemaversion.DataSourceInfoProvider = &mockDataSourceInfoProvider{}
+
+type mockDataSourceInfoProvider struct {
+	dataSourceInfo []schemaversion.DataSourceInfo
+}
+
+func (m *mockDataSourceInfoProvider) GetDataSourceInfo() []schemaversion.DataSourceInfo {
+	return m.dataSourceInfo
 }
