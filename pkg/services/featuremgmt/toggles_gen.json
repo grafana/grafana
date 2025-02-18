@@ -2807,6 +2807,20 @@
     },
     {
       "metadata": {
+        "name": "newShareReportDrawer",
+        "resourceVersion": "1739544763554",
+        "creationTimestamp": "2025-02-14T14:52:43Z"
+      },
+      "spec": {
+        "description": "Enables the report creation drawer in a dashboard",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "nodeGraphDotLayout",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2024-01-31T16:26:12Z"

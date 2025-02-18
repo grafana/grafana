@@ -1,0 +1,96 @@
+name: Backend Coverage (OSS)
+on:
+  push:
+    paths:
+      - pkg/**
+      - .github/workflows/backend-coverage.yml
+      - go.*
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  unit-tests:
+    name: Run unit tests (OSS)
+    runs-on: ubuntu-latest
+    if: github.repository == 'grafana/grafana'
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4.2.2
+      - name: Setup Go environment
+        uses: actions/setup-go@v5.3.0
+        with:
+          go-version-file: go.work
+      - name: Run tests
+        run: make gen-go test-go-unit
+      - name: Upload coverage file
+        uses: actions/upload-artifact@v4
+        if: success() || failure()
+        with:
+          name: unit-cov
+          path: unit.cov
+          retention-days: 1
+          compression-level: 9 # this is raw text, and includes a _lot_ of repetition. compressing it should yield pretty good results.
+  integration-tests:
+    name: Run integration tests (OSS)
+    runs-on: ubuntu-latest
+    if: github.repository == 'grafana/grafana'
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4.2.2
+      - name: Setup Go environment
+        uses: actions/setup-go@v5.3.0
+        with:
+          go-version-file: go.work
+      - name: Run tests
+        run: make gen-go test-go-integration
+      - name: Upload coverage file
+        uses: actions/upload-artifact@v4
+        if: success() || failure()
+        with:
+          name: integration-cov
+          path: integration.cov
+          retention-days: 1
+          compression-level: 9 # this is raw text, and includes a _lot_ of repetition. compressing it should yield pretty good results.
+  report-coverage:
+    name: Report coverage from unit and integration tests (OSS)
+    needs: [unit-tests, integration-tests]
+    runs-on: ubuntu-latest
+    # we don't do always() so as to not run even if the workflow is cancelled
+    if: github.repository == 'grafana/grafana' && (success() || failure())
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4.2.2
+      - name: Setup Go environment
+        uses: actions/setup-go@v5.3.0
+        with:
+          go-version-file: go.work
+      - name: Generate Go
+        run: make gen-go
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: '*-cov'
+          path: .
+          merge-multiple: true
+      - name: Join coverage outputs
+        run: |
+          cp unit.cov backend.cov
+          tail -n+2 integration.cov >> backend.cov
+      - name: Convert coverage info to per-func stats
+        run: go tool cover -func backend.cov > backend-funcs.log
+      - name: Upload coverage file
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-cov
+          path: |
+            backend.cov
+            backend-funcs.log
+          retention-days: 30
+          compression-level: 9 # this is raw text, and includes a _lot_ of repetition. compressing it should yield pretty good results.
+      - name: Set summary to total coverage
+        # We use single quotes here to disable the bash backtick behaviour of executing commands.
+        run: |
+          echo '# Coverage' >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          grep 'total:' backend-funcs.log | tr '\t' ' ' >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
