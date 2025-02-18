@@ -23,7 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
@@ -50,11 +50,10 @@ type k8sHandler struct {
 	userService user.Service
 }
 
-func NewK8sHandler(cfg *setting.Cfg, namespacer request.NamespaceMapper, gvr schema.GroupVersionResource,
+func NewK8sHandler(dual dualwrite.Service, namespacer request.NamespaceMapper, gvr schema.GroupVersionResource,
 	restConfig func(context.Context) *rest.Config, dashStore dashboards.Store, userSvc user.Service, resourceClient resource.ResourceClient) K8sHandler {
 	legacySearcher := legacysearcher.NewDashboardSearchClient(dashStore)
-	key := gvr.Resource + "." + gvr.Group // the unified storage key in the config.ini is resource + group
-	searchClient := resource.NewSearchClient(cfg, key, resourceClient, legacySearcher)
+	searchClient := resource.NewSearchClient(dual, gvr.GroupResource(), resourceClient, legacySearcher)
 
 	return &k8sHandler{
 		namespacer:  namespacer,
