@@ -300,18 +300,19 @@ export const browseDashboardsAPI = createApi({
         // Delete all the dashboards sequentially
         // TODO error handling here
         for (const dashboardUID of selectedDashboards) {
-          const response = getDashboardAPI().deleteDashboard(dashboardUID, false);
+          const response = await getDashboardAPI().deleteDashboard(dashboardUID, true);
 
-          // @ts-expect-error
-          const name = response?.data?.title;
+          const name = response?.title;
 
-          if (name) {
-            appEvents.publish({
-              type: AppEvents.alertSuccess.name,
-              payload: [
-                t('browse-dashboards.soft-delete.success', 'Dashboard {{name}} moved to Recently deleted', { name }),
-              ],
-            });
+          if (config.featureToggles.dashboardRestore) {
+            if (name) {
+              appEvents.publish({
+                type: AppEvents.alertSuccess.name,
+                payload: [
+                  t('browse-dashboards.soft-delete.success', 'Dashboard {{name}} moved to Recently deleted', { name }),
+                ],
+              });
+            }
           }
         }
         return { data: undefined };
