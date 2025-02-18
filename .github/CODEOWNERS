@@ -73,7 +73,7 @@
 
 /apps/alerting/ @grafana/alerting-backend
 /apps/playlist/ @grafana/grafana-app-platform-squad
-/apps/investigation/ @fcjack @matryer
+/apps/investigations/ @fcjack @matryer @svennergr
 /apps/advisor/ @grafana/plugins-platform-backend
 /pkg/api/ @grafana/grafana-backend-group
 /pkg/apis/ @grafana/grafana-app-platform-squad
@@ -446,6 +446,7 @@
 /.betterer.eslint.config.js @grafana/frontend-ops
 /.gitattributes @grafana/frontend-ops
 /.gitignore @grafana/frontend-ops
+/.ignore @grafana/frontend-ops
 /.nvmrc @grafana/frontend-ops
 /.prettierignore @grafana/frontend-ops
 /.yarn @grafana/frontend-ops

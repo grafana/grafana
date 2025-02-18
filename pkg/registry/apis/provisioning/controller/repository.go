@@ -247,11 +247,18 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	shouldResync := syncAge >= (syncInterval-tolerance) && !isSyncJobPendingOrRunning
 	hasSpecChanged := obj.Generation != obj.Status.ObservedGeneration
 
-	if !hasSpecChanged && obj.DeletionTimestamp == nil && (healthAge < time.Hour*4) && !shouldResync {
+	switch {
+	case hasSpecChanged:
+		logger.Info("spec changed", "Generation", obj.Generation, "ObservedGeneration", obj.Status.ObservedGeneration)
+	case obj.DeletionTimestamp != nil:
+		logger.Info("deletion timestamp set")
+	case shouldResync:
+		logger.Info("sync interval triggered", "sync_age", syncAge, "sync_interval", syncInterval, "sync_status", obj.Status.Sync.State)
+	case healthAge > time.Hour*4:
+		logger.Info("health is too old", "health_age", healthAge)
+	default:
 		logger.Info("skipping as conditions are not met", "status", obj.Status, "generation", obj.Generation, "deletion_timestamp", obj.DeletionTimestamp, "sync_spec", obj.Spec.Sync)
 		return nil
-	} else {
-		logger.Info("conditions met", "status", obj.Status, "generation", obj.Generation, "deletion_timestamp", obj.DeletionTimestamp, "sync_spec", obj.Spec.Sync)
 	}
 
 	repo, err := rc.repoGetter.AsRepository(ctx, obj)
@@ -370,6 +377,12 @@ func (rc *RepositoryController) process(item *queueItem) error {
 			return fmt.Errorf("error adding sync job: %w", err)
 		} else {
 			logger.Info("sync job triggered", "job", job.Name)
+		}
+
+		statusPatch.Sync = provisioning.SyncStatus{
+			State:       provisioning.JobStatePending,
+			JobID:       job.Name,
+			Incremental: sync.Incremental,
 		}
 	}
 

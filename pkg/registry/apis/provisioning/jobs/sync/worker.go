@@ -124,7 +124,7 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 		stats = &provisioning.ResourceStats{}
 	}
 
-	progress.SetMessage("update sync amd stats status at end")
+	progress.SetMessage("update status and stats")
 	data = map[string]any{
 		"status": map[string]any{
 			"sync":  syncStatus,
@@ -134,6 +134,10 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 
 	if err := r.patchStatus(ctx, cfg, data); err != nil {
 		return fmt.Errorf("update repo with job final status: %w", err)
+	}
+
+	if syncError == nil {
+		progress.SetMessage("job completed successfully")
 	}
 
 	return syncError
