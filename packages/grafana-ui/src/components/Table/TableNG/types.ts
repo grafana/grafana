@@ -9,7 +9,7 @@ export interface CellNGProps {
   theme?: GrafanaTheme2;
   height?: number;
   justifyContent: Property.JustifyContent;
-  rowIdx?: number;
+  rowIdx: number;
 }
 
 export interface RowExpanderNGProps {

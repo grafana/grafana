@@ -1,5 +1,3 @@
-import { isFunction } from 'lodash';
-
 import { ThresholdsConfig, ThresholdsMode, VizOrientation, getFieldConfigWithMinMax } from '@grafana/data';
 import { BarGaugeDisplayMode, BarGaugeValueMode, TableCellDisplayMode } from '@grafana/schema';
 
@@ -7,6 +5,7 @@ import { BarGauge } from '../../../BarGauge/BarGauge';
 import { DataLinksContextMenu, DataLinksContextMenuApi } from '../../../DataLinks/DataLinksContextMenu';
 import { getAlignmentFactor, getCellOptions } from '../../utils';
 import { BarGaugeCellProps } from '../types';
+import { getCellLinks } from '../utils';
 
 const defaultScale: ThresholdsConfig = {
   mode: ThresholdsMode.Absolute,
@@ -45,15 +44,7 @@ export const BarGaugeCell = ({ value, field, theme, height, width, rowIdx }: Bar
       cellOptions.valueDisplayMode !== undefined ? cellOptions.valueDisplayMode : BarGaugeValueMode.Text;
   }
 
-  const getLinks = () => {
-    if (!isFunction(field.getLinks)) {
-      return [];
-    }
-
-    return field.getLinks({ valueRowIndex: rowIdx });
-  };
-
-  const hasLinks = Boolean(getLinks().length);
+  const hasLinks = Boolean(getCellLinks(field, rowIdx)?.length);
 
   const alignmentFactors = getAlignmentFactor(field, displayValue, rowIdx!);
 
@@ -84,7 +75,10 @@ export const BarGaugeCell = ({ value, field, theme, height, width, rowIdx }: Bar
   return (
     <>
       {hasLinks ? (
-        <DataLinksContextMenu links={getLinks} style={{ display: 'flex', width: '100%' }}>
+        <DataLinksContextMenu
+          links={() => getCellLinks(field, rowIdx) || []}
+          style={{ display: 'flex', width: '100%' }}
+        >
           {(api) => renderComponent(api)}
         </DataLinksContextMenu>
       ) : (

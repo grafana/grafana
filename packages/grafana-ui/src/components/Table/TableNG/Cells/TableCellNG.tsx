@@ -94,6 +94,7 @@ export function TableCellNG(props: any) {
           timeRange={timeRange}
           height={height}
           width={divWidth}
+          rowIdx={rowIdx}
         />
       );
       break;
@@ -105,14 +106,17 @@ export function TableCellNG(props: any) {
           height={height}
           justifyContent={justifyContent}
           value={value}
+          rowIdx={rowIdx}
         />
       );
       break;
     case TableCellDisplayMode.JSONView:
-      cell = <JSONCell value={value} justifyContent={justifyContent} />;
+      cell = <JSONCell value={value} justifyContent={justifyContent} field={field} rowIdx={rowIdx} />;
       break;
     case TableCellDisplayMode.DataLinks:
-      cell = <DataLinksCell value={value} field={field} theme={theme} justifyContent={justifyContent} />;
+      cell = (
+        <DataLinksCell value={value} field={field} theme={theme} justifyContent={justifyContent} rowIdx={rowIdx} />
+      );
       break;
     case TableCellDisplayMode.Auto:
     default:
@@ -123,6 +127,7 @@ export function TableCellNG(props: any) {
           theme={theme}
           justifyContent={justifyContent}
           cellOptions={fieldConfig.custom.cellOptions}
+          rowIdx={rowIdx}
         />
       );
   }
