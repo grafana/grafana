@@ -44,6 +44,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/supportbundles"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -87,6 +88,7 @@ func ProvideService(
 	r prometheus.Registerer,
 	tracer tracing.Tracer,
 	resourceClient resource.ResourceClient,
+	dual dualwrite.Service,
 ) *Service {
 	srv := &Service{
 		log:                    slog.Default().With("logger", "folder-service"),
@@ -111,7 +113,7 @@ func ProvideService(
 
 	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesFoldersServiceV2) {
 		k8sHandler := client.NewK8sHandler(
-			cfg,
+			dual,
 			request.GetNamespaceMapper(cfg),
 			v0alpha1.FolderResourceInfo.GroupVersionResource(),
 			apiserver.GetRestConfig,
@@ -128,7 +130,7 @@ func ProvideService(
 
 	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesCliDashboards) {
 		dashHandler := client.NewK8sHandler(
-			cfg,
+			dual,
 			request.GetNamespaceMapper(cfg),
 			dashboardalpha1.DashboardResourceInfo.GroupVersionResource(),
 			apiserver.GetRestConfig,
