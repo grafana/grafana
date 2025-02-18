@@ -93,7 +93,7 @@ func mustGenerateKeeper(t *testing.T, helper *apis.K8sTestHelper, user apis.User
 	})
 
 	if testFile == "" {
-		testFile = "testdata/keeper-aws-generate.yaml"
+		testFile = "testdata/keeper-sql-generate.yaml"
 	}
 	testKeeper := helper.LoadYAMLOrJSONFile(testFile)
 	if specType != nil {

@@ -50,7 +50,7 @@ func TestIntegrationSecureValue(t *testing.T) {
 	})
 
 	t.Run("creating a secure value returns it without any of the value or ref", func(t *testing.T) {
-		keeper := mustGenerateKeeper(t, helper, helper.Org1.Admin, nil, "testdata/keeper-sql-generate.yaml")
+		keeper := mustGenerateKeeper(t, helper, helper.Org1.Admin, nil, "")
 		raw := mustGenerateSecureValue(t, helper, helper.Org1.Admin, keeper.GetName())
 
 		secureValue := new(secretv0alpha1.SecureValue)
@@ -116,7 +116,7 @@ func TestIntegrationSecureValue(t *testing.T) {
 		})
 
 		t.Run("and updating the secure value keeper is not allowed and returns error", func(t *testing.T) {
-			newKeeper := mustGenerateKeeper(t, helper, helper.Org1.Admin, nil, "testdata/keeper-sql-generate.yaml")
+			newKeeper := mustGenerateKeeper(t, helper, helper.Org1.Admin, nil, "")
 
 			newRaw := helper.LoadYAMLOrJSONFile("testdata/secure-value-generate.yaml")
 			newRaw.SetName(raw.GetName())
@@ -131,7 +131,7 @@ func TestIntegrationSecureValue(t *testing.T) {
 	})
 
 	t.Run("creating a secure value with a `value` then updating it to a `ref` returns an error", func(t *testing.T) {
-		keeper := mustGenerateKeeper(t, helper, helper.Org1.Admin, nil, "testdata/keeper-sql-generate.yaml")
+		keeper := mustGenerateKeeper(t, helper, helper.Org1.Admin, nil, "")
 		svWithValue := mustGenerateSecureValue(t, helper, helper.Org1.Admin, keeper.GetName())
 
 		testData := svWithValue.DeepCopy()
@@ -173,7 +173,7 @@ func TestIntegrationSecureValue(t *testing.T) {
 	t.Run("deleting a secure value that exists does not return an error", func(t *testing.T) {
 		generatePrefix := "generated-"
 
-		keeper := mustGenerateKeeper(t, helper, helper.Org1.Admin, nil, "testdata/keeper-sql-generate.yaml")
+		keeper := mustGenerateKeeper(t, helper, helper.Org1.Admin, nil, "")
 
 		testData := helper.LoadYAMLOrJSONFile("testdata/secure-value-generate.yaml")
 		testData.SetGenerateName(generatePrefix)
@@ -211,8 +211,8 @@ func TestIntegrationSecureValue(t *testing.T) {
 		adminOrg1 := helper.Org1.Admin
 		adminOrg2 := helper.OrgB.Admin
 
-		keeperOrg1 := mustGenerateKeeper(t, helper, adminOrg1, nil, "testdata/keeper-sql-generate.yaml")
-		keeperOrg2 := mustGenerateKeeper(t, helper, adminOrg2, nil, "testdata/keeper-sql-generate.yaml")
+		keeperOrg1 := mustGenerateKeeper(t, helper, adminOrg1, nil, "")
+		keeperOrg2 := mustGenerateKeeper(t, helper, adminOrg2, nil, "")
 
 		secureValueOrg1 := mustGenerateSecureValue(t, helper, adminOrg1, keeperOrg1.GetName())
 		secureValueOrg2 := mustGenerateSecureValue(t, helper, adminOrg2, keeperOrg2.GetName())
@@ -330,7 +330,7 @@ func TestIntegrationSecureValue(t *testing.T) {
 	})
 
 	t.Run("creating a secure value with a not implemented keeper returns error", func(t *testing.T) {
-		keeper := mustGenerateKeeper(t, helper, helper.Org1.Admin, nil, "")
+		keeper := mustGenerateKeeper(t, helper, helper.Org1.Admin, nil, "testdata/keeper-aws-generate.yaml")
 		testSecureValue := helper.LoadYAMLOrJSONFile("testdata/secure-value-generate.yaml")
 		testSecureValue.Object["spec"].(map[string]any)["keeper"] = keeper.GetName()
 
@@ -405,7 +405,7 @@ func TestIntegrationSecureValue(t *testing.T) {
 		})
 
 		t.Run("and updating the secure value keeper is not allowed and returns error", func(t *testing.T) {
-			newKeeper := mustGenerateKeeper(t, helper, helper.Org1.Admin, nil, "testdata/keeper-sql-generate.yaml")
+			newKeeper := mustGenerateKeeper(t, helper, helper.Org1.Admin, nil, "")
 
 			newRaw := helper.LoadYAMLOrJSONFile("testdata/secure-value-generate.yaml")
 			newRaw.SetName(raw.GetName())
