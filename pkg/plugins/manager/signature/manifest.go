@@ -140,32 +140,8 @@ func (s *Signature) ReadPluginManifestFromFS(ctx context.Context, pfs plugins.FS
 	return manifest, nil
 }
 
-func (s *Signature) calculateCDN(plugin plugins.FoundPlugin) plugins.Signature {
-	v, ok := s.cfg.PluginSettings[plugin.JSONData.ID]["signature_type"]
-	if !ok {
-		// Unsupported config (missing key), fall back to old behaviour
-		return plugins.Signature{Status: plugins.SignatureStatusValid}
-	}
-	cfgSigType := plugins.SignatureType(v)
-	if !cfgSigType.IsValid() {
-		s.log.Warn("CDN plugin has invalid signature type", "id", plugin.JSONData.ID, "signatureType", cfgSigType)
-		return plugins.Signature{
-			Status: plugins.SignatureStatusUnsigned,
-		}
-	}
-	cfgSigOrg := s.cfg.PluginSettings[plugin.JSONData.ID]["signature_org_name"]
-	return plugins.Signature{
-		Status:     plugins.SignatureStatusValid,
-		Type:       cfgSigType,
-		SigningOrg: cfgSigOrg,
-	}
-}
-
 func (s *Signature) Calculate(ctx context.Context, src plugins.PluginSource, plugin plugins.FoundPlugin) (plugins.Signature, error) {
-	if src.PluginClass(ctx) == plugins.ClassCDN {
-		return s.calculateCDN(plugin), nil
-	}
-	if defaultSignature, exists := src.DefaultSignature(ctx); exists {
+	if defaultSignature, exists := src.DefaultSignature(ctx, plugin.JSONData.ID); exists {
 		return defaultSignature, nil
 	}
 
