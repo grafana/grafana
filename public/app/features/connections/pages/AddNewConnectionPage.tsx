@@ -21,8 +21,13 @@ export function AddNewConnectionPage() {
 
   const updateAll = (
     <Button disabled={disableUpdateAllButton} onClick={onUpdateAll}>
-      <Trans i18nKey="plugins.catalog.update-all.button">Update all</Trans>
-      {disableUpdateAllButton ? '' : ` (${updatableDSPlugins.length})`}
+      {disableUpdateAllButton ? (
+        <Trans i18nKey="plugins.catalog.no-updates-available">No updates available</Trans>
+      ) : (
+        <Trans i18nKey="plugins.catalog.update-all.button" values={{ length: updatablePlugins.length }}>
+          Update all ({{ length }})
+        </Trans>
+      )}
     </Button>
   );
   return (

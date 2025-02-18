@@ -1,15 +1,16 @@
 import { css } from '@emotion/css';
-import { useMemo, useState, FormEvent, MouseEvent } from 'react';
+import { useMemo, useState, MouseEvent } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
 import { PluginType, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { locationSearchToObject, reportInteraction } from '@grafana/runtime';
-import { LoadingPlaceholder, EmptyState, useStyles2, Field, RadioButtonGroup, Tooltip, Combobox } from '@grafana/ui';
+import { LoadingPlaceholder, EmptyState, Field, RadioButtonGroup, Tooltip, Combobox, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { t, Trans } from 'app/core/internationalization';
 import { HorizontalGroup } from 'app/features/plugins/admin/components/HorizontalGroup';
 import { RoadmapLinks } from 'app/features/plugins/admin/components/RoadmapLinks';
+import { SearchField } from 'app/features/plugins/admin/components/SearchField';
 import { Sorters } from 'app/features/plugins/admin/helpers';
 import { useHistory } from 'app/features/plugins/admin/hooks/useHistory';
 import { useGetAll, useIsRemotePluginsAvailable } from 'app/features/plugins/admin/state/hooks';
@@ -20,7 +21,6 @@ import { ROUTES } from '../../constants';
 import { CardGrid, type CardGridItem } from './CardGrid';
 import { CategoryHeader } from './CategoryHeader';
 import { NoAccessModal } from './NoAccessModal';
-import { Search } from './Search';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   spacer: css({
@@ -37,12 +37,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
       marginLeft: 'auto',
     },
   }),
-  rightContent: css({
-    display: 'flex',
-    justifyContent: 'flex-end',
-    alignItems: 'center',
-    height: '40px',
-  }),
 });
 
 export function AddNewConnection() {
@@ -57,9 +51,9 @@ export function AddNewConnection() {
   const filterBy = locationSearch.filterBy?.toString() || 'all';
   const canCreateDataSources = contextSrv.hasPermission(AccessControlAction.DataSourcesCreate);
   const styles = useStyles2(getStyles);
-  const handleSearchChange = (e: FormEvent<HTMLInputElement>) => {
+  const handleSearchChange = (val: string) => {
     setQueryParams({
-      search: e.currentTarget.value.toLowerCase(),
+      search: val,
     });
   };
   const remotePluginsAvailable = useIsRemotePluginsAvailable();
@@ -126,50 +120,54 @@ export function AddNewConnection() {
   return (
     <>
       {focusedItem && <NoAccessModal item={focusedItem} isOpen={isNoAccessModalOpen} onDismiss={closeModal} />}
-      <Search onChange={handleSearchChange} value={searchTerm} />
-      <HorizontalGroup wrap className={styles.actionBar}>
-        {/* Filter by installed / all */}
-        {remotePluginsAvailable ? (
-          <Field label={t('plugins.filter.state', 'State')}>
-            <RadioButtonGroup value={filterBy} onChange={onFilterByChange} options={filterByOptions} />
-          </Field>
-        ) : (
-          <Tooltip
-            content={t(
-              'plugins.filter.disabled',
-              'This filter has been disabled because the Grafana server cannot access grafana.com'
-            )}
-            placement="top"
-          >
-            <div>
-              <Field label={t('plugins.filter.state', 'State')}>
-                <RadioButtonGroup
-                  disabled={true}
-                  value={filterBy}
-                  onChange={onFilterByChange}
-                  options={filterByOptions}
-                />
-              </Field>
-            </div>
-          </Tooltip>
-        )}
-
-        {/* Sorting */}
-        <Field label={t('plugins.filter.sort', 'Sort')}>
-          <Combobox
-            aria-label={t('plugins.filter.sort-list', 'Sort Plugins List')}
-            width={24}
-            value={sortBy?.toString()}
-            onChange={onSortByChange}
-            options={[
-              { value: 'nameAsc', label: 'By name (A-Z)' },
-              { value: 'nameDesc', label: 'By name (Z-A)' },
-              { value: 'updated', label: 'By updated date' },
-              { value: 'published', label: 'By published date' },
-              { value: 'downloads', label: 'By downloads' },
-            ]}
-          />
+      <HorizontalGroup wrap>
+        <Field label={t('common.search', 'Search')}>
+          <SearchField value={searchTerm} onSearch={handleSearchChange} />
         </Field>
+        <HorizontalGroup className={styles.actionBar}>
+          {/* Filter by installed / all */}
+          {remotePluginsAvailable ? (
+            <Field label={t('plugins.filter.state', 'State')}>
+              <RadioButtonGroup value={filterBy} onChange={onFilterByChange} options={filterByOptions} />
+            </Field>
+          ) : (
+            <Tooltip
+              content={t(
+                'plugins.filter.disabled',
+                'This filter has been disabled because the Grafana server cannot access grafana.com'
+              )}
+              placement="top"
+            >
+              <div>
+                <Field label={t('plugins.filter.state', 'State')}>
+                  <RadioButtonGroup
+                    disabled={true}
+                    value={filterBy}
+                    onChange={onFilterByChange}
+                    options={filterByOptions}
+                  />
+                </Field>
+              </div>
+            </Tooltip>
+          )}
+
+          {/* Sorting */}
+          <Field label={t('plugins.filter.sort', 'Sort')}>
+            <Combobox
+              aria-label={t('plugins.filter.sort-list', 'Sort Plugins List')}
+              width={24}
+              value={sortBy?.toString()}
+              onChange={onSortByChange}
+              options={[
+                { value: 'nameAsc', label: 'By name (A-Z)' },
+                { value: 'nameDesc', label: 'By name (Z-A)' },
+                { value: 'updated', label: 'By updated date' },
+                { value: 'published', label: 'By published date' },
+                { value: 'downloads', label: 'By downloads' },
+              ]}
+            />
+          </Field>
+        </HorizontalGroup>
       </HorizontalGroup>
       <CategoryHeader iconName="database" label={categoryHeaderLabel} />
       {isLoading ? (

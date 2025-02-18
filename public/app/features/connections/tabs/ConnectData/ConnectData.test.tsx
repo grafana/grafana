@@ -136,21 +136,26 @@ describe('Add new connection', () => {
   });
 
   test('renders card if search term matches', async () => {
-    renderPage([
-      getCatalogPluginMock({ type: PluginType.datasource, id: 'test1' }),
-      getCatalogPluginMock({ id: 'test2', type: PluginType.datasource, name: 'querymatches' }),
-    ]);
-    const searchField = await screen.findByRole('textbox');
-
-    await userEvent.type(searchField, 'rymatch');
+    renderPage(
+      [
+        getCatalogPluginMock({ type: PluginType.datasource, id: 'test1', name: 'test33' }),
+        getCatalogPluginMock({ id: 'test2', type: PluginType.datasource, name: 'querymatches' }),
+      ],
+      '/add-new-connection?filterBy=all&sortBy=nameAsc&search=querymatches'
+    );
     expect(await screen.findByText('querymatches')).toBeVisible();
+  });
 
-    await userEvent.clear(searchField);
-    await userEvent.type(searchField, 'cramp');
-    expect(screen.queryByText('No results matching your query were found')).toBeInTheDocument();
+  test('renders no results if search term does not match', async () => {
+    renderPage(
+      [
+        getCatalogPluginMock({ type: PluginType.datasource, id: 'test1', name: 'test33' }),
+        getCatalogPluginMock({ id: 'test2', type: PluginType.datasource, name: 'querymatches' }),
+      ],
+      '/add-new-connection?filterBy=all&sortBy=nameAsc&search=dfvdfv'
+    );
 
-    await userEvent.clear(searchField);
-    expect(await screen.findByText('querymatches')).toBeVisible();
+    expect(await screen.findByText('No results matching your query were found')).toBeVisible();
   });
 
   test('shows a "No access" modal if the user does not have permissions to create datasources', async () => {

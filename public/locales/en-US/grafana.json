@@ -2845,10 +2845,11 @@
   },
   "plugins": {
     "catalog": {
+      "no-updates-available": "No updates available",
       "update-all": {
         "all-plugins-updated": "All plugins updated!",
         "available-header": "Available",
-        "button": "Update all",
+        "button": "Update all ({{length}})",
         "cloud-update-message": "* It may take a few minutes for the plugins to be available for usage.",
         "error": "Error updating plugin:",
         "error-status-text": "failed - see error messages",

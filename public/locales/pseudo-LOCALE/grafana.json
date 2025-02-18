@@ -2845,10 +2845,11 @@
   },
   "plugins": {
     "catalog": {
+      "no-updates-available": "Ńő ūpđäŧęş äväįľäþľę",
       "update-all": {
         "all-plugins-updated": "Åľľ pľūģįŉş ūpđäŧęđ!",
         "available-header": "Åväįľäþľę",
-        "button": "Ůpđäŧę äľľ",
+        "button": "Ůpđäŧę äľľ ({{length}})",
         "cloud-update-message": "* Ĩŧ mäy ŧäĸę ä ƒęŵ mįŉūŧęş ƒőř ŧĥę pľūģįŉş ŧő þę äväįľäþľę ƒőř ūşäģę.",
         "error": "Ēřřőř ūpđäŧįŉģ pľūģįŉ:",
         "error-status-text": "ƒäįľęđ - şęę ęřřőř męşşäģęş",
