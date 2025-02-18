@@ -227,6 +227,7 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit, panelId, zoomMode }
                 onMouseEnter={setEdgeHover}
                 onMouseLeave={clearEdgeHover}
                 svgIdNamespace={svgIdNamespace}
+                processedNodesLength={processed.nodes.length}
               />
             )}
             <Nodes
@@ -348,13 +349,15 @@ interface EdgesProps {
   onClick: (event: MouseEvent<SVGElement>, link: EdgeDatumLayout) => void;
   onMouseEnter: (id: string) => void;
   onMouseLeave: (id: string) => void;
+  processedNodesLength: number;
 }
 const Edges = memo(function Edges(props: EdgesProps) {
   return (
     <>
-      {props.edges.map((e) => (
+      {props.edges.map((e, index) => (
         <Edge
-          key={e.id}
+          key={`${e.id}-${index}-${props.processedNodesLength}`}
+          index={index}
           edge={e}
           hovering={
             (e.source as NodeDatum).id === props.nodeHoveringId ||
@@ -365,6 +368,7 @@ const Edges = memo(function Edges(props: EdgesProps) {
           onMouseEnter={props.onMouseEnter}
           onMouseLeave={props.onMouseLeave}
           svgIdNamespace={props.svgIdNamespace}
+          processedNodesLength={props.processedNodesLength}
         />
       ))}
     </>
