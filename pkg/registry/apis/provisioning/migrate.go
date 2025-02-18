@@ -74,7 +74,7 @@ func (c *migrateConnector) Connect(
 				Namespace: cfg.Namespace,
 			},
 			Spec: provisioning.JobSpec{
-				Action:     provisioning.JobActionSync,
+				Action:     provisioning.JobActionMigrate,
 				Repository: cfg.Name,
 				Migrate:    &options,
 			},

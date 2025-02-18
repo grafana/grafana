@@ -11,11 +11,10 @@ interface Props {
 
 export function ExportToRepository({ repo }: Props) {
   const [exportRepo, exportQuery] = useCreateRepositoryExportMutation();
-  const exportName = exportQuery.data?.metadata?.name;
+  const exportJob = exportQuery.data?.metadata?.name;
 
   const { register, formState, handleSubmit } = useForm<ExportJobOptions>({
     defaultValues: {
-      history: true,
       prefix: '',
     },
   });
@@ -26,8 +25,8 @@ export function ExportToRepository({ repo }: Props) {
       body, // << the form
     });
 
-  if (exportName) {
-    return <ExportJobStatus name={exportName} />;
+  if (exportJob) {
+    return <ExportJobStatus name={exportJob} />;
   }
 
   const isGit = repo.spec?.type === 'github';
@@ -48,10 +47,6 @@ export function ExportToRepository({ repo }: Props) {
 
           <Field label="Identifier" description="Include the current identifier in exported metadata">
             <Switch {...register('identifier')} />
-          </Field>
-
-          <Field label="History" description="Include commits for each historical value">
-            <Switch {...register('history')} />
           </Field>
 
           <Button

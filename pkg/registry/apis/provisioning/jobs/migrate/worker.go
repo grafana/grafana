@@ -6,8 +6,12 @@ import (
 	"fmt"
 	"os"
 
+	"google.golang.org/grpc/metadata"
+
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	dashboard "github.com/grafana/grafana/pkg/apis/dashboard"
+	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -102,7 +106,17 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 		return fmt.Errorf("error getting client: %w", err)
 	}
 
-	worker := newMigrationJob(ctx, repo, *options, dynamicClient, progress)
+	worker, err := newMigrationJob(ctx, repo, *options, dynamicClient, w.legacyMigrator, w.batch, progress)
+	if err != nil {
+		return fmt.Errorf("error creating job: %w", err)
+	}
+
+	// Make sure we close
+	defer func() {
+		if worker.batch != nil {
+			_ = worker.batch.CloseSend()
+		}
+	}()
 
 	if options.History {
 		progress.SetMessage("load users")
@@ -132,6 +146,12 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 		}
 	}
 
+	rsp, err := worker.batch.CloseAndRecv()
+	if err != nil {
+		return fmt.Errorf("error getting results: %w", err)
+	}
+	worker.logger.Info("processed", "results", rsp)
+
 	return nil
 }
 
@@ -140,6 +160,7 @@ type migrationJob struct {
 	logger logging.Logger
 	target repository.Repository
 	legacy legacy.LegacyMigrator
+	batch  resource.BatchStore_BatchProcessClient
 	client *resources.DynamicClient // Read from
 
 	namespace string
@@ -156,11 +177,33 @@ func newMigrationJob(ctx context.Context,
 	target repository.Repository,
 	options provisioning.MigrateJobOptions,
 	client *resources.DynamicClient,
+	legacyMigrator legacy.LegacyMigrator,
+	batch resource.BatchStoreClient,
 	progress jobs.JobProgressRecorder,
-) *migrationJob {
+) (*migrationJob, error) {
 	if options.Prefix != "" {
 		options.Prefix = safepath.Clean(options.Prefix)
 	}
+
+	ns := target.Config().Namespace
+	settings := resource.BatchSettings{
+		RebuildCollection: true, // wipes everything in the collection
+		Collection: []*resource.ResourceKey{{
+			Namespace: ns,
+			Group:     folders.GROUP,
+			Resource:  folders.RESOURCE,
+		}, {
+			Namespace: ns,
+			Group:     dashboard.GROUP,
+			Resource:  dashboard.DASHBOARD_RESOURCE,
+		}},
+	}
+	ctx = metadata.NewOutgoingContext(ctx, settings.ToMD())
+	stream, err := batch.BatchProcess(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	return &migrationJob{
 		namespace:  target.Config().Namespace,
 		target:     target,
@@ -168,8 +211,10 @@ func newMigrationJob(ctx context.Context,
 		progress:   progress,
 		options:    options,
 		client:     client,
+		legacy:     legacyMigrator,
+		batch:      stream,
 		folderTree: resources.NewEmptyFolderTree(),
-	}
+	}, nil
 }
 
 func (j *migrationJob) withAuthorSignature(ctx context.Context, item utils.GrafanaMetaAccessor) context.Context {

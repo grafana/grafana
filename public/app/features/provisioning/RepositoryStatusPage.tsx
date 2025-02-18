@@ -4,6 +4,7 @@ import { useParams } from 'react-router-dom-v5-compat';
 
 import { SelectableValue, urlUtil } from '@grafana/data';
 import {
+  Alert,
   Button,
   CellProps,
   Column,
@@ -26,6 +27,7 @@ import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { isNotFoundError } from '../alerting/unified/api/util';
 
 import { ExportToRepository } from './ExportToRepository';
+import { MigrateToRepository } from './MigrateToRepository';
 import { RepositoryOverview } from './RepositoryOverview';
 import { RepositoryResources } from './RepositoryResources';
 import { StatusBadge } from './StatusBadge';
@@ -35,6 +37,7 @@ import {
   Repository,
   useListRepositoryQuery,
   useDeleteRepositoryFilesWithPathMutation,
+  useGetFrontendSettingsQuery,
 } from './api';
 import { FileDetails } from './api/types';
 import { PROVISIONING_URL } from './constants';
@@ -62,6 +65,7 @@ export default function RepositoryStatusPage() {
   const data = query.data?.items?.[0];
   const location = useLocation();
   const [queryParams] = useQueryParams();
+  const settings = useGetFrontendSettingsQuery();
   const tab = queryParams['tab'] ?? TabSelection.Overview;
 
   const notFound = query.isError && isNotFoundError(query.error);
@@ -88,6 +92,11 @@ export default function RepositoryStatusPage() {
       }
     >
       <Page.Contents isLoading={query.isLoading}>
+        {settings.data?.legacyStorage && (
+          <Alert title="Legacy Storage" severity="error">
+            Instance is not yet running unified storage -- requires migration wizard
+          </Alert>
+        )}
         {notFound ? (
           <EmptyState message={`Repository not found`} variant="not-found">
             <Text element={'p'}>Make sure the repository config exists in the configuration file.</Text>
@@ -112,7 +121,15 @@ export default function RepositoryStatusPage() {
                   {tab === TabSelection.Overview && <RepositoryOverview repo={data} />}
                   {tab === TabSelection.Resources && <RepositoryResources repo={data} />}
                   {tab === TabSelection.Files && <FilesView repo={data} />}
-                  {tab === TabSelection.Export && <ExportToRepository repo={data} />}
+                  {tab === TabSelection.Export && (
+                    <>
+                      {settings.data?.legacyStorage ? (
+                        <MigrateToRepository repo={data} />
+                      ) : (
+                        <ExportToRepository repo={data} />
+                      )}
+                    </>
+                  )}
                 </TabContent>
               </>
             ) : (
