@@ -659,14 +659,6 @@ var (
 			Expression:   "true", // enabled by default
 		},
 		{
-			Name:         "transformationsVariableSupport",
-			Description:  "Allows using variables in transformations",
-			FrontendOnly: true,
-			Stage:        FeatureStageGeneralAvailability,
-			Owner:        grafanaDatavizSquad,
-			Expression:   "true", // Enabled by default
-		},
-		{
 			Name:            "kubernetesPlaylists",
 			Description:     "Use the kubernetes API in the frontend for playlists, and route /api/playlist requests to k8s",
 			Stage:           FeatureStageGeneralAvailability,
@@ -772,14 +764,6 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaOperatorExperienceSquad,
 			FrontendOnly: false,
-		},
-		{
-			Name:            "managedPluginsInstall",
-			Description:     "Install managed plugins directly from plugins catalog",
-			Stage:           FeatureStageGeneralAvailability,
-			RequiresDevMode: false,
-			Owner:           grafanaPluginsPlatformSquad,
-			Expression:      "true", // enabled by default
 		},
 		{
 			Name:         "prometheusPromQAIL",
@@ -1717,13 +1701,6 @@ var (
 			HideFromDocs: true,
 		},
 		{
-			Name:           "queryLibraryDashboards",
-			Description:    "Enables Query Library feature in Dashboards",
-			Stage:          FeatureStageExperimental,
-			Owner:          grafanaFrontendPlatformSquad,
-			AllowSelfServe: false,
-		},
-		{
 			Name:        "grafanaAdvisor",
 			Description: "Enables Advisor app",
 			Stage:       FeatureStageExperimental,
@@ -1755,6 +1732,14 @@ var (
 		{
 			Name:              "fetchRulesUsingPost",
 			Description:       "Use a POST request to list rules by passing down the namespaces user has access to",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaAlertingSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+		},
+		{
+			Name:              "alertingConversionAPI",
+			Description:       "Enable the alerting conversion API",
 			Stage:             FeatureStageExperimental,
 			Owner:             grafanaAlertingSquad,
 			HideFromAdminPage: true,
@@ -1799,6 +1784,31 @@ var (
 			Description: "Load plugins from CDN synchronously",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaPluginsPlatformSquad,
+		},
+		{
+			Name:         "alertingJiraIntegration",
+			Description:  "Enables the new Jira integration for contact points in cloud alert managers.",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			FrontendOnly: true,
+			HideFromDocs: true,
+		},
+		{
+			Name:              "alertingRuleVersionHistoryRestore",
+			Description:       "Enables the alert rule version history restore feature",
+			FrontendOnly:      true,
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaAlertingSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+		},
+		{
+			Name:              "newShareReportDrawer",
+			Description:       "Enables the report creation drawer in a dashboard",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaSharingSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
 		},
 	}
 )

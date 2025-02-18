@@ -68,6 +68,13 @@ func (st DBstore) DeleteAlertRulesByUID(ctx context.Context, orgID int64, ruleUI
 			return err
 		}
 		logger.Debug("Deleted alert instances", "count", rows)
+
+		rows, err = sess.Table("alert_rule_state").Where("org_id = ?", orgID).In("rule_uid", ruleUID).Delete(alertRule{})
+		if err != nil {
+			return err
+		}
+		logger.Debug("Deleted alert rule state", "count", rows)
+
 		return nil
 	})
 }
@@ -329,7 +336,13 @@ func (st DBstore) UpdateAlertRules(ctx context.Context, user *ngmodels.UserUID, 
 			v := alertRuleToAlertRuleVersion(converted)
 			v.Version++
 			v.ParentVersion = r.Existing.Version
-			ruleVersions = append(ruleVersions, v)
+
+			// check if there is diff between existing and new, and if no, skip saving version.
+			existingConverted, err := alertRuleFromModelsAlertRule(*r.Existing)
+			if err != nil || !alertRuleToAlertRuleVersion(existingConverted).EqualSpec(v) {
+				ruleVersions = append(ruleVersions, v)
+			}
+
 			keys = append(keys, ngmodels.AlertRuleKey{OrgID: r.New.OrgID, UID: r.New.UID})
 		}
 		if len(ruleVersions) > 0 {
@@ -984,7 +997,7 @@ func (st DBstore) RenameReceiverInNotificationSettings(ctx context.Context, orgI
 			continue
 		}
 
-		r := ngmodels.CopyRule(rule)
+		r := rule.Copy()
 		for idx := range r.NotificationSettings {
 			if r.NotificationSettings[idx].Receiver == oldReceiver {
 				r.NotificationSettings[idx].Receiver = newReceiver
@@ -1059,7 +1072,7 @@ func (st DBstore) RenameTimeIntervalInNotificationSettings(
 			continue
 		}
 
-		r := ngmodels.CopyRule(rule)
+		r := rule.Copy()
 		for idx := range r.NotificationSettings {
 			for mtIdx := range r.NotificationSettings[idx].MuteTimeIntervals {
 				if r.NotificationSettings[idx].MuteTimeIntervals[mtIdx] == oldTimeInterval {

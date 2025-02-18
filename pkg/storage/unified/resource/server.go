@@ -26,6 +26,7 @@ import (
 // ResourceServer implements all gRPC services
 type ResourceServer interface {
 	ResourceStoreServer
+	BatchStoreServer
 	ResourceIndexServer
 	RepositoryIndexServer
 	BlobStoreServer
@@ -260,7 +261,7 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 
 	err := s.Init(ctx)
 	if err != nil {
-		s.log.Error("error initializing resource server", "error", err)
+		s.log.Error("resource server init failed", "error", err)
 		return nil, err
 	}
 
@@ -314,7 +315,7 @@ func (s *server) Init(ctx context.Context) error {
 		}
 
 		if s.initErr != nil {
-			s.log.Error("error initializing resource server", "error", s.initErr)
+			s.log.Error("error running resource server init", "error", s.initErr)
 		}
 	})
 	return s.initErr
@@ -921,6 +922,12 @@ func (s *server) initWatcher() error {
 			for {
 				// pipe all events
 				v := <-events
+
+				// Skip events during batch updates
+				if v.PreviousRV < 0 {
+					continue
+				}
+
 				s.log.Debug("Server. Streaming Event", "type", v.Type, "previousRV", v.PreviousRV, "group", v.Key.Group, "namespace", v.Key.Namespace, "resource", v.Key.Resource, "name", v.Key.Name)
 				s.mostRecentRV.Store(v.ResourceVersion)
 				out <- v

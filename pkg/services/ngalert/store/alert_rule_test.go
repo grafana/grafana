@@ -73,6 +73,16 @@ func TestIntegrationUpdateAlertRules(t *testing.T) {
 
 		require.NoError(t, err)
 		require.Equal(t, rule.Version+1, dbrule.Version)
+
+		t.Run("should create version record", func(t *testing.T) {
+			var count int64
+			err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+				count, err = sess.Table(alertRuleVersion{}).Where("rule_uid = ?", rule.UID).Count()
+				return err
+			})
+			require.NoError(t, err)
+			require.EqualValues(t, 1, count) // only the current version, insert did not create version.
+		})
 	})
 
 	t.Run("updating record field should increase version", func(t *testing.T) {
@@ -189,6 +199,32 @@ func TestIntegrationUpdateAlertRules(t *testing.T) {
 				return err
 			})
 			assert.Nil(t, dbrule.UpdatedBy)
+		})
+	})
+
+	t.Run("should save noop update", func(t *testing.T) {
+		rule := createRule(t, store, gen)
+		newRule := models.CopyRule(rule)
+		err := store.UpdateAlertRules(context.Background(), &usr, []models.UpdateRule{{
+			Existing: rule,
+			New:      *newRule,
+		},
+		})
+		require.NoError(t, err)
+
+		newRule, err = store.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{UID: rule.UID})
+		require.NoError(t, err)
+
+		assert.Equal(t, rule.Version+1, newRule.Version)
+
+		t.Run("should not create version record", func(t *testing.T) {
+			var count int64
+			err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+				count, err = sess.Table(alertRuleVersion{}).Where("rule_uid = ?", rule.UID).Count()
+				return err
+			})
+			require.NoError(t, err)
+			require.EqualValues(t, 1, count) // only the current version
 		})
 	})
 }
@@ -679,13 +715,22 @@ func TestIntegration_DeleteAlertRulesByUID(t *testing.T) {
 	sqlStore := db.InitTestDB(t)
 	cfg := setting.NewCfg()
 	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
-	b := &fakeBus{}
 	logger := log.New("test-dbstore")
-	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, b)
+	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, &fakeBus{})
+	protoInstanceStore := ProtoInstanceDBStore{
+		SQLStore:       sqlStore,
+		Logger:         logger,
+		FeatureToggles: featuremgmt.WithFeatures(),
+	}
 
 	gen := models.RuleGen
 
 	t.Run("should emit event when rules are deleted", func(t *testing.T) {
+		// Create a new store to pass the custom bus to check the signal
+		b := &fakeBus{}
+		logger := log.New("test-dbstore")
+		store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, b)
+
 		rule := createRule(t, store, gen)
 		called := false
 		b.publishFn = func(ctx context.Context, msg bus.Msg) error {
@@ -700,6 +745,40 @@ func TestIntegration_DeleteAlertRulesByUID(t *testing.T) {
 		err := store.DeleteAlertRulesByUID(context.Background(), rule.OrgID, rule.UID)
 		require.NoError(t, err)
 		require.True(t, called)
+	})
+
+	t.Run("should delete alert rule state", func(t *testing.T) {
+		rule := createRule(t, store, gen)
+
+		// Save state for the alert rule
+		instances := []models.AlertInstance{
+			{
+				AlertInstanceKey: models.AlertInstanceKey{
+					RuleUID:   rule.UID,
+					RuleOrgID: rule.OrgID,
+				},
+			},
+		}
+		err := protoInstanceStore.SaveAlertInstancesForRule(context.Background(), rule.GetKeyWithGroup(), instances)
+		require.NoError(t, err)
+		savedInstances, err := protoInstanceStore.ListAlertInstances(context.Background(), &models.ListAlertInstancesQuery{
+			RuleUID:   rule.UID,
+			RuleOrgID: rule.OrgID,
+		})
+		require.NoError(t, err)
+		require.Len(t, savedInstances, 1)
+
+		// Delete the rule
+		err = store.DeleteAlertRulesByUID(context.Background(), rule.OrgID, rule.UID)
+		require.NoError(t, err)
+
+		// Now there should be no alert rule state
+		savedInstances, err = protoInstanceStore.ListAlertInstances(context.Background(), &models.ListAlertInstancesQuery{
+			RuleUID:   rule.UID,
+			RuleOrgID: rule.OrgID,
+		})
+		require.NoError(t, err)
+		require.Empty(t, savedInstances)
 	})
 }
 

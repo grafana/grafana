@@ -355,10 +355,6 @@ const (
 	// Enable format string transformer
 	FlagFormatString = "formatString"
 
-	// FlagTransformationsVariableSupport
-	// Allows using variables in transformations
-	FlagTransformationsVariableSupport = "transformationsVariableSupport"
-
 	// FlagKubernetesPlaylists
 	// Use the kubernetes API in the frontend for playlists, and route /api/playlist requests to k8s
 	FlagKubernetesPlaylists = "kubernetesPlaylists"
@@ -418,10 +414,6 @@ const (
 	// FlagCachingOptimizeSerializationMemoryUsage
 	// If enabled, the caching backend gradually serializes query responses for the cache, comparing against the configured `[caching]max_value_mb` value as it goes. This can can help prevent Grafana from running out of memory while attempting to cache very large query responses.
 	FlagCachingOptimizeSerializationMemoryUsage = "cachingOptimizeSerializationMemoryUsage"
-
-	// FlagManagedPluginsInstall
-	// Install managed plugins directly from plugins catalog
-	FlagManagedPluginsInstall = "managedPluginsInstall"
 
 	// FlagPrometheusPromQAIL
 	// Prometheus and AI/ML to assist users in creating a query
@@ -923,10 +915,6 @@ const (
 	// Test feature toggle to see how cohorts could be set up AB testing
 	FlagABTestFeatureToggleB = "ABTestFeatureToggleB"
 
-	// FlagQueryLibraryDashboards
-	// Enables Query Library feature in Dashboards
-	FlagQueryLibraryDashboards = "queryLibraryDashboards"
-
 	// FlagGrafanaAdvisor
 	// Enables Advisor app
 	FlagGrafanaAdvisor = "grafanaAdvisor"
@@ -947,6 +935,10 @@ const (
 	// Use a POST request to list rules by passing down the namespaces user has access to
 	FlagFetchRulesUsingPost = "fetchRulesUsingPost"
 
+	// FlagAlertingConversionAPI
+	// Enable the alerting conversion API
+	FlagAlertingConversionAPI = "alertingConversionAPI"
+
 	// FlagAlertingAlertmanagerExtraDedupStage
 	// enables extra deduplication stage in alertmanager that checks that timestamps of the pipeline and the current state are matching
 	FlagAlertingAlertmanagerExtraDedupStage = "alertingAlertmanagerExtraDedupStage"
@@ -966,4 +958,16 @@ const (
 	// FlagPluginsCDNSyncLoader
 	// Load plugins from CDN synchronously
 	FlagPluginsCDNSyncLoader = "pluginsCDNSyncLoader"
+
+	// FlagAlertingJiraIntegration
+	// Enables the new Jira integration for contact points in cloud alert managers.
+	FlagAlertingJiraIntegration = "alertingJiraIntegration"
+
+	// FlagAlertingRuleVersionHistoryRestore
+	// Enables the alert rule version history restore feature
+	FlagAlertingRuleVersionHistoryRestore = "alertingRuleVersionHistoryRestore"
+
+	// FlagNewShareReportDrawer
+	// Enables the report creation drawer in a dashboard
+	FlagNewShareReportDrawer = "newShareReportDrawer"
 )

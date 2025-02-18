@@ -130,6 +130,8 @@ export interface PluginExtensions {
   // The component extensions that the plugin registers
   addedComponents: ExtensionInfo[];
 
+  addedFunctions: ExtensionInfo[];
+
   // The link extensions that the plugin registers
   addedLinks: ExtensionInfo[];
 

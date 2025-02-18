@@ -9,10 +9,6 @@ func Migrate(dash map[string]interface{}, targetVersion int) error {
 	inputVersion := schemaversion.GetSchemaVersion(dash)
 	dash["schemaVersion"] = inputVersion
 
-	if inputVersion < schemaversion.MINIUM_VERSION {
-		return schemaversion.NewMinimumVersionError(inputVersion)
-	}
-
 	for nextVersion := inputVersion + 1; nextVersion <= targetVersion; nextVersion++ {
 		if migration, ok := schemaversion.Migrations[nextVersion]; ok {
 			if err := migration(dash); err != nil {
