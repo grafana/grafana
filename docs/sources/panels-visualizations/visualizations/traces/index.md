@@ -107,11 +107,15 @@ This procedure uses dashboard variables and templates to allow you to enter trac
 1. Click **Back to dashboard**.
 1. Click **Settings** and go to the **Variables** tab.
 1. Add a new variable called `traceId`, of variable type **Custom**, giving it a label if required.
+
+   {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-traces-custom-variable-v11.5.png" max-width="400px" alt="Add a template query" >}}
+
 1. Click **Save dashboard**.
 1. Click **Back to dashboard** and **Exit edit**.
 1. Verify that the panel works by using a valid trace ID for the data source used for the trace panel and editing the ID in the dashboard variable.
 
    {{< figure src="/static/img/docs/panels/traces/screenshot-traces-traceid-panel.png" alt="Results of query in trace panel" >}}
+   <!-- update this image -->
 
 ## Add TraceQL with table visualizations
 
@@ -136,6 +140,8 @@ When results are returned from a query, the results are rendered in the panel’
 {{< figure src="/static/img/docs/panels/traces/screenshot-traces-returned-query.png" alt="Results of a returned query in the panel table" >}}
 
 ### Use a variable to add other links to traces
+
+<!-- try to update these images -->
 
 The results in the traces visualization include links to the **Explore** page that renders the trace. You can add other links to traces in the table that fill in the `traceId` dashboard variable when selected, so that the trace is visualized in the same dashboard.
 
