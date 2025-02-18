@@ -18297,7 +18297,6 @@ __metadata:
     msw: "npm:2.7.0"
     mutationobserver-shim: "npm:0.3.7"
     nanoid: "npm:^5.0.4"
-    ngtemplate-loader: "npm:2.1.0"
     node-forge: "npm:^1.3.1"
     node-notifier: "npm:10.0.1"
     nx: "npm:19.8.2"
@@ -18369,7 +18368,6 @@ __metadata:
     swagger-ui-react: "npm:5.18.3"
     symbol-observable: "npm:4.0.0"
     systemjs: "npm:6.15.1"
-    systemjs-cjs-extra: "npm:0.2.1"
     terser-webpack-plugin: "npm:5.3.11"
     testing-library-selector: "npm:0.3.1"
     tether-drop: "https://github.com/torkelo/drop"
@@ -20982,21 +20980,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jsesc@npm:^0.5.0, jsesc@npm:~0.5.0":
-  version: 0.5.0
-  resolution: "jsesc@npm:0.5.0"
-  bin:
-    jsesc: bin/jsesc
-  checksum: 10/fab949f585c71e169c5cbe00f049f20de74f067081bbd64a55443bad1c71e1b5a5b448f2359bf2fe06f5ed7c07e2e4a9101843b01c823c30b6afc11f5bfaf724
-  languageName: node
-  linkType: hard
-
 "jsesc@npm:^3.0.2, jsesc@npm:~3.0.2":
   version: 3.0.2
   resolution: "jsesc@npm:3.0.2"
   bin:
     jsesc: bin/jsesc
   checksum: 10/8e5a7de6b70a8bd71f9cb0b5a7ade6a73ae6ab55e697c74cc997cede97417a3a65ed86c36f7dd6125fe49766e8386c845023d9e213916ca92c9dfdd56e2babf3
+  languageName: node
+  linkType: hard
+
+"jsesc@npm:~0.5.0":
+  version: 0.5.0
+  resolution: "jsesc@npm:0.5.0"
+  bin:
+    jsesc: bin/jsesc
+  checksum: 10/fab949f585c71e169c5cbe00f049f20de74f067081bbd64a55443bad1c71e1b5a5b448f2359bf2fe06f5ed7c07e2e4a9101843b01c823c30b6afc11f5bfaf724
   languageName: node
   linkType: hard
 
@@ -21678,7 +21676,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"loader-utils@npm:^2.0.0, loader-utils@npm:^2.0.4":
+"loader-utils@npm:^2.0.4":
   version: 2.0.4
   resolution: "loader-utils@npm:2.0.4"
   dependencies:
@@ -22995,16 +22993,6 @@ __metadata:
   version: 0.6.18
   resolution: "neotraverse@npm:0.6.18"
   checksum: 10/a19649cdadb9a3ce3c54c2d6093a2eb1e12364ace384301a7515d40c752bfbac45d12c6eb9c4b004beba7bd4d1871323ebd46ad1446e0de5bc5143b0367647cb
-  languageName: node
-  linkType: hard
-
-"ngtemplate-loader@npm:2.1.0":
-  version: 2.1.0
-  resolution: "ngtemplate-loader@npm:2.1.0"
-  dependencies:
-    jsesc: "npm:^0.5.0"
-    loader-utils: "npm:^1.0.2"
-  checksum: 10/6020fcabc13ac355b93ceec03e6df2e62bd90cf285ab11cefd345861ee2ca12d3e5475d94bbacc6b31c379aea85464410bb7ed8dc0612780aa33aa3712be45b8
   languageName: node
   linkType: hard
 
@@ -29992,13 +29980,6 @@ __metadata:
     "@pkgr/core": "npm:^0.1.0"
     tslib: "npm:^2.6.2"
   checksum: 10/bff3903976baf8b699b5483228116d70223781a93b17c70e685c277ee960cdfd1a09cb5a741e6a9ec35e2428f14f4664baec41ccc99a598f267608b2a54f529b
-  languageName: node
-  linkType: hard
-
-"systemjs-cjs-extra@npm:0.2.1":
-  version: 0.2.1
-  resolution: "systemjs-cjs-extra@npm:0.2.1"
-  checksum: 10/b620af840b1f01f3facc0f9c6895d086fd207f1a55619183b5d4e787596963edc56250acbb3b597df02fbfac38fa8cc1b537d2dbb204ba7f56a2659f56d7a02f
   languageName: node
   linkType: hard
 
