@@ -16,7 +16,7 @@ import (
 func ProvideService(features featuremgmt.FeatureToggles, reg prometheus.Registerer, cfg *setting.Cfg) Service {
 	enabled := features.IsEnabledGlobally(featuremgmt.FlagManagedDualWriter) ||
 		features.IsEnabledGlobally(featuremgmt.FlagProvisioning) // required for git provisioning
-	if !enabled {
+	if !enabled && cfg != nil {
 		return &staticService{cfg} // fallback to using the dual write flags from cfg
 	}
 

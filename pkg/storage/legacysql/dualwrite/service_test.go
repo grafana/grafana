@@ -43,4 +43,15 @@ func TestService(t *testing.T) {
 	require.Equal(t, status.UpdateKey, int64(3), "the key increased")
 	require.Equal(t, status.Migrating, int64(0), "done migrating")
 	require.True(t, status.Migrated > 0, "migration is running")
+
+	status.WriteUnified = false
+	status.ReadUnified = true
+	_, err = mode.Update(ctx, status)
+	require.Error(t, err) // must write unified if we read it
+
+	status.WriteUnified = false
+	status.ReadUnified = false
+	status.WriteLegacy = false
+	_, err = mode.Update(ctx, status)
+	require.Error(t, err) // must write something!
 }
