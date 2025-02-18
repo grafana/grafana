@@ -85,7 +85,7 @@ jobs:
           path: |
             backend.cov
             backend-funcs.log
-          retention-days: 30 # this is a pretty small file; 10MB or so. it is GZip compressed by the action, which makes it <1MB.
+          retention-days: 30
           compression-level: 9 # this is raw text, and includes a _lot_ of repetition. compressing it should yield pretty good results.
       - name: Set summary to total coverage
         # We use single quotes here to disable the bash backtick behaviour of executing commands.
