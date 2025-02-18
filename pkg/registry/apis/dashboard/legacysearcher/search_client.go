@@ -14,9 +14,10 @@ import (
 	folderv0alpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
-	"github.com/grafana/grafana/pkg/services/search"
+	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	unisearch "github.com/grafana/grafana/pkg/storage/unified/search"
 	"google.golang.org/grpc"
 	"k8s.io/apimachinery/pkg/selection"
 )
@@ -24,10 +25,19 @@ import (
 type DashboardSearchClient struct {
 	resource.ResourceIndexClient
 	dashboardStore dashboards.Store
+	sorter         sort.Service
 }
 
-func NewDashboardSearchClient(dashboardStore dashboards.Store) *DashboardSearchClient {
-	return &DashboardSearchClient{dashboardStore: dashboardStore}
+func NewDashboardSearchClient(dashboardStore dashboards.Store, sorter sort.Service) *DashboardSearchClient {
+	return &DashboardSearchClient{dashboardStore: dashboardStore, sorter: sorter}
+}
+
+var sortByMapping = map[string]string{
+	unisearch.DASHBOARD_VIEWS_LAST_30_DAYS:  "viewed-recently-",
+	unisearch.DASHBOARD_VIEWS_TOTAL:         "viewed-",
+	unisearch.DASHBOARD_ERRORS_LAST_30_DAYS: "errors-recently-",
+	unisearch.DASHBOARD_ERRORS_TOTAL:        "errors-",
+	"title":                                 "alpha-",
 }
 
 // nolint:gocyclo
@@ -78,16 +88,30 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 		query.Type = queryType
 	}
 
-	// technically, there exists the ability to register multiple ways of sorting using the legacy database
-	// see RegisterSortOption in pkg/services/search/sorting.go
-	// however, it doesn't look like we are taking advantage of that. And since by default the legacy
-	// sql will sort by title ascending, we only really need to handle the "alpha-desc" case
-	if req.SortBy != nil {
-		for _, sort := range req.SortBy {
-			if sort.Field == "title" && sort.Desc {
-				query.Sort = search.SortAlphaDesc
-			}
+	sortByField := ""
+	if len(req.SortBy) != 0 {
+		if len(req.SortBy) > 1 {
+			return nil, fmt.Errorf("only one sort field is supported")
 		}
+		sort := req.SortBy[0]
+		sortByField = strings.TrimPrefix(sort.Field, resource.SEARCH_FIELD_PREFIX)
+		sorterName := sortByMapping[sortByField]
+
+		if sort.Desc {
+			sorterName += "desc"
+		} else {
+			sorterName += "asc"
+		}
+
+		if sorter, ok := c.sorter.GetSortOption(sorterName); ok {
+			query.Sort = sorter
+		}
+	}
+
+	// the title search will not return any sortMeta (an int64), like
+	// most sorting will. Without this, the title will be set to sortMeta (0)
+	if sortByField == resource.SEARCH_FIELD_TITLE {
+		sortByField = ""
 	}
 
 	// if searching for tags, get those instead of the dashboards or folders
@@ -178,7 +202,6 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 			query.ProvisionedRepo, _ = dashboard.GetProvisionedFileNameFromMeta(vals[0])
 		}
 	}
-
 	searchFields := resource.StandardSearchFields()
 	list := &resource.ResourceSearchResponse{
 		Results: &resource.ResourceTable{
@@ -186,6 +209,10 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 				searchFields.Field(resource.SEARCH_FIELD_TITLE),
 				searchFields.Field(resource.SEARCH_FIELD_FOLDER),
 				searchFields.Field(resource.SEARCH_FIELD_TAGS),
+				&resource.ResourceTableColumnDefinition{
+					Name: sortByField,
+					Type: resource.ResourceTableColumnDefinition_INT64,
+				},
 			},
 		},
 	}
@@ -213,7 +240,7 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 				Key: getResourceKey(&dashboards.DashboardSearchProjection{
 					UID: dashboard.UID,
 				}, req.Options.Key.Namespace),
-				Cells: [][]byte{[]byte(dashboard.Title), []byte(dashboard.FolderUID), {}},
+				Cells: [][]byte{[]byte(dashboard.Title), []byte(dashboard.FolderUID), {}, {}},
 			})
 		}
 
@@ -235,7 +262,7 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 
 		list.Results.Rows = append(list.Results.Rows, &resource.ResourceTableRow{
 			Key:   getResourceKey(dashboard, req.Options.Key.Namespace),
-			Cells: [][]byte{[]byte(dashboard.Title), []byte(dashboard.FolderUID), tags},
+			Cells: [][]byte{[]byte(dashboard.Title), []byte(dashboard.FolderUID), tags, []byte(strconv.FormatInt(dashboard.SortMeta, 10))},
 		})
 	}
 
@@ -276,6 +303,7 @@ func formatQueryResult(res []dashboards.DashboardSearchProjection) []*dashboards
 				FolderUID: item.FolderUID,
 				Tags:      []string{},
 				IsFolder:  item.IsFolder,
+				SortMeta:  item.SortMeta,
 			}
 			hitList = append(hitList, hit)
 			hits[key] = hit

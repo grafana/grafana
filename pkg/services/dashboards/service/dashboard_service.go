@@ -49,6 +49,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/search/model"
+	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -95,9 +96,9 @@ func ProvideDashboardServiceImpl(
 	ac accesscontrol.AccessControl, folderSvc folder.Service, fStore folder.Store, r prometheus.Registerer,
 	restConfigProvider apiserver.RestConfigProvider, userService user.Service,
 	quotaService quota.Service, orgService org.Service, publicDashboardService publicdashboards.ServiceWrapper,
-	resourceClient resource.ResourceClient,
+	resourceClient resource.ResourceClient, sorter sort.Service,
 ) (*DashboardServiceImpl, error) {
-	k8sHandler := client.NewK8sHandler(cfg, request.GetNamespaceMapper(cfg), dashboardv0alpha1.DashboardResourceInfo.GroupVersionResource(), restConfigProvider.GetRestConfig, dashboardStore, userService, resourceClient)
+	k8sHandler := client.NewK8sHandler(cfg, request.GetNamespaceMapper(cfg), dashboardv0alpha1.DashboardResourceInfo.GroupVersionResource(), restConfigProvider.GetRestConfig, dashboardStore, userService, resourceClient, sorter)
 
 	dashSvc := &DashboardServiceImpl{
 		cfg:                       cfg,

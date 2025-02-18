@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
+	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
@@ -117,6 +118,7 @@ func TestValidateDashboardExists(t *testing.T) {
 		nil,
 		nil,
 		nil,
+		sort.ProvideService(),
 	)
 	require.NoError(t, err)
 	s := ProvideService(dsStore, secretsService, dashSvc)
