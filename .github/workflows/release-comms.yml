@@ -30,7 +30,7 @@ jobs:
       release_branch: ${{ steps.output.outputs.release_branch }}
       dry_run: ${{ steps.output.outputs.dry_run }}
       latest: ${{ steps.output.outputs.latest }}
-      token: ${{ steps.output.outputs.token }}
+      token: ${{ steps.generate_token.outputs.token }}
     runs-on: ubuntu-latest
     steps:
     - name: "Generate token"
@@ -58,7 +58,6 @@ jobs:
         echo "version: $VERSION"
 
         echo "release_branch=$(echo $VERSION | sed -s 's/^v/release-/g')" >> "$GITHUB_OUTPUT"
-        echo "token=${{ steps.generate_token.outputs.token }}" >> "$GITHUB_OUTPUT"
         echo "dry_run=$DRY_RUN" >> "$GITHUB_OUTPUT"
         echo "latest=$LATEST" >> "$GITHUB_OUTPUT"
         echo "version=$VERSION" >> "$GITHUB_OUTPUT"
@@ -70,7 +69,7 @@ jobs:
       ownerRepo: 'grafana/grafana'
       source: ${{ needs.setup.outputs.release_branch }}
     secrets:
-      token: ${{ needs.setup.outputs.token }}
+      token: ${{ steps.generate_token.outputs.token }}
   create_next_release_branch_enterprise:
     name: Create next release branch (Grafana Enterprise)
     needs: setup
