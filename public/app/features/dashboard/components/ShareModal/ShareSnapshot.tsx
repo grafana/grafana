@@ -25,7 +25,7 @@ interface State {
   snapshotExpires?: number;
   snapshotUrl: string;
   deleteUrl: string;
-  timeoutSeconds: number;
+  timeoutSeconds: number | string;
   externalEnabled: boolean;
   sharingButtonText: string;
 }
@@ -92,7 +92,7 @@ export class ShareSnapshot extends PureComponent<Props, State> {
 
     setTimeout(() => {
       this.saveSnapshot(this.dashboard, external);
-    }, timeoutSeconds * 1000);
+    }, Number(timeoutSeconds) * 1000);
   };
 
   saveSnapshot = async (dashboard: DashboardModel, external?: boolean) => {
@@ -119,13 +119,13 @@ export class ShareSnapshot extends PureComponent<Props, State> {
       if (external) {
         DashboardInteractions.publishSnapshotClicked({
           expires: snapshotExpires,
-          timeout: timeoutSeconds,
+          timeout: Number(timeoutSeconds),
           shareResource: getTrackingSource(this.props.panel),
         });
       } else {
         DashboardInteractions.publishSnapshotLocalClicked({
           expires: snapshotExpires,
-          timeout: timeoutSeconds,
+          timeout: Number(timeoutSeconds),
           shareResource: getTrackingSource(this.props.panel),
         });
       }
@@ -215,8 +215,15 @@ export class ShareSnapshot extends PureComponent<Props, State> {
   };
 
   onTimeoutChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    this.setState({ timeoutSeconds: Number(event.target.value) });
+    this.setState({ timeoutSeconds: event.target.value === '' ? '' : Number(event.target.value) });
   };
+
+  onBlurTimeout = () => {
+    this.setState((prevState) => ({
+        timeoutSeconds: Number(prevState.timeoutSeconds),
+    })
+    );
+  }
 
   onExpireChange = (option: SelectableValue<number>) => {
     this.setState({
@@ -268,7 +275,7 @@ export class ShareSnapshot extends PureComponent<Props, State> {
           />
         </Field>
         <Field label={timeoutTranslation} description={timeoutDescriptionTranslation}>
-          <Input id="timeout-input" type="number" width={21} value={timeoutSeconds} onChange={this.onTimeoutChange} />
+          <Input id="timeout-input" type="number" width={21} value={timeoutSeconds} onChange={this.onTimeoutChange} onBlur={this.onBlurTimeout} />
         </Field>
 
         <Modal.ButtonRow>
