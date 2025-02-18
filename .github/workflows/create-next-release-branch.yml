@@ -11,8 +11,10 @@ on:
         type: string
         required: true
     secrets:
-      GRAFANA_DELIVERY_BOT_APP_ID: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
-      GRAFANA_DELIVERY_BOT_APP_PEM: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
+      GRAFANA_DELIVERY_BOT_APP_ID:
+        required: true
+      GRAFANA_DELIVERY_BOT_APP_PEM:
+        required: true
     outputs:
       branch:
         description: The new branch that was created
@@ -26,8 +28,10 @@ on:
         type: string
         required: true
     secrets:
-      GRAFANA_DELIVERY_BOT_APP_ID: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
-      GRAFANA_DELIVERY_BOT_APP_PEM: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
+      GRAFANA_DELIVERY_BOT_APP_ID:
+        required: true
+      GRAFANA_DELIVERY_BOT_APP_PEM:
+        required: true
 jobs:
   main:
     runs-on: ubuntu-latest
