@@ -78,12 +78,10 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 		}
 
 		// New empty branch (same on main???)
-		if options.Branch != "" {
-			progress.SetMessage("create empty branch")
-			_, err := buffered.NewEmptyBranch(ctx, options.Branch)
-			if err != nil {
-				return fmt.Errorf("unable to create empty branch: %w", err)
-			}
+		progress.SetMessage("create empty branch")
+		_, err := buffered.CheckoutEmptyBranch(ctx, options.Branch) // or
+		if err != nil {
+			return fmt.Errorf("unable to create empty branch: %w", err)
 		}
 
 		repo = buffered     // send all writes to the buffered repo

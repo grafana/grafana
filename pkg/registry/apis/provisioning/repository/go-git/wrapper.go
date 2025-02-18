@@ -57,6 +57,9 @@ func Clone(
 	if gitcfg == nil {
 		return nil, fmt.Errorf("missing github config")
 	}
+	if gitcfg.Branch == "" {
+		return nil, fmt.Errorf("missing base branch")
+	}
 	if opts.Root == "" {
 		return nil, fmt.Errorf("missing root config")
 	}
@@ -87,9 +90,8 @@ func Clone(
 				Username: "grafana",         // this can be anything except an empty string for PAT
 				Password: string(decrypted), // TODO... will need to get from a service!
 			},
-			URL:           url,
-			ReferenceName: plumbing.ReferenceName(gitcfg.Branch),
-			Progress:      progress,
+			URL:      url,
+			Progress: progress,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("clone error %w", err)
@@ -114,9 +116,11 @@ func Clone(
 		return nil, err
 	}
 
+	// Checkout the selected branch
 	err = worktree.Checkout(&git.CheckoutOptions{
 		Branch: plumbing.NewBranchReferenceName(gitcfg.Branch),
 		Force:  true, // clear any local changes
+		Create: true, // if not exists?
 	})
 	if err != nil {
 		return nil, fmt.Errorf("unable to open branch %w", err)
@@ -143,14 +147,16 @@ func mkdirTempClone(root string, config *provisioning.Repository) (string, error
 }
 
 // Remove everything from the tree
-func (g *GoGitRepo) NewEmptyBranch(ctx context.Context, branch string) (int64, error) {
-	err := g.tree.Checkout(&git.CheckoutOptions{
-		Branch: plumbing.NewBranchReferenceName(branch),
-		Force:  true, // clear any local changes
-		Create: true,
-	})
-	if err != nil {
-		return 0, err
+func (g *GoGitRepo) CheckoutEmptyBranch(ctx context.Context, branch string) (int64, error) {
+	if branch != "" {
+		err := g.tree.Checkout(&git.CheckoutOptions{
+			Branch: plumbing.NewBranchReferenceName(branch),
+			Force:  true, // clear any local changes
+			Create: true,
+		})
+		if err != nil {
+			return 0, err
+		}
 	}
 
 	count := int64(0)
@@ -179,6 +185,7 @@ func (g *GoGitRepo) Push(ctx context.Context, progress io.Writer) error {
 
 	return g.repo.PushContext(ctx, &git.PushOptions{
 		Progress: progress,
+		Force:    true, // avoid fast-forward-errors
 		Auth: &githttp.BasicAuth{ // reuse logic from clone?
 			Username: "grafana",
 			Password: g.decryptedPassword,
