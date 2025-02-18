@@ -92,7 +92,9 @@ jobs:
           retention-days: 30
           compression-level: 9 # this is raw text, and includes a _lot_ of repetition. compressing it should yield pretty good results.
       - name: Delete old coverage files
-        uses: actions/delete-artifact@v5.1.0
+        # This is a community tool, not one provided by GitHub. Hence it shall be pinned to a hash.
+        # https://github.com/GeekyEggo/delete-artifact/tree/v5
+        uses: GeekyEggo/delete-artifact@f275313e70c08f6120db482d7a6b98377786765b
         with:
           name: |
             unit-cov
