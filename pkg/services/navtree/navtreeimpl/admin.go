@@ -70,16 +70,6 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 		})
 	}
 
-	// TODO add permissions check
-	if s.features.IsEnabled(ctx, featuremgmt.FlagProvisioning) {
-		generalNodeLinks = append(generalNodeLinks, &navtree.NavLink{
-			Text:     "Provisioning",
-			Id:       "provisioning",
-			SubTitle: "Manage resources from remote repositories",
-			Url:      s.cfg.AppSubURL + "/admin/provisioning",
-		})
-	}
-
 	generalNode := &navtree.NavLink{
 		Text:     "General",
 		SubTitle: "Manage default preferences and settings across Grafana",
