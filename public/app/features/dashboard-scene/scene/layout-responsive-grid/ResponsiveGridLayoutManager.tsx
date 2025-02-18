@@ -11,6 +11,7 @@ import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
 import { ResponsiveGridItem } from './ResponsiveGridItem';
 import { getEditOptions } from './ResponsiveGridLayoutManagerEditor';
+import { joinCloneKeys } from '../../utils/clone';
 
 interface ResponsiveGridLayoutManagerState extends SceneObjectState {
   layout: SceneCSSGridLayout;
@@ -113,6 +114,25 @@ export class ResponsiveGridLayoutManager
     }
 
     return false;
+  }
+
+  public cloneLayout(ancestorKey: string, isSource: boolean): DashboardLayoutManager {
+    return this.clone({
+      layout: this.state.layout.clone({
+        children: this.state.layout.state.children.map((gridItem, index) => {
+          if (gridItem instanceof ResponsiveGridItem) {
+            const gridItemKey = joinCloneKeys(ancestorKey, getGridItemKeyForPanelId(index));
+            return gridItem.clone({
+              key: gridItemKey,
+              body: gridItem.state.body.clone({
+                key: joinCloneKeys(gridItemKey, getVizPanelKeyForPanelId(index)),
+              }),
+            });
+          }
+          return gridItem;
+        }),
+      }),
+    });
   }
 
   public addNewRow() {
