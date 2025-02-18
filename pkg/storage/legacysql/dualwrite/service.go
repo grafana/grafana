@@ -14,16 +14,21 @@ import (
 )
 
 func ProvideService(features featuremgmt.FeatureToggles, reg prometheus.Registerer, cfg *setting.Cfg) Service {
+	enabled := features.IsEnabledGlobally(featuremgmt.FlagManagedDualWriter) ||
+		features.IsEnabledGlobally(featuremgmt.FlagProvisioning) // required for git provisioning
+	if !enabled {
+		return &staticService{cfg} // fallback to using the dual write flags from cfg
+	}
+
 	path := "" // storage path
 	if cfg != nil {
 		path = filepath.Join(cfg.DataPath, "dualwrite.json")
 	}
 
 	return &service{
-		db:  newFileDB(path),
-		reg: reg,
-		enabled: features.IsEnabledGlobally(featuremgmt.FlagManagedDualWriter) ||
-			features.IsEnabledGlobally(featuremgmt.FlagProvisioning), // required for git provisioning
+		db:      newFileDB(path),
+		reg:     reg,
+		enabled: enabled,
 	}
 }
 
