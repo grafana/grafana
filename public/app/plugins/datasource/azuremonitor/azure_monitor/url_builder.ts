@@ -62,7 +62,7 @@ export default class UrlBuilder {
       const { subscription, resourceGroup, metricNamespace, resourceName } = query;
       resourceUri = UrlBuilder.buildResourceUri(templateSrv, {
         subscription,
-        resourceGroup, // if resourceGroup is not present use the original endpoint
+        resourceGroup, 
         metricNamespace,
         resourceName,
       });
@@ -78,9 +78,6 @@ export default class UrlBuilder {
         region ? `&region=${region}` : globalRegion ? '&region=global' : ''
       }`;
     }
-    // JUST MAKE RESOURCE GROUPS BEHAVIOR CHANGE NOT AT THE SUB OR RESOURCE LEVEL
-    // toggle this on or off?
-    // need distinct to filter out namespaces with metrics? resources endpoint supports filtering? use resourcegraph query
   }
 
   static buildAzureMonitorGetMetricNamesUrl(
