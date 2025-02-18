@@ -37,7 +37,15 @@ export interface WizardProps {
 export function ProvisioningWizard({ data, onSubmit }: WizardProps) {
   const [activeStep, setActiveStep] = useState<WizardStep>('connection');
   const [completedSteps, setCompletedSteps] = useState<WizardStep[]>([]);
-  const methods = useForm<WizardFormData>({ defaultValues: { repository: getDefaultValues(data) } });
+  const methods = useForm<WizardFormData>({
+    defaultValues: {
+      repository: getDefaultValues(data),
+      export: {
+        history: true,
+        identifier: false,
+      },
+    },
+  });
   const styles = useStyles2(getStyles);
 
   const handleNext = async () => {

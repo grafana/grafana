@@ -5,6 +5,8 @@ export type WizardStep = 'connection' | 'repository' | 'export' | 'provisioning'
 export interface ExportFormData {
   dashboards: string[];
   folders: string[];
+  history: boolean;
+  identifier: boolean;
 }
 
 export interface WizardFormData {

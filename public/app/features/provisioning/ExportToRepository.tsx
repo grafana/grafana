@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { Box, Button, Field, FieldSet, Input, Stack, Switch, Text } from '@grafana/ui';
@@ -11,6 +12,7 @@ interface Props {
 
 export function ExportToRepository({ repo }: Props) {
   const [exportRepo, exportQuery] = useCreateRepositoryExportMutation();
+  const [showExportStatus, setShowExportStatus] = useState(false);
   const exportName = exportQuery.data?.metadata?.name;
 
   const { register, formState, handleSubmit } = useForm<ExportJobOptions>({
@@ -20,14 +22,32 @@ export function ExportToRepository({ repo }: Props) {
     },
   });
 
-  const onSubmit = (body: ExportJobOptions) =>
-    exportRepo({
+  const onSubmit = async (body: ExportJobOptions) => {
+    await exportRepo({
       name: repo.metadata?.name ?? '',
       body, // << the form
     });
+    setShowExportStatus(true);
+  };
 
-  if (exportName) {
-    return <ExportJobStatus name={exportName} />;
+  const onAbort = () => {
+    exportQuery.reset();
+    setShowExportStatus(false);
+  };
+
+  if (showExportStatus && exportName) {
+    return (
+      <Box paddingTop={2}>
+        <Stack direction="column" gap={2}>
+          <ExportJobStatus name={exportName} />
+          <Stack gap={2}>
+            <Button variant="secondary" onClick={onAbort}>
+              Abort export
+            </Button>
+          </Stack>
+        </Stack>
+      </Box>
+    );
   }
 
   const isGit = repo.spec?.type === 'github';
@@ -77,18 +97,16 @@ export function ExportJobStatus({ name }: { name: string }) {
   }
 
   return (
-    <Box paddingTop={2}>
-      <Stack direction={'column'} gap={2}>
-        {job.status && (
-          <Stack direction="column" gap={2}>
-            <Text element="p">
-              {job.status.message} // {job.status.state}
-            </Text>
-            <ProgressBar progress={job.status.progress} />
-          </Stack>
-        )}
-        <pre>{JSON.stringify(job, null, ' ')}</pre>
-      </Stack>
-    </Box>
+    <Stack direction={'column'} gap={2}>
+      {job.status && (
+        <Stack direction="column" gap={2}>
+          <Text element="p">
+            {job.status.message} // {job.status.state}
+          </Text>
+          <ProgressBar progress={job.status.progress} />
+        </Stack>
+      )}
+      <pre>{JSON.stringify(job, null, ' ')}</pre>
+    </Stack>
   );
 }
