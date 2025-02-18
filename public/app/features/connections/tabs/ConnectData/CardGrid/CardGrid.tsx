@@ -8,6 +8,7 @@ import {
   PluginAngularBadge,
   PluginDeprecatedBadge,
   PluginDisabledBadge,
+  PluginInstalledBadge,
   PluginUpdateAvailableBadge,
 } from 'app/features/plugins/admin/components/Badges';
 import { getBadgeColor } from 'app/features/plugins/admin/components/Badges/sharedStyles';
@@ -58,7 +59,7 @@ function PluginEnterpriseBadgeWithoutSignature() {
       role="img"
       aria-label={t('lock-icon', 'lock icon')}
       text={t('get-enterprise.title', 'Enterprise')}
-      color="blue"
+      color="darkgrey"
       className={customBadgeStyles}
       title={t('get-enterprise.requires-license', 'Requires a Grafana Enterprise license')}
     />
@@ -99,6 +100,7 @@ export const CardGrid = ({ items, onClickItem }: CardGridProps) => {
             <Stack height="auto" wrap="wrap">
               {item.isEnterprise && <PluginEnterpriseBadgeWithoutSignature />}
               {item.isDeprecated && <PluginDeprecatedBadge />}
+              {item.isInstalled && <PluginInstalledBadge />}
               {item.isDisabled && <PluginDisabledBadge error={item.error} />}
               {isPluginUpdatable(item) && <PluginUpdateAvailableBadge plugin={item} />}
               {item.angularDetected && <PluginAngularBadge />}

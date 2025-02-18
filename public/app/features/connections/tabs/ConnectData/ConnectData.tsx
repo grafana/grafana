@@ -4,7 +4,7 @@ import { useLocation } from 'react-router-dom-v5-compat';
 
 import { PluginType, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { locationSearchToObject, reportInteraction } from '@grafana/runtime';
-import { LoadingPlaceholder, EmptyState, useStyles2, Field, RadioButtonGroup, Tooltip, Select } from '@grafana/ui';
+import { LoadingPlaceholder, EmptyState, useStyles2, Field, RadioButtonGroup, Tooltip, Combobox } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { t, Trans } from 'app/core/internationalization';
@@ -156,10 +156,10 @@ export function AddNewConnection() {
 
         {/* Sorting */}
         <Field label={t('plugins.filter.sort', 'Sort')}>
-          <Select
+          <Combobox
             aria-label={t('plugins.filter.sort-list', 'Sort Plugins List')}
             width={24}
-            value={sortBy}
+            value={sortBy?.toString()}
             onChange={onSortByChange}
             options={[
               { value: 'nameAsc', label: 'By name (A-Z)' },
