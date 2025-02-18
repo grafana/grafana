@@ -37,7 +37,7 @@ export default function AutoCell({ value, field, justifyContent, cellOptions, ro
                 </button>
               );
             } else {
-              return <button className={getLinkStyle(styles, cellOptions, api.targetClassName)}>{value}</button>;
+              return <div className={getLinkStyle(styles, cellOptions, api.targetClassName)}>{value}</div>;
             }
           }}
         </DataLinksContextMenu>
