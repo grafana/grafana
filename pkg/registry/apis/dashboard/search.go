@@ -290,7 +290,7 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	if queryParams.Has("sort") {
 		for _, sort := range queryParams["sort"] {
 			if slices.Contains(search.DashboardFields(), sort) {
-				sort = "fields." + sort
+				sort = resource.SEARCH_FIELD_PREFIX + sort
 			}
 			s := &resource.ResourceSearchRequest_Sort{Field: sort}
 			if strings.HasPrefix(sort, "-") {

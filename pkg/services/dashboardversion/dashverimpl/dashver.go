@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -41,7 +42,7 @@ type Service struct {
 }
 
 func ProvideService(cfg *setting.Cfg, db db.DB, dashboardService dashboards.DashboardService, dashboardStore dashboards.Store, features featuremgmt.FeatureToggles,
-	restConfigProvider apiserver.RestConfigProvider, userService user.Service, unified resource.ResourceClient) dashver.Service {
+	restConfigProvider apiserver.RestConfigProvider, userService user.Service, unified resource.ResourceClient, sorter sort.Service) dashver.Service {
 	return &Service{
 		cfg: cfg,
 		store: &sqlStore{
@@ -57,6 +58,7 @@ func ProvideService(cfg *setting.Cfg, db db.DB, dashboardService dashboards.Dash
 			dashboardStore,
 			userService,
 			unified,
+			sorter,
 		),
 		dashSvc: dashboardService,
 		log:     log.New("dashboard-version"),

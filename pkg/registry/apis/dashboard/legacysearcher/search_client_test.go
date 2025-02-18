@@ -3,14 +3,18 @@ package legacysearcher
 import (
 	"context"
 	"encoding/json"
+	"strconv"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apis/dashboard"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/search/model"
+	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	unisearch "github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/selection"
@@ -18,10 +22,13 @@ import (
 
 func TestDashboardSearchClient_Search(t *testing.T) {
 	mockStore := dashboards.NewFakeDashboardStore(t)
-	client := NewDashboardSearchClient(mockStore)
+	sortSvc := sort.ProvideService()
+	client := NewDashboardSearchClient(mockStore, sortSvc)
 	ctx := context.Background()
 	user := &user.SignedInUser{OrgID: 2}
 	ctx = identity.WithRequester(ctx, user)
+	emptyTags, err := json.Marshal([]string{})
+	require.NoError(t, err)
 
 	dashboardKey := &resource.ResourceKey{
 		Name:     "uid",
@@ -29,9 +36,11 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 	}
 
 	t.Run("Should parse results into GRPC", func(t *testing.T) {
+		sorter, _ := sortSvc.GetSortOption("alpha-asc")
 		mockStore.On("FindDashboards", mock.Anything, &dashboards.FindPersistedDashboardsQuery{
 			SignedInUser: user,      // user from context should be used
 			Type:         "dash-db", // should set type based off of key
+			Sort:         sorter,
 		}).Return([]dashboards.DashboardSearchProjection{
 			{UID: "uid", Title: "Test Dashboard", FolderUID: "folder1", Term: "term"},
 			{UID: "uid2", Title: "Test Dashboard2", FolderUID: "folder2"},
@@ -41,17 +50,19 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 			Options: &resource.ListOptions{
 				Key: dashboardKey,
 			},
+			SortBy: []*resource.ResourceSearchRequest_Sort{
+				{
+					Field: resource.SEARCH_FIELD_TITLE,
+				},
+			},
 		}
 		resp, err := client.Search(ctx, req)
 		require.NoError(t, err)
 
 		tags, err := json.Marshal([]string{"term"})
 		require.NoError(t, err)
-
-		emptyTags, err := json.Marshal([]string{})
-		require.NoError(t, err)
-
 		require.NotNil(t, resp)
+
 		searchFields := resource.StandardSearchFields()
 		require.Equal(t, &resource.ResourceSearchResponse{
 			TotalHits: 2,
@@ -60,6 +71,10 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 					searchFields.Field(resource.SEARCH_FIELD_TITLE),
 					searchFields.Field(resource.SEARCH_FIELD_FOLDER),
 					searchFields.Field(resource.SEARCH_FIELD_TAGS),
+					&resource.ResourceTableColumnDefinition{
+						Name: "", // sort by should be empty if title is what we sorted by
+						Type: resource.ResourceTableColumnDefinition_INT64,
+					},
 				},
 				Rows: []*resource.ResourceTableRow{
 					{
@@ -72,6 +87,7 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 							[]byte("Test Dashboard"),
 							[]byte("folder1"),
 							tags,
+							[]byte(strconv.FormatInt(0, 10)),
 						},
 					},
 					{
@@ -84,6 +100,127 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 							[]byte("Test Dashboard2"),
 							[]byte("folder2"),
 							emptyTags,
+							[]byte(strconv.FormatInt(0, 10)),
+						},
+					},
+				},
+			},
+		}, resp)
+		mockStore.AssertExpectations(t)
+	})
+
+	t.Run("Sorting should be properly parsed into legacy sorting options (asc), and results added", func(t *testing.T) {
+		sortOptionAsc := model.SortOption{
+			Name: "viewed-asc", // should add -asc to the sort field and match on that
+		}
+		sortSvc.RegisterSortOption(sortOptionAsc)
+		mockStore.On("FindDashboards", mock.Anything, &dashboards.FindPersistedDashboardsQuery{
+			SignedInUser: user,
+			Type:         "dash-db",
+			Sort:         sortOptionAsc,
+		}).Return([]dashboards.DashboardSearchProjection{
+			{UID: "uid", Title: "Test Dashboard", FolderUID: "folder", SortMeta: int64(50)},
+		}, nil).Once()
+
+		req := &resource.ResourceSearchRequest{
+			Options: &resource.ListOptions{
+				Key: dashboardKey,
+			},
+			SortBy: []*resource.ResourceSearchRequest_Sort{
+				{
+					Field: resource.SEARCH_FIELD_PREFIX + unisearch.DASHBOARD_VIEWS_TOTAL, // "fields." prefix should be removed
+					Desc:  false,
+				},
+			},
+		}
+		resp, err := client.Search(ctx, req)
+		require.NoError(t, err)
+		require.NotNil(t, resp)
+		searchFields := resource.StandardSearchFields()
+		require.Equal(t, &resource.ResourceSearchResponse{
+			TotalHits: 1,
+			Results: &resource.ResourceTable{
+				Columns: []*resource.ResourceTableColumnDefinition{
+					searchFields.Field(resource.SEARCH_FIELD_TITLE),
+					searchFields.Field(resource.SEARCH_FIELD_FOLDER),
+					searchFields.Field(resource.SEARCH_FIELD_TAGS),
+					&resource.ResourceTableColumnDefinition{
+						Name: "views_total",
+						Type: resource.ResourceTableColumnDefinition_INT64,
+					},
+				},
+				Rows: []*resource.ResourceTableRow{
+					{
+						Key: &resource.ResourceKey{
+							Name:     "uid",
+							Group:    dashboard.GROUP,
+							Resource: dashboard.DASHBOARD_RESOURCE,
+						},
+						Cells: [][]byte{
+							[]byte("Test Dashboard"),
+							[]byte("folder"),
+							emptyTags,
+							[]byte(strconv.FormatInt(50, 10)),
+						},
+					},
+				},
+			},
+		}, resp)
+		mockStore.AssertExpectations(t)
+	})
+
+	t.Run("Sorting should be properly parsed into legacy sorting options (desc)", func(t *testing.T) {
+		sortOptionAsc := model.SortOption{
+			Name: "errors-recently-desc", // should add -asc to the sort field and match on that
+		}
+		sortSvc.RegisterSortOption(sortOptionAsc)
+		mockStore.On("FindDashboards", mock.Anything, &dashboards.FindPersistedDashboardsQuery{
+			SignedInUser: user,
+			Type:         "dash-db",
+			Sort:         sortOptionAsc,
+		}).Return([]dashboards.DashboardSearchProjection{
+			{UID: "uid", Title: "Test Dashboard", FolderUID: "folder", SortMeta: int64(2)},
+		}, nil).Once()
+
+		req := &resource.ResourceSearchRequest{
+			Options: &resource.ListOptions{
+				Key: dashboardKey,
+			},
+			SortBy: []*resource.ResourceSearchRequest_Sort{
+				{
+					Field: unisearch.DASHBOARD_ERRORS_LAST_30_DAYS,
+					Desc:  true,
+				},
+			},
+		}
+		resp, err := client.Search(ctx, req)
+		require.NoError(t, err)
+		require.NotNil(t, resp)
+		searchFields := resource.StandardSearchFields()
+		require.Equal(t, &resource.ResourceSearchResponse{
+			TotalHits: 1,
+			Results: &resource.ResourceTable{
+				Columns: []*resource.ResourceTableColumnDefinition{
+					searchFields.Field(resource.SEARCH_FIELD_TITLE),
+					searchFields.Field(resource.SEARCH_FIELD_FOLDER),
+					searchFields.Field(resource.SEARCH_FIELD_TAGS),
+					&resource.ResourceTableColumnDefinition{
+						Name: "errors_last_30_days",
+						Type: resource.ResourceTableColumnDefinition_INT64,
+					},
+				},
+				Rows: []*resource.ResourceTableRow{
+					{
+						Key: &resource.ResourceKey{
+							Name:     "uid",
+							Group:    dashboard.GROUP,
+							Resource: dashboard.DASHBOARD_RESOURCE,
+						},
+						Cells: [][]byte{
+							[]byte("Test Dashboard"),
+							[]byte("folder"),
+							emptyTags,
+							[]byte(strconv.FormatInt(2, 10)),
 						},
 					},
 				},
