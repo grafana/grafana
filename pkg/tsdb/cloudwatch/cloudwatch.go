@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/clients"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/features"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 	"github.com/patrickmn/go-cache"
@@ -230,6 +231,10 @@ func (e *cloudWatchExecutor) QueryData(ctx context.Context, req *backend.QueryDa
 		fallthrough
 	default:
 		result, err = e.executeTimeSeriesQuery(ctx, req)
+	}
+
+	if features.IsEnabled(ctx, features.FlagCloudWatchRoundUpEndTime) {
+		return nil, fmt.Errorf("test bug")
 	}
 
 	return result, err
