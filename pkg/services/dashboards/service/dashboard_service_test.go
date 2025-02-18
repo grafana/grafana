@@ -1166,6 +1166,9 @@ func TestSaveDashboard(t *testing.T) {
 	service := &DashboardServiceImpl{
 		cfg:            setting.NewCfg(),
 		dashboardStore: &fakeStore,
+		folderService: &foldertest.FakeService{
+			ExpectedFolder: &folder.Folder{},
+		},
 	}
 
 	origNewDashboardGuardian := guardian.New
