@@ -72,7 +72,7 @@ jobs:
       GRAFANA_DELIVERY_BOT_APP_ID: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
       GRAFANA_DELIVERY_BOT_APP_PEM: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
     with:
-      ownerRepo: 'grafana/grafana'
+      ownerRepo: 'grafana/grafana-enterprise'
       source: ${{ needs.setup.outputs.release_branch }}
   migrate_prs_grafana:
     needs:
