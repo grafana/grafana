@@ -109,7 +109,7 @@ export interface FeatureToggles {
   kubernetesSnapshots?: boolean;
   kubernetesDashboards?: boolean;
   kubernetesRestore?: boolean;
-  kubernetesCliDashboardsFolders?: boolean;
+  kubernetesClientDashboardsFolders?: boolean;
   datasourceQueryTypes?: boolean;
   queryService?: boolean;
   queryServiceRewrite?: boolean;

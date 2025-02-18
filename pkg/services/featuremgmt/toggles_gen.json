@@ -2227,7 +2227,7 @@
     },
     {
       "metadata": {
-        "name": "kubernetesCliDashboardsFolders",
+        "name": "kubernetesClientDashboardsFolders",
         "resourceVersion": "1739913583714",
         "creationTimestamp": "2025-02-18T21:15:35Z",
         "annotations": {

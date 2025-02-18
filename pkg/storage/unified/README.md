@@ -62,7 +62,7 @@ protocol = https
 
 [feature_toggles]
 grafanaAPIServerWithExperimentalAPIs = true
-kubernetesCliDashboardsFolders = true
+kubernetesClientDashboardsFolders = true
 
 [unified_storage.folders.folder.grafana.app]
 dualWriterMode = 4

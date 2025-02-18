@@ -371,9 +371,9 @@ const (
 	// Allow restoring objects in k8s
 	FlagKubernetesRestore = "kubernetesRestore"
 
-	// FlagKubernetesCliDashboardsFolders
+	// FlagKubernetesClientDashboardsFolders
 	// Route the folder and dashboard service requests to k8s
-	FlagKubernetesCliDashboardsFolders = "kubernetesCliDashboardsFolders"
+	FlagKubernetesClientDashboardsFolders = "kubernetesClientDashboardsFolders"
 
 	// FlagDatasourceQueryTypes
 	// Show query type endpoints in datasource API servers (currently hardcoded for testdata, expressions, and prometheus)
