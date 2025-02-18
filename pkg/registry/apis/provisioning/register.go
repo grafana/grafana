@@ -75,7 +75,7 @@ type APIBuilder struct {
 	blobstore         blob.PublicBlobStore
 	client            *resources.ClientFactory
 	parsers           *resources.ParserFactory
-	ghFactory         github.ClientFactory
+	ghFactory         *github.Factory
 	clonedir          string // where repo clones are managed
 	jobs              jobs.JobQueue
 	tester            *RepositoryTester
@@ -100,7 +100,7 @@ func NewAPIBuilder(
 	blobstore blob.PublicBlobStore,
 	clonedir string, // where repo clones are managed
 	configProvider apiserver.RestConfigProvider,
-	ghFactory github.ClientFactory,
+	ghFactory *github.Factory,
 	legacyMigrator legacy.LegacyMigrator,
 	storageStatus dualwrite.Service,
 	secrets secrets.Service,
@@ -138,7 +138,7 @@ func RegisterAPIService(
 	render rendering.Service,
 	client resource.ResourceClient, // implements resource.RepositoryClient
 	configProvider apiserver.RestConfigProvider,
-	ghFactory github.ClientFactory,
+	ghFactory *github.Factory,
 	legacyMigrator legacy.LegacyMigrator,
 	storageStatus dualwrite.Service,
 	// FIXME: use multi-tenant service when one exists. In this state, we can't make this a multi-tenant service!

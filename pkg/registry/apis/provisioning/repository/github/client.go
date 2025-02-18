@@ -24,7 +24,6 @@ var (
 
 type ErrRateLimited = github.RateLimitError
 
-//go:generate mockery --name Client --structname MockClient --inpackage --filename client_mock.go
 type Client interface {
 	// IsAuthenticated checks if the client is authenticated.
 	IsAuthenticated(ctx context.Context) error
