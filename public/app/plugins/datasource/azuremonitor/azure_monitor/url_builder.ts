@@ -73,7 +73,7 @@ export default class UrlBuilder {
         region ? `&region=${region}` : globalRegion ? '&region=global' : ''
       }`;
     } else {
-      apiVersion = "2017-12-01-preview"
+      apiVersion = '2017-12-01-preview';
       return `${baseUrl}${resourceUri}/providers/microsoft.insights/metricNamespaces?api-version=${apiVersion}${
         region ? `&region=${region}` : globalRegion ? '&region=global' : ''
       }`;
