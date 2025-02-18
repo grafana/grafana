@@ -33,6 +33,8 @@ import (
 	"errors"
 	"net/http"
 
+	"go.opentelemetry.io/otel"
+
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/middleware/requestmeta"
@@ -40,6 +42,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ssoutils"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/cloudmigration"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/correlations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -51,7 +54,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/web"
-	"go.opentelemetry.io/otel"
 )
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/api")
@@ -65,7 +67,8 @@ func (hs *HTTPServer) registerRoutes() {
 	reqGrafanaAdmin := middleware.ReqGrafanaAdmin
 	reqOrgAdmin := middleware.ReqOrgAdmin
 	reqRoleForAppRoute := middleware.RoleAppPluginAuth(hs.AccessControl, hs.pluginStore, hs.Features, hs.log)
-	reqSnapshotPublicModeOrSignedIn := middleware.SnapshotPublicModeOrSignedIn(hs.Cfg)
+	reqSnapshotPublicModeOrCreate := middleware.SnapshotPublicModeOrCreate(hs.Cfg, hs.AccessControl)
+	reqSnapshotPublicModeOrDelete := middleware.SnapshotPublicModeOrDelete(hs.Cfg, hs.AccessControl)
 	redirectFromLegacyPanelEditURL := middleware.RedirectFromLegacyPanelEditURL(hs.Cfg)
 	authorize := ac.Middleware(hs.AccessControl)
 	authorizeInOrg := ac.AuthorizeInOrgMiddleware(hs.AccessControl, hs.authnService)
@@ -78,6 +81,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/logout", hs.Logout)
 	r.Post("/login", requestmeta.SetOwner(requestmeta.TeamAuth), quota(string(auth.QuotaTargetSrv)), routing.Wrap(hs.LoginPost))
 	r.Get("/login/:name", quota(string(auth.QuotaTargetSrv)), hs.OAuthLogin)
+
 	r.Get("/login", hs.LoginView)
 	r.Get("/invite/:code", hs.Index)
 
@@ -112,13 +116,9 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/admin/orgs", authorizeInOrg(ac.UseGlobalOrg, ac.OrgsAccessEvaluator), hs.Index)
 	r.Get("/admin/orgs/edit/:id", authorizeInOrg(ac.UseGlobalOrg, ac.OrgsAccessEvaluator), hs.Index)
 	r.Get("/admin/stats", authorize(ac.EvalPermission(ac.ActionServerStatsRead)), hs.Index)
-	if hs.Features.IsEnabledGlobally(featuremgmt.FlagStorage) {
-		r.Get("/admin/storage", reqSignedIn, hs.Index)
-		r.Get("/admin/storage/*", reqSignedIn, hs.Index)
-	}
 
 	if hs.Features.IsEnabledGlobally(featuremgmt.FlagOnPremToCloudMigrations) {
-		r.Get("/admin/migrate-to-cloud", reqOrgAdmin, hs.Index)
+		r.Get("/admin/migrate-to-cloud", authorize(cloudmigration.MigrationAssistantAccess), hs.Index)
 	}
 
 	// feature toggle admin page
@@ -164,7 +164,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/dashboards/*", reqSignedIn, hs.Index)
 	r.Get("/goto/:uid", reqSignedIn, hs.redirectFromShortURL, hs.Index)
 
-	if hs.Features.IsEnabledGlobally(featuremgmt.FlagPublicDashboards) && hs.Cfg.PublicDashboardsEnabled {
+	if hs.Cfg.PublicDashboardsEnabled {
 		// list public dashboards
 		r.Get("/public-dashboards/list", reqSignedIn, hs.Index)
 
@@ -205,6 +205,11 @@ func (hs *HTTPServer) registerRoutes() {
 	if hs.Cfg.Smtp.Enabled && hs.Cfg.VerifyEmailEnabled {
 		r.Get("/user/email/update", reqSignedInNoAnonymous, routing.Wrap(hs.UpdateUserEmail))
 		r.Post("/api/user/email/start-verify", reqSignedInNoAnonymous, routing.Wrap(hs.StartEmailVerificaton))
+	}
+
+	if hs.Cfg.PasswordlessMagicLinkAuth.Enabled && hs.Features.IsEnabledGlobally(featuremgmt.FlagPasswordlessMagicLinkAuthentication) {
+		r.Post("/api/login/passwordless/start", requestmeta.SetOwner(requestmeta.TeamAuth), quota(string(auth.QuotaTargetSrv)), hs.StartPasswordless)
+		r.Post("/api/login/passwordless/authenticate", requestmeta.SetOwner(requestmeta.TeamAuth), quota(string(auth.QuotaTargetSrv)), routing.Wrap(hs.LoginPasswordless))
 	}
 
 	// invited
@@ -310,10 +315,6 @@ func (hs *HTTPServer) registerRoutes() {
 
 		if hs.Features.IsEnabledGlobally(featuremgmt.FlagPanelTitleSearch) {
 			apiRoute.Group("/search-v2", hs.SearchV2HTTPService.RegisterHTTPRoutes)
-		}
-
-		if hs.Features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageSearch) {
-			apiRoute.Group("/unified-search", hs.UnifiedSearchHTTPService.RegisterHTTPRoutes)
 		}
 
 		// current org
@@ -423,7 +424,7 @@ func (hs *HTTPServer) registerRoutes() {
 		apiRoute.Any("/plugin-proxy/:pluginId/*", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(pluginaccesscontrol.ActionAppAccess, pluginIDScope)), checkAppEnabled(hs.pluginStore, hs.PluginSettings), hs.ProxyPluginRequest)
 		apiRoute.Any("/plugin-proxy/:pluginId", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(pluginaccesscontrol.ActionAppAccess, pluginIDScope)), checkAppEnabled(hs.pluginStore, hs.PluginSettings), hs.ProxyPluginRequest)
 
-		if hs.Cfg.PluginAdminEnabled && (hs.Features.IsEnabledGlobally(featuremgmt.FlagManagedPluginsInstall) || !hs.Cfg.PluginAdminExternalManageEnabled) {
+		if hs.Cfg.PluginAdminEnabled {
 			apiRoute.Group("/plugins", func(pluginRoute routing.RouteRegister) {
 				pluginRoute.Post("/:pluginId/install", authorizeInOrg(ac.UseGlobalOrSingleOrg(hs.Cfg), ac.EvalPermission(pluginaccesscontrol.ActionInstall)), routing.Wrap(hs.InstallPlugin))
 				pluginRoute.Post("/:pluginId/uninstall", authorizeInOrg(ac.UseGlobalOrSingleOrg(hs.Cfg), ac.EvalPermission(pluginaccesscontrol.ActionInstall)), routing.Wrap(hs.UninstallPlugin))
@@ -506,7 +507,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// Dashboard snapshots
 		apiRoute.Group("/dashboard/snapshots", func(dashboardRoute routing.RouteRegister) {
-			dashboardRoute.Get("/", routing.Wrap(hs.SearchDashboardSnapshots))
+			dashboardRoute.Get("/", authorize(ac.EvalPermission(dashboards.ActionSnapshotsRead)), routing.Wrap(hs.SearchDashboardSnapshots))
 		})
 
 		// Playlist
@@ -607,11 +608,14 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/avatar/:hash", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), hs.AvatarCacheServer.Handler)
 
 	// Snapshots
-	r.Post("/api/snapshots/", reqSnapshotPublicModeOrSignedIn, hs.getCreatedSnapshotHandler())
 	r.Get("/api/snapshot/shared-options/", reqSignedIn, hs.GetSharingOptions)
+
+	r.Post("/api/snapshots/", reqSnapshotPublicModeOrCreate, hs.getCreatedSnapshotHandler())
 	r.Get("/api/snapshots/:key", routing.Wrap(hs.GetDashboardSnapshot))
-	r.Get("/api/snapshots-delete/:deleteKey", reqSnapshotPublicModeOrSignedIn, routing.Wrap(hs.DeleteDashboardSnapshotByDeleteKey))
-	r.Delete("/api/snapshots/:key", reqSignedIn, routing.Wrap(hs.DeleteDashboardSnapshot))
+	r.Delete("/api/snapshots/:key", authorize(ac.EvalPermission(dashboards.ActionSnapshotsDelete)), routing.Wrap(hs.DeleteDashboardSnapshot))
+
+	// Snapshots delete for public mode or using the deleteKey
+	r.Get("/api/snapshots-delete/:deleteKey", reqSnapshotPublicModeOrDelete, routing.Wrap(hs.DeleteDashboardSnapshotByDeleteKey))
 }
 
 func middlewareUserUIDResolver(userService user.Service, paramName string) web.Handler {

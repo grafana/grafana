@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/authlib/claims"
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/concurrency"
 
 	"github.com/grafana/grafana/pkg/infra/db"

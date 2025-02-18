@@ -14,6 +14,7 @@ jest.mock('uuid', () => ({
 
 const originalLog = console.log;
 const originalWarn = console.warn;
+const originalErr = console.error;
 beforeEach(() => {
   jest.spyOn(console, 'log').mockImplementation(() => {});
   jest.spyOn(console, 'warn').mockImplementation(() => {});
@@ -22,6 +23,7 @@ beforeEach(() => {
 afterAll(() => {
   console.log = originalLog;
   console.warn = originalWarn;
+  console.error = originalErr;
 });
 
 describe('runShardSplitQuery()', () => {
@@ -48,9 +50,7 @@ describe('runShardSplitQuery()', () => {
   };
   let request: DataQueryRequest<LokiQuery>;
   beforeEach(() => {
-    request = createRequest([
-      { expr: 'count_over_time($SELECTOR[1m])', refId: 'A', direction: LokiQueryDirection.Scan },
-    ]);
+    request = createRequest([{ expr: '$SELECTOR', refId: 'A', direction: LokiQueryDirection.Scan }]);
     datasource = createLokiDatasource();
     datasource.languageProvider.fetchLabelValues = jest.fn();
     datasource.interpolateVariablesInQueries = jest.fn().mockImplementation((queries: LokiQuery[]) => {
@@ -66,6 +66,24 @@ describe('runShardSplitQuery()', () => {
   });
 
   test('Splits datasource queries', async () => {
+    const querySplittingRange = {
+      from: dateTime('2023-02-08T05:00:00.000Z'),
+      to: dateTime('2023-02-10T06:00:00.000Z'),
+      raw: {
+        from: dateTime('2023-02-08T05:00:00.000Z'),
+        to: dateTime('2023-02-10T06:00:00.000Z'),
+      },
+    };
+    request = createRequest([{ expr: '$SELECTOR', refId: 'A', direction: LokiQueryDirection.Scan }], {
+      range: querySplittingRange,
+    });
+    await expect(runShardSplitQuery(datasource, request)).toEmitValuesWith(() => {
+      // 5 shards, 3 groups + empty shard group, 4 requests * 3 days, 3 chunks, 3 requests = 12 requests
+      expect(datasource.runQuery).toHaveBeenCalledTimes(12);
+    });
+  });
+
+  test('Users query splitting for querying over a day', async () => {
     await expect(runShardSplitQuery(datasource, request)).toEmitValuesWith(() => {
       // 5 shards, 3 groups + empty shard group, 4 requests
       expect(datasource.runQuery).toHaveBeenCalledTimes(4);
@@ -79,10 +97,11 @@ describe('runShardSplitQuery()', () => {
       expect(datasource.runQuery).toHaveBeenCalledWith({
         intervalMs: expect.any(Number),
         range: expect.any(Object),
-        requestId: 'TEST_shard_0_0_2',
+        queryGroupId: expect.any(String),
+        requestId: 'TEST_shard_0_0_2_1',
         targets: [
           {
-            expr: 'count_over_time({a="b", __stream_shard__=~"20|10"} | drop __stream_shard__[1m])',
+            expr: '{a="b", __stream_shard__=~"20|10"}',
             refId: 'A',
             direction: LokiQueryDirection.Scan,
           },
@@ -92,10 +111,11 @@ describe('runShardSplitQuery()', () => {
       expect(datasource.runQuery).toHaveBeenCalledWith({
         intervalMs: expect.any(Number),
         range: expect.any(Object),
-        requestId: 'TEST_shard_0_2_2',
+        queryGroupId: expect.any(String),
+        requestId: 'TEST_shard_0_2_2_1',
         targets: [
           {
-            expr: 'count_over_time({a="b", __stream_shard__=~"3|2"} | drop __stream_shard__[1m])',
+            expr: '{a="b", __stream_shard__=~"3|2"}',
             refId: 'A',
             direction: LokiQueryDirection.Scan,
           },
@@ -105,10 +125,11 @@ describe('runShardSplitQuery()', () => {
       expect(datasource.runQuery).toHaveBeenCalledWith({
         intervalMs: expect.any(Number),
         range: expect.any(Object),
-        requestId: 'TEST_shard_0_4_1',
+        queryGroupId: expect.any(String),
+        requestId: 'TEST_shard_0_4_1_1',
         targets: [
           {
-            expr: 'count_over_time({a="b", __stream_shard__="1"} | drop __stream_shard__[1m])',
+            expr: '{a="b", __stream_shard__="1"}',
             refId: 'A',
             direction: LokiQueryDirection.Scan,
           },
@@ -118,10 +139,11 @@ describe('runShardSplitQuery()', () => {
       expect(datasource.runQuery).toHaveBeenCalledWith({
         intervalMs: expect.any(Number),
         range: expect.any(Object),
-        requestId: 'TEST_shard_0_5_1',
+        queryGroupId: expect.any(String),
+        requestId: 'TEST_shard_0_5_1_1',
         targets: [
           {
-            expr: 'count_over_time({a="b", __stream_shard__=""} | drop __stream_shard__[1m])',
+            expr: '{a="b", __stream_shard__=""}',
             refId: 'A',
             direction: LokiQueryDirection.Scan,
           },
@@ -147,10 +169,11 @@ describe('runShardSplitQuery()', () => {
       expect(datasource.runQuery).toHaveBeenCalledWith({
         intervalMs: expect.any(Number),
         range: expect.any(Object),
-        requestId: 'TEST_shard_0_0_2',
+        queryGroupId: expect.any(String),
+        requestId: 'TEST_shard_0_0_2_1',
         targets: [
           {
-            expr: 'count_over_time({service_name="test", filter="true", __stream_shard__=~"20|10"} | drop __stream_shard__[1m])',
+            expr: '{service_name="test", filter="true", __stream_shard__=~"20|10"}',
             refId: 'A',
             direction: LokiQueryDirection.Scan,
           },
@@ -203,25 +226,11 @@ describe('runShardSplitQuery()', () => {
       callback();
     });
     await expect(runShardSplitQuery(datasource, request)).toEmitValuesWith((response: DataQueryResponse[]) => {
-      expect(datasource.runQuery).toHaveBeenCalledTimes(2);
+      expect(datasource.runQuery).toHaveBeenCalledTimes(1);
     });
   });
 
   test('Adjusts the group size based on errors and execution time', async () => {
-    const request = createRequest(
-      [{ expr: 'count_over_time($SELECTOR[1m])', refId: 'A', direction: LokiQueryDirection.Scan }],
-      {
-        range: {
-          from: dateTime('2024-11-13T05:00:00.000Z'),
-          to: dateTime('2024-11-14T06:00:00.000Z'),
-          raw: {
-            from: dateTime('2024-11-13T05:00:00.000Z'),
-            to: dateTime('2024-11-14T06:00:00.000Z'),
-          },
-        },
-      }
-    );
-
     jest
       .mocked(datasource.languageProvider.fetchLabelValues)
       .mockResolvedValue(['1', '10', '2', '20', '3', '4', '5', '6', '7', '8', '9']);
@@ -376,10 +385,11 @@ describe('runShardSplitQuery()', () => {
       expect(datasource.runQuery).toHaveBeenCalledWith({
         intervalMs: expect.any(Number),
         range: expect.any(Object),
-        requestId: 'TEST_shard_0_0_3',
+        queryGroupId: expect.any(String),
+        requestId: 'TEST_shard_0_0_3_1',
         targets: [
           {
-            expr: 'count_over_time({a="b", __stream_shard__=~"20|10|9"} | drop __stream_shard__[1m])',
+            expr: '{a="b", __stream_shard__=~"20|10|9"}',
             refId: 'A',
             direction: LokiQueryDirection.Scan,
           },
@@ -390,10 +400,11 @@ describe('runShardSplitQuery()', () => {
       expect(datasource.runQuery).toHaveBeenCalledWith({
         intervalMs: expect.any(Number),
         range: expect.any(Object),
-        requestId: 'TEST_shard_0_3_4',
+        queryGroupId: expect.any(String),
+        requestId: 'TEST_shard_0_3_4_1',
         targets: [
           {
-            expr: 'count_over_time({a="b", __stream_shard__=~"8|7|6|5"} | drop __stream_shard__[1m])',
+            expr: '{a="b", __stream_shard__=~"8|7|6|5"}',
             refId: 'A',
             direction: LokiQueryDirection.Scan,
           },
@@ -404,10 +415,11 @@ describe('runShardSplitQuery()', () => {
       expect(datasource.runQuery).toHaveBeenCalledWith({
         intervalMs: expect.any(Number),
         range: expect.any(Object),
-        requestId: 'TEST_shard_0_3_2',
+        queryGroupId: expect.any(String),
+        requestId: 'TEST_shard_0_3_2_1',
         targets: [
           {
-            expr: 'count_over_time({a="b", __stream_shard__=~"8|7"} | drop __stream_shard__[1m])',
+            expr: '{a="b", __stream_shard__=~"8|7"}',
             refId: 'A',
             direction: LokiQueryDirection.Scan,
           },
@@ -418,10 +430,11 @@ describe('runShardSplitQuery()', () => {
       expect(datasource.runQuery).toHaveBeenCalledWith({
         intervalMs: expect.any(Number),
         range: expect.any(Object),
-        requestId: 'TEST_shard_0_5_3',
+        queryGroupId: expect.any(String),
+        requestId: 'TEST_shard_0_5_3_1',
         targets: [
           {
-            expr: 'count_over_time({a="b", __stream_shard__=~"6|5|4"} | drop __stream_shard__[1m])',
+            expr: '{a="b", __stream_shard__=~"6|5|4"}',
             refId: 'A',
             direction: LokiQueryDirection.Scan,
           },
@@ -432,10 +445,11 @@ describe('runShardSplitQuery()', () => {
       expect(datasource.runQuery).toHaveBeenCalledWith({
         intervalMs: expect.any(Number),
         range: expect.any(Object),
-        requestId: 'TEST_shard_0_8_2',
+        queryGroupId: expect.any(String),
+        requestId: 'TEST_shard_0_8_2_1',
         targets: [
           {
-            expr: 'count_over_time({a="b", __stream_shard__=~"3|2"} | drop __stream_shard__[1m])',
+            expr: '{a="b", __stream_shard__=~"3|2"}',
             refId: 'A',
             direction: LokiQueryDirection.Scan,
           },
@@ -446,10 +460,11 @@ describe('runShardSplitQuery()', () => {
       expect(datasource.runQuery).toHaveBeenCalledWith({
         intervalMs: expect.any(Number),
         range: expect.any(Object),
-        requestId: 'TEST_shard_0_10_1',
+        queryGroupId: expect.any(String),
+        requestId: 'TEST_shard_0_10_1_1',
         targets: [
           {
-            expr: 'count_over_time({a="b", __stream_shard__="1"} | drop __stream_shard__[1m])',
+            expr: '{a="b", __stream_shard__="1"}',
             refId: 'A',
             direction: LokiQueryDirection.Scan,
           },
@@ -460,10 +475,11 @@ describe('runShardSplitQuery()', () => {
       expect(datasource.runQuery).toHaveBeenCalledWith({
         intervalMs: expect.any(Number),
         range: expect.any(Object),
-        requestId: 'TEST_shard_0_11_1',
+        queryGroupId: expect.any(String),
+        requestId: 'TEST_shard_0_11_1_1',
         targets: [
           {
-            expr: 'count_over_time({a="b", __stream_shard__=""} | drop __stream_shard__[1m])',
+            expr: '{a="b", __stream_shard__=""}',
             refId: 'A',
             direction: LokiQueryDirection.Scan,
           },

@@ -12,7 +12,7 @@ import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
 import { DataQuery, DataSourceRef } from '@grafana/schema';
-import { Button, CustomScrollbar, Icon, Input, ModalsController, Portal, useStyles2 } from '@grafana/ui';
+import { Button, Icon, Input, ModalsController, Portal, ScrollContainer, useStyles2 } from '@grafana/ui';
 import config from 'app/core/config';
 import { Trans } from 'app/core/internationalization';
 import { useKeyNavigationListener } from 'app/features/search/hooks/useSearchKeyboardSelection';
@@ -347,7 +347,7 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
 
   return (
     <div style={props.style} ref={ref} className={styles.container}>
-      <CustomScrollbar>
+      <ScrollContainer showScrollIndicators>
         <DataSourceList
           {...props}
           enableKeyboardNavigation
@@ -361,7 +361,7 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
             })
           }
         ></DataSourceList>
-      </CustomScrollbar>
+      </ScrollContainer>
       <FocusScope>
         <Footer
           {...props}
@@ -380,8 +380,10 @@ function getStylesPickerContent(theme: GrafanaTheme2) {
     container: css({
       display: 'flex',
       flexDirection: 'column',
-      background: theme.colors.background.primary,
+      background: theme.colors.background.elevated,
+      borderRadius: theme.shape.radius.default,
       boxShadow: theme.shadows.z3,
+      overflow: 'hidden',
     }),
     picker: css({
       background: theme.colors.background.secondary,

@@ -39,6 +39,19 @@ export const versionedPages = {
       '10.2.3': 'data-testid Skip change password button',
     },
   },
+  PasswordlessLogin: {
+    url: {
+      [MIN_GRAFANA_VERSION]: '/login/passwordless/authenticate',
+    },
+    email: {
+      '10.2.3': 'data-testid Email input field',
+      [MIN_GRAFANA_VERSION]: 'Email input field',
+    },
+    submit: {
+      '10.2.3': 'data-testid PasswordlessLogin button',
+      [MIN_GRAFANA_VERSION]: 'PasswordlessLogin button',
+    },
+  },
   Home: {
     url: {
       [MIN_GRAFANA_VERSION]: '/',
@@ -105,6 +118,7 @@ export const versionedPages = {
     },
     addNewPanel: {
       '11.1.0': 'data-testid Add new panel',
+      '8.0.0': 'Add new panel',
       [MIN_GRAFANA_VERSION]: 'Add new panel',
     },
     itemButtonAddViz: {
@@ -141,8 +155,9 @@ export const versionedPages = {
         },
         Edit: {
           url: {
-            [MIN_GRAFANA_VERSION]: (annotationIndex: string) =>
-              `/dashboard/new?orgId=1&editview=templating&editIndex=${annotationIndex}`,
+            '11.3.0': (editIndex: string) => `/dashboard/new?orgId=1&editview=variables&editIndex=${editIndex}`,
+            [MIN_GRAFANA_VERSION]: (editIndex: string) =>
+              `/dashboard/new?orgId=1&editview=templating&editIndex=${editIndex}`,
           },
         },
       },
@@ -190,6 +205,9 @@ export const versionedPages = {
           },
           shareSnapshot: {
             '11.2.0': 'data-testid new share button share snapshot',
+          },
+          inviteUser: {
+            '11.5.0': 'data-testid new share button invite user',
           },
         },
       },
@@ -330,6 +348,7 @@ export const versionedPages = {
       Variables: {
         List: {
           url: {
+            '11.3.0': (dashboardUid: string) => `/d/${dashboardUid}?editview=variables`,
             [MIN_GRAFANA_VERSION]: (dashboardUid: string) => `/d/${dashboardUid}?editview=templating`,
           },
           addVariableCTAV2: {
@@ -362,6 +381,7 @@ export const versionedPages = {
         },
         Edit: {
           urlParams: {
+            '11.3.0': (editIndex: string) => `editview=variables&editIndex=${editIndex}`,
             [MIN_GRAFANA_VERSION]: (editIndex: string) => `editview=templating&editIndex=${editIndex}`,
           },
           General: {
@@ -400,6 +420,9 @@ export const versionedPages = {
             },
             generalHideSelectV2: {
               [MIN_GRAFANA_VERSION]: 'data-testid Variable editor Form Hide select',
+            },
+            selectionOptionsAllowCustomValueSwitch: {
+              [MIN_GRAFANA_VERSION]: 'data-testid Variable editor Form Allow Custom Value switch',
             },
             selectionOptionsMultiSwitch: {
               '10.4.0': 'data-testid Variable editor Form Multi switch',
@@ -673,6 +696,26 @@ export const versionedPages = {
       },
       copyUrlButton: {
         '11.3.0': 'data-testid share internally copy url button',
+      },
+      SharePanel: {
+        preview: {
+          '11.5.0': 'data-testid share panel internally image generation preview',
+        },
+        widthInput: {
+          '11.5.0': 'data-testid share panel internally width input',
+        },
+        heightInput: {
+          '11.5.0': 'data-testid share panel internally height input',
+        },
+        scaleFactorInput: {
+          '11.5.0': 'data-testid share panel internally scale factor input',
+        },
+        generateImageButton: {
+          '11.5.0': 'data-testid share panel internally generate image button',
+        },
+        downloadImageButton: {
+          '11.5.0': 'data-testid share panel internally download image button',
+        },
       },
     },
     ShareExternally: {
@@ -948,6 +991,7 @@ export const versionedPages = {
     },
     org: {
       url: {
+        '10.2.0': '/admin/users',
         '9.5.0': '/org/users',
       },
     },

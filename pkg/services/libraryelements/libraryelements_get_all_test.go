@@ -539,7 +539,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 
 	scenarioWithPanel(t, "When an admin tries to get all library panels and two exist and folderFilterUIDs is set to existing folders, it should succeed and the result should be correct",
 		func(t *testing.T, sc scenarioContext) {
-			newFolder := createFolder(t, sc, "NewFolder")
+			newFolder := createFolder(t, sc, "NewFolder", nil)
 			// nolint:staticcheck
 			command := getCreatePanelCommand(newFolder.ID, newFolder.UID, "Text - Library Panel2")
 			sc.reqContext.Req.Body = mockRequestBody(command)
@@ -608,7 +608,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 
 	scenarioWithPanel(t, "When an admin tries to get all library panels and two exist and folderFilter is set to a nonexistent folders, it should succeed and the result should be correct",
 		func(t *testing.T, sc scenarioContext) {
-			newFolder := createFolder(t, sc, "NewFolder")
+			newFolder := createFolder(t, sc, "NewFolder", nil)
 			// nolint:staticcheck
 			command := getCreatePanelCommand(newFolder.ID, sc.folder.UID, "Text - Library Panel2")
 			sc.reqContext.Req.Body = mockRequestBody(command)

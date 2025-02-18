@@ -25,9 +25,9 @@ weight: 80
 refs:
   global-variables:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#**from-and-**to
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#__from-and-__to
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/dashboards/variables/add-template-variables/#**from-and-**to
+      destination: /docs/grafana-cloud/visualizations/dashboards/variables/add-template-variables/#__from-and-__to
   heatmap:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/heatmap/
@@ -143,14 +143,26 @@ If there's only one data link in the visualization, clicking anywhere on the vis
 
 You can configure data links for the following visualizations:
 
-|                                |                                      |                                      |
-| ------------------------------ | ------------------------------------ | ------------------------------------ |
-| [Bar chart](ref:bar-chart)     | [Heatmap](ref:heatmap)               | [Status history](ref:status-history) |
-| [Bar gauge](ref:bar-gauge)     | [Histogram](ref:histogram)           | [Table](ref:table)                   |
-| [Candlestick](ref:candlestick) | [Pie chart](ref:pie-chart)           | [Time series](ref:time-series)       |
-| [Canvas](ref:canvas)           | [Stat](ref:stat)                     | [Trend](ref:trend)                   |
-| [Gauge](ref:gauge)             | [State timeline](ref:state-timeline) | [XY chart](ref:xy-chart)             |
-| [Geomap](ref:geomap)           |                                      |                                      |
+{{< column-list >}}
+
+- [Bar chart](ref:bar-chart)
+- [Bar gauge](ref:bar-gauge)
+- [Candlestick](ref:candlestick)
+- [Canvas](ref:canvas)
+- [Gauge](ref:gauge)
+- [Geomap](ref:geomap)
+- [Heatmap](ref:heatmap)
+- [Histogram](ref:histogram)
+- [Pie chart](ref:pie-chart)
+- [Stat](ref:stat)
+- [State timeline](ref:state-timeline)
+- [Status history](ref:status-history)
+- [Table](ref:table)
+- [Time series](ref:time-series)
+- [Trend](ref:trend)
+- [XY chart](ref:xy-chart)
+
+{{< /column-list >}}
 
 ## Data link variables
 
@@ -241,13 +253,17 @@ If you want to add all of the current dashboard's variables to the URL, then use
 1. Hover over any part of the panel to display the menu icon in the upper-right corner.
 1. Click the menu icon and select **Edit** to open the panel editor.
 1. In the panel edit pane, scroll down to the **Data links** section and expand it.
-1. Click **Add link**.
-1. In the dialog box that opens, enter a **Title**. This is a human-readable label for the link, which will be displayed in the UI.
-1. Enter the **URL** or variable to which you want to link.
+1. Click **+ Add link**.
+1. In the dialog box that opens, enter a **Title**. This is a human-readable label for the link displayed in the UI. This is a required field.
+1. Enter the **URL** or variable to which you want to link. This is a required field.
 
    To add a data link variable, click in the **URL** field and enter `$` or press Ctrl+Space or Cmd+Space to see a list of available variables.
 
 1. If you want the link to open in a new tab, toggle the **Open in a new tab** switch.
+1. If you want the data link to open with a single click, toggle the **One click** switch.
+
+   Only one data link can have **One click** enabled at a time. **One click** is only supported for some visualizations.
+
 1. Click **Save** to save changes and close the dialog box.
 1. Click **Save dashboard**.
 1. Click **Back to dashboard** and then **Exit edit**.

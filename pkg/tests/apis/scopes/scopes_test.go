@@ -28,9 +28,9 @@ func TestIntegrationScopes(t *testing.T) {
 
 	ctx := context.Background()
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		AppModeProduction: false, // required for experimental APIs
+		AppModeProduction: true,
 		EnableFeatureToggles: []string{
-			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // Required to start the example service
+			featuremgmt.FlagScopeApi, // Required to register the API
 		},
 	})
 

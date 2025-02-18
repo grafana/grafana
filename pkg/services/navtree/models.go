@@ -165,6 +165,7 @@ func (root *NavTreeRoot) ApplyCostManagementIA() {
 	var costManagementApp *NavLink
 	var adaptiveMetricsApp *NavLink
 	var adaptiveLogsApp *NavLink
+	var adaptiveTracesApp *NavLink
 	var attributionsApp *NavLink
 	var logVolumeExplorerApp *NavLink
 
@@ -178,6 +179,8 @@ func (root *NavTreeRoot) ApplyCostManagementIA() {
 				adaptiveMetricsApp = element
 			case "plugin-page-grafana-adaptivelogs-app":
 				adaptiveLogsApp = element
+			case "plugin-page-grafana-adaptivetraces-app":
+				adaptiveTracesApp = element
 			case "plugin-page-grafana-attributions-app":
 				attributionsApp = element
 			case "plugin-page-grafana-logvolumeexplorer-app":
@@ -205,6 +208,13 @@ func (root *NavTreeRoot) ApplyCostManagementIA() {
 				}
 				if logVolumeExplorerApp != nil {
 					costManagementLogsNode.Children = append(costManagementLogsNode.Children, logVolumeExplorerApp)
+				}
+			}
+
+			costManagementTracesNode := FindByURL(costManagementApp.Children, "/a/grafana-costmanagementui-app/traces")
+			if costManagementTracesNode != nil {
+				if adaptiveTracesApp != nil {
+					costManagementTracesNode.Children = append(costManagementTracesNode.Children, adaptiveTracesApp)
 				}
 			}
 			adminNodeLinks = append(adminNodeLinks, costManagementApp)

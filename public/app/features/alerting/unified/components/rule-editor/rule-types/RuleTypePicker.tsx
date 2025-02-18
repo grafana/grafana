@@ -1,13 +1,10 @@
 import { css } from '@emotion/css';
 import { isEmpty } from 'lodash';
-import { useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data/src';
-import { useStyles2, Stack } from '@grafana/ui';
-import { dispatch } from 'app/store/store';
+import { Stack, useStyles2 } from '@grafana/ui';
 
 import { useRulesSourcesWithRuler } from '../../../hooks/useRuleSourcesWithRuler';
-import { fetchAllPromBuildInfoAction } from '../../../state/actions';
 import { RuleFormType } from '../../../types/rule-form';
 
 import { GrafanaManagedRuleType } from './GrafanaManagedAlert';
@@ -19,12 +16,8 @@ interface RuleTypePickerProps {
 }
 
 const RuleTypePicker = ({ selected, onChange, enabledTypes }: RuleTypePickerProps) => {
-  const rulesSourcesWithRuler = useRulesSourcesWithRuler();
+  const { rulesSourcesWithRuler } = useRulesSourcesWithRuler();
   const hasLotexDatasources = !isEmpty(rulesSourcesWithRuler);
-
-  useEffect(() => {
-    dispatch(fetchAllPromBuildInfoAction());
-  }, []);
 
   const styles = useStyles2(getStyles);
 

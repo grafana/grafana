@@ -66,8 +66,17 @@ The metrics query editor helps you select metrics, group and aggregate by labels
 1. _(Optional)_ Use the plus and minus icons in the filter and group-by sections to add and remove filters or group-by clauses.
 
 Google Cloud Monitoring supports several metrics types, such as `GAUGE`, `DELTA,` and `CUMULATIVE`.
-Each supports different aggregation options, such as reducers and aligners.
-The metrics query editor lists available aggregation methods for a selected metric, and sets a default reducer and aligner when you select a metric.
+Each supports different aggregation options, such as reducers and aligners. Additionally, metrics have specific value types that can be either scalar or a distribution.
+
+The metrics query editor lists available aggregation methods for a selected metric, and sets a default aggregation, reducer and aligner when you select a metric.
+
+In the case that the metric value type is a distribution, the aggregation will be set by default to the mean. For scalar value types, there is no aggregation by default.
+
+The various metrics are documented [here](https://cloud.google.com/monitoring/api/metrics_gcp) and further details on the kinds and types of metrics can be found [here](https://cloud.google.com/monitoring/api/v3/kinds-and-types).
+
+{{% admonition type="note" %}}
+Distribution metrics are typically best visualized as either a heatmap or histogram. When visualizing in this way, aggregation is not necessary. However, for other visualization types, performance degradation may be observed when attempting to query distribution metrics that are not aggregated due to the number of potential buckets that can be returned. For more information on how to visualize distribution metrics refer to [this page](https://cloud.google.com/monitoring/charts/charting-distribution-metrics).
+{{% /admonition %}}
 
 ### Apply a filter
 

@@ -50,7 +50,7 @@ func (m *OAuthTokenMiddleware) applyToken(ctx context.Context, pCtx backend.Plug
 	}
 
 	if m.oAuthTokenService.IsOAuthPassThruEnabled(ds) {
-		if token := m.oAuthTokenService.GetCurrentOAuthToken(ctx, reqCtx.SignedInUser); token != nil {
+		if token := m.oAuthTokenService.GetCurrentOAuthToken(ctx, reqCtx.SignedInUser, reqCtx.UserToken); token != nil {
 			authorizationHeader := fmt.Sprintf("%s %s", token.Type(), token.AccessToken)
 			idTokenHeader := ""
 

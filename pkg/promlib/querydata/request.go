@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/utils/maputil"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/status"
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/promlib/client"
@@ -237,13 +238,6 @@ func (s *QueryData) rangeQuery(ctx context.Context, c *client.Client, q *models.
 		return addErrorSourceToDataResponse(err)
 	}
 
-	if res.StatusCode/100 != 2 {
-		// for differentiating the source of http errors by status code
-		return backend.DataResponse{
-			ErrorSource: backend.ErrorSourceFromHTTPStatus(res.StatusCode),
-		}
-	}
-
 	defer func() {
 		err := res.Body.Close()
 		if err != nil {
@@ -257,21 +251,13 @@ func (s *QueryData) rangeQuery(ctx context.Context, c *client.Client, q *models.
 func (s *QueryData) instantQuery(ctx context.Context, c *client.Client, q *models.Query, enablePrometheusDataplaneFlag bool) backend.DataResponse {
 	res, err := c.QueryInstant(ctx, q)
 	if err != nil {
-		// confirm that it is a downstream error
 		return addErrorSourceToDataResponse(err)
 	}
 
-	if res.StatusCode/100 != 2 {
-		// This is only for health check fall back scenario
-		// add more details to the health check error
-		if q.RefId == "__healthcheck__" {
-			return backend.DataResponse{
-				Error:       errors.New(res.Status),
-				ErrorSource: backend.ErrorSourceFromHTTPStatus(res.StatusCode),
-			}
-		}
-		// for differentiating the source of http errors by status code
+	// This is only for health check fall back scenario
+	if res.StatusCode != 200 && q.RefId == "__healthcheck__" {
 		return backend.DataResponse{
+			Error:       errors.New(res.Status),
 			ErrorSource: backend.ErrorSourceFromHTTPStatus(res.StatusCode),
 		}
 	}
@@ -289,14 +275,14 @@ func (s *QueryData) instantQuery(ctx context.Context, c *client.Client, q *model
 func (s *QueryData) exemplarQuery(ctx context.Context, c *client.Client, q *models.Query, enablePrometheusDataplaneFlag bool) backend.DataResponse {
 	res, err := c.QueryExemplars(ctx, q)
 	if err != nil {
-		return addErrorSourceToDataResponse(err)
-	}
-
-	if res.StatusCode/100 != 2 {
-		// for differentiating the source of http errors by status code
-		return backend.DataResponse{
-			ErrorSource: backend.ErrorSourceFromHTTPStatus(res.StatusCode),
+		response := backend.DataResponse{
+			Error: err,
 		}
+
+		if backend.IsDownstreamHTTPError(err) {
+			response.ErrorSource = backend.ErrorSourceDownstream
+		}
+		return response
 	}
 
 	defer func() {
@@ -315,6 +301,7 @@ func addDataResponse(res *backend.DataResponse, dr *backend.DataResponse) {
 		} else {
 			dr.Error = fmt.Errorf("%v %w", dr.Error, res.Error)
 		}
+		dr.ErrorSource = status.SourceFromHTTPStatus(int(res.Status))
 		dr.Status = res.Status
 	}
 	dr.Frames = append(dr.Frames, res.Frames...)

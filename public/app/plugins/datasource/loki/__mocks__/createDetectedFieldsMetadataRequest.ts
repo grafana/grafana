@@ -1,10 +1,12 @@
-export function createDetectedFieldsMetadataRequest(labelsAndValues: string[]) {
-  const lokiLabelsAndValuesEndpointRegex = /^detected_field\/([%\w]*)\/values/;
+import { DetectedFieldsResult } from '../types';
+
+export function createDetectedFieldsMetadataRequest(response: DetectedFieldsResult) {
+  const lokiLabelsAndValuesEndpointRegex = /^detected_fields/;
 
   return async function metadataRequestMock(url: string) {
     const labelsMatch = url.match(lokiLabelsAndValuesEndpointRegex);
     if (labelsMatch) {
-      return labelsAndValues ?? [];
+      return response ?? {};
     } else {
       throw new Error(`Unexpected url error, ${url}`);
     }

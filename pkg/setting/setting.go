@@ -5,11 +5,9 @@ package setting
 
 import (
 	"bytes"
-	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/fs"
 	"net/http"
 	"net/url"
 	"os"
@@ -136,7 +134,6 @@ type Cfg struct {
 	DataPath              string
 	LogsPath              string
 	PluginsPath           string
-	BundledPluginsPath    string
 	EnterpriseLicensePath string
 
 	// SMTP email settings
@@ -156,18 +153,20 @@ type Cfg struct {
 	RendererDefaultImageScale      float64
 
 	// Security
-	DisableInitAdminCreation          bool
-	DisableBruteForceLoginProtection  bool
-	CookieSecure                      bool
-	CookieSameSiteDisabled            bool
-	CookieSameSiteMode                http.SameSite
-	AllowEmbedding                    bool
-	XSSProtectionHeader               bool
-	ContentTypeProtectionHeader       bool
-	StrictTransportSecurity           bool
-	StrictTransportSecurityMaxAge     int
-	StrictTransportSecurityPreload    bool
-	StrictTransportSecuritySubDomains bool
+	DisableInitAdminCreation             bool
+	DisableBruteForceLoginProtection     bool
+	BruteForceLoginProtectionMaxAttempts int64
+	DisableIPAddressLoginProtection      bool
+	CookieSecure                         bool
+	CookieSameSiteDisabled               bool
+	CookieSameSiteMode                   http.SameSite
+	AllowEmbedding                       bool
+	XSSProtectionHeader                  bool
+	ContentTypeProtectionHeader          bool
+	StrictTransportSecurity              bool
+	StrictTransportSecurityMaxAge        int
+	StrictTransportSecurityPreload       bool
+	StrictTransportSecuritySubDomains    bool
 	// CSPEnabled toggles Content Security Policy support.
 	CSPEnabled bool
 	// CSPTemplate contains the Content Security Policy template.
@@ -197,7 +196,6 @@ type Cfg struct {
 	PluginSkipPublicKeyDownload      bool
 	DisablePlugins                   []string
 	HideAngularDeprecation           []string
-	PluginInstallToken               string
 	ForwardHostEnvVars               []string
 	PreinstallPlugins                []InstallPlugin
 	PreinstallPluginsAsync           bool
@@ -221,9 +219,10 @@ type Cfg struct {
 	MetricsGrafanaEnvironmentInfo    map[string]string
 
 	// Dashboards
-	DashboardVersionsToKeep  int
-	MinRefreshInterval       string
-	DefaultHomeDashboardPath string
+	DashboardVersionsToKeep     int
+	MinRefreshInterval          string
+	DefaultHomeDashboardPath    string
+	DashboardPerformanceMetrics []string
 
 	// Auth
 	LoginCookieName               string
@@ -271,6 +270,8 @@ type Cfg struct {
 	JWTAuth    AuthJWTSettings
 	ExtJWTAuth ExtJWTSettings
 
+	PasswordlessMagicLinkAuth AuthPasswordlessMagicLinkSettings
+
 	// SSO Settings Auth
 	SSOSettingsReloadInterval        time.Duration
 	SSOSettingsConfigurableProviders map[string]bool
@@ -302,11 +303,7 @@ type Cfg struct {
 	// Deprecated: use featuremgmt.FeatureFlags
 	IsFeatureToggleEnabled func(key string) bool // filled in dynamically
 
-	AnonymousEnabled     bool
-	AnonymousOrgName     string
-	AnonymousOrgRole     string
-	AnonymousHideVersion bool
-	AnonymousDeviceLimit int64
+	Anonymous AnonymousSettings
 
 	DateFormats DateFormats
 
@@ -334,6 +331,9 @@ type Cfg struct {
 	DataSourceLimit int
 	// Number of queries to be executed concurrently. Only for the datasource supports concurrency.
 	ConcurrentQueryCount int
+	// Default behavior for the "Manage alerts via Alerting UI" toggle when configuring a data source.
+	// It only works if the data source's `jsonData.manageAlerts` prop does not contain a previously configured value.
+	DefaultDatasourceManageAlertsUIToggle bool
 
 	// IP range access control
 	IPRangeACEnabled     bool
@@ -399,20 +399,22 @@ type Cfg struct {
 	Quota QuotaSettings
 
 	// User settings
-	AllowUserSignUp            bool
-	AllowUserOrgCreate         bool
-	VerifyEmailEnabled         bool
-	LoginHint                  string
-	PasswordHint               string
-	DisableSignoutMenu         bool
-	ExternalUserMngLinkUrl     string
-	ExternalUserMngLinkName    string
-	ExternalUserMngInfo        string
-	AutoAssignOrg              bool
-	AutoAssignOrgId            int
-	AutoAssignOrgRole          string
-	LoginDefaultOrgId          int64
-	OAuthSkipOrgRoleUpdateSync bool
+	AllowUserSignUp                bool
+	AllowUserOrgCreate             bool
+	VerifyEmailEnabled             bool
+	LoginHint                      string
+	PasswordHint                   string
+	DisableSignoutMenu             bool
+	ExternalUserMngLinkUrl         string
+	ExternalUserMngLinkName        string
+	ExternalUserMngInfo            string
+	ExternalUserMngAnalytics       bool
+	ExternalUserMngAnalyticsParams string
+	AutoAssignOrg                  bool
+	AutoAssignOrgId                int
+	AutoAssignOrgRole              string
+	LoginDefaultOrgId              int64
+	OAuthSkipOrgRoleUpdateSync     bool
 
 	// ExpressionsEnabled specifies whether expressions are enabled.
 	ExpressionsEnabled bool
@@ -434,6 +436,9 @@ type Cfg struct {
 	// LiveAllowedOrigins is a set of origins accepted by Live. If not provided
 	// then Live uses AppURL as the only allowed origin.
 	LiveAllowedOrigins []string
+	// LiveMessageSizeLimit is the maximum size in bytes of Websocket messages
+	// from clients. Defaults to 64KB.
+	LiveMessageSizeLimit int
 
 	// Grafana.com URL, used for OAuth redirect.
 	GrafanaComURL string
@@ -475,15 +480,11 @@ type Cfg struct {
 
 	RBAC RBACSettings
 
-	Zanzana ZanzanaSettings
+	ZanzanaClient ZanzanaClientSettings
+	ZanzanaServer ZanzanaServerSettings
 
 	// GRPC Server.
-	GRPCServerNetwork        string
-	GRPCServerAddress        string
-	GRPCServerTLSConfig      *tls.Config
-	GRPCServerEnableLogging  bool // log request and response of each unary gRPC call
-	GRPCServerMaxRecvMsgSize int
-	GRPCServerMaxSendMsgSize int
+	GRPCServer GRPCServerSettings
 
 	CustomResponseHeaders map[string]string
 
@@ -514,6 +515,7 @@ type Cfg struct {
 	// Explore UI
 	ExploreEnabled           bool
 	ExploreDefaultTimeOffset string
+	ExploreHideLogsDownload  bool
 
 	// Help UI
 	HelpEnabled bool
@@ -532,21 +534,33 @@ type Cfg struct {
 	ShortLinkExpiration int
 
 	// Unified Storage
-	UnifiedStorage    map[string]UnifiedStorageConfig
-	IndexPath         string
-	IndexWorkers      int
-	IndexMaxBatchSize int
-	IndexListLimit    int
+	UnifiedStorage              map[string]UnifiedStorageConfig
+	IndexPath                   string
+	IndexWorkers                int
+	IndexMaxBatchSize           int
+	IndexFileThreshold          int
+	IndexMinCount               int
+	SprinklesApiServer          string
+	SprinklesApiServerPageLimit int
+	CACertPath                  string
+	HttpsSkipVerify             bool
 }
+
+const UnifiedStorageConfigKeyDashboard = "dashboards.dashboard.grafana.app"
 
 type UnifiedStorageConfig struct {
 	DualWriterMode                       rest.DualWriterMode
 	DualWriterPeriodicDataSyncJobEnabled bool
+	// DataSyncerInterval defines how often the data syncer should run for a resource on the grafana instance.
+	DataSyncerInterval time.Duration
+	// DataSyncerRecordsLimit defines how many records will be processed at max during a sync invocation.
+	DataSyncerRecordsLimit int
 }
 
 type InstallPlugin struct {
 	ID      string `json:"id"`
 	Version string `json:"version"`
+	URL     string `json:"url,omitempty"`
 }
 
 // AddChangePasswordLink returns if login form is disabled or not since
@@ -602,7 +616,14 @@ func RedactedValue(key, value string) string {
 		"VAULT_TOKEN",
 		"CLIENT_SECRET",
 		"ENTERPRISE_LICENSE",
-		"GF_ENTITY_API_DB_PASS",
+		"API_DB_PASS",
+		"ID_FORWARDING_TOKEN$",
+		"AUTHENTICATION_TOKEN$",
+		"AUTH_TOKEN$",
+		"RENDERER_TOKEN$",
+		"API_TOKEN$",
+		"WEBHOOK_TOKEN$",
+		"INSTALL_TOKEN$",
 	} {
 		if match, err := regexp.MatchString(pattern, uppercased); match && err == nil {
 			return RedactedPassword
@@ -1090,7 +1111,6 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.InstanceName = valueAsString(iniFile.Section(""), "instance_name", "unknown_instance_name")
 	plugins := valueAsString(iniFile.Section("paths"), "plugins", "")
 	cfg.PluginsPath = makeAbsolute(plugins, cfg.HomePath)
-	cfg.BundledPluginsPath = makeAbsolute("plugins-bundled", cfg.HomePath)
 	provisioning := valueAsString(iniFile.Section("paths"), "provisioning", "")
 	cfg.ProvisioningPath = makeAbsolute(provisioning, cfg.HomePath)
 
@@ -1119,6 +1139,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.DashboardVersionsToKeep = dashboards.Key("versions_to_keep").MustInt(20)
 	cfg.MinRefreshInterval = valueAsString(dashboards, "min_refresh_interval", "5s")
 	cfg.DefaultHomeDashboardPath = dashboards.Key("default_home_dashboard_path").MustString("")
+	cfg.DashboardPerformanceMetrics = util.SplitString(dashboards.Key("dashboard_performance_metrics").MustString(""))
 
 	if err := readUserSettings(iniFile, cfg); err != nil {
 		return err
@@ -1198,6 +1219,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	} else {
 		cfg.ExploreDefaultTimeOffset = exploreDefaultTimeOffset
 	}
+	cfg.ExploreHideLogsDownload = explore.Key("hide_logs_download").MustBool(false)
 
 	help := iniFile.Section("help")
 	cfg.HelpEnabled = help.Key("enabled").MustBool(true)
@@ -1248,6 +1270,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.readAuthExtJWTSettings()
 	cfg.readAuthProxySettings()
 	cfg.readSessionConfig()
+	cfg.readPasswordlessMagicLinkSettings()
 	if err := cfg.readSmtpSettings(); err != nil {
 		return err
 	}
@@ -1502,7 +1525,15 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 	security := iniFile.Section("security")
 	cfg.SecretKey = valueAsString(security, "secret_key", "")
 	cfg.DisableGravatar = security.Key("disable_gravatar").MustBool(true)
+
 	cfg.DisableBruteForceLoginProtection = security.Key("disable_brute_force_login_protection").MustBool(false)
+	cfg.BruteForceLoginProtectionMaxAttempts = security.Key("brute_force_login_protection_max_attempts").MustInt64(5)
+	cfg.DisableIPAddressLoginProtection = security.Key("disable_ip_address_login_protection").MustBool(true)
+
+	// Ensure at least one login attempt can be performed.
+	if cfg.BruteForceLoginProtectionMaxAttempts <= 0 {
+		cfg.BruteForceLoginProtectionMaxAttempts = 1
+	}
 
 	CookieSecure = security.Key("cookie_secure").MustBool(false)
 	cfg.CookieSecure = CookieSecure
@@ -1638,12 +1669,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	}
 
 	// anonymous access
-	anonSection := iniFile.Section("auth.anonymous")
-	cfg.AnonymousEnabled = anonSection.Key("enabled").MustBool(false)
-	cfg.AnonymousOrgName = valueAsString(anonSection, "org_name", "")
-	cfg.AnonymousOrgRole = valueAsString(anonSection, "org_role", "")
-	cfg.AnonymousHideVersion = anonSection.Key("hide_version").MustBool(false)
-	cfg.AnonymousDeviceLimit = anonSection.Key("device_limit").MustInt64(0)
+	cfg.readAnonymousSettings()
 
 	// basic auth
 	authBasic := iniFile.Section("auth.basic")
@@ -1700,6 +1726,8 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 	cfg.ExternalUserMngLinkUrl = valueAsString(users, "external_manage_link_url", "")
 	cfg.ExternalUserMngLinkName = valueAsString(users, "external_manage_link_name", "")
 	cfg.ExternalUserMngInfo = valueAsString(users, "external_manage_info", "")
+	cfg.ExternalUserMngAnalytics = users.Key("external_manage_analytics").MustBool(false)
+	cfg.ExternalUserMngAnalyticsParams = valueAsString(users, "external_manage_analytics_params", "")
 
 	cfg.ViewersCanEdit = users.Key("viewers_can_edit").MustBool(false)
 	cfg.EditorsCanAdmin = users.Key("editors_can_admin").MustBool(false)
@@ -1792,71 +1820,6 @@ func (cfg *Cfg) readAlertingSettings(iniFile *ini.File) error {
 	if err == nil && enabled {
 		cfg.Logger.Error("Option '[alerting].enabled' cannot be true. Legacy Alerting is removed. It is no longer deployed, enhanced, or supported. Delete '[alerting].enabled' and use '[unified_alerting].enabled' to enable Grafana Alerting. For more information, refer to the documentation on upgrading to Grafana Alerting (https://grafana.com/docs/grafana/v10.4/alerting/set-up/migrating-alerts)")
 		return fmt.Errorf("invalid setting [alerting].enabled")
-	}
-	return nil
-}
-
-func readGRPCServerSettings(cfg *Cfg, iniFile *ini.File) error {
-	server := iniFile.Section("grpc_server")
-	errPrefix := "grpc_server:"
-	useTLS := server.Key("use_tls").MustBool(false)
-	certFile := server.Key("cert_file").String()
-	keyFile := server.Key("cert_key").String()
-	if useTLS {
-		serverCert, err := tls.LoadX509KeyPair(certFile, keyFile)
-		if err != nil {
-			return fmt.Errorf("%s error loading X509 key pair: %w", errPrefix, err)
-		}
-		cfg.GRPCServerTLSConfig = &tls.Config{
-			Certificates: []tls.Certificate{serverCert},
-			ClientAuth:   tls.NoClientCert,
-		}
-	}
-
-	cfg.GRPCServerNetwork = valueAsString(server, "network", "tcp")
-	cfg.GRPCServerAddress = valueAsString(server, "address", "")
-	cfg.GRPCServerEnableLogging = server.Key("enable_logging").MustBool(false)
-	cfg.GRPCServerMaxRecvMsgSize = server.Key("max_recv_msg_size").MustInt(0)
-	cfg.GRPCServerMaxSendMsgSize = server.Key("max_send_msg_size").MustInt(0)
-	switch cfg.GRPCServerNetwork {
-	case "unix":
-		if cfg.GRPCServerAddress != "" {
-			// Explicitly provided path for unix domain socket.
-			if stat, err := os.Stat(cfg.GRPCServerAddress); os.IsNotExist(err) {
-				// File does not exist - nice, nothing to do.
-			} else if err != nil {
-				return fmt.Errorf("%s error getting stat for a file: %s", errPrefix, cfg.GRPCServerAddress)
-			} else {
-				if stat.Mode()&fs.ModeSocket == 0 {
-					return fmt.Errorf("%s file %s already exists and is not a unix domain socket", errPrefix, cfg.GRPCServerAddress)
-				}
-				// Unix domain socket file, should be safe to remove.
-				err := os.Remove(cfg.GRPCServerAddress)
-				if err != nil {
-					return fmt.Errorf("%s can't remove unix socket file: %s", errPrefix, cfg.GRPCServerAddress)
-				}
-			}
-		} else {
-			// Use temporary file path for a unix domain socket.
-			tf, err := os.CreateTemp("", "gf_grpc_server_api")
-			if err != nil {
-				return fmt.Errorf("%s error creating tmp file: %v", errPrefix, err)
-			}
-			unixPath := tf.Name()
-			if err := tf.Close(); err != nil {
-				return fmt.Errorf("%s error closing tmp file: %v", errPrefix, err)
-			}
-			if err := os.Remove(unixPath); err != nil {
-				return fmt.Errorf("%s error removing tmp file: %v", errPrefix, err)
-			}
-			cfg.GRPCServerAddress = unixPath
-		}
-	case "tcp":
-		if cfg.GRPCServerAddress == "" {
-			cfg.GRPCServerAddress = "127.0.0.1:10000"
-		}
-	default:
-		return fmt.Errorf("%s unsupported network %s", errPrefix, cfg.GRPCServerNetwork)
 	}
 	return nil
 }
@@ -1968,6 +1931,7 @@ func (cfg *Cfg) readDataSourcesSettings() {
 	datasources := cfg.Raw.Section("datasources")
 	cfg.DataSourceLimit = datasources.Key("datasource_limit").MustInt(5000)
 	cfg.ConcurrentQueryCount = datasources.Key("concurrent_query_count").MustInt(10)
+	cfg.DefaultDatasourceManageAlertsUIToggle = datasources.Key("default_manage_alerts_ui_toggle").MustBool(true)
 }
 
 func (cfg *Cfg) readDataSourceSecuritySettings() {
@@ -2014,6 +1978,10 @@ func (cfg *Cfg) readLiveSettings(iniFile *ini.File) error {
 	cfg.LiveMaxConnections = section.Key("max_connections").MustInt(100)
 	if cfg.LiveMaxConnections < -1 {
 		return fmt.Errorf("unexpected value %d for [live] max_connections", cfg.LiveMaxConnections)
+	}
+	cfg.LiveMessageSizeLimit = section.Key("message_size_limit").MustInt(65536)
+	if cfg.LiveMessageSizeLimit < -1 {
+		return fmt.Errorf("unexpected value %d for [live] message_size_limit", cfg.LiveMaxConnections)
 	}
 	cfg.LiveHAEngine = section.Key("ha_engine").MustString("")
 	switch cfg.LiveHAEngine {

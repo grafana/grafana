@@ -39,7 +39,7 @@ packages, then your configuration file is located at
 
 You can use environment variable interpolation in all three provisioning configuration types.
 The allowed syntax is either `$ENV_VAR_NAME` or `${ENV_VAR_NAME}`, and it can be used only for values, not for keys or larger parts
-of the configurations.
+of the configurations. If the environment variable value has a `$` (e.g. `Pa$sw0rd`), use the `$ENV_VAR_NAME` syntax to avoid double expansion.
 It's not available in the dashboard's definition files, just the dashboard provisioning
 configuration.
 
@@ -253,17 +253,17 @@ All of these settings are optional.
 The _HTTP\*_ tag denotes data sources that communicate using the HTTP protocol, including all core data source plugins except MySQL, PostgreSQL, and MS SQL.
 {{< /admonition >}}
 
-| Name              | Type   | Data source                        | Description                                              |
-| ----------------- | ------ | ---------------------------------- | -------------------------------------------------------- |
-| tlsCACert         | string | _HTTP\*_, MySQL, PostgreSQL        | CA cert for out going requests                           |
-| tlsClientCert     | string | _HTTP\*_, MySQL, PostgreSQL        | TLS Client cert for outgoing requests                    |
-| tlsClientKey      | string | _HTTP\*_, MySQL, PostgreSQL        | TLS Client key for outgoing requests                     |
-| password          | string | _HTTP\*_, MySQL, PostgreSQL, MSSQL | password                                                 |
-| basicAuthPassword | string | _HTTP\*_                           | password for basic authentication                        |
-| accessKey         | string | Cloudwatch                         | Access key for connecting to Cloudwatch                  |
-| secretKey         | string | Cloudwatch                         | Secret key for connecting to Cloudwatch                  |
-| sigV4AccessKey    | string | Elasticsearch and Prometheus       | SigV4 access key. Required when using keys auth provider |
-| sigV4SecretKey    | string | Elasticsearch and Prometheus       | SigV4 secret key. Required when using keys auth provider |
+| Name              | Type   | Data source                        | Description                                                                                                                                                      |
+| ----------------- | ------ | ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| tlsCACert         | string | _HTTP\*_, MySQL, PostgreSQL        | CA cert for out going requests. You can point directly to your stored cert by using an environment variable following the `$__file{path/to/ca}` format.          |
+| tlsClientCert     | string | _HTTP\*_, MySQL, PostgreSQL        | TLS Client cert for outgoing requests. You can point directly to your stored cert by using an environment variable following the `$__file{path/to/cert}` format. |
+| tlsClientKey      | string | _HTTP\*_, MySQL, PostgreSQL        | TLS Client key for outgoing requests. You can point directly to your stored key by using an environment variable following the `$__file{path/to/key}` format.    |
+| password          | string | _HTTP\*_, MySQL, PostgreSQL, MSSQL | password                                                                                                                                                         |
+| basicAuthPassword | string | _HTTP\*_                           | password for basic authentication                                                                                                                                |
+| accessKey         | string | Cloudwatch                         | Access key for connecting to Cloudwatch                                                                                                                          |
+| secretKey         | string | Cloudwatch                         | Secret key for connecting to Cloudwatch                                                                                                                          |
+| sigV4AccessKey    | string | Elasticsearch and Prometheus       | SigV4 access key. Required when using keys auth provider                                                                                                         |
+| sigV4SecretKey    | string | Elasticsearch and Prometheus       | SigV4 secret key. Required when using keys auth provider                                                                                                         |
 
 #### Custom HTTP headers for data sources
 
@@ -479,6 +479,7 @@ The following sections detail the supported settings and secure settings for eac
 | mentionGroups  |                |
 | mentionChannel |                |
 | token          | yes            |
+| color          |                |
 
 #### Alert notification `victorops`
 

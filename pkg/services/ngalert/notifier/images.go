@@ -11,6 +11,7 @@ import (
 	alertingImages "github.com/grafana/alerting/images"
 	alertingModels "github.com/grafana/alerting/models"
 	alertingNotify "github.com/grafana/alerting/notify"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -32,7 +33,7 @@ func (i imageProvider) GetImage(ctx context.Context, uri string) (*alertingImage
 	image, err := i.getImageFromURI(ctx, uri)
 	if err != nil {
 		if errors.Is(err, models.ErrImageNotFound) {
-			i.logger.Info("Image not found in database")
+			i.logger.Info("Image not found in database", "uri", uri)
 			return nil, alertingImages.ErrImageNotFound
 		}
 		return nil, err

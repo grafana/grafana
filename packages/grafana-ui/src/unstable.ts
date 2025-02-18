@@ -10,4 +10,3 @@
  */
 
 export * from './utils/skeleton';
-export * from './components/ScrollContainer/ScrollContainer';

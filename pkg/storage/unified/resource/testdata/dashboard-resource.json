@@ -8,9 +8,9 @@
         "creationTimestamp": "2024-10-30T18:30:54Z",
         "annotations": {
             "grafana.app/createdBy": "user:be2g71ke8yoe8b",
-            "grafana.app/originHash": "Grafana v9.2.0 (NA)",
-            "grafana.app/originName": "UI",
-            "grafana.app/originPath": "/dashboard/new"
+            "grafana.app/repoHash": "Grafana v9.2.0 (NA)",
+            "grafana.app/repoName": "UI",
+            "grafana.app/repoPath": "/dashboard/new"
         },
         "managedFields": [
             {
@@ -23,9 +23,9 @@
                     "f:metadata": {
                         "f:annotations": {
                             ".": {},
-                            "f:grafana.app/originHash": {},
-                            "f:grafana.app/originName": {},
-                            "f:grafana.app/originPath": {}
+                            "f:grafana.app/repoHash": {},
+                            "f:grafana.app/repoName": {},
+                            "f:grafana.app/repoPath": {}
                         },
                         "f:generateName": {}
                     },

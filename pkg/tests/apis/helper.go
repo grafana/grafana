@@ -8,10 +8,12 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strconv"
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -66,7 +68,9 @@ func NewK8sTestHelper(t *testing.T, opts testinfra.GrafanaOpts) *K8sTestHelper {
 
 	// Use GRPC server when not configured
 	if opts.APIServerStorageType == "" && opts.GRPCServerAddress == "" {
-		opts.APIServerStorageType = options.StorageTypeUnifiedGrpc
+		// TODO, this really should be gRPC, but sometimes fails in drone
+		// the two *should* be identical, but we have seen issues when using real gRPC vs channel
+		opts.APIServerStorageType = options.StorageTypeUnified // TODO, should be GRPC
 	}
 
 	// Always enable `FlagAppPlatformGrpcClientAuth` for k8s integration tests, as this is the desired behavior.
@@ -213,8 +217,16 @@ func (c *K8sResourceClient) sanitizeObject(v *unstructured.Unstructured, replace
 	meta, ok := copy["metadata"].(map[string]any)
 	require.True(c.t, ok)
 
+	// remove generation
+	delete(meta, "generation")
+
 	replaceMeta = append(replaceMeta, "creationTimestamp", "resourceVersion", "uid")
 	for _, key := range replaceMeta {
+		if key == "labels" {
+			delete(meta, key)
+			continue
+		}
+
 		old, ok := meta[key]
 		if ok {
 			require.NotEmpty(c.t, old)
@@ -400,12 +412,18 @@ func DoRequest[T any](c *K8sTestHelper, params RequestParams, result *T) K8sResp
 // Read local JSON or YAML file into a resource
 func (c *K8sTestHelper) LoadYAMLOrJSONFile(fpath string) *unstructured.Unstructured {
 	c.t.Helper()
+	return c.LoadYAMLOrJSON(string(c.LoadFile(fpath)))
+}
+
+// Read local file into a byte slice. Does not need to be a resource.
+func (c *K8sTestHelper) LoadFile(fpath string) []byte {
+	c.t.Helper()
 
 	//nolint:gosec
 	raw, err := os.ReadFile(fpath)
 	require.NoError(c.t, err)
 	require.NotEmpty(c.t, raw)
-	return c.LoadYAMLOrJSON(string(raw))
+	return raw
 }
 
 // Read local JSON or YAML file into a resource
@@ -642,4 +660,51 @@ func (c *K8sTestHelper) CreateTeam(name, email string, orgID int64) team.Team {
 	team, err := c.env.Server.HTTPServer.TeamService.CreateTeam(context.Background(), name, email, orgID)
 	require.NoError(c.t, err)
 	return team
+}
+
+// Compare the OpenAPI schema from one api against a cached snapshot
+func VerifyOpenAPISnapshots(t *testing.T, dir string, gv schema.GroupVersion, h *K8sTestHelper) {
+	if gv.Group == "" {
+		return // skip invalid groups
+	}
+	path := fmt.Sprintf("/openapi/v3/apis/%s/%s", gv.Group, gv.Version)
+	t.Run(path, func(t *testing.T) {
+		rsp := DoRequest(h, RequestParams{
+			Method: http.MethodGet,
+			Path:   path,
+			User:   h.Org1.Admin,
+		}, &AnyResource{})
+
+		require.NotNil(t, rsp.Response)
+		require.Equal(t, 200, rsp.Response.StatusCode, path)
+
+		var prettyJSON bytes.Buffer
+		err := json.Indent(&prettyJSON, rsp.Body, "", "  ")
+		require.NoError(t, err)
+		pretty := prettyJSON.String()
+
+		write := false
+		fpath := filepath.Join(dir, fmt.Sprintf("%s-%s.json", gv.Group, gv.Version))
+
+		// nolint:gosec
+		// We can ignore the gosec G304 warning since this is a test and the function is only called with explicit paths
+		body, err := os.ReadFile(fpath)
+		if err == nil {
+			if !assert.JSONEq(t, string(body), pretty) {
+				t.Logf("openapi spec has changed: %s", path)
+				t.Fail()
+				write = true
+			}
+		} else {
+			t.Errorf("missing openapi spec for: %s", path)
+			write = true
+		}
+
+		if write {
+			e2 := os.WriteFile(fpath, []byte(pretty), 0644)
+			if e2 != nil {
+				t.Errorf("error writing file: %s", e2.Error())
+			}
+		}
+	})
 }

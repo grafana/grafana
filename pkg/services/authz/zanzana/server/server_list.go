@@ -2,146 +2,222 @@ package server
 
 import (
 	"context"
-	"fmt"
+	"encoding/base64"
+	"errors"
+	"hash/fnv"
+	"io"
 	"strings"
 
+	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
-	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
-	authzextv1 "github.com/grafana/grafana/pkg/services/authz/zanzana/proto/v1"
 )
 
-func (s *Server) List(ctx context.Context, r *authzextv1.ListRequest) (*authzextv1.ListResponse, error) {
-	ctx, span := tracer.Start(ctx, "authzServer.List")
+func (s *Server) List(ctx context.Context, r *authzv1.ListRequest) (*authzv1.ListResponse, error) {
+	ctx, span := tracer.Start(ctx, "server.List")
 	defer span.End()
 
-	if info, ok := common.GetTypeInfo(r.GetGroup(), r.GetResource()); ok {
-		return s.listTyped(ctx, r, info)
+	if err := authorize(ctx, r.GetNamespace()); err != nil {
+		return nil, err
 	}
 
-	return s.listGeneric(ctx, r)
-}
+	store, err := s.getStoreInfo(ctx, r.GetNamespace())
+	if err != nil {
+		return nil, err
+	}
 
-func (s *Server) listTyped(ctx context.Context, r *authzextv1.ListRequest, info common.TypeInfo) (*authzextv1.ListResponse, error) {
-	storeInf, err := s.getNamespaceStore(ctx, r.Namespace)
+	contextuals, err := s.getContextuals(ctx, r.GetSubject())
 	if err != nil {
 		return nil, err
 	}
 
 	relation := common.VerbMapping[r.GetVerb()]
+	resource := common.NewResourceInfoFromList(r)
 
-	// 1. check if subject has access through namespace because then they can read all of them
-	res, err := s.openfga.Check(ctx, &openfgav1.CheckRequest{
-		StoreId:              storeInf.Id,
-		AuthorizationModelId: storeInf.AuthorizationModelId,
-		TupleKey: &openfgav1.CheckRequestTupleKey{
-			User:     r.GetSubject(),
-			Relation: relation,
-			Object:   common.NewNamespaceResourceIdent(r.GetGroup(), r.GetResource()),
-		},
-	})
+	res, err := s.checkGroupResource(ctx, r.GetSubject(), relation, resource, contextuals, store)
 	if err != nil {
 		return nil, err
 	}
 
 	if res.GetAllowed() {
-		return &authzextv1.ListResponse{All: true}, nil
+		return &authzv1.ListResponse{All: true}, nil
 	}
 
-	// 2. List all resources user has access too
-	listRes, err := s.openfga.ListObjects(ctx, &openfgav1.ListObjectsRequest{
-		StoreId:              storeInf.Id,
-		AuthorizationModelId: storeInf.AuthorizationModelId,
-		Type:                 info.Type,
+	if resource.IsGeneric() {
+		return s.listGeneric(ctx, r.GetSubject(), relation, resource, contextuals, store)
+	}
+
+	return s.listTyped(ctx, r.GetSubject(), relation, resource, contextuals, store)
+}
+
+func (s *Server) listTyped(ctx context.Context, subject, relation string, resource common.ResourceInfo, contextuals *openfgav1.ContextualTupleKeys, store *storeInfo) (*authzv1.ListResponse, error) {
+	if !resource.IsValidRelation(relation) {
+		return &authzv1.ListResponse{}, nil
+	}
+
+	// List all resources user has access too
+	res, err := s.listObjects(ctx, &openfgav1.ListObjectsRequest{
+		StoreId:              store.ID,
+		AuthorizationModelId: store.ModelID,
+		Type:                 resource.Type(),
 		Relation:             relation,
-		User:                 r.GetSubject(),
+		User:                 subject,
+		ContextualTuples:     contextuals,
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	return &authzextv1.ListResponse{
-		Items: typedObjects(info.Type, listRes.GetObjects()),
+	return &authzv1.ListResponse{
+		Items: typedObjects(resource.Type(), res.GetObjects()),
 	}, nil
 }
 
-func (s *Server) listGeneric(ctx context.Context, r *authzextv1.ListRequest) (*authzextv1.ListResponse, error) {
-	storeInf, err := s.getNamespaceStore(ctx, r.Namespace)
-	if err != nil {
-		return nil, err
+func (s *Server) listGeneric(ctx context.Context, subject, relation string, resource common.ResourceInfo, contextuals *openfgav1.ContextualTupleKeys, store *storeInfo) (*authzv1.ListResponse, error) {
+	var (
+		folderRelation = common.FolderResourceRelation(relation)
+		resourceCtx    = resource.Context()
+	)
+
+	// 1. List all folders subject has access to resource type in
+	var folders []string
+	if common.IsFolderResourceRelation(folderRelation) {
+		res, err := s.listObjects(ctx, &openfgav1.ListObjectsRequest{
+			StoreId:              store.ID,
+			AuthorizationModelId: store.ModelID,
+			Type:                 common.TypeFolder,
+			Relation:             folderRelation,
+			User:                 subject,
+			Context:              resourceCtx,
+			ContextualTuples:     contextuals,
+		})
+
+		if err != nil {
+			return nil, err
+		}
+
+		folders = res.GetObjects()
 	}
 
-	relation := common.VerbMapping[r.GetVerb()]
+	// 2. List all resource directly assigned to subject
+	var objects []string
+	if resource.IsValidRelation(relation) {
+		res, err := s.listObjects(ctx, &openfgav1.ListObjectsRequest{
+			StoreId:              store.ID,
+			AuthorizationModelId: store.ModelID,
+			Type:                 common.TypeResource,
+			Relation:             relation,
+			User:                 subject,
+			Context:              resourceCtx,
+			ContextualTuples:     contextuals,
+		})
+		if err != nil {
+			return nil, err
+		}
 
-	// 1. check if subject has access through namespace because then they can read all of them
-	res, err := s.openfga.Check(ctx, &openfgav1.CheckRequest{
-		StoreId:              storeInf.Id,
-		AuthorizationModelId: storeInf.AuthorizationModelId,
-		TupleKey: &openfgav1.CheckRequestTupleKey{
-			User:     r.GetSubject(),
-			Relation: relation,
-			Object:   common.NewNamespaceResourceIdent(r.GetGroup(), r.GetResource()),
-		},
-	})
-	if err != nil {
-		return nil, err
+		objects = res.GetObjects()
 	}
 
-	if res.Allowed {
-		return &authzextv1.ListResponse{All: true}, nil
-	}
-
-	// 2. List all folders subject has access to resource type in
-	folders, err := s.openfga.ListObjects(ctx, &openfgav1.ListObjectsRequest{
-		StoreId:              storeInf.Id,
-		AuthorizationModelId: storeInf.AuthorizationModelId,
-		Type:                 common.TypeFolder,
-		Relation:             common.FolderResourceRelation(relation),
-		User:                 r.GetSubject(),
-		Context: &structpb.Struct{
-			Fields: map[string]*structpb.Value{
-				"requested_group": structpb.NewStringValue(common.FormatGroupResource(r.GetGroup(), r.GetResource())),
-			},
-		},
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	// 3. List all resource directly assigned to subject
-	direct, err := s.openfga.ListObjects(ctx, &openfgav1.ListObjectsRequest{
-		StoreId:              storeInf.Id,
-		AuthorizationModelId: storeInf.AuthorizationModelId,
-		Type:                 common.TypeResource,
-		Relation:             relation,
-		User:                 r.GetSubject(),
-		Context: &structpb.Struct{
-			Fields: map[string]*structpb.Value{
-				"requested_group": structpb.NewStringValue(common.FormatGroupResource(r.GetGroup(), r.GetResource())),
-			},
-		},
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return &authzextv1.ListResponse{
-		Folders: folderObject(folders.GetObjects()),
-		Items:   directObjects(r.GetGroup(), r.GetResource(), direct.GetObjects()),
+	return &authzv1.ListResponse{
+		Folders: folderObject(folders),
+		Items:   genericObjects(resource.GroupResource(), objects),
 	}, nil
+}
+
+func (s *Server) listObjects(ctx context.Context, req *openfgav1.ListObjectsRequest) (*openfgav1.ListObjectsResponse, error) {
+	fn := s.openfga.ListObjects
+	if s.cfg.UseStreamedListObjects {
+		fn = s.streamedListObjects
+	}
+
+	if s.cfg.CheckQueryCache {
+		return s.listObjectCached(ctx, req, fn)
+	}
+
+	return fn(ctx, req)
+}
+
+type listFn func(ctx context.Context, req *openfgav1.ListObjectsRequest) (*openfgav1.ListObjectsResponse, error)
+
+func (s *Server) listObjectCached(ctx context.Context, req *openfgav1.ListObjectsRequest, fn listFn) (*openfgav1.ListObjectsResponse, error) {
+	ctx, span := tracer.Start(ctx, "server.listObjectCached")
+	defer span.End()
+
+	key, err := getRequestHash(req)
+	if err != nil {
+		return nil, err
+	}
+
+	if res, ok := s.cache.Get(key); ok {
+		return res.(*openfgav1.ListObjectsResponse), nil
+	}
+
+	res, err := fn(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	s.cache.Set(key, res, 0)
+	return res, nil
+}
+
+func (s *Server) streamedListObjects(ctx context.Context, req *openfgav1.ListObjectsRequest) (*openfgav1.ListObjectsResponse, error) {
+	ctx, span := tracer.Start(ctx, "server.streamedListObjects")
+	defer span.End()
+
+	r := &openfgav1.StreamedListObjectsRequest{
+		StoreId:              req.GetStoreId(),
+		AuthorizationModelId: req.GetAuthorizationModelId(),
+		Type:                 req.GetType(),
+		Relation:             req.GetRelation(),
+		User:                 req.GetUser(),
+		Context:              req.GetContext(),
+		ContextualTuples:     req.ContextualTuples,
+	}
+
+	stream, err := s.openfgaClient.StreamedListObjects(ctx, r)
+	if err != nil {
+		return nil, err
+	}
+
+	var objects []string
+	for {
+		res, err := stream.Recv()
+		if err != nil {
+			if errors.Is(err, io.EOF) {
+				break
+			}
+			return nil, err
+		}
+		objects = append(objects, res.GetObject())
+	}
+
+	return &openfgav1.ListObjectsResponse{
+		Objects: objects,
+	}, nil
+}
+
+func getRequestHash(req *openfgav1.ListObjectsRequest) (string, error) {
+	hash := fnv.New64a()
+	_, err := hash.Write([]byte(req.String()))
+	if err != nil {
+		return "", err
+	}
+
+	return base64.StdEncoding.EncodeToString(hash.Sum(nil)), nil
 }
 
 func typedObjects(typ string, objects []string) []string {
-	prefix := fmt.Sprintf("%s:", typ)
+	prefix := typ + ":"
 	for i := range objects {
 		objects[i] = strings.TrimPrefix(objects[i], prefix)
 	}
 	return objects
 }
 
-func directObjects(group, resource string, objects []string) []string {
-	prefix := fmt.Sprintf("%s:%s/%s/", resourceType, group, resource)
+func genericObjects(gr string, objects []string) []string {
+	prefix := common.TypeResourcePrefix + gr + "/"
 	for i := range objects {
 		objects[i] = strings.TrimPrefix(objects[i], prefix)
 	}
@@ -150,7 +226,7 @@ func directObjects(group, resource string, objects []string) []string {
 
 func folderObject(objects []string) []string {
 	for i := range objects {
-		objects[i] = strings.TrimPrefix(objects[i], folderTypePrefix)
+		objects[i] = strings.TrimPrefix(objects[i], common.TypeFolderPrefix)
 	}
 	return objects
 }

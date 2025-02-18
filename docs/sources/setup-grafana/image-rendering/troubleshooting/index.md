@@ -49,7 +49,7 @@ are not installed in your system:
 
 ```bash
 cd <grafana-image-render plugin directory>
-ldd chrome-linux/chrome
+ldd chrome-headless-shell/linux-132.0.6781.0/chrome-headless-shell-linux64/chrome-headless-shell
       linux-vdso.so.1 (0x00007fff1bf65000)
       libdl.so.2 => /lib/x86_64-linux-gnu/libdl.so.2 (0x00007f2047945000)
       libpthread.so.0 => /lib/x86_64-linux-gnu/libpthread.so.0 (0x00007f2047924000)

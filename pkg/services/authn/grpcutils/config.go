@@ -1,47 +1,31 @@
 package grpcutils
 
 import (
-	"fmt"
+	"github.com/spf13/pflag"
 
 	"github.com/grafana/grafana/pkg/setting"
-)
-
-type Mode string
-
-func (s Mode) IsValid() bool {
-	switch s {
-	case ModeOnPrem, ModeCloud:
-		return true
-	}
-	return false
-}
-
-const (
-	ModeOnPrem Mode = "on-prem"
-	ModeCloud  Mode = "cloud"
 )
 
 type GrpcServerConfig struct {
 	SigningKeysURL   string
 	AllowedAudiences []string
-	Mode             Mode
 	LegacyFallback   bool
+	AllowInsecure    bool
 }
 
-func ReadGrpcServerConfig(cfg *setting.Cfg) (*GrpcServerConfig, error) {
-	section := cfg.SectionWithEnvOverrides("grpc_server_authentication")
+func (c *GrpcServerConfig) AddFlags(fs *pflag.FlagSet) {
+	fs.StringVar(&c.SigningKeysURL, "grpc-server-authentication.signing-keys-url", "", "gRPC server authentication signing keys URL")
+}
 
-	mode := Mode(section.Key("mode").MustString(string(ModeOnPrem)))
-	if !mode.IsValid() {
-		return nil, fmt.Errorf("grpc_server_authentication: invalid mode %q", mode)
-	}
+func ReadGrpcServerConfig(cfg *setting.Cfg) *GrpcServerConfig {
+	section := cfg.SectionWithEnvOverrides("grpc_server_authentication")
 
 	return &GrpcServerConfig{
 		SigningKeysURL:   section.Key("signing_keys_url").MustString(""),
 		AllowedAudiences: section.Key("allowed_audiences").Strings(","),
-		Mode:             mode,
 		LegacyFallback:   section.Key("legacy_fallback").MustBool(true),
-	}, nil
+		AllowInsecure:    cfg.Env == setting.Dev,
+	}
 }
 
 type GrpcClientConfig struct {

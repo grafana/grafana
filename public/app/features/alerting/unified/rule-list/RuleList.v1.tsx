@@ -4,8 +4,9 @@ import { useAsyncFn, useInterval } from 'react-use';
 
 import { urlUtil } from '@grafana/data';
 import { logInfo } from '@grafana/runtime';
-import { Button, LinkButton, Stack, withErrorBoundary } from '@grafana/ui';
+import { Button, LinkButton, Stack } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
+import { Trans } from 'app/core/internationalization';
 import { useDispatch } from 'app/types';
 import { CombinedRuleNamespace } from 'app/types/unified-alerting';
 
@@ -25,7 +26,8 @@ import { useFilteredRules, useRulesFilter } from '../hooks/useFilteredRules';
 import { useUnifiedAlertingSelector } from '../hooks/useUnifiedAlertingSelector';
 import { fetchAllPromAndRulerRulesAction, fetchAllPromRulesAction, fetchRulerRulesAction } from '../state/actions';
 import { RULE_LIST_POLL_INTERVAL_MS } from '../utils/constants';
-import { getAllRulesSourceNames, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME, getAllRulesSourceNames } from '../utils/datasource';
+import { createRelativeUrl } from '../utils/url';
 
 const VIEWS = {
   groups: RuleListGroupView,
@@ -49,8 +51,9 @@ const RuleListV1 = () => {
 
   const hasActiveLabelsFilter = filterState.labels.length > 0;
 
-  const queryParamView = queryParams.view as keyof typeof VIEWS;
-  const view = VIEWS[queryParamView] ? queryParamView : 'groups';
+  const queryParamView = queryParams.view;
+  const viewType = queryParamView === 'state' || queryParamView === 'groups' ? queryParamView : 'groups';
+  const view = VIEWS[viewType] ? viewType : 'groups';
 
   const ViewComponent = VIEWS[view];
 
@@ -117,7 +120,17 @@ const RuleListV1 = () => {
   return (
     // We don't want to show the Loading... indicator for the whole page.
     // We show separate indicators for Grafana-managed and Cloud rules
-    <AlertingPageWrapper navId="alert-list" isLoading={false} actions={hasAlertRulesCreated && <CreateAlertButton />}>
+    <AlertingPageWrapper
+      navId="alert-list"
+      isLoading={false}
+      actions={
+        hasAlertRulesCreated && (
+          <Stack gap={1}>
+            <CreateAlertButton /> <ExportNewRuleButton />
+          </Stack>
+        )
+      }
+    >
       <Stack direction="column">
         <RuleListErrors />
         <RulesFilter onClear={onFilterCleared} />
@@ -142,7 +155,7 @@ const RuleListV1 = () => {
   );
 };
 
-export default withErrorBoundary(RuleListV1, { style: 'page' });
+export default RuleListV1;
 
 export function CreateAlertButton() {
   const [createRuleSupported, createRuleAllowed] = useAlertingAbility(AlertingAction.CreateAlertRule);
@@ -161,9 +174,27 @@ export function CreateAlertButton() {
         icon="plus"
         onClick={() => logInfo(LogMessages.alertRuleFromScratch)}
       >
-        New alert rule
+        <Trans i18nKey="alerting.rule-list.new-alert-rule">New alert rule</Trans>
       </LinkButton>
     );
   }
   return null;
+}
+
+function ExportNewRuleButton() {
+  const returnTo = location.pathname + location.search;
+  const url = createRelativeUrl(`/alerting/export-new-rule`, {
+    returnTo,
+  });
+  return (
+    <LinkButton
+      href={url}
+      icon="download-alt"
+      variant="secondary"
+      tooltip="Export new grafana rule"
+      onClick={() => logInfo(LogMessages.exportNewGrafanaRule)}
+    >
+      <Trans i18nKey="alerting.list-view.section.grafanaManaged.export-new-rule">Export rule definition</Trans>
+    </LinkButton>
+  );
 }

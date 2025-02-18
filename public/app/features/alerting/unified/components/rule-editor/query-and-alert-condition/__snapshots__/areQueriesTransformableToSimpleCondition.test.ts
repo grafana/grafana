@@ -1,13 +1,10 @@
-// QueryAndExpressionsStep.test.tsx
-
 import { produce } from 'immer';
 
 import { EvalFunction } from 'app/features/alerting/state/alertDef';
 import { dataQuery, reduceExpression, thresholdExpression } from 'app/features/alerting/unified/mocks';
+import { areQueriesTransformableToSimpleCondition } from 'app/features/alerting/unified/rule-editor/formProcessing';
 import { ExpressionQuery, ReducerMode } from 'app/features/expressions/types';
 import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
-
-import { areQueriesTransformableToSimpleCondition } from '../QueryAndExpressionsStep';
 
 const expressionQueries: Array<AlertQuery<ExpressionQuery>> = [reduceExpression, thresholdExpression];
 
@@ -24,7 +21,7 @@ describe('areQueriesTransformableToSimpleCondition', () => {
     expect(result).toBe(false);
   });
 
-  it('should return false if the dataQuery refId does not match SIMPLE_CONDITION_QUERY_ID', () => {
+  it('should return false if the dataQuery refId does not match SimpleConditionIdentifier.queryId', () => {
     const dataQueries: Array<AlertQuery<AlertDataQuery | ExpressionQuery>> = [
       { refId: 'notSimpleCondition', datasourceUid: 'abc123', queryType: '', model: { refId: 'notSimpleCondition' } },
     ];

@@ -287,6 +287,46 @@ policies:
             - weekends
 ```
 
+### Notification template groups
+
+Template groups enable you to define multiple notification templates (`{{ define "" }}`) within a single group. They can be managed from the Grafana Alerting UI.
+
+| Method | URI                                  | Name                                            | Summary                                         |
+| ------ | ------------------------------------ | ----------------------------------------------- | ----------------------------------------------- |
+| DELETE | /api/v1/provisioning/templates/:name | [route delete template](#route-delete-template) | Delete a notification template group.           |
+| GET    | /api/v1/provisioning/templates/:name | [route get template](#route-get-template)       | Get a notification template group.              |
+| GET    | /api/v1/provisioning/templates       | [route get template](#route-get-templates)      | Get all notification template groups.           |
+| PUT    | /api/v1/provisioning/templates/:name | [route put template](#route-put-template)       | Create or update a notification template group. |
+
+**Example Request for all notification template groups:**
+
+```http
+GET /api/v1/provisioning/templates
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```
+
+**Example Response:**
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+[
+  {
+    "name": "custom_email.message",
+    "template": "{{ define \"custom_email.message\" }}\n  Custom alert!\n{{ end }}",
+    "provenance": "file"
+  },
+  {
+    "name": "custom_email.subject",
+    "template": "{{ define \"custom_email.subject\" }}\n{{ len .Alerts.Firing }} firing alert(s), {{ len .Alerts.Resolved }} resolved alert(s)\n{{ end }}",
+    "provenance": "file"
+  }
+]
+```
+
 ### Mute timings
 
 | Method | URI                                            | Name                                                            | Summary                                              |
@@ -331,44 +371,6 @@ Content-Type: application/json
 ]
 ```
 
-### Templates
-
-| Method | URI                                  | Name                                            | Summary                                   |
-| ------ | ------------------------------------ | ----------------------------------------------- | ----------------------------------------- |
-| DELETE | /api/v1/provisioning/templates/:name | [route delete template](#route-delete-template) | Delete a template.                        |
-| GET    | /api/v1/provisioning/templates/:name | [route get template](#route-get-template)       | Get a notification template.              |
-| GET    | /api/v1/provisioning/templates       | [route get templates](#route-get-templates)     | Get all notification templates.           |
-| PUT    | /api/v1/provisioning/templates/:name | [route put template](#route-put-template)       | Create or update a notification template. |
-
-**Example Request for all notification templates:**
-
-```http
-GET /api/v1/provisioning/templates
-Accept: application/json
-Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
-```
-
-**Example Response:**
-
-```http
-HTTP/1.1 200 OK
-Content-Type: application/json
-
-[
-  {
-    "name": "custom_email.message",
-    "template": "{{ define \"custom_email.message\" }}\n  Custom alert!\n{{ end }}",
-    "provenance": "file"
-  },
-  {
-    "name": "custom_email.subject",
-    "template": "{{ define \"custom_email.subject\" }}\n{{ len .Alerts.Firing }} firing alert(s), {{ len .Alerts.Resolved }} resolved alert(s)\n{{ end }}",
-    "provenance": "file"
-  }
-]
-```
-
 ### Edit resources in the Grafana UI
 
 By default, you cannot edit API-provisioned alerting resources in Grafana. To enable editing these resources in the Grafana UI, add the `X-Disable-Provenance` header to the following requests in the API:
@@ -384,7 +386,7 @@ To reset the notification policy tree to the default and unlock it for editing i
 
 ## Data source-managed resources
 
-The Alerting Provisioning HTTP API can only be used to manage Grafana-managed alert resources. To manage resources related to [data source-managed alerts](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-mimir-loki-managed-rule/), consider the following tools:
+The Alerting Provisioning HTTP API can only be used to manage Grafana-managed alert resources. To manage resources related to [data source-managed alerts](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-data-source-managed-rule/), consider the following tools:
 
 - [mimirtool](https://grafana.com/docs/mimir/<GRAFANA_VERSION>/manage/tools/mimirtool/): to interact with the Mimir alertmanager and ruler configuration.
 - [cortex-tools](https://github.com/grafana/cortex-tools#cortextool): to interact with the Cortex alertmanager and ruler configuration.
@@ -489,7 +491,7 @@ Status: Conflict
 
 [GenericPublicError](#generic-public-error)
 
-### <span id="route-delete-template"></span> Delete a template. (_RouteDeleteTemplate_)
+### <span id="route-delete-template"></span> Delete a notification template group. (_RouteDeleteTemplate_)
 
 ```
 DELETE /api/v1/provisioning/templates/:name
@@ -499,7 +501,7 @@ DELETE /api/v1/provisioning/templates/:name
 
 | Name    | Source  | Type   | Go type  | Separator | Required | Default | Description                                                                                                   |
 | ------- | ------- | ------ | -------- | --------- | :------: | ------- | ------------------------------------------------------------------------------------------------------------- |
-| name    | `path`  | string | `string` |           |    ✓     |         | Template Name                                                                                                 |
+| name    | `path`  | string | `string` |           |    ✓     |         | Name of the template group                                                                                    |
 | version | `query` | string | `string` |           |          |         | Current version of the resource. Used for optimistic concurrency validation. Keep empty to bypass validation. |
 
 #### All responses
@@ -1047,7 +1049,7 @@ Status: Not Found
 
 [NotFound](#not-found)
 
-### <span id="route-get-template"></span> Get a notification template. (_RouteGetTemplate_)
+### <span id="route-get-template"></span> Get a notification template group. (_RouteGetTemplate_)
 
 ```
 GET /api/v1/provisioning/templates/:name
@@ -1055,9 +1057,9 @@ GET /api/v1/provisioning/templates/:name
 
 #### Parameters
 
-| Name | Source | Type   | Go type  | Separator | Required | Default | Description   |
-| ---- | ------ | ------ | -------- | --------- | :------: | ------- | ------------- |
-| name | `path` | string | `string` |           |    ✓     |         | Template Name |
+| Name | Source | Type   | Go type  | Separator | Required | Default | Description                |
+| ---- | ------ | ------ | -------- | --------- | :------: | ------- | -------------------------- |
+| name | `path` | string | `string` |           |    ✓     |         | Name of the template group |
 
 #### All responses
 
@@ -1082,7 +1084,7 @@ Status: OK
 
 ###### <span id="route-get-template-404-schema"></span> Schema
 
-### <span id="route-get-templates"></span> Get all notification templates. (_RouteGetTemplates_)
+### <span id="route-get-templates"></span> Get all notification template groups. (_RouteGetTemplates_)
 
 ```
 GET /api/v1/provisioning/templates
@@ -1456,7 +1458,7 @@ Status: Bad Request
 
 [ValidationError](#validation-error)
 
-### <span id="route-put-template"></span> Create or update a notification template. (_RoutePutTemplate_)
+### <span id="route-put-template"></span> Create or update a notification template group. (_RoutePutTemplate_)
 
 ```
 PUT /api/v1/provisioning/templates/:name
@@ -1468,7 +1470,7 @@ PUT /api/v1/provisioning/templates/:name
 
 | Name                       | Source   | Type                                                          | Go type                              | Separator | Required | Default | Description                                               |
 | -------------------------- | -------- | ------------------------------------------------------------- | ------------------------------------ | --------- | :------: | ------- | --------------------------------------------------------- |
-| name                       | `path`   | string                                                        | `string`                             |           |    ✓     |         | Template Name                                             |
+| name                       | `path`   | string                                                        | `string`                             |           |    ✓     |         | Name of the template group                                |
 | X-Disable-Provenance: true | `header` | string                                                        | `string`                             |           |          |         | Allows editing of provisioned resources in the Grafana UI |
 | Body                       | `body`   | [NotificationTemplateContent](#notification-template-content) | `models.NotificationTemplateContent` |           |          |         |                                                           |
 

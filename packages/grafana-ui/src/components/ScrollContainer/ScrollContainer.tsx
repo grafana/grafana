@@ -9,7 +9,7 @@ import { Box, BoxProps } from '../Layout/Box/Box';
 
 import { ScrollIndicators } from './ScrollIndicators';
 
-interface Props extends Omit<BoxProps, 'display' | 'direction' | 'flex' | 'position'> {
+interface Props extends Omit<BoxProps, 'display' | 'direction' | 'element' | 'flex' | 'position'> {
   showScrollIndicators?: boolean;
   onScroll?: UIEventHandler<HTMLDivElement>;
   overflowX?: Property.OverflowX;
@@ -34,6 +34,7 @@ export const ScrollContainer = forwardRef<HTMLDivElement, PropsWithChildren<Prop
     const defaults: Partial<BoxProps> = {
       maxHeight: '100%',
       minHeight: 0,
+      minWidth: 0,
     };
     const boxProps = { ...defaults, ...rest };
 

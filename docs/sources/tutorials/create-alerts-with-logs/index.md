@@ -82,7 +82,7 @@ To demonstrate the observation of data using the Grafana stack, download and run
 1. Download and save a Docker compose file to run Grafana, Loki and Promtail.
 
    ```bash
-   wget https://raw.githubusercontent.com/grafana/loki/v2.8.0/production/docker-compose.yaml -O docker-compose.yaml
+   wget https://raw.githubusercontent.com/grafana/loki/refs/heads/main/production/docker-compose.yaml -O docker-compose.yaml
    ```
 
 2. Run the Grafana stack.
@@ -234,7 +234,7 @@ In this section, we use the default options for Grafana-managed alert rule creat
 
    It should return alert instances from log lines with a status code that is not 200 (OK), and that has met the alert condition. The condition for the alert rule to fire is any occurrence that goes over the threshold of `0`. Since the Loki query has returned more than zero alert instances, the alert rule is `Firing`.
 
-   {{< figure src="/media/docs/alerting/expression-loki-alert.png" max-width="1200px" caption="Preview of a firing alert instances" >}}
+   {{< figure src="/media/docs/alerting/firing-loki-alert-rule.png" max-width="1200px" caption="Preview of a firing alert instances" >}}
 
 ### Set evaluation behavior
 

@@ -12,8 +12,6 @@
         "annotation": "test-annotation"
       },
       "grafana_alert": {
-        "id": 3,
-        "orgId": 1,
         "title": "Rule3",
         "condition": "A",
         "data": [
@@ -44,7 +42,8 @@
         "is_paused": false,
         "metadata": {
           "editor_settings": {
-            "simplified_query_and_expressions_section": false
+            "simplified_query_and_expressions_section": false,
+            "simplified_notifications_section": false
           }
         }
       }

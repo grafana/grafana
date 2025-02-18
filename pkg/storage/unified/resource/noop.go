@@ -5,9 +5,8 @@ import (
 )
 
 var (
-	_ DiagnosticsServer   = (*noopService)(nil)
-	_ ResourceIndexServer = (*noopService)(nil)
-	_ LifecycleHooks      = (*noopService)(nil)
+	_ DiagnosticsServer = (*noopService)(nil)
+	_ LifecycleHooks    = (*noopService)(nil)
 )
 
 // noopService is a helper implementation to simplify tests
@@ -32,17 +31,5 @@ func (n *noopService) IsHealthy(context.Context, *HealthCheckRequest) (*HealthCh
 }
 
 func (n *noopService) Read(context.Context, *ReadRequest) (*ReadResponse, error) {
-	return nil, ErrNotImplementedYet
-}
-
-func (n *noopService) Search(context.Context, *SearchRequest) (*SearchResponse, error) {
-	return nil, ErrNotImplementedYet
-}
-
-func (n *noopService) History(context.Context, *HistoryRequest) (*HistoryResponse, error) {
-	return nil, ErrNotImplementedYet
-}
-
-func (n *noopService) Origin(context.Context, *OriginRequest) (*OriginResponse, error) {
 	return nil, ErrNotImplementedYet
 }

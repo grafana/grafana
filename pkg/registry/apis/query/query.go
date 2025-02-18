@@ -125,7 +125,7 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 			var refError ErrorWithRefID
 			statusCode := http.StatusBadRequest
 			message := err
-			refID := ""
+			refID := "A"
 
 			if errors.Is(err, datasources.ErrDataSourceNotFound) {
 				statusCode = http.StatusNotFound
@@ -147,6 +147,8 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 				},
 			}
 
+			b.log.Error("Error parsing query", "refId", refID, "message", message)
+
 			responder.Object(statusCode, qdr)
 			return
 		}
@@ -158,6 +160,7 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 		// Actually run the query
 		rsp, err := b.execute(ctx, req)
 		if err != nil {
+			b.log.Error("hit unexpected error while executing query, this will show as an unhandled k8s status error", "err", err)
 			responder.Error(err)
 			return
 		}
@@ -183,6 +186,11 @@ func (b *QueryAPIBuilder) execute(ctx context.Context, req parsedRequestInfo) (q
 	default:
 		b.log.Debug("executing concurrent queries")
 		qdr, err = b.executeConcurrentQueries(ctx, req.Requests)
+	}
+
+	if err != nil {
+		b.log.Debug("error in query phase, skipping expressions", "error", err)
+		return qdr, err //return early here to prevent expressions from being executed if we got an error during the query phase
 	}
 
 	if len(req.Expressions) > 0 {
@@ -230,10 +238,12 @@ func (b *QueryAPIBuilder) handleQuerySingleDatasource(ctx context.Context, req d
 		req.Headers,
 	)
 	if err != nil {
-		return nil, err
+		b.log.Debug("error getting single datasource client", "error", err, "reqUid", req.UID)
+		qdr := buildErrorResponse(err, req)
+		return qdr, err
 	}
 
-	code, rsp, err := client.QueryData(ctx, *req.Request)
+	rsp, err := client.QueryData(ctx, *req.Request)
 	if err == nil && rsp != nil {
 		for _, q := range req.Request.Queries {
 			if q.ResultAssertions != nil {
@@ -250,16 +260,6 @@ func (b *QueryAPIBuilder) handleQuerySingleDatasource(ctx context.Context, req d
 		}
 	}
 
-	// Create a response object with the error when missing (happens for client errors like 404)
-	if rsp == nil && err != nil {
-		rsp = &backend.QueryDataResponse{Responses: make(backend.Responses)}
-		for _, q := range req.Request.Queries {
-			rsp.Responses[q.RefID] = backend.DataResponse{
-				Status: backend.Status(code),
-				Error:  err,
-			}
-		}
-	}
 	return rsp, err
 }
 
@@ -369,8 +369,7 @@ func (b *QueryAPIBuilder) handleExpressions(ctx context.Context, req parsedReque
 			if !ok {
 				dr, ok := qdr.Responses[refId]
 				if ok {
-					allowLongFrames := false // TODO -- depends on input type and only if SQL?
-					_, res, err := b.converter.Convert(ctx, req.RefIDTypes[refId], dr.Frames, allowLongFrames)
+					_, res, err := b.converter.Convert(ctx, req.RefIDTypes[refId], dr.Frames)
 					if err != nil {
 						expressionsLogger.Error("error converting frames for expressions", "error", err)
 						res.Error = err
@@ -410,13 +409,12 @@ func (b *QueryAPIBuilder) convertQueryWithoutExpression(ctx context.Context, req
 	if qdr == nil {
 		return nil, errors.New("queryDataResponse is nil")
 	}
-	allowLongFrames := false
 	refID := req.Request.Queries[0].RefID
 	if _, exist := qdr.Responses[refID]; !exist {
 		return nil, fmt.Errorf("refID '%s' does not exist", refID)
 	}
 	frames := qdr.Responses[refID].Frames
-	_, results, err := b.converter.Convert(ctx, req.PluginId, frames, allowLongFrames)
+	_, results, err := b.converter.Convert(ctx, req.PluginId, frames)
 	if err != nil {
 		results.Error = err
 	}

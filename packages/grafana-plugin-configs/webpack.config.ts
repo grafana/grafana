@@ -5,6 +5,7 @@ import path from 'path';
 // @ts-expect-error - there are no types for this package
 import ReplaceInFileWebpackPlugin from 'replace-in-file-webpack-plugin';
 import { Configuration } from 'webpack';
+import { BundleAnalyzerPlugin } from 'webpack-bundle-analyzer';
 
 import { DIST_DIR } from './constants';
 import { getPackageJson, getPluginJson, getEntries, hasLicense } from './utils';
@@ -62,6 +63,7 @@ const config = async (env: Record<string, unknown>): Promise<Configuration> => {
       'react-redux',
       'redux',
       'rxjs',
+      'rxjs/operators',
       'react-router',
       'd3',
       'angular',
@@ -212,6 +214,7 @@ const config = async (env: Record<string, unknown>): Promise<Configuration> => {
                 path.basename(process.cwd()),
                 '.eslintcache'
               ),
+              configType: 'flat',
             }),
           ]
         : []),
@@ -228,6 +231,11 @@ const config = async (env: Record<string, unknown>): Promise<Configuration> => {
       ignored: ['**/node_modules', '**/dist', '**/.yarn'],
     },
   };
+
+  if (env.stats) {
+    baseConfig.stats = 'normal';
+    baseConfig.plugins?.push(new BundleAnalyzerPlugin());
+  }
 
   return baseConfig;
 };

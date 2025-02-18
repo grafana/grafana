@@ -3,6 +3,7 @@ package scope
 import (
 	"fmt"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
@@ -11,8 +12,6 @@ import (
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
-
-	"github.com/prometheus/client_golang/prometheus"
 
 	scope "github.com/grafana/grafana/pkg/apis/scope/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -29,7 +28,9 @@ func NewScopeAPIBuilder() *ScopeAPIBuilder {
 }
 
 func RegisterAPIService(features featuremgmt.FeatureToggles, apiregistration builder.APIRegistrar, reg prometheus.Registerer) *ScopeAPIBuilder {
-	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
+	if !featuremgmt.AnyEnabled(features,
+		featuremgmt.FlagScopeApi,
+		featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		return nil // skip registration unless opting into experimental apis
 	}
 	builder := NewScopeAPIBuilder()
@@ -156,11 +157,6 @@ func (b *ScopeAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
 	return scope.GetOpenAPIDefinitions
 }
 
-// Register additional routes with the server
-func (b *ScopeAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
-	return nil
-}
-
 func (b *ScopeAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
 	// The plugin description
 	oas.Info.Description = "Grafana scopes"
@@ -224,10 +220,5 @@ func (b *ScopeAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI
 		oas.Paths.Paths[root+"namespaces/{namespace}/find/scope_dashboard_bindings"] = findDashboardPath
 	}
 
-	// The root API discovery list
-	sub = oas.Paths.Paths[root]
-	if sub != nil && sub.Get != nil {
-		sub.Get.Tags = []string{"API Discovery"} // sorts first in the list
-	}
 	return oas, nil
 }

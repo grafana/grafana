@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react';
+import { Suspense, lazy } from 'react';
 
 import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';

@@ -4,16 +4,15 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"strconv"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	"github.com/grafana/authlib/claims"
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	dashboard "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
+	dashboard "github.com/grafana/grafana/pkg/apis/dashboard"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
@@ -32,17 +31,29 @@ type DTOConnector struct {
 	unified       resource.ResourceClient
 	largeObjects  apistore.LargeObjectSupport
 	accessControl accesscontrol.AccessControl
+	scheme        *runtime.Scheme
+	newFunc       func() runtime.Object
 	log           log.Logger
 }
 
-func newDTOConnector(dash rest.Storage, largeObjects apistore.LargeObjectSupport, builder *DashboardsAPIBuilder) (rest.Storage, error) {
+func NewDTOConnector(
+	dash rest.Storage,
+	largeObjects apistore.LargeObjectSupport,
+	legacyAccess legacy.DashboardAccess,
+	resourceClient resource.ResourceClient,
+	accessControl accesscontrol.AccessControl,
+	scheme *runtime.Scheme,
+	newFunc func() runtime.Object,
+) (rest.Storage, error) {
 	ok := false
 	v := &DTOConnector{
-		legacy:        builder.legacy.access,
-		accessControl: builder.accessControl,
-		unified:       builder.unified,
+		legacy:        legacyAccess,
+		accessControl: accessControl,
+		unified:       resourceClient,
 		largeObjects:  largeObjects,
-		log:           builder.log,
+		newFunc:       newFunc,
+		scheme:        scheme,
+		log:           log.New("grafana-apiserver.dashboards.dto-connector"),
 	}
 	v.getter, ok = dash.(rest.Getter)
 	if !ok {
@@ -57,7 +68,7 @@ var (
 )
 
 func (r *DTOConnector) New() runtime.Object {
-	return &dashboard.DashboardWithAccessInfo{}
+	return r.newFunc()
 }
 
 func (r *DTOConnector) Destroy() {
@@ -76,7 +87,7 @@ func (r *DTOConnector) ProducesMIMETypes(verb string) []string {
 }
 
 func (r *DTOConnector) ProducesObject(verb string) interface{} {
-	return &dashboard.DashboardWithAccessInfo{}
+	return r.newFunc()
 }
 
 func (r *DTOConnector) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
@@ -95,10 +106,11 @@ func (r *DTOConnector) Connect(ctx context.Context, name string, opts runtime.Ob
 		return nil, err
 	}
 
-	dash, ok := rawobj.(*dashboard.Dashboard)
-	if !ok {
-		return nil, fmt.Errorf("expecting dashboard, not %t", rawobj)
+	dash, err := ToInternalDashboard(r.scheme, rawobj)
+	if err != nil {
+		return nil, err
 	}
+
 	obj, err := utils.MetaAccessor(dash)
 	if err != nil {
 		return nil, err
@@ -107,16 +119,14 @@ func (r *DTOConnector) Connect(ctx context.Context, name string, opts runtime.Ob
 	dto := &dashboards.Dashboard{
 		UID:   name,
 		OrgID: info.OrgID,
+		ID:    obj.GetDeprecatedInternalID(), // nolint:staticcheck
 	}
-	origin, err := obj.GetOriginInfo()
+	repo, err := obj.GetRepositoryInfo()
 	if err != nil {
 		return nil, err
 	}
-	if origin != nil && origin.Name == "SQL" {
-		dto.ID, err = strconv.ParseInt(origin.Path, 10, 64)
-		if err == nil {
-			return nil, err
-		}
+	if repo != nil && repo.Name == dashboard.PluginIDRepoName {
+		dto.PluginID = repo.Path
 	}
 
 	guardian, err := guardian.NewByDashboard(ctx, dto, info.OrgID, user)

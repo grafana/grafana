@@ -1,8 +1,8 @@
-import { isEqual } from 'lodash';
+import { debounce, isEqual } from 'lodash';
 
 import { UrlQueryMap } from '@grafana/data';
 import { sceneGraph, SceneObjectBase, SceneObjectState, VariableDependencyConfig } from '@grafana/scenes';
-import { getClosestScopesFacade, ScopesFacade } from 'app/features/scopes';
+import { getClosestScopesFacade } from 'app/features/scopes';
 
 import { getDashboardScenePageStateManager } from '../pages/DashboardScenePageStateManager';
 
@@ -13,25 +13,23 @@ export interface DashboardReloadBehaviorState extends SceneObjectState {
 }
 
 export class DashboardReloadBehavior extends SceneObjectBase<DashboardReloadBehaviorState> {
-  private _scopesFacade: ScopesFacade | null = null;
-
   constructor(state: DashboardReloadBehaviorState) {
     const shouldReload = state.reloadOnParamsChange && state.uid;
 
     super(state);
 
-    this.reloadDashboard = this.reloadDashboard.bind(this);
+    // Sometimes the reload is triggered multiple subsequent times
+    // Debouncing it prevents double/triple reloads
+    this.reloadDashboard = debounce(this.reloadDashboard).bind(this);
 
     if (shouldReload) {
       this.addActivationHandler(() => {
-        this._scopesFacade = getClosestScopesFacade(this);
+        getClosestScopesFacade(this)?.setState({
+          handler: this.reloadDashboard,
+        });
 
         this._variableDependency = new VariableDependencyConfig(this, {
           onAnyVariableChanged: this.reloadDashboard,
-        });
-
-        this._scopesFacade?.setState({
-          handler: this.reloadDashboard,
         });
 
         this._subs.add(
@@ -41,6 +39,8 @@ export class DashboardReloadBehavior extends SceneObjectBase<DashboardReloadBeha
             }
           })
         );
+
+        this.reloadDashboard();
       });
     }
   }
@@ -59,21 +59,25 @@ export class DashboardReloadBehavior extends SceneObjectBase<DashboardReloadBeha
     if (!this.isEditing() && !this.isWaitingForVariables()) {
       const timeRange = sceneGraph.getTimeRange(this);
 
-      let params: UrlQueryMap = {
-        version: this.state.version,
-        scopes: this._scopesFacade?.value.map((scope) => scope.metadata.name),
-        ...timeRange.urlSync?.getUrlState(),
-      };
-
-      params = sceneGraph.getVariables(this).state.variables.reduce<UrlQueryMap>(
-        (acc, variable) => ({
-          ...acc,
-          ...variable.urlSync?.getUrlState(),
-        }),
-        params
-      );
-
-      getDashboardScenePageStateManager().reloadDashboard(params);
+      // This is wrapped in setTimeout in order to allow variables and scopes to be set in the URL before actually reloading the dashboard
+      setTimeout(() => {
+        getDashboardScenePageStateManager().reloadDashboard({
+          version: this.state.version!,
+          scopes: getClosestScopesFacade(this)?.value.map((scope) => scope.metadata.name) ?? [],
+          // We're not using the getUrlState from timeRange since it makes more sense to pass the absolute timestamps as opposed to relative time
+          timeRange: {
+            from: timeRange.state.value.from.toISOString(),
+            to: timeRange.state.value.to.toISOString(),
+          },
+          variables: sceneGraph.getVariables(this).state.variables.reduce<UrlQueryMap>(
+            (acc, variable) => ({
+              ...acc,
+              ...variable.urlSync?.getUrlState(),
+            }),
+            {}
+          ),
+        });
+      });
     }
   }
 }

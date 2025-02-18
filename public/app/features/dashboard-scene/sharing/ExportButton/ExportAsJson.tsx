@@ -11,6 +11,7 @@ import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { t, Trans } from 'app/core/internationalization';
 import { dispatch } from 'app/store/store';
 
+import { DashboardInteractions } from '../../utils/interactions';
 import { ShareExportTab } from '../ShareExportTab';
 
 const selector = e2eSelectors.pages.ExportDashboardDrawer.ExportAsJson;
@@ -94,6 +95,9 @@ function ExportAsJsonRenderer({ model }: SceneComponentProps<ExportAsJson>) {
             icon="copy"
             disabled={dashboardJson.loading}
             getText={() => dashboardJson.value ?? ''}
+            onClipboardCopy={() => {
+              DashboardInteractions.exportCopyJsonClicked();
+            }}
           >
             <Trans i18nKey="export.json.copy-button">Copy to clipboard</Trans>
           </ClipboardButton>

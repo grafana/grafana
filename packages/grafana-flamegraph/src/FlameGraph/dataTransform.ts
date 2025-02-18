@@ -237,7 +237,7 @@ export function checkFields(data: DataFrame): CheckFieldsResult | undefined {
 
   for (const field of fields) {
     const [name, types] = field;
-    const frameField = data.fields.find((f) => f.name === name);
+    const frameField = data?.fields.find((f) => f.name === name);
     if (!frameField) {
       missingFields.push(name);
       continue;

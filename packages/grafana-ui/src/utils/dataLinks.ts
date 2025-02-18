@@ -29,8 +29,3 @@ export const actionModelToContextMenuItems: (actions: ActionModel[]) => MenuItem
     };
   });
 };
-
-export const isCompactUrl = (url: string) => {
-  const compactExploreUrlRegex = /\/explore\?.*&(left|right)=\[(.*\,){2,}(.*){1}\]/;
-  return compactExploreUrlRegex.test(url);
-};

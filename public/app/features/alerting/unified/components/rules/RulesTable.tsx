@@ -3,8 +3,8 @@ import { useEffect, useMemo } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { LoadingPlaceholder, Pagination, Tooltip, useStyles2 } from '@grafana/ui';
-import { CombinedRule } from 'app/types/unified-alerting';
+import { Pagination, Tooltip, useStyles2 } from '@grafana/ui';
+import { CombinedRule, RulesSource } from 'app/types/unified-alerting';
 
 import { DEFAULT_PER_PAGE_PAGINATION } from '../../../../../core/constants';
 import { alertRuleApi } from '../../api/alertRuleApi';
@@ -14,10 +14,11 @@ import { useAsync } from '../../hooks/useAsync';
 import { attachRulerRuleToCombinedRule } from '../../hooks/useCombinedRuleNamespaces';
 import { useHasRuler } from '../../hooks/useHasRuler';
 import { usePagination } from '../../hooks/usePagination';
+import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { PluginOriginBadge } from '../../plugins/PluginOriginBadge';
 import { calculateNextEvaluationEstimate } from '../../rule-list/components/util';
 import { Annotation } from '../../utils/constants';
-import { getRulesSourceName, GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME, getRulesSourceName } from '../../utils/datasource';
 import { getRulePluginOrigin, isGrafanaRulerRule, isGrafanaRulerRulePaused } from '../../utils/rules';
 import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
 import { DynamicTableWithGuidelines } from '../DynamicTableWithGuidelines';
@@ -63,18 +64,9 @@ export const RulesTable = ({
 
   const { pageItems, page, numberOfPages, onPageChange } = usePagination(rules, 1, DEFAULT_PER_PAGE_PAGINATION);
 
-  const [lazyLoadRules, { result: rulesWithRulerDefinitions, status: rulerRulesLoadingStatus }] =
-    useLazyLoadRulerRules(pageItems);
-  const isLoadingRulerGroup = useMemo(
-    () => !rulerRulesLoadingStatus || rulerRulesLoadingStatus === 'loading',
-    [rulerRulesLoadingStatus]
-  );
+  const { result: rulesWithRulerDefinitions, status: rulerRulesLoadingStatus } = useLazyLoadRulerRules(pageItems);
 
-  useEffect(() => {
-    if (pageItems.length > 0) {
-      lazyLoadRules.execute();
-    }
-  }, [lazyLoadRules, pageItems, rulerRulesLoadingStatus]);
+  const isLoadingRulerGroup = rulerRulesLoadingStatus === 'loading';
 
   const items = useMemo((): RuleTableItemProps[] => {
     return rulesWithRulerDefinitions.map((rule, ruleIdx) => {
@@ -89,10 +81,6 @@ export const RulesTable = ({
 
   if (!pageItems.length) {
     return <div className={cx(wrapperClass, styles.emptyMessage)}>{emptyMessage}</div>;
-  }
-
-  if (isLoadingRulerGroup) {
-    return <LoadingPlaceholder text="Loading..." />;
   }
 
   const TableComponent = showGuidelines ? DynamicTableWithGuidelines : DynamicTable;
@@ -127,11 +115,8 @@ function useLazyLoadRulerRules(rules: CombinedRule[]) {
   const [fetchRulerRuleGroup] = useLazyGetRuleGroupForNamespaceQuery();
   const [fetchDsFeatures] = useLazyDiscoverDsFeaturesQuery();
 
-  return useAsync(async () => {
-    if (!prometheusRulesPrimary) {
-      return rules;
-    }
-    return Promise.all(
+  const [actions, state] = useAsync(async () => {
+    const result = Promise.all(
       rules.map(async (rule) => {
         const dsFeatures = await fetchDsFeatures(
           { rulesSourceName: getRulesSourceName(rule.namespace.rulesSource) },
@@ -156,7 +141,20 @@ function useLazyLoadRulerRules(rules: CombinedRule[]) {
         return rule;
       })
     );
+    return result;
   }, rules);
+
+  useEffect(() => {
+    if (prometheusRulesPrimary) {
+      actions.execute();
+    } else {
+      // We need to reset the actions to update the rules if they changed
+      // Otherwise useAsync acts like a cache and always return the first rules passed to it
+      actions.reset();
+    }
+  }, [rules, actions]);
+
+  return state;
 }
 
 export const getStyles = (theme: GrafanaTheme2) => ({
@@ -214,9 +212,9 @@ function useColumns(
         label: '',
         // eslint-disable-next-line react/display-name
         renderCell: ({ data: rule }) => {
-          const rulerRule = rule.rulerRule;
+          const { promRule, rulerRule } = rule;
 
-          const originMeta = getRulePluginOrigin(rule);
+          const originMeta = getRulePluginOrigin(promRule ?? rulerRule);
           if (originMeta) {
             return <PluginOriginBadge pluginId={originMeta.pluginId} />;
           }
@@ -331,8 +329,20 @@ function RuleActionsCell({ rule, isLoadingRuler }: { rule: CombinedRule; isLoadi
   );
 }
 
+export function useIsRulesLoading(rulesSource: RulesSource) {
+  const rulerRules = useUnifiedAlertingSelector((state) => state.rulerRules);
+  const rulesSourceName = getRulesSourceName(rulesSource);
+
+  const rulerRulesLoaded = Boolean(rulerRules[rulesSourceName]?.result);
+  return rulerRulesLoaded;
+}
+
 function useRuleStatus(rule: CombinedRule) {
-  const { hasRuler, rulerRulesLoaded } = useHasRuler(rule.namespace.rulesSource);
+  const rulesSource = rule.namespace.rulesSource;
+
+  const rulerRulesLoaded = useIsRulesLoading(rulesSource);
+  const { hasRuler } = useHasRuler(rulesSource);
+
   const { promRule, rulerRule } = rule;
 
   // If prometheusRulesPrimary is enabled, we don't fetch rules from the Ruler API (except for Grafana managed rules)

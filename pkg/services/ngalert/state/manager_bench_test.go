@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/benbjohnson/clock"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/mock"
 
@@ -21,6 +22,7 @@ import (
 )
 
 func BenchmarkProcessEvalResults(b *testing.B) {
+	b.ReportAllocs()
 	as := annotations.FakeAnnotationsRepo{}
 	as.On("SaveMany", mock.Anything, mock.Anything).Return(nil)
 	metrics := metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem)
@@ -32,6 +34,7 @@ func BenchmarkProcessEvalResults(b *testing.B) {
 		Historian: hist,
 		Tracer:    tracing.InitializeTracerForTest(),
 		Log:       log.New("ngalert.state.manager"),
+		Clock:     clock.New(),
 	}
 	sut := state.NewManager(cfg, state.NewNoopPersister())
 	now := time.Now().UTC()
@@ -40,6 +43,8 @@ func BenchmarkProcessEvalResults(b *testing.B) {
 	labels := map[string]string{}
 
 	var ans []state.StateTransition
+	b.ResetTimer()
+
 	for i := 0; i < b.N; i++ {
 		ans = sut.ProcessEvalResults(context.Background(), now, &rule, results, labels, nil)
 	}

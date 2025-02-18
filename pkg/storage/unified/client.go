@@ -12,6 +12,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 
 	authnlib "github.com/grafana/authlib/authn"
+	"github.com/grafana/authlib/types"
 
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -19,30 +20,56 @@ import (
 	"github.com/grafana/grafana/pkg/services/authn/grpcutils"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
+	"github.com/grafana/grafana/pkg/storage/unified/federated"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 )
 
 const resourceStoreAudience = "resourceStore"
 
+type Options struct {
+	Cfg      *setting.Cfg
+	Features featuremgmt.FeatureToggles
+	DB       infraDB.DB
+	Tracer   tracing.Tracer
+	Reg      prometheus.Registerer
+	Authzc   types.AccessClient
+	Docs     resource.DocumentBuilderSupplier
+}
+
 // This adds a UnifiedStorage client into the wire dependency tree
-func ProvideUnifiedStorageClient(
+func ProvideUnifiedStorageClient(opts *Options) (resource.ResourceClient, error) {
+	// See: apiserver.ApplyGrafanaConfig(cfg, features, o)
+	apiserverCfg := opts.Cfg.SectionWithEnvOverrides("grafana-apiserver")
+	client, err := newClient(options.StorageOptions{
+		StorageType:  options.StorageType(apiserverCfg.Key("storage_type").MustString(string(options.StorageTypeUnified))),
+		DataPath:     apiserverCfg.Key("storage_path").MustString(filepath.Join(opts.Cfg.DataPath, "grafana-apiserver")),
+		Address:      apiserverCfg.Key("address").MustString(""), // client address
+		BlobStoreURL: apiserverCfg.Key("blob_url").MustString(""),
+	}, opts.Cfg, opts.Features, opts.DB, opts.Tracer, opts.Reg, opts.Authzc, opts.Docs)
+	if err == nil {
+		// Used to get the folder stats
+		client = federated.NewFederatedClient(
+			client, // The original
+			legacysql.NewDatabaseProvider(opts.DB),
+		)
+	}
+
+	return client, err
+}
+
+func newClient(opts options.StorageOptions,
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	db infraDB.DB,
 	tracer tracing.Tracer,
 	reg prometheus.Registerer,
+	authzc types.AccessClient,
+	docs resource.DocumentBuilderSupplier,
 ) (resource.ResourceClient, error) {
-	// See: apiserver.ApplyGrafanaConfig(cfg, features, o)
-	apiserverCfg := cfg.SectionWithEnvOverrides("grafana-apiserver")
-	opts := options.StorageOptions{
-		StorageType:  options.StorageType(apiserverCfg.Key("storage_type").MustString(string(options.StorageTypeLegacy))),
-		DataPath:     apiserverCfg.Key("storage_path").MustString(filepath.Join(cfg.DataPath, "grafana-apiserver")),
-		Address:      apiserverCfg.Key("address").MustString(""), // client address
-		BlobStoreURL: apiserverCfg.Key("blob_url").MustString(""),
-	}
 	ctx := context.Background()
-
 	switch opts.StorageType {
 	case options.StorageTypeFile:
 		if opts.DataPath == "" {
@@ -95,7 +122,11 @@ func ProvideUnifiedStorageClient(
 
 	// Use the local SQL
 	default:
-		server, err := sql.NewResourceServer(ctx, db, cfg, features, tracer, reg)
+		searchOptions, err := search.NewSearchOptions(features, cfg, tracer, docs, reg)
+		if err != nil {
+			return nil, err
+		}
+		server, err := sql.NewResourceServer(db, cfg, tracer, reg, authzc, searchOptions)
 		if err != nil {
 			return nil, err
 		}
@@ -120,11 +151,5 @@ func newResourceClient(conn *grpc.ClientConn, cfg *setting.Cfg, features feature
 	if !features.IsEnabledGlobally(featuremgmt.FlagAppPlatformGrpcClientAuth) {
 		return resource.NewLegacyResourceClient(conn), nil
 	}
-	if cfg.StackID == "" {
-		return resource.NewGRPCResourceClient(tracer, conn)
-	}
-
-	grpcClientCfg := grpcutils.ReadGrpcClientConfig(cfg)
-
-	return resource.NewCloudResourceClient(tracer, conn, clientCfgMapping(grpcClientCfg), cfg.Env == setting.Dev)
+	return resource.NewRemoteResourceClient(tracer, conn, clientCfgMapping(grpcutils.ReadGrpcClientConfig(cfg)), cfg.Env == setting.Dev)
 }

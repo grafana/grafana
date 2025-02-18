@@ -2,15 +2,16 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { SceneComponentProps } from '@grafana/scenes';
 import { Button, useStyles2, useTheme2 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 
+import { DataTrail } from './DataTrail';
 import { DataTrailCard } from './DataTrailCard';
-import { DataTrailsHome } from './DataTrailsHome';
 import { getTrailStore } from './TrailStore/TrailStore';
 
-export function DataTrailsRecentMetrics({ model }: SceneComponentProps<DataTrailsHome>) {
+type Props = { onSelect: (trail: DataTrail) => void };
+
+export function DataTrailsRecentMetrics({ onSelect }: Props) {
   const styles = useStyles2(getStyles);
   const recentMetrics = getTrailStore().recent;
   const theme = useTheme2();
@@ -40,7 +41,7 @@ export function DataTrailsRecentMetrics({ model }: SceneComponentProps<DataTrail
               <DataTrailCard
                 key={(resolvedTrail.state.key || '') + index}
                 trail={resolvedTrail}
-                onSelect={() => model.onSelectRecentTrail(resolvedTrail)}
+                onSelect={() => onSelect(resolvedTrail)}
               />
             );
           })}
@@ -63,12 +64,8 @@ function getStyles(theme: GrafanaTheme2) {
     header: css({
       color: theme.colors.text.primary,
       textAlign: 'center',
-      /* H4 */
-      fontFamily: 'Inter',
       fontSize: '18px',
-      fontStyle: 'normal',
       fontWeight: '400',
-      lineHeight: '22px' /* 122.222% */,
       letterSpacing: '0.045px',
     }),
     trailList: css({

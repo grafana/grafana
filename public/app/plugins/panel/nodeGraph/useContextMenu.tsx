@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { MouseEvent, useCallback, useState } from 'react';
 import * as React from 'react';
 
-import { DataFrame, Field, GrafanaTheme2, LinkModel } from '@grafana/data';
+import { DataFrame, Field, GrafanaTheme2, LinkModel, LinkTarget } from '@grafana/data';
 import { ContextMenu, MenuGroup, MenuItem, useStyles2 } from '@grafana/ui';
 
 import { Config } from './layout';
@@ -129,7 +129,7 @@ function mapMenuItem<T extends NodeDatum | EdgeDatumLayout>(item: T) {
               }
             : undefined
         }
-        target={'_self'}
+        target={link.target || '_self'}
       />
     );
   };
@@ -140,6 +140,7 @@ type LinkData<T extends NodeDatum | EdgeDatumLayout> = {
   ariaLabel?: string;
   url?: string;
   onClick?: (item: T) => void;
+  target?: LinkTarget;
 };
 
 function getItems(links: LinkModel[]) {
@@ -169,6 +170,7 @@ function getItems(links: LinkModel[]) {
         ariaLabel: link.newTitle || link.l.title,
         url: link.l.href,
         onClick: link.l.onClick,
+        target: link.l.target,
       })),
     };
   });

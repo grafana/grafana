@@ -31,7 +31,7 @@ export class SortByScene extends SceneObjectBase<SortBySceneState> {
       options: [
         {
           value: 'outliers',
-          label: 'Outlying Values',
+          label: 'Outlying series',
           description: 'Prioritizes values that show distinct behavior from others within the same label',
         },
         {

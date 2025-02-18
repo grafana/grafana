@@ -1,22 +1,23 @@
 package sql
 
 import (
-	"context"
 	"os"
 	"strings"
 
-	"github.com/grafana/authlib/claims"
+	"github.com/prometheus/client_golang/prometheus"
+
+	"github.com/grafana/authlib/types"
+
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 // Creates a new ResourceServer
-func NewResourceServer(ctx context.Context, db infraDB.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer tracing.Tracer, reg prometheus.Registerer) (resource.ResourceServer, error) {
+func NewResourceServer(db infraDB.DB, cfg *setting.Cfg,
+	tracer tracing.Tracer, reg prometheus.Registerer, ac types.AccessClient, searchOptions resource.SearchOptions) (resource.ResourceServer, error) {
 	apiserverCfg := cfg.SectionWithEnvOverrides("grafana-apiserver")
 	opts := resource.ResourceServerOptions{
 		Tracer: tracer,
@@ -25,7 +26,9 @@ func NewResourceServer(ctx context.Context, db infraDB.DB, cfg *setting.Cfg, fea
 		},
 		Reg: reg,
 	}
-
+	if ac != nil {
+		opts.AccessClient = resource.NewAuthzLimitedClient(ac, resource.AuthzOptions{Tracer: tracer, Registry: reg})
+	}
 	// Support local file blob
 	if strings.HasPrefix(opts.Blob.URL, "./data/") {
 		dir := strings.Replace(opts.Blob.URL, "./data", cfg.DataPath, 1)
@@ -47,33 +50,11 @@ func NewResourceServer(ctx context.Context, db infraDB.DB, cfg *setting.Cfg, fea
 	opts.Backend = store
 	opts.Diagnostics = store
 	opts.Lifecycle = store
-
-	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesFolders) {
-		opts.WriteAccess = resource.WriteAccessHooks{
-			Folder: func(ctx context.Context, user claims.AuthInfo, uid string) bool {
-				// #TODO build on the logic here
-				// #TODO only enable write access when the resource being written in the folder
-				// is another folder
-				return true
-			},
-		}
-	}
-
-	if features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageSearch) {
-		opts.Index = resource.NewResourceIndexServer(cfg, tracer)
-	}
+	opts.Search = searchOptions
 
 	rs, err := resource.NewResourceServer(opts)
 	if err != nil {
 		return nil, err
-	}
-
-	// Initialize the indexer if one is configured
-	if opts.Index != nil {
-		_, err = rs.(resource.ResourceIndexer).Index(ctx)
-		if err != nil {
-			return nil, err
-		}
 	}
 
 	return rs, nil

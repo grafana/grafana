@@ -21,7 +21,7 @@ const Namespace = ({ children, name, href, application }: NamespaceProps) => {
     <li className={styles.namespaceWrapper} role="treeitem" aria-selected="false">
       <div className={styles.namespaceTitle}>
         <Stack alignItems={'center'} gap={1}>
-          <NamespaceIcon application={application} />
+          <DataSourceIcon application={application} />
           {href ? (
             <WithReturnButton
               title="Alert rules"
@@ -47,28 +47,29 @@ const Namespace = ({ children, name, href, application }: NamespaceProps) => {
 
 interface NamespaceIconProps {
   application?: RulesSourceApplication;
+  size?: number;
 }
 
-const NamespaceIcon = ({ application }: NamespaceIconProps) => {
+export const DataSourceIcon = ({ application, size = 16 }: NamespaceIconProps) => {
   switch (application) {
     case PromApplication.Prometheus:
       return (
         <img
-          width={16}
-          height={16}
+          width={size}
+          height={size}
           src="public/app/plugins/datasource/prometheus/img/prometheus_logo.svg"
           alt="Prometheus"
         />
       );
     case PromApplication.Mimir:
       return (
-        <img width={16} height={16} src="public/app/plugins/datasource/prometheus/img/mimir_logo.svg" alt="Mimir" />
+        <img width={size} height={size} src="public/app/plugins/datasource/prometheus/img/mimir_logo.svg" alt="Mimir" />
       );
-    case 'loki':
-      return <img width={16} height={16} src="public/app/plugins/datasource/loki/img/loki_icon.svg" alt="Loki" />;
+    case 'Loki':
+      return <img width={size} height={size} src="public/app/plugins/datasource/loki/img/loki_icon.svg" alt="Loki" />;
     case 'grafana':
     default:
-      return <Icon name="folder" />;
+      return <Icon name="grafana" />;
   }
 };
 
@@ -101,10 +102,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
   namespaceTitle: css({
     padding: `${theme.spacing(1)} ${theme.spacing(1.5)}`,
 
-    background: theme.colors.background.secondary,
+    // background: theme.colors.background.secondary,
 
-    border: `solid 1px ${theme.colors.border.weak}`,
-    borderRadius: theme.shape.radius.default,
+    // border: `solid 1px ${theme.colors.border.weak}`,
+    // borderRadius: theme.shape.radius.default,
   }),
 });
 

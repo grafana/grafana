@@ -1,5 +1,4 @@
 import { config } from '@grafana/runtime';
-import { UrlSyncManager } from '@grafana/scenes';
 
 import { ScopesDashboardsScene } from './internal/ScopesDashboardsScene';
 import { ScopesSelectorScene } from './internal/ScopesSelectorScene';
@@ -14,8 +13,5 @@ export function initializeScopes() {
 
     scopesSelectorScene.setState({ dashboards: scopesDashboardsScene.getRef() });
     scopesDashboardsScene.setState({ selector: scopesSelectorScene.getRef() });
-
-    const urlSyncManager = new UrlSyncManager();
-    urlSyncManager.initSync(scopesSelectorScene!);
   }
 }
