@@ -718,6 +718,15 @@ const getStyles = (theme: GrafanaTheme2, textWrap: boolean) => ({
       '--rdg-row-hover-background-color': theme.colors.action.hover,
       overflow: 'scroll',
     },
+
+    // Highlight the re-size handler on hover
+    'div[role=columnheader]': {
+      '.r1y6ywlx7-0-0-beta-46': {
+        '&:hover': {
+          borderRight: `3px solid ${theme.colors.text.link}`,
+        },
+      },
+    },
   }),
   menuItem: css({
     maxWidth: '200px',
@@ -739,8 +748,8 @@ const getStyles = (theme: GrafanaTheme2, textWrap: boolean) => ({
     },
 
     '&:hover': {
-      // Adjust margin to prevent text shift caused by border on hover.
-      margin: '-1px -1px 0px -1px',
+      // Prevent text shift caused by border on hover by translating the element.
+      transform: `translate(-1px, -0.5px)`,
       border: `1px solid ${theme.colors.text.link}`,
       // Set a zIndex to eliminate depth built into datagrid cells.
       zIndex: theme.zIndex.tooltip,
