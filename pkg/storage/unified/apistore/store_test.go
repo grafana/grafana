@@ -7,11 +7,13 @@ package apistore_test
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -177,14 +179,15 @@ func TestGRPCtoHTTPStatusMapping(t *testing.T) {
 			nil,
 			nil,
 			apistore.StorageOptions{})
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		err = s.GetList(context.Background(), "/group/resource.grafana.app/resource/resources/namespace/default", storage.ListOptions{}, nil)
-		assert.Error(t, err)
+		require.Error(t, err)
 
-		e, ok := err.(*apierrors.StatusError)
-		assert.Equal(t, true, ok)
-		assert.Equal(t, int(e.Status().Code), http.StatusUnauthorized)
+		var statusError *apierrors.StatusError
+		ok := errors.As(err, &statusError)
+		require.Equal(t, true, ok)
+		require.Equal(t, int(statusError.Status().Code), http.StatusUnauthorized)
 	})
 }
 
