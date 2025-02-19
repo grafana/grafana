@@ -295,12 +295,17 @@ type AlertRule struct {
 }
 
 type AlertRuleMetadata struct {
-	EditorSettings EditorSettings `json:"editor_settings"`
+	EditorSettings      EditorSettings       `json:"editor_settings"`
+	PrometheusStyleRule *PrometheusStyleRule `json:"prometheus_style_rule,omitempty"`
 }
 
 type EditorSettings struct {
 	SimplifiedQueryAndExpressionsSection bool `json:"simplified_query_and_expressions_section"`
 	SimplifiedNotificationsSection       bool `json:"simplified_notifications_section"`
+}
+
+type PrometheusStyleRule struct {
+	OriginalRuleDefinition string `json:"original_rule_definition,omitempty"`
 }
 
 // Namespaced describes a class of resources that are stored in a specific namespace.
@@ -746,6 +751,11 @@ func (alertRule *AlertRule) Copy() *AlertRule {
 			From:   alertRule.Record.From,
 			Metric: alertRule.Record.Metric,
 		}
+	}
+
+	if alertRule.Metadata.PrometheusStyleRule != nil {
+		prometheusStyleRule := *alertRule.Metadata.PrometheusStyleRule
+		result.Metadata.PrometheusStyleRule = &prometheusStyleRule
 	}
 
 	for _, s := range alertRule.NotificationSettings {

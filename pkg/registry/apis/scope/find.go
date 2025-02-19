@@ -104,9 +104,8 @@ func filterAndAppendItem(item scope.ScopeNode, parent string, query string, resu
 		return // Someday this will have an index in raw storage on parentName
 	}
 
-	// skip if query is passed and title doesn't match.
-	// HasPrefix is not the end goal but something that that gets us started.
-	if query != "" && !strings.HasPrefix(item.Spec.Title, query) {
+	// skip if query is passed and title doesn't contain the query.
+	if query != "" && !strings.Contains(item.Spec.Title, query) {
 		return
 	}
 

@@ -659,14 +659,6 @@ var (
 			Expression:   "true", // enabled by default
 		},
 		{
-			Name:         "transformationsVariableSupport",
-			Description:  "Allows using variables in transformations",
-			FrontendOnly: true,
-			Stage:        FeatureStageGeneralAvailability,
-			Owner:        grafanaDatavizSquad,
-			Expression:   "true", // Enabled by default
-		},
-		{
 			Name:            "kubernetesPlaylists",
 			Description:     "Use the kubernetes API in the frontend for playlists, and route /api/playlist requests to k8s",
 			Stage:           FeatureStageGeneralAvailability,
@@ -689,22 +681,16 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:        "kubernetesCliDashboards",
-			Description: "Use the k8s client to retrieve dashboards internally",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaAppPlatformSquad,
-		},
-		{
 			Name:        "kubernetesRestore",
 			Description: "Allow restoring objects in k8s",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaAppPlatformSquad,
 		},
 		{
-			Name:        "kubernetesFoldersServiceV2",
-			Description: "Use the Folders Service V2, and route Folder Service requests to k8s",
+			Name:        "kubernetesClientDashboardsFolders",
+			Description: "Route the folder and dashboard service requests to k8s",
 			Stage:       FeatureStageExperimental,
-			Owner:       grafanaSearchAndStorageSquad,
+			Owner:       grafanaAppPlatformSquad,
 		},
 		{
 			Name:            "datasourceQueryTypes",
@@ -772,14 +758,6 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaOperatorExperienceSquad,
 			FrontendOnly: false,
-		},
-		{
-			Name:            "managedPluginsInstall",
-			Description:     "Install managed plugins directly from plugins catalog",
-			Stage:           FeatureStageGeneralAvailability,
-			RequiresDevMode: false,
-			Owner:           grafanaPluginsPlatformSquad,
-			Expression:      "true", // enabled by default
 		},
 		{
 			Name:         "prometheusPromQAIL",
@@ -1717,13 +1695,6 @@ var (
 			HideFromDocs: true,
 		},
 		{
-			Name:           "queryLibraryDashboards",
-			Description:    "Enables Query Library feature in Dashboards",
-			Stage:          FeatureStageExperimental,
-			Owner:          grafanaFrontendPlatformSquad,
-			AllowSelfServe: false,
-		},
-		{
 			Name:        "grafanaAdvisor",
 			Description: "Enables Advisor app",
 			Stage:       FeatureStageExperimental,
@@ -1807,6 +1778,31 @@ var (
 			Description: "Load plugins from CDN synchronously",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaPluginsPlatformSquad,
+		},
+		{
+			Name:         "alertingJiraIntegration",
+			Description:  "Enables the new Jira integration for contact points in cloud alert managers.",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			FrontendOnly: true,
+			HideFromDocs: true,
+		},
+		{
+			Name:              "alertingRuleVersionHistoryRestore",
+			Description:       "Enables the alert rule version history restore feature",
+			FrontendOnly:      true,
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaAlertingSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+		},
+		{
+			Name:              "newShareReportDrawer",
+			Description:       "Enables the report creation drawer in a dashboard",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaSharingSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
 		},
 	}
 )

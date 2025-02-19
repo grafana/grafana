@@ -3,7 +3,7 @@ import moment from 'moment';
 import { useState } from 'react';
 
 import { FieldType, GrafanaTheme2, store } from '@grafana/data';
-import { Button, Card, IconButton, Space, Stack, Text, useStyles2, Box, Sparkline, useTheme2 } from '@grafana/ui';
+import { Button, Card, IconButton, Space, Stack, Text, useStyles2, Box, Sparkline, useTheme2, Icon } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
 import { HISTORY_LOCAL_STORAGE_KEY } from '../AppChromeService';
@@ -41,10 +41,10 @@ export function HistoryWrapper({ onClose }: { onClose: () => void }) {
         {Object.keys(hist).map((entries, date) => {
           return (
             <Stack key={date} direction="column" gap={1}>
-              <span className={styles.paddingLeft}>
+              <Box paddingLeft={2}>
                 <Text color="secondary">{entries}</Text>
-              </span>
-              <span className={styles.borderLeft}>
+              </Box>
+              <div className={styles.timeline}>
                 {hist[entries].map((entry, index) => {
                   return (
                     <HistoryEntryAppView
@@ -55,13 +55,13 @@ export function HistoryWrapper({ onClose }: { onClose: () => void }) {
                     />
                   );
                 })}
-              </span>
+              </div>
             </Stack>
           );
         })}
       </Box>
       {history.length > numItemsToShow && (
-        <span className={styles.paddingLeft}>
+        <Box paddingLeft={2}>
           <Button
             variant="secondary"
             fill="text"
@@ -72,7 +72,7 @@ export function HistoryWrapper({ onClose }: { onClose: () => void }) {
           >
             {t('nav.history-wrapper.show-more', 'Show more')}
           </Button>
-        </span>
+        </Box>
       )}
     </Stack>
   );
@@ -101,9 +101,9 @@ function HistoryEntryAppView({ entry, isSelected, onClick }: ItemProps) {
     })?.time;
 
   return (
-    <span className={styles.marginBottom}>
+    <Box marginBottom={1}>
       <Stack direction="column" gap={1}>
-        <Stack>
+        <Stack alignItems="baseline">
           {views.length > 0 ? (
             <IconButton
               name={isExpanded ? 'angle-down' : 'angle-right'}
@@ -114,14 +114,11 @@ function HistoryEntryAppView({ entry, isSelected, onClick }: ItemProps) {
           ) : (
             <Space h={2} />
           )}
-          <IconButton
+          <Icon
             size="sm"
             name={isSelected ? 'circle-mono' : 'circle'}
-            onClick={(e) => {
-              e.preventDefault();
-            }}
             aria-label={entryIconLabel}
-            className={styles.iconButtonCircle}
+            className={isExpanded ? styles.iconButtonDot : styles.iconButtonCircle}
           />
           <Card
             onClick={() => {
@@ -202,7 +199,7 @@ function HistoryEntryAppView({ entry, isSelected, onClick }: ItemProps) {
           </div>
         )}
       </Stack>
-    </span>
+    </Box>
   );
 }
 const getStyles = (theme: GrafanaTheme2) => {
@@ -226,13 +223,28 @@ const getStyles = (theme: GrafanaTheme2) => {
       margin: 0,
     }),
     iconButtonCircle: css({
-      label: 'blue-circle-button',
+      label: 'blue-circle-icon',
       margin: 0,
-      color: theme.colors.primary.main,
+      background: theme.colors.background.primary,
+      fill: theme.colors.primary.main,
       cursor: 'default',
-      '&:hover': {
+      '&:hover:before': {
         background: 'none',
       },
+      //Need this to place the icon on the line, otherwise the line will appear on top of the icon
+      zIndex: 0,
+    }),
+    iconButtonDot: css({
+      label: 'blue-dot-icon',
+      margin: 0,
+      color: theme.colors.primary.main,
+      border: theme.shape.radius.circle,
+      cursor: 'default',
+      '&:hover:before': {
+        background: 'none',
+      },
+      //Need this to place the icon on the line, otherwise the line will appear on top of the icon
+      zIndex: 0,
     }),
     expanded: css({
       label: 'expanded',
@@ -251,8 +263,8 @@ const getStyles = (theme: GrafanaTheme2) => {
         background: theme.colors.border.weak,
       },
     }),
-    borderLeft: css({
-      label: 'border-left',
+    timeline: css({
+      label: 'timeline',
       position: 'relative',
       height: '100%',
       width: '100%',
@@ -260,26 +272,12 @@ const getStyles = (theme: GrafanaTheme2) => {
       '&:before': {
         content: '""',
         position: 'absolute',
-        left: theme.spacing(6),
+        left: theme.spacing(5.75),
         top: 0,
         height: '100%',
         width: '1px',
-        background: `repeating-linear-gradient(
-          to bottom,
-          ${theme.colors.border.strong},
-          ${theme.colors.border.strong} 2px,
-          transparent 2px,
-          transparent 4px
-        )`,
+        borderLeft: `1px dashed ${theme.colors.border.strong}`,
       },
-    }),
-    paddingLeft: css({
-      label: 'padding-left',
-      paddingLeft: theme.spacing(2),
-    }),
-    marginBottom: css({
-      label: 'margin-bottom',
-      marginBottom: theme.spacing(1),
     }),
   };
 };
