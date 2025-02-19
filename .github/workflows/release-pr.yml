@@ -74,6 +74,7 @@ jobs:
           ref: ${{ steps.branch.outputs.branch }}
           fetch-depth: 0
           fetch-tags: true
+          token: ${{ steps.generate_token.outputs.token }}
       - name: Checkout Grafana (main)
         uses: actions/checkout@v4
         with:
@@ -81,6 +82,7 @@ jobs:
           fetch-depth: '0'
           fetch-tags: 'false'
           path: .grafana-main
+          token: ${{ steps.generate_token.outputs.token }}
       - name: Setup nodejs environment
         uses: actions/setup-node@v4
         with:

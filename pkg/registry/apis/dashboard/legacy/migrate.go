@@ -16,6 +16,7 @@ import (
 	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/provisioning"
+	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
@@ -42,9 +43,10 @@ type LegacyMigrator interface {
 func ProvideLegacyMigrator(
 	sql db.DB, // direct access to tables
 	provisioning provisioning.ProvisioningService, // only needed for dashboard settings
+	sort sort.Service,
 ) LegacyMigrator {
 	dbp := legacysql.NewDatabaseProvider(sql)
-	return NewDashboardAccess(dbp, authlib.OrgNamespaceFormatter, nil, provisioning, false)
+	return NewDashboardAccess(dbp, authlib.OrgNamespaceFormatter, nil, provisioning, false, sort)
 }
 
 type BlobStoreInfo struct {
