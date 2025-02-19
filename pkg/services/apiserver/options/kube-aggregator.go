@@ -49,7 +49,7 @@ func (o *KubeAggregatorOptions) AddFlags(fs *pflag.FlagSet) {
 		"path to proxy client key file")
 
 	fs.BoolVar(&o.LegacyClientCertAuth, "legacy-client-cert-auth", true,
-		"path to proxy client key file")
+		"whether to use legacy client cert auth")
 }
 
 func (o *KubeAggregatorOptions) Validate() []error {
