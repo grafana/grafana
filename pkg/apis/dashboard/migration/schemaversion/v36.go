@@ -49,7 +49,7 @@ func getDefaultDSInstanceSettings(datasources []DataSourceInfo) *DataSourceInfo 
 
 // getInstanceSettings looks up a datasource by name or uid reference
 func getInstanceSettings(nameOrRef interface{}, datasources []DataSourceInfo) *DataSourceInfo {
-	if nameOrRef == nil {
+	if nameOrRef == nil || nameOrRef == "default" {
 		return getDefaultDSInstanceSettings(datasources)
 	}
 
