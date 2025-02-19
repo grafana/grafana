@@ -88,6 +88,20 @@ export class LayoutOrchestrator extends SceneObjectBase<LayoutOrchestratorState>
     // measure and store height of all scroll zones
   };
 
+  private movePlaceholder = (dropZone: DropZone, scrollTop: number) => {
+    if (this.placeholderRef.current) {
+      if (this.placeholderRef.current.style.width === '1px' && this.placeholderRef.current.style.height === '1px') {
+        // This is a newly created placeholder, don't animate it.
+        this.placeholderRef.current.style.transition = 'translate 0ms, width 0ms, height 0ms';
+      } else {
+        this.placeholderRef.current.style.transition = 'translate 150ms ease, width 150ms ease, height 150ms ease';
+      }
+      this.placeholderRef.current.style.width = `${dropZone.right - dropZone.left}px`;
+      this.placeholderRef.current.style.height = `${dropZone.bottom - dropZone.top}px`;
+      this.placeholderRef.current.style.translate = `${dropZone.left}px ${dropZone.top - scrollTop}px`;
+    }
+  };
+
   public onDrag = (e: PointerEvent) => {
     const activeLayout = this.state.activeLayoutRef?.resolve();
     if (!activeLayout) {
@@ -118,12 +132,9 @@ export class LayoutOrchestrator extends SceneObjectBase<LayoutOrchestratorState>
         top: state.dropZone.top - cell.scrollTop,
       };
 
-      if (this.placeholderRef.current) {
-        this.placeholderRef.current.style.width = `${state.dropZone.right - state.dropZone.left}px`;
-        this.placeholderRef.current.style.height = `${state.dropZone.bottom - state.dropZone.top}px`;
-        this.placeholderRef.current.style.translate = `${state.dropZone.left}px ${state.dropZone.top - cell.scrollTop}px`;
-        this.placeholderRef.current.style.transition = 'translate 150ms ease, width 150ms ease, height 150ms ease';
-      }
+      this.movePlaceholder(state.dropZone, cell.scrollTop);
+    } else {
+      this.movePlaceholder(this.state.dropZone, cell.scrollTop);
     }
 
     if (Object.keys(state).length > 0) {
