@@ -150,7 +150,7 @@ func (dr *DashboardServiceImpl) getPermissionsService(isFolder bool) accesscontr
 }
 
 func (dr *DashboardServiceImpl) Count(ctx context.Context, scopeParams *quota.ScopeParameters) (*quota.Map, error) {
-	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesCliDashboards) {
+	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
 		u := &quota.Map{}
 		orgs, err := dr.orgService.Search(ctx, &org.SearchOrgsQuery{})
 		if err != nil {
@@ -186,7 +186,7 @@ func (dr *DashboardServiceImpl) Count(ctx context.Context, scopeParams *quota.Sc
 }
 
 func (dr *DashboardServiceImpl) CountDashboardsInOrg(ctx context.Context, orgID int64) (int64, error) {
-	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesCliDashboards) {
+	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
 		resp, err := dr.k8sclient.GetStats(ctx, orgID)
 		if err != nil {
 			return 0, err
@@ -224,7 +224,7 @@ func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
 }
 
 func (dr *DashboardServiceImpl) GetProvisionedDashboardData(ctx context.Context, name string) ([]*dashboards.DashboardProvisioning, error) {
-	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesCliDashboards) {
+	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
 		orgs, err := dr.orgService.Search(ctx, &org.SearchOrgsQuery{})
 		if err != nil {
 			return nil, err
@@ -265,7 +265,7 @@ func (dr *DashboardServiceImpl) GetProvisionedDashboardData(ctx context.Context,
 }
 
 func (dr *DashboardServiceImpl) GetProvisionedDashboardDataByDashboardID(ctx context.Context, dashboardID int64) (*dashboards.DashboardProvisioning, error) {
-	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesCliDashboards) {
+	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
 		// if dashboard id is 0, it is a new dashboard
 		if dashboardID == 0 {
 			return nil, nil
@@ -299,7 +299,7 @@ func (dr *DashboardServiceImpl) GetProvisionedDashboardDataByDashboardID(ctx con
 }
 
 func (dr *DashboardServiceImpl) GetProvisionedDashboardDataByDashboardUID(ctx context.Context, orgID int64, dashboardUID string) (*dashboards.DashboardProvisioning, error) {
-	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesCliDashboards) {
+	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
 		if dashboardUID == "" {
 			return nil, nil
 		}
@@ -366,7 +366,7 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 	}
 
 	// Validate folder
-	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesFoldersServiceV2) {
+	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
 		folder, err := dr.folderService.Get(ctx, &folder.GetFolderQuery{
 			OrgID:        dash.OrgID,
 			UID:          &dash.FolderUID,
@@ -553,7 +553,7 @@ func (dr *DashboardServiceImpl) ValidateDashboardBeforeSave(ctx context.Context,
 }
 
 func (dr *DashboardServiceImpl) DeleteOrphanedProvisionedDashboards(ctx context.Context, cmd *dashboards.DeleteOrphanedProvisionedDashboardsCommand) error {
-	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesCliDashboards) {
+	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
 		// check each org for orphaned provisioned dashboards
 		orgs, err := dr.orgService.Search(ctx, &org.SearchOrgsQuery{})
 		if err != nil {
@@ -671,7 +671,7 @@ func (dr *DashboardServiceImpl) SaveProvisionedDashboard(ctx context.Context, dt
 	}
 
 	var dash *dashboards.Dashboard
-	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesCliDashboards) {
+	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
 		// save the dashboard but then do NOT return
 		// we want to save the provisioning data to the dashboard_provisioning table still
 		// to ensure we can safely rollback to mode2 if needed
@@ -746,7 +746,7 @@ func (dr *DashboardServiceImpl) SaveDashboard(ctx context.Context, dto *dashboar
 }
 
 func (dr *DashboardServiceImpl) saveDashboard(ctx context.Context, cmd *dashboards.SaveDashboardCommand) (*dashboards.Dashboard, error) {
-	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesCliDashboards) {
+	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
 		return dr.saveDashboardThroughK8s(ctx, cmd, cmd.OrgID)
 	}
 
@@ -754,7 +754,7 @@ func (dr *DashboardServiceImpl) saveDashboard(ctx context.Context, cmd *dashboar
 }
 
 func (dr *DashboardServiceImpl) GetSoftDeletedDashboard(ctx context.Context, orgID int64, uid string) (*dashboards.Dashboard, error) {
-	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesCliDashboards) {
+	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
 		return dr.getDashboardThroughK8s(ctx, &dashboards.GetDashboardQuery{OrgID: orgID, UID: uid, IncludeDeleted: true})
 	}
 
@@ -813,7 +813,7 @@ func (dr *DashboardServiceImpl) SoftDeleteDashboard(ctx context.Context, orgID i
 		return fmt.Errorf("feature flag %s is not enabled", featuremgmt.FlagDashboardRestore)
 	}
 
-	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesCliDashboards) {
+	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
 		// deletes in unistore are soft deletes, so we can just delete in the same way
 		return dr.deleteDashboardThroughK8s(ctx, &dashboards.DeleteDashboardCommand{OrgID: orgID, UID: dashboardUID}, true)
 	}
@@ -834,7 +834,7 @@ func (dr *DashboardServiceImpl) DeleteDashboard(ctx context.Context, dashboardId
 
 // DeleteAllDashboards will delete all dashboards within a given org.
 func (dr *DashboardServiceImpl) DeleteAllDashboards(ctx context.Context, orgId int64) error {
-	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesCliDashboards) {
+	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
 		return dr.deleteAllDashboardThroughK8s(ctx, orgId)
 	}
 
@@ -857,7 +857,7 @@ func (dr *DashboardServiceImpl) deleteDashboard(ctx context.Context, dashboardId
 
 	cmd := &dashboards.DeleteDashboardCommand{OrgID: orgId, ID: dashboardId, UID: dashboardUID}
 
-	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesCliDashboards) {
+	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
 		err := dr.deleteDashboardThroughK8s(ctx, cmd, validateProvisionedDashboard)
 		if err != nil {
 			return err
@@ -922,7 +922,7 @@ func (dr *DashboardServiceImpl) ImportDashboard(ctx context.Context, dto *dashbo
 // UnprovisionDashboard removes info about dashboard being provisioned. Used after provisioning configs are changed
 // and provisioned dashboards are left behind but not deleted.
 func (dr *DashboardServiceImpl) UnprovisionDashboard(ctx context.Context, dashboardId int64) error {
-	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesCliDashboards) {
+	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
 		orgs, err := dr.orgService.Search(ctx, &org.SearchOrgsQuery{})
 		if err != nil {
 			return err
@@ -955,7 +955,7 @@ func (dr *DashboardServiceImpl) UnprovisionDashboard(ctx context.Context, dashbo
 }
 
 func (dr *DashboardServiceImpl) GetDashboardsByPluginID(ctx context.Context, query *dashboards.GetDashboardsByPluginIDQuery) ([]*dashboards.Dashboard, error) {
-	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesCliDashboards) {
+	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
 		dashs, err := dr.searchDashboardsThroughK8s(ctx, &dashboards.FindPersistedDashboardsQuery{
 			OrgId:           query.OrgID,
 			ProvisionedRepo: dashboard.PluginIDRepoName,
@@ -1053,7 +1053,7 @@ func (dr *DashboardServiceImpl) setDefaultFolderPermissions(ctx context.Context,
 }
 
 func (dr *DashboardServiceImpl) GetDashboard(ctx context.Context, query *dashboards.GetDashboardQuery) (*dashboards.Dashboard, error) {
-	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesCliDashboards) {
+	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
 		return dr.getDashboardThroughK8s(ctx, query)
 	}
 
@@ -1061,7 +1061,7 @@ func (dr *DashboardServiceImpl) GetDashboard(ctx context.Context, query *dashboa
 }
 
 func (dr *DashboardServiceImpl) GetDashboardUIDByID(ctx context.Context, query *dashboards.GetDashboardRefByIDQuery) (*dashboards.DashboardRef, error) {
-	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesCliDashboards) {
+	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
 		requester, err := identity.GetRequester(ctx)
 		if err != nil {
 			return nil, err
@@ -1087,7 +1087,7 @@ func (dr *DashboardServiceImpl) GetDashboardUIDByID(ctx context.Context, query *
 }
 
 func (dr *DashboardServiceImpl) GetDashboards(ctx context.Context, query *dashboards.GetDashboardsQuery) ([]*dashboards.Dashboard, error) {
-	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesCliDashboards) {
+	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
 		if query.OrgID == 0 {
 			requester, err := identity.GetRequester(ctx)
 			if err != nil {
@@ -1235,7 +1235,7 @@ func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *dashb
 		}(time.Now())
 	}
 
-	if dr.features.IsEnabled(ctx, featuremgmt.FlagKubernetesCliDashboards) {
+	if dr.features.IsEnabled(ctx, featuremgmt.FlagKubernetesClientDashboardsFolders) {
 		if query.OrgId == 0 {
 			requester, err := identity.GetRequester(ctx)
 			if err != nil {
@@ -1317,7 +1317,7 @@ func (dr *DashboardServiceImpl) SearchDashboards(ctx context.Context, query *das
 }
 
 func (dr *DashboardServiceImpl) GetAllDashboards(ctx context.Context) ([]*dashboards.Dashboard, error) {
-	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesCliDashboards) {
+	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
 		requester, err := identity.GetRequester(ctx)
 		if err != nil {
 			return nil, err
@@ -1329,7 +1329,7 @@ func (dr *DashboardServiceImpl) GetAllDashboards(ctx context.Context) ([]*dashbo
 }
 
 func (dr *DashboardServiceImpl) GetAllDashboardsByOrgId(ctx context.Context, orgID int64) ([]*dashboards.Dashboard, error) {
-	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesCliDashboards) {
+	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
 		return dr.listDashboardsThroughK8s(ctx, orgID)
 	}
 
@@ -1403,7 +1403,7 @@ func makeQueryResult(query *dashboards.FindPersistedDashboardsQuery, res []dashb
 }
 
 func (dr *DashboardServiceImpl) GetDashboardTags(ctx context.Context, query *dashboards.GetDashboardTagsQuery) ([]*dashboards.DashboardTagCloudItem, error) {
-	if dr.features.IsEnabled(ctx, featuremgmt.FlagKubernetesCliDashboards) {
+	if dr.features.IsEnabled(ctx, featuremgmt.FlagKubernetesClientDashboardsFolders) {
 		res, err := dr.k8sclient.Search(ctx, query.OrgID, &resource.ResourceSearchRequest{
 			Facet: map[string]*resource.ResourceSearchRequest_Facet{
 				"tags": {
@@ -1435,7 +1435,7 @@ func (dr *DashboardServiceImpl) GetDashboardTags(ctx context.Context, query *das
 }
 
 func (dr DashboardServiceImpl) CountInFolders(ctx context.Context, orgID int64, folderUIDs []string, u identity.Requester) (int64, error) {
-	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesCliDashboards) {
+	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
 		dashs, err := dr.searchDashboardsThroughK8s(ctx, &dashboards.FindPersistedDashboardsQuery{
 			OrgId:      orgID,
 			FolderUIDs: folderUIDs,

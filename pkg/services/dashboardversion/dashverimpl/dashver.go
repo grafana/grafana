@@ -87,7 +87,7 @@ func (s *Service) Get(ctx context.Context, query *dashver.GetDashboardVersionQue
 		query.DashboardID = id
 	}
 
-	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesCliDashboards) {
+	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
 		version, err := s.getHistoryThroughK8s(ctx, query.OrgID, query.DashboardUID, query.Version)
 		if err != nil {
 			return nil, err
@@ -158,7 +158,7 @@ func (s *Service) List(ctx context.Context, query *dashver.ListDashboardVersions
 		query.Limit = 1000
 	}
 
-	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesCliDashboards) {
+	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
 		versions, err := s.listHistoryThroughK8s(
 			ctx,
 			query.OrgID,
