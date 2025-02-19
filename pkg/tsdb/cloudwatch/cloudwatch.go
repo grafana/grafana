@@ -234,6 +234,7 @@ func (e *cloudWatchExecutor) QueryData(ctx context.Context, req *backend.QueryDa
 	}
 
 	if features.IsEnabled(ctx, features.FlagCloudWatchRoundUpEndTime) {
+		e.logger.Debug("!!!!!!!!!! IT BROKE HERE !!!!!!!!!!")
 		return nil, fmt.Errorf("test bug")
 	}
 
