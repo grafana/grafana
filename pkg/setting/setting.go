@@ -1729,7 +1729,7 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 	cfg.ExternalUserMngAnalytics = users.Key("external_manage_analytics").MustBool(false)
 	cfg.ExternalUserMngAnalyticsParams = valueAsString(users, "external_manage_analytics_params", "")
 
-	cfg.ViewersCanEdit = users.Key("viewers_can_edit").MustBool(false)
+	cfg.ViewersCanEdit = false
 	cfg.EditorsCanAdmin = users.Key("editors_can_admin").MustBool(false)
 
 	userInviteMaxLifetimeVal := valueAsString(users, "user_invite_max_lifetime_duration", "24h")
