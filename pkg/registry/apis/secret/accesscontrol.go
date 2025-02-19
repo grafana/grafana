@@ -7,7 +7,7 @@ import (
 const (
 	// SecureValues
 	ActionSecretSecureValuesCreate = "secret.securevalues:create" // CREATE.
-	ActionSecretSecureValuesWrite  = "secret.securevalues:write"  // CREATE + UPDATE.
+	ActionSecretSecureValuesWrite  = "secret.securevalues:write"  // UPDATE.
 	ActionSecretSecureValuesRead   = "secret.securevalues:read"   // GET + LIST.
 	ActionSecretSecureValuesDelete = "secret.securevalues:delete" // DELETE.
 
@@ -56,6 +56,10 @@ func RegisterAccessControlRoles(service accesscontrol.Service) error {
 					Scope:  ScopeAllSecureValues,
 				},
 				{
+					Action: ActionSecretSecureValuesRead,
+					Scope:  ScopeAllSecureValues,
+				},
+				{
 					Action: ActionSecretSecureValuesWrite,
 					Scope:  ScopeAllSecureValues,
 				},
@@ -94,6 +98,10 @@ func RegisterAccessControlRoles(service accesscontrol.Service) error {
 			Permissions: []accesscontrol.Permission{
 				{
 					Action: ActionSecretKeepersCreate,
+					Scope:  ScopeAllKeepers,
+				},
+				{
+					Action: ActionSecretKeepersRead,
 					Scope:  ScopeAllKeepers,
 				},
 				{
