@@ -162,12 +162,10 @@ func (g *GoGitRepo) Checkout(ctx context.Context, branch string, createIfNotFoun
 		return fmt.Errorf("expecting branch name")
 	}
 
-	branchRefName := plumbing.NewBranchReferenceName(branch)
 	branchCoOpts := git.CheckoutOptions{
-		Branch: plumbing.ReferenceName(branchRefName),
+		Branch: plumbing.NewBranchReferenceName(branch),
 		Force:  true, // removes any local changes
 	}
-
 	err := g.tree.Checkout(&branchCoOpts)
 	if err == nil {
 		return nil // success
@@ -200,7 +198,6 @@ func (g *GoGitRepo) Checkout(ctx context.Context, branch string, createIfNotFoun
 		branchCoOpts.Create = true
 		return g.tree.Checkout(&branchCoOpts)
 	}
-
 	return err
 }
 
