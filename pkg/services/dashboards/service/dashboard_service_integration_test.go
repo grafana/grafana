@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
+	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -895,7 +896,10 @@ func permissionScenario(t *testing.T, desc string, canSave bool, fn permissionSc
 			publicDashboardFakeService,
 			cfg,
 			nil,
-			tracer)
+			tracer,
+			nil,
+			sort.ProvideService(),
+		)
 		dashboardPermissions := accesscontrolmock.NewMockedPermissionsService()
 		dashboardService, err := ProvideDashboardServiceImpl(
 			cfg, dashboardStore, folderStore,
@@ -910,6 +914,8 @@ func permissionScenario(t *testing.T, desc string, canSave bool, fn permissionSc
 			quotaService,
 			nil,
 			nil,
+			nil,
+			sort.ProvideService(),
 		)
 		dashboardService.RegisterDashboardPermissions(dashboardPermissions)
 		require.NoError(t, err)
@@ -981,7 +987,10 @@ func callSaveWithResult(t *testing.T, cmd dashboards.SaveDashboardCommand, sqlSt
 		publicDashboardFakeService,
 		cfg,
 		nil,
-		tracer)
+		tracer,
+		nil,
+		sort.ProvideService(),
+	)
 	dashboardPermissions := accesscontrolmock.NewMockedPermissionsService()
 	dashboardPermissions.On("SetPermissions",
 		mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
@@ -998,6 +1007,8 @@ func callSaveWithResult(t *testing.T, cmd dashboards.SaveDashboardCommand, sqlSt
 		quotaService,
 		nil,
 		nil,
+		nil,
+		sort.ProvideService(),
 	)
 	require.NoError(t, err)
 	service.RegisterDashboardPermissions(dashboardPermissions)
@@ -1030,7 +1041,10 @@ func callSaveWithError(t *testing.T, cmd dashboards.SaveDashboardCommand, sqlSto
 		publicDashboardFakeService,
 		cfg,
 		nil,
-		tracer)
+		tracer,
+		nil,
+		sort.ProvideService(),
+	)
 	service, err := ProvideDashboardServiceImpl(
 		cfg, dashboardStore, folderStore,
 		featuremgmt.WithFeatures(),
@@ -1044,6 +1058,8 @@ func callSaveWithError(t *testing.T, cmd dashboards.SaveDashboardCommand, sqlSto
 		quotaService,
 		nil,
 		nil,
+		nil,
+		sort.ProvideService(),
 	)
 	require.NoError(t, err)
 	service.RegisterDashboardPermissions(accesscontrolmock.NewMockedPermissionsService())
@@ -1095,7 +1111,10 @@ func saveTestDashboard(t *testing.T, title string, orgID int64, folderUID string
 		publicDashboardFakeService,
 		cfg,
 		nil,
-		tracer)
+		tracer,
+		nil,
+		sort.ProvideService(),
+	)
 	service, err := ProvideDashboardServiceImpl(
 		cfg, dashboardStore, folderStore,
 		features,
@@ -1109,6 +1128,8 @@ func saveTestDashboard(t *testing.T, title string, orgID int64, folderUID string
 		quotaService,
 		nil,
 		nil,
+		nil,
+		sort.ProvideService(),
 	)
 	require.NoError(t, err)
 	service.RegisterDashboardPermissions(dashboardPermissions)
@@ -1166,7 +1187,10 @@ func saveTestFolder(t *testing.T, title string, orgID int64, sqlStore db.DB) *da
 		publicDashboardFakeService,
 		cfg,
 		nil,
-		tracer)
+		tracer,
+		nil,
+		sort.ProvideService(),
+	)
 	folderPermissions.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
 	service, err := ProvideDashboardServiceImpl(
 		cfg, dashboardStore, folderStore,
@@ -1181,6 +1205,8 @@ func saveTestFolder(t *testing.T, title string, orgID int64, sqlStore db.DB) *da
 		quotaService,
 		nil,
 		nil,
+		nil,
+		sort.ProvideService(),
 	)
 	require.NoError(t, err)
 	service.RegisterDashboardPermissions(accesscontrolmock.NewMockedPermissionsService())

@@ -101,10 +101,6 @@ export class UnifiedSearcher implements GrafanaSearcher {
         opts.push({ value: `-${sf.name}`, label: `${sf.display} (most)` });
         opts.push({ value: `${sf.name}`, label: `${sf.display} (least)` });
       }
-      for (const sf of sortTimeFields) {
-        opts.push({ value: `-${sf.name}`, label: `${sf.display} (recent)` });
-        opts.push({ value: `${sf.name}`, label: `${sf.display} (oldest)` });
-      }
     }
 
     return Promise.resolve(opts);
@@ -204,15 +200,19 @@ export class UnifiedSearcher implements GrafanaSearcher {
     if (!hasMissing) {
       return rsp;
     }
-    // we still have results here with folders we can't find
-    // filter the results since we probably don't have access to that folder
+
     const locationInfo = await this.locationInfo;
-    const hits = rsp.hits.filter((hit) => {
-      if (hit.folder === undefined || locationInfo[hit.folder] !== undefined) {
-        return true;
+    const hits = rsp.hits.map((hit) => {
+      if (hit.folder === undefined) {
+        return { ...hit, location: 'general', folder: 'general' };
       }
-      console.warn('Dropping search hit with missing folder', hit);
-      return false;
+
+      // this means user has permission to see this dashboard, but not the folder contents
+      if (locationInfo[hit.folder] === undefined) {
+        return { ...hit, location: 'sharedwithme', folder: 'sharedwithme' };
+      }
+
+      return hit;
     });
     const totalHits = rsp.totalHits - (rsp.hits.length - hits.length);
     return { ...rsp, hits, totalHits };
@@ -279,12 +279,6 @@ const sortFields = [
   { name: 'errors_last_30_days', display: 'Errors 30 days' },
 ];
 
-// Enterprise only time sort field values for dashboards
-const sortTimeFields = [
-  { name: 'created_at', display: 'Created time' },
-  { name: 'updated_at', display: 'Updated time' },
-];
-
 function noDataResponse(): QueryResponse | PromiseLike<QueryResponse> {
   return {
     view: new DataFrameView({ length: 0, fields: [] }),
@@ -301,11 +295,6 @@ function noDataResponse(): QueryResponse | PromiseLike<QueryResponse> {
 /** Given the internal field name, this gives a reasonable display name for the table colum header */
 function getSortFieldDisplayName(name: string) {
   for (const sf of sortFields) {
-    if (sf.name === name) {
-      return sf.display;
-    }
-  }
-  for (const sf of sortTimeFields) {
     if (sf.name === name) {
       return sf.display;
     }
@@ -370,6 +359,11 @@ async function loadLocationInfo(): Promise<Record<string, LocationInfo>> {
           name: 'Dashboards',
           url: '/dashboards',
         }, // share location info with everyone
+        sharedwithme: {
+          kind: 'sharedwithme',
+          name: 'Shared with me',
+          url: '',
+        },
       };
       for (const hit of rsp.hits) {
         locationInfo[hit.name] = {

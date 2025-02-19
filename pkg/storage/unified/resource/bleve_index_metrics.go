@@ -12,6 +12,7 @@ import (
 
 var (
 	onceIndex             sync.Once
+	onceSprinkles         sync.Once
 	IndexMetrics          *BleveIndexMetrics
 	SprinklesIndexMetrics *SprinklesMetrics
 )
@@ -36,7 +37,7 @@ type SprinklesMetrics struct {
 var IndexCreationBuckets = []float64{1, 5, 10, 25, 50, 75, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000}
 
 func NewSprinklesMetrics() *SprinklesMetrics {
-	onceIndex.Do(func() {
+	onceSprinkles.Do(func() {
 		SprinklesIndexMetrics = &SprinklesMetrics{
 			SprinklesLatency: prometheus.NewHistogram(prometheus.HistogramOpts{
 				Namespace:                       "index_server",
