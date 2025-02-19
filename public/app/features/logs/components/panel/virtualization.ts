@@ -8,7 +8,7 @@ let gridSize = 8;
 let paddingBottom = gridSize * 0.75;
 export let lineHeight = 22;
 let measurementMode: 'canvas' | 'dom' = 'canvas';
-const iconWidth = 22;
+const iconWidth = 24;
 
 // Controls the space between fields in the log line, timestamp, level, displayed fields, and log line body
 export const FIELD_GAP_MULTIPLIER = 1.5;
@@ -130,7 +130,6 @@ export function measureTextHeight(text: string, maxWidth: number, beforeWidth = 
       if (beforeWidth) {
         beforeWidth = 0;
       }
-      //console.log(testLogLine)
       logLines += 1;
       start += testLogLine.length;
     }
