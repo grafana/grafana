@@ -360,12 +360,12 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     // i.e. /^$myVar$/ or /$myVar/ or /^($myVar)$/
     const regex = new RegExp(`\\/(?:\\^)?(.*)(\\$${variable.name})(.*)(?:\\$)?\\/`, 'gm');
     if (!query) {
-      return;
+      return value;
     }
 
     const queryMatches = query.match(regexMatcher);
     if (!queryMatches) {
-      return;
+      return value;
     }
     for (const match of queryMatches) {
       if (!match.match(regex)) {
