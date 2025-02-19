@@ -5,16 +5,15 @@ import * as React from 'react';
 import { DisplayValue, formattedValueToString } from '@grafana/data';
 import { TableCellDisplayMode } from '@grafana/schema';
 
-import { useStyles2 } from '../../themes';
-import { getCellLinks } from '../../utils';
-import { clearLinkButtonStyles } from '../Button';
-import { DataLinksContextMenu } from '../DataLinks/DataLinksContextMenu';
-
-import { CellActions } from './CellActions';
-import { TableCellInspectorMode } from './TableCellInspector';
-import { TableStyles } from './TableRT/styles';
-import { TableCellProps, CustomCellRendererProps, TableCellOptions } from './types';
-import { getCellColors, getCellOptions } from './utils';
+import { useStyles2 } from '../../../themes';
+import { getCellLinks } from '../../../utils';
+import { clearLinkButtonStyles } from '../../Button';
+import { DataLinksContextMenu } from '../../DataLinks/DataLinksContextMenu';
+import { CellActions } from '../CellActions';
+import { TableCellInspectorMode } from '../TableCellInspector';
+import { TableStyles } from '../TableRT/styles';
+import { TableCellProps, CustomCellRendererProps, TableCellOptions } from '../types';
+import { getCellColors, getCellOptions } from '../utils';
 
 export const DefaultCell = (props: TableCellProps) => {
   const { field, cell, tableStyles, row, cellProps, frame, rowStyled, rowExpanded, textWrapped, height, actions } =
