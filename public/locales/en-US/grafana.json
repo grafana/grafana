@@ -334,6 +334,7 @@
       "no-delivery-attempts": "No delivery attempts",
       "no-integrations": "No integrations configured",
       "on-call-unreachable": "Grafana OnCall plugin has been enabled in your Grafana instances but it is not reachable. Please check the plugin configuration",
+      "on-call-unreachable-title": "Loading OnCall integration failed",
       "only-firing": "Delivering <1>only firing</1> notifications",
       "receiver-summary": {
         "jira": "Creates a \"{{issueType}}\" issue in the \"{{project}}\" project"
