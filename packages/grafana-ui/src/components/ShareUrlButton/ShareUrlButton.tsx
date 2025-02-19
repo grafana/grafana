@@ -63,7 +63,7 @@ export function ShareUrlButton({ collapsed }: Props) {
       </Dropdown>
     </ButtonGroup>
   );
-};
+}
 
 function absoluteTimeRangeURL(url?: string) {
   const MINUTE_IN_MILLISECONDS = 60 * 1000;
@@ -78,7 +78,7 @@ function absoluteTimeRangeURL(url?: string) {
     queryParams.set('to', toUtc(Date.now()).valueOf().toString());
     queryParams.set(
       'from',
-      toUtc(Date.now() - (30 * MINUTE_IN_MILLISECONDS))
+      toUtc(Date.now() - 30 * MINUTE_IN_MILLISECONDS)
         .valueOf()
         .toString()
     );
@@ -98,13 +98,12 @@ function absoluteTimeRangeURL(url?: string) {
   return href;
 }
 
-
 const getStyles = (theme: GrafanaTheme2) => ({
   copy: css({
     marginLeft: 'auto',
     marginRight: '0',
     padding: '0 8px',
-    'svg': css({
+    svg: css({
       marginRight: '0',
     }),
   }),
@@ -115,7 +114,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   shareText: css({
     marginLeft: '8px',
     '@media screen and (max-width: 1040px)': {
-      display: 'none', /*Won't be displayed on screens below or equal to 1040px width*/
+      display: 'none' /*Won't be displayed on screens below or equal to 1040px width*/,
     },
   }),
 });

@@ -22,9 +22,7 @@ interface StoryProps extends Partial<Props> {
 }
 
 export const ShareUrlButton: StoryFn<StoryProps> = (args) => {
-  return (
-    <ShareUrlButtonImpl />
-  );
+  return <ShareUrlButtonImpl />;
 };
 
 export default meta;
