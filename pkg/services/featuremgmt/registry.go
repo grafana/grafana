@@ -1455,6 +1455,14 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
+			Name:              "managedDualWriter",
+			Description:       "Pick the dual write mode from database configs",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaSearchAndStorageSquad,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+		},
+		{
 			Name:        "pluginsSriChecks",
 			Description: "Enables SRI checks for plugin assets",
 			Stage:       FeatureStageExperimental,

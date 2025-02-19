@@ -34,6 +34,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
@@ -69,6 +70,7 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 	sql db.DB,
 	tracing *tracing.TracingService,
 	unified resource.ResourceClient,
+	dual dualwrite.Service,
 	sorter sort.Service,
 ) *DashboardsAPIBuilder {
 	softDelete := features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore)
@@ -84,7 +86,7 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 		features:         features,
 		accessControl:    accessControl,
 		unified:          unified,
-		search:           dashboard.NewSearchHandler(tracing, cfg, legacyDashboardSearcher, unified, features),
+		search:           dashboard.NewSearchHandler(tracing, dual, legacyDashboardSearcher, unified, features),
 
 		legacy: &dashboard.DashboardStorage{
 			Resource:       dashboardv0alpha1.DashboardResourceInfo,
