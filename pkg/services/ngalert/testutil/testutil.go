@@ -66,8 +66,7 @@ func SetupDashboardService(tb testing.TB, sqlStore db.DB, fs *folderimpl.Dashboa
 		features, folderPermissions, ac,
 		foldertest.NewFakeService(), folder.NewFakeStore(),
 		nil, client.MockTestRestConfig{}, nil, quotaService, nil, nil, nil,
-		dualwrite.ProvideTestService(),
-		sort.ProvideService(),
+		dualwrite.ProvideTestService(), sort.ProvideService(),
 	)
 	require.NoError(tb, err)
 	dashboardService.RegisterDashboardPermissions(dashboardPermissions)
