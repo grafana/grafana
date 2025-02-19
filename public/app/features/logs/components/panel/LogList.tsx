@@ -71,7 +71,7 @@ export const LogList = ({
   const widthRef = useRef(containerElement.clientWidth);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const dimensions = useMemo(
-    () => wrapLogMessage ? [] : calculateFieldDimensions(processedLogs, displayedFields),
+    () => (wrapLogMessage ? [] : calculateFieldDimensions(processedLogs, displayedFields)),
     [displayedFields, processedLogs, wrapLogMessage]
   );
   const styles = getStyles(dimensions);
