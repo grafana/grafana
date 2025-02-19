@@ -89,7 +89,7 @@ func (a *SyncStatePersister) saveAlertStates(ctx context.Context, states ...Stat
 		instance := ngModels.AlertInstance{
 			AlertInstanceKey:  key,
 			Labels:            ngModels.InstanceLabels(s.Labels),
-			CurrentState:      ngModels.InstanceStateType(s.State.State.String()),
+			CurrentState:      ngModels.InstanceStateType(s.AlertInstance.EvaluationState.String()),
 			CurrentReason:     s.StateReason,
 			LastEvalTime:      s.LastEvaluationTime,
 			CurrentStateSince: s.StartsAt,
@@ -101,7 +101,7 @@ func (a *SyncStatePersister) saveAlertStates(ctx context.Context, states ...Stat
 
 		err = a.store.SaveAlertInstance(ctx, instance)
 		if err != nil {
-			logger.Error("Failed to save alert state", "labels", s.Labels.String(), "state", s.State, "error", err)
+			logger.Error("Failed to save alert state", "labels", s.Labels.String(), "state", s.AlertInstance, "error", err)
 			return nil
 		}
 		return nil

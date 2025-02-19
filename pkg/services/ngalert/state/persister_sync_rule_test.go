@@ -29,7 +29,7 @@ func TestSyncRuleStatePersister_Sync(t *testing.T) {
 			name: "success case",
 			states: StateTransitions{
 				{
-					State: &State{
+					AlertInstance: &AlertInstance{
 						Labels: data.Labels{
 							"label-1": "value-1",
 						},
@@ -67,7 +67,7 @@ func TestSyncRuleStatePersister_Sync(t *testing.T) {
 				instance := models.AlertInstance{
 					AlertInstanceKey:  key,
 					Labels:            models.InstanceLabels(s.Labels),
-					CurrentState:      models.InstanceStateType(s.State.State.String()),
+					CurrentState:      models.InstanceStateType(s.AlertInstance.EvaluationState.String()),
 					CurrentReason:     s.StateReason,
 					LastEvalTime:      s.LastEvaluationTime,
 					CurrentStateSince: s.StartsAt,
@@ -112,7 +112,7 @@ func TestSyncRuleStatePersister_Sync(t *testing.T) {
 		}
 		states := StateTransitions{
 			{
-				State: &State{
+				AlertInstance: &AlertInstance{
 					Labels: data.Labels{
 						"label-1": "value-1",
 					},

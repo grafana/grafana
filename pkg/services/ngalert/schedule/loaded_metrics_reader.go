@@ -18,7 +18,7 @@ func (a *alertRule) newLoadedMetricsReader(rule *ngmodels.AlertRule) eval.Alerti
 }
 
 type RuleStateProvider interface {
-	GetStatesForRuleUID(orgID int64, alertRuleUID string) []*state.State
+	GetStatesForRuleUID(orgID int64, alertRuleUID string) []*state.AlertInstance
 }
 
 // AlertingResultsFromRuleState implements eval.AlertingResultsReader that gets the data from state manager.
@@ -36,7 +36,7 @@ func (n AlertingResultsFromRuleState) Read() map[data.Fingerprint]struct{} {
 		if st.StateReason != "" {
 			continue
 		}
-		if st.State == eval.Alerting || st.State == eval.Pending {
+		if st.EvaluationState == eval.Alerting || st.EvaluationState == eval.Pending {
 			active[st.ResultFingerprint] = struct{}{}
 		}
 	}

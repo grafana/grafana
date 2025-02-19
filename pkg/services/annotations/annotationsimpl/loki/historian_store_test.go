@@ -109,7 +109,7 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 		})
 
 		t.Run("should return ErrLokiStoreNotFound if rule is not found", func(t *testing.T) {
-			var rules = slices.Concat(maps.Values(dashboardRules)...)
+			rules := slices.Concat(maps.Values(dashboardRules)...)
 			id := rand.Int63n(1000) // in Postgres ID is integer, so limit range
 			// make sure id is not known
 			for slices.IndexFunc(rules, func(rule *ngmodels.AlertRule) bool {
@@ -348,7 +348,7 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 					DashboardID:  dashboard1.ID,
 					DashboardUID: &dashboard1.UID,
 					PanelID:      *rule.PanelID,
-					Time:         transition.State.LastEvaluationTime.UnixMilli(),
+					Time:         transition.AlertInstance.LastEvaluationTime.UnixMilli(),
 					NewState:     transition.Formatted(),
 				}
 				if i > 0 {
@@ -586,8 +586,8 @@ func TestBuildTransition(t *testing.T) {
 		}
 
 		expected := &state.StateTransition{
-			State: &state.State{
-				State:              eval.Normal,
+			AlertInstance: &state.AlertInstance{
+				EvaluationState:    eval.Normal,
 				StateReason:        "",
 				LastEvaluationTime: time.Time{},
 				Values:             values,
@@ -699,8 +699,8 @@ func genStateTransitions(t *testing.T, num int, start time.Time) []state.StateTr
 	t.Helper()
 
 	transitions := make([]state.StateTransition, 0, num)
-	lastState := state.State{
-		State:              eval.Normal,
+	lastState := state.AlertInstance{
+		EvaluationState:    eval.Normal,
 		StateReason:        "",
 		LastEvaluationTime: start,
 		Values: map[string]float64{
@@ -715,12 +715,12 @@ func genStateTransitions(t *testing.T, num int, start time.Time) []state.StateTr
 
 	for i := 0; i < num; i++ {
 		stateVal := rand.Intn(4)
-		if stateVal == int(lastState.State) {
+		if stateVal == int(lastState.EvaluationState) {
 			stateVal = (stateVal + 1) % 4
 		}
 
-		newState := state.State{
-			State:              eval.State(stateVal),
+		newState := state.AlertInstance{
+			EvaluationState:    eval.State(stateVal),
 			StateReason:        "",
 			LastEvaluationTime: lastState.LastEvaluationTime.Add(time.Second * time.Duration(i)),
 			Values:             lastState.Values,
@@ -728,9 +728,9 @@ func genStateTransitions(t *testing.T, num int, start time.Time) []state.StateTr
 		}
 
 		transitions = append(transitions, state.StateTransition{
-			PreviousState:       lastState.State,
+			PreviousState:       lastState.EvaluationState,
 			PreviousStateReason: lastState.StateReason,
-			State:               &newState,
+			AlertInstance:       &newState,
 		})
 
 		lastState = newState

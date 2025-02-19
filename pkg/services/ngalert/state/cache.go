@@ -19,7 +19,7 @@ import (
 )
 
 type ruleStates struct {
-	states map[data.Fingerprint]*State
+	states map[data.Fingerprint]*AlertInstance
 }
 
 type cache struct {
@@ -61,7 +61,7 @@ func (c *cache) countAlertsBy(state eval.State) float64 {
 	for _, orgMap := range c.states {
 		for _, rule := range orgMap {
 			for _, st := range rule.states {
-				if st.State == state {
+				if st.EvaluationState == state {
 					count++
 				}
 			}
@@ -166,8 +166,8 @@ func expand(ctx context.Context, log log.Logger, name string, original map[strin
 	return expanded, errs
 }
 
-func (rs *ruleStates) deleteStates(predicate func(s *State) bool) []*State {
-	deleted := make([]*State, 0)
+func (rs *ruleStates) deleteStates(predicate func(s *AlertInstance) bool) []*AlertInstance {
+	deleted := make([]*AlertInstance, 0)
 	for id, state := range rs.states {
 		if predicate(state) {
 			delete(rs.states, id)
@@ -177,7 +177,7 @@ func (rs *ruleStates) deleteStates(predicate func(s *State) bool) []*State {
 	return deleted
 }
 
-func (c *cache) deleteRuleStates(ruleKey ngModels.AlertRuleKey, predicate func(s *State) bool) []*State {
+func (c *cache) deleteRuleStates(ruleKey ngModels.AlertRuleKey, predicate func(s *AlertInstance) bool) []*AlertInstance {
 	c.mtxStates.Lock()
 	defer c.mtxStates.Unlock()
 	ruleStates, ok := c.states[ruleKey.OrgID][ruleKey.UID]
@@ -196,24 +196,24 @@ func (c *cache) setRuleStates(ruleKey ngModels.AlertRuleKey, s ruleStates) {
 	c.states[ruleKey.OrgID][ruleKey.UID] = &s
 }
 
-func (c *cache) set(entry *State) {
+func (c *cache) set(entry *AlertInstance) {
 	c.mtxStates.Lock()
 	defer c.mtxStates.Unlock()
 	if _, ok := c.states[entry.OrgID]; !ok {
 		c.states[entry.OrgID] = make(map[string]*ruleStates)
 	}
 	if _, ok := c.states[entry.OrgID][entry.AlertRuleUID]; !ok {
-		c.states[entry.OrgID][entry.AlertRuleUID] = &ruleStates{states: make(map[data.Fingerprint]*State)}
+		c.states[entry.OrgID][entry.AlertRuleUID] = &ruleStates{states: make(map[data.Fingerprint]*AlertInstance)}
 	}
 	c.states[entry.OrgID][entry.AlertRuleUID].states[entry.CacheID] = entry
 }
 
-func (c *cache) get(orgID int64, alertRuleUID string, stateId data.Fingerprint) *State {
+func (c *cache) get(orgID int64, alertRuleUID string, stateId data.Fingerprint) *AlertInstance {
 	c.mtxStates.RLock()
 	defer c.mtxStates.RUnlock()
 	ruleStates, ok := c.states[orgID][alertRuleUID]
 	if ok {
-		var state *State
+		var state *AlertInstance
 		state, ok = ruleStates.states[stateId]
 		if ok {
 			return state
@@ -222,8 +222,8 @@ func (c *cache) get(orgID int64, alertRuleUID string, stateId data.Fingerprint) 
 	return nil
 }
 
-func (c *cache) getAll(orgID int64) []*State {
-	var states []*State
+func (c *cache) getAll(orgID int64) []*AlertInstance {
+	var states []*AlertInstance
 	c.mtxStates.RLock()
 	defer c.mtxStates.RUnlock()
 	for _, v1 := range c.states[orgID] {
@@ -234,7 +234,7 @@ func (c *cache) getAll(orgID int64) []*State {
 	return states
 }
 
-func (c *cache) getStatesForRuleUID(orgID int64, alertRuleUID string) []*State {
+func (c *cache) getStatesForRuleUID(orgID int64, alertRuleUID string) []*AlertInstance {
 	c.mtxStates.RLock()
 	defer c.mtxStates.RUnlock()
 	orgRules, ok := c.states[orgID]
@@ -245,7 +245,7 @@ func (c *cache) getStatesForRuleUID(orgID int64, alertRuleUID string) []*State {
 	if !ok {
 		return nil
 	}
-	result := make([]*State, 0, len(rs.states))
+	result := make([]*AlertInstance, 0, len(rs.states))
 	for _, state := range rs.states {
 		result = append(result, state)
 	}
@@ -253,7 +253,7 @@ func (c *cache) getStatesForRuleUID(orgID int64, alertRuleUID string) []*State {
 }
 
 // removeByRuleUID deletes all entries in the state cache that match the given UID. Returns removed states
-func (c *cache) removeByRuleUID(orgID int64, uid string) []*State {
+func (c *cache) removeByRuleUID(orgID int64, uid string) []*AlertInstance {
 	c.mtxStates.Lock()
 	defer c.mtxStates.Unlock()
 	orgStates, ok := c.states[orgID]
@@ -268,7 +268,7 @@ func (c *cache) removeByRuleUID(orgID int64, uid string) []*State {
 	if len(rs.states) == 0 {
 		return nil
 	}
-	states := make([]*State, 0, len(rs.states))
+	states := make([]*AlertInstance, 0, len(rs.states))
 	for _, state := range rs.states {
 		states = append(states, state)
 	}
@@ -290,7 +290,7 @@ func (c *cache) GetAlertInstances() []ngModels.AlertInstance {
 				states = append(states, ngModels.AlertInstance{
 					AlertInstanceKey:  key,
 					Labels:            ngModels.InstanceLabels(v2.Labels),
-					CurrentState:      ngModels.InstanceStateType(v2.State.String()),
+					CurrentState:      ngModels.InstanceStateType(v2.EvaluationState.String()),
 					CurrentReason:     v2.StateReason,
 					LastEvalTime:      v2.LastEvaluationTime,
 					CurrentStateSince: v2.StartsAt,

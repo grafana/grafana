@@ -48,7 +48,7 @@ func (a *SyncRuleStatePersister) Sync(ctx context.Context, span trace.Span, rule
 		instance := models.AlertInstance{
 			AlertInstanceKey:  key,
 			Labels:            models.InstanceLabels(s.Labels),
-			CurrentState:      models.InstanceStateType(s.State.State.String()),
+			CurrentState:      models.InstanceStateType(s.AlertInstance.EvaluationState.String()),
 			CurrentReason:     s.StateReason,
 			LastEvalTime:      s.LastEvaluationTime,
 			CurrentStateSince: s.StartsAt,

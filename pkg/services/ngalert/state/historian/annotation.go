@@ -205,7 +205,7 @@ func buildAnnotations(rule history_model.RuleMeta, states []state.StateTransitio
 		}
 		logger.Debug("Alert state changed creating annotation", "newState", state.Formatted(), "oldState", state.PreviousFormatted())
 
-		annotationText, annotationData := BuildAnnotationTextAndData(rule, state.State)
+		annotationText, annotationData := BuildAnnotationTextAndData(rule, state.AlertInstance)
 
 		item := annotations.Item{
 			AlertID:   rule.ID,
@@ -222,11 +222,11 @@ func buildAnnotations(rule history_model.RuleMeta, states []state.StateTransitio
 	return items
 }
 
-func BuildAnnotationTextAndData(rule history_model.RuleMeta, currentState *state.State) (string, *simplejson.Json) {
+func BuildAnnotationTextAndData(rule history_model.RuleMeta, currentState *state.AlertInstance) (string, *simplejson.Json) {
 	jsonData := simplejson.New()
 	var value string
 
-	switch currentState.State {
+	switch currentState.EvaluationState {
 	case eval.Error:
 		if currentState.Error == nil {
 			jsonData.Set("error", nil)

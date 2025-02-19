@@ -47,10 +47,10 @@ func TestSyncPersister_saveAlertStates(t *testing.T) {
 	for _, fromState := range allStates {
 		for i, toState := range allStates {
 			tr := StateTransition{
-				State: &State{
-					State:       toState.State,
-					StateReason: toState.Reason,
-					Labels:      ngmodels.GenerateAlertLabels(5, fmt.Sprintf("%d--", i)),
+				AlertInstance: &AlertInstance{
+					EvaluationState: toState.State,
+					StateReason:     toState.Reason,
+					Labels:          ngmodels.GenerateAlertLabels(5, fmt.Sprintf("%d--", i)),
 				},
 				PreviousState:       fromState.State,
 				PreviousStateReason: fromState.Reason,
@@ -79,7 +79,7 @@ func TestSyncPersister_saveAlertStates(t *testing.T) {
 		assert.Len(t, transitionToKey, len(savedKeys))
 
 		for key, tr := range transitionToKey {
-			assert.Containsf(t, savedKeys, key, "state %s (%s) was not saved but should be", tr.State.State, tr.StateReason)
+			assert.Containsf(t, savedKeys, key, "state %s (%s) was not saved but should be", tr.AlertInstance.EvaluationState, tr.StateReason)
 		}
 	})
 
@@ -99,10 +99,10 @@ func TestSyncPersister_saveAlertStates(t *testing.T) {
 			savedKeys[saved.AlertInstanceKey] = saved
 		}
 		for key, tr := range transitionToKey {
-			if tr.State.State == eval.Normal && tr.StateReason == "" && tr.PreviousState == eval.Normal && tr.PreviousStateReason == "" {
+			if tr.AlertInstance.EvaluationState == eval.Normal && tr.StateReason == "" && tr.PreviousState == eval.Normal && tr.PreviousStateReason == "" {
 				continue
 			}
-			assert.Containsf(t, savedKeys, key, "state %s (%s) was not saved but should be", tr.State.State, tr.StateReason)
+			assert.Containsf(t, savedKeys, key, "state %s (%s) was not saved but should be", tr.AlertInstance.EvaluationState, tr.StateReason)
 		}
 	})
 
@@ -115,11 +115,11 @@ func TestSyncPersister_saveAlertStates(t *testing.T) {
 			MaxStateSaveConcurrency: 1,
 		})
 
-		state := &State{
+		state := &AlertInstance{
 			OrgID:             rand.Int63(),
 			AlertRuleUID:      util.GenerateShortUID(),
 			CacheID:           data.Fingerprint(rand.Int63()),
-			State:             eval.Alerting,
+			EvaluationState:   eval.Alerting,
 			StateReason:       "TEST",
 			ResultFingerprint: data.Fingerprint(rand.Int63()),
 			LatestResult: &Evaluation{
@@ -156,7 +156,7 @@ func TestSyncPersister_saveAlertStates(t *testing.T) {
 		}
 
 		transition := StateTransition{
-			State:               state,
+			AlertInstance:       state,
 			PreviousState:       eval.Normal,
 			PreviousStateReason: util.GenerateShortUID(),
 		}
@@ -170,7 +170,7 @@ func TestSyncPersister_saveAlertStates(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, expectedAlertInstanceKey, saved.AlertInstanceKey)
 		assert.Equal(t, ngmodels.InstanceLabels(state.Labels), saved.Labels)
-		assert.EqualValues(t, ngmodels.InstanceStateType(state.State.String()), saved.CurrentState)
+		assert.EqualValues(t, ngmodels.InstanceStateType(state.EvaluationState.String()), saved.CurrentState)
 		assert.Equal(t, state.StateReason, saved.CurrentReason)
 		assert.Equal(t, state.StartsAt, saved.CurrentStateSince)
 		assert.Equal(t, state.EndsAt, saved.CurrentStateEnd)
