@@ -50,7 +50,7 @@ To create a contact point with webhook integration, complete the following steps
 1. Enter a name for the contact point.
 1. From the **Integration** list, select **Webhook**.
 1. In the **URL** field, copy in your Webhook URL.
-1. (Optional) Configure [additional settings](#settings).
+1. (Optional) Configure [additional settings](#webhook-settings).
 1. Click **Save contact point**.
 
 For more details on contact points, including how to test them and enable notifications, refer to [Configure contact points](ref:configure-contact-points).
