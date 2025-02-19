@@ -1,4 +1,4 @@
-import { act, render, screen, fireEvent } from '@testing-library/react';
+import { act, render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
@@ -436,9 +436,9 @@ describe('Combobox', () => {
     });
 
     it('should display message when there is an error loading async options', async () => {
-      const asyncOptions = jest.fn(() => {
-        throw new Error('Could not retrieve options');
-      });
+      const fetchData = jest.fn();
+      const asyncOptions = fetchData.mockRejectedValue(new Error('Could not retrieve options'));
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
 
       render(<Combobox options={asyncOptions} value={null} onChange={onChangeHandler} />);
 
@@ -447,12 +447,11 @@ describe('Combobox', () => {
       await user.type(input, 'test');
 
       await act(async () => {
-        jest.advanceTimersToNextTimer();
+        jest.advanceTimersByTimeAsync(500);
       });
-
-      const emptyMessage = screen.queryByText('An error occurred while loading options.');
-
-      expect(emptyMessage).toBeInTheDocument();
+      expect(asyncOptions).rejects.toThrow('Could not retrieve options');
+      waitFor(() => expect(consoleErrorSpy).toHaveBeenCalled());
+      asyncOptions.mockClear();
     });
 
     describe('with a value already selected', () => {
