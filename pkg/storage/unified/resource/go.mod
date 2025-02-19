@@ -19,7 +19,7 @@ require (
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250121113133-e747350fee2d
 	github.com/grafana/grafana/pkg/apiserver v0.0.0-20250121113133-e747350fee2d // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.2.0
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.25.1
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.26.0
 	github.com/hashicorp/golang-lru/v2 v2.0.7
 	github.com/prometheus/client_golang v1.20.5
 	github.com/stretchr/testify v1.10.0
@@ -191,7 +191,7 @@ require (
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529 // indirect
 	github.com/spf13/cobra v1.8.1 // indirect
-	github.com/spf13/pflag v1.0.5 // indirect
+	github.com/spf13/pflag v1.0.6 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/tjhop/slog-gokit v0.1.3 // indirect
 	github.com/uber/jaeger-client-go v2.30.0+incompatible // indirect

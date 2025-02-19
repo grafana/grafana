@@ -11,7 +11,7 @@ require (
 	cloud.google.com/go/storage v1.43.0 // @grafana/grafana-backend-group
 	github.com/Masterminds/semver/v3 v3.3.0 // @grafana/grafana-developer-enablement-squad
 	github.com/aws/aws-sdk-go v1.55.5 // @grafana/aws-datasources
-	github.com/docker/docker v27.4.1+incompatible // @grafana/grafana-developer-enablement-squad
+	github.com/docker/docker v27.5.1+incompatible // @grafana/grafana-developer-enablement-squad
 	github.com/drone/drone-cli v1.8.0 // @grafana/grafana-developer-enablement-squad
 	github.com/gogo/protobuf v1.3.2 // indirect; @grafana/alerting-backend
 	github.com/google/go-cmp v0.6.0 // @grafana/grafana-backend-group
@@ -91,7 +91,7 @@ require (
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
 	github.com/containerd/log v0.1.0 // indirect
 	github.com/distribution/reference v0.6.0 // indirect
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.25.1 // indirect
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.26.0 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/moby/docker-image-spec v1.3.1 // indirect
 	github.com/moby/term v0.5.0 // indirect
