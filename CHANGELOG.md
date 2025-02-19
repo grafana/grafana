@@ -1,3 +1,16 @@
+<!-- 11.2.7 START -->
+
+# 11.2.7 (2025-02-18)
+
+### Features and enhancements
+
+- **Docker:** Use our own glibc 2.40 binaries [#99922](https://github.com/grafana/grafana/pull/99922), [@DanCech](https://github.com/DanCech)
+
+### Bug fixes
+
+- **Azure:** Correctly set application insights resource values [#99596](https://github.com/grafana/grafana/pull/99596), [@aangelisc](https://github.com/aangelisc)
+
+<!-- 11.2.7 END -->
 <!-- 11.1.12 START -->
 
 # 11.1.12 (2025-02-18)
