@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
+	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -302,7 +303,7 @@ func TestIntegrationDashboardInheritedFolderRBAC(t *testing.T) {
 		folderStore := folderimpl.ProvideStore(sqlStore)
 		folderSvc := folderimpl.ProvideService(
 			folderStore, mock.New(), bus.ProvideBus(tracer), dashboardWriteStore, folderimpl.ProvideDashboardFolderStore(sqlStore),
-			nil, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil)
+			nil, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, sort.ProvideService())
 
 		parentUID := ""
 		for i := 0; ; i++ {
