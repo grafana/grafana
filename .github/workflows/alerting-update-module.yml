@@ -39,6 +39,8 @@ jobs:
 
       - name: Get latest commit
         id: latest-commit
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           TO_COMMIT=$(gh api repos/grafana/alerting/commits/main --jq '.sha')
           if [ -z "$TO_COMMIT" ]; then
@@ -63,6 +65,8 @@ jobs:
 
       - name: Check for commit history
         id: check-commits
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           # get all commits that contains 'Alerting:' in the message          
           ALERTING_COMMITS=$(gh api repos/grafana/alerting/compare/${{ steps.current-commit.outputs.from_commit }}...${{ steps.latest-commit.outputs.to_commit }} \
