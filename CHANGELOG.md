@@ -16,7 +16,6 @@
 - **RBAC:** Don't check folder access if `annotationPermissionUpdate` FT is enabled [#100116](https://github.com/grafana/grafana/pull/100116), [@IevaVasiljeva](https://github.com/IevaVasiljeva)
 
 <!-- 11.4.2 END -->
-=======
 <!-- 11.3.4 START -->
 
 # 11.3.4 (2025-02-18)
