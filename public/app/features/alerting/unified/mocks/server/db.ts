@@ -2,7 +2,7 @@ import { Factory } from 'fishery';
 import { uniqueId } from 'lodash';
 
 import { DataSourceInstanceSettings, PluginType } from '@grafana/data';
-import { config, setDataSourceSrv } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import { FolderDTO } from 'app/types';
 import {
   PromAlertingRuleDTO,
