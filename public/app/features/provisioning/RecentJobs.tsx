@@ -190,7 +190,7 @@ export function RecentJobs({ repo }: Props) {
           <EmptyState />
         ) : (
           <InteractiveTable
-            data={items.slice(0, 15)}
+            data={items.slice(0, 8)}
             columns={jobColumns}
             getRowId={(item) => `${item.metadata?.name}`}
             renderExpandedRow={(row) => <ExpandedRow row={row} />}
