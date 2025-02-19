@@ -4,8 +4,9 @@ import { ThresholdsConfig, ThresholdsMode, VizOrientation, getFieldConfigWithMin
 import { BarGaugeDisplayMode, BarGaugeValueMode, TableCellDisplayMode } from '@grafana/schema';
 
 import { BarGauge } from '../BarGauge/BarGauge';
-import { DataLinksContextMenu, DataLinksContextMenuApi } from '../DataLinks/DataLinksContextMenu';
+import { DataLinksContextMenuApi } from '../DataLinks/DataLinksContextMenu';
 
+import { DataLinksActionsTooltip } from './DataLinksActionsTooltip';
 import { TableCellProps } from './types';
 import { getAlignmentFactor, getCellOptions } from './utils';
 
@@ -86,9 +87,11 @@ export const BarGaugeCell = (props: TableCellProps) => {
   return (
     <div {...cellProps} className={tableStyles.cellContainer}>
       {hasLinks || hasActions ? (
-        <DataLinksContextMenu links={getLinks} actions={actions} style={{ display: 'flex', width: '100%' }}>
-          {(api) => renderComponent(api)}
-        </DataLinksContextMenu>
+        <>
+          <DataLinksActionsTooltip links={getLinks()} actions={actions}>
+            {renderComponent({})}
+          </DataLinksActionsTooltip>
+        </>
       ) : (
         renderComponent({})
       )}

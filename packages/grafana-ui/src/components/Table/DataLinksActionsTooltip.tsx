@@ -21,14 +21,15 @@ import { VizTooltipWrapper } from '../VizTooltip/VizTooltipWrapper';
 interface Props {
   links: LinkModel[];
   actions?: ActionModel[];
-  value: string | ReactElement;
+  value?: string | ReactElement;
+  children?: ReactElement;
 }
 
 /**
  *
  * @internal
  */
-export const DataLinksActionsTooltip = ({ links, actions, value }: Props) => {
+export const DataLinksActionsTooltip = ({ links, actions, value, children }: Props) => {
   const styles = useStyles2(getStyles);
   const [show, setShow] = useState(false);
 
@@ -59,8 +60,8 @@ export const DataLinksActionsTooltip = ({ links, actions, value }: Props) => {
 
   return (
     <>
-      <span ref={refs.setReference} {...getReferenceProps()} className={styles.clickableValue}>
-        {value}
+      <span ref={refs.setReference} {...getReferenceProps()} className={styles.cursor}>
+        {value ?? children}
       </span>
       {show && (
         <Portal>
@@ -99,7 +100,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     pinned: css({
       boxShadow: theme.shadows.z3,
     }),
-    clickableValue: css({
+    cursor: css({
       cursor: 'pointer',
     }),
   };
