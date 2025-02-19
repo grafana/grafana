@@ -43,7 +43,7 @@ refs:
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/transform-data/
   visualizations:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/ 
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/
 ---

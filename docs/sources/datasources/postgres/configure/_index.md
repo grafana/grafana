@@ -51,8 +51,10 @@ refs:
 # Configure the PostgreSQL data source
 
 This document provides instructions for configuring the PostgreSQL data source and explains available configuration options. For general information on managing data sources refer to [Data source management](ref:data-source-management).
+
 <!-- vale Grafana.ProductPossessives = NO -->
 <!-- vale Grafana.Spelling = NO -->
+
 ## Before you begin
 
 You must have the `Organization administrator` role to configure the Postgres data source.
@@ -93,7 +95,7 @@ Following is a list of PostgreSQL configuration options:
 
 **Connection section:**
 
-- **Host URL** - The IP address/hostname and optional port of your PostgreSQL instance. 
+- **Host URL** - The IP address/hostname and optional port of your PostgreSQL instance.
 - **Database name** - The name of your PostgreSQL database.
 
 **Authentication section:**
@@ -192,6 +194,7 @@ datasources:
 
 <!-- vale Grafana.ProductPossessives = YES -->
 <!-- vale Grafana.Spelling = YES -->
+
 #### Troubleshoot provisioning issues
 
 If you encounter metric request errors or other issues:

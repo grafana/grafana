@@ -59,7 +59,9 @@ refs:
 ---
 
 # PostgreSQL query editor
+
 <!-- vale Grafana.Spelling = NO -->
+
 Grafana’s query editors are unique for each data source. For general information on Grafana query editors, refer to [Query editors](ref:query-editor). For general information on querying data sources in Grafana, refer to [Query and transform data](ref:query-transform-data).
 
 The PostgreSQL query editor is located on the [Explore page](ref:explore). You can also access the PostgreSQL query editor from a dashboard panel. Click the ellipsis in the upper right of the panel and select **Edit**.
