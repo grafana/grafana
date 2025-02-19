@@ -1,23 +1,30 @@
 package migrate
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
-func isEmptyRepo(tree []repository.FileTreeEntry) bool {
+func verifyEmptyRepo(tree []repository.FileTreeEntry) error {
+	var folders []string
+	var files []string
+
 	for _, item := range tree {
 		if strings.HasPrefix(item.Path, ".") {
 			continue
 		}
 		if !item.Blob {
-			return false // found a folder!
-		}
-		if !resources.ShouldIgnorePath(item.Path) {
-			return false // has a json or yaml
+			folders = append(folders, item.Path)
+		} else if !resources.ShouldIgnorePath(item.Path) {
+			files = append(files, item.Path)
 		}
 	}
-	return true
+
+	if len(folders) > 0 || len(files) > 0 {
+		return fmt.Errorf("expected empty repository, but found %d files in %d folders", len(files), len(folders))
+	}
+	return nil
 }

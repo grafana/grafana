@@ -6,12 +6,8 @@ import (
 	"fmt"
 	"os"
 
-	"google.golang.org/grpc/metadata"
-
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	dashboard "github.com/grafana/grafana/pkg/apis/dashboard"
-	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -31,6 +27,9 @@ type MigrationWorker struct {
 	// Read users
 	clients *resources.ClientFactory
 
+	// temporary... while we still do an import
+	parsers *resources.ParserFactory
+
 	// Check where values are currently saved
 	storageStatus dualwrite.Service
 
@@ -46,6 +45,7 @@ type MigrationWorker struct {
 
 func NewMigrationWorker(clients *resources.ClientFactory,
 	legacyMigrator legacy.LegacyMigrator,
+	parsers *resources.ParserFactory, // should not be necessary!
 	storageStatus dualwrite.Service,
 	batch resource.BatchStoreClient,
 	secrets secrets.Service,
@@ -54,6 +54,7 @@ func NewMigrationWorker(clients *resources.ClientFactory,
 	return &MigrationWorker{
 		clonedir,
 		clients,
+		parsers,
 		storageStatus,
 		legacyMigrator,
 		batch,
@@ -97,8 +98,8 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 	if err != nil {
 		return fmt.Errorf("unable to read currnet tree: %w", err)
 	}
-	if isEmptyRepo(tree) {
-		return fmt.Errorf("expecting empty repository target")
+	if err = verifyEmptyRepo(tree); err != nil {
+		return err
 	}
 
 	dynamicClient, _, err := w.clients.New(repo.Config().Namespace)
@@ -106,17 +107,15 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 		return fmt.Errorf("error getting client: %w", err)
 	}
 
-	worker, err := newMigrationJob(ctx, repo, *options, dynamicClient, w.legacyMigrator, w.batch, progress)
+	parser, err := w.parsers.GetParser(ctx, repo)
+	if err != nil {
+		return fmt.Errorf("error getting parser: %w", err)
+	}
+
+	worker, err := newMigrationJob(ctx, repo, *options, dynamicClient, parser, w.batch, w.legacyMigrator, progress)
 	if err != nil {
 		return fmt.Errorf("error creating job: %w", err)
 	}
-
-	// Make sure we close
-	defer func() {
-		if worker.batch != nil {
-			_ = worker.batch.CloseSend()
-		}
-	}()
 
 	if options.History {
 		progress.SetMessage("load users")
@@ -146,13 +145,10 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 		}
 	}
 
-	rsp, err := worker.batch.CloseAndRecv()
-	if err != nil {
-		return fmt.Errorf("error getting results: %w", err)
-	}
-	worker.logger.Info("processed", "results", rsp)
-
-	return nil
+	// Now import from out local checkout
+	// TODO: can we skip this and write while exporting?
+	// YES... but :( the export with *history* does not know the current value
+	return worker.importFromRepo(ctx, w.storageStatus)
 }
 
 // MigrationJob holds all context for a running job
@@ -160,8 +156,9 @@ type migrationJob struct {
 	logger logging.Logger
 	target repository.Repository
 	legacy legacy.LegacyMigrator
-	batch  resource.BatchStore_BatchProcessClient
-	client *resources.DynamicClient // Read from
+	client *resources.DynamicClient // used to read users
+	parser *resources.Parser
+	batch  resource.BatchStoreClient
 
 	namespace string
 
@@ -177,31 +174,13 @@ func newMigrationJob(ctx context.Context,
 	target repository.Repository,
 	options provisioning.MigrateJobOptions,
 	client *resources.DynamicClient,
-	legacyMigrator legacy.LegacyMigrator,
+	parser *resources.Parser,
 	batch resource.BatchStoreClient,
+	legacyMigrator legacy.LegacyMigrator,
 	progress jobs.JobProgressRecorder,
 ) (*migrationJob, error) {
 	if options.Prefix != "" {
 		options.Prefix = safepath.Clean(options.Prefix)
-	}
-
-	ns := target.Config().Namespace
-	settings := resource.BatchSettings{
-		RebuildCollection: true, // wipes everything in the collection
-		Collection: []*resource.ResourceKey{{
-			Namespace: ns,
-			Group:     folders.GROUP,
-			Resource:  folders.RESOURCE,
-		}, {
-			Namespace: ns,
-			Group:     dashboard.GROUP,
-			Resource:  dashboard.DASHBOARD_RESOURCE,
-		}},
-	}
-	ctx = metadata.NewOutgoingContext(ctx, settings.ToMD())
-	stream, err := batch.BatchProcess(ctx)
-	if err != nil {
-		return nil, err
 	}
 
 	return &migrationJob{
@@ -211,8 +190,9 @@ func newMigrationJob(ctx context.Context,
 		progress:   progress,
 		options:    options,
 		client:     client,
+		parser:     parser,
+		batch:      batch,
 		legacy:     legacyMigrator,
-		batch:      stream,
 		folderTree: resources.NewEmptyFolderTree(),
 	}, nil
 }

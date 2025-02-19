@@ -13,6 +13,7 @@ import (
 
 	"github.com/go-git/go-billy/v5/util"
 	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	githttp "github.com/go-git/go-git/v5/plumbing/transport/http"
@@ -20,6 +21,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
@@ -116,24 +118,18 @@ func Clone(
 		return nil, err
 	}
 
-	// Checkout the selected branch
-	err = worktree.Checkout(&git.CheckoutOptions{
-		Branch: plumbing.NewBranchReferenceName(gitcfg.Branch),
-		Force:  true, // clear any local changes
-		Create: true, // if not exists?
-	})
-	if err != nil {
-		return nil, fmt.Errorf("unable to open branch %w", err)
-	}
-
-	return &GoGitRepo{
+	gogit := &GoGitRepo{
 		config:            config,
 		opts:              opts,
 		tree:              worktree,
 		decryptedPassword: string(decrypted),
 		repo:              repo,
 		dir:               dir,
-	}, nil
+	}
+
+	// Make sure we are checked out on the requested branch
+	err = gogit.Checkout(ctx, gitcfg.Branch, true)
+	return gogit, err
 }
 
 func mkdirTempClone(root string, config *provisioning.Repository) (string, error) {
@@ -147,29 +143,47 @@ func mkdirTempClone(root string, config *provisioning.Repository) (string, error
 }
 
 // Remove everything from the tree
-func (g *GoGitRepo) CheckoutEmptyBranch(ctx context.Context, branch string) (int64, error) {
-	if branch != "" {
-		err := g.tree.Checkout(&git.CheckoutOptions{
-			Branch: plumbing.NewBranchReferenceName(branch),
-			Force:  true, // clear any local changes
-			Create: true,
-		})
-		if err != nil {
-			return 0, err
+func (g *GoGitRepo) Checkout(ctx context.Context, branch string, createIfNotFound bool) error {
+	if branch == "" {
+		return fmt.Errorf("expecting branch name")
+	}
+
+	branchRefName := plumbing.NewBranchReferenceName(branch)
+	branchCoOpts := git.CheckoutOptions{
+		Branch: plumbing.ReferenceName(branchRefName),
+		Force:  true, // removes any local changes
+	}
+
+	err := g.tree.Checkout(&branchCoOpts)
+	if err == nil {
+		return nil // success
+	}
+
+	logger := logging.FromContext(ctx)
+	logger.Info("local checkout failed, will attempt to fetch remote branch of same name.", "branch", branch)
+
+	remote, err := g.repo.Remote("origin")
+	if err != nil {
+		return err
+	}
+	refSpecs := []config.RefSpec{config.RefSpec(
+		fmt.Sprintf("refs/heads/%s:refs/heads/%s", branch, branch),
+	)}
+	if err = remote.Fetch(&git.FetchOptions{RefSpecs: refSpecs}); err != nil {
+		if !errors.Is(err, git.NoErrAlreadyUpToDate) {
+			return fmt.Errorf("fetch origin failed: %v", err)
 		}
 	}
 
-	count := int64(0)
-	return count, util.Walk(g.tree.Filesystem, "/", func(path string, info fs.FileInfo, err error) error {
-		if err != nil || strings.HasPrefix(path, "/.git") || path == "/" {
-			return err
-		}
-		if !info.IsDir() {
-			count++
-			_, err = g.tree.Remove(strings.TrimLeft(path, "/"))
-		}
-		return err
-	})
+	// Try again
+	err = g.tree.Checkout(&branchCoOpts)
+	if err != nil {
+		// It did not exist, so lets create it
+		branchCoOpts.Create = true
+		return g.tree.Checkout(&branchCoOpts)
+	}
+
+	return err
 }
 
 // Affer making changes to the worktree, push changes
@@ -183,7 +197,7 @@ func (g *GoGitRepo) Push(ctx context.Context, progress io.Writer) error {
 		}
 	}
 
-	return g.repo.PushContext(ctx, &git.PushOptions{
+	err := g.repo.PushContext(ctx, &git.PushOptions{
 		Progress: progress,
 		Force:    true, // avoid fast-forward-errors
 		Auth: &githttp.BasicAuth{ // reuse logic from clone?
@@ -191,6 +205,10 @@ func (g *GoGitRepo) Push(ctx context.Context, progress io.Writer) error {
 			Password: g.decryptedPassword,
 		},
 	})
+	if errors.Is(err, git.NoErrAlreadyUpToDate) {
+		return nil // same as the target
+	}
+	return err
 }
 
 // Config implements repository.Repository.

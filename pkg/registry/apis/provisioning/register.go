@@ -493,6 +493,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			b.jobs.Register(migrate.NewMigrationWorker(
 				b.client,
 				b.legacyMigrator,
+				b.parsers,
 				b.storageStatus,
 				b.unified,
 				b.secrets,
