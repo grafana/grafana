@@ -54,7 +54,6 @@ function HistoryView({ history, path, repo }: Props) {
 
   return (
     <Stack direction={'column'}>
-      <h5>History</h5>
       {history.items.map((item) => (
         <Card href={`${PROVISIONING_URL}/${repo}/file/${path}?ref=${item.ref}`} key={item.ref}>
           <Card.Heading>{item.message}</Card.Heading>
