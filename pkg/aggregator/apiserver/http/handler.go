@@ -3,7 +3,6 @@ package http
 import (
 	"net/http"
 	"net/url"
-	"path"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/httpstream"
@@ -46,42 +45,6 @@ func NewHTTPHandler(
 	}
 
 	return backendHandler.NewBackendHandler(h, delegate, dataplaneService)
-}
-
-func (h *HTTPHandler) AdmissionMutationHandler(b aggregationv0alpha1.Backend) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		w.WriteHeader(http.StatusNotImplemented)
-		w.Write([]byte("AdmissionMutationHandler not implemented"))
-	})
-}
-
-func (h *HTTPHandler) AdmissionValidationHandler(b aggregationv0alpha1.Backend) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		w.WriteHeader(http.StatusNotImplemented)
-		w.Write([]byte("AdmissionValidationHandler not implemented"))
-	})
-}
-
-func (h *HTTPHandler) QueryDataHandler(b aggregationv0alpha1.Backend) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		w.WriteHeader(http.StatusNotImplemented)
-		w.Write([]byte("QueryDataHandler not implemented"))
-	})
-}
-
-func (h *HTTPHandler) RouteHandler(b aggregationv0alpha1.Backend) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		ctx := req.Context()
-		span := tracing.SpanFromContext(ctx)
-		span.AddEvent("RouteHandler")
-		location, err := url.Parse(b.BaseURL)
-		if err != nil {
-			proxyError(w, req, "invalid backend URL", http.StatusInternalServerError)
-			return
-		}
-		location.Path = path.Join(location.Path, req.URL.Path)
-		h.handlerFor(location).ServeHTTP(w, req)
-	})
 }
 
 func (h *HTTPHandler) handlerFor(location *url.URL) http.Handler {
