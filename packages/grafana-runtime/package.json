@@ -44,6 +44,7 @@
     "@grafana/ui": "11.6.0-pre",
     "history": "4.10.1",
     "lodash": "4.17.21",
+    "react-loading-skeleton": "3.5.0",
     "react-use": "17.6.0",
     "rxjs": "7.8.1",
     "tslib": "2.8.1"
