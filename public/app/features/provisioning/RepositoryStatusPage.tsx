@@ -19,6 +19,7 @@ import {
   TabsBar,
   Text,
   TextLink,
+  Modal,
 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
@@ -43,18 +44,17 @@ enum TabSelection {
   Overview = 'overview',
   Resources = 'resources',
   Files = 'files',
-  Export = 'export',
 }
 
 const tabInfo: SelectableValue<TabSelection> = [
   { value: TabSelection.Overview, label: 'Overview', title: 'Repository overview' },
   { value: TabSelection.Resources, label: 'Resources', title: 'Resources saved in grafana database' },
   { value: TabSelection.Files, label: 'Files', title: 'The raw file list from the repository' },
-  { value: TabSelection.Export, label: 'Export' },
 ];
 
 export default function RepositoryStatusPage() {
   const { name = '' } = useParams();
+  const [showExportModal, setShowExportModal] = useState(false);
   const query = useListRepositoryQuery({
     fieldSelector: `metadata.name=${name}`,
     watch: true,
@@ -77,7 +77,7 @@ export default function RepositoryStatusPage() {
           <Stack>
             <StatusBadge enabled={Boolean(data.spec?.sync?.enabled)} state={data.status?.sync?.state} name={name} />
             <SyncRepository repository={data} />
-            <Button variant="secondary" icon="upload">
+            <Button variant="secondary" icon="upload" onClick={() => setShowExportModal(true)}>
               Export
             </Button>
             <LinkButton variant="secondary" icon="cog" href={`${PROVISIONING_URL}/${name}/edit`}>
@@ -112,8 +112,13 @@ export default function RepositoryStatusPage() {
                   {tab === TabSelection.Overview && <RepositoryOverview repo={data} />}
                   {tab === TabSelection.Resources && <RepositoryResources repo={data} />}
                   {tab === TabSelection.Files && <FilesView repo={data} />}
-                  {tab === TabSelection.Export && <ExportToRepository repo={data} />}
                 </TabContent>
+
+                {showExportModal && (
+                  <Modal isOpen={true} title="Export to Repository" onDismiss={() => setShowExportModal(false)}>
+                    <ExportToRepository repo={data} />
+                  </Modal>
+                )}
               </>
             ) : (
               <div>not found</div>

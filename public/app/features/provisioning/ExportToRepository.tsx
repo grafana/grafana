@@ -35,34 +35,32 @@ export function ExportToRepository({ repo }: Props) {
   return (
     <Box paddingTop={2}>
       <form onSubmit={handleSubmit(onSubmit)}>
-        <FieldSet label="Export from grafana into repository">
-          {isGit && (
-            <Field label="Target Branch" description={'The target branch.  This will be created and emptied first'}>
-              <Input placeholder={repo.spec?.github?.branch} {...register('branch')} />
-            </Field>
-          )}
-
-          <Field label="Prefix">
-            <Input placeholder="Prefix in the remote system" {...register('prefix')} />
+        {isGit && (
+          <Field label="Target Branch" description={'The target branch.  This will be created and emptied first'}>
+            <Input placeholder={repo.spec?.github?.branch} {...register('branch')} />
           </Field>
+        )}
 
-          <Field label="Identifier" description="Include the current identifier in exported metadata">
-            <Switch {...register('identifier')} />
-          </Field>
+        <Field label="Prefix">
+          <Input placeholder="Prefix in the remote system" {...register('prefix')} />
+        </Field>
 
-          <Field label="History" description="Include commits for each historical value">
-            <Switch {...register('history')} />
-          </Field>
+        <Field label="Identifier" description="Include the current identifier in exported metadata">
+          <Switch {...register('identifier')} />
+        </Field>
 
-          <Button
-            type="submit"
-            disabled={formState.isSubmitting}
-            variant={'secondary'}
-            icon={exportQuery.isLoading ? 'spinner' : undefined}
-          >
-            Export
-          </Button>
-        </FieldSet>
+        <Field label="History" description="Include commits for each historical value">
+          <Switch {...register('history')} />
+        </Field>
+
+        <Button
+          type="submit"
+          disabled={formState.isSubmitting}
+          variant={'secondary'}
+          icon={exportQuery.isLoading ? 'spinner' : undefined}
+        >
+          Export
+        </Button>
       </form>
     </Box>
   );
