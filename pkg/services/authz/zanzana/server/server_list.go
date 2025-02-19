@@ -141,7 +141,7 @@ func (s *Server) listObjects(ctx context.Context, req *openfgav1.ListObjectsRequ
 type listFn func(ctx context.Context, req *openfgav1.ListObjectsRequest) (*openfgav1.ListObjectsResponse, error)
 
 func (s *Server) listObjectCached(ctx context.Context, req *openfgav1.ListObjectsRequest, fn listFn) (*openfgav1.ListObjectsResponse, error) {
-	ctx, span := tracer.Start(ctx, "server.listObjectCached")
+	ctx, span := s.tracer.Start(ctx, "server.listObjectCached")
 	defer span.End()
 
 	key, err := getRequestHash(req)
@@ -163,7 +163,7 @@ func (s *Server) listObjectCached(ctx context.Context, req *openfgav1.ListObject
 }
 
 func (s *Server) streamedListObjects(ctx context.Context, req *openfgav1.ListObjectsRequest) (*openfgav1.ListObjectsResponse, error) {
-	ctx, span := tracer.Start(ctx, "server.streamedListObjects")
+	ctx, span := s.tracer.Start(ctx, "server.streamedListObjects")
 	defer span.End()
 
 	r := &openfgav1.StreamedListObjectsRequest{
