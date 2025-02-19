@@ -34,13 +34,12 @@ func UnaryRetryInterceptor(cfg RetryConfig) grpc.UnaryClientInterceptor {
 }
 
 // UnaryRetryInstrument creates an interceptor to count and log retry attempts.
-func UnaryRetryInstrument(metric *prometheus.CounterVec /*, logger log.Logger*/) grpc.UnaryClientInterceptor {
+func UnaryRetryInstrument(metric *prometheus.CounterVec) grpc.UnaryClientInterceptor {
 	return func(ctx context.Context, method string, req, resp interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 		// We can tell if a call is a retry by checking the retry attempt metadata.
 		attempt, err := strconv.Atoi(metautils.ExtractOutgoing(ctx).Get(grpc_retry.AttemptMetadataKey))
 		if err == nil && attempt > 0 {
 			metric.WithLabelValues(method).Inc()
-			//level.Debug(logger).Log("msg", "retrying grpc request", "method", method, "attempt", attempt)
 		}
 		return invoker(ctx, method, req, resp, cc, opts...)
 	}
