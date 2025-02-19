@@ -42,6 +42,7 @@ type SecretAPIBuilder struct {
 	keeperStorage      contracts.KeeperStorage
 	decryptStorage     contracts.DecryptStorage
 	accessClient       claims.AccessClient
+	isDevMode          bool // REMOVE ME
 }
 
 func NewSecretAPIBuilder(
@@ -50,8 +51,9 @@ func NewSecretAPIBuilder(
 	keeperStorage contracts.KeeperStorage,
 	decryptStorage contracts.DecryptStorage,
 	accessClient claims.AccessClient,
+	isDevMode bool, // REMOVE ME
 ) *SecretAPIBuilder {
-	return &SecretAPIBuilder{tracer, secureValueStorage, keeperStorage, decryptStorage, accessClient}
+	return &SecretAPIBuilder{tracer, secureValueStorage, keeperStorage, decryptStorage, accessClient, isDevMode}
 }
 
 func RegisterAPIService(
@@ -84,7 +86,7 @@ func RegisterAPIService(
 		return nil, fmt.Errorf("register secret access control roles: %w", err)
 	}
 
-	builder := NewSecretAPIBuilder(tracer, secureValueStorage, keeperStorage, decryptStorage, accessClient)
+	builder := NewSecretAPIBuilder(tracer, secureValueStorage, keeperStorage, decryptStorage, accessClient, cfg.SecretsManagement.IsDeveloperMode)
 	apiregistration.RegisterAPI(builder)
 	return builder, nil
 }
@@ -154,6 +156,10 @@ func (b *SecretAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions 
 // For Secrets, this is not the case, but if we want to make it so, we need to update this ResourceAuthorizer to check the containing folder.
 // If we ever want to do that, get guidance from IAM first as well.
 func (b *SecretAPIBuilder) GetAuthorizer() authorizer.Authorizer {
+	if b.isDevMode {
+		return nil
+	}
+
 	return authsvc.NewResourceAuthorizer(b.accessClient)
 }
 
