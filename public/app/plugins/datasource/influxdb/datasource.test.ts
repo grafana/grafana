@@ -363,6 +363,18 @@ describe('interpolateQueryExpr', () => {
     expect(result).toBe(expectation);
   });
 
+  it('should **not** return the escaped value if the value **is not** wrapped in regex and the query is more complex (e.g. text is contained between two / but not a regex', () => {
+    const value = 'testmatch';
+    const variableMock = queryBuilder().withId('tempVar').withName('tempVar').withMulti(false).build();
+    const result = ds.interpolateQueryExpr(
+      value,
+      variableMock,
+      `select value where ("tag"::tag =~ /value/) AND where other = $tempVar $timeFilter GROUP BY time($__interval) tz('Europe/London')`
+    );
+    const expectation = `testmatch`;
+    expect(result).toBe(expectation);
+  });
+
   it('should return floating point number as it is', () => {
     const variableMock = queryBuilder()
       .withId('tempVar')
