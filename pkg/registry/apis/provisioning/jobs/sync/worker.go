@@ -28,7 +28,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 // SyncWorker synchronizes the external repo with grafana database
@@ -45,9 +44,6 @@ type SyncWorker struct {
 
 	// Check if the system is using unified storage
 	storageStatus dualwrite.Service
-
-	// Direct access to unified storage... to wipe any existing values!
-	batch resource.BatchStoreClient
 }
 
 func NewSyncWorker(
@@ -55,14 +51,12 @@ func NewSyncWorker(
 	parsers *resources.ParserFactory,
 	lister resources.ResourceLister,
 	storageStatus dualwrite.Service,
-	batch resource.BatchStoreClient,
 ) *SyncWorker {
 	return &SyncWorker{
 		client:        client,
 		parsers:       parsers,
 		lister:        lister,
 		storageStatus: storageStatus,
-		batch:         batch,
 	}
 }
 
@@ -73,6 +67,10 @@ func (r *SyncWorker) IsSupported(ctx context.Context, job provisioning.Job) bool
 func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, job provisioning.Job, progress jobs.JobProgressRecorder) error {
 	cfg := repo.Config()
 	logger := logging.FromContext(ctx).With("job", job.GetName(), "namespace", job.GetNamespace())
+	// Check if we are onboarding from legacy storage
+	if dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, r.storageStatus) {
+		return fmt.Errorf("sync not supported until storage has migrated")
+	}
 
 	// Update sync status at start using JSON patch
 	patchOperations := []map[string]interface{}{
@@ -86,18 +84,6 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	progress.SetMessage("update sync status at start")
 	if err := r.patchStatus(ctx, cfg, patchOperations); err != nil {
 		return fmt.Errorf("update repo with job status at start: %w", err)
-	}
-
-	// Check if we are onboarding from legacy storage
-	if dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, r.storageStatus) {
-		if job.Spec.Sync.Incremental {
-			return nil
-		}
-
-		progress.SetMessage("wipe unified and set migrated flag")
-		if err := r.wipeUnifiedAndSetMigratedFlag(ctx, job.Namespace); err != nil {
-			return fmt.Errorf("failed to wipe unified and set migrated flag: %w", err)
-		}
 	}
 
 	progress.SetMessage("execute sync job")

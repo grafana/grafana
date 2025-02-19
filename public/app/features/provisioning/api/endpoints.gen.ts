@@ -190,6 +190,10 @@ const injectedRtkApi = api
         }),
         providesTags: ['Repository'],
       }),
+      createRepositoryMigrate: build.mutation<CreateRepositoryMigrateResponse, CreateRepositoryMigrateArg>({
+        query: (queryArg) => ({ url: `/repositories/${queryArg.name}/migrate`, method: 'POST', body: queryArg.body }),
+        invalidatesTags: ['Repository'],
+      }),
       getRepositoryResources: build.query<GetRepositoryResourcesResponse, GetRepositoryResourcesArg>({
         query: (queryArg) => ({ url: `/repositories/${queryArg.name}/resources` }),
         providesTags: ['Repository'],
@@ -405,11 +409,9 @@ export type CreateRepositoryExportArg = {
     branch?: string;
     /** The source folder (or empty) to export */
     folder?: string;
-    /** Preserve history (if possible) */
-    history?: boolean;
     /** Include the identifier in the exported metadata */
     identifier: boolean;
-    /** Target file prefix */
+    /** Prefix in target file system */
     prefix?: string;
   };
 };
@@ -490,6 +492,19 @@ export type GetRepositoryHistoryWithPathArg = {
   path: string;
   /** branch or commit hash */
   ref?: string;
+};
+export type CreateRepositoryMigrateResponse = /** status 200 OK */ Job;
+export type CreateRepositoryMigrateArg = {
+  /** name of the Job */
+  name: string;
+  body: {
+    /** Preserve history (if possible) */
+    history?: boolean;
+    /** Include the identifier in the exported metadata */
+    identifier: boolean;
+    /** Target file prefix */
+    prefix?: string;
+  };
 };
 export type GetRepositoryResourcesResponse = /** status 200 OK */ ResourceList;
 export type GetRepositoryResourcesArg = {
@@ -641,6 +656,12 @@ export type ExportJobOptions = {
   branch?: string;
   /** The source folder (or empty) to export */
   folder?: string;
+  /** Include the identifier in the exported metadata */
+  identifier: boolean;
+  /** Prefix in target file system */
+  prefix?: string;
+};
+export type MigrateJobOptions = {
   /** Preserve history (if possible) */
   history?: boolean;
   /** Include the identifier in the exported metadata */
@@ -664,11 +685,14 @@ export type SyncJobOptions = {
 export type JobSpec = {
   /** Possible enum values:
      - `"export"` Export from grafana into the remote repository
+     - `"migrate"` Migration task -- this will migrate an full instance from SQL > Git
      - `"pr"` Update a pull request -- send preview images, links etc
      - `"sync"` Sync the remote branch with the grafana instance */
-  action: 'export' | 'pr' | 'sync';
+  action: 'export' | 'migrate' | 'pr' | 'sync';
   /** Required when the action is `export` */
   export?: ExportJobOptions;
+  /** Required when the action is `migrate` */
+  migrate?: MigrateJobOptions;
   /** Pull request options */
   pr?: PullRequestJobOptions;
   /** The the repository reference (for now also in labels) */
@@ -1088,6 +1112,7 @@ export const {
   useDeleteRepositoryFilesWithPathMutation,
   useGetRepositoryHistoryQuery,
   useGetRepositoryHistoryWithPathQuery,
+  useCreateRepositoryMigrateMutation,
   useGetRepositoryResourcesQuery,
   useGetRepositoryStatusQuery,
   useReplaceRepositoryStatusMutation,

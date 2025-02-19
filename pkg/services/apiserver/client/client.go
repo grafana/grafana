@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacysearcher"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -51,8 +52,8 @@ type k8sHandler struct {
 }
 
 func NewK8sHandler(dual dualwrite.Service, namespacer request.NamespaceMapper, gvr schema.GroupVersionResource,
-	restConfig func(context.Context) *rest.Config, dashStore dashboards.Store, userSvc user.Service, resourceClient resource.ResourceClient) K8sHandler {
-	legacySearcher := legacysearcher.NewDashboardSearchClient(dashStore)
+	restConfig func(context.Context) *rest.Config, dashStore dashboards.Store, userSvc user.Service, resourceClient resource.ResourceClient, sorter sort.Service) K8sHandler {
+	legacySearcher := legacysearcher.NewDashboardSearchClient(dashStore, sorter)
 	searchClient := resource.NewSearchClient(dual, gvr.GroupResource(), resourceClient, legacySearcher)
 
 	return &k8sHandler{

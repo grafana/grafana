@@ -681,22 +681,16 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:        "kubernetesCliDashboards",
-			Description: "Use the k8s client to retrieve dashboards internally",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaAppPlatformSquad,
-		},
-		{
 			Name:        "kubernetesRestore",
 			Description: "Allow restoring objects in k8s",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaAppPlatformSquad,
 		},
 		{
-			Name:        "kubernetesFoldersServiceV2",
-			Description: "Use the Folders Service V2, and route Folder Service requests to k8s",
+			Name:        "kubernetesClientDashboardsFolders",
+			Description: "Route the folder and dashboard service requests to k8s",
 			Stage:       FeatureStageExperimental,
-			Owner:       grafanaSearchAndStorageSquad,
+			Owner:       grafanaAppPlatformSquad,
 		},
 		{
 			Name:            "datasourceQueryTypes",
@@ -1238,13 +1232,6 @@ var (
 			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaPluginsPlatformSquad,
 			Expression:  "false", // disabled by default
-		},
-		{
-			Name:         "sqlQuerybuilderFunctionParameters",
-			Description:  "Enables SQL query builder function parameters",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaOSSBigTent,
-			FrontendOnly: true,
 		},
 		{
 			Name:        "azureMonitorPrometheusExemplars",

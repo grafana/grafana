@@ -1262,24 +1262,19 @@
                     "description": "The source folder (or empty) to export",
                     "type": "string"
                   },
-                  "history": {
-                    "description": "Preserve history (if possible)",
-                    "type": "boolean"
-                  },
                   "identifier": {
                     "description": "Include the identifier in the exported metadata",
                     "type": "boolean",
                     "default": false
                   },
                   "prefix": {
-                    "description": "Target file prefix",
+                    "description": "Prefix in target file system",
                     "type": "string"
                   }
                 }
               },
               "example": {
                 "folder": "grafan-folder-ref",
-                "history": true,
                 "branch": "target-branch",
                 "prefix": "prefix/in/repo/tree",
                 "identifier": false
@@ -1899,6 +1894,87 @@
           "name": "path",
           "in": "path",
           "description": "path to the resource",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
+    "/apis/provisioning.grafana.app/v0alpha1/namespaces/{namespace}/repositories/{name}/migrate": {
+      "post": {
+        "tags": [
+          "Repository"
+        ],
+        "description": "Export from grafana into the remote repository",
+        "operationId": "createRepositoryMigrate",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "identifier"
+                ],
+                "properties": {
+                  "history": {
+                    "description": "Preserve history (if possible)",
+                    "type": "boolean"
+                  },
+                  "identifier": {
+                    "description": "Include the identifier in the exported metadata",
+                    "type": "boolean",
+                    "default": false
+                  },
+                  "prefix": {
+                    "description": "Target file prefix",
+                    "type": "string"
+                  }
+                }
+              },
+              "example": {
+                "prefix": "prefix/in/repo/tree",
+                "history": true,
+                "identifier": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.Job"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "provisioning.grafana.app",
+          "version": "v0alpha1",
+          "kind": "Job"
+        }
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the Job",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "namespace",
+          "in": "path",
+          "description": "object name and auth scope, such as for teams and projects",
           "required": true,
           "schema": {
             "type": "string",
@@ -2713,17 +2789,13 @@
             "description": "The source folder (or empty) to export",
             "type": "string"
           },
-          "history": {
-            "description": "Preserve history (if possible)",
-            "type": "boolean"
-          },
           "identifier": {
             "description": "Include the identifier in the exported metadata",
             "type": "boolean",
             "default": false
           },
           "prefix": {
-            "description": "Target file prefix",
+            "description": "Prefix in target file system",
             "type": "string"
           }
         }
@@ -3050,11 +3122,12 @@
         ],
         "properties": {
           "action": {
-            "description": "Possible enum values:\n - `\"export\"` Export from grafana into the remote repository\n - `\"pr\"` Update a pull request -- send preview images, links etc\n - `\"sync\"` Sync the remote branch with the grafana instance",
+            "description": "Possible enum values:\n - `\"export\"` Export from grafana into the remote repository\n - `\"migrate\"` Migration task -- this will migrate an full instance from SQL \u003e Git\n - `\"pr\"` Update a pull request -- send preview images, links etc\n - `\"sync\"` Sync the remote branch with the grafana instance",
             "type": "string",
             "default": "",
             "enum": [
               "export",
+              "migrate",
               "pr",
               "sync"
             ]
@@ -3064,6 +3137,14 @@
             "allOf": [
               {
                 "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ExportJobOptions"
+              }
+            ]
+          },
+          "migrate": {
+            "description": "Required when the action is `migrate`",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.MigrateJobOptions"
               }
             ]
           },
@@ -3170,6 +3251,27 @@
         "type": "object",
         "properties": {
           "path": {
+            "type": "string"
+          }
+        }
+      },
+      "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.MigrateJobOptions": {
+        "type": "object",
+        "required": [
+          "identifier"
+        ],
+        "properties": {
+          "history": {
+            "description": "Preserve history (if possible)",
+            "type": "boolean"
+          },
+          "identifier": {
+            "description": "Include the identifier in the exported metadata",
+            "type": "boolean",
+            "default": false
+          },
+          "prefix": {
+            "description": "Target file prefix",
             "type": "string"
           }
         }

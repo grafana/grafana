@@ -12,7 +12,9 @@ import (
 	"github.com/grafana/authlib/types"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
@@ -75,7 +77,11 @@ func newAuthenticator(auth authn.Authenticator, tracer tracing.Tracer) intercept
 		info, err := auth.Authenticate(ctx, authn.NewGRPCTokenProvider(md))
 		if err != nil {
 			span.RecordError(err)
-			return ctx, err
+			if authn.IsUnauthenticatedErr(err) {
+				return nil, status.Error(codes.Unauthenticated, err.Error())
+			}
+
+			return ctx, status.Error(codes.Internal, err.Error())
 		}
 
 		// FIXME: Add attribute with service subject once https://github.com/grafana/authlib/issues/139 is closed.

@@ -4,6 +4,7 @@ import { useParams } from 'react-router-dom-v5-compat';
 
 import { SelectableValue, urlUtil } from '@grafana/data';
 import {
+  Alert,
   Button,
   CellProps,
   Column,
@@ -27,6 +28,7 @@ import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { isNotFoundError } from '../alerting/unified/api/util';
 
 import { ExportToRepository } from './ExportToRepository';
+import { MigrateToRepository } from './MigrateToRepository';
 import { RepositoryOverview } from './RepositoryOverview';
 import { RepositoryResources } from './RepositoryResources';
 import { StatusBadge } from './StatusBadge';
@@ -36,6 +38,7 @@ import {
   Repository,
   useListRepositoryQuery,
   useDeleteRepositoryFilesWithPathMutation,
+  useGetFrontendSettingsQuery,
 } from './api';
 import { FileDetails } from './api/types';
 import { PROVISIONING_URL } from './constants';
@@ -55,6 +58,8 @@ const tabInfo: SelectableValue<TabSelection> = [
 export default function RepositoryStatusPage() {
   const { name = '' } = useParams();
   const [showExportModal, setShowExportModal] = useState(false);
+  const [showMigrateModal, setShowMigrateModal] = useState(false);
+
   const query = useListRepositoryQuery({
     fieldSelector: `metadata.name=${name}`,
     watch: true,
@@ -62,6 +67,7 @@ export default function RepositoryStatusPage() {
   const data = query.data?.items?.[0];
   const location = useLocation();
   const [queryParams] = useQueryParams();
+  const settings = useGetFrontendSettingsQuery();
   const tab = queryParams['tab'] ?? TabSelection.Overview;
   const remoteURL = data ? getRemoteURL(data) : undefined;
 
@@ -83,9 +89,15 @@ export default function RepositoryStatusPage() {
               </Button>
             )}
             <SyncRepository repository={data} />
-            <Button variant="secondary" icon="upload" onClick={() => setShowExportModal(true)}>
-              Export
-            </Button>
+            {settings.data?.legacyStorage ? (
+              <Button variant="secondary" icon="upload" onClick={() => setShowMigrateModal(true)}>
+                Migrate
+              </Button>
+            ) : (
+              <Button variant="secondary" icon="upload" onClick={() => setShowExportModal(true)}>
+                Export
+              </Button>
+            )}
             <LinkButton variant="secondary" icon="cog" href={`${PROVISIONING_URL}/${name}/edit`}>
               Settings
             </LinkButton>
@@ -94,6 +106,11 @@ export default function RepositoryStatusPage() {
       }
     >
       <Page.Contents isLoading={query.isLoading}>
+        {settings.data?.legacyStorage && (
+          <Alert title="Legacy Storage" severity="error">
+            Instance is not yet running unified storage -- requires migration wizard
+          </Alert>
+        )}
         {notFound ? (
           <EmptyState message={`Repository not found`} variant="not-found">
             <Text element={'p'}>Make sure the repository config exists in the configuration file.</Text>
@@ -123,6 +140,11 @@ export default function RepositoryStatusPage() {
                 {showExportModal && (
                   <Modal isOpen={true} title="Export to Repository" onDismiss={() => setShowExportModal(false)}>
                     <ExportToRepository repo={data} />
+                  </Modal>
+                )}
+                {showMigrateModal && (
+                  <Modal isOpen={true} title="Migrate to Repository" onDismiss={() => setShowMigrateModal(false)}>
+                    <MigrateToRepository repo={data} />
                   </Modal>
                 )}
               </>
