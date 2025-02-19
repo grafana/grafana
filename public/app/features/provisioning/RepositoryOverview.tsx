@@ -148,6 +148,13 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
               <Card.Description>
                 <Grid columns={12} gap={1} alignItems="baseline">
                   <div className={styles.labelColumn}>
+                    <Text color="secondary">Status:</Text>
+                  </div>
+                  <div className={styles.valueColumn}>
+                    <Text variant="body">{status?.sync.state ?? 'N/A'}</Text>
+                  </div>
+
+                  <div className={styles.labelColumn}>
                     <Text color="secondary">Job ID:</Text>
                   </div>
                   <div className={styles.valueColumn}>
