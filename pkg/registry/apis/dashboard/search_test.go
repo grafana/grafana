@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
@@ -33,8 +34,8 @@ func TestSearchFallback(t *testing.T) {
 				"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode0},
 			},
 		}
-		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), cfg, mockLegacyClient, mockClient, nil)
-		searchHandler.client = resource.NewSearchClient(cfg, setting.UnifiedStorageConfigKeyDashboard, mockClient, mockLegacyClient)
+		dual := dualwrite.ProvideService(featuremgmt.WithFeatures(), nil, cfg)
+		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), dual, mockLegacyClient, mockClient, nil)
 
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/search", nil)
@@ -60,8 +61,8 @@ func TestSearchFallback(t *testing.T) {
 				"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode1},
 			},
 		}
-		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), cfg, mockLegacyClient, mockClient, nil)
-		searchHandler.client = resource.NewSearchClient(cfg, setting.UnifiedStorageConfigKeyDashboard, mockClient, mockLegacyClient)
+		dual := dualwrite.ProvideService(featuremgmt.WithFeatures(), nil, cfg)
+		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), dual, mockLegacyClient, mockClient, nil)
 
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/search", nil)
@@ -87,8 +88,8 @@ func TestSearchFallback(t *testing.T) {
 				"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode2},
 			},
 		}
-		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), cfg, mockLegacyClient, mockClient, nil)
-		searchHandler.client = resource.NewSearchClient(cfg, setting.UnifiedStorageConfigKeyDashboard, mockClient, mockLegacyClient)
+		dual := dualwrite.ProvideService(featuremgmt.WithFeatures(), nil, cfg)
+		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), dual, mockLegacyClient, mockClient, nil)
 
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/search", nil)
@@ -114,8 +115,8 @@ func TestSearchFallback(t *testing.T) {
 				"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode3},
 			},
 		}
-		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), cfg, mockLegacyClient, mockClient, nil)
-		searchHandler.client = resource.NewSearchClient(cfg, setting.UnifiedStorageConfigKeyDashboard, mockClient, mockLegacyClient)
+		dual := dualwrite.ProvideService(featuremgmt.WithFeatures(), nil, cfg)
+		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), dual, mockLegacyClient, mockClient, nil)
 
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/search", nil)
@@ -141,8 +142,8 @@ func TestSearchFallback(t *testing.T) {
 				"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode4},
 			},
 		}
-		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), cfg, mockLegacyClient, mockClient, nil)
-		searchHandler.client = resource.NewSearchClient(cfg, setting.UnifiedStorageConfigKeyDashboard, mockClient, mockLegacyClient)
+		dual := dualwrite.ProvideService(featuremgmt.WithFeatures(), nil, cfg)
+		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), dual, mockLegacyClient, mockClient, nil)
 
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/search", nil)
@@ -168,8 +169,8 @@ func TestSearchFallback(t *testing.T) {
 				"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode5},
 			},
 		}
-		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), cfg, mockLegacyClient, mockClient, nil)
-		searchHandler.client = resource.NewSearchClient(cfg, setting.UnifiedStorageConfigKeyDashboard, mockClient, mockLegacyClient)
+		dual := dualwrite.ProvideService(featuremgmt.WithFeatures(), nil, cfg)
+		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), dual, mockLegacyClient, mockClient, nil)
 
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/search", nil)

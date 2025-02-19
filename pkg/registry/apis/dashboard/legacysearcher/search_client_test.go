@@ -71,7 +71,7 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 					searchFields.Field(resource.SEARCH_FIELD_TITLE),
 					searchFields.Field(resource.SEARCH_FIELD_FOLDER),
 					searchFields.Field(resource.SEARCH_FIELD_TAGS),
-					&resource.ResourceTableColumnDefinition{
+					{
 						Name: "", // sort by should be empty if title is what we sorted by
 						Type: resource.ResourceTableColumnDefinition_INT64,
 					},
@@ -144,7 +144,7 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 					searchFields.Field(resource.SEARCH_FIELD_TITLE),
 					searchFields.Field(resource.SEARCH_FIELD_FOLDER),
 					searchFields.Field(resource.SEARCH_FIELD_TAGS),
-					&resource.ResourceTableColumnDefinition{
+					{
 						Name: "views_total",
 						Type: resource.ResourceTableColumnDefinition_INT64,
 					},
@@ -204,7 +204,7 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 					searchFields.Field(resource.SEARCH_FIELD_TITLE),
 					searchFields.Field(resource.SEARCH_FIELD_FOLDER),
 					searchFields.Field(resource.SEARCH_FIELD_TAGS),
-					&resource.ResourceTableColumnDefinition{
+					{
 						Name: "errors_last_30_days",
 						Type: resource.ResourceTableColumnDefinition_INT64,
 					},

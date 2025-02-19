@@ -2623,6 +2623,20 @@
     },
     {
       "metadata": {
+        "name": "managedDualWriter",
+        "resourceVersion": "1739347092893",
+        "creationTimestamp": "2025-02-12T07:58:12Z"
+      },
+      "spec": {
+        "description": "Pick the dual write mode from database configs",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "managedPluginsInstall",
         "resourceVersion": "1720021873452",
         "creationTimestamp": "2023-10-18T13:17:03Z",

@@ -14,7 +14,11 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	dashboard "github.com/grafana/grafana/pkg/apis/dashboard"
 	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/services/provisioning"
+	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
@@ -22,7 +26,6 @@ import (
 type MigrateOptions struct {
 	Namespace    string
 	Store        resource.BatchStoreClient
-	Writer       resource.BatchResourceWriter
 	LargeObjects apistore.LargeObjectSupport
 	BlobStore    resource.BlobStoreClient
 	Resources    []schema.GroupResource
@@ -34,6 +37,15 @@ type MigrateOptions struct {
 // Read from legacy and write into unified storage
 type LegacyMigrator interface {
 	Migrate(ctx context.Context, opts MigrateOptions) (*resource.BatchResponse, error)
+}
+
+// This can migrate Folders, Dashboards and LibraryPanels
+func ProvideLegacyMigrator(
+	sql db.DB, // direct access to tables
+	provisioning provisioning.ProvisioningService, // only needed for dashboard settings
+) LegacyMigrator {
+	dbp := legacysql.NewDatabaseProvider(sql)
+	return NewDashboardAccess(dbp, authlib.OrgNamespaceFormatter, nil, provisioning, false, sort.ProvideService())
 }
 
 type BlobStoreInfo struct {
@@ -48,6 +60,9 @@ func (a *dashboardSqlAccess) Migrate(ctx context.Context, opts MigrateOptions) (
 	info, err := authlib.ParseNamespace(opts.Namespace)
 	if err != nil {
 		return nil, err
+	}
+	if opts.Progress == nil {
+		opts.Progress = func(count int, msg string) {} // noop
 	}
 
 	// Migrate everything
