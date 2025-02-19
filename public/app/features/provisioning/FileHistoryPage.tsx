@@ -63,7 +63,6 @@ function HistoryView({ history, path, repo }: Props) {
           </Card.Meta>
           <Card.Description>
             <Stack gap={1}>
-              <span key={item.ref}>Authors:</span>
               <Stack>
                 {item.authors.map((a) => (
                   <span key={a.username} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -71,7 +70,7 @@ function HistoryView({ history, path, repo }: Props) {
                       <img
                         src={a.avatarURL}
                         alt={`${a.name}'s avatar`}
-                        style={{ width: '20px', height: '20px', borderRadius: '50%', objectFit: 'cover' }}
+                        style={{ width: '24px', height: '24px', borderRadius: '50%', objectFit: 'cover' }}
                       />
                     )}
                     <a href={`https://github.com/${a.username}`}>{a.name}</a>
