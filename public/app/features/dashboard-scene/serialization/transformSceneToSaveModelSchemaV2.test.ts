@@ -49,6 +49,7 @@ import { TabsLayoutManager } from '../scene/layout-tabs/TabsLayoutManager';
 import { DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 
 import { transformSceneToSaveModelSchemaV2 } from './transformSceneToSaveModelSchemaV2';
+import { LayoutOrchestrator } from '../scene/layout-manager/LayoutOrchestrator';
 
 function setupDashboardScene(state: Partial<DashboardSceneState>): DashboardScene {
   return new DashboardScene(state);
@@ -151,74 +152,75 @@ describe('transformSceneToSaveModelSchemaV2', () => {
           type: 'link',
         },
       ],
-      body: new DefaultGridLayoutManager({
-        grid: new SceneGridLayout({
-          isLazy: false,
-          children: [
-            new DashboardGridItem({
-              y: 0,
-              height: 10,
-              body: new VizPanel({
-                key: 'panel-1',
-                pluginId: 'timeseries',
-                title: 'Test Panel',
-                titleItems: [
-                  new VizPanelLinks({
-                    rawLinks: [
-                      { title: 'Test Link 1', url: 'http://test1.com', targetBlank: true },
-                      { title: 'Test Link 2', url: 'http://test2.com' },
-                    ],
-                    menu: new VizPanelLinksMenu({}),
+      body: new LayoutOrchestrator({
+        manager: new DefaultGridLayoutManager({
+          grid: new SceneGridLayout({
+            isLazy: false,
+            children: [
+              new DashboardGridItem({
+                y: 0,
+                height: 10,
+                body: new VizPanel({
+                  key: 'panel-1',
+                  pluginId: 'timeseries',
+                  title: 'Test Panel',
+                  titleItems: [
+                    new VizPanelLinks({
+                      rawLinks: [
+                        { title: 'Test Link 1', url: 'http://test1.com', targetBlank: true },
+                        { title: 'Test Link 2', url: 'http://test2.com' },
+                      ],
+                      menu: new VizPanelLinksMenu({}),
+                    }),
+                  ],
+                  description: 'Test Description',
+                  hoverHeader: true,
+                  hoverHeaderOffset: 10,
+                  fieldConfig: { defaults: {}, overrides: [] },
+                  displayMode: 'transparent',
+                  pluginVersion: '7.0.0',
+                  $timeRange: new SceneTimeRange({
+                    timeZone: 'UTC',
+                    from: 'now-3h',
+                    to: 'now',
                   }),
-                ],
-                description: 'Test Description',
-                hoverHeader: true,
-                hoverHeaderOffset: 10,
-                fieldConfig: { defaults: {}, overrides: [] },
-                displayMode: 'transparent',
-                pluginVersion: '7.0.0',
-                $timeRange: new SceneTimeRange({
-                  timeZone: 'UTC',
-                  from: 'now-3h',
-                  to: 'now',
                 }),
+                // Props related to repeatable panels
+                // repeatedPanels?: VizPanel[],
+                // variableName?: string,
+                // itemHeight?: number,
+                // repeatDirection?: RepeatDirection,
+                // maxPerRow?: number,
               }),
-              // Props related to repeatable panels
-              // repeatedPanels?: VizPanel[],
-              // variableName?: string,
-              // itemHeight?: number,
-              // repeatDirection?: RepeatDirection,
-              // maxPerRow?: number,
-            }),
-            new SceneGridRow({
-              key: 'panel-4',
-              title: 'Test Row',
-              y: 10,
-              $behaviors: [new RowRepeaterBehavior({ variableName: 'customVar' })],
-              children: [
-                new DashboardGridItem({
-                  y: 11,
-                  body: new VizPanel({
-                    key: 'panel-2',
-                    pluginId: 'graph',
-                    title: 'Test Panel 2',
-                    description: 'Test Description 2',
-                    fieldConfig: { defaults: {}, overrides: [] },
-                    displayMode: 'transparent',
-                    pluginVersion: '7.0.0',
-                    $timeRange: new SceneTimeRange({
-                      timeZone: 'UTC',
-                      from: 'now-3h',
-                      to: 'now',
+              new SceneGridRow({
+                key: 'panel-4',
+                title: 'Test Row',
+                y: 10,
+                $behaviors: [new RowRepeaterBehavior({ variableName: 'customVar' })],
+                children: [
+                  new DashboardGridItem({
+                    y: 11,
+                    body: new VizPanel({
+                      key: 'panel-2',
+                      pluginId: 'graph',
+                      title: 'Test Panel 2',
+                      description: 'Test Description 2',
+                      fieldConfig: { defaults: {}, overrides: [] },
+                      displayMode: 'transparent',
+                      pluginVersion: '7.0.0',
+                      $timeRange: new SceneTimeRange({
+                        timeZone: 'UTC',
+                        from: 'now-3h',
+                        to: 'now',
+                      }),
                     }),
                   }),
-                }),
-              ],
-            }),
-          ],
+                ],
+              }),
+            ],
+          }),
         }),
       }),
-      meta: {},
       editPane: new DashboardEditPane(),
       $behaviors: [
         new behaviors.CursorSync({

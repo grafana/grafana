@@ -146,11 +146,14 @@ function panelQueryKindToSceneQuery(query: PanelQueryKind): SceneDataQuery {
   };
 }
 
-export function getLayout(orchestrator: DashboardLayoutManager): DashboardV2Spec['layout'] {
-  if (!(orchestrator instanceof LayoutOrchestrator)) {
-    throw new Error('Expected LayoutOrchestrator');
+export function getLayout(manager: DashboardLayoutManager): DashboardV2Spec['layout'] {
+  let layoutManager: DashboardLayoutManager;
+
+  if (manager instanceof LayoutOrchestrator) {
+    layoutManager = manager.state.manager;
+  } else {
+    layoutManager = manager;
   }
-  const layoutManager = orchestrator.state.manager;
 
   const registryItem = layoutSerializerRegistry.get(layoutManager.descriptor.kind ?? '');
   if (!registryItem) {
