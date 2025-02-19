@@ -41,6 +41,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/transform-data/
+  visualizations:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/ 
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/
 ---
 
 # PostgreSQL data source
@@ -58,6 +63,7 @@ The following documents will help you get started with the PostgreSQL data sourc
 
 Once you have configured the data source you can:
 
+- Create a variety of [visualizations](ref:visualizations)
 - Add [annotations](ref:annotate-visualizations)
 - Set up [alerting](ref:alerting)
 - Add [transformations](ref:transformations)
