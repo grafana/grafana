@@ -29,6 +29,8 @@ interface LayoutOrchestratorState extends SceneObjectState {
   activeItemDimensions?: {
     width: number;
     height: number;
+    left: number;
+    top: number;
   };
   dropZone?: DropZone;
   placeholder?: {
@@ -79,8 +81,6 @@ export class LayoutOrchestrator extends SceneObjectBase<LayoutOrchestratorState>
     this.dropZones = dropZones;
     const { closest, offset } = closestCell(this, this.dropZones, { x: e.clientX, y: e.clientY });
 
-    // layoutItem?.clearParent();
-
     this.setState({
       placeholder: {
         width: closest.right - closest.left,
@@ -93,6 +93,8 @@ export class LayoutOrchestrator extends SceneObjectBase<LayoutOrchestratorState>
       activeItemDimensions: {
         width: closest.right - closest.left,
         height: closest.bottom - closest.top,
+        left: offset.x,
+        top: offset.y,
       },
     });
 
@@ -249,10 +251,13 @@ export class LayoutOrchestrator extends SceneObjectBase<LayoutOrchestratorState>
   }
 
   public static Component = ({ model }: SceneComponentProps<LayoutOrchestrator>) => {
-    const { manager, activeItemRef, activeItemDimensions = { width: 50, height: 50 } } = model.useState();
+    const {
+      manager,
+      activeItemRef,
+      activeItemDimensions = { width: 50, height: 50, left: 0, top: 0 },
+    } = model.useState();
 
     const activeItem = activeItemRef?.resolve();
-    console.log(activeItem);
     return (
       <>
         <Portal>
@@ -260,7 +265,7 @@ export class LayoutOrchestrator extends SceneObjectBase<LayoutOrchestratorState>
           <FloatingPanel
             width={activeItemDimensions.width}
             height={activeItemDimensions.height}
-            offset={{ left: 0, top: 0 }}
+            offset={{ left: activeItemDimensions.left, top: activeItemDimensions.top }}
             ref={model.floatingPanelRef}
           >
             {activeItem && <activeItem.Component model={activeItem} />}

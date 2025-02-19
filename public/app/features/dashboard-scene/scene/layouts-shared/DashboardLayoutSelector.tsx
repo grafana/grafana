@@ -55,11 +55,8 @@ export function useLayoutCategory(layoutManager: DashboardLayoutManager) {
       isOpenDefault: true,
     });
 
-    console.log(layoutManager);
     const layoutOrchestrator = getClosest(layoutManager, (s) => (s instanceof LayoutOrchestrator ? s : undefined));
-    console.log(`Layout orchestrator: ${layoutOrchestrator}`);
     if (layoutOrchestrator) {
-      console.log('orchestrator found!');
       layoutCategory.addItem(
         new OptionsPaneItemDescriptor({
           title: 'Type',

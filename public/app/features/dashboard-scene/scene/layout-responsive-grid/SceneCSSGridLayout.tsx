@@ -89,14 +89,10 @@ export class SceneCSSGridLayout extends SceneObjectBase<SceneCSSGridLayoutState>
   };
 
   public onPointerDown = (e: PointerEvent, panel: VizPanel) => {
-    console.log('pointer down');
     const noContainer = !this.container;
     const cannotDrag = this.cannotDrag(e.target);
     const noLayoutManager = !this.layoutManager;
     if (noContainer || cannotDrag || !this.layoutManager) {
-      console.log(
-        `${noContainer ? 'No container, ' : ''}${cannotDrag ? 'Cannot drag, ' : ''}${noLayoutManager ? 'No layout manager' : ''}`
-      );
       return;
     }
 
