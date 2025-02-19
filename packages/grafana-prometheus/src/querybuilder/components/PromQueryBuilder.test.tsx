@@ -11,7 +11,7 @@ import {
   QueryHint,
   TimeRange,
 } from '@grafana/data';
-import { config, TemplateSrv } from '@grafana/runtime';
+import { TemplateSrv } from '@grafana/runtime';
 
 import { PrometheusDatasource } from '../../datasource';
 import PromQlLanguageProvider from '../../language_provider';
