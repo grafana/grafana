@@ -74,8 +74,8 @@ jobs:
           merge-multiple: true
       - name: Join coverage outputs
         run: |
-          cp unit.cov backend.cov
-          tail -n+2 integration.cov >> backend.cov
+          go build -o /tmp/mergecov ./scripts/build/ci-merge-cov/
+          /tmp/mergecov backend.cov unit.cov integration.cov
       - name: Convert coverage info to per-func stats
         run: go tool cover -func backend.cov > backend-funcs.log
       # The HTML can be useful in some UI to browse the artifacts easily.
