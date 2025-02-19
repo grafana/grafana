@@ -39,7 +39,7 @@ type Service interface {
 	NewStorage(gr schema.GroupResource, legacy grafanarest.LegacyStorage, storage grafanarest.Storage) (grafanarest.Storage, error)
 
 	// Check if the dual writes is reading from unified storage (mode3++)
-	ReadFromUnified(ctx context.Context, gr schema.GroupResource) bool
+	ReadFromUnified(ctx context.Context, gr schema.GroupResource) (bool, error)
 
 	// Get status details for a Group/Resource
 	Status(ctx context.Context, gr schema.GroupResource) (StorageStatus, error)

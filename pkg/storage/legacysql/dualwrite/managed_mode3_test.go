@@ -214,7 +214,7 @@ func TestManagedMode3_CreateWhileMigrating(t *testing.T) {
 				},
 			},
 			{
-				name:    "should be unavaliable if migrating",
+				name:    "should be unavailable if migrating",
 				input:   failingObj,
 				wantErr: true,
 				prepare: func(dual Service) (StorageStatus, error) {

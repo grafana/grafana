@@ -31,8 +31,8 @@ func (m *mockService) NewStorage(gr schema.GroupResource, legacy rest.LegacyStor
 }
 
 // ReadFromUnified implements Service.
-func (m *mockService) ReadFromUnified(ctx context.Context, gr schema.GroupResource) bool {
-	return m.status.ReadUnified
+func (m *mockService) ReadFromUnified(ctx context.Context, gr schema.GroupResource) (bool, error) {
+	return m.status.ReadUnified, nil
 }
 
 // ShouldManage implements Service.

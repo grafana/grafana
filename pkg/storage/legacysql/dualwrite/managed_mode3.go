@@ -57,14 +57,22 @@ type mangedMode3 struct {
 }
 
 func (d *mangedMode3) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	if d.service.ReadFromUnified(ctx, d.gr) {
+	unified, err := d.service.ReadFromUnified(ctx, d.gr)
+	if err != nil {
+		return nil, err
+	}
+	if unified {
 		return d.unified.Get(ctx, name, options)
 	}
 	return d.legacy.Get(ctx, name, options)
 }
 
 func (d *mangedMode3) List(ctx context.Context, options *metainternalversion.ListOptions) (runtime.Object, error) {
-	if d.service.ReadFromUnified(ctx, d.gr) {
+	unified, err := d.service.ReadFromUnified(ctx, d.gr)
+	if err != nil {
+		return nil, err
+	}
+	if unified {
 		return d.unified.List(ctx, options)
 	}
 	return d.legacy.List(ctx, options)

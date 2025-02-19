@@ -19,13 +19,13 @@ func (m *staticService) NewStorage(gr schema.GroupResource, legacy rest.LegacySt
 }
 
 // ReadFromUnified implements Service.
-func (m *staticService) ReadFromUnified(ctx context.Context, gr schema.GroupResource) bool {
+func (m *staticService) ReadFromUnified(ctx context.Context, gr schema.GroupResource) (bool, error) {
 	config := m.cfg.UnifiedStorage[gr.String()]
 	switch config.DualWriterMode {
 	case rest.Mode3, rest.Mode4, rest.Mode5:
-		return true
+		return true, nil
 	default:
-		return false
+		return false, nil
 	}
 }
 

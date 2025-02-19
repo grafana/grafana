@@ -35,7 +35,11 @@ type searchWrapper struct {
 
 func (s *searchWrapper) GetStats(ctx context.Context, in *ResourceStatsRequest, opts ...grpc.CallOption) (*ResourceStatsResponse, error) {
 	client := s.legacyClient
-	if s.dual.ReadFromUnified(ctx, s.groupResource) {
+	unified, err := s.dual.ReadFromUnified(ctx, s.groupResource)
+	if err != nil {
+		return nil, err
+	}
+	if unified {
 		client = s.unifiedClient
 	}
 	return client.GetStats(ctx, in, opts...)
@@ -43,7 +47,11 @@ func (s *searchWrapper) GetStats(ctx context.Context, in *ResourceStatsRequest, 
 
 func (s *searchWrapper) Search(ctx context.Context, in *ResourceSearchRequest, opts ...grpc.CallOption) (*ResourceSearchResponse, error) {
 	client := s.legacyClient
-	if s.dual.ReadFromUnified(ctx, s.groupResource) {
+	unified, err := s.dual.ReadFromUnified(ctx, s.groupResource)
+	if err != nil {
+		return nil, err
+	}
+	if unified {
 		client = s.unifiedClient
 	}
 	return client.Search(ctx, in, opts...)
