@@ -7,6 +7,9 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	grpcstatus "google.golang.org/grpc/status"
 )
 
 // Package-level errors.
@@ -67,10 +70,17 @@ func AsErrorResult(err error) *ErrorResult {
 		return res
 	}
 
+	code := 500
+
+	st, ok := grpcstatus.FromError(err)
+	if ok {
+		code = runtime.HTTPStatusFromCode(st.Code())
+	}
+
 	// TODO... better conversion??
 	return &ErrorResult{
 		Message: err.Error(),
-		Code:    500,
+		Code:    int32(code),
 	}
 }
 
