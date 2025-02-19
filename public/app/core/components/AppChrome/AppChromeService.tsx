@@ -13,6 +13,7 @@ import { RouteDescriptor } from '../../navigation/types';
 import { buildBreadcrumbs } from '../Breadcrumbs/utils';
 
 import { ReturnToPreviousProps } from './ReturnToPrevious/ReturnToPrevious';
+import { getMegaMenuDockedState, MenuDockState } from './menuPreference';
 import { HistoryEntry, TOP_BAR_LEVEL_HEIGHT } from './types';
 
 export interface AppChromeState {
@@ -39,10 +40,7 @@ export class AppChromeService {
   private currentRoute?: RouteDescriptor;
   private routeChangeHandled = true;
 
-  private megaMenuDocked = Boolean(
-    window.innerWidth >= config.theme2.breakpoints.values.xl &&
-      store.getBool(DOCKED_LOCAL_STORAGE_KEY, Boolean(window.innerWidth >= config.theme2.breakpoints.values.xxl))
-  );
+  private megaMenuDocked = getMegaMenuDockedState() !== MenuDockState.Undocked;
 
   private sessionStorageData = window.sessionStorage.getItem('returnToPrevious');
   private returnToPreviousData = this.sessionStorageData ? JSON.parse(this.sessionStorageData) : undefined;
