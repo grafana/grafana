@@ -24,10 +24,12 @@ func (d *datasourceInfoProvider) GetDataSourceInfo() []schemaversion.DataSourceI
 
 	for _, ds := range dataSources {
 		out = append(out, schemaversion.DataSourceInfo{
-			Name:    ds.Name,
-			UID:     ds.UID,
-			ID:      ds.ID,
-			Default: ds.IsDefault,
+			Name:       ds.Name,
+			UID:        ds.UID,
+			ID:         ds.ID,
+			Type:       ds.Type,
+			Default:    ds.IsDefault,
+			APIVersion: ds.APIVersion,
 		})
 	}
 

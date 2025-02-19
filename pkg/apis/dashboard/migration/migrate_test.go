@@ -28,6 +28,7 @@ func TestMigrate(t *testing.T) {
 				Default: true,
 				UID:     "test",
 				ID:      1,
+				Type:    "test",
 				Name:    "Test",
 			},
 		},

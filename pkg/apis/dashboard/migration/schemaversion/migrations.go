@@ -9,10 +9,12 @@ const LATEST_VERSION = 41
 type SchemaVersionMigrationFunc func(map[string]interface{}) error
 
 type DataSourceInfo struct {
-	Default bool
-	UID     string
-	Name    string
-	ID      int64
+	Default    bool
+	UID        string
+	Name       string
+	Type       string
+	ID         int64
+	APIVersion string
 }
 
 type DataSourceInfoProvider interface {
