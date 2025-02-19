@@ -159,7 +159,6 @@ describe.skip('Prometheus query editor', () => {
 
       e2e.components.DataSource.Prometheus.queryEditor.builder.metricsExplorer().should('exist');
     });
-
   });
 });
 
