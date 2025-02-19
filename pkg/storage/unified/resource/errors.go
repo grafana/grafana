@@ -77,7 +77,6 @@ func AsErrorResult(err error) *ErrorResult {
 		code = runtime.HTTPStatusFromCode(st.Code())
 	}
 
-	// TODO... better conversion??
 	return &ErrorResult{
 		Message: err.Error(),
 		Code:    int32(code),
