@@ -1,3 +1,28 @@
+<!-- 11.5.2 START -->
+
+# 11.5.2 (2025-02-18)
+
+### Features and enhancements
+
+- **Docker:** Use our own glibc 2.40 binaries [#99918](https://github.com/grafana/grafana/pull/99918), [@DanCech](https://github.com/DanCech)
+- **TransformationFilter:** Include transformation outputs in transformation filtering options [#99878](https://github.com/grafana/grafana/pull/99878), [@Sergej-Vlasov](https://github.com/Sergej-Vlasov)
+- **grafana-ui:** Update InlineField error prop type to React.ReactNode [#100373](https://github.com/grafana/grafana/pull/100373), [@Clarity-89](https://github.com/Clarity-89)
+
+### Bug fixes
+
+- **Alerting:** Allow specifying uid for new rules added to groups [#100450](https://github.com/grafana/grafana/pull/100450), [@yuri-tceretian](https://github.com/yuri-tceretian)
+- **Alerting:** Allow specifying uid for new rules added to groups [#100450](https://github.com/grafana/grafana/pull/100450), [@yuri-tceretian](https://github.com/yuri-tceretian)
+- **Alerting:** Call RLock() before reading sendAlertsTo map [#99880](https://github.com/grafana/grafana/pull/99880), [@santihernandezc](https://github.com/santihernandezc)
+- **Auth:** Fix redirect with JWT auth URL login [#100355](https://github.com/grafana/grafana/pull/100355), [@mgyongyosi](https://github.com/mgyongyosi)
+- **AuthN:** Refetch user on "ErrUserAlreadyExists" [#100582](https://github.com/grafana/grafana/pull/100582), [@kalleep](https://github.com/kalleep)
+- **Azure:** Correctly set application insights resource values [#99599](https://github.com/grafana/grafana/pull/99599), [@aangelisc](https://github.com/aangelisc)
+- **CodeEditor:** Fix cursor alignment [#99863](https://github.com/grafana/grafana/pull/99863), [@ashharrison90](https://github.com/ashharrison90)
+- **DashboardList:** Throttle the re-renders [#100046](https://github.com/grafana/grafana/pull/100046), [@bfmatei](https://github.com/bfmatei)
+- **Dashboards:** Bring back scripted dashboards [#100633](https://github.com/grafana/grafana/pull/100633), [@dprokop](https://github.com/dprokop)
+- **Plugin Metrics:** Eliminate data race in plugin metrics middleware [#100078](https://github.com/grafana/grafana/pull/100078), [@clord](https://github.com/clord)
+- **RBAC:** Don't check folder access if `annotationPermissionUpdate` FT is enabled [#100117](https://github.com/grafana/grafana/pull/100117), [@IevaVasiljeva](https://github.com/IevaVasiljeva)
+
+<!-- 11.5.2 END -->
 <!-- 11.4.2 START -->
 
 # 11.4.2 (2025-02-18)
