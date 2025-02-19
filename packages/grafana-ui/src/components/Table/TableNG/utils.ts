@@ -185,10 +185,10 @@ export function getCellColors(
   cellOptions: TableCellOptions,
   displayValue: DisplayValue
 ): CellColors {
-  // Calculate RBG value from our RGBA action hover colors given default light
-  // and dark theme background colors (e.g., theme.colors.background.primary).
+  // Calculate RBG value from our RGBA action hover colors given default
+  // light and dark theme background colors.
   const rgbaToRgb: { [key: string]: string } = { light: '#e5e5e6', dark: '#35373d' };
-  const autoCellBackgroundColor = rgbaToRgb[theme.colors.mode];
+  const autoCellBackgroundHoverColor = rgbaToRgb[theme.colors.mode];
 
   // How much to darken elements depends upon if we're in dark mode
   const darkeningFactor = theme.isDark ? 1 : -0.7;
@@ -196,7 +196,7 @@ export function getCellColors(
   // Setup color variables
   let textColor: string | undefined = undefined;
   let bgColor: string | undefined = undefined;
-  let bgHoverColor: string = autoCellBackgroundColor;
+  let bgHoverColor: string = autoCellBackgroundHoverColor;
 
   if (cellOptions.type === TableCellDisplayMode.ColorText) {
     textColor = displayValue.color;

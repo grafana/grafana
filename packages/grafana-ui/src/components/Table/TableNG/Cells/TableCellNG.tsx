@@ -47,7 +47,6 @@ export function TableCellNG(props: any) {
     () => getCellColors(theme, fieldConfig.custom.cellOptions, displayValue),
     [theme, fieldConfig.custom.cellOptions, displayValue]
   );
-
   const styles = useStyles2(getStyles, isRightAligned, colors);
 
   // TODO

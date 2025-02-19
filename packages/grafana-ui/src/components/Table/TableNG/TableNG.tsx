@@ -715,7 +715,7 @@ const getStyles = (theme: GrafanaTheme2, textWrap: boolean) => ({
     scrollbarWidth: 'thin',
 
     '&:hover': {
-      '--rdg-row-hover-background-color': theme.colors.emphasize(theme.colors.action.hover, 0.55),
+      '--rdg-row-hover-background-color': theme.colors.emphasize(theme.colors.action.hover, 0.6),
       overflow: 'scroll',
     },
 
