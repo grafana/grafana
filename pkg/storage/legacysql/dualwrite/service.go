@@ -43,7 +43,7 @@ type service struct {
 
 // The storage interface has zero business logic and simply writes values to a database
 type statusStorage interface {
-	Get(ctx context.Context, gr schema.GroupResource) (StorageStatus, bool)
+	Get(ctx context.Context, gr schema.GroupResource) (StorageStatus, bool, error)
 	Set(ctx context.Context, status StorageStatus) error
 }
 
@@ -62,19 +62,25 @@ func (m *service) ShouldManage(gr schema.GroupResource) bool {
 }
 
 func (m *service) ReadFromUnified(ctx context.Context, gr schema.GroupResource) bool {
-	v, ok := m.db.Get(ctx, gr)
+	v, ok, err := m.db.Get(ctx, gr)
+	if err != nil {
+		m.logger.Warn("error reading storage", "err", err)
+	}
 	return ok && v.ReadUnified
 }
 
 // Status implements Service.
 func (m *service) Status(ctx context.Context, gr schema.GroupResource) (StorageStatus, error) {
-	v, found := m.db.Get(ctx, gr)
+	v, found, err := m.db.Get(ctx, gr)
+	if err != nil {
+		return v, err
+	}
 	if !found {
 		v = StorageStatus{
 			Group:        gr.Group,
 			Resource:     gr.Resource,
 			WriteLegacy:  true,
-			WriteUnified: true,
+			WriteUnified: true, // Write both, but read legacy
 			ReadUnified:  false,
 			Migrated:     0,
 			Migrating:    0,
@@ -90,7 +96,10 @@ func (m *service) Status(ctx context.Context, gr schema.GroupResource) (StorageS
 // StartMigration implements Service.
 func (m *service) StartMigration(ctx context.Context, gr schema.GroupResource, key int64) (StorageStatus, error) {
 	now := time.Now().UnixMilli()
-	v, ok := m.db.Get(ctx, gr)
+	v, ok, err := m.db.Get(ctx, gr)
+	if err != nil {
+		return v, err
+	}
 	if ok {
 		if v.Migrated > 0 {
 			return v, fmt.Errorf("already migrated")
@@ -117,15 +126,18 @@ func (m *service) StartMigration(ctx context.Context, gr schema.GroupResource, k
 			UpdateKey:    1,
 		}
 	}
-	err := m.db.Set(ctx, v)
+	err = m.db.Set(ctx, v)
 	return v, err
 }
 
 // FinishMigration implements Service.
 func (m *service) Update(ctx context.Context, status StorageStatus) (StorageStatus, error) {
-	v, ok := m.db.Get(ctx, schema.GroupResource{Group: status.Group, Resource: status.Resource})
+	v, ok, err := m.db.Get(ctx, schema.GroupResource{Group: status.Group, Resource: status.Resource})
+	if err != nil {
+		return v, err
+	}
 	if !ok {
-		return v, fmt.Errorf("no running status")
+		return v, fmt.Errorf("unable to update status that is not yet saved")
 	}
 	if status.UpdateKey != v.UpdateKey {
 		return v, fmt.Errorf("key mismatch (resource: %s, expected:%d, received: %d)", v.Resource, v.UpdateKey, status.UpdateKey)
