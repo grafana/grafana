@@ -112,16 +112,22 @@ export function calculateTimesWithin(cfg: TimeRegionConfig, tRange: TimeRange): 
   let cronExpr = '';
   let durationMs = 0;
 
-  if (cfg.mode == null) {
-    const cron = convertToCron(cfg.fromDayOfWeek, cfg.from, cfg.toDayOfWeek, cfg.to);
+  let { fromDayOfWeek, from, toDayOfWeek, to, duration = '' } = cfg;
+
+  if (cfg.mode === 'cron') {
+    cronExpr = cfg.cronExpr ?? '';
+    durationMs = durationToMilliseconds(parseDuration(duration));
+  } else {
+    // remove empty strings
+    from = from === '' ? undefined : from;
+    to = to === '' ? undefined : to;
+
+    const cron = convertToCron(fromDayOfWeek, from, toDayOfWeek, to);
 
     if (cron != null) {
-      cronExpr = cron?.cronExpr;
-      durationMs = cron?.duration * 1e3;
+      cronExpr = cron.cronExpr;
+      durationMs = cron.duration * 1e3;
     }
-  } else if (cfg.mode === 'cron') {
-    cronExpr = cfg.cronExpr!;
-    durationMs = (cfg.duration ?? '') !== '' ? durationToMilliseconds(parseDuration(cfg.duration!)) : 0;
   }
 
   try {
