@@ -185,7 +185,7 @@ func grpcConn(address string, reg prometheus.Registerer) (*grpc.ClientConn, erro
 	opts = append(opts, grpc.WithStatsHandler(otelgrpc.NewClientHandler()))
 	opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 
-	// Use round_robin to balances requests more evenly over the available Storage server.
+	// Use round_robin to balance requests more evenly over the available Storage server.
 	opts = append(opts, grpc.WithDefaultServiceConfig(`{"loadBalancingPolicy":"round_robin"}`))
 
 	// Disable looking up service config from TXT DNS records.
