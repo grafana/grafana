@@ -5,8 +5,9 @@ import { GrafanaTheme2 } from '@grafana/data';
 
 import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
 
+import { LogLineMenu } from './LogLineMenu';
 import { LogFieldDimension, LogListModel } from './processing';
-import { FIELD_GAP_MULTIPLIER, hasUnderOrOverflow } from './virtualization';
+import { FIELD_GAP_MULTIPLIER, hasUnderOrOverflow, lineHeight } from './virtualization';
 
 interface Props {
   displayedFields: string[];
@@ -46,6 +47,7 @@ export const LogLine = ({
 
   return (
     <div style={style} className={`${styles.logLine} ${variant ?? ''}`} ref={onOverflow ? logLineRef : undefined}>
+      <LogLineMenu styles={styles} log={log} />
       <div className={`${wrapLogMessage ? styles.wrappedLogLine : `${styles.unwrappedLogLine} unwrapped-log-line`}`}>
         <Log displayedFields={displayedFields} log={log} showTime={showTime} styles={styles} />
       </div>
@@ -57,7 +59,7 @@ interface LogProps {
   displayedFields: string[];
   log: LogListModel;
   showTime: boolean;
-  styles: ReturnType<typeof getStyles>;
+  styles: LogLineStyles;
 }
 
 const Log = ({ displayedFields, log, showTime, styles }: LogProps) => {
@@ -111,6 +113,9 @@ export const getStyles = (theme: GrafanaTheme2) => {
   return {
     logLine: css({
       color: theme.colors.text.primary,
+      display: 'flex',
+      gap: theme.spacing(0.5),
+      flexDirection: 'row',
       fontFamily: theme.typography.fontFamilyMonospace,
       fontSize: theme.typography.fontSize,
       wordBreak: 'break-all',
@@ -128,6 +133,11 @@ export const getStyles = (theme: GrafanaTheme2) => {
           width: '100%',
         },
       },
+    }),
+    menuIcon: css({
+      height: lineHeight,
+      margin: 0,
+      padding: theme.spacing(0, 0, 0, 0.5),
     }),
     logLineMessage: css({
       fontFamily: theme.typography.fontFamily,
