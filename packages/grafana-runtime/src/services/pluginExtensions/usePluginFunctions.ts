@@ -1,4 +1,14 @@
-import { UsePluginFunctionsOptions, UsePluginFunctionsResult } from './getPluginExtensions';
+import { PluginExtensionFunction } from '@grafana/data';
+
+export type UsePluginFunctionsOptions = {
+  extensionPointId: string;
+  limitPerPlugin?: number;
+};
+
+export type UsePluginFunctionsResult<Signature> = {
+  isLoading: boolean;
+  functions: Array<PluginExtensionFunction<Signature>>;
+};
 
 export type UsePluginFunctions<T> = (options: UsePluginFunctionsOptions) => UsePluginFunctionsResult<T>;
 
