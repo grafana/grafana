@@ -38,7 +38,7 @@ func TestQueryData(t *testing.T) {
 			},
 			{
 				err:           errors.New("surprise surprise"),
-				expectedError: plugins.ErrPluginDownstreamErrorBase,
+				expectedError: plugins.ErrPluginRequestErrorBase,
 			},
 			{
 				err:           context.Canceled,
