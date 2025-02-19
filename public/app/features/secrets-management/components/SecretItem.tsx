@@ -92,9 +92,9 @@ export function SecretItem({ secret, onEditSecret }: SecretItemProps) {
         </InlineFieldRow>
 
         <InlineFieldRow className={styles.inlineField}>
-          <InlineField label="Audience:">
+          <InlineField label="Decrypters:">
             <div className={styles.row}>
-              {secret.audiences.map((item) => (
+              {secret.audiences?.map((item) => (
                 <Badge className={styles.audienceBadge} color="blue" key={item} text={item} />
               ))}
             </div>

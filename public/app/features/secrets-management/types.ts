@@ -14,7 +14,7 @@ export interface SecretsListResponseItem {
     uid: string;
   };
   spec: {
-    audiences: string[];
+    decrypters: string[] | null;
     title: string;
     keeper: string;
   };
@@ -48,7 +48,7 @@ export interface SecretsListResponse {
 export interface Secret {
   name: SecretsListResponseItem['metadata']['name'];
   description: SecretsListResponseItem['spec']['title'];
-  audiences: SecretsListResponseItem['spec']['audiences'];
+  audiences: SecretsListResponseItem['spec']['decrypters'];
   keeper: SecretsListResponseItem['spec']['keeper'];
   uid: SecretsListResponseItem['metadata']['uid'];
   value?: string; // Only present when editing a secret

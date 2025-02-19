@@ -98,7 +98,7 @@ export function SecretForm({
           )}
         />
       </Field>
-      <Field description="Services able to decrypt secret value." label="Audience">
+      <Field description="Services able to decrypt secret value." label="Decrypters">
         <Controller
           control={control}
           name="audiences"
