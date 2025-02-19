@@ -77,6 +77,7 @@ module.exports = (env = {}) =>
       new WebpackAssetsManifest({
         entrypoints: true,
         integrity: true,
+        integrityHashes: ['sha384', 'sha512'],
         publicPath: true,
       }),
       new WebpackManifestPlugin({
