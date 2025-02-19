@@ -7,6 +7,7 @@ import { BarGauge } from '../../../BarGauge/BarGauge';
 import { DataLinksContextMenu, DataLinksContextMenuApi } from '../../../DataLinks/DataLinksContextMenu';
 import { getAlignmentFactor, getCellOptions } from '../../utils';
 import { BarGaugeCellProps } from '../types';
+import { extractPixelValue } from '../utils';
 
 const defaultScale: ThresholdsConfig = {
   mode: ThresholdsMode.Absolute,
@@ -20,11 +21,6 @@ const defaultScale: ThresholdsConfig = {
       value: 20,
     },
   ],
-};
-
-/** Extracts numeric pixel value from theme spacing */
-const extractPixelValue = (spacing: string | number): number => {
-  return typeof spacing === 'number' ? spacing : parseFloat(spacing) || 0;
 };
 
 export const BarGaugeCell = ({ value, field, theme, height, width, rowIdx }: BarGaugeCellProps) => {

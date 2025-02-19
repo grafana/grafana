@@ -250,3 +250,8 @@ export const getCellLinks = (field: Field, rowIdx: number) => {
 
   return links;
 };
+
+/** Extracts numeric pixel value from theme spacing */
+export const extractPixelValue = (spacing: string | number): number => {
+  return typeof spacing === 'number' ? spacing : parseFloat(spacing) || 0;
+};
