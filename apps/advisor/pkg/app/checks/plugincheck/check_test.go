@@ -42,10 +42,14 @@ func TestRun(t *testing.T) {
 			expectedFailures: []advisor.CheckReportFailure{
 				{
 					Severity: advisor.CheckReportFailureSeverityHigh,
-					Reason:   "Plugin deprecated: plugin1",
-					Action:   "Check the <a href='https://grafana.com/legal/plugin-deprecation/#a-plugin-i-use-is-deprecated-what-should-i-do' target=_blank>documentation</a> for recommended steps.",
 					StepID:   "deprecation",
-					ItemID:   "plugin1",
+					Item:     "plugin1",
+					Links: []advisor.CheckErrorLink{
+						{
+							Url:     "/plugins/plugin1",
+							Message: "Admin",
+						},
+					},
 				},
 			},
 		},
@@ -63,10 +67,14 @@ func TestRun(t *testing.T) {
 			expectedFailures: []advisor.CheckReportFailure{
 				{
 					Severity: advisor.CheckReportFailureSeverityLow,
-					Reason:   "New version available for plugin2",
-					Action:   "Go to the <a href='/plugins/plugin2?page=version-history'>plugin admin page</a> and upgrade to the latest version.",
 					StepID:   "update",
-					ItemID:   "plugin2",
+					Item:     "plugin2",
+					Links: []advisor.CheckErrorLink{
+						{
+							Url:     "/plugins/plugin2?page=version-history",
+							Message: "Upgrade",
+						},
+					},
 				},
 			},
 		},
@@ -84,10 +92,14 @@ func TestRun(t *testing.T) {
 			expectedFailures: []advisor.CheckReportFailure{
 				{
 					Severity: advisor.CheckReportFailureSeverityLow,
-					Reason:   "New version available for plugin2",
-					Action:   "Go to the <a href='/plugins/plugin2?page=version-history'>plugin admin page</a> and upgrade to the latest version.",
 					StepID:   "update",
-					ItemID:   "plugin2",
+					Item:     "plugin2",
+					Links: []advisor.CheckErrorLink{
+						{
+							Url:     "/plugins/plugin2?page=version-history",
+							Message: "Upgrade",
+						},
+					},
 				},
 			},
 		},
