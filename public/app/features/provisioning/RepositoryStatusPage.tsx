@@ -75,12 +75,12 @@ export default function RepositoryStatusPage() {
       actions={
         data && (
           <Stack gap={1}>
-            {getRemoteURL(data) && (
-              <TextLink external href={getRemoteURL(data) ?? ''} icon="github">
-                Source Code
-              </TextLink>
-            )}
             <StatusBadge enabled={Boolean(data.spec?.sync?.enabled)} state={data.status?.sync?.state} name={name} />
+            {getRemoteURL(data) && (
+              <Button variant="secondary" icon="github" onClick={() => window.open(getRemoteURL(data), '_blank')}>
+                Source Code
+              </Button>
+            )}
             <SyncRepository repository={data} />
             <Button variant="secondary" icon="upload" onClick={() => setShowExportModal(true)}>
               Export
