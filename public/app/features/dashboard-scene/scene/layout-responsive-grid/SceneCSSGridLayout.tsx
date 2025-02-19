@@ -91,7 +91,6 @@ export class SceneCSSGridLayout extends SceneObjectBase<SceneCSSGridLayoutState>
   public onPointerDown = (e: PointerEvent, panel: VizPanel) => {
     const noContainer = !this.container;
     const cannotDrag = this.cannotDrag(e.target);
-    const noLayoutManager = !this.layoutManager;
     if (noContainer || cannotDrag || !this.layoutManager) {
       return;
     }
