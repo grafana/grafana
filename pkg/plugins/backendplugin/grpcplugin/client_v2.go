@@ -362,7 +362,7 @@ func handleGrpcStatusError(ctx context.Context, errorSource errstatus.Source, er
 		if errorSourceErr != nil {
 			logger.Error("Could not set plugin error source", "error", errorSourceErr)
 		}
-		// plugin request errors are coming from plugin and not Grafana server
+		// plugin request has failed after being sent from the Grafana server
 		return plugins.ErrPluginRequestFailureErrorBase.Errorf("%v", err)
 	}
 	return fmt.Errorf("%v: %w", "Failed to query data", err)
