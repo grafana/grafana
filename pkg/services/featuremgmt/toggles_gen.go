@@ -655,10 +655,6 @@ const (
 	// Preserve plugin proxy trailing slash.
 	FlagPluginProxyPreserveTrailingSlash = "pluginProxyPreserveTrailingSlash"
 
-	// FlagSqlQuerybuilderFunctionParameters
-	// Enables SQL query builder function parameters
-	FlagSqlQuerybuilderFunctionParameters = "sqlQuerybuilderFunctionParameters"
-
 	// FlagAzureMonitorPrometheusExemplars
 	// Allows configuration of Azure Monitor as a data source that can provide Prometheus exemplars
 	FlagAzureMonitorPrometheusExemplars = "azureMonitorPrometheusExemplars"
