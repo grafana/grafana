@@ -39,9 +39,6 @@ const desertBloomTheme: NewThemeOptions = {
     info: {
       main: '#1A82E2',
     },
-    error: {
-      main: '#FF6B6B',
-    },
     success: {
       main: '#4CAF50',
     },

@@ -105,13 +105,11 @@ export interface FeatureToggles {
   enableNativeHTTPHistogram?: boolean;
   disableClassicHTTPHistogram?: boolean;
   formatString?: boolean;
-  transformationsVariableSupport?: boolean;
   kubernetesPlaylists?: boolean;
   kubernetesSnapshots?: boolean;
   kubernetesDashboards?: boolean;
-  kubernetesCliDashboards?: boolean;
   kubernetesRestore?: boolean;
-  kubernetesFoldersServiceV2?: boolean;
+  kubernetesClientDashboardsFolders?: boolean;
   datasourceQueryTypes?: boolean;
   queryService?: boolean;
   queryServiceRewrite?: boolean;
@@ -121,7 +119,6 @@ export interface FeatureToggles {
   lokiStructuredMetadata?: boolean;
   teamHttpHeaders?: boolean;
   cachingOptimizeSerializationMemoryUsage?: boolean;
-  managedPluginsInstall?: boolean;
   prometheusPromQAIL?: boolean;
   prometheusCodeModeMetricNamesSearch?: boolean;
   addFieldFromCalculationStatFunctions?: boolean;
@@ -259,4 +256,6 @@ export interface FeatureToggles {
   grafanaconThemes?: boolean;
   pluginsCDNSyncLoader?: boolean;
   alertingJiraIntegration?: boolean;
+  alertingRuleVersionHistoryRestore?: boolean;
+  newShareReportDrawer?: boolean;
 }
