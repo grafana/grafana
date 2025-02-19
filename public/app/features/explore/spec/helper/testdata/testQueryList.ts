@@ -1,6 +1,6 @@
 export const getTestQueryList = () => ({
   kind: 'QueryTemplateList',
-  apiVersion: 'peakq.grafana.app/v0alpha1',
+  apiVersion: 'querylibrary.grafana.app/v0alpha1',
   metadata: {
     resourceVersion: '1783293408052252672',
     remainingItemCount: 0,
@@ -8,7 +8,7 @@ export const getTestQueryList = () => ({
   items: [
     {
       kind: 'QueryTemplate',
-      apiVersion: 'peakq.grafana.app/v0alpha1',
+      apiVersion: 'querylibrary.grafana.app/v0alpha1',
       metadata: {
         name: 'AElastic2nkf9',
         generateName: 'AElastic',
@@ -55,7 +55,7 @@ export const getTestQueryList = () => ({
     },
     {
       kind: 'QueryTemplate',
-      apiVersion: 'peakq.grafana.app/v0alpha1',
+      apiVersion: 'querylibrary.grafana.app/v0alpha1',
       metadata: {
         name: 'ALoki296tj',
         generateName: 'ALoki',

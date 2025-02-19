@@ -22,7 +22,7 @@ DashboardV2Spec: {
 
   elements: [ElementReference.name]: Element
 
-  layout: GridLayoutKind | RowsLayoutKind | ResponsiveGridLayoutKind
+  layout: GridLayoutKind | RowsLayoutKind | ResponsiveGridLayoutKind | TabsLayoutKind
 
   // Links with references to other dashboards or external websites.
   links: [...DashboardLink]
@@ -553,7 +553,7 @@ RowsLayoutRowSpec: {
   title?: string
   collapsed: bool
   repeat?: RowRepeatOptions
-  layout: GridLayoutKind | ResponsiveGridLayoutKind
+  layout: GridLayoutKind | ResponsiveGridLayoutKind | TabsLayoutKind
 }
 
 ResponsiveGridLayoutKind: {
@@ -574,6 +574,25 @@ ResponsiveGridLayoutItemKind: {
 
 ResponsiveGridLayoutItemSpec: {
   element: ElementReference
+}
+
+TabsLayoutKind: {
+  kind: "TabsLayout"
+  spec: TabsLayoutSpec
+}
+
+TabsLayoutSpec: {
+  tabs: [...TabsLayoutTabKind]
+}
+
+TabsLayoutTabKind: {
+  kind: "TabsLayoutTab"
+  spec: TabsLayoutTabSpec
+}
+
+TabsLayoutTabSpec: {
+  title?: string
+  layout: GridLayoutKind | RowsLayoutKind | ResponsiveGridLayoutKind
 }
 
 PanelSpec: {
