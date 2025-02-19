@@ -161,7 +161,7 @@ func newResourceClient(conn *grpc.ClientConn, cfg *setting.Cfg, features feature
 // grpcConn creates a new gRPC connection to the provided address.
 func grpcConn(address string, reg prometheus.Registerer) (*grpc.ClientConn, error) {
 	// This works for now as the Provide function is only called once during startup.
-	// We might eventually want to tight this factory to a struct for more runtime control.
+	// We might eventually want to tie this factory to a struct for more runtime control.
 	metrics := ClientMetrics{
 		requestDuration: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
 			Name:    "resource_server_client_request_duration_seconds",
