@@ -34,9 +34,6 @@ const (
 
 	// How long we keep silences in the kvstore after they've expired.
 	silenceRetention = 5 * 24 * time.Hour
-
-	// httpClientUserAgent is the user agent string used when Alertmanager integrations make HTTP requests.
-	httpClientUserAgent = "Grafana"
 )
 
 type AlertingStore interface {
@@ -412,7 +409,7 @@ func (am *alertmanager) buildReceiverIntegrations(receiver *alertingNotify.APIRe
 		tmpl,
 		img,
 		LoggerFactory,
-		alertingHttp.ClientConfiguration{UserAgent: httpClientUserAgent},
+		alertingHttp.DefaultClientConfiguration,
 		func(n receivers.Metadata) (receivers.EmailSender, error) {
 			return s, nil
 		},
