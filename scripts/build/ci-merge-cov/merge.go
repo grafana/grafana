@@ -35,13 +35,12 @@ import (
 	"slices"
 	"sort"
 
-	"github.com/lmittmann/tint"
 	"golang.org/x/tools/cover"
 )
 
 func main() {
 	slog.SetDefault(slog.New(
-		tint.NewHandler(os.Stdout, &tint.Options{
+		slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
 			Level: slog.LevelInfo,
 		}),
 	))

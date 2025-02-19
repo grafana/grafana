@@ -21,7 +21,6 @@ use (
 	./pkg/storage/unified/apistore
 	./pkg/storage/unified/resource
 	./pkg/util/xorm // skip:golangci-lint
-	./scripts/build/ci-merge-cov
 )
 
 // when we release xorm we would like to release it like github.com/grafana/grafana/pkg/util/xorm
