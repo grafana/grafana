@@ -33,6 +33,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+const folderSearchLimit = 100000
+
 func (s *Service) getFoldersFromApiServer(ctx context.Context, q folder.GetFoldersQuery) ([]*folder.Folder, error) {
 	if q.SignedInUser == nil {
 		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
@@ -171,7 +173,7 @@ func (s *Service) searchFoldersFromApiServer(ctx context.Context, query folder.S
 			Fields: []*resource.Requirement{},
 			Labels: []*resource.Requirement{},
 		},
-		Limit: 100000}
+		Limit: folderSearchLimit}
 
 	if len(query.UIDs) > 0 {
 		request.Options.Fields = []*resource.Requirement{{
@@ -269,7 +271,7 @@ func (s *Service) getFolderByIDFromApiServer(ctx context.Context, id int64, orgI
 				},
 			},
 		},
-		Limit: 100000}
+		Limit: folderSearchLimit}
 
 	res, err := s.k8sclient.Search(ctx, orgID, request)
 	if err != nil {
@@ -322,7 +324,7 @@ func (s *Service) getFolderByTitleFromApiServer(ctx context.Context, orgID int64
 			},
 			Labels: []*resource.Requirement{},
 		},
-		Limit: 100000}
+		Limit: folderSearchLimit}
 
 	if parentUID != nil {
 		req := []*resource.Requirement{{
@@ -671,7 +673,7 @@ func (s *Service) deleteFromApiServer(ctx context.Context, cmd *folder.DeleteFol
 					},
 				},
 			},
-			Limit: 100000}
+			Limit: folderSearchLimit}
 
 		res, err := s.dashboardK8sClient.Search(ctx, cmd.OrgID, request)
 		if err != nil {
