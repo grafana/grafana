@@ -1,16 +1,13 @@
-import { cx } from '@emotion/css';
 import { ReactElement } from 'react';
 import * as React from 'react';
 
 import { DisplayValue, formattedValueToString } from '@grafana/data';
 import { TableCellDisplayMode } from '@grafana/schema';
 
-import { useStyles2 } from '../../themes';
 import { getCellLinks } from '../../utils';
-import { clearLinkButtonStyles } from '../Button';
-import { DataLinksContextMenu } from '../DataLinks/DataLinksContextMenu';
 
 import { CellActions } from './CellActions';
+import { DataLinksActionsTooltip } from './DataLinksActionsTooltip';
 import { TableCellInspectorMode } from './TableCellInspector';
 import { TableStyles } from './styles';
 import { TableCellProps, CustomCellRendererProps, TableCellOptions } from './types';
@@ -27,7 +24,6 @@ export const DefaultCell = (props: TableCellProps) => {
   const cellOptions = getCellOptions(field);
   const hasLinks = Boolean(getCellLinks(field, row)?.length);
   const hasActions = Boolean(actions?.length);
-  const clearButtonStyle = useStyles2(clearLinkButtonStyles);
   let value: string | ReactElement;
 
   const OG_TWEET_LENGTH = 140; // 🙏
@@ -78,26 +74,12 @@ export const DefaultCell = (props: TableCellProps) => {
   }
 
   const { key, ...rest } = cellProps;
+  const links = getCellLinks(field, row) || [];
 
   return (
     <div key={key} {...rest} className={cellStyle}>
       {hasLinks || hasActions ? (
-        <DataLinksContextMenu links={() => getCellLinks(field, row) || []} actions={actions}>
-          {(api) => {
-            if (api.openMenu) {
-              return (
-                <button
-                  className={cx(clearButtonStyle, getLinkStyle(tableStyles, cellOptions, api.targetClassName))}
-                  onClick={api.openMenu}
-                >
-                  {value}
-                </button>
-              );
-            } else {
-              return <div className={getLinkStyle(tableStyles, cellOptions, api.targetClassName)}>{value}</div>;
-            }
-          }}
-        </DataLinksContextMenu>
+        <DataLinksActionsTooltip links={links} actions={actions} value={value} />
       ) : isStringValue ? (
         `${value}`
       ) : (
@@ -144,12 +126,4 @@ function getCellStyle(
     rowStyled,
     rowExpanded
   );
-}
-
-function getLinkStyle(tableStyles: TableStyles, cellOptions: TableCellOptions, targetClassName: string | undefined) {
-  if (cellOptions.type === TableCellDisplayMode.Auto) {
-    return cx(tableStyles.cellLink, targetClassName);
-  }
-
-  return cx(tableStyles.cellLinkForColoredCell, targetClassName);
 }
