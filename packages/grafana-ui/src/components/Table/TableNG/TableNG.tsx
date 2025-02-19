@@ -716,6 +716,21 @@ const getStyles = (theme: GrafanaTheme2, textWrap: boolean) => ({
       '--rdg-row-hover-background-color': theme.colors.action.hover,
       overflow: 'scroll',
     },
+
+    // If we rely solely on borderInlineEnd which is added from data grid, we
+    // get a small gap where the gridCell borders meet the column header borders.
+    // To avoid this, we can unset borderInlineEnd and set borderRight instead.
+    '.rdg-cell': {
+      borderInlineEnd: 'unset',
+      borderRight: `1px solid ${theme.colors.border.medium}`,
+    },
+
+    // Due to stylistic choices, we do not want borders on the column headers
+    // other than the bottom border.
+    'div[role=columnheader]': {
+      borderBottom: `1px solid ${theme.colors.border.medium}`,
+      borderInlineEnd: 'unset',
+    },
   }),
   menuItem: css({
     maxWidth: '200px',
