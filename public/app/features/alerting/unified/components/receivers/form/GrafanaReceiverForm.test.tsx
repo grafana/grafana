@@ -39,7 +39,7 @@ const noop = () => {};
 setupMswServer();
 
 const ui = {
-  loadingIndicator: byText('Loading notifiers...'),
+  loadingIndicator: byText('Loading...'),
   integrationType: byLabelText('Integration'),
   onCallIntegrationType: byRole('radiogroup'),
   integrationOption: {

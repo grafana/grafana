@@ -323,11 +323,11 @@
       "empty-state": {
         "title": "You don't have any contact points yet"
       },
+      "failed-loading": "Failed to load contact points",
       "key-value-map": {
         "add": "Add",
         "confirm-add": "Confirm to add"
       },
-      "failed-loading": "Failed to load contact points",
       "last-delivery-attempt": "Last delivery attempt",
       "last-delivery-failed": "Last delivery attempt failed",
       "no-contact-points-found": "No contact points found",
