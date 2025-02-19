@@ -601,14 +601,14 @@
     {
       "metadata": {
         "name": "assetSriChecks",
-        "resourceVersion": "1740755392482",
+        "resourceVersion": "1739984409734",
         "creationTimestamp": "2025-02-19T15:56:59Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2025-02-28 15:09:52.482058 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2025-02-19 17:00:09.734088 +0000 UTC"
         }
       },
       "spec": {
-        "description": "Enables SRI checks for Grafana Javascript assets",
+        "description": "Enables SRI checks for Grafana JavaScript assets",
         "stage": "experimental",
         "codeowner": "@grafana/frontend-ops",
         "frontend": true
