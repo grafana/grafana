@@ -63,6 +63,7 @@ export default function RepositoryStatusPage() {
   const location = useLocation();
   const [queryParams] = useQueryParams();
   const tab = queryParams['tab'] ?? TabSelection.Overview;
+  const remoteURL = data ? getRemoteURL(data) : undefined;
 
   const notFound = query.isError && isNotFoundError(query.error);
   return (
@@ -74,10 +75,10 @@ export default function RepositoryStatusPage() {
       }}
       actions={
         data && (
-          <Stack gap={1}>
+          <Stack>
             <StatusBadge enabled={Boolean(data.spec?.sync?.enabled)} state={data.status?.sync?.state} name={name} />
-            {getRemoteURL(data) && (
-              <Button variant="secondary" icon="github" onClick={() => window.open(getRemoteURL(data), '_blank')}>
+            {remoteURL && (
+              <Button variant="secondary" icon="github" onClick={() => window.open(remoteURL, '_blank')}>
                 Source Code
               </Button>
             )}

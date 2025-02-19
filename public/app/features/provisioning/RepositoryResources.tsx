@@ -135,12 +135,14 @@ export function RepositoryResources({ repo }: RepoProps) {
         confirmText="Delete"
         icon={deleteFileStatus.isLoading ? `spinner` : `exclamation-triangle`}
         onConfirm={() => {
-          deleteFile({
-            name: name,
-            path: pathToDelete!,
-            message: `Deleted from repo test UI`,
-          });
-          setPathToDelete('');
+          if (pathToDelete) {
+            deleteFile({
+              name: name,
+              path: pathToDelete,
+              message: `Deleted from repo test UI`,
+            });
+            setPathToDelete('');
+          }
         }}
         onDismiss={() => setPathToDelete('')}
       />

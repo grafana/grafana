@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { Spinner, Alert, Badge, InteractiveTable, Card, Box, Stack, Icon, Text, CodeEditor } from '@grafana/ui';
+import { Spinner, Alert, Badge, InteractiveTable, Card, Box, Stack, Icon, Text } from '@grafana/ui';
 
 import { Repository, JobResourceSummary, Job, SyncStatus } from './api';
 import { useRepositoryJobs } from './hooks';
@@ -131,24 +131,25 @@ function ExpandedRow({ row }: ExpandedRowProps) {
   return (
     <Box padding={2}>
       <Stack direction="column" gap={2}>
-        {hasSpec && specJson && (
-          <Stack direction="column" gap={1}>
+        {specJson && (
+          <Stack direction="column">
             <Text variant="bodySmall" color="secondary">
               Job Specification
             </Text>
-            <CodeEditor
-              language="json"
-              showLineNumbers={false}
-              showMiniMap={false}
-              value={specJson}
-              readOnly
-              height={Math.min(400, specJson.split('\n').length * 24)}
-              width="100%"
-            />
+            <pre
+              style={{
+                width: '100%',
+                height: Math.min(400, specJson.split('\n').length * 24),
+                whiteSpace: 'pre-wrap',
+                overflowX: 'auto',
+              }}
+            >
+              {specJson}
+            </pre>
           </Stack>
         )}
         {hasErrors && (
-          <Stack direction="column" gap={1}>
+          <Stack direction="column">
             {row.status?.errors?.map(
               (error, index) =>
                 error.trim() && (
@@ -167,6 +168,7 @@ function ExpandedRow({ row }: ExpandedRowProps) {
             data={row.status!.summary!}
             columns={getSummaryColumns()}
             getRowId={(item) => item.resource || ''}
+            pageSize={10}
           />
         )}
       </Stack>
@@ -209,10 +211,11 @@ export function RecentJobs({ repo }: Props) {
           <EmptyState />
         ) : (
           <InteractiveTable
-            data={items.slice(0, 8)}
+            data={items}
             columns={jobColumns}
             getRowId={(item) => `${item.metadata?.name}`}
             renderExpandedRow={(row) => <ExpandedRow row={row} />}
+            pageSize={10}
           />
         )}
       </Card.Description>

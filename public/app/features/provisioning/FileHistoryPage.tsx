@@ -1,6 +1,6 @@
 import { useParams } from 'react-router-dom-v5-compat';
 
-import { Card, EmptyState, Spinner, Stack, Text, TextLink } from '@grafana/ui';
+import { Card, EmptyState, Spinner, Stack, Text, TextLink, UserIcon } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
 import { isNotFoundError } from '../alerting/unified/api/util';
@@ -61,21 +61,21 @@ function HistoryView({ history, path, repo }: Props) {
             <span>{formatTimestamp(item.createdAt)}</span>
           </Card.Meta>
           <Card.Description>
-            <Stack gap={1}>
-              <Stack>
-                {item.authors.map((a) => (
-                  <span key={a.username} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    {a.avatarURL && (
-                      <img
-                        src={a.avatarURL}
-                        alt={`${a.name}'s avatar`}
-                        style={{ width: '24px', height: '24px', borderRadius: '50%', objectFit: 'cover' }}
-                      />
-                    )}
-                    <a href={`https://github.com/${a.username}`}>{a.name}</a>
-                  </span>
-                ))}
-              </Stack>
+            <Stack>
+              {item.authors.map((a) => (
+                <span key={a.username} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  {a.avatarURL && (
+                    <UserIcon
+                      userView={{
+                        user: { name: a.name, avatarUrl: a.avatarURL },
+                        lastActiveAt: new Date().toISOString(),
+                      }}
+                      showTooltip={false}
+                    />
+                  )}
+                  <a href={`https://github.com/${a.username}`}>{a.name}</a>
+                </span>
+              ))}
             </Stack>
           </Card.Description>
         </Card>
