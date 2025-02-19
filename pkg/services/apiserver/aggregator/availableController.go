@@ -8,6 +8,7 @@ package aggregator
 import (
 	"context"
 	"fmt"
+	"math/rand"
 	"net/http"
 	"net/url"
 	"reflect"
@@ -200,10 +201,14 @@ func (c *AvailableConditionController) sync(key string) error {
 
 	// actually try to hit the discovery endpoint when it isn't local and when we're routing as a service.
 	if apiService.Spec.Service != nil && c.serviceResolver != nil {
-		attempts := 5
+		attempts := 3
 		results := make(chan error, attempts)
 		for i := 0; i < attempts; i++ {
 			go func() {
+				// stagger these requests to reduce pressure on aggregated services
+				waitDuration := time.Second * time.Duration(rand.Int31n(int32(3)))
+				time.Sleep(waitDuration)
+
 				discoveryURL, err := c.serviceResolver.ResolveEndpoint(apiService.Spec.Service.Namespace, apiService.Spec.Service.Name, *apiService.Spec.Service.Port)
 				if err != nil {
 					results <- err
@@ -251,7 +256,7 @@ func (c *AvailableConditionController) sync(key string) error {
 
 					// we had trouble with slow dial and DNS responses causing us to wait too long.
 					// we added this as insurance
-				case <-time.After(6 * time.Second):
+				case <-time.After(10 * time.Second):
 					results <- fmt.Errorf("timed out waiting for %v", discoveryURL)
 					return
 				}
