@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { Spinner, Alert, Badge, InteractiveTable, Card, Box, Stack, Icon, Text } from '@grafana/ui';
+import { Spinner, Alert, Badge, InteractiveTable, Card, Box, Stack, Icon, Text, CodeEditor } from '@grafana/ui';
 
 import { Repository, JobResourceSummary, Job, SyncStatus } from './api';
 import { useRepositoryJobs } from './hooks';
@@ -120,15 +120,33 @@ interface ExpandedRowProps {
 function ExpandedRow({ row }: ExpandedRowProps) {
   const hasSummary = Boolean(row.status?.summary?.length);
   const hasErrors = Boolean(row.status?.errors?.length);
+  const hasSpec = Boolean(row.spec);
+  const specJson = hasSpec ? JSON.stringify(row.spec, null, 2) : '';
 
-  if (!hasSummary && !hasErrors) {
-    console.log('no summary or errors', row);
+  if (!hasSummary && !hasErrors && !hasSpec) {
+    console.log('no summary, errors, or spec', row);
     return null;
   }
 
   return (
     <Box padding={2}>
       <Stack direction="column" gap={2}>
+        {hasSpec && specJson && (
+          <Stack direction="column" gap={1}>
+            <Text variant="bodySmall" color="secondary">
+              Job Specification
+            </Text>
+            <CodeEditor
+              language="json"
+              showLineNumbers={false}
+              showMiniMap={false}
+              value={specJson}
+              readOnly
+              height={Math.min(400, specJson.split('\n').length * 24)}
+              width="100%"
+            />
+          </Stack>
+        )}
         {hasErrors && (
           <Stack direction="column" gap={1}>
             {row.status?.errors?.map(
