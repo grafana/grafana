@@ -107,10 +107,7 @@ func TestMode3_Get(t *testing.T) {
 				},
 			},
 			{
-				name: "should return an error when getting an object in the unified store fails",
-				setupLegacyFn: func(m *mock.Mock, name string) {
-					m.On("Get", mock.Anything, name, mock.Anything).Return(exampleObj, nil)
-				},
+				name: "should return an error when getting an object in the unified store fails, and should not go to legacy",
 				setupStorageFn: func(m *mock.Mock, name string) {
 					m.On("Get", mock.Anything, name, mock.Anything).Return(nil, errors.New("error"))
 				},

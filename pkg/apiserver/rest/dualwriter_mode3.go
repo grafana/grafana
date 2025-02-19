@@ -118,6 +118,7 @@ func (d *DualWriterMode3) Get(ctx context.Context, name string, options *metav1.
 	d.recordStorageDuration(err != nil, mode3Str, d.resource, method, startStorage)
 	if err != nil {
 		log.Error(err, "unable to get object in storage")
+		return nil, err
 	}
 
 	//nolint:errcheck
