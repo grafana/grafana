@@ -6,8 +6,10 @@ import (
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	grafanasecrets "github.com/grafana/grafana/pkg/services/secrets"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -25,13 +27,19 @@ var (
 	_ builder.APIGroupBuilder = (*APIBuilder)(nil)
 )
 
-type APIBuilder struct{}
+type APIBuilder struct {
+	secrets secrets.Service
+}
 
 // NewAPIBuilder creates an API builder.
 // It avoids anything that is core to Grafana, such that it can be used in a multi-tenant service down the line.
 // This means there are no hidden dependencies, and no use of e.g. *settings.Cfg.
-func NewAPIBuilder() *APIBuilder {
-	return &APIBuilder{}
+func NewAPIBuilder(
+	secrets secrets.Service,
+) *APIBuilder {
+	return &APIBuilder{
+		secrets: secrets,
+	}
 }
 
 // RegisterAPIService returns an API builder, from [NewAPIBuilder]. It is called by Wire.
@@ -39,13 +47,14 @@ func NewAPIBuilder() *APIBuilder {
 func RegisterAPIService(
 	features featuremgmt.FeatureToggles,
 	apiregistration builder.APIRegistrar,
+	secretsSvc grafanasecrets.Service,
 ) (*APIBuilder, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagProvisioning) &&
 		!features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		return nil, nil // skip registration unless opting into experimental apis OR the feature specifically
 	}
 
-	builder := NewAPIBuilder()
+	builder := NewAPIBuilder(secrets.NewSingleTenant(secretsSvc))
 	apiregistration.RegisterAPI(builder)
 	return builder, nil
 }
