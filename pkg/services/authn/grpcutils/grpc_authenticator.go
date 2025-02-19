@@ -77,7 +77,7 @@ func newAuthenticator(auth authn.Authenticator, tracer tracing.Tracer) intercept
 		info, err := auth.Authenticate(ctx, authn.NewGRPCTokenProvider(md))
 		if err != nil {
 			span.RecordError(err)
-			if authn.IsUnauthorizedErr(err) {
+			if authn.IsUnauthenticatedErr(err) {
 				return nil, status.Error(codes.Unauthenticated, err.Error())
 			}
 
