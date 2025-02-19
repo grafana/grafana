@@ -81,7 +81,12 @@ export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls
             return;
           }
 
-          editPane.clearSelection();
+          setTimeout(() => {
+            if (!editPane.isActive) {
+              return;
+            }
+            editPane.clearSelection();
+          }, 10);
         }}
       >
         <NavToolbarActions dashboard={dashboard} />
