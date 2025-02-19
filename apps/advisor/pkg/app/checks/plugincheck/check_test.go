@@ -46,8 +46,8 @@ func TestRun(t *testing.T) {
 					Item:     "plugin1",
 					Links: []advisor.CheckErrorLink{
 						{
-							Url:     "https://grafana.com/legal/plugin-deprecation/#a-plugin-i-use-is-deprecated-what-should-i-do",
-							Message: "More info",
+							Url:     "/plugins/plugin1",
+							Message: "Admin",
 						},
 					},
 				},
