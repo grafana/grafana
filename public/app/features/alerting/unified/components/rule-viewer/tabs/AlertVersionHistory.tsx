@@ -1,10 +1,8 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
-import { config } from '@grafana/runtime';
-import { Alert, Box, Button, Drawer, EmptyState, LoadingPlaceholder, Stack, Text, Tooltip } from '@grafana/ui';
-import { RevisionModel, VersionHistoryComparison } from 'app/core/components/VersionHistory/VersionHistoryComparison';
+import { Alert, Button, EmptyState, LoadingPlaceholder, Stack, Text, Tooltip } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
-import { GrafanaRuleIdentifier, RuleIdentifier } from 'app/types/unified-alerting';
+import { RuleIdentifier } from 'app/types/unified-alerting';
 import { GrafanaRuleDefinition, RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { LogMessages, logInfo, trackRuleVersionsComparisonClick } from '../../../Analytics';
@@ -12,9 +10,8 @@ import { alertRuleApi } from '../../../api/alertRuleApi';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
 import { stringifyErrorLike } from '../../../utils/misc';
 
-import { ConfirmVersionRestoreModal } from './version-history/ConfirmVersionRestoreModal';
+import { ComparisonDrawer } from './version-history/ComparisonDrawer';
 import { VersionHistoryTable } from './version-history/VersionHistoryTable';
-import { getSpecialUidsDisplayMap, preprocessRuleForDiffDisplay } from './version-history/versions-utils';
 
 const { useGetAlertVersionHistoryQuery } = alertRuleApi;
 
@@ -151,97 +148,4 @@ export function AlertVersionHistory({ ruleUid }: AlertVersionHistoryProps) {
       />
     </Stack>
   );
-}
-
-interface ComparisonDrawerProps {
-  oldVersion: RulerGrafanaRuleDTO<GrafanaRuleDefinition>;
-  newVersion: RulerGrafanaRuleDTO<GrafanaRuleDefinition>;
-  ruleIdentifier: GrafanaRuleIdentifier;
-  isNewLatest: boolean;
-  setShowDrawer: (show: boolean) => void;
-}
-
-function ComparisonDrawer({
-  oldVersion,
-  newVersion,
-  ruleIdentifier,
-  isNewLatest,
-  setShowDrawer,
-}: ComparisonDrawerProps) {
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const onDismiss = useCallback(() => setShowDrawer(false), [setShowDrawer]);
-
-  return (
-    <>
-      <Drawer
-        onClose={() => setShowDrawer(false)}
-        title={t('alerting.alertVersionHistory.comparing-versions', 'Comparing versions')}
-      >
-        <VersionHistoryComparison
-          oldSummary={parseVersionInfoToSummary(oldVersion)}
-          oldVersion={oldVersion}
-          newSummary={parseVersionInfoToSummary(newVersion)}
-          newVersion={newVersion}
-          preprocessVersion={preprocessRuleForDiffDisplay}
-        />
-        {config.featureToggles.alertingRuleVersionHistoryRestore && isNewLatest && (
-          <Box paddingTop={2}>
-            <Stack justifyContent="flex-end">
-              <Button
-                variant="destructive"
-                onClick={() => {
-                  setShowConfirmModal(true);
-                }}
-                icon="history"
-              >
-                <Trans i18nKey="alerting.alertVersionHistory.restore-version">
-                  Restore to version {{ version: oldVersion.grafana_alert.version }}
-                </Trans>
-              </Button>
-            </Stack>
-          </Box>
-        )}
-      </Drawer>
-      {showConfirmModal && (
-        <ConfirmVersionRestoreModal
-          ruleIdentifier={ruleIdentifier}
-          baseVersion={newVersion}
-          versionToRestore={oldVersion}
-          isOpen={showConfirmModal}
-          onDismiss={onDismiss}
-        />
-      )}
-    </>
-  );
-}
-
-/**
- * Turns a version of a Grafana rule definition into data structure
- * used to display the version summary when comparing versions
- */
-function parseVersionInfoToSummary(version: RulerGrafanaRuleDTO<GrafanaRuleDefinition>): RevisionModel {
-  const unknown = t('alerting.alertVersionHistory.unknown', 'Unknown');
-  const SPECIAL_UID_MAP = getSpecialUidsDisplayMap();
-  const createdBy = (() => {
-    const updatedBy = version?.grafana_alert.updated_by;
-    const uid = updatedBy?.uid;
-    const name = updatedBy?.name;
-
-    if (!updatedBy) {
-      return unknown;
-    }
-    if (uid && SPECIAL_UID_MAP[uid]) {
-      return SPECIAL_UID_MAP[uid].name;
-    }
-    if (name) {
-      return name;
-    }
-    return uid ? t('alerting.alertVersionHistory.user-id', 'User ID {{uid}}', { uid }) : unknown;
-  })();
-
-  return {
-    created: version.grafana_alert.updated || unknown,
-    createdBy,
-    version: version.grafana_alert.version || unknown,
-  };
 }
