@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -44,6 +45,7 @@ type Options struct {
 
 type ClientMetrics struct {
 	requestDuration *prometheus.HistogramVec
+	requestRetries  *prometheus.CounterVec
 }
 
 // This adds a UnifiedStorage client into the wire dependency tree
@@ -168,12 +170,26 @@ func grpcConn(address string, reg prometheus.Registerer) (*grpc.ClientConn, erro
 			Help:    "Time spent executing requests to the resource server.",
 			Buckets: prometheus.ExponentialBuckets(0.008, 4, 7),
 		}, []string{"operation", "status_code"}),
+		requestRetries: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "resource_server_client_request_retries_total",
+			Help: "Total number of retries for requests to the resource server.",
+		}, []string{"operation"}),
 	}
 
 	// Report gRPC status code errors as labels.
 	var instrumentationOptions []middleware.InstrumentationOption
 	instrumentationOptions = append(instrumentationOptions, middleware.ReportGRPCStatusOption)
 	unary, stream := grpcclient.Instrument(metrics.requestDuration, instrumentationOptions...)
+
+	// Add middleware to retry on transient connection issues. Note that
+	// we do not implement it for streams, as we don't currently use streams.
+	retryCfg := RetryConfig{
+		Max:           3,
+		Backoff:       time.Second,
+		BackoffJitter: 0.5,
+	}
+	unary = append(unary, UnaryRetryInterceptor(retryCfg))
+	unary = append(unary, UnaryRetryInstrument(metrics.requestRetries))
 
 	// We can later pass in the gRPC config here, i.e. to set MaxRecvMsgSize etc.
 	cfg := grpcclient.Config{}
