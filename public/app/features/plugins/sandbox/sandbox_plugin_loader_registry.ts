@@ -21,6 +21,8 @@ export function setSandboxEnabledCheck(checker: SandboxEnabledCheck) {
   sandboxEnabledCheck = checker;
 }
 
+const pluginElegibilityCache = new Map<string, Promise<boolean>>();
+
 export async function shouldLoadPluginInFrontendSandbox({
   isAngular,
   pluginId,
@@ -62,21 +64,34 @@ export async function isPluginFrontendSandboxEligible({
     return false;
   }
 
-  // don't run grafana-signed plugins in sandbox
+  // skip cache for jest tests
+  if (!process.env.JEST_WORKER_ID && pluginElegibilityCache.has(pluginId)) {
+    return pluginElegibilityCache.get(pluginId)!;
+  }
+
+  // grafana signature and internal plugins are not allowed in the sandbox
+  const result = isPluginSignatureEligibleForSandbox({ pluginId });
+  // promise meomization to prevent redundant requests
+  pluginElegibilityCache.set(pluginId, result);
+
+  return result;
+
+}
+
+async function isPluginSignatureEligibleForSandbox({ pluginId }: SandboxEligibilityCheckParams): Promise<boolean> {
   try {
-    //this can fail if gcom is not accesible
-    const details = await getPluginDetails(pluginId);
-    return details.signatureType !== PluginSignatureType.grafana && details.signature !== 'internal';
+    // this can fail if we are trying to fetch settings of a non-installed plugin
+    const pluginMeta = await getPluginSettings(pluginId, { showErrorAlert: false });
+    return pluginMeta.signatureType !== PluginSignatureType.grafana && pluginMeta.signature !== 'internal';
   } catch (e) {
     try {
-      // this can fail if we are trying to fetch settings of a non-installed plugin
-      const pluginMeta = await getPluginSettings(pluginId, { showErrorAlert: false });
-      return pluginMeta.signatureType !== PluginSignatureType.grafana && pluginMeta.signature !== 'internal';
+      //this can fail if gcom is not accesible
+      const details = await getPluginDetails(pluginId);
+      return details.signatureType !== PluginSignatureType.grafana && details.signature !== 'internal';
     } catch (e) {
       return false;
     }
   }
-  return true;
 }
 
 /**
