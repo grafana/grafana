@@ -80,21 +80,42 @@ func Clone(
 		return nil, err
 	}
 
+	branch := plumbing.NewBranchReferenceName(gitcfg.Branch)
 	url := fmt.Sprintf("%s.git", gitcfg.URL)
 	repo, err := git.PlainOpen(dir)
 	if err != nil {
 		if !errors.Is(err, git.ErrRepositoryNotExists) {
 			return nil, fmt.Errorf("error opening repository %w", err)
 		}
-
-		repo, err = git.PlainCloneContext(ctx, dir, false, &git.CloneOptions{
+		opts := &git.CloneOptions{
+			ReferenceName: branch,
 			Auth: &githttp.BasicAuth{
 				Username: "grafana",         // this can be anything except an empty string for PAT
 				Password: string(decrypted), // TODO... will need to get from a service!
 			},
 			URL:      url,
 			Progress: progress,
-		})
+		}
+
+		repo, err = git.PlainCloneContext(ctx, dir, false, opts)
+		if errors.Is(err, plumbing.ErrReferenceNotFound) {
+			opts.ReferenceName = "" // empty
+			repo, err = git.PlainCloneContext(ctx, dir, false, opts)
+			if err == nil {
+				worktree, err := repo.Worktree()
+				if err != nil {
+					return nil, err
+				}
+				err = worktree.Checkout(&git.CheckoutOptions{
+					Branch: branch,
+					Force:  true,
+					Create: true,
+				})
+				if err != nil {
+					return nil, fmt.Errorf("unable to create new branch %w", err)
+				}
+			}
+		}
 		if err != nil {
 			return nil, fmt.Errorf("clone error %w", err)
 		}
@@ -118,18 +139,14 @@ func Clone(
 		return nil, err
 	}
 
-	gogit := &GoGitRepo{
+	return &GoGitRepo{
 		config:            config,
 		opts:              opts,
 		tree:              worktree,
 		decryptedPassword: string(decrypted),
 		repo:              repo,
 		dir:               dir,
-	}
-
-	// Make sure we are checked out on the requested branch
-	err = gogit.Checkout(ctx, gitcfg.Branch, true)
-	return gogit, err
+	}, nil
 }
 
 func mkdirTempClone(root string, config *provisioning.Repository) (string, error) {
@@ -166,10 +183,16 @@ func (g *GoGitRepo) Checkout(ctx context.Context, branch string, createIfNotFoun
 	if err != nil {
 		return err
 	}
-	refSpecs := []config.RefSpec{config.RefSpec(
-		fmt.Sprintf("refs/heads/%s:refs/heads/%s", branch, branch),
-	)}
-	if err = remote.Fetch(&git.FetchOptions{RefSpecs: refSpecs}); err != nil {
+	err = remote.Fetch(&git.FetchOptions{
+		RefSpecs: []config.RefSpec{config.RefSpec(
+			fmt.Sprintf("refs/heads/%s:refs/heads/%s", branch, branch),
+		)},
+		Auth: &githttp.BasicAuth{ // reuse logic from clone?
+			Username: "grafana",
+			Password: g.decryptedPassword,
+		},
+	})
+	if err != nil {
 		if !errors.Is(err, git.NoErrAlreadyUpToDate) {
 			return fmt.Errorf("fetch origin failed: %v", err)
 		}
