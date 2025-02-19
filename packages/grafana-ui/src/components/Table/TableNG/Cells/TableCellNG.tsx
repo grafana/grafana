@@ -47,7 +47,11 @@ export function TableCellNG(props: any) {
     () => getCellColors(theme, fieldConfig.custom.cellOptions, displayValue),
     [theme, fieldConfig.custom.cellOptions, displayValue]
   );
-  const styles = useStyles2(getStyles, isRightAligned, colors);
+
+  // Calculate RBG value from our RGBA action hover colors given default light
+  // and dark theme background colors (e.g., theme.colors.background.primary).
+  const rgbaToRgb = { light: '#e5e5e6', dark: '#35373d' };
+  const styles = useStyles2(getStyles, isRightAligned, colors, rgbaToRgb);
 
   // TODO
   // TableNG provides either an overridden cell width or 'auto' as the cell width value.
@@ -179,7 +183,12 @@ export function TableCellNG(props: any) {
   );
 }
 
-const getStyles = (theme: GrafanaTheme2, isRightAligned: boolean, color: CellColors) => ({
+const getStyles = (
+  theme: GrafanaTheme2,
+  isRightAligned: boolean,
+  color: CellColors,
+  rgbaToRgb: { [key: string]: string }
+) => ({
   cell: css({
     height: '100%',
     alignContent: 'center',
@@ -188,9 +197,7 @@ const getStyles = (theme: GrafanaTheme2, isRightAligned: boolean, color: CellCol
     background: color.bgColor || 'none',
     color: color.textColor,
     '&:hover': {
-      background:
-        color.bgHoverColor ??
-        `color-mix(in srgb, ${theme.colors.background.primary}, ${theme.isDark ? 'white' : 'black'} 30%)`,
+      background: color.bgHoverColor ?? rgbaToRgb[theme.colors.mode],
     },
   }),
   cellActions: css({
