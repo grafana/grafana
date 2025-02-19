@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-app-sdk/resource"
+	advisorv0alpha1 "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
 	k8sErrs "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -134,8 +135,6 @@ func (m *mockCheck) Steps() []checks.Step {
 }
 
 type mockStep struct {
-	checks.Step
-
 	id          string
 	title       string
 	description string
@@ -151,6 +150,14 @@ func (m *mockStep) Title() string {
 
 func (m *mockStep) Description() string {
 	return m.description
+}
+
+func (m *mockStep) Resolution() string {
+	return ""
+}
+
+func (m *mockStep) Run(ctx context.Context, obj *advisorv0alpha1.CheckSpec, item any) (*advisorv0alpha1.CheckReportFailure, error) {
+	return nil, nil
 }
 
 type mockClient struct {
