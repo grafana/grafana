@@ -122,6 +122,7 @@ function ExpandedRow({ row }: ExpandedRowProps) {
   const hasErrors = Boolean(row.status?.errors?.length);
 
   if (!hasSummary && !hasErrors) {
+    console.log('no summary or errors', row);
     return null;
   }
 

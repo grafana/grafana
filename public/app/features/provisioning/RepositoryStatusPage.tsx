@@ -74,7 +74,12 @@ export default function RepositoryStatusPage() {
       }}
       actions={
         data && (
-          <Stack>
+          <Stack gap={1}>
+            {getRemoteURL(data) && (
+              <TextLink external href={getRemoteURL(data) ?? ''} icon="github">
+                Source Code
+              </TextLink>
+            )}
             <StatusBadge enabled={Boolean(data.spec?.sync?.enabled)} state={data.status?.sync?.state} name={name} />
             <SyncRepository repository={data} />
             <Button variant="secondary" icon="upload" onClick={() => setShowExportModal(true)}>
@@ -224,4 +229,16 @@ function FilesView({ repo }: RepoProps) {
       <InteractiveTable columns={columns} data={data} pageSize={25} getRowId={(f: FileDetails) => String(f.path)} />
     </Stack>
   );
+}
+
+function getRemoteURL(repo: Repository) {
+  if (repo.spec?.type === 'github') {
+    const spec = repo.spec.github;
+    let url = spec?.url || '';
+    if (spec?.branch) {
+      url += `/tree/${spec.branch}`;
+    }
+    return url;
+  }
+  return undefined;
 }
