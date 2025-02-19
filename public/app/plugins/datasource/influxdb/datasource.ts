@@ -359,22 +359,24 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     // If matches are found this regex is evaluated to check if the variable is contained in the regex /^...$/ (^ and $ is optional)
     // i.e. /^$myVar$/ or /$myVar/ or /^($myVar)$/
     const regex = new RegExp(`\\/(?:\\^)?(.*)(\\$${variable.name})(.*)(?:\\$)?\\/`, 'gm');
-    if (query) {
-      const queryMatches = query.match(regexMatcher);
-      if (queryMatches) {
-        for (const match of queryMatches) {
-          if (match.match(regex)) {
-            if (typeof value === 'string') {
-              return escapeRegex(value);
-            }
-
-            // If the value is a string array first escape them then join them with pipe
-            // then put inside parenthesis.
-            return `(${value.map((v) => escapeRegex(v)).join('|')})`;
-          }
-        }
-      }
+    if (!query) {
+      return;
     }
+
+    const queryMatches = query.match(regexMatcher);
+    if (!queryMatches) {
+      return;
+    }
+    for (const match of queryMatches) {
+      if (!match.match(regex)) {
+        continue;
+      }
+
+      // If the value is a string array first escape them then join them with pipe
+      // then put inside parenthesis.
+      return typeof value === 'string' ? escapeRegex(value) : `(${value.map((v) => escapeRegex(v)).join('|')})`;
+    }
+
     return value;
   }
 
