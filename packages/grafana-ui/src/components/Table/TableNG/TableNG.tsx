@@ -716,6 +716,11 @@ const getStyles = (theme: GrafanaTheme2, textWrap: boolean) => ({
       '--rdg-row-hover-background-color': theme.colors.action.hover,
       overflow: 'scroll',
     },
+
+    '.rdg-summary-row': {
+      backgroundColor: theme.colors.background.primary,
+      '--rdg-summary-border-color': theme.colors.border.medium,
+    },
   }),
   menuItem: css({
     maxWidth: '200px',
