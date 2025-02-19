@@ -8,7 +8,7 @@ export function selectSecretsManagementSecrets({ secretsManagementAdmin }: Store
   return secretsManagementAdmin.secrets ?? [];
 }
 
-export function createSelectSecretsManagementSecretByName(name: string) {
+export function createSelectSecretsManagementSecretByName(name?: string) {
   return ({ secretsManagementAdmin }: StoreState) =>
     secretsManagementAdmin.secrets.find((secret) => secret.name === name);
 }

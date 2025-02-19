@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data/';
-import { Badge, ClipboardButton, InlineField, InlineFieldRow } from '@grafana/ui';
+import { Badge, ClipboardButton, ConfirmModal, InlineField, InlineFieldRow } from '@grafana/ui';
 import { Button, useStyles2 } from '@grafana/ui/';
 import { useDispatch } from 'app/types';
 
@@ -18,6 +18,7 @@ interface SecretItemProps {
 export function SecretItem({ secret, onEditSecret }: SecretItemProps) {
   const dispatch = useDispatch();
   const styles = useStyles2(getStyles);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   const handleEdit = () => {
     onEditSecret(secret.name);
@@ -33,56 +34,76 @@ export function SecretItem({ secret, onEditSecret }: SecretItemProps) {
     dispatch(deleteSecret(secret.name));
   };
 
+  const handleShowDeleteModal = () => {
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleHideDeleteModal = () => {
+    setIsDeleteModalOpen(false);
+  };
+
   return (
-    <li className={styles.li} tabIndex={0} onKeyUp={handleKeyUp}>
-      <div className={styles.headerContainer}>
-        <h2 className={styles.heading}>{secret.name}</h2>
-        <div className={styles.headerActions}>
-          <Button fill="outline" icon="edit" size="sm" onClick={handleEdit} variant="secondary">
-            Edit
-          </Button>
-          <Button fill="outline" icon="trash-alt" size="sm" onClick={handleDelete} variant="destructive" />
+    <>
+      <li className={styles.li} tabIndex={0} onKeyUp={handleKeyUp}>
+        <div className={styles.headerContainer}>
+          <h2 className={styles.heading}>{secret.name}</h2>
+          <div className={styles.headerActions}>
+            <Button fill="outline" icon="edit" size="sm" onClick={handleEdit} variant="secondary">
+              Edit
+            </Button>
+            <Button fill="outline" icon="trash-alt" size="sm" variant="secondary" onClick={handleShowDeleteModal} />
+          </div>
         </div>
-      </div>
-      <InlineFieldRow className={styles.inlineField}>
-        <InlineField label="Name:">
-          <div>
-            {secret.name}
-            <ClipboardButton getText={() => secret.name} size="sm" icon="copy" fill="text" variant="secondary" />
-          </div>
-        </InlineField>
-      </InlineFieldRow>
-      <InlineFieldRow className={styles.inlineField}>
-        <InlineField label="ID:">
-          <div>
-            {secret.uid}
-            <ClipboardButton getText={() => secret.uid} size="sm" icon="copy" fill="text" variant="secondary" />
-          </div>
-        </InlineField>
-      </InlineFieldRow>
+        <InlineFieldRow className={styles.inlineField}>
+          <InlineField label="Name:">
+            <div>
+              {secret.name}
+              <ClipboardButton getText={() => secret.name} size="sm" icon="copy" fill="text" variant="secondary" />
+            </div>
+          </InlineField>
+        </InlineFieldRow>
+        <InlineFieldRow className={styles.inlineField}>
+          <InlineField label="ID:">
+            <div>
+              {secret.uid}
+              <ClipboardButton getText={() => secret.uid} size="sm" icon="copy" fill="text" variant="secondary" />
+            </div>
+          </InlineField>
+        </InlineFieldRow>
 
-      <InlineFieldRow className={styles.inlineField}>
-        <InlineField label="Description:">
-          <div>{secret.description}</div>
-        </InlineField>
-      </InlineFieldRow>
+        <InlineFieldRow className={styles.inlineField}>
+          <InlineField label="Description:">
+            <div>{secret.description}</div>
+          </InlineField>
+        </InlineFieldRow>
 
-      <InlineFieldRow className={styles.inlineField}>
-        <InlineField label="Audience:">
-          <div className={styles.row}>
-            {secret.audiences.map((item) => (
-              <Badge className={styles.audienceBadge} color="blue" key={item} text={item} />
-            ))}
-          </div>
-        </InlineField>
-      </InlineFieldRow>
+        <InlineFieldRow className={styles.inlineField}>
+          <InlineField label="Audience:">
+            <div className={styles.row}>
+              {secret.audiences.map((item) => (
+                <Badge className={styles.audienceBadge} color="blue" key={item} text={item} />
+              ))}
+            </div>
+          </InlineField>
+        </InlineFieldRow>
 
-      <InlineFieldRow className={styles.inlineField}>
-        <InlineField label="Keeper:">
-          <div>{secret.keeper}</div>
-        </InlineField>
-      </InlineFieldRow>
-    </li>
+        <InlineFieldRow className={styles.inlineField}>
+          <InlineField label="Keeper:">
+            <div>{secret.keeper}</div>
+          </InlineField>
+        </InlineFieldRow>
+      </li>
+      <ConfirmModal
+        isOpen={isDeleteModalOpen}
+        onDismiss={handleHideDeleteModal}
+        onConfirm={handleDelete}
+        confirmText="Delete"
+        confirmationText="Delete"
+        title="Delete secret"
+        body={`Are you sure you want to delete '${secret.name}'?`}
+        description="Before you delete this secret, make sure it's not being used by any service. Deleting this secret will not remove any references to it."
+      />
+    </>
   );
 }
 

@@ -2,7 +2,7 @@ import { lastValueFrom } from 'rxjs';
 
 import { getBackendSrv } from '@grafana/runtime';
 
-import { Secret, SecretsListResponse } from './types';
+import { NewSecret, Secret, SecretsListResponse, SecretsListResponseItem } from './types';
 import { transformFromSecret, transformListResponse } from './utils';
 
 export async function getSecretsList() {
@@ -24,14 +24,30 @@ export async function deleteSecretRequest(name: string) {
       method: 'DELETE',
       url: `/apis/secret.grafana.app/v0alpha1/namespaces/default/securevalues/${safeName}`,
     })
+  )
+    .then((response) => Promise.resolve(response))
+    .catch((error: unknown) => {
+      return Promise.reject(error);
+    });
+}
+
+export async function createSecretRequest(data: NewSecret) {
+  return await lastValueFrom(
+    getBackendSrv().fetch<SecretsListResponseItem>({
+      method: 'POST',
+      url: '/apis/secret.grafana.app/v0alpha1/namespaces/default/securevalues',
+      data: transformFromSecret(data),
+    })
   );
 }
 
-export async function createSecretRequest(data: Partial<Secret> & { value?: string }) {
+export async function updateSecretRequest(data: Secret) {
+  const safeName = encodeURIComponent(data.name);
+
   return await lastValueFrom(
-    getBackendSrv().fetch({
-      method: 'POST',
-      url: '/apis/secret.grafana.app/v0alpha1/namespaces/default/securevalues',
+    getBackendSrv().fetch<SecretsListResponseItem>({
+      method: 'PUT',
+      url: `/apis/secret.grafana.app/v0alpha1/namespaces/default/securevalues/${safeName}`,
       data: transformFromSecret(data),
     })
   );

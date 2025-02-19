@@ -1,7 +1,7 @@
 import { ThunkResult } from 'app/types';
 
-import { createSecretRequest, deleteSecretRequest, getSecretsList } from '../api';
-import { Secret, SecretRequestIdentifier } from '../types';
+import { createSecretRequest, deleteSecretRequest, getSecretsList, updateSecretRequest } from '../api';
+import { NewSecret, Secret, SecretRequestIdentifier } from '../types';
 
 import {
   secretsFetchBegin,
@@ -13,45 +13,76 @@ import {
   createSecretSuccess,
   createSecretFailure,
   deleteSecretSuccess,
+  updateSecretBegin,
+  updateSecretSuccess,
+  updateSecretFailure,
 } from './reducers';
 
 export function fetchSecrets(): ThunkResult<void> {
-  return async (dispatch, getState) => {
+  return async (dispatch) => {
     try {
       dispatch(secretsFetchBegin());
       const secrets = await getSecretsList();
       dispatch(secretsFetchSuccess(secrets));
     } catch (error: unknown) {
-      dispatch(fetchSecretsFailure(error));
+      dispatch(fetchSecretsFailure());
     }
   };
 }
 
-export function deleteSecret(id: SecretRequestIdentifier): ThunkResult<void> {
+export function deleteSecret(id: SecretRequestIdentifier): ThunkResult<Promise<boolean>> {
   return async (dispatch) => {
     try {
-      dispatch(deleteSecretBegin(id));
+      dispatch(deleteSecretBegin());
       await deleteSecretRequest(id);
-      dispatch(fetchSecrets());
       dispatch(deleteSecretSuccess(id));
+      // dispatch(fetchSecrets());
+      return Promise.resolve(true);
     } catch (error: unknown) {
       dispatch(deleteSecretFailure(error));
+      return Promise.reject(false);
     }
   };
 }
 
-export function createSecret(data: Partial<Secret> & { value?: string }): ThunkResult<Promise<void>> {
+export function createSecret(data: NewSecret): ThunkResult<Promise<void>> {
   return async (dispatch) => {
     try {
       dispatch(createSecretBegin());
-      await createSecretRequest(data);
-      dispatch(fetchSecrets());
-      dispatch(createSecretSuccess());
+      const response = await createSecretRequest(data);
+      dispatch(createSecretSuccess(response.data));
+      // dispatch(fetchSecrets());
 
       return Promise.resolve();
     } catch (error: unknown) {
-      dispatch(createSecretFailure(error));
+      dispatch(createSecretFailure());
       return Promise.reject(error);
+    }
+  };
+}
+
+export function updateSecret(data: Secret): ThunkResult<Promise<void>> {
+  return async (dispatch) => {
+    try {
+      dispatch(updateSecretBegin());
+      const response = await updateSecretRequest(data);
+      dispatch(updateSecretSuccess(response.data));
+      // dispatch(fetchSecrets());
+
+      return Promise.resolve();
+    } catch (error: unknown) {
+      dispatch(updateSecretFailure());
+      return Promise.reject(error);
+    }
+  };
+}
+
+export function storeSecret(data: Secret | NewSecret): ThunkResult<Promise<void>> {
+  return async (dispatch) => {
+    if (!data.uid) {
+      await dispatch(createSecret(data as NewSecret));
+    } else {
+      await dispatch(updateSecret(data as Secret));
     }
   };
 }
