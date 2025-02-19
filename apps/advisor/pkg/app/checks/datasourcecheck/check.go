@@ -83,7 +83,6 @@ func (s *uidValidationStep) Run(ctx context.Context, obj *advisor.CheckSpec, i a
 	// Data source UID validation
 	err := util.ValidateUID(ds.UID)
 	if err != nil {
-		icon := "document-info"
 		return checks.NewCheckReportFailure(
 			advisor.CheckReportFailureSeverityLow,
 			s.ID(),
@@ -92,7 +91,6 @@ func (s *uidValidationStep) Run(ctx context.Context, obj *advisor.CheckSpec, i a
 				{
 					Message: "More info",
 					Url:     "https://grafana.com/docs/grafana/latest/upgrade-guide/upgrade-v11.2/#grafana-data-source-uid-format-enforcement",
-					Icon:    &icon,
 				},
 			},
 		), nil
@@ -138,8 +136,6 @@ func (s *healthCheckStep) Run(ctx context.Context, obj *advisor.CheckSpec, i any
 	}
 	resp, err := s.PluginClient.CheckHealth(ctx, req)
 	if err != nil || resp.Status != backend.HealthStatusOk {
-		icon := "wrench"
-		variant := advisor.CheckErrorLinkVariantPrimary
 		return checks.NewCheckReportFailure(
 			advisor.CheckReportFailureSeverityHigh,
 			s.ID(),
@@ -148,8 +144,6 @@ func (s *healthCheckStep) Run(ctx context.Context, obj *advisor.CheckSpec, i any
 				{
 					Message: "Fix me",
 					Url:     fmt.Sprintf("/connections/datasources/edit/%s", ds.UID),
-					Icon:    &icon,
-					Variant: &variant,
 				},
 			},
 		), nil

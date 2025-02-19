@@ -98,20 +98,6 @@ func schema_pkg_apis_advisor_v0alpha1_CheckErrorLink(ref common.ReferenceCallbac
 							Format:      "",
 						},
 					},
-					"icon": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Icon to display next to the error message",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"variant": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Variant of the button that will render the link",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
 				},
 				Required: []string{"url", "message"},
 			},

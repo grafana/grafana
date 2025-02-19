@@ -8,10 +8,6 @@ type CheckErrorLink struct {
 	Url string `json:"url"`
 	// Human readable error message
 	Message string `json:"message"`
-	// Icon to display next to the error message
-	Icon *string `json:"icon,omitempty"`
-	// Variant of the button that will render the link
-	Variant *CheckErrorLinkVariant `json:"variant,omitempty"`
 }
 
 // NewCheckErrorLink creates a new CheckErrorLink object.
@@ -70,16 +66,6 @@ func NewCheckStatus() *CheckStatus {
 		Report: *NewCheckV0alpha1StatusReport(),
 	}
 }
-
-// +k8s:openapi-gen=true
-type CheckErrorLinkVariant string
-
-const (
-	CheckErrorLinkVariantPrimary     CheckErrorLinkVariant = "primary"
-	CheckErrorLinkVariantSecondary   CheckErrorLinkVariant = "secondary"
-	CheckErrorLinkVariantDestructive CheckErrorLinkVariant = "destructive"
-	CheckErrorLinkVariantSuccess     CheckErrorLinkVariant = "success"
-)
 
 // +k8s:openapi-gen=true
 type CheckReportFailureSeverity string

@@ -48,7 +48,6 @@ func TestRun(t *testing.T) {
 						{
 							Url:     "https://grafana.com/legal/plugin-deprecation/#a-plugin-i-use-is-deprecated-what-should-i-do",
 							Message: "More info",
-							Icon:    &iconDoc,
 						},
 					},
 				},
@@ -74,8 +73,6 @@ func TestRun(t *testing.T) {
 						{
 							Url:     "/plugins/plugin2?page=version-history",
 							Message: "Upgrade",
-							Icon:    &iconArrow,
-							Variant: &primaryVariant,
 						},
 					},
 				},
@@ -101,8 +98,6 @@ func TestRun(t *testing.T) {
 						{
 							Url:     "/plugins/plugin2?page=version-history",
 							Message: "Upgrade",
-							Icon:    &iconArrow,
-							Variant: &primaryVariant,
 						},
 					},
 				},
