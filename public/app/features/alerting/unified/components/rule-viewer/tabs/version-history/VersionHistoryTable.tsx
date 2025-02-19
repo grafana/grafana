@@ -25,12 +25,12 @@ export function VersionHistoryTable({
   disableSelection: boolean;
   checkedVersions: Set<string>;
 }) {
-  //----> restore code : no need to review as it's behind a feature flag
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [ruleToRestore, setRuleToRestore] = useState<RulerGrafanaRuleDTO<GrafanaRuleDefinition>>();
+  const ruleToRestoreUid = ruleToRestore?.grafana_alert?.uid ?? '';
   const ruleIdentifier: RuleIdentifier = useMemo(
-    () => ({ ruleSourceName: GRAFANA_RULES_SOURCE_NAME, uid: ruleToRestore?.grafana_alert?.uid ?? '' }),
-    [ruleToRestore]
+    () => ({ ruleSourceName: GRAFANA_RULES_SOURCE_NAME, uid: ruleToRestoreUid }),
+    [ruleToRestoreUid]
   );
 
   const showConfirmation = (ruleToRestore: RulerGrafanaRuleDTO<GrafanaRuleDefinition>) => {

@@ -1,3 +1,4 @@
+import { skipToken } from '@reduxjs/toolkit/query';
 import { useEffect, useMemo } from 'react';
 import { useAsync } from 'react-use';
 
@@ -173,8 +174,8 @@ export interface RuleLocation {
 
 export function useRuleLocation(ruleIdentifier: RuleIdentifier): RequestState<RuleLocation> {
   const { isLoading, currentData, error, isUninitialized } = alertRuleApi.endpoints.getAlertRule.useQuery(
-    { uid: isGrafanaRuleIdentifier(ruleIdentifier) ? ruleIdentifier.uid : '' },
-    { skip: !isGrafanaRuleIdentifier(ruleIdentifier), refetchOnMountOrArgChange: true }
+    isGrafanaRuleIdentifier(ruleIdentifier) && ruleIdentifier.uid !== '' ? { uid: ruleIdentifier.uid } : skipToken,
+    { refetchOnMountOrArgChange: true }
   );
 
   return useMemo(() => {

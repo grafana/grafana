@@ -72,6 +72,7 @@ export function AlertVersionHistory({ ruleUid }: AlertVersionHistoryProps) {
   }
 
   const compareVersions = () => {
+    // precondition: we have only two versions selected in checkedVersions
     const [older, newer] = ruleVersions
       .filter((rule) => {
         const version = rule.grafana_alert.version;
@@ -95,6 +96,7 @@ export function AlertVersionHistory({ ruleUid }: AlertVersionHistoryProps) {
       newVersion: newer?.grafana_alert.version || 0,
     });
 
+    // setting the versions to compare
     setOldVersion(older);
     setNewVersion(newer);
     setShowDrawer(true);
@@ -172,10 +174,6 @@ export function AlertVersionHistory({ ruleUid }: AlertVersionHistoryProps) {
           )}
         </>
       )}
-      {/*
-      {oldVersion && newVersion && showConfirmModal && (
-      )} */}
-
       <VersionHistoryTable
         onVersionsChecked={handleCheckedVersionChange}
         ruleVersions={ruleVersions}
