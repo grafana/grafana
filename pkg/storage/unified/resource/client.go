@@ -92,31 +92,7 @@ func NewLocalResourceClient(server ResourceServer) ResourceClient {
 	}
 }
 
-func NewGRPCResourceClient(tracer tracing.Tracer, conn *grpc.ClientConn) (ResourceClient, error) {
-	// scenario: remote on-prem
-	clientInt, err := authnlib.NewGrpcClientInterceptor(
-		&authnlib.GrpcClientConfig{},
-		authnlib.WithDisableAccessTokenOption(),
-		authnlib.WithIDTokenExtractorOption(idTokenExtractor),
-		authnlib.WithTracerOption(tracer),
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	cc := grpchan.InterceptClientConn(conn, clientInt.UnaryClientInterceptor, clientInt.StreamClientInterceptor)
-	return &resourceClient{
-		ResourceStoreClient:   NewResourceStoreClient(cc),
-		ResourceIndexClient:   NewResourceIndexClient(cc),
-		BlobStoreClient:       NewBlobStoreClient(cc),
-		BatchStoreClient:      NewBatchStoreClient(cc),
-		RepositoryIndexClient: NewRepositoryIndexClient(cc),
-		DiagnosticsClient:     NewDiagnosticsClient(cc),
-	}, nil
-}
-
-func NewCloudResourceClient(tracer tracing.Tracer, conn *grpc.ClientConn, cfg authnlib.GrpcClientConfig, allowInsecure bool) (ResourceClient, error) {
-	// scenario: remote cloud
+func NewRemoteResourceClient(tracer tracing.Tracer, conn *grpc.ClientConn, cfg authnlib.GrpcClientConfig, allowInsecure bool) (ResourceClient, error) {
 	opts := []authnlib.GrpcClientInterceptorOption{
 		authnlib.WithIDTokenExtractorOption(idTokenExtractor),
 		authnlib.WithTracerOption(tracer),

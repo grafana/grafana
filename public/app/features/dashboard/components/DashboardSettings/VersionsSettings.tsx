@@ -94,7 +94,7 @@ export class VersionsSettings extends PureComponent<Props, State> {
     });
 
     let lhs, rhs;
-    if (config.featureToggles.kubernetesCliDashboards) {
+    if (config.featureToggles.kubernetesClientDashboardsFolders) {
       // the id here is the resource version in k8s, use this instead to get the specific version
       lhs = await historySrv.getDashboardVersion(this.props.dashboard.uid, baseInfo.id);
       rhs = await historySrv.getDashboardVersion(this.props.dashboard.uid, newInfo.id);
