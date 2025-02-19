@@ -45,6 +45,7 @@ import {
   transformSceneToSaveModel,
   trimDashboardForSnapshot,
 } from './transformSceneToSaveModel';
+import { LayoutOrchestrator } from '../scene/layout-manager/LayoutOrchestrator';
 
 standardTransformersRegistry.setInit(() => [reduceTransformRegistryItem]);
 setPluginImportUtils({
@@ -230,7 +231,8 @@ describe('transformSceneToSaveModel', () => {
       const variable = scene.state.$variables?.state.variables[0] as MultiValueVariable;
       variable.changeValueTo(['a', 'b', 'c']);
 
-      const layout = scene.state.body as DefaultGridLayoutManager;
+      const orchestrator = scene.state.body as LayoutOrchestrator;
+      const layout = orchestrator.state.manager as DefaultGridLayoutManager;
       const grid = layout.state.grid;
       const rowWithRepeat = grid.state.children[1] as SceneGridRow;
       const rowRepeater = rowWithRepeat.state.$behaviors![0] as RowRepeaterBehavior;
