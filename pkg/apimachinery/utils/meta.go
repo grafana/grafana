@@ -48,9 +48,10 @@ const AnnoKeyRepoTimestamp = "grafana.app/repoTimestamp"
 
 // Annotations used to store manager properties
 
+const AnnoKeyManagerKind = "grafana.app/managedBy"
 const AnnoKeyManagerIdentity = "grafana.app/managerId"
-const AnnoKeyManagerKind = "grafana.app/managerType"
-const AnnoKeyManagerExclusive = "grafana.app/managerExclusive"
+const AnnoKeyManagerAllowsEdits = "grafana.app/managerAllowsEdits"
+const AnnoKeyManagerSuspended = "grafana.app/managerSuspended"
 
 // LabelKeyDeprecatedInternalID gives the deprecated internal ID of a resource
 // Deprecated: will be removed in grafana 13
@@ -737,9 +738,10 @@ func (m *grafanaMetaAccessor) FindTitle(defaultTitle string) string {
 
 func (m *grafanaMetaAccessor) GetManagerProperties() (ManagerProperties, bool) {
 	res := ManagerProperties{
-		Identity:  "",
-		Kind:      ManagerKindUI,
-		Exclusive: false,
+		Identity:    "",
+		Kind:        ManagerKindUnknown,
+		AllowsEdits: true,
+		Suspended:   false,
 	}
 
 	annot := m.obj.GetAnnotations()
@@ -748,7 +750,7 @@ func (m *grafanaMetaAccessor) GetManagerProperties() (ManagerProperties, bool) {
 	if !ok || id == "" {
 		// If the identity is not set, we should ignore the other annotations and return the default values.
 		//
-		// This is to prevent inadvertently marking resources as managed exclusively,
+		// This is to prevent inadvertently marking resources as managed,
 		// since that can potentially block updates from other sources.
 		return res, false
 	}
@@ -758,8 +760,12 @@ func (m *grafanaMetaAccessor) GetManagerProperties() (ManagerProperties, bool) {
 		res.Kind = ParseManagerKindString(v)
 	}
 
-	if v, ok := annot[AnnoKeyManagerExclusive]; ok {
-		res.Exclusive = v == "true"
+	if v, ok := annot[AnnoKeyManagerAllowsEdits]; ok {
+		res.AllowsEdits = v == "true"
+	}
+
+	if v, ok := annot[AnnoKeyManagerSuspended]; ok {
+		res.Suspended = v == "true"
 	}
 
 	return res, true
@@ -773,7 +779,8 @@ func (m *grafanaMetaAccessor) SetManagerProperties(v ManagerProperties) {
 
 	annot[AnnoKeyManagerIdentity] = v.Identity
 	annot[AnnoKeyManagerKind] = string(v.Kind)
-	annot[AnnoKeyManagerExclusive] = strconv.FormatBool(v.Exclusive)
+	annot[AnnoKeyManagerAllowsEdits] = strconv.FormatBool(v.AllowsEdits)
+	annot[AnnoKeyManagerSuspended] = strconv.FormatBool(v.Suspended)
 
 	m.obj.SetAnnotations(annot)
 }
@@ -869,9 +876,10 @@ func ParseBlobInfo(v string) *BlobInfo {
 // The is exclusive flag indicates whether the manager is the exclusive owner of the resource.
 // If set to true, then only updates coming from the manager will be accepted.
 type ManagerProperties struct {
-	Kind      ManagerKind
-	Identity  string
-	Exclusive bool
+	Kind        ManagerKind
+	Identity    string
+	AllowsEdits bool
+	Suspended   bool
 }
 
 // ManagerKind is the type of manager, which is responsible for managing the resource.
@@ -880,23 +888,24 @@ type ManagerKind string
 
 // Known values for ManagerKind.
 const (
-	ManagerKindUI        ManagerKind = "ui"
-	ManagerKindGeneric   ManagerKind = "api/generic"
-	ManagerKindKubectl   ManagerKind = "api/kubectl"
-	ManagerKindTerraform ManagerKind = "api/terraform"
+	ManagerKindUnknown   ManagerKind = ""
+	ManagerKindGit       ManagerKind = "git"
+	ManagerKindTerraform ManagerKind = "terraform"
+	ManagerKindKubectl   ManagerKind = "kubectl"
 )
 
 // ParseManagerKindString parses a string into a ManagerKind.
-// It only supports the known values and defaults to ManagerKindGeneric for unknown ones.
+// It returns the ManagerKind and a boolean indicating whether the string was a valid ManagerKind.
+// For unknown values, it returns ManagerKindUnknown and false.
 func ParseManagerKindString(v string) ManagerKind {
 	switch v {
-	case string(ManagerKindUI):
-		return ManagerKindUI
+	case string(ManagerKindGit):
+		return ManagerKindGit
 	case string(ManagerKindTerraform):
 		return ManagerKindTerraform
 	case string(ManagerKindKubectl):
 		return ManagerKindKubectl
 	default:
-		return ManagerKindGeneric
+		return ManagerKindUnknown
 	}
 }
