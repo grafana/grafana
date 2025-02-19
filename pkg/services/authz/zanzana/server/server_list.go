@@ -27,7 +27,7 @@ func (s *Server) List(ctx context.Context, r *authzv1.ListRequest) (*authzv1.Lis
 		return nil, err
 	}
 
-	contextuals, err := s.getContextuals(ctx, r.GetSubject())
+	contextuals, err := s.getContextuals(r.GetSubject())
 	if err != nil {
 		return nil, err
 	}
