@@ -33,6 +33,7 @@ import (
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/tools/cache"
+	"k8s.io/component-base/metrics"
 	"k8s.io/component-base/metrics/legacyregistry"
 	"k8s.io/klog/v2"
 	v1 "k8s.io/kube-aggregator/pkg/apis/apiregistration/v1"
@@ -266,11 +267,11 @@ func CreateAggregatorServer(config *Config, delegateAPIServer genericapiserver.D
 		}
 	}
 
-	metrics := newAvailabilityMetrics()
-
+	registry := legacyregistry.DefaultGatherer.(metrics.KubeRegistry)
+	availibilityMetrics := newAvailabilityMetrics()
 	// create shared (remote and local) availability metrics
 	// TODO: decouple from legacyregistry
-	registerIntoLegacyRegistryOnce.Do(func() { err = metrics.Register(legacyregistry.Register, legacyregistry.CustomRegister) })
+	registerIntoLegacyRegistryOnce.Do(func() { err = availibilityMetrics.Register(registry.Register, registry.CustomRegister) })
 	if err != nil {
 		return nil, err
 	}
@@ -282,7 +283,7 @@ func CreateAggregatorServer(config *Config, delegateAPIServer genericapiserver.D
 		nil,
 		proxyCurrentCertKeyContentFunc,
 		completedConfig.ExtraConfig.ServiceResolver,
-		metrics,
+		availibilityMetrics,
 	)
 	if err != nil {
 		return nil, err
