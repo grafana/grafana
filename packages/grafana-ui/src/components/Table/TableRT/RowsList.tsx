@@ -21,7 +21,13 @@ import { useTheme2 } from '../../../themes';
 import CustomScrollbar from '../../CustomScrollbar/CustomScrollbar';
 import { usePanelContext } from '../../PanelChrome';
 import { TableCell } from '../TableCell';
-import { CellColors, GetActionsFunction, TableFieldOptions, TableFilterActionCallback } from '../types';
+import {
+  CellColors,
+  GetActionsFunction,
+  TableFieldOptions,
+  TableFilterActionCallback,
+  TableInspectCellCallback,
+} from '../types';
 import {
   calculateAroundPointThreshold,
   getCellColors,
@@ -57,6 +63,7 @@ interface RowsListProps {
   textWrapField?: Field;
   getActions?: GetActionsFunction;
   replaceVariables?: InterpolateFunction;
+  setInspectCell?: TableInspectCellCallback;
 }
 
 export const RowsList = (props: RowsListProps) => {
@@ -85,6 +92,7 @@ export const RowsList = (props: RowsListProps) => {
     textWrapField,
     getActions,
     replaceVariables,
+    setInspectCell,
   } = props;
 
   const [rowHighlightIndex, setRowHighlightIndex] = useState<number | undefined>(initialRowIndex);
@@ -124,11 +132,15 @@ export const RowsList = (props: RowsListProps) => {
 
   const onRowHover = useCallback(
     (idx: number, frame: DataFrame) => {
-      if (!panelContext || !enableSharedCrosshair || !hasTimeField(frame)) {
+      if (!panelContext || !enableSharedCrosshair) {
         return;
       }
 
       const timeField: Field = frame!.fields.find((f) => f.type === FieldType.time)!;
+
+      if (!timeField) {
+        return;
+      }
 
       panelContext.eventBus.publish(
         new DataHoverEvent({
@@ -311,7 +323,7 @@ export const RowsList = (props: RowsListProps) => {
           key={key}
           {...rowProps}
           className={cx(tableStyles.row, expandedRowStyle)}
-          onMouseEnter={() => onRowHover(index, data)}
+          onMouseEnter={() => onRowHover(row.index, data)}
           onMouseLeave={onRowLeave}
         >
           {/*add the nested data to the DOM first to prevent a 1px border CSS issue on the last cell of the row*/}
@@ -342,6 +354,7 @@ export const RowsList = (props: RowsListProps) => {
               height={Number(style.height)}
               getActions={getActions}
               replaceVariables={replaceVariables}
+              setInspectCell={setInspectCell}
             />
           ))}
         </div>
@@ -370,6 +383,7 @@ export const RowsList = (props: RowsListProps) => {
       timeRange,
       getActions,
       replaceVariables,
+      setInspectCell,
     ]
   );
 

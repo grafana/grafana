@@ -8,7 +8,7 @@ WIRE_TAGS = "oss"
 include .bingo/Variables.mk
 
 GO = go
-GO_VERSION = 1.23.1
+GO_VERSION = 1.23.5
 GO_LINT_FILES ?= $(shell ./scripts/go-workspace/golangci-lint-includes.sh)
 GO_TEST_FILES ?= $(shell ./scripts/go-workspace/test-includes.sh)
 SH_FILES ?= $(shell find ./scripts -name *.sh)
@@ -149,7 +149,7 @@ gen-cue: ## Do all CUE/Thema code generation
 .PHONY: gen-cuev2
 gen-cuev2: ## Do all CUE code generation
 	@echo "generate code from .cue files (v2)"
-	go generate ./kindsv2/gen.go
+	@$(MAKE) -C ./kindsv2 all
 
 .PHONY: gen-feature-toggles
 gen-feature-toggles:
@@ -211,7 +211,6 @@ build-cli: ## Build Grafana CLI application.
 build-js: ## Build frontend assets.
 	@echo "build frontend"
 	yarn run build
-	yarn run plugins:build-bundled
 
 PLUGIN_ID ?=
 
@@ -249,8 +248,7 @@ test-go: test-go-unit test-go-integration
 .PHONY: test-go-unit
 test-go-unit: ## Run unit tests for backend with flags.
 	@echo "test backend unit tests"
-	printf '$(GO_TEST_FILES)' | xargs \
-	$(GO) test $(GO_RACE_FLAG) -short -covermode=atomic -timeout=30m
+	$(GO) test $(GO_RACE_FLAG) -short -covermode=atomic -coverprofile=unit.cov -timeout=30m $(GO_TEST_FILES)
 
 .PHONY: test-go-unit-pretty
 test-go-unit-pretty: check-tparse
@@ -263,7 +261,7 @@ test-go-unit-pretty: check-tparse
 .PHONY: test-go-integration
 test-go-integration: ## Run integration tests for backend with flags.
 	@echo "test backend integration tests"
-	$(GO) test $(GO_RACE_FLAG) -count=1 -run "^TestIntegration" -covermode=atomic -timeout=5m $(GO_INTEGRATION_TESTS)
+	$(GO) test $(GO_RACE_FLAG) -count=1 -run "^TestIntegration" -covermode=atomic -coverprofile=integration.cov -timeout=5m $(GO_INTEGRATION_TESTS)
 
 .PHONY: test-go-integration-alertmanager
 test-go-integration-alertmanager: ## Run integration tests for the remote alertmanager (config taken from the mimir_backend block).
@@ -271,6 +269,14 @@ test-go-integration-alertmanager: ## Run integration tests for the remote alertm
 	$(GO) clean -testcache
 	AM_URL=http://localhost:8080 AM_TENANT_ID=test \
 	$(GO) test $(GO_RACE_FLAG) -count=1 -run "^TestIntegrationRemoteAlertmanager" -covermode=atomic -timeout=5m ./pkg/services/ngalert/...
+
+.PHONY: test-go-integration-grafana-alertmanager
+test-go-integration-grafana-alertmanager: ## Run integration tests for the grafana alertmanager
+	@echo "test grafana alertmanager integration tests"
+	@export GRAFANA_VERSION=11.5.0-81938; \
+	$(GO) run tools/setup_grafana_alertmanager_integration_test_images.go; \
+	$(GO) clean -testcache; \
+	$(GO) test $(GO_RACE_FLAG) -count=1 -run "^TestAlertmanagerIntegration" -covermode=atomic -timeout=10m ./pkg/tests/alertmanager/...
 
 .PHONY: test-go-integration-postgres
 test-go-integration-postgres: devenv-postgres ## Run integration tests for postgres backend with flags.
@@ -422,6 +428,7 @@ protobuf: ## Compile protobuf definitions
 	buf generate pkg/plugins/backendplugin/secretsmanagerplugin --template pkg/plugins/backendplugin/secretsmanagerplugin/buf.gen.yaml
 	buf generate pkg/storage/unified/resource --template pkg/storage/unified/resource/buf.gen.yaml
 	buf generate pkg/services/authz/proto/v1 --template pkg/services/authz/proto/v1/buf.gen.yaml
+	buf generate pkg/services/ngalert/store/proto/v1 --template pkg/services/ngalert/store/proto/v1/buf.gen.yaml
 
 .PHONY: clean
 clean: ## Clean up intermediate build artifacts.

@@ -15,6 +15,7 @@ import (
 	"strconv"
 	"time"
 
+	"golang.org/x/exp/rand"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -26,6 +27,8 @@ import (
 	"k8s.io/apiserver/pkg/storage/storagebackend"
 	"k8s.io/apiserver/pkg/storage/storagebackend/factory"
 	"k8s.io/client-go/tools/cache"
+
+	"github.com/bwmarrin/snowflake"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
@@ -45,6 +48,8 @@ var _ storage.Interface = (*Storage)(nil)
 type StorageOptions struct {
 	LargeObjectSupport LargeObjectSupport
 	InternalConversion func([]byte, runtime.Object) (runtime.Object, error)
+
+	RequireDeprecatedInternalID bool
 }
 
 // Storage implements storage.Interface and storage resources as JSON files on disk.
@@ -58,8 +63,9 @@ type Storage struct {
 	trigger      storage.IndexerFuncs
 	indexers     *cache.Indexers
 
-	store  resource.ResourceClient
-	getKey func(string) (*resource.ResourceKey, error)
+	store     resource.ResourceClient
+	getKey    func(string) (*resource.ResourceKey, error)
+	snowflake *snowflake.Node // used to enforce internal ids
 
 	versioner storage.Versioner
 
@@ -102,6 +108,14 @@ func NewStorage(
 		versioner: &storage.APIObjectVersioner{},
 
 		opts: opts,
+	}
+
+	if opts.RequireDeprecatedInternalID {
+		node, err := snowflake.NewNode(rand.Int63n(1024))
+		if err != nil {
+			return nil, nil, err
+		}
+		s.snowflake = node
 	}
 
 	// The key parsing callback allows us to support the hardcoded paths from upstream tests
@@ -157,7 +171,7 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 	}
 	rsp, err := s.store.Create(ctx, req)
 	if err != nil {
-		return err
+		return resource.GetError(resource.AsErrorResult(err))
 	}
 	if rsp.Error != nil {
 		if rsp.Error.Code == http.StatusConflict {
@@ -179,7 +193,7 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 	// set a timer to delete the file after ttl seconds
 	if ttl > 0 {
 		time.AfterFunc(time.Second*time.Duration(ttl), func() {
-			if err := s.Delete(ctx, key, s.newFunc(), &storage.Preconditions{}, func(ctx context.Context, obj runtime.Object) error { return nil }, obj); err != nil {
+			if err := s.Delete(ctx, key, s.newFunc(), &storage.Preconditions{}, func(ctx context.Context, obj runtime.Object) error { return nil }, obj, storage.DeleteOptions{}); err != nil {
 				panic(err)
 			}
 		})
@@ -200,6 +214,7 @@ func (s *Storage) Delete(
 	preconditions *storage.Preconditions,
 	validateDeletion storage.ValidateObjectFunc,
 	_ runtime.Object,
+	opts storage.DeleteOptions,
 ) error {
 	if err := s.Get(ctx, key, storage.GetOptions{}, out); err != nil {
 		return err
@@ -227,13 +242,14 @@ func (s *Storage) Delete(
 		}
 	}
 
-	// ?? this was after delete before
-	if err := validateDeletion(ctx, out); err != nil {
-		return err
+	if validateDeletion != nil {
+		if err := validateDeletion(ctx, out); err != nil {
+			return err
+		}
 	}
 	rsp, err := s.store.Delete(ctx, cmd)
 	if err != nil {
-		return err
+		return resource.GetError(resource.AsErrorResult(err))
 	}
 	if rsp.Error != nil {
 		return resource.GetError(rsp.Error)
@@ -273,7 +289,8 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 		if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) || errors.Is(err, io.EOF) {
 			return watch.NewEmptyWatch(), nil
 		}
-		return nil, err
+
+		return nil, resource.GetError(resource.AsErrorResult(err))
 	}
 
 	reporter := apierrors.NewClientErrorReporter(500, "WATCH", "")
@@ -307,7 +324,7 @@ func (s *Storage) Get(ctx context.Context, key string, opts storage.GetOptions, 
 
 	rsp, err := s.store.Read(ctx, req)
 	if err != nil {
-		return err
+		return resource.GetError(resource.AsErrorResult(err))
 	}
 	if rsp.Error != nil {
 		if rsp.Error.Code == http.StatusNotFound {
@@ -345,7 +362,7 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 
 	rsp, err := s.store.List(ctx, req)
 	if err != nil {
-		return err
+		return resource.GetError(resource.AsErrorResult(err))
 	}
 	if rsp.Error != nil {
 		return resource.GetError(rsp.Error)
@@ -453,7 +470,7 @@ func (s *Storage) GuaranteedUpdate(
 		// Read the latest value
 		rsp, err := s.store.Read(ctx, &resource.ReadRequest{Key: req.Key})
 		if err != nil {
-			return err
+			return resource.GetError(resource.AsErrorResult(err))
 		}
 
 		if rsp.Error != nil {
@@ -538,7 +555,7 @@ func (s *Storage) GuaranteedUpdate(
 			Value: value,
 		})
 		if err != nil {
-			return err
+			return resource.GetError(resource.AsErrorResult(err))
 		}
 		if rsp2.Error != nil {
 			return resource.GetError(rsp2.Error)
@@ -551,7 +568,7 @@ func (s *Storage) GuaranteedUpdate(
 		}
 		rsp2, err := s.store.Update(ctx, req)
 		if err != nil {
-			return err
+			return resource.GetError(resource.AsErrorResult(err))
 		}
 		if rsp2.Error != nil {
 			return resource.GetError(rsp2.Error)

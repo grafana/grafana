@@ -26,7 +26,10 @@ type StatusREST struct {
 	store *genericregistry.Store
 }
 
-var _ = rest.Patcher(&StatusREST{})
+var (
+	_ rest.Patcher = (*StatusREST)(nil)
+	_ rest.Storage = (*StatusREST)(nil)
+)
 
 // New creates a new DataPlaneService object.
 func (r *StatusREST) New() runtime.Object {

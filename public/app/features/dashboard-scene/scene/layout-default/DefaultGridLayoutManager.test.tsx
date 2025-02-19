@@ -1,6 +1,7 @@
 import { SceneGridItemLike, SceneGridLayout, SceneGridRow, SceneQueryRunner, VizPanel } from '@grafana/scenes';
 
 import { findVizPanelByKey } from '../../utils/utils';
+import { DashboardScene } from '../DashboardScene';
 
 import { DashboardGridItem } from './DashboardGridItem';
 import { DefaultGridLayoutManager } from './DefaultGridLayoutManager';
@@ -22,22 +23,6 @@ describe('DefaultGridLayoutManager', () => {
       const { manager } = setup({ gridItems: [] });
       const vizPanels = manager.getVizPanels();
       expect(vizPanels.length).toBe(0);
-    });
-  });
-
-  describe('getNextPanelId', () => {
-    it('should get next panel id in a simple 3 panel layout', () => {
-      const { manager } = setup();
-      const id = manager.getNextPanelId();
-
-      expect(id).toBe(4);
-    });
-
-    it('should return 1 if no panels are found', () => {
-      const { manager } = setup({ gridItems: [] });
-      const id = manager.getNextPanelId();
-
-      expect(id).toBe(1);
     });
   });
 
@@ -197,6 +182,7 @@ describe('DefaultGridLayoutManager', () => {
       const newGridItem = grid.state.children[grid.state.children.length - 1] as DashboardGridItem;
 
       expect(newGridItem.state.height).toBe(1);
+      expect(newGridItem.state.itemHeight).toBe(1);
     });
 
     it('Should duplicate a repeated panel', () => {
@@ -275,6 +261,8 @@ function setup(options?: TestOptions) {
 
   const grid = new SceneGridLayout({ children: gridItems });
   const manager = new DefaultGridLayoutManager({ grid: grid });
+
+  new DashboardScene({ body: manager });
 
   return { manager, grid };
 }

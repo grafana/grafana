@@ -1,6 +1,6 @@
 import { ConfirmModal } from '@grafana/ui';
 
-import { PanelModel } from '../../../dashboard/state';
+import { PanelModel } from '../../../dashboard/state/PanelModel';
 import { isPanelModelLibraryPanel } from '../../guard';
 
 export interface ChangeLibraryPanelModalProps {

@@ -51,6 +51,7 @@ interface UPlotConfigOptions {
   mergeValues?: boolean;
   getValueColor: (frameIdx: number, fieldIdx: number, value: unknown) => string;
   hoverMulti: boolean;
+  axisWidth?: number;
 }
 
 /**
@@ -161,25 +162,32 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
     range: coreConfig.yRange,
   });
 
+  const xAxisHidden = frame.fields[0].config.custom.axisPlacement === AxisPlacement.Hidden;
+
   builder.addAxis({
+    show: !xAxisHidden,
     scaleKey: xScaleKey,
     isTime: true,
     splits: coreConfig.xSplits!,
     placement: AxisPlacement.Bottom,
     timeZone: timeZones[0],
     theme,
-    grid: { show: true },
   });
+
+  const yCustomConfig = frame.fields[1].config.custom;
+  const yAxisWidth = yCustomConfig.axisWidth;
+  const yAxisHidden = yCustomConfig.axisPlacement === AxisPlacement.Hidden;
 
   builder.addAxis({
     scaleKey: FIXED_UNIT, // y
     isTime: false,
     placement: AxisPlacement.Left,
     splits: coreConfig.ySplits,
-    values: coreConfig.yValues,
+    values: yAxisHidden ? (u, splits) => splits.map((v) => null) : coreConfig.yValues,
     grid: { show: false },
     ticks: { show: false },
-    gap: 16,
+    gap: yAxisHidden ? 0 : 16,
+    size: yAxisHidden ? 0 : yAxisWidth,
     theme,
   });
 

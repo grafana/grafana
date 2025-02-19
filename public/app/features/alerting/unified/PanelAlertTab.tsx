@@ -1,5 +1,6 @@
 import { Tab, TabProps } from '@grafana/ui';
-import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 
 import { usePanelCombinedRules } from './hooks/usePanelCombinedRules';
 

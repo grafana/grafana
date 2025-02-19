@@ -34,7 +34,7 @@ export function TabbedContainer({ tabs, defaultTab, closeIconTooltip, onClose, t
     setActiveTab(item.value!);
   };
 
-  const autoHeight = `calc(100% - (${theme.components.menuTabs.height}px + ${theme.spacing(1)}))`;
+  const autoHeight = `calc(100% - (${theme.spacing(theme.components.menuTabs.height)} + ${theme.spacing(1)}))`;
 
   return (
     <div className={styles.container} data-testid={testId}>

@@ -108,7 +108,7 @@ func TestInfluxdbQueryParser_Parse(t *testing.T) {
 			Interval: time.Second * 20,
 		}
 
-		res, err := QueryParse(query)
+		res, err := QueryParse(query, nil)
 		require.NoError(t, err)
 		require.Len(t, res.GroupBy, 3)
 		require.Len(t, res.Selects, 3)
@@ -140,7 +140,7 @@ func TestInfluxdbQueryParser_Parse(t *testing.T) {
         ],
         "interval": ">10s",
         "policy": "default",
-        "query": "RawDummyQuery",
+        "query": "SELECT \"value\" FROM \"measurement\"",
         "rawQuery": true,
         "refId": "A",
         "resultFormat": "time_series",
@@ -171,9 +171,9 @@ func TestInfluxdbQueryParser_Parse(t *testing.T) {
 			Interval: time.Second * 10,
 		}
 
-		res, err := QueryParse(query)
+		res, err := QueryParse(query, nil)
 		require.NoError(t, err)
-		require.Equal(t, "RawDummyQuery", res.RawQuery)
+		require.Equal(t, `SELECT "value" FROM "measurement"`, res.RawQuery)
 		require.Len(t, res.GroupBy, 2)
 		require.Len(t, res.Selects, 1)
 		require.Empty(t, res.Tags)
@@ -183,7 +183,7 @@ func TestInfluxdbQueryParser_Parse(t *testing.T) {
 	t.Run("will enforce a minInterval of 1 millisecond", func(t *testing.T) {
 		json := `
       {
-        "query": "RawDummyQuery",
+        "query": "SELECT \"value\" FROM \"measurement\"",
         "rawQuery": true,
         "resultFormat": "time_series"
       }
@@ -194,7 +194,7 @@ func TestInfluxdbQueryParser_Parse(t *testing.T) {
 			Interval: time.Millisecond * 0,
 		}
 
-		res, err := QueryParse(query)
+		res, err := QueryParse(query, nil)
 		require.NoError(t, err)
 		require.Equal(t, time.Millisecond*1, res.Interval)
 	})

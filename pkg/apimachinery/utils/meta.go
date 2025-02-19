@@ -17,6 +17,18 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
+// LabelKeyGetHistory is used to select object history for an given resource
+const LabelKeyGetHistory = "grafana.app/get-history"
+
+// LabelKeyGetTrash is used to list objects that have been (soft) deleted
+const LabelKeyGetTrash = "grafana.app/get-trash"
+
+// AnnoKeyKubectlLastAppliedConfig is the annotation kubectl writes with the entire previous config
+const AnnoKeyKubectlLastAppliedConfig = "kubectl.kubernetes.io/last-applied-configuration"
+
+// DeletedGeneration is set on Resources that have been (soft) deleted
+const DeletedGeneration = int64(-999)
+
 // Annotation keys
 
 const AnnoKeyCreatedBy = "grafana.app/createdBy"
@@ -34,21 +46,16 @@ const AnnoKeyRepoPath = "grafana.app/repoPath"
 const AnnoKeyRepoHash = "grafana.app/repoHash"
 const AnnoKeyRepoTimestamp = "grafana.app/repoTimestamp"
 
+// LabelKeyDeprecatedInternalID gives the deprecated internal ID of a resource
+// Deprecated: will be removed in grafana 13
+const LabelKeyDeprecatedInternalID = "grafana.app/deprecatedInternalID"
+
 // These can be removed once we verify that non of the dual-write sources
 // (for dashboards/playlists/etc) depend on the saved internal ID in SQL
 const oldAnnoKeyOriginName = "grafana.app/originName"
 const oldAnnoKeyOriginPath = "grafana.app/originPath"
 const oldAnnoKeyOriginHash = "grafana.app/originHash"
 const oldAnnoKeyOriginTimestamp = "grafana.app/originTimestamp"
-
-// annoKeyFullPath encodes the full path in folder resources
-// revisit keeping these folder-specific annotations once we have complete support for mode 1
-// Deprecated: this goes away when folders have a better solution
-const annoKeyFullPath = "grafana.app/fullPath"
-
-// annoKeyFullPathUIDs encodes the full path in folder resources
-// Deprecated: this goes away when folders have a better solution
-const annoKeyFullPathUIDs = "grafana.app/fullPathUIDs"
 
 // ResourceRepositoryInfo is encoded into kubernetes metadata annotations.
 // This value identifies indicates the state of the resource in its provisioning source when
@@ -102,6 +109,12 @@ type GrafanaMetaAccessor interface {
 	SetBlob(v *BlobInfo)
 	GetBlob() *BlobInfo
 
+	// Deprecated: This will be removed in Grafana 13
+	GetDeprecatedInternalID() int64
+
+	// Deprecated: This will be removed in Grafana 13
+	SetDeprecatedInternalID(id int64)
+
 	GetRepositoryInfo() (*ResourceRepositoryInfo, error)
 	SetRepositoryInfo(info *ResourceRepositoryInfo)
 	GetRepositoryName() string
@@ -117,18 +130,6 @@ type GrafanaMetaAccessor interface {
 	// Used by the generic strategy to keep the status value unchanged on an update
 	// NOTE the type must match the existing value, or an error will be thrown
 	SetStatus(any) error
-
-	// Deprecated: this is a temporary hack for folders, it will be removed without notice soon
-	GetFullPath() string
-
-	// Deprecated: this is a temporary hack for folders, it will be removed without notice soon
-	SetFullPath(path string)
-
-	// Deprecated: this is a temporary hack for folders, it will be removed without notice soon
-	GetFullPathUIDs() string
-
-	// Deprecated: this is a temporary hack for folders, it will be removed without notice soon
-	SetFullPathUIDs(path string)
 
 	// Find a title in the object
 	// This will reflect the object and try to get:
@@ -281,6 +282,44 @@ func (m *grafanaMetaAccessor) GetSlug() string {
 
 func (m *grafanaMetaAccessor) SetSlug(v string) {
 	m.SetAnnotation(AnnoKeySlug, v)
+}
+
+// This will be removed in Grafana 13. Do not add any new usage of it.
+func (m *grafanaMetaAccessor) GetDeprecatedInternalID() int64 {
+	labels := m.obj.GetLabels()
+	if labels == nil {
+		return 0
+	}
+
+	if internalID, ok := labels[LabelKeyDeprecatedInternalID]; ok {
+		id, err := strconv.ParseInt(internalID, 10, 64)
+		if err == nil {
+			return id
+		}
+	}
+
+	return 0
+}
+
+// This will be removed in Grafana 13. Do not add any new usage of it.
+func (m *grafanaMetaAccessor) SetDeprecatedInternalID(id int64) {
+	labels := m.obj.GetLabels()
+
+	// disallow setting it to 0
+	if id == 0 {
+		if labels != nil {
+			delete(labels, LabelKeyDeprecatedInternalID)
+			m.obj.SetLabels(labels)
+		}
+		return
+	}
+
+	if labels == nil {
+		labels = make(map[string]string)
+	}
+
+	labels[LabelKeyDeprecatedInternalID] = strconv.FormatInt(id, 10)
+	m.obj.SetLabels(labels)
 }
 
 // This allows looking up a primary and secondary key -- if either exist the value will be returned
@@ -646,26 +685,6 @@ func (m *grafanaMetaAccessor) SetStatus(s any) (err error) {
 	return
 }
 
-func (m *grafanaMetaAccessor) GetFullPath() string {
-	// nolint:staticcheck
-	return m.get(annoKeyFullPath)
-}
-
-func (m *grafanaMetaAccessor) SetFullPath(path string) {
-	// nolint:staticcheck
-	m.SetAnnotation(annoKeyFullPath, path)
-}
-
-func (m *grafanaMetaAccessor) GetFullPathUIDs() string {
-	// nolint:staticcheck
-	return m.get(annoKeyFullPathUIDs)
-}
-
-func (m *grafanaMetaAccessor) SetFullPathUIDs(path string) {
-	// nolint:staticcheck
-	m.SetAnnotation(annoKeyFullPathUIDs, path)
-}
-
 func (m *grafanaMetaAccessor) FindTitle(defaultTitle string) string {
 	// look for Spec.Title or Spec.Name
 	spec := m.r.FieldByName("Spec")
@@ -677,6 +696,18 @@ func (m *grafanaMetaAccessor) FindTitle(defaultTitle string) string {
 		name := spec.FieldByName("Name")
 		if name.IsValid() && name.Kind() == reflect.String {
 			return name.String()
+		}
+	}
+
+	obj, ok := m.obj.(*unstructured.Unstructured)
+	if ok {
+		title, ok, _ := unstructured.NestedString(obj.Object, "spec", "title")
+		if ok && title != "" {
+			return title
+		}
+		title, ok, _ = unstructured.NestedString(obj.Object, "spec", "name")
+		if ok && title != "" {
+			return title
 		}
 	}
 

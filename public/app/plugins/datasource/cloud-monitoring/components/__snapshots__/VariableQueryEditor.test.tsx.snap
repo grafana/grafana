@@ -1,103 +1,84 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`VariableQueryEditor renders correctly 1`] = `
-<div
-  className="css-1rplq84"
->
+<div>
   <div
-    className="css-l4ykjo-Label"
+    class="css-1rplq84"
   >
-    <label>
-      <div
-        className="css-70qvj9"
-      >
-        Query Type
-      </div>
-    </label>
-  </div>
-  <div>
-    <div>
-      <div
-        className="css-1nmqu8c-input-wrapper css-smf98s"
-        onKeyDown={[Function]}
-      >
-        <span
-          className="css-1f43avz-a11yText-A11yText"
-          id="react-select-2-live-region"
-        />
-        <span
-          aria-atomic="false"
-          aria-live="polite"
-          aria-relevant="additions text"
-          className="css-1f43avz-a11yText-A11yText"
-          role="log"
-        />
+    <div
+      class="css-l4ykjo-Label"
+    >
+      <label>
         <div
-          className="css-1i88p6p"
-          onMouseDown={[Function]}
-          onTouchEnd={[Function]}
+          class="css-70qvj9"
         >
+          Query Type
+        </div>
+      </label>
+    </div>
+    <div>
+      <div>
+        <div
+          class="css-rebjtg-input-wrapper css-smf98s"
+        >
+          <span
+            class="css-1f43avz-a11yText-A11yText"
+            id="react-select-2-live-region"
+          />
+          <span
+            aria-atomic="false"
+            aria-live="polite"
+            aria-relevant="additions text"
+            class="css-1f43avz-a11yText-A11yText"
+            role="log"
+          />
           <div
-            className="css-1q0c0d5-grafana-select-value-container"
+            class="css-1i88p6p"
           >
             <div
-              className="css-8nwx1l-singleValue css-0"
+              class="css-1q0c0d5-grafana-select-value-container"
             >
-              Loading...
+              <div
+                class="css-8nwx1l-singleValue css-0"
+              >
+                Loading...
+              </div>
+              <div
+                class="css-1eu65zc"
+                data-value=""
+              >
+                <input
+                  aria-activedescendant=""
+                  aria-autocomplete="list"
+                  aria-expanded="false"
+                  aria-haspopup="true"
+                  autocapitalize="none"
+                  autocomplete="off"
+                  autocorrect="off"
+                  class=""
+                  id="react-select-2-input"
+                  role="combobox"
+                  spellcheck="false"
+                  style="opacity: 1; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
+                  tabindex="0"
+                  type="text"
+                  value=""
+                />
+              </div>
             </div>
             <div
-              className="css-1eu65zc"
-              data-value=""
+              class="css-zyjsuv-input-suffix"
             >
-              <input
-                aria-activedescendant=""
-                aria-autocomplete="list"
-                aria-expanded={false}
-                aria-haspopup={true}
-                autoCapitalize="none"
-                autoComplete="off"
-                autoCorrect="off"
-                className=""
-                disabled={false}
-                id="react-select-2-input"
-                onBlur={[Function]}
-                onChange={[Function]}
-                onFocus={[Function]}
-                role="combobox"
-                spellCheck="false"
-                style={
-                  {
-                    "background": 0,
-                    "border": 0,
-                    "color": "inherit",
-                    "font": "inherit",
-                    "gridArea": "1 / 2",
-                    "label": "input",
-                    "margin": 0,
-                    "minWidth": "2px",
-                    "opacity": 1,
-                    "outline": 0,
-                    "padding": 0,
-                    "width": "100%",
-                  }
-                }
-                tabIndex={0}
-                type="text"
-                value=""
+              <svg
+                aria-hidden="true"
+                class="css-1d3xu67-Icon"
+                height="16"
+                id="public/img/icons/unicons/angle-down.svg"
+                loader="[object Object]"
+                title=""
+                width="16"
               />
             </div>
-          </div>
-          <div
-            className="css-zyjsuv-input-suffix"
-          >
-            <svg
-              aria-hidden={true}
-              className="css-1d3xu67-Icon"
-              height={16}
-              id="public/img/icons/unicons/angle-down.svg"
-              title=""
-              width={16}
-            />
           </div>
         </div>
       </div>

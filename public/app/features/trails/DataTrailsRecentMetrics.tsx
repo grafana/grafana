@@ -64,12 +64,8 @@ function getStyles(theme: GrafanaTheme2) {
     header: css({
       color: theme.colors.text.primary,
       textAlign: 'center',
-      /* H4 */
-      fontFamily: 'Inter',
       fontSize: '18px',
-      fontStyle: 'normal',
       fontWeight: '400',
-      lineHeight: '22px' /* 122.222% */,
       letterSpacing: '0.045px',
     }),
     trailList: css({

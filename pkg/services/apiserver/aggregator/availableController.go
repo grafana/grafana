@@ -14,9 +14,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/grafana/grafana/pkg/apis/service/v0alpha1"
-	informersservicev0alpha1 "github.com/grafana/grafana/pkg/generated/informers/externalversions/service/v0alpha1"
-	listersservicev0alpha1 "github.com/grafana/grafana/pkg/generated/listers/service/v0alpha1"
 	"k8s.io/apimachinery/pkg/api/equality"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -35,6 +32,10 @@ import (
 	informers "k8s.io/kube-aggregator/pkg/client/informers/externalversions/apiregistration/v1"
 	listers "k8s.io/kube-aggregator/pkg/client/listers/apiregistration/v1"
 	"k8s.io/kube-aggregator/pkg/controllers"
+
+	"github.com/grafana/grafana/pkg/apis/service/v0alpha1"
+	informersservicev0alpha1 "github.com/grafana/grafana/pkg/generated/informers/externalversions/service/v0alpha1"
+	listersservicev0alpha1 "github.com/grafana/grafana/pkg/generated/listers/service/v0alpha1"
 )
 
 type certKeyFunc func() ([]byte, []byte)
@@ -126,7 +127,10 @@ func NewAvailableConditionController(
 func (c *AvailableConditionController) sync(key string) error {
 	originalAPIService, err := c.apiServiceLister.Get(key)
 	if apierrors.IsNotFound(err) {
-		c.metrics.ForgetAPIService(key)
+		if originalAPIService.Spec.Service != nil {
+			// Only reset state, if the service was a remote service
+			c.metrics.ForgetAPIService(key)
+		}
 		return nil
 	}
 	if err != nil {
@@ -222,7 +226,9 @@ func (c *AvailableConditionController) sync(key string) error {
 					}
 
 					// setting the system-masters identity ensures that we will always have access rights
-					transport.SetAuthProxyHeaders(newReq, "system:kube-aggregator", []string{"system:masters"}, nil)
+					uid := ""
+					var extra map[string][]string
+					transport.SetAuthProxyHeaders(newReq, "system:kube-aggregator", uid, []string{"system:masters"}, extra)
 					resp, err := discoveryClient.Do(newReq)
 					if resp != nil {
 						_ = resp.Body.Close()
@@ -289,7 +295,10 @@ func (c *AvailableConditionController) sync(key string) error {
 // apiservices. Doing that means we don't want to quickly issue no-op updates.
 func (c *AvailableConditionController) updateAPIServiceStatus(originalAPIService, newAPIService *apiregistrationv1.APIService) (*apiregistrationv1.APIService, error) {
 	// update this metric on every sync operation to reflect the actual state
-	c.metrics.SetUnavailableGauge(newAPIService)
+	if newAPIService.Spec.Service != nil {
+		// Only expose the metric for remote services, trusts the type on the new object
+		c.metrics.SetUnavailableGauge(newAPIService)
+	}
 
 	if equality.Semantic.DeepEqual(originalAPIService.Status, newAPIService.Status) {
 		return newAPIService, nil
@@ -316,7 +325,10 @@ func (c *AvailableConditionController) updateAPIServiceStatus(originalAPIService
 		return nil, err
 	}
 
-	c.metrics.SetUnavailableCounter(originalAPIService, newAPIService)
+	if newAPIService.Spec.Service != nil {
+		// Only expose the metric for remote services, trusts the type on the new object
+		c.metrics.SetUnavailableCounter(originalAPIService, newAPIService)
+	}
 	return newAPIService, nil
 }
 

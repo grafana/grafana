@@ -3,15 +3,16 @@ import { useEffect, useMemo, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { AccessoryButton } from '@grafana/experimental';
+import { AccessoryButton } from '@grafana/plugin-ui';
 import { Alert, HorizontalGroup, InputActionMeta, Select, useStyles2 } from '@grafana/ui';
 
 import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
 import { TempoDatasource } from '../datasource';
+import { OPTIONS_LIMIT } from '../language_provider';
 import { TempoQuery } from '../types';
 
 import InlineSearchField from './InlineSearchField';
-import { maxOptions, withTemplateVariableOptions } from './SearchField';
+import { withTemplateVariableOptions } from './SearchField';
 import { replaceAt } from './utils';
 
 interface Props {
@@ -46,11 +47,11 @@ export const GroupByField = (props: Props) => {
     () => (f: TraceqlFilter) => {
       const tags = datasource!.languageProvider.getMetricsSummaryTags(f.scope);
       if (tagQuery.length === 0) {
-        return tags.slice(0, maxOptions);
+        return tags.slice(0, OPTIONS_LIMIT);
       }
 
       const queryLowerCase = tagQuery.toLowerCase();
-      return tags.filter((tag) => tag.toLowerCase().includes(queryLowerCase)).slice(0, maxOptions);
+      return tags.filter((tag) => tag.toLowerCase().includes(queryLowerCase)).slice(0, OPTIONS_LIMIT);
     },
     [datasource, tagQuery]
   );
@@ -86,7 +87,10 @@ export const GroupByField = (props: Props) => {
     .map((t) => ({ label: t, value: t }));
 
   return (
-    <InlineSearchField label="Aggregate by" tooltip={`${notice} Select one or more tags to see the metrics summary.`}>
+    <InlineSearchField
+      label="Aggregate by"
+      tooltip={`Note: We recommend using Explore Traces instead. Select one or more tags to see the metrics summary.`}
+    >
       <>
         {query.groupBy?.map((f, i) => {
           const tags = tagOptions(f)
@@ -152,14 +156,26 @@ export const GroupByField = (props: Props) => {
           );
         })}
         {query.groupBy && query.groupBy.length > 0 && query.groupBy[0].tag && (
-          <Alert title={notice} severity="warning" className={styles.notice}></Alert>
+          <Alert title="" severity="warning" className={styles.notice}>
+            The aggregate by feature is deprecated. We recommend using Explore Traces instead. If you want to write your
+            own TraceQL queries to replicate this API, please check
+            <a
+              href={
+                'https://grafana.com/docs/tempo/latest/api_docs/metrics-summary/#deprecation-in-favor-of-traceql-metrics'
+              }
+              className={styles.noticeLink}
+              target="_blank"
+              rel="noreferrer noopener"
+            >
+              this page
+            </a>
+            .
+          </Alert>
         )}
       </>
     </InlineSearchField>
   );
 };
-
-export const notice = 'The aggregate by feature is deprecated and will be removed in the future.';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   addTag: css({
@@ -168,5 +184,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
   notice: css({
     width: '500px',
     marginTop: theme.spacing(0.75),
+  }),
+  noticeLink: css({
+    color: theme.colors.text.link,
+    textDecoration: 'underline',
+    marginLeft: '5px',
   }),
 });

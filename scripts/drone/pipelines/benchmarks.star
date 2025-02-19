@@ -66,10 +66,6 @@ def integration_benchmarks(prefix):
                           "GRAFANA_TEST_DB": "postgres",
                           "POSTGRES_HOST": "postgres",
                       }) + \
-                      integration_benchmarks_step("mysql-5.7", {
-                          "GRAFANA_TEST_DB": "mysql",
-                          "MYSQL_HOST": "mysql57",
-                      }) + \
                       integration_benchmarks_step("mysql-8.0", {
                           "GRAFANA_TEST_DB": "mysql",
                           "MYSQL_HOST": "mysql80",

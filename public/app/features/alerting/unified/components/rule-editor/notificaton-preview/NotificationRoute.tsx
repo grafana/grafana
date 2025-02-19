@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, getTagColorIndexFromName, TagList, useStyles2 } from '@grafana/ui';
+import { Button, TagList, getTagColorIndexFromName, useStyles2 } from '@grafana/ui';
 
 import { Receiver } from '../../../../../../plugins/datasource/alertmanager/types';
 import { Stack } from '../../../../../../plugins/datasource/parca/QueryEditor/Stack';

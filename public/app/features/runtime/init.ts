@@ -2,7 +2,7 @@ import { PanelData, RawTimeRange } from '@grafana/data';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
-import { DashboardModel } from '../dashboard/state';
+import { DashboardModel } from '../dashboard/state/DashboardModel';
 
 declare global {
   interface Window {
