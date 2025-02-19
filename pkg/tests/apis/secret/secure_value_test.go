@@ -3,7 +3,9 @@ package secret
 import (
 	"context"
 	"errors"
+	"math/rand/v2"
 	"net/http"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -15,6 +17,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/secret"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -31,6 +34,9 @@ func TestIntegrationSecureValue(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		AppModeProduction: false, // required for experimental APIs
 		EnableFeatureToggles: []string{
@@ -40,18 +46,27 @@ func TestIntegrationSecureValue(t *testing.T) {
 		},
 	})
 
-	ctx, cancel := context.WithCancel(context.Background())
-	t.Cleanup(cancel)
+	permissions := map[string]ResourcePermission{
+		ResourceSecureValues: {Actions: ActionsAllSecureValues},
+		// in order to create securevalues, we need to first create keepers (and delete them to clean it up).
+		ResourceKeepers: {
+			Actions: []string{
+				secret.ActionSecretKeepersCreate,
+				secret.ActionSecretKeepersDelete,
+			},
+		},
+	}
+
+	genericUserEditor := mustCreateUsers(t, helper, permissions).Editor
 
 	client := helper.GetResourceClient(apis.ResourceClientArgs{
-		// #TODO: figure out permissions topic
-		User: helper.Org1.Admin,
+		User: genericUserEditor,
 		GVR:  gvrSecureValues,
 	})
 
 	t.Run("creating a secure value returns it without any of the value or ref", func(t *testing.T) {
-		keeper := mustGenerateKeeper(t, helper, helper.Org1.Admin, nil, "")
-		raw := mustGenerateSecureValue(t, helper, helper.Org1.Admin, keeper.GetName())
+		keeper := mustGenerateKeeper(t, helper, genericUserEditor, nil, "")
+		raw := mustGenerateSecureValue(t, helper, genericUserEditor, keeper.GetName())
 
 		secureValue := new(secretv0alpha1.SecureValue)
 		err := runtime.DefaultUnstructuredConverter.FromUnstructured(raw.Object, secureValue)
@@ -116,7 +131,7 @@ func TestIntegrationSecureValue(t *testing.T) {
 		})
 
 		t.Run("and updating the secure value keeper is not allowed and returns error", func(t *testing.T) {
-			newKeeper := mustGenerateKeeper(t, helper, helper.Org1.Admin, nil, "")
+			newKeeper := mustGenerateKeeper(t, helper, genericUserEditor, nil, "")
 
 			newRaw := helper.LoadYAMLOrJSONFile("testdata/secure-value-generate.yaml")
 			newRaw.SetName(raw.GetName())
@@ -131,8 +146,8 @@ func TestIntegrationSecureValue(t *testing.T) {
 	})
 
 	t.Run("creating a secure value with a `value` then updating it to a `ref` returns an error", func(t *testing.T) {
-		keeper := mustGenerateKeeper(t, helper, helper.Org1.Admin, nil, "")
-		svWithValue := mustGenerateSecureValue(t, helper, helper.Org1.Admin, keeper.GetName())
+		keeper := mustGenerateKeeper(t, helper, genericUserEditor, nil, "")
+		svWithValue := mustGenerateSecureValue(t, helper, genericUserEditor, keeper.GetName())
 
 		testData := svWithValue.DeepCopy()
 		testData.Object["spec"].(map[string]any)["value"] = nil
@@ -173,7 +188,7 @@ func TestIntegrationSecureValue(t *testing.T) {
 	t.Run("deleting a secure value that exists does not return an error", func(t *testing.T) {
 		generatePrefix := "generated-"
 
-		keeper := mustGenerateKeeper(t, helper, helper.Org1.Admin, nil, "")
+		keeper := mustGenerateKeeper(t, helper, genericUserEditor, nil, "")
 
 		testData := helper.LoadYAMLOrJSONFile("testdata/secure-value-generate.yaml")
 		testData.SetGenerateName(generatePrefix)
@@ -208,55 +223,60 @@ func TestIntegrationSecureValue(t *testing.T) {
 	})
 
 	t.Run("creating securevalues in multiple namespaces", func(t *testing.T) {
-		adminOrg1 := helper.Org1.Admin
-		adminOrg2 := helper.OrgB.Admin
+		permissions := map[string]ResourcePermission{
+			ResourceSecureValues: {Actions: ActionsAllSecureValues},
+			ResourceKeepers:      {Actions: ActionsAllKeepers},
+		}
 
-		keeperOrg1 := mustGenerateKeeper(t, helper, adminOrg1, nil, "")
-		keeperOrg2 := mustGenerateKeeper(t, helper, adminOrg2, nil, "")
+		editorOrgA := mustCreateUsers(t, helper, permissions).Editor
+		editorOrgB := mustCreateUsers(t, helper, permissions).Editor
 
-		secureValueOrg1 := mustGenerateSecureValue(t, helper, adminOrg1, keeperOrg1.GetName())
-		secureValueOrg2 := mustGenerateSecureValue(t, helper, adminOrg2, keeperOrg2.GetName())
+		keeperOrgA := mustGenerateKeeper(t, helper, editorOrgA, nil, "")
+		keeperOrgB := mustGenerateKeeper(t, helper, editorOrgB, nil, "")
 
-		clientOrg1 := helper.GetResourceClient(apis.ResourceClientArgs{User: adminOrg1, GVR: gvrSecureValues})
-		clientOrg2 := helper.GetResourceClient(apis.ResourceClientArgs{User: adminOrg2, GVR: gvrSecureValues})
+		secureValueOrgA := mustGenerateSecureValue(t, helper, editorOrgA, keeperOrgA.GetName())
+		secureValueOrgB := mustGenerateSecureValue(t, helper, editorOrgB, keeperOrgB.GetName())
+
+		clientOrgA := helper.GetResourceClient(apis.ResourceClientArgs{User: editorOrgA, GVR: gvrSecureValues})
+		clientOrgB := helper.GetResourceClient(apis.ResourceClientArgs{User: editorOrgB, GVR: gvrSecureValues})
 
 		// Create
 		t.Run("creating a securevalue with the same name as one from another namespace does not return an error", func(t *testing.T) {
-			// Org1 creating a securevalue with the same name from Org2.
+			// OrgA creating a securevalue with the same name from OrgB.
 			testData := helper.LoadYAMLOrJSONFile("testdata/secure-value-generate.yaml")
-			testData.SetName(secureValueOrg2.GetName())
-			testData.Object["spec"].(map[string]any)["keeper"] = keeperOrg1.GetName()
+			testData.SetName(secureValueOrgB.GetName())
+			testData.Object["spec"].(map[string]any)["keeper"] = keeperOrgA.GetName()
 
-			raw, err := clientOrg1.Resource.Create(ctx, testData, metav1.CreateOptions{})
+			raw, err := clientOrgA.Resource.Create(ctx, testData, metav1.CreateOptions{})
 			require.NoError(t, err)
 			require.NotNil(t, raw)
 
-			// Org2 creating a securevalue with the same name from Org1.
+			// OrgB creating a securevalue with the same name from OrgA.
 			testData = helper.LoadYAMLOrJSONFile("testdata/secure-value-generate.yaml")
-			testData.SetName(secureValueOrg1.GetName())
-			testData.Object["spec"].(map[string]any)["keeper"] = keeperOrg2.GetName()
+			testData.SetName(secureValueOrgA.GetName())
+			testData.Object["spec"].(map[string]any)["keeper"] = keeperOrgB.GetName()
 
-			raw, err = clientOrg2.Resource.Create(ctx, testData, metav1.CreateOptions{})
+			raw, err = clientOrgB.Resource.Create(ctx, testData, metav1.CreateOptions{})
 			require.NoError(t, err)
 			require.NotNil(t, raw)
 
-			require.NoError(t, clientOrg1.Resource.Delete(ctx, secureValueOrg2.GetName(), metav1.DeleteOptions{}))
-			require.NoError(t, clientOrg2.Resource.Delete(ctx, secureValueOrg1.GetName(), metav1.DeleteOptions{}))
+			require.NoError(t, clientOrgA.Resource.Delete(ctx, secureValueOrgB.GetName(), metav1.DeleteOptions{}))
+			require.NoError(t, clientOrgB.Resource.Delete(ctx, secureValueOrgA.GetName(), metav1.DeleteOptions{}))
 		})
 
 		// Read
 		t.Run("fetching a securevalue from another namespace returns not found", func(t *testing.T) {
 			var statusErr *apierrors.StatusError
 
-			// Org1 trying to fetch securevalue from Org2.
-			raw, err := clientOrg1.Resource.Get(ctx, secureValueOrg2.GetName(), metav1.GetOptions{})
+			// OrgA trying to fetch securevalue from OrgB.
+			raw, err := clientOrgA.Resource.Get(ctx, secureValueOrgB.GetName(), metav1.GetOptions{})
 			require.Error(t, err)
 			require.Nil(t, raw)
 			require.True(t, errors.As(err, &statusErr))
 			require.Equal(t, http.StatusNotFound, int(statusErr.Status().Code))
 
-			// Org2 trying to fetch securevalue from Org1.
-			raw, err = clientOrg2.Resource.Get(ctx, secureValueOrg1.GetName(), metav1.GetOptions{})
+			// OrgB trying to fetch securevalue from OrgA.
+			raw, err = clientOrgB.Resource.Get(ctx, secureValueOrgA.GetName(), metav1.GetOptions{})
 			require.Error(t, err)
 			require.Nil(t, raw)
 			require.True(t, errors.As(err, &statusErr))
@@ -267,23 +287,23 @@ func TestIntegrationSecureValue(t *testing.T) {
 		t.Run("updating a securevalue from another namespace returns not found", func(t *testing.T) {
 			var statusErr *apierrors.StatusError
 
-			// Org1 trying to update securevalue from Org2.
+			// OrgA trying to update securevalue from OrgB.
 			testData := helper.LoadYAMLOrJSONFile("testdata/secure-value-generate.yaml")
-			testData.SetName(secureValueOrg2.GetName())
+			testData.SetName(secureValueOrgB.GetName())
 			testData.Object["spec"].(map[string]any)["title"] = "New title"
 
-			raw, err := clientOrg1.Resource.Update(ctx, testData, metav1.UpdateOptions{})
+			raw, err := clientOrgA.Resource.Update(ctx, testData, metav1.UpdateOptions{})
 			require.Error(t, err)
 			require.Nil(t, raw)
 			require.True(t, errors.As(err, &statusErr))
 			require.Equal(t, http.StatusNotFound, int(statusErr.Status().Code))
 
-			// Org2 trying to update securevalue from Org1.
+			// OrgB trying to update securevalue from OrgA.
 			testData = helper.LoadYAMLOrJSONFile("testdata/secure-value-generate.yaml")
-			testData.SetName(secureValueOrg1.GetName())
+			testData.SetName(secureValueOrgA.GetName())
 			testData.Object["spec"].(map[string]any)["title"] = "New title"
 
-			raw, err = clientOrg2.Resource.Update(ctx, testData, metav1.UpdateOptions{})
+			raw, err = clientOrgB.Resource.Update(ctx, testData, metav1.UpdateOptions{})
 			require.Error(t, err)
 			require.Nil(t, raw)
 			require.True(t, errors.As(err, &statusErr))
@@ -292,45 +312,260 @@ func TestIntegrationSecureValue(t *testing.T) {
 
 		// Delete
 		t.Run("deleting a securevalue from another namespace does not return an error but does not delete it", func(t *testing.T) {
-			// Org1 trying to delete securevalue from Org2.
-			err := clientOrg1.Resource.Delete(ctx, secureValueOrg2.GetName(), metav1.DeleteOptions{})
+			// OrgA trying to delete securevalue from OrgB.
+			err := clientOrgA.Resource.Delete(ctx, secureValueOrgB.GetName(), metav1.DeleteOptions{})
 			require.NoError(t, err)
 
-			// Check that it still exists from the perspective of Org2.
-			raw, err := clientOrg2.Resource.Get(ctx, secureValueOrg2.GetName(), metav1.GetOptions{})
+			// Check that it still exists from the perspective of OrgB.
+			raw, err := clientOrgB.Resource.Get(ctx, secureValueOrgB.GetName(), metav1.GetOptions{})
 			require.NoError(t, err)
 			require.NotNil(t, raw)
 
-			// Org2 trying to delete securevalue from Org1.
-			err = clientOrg2.Resource.Delete(ctx, secureValueOrg1.GetName(), metav1.DeleteOptions{})
+			// OrgB trying to delete securevalue from OrgA.
+			err = clientOrgB.Resource.Delete(ctx, secureValueOrgA.GetName(), metav1.DeleteOptions{})
 			require.NoError(t, err)
 
-			// Check that it still exists from the perspective of Org1.
-			raw, err = clientOrg1.Resource.Get(ctx, secureValueOrg1.GetName(), metav1.GetOptions{})
+			// Check that it still exists from the perspective of OrgA.
+			raw, err = clientOrgA.Resource.Get(ctx, secureValueOrgA.GetName(), metav1.GetOptions{})
 			require.NoError(t, err)
 			require.NotNil(t, raw)
 		})
 
 		// List
 		t.Run("listing securevalues from a namespace does not return the ones from another namespace", func(t *testing.T) {
-			// Org1 listing securevalues.
-			listOrg1, err := clientOrg1.Resource.List(ctx, metav1.ListOptions{})
+			// OrgA listing securevalues.
+			listOrgA, err := clientOrgA.Resource.List(ctx, metav1.ListOptions{})
 			require.NoError(t, err)
-			require.NotNil(t, listOrg1)
-			require.Len(t, listOrg1.Items, 1)
-			require.Equal(t, *secureValueOrg1, listOrg1.Items[0])
+			require.NotNil(t, listOrgA)
+			require.Len(t, listOrgA.Items, 1)
+			require.Equal(t, *secureValueOrgA, listOrgA.Items[0])
 
-			// Org2 listing securevalues.
-			listOrg2, err := clientOrg2.Resource.List(ctx, metav1.ListOptions{})
+			// OrgB listing securevalues.
+			listOrgB, err := clientOrgB.Resource.List(ctx, metav1.ListOptions{})
 			require.NoError(t, err)
-			require.NotNil(t, listOrg2)
-			require.Len(t, listOrg2.Items, 1)
-			require.Equal(t, *secureValueOrg2, listOrg2.Items[0])
+			require.NotNil(t, listOrgB)
+			require.Len(t, listOrgB.Items, 1)
+			require.Equal(t, *secureValueOrgB, listOrgB.Items[0])
+		})
+	})
+
+	t.Run("securevalue actions without having required permissions", func(t *testing.T) {
+		// Create users on a random org without specifying secrets-related permissions.
+		editorP := mustCreateUsers(t, helper, nil).Editor
+
+		clientP := helper.GetResourceClient(apis.ResourceClientArgs{
+			User: editorP,
+			GVR:  gvrSecureValues,
+		})
+
+		// GET
+		rawGet, err := clientP.Resource.Get(ctx, "some-securevalue", metav1.GetOptions{})
+		require.Error(t, err)
+		require.Nil(t, rawGet)
+
+		var statusGetErr *apierrors.StatusError
+		require.True(t, errors.As(err, &statusGetErr))
+		require.EqualValues(t, http.StatusForbidden, statusGetErr.Status().Code)
+
+		// LIST
+		rawList, err := clientP.Resource.List(ctx, metav1.ListOptions{})
+		require.Error(t, err)
+		require.Nil(t, rawList)
+
+		var statusListErr *apierrors.StatusError
+		require.True(t, errors.As(err, &statusListErr))
+		require.EqualValues(t, http.StatusForbidden, statusListErr.Status().Code)
+
+		// CREATE
+		testSecureValue := helper.LoadYAMLOrJSONFile("testdata/secure-value-generate.yaml") // to pass validation before authz.
+		rawCreate, err := clientP.Resource.Create(ctx, testSecureValue, metav1.CreateOptions{})
+		require.Error(t, err)
+		require.Nil(t, rawCreate)
+
+		var statusCreateErr *apierrors.StatusError
+		require.True(t, errors.As(err, &statusCreateErr))
+		require.EqualValues(t, http.StatusForbidden, statusCreateErr.Status().Code)
+
+		// UPDATE
+		testSecureValue.SetName("test") // to pass validation before authz.
+		rawUpdate, err := clientP.Resource.Update(ctx, testSecureValue, metav1.UpdateOptions{})
+		require.Error(t, err)
+		require.Nil(t, rawUpdate)
+
+		var statusUpdateErr *apierrors.StatusError
+		require.True(t, errors.As(err, &statusUpdateErr))
+		require.EqualValues(t, http.StatusForbidden, statusUpdateErr.Status().Code)
+
+		// DELETE
+		err = clientP.Resource.Delete(ctx, "some-securevalue", metav1.DeleteOptions{})
+		require.Error(t, err)
+
+		var statusDeleteErr *apierrors.StatusError
+		require.True(t, errors.As(err, &statusDeleteErr))
+		require.EqualValues(t, http.StatusForbidden, statusDeleteErr.Status().Code)
+	})
+
+	t.Run("securevalue actions with permissions but with limited scope", func(t *testing.T) {
+		suffix := strconv.FormatInt(rand.Int64(), 10)
+
+		// Fix the SecureValue names.
+		secureValueName := "sv-" + suffix
+		testSecureValue := helper.LoadYAMLOrJSONFile("testdata/secure-value-generate.yaml")
+		testSecureValue.SetName(secureValueName)
+
+		secureValueNameAnother := "sv-another-" + suffix
+		testSecureValueAnother := helper.LoadYAMLOrJSONFile("testdata/secure-value-generate.yaml")
+		testSecureValueAnother.SetName(secureValueNameAnother)
+
+		// Fix the org ID because we will create another user with scope "all" permissions on the same org, to compare.
+		orgID := rand.Int64() + 2
+
+		// Permissions which allow any action, but scoped actions (get, update, delete) only on `secureValueName` and NO OTHER SecureValue.
+		scopedLimitedPermissions := map[string]ResourcePermission{
+			ResourceSecureValues: {
+				Actions: ActionsAllSecureValues,
+				Name:    secureValueName,
+			},
+			// we need to have a Keeper before creating SecureValues.
+			ResourceKeepers: {
+				Actions: []string{
+					secret.ActionSecretKeepersCreate,
+					secret.ActionSecretKeepersDelete,
+				},
+			},
+		}
+
+		// Create users (+ client) with permission to manage ONLY the SecureValue `secureValueName`.
+		editorLimited := mustCreateUsersWithOrg(t, helper, orgID, scopedLimitedPermissions).Editor
+
+		clientScopedLimited := helper.GetResourceClient(apis.ResourceClientArgs{
+			User: editorLimited,
+			GVR:  gvrSecureValues,
+		})
+
+		// Create users (+ client) with permission to manage ANY SecureValues.
+		scopedAllPermissions := map[string]ResourcePermission{
+			ResourceSecureValues: {
+				Actions: ActionsAllSecureValues,
+				Name:    "*", // this or not sending a `Name` have the same effect.
+			},
+		}
+
+		editorAll := mustCreateUsersWithOrg(t, helper, orgID, scopedAllPermissions).Editor
+
+		clientScopedAll := helper.GetResourceClient(apis.ResourceClientArgs{
+			User: editorAll,
+			GVR:  gvrSecureValues,
+		})
+
+		// Create an initial Keeper to be able to start creating SecureValues.
+		keeper := mustGenerateKeeper(t, helper, editorLimited, nil, "")
+		testSecureValue.Object["spec"].(map[string]any)["keeper"] = keeper.GetName()
+		testSecureValueAnother.Object["spec"].(map[string]any)["keeper"] = keeper.GetName()
+
+		t.Run("CREATE", func(t *testing.T) {
+			// Create the SecureValue with the limited client.
+			rawCreateLimited, err := clientScopedLimited.Resource.Create(ctx, testSecureValue, metav1.CreateOptions{})
+			require.NoError(t, err)
+			require.NotNil(t, rawCreateLimited)
+
+			// Create another SecureValue with the limited client, because the action is not scoped (no `name` available).
+			rawCreateLimited, err = clientScopedLimited.Resource.Create(ctx, testSecureValueAnother, metav1.CreateOptions{})
+			require.NoError(t, err)
+			require.NotNil(t, rawCreateLimited)
+		})
+
+		t.Run("READ", func(t *testing.T) {
+			// Retrieve `secureValueName` from the limited client.
+			rawGetLimited, err := clientScopedLimited.Resource.Get(ctx, secureValueName, metav1.GetOptions{})
+			require.NoError(t, err)
+			require.NotNil(t, rawGetLimited)
+			require.Equal(t, rawGetLimited.GetUID(), rawGetLimited.GetUID())
+
+			// Retrieve `secureValueName` from the scope-all client.
+			rawGetAll, err := clientScopedAll.Resource.Get(ctx, secureValueName, metav1.GetOptions{})
+			require.NoError(t, err)
+			require.NotNil(t, rawGetAll)
+			require.Equal(t, rawGetAll.GetUID(), rawGetLimited.GetUID())
+
+			// Even though we can create it, we cannot retrieve `secureValueNameAnother` from the limited client.
+			rawGetLimited, err = clientScopedLimited.Resource.Get(ctx, secureValueNameAnother, metav1.GetOptions{})
+			require.Error(t, err)
+			require.Nil(t, rawGetLimited)
+
+			var statusGetErr *apierrors.StatusError
+			require.True(t, errors.As(err, &statusGetErr))
+			require.EqualValues(t, http.StatusForbidden, statusGetErr.Status().Code)
+
+			// Retrieve `secureValueNameAnother` from the scope-all client.
+			rawGetAll, err = clientScopedAll.Resource.Get(ctx, secureValueNameAnother, metav1.GetOptions{})
+			require.NoError(t, err)
+			require.NotNil(t, rawGetAll)
+		})
+
+		t.Run("LIST", func(t *testing.T) {
+			// List SecureValues from the limited client should return only 1, but it doesn't.
+			rawList, err := clientScopedLimited.Resource.List(ctx, metav1.ListOptions{})
+			require.NoError(t, err)
+			require.NotNil(t, rawList)
+			require.Len(t, rawList.Items, 1) // TODO: Can view both SecureValues. How can we limit that?
+
+			// List SecureValues from the scope-all client should return all of them.
+			rawList, err = clientScopedAll.Resource.List(ctx, metav1.ListOptions{})
+			require.NoError(t, err)
+			require.NotNil(t, rawList)
+			require.Len(t, rawList.Items, 2)
+		})
+
+		t.Run("UPDATE", func(t *testing.T) {
+			// Update `secureValueName` from the limited client.
+			testSecureValueUpdate := testSecureValue.DeepCopy()
+			testSecureValueUpdate.Object["spec"].(map[string]any)["title"] = "sv-title-1234"
+
+			rawUpdate, err := clientScopedLimited.Resource.Update(ctx, testSecureValueUpdate, metav1.UpdateOptions{})
+			require.NoError(t, err)
+			require.NotNil(t, rawUpdate)
+
+			// Try to update `secureValueNameAnother` from the limited client.
+			testSecureValueAnotherUpdate := testSecureValueAnother.DeepCopy()
+			testSecureValueAnotherUpdate.Object["spec"].(map[string]any)["title"] = "sv-title-5678"
+
+			rawUpdate, err = clientScopedLimited.Resource.Update(ctx, testSecureValueAnotherUpdate, metav1.UpdateOptions{})
+			require.Error(t, err)
+			require.Nil(t, rawUpdate)
+
+			var statusUpdateErr *apierrors.StatusError
+			require.True(t, errors.As(err, &statusUpdateErr))
+			require.EqualValues(t, http.StatusForbidden, statusUpdateErr.Status().Code)
+
+			// Update `secureValueNameAnother` from the scope-all client.
+			rawUpdate, err = clientScopedAll.Resource.Update(ctx, testSecureValueAnotherUpdate, metav1.UpdateOptions{})
+			require.NoError(t, err)
+			require.NotNil(t, rawUpdate)
+		})
+
+		// Keep this last for cleaning up the resources.
+		t.Run("DELETE", func(t *testing.T) {
+			// Try to delete `secureValueNameAnother` from the limited client.
+			err := clientScopedLimited.Resource.Delete(ctx, secureValueNameAnother, metav1.DeleteOptions{})
+			require.Error(t, err)
+
+			var statusDeleteErr *apierrors.StatusError
+			require.True(t, errors.As(err, &statusDeleteErr))
+			require.EqualValues(t, http.StatusForbidden, statusDeleteErr.Status().Code)
+
+			// Delete `secureValueNameAnother` from the scope-all client.
+			err = clientScopedAll.Resource.Delete(ctx, secureValueNameAnother, metav1.DeleteOptions{})
+			require.NoError(t, err)
+
+			// Delete `secureValueName` from the limited client.
+			err = clientScopedLimited.Resource.Delete(ctx, secureValueName, metav1.DeleteOptions{})
+			require.NoError(t, err)
 		})
 	})
 
 	t.Run("creating a secure value with a not implemented keeper returns error", func(t *testing.T) {
-		keeper := mustGenerateKeeper(t, helper, helper.Org1.Admin, nil, "testdata/keeper-aws-generate.yaml")
+		keeper := mustGenerateKeeper(t, helper, genericUserEditor, nil, "testdata/keeper-aws-generate.yaml")
 		testSecureValue := helper.LoadYAMLOrJSONFile("testdata/secure-value-generate.yaml")
 		testSecureValue.Object["spec"].(map[string]any)["keeper"] = keeper.GetName()
 
@@ -340,7 +575,7 @@ func TestIntegrationSecureValue(t *testing.T) {
 	})
 
 	t.Run("creating a secure value in default sql keeper returns it", func(t *testing.T) {
-		raw := mustGenerateSecureValue(t, helper, helper.Org1.Admin, keepertypes.DefaultSQLKeeper)
+		raw := mustGenerateSecureValue(t, helper, genericUserEditor, keepertypes.DefaultSQLKeeper)
 
 		secureValue := new(secretv0alpha1.SecureValue)
 		err := runtime.DefaultUnstructuredConverter.FromUnstructured(raw.Object, secureValue)
@@ -405,7 +640,7 @@ func TestIntegrationSecureValue(t *testing.T) {
 		})
 
 		t.Run("and updating the secure value keeper is not allowed and returns error", func(t *testing.T) {
-			newKeeper := mustGenerateKeeper(t, helper, helper.Org1.Admin, nil, "")
+			newKeeper := mustGenerateKeeper(t, helper, genericUserEditor, nil, "")
 
 			newRaw := helper.LoadYAMLOrJSONFile("testdata/secure-value-generate.yaml")
 			newRaw.SetName(raw.GetName())
