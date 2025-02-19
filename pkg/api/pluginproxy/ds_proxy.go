@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"github.com/grafana/grafana/pkg/services/jwttoken"
 	"io"
 	"net/http"
 	"net/url"
@@ -45,6 +46,7 @@ type DataSourceProxy struct {
 	cfg                *setting.Cfg
 	clientProvider     httpclient.Provider
 	oAuthTokenService  oauthtoken.OAuthTokenService
+	jwtTokenService    jwttoken.JWTTokenService
 	dataSourcesService datasources.DataSourceService
 	tracer             tracing.Tracer
 	features           featuremgmt.FeatureToggles
@@ -59,6 +61,7 @@ func NewDataSourceProxy(ds *datasources.DataSource, pluginRoutes []*plugins.Rout
 	proxyPath string, cfg *setting.Cfg, clientProvider httpclient.Provider,
 	oAuthTokenService oauthtoken.OAuthTokenService, dsService datasources.DataSourceService,
 	tracer tracing.Tracer, features featuremgmt.FeatureToggles,
+	jwtTokenService jwttoken.JWTTokenService,
 ) (*DataSourceProxy, error) {
 	targetURL, err := datasource.ValidateURL(ds.Type, ds.URL)
 	if err != nil {
@@ -74,6 +77,7 @@ func NewDataSourceProxy(ds *datasources.DataSource, pluginRoutes []*plugins.Rout
 		cfg:                cfg,
 		clientProvider:     clientProvider,
 		oAuthTokenService:  oAuthTokenService,
+		jwtTokenService:    jwtTokenService,
 		dataSourcesService: dsService,
 		tracer:             tracer,
 		features:           features,
@@ -264,6 +268,11 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 
 	if proxy.oAuthTokenService.IsOAuthPassThruEnabled(proxy.ds) {
 		reqCtx := contexthandler.FromContext(req.Context())
+
+		if token, header := proxy.jwtTokenService.GetCurrentJWTToken(req.Context(), proxy.ctx.SignedInUser, reqCtx); token != "" {
+			req.Header.Set(header, token)
+		}
+
 		if token := proxy.oAuthTokenService.GetCurrentOAuthToken(req.Context(), proxy.ctx.SignedInUser, reqCtx.UserToken); token != nil {
 			req.Header.Set("Authorization", fmt.Sprintf("%s %s", token.Type(), token.AccessToken))
 
