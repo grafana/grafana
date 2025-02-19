@@ -10,7 +10,6 @@ import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
 import { layoutRegistry } from './layoutRegistry';
-import { findParentLayout } from './utils';
 
 export interface Props {
   layoutOrchestrator: LayoutOrchestrator;
@@ -18,21 +17,19 @@ export interface Props {
 
 export function DashboardLayoutSelector({ layoutOrchestrator }: Props) {
   const { manager } = layoutOrchestrator.useState();
-  const currentLayoutId = useMemo(() => manager.descriptor.id, [manager]);
-  const options = useMemo(() => {
-    const parentLayout = findParentLayout(layoutOrchestrator);
-    const parentLayoutId = parentLayout?.descriptor.id;
+  const { options, currentOption } = useMemo(() => {
+    const managerId = manager.descriptor.id;
+    const layouts = layoutRegistry.list().map((layout) => ({
+      label: layout.name,
+      value: layout,
+    }));
+    const currentOption = layouts.find((option) => option.value.id === managerId);
 
-    return layoutRegistry
-      .list()
-      .filter((layout) => layout.id !== parentLayoutId)
-      .map((layout) => ({
-        label: layout.name,
-        value: layout,
-      }));
-  }, [layoutOrchestrator]);
-
-  const currentOption = options.find((option) => option.value.id === currentLayoutId);
+    return {
+      options: layouts.filter((layout) => currentOption?.value !== layout.value),
+      currentOption,
+    };
+  }, [manager]);
 
   return (
     <Select

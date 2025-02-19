@@ -22,6 +22,10 @@ export class DashboardEditableElement implements EditableDashboardElement {
     // When layout changes we need to update options list
     const { body } = dashboard.useState();
 
+    // Probably a nicer way to do this :(
+    const layoutOrchestrator = body as LayoutOrchestrator;
+    const { manager } = layoutOrchestrator.useState();
+
     const dashboardOptions = useMemo(() => {
       return new OptionsPaneCategoryDescriptor({
         title: t('dashboard.options.title', 'Dashboard options'),
@@ -46,7 +50,7 @@ export class DashboardEditableElement implements EditableDashboardElement {
         );
     }, [dashboard]);
 
-    const layoutCategory = useLayoutCategory((body as LayoutOrchestrator).state.manager);
+    const layoutCategory = useLayoutCategory(manager);
 
     return [dashboardOptions, layoutCategory];
   }
