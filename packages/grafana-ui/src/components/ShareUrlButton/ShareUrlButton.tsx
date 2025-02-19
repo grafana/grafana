@@ -113,8 +113,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   shareText: css({
     marginLeft: '8px',
-    '@media screen and (max-width: 1040px)': {
+    '@media screen and (max-width: 1040px)': css({
       display: 'none' /*Won't be displayed on screens below or equal to 1040px width*/,
-    },
+    }),
   }),
 });

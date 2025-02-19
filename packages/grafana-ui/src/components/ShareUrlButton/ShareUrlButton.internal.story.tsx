@@ -11,18 +11,15 @@ const meta: Meta = {
       page: mdx,
     },
     controls: {
-      exclude: ['variant', 'icon', 'className', 'fullWidth', 'getText', 'onClipboardCopy', 'onClipboardError'],
+      exclude: ['fill', 'type', 'tooltip', 'tooltipPlacement', 'size', 'variant', 'icon', 'className', 'fullWidth', 'getText', 'onClipboardCopy', 'onClipboardError'],
     },
   },
 };
 
-interface StoryProps extends Partial<Props> {
-  inputText: string;
-  buttonText: string;
-}
+interface StoryProps extends Props {}
 
 export const ShareUrlButton: StoryFn<StoryProps> = (args) => {
-  return <ShareUrlButtonImpl />;
+  return <ShareUrlButtonImpl {...args} />;
 };
 
 export default meta;
