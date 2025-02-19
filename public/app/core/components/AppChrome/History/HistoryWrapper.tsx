@@ -1,37 +1,57 @@
 import { css } from '@emotion/css';
 import moment from 'moment';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
-import { FieldType, GrafanaTheme2, store } from '@grafana/data';
+import { FieldType, GrafanaTheme2, NavModelItem, store } from '@grafana/data';
 import { Button, Card, IconButton, Space, Stack, Text, useStyles2, Box, Sparkline, useTheme2 } from '@grafana/ui';
+import appEvents from 'app/core/app_events';
+import { useGrafana } from 'app/core/context/GrafanaContext';
 import { t } from 'app/core/internationalization';
+import { RecordHistoryEntryEvent } from 'app/types/events';
 
-import { HISTORY_LOCAL_STORAGE_KEY } from '../AppChromeService';
 import { HistoryEntry } from '../types';
 
-export function HistoryWrapper({ onClose }: { onClose: () => void }) {
-  const history = store.getObject<HistoryEntry[]>(HISTORY_LOCAL_STORAGE_KEY, []).filter((entry) => {
-    return moment(entry.time).isAfter(moment().subtract(2, 'day').startOf('day'));
-  });
-  const [numItemsToShow, setNumItemsToShow] = useState(5);
+import { historyFormated } from './utils';
 
+export function HistoryWrapper() {
+  const { chrome } = useGrafana();
+  const [numItemsToShow, setNumItemsToShow] = useState(5);
+  const { history, historyDocked } = chrome.useState();
   const selectedTime = history.find((entry) => {
     return entry.url === window.location.href || entry.views.some((view) => view.url === window.location.href);
   })?.time;
 
-  const hist = history.slice(0, numItemsToShow).reduce((acc: { [key: string]: HistoryEntry[] }, entry) => {
-    const date = moment(entry.time);
-    let key = '';
-    if (date.isSame(moment(), 'day')) {
-      key = t('nav.history-wrapper.today', 'Today');
-    } else if (date.isSame(moment().subtract(1, 'day'), 'day')) {
-      key = t('nav.history-wrapper.yesterday', 'Yesterday');
-    } else {
-      key = date.format('YYYY-MM-DD');
-    }
-    acc[key] = [...(acc[key] || []), entry];
-    return acc;
-  }, {});
+  const hist = historyFormated(history, numItemsToShow);
+
+  useEffect(() => {
+    const sub = appEvents.subscribe(RecordHistoryEntryEvent, (ev) => {
+      const clickedHistory = store.getObject<boolean>('CLICKING_HISTORY');
+      if (clickedHistory) {
+        store.setObject('CLICKING_HISTORY', false);
+        return;
+      }
+      let lastEntry = history[0];
+      const newUrl = ev.payload.url;
+      const lastUrl = lastEntry.views[0]?.url;
+      if (lastUrl !== newUrl) {
+        lastEntry.views = [
+          {
+            name: ev.payload.name,
+            description: ev.payload.description,
+            url: newUrl,
+            time: Date.now(),
+          },
+          ...lastEntry.views,
+        ];
+        chrome.setHistory([...history]);
+      }
+    });
+    return () => {
+      sub.unsubscribe();
+    };
+  }, [chrome, history]);
+
+  const styles = useStyles2(getStyles);
 
   return (
     <Stack direction="column" alignItems="flex-start">
@@ -39,27 +59,31 @@ export function HistoryWrapper({ onClose }: { onClose: () => void }) {
         {Object.keys(hist).map((entries, date) => {
           return (
             <Stack key={date} direction="column" gap={1}>
-              <Text color="secondary" variant="bodySmall">
-                {entries}
-              </Text>
-              {hist[entries].map((entry, index) => {
-                return (
-                  <HistoryEntryAppView
-                    key={index}
-                    entry={entry}
-                    isSelected={entry.time === selectedTime}
-                    onClick={() => onClose()}
-                  />
-                );
-              })}
+              <span className={styles.paddingLeft}>
+                <Text color="secondary">{entries}</Text>
+              </span>
+              <span key={date} className={styles.borderLeft}>
+                {hist[entries].map((entry, index) => {
+                  return (
+                    <HistoryEntryAppView
+                      key={index}
+                      entry={entry}
+                      isSelected={entry.time === selectedTime}
+                      onClick={() => !historyDocked && chrome.setHistoryOpen(false)}
+                    />
+                  );
+                })}
+              </span>
             </Stack>
           );
         })}
       </Box>
       {history.length > numItemsToShow && (
-        <Button variant="secondary" fill="text" onClick={() => setNumItemsToShow(numItemsToShow + 5)}>
-          {t('nav.history-wrapper.show-more', 'Show more')}
-        </Button>
+        <span className={styles.paddingLeft}>
+          <Button variant="secondary" fill="text" onClick={() => setNumItemsToShow(numItemsToShow + 5)}>
+            {t('nav.history-wrapper.show-more', 'Show more')}
+          </Button>
+        </span>
       )}
     </Stack>
   );
@@ -78,27 +102,45 @@ function HistoryEntryAppView({ entry, isSelected, onClick }: ItemProps) {
   const expandedLabel = isExpanded
     ? t('nav.history-wrapper.collapse', 'Collapse')
     : t('nav.history-wrapper.expand', 'Expand');
-
+  const entryIconLabel = isExpanded
+    ? t('nav.history-wrapper.icon-selected', 'Selected Entry')
+    : t('nav.history-wrapper.icon-unselected', 'Normal Entry');
   const selectedViewTime =
     isSelected &&
     entry.views.find((entry) => {
       return entry.url === window.location.href;
     })?.time;
-
+  const breadcrumbsToString = (breadcrumbs: NavModelItem[]) => {
+    return breadcrumbs
+      .map((breadcrumb, index) => {
+        const finalBreadcrumbText =
+          breadcrumb.text.length > 30 ? breadcrumb.text.slice(0, 27) + '...' : breadcrumb.text;
+        return finalBreadcrumbText + (index !== breadcrumbs.length - 1 ? ' > ' : '');
+      })
+      .join('');
+  };
   return (
     <Stack direction="column" gap={1}>
-      <Stack>
-        {views.length > 0 ? (
+      <Stack alignItems={'baseline'}>
+        <Stack direction="row">
+          {views.length > 0 ? (
+            <IconButton
+              name={isExpanded ? 'angle-down' : 'angle-right'}
+              onClick={() => setIsExpanded(!isExpanded)}
+              aria-label={expandedLabel}
+              className={styles.iconButton}
+            />
+          ) : (
+            <Space h={2} />
+          )}
           <IconButton
-            name={isExpanded ? 'angle-down' : 'angle-right'}
-            onClick={() => setIsExpanded(!isExpanded)}
-            aria-label={expandedLabel}
-            className={styles.iconButton}
+            size="sm"
+            name={isSelected ? 'circle-mono' : 'circle'}
+            onClick={() => {}}
+            aria-label={entryIconLabel}
+            className={styles.iconButtonCircle}
           />
-        ) : (
-          <Space h={2} />
-        )}
-
+        </Stack>
         <Card
           onClick={() => {
             store.setObject('CLICKING_HISTORY', true);
@@ -109,14 +151,10 @@ function HistoryEntryAppView({ entry, isSelected, onClick }: ItemProps) {
           className={isSelected ? undefined : styles.card}
         >
           <Stack direction="column">
-            <div>
-              {breadcrumbs.map((breadcrumb, index) => (
-                <Text key={index}>
-                  {breadcrumb.text} {index !== breadcrumbs.length - 1 ? '> ' : ''}
-                </Text>
-              ))}
-            </div>
-            <Text color="secondary">{moment(time).format('h:mm A')}</Text>
+            <div className={styles.breadcrumbs}>{breadcrumbsToString(breadcrumbs)}</div>
+            <Text color="secondary" variant="bodySmall">
+              {moment(time).format('h:mm A')}
+            </Text>
             {sparklineData && (
               <Sparkline
                 theme={theme}
@@ -182,23 +220,58 @@ const getStyles = (theme: GrafanaTheme2) => {
       background: 'none',
     }),
     iconButton: css({
-      margin: 0,
+      margin: theme.spacing(1, 0, 0, 0),
+    }),
+    iconButtonCircle: css({
+      margin: theme.spacing(1, 0, 0, 0),
+      color: theme.colors.primary.main,
     }),
     expanded: css({
       display: 'flex',
       flexDirection: 'column',
-      marginLeft: theme.spacing(5),
+      marginLeft: theme.spacing(6),
       gap: theme.spacing(1),
       position: 'relative',
       '&:before': {
         content: '""',
         position: 'absolute',
-        left: theme.spacing(-2),
+        left: 0,
         top: 0,
         height: '100%',
         width: '1px',
         background: theme.colors.border.weak,
       },
+    }),
+    borderLeft: css({
+      position: 'relative',
+      height: '100%',
+      width: '100%',
+      padding: theme.spacing(0, 2),
+      '&:before': {
+        content: '""',
+        position: 'absolute',
+        left: theme.spacing(6),
+        top: 0,
+        height: '100%',
+        width: '1px',
+        background: `repeating-linear-gradient(
+          to bottom,
+          ${theme.colors.border.strong},
+          ${theme.colors.border.strong} 2px,
+          transparent 2px,
+          transparent 4px
+        )`,
+      },
+    }),
+    paddingLeft: css({
+      paddingLeft: theme.spacing(2),
+    }),
+    breadcrumbs: css({
+      wordBreak: 'break-word',
+      WebkitLineClamp: 3,
+      WebkitBoxOrient: 'vertical',
+      display: '-webkit-box',
+      overflow: 'hidden',
     }),
   };
 };

@@ -1,3 +1,4 @@
+import moment from 'moment';
 import { useObservable } from 'react-use';
 import { BehaviorSubject, distinctUntilChanged, map } from 'rxjs';
 
@@ -12,6 +13,7 @@ import { KioskMode } from 'app/types';
 import { RouteDescriptor } from '../../navigation/types';
 import { buildBreadcrumbs } from '../Breadcrumbs/utils';
 
+import { hackyFixes } from './History/utils';
 import { ReturnToPreviousProps } from './ReturnToPrevious/ReturnToPrevious';
 import { HistoryEntry, TOP_BAR_LEVEL_HEIGHT } from './types';
 
@@ -28,11 +30,16 @@ export interface AppChromeState {
     title: ReturnToPreviousProps['title'];
     href: ReturnToPreviousProps['href'];
   };
+  historyOpen: boolean;
+  historyDocked: boolean;
+  history: HistoryEntry[];
 }
 
 export const DOCKED_LOCAL_STORAGE_KEY = 'grafana.navigation.docked';
 export const DOCKED_MENU_OPEN_LOCAL_STORAGE_KEY = 'grafana.navigation.open';
 export const HISTORY_LOCAL_STORAGE_KEY = 'grafana.navigation.history';
+export const OPEN_HISTORY_LOCAL_STORAGE_KEY = 'grafana.navigation.history.open';
+export const DOCKED_HISTORY_LOCAL_STORAGE_KEY = 'grafana.navigation.history.docked';
 
 export class AppChromeService {
   searchBarStorageKey = 'SearchBar_Hidden';
@@ -47,6 +54,14 @@ export class AppChromeService {
   private sessionStorageData = window.sessionStorage.getItem('returnToPrevious');
   private returnToPreviousData = this.sessionStorageData ? JSON.parse(this.sessionStorageData) : undefined;
 
+  private historyDocked = Boolean(
+    window.innerWidth >= config.theme2.breakpoints.values.xl &&
+      store.getBool(
+        DOCKED_HISTORY_LOCAL_STORAGE_KEY,
+        Boolean(window.innerWidth >= config.theme2.breakpoints.values.xxl)
+      )
+  );
+
   readonly state = new BehaviorSubject<AppChromeState>({
     chromeless: true, // start out hidden to not flash it on pages without chrome
     sectionNav: { node: { text: t('nav.home.title', 'Home') }, main: { text: '' } },
@@ -55,6 +70,11 @@ export class AppChromeService {
     kioskMode: null,
     layout: PageLayoutType.Canvas,
     returnToPrevious: this.returnToPreviousData,
+    historyOpen: this.historyDocked && store.getBool(OPEN_HISTORY_LOCAL_STORAGE_KEY, true),
+    historyDocked: this.historyDocked,
+    history: store.getObject<HistoryEntry[]>(HISTORY_LOCAL_STORAGE_KEY, []).filter((entry) => {
+      return moment(entry.time).isAfter(moment().subtract(2, 'day').startOf('day'));
+    }),
   });
 
   public headerHeightObservable = this.state
@@ -101,8 +121,12 @@ export class AppChromeService {
     newState.chromeless = newState.kioskMode === KioskMode.Full || this.currentRoute?.chromeless;
 
     if (!this.ignoreStateUpdate(newState, current)) {
-      config.featureToggles.unifiedHistory &&
-        store.setObject(HISTORY_LOCAL_STORAGE_KEY, this.getUpdatedHistory(newState));
+      if (config.featureToggles.unifiedHistory) {
+        const newHistory = this.getUpdatedHistory(newState);
+        // can't use setHistory directly here as the other state updates will be ignored
+        newState.history = newHistory;
+        store.setObject(HISTORY_LOCAL_STORAGE_KEY, newHistory);
+      }
       this.state.next(newState);
     }
   }
@@ -135,7 +159,7 @@ export class AppChromeService {
     const breadcrumbs = buildBreadcrumbs(newState.sectionNav.node, newState.pageNav, { text: 'Home', url: '/' }, true);
     const newPageNav = newState.pageNav || newState.sectionNav.node;
 
-    let entries = store.getObject<HistoryEntry[]>(HISTORY_LOCAL_STORAGE_KEY, []);
+    let entries = newState.history;
     const clickedHistory = store.getObject<boolean>('CLICKING_HISTORY');
     if (clickedHistory) {
       store.setObject('CLICKING_HISTORY', false);
@@ -147,17 +171,16 @@ export class AppChromeService {
 
     const lastEntry = entries[0];
     const newEntry = { name: newPageNav.text, views: [], breadcrumbs, time: Date.now(), url: window.location.href };
-    const isSameUrl = lastEntry && newEntry.url === lastEntry.url;
 
-    // To avoid adding an entry with the same url twice, we always use the latest one
-    if (isSameUrl) {
+    if (lastEntry && lastEntry.url === newEntry.url) {
       entries[0] = newEntry;
     } else {
-      entries = [newEntry, ...entries];
+      entries = hackyFixes(newEntry, entries);
     }
 
     return entries;
   }
+
   private ignoreStateUpdate(newState: AppChromeState, current: AppChromeState) {
     if (isShallowEqual(newState, current)) {
       return true;
@@ -203,6 +226,34 @@ export class AppChromeService {
     reportInteraction('grafana_mega_menu_docked', { state: newDockedState });
     this.update({
       megaMenuDocked: newDockedState,
+    });
+  };
+
+  public setHistoryOpen = (newOpenState: boolean) => {
+    const { historyDocked } = this.state.getValue();
+    if (historyDocked) {
+      store.set(OPEN_HISTORY_LOCAL_STORAGE_KEY, newOpenState);
+    }
+    this.update({
+      historyOpen: newOpenState,
+    });
+  };
+
+  public setHistory = (newHistory: HistoryEntry[]) => {
+    const currentState = this.state.getValue();
+    this.state.next({
+      ...currentState,
+      history: newHistory,
+    });
+    store.setObject(HISTORY_LOCAL_STORAGE_KEY, newHistory);
+  };
+
+  public setHistoryDocked = (newDockedState: boolean, updatePersistedState = true) => {
+    if (updatePersistedState) {
+      store.set(DOCKED_HISTORY_LOCAL_STORAGE_KEY, newDockedState);
+    }
+    this.update({
+      historyDocked: newDockedState,
     });
   };
 
