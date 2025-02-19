@@ -30,7 +30,7 @@ func (s *LocalSource) PluginURIs(_ context.Context) []string {
 	return s.paths
 }
 
-func (s *LocalSource) DefaultSignature(_ context.Context) (plugins.Signature, bool) {
+func (s *LocalSource) DefaultSignature(_ context.Context, _ string) (plugins.Signature, bool) {
 	switch s.class {
 	case plugins.ClassCore:
 		return plugins.Signature{
