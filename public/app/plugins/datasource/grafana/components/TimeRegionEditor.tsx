@@ -8,15 +8,16 @@ import {
   Field,
   FieldSet,
   Input,
-  RadioButtonGroup,
   Select,
   Stack,
+  Switch,
   TimeOfDayPicker,
   TimeZonePicker,
   useStyles2,
 } from '@grafana/ui';
 import { TimeZoneOffset } from '@grafana/ui/src/components/DateTimePickers/TimeZonePicker/TimeZoneOffset';
 import { TimeZoneTitle } from '@grafana/ui/src/components/DateTimePickers/TimeZonePicker/TimeZoneTitle';
+import { t } from '@grafana/ui/src/utils/i18n';
 import { TimeRegionConfig, TimeRegionMode } from 'app/core/utils/timeRegions';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
@@ -149,18 +150,29 @@ export const TimeRegionEditor = ({ value, onChange }: Props) => {
 
   return (
     <FieldSet className={styles.wrapper}>
-      <Field label="Mode">
-        <RadioButtonGroup
-          options={[
-            { label: 'Simple', value: 'simple' },
-            { label: 'Cron', value: 'cron' },
-          ]}
-          value={value.mode ?? 'simple'}
-          onChange={onModeChange}
+      <Field
+        label={t('dashboard-settings.time-regions.advanced-label', 'Advanced')}
+        description={
+          <>
+            {t('dashboard-settings.time-regions.advanced-description-use', 'Use ')}
+            <a href="https://crontab.run/" target="_blank">
+              {t('dashboard-settings.time-regions.advanced-description-cron', 'Cron syntax')}
+            </a>
+            {t(
+              'dashboard-settings.time-regions.advanced-description-rest',
+              ' to define a recurrence schedule and duration'
+            )}
+          </>
+        }
+      >
+        <Switch
+          id="time-regions-adanced-mode-toggle"
+          value={value.mode === 'cron'}
+          onChange={(e: ChangeEvent<HTMLInputElement>) => onModeChange(e.currentTarget.checked ? 'cron' : null)}
         />
       </Field>
 
-      {(value.mode == null || value.mode === 'simple') && (
+      {value.mode == null && (
         <>
           <Field label="From">
             <Stack gap={0.5}>
@@ -206,10 +218,10 @@ export const TimeRegionEditor = ({ value, onChange }: Props) => {
       )}
       {value.mode === 'cron' && (
         <>
-          <Field label="Expression">
+          <Field label="Cron expression">
             <Input
               onChange={(e: ChangeEvent<HTMLInputElement>) => onCronExprChange(e.target.value)}
-              value={value.cronExpr ?? ''}
+              value={value.cronExpr}
               placeholder="0 9 * * 1-5"
               width={40}
             />
@@ -217,7 +229,7 @@ export const TimeRegionEditor = ({ value, onChange }: Props) => {
           <Field label="Duration">
             <Input
               onChange={(e: ChangeEvent<HTMLInputElement>) => onDurationChange(e.target.value)}
-              value={value.duration ?? ''}
+              value={value.duration}
               placeholder="8h"
               width={40}
             />

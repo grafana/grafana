@@ -2,7 +2,7 @@ import { Cron } from 'croner';
 
 import { AbsoluteTimeRange, TimeRange, durationToMilliseconds, parseDuration } from '@grafana/data';
 
-export type TimeRegionMode = 'simple' | 'cron';
+export type TimeRegionMode = null | 'cron';
 export interface TimeRegionConfig {
   mode?: TimeRegionMode;
 
@@ -106,22 +106,20 @@ export function convertToCron(
   return cronCfg;
 }
 
-export function calculateTimesWithin(cfg: TimeRegionConfig, tRange: TimeRange, timezone?: string): AbsoluteTimeRange[] {
+export function calculateTimesWithin(cfg: TimeRegionConfig, tRange: TimeRange): AbsoluteTimeRange[] {
   const ranges: AbsoluteTimeRange[] = [];
-
-  const mode = cfg.mode ?? 'simple';
 
   let cronExpr = '';
   let durationMs = 0;
 
-  if (mode === 'simple') {
+  if (cfg.mode == null) {
     const cron = convertToCron(cfg.fromDayOfWeek, cfg.from, cfg.toDayOfWeek, cfg.to);
 
     if (cron != null) {
       cronExpr = cron?.cronExpr;
       durationMs = cron?.duration * 1e3;
     }
-  } else if (mode === 'cron') {
+  } else if (cfg.mode === 'cron') {
     cronExpr = cfg.cronExpr!;
     durationMs = (cfg.duration ?? '') !== '' ? durationToMilliseconds(parseDuration(cfg.duration!)) : 0;
   }
