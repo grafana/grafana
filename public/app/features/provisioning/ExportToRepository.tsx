@@ -1,9 +1,9 @@
 import { useForm } from 'react-hook-form';
 
-import { Box, Button, Field, FieldSet, Input, Stack, Switch, Text } from '@grafana/ui';
+import { Box, Button, Field, FieldSet, Input, Switch } from '@grafana/ui';
 
-import ProgressBar from './ProgressBar';
-import { Repository, useCreateRepositoryExportMutation, useListJobQuery, ExportJobOptions } from './api';
+import { JobStatus } from './JobStatus';
+import { Repository, useCreateRepositoryExportMutation, ExportJobOptions } from './api';
 
 interface Props {
   repo: Repository;
@@ -26,7 +26,7 @@ export function ExportToRepository({ repo }: Props) {
     });
 
   if (exportJob) {
-    return <ExportJobStatus name={exportJob} />;
+    return <JobStatus name={exportJob} />;
   }
 
   const isGit = repo.spec?.type === 'github';
@@ -59,31 +59,6 @@ export function ExportToRepository({ repo }: Props) {
           </Button>
         </FieldSet>
       </form>
-    </Box>
-  );
-}
-
-function ExportJobStatus({ name }: { name: string }) {
-  const jobQuery = useListJobQuery({ watch: true, fieldSelector: `metadata.name=${name}` });
-  const job = jobQuery.data?.items?.[0];
-
-  if (!job) {
-    return null;
-  }
-
-  return (
-    <Box paddingTop={2}>
-      <Stack direction={'column'} gap={2}>
-        {job.status && (
-          <Stack direction="column" gap={2}>
-            <Text element="p">
-              {job.status.message} // {job.status.state}
-            </Text>
-            <ProgressBar progress={job.status.progress} />
-          </Stack>
-        )}
-        <pre>{JSON.stringify(job, null, ' ')}</pre>
-      </Stack>
     </Box>
   );
 }
