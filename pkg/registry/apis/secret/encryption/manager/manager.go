@@ -90,7 +90,8 @@ func NewEncryptionManager(
 		return nil, fmt.Errorf("missing configuration for current encryption provider %s", currentProviderID)
 	}
 
-	s.registerUsageMetrics()
+	//TODO: how to register metrics in api server
+	// s.registerUsageMetrics()
 
 	return s, nil
 }
