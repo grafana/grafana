@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
+	grafanasort "github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 )
@@ -50,7 +51,7 @@ func TestDuplicatesValidator(t *testing.T) {
 	folderStore := folderimpl.ProvideDashboardFolderStore(sql)
 	folderSvc := folderimpl.ProvideService(fStore, actest.FakeAccessControl{}, bus.ProvideBus(tracing.InitializeTracerForTest()),
 		dashStore, folderStore, nil, sql, featuremgmt.WithFeatures(),
-		supportbundlestest.NewFakeBundleService(), nil, cfgT, nil, tracing.InitializeTracerForTest(), nil)
+		supportbundlestest.NewFakeBundleService(), nil, cfgT, nil, tracing.InitializeTracerForTest(), nil, grafanasort.ProvideService())
 
 	t.Run("Duplicates validator should collect info about duplicate UIDs and titles within folders", func(t *testing.T) {
 		const folderName = "duplicates-validator-folder"
