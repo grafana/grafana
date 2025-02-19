@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import '@testing-library/jest-dom';
@@ -92,7 +92,7 @@ describe('MetricCombobox', () => {
     const combobox = screen.getByPlaceholderText('Select metric');
     await userEvent.click(combobox);
 
-    expect(mockOnGetMetrics).toHaveBeenCalledTimes(1);
+    waitFor(() => expect(mockOnGetMetrics).toHaveBeenCalledTimes(1));
 
     const item = await screen.findByRole('option', { name: 'random_metric' });
     expect(item).toBeInTheDocument();
