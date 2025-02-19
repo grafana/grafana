@@ -24,6 +24,7 @@ type alertRule struct {
 	NoDataState          string
 	ExecErrState         string
 	For                  time.Duration
+	KeepFiringFor        time.Duration
 	Annotations          string
 	Labels               string
 	IsPaused             bool
@@ -60,6 +61,7 @@ type alertRuleVersion struct {
 	// ideally this field should have been apimodels.ApiDuration
 	// but this is currently not possible because of circular dependencies
 	For                  time.Duration
+	KeepFiringFor        time.Duration
 	Annotations          string
 	Labels               string
 	IsPaused             bool

@@ -115,6 +115,7 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 	t1 := tN(1)
 	t2 := tN(2)
 	t3 := tN(3)
+	t4 := tN(4)
 
 	baseRule := &ngmodels.AlertRule{
 		OrgID: 1,
@@ -733,6 +734,262 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							StartsAt:           t1,
 							EndsAt:             t1.Add(ResendDelay * 4),
 							LastEvaluationTime: t1,
+						},
+					},
+				},
+			},
+		},
+		{
+			desc:      "t1[{}:alerting] t2[{}:recovering] t3[{}:recovering] t4[{}:normal] and 'keep_firing_for'>0  at t2,t3.t4",
+			alertRule: baseRuleWith(ngmodels.RuleMuts.WithKeepFiringForNTimes(2), ngmodels.RuleMuts.WithFor(0)),
+			results: map[time.Time]eval.Results{
+				t1: {
+					newResult(eval.WithState(eval.Alerting)),
+				},
+				t2: {
+					newResult(eval.WithState(eval.Normal)),
+				},
+				t3: {
+					newResult(eval.WithState(eval.Normal)),
+				},
+				t4: {
+					newResult(eval.WithState(eval.Normal)),
+				},
+			},
+			expectedTransitions: map[time.Time][]StateTransition{
+				t1: {
+					{
+						PreviousState: eval.Normal,
+						State: &State{
+							Labels:             labels["system + rule"],
+							State:              eval.Alerting,
+							LatestResult:       newEvaluation(t1, eval.Alerting),
+							StartsAt:           t1,
+							EndsAt:             t1.Add(ResendDelay * 4),
+							LastEvaluationTime: t1,
+							LastSentAt:         &t1,
+						},
+					},
+				},
+				t2: {
+					{
+						PreviousState: eval.Alerting,
+						State: &State{
+							Labels:             labels["system + rule"],
+							State:              eval.Recovering,
+							LatestResult:       newEvaluation(t2, eval.Normal),
+							StartsAt:           t2,
+							EndsAt:             t2.Add(ResendDelay * 4),
+							LastEvaluationTime: t2,
+							LastSentAt:         &t1,
+						},
+					},
+				},
+				t3: {
+					{
+						PreviousState: eval.Recovering,
+						State: &State{
+							Labels:             labels["system + rule"],
+							State:              eval.Recovering,
+							LatestResult:       newEvaluation(t3, eval.Normal),
+							StartsAt:           t2,
+							EndsAt:             t3.Add(ResendDelay * 4),
+							LastEvaluationTime: t3,
+							LastSentAt:         &t1,
+						},
+					},
+				},
+				t4: {
+					{
+						PreviousState: eval.Recovering,
+						State: &State{
+							Labels:             labels["system + rule"],
+							State:              eval.Normal,
+							LatestResult:       newEvaluation(t4, eval.Normal),
+							StartsAt:           t4,
+							EndsAt:             t4,
+							LastEvaluationTime: t4,
+							LastSentAt:         &t4,
+							ResolvedAt:         &t4,
+						},
+					},
+				},
+			},
+		},
+		{
+			desc:      "t1[{}:alerting] t2[{}:recovering] t3[{}:alerting] and 'keep_firing_for'>0  at t2,t3",
+			alertRule: baseRuleWith(ngmodels.RuleMuts.WithKeepFiringForNTimes(1), ngmodels.RuleMuts.WithFor(0)),
+			results: map[time.Time]eval.Results{
+				t1: {
+					newResult(eval.WithState(eval.Alerting)),
+				},
+				t2: {
+					newResult(eval.WithState(eval.Normal)),
+				},
+				t3: {
+					newResult(eval.WithState(eval.Alerting)),
+				},
+			},
+			expectedTransitions: map[time.Time][]StateTransition{
+				t1: {
+					{
+						PreviousState: eval.Normal,
+						State: &State{
+							Labels:             labels["system + rule"],
+							State:              eval.Alerting,
+							LatestResult:       newEvaluation(t1, eval.Alerting),
+							StartsAt:           t1,
+							EndsAt:             t1.Add(ResendDelay * 4),
+							LastEvaluationTime: t1,
+							LastSentAt:         &t1,
+						},
+					},
+				},
+				t2: {
+					{
+						PreviousState: eval.Alerting,
+						State: &State{
+							Labels:             labels["system + rule"],
+							State:              eval.Recovering,
+							LatestResult:       newEvaluation(t2, eval.Normal),
+							StartsAt:           t2,
+							EndsAt:             t2.Add(ResendDelay * 4),
+							LastEvaluationTime: t2,
+							LastSentAt:         &t1,
+						},
+					},
+				},
+				t3: {
+					{
+						PreviousState: eval.Recovering,
+						State: &State{
+							Labels:             labels["system + rule"],
+							State:              eval.Alerting,
+							LatestResult:       newEvaluation(t3, eval.Alerting),
+							StartsAt:           t3,
+							EndsAt:             t3.Add(ResendDelay * 4),
+							LastEvaluationTime: t3,
+							LastSentAt:         &t1,
+						},
+					},
+				},
+			},
+		},
+		{
+			desc:      "t1[{}:alerting] t2[{}:recovering] t3[{}:nodata] and 'keep_firing_for'>0  at t2,t3",
+			alertRule: baseRuleWith(ngmodels.RuleMuts.WithKeepFiringForNTimes(1), ngmodels.RuleMuts.WithFor(0)),
+			results: map[time.Time]eval.Results{
+				t1: {
+					newResult(eval.WithState(eval.Alerting)),
+				},
+				t2: {
+					newResult(eval.WithState(eval.Normal)),
+				},
+				t3: {
+					newResult(eval.WithState(eval.NoData)),
+				},
+			},
+			expectedTransitions: map[time.Time][]StateTransition{
+				t1: {
+					{
+						PreviousState: eval.Normal,
+						State: &State{
+							Labels:             labels["system + rule"],
+							State:              eval.Alerting,
+							LatestResult:       newEvaluation(t1, eval.Alerting),
+							StartsAt:           t1,
+							EndsAt:             t1.Add(ResendDelay * 4),
+							LastEvaluationTime: t1,
+							LastSentAt:         &t1,
+						},
+					},
+				},
+				t2: {
+					{
+						PreviousState: eval.Alerting,
+						State: &State{
+							Labels:             labels["system + rule"],
+							State:              eval.Recovering,
+							LatestResult:       newEvaluation(t2, eval.Normal),
+							StartsAt:           t2,
+							EndsAt:             t2.Add(ResendDelay * 4),
+							LastEvaluationTime: t2,
+							LastSentAt:         &t1,
+						},
+					},
+				},
+				t3: {
+					{
+						PreviousState: eval.Recovering,
+						State: &State{
+							Labels:             labels["system + rule"],
+							State:              eval.NoData,
+							LatestResult:       newEvaluation(t3, eval.NoData),
+							StartsAt:           t3,
+							EndsAt:             t3.Add(ResendDelay * 4),
+							LastEvaluationTime: t3,
+							LastSentAt:         &t1,
+						},
+					},
+				},
+			},
+		},
+		{
+			desc:      "t1[{}:alerting] t2[{}:recovering] t3[{}:GenericError] and 'keep_firing_for'>0  at t2,t3",
+			alertRule: baseRuleWith(ngmodels.RuleMuts.WithKeepFiringForNTimes(1), ngmodels.RuleMuts.WithFor(0)),
+			results: map[time.Time]eval.Results{
+				t1: {
+					newResult(eval.WithState(eval.Alerting)),
+				},
+				t2: {
+					newResult(eval.WithState(eval.Normal)),
+				},
+				t3: {
+					newResult(eval.WithError(genericError)),
+				},
+			},
+			expectedTransitions: map[time.Time][]StateTransition{
+				t1: {
+					{
+						PreviousState: eval.Normal,
+						State: &State{
+							Labels:             labels["system + rule"],
+							State:              eval.Alerting,
+							LatestResult:       newEvaluation(t1, eval.Alerting),
+							StartsAt:           t1,
+							EndsAt:             t1.Add(ResendDelay * 4),
+							LastEvaluationTime: t1,
+							LastSentAt:         &t1,
+						},
+					},
+				},
+				t2: {
+					{
+						PreviousState: eval.Alerting,
+						State: &State{
+							Labels:             labels["system + rule"],
+							State:              eval.Recovering,
+							LatestResult:       newEvaluation(t2, eval.Normal),
+							StartsAt:           t2,
+							EndsAt:             t2.Add(ResendDelay * 4),
+							LastEvaluationTime: t2,
+							LastSentAt:         &t1,
+						},
+					},
+				},
+				t3: {
+					{
+						PreviousState: eval.Recovering,
+						State: &State{
+							Labels:             labels["system + rule"],
+							State:              eval.Error,
+							Error:              genericError,
+							LatestResult:       newEvaluation(t3, eval.Error),
+							StartsAt:           t3,
+							EndsAt:             t3.Add(ResendDelay * 4),
+							LastEvaluationTime: t3,
+							LastSentAt:         &t1,
+							Annotations:        genericErrorAnnotations,
 						},
 					},
 				},
