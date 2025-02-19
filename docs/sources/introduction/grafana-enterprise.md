@@ -15,13 +15,13 @@ Grafana Enterprise is a commercial edition of Grafana that includes additional f
 
 Building on everything you already know and love about Grafana open source, Grafana Enterprise includes [exclusive datasource plugins]({{< relref "#enterprise-data-sources" >}}) and [additional features]({{< relref "#enterprise-features" >}}). You also get 24x7x365 support and training from the core Grafana team.
 
-To learn more about Grafana Enterprise, refer to [our product page](/enterprise).
+To learn more about Grafana Enterprise, refer to [our product page](https://grafana.com/products/enterprise/).
 
 ## Enterprise features in Grafana Cloud
 
-Many Grafana Enterprise features are also available in [Grafana Cloud](/docs/grafana-cloud) Free, Pro, and Advanced accounts. For details, refer to [Grafana Cloud pricing](/pricing/#featuresTable).
+Many Grafana Enterprise features are also available in [Grafana Cloud](/docs/grafana-cloud/) Free, Pro, and Advanced accounts. For details, refer to [Grafana Cloud pricing](/pricing/).
 
-To migrate to Grafana Cloud, refer to [Migrate from Grafana Enterprise to Grafana Cloud](/docs/grafana-cloud/account-management/e2c-guide/).
+To migrate to Grafana Cloud, refer to [Migrate from Grafana Enterprise to Grafana Cloud](https://grafana.com/docs/grafana-cloud/security-and-account-management/migration-guide/).
 
 ## Authentication
 
@@ -76,42 +76,42 @@ Grafana Enterprise adds the following features:
 
 With a Grafana Enterprise license, you also get access to premium data sources, including:
 
-- [Adobe Analytics](/grafana/plugins/grafana-adobeanalytics-datasource)
-- [Amazon Aurora](/grafana/plugins/grafana-aurora-datasource)
-- [AppDynamics](/grafana/plugins/dlopes7-appdynamics-datasource)
-- [Atlassian Statuspage](/grafana/plugins/grafana-atlassianstatuspage-datasource)
-- [Azure CosmosDB](/grafana/plugins/grafana-azurecosmosdb-datasource)
-- [Azure Devops](/grafana/plugins/grafana-azuredevops-datasource)
-- [Catchpoint](/grafana/plugins/grafana-catchpoint-datasource)
-- [Cloudflare](/grafana/plugins/grafana-cloudflare-datasource)
-- [CockroachDB](/grafana/plugins/grafana-cockroachdb-datasource)
-- [Databricks](/grafana/plugins/grafana-databricks-datasource)
-- [DataDog](/grafana/plugins/grafana-datadog-datasource)
-- [Drone](/grafana/plugins/grafana-drone-datasource)
+- [Adobe Analytics](/grafana/plugins/grafana-adobeanalytics-datasource/)
+- [Amazon Aurora](/grafana/plugins/grafana-aurora-datasource/)
+- [AppDynamics](/grafana/plugins/dlopes7-appdynamics-datasource/)
+- [Atlassian Statuspage](/grafana/plugins/grafana-atlassianstatuspage-datasource/)
+- [Azure CosmosDB](/grafana/plugins/grafana-azurecosmosdb-datasource/)
+- [Azure Devops](/grafana/plugins/grafana-azuredevops-datasource/)
+- [Catchpoint](/grafana/plugins/grafana-catchpoint-datasource/)
+- [Cloudflare](/grafana/plugins/grafana-cloudflare-datasource/)
+- [CockroachDB](/grafana/plugins/grafana-cockroachdb-datasource/)
+- [Databricks](/grafana/plugins/grafana-databricks-datasource/)
+- [DataDog](/grafana/plugins/grafana-datadog-datasource/)
+- [Drone](/grafana/plugins/grafana-drone-datasource/)
 - [DynamoDB](/grafana/plugins/grafana-dynamodb-datasource/)
-- [Dynatrace](/grafana/plugins/grafana-dynatrace-datasource)
-- [Gitlab](/grafana/plugins/grafana-gitlab-datasource)
+- [Dynatrace](/grafana/plugins/grafana-dynatrace-datasource/)
+- [Gitlab](/grafana/plugins/grafana-gitlab-datasource/)
 - [Grafana Enterprise Logs](/grafana/plugins/grafana-enterprise-logs-app/)
 - [Grafana Enterprise Metrics](/grafana/plugins/grafana-metrics-enterprise-app/)
 - [Grafana Enterprise Traces](/grafana/plugins/grafana-enterprise-traces-app/)
-- [Honeycomb](/grafana/plugins/grafana-honeycomb-datasource)
-- [Jira](/grafana/plugins/grafana-jira-datasource)
+- [Honeycomb](/grafana/plugins/grafana-honeycomb-datasource/)
+- [Jira](/grafana/plugins/grafana-jira-datasource/)
 - [Looker](/grafana/plugins/grafana-looker-datasource/)
-- [MongoDB](/grafana/plugins/grafana-mongodb-datasource)
-- [Netlify](/grafana/plugins/grafana-netlify-datasource)
-- [New Relic](/grafana/plugins/grafana-newrelic-datasource)
-- [Oracle Database](/grafana/plugins/grafana-oracle-datasource)
-- [PagerDuty](/grafana/plugins/grafana-pagerduty-datasource)
-- [Salesforce](/grafana/plugins/grafana-salesforce-datasource)
-- [SAP HANA®](/grafana/plugins/grafana-saphana-datasource)
-- [ServiceNow](/grafana/plugins/grafana-servicenow-datasource)
-- [Snowflake](/grafana/plugins/grafana-snowflake-datasource)
-- [Splunk](/grafana/plugins/grafana-splunk-datasource)
-- [Splunk Infrastructure monitoring (SignalFx)](/grafana/plugins/grafana-splunk-monitoring-datasource)
-- [Sqlyze Datasource](/grafana/plugins/grafana-odbc-datasource)
-- [SumoLogic](/grafana/plugins/grafana-sumologic-datasource)
-- [Wavefront](/grafana/plugins/grafana-wavefront-datasource)
-- [Zendesk](/grafana/plugins/grafana-zendesk-datasource)
+- [MongoDB](/grafana/plugins/grafana-mongodb-datasource/)
+- [Netlify](/grafana/plugins/grafana-netlify-datasource/)
+- [New Relic](/grafana/plugins/grafana-newrelic-datasource/)
+- [Oracle Database](/grafana/plugins/grafana-oracle-datasource/)
+- [PagerDuty](/grafana/plugins/grafana-pagerduty-datasource/)
+- [Salesforce](/grafana/plugins/grafana-salesforce-datasource/)
+- [SAP HANA®](/grafana/plugins/grafana-saphana-datasource/)
+- [ServiceNow](/grafana/plugins/grafana-servicenow-datasource/)
+- [Snowflake](/grafana/plugins/grafana-snowflake-datasource/)
+- [Splunk](/grafana/plugins/grafana-splunk-datasource/)
+- [Splunk Infrastructure monitoring (SignalFx)](/grafana/plugins/grafana-splunk-monitoring-datasource/)
+- [Sqlyze Datasource](/grafana/plugins/grafana-odbc-datasource/)
+- [SumoLogic](/grafana/plugins/grafana-sumologic-datasource/)
+- [Wavefront](/grafana/plugins/grafana-wavefront-datasource/)
+- [Zendesk](/grafana/plugins/grafana-zendesk-datasource/)
 
 ## Try Grafana Enterprise
 
