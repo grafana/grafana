@@ -57,7 +57,8 @@ import (
 // making sure we only register metrics once into legacy registry
 var registerIntoLegacyRegistryOnce sync.Once
 
-func readCABundlePEM(path string, devMode bool) ([]byte, error) {
+//nolint:unused
+func _readCABundlePEM(path string, devMode bool) ([]byte, error) {
 	if devMode {
 		return nil, nil
 	}
@@ -128,13 +129,18 @@ func CreateAggregatorConfig(commandOptions *options.Options, sharedConfig generi
 		},
 		ExtraConfig: aggregatorapiserver.ExtraConfig{
 			DisableRemoteAvailableConditionController: true,
-			ProxyClientCertFile:                       commandOptions.KubeAggregatorOptions.ProxyClientCertFile,
-			ProxyClientKeyFile:                        commandOptions.KubeAggregatorOptions.ProxyClientKeyFile,
 			// NOTE: while ProxyTransport can be skipped in the configuration, it allows honoring
 			// DISABLE_HTTP2, HTTPS_PROXY and NO_PROXY env vars as needed
 			ProxyTransport:  createProxyTransport(),
 			ServiceResolver: serviceResolver,
 		},
+	}
+
+	if commandOptions.KubeAggregatorOptions.LegacyClientCertAuth {
+		// NOTE: the availability controller below is a bit different and uses the cert/key pair regardless
+		// of the legacy bool, this is because we are still using that for discovery requests
+		aggregatorConfig.ExtraConfig.ProxyClientCertFile = commandOptions.KubeAggregatorOptions.ProxyClientCertFile
+		aggregatorConfig.ExtraConfig.ProxyClientKeyFile = commandOptions.KubeAggregatorOptions.ProxyClientKeyFile
 	}
 
 	if err := commandOptions.KubeAggregatorOptions.ApplyTo(aggregatorConfig, commandOptions.RecommendedOptions.Etcd); err != nil {
@@ -152,10 +158,6 @@ func CreateAggregatorConfig(commandOptions *options.Options, sharedConfig generi
 		return NewConfig(aggregatorConfig, sharedInformerFactory, []builder.APIGroupBuilder{serviceAPIBuilder}, nil), nil
 	}
 
-	_, err = readCABundlePEM(commandOptions.KubeAggregatorOptions.APIServiceCABundleFile, commandOptions.ExtraOptions.DevMode)
-	if err != nil {
-		return nil, err
-	}
 	remoteServices, err := ReadRemoteServices(commandOptions.KubeAggregatorOptions.RemoteServicesFile)
 	if err != nil {
 		return nil, err
