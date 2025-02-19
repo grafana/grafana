@@ -175,6 +175,7 @@ func (r *SyncWorker) createJob(ctx context.Context, repo repository.Repository, 
 			Version:  "v1alpha1",
 			Resource: dashboard.DASHBOARD_RESOURCE,
 		}),
+		resourcesLookup: map[resourceID]bool{},
 	}
 
 	return job, nil
@@ -195,15 +196,22 @@ func (r *SyncWorker) patchStatus(ctx context.Context, repo *provisioning.Reposit
 	return nil
 }
 
+type resourceID struct {
+	Name     string
+	Resource string
+	Group    string
+}
+
 // created once for each sync execution
 type syncJob struct {
-	repository   repository.Repository
-	progress     jobs.JobProgressRecorder
-	parser       *resources.Parser
-	lister       resources.ResourceLister
-	folders      dynamic.ResourceInterface
-	dashboards   dynamic.ResourceInterface
-	folderLookup *resources.FolderTree
+	repository      repository.Repository
+	progress        jobs.JobProgressRecorder
+	parser          *resources.Parser
+	lister          resources.ResourceLister
+	folders         dynamic.ResourceInterface
+	dashboards      dynamic.ResourceInterface
+	folderLookup    *resources.FolderTree
+	resourcesLookup map[resourceID]bool
 }
 
 func (r *syncJob) run(ctx context.Context, options provisioning.SyncJobOptions) error {
@@ -431,6 +439,19 @@ func (r *syncJob) writeResourceFromFile(ctx context.Context, path string, ref st
 		result.Error = fmt.Errorf("failed to parse file: %w", err)
 		return result
 	}
+
+	// Check if the resource already exists
+	id := resourceID{
+		Name:     parsed.Obj.GetName(),
+		Resource: parsed.GVR.Resource,
+		Group:    parsed.GVK.Group,
+	}
+
+	if r.resourcesLookup[id] {
+		result.Error = fmt.Errorf("duplicate resource name: %s", parsed.Obj.GetName())
+		return result
+	}
+	r.resourcesLookup[id] = true
 
 	// Make sure the parent folders exist
 	folder, err := r.ensureFolderPathExists(ctx, path)
