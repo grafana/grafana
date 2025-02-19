@@ -432,7 +432,7 @@ func (r *githubRepository) History(ctx context.Context, path, ref string) ([]pro
 			Ref:       commit.Ref,
 			Message:   commit.Message,
 			Authors:   authors,
-			CreatedAt: commit.CreatedAt.UnixNano(),
+			CreatedAt: commit.CreatedAt.UnixMilli(),
 		})
 	}
 

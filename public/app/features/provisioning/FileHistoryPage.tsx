@@ -8,6 +8,7 @@ import { isNotFoundError } from '../alerting/unified/api/util';
 import { useGetRepositoryHistoryWithPathQuery, useGetRepositoryStatusQuery } from './api';
 import { HistoryListResponse } from './api/types';
 import { PROVISIONING_URL } from './constants';
+import { formatTimestamp } from './utils/time';
 
 export default function FileHistoryPage() {
   const params = useParams();
@@ -58,6 +59,9 @@ function HistoryView({ history, path, repo }: Props) {
         <Card href={`${PROVISIONING_URL}/${repo}/file/${path}?ref=${item.ref}`} key={item.ref}>
           <Card.Heading>{item.message}</Card.Heading>
           <Card.Meta>
+            <span>{formatTimestamp(item.createdAt)}</span>
+          </Card.Meta>
+          <Card.Description>
             <Stack gap={1}>
               <span key={item.ref}>Authors:</span>
               <Stack>
@@ -68,7 +72,7 @@ function HistoryView({ history, path, repo }: Props) {
                 ))}
               </Stack>
             </Stack>
-          </Card.Meta>
+          </Card.Description>
         </Card>
       ))}
     </Stack>
