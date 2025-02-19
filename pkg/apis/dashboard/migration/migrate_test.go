@@ -26,10 +26,17 @@ func TestMigrate(t *testing.T) {
 		dataSourceInfo: []schemaversion.DataSourceInfo{
 			{
 				Default: true,
-				UID:     "test",
+				UID:     "default-ds-uid",
 				ID:      1,
-				Type:    "test",
-				Name:    "Test",
+				Type:    "prometheus",
+				Name:    "Default Test Datasource",
+			},
+			{
+				UID:        "non-default-test-ds-uid",
+				ID:         2,
+				Type:       "loki",
+				Name:       "Non Default Test Datasource",
+				APIVersion: "1",
 			},
 		},
 	})

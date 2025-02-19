@@ -15,8 +15,9 @@
       },
       {
         "datasource": {
-          "type": "test",
-          "uid": "test"
+          "apiVersion": "1",
+          "type": "loki",
+          "uid": "non-default-test-ds-uid"
         },
         "enable": true,
         "name": "Test Annotation by Name",
@@ -24,8 +25,9 @@
       },
       {
         "datasource": {
-          "type": "test",
-          "uid": "test"
+          "apiVersion": "1",
+          "type": "loki",
+          "uid": "non-default-test-ds-uid"
         },
         "enable": true,
         "name": "Test Annotation by UID",
@@ -33,8 +35,8 @@
       },
       {
         "datasource": {
-          "type": "test",
-          "uid": "test"
+          "type": "prometheus",
+          "uid": "default-ds-uid"
         },
         "enable": true,
         "name": "Test Default Annotation",
@@ -150,14 +152,16 @@
       "targets": [
         {
           "datasource": {
-            "type": "test",
-            "uid": "test"
+            "apiVersion": "1",
+            "type": "loki",
+            "uid": "non-default-test-ds-uid"
           }
         },
         {
           "datasource": {
-            "type": "test",
-            "uid": "test"
+            "apiVersion": "1",
+            "type": "loki",
+            "uid": "non-default-test-ds-uid"
           }
         }
       ],
@@ -177,14 +181,16 @@
       "targets": [
         {
           "datasource": {
-            "type": "test",
-            "uid": "test"
+            "apiVersion": "1",
+            "type": "loki",
+            "uid": "non-default-test-ds-uid"
           }
         },
         {
           "datasource": {
-            "type": "test",
-            "uid": "test"
+            "apiVersion": "1",
+            "type": "loki",
+            "uid": "non-default-test-ds-uid"
           }
         }
       ],
@@ -219,32 +225,34 @@
     "list": [
       {
         "datasource": {
-          "type": "test",
-          "uid": "test"
+          "type": "prometheus",
+          "uid": "default-ds-uid"
         },
         "name": "default_var",
         "type": "query"
       },
       {
         "datasource": {
-          "type": "test",
-          "uid": "test"
+          "apiVersion": "1",
+          "type": "loki",
+          "uid": "non-default-test-ds-uid"
         },
         "name": "es_var_by_name",
         "type": "query"
       },
       {
         "datasource": {
-          "type": "test",
-          "uid": "test"
+          "apiVersion": "1",
+          "type": "loki",
+          "uid": "non-default-test-ds-uid"
         },
         "name": "es_var_by_uid",
         "type": "query"
       },
       {
         "datasource": {
-          "type": "test",
-          "uid": "test"
+          "type": "prometheus",
+          "uid": "default-ds-uid"
         },
         "name": "null_var",
         "type": "query"

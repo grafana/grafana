@@ -14,13 +14,13 @@
         "type": "dashboard"
       },
       {
-        "datasource": "Test",
+        "datasource": "Non Default Test Datasource",
         "enable": true,
         "name": "Test Annotation by Name",
         "type": "dashboard"
       },
       {
-        "datasource": "test",
+        "datasource": "non-default-test-ds-uid",
         "enable": true,
         "name": "Test Annotation by UID",
         "type": "dashboard"
@@ -128,7 +128,7 @@
       }
     },
     {
-        "datasource": "default",
+    "datasource": "default",
       "title": "Mixed Datasources Panel",
       "id": 7,
       "gridPos": {
@@ -139,10 +139,10 @@
       },
       "targets": [
         {
-          "datasource": "test"
+          "datasource": "non-default-test-ds-uid"
         },
         {
-          "datasource": "Test"
+          "datasource": "Non Default Test Datasource"
         }
       ]
     },
@@ -160,10 +160,10 @@
       },
       "targets": [
         {
-          "datasource": "test"
+          "datasource": "non-default-test-ds-uid"
         },
         {
-          "datasource": "Test"
+          "datasource": "Non Default Test Datasource"
         }
       ]
     },
@@ -197,12 +197,12 @@
       },
       {
         "type": "query",
-        "datasource": "test",
+        "datasource": "Non Default Test Datasource",
         "name": "es_var_by_name"
       },
       {
         "type": "query",
-        "datasource": "Test",
+        "datasource": "non-default-test-ds-uid",
         "name": "es_var_by_uid"
       },
       {
