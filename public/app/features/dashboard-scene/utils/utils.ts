@@ -21,7 +21,7 @@ import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DashboardLayoutManager, isDashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 
-import { getOriginalKey, isClonedKey } from './clone';
+import { containsCloneKey, getLastKeyFromClone, getOriginalKey, isInCloneChain } from './clone';
 
 export const NEW_PANEL_HEIGHT = 8;
 export const NEW_PANEL_WIDTH = 12;
@@ -68,12 +68,63 @@ function findVizPanelInternal(scene: SceneObject, key: string | undefined): VizP
       return true;
     }
 
-    // It might be possible to have the keys changed in the meantime from `panel-2` to `panel-2-clone-0`
-    // We need to check this as well
-    const originalObjectKey = !isClonedKey(objKey) ? getOriginalKey(objKey) : objKey;
-    const originalKey = !isClonedKey(key) ? getOriginalKey(key) : key;
+    if (!(obj instanceof VizPanel)) {
+      return false;
+    }
 
-    if (originalObjectKey === originalKey) {
+    return false;
+  });
+
+  if (panel) {
+    if (panel instanceof VizPanel) {
+      return panel;
+    } else {
+      throw new Error(`Found panel with key ${key} but it was not a VizPanel`);
+    }
+  }
+
+  return null;
+}
+
+export function findOriginalVizPanelByKey(scene: SceneObject, key: string | undefined): VizPanel | null {
+  if (!key) {
+    return null;
+  }
+
+  let panel: VizPanel | null = findOriginalVizPanelInternal(scene, key);
+
+  if (panel) {
+    return panel;
+  }
+
+  // Also try to find by panel id
+  const id = parseInt(key, 10);
+  if (isNaN(id)) {
+    return null;
+  }
+
+  const panelId = getVizPanelKeyForPanelId(id);
+  panel = findVizPanelInternal(scene, panelId);
+
+  if (panel) {
+    return panel;
+  }
+
+  panel = findOriginalVizPanelInternal(scene, panelId);
+
+  return panel;
+}
+
+function findOriginalVizPanelInternal(scene: SceneObject, key: string | undefined): VizPanel | null {
+  if (!key) {
+    return null;
+  }
+
+  const panel = sceneGraph.findObject(scene, (obj) => {
+    const objKey = obj.state.key!;
+
+    // Compare the original keys
+    if (objKey === key || (!isInCloneChain(objKey) && getOriginalKey(objKey) === getOriginalKey(key))) {
       return true;
     }
 
@@ -93,6 +144,48 @@ function findVizPanelInternal(scene: SceneObject, key: string | undefined): VizP
   }
 
   return null;
+}
+
+export function findEditPanel(scene: SceneObject, key: string | undefined): VizPanel | null {
+  if (!key) {
+    return null;
+  }
+
+  // First we try to find the non-cloned panel
+  // This means it is either in not in a repeat chain or every item in the chain is not a clone
+  let panel: SceneObject | null = findOriginalVizPanelByKey(scene, key);
+  if (!panel || !panel.state.key) {
+    return null;
+  }
+
+  // Get the actual panel key, without any of the ancestors
+  const panelKey = getLastKeyFromClone(panel.state.key);
+
+  // If the panel contains clone in the key, this means it's a repeated panel, and we need to find the original panel
+  if (containsCloneKey(panelKey)) {
+    // Get the original key of the panel that we are looking for
+    const originalPanelKey = getOriginalKey(panelKey);
+    // Start the search from the parent to avoid unnecessary checks
+    // The parent usually is the grid item where the referenced panel is also located
+    panel = sceneGraph.findObject(panel.parent ?? scene, (sceneObject) => {
+      if (!sceneObject.state.key || isInCloneChain(sceneObject.state.key)) {
+        return false;
+      }
+
+      const currentLastKey = getLastKeyFromClone(sceneObject.state.key);
+      if (containsCloneKey(currentLastKey)) {
+        return false;
+      }
+
+      return getOriginalKey(currentLastKey) === originalPanelKey;
+    });
+  }
+
+  if (!(panel instanceof VizPanel)) {
+    return null;
+  }
+
+  return panel;
 }
 
 /**

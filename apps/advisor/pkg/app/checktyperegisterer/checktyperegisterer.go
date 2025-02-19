@@ -24,10 +24,11 @@ type Runner struct {
 // NewRunner creates a new Runner.
 func New(cfg app.Config) (app.Runnable, error) {
 	// Read config
-	checkRegistry, ok := cfg.SpecificConfig.(checkregistry.CheckService)
+	specificConfig, ok := cfg.SpecificConfig.(checkregistry.AdvisorAppConfig)
 	if !ok {
 		return nil, fmt.Errorf("invalid config type")
 	}
+	checkRegistry := specificConfig.CheckRegistry
 
 	// Prepare storage client
 	clientGenerator := k8s.NewClientRegistry(cfg.KubeConfig, k8s.ClientConfig{})
@@ -51,6 +52,7 @@ func (r *Runner) Run(ctx context.Context) error {
 				Title:       s.Title(),
 				Description: s.Description(),
 				StepID:      s.ID(),
+				Resolution:  s.Resolution(),
 			}
 		}
 		obj := &advisorv0alpha1.CheckType{
