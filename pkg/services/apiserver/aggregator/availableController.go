@@ -8,7 +8,6 @@ package aggregator
 import (
 	"context"
 	"fmt"
-	"math/rand"
 	"net/http"
 	"net/url"
 	"reflect"
@@ -206,7 +205,8 @@ func (c *AvailableConditionController) sync(key string) error {
 		for i := 0; i < attempts; i++ {
 			go func() {
 				// stagger these requests to reduce pressure on aggregated services
-				waitDuration := time.Second * time.Duration(rand.Int31n(int32(3)))
+				waitDuration := time.Second * time.Duration(int32(i))
+				fmt.Println("waited for duration", waitDuration)
 				time.Sleep(waitDuration)
 
 				discoveryURL, err := c.serviceResolver.ResolveEndpoint(apiService.Spec.Service.Namespace, apiService.Spec.Service.Name, *apiService.Spec.Service.Port)
