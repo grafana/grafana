@@ -15,7 +15,7 @@ import { InlineFieldRow } from '../Forms/InlineFieldRow';
 import { RadioButtonGroup } from '../Forms/RadioButtonGroup/RadioButtonGroup';
 import { Icon } from '../Icon/Icon';
 import { Input } from '../Input/Input';
-import { BackgroundColor, BorderColor, Box } from '../Layout/Box/Box';
+import { BackgroundColor, BorderColor, Box, BoxShadow } from '../Layout/Box/Box';
 import { Stack } from '../Layout/Stack/Stack';
 import { Select } from '../Select/Select';
 import { Switch } from '../Switch/Switch';
@@ -24,12 +24,20 @@ import { Text, TextProps } from '../Text/Text';
 interface DemoBoxProps {
   bg?: BackgroundColor;
   border?: BorderColor;
+  shadow?: BoxShadow;
   textColor?: TextProps['color'];
 }
 
-const DemoBox = ({ bg, border, children }: React.PropsWithChildren<DemoBoxProps>) => {
+const DemoBox = ({ bg, border, children, shadow }: React.PropsWithChildren<DemoBoxProps>) => {
   return (
-    <Box backgroundColor={bg ? bg : undefined} padding={2} borderStyle={border ? 'solid' : undefined}>
+    <Box
+      backgroundColor={bg ? bg : undefined}
+      padding={2}
+      borderStyle={border ? 'solid' : undefined}
+      borderColor={border}
+      boxShadow={shadow}
+      borderRadius={'default'}
+    >
       {children}
     </Box>
   );
@@ -91,8 +99,14 @@ export const ThemeDemo = () => {
           <DemoBox bg="primary" border="weak">
             <DemoText>t.colors.background.primary is the main & preferred content </DemoText>
             <DemoBox bg="secondary" border="weak">
-              <DemoText>t.colors.background.secondary and t.colors.border.layer1</DemoText>
+              <DemoText>t.colors.background.secondary (Used for cards)</DemoText>
             </DemoBox>
+            <Box padding={4}>
+              <DemoText>t.colors.background.elevated</DemoText>
+              <DemoBox bg="elevated" border="weak" shadow="z3">
+                This elevated color should be used for menus and popovers.
+              </DemoBox>
+            </Box>
           </DemoBox>
         </CollapsableSection>
         <CollapsableSection label="Text colors" isOpen={true}>

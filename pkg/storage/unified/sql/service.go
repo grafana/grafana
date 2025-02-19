@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
+	"github.com/grafana/grafana/pkg/storage/unified/search"
 )
 
 var (
@@ -80,11 +81,7 @@ func ProvideUnifiedStorageGrpcService(
 
 	// FIXME: This is a temporary solution while we are migrating to the new authn interceptor
 	// grpcutils.NewGrpcAuthenticator should be used instead.
-	fallback := &grpc.Authenticator{Tracer: tracing}
-	authn, err := grpcutils.NewGrpcAuthenticatorWithFallback(cfg, reg, tracing, fallback)
-	if err != nil {
-		return nil, err
-	}
+	authn := grpcutils.NewAuthenticatorWithFallback(cfg, reg, tracing, &grpc.Authenticator{Tracer: tracing})
 
 	s := &service{
 		cfg:           cfg,
@@ -110,7 +107,12 @@ func (s *service) start(ctx context.Context) error {
 		return err
 	}
 
-	server, err := NewResourceServer(ctx, s.db, s.cfg, s.features, s.docBuilders, s.tracing, s.reg, authzClient)
+	searchOptions, err := search.NewSearchOptions(s.features, s.cfg, s.tracing, s.docBuilders, s.reg)
+	if err != nil {
+		return err
+	}
+
+	server, err := NewResourceServer(s.db, s.cfg, s.tracing, s.reg, authzClient, searchOptions)
 	if err != nil {
 		return err
 	}
@@ -126,7 +128,9 @@ func (s *service) start(ctx context.Context) error {
 
 	srv := s.handler.GetServer()
 	resource.RegisterResourceStoreServer(srv, server)
+	resource.RegisterBatchStoreServer(srv, server)
 	resource.RegisterResourceIndexServer(srv, server)
+	resource.RegisterRepositoryIndexServer(srv, server)
 	resource.RegisterBlobStoreServer(srv, server)
 	resource.RegisterDiagnosticsServer(srv, server)
 	grpc_health_v1.RegisterHealthServer(srv, healthService)

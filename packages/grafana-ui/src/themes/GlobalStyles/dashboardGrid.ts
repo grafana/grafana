@@ -20,9 +20,8 @@ export function getDashboardGridStyles(theme: GrafanaTheme2) {
     },
 
     '.dragging-active': {
-      cursor: 'move',
-      userSelect: 'none',
-      '> *': {
+      '*': {
+        cursor: 'move',
         userSelect: 'none',
       },
     },

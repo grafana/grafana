@@ -5,7 +5,6 @@ import (
 	"errors"
 
 	"github.com/stretchr/testify/mock"
-	"k8s.io/apimachinery/pkg/api/meta"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -30,8 +29,8 @@ func (m legacyStoreMock) Get(ctx context.Context, name string, options *metav1.G
 	}
 
 	args := m.Called(ctx, name, options)
-	if name == "object-fail" {
-		return nil, args.Error(1)
+	if err := args.Get(1); err != nil {
+		return nil, err.(error)
 	}
 	return args.Get(0).(runtime.Object), args.Error(1)
 }
@@ -44,13 +43,8 @@ func (m legacyStoreMock) Create(ctx context.Context, obj runtime.Object, createV
 	}
 
 	args := m.Called(ctx, obj, createValidation, options)
-	acc, err := meta.Accessor(obj)
-	if err != nil {
-		return nil, args.Error(1)
-	}
-	name := acc.GetName()
-	if name == "object-fail" {
-		return nil, args.Error(1)
+	if err := args.Get(1); err != nil {
+		return nil, err.(error)
 	}
 	return args.Get(0).(runtime.Object), args.Error(1)
 }
@@ -63,8 +57,8 @@ func (m legacyStoreMock) List(ctx context.Context, options *metainternalversion.
 	}
 
 	args := m.Called(ctx, options)
-	if options.Kind == "fail" {
-		return nil, args.Error(1)
+	if err := args.Get(1); err != nil {
+		return nil, err.(error)
 	}
 	return args.Get(0).(runtime.Object), args.Error(1)
 }
@@ -80,8 +74,8 @@ func (m legacyStoreMock) Update(ctx context.Context, name string, objInfo rest.U
 	default:
 	}
 	args := m.Called(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
-	if name == "object-fail" {
-		return nil, false, args.Error(2)
+	if err := args.Get(2); err != nil {
+		return nil, false, err.(error)
 	}
 	return args.Get(0).(runtime.Object), args.Bool(1), args.Error(2)
 }
@@ -94,11 +88,8 @@ func (m legacyStoreMock) Delete(ctx context.Context, name string, deleteValidati
 	}
 
 	args := m.Called(ctx, name, deleteValidation, options)
-	if name == "object-fail" {
-		return nil, false, args.Error(2)
-	}
-	if name == "not-found-legacy" {
-		return nil, false, args.Error(2)
+	if err := args.Get(2); err != nil {
+		return nil, false, err.(error)
 	}
 	return args.Get(0).(runtime.Object), args.Bool(1), args.Error(2)
 }
@@ -110,8 +101,8 @@ func (m legacyStoreMock) DeleteCollection(ctx context.Context, deleteValidation 
 	default:
 	}
 	args := m.Called(ctx, deleteValidation, options, listOptions)
-	if options.Kind == "fail" {
-		return nil, args.Error(1)
+	if err := args.Get(1); err != nil {
+		return nil, err.(error)
 	}
 	return args.Get(0).(runtime.Object), args.Error(1)
 }
@@ -125,11 +116,8 @@ func (m storageMock) Get(ctx context.Context, name string, options *metav1.GetOp
 	}
 
 	args := m.Called(ctx, name, options)
-	if name == "object-fail" {
-		return nil, args.Error(1)
-	}
-	if name == "not-found" {
-		return nil, args.Error(1)
+	if err := args.Get(1); err != nil {
+		return nil, err.(error)
 	}
 	return args.Get(0).(runtime.Object), args.Error(1)
 }
@@ -142,13 +130,8 @@ func (m storageMock) Create(ctx context.Context, obj runtime.Object, createValid
 	}
 
 	args := m.Called(ctx, obj, createValidation, options)
-	acc, err := meta.Accessor(obj)
-	if err != nil {
-		return nil, args.Error(1)
-	}
-	name := acc.GetName()
-	if name == "object-fail" {
-		return nil, args.Error(1)
+	if err := args.Get(1); err != nil {
+		return nil, err.(error)
 	}
 	return args.Get(0).(runtime.Object), args.Error(1)
 }
@@ -161,8 +144,8 @@ func (m storageMock) List(ctx context.Context, options *metainternalversion.List
 	}
 
 	args := m.Called(ctx, options)
-	if options.Kind == "fail" {
-		return nil, args.Error(1)
+	if err := args.Get(1); err != nil {
+		return nil, err.(error)
 	}
 	return args.Get(0).(runtime.Object), args.Error(1)
 }
@@ -179,8 +162,8 @@ func (m storageMock) Update(ctx context.Context, name string, objInfo rest.Updat
 	}
 
 	args := m.Called(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
-	if name == "object-fail" {
-		return nil, false, args.Error(2)
+	if err := args.Get(2); err != nil {
+		return nil, false, err.(error)
 	}
 	return args.Get(0).(runtime.Object), args.Bool(1), args.Error(2)
 }
@@ -193,8 +176,8 @@ func (m storageMock) Delete(ctx context.Context, name string, deleteValidation r
 	}
 
 	args := m.Called(ctx, name, deleteValidation, options)
-	if name == "object-fail" {
-		return nil, false, args.Error(2)
+	if err := args.Get(2); err != nil {
+		return nil, false, err.(error)
 	}
 	return args.Get(0).(runtime.Object), args.Bool(1), args.Error(2)
 }
@@ -207,8 +190,8 @@ func (m storageMock) DeleteCollection(ctx context.Context, deleteValidation rest
 	}
 
 	args := m.Called(ctx, deleteValidation, options, listOptions)
-	if options.Kind == "fail" {
-		return nil, args.Error(1)
+	if err := args.Get(1); err != nil {
+		return nil, err.(error)
 	}
 	return args.Get(0).(runtime.Object), args.Error(1)
 }

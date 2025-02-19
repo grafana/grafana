@@ -96,69 +96,6 @@ func TestIntegration_CompressedAlertRuleStateOperations(t *testing.T) {
 	}
 }
 
-func TestIntegration_CompressedAlertRuleStateOperations_NoNormalState(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
-
-	ctx := context.Background()
-	ng, dbstore := tests.SetupTestEnv(
-		t,
-		baseIntervalSeconds,
-		tests.WithFeatureToggles(
-			featuremgmt.WithFeatures(
-				featuremgmt.FlagAlertingSaveStateCompressed,
-				featuremgmt.FlagAlertingNoNormalState,
-			),
-		),
-	)
-
-	const mainOrgID int64 = 1
-
-	alertRule1 := tests.CreateTestAlertRule(t, ctx, dbstore, 60, mainOrgID)
-	orgID := alertRule1.OrgID
-
-	tests := []struct {
-		name           string
-		setupInstances func() []models.AlertInstance
-		listQuery      *models.ListAlertInstancesQuery
-		validate       func(t *testing.T, alerts []*models.AlertInstance)
-	}{
-		{
-			name: "should ignore Normal state with no reason if feature flag is enabled",
-			setupInstances: func() []models.AlertInstance {
-				return []models.AlertInstance{
-					createAlertInstance(orgID, util.GenerateShortUID(), util.GenerateShortUID(), "", models.InstanceStateNormal),
-					createAlertInstance(orgID, util.GenerateShortUID(), "errorHash", "error", models.InstanceStateNormal),
-				}
-			},
-			listQuery: &models.ListAlertInstancesQuery{
-				RuleOrgID: orgID,
-			},
-			validate: func(t *testing.T, alerts []*models.AlertInstance) {
-				require.Len(t, alerts, 1)
-				containsHash(t, alerts, "errorHash")
-				for _, instance := range alerts {
-					if instance.CurrentState == models.InstanceStateNormal && instance.CurrentReason == "" {
-						require.Fail(t, "List operation expected to return all states except Normal but the result contains Normal states")
-					}
-				}
-			},
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			instances := tc.setupInstances()
-			err := ng.InstanceStore.SaveAlertInstancesForRule(ctx, alertRule1.GetKeyWithGroup(), instances)
-			require.NoError(t, err)
-			alerts, err := ng.InstanceStore.ListAlertInstances(ctx, tc.listQuery)
-			require.NoError(t, err)
-			tc.validate(t, alerts)
-		})
-	}
-}
-
 // containsHash is a helper function to check if an instance with
 // a given labels hash exists in the list of alert instances.
 func containsHash(t *testing.T, instances []*models.AlertInstance, hash string) {
@@ -316,57 +253,6 @@ func TestIntegrationAlertInstanceOperations(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Len(t, alerts, 4)
-	})
-
-	t.Run("should ignore Normal state with no reason if feature flag is enabled", func(t *testing.T) {
-		ng, _ := tests.SetupTestEnv(
-			t,
-			baseIntervalSeconds,
-			tests.WithFeatureToggles(
-				featuremgmt.WithFeatures(featuremgmt.FlagAlertingNoNormalState),
-			),
-		)
-
-		labels := models.InstanceLabels{"test": util.GenerateShortUID()}
-		instance1 := models.AlertInstance{
-			AlertInstanceKey: models.AlertInstanceKey{
-				RuleOrgID:  orgID,
-				RuleUID:    util.GenerateShortUID(),
-				LabelsHash: util.GenerateShortUID(),
-			},
-			CurrentState:  models.InstanceStateNormal,
-			CurrentReason: "",
-			Labels:        labels,
-		}
-		instance2 := models.AlertInstance{
-			AlertInstanceKey: models.AlertInstanceKey{
-				RuleOrgID:  orgID,
-				RuleUID:    util.GenerateShortUID(),
-				LabelsHash: util.GenerateShortUID(),
-			},
-			CurrentState:  models.InstanceStateNormal,
-			CurrentReason: models.StateReasonError,
-			Labels:        labels,
-		}
-		err := ng.InstanceStore.SaveAlertInstance(ctx, instance1)
-		require.NoError(t, err)
-		err = ng.InstanceStore.SaveAlertInstance(ctx, instance2)
-		require.NoError(t, err)
-
-		listQuery := &models.ListAlertInstancesQuery{
-			RuleOrgID: orgID,
-		}
-
-		alerts, err := ng.InstanceStore.ListAlertInstances(ctx, listQuery)
-		require.NoError(t, err)
-
-		containsHash(t, alerts, instance2.LabelsHash)
-
-		for _, instance := range alerts {
-			if instance.CurrentState == models.InstanceStateNormal && instance.CurrentReason == "" {
-				require.Fail(t, "List operation expected to return all states except Normal but the result contains Normal states")
-			}
-		}
 	})
 
 	t.Run("update instance with same org_id, uid and different state", func(t *testing.T) {

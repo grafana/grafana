@@ -71,9 +71,7 @@ func TestUsageMetrics(t *testing.T) {
 				featuremgmt.WithFeatures(),
 				tracing.InitializeTracerForTest(),
 				nil,
-				nil,
 				permreg.ProvidePermissionRegistry(),
-				nil,
 				nil,
 			)
 			assert.Equal(t, tt.expectedValue, s.GetUsageStats(context.Background())["stats.oss.accesscontrol.enabled.count"])

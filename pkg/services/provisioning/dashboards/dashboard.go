@@ -42,7 +42,7 @@ func (provider *Provisioner) HasDashboardSources() bool {
 // New returns a new DashboardProvisioner
 func New(ctx context.Context, configDirectory string, provisioner dashboards.DashboardProvisioningService, orgService org.Service, dashboardStore utils.DashboardStore, folderService folder.Service) (DashboardProvisioner, error) {
 	logger := log.New("provisioning.dashboard")
-	cfgReader := &configReader{path: configDirectory, log: logger, orgService: orgService}
+	cfgReader := &configReader{path: configDirectory, log: logger, orgExists: utils.NewOrgExistsChecker(orgService)}
 	configs, err := cfgReader.readConfig(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("%v: %w", "Failed to read dashboards config", err)

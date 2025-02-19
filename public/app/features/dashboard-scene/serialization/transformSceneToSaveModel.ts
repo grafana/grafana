@@ -33,9 +33,10 @@ import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene } from '../scene/DashboardScene';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
-import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
+import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior';
+import { isClonedKey } from '../utils/clone';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import {
   calculateGridItemDimensions,
@@ -72,7 +73,7 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
 
       if (child instanceof SceneGridRow) {
         // Skip repeat clones or when generating a snapshot
-        if (child.state.key!.indexOf('-clone-') > 0 && !isSnapshot) {
+        if (isClonedKey(child.state.key!) && !isSnapshot) {
           continue;
         }
         gridRowToSaveModel(child, panels, isSnapshot);

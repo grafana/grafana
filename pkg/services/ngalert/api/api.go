@@ -185,4 +185,10 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 		receiverService:   api.ReceiverService,
 		muteTimingService: api.MuteTimings,
 	}), m)
+
+	if api.FeatureManager.IsEnabledGlobally(featuremgmt.FlagAlertingConversionAPI) {
+		api.RegisterConvertPrometheusApiEndpoints(NewConvertPrometheusApi(&ConvertPrometheusSrv{
+			logger: logger,
+		}), m)
+	}
 }

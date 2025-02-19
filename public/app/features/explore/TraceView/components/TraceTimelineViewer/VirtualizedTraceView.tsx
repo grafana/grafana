@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { isEqual } from 'lodash';
 import memoizeOne from 'memoize-one';
 import * as React from 'react';
@@ -566,7 +566,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
     const styles = getStyles();
 
     return (
-      <div className={styles.row} key={key} style={{ ...style, zIndex: 1 }} {...attrs}>
+      <div className={cx(styles.row, 'span-detail-row')} key={key} style={{ ...style, zIndex: 1 }} {...attrs}>
         <SpanDetailRow
           color={color}
           columnDivision={spanNameColumnWidth}

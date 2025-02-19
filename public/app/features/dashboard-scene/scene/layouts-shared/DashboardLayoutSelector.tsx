@@ -6,9 +6,11 @@ import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/Pan
 
 import { LayoutOrchestrator } from '../layout-manager/LayoutOrchestrator';
 import { getClosest } from '../layout-manager/utils';
-import { DashboardLayoutManager, LayoutRegistryItem } from '../types';
+import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
+import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
 import { layoutRegistry } from './layoutRegistry';
+import { findParentLayout } from './utils';
 
 export interface Props {
   layoutOrchestrator: LayoutOrchestrator;
@@ -16,11 +18,19 @@ export interface Props {
 
 export function DashboardLayoutSelector({ layoutOrchestrator }: Props) {
   const { manager } = layoutOrchestrator.useState();
-  const currentLayoutId = useMemo(() => manager.getDescriptor().id, [manager]);
-  const options = layoutRegistry.list().map((layout) => ({
-    label: layout.name,
-    value: layout,
-  }));
+  const currentLayoutId = useMemo(() => manager.descriptor.id, [manager]);
+  const options = useMemo(() => {
+    const parentLayout = findParentLayout(layoutOrchestrator);
+    const parentLayoutId = parentLayout?.descriptor.id;
+
+    return layoutRegistry
+      .list()
+      .filter((layout) => layout.id !== parentLayoutId)
+      .map((layout) => ({
+        label: layout.name,
+        value: layout,
+      }));
+  }, [layoutOrchestrator]);
 
   const currentOption = options.find((option) => option.value.id === currentLayoutId);
 

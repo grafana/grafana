@@ -121,7 +121,7 @@ func TestGetAlertRules(t *testing.T) {
 
 		user := &user.SignedInUser{OrgID: 1}
 
-		alertRule := createAlertRule(t, ctx, s, user, false)
+		alertRule := createAlertRule(t, ctx, s, user, false, "")
 
 		alertRules, err := s.getAlertRules(ctx, user)
 		require.NoError(t, err)
@@ -138,10 +138,10 @@ func TestGetAlertRules(t *testing.T) {
 
 		user := &user.SignedInUser{OrgID: 1}
 
-		alertRulePaused := createAlertRule(t, ctx, s, user, true)
+		alertRulePaused := createAlertRule(t, ctx, s, user, true, "")
 		require.True(t, alertRulePaused.IsPaused)
 
-		alertRuleUnpaused := createAlertRule(t, ctx, s, user, false)
+		alertRuleUnpaused := createAlertRule(t, ctx, s, user, false, "")
 		require.False(t, alertRuleUnpaused.IsPaused)
 
 		alertRules, err := s.getAlertRules(ctx, user)
@@ -149,6 +149,83 @@ func TestGetAlertRules(t *testing.T) {
 		require.Len(t, alertRules, 2)
 		require.True(t, alertRules[0].IsPaused)
 		require.True(t, alertRules[1].IsPaused)
+	})
+}
+
+func TestGetAlertRuleGroups(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+
+	t.Run("it returns the alert rule groups", func(t *testing.T) {
+		s := setUpServiceTest(t, false).(*Service)
+
+		user := &user.SignedInUser{OrgID: 1}
+
+		ruleGroupTitle := "ruleGroupTitle"
+
+		alertRule1 := createAlertRule(t, ctx, s, user, true, ruleGroupTitle)
+		alertRule2 := createAlertRule(t, ctx, s, user, false, ruleGroupTitle)
+		alertRule3 := createAlertRule(t, ctx, s, user, false, "anotherRuleGroup")
+
+		createAlertRuleGroup(t, ctx, s, user, ruleGroupTitle, []models.AlertRule{alertRule1, alertRule2})
+
+		ruleGroups, err := s.getAlertRuleGroups(ctx, user)
+		require.NoError(t, err)
+		require.Len(t, ruleGroups, 2)
+
+		for _, ruleGroup := range ruleGroups {
+			alertRuleUIDs := make([]string, 0)
+			for _, alertRule := range ruleGroup.Rules {
+				alertRuleUIDs = append(alertRuleUIDs, alertRule.UID)
+			}
+
+			if ruleGroup.Title == ruleGroupTitle {
+				require.Len(t, ruleGroup.Rules, 2)
+				require.ElementsMatch(t, []string{alertRule1.UID, alertRule2.UID}, alertRuleUIDs)
+			} else {
+				require.Len(t, ruleGroup.Rules, 1)
+				require.ElementsMatch(t, []string{alertRule3.UID}, alertRuleUIDs)
+			}
+		}
+	})
+
+	t.Run("with the alert rules state set to paused, it returns the alert rule groups with alert rules paused", func(t *testing.T) {
+		alertRulesState := func(c *setting.Cfg) {
+			c.CloudMigration.AlertRulesState = setting.GMSAlertRulesPaused
+		}
+
+		s := setUpServiceTest(t, false, alertRulesState).(*Service)
+
+		user := &user.SignedInUser{OrgID: 1}
+
+		ruleGroupTitle := "ruleGroupTitle"
+
+		alertRule1 := createAlertRule(t, ctx, s, user, true, ruleGroupTitle)
+		alertRule2 := createAlertRule(t, ctx, s, user, false, ruleGroupTitle)
+		alertRule3 := createAlertRule(t, ctx, s, user, false, "anotherRuleGroup")
+
+		createAlertRuleGroup(t, ctx, s, user, ruleGroupTitle, []models.AlertRule{alertRule1, alertRule2})
+
+		ruleGroups, err := s.getAlertRuleGroups(ctx, user)
+		require.NoError(t, err)
+		require.Len(t, ruleGroups, 2)
+
+		for _, ruleGroup := range ruleGroups {
+			alertRuleUIDs := make([]string, 0)
+			for _, alertRule := range ruleGroup.Rules {
+				alertRuleUIDs = append(alertRuleUIDs, alertRule.UID)
+
+				require.True(t, alertRule.IsPaused)
+			}
+
+			if ruleGroup.Title == ruleGroupTitle {
+				require.Len(t, ruleGroup.Rules, 2)
+				require.ElementsMatch(t, []string{alertRule1.UID, alertRule2.UID}, alertRuleUIDs)
+			} else {
+				require.Len(t, ruleGroup.Rules, 1)
+				require.ElementsMatch(t, []string{alertRule3.UID}, alertRuleUIDs)
+			}
+		}
 	})
 }
 
@@ -267,12 +344,12 @@ func updateNotificationPolicyTree(t *testing.T, ctx context.Context, service *Se
 	require.NoError(t, err)
 }
 
-func createAlertRule(t *testing.T, ctx context.Context, service *Service, user *user.SignedInUser, isPaused bool) models.AlertRule {
+func createAlertRule(t *testing.T, ctx context.Context, service *Service, user *user.SignedInUser, isPaused bool, ruleGroup string) models.AlertRule {
 	t.Helper()
 
 	rule := models.AlertRule{
 		OrgID:        user.GetOrgID(),
-		Title:        fmt.Sprintf("Alert Rule SLO (Paused: %v)", isPaused),
+		Title:        fmt.Sprintf("Alert Rule SLO (Paused: %v) - %v", isPaused, ruleGroup),
 		NamespaceUID: "folderUID",
 		Condition:    "A",
 		Data: []models.AlertQuery{
@@ -286,7 +363,7 @@ func createAlertRule(t *testing.T, ctx context.Context, service *Service, user *
 			},
 		},
 		IsPaused:        isPaused,
-		RuleGroup:       "ruleGroup",
+		RuleGroup:       ruleGroup,
 		For:             time.Minute,
 		IntervalSeconds: 60,
 		NoDataState:     models.OK,
@@ -297,4 +374,20 @@ func createAlertRule(t *testing.T, ctx context.Context, service *Service, user *
 	require.NoError(t, err)
 
 	return createdRule
+}
+
+func createAlertRuleGroup(t *testing.T, ctx context.Context, service *Service, user *user.SignedInUser, title string, rules []models.AlertRule) models.AlertRuleGroup {
+	t.Helper()
+
+	group := models.AlertRuleGroup{
+		Title:     title,
+		FolderUID: "folderUID",
+		Interval:  300,
+		Rules:     rules,
+	}
+
+	err := service.ngAlert.Api.AlertRules.ReplaceRuleGroup(ctx, user, group, "")
+	require.NoError(t, err)
+
+	return group
 }
