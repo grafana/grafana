@@ -596,6 +596,22 @@ export function TableNG(props: TableNGProps) {
     [expandedRows, defaultRowHeight, columnTypes, headerCellRefs, osContext, defaultLineHeight]
   );
 
+  const summaryRow = useMemo<TableRow>(() => {
+    if (!isFooterVisible) {
+      return {};
+    }
+
+    const summary: TableRow = {};
+    const { fields } = props.data;
+    const { current: footerCalculations } = calcsRef;
+
+    for (let i = 0; i < fields.length; i++) {
+      summary[fields[i].name] = footerCalculations[i];
+    }
+
+    return summary;
+  }, [isFooterVisible, props.data]);
+
   // Return the data grid
   return (
     <>
@@ -627,9 +643,7 @@ export function TableNG(props: TableNGProps) {
         }}
         // sorting
         sortColumns={sortColumns}
-        // footer
-        // TODO figure out exactly how this works - some array needs to be here for it to render regardless of renderSummaryCell()
-        bottomSummaryRows={isFooterVisible ? [{}] : undefined}
+        bottomSummaryRows={isFooterVisible ? [summaryRow] : undefined}
         onColumnResize={() => {
           // NOTE: This method is called continuously during the column resize drag operation,
           // providing the current column width. There is no separate event for the end of the drag operation.
