@@ -254,6 +254,8 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		logger.Info("deletion timestamp set")
 	case shouldResync:
 		logger.Info("sync interval triggered", "sync_age", syncAge, "sync_interval", syncInterval, "sync_status", obj.Status.Sync.State)
+		// Force health check on resync
+		healthAge = time.Hour // Force health check to run
 	case healthAge > time.Hour*4:
 		logger.Info("health is too old", "health_age", healthAge)
 	default:
@@ -292,11 +294,14 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		return err // delete will be called again
 	}
 
-	// Test configuration before anything else
-	statusPatch := provisioning.RepositoryStatus{
-		ObservedGeneration: obj.Generation,
+	// Initialize patch operations
+	patchOperations := []map[string]interface{}{
+		{
+			"op":    "replace",
+			"path":  "/status/observedGeneration",
+			"value": obj.Generation,
+		},
 	}
-	var hasChanges bool
 
 	if obj.DeletionTimestamp == nil && healthAge > 350*time.Millisecond {
 		logger.Info("running health check")
@@ -311,20 +316,37 @@ func (rc *RepositoryController) process(item *queueItem) error {
 			}
 		}
 
-		statusPatch.Health = provisioning.HealthStatus{
+		// Create timestamp once and use it consistently
+		now := time.Now().UnixMilli()
+		healthStatus := provisioning.HealthStatus{
 			Healthy: res.Success,
-			Checked: time.Now().UnixMilli(),
+			Checked: now,
 			Message: res.Errors,
 		}
-		hasChanges = true
 
-		// If health check fails, set sync state to error
+		// Add health status patch operation
+		patchOperations = append(patchOperations, map[string]interface{}{
+			"op":    "replace",
+			"path":  "/status/health",
+			"value": healthStatus,
+		})
+
+		// If health check fails, add sync state patch operation
 		if !res.Success {
-			statusPatch.Sync = provisioning.SyncStatus{
-				State:   provisioning.JobStateError,
-				Message: res.Errors,
-			}
+			patchOperations = append(patchOperations, map[string]interface{}{
+				"op":   "replace",
+				"path": "/status/sync",
+				"value": provisioning.SyncStatus{
+					State:   provisioning.JobStateError,
+					Message: res.Errors,
+				},
+			})
 		}
+
+		logger.Info("health check completed",
+			"healthy", res.Success,
+			"checked", now,
+			"errors", len(res.Errors))
 	}
 
 	var sync *provisioning.SyncJobOptions
@@ -337,8 +359,11 @@ func (rc *RepositoryController) process(item *queueItem) error {
 			if err != nil {
 				return fmt.Errorf("error running OnCreate: %w", err)
 			}
-			statusPatch.Webhook = webhookStatus
-			hasChanges = true
+			patchOperations = append(patchOperations, map[string]interface{}{
+				"op":    "replace",
+				"path":  "/status/webhook",
+				"value": webhookStatus,
+			})
 		}
 		sync = &provisioning.SyncJobOptions{}
 	case hasSpecChanged:
@@ -348,8 +373,11 @@ func (rc *RepositoryController) process(item *queueItem) error {
 			if err != nil {
 				return fmt.Errorf("error running OnCreate: %w", err)
 			}
-			statusPatch.Webhook = webhookStatus
-			hasChanges = true
+			patchOperations = append(patchOperations, map[string]interface{}{
+				"op":    "replace",
+				"path":  "/status/webhook",
+				"value": webhookStatus,
+			})
 		}
 		sync = &provisioning.SyncJobOptions{}
 	case shouldResync:
@@ -379,29 +407,28 @@ func (rc *RepositoryController) process(item *queueItem) error {
 			logger.Info("sync job triggered", "job", job.Name)
 		}
 
-		statusPatch.Sync = provisioning.SyncStatus{
-			State:       provisioning.JobStatePending,
-			JobID:       job.Name,
-			Incremental: sync.Incremental,
-		}
+		patchOperations = append(patchOperations, map[string]interface{}{
+			"op":   "replace",
+			"path": "/status/sync",
+			"value": provisioning.SyncStatus{
+				State:       provisioning.JobStatePending,
+				JobID:       job.Name,
+				Incremental: sync.Incremental,
+			},
+		})
 	}
 
-	// The one place we update status (triggers another controller loop!)
-	if hasChanges {
-		// Preserve error state if not explicitly setting a new state
-		if statusPatch.Sync.State == "" && obj.Status.Sync.State == provisioning.JobStateError {
-			statusPatch.Sync = obj.Status.Sync
-		}
-
-		patch, err := json.Marshal(map[string]any{
-			"status": statusPatch,
-		})
+	// Apply all collected patch operations if we have any
+	if len(patchOperations) > 0 {
+		patch, err := json.Marshal(patchOperations)
 		if err != nil {
 			return fmt.Errorf("error encoding status patch: %w", err)
 		}
-		if _, err := rc.client.Repositories(obj.GetNamespace()).
-			Patch(ctx, obj.GetName(), types.MergePatchType, patch, v1.PatchOptions{}, "status"); err != nil {
-			return fmt.Errorf("update status: %w", err)
+
+		_, err = rc.client.Repositories(obj.GetNamespace()).
+			Patch(ctx, obj.Name, types.JSONPatchType, patch, v1.PatchOptions{}, "status")
+		if err != nil {
+			return fmt.Errorf("error applying status patch: %w", err)
 		}
 	}
 	return nil
