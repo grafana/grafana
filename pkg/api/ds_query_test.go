@@ -249,7 +249,7 @@ func TestDataSourceQueryError(t *testing.T) {
 			expectedStatus: errutil.StatusInternal.HTTPStatus(),
 			expectedBody: body{
 				Message:    "An error occurred within the plugin",
-				MessageId:  "plugin.requestError",
+				MessageId:  "plugin.requestFailureError",
 				StatusCode: 500,
 			},
 		},
