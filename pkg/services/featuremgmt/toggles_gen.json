@@ -3730,7 +3730,8 @@
       "metadata": {
         "name": "sqlQuerybuilderFunctionParameters",
         "resourceVersion": "1718487716739",
-        "creationTimestamp": "2024-11-04T16:13:35Z"
+        "creationTimestamp": "2024-11-04T16:13:35Z",
+        "deletionTimestamp": "2025-01-31T10:58:09Z"
       },
       "spec": {
         "description": "Enables SQL query builder function parameters",
