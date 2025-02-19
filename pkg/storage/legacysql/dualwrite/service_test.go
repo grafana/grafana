@@ -16,8 +16,8 @@ func TestService(t *testing.T) {
 	mode := ProvideService(featuremgmt.WithFeatures(), nil, nil)
 
 	gr := schema.GroupResource{Group: "ggg", Resource: "rrr"}
-	status, found := mode.Status(ctx, gr)
-	require.False(t, found, "initially not found")
+	status, err := mode.Status(ctx, gr)
+	require.NoError(t, err)
 	require.Equal(t, StorageStatus{
 		Group:        "ggg",
 		Resource:     "rrr",
@@ -31,7 +31,7 @@ func TestService(t *testing.T) {
 	}, status, "should start with the right defaults")
 
 	// Start migration
-	status, err := mode.StartMigration(ctx, gr, 1)
+	status, err = mode.StartMigration(ctx, gr, 1)
 	require.NoError(t, err)
 	require.Equal(t, status.UpdateKey, int64(2), "the key increased")
 	require.True(t, status.Migrating > 0, "migration is running")

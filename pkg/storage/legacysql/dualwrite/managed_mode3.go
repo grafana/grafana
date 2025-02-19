@@ -18,7 +18,10 @@ func (m *service) NewStorage(gr schema.GroupResource,
 	legacy grafanarest.LegacyStorage,
 	storage grafanarest.Storage,
 ) (grafanarest.Storage, error) {
-	status, _ := m.Status(context.Background(), gr)
+	status, err := m.Status(context.Background(), gr)
+	if err != nil {
+		return nil, err
+	}
 
 	if m.enabled && status.Runtime {
 		// Dynamic storage behavior
@@ -68,8 +71,12 @@ func (d *mangedMode3) List(ctx context.Context, options *metainternalversion.Lis
 }
 
 func (d *mangedMode3) getWriter(ctx context.Context) (grafanarest.Storage, error) {
-	status, ok := d.service.Status(ctx, d.gr)
-	if ok && status.Migrating > 0 {
+	status, err := d.service.Status(ctx, d.gr)
+	if err != nil {
+		return nil, err
+	}
+
+	if status.Migrating > 0 {
 		return nil, &apierrors.StatusError{
 			ErrStatus: metav1.Status{
 				Code:    http.StatusServiceUnavailable,

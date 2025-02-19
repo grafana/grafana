@@ -40,7 +40,7 @@ func (m *staticService) StartMigration(ctx context.Context, gr schema.GroupResou
 }
 
 // Status implements Service.
-func (m *staticService) Status(ctx context.Context, gr schema.GroupResource) (StorageStatus, bool) {
+func (m *staticService) Status(ctx context.Context, gr schema.GroupResource) (StorageStatus, error) {
 	status := StorageStatus{
 		Group:       gr.Group,
 		Resource:    gr.Resource,
@@ -67,7 +67,7 @@ func (m *staticService) Status(ctx context.Context, gr schema.GroupResource) (St
 			status.ReadUnified = true
 		}
 	}
-	return status, false
+	return status, nil
 }
 
 // Update implements Service.

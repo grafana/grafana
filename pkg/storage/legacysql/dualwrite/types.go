@@ -42,7 +42,7 @@ type Service interface {
 	ReadFromUnified(ctx context.Context, gr schema.GroupResource) bool
 
 	// Get status details for a Group/Resource
-	Status(ctx context.Context, gr schema.GroupResource) (StorageStatus, bool)
+	Status(ctx context.Context, gr schema.GroupResource) (StorageStatus, error)
 
 	// Start a migration process (writes will be locked)
 	StartMigration(ctx context.Context, gr schema.GroupResource, key int64) (StorageStatus, error)

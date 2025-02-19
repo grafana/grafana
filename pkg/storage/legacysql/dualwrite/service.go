@@ -67,7 +67,7 @@ func (m *service) ReadFromUnified(ctx context.Context, gr schema.GroupResource) 
 }
 
 // Status implements Service.
-func (m *service) Status(ctx context.Context, gr schema.GroupResource) (StorageStatus, bool) {
+func (m *service) Status(ctx context.Context, gr schema.GroupResource) (StorageStatus, error) {
 	v, found := m.db.Get(ctx, gr)
 	if !found {
 		v = StorageStatus{
@@ -81,12 +81,10 @@ func (m *service) Status(ctx context.Context, gr schema.GroupResource) (StorageS
 			Runtime:      true, // need to explicitly ask for not runtime
 			UpdateKey:    1,
 		}
-		if err := m.db.Set(ctx, v); err != nil {
-			m.logger.Warn("error writing value", "err", err)
-		}
-		return v, false
+		err := m.db.Set(ctx, v)
+		return v, err
 	}
-	return v, found
+	return v, nil
 }
 
 // StartMigration implements Service.
