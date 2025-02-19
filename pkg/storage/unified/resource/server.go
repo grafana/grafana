@@ -952,6 +952,7 @@ func (s *server) Watch(req *WatchRequest, srv ResourceStore_WatchServer) error {
 		Group:     key.Group,
 		Resource:  key.Resource,
 		Namespace: key.Namespace,
+		Verb:      utils.VerbGet,
 	})
 	if err != nil {
 		return err
