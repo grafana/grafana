@@ -21,8 +21,6 @@ export function setSandboxEnabledCheck(checker: SandboxEnabledCheck) {
   sandboxEnabledCheck = checker;
 }
 
-const pluginElegibilityCache = new Map<string, Promise<boolean>>();
-
 export async function shouldLoadPluginInFrontendSandbox({
   isAngular,
   pluginId,
@@ -64,17 +62,8 @@ export async function isPluginFrontendSandboxEligible({
     return false;
   }
 
-  // skip cache for jest tests
-  if (!process.env.JEST_WORKER_ID && pluginElegibilityCache.has(pluginId)) {
-    return pluginElegibilityCache.get(pluginId)!;
-  }
-
   // grafana signature and internal plugins are not allowed in the sandbox
-  const result = isPluginSignatureEligibleForSandbox({ pluginId });
-  // promise meomization to prevent redundant requests
-  pluginElegibilityCache.set(pluginId, result);
-
-  return result;
+  return isPluginSignatureEligibleForSandbox({ pluginId });
 
 }
 
