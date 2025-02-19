@@ -111,7 +111,7 @@ export function SelectRow({ query, onQueryChange, db, columns }: SelectRowProps)
       {query.sql?.columns?.map((item, index) => (
         <div key={index}>
           <Stack gap={2} alignItems="end">
-            <EditorField label={'Data operations'} optional width={25}>
+            <EditorField label="Data operations" optional width={25}>
               <Select
                 value={item.name ? toOption(item.name) : null}
                 inputId={`select-aggregation-${index}-${uniqueId()}`}
