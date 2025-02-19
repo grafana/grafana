@@ -20,10 +20,12 @@ export class DashboardEditableElement implements EditableDashboardElement {
     const dashboard = this.dashboard;
 
     // When layout changes we need to update options list
-    const { body } = dashboard.useState();
+    const { body: layoutOrchestrator } = dashboard.useState();
 
-    // Probably a nicer way to do this :(
-    const layoutOrchestrator = body as LayoutOrchestrator;
+    if (!(layoutOrchestrator instanceof LayoutOrchestrator)) {
+      return [];
+    }
+
     const { manager } = layoutOrchestrator.useState();
 
     const dashboardOptions = useMemo(() => {
