@@ -1,71 +1,64 @@
 import { Controller, useForm } from 'react-hook-form';
 
 import { Button, Field, Input, MultiSelect, RadioButtonGroup, Stack } from '@grafana/ui';
-import { useDispatch } from 'app/types';
 
-import { createSecret } from '../state/actions';
-import { Secret } from '../types';
-import { transformFromSecret } from '../utils';
+import { MOCKED_SECRET_AUDIENCES } from '../constants';
 
 import { SecretInput } from './SecretInput';
 
-interface FormValues {
+export interface SecretFormValues {
   name: string;
   description: string;
   value?: string;
+  uid?: string;
   enabled?: boolean;
   audiences: Array<{ label: string; value: string }>;
+  keeper?: string;
 }
 
-interface SecretFormProps {
-  create?: boolean;
-  onSubmit: () => void;
-  initialValues?: Partial<Secret>;
+interface BaseSecretFormProps {
+  onCancel: () => void;
+  initialValues?: SecretFormValues;
+  onSubmit: (data: SecretFormValues) => void;
+  submitText?: string;
+  disableNameField?: boolean;
 }
 
-export function SecretForm({ onSubmit, create = false, initialValues }: SecretFormProps) {
-  const dispatch = useDispatch();
-
-  const audiencesValues = initialValues?.audiences
-    ? initialValues.audiences.map((audience) => ({ label: audience, value: audience }))
-    : [];
-
+export function SecretForm({
+  onSubmit,
+  onCancel,
+  initialValues,
+  submitText = 'Save',
+  disableNameField = false,
+}: BaseSecretFormProps) {
   const audiences = [
-    { label: 'Grafana', value: 'grafana/grafana' },
-    { label: 'k6', value: 'k6/runner' },
-    { label: 'Synthetic Monitoring', value: 'sm/runner' },
-    ...audiencesValues,
+    ...MOCKED_SECRET_AUDIENCES.map((audience) => ({ label: audience, value: audience })),
+    ...(initialValues?.audiences ?? []),
   ];
 
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isSubmitting },
     control,
-  } = useForm<FormValues>({
-    defaultValues: { ...(initialValues as unknown as FormValues), audiences: audiencesValues },
+  } = useForm<SecretFormValues>({
+    defaultValues: initialValues,
   });
-
-  const submitText = create ? 'Create' : 'Update';
 
   return (
     <form
-      onSubmit={handleSubmit((data) => {
-        dispatch(
-          createSecret({
-            ...data,
-            audiences: data.audiences.map((audience: { value: string }) => audience.value),
-          } as Secret)
-        ).finally(() => {
-          onSubmit();
-        });
-
-        // @ts-expect-error just testing
-        console.log('data', data, transformFromSecret(data));
-      })}
+      onSubmit={handleSubmit(
+        (data) => {
+          onSubmit(data);
+        },
+        (errors) => {
+          console.log(errors);
+        }
+      )}
     >
+      <input type="hidden" {...register('uid')} />
       <Field
-        disabled={!create}
+        disabled={disableNameField}
         description="The name that the secret will be referred to as."
         label="Name"
         invalid={Boolean(errors?.name?.message)}
@@ -87,7 +80,7 @@ export function SecretForm({ onSubmit, create = false, initialValues }: SecretFo
         invalid={Boolean(errors?.value?.message)}
         error={errors?.value?.message as string}
       >
-        <SecretInput isConfigured={!create} {...register('value', { required: create })} />
+        <SecretInput isConfigured={disableNameField} {...register('value', { required: !disableNameField })} />
       </Field>
       <Field label="State" description="State of the secret.">
         <Controller
@@ -109,14 +102,16 @@ export function SecretForm({ onSubmit, create = false, initialValues }: SecretFo
         <Controller
           control={control}
           name="audiences"
-          render={({ field: { ref, ...field } }) => <MultiSelect options={audiences} {...field} />}
+          render={({ field: { ref, ...field } }) => <MultiSelect allowCustomValue options={audiences} {...field} />}
         />
       </Field>
       <Stack gap={1} justifyContent="flex-end">
-        <Button variant="secondary" onClick={onSubmit}>
+        <Button variant="secondary" onClick={onCancel}>
           Cancel
         </Button>
-        <Button type="submit">{submitText}</Button>
+        <Button disabled={isSubmitting} type="submit">
+          {submitText}
+        </Button>
       </Stack>
     </form>
   );

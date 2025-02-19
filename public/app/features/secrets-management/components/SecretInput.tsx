@@ -13,7 +13,7 @@ interface SecretInputProps extends Omit<InputProps, 'type'> {
 
 export const SecretInput = forwardRef<HTMLInputElement, SecretInputProps>((props, ref) => {
   const [reveal, setReveal] = useState(false);
-  const { revealTooltip = 'Hide secret', hiddenTooltip = 'Show secret', isConfigured = false } = props;
+  const { revealTooltip = 'Hide secret', hiddenTooltip = 'Show secret', isConfigured = false, ...inputProps } = props;
   const styles = useStyles2(getStyles);
   const [canEdit, setCanEdit] = useState(!isConfigured);
 
@@ -21,7 +21,7 @@ export const SecretInput = forwardRef<HTMLInputElement, SecretInputProps>((props
     <>
       <div className={styles.wrapper}>
         <Input
-          {...props}
+          {...inputProps}
           type={reveal && canEdit ? 'text' : 'password'}
           ref={ref}
           disabled={!canEdit}

@@ -2,16 +2,27 @@
 
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-import { Secret, SecretRequestIdentifier } from '../types';
+import { Secret, SecretRequestIdentifier, SecretsListResponseItem } from '../types';
+import { transformToSecret } from '../utils';
 
 interface SecretsManagementAdminState {
   isLoading: boolean;
   secrets: Secret[];
+  queued: {
+    delete: SecretRequestIdentifier[];
+    create: SecretsListResponseItem[];
+    update: SecretsListResponseItem[];
+  };
 }
 
 const initialSecretsManagementAdminState: SecretsManagementAdminState = {
   isLoading: false,
   secrets: [],
+  queued: {
+    delete: [],
+    create: [],
+    update: [],
+  },
 };
 
 export const secretsManagementAdminSlice = createSlice({
@@ -25,31 +36,32 @@ export const secretsManagementAdminSlice = createSlice({
       state.isLoading = false;
       state.secrets = action.payload;
     },
-    fetchSecretsFailure: (state, action) => {
+    fetchSecretsFailure: (state) => {
       state.isLoading = false;
-      console.error('Unable to load secrets.', action);
     },
-    deleteSecretBegin: (state, action: PayloadAction<SecretRequestIdentifier>) => {
-      console.warn('Deleting secret', action.payload);
-      state.isLoading = true;
-    },
+    deleteSecretBegin: () => {},
     deleteSecretSuccess: (state, action: PayloadAction<SecretRequestIdentifier>) => {
-      console.warn('Secret deleted', action.payload);
+      state.secrets = state.secrets.filter((secret) => secret.name !== action.payload);
     },
-    deleteSecretFailure: (state, action) => {
-      state.isLoading = false;
-      console.error('Unable to delete secrets.', action);
+    deleteSecretFailure: (_state, action: PayloadAction<unknown>) => {
+      console.error('unable to remove secret', action.payload);
     },
-    createSecretBegin: (state) => {
-      state.isLoading = true;
+    createSecretBegin: () => {},
+    createSecretSuccess: (state, action: PayloadAction<SecretsListResponseItem>) => {
+      const newSecret = transformToSecret(action.payload);
+      state.secrets.push(newSecret);
     },
-    createSecretSuccess: (state) => {
-      state.isLoading = false;
+    createSecretFailure: () => {},
+    updateSecretBegin: () => {},
+    updateSecretSuccess: (state, action: PayloadAction<SecretsListResponseItem>) => {
+      state.secrets = state.secrets.map((secret) => {
+        if (secret.name === action.payload.metadata.name) {
+          return transformToSecret(action.payload);
+        }
+        return secret;
+      });
     },
-    createSecretFailure: (state, action) => {
-      state.isLoading = false;
-      console.error('Unable to create secret.', action);
-    },
+    updateSecretFailure: () => {},
   },
 });
 
@@ -65,4 +77,7 @@ export const {
   createSecretBegin,
   createSecretSuccess,
   createSecretFailure,
+  updateSecretBegin,
+  updateSecretSuccess,
+  updateSecretFailure,
 } = secretsManagementAdminSlice.actions;

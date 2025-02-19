@@ -51,4 +51,10 @@ export interface Secret {
   audiences: SecretsListResponseItem['spec']['audiences'];
   keeper: SecretsListResponseItem['spec']['keeper'];
   uid: SecretsListResponseItem['metadata']['uid'];
+  value?: string; // Only present when editing a secret
+}
+
+export interface NewSecret extends Omit<Secret, 'uid'> {
+  uid: never;
+  value: string;
 }
