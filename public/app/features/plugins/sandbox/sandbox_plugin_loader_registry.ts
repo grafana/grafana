@@ -64,7 +64,6 @@ export async function isPluginFrontendSandboxEligible({
 
   // grafana signature and internal plugins are not allowed in the sandbox
   return isPluginSignatureEligibleForSandbox({ pluginId });
-
 }
 
 async function isPluginSignatureEligibleForSandbox({ pluginId }: SandboxEligibilityCheckParams): Promise<boolean> {
