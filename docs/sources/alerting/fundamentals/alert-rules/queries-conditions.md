@@ -111,6 +111,12 @@ The threshold expression allows the comparison between two single values. Availa
 - **Is below**: `$B < 3`
 - **Is within range**: `$A > 0 AND $A < 10`
 - **Is outside range**: `$B < 0 OR $B > 100`
+- **Equal**: `$A == 2`
+- **Not Equal**: `$B =! 4`
+- **Greater or Equal**: `$A >= 8`
+- **Less or Equal**: `$B >= 16`
+- **Within Range Inclusive**: `$A <= 32 || $A >= 64`
+- **Outside Range Inclusive**: `$A <= 124 && $A >= 256`
 
 A threshold returns `0` when the condition is false and `1` when true.
 
