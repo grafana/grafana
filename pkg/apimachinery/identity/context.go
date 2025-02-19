@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"reflect"
 
+	"github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
 )
 
@@ -33,11 +34,8 @@ func checkNilRequester(r Requester) bool {
 const serviceName = "service"
 const serviceNameForProvisioning = "provisioning"
 
-// WithServiceIdentity sets an identity representing the service itself in provided org and store it in context.
-// This is useful for background tasks that has to communicate with unfied storage. It also returns a Requester with
-// static permissions so it can be used in legacy code paths.
-func WithServiceIdentity(ctx context.Context, orgID int64) (context.Context, Requester) {
-	r := &StaticRequester{
+func NewServiceIdentity(orgID int64) Requester {
+	return &StaticRequester{
 		Type:           types.TypeAccessPolicy,
 		Name:           serviceName,
 		UserUID:        serviceName,
@@ -49,8 +47,15 @@ func WithServiceIdentity(ctx context.Context, orgID int64) (context.Context, Req
 		Permissions: map[int64]map[string][]string{
 			orgID: serviceIdentityPermissions,
 		},
+		AccessTokenClaims: ServiceIdentityClaims,
 	}
+}
 
+// WithServiceIdentity sets an identity representing the service itself in provided org and store it in context.
+// This is useful for background tasks that has to communicate with unfied storage. It also returns a Requester with
+// static permissions so it can be used in legacy code paths.
+func WithServiceIdentity(ctx context.Context, orgID int64) (context.Context, Requester) {
+	r := NewServiceIdentity(orgID)
 	return WithRequester(ctx, r), r
 }
 
@@ -97,6 +102,14 @@ func getWildcardPermissions(actions ...string) map[string][]string {
 	return permissions
 }
 
+func getTokenPermissions(groups ...string) []string {
+	out := make([]string, 0, len(groups))
+	for _, group := range groups {
+		out = append(out, group+":*")
+	}
+	return out
+}
+
 // serviceIdentityPermissions is a list of wildcard permissions for provided actions.
 // We should add every action required "internally" here.
 var serviceIdentityPermissions = getWildcardPermissions(
@@ -117,6 +130,19 @@ var serviceIdentityPermissions = getWildcardPermissions(
 	"org.users:read", // accesscontrol.ActionOrgUsersRead,
 	"teams:read",     // accesscontrol.ActionTeamsRead,
 )
+
+var serviceIdentityTokenPermissions = getTokenPermissions(
+	"folder.grafana.app",
+	"dashboard.grafana.app",
+	"secret.grafana.app",
+)
+
+var ServiceIdentityClaims = &authn.Claims[authn.AccessTokenClaims]{
+	Rest: authn.AccessTokenClaims{
+		Permissions:          serviceIdentityTokenPermissions,
+		DelegatedPermissions: serviceIdentityTokenPermissions,
+	},
+}
 
 func IsServiceIdentity(ctx context.Context) bool {
 	ident, ok := types.AuthInfoFrom(ctx)
