@@ -19,6 +19,7 @@ import { panelLinksBehavior, panelMenuBehavior } from '../../scene/PanelMenuBeha
 import { PanelNotices } from '../../scene/PanelNotices';
 import { PanelTimeRange } from '../../scene/PanelTimeRange';
 import { AngularDeprecation } from '../../scene/angular/AngularDeprecation';
+import { LayoutOrchestrator } from '../../scene/layout-manager/LayoutOrchestrator';
 import { setDashboardPanelContext } from '../../scene/setDashboardPanelContext';
 import { DashboardLayoutManager } from '../../scene/types/DashboardLayoutManager';
 import { getVizPanelKeyForPanelId } from '../../utils/utils';
@@ -145,10 +146,15 @@ function panelQueryKindToSceneQuery(query: PanelQueryKind): SceneDataQuery {
   };
 }
 
-export function getLayout(sceneState: DashboardLayoutManager): DashboardV2Spec['layout'] {
-  const registryItem = layoutSerializerRegistry.get(sceneState.descriptor.kind ?? '');
-  if (!registryItem) {
-    throw new Error(`Layout serializer not found for kind: ${sceneState.descriptor.kind}`);
+export function getLayout(orchestrator: DashboardLayoutManager): DashboardV2Spec['layout'] {
+  if (!(orchestrator instanceof LayoutOrchestrator)) {
+    throw new Error('Expected LayoutOrchestrator');
   }
-  return registryItem.serializer.serialize(sceneState);
+  const layoutManager = orchestrator.state.manager;
+
+  const registryItem = layoutSerializerRegistry.get(layoutManager.descriptor.kind ?? '');
+  if (!registryItem) {
+    throw new Error(`Layout serializer not found for kind: ${layoutManager.descriptor.kind}`);
+  }
+  return registryItem.serializer.serialize(layoutManager);
 }
