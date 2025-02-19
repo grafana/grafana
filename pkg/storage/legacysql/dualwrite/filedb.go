@@ -12,7 +12,7 @@ import (
 )
 
 // Simple file implementation -- useful while testing and not yet sure about the SQL structure!
-// When a path exists, read/write it from disk
+// When a path exists, read/write it from disk; otherwise it is held in memory
 type fileDB struct {
 	path    string
 	changed int64
@@ -30,7 +30,7 @@ func newFileDB(path string) *fileDB {
 	}
 }
 
-func (m *fileDB) Get(ctx context.Context, gr schema.GroupResource) (StorageStatus, bool) {
+func (m *fileDB) Get(ctx context.Context, gr schema.GroupResource) (StorageStatus, bool, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
@@ -44,10 +44,31 @@ func (m *fileDB) Get(ctx context.Context, gr schema.GroupResource) (StorageStatu
 		if err != nil {
 			m.logger.Warn("error reading filedb", "err", err)
 		}
+
+		changed := false
+		for k, v := range m.db {
+			// Must write to unified if we are reading unified
+			if v.ReadUnified && !v.WriteUnified {
+				v.WriteUnified = true
+				m.db[k] = v
+				changed = true
+			}
+
+			// Make sure we are writing something!
+			if !(v.WriteLegacy || v.WriteUnified) {
+				v.WriteLegacy = true
+				m.db[k] = v
+				changed = true
+			}
+		}
+		if changed {
+			err = m.save()
+			m.logger.Warn("error saving changes filedb", "err", err)
+		}
 	}
 
 	v, ok := m.db[gr.String()]
-	return v, ok
+	return v, ok, nil
 }
 
 func (m *fileDB) Set(ctx context.Context, status StorageStatus) error {
@@ -60,6 +81,10 @@ func (m *fileDB) Set(ctx context.Context, status StorageStatus) error {
 	}
 	m.db[gr.String()] = status
 
+	return m.save()
+}
+
+func (m *fileDB) save() error {
 	if m.path != "" {
 		data, err := json.MarshalIndent(m.db, "", "  ")
 		if err != nil {
@@ -70,6 +95,5 @@ func (m *fileDB) Set(ctx context.Context, status StorageStatus) error {
 			return err
 		}
 	}
-
 	return nil
 }
