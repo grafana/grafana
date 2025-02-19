@@ -14,7 +14,7 @@ import {
   RulerRuleGroupDTO,
 } from 'app/types/unified-alerting-dto';
 
-import { MockDataSourceSrv } from '../../mocks';
+import { setupDataSources } from '../../testSetup/datasources';
 import { DataSourceType } from '../../utils/datasource';
 
 const prometheusRuleFactory = Factory.define<PromAlertingRuleDTO>(({ sequence }) => ({
@@ -62,7 +62,7 @@ const prometheusRuleGroupFactory = Factory.define<PromRuleGroupDTO>(({ sequence 
 const dataSourceFactory = Factory.define<DataSourceInstanceSettings>(({ sequence, params, afterBuild }) => {
   afterBuild((dataSource) => {
     config.datasources[dataSource.name] = dataSource;
-    setDataSourceSrv(new MockDataSourceSrv(config.datasources));
+    setupDataSources(...Object.values(config.datasources));
   });
 
   const uid = params.uid ?? `mock-ds-${sequence}`;
