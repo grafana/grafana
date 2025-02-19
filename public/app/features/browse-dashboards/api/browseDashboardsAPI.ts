@@ -302,20 +302,31 @@ export const browseDashboardsAPI = createApi({
         for (const dashboardUID of selectedDashboards) {
           const response = await getDashboardAPI().deleteDashboard(dashboardUID, true);
 
-          // TODO: handle displaying notifications for k8s dashboards
-          // the issue is that we don't get back the dashboad title in the delete response
-
+          // handling success alerts for these feature toggles
+          // for legacy response, the success alert will be triggered by showSuccessAlert function in public/app/core/services/backend_srv.ts
           if (config.featureToggles.dashboardRestore) {
             const name = response?.title;
 
             if (name) {
+              const payload =
+                config.featureToggles.useV2DashboardsAPI || config.featureToggles.kubernetesDashboards
+                  ? ['Dashboard moved to Recently deleted']
+                  : [
+                      t('browse-dashboards.soft-delete.success', 'Dashboard {{name}} moved to Recently deleted', {
+                        name,
+                      }),
+                    ];
+
               appEvents.publish({
                 type: AppEvents.alertSuccess.name,
-                payload: [
-                  t('browse-dashboards.soft-delete.success', 'Dashboard {{name}} moved to Recently deleted', { name }),
-                ],
+                payload,
               });
             }
+          } else if (config.featureToggles.useV2DashboardsAPI || config.featureToggles.kubernetesDashboards) {
+            appEvents.publish({
+              type: AppEvents.alertSuccess.name,
+              payload: ['Dashboard deleted'],
+            });
           }
         }
         return { data: undefined };
