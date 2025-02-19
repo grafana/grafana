@@ -5,7 +5,7 @@ import { setPluginLinksHook } from '@grafana/runtime';
 
 import { mockPluginLinkExtension } from '../../alerting/unified/mocks';
 
-import { AddToExplorationButton, addToExplorationsButtonLabel, explorationsPluginId } from './AddToExplorationsButton';
+import { AddToInvestigationButton, addToInvestigationButtonLabel, investigationsPluginId } from './AddToInvestigationButton';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -38,28 +38,28 @@ describe('AddToExplorationButton', () => {
       links: [],
       isLoading: false,
     }));
-    const scene = new AddToExplorationButton({});
+    const scene = new AddToInvestigationButton({});
     render(<scene.Component model={scene} />);
-    expect(() => screen.getByLabelText(addToExplorationsButtonLabel)).toThrow();
+    expect(() => screen.getByLabelText(addToInvestigationButtonLabel)).toThrow();
   });
 
   it('should render when the Explorations app provides a plugin extension link', async () => {
     setPluginLinksHook(() => ({
       links: [
         mockPluginLinkExtension({
-          description: addToExplorationsButtonLabel, // this overrides the aria-label
+          description: addToInvestigationButtonLabel, // this overrides the aria-label
           onClick: () => {},
           path: '/a/grafana-explorations-app',
-          pluginId: explorationsPluginId,
+          pluginId: investigationsPluginId,
           title: 'Explorations',
           type: PluginExtensionTypes.link,
         }),
       ],
       isLoading: false,
     }));
-    const scene = new AddToExplorationButton({});
+    const scene = new AddToInvestigationButton({});
     render(<scene.Component model={scene} />);
-    const button = screen.getByLabelText(addToExplorationsButtonLabel);
+    const button = screen.getByLabelText(addToInvestigationButtonLabel);
     expect(button).toBeInTheDocument();
   });
 });

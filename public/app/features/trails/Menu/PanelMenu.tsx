@@ -12,7 +12,7 @@ import {
 import { getExploreUrl } from 'app/core/utils/explore';
 import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/utils';
 
-import { AddToExplorationButton, extensionPointId } from '../MetricSelect/AddToExplorationsButton';
+import { AddToInvestigationButton, extensionPointId } from '../MetricSelect/AddToInvestigationButton';
 import { getDataSource, getTrailFor } from '../utils';
 
 const ADD_TO_INVESTIGATION_MENU_TEXT = 'Add to investigation';
@@ -24,8 +24,8 @@ interface PanelMenuState extends SceneObjectState {
   frame?: DataFrame;
   labelName?: string;
   fieldName?: string;
-  addExplorationsLink?: boolean;
-  explorationsButton?: AddToExplorationButton;
+  addInvestigationLink?: boolean;
+  investigationButton?: AddToInvestigationButton;
 }
 
 /**
@@ -33,7 +33,7 @@ interface PanelMenuState extends SceneObjectState {
  */
 export class PanelMenu extends SceneObjectBase<PanelMenuState> implements VizPanelMenu, SceneObject {
   constructor(state: Partial<PanelMenuState>) {
-    super({ ...state, addExplorationsLink: state.addExplorationsLink ?? true });
+    super({ ...state, addInvestigationLink: state.addInvestigationLink ?? true });
     this.addActivationHandler(() => {
       let exploreUrl: Promise<string | undefined> | undefined;
       try {
@@ -75,22 +75,22 @@ export class PanelMenu extends SceneObjectBase<PanelMenuState> implements VizPan
         }),
       });
 
-      const addToExplorationsButton = new AddToExplorationButton({
+      const addToInvestigationButton = new AddToInvestigationButton({
         labelName: this.state.labelName,
         fieldName: this.state.fieldName,
         frame: this.state.frame,
       });
       this._subs.add(
-        addToExplorationsButton?.subscribeToState(() => {
-          subscribeToAddToExploration(this);
+        addToInvestigationButton?.subscribeToState(() => {
+          subscribeToAddToInvestigation(this);
         })
       );
       this.setState({
-        explorationsButton: addToExplorationsButton,
+        investigationButton: addToInvestigationButton,
       });
 
-      if (this.state.addExplorationsLink) {
-        this.state.explorationsButton?.activate();
+      if (this.state.addInvestigationLink) {
+        this.state.investigationButton?.activate();
       }
     });
   }
@@ -118,33 +118,33 @@ export class PanelMenu extends SceneObjectBase<PanelMenuState> implements VizPan
   };
 }
 
-const getInvestigationLink = (addToExplorations: AddToExplorationButton) => {
+const getInvestigationLink = (addToInvestigation: AddToInvestigationButton) => {
   const links = getPluginLinkExtensions({
     extensionPointId: extensionPointId,
-    context: addToExplorations.state.context,
+    context: addToInvestigation.state.context,
   });
 
   return links.extensions[0];
 };
 
-const onAddToInvestigationClick = (event: React.MouseEvent, addToExplorations: AddToExplorationButton) => {
-  const link = getInvestigationLink(addToExplorations);
+const onAddToInvestigationClick = (event: React.MouseEvent, addToInvestigation: AddToInvestigationButton) => {
+  const link = getInvestigationLink(addToInvestigation);
   if (link && link.onClick) {
     link.onClick(event);
   }
 };
 
-function subscribeToAddToExploration(menu: PanelMenu) {
-  const addToExplorationButton = menu.state.explorationsButton;
-  if (addToExplorationButton) {
-    const link = getInvestigationLink(addToExplorationButton);
+function subscribeToAddToInvestigation(menu: PanelMenu) {
+  const addToInvestigationButton = menu.state.investigationButton;
+  if (addToInvestigationButton) {
+    const link = getInvestigationLink(addToInvestigationButton);
 
     const existingMenuItems = menu.state.body?.state.items ?? [];
 
-    const existingAddToExplorationLink = existingMenuItems.find((item) => item.text === ADD_TO_INVESTIGATION_MENU_TEXT);
+    const existingAddToInvestigationLink = existingMenuItems.find((item) => item.text === ADD_TO_INVESTIGATION_MENU_TEXT);
 
     if (link) {
-      if (!existingAddToExplorationLink) {
+      if (!existingAddToInvestigationLink) {
         menu.state.body?.addItem({
           text: ADD_TO_INVESTIGATION_MENU_DIVIDER_TEXT,
           type: 'divider',
@@ -156,10 +156,10 @@ function subscribeToAddToExploration(menu: PanelMenu) {
         menu.state.body?.addItem({
           text: ADD_TO_INVESTIGATION_MENU_TEXT,
           iconClassName: 'plus-square',
-          onClick: (e) => onAddToInvestigationClick(e, addToExplorationButton),
+          onClick: (e) => onAddToInvestigationClick(e, addToInvestigationButton),
         });
       } else {
-        if (existingAddToExplorationLink) {
+        if (existingAddToInvestigationLink) {
           menu.state.body?.setItems(
             existingMenuItems.filter(
               (item) =>

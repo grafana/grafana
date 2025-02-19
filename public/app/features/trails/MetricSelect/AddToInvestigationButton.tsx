@@ -7,11 +7,11 @@ import { IconButton } from '@grafana/ui';
 import MimirLogo from '../../../plugins/datasource/prometheus/img/mimir_logo.svg';
 import { VAR_DATASOURCE_EXPR } from '../shared';
 
-export const explorationsPluginId = 'grafana-explorations-app';
-export const extensionPointId = 'grafana-explore-metrics/exploration/v1';
-export const addToExplorationsButtonLabel = 'add panel to exploration';
+export const investigationsPluginId = 'grafana-investigations-app';
+export const extensionPointId = 'grafana-explore-metrics/investigation/v1';
+export const addToInvestigationButtonLabel = 'add panel to exploration';
 
-export interface AddToExplorationButtonState extends SceneObjectState {
+export interface AddToInvestigationButtonState extends SceneObjectState {
   frame?: DataFrame;
   dsUid?: string;
   labelName?: string;
@@ -35,8 +35,8 @@ interface ExtensionContext {
   drillDownLabel?: string;
 }
 
-export class AddToExplorationButton extends SceneObjectBase<AddToExplorationButtonState> {
-  constructor(state: Omit<AddToExplorationButtonState, 'queries'>) {
+export class AddToInvestigationButton extends SceneObjectBase<AddToInvestigationButtonState> {
+  constructor(state: Omit<AddToInvestigationButtonState, 'queries'>) {
     super({ ...state, queries: [] });
 
     this.addActivationHandler(this._onActivate.bind(this));
@@ -96,10 +96,10 @@ export class AddToExplorationButton extends SceneObjectBase<AddToExplorationButt
     }
   };
 
-  public static Component = ({ model }: SceneComponentProps<AddToExplorationButton>) => {
+  public static Component = ({ model }: SceneComponentProps<AddToInvestigationButton>) => {
     const { context } = model.useState();
     const { links } = usePluginLinks({ extensionPointId, context, limitPerPlugin: 1 });
-    const link = links.find((link) => link.pluginId === explorationsPluginId);
+    const link = links.find((link) => link.pluginId === investigationsPluginId);
 
     if (!link) {
       return null;
@@ -108,7 +108,7 @@ export class AddToExplorationButton extends SceneObjectBase<AddToExplorationButt
     return (
       <IconButton
         tooltip={link.description}
-        aria-label={addToExplorationsButtonLabel} // this is overriden by the `tooltip`
+        aria-label={addToInvestigationButtonLabel} // this is overriden by the `tooltip`
         key={link.id}
         name={link.icon ?? 'panel-add'}
         onClick={(e) => {
