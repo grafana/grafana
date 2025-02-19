@@ -5,7 +5,6 @@ import { AppEvents } from '@grafana/data';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { Button, ConfirmModal, Stack } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
-import configCore from 'app/core/config';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { removePluginFromNavTree } from 'app/core/reducers/navBarTree';
 import { useDispatch } from 'app/types';
@@ -72,7 +71,7 @@ export function InstallControlsButton({
     const result = await install(plugin.id, latestCompatibleVersion?.version);
     if (!errorInstalling && !('error' in result)) {
       let successMessage = `Installed ${plugin.name}`;
-      if (config.pluginAdminExternalManageEnabled && configCore.featureToggles.managedPluginsInstall) {
+      if (config.pluginAdminExternalManageEnabled) {
         successMessage = 'Install requested, this may take a few minutes.';
       }
 
@@ -98,7 +97,7 @@ export function InstallControlsButton({
       }
 
       let successMessage = `Uninstalled ${plugin.name}`;
-      if (config.pluginAdminExternalManageEnabled && configCore.featureToggles.managedPluginsInstall) {
+      if (config.pluginAdminExternalManageEnabled) {
         successMessage = 'Uninstall requested, this may take a few minutes.';
       }
 
@@ -154,10 +153,7 @@ export function InstallControlsButton({
   }
 
   if (pluginStatus === PluginStatus.UPDATE) {
-    const disableUpdate =
-      config.pluginAdminExternalManageEnabled && configCore.featureToggles.managedPluginsInstall
-        ? plugin.isUpdatingFromInstance
-        : isInstalling;
+    const disableUpdate = config.pluginAdminExternalManageEnabled ? plugin.isUpdatingFromInstance : isInstalling;
 
     return (
       <Stack alignItems="flex-start" width="auto" height="auto">
@@ -181,7 +177,7 @@ export function InstallControlsButton({
 }
 
 function shouldDisableUninstall(isUninstalling: boolean, plugin: CatalogPlugin) {
-  if (config.pluginAdminExternalManageEnabled && config.featureToggles.managedPluginsInstall) {
+  if (config.pluginAdminExternalManageEnabled) {
     return plugin.isUninstallingFromInstance || !plugin.isFullyInstalled || plugin.isUpdatingFromInstance;
   }
 

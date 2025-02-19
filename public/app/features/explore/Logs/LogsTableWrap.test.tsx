@@ -1,6 +1,5 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { ComponentProps } from 'react';
-import { act } from 'react-test-renderer';
 
 import {
   createTheme,

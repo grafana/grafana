@@ -31,9 +31,10 @@ type PluginManagementCfg struct {
 
 // Features contains the feature toggles used for the plugin management system.
 type Features struct {
-	ExternalCorePluginsEnabled bool
-	SkipHostEnvVarsEnabled     bool
-	SriChecksEnabled           bool
+	ExternalCorePluginsEnabled  bool
+	SkipHostEnvVarsEnabled      bool
+	SriChecksEnabled            bool
+	PluginsCDNSyncLoaderEnabled bool
 }
 
 // NewPluginManagementCfg returns a new PluginManagementCfg.

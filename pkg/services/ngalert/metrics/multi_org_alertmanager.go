@@ -325,8 +325,8 @@ func (a *AlertmanagerAggregatedMetrics) Collect(out chan<- prometheus.Metric) {
 
 	data.SendSumOfCountersPerTenant(out, a.numReceivedAlerts, "alertmanager_alerts_received_total", metrics.WithLabels("status"))
 	data.SendSumOfCountersPerTenant(out, a.numInvalidAlerts, "alertmanager_alerts_invalid_total")
-	data.SendSumOfGaugesPerTenantWithLabels(out, a.configuredReceivers, "grafana_alerting_alertmanager_receivers", "state")
-	data.SendSumOfGaugesPerTenantWithLabels(out, a.configuredIntegrations, "grafana_alerting_alertmanager_integrations", "type")
+	data.SendSumOfGaugesPerTenant(out, a.configuredReceivers, "grafana_alerting_alertmanager_receivers", metrics.WithLabels("state"))
+	data.SendSumOfGaugesPerTenant(out, a.configuredIntegrations, "grafana_alerting_alertmanager_integrations", metrics.WithLabels("type"))
 	data.SendSumOfGaugesPerTenant(out, a.configuredInhibitionRules, "grafana_alerting_alertmanager_inhibition_rules")
 
 	data.SendSumOfCountersPerTenant(out, a.numNotifications, "alertmanager_notifications_total", metrics.WithLabels("integration"), metrics.WithSkipZeroValueMetrics)
@@ -343,7 +343,7 @@ func (a *AlertmanagerAggregatedMetrics) Collect(out chan<- prometheus.Metric) {
 	data.SendSumOfHistograms(out, a.nflogQueryDuration, "alertmanager_nflog_query_duration_seconds")
 	data.SendSumOfCounters(out, a.nflogPropagatedMessagesTotal, "alertmanager_nflog_gossip_messages_propagated_total")
 
-	data.SendSumOfGaugesPerTenantWithLabels(out, a.markerAlerts, "alertmanager_alerts", "state")
+	data.SendSumOfGaugesPerTenant(out, a.markerAlerts, "alertmanager_alerts", metrics.WithLabels("state"))
 
 	data.SendSumOfSummaries(out, a.silencesGCDuration, "alertmanager_silences_gc_duration_seconds")
 	data.SendSumOfSummaries(out, a.silencesSnapshotDuration, "alertmanager_silences_snapshot_duration_seconds")
@@ -352,7 +352,7 @@ func (a *AlertmanagerAggregatedMetrics) Collect(out chan<- prometheus.Metric) {
 	data.SendSumOfCounters(out, a.silencesQueryErrorsTotal, "alertmanager_silences_query_errors_total")
 	data.SendSumOfHistograms(out, a.silencesQueryDuration, "alertmanager_silences_query_duration_seconds")
 	data.SendSumOfCounters(out, a.silencesPropagatedMessagesTotal, "alertmanager_silences_gossip_messages_propagated_total")
-	data.SendSumOfGaugesPerTenantWithLabels(out, a.silences, "alertmanager_silences", "state")
+	data.SendSumOfGaugesPerTenant(out, a.silences, "alertmanager_silences", metrics.WithLabels("state"))
 
 	data.SendSumOfGauges(out, a.dispatchAggrGroups, "alertmanager_dispatcher_aggregation_groups")
 	data.SendSumOfSummaries(out, a.dispatchProcessingDuration, "alertmanager_dispatcher_alert_processing_duration_seconds")

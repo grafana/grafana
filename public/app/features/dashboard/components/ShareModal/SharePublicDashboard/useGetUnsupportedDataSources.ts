@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-import { DashboardModel } from 'app/features/dashboard/state';
+import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 
 import { getUnsupportedDashboardDatasources } from './SharePublicDashboardUtils';
 

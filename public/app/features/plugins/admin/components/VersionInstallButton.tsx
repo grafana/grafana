@@ -11,7 +11,7 @@ import { isPreinstalledPlugin } from '../helpers';
 import { useInstall } from '../state/hooks';
 import { Version } from '../types';
 
-const PLUGINS_VERSION_PAGE_INSTALL_INTERACTION_EVENT_NAME = 'plugins_upgrade_clicked';
+const PLUGINS_VERSION_PAGE_UPGRADE_INTERACTION_EVENT_NAME = 'plugins_upgrade_clicked';
 const PLUGINS_VERSION_PAGE_CHANGE_INTERACTION_EVENT_NAME = 'plugins_downgrade_clicked';
 
 interface Props {
@@ -61,8 +61,8 @@ export const VersionInstallButton = ({
       schema_version: '1.0.0',
     };
 
-    if (!installedVersion) {
-      reportInteraction(PLUGINS_VERSION_PAGE_INSTALL_INTERACTION_EVENT_NAME, trackProps);
+    if (!installedVersion || gt(version.version, installedVersion)) {
+      reportInteraction(PLUGINS_VERSION_PAGE_UPGRADE_INTERACTION_EVENT_NAME, trackProps);
     } else {
       reportInteraction(PLUGINS_VERSION_PAGE_CHANGE_INTERACTION_EVENT_NAME, {
         ...trackProps,

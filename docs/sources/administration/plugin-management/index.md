@@ -66,7 +66,7 @@ To prevent users from seeing an app plugin, refer to [these permissions scenario
 
 ## Plugin catalog
 
-The Grafana plugin catalog allows you to browse and manage plugins from within Grafana. Only Grafana server administrators and Organization administrators can access and use the plugin catalog. For more information about Grafana roles and permissions, refer to [Roles and permissions]({{< relref "../administration/roles-and-permissions" >}}).
+The Grafana plugin catalog allows you to browse and manage plugins from within Grafana. Only Grafana server administrators and Organization administrators can access and use the plugin catalog. For more information about Grafana roles and permissions, refer to [Roles and permissions]({{< relref "../roles-and-permissions" >}}).
 
 The following access rules apply depending on the user role:
 
@@ -236,6 +236,32 @@ WARN[06-01|16:45:59] Running an unsigned plugin   pluginID=<plugin id>
 If you're developing a plugin, then you can enable development mode to allow all unsigned plugins.
 {{% /admonition %}}
 
+## Integrate plugins
+
+You can configure your Grafana instance to let the frontends of installed plugins directly communicate locally with the backends of other installed plugins. By default, you can only communicate with plugin backends remotely. You can use this configuration to, for example, enable a [canvas panel](https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/canvas/) to call an application resource API that is permitted by the `actions_allow_post_url` option.
+
+To enable backend communication between plugins:
+
+1. Set the plugins you want to communicate with. In your configuration file (`grafana.ini` or `custom.ini` depending on your operating system) remove the semicolon to enable and then set the following configuration option:
+
+   ```
+   actions_allow_post_url=
+   ```
+
+   This is a comma-separated list that uses glob matching.
+
+   - To allow access to all plugins that have a backend:
+
+     ```
+     actions_allow_post_url=/api/plugins/*
+     ```
+
+   - To access to the backend of only one plugin:
+
+     ```
+     actions_allow_post_url=/api/plugins/<GRAFANA_SPECIAL_APP>
+     ```
+
 ## Plugin Frontend Sandbox
 
 {{% admonition type="caution" %}}
@@ -268,7 +294,7 @@ Enabling the Frontend Sandbox might impact the performance of certain plugins. O
 
 ### Compatibility
 
-The Frontend Sandbox is available in public preview in Grafana >=11.4. It is compatible with all types of plugins including app plugins, panel plugins, and data source plugins. Angular-based plugins are not supported. Plugins developed and signed by Grafana Labs are excluded and cannot be sandboxed.
+The Frontend Sandbox is available in public preview in Grafana >=11.5. It is compatible with all types of plugins including app plugins, panel plugins, and data source plugins. Angular-based plugins are not supported. Plugins developed and signed by Grafana Labs are excluded and cannot be sandboxed.
 
 ### When to Use Frontend Sandbox
 

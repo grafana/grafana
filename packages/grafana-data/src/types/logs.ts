@@ -1,7 +1,10 @@
 import { Observable } from 'rxjs';
 
-import { DataQuery } from '@grafana/schema';
+import { DataQuery, LogsSortOrder } from '@grafana/schema';
 
+import { BusEventWithPayload } from '../events/types';
+
+import { ScopedVars } from './ScopedVars';
 import { KeyValue, Labels } from './data';
 import { DataFrame } from './dataFrame';
 import { DataQueryRequest, DataQueryResponse, DataSourceApi, QueryFixAction, QueryFixType } from './datasource';
@@ -132,6 +135,7 @@ export enum LogsDedupDescription {
 export interface LogRowContextOptions {
   direction?: LogRowContextQueryDirection;
   limit?: number;
+  scopedVars?: ScopedVars;
 }
 
 export enum LogRowContextQueryDirection {
@@ -170,7 +174,12 @@ export interface DataSourceWithLogsContextSupport<TQuery extends DataQuery = Dat
    * @alpha
    * @internal
    */
-  getLogRowContextUi?(row: LogRowModel, runContextQuery?: () => void, origQuery?: TQuery): React.ReactNode;
+  getLogRowContextUi?(
+    row: LogRowModel,
+    runContextQuery?: () => void,
+    origQuery?: TQuery,
+    scopedVars?: ScopedVars
+  ): React.ReactNode;
 }
 
 export const hasLogsContextSupport = (datasource: unknown): datasource is DataSourceWithLogsContextSupport => {
@@ -366,3 +375,11 @@ export const hasQueryModificationSupport = <TQuery extends DataQuery>(
     'getSupportedQueryModifications' in datasource
   );
 };
+
+export interface LogSortOrderChangePayload {
+  order: LogsSortOrder;
+}
+
+export class LogSortOrderChangeEvent extends BusEventWithPayload<LogSortOrderChangePayload> {
+  static type = 'logs-sort-order-change';
+}

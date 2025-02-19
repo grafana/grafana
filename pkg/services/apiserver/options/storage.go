@@ -4,11 +4,19 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/spf13/pflag"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/server/options"
+
+	"github.com/grafana/authlib/authn"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/apistore"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 type StorageType string
@@ -16,16 +24,23 @@ type StorageType string
 const (
 	StorageTypeFile        StorageType = "file"
 	StorageTypeEtcd        StorageType = "etcd"
-	StorageTypeLegacy      StorageType = "legacy"
 	StorageTypeUnified     StorageType = "unified"
 	StorageTypeUnifiedGrpc StorageType = "unified-grpc"
+
+	// Deprecated: legacy is a shim that is no longer necessary
+	StorageTypeLegacy StorageType = "legacy"
 )
 
-type StorageOptions struct { // The desired storage type
+type StorageOptions struct {
+	// The desired storage type
 	StorageType StorageType
 
-	// For unified-grpc, the address is required
-	Address string
+	// For unified-grpc
+	Address                                  string
+	GrpcClientAuthenticationToken            string
+	GrpcClientAuthenticationTokenExchangeURL string
+	GrpcClientAuthenticationTokenNamespace   string
+	GrpcClientAuthenticationAllowInsecure    bool
 
 	// For file storage, this is the requested path
 	DataPath string
@@ -43,8 +58,10 @@ type StorageOptions struct { // The desired storage type
 
 func NewStorageOptions() *StorageOptions {
 	return &StorageOptions{
-		StorageType: StorageTypeLegacy,
-		Address:     "localhost:10000",
+		StorageType:                            StorageTypeUnified,
+		Address:                                "localhost:10000",
+		GrpcClientAuthenticationTokenNamespace: "*",
+		GrpcClientAuthenticationAllowInsecure:  false,
 	}
 }
 
@@ -52,14 +69,22 @@ func (o *StorageOptions) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar((*string)(&o.StorageType), "grafana-apiserver-storage-type", string(o.StorageType), "Storage type")
 	fs.StringVar(&o.DataPath, "grafana-apiserver-storage-path", o.DataPath, "Storage path for file storage")
 	fs.StringVar(&o.Address, "grafana-apiserver-storage-address", o.Address, "Remote grpc address endpoint")
+	fs.StringVar(&o.GrpcClientAuthenticationToken, "grpc-client-authentication-token", o.GrpcClientAuthenticationToken, "Token for grpc client authentication")
+	fs.StringVar(&o.GrpcClientAuthenticationTokenExchangeURL, "grpc-client-authentication-token-exchange-url", o.GrpcClientAuthenticationTokenExchangeURL, "Token exchange url for grpc client authentication")
+	fs.StringVar(&o.GrpcClientAuthenticationTokenNamespace, "grpc-client-authentication-token-namespace", o.GrpcClientAuthenticationTokenNamespace, "Token namespace for grpc client authentication")
+	fs.BoolVar(&o.GrpcClientAuthenticationAllowInsecure, "grpc-client-authentication-allow-insecure", o.GrpcClientAuthenticationAllowInsecure, "Allow insecure grpc client authentication")
 }
 
 func (o *StorageOptions) Validate() []error {
 	errs := []error{}
 	switch o.StorageType {
-	case StorageTypeFile, StorageTypeEtcd, StorageTypeLegacy, StorageTypeUnified, StorageTypeUnifiedGrpc:
+	// nolint:staticcheck
+	case StorageTypeLegacy:
+		// no-op
+	case StorageTypeFile, StorageTypeEtcd, StorageTypeUnified, StorageTypeUnifiedGrpc:
 		// no-op
 	default:
+		// nolint:staticcheck
 		errs = append(errs, fmt.Errorf("--grafana-apiserver-storage-type must be one of %s, %s, %s, %s, %s", StorageTypeFile, StorageTypeEtcd, StorageTypeLegacy, StorageTypeUnified, StorageTypeUnifiedGrpc))
 	}
 
@@ -71,17 +96,56 @@ func (o *StorageOptions) Validate() []error {
 	if o.BlobStoreURL != "" && o.StorageType != StorageTypeUnified {
 		errs = append(errs, fmt.Errorf("blob storage is only valid with unified storage"))
 	}
+
+	// Validate grpc client with auth
+	if o.StorageType == StorageTypeUnifiedGrpc && o.GrpcClientAuthenticationToken != "" {
+		if o.GrpcClientAuthenticationToken == "" {
+			errs = append(errs, fmt.Errorf("grpc client auth token is required for unified-grpc storage"))
+		}
+		if o.GrpcClientAuthenticationTokenExchangeURL == "" {
+			errs = append(errs, fmt.Errorf("grpc client auth token exchange url is required for unified-grpc storage"))
+		}
+		if o.GrpcClientAuthenticationTokenNamespace == "" {
+			errs = append(errs, fmt.Errorf("grpc client auth namespace is required for unified-grpc storage"))
+		}
+	}
 	return errs
 }
 
-func (o *StorageOptions) ApplyTo(serverConfig *genericapiserver.RecommendedConfig, etcdOptions *options.EtcdOptions) error {
-	// TODO: move storage setup here
+func (o *StorageOptions) ApplyTo(serverConfig *genericapiserver.RecommendedConfig, etcdOptions *options.EtcdOptions, tracer tracing.Tracer) error {
+	if o.StorageType != StorageTypeUnifiedGrpc {
+		return nil
+	}
+	conn, err := grpc.NewClient(o.Address,
+		grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	)
+	if err != nil {
+		return err
+	}
+	authCfg := authn.GrpcClientConfig{
+		TokenClientConfig: &authn.TokenExchangeConfig{
+			Token:            o.GrpcClientAuthenticationToken,
+			TokenExchangeURL: o.GrpcClientAuthenticationTokenExchangeURL,
+		},
+		TokenRequest: &authn.TokenExchangeRequest{
+			Audiences: []string{"resourceStore"},
+			Namespace: o.GrpcClientAuthenticationTokenNamespace,
+		},
+	}
+	unified, err := resource.NewRemoteResourceClient(tracer, conn, authCfg, o.GrpcClientAuthenticationAllowInsecure)
+	if err != nil {
+		return err
+	}
+	getter := apistore.NewRESTOptionsGetterForClient(unified, etcdOptions.StorageConfig)
+	serverConfig.RESTOptionsGetter = getter
 	return nil
 }
 
 // EnforceFeatureToggleAfterMode1 makes sure there is a feature toggle set for resources with DualWriterMode > 1.
 // This is needed to ensure that we use the K8s client before enabling dual writing.
 func (o *StorageOptions) EnforceFeatureToggleAfterMode1(features featuremgmt.FeatureToggles) error {
+	// nolint:staticcheck
 	if o.StorageType != StorageTypeLegacy {
 		for rg, s := range o.UnifiedStorageConfig {
 			if s.DualWriterMode > 1 {

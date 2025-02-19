@@ -206,6 +206,8 @@ VizTextDisplayOptions: {
 	titleSize?: number
 	// Explicit value text size
 	valueSize?: number
+	// Explicit percent text size
+	percentSize?: number
 } @cuetsy(kind="interface")
 
 // TODO docs
@@ -262,6 +264,7 @@ VizTooltipOptions: {
 	sort: SortOrder
 	maxWidth?: number
 	maxHeight?: number
+	hideZeros?: bool
 } @cuetsy(kind="interface")
 
 Labels: {

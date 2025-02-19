@@ -6,7 +6,7 @@ import { RefreshEvent } from '@grafana/runtime';
 import { dedupAnnotations } from 'app/features/annotations/events_processing';
 
 import { getTimeSrv, TimeSrv } from '../../../dashboard/services/TimeSrv';
-import { DashboardModel } from '../../../dashboard/state';
+import { DashboardModel } from '../../../dashboard/state/DashboardModel';
 
 import { AnnotationsWorker } from './AnnotationsWorker';
 import { SnapshotWorker } from './SnapshotWorker';

@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { groupBy, size, upperFirst } from 'lodash';
 import { Fragment, ReactNode } from 'react';
 
-import { dateTime, GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, dateTime } from '@grafana/data';
 import { Icon, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 import { PrimaryText } from 'app/features/alerting/unified/components/common/TextVariants';
@@ -19,7 +19,7 @@ import { ReceiverMetadataBadge } from '../receivers/grafanaAppReceivers/Receiver
 import { ReceiverPluginMetadata } from '../receivers/grafanaAppReceivers/useReceiversMetadata';
 
 import { RECEIVER_META_KEY, RECEIVER_PLUGIN_META_KEY, RECEIVER_STATUS_KEY } from './constants';
-import { ContactPointWithMetadata, getReceiverDescription, ReceiverConfigWithMetadata } from './utils';
+import { ContactPointWithMetadata, ReceiverConfigWithMetadata, getReceiverDescription } from './utils';
 
 interface ContactPointProps {
   contactPoint: ContactPointWithMetadata;

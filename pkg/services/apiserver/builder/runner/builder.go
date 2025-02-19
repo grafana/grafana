@@ -1,8 +1,6 @@
 package runner
 
 import (
-	"github.com/grafana/grafana-app-sdk/app"
-	"github.com/grafana/grafana-app-sdk/resource"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
@@ -10,6 +8,8 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/kube-openapi/pkg/common"
 
+	"github.com/grafana/grafana-app-sdk/app"
+	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
@@ -114,12 +114,6 @@ func (b *appBuilder) getStorage(resourceInfo utils.ResourceInfo, opts builder.AP
 // GetOpenAPIDefinitions implements APIGroupBuilder.GetOpenAPIDefinitions
 func (b *appBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
 	return b.config.OpenAPIDefGetter
-}
-
-// GetAPIRoutes implements APIGroupBuilder.GetAPIRoutes
-func (b *appBuilder) GetAPIRoutes() *builder.APIRoutes {
-	// TODO: The API routes are not yet exposed by the app.App interface.
-	return nil
 }
 
 // GetAuthorizer implements APIGroupBuilder.GetAuthorizer

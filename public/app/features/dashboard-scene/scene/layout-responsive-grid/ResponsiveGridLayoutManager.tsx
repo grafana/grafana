@@ -1,14 +1,16 @@
-import { SelectableValue } from '@grafana/data';
 import { SceneComponentProps, SceneCSSGridLayout, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
-import { Button, Field, Select } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+import { t } from 'app/core/internationalization';
+import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
-import { DashboardInteractions } from '../../utils/interactions';
-import { getDefaultVizPanel, getPanelIdForVizPanel, getVizPanelKeyForPanelId } from '../../utils/utils';
-import { LayoutEditChrome } from '../layouts-shared/LayoutEditChrome';
-import { DashboardLayoutManager, LayoutRegistryItem, LayoutEditorProps } from '../types';
+import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
+import { getDashboardSceneFor, getGridItemKeyForPanelId, getVizPanelKeyForPanelId } from '../../utils/utils';
+import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
+import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
+import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
+import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
 import { ResponsiveGridItem } from './ResponsiveGridItem';
+import { getEditOptions } from './ResponsiveGridLayoutManagerEditor';
 
 interface ResponsiveGridLayoutManagerState extends SceneObjectState {
   layout: SceneCSSGridLayout;
@@ -18,10 +20,39 @@ export class ResponsiveGridLayoutManager
   extends SceneObjectBase<ResponsiveGridLayoutManagerState>
   implements DashboardLayoutManager
 {
-  public editModeChanged(isEditing: boolean): void {}
+  public static Component = ResponsiveGridLayoutManagerRenderer;
 
-  public addPanel(vizPanel: VizPanel): void {
-    const panelId = this.getNextPanelId();
+  public readonly isDashboardLayoutManager = true;
+
+  public static readonly descriptor: LayoutRegistryItem = {
+    get name() {
+      return t('dashboard.responsive-layout.name', 'Responsive grid');
+    },
+    get description() {
+      return t('dashboard.responsive-layout.description', 'CSS layout that adjusts to the available space');
+    },
+    id: 'responsive-grid',
+    createFromLayout: ResponsiveGridLayoutManager.createFromLayout,
+
+    kind: 'ResponsiveGridLayout',
+  };
+
+  public readonly descriptor = ResponsiveGridLayoutManager.descriptor;
+
+  public static defaultCSS = {
+    templateColumns: 'repeat(auto-fit, minmax(400px, auto))',
+    autoRows: 'minmax(300px, auto)',
+  };
+
+  public constructor(state: ResponsiveGridLayoutManagerState) {
+    super(state);
+
+    // @ts-ignore
+    this.state.layout.getDragClassCancel = () => 'drag-cancel';
+  }
+
+  public addPanel(vizPanel: VizPanel) {
+    const panelId = dashboardSceneGraph.getNextPanelId(this);
 
     vizPanel.setState({ key: getVizPanelKeyForPanelId(panelId) });
     vizPanel.clearParent();
@@ -31,33 +62,35 @@ export class ResponsiveGridLayoutManager
     });
   }
 
-  public addNewRow(): void {
-    throw new Error('Method not implemented.');
-  }
-
-  public getNextPanelId(): number {
-    let max = 0;
-
-    for (const child of this.state.layout.state.children) {
-      if (child instanceof VizPanel) {
-        let panelId = getPanelIdForVizPanel(child);
-
-        if (panelId > max) {
-          max = panelId;
-        }
-      }
-    }
-
-    return max;
-  }
-
   public removePanel(panel: VizPanel) {
     const element = panel.parent;
     this.state.layout.setState({ children: this.state.layout.state.children.filter((child) => child !== element) });
   }
 
-  public duplicatePanel(panel: VizPanel): void {
-    throw new Error('Method not implemented.');
+  public duplicatePanel(panel: VizPanel) {
+    const gridItem = panel.parent;
+    if (!(gridItem instanceof ResponsiveGridItem)) {
+      console.error('Trying to duplicate a panel that is not inside a DashboardGridItem');
+      return;
+    }
+
+    const newPanelId = dashboardSceneGraph.getNextPanelId(this);
+    const grid = this.state.layout;
+
+    const newGridItem = gridItem.clone({
+      key: getGridItemKeyForPanelId(newPanelId),
+      body: panel.clone({
+        key: getVizPanelKeyForPanelId(newPanelId),
+      }),
+    });
+
+    const sourceIndex = grid.state.children.indexOf(gridItem);
+    const newChildren = [...grid.state.children];
+
+    // insert after
+    newChildren.splice(sourceIndex + 1, 0, newGridItem);
+
+    grid.setState({ children: newChildren });
   }
 
   public getVizPanels(): VizPanel[] {
@@ -72,25 +105,58 @@ export class ResponsiveGridLayoutManager
     return panels;
   }
 
-  public renderEditor() {
-    return <AutomaticGridEditor layoutManager={this} />;
+  public hasVizPanels(): boolean {
+    for (const child of this.state.layout.state.children) {
+      if (child instanceof ResponsiveGridItem) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
-  public getDescriptor(): LayoutRegistryItem {
-    return ResponsiveGridLayoutManager.getDescriptor();
+  public addNewRow() {
+    const shouldAddRow = this.hasVizPanels();
+    const rowsLayout = RowsLayoutManager.createFromLayout(this);
+
+    if (shouldAddRow) {
+      rowsLayout.addNewRow();
+    }
+
+    getDashboardSceneFor(this).switchLayout(rowsLayout);
   }
 
-  public static getDescriptor(): LayoutRegistryItem {
-    return {
-      name: 'Responsive grid',
-      description: 'CSS layout that adjusts to the available space',
-      id: 'responsive-grid',
-      createFromLayout: ResponsiveGridLayoutManager.createFromLayout,
-    };
+  public addNewTab() {
+    const shouldAddTab = this.hasVizPanels();
+    const tabsLayout = TabsLayoutManager.createFromLayout(this);
+
+    if (shouldAddTab) {
+      tabsLayout.addNewTab();
+    }
+
+    getDashboardSceneFor(this).switchLayout(tabsLayout);
   }
 
-  public static createEmpty() {
-    return new ResponsiveGridLayoutManager({ layout: new SceneCSSGridLayout({ children: [] }) });
+  public getOptions(): OptionsPaneItemDescriptor[] {
+    return getEditOptions(this);
+  }
+
+  public changeColumns(columns: string) {
+    this.state.layout.setState({ templateColumns: columns });
+  }
+
+  public changeRows(rows: string) {
+    this.state.layout.setState({ autoRows: rows });
+  }
+
+  public static createEmpty(): ResponsiveGridLayoutManager {
+    return new ResponsiveGridLayoutManager({
+      layout: new SceneCSSGridLayout({
+        children: [],
+        templateColumns: ResponsiveGridLayoutManager.defaultCSS.templateColumns,
+        autoRows: ResponsiveGridLayoutManager.defaultCSS.autoRows,
+      }),
+    });
   }
 
   public static createFromLayout(layout: DashboardLayoutManager): ResponsiveGridLayoutManager {
@@ -101,81 +167,13 @@ export class ResponsiveGridLayoutManager
       children.push(new ResponsiveGridItem({ body: panel.clone() }));
     }
 
-    return new ResponsiveGridLayoutManager({
-      layout: new SceneCSSGridLayout({
-        children,
-        templateColumns: 'repeat(auto-fit, minmax(400px, auto))',
-        autoRows: 'minmax(300px, auto)',
-      }),
-    });
-  }
+    const layoutManager = ResponsiveGridLayoutManager.createEmpty();
+    layoutManager.state.layout.setState({ children });
 
-  public static Component = ({ model }: SceneComponentProps<ResponsiveGridLayoutManager>) => {
-    return (
-      <LayoutEditChrome layoutManager={model}>
-        <model.state.layout.Component model={model.state.layout} />
-      </LayoutEditChrome>
-    );
-  };
+    return layoutManager;
+  }
 }
 
-function AutomaticGridEditor({ layoutManager }: LayoutEditorProps<ResponsiveGridLayoutManager>) {
-  const cssLayout = layoutManager.state.layout;
-  const { templateColumns, autoRows } = cssLayout.useState();
-
-  const rowOptions: Array<SelectableValue<string>> = [];
-  const sizes = [100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 650];
-  const colOptions: Array<SelectableValue<string>> = [
-    { label: `1 column`, value: `1fr` },
-    { label: `2 columns`, value: `1fr 1fr` },
-    { label: `3 columns`, value: `1fr 1fr 1fr` },
-  ];
-
-  for (const size of sizes) {
-    colOptions.push({ label: `Min: ${size}px`, value: `repeat(auto-fit, minmax(${size}px, auto))` });
-  }
-
-  for (const size of sizes) {
-    rowOptions.push({ label: `Min: ${size}px`, value: `minmax(${size}px, auto)` });
-  }
-
-  for (const size of sizes) {
-    rowOptions.push({ label: `Fixed: ${size}px`, value: `${size}px` });
-  }
-
-  const onColumnsChange = (value: SelectableValue<string>) => {
-    cssLayout.setState({ templateColumns: value.value });
-  };
-
-  const onRowsChange = (value: SelectableValue<string>) => {
-    cssLayout.setState({ autoRows: value.value });
-  };
-
-  return (
-    <>
-      <Field label="Columns">
-        <Select
-          options={colOptions}
-          value={String(templateColumns)}
-          onChange={onColumnsChange}
-          allowCustomValue={true}
-        />
-      </Field>
-
-      <Field label="Row height">
-        <Select options={rowOptions} value={String(autoRows)} onChange={onRowsChange} />
-      </Field>
-      <Button
-        fill="outline"
-        icon="plus"
-        onClick={() => {
-          const vizPanel = getDefaultVizPanel();
-          layoutManager.addPanel(vizPanel);
-          DashboardInteractions.toolbarAddButtonClicked({ item: 'add_visualization' });
-        }}
-      >
-        <Trans i18nKey="dashboard.add-menu.visualization">Visualization</Trans>
-      </Button>
-    </>
-  );
+function ResponsiveGridLayoutManagerRenderer({ model }: SceneComponentProps<ResponsiveGridLayoutManager>) {
+  return <model.state.layout.Component model={model.state.layout} />;
 }

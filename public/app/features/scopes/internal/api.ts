@@ -1,18 +1,20 @@
 import { Scope, ScopeDashboardBinding, ScopeNode, ScopeSpec } from '@grafana/data';
-import { config, getBackendSrv } from '@grafana/runtime';
+import { getBackendSrv } from '@grafana/runtime';
 import { ScopedResourceClient } from 'app/features/apiserver/client';
+
+import { getAPINamespace } from '../../../api/utils';
 
 import { NodeReason, NodesMap, SelectedScope, TreeScope } from './types';
 import { getBasicScope, mergeScopes } from './utils';
 
 const group = 'scope.grafana.app';
 const version = 'v0alpha1';
-const namespace = config.namespace ?? 'default';
+const namespace = getAPINamespace();
 
 const nodesEndpoint = `/apis/${group}/${version}/namespaces/${namespace}/find/scope_node_children`;
 const dashboardsEndpoint = `/apis/${group}/${version}/namespaces/${namespace}/find/scope_dashboard_bindings`;
 
-const scopesClient = new ScopedResourceClient<ScopeSpec, 'Scope'>({
+const scopesClient = new ScopedResourceClient<ScopeSpec, unknown, 'Scope'>({
   group,
   version,
   resource: 'scopes',

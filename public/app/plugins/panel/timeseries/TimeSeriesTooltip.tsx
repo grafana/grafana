@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 
-import { DataFrame, Field, FieldType, formattedValueToString, InterpolateFunction } from '@grafana/data';
+import { DataFrame, Field, FieldType, formattedValueToString, InterpolateFunction, LinkModel } from '@grafana/data';
 import { SortOrder, TooltipDisplayMode } from '@grafana/schema/dist/esm/common/common.gen';
 import { VizTooltipContent } from '@grafana/ui/src/components/VizTooltip/VizTooltipContent';
 import { VizTooltipFooter } from '@grafana/ui/src/components/VizTooltip/VizTooltipFooter';
@@ -9,7 +9,7 @@ import { VizTooltipWrapper } from '@grafana/ui/src/components/VizTooltip/VizTool
 import { VizTooltipItem } from '@grafana/ui/src/components/VizTooltip/types';
 import { getContentItems } from '@grafana/ui/src/components/VizTooltip/utils';
 
-import { getDataLinks, getFieldActions } from '../status-history/utils';
+import { getFieldActions } from '../status-history/utils';
 import { fmt } from '../xychart/utils';
 
 import { isTooltipScrollable } from './utils';
@@ -37,6 +37,8 @@ export interface TimeSeriesTooltipProps {
   maxHeight?: number;
 
   replaceVariables?: InterpolateFunction;
+  dataLinks: LinkModel[];
+  hideZeros?: boolean;
 }
 
 export const TimeSeriesTooltip = ({
@@ -49,7 +51,9 @@ export const TimeSeriesTooltip = ({
   isPinned,
   annotate,
   maxHeight,
-  replaceVariables,
+  replaceVariables = (str) => str,
+  dataLinks,
+  hideZeros,
 }: TimeSeriesTooltipProps) => {
   const xField = series.fields[0];
   const xVal = formattedValueToString(xField.display!(xField.values[dataIdxs[0]!]));
@@ -61,7 +65,8 @@ export const TimeSeriesTooltip = ({
     seriesIdx,
     mode,
     sortOrder,
-    (field) => field.type === FieldType.number || field.type === FieldType.enum
+    (field) => field.type === FieldType.number || field.type === FieldType.enum,
+    hideZeros
   );
 
   _rest?.forEach((field) => {
@@ -75,13 +80,16 @@ export const TimeSeriesTooltip = ({
 
   let footer: ReactNode;
 
-  if (isPinned && seriesIdx != null) {
+  if (seriesIdx != null) {
     const field = series.fields[seriesIdx];
-    const dataIdx = dataIdxs[seriesIdx]!;
-    const links = getDataLinks(field, dataIdx);
-    const actions = getFieldActions(series, field, replaceVariables!, dataIdx);
+    const hasOneClickLink = dataLinks.some((dataLink) => dataLink.oneClick === true);
 
-    footer = <VizTooltipFooter dataLinks={links} actions={actions} annotate={annotate} />;
+    if (isPinned || hasOneClickLink) {
+      const dataIdx = dataIdxs[seriesIdx]!;
+      const actions = getFieldActions(series, field, replaceVariables, dataIdx);
+
+      footer = <VizTooltipFooter dataLinks={dataLinks} actions={actions} annotate={annotate} />;
+    }
   }
 
   const headerItem: VizTooltipItem | null = xField.config.custom?.hideFrom?.tooltip

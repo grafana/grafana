@@ -5,7 +5,7 @@ import { defaultDashboard, FieldColorModeId } from '@grafana/schema';
 import { browseDashboardsAPI } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { getLibraryPanel } from 'app/features/library-panels/state/api';
 
-import { PanelModel } from '../../dashboard/state';
+import { PanelModel } from '../../dashboard/state/PanelModel';
 import { LibraryElementDTO } from '../../library-panels/types';
 import { DashboardJson } from '../types';
 import { validateDashboardJson } from '../utils/validation';

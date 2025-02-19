@@ -11,7 +11,7 @@ import { addUniqueIdentifierToRoute } from '../../../utils/amroutes';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
 import { AlertInstanceMatch, computeInheritedTree, normalizeRoute } from '../../../utils/notification-policies';
 
-import { getRoutesByIdMap, RouteWithPath } from './route';
+import { RouteWithPath, getRoutesByIdMap } from './route';
 
 export const useAlertmanagerNotificationRoutingPreview = (alertmanager: string, potentialInstances: Labels[]) => {
   const {

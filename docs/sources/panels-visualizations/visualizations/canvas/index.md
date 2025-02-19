@@ -258,6 +258,13 @@ You can enable panning and zooming in a canvas. This allows you to both create a
 
 {{< docs/public-preview product="Canvas pan and zoom" featureFlag="`canvasPanelPanZoom`" >}}
 
+Use the following pointer and keyboard strokes:
+
+- **Zoom in** - Scroll up
+- **Zoom out** - Scroll down
+- **Pan** - Middle mouse/wheel + drag OR Control + right-click + drag
+- **Reset** - Double-click
+
 {{< video-embed src="/media/docs/grafana/2024-01-05-Canvas-Pan-&-Zoom-Enablement-Video.mp4" max-width="750px" alt="Canvas pan and zoom enablement video" >}}
 
 ##### Infinite panning
@@ -323,14 +330,14 @@ Use the following options to control the border of the canvas:
 
 The following options allow you to control the appearance of the element you've selected. To access an element so that you can edit it, expand the **Layer** section and select the desired element.
 
-| Option                                      | Description                                                                                     |
-| ------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| [Element type](#element-type)               | Change the selected element type.                                                               |
-| [Element](#element)                         | Control the appearance of text on the element. This section is named based on the element type. |
-| [Layout](#layout)                           | Control the placement of elements on the canvas.                                                |
-| [Background (element)](#background-element) | Set the background of the element.                                                              |
-| [Border (element)](#border-element)         | Set the border of the element.                                                                  |
-| [Data links](#data-links)                   | Configure data links for elements.                                                              |
+| Option                                            | Description                                                                                     |
+| ------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| [Element type](#element-type)                     | Change the selected element type.                                                               |
+| [Element](#element)                               | Control the appearance of text on the element. This section is named based on the element type. |
+| [Layout](#layout)                                 | Control the placement of elements on the canvas.                                                |
+| [Background (element)](#background-element)       | Set the background of the element.                                                              |
+| [Border (element)](#border-element)               | Set the border of the element.                                                                  |
+| [Data links and actions](#data-links-and-actions) | Configure data links and actions for elements.                                                  |
 
 #### Element type
 
@@ -398,40 +405,66 @@ Use the following options to set the border of the element:
 - **Color** - Set the border color. This option is only displayed when the border width is greater than zero.
 - **Radius** - Add rounded corners to the element border and control the degree of curve.
 
-#### Data links
+#### Data links and actions
 
-Canvases support [data links](ref:data-links) for all elements except drone and button elements. You can add a data link by following these steps:
+Canvases support [data links](ref:data-links) and actions for all elements.
 
-1. Enable inline editing.
-1. Click the element you to which you want to add the data link.
-1. In either the inline editor or panel editor, expand the **Selected element** editor.
-1. Scroll down to the **Data links** section and expand it.
-1. Click **Add link**.
-1. In the dialog box that opens, enter a **Title**. This is a human-readable label for the link, which will be displayed in the UI.
-1. Enter the **URL** or variable to which you want to link.
+If you add multiple data links or actions to an element, you can control the order in which they appear in the element tooltip.
+To do this, click and drag the link or action to the desired position.
 
-   To add a data link variable, click in the **URL** field and enter `$` or press Ctrl+Space or Cmd+Space to see a list of available variables.
+The following tasks describe how to configure data links and actions.
 
-1. If you want the link to open in a new tab, toggle the **Open in a new tab** switch.
-1. Click **Save** to save changes and close the dialog box.
-1. Disable inline editing.
-
-If you add multiple data links, you can control the order in which they appear in the visualization. To do this, click and drag the data link to the desired position.
-
-##### One-click data link
-
-You can configure a canvas data link to open with a single click on the element. To enable this feature, follow these steps:
+{{< tabs >}}
+{{< tab-content name="Add data links" >}}
+To add a data link, follow these steps:
 
 1. Enable inline editing.
 1. Click the element to which you want to add the data link.
 1. In either the inline editor or panel editor, expand the **Selected element** editor.
-1. Scroll down to the **Data links** section and expand it.
-1. In the **One-click** section, choose **Link**.
+1. Scroll down to the **Data links and actions** section and expand it.
+1. Click **+ Add link**.
+1. In the dialog box that opens, enter a **Title**.
+
+   This is a human-readable label for the link displayed in the UI. This is a required field.
+
+1. Enter the **URL** or variable to which you want to link.
+
+   To add a data link variable, click in the **URL** field and enter `$` or press Ctrl+Space or Cmd+Space to see a list of available variables. This is a required field.
+
+1. If you want the link to open in a new tab, toggle the **Open in a new tab** switch.
+1. If you want the data link to open with a single click on the element, toggle the **One click** switch.
+
+   Only one data link or action can have **One click** enabled at a time.
+
+1. Click **Save** to save changes and close the dialog box.
 1. Disable inline editing.
+   {{< /tab-content >}}
+   {{< tab-content name="Add actions" >}}
+   To add an action, by follow these steps:
 
-The first data link in the list will be configured as your one-click data link. If you want to change the one-click data link, simply drag the desired data link to the top of the list.
+1. Enable inline editing.
+1. Click the element to which you want to add the data link.
+1. In either the inline editor or panel editor, expand the **Selected element** editor.
+1. Scroll down to the **Data links and actions** section and expand it.
+1. Click **+ Add action**.
+1. In the dialog box that opens, set the action options:
 
-{{< video-embed src="/media/docs/grafana/panels-visualizations/canvas-one-click-datalink-.mp4" >}}
+   | Option               | Description                                                                                                                                                                                     |
+   | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+   | Title                | A human-readable label for the action that's displayed in the UI.                                                                                                                               |
+   | Confirmation message | A descriptive prompt to confirm or cancel the action.                                                                                                                                           |
+   | One click            | If you want the action to be triggered by a single click on the element, toggle the switch.</p><p>Only one data link or action can have **One click** enabled at a time.                        |
+   | Method               | Select from **POST**, **PUT**, or **GET**.                                                                                                                                                      |
+   | URL                  | The request URL or variable to which you want to link.</p><p>To add a variable, click in the **URL** field and enter `$` or press Ctrl+Space or Cmd+Space to see a list of available variables. |
+   | Query parameters     | **Key** and **Value** pairs. Click the **+** icon to add as many key/value pairs as you need.                                                                                                   |
+   | Headers              | Comprised of **Key** and **Value** pairs and a **Content-Type**.</p><p>Click the **+** icon to add as many key/value pairs as you need.                                                         |
+   | Content-Type         | Select from the following: **application/json**, **text/plain**, **application/XML**, and **application/x-www-form-urlencoded**.                                                                |
+   | Body                 | The body of the request.                                                                                                                                                                        |
+
+1. Click **Save** to save changes and close the dialog box.
+1. Disable inline editing.
+   {{< /tab-content >}}
+   {{< /tabs >}}
 
 ### Selected connection options
 

@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -397,15 +396,14 @@ func TestAPI_Annotations(t *testing.T) {
 				dashService := &dashboards.FakeDashboardService{}
 				dashService.On("GetDashboard", mock.Anything, mock.Anything).Return(&dashboards.Dashboard{UID: dashUID, FolderUID: folderUID, FolderID: 1}, nil)
 				folderService := &foldertest.FakeService{}
-				fStore := folder.NewFakeStore()
 				folderService.ExpectedFolder = &folder.Folder{UID: folderUID, ID: 1}
 				folderDB := &foldertest.FakeFolderStore{}
 				folderDB.On("GetFolderByID", mock.Anything, mock.Anything, mock.Anything).Return(&folder.Folder{UID: folderUID, ID: 1}, nil)
 				hs.DashboardService = dashService
 				hs.folderService = folderService
-				hs.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())
-				hs.AccessControl.RegisterScopeAttributeResolver(AnnotationTypeScopeResolver(hs.annotationsRepo, hs.Features, dashService, fStore))
-				hs.AccessControl.RegisterScopeAttributeResolver(dashboards.NewDashboardIDScopeResolver(folderDB, dashService, fStore))
+				hs.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
+				hs.AccessControl.RegisterScopeAttributeResolver(AnnotationTypeScopeResolver(hs.annotationsRepo, hs.Features, dashService, folderService))
+				hs.AccessControl.RegisterScopeAttributeResolver(dashboards.NewDashboardIDScopeResolver(dashService, folderService))
 			})
 			var body io.Reader
 			if tt.body != "" {
@@ -505,7 +503,7 @@ func TestService_AnnotationTypeScopeResolver(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
 			features := featuremgmt.WithFeatures(tc.featureToggles...)
-			prefix, resolver := AnnotationTypeScopeResolver(fakeAnnoRepo, features, dashSvc, folder.NewFakeStore())
+			prefix, resolver := AnnotationTypeScopeResolver(fakeAnnoRepo, features, dashSvc, &foldertest.FakeService{})
 			require.Equal(t, "annotations:id:", prefix)
 
 			resolved, err := resolver.Resolve(context.Background(), 1, tc.given)

@@ -1,4 +1,4 @@
-import { Registry, RegistryItem, stringStartsAsRegEx, stringToJsRegex } from '@grafana/data';
+import { escapeStringForRegex, Registry, RegistryItem, stringStartsAsRegEx, stringToJsRegex } from '@grafana/data';
 
 import { ExtractFieldsOptions, FieldExtractorID } from './types';
 
@@ -82,7 +82,6 @@ function parseKeyValuePairs(raw: string): Record<string, string> {
       case `'`:
       // whitespace
       case ` `:
-      case `\n`:
       case `\t`:
       case `\r`:
       case `\n`:
@@ -133,7 +132,27 @@ const extLabels: FieldExtractor = {
   getParser: (options) => parseKeyValuePairs,
 };
 
-const fmts = [extJSON, extLabels, extRegExp];
+const extDelimiter: FieldExtractor = {
+  id: FieldExtractorID.Delimiter,
+  name: 'Split by delimiter',
+  description: 'Splits at delimited values, such as commas',
+  getParser: ({ delimiter = ',' }) => {
+    // Match for delimiter with surrounding whitesapce (\s)
+    const splitRegExp = new RegExp(`\\s*${escapeStringForRegex(delimiter)}\\s*`, 'g');
+
+    return (raw: string) => {
+      // Try to split delimited values
+      const parts = raw.trim().split(splitRegExp);
+      const acc: Record<string, number> = {};
+      for (const part of parts) {
+        acc[part] = 1;
+      }
+      return acc;
+    };
+  },
+};
+
+const fmts = [extJSON, extLabels, extDelimiter, extRegExp];
 
 const extAuto: FieldExtractor = {
   id: FieldExtractorID.Auto,

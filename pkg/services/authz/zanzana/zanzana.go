@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/grafana/authlib/authz"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
+
+	authlib "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 )
@@ -13,11 +14,13 @@ import (
 const (
 	TypeUser           = common.TypeUser
 	TypeServiceAccount = common.TypeServiceAccount
+	TypeRenderService  = common.TypeRenderService
+	TypeAnonymous      = common.TypeAnonymous
 	TypeTeam           = common.TypeTeam
 	TypeRole           = common.TypeRole
 	TypeFolder         = common.TypeFolder
 	TypeResource       = common.TypeResource
-	TypeNamespace      = common.TypeNamespace
+	TypeNamespace      = common.TypeGroupResouce
 )
 
 const (
@@ -30,28 +33,25 @@ const (
 	RelationSetEdit  = common.RelationSetEdit
 	RelationSetAdmin = common.RelationSetAdmin
 
-	RelationRead             = common.RelationRead
-	RelationWrite            = common.RelationWrite
-	RelationCreate           = common.RelationCreate
-	RelationDelete           = common.RelationDelete
-	RelationPermissionsRead  = common.RelationPermissionsRead
-	RelationPermissionsWrite = common.RelationPermissionsWrite
+	RelationGet    = common.RelationGet
+	RelationUpdate = common.RelationUpdate
+	RelationCreate = common.RelationCreate
+	RelationDelete = common.RelationDelete
 
 	RelationFolderResourceSetView  = common.RelationFolderResourceSetView
 	RelationFolderResourceSetEdit  = common.RelationFolderResourceSetEdit
 	RelationFolderResourceSetAdmin = common.RelationFolderResourceSetAdmin
 
-	RelationFolderResourceRead             = common.RelationFolderResourceRead
-	RelationFolderResourceWrite            = common.RelationFolderResourceWrite
-	RelationFolderResourceCreate           = common.RelationFolderResourceCreate
-	RelationFolderResourceDelete           = common.RelationFolderResourceDelete
-	RelationFolderResourcePermissionsRead  = common.RelationFolderResourcePermissionsRead
-	RelationFolderResourcePermissionsWrite = common.RelationFolderResourcePermissionsWrite
+	RelationFolderResourceRead   = common.RelationFolderResourceGet
+	RelationFolderResourceWrite  = common.RelationFolderResourceUpdate
+	RelationFolderResourceCreate = common.RelationFolderResourceCreate
+	RelationFolderResourceDelete = common.RelationFolderResourceDelete
 )
 
 var (
-	FolderRelations   = common.FolderRelations
-	ResourceRelations = common.ResourceRelations
+	RelationsFolder         = common.RelationsFolder
+	RelationsResouce        = common.RelationsResource
+	RelationsFolderResource = common.RelationsFolderResource
 )
 
 const (
@@ -69,8 +69,6 @@ var (
 	ToOpenFGATuples                   = common.ToOpenFGATuples
 	ToOpenFGATupleKey                 = common.ToOpenFGATupleKey
 	ToOpenFGATupleKeyWithoutCondition = common.ToOpenFGATupleKeyWithoutCondition
-
-	FormatGroupResource = common.FormatGroupResource
 )
 
 // NewTupleEntry constructs new openfga entry type:name[#relation].
@@ -97,16 +95,16 @@ func TranslateToResourceTuple(subject string, action, kind, name string) (*openf
 	}
 
 	if name == "*" {
-		return common.NewNamespaceResourceTuple(subject, m.relation, translation.group, translation.resource), true
+		return common.NewGroupResourceTuple(subject, m.relation, translation.group, translation.resource, m.subresource), true
 	}
 
 	if translation.typ == TypeResource {
-		return common.NewResourceTuple(subject, m.relation, translation.group, translation.resource, name), true
+		return common.NewResourceTuple(subject, m.relation, translation.group, translation.resource, m.subresource, name), true
 	}
 
 	if translation.typ == TypeFolder {
 		if m.group != "" && m.resource != "" {
-			return common.NewFolderResourceTuple(subject, m.relation, m.group, m.resource, name), true
+			return common.NewFolderResourceTuple(subject, m.relation, m.group, m.resource, m.subresource, name), true
 		}
 
 		return common.NewFolderTuple(subject, m.relation, name), true
@@ -125,7 +123,7 @@ func MergeFolderResourceTuples(a, b *openfgav1.TupleKey) {
 	va.GetListValue().Values = append(va.GetListValue().Values, vb.GetListValue().Values...)
 }
 
-func TranslateToCheckRequest(namespace, action, kind, folder, name string) (*authz.CheckRequest, bool) {
+func TranslateToCheckRequest(namespace, action, kind, folder, name string) (*authlib.CheckRequest, bool) {
 	translation, ok := resourceTranslations[kind]
 
 	if !ok {
@@ -142,7 +140,7 @@ func TranslateToCheckRequest(namespace, action, kind, folder, name string) (*aut
 		return nil, false
 	}
 
-	req := &authz.CheckRequest{
+	req := &authlib.CheckRequest{
 		Namespace: namespace,
 		Verb:      verb,
 		Group:     translation.group,
@@ -154,7 +152,7 @@ func TranslateToCheckRequest(namespace, action, kind, folder, name string) (*aut
 	return req, true
 }
 
-func TranslateToListRequest(namespace, action, kind string) (*authz.ListRequest, bool) {
+func TranslateToListRequest(namespace, action, kind string) (*authlib.ListRequest, bool) {
 	translation, ok := resourceTranslations[kind]
 
 	if !ok {
@@ -162,7 +160,7 @@ func TranslateToListRequest(namespace, action, kind string) (*authz.ListRequest,
 	}
 
 	// FIXME: support different verbs
-	req := &authz.ListRequest{
+	req := &authlib.ListRequest{
 		Namespace: namespace,
 		Group:     translation.group,
 		Resource:  translation.resource,
@@ -176,7 +174,7 @@ func TranslateToGroupResource(kind string) string {
 	if !ok {
 		return ""
 	}
-	return common.FormatGroupResource(translation.group, translation.resource)
+	return common.FormatGroupResource(translation.group, translation.resource, "")
 }
 
 func TranslateBasicRole(name string) string {
