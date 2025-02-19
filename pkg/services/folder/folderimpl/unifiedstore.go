@@ -168,6 +168,12 @@ func (ss *FolderUnifiedStoreImpl) GetChildren(ctx context.Context, q folder.GetC
 	if q.UID == folder.GeneralFolderUID {
 		q.UID = ""
 	}
+	if q.Limit == 0 {
+		q.Limit = folderSearchLimit
+	}
+	if q.Page == 0 {
+		q.Page = 1
+	}
 
 	req := &resource.ResourceSearchRequest{
 		Options: &resource.ListOptions{
@@ -179,15 +185,11 @@ func (ss *FolderUnifiedStoreImpl) GetChildren(ctx context.Context, q folder.GetC
 				},
 			},
 		},
-	}
-
-	if q.Limit != 0 {
-		req.Limit = q.Limit
-
-		if q.Page == 0 {
-			q.Page = 1
-		}
-		req.Offset = q.Limit * (q.Page - 1)
+		Limit: q.Limit,
+		// legacy fallback search requires page, unistore requires offset,
+		// so set both
+		Offset: q.Limit * (q.Page - 1),
+		Page:   q.Page,
 	}
 
 	// only filter the folder UIDs if they are provided in the query
