@@ -552,7 +552,7 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resource.Res
 	fields := make([]string, 0, len(req.Fields))
 	for _, f := range req.Fields {
 		if slices.Contains(DashboardFields(), f) {
-			f = "fields." + f
+			f = resource.SEARCH_FIELD_PREFIX + f
 		}
 		fields = append(fields, f)
 	}
@@ -677,7 +677,7 @@ func getSortFields(req *resource.ResourceSearchRequest) []string {
 		}
 
 		if slices.Contains(DashboardFields(), input) {
-			input = "fields." + input
+			input = resource.SEARCH_FIELD_PREFIX + input
 		}
 
 		if sort.Desc {
@@ -847,7 +847,7 @@ func (b *bleveIndex) hitsToTable(ctx context.Context, selectFields []string, hit
 				v := match.Fields[fieldName]
 				// fields that are specific to the resource get stored as fields.<fieldName>, so we need to check for that
 				if v == nil {
-					v = match.Fields["fields."+fieldName]
+					v = match.Fields[resource.SEARCH_FIELD_PREFIX+fieldName]
 				}
 				if v != nil {
 					// Encode the value to protobuf
