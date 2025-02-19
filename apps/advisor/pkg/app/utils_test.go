@@ -191,6 +191,10 @@ func (m *mockStep) Description() string {
 	return "mock"
 }
 
+func (m *mockStep) Resolution() string {
+	return "mock"
+}
+
 func (m *mockStep) ID() string {
 	return "mock"
 }
