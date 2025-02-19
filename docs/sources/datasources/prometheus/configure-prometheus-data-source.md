@@ -186,7 +186,14 @@ Refer to the following troubleshooting information, as required.
 
 #### Data doesn't appear in Explore metrics
 
-If metric data doesn't appear in Explore after you've successfully tested a connection to a Prometheus data source, ensure that you've selected the correct data source in the **Data source** drop-down menu.
+<!-- vale Grafana.Spelling = NO -->
+
+If metric data doesn't appear in Explore after you've successfully tested a connection to a Prometheus data source or sent
+metrics to Grafana Cloud, ensure that you've selected the correct data source in the **Data source** drop-down menu. If
+you've used remote_write to send metrics to Grafana Cloud, the data source name follows the convention
+`grafanacloud-stackname-prom`.
+
+<!-- vale Grafana.Spelling = YES -->
 
 The following image shows the **Data source** field in Explore metrics.
 
