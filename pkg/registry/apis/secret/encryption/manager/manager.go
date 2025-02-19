@@ -63,11 +63,11 @@ func NewEncryptionManager(
 	cfg *setting.Cfg,
 	usageStats usagestats.Service,
 ) (*EncryptionManager, error) {
-	ttl := cfg.SectionWithEnvOverrides("security.encryption").Key("data_keys_cache_ttl").MustDuration(15 * time.Minute)
+	ttl := cfg.SectionWithEnvOverrides("secrets_manager.encryption").Key("data_keys_cache_ttl").MustDuration(15 * time.Minute)
 
 	currentProviderID := encryption.ProviderID(
 		kmsproviders.NormalizeProviderID(secrets.ProviderID(
-			cfg.SectionWithEnvOverrides("security").Key("encryption_provider").MustString(kmsproviders.Default),
+			cfg.SectionWithEnvOverrides("secrets_manager").Key("encryption_provider").MustString(kmsproviders.Default),
 		)))
 
 	s := &EncryptionManager{
@@ -424,7 +424,7 @@ func (s *EncryptionManager) ReEncryptDataKeys(ctx context.Context, namespace str
 
 func (s *EncryptionManager) Run(ctx context.Context) error {
 	gc := time.NewTicker(
-		s.cfg.SectionWithEnvOverrides("security.encryption").Key("data_keys_cache_cleanup_interval").
+		s.cfg.SectionWithEnvOverrides("secrets_manager.encryption").Key("data_keys_cache_cleanup_interval").
 			MustDuration(time.Minute),
 	)
 

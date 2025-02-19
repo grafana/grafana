@@ -30,7 +30,6 @@ import templatingReducers from 'app/features/variables/state/keyedVariablesReduc
 import { alertingApi } from '../../features/alerting/unified/api/alertingApi';
 import { iamApi } from '../../features/iam/api/api';
 import { userPreferencesAPI } from '../../features/preferences/api';
-import { queryLibraryApi } from '../../features/query-library/api/api';
 import { secretsManagementAdminReducer } from '../../features/secrets-management/state/reducers';
 import { cleanUpAction } from '../actions/cleanUp';
 
@@ -62,7 +61,6 @@ const rootReducers = {
   [publicDashboardApi.reducerPath]: publicDashboardApi.reducer,
   [browseDashboardsAPI.reducerPath]: browseDashboardsAPI.reducer,
   [cloudMigrationAPI.reducerPath]: cloudMigrationAPI.reducer,
-  [queryLibraryApi.reducerPath]: queryLibraryApi.reducer,
   [iamApi.reducerPath]: iamApi.reducer,
   [userPreferencesAPI.reducerPath]: userPreferencesAPI.reducer,
 };

@@ -15,27 +15,43 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/kube-openapi/pkg/common"
 
+	claims "github.com/grafana/authlib/types"
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/reststorage"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	authsvc "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
-var _ builder.APIGroupBuilder = (*SecretAPIBuilder)(nil)
+var (
+	_ builder.APIGroupBuilder               = (*SecretAPIBuilder)(nil)
+	_ builder.APIGroupMutation              = (*SecretAPIBuilder)(nil)
+	_ builder.APIGroupValidation            = (*SecretAPIBuilder)(nil)
+	_ builder.APIGroupRouteProvider         = (*SecretAPIBuilder)(nil)
+	_ builder.APIGroupPostStartHookProvider = (*SecretAPIBuilder)(nil)
+)
 
 type SecretAPIBuilder struct {
 	tracer             tracing.Tracer
 	secureValueStorage contracts.SecureValueStorage
 	keeperStorage      contracts.KeeperStorage
 	decryptStorage     contracts.DecryptStorage
+	accessClient       claims.AccessClient
 }
 
-func NewSecretAPIBuilder(tracer tracing.Tracer, secureValueStorage contracts.SecureValueStorage, keeperStorage contracts.KeeperStorage, decryptStorage contracts.DecryptStorage) *SecretAPIBuilder {
-	return &SecretAPIBuilder{tracer, secureValueStorage, keeperStorage, decryptStorage}
+func NewSecretAPIBuilder(
+	tracer tracing.Tracer,
+	secureValueStorage contracts.SecureValueStorage,
+	keeperStorage contracts.KeeperStorage,
+	decryptStorage contracts.DecryptStorage,
+	accessClient claims.AccessClient,
+) *SecretAPIBuilder {
+	return &SecretAPIBuilder{tracer, secureValueStorage, keeperStorage, decryptStorage, accessClient}
 }
 
 func RegisterAPIService(
@@ -46,6 +62,8 @@ func RegisterAPIService(
 	secureValueStorage contracts.SecureValueStorage,
 	keeperStorage contracts.KeeperStorage,
 	decryptStorage contracts.DecryptStorage,
+	accessClient claims.AccessClient,
+	accessControlService accesscontrol.Service,
 ) (*SecretAPIBuilder, error) {
 	// Skip registration unless opting into experimental apis and the secrets management app platform flag.
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) ||
@@ -62,7 +80,11 @@ func RegisterAPIService(
 		decryptStorage = reststorage.NewFakeDecryptStore(secureValueStorage)
 	}
 
-	builder := NewSecretAPIBuilder(tracer, secureValueStorage, keeperStorage, decryptStorage)
+	if err := RegisterAccessControlRoles(accessControlService); err != nil {
+		return nil, fmt.Errorf("register secret access control roles: %w", err)
+	}
+
+	builder := NewSecretAPIBuilder(tracer, secureValueStorage, keeperStorage, decryptStorage, accessClient)
 	apiregistration.RegisterAPI(builder)
 	return builder, nil
 }
@@ -125,11 +147,14 @@ func (b *SecretAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions 
 	return secretv0alpha1.GetOpenAPIDefinitions
 }
 
-// GetAuthorizer: [TODO] who can create secrets? must be multi-tenant first
+// GetAuthorizer decides whether the request is allowed, denied or no opinion based on credentials and request attributes.
+// Usually most resource are stored in folders (e.g. alerts, dashboards), which allows users to manage permissions at folder level,
+// rather than at resource level which also has the benefit of lowering the load on AuthZ side, since instead of storing access to
+// a single dashboard, you'd store access to all dashboards in a specific folder.
+// For Secrets, this is not the case, but if we want to make it so, we need to update this ResourceAuthorizer to check the containing folder.
+// If we ever want to do that, get guidance from IAM first as well.
 func (b *SecretAPIBuilder) GetAuthorizer() authorizer.Authorizer {
-	// This is TBD being defined with IAM. Test
-
-	return nil // start with the default authorizer
+	return authsvc.NewResourceAuthorizer(b.accessClient)
 }
 
 // Register additional routes with the server.
@@ -228,5 +253,23 @@ func (b *SecretAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, o
 		}
 	}
 
+	// On any mutation to a `SecureValue`, override the `phase` as `Pending` and an empty `message`.
+	if operation == admission.Create || operation == admission.Update {
+		sv, ok := obj.(*secretv0alpha1.SecureValue)
+		if ok && sv != nil {
+			sv.Status.Phase = secretv0alpha1.SecureValuePhasePending
+			sv.Status.Message = ""
+		}
+	}
+
 	return nil
+}
+
+// TODO: use this for starting the outbox queue async process?
+func (b *SecretAPIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartHookFunc, error) {
+	return map[string]genericapiserver.PostStartHookFunc{
+		"start-outbox-queue-workers": func(context genericapiserver.PostStartHookContext) error {
+			return nil
+		},
+	}, nil
 }

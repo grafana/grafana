@@ -72,7 +72,7 @@ func (m *SecretsMigrator) RollBackSecrets(ctx context.Context) (bool, error) {
 	// 		m.secretsSrv,
 	// 		m.encryptionSrv,
 	// 		m.sqlStore,
-	// 		m.settings.KeyValue("security", "secret_key").Value(),
+	// 		m.settings.KeyValue("secrets_manager", "secret_key").Value(),
 	// 	); failed {
 	// 		anyFailure = true
 	// 	}

@@ -715,13 +715,22 @@ func TestIntegration_DeleteAlertRulesByUID(t *testing.T) {
 	sqlStore := db.InitTestDB(t)
 	cfg := setting.NewCfg()
 	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
-	b := &fakeBus{}
 	logger := log.New("test-dbstore")
-	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, b)
+	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, &fakeBus{})
+	protoInstanceStore := ProtoInstanceDBStore{
+		SQLStore:       sqlStore,
+		Logger:         logger,
+		FeatureToggles: featuremgmt.WithFeatures(),
+	}
 
 	gen := models.RuleGen
 
 	t.Run("should emit event when rules are deleted", func(t *testing.T) {
+		// Create a new store to pass the custom bus to check the signal
+		b := &fakeBus{}
+		logger := log.New("test-dbstore")
+		store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, b)
+
 		rule := createRule(t, store, gen)
 		called := false
 		b.publishFn = func(ctx context.Context, msg bus.Msg) error {
@@ -736,6 +745,40 @@ func TestIntegration_DeleteAlertRulesByUID(t *testing.T) {
 		err := store.DeleteAlertRulesByUID(context.Background(), rule.OrgID, rule.UID)
 		require.NoError(t, err)
 		require.True(t, called)
+	})
+
+	t.Run("should delete alert rule state", func(t *testing.T) {
+		rule := createRule(t, store, gen)
+
+		// Save state for the alert rule
+		instances := []models.AlertInstance{
+			{
+				AlertInstanceKey: models.AlertInstanceKey{
+					RuleUID:   rule.UID,
+					RuleOrgID: rule.OrgID,
+				},
+			},
+		}
+		err := protoInstanceStore.SaveAlertInstancesForRule(context.Background(), rule.GetKeyWithGroup(), instances)
+		require.NoError(t, err)
+		savedInstances, err := protoInstanceStore.ListAlertInstances(context.Background(), &models.ListAlertInstancesQuery{
+			RuleUID:   rule.UID,
+			RuleOrgID: rule.OrgID,
+		})
+		require.NoError(t, err)
+		require.Len(t, savedInstances, 1)
+
+		// Delete the rule
+		err = store.DeleteAlertRulesByUID(context.Background(), rule.OrgID, rule.UID)
+		require.NoError(t, err)
+
+		// Now there should be no alert rule state
+		savedInstances, err = protoInstanceStore.ListAlertInstances(context.Background(), &models.ListAlertInstancesQuery{
+			RuleUID:   rule.UID,
+			RuleOrgID: rule.OrgID,
+		})
+		require.NoError(t, err)
+		require.Empty(t, savedInstances)
 	})
 }
 

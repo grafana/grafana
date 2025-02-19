@@ -26,10 +26,14 @@ type secureValueDB struct {
 	Updated     int64  `xorm:"updated"`
 	UpdatedBy   string `xorm:"updated_by"`
 
+	// Kubernetes Status
+	Phase   string  `xorm:"status_phase"`
+	Message *string `xorm:"status_message"`
+
 	// Spec
 	Title      string  `xorm:"title"`
 	Keeper     string  `xorm:"keeper"`
-	Audiences  string  `xorm:"audiences"` // TODO rename this since it's a "reserved word" in the authnz world
+	Decrypters *string `xorm:"decrypters"`
 	Ref        *string `xorm:"ref"`
 	ExternalID string  `xorm:"external_id"`
 }
@@ -54,18 +58,18 @@ func (sv *secureValueDB) toKubernetes() (*secretv0alpha1.SecureValue, error) {
 		}
 	}
 
-	audiences := make([]string, 0)
-	if sv.Audiences != "" {
-		if err := json.Unmarshal([]byte(sv.Audiences), &audiences); err != nil {
-			return nil, fmt.Errorf("failed to unmarshal audiences: %w", err)
+	decrypters := make([]string, 0)
+	if sv.Decrypters != nil && *sv.Decrypters != "" {
+		if err := json.Unmarshal([]byte(*sv.Decrypters), &decrypters); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal decrypters: %w", err)
 		}
 	}
 
 	resource := &secretv0alpha1.SecureValue{
 		Spec: secretv0alpha1.SecureValueSpec{
-			Title:     sv.Title,
-			Keeper:    sv.Keeper,
-			Audiences: audiences,
+			Title:      sv.Title,
+			Keeper:     sv.Keeper,
+			Decrypters: decrypters,
 		},
 	}
 	if sv.Ref != nil {
@@ -157,14 +161,15 @@ func toRow(sv *secretv0alpha1.SecureValue, externalID string) (*secureValueDB, e
 		labels = string(encodedLabels)
 	}
 
-	var audiences string
-	if len(sv.Spec.Audiences) > 0 {
-		encodedAudiences, err := json.Marshal(sv.Spec.Audiences)
+	var decrypters *string
+	if len(sv.Spec.Decrypters) > 0 {
+		encodedDecrypters, err := json.Marshal(sv.Spec.Decrypters)
 		if err != nil {
-			return nil, fmt.Errorf("failed to encode audiences: %w", err)
+			return nil, fmt.Errorf("failed to encode decrypters: %w", err)
 		}
 
-		audiences = string(encodedAudiences)
+		rawDecrypters := string(encodedDecrypters)
+		decrypters = &rawDecrypters
 	}
 
 	meta, err := utils.MetaAccessor(sv)
@@ -186,6 +191,11 @@ func toRow(sv *secretv0alpha1.SecureValue, externalID string) (*secureValueDB, e
 		ref = &sv.Spec.Ref
 	}
 
+	var statusMessage *string
+	if sv.Status.Message != "" {
+		statusMessage = &sv.Status.Message
+	}
+
 	return &secureValueDB{
 		GUID:        string(sv.UID),
 		Name:        sv.Name,
@@ -197,9 +207,12 @@ func toRow(sv *secretv0alpha1.SecureValue, externalID string) (*secureValueDB, e
 		Updated:     updatedTimestamp,
 		UpdatedBy:   meta.GetUpdatedBy(),
 
+		Phase:   string(sv.Status.Phase),
+		Message: statusMessage,
+
 		Title:      sv.Spec.Title,
 		Keeper:     sv.Spec.Keeper,
-		Audiences:  audiences,
+		Decrypters: decrypters,
 		Ref:        ref,
 		ExternalID: externalID,
 	}, nil

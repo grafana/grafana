@@ -28,7 +28,7 @@ func TestMain(m *testing.M) {
 
 func Test_SQLKeeperSetup(t *testing.T) {
 	cfg := `
-	[security]
+	[secrets_manager]
 	secret_key = sdDkslslld
 	encryption_provider = secretKey.v1
 	available_encryption_providers = secretKey.v1
@@ -134,10 +134,9 @@ func Test_SQLKeeperSetup(t *testing.T) {
 		require.NoError(t, err)
 
 		exposedVal, err := sqlKeeper.Expose(ctx, nil, namespace1, externalId1)
-		require.Error(t, err)
-		assert.Empty(t, exposedVal)
-
-		assert.NotEqual(t, plaintext1, exposedVal)
+		require.NoError(t, err)
+		assert.NotNil(t, exposedVal)
+		assert.Equal(t, plaintext2, exposedVal.DangerouslyExposeAndConsumeValue())
 	})
 
 	t.Run("updating a non existent encrypted value returns error", func(t *testing.T) {

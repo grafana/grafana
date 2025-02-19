@@ -32,6 +32,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.SecureValue":           schema_pkg_apis_secret_v0alpha1_SecureValue(ref),
 		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.SecureValueList":       schema_pkg_apis_secret_v0alpha1_SecureValueList(ref),
 		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.SecureValueSpec":       schema_pkg_apis_secret_v0alpha1_SecureValueSpec(ref),
+		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.SecureValueStatus":     schema_pkg_apis_secret_v0alpha1_SecureValueStatus(ref),
 	}
 }
 
@@ -582,11 +583,19 @@ func schema_pkg_apis_secret_v0alpha1_SecureValue(ref common.ReferenceCallback) c
 							Ref:         ref("github.com/grafana/grafana/pkg/apis/secret/v0alpha1.SecureValueSpec"),
 						},
 					},
+					"status": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Read-only observed status of the `SecureValue`. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status",
+							Default:     map[string]interface{}{},
+							Ref:         ref("github.com/grafana/grafana/pkg/apis/secret/v0alpha1.SecureValueStatus"),
+						},
+					},
 				},
+				Required: []string{"status"},
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.SecureValueSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.SecureValueSpec", "github.com/grafana/grafana/pkg/apis/secret/v0alpha1.SecureValueStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
@@ -674,14 +683,14 @@ func schema_pkg_apis_secret_v0alpha1_SecureValueSpec(ref common.ReferenceCallbac
 							Format:      "",
 						},
 					},
-					"audiences": {
+					"decrypters": {
 						VendorExtensible: spec.VendorExtensible{
 							Extensions: spec.Extensions{
 								"x-kubernetes-list-type": "atomic",
 							},
 						},
 						SchemaProps: spec.SchemaProps{
-							Description: "The Audiences that are allowed to decrypt this secret Support and behavior is still TBD, but could likely look like: * testdata.grafana.app/{name1} * testdata.grafana.app/{name2} * runner.k6.grafana.app/*  -- allow any k6 test runner Rather than a string pattern, we may want a more explicit object: [{ group:\"testdata.grafana.app\", name=\"name1\"},\n { group:\"runner.k6.grafana.app\"}]",
+							Description: "The Decrypters that are allowed to decrypt this secret. An empty list means no service can decrypt it. Support and behavior is still TBD, but could likely look like: * testdata.grafana.app/{name1} * testdata.grafana.app/{name2} * runner.k6.grafana.app/*  -- allow any k6 test runner Rather than a string pattern, we may want a more explicit object: [{ group:\"testdata.grafana.app\", name=\"name1\"},\n { group:\"runner.k6.grafana.app\"}]",
 							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
@@ -695,7 +704,36 @@ func schema_pkg_apis_secret_v0alpha1_SecureValueSpec(ref common.ReferenceCallbac
 						},
 					},
 				},
-				Required: []string{"title", "audiences"},
+				Required: []string{"title"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_secret_v0alpha1_SecureValueStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"phase": {
+						SchemaProps: spec.SchemaProps{
+							Description: "High-level summary of where the `SecureValue` is in its lifecycle. One of: `Pending`, `Succeeded` or `Failed`.\n\nPossible enum values:\n - `\"Failed\"` If the creation of the secret fails, it will move to the `Failed` phase. Check the additional `status` fields for more information on what caused the failure. This state is unrecoverable.\n - `\"Pending\"` When the `SecureValue` is created, it will start in `Pending` phase to create the underlying secret asynchronously.\n - `\"Succeeded\"` If the creation of the secret is successful, it will move to the `Succeeded` phase.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+							Enum:        []interface{}{"Failed", "Pending", "Succeeded"},
+						},
+					},
+					"message": {
+						SchemaProps: spec.SchemaProps{
+							Description: "A human readable message indicating details about why the `SecureValue` is in this phase. Only applicable if the `phase=Failed`.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"phase"},
 			},
 		},
 	}

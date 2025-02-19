@@ -841,7 +841,7 @@ func TestDiff(t *testing.T) {
 		}
 	})
 
-	t.Run("should detect changes in Metadata", func(t *testing.T) {
+	t.Run("should detect changes in Metadata.EditorSettings", func(t *testing.T) {
 		rule1 := RuleGen.With(RuleGen.WithMetadata(AlertRuleMetadata{EditorSettings: EditorSettings{
 			SimplifiedQueryAndExpressionsSection: false,
 			SimplifiedNotificationsSection:       false,
@@ -856,6 +856,21 @@ func TestDiff(t *testing.T) {
 		assert.ElementsMatch(t, []string{
 			"Metadata.EditorSettings.SimplifiedQueryAndExpressionsSection",
 			"Metadata.EditorSettings.SimplifiedNotificationsSection",
+		}, diff.Paths())
+	})
+
+	t.Run("should detect changes in Metadata.PrometheusStyleRule", func(t *testing.T) {
+		rule1 := RuleGen.With(RuleGen.WithMetadata(AlertRuleMetadata{PrometheusStyleRule: &PrometheusStyleRule{
+			OriginalRuleDefinition: "data",
+		}})).GenerateRef()
+
+		rule2 := CopyRule(rule1, RuleGen.WithMetadata(AlertRuleMetadata{PrometheusStyleRule: &PrometheusStyleRule{
+			OriginalRuleDefinition: "updated data",
+		}}))
+
+		diff := rule1.Diff(rule2)
+		assert.ElementsMatch(t, []string{
+			"Metadata.PrometheusStyleRule.OriginalRuleDefinition",
 		}, diff.Paths())
 	})
 }
@@ -940,11 +955,21 @@ func TestAlertRuleGetKeyWithGroup(t *testing.T) {
 }
 
 func TestAlertRuleCopy(t *testing.T) {
-	for i := 0; i < 100; i++ {
-		rule := RuleGen.GenerateRef()
+	t.Run("should return a copy of the rule", func(t *testing.T) {
+		for i := 0; i < 100; i++ {
+			rule := RuleGen.GenerateRef()
+			copied := rule.Copy()
+			require.Empty(t, rule.Diff(copied))
+		}
+	})
+
+	t.Run("should create a copy of the prometheus rule definition from the metadata", func(t *testing.T) {
+		rule := RuleGen.With(RuleGen.WithMetadata(AlertRuleMetadata{PrometheusStyleRule: &PrometheusStyleRule{
+			OriginalRuleDefinition: "data",
+		}})).GenerateRef()
 		copied := rule.Copy()
-		require.Empty(t, rule.Diff(copied))
-	}
+		require.NotSame(t, rule.Metadata.PrometheusStyleRule, copied.Metadata.PrometheusStyleRule)
+	})
 }
 
 // This test makes sure the default generator

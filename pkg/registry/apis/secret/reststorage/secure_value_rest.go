@@ -207,16 +207,15 @@ func ValidateSecureValue(sv, oldSv *secretv0alpha1.SecureValue, operation admiss
 	}
 
 	// General validations.
+	decrypterGroups := make(map[string]map[string]int, 0)
 
-	audienceGroups := make(map[string]map[string]int, 0)
-
-	// Audience must match "{group}/{name OR *}" and must be unique.
-	for i, audience := range sv.Spec.Audiences {
-		group, name, found := strings.Cut(audience, "/")
+	// If populated, `Decrypters` must match "{group}/{name OR *}" and must be unique.
+	for i, decrypter := range sv.Spec.Decrypters {
+		group, name, found := strings.Cut(decrypter, "/")
 		if !found {
 			errs = append(
 				errs,
-				field.Invalid(field.NewPath("spec", "audiences", "["+strconv.Itoa(i)+"]"), audience, "an audience must have the format `{string}/{string}`"),
+				field.Invalid(field.NewPath("spec", "decrypters", "["+strconv.Itoa(i)+"]"), decrypter, "a decrypter must have the format `{string}/{string}`"),
 			)
 
 			continue
@@ -225,7 +224,7 @@ func ValidateSecureValue(sv, oldSv *secretv0alpha1.SecureValue, operation admiss
 		if group == "" {
 			errs = append(
 				errs,
-				field.Invalid(field.NewPath("spec", "audiences", "["+strconv.Itoa(i)+"]"), audience, "an audience group must be present"),
+				field.Invalid(field.NewPath("spec", "decrypters", "["+strconv.Itoa(i)+"]"), decrypter, "a decrypter group must be present"),
 			)
 
 			continue
@@ -234,34 +233,34 @@ func ValidateSecureValue(sv, oldSv *secretv0alpha1.SecureValue, operation admiss
 		if found && name == "" {
 			errs = append(
 				errs,
-				field.Invalid(field.NewPath("spec", "audiences", "["+strconv.Itoa(i)+"]"), audience, "an audience name must be present (use * for match-all)"),
+				field.Invalid(field.NewPath("spec", "decrypters", "["+strconv.Itoa(i)+"]"), decrypter, "a decrypter name must be present (use * for match-all)"),
 			)
 
 			continue
 		}
 
-		if _, exists := audienceGroups[group][name]; exists {
+		if _, exists := decrypterGroups[group][name]; exists {
 			errs = append(
 				errs,
 				field.Invalid(
-					field.NewPath("spec", "audiences", "["+strconv.Itoa(i)+"]"),
-					audience,
-					"the same audience already exists and must be unique",
+					field.NewPath("spec", "decrypters", "["+strconv.Itoa(i)+"]"),
+					decrypter,
+					"the same decrypter already exists and must be unique",
 				),
 			)
 
 			continue
 		}
 
-		if audienceGroups[group] == nil {
-			audienceGroups[group] = make(map[string]int)
+		if decrypterGroups[group] == nil {
+			decrypterGroups[group] = make(map[string]int)
 		}
 
-		audienceGroups[group][name] = i
+		decrypterGroups[group][name] = i
 	}
 
 	// In case of a "{group}/*" any other "{group}/{name}" with a matching "{group}" is redundant.
-	for group, names := range audienceGroups {
+	for group, names := range decrypterGroups {
 		const wildcard = "*"
 
 		if _, exists := names[wildcard]; exists && len(names) > 1 {
@@ -273,9 +272,9 @@ func ValidateSecureValue(sv, oldSv *secretv0alpha1.SecureValue, operation admiss
 				errs = append(
 					errs,
 					field.Invalid(
-						field.NewPath("spec", "audiences", "["+strconv.Itoa(i)+"]"),
+						field.NewPath("spec", "decrypters", "["+strconv.Itoa(i)+"]"),
 						group+"/"+name,
-						`the audience is not required as there is a wildcard "`+group+`/*" which takes precedence`,
+						`the decrypter is not required as there is a wildcard "`+group+`/*" which takes precedence`,
 					),
 				)
 			}
@@ -303,10 +302,6 @@ func validateSecureValueCreate(sv *secretv0alpha1.SecureValue) field.ErrorList {
 
 	if sv.Spec.Value != "" && sv.Spec.Ref != "" {
 		errs = append(errs, field.Required(field.NewPath("spec"), "only one of `value` or `ref` can be set"))
-	}
-
-	if len(sv.Spec.Audiences) == 0 {
-		errs = append(errs, field.Required(field.NewPath("spec", "audiences"), "an `audiences` is required"))
 	}
 
 	return errs

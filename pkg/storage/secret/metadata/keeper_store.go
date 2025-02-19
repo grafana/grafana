@@ -129,7 +129,9 @@ func (s *keeperStorage) Update(ctx context.Context, newKeeper *secretv0alpha1.Ke
 		return nil, fmt.Errorf("failed to map into update row: %w", err)
 	}
 	err = s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		if _, err := sess.Update(newRow); err != nil {
+		cond := &keeperDB{Name: newKeeper.Name, Namespace: newKeeper.Namespace}
+
+		if _, err := sess.Update(newRow, cond); err != nil {
 			return fmt.Errorf("failed to update row: %w", err)
 		}
 
