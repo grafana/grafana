@@ -6,10 +6,10 @@ import (
 	"time"
 
 	"github.com/bwmarrin/snowflake"
+	authtypes "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/exp/rand"
 	"k8s.io/apimachinery/pkg/api/apitesting"
@@ -32,12 +32,13 @@ func TestPrepareObjectForStorage(t *testing.T) {
 			LargeObjectSupport: nil,
 		},
 	}
-	ctx := identity.WithRequester(context.Background(), &user.SignedInUser{UserID: 1, UserUID: "user-uid"})
 
-	t.Run("Error getting requester from context", func(t *testing.T) {
+	ctx := authtypes.WithAuthInfo(context.Background(), &identity.StaticRequester{UserID: 1, UserUID: "user-uid", Type: authtypes.TypeUser})
+
+	t.Run("Error getting auth info from context", func(t *testing.T) {
 		_, err := s.prepareObjectForStorage(context.Background(), nil)
 		require.Error(t, err)
-		require.Contains(t, err.Error(), "a Requester was not found in the context")
+		require.Contains(t, err.Error(), "missing auth info")
 	})
 
 	t.Run("Error on missing name", func(t *testing.T) {
