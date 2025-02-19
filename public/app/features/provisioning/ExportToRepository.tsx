@@ -1,6 +1,6 @@
 import { useForm } from 'react-hook-form';
 
-import { Box, Button, Field, FieldSet, Input, Stack, Switch, Text } from '@grafana/ui';
+import { Box, Button, Field, Input, Stack, Switch, Text } from '@grafana/ui';
 
 import ProgressBar from './ProgressBar';
 import { Repository, useCreateRepositoryExportMutation, useListJobQuery, ExportJobOptions } from './api';
