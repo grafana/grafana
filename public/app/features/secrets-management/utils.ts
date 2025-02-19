@@ -14,7 +14,7 @@ export function transformToSecret(subject: SecretsListResponseItem): Secret {
   return {
     name: subject.metadata.name,
     description: subject.spec.title,
-    audiences: subject.spec.audiences,
+    audiences: subject.spec.decrypters,
     keeper: subject.spec.keeper,
     uid: subject.metadata.uid,
   };
@@ -30,7 +30,7 @@ export function transformFromSecret(
     },
     spec: {
       title: secret.description,
-      audiences: secret.audiences ?? ['test/default'],
+      decrypters: secret.audiences ?? ['test/default'],
       keeper: secret.keeper ?? 'default',
       ...(!!secret.value ? { value: secret.value } : undefined),
     },
