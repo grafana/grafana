@@ -209,7 +209,7 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 				searchFields.Field(resource.SEARCH_FIELD_TITLE),
 				searchFields.Field(resource.SEARCH_FIELD_FOLDER),
 				searchFields.Field(resource.SEARCH_FIELD_TAGS),
-				&resource.ResourceTableColumnDefinition{
+				{
 					Name: sortByField,
 					Type: resource.ResourceTableColumnDefinition_INT64,
 				},

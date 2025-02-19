@@ -265,7 +265,7 @@ func TestDashboardService(t *testing.T) {
 func setupK8sDashboardTests(service *DashboardServiceImpl) (context.Context, *client.MockK8sHandler) {
 	mockCli := new(client.MockK8sHandler)
 	service.k8sclient = mockCli
-	service.features = featuremgmt.WithFeatures(featuremgmt.FlagKubernetesCliDashboards)
+	service.features = featuremgmt.WithFeatures(featuremgmt.FlagKubernetesClientDashboardsFolders)
 
 	ctx := context.Background()
 	userCtx := &user.SignedInUser{UserID: 1, OrgID: 1}
@@ -1096,7 +1096,13 @@ func TestSaveProvisionedDashboard(t *testing.T) {
 	service := &DashboardServiceImpl{
 		cfg:            setting.NewCfg(),
 		dashboardStore: &fakeStore,
-		log:            log.NewNopLogger(),
+		folderService: &foldertest.FakeService{
+			ExpectedFolder: &folder.Folder{
+				ID:  0,
+				UID: "general",
+			},
+		},
+		log: log.NewNopLogger(),
 	}
 
 	origNewDashboardGuardian := guardian.New
@@ -1160,6 +1166,9 @@ func TestSaveDashboard(t *testing.T) {
 	service := &DashboardServiceImpl{
 		cfg:            setting.NewCfg(),
 		dashboardStore: &fakeStore,
+		folderService: &foldertest.FakeService{
+			ExpectedFolder: &folder.Folder{},
+		},
 	}
 
 	origNewDashboardGuardian := guardian.New

@@ -367,17 +367,13 @@ const (
 	// Use the kubernetes API in the frontend for dashboards
 	FlagKubernetesDashboards = "kubernetesDashboards"
 
-	// FlagKubernetesCliDashboards
-	// Use the k8s client to retrieve dashboards internally
-	FlagKubernetesCliDashboards = "kubernetesCliDashboards"
-
 	// FlagKubernetesRestore
 	// Allow restoring objects in k8s
 	FlagKubernetesRestore = "kubernetesRestore"
 
-	// FlagKubernetesFoldersServiceV2
-	// Use the Folders Service V2, and route Folder Service requests to k8s
-	FlagKubernetesFoldersServiceV2 = "kubernetesFoldersServiceV2"
+	// FlagKubernetesClientDashboardsFolders
+	// Route the folder and dashboard service requests to k8s
+	FlagKubernetesClientDashboardsFolders = "kubernetesClientDashboardsFolders"
 
 	// FlagDatasourceQueryTypes
 	// Show query type endpoints in datasource API servers (currently hardcoded for testdata, expressions, and prometheus)
@@ -659,10 +655,6 @@ const (
 	// Preserve plugin proxy trailing slash.
 	FlagPluginProxyPreserveTrailingSlash = "pluginProxyPreserveTrailingSlash"
 
-	// FlagSqlQuerybuilderFunctionParameters
-	// Enables SQL query builder function parameters
-	FlagSqlQuerybuilderFunctionParameters = "sqlQuerybuilderFunctionParameters"
-
 	// FlagAzureMonitorPrometheusExemplars
 	// Allows configuration of Azure Monitor as a data source that can provide Prometheus exemplars
 	FlagAzureMonitorPrometheusExemplars = "azureMonitorPrometheusExemplars"
@@ -782,6 +774,10 @@ const (
 	// FlagUnifiedStorageSearchPermissionFiltering
 	// Enable permission filtering on unified storage search
 	FlagUnifiedStorageSearchPermissionFiltering = "unifiedStorageSearchPermissionFiltering"
+
+	// FlagManagedDualWriter
+	// Pick the dual write mode from database configs
+	FlagManagedDualWriter = "managedDualWriter"
 
 	// FlagPluginsSriChecks
 	// Enables SRI checks for plugin assets
