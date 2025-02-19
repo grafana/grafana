@@ -486,8 +486,15 @@ func schema_pkg_apis_advisor_v0alpha1_CheckTypeStep(ref common.ReferenceCallback
 							Format:  "",
 						},
 					},
+					"resolution": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
 				},
-				Required: []string{"title", "description", "stepID"},
+				Required: []string{"title", "description", "stepID", "resolution"},
 			},
 		},
 	}

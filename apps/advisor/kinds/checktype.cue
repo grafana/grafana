@@ -15,6 +15,7 @@ checktype: {
 					title:			string
 					description:	string
 					stepID:			string
+					resolution:		string
 				}	
 				spec: {
 					name: 	string

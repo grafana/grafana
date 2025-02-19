@@ -74,6 +74,11 @@ func (s *deprecationStep) Description() string {
 	return "Check if any installed plugins are deprecated."
 }
 
+func (s *deprecationStep) Resolution() string {
+	return "Check the <a href='https://grafana.com/legal/plugin-deprecation/#a-plugin-i-use-is-deprecated-what-should-i-do'" +
+		"target=_blank>documentation</a> for recommended steps or delete the plugin."
+}
+
 func (s *deprecationStep) ID() string {
 	return "deprecation"
 }
@@ -102,8 +107,8 @@ func (s *deprecationStep) Run(ctx context.Context, _ *advisor.CheckSpec, it any)
 			p.ID,
 			[]advisor.CheckErrorLink{
 				{
-					Message: "More info",
-					Url:     "https://grafana.com/legal/plugin-deprecation/#a-plugin-i-use-is-deprecated-what-should-i-do",
+					Message: "Admin",
+					Url:     fmt.Sprintf("/plugins/%s", p.ID),
 				},
 			},
 		), nil
@@ -122,7 +127,11 @@ func (s *updateStep) Title() string {
 }
 
 func (s *updateStep) Description() string {
-	return "Check if any installed plugins have a newer version available."
+	return "Checks if an installed plugins has a newer version available."
+}
+
+func (s *updateStep) Resolution() string {
+	return "Go to the plugin admin page and upgrade to the latest version."
 }
 
 func (s *updateStep) ID() string {

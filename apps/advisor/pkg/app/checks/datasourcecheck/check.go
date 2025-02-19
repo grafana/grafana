@@ -73,7 +73,12 @@ func (s *uidValidationStep) Title() string {
 }
 
 func (s *uidValidationStep) Description() string {
-	return "Check if the UID of each data source is valid."
+	return "Checks if the UID of a data source is valid."
+}
+
+func (s *uidValidationStep) Resolution() string {
+	return "Check the <a href='https://grafana.com/docs/grafana/latest/upgrade-guide/upgrade-v11.2/#grafana-data-source-uid-format-enforcement'" +
+		"target=_blank>documentation</a> for more information or delete the data source and create a new one."
 }
 
 func (s *uidValidationStep) Run(ctx context.Context, obj *advisor.CheckSpec, i any) (*advisor.CheckReportFailure, error) {
@@ -88,12 +93,7 @@ func (s *uidValidationStep) Run(ctx context.Context, obj *advisor.CheckSpec, i a
 			advisor.CheckReportFailureSeverityLow,
 			s.ID(),
 			fmt.Sprintf("%s (%s)", ds.Name, ds.UID),
-			[]advisor.CheckErrorLink{
-				{
-					Message: "More info",
-					Url:     "https://grafana.com/docs/grafana/latest/upgrade-guide/upgrade-v11.2/#grafana-data-source-uid-format-enforcement",
-				},
-			},
+			[]advisor.CheckErrorLink{},
 		), nil
 	}
 	return nil, nil
@@ -109,7 +109,11 @@ func (s *healthCheckStep) Title() string {
 }
 
 func (s *healthCheckStep) Description() string {
-	return "Check if all data sources are healthy."
+	return "Checks if a data sources is healthy."
+}
+
+func (s *healthCheckStep) Resolution() string {
+	return "Go to the data source configuration page and address the issues reported."
 }
 
 func (s *healthCheckStep) ID() string {
