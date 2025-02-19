@@ -243,8 +243,11 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	syncAge := time.Since(time.UnixMilli(obj.Status.Sync.Finished))
 	syncInterval := time.Duration(obj.Spec.Sync.IntervalSeconds) * time.Second
 	tolerance := time.Second
-	isSyncJobPendingOrRunning := obj.Status.Sync.State == provisioning.JobStatePending || obj.Status.Sync.State == provisioning.JobStateWorking
-	shouldResync := syncAge >= (syncInterval-tolerance) && !isSyncJobPendingOrRunning
+	// HACK: how would this work in a multi-tenant world or under heavy load?
+	// It will start queueing up jobs and we will have to deal with that
+	pendingForTooLong := syncAge >= syncInterval/2 && obj.Status.Sync.State == provisioning.JobStatePending
+	isRunning := obj.Status.Sync.State == provisioning.JobStateWorking
+	shouldResync := syncAge >= (syncInterval-tolerance) && !pendingForTooLong && !isRunning
 	hasSpecChanged := obj.Generation != obj.Status.ObservedGeneration
 
 	switch {
@@ -349,8 +352,7 @@ func (rc *RepositoryController) process(item *queueItem) error {
 			"errors", len(res.Errors))
 	}
 
-	var sync *provisioning.SyncJobOptions
-
+	var incremental bool
 	switch {
 	case obj.Status.ObservedGeneration < 1:
 		logger.Info("handle repository create")
@@ -365,7 +367,6 @@ func (rc *RepositoryController) process(item *queueItem) error {
 				"value": webhookStatus,
 			})
 		}
-		sync = &provisioning.SyncJobOptions{}
 	case hasSpecChanged:
 		logger.Info("handle repository spec update", "Generation", obj.Generation, "ObservedGeneration", obj.Status.ObservedGeneration)
 		if hooks != nil {
@@ -379,41 +380,19 @@ func (rc *RepositoryController) process(item *queueItem) error {
 				"value": webhookStatus,
 			})
 		}
-		sync = &provisioning.SyncJobOptions{}
 	case shouldResync:
-		if obj.Spec.Sync.Enabled {
-			logger.Info("handle repository resync")
-			sync = &provisioning.SyncJobOptions{Incremental: true}
-		}
+		logger.Info("handle repository resync")
+		incremental = true
 	default:
-		logger.Info("handle unknown repository situation")
+		return errors.New("unknown repository situation")
 	}
 
-	if obj.Spec.Sync.Enabled && sync != nil &&
-		obj.Generation > 0 && !isSyncJobPendingOrRunning && obj.Status.Health.Healthy {
-		job, err := rc.jobs.Add(ctx, &provisioning.Job{
-			ObjectMeta: v1.ObjectMeta{
-				Namespace: obj.Namespace,
-			},
-			Spec: provisioning.JobSpec{
-				Repository: obj.GetName(),
-				Action:     provisioning.JobActionSync,
-				Sync:       sync,
-			},
-		})
-		if err != nil {
-			return fmt.Errorf("error adding sync job: %w", err)
-		} else {
-			logger.Info("sync job triggered", "job", job.Name)
-		}
-
+	if obj.Spec.Sync.Enabled && obj.Status.Health.Healthy {
 		patchOperations = append(patchOperations, map[string]interface{}{
 			"op":   "replace",
 			"path": "/status/sync",
 			"value": provisioning.SyncStatus{
-				State:       provisioning.JobStatePending,
-				JobID:       job.Name,
-				Incremental: sync.Incremental,
+				State: provisioning.JobStatePending,
 			},
 		})
 	}
@@ -431,5 +410,25 @@ func (rc *RepositoryController) process(item *queueItem) error {
 			return fmt.Errorf("error applying status patch: %w", err)
 		}
 	}
+
+	// Trigger sync job after we have applied all patch operations
+	if obj.Spec.Sync.Enabled && obj.Status.Health.Healthy {
+		job, err := rc.jobs.Add(ctx, &provisioning.Job{
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: obj.Namespace,
+			},
+			Spec: provisioning.JobSpec{
+				Repository: obj.GetName(),
+				Action:     provisioning.JobActionSync,
+				Sync:       &provisioning.SyncJobOptions{Incremental: incremental},
+			},
+		})
+		if err != nil {
+			return fmt.Errorf("error adding sync job: %w", err)
+		}
+
+		logger.Info("sync job triggered", "job", job.Name)
+	}
+
 	return nil
 }
