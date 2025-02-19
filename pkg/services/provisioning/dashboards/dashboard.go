@@ -76,6 +76,7 @@ func New(ctx context.Context, configDirectory string, provisioner dashboards.Das
 // Provision scans the disk for dashboards and updates
 // the database with the latest versions of those dashboards.
 func (provider *Provisioner) Provision(ctx context.Context) error {
+	// skip provisioning during migrations to prevent multi-replica instances from crashing when another replica is migrating
 	if provider.dual != nil {
 		status, _ := provider.dual.Status(context.Background(), dashboard.DashboardResourceInfo.GroupResource())
 		if status.Migrating > 0 {
