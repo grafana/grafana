@@ -22,9 +22,15 @@ const defaultScale: ThresholdsConfig = {
   ],
 };
 
+/** Extracts numeric pixel value from theme spacing */
+const extractPixelValue = (spacing: string | number): number => {
+  return typeof spacing === 'number' ? spacing : parseFloat(spacing) || 0;
+};
+
 export const BarGaugeCell = ({ value, field, theme, height, width, rowIdx }: BarGaugeCellProps) => {
   const displayValue = field.display!(value);
   const cellOptions = getCellOptions(field);
+  const heightOffset = extractPixelValue(theme.spacing(1));
 
   let config = getFieldConfigWithMinMax(field, false);
   if (!config.thresholds) {
@@ -63,7 +69,7 @@ export const BarGaugeCell = ({ value, field, theme, height, width, rowIdx }: Bar
     return (
       <BarGauge
         width={width}
-        height={height}
+        height={height - heightOffset}
         field={config}
         display={field.display}
         text={{ valueSize: 14 }}
