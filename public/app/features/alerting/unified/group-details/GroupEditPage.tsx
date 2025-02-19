@@ -1,20 +1,24 @@
+import { css } from '@emotion/css';
+import { skipToken } from '@reduxjs/toolkit/query';
 import { produce } from 'immer';
 import { useCallback, useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { useParams } from 'react-router-dom-v5-compat';
 
-import { NavModelItem } from '@grafana/data';
+import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { Alert, Button, Field, Input, Stack, withErrorBoundary } from '@grafana/ui';
+import { Alert, Button, Field, Input, Stack, useStyles2, withErrorBoundary } from '@grafana/ui';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 import { useAppNotification } from 'app/core/copy/appNotification';
-import { t } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 import { GrafanaRulesSourceSymbol, RuleGroupIdentifierV2 } from 'app/types/unified-alerting';
 import { RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../api/alertRuleApi';
 import { featureDiscoveryApi } from '../api/featureDiscoveryApi';
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
+import { EvaluationGroupQuickPick } from '../components/rule-editor/EvaluationGroupQuickPick';
+import { evaluateEveryValidationOptions } from '../components/rules/EditRuleGroupModal';
 import { UpdateGroupDelta, useUpdateRuleGroup } from '../hooks/ruleGroup/useUpdateRuleGroup';
 import { useFolder } from '../hooks/useFolder';
 import { useRuleGroupConsistencyCheck } from '../hooks/usePrometheusConsistencyCheck';
@@ -38,7 +42,10 @@ interface GroupEditFormData {
 }
 
 function GroupEditForm({ rulerGroup, groupIdentifier }: GroupEditFormProps) {
+  const styles = useStyles2(getStyles);
   const appInfo = useAppNotification();
+  const { folder } = useFolder(groupIdentifier.groupOrigin === 'grafana' ? groupIdentifier.namespace.uid : '');
+
   const { waitForGroupConsistency } = useRuleGroupConsistencyCheck();
   const [updateRuleGroup] = useUpdateRuleGroup();
   const groupIntervalOrDefault = rulerGroup?.interval ?? DEFAULT_GROUP_EVALUATION_INTERVAL;
@@ -47,8 +54,12 @@ function GroupEditForm({ rulerGroup, groupIdentifier }: GroupEditFormProps) {
   const {
     register,
     handleSubmit,
-    formState: { dirtyFields, isSubmitting },
+    getValues,
+    setValue,
+    formState: { errors, dirtyFields, isSubmitting },
   } = useForm<GroupEditFormData>({
+    mode: 'onBlur',
+    shouldFocusError: true,
     defaultValues: {
       name: rulerGroup.name,
       interval: rulerGroup.interval,
@@ -92,15 +103,36 @@ function GroupEditForm({ rulerGroup, groupIdentifier }: GroupEditFormProps) {
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
       {groupIdentifier.groupOrigin === 'datasource' && (
-        <Field label="Namespace">
-          <Input id="namespace" {...register('namespace')} />
+        <Field label="Namespace" required invalid={!!errors.namespace} error={errors.namespace?.message}>
+          <Input id="namespace" {...register('namespace', { required: 'Namespace is required' })} />
         </Field>
       )}
-      <Field label="Evaluation group name">
-        <Input id="group-name" {...register('name')} />
+      {groupIdentifier.groupOrigin === 'grafana' && (
+        <Field label="Folder" required>
+          <Input id="folder" value={folder?.title ?? ''} readOnly />
+        </Field>
+      )}
+      <Field label="Evaluation group name" required invalid={!!errors.name} error={errors.name?.message}>
+        <Input id="group-name" {...register('name', { required: 'Group name is required' })} />
       </Field>
-      <Field label="Evaluation interval" description="How often is the group evaluated">
-        <Input id="interval" {...register('interval')} />
+      <Field
+        label="Evaluation interval"
+        description="How often is the group evaluated"
+        invalid={!!errors.interval}
+        error={errors.interval?.message}
+        htmlFor="interval"
+      >
+        <>
+          <Input
+            id="interval"
+            {...register('interval', evaluateEveryValidationOptions(rulerGroup.rules))}
+            className={styles.intervalInput}
+          />
+          <EvaluationGroupQuickPick
+            currentInterval={getValues('interval')}
+            onSelect={(value) => setValue('interval', value, { shouldValidate: true, shouldDirty: true })}
+          />
+        </>
       </Field>
       <Field label="Alerting and recording rules" description="Drag rules to reorder">
         <DraggableRulesTable rules={rulerGroup.rules} groupInterval={groupIntervalOrDefault} onSwap={onSwap} />
@@ -114,6 +146,12 @@ function GroupEditForm({ rulerGroup, groupIdentifier }: GroupEditFormProps) {
     </form>
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  intervalInput: css({
+    marginBottom: theme.spacing(0.5),
+  }),
+});
 
 function setMatchingGroupPageUrl(groupIdentifier: RuleGroupIdentifierV2) {
   if (groupIdentifier.groupOrigin === 'datasource') {
@@ -152,12 +190,13 @@ function GroupEditPage() {
     isUninitialized: isRuleGroupUninitialized,
     error: ruleGroupError,
   } = useGetRuleGroupForNamespaceQuery(
-    {
-      rulerConfig: dsFeatures?.rulerConfig!,
-      namespace: namespaceId,
-      group: groupName,
-    },
-    { skip: !dsFeatures?.rulerConfig }
+    dsFeatures?.rulerConfig
+      ? {
+          rulerConfig: dsFeatures.rulerConfig,
+          namespace: namespaceId,
+          group: groupName,
+        }
+      : skipToken
   );
 
   const isLoading = isFolderLoading || isDsFeaturesLoading || isRuleGroupLoading || isRuleGroupUninitialized;
@@ -176,8 +215,10 @@ function GroupEditPage() {
   if (!!dsFeatures && !dsFeatures.rulerConfig) {
     return (
       <AlertingPageWrapper pageNav={pageNav} title={groupName} isLoading={isLoading}>
-        <Alert title="Selected group cannot be edited">
-          This group belongs to a data source that does not support editing.
+        <Alert title={t('alerting.rule-groups.edit.group-not-editable', 'Selected group cannot be edited')}>
+          <Trans i18nKey="alerting.rule-groups.edit.group-not-editable-description">
+            This group belongs to a data source that does not support editing.
+          </Trans>
         </Alert>
       </AlertingPageWrapper>
     );
@@ -198,15 +239,28 @@ function GroupEditPage() {
         };
 
   return (
-    <AlertingPageWrapper pageNav={pageNav} title="Edit evaluation group" navId="alert-list" isLoading={isLoading}>
+    <AlertingPageWrapper
+      pageNav={pageNav}
+      title={t('alerting.rule-groups.edit.title', 'Edit evaluation group')}
+      navId="alert-list"
+      isLoading={isLoading}
+    >
       <>
         {dsFeaturesError && (
-          <Alert title="Error loading data source details" bottomSpacing={0} topSpacing={2}>
+          <Alert
+            title={t('alerting.rule-groups.edit.ds-error', 'Error loading data source details')}
+            bottomSpacing={0}
+            topSpacing={2}
+          >
             <div>{stringifyErrorLike(dsFeaturesError)}</div>
           </Alert>
         )}
         {ruleGroupError && (
-          <Alert title="Error loading rule group" bottomSpacing={0} topSpacing={2}>
+          <Alert
+            title={t('alerting.rule-groups.edit.rule-group-error', 'Error loading rule group')}
+            bottomSpacing={0}
+            topSpacing={2}
+          >
             {stringifyErrorLike(ruleGroupError)}
           </Alert>
         )}

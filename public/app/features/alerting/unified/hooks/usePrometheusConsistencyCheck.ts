@@ -8,7 +8,7 @@ import {
   RuleIdentifier,
 } from 'app/types/unified-alerting';
 
-import { logError } from '../Analytics';
+import { logError, logMeasurement } from '../Analytics';
 import { alertRuleApi } from '../api/alertRuleApi';
 import { featureDiscoveryApi } from '../api/featureDiscoveryApi';
 import * as ruleId from '../utils/rule-id';
@@ -178,15 +178,29 @@ export function useRuleGroupConsistencyCheck() {
     const timeoutPromise = new Promise<void>((_, reject) => {
       setTimeout(() => {
         clearConsistencyInterval();
-        reject(new Error('Timeout while waiting for rule group consistency'));
+        const error = new Error('Timeout while waiting for rule group consistency');
+        logError(error, { groupOrigin: groupIdentifier.groupOrigin });
+        reject(error);
       }, CONSISTENCY_CHECK_TIMEOUT);
     });
 
     const waitPromise = new Promise<void>((resolve, reject) => {
+      performance.mark('waitForGroupConsistency:started');
       consistencyInterval.current = setInterval(() => {
         isGroupInSync(groupIdentifier)
           .then((inSync) => {
             if (inSync) {
+              performance.mark('waitForGroupConsistency:finished');
+              const duration = performance.measure(
+                'waitForGroupConsistency',
+                'waitForGroupConsistency:started',
+                'waitForGroupConsistency:finished'
+              );
+              logMeasurement(
+                'alerting:wait-for-group-consistency',
+                { duration: duration.duration },
+                { groupOrigin: groupIdentifier.groupOrigin }
+              );
               clearConsistencyInterval();
               resolve();
             }

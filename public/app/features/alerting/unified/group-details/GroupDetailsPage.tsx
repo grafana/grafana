@@ -1,3 +1,4 @@
+import { skipToken } from '@reduxjs/toolkit/query';
 import { useMemo } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
@@ -107,12 +108,13 @@ function GroupDetailsPage() {
     isUninitialized: isRuleNamespacesUninitialized,
     error: ruleNamespacesError,
   } = usePrometheusRuleNamespacesQuery(
-    {
-      ruleSourceName: dsFeatures?.name ?? '',
-      namespace: namespaceId,
-      groupName: groupName,
-    },
-    { skip: !dsFeatures }
+    dsFeatures
+      ? {
+          ruleSourceName: dsFeatures?.name ?? '',
+          namespace: namespaceId,
+          groupName: groupName,
+        }
+      : skipToken
   );
 
   const isLoading = isFolderLoading || isDsFeaturesLoading || isRuleNamespacesLoading || isRuleNamespacesUninitialized;
