@@ -85,6 +85,7 @@ import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
 import { AngularDeprecation } from '../scene/angular/AngularDeprecation';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
+import { LayoutOrchestrator } from '../scene/layout-manager/LayoutOrchestrator';
 import { RowActions } from '../scene/row-actions/RowActions';
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
 import { preserveDashboardSceneStateInLocalStorage } from '../utils/dashboardSessionState';
@@ -177,13 +178,16 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
     title: dashboard.title,
     uid: metadata.name,
     version: parseInt(metadata.resourceVersion, 10),
-    body: new DefaultGridLayoutManager({
-      grid: new SceneGridLayout({
-        isLazy: !(dashboard.preload || contextSrv.user.authenticatedBy === 'render'),
-        children: createSceneGridLayoutForItems(dashboard),
-        $behaviors: [trackIfEmpty],
+    body: new LayoutOrchestrator({
+      manager: new DefaultGridLayoutManager({
+        grid: new SceneGridLayout({
+          isLazy: !(dashboard.preload || contextSrv.user.authenticatedBy === 'render'),
+          children: createSceneGridLayoutForItems(dashboard),
+          $behaviors: [trackIfEmpty],
+        }),
       }),
     }),
+
     $timeRange: new SceneTimeRange({
       from: dashboard.timeSettings.from,
       to: dashboard.timeSettings.to,

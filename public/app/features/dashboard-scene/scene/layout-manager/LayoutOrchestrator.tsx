@@ -95,6 +95,12 @@ export class LayoutOrchestrator extends SceneObjectBase<LayoutOrchestratorState>
     }
 
     const localDropZones = this.dropZones.filter((v) => v.layoutKey === activeLayout.state.key);
+    if (localDropZones.length === 0) {
+      // For the first tick after switching layouts, the dropzones are not yet been updated.
+      // This shouldn't be a problem, this event will trigger again and eventually the
+      // dropzones will be there.
+      return;
+    }
     let cell = closestCell(this, localDropZones, { x: e.clientX, y: e.clientY });
     let state: Partial<LayoutOrchestratorState> = {};
 
