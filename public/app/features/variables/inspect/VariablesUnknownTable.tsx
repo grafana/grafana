@@ -6,7 +6,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { CollapsableSection, HorizontalGroup, Icon, Spinner, Tooltip, useStyles2, VerticalGroup } from '@grafana/ui';
 
-import { DashboardModel } from '../../dashboard/state';
+import { DashboardModel } from '../../dashboard/state/DashboardModel';
 import { VariableModel } from '../types';
 
 import { VariablesUnknownButton } from './VariablesUnknownButton';

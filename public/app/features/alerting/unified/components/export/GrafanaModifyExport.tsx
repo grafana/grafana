@@ -1,4 +1,3 @@
-import * as React from 'react';
 import { useMemo } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
@@ -7,15 +6,16 @@ import { Alert, LoadingPlaceholder } from '@grafana/ui';
 
 import { RuleIdentifier } from '../../../../../types/unified-alerting';
 import { useRuleWithLocation } from '../../hooks/useCombinedRule';
+import { formValuesFromExistingRule } from '../../rule-editor/formDefaults';
 import { stringifyErrorLike } from '../../utils/misc';
-import { formValuesFromExistingRule } from '../../utils/rule-form';
 import * as ruleId from '../../utils/rule-id';
 import { isGrafanaRulerRule } from '../../utils/rules';
 import { createRelativeUrl } from '../../utils/url';
+import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { AlertingPageWrapper } from '../AlertingPageWrapper';
 import { ModifyExportRuleForm } from '../rule-editor/alert-rule-form/ModifyExportRuleForm';
 
-export default function GrafanaModifyExport() {
+function GrafanaModifyExport() {
   const { id } = useParams();
   const ruleIdentifier = useMemo<RuleIdentifier | undefined>(() => {
     return ruleId.tryParse(id, true);
@@ -23,38 +23,13 @@ export default function GrafanaModifyExport() {
 
   if (!ruleIdentifier) {
     return (
-      <ModifyExportWrapper>
-        <Alert title="Invalid rule ID" severity="error">
-          The rule UID in the page URL is invalid. Please check the URL and try again.
-        </Alert>
-      </ModifyExportWrapper>
+      <Alert title="Invalid rule ID" severity="error">
+        The rule UID in the page URL is invalid. Please check the URL and try again.
+      </Alert>
     );
   }
 
-  return (
-    <ModifyExportWrapper>
-      <RuleModifyExport ruleIdentifier={ruleIdentifier} />
-    </ModifyExportWrapper>
-  );
-}
-
-interface ModifyExportWrapperProps {
-  children: React.ReactNode;
-}
-
-function ModifyExportWrapper({ children }: ModifyExportWrapperProps) {
-  return (
-    <AlertingPageWrapper
-      navId="alert-list"
-      pageNav={{
-        text: 'Modify export',
-        subTitle:
-          'Modify the current alert rule and export the rule definition in the format of your choice. Any changes you make will not be saved.',
-      }}
-    >
-      {children}
-    </AlertingPageWrapper>
-  );
+  return <RuleModifyExport ruleIdentifier={ruleIdentifier} />;
 }
 
 function RuleModifyExport({ ruleIdentifier }: { ruleIdentifier: RuleIdentifier }) {
@@ -105,3 +80,20 @@ function RuleModifyExport({ ruleIdentifier }: { ruleIdentifier: RuleIdentifier }
 
   return <Alert title="Unknown error" />;
 }
+
+function GrafanaModifyExportPage() {
+  return (
+    <AlertingPageWrapper
+      navId="alert-list"
+      pageNav={{
+        text: 'Modify export',
+        subTitle:
+          'Modify the current alert rule and export the rule definition in the format of your choice. Any changes you make will not be saved.',
+      }}
+    >
+      <GrafanaModifyExport />
+    </AlertingPageWrapper>
+  );
+}
+
+export default withPageErrorBoundary(GrafanaModifyExportPage);

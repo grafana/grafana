@@ -9,11 +9,11 @@ import (
 	"github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	ngalertapi "github.com/grafana/grafana/pkg/services/ngalert/api"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type muteTimeInterval struct {
@@ -25,10 +25,6 @@ type muteTimeInterval struct {
 }
 
 func (s *Service) getAlertMuteTimings(ctx context.Context, signedInUser *user.SignedInUser) ([]muteTimeInterval, error) {
-	if !s.features.IsEnabledGlobally(featuremgmt.FlagOnPremToCloudMigrationsAlerts) {
-		return nil, nil
-	}
-
 	muteTimings, err := s.ngAlert.Api.MuteTimings.GetMuteTimings(ctx, signedInUser.OrgID)
 	if err != nil {
 		return nil, fmt.Errorf("fetching ngalert mute timings: %w", err)
@@ -56,10 +52,6 @@ type notificationTemplate struct {
 }
 
 func (s *Service) getNotificationTemplates(ctx context.Context, signedInUser *user.SignedInUser) ([]notificationTemplate, error) {
-	if !s.features.IsEnabledGlobally(featuremgmt.FlagOnPremToCloudMigrationsAlerts) {
-		return nil, nil
-	}
-
 	templates, err := s.ngAlert.Api.Templates.GetTemplates(ctx, signedInUser.OrgID)
 	if err != nil {
 		return nil, fmt.Errorf("fetching ngalert notification templates: %w", err)
@@ -87,10 +79,6 @@ type contactPoint struct {
 }
 
 func (s *Service) getContactPoints(ctx context.Context, signedInUser *user.SignedInUser) ([]contactPoint, error) {
-	if !s.features.IsEnabledGlobally(featuremgmt.FlagOnPremToCloudMigrationsAlerts) {
-		return nil, nil
-	}
-
 	query := provisioning.ContactPointQuery{
 		OrgID:   signedInUser.GetOrgID(),
 		Decrypt: true, // needed to recreate the settings in the target instance.
@@ -122,10 +110,6 @@ type notificationPolicy struct {
 }
 
 func (s *Service) getNotificationPolicies(ctx context.Context, signedInUser *user.SignedInUser) (notificationPolicy, error) {
-	if !s.features.IsEnabledGlobally(featuremgmt.FlagOnPremToCloudMigrationsAlerts) {
-		return notificationPolicy{}, nil
-	}
-
 	policyTree, _, err := s.ngAlert.Api.Policies.GetPolicyTree(ctx, signedInUser.GetOrgID())
 	if err != nil {
 		return notificationPolicy{}, fmt.Errorf("fetching ngalert notification policy tree: %w", err)
@@ -158,18 +142,21 @@ type alertRule struct {
 }
 
 func (s *Service) getAlertRules(ctx context.Context, signedInUser *user.SignedInUser) ([]alertRule, error) {
-	if !s.features.IsEnabledGlobally(featuremgmt.FlagOnPremToCloudMigrationsAlerts) {
-		return nil, nil
-	}
-
 	alertRules, _, err := s.ngAlert.Api.AlertRules.GetAlertRules(ctx, signedInUser)
 	if err != nil {
 		return nil, fmt.Errorf("fetching alert rules: %w", err)
 	}
 
+	settingAlertRulesPaused := s.cfg.CloudMigration.AlertRulesState == setting.GMSAlertRulesPaused
+
 	provisionedAlertRules := make([]alertRule, 0, len(alertRules))
 
 	for _, rule := range alertRules {
+		isPaused := rule.IsPaused
+		if settingAlertRulesPaused {
+			isPaused = true
+		}
+
 		provisionedAlertRules = append(provisionedAlertRules, alertRule{
 			ID:                   rule.ID,
 			UID:                  rule.UID,
@@ -185,11 +172,69 @@ func (s *Service) getAlertRules(ctx context.Context, signedInUser *user.SignedIn
 			ExecErrState:         rule.ExecErrState.String(),
 			Annotations:          rule.Annotations,
 			Labels:               rule.Labels,
-			IsPaused:             rule.IsPaused,
+			IsPaused:             isPaused,
 			NotificationSettings: ngalertapi.AlertRuleNotificationSettingsFromNotificationSettings(rule.NotificationSettings),
 			Record:               ngalertapi.ApiRecordFromModelRecord(rule.Record),
 		})
 	}
 
 	return provisionedAlertRules, nil
+}
+
+type alertRuleGroup struct {
+	Title     string      `json:"title"`
+	FolderUID string      `json:"folderUid"`
+	Interval  int64       `json:"interval"`
+	Rules     []alertRule `json:"rules"`
+}
+
+func (s *Service) getAlertRuleGroups(ctx context.Context, signedInUser *user.SignedInUser) ([]alertRuleGroup, error) {
+	alertRuleGroupsWithFolder, err := s.ngAlert.Api.AlertRules.GetAlertGroupsWithFolderFullpath(ctx, signedInUser, nil)
+	if err != nil {
+		return nil, fmt.Errorf("fetching alert rule groups with folders: %w", err)
+	}
+
+	settingAlertRulesPaused := s.cfg.CloudMigration.AlertRulesState == setting.GMSAlertRulesPaused
+
+	alertRuleGroups := make([]alertRuleGroup, 0, len(alertRuleGroupsWithFolder))
+
+	for _, ruleGroup := range alertRuleGroupsWithFolder {
+		provisionedAlertRules := make([]alertRule, 0, len(ruleGroup.Rules))
+
+		for _, rule := range ruleGroup.Rules {
+			isPaused := rule.IsPaused
+			if settingAlertRulesPaused {
+				isPaused = true
+			}
+
+			provisionedAlertRules = append(provisionedAlertRules, alertRule{
+				ID:                   rule.ID,
+				UID:                  rule.UID,
+				OrgID:                rule.OrgID,
+				FolderUID:            rule.NamespaceUID,
+				RuleGroup:            rule.RuleGroup,
+				Title:                rule.Title,
+				For:                  model.Duration(rule.For),
+				Condition:            rule.Condition,
+				Data:                 ngalertapi.ApiAlertQueriesFromAlertQueries(rule.Data),
+				Updated:              rule.Updated,
+				NoDataState:          rule.NoDataState.String(),
+				ExecErrState:         rule.ExecErrState.String(),
+				Annotations:          rule.Annotations,
+				Labels:               rule.Labels,
+				IsPaused:             isPaused,
+				NotificationSettings: ngalertapi.AlertRuleNotificationSettingsFromNotificationSettings(rule.NotificationSettings),
+				Record:               ngalertapi.ApiRecordFromModelRecord(rule.Record),
+			})
+		}
+
+		alertRuleGroups = append(alertRuleGroups, alertRuleGroup{
+			Title:     ruleGroup.Title,
+			FolderUID: ruleGroup.FolderUID,
+			Interval:  ruleGroup.Interval,
+			Rules:     provisionedAlertRules,
+		})
+	}
+
+	return alertRuleGroups, nil
 }

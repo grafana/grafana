@@ -7,8 +7,9 @@ import (
 	"time"
 
 	"github.com/golang/mock/gomock"
-	"github.com/grafana/authlib/claims"
 	"github.com/stretchr/testify/assert"
+
+	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
@@ -28,7 +29,29 @@ func TestRender_Authenticate(t *testing.T) {
 
 	tests := []TestCase{
 		{
-			desc:      "expect valid render key to return render user identity",
+			desc:      "expect valid render key to return anonymous user identity for org role Viewer",
+			renderKey: "123",
+			req: &authn.Request{
+				HTTPRequest: &http.Request{
+					Header: map[string][]string{"Cookie": {"renderKey=123"}},
+				},
+			},
+			expectedIdentity: &authn.Identity{
+				ID:              "0",
+				Type:            claims.TypeAnonymous,
+				OrgID:           1,
+				OrgRoles:        map[int64]org.RoleType{1: org.RoleViewer},
+				AuthenticatedBy: login.RenderModule,
+				ClientParams:    authn.ClientParams{SyncPermissions: true},
+			},
+			expectedRenderUsr: &rendering.RenderUser{
+				OrgID:   1,
+				UserID:  0,
+				OrgRole: "Viewer",
+			},
+		},
+		{
+			desc:      "expect valid render key to return render user identity for org role Admin",
 			renderKey: "123",
 			req: &authn.Request{
 				HTTPRequest: &http.Request{
@@ -39,14 +62,14 @@ func TestRender_Authenticate(t *testing.T) {
 				ID:              "0",
 				Type:            claims.TypeRenderService,
 				OrgID:           1,
-				OrgRoles:        map[int64]org.RoleType{1: org.RoleViewer},
+				OrgRoles:        map[int64]org.RoleType{1: org.RoleAdmin},
 				AuthenticatedBy: login.RenderModule,
 				ClientParams:    authn.ClientParams{SyncPermissions: true},
 			},
 			expectedRenderUsr: &rendering.RenderUser{
 				OrgID:   1,
 				UserID:  0,
-				OrgRole: "Viewer",
+				OrgRole: "Admin",
 			},
 		},
 		{

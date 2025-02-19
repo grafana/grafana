@@ -1,13 +1,13 @@
 import { concat } from 'lodash';
-import type { languages, editor, Position, IRange, IDisposable } from 'monaco-editor/esm/vs/editor/editor.api';
+import type { IDisposable, IRange, Position, editor, languages } from 'monaco-editor/esm/vs/editor/editor.api';
 
 import type { Monaco } from '@grafana/ui';
 
 import { getAlertManagerSuggestions } from './alertManagerSuggestions';
 import { SuggestionDefinition } from './suggestionDefinition';
 import {
-  getAlertsSuggestions,
   getAlertSuggestions,
+  getAlertsSuggestions,
   getGlobalSuggestions,
   getKeyValueSuggestions,
   getSnippetsSuggestions,

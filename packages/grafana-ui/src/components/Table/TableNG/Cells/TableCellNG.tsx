@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { ReactNode, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { TableCellDisplayMode } from '@grafana/schema';
+import { TableAutoCellOptions, TableCellDisplayMode } from '@grafana/schema';
 
 import { useStyles2 } from '../../../../themes';
 import { IconButton } from '../../../IconButton/IconButton';
@@ -39,14 +39,13 @@ export function TableCellNG(props: any) {
     cellInspect,
   } = props;
   const { config: fieldConfig } = field;
-  const { type: cellType } = fieldConfig.custom.cellOptions;
+  const defaultCellOptions: TableAutoCellOptions = { type: TableCellDisplayMode.Auto };
+  const cellOptions = fieldConfig.custom?.cellOptions ?? defaultCellOptions;
+  const { type: cellType } = cellOptions;
 
   const isRightAligned = getTextAlign(field) === 'flex-end';
   const displayValue = field.display!(value);
-  const colors = useMemo(
-    () => getCellColors(theme, fieldConfig.custom.cellOptions, displayValue),
-    [theme, fieldConfig.custom.cellOptions, displayValue]
-  );
+  const colors = useMemo(() => getCellColors(theme, cellOptions, displayValue), [theme, cellOptions, displayValue]);
   const styles = useStyles2(getStyles, isRightAligned, colors);
 
   // TODO
@@ -100,7 +99,7 @@ export function TableCellNG(props: any) {
     case TableCellDisplayMode.Image:
       cell = (
         <ImageCell
-          cellOptions={fieldConfig.custom.cellOptions}
+          cellOptions={cellOptions}
           field={field}
           height={height}
           justifyContent={justifyContent}
@@ -117,13 +116,7 @@ export function TableCellNG(props: any) {
     case TableCellDisplayMode.Auto:
     default:
       cell = (
-        <AutoCell
-          value={value}
-          field={field}
-          theme={theme}
-          justifyContent={justifyContent}
-          cellOptions={fieldConfig.custom.cellOptions}
-        />
+        <AutoCell value={value} field={field} theme={theme} justifyContent={justifyContent} cellOptions={cellOptions} />
       );
   }
 

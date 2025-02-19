@@ -1,6 +1,6 @@
 import { config } from '@grafana/runtime';
 import { SceneDataProvider, SceneDataTransformer, SceneQueryRunner } from '@grafana/scenes';
-import { PanelModel } from 'app/features/dashboard/state';
+import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 
 import { DashboardDatasourceBehaviour } from '../scene/DashboardDatasourceBehaviour';
 

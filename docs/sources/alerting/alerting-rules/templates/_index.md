@@ -18,16 +18,16 @@ labels:
 title: Template annotations and labels
 weight: 500
 refs:
-  labels:
+  reference-labels:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/annotation-label/#labels
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/reference/#labels
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/annotation-label/#labels
-  values:
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/reference/#labels
+  reference-values:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/annotation-label/#values
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/reference/#values
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/annotation-label/#values
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/reference/#values
   annotations:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/annotation-label/#annotations
@@ -63,14 +63,19 @@ refs:
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/reference/#notification-data
   view-alert-state:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/manage-notifications/view-state-health/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/monitor-status/view-alert-state/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/manage-notifications/view-state-health/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/monitor-status/view-alert-state/
   preview-notifications:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/manage-notification-templates/#preview-notification-templates
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/manage-notification-templates/#preview-notification-templates
+  labels:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/latest/alerting/fundamentals/alert-rules/annotation-label/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/annotation-label/
 ---
 
 # Template annotations and labels
@@ -92,7 +97,7 @@ Refer to [Templates Introduction](ref:intro-to-templates) for a more detailed ex
 
 Both types of templates are written in the Go templating system. However, it's important to understand that variables and functions used in notification templates are different from those used in annotation and label templates.
 
-1.  **Template annotations and labels**: These templates add extra information to individual alert instances. Template variables like [`$labels`](ref:labels) and [`$values`](ref:values) represent alert query data of the individual alert instance.
+1.  **Template annotations and labels**: These templates add extra information to individual alert instances. Template variables like [`$labels`](ref:reference-labels) and [`$values`](ref:reference-values) represent alert query data of the individual alert instance.
 1.  **Template notifications**: Notification templates format the notification content for a group of alerts. Variables like [`.Alerts`](ref:notification-data-reference) include all firing and resolved alerts in the notification.
 
 ## Template annotations
@@ -111,11 +116,11 @@ CPU usage has exceeded 80% for the last 5 minutes.
 
 However, if you want to display dynamic query values in annotations, you need to use template code. Common use cases include:
 
-- Displaying the query value or threshold that triggered the alert.
-- Highlighting label information that identifies the alert, such as environment, region, or priority.
+- Displaying the query value that triggered the alert.
+- Highlighting label information that identifies the alert, such as the environment, instance, or region.
 - Providing specific instructions based on query values.
-- Customizing runbook links depending on query or label values.
-- Including contact information based on alert labels.
+- Customizing runbook links depending on query labels.
+- Including contact information based on query labels.
 
 For instance, you can template the previous example to display the specific instance and CPU value that triggered the alert.
 
@@ -213,3 +218,7 @@ For further details on how to template alert rules, refer to:
 
 - [Annotation and label template reference](ref:alert-rule-template-reference)
 - [Annotation and label examples](ref:alert-rule-template-examples)
+
+{{< admonition type="tip" >}}
+For a practical example of templating, refer to our [Getting Started with Templating tutorial](https://grafana.com/tutorials/alerting-get-started-pt4/).
+{{< /admonition  >}}

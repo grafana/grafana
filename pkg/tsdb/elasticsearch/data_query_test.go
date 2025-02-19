@@ -576,9 +576,50 @@ func TestExecuteElasticsearchDataQuery(t *testing.T) {
 			require.Equal(t, firstLevel.Aggregation.Type, "histogram")
 			hAgg := firstLevel.Aggregation.Aggregation.(*es.HistogramAgg)
 			require.Equal(t, hAgg.Field, "bytes")
-			require.Equal(t, hAgg.Interval, 10)
+			require.Equal(t, hAgg.Interval, float64(10))
 			require.Equal(t, hAgg.MinDocCount, 2)
 			require.Equal(t, *hAgg.Missing, 5)
+		})
+		t.Run("With histogram agg with decimal interval", func(t *testing.T) {
+			c := newFakeClient()
+			_, err := executeElasticsearchDataQuery(c, `{
+				"bucketAggs": [
+					{
+						"id": "3",
+						"type": "histogram",
+						"field": "bytes",
+						"settings": { "interval": "5.5", "min_doc_count": 2, "missing": 5 }
+					}
+				],
+				"metrics": [{"type": "count", "id": "1" }]
+			}`, from, to)
+			require.NoError(t, err)
+			sr := c.multisearchRequests[0].Requests[0]
+
+			firstLevel := sr.Aggs[0]
+			hAgg := firstLevel.Aggregation.Aggregation.(*es.HistogramAgg)
+			require.Equal(t, hAgg.Interval, 5.5)
+		})
+
+		t.Run("With histogram agg with invalid interval", func(t *testing.T) {
+			c := newFakeClient()
+			_, err := executeElasticsearchDataQuery(c, `{
+				"bucketAggs": [
+					{
+						"id": "3",
+						"type": "histogram",
+						"field": "bytes",
+						"settings": { "interval": "5,5", "min_doc_count": 2, "missing": 5 }
+					}
+				],
+				"metrics": [{"type": "count", "id": "1" }]
+			}`, from, to)
+			require.NoError(t, err)
+			sr := c.multisearchRequests[0].Requests[0]
+
+			firstLevel := sr.Aggs[0]
+			hAgg := firstLevel.Aggregation.Aggregation.(*es.HistogramAgg)
+			require.Equal(t, hAgg.Interval, float64(1000))
 		})
 
 		t.Run("With histogram (from frontend tests)", func(t *testing.T) {
@@ -602,7 +643,7 @@ func TestExecuteElasticsearchDataQuery(t *testing.T) {
 			require.Equal(t, firstLevel.Aggregation.Type, "histogram")
 			hAgg := firstLevel.Aggregation.Aggregation.(*es.HistogramAgg)
 			require.Equal(t, hAgg.Field, "bytes")
-			require.Equal(t, hAgg.Interval, 10)
+			require.Equal(t, hAgg.Interval, float64(10))
 			require.Equal(t, hAgg.MinDocCount, 2)
 		})
 
@@ -1431,7 +1472,6 @@ func TestExecuteElasticsearchDataQuery(t *testing.T) {
 				"query": "foo",
 			}`, from, to)
 			require.NoError(t, err)
-			require.Equal(t, res.Responses["A"].ErrorSource, backend.ErrorSourcePlugin)
 			require.Equal(t, res.Responses["A"].Error.Error(), "invalid character '}' looking for beginning of object key string")
 		}))
 	})

@@ -116,6 +116,7 @@ For details, refer to [Configuring using Workload Identity](#configuring-using-w
 | **Application (client) ID** | Sets the application/client ID for the Azure AD app registration to use for authentication.                                                                                                                                                                                                           |
 | **Client secret**           | Sets the application client secret for the Azure AD app registration to use for authentication. For details, see the [Azure application secret docs](https://docs.microsoft.com/en-us/azure/active-directory/develop/howto-create-service-principal-portal#option-2-create-a-new-application-secret). |
 | **Default subscription**    | _(Optional)_ Sets a default subscription for template variables to use.                                                                                                                                                                                                                               |
+| **Enable Basic Logs**       | Allows this data source to execute queries against [Basic Logs tables](https://learn.microsoft.com/en-us/azure/azure-monitor/logs/basic-logs-query?tabs=portal-1) in supported Log Analytics Workspaces. These queries may incur additional costs.                                                    |
 
 ### Provision the data source
 
@@ -210,6 +211,10 @@ The public cloud name is `AzureCloud`, the Chinese national cloud name is `Azure
 {{< /admonition >}}
 
 ### Configure Managed Identity
+
+{{< admonition type="note" >}}
+Managed Identity is available only in [Azure Managed Grafana](https://azure.microsoft.com/en-us/products/managed-grafana) or Grafana OSS/Enterprise when deployed in Azure. It is not available in Grafana Cloud.
+{{< /admonition >}}
 
 You can use managed identity to configure Azure Monitor in Grafana if you host Grafana in Azure (such as an App Service or with Azure Virtual Machines) and have managed identity enabled on your VM.
 This lets you securely authenticate data sources without manually configuring credentials via Azure AD App Registrations.

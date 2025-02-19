@@ -267,7 +267,7 @@ export function createFolder(payload: any) {
 
 export const SLICE_FOLDER_RESULTS_TO = 1000;
 
-export function searchFolders(
+export async function searchFolders(
   query: any,
   permission?: PermissionLevelString,
   type: SearchQueryType = SearchQueryType.Folder
@@ -282,7 +282,4 @@ export function searchFolders(
 
 export function getFolderByUid(uid: string): Promise<{ uid: string; title: string }> {
   return getBackendSrv().get(`/api/folders/${uid}`);
-}
-export function getFolderById(id: number): Promise<{ id: number; title: string }> {
-  return getBackendSrv().get(`/api/folders/id/${id}`);
 }

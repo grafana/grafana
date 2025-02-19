@@ -11,10 +11,11 @@ import {
   DataTopic,
 } from '@grafana/data';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { PanelModel } from 'app/features/dashboard/state';
+import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { QueryRunnerOptions } from 'app/features/query/state/PanelQueryRunner';
 
-import { DashboardQuery, SHARED_DASHBOARD_QUERY } from './types';
+import { SHARED_DASHBOARD_QUERY } from './constants';
+import { DashboardQuery } from './types';
 
 export function isSharedDashboardQuery(datasource: string | DataSourceRef | DataSourceApi | null) {
   if (!datasource) {

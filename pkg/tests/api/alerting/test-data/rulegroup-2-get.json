@@ -12,8 +12,6 @@
         "annotation": "test-annotation"
       },
       "grafana_alert": {
-        "id": 3,
-        "orgId": 1,
         "title": "Rule3",
         "condition": "A",
         "data": [

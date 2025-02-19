@@ -1,5 +1,6 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/datasource.ts
 import { defaults } from 'lodash';
+import { tz } from 'moment-timezone';
 import { lastValueFrom, Observable, throwError } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import semver from 'semver/preload';
@@ -71,6 +72,7 @@ import {
   RawRecordingRules,
   RuleQueryMapping,
 } from './types';
+import { utf8Support, wrapUtf8Filters } from './utf8_support';
 import { PrometheusVariableSupport } from './variables';
 
 const ANNOTATION_QUERY_STEP_DEFAULT = '60s';
@@ -372,13 +374,32 @@ export class PrometheusDatasource
   }
 
   processTargetV2(target: PromQuery, request: DataQueryRequest<PromQuery>) {
+    // The `utcOffsetSec` parameter is required by the backend to correctly align time ranges.
+    // This alignment ensures that relative time ranges (e.g., "Last N hours/days/years") are adjusted
+    // according to the user's selected time zone, rather than defaulting to UTC.
+    //
+    // Example: If the user selects "Last 5 days," each day should begin at 00:00 in the chosen time zone,
+    // rather than at 00:00 UTC, ensuring an accurate breakdown.
+    //
+    // This adjustment does not apply to absolute time ranges, where users explicitly set
+    // the start and end timestamps.
+    //
+    // Handling `utcOffsetSec`:
+    // - When using the browser's time zone, the UTC offset is derived from the request range object.
+    // - When the user selects a custom time zone, the UTC offset must be calculated accordingly.
+    // More details:
+    // - Issue that led to the introduction of utcOffsetSec: https://github.com/grafana/grafana/issues/17278
+    // - Implementation PR: https://github.com/grafana/grafana/pull/17477
+    let utcOffset = request.range.to.utcOffset();
+    if (request.timezone !== 'browser') {
+      utcOffset = tz(request.timezone).utcOffset();
+    }
     const processedTargets: PromQuery[] = [];
     const processedTarget = {
       ...target,
       exemplar: this.shouldRunExemplarQuery(target, request),
       requestId: request.panelId + target.refId,
-      // We need to pass utcOffsetSec to backend to calculate aligned range
-      utcOffsetSec: request.range.to.utcOffset() * 60,
+      utcOffsetSec: utcOffset * 60,
     };
 
     if (config.featureToggles.promQLScope) {
@@ -455,13 +476,15 @@ export class PrometheusDatasource
       return Promise.resolve([]);
     }
 
+    const timeRange = options?.range ?? this.languageProvider.timeRange ?? getDefaultTimeRange();
+
     const scopedVars = {
       ...this.getIntervalVars(),
-      ...this.getRangeScopedVars(options?.range ?? getDefaultTimeRange()),
+      ...this.getRangeScopedVars(timeRange),
     };
     const interpolated = this.templateSrv.replace(query, scopedVars, this.interpolateQueryExpr);
     const metricFindQuery = new PrometheusMetricFindQuery(this, interpolated);
-    return metricFindQuery.process(options?.range ?? getDefaultTimeRange());
+    return metricFindQuery.process(timeRange);
   }
 
   getIntervalVars() {
@@ -537,7 +560,11 @@ export class PrometheusDatasource
     const annotation = options.annotation;
     const { tagKeys = '', titleFormat = '', textFormat = '' } = annotation;
 
-    const step = rangeUtil.intervalToSeconds(annotation.step || ANNOTATION_QUERY_STEP_DEFAULT) * 1000;
+    const input = frames[0].meta?.executedQueryString || '';
+    const regex = /Step:\s*([\d\w]+)/;
+    const match = input.match(regex);
+    const stepValue = match ? match[1] : null;
+    const step = rangeUtil.intervalToSeconds(stepValue || ANNOTATION_QUERY_STEP_DEFAULT) * 1000;
     const tagKeysArray = tagKeys.split(',');
 
     const eventList: AnnotationEvent[] = [];
@@ -620,7 +647,7 @@ export class PrometheusDatasource
   // it is used in metric_find_query.ts
   // and in Tempo here grafana/public/app/plugins/datasource/tempo/QueryEditor/ServiceGraphSection.tsx
   async getTagKeys(options: DataSourceGetTagKeysOptions<PromQuery>): Promise<MetricFindValue[]> {
-    if (config.featureToggles.promQLScope && !!options) {
+    if (config.featureToggles.promQLScope && (options?.scopes?.length ?? 0) > 0) {
       const suggestions = await this.languageProvider.fetchSuggestions(
         options.timeRange,
         options.queries,
@@ -701,7 +728,11 @@ export class PrometheusDatasource
     let expandedQueries = queries;
     if (queries && queries.length) {
       expandedQueries = queries.map((query) => {
-        const interpolatedQuery = this.templateSrv.replace(query.expr, scopedVars, this.interpolateQueryExpr);
+        const interpolatedQuery = this.templateSrv.replace(
+          query.expr,
+          scopedVars,
+          this.interpolateExploreMetrics(query.fromExploreMetrics)
+        );
         const replacedInterpolatedQuery = config.featureToggles.promQLScope
           ? interpolatedQuery
           : this.templateSrv.replace(
@@ -921,7 +952,11 @@ export class PrometheusDatasource
 
     // We need a first replace to evaluate variables before applying adhoc filters
     // This is required for an expression like `metric > $VAR` where $VAR is a float to which we must not add adhoc filters
-    const expr = this.templateSrv.replace(target.expr, variables, this.interpolateQueryExpr);
+    const expr = this.templateSrv.replace(
+      target.expr,
+      variables,
+      this.interpolateExploreMetrics(target.fromExploreMetrics)
+    );
 
     // Apply ad-hoc filters
     // When ad-hoc filters are applied, we replace again the variables in case the ad-hoc filters also reference a variable
@@ -944,6 +979,20 @@ export class PrometheusDatasource
 
   interpolateString(string: string, scopedVars?: ScopedVars) {
     return this.templateSrv.replace(string, scopedVars, this.interpolateQueryExpr);
+  }
+
+  interpolateExploreMetrics(fromExploreMetrics?: boolean) {
+    return (value: string | string[] = [], variable: QueryVariableModel | CustomVariableModel) => {
+      if (typeof value === 'string' && fromExploreMetrics) {
+        if (variable.name === 'filters') {
+          return wrapUtf8Filters(value);
+        }
+        if (variable.name === 'groupby') {
+          return utf8Support(value);
+        }
+      }
+      return this.interpolateQueryExpr(value, variable);
+    };
   }
 
   getDebounceTimeInMilliseconds(): number {
@@ -1042,13 +1091,46 @@ export function extractRuleMappingFromGroups(groups: RawRecordingRules[]): RuleQ
   );
 }
 
-// NOTE: these two functions are very similar to the escapeLabelValueIn* functions
+// NOTE: these two functions are similar to the escapeLabelValueIn* functions
 // in language_utils.ts, but they are not exactly the same algorithm, and we found
 // no way to reuse one in the another or vice versa.
 export function prometheusRegularEscape<T>(value: T) {
-  return typeof value === 'string' ? value.replace(/\\/g, '\\\\').replace(/'/g, "\\\\'") : value;
+  if (typeof value !== 'string') {
+    return value;
+  }
+
+  if (config.featureToggles.prometheusSpecialCharsInLabelValues) {
+    // if the string looks like a complete label matcher (e.g. 'job="grafana"' or 'job=~"grafana"'),
+    // don't escape the encapsulating quotes
+    if (/^\w+(=|!=|=~|!~)".*"$/.test(value)) {
+      return value;
+    }
+
+    return value
+      .replace(/\\/g, '\\\\') // escape backslashes
+      .replace(/"/g, '\\"'); // escape double quotes
+  }
+
+  // classic behavior
+  return value
+    .replace(/\\/g, '\\\\') // escape backslashes
+    .replace(/'/g, "\\\\'"); // escape single quotes
 }
 
 export function prometheusSpecialRegexEscape<T>(value: T) {
-  return typeof value === 'string' ? value.replace(/\\/g, '\\\\\\\\').replace(/[$^*{}\[\]\'+?.()|]/g, '\\\\$&') : value;
+  if (typeof value !== 'string') {
+    return value;
+  }
+
+  if (config.featureToggles.prometheusSpecialCharsInLabelValues) {
+    return value
+      .replace(/\\/g, '\\\\\\\\') // escape backslashes
+      .replace(/"/g, '\\\\\\"') // escape double quotes
+      .replace(/[$^*{}\[\]\'+?.()|]/g, '\\\\$&'); // escape regex metacharacters
+  }
+
+  // classic behavior
+  return value
+    .replace(/\\/g, '\\\\\\\\') // escape backslashes
+    .replace(/[$^*{}\[\]+?.()|]/g, '\\\\$&'); // escape regex metacharacters
 }

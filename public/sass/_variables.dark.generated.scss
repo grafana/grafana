@@ -16,9 +16,9 @@ $theme-name: dark;
 
 // New Colors
 // -------------------------
-$blue-base: #3D71D9;
-$red-base: #D10E5C;
-$green-base: #1A7F4B;
+$blue-base: #3d71d9;
+$red-base: #d10e5c;
+$green-base: #1a7f4b;
 
 // Grays
 // -------------------------
@@ -49,14 +49,14 @@ $body-bg: #111217;
 
 $text-color: rgb(204, 204, 220);
 $text-color-weak: rgba(204, 204, 220, 0.65);
-$text-color-emphasis: #FFFFFF;
+$text-color-emphasis: #ffffff;
 
 
 // Links
 // -------------------------
 $link-color: rgb(204, 204, 220);
 $link-color-disabled: rgba(204, 204, 220, 0.6);
-$link-hover-color: #FFFFFF;
+$link-hover-color: #ffffff;
 
 // Typography
 // -------------------------
@@ -109,7 +109,7 @@ $btn-drag-image: '../img/grab_dark.svg';
 $input-bg: #111217;
 
 $input-color: rgb(204, 204, 220);
-$input-border-color: rgba(204, 204, 220, 0.20);
+$input-border-color: rgba(204, 204, 220, 0.2);
 
 // Dropdowns
 // -------------------------
@@ -131,15 +131,15 @@ $menu-dropdown-shadow: 0px 8px 24px rgb(1, 4, 9);
 
 // Form states and alerts
 // -------------------------
-$alert-error-bg: #D10E5C;
-$alert-success-bg: #1A7F4B;
-$alert-warning-bg: #FF9900;
-$alert-info-bg: #FF9900;
+$alert-error-bg: #d10e5c;
+$alert-success-bg: #1a7f4b;
+$alert-warning-bg: #ff9900;
+$alert-info-bg: #ff9900;
 
 // Tooltips and popovers
 // -------------------------
 $tooltipLinkColor: $link-color;
-$tooltipExternalLinkColor: #6E9FFF;
+$tooltipExternalLinkColor: #6e9fff;
 $graph-tooltip-bg: $dark-1;
 
 $tooltipBackground: #22252b;

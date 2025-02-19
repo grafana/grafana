@@ -3,6 +3,7 @@ import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Checkbox, Button, Tag, ModalsController, useStyles2 } from '@grafana/ui';
+import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
 import { DecoratedRevisionModel } from '../VersionsEditView';
 
@@ -64,6 +65,12 @@ export const VersionHistoryTable = ({ versions, canCompare, onCheck, onRestore }
                             version,
                             hideModal,
                             onRestore,
+                          });
+                          DashboardInteractions.versionRestoreClicked({
+                            version: version.version,
+                            index: idx,
+                            confirm: false,
+                            timestamp: version.created,
                           });
                         }}
                       >

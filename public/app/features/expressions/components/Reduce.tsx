@@ -1,18 +1,20 @@
 import * as React from 'react';
 
-import { SelectableValue } from '@grafana/data';
-import { InlineField, InlineFieldRow, Input, Select } from '@grafana/ui';
+import { CoreApp, SelectableValue } from '@grafana/data';
+import { Alert, InlineField, InlineFieldRow, Input, Select, TextLink } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
 
 import { ExpressionQuery, ExpressionQuerySettings, ReducerMode, reducerModes, reducerTypes } from '../types';
 
 interface Props {
+  app?: CoreApp;
   labelWidth?: number | 'auto';
   refIds: Array<SelectableValue<string>>;
   query: ExpressionQuery;
   onChange: (query: ExpressionQuery) => void;
 }
 
-export const Reduce = ({ labelWidth = 'auto', onChange, refIds, query }: Props) => {
+export const Reduce = ({ labelWidth = 'auto', onChange, app, refIds, query }: Props) => {
   const reducer = reducerTypes.find((o) => o.value === query.reducer);
 
   const onRefIdChange = (value: SelectableValue<string>) => {
@@ -30,6 +32,10 @@ export const Reduce = ({ labelWidth = 'auto', onChange, refIds, query }: Props) 
   const onModeChanged = (value: SelectableValue<ReducerMode>) => {
     let newSettings: ExpressionQuerySettings;
     switch (value.value) {
+      case ReducerMode.Strict:
+        newSettings = { mode: ReducerMode.Strict };
+        break;
+
       case ReducerMode.ReplaceNonNumbers:
         let replaceWithNumber = 0;
         if (query.settings?.mode === ReducerMode.ReplaceNonNumbers) {
@@ -40,6 +46,7 @@ export const Reduce = ({ labelWidth = 'auto', onChange, refIds, query }: Props) 
           replaceWithValue: replaceWithNumber,
         };
         break;
+
       default:
         newSettings = {
           mode: value.value,
@@ -66,8 +73,29 @@ export const Reduce = ({ labelWidth = 'auto', onChange, refIds, query }: Props) 
     );
   };
 
+  // for Alerting we really don't want to add additional confusing messages that would be unhelpful to the majority of our users
+  const strictModeNotification = () => {
+    const isWithinAlerting = app === CoreApp.UnifiedAlerting;
+    if (mode !== ReducerMode.Strict || isWithinAlerting) {
+      return null;
+    }
+
+    return (
+      <Alert title={t('reduce.strictMode.title', 'Strict Mode Behaviour')} severity="info">
+        <Trans i18nKey="reduce.strictMode.description">
+          When <code>Reduce Strict mode</code> is used, the <code>fill(null)</code> function (InfluxQL) will result in{' '}
+          <code>NaN</code>.{' '}
+          <TextLink href="https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/expression-queries/#reduction-modes">
+            See the documentation for more details.
+          </TextLink>
+        </Trans>
+      </Alert>
+    );
+  };
+
   return (
     <>
+      {strictModeNotification()}
       <InlineFieldRow>
         <InlineField label="Input" labelWidth={labelWidth}>
           <Select onChange={onRefIdChange} options={refIds} value={query.expression} width={'auto'} />

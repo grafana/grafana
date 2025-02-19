@@ -79,7 +79,8 @@ export const getContentItems = (
   seriesIdx: number | null | undefined,
   mode: TooltipDisplayMode,
   sortOrder: SortOrder,
-  fieldFilter = (field: Field) => true
+  fieldFilter = (field: Field) => true,
+  hideZeros = false
 ): VizTooltipItem[] => {
   let rows: VizTooltipItem[] = [];
 
@@ -116,7 +117,7 @@ export const getContentItems = (
 
     const v = fields[i].values[dataIdx];
 
-    if (v == null && field.config.noValue == null) {
+    if ((v == null && field.config.noValue == null) || (hideZeros && v === 0)) {
       continue;
     }
 

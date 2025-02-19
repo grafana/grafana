@@ -4,5 +4,6 @@ import { GeneralTableProps } from './types';
 
 export function Table(props: GeneralTableProps) {
   let table = props.useTableNg ? <TableNG {...props} /> : <TableRT {...props} />;
+  table = <TableRT {...props} />;
   return table;
 }

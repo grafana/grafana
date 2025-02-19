@@ -3,4 +3,4 @@ kind: Dashboard
 metadata:
   generateName: x # anything is ok here... except yes or true -- they become boolean!
 spec:
-  title: Dashboard with auto generated UID ${NOW}
+  title: Dashboard with auto generated name
