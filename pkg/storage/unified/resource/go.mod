@@ -11,8 +11,8 @@ replace (
 require (
 	github.com/fullstorydev/grpchan v1.1.1
 	github.com/google/uuid v1.6.0
-	github.com/grafana/authlib v0.0.0-20250218130339-1364fbcc4d77
-	github.com/grafana/authlib/types v0.0.0-20250120145936-5f0e28e7a87c
+	github.com/grafana/authlib v0.0.0-20250219100139-6a3b1bbb50e7
+	github.com/grafana/authlib/types v0.0.0-20250219092154-21ce22b49f31
 	github.com/grafana/dskit v0.0.0-20241105154643-a6b453a88040
 	github.com/grafana/grafana v11.4.0-00010101000000-000000000000+incompatible
 	github.com/grafana/grafana-plugin-sdk-go v0.266.0
