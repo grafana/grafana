@@ -33,6 +33,7 @@ import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 import { DashboardGridItem } from './DashboardGridItem';
 import { RowRepeaterBehavior } from './RowRepeaterBehavior';
 import { RowActions } from './row-actions/RowActions';
+import { LayoutOrchestrator } from '../layout-manager/LayoutOrchestrator';
 
 interface DefaultGridLayoutManagerState extends SceneObjectState {
   grid: SceneGridLayout;
@@ -464,8 +465,8 @@ function DefaultGridLayoutManagerRenderer({ model }: SceneComponentProps<Default
   const { children } = useSceneObjectState(model.state.grid, { shouldActivateOrKeepAlive: true });
   const dashboard = getDashboardSceneFor(model);
 
-  // If we are top level layout and have no children, show empty state
-  if (model.parent === dashboard && children.length === 0) {
+  // If we are top level layout or parent is orchestrator and we have no children, show empty state
+  if ((model.parent === dashboard || model.parent instanceof LayoutOrchestrator) && children.length === 0) {
     return (
       <DashboardEmpty dashboard={dashboard} canCreate={!!dashboard.state.meta.canEdit} key="dashboard-empty-state" />
     );

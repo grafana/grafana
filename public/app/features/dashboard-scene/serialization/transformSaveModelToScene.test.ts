@@ -47,6 +47,7 @@ import {
   transformSaveModelToScene,
   convertOldSnapshotToScenesSnapshot,
 } from './transformSaveModelToScene';
+import { LayoutOrchestrator } from '../scene/layout-manager/LayoutOrchestrator';
 
 describe('transformSaveModelToScene', () => {
   describe('when creating dashboard scene', () => {
@@ -193,7 +194,8 @@ describe('transformSaveModelToScene', () => {
       const oldModel = new DashboardModel(dashboard);
 
       const scene = createDashboardSceneFromDashboardModel(oldModel, dashboard);
-      const layout = scene.state.body as DefaultGridLayoutManager;
+      const orchestrator = scene.state.body as LayoutOrchestrator;
+      const layout = orchestrator.state.manager as DefaultGridLayoutManager;
       const body = layout.state.grid;
 
       expect(body.state.isLazy).toBeFalsy();
@@ -354,7 +356,8 @@ describe('transformSaveModelToScene', () => {
       const oldModel = new DashboardModel(dashboard);
 
       const scene = createDashboardSceneFromDashboardModel(oldModel, dashboard);
-      const layout = scene.state.body as DefaultGridLayoutManager;
+      const orchestrator = scene.state.body as LayoutOrchestrator;
+      const layout = orchestrator.state.manager as DefaultGridLayoutManager;
       const body = layout.state.grid;
 
       expect(body.state.children).toHaveLength(3);
@@ -407,7 +410,8 @@ describe('transformSaveModelToScene', () => {
       const oldModel = new DashboardModel(dashboard);
 
       const scene = createDashboardSceneFromDashboardModel(oldModel, dashboard);
-      const layout = scene.state.body as DefaultGridLayoutManager;
+      const orchestrator = scene.state.body as LayoutOrchestrator;
+      const layout = orchestrator.state.manager as DefaultGridLayoutManager;
       const body = layout.state.grid;
 
       expect(body.state.children).toHaveLength(1);
@@ -504,7 +508,8 @@ describe('transformSaveModelToScene', () => {
       const oldModel = new DashboardModel(dashboard);
 
       const scene = createDashboardSceneFromDashboardModel(oldModel, dashboard);
-      const layout = scene.state.body as DefaultGridLayoutManager;
+      const orchestrator = scene.state.body as LayoutOrchestrator;
+      const layout = orchestrator.state.manager as DefaultGridLayoutManager;
       const body = layout.state.grid;
 
       expect(body.state.children).toHaveLength(4);
@@ -817,7 +822,8 @@ describe('transformSaveModelToScene', () => {
         meta: {},
       });
 
-      const layout = scene.state.body as DefaultGridLayoutManager;
+      const orchestrator = scene.state.body as LayoutOrchestrator;
+      const layout = orchestrator.state.manager as DefaultGridLayoutManager;
       const body = layout.state.grid;
       const row2 = body.state.children[1] as SceneGridRow;
 

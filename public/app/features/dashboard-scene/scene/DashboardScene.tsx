@@ -79,6 +79,7 @@ import { setupKeyboardShortcuts } from './keyboardShortcuts';
 import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { DashboardLayoutManager } from './types/DashboardLayoutManager';
+import { LayoutOrchestrator } from './layout-manager/LayoutOrchestrator';
 
 export const PERSISTED_PROPS = ['title', 'description', 'tags', 'editable', 'graphTooltip', 'links', 'meta', 'preload'];
 export const PANEL_SEARCH_VAR = 'systemPanelFilterVar';
@@ -694,7 +695,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   }
 
   public hasDashboardAngularPlugins() {
-    const sceneGridLayout = this.state.body;
+    let sceneGridLayout = this.state.body;
+    if (sceneGridLayout instanceof LayoutOrchestrator) {
+      sceneGridLayout = sceneGridLayout.state.manager;
+    }
     if (!(sceneGridLayout instanceof DefaultGridLayoutManager)) {
       return false;
     }

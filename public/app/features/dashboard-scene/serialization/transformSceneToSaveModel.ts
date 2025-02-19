@@ -50,17 +50,20 @@ import { GRAFANA_DATASOURCE_REF } from './const';
 import { dataLayersToAnnotations } from './dataLayersToAnnotations';
 import { sceneVariablesSetToVariables } from './sceneVariablesSetToVariables';
 import { LayoutOrchestrator } from '../scene/layout-manager/LayoutOrchestrator';
+import { DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 
 export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = false): Dashboard {
   const state = scene.state;
   const timeRange = state.$timeRange!.state;
   const data = state.$data;
   const variablesSet = state.$variables;
-  if (!(state.body instanceof LayoutOrchestrator)) {
-    throw new Error('DashboardScene body expected to be LayoutOrchestrator');
+  let body: DashboardLayoutManager;
+  if (state.body instanceof LayoutOrchestrator) {
+    body = state.body.state.manager;
+  } else {
+    body = state.body;
   }
 
-  const body = state.body.state.manager;
   let panels: Panel[] = [];
   let variables: VariableModel[] = [];
 
