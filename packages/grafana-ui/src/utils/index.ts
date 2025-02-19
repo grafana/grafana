@@ -1,6 +1,7 @@
 import * as DOMUtil from './dom'; // includes Element.closest polyfill
 import * as ReactUtils from './reactUtils';
 
+export * from './clipboard';
 export * from './colors';
 export * from './validate';
 export * from './slate';
