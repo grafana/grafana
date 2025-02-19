@@ -1719,6 +1719,10 @@
       "cancel-upload": "Cancel upload",
       "file-too-large": "File is larger than {{size}}"
     },
+    "filter-by-name-transformer-editor": {
+      "deselect-all": "Deselect All",
+      "select-all": "Select All"
+    },
     "filter-input": {
       "clear": "Clear"
     },

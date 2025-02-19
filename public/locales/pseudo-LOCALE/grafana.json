@@ -1719,6 +1719,10 @@
       "cancel-upload": "Cäŉčęľ ūpľőäđ",
       "file-too-large": "Fįľę įş ľäřģęř ŧĥäŉ {{size}}"
     },
+    "filter-by-name-transformer-editor": {
+      "deselect-all": "Đęşęľęčŧ Åľľ",
+      "select-all": "Ŝęľęčŧ Åľľ"
+    },
     "filter-input": {
       "clear": "Cľęäř"
     },
