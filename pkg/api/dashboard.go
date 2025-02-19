@@ -11,7 +11,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/grafana/authlib/claims"
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -24,7 +24,9 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
+	"github.com/grafana/grafana/pkg/services/dashboardversion/dashverimpl"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/org"
 	pref "github.com/grafana/grafana/pkg/services/preference"
@@ -84,6 +86,8 @@ func dashboardGuardianResponse(err error) response.Response {
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
+//
+//nolint:gocyclo
 func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response {
 	ctx, span := tracer.Start(c.Req.Context(), "api.GetDashboard")
 	defer span.End()
@@ -150,10 +154,10 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 	// Finding creator and last updater of the dashboard
 	updater, creator := anonString, anonString
 	if dash.UpdatedBy > 0 {
-		updater = hs.getUserLogin(ctx, dash.UpdatedBy)
+		updater = hs.getIdentityName(ctx, dash.OrgID, dash.UpdatedBy)
 	}
 	if dash.CreatedBy > 0 {
-		creator = hs.getUserLogin(ctx, dash.CreatedBy)
+		creator = hs.getIdentityName(ctx, dash.OrgID, dash.CreatedBy)
 	}
 
 	annotationPermissions := &dashboardsV0.AnnotationPermission{}
@@ -187,11 +191,35 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 		PublicDashboardEnabled: publicDashboardEnabled,
 	}
 	metrics.MFolderIDsAPICount.WithLabelValues(metrics.GetDashboard).Inc()
-	// lookup folder title
-	// nolint:staticcheck
-	if dash.FolderID > 0 {
-		// nolint:staticcheck
-		query := dashboards.GetDashboardQuery{ID: dash.FolderID, OrgID: c.SignedInUser.GetOrgID()}
+	// lookup folder title & url
+	if dash.FolderUID != "" && hs.Features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
+		queryResult, err := hs.folderService.Get(ctx, &folder.GetFolderQuery{
+			OrgID:        c.SignedInUser.GetOrgID(),
+			UID:          &dash.FolderUID,
+			SignedInUser: c.SignedInUser,
+		})
+		if errors.Is(err, dashboards.ErrFolderNotFound) {
+			return response.Error(http.StatusNotFound, "Folder not found", err)
+		}
+		if apierrors.IsForbidden(err) {
+			// the dashboard is in a folder the user can't access, so return the dashboard without folder info
+			err = nil
+			queryResult = &folder.Folder{
+				UID: dash.FolderUID,
+			}
+		}
+		if err != nil {
+			hs.log.Error("Failed to get dashboard folder", "error", err)
+			return response.Error(http.StatusInternalServerError, "Dashboard folder could not be read", err)
+		}
+
+		meta.FolderUid = queryResult.UID
+		meta.FolderTitle = queryResult.Title
+		meta.FolderId = queryResult.ID // nolint:staticcheck
+		queryResult = queryResult.WithURL()
+		meta.FolderUrl = queryResult.URL
+	} else if dash.FolderID > 0 { // nolint:staticcheck
+		query := dashboards.GetDashboardQuery{ID: dash.FolderID, OrgID: c.SignedInUser.GetOrgID()} // nolint:staticcheck
 		metrics.MFolderIDsAPICount.WithLabelValues(metrics.GetDashboard).Inc()
 		queryResult, err := hs.DashboardService.GetDashboard(ctx, &query)
 		if err != nil {
@@ -265,16 +293,24 @@ func (hs *HTTPServer) getAnnotationPermissionsByScope(c *contextmodel.ReqContext
 	}
 }
 
-func (hs *HTTPServer) getUserLogin(ctx context.Context, userID int64) string {
-	ctx, span := tracer.Start(ctx, "api.getUserLogin")
+// getIdentityName returns name of either user or service account
+func (hs *HTTPServer) getIdentityName(ctx context.Context, orgID, id int64) string {
+	ctx, span := tracer.Start(ctx, "api.getIdentityName")
 	defer span.End()
 
-	query := user.GetUserByIDQuery{ID: userID}
-	user, err := hs.userService.GetByID(ctx, &query)
+	// We use GetSignedInUser here instead of GetByID so both user and service accounts are resolved.
+	ident, err := hs.userService.GetSignedInUser(ctx, &user.GetSignedInUserQuery{
+		UserID: id,
+		OrgID:  orgID,
+	})
 	if err != nil {
 		return anonString
 	}
-	return user.Login
+
+	if ident.IsIdentityType(claims.TypeServiceAccount) {
+		return ident.GetName()
+	}
+	return ident.GetLogin()
 }
 
 func (hs *HTTPServer) getDashboardHelper(ctx context.Context, orgID int64, id int64, uid string) (*dashboards.Dashboard, response.Response) {
@@ -475,12 +511,6 @@ func (hs *HTTPServer) deleteDashboard(c *contextmodel.ReqContext) response.Respo
 			"dashboard", dash.ID,
 			"identity", c.GetID(),
 			"error", err)
-	}
-
-	// deletes all related public dashboard entities
-	err = hs.PublicDashboardsApi.PublicDashboardService.DeleteByDashboard(c.Req.Context(), dash)
-	if err != nil {
-		hs.log.Error("Failed to delete public dashboard")
 	}
 
 	err = hs.DashboardService.DeleteDashboard(c.Req.Context(), dash.ID, dash.UID, c.SignedInUser.GetOrgID())
@@ -811,21 +841,22 @@ func (hs *HTTPServer) GetDashboardVersions(c *contextmodel.ReqContext) response.
 	}
 
 	query := dashver.ListDashboardVersionsQuery{
-		OrgID:        c.SignedInUser.GetOrgID(),
-		DashboardID:  dash.ID,
-		DashboardUID: dash.UID,
-		Limit:        c.QueryInt("limit"),
-		Start:        c.QueryInt("start"),
+		OrgID:         c.SignedInUser.GetOrgID(),
+		DashboardID:   dash.ID,
+		DashboardUID:  dash.UID,
+		Limit:         c.QueryInt("limit"),
+		Start:         c.QueryInt("start"),
+		ContinueToken: c.Query("continueToken"),
 	}
 
-	versions, err := hs.dashboardVersionService.List(c.Req.Context(), &query)
+	resp, err := hs.dashboardVersionService.List(c.Req.Context(), &query)
 	if err != nil {
 		return response.Error(http.StatusNotFound, fmt.Sprintf("No versions found for dashboardId %d", dash.ID), err)
 	}
 
-	loginMem := make(map[int64]string, len(versions))
-	res := make([]dashver.DashboardVersionMeta, 0, len(versions))
-	for _, version := range versions {
+	loginMem := make(map[int64]string, len(resp.Versions))
+	res := make([]dashver.DashboardVersionMeta, 0, len(resp.Versions))
+	for _, version := range resp.Versions {
 		msg := version.Message
 		if version.RestoredFrom == version.Version {
 			msg = "Initial save (created by migration)"
@@ -845,7 +876,7 @@ func (hs *HTTPServer) GetDashboardVersions(c *contextmodel.ReqContext) response.
 			if found {
 				creator = login
 			} else {
-				creator = hs.getUserLogin(c.Req.Context(), version.CreatedBy)
+				creator = hs.getIdentityName(c.Req.Context(), c.SignedInUser.GetOrgID(), version.CreatedBy)
 				if creator != anonString {
 					loginMem[version.CreatedBy] = creator
 				}
@@ -866,7 +897,10 @@ func (hs *HTTPServer) GetDashboardVersions(c *contextmodel.ReqContext) response.
 		})
 	}
 
-	return response.JSON(http.StatusOK, res)
+	return response.JSON(http.StatusOK, dashver.DashboardVersionResponseMeta{
+		Versions:      res,
+		ContinueToken: resp.ContinueToken,
+	})
 }
 
 // swagger:route GET /dashboards/id/{DashboardID}/versions/{DashboardVersionID} dashboard_versions getDashboardVersionByID
@@ -926,12 +960,15 @@ func (hs *HTTPServer) GetDashboardVersion(c *contextmodel.ReqContext) response.R
 		return dashboardGuardianResponse(err)
 	}
 
-	version, _ := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 32)
+	version, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
+	if err != nil {
+		return response.Err(err)
+	}
 	query := dashver.GetDashboardVersionQuery{
 		OrgID:        c.SignedInUser.GetOrgID(),
 		DashboardID:  dash.ID,
 		DashboardUID: dash.UID,
-		Version:      int(version),
+		Version:      version,
 	}
 
 	res, err := hs.dashboardVersionService.Get(c.Req.Context(), &query)
@@ -941,7 +978,7 @@ func (hs *HTTPServer) GetDashboardVersion(c *contextmodel.ReqContext) response.R
 
 	creator := anonString
 	if res.CreatedBy > 0 {
-		creator = hs.getUserLogin(c.Req.Context(), res.CreatedBy)
+		creator = hs.getIdentityName(c.Req.Context(), dash.OrgID, res.CreatedBy)
 	}
 
 	dashVersionMeta := &dashver.DashboardVersionMeta{
@@ -1141,7 +1178,7 @@ func (hs *HTTPServer) RestoreDashboardVersion(c *contextmodel.ReqContext) respon
 	saveCmd.Dashboard = version.Data
 	saveCmd.Dashboard.Set("version", dash.Version)
 	saveCmd.Dashboard.Set("uid", dash.UID)
-	saveCmd.Message = fmt.Sprintf("Restored from version %d", version.Version)
+	saveCmd.Message = dashverimpl.DashboardRestoreMessage(version.Version)
 	// nolint:staticcheck
 	saveCmd.FolderID = dash.FolderID
 	metrics.MFolderIDsAPICount.WithLabelValues(metrics.RestoreDashboardVersion).Inc()

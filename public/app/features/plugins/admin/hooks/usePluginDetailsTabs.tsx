@@ -42,7 +42,8 @@ export const usePluginDetailsTabs = (
   const navModelChildren = useMemo(() => {
     const canConfigurePlugins = plugin && contextSrv.hasPermissionInMetadata(AccessControlAction.PluginsWrite, plugin);
     const navModelChildren: NavModelItem[] = [];
-    if (isPublished) {
+    // currently the versions available of core plugins are not consistent
+    if (isPublished && !plugin?.isCore) {
       navModelChildren.push({
         text: PluginTabLabels.VERSIONS,
         id: PluginTabIds.VERSIONS,
@@ -51,7 +52,8 @@ export const usePluginDetailsTabs = (
         active: PluginTabIds.VERSIONS === currentPageId,
       });
     }
-    if (isPublished && plugin?.details?.changelog) {
+    // currently there is not changelog available for core plugins
+    if (isPublished && plugin?.details?.changelog && !plugin.isCore) {
       navModelChildren.push({
         text: PluginTabLabels.CHANGELOG,
         id: PluginTabIds.CHANGELOG,
@@ -96,6 +98,16 @@ export const usePluginDetailsTabs = (
         id: PluginTabIds.USAGE,
         url: `${pathname}?page=${PluginTabIds.USAGE}`,
         active: PluginTabIds.USAGE === currentPageId,
+      });
+    }
+
+    if (config.featureToggles.datasourceConnectionsTab && plugin?.type === PluginType.datasource) {
+      navModelChildren.push({
+        text: PluginTabLabels.DATASOURCE_CONNECTIONS,
+        icon: 'database',
+        id: PluginTabIds.DATASOURCE_CONNECTIONS,
+        url: `${pathname}?page=${PluginTabIds.DATASOURCE_CONNECTIONS}`,
+        active: PluginTabIds.DATASOURCE_CONNECTIONS === currentPageId,
       });
     }
 

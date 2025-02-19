@@ -5,13 +5,13 @@
     "resource": "dashboards",
     "name": "aaa"
   },
-  "kind": "dashboards",
+  "name": "aaa",
   "rv": 1234,
   "title": "Test AAA",
-  "title_sort": "test aaa",
+  "title_phrase": "test aaa",
+  "labels": {
+    "grafana.app/deprecatedInternalID": "123"
+  },
   "created": 1706690655000,
-  "createdBy": "user:abc",
-  "repository": {
-    "name": "SQL"
-  }
+  "createdBy": "user:abc"
 }

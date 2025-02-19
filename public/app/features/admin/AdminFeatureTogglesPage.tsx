@@ -55,7 +55,7 @@ export default function AdminFeatureTogglesPage() {
     <Page navId="feature-toggles" subTitle={subTitle}>
       <Page.Contents isLoading={featureState.loading}>
         <>
-          {featureState.error}
+          {featureState.error?.message}
           {featureState.loading && 'Fetching feature toggles'}
 
           <EditingAlert />

@@ -1,10 +1,11 @@
 import { Unsubscribable } from 'rxjs';
 
-import { SceneObjectBase, SceneObjectState, SceneQueryRunner, VizPanel } from '@grafana/scenes';
+import { SceneDataTransformer, SceneObjectBase, SceneObjectState, SceneQueryRunner, VizPanel } from '@grafana/scenes';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
+import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import {
-  findVizPanelByKey,
+  findOriginalVizPanelByKey,
   getDashboardSceneFor,
   getLibraryPanelBehavior,
   getQueryRunnerFor,
@@ -25,24 +26,25 @@ export class DashboardDatasourceBehaviour extends SceneObjectBase<DashboardDatas
   }
 
   private _activationHandler() {
-    const dashboardDsQueryRunner = this.parent;
+    const queryRunner = this.parent;
     let libraryPanelSub: Unsubscribable;
+    let transformerSub: Unsubscribable;
     let dashboard: DashboardScene;
-    if (!(dashboardDsQueryRunner instanceof SceneQueryRunner)) {
+    if (!(queryRunner instanceof SceneQueryRunner)) {
       throw new Error('DashboardDatasourceBehaviour must be attached to a SceneQueryRunner');
     }
 
-    if (dashboardDsQueryRunner.state.datasource?.uid !== SHARED_DASHBOARD_QUERY) {
+    if (!this.containsDashboardDSQueries(queryRunner)) {
       return;
     }
 
     try {
-      dashboard = getDashboardSceneFor(dashboardDsQueryRunner);
+      dashboard = getDashboardSceneFor(queryRunner);
     } catch {
       return;
     }
 
-    const dashboardQuery = dashboardDsQueryRunner.state.queries.find((query) => query.panelId !== undefined);
+    const dashboardQuery = queryRunner.state.queries.find((query) => query.panelId !== undefined);
 
     if (!dashboardQuery) {
       return;
@@ -51,7 +53,8 @@ export class DashboardDatasourceBehaviour extends SceneObjectBase<DashboardDatas
     // find the source panel referenced in the the dashboard ds query
     const panelId = dashboardQuery.panelId;
     const vizKey = getVizPanelKeyForPanelId(panelId);
-    const sourcePanel = findVizPanelByKey(dashboard, vizKey);
+    // We're trying to find the original panel, not a cloned one, since `panelId` alone cannot resolve clones
+    const sourcePanel = findOriginalVizPanelByKey(dashboard, vizKey);
 
     if (!(sourcePanel instanceof VizPanel)) {
       return;
@@ -61,7 +64,7 @@ export class DashboardDatasourceBehaviour extends SceneObjectBase<DashboardDatas
     const libraryPanelBehaviour = getLibraryPanelBehavior(sourcePanel);
     if (libraryPanelBehaviour && !libraryPanelBehaviour.state.isLoaded) {
       libraryPanelSub = libraryPanelBehaviour.subscribeToState((newLibPanel) => {
-        this.handleLibPanelStateUpdates(newLibPanel, dashboardDsQueryRunner, sourcePanel);
+        this.handleLibPanelStateUpdates(newLibPanel, queryRunner, sourcePanel);
       });
       return;
     }
@@ -72,8 +75,22 @@ export class DashboardDatasourceBehaviour extends SceneObjectBase<DashboardDatas
       throw new Error('Could not find SceneQueryRunner for panel');
     }
 
+    const dataTransformer = sourcePanelQueryRunner.parent;
+
+    if (dataTransformer instanceof SceneDataTransformer && dataTransformer.state.transformations.length) {
+      // in mixed DS scenario we complete the observable and merge data, so on a variable change
+      // the data transformer will emit but there will be no subscription and thus not visual update
+      // on the panel. Similar thing happens when going to edit mode and back, where we unsubscribe and
+      // since we never re-run the query, only reprocess the transformations, the panel will not update.
+      transformerSub = dataTransformer.subscribeToState((newState, oldState) => {
+        if (newState.data !== oldState.data) {
+          queryRunner.runQueries();
+        }
+      });
+    }
+
     if (this.prevRequestId && this.prevRequestId !== sourcePanelQueryRunner.state.data?.request?.requestId) {
-      dashboardDsQueryRunner.runQueries();
+      queryRunner.runQueries();
     }
 
     return () => {
@@ -81,7 +98,22 @@ export class DashboardDatasourceBehaviour extends SceneObjectBase<DashboardDatas
       if (libraryPanelSub) {
         libraryPanelSub.unsubscribe();
       }
+
+      if (transformerSub) {
+        transformerSub.unsubscribe();
+      }
     };
+  }
+
+  private containsDashboardDSQueries(queryRunner: SceneQueryRunner): boolean {
+    if (queryRunner.state.datasource?.uid === SHARED_DASHBOARD_QUERY) {
+      return true;
+    }
+
+    return (
+      queryRunner.state.datasource?.uid === MIXED_DATASOURCE_NAME &&
+      queryRunner.state.queries.some((query) => query.datasource?.uid === SHARED_DASHBOARD_QUERY)
+    );
   }
 
   private handleLibPanelStateUpdates(

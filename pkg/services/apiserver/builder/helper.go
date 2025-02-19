@@ -2,9 +2,14 @@ package builder
 
 import (
 	"context"
+	"encoding/csv"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
+	"os"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -28,10 +33,16 @@ import (
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 )
 
+type BuildHandlerChainFuncFromBuilders = func([]APIGroupBuilder) BuildHandlerChainFunc
 type BuildHandlerChainFunc = func(delegateHandler http.Handler, c *genericapiserver.Config) http.Handler
+
+func ProvideDefaultBuildHandlerChainFuncFromBuilders() BuildHandlerChainFuncFromBuilders {
+	return GetDefaultBuildHandlerChainFunc
+}
 
 // PathRewriters is a temporary hack to make rest.Connecter work with resource level routes (TODO)
 var PathRewriters = []filters.PathRewriter{
@@ -48,12 +59,6 @@ var PathRewriters = []filters.PathRewriter{
 		},
 	},
 	{
-		Pattern: regexp.MustCompile(`(/apis/iam.grafana.app/v0alpha1/namespaces/.*/display$)`),
-		ReplaceFunc: func(matches []string) string {
-			return matches[1] + "/name" // connector requires a name
-		},
-	},
-	{
 		Pattern: regexp.MustCompile(`(/apis/.*/v0alpha1/namespaces/.*/queryconvert$)`),
 		ReplaceFunc: func(matches []string) string {
 			return matches[1] + "/name" // connector requires a name
@@ -61,7 +66,7 @@ var PathRewriters = []filters.PathRewriter{
 	},
 }
 
-func getDefaultBuildHandlerChainFunc(builders []APIGroupBuilder) BuildHandlerChainFunc {
+func GetDefaultBuildHandlerChainFunc(builders []APIGroupBuilder) BuildHandlerChainFunc {
 	return func(delegateHandler http.Handler, c *genericapiserver.Config) http.Handler {
 		requestHandler, err := GetCustomRoutesHandler(
 			delegateHandler,
@@ -101,7 +106,7 @@ func SetupConfig(
 	buildVersion string,
 	buildCommit string,
 	buildBranch string,
-	buildHandlerChainFunc func(delegateHandler http.Handler, c *genericapiserver.Config) http.Handler,
+	buildHandlerChainFuncFromBuilders BuildHandlerChainFuncFromBuilders,
 ) error {
 	serverConfig.AdmissionControl = NewAdmissionFromBuilders(builders)
 	defsGetter := GetOpenAPIDefinitions(builders)
@@ -116,15 +121,104 @@ func SetupConfig(
 	// Add the custom routes to service discovery
 	serverConfig.OpenAPIV3Config.PostProcessSpec = getOpenAPIPostProcessor(buildVersion, builders)
 	serverConfig.OpenAPIV3Config.GetOperationIDAndTagsFromRoute = func(r common.Route) (string, []string, error) {
+		meta := r.Metadata()
+		kind := ""
+		action := ""
+		sub := ""
+
 		tags := []string{}
-		prop, ok := r.Metadata()["x-kubernetes-group-version-kind"]
+		prop, ok := meta["x-kubernetes-group-version-kind"]
 		if ok {
 			gvk, ok := prop.(metav1.GroupVersionKind)
 			if ok && gvk.Kind != "" {
+				kind = gvk.Kind
 				tags = append(tags, gvk.Kind)
 			}
 		}
-		return r.OperationName(), tags, nil
+		prop, ok = meta["x-kubernetes-action"]
+		if ok {
+			action = fmt.Sprintf("%v", prop)
+		}
+
+		isNew := false
+		if _, err := os.Stat("test.csv"); errors.Is(err, os.ErrNotExist) {
+			isNew = true
+		}
+
+		if action == "connect" {
+			idx := strings.LastIndex(r.Path(), "/{name}/")
+			if idx > 0 {
+				sub = r.Path()[(idx + len("/{name}/")):]
+			}
+		}
+
+		operationAlt := r.OperationName()
+		if action != "" {
+			if action == "connect" {
+				idx := strings.Index(r.OperationName(), "Namespaced")
+				if idx > 0 {
+					operationAlt = strings.ToLower(r.Method()) +
+						r.OperationName()[idx:]
+				}
+			}
+		}
+
+		operationAlt = strings.ReplaceAll(operationAlt, "Namespaced", "")
+		if strings.HasPrefix(operationAlt, "post") {
+			operationAlt = "create" + operationAlt[len("post"):]
+		} else if strings.HasPrefix(operationAlt, "read") {
+			operationAlt = "get" + operationAlt[len("read"):]
+		} else if strings.HasPrefix(operationAlt, "patch") {
+			operationAlt = "update" + operationAlt[len("patch"):]
+		}
+
+		// Audit our options here
+		if false {
+			// Safe to ignore G304 -- this will be removed before merging to main, and just helps audit the conversion
+			// nolint:gosec
+			f, err := os.OpenFile("test.csv", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+			if err != nil {
+				fmt.Printf("ERROR: %s\n", err)
+			} else {
+				metastr, _ := json.Marshal(meta)
+
+				prop, ok = meta["x-kubernetes-group-version-kind"]
+				if ok {
+					gvk, ok := prop.(metav1.GroupVersionKind)
+					if ok {
+						kind = gvk.Kind
+					}
+				}
+
+				w := csv.NewWriter(f)
+				if isNew {
+					_ = w.Write([]string{
+						"#Path",
+						"Method",
+						"action",
+						"kind",
+						"sub",
+						"OperationName",
+						"OperationNameAlt",
+						"Description",
+						"metadata",
+					})
+				}
+				_ = w.Write([]string{
+					r.Path(),
+					r.Method(),
+					action,
+					kind,
+					sub,
+					r.OperationName(),
+					operationAlt,
+					r.Description(),
+					string(metastr),
+				})
+				w.Flush()
+			}
+		}
+		return operationAlt, tags, nil
 	}
 
 	// Set the swagger build versions
@@ -132,13 +226,24 @@ func SetupConfig(
 	serverConfig.OpenAPIV3Config.Info.Version = buildVersion
 
 	serverConfig.SkipOpenAPIInstallation = false
-	serverConfig.BuildHandlerChainFunc = getDefaultBuildHandlerChainFunc(builders)
+	serverConfig.BuildHandlerChainFunc = buildHandlerChainFuncFromBuilders(builders)
 
-	if buildHandlerChainFunc != nil {
-		serverConfig.BuildHandlerChainFunc = buildHandlerChainFunc
-	}
+	v := utilversion.DefaultKubeEffectiveVersion()
+	patchver := 0 // required for semver
 
-	serverConfig.EffectiveVersion = utilversion.DefaultKubeEffectiveVersion()
+	info := v.BinaryVersion().Info()
+	info.BuildDate = time.Unix(buildTimestamp, 0).UTC().Format(time.RFC3339)
+	info.GitVersion = fmt.Sprintf("%s.%s.%d+grafana-v%s", info.Major, info.Minor, patchver, buildVersion)
+	info.GitCommit = fmt.Sprintf("%s@%s", buildBranch, buildCommit)
+	info.GitTreeState = fmt.Sprintf("grafana v%s", buildVersion)
+
+	info2 := v.EmulationVersion().Info()
+	info2.BuildDate = info.BuildDate
+	info2.GitVersion = fmt.Sprintf("%s.%s.%d+grafana-v%s", info2.Major, info2.Minor, patchver, buildVersion)
+	info2.GitCommit = info.GitCommit
+	info2.GitTreeState = info.GitTreeState
+
+	serverConfig.EffectiveVersion = v
 
 	if err := AddPostStartHooks(serverConfig, builders); err != nil {
 		return err
@@ -171,6 +276,7 @@ func InstallAPIs(
 	namespaceMapper request.NamespaceMapper,
 	kvStore grafanarest.NamespacedKVStore,
 	serverLock ServerLockService,
+	dualWriteService dualwrite.Service,
 	optsregister apistore.StorageOptionsRegister,
 ) error {
 	// dual writing is only enabled when the storage type is not legacy.
@@ -181,6 +287,11 @@ func InstallAPIs(
 	// nolint:staticcheck
 	if storageOpts.StorageType != options.StorageTypeLegacy {
 		dualWrite = func(gr schema.GroupResource, legacy grafanarest.LegacyStorage, storage grafanarest.Storage) (grafanarest.Storage, error) {
+			// Dashboards + Folders may be managed (depends on feature toggles and database state)
+			if dualWriteService != nil && dualWriteService.ShouldManage(gr) {
+				return dualWriteService.NewStorage(gr, legacy, storage) // eventually this can replace this whole function
+			}
+
 			key := gr.String() // ${resource}.{group} eg playlists.playlist.grafana.app
 
 			// Get the option from custom.ini/command line
@@ -257,7 +368,10 @@ func InstallAPIs(
 	// in other places, working with a flat []APIGroupBuilder list is much nicer
 	buildersGroupMap := make(map[string][]APIGroupBuilder, 0)
 	for _, b := range builders {
-		group := b.GetGroupVersion().Group
+		group, err := getGroup(b)
+		if err != nil {
+			return err
+		}
 		if _, ok := buildersGroupMap[group]; !ok {
 			buildersGroupMap[group] = make([]APIGroupBuilder, 0)
 		}

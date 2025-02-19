@@ -8,9 +8,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/authlib/claims"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
+
+	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -25,11 +26,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/api"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/dualwrite"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/migrator"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/permreg"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/pluginutils"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -54,7 +53,7 @@ var OSSRolesPrefixes = []string{accesscontrol.ManagedRolePrefix, accesscontrol.E
 func ProvideService(
 	cfg *setting.Cfg, db db.DB, routeRegister routing.RouteRegister, cache *localcache.CacheService,
 	accessControl accesscontrol.AccessControl, userService user.Service, actionResolver accesscontrol.ActionResolver,
-	features featuremgmt.FeatureToggles, tracer tracing.Tracer, zclient zanzana.Client, permRegistry permreg.PermissionRegistry,
+	features featuremgmt.FeatureToggles, tracer tracing.Tracer, permRegistry permreg.PermissionRegistry,
 	lock *serverlock.ServerLockService,
 ) (*Service, error) {
 	service := ProvideOSSService(
@@ -64,7 +63,6 @@ func ProvideService(
 		cache,
 		features,
 		tracer,
-		zclient,
 		db,
 		permRegistry,
 		lock,
@@ -89,7 +87,7 @@ func ProvideService(
 func ProvideOSSService(
 	cfg *setting.Cfg, store accesscontrol.Store, actionResolver accesscontrol.ActionResolver,
 	cache *localcache.CacheService, features featuremgmt.FeatureToggles, tracer tracing.Tracer,
-	zclient zanzana.Client, db db.DB, permRegistry permreg.PermissionRegistry, lock *serverlock.ServerLockService,
+	db db.DB, permRegistry permreg.PermissionRegistry, lock *serverlock.ServerLockService,
 ) *Service {
 	s := &Service{
 		actionResolver: actionResolver,
@@ -99,7 +97,6 @@ func ProvideOSSService(
 		log:            log.New("accesscontrol.service"),
 		roles:          accesscontrol.BuildBasicRoleDefinitions(),
 		store:          store,
-		reconciler:     dualwrite.NewZanzanaReconciler(cfg, zclient, db, lock),
 		permRegistry:   permRegistry,
 	}
 
@@ -116,16 +113,7 @@ type Service struct {
 	registrations  accesscontrol.RegistrationList
 	roles          map[string]*accesscontrol.RoleDTO
 	store          accesscontrol.Store
-	reconciler     *dualwrite.ZanzanaReconciler
 	permRegistry   permreg.PermissionRegistry
-}
-
-// Run implements accesscontrol.Service.
-func (s *Service) Run(ctx context.Context) error {
-	if s.features.IsEnabledGlobally(featuremgmt.FlagZanzana) {
-		return s.reconciler.Reconcile(ctx)
-	}
-	return nil
 }
 
 func (s *Service) GetUsageStats(_ context.Context) map[string]any {
@@ -462,7 +450,15 @@ func (s *Service) RegisterFixedRoles(ctx context.Context) error {
 	s.registrations.Range(func(registration accesscontrol.RoleRegistration) bool {
 		for br := range accesscontrol.BuiltInRolesWithParents(registration.Grants) {
 			if basicRole, ok := s.roles[br]; ok {
-				basicRole.Permissions = append(basicRole.Permissions, registration.Role.Permissions...)
+				for _, p := range registration.Role.Permissions {
+					perm := accesscontrol.Permission{
+						Action: p.Action,
+						Scope:  p.Scope,
+					}
+
+					perm.Kind, perm.Attribute, perm.Identifier = accesscontrol.SplitScope(perm.Scope)
+					basicRole.Permissions = append(basicRole.Permissions, perm)
+				}
 			} else {
 				s.log.Error("Unknown builtin role", "builtInRole", br)
 			}
@@ -768,8 +764,12 @@ func (s *Service) DeleteExternalServiceRole(ctx context.Context, externalService
 	return s.store.DeleteExternalServiceRole(ctx, slug)
 }
 
-func (*Service) SyncUserRoles(ctx context.Context, orgID int64, cmd accesscontrol.SyncUserRolesCommand) error {
+func (s *Service) SyncUserRoles(ctx context.Context, orgID int64, cmd accesscontrol.SyncUserRolesCommand) error {
 	return nil
+}
+
+func (s *Service) GetStaticRoles(ctx context.Context) map[string]*accesscontrol.RoleDTO {
+	return s.roles
 }
 
 func (s *Service) GetRoleByName(ctx context.Context, orgID int64, roleName string) (*accesscontrol.RoleDTO, error) {

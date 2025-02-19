@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -402,9 +401,9 @@ func TestAPI_Annotations(t *testing.T) {
 				folderDB.On("GetFolderByID", mock.Anything, mock.Anything, mock.Anything).Return(&folder.Folder{UID: folderUID, ID: 1}, nil)
 				hs.DashboardService = dashService
 				hs.folderService = folderService
-				hs.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())
+				hs.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
 				hs.AccessControl.RegisterScopeAttributeResolver(AnnotationTypeScopeResolver(hs.annotationsRepo, hs.Features, dashService, folderService))
-				hs.AccessControl.RegisterScopeAttributeResolver(dashboards.NewDashboardIDScopeResolver(folderDB, dashService, folderService))
+				hs.AccessControl.RegisterScopeAttributeResolver(dashboards.NewDashboardIDScopeResolver(dashService, folderService))
 			})
 			var body io.Reader
 			if tt.body != "" {

@@ -89,7 +89,7 @@ export function toRawSql({ sql, dataset, table }: SQLQuery): string {
   rawQuery += createSelectClause(sql.columns, sql.limit);
 
   if (dataset && table) {
-    rawQuery += `FROM ${dataset}.${table} `;
+    rawQuery += `FROM [${dataset}].${table} `;
   }
 
   if (sql.whereString) {

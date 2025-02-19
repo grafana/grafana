@@ -47,7 +47,6 @@ export interface FeatureToggles {
   nestedFolders?: boolean;
   alertingBacktesting?: boolean;
   editPanelCSVDragAndDrop?: boolean;
-  alertingNoNormalState?: boolean;
   logsContextDatasourceUi?: boolean;
   lokiShardSplitting?: boolean;
   lokiQuerySplitting?: boolean;
@@ -106,14 +105,11 @@ export interface FeatureToggles {
   enableNativeHTTPHistogram?: boolean;
   disableClassicHTTPHistogram?: boolean;
   formatString?: boolean;
-  transformationsVariableSupport?: boolean;
   kubernetesPlaylists?: boolean;
   kubernetesSnapshots?: boolean;
   kubernetesDashboards?: boolean;
-  kubernetesCliDashboards?: boolean;
   kubernetesRestore?: boolean;
-  kubernetesFolders?: boolean;
-  grafanaAPIServerTestingWithExperimentalAPIs?: boolean;
+  kubernetesClientDashboardsFolders?: boolean;
   datasourceQueryTypes?: boolean;
   queryService?: boolean;
   queryServiceRewrite?: boolean;
@@ -123,8 +119,6 @@ export interface FeatureToggles {
   lokiStructuredMetadata?: boolean;
   teamHttpHeaders?: boolean;
   cachingOptimizeSerializationMemoryUsage?: boolean;
-  panelTitleSearchInV1?: boolean;
-  managedPluginsInstall?: boolean;
   prometheusPromQAIL?: boolean;
   prometheusCodeModeMetricNamesSearch?: boolean;
   addFieldFromCalculationStatFunctions?: boolean;
@@ -155,8 +149,8 @@ export interface FeatureToggles {
   newFolderPicker?: boolean;
   jitterAlertRulesWithinGroups?: boolean;
   onPremToCloudMigrations?: boolean;
-  onPremToCloudMigrationsAuthApiMig?: boolean;
   alertingSaveStatePeriodic?: boolean;
+  alertingSaveStateCompressed?: boolean;
   scopeApi?: boolean;
   promQLScope?: boolean;
   logQLScope?: boolean;
@@ -168,7 +162,6 @@ export interface FeatureToggles {
   kubernetesAggregator?: boolean;
   expressionParser?: boolean;
   groupByVariable?: boolean;
-  authAPIAccessTokenAuth?: boolean;
   scopeFilters?: boolean;
   ssoSettingsSAML?: boolean;
   oauthRequireSubClaim?: boolean;
@@ -181,18 +174,15 @@ export interface FeatureToggles {
   logsExploreTableDefaultVisualization?: boolean;
   newDashboardSharingComponent?: boolean;
   alertingListViewV2?: boolean;
-  notificationBanner?: boolean;
   dashboardRestore?: boolean;
   datasourceProxyDisableRBAC?: boolean;
   alertingDisableSendAlertsExternal?: boolean;
   preserveDashboardStateWhenNavigating?: boolean;
   alertingCentralAlertHistory?: boolean;
   pluginProxyPreserveTrailingSlash?: boolean;
-  sqlQuerybuilderFunctionParameters?: boolean;
   azureMonitorPrometheusExemplars?: boolean;
   pinNavItems?: boolean;
   authZGRPCServer?: boolean;
-  openSearchBackendFlowEnabled?: boolean;
   ssoSettingsLDAP?: boolean;
   failWrongDSUID?: boolean;
   zanzana?: boolean;
@@ -200,7 +190,6 @@ export interface FeatureToggles {
   enableScopesInMetricsExplore?: boolean;
   alertingApiServer?: boolean;
   cloudWatchRoundUpEndTime?: boolean;
-  cloudwatchMetricInsightsCrossAccount?: boolean;
   prometheusAzureOverrideAudience?: boolean;
   alertingFilterV2?: boolean;
   dataplaneAggregator?: boolean;
@@ -220,6 +209,8 @@ export interface FeatureToggles {
   rolePickerDrawer?: boolean;
   unifiedStorageSearch?: boolean;
   unifiedStorageSearchSprinkles?: boolean;
+  unifiedStorageSearchPermissionFiltering?: boolean;
+  managedDualWriter?: boolean;
   pluginsSriChecks?: boolean;
   unifiedStorageBigObjectsSupport?: boolean;
   timeRangeProvider?: boolean;
@@ -232,7 +223,6 @@ export interface FeatureToggles {
   exploreMetricsRelatedLogs?: boolean;
   prometheusSpecialCharsInLabelValues?: boolean;
   enableExtensionsAdminPage?: boolean;
-  zipkinBackendMigration?: boolean;
   enableSCIM?: boolean;
   crashDetection?: boolean;
   jaegerBackendMigration?: boolean;
@@ -249,4 +239,23 @@ export interface FeatureToggles {
   investigationsBackend?: boolean;
   k8SFolderCounts?: boolean;
   k8SFolderMove?: boolean;
+  improvedExternalSessionHandlingSAML?: boolean;
+  teamHttpHeadersMimir?: boolean;
+  ABTestFeatureToggleA?: boolean;
+  templateVariablesUsesCombobox?: boolean;
+  ABTestFeatureToggleB?: boolean;
+  grafanaAdvisor?: boolean;
+  elasticsearchImprovedParsing?: boolean;
+  exploreMetricsUseExternalAppPlugin?: boolean;
+  datasourceConnectionsTab?: boolean;
+  fetchRulesUsingPost?: boolean;
+  alertingConversionAPI?: boolean;
+  alertingAlertmanagerExtraDedupStage?: boolean;
+  alertingAlertmanagerExtraDedupStageStopPipeline?: boolean;
+  newLogsPanel?: boolean;
+  grafanaconThemes?: boolean;
+  pluginsCDNSyncLoader?: boolean;
+  alertingJiraIntegration?: boolean;
+  alertingRuleVersionHistoryRestore?: boolean;
+  newShareReportDrawer?: boolean;
 }

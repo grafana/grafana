@@ -33,11 +33,18 @@ import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene } from '../scene/DashboardScene';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
-import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
+import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior';
+import { isClonedKey } from '../utils/clone';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
-import { getLibraryPanelBehavior, getPanelIdForVizPanel, getQueryRunnerFor, isLibraryPanel } from '../utils/utils';
+import {
+  calculateGridItemDimensions,
+  getLibraryPanelBehavior,
+  getPanelIdForVizPanel,
+  getQueryRunnerFor,
+  isLibraryPanel,
+} from '../utils/utils';
 
 import { GRAFANA_DATASOURCE_REF } from './const';
 import { dataLayersToAnnotations } from './dataLayersToAnnotations';
@@ -66,7 +73,7 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
 
       if (child instanceof SceneGridRow) {
         // Skip repeat clones or when generating a snapshot
-        if (child.state.key!.indexOf('-clone-') > 0 && !isSnapshot) {
+        if (isClonedKey(child.state.key!) && !isSnapshot) {
           continue;
         }
         gridRowToSaveModel(child, panels, isSnapshot);
@@ -134,6 +141,8 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
     liveNow,
     schemaVersion: DASHBOARD_SCHEMA_VERSION,
     refresh: refreshPicker?.state.refresh,
+    // @ts-expect-error not in dashboard schema because it's experimental
+    scopeMeta: state.scopeMeta,
   };
 
   return sortedDeepCloneWithoutNulls(dashboard);
@@ -180,12 +189,13 @@ export function vizPanelToPanel(
 
     panel = {
       id: getPanelIdForVizPanel(vizPanel),
-      title: libPanel!.state.title,
+      title: vizPanel.state.title,
       gridPos: gridPos,
       libraryPanel: {
         name: libPanel!.state.name,
         uid: libPanel!.state.uid,
       },
+      type: 'library-panel-ref',
     } as Panel;
 
     return panel;
@@ -319,11 +329,7 @@ export function panelRepeaterToPanels(repeater: DashboardGridItem, isSnapshot = 
     }
 
     if (repeater.state.repeatedPanels) {
-      const itemHeight = repeater.state.itemHeight ?? 10;
-      const rowCount = Math.ceil(repeater.state.repeatedPanels!.length / repeater.getMaxPerRow());
-      const columnCount = Math.ceil(repeater.state.repeatedPanels!.length / rowCount);
-      const w = 24 / columnCount;
-      const h = itemHeight;
+      const { h, w, columnCount } = calculateGridItemDimensions(repeater);
       const panels = repeater.state.repeatedPanels!.map((panel, index) => {
         let x = 0,
           y = 0;

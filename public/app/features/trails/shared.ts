@@ -2,7 +2,7 @@ import { BusEventBase, BusEventWithPayload } from '@grafana/data';
 import { ConstantVariable, SceneObject } from '@grafana/scenes';
 import { VariableHide } from '@grafana/schema';
 
-export type ActionViewType = 'overview' | 'breakdown' | 'related_logs' | 'related';
+export type ActionViewType = 'breakdown' | 'related_logs' | 'related';
 
 export interface ActionViewDefinition {
   displayName: string;
@@ -36,6 +36,9 @@ export const VAR_OTEL_GROUP_LEFT = 'otel_group_left';
 export const VAR_OTEL_GROUP_LEFT_EXPR = '${otel_group_left}';
 export const VAR_MISSING_OTEL_TARGETS = 'missing_otel_targets';
 export const VAR_MISSING_OTEL_TARGETS_EXPR = '${missing_otel_targets}';
+// for consolidating otel and metric filters into one adhoc filter set
+export const VAR_OTEL_AND_METRIC_FILTERS = 'otel_and_metric_filters';
+export const VAR_OTEL_AND_METRIC_FILTERS_EXPR = '${otel_and_metric_filters}';
 
 export const LOGS_METRIC = '$__logs__';
 export const KEY_SQR_METRIC_VIZ_QUERY = 'sqr-metric-viz-query';

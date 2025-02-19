@@ -131,14 +131,14 @@ Grafana has a number of keyboard shortcuts available. Press `?` on your keyboard
 - `d+e`: Expand all rows.
 - `d+s`: Dashboard settings.
 - `Ctrl+K`: Opens the command palette.
-- `Esc`: Exits panel when in fullscreen view or edit mode. Also returns you to the dashboard from dashboard settings.
+- `Esc`: Exits panel when in full screen view or edit mode. Also returns you to the dashboard from dashboard settings.
 
 **Focused panel**
 
 By hovering over a panel with the mouse you can use some shortcuts that will target that panel.
 
 - `e`: Toggle panel edit view
-- `v`: Toggle panel fullscreen view
+- `v`: Toggle panel full screen view
 - `pu`: Open share panel link configuration
 - `pe`: Open share panel embed configuration
 - `ps`: Open share panel snapshot configuration

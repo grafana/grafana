@@ -3,7 +3,8 @@ import { useArgs } from '@storybook/preview-api';
 import { Meta, StoryFn } from '@storybook/react';
 
 import { dateTime } from '@grafana/data';
-import { TimeOfDayPicker } from '@grafana/ui';
+
+import { TimeOfDayPicker } from './TimeOfDayPicker';
 
 const meta: Meta<typeof TimeOfDayPicker> = {
   title: 'Pickers and Editors/TimePickers/TimeOfDayPicker',
@@ -24,7 +25,7 @@ export const Basic: StoryFn<typeof TimeOfDayPicker> = (args) => {
   return (
     <TimeOfDayPicker
       {...args}
-      onChange={(newValue) => {
+      onChange={(newValue?) => {
         action('on selected')(newValue);
         updateArgs({ value: newValue });
       }}

@@ -12,6 +12,11 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -43,11 +48,8 @@ import (
 	secretsfakes "github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretskv "github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 )
 
 func Test_NoopServiceDoesNothing(t *testing.T) {
@@ -114,11 +116,19 @@ func Test_GetSnapshotStatusFromGMS(t *testing.T) {
 		assert.Equal(t, cloudmigration.SnapshotStatusCreating, snapshot.Status)
 		assert.Never(t, func() bool { return gmsClientFake.GetSnapshotStatusCallCount() > 0 }, time.Second, 10*time.Millisecond)
 
-		// Make the status pending processing and ensure GMS gets called
+		// Make the status pending processing to ensure GMS gets called and initialize a resource
 		err = s.store.UpdateSnapshot(ctx, cloudmigration.UpdateSnapshotCmd{
 			UID:       uid,
 			SessionID: sess.UID,
 			Status:    cloudmigration.SnapshotStatusPendingProcessing,
+			LocalResourcesToCreate: []cloudmigration.CloudMigrationResource{
+				{
+					Name:   "A name",
+					Type:   cloudmigration.DatasourceDataType,
+					RefID:  "A",
+					Status: cloudmigration.ItemStatusPending,
+				},
+			},
 		})
 		assert.NoError(t, err)
 
@@ -399,18 +409,15 @@ func Test_OnlyQueriesStatusFromGMSWhenRequired(t *testing.T) {
 func Test_DeletedDashboardsNotMigrated(t *testing.T) {
 	s := setUpServiceTest(t, false).(*Service)
 
-	/** NOTE: this is not used at the moment since we changed the service
-
 	// modify what the mock returns for just this test case
 	dashMock := s.dashboardService.(*dashboards.FakeDashboardService)
-	dashMock.On("GetAllDashboards", mock.Anything).Return(
+	dashMock.On("GetAllDashboardsByOrgId", mock.Anything, int64(1)).Return(
 		[]*dashboards.Dashboard{
 			{UID: "1", OrgID: 1, Data: simplejson.New()},
 			{UID: "2", OrgID: 1, Data: simplejson.New(), Deleted: time.Now()},
 		},
 		nil,
 	)
-	*/
 
 	data, err := s.getMigrationDataJSON(context.TODO(), &user.SignedInUser{OrgID: 1})
 	assert.NoError(t, err)
@@ -814,8 +821,11 @@ func setUpServiceTest(t *testing.T, withDashboardMock bool, cfgOverrides ...conf
 	secretsService := secretsfakes.NewFakeSecretsService()
 	rr := routing.NewRouteRegister()
 	tracer := tracing.InitializeTracerForTest()
+
+	fakeFolder := &folder.Folder{UID: "folderUID", Title: "Folder"}
 	mockFolder := &foldertest.FakeService{
-		ExpectedFolder: &folder.Folder{UID: "folderUID", Title: "Folder"},
+		ExpectedFolders: []*folder.Folder{fakeFolder},
+		ExpectedFolder:  fakeFolder,
 	}
 
 	cfg := setting.NewCfg()
@@ -869,7 +879,7 @@ func setUpServiceTest(t *testing.T, withDashboardMock bool, cfgOverrides ...conf
 		cfg, featureToggles, nil, nil, rr, sqlStore, kvStore, nil, nil, quotatest.New(false, nil),
 		secretsService, nil, alertMetrics, mockFolder, fakeAccessControl, dashboardService, nil, bus, fakeAccessControlService,
 		annotationstest.NewFakeAnnotationsRepo(), &pluginstore.FakePluginStore{}, tracer, ruleStore,
-		httpclient.NewProvider(), ngalertfakes.NewFakeReceiverPermissionsService(),
+		httpclient.NewProvider(), ngalertfakes.NewFakeReceiverPermissionsService(), usertest.NewUserServiceFake(),
 	)
 	require.NoError(t, err)
 
@@ -932,6 +942,7 @@ func setUpServiceTest(t *testing.T, withDashboardMock bool, cfgOverrides ...conf
 		&pluginstore.FakePluginStore{},
 		&pluginsettings.FakePluginSettings{},
 		actest.FakeAccessControl{ExpectedEvaluate: true},
+		fakeAccessControlService,
 		kvstore.ProvideService(sqlStore),
 		&libraryelementsfake.LibraryElementService{},
 		ng,

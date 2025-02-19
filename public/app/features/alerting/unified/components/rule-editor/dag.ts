@@ -1,24 +1,19 @@
-import { compact, memoize, uniq } from 'lodash';
-import memoizeOne from 'memoize-one';
+import { compact, memoize, reject, uniq } from 'lodash';
 
 import { Edge, Graph, Node } from 'app/core/utils/dag';
 import { isExpressionQuery } from 'app/features/expressions/guards';
+import { ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
-
-// memoized version of _createDagFromQueries to prevent recreating the DAG if no sources or targets are modified
-export const createDagFromQueries = memoizeOne(
-  _createDagFromQueries,
-  (previous: Parameters<typeof _createDagFromQueries>, next: Parameters<typeof _createDagFromQueries>) => {
-    return fingerPrintQueries(previous[0]) === fingerPrintQueries(next[0]);
-  }
-);
 
 /**
  * Turn the array of alert queries (this means data queries and expressions)
  * in to a DAG, a directed acyclical graph
  */
-export function _createDagFromQueries(queries: AlertQuery[]): Graph {
+export function createDagFromQueries(queries: AlertQuery[]): Graph {
   const graph = new Graph();
+
+  // collect link errors in here so we can throw a single error with all nodes that failed to link
+  const linkErrors: LinkError[] = [];
 
   const nodes = queries.map((query) => query.refId);
   graph.createNodes(nodes);
@@ -28,23 +23,81 @@ export function _createDagFromQueries(queries: AlertQuery[]): Graph {
       return;
     }
     const source = query.refId;
-    const isMathExpression = query.model.type === 'math';
 
     // some expressions have multiple targets (like the math expression)
-    const targets = isMathExpression
-      ? parseRefsFromMathExpression(query.model.expression ?? '')
-      : [query.model.expression];
+    const targets = getTargets(query.model);
 
     targets.forEach((target) => {
-      const isSelf = source === target;
-
-      if (source && target && !isSelf) {
-        graph.link(target, source);
+      if (source && target) {
+        try {
+          graph.link(target, source);
+        } catch (error) {
+          linkErrors.push({ source, target, error });
+        }
       }
     });
   });
 
+  if (linkErrors.length > 0) {
+    throw new DAGError('failed to create DAG from queries', { cause: linkErrors });
+  }
+
   return graph;
+}
+
+/**
+ * This function attempts to create a "clean" DAG where only the nodes that successfully link are left
+ * ⚠️ This is a recursive function and very expensive for larger DAGs or large amount of queries
+ */
+export function createDAGFromQueriesSafe(
+  queries: AlertQuery[],
+  collectedLinkErrors: LinkError[] = []
+): [Graph, LinkError[]] {
+  try {
+    return [createDagFromQueries(queries), collectedLinkErrors];
+  } catch (error) {
+    if (error instanceof DAGError) {
+      const linkErrors = error.cause;
+      collectedLinkErrors.push(...linkErrors);
+
+      const updatedQueries = reject(queries, (query) =>
+        linkErrors.some((linkError) => linkError.source === query.refId)
+      );
+
+      return createDAGFromQueriesSafe(updatedQueries, collectedLinkErrors);
+    }
+  }
+
+  return [new Graph(), collectedLinkErrors];
+}
+
+export interface LinkError {
+  source: string;
+  target: string;
+  error: unknown;
+}
+
+/** DAGError subclass, this is just a regular error but with LinkError[] as the cause */
+export class DAGError extends Error {
+  constructor(message: string, options: { cause: LinkError[] }) {
+    super(message, options);
+    this.cause = options?.cause ?? [];
+  }
+
+  cause: LinkError[];
+}
+
+export function getTargets(model: ExpressionQuery) {
+  const isMathExpression = model.type === ExpressionQueryType.math;
+  const isClassicCondition = model.type === ExpressionQueryType.classic;
+
+  if (isMathExpression) {
+    return parseRefsFromMathExpression(model.expression ?? '');
+  }
+  if (isClassicCondition) {
+    return model.conditions?.map((c) => c.query.params[0]) ?? [];
+  }
+  return [model.expression];
 }
 
 /**
@@ -128,14 +181,4 @@ export function fingerprintGraph(graph: Graph) {
       return `${n.name}:${outputEdges}:${inputEdges}`;
     })
     .join(' ');
-}
-
-// create a unique fingerprint of the array of queries
-export function fingerPrintQueries(queries: AlertQuery[]) {
-  return queries
-    .map((query) => {
-      const type = isExpressionQuery(query.model) ? query.model.type : query.queryType;
-      return query.refId + (query.model.expression ?? '') + type;
-    })
-    .join();
 }

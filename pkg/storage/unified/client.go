@@ -6,53 +6,64 @@ import (
 	"path/filepath"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"gocloud.dev/blob/fileblob"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
 	authnlib "github.com/grafana/authlib/authn"
+	"github.com/grafana/authlib/types"
+	"github.com/grafana/dskit/grpcclient"
+	"github.com/grafana/dskit/middleware"
 
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/authn/grpcutils"
-	"github.com/grafana/grafana/pkg/services/authz"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/federated"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 )
 
 const resourceStoreAudience = "resourceStore"
 
+type Options struct {
+	Cfg      *setting.Cfg
+	Features featuremgmt.FeatureToggles
+	DB       infraDB.DB
+	Tracer   tracing.Tracer
+	Reg      prometheus.Registerer
+	Authzc   types.AccessClient
+	Docs     resource.DocumentBuilderSupplier
+}
+
+type ClientMetrics struct {
+	requestDuration *prometheus.HistogramVec
+}
+
 // This adds a UnifiedStorage client into the wire dependency tree
-func ProvideUnifiedStorageClient(
-	cfg *setting.Cfg,
-	features featuremgmt.FeatureToggles,
-	db infraDB.DB,
-	tracer tracing.Tracer,
-	reg prometheus.Registerer,
-	authzc authz.Client,
-	docs resource.DocumentBuilderSupplier,
-) (resource.ResourceClient, error) {
+func ProvideUnifiedStorageClient(opts *Options) (resource.ResourceClient, error) {
 	// See: apiserver.ApplyGrafanaConfig(cfg, features, o)
-	apiserverCfg := cfg.SectionWithEnvOverrides("grafana-apiserver")
+	apiserverCfg := opts.Cfg.SectionWithEnvOverrides("grafana-apiserver")
 	client, err := newClient(options.StorageOptions{
 		StorageType:  options.StorageType(apiserverCfg.Key("storage_type").MustString(string(options.StorageTypeUnified))),
-		DataPath:     apiserverCfg.Key("storage_path").MustString(filepath.Join(cfg.DataPath, "grafana-apiserver")),
+		DataPath:     apiserverCfg.Key("storage_path").MustString(filepath.Join(opts.Cfg.DataPath, "grafana-apiserver")),
 		Address:      apiserverCfg.Key("address").MustString(""), // client address
 		BlobStoreURL: apiserverCfg.Key("blob_url").MustString(""),
-	}, cfg, features, db, tracer, reg, authzc, docs)
+	}, opts.Cfg, opts.Features, opts.DB, opts.Tracer, opts.Reg, opts.Authzc, opts.Docs)
 	if err == nil {
 		// Used to get the folder stats
 		client = federated.NewFederatedClient(
 			client, // The original
-			legacysql.NewDatabaseProvider(db),
+			legacysql.NewDatabaseProvider(opts.DB),
 		)
 	}
+
 	return client, err
 }
 
@@ -62,7 +73,7 @@ func newClient(opts options.StorageOptions,
 	db infraDB.DB,
 	tracer tracing.Tracer,
 	reg prometheus.Registerer,
-	authzc authz.Client,
+	authzc types.AccessClient,
 	docs resource.DocumentBuilderSupplier,
 ) (resource.ResourceClient, error) {
 	ctx := context.Background()
@@ -100,11 +111,8 @@ func newClient(opts options.StorageOptions,
 			return nil, fmt.Errorf("expecting address for storage_type: %s", opts.StorageType)
 		}
 
-		// Create a connection to the gRPC server
-		conn, err := grpc.NewClient(opts.Address,
-			grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
-			grpc.WithTransportCredentials(insecure.NewCredentials()),
-		)
+		// Create a connection to the gRPC server.
+		conn, err := grpcConn(opts.Address, reg)
 		if err != nil {
 			return nil, err
 		}
@@ -118,7 +126,11 @@ func newClient(opts options.StorageOptions,
 
 	// Use the local SQL
 	default:
-		server, err := sql.NewResourceServer(ctx, db, cfg, features, docs, tracer, reg, authzc)
+		searchOptions, err := search.NewSearchOptions(features, cfg, tracer, docs, reg)
+		if err != nil {
+			return nil, err
+		}
+		server, err := sql.NewResourceServer(db, cfg, tracer, reg, authzc, searchOptions)
 		if err != nil {
 			return nil, err
 		}
@@ -143,11 +155,43 @@ func newResourceClient(conn *grpc.ClientConn, cfg *setting.Cfg, features feature
 	if !features.IsEnabledGlobally(featuremgmt.FlagAppPlatformGrpcClientAuth) {
 		return resource.NewLegacyResourceClient(conn), nil
 	}
-	if cfg.StackID == "" {
-		return resource.NewGRPCResourceClient(tracer, conn)
+	return resource.NewRemoteResourceClient(tracer, conn, clientCfgMapping(grpcutils.ReadGrpcClientConfig(cfg)), cfg.Env == setting.Dev)
+}
+
+// grpcConn creates a new gRPC connection to the provided address.
+func grpcConn(address string, reg prometheus.Registerer) (*grpc.ClientConn, error) {
+	// This works for now as the Provide function is only called once during startup.
+	// We might eventually want to tie this factory to a struct for more runtime control.
+	metrics := ClientMetrics{
+		requestDuration: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
+			Name:    "resource_server_client_request_duration_seconds",
+			Help:    "Time spent executing requests to the resource server.",
+			Buckets: prometheus.ExponentialBuckets(0.008, 4, 7),
+		}, []string{"operation", "status_code"}),
 	}
 
-	grpcClientCfg := grpcutils.ReadGrpcClientConfig(cfg)
+	// Report gRPC status code errors as labels.
+	var instrumentationOptions []middleware.InstrumentationOption
+	instrumentationOptions = append(instrumentationOptions, middleware.ReportGRPCStatusOption)
+	unary, stream := grpcclient.Instrument(metrics.requestDuration, instrumentationOptions...)
 
-	return resource.NewCloudResourceClient(tracer, conn, clientCfgMapping(grpcClientCfg), cfg.Env == setting.Dev)
+	// We can later pass in the gRPC config here, i.e. to set MaxRecvMsgSize etc.
+	cfg := grpcclient.Config{}
+	opts, err := cfg.DialOption(unary, stream)
+	if err != nil {
+		return nil, fmt.Errorf("could not instrument grpc client: %w", err)
+	}
+
+	opts = append(opts, grpc.WithStatsHandler(otelgrpc.NewClientHandler()))
+	opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
+
+	// Use round_robin to balance requests more evenly over the available Storage server.
+	opts = append(opts, grpc.WithDefaultServiceConfig(`{"loadBalancingPolicy":"round_robin"}`))
+
+	// Disable looking up service config from TXT DNS records.
+	// This reduces the number of requests made to the DNS servers.
+	opts = append(opts, grpc.WithDisableServiceConfig())
+
+	// Create a connection to the gRPC server
+	return grpc.NewClient(address, opts...)
 }

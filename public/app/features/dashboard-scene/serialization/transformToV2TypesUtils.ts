@@ -3,6 +3,7 @@ import {
   VariableRefresh as VariableRefreshV1,
   VariableSort as VariableSortV1,
   DashboardCursorSync as DashboardCursorSyncV1,
+  FieldColorModeId as FieldColorModeIdV1,
   DataTopic,
 } from '@grafana/schema';
 import { DataTransformerConfig } from '@grafana/schema/dist/esm/raw/dashboard/x/dashboard_types.gen';
@@ -15,7 +16,11 @@ import {
   VariableHide,
   VariableRefresh,
   VariableSort,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
+  FieldColorModeId as FieldColorModeIdV2,
+} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
+
+// used for QueryVariableKind's query prop - in schema V2 we've deprecated string type and support only DataQuery
+export const LEGACY_STRING_VALUE_KEY = '__legacyStringValue';
 
 export function transformCursorSynctoEnum(cursorSync?: DashboardCursorSyncV1): DashboardCursorSync {
   switch (cursorSync) {
@@ -79,6 +84,43 @@ export function transformDataTopic(topic: DataTransformerConfig['topic']): DataT
       return DataTopic.AlertStates;
     case 'series':
       return DataTopic.Series;
+    default:
+      return undefined;
+  }
+}
+
+export function colorIdEnumToColorIdV2(colorId: FieldColorModeIdV1 | string): FieldColorModeIdV2 | undefined {
+  switch (colorId) {
+    case FieldColorModeIdV1.Thresholds:
+      return 'thresholds';
+    case FieldColorModeIdV1.PaletteClassic:
+      return 'palette-classic';
+    case FieldColorModeIdV1.PaletteClassicByName:
+      return 'palette-classic-by-name';
+    case FieldColorModeIdV1.ContinuousGrYlRd:
+      return 'continuous-GrYlRd';
+    case FieldColorModeIdV1.ContinuousRdYlGr:
+      return 'continuous-RdYlGr';
+    case FieldColorModeIdV1.ContinuousBlYlRd:
+      return 'continuous-BlYlRd';
+    case FieldColorModeIdV1.ContinuousYlRd:
+      return 'continuous-YlRd';
+    case FieldColorModeIdV1.ContinuousBlPu:
+      return 'continuous-BlPu';
+    case FieldColorModeIdV1.ContinuousYlBl:
+      return 'continuous-YlBl';
+    case FieldColorModeIdV1.ContinuousBlues:
+      return 'continuous-blues';
+    case FieldColorModeIdV1.ContinuousReds:
+      return 'continuous-reds';
+    case FieldColorModeIdV1.ContinuousGreens:
+      return 'continuous-greens';
+    case FieldColorModeIdV1.ContinuousPurples:
+      return 'continuous-purples';
+    case FieldColorModeIdV1.Fixed:
+      return 'fixed';
+    case FieldColorModeIdV1.Shades:
+      return 'shades';
     default:
       return undefined;
   }

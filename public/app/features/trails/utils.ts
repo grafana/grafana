@@ -10,10 +10,12 @@ import {
   ScopeSpecFilter,
   urlUtil,
 } from '@grafana/data';
-import { getPrometheusTime } from '@grafana/prometheus/src/language_utils';
+import { getPrometheusTime } from '@grafana/prometheus';
 import { config, FetchResponse, getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
+  ConstantVariable,
+  CustomVariable,
   sceneGraph,
   SceneObject,
   SceneObjectState,
@@ -32,7 +34,20 @@ import { DataTrailSettings } from './DataTrailSettings';
 import { MetricScene } from './MetricScene';
 import { getTrailStore } from './TrailStore/TrailStore';
 import { MetricDatasourceHelper } from './helpers/MetricDatasourceHelper';
-import { LOGS_METRIC, TRAILS_ROUTE, VAR_DATASOURCE_EXPR } from './shared';
+import { sortResources } from './otel/util';
+import { LOGS_METRIC, TRAILS_ROUTE, VAR_DATASOURCE_EXPR, VAR_OTEL_AND_METRIC_FILTERS } from './shared';
+
+export function isAdHocVariable(variable: SceneVariable | null): variable is AdHocFiltersVariable {
+  return variable !== null && variable.state.type === 'adhoc';
+}
+
+export function isCustomVariable(variable: SceneVariable | null): variable is CustomVariable {
+  return variable !== null && variable.state.type === 'custom';
+}
+
+export function isConstantVariable(variable: SceneVariable | null): variable is ConstantVariable {
+  return variable !== null && variable.state.type === 'constant';
+}
 
 export function getTrailFor(model: SceneObject): DataTrail {
   return sceneGraph.getAncestor(model, DataTrail);
@@ -42,11 +57,12 @@ export function getTrailSettings(model: SceneObject): DataTrailSettings {
   return sceneGraph.getAncestor(model, DataTrail).state.settings;
 }
 
-export function newMetricsTrail(initialDS?: string): DataTrail {
+export function newMetricsTrail(initialDS?: string, startButtonClicked?: boolean): DataTrail {
   return new DataTrail({
     initialDS,
     $timeRange: new SceneTimeRange({ from: 'now-1h', to: 'now' }),
     embedded: false,
+    startButtonClicked,
   });
 }
 
@@ -145,19 +161,19 @@ const MAX_ADHOC_VARIABLE_OPTIONS = 10000;
  * This function still uses these functions from inside the data source helper.
  *
  * @param dataTrail
- * @param filtersVariable
+ * @param limitedFilterVariable Depending on otel experience flag, either filtersVar or otelAndMetricsVar
  * @param datasourceHelper
  */
 export function limitAdhocProviders(
   dataTrail: DataTrail,
-  filtersVariable: SceneVariable<SceneVariableState> | null,
+  limitedFilterVariable: SceneVariable<SceneVariableState> | null,
   datasourceHelper: MetricDatasourceHelper
 ) {
-  if (!(filtersVariable instanceof AdHocFiltersVariable)) {
+  if (!(limitedFilterVariable instanceof AdHocFiltersVariable)) {
     return;
   }
 
-  filtersVariable.setState({
+  limitedFilterVariable.setState({
     getTagKeysProvider: async (
       variable: AdHocFiltersVariable,
       currentKey: string | null
@@ -170,7 +186,7 @@ export function limitAdhocProviders(
       // to use in the query to filter the response
       // using filters, e.g. {previously_selected_label:"value"},
       // as the series match[] parameter in Prometheus labels endpoint
-      const filters = filtersVariable.state.filters;
+      const filters = limitedFilterVariable.state.filters;
       // call getTagKeys and truncate the response
       // we're passing the queries so we get the labels that adhere to the queries
       // we're also passing the scopes so we get the labels that adhere to the scopes filters
@@ -187,7 +203,15 @@ export function limitAdhocProviders(
         opts.queries = [];
       }
 
-      const values = (await datasourceHelper.getTagKeys(opts)).slice(0, MAX_ADHOC_VARIABLE_OPTIONS);
+      let values = (await datasourceHelper.getTagKeys(opts)).slice(0, MAX_ADHOC_VARIABLE_OPTIONS);
+
+      // sort the values for otel resources at the top
+      if (limitedFilterVariable.state.name === VAR_OTEL_AND_METRIC_FILTERS) {
+        values = sortResources(
+          values,
+          filters.map((f) => f.key)
+        );
+      }
       // use replace: true to override the default lookup in adhoc filter variable
       return { replace: true, values };
     },
@@ -203,7 +227,7 @@ export function limitAdhocProviders(
       // to use in the query to filter the response
       // using filters, e.g. {previously_selected_label:"value"},
       // as the series match[] parameter in Prometheus label values endpoint
-      const filtersValues = filtersVariable.state.filters;
+      const filtersValues = limitedFilterVariable.state.filters;
       // remove current selected filter if updating a chosen filter
       const filters = filtersValues.filter((f) => f.key !== filter.key);
       // call getTagValues and truncate the response

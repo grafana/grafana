@@ -611,7 +611,7 @@ def betterer_frontend_step():
         ],
         "commands": [
             "apk add --update git bash",
-            "yarn betterer ci",
+            "yarn betterer:ci",
         ],
     }
 
@@ -667,6 +667,28 @@ def verify_i18n_step():
             # Verify that translation extraction has been committed
             '''
             file_diff=$(git diff --dirstat public/locales)
+            if [ -n "$file_diff" ]; then
+                echo $file_diff
+                echo "{}"
+                exit 1
+            fi
+            '''.format(uncommited_error_message),
+        ],
+    }
+
+def verify_api_clients_step():
+    uncommited_error_message = "\nAPI client generation has not been committed. Please run 'yarn generate-apis', commit the changes and push again."
+    return {
+        "name": "verify-api-clients",
+        "image": images["node_deb"],
+        "depends_on": [
+            "yarn-install",
+        ],
+        "commands": [
+            "yarn generate-apis",
+            # Verify that client generation has been run and committed
+            '''
+            file_diff=$(git diff ':!conf')
             if [ -n "$file_diff" ]; then
                 echo $file_diff
                 echo "{}"
@@ -752,16 +774,6 @@ def frontend_metrics_step(trigger = None):
     if trigger:
         step = dict(step, when = trigger)
     return step
-
-def codespell_step():
-    return {
-        "name": "codespell",
-        "image": images["python"],
-        "commands": [
-            "pip3 install codespell",
-            "codespell -I docs/.codespellignore docs/",
-        ],
-    }
 
 def grafana_server_step():
     """Runs the grafana-server binary as a service.
@@ -1075,8 +1087,8 @@ def postgres_integration_tests_steps():
 
 def mysql_integration_tests_steps(hostname, version):
     cmds = [
-        "apk add --update mysql-client",
-        "cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h {} -P 3306 -u root -prootpass".format(hostname),
+        "apk add --update mariadb-client",  # alpine doesn't package mysql anymore; more info: https://wiki.alpinelinux.org/wiki/MySQL
+        "cat devenv/docker/blocks/mysql_tests/setup.sql | mariadb -h {} -P 3306 -u root -prootpass --disable-ssl-verify-server-cert".format(hostname),
         "go clean -testcache",
         "go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+' | grep -o '\\(.*\\)/' | sort -u)",
     ]

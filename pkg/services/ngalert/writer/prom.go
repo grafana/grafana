@@ -28,6 +28,7 @@ const (
 	MimirDuplicateTimestampError = "err-mimir-sample-duplicate-timestamp"
 	MimirInvalidLabelError       = "err-mimir-label-invalid"
 	MimirMaxSeriesPerUserError   = "err-mimir-max-series-per-user"
+	MimirLabelValueTooLongError  = "err-mimir-label-value-too-long"
 
 	// Best effort error messages
 	PrometheusDuplicateTimestampError = "duplicate sample for timestamp"
@@ -272,6 +273,10 @@ func checkWriteError(writeErr promremote.WriteError) (err error, ignored bool) {
 
 		// this can happen when user exceeded defined maximum of
 		if strings.Contains(msg, MimirMaxSeriesPerUserError) {
+			return errors.Join(ErrRejectedWrite, writeErr), false
+		}
+
+		if strings.Contains(msg, MimirLabelValueTooLongError) {
 			return errors.Join(ErrRejectedWrite, writeErr), false
 		}
 

@@ -182,6 +182,19 @@ type resourceTableColumn struct {
 	OpenAPIFormat string
 }
 
+// helper to decode a cell value
+func DecodeCell(columnDef *ResourceTableColumnDefinition, index int, cellVal []byte) (any, error) {
+	col, err := newResourceTableColumn(columnDef, index)
+	if err != nil {
+		return nil, err
+	}
+	res, err := col.Decode(cellVal)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
 // nolint:gocyclo
 func newResourceTableColumn(def *ResourceTableColumnDefinition, index int) (*resourceTableColumn, error) {
 	col := &resourceTableColumn{def: def, index: index}

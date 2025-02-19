@@ -171,7 +171,7 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 	}
 	rsp, err := s.store.Create(ctx, req)
 	if err != nil {
-		return err
+		return resource.GetError(resource.AsErrorResult(err))
 	}
 	if rsp.Error != nil {
 		if rsp.Error.Code == http.StatusConflict {
@@ -249,7 +249,7 @@ func (s *Storage) Delete(
 	}
 	rsp, err := s.store.Delete(ctx, cmd)
 	if err != nil {
-		return err
+		return resource.GetError(resource.AsErrorResult(err))
 	}
 	if rsp.Error != nil {
 		return resource.GetError(rsp.Error)
@@ -289,7 +289,8 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 		if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) || errors.Is(err, io.EOF) {
 			return watch.NewEmptyWatch(), nil
 		}
-		return nil, err
+
+		return nil, resource.GetError(resource.AsErrorResult(err))
 	}
 
 	reporter := apierrors.NewClientErrorReporter(500, "WATCH", "")
@@ -323,7 +324,7 @@ func (s *Storage) Get(ctx context.Context, key string, opts storage.GetOptions, 
 
 	rsp, err := s.store.Read(ctx, req)
 	if err != nil {
-		return err
+		return resource.GetError(resource.AsErrorResult(err))
 	}
 	if rsp.Error != nil {
 		if rsp.Error.Code == http.StatusNotFound {
@@ -361,7 +362,7 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 
 	rsp, err := s.store.List(ctx, req)
 	if err != nil {
-		return err
+		return resource.GetError(resource.AsErrorResult(err))
 	}
 	if rsp.Error != nil {
 		return resource.GetError(rsp.Error)
@@ -469,7 +470,7 @@ func (s *Storage) GuaranteedUpdate(
 		// Read the latest value
 		rsp, err := s.store.Read(ctx, &resource.ReadRequest{Key: req.Key})
 		if err != nil {
-			return err
+			return resource.GetError(resource.AsErrorResult(err))
 		}
 
 		if rsp.Error != nil {
@@ -554,7 +555,7 @@ func (s *Storage) GuaranteedUpdate(
 			Value: value,
 		})
 		if err != nil {
-			return err
+			return resource.GetError(resource.AsErrorResult(err))
 		}
 		if rsp2.Error != nil {
 			return resource.GetError(rsp2.Error)
@@ -567,7 +568,7 @@ func (s *Storage) GuaranteedUpdate(
 		}
 		rsp2, err := s.store.Update(ctx, req)
 		if err != nil {
-			return err
+			return resource.GetError(resource.AsErrorResult(err))
 		}
 		if rsp2.Error != nil {
 			return resource.GetError(rsp2.Error)
