@@ -67,7 +67,7 @@ require (
 	github.com/golang/protobuf v1.5.4 // @grafana/grafana-backend-group
 	github.com/golang/snappy v0.0.4 // @grafana/alerting-backend
 	github.com/google/go-cmp v0.6.0 // @grafana/grafana-backend-group
-	github.com/google/go-github/v66 v66.0.0 // @grafana/grafana-app-platform-squad
+	github.com/google/go-github/v69 v69.2.0 // @grafana/grafana-app-platform-squad
 	github.com/google/go-querystring v1.1.0 // indirect; @grafana/oss-big-tent
 	github.com/google/uuid v1.6.0 // @grafana/grafana-backend-group
 	github.com/google/wire v0.6.0 // @grafana/grafana-backend-group

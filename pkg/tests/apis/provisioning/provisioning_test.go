@@ -19,7 +19,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	gh "github.com/google/go-github/v66/github"
+	gh "github.com/google/go-github/v69/github"
 	ghmock "github.com/migueleliasweb/go-github-mock/src/mock"
 
 	dashboard "github.com/grafana/grafana/pkg/apis/dashboard/v1alpha1"

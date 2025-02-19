@@ -12,12 +12,13 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/google/go-github/v66/github"
+	"github.com/google/go-github/v69/github"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/google/uuid"
+
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	pgh "github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
