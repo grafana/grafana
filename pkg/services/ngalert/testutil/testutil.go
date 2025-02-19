@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/service"
@@ -19,6 +20,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/guardian"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
@@ -29,7 +32,7 @@ func SetupFolderService(tb testing.TB, cfg *setting.Cfg, db db.DB, dashboardStor
 	tb.Helper()
 	fStore := folderimpl.ProvideStore(db)
 	return folderimpl.ProvideService(fStore, ac, bus, dashboardStore, folderStore, nil, db,
-		features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest())
+		features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil)
 }
 
 func SetupDashboardService(tb testing.TB, sqlStore db.DB, fs *folderimpl.DashboardFolderStoreImpl, cfg *setting.Cfg) (*dashboardservice.DashboardServiceImpl, dashboards.Store) {
@@ -60,10 +63,16 @@ func SetupDashboardService(tb testing.TB, sqlStore db.DB, fs *folderimpl.Dashboa
 		cfg, dashboardStore, fs,
 		features, folderPermissions, ac,
 		foldertest.NewFakeService(), folder.NewFakeStore(),
-		nil, nil, nil, nil, quotaService, nil, nil,
+		nil, client.MockTestRestConfig{}, nil, quotaService, nil, nil, nil,
 	)
 	require.NoError(tb, err)
 	dashboardService.RegisterDashboardPermissions(dashboardPermissions)
 
 	return dashboardService, dashboardStore
+}
+
+func SetupOrgService(tb testing.TB, sqlStore db.DB, cfg *setting.Cfg) (org.Service, error) {
+	tb.Helper()
+	quotaService := quotatest.New(false, nil)
+	return orgimpl.ProvideService(sqlStore, cfg, quotaService)
 }

@@ -2,7 +2,7 @@ import { Dispatch, SetStateAction, useCallback, useEffect, useState } from 'reac
 import { useAsync } from 'react-use';
 import { Subscription } from 'rxjs';
 
-import { llms } from '@grafana/experimental';
+import { openai } from '@grafana/llm';
 import { createMonitoringLogger } from '@grafana/runtime';
 import { useAppNotification } from 'app/core/copy/appNotification';
 
@@ -10,7 +10,7 @@ import { isLLMPluginEnabled, DEFAULT_OAI_MODEL } from './utils';
 
 // Declared instead of imported from utils to make this hook modular
 // Ideally we will want to move the hook itself to a different scope later.
-type Message = llms.openai.Message;
+type Message = openai.Message;
 
 const genAILogger = createMonitoringLogger('features.dashboards.genai');
 
@@ -93,7 +93,7 @@ export function useOpenAIStream({ model, temperature, onResponse }: Options = de
     setStreamStatus(StreamStatus.GENERATING);
     setError(undefined);
     // Stream the completions. Each element is the next stream chunk.
-    const stream = llms.openai
+    const stream = openai
       .streamChatCompletions({
         model,
         temperature,
@@ -102,7 +102,7 @@ export function useOpenAIStream({ model, temperature, onResponse }: Options = de
       .pipe(
         // Accumulate the stream content into a stream of strings, where each
         // element contains the accumulated message so far.
-        llms.openai.accumulateContent()
+        openai.accumulateContent()
         // The stream is just a regular Observable, so we can use standard rxjs
         // functionality to update state, e.g. recording when the stream
         // has completed.

@@ -39,6 +39,9 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
     const [splitDurationValid, setSplitDurationValid] = useState(true);
 
     useEffect(() => {
+      if (app !== CoreApp.Explore && app !== CoreApp.Dashboard && app !== CoreApp.PanelEditor) {
+        return;
+      }
       // Initialize the query direction according to the current environment.
       if (!query.direction) {
         onChange({ ...query, direction: getDefaultQueryDirection(app) });
@@ -182,7 +185,11 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
                 />
               </EditorField>
               <EditorField label="Direction" tooltip="Direction to search for logs.">
-                <RadioButtonGroup options={queryDirections} value={query.direction} onChange={onQueryDirectionChange} />
+                <RadioButtonGroup
+                  options={queryDirections}
+                  value={query.direction ?? getDefaultQueryDirection(app)}
+                  onChange={onQueryDirectionChange}
+                />
               </EditorField>
             </>
           )}

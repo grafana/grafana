@@ -31,6 +31,7 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 			featuremgmt.FlagKubernetesFoldersServiceV2, // Will be default on by G12
 			featuremgmt.FlagQueryService,               // Query Library
 			featuremgmt.FlagProvisioning,
+			featuremgmt.FlagInvestigationsBackend,
 		},
 	})
 
@@ -65,7 +66,13 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 		Group:   "folder.grafana.app",
 		Version: "v0alpha1",
 	}, {
-		Group:   "peakq.grafana.app",
+		Group:   "iam.grafana.app",
+		Version: "v0alpha1",
+	}, {
+		Group:   "provisioning.grafana.app",
+		Version: "v0alpha1",
+	}, {
+		Group:   "investigations.grafana.app",
 		Version: "v0alpha1",
 	}}
 	for _, gv := range groups {

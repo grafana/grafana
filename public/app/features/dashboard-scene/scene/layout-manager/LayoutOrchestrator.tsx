@@ -15,7 +15,9 @@ import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/Pan
 
 import { DropZonePlaceholder } from '../layout-default/DropZonePlaceholder';
 import { FloatingPanel } from '../layout-default/FloatingPanel';
-import { DashboardLayoutManager, isDashboardLayoutItem, LayoutRegistryItem } from '../types';
+import { isDashboardLayoutItem } from '../types/DashboardLayoutItem';
+import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
+import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
 import { DropZone } from './DragManager';
 import { closestCell, getClosest, isSceneLayout, SceneLayout2 } from './utils';
@@ -46,6 +48,15 @@ export class LayoutOrchestrator extends SceneObjectBase<LayoutOrchestratorState>
   public dropZones: DropZone[] = [];
   public floatingPanelRef = createRef<HTMLDivElement>();
   public placeholderRef = createRef<HTMLDivElement>();
+  public descriptor: Readonly<LayoutRegistryItem<{}>> = this.state.manager.descriptor;
+
+  hasVizPanels(): boolean {
+    return true;
+  }
+
+  addNewTab(): void {
+    return;
+  }
 
   public onDragStart = (e: PointerEvent, layout: SceneLayout2, item: SceneObject) => {
     const layoutItem = getClosest(item, (o) => (isDashboardLayoutItem(o) ? o : undefined));
@@ -147,16 +158,6 @@ export class LayoutOrchestrator extends SceneObjectBase<LayoutOrchestratorState>
     }
   };
 
-  public refreshDropZones() {
-    const dropZones = [];
-    const layouts = sceneGraph.findAllObjects(this.getRoot(), isSceneLayout) as SceneLayout2[];
-    for (const l of layouts) {
-      dropZones.push(...l.getDropZones().map((v) => ({ ...v, layoutKey: l.state.key! })));
-    }
-
-    this.dropZones = dropZones;
-  }
-
   public onDragEnd = (e: PointerEvent) => {
     document.removeEventListener('pointermove', this.onDrag);
     document.removeEventListener('pointerup', this.onDragEnd);
@@ -196,16 +197,27 @@ export class LayoutOrchestrator extends SceneObjectBase<LayoutOrchestratorState>
     document.body.classList.remove('dragging-active');
   };
 
+  public refreshDropZones() {
+    const dropZones = [];
+    const layouts = sceneGraph.findAllObjects(this.getRoot(), isSceneLayout) as SceneLayout2[];
+    for (const l of layouts) {
+      dropZones.push(...l.getDropZones().map((v) => ({ ...v, layoutKey: l.state.key! })));
+    }
+
+    this.dropZones = dropZones;
+  }
+
   // LayoutManager methods
   editModeChanged(isEditing: boolean): void {
-    return this.state.manager.editModeChanged(isEditing);
+    return this.state.manager.editModeChanged?.(isEditing);
   }
 
   removePanel(panel: VizPanel): void {
-    return this.state.manager.removePanel(panel);
+    return this.state.manager.removePanel?.(panel);
   }
+
   duplicatePanel(panel: VizPanel): void {
-    return this.state.manager.duplicatePanel(panel);
+    return this.state.manager.duplicatePanel?.(panel);
   }
 
   addPanel(panel: VizPanel): void {
@@ -220,16 +232,12 @@ export class LayoutOrchestrator extends SceneObjectBase<LayoutOrchestratorState>
     return this.state.manager.getVizPanels();
   }
 
-  toSaveModel?() {
-    return this.state.manager.toSaveModel?.();
+  toSaveModel() {
+    return this.state.manager.toSaveModel?.() ?? {};
   }
 
   activateRepeaters?(): void {
     return this.state.manager.activateRepeaters?.();
-  }
-
-  getDescriptor(): LayoutRegistryItem {
-    return this.state.manager.getDescriptor?.();
   }
 
   getOptions?(): OptionsPaneItemDescriptor[] {

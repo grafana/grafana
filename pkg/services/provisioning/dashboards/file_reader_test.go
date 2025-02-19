@@ -131,7 +131,7 @@ func TestDashboardFileReader(t *testing.T) {
 	folderStore := folderimpl.ProvideDashboardFolderStore(sql)
 	folderSvc := folderimpl.ProvideService(fStore, actest.FakeAccessControl{}, bus.ProvideBus(tracing.InitializeTracerForTest()),
 		dashStore, folderStore, nil, sql, featuremgmt.WithFeatures(),
-		supportbundlestest.NewFakeBundleService(), nil, cfgT, nil, tracing.InitializeTracerForTest())
+		supportbundlestest.NewFakeBundleService(), nil, cfgT, nil, tracing.InitializeTracerForTest(), nil)
 
 	t.Run("Reading dashboards from disk", func(t *testing.T) {
 		t.Run("Can read default dashboard", func(t *testing.T) {
@@ -411,7 +411,7 @@ func TestDashboardFileReader(t *testing.T) {
 		require.NoError(t, err)
 
 		ctx := context.Background()
-		ctx, _ = identity.WithServiceIdentitiy(ctx, 1)
+		ctx, _ = identity.WithServiceIdentity(ctx, 1)
 		_, _, err = r.getOrCreateFolder(ctx, cfg, fakeService, cfg.Folder)
 		require.NoError(t, err)
 	})
@@ -433,7 +433,7 @@ func TestDashboardFileReader(t *testing.T) {
 		require.NoError(t, err)
 
 		ctx := context.Background()
-		ctx, _ = identity.WithServiceIdentitiy(ctx, 1)
+		ctx, _ = identity.WithServiceIdentity(ctx, 1)
 		_, _, err = r.getOrCreateFolder(ctx, cfg, fakeService, cfg.Folder)
 		require.ErrorIs(t, err, dashboards.ErrFolderInvalidUID)
 	})

@@ -132,6 +132,8 @@ export class SceneCSSGridLayout extends SceneObjectBase<SceneCSSGridLayoutState>
     const layoutHasVisibleChildren =
       [...this.container.children].filter((n) => Number.parseInt(n.getAttribute('data-order') ?? '0', 10) > -1).length >
       0;
+
+    // If there are no visible children, temporarily add one to calculate dimensions
     if (!layoutHasVisibleChildren) {
       const child = this.container.appendChild(document.createElement('div'));
       child.setAttribute('data-order', '99999');

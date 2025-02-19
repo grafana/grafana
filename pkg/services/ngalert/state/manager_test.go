@@ -35,6 +35,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/state/historian"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests"
+	alertTestUtil "github.com/grafana/grafana/pkg/services/ngalert/testutil"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -49,8 +52,12 @@ func TestWarmStateCache(t *testing.T) {
 	ctx := context.Background()
 	ng, dbstore := tests.SetupTestEnv(t, 1)
 
-	const mainOrgID int64 = 1
-	rule := tests.CreateTestAlertRule(t, ctx, dbstore, 600, mainOrgID)
+	orgService, err := alertTestUtil.SetupOrgService(t, dbstore.SQLStore, setting.NewCfg())
+	require.NoError(t, err)
+	mainOrg, err := orgService.CreateWithMember(ctx, &org.CreateOrgCommand{})
+	require.NoError(t, err)
+
+	rule := tests.CreateTestAlertRule(t, ctx, dbstore, 600, mainOrg.ID)
 
 	expectedEntries := []*state.State{
 		{
@@ -230,7 +237,7 @@ func TestWarmStateCache(t *testing.T) {
 		Log:           log.New("ngalert.state.manager"),
 	}
 	st := state.NewManager(cfg, state.NewNoopPersister())
-	st.Warm(ctx, dbstore, ng.InstanceStore)
+	st.Warm(ctx, dbstore, dbstore, ng.InstanceStore)
 
 	t.Run("instance cache has expected entries", func(t *testing.T) {
 		for _, entry := range expectedEntries {
@@ -277,7 +284,7 @@ func TestDashboardAnnotations(t *testing.T) {
 		"test2": "{{ $labels.instance_label }}",
 	})
 
-	st.Warm(ctx, dbstore, ng.InstanceStore)
+	st.Warm(ctx, dbstore, dbstore, ng.InstanceStore)
 	bValue := float64(42)
 	cValue := float64(1)
 	_ = st.ProcessEvalResults(ctx, evaluationTime, rule, eval.Results{{
@@ -1699,8 +1706,12 @@ func TestStaleResultsHandler(t *testing.T) {
 	ctx := context.Background()
 	ng, dbstore := tests.SetupTestEnv(t, 1)
 
-	const mainOrgID int64 = 1
-	rule := tests.CreateTestAlertRule(t, ctx, dbstore, int64(interval.Seconds()), mainOrgID)
+	orgService, err := alertTestUtil.SetupOrgService(t, dbstore.SQLStore, setting.NewCfg())
+	require.NoError(t, err)
+	mainOrg, err := orgService.CreateWithMember(ctx, &org.CreateOrgCommand{})
+	require.NoError(t, err)
+
+	rule := tests.CreateTestAlertRule(t, ctx, dbstore, int64(interval.Seconds()), mainOrg.ID)
 	lastEval := evaluationTime.Add(-2 * interval)
 
 	labels1 := models.InstanceLabels{
@@ -1813,7 +1824,7 @@ func TestStaleResultsHandler(t *testing.T) {
 			Log:           log.New("ngalert.state.manager"),
 		}
 		st := state.NewManager(cfg, state.NewNoopPersister())
-		st.Warm(ctx, dbstore, ng.InstanceStore)
+		st.Warm(ctx, dbstore, dbstore, ng.InstanceStore)
 		existingStatesForRule := st.GetStatesForRuleUID(rule.OrgID, rule.UID)
 
 		// We have loaded the expected number of entries from the db
@@ -1980,8 +1991,12 @@ func TestDeleteStateByRuleUID(t *testing.T) {
 	ctx := context.Background()
 	ng, dbstore := tests.SetupTestEnv(t, 1)
 
-	const mainOrgID int64 = 1
-	rule := tests.CreateTestAlertRule(t, ctx, dbstore, int64(interval.Seconds()), mainOrgID)
+	orgService, err := alertTestUtil.SetupOrgService(t, dbstore.SQLStore, setting.NewCfg())
+	require.NoError(t, err)
+	mainOrg, err := orgService.CreateWithMember(ctx, &org.CreateOrgCommand{})
+	require.NoError(t, err)
+
+	rule := tests.CreateTestAlertRule(t, ctx, dbstore, int64(interval.Seconds()), mainOrg.ID)
 
 	labels1 := models.InstanceLabels{"test1": "testValue1"}
 	_, hash1, _ := labels1.StringAndHash()
@@ -2073,7 +2088,7 @@ func TestDeleteStateByRuleUID(t *testing.T) {
 				Log:           log.New("ngalert.state.manager"),
 			}
 			st := state.NewManager(cfg, state.NewNoopPersister())
-			st.Warm(ctx, dbstore, ng.InstanceStore)
+			st.Warm(ctx, dbstore, dbstore, ng.InstanceStore)
 			q := &models.ListAlertInstancesQuery{RuleOrgID: rule.OrgID, RuleUID: rule.UID}
 			alerts, _ := ng.InstanceStore.ListAlertInstances(ctx, q)
 			existingStatesForRule := st.GetStatesForRuleUID(rule.OrgID, rule.UID)
@@ -2122,8 +2137,12 @@ func TestResetStateByRuleUID(t *testing.T) {
 	ctx := context.Background()
 	ng, dbstore := tests.SetupTestEnv(t, 1)
 
-	const mainOrgID int64 = 1
-	rule := tests.CreateTestAlertRule(t, ctx, dbstore, int64(interval.Seconds()), mainOrgID)
+	orgService, err := alertTestUtil.SetupOrgService(t, dbstore.SQLStore, setting.NewCfg())
+	require.NoError(t, err)
+	mainOrg, err := orgService.CreateWithMember(ctx, &org.CreateOrgCommand{})
+	require.NoError(t, err)
+
+	rule := tests.CreateTestAlertRule(t, ctx, dbstore, int64(interval.Seconds()), mainOrg.ID)
 
 	labels1 := models.InstanceLabels{"test1": "testValue1"}
 	_, hash1, _ := labels1.StringAndHash()
@@ -2214,7 +2233,7 @@ func TestResetStateByRuleUID(t *testing.T) {
 				Log:           log.New("ngalert.state.manager"),
 			}
 			st := state.NewManager(cfg, state.NewNoopPersister())
-			st.Warm(ctx, dbstore, ng.InstanceStore)
+			st.Warm(ctx, dbstore, dbstore, ng.InstanceStore)
 			q := &models.ListAlertInstancesQuery{RuleOrgID: rule.OrgID, RuleUID: rule.UID}
 			alerts, _ := ng.InstanceStore.ListAlertInstances(ctx, q)
 			existingStatesForRule := st.GetStatesForRuleUID(rule.OrgID, rule.UID)

@@ -22,7 +22,7 @@ You cannot configure LBAC rules for Grafana-provisioned data sources from the UI
 
 ## Before you begin
 
-To be able to use LBAC for data sources rules, you need to enable the feature toggle `teamHttpHeaders` on your Grafana instance. Contact support to enable the feature toggle for you.
+To be able to use LBAC for data sources rules, you need to enable the feature toggle `teamHttpHeadersMimir` on your Grafana instance. Contact support to enable the feature toggle for you.
 
 - Be sure that you have the permission setup to create a Prometheus tenant in Grafana Cloud
 - Be sure that you have admin data source permissions for Grafana.

@@ -40,6 +40,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
     pointerEvents: 'none',
     zIndex: '999999',
     visibility: 'hidden',
-    border: '1px solid white',
   }),
 });

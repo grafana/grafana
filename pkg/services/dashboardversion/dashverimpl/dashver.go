@@ -7,6 +7,9 @@ import (
 	"strconv"
 	"strings"
 
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -21,8 +24,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 const (
@@ -52,10 +53,10 @@ func ProvideService(cfg *setting.Cfg, db db.DB, dashboardService dashboards.Dash
 			cfg,
 			request.GetNamespaceMapper(cfg),
 			v0alpha1.DashboardResourceInfo.GroupVersionResource(),
-			restConfigProvider,
-			unified,
+			restConfigProvider.GetRestConfig,
 			dashboardStore,
 			userService,
+			unified,
 		),
 		dashSvc: dashboardService,
 		log:     log.New("dashboard-version"),

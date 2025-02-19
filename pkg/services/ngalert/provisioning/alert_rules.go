@@ -232,7 +232,7 @@ func (service *AlertRuleService) CreateAlertRule(ctx context.Context, user ident
 		}
 	}
 	err = service.xact.InTransaction(ctx, func(ctx context.Context) error {
-		ids, err := service.ruleStore.InsertAlertRules(ctx, models.NewUserUID(user), []models.AlertRule{
+		ids, err := service.ruleStore.InsertAlertRules(ctx, userUidOrFallback(user), []models.AlertRule{
 			rule,
 		})
 		if err != nil {
@@ -359,13 +359,23 @@ func (service *AlertRuleService) UpdateRuleGroup(ctx context.Context, user ident
 			}
 		}
 
-		return service.ruleStore.UpdateAlertRules(ctx, models.NewUserUID(user), updateRules)
+		return service.ruleStore.UpdateAlertRules(ctx, userUidOrFallback(user), updateRules)
 	})
 }
 
 func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, user identity.Requester, group models.AlertRuleGroup, provenance models.Provenance) error {
 	if err := models.ValidateRuleGroupInterval(group.Interval, service.baseIntervalSeconds); err != nil {
 		return err
+	}
+
+	for _, rule := range group.Rules {
+		if rule.UID == "" {
+			// if empty the UID will be generated before save
+			continue
+		}
+		if err := util.ValidateUID(rule.UID); err != nil {
+			return fmt.Errorf("%w: cannot create rule with UID %q: %w", models.ErrAlertRuleFailedValidation, rule.UID, err)
+		}
 	}
 
 	delta, err := service.calcDelta(ctx, user, group)
@@ -511,7 +521,7 @@ func (service *AlertRuleService) persistDelta(ctx context.Context, user identity
 					New:      *update.New,
 				})
 			}
-			if err := service.ruleStore.UpdateAlertRules(ctx, models.NewUserUID(user), updates); err != nil {
+			if err := service.ruleStore.UpdateAlertRules(ctx, userUidOrFallback(user), updates); err != nil {
 				return fmt.Errorf("failed to update alert rules: %w", err)
 			}
 			for _, update := range delta.Update {
@@ -522,7 +532,7 @@ func (service *AlertRuleService) persistDelta(ctx context.Context, user identity
 		}
 
 		if len(delta.New) > 0 {
-			uids, err := service.ruleStore.InsertAlertRules(ctx, models.NewUserUID(user), withoutNilAlertRules(delta.New))
+			uids, err := service.ruleStore.InsertAlertRules(ctx, userUidOrFallback(user), withoutNilAlertRules(delta.New))
 			if err != nil {
 				return fmt.Errorf("failed to insert alert rules: %w", err)
 			}
@@ -575,6 +585,10 @@ func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, user ident
 			// No changes to the rule.
 			return rule, nil
 		}
+		// new rules not allowed in update for a single rule
+		if len(delta.New) > 0 {
+			return models.AlertRule{}, fmt.Errorf("failed to update rule with UID %s because %w", rule.UID, models.ErrAlertRuleNotFound)
+		}
 		for _, d := range delta.Update {
 			if d.Existing.GetKey() == rule.GetKey() {
 				storedRule = d.Existing
@@ -618,7 +632,7 @@ func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, user ident
 		return models.AlertRule{}, err
 	}
 	err = service.xact.InTransaction(ctx, func(ctx context.Context) error {
-		err := service.ruleStore.UpdateAlertRules(ctx, models.NewUserUID(user), []models.UpdateRule{
+		err := service.ruleStore.UpdateAlertRules(ctx, userUidOrFallback(user), []models.UpdateRule{
 			{
 				Existing: storedRule,
 				New:      rule,
@@ -817,6 +831,7 @@ func syncGroupRuleFields(group *models.AlertRuleGroup, orgID int64) *models.Aler
 		group.Rules[i].RuleGroup = group.Title
 		group.Rules[i].NamespaceUID = group.FolderUID
 		group.Rules[i].OrgID = orgID
+		group.Rules[i].RuleGroupIndex = i
 	}
 	return group
 }
@@ -870,4 +885,12 @@ func (service *AlertRuleService) ensureNamespace(ctx context.Context, user ident
 	}
 
 	return nil
+}
+
+func userUidOrFallback(user identity.Requester) *models.UserUID {
+	userUID := models.NewUserUID(user)
+	if user == nil {
+		return &models.FileProvisioningUserUID
+	}
+	return userUID
 }

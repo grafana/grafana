@@ -821,8 +821,11 @@ func setUpServiceTest(t *testing.T, withDashboardMock bool, cfgOverrides ...conf
 	secretsService := secretsfakes.NewFakeSecretsService()
 	rr := routing.NewRouteRegister()
 	tracer := tracing.InitializeTracerForTest()
+
+	fakeFolder := &folder.Folder{UID: "folderUID", Title: "Folder"}
 	mockFolder := &foldertest.FakeService{
-		ExpectedFolder: &folder.Folder{UID: "folderUID", Title: "Folder"},
+		ExpectedFolders: []*folder.Folder{fakeFolder},
+		ExpectedFolder:  fakeFolder,
 	}
 
 	cfg := setting.NewCfg()

@@ -12,8 +12,7 @@ import (
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"google.golang.org/grpc"
-	"k8s.io/client-go/dynamic"
+	"k8s.io/apimachinery/pkg/selection"
 	clientrest "k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -27,8 +26,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
+	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	dashboardsearch "github.com/grafana/grafana/pkg/services/dashboards/service/search"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
@@ -172,23 +173,17 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 		Host: folderApiServerMock.URL,
 	}
 
-	f := func(ctx context.Context) resource.ResourceClient {
-		return resourceClientMock{}
-	}
-
-	k8sHandler := &foldk8sHandler{
-		gvr:                    v0alpha1.FolderResourceInfo.GroupVersionResource(),
-		namespacer:             request.GetNamespaceMapper(cfg),
-		cfg:                    cfg,
-		restConfigProvider:     restCfgProvider.GetRestConfig,
-		recourceClientProvider: f,
-	}
-
 	userService := &usertest.FakeUserService{
 		ExpectedUser: &user.User{},
 	}
 
-	unifiedStore := ProvideUnifiedStore(k8sHandler, userService)
+	featuresArr := []any{
+		featuremgmt.FlagKubernetesFoldersServiceV2}
+	features := featuremgmt.WithFeatures(featuresArr...)
+
+	dashboardStore := dashboards.NewFakeDashboardStore(t)
+	k8sCli := client.NewK8sHandler(cfg, request.GetNamespaceMapper(cfg), v0alpha1.FolderResourceInfo.GroupVersionResource(), restCfgProvider.GetRestConfig, dashboardStore, userService, nil)
+	unifiedStore := ProvideUnifiedStore(k8sCli, userService)
 
 	ctx := context.Background()
 	usr := &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{
@@ -208,10 +203,6 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 		AccessControl: actest.FakeAccessControl{ExpectedEvaluate: true},
 	}
 
-	featuresArr := []any{
-		featuremgmt.FlagKubernetesFoldersServiceV2}
-	features := featuremgmt.WithFeatures(featuresArr...)
-	dashboardStore := dashboards.NewFakeDashboardStore(t)
 	publicDashboardService := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
 
 	folderService := &Service{
@@ -223,7 +214,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 		registry:               make(map[string]folder.RegistryService),
 		metrics:                newFoldersMetrics(nil),
 		tracer:                 tracing.InitializeTracerForTest(),
-		k8sclient:              k8sHandler,
+		k8sclient:              k8sCli,
 		dashboardStore:         dashboardStore,
 		publicDashboardService: publicDashboardService,
 	}
@@ -340,7 +331,6 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 					NewTitle:     &title,
 					SignedInUser: usr,
 				}
-
 				reqResult, err := folderService.Update(ctx, req)
 				require.NoError(t, err)
 				require.Equal(t, title, reqResult.Title)
@@ -357,7 +347,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 			})
 
 			t.Run("When deleting folder by uid should not return access denied error - ForceDeleteRules false", func(t *testing.T) {
-				dashboardStore.On("FindDashboards", mock.Anything, mock.Anything).Return([]dashboards.DashboardSearchProjection{}, nil)
+				dashboardStore.On("FindDashboards", mock.Anything, mock.Anything).Return([]dashboards.DashboardSearchProjection{}, nil).Once()
 				publicDashboardService.On("DeleteByDashboardUIDs", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 				err := folderService.Delete(ctx, &folder.DeleteFolderCommand{
@@ -427,6 +417,13 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 			})
 
 			t.Run("When get folder by ID and uid is an empty string should return folder by id", func(t *testing.T) {
+				dashboardStore.On("FindDashboards", mock.Anything, mock.Anything).Return([]dashboards.DashboardSearchProjection{
+					{
+						IsFolder: true,
+						ID:       fooFolder.ID, // nolint:staticcheck
+						UID:      fooFolder.UID,
+					},
+				}, nil).Once()
 				id := int64(123)
 				emptyString := ""
 				query := &folder.GetFolderQuery{
@@ -442,6 +439,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 			})
 
 			t.Run("When get folder by non existing ID should return not found error", func(t *testing.T) {
+				dashboardStore.On("FindDashboards", mock.Anything, mock.Anything).Return([]dashboards.DashboardSearchProjection{}, nil).Once()
 				id := int64(111111)
 				query := &folder.GetFolderQuery{
 					ID:           &id,
@@ -455,6 +453,13 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 			})
 
 			t.Run("When get folder by Title should return folder", func(t *testing.T) {
+				dashboardStore.On("FindDashboards", mock.Anything, mock.Anything).Return([]dashboards.DashboardSearchProjection{
+					{
+						IsFolder: true,
+						ID:       fooFolder.ID, // nolint:staticcheck
+						UID:      fooFolder.UID,
+					},
+				}, nil).Once()
 				title := "foo"
 				query := &folder.GetFolderQuery{
 					Title:        &title,
@@ -468,6 +473,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 			})
 
 			t.Run("When get folder by non existing Title should return not found error", func(t *testing.T) {
+				dashboardStore.On("FindDashboards", mock.Anything, mock.Anything).Return([]dashboards.DashboardSearchProjection{}, nil).Once()
 				title := "does not exists"
 				query := &folder.GetFolderQuery{
 					Title:        &title,
@@ -505,239 +511,81 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 	})
 }
 
-type resourceClientMock struct{}
-
-func (r resourceClientMock) Read(ctx context.Context, in *resource.ReadRequest, opts ...grpc.CallOption) (*resource.ReadResponse, error) {
-	return nil, nil
-}
-func (r resourceClientMock) Create(ctx context.Context, in *resource.CreateRequest, opts ...grpc.CallOption) (*resource.CreateResponse, error) {
-	return nil, nil
-}
-func (r resourceClientMock) Update(ctx context.Context, in *resource.UpdateRequest, opts ...grpc.CallOption) (*resource.UpdateResponse, error) {
-	return nil, nil
-}
-func (r resourceClientMock) Delete(ctx context.Context, in *resource.DeleteRequest, opts ...grpc.CallOption) (*resource.DeleteResponse, error) {
-	return nil, nil
-}
-func (r resourceClientMock) Restore(ctx context.Context, in *resource.RestoreRequest, opts ...grpc.CallOption) (*resource.RestoreResponse, error) {
-	return nil, nil
-}
-func (r resourceClientMock) List(ctx context.Context, in *resource.ListRequest, opts ...grpc.CallOption) (*resource.ListResponse, error) {
-	return nil, nil
-}
-func (r resourceClientMock) Watch(ctx context.Context, in *resource.WatchRequest, opts ...grpc.CallOption) (resource.ResourceStore_WatchClient, error) {
-	return nil, nil
-}
-func (r resourceClientMock) Search(ctx context.Context, in *resource.ResourceSearchRequest, opts ...grpc.CallOption) (*resource.ResourceSearchResponse, error) {
-	if len(in.Options.Labels) > 0 &&
-		in.Options.Labels[0].Key == utils.LabelKeyDeprecatedInternalID &&
-		in.Options.Labels[0].Operator == "in" &&
-		len(in.Options.Labels[0].Values) > 0 &&
-		in.Options.Labels[0].Values[0] == "123" {
-		return &resource.ResourceSearchResponse{
-			Results: &resource.ResourceTable{
-				Columns: []*resource.ResourceTableColumnDefinition{
-					{
-						Name: "_id",
-						Type: resource.ResourceTableColumnDefinition_STRING,
-					},
-					{
-						Name: "title",
-						Type: resource.ResourceTableColumnDefinition_STRING,
-					},
-					{
-						Name: "folder",
-						Type: resource.ResourceTableColumnDefinition_STRING,
-					},
-				},
-				Rows: []*resource.ResourceTableRow{
-					{
-						Key: &resource.ResourceKey{
-							Name:     "foo",
-							Resource: "folders",
-						},
-						Cells: [][]byte{
-							[]byte("123"),
-							[]byte("folder1"),
-							[]byte(""),
-						},
-					},
-				},
-			},
-			TotalHits: 1,
-		}, nil
-	}
-
-	if len(in.Options.Fields) > 0 &&
-		in.Options.Fields[0].Key == resource.SEARCH_FIELD_TITLE_PHRASE &&
-		in.Options.Fields[0].Operator == "in" &&
-		len(in.Options.Fields[0].Values) > 0 &&
-		in.Options.Fields[0].Values[0] == "foo" {
-		return &resource.ResourceSearchResponse{
-			Results: &resource.ResourceTable{
-				Columns: []*resource.ResourceTableColumnDefinition{
-					{
-						Name: "_id",
-						Type: resource.ResourceTableColumnDefinition_STRING,
-					},
-					{
-						Name: "title",
-						Type: resource.ResourceTableColumnDefinition_STRING,
-					},
-					{
-						Name: "folder",
-						Type: resource.ResourceTableColumnDefinition_STRING,
-					},
-				},
-				Rows: []*resource.ResourceTableRow{
-					{
-						Key: &resource.ResourceKey{
-							Name:     "foo",
-							Resource: "folders",
-						},
-						Cells: [][]byte{
-							[]byte("123"),
-							[]byte("folder1"),
-							[]byte(""),
-						},
-					},
-				},
-			},
-			TotalHits: 1,
-		}, nil
-	}
-
-	if in.Query == "*test*" {
-		return &resource.ResourceSearchResponse{
-			Results: &resource.ResourceTable{
-				Columns: []*resource.ResourceTableColumnDefinition{
-					{
-						Name: "_id",
-						Type: resource.ResourceTableColumnDefinition_STRING,
-					},
-					{
-						Name: "title",
-						Type: resource.ResourceTableColumnDefinition_STRING,
-					},
-					{
-						Name: "folder",
-						Type: resource.ResourceTableColumnDefinition_STRING,
-					},
-				},
-				Rows: []*resource.ResourceTableRow{
-					{
-						Key: &resource.ResourceKey{
-							Name:     "uid",
-							Resource: "folders",
-						},
-						Cells: [][]byte{
-							[]byte("123"),
-							[]byte("testing-123"),
-							[]byte("parent-uid"),
-						},
-					},
-				},
-			},
-			TotalHits: 1,
-		}, nil
-	}
-
-	if len(in.Options.Fields) > 0 &&
-		in.Options.Fields[0].Key == resource.SEARCH_FIELD_NAME &&
-		in.Options.Fields[0].Operator == "in" &&
-		len(in.Options.Fields[0].Values) > 0 {
-		rows := []*resource.ResourceTableRow{}
-		for i, row := range in.Options.Fields[0].Values {
-			rows = append(rows, &resource.ResourceTableRow{
-				Key: &resource.ResourceKey{
-					Name:     row,
-					Resource: "folders",
-				},
-				Cells: [][]byte{
-					[]byte(fmt.Sprintf("%d", i)),       // set legacy id as the row id
-					[]byte(fmt.Sprintf("folder%d", i)), // set title as folder + row id
-					[]byte(""),
-				},
-			})
-		}
-		return &resource.ResourceSearchResponse{
-			Results: &resource.ResourceTable{
-				Columns: []*resource.ResourceTableColumnDefinition{
-					{
-						Name: "_id",
-						Type: resource.ResourceTableColumnDefinition_STRING,
-					},
-					{
-						Name: "title",
-						Type: resource.ResourceTableColumnDefinition_STRING,
-					},
-					{
-						Name: "folder",
-						Type: resource.ResourceTableColumnDefinition_STRING,
-					},
-				},
-				Rows: rows,
-			},
-			TotalHits: int64(len(rows)),
-		}, nil
-	}
-
-	// not found
-	return &resource.ResourceSearchResponse{
-		Results: &resource.ResourceTable{},
-	}, nil
-}
-func (r resourceClientMock) GetStats(ctx context.Context, in *resource.ResourceStatsRequest, opts ...grpc.CallOption) (*resource.ResourceStatsResponse, error) {
-	return nil, nil
-}
-func (r resourceClientMock) CountRepositoryObjects(ctx context.Context, in *resource.CountRepositoryObjectsRequest, opts ...grpc.CallOption) (*resource.CountRepositoryObjectsResponse, error) {
-	return nil, nil
-}
-func (r resourceClientMock) ListRepositoryObjects(ctx context.Context, in *resource.ListRepositoryObjectsRequest, opts ...grpc.CallOption) (*resource.ListRepositoryObjectsResponse, error) {
-	return nil, nil
-}
-func (r resourceClientMock) PutBlob(ctx context.Context, in *resource.PutBlobRequest, opts ...grpc.CallOption) (*resource.PutBlobResponse, error) {
-	return nil, nil
-}
-func (r resourceClientMock) GetBlob(ctx context.Context, in *resource.GetBlobRequest, opts ...grpc.CallOption) (*resource.GetBlobResponse, error) {
-	return nil, nil
-}
-func (r resourceClientMock) IsHealthy(ctx context.Context, in *resource.HealthCheckRequest, opts ...grpc.CallOption) (*resource.HealthCheckResponse, error) {
-	return nil, nil
-}
-
-type mockFoldersK8sCli struct {
-	mock.Mock
-	searcher resourceClientMock
-}
-
-func (m *mockFoldersK8sCli) getClient(ctx context.Context, orgID int64) (dynamic.ResourceInterface, bool) {
-	args := m.Called(ctx, orgID)
-	return args.Get(0).(dynamic.ResourceInterface), args.Bool(1)
-}
-
-func (m *mockFoldersK8sCli) getNamespace(orgID int64) string {
-	if orgID == 1 {
-		return "default"
-	}
-	return fmt.Sprintf("orgs-%d", orgID)
-}
-
-func (m *mockFoldersK8sCli) getSearcher(ctx context.Context) resource.ResourceClient {
-	return m.searcher
-}
-
 func TestSearchFoldersFromApiServer(t *testing.T) {
-	fakeK8sClient := new(mockFoldersK8sCli)
-	service := Service{
-		k8sclient: fakeK8sClient,
-		features:  featuremgmt.WithFeatures(featuremgmt.FlagKubernetesFoldersServiceV2),
+	fakeK8sClient := new(client.MockK8sHandler)
+	guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{
+		CanSaveValue: true,
+		CanViewValue: true,
+	})
+	folderStore := folder.NewFakeStore()
+	folderStore.ExpectedFolder = &folder.Folder{
+		UID:   "parent-uid",
+		ID:    2,
+		Title: "parent title",
 	}
-	fakeK8sClient.On("getSearcher", mock.Anything).Return(fakeK8sClient)
+	service := Service{
+		k8sclient:    fakeK8sClient,
+		features:     featuremgmt.WithFeatures(featuremgmt.FlagKubernetesFoldersServiceV2),
+		unifiedStore: folderStore,
+	}
 	user := &user.SignedInUser{OrgID: 1}
 	ctx := identity.WithRequester(context.Background(), user)
+	fakeK8sClient.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
 
-	t.Run("Should search by uids if provided", func(t *testing.T) {
+	t.Run("Should call search with uids, if provided", func(t *testing.T) {
+		fakeK8sClient.On("Search", mock.Anything, int64(1), &resource.ResourceSearchRequest{
+			Options: &resource.ListOptions{
+				Key: &resource.ResourceKey{
+					Namespace: "default",
+					Group:     v0alpha1.FolderResourceInfo.GroupVersionResource().Group,
+					Resource:  v0alpha1.FolderResourceInfo.GroupVersionResource().Resource,
+				},
+				Fields: []*resource.Requirement{
+					{
+						Key:      resource.SEARCH_FIELD_NAME,
+						Operator: string(selection.In),
+						Values:   []string{"uid1", "uid2"}, // should only search by uid since it is provided
+					},
+				},
+				Labels: []*resource.Requirement{},
+			},
+			Limit: 100000}).Return(&resource.ResourceSearchResponse{
+			Results: &resource.ResourceTable{
+				Columns: []*resource.ResourceTableColumnDefinition{
+					{
+						Name: "title",
+						Type: resource.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: "folder",
+						Type: resource.ResourceTableColumnDefinition_STRING,
+					},
+				},
+				Rows: []*resource.ResourceTableRow{
+					{
+						Key: &resource.ResourceKey{
+							Name:     "uid1",
+							Resource: "folder",
+						},
+						Cells: [][]byte{
+							[]byte("folder0"),
+							[]byte(""),
+						},
+					},
+					{
+						Key: &resource.ResourceKey{
+							Name:     "uid2",
+							Resource: "folder",
+						},
+						Cells: [][]byte{
+							[]byte("folder1"),
+							[]byte(""),
+						},
+					},
+				},
+			},
+			TotalHits: 2,
+		}, nil).Once()
 		query := folder.SearchFoldersQuery{
 			UIDs:         []string{"uid1", "uid2"},
 			IDs:          []int64{1, 2}, // will ignore these because uid is passed in
@@ -772,16 +620,60 @@ func TestSearchFoldersFromApiServer(t *testing.T) {
 			},
 		}
 		require.Equal(t, expectedResult, result)
+		fakeK8sClient.AssertExpectations(t)
 	})
 
-	t.Run("Search by ID if uids are not provided", func(t *testing.T) {
+	t.Run("Should call search by ID if uids are not provided", func(t *testing.T) {
 		query := folder.SearchFoldersQuery{
 			IDs:          []int64{123},
 			SignedInUser: user,
 		}
+		fakeK8sClient.On("Search", mock.Anything, int64(1), &resource.ResourceSearchRequest{
+			Options: &resource.ListOptions{
+				Key: &resource.ResourceKey{
+					Namespace: "default",
+					Group:     v0alpha1.FolderResourceInfo.GroupVersionResource().Group,
+					Resource:  v0alpha1.FolderResourceInfo.GroupVersionResource().Resource,
+				},
+				Fields: []*resource.Requirement{},
+				Labels: []*resource.Requirement{
+					{
+						Key:      utils.LabelKeyDeprecatedInternalID,
+						Operator: string(selection.In),
+						Values:   []string{"123"},
+					},
+				},
+			},
+			Limit: 100000}).Return(&resource.ResourceSearchResponse{
+			Results: &resource.ResourceTable{
+				Columns: []*resource.ResourceTableColumnDefinition{
+					{
+						Name: "title",
+						Type: resource.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: "folder",
+						Type: resource.ResourceTableColumnDefinition_STRING,
+					},
+				},
+				Rows: []*resource.ResourceTableRow{
+					{
+						Key: &resource.ResourceKey{
+							Name:     "foo",
+							Resource: "folder",
+						},
+						Cells: [][]byte{
+							[]byte("folder1"),
+							[]byte(""),
+						},
+					},
+				},
+			},
+			TotalHits: 1,
+		}, nil).Once()
+
 		result, err := service.searchFoldersFromApiServer(ctx, query)
 		require.NoError(t, err)
-
 		expectedResult := model.HitList{
 			{
 				UID:         "foo",
@@ -795,6 +687,7 @@ func TestSearchFoldersFromApiServer(t *testing.T) {
 			},
 		}
 		require.Equal(t, expectedResult, result)
+		fakeK8sClient.AssertExpectations(t)
 	})
 
 	t.Run("Search by title, wildcard should be added to search request (won't match in search mock if not)", func(t *testing.T) {
@@ -806,10 +699,45 @@ func TestSearchFoldersFromApiServer(t *testing.T) {
 			Title: "parent title",
 		}
 		service.unifiedStore = fakeFolderStore
-		guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{
-			CanSaveValue: true,
-			CanViewValue: true,
-		})
+		fakeK8sClient.On("Search", mock.Anything, int64(1), &resource.ResourceSearchRequest{
+			Options: &resource.ListOptions{
+				Key: &resource.ResourceKey{
+					Namespace: "default",
+					Group:     v0alpha1.FolderResourceInfo.GroupVersionResource().Group,
+					Resource:  v0alpha1.FolderResourceInfo.GroupVersionResource().Resource,
+				},
+				Fields: []*resource.Requirement{},
+				Labels: []*resource.Requirement{},
+			},
+			Query:  "*test*",
+			Fields: dashboardsearch.IncludeFields,
+			Limit:  100000}).Return(&resource.ResourceSearchResponse{
+			Results: &resource.ResourceTable{
+				Columns: []*resource.ResourceTableColumnDefinition{
+					{
+						Name: "title",
+						Type: resource.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: "folder",
+						Type: resource.ResourceTableColumnDefinition_STRING,
+					},
+				},
+				Rows: []*resource.ResourceTableRow{
+					{
+						Key: &resource.ResourceKey{
+							Name:     "uid",
+							Resource: "folder",
+						},
+						Cells: [][]byte{
+							[]byte("testing-123"),
+							[]byte("parent-uid"),
+						},
+					},
+				},
+			},
+			TotalHits: 1,
+		}, nil).Once()
 
 		query := folder.SearchFoldersQuery{
 			Title:        "test",
@@ -832,5 +760,134 @@ func TestSearchFoldersFromApiServer(t *testing.T) {
 			},
 		}
 		require.Equal(t, expectedResult, result)
+		fakeK8sClient.AssertExpectations(t)
+	})
+}
+
+func TestDeleteFoldersFromApiServer(t *testing.T) {
+	fakeK8sClient := new(client.MockK8sHandler)
+	fakeK8sClient.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
+	dashboardK8sclient := new(client.MockK8sHandler)
+	fakeFolderStore := folder.NewFakeStore()
+	dashboardStore := dashboards.NewFakeDashboardStore(t)
+	publicDashboardFakeService := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
+	service := Service{
+		k8sclient:              fakeK8sClient,
+		dashboardK8sClient:     dashboardK8sclient,
+		unifiedStore:           fakeFolderStore,
+		dashboardStore:         dashboardStore,
+		publicDashboardService: publicDashboardFakeService,
+		registry:               make(map[string]folder.RegistryService),
+		features:               featuremgmt.WithFeatures(featuremgmt.FlagKubernetesFoldersServiceV2),
+	}
+	user := &user.SignedInUser{OrgID: 1}
+	ctx := identity.WithRequester(context.Background(), user)
+	guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{
+		CanSaveValue: true,
+		CanViewValue: true,
+	})
+	db, cfg := sqlstore.InitTestDB(t)
+
+	alertingStore := ngstore.DBstore{
+		SQLStore:      db,
+		Cfg:           cfg.UnifiedAlerting,
+		Logger:        log.New("test-alerting-store"),
+		AccessControl: actest.FakeAccessControl{ExpectedEvaluate: true},
+	}
+	require.NoError(t, service.RegisterService(alertingStore))
+
+	t.Run("Should delete folder", func(t *testing.T) {
+		dashboardStore.On("FindDashboards", mock.Anything, mock.Anything).Return([]dashboards.DashboardSearchProjection{}, nil).Once()
+		publicDashboardFakeService.On("DeleteByDashboardUIDs", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
+		err := service.deleteFromApiServer(ctx, &folder.DeleteFolderCommand{
+			UID:          "uid",
+			OrgID:        1,
+			SignedInUser: user,
+		})
+		require.NoError(t, err)
+	})
+
+	t.Run("Should delete dashboards and public dashboards within the folder", func(t *testing.T) {
+		dashboardStore.On("FindDashboards", mock.Anything, mock.Anything).Return([]dashboards.DashboardSearchProjection{
+			{
+				UID:   "test",
+				OrgID: 1,
+			},
+			{
+				UID:   "test2",
+				OrgID: 1,
+			},
+		}, nil).Once()
+		dashboardStore.On("DeleteDashboard", mock.Anything, &dashboards.DeleteDashboardCommand{
+			UID:   "test",
+			OrgID: 1,
+		}).Return(nil).Once()
+		dashboardStore.On("DeleteDashboard", mock.Anything, &dashboards.DeleteDashboardCommand{
+			UID:   "test2",
+			OrgID: 1,
+		}).Return(nil).Once()
+		publicDashboardFakeService.On("DeleteByDashboardUIDs", mock.Anything, int64(1), []string{"test", "test2"}).Return(nil).Once()
+		err := service.deleteFromApiServer(ctx, &folder.DeleteFolderCommand{
+			UID:          "uid",
+			OrgID:        1,
+			SignedInUser: user,
+		})
+		require.NoError(t, err)
+		dashboardStore.AssertExpectations(t)
+		publicDashboardFakeService.AssertExpectations(t)
+	})
+
+	// enable k8s ff for dashboards, retest
+	service.features = featuremgmt.WithFeatures(featuremgmt.FlagKubernetesFoldersServiceV2, featuremgmt.FlagKubernetesCliDashboards)
+
+	t.Run("Should delete dashboards and public dashboards within the folder through k8s if the ff is enabled", func(t *testing.T) {
+		publicDashboardFakeService.On("DeleteByDashboardUIDs", mock.Anything, int64(1), []string{"uid1"}).Return(nil).Once()
+		dashboardK8sclient.On("Delete", mock.Anything, "uid1", int64(1), mock.Anything).Return(nil).Once()
+		dashboardK8sclient.On("Search", mock.Anything, int64(1), &resource.ResourceSearchRequest{
+			Options: &resource.ListOptions{
+				Labels: []*resource.Requirement{},
+				Fields: []*resource.Requirement{
+					{
+						Key:      resource.SEARCH_FIELD_FOLDER,
+						Operator: string(selection.In),
+						Values:   []string{"uid1"},
+					},
+				},
+			},
+			Limit: 100000}).Return(&resource.ResourceSearchResponse{
+			Results: &resource.ResourceTable{
+				Columns: []*resource.ResourceTableColumnDefinition{
+					{
+						Name: "title",
+						Type: resource.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: "folder",
+						Type: resource.ResourceTableColumnDefinition_STRING,
+					},
+				},
+				Rows: []*resource.ResourceTableRow{
+					{
+						Key: &resource.ResourceKey{
+							Name:     "uid1",
+							Resource: "folder",
+						},
+						Cells: [][]byte{
+							[]byte("folder1"),
+							[]byte(""),
+						},
+					},
+				},
+			},
+			TotalHits: 1,
+		}, nil).Once()
+		err := service.deleteFromApiServer(ctx, &folder.DeleteFolderCommand{
+			UID:          "uid1",
+			OrgID:        1,
+			SignedInUser: user,
+		})
+		require.NoError(t, err)
+		publicDashboardFakeService.AssertExpectations(t)
+		dashboardK8sclient.AssertExpectations(t)
 	})
 }

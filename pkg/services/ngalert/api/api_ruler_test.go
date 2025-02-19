@@ -404,6 +404,24 @@ func TestRouteGetRuleByUID(t *testing.T) {
 						Name: "Test",
 					},
 				},
+				{
+					desc:             "recognize system identifier (alerting)",
+					UpdatedBy:        &models.AlertingUserUID,
+					User:             nil,
+					UserServiceError: nil,
+					Expected: &apimodels.UserInfo{
+						UID: string(models.AlertingUserUID),
+					},
+				},
+				{
+					desc:             "recognize system identifier (provisioning)",
+					UpdatedBy:        &models.FileProvisioningUserUID,
+					User:             nil,
+					UserServiceError: nil,
+					Expected: &apimodels.UserInfo{
+						UID: string(models.FileProvisioningUserUID),
+					},
+				},
 			}
 			for _, tc := range testcases {
 				t.Run(tc.desc, func(t *testing.T) {
@@ -445,6 +463,109 @@ func TestRouteGetRuleByUID(t *testing.T) {
 		response := createService(ruleStore).RouteGetRuleByUID(req, "foobar")
 
 		require.Equal(t, http.StatusNotFound, response.Status())
+	})
+}
+
+func TestRouteGetRuleHistoryByUID(t *testing.T) {
+	orgID := rand.Int63()
+	f := randFolder()
+	groupKey := models.GenerateGroupKey(orgID)
+	groupKey.NamespaceUID = f.UID
+	gen := models.RuleGen.With(models.RuleGen.WithGroupKey(groupKey), models.RuleGen.WithUniqueID())
+
+	t.Run("rule history is successfully fetched with the correct UID", func(t *testing.T) {
+		ruleStore := fakes.NewRuleStore(t)
+		ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], f)
+
+		rule := gen.GenerateRef()
+		history := gen.With(gen.WithUID(rule.UID)).GenerateManyRef(3)
+		// simulate order of the history
+		rule.ID = 100
+		for i, alertRule := range history {
+			alertRule.ID = rule.ID - int64(i) - 1
+		}
+
+		ruleStore.PutRule(context.Background(), rule)
+		ruleStore.History[rule.GetKey()] = append(ruleStore.History[rule.GetKey()], history...)
+
+		perms := createPermissionsForRules([]*models.AlertRule{rule}, orgID)
+		req := createRequestContextWithPerms(orgID, perms, nil)
+
+		svc := createService(ruleStore)
+		response := svc.RouteGetRuleVersionsByUID(req, rule.UID)
+
+		require.Equal(t, http.StatusOK, response.Status())
+		var result apimodels.GettableRuleVersions
+		require.NoError(t, json.Unmarshal(response.Body(), &result))
+		require.NotNil(t, result)
+
+		require.Len(t, result, len(history)+1) // history + current version
+
+		t.Run("should be in correct order", func(t *testing.T) {
+			expectedHistory := append([]*models.AlertRule{rule}, history...)
+			for i, rul := range expectedHistory {
+				assert.Equal(t, rul.UID, result[i].GrafanaManagedAlert.UID)
+			}
+		})
+	})
+
+	t.Run("NotFound when rule does not exist", func(t *testing.T) {
+		ruleStore := fakes.NewRuleStore(t)
+		ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], f)
+		ruleKey := models.AlertRuleKey{
+			OrgID: orgID,
+			UID:   "test",
+		}
+		history := gen.With(gen.WithKey(ruleKey)).GenerateManyRef(3)
+		ruleStore.History[ruleKey] = append(ruleStore.History[ruleKey], history...) // even if history is full of records
+
+		perms := createPermissionsForRules(history, orgID)
+		req := createRequestContextWithPerms(orgID, perms, nil)
+		response := createService(ruleStore).RouteGetRuleVersionsByUID(req, ruleKey.UID)
+
+		require.Equal(t, http.StatusNotFound, response.Status())
+	})
+
+	t.Run("Empty result when rule history is empty", func(t *testing.T) {
+		ruleStore := fakes.NewRuleStore(t)
+		ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], f)
+		ruleKey := models.AlertRuleKey{
+			OrgID: orgID,
+			UID:   "test",
+		}
+		rule := gen.With(gen.WithKey(ruleKey)).GenerateRef()
+		ruleStore.PutRule(context.Background(), rule)
+		ruleStore.History[ruleKey] = nil
+
+		perms := createPermissionsForRules([]*models.AlertRule{rule}, orgID)
+		req := createRequestContextWithPerms(orgID, perms, nil)
+		response := createService(ruleStore).RouteGetRuleVersionsByUID(req, ruleKey.UID)
+
+		require.Equal(t, http.StatusOK, response.Status())
+
+		var result apimodels.GettableRuleVersions
+		require.NoError(t, json.Unmarshal(response.Body(), &result))
+		require.Empty(t, result)
+	})
+
+	t.Run("Unauthorized if user does not have access to the current rule", func(t *testing.T) {
+		ruleStore := fakes.NewRuleStore(t)
+		anotherFolder := randFolder()
+		ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], f, anotherFolder)
+		ruleKey := models.AlertRuleKey{
+			OrgID: orgID,
+			UID:   "test",
+		}
+		rule := gen.With(gen.WithKey(ruleKey), gen.WithNamespaceUID(anotherFolder.UID)).GenerateRef()
+		ruleStore.PutRule(context.Background(), rule)
+		history := gen.With(gen.WithKey(ruleKey)).GenerateManyRef(3)
+		ruleStore.History[ruleKey] = history
+
+		perms := createPermissionsForRules(history, orgID) // grant permissions to all records in history but not the rule itself
+		req := createRequestContextWithPerms(orgID, perms, nil)
+		response := createService(ruleStore).RouteGetRuleVersionsByUID(req, ruleKey.UID)
+
+		require.Equal(t, http.StatusForbidden, response.Status())
 	})
 }
 
@@ -572,6 +693,24 @@ func TestRouteGetRulesGroupConfig(t *testing.T) {
 				require.Fail(t, fmt.Sprintf("rules are not sorted by group index. Expected: %v. Actual: %v", expectedUIDs, actualUIDs))
 			}
 		}
+	})
+	t.Run("should return a 404 when fetching a group that doesn't exist", func(t *testing.T) {
+		orgID := rand.Int63()
+		folder := randFolder()
+		ruleStore := fakes.NewRuleStore(t)
+		ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
+		groupKey := models.GenerateGroupKey(orgID)
+		groupKey.NamespaceUID = folder.UID
+
+		expectedRules := gen.With(gen.WithGroupKey(groupKey), gen.WithUniqueGroupIndex()).GenerateManyRef(5, 10)
+		ruleStore.PutRule(context.Background(), expectedRules...)
+
+		perms := createPermissionsForRules(expectedRules, orgID)
+		req := createRequestContextWithPerms(orgID, perms, nil)
+
+		response := createService(ruleStore).RouteGetRulesGroupConfig(req, folder.UID, "non-existent-rule-group")
+
+		require.Equal(t, http.StatusNotFound, response.Status())
 	})
 }
 

@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase, SceneObjectRef, SceneObjectState, VizPanel } from '@grafana/scenes';
 import { Alert, LoadingPlaceholder, Tab, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
@@ -46,7 +47,11 @@ export class PanelDataAlertingTab extends SceneObjectBase<PanelDataAlertingTabSt
 
   public getCanCreateRules() {
     const rulesPermissions = getRulesPermissions('grafana');
-    return this.getDashboard().state.meta.canSave && contextSrv.hasPermission(rulesPermissions.create);
+    return (
+      config.unifiedAlerting &&
+      this.getDashboard().state.meta.canSave &&
+      contextSrv.hasPermission(rulesPermissions.create)
+    );
   }
 }
 
