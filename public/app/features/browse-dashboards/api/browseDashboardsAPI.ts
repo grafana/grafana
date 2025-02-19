@@ -302,9 +302,12 @@ export const browseDashboardsAPI = createApi({
         for (const dashboardUID of selectedDashboards) {
           const response = await getDashboardAPI().deleteDashboard(dashboardUID, true);
 
-          const name = response?.title;
+          // TODO: handle displaying notifications for k8s dashboards
+          // the issue is that we don't get back the dashboad title in the delete response
 
           if (config.featureToggles.dashboardRestore) {
+            const name = response?.title;
+
             if (name) {
               appEvents.publish({
                 type: AppEvents.alertSuccess.name,
