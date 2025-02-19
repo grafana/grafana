@@ -72,13 +72,6 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 			return fmt.Errorf("unable to clone target: %w", err)
 		}
 
-		// New empty branch (same on main???)
-		progress.SetMessage("create empty branch")
-		_, err := buffered.CheckoutEmptyBranch(ctx, options.Branch) // or
-		if err != nil {
-			return fmt.Errorf("unable to create empty branch: %w", err)
-		}
-
 		repo = buffered     // send all writes to the buffered repo
 		options.Branch = "" // :( the branch is now baked into the repo
 	}

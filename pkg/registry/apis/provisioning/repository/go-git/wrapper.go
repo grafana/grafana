@@ -32,6 +32,9 @@ var _ repository.Repository = (*GoGitRepo)(nil)
 type GoGitCloneOptions struct {
 	Root string // tempdir (when empty, memory??)
 
+	// If the branch does not exist, create it
+	CreateIfNotExists bool
+
 	// Skip intermediate commits and commit all before push
 	SingleCommitBeforePush bool
 }
@@ -79,46 +82,40 @@ func Clone(
 	if err != nil {
 		return nil, err
 	}
+	url := fmt.Sprintf("%s.git", gitcfg.URL)
 
 	branch := plumbing.NewBranchReferenceName(gitcfg.Branch)
-	url := fmt.Sprintf("%s.git", gitcfg.URL)
-	repo, err := git.PlainOpen(dir)
-	if err != nil {
-		if !errors.Is(err, git.ErrRepositoryNotExists) {
-			return nil, fmt.Errorf("error opening repository %w", err)
-		}
-		opts := &git.CloneOptions{
-			ReferenceName: branch,
-			Auth: &githttp.BasicAuth{
-				Username: "grafana",         // this can be anything except an empty string for PAT
-				Password: string(decrypted), // TODO... will need to get from a service!
-			},
-			URL:      url,
-			Progress: progress,
-		}
+	cloneOpts := &git.CloneOptions{
+		ReferenceName: branch,
+		Auth: &githttp.BasicAuth{
+			Username: "grafana",         // this can be anything except an empty string for PAT
+			Password: string(decrypted), // TODO... will need to get from a service!
+		},
+		URL:      url,
+		Progress: progress,
+	}
 
-		repo, err = git.PlainCloneContext(ctx, dir, false, opts)
-		if errors.Is(err, plumbing.ErrReferenceNotFound) {
-			opts.ReferenceName = "" // empty
-			repo, err = git.PlainCloneContext(ctx, dir, false, opts)
-			if err == nil {
-				worktree, err := repo.Worktree()
-				if err != nil {
-					return nil, err
-				}
-				err = worktree.Checkout(&git.CheckoutOptions{
-					Branch: branch,
-					Force:  true,
-					Create: true,
-				})
-				if err != nil {
-					return nil, fmt.Errorf("unable to create new branch %w", err)
-				}
+	repo, err := git.PlainCloneContext(ctx, dir, false, cloneOpts)
+	if errors.Is(err, plumbing.ErrReferenceNotFound) && opts.CreateIfNotExists {
+		cloneOpts.ReferenceName = "" // empty
+		repo, err = git.PlainCloneContext(ctx, dir, false, cloneOpts)
+		if err == nil {
+			worktree, err := repo.Worktree()
+			if err != nil {
+				return nil, err
+			}
+			err = worktree.Checkout(&git.CheckoutOptions{
+				Branch: branch,
+				Force:  true,
+				Create: true,
+			})
+			if err != nil {
+				return nil, fmt.Errorf("unable to create new branch %w", err)
 			}
 		}
-		if err != nil {
-			return nil, fmt.Errorf("clone error %w", err)
-		}
+	}
+	if err != nil {
+		return nil, fmt.Errorf("clone error %w", err)
 	}
 
 	rcfg, err := repo.Config()
@@ -193,14 +190,12 @@ func (g *GoGitRepo) Checkout(ctx context.Context, branch string, createIfNotFoun
 		},
 	})
 	if err != nil {
-		if !errors.Is(err, git.NoErrAlreadyUpToDate) {
-			return fmt.Errorf("fetch origin failed: %v", err)
-		}
+		logger.Info("origin fetch failed.", "branch", branch, "err", err)
 	}
 
-	// Try again
+	// Try again, this time create
 	err = g.tree.Checkout(&branchCoOpts)
-	if err != nil {
+	if err != nil && createIfNotFound {
 		// It did not exist, so lets create it
 		branchCoOpts.Create = true
 		return g.tree.Checkout(&branchCoOpts)
