@@ -51,7 +51,7 @@ func TestGoGitWrapper(t *testing.T) {
 		Spec: v0alpha1.RepositorySpec{
 			GitHub: &v0alpha1.GitHubRepositoryConfig{
 				URL:    "https://github.com/grafana/git-ui-sync-demo",
-				Branch: "ryan-test-test-test",
+				Branch: "ryan-test",
 			},
 		},
 	},
@@ -59,6 +59,7 @@ func TestGoGitWrapper(t *testing.T) {
 			Root: "testdata/clone", // where things are cloned,
 			// one commit (not 11)
 			SingleCommitBeforePush: true,
+			CreateIfNotExists:      true,
 		},
 		&dummySecret{},
 		os.Stdout)
@@ -72,11 +73,9 @@ func TestGoGitWrapper(t *testing.T) {
 
 	fmt.Printf("TREE:%s\n", string(jj))
 
-	branch := "" //fmt.Sprintf("unit-test-%s", time.Now().Format("20060102-150405")) // the branch name to create
-
-	count, err := wrap.CheckoutEmptyBranch(ctx, branch)
+	branch := fmt.Sprintf("unit-test-%s", time.Now().Format("20060102-150405")) // the branch name to create
+	err = wrap.Checkout(ctx, branch, true)
 	require.NoError(t, err)
-	fmt.Printf("REMOVED: %d\n", count)
 
 	ctx = repository.WithAuthorSignature(ctx, repository.CommitSignature{
 		Name:  "xxxxx",

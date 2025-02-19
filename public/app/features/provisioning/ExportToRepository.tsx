@@ -1,9 +1,9 @@
 import { useForm } from 'react-hook-form';
 
-import { Box, Button, Field, FieldSet, Input, Stack, Switch, Text } from '@grafana/ui';
+import { Box, Button, Field, FieldSet, Input, Switch } from '@grafana/ui';
 
-import ProgressBar from './ProgressBar';
-import { Repository, useCreateRepositoryExportMutation, useListJobQuery, ExportJobOptions } from './api';
+import { JobStatus } from './JobStatus';
+import { Repository, useCreateRepositoryExportMutation, ExportJobOptions } from './api';
 
 interface Props {
   repo: Repository;
@@ -11,11 +11,10 @@ interface Props {
 
 export function ExportToRepository({ repo }: Props) {
   const [exportRepo, exportQuery] = useCreateRepositoryExportMutation();
-  const exportName = exportQuery.data?.metadata?.name;
+  const exportJob = exportQuery.data?.metadata?.name;
 
   const { register, formState, handleSubmit } = useForm<ExportJobOptions>({
     defaultValues: {
-      history: true,
       prefix: '',
     },
   });
@@ -26,8 +25,8 @@ export function ExportToRepository({ repo }: Props) {
       body, // << the form
     });
 
-  if (exportName) {
-    return <ExportJobStatus name={exportName} />;
+  if (exportJob) {
+    return <JobStatus name={exportJob} />;
   }
 
   const isGit = repo.spec?.type === 'github';
@@ -50,10 +49,6 @@ export function ExportToRepository({ repo }: Props) {
             <Switch {...register('identifier')} />
           </Field>
 
-          <Field label="History" description="Include commits for each historical value">
-            <Switch {...register('history')} />
-          </Field>
-
           <Button
             type="submit"
             disabled={formState.isSubmitting}
@@ -64,31 +59,6 @@ export function ExportToRepository({ repo }: Props) {
           </Button>
         </FieldSet>
       </form>
-    </Box>
-  );
-}
-
-function ExportJobStatus({ name }: { name: string }) {
-  const jobQuery = useListJobQuery({ watch: true, fieldSelector: `metadata.name=${name}` });
-  const job = jobQuery.data?.items?.[0];
-
-  if (!job) {
-    return null;
-  }
-
-  return (
-    <Box paddingTop={2}>
-      <Stack direction={'column'} gap={2}>
-        {job.status && (
-          <Stack direction="column" gap={2}>
-            <Text element="p">
-              {job.status.message} // {job.status.state}
-            </Text>
-            <ProgressBar progress={job.status.progress} />
-          </Stack>
-        )}
-        <pre>{JSON.stringify(job, null, ' ')}</pre>
-      </Stack>
     </Box>
   );
 }

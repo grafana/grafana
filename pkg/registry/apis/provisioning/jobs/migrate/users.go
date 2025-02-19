@@ -1,4 +1,4 @@
-package export
+package migrate
 
 import (
 	"context"
@@ -13,8 +13,8 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 )
 
-func (r *exportJob) loadUsers(ctx context.Context) error {
-	client := r.client.Resource(schema.GroupVersionResource{
+func (j *migrationJob) loadUsers(ctx context.Context) error {
+	client := j.client.Resource(schema.GroupVersionResource{
 		Group:    iam.GROUP,
 		Version:  iam.VERSION,
 		Resource: iam.UserResourceInfo.GroupResource().Resource,
@@ -29,7 +29,7 @@ func (r *exportJob) loadUsers(ctx context.Context) error {
 	}
 
 	var ok bool
-	r.userInfo = make(map[string]repository.CommitSignature)
+	j.userInfo = make(map[string]repository.CommitSignature)
 	for _, item := range rawList.Items {
 		sig := repository.CommitSignature{}
 		// FIXME: should we improve logging here?
@@ -50,8 +50,7 @@ func (r *exportJob) loadUsers(ctx context.Context) error {
 			}
 		}
 
-		r.userInfo["user:"+item.GetName()] = sig
+		j.userInfo["user:"+item.GetName()] = sig
 	}
-
 	return nil
 }

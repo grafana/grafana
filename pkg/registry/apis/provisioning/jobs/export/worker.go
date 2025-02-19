@@ -7,7 +7,6 @@ import (
 	"os"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	gogit "github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/go-git"
@@ -26,14 +25,11 @@ type ExportWorker struct {
 	// Check where values are currently saved
 	storageStatus dualwrite.Service
 
-	// Support reading from history
-	legacyMigrator legacy.LegacyMigrator
-
+	// Decrypt secrets in config
 	secrets secrets.Service
 }
 
 func NewExportWorker(clients *resources.ClientFactory,
-	legacyMigrator legacy.LegacyMigrator,
 	storageStatus dualwrite.Service,
 	secrets secrets.Service,
 	clonedir string,
@@ -42,7 +38,6 @@ func NewExportWorker(clients *resources.ClientFactory,
 		clonedir,
 		clients,
 		storageStatus,
-		legacyMigrator,
 		secrets,
 	}
 }
@@ -71,17 +66,10 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 		progress.SetMessage("clone target")
 		buffered, err = gogit.Clone(ctx, repo.Config(), gogit.GoGitCloneOptions{
 			Root:                   r.clonedir,
-			SingleCommitBeforePush: !options.History,
+			SingleCommitBeforePush: true,
 		}, r.secrets, os.Stdout)
 		if err != nil {
 			return fmt.Errorf("unable to clone target: %w", err)
-		}
-
-		// New empty branch (same on main???)
-		progress.SetMessage("create empty branch")
-		_, err := buffered.CheckoutEmptyBranch(ctx, options.Branch) // or
-		if err != nil {
-			return fmt.Errorf("unable to create empty branch: %w", err)
 		}
 
 		repo = buffered     // send all writes to the buffered repo
@@ -94,19 +82,6 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 	}
 
 	worker := newExportJob(ctx, repo, *options, dynamicClient, progress)
-
-	if options.History {
-		progress.SetMessage("load users")
-		err = worker.loadUsers(ctx)
-		if err != nil {
-			return fmt.Errorf("error loading users: %w", err)
-		}
-	}
-
-	// Read from legacy if not yet using unified storage
-	if dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, r.storageStatus) {
-		worker.legacy = r.legacyMigrator
-	}
 
 	// Load and write all folders
 	progress.SetMessage("start folder export")
