@@ -212,7 +212,7 @@ If you use reverse proxies, configure them accordingly to use live tailing:
 **Using Apache2 for proxying between the browser and the Grafana server:**
 
 ```
-ProxyPassMatch "^/(api/datasources/proxy/uid/\d+/loki/api/v1/tail)" "ws://127.0.0.1:3000/$1"
+ProxyPassMatch "^/(api/datasources/proxy/uid/[a-zA-Z0-9_-]+/loki/api/v1/tail)" "ws://127.0.0.1:3000/$1"
 ```
 
 **Using NGINX:**
@@ -233,7 +233,7 @@ In the `http` section of NGINX configuration, add the following map definition:
 In your `server` section, add the following configuration:
 
 ```
-  location ~ /(api/datasources/proxy/uid/\d+/loki/api/v1/tail) {
+  location ~ /(api/datasources/proxy/uid/[a-zA-Z0-9_-]+/loki/api/v1/tail) {
       proxy_pass          http://localhost:3000$request_uri;
       proxy_set_header    Host              $host;
       proxy_set_header    X-Real-IP         $remote_addr;
