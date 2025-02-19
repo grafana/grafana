@@ -25,9 +25,8 @@ type StatCell<T extends keyof ResourceCount = keyof ResourceCount> = CellProps<R
 
 export function RepositoryOverview({ repo }: { repo: Repository }) {
   const styles = useStyles2(getStyles);
-  const remoteURL = getRemoteURL(repo);
-  const webhookURL = getWebhookURL(repo);
   const status = repo.status;
+  const webhookURL = getWebhookURL(repo);
 
   const resourceColumns = useMemo(
     () => [
@@ -53,36 +52,7 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
   return (
     <Box padding={2}>
       <Stack direction="column" gap={2}>
-        <Grid columns={2} gap={2}>
-          <div className={styles.cardContainer}>
-            <Card className={styles.card}>
-              <Card.Heading>Links</Card.Heading>
-              <Card.Meta>
-                <Stack>
-                  {remoteURL && (
-                    <Text>
-                      <TextLink external href={remoteURL}>
-                        {remoteURL}
-                      </TextLink>
-                    </Text>
-                  )}
-
-                  {webhookURL && (
-                    <Text>
-                      <TextLink external href={webhookURL}>
-                        Webhook
-                      </TextLink>
-                    </Text>
-                  )}
-                </Stack>
-              </Card.Meta>
-              <Card.Actions className={styles.actions}>
-                <LinkButton fill="outline" size="md" href={getFolderURL(repo)}>
-                  Containing Folder
-                </LinkButton>
-              </Card.Actions>
-            </Card>
-          </div>
+        <Grid columns={3} gap={2}>
           <div className={styles.cardContainer}>
             <Card className={styles.card}>
               <Card.Heading>Resources</Card.Heading>
@@ -95,6 +65,11 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
                   />
                 ) : null}
               </Card.Description>
+              <Card.Actions className={styles.actions}>
+                <LinkButton fill="outline" size="md" href={getFolderURL(repo)} icon="folder-open">
+                  View Folder
+                </LinkButton>
+              </Card.Actions>
             </Card>
           </div>
           {repo.status?.health && (
@@ -148,6 +123,13 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
               <Card.Description>
                 <Grid columns={12} gap={1} alignItems="baseline">
                   <div className={styles.labelColumn}>
+                    <Text color="secondary">Status:</Text>
+                  </div>
+                  <div className={styles.valueColumn}>
+                    <Text variant="body">{status?.sync.state ?? 'N/A'}</Text>
+                  </div>
+
+                  <div className={styles.labelColumn}>
                     <Text color="secondary">Job ID:</Text>
                   </div>
                   <div className={styles.valueColumn}>
@@ -195,6 +177,11 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
               </Card.Description>
               <Card.Actions className={styles.actions}>
                 <SyncRepository repository={repo} />
+                {webhookURL && (
+                  <TextLink external href={webhookURL} icon="link">
+                    Webhook
+                  </TextLink>
+                )}
               </Card.Actions>
             </Card>
           </div>
@@ -205,26 +192,6 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
       </Stack>
     </Box>
   );
-}
-
-function getRemoteURL(repo: Repository) {
-  if (repo.spec?.type === 'github') {
-    const spec = repo.spec.github;
-    let url = spec?.url || '';
-    if (spec?.branch) {
-      url += `/tree/${spec.branch}`;
-    }
-    return url;
-  }
-  return undefined;
-}
-
-function getWebhookURL(repo: Repository) {
-  const { status, spec } = repo;
-  if (spec?.type === 'github' && status?.webhook?.url && spec.github?.url) {
-    return `${spec.github.url}/settings/hooks/${status.webhook?.id}`;
-  }
-  return undefined;
 }
 
 function getFolderURL(repo: Repository) {
@@ -255,3 +222,11 @@ const getStyles = () => {
     }),
   };
 };
+
+function getWebhookURL(repo: Repository) {
+  const { status, spec } = repo;
+  if (spec?.type === 'github' && status?.webhook?.url && spec.github?.url) {
+    return `${spec.github.url}/settings/hooks/${status.webhook?.id}`;
+  }
+  return undefined;
+}

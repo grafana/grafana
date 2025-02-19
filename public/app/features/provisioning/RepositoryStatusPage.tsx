@@ -20,6 +20,7 @@ import {
   TabsBar,
   Text,
   TextLink,
+  Modal,
 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
@@ -46,18 +47,19 @@ enum TabSelection {
   Overview = 'overview',
   Resources = 'resources',
   Files = 'files',
-  Export = 'export',
 }
 
 const tabInfo: SelectableValue<TabSelection> = [
   { value: TabSelection.Overview, label: 'Overview', title: 'Repository overview' },
   { value: TabSelection.Resources, label: 'Resources', title: 'Resources saved in grafana database' },
   { value: TabSelection.Files, label: 'Files', title: 'The raw file list from the repository' },
-  { value: TabSelection.Export, label: 'Export' },
 ];
 
 export default function RepositoryStatusPage() {
   const { name = '' } = useParams();
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [showMigrateModal, setShowMigrateModal] = useState(false);
+
   const query = useListRepositoryQuery({
     fieldSelector: `metadata.name=${name}`,
     watch: true,
@@ -67,6 +69,7 @@ export default function RepositoryStatusPage() {
   const [queryParams] = useQueryParams();
   const settings = useGetFrontendSettingsQuery();
   const tab = queryParams['tab'] ?? TabSelection.Overview;
+  const remoteURL = data ? getRemoteURL(data) : undefined;
 
   const notFound = query.isError && isNotFoundError(query.error);
   return (
@@ -80,10 +83,21 @@ export default function RepositoryStatusPage() {
         data && (
           <Stack>
             <StatusBadge enabled={Boolean(data.spec?.sync?.enabled)} state={data.status?.sync?.state} name={name} />
+            {remoteURL && (
+              <Button variant="secondary" icon="github" onClick={() => window.open(remoteURL, '_blank')}>
+                Source Code
+              </Button>
+            )}
             <SyncRepository repository={data} />
-            <Button variant="secondary" icon="upload">
-              Export
-            </Button>
+            {settings.data?.legacyStorage ? (
+              <Button variant="secondary" icon="upload" onClick={() => setShowMigrateModal(true)}>
+                Migrate
+              </Button>
+            ) : (
+              <Button variant="secondary" icon="upload" onClick={() => setShowExportModal(true)}>
+                Export
+              </Button>
+            )}
             <LinkButton variant="secondary" icon="cog" href={`${PROVISIONING_URL}/${name}/edit`}>
               Settings
             </LinkButton>
@@ -121,16 +135,18 @@ export default function RepositoryStatusPage() {
                   {tab === TabSelection.Overview && <RepositoryOverview repo={data} />}
                   {tab === TabSelection.Resources && <RepositoryResources repo={data} />}
                   {tab === TabSelection.Files && <FilesView repo={data} />}
-                  {tab === TabSelection.Export && (
-                    <>
-                      {settings.data?.legacyStorage ? (
-                        <MigrateToRepository repo={data} />
-                      ) : (
-                        <ExportToRepository repo={data} />
-                      )}
-                    </>
-                  )}
                 </TabContent>
+
+                {showExportModal && (
+                  <Modal isOpen={true} title="Export to Repository" onDismiss={() => setShowExportModal(false)}>
+                    <ExportToRepository repo={data} />
+                  </Modal>
+                )}
+                {showMigrateModal && (
+                  <Modal isOpen={true} title="Migrate to Repository" onDismiss={() => setShowMigrateModal(false)}>
+                    <MigrateToRepository repo={data} />
+                  </Modal>
+                )}
               </>
             ) : (
               <div>not found</div>
@@ -236,4 +252,16 @@ function FilesView({ repo }: RepoProps) {
       <InteractiveTable columns={columns} data={data} pageSize={25} getRowId={(f: FileDetails) => String(f.path)} />
     </Stack>
   );
+}
+
+function getRemoteURL(repo: Repository) {
+  if (repo.spec?.type === 'github') {
+    const spec = repo.spec.github;
+    let url = spec?.url || '';
+    if (spec?.branch) {
+      url += `/tree/${spec.branch}`;
+    }
+    return url;
+  }
+  return undefined;
 }

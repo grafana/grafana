@@ -156,7 +156,7 @@ type HealthStatus struct {
 
 	// Summary messages (will be shown to users)
 	// +listType=atomic
-	Message []string `json:"message,omitempty"`
+	Message []string `json:"message"`
 }
 
 type SyncStatus struct {

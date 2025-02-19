@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"reflect"
 	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -53,34 +54,37 @@ func (s *testConnector) Connect(ctx context.Context, name string, opts runtime.O
 		}
 		var repo repository.Repository
 		if len(body) > 0 {
-			cfg := &provisioning.Repository{}
-			err = json.Unmarshal(body, cfg)
+			var cfg provisioning.Repository
+			err = json.Unmarshal(body, &cfg)
 			if err != nil {
 				responder.Error(err)
 				return
 			}
 
-			// Create a temporary repository
-			tmp, err := s.getter.AsRepository(ctx, cfg)
-			if err != nil {
-				responder.Error(err)
-				return
-			}
-
-			if name != "new" {
-				repo, err = s.getter.AsRepository(ctx, cfg)
+			// In case the body is an empty object
+			if !reflect.ValueOf(cfg).IsZero() {
+				// Create a temporary repository
+				tmp, err := s.getter.AsRepository(ctx, &cfg)
 				if err != nil {
 					responder.Error(err)
 					return
 				}
 
-				// Make sure we are OK with the changes
-				if cfg.Spec.Type != repo.Config().Spec.Type {
-					responder.Error(apierrors.NewBadRequest("test config must be the same type"))
-					return
+				if name != "new" {
+					repo, err = s.getter.AsRepository(ctx, &cfg)
+					if err != nil {
+						responder.Error(err)
+						return
+					}
+
+					// Make sure we are OK with the changes
+					if cfg.Spec.Type != repo.Config().Spec.Type {
+						responder.Error(apierrors.NewBadRequest("test config must be the same type"))
+						return
+					}
 				}
+				repo = tmp
 			}
-			repo = tmp
 		}
 
 		if repo == nil {

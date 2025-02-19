@@ -9,7 +9,6 @@ import (
 	"path"
 	"sort"
 	"strings"
-	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -68,20 +67,22 @@ func (r *SyncWorker) IsSupported(ctx context.Context, job provisioning.Job) bool
 func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, job provisioning.Job, progress jobs.JobProgressRecorder) error {
 	cfg := repo.Config()
 	logger := logging.FromContext(ctx).With("job", job.GetName(), "namespace", job.GetNamespace())
-
 	// Check if we are onboarding from legacy storage
 	if dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, r.storageStatus) {
 		return fmt.Errorf("sync not supported until storage has migrated")
 	}
 
-	data := map[string]any{
-		"status": map[string]any{
-			"sync": job.Status.ToSyncStatus(job.Name),
+	// Update sync status at start using JSON patch
+	patchOperations := []map[string]interface{}{
+		{
+			"op":    "replace",
+			"path":  "/status/sync",
+			"value": job.Status.ToSyncStatus(job.Name),
 		},
 	}
 
 	progress.SetMessage("update sync status at start")
-	if err := r.patchStatus(ctx, cfg, data); err != nil {
+	if err := r.patchStatus(ctx, cfg, patchOperations); err != nil {
 		return fmt.Errorf("update repo with job status at start: %w", err)
 	}
 
@@ -99,27 +100,29 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 		syncStatus.Hash = progress.GetRef()
 	}
 
-	progress.SetMessage("get resource stats")
-	// HACK: this is a hack to give the index some time to catch up
-	time.Sleep(1 * time.Second)
-	stats, err := r.lister.Stats(ctx, cfg.Namespace, cfg.Name)
-	if err != nil {
-		logger.Error("unable to read stats", "error", err)
-	}
-
-	if stats == nil {
-		stats = &provisioning.ResourceStats{}
-	}
-
+	// Update final status using JSON patch
 	progress.SetMessage("update status and stats")
-	data = map[string]any{
-		"status": map[string]any{
-			"sync":  syncStatus,
-			"stats": stats.Items,
+	patchOperations = []map[string]interface{}{
+		{
+			"op":    "replace",
+			"path":  "/status/sync",
+			"value": syncStatus,
 		},
 	}
 
-	if err := r.patchStatus(ctx, cfg, data); err != nil {
+	// Only add stats patch if stats are not nil
+	if stats, err := r.lister.Stats(ctx, cfg.Namespace, cfg.Name); err != nil {
+		logger.Error("unable to read stats", "error", err)
+	} else if stats != nil && stats.Items != nil {
+		patchOperations = append(patchOperations, map[string]interface{}{
+			"op":    "replace",
+			"path":  "/status/stats",
+			"value": stats.Items,
+		})
+	}
+
+	// Only patch the specific fields we want to update, not the entire status
+	if err := r.patchStatus(ctx, cfg, patchOperations); err != nil {
 		return fmt.Errorf("update repo with job final status: %w", err)
 	}
 
@@ -162,19 +165,20 @@ func (r *SyncWorker) createJob(ctx context.Context, repo repository.Repository, 
 			Version:  "v1alpha1",
 			Resource: dashboard.DASHBOARD_RESOURCE,
 		}),
+		resourcesLookup: map[resourceID]bool{},
 	}
 
 	return job, nil
 }
 
-func (r *SyncWorker) patchStatus(ctx context.Context, repo *provisioning.Repository, data interface{}) error {
-	patch, err := json.Marshal(data)
+func (r *SyncWorker) patchStatus(ctx context.Context, repo *provisioning.Repository, patchOperations []map[string]interface{}) error {
+	patch, err := json.Marshal(patchOperations)
 	if err != nil {
 		return fmt.Errorf("unable to marshal patch data: %w", err)
 	}
 
 	_, err = r.client.Repositories(repo.Namespace).
-		Patch(ctx, repo.Name, types.MergePatchType, patch, metav1.PatchOptions{}, "status")
+		Patch(ctx, repo.Name, types.JSONPatchType, patch, metav1.PatchOptions{}, "status")
 	if err != nil {
 		return fmt.Errorf("unable to update repo with job status: %w", err)
 	}
@@ -182,15 +186,22 @@ func (r *SyncWorker) patchStatus(ctx context.Context, repo *provisioning.Reposit
 	return nil
 }
 
+type resourceID struct {
+	Name     string
+	Resource string
+	Group    string
+}
+
 // created once for each sync execution
 type syncJob struct {
-	repository   repository.Repository
-	progress     jobs.JobProgressRecorder
-	parser       *resources.Parser
-	lister       resources.ResourceLister
-	folders      dynamic.ResourceInterface
-	dashboards   dynamic.ResourceInterface
-	folderLookup *resources.FolderTree
+	repository      repository.Repository
+	progress        jobs.JobProgressRecorder
+	parser          *resources.Parser
+	lister          resources.ResourceLister
+	folders         dynamic.ResourceInterface
+	dashboards      dynamic.ResourceInterface
+	folderLookup    *resources.FolderTree
+	resourcesLookup map[resourceID]bool
 }
 
 func (r *syncJob) run(ctx context.Context, options provisioning.SyncJobOptions) error {
@@ -418,6 +429,19 @@ func (r *syncJob) writeResourceFromFile(ctx context.Context, path string, ref st
 		result.Error = fmt.Errorf("failed to parse file: %w", err)
 		return result
 	}
+
+	// Check if the resource already exists
+	id := resourceID{
+		Name:     parsed.Obj.GetName(),
+		Resource: parsed.GVR.Resource,
+		Group:    parsed.GVK.Group,
+	}
+
+	if r.resourcesLookup[id] {
+		result.Error = fmt.Errorf("duplicate resource name: %s", parsed.Obj.GetName())
+		return result
+	}
+	r.resourcesLookup[id] = true
 
 	// Make sure the parent folders exist
 	folder, err := r.ensureFolderPathExists(ctx, path)
