@@ -300,17 +300,32 @@ export const browseDashboardsAPI = createApi({
         // Delete all the dashboards sequentially
         // TODO error handling here
         for (const dashboardUID of selectedDashboards) {
-          const response = getDashboardAPI().deleteDashboard(dashboardUID, false);
+          const response = await getDashboardAPI().deleteDashboard(dashboardUID, true);
 
-          // @ts-expect-error
-          const name = response?.data?.title;
+          // handling success alerts for these feature toggles
+          // for legacy response, the success alert will be triggered by showSuccessAlert function in public/app/core/services/backend_srv.ts
+          if (config.featureToggles.dashboardRestore) {
+            const name = response?.title;
 
-          if (name) {
+            if (name) {
+              const payload =
+                config.featureToggles.useV2DashboardsAPI || config.featureToggles.kubernetesDashboards
+                  ? ['Dashboard moved to Recently deleted']
+                  : [
+                      t('browse-dashboards.soft-delete.success', 'Dashboard {{name}} moved to Recently deleted', {
+                        name,
+                      }),
+                    ];
+
+              appEvents.publish({
+                type: AppEvents.alertSuccess.name,
+                payload,
+              });
+            }
+          } else if (config.featureToggles.useV2DashboardsAPI || config.featureToggles.kubernetesDashboards) {
             appEvents.publish({
               type: AppEvents.alertSuccess.name,
-              payload: [
-                t('browse-dashboards.soft-delete.success', 'Dashboard {{name}} moved to Recently deleted', { name }),
-              ],
+              payload: ['Dashboard deleted'],
             });
           }
         }
