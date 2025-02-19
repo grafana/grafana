@@ -1,9 +1,10 @@
 import { css } from '@emotion/css';
 import { useRef, useState } from 'react';
 
-import { GrafanaTheme2, rangeUtil, toUtc } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
 import { copyText } from '../../../src/utils/clipboard';
+import { absoluteTimeRangeURL } from '../../../src/utils/time';
 import { useStyles2 } from '../../themes';
 import { Button, ButtonGroup, ButtonProps } from '../Button';
 import { ClipboardButton } from '../ClipboardButton/ClipboardButton';
@@ -12,11 +13,32 @@ import { Menu } from '../Menu/Menu';
 import { MenuItemElement } from '../Menu/MenuItem';
 
 export interface Props extends ButtonProps {
-  /** */
+  /**
+   * Whether to collapse the button text
+   */
   collapsed?: boolean;
+
+  /**
+   * The URL to share
+   */
+  url?: string;
+
+  /**
+   * The from parameter to use in the URL
+   *
+   * @default 'from'
+   */
+  fromParam?: string;
+
+  /**
+   * The to parameter to use in the URL
+   *
+   * @default 'to'
+   */
+  toParam?: string;
 }
 
-export function ShareUrlButton({ collapsed }: Props) {
+export function ShareUrlButton({ collapsed, url, fromParam, toParam }: Props) {
   const [isOpen, setIsOpen] = useState(false);
   const styles = useStyles2(getStyles);
 
@@ -39,7 +61,7 @@ export function ShareUrlButton({ collapsed }: Props) {
           key="copy-url"
           label="Copy URL with absolute time range"
           icon="clock-nine"
-          onClick={() => copyText(absoluteTimeRangeURL(), absoluteUrlRef)}
+          onClick={() => copyText(absoluteTimeRangeURL({ url, fromParam, toParam }), absoluteUrlRef)}
           ref={absoluteUrlRef}
         />
       </Menu.Group>
@@ -65,39 +87,6 @@ export function ShareUrlButton({ collapsed }: Props) {
   );
 }
 
-function absoluteTimeRangeURL(url?: string) {
-  const MINUTE_IN_MILLISECONDS = 60 * 1000;
-  const queryParams = new URLSearchParams(url ? new URL(url).search : window.location.search);
-  const href = url ? new URL(url).href : window.location.href;
-
-  const from = queryParams.get('from');
-  const to = queryParams.get('to');
-
-  if (!from || !to) {
-    // If no time range is found in the URL, we default to the last 30 minutes
-    queryParams.set('to', toUtc(Date.now()).valueOf().toString());
-    queryParams.set(
-      'from',
-      toUtc(Date.now() - 30 * MINUTE_IN_MILLISECONDS)
-        .valueOf()
-        .toString()
-    );
-
-    return `${href.split('?')?.[0] ?? href}?${queryParams.toString()}`;
-  }
-
-  if (rangeUtil.isRelativeTime(to) || rangeUtil.isRelativeTime(from)) {
-    const range = rangeUtil.convertRawToRange({ from, to });
-
-    queryParams.set('from', toUtc(range.from).valueOf().toString());
-    queryParams.set('to', toUtc(range.to).valueOf().toString());
-
-    return `${href.split('?')?.[0] ?? href}?${queryParams.toString()}`;
-  }
-
-  return href;
-}
-
 const getStyles = (theme: GrafanaTheme2) => ({
   copy: css({
     marginLeft: 'auto',
@@ -114,7 +103,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   shareText: css({
     marginLeft: '8px',
     '@media screen and (max-width: 1040px)': css({
-      display: 'none' /*Won't be displayed on screens below or equal to 1040px width*/,
+      display: 'none', // won't be displayed on screens below or equal to 1040px width
     }),
   }),
 });

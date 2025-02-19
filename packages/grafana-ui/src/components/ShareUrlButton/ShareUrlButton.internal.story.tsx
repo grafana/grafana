@@ -6,6 +6,11 @@ import mdx from './ShareUrlButton.mdx';
 const meta: Meta = {
   title: 'Buttons/ShareUrlButton',
   component: ShareUrlButtonImpl,
+  args: {
+    url: 'http://mygrafanainstance.grafana.net/dashboard/1?from=now-1h&to=now',
+    fromParam: 'from',
+    toParam: 'to',
+  },
   parameters: {
     docs: {
       page: mdx,
