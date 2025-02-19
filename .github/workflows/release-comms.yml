@@ -30,15 +30,8 @@ jobs:
       release_branch: ${{ steps.output.outputs.release_branch }}
       dry_run: ${{ steps.output.outputs.dry_run }}
       latest: ${{ steps.output.outputs.latest }}
-      token: ${{ steps.output.outputs.token }}
     runs-on: ubuntu-latest
     steps:
-    - name: "Generate token"
-      id: generate_token
-      uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
-      with:
-        app_id: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
-        private_key: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
       # The github-release action expects a `LATEST` value of a string of either '1' or '0'
     - if: ${{ github.event_name == 'workflow_dispatch' }}
       run: |
@@ -58,7 +51,6 @@ jobs:
         echo "version: $VERSION"
 
         echo "release_branch=$(echo $VERSION | sed -s 's/^v/release-/g')" >> "$GITHUB_OUTPUT"
-        echo "token=${{ steps.generate_token.outputs.token }}" >> "$GITHUB_OUTPUT"
         echo "dry_run=$DRY_RUN" >> "$GITHUB_OUTPUT"
         echo "latest=$LATEST" >> "$GITHUB_OUTPUT"
         echo "version=$VERSION" >> "$GITHUB_OUTPUT"
@@ -66,42 +58,46 @@ jobs:
     name: Create next release branch (Grafana)
     needs: setup
     uses: ./.github/workflows/create-next-release-branch.yml
+    secrets:
+      GRAFANA_DELIVERY_BOT_APP_ID: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
+      GRAFANA_DELIVERY_BOT_APP_PEM: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
     with:
       ownerRepo: 'grafana/grafana'
       source: ${{ needs.setup.outputs.release_branch }}
-    secrets:
-      token: ${{ needs.setup.outputs.token }}
   create_next_release_branch_enterprise:
     name: Create next release branch (Grafana Enterprise)
     needs: setup
     uses: ./.github/workflows/create-next-release-branch.yml
-    with:
-      ownerRepo: 'grafana/grafana'
-      source: ${{ needs.setup.outputs.release_branch }}
     secrets:
-      token: ${{ needs.setup.outputs.token }}
+      GRAFANA_DELIVERY_BOT_APP_ID: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
+      GRAFANA_DELIVERY_BOT_APP_PEM: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
+    with:
+      ownerRepo: 'grafana/grafana-enterprise'
+      source: ${{ needs.setup.outputs.release_branch }}
   migrate_prs_grafana:
     needs:
       - setup
       - create_next_release_branch_grafana
     uses: ./.github/workflows/migrate-prs.yml
+    secrets:
+      GRAFANA_DELIVERY_BOT_APP_ID: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
+      GRAFANA_DELIVERY_BOT_APP_PEM: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
     with:
       ownerRepo: 'grafana/grafana'
       from: ${{ needs.setup.outputs.release_branch }}
       to: ${{ needs.create_next_release_branch_grafana.outputs.branch }}
-    secrets:
-      token: ${{ needs.setup.outputs.token }}
   migrate_prs_enterprise:
     needs:
       - setup
       - create_next_release_branch_enterprise
     uses: ./.github/workflows/migrate-prs.yml
+    secrets:
+      GRAFANA_DELIVERY_BOT_APP_ID: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
+      GRAFANA_DELIVERY_BOT_APP_PEM: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
     with:
       ownerRepo: 'grafana/grafana-enterprise'
       from: ${{ needs.setup.outputs.release_branch }}
       to: ${{ needs.create_next_release_branch_enterprise.outputs.branch }}
-    secrets:
-      token: ${{ needs.setup.outputs.token }}
   post_changelog_on_forum:
     needs: setup
     uses: ./.github/workflows/community-release.yml
