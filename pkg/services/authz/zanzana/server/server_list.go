@@ -15,7 +15,7 @@ import (
 )
 
 func (s *Server) List(ctx context.Context, r *authzv1.ListRequest) (*authzv1.ListResponse, error) {
-	ctx, span := tracer.Start(ctx, "server.List")
+	ctx, span := s.tracer.Start(ctx, "server.List")
 	defer span.End()
 
 	if err := authorize(ctx, r.GetNamespace()); err != nil {
