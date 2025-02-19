@@ -1519,6 +1519,7 @@ You can use multiple filters with a comma-seperated list:
 For example: `filters = sqlstore:debug,plugins:info`
 
 The equivalent for a `docker-compose.yaml` looks like this:
+
 ```
 GF_LOG_FILTERS: sqlstore:debug,plugins:info
 GF_LOG_LEVEL: error
