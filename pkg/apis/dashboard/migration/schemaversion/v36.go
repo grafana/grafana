@@ -40,7 +40,6 @@ func getDefaultDSInstanceSettings(datasources []DataSourceInfo) *DataSourceInfo 
 				UID:        ds.UID,
 				Type:       ds.Type,
 				Name:       ds.Name,
-				Default:    ds.Default,
 				APIVersion: ds.APIVersion,
 			}
 		}
@@ -156,38 +155,51 @@ func migratePanelDatasources(panelMap map[string]interface{}, datasources []Data
 	if targets, hasTargets := panelMap["targets"].([]interface{}); hasTargets && len(targets) > 0 {
 		panelDataSourceWasDefault := false
 
+		// Handle panel datasource
 		if ds, exists := panelMap["datasource"]; exists {
 			if ds == nil {
-				panelMap["datasource"] = getDefaultDSInstanceSettings(datasources)
+				defaultDS := getDefaultDSInstanceSettings(datasources)
+				panelMap["datasource"] = getDataSourceRef(defaultDS)
 				panelDataSourceWasDefault = true
 			} else {
 				panelMap["datasource"] = migrateDatasourceNameToRef(ds, map[string]bool{"returnDefaultAsNull": true}, datasources)
 			}
 		}
 
-		migrateTargetDatasources(panelMap, targets, panelDataSourceWasDefault, datasources)
-	}
-}
+		// Handle target datasources
+		for _, target := range targets {
+			if targetMap, ok := target.(map[string]interface{}); ok {
+				ds, exists := targetMap["datasource"]
 
-// migrateTargetDatasources updates datasource references in panel query targets
-// Handles special cases for mixed datasources and expression queries
-func migrateTargetDatasources(panelMap map[string]interface{}, targets []interface{}, panelDataSourceWasDefault bool, datasources []DataSourceInfo) {
-	for _, target := range targets {
-		if targetMap, ok := target.(map[string]interface{}); ok {
-			if ds, exists := targetMap["datasource"]; exists {
-				if panelDS, hasPanelDS := panelMap["datasource"].(map[string]interface{}); hasPanelDS {
-					if panelUID, ok := panelDS["uid"].(string); ok && panelUID != "-- Mixed --" {
-						targetMap["datasource"] = panelDS
-					} else {
-						targetMap["datasource"] = migrateDatasourceNameToRef(ds, map[string]bool{"returnDefaultAsNull": false}, datasources)
+				// Check if target datasource is null or has no uid
+				isNullOrNoUID := !exists || ds == nil
+				if !isNullOrNoUID {
+					if dsMap, ok := ds.(map[string]interface{}); ok {
+						if uid, hasUID := dsMap["uid"]; !hasUID || uid == nil {
+							isNullOrNoUID = true
+						}
 					}
 				}
-			}
 
-			if panelDataSourceWasDefault {
-				if targetDS, hasTargetDS := targetMap["datasource"].(map[string]interface{}); hasTargetDS {
-					if targetUID, ok := targetDS["uid"].(string); ok && targetUID != "__expr__" {
-						panelMap["datasource"] = targetDS
+				if isNullOrNoUID {
+					// If panel doesn't have mixed datasource, use panel's datasource
+					if panelDS, ok := panelMap["datasource"].(map[string]interface{}); ok {
+						if uid, hasUID := panelDS["uid"].(string); hasUID && uid != "-- Mixed --" {
+							targetMap["datasource"] = panelDS
+						}
+					}
+				} else {
+					// Migrate existing target datasource
+					targetDS := migrateDatasourceNameToRef(ds, map[string]bool{"returnDefaultAsNull": false}, datasources)
+					targetMap["datasource"] = targetDS
+				}
+
+				// Update panel datasource if it was default and target is not an expression
+				if panelDataSourceWasDefault {
+					if targetDS, ok := targetMap["datasource"].(map[string]interface{}); ok {
+						if uid, ok := targetDS["uid"].(string); ok && uid != "__expr__" {
+							panelMap["datasource"] = targetDS
+						}
 					}
 				}
 			}
