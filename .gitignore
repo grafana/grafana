@@ -16,6 +16,7 @@ vendor/
 /requests
 tsconfig.tsbuildinfo
 __debug_bin*
+*.cov
 
 # yarn
 .yarn/cache

@@ -60,6 +60,13 @@ export function AlertInstanceModalSelector({
         if (!rules[instance.labels.alertname]) {
           rules[instance.labels.alertname] = [];
         }
+        const filteredAnnotations = Object.fromEntries(
+          Object.entries(instance.annotations).filter(([key]) => !key.startsWith('__'))
+        );
+        const filteredLabels = Object.fromEntries(
+          Object.entries(instance.labels).filter(([key]) => !key.startsWith('__'))
+        );
+        instance = { ...instance, annotations: filteredAnnotations, labels: filteredLabels };
         rules[instance.labels.alertname].push(instance);
       });
     }

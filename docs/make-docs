@@ -8,6 +8,12 @@
 # [Semantic versioning](https://semver.org/) is used to help the reader identify the significance of changes.
 # Changes are relevant to this script and the support docs.mk GNU Make interface.
 #
+# ## 8.5.1 (2025-02-18)
+#
+# ### Fixed
+#
+# - PHONY declaration for topic/<KIND> targets.
+#
 # ## 8.5.0 (2025-02-13)
 #
 # ### Added
