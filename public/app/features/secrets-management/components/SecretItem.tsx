@@ -58,7 +58,14 @@ export function SecretItem({ secret, onEditSecret }: SecretItemProps) {
           <InlineField label="Name:">
             <div>
               {secret.name}
-              <ClipboardButton getText={() => secret.name} size="sm" icon="copy" fill="text" variant="secondary" />
+              <ClipboardButton
+                className={styles.copyButton}
+                getText={() => secret.name}
+                size="sm"
+                icon="copy"
+                fill="text"
+                variant="secondary"
+              />
             </div>
           </InlineField>
         </InlineFieldRow>
@@ -66,7 +73,14 @@ export function SecretItem({ secret, onEditSecret }: SecretItemProps) {
           <InlineField label="ID:">
             <div>
               {secret.uid}
-              <ClipboardButton getText={() => secret.uid} size="sm" icon="copy" fill="text" variant="secondary" />
+              <ClipboardButton
+                className={styles.copyButton}
+                getText={() => secret.uid}
+                size="sm"
+                icon="copy"
+                fill="text"
+                variant="secondary"
+              />
             </div>
           </InlineField>
         </InlineFieldRow>
@@ -151,6 +165,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
     },
     '& > div': {
       alignItems: 'center',
+    },
+  }),
+  copyButton: css({
+    marginLeft: theme.spacing(1),
+    padding: `0 ${theme.spacing(0.5)}`,
+    '& > svg': {
+      margin: '0',
     },
   }),
 });
