@@ -1775,6 +1775,13 @@ var (
 			HideFromDocs:      true,
 			FrontendOnly:      true,
 		},
+		{
+			Name:         "assetSriChecks",
+			Description:  "Enables SRI checks for grafana javascript assets",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendOpsWG,
+			FrontendOnly: true,
+		},
 	}
 )
 
