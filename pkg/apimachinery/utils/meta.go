@@ -53,6 +53,12 @@ const AnnoKeyManagerIdentity = "grafana.app/managerId"
 const AnnoKeyManagerAllowsEdits = "grafana.app/managerAllowsEdits"
 const AnnoKeyManagerSuspended = "grafana.app/managerSuspended"
 
+// Annotations used to store source properties
+
+const AnnoKeySourcePath = "grafana.app/sourcePath"
+const AnnoKeySourceHash = "grafana.app/sourceHash"
+const AnnoKeySourceTimestamp = "grafana.app/sourceTimestamp"
+
 // LabelKeyDeprecatedInternalID gives the deprecated internal ID of a resource
 // Deprecated: will be removed in grafana 13
 const LabelKeyDeprecatedInternalID = "grafana.app/deprecatedInternalID"
@@ -146,16 +152,21 @@ type GrafanaMetaAccessor interface {
 	// and return an empty string if nothing was found
 	FindTitle(defaultTitle string) string
 
-	// GetManagedBy returns the identity of the user or tool,
+	// GetManagerProperties returns the identity of the tool,
 	// which is responsible for managing the resource.
 	//
-	// If the identity is not known, it is assumed to be managed by a user,
-	// and the second return value will be false.
+	// If the identity is not known, the second return value will be false.
 	GetManagerProperties() (ManagerProperties, bool)
 
-	// SetManagedBy sets the identity of the user or tool,
+	// SetManagerProperties sets the identity of the tool,
 	// which is responsible for managing the resource.
 	SetManagerProperties(ManagerProperties)
+
+	// GetSourceProperties returns the source properties of the resource.
+	GetSourceProperties() (SourceProperties, bool)
+
+	// SetSourceProperties sets the source properties of the resource.
+	SetSourceProperties(SourceProperties)
 }
 
 var _ GrafanaMetaAccessor = (*grafanaMetaAccessor)(nil)
@@ -785,6 +796,58 @@ func (m *grafanaMetaAccessor) SetManagerProperties(v ManagerProperties) {
 	m.obj.SetAnnotations(annot)
 }
 
+func (m *grafanaMetaAccessor) GetSourceProperties() (SourceProperties, bool) {
+	var (
+		res   SourceProperties
+		found bool
+	)
+
+	annot := m.obj.GetAnnotations()
+	if annot == nil {
+		return res, false
+	}
+
+	if path, ok := annot[AnnoKeySourcePath]; ok && path != "" {
+		res.Path = path
+		found = true
+	}
+
+	if hash, ok := annot[AnnoKeySourceHash]; ok && hash != "" {
+		res.Hash = hash
+		found = true
+	}
+
+	if timestamp, ok := annot[AnnoKeySourceTimestamp]; ok && timestamp != "" {
+		if t, err := time.Parse(time.RFC3339, timestamp); err == nil {
+			res.Timestamp = t
+			found = true
+		}
+	}
+
+	return res, found
+}
+
+func (m *grafanaMetaAccessor) SetSourceProperties(v SourceProperties) {
+	annot := m.obj.GetAnnotations()
+	if annot == nil {
+		annot = make(map[string]string, 3)
+	}
+
+	if v.Path != "" {
+		annot[AnnoKeySourcePath] = v.Path
+	}
+
+	if v.Hash != "" {
+		annot[AnnoKeySourceHash] = v.Hash
+	}
+
+	if !v.Timestamp.IsZero() {
+		annot[AnnoKeySourceTimestamp] = v.Timestamp.Format(time.RFC3339)
+	}
+
+	m.obj.SetAnnotations(annot)
+}
+
 type BlobInfo struct {
 	UID      string `json:"uid"`
 	Size     int64  `json:"size,omitempty"`
@@ -862,50 +925,4 @@ func ParseBlobInfo(v string) *BlobInfo {
 		}
 	}
 	return info
-}
-
-// ManagerProperties is used to identify the manager of the resource.
-//
-// This is used to identify the manager of the resource.
-//
-// The manager kind is the type of manager, such as "ui", "api/generic", "api/kubectl", or "api/terraform".
-//
-// The manager identity is the identity of the manager, such as the username of the user who created the resource,
-// or the name of the tool that created the resource.
-//
-// The is exclusive flag indicates whether the manager is the exclusive owner of the resource.
-// If set to true, then only updates coming from the manager will be accepted.
-type ManagerProperties struct {
-	Kind        ManagerKind
-	Identity    string
-	AllowsEdits bool
-	Suspended   bool
-}
-
-// ManagerKind is the type of manager, which is responsible for managing the resource.
-// It can be a user or a tool or a generic API client.
-type ManagerKind string
-
-// Known values for ManagerKind.
-const (
-	ManagerKindUnknown   ManagerKind = ""
-	ManagerKindGit       ManagerKind = "git"
-	ManagerKindTerraform ManagerKind = "terraform"
-	ManagerKindKubectl   ManagerKind = "kubectl"
-)
-
-// ParseManagerKindString parses a string into a ManagerKind.
-// It returns the ManagerKind and a boolean indicating whether the string was a valid ManagerKind.
-// For unknown values, it returns ManagerKindUnknown and false.
-func ParseManagerKindString(v string) ManagerKind {
-	switch v {
-	case string(ManagerKindGit):
-		return ManagerKindGit
-	case string(ManagerKindTerraform):
-		return ManagerKindTerraform
-	case string(ManagerKindKubectl):
-		return ManagerKindKubectl
-	default:
-		return ManagerKindUnknown
-	}
 }

@@ -3,6 +3,7 @@ package utils_test
 import (
 	"encoding/json"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -514,6 +515,51 @@ func TestMetaAccessor(t *testing.T) {
 				mp, ok := meta.GetManagerProperties()
 				require.Equal(t, tt.wantOK, ok)
 				require.Equal(t, tt.wantProperties, mp)
+			})
+		}
+	})
+
+	t.Run("SourceProperties", func(t *testing.T) {
+		tests := []struct {
+			name           string
+			setProperties  *utils.SourceProperties
+			wantProperties utils.SourceProperties
+			wantOK         bool
+		}{
+			{
+				name:           "get default values",
+				wantProperties: utils.SourceProperties{},
+				wantOK:         false,
+			},
+			{
+				name: "set and get valid values",
+				setProperties: &utils.SourceProperties{
+					Path:      "path",
+					Hash:      "hash",
+					Timestamp: time.Date(2025, 1, 1, 12, 0, 0, 0, time.UTC),
+				},
+				wantProperties: utils.SourceProperties{
+					Path:      "path",
+					Hash:      "hash",
+					Timestamp: time.Date(2025, 1, 1, 12, 0, 0, 0, time.UTC),
+				},
+				wantOK: true,
+			},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				res := &TestResource2{}
+				meta, err := utils.MetaAccessor(res)
+				require.NoError(t, err)
+
+				if tt.setProperties != nil {
+					meta.SetSourceProperties(*tt.setProperties)
+				}
+
+				sp, ok := meta.GetSourceProperties()
+				require.Equal(t, tt.wantProperties, sp)
+				require.Equal(t, tt.wantOK, ok)
 			})
 		}
 	})
