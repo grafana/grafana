@@ -124,11 +124,16 @@ func (g *addPrefixWrapper) Gather() ([]*dto.MetricFamily, error) {
 var _ prometheus.Gatherer = (*multiRegistry)(nil)
 
 type multiRegistry struct {
+	denyList  map[string]struct{}
 	gatherers []prometheus.Gatherer
 }
 
 func NewMultiRegistry(gatherers ...prometheus.Gatherer) *multiRegistry {
+	denyList := map[string]struct{}{
+		"grafana_apiserver_request_slo_duration_seconds_bucket": {},
+	}
 	return &multiRegistry{
+		denyList:  denyList,
 		gatherers: gatherers,
 	}
 }
@@ -143,9 +148,12 @@ func (r *multiRegistry) Gather() (mfs []*dto.MetricFamily, err error) {
 
 		for i := 0; i < len(mf); i++ {
 			m := mf[i]
-			_, exists := names[*m.Name]
+			// skip metrics in the deny list
+			if _, denied := r.denyList[*m.Name]; denied {
+				continue
+			}
 			// prevent duplicate metric names
-			if exists {
+			if _, exists := names[*m.Name]; exists {
 				// we can skip go_ and process_ metrics without returning an error
 				// because they are known to be duplicates in both
 				// the k8s and prometheus gatherers.
