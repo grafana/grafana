@@ -20,7 +20,7 @@ import { TableCellDisplayMode, TableCellHeight } from '@grafana/schema';
 import { useTheme2 } from '../../../themes';
 import CustomScrollbar from '../../CustomScrollbar/CustomScrollbar';
 import { usePanelContext } from '../../PanelChrome';
-import { TableCell } from '../Cells/TableCell';
+import { TableCell } from '../TableCell';
 import { CellColors, GetActionsFunction, TableFieldOptions, TableFilterActionCallback } from '../types';
 import {
   calculateAroundPointThreshold,

@@ -33,7 +33,7 @@ import { getTextColorForAlphaBackground } from '../../utils';
 import { ActionsCell } from './ActionsCell';
 import { BarGaugeCell } from './Cells/BarGaugeCell';
 import { DataLinksCell } from './Cells/DataLinksCell';
-import { DefaultCell } from './Cells/DefaultCell';
+import { DefaultCell } from './DefaultCell';
 import { GeoCell } from './Cells/GeoCell';
 import { ImageCell } from './Cells/ImageCell';
 import { JSONViewCell } from './Cells/JSONViewCell';
