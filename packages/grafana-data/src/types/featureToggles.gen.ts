@@ -108,9 +108,8 @@ export interface FeatureToggles {
   kubernetesPlaylists?: boolean;
   kubernetesSnapshots?: boolean;
   kubernetesDashboards?: boolean;
-  kubernetesCliDashboards?: boolean;
   kubernetesRestore?: boolean;
-  kubernetesFoldersServiceV2?: boolean;
+  kubernetesClientDashboardsFolders?: boolean;
   datasourceQueryTypes?: boolean;
   queryService?: boolean;
   queryServiceRewrite?: boolean;

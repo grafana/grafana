@@ -367,17 +367,13 @@ const (
 	// Use the kubernetes API in the frontend for dashboards
 	FlagKubernetesDashboards = "kubernetesDashboards"
 
-	// FlagKubernetesCliDashboards
-	// Use the k8s client to retrieve dashboards internally
-	FlagKubernetesCliDashboards = "kubernetesCliDashboards"
-
 	// FlagKubernetesRestore
 	// Allow restoring objects in k8s
 	FlagKubernetesRestore = "kubernetesRestore"
 
-	// FlagKubernetesFoldersServiceV2
-	// Use the Folders Service V2, and route Folder Service requests to k8s
-	FlagKubernetesFoldersServiceV2 = "kubernetesFoldersServiceV2"
+	// FlagKubernetesClientDashboardsFolders
+	// Route the folder and dashboard service requests to k8s
+	FlagKubernetesClientDashboardsFolders = "kubernetesClientDashboardsFolders"
 
 	// FlagDatasourceQueryTypes
 	// Show query type endpoints in datasource API servers (currently hardcoded for testdata, expressions, and prometheus)
