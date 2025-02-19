@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/util"
+	"k8s.io/klog/v2"
 )
 
 type check struct {
@@ -128,7 +129,9 @@ func (s *healthCheckStep) Run(ctx context.Context, obj *advisor.CheckSpec, i any
 	}
 	pCtx, err := s.PluginContextProvider.GetWithDataSource(ctx, ds.Type, requester, ds)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get plugin context: %w", err)
+		// Unable to check health check
+		klog.Error("Failed to get plugin context", "datasource_uid", ds.UID, "error", err)
+		return nil, nil
 	}
 	req := &backend.CheckHealthRequest{
 		PluginContext: pCtx,
