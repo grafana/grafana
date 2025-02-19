@@ -30,6 +30,12 @@
         "enable": true,
         "name": "Test Default Annotation",
         "type": "dashboard"
+      },
+      {
+        "datasource": "non-existing-ds",
+        "enable": true,
+        "name": "Test Non-existing Annotation",
+        "type": "dashboard"
       }
     ]
   },
@@ -160,6 +166,22 @@
           "datasource": "Test"
         }
       ]
+    },
+    {
+      "datasource": "non-existing-ds",
+      "title": "Non-existing Datasource Panel",
+      "id": 9,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 32
+      },
+      "targets": [
+        {
+          "datasource": "non-existing-ds"
+        }
+      ]
     }
   ],
   "preload": false,
@@ -187,6 +209,11 @@
         "type": "query",
         "datasource": null,
         "name": "null_var"
+      },
+      {
+        "type": "query",
+        "datasource": "non-existing-ds",
+        "name": "non_existing_var"
       }
     ]
   },

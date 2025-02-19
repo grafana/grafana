@@ -39,6 +39,14 @@
         "enable": true,
         "name": "Test Default Annotation",
         "type": "dashboard"
+      },
+      {
+        "datasource": {
+          "uid": "non-existing-ds"
+        },
+        "enable": true,
+        "name": "Test Non-existing Annotation",
+        "type": "dashboard"
       }
     ]
   },
@@ -190,6 +198,26 @@
         }
       ],
       "title": "Mixed Panel with Mixed Targets"
+    },
+    {
+      "datasource": {
+        "uid": "non-existing-ds"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 32
+      },
+      "id": 9,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "non-existing-ds"
+          }
+        }
+      ],
+      "title": "Non-existing Datasource Panel"
     }
   ],
   "preload": false,
@@ -228,6 +256,13 @@
           "uid": "test"
         },
         "name": "null_var",
+        "type": "query"
+      },
+      {
+        "datasource": {
+          "uid": "non-existing-ds"
+        },
+        "name": "non_existing_var",
         "type": "query"
       }
     ]
