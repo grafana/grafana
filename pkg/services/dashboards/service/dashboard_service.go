@@ -366,7 +366,7 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 	}
 
 	// Validate folder
-	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
+	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) && (dash.FolderID != 0 || dash.FolderUID != "") { // nolint:staticcheck
 		folder, err := dr.folderService.Get(ctx, &folder.GetFolderQuery{
 			OrgID:        dash.OrgID,
 			UID:          &dash.FolderUID,
