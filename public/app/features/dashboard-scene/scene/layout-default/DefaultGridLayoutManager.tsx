@@ -26,6 +26,7 @@ import {
   getGridItemKeyForPanelId,
   getDashboardSceneFor,
 } from '../../utils/utils';
+import { LayoutOrchestrator } from '../layout-manager/LayoutOrchestrator';
 import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
@@ -33,7 +34,6 @@ import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 import { DashboardGridItem } from './DashboardGridItem';
 import { RowRepeaterBehavior } from './RowRepeaterBehavior';
 import { RowActions } from './row-actions/RowActions';
-import { LayoutOrchestrator } from '../layout-manager/LayoutOrchestrator';
 
 interface DefaultGridLayoutManagerState extends SceneObjectState {
   grid: SceneGridLayout;

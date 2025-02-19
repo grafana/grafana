@@ -36,6 +36,8 @@ import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior';
+import { LayoutOrchestrator } from '../scene/layout-manager/LayoutOrchestrator';
+import { DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 import { isClonedKey } from '../utils/clone';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import {
@@ -49,8 +51,6 @@ import {
 import { GRAFANA_DATASOURCE_REF } from './const';
 import { dataLayersToAnnotations } from './dataLayersToAnnotations';
 import { sceneVariablesSetToVariables } from './sceneVariablesSetToVariables';
-import { LayoutOrchestrator } from '../scene/layout-manager/LayoutOrchestrator';
-import { DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 
 export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = false): Dashboard {
   const state = scene.state;

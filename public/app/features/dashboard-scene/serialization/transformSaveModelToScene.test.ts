@@ -33,6 +33,7 @@ import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior';
+import { LayoutOrchestrator } from '../scene/layout-manager/LayoutOrchestrator';
 import { NEW_LINK } from '../settings/links/utils';
 import { getQueryRunnerFor } from '../utils/utils';
 
@@ -47,7 +48,6 @@ import {
   transformSaveModelToScene,
   convertOldSnapshotToScenesSnapshot,
 } from './transformSaveModelToScene';
-import { LayoutOrchestrator } from '../scene/layout-manager/LayoutOrchestrator';
 
 describe('transformSaveModelToScene', () => {
   describe('when creating dashboard scene', () => {

@@ -28,6 +28,7 @@ import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior';
+import { LayoutOrchestrator } from '../scene/layout-manager/LayoutOrchestrator';
 import { NEW_LINK } from '../settings/links/utils';
 import { activateFullSceneTree, buildPanelRepeaterScene } from '../utils/test-utils';
 import { getVizPanelKeyForPanelId } from '../utils/utils';
@@ -45,7 +46,6 @@ import {
   transformSceneToSaveModel,
   trimDashboardForSnapshot,
 } from './transformSceneToSaveModel';
-import { LayoutOrchestrator } from '../scene/layout-manager/LayoutOrchestrator';
 
 standardTransformersRegistry.setInit(() => [reduceTransformRegistryItem]);
 setPluginImportUtils({
