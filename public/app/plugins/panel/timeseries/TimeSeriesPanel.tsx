@@ -4,6 +4,7 @@ import { PanelProps, DataFrameType, DashboardCursorSync, formattedValueToString 
 import { PanelDataErrorView } from '@grafana/runtime';
 import { TooltipDisplayMode, VizOrientation } from '@grafana/schema';
 import { EventBusPlugin, KeyboardPlugin, TooltipPlugin2, usePanelContext } from '@grafana/ui';
+import { VizCustomizableFooterTooltip } from '@grafana/ui/src/components/VizTooltip/VizCustomizableFooterTooltip';
 import { VizCustomizableHeaderTooltip } from '@grafana/ui/src/components/VizTooltip/VizCustomizableHeaderTooltip';
 import { TimeRange2, TooltipHoverMode } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2';
 import { TimeSeries } from 'app/core/components/TimeSeries/TimeSeries';
@@ -128,7 +129,7 @@ export const TimeSeriesPanel = ({
                     dismiss();
                   };
 
-                  // Header
+                  // custom Header
                   const xField = alignedFrame.fields[0];
                   const xVal = formattedValueToString(xField.display!(xField.values[dataIdxs[0]!]));
                   const headerValue = xField.config.custom?.hideFrom?.tooltip ? { value: '' } : { value: xVal };
@@ -139,11 +140,11 @@ export const TimeSeriesPanel = ({
                       dataIdxs={dataIdxs}
                       seriesIdx={seriesIdx}
                       isPinned={isPinned}
-                      annotate={enableAnnotationCreation ? annotate : undefined}
                       maxHeight={options.tooltip.maxHeight}
                       replaceVariables={replaceVariables}
                       dataLinks={dataLinks}
                       customHeader={<VizCustomizableHeaderTooltip value={headerValue.value} />}
+                      customFooter={<VizCustomizableFooterTooltip dataLinks={dataLinks} />}
                     />
                   ) : (
                     <TimeSeriesTooltip

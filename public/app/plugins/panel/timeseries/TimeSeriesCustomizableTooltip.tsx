@@ -3,11 +3,9 @@ import { ReactNode } from 'react';
 import { DataFrame, Field, FieldType, InterpolateFunction, LinkModel } from '@grafana/data';
 import { SortOrder, TooltipDisplayMode } from '@grafana/schema/dist/esm/common/common.gen';
 import { VizTooltipContent } from '@grafana/ui/src/components/VizTooltip/VizTooltipContent';
-import { VizTooltipFooter } from '@grafana/ui/src/components/VizTooltip/VizTooltipFooter';
 import { VizTooltipWrapper } from '@grafana/ui/src/components/VizTooltip/VizTooltipWrapper';
 import { getContentItems } from '@grafana/ui/src/components/VizTooltip/utils';
 
-import { getFieldActions } from '../status-history/utils';
 import { fmt } from '../xychart/utils';
 
 import { isTooltipScrollable } from './utils';
@@ -28,7 +26,6 @@ export interface TimeSeriesCustomizableTooltipProps {
 
   isPinned: boolean;
 
-  annotate?: () => void;
   maxHeight?: number;
 
   replaceVariables?: InterpolateFunction;
@@ -36,6 +33,7 @@ export interface TimeSeriesCustomizableTooltipProps {
   hideZeros?: boolean;
 
   customHeader?: ReactNode;
+  customFooter?: ReactNode;
 }
 
 export const TimeSeriesCustomizableTooltip = ({
@@ -46,15 +44,12 @@ export const TimeSeriesCustomizableTooltip = ({
   mode = TooltipDisplayMode.Single,
   sortOrder = SortOrder.None,
   isPinned,
-  annotate,
   maxHeight,
-  replaceVariables = (str) => str,
-  dataLinks,
   hideZeros,
   customHeader,
+  customFooter,
 }: TimeSeriesCustomizableTooltipProps) => {
   const xField = series.fields[0];
-  // const xVal = formattedValueToString(xField.display!(xField.values[dataIdxs[0]!]));
 
   /* contentItems = {
     "label": "A-series",
@@ -85,20 +80,6 @@ export const TimeSeriesCustomizableTooltip = ({
     }
   });
 
-  let footer: ReactNode;
-
-  if (seriesIdx != null) {
-    const field = series.fields[seriesIdx];
-    const hasOneClickLink = dataLinks.some((dataLink) => dataLink.oneClick === true);
-
-    if (isPinned || hasOneClickLink) {
-      const dataIdx = dataIdxs[seriesIdx]!;
-      const actions = getFieldActions(series, field, replaceVariables, dataIdx);
-
-      footer = <VizTooltipFooter dataLinks={dataLinks} actions={actions} annotate={annotate} />;
-    }
-  }
-
   return (
     <VizTooltipWrapper>
       {customHeader}
@@ -108,7 +89,7 @@ export const TimeSeriesCustomizableTooltip = ({
         scrollable={isTooltipScrollable({ mode, maxHeight })}
         maxHeight={maxHeight}
       />
-      {footer}
+      {customFooter}
     </VizTooltipWrapper>
   );
 };
