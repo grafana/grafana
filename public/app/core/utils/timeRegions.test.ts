@@ -323,8 +323,6 @@ describe('timeRegions', () => {
       it(name, () => {
         const cron = convertToCron(fromDayOfWeek, from, toDayOfWeek, to);
 
-        // console.log(cron?.cronExpr, reverseParseDuration(durationFromSeconds(cron.duration), false));
-
         expect(cron).not.toBeUndefined();
         expect(cron?.cronExpr).toEqual(cronExpr);
         expect(reverseParseDuration(durationFromSeconds(cron?.duration ?? 0), false)).toEqual(duration);
@@ -346,8 +344,6 @@ describe('timeRegions', () => {
     tests.forEach(([name, fromDayOfWeek, from, toDayOfWeek, to, cronExpr, duration]) => {
       it(name, () => {
         const cron = convertToCron(fromDayOfWeek, from, toDayOfWeek, to);
-
-        // console.log(cron?.cronExpr, reverseParseDuration(durationFromSeconds(cron.duration), false));
 
         expect(cron).not.toBeUndefined();
         expect(cron?.cronExpr).toEqual(cronExpr);
