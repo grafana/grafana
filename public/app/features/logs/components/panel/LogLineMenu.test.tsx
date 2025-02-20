@@ -20,9 +20,7 @@ describe('LogLineMenu', () => {
   });
 
   test('Renders the component', async () => {
-    render(
-      <LogLineMenu log={log} styles={styles} />
-    );
+    render(<LogLineMenu log={log} styles={styles} />);
     expect(screen.queryByText('Copy log line')).not.toBeInTheDocument();
     await userEvent.click(screen.getByLabelText('Log menu'));
     expect(screen.getByText('Copy log line')).toBeInTheDocument();
