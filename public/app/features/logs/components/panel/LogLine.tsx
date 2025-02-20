@@ -1,11 +1,14 @@
 import { css } from '@emotion/css';
 import { CSSProperties, useEffect, useRef } from 'react';
+import tinycolor from 'tinycolor2';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, LogRowModel } from '@grafana/data';
+import { PopoverContent } from '@grafana/ui';
 
 import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
 
 import { LogLineMenu } from './LogLineMenu';
+import { useLogIsPinned } from './LogListContext';
 import { LogFieldDimension, LogListModel } from './processing';
 import { FIELD_GAP_MULTIPLIER, hasUnderOrOverflow, lineHeight } from './virtualization';
 
@@ -33,6 +36,7 @@ export const LogLine = ({
   wrapLogMessage,
 }: Props) => {
   const logLineRef = useRef<HTMLDivElement | null>(null);
+  const pinned = useLogIsPinned(log);
 
   useEffect(() => {
     if (!onOverflow || !logLineRef.current) {
@@ -46,7 +50,11 @@ export const LogLine = ({
   }, [index, log.uid, onOverflow, style.height]);
 
   return (
-    <div style={style} className={`${styles.logLine} ${variant ?? ''}`} ref={onOverflow ? logLineRef : undefined}>
+    <div
+      style={style}
+      className={`${styles.logLine} ${variant ?? ''} ${pinned ? styles.pinnedLogLine : ''}`}
+      ref={onOverflow ? logLineRef : undefined}
+    >
       <LogLineMenu styles={styles} log={log} />
       <div className={`${wrapLogMessage ? styles.wrappedLogLine : `${styles.unwrappedLogLine} unwrapped-log-line`}`}>
         <Log displayedFields={displayedFields} log={log} showTime={showTime} styles={styles} />
@@ -133,6 +141,9 @@ export const getStyles = (theme: GrafanaTheme2) => {
           width: '100%',
         },
       },
+    }),
+    pinnedLogLine: css({
+      backgroundColor: tinycolor(theme.colors.info.transparent).setAlpha(0.25).toString(),
     }),
     menuIcon: css({
       height: lineHeight,
