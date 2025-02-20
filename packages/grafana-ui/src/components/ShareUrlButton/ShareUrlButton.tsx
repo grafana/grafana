@@ -48,10 +48,10 @@ export function ShareUrlButton({ collapsed, url, fromParam, toParam }: Props) {
 
   const menu = (
     <Menu>
-      <Menu.Group label="Normal URL links">
+      <Menu.Group label={t('explore.toolbar.copy-links-normal-category', 'Normal URL links')}>
         <Menu.Item
           key="copy-url-relative"
-          label="Copy URL"
+          label={t('explore.toolbar.copy-link', 'Copy URL')}
           icon="link"
           onClick={() => copyText(window.location.href, relativeUrlRef)}
           ref={relativeUrlRef}
