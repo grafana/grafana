@@ -708,7 +708,6 @@ const getStyles = (theme: GrafanaTheme2, textWrap: boolean) => ({
     '--rdg-background-color': theme.colors.background.primary,
     '--rdg-header-background-color': theme.colors.background.primary,
     '--rdg-border-color': 'transparent',
-    '--rdg-summary-border-color': theme.colors.border.medium,
     '--rdg-color': theme.colors.text.primary,
     // TODO replace with ScrollContainer
     overflow: 'hidden',
@@ -717,6 +716,30 @@ const getStyles = (theme: GrafanaTheme2, textWrap: boolean) => ({
     '&:hover': {
       '--rdg-row-hover-background-color': theme.colors.action.hover,
       overflow: 'scroll',
+    },
+
+    // If we rely solely on borderInlineEnd which is added from data grid, we
+    // get a small gap where the gridCell borders meet the column header borders.
+    // To avoid this, we can unset borderInlineEnd and set borderRight instead.
+    '.rdg-cell': {
+      borderInlineEnd: 'unset',
+      borderRight: `1px solid ${theme.colors.border.medium}`,
+    },
+
+    '.rdg-summary-row': {
+      backgroundColor: theme.colors.background.primary,
+      '--rdg-summary-border-color': theme.colors.border.medium,
+
+      '.rdg-cell': {
+        borderRight: 'none',
+      },
+    },
+
+    // Due to stylistic choices, we do not want borders on the column headers
+    // other than the bottom border.
+    'div[role=columnheader]': {
+      borderBottom: `1px solid ${theme.colors.border.medium}`,
+      borderInlineEnd: 'unset',
     },
   }),
   menuItem: css({
