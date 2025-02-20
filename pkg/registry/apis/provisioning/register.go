@@ -6,6 +6,8 @@ import (
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -24,11 +26,17 @@ import (
 )
 
 var (
-	_ builder.APIGroupBuilder = (*APIBuilder)(nil)
+	_ builder.APIGroupBuilder               = (*APIBuilder)(nil)
+	_ builder.APIGroupMutation              = (*APIBuilder)(nil)
+	_ builder.APIGroupValidation            = (*APIBuilder)(nil)
+	_ builder.APIGroupPostStartHookProvider = (*APIBuilder)(nil)
+	_ builder.OpenAPIPostProcessor          = (*APIBuilder)(nil)
 )
 
 type APIBuilder struct {
 	secrets secrets.Service
+	jobs    jobs.JobQueue
+	getter  rest.Getter
 }
 
 // NewAPIBuilder creates an API builder.
@@ -96,9 +104,14 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 		return fmt.Errorf("failed to create repository storage: %w", err)
 	}
 
+	// FIXME: Make job queue store the jobs somewhere persistent.
+	jobStore := jobs.NewJobStore(50, b) // in memory, for now...
+	b.jobs = jobStore
+
 	repositoryStatusStorage := grafanaregistry.NewRegistryStatusStore(opts.Scheme, repositoryStorage)
 
 	storage := map[string]rest.Storage{}
+	storage[provisioning.JobResourceInfo.StoragePath()] = jobStore
 	storage[provisioning.RepositoryResourceInfo.StoragePath()] = repositoryStorage
 	storage[provisioning.RepositoryResourceInfo.StoragePath("status")] = repositoryStatusStorage
 	apiGroupInfo.VersionedResourcesStorageMap[provisioning.VERSION] = storage
@@ -166,4 +179,17 @@ func (b *APIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, err
 	}
 
 	return oas, nil
+}
+
+// Helpers for fetching valid Repository objects
+
+func (b *APIBuilder) GetRepository(ctx context.Context, name string) (repository.Repository, error) {
+	obj, err := b.getter.Get(ctx, name, &metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	_ = obj
+	// FIXME: Return a valid Repository object with the correct underlying storage.
+	panic("FIXME")
 }
