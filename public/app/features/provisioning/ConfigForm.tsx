@@ -34,7 +34,7 @@ const targetOptions = [
 export function getWorkflowOptions(type?: 'github' | 'local'): Array<ComboboxOption<WorkflowOption>> {
   const opts: Array<ComboboxOption<WorkflowOption>> = [
     { label: 'Branch', value: 'branch', description: 'Create a branch (and pull request) for changes' },
-    { label: 'Write', value: 'write', description: 'Allow writing updates to the remove repository' },
+    { label: 'Write', value: 'write', description: 'Allow writing updates to the remote repository' },
   ];
   if (type === 'github') {
     return opts;
