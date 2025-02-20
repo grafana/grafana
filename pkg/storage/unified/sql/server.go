@@ -45,10 +45,12 @@ func NewResourceServer(db infraDB.DB, cfg *setting.Cfg,
 		return nil, err
 	}
 
+	dbCfg := cfg.SectionWithEnvOverrides("database")
 	// Check in the config if HA is enabled by default we always assume a HA setup.
-	isHA := cfg.SectionWithEnvOverrides("database").Key("high_availability").MustBool(true)
+	isHA := dbCfg.Key("high_availability").MustBool(true)
 	// SQLite is not possible to run in HA, so we set it to false.
-	if db.GetDialect().DriverName() == migrator.SQLite {
+	databaseType := dbCfg.Key("type").MustString(migrator.SQLite)
+	if databaseType == migrator.SQLite {
 		isHA = false
 	}
 
