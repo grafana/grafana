@@ -3846,6 +3846,7 @@
         "name": "teamHttpHeaders",
         "resourceVersion": "1738590709387",
         "creationTimestamp": "2023-10-17T10:23:54Z",
+        "deletionTimestamp": "2025-02-19T10:48:55Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2025-02-03 13:51:49.3871 +0000 UTC"
         }
