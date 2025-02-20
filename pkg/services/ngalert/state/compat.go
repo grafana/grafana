@@ -17,6 +17,7 @@ import (
 
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 const (
@@ -48,8 +49,8 @@ func StateToPostableAlert(transition StateTransition, appURL *url.URL) *models.P
 		nA[alertingModels.ValueStringAnnotation] = alertState.LastEvaluationString
 	}
 
-	if alertState.Image != nil && alertState.Image.Token != "" {
-		nA[alertingModels.ImageTokenAnnotation] = alertState.Image.Token
+	if alertState.Image != nil {
+		attachImageAnnotations(alertState.Image, nA)
 	}
 
 	if alertState.StateReason != "" {
@@ -152,4 +153,14 @@ func FromAlertsStateToStoppedAlert(firingStates []StateTransition, appURL *url.U
 		alerts.PostableAlerts = append(alerts.PostableAlerts, *postableAlert)
 	}
 	return alerts
+}
+
+// attachImageAnnotations attaches image annotations to the alert.
+func attachImageAnnotations(image *ngModels.Image, a data.Labels) {
+	if image.Token != "" {
+		a[alertingModels.ImageTokenAnnotation] = image.Token
+	}
+	if image.URL != "" {
+		a[alertingModels.ImageURLAnnotation] = image.URL
+	}
 }
