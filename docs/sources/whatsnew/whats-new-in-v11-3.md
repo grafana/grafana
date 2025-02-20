@@ -20,7 +20,7 @@ weight: -45
 
 # What’s new in Grafana v11.3
 
-Welcome to Grafana 11.3! Scenes-powered dashboards are now generally available and the Grafana Logs Drilldown plugin is now installed by default. The dashboard experience has also improved in other ways including the ability to trigger API calls from any canvas element with the new **Actions** option and an update to transformations so you can apply calculations to dynamic fields. We've also simplified the alert setup experience, added customizable announcement banners that admins can send to all users, and improved some default permissions.
+Welcome to Grafana 11.3! Scenes-powered dashboards are now generally available and the Explore Logs plugin is now installed by default. The dashboard experience has also improved in other ways including the ability to trigger API calls from any canvas element with the new **Actions** option and an update to transformations so you can apply calculations to dynamic fields. We've also simplified the alert setup experience, added customizable announcement banners that admins can send to all users, and improved some default permissions.
 
 {{< youtube id="a0rdRbYPCls" >}}
 
@@ -158,19 +158,19 @@ This functionality has been added for the following visualizations:
 
 To try out this feature, enable the `vizActions` feature toggle.
 
-## Grafana Logs Drilldown
+## Explore Logs
 
-### The Grafana Logs Drilldown plugin is installed by default
+### The Explore Logs plugin is installed by default
 
 <!-- #proj-explorelogs-dev -->
 
 _Generally available in all editions of Grafana_
 
-With **Grafana Logs Drilldown** you can visualize and explore your logs to troubleshoot without having to write queries. It is easy to find spikes in your log volume, filter your logs and pinpoint problematic log lines.
+With **Explore Logs** you can visualize and explore your logs to troubleshoot without having to write queries. It is easy to find spikes in your log volume, filter your logs and pinpoint problematic log lines.
 
-While **Grafana Logs Drilldown** is [GA in cloud](https://grafana.com/blog/2024/09/24/queryless-metrics-logs-traces-profiles/#explore-logs) and installed there by default already, with Grafana v11.3.0 it will be automatically installed on your Open Source or Enterprise instance as well. This will let you use Grafana Logs Drilldown alongside **Grafana Metrics Drilldown** without needing to install it manually.
+While **Explore Logs** is [GA in cloud](https://grafana.com/blog/2024/09/24/queryless-metrics-logs-traces-profiles/#explore-logs) and installed there by default already, with Grafana v11.3.0 it will be automatically installed on your Open Source or Enterprise instance as well. This will let you use Explore Logs alongside **Explore Metrics** without needing to install it manually.
 
-This is configured by the [`preinstall` configuration parameter](https://github.com/grafana/grafana/blob/9ece88d5852dceb90f83271e66902eece24f908f/conf/defaults.ini#L1748) in your Grafana configuration. For more information about Grafana Logs Drilldown, refer to [the documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/simplified-exploration/logs/).
+This is configured by the [`preinstall` configuration parameter](https://github.com/grafana/grafana/blob/9ece88d5852dceb90f83271e66902eece24f908f/conf/defaults.ini#L1748) in your Grafana configuration. For more information about Explore logs, refer to [the documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/simplified-exploration/logs/).
 
 ## Correlations
 
