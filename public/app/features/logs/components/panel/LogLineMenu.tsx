@@ -72,10 +72,10 @@ export const LogLineMenu = ({ log, styles }: Props) => {
           <Menu.Item onClick={showContext} label={t('logs.log-line-menu.show-context', 'Show context')} />
         )}
         {!pinned && onPinLine && (
-          <Menu.Item onClick={togglePinning} label={t('logs.log-line-menu.pin-to-outline', 'Pin line')} />
+          <Menu.Item onClick={togglePinning} label={t('logs.log-line-menu.pin-to-outline', 'Pin log')} />
         )}
         {pinned && onUnpinLine && (
-          <Menu.Item onClick={togglePinning} label={t('logs.log-line-menu.pin-to-outline', 'Unpin line')} />
+          <Menu.Item onClick={togglePinning} label={t('logs.log-line-menu.pin-to-outline', 'Unpin log')} />
         )}
       </Menu>
     ),

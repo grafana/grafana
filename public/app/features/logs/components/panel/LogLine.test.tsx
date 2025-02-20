@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import { createTheme } from '@grafana/data';
 
@@ -7,7 +8,6 @@ import { createLogLine } from '../__mocks__/logRow';
 
 import { getStyles, LogLine } from './LogLine';
 import { LogListModel } from './processing';
-import userEvent from '@testing-library/user-event';
 
 const theme = createTheme();
 const styles = getStyles(theme);
@@ -101,5 +101,5 @@ describe('LogLine', () => {
       await userEvent.click(screen.getByLabelText('Log menu'));
       expect(screen.getByText('Copy log line')).toBeInTheDocument();
     });
-  })
+  });
 });
