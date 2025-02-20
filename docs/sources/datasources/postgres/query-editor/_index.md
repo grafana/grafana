@@ -261,7 +261,7 @@ Data frame result:
 
 ## Templating
 
-Instead of hardcoding values like server, application, or sensor names in your metric queries, you can use variables. Variables appear as drop-down select boxes at the top of the dashboard. These drop-downs make it easy to change the data being displayed in your dashboard.
+Instead of hard coding values like server, application, or sensor names in your metric queries, you can use variables. Variables appear as drop-down select boxes at the top of the dashboard. These drop-downs make it easy to change the data being displayed in your dashboard.
 
 Refer to [Templates](ref:templates) for an introduction to creating template variables as well as the different types.
 
