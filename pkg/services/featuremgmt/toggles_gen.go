@@ -812,7 +812,7 @@ const (
 	FlagPasswordlessMagicLinkAuthentication = "passwordlessMagicLinkAuthentication"
 
 	// FlagExploreMetricsRelatedLogs
-	// Display Related Logs in Explore Metrics
+	// Display Related Logs in Grafana Metrics Drilldown
 	FlagExploreMetricsRelatedLogs = "exploreMetricsRelatedLogs"
 
 	// FlagPrometheusSpecialCharsInLabelValues

@@ -1516,11 +1516,11 @@ var (
 		},
 		{
 			Name:         "exploreMetricsRelatedLogs",
-			Description:  "Display Related Logs in Explore Metrics",
+			Description:  "Display Related Logs in Grafana Metrics Drilldown",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaObservabilityMetricsSquad,
 			FrontendOnly: true,
-			HideFromDocs: true,
+			HideFromDocs: false,
 		},
 		{
 			Name:         "prometheusSpecialCharsInLabelValues",
