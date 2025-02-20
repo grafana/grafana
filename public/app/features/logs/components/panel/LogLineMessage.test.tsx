@@ -3,21 +3,13 @@ import userEvent from '@testing-library/user-event';
 
 import { createTheme } from '@grafana/data';
 
-import { createLogLine } from '../__mocks__/logRow';
-
 import { getStyles } from './LogLine';
 import { LogLineMessage } from './LogLineMessage';
-import { LogListModel } from './processing';
 
 const theme = createTheme();
 const styles = getStyles(theme);
 
 describe('LogLineMessage', () => {
-  let log: LogListModel;
-  beforeEach(() => {
-    log = createLogLine({ labels: { place: 'luna' } });
-  });
-
   test('Renders a log line message', () => {
     render(
       <LogLineMessage style={{}} styles={styles}>
