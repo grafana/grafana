@@ -1,9 +1,9 @@
-import { useEffect } from 'react';
-import { useParams } from 'react-router-dom-v5-compat';
+import { useEffect, useLayoutEffect, useRef } from 'react';
+import { Params, useParams } from 'react-router-dom-v5-compat';
 import { usePrevious } from 'react-use';
 
 import { PageLayoutType } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { UrlSyncContextProvider } from '@grafana/scenes';
 import { Box } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
@@ -30,6 +30,7 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
   const { dashboard, isLoading, loadError } = stateManager.useState();
   // After scene migration is complete and we get rid of old dashboard we should refactor dashboardWatcher so this route reload is not need
   const routeReloadCounter = (location.state as any)?.routeReloadCounter;
+  const prevParams = useRef<Params<string>>(params);
 
   useEffect(() => {
     if (route.routeName === DashboardRoutes.Normal && type === 'snapshot') {
@@ -60,6 +61,23 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
     // removing slug from dependencies
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stateManager, uid, route.routeName, queryParams.folderUid, routeReloadCounter, type]);
+
+  useLayoutEffect(() => {
+    if (route.routeName === DashboardRoutes.Normal) {
+      if (uid === prevParams.current.uid && prevParams.current.slug && slug !== prevParams.current.slug) {
+        const currentUrl = locationService.getLocation().pathname;
+        const adjustedUrl = `${currentUrl.split(uid!)[0]}${uid}/${prevParams.current.slug}`;
+        locationService.replace({
+          ...locationService.getLocation(),
+          pathname: adjustedUrl,
+        });
+      }
+    }
+
+    return () => {
+      prevParams.current = { uid, slug: !slug ? prevParams.current.slug : slug };
+    };
+  }, [route, slug, type, uid]);
 
   if (!dashboard) {
     let errorElement;
