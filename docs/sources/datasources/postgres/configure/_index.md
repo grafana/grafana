@@ -164,7 +164,7 @@ This value must be formatted as a number followed by a valid time identifier:
 
 ## Provision the data source
 
-You can define and configure the data source in YAML files as part of Grafana's provisioning system.
+You can define and configure the data source in YAML files with [provisioning](/docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources).
 For more information about provisioning, and available configuration options, refer to [Provision Grafana](ref:provisioning-data-sources).
 
 ### PostgreSQL provisioning example
