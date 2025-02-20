@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react';
 
-import { PanelProps, DataFrameType, DashboardCursorSync } from '@grafana/data';
+import { PanelProps, DataFrameType, DashboardCursorSync, formattedValueToString } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { TooltipDisplayMode, VizOrientation } from '@grafana/schema';
 import { EventBusPlugin, KeyboardPlugin, TooltipPlugin2, usePanelContext } from '@grafana/ui';
+import { VizCustomizableTooltipHeader } from '@grafana/ui/src/components/VizTooltip/VizTooltipCustomizableHeader';
 import { TimeRange2, TooltipHoverMode } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2';
 import { TimeSeries } from 'app/core/components/TimeSeries/TimeSeries';
 import { config } from 'app/core/config';
@@ -127,6 +128,11 @@ export const TimeSeriesPanel = ({
                     dismiss();
                   };
 
+                  // Header
+                  const xField = alignedFrame.fields[0];
+                  const xVal = formattedValueToString(xField.display!(xField.values[dataIdxs[0]!]));
+                  const headerValue = xField.config.custom?.hideFrom?.tooltip ? { value: '' } : { value: xVal };
+
                   return isTooltipCustomizable ? (
                     <TimeSeriesCustomizableTooltip
                       series={alignedFrame}
@@ -137,6 +143,7 @@ export const TimeSeriesPanel = ({
                       maxHeight={options.tooltip.maxHeight}
                       replaceVariables={replaceVariables}
                       dataLinks={dataLinks}
+                      customHeader={<VizCustomizableTooltipHeader value={headerValue.value} />}
                     />
                   ) : (
                     <TimeSeriesTooltip
