@@ -1337,6 +1337,12 @@
       "time-zone-label": "Time zone",
       "week-start-label": "Week start"
     },
+    "time-regions": {
+      "advanced-description-cron": "Cron syntax",
+      "advanced-description-rest": " to define a recurrence schedule and duration",
+      "advanced-description-use": "Use ",
+      "advanced-label": "Advanced"
+    },
     "variables": {
       "title": "Variables"
     },
