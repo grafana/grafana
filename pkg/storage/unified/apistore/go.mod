@@ -16,9 +16,9 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/grafana/authlib/types v0.0.0-20250219092154-21ce22b49f31
 	github.com/grafana/grafana v11.4.0-00010101000000-000000000000+incompatible
-	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250121113133-e747350fee2d
-	github.com/grafana/grafana/pkg/apiserver v0.0.0-20250121113133-e747350fee2d
-	github.com/grafana/grafana/pkg/storage/unified/resource v0.0.0-20250121113133-e747350fee2d
+	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250220154326-6e5de80ef295
+	github.com/grafana/grafana/pkg/apiserver v0.0.0-20250220154326-6e5de80ef295
+	github.com/grafana/grafana/pkg/storage/unified/resource v0.0.0-20250220154326-6e5de80ef295
 	github.com/stretchr/testify v1.10.0
 	gocloud.dev v0.40.0
 	golang.org/x/exp v0.0.0-20240909161429-701f63a606c0
@@ -200,9 +200,9 @@ require (
 	github.com/grafana/grafana-aws-sdk v0.31.5 // indirect
 	github.com/grafana/grafana-azure-sdk-go/v2 v2.1.6 // indirect
 	github.com/grafana/grafana-plugin-sdk-go v0.266.0 // indirect
-	github.com/grafana/grafana/pkg/aggregator v0.0.0-20250121113133-e747350fee2d // indirect
+	github.com/grafana/grafana/pkg/aggregator v0.0.0-20250220163425-b4c4b9abbdc8 // indirect
 	github.com/grafana/grafana/pkg/promlib v0.0.8 // indirect
-	github.com/grafana/grafana/pkg/semconv v0.0.0-20250121113133-e747350fee2d // indirect
+	github.com/grafana/grafana/pkg/semconv v0.0.0-20250220164708-c8d4ff28a450 // indirect
 	github.com/grafana/otel-profiling-go v0.5.1 // indirect
 	github.com/grafana/pyroscope-go/godeltaprof v0.1.8 // indirect
 	github.com/grafana/regexp v0.0.0-20240518133315-a468a5bfb3bc // indirect

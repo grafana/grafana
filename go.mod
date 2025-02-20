@@ -200,21 +200,21 @@ require (
 )
 
 require (
-	github.com/grafana/grafana/apps/advisor v0.0.0-20250123151950-b066a6313173 // @grafana/plugins-platform-backend
-	github.com/grafana/grafana/apps/alerting/notifications v0.0.0-20250121113133-e747350fee2d // @grafana/alerting-backend
-	github.com/grafana/grafana/apps/investigations v0.0.0-20250217190546-9df6412e9255 // @fcjack @matryer
-	github.com/grafana/grafana/apps/playlist v0.0.0-20250121113133-e747350fee2d // @grafana/grafana-app-platform-squad
-	github.com/grafana/grafana/pkg/aggregator v0.0.0-20250121113133-e747350fee2d // @grafana/grafana-app-platform-squad
-	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250121113133-e747350fee2d // @grafana/grafana-app-platform-squad
-	github.com/grafana/grafana/pkg/apiserver v0.0.0-20250121113133-e747350fee2d // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana/apps/advisor v0.0.0-20250220163425-b4c4b9abbdc8 // @grafana/plugins-platform-backend
+	github.com/grafana/grafana/apps/alerting/notifications v0.0.0-20250220163425-b4c4b9abbdc8 // @grafana/alerting-backend
+	github.com/grafana/grafana/apps/investigations v0.0.0-20250220163425-b4c4b9abbdc8 // @fcjack @matryer
+	github.com/grafana/grafana/apps/playlist v0.0.0-20250220164708-c8d4ff28a450 // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana/pkg/aggregator v0.0.0-20250220163425-b4c4b9abbdc8 // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250220154326-6e5de80ef295 // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana/pkg/apiserver v0.0.0-20250220154326-6e5de80ef295 // @grafana/grafana-app-platform-squad
 
 	// This needs to be here for other projects that import grafana/grafana
 	// For local development grafana/grafana will always use the local files
 	// Check go.work file for details
 	github.com/grafana/grafana/pkg/promlib v0.0.8 // @grafana/oss-big-tent
-	github.com/grafana/grafana/pkg/semconv v0.0.0-20250121113133-e747350fee2d // @grafana/grafana-app-platform-squad
-	github.com/grafana/grafana/pkg/storage/unified/apistore v0.0.0-20250121113133-e747350fee2d // @grafana/grafana-search-and-storage
-	github.com/grafana/grafana/pkg/storage/unified/resource v0.0.0-20250121113133-e747350fee2d // @grafana/grafana-search-and-storage
+	github.com/grafana/grafana/pkg/semconv v0.0.0-20250220164708-c8d4ff28a450 // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana/pkg/storage/unified/apistore v0.0.0-20250220154326-6e5de80ef295 // @grafana/grafana-search-and-storage
+	github.com/grafana/grafana/pkg/storage/unified/resource v0.0.0-20250220154326-6e5de80ef295 // @grafana/grafana-search-and-storage
 )
 
 require github.com/grafana/grafana-api-golang-client v0.27.0 // @grafana/alerting-backend
