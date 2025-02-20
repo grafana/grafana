@@ -31,11 +31,12 @@ func checkNilRequester(r Requester) bool {
 }
 
 const serviceName = "service"
+const serviceNameForProvisioning = "provisioning"
 
-// WithServiceIdentitiy sets creates an identity representing the service itself in provided org and store it in context.
+// WithServiceIdentity sets an identity representing the service itself in provided org and store it in context.
 // This is useful for background tasks that has to communicate with unfied storage. It also returns a Requester with
 // static permissions so it can be used in legacy code paths.
-func WithServiceIdentitiy(ctx context.Context, orgID int64) (context.Context, Requester) {
+func WithServiceIdentity(ctx context.Context, orgID int64) (context.Context, Requester) {
 	r := &StaticRequester{
 		Type:           types.TypeAccessPolicy,
 		Name:           serviceName,
@@ -53,6 +54,41 @@ func WithServiceIdentitiy(ctx context.Context, orgID int64) (context.Context, Re
 	return WithRequester(ctx, r), r
 }
 
+func WithProvisioningIdentitiy(ctx context.Context, namespace string) (context.Context, Requester, error) {
+	ns, err := types.ParseNamespace(namespace)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	r := &StaticRequester{
+		Type:           types.TypeAccessPolicy,
+		Name:           serviceNameForProvisioning,
+		UserUID:        serviceNameForProvisioning,
+		AuthID:         serviceNameForProvisioning,
+		Login:          serviceNameForProvisioning,
+		OrgRole:        RoleAdmin,
+		IsGrafanaAdmin: true,
+		Namespace:      namespace,
+		OrgID:          ns.OrgID,
+		Permissions: map[int64]map[string][]string{
+			ns.OrgID: serviceIdentityPermissions,
+		},
+	}
+
+	return WithRequester(ctx, r), r, nil
+}
+
+// WithServiceIdentityContext sets an identity representing the service itself in context.
+func WithServiceIdentityContext(ctx context.Context, orgID int64) context.Context {
+	ctx, _ = WithServiceIdentity(ctx, orgID)
+	return ctx
+}
+
+// WithServiceIdentityFN calls provided closure with an context contaning the identity of the service.
+func WithServiceIdentityFn[T any](ctx context.Context, orgID int64, fn func(ctx context.Context) (T, error)) (T, error) {
+	return fn(WithServiceIdentityContext(ctx, orgID))
+}
+
 func getWildcardPermissions(actions ...string) map[string][]string {
 	permissions := make(map[string][]string, len(actions))
 	for _, a := range actions {
@@ -64,21 +100,33 @@ func getWildcardPermissions(actions ...string) map[string][]string {
 // serviceIdentityPermissions is a list of wildcard permissions for provided actions.
 // We should add every action required "internally" here.
 var serviceIdentityPermissions = getWildcardPermissions(
+	"annotations:read",
 	"folders:read",
 	"folders:write",
 	"folders:create",
+	"folders:delete",
 	"dashboards:read",
 	"dashboards:write",
 	"dashboards:create",
+	"datasources:query",
 	"datasources:read",
+	"datasources:delete",
 	"alert.provisioning:write",
 	"alert.provisioning.secrets:read",
+	"users:read",     // accesscontrol.ActionUsersRead,
+	"org.users:read", // accesscontrol.ActionOrgUsersRead,
+	"teams:read",     // accesscontrol.ActionTeamsRead,
 )
 
 func IsServiceIdentity(ctx context.Context) bool {
-	ident, err := GetRequester(ctx)
+	ident, ok := types.AuthInfoFrom(ctx)
+	if !ok {
+		return false
+	}
+	t, uid, err := types.ParseTypeID(ident.GetUID())
 	if err != nil {
 		return false
 	}
-	return ident.GetUID() == types.NewTypeID(types.TypeAccessPolicy, serviceName)
+
+	return t == types.TypeAccessPolicy && (uid == serviceName || uid == serviceNameForProvisioning)
 }

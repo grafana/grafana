@@ -10,6 +10,7 @@ import {
   AnnoKeyMessage,
   AnnoKeyFolder,
   Resource,
+  DeprecatedInternalId,
 } from 'app/features/apiserver/types';
 import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
 import { DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
@@ -84,7 +85,7 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
   }
 
   deleteDashboard(uid: string, showSuccessAlert: boolean): Promise<DeleteDashboardResponse> {
-    return this.client.delete(uid).then((v) => ({
+    return this.client.delete(uid, showSuccessAlert).then((v) => ({
       id: 0,
       message: v.message,
       title: 'deleted',
@@ -106,6 +107,10 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
         },
         dashboard: dash.spec,
       };
+
+      if (dash.metadata.labels?.[DeprecatedInternalId]) {
+        result.dashboard.id = parseInt(dash.metadata.labels[DeprecatedInternalId], 10);
+      }
 
       if (dash.metadata.annotations?.[AnnoKeyFolder]) {
         try {

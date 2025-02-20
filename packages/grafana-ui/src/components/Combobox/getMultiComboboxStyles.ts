@@ -54,7 +54,9 @@ export const getMultiComboboxStyles = (
       },
       '&:focus': {
         outline: 'none',
+        cursor: 'text',
       },
+      cursor: 'pointer',
     }),
 
     pillWrapper: css({

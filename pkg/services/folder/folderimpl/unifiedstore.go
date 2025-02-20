@@ -4,21 +4,23 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	k8sUser "k8s.io/apiserver/pkg/authentication/user"
-	k8sRequest "k8s.io/apiserver/pkg/endpoints/request"
+	"k8s.io/apimachinery/pkg/selection"
 
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 
 	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	internalfolders "github.com/grafana/grafana/pkg/registry/apis/folders"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	dashboardsearch "github.com/grafana/grafana/pkg/services/dashboards/service/search"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
@@ -26,14 +28,14 @@ import (
 
 type FolderUnifiedStoreImpl struct {
 	log         log.Logger
-	k8sclient   folderK8sHandler
+	k8sclient   client.K8sHandler
 	userService user.Service
 }
 
 // sqlStore implements the store interface.
 var _ folder.Store = (*FolderUnifiedStoreImpl)(nil)
 
-func ProvideUnifiedStore(k8sHandler *foldk8sHandler, userService user.Service) *FolderUnifiedStoreImpl {
+func ProvideUnifiedStore(k8sHandler client.K8sHandler, userService user.Service) *FolderUnifiedStoreImpl {
 	return &FolderUnifiedStoreImpl{
 		k8sclient:   k8sHandler,
 		log:         log.New("folder-store"),
@@ -42,23 +44,11 @@ func ProvideUnifiedStore(k8sHandler *foldk8sHandler, userService user.Service) *
 }
 
 func (ss *FolderUnifiedStoreImpl) Create(ctx context.Context, cmd folder.CreateFolderCommand) (*folder.Folder, error) {
-	newCtx, cancel, err := ss.getK8sContext(ctx)
-	if err != nil {
-		return nil, err
-	} else if cancel != nil {
-		defer cancel()
-	}
-
-	client, ok := ss.k8sclient.getClient(newCtx, cmd.OrgID)
-	if !ok {
-		return nil, nil
-	}
-
 	obj, err := internalfolders.LegacyCreateCommandToUnstructured(&cmd)
 	if err != nil {
 		return nil, err
 	}
-	out, err := client.Create(newCtx, obj, v1.CreateOptions{})
+	out, err := ss.k8sclient.Create(ctx, obj, cmd.OrgID)
 	if err != nil {
 		return nil, err
 	}
@@ -72,20 +62,8 @@ func (ss *FolderUnifiedStoreImpl) Create(ctx context.Context, cmd folder.CreateF
 }
 
 func (ss *FolderUnifiedStoreImpl) Delete(ctx context.Context, UIDs []string, orgID int64) error {
-	newCtx, cancel, err := ss.getK8sContext(ctx)
-	if err != nil {
-		return err
-	} else if cancel != nil {
-		defer cancel()
-	}
-
-	client, ok := ss.k8sclient.getClient(newCtx, orgID)
-	if !ok {
-		return nil
-	}
-
 	for _, uid := range UIDs {
-		err = client.Delete(newCtx, uid, v1.DeleteOptions{})
+		err := ss.k8sclient.Delete(ctx, uid, orgID, v1.DeleteOptions{})
 		if err != nil {
 			return err
 		}
@@ -95,19 +73,7 @@ func (ss *FolderUnifiedStoreImpl) Delete(ctx context.Context, UIDs []string, org
 }
 
 func (ss *FolderUnifiedStoreImpl) Update(ctx context.Context, cmd folder.UpdateFolderCommand) (*folder.Folder, error) {
-	newCtx, cancel, err := ss.getK8sContext(ctx)
-	if err != nil {
-		return nil, err
-	} else if cancel != nil {
-		defer cancel()
-	}
-
-	client, ok := ss.k8sclient.getClient(newCtx, cmd.OrgID)
-	if !ok {
-		return nil, nil
-	}
-
-	obj, err := client.Get(ctx, cmd.UID, v1.GetOptions{})
+	obj, err := ss.k8sclient.Get(ctx, cmd.UID, cmd.OrgID, v1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -133,7 +99,7 @@ func (ss *FolderUnifiedStoreImpl) Update(ctx context.Context, cmd folder.UpdateF
 		meta.SetFolder(*cmd.NewParentUID)
 	}
 
-	out, err := client.Update(ctx, updated, v1.UpdateOptions{})
+	out, err := ss.k8sclient.Update(ctx, updated, cmd.OrgID)
 	if err != nil {
 		return nil, err
 	}
@@ -160,21 +126,7 @@ func (ss *FolderUnifiedStoreImpl) Update(ctx context.Context, cmd folder.UpdateF
 //
 // The full path of C is "A/B\/C".
 func (ss *FolderUnifiedStoreImpl) Get(ctx context.Context, q folder.GetFolderQuery) (*folder.Folder, error) {
-	// create a new context - prevents issues when the request stems from the k8s api itself
-	// otherwise the context goes through the handlers twice and causes issues
-	newCtx, cancel, err := ss.getK8sContext(ctx)
-	if err != nil {
-		return nil, err
-	} else if cancel != nil {
-		defer cancel()
-	}
-
-	client, ok := ss.k8sclient.getClient(newCtx, q.OrgID)
-	if !ok {
-		return nil, nil
-	}
-
-	out, err := client.Get(newCtx, *q.UID, v1.GetOptions{})
+	out, err := ss.k8sclient.Get(ctx, *q.UID, q.OrgID, v1.GetOptions{})
 	if err != nil && !apierrors.IsNotFound(err) {
 		return nil, err
 	} else if err != nil || out == nil {
@@ -185,26 +137,12 @@ func (ss *FolderUnifiedStoreImpl) Get(ctx context.Context, q folder.GetFolderQue
 }
 
 func (ss *FolderUnifiedStoreImpl) GetParents(ctx context.Context, q folder.GetParentsQuery) ([]*folder.Folder, error) {
-	// create a new context - prevents issues when the request stems from the k8s api itself
-	// otherwise the context goes through the handlers twice and causes issues
-	newCtx, cancel, err := ss.getK8sContext(ctx)
-	if err != nil {
-		return nil, err
-	} else if cancel != nil {
-		defer cancel()
-	}
-
-	client, ok := ss.k8sclient.getClient(newCtx, q.OrgID)
-	if !ok {
-		return nil, nil
-	}
-
 	hits := []*folder.Folder{}
 
 	parentUid := q.UID
 
 	for parentUid != "" {
-		out, err := client.Get(newCtx, parentUid, v1.GetOptions{})
+		out, err := ss.k8sclient.Get(ctx, parentUid, q.OrgID, v1.GetOptions{})
 		if err != nil {
 			return nil, err
 		}
@@ -226,40 +164,71 @@ func (ss *FolderUnifiedStoreImpl) GetParents(ctx context.Context, q folder.GetPa
 }
 
 func (ss *FolderUnifiedStoreImpl) GetChildren(ctx context.Context, q folder.GetChildrenQuery) ([]*folder.Folder, error) {
-	// create a new context - prevents issues when the request stems from the k8s api itself
-	// otherwise the context goes through the handlers twice and causes issues
-	newCtx, cancel, err := ss.getK8sContext(ctx)
+	// the general folder is saved as an empty string in the database
+	if q.UID == folder.GeneralFolderUID {
+		q.UID = ""
+	}
+	if q.Limit == 0 {
+		q.Limit = folderSearchLimit
+	}
+	if q.Page == 0 {
+		q.Page = 1
+	}
+
+	req := &resource.ResourceSearchRequest{
+		Options: &resource.ListOptions{
+			Fields: []*resource.Requirement{
+				{
+					Key:      resource.SEARCH_FIELD_FOLDER,
+					Operator: string(selection.In),
+					Values:   []string{q.UID},
+				},
+			},
+		},
+		Limit: q.Limit,
+		// legacy fallback search requires page, unistore requires offset,
+		// so set both
+		Offset: q.Limit * (q.Page - 1),
+		Page:   q.Page,
+	}
+
+	// only filter the folder UIDs if they are provided in the query
+	if len(q.FolderUIDs) > 0 {
+		req.Options.Fields = append(req.Options.Fields, &resource.Requirement{
+			Key:      resource.SEARCH_FIELD_NAME,
+			Operator: string(selection.In),
+			Values:   q.FolderUIDs,
+		})
+	}
+
+	// now, get children of the parent folder
+	out, err := ss.k8sclient.Search(ctx, q.OrgID, req)
 	if err != nil {
 		return nil, err
-	} else if cancel != nil {
-		defer cancel()
 	}
 
-	client, ok := ss.k8sclient.getClient(newCtx, q.OrgID)
-	if !ok {
-		return nil, nil
-	}
-
-	out, err := client.List(newCtx, v1.ListOptions{})
+	res, err := dashboardsearch.ParseResults(out, 0)
 	if err != nil {
 		return nil, err
 	}
 
+	allowK6Folder := (q.SignedInUser != nil && q.SignedInUser.IsIdentityType(claims.TypeServiceAccount))
 	hits := make([]*folder.Folder, 0)
-	for _, item := range out.Items {
-		// convert item to legacy folder format
-		f, err := ss.UnstructuredToLegacyFolder(ctx, &item)
-		if f == nil {
-			return nil, fmt.Errorf("unable to convert unstructured item to legacy folder %w", err)
+	for _, item := range res.Hits {
+		// filter out k6 folders if request is not from a service account
+		if item.Name == accesscontrol.K6FolderUID && !allowK6Folder {
+			continue
 		}
 
-		// it we are at root level, skip subfolder
-		if q.UID == "" && f.ParentUID != "" {
-			continue // query filter
+		// search only returns a subset of info, get all info of the folder
+		item, err := ss.k8sclient.Get(ctx, item.Name, q.OrgID, v1.GetOptions{})
+		if err != nil {
+			return nil, err
 		}
-		// if we are at a nested folder, then skip folders that don't belong to parentUid
-		if q.UID != "" && !strings.EqualFold(f.ParentUID, q.UID) {
-			continue
+
+		f, err := ss.UnstructuredToLegacyFolder(ctx, item)
+		if err != nil {
+			return nil, err
 		}
 
 		hits = append(hits, f)
@@ -328,19 +297,7 @@ func (ss *FolderUnifiedStoreImpl) GetHeight(ctx context.Context, foldrUID string
 // The full path UIDs of B is "uid1/uid2".
 // The full path UIDs of A is "uid1".
 func (ss *FolderUnifiedStoreImpl) GetFolders(ctx context.Context, q folder.GetFoldersFromStoreQuery) ([]*folder.Folder, error) {
-	newCtx, cancel, err := ss.getK8sContext(ctx)
-	if err != nil {
-		return nil, err
-	} else if cancel != nil {
-		defer cancel()
-	}
-
-	client, ok := ss.k8sclient.getClient(newCtx, q.OrgID)
-	if !ok {
-		return nil, nil
-	}
-
-	out, err := client.List(newCtx, v1.ListOptions{})
+	out, err := ss.k8sclient.List(ctx, q.OrgID, v1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -394,21 +351,7 @@ func (ss *FolderUnifiedStoreImpl) GetFolders(ctx context.Context, q folder.GetFo
 }
 
 func (ss *FolderUnifiedStoreImpl) GetDescendants(ctx context.Context, orgID int64, ancestor_uid string) ([]*folder.Folder, error) {
-	// create a new context - prevents issues when the request stems from the k8s api itself
-	// otherwise the context goes through the handlers twice and causes issues
-	newCtx, cancel, err := ss.getK8sContext(ctx)
-	if err != nil {
-		return nil, err
-	} else if cancel != nil {
-		defer cancel()
-	}
-
-	client, ok := ss.k8sclient.getClient(newCtx, orgID)
-	if !ok {
-		return nil, nil
-	}
-
-	out, err := client.List(newCtx, v1.ListOptions{})
+	out, err := ss.k8sclient.List(ctx, orgID, v1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -458,21 +401,7 @@ func getDescendants(nodes map[string]*folder.Folder, tree map[string]map[string]
 }
 
 func (ss *FolderUnifiedStoreImpl) CountFolderContent(ctx context.Context, orgID int64, ancestor_uid string) (folder.DescendantCounts, error) {
-	// create a new context - prevents issues when the request stems from the k8s api itself
-	// otherwise the context goes through the handlers twice and causes issues
-	newCtx, cancel, err := ss.getK8sContext(ctx)
-	if err != nil {
-		return nil, err
-	} else if cancel != nil {
-		defer cancel()
-	}
-
-	client, ok := ss.k8sclient.getClient(newCtx, orgID)
-	if !ok {
-		return nil, nil
-	}
-
-	counts, err := client.Get(newCtx, ancestor_uid, v1.GetOptions{}, "counts")
+	counts, err := ss.k8sclient.Get(ctx, ancestor_uid, orgID, v1.GetOptions{}, "counts")
 	if err != nil {
 		return nil, err
 	}
@@ -500,42 +429,6 @@ func toFolderLegacyCounts(u *unstructured.Unstructured) (*folder.DescendantCount
 		}
 	}
 	return &out, nil
-}
-
-func (ss *FolderUnifiedStoreImpl) getK8sContext(ctx context.Context) (context.Context, context.CancelFunc, error) {
-	requester, requesterErr := identity.GetRequester(ctx)
-	if requesterErr != nil {
-		return nil, nil, requesterErr
-	}
-
-	user, exists := k8sRequest.UserFrom(ctx)
-	if !exists {
-		// add in k8s user if not there yet
-		var ok bool
-		user, ok = requester.(k8sUser.Info)
-		if !ok {
-			return nil, nil, fmt.Errorf("could not convert user to k8s user")
-		}
-	}
-
-	newCtx := k8sRequest.WithUser(context.Background(), user)
-	newCtx = log.WithContextualAttributes(newCtx, log.FromContext(ctx))
-	// TODO: after GLSA token workflow is removed, make this return early
-	// and move the else below to be unconditional
-	if requesterErr == nil {
-		newCtxWithRequester := identity.WithRequester(newCtx, requester)
-		newCtx = newCtxWithRequester
-	}
-
-	// inherit the deadline from the original context, if it exists
-	deadline, ok := ctx.Deadline()
-	if ok {
-		var newCancel context.CancelFunc
-		newCtx, newCancel = context.WithTimeout(newCtx, time.Until(deadline))
-		return newCtx, newCancel, nil
-	}
-
-	return newCtx, nil, nil
 }
 
 func computeFullPath(parents []*folder.Folder) (string, string) {

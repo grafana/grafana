@@ -89,6 +89,7 @@ const getStyles = (theme: GrafanaTheme2, placeholder: string) => {
       '.monaco-editor .suggest-widget': {
         minWidth: '50%',
       },
+      overflow: 'hidden',
     }),
     placeholder: css({
       '::after': {
