@@ -243,7 +243,16 @@ func ldflags(opts BuildOpts) (string, error) {
 		buildBranch = v
 	}
 	var b bytes.Buffer
-	b.WriteString("-w")
+	if !opts.isDev {
+		// Only ask the linker to strip DWARF information if we're not in
+		// dev, to avoid seeing stuff like this when using delve:
+		//
+		//   ~ $ dlv attach $(pgrep grafana)
+		//   (dlv) l main.main
+		//   Command failed: location "main.main" not found
+		//
+		b.WriteString("-w")
+	}
 	b.WriteString(fmt.Sprintf(" -X main.version=%s", opts.version))
 	b.WriteString(fmt.Sprintf(" -X main.commit=%s", commitSha))
 	if enterpriseCommitSha != "" {

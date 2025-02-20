@@ -1,4 +1,4 @@
-import { cloneDeep, first as _first, isNumber, isString, map as _map, find, isObject } from 'lodash';
+import { cloneDeep, first as _first, isNumber, isString, map as _map, isObject } from 'lodash';
 import { from, generate, lastValueFrom, Observable, of } from 'rxjs';
 import { catchError, first, map, mergeMap, skipWhile, throwIfEmpty, tap } from 'rxjs/operators';
 import { SemVer } from 'semver';
@@ -83,7 +83,7 @@ import {
   isElasticsearchResponseWithHits,
   ElasticsearchHits,
 } from './types';
-import { getScriptValue, isSupportedVersion, isTimeSeriesQuery, unsupportedVersionMessage } from './utils';
+import { getScriptValue, isTimeSeriesQuery } from './utils';
 
 export const REF_ID_STARTER_LOG_VOLUME = 'log-volume-';
 export const REF_ID_STARTER_LOG_SAMPLE = 'log-sample-';
@@ -439,37 +439,6 @@ export class ElasticDatasource
     filters?: AdHocVariableFilter[]
   ): ElasticsearchQuery[] {
     return queries.map((q) => this.applyTemplateVariables(q, scopedVars, filters));
-  }
-
-  /**
-   * @todo Remove as we have health checks in the backend
-   */
-  async testDatasource() {
-    // we explicitly ask for uncached, "fresh" data here
-    const dbVersion = await this.getDatabaseVersion(false);
-    // if we are not able to determine the elastic-version, we assume it is a good version.
-    const isSupported = dbVersion != null ? isSupportedVersion(dbVersion) : true;
-    const versionMessage = isSupported ? '' : `WARNING: ${unsupportedVersionMessage} `;
-    // validate that the index exist and has date field
-    return lastValueFrom(
-      this.getFields(['date']).pipe(
-        mergeMap((dateFields) => {
-          const timeField = find(dateFields, { text: this.timeField });
-          if (!timeField) {
-            return of({
-              status: 'error',
-              message: 'No date field named ' + this.timeField + ' found',
-            });
-          }
-          return of({ status: 'success', message: `${versionMessage}Data source successfully connected.` });
-        }),
-        catchError((err) => {
-          const infoInParentheses = err.message ? ` (${err.message})` : '';
-          const message = `Unable to connect with Elasticsearch${infoInParentheses}. Please check the server logs for more details.`;
-          return of({ status: 'error', message });
-        })
-      )
-    );
   }
 
   // Private method used in `getTerms` to get the header for the Elasticsearch query
@@ -897,7 +866,11 @@ export class ElasticDatasource
    * Get values for a given field.
    * Used for example in getTagValues.
    */
-  getTerms(queryDef: TermsQuery, range = getDefaultTimeRange()): Observable<MetricFindValue[]> {
+  getTerms(
+    queryDef: TermsQuery,
+    range = getDefaultTimeRange(),
+    isTagValueQuery = false
+  ): Observable<MetricFindValue[]> {
     const searchType = 'query_then_fetch';
     const header = this.getQueryHeader(searchType, range.from, range.to);
     let esQuery = JSON.stringify(this.queryBuilder.getTermsQuery(queryDef));
@@ -919,9 +892,10 @@ export class ElasticDatasource
 
         const buckets = res.responses[0].aggregations['1'].buckets;
         return _map(buckets, (bucket) => {
+          const keyString = String(bucket.key);
           return {
-            text: bucket.key_as_string || bucket.key,
-            value: bucket.key,
+            text: bucket.key_as_string || keyString,
+            value: isTagValueQuery ? keyString : bucket.key,
           };
         });
       })
@@ -979,7 +953,7 @@ export class ElasticDatasource
    * @returns A Promise that resolves to an array of label values represented as MetricFindValue objects
    */
   getTagValues(options: DataSourceGetTagValuesOptions<ElasticsearchQuery>) {
-    return lastValueFrom(this.getTerms({ field: options.key }, options.timeRange));
+    return lastValueFrom(this.getTerms({ field: options.key }, options.timeRange, true));
   }
 
   /**

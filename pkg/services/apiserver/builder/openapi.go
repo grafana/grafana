@@ -49,73 +49,88 @@ func getOpenAPIPostProcessor(version string, builders []APIGroupBuilder) func(*s
 		}
 
 		for _, b := range builders {
-			gv := b.GetGroupVersion()
-			prefix := "/apis/" + gv.String() + "/"
-			if s.Paths.Paths[prefix] != nil {
-				copy := spec3.OpenAPI{
-					Version: s.Version,
-					Info: &spec.Info{
-						InfoProps: spec.InfoProps{
-							Title:   gv.String(),
-							Version: version,
+			for _, gv := range GetGroupVersions(b) {
+				prefix := "/apis/" + gv.String() + "/"
+				if s.Paths.Paths[prefix] != nil {
+					copy := spec3.OpenAPI{
+						Version: s.Version,
+						Info: &spec.Info{
+							InfoProps: spec.InfoProps{
+								Title:   gv.String(),
+								Version: version,
+							},
 						},
-					},
-					Components:   s.Components,
-					ExternalDocs: s.ExternalDocs,
-					Servers:      s.Servers,
-					Paths:        s.Paths,
-				}
-
-				// Remove the growing list of kinds
-				for k, v := range copy.Components.Schemas {
-					if strings.HasPrefix(k, "io.k8s.apimachinery.pkg.apis.meta.v1") && v.Extensions != nil {
-						delete(v.Extensions, "x-kubernetes-group-version-kind") // a growing list of everything
+						Components:   s.Components,
+						ExternalDocs: s.ExternalDocs,
+						Servers:      s.Servers,
+						Paths:        s.Paths,
 					}
-				}
 
-				// Optionally include raw http handlers
-				provider, ok := b.(APIGroupRouteProvider)
-				if ok && provider != nil {
-					routes := provider.GetAPIRoutes()
-					if routes != nil {
-						for _, route := range routes.Root {
-							copy.Paths.Paths[prefix+route.Path] = &spec3.Path{
-								PathProps: *route.Spec,
-							}
-						}
-
-						for _, route := range routes.Namespace {
-							copy.Paths.Paths[prefix+"namespaces/{namespace}/"+route.Path] = &spec3.Path{
-								PathProps: *route.Spec,
-							}
+					for k := range copy.Paths.Paths {
+						// Remove the deprecated watch URL -- can use list with ?watch=true
+						if strings.HasPrefix(k, prefix+"watch/") {
+							delete(copy.Paths.Paths, k)
+							continue
 						}
 					}
-				}
 
-				// Make the sub-resources (connect) share the same tags as the main resource
-				for path, spec := range copy.Paths.Paths {
-					idx := strings.LastIndex(path, "{name}/")
-					if idx > 0 {
-						parent := copy.Paths.Paths[path[:idx+6]]
-						if parent != nil && parent.Get != nil {
-							for _, op := range GetPathOperations(spec) {
-								if op != nil && op.Extensions != nil {
-									action, ok := op.Extensions.GetString("x-kubernetes-action")
-									if ok && action == "connect" {
-										op.Tags = parent.Get.Tags
+					sub := copy.Paths.Paths[prefix]
+					if sub != nil && sub.Get != nil {
+						sub.Get.Tags = []string{"API Discovery"}
+						sub.Get.Description = "Describe the available kubernetes resources"
+					}
+
+					// Remove the growing list of kinds
+					for k, v := range copy.Components.Schemas {
+						if strings.HasPrefix(k, "io.k8s.apimachinery.pkg.apis.meta.v1") && v.Extensions != nil {
+							delete(v.Extensions, "x-kubernetes-group-version-kind") // a growing list of everything
+						}
+					}
+
+					// Optionally include raw http handlers
+					provider, ok := b.(APIGroupRouteProvider)
+					if ok && provider != nil {
+						routes := provider.GetAPIRoutes()
+						if routes != nil {
+							for _, route := range routes.Root {
+								copy.Paths.Paths[prefix+route.Path] = &spec3.Path{
+									PathProps: *route.Spec,
+								}
+							}
+
+							for _, route := range routes.Namespace {
+								copy.Paths.Paths[prefix+"namespaces/{namespace}/"+route.Path] = &spec3.Path{
+									PathProps: *route.Spec,
+								}
+							}
+						}
+					}
+
+					// Make the sub-resources (connect) share the same tags as the main resource
+					for path, spec := range copy.Paths.Paths {
+						idx := strings.LastIndex(path, "{name}/")
+						if idx > 0 {
+							parent := copy.Paths.Paths[path[:idx+6]]
+							if parent != nil && parent.Get != nil {
+								for _, op := range GetPathOperations(spec) {
+									if op != nil && op.Extensions != nil {
+										action, ok := op.Extensions.GetString("x-kubernetes-action")
+										if ok && action == "connect" {
+											op.Tags = parent.Get.Tags
+										}
 									}
 								}
 							}
 						}
 					}
-				}
 
-				// Support direct manipulation of API results
-				processor, ok := b.(OpenAPIPostProcessor)
-				if ok {
-					return processor.PostProcessOpenAPI(&copy)
+					// Support direct manipulation of API results
+					processor, ok := b.(OpenAPIPostProcessor)
+					if ok {
+						return processor.PostProcessOpenAPI(&copy)
+					}
+					return &copy, nil
 				}
-				return &copy, nil
 			}
 		}
 

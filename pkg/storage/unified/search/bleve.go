@@ -18,6 +18,7 @@ import (
 	"github.com/blevesearch/bleve/v2/search/query"
 	bleveSearch "github.com/blevesearch/bleve/v2/search/searcher"
 	index "github.com/blevesearch/bleve_index_api"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"go.opentelemetry.io/otel/trace"
 	"k8s.io/apimachinery/pkg/selection"
@@ -177,6 +178,7 @@ func (b *bleveBackend) BuildIndex(ctx context.Context,
 		fields:    fields,
 		standard:  resource.StandardSearchFields(),
 		features:  b.features,
+		tracing:   b.tracer,
 	}
 
 	idx.allFields, err = getAllFields(idx.standard, fields)
@@ -216,7 +218,7 @@ func (b *bleveBackend) cleanOldIndexes(dir string, skip string) {
 			if err != nil {
 				b.log.Error("Unable to remove old index folder", "directory", fpath, "error", err)
 			} else {
-				b.log.Error("Removed old index folder", "directory", fpath)
+				b.log.Info("Removed old index folder", "directory", fpath)
 			}
 		}
 	}
@@ -250,6 +252,7 @@ type bleveIndex struct {
 	batchSize int // ??? not totally sure the units here
 
 	features featuremgmt.FeatureToggles
+	tracing  trace.Tracer
 }
 
 // Write implements resource.DocumentIndex.
@@ -404,6 +407,9 @@ func (b *bleveIndex) Search(
 	req *resource.ResourceSearchRequest,
 	federate []resource.ResourceIndex, // For federated queries, these will match the values in req.federate
 ) (*resource.ResourceSearchResponse, error) {
+	ctx, span := b.tracing.Start(ctx, tracingPrexfixBleve+"Search")
+	defer span.End()
+
 	if req.Options == nil || req.Options.Key == nil {
 		return &resource.ResourceSearchResponse{
 			Error: resource.NewBadRequestError("missing query key"),
@@ -418,7 +424,7 @@ func (b *bleveIndex) Search(
 	}
 
 	// Verifies the index federation
-	index, err := b.getIndex(req, federate)
+	index, err := b.getIndex(ctx, req, federate)
 	if err != nil {
 		return nil, err
 	}
@@ -448,7 +454,7 @@ func (b *bleveIndex) Search(
 	response.QueryCost = float64(res.Cost)
 	response.MaxScore = res.MaxScore
 
-	response.Results, err = b.hitsToTable(searchrequest.Fields, res.Hits, req.Explain)
+	response.Results, err = b.hitsToTable(ctx, searchrequest.Fields, res.Hits, req.Explain)
 	if err != nil {
 		return nil, err
 	}
@@ -465,6 +471,9 @@ func (b *bleveIndex) Search(
 }
 
 func (b *bleveIndex) DocCount(ctx context.Context, folder string) (int64, error) {
+	ctx, span := b.tracing.Start(ctx, tracingPrexfixBleve+"DocCount")
+	defer span.End()
+
 	if folder == "" {
 		count, err := b.index.DocCount()
 		return int64(count), err
@@ -500,9 +509,13 @@ func (b *bleveIndex) verifyKey(key *resource.ResourceKey) *resource.ErrorResult 
 }
 
 func (b *bleveIndex) getIndex(
+	ctx context.Context,
 	req *resource.ResourceSearchRequest,
 	federate []resource.ResourceIndex,
 ) (bleve.Index, error) {
+	_, span := b.tracing.Start(ctx, tracingPrexfixBleve+"getIndex")
+	defer span.End()
+
 	if len(req.Federated) != len(federate) {
 		return nil, fmt.Errorf("federation is misconfigured")
 	}
@@ -527,6 +540,9 @@ func (b *bleveIndex) getIndex(
 }
 
 func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resource.ResourceSearchRequest, access authlib.AccessClient) (*bleve.SearchRequest, *resource.ErrorResult) {
+	ctx, span := b.tracing.Start(ctx, tracingPrexfixBleve+"toBleveSearchRequest")
+	defer span.End()
+
 	facets := bleve.FacetsRequest{}
 	for _, f := range req.Facet {
 		facets[f.Field] = bleve.NewFacetRequest(f.Field, int(f.Limit))
@@ -536,7 +552,7 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resource.Res
 	fields := make([]string, 0, len(req.Fields))
 	for _, f := range req.Fields {
 		if slices.Contains(DashboardFields(), f) {
-			f = "fields." + f
+			f = resource.SEARCH_FIELD_PREFIX + f
 		}
 		fields = append(fields, f)
 	}
@@ -574,7 +590,12 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resource.Res
 	// Add a text query
 	if req.Query != "" && req.Query != "*" {
 		searchrequest.Fields = append(searchrequest.Fields, resource.SEARCH_FIELD_SCORE)
-		queries = append(queries, bleve.NewFuzzyQuery(req.Query))
+		// mimic the behavior of the sql search
+		query := strings.ToLower(req.Query)
+		if !strings.Contains(query, "*") {
+			query = "*" + query + "*"
+		}
+		queries = append(queries, bleve.NewWildcardQuery(query))
 	}
 
 	switch len(queries) {
@@ -591,11 +612,16 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resource.Res
 		if !ok {
 			return nil, resource.AsErrorResult(fmt.Errorf("missing auth info"))
 		}
+		verb := utils.VerbList
+		if req.Permission == int64(dashboardaccess.PERMISSION_EDIT) {
+			verb = utils.VerbPatch
+		}
+
 		checker, err := access.Compile(ctx, auth, authlib.ListRequest{
 			Namespace: b.key.Namespace,
 			Group:     b.key.Group,
 			Resource:  b.key.Resource,
-			Verb:      utils.VerbList,
+			Verb:      verb,
 		})
 		if err != nil {
 			return nil, resource.AsErrorResult(err)
@@ -650,6 +676,10 @@ func getSortFields(req *resource.ResourceSearchRequest) []string {
 			input = field
 		}
 
+		if slices.Contains(DashboardFields(), input) {
+			input = resource.SEARCH_FIELD_PREFIX + input
+		}
+
 		if sort.Desc {
 			input = "-" + input
 		}
@@ -660,8 +690,10 @@ func getSortFields(req *resource.ResourceSearchRequest) []string {
 
 // fields that we went to sort by the full text
 var textSortFields = map[string]string{
-	resource.SEARCH_FIELD_TITLE: resource.SEARCH_FIELD_TITLE + "_sort",
+	resource.SEARCH_FIELD_TITLE: resource.SEARCH_FIELD_TITLE_PHRASE,
 }
+
+const lowerCase = "phrase"
 
 // Convert a "requirement" into a bleve query
 func requirementQuery(req *resource.Requirement, prefix string) (query.Query, *resource.ErrorResult) {
@@ -672,14 +704,14 @@ func requirementQuery(req *resource.Requirement, prefix string) (query.Query, *r
 		}
 
 		if len(req.Values[0]) == 1 {
-			q := query.NewMatchQuery(req.Values[0])
+			q := query.NewMatchQuery(filterValue(req.Key, req.Values[0]))
 			q.FieldVal = prefix + req.Key
 			return q, nil
 		}
 
 		conjuncts := []query.Query{}
 		for _, v := range req.Values {
-			q := query.NewMatchQuery(v)
+			q := query.NewMatchQuery(filterValue(req.Key, v))
 			q.FieldVal = prefix + req.Key
 			conjuncts = append(conjuncts, q)
 		}
@@ -696,14 +728,14 @@ func requirementQuery(req *resource.Requirement, prefix string) (query.Query, *r
 			return query.NewMatchAllQuery(), nil
 		}
 		if len(req.Values) == 1 {
-			q := query.NewMatchQuery(req.Values[0])
+			q := query.NewMatchQuery(filterValue(req.Key, req.Values[0]))
 			q.FieldVal = prefix + req.Key
 			return q, nil
 		}
 
 		disjuncts := []query.Query{}
 		for _, v := range req.Values {
-			q := query.NewMatchQuery(v)
+			q := query.NewMatchQuery(filterValue(req.Key, v))
 			q.FieldVal = prefix + req.Key
 			disjuncts = append(disjuncts, q)
 		}
@@ -715,7 +747,7 @@ func requirementQuery(req *resource.Requirement, prefix string) (query.Query, *r
 
 		var mustNotQueries []query.Query
 		for _, value := range req.Values {
-			mustNotQueries = append(mustNotQueries, bleve.NewMatchQuery(value))
+			mustNotQueries = append(mustNotQueries, bleve.NewMatchQuery(filterValue(req.Key, value)))
 		}
 		boolQuery.AddMustNot(mustNotQueries...)
 
@@ -730,7 +762,18 @@ func requirementQuery(req *resource.Requirement, prefix string) (query.Query, *r
 	)
 }
 
-func (b *bleveIndex) hitsToTable(selectFields []string, hits search.DocumentMatchCollection, explain bool) (*resource.ResourceTable, error) {
+// filterValue will convert the value to lower case if the field is a phrase field
+func filterValue(field string, v string) string {
+	if strings.HasSuffix(field, lowerCase) {
+		return strings.ToLower(v)
+	}
+	return v
+}
+
+func (b *bleveIndex) hitsToTable(ctx context.Context, selectFields []string, hits search.DocumentMatchCollection, explain bool) (*resource.ResourceTable, error) {
+	_, span := b.tracing.Start(ctx, tracingPrexfixBleve+"hitsToTable")
+	defer span.End()
+
 	fields := []*resource.ResourceTableColumnDefinition{}
 	for _, name := range selectFields {
 		if name == "_all" {
@@ -804,7 +847,7 @@ func (b *bleveIndex) hitsToTable(selectFields []string, hits search.DocumentMatc
 				v := match.Fields[fieldName]
 				// fields that are specific to the resource get stored as fields.<fieldName>, so we need to check for that
 				if v == nil {
-					v = match.Fields["fields."+fieldName]
+					v = match.Fields[resource.SEARCH_FIELD_PREFIX+fieldName]
 				}
 				if v != nil {
 					// Encode the value to protobuf

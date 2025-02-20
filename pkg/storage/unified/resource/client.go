@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"log/slog"
 	"net/http"
 
 	"github.com/fullstorydev/grpchan"
@@ -12,7 +13,8 @@ import (
 	"google.golang.org/grpc"
 
 	authnlib "github.com/grafana/authlib/authn"
-	claims "github.com/grafana/authlib/types"
+	"github.com/grafana/authlib/types"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/authn/grpcutils"
@@ -23,6 +25,7 @@ type ResourceClient interface {
 	ResourceStoreClient
 	ResourceIndexClient
 	RepositoryIndexClient
+	BatchStoreClient
 	BlobStoreClient
 	DiagnosticsClient
 }
@@ -32,6 +35,7 @@ type resourceClient struct {
 	ResourceStoreClient
 	ResourceIndexClient
 	RepositoryIndexClient
+	BatchStoreClient
 	BlobStoreClient
 	DiagnosticsClient
 }
@@ -42,6 +46,7 @@ func NewLegacyResourceClient(channel *grpc.ClientConn) ResourceClient {
 		ResourceStoreClient:   NewResourceStoreClient(cc),
 		ResourceIndexClient:   NewResourceIndexClient(cc),
 		RepositoryIndexClient: NewRepositoryIndexClient(cc),
+		BatchStoreClient:      NewBatchStoreClient(cc),
 		BlobStoreClient:       NewBlobStoreClient(cc),
 		DiagnosticsClient:     NewDiagnosticsClient(cc),
 	}
@@ -57,6 +62,7 @@ func NewLocalResourceClient(server ResourceServer) ResourceClient {
 		&ResourceIndex_ServiceDesc,
 		&RepositoryIndex_ServiceDesc,
 		&BlobStore_ServiceDesc,
+		&BatchStore_ServiceDesc,
 		&Diagnostics_ServiceDesc,
 	} {
 		channel.RegisterService(
@@ -70,8 +76,8 @@ func NewLocalResourceClient(server ResourceServer) ResourceClient {
 	}
 
 	clientInt, _ := authnlib.NewGrpcClientInterceptor(
-		&authnlib.GrpcClientConfig{},
-		authnlib.WithDisableAccessTokenOption(),
+		&authnlib.GrpcClientConfig{TokenRequest: &authnlib.TokenExchangeRequest{}},
+		authnlib.WithTokenClientOption(grpcutils.ProvideInProcExchanger()),
 		authnlib.WithIDTokenExtractorOption(idTokenExtractor),
 	)
 
@@ -80,34 +86,13 @@ func NewLocalResourceClient(server ResourceServer) ResourceClient {
 		ResourceStoreClient:   NewResourceStoreClient(cc),
 		ResourceIndexClient:   NewResourceIndexClient(cc),
 		RepositoryIndexClient: NewRepositoryIndexClient(cc),
+		BatchStoreClient:      NewBatchStoreClient(cc),
 		BlobStoreClient:       NewBlobStoreClient(cc),
 		DiagnosticsClient:     NewDiagnosticsClient(cc),
 	}
 }
 
-func NewGRPCResourceClient(tracer tracing.Tracer, conn *grpc.ClientConn) (ResourceClient, error) {
-	// scenario: remote on-prem
-	clientInt, err := authnlib.NewGrpcClientInterceptor(
-		&authnlib.GrpcClientConfig{},
-		authnlib.WithDisableAccessTokenOption(),
-		authnlib.WithIDTokenExtractorOption(idTokenExtractor),
-		authnlib.WithTracerOption(tracer),
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	cc := grpchan.InterceptClientConn(conn, clientInt.UnaryClientInterceptor, clientInt.StreamClientInterceptor)
-	return &resourceClient{
-		ResourceStoreClient: NewResourceStoreClient(cc),
-		ResourceIndexClient: NewResourceIndexClient(cc),
-		BlobStoreClient:     NewBlobStoreClient(cc),
-		DiagnosticsClient:   NewDiagnosticsClient(cc),
-	}, nil
-}
-
-func NewCloudResourceClient(tracer tracing.Tracer, conn *grpc.ClientConn, cfg authnlib.GrpcClientConfig, allowInsecure bool) (ResourceClient, error) {
-	// scenario: remote cloud
+func NewRemoteResourceClient(tracer tracing.Tracer, conn *grpc.ClientConn, cfg authnlib.GrpcClientConfig, allowInsecure bool) (ResourceClient, error) {
 	opts := []authnlib.GrpcClientInterceptorOption{
 		authnlib.WithIDTokenExtractorOption(idTokenExtractor),
 		authnlib.WithTracerOption(tracer),
@@ -124,22 +109,37 @@ func NewCloudResourceClient(tracer tracing.Tracer, conn *grpc.ClientConn, cfg au
 
 	cc := grpchan.InterceptClientConn(conn, clientInt.UnaryClientInterceptor, clientInt.StreamClientInterceptor)
 	return &resourceClient{
-		ResourceStoreClient: NewResourceStoreClient(cc),
-		ResourceIndexClient: NewResourceIndexClient(cc),
-		BlobStoreClient:     NewBlobStoreClient(cc),
-		DiagnosticsClient:   NewDiagnosticsClient(cc),
+		ResourceStoreClient:   NewResourceStoreClient(cc),
+		ResourceIndexClient:   NewResourceIndexClient(cc),
+		BlobStoreClient:       NewBlobStoreClient(cc),
+		BatchStoreClient:      NewBatchStoreClient(cc),
+		RepositoryIndexClient: NewRepositoryIndexClient(cc),
+		DiagnosticsClient:     NewDiagnosticsClient(cc),
 	}, nil
 }
 
+var authLogger = slog.Default().With("logger", "resource-client-auth-interceptor")
+
 func idTokenExtractor(ctx context.Context) (string, error) {
-	authInfo, ok := claims.AuthInfoFrom(ctx)
+	if identity.IsServiceIdentity(ctx) {
+		return "", nil
+	}
+
+	info, ok := types.AuthInfoFrom(ctx)
 	if !ok {
 		return "", fmt.Errorf("no claims found")
 	}
 
-	extra := authInfo.GetExtra()
-	if token, exists := extra["id-token"]; exists && len(token) != 0 && token[0] != "" {
-		return token[0], nil
+	if token := info.GetIDToken(); len(token) != 0 {
+		return token, nil
+	}
+
+	if !types.IsIdentityType(info.GetIdentityType(), types.TypeAccessPolicy) {
+		authLogger.Warn(
+			"calling resource store as the service without id token or marking it as the service identity",
+			"subject", info.GetSubject(),
+			"uid", info.GetUID(),
+		)
 	}
 
 	return "", nil

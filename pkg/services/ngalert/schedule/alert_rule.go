@@ -42,6 +42,8 @@ type Rule interface {
 	Type() ngmodels.RuleType
 	// Status indicates the status of the evaluating rule.
 	Status() ngmodels.RuleStatus
+	// Identifier returns the identifier of the rule.
+	Identifier() ngmodels.AlertRuleKeyWithGroup
 }
 
 type ruleFactoryFunc func(context.Context, *ngmodels.AlertRule) Rule
@@ -71,7 +73,7 @@ func newRuleFactory(
 		if rule.Type() == ngmodels.RuleTypeRecording {
 			return newRecordingRule(
 				ctx,
-				rule.GetKey(),
+				rule.GetKeyWithGroup(),
 				maxAttempts,
 				clock,
 				evalFactory,
@@ -176,6 +178,10 @@ func newAlertRule(
 		logger:               logger.FromContext(ctx),
 		tracer:               tracer,
 	}
+}
+
+func (a *alertRule) Identifier() ngmodels.AlertRuleKeyWithGroup {
+	return a.key
 }
 
 func (a *alertRule) Type() ngmodels.RuleType {
@@ -345,17 +351,25 @@ func (a *alertRule) Run() error {
 			}()
 
 		case <-grafanaCtx.Done():
-			// clean up the state only if the reason for stopping the evaluation loop is that the rule was deleted
-			if errors.Is(grafanaCtx.Err(), errRuleDeleted) {
-				// We do not want a context to be unbounded which could potentially cause a go routine running
-				// indefinitely. 1 minute is an almost randomly chosen timeout, big enough to cover the majority of the
-				// cases.
-				ctx, cancelFunc := context.WithTimeout(context.Background(), time.Minute)
-				defer cancelFunc()
-				states := a.stateManager.DeleteStateByRuleUID(ngmodels.WithRuleKey(ctx, a.key.AlertRuleKey), a.key, ngmodels.StateReasonRuleDeleted)
-				a.expireAndSend(grafanaCtx, states)
+			reason := grafanaCtx.Err()
+
+			// We do not want a context to be unbounded which could potentially cause a go routine running
+			// indefinitely. 1 minute is an almost randomly chosen timeout, big enough to cover the majority of the
+			// cases.
+			ctx, cancelFunc := context.WithTimeout(context.Background(), time.Minute)
+			defer cancelFunc()
+
+			if errors.Is(reason, errRuleDeleted) {
+				// Clean up the state and send resolved notifications for firing alerts only if the reason for stopping
+				// the evaluation loop is that the rule was deleted.
+				stateTransitions := a.stateManager.DeleteStateByRuleUID(ngmodels.WithRuleKey(ctx, a.key.AlertRuleKey), a.key, ngmodels.StateReasonRuleDeleted)
+				a.expireAndSend(grafanaCtx, stateTransitions)
+			} else {
+				// Otherwise, just clean up the cache.
+				a.stateManager.ForgetStateByRuleUID(ngmodels.WithRuleKey(ctx, a.key.AlertRuleKey), a.key)
 			}
-			a.logger.Debug("Stopping alert rule routine")
+
+			a.logger.Debug("Stopping alert rule routine", "reason", reason)
 			return nil
 		}
 	}

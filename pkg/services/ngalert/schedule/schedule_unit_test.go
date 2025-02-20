@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math/rand"
 	"net/url"
@@ -558,7 +559,7 @@ func TestProcessTicks(t *testing.T) {
 func TestSchedule_updateRulesMetrics(t *testing.T) {
 	ruleStore := newFakeRulesStore()
 	reg := prometheus.NewPedanticRegistry()
-	sch := setupScheduler(t, ruleStore, nil, reg, nil, nil)
+	sch := setupScheduler(t, ruleStore, nil, reg, nil, nil, nil)
 	ctx := context.Background()
 	const firstOrgID int64 = 1
 
@@ -783,6 +784,7 @@ func TestSchedule_updateRulesMetrics(t *testing.T) {
 
 		alertRuleWithAdvancedSettings := models.RuleGen.With(
 			models.RuleGen.WithOrgID(firstOrgID),
+			models.RuleGen.WithEditorSettingsSimplifiedNotificationsSection(false),
 			models.RuleGen.WithEditorSettingsSimplifiedQueryAndExpressionsSection(false),
 		).GenerateRef()
 
@@ -817,6 +819,7 @@ func TestSchedule_updateRulesMetrics(t *testing.T) {
 
 		alertRule2 := models.RuleGen.With(
 			models.RuleGen.WithOrgID(secondOrgID),
+			models.RuleGen.WithEditorSettingsSimplifiedNotificationsSection(false),
 			models.RuleGen.WithEditorSettingsSimplifiedQueryAndExpressionsSection(true),
 		).GenerateRef()
 
@@ -916,29 +919,114 @@ func TestSchedule_updateRulesMetrics(t *testing.T) {
 	})
 }
 
+type mockAlertRuleStopReasonProvider struct {
+	mock.Mock
+}
+
+func (m *mockAlertRuleStopReasonProvider) FindReason(ctx context.Context, logger log.Logger, key models.AlertRuleKeyWithGroup) (error, error) {
+	args := m.Called(ctx, logger, key)
+	return args.Error(0), args.Error(1)
+}
+
 func TestSchedule_deleteAlertRule(t *testing.T) {
+	ctx := context.Background()
 	t.Run("when rule exists", func(t *testing.T) {
 		t.Run("it should stop evaluation loop and remove the controller from registry", func(t *testing.T) {
-			sch := setupScheduler(t, nil, nil, nil, nil, nil)
+			ruleStore := newFakeRulesStore()
+			sch := setupScheduler(t, ruleStore, nil, nil, nil, nil, nil)
 			ruleFactory := ruleFactoryFromScheduler(sch)
 			rule := models.RuleGen.GenerateRef()
+			ruleStore.PutRule(ctx, rule)
 			key := rule.GetKey()
-			info, _ := sch.registry.getOrCreate(context.Background(), rule, ruleFactory)
-			sch.deleteAlertRule(key)
+			info, _ := sch.registry.getOrCreate(ctx, rule, ruleFactory)
+
+			sch.deleteAlertRule(ctx, key)
+
 			require.ErrorIs(t, info.(*alertRule).ctx.Err(), errRuleDeleted)
 			require.False(t, sch.registry.exists(key))
 		})
+
+		t.Run("it should call ruleStopReasonProvider if it is defined", func(t *testing.T) {
+			mockReasonProvider := new(mockAlertRuleStopReasonProvider)
+			expectedReason := errors.New("some rule deletion reason")
+			mockReasonProvider.On("FindReason", mock.Anything, mock.Anything, mock.Anything).Return(expectedReason, nil)
+
+			ruleStore := newFakeRulesStore()
+			sch := setupScheduler(t, ruleStore, nil, nil, nil, nil, mockReasonProvider)
+			ruleFactory := ruleFactoryFromScheduler(sch)
+			rule := models.RuleGen.GenerateRef()
+			ruleStore.PutRule(ctx, rule)
+			key := rule.GetKey()
+			info, _ := sch.registry.getOrCreate(ctx, rule, ruleFactory)
+
+			_, err := sch.updateSchedulableAlertRules(ctx)
+			require.NoError(t, err)
+
+			sch.deleteAlertRule(ctx, key)
+
+			mockReasonProvider.AssertCalled(t, "FindReason", mock.Anything, mock.Anything, rule.GetKeyWithGroup())
+
+			require.ErrorIs(t, info.(*alertRule).ctx.Err(), expectedReason)
+			require.False(t, sch.registry.exists(key))
+		})
+
+		t.Run("it should use the default reason if ruleStopReasonProvider does not return anything", func(t *testing.T) {
+			mockReasonProvider := new(mockAlertRuleStopReasonProvider)
+			mockReasonProvider.On("FindReason", mock.Anything, mock.Anything, mock.Anything).Return(nil, nil)
+
+			ruleStore := newFakeRulesStore()
+			sch := setupScheduler(t, ruleStore, nil, nil, nil, nil, mockReasonProvider)
+			ruleFactory := ruleFactoryFromScheduler(sch)
+			rule := models.RuleGen.GenerateRef()
+			ruleStore.PutRule(ctx, rule)
+			key := rule.GetKey()
+			info, _ := sch.registry.getOrCreate(ctx, rule, ruleFactory)
+
+			_, err := sch.updateSchedulableAlertRules(ctx)
+			require.NoError(t, err)
+
+			sch.deleteAlertRule(ctx, key)
+
+			mockReasonProvider.AssertCalled(t, "FindReason", mock.Anything, mock.Anything, rule.GetKeyWithGroup())
+
+			require.ErrorIs(t, info.(*alertRule).ctx.Err(), errRuleDeleted)
+			require.False(t, sch.registry.exists(key))
+		})
+
+		t.Run("it should still call ruleStopReasonProvider if the rule is not found in the registry", func(t *testing.T) {
+			mockReasonProvider := new(mockAlertRuleStopReasonProvider)
+			expectedReason := errors.New("some rule deletion reason")
+			mockReasonProvider.On("FindReason", mock.Anything, mock.Anything, mock.Anything).Return(expectedReason, nil)
+
+			// Don't create a ruleStore so that the rule will not be found in deleteAlertRule
+			sch := setupScheduler(t, nil, nil, nil, nil, nil, mockReasonProvider)
+			ruleFactory := ruleFactoryFromScheduler(sch)
+			rule := models.RuleGen.GenerateRef()
+			key := rule.GetKey()
+			info, _ := sch.registry.getOrCreate(ctx, rule, ruleFactory)
+
+			_, err := sch.updateSchedulableAlertRules(ctx)
+			require.NoError(t, err)
+
+			sch.deleteAlertRule(ctx, key)
+
+			mockReasonProvider.AssertCalled(t, "FindReason", mock.Anything, mock.Anything, rule.GetKeyWithGroup())
+
+			require.ErrorIs(t, info.(*alertRule).ctx.Err(), expectedReason)
+			require.False(t, sch.registry.exists(key))
+		})
 	})
+
 	t.Run("when rule does not exist", func(t *testing.T) {
 		t.Run("should exit", func(t *testing.T) {
-			sch := setupScheduler(t, nil, nil, nil, nil, nil)
+			sch := setupScheduler(t, nil, nil, nil, nil, nil, nil)
 			key := models.GenerateRuleKey(rand.Int63())
-			sch.deleteAlertRule(key)
+			sch.deleteAlertRule(ctx, key)
 		})
 	})
 }
 
-func setupScheduler(t *testing.T, rs *fakeRulesStore, is *state.FakeInstanceStore, registry *prometheus.Registry, senderMock *SyncAlertsSenderMock, evalMock eval.EvaluatorFactory) *schedule {
+func setupScheduler(t *testing.T, rs *fakeRulesStore, is *state.FakeInstanceStore, registry *prometheus.Registry, senderMock *SyncAlertsSenderMock, evalMock eval.EvaluatorFactory, ruleStopReasonProvider AlertRuleStopReasonProvider) *schedule {
 	t.Helper()
 	testTracer := tracing.InitializeTracerForTest()
 
@@ -983,18 +1071,19 @@ func setupScheduler(t *testing.T, rs *fakeRulesStore, is *state.FakeInstanceStor
 	fakeRecordingWriter := writer.FakeWriter{}
 
 	schedCfg := SchedulerCfg{
-		BaseInterval:      cfg.BaseInterval,
-		MaxAttempts:       cfg.MaxAttempts,
-		C:                 mockedClock,
-		AppURL:            appUrl,
-		EvaluatorFactory:  evaluator,
-		RuleStore:         rs,
-		RecordingRulesCfg: cfg.RecordingRules,
-		Metrics:           m.GetSchedulerMetrics(),
-		AlertSender:       senderMock,
-		Tracer:            testTracer,
-		Log:               log.New("ngalert.scheduler"),
-		RecordingWriter:   fakeRecordingWriter,
+		BaseInterval:           cfg.BaseInterval,
+		MaxAttempts:            cfg.MaxAttempts,
+		C:                      mockedClock,
+		AppURL:                 appUrl,
+		EvaluatorFactory:       evaluator,
+		RuleStore:              rs,
+		RecordingRulesCfg:      cfg.RecordingRules,
+		Metrics:                m.GetSchedulerMetrics(),
+		AlertSender:            senderMock,
+		Tracer:                 testTracer,
+		Log:                    log.New("ngalert.scheduler"),
+		RecordingWriter:        fakeRecordingWriter,
+		RuleStopReasonProvider: ruleStopReasonProvider,
 	}
 	managerCfg := state.ManagerCfg{
 		Metrics:                 m.GetStateMetrics(),

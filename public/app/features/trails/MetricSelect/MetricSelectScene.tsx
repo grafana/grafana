@@ -45,7 +45,6 @@ import {
 } from '../shared';
 import { getFilters, getTrailFor, isSceneTimeRangeState } from '../utils';
 
-import { AddToExplorationButton } from './AddToExplorationsButton';
 import { SelectMetricAction } from './SelectMetricAction';
 import { getMetricNames } from './api';
 import { getPreviewPanelFor } from './previewPanel';
@@ -424,7 +423,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
         }
         // refactor this into the query generator in future
         const isNative = trail.isNativeHistogram(metric.name);
-        const panel = getPreviewPanelFor(metric.name, index, currentFilterCount, description, isNative);
+        const panel = getPreviewPanelFor(metric.name, index, currentFilterCount, description, isNative, true);
 
         metric.itemRef = panel.getRef();
         metric.isPanel = true;
@@ -655,10 +654,7 @@ function getCardPanelFor(metric: string, description?: string) {
   return PanelBuilders.text()
     .setTitle(metric)
     .setDescription(description)
-    .setHeaderActions([
-      new SelectMetricAction({ metric, title: 'Select' }),
-      new AddToExplorationButton({ labelName: metric }),
-    ])
+    .setHeaderActions([new SelectMetricAction({ metric, title: 'Select' })])
     .setOption('content', '')
     .build();
 }

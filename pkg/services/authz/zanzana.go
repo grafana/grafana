@@ -18,6 +18,7 @@ import (
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/services"
+
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -28,8 +29,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
 	"github.com/grafana/grafana/pkg/setting"
 )
-
-const zanzanaAudience = "zanzana"
 
 // ProvideZanzana used to register ZanzanaClient.
 // It will also start an embedded ZanzanaSever if mode is set to "embedded".
@@ -54,18 +53,13 @@ func ProvideZanzana(cfg *setting.Cfg, db db.DB, features featuremgmt.FeatureTogg
 		if cfg.StackID == "" {
 			return nil, fmt.Errorf("missing stack ID")
 		}
-		namespace := fmt.Sprintf("stacks-%s", cfg.StackID)
-
-		tokenAuthCred := &tokenAuth{
-			cfg:         cfg,
-			namespace:   namespace,
-			tokenClient: tokenClient,
-		}
 
 		dialOptions := []grpc.DialOption{
 			// TODO: add TLS support
 			grpc.WithTransportCredentials(insecure.NewCredentials()),
-			grpc.WithPerRPCCredentials(tokenAuthCred),
+			grpc.WithPerRPCCredentials(
+				newGRPCTokenAuth(authzServiceAudience, fmt.Sprintf("stacks-%s", cfg.StackID), tokenClient),
+			),
 		}
 
 		conn, err := grpc.NewClient(cfg.ZanzanaClient.Addr, dialOptions...)
@@ -179,7 +173,7 @@ func (z *Zanzana) start(ctx context.Context) error {
 	authenticator := authnlib.NewAccessTokenAuthenticator(
 		authnlib.NewAccessTokenVerifier(
 			authnlib.VerifierConfig{
-				AllowedAudiences: []string{zanzanaAudience},
+				AllowedAudiences: []string{authzServiceAudience},
 			},
 			authnlib.NewKeyRetriever(authnlib.KeyRetrieverConfig{
 				SigningKeysURL: z.cfg.ZanzanaServer.SigningKeysURL,
@@ -244,28 +238,4 @@ func (z *Zanzana) stopping(err error) error {
 		z.logger.Error("Stopping zanzana due to unexpected error", "err", err)
 	}
 	return nil
-}
-
-type tokenAuth struct {
-	cfg         *setting.Cfg
-	namespace   string
-	tokenClient *authnlib.TokenExchangeClient
-}
-
-func (t *tokenAuth) GetRequestMetadata(ctx context.Context, _ ...string) (map[string]string, error) {
-	token, err := t.tokenClient.Exchange(ctx, authnlib.TokenExchangeRequest{
-		Namespace: t.namespace,
-		Audiences: []string{zanzanaAudience},
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return map[string]string{
-		authnlib.DefaultAccessTokenMetadataKey: token.Token,
-	}, nil
-}
-
-func (t *tokenAuth) RequireTransportSecurity() bool {
-	return false
 }

@@ -36,6 +36,7 @@ jest.mock('@grafana/runtime', () => ({
   config: {
     buildInfo: {},
     panels: {},
+    apps: {},
     featureToggles: {
       newVariables: false,
     },

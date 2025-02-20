@@ -26,6 +26,7 @@ import (
 
 const tracePrefix = "sql.resource."
 const defaultPollingInterval = 100 * time.Millisecond
+const defaultWatchBufferSize = 100 // number of events to buffer in the watch stream
 
 type Backend interface {
 	resource.StorageBackend
@@ -37,6 +38,7 @@ type BackendOptions struct {
 	DBProvider      db.DBProvider
 	Tracer          trace.Tracer
 	PollingInterval time.Duration
+	WatchBufferSize int
 }
 
 func NewBackend(opts BackendOptions) (Backend, error) {
@@ -52,6 +54,9 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 	if pollingInterval == 0 {
 		pollingInterval = defaultPollingInterval
 	}
+	if opts.WatchBufferSize == 0 {
+		opts.WatchBufferSize = defaultWatchBufferSize
+	}
 	return &backend{
 		done:            ctx.Done(),
 		cancel:          cancel,
@@ -59,6 +64,8 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 		tracer:          opts.Tracer,
 		dbProvider:      opts.DBProvider,
 		pollingInterval: pollingInterval,
+		watchBufferSize: opts.WatchBufferSize,
+		batchLock:       &batchLock{running: make(map[string]bool)},
 	}, nil
 }
 
@@ -77,10 +84,12 @@ type backend struct {
 	dbProvider db.DBProvider
 	db         db.DB
 	dialect    sqltemplate.Dialect
+	batchLock  *batchLock
 
 	// watch streaming
 	//stream chan *resource.WatchEvent
 	pollingInterval time.Duration
+	watchBufferSize int
 }
 
 func (b *backend) Init(ctx context.Context) error {
@@ -519,6 +528,10 @@ func (l *listIter) ContinueToken() string {
 	return ContinueToken{ResourceVersion: l.listRV, StartOffset: l.offset}.String()
 }
 
+func (l *listIter) ContinueTokenWithCurrentRV() string {
+	return ContinueToken{ResourceVersion: l.rv, StartOffset: l.offset}.String()
+}
+
 func (l *listIter) Error() error {
 	return l.err
 }
@@ -697,10 +710,10 @@ func (b *backend) WatchWriteEvents(ctx context.Context) (<-chan *resource.Writte
 	// Get the latest RV
 	since, err := b.listLatestRVs(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("get the latest resource version: %w", err)
+		return nil, fmt.Errorf("watch, get latest resource version: %w", err)
 	}
 	// Start the poller
-	stream := make(chan *resource.WrittenEvent)
+	stream := make(chan *resource.WrittenEvent, b.watchBufferSize)
 	go b.poller(ctx, since, stream)
 	return stream, nil
 }
@@ -709,17 +722,23 @@ func (b *backend) poller(ctx context.Context, since groupResourceRV, stream chan
 	t := time.NewTicker(b.pollingInterval)
 	defer close(stream)
 	defer t.Stop()
+	isSQLite := b.dialect.DialectName() == "sqlite"
 
 	for {
 		select {
 		case <-b.done:
 			return
 		case <-t.C:
+			// Block polling duffing import to avoid database locked issues
+			if isSQLite && b.batchLock.Active() {
+				continue
+			}
+
 			ctx, span := b.tracer.Start(ctx, tracePrefix+"poller")
 			// List the latest RVs
 			grv, err := b.listLatestRVs(ctx)
 			if err != nil {
-				b.log.Error("get the latest resource version", "err", err)
+				b.log.Error("poller get latest resource version", "err", err)
 				t.Reset(b.pollingInterval)
 				continue
 			}
@@ -801,6 +820,8 @@ func fetchLatestRV(ctx context.Context, x db.ContextExecer, d sqltemplate.Dialec
 func (b *backend) poll(ctx context.Context, grp string, res string, since int64, stream chan<- *resource.WrittenEvent) (int64, error) {
 	ctx, span := b.tracer.Start(ctx, tracePrefix+"poll")
 	defer span.End()
+
+	start := time.Now()
 	var records []*historyPollResponse
 	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
 		var err error
@@ -816,6 +837,8 @@ func (b *backend) poll(ctx context.Context, grp string, res string, since int64,
 	if err != nil {
 		return 0, fmt.Errorf("poll history: %w", err)
 	}
+	end := time.Now()
+	resource.NewStorageMetrics().PollerLatency.Observe(end.Sub(start).Seconds())
 
 	var nextRV int64
 	for _, rec := range records {
@@ -843,6 +866,7 @@ func (b *backend) poll(ctx context.Context, grp string, res string, since int64,
 			ResourceVersion: rec.ResourceVersion,
 			// Timestamp:  , // TODO: add timestamp
 		}
+		b.log.Debug("poller sent event to stream", "namespace", rec.Key.Namespace, "group", rec.Key.Group, "resource", rec.Key.Resource, "name", rec.Key.Name, "action", rec.Action, "rv", rec.ResourceVersion)
 	}
 
 	return nextRV, nil

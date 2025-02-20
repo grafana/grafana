@@ -62,6 +62,8 @@ export interface DataTransformerConfig<TOptions = any> extends raw.DataTransform
   topic?: DataTopic;
 }
 
+export interface TimeOption extends raw.TimeOption {}
+
 export interface TimePickerConfig extends raw.TimePickerConfig {}
 
 export const defaultDashboard = raw.defaultDashboard as Dashboard;
