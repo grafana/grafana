@@ -8,9 +8,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/authlib/claims"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
+
+	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -25,11 +26,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/api"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/dualwrite"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/migrator"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/permreg"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/pluginutils"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -53,8 +52,8 @@ var OSSRolesPrefixes = []string{accesscontrol.ManagedRolePrefix, accesscontrol.E
 
 func ProvideService(
 	cfg *setting.Cfg, db db.DB, routeRegister routing.RouteRegister, cache *localcache.CacheService,
-	accessControl accesscontrol.AccessControl, actionResolver accesscontrol.ActionResolver,
-	features featuremgmt.FeatureToggles, tracer tracing.Tracer, zclient zanzana.Client, permRegistry permreg.PermissionRegistry,
+	accessControl accesscontrol.AccessControl, userService user.Service, actionResolver accesscontrol.ActionResolver,
+	features featuremgmt.FeatureToggles, tracer tracing.Tracer, permRegistry permreg.PermissionRegistry,
 	lock *serverlock.ServerLockService,
 ) (*Service, error) {
 	service := ProvideOSSService(
@@ -64,13 +63,12 @@ func ProvideService(
 		cache,
 		features,
 		tracer,
-		zclient,
 		db,
 		permRegistry,
 		lock,
 	)
 
-	api.NewAccessControlAPI(routeRegister, accessControl, service, features).RegisterAPIEndpoints()
+	api.NewAccessControlAPI(routeRegister, accessControl, service, userService, features).RegisterAPIEndpoints()
 	if err := accesscontrol.DeclareFixedRoles(service, cfg); err != nil {
 		return nil, err
 	}
@@ -89,7 +87,7 @@ func ProvideService(
 func ProvideOSSService(
 	cfg *setting.Cfg, store accesscontrol.Store, actionResolver accesscontrol.ActionResolver,
 	cache *localcache.CacheService, features featuremgmt.FeatureToggles, tracer tracing.Tracer,
-	zclient zanzana.Client, db db.DB, permRegistry permreg.PermissionRegistry, lock *serverlock.ServerLockService,
+	db db.DB, permRegistry permreg.PermissionRegistry, lock *serverlock.ServerLockService,
 ) *Service {
 	s := &Service{
 		actionResolver: actionResolver,
@@ -99,7 +97,6 @@ func ProvideOSSService(
 		log:            log.New("accesscontrol.service"),
 		roles:          accesscontrol.BuildBasicRoleDefinitions(),
 		store:          store,
-		reconciler:     dualwrite.NewZanzanaReconciler(cfg, zclient, db, lock),
 		permRegistry:   permRegistry,
 	}
 
@@ -116,16 +113,7 @@ type Service struct {
 	registrations  accesscontrol.RegistrationList
 	roles          map[string]*accesscontrol.RoleDTO
 	store          accesscontrol.Store
-	reconciler     *dualwrite.ZanzanaReconciler
 	permRegistry   permreg.PermissionRegistry
-}
-
-// Run implements accesscontrol.Service.
-func (s *Service) Run(ctx context.Context) error {
-	if s.features.IsEnabledGlobally(featuremgmt.FlagZanzana) {
-		return s.reconciler.Reconcile(ctx)
-	}
-	return nil
 }
 
 func (s *Service) GetUsageStats(_ context.Context) map[string]any {
@@ -462,7 +450,15 @@ func (s *Service) RegisterFixedRoles(ctx context.Context) error {
 	s.registrations.Range(func(registration accesscontrol.RoleRegistration) bool {
 		for br := range accesscontrol.BuiltInRolesWithParents(registration.Grants) {
 			if basicRole, ok := s.roles[br]; ok {
-				basicRole.Permissions = append(basicRole.Permissions, registration.Role.Permissions...)
+				for _, p := range registration.Role.Permissions {
+					perm := accesscontrol.Permission{
+						Action: p.Action,
+						Scope:  p.Scope,
+					}
+
+					perm.Kind, perm.Attribute, perm.Identifier = accesscontrol.SplitScope(perm.Scope)
+					basicRole.Permissions = append(basicRole.Permissions, perm)
+				}
 			} else {
 				s.log.Error("Unknown builtin role", "builtInRole", br)
 			}
@@ -526,20 +522,14 @@ func (s *Service) SearchUsersPermissions(ctx context.Context, usr identity.Reque
 
 	// Limit roles to available in OSS
 	options.RolePrefixes = OSSRolesPrefixes
-	if options.TypedID != "" {
-		userID, err := options.ComputeUserID()
-		if err != nil {
-			s.log.Error("Failed to resolve user ID", "error", err)
-			return nil, err
-		}
-
+	if options.UserID > 0 {
 		// Reroute to the user specific implementation of search permissions
 		// because it leverages the user permission cache.
 		userPerms, err := s.SearchUserPermissions(ctx, usr.GetOrgID(), options)
 		if err != nil {
 			return nil, err
 		}
-		return map[int64][]accesscontrol.Permission{userID: userPerms}, nil
+		return map[int64][]accesscontrol.Permission{options.UserID: userPerms}, nil
 	}
 
 	timer := prometheus.NewTimer(metrics.MAccessSearchPermissionsSummary)
@@ -641,7 +631,7 @@ func (s *Service) SearchUserPermissions(ctx context.Context, orgID int64, search
 	timer := prometheus.NewTimer(metrics.MAccessPermissionsSummary)
 	defer timer.ObserveDuration()
 
-	if searchOptions.TypedID == "" {
+	if searchOptions.UserID <= 0 {
 		return nil, fmt.Errorf("expected namespaced ID to be specified")
 	}
 
@@ -655,20 +645,15 @@ func (s *Service) searchUserPermissions(ctx context.Context, orgID int64, search
 	ctx, span := tracer.Start(ctx, "accesscontrol.acimpl.searchUserPermissions")
 	defer span.End()
 
-	userID, err := searchOptions.ComputeUserID()
-	if err != nil {
-		return nil, err
-	}
-
 	// Get permissions for user's basic roles from RAM
-	roleList, err := s.store.GetUsersBasicRoles(ctx, []int64{userID}, orgID)
+	roleList, err := s.store.GetUsersBasicRoles(ctx, []int64{searchOptions.UserID}, orgID)
 	if err != nil {
 		return nil, fmt.Errorf("could not fetch basic roles for the user: %w", err)
 	}
 	var roles []string
 	var ok bool
-	if roles, ok = roleList[userID]; !ok {
-		return nil, fmt.Errorf("found no basic roles for user %d in organisation %d", userID, orgID)
+	if roles, ok = roleList[searchOptions.UserID]; !ok {
+		return nil, fmt.Errorf("found no basic roles for user %d in organisation %d", searchOptions.UserID, orgID)
 	}
 	permissions := make([]accesscontrol.Permission, 0)
 	for _, builtin := range roles {
@@ -692,13 +677,13 @@ func (s *Service) searchUserPermissions(ctx context.Context, orgID int64, search
 	if err != nil {
 		return nil, err
 	}
-	permissions = append(permissions, dbPermissions[userID]...)
+	permissions = append(permissions, dbPermissions[searchOptions.UserID]...)
 
 	if s.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) && len(searchOptions.ActionSets) != 0 {
 		permissions = s.actionResolver.ExpandActionSetsWithFilter(permissions, GetActionFilter(searchOptions))
 	}
 
-	key, err := accesscontrol.GetSearchPermissionCacheKey(s.log, &user.SignedInUser{UserID: userID, OrgID: orgID}, searchOptions)
+	key, err := accesscontrol.GetSearchPermissionCacheKey(s.log, &user.SignedInUser{UserID: searchOptions.UserID, OrgID: orgID}, searchOptions)
 	if err != nil {
 		s.log.Warn("failed to create search permission cache key", "err", err)
 	} else {
@@ -712,14 +697,9 @@ func (s *Service) searchUserPermissionsFromCache(ctx context.Context, orgID int6
 	_, span := tracer.Start(ctx, "accesscontrol.acimpl.searchUserPermissionsFromCache")
 	defer span.End()
 
-	userID, err := searchOptions.ComputeUserID()
-	if err != nil {
-		return nil, false
-	}
-
 	// Create a temp signed in user object to retrieve cache key
 	tempUser := &user.SignedInUser{
-		UserID: userID,
+		UserID: searchOptions.UserID,
 		OrgID:  orgID,
 	}
 
@@ -784,8 +764,12 @@ func (s *Service) DeleteExternalServiceRole(ctx context.Context, externalService
 	return s.store.DeleteExternalServiceRole(ctx, slug)
 }
 
-func (*Service) SyncUserRoles(ctx context.Context, orgID int64, cmd accesscontrol.SyncUserRolesCommand) error {
+func (s *Service) SyncUserRoles(ctx context.Context, orgID int64, cmd accesscontrol.SyncUserRolesCommand) error {
 	return nil
+}
+
+func (s *Service) GetStaticRoles(ctx context.Context) map[string]*accesscontrol.RoleDTO {
+	return s.roles
 }
 
 func (s *Service) GetRoleByName(ctx context.Context, orgID int64, roleName string) (*accesscontrol.RoleDTO, error) {

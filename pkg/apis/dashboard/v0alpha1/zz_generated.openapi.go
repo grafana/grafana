@@ -216,13 +216,12 @@ func schema_pkg_apis_dashboard_v0alpha1_DashboardHit(ref common.ReferenceCallbac
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
-					"kind": {
+					"resource": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Dashboard or folder\n\nPossible enum values:\n - `\"Dashboard\"`\n - `\"Folder\"`",
+							Description: "Dashboard or folder",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
-							Enum:        []interface{}{"Dashboard", "Folder"},
 						},
 					},
 					"name": {
@@ -258,7 +257,7 @@ func schema_pkg_apis_dashboard_v0alpha1_DashboardHit(ref common.ReferenceCallbac
 					},
 					"folder": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The UID/name for the folder",
+							Description: "The k8s name (eg, grafana UID) for the parent folder",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -269,12 +268,6 @@ func schema_pkg_apis_dashboard_v0alpha1_DashboardHit(ref common.ReferenceCallbac
 							Ref:         ref("github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured"),
 						},
 					},
-					"explain": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Explain the score (if possible)",
-							Ref:         ref("github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured"),
-						},
-					},
 					"score": {
 						SchemaProps: spec.SchemaProps{
 							Description: "When using \"real\" search, this is the score",
@@ -282,8 +275,14 @@ func schema_pkg_apis_dashboard_v0alpha1_DashboardHit(ref common.ReferenceCallbac
 							Format:      "double",
 						},
 					},
+					"explain": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Explain the score (if possible)",
+							Ref:         ref("github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured"),
+						},
+					},
 				},
-				Required: []string{"kind", "name", "title"},
+				Required: []string{"resource", "name", "title"},
 			},
 		},
 		Dependencies: []string{

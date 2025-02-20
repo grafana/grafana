@@ -4,7 +4,6 @@ import { useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { config } from '@grafana/runtime';
 import { getInputStyles, Icon, Text, ToolbarButton, useStyles2, useTheme2 } from '@grafana/ui';
 import { getFocusStyles } from '@grafana/ui/src/themes/mixins';
 import { useMediaQueryChange } from 'app/core/hooks/useMediaQueryChange';
@@ -13,13 +12,12 @@ import { getModKey } from 'app/core/utils/browser';
 
 export function TopSearchBarCommandPaletteTrigger() {
   const theme = useTheme2();
-  const isSingleTopNav = config.featureToggles.singleTopNav;
   const { query: kbar } = useKBar((kbarState) => ({
     kbarSearchQuery: kbarState.searchQuery,
     kbarIsOpen: kbarState.visualState === VisualState.showing,
   }));
 
-  const breakpoint = isSingleTopNav ? theme.breakpoints.values.lg : theme.breakpoints.values.sm;
+  const breakpoint = theme.breakpoints.values.lg;
 
   const [isSmallScreen, setIsSmallScreen] = useState(!window.matchMedia(`(min-width: ${breakpoint}px)`).matches);
 

@@ -6,8 +6,6 @@ import { DataTrailBookmark } from './TrailStore/TrailStore';
 
 jest.mock('./utils', () => ({
   ...jest.requireActual('./utils'),
-  getDataSource: jest.fn(() => 'Test DataSource'),
-  getDataSourceName: jest.fn(() => 'Test DataSource Name'),
 }));
 
 describe('DataTrailCard', () => {
@@ -55,19 +53,19 @@ describe('DataTrailCard', () => {
     expect(screen.getByText('...', { exact: false })).toBeInTheDocument();
   });
 
-  it('truncates long list of labels after 3 lines in recent explorations', () => {
+  it('truncates long list of labels after 2 lines in recent explorations', () => {
     const bookmarkWithLongLabel: DataTrailBookmark = {
       urlValues: {
         key: '1',
         metric: 'metric',
         // labels are in a comma separated list
-        'var-filters': `zone|=|averylonglabeltotakeupspace,zone=averylonglabeltotakeupspace,zone1=averylonglabeltotakeupspace,zone2=averylonglabeltotakeupspace,zone3=averylonglabeltotakeupspace,zone4=averylonglabeltotakeupspace`,
+        'var-filters': `zone|=|averylonglabeltotakeupspace,zone1=averylonglabeltotakeupspace,zone2=averylonglabeltotakeupspace,zone3=averylonglabeltotakeupspace,zone4=averylonglabeltotakeupspace`,
       },
       createdAt: Date.now(),
     };
     render(<DataTrailCard bookmark={bookmarkWithLongLabel} onSelect={onSelect} onDelete={onDelete} />);
     // to test the non-existence of a truncated label we need queryByText
-    const truncatedLabel = screen.queryByText('zone4');
+    const truncatedLabel = screen.queryByText('zone3');
     expect(truncatedLabel).not.toBeInTheDocument();
   });
 });

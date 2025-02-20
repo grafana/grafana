@@ -14,25 +14,37 @@ const getStyles = (theme: GrafanaTheme2) => {
       alignItems: 'center',
       flexDirection: 'row-reverse',
       justifyContent: 'space-between',
-    }),
-    selected: css({
-      background: theme.colors.action.selected,
-      fontWeight: theme.typography.fontWeightMedium,
+      position: 'relative',
     }),
     radio: css({
       opacity: 0,
       width: '0 !important',
-
       '&:focus-visible + label': getFocusStyles(theme),
     }),
     label: css({
       cursor: 'pointer',
       flex: 1,
-      padding: '7px 9px 7px 9px',
+      padding: theme.spacing(1),
+      borderRadius: theme.shape.radius.default,
 
       '&:hover': {
         background: theme.colors.action.hover,
         cursor: 'pointer',
+      },
+    }),
+    labelSelected: css({
+      background: theme.colors.action.selected,
+
+      '&::before': {
+        backgroundImage: theme.colors.gradients.brandVertical,
+        borderRadius: theme.shape.radius.default,
+        content: '" "',
+        display: 'block',
+        height: '100%',
+        position: 'absolute',
+        width: theme.spacing(0.5),
+        left: 0,
+        top: 0,
       },
     }),
   };
@@ -54,7 +66,7 @@ export const TimeRangeOption = memo<Props>(({ value, onSelect, selected = false,
   const id = uuidv4();
 
   return (
-    <li className={cx(styles.container, selected && styles.selected)}>
+    <li className={styles.container}>
       <input
         className={styles.radio}
         checked={selected}
@@ -65,7 +77,7 @@ export const TimeRangeOption = memo<Props>(({ value, onSelect, selected = false,
         id={id}
         onChange={() => onSelect(value)}
       />
-      <label className={styles.label} htmlFor={id}>
+      <label className={cx(styles.label, selected && styles.labelSelected)} htmlFor={id}>
         {value.display}
       </label>
     </li>

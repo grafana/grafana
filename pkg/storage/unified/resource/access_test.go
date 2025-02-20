@@ -4,12 +4,13 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/authlib/authz"
 	"github.com/stretchr/testify/assert"
+
+	authlib "github.com/grafana/authlib/types"
 )
 
 func TestAuthzLimitedClient_Check(t *testing.T) {
-	mockClient := &staticAuthzClient{allowed: false}
+	mockClient := authlib.FixedAccessClient(false)
 	client := NewAuthzLimitedClient(mockClient, AuthzOptions{})
 
 	tests := []struct {
@@ -23,7 +24,7 @@ func TestAuthzLimitedClient_Check(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		req := authz.CheckRequest{
+		req := authlib.CheckRequest{
 			Group:    test.group,
 			Resource: test.resource,
 		}
@@ -34,7 +35,7 @@ func TestAuthzLimitedClient_Check(t *testing.T) {
 }
 
 func TestAuthzLimitedClient_Compile(t *testing.T) {
-	mockClient := &staticAuthzClient{allowed: false}
+	mockClient := authlib.FixedAccessClient(false)
 	client := NewAuthzLimitedClient(mockClient, AuthzOptions{})
 
 	tests := []struct {
@@ -48,7 +49,7 @@ func TestAuthzLimitedClient_Compile(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		req := authz.ListRequest{
+		req := authlib.ListRequest{
 			Group:    test.group,
 			Resource: test.resource,
 		}

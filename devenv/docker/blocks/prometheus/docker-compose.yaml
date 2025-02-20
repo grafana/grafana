@@ -15,7 +15,7 @@
   node_exporter:
     image: prom/node-exporter
     ports:
-      - "9100:9100"
+      - "9101:9100"
 
   fake-prometheus-data:
     image: grafana/fake-data-gen
@@ -42,3 +42,8 @@
     build: docker/blocks/prometheus_high_card
     ports:
       - "9111:9111"
+
+  prometheus-utf8:
+    build: docker/blocks/prometheus_utf8
+    ports:
+      - "9112:9112"

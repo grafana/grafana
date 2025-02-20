@@ -12,6 +12,8 @@ Developers modifying the HTTP API endpoints need to make sure to add the necessa
 
 The following route defines a `PATCH` endpoint under the `/serviceaccounts/{serviceAccountId}` path with tag `service_accounts` (used for grouping together several routes) and operation ID `updateServiceAccount` (used for uniquely identifying routes and associate parameters and response with them).
 
+> For enterprise endpoints make sure you add the `enterprise` tag as well.
+
 ```go
 
 // swagger:route PATCH /serviceaccounts/{serviceAccountId} service_accounts updateServiceAccount

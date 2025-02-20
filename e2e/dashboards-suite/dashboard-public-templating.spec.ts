@@ -7,7 +7,7 @@ describe('Create a public dashboard with template variables shows a template var
 
   it('Create a public dashboard with template variables shows a template variable warning', () => {
     // Opening a dashboard with template variables
-    e2e.flows.openDashboard({ uid: 'HYaGDGIMk' });
+    e2e.flows.openDashboard({ uid: 'HYaGDGIMk', queryParams: { '__feature.newDashboardSharingComponent': false } });
 
     // Open sharing modal
     e2e.components.NavToolbar.shareDashboard().click();
