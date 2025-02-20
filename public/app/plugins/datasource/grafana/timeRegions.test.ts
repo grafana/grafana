@@ -14,7 +14,7 @@ describe('grafana data source', () => {
           to: '',
           from: '',
         },
-      },
+      }
     );
 
     expect(toDataFrameDTO(frame!)).toMatchInlineSnapshot(`
@@ -79,7 +79,7 @@ describe('grafana data source', () => {
           to: '',
           from: '',
         },
-      },
+      }
     );
 
     expect(toDataFrameDTO(frame!).fields).toMatchInlineSnapshot(`
@@ -131,7 +131,7 @@ describe('grafana data source', () => {
           to: '',
           from: '',
         },
-      },
+      }
     );
 
     expect(toDataFrameDTO(frame!).fields).toMatchInlineSnapshot(`
@@ -183,7 +183,7 @@ describe('grafana data source', () => {
           to: '',
           from: '',
         },
-      },
+      }
     );
 
     expect(toDataFrameDTO(frame!).fields).toMatchInlineSnapshot(`
@@ -235,7 +235,7 @@ describe('grafana data source', () => {
           to: '',
           from: '',
         },
-      },
+      }
     );
 
     expect(toDataFrameDTO(frame!).fields).toMatchInlineSnapshot(`
@@ -287,7 +287,7 @@ describe('grafana data source', () => {
           to: '',
           from: '',
         },
-      },
+      }
     );
 
     expect(toDataFrameDTO(frame!).fields).toMatchInlineSnapshot(`
@@ -339,7 +339,7 @@ describe('grafana data source', () => {
           to: '',
           from: '',
         },
-      },
+      }
     );
 
     expect(toDataFrameDTO(frame!).fields).toMatchInlineSnapshot(`
@@ -391,7 +391,7 @@ describe('grafana data source', () => {
           to: '',
           from: '',
         },
-      },
+      }
     );
 
     expect(toDataFrameDTO(frame!).fields).toMatchInlineSnapshot(`
@@ -443,7 +443,7 @@ describe('grafana data source', () => {
           to: '',
           from: '',
         },
-      },
+      }
     );
 
     expect(toDataFrameDTO(frame!).fields).toMatchInlineSnapshot(`
