@@ -40,7 +40,7 @@ const workflowOptions: Array<ComboboxOption<WorkflowOption>> = [workflowOptionsG
 
 const appEvents = getAppEvents();
 
-function getDefaultValues(repository?: RepositorySpec): RepositoryFormData {
+export function getDefaultValues(repository?: RepositorySpec): RepositoryFormData {
   if (!repository) {
     return {
       type: 'github',

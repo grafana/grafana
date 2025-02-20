@@ -1,6 +1,7 @@
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
-import { Box, Button, Field, Input, Switch } from '@grafana/ui';
+import { Box, Button, Field, Input, Stack, Switch } from '@grafana/ui';
 
 import { JobStatus } from './JobStatus';
 import { Repository, useCreateRepositoryExportMutation, ExportJobOptions } from './api';
@@ -11,6 +12,7 @@ interface Props {
 
 export function ExportToRepository({ repo }: Props) {
   const [exportRepo, exportQuery] = useCreateRepositoryExportMutation();
+  const [showExportStatus, setShowExportStatus] = useState(false);
   const exportJob = exportQuery.data?.metadata?.name;
 
   const { register, formState, handleSubmit } = useForm<ExportJobOptions>({
@@ -19,14 +21,32 @@ export function ExportToRepository({ repo }: Props) {
     },
   });
 
-  const onSubmit = (body: ExportJobOptions) =>
-    exportRepo({
+  const onSubmit = async (body: ExportJobOptions) => {
+    await exportRepo({
       name: repo.metadata?.name ?? '',
       body, // << the form
     });
+    setShowExportStatus(true);
+  };
 
-  if (exportJob) {
-    return <JobStatus name={exportJob} />;
+  const onAbort = () => {
+    exportQuery.reset();
+    setShowExportStatus(false);
+  };
+
+  if (showExportStatus && exportJob) {
+    return (
+      <Box paddingTop={2}>
+        <Stack direction="column" gap={2}>
+          <JobStatus name={exportJob} />
+          <Stack gap={2}>
+            <Button variant="secondary" onClick={onAbort}>
+              Abort export
+            </Button>
+          </Stack>
+        </Stack>
+      </Box>
+    );
   }
 
   const isGit = repo.spec?.type === 'github';
