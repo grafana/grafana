@@ -10,7 +10,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apis/dashboard"
-	dashboards "github.com/grafana/grafana/pkg/apis/dashboard"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -65,8 +64,8 @@ func (r *resourceReader) Write(ctx context.Context, key *resource.ResourceKey, v
 
 func (j *migrationJob) loadResources(ctx context.Context) error {
 	kinds := []schema.GroupVersionResource{{
-		Group:    dashboards.GROUP,
-		Resource: dashboards.DASHBOARD_RESOURCE,
+		Group:    dashboard.GROUP,
+		Resource: dashboard.DASHBOARD_RESOURCE,
 		Version:  "v1alpha1",
 	}}
 
