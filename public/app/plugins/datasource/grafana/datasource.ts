@@ -108,7 +108,7 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
         continue;
       }
       if (target.queryType === GrafanaQueryType.TimeRegions) {
-        const frame = doTimeRegionQuery('', target.timeRegion!, request.range, request.timezone);
+        const frame = doTimeRegionQuery('', target.timeRegion!, request.range);
         results.push(
           of({
             data: frame ? [frame] : [],
