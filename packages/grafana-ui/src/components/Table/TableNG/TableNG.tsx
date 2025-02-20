@@ -706,7 +706,6 @@ const getStyles = (theme: GrafanaTheme2, textWrap: boolean) => ({
     '--rdg-background-color': theme.colors.background.primary,
     '--rdg-header-background-color': theme.colors.background.primary,
     '--rdg-border-color': 'transparent',
-    '--rdg-summary-border-color': theme.colors.border.medium,
     '--rdg-color': theme.colors.text.primary,
     // TODO replace with ScrollContainer
     overflow: 'hidden',
