@@ -75,7 +75,7 @@ export const LogLineMenu = ({ log, styles }: Props) => {
           <Menu.Item onClick={togglePinning} label={t('logs.log-line-menu.pin-to-outline', 'Pin log')} />
         )}
         {pinned && onUnpinLine && (
-          <Menu.Item onClick={togglePinning} label={t('logs.log-line-menu.pin-to-outline', 'Unpin log')} />
+          <Menu.Item onClick={togglePinning} label={t('logs.log-line-menu.unpin-from-outline', 'Unpin log')} />
         )}
       </Menu>
     ),
@@ -96,7 +96,11 @@ export const LogLineMenu = ({ log, styles }: Props) => {
 
   return (
     <Dropdown overlay={menu} placement="bottom-start">
-      <IconButton className={styles.menuIcon} name="ellipsis-v" aria-label="Log menu" />
+      <IconButton
+        className={styles.menuIcon}
+        name="ellipsis-v"
+        aria-label={t('logs.log-line-menu.icon-label', 'Log menu')}
+      />
     </Dropdown>
   );
 };
