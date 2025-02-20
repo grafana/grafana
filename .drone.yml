@@ -4184,51 +4184,6 @@ volumes:
 ---
 clone:
   retries: 3
-depends_on: []
-environment:
-  EDITION: oss
-image_pull_secrets:
-- gcr
-- gar
-kind: pipeline
-name: release-whatsnew-checker
-node:
-  type: no-parallel
-platform:
-  arch: amd64
-  os: linux
-services: []
-steps:
-- commands:
-  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
-  depends_on: []
-  environment:
-    CGO_ENABLED: 0
-  image: golang:1.22.11-alpine
-  name: compile-build-cmd
-- commands:
-  - ./bin/build whatsnew-checker
-  depends_on:
-  - compile-build-cmd
-  image: golang:1.22.11-alpine
-  name: whats-new-checker
-trigger:
-  event:
-    exclude:
-    - promote
-  ref:
-    exclude:
-    - refs/tags/*-cloud*
-    include:
-    - refs/tags/v*
-type: docker
-volumes:
-- host:
-    path: /var/run/docker.sock
-  name: docker
----
-clone:
-  retries: 3
 depends_on:
 - rgm-tag-prerelease
 image_pull_secrets:
@@ -5705,6 +5660,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: fab3c8e18e6f18b392684cac24c9c16a664ae13cadfabee7b244c10d48bafe52
+hmac: fcaa5543dfb5856d9b751a60592243795e115d5e63351ad73a86e684609a30d3
 
 ...
