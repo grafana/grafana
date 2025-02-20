@@ -113,7 +113,8 @@ describe('MetricCombobox', () => {
     expect(item).toBeInTheDocument();
 
     // This should be asserted by the above check, but double check anyway
-    expect(mockDatasource.metricFindQuery).toHaveBeenCalledWith('unique_metric');
+    // This is the actual argument, created by formatKeyValueStringsForLabelValuesQuery()
+    expect(mockDatasource.metricFindQuery).toHaveBeenCalledWith('label_values({__name__=~".*unique.*"},__name__)');
   });
 
   it('calls onChange with the correct value when a metric is selected', async () => {
