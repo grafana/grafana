@@ -69,6 +69,7 @@ export function TableNG(props: TableNGProps) {
     footerOptions,
     onColumnResize,
     enablePagination,
+    getActions,
   } = props;
 
   const textWrap = fieldConfig?.defaults?.custom?.cellOptions.wrapText ?? false;
@@ -353,6 +354,7 @@ export function TableNG(props: TableNGProps) {
               setIsInspecting={setIsInspecting}
               setContextMenuProps={setContextMenuProps}
               cellInspect={cellInspect}
+              getActions={getActions}
             />
           );
         },

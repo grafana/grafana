@@ -11,6 +11,7 @@ import { getTextAlign } from '../../utils';
 import { CellColors } from '../types';
 import { getCellColors } from '../utils';
 
+import { ActionsCell } from './ActionsCell';
 import AutoCell from './AutoCell';
 import { BarGaugeCell } from './BarGaugeCell';
 import { DataLinksCell } from './DataLinksCell';
@@ -27,6 +28,7 @@ import { SparklineCell } from './SparklineCell';
 export function TableCellNG(props: any) {
   const {
     field,
+    frame,
     value,
     theme,
     timeRange,
@@ -37,6 +39,7 @@ export function TableCellNG(props: any) {
     setIsInspecting,
     setContextMenuProps,
     cellInspect,
+    getActions,
   } = props;
   const { config: fieldConfig } = field;
   const defaultCellOptions: TableAutoCellOptions = { type: TableCellDisplayMode.Auto };
@@ -55,6 +58,8 @@ export function TableCellNG(props: any) {
   const divWidthRef = useRef<HTMLDivElement>(null);
   const [divWidth, setDivWidth] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
+
+  const actions = getActions ? getActions(frame, field) : [];
 
   useLayoutEffect(() => {
     if (divWidthRef.current && divWidthRef.current.clientWidth !== 0) {
@@ -93,6 +98,7 @@ export function TableCellNG(props: any) {
           timeRange={timeRange}
           height={height}
           width={divWidth}
+          rowIdx={rowIdx}
         />
       );
       break;
@@ -104,19 +110,41 @@ export function TableCellNG(props: any) {
           height={height}
           justifyContent={justifyContent}
           value={value}
+          rowIdx={rowIdx}
         />
       );
       break;
     case TableCellDisplayMode.JSONView:
-      cell = <JSONCell value={value} justifyContent={justifyContent} />;
+      cell = <JSONCell value={value} justifyContent={justifyContent} rowIdx={rowIdx} />;
       break;
     case TableCellDisplayMode.DataLinks:
-      cell = <DataLinksCell value={value} field={field} theme={theme} justifyContent={justifyContent} />;
+      cell = (
+        <DataLinksCell value={value} field={field} theme={theme} justifyContent={justifyContent} rowIdx={rowIdx} />
+      );
+      break;
+    case TableCellDisplayMode.Actions:
+      cell = (
+        <ActionsCell
+          value={value}
+          field={field}
+          theme={theme}
+          justifyContent={justifyContent}
+          rowIdx={rowIdx}
+          actions={actions}
+        />
+      );
       break;
     case TableCellDisplayMode.Auto:
     default:
       cell = (
-        <AutoCell value={value} field={field} theme={theme} justifyContent={justifyContent} cellOptions={cellOptions} />
+        <AutoCell
+          value={value}
+          field={field}
+          theme={theme}
+          justifyContent={justifyContent}
+          cellOptions={cellOptions}
+          rowIdx={rowIdx}
+        />
       );
   }
 
