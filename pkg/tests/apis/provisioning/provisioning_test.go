@@ -187,13 +187,6 @@ func TestIntegrationProvisioning(t *testing.T) {
 					require.NoError(t, err, "unable to copy encrypted token")
 				}
 
-				// Missing workflows should mutate
-				_, found, _ = unstructured.NestedSlice(input.Object, "spec", "workflows")
-				if !found {
-					err = unstructured.SetNestedSlice(input.Object, []any{"write"}, "spec", "workflows")
-					require.NoError(t, err, "unable to copy workflows mutation")
-				}
-
 				expectedOutput, err := json.MarshalIndent(input.Object["spec"], "", "  ")
 				require.NoError(t, err, "failed to marshal JSON from input spec")
 				outputJSON, err := json.MarshalIndent(output.Object["spec"], "", "  ")

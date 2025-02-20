@@ -380,13 +380,6 @@ func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admis
 			r.Spec.GitHub.Branch = "main"
 		}
 
-		if r.Spec.Workflows == nil {
-			r.Spec.Workflows = []provisioning.Workflow{
-				provisioning.BranchWorkflow,
-				provisioning.WriteWorkflow,
-			}
-		}
-
 		// Trim trailing slash or .git
 		if len(r.Spec.GitHub.URL) > 5 {
 			r.Spec.GitHub.URL = strings.TrimRight(strings.TrimRight(r.Spec.GitHub.URL, "/"), ".git")
@@ -394,9 +387,7 @@ func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admis
 	}
 
 	if r.Spec.Workflows == nil {
-		r.Spec.Workflows = []provisioning.Workflow{
-			provisioning.WriteWorkflow,
-		}
+		r.Spec.Workflows = []provisioning.Workflow{}
 	}
 
 	if err := b.encryptSecrets(ctx, r); err != nil {
