@@ -1069,13 +1069,21 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                 {logsContainerRef.current && (
                   <LogList
                     app={CoreApp.Explore}
+                    logSupportsContext={showContextToggle}
                     containerElement={logsContainerRef.current}
                     displayedFields={displayedFields}
                     eventBus={eventBus}
                     forceEscape={forceEscape}
                     getFieldLinks={getFieldLinks}
+                    getRowContextQuery={getRowContextQuery}
                     loadMore={loadMoreLogs}
                     logs={dedupedRows}
+                    onOpenContext={onOpenContext}
+                    onPermalinkClick={onPermalinkClick}
+                    onPinLine={onPinToContentOutlineClick}
+                    onUnpinLine={onPinToContentOutlineClick}
+                    pinLineButtonTooltipTitle={pinLineButtonTooltipTitle}
+                    pinnedLogs={pinnedLogs}
                     showTime={showTime}
                     sortOrder={logsSortOrder}
                     timeRange={props.range}
