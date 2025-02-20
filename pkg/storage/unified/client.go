@@ -16,6 +16,7 @@ import (
 
 	authnlib "github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
+	"github.com/grafana/dskit/flagext"
 	"github.com/grafana/dskit/grpcclient"
 	"github.com/grafana/dskit/middleware"
 
@@ -175,11 +176,10 @@ func grpcConn(address string, reg prometheus.Registerer) (*grpc.ClientConn, erro
 	// Report gRPC status code errors as labels.
 	unary, stream := instrument(metrics.requestDuration, middleware.ReportGRPCStatusOption)
 
-	// Set the defaults that are normally set by Config.RegisterFlags to 100MiB.
-	cfg := grpcclient.Config{
-		MaxRecvMsgSize: 100 << 20,
-		MaxSendMsgSize: 100 << 20,
-	}
+	cfg := grpcclient.Config{}
+	// Set the defaults that are normally set by Config.RegisterFlags.
+	flagext.DefaultValues(&cfg)
+
 	opts, err := cfg.DialOption(unary, stream)
 	if err != nil {
 		return nil, fmt.Errorf("could not instrument grpc client: %w", err)
