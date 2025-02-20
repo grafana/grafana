@@ -472,7 +472,7 @@ func TestMetaAccessor(t *testing.T) {
 				name: "set empty identity returns default values",
 				setProperties: &utils.ManagerProperties{
 					Identity:    "",
-					Kind:        utils.ManagerKindGit,
+					Kind:        utils.ManagerKindRepo,
 					AllowsEdits: false,
 					Suspended:   false,
 				},

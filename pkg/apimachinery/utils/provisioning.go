@@ -27,7 +27,7 @@ type ManagerKind string
 // Known values for ManagerKind.
 const (
 	ManagerKindUnknown   ManagerKind = ""
-	ManagerKindGit       ManagerKind = "git"
+	ManagerKindRepo      ManagerKind = "repo"
 	ManagerKindTerraform ManagerKind = "terraform"
 	ManagerKindKubectl   ManagerKind = "kubectl"
 )
@@ -37,8 +37,8 @@ const (
 // For unknown values, it returns ManagerKindUnknown and false.
 func ParseManagerKindString(v string) ManagerKind {
 	switch v {
-	case string(ManagerKindGit):
-		return ManagerKindGit
+	case string(ManagerKindRepo):
+		return ManagerKindRepo
 	case string(ManagerKindTerraform):
 		return ManagerKindTerraform
 	case string(ManagerKindKubectl):
