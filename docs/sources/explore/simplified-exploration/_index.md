@@ -12,7 +12,7 @@ hero:
   level: 1
   width: 100
   height: 100
-  description: Use Grafana Profiles Drilldown to investigate and identify issues using profiling data.
+  description: Use the Drilldown apps to investigate and identify issues using telemetry data.
 cards:
   title_class: pt-0 lh-1
   items:
