@@ -9,12 +9,12 @@
         "local": {
             "path": "conf/provisioning/sample"
         },
+        "workflows": [],
         "sync": {
             "enabled": false,
             "target": "folder",
             "intervalSeconds": 60
         },
-        "readOnly": false,
         "title": "Config provisioning files",
         "type": "local"
     }

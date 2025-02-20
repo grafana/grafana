@@ -6,8 +6,9 @@ import (
 	"net/http"
 	"slices"
 
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+
+	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 )
 
 // Tester is a struct that implements the Tester interface
@@ -68,6 +69,18 @@ func ValidateRepository(repo Repository) field.ErrorList {
 	if cfg.Spec.Type != provisioning.GitHubRepositoryType && cfg.Spec.GitHub != nil {
 		list = append(list, field.Invalid(field.NewPath("spec", "github"),
 			cfg.Spec.GitHub, "Github config only valid when type is github"))
+	}
+
+	for _, w := range cfg.Spec.Workflows {
+		switch w {
+		case provisioning.WriteWorkflow:
+		case provisioning.BranchWorkflow:
+			if cfg.Spec.Type != provisioning.GitHubRepositoryType {
+				list = append(list, field.Invalid(field.NewPath("spec", "workflow"), w, "branch is only supported on git repositories"))
+			}
+		default:
+			list = append(list, field.Invalid(field.NewPath("spec", "workflow"), w, "invalid workflow"))
+		}
 	}
 
 	return list

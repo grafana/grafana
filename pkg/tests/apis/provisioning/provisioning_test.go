@@ -12,15 +12,14 @@ import (
 	"testing"
 	"time"
 
+	gh "github.com/google/go-github/v69/github"
+	ghmock "github.com/migueleliasweb/go-github-mock/src/mock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/exp/rand"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-
-	gh "github.com/google/go-github/v69/github"
-	ghmock "github.com/migueleliasweb/go-github-mock/src/mock"
 
 	dashboard "github.com/grafana/grafana/pkg/apis/dashboard/v1alpha1"
 	folder "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
@@ -172,17 +171,33 @@ func TestIntegrationProvisioning(t *testing.T) {
 		} {
 			t.Run(inputFilePath, func(t *testing.T) {
 				input := helper.LoadYAMLOrJSONFile(inputFilePath)
-				expectedOutput, err := json.MarshalIndent(input.Object["spec"], "", "  ")
-				require.NoError(t, err, "failed to marshal JSON from input spec")
 
-				_, err = client.Resource.Create(ctx, input, createOptions)
+				_, err := client.Resource.Create(ctx, input, createOptions)
 				require.NoError(t, err, "failed to create resource")
 
 				output, err := client.Resource.Get(ctx, mustNestedString(input.Object, "metadata", "name"), metav1.GetOptions{})
 				require.NoError(t, err, "failed to read back resource")
+
+				// Move encrypted token mutation
+				token, found, err := unstructured.NestedString(output.Object, "spec", "github", "encryptedToken")
+				require.NoError(t, err, "encryptedToken is not a string")
+				if found {
+					unstructured.RemoveNestedField(input.Object, "spec", "github", "token")
+					err = unstructured.SetNestedField(input.Object, token, "spec", "github", "encryptedToken")
+					require.NoError(t, err, "unable to copy encrypted token")
+				}
+
+				// Missing workflows should mutate
+				_, found, _ = unstructured.NestedSlice(input.Object, "spec", "workflows")
+				if !found {
+					err = unstructured.SetNestedSlice(input.Object, []any{"write"}, "spec", "workflows")
+					require.NoError(t, err, "unable to copy workflows mutation")
+				}
+
+				expectedOutput, err := json.MarshalIndent(input.Object["spec"], "", "  ")
+				require.NoError(t, err, "failed to marshal JSON from input spec")
 				outputJSON, err := json.MarshalIndent(output.Object["spec"], "", "  ")
 				require.NoError(t, err, "failed to marshal JSON from read back resource")
-
 				require.JSONEq(t, string(expectedOutput), string(outputJSON))
 			})
 		}

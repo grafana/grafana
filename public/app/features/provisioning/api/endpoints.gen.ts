@@ -759,8 +759,8 @@ export type JobList = {
   metadata?: ListMeta;
 };
 export type GitHubRepositoryConfig = {
-  /** The branch to use in the repository. By default, this is the main branch. */
-  branch?: string;
+  /** The branch to use in the repository. */
+  branch: string;
   /** Token for accessing the repository, but encrypted. This is not possible to read back to a user decrypted. */
   encryptedToken?: string;
   /** Whether we should show dashboard previews for pull requests. By default, this is false (i.e. we will not create previews). */
@@ -769,8 +769,6 @@ export type GitHubRepositoryConfig = {
   token?: string;
   /** The repository URL (e.g. `https://github.com/example/test`). */
   url?: string;
-  /** Workflow allowed for changes to the repository. The order is relevant for defining the precedence of the workflows. Possible values: pull-request, branch, push. */
-  workflows?: ('branch' | 'push')[];
 };
 export type LocalRepositoryConfig = {
   path?: string;
@@ -794,8 +792,6 @@ export type RepositorySpec = {
   github?: GitHubRepositoryConfig;
   /** The repository on the local file system. Mutually exclusive with local | github. */
   local?: LocalRepositoryConfig;
-  /** ReadOnly  repository does not allow any write commands */
-  readOnly: boolean;
   /** Sync settings -- how values are pulled from the repository into grafana */
   sync: SyncOptions;
   /** The repository display name (shown in the UI) */
@@ -806,6 +802,8 @@ export type RepositorySpec = {
      - `"github"`
      - `"local"` */
   type: 'github' | 'local';
+  /** UI driven Workflow taht allow changes to the contends of the repository. The order is relevant for defining the precedence of the workflows. When empty, the repository does not support any edits (eg, readonly) */
+  workflows?: ('branch' | 'write')[];
 };
 export type HealthStatus = {
   /** When the health was checked last time */
@@ -813,7 +811,7 @@ export type HealthStatus = {
   /** When not healthy, requests will not be executed */
   healthy: boolean;
   /** Summary messages (will be shown to users) */
-  message?: string[];
+  message: string[];
 };
 export type ResourceCount = {
   count: number;

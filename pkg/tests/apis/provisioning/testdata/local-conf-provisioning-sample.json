@@ -11,7 +11,7 @@
         },
         "title": "Config provisioning files",
         "type": "local",
-        "readOnly": false,
+        "workflows": ["write"],
         "sync": {
             "enabled": false,
             "target": "folder",

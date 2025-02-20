@@ -14,7 +14,6 @@
             "target": "folder",
             "intervalSeconds": 60
         },
-        "readOnly": false,
         "title": "Load tmp dashboards",
         "type": "local"
     }

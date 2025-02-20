@@ -2852,10 +2852,14 @@
       },
       "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.GitHubRepositoryConfig": {
         "type": "object",
+        "required": [
+          "branch"
+        ],
         "properties": {
           "branch": {
-            "description": "The branch to use in the repository. By default, this is the main branch.",
-            "type": "string"
+            "description": "The branch to use in the repository.",
+            "type": "string",
+            "default": ""
           },
           "encryptedToken": {
             "description": "Token for accessing the repository, but encrypted. This is not possible to read back to a user decrypted.",
@@ -2874,25 +2878,14 @@
           "url": {
             "description": "The repository URL (e.g. `https://github.com/example/test`).",
             "type": "string"
-          },
-          "workflows": {
-            "description": "Workflow allowed for changes to the repository. The order is relevant for defining the precedence of the workflows. Possible values: pull-request, branch, push.",
-            "type": "array",
-            "items": {
-              "type": "string",
-              "default": "",
-              "enum": [
-                "branch",
-                "push"
-              ]
-            }
           }
         }
       },
       "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.HealthStatus": {
         "type": "object",
         "required": [
-          "healthy"
+          "healthy",
+          "message"
         ],
         "properties": {
           "checked": {
@@ -3396,7 +3389,6 @@
         "type": "object",
         "required": [
           "title",
-          "readOnly",
           "sync",
           "type"
         ],
@@ -3421,11 +3413,6 @@
               }
             ]
           },
-          "readOnly": {
-            "description": "ReadOnly  repository does not allow any write commands",
-            "type": "boolean",
-            "default": false
-          },
           "sync": {
             "description": "Sync settings -- how values are pulled from the repository into grafana",
             "default": {},
@@ -3448,6 +3435,18 @@
               "github",
               "local"
             ]
+          },
+          "workflows": {
+            "description": "UI driven Workflow taht allow changes to the contends of the repository. The order is relevant for defining the precedence of the workflows. When empty, the repository does not support any edits (eg, readonly)",
+            "type": "array",
+            "items": {
+              "type": "string",
+              "default": "",
+              "enum": [
+                "branch",
+                "write"
+              ]
+            }
           }
         }
       },

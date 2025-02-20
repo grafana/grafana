@@ -48,13 +48,14 @@ func (r *ExportWorker) IsSupported(ctx context.Context, job provisioning.Job) bo
 
 // Process will start a job
 func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, job provisioning.Job, progress jobs.JobProgressRecorder) error {
-	if repo.Config().Spec.ReadOnly {
-		return errors.New("read only repository")
-	}
-
 	options := job.Spec.Export
 	if options == nil {
 		return errors.New("missing export settings")
+	}
+
+	// Can write to external branch
+	if err := repository.IsWriteAllowed(repo.Config(), options.Branch); err != nil {
+		return err
 	}
 
 	var (

@@ -155,7 +155,7 @@ func (b *APIBuilder) handleSettings(w http.ResponseWriter, r *http.Request) {
 			Name:     val.ObjectMeta.Name,
 			Title:    val.Spec.Title,
 			Type:     val.Spec.Type,
-			ReadOnly: val.Spec.ReadOnly,
+			ReadOnly: len(val.Spec.Workflows) == 0,
 			Target:   val.Spec.Sync.Target,
 		}
 	}

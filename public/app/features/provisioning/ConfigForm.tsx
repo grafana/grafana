@@ -31,10 +31,12 @@ const targetOptions = [
   { value: 'folder', label: 'Managed folder' },
 ];
 
-const workflowOptions: Array<ComboboxOption<WorkflowOption>> = [
-  { label: 'Push', value: 'push' },
-  { label: 'Branch', value: 'branch' },
+const workflowOptionsGit: Array<ComboboxOption<WorkflowOption>> = [
+  { label: 'Branch', value: 'branch', description: 'Create a branch (and pull request) for changes' },
+  { label: 'Write', value: 'write', description: 'Allow writing updates to the remore repository' },
 ];
+
+const workflowOptions: Array<ComboboxOption<WorkflowOption>> = [workflowOptionsGit[1]];
 
 const appEvents = getAppEvents();
 
@@ -47,13 +49,12 @@ function getDefaultValues(repository?: RepositorySpec): RepositoryFormData {
       url: '',
       branch: 'main',
       generateDashboardPreviews: true,
-      workflows: ['push', 'branch'],
+      workflows: ['write'], // 'branch' if github
       sync: {
         enabled: false,
         target: 'instance',
         intervalSeconds: 60,
       },
-      readOnly: false,
     };
   }
   return specToData(repository);
@@ -178,17 +179,16 @@ export function ConfigForm({ data }: ConfigFormProps) {
           <Field label={'Branch'}>
             <Input {...register('branch')} placeholder={'main'} />
           </Field>
-          <Field label={'Workflows'} required error={errors?.workflows?.message} invalid={!!errors?.workflows}>
-            <Controller
-              name={'workflows'}
-              control={control}
-              rules={{ required: 'This field is required.' }}
-              render={({ field: { ref, ...field } }) => (
-                <MultiCombobox options={workflowOptions} placeholder={'Select workflows'} {...field} />
-              )}
-            />
-          </Field>
-          <Field label={'Show dashboard previews'}>
+          <Field
+            label={'Attach dashboard previews to pull requests'}
+            description={
+              <span>
+                Render before/after images and link them to the pull request.
+                <br />
+                NOTE! these will be public URLs!!!"
+              </span>
+            }
+          >
             <Switch {...register('generateDashboardPreviews')} id={'generateDashboardPreviews'} />
           </Field>
           {/* The lint option is intentionally not presented here, as it's an experimental feature. */}
@@ -200,6 +200,27 @@ export function ConfigForm({ data }: ConfigFormProps) {
           <Input {...register('path', { required: 'This field is required.' })} placeholder={'/path/to/repo'} />
         </Field>
       )}
+
+      <Field
+        label={'Workflows'}
+        required
+        error={errors?.workflows?.message}
+        invalid={!!errors?.workflows}
+        description="no workflows makes the repository read only"
+      >
+        <Controller
+          name={'workflows'}
+          control={control}
+          rules={{ required: 'This field is required.' }}
+          render={({ field: { ref, ...field } }) => (
+            <MultiCombobox
+              options={type === 'github' ? workflowOptionsGit : workflowOptions}
+              placeholder={'Readonly repository'}
+              {...field}
+            />
+          )}
+        />
+      </Field>
 
       <FieldSet label="Sync Settings">
         <Field label={'Enabled'} description={'Once sync is enabled, the target cannot be changed.'}>
@@ -224,11 +245,6 @@ export function ConfigForm({ data }: ConfigFormProps) {
         </Field>
         <Field label={'Interval (seconds)'}>
           <Input {...register('sync.intervalSeconds', { valueAsNumber: true })} type={'number'} placeholder={'60'} />
-        </Field>
-      </FieldSet>
-      <FieldSet label="Advanced Settings">
-        <Field label={'Read Only'} description={'Disable writing to this repository'}>
-          <Switch {...register('readOnly')} id={'readOnly'} />
         </Field>
       </FieldSet>
       <Stack gap={2}>

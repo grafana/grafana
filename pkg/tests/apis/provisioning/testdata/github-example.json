@@ -8,7 +8,7 @@
         "title": "Github Example",
         "description": "load resources from github",
         "type": "github",
-        "readOnly": false,
+        "workflows": ["branch", "write"],
         "sync": {
             "enabled": true,
             "target": "folder",
@@ -17,7 +17,6 @@
         "github": {
             "url": "https://github.com/grafana/git-ui-sync-demo",
             "branch": "dummy-branch",
-            "workflows": ["push", "branch"],
             "generateDashboardPreviews": true,
             "token": "github_pat_dummy"
         }
