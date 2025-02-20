@@ -12,10 +12,7 @@ labels:
     - oss
 menuTitle: Link to a trace ID
 title: Link to a trace ID
-weight: 800
-aliases:
-  - ../link-trace-id/ # /docs/grafana/latest/datasources/tempo/link-trace-id/
-
+weight: 700
 refs:
   configure-grafana-feature-toggles:
     - pattern: /docs/grafana/
@@ -72,10 +69,10 @@ You can link to Tempo traces from logs or metrics.
 
 You can link to Tempo traces from logs in Loki, Elasticsearch, Splunk, and other logs data sources by configuring an internal link.
 
-To configure this feature, refer to the [Derived fields](../../loki#configure-derived-fields) section of the Loki data source docs or the [Data links](../../elasticsearch#data-links) section of the Elasticsearch or Splunk data source docs.
+To configure this feature, see the [Derived fields]({{< relref "../loki#configure-derived-fields" >}}) section of the Loki data source docs or the [Data links]({{< relref "../elasticsearch#data-links" >}}) section of the Elasticsearch or Splunk data source docs.
 
 ## Link to a trace ID from metrics
 
 You can link to Tempo traces from metrics in Prometheus data sources by configuring an exemplar.
 
-To configure this feature, refer to the [Exemplars](ref:exemplars) documentation.
+To configure this feature, see the [introduction to exemplars](ref:exemplars) documentation.
