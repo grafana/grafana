@@ -411,4 +411,3 @@ For more information regarding alerting refer to the following:
 
 - [Alert rules](ref:alert-rules)
 - [Template annotations and labels](ref:template-annotations-and-labels)
-<!-- vale Grafana.Spelling = YES -->
