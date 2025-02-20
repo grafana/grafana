@@ -313,6 +313,10 @@ func (s *ServiceImpl) readNavigationSettings() {
 		s.navigationAppConfig["grafana-metricsdrilldown-app"] = NavigationAppConfig{SectionID: navtree.NavIDExplore, SortWeight: 1, Text: "Metrics"}
 	}
 
+	if s.features.IsEnabledGlobally(featuremgmt.FlagGrafanaAdvisor) {
+		s.navigationAppConfig["grafana-advisor-app"] = NavigationAppConfig{SectionID: navtree.NavIDCfg, Text: "Advisor"}
+	}
+
 	s.navigationAppPathConfig = map[string]NavigationAppConfig{
 		"/a/grafana-auth-app": {SectionID: navtree.NavIDCfgAccess, SortWeight: 2},
 	}
