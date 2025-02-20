@@ -21,6 +21,7 @@ import { useStyles2, useTheme2 } from '../../../themes';
 import { Trans } from '../../../utils/i18n';
 import { ContextMenu } from '../../ContextMenu/ContextMenu';
 import { MenuItem } from '../../Menu/MenuItem';
+import { ScrollContainer } from '../../ScrollContainer/ScrollContainer';
 import { TableCellInspector, TableCellInspectorMode } from '../TableCellInspector';
 import { TableNGProps } from '../types';
 import { getTextAlign } from '../utils';
@@ -184,6 +185,7 @@ export function TableNG(props: TableNGProps) {
   }
   const defaultRowHeight = getDefaultRowHeight();
   const defaultLineHeight = theme.typography.body.lineHeight * theme.typography.fontSize;
+  const panelPaddingHeight = theme.components.panel.padding * theme.spacing.gridSize * 2;
 
   const handleSort = (columnKey: string, direction: SortDirection, isMultiSort: boolean) => {
     let currentSortColumn: SortColumn | undefined;
@@ -504,7 +506,9 @@ export function TableNG(props: TableNGProps) {
   } else if (!noHeader && Object.keys(headerCellRefs.current).length > 0) {
     headerCellHeight = headerCellRefs.current[Object.keys(headerCellRefs.current)[0]].getBoundingClientRect().height;
   }
-  let rowsPerPage = Math.floor((height - headerCellHeight - SCROLL_BAR_WIDTH - paginationHeight) / defaultRowHeight);
+  let rowsPerPage = Math.floor(
+    (height - headerCellHeight - SCROLL_BAR_WIDTH - paginationHeight - panelPaddingHeight) / defaultRowHeight
+  );
   // if footer calcs are on, remove one row per page
   if (isFooterVisible) {
     rowsPerPage -= 1;
@@ -601,47 +605,49 @@ export function TableNG(props: TableNGProps) {
   // Return the data grid
   return (
     <>
-      <DataGrid
-        className={styles.dataGrid}
-        key={`DataGrid${revId}`}
-        rows={enablePagination ? paginatedRows : filteredRows}
-        columns={columns}
-        headerRowHeight={noHeader ? 0 : undefined}
-        defaultColumnOptions={{
-          sortable: true,
-          resizable: true,
-        }}
-        rowHeight={textWrap || isNestedTable ? calculateRowHeight : defaultRowHeight}
-        // TODO: This doesn't follow current table behavior
-        style={{ width, height: height - (enablePagination ? paginationHeight : 0) }}
-        renderers={{ renderRow: myRowRenderer }}
-        onCellContextMenu={({ row, column }, event) => {
-          event.preventGridDefault();
-          // Do not show the default context menu
-          event.preventDefault();
-          setContextMenuProps({
-            // rowIdx: rows.indexOf(row),
-            value: row[column.key],
-            top: event.clientY,
-            left: event.clientX,
-          });
-          setIsContextMenuOpen(true);
-        }}
-        // sorting
-        sortColumns={sortColumns}
-        // footer
-        // TODO figure out exactly how this works - some array needs to be here for it to render regardless of renderSummaryCell()
-        bottomSummaryRows={isFooterVisible ? [{}] : undefined}
-        onColumnResize={() => {
-          // NOTE: This method is called continuously during the column resize drag operation,
-          // providing the current column width. There is no separate event for the end of the drag operation.
-          if (textWrap) {
-            // This is needed only when textWrap is enabled
-            // TODO: this is a hack to force rowHeight re-calculation
-            setResizeTrigger((prev) => prev + 1);
-          }
-        }}
-      />
+      <ScrollContainer>
+        <DataGrid
+          className={styles.dataGrid}
+          key={`DataGrid${revId}`}
+          rows={enablePagination ? paginatedRows : filteredRows}
+          columns={columns}
+          headerRowHeight={noHeader ? 0 : undefined}
+          defaultColumnOptions={{
+            sortable: true,
+            resizable: true,
+          }}
+          rowHeight={textWrap || isNestedTable ? calculateRowHeight : defaultRowHeight}
+          // TODO: This doesn't follow current table behavior
+          style={{ width, height: height - (enablePagination ? paginationHeight : 0) }}
+          renderers={{ renderRow: myRowRenderer }}
+          onCellContextMenu={({ row, column }, event) => {
+            event.preventGridDefault();
+            // Do not show the default context menu
+            event.preventDefault();
+            setContextMenuProps({
+              // rowIdx: rows.indexOf(row),
+              value: row[column.key],
+              top: event.clientY,
+              left: event.clientX,
+            });
+            setIsContextMenuOpen(true);
+          }}
+          // sorting
+          sortColumns={sortColumns}
+          // footer
+          // TODO figure out exactly how this works - some array needs to be here for it to render regardless of renderSummaryCell()
+          bottomSummaryRows={isFooterVisible ? [{}] : undefined}
+          onColumnResize={() => {
+            // NOTE: This method is called continuously during the column resize drag operation,
+            // providing the current column width. There is no separate event for the end of the drag operation.
+            if (textWrap) {
+              // This is needed only when textWrap is enabled
+              // TODO: this is a hack to force rowHeight re-calculation
+              setResizeTrigger((prev) => prev + 1);
+            }
+          }}
+        />
+      </ScrollContainer>
 
       {enablePagination && (
         <div className={styles.paginationContainer} ref={paginationWrapperRef}>
@@ -709,13 +715,8 @@ const getStyles = (theme: GrafanaTheme2, textWrap: boolean) => ({
     '--rdg-header-background-color': theme.colors.background.primary,
     '--rdg-border-color': 'transparent',
     '--rdg-color': theme.colors.text.primary,
-    // TODO replace with ScrollContainer
-    overflow: 'hidden',
-    scrollbarWidth: 'thin',
-
     '&:hover': {
       '--rdg-row-hover-background-color': theme.colors.emphasize(theme.colors.action.hover, 0.6),
-      overflow: 'scroll',
     },
 
     // If we rely solely on borderInlineEnd which is added from data grid, we
