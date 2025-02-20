@@ -28,7 +28,7 @@ type LocalRepositoryConfig struct {
 type Workflow string
 
 const (
-	// WriteWorkflow allows users to write directly to the respository
+	// WriteWorkflow allows a user to write directly to the respository
 	WriteWorkflow Workflow = "write"
 	// BranchWorkflow allows creating a branch for changes (where we can then make a PR)
 	BranchWorkflow Workflow = "branch"

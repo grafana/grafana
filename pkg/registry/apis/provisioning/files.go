@@ -186,7 +186,7 @@ func (s *filesConnector) doRead(ctx context.Context, repo repository.Repository,
 }
 
 func (s *filesConnector) doWrite(ctx context.Context, update bool, repo repository.Repository, path string, ref string, message string, req *http.Request) (*provisioning.ResourceWrapper, error) {
-	if err := repository.IsWriteAllowed(repo.Config(), ""); err != nil {
+	if err := repository.IsWriteAllowed(repo.Config(), ref); err != nil {
 		return nil, err
 	}
 
@@ -275,7 +275,7 @@ func (s *filesConnector) doWrite(ctx context.Context, update bool, repo reposito
 }
 
 func (s *filesConnector) doDelete(ctx context.Context, repo repository.Repository, path string, ref string, message string) (*provisioning.ResourceWrapper, error) {
-	if err := repository.IsWriteAllowed(repo.Config(), ""); err != nil {
+	if err := repository.IsWriteAllowed(repo.Config(), ref); err != nil {
 		return nil, err
 	}
 

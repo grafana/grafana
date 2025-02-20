@@ -3389,6 +3389,7 @@
         "type": "object",
         "required": [
           "title",
+          "workflows",
           "sync",
           "type"
         ],

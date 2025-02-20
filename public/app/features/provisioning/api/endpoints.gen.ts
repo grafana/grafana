@@ -803,7 +803,7 @@ export type RepositorySpec = {
      - `"local"` */
   type: 'github' | 'local';
   /** UI driven Workflow taht allow changes to the contends of the repository. The order is relevant for defining the precedence of the workflows. When empty, the repository does not support any edits (eg, readonly) */
-  workflows?: ('branch' | 'write')[];
+  workflows: ('branch' | 'write')[];
 };
 export type HealthStatus = {
   /** When the health was checked last time */
