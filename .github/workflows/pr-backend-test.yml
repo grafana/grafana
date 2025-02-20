@@ -66,9 +66,9 @@ jobs:
         uses: grafana/shared-workflows/actions/get-vault-secrets@get-vault-secrets-v1.0.1
         with:
           repo_secrets: |
-            APP_ID=github-app:app-id
-            APP_INSTALLATION_ID=github-app:app-installation-id
-            PRIVATE_KEY=github-app:private-key
+            APP_ID=grafana-drone-ci-app:app-id
+            APP_INSTALLATION_ID=grafana-drone-ci-app:app-installation-id
+            PRIVATE_KEY=grafana-drone-ci-app:private-key
 
       # - name: Debug secrets (redacted)
       #   run: |
