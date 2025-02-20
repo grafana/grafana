@@ -1,7 +1,4 @@
 ---
-aliases:
-  - ../data-sources/postgres/
-  - ../features/datasources/postgres/
 description: This document provides instructions for configuring the PostgreSQL data source.
 keywords:
   - grafana

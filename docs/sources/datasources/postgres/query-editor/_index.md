@@ -1,7 +1,4 @@
 ---
-aliases:
-  - ../data-sources/postgres/
-  - ../features/datasources/postgres/
 description: This document describes the PostgreSQL query editor in Grafana.
 keywords:
   - grafana
