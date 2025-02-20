@@ -744,15 +744,6 @@ var (
 			Expression:   "true",
 		},
 		{
-			Name:           "teamHttpHeaders",
-			Description:    "Enables LBAC for datasources to apply LogQL filtering of logs to the client requests for users in teams",
-			Stage:          FeatureStagePublicPreview,
-			FrontendOnly:   false,
-			AllowSelfServe: true,
-			Owner:          identityAccessTeam,
-			Expression:     "true",
-		},
-		{
 			Name:         "cachingOptimizeSerializationMemoryUsage",
 			Description:  "If enabled, the caching backend gradually serializes query responses for the cache, comparing against the configured `[caching]max_value_mb` value as it goes. This can can help prevent Grafana from running out of memory while attempting to cache very large query responses.",
 			Stage:        FeatureStageExperimental,
@@ -1234,13 +1225,6 @@ var (
 			Expression:  "false", // disabled by default
 		},
 		{
-			Name:         "sqlQuerybuilderFunctionParameters",
-			Description:  "Enables SQL query builder function parameters",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaOSSBigTent,
-			FrontendOnly: true,
-		},
-		{
 			Name:        "azureMonitorPrometheusExemplars",
 			Description: "Allows configuration of Azure Monitor as a data source that can provide Prometheus exemplars",
 			Stage:       FeatureStagePublicPreview,
@@ -1456,6 +1440,14 @@ var (
 		{
 			Name:              "unifiedStorageSearchPermissionFiltering",
 			Description:       "Enable permission filtering on unified storage search",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaSearchAndStorageSquad,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+		},
+		{
+			Name:              "managedDualWriter",
+			Description:       "Pick the dual write mode from database configs",
 			Stage:             FeatureStageExperimental,
 			Owner:             grafanaSearchAndStorageSquad,
 			HideFromDocs:      true,

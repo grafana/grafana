@@ -403,10 +403,6 @@ const (
 	// Enables the loki data source to request structured metadata from the Loki server
 	FlagLokiStructuredMetadata = "lokiStructuredMetadata"
 
-	// FlagTeamHttpHeaders
-	// Enables LBAC for datasources to apply LogQL filtering of logs to the client requests for users in teams
-	FlagTeamHttpHeaders = "teamHttpHeaders"
-
 	// FlagCachingOptimizeSerializationMemoryUsage
 	// If enabled, the caching backend gradually serializes query responses for the cache, comparing against the configured `[caching]max_value_mb` value as it goes. This can can help prevent Grafana from running out of memory while attempting to cache very large query responses.
 	FlagCachingOptimizeSerializationMemoryUsage = "cachingOptimizeSerializationMemoryUsage"
@@ -655,10 +651,6 @@ const (
 	// Preserve plugin proxy trailing slash.
 	FlagPluginProxyPreserveTrailingSlash = "pluginProxyPreserveTrailingSlash"
 
-	// FlagSqlQuerybuilderFunctionParameters
-	// Enables SQL query builder function parameters
-	FlagSqlQuerybuilderFunctionParameters = "sqlQuerybuilderFunctionParameters"
-
 	// FlagAzureMonitorPrometheusExemplars
 	// Allows configuration of Azure Monitor as a data source that can provide Prometheus exemplars
 	FlagAzureMonitorPrometheusExemplars = "azureMonitorPrometheusExemplars"
@@ -778,6 +770,10 @@ const (
 	// FlagUnifiedStorageSearchPermissionFiltering
 	// Enable permission filtering on unified storage search
 	FlagUnifiedStorageSearchPermissionFiltering = "unifiedStorageSearchPermissionFiltering"
+
+	// FlagManagedDualWriter
+	// Pick the dual write mode from database configs
+	FlagManagedDualWriter = "managedDualWriter"
 
 	// FlagPluginsSriChecks
 	// Enables SRI checks for plugin assets
