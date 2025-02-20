@@ -88,6 +88,12 @@ jobs:
           GH_TOKEN: ${{ steps.generate_token.outputs.token }}
         run: |
           echo "Testing enterprise repo access..."
+          echo "App ID being used: ${{ env.APP_ID }}"
+          echo "Installation ID being used: ${{ env.APP_INSTALLATION_ID }}"
+          # Test the token
+          echo "Token info:"
+          curl -H "Authorization: token ${GH_TOKEN}" -H "Accept: application/vnd.github.v3+json" https://api.github.com/installation/repositories
+          # Try the clone
           git ls-remote https://x-access-token:${GH_TOKEN}@github.com/grafana/grafana-enterprise.git
 
       - name: Setup Enterprise (PR only)
