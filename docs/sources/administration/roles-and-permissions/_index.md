@@ -130,7 +130,7 @@ You can assign a team member one of the following permissions:
 - **Member**: Includes the user as a member of the team. Members do not have team administrator privileges.
 - **Admin**: Administrators have permission to manage various aspects of the team, including team membership, permissions, and settings.
 
-Because teams exist inside an organization, the organization administrator can manage all teams. 
+Because teams exist inside an organization, the organization administrator can manage all teams.
 
 For details on managing teams, see [Team management]({{< relref "../team-management/" >}}).
 
