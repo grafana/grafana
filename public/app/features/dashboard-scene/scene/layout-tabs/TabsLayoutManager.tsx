@@ -47,6 +47,10 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     return panels;
   }
 
+  public cloneLayout(ancestorKey: string, isSource: boolean): DashboardLayoutManager {
+    throw new Error('Method not implemented.');
+  }
+
   public hasVizPanels(): boolean {
     for (const tab of this.state.tabs) {
       if (tab.getLayout().hasVizPanels()) {

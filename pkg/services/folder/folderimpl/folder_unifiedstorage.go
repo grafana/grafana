@@ -637,10 +637,12 @@ func (s *Service) deleteFromApiServer(ctx context.Context, cmd *folder.DeleteFol
 		return err
 	}
 
-	folders := []string{cmd.UID}
+	folders := []string{}
 	for _, f := range descFolders {
 		folders = append(folders, f.UID)
 	}
+	// must delete children first, then the parent folder
+	folders = append(folders, cmd.UID)
 
 	if cmd.ForceDeleteRules {
 		if err := s.deleteChildrenInFolder(ctx, cmd.OrgID, folders, cmd.SignedInUser); err != nil {
