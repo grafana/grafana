@@ -8,7 +8,8 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
-func verifyEmptyRepo(tree []repository.FileTreeEntry) error {
+// VerifyEmptyRepo -- checks if there is anything useable in the tree
+func VerifyEmptyRepo(tree []repository.FileTreeEntry) error {
 	var folders []string
 	var files []string
 

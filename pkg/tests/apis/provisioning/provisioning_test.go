@@ -442,7 +442,7 @@ func repoContent(fpath string, content []byte) *gh.RepositoryContent {
 		SHA:      gh.Ptr(hex.EncodeToString(sha[:])),
 		Name:     gh.Ptr(path.Base(fpath)),
 		Path:     &fpath,
-		Size:     gh.Int(len(content)),
+		Size:     gh.Ptr(len(content)),
 		Type:     &typ,
 		Content:  gh.Ptr(string(content)),
 		Encoding: gh.Ptr("UTF-8"),
