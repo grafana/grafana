@@ -3,21 +3,22 @@ package utils
 import "time"
 
 // ManagerProperties is used to identify the manager of the resource.
-//
-// This is used to identify the manager of the resource.
-//
-// The manager kind is the type of manager, such as "ui", "api/generic", "api/kubectl", or "api/terraform".
-//
-// The manager identity is the identity of the manager, such as the username of the user who created the resource,
-// or the name of the tool that created the resource.
-//
-// The is exclusive flag indicates whether the manager is the exclusive owner of the resource.
-// If set to true, then only updates coming from the manager will be accepted.
 type ManagerProperties struct {
-	Kind        ManagerKind
-	Identity    string
+	// The kind of manager, which is responsible for managing the resource.
+	// Examples include "git", "terraform", "kubectl", etc.
+	Kind ManagerKind
+
+	// The identity of the manager, which refers to a specific instance of the manager.
+	// The format & the value depends on the manager kind.
+	Identity string
+
+	// AllowsEdits indicates whether the manager allows edits to the resource.
+	// If set to true, it means that other requesters can edit the resource.
 	AllowsEdits bool
-	Suspended   bool
+
+	// Suspended indicates whether the manager is suspended.
+	// If set to true, then the manager skip updates to the resource.
+	Suspended bool
 }
 
 // ManagerKind is the type of manager, which is responsible for managing the resource.
@@ -52,7 +53,15 @@ func ParseManagerKindString(v string) ManagerKind {
 // It is used by managers for reconciling data from a source to Grafana.
 // Not all managers use these properties, some (like Terraform) don't have a concept of a source.
 type SourceProperties struct {
-	Path      string
-	Hash      string
+	// The path to the source of the resource.
+	// Can be a file path, a URL, etc.
+	Path string
+
+	// The hash of the source of the resource.
+	// An example could be a git commit hash.
+	Hash string
+
+	// The timestamp of the source of the resource.
+	// An example could be the file modification time.
 	Timestamp time.Time
 }
