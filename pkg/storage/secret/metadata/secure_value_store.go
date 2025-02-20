@@ -8,6 +8,8 @@ import (
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper"
+	keepertypes "github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/types"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -17,7 +19,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 )
 
-func ProvideSecureValueStorage(db db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles) (contracts.SecureValueStorage, error) {
+func ProvideSecureValueStorage(db db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, keeperService secretkeeper.Service) (contracts.SecureValueStorage, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) ||
 		!features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) {
 		return &secureValueStorage{}, nil
@@ -27,12 +29,18 @@ func ProvideSecureValueStorage(db db.DB, cfg *setting.Cfg, features featuremgmt.
 		return nil, fmt.Errorf("failed to run migrations: %w", err)
 	}
 
-	return &secureValueStorage{db: db}, nil
+	keepers, err := keeperService.GetKeepers()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get keepers: %w", err)
+	}
+
+	return &secureValueStorage{db: db, keepers: keepers}, nil
 }
 
 // secureValueStorage is the actual implementation of the secure value (metadata) storage.
 type secureValueStorage struct {
-	db db.DB
+	db      db.DB
+	keepers map[keepertypes.KeeperType]keepertypes.Keeper
 }
 
 func (s *secureValueStorage) Create(ctx context.Context, sv *secretv0alpha1.SecureValue) (*secretv0alpha1.SecureValue, error) {
@@ -41,26 +49,34 @@ func (s *secureValueStorage) Create(ctx context.Context, sv *secretv0alpha1.Secu
 		return nil, fmt.Errorf("missing auth info in context")
 	}
 
-	// This should come from the keeper. From this point on, we should not have a need to read value.
-	externalID := "TODO"
+	// Store in keeper.
+	// TODO: here temporary, the moment of storing will change in the async flow.
+	externalID, err := s.storeInKeeper(ctx, sv)
+	if err != nil {
+		return nil, fmt.Errorf("failed to store in keeper: %w", err)
+	}
+
+	// From this point on, we should not have a need to read value.
 	sv.Spec.Value = ""
 
-	row, err := toCreateRow(sv, authInfo.GetUID(), externalID)
+	row, err := toCreateRow(sv, authInfo.GetUID(), externalID.String())
 	if err != nil {
 		return nil, fmt.Errorf("to create row: %w", err)
 	}
 
 	err = s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		// Validate before inserting that the chosen `keeper` exists.
-		keeperRow := &keeperDB{Name: row.Keeper, Namespace: row.Namespace}
+		if row.Keeper != keepertypes.DefaultSQLKeeper {
+			// Validate before inserting that the chosen `keeper` exists.
+			keeperRow := &keeperDB{Name: row.Keeper, Namespace: row.Namespace}
 
-		keeperExists, err := sess.Table(keeperRow.TableName()).ForUpdate().Exist(keeperRow)
-		if err != nil {
-			return fmt.Errorf("check keeper existence: %w", err)
-		}
+			keeperExists, err := sess.Table(keeperRow.TableName()).ForUpdate().Exist(keeperRow)
+			if err != nil {
+				return fmt.Errorf("check keeper existence: %w", err)
+			}
 
-		if !keeperExists {
-			return contracts.ErrKeeperNotFound
+			if !keeperExists {
+				return contracts.ErrKeeperNotFound
+			}
 		}
 
 		if _, err := sess.Insert(row); err != nil {
@@ -137,26 +153,34 @@ func (s *secureValueStorage) Update(ctx context.Context, newSecureValue *secretv
 		return nil, fmt.Errorf("db failure: %w", err)
 	}
 
-	// This should come from the keeper.
-	externalID := "TODO2"
+	// Update in keeper.
+	// TODO: here temporary, the moment of update will change in the async flow.
+	err = s.updateInKeeper(ctx, currentRow, newSecureValue)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update in keeper: %w", err)
+	}
+
+	// From this point on, we should not have a need to read value.
 	newSecureValue.Spec.Value = ""
 
-	newRow, err := toUpdateRow(currentRow, newSecureValue, authInfo.GetUID(), externalID)
+	newRow, err := toUpdateRow(currentRow, newSecureValue, authInfo.GetUID(), currentRow.ExternalID)
 	if err != nil {
 		return nil, fmt.Errorf("to update row: %w", err)
 	}
 
 	err = s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		// Validate before updating that the new `keeper` exists.
-		keeperRow := &keeperDB{Name: newRow.Keeper, Namespace: newRow.Namespace}
+		if newRow.Keeper != keepertypes.DefaultSQLKeeper {
+			// Validate before updating that the new `keeper` exists.
+			keeperRow := &keeperDB{Name: newRow.Keeper, Namespace: newRow.Namespace}
 
-		keeperExists, err := sess.Table(keeperRow.TableName()).ForUpdate().Exist(keeperRow)
-		if err != nil {
-			return fmt.Errorf("check keeper existence: %w", err)
-		}
+			keeperExists, err := sess.Table(keeperRow.TableName()).ForUpdate().Exist(keeperRow)
+			if err != nil {
+				return fmt.Errorf("check keeper existence: %w", err)
+			}
 
-		if !keeperExists {
-			return contracts.ErrKeeperNotFound
+			if !keeperExists {
+				return contracts.ErrKeeperNotFound
+			}
 		}
 
 		cond := &secureValueDB{Name: newSecureValue.Name, Namespace: newSecureValue.Namespace}
@@ -185,7 +209,10 @@ func (s *secureValueStorage) Delete(ctx context.Context, namespace xkube.Namespa
 		return fmt.Errorf("missing auth info in context")
 	}
 
-	// TODO: delete from the keeper!
+	// Delete from the keeper.
+	// TODO: here temporary, the moment of deletion will change in the async flow.
+	// TODO: do we care to inform the caller if there is any error?
+	_ = s.deleteFromKeeper(ctx, namespace, name)
 
 	// TODO: do we need to delete by GUID? name+namespace is a unique index. It would avoid doing a fetch.
 	row := &secureValueDB{Name: name, Namespace: namespace.String()}

@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
+	keepertypes "github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/types"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/storage/secret/migrator"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -286,6 +287,24 @@ func toProvider(keeperType KeeperType, payload string) secretv0alpha1.KeeperConf
 		return hashicorp
 	default:
 		return nil
+	}
+}
+
+// toType maps between keeperDB.Type and types KeeperType, but TODO: work towards unifing these types
+func toType(keeperType KeeperType) keepertypes.KeeperType {
+	switch keeperType {
+	case SqlKeeperType:
+		return keepertypes.SQLKeeperType
+	case AWSKeeperType:
+		return keepertypes.AWSKeeperType
+	case AzureKeeperType:
+		return keepertypes.AzureKeeperType
+	case GCPKeeperType:
+		return keepertypes.GCPKeeperType
+	case HashiCorpKeeperType:
+		return keepertypes.HashiCorpKeeperType
+	default:
+		return ""
 	}
 }
 

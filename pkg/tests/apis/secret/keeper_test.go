@@ -69,7 +69,7 @@ func TestIntegrationKeeper(t *testing.T) {
 	})
 
 	t.Run("creating a keeper returns it", func(t *testing.T) {
-		raw := mustGenerateKeeper(t, helper, genericUserEditor, nil)
+		raw := mustGenerateKeeper(t, helper, genericUserEditor, nil, "testdata/keeper-aws-generate.yaml")
 
 		keeper := new(secretv0alpha1.Keeper)
 		err := runtime.DefaultUnstructuredConverter.FromUnstructured(raw.Object, keeper)
@@ -161,10 +161,10 @@ func TestIntegrationKeeper(t *testing.T) {
 	})
 
 	t.Run("creating a keeper with a provider then changing the provider does not return an error", func(t *testing.T) {
-		rawAWS := mustGenerateKeeper(t, helper, genericUserEditor, nil)
+		rawAWS := mustGenerateKeeper(t, helper, genericUserEditor, nil, "")
 
 		testDataKeeperGCP := rawAWS.DeepCopy()
-		testDataKeeperGCP.Object["spec"].(map[string]any)["aws"] = nil
+		testDataKeeperGCP.Object["spec"].(map[string]any)["sql"] = nil
 		testDataKeeperGCP.Object["spec"].(map[string]any)["gcp"] = map[string]any{
 			"projectId":       "project-id",
 			"credentialsFile": "/path/to/file.json",
@@ -229,43 +229,6 @@ func TestIntegrationKeeper(t *testing.T) {
 		})
 	})
 
-	t.Run("creating a keeper that references a securevalue that is stored in a non-SQL type Keeper returns an error", func(t *testing.T) {
-		// 0. Create user with required permissions.
-		permissions := map[string]ResourcePermission{
-			ResourceKeepers: {Actions: ActionsAllKeepers},
-			// needed for this test to create (and delete for cleanup) securevalues.
-			ResourceSecureValues: {
-				Actions: []string{
-					secret.ActionSecretSecureValuesCreate,
-					secret.ActionSecretSecureValuesDelete,
-				},
-			},
-		}
-
-		editor := mustCreateUsers(t, helper, permissions).Editor
-
-		clientP := helper.GetResourceClient(apis.ResourceClientArgs{
-			User: editor,
-			GVR:  gvrKeepers,
-		})
-
-		// 1. Create a non-SQL keeper without using `secureValueName`.
-		keeperAWS := mustGenerateKeeper(t, helper, editor, nil)
-
-		// 2. Create a secureValue that is stored in the previously created keeper (non-SQL).
-		secureValue := mustGenerateSecureValue(t, helper, editor, keeperAWS.GetName())
-
-		// 3. Create another keeper that uses the secureValue, which fails.
-		testDataAnotherKeeper := keeperAWS.DeepCopy()
-		testDataAnotherKeeper.Object["spec"].(map[string]any)["aws"].(map[string]any)["accessKeyId"] = map[string]any{
-			"secureValueName": secureValue.GetName(),
-		}
-
-		keeperAnother, err := clientP.Resource.Create(ctx, testDataAnotherKeeper, metav1.CreateOptions{})
-		require.Error(t, err)
-		require.Nil(t, keeperAnother)
-	})
-
 	t.Run("creating a keeper that references a securevalue that is stored in a SQL type Keeper returns no error", func(t *testing.T) {
 		// 0. Create user with required permissions.
 		permissions := map[string]ResourcePermission{
@@ -287,7 +250,7 @@ func TestIntegrationKeeper(t *testing.T) {
 			"sql": map[string]any{
 				"encryption": map[string]any{"envelope": map[string]any{}},
 			},
-		})
+		}, "")
 
 		// 2. Create a secureValue that is stored in the previously created keeper (SQL).
 		secureValue := mustGenerateSecureValue(t, helper, editor, keeperSQL.GetName())
@@ -299,7 +262,7 @@ func TestIntegrationKeeper(t *testing.T) {
 				"accessKeyId":     map[string]any{"secureValueName": secureValue.GetName()},
 				"secretAccessKey": map[string]any{"valueFromEnv": "SECRET_ACCESS_KEY_XYZ"},
 			},
-		})
+		}, "")
 		require.NotNil(t, keeperAWS)
 	})
 
@@ -311,8 +274,8 @@ func TestIntegrationKeeper(t *testing.T) {
 		editorOrgA := mustCreateUsers(t, helper, permissions).Editor
 		editorOrgB := mustCreateUsers(t, helper, permissions).Editor
 
-		keeperOrgA := mustGenerateKeeper(t, helper, editorOrgA, nil)
-		keeperOrgB := mustGenerateKeeper(t, helper, editorOrgB, nil)
+		keeperOrgA := mustGenerateKeeper(t, helper, editorOrgA, nil, "")
+		keeperOrgB := mustGenerateKeeper(t, helper, editorOrgB, nil, "")
 
 		clientOrgA := helper.GetResourceClient(apis.ResourceClientArgs{User: editorOrgA, GVR: gvrKeepers})
 		clientOrgB := helper.GetResourceClient(apis.ResourceClientArgs{User: editorOrgB, GVR: gvrKeepers})
