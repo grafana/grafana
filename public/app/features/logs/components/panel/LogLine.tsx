@@ -76,7 +76,7 @@ const Log = ({ displayedFields, log, showTime, styles }: LogProps) => {
       <span className={`${styles.level} level-${log.logLevel} field`}>{log.displayLevel}</span>
       {displayedFields.length > 0 ? (
         displayedFields.map((field) => (
-          <span className="field" title={field}>
+          <span className="field" title={field} key={field}>
             {getDisplayedFieldValue(field, log)}
           </span>
         ))
