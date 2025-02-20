@@ -1,6 +1,9 @@
 package versions
 
-import "regexp"
+import (
+	"regexp"
+	"strings"
+)
 
 var semverRegex = regexp.MustCompile(`^(?P<major>0|[1-9]\d*)\.(?P<minor>0|[1-9]\d*)\.(?P<patch>0|[1-9]\d*)(?:-(?P<prerelease>(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+(?P<buildmetadata>[0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$`)
 
@@ -13,6 +16,7 @@ type Semver struct {
 }
 
 func ParseSemver(version string) Semver {
+	version = strings.TrimPrefix(version, "v")
 	matches := semverRegex.FindStringSubmatch(version)
 	results := make(map[string]string)
 	for i, name := range semverRegex.SubexpNames() {
