@@ -9,6 +9,7 @@ import (
 	"github.com/go-jose/go-jose/v3/jwt"
 	"github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
 type inProcExchanger struct {
@@ -37,8 +38,8 @@ func createInProcToken() (*authn.TokenExchangeResponse, error) {
 		},
 		Rest: authn.AccessTokenClaims{
 			Namespace:            "*",
-			Permissions:          []string{"folder.grafana.app:*", "dashboard.grafana.app:*"},
-			DelegatedPermissions: []string{"folder.grafana.app:*", "dashboard.grafana.app:*"},
+			Permissions:          identity.ServiceIdentityClaims.Rest.Permissions,
+			DelegatedPermissions: identity.ServiceIdentityClaims.Rest.DelegatedPermissions,
 		},
 	}
 
