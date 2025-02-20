@@ -73,7 +73,7 @@ func ValidateRepository(repo Repository) field.ErrorList {
 
 	for _, w := range cfg.Spec.Workflows {
 		switch w {
-		case provisioning.WriteWorkflow:
+		case provisioning.WriteWorkflow: // valid; no fall thru
 		case provisioning.BranchWorkflow:
 			if cfg.Spec.Type != provisioning.GitHubRepositoryType {
 				list = append(list, field.Invalid(field.NewPath("spec", "workflow"), w, "branch is only supported on git repositories"))
