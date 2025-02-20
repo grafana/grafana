@@ -554,7 +554,7 @@ func TestSearchFoldersFromApiServer(t *testing.T) {
 				},
 				Labels: []*resource.Requirement{},
 			},
-			Limit: 100000}).Return(&resource.ResourceSearchResponse{
+			Limit: folderSearchLimit}).Return(&resource.ResourceSearchResponse{
 			Results: &resource.ResourceTable{
 				Columns: []*resource.ResourceTableColumnDefinition{
 					{
@@ -649,7 +649,7 @@ func TestSearchFoldersFromApiServer(t *testing.T) {
 					},
 				},
 			},
-			Limit: 100000}).Return(&resource.ResourceSearchResponse{
+			Limit: folderSearchLimit}).Return(&resource.ResourceSearchResponse{
 			Results: &resource.ResourceTable{
 				Columns: []*resource.ResourceTableColumnDefinition{
 					{
@@ -716,7 +716,7 @@ func TestSearchFoldersFromApiServer(t *testing.T) {
 			},
 			Query:  "*test*",
 			Fields: dashboardsearch.IncludeFields,
-			Limit:  100000}).Return(&resource.ResourceSearchResponse{
+			Limit:  folderSearchLimit}).Return(&resource.ResourceSearchResponse{
 			Results: &resource.ResourceTable{
 				Columns: []*resource.ResourceTableColumnDefinition{
 					{
@@ -825,11 +825,11 @@ func TestDeleteFoldersFromApiServer(t *testing.T) {
 					{
 						Key:      resource.SEARCH_FIELD_FOLDER,
 						Operator: string(selection.In),
-						Values:   []string{"uid", "uid2"},
+						Values:   []string{"uid2", "uid"},
 					},
 				},
 			},
-			Limit: 100000}).Return(&resource.ResourceSearchResponse{
+			Limit: folderSearchLimit}).Return(&resource.ResourceSearchResponse{
 			Results: &resource.ResourceTable{
 				Columns: []*resource.ResourceTableColumnDefinition{
 					{

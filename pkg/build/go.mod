@@ -15,8 +15,7 @@ require (
 	github.com/drone/drone-cli v1.8.0 // @grafana/grafana-developer-enablement-squad
 	github.com/gogo/protobuf v1.3.2 // indirect; @grafana/alerting-backend
 	github.com/google/go-cmp v0.6.0 // @grafana/grafana-backend-group
-	github.com/google/go-github v17.0.0+incompatible // @grafana/grafana-developer-enablement-squad
-	github.com/google/go-github/v45 v45.2.0 // @grafana/grafana-developer-enablement-squad
+	github.com/google/go-github/v69 v69.2.0 // @grafana/grafana-developer-enablement-squad
 	github.com/google/uuid v1.6.0 // indirect; @grafana/grafana-backend-group
 	github.com/googleapis/gax-go/v2 v2.14.1 // indirect; @grafana/grafana-backend-group
 	github.com/jmespath/go-jmespath v0.4.0 // indirect; @grafana/grafana-backend-group
