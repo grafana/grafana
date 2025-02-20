@@ -86,6 +86,9 @@ grafana:codegen:lsdirs() {
 grafana::codegen:run pkg
 grafana::codegen:run pkg/apimachinery
 grafana::codegen:run pkg/aggregator
-grafana::codegen:run pkg/extensions
+
+if [ -d "pkg/extensions/apis" ]; then
+  grafana::codegen:run pkg/extensions
+fi
 
 echo "done."
