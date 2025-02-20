@@ -52,6 +52,7 @@ func (r *Runner) Run(ctx context.Context) error {
 				Title:       s.Title(),
 				Description: s.Description(),
 				StepID:      s.ID(),
+				Resolution:  s.Resolution(),
 			}
 		}
 		obj := &advisorv0alpha1.CheckType{

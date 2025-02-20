@@ -179,7 +179,7 @@ steps:
   name: yarn-install
 - commands:
   - apk add --update git bash
-  - yarn betterer ci
+  - yarn betterer:ci
   depends_on:
   - yarn-install
   image: node:22.11.0-alpine
@@ -1717,7 +1717,7 @@ steps:
   name: yarn-install
 - commands:
   - apk add --update git bash
-  - yarn betterer ci
+  - yarn betterer:ci
   depends_on:
   - yarn-install
   image: node:22.11.0-alpine
@@ -2865,7 +2865,7 @@ steps:
   name: yarn-install
 - commands:
   - apk add --update git bash
-  - yarn betterer ci
+  - yarn betterer:ci
   depends_on:
   - yarn-install
   image: node:22.11.0-alpine
@@ -4342,7 +4342,7 @@ steps:
   name: yarn-install
 - commands:
   - apk add --update git bash
-  - yarn betterer ci
+  - yarn betterer:ci
   depends_on:
   - yarn-install
   image: node:22.11.0-alpine
@@ -5605,6 +5605,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: a1d8f3defdf52b76049d8a8df1c21dd13cac9a2a9f80566abceffb4acd1b49d2
+hmac: 7a16cbedacf8a7381304abfde88319ce712a133e24c1ab304543c4c7ac318816
 
 ...

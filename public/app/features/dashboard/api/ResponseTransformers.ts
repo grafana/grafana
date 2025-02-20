@@ -533,9 +533,7 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
             sort: transformSortVariableToEnum(v.sort),
             query: {
               kind: v.datasource?.type || getDefaultDatasourceType(),
-              spec: {
-                ...v.query,
-              },
+              spec: query,
             },
           },
         };
