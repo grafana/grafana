@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/grpcclient"
 	"github.com/grafana/dskit/middleware"
+	"github.com/grafana/dskit/user"
 
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -30,7 +31,10 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 )
 
-const resourceStoreAudience = "resourceStore"
+const (
+	defaultUser           = "none"
+	resourceStoreAudience = "resourceStore"
+)
 
 type Options struct {
 	Cfg      *setting.Cfg
@@ -175,6 +179,13 @@ func grpcConn(address string, reg prometheus.Registerer) (*grpc.ClientConn, erro
 	instrumentationOptions = append(instrumentationOptions, middleware.ReportGRPCStatusOption)
 	unary, stream := grpcclient.Instrument(metrics.requestDuration, instrumentationOptions...)
 
+	// The defaultUser middleware is used to set the default user if no orgID is set, the library is built
+	// with the assumption that a user is always set.
+	//
+	// Make sure the defaultUser middleware is called first by adding it to the front of the interceptors.
+	unary = append([]grpc.UnaryClientInterceptor{defaultUserUnaryClientInterceptor()}, unary...)
+	stream = append([]grpc.StreamClientInterceptor{defaultUserStreamClientInterceptor()}, stream...)
+
 	// We can later pass in the gRPC config here, i.e. to set MaxRecvMsgSize etc.
 	cfg := grpcclient.Config{}
 	opts, err := cfg.DialOption(unary, stream)
@@ -194,4 +205,30 @@ func grpcConn(address string, reg prometheus.Registerer) (*grpc.ClientConn, erro
 
 	// Create a connection to the gRPC server
 	return grpc.NewClient(address, opts...)
+}
+
+func defaultUserUnaryClientInterceptor() grpc.UnaryClientInterceptor {
+	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+		// If no valid orgID is set, just set the no-auth one.
+		ctx = user.InjectOrgID(ctx, defaultUser)
+		// Invoke the next interceptor in the chain.
+		err := invoker(ctx, method, req, reply, cc, opts...)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+}
+
+func defaultUserStreamClientInterceptor() grpc.StreamClientInterceptor {
+	return func(ctx context.Context, desc *grpc.StreamDesc, cc *grpc.ClientConn, method string, streamer grpc.Streamer, opts ...grpc.CallOption) (grpc.ClientStream, error) {
+		// If no valid orgID is set, just set the no-auth one.
+		ctx = user.InjectOrgID(ctx, defaultUser)
+		// Invoke the next interceptor in the chain.
+		clientStream, err := streamer(ctx, desc, cc, method, opts...)
+		if err != nil {
+			return nil, err
+		}
+		return clientStream, nil
+	}
 }
