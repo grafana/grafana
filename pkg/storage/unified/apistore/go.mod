@@ -192,7 +192,7 @@ require (
 	github.com/googleapis/gax-go/v2 v2.14.1 // indirect
 	github.com/gorilla/mux v1.8.1 // indirect
 	github.com/gorilla/websocket v1.5.3 // indirect
-	github.com/grafana/alerting v0.0.0-20250219042117-00d67037a5f1 // indirect
+	github.com/grafana/alerting v0.0.0-20250219142948-d43046431703 // indirect
 	github.com/grafana/authlib v0.0.0-20250219100139-6a3b1bbb50e7 // indirect
 	github.com/grafana/dataplane/sdata v0.0.9 // indirect
 	github.com/grafana/dskit v0.0.0-20241105154643-a6b453a88040 // indirect
