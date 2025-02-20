@@ -120,16 +120,36 @@ interface ExpandedRowProps {
 function ExpandedRow({ row }: ExpandedRowProps) {
   const hasSummary = Boolean(row.status?.summary?.length);
   const hasErrors = Boolean(row.status?.errors?.length);
+  const hasSpec = Boolean(row.spec);
+  const specJson = hasSpec ? JSON.stringify(row.spec, null, 2) : '';
 
-  if (!hasSummary && !hasErrors) {
+  if (!hasSummary && !hasErrors && !hasSpec) {
+    console.log('no summary, errors, or spec', row);
     return null;
   }
 
   return (
     <Box padding={2}>
       <Stack direction="column" gap={2}>
+        {specJson && (
+          <Stack direction="column">
+            <Text variant="bodySmall" color="secondary">
+              Job Specification
+            </Text>
+            <pre
+              style={{
+                width: '100%',
+                height: Math.min(400, specJson.split('\n').length * 24),
+                whiteSpace: 'pre-wrap',
+                overflowX: 'auto',
+              }}
+            >
+              {specJson}
+            </pre>
+          </Stack>
+        )}
         {hasErrors && (
-          <Stack direction="column" gap={1}>
+          <Stack direction="column">
             {row.status?.errors?.map(
               (error, index) =>
                 error.trim() && (
@@ -148,6 +168,7 @@ function ExpandedRow({ row }: ExpandedRowProps) {
             data={row.status!.summary!}
             columns={getSummaryColumns()}
             getRowId={(item) => item.resource || ''}
+            pageSize={10}
           />
         )}
       </Stack>
@@ -190,10 +211,11 @@ export function RecentJobs({ repo }: Props) {
           <EmptyState />
         ) : (
           <InteractiveTable
-            data={items.slice(0, 15)}
+            data={items}
             columns={jobColumns}
             getRowId={(item) => `${item.metadata?.name}`}
             renderExpandedRow={(row) => <ExpandedRow row={row} />}
+            pageSize={10}
           />
         )}
       </Card.Description>

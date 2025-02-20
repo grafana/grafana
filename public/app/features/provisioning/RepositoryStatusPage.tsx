@@ -4,6 +4,7 @@ import { useParams } from 'react-router-dom-v5-compat';
 
 import { SelectableValue, urlUtil } from '@grafana/data';
 import {
+  Alert,
   Button,
   CellProps,
   Column,
@@ -19,6 +20,7 @@ import {
   TabsBar,
   Text,
   TextLink,
+  Modal,
 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
@@ -26,6 +28,7 @@ import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { isNotFoundError } from '../alerting/unified/api/util';
 
 import { ExportToRepository } from './ExportToRepository';
+import { MigrateToRepository } from './MigrateToRepository';
 import { RepositoryOverview } from './RepositoryOverview';
 import { RepositoryResources } from './RepositoryResources';
 import { StatusBadge } from './StatusBadge';
@@ -35,6 +38,7 @@ import {
   Repository,
   useListRepositoryQuery,
   useDeleteRepositoryFilesWithPathMutation,
+  useGetFrontendSettingsQuery,
 } from './api';
 import { FileDetails } from './api/types';
 import { PROVISIONING_URL } from './constants';
@@ -43,18 +47,19 @@ enum TabSelection {
   Overview = 'overview',
   Resources = 'resources',
   Files = 'files',
-  Export = 'export',
 }
 
 const tabInfo: SelectableValue<TabSelection> = [
   { value: TabSelection.Overview, label: 'Overview', title: 'Repository overview' },
   { value: TabSelection.Resources, label: 'Resources', title: 'Resources saved in grafana database' },
   { value: TabSelection.Files, label: 'Files', title: 'The raw file list from the repository' },
-  { value: TabSelection.Export, label: 'Export' },
 ];
 
 export default function RepositoryStatusPage() {
   const { name = '' } = useParams();
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [showMigrateModal, setShowMigrateModal] = useState(false);
+
   const query = useListRepositoryQuery({
     fieldSelector: `metadata.name=${name}`,
     watch: true,
@@ -62,7 +67,9 @@ export default function RepositoryStatusPage() {
   const data = query.data?.items?.[0];
   const location = useLocation();
   const [queryParams] = useQueryParams();
+  const settings = useGetFrontendSettingsQuery();
   const tab = queryParams['tab'] ?? TabSelection.Overview;
+  const remoteURL = data ? getRemoteURL(data) : undefined;
 
   const notFound = query.isError && isNotFoundError(query.error);
   return (
@@ -76,10 +83,21 @@ export default function RepositoryStatusPage() {
         data && (
           <Stack>
             <StatusBadge enabled={Boolean(data.spec?.sync?.enabled)} state={data.status?.sync?.state} name={name} />
+            {remoteURL && (
+              <Button variant="secondary" icon="github" onClick={() => window.open(remoteURL, '_blank')}>
+                Source Code
+              </Button>
+            )}
             <SyncRepository repository={data} />
-            <Button variant="secondary" icon="upload">
-              Export
-            </Button>
+            {settings.data?.legacyStorage ? (
+              <Button variant="secondary" icon="upload" onClick={() => setShowMigrateModal(true)}>
+                Migrate
+              </Button>
+            ) : (
+              <Button variant="secondary" icon="upload" onClick={() => setShowExportModal(true)}>
+                Export
+              </Button>
+            )}
             <LinkButton variant="secondary" icon="cog" href={`${PROVISIONING_URL}/${name}/edit`}>
               Settings
             </LinkButton>
@@ -88,6 +106,11 @@ export default function RepositoryStatusPage() {
       }
     >
       <Page.Contents isLoading={query.isLoading}>
+        {settings.data?.legacyStorage && (
+          <Alert title="Legacy Storage" severity="error">
+            Instance is not yet running unified storage -- requires migration wizard
+          </Alert>
+        )}
         {notFound ? (
           <EmptyState message={`Repository not found`} variant="not-found">
             <Text element={'p'}>Make sure the repository config exists in the configuration file.</Text>
@@ -112,8 +135,18 @@ export default function RepositoryStatusPage() {
                   {tab === TabSelection.Overview && <RepositoryOverview repo={data} />}
                   {tab === TabSelection.Resources && <RepositoryResources repo={data} />}
                   {tab === TabSelection.Files && <FilesView repo={data} />}
-                  {tab === TabSelection.Export && <ExportToRepository repo={data} />}
                 </TabContent>
+
+                {showExportModal && (
+                  <Modal isOpen={true} title="Export to Repository" onDismiss={() => setShowExportModal(false)}>
+                    <ExportToRepository repo={data} />
+                  </Modal>
+                )}
+                {showMigrateModal && (
+                  <Modal isOpen={true} title="Migrate to Repository" onDismiss={() => setShowMigrateModal(false)}>
+                    <MigrateToRepository repo={data} />
+                  </Modal>
+                )}
               </>
             ) : (
               <div>not found</div>
@@ -219,4 +252,16 @@ function FilesView({ repo }: RepoProps) {
       <InteractiveTable columns={columns} data={data} pageSize={25} getRowId={(f: FileDetails) => String(f.path)} />
     </Stack>
   );
+}
+
+function getRemoteURL(repo: Repository) {
+  if (repo.spec?.type === 'github') {
+    const spec = repo.spec.github;
+    let url = spec?.url || '';
+    if (spec?.branch) {
+      url += `/tree/${spec.branch}`;
+    }
+    return url;
+  }
+  return undefined;
 }

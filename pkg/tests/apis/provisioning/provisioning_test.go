@@ -19,7 +19,9 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	gh "github.com/google/go-github/v66/github"
+	gh "github.com/google/go-github/v69/github"
+	ghmock "github.com/migueleliasweb/go-github-mock/src/mock"
+
 	dashboard "github.com/grafana/grafana/pkg/apis/dashboard/v1alpha1"
 	folder "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
@@ -29,7 +31,6 @@ import (
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
-	ghmock "github.com/migueleliasweb/go-github-mock/src/mock"
 )
 
 func TestMain(m *testing.M) {
@@ -48,9 +49,8 @@ func TestIntegrationProvisioning(t *testing.T) {
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagProvisioning,
 			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
-			featuremgmt.FlagKubernetesCliDashboards,
-			featuremgmt.FlagKubernetesFoldersServiceV2,
 			featuremgmt.FlagUnifiedStorageSearch,
+			featuremgmt.FlagKubernetesClientDashboardsFolders,
 		},
 		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 			"dashboards.dashboard.grafana.app": {
@@ -98,37 +98,37 @@ func TestIntegrationProvisioning(t *testing.T) {
 			ghmock.WithRequestMatchHandler(
 				ghmock.GetUser,
 				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-					w.Write(ghmock.MustMarshal(&gh.User{}))
+					_, _ = w.Write(ghmock.MustMarshal(&gh.User{}))
 				}),
 			),
 			ghmock.WithRequestMatchHandler(
 				ghmock.GetReposHooksByOwnerByRepo,
 				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-					w.Write(ghmock.MustMarshal([]*gh.Hook{}))
+					_, _ = w.Write(ghmock.MustMarshal([]*gh.Hook{}))
 				}),
 			),
 			ghmock.WithRequestMatchHandler(
 				ghmock.PostReposHooksByOwnerByRepo,
 				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-					w.Write(ghmock.MustMarshal(&gh.Hook{}))
+					_, _ = w.Write(ghmock.MustMarshal(&gh.Hook{}))
 				}),
 			),
 			ghmock.WithRequestMatchHandler(
 				ghmock.GetReposByOwnerByRepo,
 				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-					w.Write(ghmock.MustMarshal(&gh.Repository{}))
+					_, _ = w.Write(ghmock.MustMarshal(&gh.Repository{}))
 				}),
 			),
 			ghmock.WithRequestMatchHandler(
 				ghmock.GetReposBranchesByOwnerByRepoByBranch,
 				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-					w.Write(ghmock.MustMarshal(&gh.Branch{}))
+					_, _ = w.Write(ghmock.MustMarshal(&gh.Branch{}))
 				}),
 			),
 			ghmock.WithRequestMatchHandler(
 				ghmock.GetReposGitTreesByOwnerByRepoByTreeSha,
 				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-					w.Write(ghmock.MustMarshal(&gh.Tree{}))
+					_, _ = w.Write(ghmock.MustMarshal(&gh.Tree{}))
 				}),
 			),
 			ghmock.WithRequestMatchHandler(

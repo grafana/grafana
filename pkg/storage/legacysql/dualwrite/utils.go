@@ -9,8 +9,8 @@ import (
 )
 
 func IsReadingLegacyDashboardsAndFolders(ctx context.Context, svc Service) bool {
-	f := svc.ReadFromUnified(ctx, folders.FolderResourceInfo.GroupResource())
-	d := svc.ReadFromUnified(ctx, schema.GroupResource{
+	f, _ := svc.ReadFromUnified(ctx, folders.FolderResourceInfo.GroupResource())
+	d, _ := svc.ReadFromUnified(ctx, schema.GroupResource{
 		Group:    dashboard.GROUP,
 		Resource: dashboard.DASHBOARD_RESOURCE,
 	})

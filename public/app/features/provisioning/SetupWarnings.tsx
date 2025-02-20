@@ -7,10 +7,9 @@ import { Alert, Text, Collapse } from '@grafana/ui';
 const requiredFeatureToggles: Array<keyof FeatureToggles> = [
   'provisioning',
   'kubernetesDashboards',
-  'kubernetesFoldersServiceV2',
+  'kubernetesClientDashboardsFolders',
   'unifiedStorageSearch',
   'unifiedStorageSearchUI',
-  'kubernetesCliDashboards',
 ];
 
 const custom_ini = `app_mode = development
@@ -18,9 +17,9 @@ const custom_ini = `app_mode = development
 [feature_toggles]
 provisioning = true
 kubernetesDashboards = true
+unifiedStorageSearch = true
 unifiedStorageSearchUI = true
-kubernetesCliDashboards = true
-kubernetesFoldersServiceV2 = true
+kubernetesClientDashboardsFolders = true
 
 # If you want easy kubectl setup development mode
 grafanaAPIServerEnsureKubectlAccess = true

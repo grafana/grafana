@@ -12,49 +12,11 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	dashboards "github.com/grafana/grafana/pkg/apis/dashboard"
 	"github.com/grafana/grafana/pkg/infra/slugify"
-	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
-	"github.com/grafana/grafana/pkg/storage/unified/parquet"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
-
-var _ resource.BatchResourceWriter = (*resourceReader)(nil)
-
-type resourceReader struct {
-	job *exportJob
-}
-
-// Close implements resource.BatchResourceWriter.
-func (f *resourceReader) Close() error {
-	return nil
-}
-
-// CloseWithResults implements resource.BatchResourceWriter.
-func (f *resourceReader) CloseWithResults() (*resource.BatchResponse, error) {
-	return &resource.BatchResponse{}, nil
-}
-
-// Write implements resource.BatchResourceWriter.
-func (f *resourceReader) Write(ctx context.Context, key *resource.ResourceKey, value []byte) error {
-	item := &unstructured.Unstructured{}
-	err := item.UnmarshalJSON(value)
-	if err != nil {
-		// TODO: should we fail the entire execution?
-		return fmt.Errorf("failed to unmarshal unstructured: %w", err)
-	}
-
-	if result := f.job.write(ctx, item); result.Error != nil {
-		f.job.progress.Record(ctx, result)
-		if err := f.job.progress.TooManyErrors(); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
 
 func (r *exportJob) loadResources(ctx context.Context) error {
 	kinds := []schema.GroupVersionResource{{
@@ -64,39 +26,6 @@ func (r *exportJob) loadResources(ctx context.Context) error {
 	}}
 
 	for _, kind := range kinds {
-		r.progress.SetMessage(fmt.Sprintf("exporting %s resource", kind.Resource))
-		if r.legacy != nil {
-			r.progress.SetMessage(fmt.Sprintf("migrate %s resource", kind.Resource))
-			gr := kind.GroupResource()
-			opts := legacy.MigrateOptions{
-				Namespace:   r.namespace,
-				WithHistory: r.withHistory,
-				Resources:   []schema.GroupResource{gr},
-				Store:       parquet.NewBatchResourceWriterClient(&resourceReader{job: r}),
-				OnlyCount:   true, // first get the count
-			}
-			stats, err := r.legacy.Migrate(ctx, opts)
-			if err != nil {
-				return fmt.Errorf("unable to count legacy items %w", err)
-			}
-
-			// FIXME: explain why we calculate it in this way
-			if len(stats.Summary) > 0 {
-				count := stats.Summary[0].Count
-				history := stats.Summary[0].History
-				if history > count {
-					count = history // the number of items we will process
-				}
-				r.progress.SetTotal(int(count))
-			}
-
-			opts.OnlyCount = false // this time actually write
-			_, err = r.legacy.Migrate(ctx, opts)
-			if err != nil {
-				return fmt.Errorf("error running legacy migrate %s %w", kind.Resource, err)
-			}
-		}
-
 		r.progress.SetMessage(fmt.Sprintf("reading %s resource", kind.Resource))
 		if err := r.loadResourcesFromAPIServer(ctx, kind); err != nil {
 			return fmt.Errorf("error loading %s %w", kind.Resource, err)
@@ -174,9 +103,6 @@ func (r *exportJob) write(ctx context.Context, obj *unstructured.Unstructured) j
 		title = name
 	}
 	folder := meta.GetFolder()
-
-	// Add the author in context (if available)
-	ctx = r.withAuthorSignature(ctx, meta)
 
 	// Get the absolute path of the folder
 	fid, ok := r.folderTree.DirPath(folder, "")
