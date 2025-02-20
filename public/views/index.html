@@ -355,12 +355,13 @@
     <!-- End Google Tag Manager -->
     [[end]]
 
-    [[if .Settings.FeatureToggles.assetSriChecks]]
+    [[if .Settings.FeatureToggles.assetSriChecks ]]
       [[range $asset := .Assets.JSFiles]]
         <script
         nonce="[[$.Nonce]]"
         src="[[$asset.FilePath]]"
         integrity="[[$asset.Integrity]]"
+        crossorigin="anonymous"
         type="text/javascript"
         defer
       ></script>
@@ -370,6 +371,7 @@
         <script
         nonce="[[$.Nonce]]"
         src="[[$asset.FilePath]]"
+        crossorigin="anonymous"
         type="text/javascript"
         defer
       ></script>
