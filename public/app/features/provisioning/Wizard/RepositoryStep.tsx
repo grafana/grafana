@@ -1,18 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { AppEvents } from '@grafana/data';
-import { getAppEvents } from '@grafana/runtime';
-import { Button, Field, FieldSet, Input, MultiCombobox, SecretInput, Stack, Switch } from '@grafana/ui';
+import { Field, FieldSet, Input, MultiCombobox, SecretInput, Switch } from '@grafana/ui';
 
 import { getWorkflowOptions } from '../ConfigForm';
 import { TokenPermissionsInfo } from '../TokenPermissionsInfo';
-import { useCreateOrUpdateRepository } from '../hooks';
-import { dataToSpec } from '../utils/data';
 
 import { WizardFormData } from './types';
-
-const appEvents = getAppEvents();
 
 export function RepositoryStep() {
   const {
@@ -20,22 +14,11 @@ export function RepositoryStep() {
     control,
     watch,
     setValue,
-    getValues,
     formState: { errors },
   } = useFormContext<WizardFormData>();
-  const [submitData, request] = useCreateOrUpdateRepository();
 
   const type = watch('repository.type');
   const [tokenConfigured, setTokenConfigured] = useState(false);
-
-  const handleConnect = async () => {
-    const formData = getValues();
-    const response = await submitData(dataToSpec(formData.repository));
-
-    if (response.data?.metadata?.name) {
-      setValue('repositoryName', response.data.metadata.name);
-    }
-  };
 
   const WorkflowsField = () => (
     <Field
@@ -63,22 +46,6 @@ export function RepositoryStep() {
       />
     </Field>
   );
-
-  useEffect(() => {
-    if (request.isSuccess) {
-      appEvents.publish({
-        type: AppEvents.alertSuccess.name,
-        payload: ['Repository settings saved'],
-      });
-    }
-
-    if (request.isError) {
-      appEvents.publish({
-        type: AppEvents.alertError.name,
-        payload: ['Failed to save repository settings', request.error],
-      });
-    }
-  }, [request.error, request.isError, request.isSuccess]);
 
   if (type === 'github') {
     return (
@@ -141,16 +108,6 @@ export function RepositoryStep() {
           </Field>
 
           <WorkflowsField />
-
-          <Stack gap={2}>
-            <Button
-              onClick={handleConnect}
-              disabled={request.isLoading}
-              icon={request.isLoading ? 'spinner' : 'check-circle'}
-            >
-              {request.isLoading ? 'Connecting...' : 'Connect & verify'}
-            </Button>
-          </Stack>
         </div>
       </FieldSet>
     );
