@@ -65,43 +65,6 @@ function formatAbsoluteRange(range: AbsoluteTimeRange, tz?: string) {
   };
 }
 
-/*
-// valid test scenarios
-
-with tz / without tz
-tz-matches / tz-mismatches
-
-point annos
-  from every day (no time)
-  from every day (time)
-  from tues      (no time)
-  from tues      (time)
-
-  // matching times
-  from every day (time)        to every day (time)
-  from tues      (time)        to tues      (time)
-
-region annos
-  from every day (time before) to every day (time after)
-  from every day (time after)  to every day (time before)
-  from every day (no time)     to every day (time)
-  from every day (time)        to every day (no time)
-
-  // "to" should assume every day
-  from every day               to tues
-
-  from fri (no time)           to tues (no time)
-  from fri (no time)           to tues (time)
-  from fri (time)              to tues (no time)
-  from fri (time)              to tues (time)
-
-  // "to" should assume Fri
-  from fri (time before)       to every day (time after)
-
-  from fri (time before)       to fri (time after)
-  from fri (time after)        to fri (time before)
-*/
-
 describe('timeRegions', () => {
   describe('day of week', () => {
     it('returns regions with 4 Mondays in March 2023', () => {
@@ -321,6 +284,78 @@ describe('timeRegions', () => {
     });
   });
 
+  type TestDef = [
+    name: string,
+    fromDayOfWeek: number | null,
+    from: string | null,
+    toDayOfWeek: number | null,
+    to: string | null,
+    cronExpr: string,
+    duration: string,
+  ];
+
+  let _ = null;
+
+  describe('various scenarios (regions)', () => {
+    /* eslint-disable */
+    // prettier-ignore
+    let tests: TestDef[] = [
+      ['from every day (time before) to every day (time after)',  _, '10:27', _, '14:27', '27 10 * * *', '4h'],
+      ['from every day (time after)  to every day (time before)', _, '22:27', _, '02:27', '27 22 * * *', '4h'],
+      ['from every day (time)        to every day (no time)',     _, '10:27', _,       _, '27 10 * * *',   ''],
+      ['from fri (no time)',                                      5,       _, _,       _,   '0 0 * * 5', '1d'],
+      ['from fri (no time)           to tues (no time)',          5,       _, 2,       _,   '0 0 * * 5', '5d'],
+      ['from fri (no time)           to tues (time)',             5,       _, 2, '02:27',   '0 0 * * 5', '4d 2h 27m'],
+      ['from fri (time)              to tues (no time)',          5, '10:27', 2,       _, '27 10 * * 5', '4d'],
+      ['from fri (time)              to tues (time)',             5, '10:27', 2, '14:27', '27 10 * * 5', '4d 4h'],
+
+      // same day
+      ['from fri (time before)       to fri (time after)',        5, '10:27', 5, '14:27', '27 10 * * 5', '4h'],
+      // "toDay" should assume Fri
+      ['from fri (time before)       to every day (time after)',  5, '10:27', _, '14:27', '27 10 * * 5', '4h'],
+      // wrap-around case
+      ['from fri (time after)        to fri (time before)',       5, '14:27', 5, '10:27', '27 14 * * 5', '6d 20h'],
+
+    ];
+    /* eslint-enable */
+
+    tests.forEach(([name, fromDayOfWeek, from, toDayOfWeek, to, cronExpr, duration]) => {
+      it(name, () => {
+        const cron = convertToCron(fromDayOfWeek, from, toDayOfWeek, to);
+
+        // console.log(cron?.cronExpr, reverseParseDuration(durationFromSeconds(cron.duration), false));
+
+        expect(cron).not.toBeUndefined();
+        expect(cron?.cronExpr).toEqual(cronExpr);
+        expect(reverseParseDuration(durationFromSeconds(cron?.duration ?? 0), false)).toEqual(duration);
+      });
+    });
+  });
+
+  describe('various scenarios (points)', () => {
+    /* eslint-disable */
+    // prettier-ignore
+    let tests: TestDef[] = [
+      ['from every day (time)',                            _, '10:03', _, _,       '3 10 * * *', ''],
+      ['from every day (time)        to every day (time)', _, '10:03', _, '10:03', '3 10 * * *', ''],
+      ['from tues      (time)',                            2, '10:03', _,       _, '3 10 * * 2', ''],
+      ['from tues      (time)        to tues      (time)', 2, '10:03', _, '10:03', '3 10 * * 2', ''],
+    ];
+    /* eslint-enable */
+
+    tests.forEach(([name, fromDayOfWeek, from, toDayOfWeek, to, cronExpr, duration]) => {
+      it(name, () => {
+        const cron = convertToCron(fromDayOfWeek, from, toDayOfWeek, to);
+
+        // console.log(cron?.cronExpr, reverseParseDuration(durationFromSeconds(cron.duration), false));
+
+        expect(cron).not.toBeUndefined();
+        expect(cron?.cronExpr).toEqual(cronExpr);
+        expect(reverseParseDuration(durationFromSeconds(cron?.duration ?? 0), false)).toEqual(duration);
+      });
+    });
+  });
+
   describe('convert simple time region config to cron string and duration', () => {
     it.each`
       from       | fromDOW | to         | toDOW | timezone     | expectedCron   | expectedDuration
@@ -334,7 +369,12 @@ describe('timeRegions', () => {
       "time region config with from time '$from' and DOW '$fromDOW', to: '$to' and DOW '$toDOW' should generate a cron string of '$expectedCron' and '$expectedDuration'",
       ({ from, fromDOW, to, toDOW, timezone, expectedCron, expectedDuration }) => {
         const timeConfig: TimeRegionConfig = { from, fromDayOfWeek: fromDOW, to, toDayOfWeek: toDOW, timezone };
-        const convertedCron = convertToCron(timeConfig.fromDayOfWeek, timeConfig.from, timeConfig.toDayOfWeek, timeConfig.to)!;
+        const convertedCron = convertToCron(
+          timeConfig.fromDayOfWeek,
+          timeConfig.from,
+          timeConfig.toDayOfWeek,
+          timeConfig.to
+        )!;
         expect(convertedCron).not.toBeUndefined();
         expect(convertedCron.cronExpr).toEqual(expectedCron);
         expect(reverseParseDuration(durationFromSeconds(convertedCron.duration), false)).toEqual(expectedDuration);
