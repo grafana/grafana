@@ -184,13 +184,13 @@ func grpcConn(address string, reg prometheus.Registerer) (*grpc.ClientConn, erro
 
 	// Add middleware to retry on transient connection issues. Note that
 	// we do not implement it for streams, as we don't currently use streams.
-	retryCfg := RetryConfig{
+	retryCfg := retryConfig{
 		Max:           3,
 		Backoff:       time.Second,
 		BackoffJitter: 0.5,
 	}
-	unary = append(unary, UnaryRetryInterceptor(retryCfg))
-	unary = append(unary, UnaryRetryInstrument(metrics.requestRetries))
+	unary = append(unary, unaryRetryInterceptor(retryCfg))
+	unary = append(unary, unaryRetryInstrument(metrics.requestRetries))
 
 	cfg := grpcclient.Config{}
 	// Set the defaults that are normally set by Config.RegisterFlags.
