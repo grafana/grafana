@@ -92,6 +92,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
       allowedExtraThemes.push('gildedgrove');
       allowedExtraThemes.push('sapphiredusk');
       allowedExtraThemes.push('tron');
+      allowedExtraThemes.push('gloom');
     }
 
     this.themeOptions = getBuiltInThemes(allowedExtraThemes).map((theme) => ({
@@ -183,7 +184,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
             disabled={isLoading}
             label={t('shared-preferences.fields.theme-label', 'Interface theme')}
             description={
-              config.featureToggles.grafanaconThemes ? (
+              config.featureToggles.grafanaconThemes && config.feedbackLinksEnabled ? (
                 <Trans i18nKey="shared-preferences.fields.theme-description">
                   Enjoying the limited edition themes? Tell us what you'd like to see{' '}
                   <TextLink

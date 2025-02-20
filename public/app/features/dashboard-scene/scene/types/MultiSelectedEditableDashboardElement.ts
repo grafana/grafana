@@ -14,6 +14,11 @@ export interface MultiSelectedEditableDashboardElement {
   typeName: Readonly<string>;
 
   /**
+   * Extremely useful for being able to access the useState inside the contained items
+   */
+  key: Readonly<string>;
+
+  /**
    * Hook that returns edit pane options
    */
   useEditPaneOptions?(): OptionsPaneCategoryDescriptor[];

@@ -47,6 +47,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
@@ -137,6 +138,7 @@ type service struct {
 
 	authorizer        *authorizer.GrafanaAuthorizer
 	serverLockService builder.ServerLockService
+	storageStatus     dualwrite.Service
 	kvStore           kvstore.KVStore
 
 	pluginClient    plugins.Client
@@ -144,6 +146,8 @@ type service struct {
 	contextProvider datasource.PluginContextWrapper
 	pluginStore     pluginstore.Store
 	unified         resource.ResourceClient
+
+	buildHandlerChainFuncFromBuilders builder.BuildHandlerChainFuncFromBuilders
 }
 
 func ProvideService(
@@ -159,26 +163,30 @@ func ProvideService(
 	datasources datasource.ScopedPluginDatasourceProvider,
 	contextProvider datasource.PluginContextWrapper,
 	pluginStore pluginstore.Store,
+	storageStatus dualwrite.Service,
 	unified resource.ResourceClient,
+	buildHandlerChainFuncFromBuilders builder.BuildHandlerChainFuncFromBuilders,
 ) (*service, error) {
 	s := &service{
-		log:               log.New(modules.GrafanaAPIServer),
-		cfg:               cfg,
-		features:          features,
-		rr:                rr,
-		stopCh:            make(chan struct{}),
-		builders:          []builder.APIGroupBuilder{},
-		authorizer:        authorizer.NewGrafanaAuthorizer(cfg, orgService),
-		tracing:           tracing,
-		db:                db, // For Unified storage
-		metrics:           metrics.ProvideRegisterer(),
-		kvStore:           kvStore,
-		pluginClient:      pluginClient,
-		datasources:       datasources,
-		contextProvider:   contextProvider,
-		pluginStore:       pluginStore,
-		serverLockService: serverLockService,
-		unified:           unified,
+		log:                               log.New(modules.GrafanaAPIServer),
+		cfg:                               cfg,
+		features:                          features,
+		rr:                                rr,
+		stopCh:                            make(chan struct{}),
+		builders:                          []builder.APIGroupBuilder{},
+		authorizer:                        authorizer.NewGrafanaAuthorizer(cfg, orgService),
+		tracing:                           tracing,
+		db:                                db, // For Unified storage
+		metrics:                           metrics.ProvideRegisterer(),
+		kvStore:                           kvStore,
+		pluginClient:                      pluginClient,
+		datasources:                       datasources,
+		contextProvider:                   contextProvider,
+		pluginStore:                       pluginStore,
+		serverLockService:                 serverLockService,
+		storageStatus:                     storageStatus,
+		unified:                           unified,
+		buildHandlerChainFuncFromBuilders: buildHandlerChainFuncFromBuilders,
 	}
 	// This will be used when running as a dskit service
 	service := services.NewBasicService(s.start, s.running, nil).WithName(modules.GrafanaAPIServer)
@@ -265,24 +273,29 @@ func (s *service) RegisterAPI(b builder.APIGroupBuilder) {
 func (s *service) start(ctx context.Context) error {
 	// Get the list of groups the server will support
 	builders := s.builders
-
 	groupVersions := make([]schema.GroupVersion, 0, len(builders))
+
 	// Install schemas
 	initialSize := len(kubeaggregator.APIVersionPriorities)
 	for i, b := range builders {
-		groupVersions = append(groupVersions, b.GetGroupVersion())
+		gvs := builder.GetGroupVersions(b)
+		groupVersions = append(groupVersions, gvs...)
 		if err := b.InstallSchema(Scheme); err != nil {
 			return err
 		}
 
-		if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAggregator) {
-			// set the priority for the group+version
-			kubeaggregator.APIVersionPriorities[b.GetGroupVersion()] = kubeaggregator.Priority{Group: 15000, Version: int32(i + initialSize)}
-		}
+		for _, gv := range gvs {
+			if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAggregator) {
+				// set the priority for the group+version
+				kubeaggregator.APIVersionPriorities[gv] = kubeaggregator.Priority{Group: 15000, Version: int32(i + initialSize)}
+			}
 
-		auth := b.GetAuthorizer()
-		if auth != nil {
-			s.authorizer.Register(b.GetGroupVersion(), auth)
+			if a, ok := b.(builder.APIGroupAuthorizer); ok {
+				auth := a.GetAuthorizer()
+				if auth != nil {
+					s.authorizer.Register(gv, auth)
+				}
+			}
 		}
 	}
 
@@ -344,7 +357,7 @@ func (s *service) start(ctx context.Context) error {
 		s.cfg.BuildVersion,
 		s.cfg.BuildCommit,
 		s.cfg.BuildBranch,
-		nil,
+		s.buildHandlerChainFuncFromBuilders,
 	)
 	if err != nil {
 		return err
@@ -361,6 +374,7 @@ func (s *service) start(ctx context.Context) error {
 		// Required for the dual writer initialization
 		s.metrics, request.GetNamespaceMapper(s.cfg), kvstore.WithNamespace(s.kvStore, 0, "storage.dualwriting"),
 		s.serverLockService,
+		s.storageStatus,
 		optsregister,
 	)
 	if err != nil {

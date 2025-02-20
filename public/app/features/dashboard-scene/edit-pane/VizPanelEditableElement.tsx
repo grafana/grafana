@@ -101,7 +101,7 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
 
   public onDelete = () => {
     const layout = dashboardSceneGraph.getLayoutManagerFor(this.panel);
-    layout.removePanel(this.panel);
+    layout.removePanel?.(this.panel);
   };
 
   public renderActions(): ReactNode {

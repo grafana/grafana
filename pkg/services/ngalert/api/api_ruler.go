@@ -242,6 +242,10 @@ func (srv RulerSrv) RouteGetRulesGroupConfig(c *contextmodel.ReqContext, namespa
 		return errorToResponse(err)
 	}
 
+	if len(rules) == 0 {
+		return ErrResp(http.StatusNotFound, errors.New("rule group does not exist"), "")
+	}
+
 	provenanceRecords, err := srv.provenanceStore.GetProvenances(c.Req.Context(), c.SignedInUser.GetOrgID(), (&ngmodels.AlertRule{}).ResourceType())
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to get group alert rules")
@@ -251,6 +255,7 @@ func (srv RulerSrv) RouteGetRulesGroupConfig(c *contextmodel.ReqContext, namespa
 		// nolint:staticcheck
 		GettableRuleGroupConfig: toGettableRuleGroupConfig(finalRuleGroup, rules, provenanceRecords, srv.resolveUserIdToNameFn(c.Req.Context())),
 	}
+
 	return response.JSON(http.StatusAccepted, result)
 }
 

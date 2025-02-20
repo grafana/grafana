@@ -22,6 +22,8 @@ export {
   type UsePluginExtensions,
   type UsePluginExtensionsResult,
   type UsePluginComponentResult,
+  type UsePluginFunctionsOptions,
+  type UsePluginFunctionsResult,
 } from './pluginExtensions/getPluginExtensions';
 export {
   setPluginExtensionsHook,
@@ -33,6 +35,7 @@ export {
 export { setPluginComponentHook, usePluginComponent } from './pluginExtensions/usePluginComponent';
 export { setPluginComponentsHook, usePluginComponents } from './pluginExtensions/usePluginComponents';
 export { setPluginLinksHook, usePluginLinks } from './pluginExtensions/usePluginLinks';
+export { setPluginFunctionsHook, usePluginFunctions } from './pluginExtensions/usePluginFunctions';
 
 export { isPluginExtensionLink, isPluginExtensionComponent } from './pluginExtensions/utils';
 export { setCurrentUser } from './user';

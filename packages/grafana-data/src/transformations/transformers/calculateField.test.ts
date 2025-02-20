@@ -1,8 +1,22 @@
+import {
+  SceneDataNode,
+  SceneDataTransformer,
+  SceneDeactivationHandler,
+  SceneFlexItem,
+  SceneFlexLayout,
+  sceneGraph,
+  SceneObject,
+  SceneObjectBase,
+  SceneVariable,
+  SceneVariableSet,
+  TestVariable,
+} from '@grafana/scenes';
+import { DataTransformerConfig, LoadingState } from '@grafana/schema';
+
 import { DataFrameView } from '../../dataframe/DataFrameView';
 import { toDataFrame } from '../../dataframe/processDataFrame';
-import { ScopedVars } from '../../types/ScopedVars';
-import { FieldType } from '../../types/dataFrame';
-import { DataTransformContext } from '../../types/transformations';
+import { DataFrame, FieldType } from '../../types/dataFrame';
+import { getDefaultTimeRange } from '../../types/time';
 import { BinaryOperationID } from '../../utils/binaryOperators';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 import { UnaryOperationID } from '../../utils/unaryOperators';
@@ -565,51 +579,26 @@ describe('calculateField transformer w/ timeseries', () => {
         replaceFields: true,
       },
     };
-    const context: DataTransformContext = {
-      interpolate: (target: string | undefined, scopedVars?: ScopedVars, format?: string | Function): string => {
-        if (!target) {
-          return '';
-        }
-        const variables: ScopedVars = {
-          var1: {
-            value: 'Test',
-            text: 'Test',
-          },
-          var2: {
-            value: 5,
-            text: '5',
-          },
-          __interval: {
-            value: 10000,
-            text: '10000',
-          },
-        };
-        for (const key in variables) {
-          if (target === `$${key}`) {
-            return variables[key]!.value + '';
-          }
-        }
-        return target;
-      },
-    };
 
-    await expect(transformDataFrame([cfg], [seriesA], context)).toEmitValuesWith((received) => {
-      const data = received[0];
-      const filtered = data[0];
-      const rows = new DataFrameView(filtered).toArray();
-      expect(rows).toMatchInlineSnapshot(`
-        [
-          {
-            "Test": 6,
-            "TheTime": 1000,
-          },
-          {
-            "Test": 105,
-            "TheTime": 2000,
-          },
-        ]
-      `);
-    });
+    const data = setupTransformationScene(seriesA, cfg, [
+      new TestVariable({ name: 'var1', value: 'Test' }),
+      new TestVariable({ name: 'var2', value: 5 }),
+    ]);
+
+    const filtered = data[0];
+    const rows = new DataFrameView(filtered).toArray();
+    expect(rows).toMatchInlineSnapshot(`
+      [
+        {
+          "Test": 6,
+          "TheTime": 1000,
+        },
+        {
+          "Test": 105,
+          "TheTime": 2000,
+        },
+      ]
+    `);
   });
 
   it('calculates centered moving average on odd window size', async () => {
@@ -749,8 +738,6 @@ describe('calculateField transformer w/ timeseries', () => {
 
     await expect(transformDataFrame([cfg], [series])).toEmitValuesWith((received) => {
       const data = received[0][0];
-
-      //console.log(data.fields);
 
       expect(data.fields.length).toEqual(2);
       expect(data.fields[1].values).toEqual([1, 1, 3, 3.5, 4.5]);
@@ -1185,3 +1172,63 @@ describe('calculateField transformer w/ timeseries', () => {
     });
   });
 });
+
+function activateFullSceneTree(scene: SceneObject): SceneDeactivationHandler {
+  const deactivationHandlers: SceneDeactivationHandler[] = [];
+
+  // Important that variables are activated before other children
+  if (scene.state.$variables) {
+    deactivationHandlers.push(activateFullSceneTree(scene.state.$variables));
+  }
+
+  scene.forEachChild((child) => {
+    // For query runners which by default use the container width for maxDataPoints calculation we are setting a width.
+    // In real life this is done by the React component when VizPanel is rendered.
+    if ('setContainerWidth' in child) {
+      // @ts-expect-error
+      child.setContainerWidth(500);
+    }
+    deactivationHandlers.push(activateFullSceneTree(child));
+  });
+
+  deactivationHandlers.push(scene.activate());
+
+  return () => {
+    for (const handler of deactivationHandlers) {
+      handler();
+    }
+  };
+}
+
+function setupTransformationScene(
+  inputData: DataFrame,
+  cfg: DataTransformerConfig,
+  variables: SceneVariable[]
+): DataFrame[] {
+  class TestSceneObject extends SceneObjectBase<{}> {}
+  const dataNode = new SceneDataNode({
+    data: {
+      state: LoadingState.Loading,
+      timeRange: getDefaultTimeRange(),
+      series: [inputData],
+    },
+  });
+
+  const transformationNode = new SceneDataTransformer({
+    transformations: [cfg],
+  });
+
+  const consumer = new TestSceneObject({
+    $data: transformationNode,
+  });
+
+  const scene = new SceneFlexLayout({
+    $data: dataNode,
+    $variables: new SceneVariableSet({ variables }),
+    children: [new SceneFlexItem({ body: consumer })],
+  });
+
+  activateFullSceneTree(scene);
+
+  return sceneGraph.getData(consumer).state.data?.series!;
+}
