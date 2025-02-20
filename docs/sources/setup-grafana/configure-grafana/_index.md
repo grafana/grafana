@@ -951,7 +951,7 @@ If you manage users externally you can replace the user invite button for organi
 #### `viewers_can_edit`
 
 {{< admonition type="note" >}}
-This option is deprecated - assign your viewers as editors, if you are using RBAC assign the datasources explorer role to your users.
+This option is deprecated - assign your viewers as editors, if you are using RBAC assign the data sources explorer role to your users.
 {{< /admonition >}}
 
 Viewers can access and use [Explore]({{< relref "../../explore" >}}) and perform temporary edits on panels in dashboards they have access to. They cannot save their changes. Default is `false`.
