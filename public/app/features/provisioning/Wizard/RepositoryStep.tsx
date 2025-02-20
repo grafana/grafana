@@ -5,7 +5,7 @@ import { AppEvents } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
 import { Button, Field, FieldSet, Input, MultiCombobox, SecretInput, Stack, Switch } from '@grafana/ui';
 
-import { GetWorkflowOptions } from '../ConfigForm';
+import { getWorkflowOptions } from '../ConfigForm';
 import { TokenPermissionsInfo } from '../TokenPermissionsInfo';
 import { useCreateOrUpdateRepository } from '../hooks';
 import { dataToSpec } from '../utils/data';
@@ -119,9 +119,18 @@ export function RepositoryStep() {
               name={'repository.workflows'}
               control={control}
               rules={{ required: 'This field is required.' }}
-              render={({ field: { ref, ...field } }) => (
-                <MultiCombobox options={GetWorkflowOptions(type)} placeholder={'Select workflows'} {...field} />
-              )}
+              render={({ field: { ref, onChange, ...field } }) => {
+                return (
+                  <MultiCombobox
+                    options={getWorkflowOptions(type)}
+                    placeholder={'Readonly repository'}
+                    onChange={(val) => {
+                      onChange(val.map((v) => v.value));
+                    }}
+                    {...field}
+                  />
+                );
+              }}
             />
           </Field>
 
