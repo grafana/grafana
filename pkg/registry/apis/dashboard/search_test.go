@@ -373,6 +373,8 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/search?folder=sharedwithme", nil)
 		req.Header.Add("content-type", "application/json")
+		// "Permissions" prop in "SignedInUser" is where we store the uid of dashboards shared with the user
+		// doesn't exist here, which represents a user without any shared dashboards
 		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test"}))
 
 		searchHandler.DoSearch(rr, req)
@@ -462,6 +464,7 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 		permissions := make(map[string][]string)
 		permissions[dashboards.ActionDashboardsRead] = []string{"dashboards:uid:dashboardinroot", "dashboards:uid:dashboardinpublicfolder"}
 		allPermissions[1] = permissions
+		// "Permissions" is where we store the uid of dashboards shared with the user
 		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test", OrgID: 1, Permissions: allPermissions}))
 
 		searchHandler.DoSearch(rr, req)
@@ -581,6 +584,7 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 		permissions := make(map[string][]string)
 		permissions[dashboards.ActionDashboardsRead] = []string{"dashboards:uid:dashboardinroot", "dashboards:uid:dashboardinprivatefolder", "dashboards:uid:dashboardinpublicfolder"}
 		allPermissions[1] = permissions
+		// "Permissions" is where we store the uid of dashboards shared with the user
 		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test", OrgID: 1, Permissions: allPermissions}))
 
 		searchHandler.DoSearch(rr, req)
