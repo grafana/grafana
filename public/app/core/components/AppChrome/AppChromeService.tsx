@@ -157,7 +157,7 @@ export class AppChromeService {
       if (lastEntry && lastEntry.name === newEntry.name) {
         logDuplicateUnifiedHistoryEntryEvent({
           entryName: newEntry.name,
-          lastEntryName: lastEntry.name,
+          lastEntryURL: lastEntry.url,
           newEntryURL: newEntry.url,
         });
       }

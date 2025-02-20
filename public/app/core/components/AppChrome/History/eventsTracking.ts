@@ -24,7 +24,7 @@ interface UnifiedHistoryEntryDuplicated {
   // Common name of the history entries
   entryName: string;
   // URL of the last entry
-  lastEntryName: string;
+  lastEntryURL: string;
   // URL of the new entry
   newEntryURL: string;
 }
@@ -41,12 +41,12 @@ export const logClickUnifiedHistoryEntryEvent = ({ entryURL, subEntry }: Unified
 //so we keep track of duplicated entries and be able to analyze them
 export const logDuplicateUnifiedHistoryEntryEvent = ({
   entryName,
-  lastEntryName,
+  lastEntryURL,
   newEntryURL,
 }: UnifiedHistoryEntryDuplicated) => {
   reportInteraction(UNIFIED_HISTORY_ENTRY_DUPLICATED, {
     entryName,
-    lastEntryName,
+    lastEntryURL,
     newEntryURL,
   });
 };
