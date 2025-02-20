@@ -38,6 +38,7 @@ import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLay
 import { ResponsiveGridItem } from '../scene/layout-responsive-grid/ResponsiveGridItem';
 import { ResponsiveGridLayoutManager } from '../scene/layout-responsive-grid/ResponsiveGridLayoutManager';
 import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
+import { TabsLayoutManager } from '../scene/layout-tabs/TabsLayoutManager';
 import { DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getQueryRunnerFor } from '../utils/utils';
@@ -530,6 +531,52 @@ describe('transformSaveModelSchemaV2ToScene', () => {
         expect(layoutManager.state.layout.state.autoRows).toBe('rowString');
         expect(layoutManager.state.layout.state.children.length).toBe(1);
         const gridItem = layoutManager.state.layout.state.children[0] as ResponsiveGridItem;
+        expect(gridItem.state.body.state.key).toBe('panel-1');
+      });
+
+      it('should build a dashboard scene with a tabs layout', () => {
+        const dashboard = cloneDeep(defaultDashboard);
+        dashboard.spec.layout = {
+          kind: 'TabsLayout',
+          spec: {
+            tabs: [
+              {
+                kind: 'TabsLayoutTab',
+                spec: {
+                  title: 'tab1',
+                  layout: {
+                    kind: 'ResponsiveGridLayout',
+                    spec: {
+                      col: 'colString',
+                      row: 'rowString',
+                      items: [
+                        {
+                          kind: 'ResponsiveGridLayoutItem',
+                          spec: {
+                            element: {
+                              kind: 'ElementReference',
+                              name: 'panel-1',
+                            },
+                          },
+                        },
+                      ],
+                    },
+                  },
+                },
+              },
+            ],
+          },
+        };
+        const scene = transformSaveModelSchemaV2ToScene(dashboard);
+        const layoutManager = scene.state.body as TabsLayoutManager;
+        expect(layoutManager.descriptor.kind).toBe('TabsLayout');
+        expect(layoutManager.state.tabs.length).toBe(1);
+        expect(layoutManager.state.tabs[0].state.title).toBe('tab1');
+        const gridLayoutManager = layoutManager.state.tabs[0].state.layout as ResponsiveGridLayoutManager;
+        expect(gridLayoutManager.state.layout.state.templateColumns).toBe('colString');
+        expect(gridLayoutManager.state.layout.state.autoRows).toBe('rowString');
+        expect(gridLayoutManager.state.layout.state.children.length).toBe(1);
+        const gridItem = gridLayoutManager.state.layout.state.children[0] as ResponsiveGridItem;
         expect(gridItem.state.body.state.key).toBe('panel-1');
       });
 
