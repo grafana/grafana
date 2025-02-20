@@ -5599,14 +5599,10 @@ exports[`better eslint`] = {
       [0, 0, 0, "\'@grafana/data/src/types/pluginExtensions\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
     ],
     "public/app/features/plugins/extensions/usePluginComponents.tsx:5381": [
-      [0, 0, 0, "\'@grafana/runtime/src/services/pluginExtensions/getPluginExtensions\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"]
+      [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/features/plugins/extensions/usePluginFunctions.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/features/plugins/extensions/usePluginLinks.tsx:5381": [
-      [0, 0, 0, "\'@grafana/runtime/src/services/pluginExtensions/getPluginExtensions\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
     ],
     "public/app/features/plugins/extensions/validators.ts:5381": [
       [0, 0, 0, "\'@grafana/data/src/types/pluginExtensions\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]

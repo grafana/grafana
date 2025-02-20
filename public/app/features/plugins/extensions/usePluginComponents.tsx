@@ -2,10 +2,7 @@ import { useMemo } from 'react';
 import { useObservable } from 'react-use';
 
 import { PluginExtensionComponentMeta, PluginExtensionTypes, usePluginContext } from '@grafana/data';
-import {
-  UsePluginComponentOptions,
-  UsePluginComponentsResult,
-} from '@grafana/runtime/src/services/pluginExtensions/getPluginExtensions';
+import { UsePluginComponentsOptions, UsePluginComponentsResult } from '@grafana/runtime';
 
 import { useAddedComponentsRegistry } from './ExtensionRegistriesContext';
 import * as errors from './errors';
@@ -19,7 +16,7 @@ import { isExtensionPointIdValid, isExtensionPointMetaInfoMissing } from './vali
 export function usePluginComponents<Props extends object = {}>({
   limitPerPlugin,
   extensionPointId,
-}: UsePluginComponentOptions): UsePluginComponentsResult<Props> {
+}: UsePluginComponentsOptions): UsePluginComponentsResult<Props> {
   const registry = useAddedComponentsRegistry();
   const registryState = useObservable(registry.asObservable());
   const pluginContext = usePluginContext();

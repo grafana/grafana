@@ -3,10 +3,7 @@ import { useMemo } from 'react';
 import { useObservable } from 'react-use';
 
 import { PluginExtensionLink, PluginExtensionTypes, usePluginContext } from '@grafana/data';
-import {
-  UsePluginLinksOptions,
-  UsePluginLinksResult,
-} from '@grafana/runtime/src/services/pluginExtensions/getPluginExtensions';
+import { UsePluginLinksOptions, UsePluginLinksResult } from '@grafana/runtime';
 
 import { useAddedLinksRegistry } from './ExtensionRegistriesContext';
 import * as errors from './errors';
