@@ -447,9 +447,9 @@ require (
 	github.com/oklog/ulid/v2 v2.1.0 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.0 // indirect
-	github.com/opentracing-contrib/go-grpc v0.0.0-20210225150812-73cb765af46e // indirect
+	github.com/opentracing-contrib/go-grpc v0.0.0-20210225150812-73cb765af46e // @grafana/grafana-search-and-storage
 	github.com/opentracing-contrib/go-stdlib v1.0.0 // indirect
-	github.com/opentracing/opentracing-go v1.2.0 // indirect
+	github.com/opentracing/opentracing-go v1.2.0 // @grafana/grafana-search-and-storage
 	github.com/pelletier/go-toml/v2 v2.2.3 // indirect
 	github.com/perimeterx/marshmallow v1.1.5 // indirect
 	github.com/pierrec/lz4/v4 v4.1.21 // indirect
