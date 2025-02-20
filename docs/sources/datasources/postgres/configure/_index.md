@@ -190,8 +190,6 @@ datasources:
       timescaledb: false
 ```
 
-<!-- vale Grafana.ProductPossessives = YES -->
-<!-- vale Grafana.Spelling = YES -->
 
 #### Troubleshoot provisioning issues
 
