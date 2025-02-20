@@ -4,53 +4,47 @@ import { useFormContext } from 'react-hook-form';
 
 import { Button, FieldSet, Stack, Text, Switch, Field } from '@grafana/ui';
 
-import { ExportJobStatus } from '../ExportToRepository';
-import { useCreateRepositoryExportMutation, useGetRepositoryQuery } from '../api';
+import { JobStatus } from '../JobStatus';
+import { useCreateRepositoryMigrateMutation, useGetRepositoryQuery } from '../api';
 
 import { WizardFormData } from './types';
 
-export function ExportStep() {
-  const [exportRepo, exportQuery] = useCreateRepositoryExportMutation();
-  const [showExportStatus, setShowExportStatus] = useState(false);
+export function MigrateStep() {
+  const [migrateRepo, migrateQuery] = useCreateRepositoryMigrateMutation();
+  const [showMigrateStatus, setShowMigrateStatus] = useState(false);
   const { watch, register } = useFormContext<WizardFormData>();
-  const [repositoryName, branch, history, identifier] = watch([
-    'repositoryName',
-    'repository.branch',
-    'export.history',
-    'export.identifier',
-  ]);
-  const exportName = exportQuery.data?.metadata?.name;
+  const [repositoryName, history, identifier] = watch(['repositoryName', 'export.history', 'export.identifier']);
+  const migrateName = migrateQuery.data?.metadata?.name;
   const repositoryQuery = useGetRepositoryQuery(repositoryName ? { name: repositoryName } : skipToken);
   const stats = repositoryQuery?.data?.status?.stats || [];
 
-  const handleExport = async () => {
+  const handleMigrate = async () => {
     if (!repositoryName) {
       return;
     }
 
-    await exportRepo({
+    await migrateRepo({
       name: repositoryName,
       body: {
-        branch,
-        history,
         identifier,
+        history,
       },
     });
-    setShowExportStatus(true);
+    setShowMigrateStatus(true);
   };
 
   const onAbort = () => {
-    exportQuery.reset();
-    setShowExportStatus(false);
+    migrateQuery.reset();
+    setShowMigrateStatus(false);
   };
 
-  if (showExportStatus && exportName) {
+  if (showMigrateStatus && migrateName) {
     return (
       <Stack direction="column" gap={2}>
-        <ExportJobStatus name={exportName} />
+        <JobStatus name={migrateName} />
         <Stack gap={2}>
           <Button variant="secondary" onClick={onAbort}>
-            Abort export
+            Abort migration
           </Button>
         </Stack>
       </Stack>
@@ -58,15 +52,15 @@ export function ExportStep() {
   }
 
   return (
-    <FieldSet label="3. Export dashboards">
+    <FieldSet label="3. Migrate dashboards">
       <Stack direction={'column'} gap={2}>
         <Text color="secondary">
-          Export all dashboards from this instance to your repository. After this one-time export, all future updates
-          will be automatically saved to the repository.
+          Migrate all dashboards from this instance to your repository. After this one-time migration, all future
+          updates will be automatically saved to the repository.
         </Text>
 
         <Stack direction={'column'} width={'300px'}>
-          <Text>Resources to export:</Text>
+          <Text>Resources to migrate:</Text>
           {Boolean(stats.length) &&
             stats.map((stat) => {
               return (
@@ -90,11 +84,11 @@ export function ExportStep() {
 
         <Stack alignItems={'flex-start'}>
           <Button
-            onClick={handleExport}
-            disabled={exportQuery.isLoading || !repositoryName}
-            icon={exportQuery.isLoading ? 'spinner' : undefined}
+            onClick={handleMigrate}
+            disabled={migrateQuery.isLoading || !repositoryName}
+            icon={migrateQuery.isLoading ? 'spinner' : undefined}
           >
-            Export dashboards
+            {migrateQuery.isLoading ? 'Migrating...' : 'Start migration'}
           </Button>
         </Stack>
       </Stack>

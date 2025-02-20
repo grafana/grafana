@@ -9,8 +9,7 @@ import { getDefaultValues } from '../ConfigForm';
 import { RepositorySpec } from '../api';
 
 import { ConnectionStep } from './ConnectionStep';
-import { ExportStep } from './ExportStep';
-import { ProvisioningStep } from './ProvisioningStep';
+import { MigrateStep } from './MigrateStep';
 import { RepositoryStep } from './RepositoryStep';
 import { Stepper, Step } from './Stepper';
 import { WizardFormData, WizardStep } from './types';
@@ -18,15 +17,13 @@ import { WizardFormData, WizardStep } from './types';
 const steps: Array<Step<WizardStep>> = [
   { id: 'connection', name: 'Repository connection' },
   { id: 'repository', name: 'Repository configuration' },
-  { id: 'export', name: 'Export dashboards' },
-  { id: 'provisioning', name: 'Start provisioning' },
+  { id: 'migrate', name: 'Migrate dashboards' },
 ];
 
 const nextButtonText = {
   connection: 'Connect to your repository',
-  repository: 'Export dashboards to repository',
-  export: 'Start provisioning',
-  provisioning: 'Finish',
+  repository: 'Configure migration',
+  migrate: 'Finish',
 } as const;
 
 export interface WizardProps {
@@ -86,8 +83,7 @@ export function ProvisioningWizard({ data, onSubmit }: WizardProps) {
           validationResults={{
             connection: { valid: true },
             repository: { valid: true },
-            export: { valid: true },
-            provisioning: { valid: true },
+            migrate: { valid: true },
           }}
           getNextUrl={() => ''}
         />
@@ -95,8 +91,7 @@ export function ProvisioningWizard({ data, onSubmit }: WizardProps) {
         <div className={styles.content}>
           {activeStep === 'connection' && <ConnectionStep />}
           {activeStep === 'repository' && <RepositoryStep />}
-          {activeStep === 'export' && <ExportStep />}
-          {activeStep === 'provisioning' && <ProvisioningStep />}
+          {activeStep === 'migrate' && <MigrateStep />}
         </div>
 
         <Stack gap={2} direction="row" justifyContent="flex-end">
@@ -106,8 +101,8 @@ export function ProvisioningWizard({ data, onSubmit }: WizardProps) {
             </Button>
           )}
           <Button
-            type={activeStep === 'provisioning' ? 'submit' : 'button'}
-            onClick={activeStep === 'provisioning' ? undefined : handleNext}
+            type={activeStep === 'migrate' ? 'submit' : 'button'}
+            onClick={activeStep === 'migrate' ? undefined : handleNext}
           >
             {nextButtonText[activeStep]}
           </Button>

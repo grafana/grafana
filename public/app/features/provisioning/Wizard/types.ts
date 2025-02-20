@@ -1,6 +1,6 @@
 import { RepositoryFormData } from '../types';
 
-export type WizardStep = 'connection' | 'repository' | 'export' | 'provisioning';
+export type WizardStep = 'connection' | 'repository' | 'migrate';
 
 export interface ExportFormData {
   dashboards: string[];
