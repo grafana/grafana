@@ -1225,13 +1225,6 @@ var (
 			Expression:  "false", // disabled by default
 		},
 		{
-			Name:         "sqlQuerybuilderFunctionParameters",
-			Description:  "Enables SQL query builder function parameters",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaOSSBigTent,
-			FrontendOnly: true,
-		},
-		{
 			Name:        "azureMonitorPrometheusExemplars",
 			Description: "Allows configuration of Azure Monitor as a data source that can provide Prometheus exemplars",
 			Stage:       FeatureStagePublicPreview,
@@ -1447,6 +1440,14 @@ var (
 		{
 			Name:              "unifiedStorageSearchPermissionFiltering",
 			Description:       "Enable permission filtering on unified storage search",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaSearchAndStorageSquad,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+		},
+		{
+			Name:              "managedDualWriter",
+			Description:       "Pick the dual write mode from database configs",
 			Stage:             FeatureStageExperimental,
 			Owner:             grafanaSearchAndStorageSquad,
 			HideFromDocs:      true,

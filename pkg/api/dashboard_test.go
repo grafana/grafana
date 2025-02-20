@@ -62,6 +62,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/web"
 	"github.com/grafana/grafana/pkg/web/webtest"
 )
@@ -833,11 +834,13 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 	quotaService := quotatest.New(false, nil)
 	folderSvc := folderimpl.ProvideService(
 		fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore,
-		nil, db, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, sort.ProvideService())
+		nil, db, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil,
+		dualwrite.ProvideTestService(), sort.ProvideService())
 	if dashboardService == nil {
 		dashboardService, err = service.ProvideDashboardServiceImpl(
 			cfg, dashboardStore, folderStore, features, folderPermissions,
-			ac, folderSvc, fStore, nil, client.MockTestRestConfig{}, nil, quotaService, nil, nil, nil, sort.ProvideService(),
+			ac, folderSvc, fStore, nil, client.MockTestRestConfig{}, nil, quotaService, nil, nil, nil,
+			dualwrite.ProvideTestService(), sort.ProvideService(),
 		)
 		require.NoError(t, err)
 		dashboardService.(dashboards.PermissionsRegistrationService).RegisterDashboardPermissions(dashboardPermissions)
@@ -846,7 +849,7 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 	dashboardProvisioningService, err := service.ProvideDashboardServiceImpl(
 		cfg, dashboardStore, folderStore, features, folderPermissions,
 		ac, folderSvc, fStore, nil, client.MockTestRestConfig{}, nil, quotaService, nil, nil, nil,
-		sort.ProvideService(),
+		dualwrite.ProvideTestService(), sort.ProvideService(),
 	)
 	require.NoError(t, err)
 

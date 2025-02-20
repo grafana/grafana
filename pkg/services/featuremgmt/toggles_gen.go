@@ -651,10 +651,6 @@ const (
 	// Preserve plugin proxy trailing slash.
 	FlagPluginProxyPreserveTrailingSlash = "pluginProxyPreserveTrailingSlash"
 
-	// FlagSqlQuerybuilderFunctionParameters
-	// Enables SQL query builder function parameters
-	FlagSqlQuerybuilderFunctionParameters = "sqlQuerybuilderFunctionParameters"
-
 	// FlagAzureMonitorPrometheusExemplars
 	// Allows configuration of Azure Monitor as a data source that can provide Prometheus exemplars
 	FlagAzureMonitorPrometheusExemplars = "azureMonitorPrometheusExemplars"
@@ -774,6 +770,10 @@ const (
 	// FlagUnifiedStorageSearchPermissionFiltering
 	// Enable permission filtering on unified storage search
 	FlagUnifiedStorageSearchPermissionFiltering = "unifiedStorageSearchPermissionFiltering"
+
+	// FlagManagedDualWriter
+	// Pick the dual write mode from database configs
+	FlagManagedDualWriter = "managedDualWriter"
 
 	// FlagPluginsSriChecks
 	// Enables SRI checks for plugin assets
