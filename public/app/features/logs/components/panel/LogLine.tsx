@@ -2,8 +2,7 @@ import { css } from '@emotion/css';
 import { CSSProperties, useEffect, useRef } from 'react';
 import tinycolor from 'tinycolor2';
 
-import { GrafanaTheme2, LogRowModel } from '@grafana/data';
-import { PopoverContent } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
 
 import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
 
