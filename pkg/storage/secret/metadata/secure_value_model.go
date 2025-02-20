@@ -27,8 +27,8 @@ type secureValueDB struct {
 	UpdatedBy   string `xorm:"updated_by"`
 
 	// Kubernetes Status
-	Phase   string  `xorm:"status_phase"`
-	Message *string `xorm:"status_message"`
+	StatusPhase   string  `xorm:"status_phase"`
+	StatusMessage *string `xorm:"status_message"`
 
 	// Spec
 	Title      string  `xorm:"title"`
@@ -207,8 +207,8 @@ func toRow(sv *secretv0alpha1.SecureValue, externalID string) (*secureValueDB, e
 		Updated:     updatedTimestamp,
 		UpdatedBy:   meta.GetUpdatedBy(),
 
-		Phase:   string(sv.Status.Phase),
-		Message: statusMessage,
+		StatusPhase:   string(sv.Status.Phase),
+		StatusMessage: statusMessage,
 
 		Title:      sv.Spec.Title,
 		Keeper:     sv.Spec.Keeper,

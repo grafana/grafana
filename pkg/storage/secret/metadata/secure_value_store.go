@@ -35,7 +35,7 @@ type secureValueStorage struct {
 	db db.DB
 }
 
-func (s *secureValueStorage) Create(ctx context.Context, sv *secretv0alpha1.SecureValue) (*secretv0alpha1.SecureValue, error) {
+func (s *secureValueStorage) Create(ctx context.Context, tx *db.Session, sv *secretv0alpha1.SecureValue) (*secretv0alpha1.SecureValue, error) {
 	authInfo, ok := claims.AuthInfoFrom(ctx)
 	if !ok {
 		return nil, fmt.Errorf("missing auth info in context")
@@ -247,4 +247,19 @@ func (s *secureValueStorage) List(ctx context.Context, namespace xkube.Namespace
 	return &secretv0alpha1.SecureValueList{
 		Items: secureValues,
 	}, nil
+}
+
+// /\ ~SecretMetadataHasPendingStatus(s)
+func (s *secureValueStorage) SecretMetadataHasPendingStatus(ctx context.Context, tx *db.Session, namespace xkube.Namespace, name string) (bool, error) {
+	secureValueDB := &secureValueDB{Name: name, Namespace: namespace.String()}
+	found, err := tx.Table(secureValueDB.TableName()).ForUpdate().Get(secureValueDB)
+	if err != nil {
+		return false, fmt.Errorf("failed to get sv: %w", err)
+	}
+
+	if found && secureValueDB.StatusPhase == string(secretv0alpha1.SecureValuePhasePending) {
+		return true, nil
+	}
+
+	return false, nil
 }

@@ -17,6 +17,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 )
@@ -35,13 +36,14 @@ var (
 // SecureValueRest is an implementation of CRUDL operations on a `securevalue` backed by a persistence layer `store`.
 type SecureValueRest struct {
 	storage        contracts.SecureValueStorage
+	outboxQueue    contracts.OutboxQueue
 	resource       utils.ResourceInfo
 	tableConverter rest.TableConvertor
 }
 
 // NewSecureValueRest is a returns a constructed `*SecureValueRest`.
-func NewSecureValueRest(storage contracts.SecureValueStorage, resource utils.ResourceInfo) *SecureValueRest {
-	return &SecureValueRest{storage, resource, resource.TableConverter()}
+func NewSecureValueRest(storage contracts.SecureValueStorage, outboxQueue contracts.OutboxQueue, resource utils.ResourceInfo) *SecureValueRest {
+	return &SecureValueRest{storage, outboxQueue, resource, resource.TableConverter()}
 }
 
 // New returns an empty `*SecureValue` that is used by the `Create` method.
@@ -122,9 +124,32 @@ func (s *SecureValueRest) Create(
 		return nil, err
 	}
 
-	createdSecureValue, err := s.storage.Create(ctx, sv)
+	//====== Move this to a servicve layer ======
+	var tx *db.Session
+
+	// /\ ~SecretMetadataHasPendingStatus(s)
+	isPending, err := s.storage.SecretMetadataHasPendingStatus(ctx, tx, xkube.Namespace(sv.Namespace), sv.Name)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create secure value: %w", err)
+	}
+
+	if isPending {
+		return nil, fmt.Errorf("already pending")
+	}
+
+	// TODO: Consume sv.rawSecret and encrypt value here before storing!
+	// TODO: handle REF vs VALUE
+	_ = sv.Spec.Value.DangerouslyExposeAndConsumeValue()
+
+	// /\ db' = [db EXCEPT !.secret_metadata = @ \union {[name |-> s, status |-> "Pending"]}]
+	createdSecureValue, err := s.storage.Create(ctx, tx, sv)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create secure value: %w", err)
+	}
+
+	// /\ queue' = [queue EXCEPT !.pending = Append(queue.pending, s)]
+	if err := s.outboxQueue.Append(ctx, tx, createdSecureValue); err != nil {
+		return nil, fmt.Errorf("failed to append to queue: %w", err)
 	}
 
 	return createdSecureValue, nil
