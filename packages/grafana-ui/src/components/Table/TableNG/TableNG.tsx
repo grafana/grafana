@@ -185,6 +185,7 @@ export function TableNG(props: TableNGProps) {
   }
   const defaultRowHeight = getDefaultRowHeight();
   const defaultLineHeight = theme.typography.body.lineHeight * theme.typography.fontSize;
+  const panelPaddingHeight = theme.components.panel.padding * theme.spacing.gridSize * 2;
 
   const handleSort = (columnKey: string, direction: SortDirection, isMultiSort: boolean) => {
     let currentSortColumn: SortColumn | undefined;
@@ -505,7 +506,9 @@ export function TableNG(props: TableNGProps) {
   } else if (!noHeader && Object.keys(headerCellRefs.current).length > 0) {
     headerCellHeight = headerCellRefs.current[Object.keys(headerCellRefs.current)[0]].getBoundingClientRect().height;
   }
-  let rowsPerPage = Math.floor((height - headerCellHeight - SCROLL_BAR_WIDTH - paginationHeight) / defaultRowHeight);
+  let rowsPerPage = Math.floor(
+    (height - headerCellHeight - SCROLL_BAR_WIDTH - paginationHeight - panelPaddingHeight) / defaultRowHeight
+  );
   // if footer calcs are on, remove one row per page
   if (isFooterVisible) {
     rowsPerPage -= 1;
