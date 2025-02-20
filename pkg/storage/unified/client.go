@@ -115,7 +115,7 @@ func newClient(opts options.StorageOptions,
 		}
 
 		// Create a connection to the gRPC server.
-		conn, err := grpcConn(opts.Address, reg)
+		conn, err := GrpcConn(opts.Address, reg)
 		if err != nil {
 			return nil, err
 		}
@@ -161,8 +161,8 @@ func newResourceClient(conn *grpc.ClientConn, cfg *setting.Cfg, features feature
 	return resource.NewRemoteResourceClient(tracer, conn, clientCfgMapping(grpcutils.ReadGrpcClientConfig(cfg)), cfg.Env == setting.Dev)
 }
 
-// grpcConn creates a new gRPC connection to the provided address.
-func grpcConn(address string, reg prometheus.Registerer) (*grpc.ClientConn, error) {
+// GrpcConn creates a new gRPC connection to the provided address.
+func GrpcConn(address string, reg prometheus.Registerer) (*grpc.ClientConn, error) {
 	// This works for now as the Provide function is only called once during startup.
 	// We might eventually want to tight this factory to a struct for more runtime control.
 	metrics := clientMetrics{
