@@ -97,37 +97,43 @@ func TestIntegrationProvisioning(t *testing.T) {
 			ghmock.WithRequestMatchHandler(
 				ghmock.GetUser,
 				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-					_, _ = w.Write(ghmock.MustMarshal(&gh.User{}))
+					_, err := w.Write(ghmock.MustMarshal(&gh.User{}))
+					require.NoError(t, err)
 				}),
 			),
 			ghmock.WithRequestMatchHandler(
 				ghmock.GetReposHooksByOwnerByRepo,
 				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-					_, _ = w.Write(ghmock.MustMarshal([]*gh.Hook{}))
+					_, err := w.Write(ghmock.MustMarshal([]*gh.Hook{}))
+					require.NoError(t, err)
 				}),
 			),
 			ghmock.WithRequestMatchHandler(
 				ghmock.PostReposHooksByOwnerByRepo,
 				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-					_, _ = w.Write(ghmock.MustMarshal(&gh.Hook{}))
+					_, err := w.Write(ghmock.MustMarshal(&gh.Hook{}))
+					require.NoError(t, err)
 				}),
 			),
 			ghmock.WithRequestMatchHandler(
 				ghmock.GetReposByOwnerByRepo,
 				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-					_, _ = w.Write(ghmock.MustMarshal(&gh.Repository{}))
+					_, err := w.Write(ghmock.MustMarshal(&gh.Repository{}))
+					require.NoError(t, err)
 				}),
 			),
 			ghmock.WithRequestMatchHandler(
 				ghmock.GetReposBranchesByOwnerByRepoByBranch,
 				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-					_, _ = w.Write(ghmock.MustMarshal(&gh.Branch{}))
+					_, err := w.Write(ghmock.MustMarshal(&gh.Branch{}))
+					require.NoError(t, err)
 				}),
 			),
 			ghmock.WithRequestMatchHandler(
 				ghmock.GetReposGitTreesByOwnerByRepoByTreeSha,
 				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-					_, _ = w.Write(ghmock.MustMarshal(&gh.Tree{}))
+					_, err := w.Write(ghmock.MustMarshal(&gh.Tree{}))
+					require.NoError(t, err)
 				}),
 			),
 			ghmock.WithRequestMatchHandler(
