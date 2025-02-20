@@ -4,7 +4,7 @@ labels:
     - cloud
     - enterprise
     - oss
-title: Grafana Metrics Drilldown
+title: Metrics Drilldown
 aliases:
   - ../explore-metrics/ # /docs/grafana/latest/explore/explore-metrics/
 canonical: https://grafana.com/docs/grafana/latest/explore/simplified-exploration/metrics/
