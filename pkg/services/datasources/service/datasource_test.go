@@ -572,7 +572,7 @@ func TestService_UpdateDataSource(t *testing.T) {
 
 	t.Run("Should update LBAC rules when updating from API", func(t *testing.T) {
 		dsService := initDSService(t)
-		dsService.features = featuremgmt.WithFeatures(featuremgmt.FlagTeamHttpHeaders)
+		dsService.features = featuremgmt.WithFeatures()
 
 		// Create a datasource with existing LBAC rules
 		existingRules := []interface{}{
@@ -629,7 +629,7 @@ func TestService_UpdateDataSource(t *testing.T) {
 	})
 	t.Run("Should preserve LBAC rules when not updating from API", func(t *testing.T) {
 		dsService := initDSService(t)
-		dsService.features = featuremgmt.WithFeatures(featuremgmt.FlagTeamHttpHeaders)
+		dsService.features = featuremgmt.WithFeatures()
 		// Create a datasource with existing LBAC rules
 		existingRules := []interface{}{
 			map[string]interface{}{
@@ -680,7 +680,7 @@ func TestService_UpdateDataSource(t *testing.T) {
 
 	t.Run("Should not remove stored rules without AllowLBACRuleUpdates", func(t *testing.T) {
 		dsService := initDSService(t)
-		dsService.features = featuremgmt.WithFeatures(featuremgmt.FlagTeamHttpHeaders)
+		dsService.features = featuremgmt.WithFeatures()
 
 		// Create a datasource with existing LBAC rules
 		existingRules := []interface{}{
@@ -720,7 +720,7 @@ func TestService_UpdateDataSource(t *testing.T) {
 
 	t.Run("Should not populate empty stored rules without AllowLBACRuleUpdates", func(t *testing.T) {
 		dsService := initDSService(t)
-		dsService.features = featuremgmt.WithFeatures(featuremgmt.FlagTeamHttpHeaders)
+		dsService.features = featuremgmt.WithFeatures()
 
 		// Create a datasource with empty LBAC rules
 		jsonData := simplejson.New()

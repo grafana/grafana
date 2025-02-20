@@ -98,7 +98,6 @@ queryServiceFromUI,experimental,@grafana/grafana-app-platform-squad,false,false,
 cloudWatchBatchQueries,preview,@grafana/aws-datasources,false,false,false
 recoveryThreshold,GA,@grafana/alerting-squad,false,true,false
 lokiStructuredMetadata,GA,@grafana/observability-logs,false,false,false
-teamHttpHeaders,preview,@grafana/identity-access-team,false,false,false
 cachingOptimizeSerializationMemoryUsage,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 prometheusPromQAIL,experimental,@grafana/oss-big-tent,false,false,true
 prometheusCodeModeMetricNamesSearch,experimental,@grafana/oss-big-tent,false,false,true
