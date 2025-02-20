@@ -89,9 +89,8 @@ formatString,GA,@grafana/dataviz-squad,false,false,true
 kubernetesPlaylists,GA,@grafana/grafana-app-platform-squad,false,true,false
 kubernetesSnapshots,experimental,@grafana/grafana-app-platform-squad,false,true,false
 kubernetesDashboards,experimental,@grafana/grafana-app-platform-squad,false,false,true
-kubernetesCliDashboards,experimental,@grafana/grafana-app-platform-squad,false,false,false
 kubernetesRestore,experimental,@grafana/grafana-app-platform-squad,false,false,false
-kubernetesFoldersServiceV2,experimental,@grafana/search-and-storage,false,false,false
+kubernetesClientDashboardsFolders,experimental,@grafana/grafana-app-platform-squad,false,false,false
 datasourceQueryTypes,experimental,@grafana/grafana-app-platform-squad,false,true,false
 queryService,experimental,@grafana/grafana-app-platform-squad,false,true,false
 queryServiceRewrite,experimental,@grafana/grafana-app-platform-squad,false,true,false
@@ -101,7 +100,6 @@ recoveryThreshold,GA,@grafana/alerting-squad,false,true,false
 lokiStructuredMetadata,GA,@grafana/observability-logs,false,false,false
 teamHttpHeaders,preview,@grafana/identity-access-team,false,false,false
 cachingOptimizeSerializationMemoryUsage,experimental,@grafana/grafana-operator-experience-squad,false,false,false
-managedPluginsInstall,GA,@grafana/plugins-platform-backend,false,false,false
 prometheusPromQAIL,experimental,@grafana/oss-big-tent,false,false,true
 prometheusCodeModeMetricNamesSearch,experimental,@grafana/oss-big-tent,false,false,true
 addFieldFromCalculationStatFunctions,GA,@grafana/dataviz-squad,false,false,true
@@ -163,7 +161,6 @@ alertingDisableSendAlertsExternal,experimental,@grafana/alerting-squad,false,fal
 preserveDashboardStateWhenNavigating,experimental,@grafana/dashboards-squad,false,false,false
 alertingCentralAlertHistory,experimental,@grafana/alerting-squad,false,false,true
 pluginProxyPreserveTrailingSlash,GA,@grafana/plugins-platform-backend,false,false,false
-sqlQuerybuilderFunctionParameters,experimental,@grafana/oss-big-tent,false,false,true
 azureMonitorPrometheusExemplars,preview,@grafana/partner-datasources,false,false,false
 pinNavItems,GA,@grafana/grafana-frontend-platform,false,false,false
 authZGRPCServer,experimental,@grafana/identity-access-team,false,false,false
@@ -194,6 +191,7 @@ rolePickerDrawer,experimental,@grafana/identity-access-team,false,false,false
 unifiedStorageSearch,experimental,@grafana/search-and-storage,false,false,false
 unifiedStorageSearchSprinkles,experimental,@grafana/search-and-storage,false,false,false
 unifiedStorageSearchPermissionFiltering,experimental,@grafana/search-and-storage,false,false,false
+managedDualWriter,experimental,@grafana/search-and-storage,false,false,false
 pluginsSriChecks,experimental,@grafana/plugins-platform-backend,false,false,false
 unifiedStorageBigObjectsSupport,experimental,@grafana/search-and-storage,false,false,false
 timeRangeProvider,experimental,@grafana/grafana-frontend-platform,false,false,false
@@ -240,3 +238,4 @@ grafanaconThemes,experimental,@grafana/grafana-frontend-platform,false,true,fals
 pluginsCDNSyncLoader,experimental,@grafana/plugins-platform-backend,false,false,false
 alertingJiraIntegration,experimental,@grafana/alerting-squad,false,false,true
 alertingRuleVersionHistoryRestore,experimental,@grafana/alerting-squad,false,false,true
+newShareReportDrawer,experimental,@grafana/sharing-squad,false,false,false

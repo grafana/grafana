@@ -681,22 +681,16 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:        "kubernetesCliDashboards",
-			Description: "Use the k8s client to retrieve dashboards internally",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaAppPlatformSquad,
-		},
-		{
 			Name:        "kubernetesRestore",
 			Description: "Allow restoring objects in k8s",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaAppPlatformSquad,
 		},
 		{
-			Name:        "kubernetesFoldersServiceV2",
-			Description: "Use the Folders Service V2, and route Folder Service requests to k8s",
+			Name:        "kubernetesClientDashboardsFolders",
+			Description: "Route the folder and dashboard service requests to k8s",
 			Stage:       FeatureStageExperimental,
-			Owner:       grafanaSearchAndStorageSquad,
+			Owner:       grafanaAppPlatformSquad,
 		},
 		{
 			Name:            "datasourceQueryTypes",
@@ -764,14 +758,6 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaOperatorExperienceSquad,
 			FrontendOnly: false,
-		},
-		{
-			Name:            "managedPluginsInstall",
-			Description:     "Install managed plugins directly from plugins catalog",
-			Stage:           FeatureStageGeneralAvailability,
-			RequiresDevMode: false,
-			Owner:           grafanaPluginsPlatformSquad,
-			Expression:      "true", // enabled by default
 		},
 		{
 			Name:         "prometheusPromQAIL",
@@ -1248,13 +1234,6 @@ var (
 			Expression:  "false", // disabled by default
 		},
 		{
-			Name:         "sqlQuerybuilderFunctionParameters",
-			Description:  "Enables SQL query builder function parameters",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaOSSBigTent,
-			FrontendOnly: true,
-		},
-		{
 			Name:        "azureMonitorPrometheusExemplars",
 			Description: "Allows configuration of Azure Monitor as a data source that can provide Prometheus exemplars",
 			Stage:       FeatureStagePublicPreview,
@@ -1470,6 +1449,14 @@ var (
 		{
 			Name:              "unifiedStorageSearchPermissionFiltering",
 			Description:       "Enable permission filtering on unified storage search",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaSearchAndStorageSquad,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+		},
+		{
+			Name:              "managedDualWriter",
+			Description:       "Pick the dual write mode from database configs",
 			Stage:             FeatureStageExperimental,
 			Owner:             grafanaSearchAndStorageSquad,
 			HideFromDocs:      true,
@@ -1807,6 +1794,14 @@ var (
 			FrontendOnly:      true,
 			Stage:             FeatureStageExperimental,
 			Owner:             grafanaAlertingSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+		},
+		{
+			Name:              "newShareReportDrawer",
+			Description:       "Enables the report creation drawer in a dashboard",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaSharingSquad,
 			HideFromAdminPage: true,
 			HideFromDocs:      true,
 		},

@@ -9,10 +9,11 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/google/go-github/github"
-	"github.com/grafana/grafana/pkg/build/cmd/util"
+	"github.com/google/go-github/v69/github"
 	"github.com/stretchr/testify/assert"
 	"github.com/urfave/cli/v2"
+
+	"github.com/grafana/grafana/pkg/build/cmd/util"
 )
 
 type githubPublishTestCases struct {
