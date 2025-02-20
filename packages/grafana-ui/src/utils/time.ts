@@ -38,13 +38,12 @@ export function absoluteTimeRangeURL(opts?: AbsoluteTimeRangeURLOptions): string
 
     if (!from || !to) {
       const now = Date.now();
-      queryParams.set(
-        toParam,
-        toUtc(now).valueOf().toString()
-      );
+      queryParams.set(toParam, toUtc(now).valueOf().toString());
       queryParams.set(
         fromParam,
-        toUtc(now - DEFAULT_TIME_RANGE_MINUTES * MINUTE_IN_MILLISECONDS).valueOf().toString()
+        toUtc(now - DEFAULT_TIME_RANGE_MINUTES * MINUTE_IN_MILLISECONDS)
+          .valueOf()
+          .toString()
       );
 
       return `${baseUrl}?${queryParams.toString()}`;

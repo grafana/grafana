@@ -16,7 +16,20 @@ const meta: Meta = {
       page: mdx,
     },
     controls: {
-      exclude: ['fill', 'type', 'tooltip', 'tooltipPlacement', 'size', 'variant', 'icon', 'className', 'fullWidth', 'getText', 'onClipboardCopy', 'onClipboardError'],
+      exclude: [
+        'fill',
+        'type',
+        'tooltip',
+        'tooltipPlacement',
+        'size',
+        'variant',
+        'icon',
+        'className',
+        'fullWidth',
+        'getText',
+        'onClipboardCopy',
+        'onClipboardError',
+      ],
     },
   },
 };

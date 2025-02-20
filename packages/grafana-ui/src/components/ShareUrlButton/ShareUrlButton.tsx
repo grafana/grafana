@@ -6,6 +6,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { copyText } from '../../../src/utils/clipboard';
 import { absoluteTimeRangeURL } from '../../../src/utils/time';
 import { useStyles2 } from '../../themes';
+import { t, Trans } from '../../utils/i18n';
 import { Button, ButtonGroup, ButtonProps } from '../Button';
 import { ClipboardButton } from '../ClipboardButton/ClipboardButton';
 import { Dropdown } from '../Dropdown/Dropdown';
@@ -56,10 +57,10 @@ export function ShareUrlButton({ collapsed, url, fromParam, toParam }: Props) {
           ref={relativeUrlRef}
         />
       </Menu.Group>
-      <Menu.Group label="Time-sync URL links (share with time range intact)">
+      <Menu.Group label={t('explore.toolbar.copy-links-absolute-category', 'Time-sync URL links (share with time range intact)')}>
         <Menu.Item
           key="copy-url"
-          label="Copy URL with absolute time range"
+          label={t('explore.toolbar.copy-link-abs-time', 'Copy absolute URL')}
           icon="clock-nine"
           onClick={() => copyText(absoluteTimeRangeURL({ url, fromParam, toParam }), absoluteUrlRef)}
           ref={absoluteUrlRef}
@@ -75,10 +76,12 @@ export function ShareUrlButton({ collapsed, url, fromParam, toParam }: Props) {
         variant="secondary"
         size="md"
         icon="share-alt"
-        tooltip={'Copy URL with absolute time range'}
+        tooltip={t('explore.toolbar.copy-link-abs-time', 'Copy absolute URL')}
         getText={() => absoluteTimeRangeURL()}
       >
-        <span className={collapsed ? styles.collapsed : styles.shareText}>Share</span>
+        <span className={collapsed ? styles.collapsed : styles.shareText}>
+          <Trans i18nKey="explore.toolbar.copy-shortened-link-label">Share</Trans>
+        </span>
       </ClipboardButton>
       <Dropdown overlay={menu} placement="bottom-start" onVisibleChange={() => setIsOpen(!isOpen)}>
         <Button variant="secondary" size="md" icon={isOpen ? 'angle-down' : 'angle-up'} />

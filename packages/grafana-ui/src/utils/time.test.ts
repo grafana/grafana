@@ -19,7 +19,9 @@ describe('absoluteTimeRangeURL', () => {
     const result = absoluteTimeRangeURL({ url });
 
     const expectedTo = toUtc(fakeSystemTime).valueOf().toString();
-    const expectedFrom = toUtc(fakeSystemTime - 30 * 60 * 1000).valueOf().toString();
+    const expectedFrom = toUtc(fakeSystemTime - 30 * 60 * 1000)
+      .valueOf()
+      .toString();
 
     expect(result).toBe(`http://localhost:3000/dashboard?to=${expectedTo}&from=${expectedFrom}`);
   });
@@ -29,7 +31,9 @@ describe('absoluteTimeRangeURL', () => {
     const result = absoluteTimeRangeURL({ url });
 
     const expectedTo = toUtc(fakeSystemTime).valueOf().toString();
-    const expectedFrom = toUtc(fakeSystemTime - 6 * 60 * 60 * 1000).valueOf().toString();
+    const expectedFrom = toUtc(fakeSystemTime - 6 * 60 * 60 * 1000)
+      .valueOf()
+      .toString();
 
     expect(result).toBe(`http://localhost:3000/dashboard?from=${expectedFrom}&to=${expectedTo}`);
   });
@@ -49,11 +53,13 @@ describe('absoluteTimeRangeURL', () => {
     const result = absoluteTimeRangeURL({
       url,
       fromParam: 'start',
-      toParam: 'end'
+      toParam: 'end',
     });
 
     const expectedTo = toUtc(fakeSystemTime).valueOf().toString();
-    const expectedFrom = toUtc(fakeSystemTime - 60 * 60 * 1000).valueOf().toString();
+    const expectedFrom = toUtc(fakeSystemTime - 60 * 60 * 1000)
+      .valueOf()
+      .toString();
 
     expect(result).toBe(`http://localhost:3000/dashboard?start=${expectedFrom}&end=${expectedTo}`);
   });
@@ -63,12 +69,15 @@ describe('absoluteTimeRangeURL', () => {
     const originalLocation = window.location;
     // @ts-ignore
     delete window.location;
-    window.location = new URL('http://localhost:3000/dashboard?from=now-1h&to=now') as any;
+    // @ts-ignore
+    window.location = new URL('http://localhost:3000/dashboard?from=now-1h&to=now');
 
     const result = absoluteTimeRangeURL();
 
     const expectedTo = toUtc(fakeSystemTime).valueOf().toString();
-    const expectedFrom = toUtc(fakeSystemTime - 60 * 60 * 1000).valueOf().toString();
+    const expectedFrom = toUtc(fakeSystemTime - 60 * 60 * 1000)
+      .valueOf()
+      .toString();
 
     expect(result).toBe(`http://localhost:3000/dashboard?from=${expectedFrom}&to=${expectedTo}`);
 
@@ -114,9 +123,13 @@ describe('absoluteTimeRangeURL', () => {
       const result = absoluteTimeRangeURL({ url });
 
       const expectedTo = toUtc(fakeSystemTime).valueOf().toString();
-      const expectedFrom = toUtc(fakeSystemTime - 6 * 60 * 60 * 1000).valueOf().toString();
+      const expectedFrom = toUtc(fakeSystemTime - 6 * 60 * 60 * 1000)
+        .valueOf()
+        .toString();
 
-      expect(result).toBe(`http://localhost:3000/dashboard?from=${expectedFrom}&to=${expectedTo}&param1=value1&param2=value2`);
+      expect(result).toBe(
+        `http://localhost:3000/dashboard?from=${expectedFrom}&to=${expectedTo}&param1=value1&param2=value2`
+      );
     });
 
     it('should handle URLs with hash fragments', () => {
@@ -124,7 +137,9 @@ describe('absoluteTimeRangeURL', () => {
       const result = absoluteTimeRangeURL({ url });
 
       const expectedTo = toUtc(fakeSystemTime).valueOf().toString();
-      const expectedFrom = toUtc(fakeSystemTime - 6 * 60 * 60 * 1000).valueOf().toString();
+      const expectedFrom = toUtc(fakeSystemTime - 6 * 60 * 60 * 1000)
+        .valueOf()
+        .toString();
 
       expect(result).toBe(`http://localhost:3000/dashboard?from=${expectedFrom}&to=${expectedTo}#panel-1`);
     });
