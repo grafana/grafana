@@ -33,7 +33,6 @@ import (
 )
 
 const (
-	defaultUser           = "none"
 	resourceStoreAudience = "resourceStore"
 )
 
