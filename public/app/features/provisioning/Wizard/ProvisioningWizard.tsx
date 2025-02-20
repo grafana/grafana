@@ -34,10 +34,11 @@ export interface WizardProps {
 export function ProvisioningWizard({ data, onSubmit }: WizardProps) {
   const [activeStep, setActiveStep] = useState<WizardStep>('connection');
   const [completedSteps, setCompletedSteps] = useState<WizardStep[]>([]);
+  const [migrationSuccess, setMigrationSuccess] = useState(false);
   const methods = useForm<WizardFormData>({
     defaultValues: {
       repository: getDefaultValues(data),
-      export: {
+      migrate: {
         history: true,
         identifier: false,
       },
@@ -91,7 +92,7 @@ export function ProvisioningWizard({ data, onSubmit }: WizardProps) {
         <div className={styles.content}>
           {activeStep === 'connection' && <ConnectionStep />}
           {activeStep === 'repository' && <RepositoryStep />}
-          {activeStep === 'migrate' && <MigrateStep />}
+          {activeStep === 'migrate' && <MigrateStep onMigrationStatusChange={setMigrationSuccess} />}
         </div>
 
         <Stack gap={2} direction="row" justifyContent="flex-end">
@@ -103,6 +104,7 @@ export function ProvisioningWizard({ data, onSubmit }: WizardProps) {
           <Button
             type={activeStep === 'migrate' ? 'submit' : 'button'}
             onClick={activeStep === 'migrate' ? undefined : handleNext}
+            disabled={activeStep === 'migrate' && !migrationSuccess}
           >
             {nextButtonText[activeStep]}
           </Button>

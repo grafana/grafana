@@ -9,11 +9,19 @@ import { useCreateRepositoryMigrateMutation, useGetRepositoryQuery } from '../ap
 
 import { WizardFormData } from './types';
 
-export function MigrateStep() {
+export interface MigrateStepProps {
+  onMigrationStatusChange: (success: boolean) => void;
+}
+
+export function MigrateStep({ onMigrationStatusChange }: MigrateStepProps) {
   const [migrateRepo, migrateQuery] = useCreateRepositoryMigrateMutation();
   const [showMigrateStatus, setShowMigrateStatus] = useState(false);
   const { watch, register } = useFormContext<WizardFormData>();
-  const [repositoryName, history, identifier] = watch(['repositoryName', 'export.history', 'export.identifier']);
+  const [repositoryName, history, identifier] = watch([
+    'repositoryName',
+    'migrate.history',
+    'migrate.identifier',
+  ]);
   const migrateName = migrateQuery.data?.metadata?.name;
   const repositoryQuery = useGetRepositoryQuery(repositoryName ? { name: repositoryName } : skipToken);
   const stats = repositoryQuery?.data?.status?.stats || [];
@@ -23,19 +31,25 @@ export function MigrateStep() {
       return;
     }
 
-    await migrateRepo({
-      name: repositoryName,
-      body: {
-        identifier,
-        history,
-      },
-    });
-    setShowMigrateStatus(true);
+    try {
+      await migrateRepo({
+        name: repositoryName,
+        body: {
+          identifier,
+          history,
+        },
+      });
+      setShowMigrateStatus(true);
+      onMigrationStatusChange(true);
+    } catch (error) {
+      onMigrationStatusChange(false);
+    }
   };
 
   const onAbort = () => {
     migrateQuery.reset();
     setShowMigrateStatus(false);
+    onMigrationStatusChange(false);
   };
 
   if (showMigrateStatus && migrateName) {
@@ -74,11 +88,11 @@ export function MigrateStep() {
 
         <FieldSet>
           <Field label="Identifier" description="Include the current identifier in exported metadata">
-            <Switch {...register('export.identifier')} />
+            <Switch {...register('migrate.identifier')} />
           </Field>
 
           <Field label="History" description="Include commits for each historical value">
-            <Switch {...register('export.history')} />
+            <Switch {...register('migrate.history')} />
           </Field>
         </FieldSet>
 

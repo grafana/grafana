@@ -2,7 +2,7 @@ import { RepositoryFormData } from '../types';
 
 export type WizardStep = 'connection' | 'repository' | 'migrate';
 
-export interface ExportFormData {
+export interface MigrateFormData {
   dashboards: string[];
   folders: string[];
   history: boolean;
@@ -11,7 +11,7 @@ export interface ExportFormData {
 
 export interface WizardFormData {
   repository: RepositoryFormData;
-  export?: ExportFormData;
+  migrate?: MigrateFormData;
   repositoryName?: string;
 }
 
