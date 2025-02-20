@@ -12,7 +12,7 @@ labels:
     - cloud
     - enterprise
     - oss
-menuTitle: Configure
+menuTitle: Configure the PostgreSQL data source
 title: Configure the PostgreSQL data source
 weight: 10
 refs:
