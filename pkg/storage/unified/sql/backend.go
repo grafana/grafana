@@ -851,17 +851,15 @@ func (b *backend) poll(ctx context.Context, grp string, res string, since int64,
 			prevRV = new(int64)
 		}
 		stream <- &resource.WrittenEvent{
-			WriteEvent: resource.WriteEvent{
-				Value: rec.Value,
-				Key: &resource.ResourceKey{
-					Namespace: rec.Key.Namespace,
-					Group:     rec.Key.Group,
-					Resource:  rec.Key.Resource,
-					Name:      rec.Key.Name,
-				},
-				Type:       resource.WatchEvent_Type(rec.Action),
-				PreviousRV: *prevRV,
+			Value: rec.Value,
+			Key: &resource.ResourceKey{
+				Namespace: rec.Key.Namespace,
+				Group:     rec.Key.Group,
+				Resource:  rec.Key.Resource,
+				Name:      rec.Key.Name,
 			},
+			Type:            resource.WatchEvent_Type(rec.Action),
+			PreviousRV:      *prevRV,
 			Folder:          rec.Folder,
 			ResourceVersion: rec.ResourceVersion,
 			// Timestamp:  , // TODO: add timestamp

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	claims "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	dashboard "github.com/grafana/grafana/pkg/apis/dashboard"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -86,7 +87,10 @@ func (a *dashboardSqlAccess) WriteEvent(ctx context.Context, event resource.Writ
 	if a.subscribers != nil {
 		go func() {
 			write := &resource.WrittenEvent{
-				WriteEvent: event,
+				Type:       event.Type,
+				Key:        event.Key,
+				PreviousRV: event.PreviousRV,
+				Value:      event.Value,
 
 				Timestamp:       time.Now().UnixMilli(),
 				ResourceVersion: rv,
