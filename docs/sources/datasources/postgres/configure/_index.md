@@ -56,7 +56,7 @@ This document provides instructions for configuring the PostgreSQL data source a
 ## Before you begin
 
 You must have the `Organization administrator` role to configure the Postgres data source.
-Organization administrators can also [configure the data source via YAML](#provision-the-data-source) with Grafana's provisioning system.
+Organization administrators can also [configure the data source via YAML](#provision-the-data-source) with the Grafana provisioning system.
 
 Grafana comes with a built-in PostgreSQL data source plugin, eliminating the need to install a plugin.
 
