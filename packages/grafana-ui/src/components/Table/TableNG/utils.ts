@@ -180,6 +180,10 @@ export function getFooterItemNG(rows: TableRow[], field: Field, options: TableFo
   return formattedValue;
 }
 
+const CELL_COLOR_DARKENING_MULTIPLIER = 10;
+const CELL_GRADIENT_DARKENING_MULTIPLIER = 15;
+const CELL_GRADIENT_HUE_ROTATION_DEGREES = 5;
+
 export function getCellColors(
   theme: GrafanaTheme2,
   cellOptions: TableCellOptions,
@@ -207,15 +211,15 @@ export function getCellColors(
       textColor = getTextColorForAlphaBackground(displayValue.color!, theme.isDark);
       bgColor = tinycolor(displayValue.color).toRgbString();
       bgHoverColor = tinycolor(displayValue.color)
-        .darken(10 * darkeningFactor)
+        .darken(CELL_COLOR_DARKENING_MULTIPLIER * darkeningFactor)
         .toRgbString();
     } else if (mode === TableCellBackgroundDisplayMode.Gradient) {
       const hoverColor = tinycolor(displayValue.color)
-        .darken(15 * darkeningFactor)
+        .darken(CELL_GRADIENT_DARKENING_MULTIPLIER * darkeningFactor)
         .toRgbString();
       const bgColor2 = tinycolor(displayValue.color)
-        .darken(10 * darkeningFactor)
-        .spin(5);
+        .darken(CELL_COLOR_DARKENING_MULTIPLIER * darkeningFactor)
+        .spin(CELL_GRADIENT_HUE_ROTATION_DEGREES);
       textColor = getTextColorForAlphaBackground(displayValue.color!, theme.isDark);
       bgColor = `linear-gradient(120deg, ${bgColor2.toRgbString()}, ${displayValue.color})`;
       bgHoverColor = `linear-gradient(120deg, ${bgColor2.toRgbString()}, ${hoverColor})`;
