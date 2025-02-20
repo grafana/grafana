@@ -188,7 +188,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       meta: {},
       editable: true,
       $timeRange: state.$timeRange ?? new SceneTimeRange({}),
-      body: state.body ?? DefaultGridLayoutManager.fromVizPanels(),
+      body: state.body ?? new LayoutOrchestrator({ manager: DefaultGridLayoutManager.fromVizPanels() }),
       links: state.links ?? [],
       ...state,
       editPane: new DashboardEditPane(),
