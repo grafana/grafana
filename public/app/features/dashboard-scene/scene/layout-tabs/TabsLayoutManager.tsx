@@ -1,6 +1,8 @@
 import { SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
 import { t } from 'app/core/internationalization';
 
+import { ConditionalRendering } from '../../conditional-rendering/ConditionalRendering';
+import { DashboardOutlineItemType, DashboardOutlineTabItem } from '../../outline/types';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
@@ -12,7 +14,10 @@ interface TabsLayoutManagerState extends SceneObjectState {
   currentTab: TabItem;
 }
 
-export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> implements DashboardLayoutManager {
+export class TabsLayoutManager
+  extends SceneObjectBase<TabsLayoutManagerState>
+  implements DashboardLayoutManager<{}, DashboardOutlineTabItem>
+{
   public static Component = TabsLayoutManagerRenderer;
 
   public readonly isDashboardLayoutManager = true;
@@ -33,7 +38,7 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
   public readonly descriptor = TabsLayoutManager.descriptor;
 
   public addPanel(vizPanel: VizPanel) {
-    this.state.currentTab.getLayout().addPanel(vizPanel);
+    this.state.currentTab.onAddPanel(vizPanel);
   }
 
   public getVizPanels(): VizPanel[] {
@@ -62,8 +67,16 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
   }
 
   public addNewTab() {
-    const currentTab = new TabItem();
+    const currentTab = new TabItem({ $behaviors: [ConditionalRendering.createEmpty()] });
     this.setState({ tabs: [...this.state.tabs, currentTab], currentTab });
+  }
+
+  public getOutline(): DashboardOutlineTabItem[] {
+    return this.state.tabs.map((tab) => ({
+      type: DashboardOutlineItemType.TAB,
+      item: tab,
+      children: tab.getLayout().getOutline(),
+    }));
   }
 
   public editModeChanged(isEditing: boolean) {
@@ -72,6 +85,48 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
 
   public activateRepeaters() {
     this.state.tabs.forEach((tab) => tab.getLayout().activateRepeaters?.());
+  }
+
+  public addTabBefore(tab: TabItem) {
+    const newTab = new TabItem({ $behaviors: [ConditionalRendering.createEmpty()] });
+    const tabs = this.state.tabs.slice();
+    tabs.splice(tabs.indexOf(tab), 0, newTab);
+    this.setState({ tabs, currentTab: newTab });
+  }
+
+  public addTabAfter(tab: TabItem) {
+    const newTab = new TabItem({ $behaviors: [ConditionalRendering.createEmpty()] });
+    const tabs = this.state.tabs.slice();
+    tabs.splice(tabs.indexOf(tab) + 1, 0, newTab);
+    this.setState({ tabs, currentTab: newTab });
+  }
+
+  public moveTabLeft(tab: TabItem) {
+    const currentIndex = this.state.tabs.indexOf(tab);
+    const tabs = this.state.tabs.slice();
+    tabs.splice(currentIndex, 1);
+    tabs.splice(currentIndex - 1, 0, tab);
+    this.setState({ tabs });
+  }
+
+  public moveTabRight(tab: TabItem) {
+    const currentIndex = this.state.tabs.indexOf(tab);
+    const tabs = this.state.tabs.slice();
+    tabs.splice(currentIndex, 1);
+    tabs.splice(currentIndex + 1, 0, tab);
+    this.setState({ tabs });
+  }
+
+  public isCurrentTab(tab: TabItem): boolean {
+    return this.state.currentTab === tab;
+  }
+
+  public isFirstTab(tab: TabItem): boolean {
+    return this.state.tabs[0] === tab;
+  }
+
+  public isLastTab(tab: TabItem): boolean {
+    return this.state.tabs[this.state.tabs.length - 1] === tab;
   }
 
   public removeTab(tab: TabItem) {
@@ -84,22 +139,25 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     }
 
     const filteredTab = this.state.tabs.filter((tab) => tab !== this.state.currentTab);
-    const tabs = filteredTab.length === 0 ? [new TabItem()] : filteredTab;
+    const tabs =
+      filteredTab.length === 0 ? [new TabItem({ $behaviors: [ConditionalRendering.createEmpty()] })] : filteredTab;
 
     this.setState({ tabs, currentTab: tabs[tabs.length - 1] });
   }
 
   public changeTab(tab: TabItem) {
-    this.setState({ currentTab: tab });
+    if (this.state.currentTab !== tab) {
+      this.setState({ currentTab: tab });
+    }
   }
 
   public static createEmpty(): TabsLayoutManager {
-    const tab = new TabItem();
+    const tab = new TabItem({ $behaviors: [ConditionalRendering.createEmpty()] });
     return new TabsLayoutManager({ tabs: [tab], currentTab: tab });
   }
 
   public static createFromLayout(layout: DashboardLayoutManager): TabsLayoutManager {
-    const tab = new TabItem({ layout: layout.clone() });
+    const tab = new TabItem({ layout: layout.clone(), $behaviors: [ConditionalRendering.createEmpty()] });
     return new TabsLayoutManager({ tabs: [tab], currentTab: tab });
   }
 }

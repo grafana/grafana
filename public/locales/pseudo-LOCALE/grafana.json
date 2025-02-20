@@ -967,6 +967,38 @@
       "redirect-link": "Ŀįşŧ įŉ Ğřäƒäŉä Åľęřŧįŉģ",
       "subtitle": "Åľęřŧ řūľęş řęľäŧęđ ŧő ŧĥįş đäşĥþőäřđ"
     },
+    "conditional-rendering": {
+      "after": {
+        "label": "Åƒŧęř"
+      },
+      "before": {
+        "label": "ßęƒőřę"
+      },
+      "data": {
+        "label": "Đäŧä"
+      },
+      "group": {
+        "add": {
+          "between": "ßęŧŵęęŉ",
+          "button": "Åđđ",
+          "data": "Đäŧä",
+          "from": "Fřőm",
+          "group": "Ğřőūp",
+          "to": "Ŧő"
+        },
+        "condition": {
+          "and": "Åŉđ",
+          "label": "Cőŉđįŧįőŉ",
+          "or": "Øř"
+        },
+        "label": "Ğřőūp"
+      },
+      "title": "Cőŉđįŧįőŉäľ řęŉđęřįŉģ őpŧįőŉş",
+      "variable": {
+        "label": "Väřįäþľę",
+        "placeholder": "Ħęřę įŧ şĥőūľđ þę väřįäþľę ęđįŧőř"
+      }
+    },
     "default-layout": {
       "description": "Ŧĥę đęƒäūľŧ ģřįđ ľäyőūŧ",
       "item-options": {
@@ -1114,6 +1146,16 @@
       "title": "Đäşĥþőäřđ őpŧįőŉş",
       "title-option": "Ŧįŧľę"
     },
+    "outline": {
+      "item": "Đäşĥþőäřđ",
+      "title": "Øūŧľįŉę",
+      "tree": {
+        "item": {
+          "collapse": "Cőľľäpşę įŧęm",
+          "expand": "Ēχpäŉđ įŧęm"
+        }
+      }
+    },
     "panel-edit": {
       "alerting-tab": {
         "dashboard-not-saved": "Đäşĥþőäřđ mūşŧ þę şävęđ þęƒőřę äľęřŧş čäŉ þę äđđęđ.",
@@ -1122,10 +1164,6 @@
     },
     "responsive-layout": {
       "description": "CŜŜ ľäyőūŧ ŧĥäŧ äđĵūşŧş ŧő ŧĥę äväįľäþľę şpäčę",
-      "item-options": {
-        "hide-no-data": "Ħįđę ŵĥęŉ ŉő đäŧä",
-        "title": "Ŀäyőūŧ őpŧįőŉş"
-      },
       "name": "Ŗęşpőŉşįvę ģřįđ",
       "options": {
         "columns": "Cőľūmŉş",
@@ -1143,6 +1181,15 @@
       "row": {
         "collapse": "Cőľľäpşę řőŵ",
         "expand": "Ēχpäŉđ řőŵ",
+        "menu": {
+          "add": "Åđđ",
+          "add-panel": "Päŉęľ",
+          "add-row-above": "Ŗőŵ äþővę",
+          "add-row-below": "Ŗőŵ þęľőŵ",
+          "delete": "Đęľęŧę",
+          "move-down": "Mővę đőŵŉ",
+          "move-up": "Mővę ūp"
+        },
         "new": "Ńęŵ řőŵ",
         "repeat": {
           "learn-more": "Ŀęäřŉ mőřę",
@@ -1170,7 +1217,19 @@
       "description": "Ŧäþş ľäyőūŧ",
       "name": "Ŧäþş",
       "tab": {
-        "new": "Ńęŵ ŧäþ"
+        "affix": {
+          "move-left": "Mővę ľęƒŧ"
+        },
+        "new": "Ńęŵ ŧäþ",
+        "suffix": {
+          "add": "Åđđ",
+          "add-panel": "Päŉęľ",
+          "add-tab-above": "Ŧäþ þęƒőřę",
+          "add-tab-after": "Ŧäþ äƒŧęř",
+          "add-tab-before": "Ŧäþ þęƒőřę",
+          "delete": "Đęľęŧę",
+          "move-right": "Mővę řįģĥŧ"
+        }
       },
       "tab-options": {
         "title": "Ŧäþ őpŧįőŉş",

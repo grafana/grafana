@@ -967,6 +967,38 @@
       "redirect-link": "List in Grafana Alerting",
       "subtitle": "Alert rules related to this dashboard"
     },
+    "conditional-rendering": {
+      "after": {
+        "label": "After"
+      },
+      "before": {
+        "label": "Before"
+      },
+      "data": {
+        "label": "Data"
+      },
+      "group": {
+        "add": {
+          "between": "Between",
+          "button": "Add",
+          "data": "Data",
+          "from": "From",
+          "group": "Group",
+          "to": "To"
+        },
+        "condition": {
+          "and": "And",
+          "label": "Condition",
+          "or": "Or"
+        },
+        "label": "Group"
+      },
+      "title": "Conditional rendering options",
+      "variable": {
+        "label": "Variable",
+        "placeholder": "Here it should be variable editor"
+      }
+    },
     "default-layout": {
       "description": "The default grid layout",
       "item-options": {
@@ -1114,6 +1146,16 @@
       "title": "Dashboard options",
       "title-option": "Title"
     },
+    "outline": {
+      "item": "Dashboard",
+      "title": "Outline",
+      "tree": {
+        "item": {
+          "collapse": "Collapse item",
+          "expand": "Expand item"
+        }
+      }
+    },
     "panel-edit": {
       "alerting-tab": {
         "dashboard-not-saved": "Dashboard must be saved before alerts can be added.",
@@ -1122,10 +1164,6 @@
     },
     "responsive-layout": {
       "description": "CSS layout that adjusts to the available space",
-      "item-options": {
-        "hide-no-data": "Hide when no data",
-        "title": "Layout options"
-      },
       "name": "Responsive grid",
       "options": {
         "columns": "Columns",
@@ -1143,6 +1181,15 @@
       "row": {
         "collapse": "Collapse row",
         "expand": "Expand row",
+        "menu": {
+          "add": "Add",
+          "add-panel": "Panel",
+          "add-row-above": "Row above",
+          "add-row-below": "Row below",
+          "delete": "Delete",
+          "move-down": "Move down",
+          "move-up": "Move up"
+        },
         "new": "New row",
         "repeat": {
           "learn-more": "Learn more",
@@ -1170,7 +1217,19 @@
       "description": "Tabs layout",
       "name": "Tabs",
       "tab": {
-        "new": "New tab"
+        "affix": {
+          "move-left": "Move left"
+        },
+        "new": "New tab",
+        "suffix": {
+          "add": "Add",
+          "add-panel": "Panel",
+          "add-tab-above": "Tab before",
+          "add-tab-after": "Tab after",
+          "add-tab-before": "Tab before",
+          "delete": "Delete",
+          "move-right": "Move right"
+        }
       },
       "tab-options": {
         "title": "Tab options",

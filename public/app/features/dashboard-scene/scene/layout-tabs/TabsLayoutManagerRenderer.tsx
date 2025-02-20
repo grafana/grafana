@@ -1,8 +1,11 @@
 import { css } from '@emotion/css';
+import { Fragment } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { SceneComponentProps } from '@grafana/scenes';
-import { TabContent, TabsBar, useStyles2 } from '@grafana/ui';
+import { Divider, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
+
+import { getDashboardSceneFor } from '../../utils/utils';
 
 import { TabsLayoutManager } from './TabsLayoutManager';
 
@@ -10,12 +13,17 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
   const styles = useStyles2(getStyles);
   const { tabs, currentTab } = model.useState();
   const { layout } = currentTab.useState();
+  const dashboard = getDashboardSceneFor(model);
+  const { isEditing } = dashboard.useState();
 
   return (
     <>
       <TabsBar className={styles.tabsContainer}>
-        {tabs.map((tab) => (
-          <tab.Component model={tab} key={tab.state.key!} />
+        {tabs.map((tab, idx) => (
+          <Fragment key={tab.state.key!}>
+            {isEditing && idx > 0 && <Divider direction="vertical" />}
+            <tab.Component model={tab} />
+          </Fragment>
         ))}
       </TabsBar>
       <TabContent className={styles.tabContentContainer}>{layout && <layout.Component model={layout} />}</TabContent>

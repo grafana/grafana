@@ -5,6 +5,7 @@ import { t } from 'app/core/internationalization';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
+import { DashboardOutline } from '../outline/DashboardOutline';
 import { DashboardScene } from '../scene/DashboardScene';
 import { useLayoutCategory } from '../scene/layouts-shared/DashboardLayoutSelector';
 import { EditableDashboardElement } from '../scene/types/EditableDashboardElement';
@@ -30,34 +31,43 @@ export class DashboardEditableElement implements EditableDashboardElement {
         .addItem(
           new OptionsPaneItemDescriptor({
             title: t('dashboard.options.title-option', 'Title'),
-            render: function renderTitle() {
-              return <DashboardTitleInput dashboard={dashboard} />;
-            },
+            render: () => <DashboardTitleInput dashboard={dashboard} />,
           })
         )
         .addItem(
           new OptionsPaneItemDescriptor({
             title: t('dashboard.options.description', 'Description'),
-            render: function renderTitle() {
-              return <DashboardDescriptionInput dashboard={dashboard} />;
-            },
+            render: () => <DashboardDescriptionInput dashboard={dashboard} />,
           })
         );
     }, [dashboard]);
 
     const layoutCategory = useLayoutCategory(body);
 
-    return [dashboardOptions, layoutCategory];
+    const dashboardOutline = useMemo(() => {
+      return new OptionsPaneCategoryDescriptor({
+        title: t('dashboard.outline.title', 'Outline'),
+        id: 'dashboard-outline',
+        isOpenDefault: true,
+      }).addItem(
+        new OptionsPaneItemDescriptor({
+          title: t('dashboard.outline.item', 'Dashboard'),
+          render: () => <DashboardOutline layout={body} />,
+        })
+      );
+    }, [body]);
+
+    return [dashboardOptions, layoutCategory, dashboardOutline];
   }
 }
 
-export function DashboardTitleInput({ dashboard }: { dashboard: DashboardScene }) {
+function DashboardTitleInput({ dashboard }: { dashboard: DashboardScene }) {
   const { title } = dashboard.useState();
 
   return <Input value={title} onChange={(e) => dashboard.setState({ title: e.currentTarget.value })} />;
 }
 
-export function DashboardDescriptionInput({ dashboard }: { dashboard: DashboardScene }) {
+function DashboardDescriptionInput({ dashboard }: { dashboard: DashboardScene }) {
   const { description } = dashboard.useState();
 
   return <TextArea value={description} onChange={(e) => dashboard.setState({ title: e.currentTarget.value })} />;

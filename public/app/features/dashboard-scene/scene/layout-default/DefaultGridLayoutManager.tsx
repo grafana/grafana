@@ -1,30 +1,32 @@
 import { config } from '@grafana/runtime';
 import {
-  SceneObjectState,
-  SceneGridLayout,
-  SceneObjectBase,
-  SceneGridRow,
-  VizPanel,
-  sceneGraph,
-  sceneUtils,
   SceneComponentProps,
+  sceneGraph,
   SceneGridItemLike,
+  SceneGridLayout,
+  SceneGridRow,
+  SceneObjectBase,
+  SceneObjectState,
+  sceneUtils,
   useSceneObjectState,
+  VizPanel,
 } from '@grafana/scenes';
 import { GRID_COLUMN_COUNT } from 'app/core/constants';
 import { t } from 'app/core/internationalization';
 import DashboardEmpty from 'app/features/dashboard/dashgrid/DashboardEmpty';
 
+import { DashboardOutlineGridRowItem, DashboardOutlineItemType, DashboardOutlinePanelItem } from '../../outline/types';
 import { isClonedKey, joinCloneKeys } from '../../utils/clone';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import {
   forceRenderChildren,
+  getDashboardSceneFor,
+  getGridItemKeyForPanelId,
   getPanelIdForVizPanel,
+  getVizPanelKeyForPanelId,
   NEW_PANEL_HEIGHT,
   NEW_PANEL_WIDTH,
-  getVizPanelKeyForPanelId,
-  getGridItemKeyForPanelId,
-  getDashboardSceneFor,
+  useDashboard,
 } from '../../utils/utils';
 import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
@@ -40,7 +42,7 @@ interface DefaultGridLayoutManagerState extends SceneObjectState {
 
 export class DefaultGridLayoutManager
   extends SceneObjectBase<DefaultGridLayoutManagerState>
-  implements DashboardLayoutManager
+  implements DashboardLayoutManager<{}, DashboardOutlineGridRowItem | DashboardOutlinePanelItem>
 {
   public static Component = DefaultGridLayoutManagerRenderer;
 
@@ -233,6 +235,59 @@ export class DefaultGridLayoutManager
     }
 
     getDashboardSceneFor(this).switchLayout(tabsLayout);
+  }
+
+  public getOutline(): Array<DashboardOutlineGridRowItem | DashboardOutlinePanelItem> {
+    this.activateRepeaters();
+
+    return this.state.grid.state.children.reduce<Array<DashboardOutlineGridRowItem | DashboardOutlinePanelItem>>(
+      (acc, child) => {
+        if (child instanceof DashboardGridItem) {
+          if (child.state.repeatedPanels?.length ?? 0 > 0) {
+            acc.push(
+              ...(child.state.repeatedPanels?.map<DashboardOutlinePanelItem>((panel) => ({
+                type: DashboardOutlineItemType.PANEL,
+                item: panel,
+                children: [],
+              })) ?? [])
+            );
+
+            return acc;
+          }
+
+          acc.push({ type: DashboardOutlineItemType.PANEL, item: child.state.body, children: [] });
+          return acc;
+        } else if (child instanceof SceneGridRow) {
+          acc.push({
+            type: DashboardOutlineItemType.GRID_ROW,
+            item: child,
+            children: child.state.children.reduce<DashboardOutlinePanelItem[]>((acc, child) => {
+              if (!(child instanceof DashboardGridItem)) {
+                return acc;
+              }
+
+              if (child.state.repeatedPanels?.length ?? 0 > 0) {
+                acc.push(
+                  ...(child.state.repeatedPanels?.map<DashboardOutlinePanelItem>((panel) => ({
+                    type: DashboardOutlineItemType.PANEL,
+                    item: panel,
+                    children: [],
+                  })) ?? [])
+                );
+
+                return acc;
+              }
+
+              acc.push({ type: DashboardOutlineItemType.PANEL, item: child.state.body, children: [] });
+              return acc;
+            }, []),
+          });
+        }
+
+        return acc;
+      },
+      []
+    );
   }
 
   public editModeChanged(isEditing: boolean) {
@@ -462,7 +517,7 @@ export class DefaultGridLayoutManager
 
 function DefaultGridLayoutManagerRenderer({ model }: SceneComponentProps<DefaultGridLayoutManager>) {
   const { children } = useSceneObjectState(model.state.grid, { shouldActivateOrKeepAlive: true });
-  const dashboard = getDashboardSceneFor(model);
+  const dashboard = useDashboard(model);
 
   // If we are top level layout and have no children, show empty state
   if (model.parent === dashboard && children.length === 0) {

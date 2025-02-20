@@ -1,3 +1,5 @@
+import { useMemo } from 'react';
+
 import { getDataSourceRef, IntervalVariableModel } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import {
@@ -7,14 +9,17 @@ import {
   SceneDataTransformer,
   sceneGraph,
   SceneObject,
+  SceneObjectState,
   SceneQueryRunner,
   VizPanel,
   VizPanelMenu,
 } from '@grafana/scenes';
+import { useElementSelection, UseElementSelectionResult } from '@grafana/ui';
 import { initialIntervalVariableModelState } from 'app/features/variables/interval/reducer';
 
+import { ConditionalRendering } from '../conditional-rendering/ConditionalRendering';
 import { DashboardDatasourceBehaviour } from '../scene/DashboardDatasourceBehaviour';
-import { DashboardScene } from '../scene/DashboardScene';
+import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
@@ -434,4 +439,47 @@ export function getLayoutManagerFor(sceneObject: SceneObject): DashboardLayoutMa
 
 export function getGridItemKeyForPanelId(panelId: number): string {
   return `grid-item-${panelId}`;
+}
+
+export function useDashboard(scene: SceneObject): DashboardScene {
+  return getDashboardSceneFor(scene);
+}
+
+export function useDashboardState(
+  scene: SceneObject
+): DashboardSceneState & { isEditing: boolean; showHiddenElements: boolean } {
+  const dashboard = useDashboard(scene);
+  const state = dashboard.useState();
+
+  return {
+    ...state,
+    isEditing: !!state.isEditing,
+    showHiddenElements: !!(state.isEditing && state.showHiddenElements),
+  };
+}
+
+export function useConditionalRenderingBehavior(scene: SceneObject): ConditionalRendering | undefined {
+  const { $behaviors } = scene.useState();
+  return useMemo(() => $behaviors?.find((b) => b instanceof ConditionalRendering), [$behaviors]);
+}
+
+export function useIsConditionallyHidden(scene: SceneObject): boolean {
+  const conditionalRendering = useConditionalRenderingBehavior(scene);
+  return !(conditionalRendering?.evaluate() ?? true);
+}
+
+export function useElementSelectionScene(scene: SceneObject): UseElementSelectionResult {
+  const { key } = scene.useState();
+
+  return useElementSelection(key);
+}
+
+export function useInterpolatedTitle<T extends SceneObjectState & { title?: string }>(scene: SceneObject<T>): string {
+  const { title } = scene.useState();
+
+  if (!title) {
+    return '';
+  }
+
+  return sceneGraph.interpolate(scene, title, undefined, 'text');
 }
