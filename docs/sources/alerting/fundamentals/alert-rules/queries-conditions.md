@@ -114,7 +114,7 @@ The threshold expression allows the comparison between two single values. Availa
 - **Equal**: `$A == 2`
 - **Not equal**: `$B =! 4`
 - **Greater or equal**: `$A >= 8`
-- **Less or equal**: `$B >= 16`
+- **Less or equal**: `$B <= 16`
 - **Is within range, inclusive**: `$A >= 0 AND $A <= 10`
 - **Is outside range inclusive**: `$A <= 124 && $A >= 256`
 
