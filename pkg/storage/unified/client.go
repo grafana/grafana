@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"path/filepath"
 
+	otgrpc "github.com/opentracing-contrib/go-grpc"
+	"github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
@@ -16,7 +18,6 @@ import (
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/grpcclient"
 	"github.com/grafana/dskit/middleware"
-	"github.com/grafana/dskit/user"
 
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -177,14 +178,7 @@ func grpcConn(address string, reg prometheus.Registerer) (*grpc.ClientConn, erro
 	// Report gRPC status code errors as labels.
 	var instrumentationOptions []middleware.InstrumentationOption
 	instrumentationOptions = append(instrumentationOptions, middleware.ReportGRPCStatusOption)
-	unary, stream := grpcclient.Instrument(metrics.requestDuration, instrumentationOptions...)
-
-	// The defaultUser middleware is used to set the default user if no orgID is set, the library is built
-	// with the assumption that a user is always set.
-	//
-	// Make sure the defaultUser middleware is called first by adding it to the front of the interceptors.
-	unary = append([]grpc.UnaryClientInterceptor{defaultUserUnaryClientInterceptor()}, unary...)
-	stream = append([]grpc.StreamClientInterceptor{defaultUserStreamClientInterceptor()}, stream...)
+	unary, stream := instrument(metrics.requestDuration, instrumentationOptions...)
 
 	// We can later pass in the gRPC config here, i.e. to set MaxRecvMsgSize etc.
 	cfg := grpcclient.Config{}
@@ -207,28 +201,14 @@ func grpcConn(address string, reg prometheus.Registerer) (*grpc.ClientConn, erro
 	return grpc.NewClient(address, opts...)
 }
 
-func defaultUserUnaryClientInterceptor() grpc.UnaryClientInterceptor {
-	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
-		// Set the default user as we know its never set.
-		ctx = user.InjectOrgID(ctx, defaultUser)
-		// Invoke the next interceptor in the chain.
-		err := invoker(ctx, method, req, reply, cc, opts...)
-		if err != nil {
-			return err
+// instrument is the same as grpcclient.Instrument but without the middleware.ClientUserHeaderInterceptor
+// and middleware.StreamClientUserHeaderInterceptor as we don't need them.
+func instrument(requestDuration *prometheus.HistogramVec, instrumentationLabelOptions ...middleware.InstrumentationOption) ([]grpc.UnaryClientInterceptor, []grpc.StreamClientInterceptor) {
+	return []grpc.UnaryClientInterceptor{
+			otgrpc.OpenTracingClientInterceptor(opentracing.GlobalTracer()),
+			middleware.UnaryClientInstrumentInterceptor(requestDuration, instrumentationLabelOptions...),
+		}, []grpc.StreamClientInterceptor{
+			otgrpc.OpenTracingStreamClientInterceptor(opentracing.GlobalTracer()),
+			middleware.StreamClientInstrumentInterceptor(requestDuration, instrumentationLabelOptions...),
 		}
-		return nil
-	}
-}
-
-func defaultUserStreamClientInterceptor() grpc.StreamClientInterceptor {
-	return func(ctx context.Context, desc *grpc.StreamDesc, cc *grpc.ClientConn, method string, streamer grpc.Streamer, opts ...grpc.CallOption) (grpc.ClientStream, error) {
-		// Set the default user as we know its never set.
-		ctx = user.InjectOrgID(ctx, defaultUser)
-		// Invoke the next interceptor in the chain.
-		clientStream, err := streamer(ctx, desc, cc, method, opts...)
-		if err != nil {
-			return nil, err
-		}
-		return clientStream, nil
-	}
 }
