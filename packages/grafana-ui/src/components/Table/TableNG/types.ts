@@ -10,7 +10,6 @@ export interface CellNGProps {
   height?: number;
   justifyContent: Property.JustifyContent;
   rowIdx?: number;
-  actions?: ActionModel[];
 }
 
 export interface RowExpanderNGProps {
@@ -29,6 +28,10 @@ export interface BarGaugeCellProps extends CellNGProps {
 export interface ImageCellProps extends CellNGProps {
   cellOptions: TableCellOptions;
   height: number;
+}
+
+export interface ActionCellProps {
+  actions?: ActionModel[];
 }
 
 export interface SparklineCellProps extends BarGaugeCellProps {}
