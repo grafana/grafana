@@ -20,8 +20,9 @@ export interface RowExpanderNGProps {
 
 export interface BarGaugeCellProps extends CellNGProps {
   height: number;
-  width: number;
+  theme: GrafanaTheme2;
   timeRange: TimeRange;
+  width: number;
 }
 
 export interface ImageCellProps extends CellNGProps {
