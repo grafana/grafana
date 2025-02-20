@@ -234,7 +234,7 @@ export function TableNG(props: TableNGProps) {
     return records;
   }, []);
   const calcsRef = useRef<string[]>([]);
-  const mapFrameToDataGrid = (main: DataFrame, calcsRef: React.MutableRefObject<string[]>, subTable?: boolean) => {
+  const mapFrameToDataGrid = (main: DataFrame, calcsRef: React.MutableRefObject<string[]>) => {
     const columns: TableColumn[] = [];
 
     const hasNestedFrames = getIsNestedTable(main);
@@ -282,7 +282,7 @@ export function TableNG(props: TableNGProps) {
           // If it's a child, render entire DataGrid at first column position
           let expandedColumns: TableColumn[] = [];
           let expandedRecords: Array<Record<string, string>> = [];
-          expandedColumns = mapFrameToDataGrid(row.data, calcsRef, true);
+          expandedColumns = mapFrameToDataGrid(row.data, calcsRef);
           expandedRecords = frameToRecords(row.data);
           // TODO add renderHeaderCell HeaderCell's here and handle all features
           return (
@@ -290,7 +290,7 @@ export function TableNG(props: TableNGProps) {
               rows={expandedRecords}
               columns={expandedColumns}
               rowHeight={defaultRowHeight}
-              style={{ height: '100%', overflow: 'visible' }}
+              style={{ height: '100%', overflow: 'visible', marginLeft: EXPANDER_WIDTH }}
               headerRowHeight={row.data.meta?.custom?.noHeader ? 0 : undefined}
             />
           );
@@ -322,42 +322,40 @@ export function TableNG(props: TableNGProps) {
         name: field.name,
         field,
         cellClass: styles.cell,
-        renderCell: subTable
-          ? undefined
-          : (props: any) => {
-              const { row, rowIdx } = props;
-              const value = row[key];
-              // Cell level rendering here
-              return (
-                <TableCellNG
-                  key={key}
-                  value={value}
-                  field={field}
-                  theme={theme}
-                  timeRange={timeRange}
-                  height={defaultRowHeight}
-                  justifyContent={justifyColumnContent}
-                  rowIdx={rowIdx}
-                  shouldTextOverflow={() =>
-                    shouldTextOverflow(
-                      key,
-                      row,
-                      columnTypes,
-                      headerCellRefs,
-                      osContext,
-                      defaultLineHeight,
-                      defaultRowHeight,
-                      DEFAULT_CELL_PADDING,
-                      textWrap,
-                      cellInspect
-                    )
-                  }
-                  setIsInspecting={setIsInspecting}
-                  setContextMenuProps={setContextMenuProps}
-                  cellInspect={cellInspect}
-                />
-              );
-            },
+        renderCell: (props: any) => {
+          const { row, rowIdx } = props;
+          const value = row[key];
+          // Cell level rendering here
+          return (
+            <TableCellNG
+              key={key}
+              value={value}
+              field={field}
+              theme={theme}
+              timeRange={timeRange}
+              height={defaultRowHeight}
+              justifyContent={justifyColumnContent}
+              rowIdx={rowIdx}
+              shouldTextOverflow={() =>
+                shouldTextOverflow(
+                  key,
+                  row,
+                  columnTypes,
+                  headerCellRefs,
+                  osContext,
+                  defaultLineHeight,
+                  defaultRowHeight,
+                  DEFAULT_CELL_PADDING,
+                  textWrap,
+                  cellInspect
+                )
+              }
+              setIsInspecting={setIsInspecting}
+              setContextMenuProps={setContextMenuProps}
+              cellInspect={cellInspect}
+            />
+          );
+        },
         renderSummaryCell: () => {
           if (isCountRowsSet && fieldIndex === 0) {
             return (

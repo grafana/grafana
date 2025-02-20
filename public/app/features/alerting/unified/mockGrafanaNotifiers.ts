@@ -1750,7 +1750,7 @@ export const grafanaAlertNotifiers: Record<GrafanaNotifierType, NotifierDTO> = {
         element: 'textarea',
         inputType: '',
         label: 'Message',
-        description: 'Custom message. You can use template variables.',
+        description: 'Templated message to be used in the payload\'s "message" field.',
         placeholder: '{{ template "default.message" . }}',
         propertyName: 'message',
         selectOptions: null,

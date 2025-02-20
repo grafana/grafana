@@ -4,11 +4,6 @@ import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/d
 import { K8sAnnotations, PROVENANCE_NONE } from 'app/features/alerting/unified/utils/k8s/constants';
 
 /**
- * Get the correct namespace to use when using the K8S API.
- */
-export const getK8sNamespace = () => config.namespace;
-
-/**
  * Should we call the kubernetes-style API for managing alertmanager entities?
  *
  * Requires the alertmanager referenced being the Grafana AM,
@@ -48,3 +43,11 @@ export const canAdminEntity = (k8sEntity: EntityToCheck) =>
 
 export const canDeleteEntity = (k8sEntity: EntityToCheck) =>
   getAnnotation(k8sEntity, K8sAnnotations.AccessDelete) === 'true';
+
+/**
+ * Escape \ and = characters for field selectors.
+ * The Kubernetes API Machinery will decode those automatically.
+ */
+export const encodeFieldSelector = (value: string): string => {
+  return value.replaceAll(/\\/g, '\\\\').replaceAll(/\=/g, '\\=').replaceAll(/,/g, '\\,');
+};

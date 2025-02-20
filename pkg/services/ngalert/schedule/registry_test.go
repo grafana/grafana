@@ -259,8 +259,11 @@ func TestRuleWithFolderFingerprint(t *testing.T) {
 		excludedFields := map[string]struct{}{
 			"Version":         {},
 			"Updated":         {},
+			"UpdatedBy":       {},
 			"IntervalSeconds": {},
 			"Annotations":     {},
+			"ID":              {},
+			"OrgID":           {},
 		}
 
 		tp := reflect.TypeOf(rule).Elem()

@@ -7,7 +7,7 @@ import { alertRuleApi } from '../../api/alertRuleApi';
 
 import { FileExportPreview } from './FileExportPreview';
 import { GrafanaExportDrawer } from './GrafanaExportDrawer';
-import { allGrafanaExportProviders, ExportFormats } from './providers';
+import { ExportFormats, allGrafanaExportProviders } from './providers';
 
 interface GrafanaRuleFolderExporterProps {
   folder: FolderDTO;

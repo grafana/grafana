@@ -115,6 +115,11 @@ func TestService_Run(t *testing.T) {
 			existingPlugins:  []*plugins.Plugin{{JSONData: plugins.JSONData{ID: "myplugin", Info: plugins.Info{Version: "1.0.0"}}}},
 			latestPlugin:     &repo.PluginArchiveInfo{Version: "2.0.0"},
 		},
+		{
+			name:             "Should install a plugin with a URL",
+			shouldInstall:    true,
+			pluginsToInstall: []setting.InstallPlugin{{ID: "myplugin", URL: "https://example.com/myplugin.tar.gz"}},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -124,6 +129,7 @@ func TestService_Run(t *testing.T) {
 				require.NoError(t, err)
 			}
 			installed := 0
+			installedFromURL := 0
 			s, err := ProvideService(
 				&setting.Cfg{
 					PreinstallPlugins:      tt.pluginsToInstall,
@@ -131,7 +137,7 @@ func TestService_Run(t *testing.T) {
 				},
 				pluginstore.New(preg, &fakes.FakeLoader{}),
 				&fakes.FakePluginInstaller{
-					AddFunc: func(ctx context.Context, pluginID string, version string, opts plugins.CompatOpts) error {
+					AddFunc: func(ctx context.Context, pluginID string, version string, opts plugins.AddOpts) error {
 						for _, plugin := range tt.pluginsToFail {
 							if plugin == pluginID {
 								return errors.New("Failed to install plugin")
@@ -143,7 +149,11 @@ func TestService_Run(t *testing.T) {
 						}
 						for _, plugin := range tt.pluginsToInstall {
 							if plugin.ID == pluginID && plugin.Version == version {
-								installed++
+								if opts.URL() != "" {
+									installedFromURL++
+								} else {
+									installed++
+								}
 							}
 						}
 						return nil
@@ -168,7 +178,27 @@ func TestService_Run(t *testing.T) {
 				require.NoError(t, err)
 			}
 			if tt.shouldInstall {
-				require.Equal(t, len(tt.pluginsToInstall)-len(tt.pluginsToFail), installed)
+				expectedInstalled := 0
+				expectedInstalledFromURL := 0
+				for _, plugin := range tt.pluginsToInstall {
+					expectedFailed := false
+					for _, pluginFail := range tt.pluginsToFail {
+						if plugin.ID == pluginFail {
+							expectedFailed = true
+							break
+						}
+					}
+					if expectedFailed {
+						continue
+					}
+					if plugin.URL != "" {
+						expectedInstalledFromURL++
+					} else {
+						expectedInstalled++
+					}
+				}
+				require.Equal(t, expectedInstalled, installed)
+				require.Equal(t, expectedInstalledFromURL, installedFromURL)
 			}
 		})
 	}

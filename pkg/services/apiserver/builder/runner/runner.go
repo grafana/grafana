@@ -101,11 +101,11 @@ func newAppBuilderGroup(cfg RunnerConfig, provider app.Provider) (appBuilderGrou
 
 	for gv, kinds := range appBuilderConfig.ManagedKinds {
 		confCopy := *appBuilderConfig
-		confCopy.ManagedKinds = map[schema.GroupVersion]resource.Kind{
+		confCopy.ManagedKinds = map[schema.GroupVersion][]resource.Kind{
 			gv: kinds,
 		}
 		confCopy.groupVersion = gv
-		if confCopy.CustomConfig == nil {
+		if confCopy.CustomConfig != nil {
 			group.customConfig = confCopy.CustomConfig
 		}
 		b, err := NewAppBuilder(confCopy)

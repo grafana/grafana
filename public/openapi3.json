@@ -895,26 +895,6 @@
         },
         "description": "(empty)"
       },
-      "getGroupMappingResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/GroupMapping"
-            }
-          }
-        },
-        "description": "(empty)"
-      },
-      "getGroupMappingsResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/getGroupMappings"
-            }
-          }
-        },
-        "description": "(empty)"
-      },
       "getGroupRolesResponse": {
         "content": {
           "application/json": {
@@ -2682,6 +2662,9 @@
       },
       "AlertRuleEditorSettings": {
         "properties": {
+          "simplified_notifications_section": {
+            "type": "boolean"
+          },
           "simplified_query_and_expressions_section": {
             "type": "boolean"
           }
@@ -2973,6 +2956,9 @@
             "format": "double",
             "type": "number"
           },
+          "folderUid": {
+            "type": "string"
+          },
           "health": {
             "type": "string"
           },
@@ -3012,10 +2998,15 @@
           },
           "type": {
             "type": "string"
+          },
+          "uid": {
+            "type": "string"
           }
         },
         "required": [
+          "uid",
           "name",
+          "folderUid",
           "query",
           "health",
           "type",
@@ -3182,13 +3173,12 @@
           "ids": {
             "description": "Panel IDs that should be included or excluded",
             "items": {
-              "format": "int64",
+              "format": "uint8",
               "type": "integer"
             },
             "type": "array"
           }
         },
-        "title": "AnnotationPanelFilter defines model for AnnotationPanelFilter.",
         "type": "object"
       },
       "AnnotationPermission": {
@@ -3207,7 +3197,7 @@
         "properties": {
           "builtIn": {
             "description": "Set to 1 for the standard annotation query all dashboards have by default.",
-            "format": "float",
+            "format": "double",
             "type": "number"
           },
           "datasource": {
@@ -3967,22 +3957,26 @@
         },
         "type": "array"
       },
-      "CookiePreferences": {
+      "ConvertPrometheusResponse": {
         "properties": {
-          "analytics": {
-            "additionalProperties": {},
-            "type": "object"
+          "error": {
+            "type": "string"
           },
-          "functional": {
-            "additionalProperties": {},
-            "type": "object"
+          "errorType": {
+            "type": "string"
           },
-          "performance": {
-            "additionalProperties": {},
-            "type": "object"
+          "status": {
+            "type": "string"
           }
         },
-        "title": "CookiePreferences defines model for CookiePreferences.",
+        "type": "object"
+      },
+      "CookiePreferences": {
+        "properties": {
+          "analytics": {},
+          "functional": {},
+          "performance": {}
+        },
         "type": "object"
       },
       "CookieType": {
@@ -5156,23 +5150,23 @@
           "type": {
             "enum": [
               "alertmanager",
-              " dingding",
-              " discord",
-              " email",
-              " googlechat",
-              " kafka",
-              " line",
-              " opsgenie",
-              " pagerduty",
-              " pushover",
-              " sensugo",
-              " slack",
-              " teams",
-              " telegram",
-              " threema",
-              " victorops",
-              " webhook",
-              " wecom"
+              "dingding",
+              "discord",
+              "email",
+              "googlechat",
+              "kafka",
+              "line",
+              "opsgenie",
+              "pagerduty",
+              "pushover",
+              "sensugo",
+              "slack",
+              "teams",
+              "telegram",
+              "threema",
+              "victorops",
+              "webhook",
+              "wecom"
             ],
             "example": "webhook",
             "type": "string"
@@ -5245,10 +5239,6 @@
           "message"
         ],
         "type": "object"
-      },
-      "ErrorSource": {
-        "description": "ErrorSource type defines the source of the error",
-        "type": "string"
       },
       "ErrorType": {
         "title": "ErrorType models the different API error types.",
@@ -5497,6 +5487,14 @@
           "CounterResetHint": {
             "$ref": "#/components/schemas/CounterResetHint"
           },
+          "CustomValues": {
+            "description": "Holds the custom (usually upper) bounds for bucket definitions, otherwise nil.\nThis slice is interned, to be treated as immutable and copied by reference.\nThese numbers should be strictly increasing. This field is only used when the\nschema is for custom buckets, and the ZeroThreshold, ZeroCount, NegativeSpans\nand NegativeBuckets fields are not used in that case.",
+            "items": {
+              "format": "double",
+              "type": "number"
+            },
+            "type": "array"
+          },
           "PositiveBuckets": {
             "description": "Observation counts in buckets. Each represents an absolute count and\nmust be zero or positive.",
             "items": {
@@ -5513,7 +5511,7 @@
             "type": "array"
           },
           "Schema": {
-            "description": "Currently valid schema numbers are -4 \u003c= n \u003c= 8.  They are all for\nbase-2 bucket schemas, where 1 is a bucket boundary in each case, and\nthen each power of two is divided into 2^n logarithmic buckets.  Or\nin other words, each bucket boundary is the previous boundary times\n2^(2^-n).",
+            "description": "Currently valid schema numbers are -4 \u003c= n \u003c= 8 for exponential buckets.\nThey are all for base-2 bucket schemas, where 1 is a bucket boundary in\neach case, and then each power of two is divided into 2^n logarithmic buckets.\nOr in other words, each bucket boundary is the previous boundary times\n2^(2^-n). Another valid schema number is -53 for custom buckets, defined by\nthe CustomValues field.",
             "format": "int32",
             "type": "integer"
           },
@@ -5583,6 +5581,10 @@
             },
             "type": "array"
           },
+          "repository": {
+            "description": "When the folder belongs to a repository\nNOTE: this is only populated when folders are managed by unified storage",
+            "type": "string"
+          },
           "title": {
             "type": "string"
           },
@@ -5613,6 +5615,10 @@
             "type": "integer"
           },
           "parentUid": {
+            "type": "string"
+          },
+          "repository": {
+            "description": "When the folder belongs to a repository\nNOTE: this is only populated when folders are managed by unified storage",
             "type": "string"
           },
           "title": {
@@ -6095,10 +6101,6 @@
             ],
             "type": "string"
           },
-          "id": {
-            "format": "int64",
-            "type": "integer"
-          },
           "intervalSeconds": {
             "format": "int64",
             "type": "integer"
@@ -6123,10 +6125,6 @@
           "notification_settings": {
             "$ref": "#/components/schemas/AlertRuleNotificationSettings"
           },
-          "orgId": {
-            "format": "int64",
-            "type": "integer"
-          },
           "provenance": {
             "$ref": "#/components/schemas/Provenance"
           },
@@ -6145,6 +6143,9 @@
           "updated": {
             "format": "date-time",
             "type": "string"
+          },
+          "updated_by": {
+            "$ref": "#/components/schemas/UserInfo"
           },
           "version": {
             "format": "int64",
@@ -6229,6 +6230,12 @@
           }
         },
         "type": "object"
+      },
+      "GettableRuleVersions": {
+        "items": {
+          "$ref": "#/components/schemas/GettableExtendedRuleNode"
+        },
+        "type": "array"
       },
       "GettableStatus": {
         "properties": {
@@ -6396,24 +6403,6 @@
         },
         "type": "object"
       },
-      "GroupMapping": {
-        "properties": {
-          "groupID": {
-            "type": "string"
-          },
-          "orgID": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "uid": {
-            "type": "string"
-          },
-          "variant": {
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
       "HTTPClientConfig": {
         "properties": {
           "authorization": {
@@ -6524,6 +6513,10 @@
           },
           "isStarred": {
             "type": "boolean"
+          },
+          "orgId": {
+            "format": "int64",
+            "type": "integer"
           },
           "permanentlyDeleteDate": {
             "format": "date-time",
@@ -7020,7 +7013,6 @@
             "type": "string"
           }
         },
-        "title": "LibraryElementDTOMetaUser defines model for LibraryElementDTOMetaUser.",
         "type": "object"
       },
       "LibraryElementResponse": {
@@ -7239,7 +7231,6 @@
               "RESOURCE_CONFLICT",
               "UNEXPECTED_STATUS_CODE",
               "INTERNAL_SERVICE_ERROR",
-              "ONLY_CORE_DATA_SOURCES",
               "GENERIC_ERROR"
             ],
             "type": "string"
@@ -7273,10 +7264,12 @@
               "FOLDER",
               "LIBRARY_ELEMENT",
               "ALERT_RULE",
+              "ALERT_RULE_GROUP",
               "CONTACT_POINT",
               "NOTIFICATION_POLICY",
               "NOTIFICATION_TEMPLATE",
-              "MUTE_TIMING"
+              "MUTE_TIMING",
+              "PLUGIN"
             ],
             "type": "string"
           }
@@ -7406,7 +7399,6 @@
             "type": "array"
           }
         },
-        "title": "NavbarPreference defines model for NavbarPreference.",
         "type": "object"
       },
       "NewApiKeyResult": {
@@ -8603,7 +8595,7 @@
             "$ref": "#/components/schemas/QueryHistoryPreference"
           },
           "theme": {
-            "description": "Theme light, dark, empty is default",
+            "description": "light, dark, empty is default",
             "type": "string"
           },
           "timezone": {
@@ -8611,8 +8603,23 @@
             "type": "string"
           },
           "weekStart": {
-            "description": "WeekStart day of the week (sunday, monday, etc)",
+            "description": "day of the week (sunday, monday, etc)",
             "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "PrometheusNamespace": {
+        "properties": {
+          "Body": {
+            "additionalProperties": {
+              "items": {
+                "$ref": "#/components/schemas/PrometheusRuleGroup"
+              },
+              "type": "array"
+            },
+            "description": "in: body",
+            "type": "object"
           }
         },
         "type": "object"
@@ -8627,6 +8634,55 @@
           },
           "remote_write_path": {
             "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "PrometheusRule": {
+        "properties": {
+          "Alert": {
+            "type": "string"
+          },
+          "Annotations": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "Expr": {
+            "type": "string"
+          },
+          "For": {
+            "type": "string"
+          },
+          "KeepFiringFor": {
+            "type": "string"
+          },
+          "Labels": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "Record": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "PrometheusRuleGroup": {
+        "properties": {
+          "Interval": {
+            "$ref": "#/components/schemas/Duration"
+          },
+          "Name": {
+            "type": "string"
+          },
+          "Rules": {
+            "items": {
+              "$ref": "#/components/schemas/PrometheusRule"
+            },
+            "type": "array"
           }
         },
         "type": "object"
@@ -9076,11 +9132,10 @@
       "QueryHistoryPreference": {
         "properties": {
           "homeTab": {
-            "description": "HomeTab one of: '' | 'query' | 'starred';",
+            "description": "one of: '' | 'query' | 'starred';",
             "type": "string"
           }
         },
-        "title": "QueryHistoryPreference defines model for QueryHistoryPreference.",
         "type": "object"
       },
       "QueryHistoryResponse": {
@@ -9929,6 +9984,9 @@
             "format": "double",
             "type": "number"
           },
+          "folderUid": {
+            "type": "string"
+          },
           "health": {
             "type": "string"
           },
@@ -9950,10 +10008,15 @@
           },
           "type": {
             "type": "string"
+          },
+          "uid": {
+            "type": "string"
           }
         },
         "required": [
+          "uid",
           "name",
+          "folderUid",
           "query",
           "health",
           "type"
@@ -9962,6 +10025,9 @@
       },
       "RuleDiscovery": {
         "properties": {
+          "groupNextToken": {
+            "type": "string"
+          },
           "groups": {
             "items": {
               "$ref": "#/components/schemas/RuleGroup"
@@ -9988,6 +10054,9 @@
             "type": "number"
           },
           "file": {
+            "type": "string"
+          },
+          "folderUid": {
             "type": "string"
           },
           "interval": {
@@ -10019,6 +10088,7 @@
         "required": [
           "name",
           "file",
+          "folderUid",
           "rules",
           "interval"
         ],
@@ -10121,6 +10191,10 @@
       "Sample": {
         "description": "Sample is a single sample belonging to a metric. It represents either a float\nsample or a histogram sample. If H is nil, it is a float sample. Otherwise,\nit is a histogram sample.",
         "properties": {
+          "DropName": {
+            "description": "DropName is used to indicate whether the __name__ label should be dropped\nas part of the query evaluation.",
+            "type": "boolean"
+          },
           "F": {
             "format": "double",
             "type": "number"
@@ -12144,6 +12218,18 @@
         },
         "type": "object"
       },
+      "UserInfo": {
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          }
+        },
+        "title": "UserInfo represents user-related information, including a unique identifier and a name.",
+        "type": "object"
+      },
       "UserLookupDTO": {
         "properties": {
           "avatarUrl": {
@@ -12680,17 +12766,6 @@
         },
         "type": "object"
       },
-      "getGroupMappings": {
-        "properties": {
-          "mappings": {
-            "items": {
-              "$ref": "#/components/schemas/GroupMapping"
-            },
-            "type": "array"
-          }
-        },
-        "type": "object"
-      },
       "getGroupsResponse": {
         "properties": {
           "groups": {
@@ -12763,6 +12838,7 @@
         "type": "object"
       },
       "gettableAlerts": {
+        "description": "GettableAlerts gettable alerts",
         "items": {
           "$ref": "#/components/schemas/gettableAlert"
         },
@@ -12886,24 +12962,11 @@
         "type": "object"
       },
       "gettableSilences": {
+        "description": "GettableSilences gettable silences",
         "items": {
           "$ref": "#/components/schemas/gettableSilence"
         },
         "type": "array"
-      },
-      "groupMappingRequestBody": {
-        "properties": {
-          "groupID": {
-            "type": "string"
-          },
-          "mapping": {
-            "type": "object"
-          },
-          "variant": {
-            "type": "string"
-          }
-        },
-        "type": "object"
       },
       "healthResponse": {
         "properties": {
@@ -19355,150 +19418,6 @@
         ]
       }
     },
-    "/groupsync/mappings": {
-      "get": {
-        "operationId": "getGroupMappings",
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/getGroupMappingsResponse"
-          },
-          "400": {
-            "$ref": "#/components/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "List group mappings. This endpoint is behind the feature flag `groupAttributeSync` and is considered experimental.",
-        "tags": [
-          "group_attribute_sync",
-          "enterprise"
-        ]
-      },
-      "post": {
-        "operationId": "createGroupMapping",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/groupMappingRequestBody"
-              }
-            }
-          },
-          "required": true,
-          "x-originalParamName": "body"
-        },
-        "responses": {
-          "201": {
-            "$ref": "#/components/responses/apiResponse"
-          },
-          "400": {
-            "$ref": "#/components/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "409": {
-            "$ref": "#/components/responses/conflictError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Create a group mapping. This endpoint is behind the feature flag `groupAttributeSync` and is considered experimental.",
-        "tags": [
-          "group_attribute_sync",
-          "enterprise"
-        ]
-      }
-    },
-    "/groupsync/mappings/{mapping_uid}": {
-      "delete": {
-        "operationId": "deleteGroupMapping",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "mapping_uid",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "$ref": "#/components/responses/okResponse"
-          },
-          "400": {
-            "$ref": "#/components/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Delete a group mapping. This endpoint is behind the feature flag `groupAttributeSync` and is considered experimental.",
-        "tags": [
-          "group_attribute_sync",
-          "enterprise"
-        ]
-      },
-      "get": {
-        "operationId": "getGroupMapping",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "mapping_uid",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/getGroupMappingResponse"
-          },
-          "400": {
-            "$ref": "#/components/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Get a group mapping. This endpoint is behind the feature flag `groupAttributeSync` and is considered experimental.",
-        "tags": [
-          "group_attribute_sync",
-          "enterprise"
-        ]
-      }
-    },
     "/health": {
       "get": {
         "description": "apiHealthHandler will return ok if Grafana's web server is running and it\ncan access the database. If the database cannot be accessed it will return\nhttp status code 503.",
@@ -22687,32 +22606,6 @@
         "tags": [
           "saml",
           "enterprise"
-        ]
-      }
-    },
-    "/scim/users/": {
-      "post": {
-        "operationId": "createUser",
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/okResponse"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "409": {
-            "$ref": "#/components/responses/conflictError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Creates user.",
-        "tags": [
-          "users"
         ]
       }
     },
@@ -26468,7 +26361,7 @@
             "description": "NotificationTemplates"
           }
         },
-        "summary": "Get all notification templates.",
+        "summary": "Get all notification template groups.",
         "tags": [
           "provisioning"
         ]
@@ -26479,7 +26372,7 @@
         "operationId": "RouteDeleteTemplate",
         "parameters": [
           {
-            "description": "Template name",
+            "description": "Template group name",
             "in": "path",
             "name": "name",
             "required": true,
@@ -26511,7 +26404,7 @@
             "description": "PublicError"
           }
         },
-        "summary": "Delete a template.",
+        "summary": "Delete a notification template group.",
         "tags": [
           "provisioning"
         ]
@@ -26520,7 +26413,7 @@
         "operationId": "RouteGetTemplate",
         "parameters": [
           {
-            "description": "Template Name",
+            "description": "Template group name",
             "in": "path",
             "name": "name",
             "required": true,
@@ -26551,7 +26444,7 @@
             "description": "PublicError"
           }
         },
-        "summary": "Get a notification template.",
+        "summary": "Get a notification template group.",
         "tags": [
           "provisioning"
         ]
@@ -26560,7 +26453,7 @@
         "operationId": "RoutePutTemplate",
         "parameters": [
           {
-            "description": "Template Name",
+            "description": "Template group name",
             "in": "path",
             "name": "name",
             "required": true,
@@ -26618,7 +26511,7 @@
             "description": "PublicError"
           }
         },
-        "summary": "Updates an existing notification template.",
+        "summary": "Updates an existing notification template group.",
         "tags": [
           "provisioning"
         ]

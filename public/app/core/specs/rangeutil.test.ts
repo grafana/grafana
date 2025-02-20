@@ -1,4 +1,4 @@
-import { rangeUtil, dateTime } from '@grafana/data';
+import { rangeUtil, dateTime, TimeOption } from '@grafana/data';
 
 describe('rangeUtil', () => {
   describe('Can get range text described', () => {
@@ -57,6 +57,11 @@ describe('rangeUtil', () => {
       expect(text).toBe('now/d+6h to now');
     });
 
+    it('matches hidden time ranges', () => {
+      const text = rangeUtil.describeTimeRange({ from: 'now', to: 'now+30m' });
+      expect(text).toBe('Next 30 minutes');
+    });
+
     it('Date range with absolute to now', () => {
       const text = rangeUtil.describeTimeRange({
         from: dateTime([2014, 10, 10, 2, 3, 4]),
@@ -102,6 +107,18 @@ describe('rangeUtil', () => {
     it('Date range with from and to both are either in now-* or now+* format', () => {
       const text = rangeUtil.describeTimeRange({ from: 'now-6h', to: 'now+1h' });
       expect(text).toBe('now-6h to now+1h');
+    });
+
+    it('Date range that is in custom quick ranges', () => {
+      const opt: TimeOption = { from: 'now-4w/w', to: 'now-1w/w', display: 'Previous 4 weeks' };
+      const text = rangeUtil.describeTimeRange({ from: opt.from, to: opt.to }, undefined, [opt]);
+      expect(text).toBe('Previous 4 weeks');
+    });
+
+    it('Date range description from custom quick ranges has higher priority', () => {
+      const opt: TimeOption = { from: 'now/d', to: 'now/d', display: 'This day' };
+      const text = rangeUtil.describeTimeRange({ from: opt.from, to: opt.to }, undefined, [opt]);
+      expect(text).toBe('This day'); // overrides 'Today'
     });
   });
 });
