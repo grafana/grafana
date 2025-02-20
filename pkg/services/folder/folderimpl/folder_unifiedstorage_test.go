@@ -825,7 +825,7 @@ func TestDeleteFoldersFromApiServer(t *testing.T) {
 					{
 						Key:      resource.SEARCH_FIELD_FOLDER,
 						Operator: string(selection.In),
-						Values:   []string{"uid", "uid2"},
+						Values:   []string{"uid2", "uid"},
 					},
 				},
 			},
