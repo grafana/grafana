@@ -1345,11 +1345,6 @@
     }
   },
   "dashboards": {
-    "panel-edit": {
-      "angular-deprecation-button-open-panel-json": "Øpęŉ ĴŜØŃ ęđįŧőř",
-      "angular-deprecation-description": "Åŉģūľäř päŉęľş őpŧįőŉş čäŉ őŉľy þę ęđįŧęđ ūşįŉģ ŧĥę ĴŜØŃ ęđįŧőř.",
-      "angular-deprecation-heading": "Päŉęľ őpŧįőŉş"
-    },
     "panel-queries": {
       "add-query-from-library": "Åđđ qūęřy ƒřőm ľįþřäřy"
     },
@@ -3101,8 +3096,7 @@
       "expand-row": "Ēχpäŉđ qūęřy řőŵ",
       "hide-response": "Ħįđę řęşpőŉşę",
       "remove-query": "Ŗęmővę qūęřy",
-      "show-response": "Ŝĥőŵ řęşpőŉşę",
-      "toggle-edit-mode": "Ŧőģģľę ŧęχŧ ęđįŧ mőđę"
+      "show-response": "Ŝĥőŵ řęşpőŉşę"
     },
     "query-editor-not-exported": "Đäŧä şőūřčę pľūģįŉ đőęş ŉőŧ ęχpőřŧ äŉy Qūęřy Ēđįŧőř čőmpőŉęŉŧ"
   },

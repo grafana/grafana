@@ -1,5 +1,4 @@
 import { PanelPlugin, PanelProps } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { SceneObject, SceneObjectBase, SceneObjectState, sceneUtils, VizPanel, VizPanelState } from '@grafana/scenes';
 import { LibraryPanel } from '@grafana/schema';
 import { Stack } from '@grafana/ui';
@@ -13,7 +12,6 @@ import { VizPanelLinks, VizPanelLinksMenu } from './PanelLinks';
 import { panelLinksBehavior } from './PanelMenuBehavior';
 import { PanelNotices } from './PanelNotices';
 import { PanelTimeRange } from './PanelTimeRange';
-import { AngularDeprecation } from './angular/AngularDeprecation';
 import { DashboardGridItem } from './layout-default/DashboardGridItem';
 
 export interface LibraryPanelBehaviorState extends SceneObjectState {
@@ -52,9 +50,7 @@ export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorSt
     const libPanelModel = new PanelModel(libPanel.model);
 
     const titleItems: SceneObject[] = [];
-    if (config.featureToggles.angularDeprecationUI) {
-      titleItems.push(new AngularDeprecation());
-    }
+
     titleItems.push(
       new VizPanelLinks({
         rawLinks: libPanelModel.links,

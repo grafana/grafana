@@ -58,11 +58,6 @@ describe('Sandbox eligibility checks', () => {
     process.env.NODE_ENV = originalNodeEnv;
   });
 
-  test('shouldLoadPluginInFrontendSandbox returns false for Angular plugins', async () => {
-    const result = await shouldLoadPluginInFrontendSandbox({ isAngular: true, pluginId: 'test-plugin' });
-    expect(result).toBe(false);
-  });
-
   test('shouldLoadPluginInFrontendSandbox returns false when feature toggle is off', async () => {
     config.featureToggles.pluginsFrontendSandbox = false;
     const result = await shouldLoadPluginInFrontendSandbox({ pluginId: 'test-plugin' });

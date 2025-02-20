@@ -47,8 +47,14 @@ describe('Angular badge', () => {
     expect(screen.queryByText('Angular')).not.toBeInTheDocument();
   });
 
-  test('shows angular badge for angular plugins', async () => {
+  test('does not show angular badge for angular plugins because we do not load them', async () => {
     renderPage([
+      getCatalogPluginMock({
+        id: 'react-plugin',
+        name: 'React Plugin',
+        type: PluginType.datasource,
+        angularDetected: false,
+      }),
       getCatalogPluginMock({
         id: 'legacy-plugin',
         name: 'Legacy Plugin',
@@ -57,9 +63,9 @@ describe('Angular badge', () => {
       }),
     ]);
     await waitFor(() => {
-      expect(screen.queryByText('Legacy Plugin')).toBeInTheDocument();
+      expect(screen.queryByText('React Plugin')).toBeInTheDocument();
     });
-    expect(screen.queryByText('Angular')).toBeInTheDocument();
+    expect(screen.queryByText('Angular')).not.toBeInTheDocument();
   });
 });
 
