@@ -1435,8 +1435,9 @@ var (
 		{
 			Name:        "prometheusUsesCombobox",
 			Description: "Use new combobox component for Prometheus query editor",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaOSSBigTent,
+			Expression:  "true", // enabled by default
 		},
 		{
 			Name:        "azureMonitorDisableLogLimit",

@@ -837,6 +837,7 @@ export interface FeatureToggles {
   timeRangeProvider?: boolean;
   /**
   * Use new combobox component for Prometheus query editor
+  * @default true
   */
   prometheusUsesCombobox?: boolean;
   /**
