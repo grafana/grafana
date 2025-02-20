@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import '@testing-library/jest-dom';
@@ -95,27 +95,25 @@ describe('MetricCombobox', () => {
     const combobox = screen.getByPlaceholderText('Select metric');
     await userEvent.click(combobox);
 
-    waitFor(() => expect(mockOnGetMetrics).toHaveBeenCalledTimes(1));
-
     const item = await screen.findByRole('option', { name: 'top_metric_one' });
     expect(item).toBeInTheDocument();
+
+    // This should be asserted by the above check, but double check anyway
+    expect(mockOnGetMetrics).toHaveBeenCalledTimes(1);
   });
 
   it('fetches metrics for the users query', async () => {
     render(<MetricCombobox {...defaultProps} />);
 
     const combobox = screen.getByPlaceholderText('Select metric');
-
-    // When we click on the menu, does that display unique_metric? without searching for it?
     await userEvent.click(combobox);
     await userEvent.type(combobox, 'unique');
 
     const item = await screen.findByRole('option', { name: 'unique_metric' });
     expect(item).toBeInTheDocument();
 
-    // Does it make sense to test this here?
-    const negativeItem = screen.queryByRole('option', { name: 'random_metric' });
-    expect(negativeItem).not.toBeInTheDocument();
+    // This should be asserted by the above check, but double check anyway
+    expect(mockDatasource.metricFindQuery).toHaveBeenCalledWith('unique_metric');
   });
 
   it('calls onChange with the correct value when a metric is selected', async () => {
