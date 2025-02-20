@@ -17,7 +17,7 @@ const (
 	// ruleUIDLabel is a special label that can be used to set a custom UID for a Prometheus
 	// alert rule when converting it to a Grafana alert rule. If this label is not present,
 	// a stable UID will be generated automatically based on the rule's data.
-	ruleUIDLabel = "__grafana_alert_rule_uid"
+	ruleUIDLabel = "__grafana_alert_rule_uid__"
 )
 
 type Config struct {
