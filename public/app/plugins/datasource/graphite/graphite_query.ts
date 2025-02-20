@@ -77,6 +77,17 @@ export default class GraphiteQuery {
 
     try {
       this.parseTargetRecursive(astNode, null);
+      if (this.target.target) {
+        const oldSanitizedQuery = this.target.target;
+        const newSanitizedQuery = this.generateQueryString();
+
+        const sanitizeQuery = (o: string): string => {
+          return o.replace(/\s|'|"|,/g, '');
+        }
+        if (sanitizeQuery(oldSanitizedQuery) !== sanitizeQuery(newSanitizedQuery)) {
+          throw new Error(`Failed to make a visual query builder query that is equivalent to the query.\nOriginal query: ${oldSanitizedQuery}\nQuery builder query: ${newSanitizedQuery}`);
+        }
+      }
     } catch (err) {
       if (err instanceof Error) {
         console.error('error parsing target:', err.message);
@@ -181,16 +192,19 @@ export default class GraphiteQuery {
     arrayMove(this.functions, index, index + offset);
   }
 
-  updateModelTarget(targets: any) {
+  generateQueryString(): string {
     const wrapFunction = (target: string, func: FuncInstance) => {
       return func.render(target, (value: string) => {
         return this.templateSrv ? this.templateSrv.replace(value, this.scopedVars) : value;
       });
     };
-
-    if (!this.target.textEditor) {
       const metricPath = this.getSegmentPathUpTo(this.segments.length).replace(/\.?select metric$/, '');
-      this.target.target = reduce(this.functions, wrapFunction, metricPath);
+      return reduce(this.functions, wrapFunction, metricPath);
+  }
+
+  updateModelTarget(targets: any) {
+    if (!this.target.textEditor) {
+      this.target.target = this.generateQueryString()
     }
 
     this.updateRenderedTarget(this.target, targets);
