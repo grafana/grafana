@@ -69,10 +69,10 @@ export function MigrateStep({ onMigrationStatusChange }: MigrateStepProps) {
           updates will be automatically saved to the repository.
         </Text>
 
-        <Stack direction={'column'} width={'300px'}>
-          <Text>Resources to migrate:</Text>
-          {Boolean(stats.length) &&
-            stats.map((stat) => {
+        {Boolean(stats.length) && (
+          <Stack direction={'column'} width={'300px'}>
+            <Text>Resources to migrate:</Text>
+            {stats.map((stat) => {
               return (
                 <Stack justifyContent={'space-between'} key={stat.group}>
                   <Text>{stat.resource}:</Text>
@@ -80,7 +80,8 @@ export function MigrateStep({ onMigrationStatusChange }: MigrateStepProps) {
                 </Stack>
               );
             })}
-        </Stack>
+          </Stack>
+        )}
 
         <FieldSet>
           <Field label="Identifier" description="Include the current identifier in exported metadata">
