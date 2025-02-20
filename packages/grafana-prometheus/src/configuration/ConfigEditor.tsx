@@ -2,7 +2,7 @@
 import { css } from '@emotion/css';
 
 import { DataSourcePluginOptionsEditorProps, GrafanaTheme2 } from '@grafana/data';
-import { ConfigSection, DataSourceDescription, AdvancedHttpSettings } from '@grafana/experimental';
+import { ConfigSection, DataSourceDescription, AdvancedHttpSettings } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
 import { Alert, FieldValidationMessage, useTheme2 } from '@grafana/ui';
 
@@ -62,7 +62,7 @@ export const ConfigEditor = (props: PrometheusConfigProps) => {
  * @returns
  */
 export function docsTip(url?: string) {
-  const docsUrl = 'https://grafana.com/docs/grafana/latest/datasources/prometheus/#configure-the-data-source';
+  const docsUrl = 'https://grafana.com/docs/grafana/latest/datasources/prometheus/configure-prometheus-data-source/';
 
   return (
     <a href={url ? url : docsUrl} target="_blank" rel="noopener noreferrer">

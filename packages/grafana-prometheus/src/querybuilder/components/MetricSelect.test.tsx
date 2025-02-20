@@ -25,7 +25,6 @@ const instanceSettings = {
 
 const dataSourceMock = new PrometheusDatasource(instanceSettings);
 const mockValues = [{ label: 'random_metric' }, { label: 'unique_metric' }, { label: 'more_unique_metric' }];
-
 // Mock metricFindQuery which will call backend API
 //@ts-ignore
 dataSourceMock.metricFindQuery = jest.fn((query: string) => {
@@ -69,7 +68,8 @@ describe('MetricSelect', () => {
     await waitFor(() => expect(screen.getByText('random_metric')).toBeInTheDocument());
     await waitFor(() => expect(screen.getByText('unique_metric')).toBeInTheDocument());
     await waitFor(() => expect(screen.getByText('more_unique_metric')).toBeInTheDocument());
-    await waitFor(() => expect(screen.getAllByTestId(selectors.components.Select.option)).toHaveLength(3));
+    await waitFor(() => expect(screen.getByText('Metrics explorer')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getAllByTestId(selectors.components.Select.option)).toHaveLength(4));
   });
 
   it('truncates list of metrics to 1000', async () => {
@@ -81,7 +81,10 @@ describe('MetricSelect', () => {
 
     render(<MetricSelect {...props} />);
     await openMetricSelect();
-    await waitFor(() => expect(screen.getAllByTestId(selectors.components.Select.option)).toHaveLength(1000));
+    // the metrics explorer is added as a custom option
+    const optionsLength = screen.getAllByTestId(selectors.components.Select.option).length;
+    const optionsLengthMinusMetricsExplorer = optionsLength - 1;
+    await waitFor(() => expect(optionsLengthMinusMetricsExplorer).toBe(1000));
   });
 
   it('shows option to set custom value when typing', async () => {
@@ -97,7 +100,8 @@ describe('MetricSelect', () => {
     await openMetricSelect();
     const input = screen.getByRole('combobox');
     await userEvent.type(input, 'unique');
-    await waitFor(() => expect(screen.getAllByTestId(selectors.components.Select.option)).toHaveLength(3));
+    const optionsLength = mockValues.length + 1; // the metrics explorer is added as a custom option
+    await waitFor(() => expect(screen.getAllByTestId(selectors.components.Select.option)).toHaveLength(optionsLength));
   });
 
   it('searches on split words', async () => {
@@ -105,7 +109,8 @@ describe('MetricSelect', () => {
     await openMetricSelect();
     const input = screen.getByRole('combobox');
     await userEvent.type(input, 'more unique');
-    await waitFor(() => expect(screen.getAllByTestId(selectors.components.Select.option)).toHaveLength(2));
+    // the metrics explorer is added as a custom option
+    await waitFor(() => expect(screen.getAllByTestId(selectors.components.Select.option)).toHaveLength(3));
   });
 
   it('searches on multiple split words', async () => {
@@ -113,7 +118,8 @@ describe('MetricSelect', () => {
     await openMetricSelect();
     const input = screen.getByRole('combobox');
     await userEvent.type(input, 'more unique metric');
-    await waitFor(() => expect(screen.getAllByTestId(selectors.components.Select.option)).toHaveLength(2));
+    // the metrics explorer is added as a custom option
+    await waitFor(() => expect(screen.getAllByTestId(selectors.components.Select.option)).toHaveLength(3));
   });
 
   it('highlights matching string', async () => {

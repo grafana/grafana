@@ -1,19 +1,23 @@
 package v1alpha1
 
 import (
+	"context"
+	"fmt"
+
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	dashboardinternal "github.com/grafana/grafana/pkg/apis/dashboard"
 	dashboardv1alpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v1alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
-	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -25,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/provisioning"
+	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
@@ -38,7 +43,9 @@ var (
 
 // This is used just so wire has something unique to return
 type DashboardsAPIBuilder struct {
+	dashboard.DashboardsAPIBuilder
 	dashboardService dashboards.DashboardService
+	features         featuremgmt.FeatureToggles
 
 	accessControl accesscontrol.AccessControl
 	legacy        *dashboard.DashboardStorage
@@ -51,6 +58,7 @@ type DashboardsAPIBuilder struct {
 func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 	apiregistration builder.APIRegistrar,
 	dashboardService dashboards.DashboardService,
+	provisioningDashboardService dashboards.DashboardProvisioningService,
 	accessControl accesscontrol.AccessControl,
 	provisioning provisioning.ProvisioningService,
 	dashStore dashboards.Store,
@@ -58,24 +66,24 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 	sql db.DB,
 	tracing *tracing.TracingService,
 	unified resource.ResourceClient,
+	sorter sort.Service,
 ) *DashboardsAPIBuilder {
-	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) && !features.IsEnabledGlobally(featuremgmt.FlagKubernetesDashboardsAPI) {
-		return nil // skip registration unless opting into experimental apis or dashboards in the k8s api
-	}
-
 	softDelete := features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore)
 	dbp := legacysql.NewDatabaseProvider(sql)
 	namespacer := request.GetNamespaceMapper(cfg)
 	builder := &DashboardsAPIBuilder{
 		log: log.New("grafana-apiserver.dashboards.v1alpha1"),
-
+		DashboardsAPIBuilder: dashboard.DashboardsAPIBuilder{
+			ProvisioningDashboardService: provisioningDashboardService,
+		},
 		dashboardService: dashboardService,
+		features:         features,
 		accessControl:    accessControl,
 		unified:          unified,
 
 		legacy: &dashboard.DashboardStorage{
 			Resource:       dashboardv1alpha1.DashboardResourceInfo,
-			Access:         legacy.NewDashboardAccess(dbp, namespacer, dashStore, provisioning, softDelete),
+			Access:         legacy.NewDashboardAccess(dbp, namespacer, dashStore, provisioning, softDelete, sorter),
 			TableConverter: dashboardv1alpha1.DashboardResourceInfo.TableConverter(),
 			Features:       features,
 		},
@@ -91,11 +99,6 @@ func (b *DashboardsAPIBuilder) GetGroupVersion() schema.GroupVersion {
 
 func (b *DashboardsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 	return dashboard.GetAuthorizer(b.dashboardService, b.log)
-}
-
-func (b *DashboardsAPIBuilder) GetDesiredDualWriterMode(dualWrite bool, modeMap map[string]grafanarest.DualWriterMode) grafanarest.DualWriterMode {
-	// Add required configuration support in order to enable other modes. For an example, see pkg/registry/apis/playlist/register.go
-	return grafanarest.Mode0
 }
 
 func (b *DashboardsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
@@ -118,6 +121,7 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 		return err
 	}
 	storageOpts := apistore.StorageOptions{
+		RequireDeprecatedInternalID: true,
 		InternalConversion: (func(b []byte, desiredObj runtime.Object) (runtime.Object, error) {
 			internal := &dashboardinternal.Dashboard{}
 			obj, _, err := defaultOpts.StorageConfig.Config.Codec.Decode(b, nil, internal)
@@ -140,13 +144,9 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 
 	storage := map[string]rest.Storage{}
 	storage[dash.StoragePath()] = legacyStore
-	storage[dash.StoragePath("history")] = apistore.NewHistoryConnector(
-		b.legacy.Server, // as client???
-		dashboardv1alpha1.DashboardResourceInfo.GroupResource(),
-	)
 
 	// Dual writes if a RESTOptionsGetter is provided
-	if optsGetter != nil && dualWriteBuilder != nil {
+	if dualWriteBuilder != nil {
 		store, err := grafanaregistry.NewRegistryStore(scheme, dash, optsGetter)
 		if err != nil {
 			return err
@@ -155,6 +155,21 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 		if err != nil {
 			return err
 		}
+	}
+
+	if b.features.IsEnabledGlobally(featuremgmt.FlagKubernetesRestore) {
+		storage[dash.StoragePath("restore")] = dashboard.NewRestoreConnector(
+			b.unified,
+			dashboardv1alpha1.DashboardResourceInfo.GroupResource(),
+			defaultOpts,
+		)
+
+		storage[dash.StoragePath("latest")] = dashboard.NewLatestConnector(
+			b.unified,
+			dashboardv1alpha1.DashboardResourceInfo.GroupResource(),
+			defaultOpts,
+			scheme,
+		)
 	}
 
 	// Register the DTO endpoint that will consolidate all dashboard bits
@@ -196,14 +211,29 @@ func (b *DashboardsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 	delete(oas.Paths.Paths, root+dashboardv1alpha1.DashboardResourceInfo.GroupResource().Resource)
 	delete(oas.Paths.Paths, root+"watch/"+dashboardv1alpha1.DashboardResourceInfo.GroupResource().Resource)
 
-	// The root API discovery list
-	sub := oas.Paths.Paths[root]
-	if sub != nil && sub.Get != nil {
-		sub.Get.Tags = []string{"API Discovery"} // sorts first in the list
-	}
 	return oas, nil
 }
 
-func (b *DashboardsAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
-	return nil // no custom API routes
+// Mutate removes any internal ID set in the spec & adds it as a label
+func (b *DashboardsAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
+	op := a.GetOperation()
+	if op == admission.Create || op == admission.Update {
+		obj := a.GetObject()
+		dash, ok := obj.(*dashboardv1alpha1.Dashboard)
+		if !ok {
+			return fmt.Errorf("expected v1alpha1 dashboard")
+		}
+
+		if id, ok := dash.Spec.Object["id"].(float64); ok {
+			delete(dash.Spec.Object, "id")
+			if id != 0 {
+				meta, err := utils.MetaAccessor(obj)
+				if err != nil {
+					return err
+				}
+				meta.SetDeprecatedInternalID(int64(id)) // nolint:staticcheck
+			}
+		}
+	}
+	return nil
 }

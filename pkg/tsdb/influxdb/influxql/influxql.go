@@ -49,7 +49,7 @@ func Query(ctx context.Context, tracer trace.Tracer, dsInfo *models.DatasourceIn
 		responseLock := sync.Mutex{}
 		err = concurrency.ForEachJob(ctx, len(req.Queries), concurrentQueryCount, func(ctx context.Context, idx int) error {
 			reqQuery := req.Queries[idx]
-			query, err := models.QueryParse(reqQuery)
+			query, err := models.QueryParse(reqQuery, logger)
 			if err != nil {
 				return err
 			}
@@ -88,7 +88,7 @@ func Query(ctx context.Context, tracer trace.Tracer, dsInfo *models.DatasourceIn
 		}
 	} else {
 		for _, reqQuery := range req.Queries {
-			query, err := models.QueryParse(reqQuery)
+			query, err := models.QueryParse(reqQuery, logger)
 			if err != nil {
 				return &backend.QueryDataResponse{}, err
 			}
@@ -175,7 +175,9 @@ func createRequest(ctx context.Context, logger log.Logger, dsInfo *models.Dataso
 func execute(ctx context.Context, tracer trace.Tracer, dsInfo *models.DatasourceInfo, logger log.Logger, query *models.Query, request *http.Request, isStreamingParserEnabled bool) (backend.DataResponse, error) {
 	res, err := dsInfo.HTTPClient.Do(request)
 	if err != nil {
-		return backend.DataResponse{}, err
+		return backend.DataResponse{
+			Error: err,
+		}, err
 	}
 	defer func() {
 		if err := res.Body.Close(); err != nil {

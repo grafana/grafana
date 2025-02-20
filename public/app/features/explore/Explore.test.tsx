@@ -103,6 +103,11 @@ const dummyProps: Props = {
   setSupplementaryQueryEnabled: jest.fn(),
   correlationEditorDetails: undefined,
   correlationEditorHelperData: undefined,
+  exploreActiveDS: {
+    exploreToDS: [],
+    dsToExplore: [],
+  },
+  changeDatasource: jest.fn(),
 };
 
 jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => {
@@ -180,7 +185,7 @@ describe('Explore', () => {
   });
 
   it('should render toolbar extension point if extensions is available', async () => {
-    usePluginLinksMock.mockReturnValueOnce({
+    usePluginLinksMock.mockReturnValue({
       links: [
         {
           id: '1',

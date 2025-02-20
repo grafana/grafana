@@ -208,6 +208,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       if (query.adhocFilters?.length) {
         const adhocFiltersToTags: InfluxQueryTag[] = (query.adhocFilters ?? []).map((af) => {
           const { condition, ...asTag } = af;
+          asTag.value = this.templateSrv.replace(asTag.value ?? '', variables);
           return asTag;
         });
         query.tags = [...(query.tags ?? []), ...adhocFiltersToTags];
@@ -350,17 +351,30 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     // If the variable is not a multi-value variable
     // we want to see how it's been used. If it is used in a regex expression
     // we escape it. Otherwise, we return it directly.
-    // regex below checks if the variable inside /^...$/ (^ and $ is optional)
+    // The regex below searches for regexes within the query string
+    const regexMatcher = new RegExp(
+      /\/((?![*+?])(?:[^\r\n\[/\\]|\\.|\[(?:[^\r\n\]\\]|\\.)*\])+)\/((?:g(?:im?|mi?)?|i(?:gm?|mg?)?|m(?:gi?|ig?)?)?)/,
+      'gm'
+    );
+    // If matches are found this regex is evaluated to check if the variable is contained in the regex /^...$/ (^ and $ is optional)
     // i.e. /^$myVar$/ or /$myVar/ or /^($myVar)$/
     const regex = new RegExp(`\\/(?:\\^)?(.*)(\\$${variable.name})(.*)(?:\\$)?\\/`, 'gm');
-    if (query && regex.test(query)) {
-      if (typeof value === 'string') {
-        return escapeRegex(value);
+    if (!query) {
+      return value;
+    }
+
+    const queryMatches = query.match(regexMatcher);
+    if (!queryMatches) {
+      return value;
+    }
+    for (const match of queryMatches) {
+      if (!match.match(regex)) {
+        continue;
       }
 
       // If the value is a string array first escape them then join them with pipe
       // then put inside parenthesis.
-      return `(${value.map((v) => escapeRegex(v)).join('|')})`;
+      return typeof value === 'string' ? escapeRegex(value) : `(${value.map((v) => escapeRegex(v)).join('|')})`;
     }
 
     return value;

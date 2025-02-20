@@ -80,7 +80,7 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
 
   return (
     <div className={styles.dataPane} data-testid={selectors.components.PanelEditor.DataPane.content}>
-      <TabsBar hideBorder={true} className={styles.tabsBar}>
+      <TabsBar className={styles.tabsBar}>
         {tabs.map((t) => t.renderTab({ active: t.tabId === tab, onChangeTab: () => model.onChangeTab(t) }))}
       </TabsBar>
       <ScrollContainer backgroundColor="primary">

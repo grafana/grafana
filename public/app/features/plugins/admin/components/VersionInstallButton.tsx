@@ -11,7 +11,7 @@ import { isPreinstalledPlugin } from '../helpers';
 import { useInstall } from '../state/hooks';
 import { Version } from '../types';
 
-const PLUGINS_VERSION_PAGE_INSTALL_INTERACTION_EVENT_NAME = 'plugins_upgrade_clicked';
+const PLUGINS_VERSION_PAGE_UPGRADE_INTERACTION_EVENT_NAME = 'plugins_upgrade_clicked';
 const PLUGINS_VERSION_PAGE_CHANGE_INTERACTION_EVENT_NAME = 'plugins_downgrade_clicked';
 
 interface Props {
@@ -20,6 +20,7 @@ interface Props {
   latestCompatibleVersion?: string;
   installedVersion?: string;
   disabled: boolean;
+  tooltip?: string;
   onConfirmInstallation: () => void;
 }
 
@@ -29,6 +30,7 @@ export const VersionInstallButton = ({
   latestCompatibleVersion,
   installedVersion,
   disabled,
+  tooltip,
   onConfirmInstallation,
 }: Props) => {
   const install = useInstall();
@@ -59,8 +61,8 @@ export const VersionInstallButton = ({
       schema_version: '1.0.0',
     };
 
-    if (!installedVersion) {
-      reportInteraction(PLUGINS_VERSION_PAGE_INSTALL_INTERACTION_EVENT_NAME, trackProps);
+    if (!installedVersion || gt(version.version, installedVersion)) {
+      reportInteraction(PLUGINS_VERSION_PAGE_UPGRADE_INTERACTION_EVENT_NAME, trackProps);
     } else {
       reportInteraction(PLUGINS_VERSION_PAGE_CHANGE_INTERACTION_EVENT_NAME, {
         ...trackProps,
@@ -119,6 +121,8 @@ export const VersionInstallButton = ({
         onClick={onInstallClick}
         className={styles.button}
         hidden={hidden}
+        tooltip={tooltip}
+        tooltipPlacement="bottom-start"
       >
         {label} {isInstalling ? <Spinner className={styles.spinner} inline size="sm" /> : getIcon(label)}
       </Button>

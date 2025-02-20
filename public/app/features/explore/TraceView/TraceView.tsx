@@ -40,7 +40,7 @@ import { createSpanLinkFactory } from './createSpanLink';
 import { useChildrenState } from './useChildrenState';
 import { useDetailState } from './useDetailState';
 import { useHoverIndentGuide } from './useHoverIndentGuide';
-import { useSearch } from './useSearch';
+import { SearchProps, useSearch } from './useSearch';
 import { useViewRange } from './useViewRange';
 
 const getStyles = (theme: GrafanaTheme2) => ({
@@ -66,6 +66,7 @@ type Props = {
   createSpanLink?: SpanLinkFunc;
   focusedSpanId?: string;
   createFocusSpanLink?: (traceId: string, spanId: string) => LinkModel<Field>;
+  spanFilters?: SearchProps;
 };
 
 export function TraceView(props: Props) {
@@ -77,6 +78,7 @@ export function TraceView(props: Props) {
     createSpanLink: createSpanLinkFromProps,
     focusedSpanId: focusedSpanIdFromProps,
     createFocusSpanLink: createFocusSpanLinkFromProps,
+    spanFilters,
   } = props;
 
   const {
@@ -95,11 +97,9 @@ export function TraceView(props: Props) {
   const { removeHoverIndentGuideId, addHoverIndentGuideId, hoverIndentGuideIds } = useHoverIndentGuide();
   const { viewRange, updateViewRangeTime, updateNextViewRangeTime } = useViewRange();
   const { expandOne, collapseOne, childrenToggle, collapseAll, childrenHiddenIDs, expandAll } = useChildrenState();
-  const { search, setSearch, spanFilterMatches } = useSearch(traceProp?.spans);
+  const { search, setSearch, spanFilterMatches } = useSearch(traceProp?.spans, spanFilters);
   const [focusedSpanIdForSearch, setFocusedSpanIdForSearch] = useState('');
   const [showSpanFilters, setShowSpanFilters] = useToggle(false);
-  const [showSpanFilterMatchesOnly, setShowSpanFilterMatchesOnly] = useState(false);
-  const [showCriticalPathSpansOnly, setShowCriticalPathSpansOnly] = useState(false);
   const [headerHeight, setHeaderHeight] = useState(100);
   const [traceFlameGraphs, setTraceFlameGraphs] = useState<TraceFlameGraphs>({});
   const [redrawListView, setRedrawListView] = useState({});
@@ -183,10 +183,6 @@ export function TraceView(props: Props) {
             setSearch={setSearch}
             showSpanFilters={showSpanFilters}
             setShowSpanFilters={setShowSpanFilters}
-            showSpanFilterMatchesOnly={showSpanFilterMatchesOnly}
-            setShowSpanFilterMatchesOnly={setShowSpanFilterMatchesOnly}
-            showCriticalPathSpansOnly={showCriticalPathSpansOnly}
-            setShowCriticalPathSpansOnly={setShowCriticalPathSpansOnly}
             setFocusedSpanIdForSearch={setFocusedSpanIdForSearch}
             spanFilterMatches={spanFilterMatches}
             datasourceType={datasourceType}
@@ -232,8 +228,8 @@ export function TraceView(props: Props) {
             scrollElement={scrollElement}
             focusedSpanId={focusedSpanId}
             focusedSpanIdForSearch={focusedSpanIdForSearch}
-            showSpanFilterMatchesOnly={showSpanFilterMatchesOnly}
-            showCriticalPathSpansOnly={showCriticalPathSpansOnly}
+            showSpanFilterMatchesOnly={search.matchesOnly}
+            showCriticalPathSpansOnly={search.criticalPathOnly}
             createFocusSpanLink={createFocusSpanLink}
             topOfViewRef={topOfViewRef}
             headerHeight={headerHeight}

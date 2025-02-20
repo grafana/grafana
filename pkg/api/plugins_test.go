@@ -12,11 +12,13 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/prometheus/client_golang/prometheus"
 	dto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/plugins/auth"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -29,14 +31,12 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature/statickey"
-	"github.com/grafana/grafana/pkg/plugins/pfs"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -45,6 +45,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginassets"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginerrs"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugininstaller"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/updatechecker"
@@ -72,7 +73,7 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 		preInstalledPlugin               bool
 	}
 	tcs := []testCase{
-		{expectedCode: http.StatusNotFound, permissionOrg: globalOrg, permissions: canInstall, pluginAdminEnabled: true, pluginAdminExternalManageEnabled: true},
+		{expectedCode: http.StatusOK, permissionOrg: globalOrg, permissions: canInstall, pluginAdminEnabled: true, pluginAdminExternalManageEnabled: true},
 		{expectedCode: http.StatusNotFound, permissionOrg: globalOrg, permissions: canInstall, pluginAdminEnabled: false, pluginAdminExternalManageEnabled: true},
 		{expectedCode: http.StatusNotFound, permissionOrg: globalOrg, permissions: canInstall, pluginAdminEnabled: false, pluginAdminExternalManageEnabled: false},
 		{expectedCode: http.StatusForbidden, permissionOrg: globalOrg, permissions: cannotInstall, pluginAdminEnabled: true, pluginAdminExternalManageEnabled: false},
@@ -111,6 +112,7 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 				},
 			})
 			hs.managedPluginsService = managedplugins.NewNoop()
+			hs.pluginPreinstall = plugininstaller.ProvidePreinstall(hs.Cfg)
 
 			expectedIdentity := &authn.Identity{
 				OrgID:       tc.permissionOrg,
@@ -682,14 +684,11 @@ func createPlugin(jd plugins.JSONData, class plugins.Class, files plugins.FS) *p
 }
 
 func TestHTTPServer_hasPluginRequestedPermissions(t *testing.T) {
-	newStr := func(s string) *string {
-		return &s
-	}
 	pluginReg := pluginstore.Plugin{
 		JSONData: plugins.JSONData{
 			ID: "grafana-test-app",
-			IAM: &pfs.IAM{
-				Permissions: []pfs.Permission{{Action: ac.ActionUsersRead, Scope: newStr(ac.ScopeUsersAll)}, {Action: ac.ActionUsersCreate}},
+			IAM: &auth.IAM{
+				Permissions: []auth.Permission{{Action: ac.ActionUsersRead, Scope: ac.ScopeUsersAll}, {Action: ac.ActionUsersCreate}},
 			},
 		},
 	}
@@ -762,7 +761,7 @@ func TestHTTPServer_hasPluginRequestedPermissions(t *testing.T) {
 			}
 			hs.log = logger
 			hs.accesscontrolService = actest.FakeService{}
-			hs.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())
+			hs.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
 
 			expectedIdentity := &authn.Identity{
 				OrgID:       tt.orgID,
@@ -870,4 +869,44 @@ func Test_PluginsSettings(t *testing.T) {
 			}
 		})
 	}
+}
+
+func Test_UpdatePluginSetting(t *testing.T) {
+	pID := "test-app"
+	p1 := createPlugin(plugins.JSONData{
+		ID: pID, Type: "app", Name: pID,
+		Info: plugins.Info{
+			Version: "1.0.0",
+		},
+		AutoEnabled: true,
+	}, plugins.ClassExternal, plugins.NewFakeFS(),
+	)
+	pluginRegistry := &fakes.FakePluginRegistry{
+		Store: map[string]*plugins.Plugin{
+			p1.ID: p1,
+		},
+	}
+
+	pluginSettings := pluginsettings.FakePluginSettings{Plugins: map[string]*pluginsettings.DTO{
+		pID: {ID: 0, OrgID: 1, PluginID: pID, PluginVersion: "1.0.0", Enabled: true},
+	}}
+
+	t.Run("should return an error when trying to disable an auto-enabled plugin", func(t *testing.T) {
+		server := SetupAPITestServer(t, func(hs *HTTPServer) {
+			hs.Cfg = setting.NewCfg()
+			hs.PluginSettings = &pluginSettings
+			hs.pluginStore = pluginstore.New(pluginRegistry, &fakes.FakeLoader{})
+			hs.pluginFileStore = filestore.ProvideService(pluginRegistry)
+			hs.managedPluginsService = managedplugins.NewNoop()
+			hs.log = log.NewNopLogger()
+		})
+
+		input := strings.NewReader(`{"enabled": false}`)
+		endpoint := fmt.Sprintf("/api/plugins/%s/settings", pID)
+		req := webtest.RequestWithSignedInUser(server.NewPostRequest(endpoint, input), userWithPermissions(1, []ac.Permission{{Action: pluginaccesscontrol.ActionWrite, Scope: "plugins:id:test-app"}}))
+		res, err := server.SendJSON(req)
+		require.NoError(t, err)
+		require.Equal(t, http.StatusBadRequest, res.StatusCode)
+		require.NoError(t, res.Body.Close())
+	})
 }

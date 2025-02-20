@@ -18,8 +18,7 @@ import {
   GroupByVariableKind,
   defaultVariableHide,
   VariableOption,
-  VariableRefresh,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
+} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 
 import { getIntervalsQueryFromNewIntervalModel } from '../utils/utils';
 
@@ -28,6 +27,7 @@ import {
   transformVariableRefreshToEnum,
   transformVariableHideToEnum,
   transformSortVariableToEnum,
+  LEGACY_STRING_VALUE_KEY,
 } from './transformToV2TypesUtils';
 /**
  * Converts a SceneVariables object into an array of VariableModel objects.
@@ -53,7 +53,7 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
       let options: VariableOption[] = [];
       // Not sure if we actually have to still support this option given
       // that it's not exposed in the UI
-      if (transformVariableRefreshToEnum(variable.state.refresh) === VariableRefresh.Never || keepQueryOptions) {
+      if (transformVariableRefreshToEnum(variable.state.refresh) === 'never' || keepQueryOptions) {
         options = variableValueOptionsToVariableOptions(variable.state);
       }
       variables.push({
@@ -176,8 +176,6 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
     } else if (sceneUtils.isAdHocVariable(variable)) {
       variables.push({
         ...commonProperties,
-        name: variable.state.name,
-        type: 'adhoc',
         datasource: variable.state.datasource,
         allowCustomValue: variable.state.allowCustomValue,
         // @ts-expect-error
@@ -269,19 +267,23 @@ export function sceneVariablesSetToSchemaV2Variables(
     if (sceneUtils.isQueryVariable(variable)) {
       // Not sure if we actually have to still support this option given
       // that it's not exposed in the UI
-      if (transformVariableRefreshToEnum(variable.state.refresh) === VariableRefresh.Never || keepQueryOptions) {
+      if (transformVariableRefreshToEnum(variable.state.refresh) === 'never' || keepQueryOptions) {
         options = variableValueOptionsToVariableOptions(variable.state);
       }
-      //query: DataQueryKind | string;
       const query = variable.state.query;
       let dataQuery: DataQueryKind | string;
       if (typeof query !== 'string') {
         dataQuery = {
-          kind: getDataQueryKind(query),
+          kind: variable.state.datasource?.type ?? getDataQueryKind(query),
           spec: getDataQuerySpec(query),
         };
       } else {
-        dataQuery = query;
+        dataQuery = {
+          kind: variable.state.datasource?.type ?? getDataQueryKind(query),
+          spec: {
+            [LEGACY_STRING_VALUE_KEY]: query,
+          },
+        };
       }
       const queryVariable: QueryVariableKind = {
         kind: 'QueryVariable',
@@ -325,14 +327,17 @@ export function sceneVariablesSetToSchemaV2Variables(
           current: currentVariableOption,
           options: [],
           regex: variable.state.regex,
-          refresh: VariableRefresh.OnDashboardLoad,
+          refresh: 'onDashboardLoad',
           pluginId: variable.state.pluginId,
-          defaultOptionEnabled: !!variable.state.defaultOptionEnabled,
           multi: variable.state.isMulti || false,
-          allValue: variable.state.allValue,
           includeAll: variable.state.includeAll || false,
         },
       };
+
+      if (variable.state.allValue !== undefined) {
+        datasourceVariable.spec.allValue = variable.state.allValue;
+      }
+
       variables.push(datasourceVariable);
     } else if (sceneUtils.isConstantVariable(variable)) {
       const constantVariable: ConstantVariableKind = {
@@ -361,7 +366,7 @@ export function sceneVariablesSetToSchemaV2Variables(
             text: variable.state.value,
           },
           query: intervals,
-          refresh: VariableRefresh.OnTimeRangeChanged,
+          refresh: 'onTimeRangeChanged',
           options: variable.state.intervals.map((interval) => ({
             value: interval,
             text: interval,
@@ -405,7 +410,6 @@ export function sceneVariablesSetToSchemaV2Variables(
             })) || [],
           current: currentVariableOption,
           multi: variable.state.isMulti || false,
-          includeAll: variable.state.includeAll || false,
         },
       };
       variables.push(groupVariable);

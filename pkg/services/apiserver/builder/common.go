@@ -2,6 +2,7 @@ package builder
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -21,9 +22,6 @@ import (
 // TODO: this (or something like it) belongs in grafana-app-sdk,
 // but lets keep it here while we iterate on a few simple examples
 type APIGroupBuilder interface {
-	// Get the main group name
-	GetGroupVersion() schema.GroupVersion
-
 	// Add the kinds to the server scheme
 	InstallSchema(scheme *runtime.Scheme) error
 
@@ -38,13 +36,17 @@ type APIGroupBuilder interface {
 
 	// Get OpenAPI definitions
 	GetOpenAPIDefinitions() common.GetOpenAPIDefinitions
+}
 
-	// Get the API routes for each version
-	GetAPIRoutes() *APIRoutes
+type APIGroupVersionProvider interface {
+	GetGroupVersion() schema.GroupVersion
+}
 
-	// Optionally add an authorization hook
-	// Standard namespace checking will happen before this is called, specifically
-	// the namespace must matches an org|stack that the user belongs to
+type APIGroupVersionsProvider interface {
+	GetGroupVersions() []schema.GroupVersion
+}
+
+type APIGroupAuthorizer interface {
 	GetAuthorizer() authorizer.Authorizer
 }
 
@@ -58,6 +60,16 @@ type APIGroupValidation interface {
 	// Validate makes an admission decision based on the request attributes.  It is NOT allowed to mutate
 	// Context is used only for timeout/deadline/cancellation and tracing information.
 	Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error)
+}
+
+type APIGroupRouteProvider interface {
+	// Support direct HTTP routes from an APIGroup
+	GetAPIRoutes() *APIRoutes
+}
+
+type APIGroupPostStartHookProvider interface {
+	// GetPostStartHooks returns a list of functions that will be called after the server has started
+	GetPostStartHooks() (map[string]genericapiserver.PostStartHookFunc, error)
 }
 
 type APIGroupOptions struct {
@@ -92,4 +104,33 @@ type APIRoutes struct {
 
 type APIRegistrar interface {
 	RegisterAPI(builder APIGroupBuilder)
+}
+
+func getGroup(builder APIGroupBuilder) (string, error) {
+	if v, ok := builder.(APIGroupVersionProvider); ok {
+		return v.GetGroupVersion().Group, nil
+	}
+
+	if v, ok := builder.(APIGroupVersionsProvider); ok {
+		if len(v.GetGroupVersions()) == 0 {
+			return "", fmt.Errorf("unable to get group: builder returned no versions")
+		}
+
+		return v.GetGroupVersions()[0].Group, nil
+	}
+
+	return "", fmt.Errorf("unable to get group: builder does not implement APIGroupVersionProvider or APIGroupVersionsProvider")
+}
+
+func GetGroupVersions(builder APIGroupBuilder) []schema.GroupVersion {
+	if v, ok := builder.(APIGroupVersionProvider); ok {
+		return []schema.GroupVersion{v.GetGroupVersion()}
+	}
+
+	if v, ok := builder.(APIGroupVersionsProvider); ok {
+		return v.GetGroupVersions()
+	}
+
+	// this should never happen
+	panic("builder does not implement APIGroupVersionProvider or APIGroupVersionsProvider")
 }
