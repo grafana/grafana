@@ -1,4 +1,5 @@
 import { ReactNode, useState } from 'react';
+import { useNavigate } from 'react-router-dom-v5-compat';
 
 import {
   Card,
@@ -26,13 +27,20 @@ import { useRepositoryList } from './hooks';
 export default function RepositoryListPage() {
   const [items, isLoading] = useRepositoryList({ watch: true });
   const settings = useGetFrontendSettingsQuery();
-
+  const navigate = useNavigate();
   return (
     <Page navId="provisioning" subTitle="View and manage your configured repositories">
       <Page.Contents isLoading={isLoading}>
         <SetupWarnings />
         {settings.data?.legacyStorage && (
-          <Alert title="Legacy Storage" severity="error">
+          <Alert
+            title="Legacy Storage"
+            severity="error"
+            buttonContent={<>Use provisioning wizard to configure a repository.</>}
+            onRemove={() => {
+              navigate('/admin/provisioning/setup');
+            }}
+          >
             Require running the onboarding wizard to convert from legacy to unified
           </Alert>
         )}
