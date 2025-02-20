@@ -190,13 +190,13 @@ export function ensureV2Response(
 export function ensureV1Response(
   dashboard: DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec> | DashboardWithAccessInfo<DashboardDataDTO>
 ): DashboardDTO {
-  // if dashboard is not on v0 schema or v2 schema, return as is
+  // if dashboard is not on v1 schema or v2 schema, return as is
   if (!isDashboardResource(dashboard)) {
     return dashboard;
   }
 
   const spec = dashboard.spec;
-  // if dashboard is on v0 schema
+  // if dashboard is on v1 schema
   if (isDashboardV0Spec(spec)) {
     return {
       meta: {
