@@ -32,7 +32,7 @@ import (
 
 // ProvideZanzana used to register ZanzanaClient.
 // It will also start an embedded ZanzanaSever if mode is set to "embedded".
-func ProvideZanzana(cfg *setting.Cfg, db db.DB, features featuremgmt.FeatureToggles) (zanzana.Client, error) {
+func ProvideZanzana(cfg *setting.Cfg, db db.DB, tracer tracing.Tracer, features featuremgmt.FeatureToggles) (zanzana.Client, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagZanzana) {
 		return zanzana.NewNoopClient(), nil
 	}
@@ -82,7 +82,7 @@ func ProvideZanzana(cfg *setting.Cfg, db db.DB, features featuremgmt.FeatureTogg
 			return nil, fmt.Errorf("failed to start zanzana: %w", err)
 		}
 
-		srv, err := zanzana.NewServer(cfg.ZanzanaServer, openfga, logger)
+		srv, err := zanzana.NewServer(cfg.ZanzanaServer, openfga, logger, tracer)
 		if err != nil {
 			return nil, fmt.Errorf("failed to start zanzana: %w", err)
 		}
