@@ -250,6 +250,10 @@ export class LayoutOrchestrator extends SceneObjectBase<LayoutOrchestratorState>
     this.setState({ manager: layoutManager });
   }
 
+  public cloneLayout(ancestorKey: string, isSource: boolean): DashboardLayoutManager {
+    return this.state.manager.cloneLayout(ancestorKey, isSource);
+  }
+
   public static Component = ({ model }: SceneComponentProps<LayoutOrchestrator>) => {
     const {
       manager,
