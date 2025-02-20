@@ -52,7 +52,6 @@ refs:
 
 This document provides instructions for configuring the PostgreSQL data source and explains available configuration options. For general information on managing data sources refer to [Data source management](ref:data-source-management).
 
-
 ## Before you begin
 
 You must have the `Organization administrator` role to configure the Postgres data source.
@@ -189,7 +188,6 @@ datasources:
       postgresVersion: 903 # 903=9.3, 904=9.4, 905=9.5, 906=9.6, 1000=10
       timescaledb: false
 ```
-
 
 #### Troubleshoot provisioning issues
 
