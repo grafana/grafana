@@ -2,6 +2,7 @@ package iam
 
 import (
 	"context"
+	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -10,8 +11,10 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	common "k8s.io/kube-openapi/pkg/common"
+	"k8s.io/kube-openapi/pkg/spec3"
+	"k8s.io/kube-openapi/pkg/validation/spec"
 
-	"github.com/grafana/authlib/authz"
+	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	iamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -32,7 +35,10 @@ var _ builder.APIGroupBuilder = (*IdentityAccessManagementAPIBuilder)(nil)
 type IdentityAccessManagementAPIBuilder struct {
 	store        legacy.LegacyIdentityStore
 	authorizer   authorizer.Authorizer
-	accessClient authz.AccessClient
+	accessClient types.AccessClient
+
+	// non-k8s api route
+	display *user.LegacyDisplayREST
 
 	// Not set for multi-tenant deployment for now
 	sso ssosettings.Service
@@ -52,6 +58,7 @@ func RegisterAPIService(
 		sso:          ssoService,
 		authorizer:   authorizer,
 		accessClient: client,
+		display:      user.NewLegacyDisplayREST(store),
 	}
 	apiregistration.RegisterAPI(builder)
 
@@ -60,7 +67,8 @@ func RegisterAPIService(
 
 func NewAPIService(store legacy.LegacyIdentityStore) *IdentityAccessManagementAPIBuilder {
 	return &IdentityAccessManagementAPIBuilder{
-		store: store,
+		store:   store,
+		display: user.NewLegacyDisplayREST(store),
 		authorizer: authorizer.AuthorizerFunc(
 			func(ctx context.Context, a authorizer.Attributes) (authorizer.Decision, string, error) {
 				user, err := identity.GetRequester(ctx)
@@ -114,15 +122,69 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 		storage[ssoResource.StoragePath()] = sso.NewLegacyStore(b.sso)
 	}
 
-	// The display endpoint -- NOTE, this uses a rewrite hack to allow requests without a name parameter
-	storage["display"] = user.NewLegacyDisplayREST(b.store)
-
 	apiGroupInfo.VersionedResourcesStorageMap[iamv0.VERSION] = storage
 	return nil
 }
 
 func (b *IdentityAccessManagementAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
 	return iamv0.GetOpenAPIDefinitions
+}
+
+func (b *IdentityAccessManagementAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
+	oas.Info.Description = "Identity and Access Management"
+
+	defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
+	defsBase := "github.com/grafana/grafana/pkg/apis/iam/v0alpha1."
+
+	// Add missing schemas
+	for k, v := range defs {
+		clean := strings.Replace(k, defsBase, "com.github.grafana.grafana.pkg.apis.iam.v0alpha1.", 1)
+		if oas.Components.Schemas[clean] == nil {
+			oas.Components.Schemas[clean] = &v.Schema
+		}
+	}
+	compBase := "com.github.grafana.grafana.pkg.apis.iam.v0alpha1."
+	schema := oas.Components.Schemas[compBase+"DisplayList"].Properties["display"]
+	schema.Items = &spec.SchemaOrArray{
+		Schema: &spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				AllOf: []spec.Schema{
+					{
+						SchemaProps: spec.SchemaProps{
+							Ref: spec.MustCreateRef("#/components/schemas/" + compBase + "Display"),
+						},
+					},
+				},
+			},
+		},
+	}
+	oas.Components.Schemas[compBase+"DisplayList"].Properties["display"] = schema
+	oas.Components.Schemas[compBase+"DisplayList"].Properties["metadata"] = spec.Schema{
+		SchemaProps: spec.SchemaProps{
+			AllOf: []spec.Schema{
+				{
+					SchemaProps: spec.SchemaProps{
+						Ref: spec.MustCreateRef("#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
+					},
+				},
+			}},
+	}
+	oas.Components.Schemas[compBase+"Display"].Properties["identity"] = spec.Schema{
+		SchemaProps: spec.SchemaProps{
+			AllOf: []spec.Schema{
+				{
+					SchemaProps: spec.SchemaProps{
+						Ref: spec.MustCreateRef("#/components/schemas/" + compBase + "IdentityRef"),
+					},
+				},
+			}},
+	}
+	return oas, nil
+}
+
+func (b *IdentityAccessManagementAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
+	defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
+	return b.display.GetAPIRoutes(defs)
 }
 
 func (b *IdentityAccessManagementAPIBuilder) GetAuthorizer() authorizer.Authorizer {

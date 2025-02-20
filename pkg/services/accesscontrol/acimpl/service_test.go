@@ -71,9 +71,7 @@ func TestUsageMetrics(t *testing.T) {
 				featuremgmt.WithFeatures(),
 				tracing.InitializeTracerForTest(),
 				nil,
-				nil,
 				permreg.ProvidePermissionRegistry(),
-				nil,
 				nil,
 			)
 			assert.Equal(t, tt.expectedValue, s.GetUsageStats(context.Background())["stats.oss.accesscontrol.enabled.count"])
@@ -373,6 +371,7 @@ func TestService_RegisterFixedRoles(t *testing.T) {
 					builtinRole, ok := ac.roles[br]
 					assert.True(t, ok)
 					for _, expectedPermission := range registration.Role.Permissions {
+						expectedPermission.Kind, expectedPermission.Attribute, expectedPermission.Identifier = accesscontrol.SplitScope(expectedPermission.Scope)
 						assert.Contains(t, builtinRole.Permissions, expectedPermission)
 					}
 				}

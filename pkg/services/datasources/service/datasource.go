@@ -536,7 +536,7 @@ func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateD
 
 		// preserve existing lbac rules when updating datasource if we're not updating lbac rules
 		// TODO: Refactor to store lbac rules separate from a datasource
-		if s.features != nil && s.features.IsEnabled(ctx, featuremgmt.FlagTeamHttpHeaders) && !cmd.AllowLBACRuleUpdates {
+		if !cmd.AllowLBACRuleUpdates {
 			s.logger.Debug("Overriding LBAC rules with stored ones using updateLBACRules API",
 				"reason", "overriding_lbac_rules_from_datasource_api",
 				"datasource_id", dataSource.ID,
@@ -745,7 +745,7 @@ func (s *Service) httpClientOptions(ctx context.Context, ds *datasources.DataSou
 		}
 	}
 
-	if ds.JsonData != nil && ds.JsonData.Get("enableSecureSocksProxy").MustBool(false) {
+	if ds.IsSecureSocksDSProxyEnabled() {
 		proxyOpts := &sdkproxy.Options{
 			Enabled: true,
 			Auth: &sdkproxy.AuthOptions{

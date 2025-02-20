@@ -10,7 +10,7 @@ import { PromAlertingRuleState, RulerRuleDTO } from 'app/types/unified-alerting-
 import { AlertRuleAction, useRulerRuleAbility } from '../../hooks/useAbilities';
 import { createShareLink, isLocalDevEnv, isOpenSourceEdition } from '../../utils/misc';
 import * as ruleId from '../../utils/rule-id';
-import { isAlertingRule } from '../../utils/rules';
+import { isAlertingRule, isGrafanaRulerRule } from '../../utils/rules';
 import { createRelativeUrl } from '../../utils/url';
 import { DeclareIncidentMenuItem } from '../bridges/DeclareIncidentButton';
 
@@ -86,7 +86,7 @@ const AlertRuleMenu = ({
 
   const menuItems = (
     <>
-      {canPause && rulerRule && groupIdentifier.groupOrigin === 'grafana' && (
+      {canPause && isGrafanaRulerRule(rulerRule) && groupIdentifier.groupOrigin === 'grafana' && (
         <MenuItemPauseRule rule={rulerRule} groupIdentifier={groupIdentifier} onPauseChange={onPauseChange} />
       )}
       {canSilence && <Menu.Item label="Silence notifications" icon="bell-slash" onClick={handleSilence} />}
@@ -131,15 +131,11 @@ const AlertRuleMenu = ({
   );
 };
 
-function copyToClipboard(text: string) {
-  navigator.clipboard?.writeText(text).then(() => {
-    appEvents.emit(AppEvents.alertSuccess, ['URL copied to clipboard']);
-  });
+interface ExportMenuItemProps {
+  identifier: RuleIdentifier;
 }
 
-type PropsWithIdentifier = { identifier: RuleIdentifier };
-
-const ExportMenuItem = ({ identifier }: PropsWithIdentifier) => {
+const ExportMenuItem = ({ identifier }: ExportMenuItemProps) => {
   const returnTo = location.pathname + location.search;
   const url = createRelativeUrl(
     `/alerting/${encodeURIComponent(ruleId.stringifyIdentifier(identifier))}/modify-export`,
@@ -150,5 +146,11 @@ const ExportMenuItem = ({ identifier }: PropsWithIdentifier) => {
 
   return <Menu.Item key="with-modifications" label="With modifications" icon="file-edit-alt" url={url} />;
 };
+
+function copyToClipboard(text: string) {
+  navigator.clipboard?.writeText(text).then(() => {
+    appEvents.emit(AppEvents.alertSuccess, ['URL copied to clipboard']);
+  });
+}
 
 export default AlertRuleMenu;

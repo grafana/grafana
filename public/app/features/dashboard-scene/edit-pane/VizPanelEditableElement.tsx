@@ -1,8 +1,8 @@
-import { useMemo } from 'react';
+import { ReactNode, useMemo } from 'react';
 
 import { sceneGraph, VizPanel } from '@grafana/scenes';
 import { Button } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import { getVisualizationOptions2 } from 'app/features/dashboard/components/PanelEditor/getVisualizationOptions';
@@ -12,11 +12,14 @@ import {
   PanelDescriptionTextArea,
   PanelFrameTitleInput,
 } from '../panel-edit/getPanelFrameOptions';
-import { EditableDashboardElement, isDashboardLayoutItem } from '../scene/types';
+import { BulkActionElement } from '../scene/types/BulkActionElement';
+import { isDashboardLayoutItem } from '../scene/types/DashboardLayoutItem';
+import { EditableDashboardElement } from '../scene/types/EditableDashboardElement';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 
-export class VizPanelEditableElement implements EditableDashboardElement {
-  public isEditableDashboardElement: true = true;
+export class VizPanelEditableElement implements EditableDashboardElement, BulkActionElement {
+  public readonly isEditableDashboardElement = true;
+  public readonly typeName = 'Panel';
 
   public constructor(private panel: VizPanel) {}
 
@@ -26,13 +29,13 @@ export class VizPanelEditableElement implements EditableDashboardElement {
 
     const panelOptions = useMemo(() => {
       return new OptionsPaneCategoryDescriptor({
-        title: 'Panel options',
+        title: t('dashboard.viz-panel.options.title', 'Panel options'),
         id: 'panel-options',
         isOpenDefault: true,
       })
         .addItem(
           new OptionsPaneItemDescriptor({
-            title: 'Title',
+            title: t('dashboard.viz-panel.options.title-option', 'Title'),
             value: panel.state.title,
             popularRank: 1,
             render: function renderTitle() {
@@ -42,7 +45,7 @@ export class VizPanelEditableElement implements EditableDashboardElement {
         )
         .addItem(
           new OptionsPaneItemDescriptor({
-            title: 'Description',
+            title: t('dashboard.viz-panel.options.description', 'Description'),
             value: panel.state.description,
             render: function renderDescription() {
               return <PanelDescriptionTextArea panel={panel} />;
@@ -51,7 +54,7 @@ export class VizPanelEditableElement implements EditableDashboardElement {
         )
         .addItem(
           new OptionsPaneItemDescriptor({
-            title: 'Transparent background',
+            title: t('dashboard.viz-panel.options.transparent-background', 'Transparent background'),
             render: function renderTransparent() {
               return <PanelBackgroundSwitch panel={panel} />;
             },
@@ -96,16 +99,12 @@ export class VizPanelEditableElement implements EditableDashboardElement {
     return categories;
   }
 
-  public getTypeName(): string {
-    return 'Panel';
-  }
-
   public onDelete = () => {
     const layout = dashboardSceneGraph.getLayoutManagerFor(this.panel);
-    layout.removePanel(this.panel);
+    layout.removePanel?.(this.panel);
   };
 
-  public renderActions(): React.ReactNode {
+  public renderActions(): ReactNode {
     return (
       <>
         <Button size="sm" variant="secondary">

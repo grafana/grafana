@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/search/model"
@@ -37,6 +38,10 @@ type DashboardService interface {
 	CleanUpDeletedDashboards(ctx context.Context) (int64, error)
 	GetSoftDeletedDashboard(ctx context.Context, orgID int64, uid string) (*Dashboard, error)
 	CountDashboardsInOrg(ctx context.Context, orgID int64) (int64, error)
+}
+
+type PermissionsRegistrationService interface {
+	RegisterDashboardPermissions(service accesscontrol.DashboardPermissionsService)
 }
 
 // PluginService is a service for operating on plugin dashboards.
@@ -76,6 +81,8 @@ type Store interface {
 	GetProvisionedDashboardData(ctx context.Context, name string) ([]*DashboardProvisioning, error)
 	GetProvisionedDataByDashboardID(ctx context.Context, dashboardID int64) (*DashboardProvisioning, error)
 	GetProvisionedDataByDashboardUID(ctx context.Context, orgID int64, dashboardUID string) (*DashboardProvisioning, error)
+	GetProvisionedDashboardsByName(ctx context.Context, name string) ([]*Dashboard, error)
+	GetOrphanedProvisionedDashboards(ctx context.Context, notIn []string) ([]*Dashboard, error)
 	SaveDashboard(ctx context.Context, cmd SaveDashboardCommand) (*Dashboard, error)
 	SaveProvisionedDashboard(ctx context.Context, dash *Dashboard, provisioning *DashboardProvisioning) error
 	UnprovisionDashboard(ctx context.Context, id int64) error

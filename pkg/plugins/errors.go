@@ -24,9 +24,9 @@ var (
 		errutil.WithPublicMessage("Plugin health check failed"),
 		errutil.WithDownstream())
 
-	// ErrPluginDownstreamErrorBase error returned when a plugin request fails.
-	// Exposed as a base error to wrap it with plugin downstream errors.
-	ErrPluginDownstreamErrorBase = errutil.Internal("plugin.downstreamError",
+	// ErrPluginRequestFailureErrorBase error returned when a plugin request fails.
+	// Exposed as a base error to wrap it with plugin request errors.
+	ErrPluginRequestFailureErrorBase = errutil.Internal("plugin.requestFailureError",
 		errutil.WithPublicMessage("An error occurred within the plugin"),
 		errutil.WithDownstream())
 

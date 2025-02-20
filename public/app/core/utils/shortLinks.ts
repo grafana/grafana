@@ -70,7 +70,7 @@ export const createDashboardShareUrl = (dashboard: DashboardScene, opts: ShareLi
     slug: dashboard.state.meta.slug,
     currentQueryParams: location.search,
     updateQuery: urlParamsUpdate,
-    absolute: true,
+    absolute: !opts.useShortUrl,
   });
 };
 

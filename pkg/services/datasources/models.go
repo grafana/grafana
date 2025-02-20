@@ -70,6 +70,16 @@ type DataSource struct {
 
 	Created time.Time `json:"created,omitempty"`
 	Updated time.Time `json:"updated,omitempty"`
+
+	isSecureSocksDSProxyEnabled *bool `xorm:"-"`
+}
+
+func (ds *DataSource) IsSecureSocksDSProxyEnabled() bool {
+	if ds.isSecureSocksDSProxyEnabled == nil {
+		enabled := ds.JsonData != nil && ds.JsonData.Get("enableSecureSocksProxy").MustBool(false)
+		ds.isSecureSocksDSProxyEnabled = &enabled
+	}
+	return *ds.isSecureSocksDSProxyEnabled
 }
 
 type TeamHTTPHeadersJSONData struct {

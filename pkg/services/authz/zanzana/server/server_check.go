@@ -24,7 +24,7 @@ func (s *Server) Check(ctx context.Context, r *authzv1.CheckRequest) (*authzv1.C
 
 	relation := common.VerbMapping[r.GetVerb()]
 
-	contextuals, err := s.getContextuals(ctx, r.GetSubject())
+	contextuals, err := s.getContextuals(r.GetSubject())
 	if err != nil {
 		return nil, err
 	}

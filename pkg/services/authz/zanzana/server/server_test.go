@@ -4,10 +4,11 @@ import (
 	"context"
 	"testing"
 
-	authnlib "github.com/grafana/authlib/authn"
-	"github.com/grafana/authlib/claims"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"github.com/stretchr/testify/require"
+
+	authnlib "github.com/grafana/authlib/authn"
+	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -113,7 +114,7 @@ func setup(t *testing.T, testDB db.DB, cfg *setting.Cfg) *Server {
 
 func newContextWithNamespace() context.Context {
 	ctx := context.Background()
-	ctx = claims.WithClaims(ctx, authnlib.NewAccessTokenAuthInfo(authnlib.Claims[authnlib.AccessTokenClaims]{
+	ctx = claims.WithAuthInfo(ctx, authnlib.NewAccessTokenAuthInfo(authnlib.Claims[authnlib.AccessTokenClaims]{
 		Rest: authnlib.AccessTokenClaims{
 			Namespace: "*",
 		},

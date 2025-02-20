@@ -53,7 +53,7 @@ export function validateVariable<
   }
   if (sceneVariable instanceof QueryVariable && variableKind.kind === 'QueryVariable') {
     expect(sceneVariable?.state.datasource).toBe(variableKind.spec.datasource);
-    expect(sceneVariable?.state.query).toBe(variableKind.spec.query);
+    expect(sceneVariable?.state.query).toEqual(variableKind.spec.query.spec);
   }
   if (sceneVariable instanceof CustomVariable && variableKind.kind === 'CustomVariable') {
     expect(sceneVariable?.state.query).toBe(variableKind.spec.query);
@@ -94,9 +94,10 @@ export function validateVizPanel(vizPanel: VizPanel, dash: DashboardV2Spec) {
     expect(vizPanelLinks.state.rawLinks).toEqual(panel.spec.links);
     expect(queryRunner.state.dataLayerFilter?.panelId).toBe(panel.spec.id);
   } else if (panel.kind === 'LibraryPanel') {
-    expect(getLibraryPanelBehavior(vizPanel)?.state.name).toBe(panel.spec.name);
-    expect(getLibraryPanelBehavior(vizPanel)?.state.uid).toBe(panel.spec.uid);
-
+    expect(getLibraryPanelBehavior(vizPanel)?.state.name).toBe(panel.spec.libraryPanel.name);
+    expect(getLibraryPanelBehavior(vizPanel)?.state.uid).toBe(panel.spec.libraryPanel.uid);
+    expect(getPanelIdForVizPanel(vizPanel)).toBe(panel.spec.id);
+    expect(vizPanel.state.title).toBe(panel.spec.title);
     expect(vizPanel.state.pluginId).toBe(LibraryPanelBehavior.LOADING_VIZ_PANEL_PLUGIN_ID);
   } else {
     throw new Error('vizPanel is not a valid element kind');

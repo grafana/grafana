@@ -30,6 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
+	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
@@ -54,12 +55,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/publicdashboards/api"
 	publicdashboardModels "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
+	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/services/star/startest"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/web"
 	"github.com/grafana/grafana/pkg/web/webtest"
 )
@@ -151,7 +154,7 @@ func TestHTTPServer_GetDashboard_AccessControl(t *testing.T) {
 			hs.starService = startest.NewStarServiceFake()
 			hs.dashboardProvisioningService = mockDashboardProvisioningService{}
 
-			guardian.InitAccessControlGuardian(hs.Cfg, hs.AccessControl, hs.DashboardService)
+			guardian.InitAccessControlGuardian(hs.Cfg, hs.AccessControl, hs.DashboardService, hs.folderService, log.NewNopLogger())
 		})
 	}
 
@@ -272,14 +275,12 @@ func TestHTTPServer_DeleteDashboardByUID_AccessControl(t *testing.T) {
 			hs.LibraryPanelService = &mockLibraryPanelService{}
 			hs.LibraryElementService = &libraryelementsfake.LibraryElementService{}
 
-			pubDashService := publicdashboards.NewFakePublicDashboardService(t)
-			pubDashService.On("DeleteByDashboard", mock.Anything, mock.Anything).Return(nil).Maybe()
 			middleware := publicdashboards.NewFakePublicDashboardMiddleware(t)
 			license := licensingtest.NewFakeLicensing()
 			license.On("FeatureEnabled", publicdashboardModels.FeaturePublicDashboardsEmailSharing).Return(false)
-			hs.PublicDashboardsApi = api.ProvideApi(pubDashService, nil, hs.AccessControl, featuremgmt.WithFeatures(), middleware, hs.Cfg, license)
+			hs.PublicDashboardsApi = api.ProvideApi(nil, nil, hs.AccessControl, featuremgmt.WithFeatures(), middleware, hs.Cfg, license)
 
-			guardian.InitAccessControlGuardian(hs.Cfg, hs.AccessControl, hs.DashboardService)
+			guardian.InitAccessControlGuardian(hs.Cfg, hs.AccessControl, hs.DashboardService, hs.folderService, log.NewNopLogger())
 		})
 	}
 	deleteDashboard := func(server *webtest.Server, permissions []accesscontrol.Permission) (*http.Response, error) {
@@ -330,7 +331,7 @@ func TestHTTPServer_GetDashboardVersions_AccessControl(t *testing.T) {
 				ExpectedDashboardVersion:     &dashver.DashboardVersionDTO{},
 			}
 
-			guardian.InitAccessControlGuardian(hs.Cfg, hs.AccessControl, hs.DashboardService)
+			guardian.InitAccessControlGuardian(hs.Cfg, hs.AccessControl, hs.DashboardService, hs.folderService, log.NewNopLogger())
 		})
 	}
 
@@ -745,10 +746,10 @@ func TestDashboardVersionsAPIEndpoint(t *testing.T) {
 			}).callGetDashboardVersions(sc)
 
 			assert.Equal(t, http.StatusOK, sc.resp.Code)
-			var versions []dashver.DashboardVersionMeta
+			var versions dashver.DashboardVersionResponseMeta
 			err := json.NewDecoder(sc.resp.Body).Decode(&versions)
 			require.NoError(t, err)
-			for _, v := range versions {
+			for _, v := range versions.Versions {
 				assert.Equal(t, "test-user", v.CreatedBy)
 			}
 		}, mockSQLStore)
@@ -771,10 +772,10 @@ func TestDashboardVersionsAPIEndpoint(t *testing.T) {
 			}).callGetDashboardVersions(sc)
 
 			assert.Equal(t, http.StatusOK, sc.resp.Code)
-			var versions []dashver.DashboardVersionMeta
+			var versions dashver.DashboardVersionResponseMeta
 			err := json.NewDecoder(sc.resp.Body).Decode(&versions)
 			require.NoError(t, err)
-			for _, v := range versions {
+			for _, v := range versions.Versions {
 				assert.Equal(t, anonString, v.CreatedBy)
 			}
 		}, mockSQLStore)
@@ -797,10 +798,10 @@ func TestDashboardVersionsAPIEndpoint(t *testing.T) {
 			}).callGetDashboardVersions(sc)
 
 			assert.Equal(t, http.StatusOK, sc.resp.Code)
-			var versions []dashver.DashboardVersionMeta
+			var versions dashver.DashboardVersionResponseMeta
 			err := json.NewDecoder(sc.resp.Body).Decode(&versions)
 			require.NoError(t, err)
-			for _, v := range versions {
+			for _, v := range versions.Versions {
 				assert.Equal(t, anonString, v.CreatedBy)
 			}
 		}, mockSQLStore)
@@ -831,20 +832,24 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 	db := db.InitTestDB(t)
 	fStore := folderimpl.ProvideStore(db)
 	quotaService := quotatest.New(false, nil)
-	folderSvc := folderimpl.ProvideService(fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()),
-		dashboardStore, folderStore, db, features,
-		supportbundlestest.NewFakeBundleService(), cfg, nil, tracing.InitializeTracerForTest())
+	folderSvc := folderimpl.ProvideService(
+		fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore,
+		nil, db, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil,
+		dualwrite.ProvideTestService(), sort.ProvideService())
 	if dashboardService == nil {
 		dashboardService, err = service.ProvideDashboardServiceImpl(
-			cfg, dashboardStore, folderStore, features, folderPermissions, dashboardPermissions,
-			ac, folderSvc, fStore, nil, nil, nil, nil, quotaService, nil,
+			cfg, dashboardStore, folderStore, features, folderPermissions,
+			ac, folderSvc, fStore, nil, client.MockTestRestConfig{}, nil, quotaService, nil, nil, nil,
+			dualwrite.ProvideTestService(), sort.ProvideService(),
 		)
 		require.NoError(t, err)
+		dashboardService.(dashboards.PermissionsRegistrationService).RegisterDashboardPermissions(dashboardPermissions)
 	}
 
 	dashboardProvisioningService, err := service.ProvideDashboardServiceImpl(
-		cfg, dashboardStore, folderStore, features, folderPermissions, dashboardPermissions,
-		ac, folderSvc, fStore, nil, nil, nil, nil, quotaService, nil,
+		cfg, dashboardStore, folderStore, features, folderPermissions,
+		ac, folderSvc, fStore, nil, client.MockTestRestConfig{}, nil, quotaService, nil, nil, nil,
+		dualwrite.ProvideTestService(), sort.ProvideService(),
 	)
 	require.NoError(t, err)
 

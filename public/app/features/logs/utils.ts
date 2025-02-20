@@ -14,6 +14,7 @@ import {
   QueryResultMeta,
   LogsVolumeType,
   NumericLogLevel,
+  getFieldDisplayName,
 } from '@grafana/data';
 
 import { getDataframeFields } from './components/logParser';
@@ -216,22 +217,28 @@ export const mergeLogsVolumeDataFrames = (dataFrames: DataFrame[]): { dataFrames
 
   // collect and aggregate into aggregated object
   dataFrames.forEach((dataFrame) => {
-    const { level, valueField, timeField, length } = getLogLevelInfo(dataFrame);
+    const { level, valueField, timeField } = getLogLevelInfo(dataFrame, dataFrames);
+
+    if (!timeField || !valueField) {
+      return;
+    }
 
     configs[level] = {
       meta: dataFrame.meta,
-      valueFieldConfig: valueField.config,
-      timeFieldConfig: timeField.config,
+      valueFieldConfig: valueField?.config ?? {},
+      timeFieldConfig: timeField?.config ?? {},
     };
 
-    for (let pointIndex = 0; pointIndex < length; pointIndex++) {
+    for (let pointIndex = 0; pointIndex < dataFrame.length; pointIndex++) {
       const time: number = timeField.values[pointIndex];
       const value: number = valueField.values[pointIndex];
       aggregated[level] ??= {};
       aggregated[level][time] = (aggregated[level][time] || 0) + value;
 
       totals[time] = (totals[time] || 0) + value;
-      maximumValue = Math.max(totals[time], maximumValue);
+      if (totals[time] > maximumValue) {
+        maximumValue = totals[time];
+      }
     }
   });
 
@@ -296,21 +303,20 @@ export const copyText = async (text: string, buttonRef: React.MutableRefObject<E
   }
 };
 
-export function getLogLevelInfo(dataFrame: DataFrame) {
+export function getLogLevelInfo(dataFrame: DataFrame, allDataFrames: DataFrame[]) {
   const fieldCache = new FieldCache(dataFrame);
   const timeField = fieldCache.getFirstFieldOfType(FieldType.time);
   const valueField = fieldCache.getFirstFieldOfType(FieldType.number);
 
   if (!timeField) {
-    throw new Error('Missing time field');
+    console.error('Time field missing in data frame');
   }
   if (!valueField) {
-    throw new Error('Missing value field');
+    console.error('Value field missing in data frame');
   }
 
-  const level = valueField.config.displayNameFromDS || dataFrame.name || 'logs';
-  const length = valueField.values.length;
-  return { level, valueField, timeField, length };
+  const level = valueField ? getFieldDisplayName(valueField, dataFrame, allDataFrames) : 'logs';
+  return { level, valueField, timeField };
 }
 
 export function targetIsElement(target: EventTarget | null): target is Element {

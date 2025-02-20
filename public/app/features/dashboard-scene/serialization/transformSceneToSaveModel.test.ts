@@ -25,9 +25,9 @@ import { DashboardDataDTO } from 'app/types';
 
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
-import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
+import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior';
 import { NEW_LINK } from '../settings/links/utils';
 import { activateFullSceneTree, buildPanelRepeaterScene } from '../utils/test-utils';
 import { getVizPanelKeyForPanelId } from '../utils/utils';
@@ -185,7 +185,6 @@ describe('transformSceneToSaveModel', () => {
         timepicker: {
           ...dashboard_to_load1.timepicker,
           refresh_intervals: ['5m', '15m', '30m', '1h'],
-          time_options: ['5m', '15m', '30m'],
           hidden: true,
         },
         links: [{ ...NEW_LINK, title: 'Link 1' }],
@@ -355,7 +354,6 @@ describe('transformSceneToSaveModel', () => {
         $behaviors: [
           new LibraryPanelBehavior({
             name: 'Some lib panel panel',
-            title: 'A panel',
             uid: 'lib-panel-uid',
           }),
         ],
@@ -399,7 +397,7 @@ describe('transformSceneToSaveModel', () => {
         x: 0,
         y: 0,
       });
-      expect(result.title).toBe('A panel');
+      expect(result.title).toBe('Panel blahh blah');
       expect(result.transformations).toBeUndefined();
       expect(result.fieldConfig).toBeUndefined();
       expect(result.options).toBeUndefined();
@@ -851,7 +849,6 @@ describe('transformSceneToSaveModel', () => {
             $behaviors: [
               new LibraryPanelBehavior({
                 name: 'Some lib panel panel',
-                title: 'A panel',
                 uid: 'lib-panel-uid',
               }),
             ],
@@ -865,7 +862,7 @@ describe('transformSceneToSaveModel', () => {
 
         expect(result[0]).toMatchObject({
           id: 4,
-          title: 'A panel',
+          title: 'Panel blahh blah',
           libraryPanel: {
             name: 'Some lib panel panel',
             uid: 'lib-panel-uid',

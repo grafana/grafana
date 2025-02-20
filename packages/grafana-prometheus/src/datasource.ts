@@ -1,5 +1,6 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/datasource.ts
 import { defaults } from 'lodash';
+import { tz } from 'moment-timezone';
 import { lastValueFrom, Observable, throwError } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import semver from 'semver/preload';
@@ -373,13 +374,32 @@ export class PrometheusDatasource
   }
 
   processTargetV2(target: PromQuery, request: DataQueryRequest<PromQuery>) {
+    // The `utcOffsetSec` parameter is required by the backend to correctly align time ranges.
+    // This alignment ensures that relative time ranges (e.g., "Last N hours/days/years") are adjusted
+    // according to the user's selected time zone, rather than defaulting to UTC.
+    //
+    // Example: If the user selects "Last 5 days," each day should begin at 00:00 in the chosen time zone,
+    // rather than at 00:00 UTC, ensuring an accurate breakdown.
+    //
+    // This adjustment does not apply to absolute time ranges, where users explicitly set
+    // the start and end timestamps.
+    //
+    // Handling `utcOffsetSec`:
+    // - When using the browser's time zone, the UTC offset is derived from the request range object.
+    // - When the user selects a custom time zone, the UTC offset must be calculated accordingly.
+    // More details:
+    // - Issue that led to the introduction of utcOffsetSec: https://github.com/grafana/grafana/issues/17278
+    // - Implementation PR: https://github.com/grafana/grafana/pull/17477
+    let utcOffset = request.range.to.utcOffset();
+    if (request.timezone !== 'browser') {
+      utcOffset = tz(request.timezone).utcOffset();
+    }
     const processedTargets: PromQuery[] = [];
     const processedTarget = {
       ...target,
       exemplar: this.shouldRunExemplarQuery(target, request),
       requestId: request.panelId + target.refId,
-      // We need to pass utcOffsetSec to backend to calculate aligned range
-      utcOffsetSec: request.range.to.utcOffset() * 60,
+      utcOffsetSec: utcOffset * 60,
     };
 
     if (config.featureToggles.promQLScope) {
@@ -456,13 +476,15 @@ export class PrometheusDatasource
       return Promise.resolve([]);
     }
 
+    const timeRange = options?.range ?? this.languageProvider.timeRange ?? getDefaultTimeRange();
+
     const scopedVars = {
       ...this.getIntervalVars(),
-      ...this.getRangeScopedVars(options?.range ?? getDefaultTimeRange()),
+      ...this.getRangeScopedVars(timeRange),
     };
     const interpolated = this.templateSrv.replace(query, scopedVars, this.interpolateQueryExpr);
     const metricFindQuery = new PrometheusMetricFindQuery(this, interpolated);
-    return metricFindQuery.process(options?.range ?? getDefaultTimeRange());
+    return metricFindQuery.process(timeRange);
   }
 
   getIntervalVars() {
@@ -706,7 +728,11 @@ export class PrometheusDatasource
     let expandedQueries = queries;
     if (queries && queries.length) {
       expandedQueries = queries.map((query) => {
-        const interpolatedQuery = this.templateSrv.replace(query.expr, scopedVars, this.interpolateQueryExpr);
+        const interpolatedQuery = this.templateSrv.replace(
+          query.expr,
+          scopedVars,
+          this.interpolateExploreMetrics(query.fromExploreMetrics)
+        );
         const replacedInterpolatedQuery = config.featureToggles.promQLScope
           ? interpolatedQuery
           : this.templateSrv.replace(
@@ -929,17 +955,7 @@ export class PrometheusDatasource
     const expr = this.templateSrv.replace(
       target.expr,
       variables,
-      (value: string | string[] = [], variable: QueryVariableModel | CustomVariableModel) => {
-        if (typeof value === 'string' && target.fromExploreMetrics) {
-          if (variable.name === 'filters') {
-            return wrapUtf8Filters(value);
-          }
-          if (variable.name === 'groupby') {
-            return utf8Support(value);
-          }
-        }
-        return this.interpolateQueryExpr(value, variable);
-      }
+      this.interpolateExploreMetrics(target.fromExploreMetrics)
     );
 
     // Apply ad-hoc filters
@@ -963,6 +979,20 @@ export class PrometheusDatasource
 
   interpolateString(string: string, scopedVars?: ScopedVars) {
     return this.templateSrv.replace(string, scopedVars, this.interpolateQueryExpr);
+  }
+
+  interpolateExploreMetrics(fromExploreMetrics?: boolean) {
+    return (value: string | string[] = [], variable: QueryVariableModel | CustomVariableModel) => {
+      if (typeof value === 'string' && fromExploreMetrics) {
+        if (variable.name === 'filters') {
+          return wrapUtf8Filters(value);
+        }
+        if (variable.name === 'groupby') {
+          return utf8Support(value);
+        }
+      }
+      return this.interpolateQueryExpr(value, variable);
+    };
   }
 
   getDebounceTimeInMilliseconds(): number {

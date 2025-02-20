@@ -7,6 +7,7 @@ import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { PanelProps } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
+import { selectors } from '@grafana/e2e-selectors';
 import {
   LocationServiceProvider,
   config,
@@ -23,6 +24,7 @@ import { DashboardLoaderSrv, setDashboardLoaderSrv } from 'app/features/dashboar
 import { DASHBOARD_FROM_LS_KEY, DashboardRoutes } from 'app/types';
 
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
+import { setupLoadDashboardMockReject, setupLoadDashboardRuntimeErrorMock } from '../utils/test-utils';
 
 import { DashboardScenePage, Props } from './DashboardScenePage';
 import { getDashboardScenePageStateManager } from './DashboardScenePageStateManager';
@@ -296,6 +298,64 @@ describe('DashboardScenePage', () => {
 
       await waitFor(() => expect(screen.queryByText('Refresh')).toBeInTheDocument());
       await waitFor(() => expect(screen.queryByText('Last 6 hours')).toBeInTheDocument());
+    });
+  });
+
+  describe('errors rendering', () => {
+    it('should render dashboard not found notice when dashboard... not found', async () => {
+      setupLoadDashboardMockReject({
+        status: 404,
+        statusText: 'Not Found',
+        data: {
+          message: 'Dashboard not found',
+        },
+        config: {
+          method: 'GET',
+          url: 'api/dashboards/uid/adfjq9edwm0hsdsa',
+          retry: 0,
+          headers: {
+            'X-Grafana-Org-Id': 1,
+          },
+          hideFromInspector: true,
+        },
+        isHandled: true,
+      });
+
+      setup();
+
+      expect(await screen.findByTestId(selectors.components.EntityNotFound.container)).toBeInTheDocument();
+    });
+    it('should render error alert for backend errors', async () => {
+      setupLoadDashboardMockReject({
+        status: 500,
+        statusText: 'internal server error',
+        data: {
+          message: 'Internal server error',
+        },
+        config: {
+          method: 'GET',
+          url: 'api/dashboards/uid/adfjq9edwm0hsdsa',
+          retry: 0,
+          headers: {
+            'X-Grafana-Org-Id': 1,
+          },
+          hideFromInspector: true,
+        },
+        isHandled: true,
+      });
+
+      setup();
+
+      expect(await screen.findByTestId('dashboard-page-error')).toBeInTheDocument();
+      expect(await screen.findByTestId('dashboard-page-error')).toHaveTextContent('Internal server error');
+    });
+    it('should render error alert for runtime errors', async () => {
+      setupLoadDashboardRuntimeErrorMock();
+
+      setup();
+
+      expect(await screen.findByTestId('dashboard-page-error')).toBeInTheDocument();
+      expect(await screen.findByTestId('dashboard-page-error')).toHaveTextContent('Runtime error');
     });
   });
 });
