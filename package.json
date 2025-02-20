@@ -437,7 +437,12 @@
     "@grafana/scenes-react/@grafana/e2e-selectors": "workspace:*"
   },
   "workspaces": {
-    "packages": ["packages/*", "packages/!(grafana-icons)/**", "public/app/plugins/*/*", "e2e/test-plugins/*"]
+    "packages": [
+      "packages/*",
+      "packages/!(grafana-icons)/**",
+      "public/app/plugins/*/*",
+      "e2e/test-plugins/*"
+    ]
   },
   "engines": {
     "node": ">= 22"
@@ -449,6 +454,8 @@
     }
   },
   "msw": {
-    "workerDirectory": ["public"]
+    "workerDirectory": [
+      "public"
+    ]
   }
 }
