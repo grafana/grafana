@@ -376,10 +376,6 @@ func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admis
 			return fmt.Errorf("github configuration is required")
 		}
 
-		if r.Spec.GitHub.Branch == "" {
-			r.Spec.GitHub.Branch = "main"
-		}
-
 		// Trim trailing slash or .git
 		if len(r.Spec.GitHub.URL) > 5 {
 			r.Spec.GitHub.URL = strings.TrimRight(strings.TrimRight(r.Spec.GitHub.URL, "/"), ".git")
