@@ -1,6 +1,6 @@
-import { useEffect } from 'react';
+import { skipToken } from '@reduxjs/toolkit/query/react';
 
-import { useLazyGetFolderQuery } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
+import { useGetFolderQuery } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { FolderDTO } from 'app/types';
 
 interface ReturnBag {
@@ -8,20 +8,12 @@ interface ReturnBag {
   loading: boolean;
 }
 
-const PREFER_CACHED_VALUES = true;
-
 /**
  * Returns a folderDTO for the given uid – uses cached values
  * @TODO propagate error state
  */
 export function useFolder(uid?: string): ReturnBag {
-  const [fetchFolder, fetchFolderState] = useLazyGetFolderQuery();
-
-  useEffect(() => {
-    if (uid) {
-      fetchFolder(uid, PREFER_CACHED_VALUES);
-    }
-  }, [fetchFolder, uid]);
+  const fetchFolderState = useGetFolderQuery(uid || skipToken);
 
   return {
     loading: fetchFolderState.isLoading || fetchFolderState.isUninitialized,
@@ -35,6 +27,6 @@ export function stringifyFolder({ title, parents }: FolderDTO) {
     : encodeTitle(title);
 }
 
-export function encodeTitle(title: string): string {
+function encodeTitle(title: string): string {
   return title.replaceAll('/', '\\/');
 }
