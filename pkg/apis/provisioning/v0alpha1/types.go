@@ -28,7 +28,7 @@ type LocalRepositoryConfig struct {
 type Workflow string
 
 const (
-	// WriteWorkflow allows a user to write directly to the respository
+	// WriteWorkflow allows a user to write directly to the repository
 	WriteWorkflow Workflow = "write"
 	// BranchWorkflow allows creating a branch for changes (where we can then make a PR)
 	BranchWorkflow Workflow = "branch"
@@ -69,7 +69,7 @@ type RepositorySpec struct {
 	// Repository description
 	Description string `json:"description,omitempty"`
 
-	// UI driven Workflow taht allow changes to the contends of the repository.
+	// UI driven Workflow that allow changes to the contends of the repository.
 	// The order is relevant for defining the precedence of the workflows.
 	// When empty, the repository does not support any edits (eg, readonly)
 	Workflows []Workflow `json:"workflows"`

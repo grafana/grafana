@@ -422,12 +422,12 @@ func treeEntry(fpath string, content []byte) *gh.TreeEntry {
 	}
 
 	return &gh.TreeEntry{
-		SHA:     gh.String(hex.EncodeToString(sha[:])),
+		SHA:     gh.Ptr(hex.EncodeToString(sha[:])),
 		Path:    &fpath,
-		Size:    gh.Int(len(content)),
+		Size:    gh.Ptr(len(content)),
 		Type:    &typ,
 		Mode:    &mode,
-		Content: gh.String(string(content)),
+		Content: gh.Ptr(string(content)),
 	}
 }
 
@@ -439,12 +439,12 @@ func repoContent(fpath string, content []byte) *gh.RepositoryContent {
 	}
 
 	return &gh.RepositoryContent{
-		SHA:      gh.String(hex.EncodeToString(sha[:])),
-		Name:     gh.String(path.Base(fpath)),
+		SHA:      gh.Ptr(hex.EncodeToString(sha[:])),
+		Name:     gh.Ptr(path.Base(fpath)),
 		Path:     &fpath,
 		Size:     gh.Int(len(content)),
 		Type:     &typ,
-		Content:  gh.String(string(content)),
-		Encoding: gh.String("UTF-8"),
+		Content:  gh.Ptr(string(content)),
+		Encoding: gh.Ptr("UTF-8"),
 	}
 }
