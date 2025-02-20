@@ -22,14 +22,13 @@ interface Props {
   links: LinkModel[];
   actions?: ActionModel[];
   value?: string | ReactElement;
-  children?: ReactElement;
 }
 
 /**
  *
  * @internal
  */
-export const DataLinksActionsTooltip = ({ links, actions, value, children }: Props) => {
+export const DataLinksActionsTooltip = ({ links, actions, value }: Props) => {
   const styles = useStyles2(getStyles);
   const [show, setShow] = useState(false);
 
@@ -63,7 +62,6 @@ export const DataLinksActionsTooltip = ({ links, actions, value, children }: Pro
   };
 
   const hasMultipleLinksOrActions = links.length > 1 || Boolean(actions?.length);
-  const renderValue = value || children;
 
   const { getReferenceProps, getFloatingProps } = useInteractions([dismiss, click]);
 
@@ -81,14 +79,20 @@ export const DataLinksActionsTooltip = ({ links, actions, value, children }: Pro
         title={primaryLink.title}
         className={styles.link}
       >
-        {renderValue}
+        {value}
       </a>
     );
   } else {
     return (
       <>
-        <span ref={refs.setReference} {...getReferenceProps()} className={styles.link} onClick={onItemClick}>
-          {renderValue}
+        <span
+          ref={refs.setReference}
+          {...getReferenceProps()}
+          className={styles.link}
+          onClick={onItemClick}
+          style={{ cursor: 'context-menu' }}
+        >
+          {value}
         </span>
         {show && hasMultipleLinksOrActions && (
           <Portal>
@@ -112,17 +116,13 @@ export const DataLinksActionsTooltip = ({ links, actions, value, children }: Pro
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     tooltipWrapper: css({
-      top: 0,
-      left: 0,
       zIndex: theme.zIndex.portal,
       whiteSpace: 'pre',
       borderRadius: theme.shape.radius.default,
-      position: 'fixed',
       background: theme.colors.background.primary,
       border: `1px solid ${theme.colors.border.weak}`,
       boxShadow: theme.shadows.z3,
       userSelect: 'text',
-      padding: 0,
       fontSize: theme.typography.bodySmall.fontSize,
     }),
     link: css({

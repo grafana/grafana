@@ -87,11 +87,7 @@ export const BarGaugeCell = (props: TableCellProps) => {
   return (
     <div {...cellProps} className={tableStyles.cellContainer}>
       {hasLinks || hasActions ? (
-        <>
-          <DataLinksActionsTooltip links={getLinks()} actions={actions}>
-            {renderComponent({})}
-          </DataLinksActionsTooltip>
-        </>
+        <DataLinksActionsTooltip links={getLinks()} actions={actions} value={renderComponent({})} />
       ) : (
         renderComponent({})
       )}
