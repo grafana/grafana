@@ -7,6 +7,7 @@ import { EventBusPlugin, KeyboardPlugin, TooltipPlugin2, usePanelContext } from 
 import { TimeRange2, TooltipHoverMode } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2';
 import { TimeSeries } from 'app/core/components/TimeSeries/TimeSeries';
 import { config } from 'app/core/config';
+import { TimeSeriesCustomizableTooltip } from 'app/plugins/panel/timeseries/TimeSeriesCustomizableTooltip';
 
 import { TimeSeriesTooltip } from './TimeSeriesTooltip';
 import { Options } from './panelcfg.gen';
@@ -17,9 +18,12 @@ import { ThresholdControlsPlugin } from './plugins/ThresholdControlsPlugin';
 import { getPrepareTimeseriesSuggestion } from './suggestions';
 import { getTimezones, prepareGraphableFields } from './utils';
 
-interface TimeSeriesPanelProps extends PanelProps<Options> {}
+interface TimeSeriesPanelProps extends PanelProps<Options> {
+  isTooltipCustomizable?: boolean;
+}
 
 export const TimeSeriesPanel = ({
+  id,
   data,
   timeRange,
   timeZone,
@@ -29,7 +33,7 @@ export const TimeSeriesPanel = ({
   fieldConfig,
   onChangeTimeRange,
   replaceVariables,
-  id,
+  isTooltipCustomizable = true,
 }: TimeSeriesPanelProps) => {
   const {
     sync,
@@ -42,7 +46,7 @@ export const TimeSeriesPanel = ({
     eventBus,
   } = usePanelContext();
   // Vertical orientation is not available for users through config.
-  // It is simplified version of horizontal time series panel and it does not support all plugins.
+  // It is a simplified version of horizontal time series panel, and it does not support all plugins.
   const isVerticallyOriented = options.orientation === VizOrientation.Vertical;
   const frames = useMemo(() => prepareGraphableFields(data.series, config.theme2, timeRange), [data.series, timeRange]);
   const timezones = useMemo(() => getTimezones(options.timezone, timeZone), [options.timezone, timeZone]);
@@ -123,20 +127,30 @@ export const TimeSeriesPanel = ({
                     dismiss();
                   };
 
-                  return (
-                    // not sure it header time here works for annotations, since it's taken from nearest datapoint index
+                  return isTooltipCustomizable ? (
+                    <TimeSeriesCustomizableTooltip
+                      series={alignedFrame}
+                      dataIdxs={dataIdxs}
+                      seriesIdx={seriesIdx}
+                      isPinned={isPinned}
+                      annotate={enableAnnotationCreation ? annotate : undefined}
+                      maxHeight={options.tooltip.maxHeight}
+                      replaceVariables={replaceVariables}
+                      dataLinks={dataLinks}
+                    />
+                  ) : (
                     <TimeSeriesTooltip
                       series={alignedFrame}
                       dataIdxs={dataIdxs}
                       seriesIdx={seriesIdx}
                       mode={viaSync ? TooltipDisplayMode.Multi : options.tooltip.mode}
                       sortOrder={options.tooltip.sort}
-                      hideZeros={options.tooltip.hideZeros}
                       isPinned={isPinned}
                       annotate={enableAnnotationCreation ? annotate : undefined}
                       maxHeight={options.tooltip.maxHeight}
                       replaceVariables={replaceVariables}
                       dataLinks={dataLinks}
+                      hideZeros={options.tooltip.hideZeros}
                     />
                   );
                 }}
