@@ -191,4 +191,4 @@ datasources:
 If you encounter metric request errors or other issues:
 
 - Ensure that the parameters in your data source YAML file precisely match the example provided, including parameter names and the correct use of quotation marks.
-- Verify that the database name **isn't** included in the URL.
+- Verify that the database name _isn't_ included in the URL.
