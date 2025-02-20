@@ -1,6 +1,7 @@
 package prom
 
 import (
+	"encoding/json"
 	"fmt"
 	"testing"
 	"time"
@@ -10,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
 
+	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/util"
@@ -208,6 +210,7 @@ func TestPrometheusRulesToGrafanaWithDuplicateRuleNames(t *testing.T) {
 func TestPrometheusRulesToGrafana_UID(t *testing.T) {
 	orgID := int64(1)
 	namespace := "some-namespace"
+	defaultInterval := 1 * time.Minute
 
 	promGroup := PrometheusRuleGroup{
 		Name:     "test-group-1",
@@ -229,8 +232,9 @@ func TestPrometheusRulesToGrafana_UID(t *testing.T) {
 	}
 
 	converter, err := NewConverter(Config{
-		DatasourceUID:  "datasource-uid",
-		DatasourceType: datasources.DS_PROMETHEUS,
+		DatasourceUID:   "datasource-uid",
+		DatasourceType:  datasources.DS_PROMETHEUS,
+		DefaultInterval: defaultInterval,
 	})
 	require.NoError(t, err)
 
@@ -257,8 +261,9 @@ func TestPrometheusRulesToGrafana_UID(t *testing.T) {
 			namespace := "some-namespace"
 
 			converter, err := NewConverter(Config{
-				DatasourceUID:  "datasource-uid",
-				DatasourceType: datasources.DS_PROMETHEUS,
+				DatasourceUID:   "datasource-uid",
+				DatasourceType:  datasources.DS_PROMETHEUS,
+				DefaultInterval: defaultInterval,
 			})
 			require.NoError(t, err)
 
@@ -275,8 +280,9 @@ func TestPrometheusRulesToGrafana_UID(t *testing.T) {
 			namespace := "some-namespace"
 
 			converter, err := NewConverter(Config{
-				DatasourceUID:  "datasource-uid",
-				DatasourceType: datasources.DS_PROMETHEUS,
+				DatasourceUID:   "datasource-uid",
+				DatasourceType:  datasources.DS_PROMETHEUS,
+				DefaultInterval: defaultInterval,
 			})
 			require.NoError(t, err)
 
@@ -293,8 +299,9 @@ func TestPrometheusRulesToGrafana_UID(t *testing.T) {
 			namespace := "some-namespace"
 
 			converter, err := NewConverter(Config{
-				DatasourceUID:  "datasource-uid",
-				DatasourceType: datasources.DS_PROMETHEUS,
+				DatasourceUID:   "datasource-uid",
+				DatasourceType:  datasources.DS_PROMETHEUS,
+				DefaultInterval: defaultInterval,
 			})
 			require.NoError(t, err)
 
@@ -304,5 +311,124 @@ func TestPrometheusRulesToGrafana_UID(t *testing.T) {
 			require.Errorf(t, err, "invalid UID label value")
 			require.Nil(t, grafanaGroup)
 		})
+	})
+}
+
+func TestCreateMathNode(t *testing.T) {
+	node, err := createMathNode()
+	require.NoError(t, err)
+
+	require.Equal(t, expr.DatasourceUID, node.DatasourceUID)
+	require.Equal(t, string(expr.QueryTypeMath), node.QueryType)
+	require.Equal(t, "B", node.RefID)
+
+	var model map[string]interface{}
+	err = json.Unmarshal(node.Model, &model)
+	require.NoError(t, err)
+
+	require.Equal(t, "B", model["refId"])
+	require.Equal(t, string(expr.QueryTypeMath), model["type"])
+	require.Equal(t, "is_number($A) || is_nan($A) || is_inf($A)", model["expression"])
+
+	ds := model["datasource"].(map[string]interface{})
+	require.Equal(t, expr.TypeCMDNode.String(), ds["name"])
+	require.Equal(t, expr.DatasourceType, ds["type"])
+	require.Equal(t, expr.DatasourceUID, ds["uid"])
+
+	conditions := model["conditions"].([]interface{})
+	require.Len(t, conditions, 1)
+
+	condition := conditions[0].(map[string]interface{})
+	require.Equal(t, "query", condition["type"])
+
+	evaluator := condition["evaluator"].(map[string]interface{})
+	require.Equal(t, "gt", evaluator["type"])
+	require.Equal(t, []interface{}{float64(0), float64(0)}, evaluator["params"])
+}
+
+func TestCreateThresholdNode(t *testing.T) {
+	node, err := createThresholdNode()
+	require.NoError(t, err)
+
+	require.Equal(t, expr.DatasourceUID, node.DatasourceUID)
+	require.Equal(t, string(expr.QueryTypeThreshold), node.QueryType)
+	require.Equal(t, "C", node.RefID)
+
+	var model map[string]interface{}
+	err = json.Unmarshal(node.Model, &model)
+	require.NoError(t, err)
+
+	require.Equal(t, "C", model["refId"])
+	require.Equal(t, string(expr.QueryTypeThreshold), model["type"])
+
+	ds := model["datasource"].(map[string]interface{})
+	require.Equal(t, expr.TypeCMDNode.String(), ds["name"])
+	require.Equal(t, expr.DatasourceType, ds["type"])
+	require.Equal(t, expr.DatasourceUID, ds["uid"])
+
+	conditions := model["conditions"].([]interface{})
+	require.Len(t, conditions, 1)
+
+	condition := conditions[0].(map[string]interface{})
+	require.Equal(t, "query", condition["type"])
+
+	evaluator := condition["evaluator"].(map[string]interface{})
+	require.Equal(t, string(expr.ThresholdIsAbove), evaluator["type"])
+	require.Equal(t, []interface{}{float64(0)}, evaluator["params"])
+}
+
+func TestPrometheusRulesToGrafana_NodesInRules(t *testing.T) {
+	cfg := Config{
+		DatasourceUID:   "datasource-uid",
+		DatasourceType:  datasources.DS_PROMETHEUS,
+		DefaultInterval: 1 * time.Minute,
+	}
+	converter, err := NewConverter(cfg)
+	require.NoError(t, err)
+
+	t.Run("alert rule should have math and threshold nodes", func(t *testing.T) {
+		group := PrometheusRuleGroup{
+			Name: "test",
+			Rules: []PrometheusRule{
+				{
+					Alert: "alert1",
+					Expr:  "up == 0",
+				},
+			},
+		}
+
+		result, err := converter.PrometheusRulesToGrafana(1, "namespace", group)
+		require.NoError(t, err)
+		require.Len(t, result.Rules, 1)
+		require.Len(t, result.Rules[0].Data, 3)
+
+		// First node should be query
+		require.Equal(t, "A", result.Rules[0].Data[0].RefID)
+		// Second node should be math
+		require.Equal(t, "B", result.Rules[0].Data[1].RefID)
+		require.Equal(t, string(expr.QueryTypeMath), result.Rules[0].Data[1].QueryType)
+		// Third node should be threshold
+		require.Equal(t, "C", result.Rules[0].Data[2].RefID)
+		require.Equal(t, string(expr.QueryTypeThreshold), result.Rules[0].Data[2].QueryType)
+	})
+
+	t.Run("recording rule should only have query node", func(t *testing.T) {
+		group := PrometheusRuleGroup{
+			Name: "test",
+			Rules: []PrometheusRule{
+				{
+					Record: "metric",
+					Expr:   "sum(rate(http_requests_total[5m]))",
+				},
+			},
+		}
+
+		result, err := converter.PrometheusRulesToGrafana(1, "namespace", group)
+		require.NoError(t, err)
+		require.Len(t, result.Rules, 1)
+		require.Len(t, result.Rules[0].Data, 1)
+
+		// Should only have query node
+		require.Equal(t, "A", result.Rules[0].Data[0].RefID)
 	})
 }
