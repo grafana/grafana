@@ -12,7 +12,7 @@
             "target": "folder",
             "intervalSeconds": 60
         },
-        "readOnly": false,
+        "workflows": ["write"],
         "type": "local",
         "local": {
             "path": "devenv/dev-dashboards"

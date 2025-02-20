@@ -186,9 +186,8 @@ func (s *filesConnector) doRead(ctx context.Context, repo repository.Repository,
 }
 
 func (s *filesConnector) doWrite(ctx context.Context, update bool, repo repository.Repository, path string, ref string, message string, req *http.Request) (*provisioning.ResourceWrapper, error) {
-	if repo.Config().Spec.ReadOnly {
-		return nil, apierrors.NewForbidden(provisioning.RepositoryResourceInfo.GroupResource(),
-			"this repository is read only", nil)
+	if err := repository.IsWriteAllowed(repo.Config(), ref); err != nil {
+		return nil, err
 	}
 
 	defer func() { _ = req.Body.Close() }()
@@ -276,9 +275,8 @@ func (s *filesConnector) doWrite(ctx context.Context, update bool, repo reposito
 }
 
 func (s *filesConnector) doDelete(ctx context.Context, repo repository.Repository, path string, ref string, message string) (*provisioning.ResourceWrapper, error) {
-	if repo.Config().Spec.ReadOnly {
-		return nil, apierrors.NewForbidden(provisioning.RepositoryResourceInfo.GroupResource(),
-			"this repository is read only", nil)
+	if err := repository.IsWriteAllowed(repo.Config(), ref); err != nil {
+		return nil, err
 	}
 
 	err := repo.Delete(ctx, path, ref, message)

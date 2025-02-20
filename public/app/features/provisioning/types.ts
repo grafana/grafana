@@ -11,4 +11,4 @@ export interface ProvisioningPreview {
   ref?: string;
 }
 
-export type WorkflowOption = 'branch' | 'push';
+export type WorkflowOption = 'branch' | 'write';

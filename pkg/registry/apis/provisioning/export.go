@@ -12,6 +12,7 @@ import (
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 )
 
 type exportConnector struct {
@@ -52,11 +53,8 @@ func (c *exportConnector) Connect(
 		return nil, err
 	}
 	cfg := repo.Config()
-	if cfg.Spec.ReadOnly {
-		return nil, &apierrors.StatusError{ErrStatus: v1.Status{
-			Code:    http.StatusPreconditionFailed,
-			Message: "Repository is read only",
-		}}
+	if err := repository.IsWriteAllowed(cfg, ""); err != nil {
+		return nil, err
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
