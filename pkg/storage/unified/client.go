@@ -32,9 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 )
 
-const (
-	resourceStoreAudience = "resourceStore"
-)
+const resourceStoreAudience = "resourceStore"
 
 type Options struct {
 	Cfg      *setting.Cfg
@@ -46,7 +44,7 @@ type Options struct {
 	Docs     resource.DocumentBuilderSupplier
 }
 
-type ClientMetrics struct {
+type clientMetrics struct {
 	requestDuration *prometheus.HistogramVec
 }
 
@@ -166,7 +164,7 @@ func newResourceClient(conn *grpc.ClientConn, cfg *setting.Cfg, features feature
 func grpcConn(address string, reg prometheus.Registerer) (*grpc.ClientConn, error) {
 	// This works for now as the Provide function is only called once during startup.
 	// We might eventually want to tight this factory to a struct for more runtime control.
-	metrics := ClientMetrics{
+	metrics := clientMetrics{
 		requestDuration: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
 			Name:    "resource_server_client_request_duration_seconds",
 			Help:    "Time spent executing requests to the resource server.",
@@ -175,12 +173,13 @@ func grpcConn(address string, reg prometheus.Registerer) (*grpc.ClientConn, erro
 	}
 
 	// Report gRPC status code errors as labels.
-	var instrumentationOptions []middleware.InstrumentationOption
-	instrumentationOptions = append(instrumentationOptions, middleware.ReportGRPCStatusOption)
-	unary, stream := instrument(metrics.requestDuration, instrumentationOptions...)
+	unary, stream := instrument(metrics.requestDuration, middleware.ReportGRPCStatusOption)
 
-	// We can later pass in the gRPC config here, i.e. to set MaxRecvMsgSize etc.
-	cfg := grpcclient.Config{}
+	// Set the defaults that are normally set by Config.RegisterFlags to 100MiB.
+	cfg := grpcclient.Config{
+		MaxRecvMsgSize: 100 << 20,
+		MaxSendMsgSize: 100 << 20,
+	}
 	opts, err := cfg.DialOption(unary, stream)
 	if err != nil {
 		return nil, fmt.Errorf("could not instrument grpc client: %w", err)
