@@ -124,6 +124,7 @@ FROM ${JS_SRC} AS js-src
 FROM ${BASE_IMAGE}
 
 LABEL maintainer="Grafana Labs <hello@grafana.com>"
+LABEL org.opencontainers.image.source="https://github.com/grafana/grafana"
 
 ARG GF_UID="472"
 ARG GF_GID="0"

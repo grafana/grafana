@@ -117,7 +117,6 @@ export interface FeatureToggles {
   cloudWatchBatchQueries?: boolean;
   recoveryThreshold?: boolean;
   lokiStructuredMetadata?: boolean;
-  teamHttpHeaders?: boolean;
   cachingOptimizeSerializationMemoryUsage?: boolean;
   prometheusPromQAIL?: boolean;
   prometheusCodeModeMetricNamesSearch?: boolean;
@@ -210,6 +209,7 @@ export interface FeatureToggles {
   unifiedStorageSearch?: boolean;
   unifiedStorageSearchSprinkles?: boolean;
   unifiedStorageSearchPermissionFiltering?: boolean;
+  managedDualWriter?: boolean;
   pluginsSriChecks?: boolean;
   unifiedStorageBigObjectsSupport?: boolean;
   timeRangeProvider?: boolean;
