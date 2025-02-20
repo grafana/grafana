@@ -19,6 +19,7 @@ func Provision(ctx context.Context, configDirectory string, pluginStore pluginst
 		cfgProvider:    newConfigReader(logger, pluginStore),
 		pluginSettings: pluginSettings,
 		orgService:     orgService,
+		pluginStore:    pluginStore,
 	}
 	return ap.applyChanges(ctx, configDirectory)
 }
@@ -30,6 +31,7 @@ type PluginProvisioner struct {
 	cfgProvider    configReader
 	pluginSettings pluginsettings.Service
 	orgService     org.Service
+	pluginStore    pluginstore.Store
 }
 
 func (ap *PluginProvisioner) apply(ctx context.Context, cfg *pluginsAsConfig) error {
@@ -43,6 +45,14 @@ func (ap *PluginProvisioner) apply(ctx context.Context, cfg *pluginsAsConfig) er
 			app.OrgID = res.ID
 		} else if app.OrgID < 0 {
 			app.OrgID = 1
+		}
+
+		p, found := ap.pluginStore.Plugin(ctx, app.PluginID)
+		if !found {
+			return errors.New("plugin not found")
+		}
+		if p.AutoEnabled && !app.Enabled {
+			return errors.New("plugin is auto enabled and cannot be disabled")
 		}
 
 		ps, err := ap.pluginSettings.GetPluginSettingByPluginID(ctx, &pluginsettings.GetByPluginIDArgs{

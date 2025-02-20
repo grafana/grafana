@@ -254,6 +254,29 @@ describe('Stats Calculators', () => {
     expect(reduce(someNulls, ReducerID.count)).toEqual(4);
   });
 
+  it('median should ignoreNulls by default', () => {
+    const someNulls = createField('y', [3, null, 2, 1, 4]);
+    expect(reduce(someNulls, ReducerID.median)).toEqual(2.5);
+  });
+
+  it('median should use fieldConfig nullValueMode.Ignore and not count nulls', () => {
+    const someNulls = createField('y', [3, null, 2, 1, 4]);
+    someNulls.config.nullValueMode = NullValueMode.Ignore;
+    expect(reduce(someNulls, ReducerID.median)).toEqual(2.5);
+  });
+
+  it('median should use fieldConfig nullValueMode.Null and count nulls', () => {
+    const someNulls = createField('y', [3, null, 2, 1, 4]);
+    someNulls.config.nullValueMode = NullValueMode.Null;
+    expect(reduce(someNulls, ReducerID.median)).toEqual(2);
+  });
+
+  it('median should use fieldConfig nullValueMode.AsZero and count nulls as zero', () => {
+    const someNulls = createField('y', [3, null, 2, 1, 4]);
+    someNulls.config.nullValueMode = NullValueMode.AsZero;
+    expect(reduce(someNulls, ReducerID.median)).toEqual(2);
+  });
+
   it('can reduce to percentiles', () => {
     // This `Array.from` will build an array of elements from 1 to 99
     const percentiles = [...Array.from({ length: 99 }, (_, i) => i + 1)];

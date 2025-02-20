@@ -111,6 +111,12 @@ The name of the alert is {{ .Labels.alertname }}
 {{ end }}
 ```
 
+You can then use the template by passing the [notification data (dot `.`)](ref:reference-notification-data):
+
+```go
+{{ template "custom_message" . }}
+```
+
 ```template_output
 The name of the alert is InstanceDown
 
@@ -140,7 +146,11 @@ In this example:
 - A template (`alert.summary_and_description`) is defined to print the `summary`, `status`, and `description` of one [alert](ref:reference-alert).
 - The main template `custom.alerts` iterates the list of alerts (`.Alerts`) in [notification data](ref:reference-notification-data), executing the `alert.summary_and_description` template to print the details of each alert.
 
-The notification message would look like this:
+Execute the template by passing the dot (`.`):
+
+```go
+{{ template "custom.alerts" . }}
+```
 
 ```template_output
 2 alert(s)
@@ -178,7 +188,11 @@ The following example is similar to the previous one, but it separates firing an
 
 Instead of `.Alerts`, the template accesses `.Alerts.Firing` and `.Alerts.Resolved` separately to print details for each alert.
 
-The output might now look like this:
+Run the template by passing the dot (`.`):
+
+```go
+{{ template "custom.firing_and_resolved_alerts" . }}
+```
 
 ```template_output
 1 resolved alert(s)
@@ -214,6 +228,12 @@ Common annotations: {{ len .CommonAnnotations.SortedPairs }}
 ```
 
 Note that `.CommonAnnotations` and `.CommonLabels` are part of [notification data](ref:reference-notification-data).
+
+Execute the template by passing the dot (`.`) as argument:
+
+```go
+{{ template "custom.common_labels_and_annotations" . }}
+```
 
 ```template_output
 1 resolved alert(s)
@@ -256,6 +276,12 @@ In this example:
 
 - The `custom.alert_labels_and_annotations` template iterates over the list of resolved and firing alerts, similar to previous examples. It then executes `alert.labels_and_annotations` for each alert.
 - The `alert.labels_and_annotations` template prints all the alert labels and annotations by accessing `.Labels.SortedPairs` and `.Annotations.SortedPairs`.
+
+Run the template by passing the dot (`.`):
+
+```go
+{{ template "custom.alert_labels_and_annotations" . }}
+```
 
 ```template_output
 1 resolved alert(s)
@@ -307,7 +333,11 @@ Note that the following example works only for Grafana-managed alerts. It displa
 {{ end -}}
 ```
 
-The output of this template looks like this:
+Pass the dot (`.`) to execute the template:
+
+```go
+{{ template "custom.alert_additional_details" . }}
+```
 
 ```template_output
 1 resolved alert(s)
@@ -339,6 +369,12 @@ Here’s a basic example that displays the number of firing and resolved alerts 
 {{ end -}}
 ```
 
+Execute the template by passing the dot (`.`) as argument:
+
+```go
+{{ template "custom_title" . }}
+```
+
 ```template_output
 🚨 1 firing alerts. ✅ 1 resolved alerts.
 ```
@@ -356,6 +392,12 @@ This is a more advanced example:
 - Prints the number of firing and resolved alerts in the notification.
 - Outputs `.GroupLabels`, the labels used to [group multiple alerts in one notification](ref:group-alert-notifications).
 - Prints `CommonLabels`, excluding labels in `.GroupLabels`.
+
+Execute the template by passing the dot (`.`):
+
+```go
+{{ template "copy_of_default_title" . }}
+```
 
 ```template_output
 [FIRING:1, RESOLVED:1] api warning (sql_db)

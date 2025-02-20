@@ -1,6 +1,6 @@
 import { Property } from 'csstype';
 
-import { Field, GrafanaTheme2, TimeRange } from '@grafana/data';
+import { ActionModel, Field, GrafanaTheme2, TimeRange } from '@grafana/data';
 import { TableCellOptions } from '@grafana/schema';
 
 export interface CellNGProps {
@@ -20,13 +20,18 @@ export interface RowExpanderNGProps {
 
 export interface BarGaugeCellProps extends CellNGProps {
   height: number;
-  width: number;
+  theme: GrafanaTheme2;
   timeRange: TimeRange;
+  width: number;
 }
 
 export interface ImageCellProps extends CellNGProps {
   cellOptions: TableCellOptions;
   height: number;
+}
+
+export interface ActionCellProps {
+  actions?: ActionModel[];
 }
 
 export interface SparklineCellProps extends BarGaugeCellProps {}

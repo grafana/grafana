@@ -35,7 +35,7 @@ import {
 } from 'app/features/alerting/unified/utils/redux';
 import { flattenCombinedRules, getFirstActiveAt } from 'app/features/alerting/unified/utils/rules';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { DashboardModel } from 'app/features/dashboard/state';
+import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { Matcher } from 'app/plugins/datasource/alertmanager/types';
 import { ThunkDispatch, useDispatch } from 'app/types';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
@@ -323,7 +323,7 @@ function filterRules(props: PanelProps<UnifiedAlertListOptions>, rules: Combined
     );
   }
 
-  // Remove rules having 0 instances
+  // Remove rules having 0 instances unless explicitly configured
   // AlertInstances filters instances and we need to prevent situation
   // when we display a rule with 0 instances
   filteredRules = filteredRules.reduce<CombinedRuleWithLocation[]>((rules, rule) => {
@@ -337,7 +337,12 @@ function filterRules(props: PanelProps<UnifiedAlertListOptions>, rules: Combined
           alertingRule.alerts ?? []
         )
       : [];
-    if (filteredAlerts.length) {
+    if (
+      filteredAlerts.length ||
+      (alertingRule?.state === PromAlertingRuleState.Inactive &&
+        options.showInactiveAlerts &&
+        !options.alertInstanceLabelFilter.length)
+    ) {
       // We intentionally don't set alerts to filteredAlerts
       // because later we couldn't display that some alerts are hidden (ref AlertInstances filtering)
       rules.push(rule);

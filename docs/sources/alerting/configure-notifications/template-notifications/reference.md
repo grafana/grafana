@@ -17,6 +17,11 @@ title: Notification template reference
 menuTitle: Template reference
 weight: 102
 refs:
+  label-types:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/annotation-label/#label-types
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/annotation-label/#label-types
   alert-rule-template-reference:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/reference/
@@ -81,6 +86,12 @@ Here's an example that prints all available notification data from dot (`.`):
 {{ end }}
 ```
 
+You can execute this template by passing the dot (`.`):
+
+```go
+{{ template "custom_template" . }}
+```
+
 ## Alert
 
 `Alert` contains data for an individual alert:
@@ -88,7 +99,7 @@ Here's an example that prints all available notification data from dot (`.`):
 | Name           | Type          | Description                                                                                                                                    |
 | -------------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
 | `Status`       | string        | Firing or resolved.                                                                                                                            |
-| `Labels`       | [KV](#kv)     | The labels for this alert.                                                                                                                     |
+| `Labels`       | [KV](#kv)     | The labels for this alert. It includes all [types of labels](ref:label-types).                                                                 |
 | `Annotations`  | [KV](#kv)     | The annotations for this alert.                                                                                                                |
 | `StartsAt`     | [Time](#time) | The time the alert fired                                                                                                                       |
 | `EndsAt`       | [Time](#time) | Only set if the end time of an alert is known. Otherwise set to a configurable timeout period from the time since the last alert was received. |
@@ -126,6 +137,12 @@ This example iterates over the list of firing and resolved alerts (`.Alerts`) in
   {{ .ValueString }}
 {{ end }}
 {{ end }}
+```
+
+You can run this template by passing the dot (`.`):
+
+```go
+{{ template "custom_template" . }}
 ```
 
 ## KV

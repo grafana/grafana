@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { PanelPluginMeta, PluginMetaInfo, PluginType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Panel } from '@grafana/schema';
-import { getGrafanaSearcher } from 'app/features/search/service';
+import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 
 import { backendSrv } from '../../../../core/services/backend_srv';
 import * as panelUtils from '../../../panel/state/util';

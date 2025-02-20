@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
 import { AnyAction } from '@reduxjs/toolkit';
+import { uniqueId } from 'lodash';
 import * as React from 'react';
 import { FormEvent, useEffect, useReducer } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
-import { InlineField, InlineFieldRow, InlineSwitch, Input, Select, useStyles2 } from '@grafana/ui';
+import { InlineField, InlineFieldRow, InlineSwitch, Input, Select, useStyles2, Stack } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { EvalFunction } from 'app/features/alerting/state/alertDef';
 
@@ -85,11 +85,13 @@ export const Threshold = ({ labelWidth, onChange, refIds, query, onError, useHys
 
   const hysteresisEnabled = Boolean(config.featureToggles?.recoveryThreshold) && useHysteresis;
 
+  const id = uniqueId('threshold-');
+
   return (
     <>
       <InlineFieldRow>
-        <InlineField label="Input" labelWidth={labelWidth}>
-          <Select onChange={onRefIdChange} options={refIds} value={query.expression} width={20} />
+        <InlineField label="Input" labelWidth={labelWidth} htmlFor={id}>
+          <Select inputId={id} onChange={onRefIdChange} options={refIds} value={query.expression} width={20} />
         </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>
@@ -142,10 +144,10 @@ export const Threshold = ({ labelWidth, onChange, refIds, query, onError, useHys
 
     return (
       <div className={styles.hysteresis}>
-        {/* This is to enhance the user experience for mouse users. 
-        The onBlur event in RecoveryThresholdRow inputs triggers validations, 
-        but we want to skip them when the switch is clicked as this click should inmount this component. 
-        To achieve this, we use the onMouseDown event to set a flag, which is later utilized in the onBlur event to bypass validations. 
+        {/* This is to enhance the user experience for mouse users.
+        The onBlur event in RecoveryThresholdRow inputs triggers validations,
+        but we want to skip them when the switch is clicked as this click should inmount this component.
+        To achieve this, we use the onMouseDown event to set a flag, which is later utilized in the onBlur event to bypass validations.
         The onMouseDown event precedes the onBlur event, unlike onchange. */}
 
         {/*Disabling the a11y rules here as the InlineSwitch handles keyboard interactions */}
@@ -201,7 +203,7 @@ function RecoveryThresholdRow({ isRange, condition, onError, dispatch, allowOnbl
     return <RecoveryForSingleValue allowOnblur={allowOnblur} />;
   }
 
-  /* We prioritize the onMouseDown event over the onBlur event. This is because the onBlur event is executed before the onChange event that we have 
+  /* We prioritize the onMouseDown event over the onBlur event. This is because the onBlur event is executed before the onChange event that we have
    in the hysteresis checkbox, and because of that, we were validating when unchecking the switch.
   We need to uncheck the switch before the onBlur event is executed.*/
   interface RecoveryProps {

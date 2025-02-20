@@ -1,23 +1,25 @@
 import { css } from '@emotion/css';
 import pluralize from 'pluralize';
-import { ReactNode } from 'react';
+import { ReactNode, useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Alert, Icon, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
+import { Alert, Icon, Stack, Text, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
-import { Rule, RuleGroupIdentifier, RuleHealth } from 'app/types/unified-alerting';
-import { Labels, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
+import { Rule, RuleGroupIdentifierV2, RuleHealth, RulesSourceIdentifier } from 'app/types/unified-alerting';
+import { Labels, PromAlertingRuleState, RulesSourceApplication } from 'app/types/unified-alerting-dto';
 
 import { logError } from '../../Analytics';
 import { MetaText } from '../../components/MetaText';
 import { ProvisioningBadge } from '../../components/Provisioning';
 import { PluginOriginBadge } from '../../plugins/PluginOriginBadge';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+import { getGroupOriginName } from '../../utils/groupIdentifier';
 import { labelsSize } from '../../utils/labels';
 import { createContactPointSearchLink } from '../../utils/misc';
 import { RulePluginOrigin } from '../../utils/rules';
 
 import { ListItem } from './ListItem';
+import { DataSourceIcon } from './Namespace';
 import { RuleListIcon } from './RuleListIcon';
 import { calculateNextEvaluationEstimate } from './util';
 
@@ -36,6 +38,8 @@ interface AlertRuleListItemProps {
   instancesCount?: number;
   namespace?: string;
   group?: string;
+  rulesSource?: RulesSourceIdentifier;
+  application?: RulesSourceApplication;
   // used for alert rules that use simplified routing
   contactPoint?: string;
   actions?: ReactNode;
@@ -57,6 +61,8 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
     instancesCount = 0,
     namespace,
     group,
+    rulesSource,
+    application,
     contactPoint,
     labels,
     origin,
@@ -67,7 +73,7 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
   if (namespace && group) {
     metadata.push(
       <Text color="secondary" variant="bodySmall">
-        <RuleLocation namespace={namespace} group={group} />
+        <RuleLocation namespace={namespace} group={group} rulesSource={rulesSource} application={application} />
       </Text>
     );
   }
@@ -142,13 +148,27 @@ type RecordingRuleListItemProps = Omit<AlertRuleListItemProps, 'summary' | 'stat
 
 export function RecordingRuleListItem({
   name,
+  namespace,
+  group,
+  rulesSource,
+  application,
   href,
   health,
   isProvisioned,
   error,
   isPaused,
   origin,
+  actions,
 }: RecordingRuleListItemProps) {
+  const metadata: ReactNode[] = [];
+  if (namespace && group) {
+    metadata.push(
+      <Text color="secondary" variant="bodySmall">
+        <RuleLocation namespace={namespace} group={group} rulesSource={rulesSource} application={application} />
+      </Text>
+    );
+  }
+
   return (
     <ListItem
       title={
@@ -165,8 +185,8 @@ export function RecordingRuleListItem({
       }
       description={<Summary error={error} />}
       icon={<RuleListIcon recording={true} health={health} isPaused={isPaused} />}
-      actions={null}
-      meta={[]}
+      actions={actions}
+      meta={metadata}
     />
   );
 }
@@ -236,14 +256,22 @@ function EvaluationMetadata({ lastEvaluation, evaluationInterval, state }: Evalu
 
 interface UnknownRuleListItemProps {
   rule: Rule;
-  groupIdentifier: RuleGroupIdentifier;
+  groupIdentifier: RuleGroupIdentifierV2;
 }
 
 export const UnknownRuleListItem = ({ rule, groupIdentifier }: UnknownRuleListItemProps) => {
   const styles = useStyles2(getStyles);
 
-  const ruleContext = { ...groupIdentifier, name: rule.name };
-  logError(new Error('unknown rule type'), ruleContext);
+  useEffect(() => {
+    const { namespace, groupName } = groupIdentifier;
+    const ruleContext = {
+      name: rule.name,
+      groupName,
+      namespace: JSON.stringify(namespace),
+      rulesSource: getGroupOriginName(groupIdentifier),
+    };
+    logError(new Error('unknown rule type'), ruleContext);
+  }, [rule, groupIdentifier]);
 
   return (
     <Alert title={'Unknown rule type'} className={styles.resetMargin}>
@@ -262,18 +290,34 @@ export const UnknownRuleListItem = ({ rule, groupIdentifier }: UnknownRuleListIt
 interface RuleLocationProps {
   namespace: string;
   group: string;
+  rulesSource?: RulesSourceIdentifier;
+  application?: RulesSourceApplication;
 }
 
-export const RuleLocation = ({ namespace, group }: RuleLocationProps) => (
-  <Stack direction="row" alignItems="center" gap={0.5}>
-    <Icon size="xs" name="folder" />
-    <Stack direction="row" alignItems="center" gap={0}>
-      {namespace}
-      <Icon size="sm" name="angle-right" />
-      {group}
+// @TODO make the datasource / namespace / group click-able to allow further filtering of the list
+export const RuleLocation = ({ namespace, group, rulesSource, application }: RuleLocationProps) => {
+  const isGrafanaApp = application === 'grafana';
+  const isDataSourceApp = !!rulesSource && !!application && !isGrafanaApp;
+
+  return (
+    <Stack direction="row" alignItems="center" gap={0.5}>
+      {isGrafanaApp && <Icon size="xs" name="folder" />}
+      {isDataSourceApp && (
+        <Tooltip content={rulesSource.name}>
+          <span>
+            <DataSourceIcon application={application} size={14} />
+          </span>
+        </Tooltip>
+      )}
+
+      <Stack direction="row" alignItems="center" gap={0}>
+        {namespace}
+        <Icon size="sm" name="angle-right" />
+        {group}
+      </Stack>
     </Stack>
-  </Stack>
-);
+  );
+};
 
 const getStyles = (theme: GrafanaTheme2) => ({
   alertListItemContainer: css({

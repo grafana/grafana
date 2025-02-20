@@ -9,7 +9,7 @@ import { stylesFactory, Themeable2, withTheme2 } from '@grafana/ui';
 
 import { StoreState } from '../../../../types';
 import { getSubMenuVariables, getVariablesState } from '../../../variables/state/selectors';
-import { DashboardModel } from '../../state';
+import { DashboardModel } from '../../state/DashboardModel';
 
 import { Annotations } from './Annotations';
 import { DashboardLinks } from './DashboardLinks';

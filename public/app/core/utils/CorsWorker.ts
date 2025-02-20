@@ -7,9 +7,7 @@ export class CorsWorker extends window.Worker {
     //    resulting public path: http://host.com/cdn/scripts
 
     const scriptUrl = url.toString();
-    const urlParts = scriptUrl.split('/');
-    urlParts.pop();
-    const scriptsBasePathUrl = `${urlParts.join('/')}/`;
+    const scriptsBasePathUrl = new URL('.', url).toString();
 
     const importScripts = `importScripts('${scriptUrl}');`;
     const objectURL = URL.createObjectURL(

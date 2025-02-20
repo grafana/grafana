@@ -4,7 +4,7 @@ import { useAsyncFn, useInterval } from 'react-use';
 
 import { urlUtil } from '@grafana/data';
 import { logInfo } from '@grafana/runtime';
-import { Button, LinkButton, Stack, withErrorBoundary } from '@grafana/ui';
+import { Button, LinkButton, Stack } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { Trans } from 'app/core/internationalization';
 import { useDispatch } from 'app/types';
@@ -26,7 +26,7 @@ import { useFilteredRules, useRulesFilter } from '../hooks/useFilteredRules';
 import { useUnifiedAlertingSelector } from '../hooks/useUnifiedAlertingSelector';
 import { fetchAllPromAndRulerRulesAction, fetchAllPromRulesAction, fetchRulerRulesAction } from '../state/actions';
 import { RULE_LIST_POLL_INTERVAL_MS } from '../utils/constants';
-import { getAllRulesSourceNames, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME, getAllRulesSourceNames } from '../utils/datasource';
 import { createRelativeUrl } from '../utils/url';
 
 const VIEWS = {
@@ -155,7 +155,7 @@ const RuleListV1 = () => {
   );
 };
 
-export default withErrorBoundary(RuleListV1, { style: 'page' });
+export default RuleListV1;
 
 export function CreateAlertButton() {
   const [createRuleSupported, createRuleAllowed] = useAlertingAbility(AlertingAction.CreateAlertRule);
