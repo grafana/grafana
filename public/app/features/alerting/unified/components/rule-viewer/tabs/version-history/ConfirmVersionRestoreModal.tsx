@@ -14,11 +14,15 @@ import { GrafanaRuleDefinition, RulerGrafanaRuleDTO } from 'app/types/unified-al
 
 import { preprocessRuleForDiffDisplay, useRestoreVersion } from './versions-utils';
 
+export type Origin = 'version-list' | 'comparison-drawer';
+
 type ModalProps = Pick<ComponentProps<typeof ConfirmModal>, 'isOpen' | 'onDismiss'> & {
   isOpen: boolean;
   baseVersion?: RulerGrafanaRuleDTO<GrafanaRuleDefinition>;
   versionToRestore?: RulerGrafanaRuleDTO<GrafanaRuleDefinition>;
   ruleIdentifier: GrafanaRuleIdentifier;
+  onRestoreSucess: () => void;
+  onRestoreError: (error: Error) => void;
 };
 
 export const ConfirmVersionRestoreModal = ({
@@ -27,6 +31,8 @@ export const ConfirmVersionRestoreModal = ({
   versionToRestore,
   ruleIdentifier,
   onDismiss,
+  onRestoreSucess,
+  onRestoreError,
 }: ModalProps) => {
   const { result: ruleWithLocation } = useRuleWithLocation({ ruleIdentifier });
   const navigate = useNavigate();
@@ -52,9 +58,11 @@ export const ConfirmVersionRestoreModal = ({
     return restoreMethod(versionToRestore, ruleWithLocation)
       .then(() => {
         onDismiss();
+        onRestoreSucess();
       })
       .catch((err) => {
         setRestoreError(err);
+        onRestoreError(err);
       });
   }
 

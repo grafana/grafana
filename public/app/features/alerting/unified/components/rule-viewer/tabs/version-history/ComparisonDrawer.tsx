@@ -16,6 +16,8 @@ interface ComparisonDrawerProps {
   ruleIdentifier: GrafanaRuleIdentifier;
   isNewLatest: boolean;
   setShowDrawer: (show: boolean) => void;
+  onRestoreSuccess: () => void;
+  onRestoreError: (error: Error) => void;
 }
 
 /**
@@ -55,6 +57,8 @@ export const ComparisonDrawer = ({
   ruleIdentifier,
   isNewLatest,
   setShowDrawer,
+  onRestoreSuccess,
+  onRestoreError,
 }: ComparisonDrawerProps) => {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const onDismiss = useCallback(() => setShowDrawer(false), [setShowDrawer]);
@@ -99,6 +103,8 @@ export const ComparisonDrawer = ({
           versionToRestore={oldVersion}
           isOpen={showConfirmModal}
           onDismiss={onDismiss}
+          onRestoreSucess={onRestoreSuccess}
+          onRestoreError={onRestoreError}
         />
       )}
     </>

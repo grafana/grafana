@@ -14,17 +14,22 @@ import { UpdatedByUser } from './UpdatedBy';
 
 const VERSIONS_PAGE_SIZE = 20;
 
+export interface VersionHistoryTableProps {
+  onVersionsChecked(id: string): void;
+  ruleVersions: Array<RulerGrafanaRuleDTO<GrafanaRuleDefinition>>;
+  disableSelection: boolean;
+  checkedVersions: Set<string>;
+  onRestoreSuccess: () => void;
+  onRestoreError: (error: Error) => void;
+}
 export function VersionHistoryTable({
   onVersionsChecked,
   ruleVersions,
   disableSelection,
   checkedVersions,
-}: {
-  onVersionsChecked(id: string): void;
-  ruleVersions: Array<RulerGrafanaRuleDTO<GrafanaRuleDefinition>>;
-  disableSelection: boolean;
-  checkedVersions: Set<string>;
-}) {
+  onRestoreSuccess,
+  onRestoreError,
+}: VersionHistoryTableProps) {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [ruleToRestore, setRuleToRestore] = useState<RulerGrafanaRuleDTO<GrafanaRuleDefinition>>();
   const ruleToRestoreUid = ruleToRestore?.grafana_alert?.uid ?? '';
@@ -152,6 +157,8 @@ export function VersionHistoryTable({
         versionToRestore={ruleToRestore}
         isOpen={showConfirmModal}
         onDismiss={hideConfirmation}
+        onRestoreSucess={onRestoreSuccess}
+        onRestoreError={onRestoreError}
       />
     </>
   );
