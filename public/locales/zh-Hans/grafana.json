@@ -2526,6 +2526,8 @@
     "history-wrapper": {
       "collapse": "",
       "expand": "",
+      "icon-selected": "",
+      "icon-unselected": "",
       "show-more": "",
       "today": "",
       "yesterday": ""

@@ -4,11 +4,11 @@ import { AnnoKeyFolder } from 'app/features/apiserver/types';
 import { DashboardDataDTO } from 'app/types';
 
 import { DashboardWithAccessInfo } from './types';
-import { K8sDashboardAPI } from './v0';
+import { K8sDashboardAPI } from './v1';
 
 const mockDashboardDto: DashboardWithAccessInfo<DashboardDataDTO> = {
   kind: 'DashboardWithAccessInfo',
-  apiVersion: 'v0alpha1',
+  apiVersion: 'v1alpha1',
 
   metadata: {
     name: 'dash-uid',
@@ -28,7 +28,7 @@ const mockDashboardDto: DashboardWithAccessInfo<DashboardDataDTO> = {
 
 const saveDashboardResponse = {
   kind: 'Dashboard',
-  apiVersion: 'dashboard.grafana.app/v0alpha1',
+  apiVersion: 'dashboard.grafana.app/v1alpha1',
   metadata: {
     name: 'adh59cn',
     namespace: 'default',
@@ -106,7 +106,7 @@ jest.mock('app/features/live/dashboard/dashboardWatcher', () => ({
   ignoreNextSave: jest.fn(),
 }));
 
-describe('v0 dashboard API', () => {
+describe('v1 dashboard API', () => {
   it('should provide folder annotations', async () => {
     jest.spyOn(backendSrv, 'getFolderByUid').mockResolvedValue({
       id: 1,

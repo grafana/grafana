@@ -7,12 +7,12 @@ describe('getDashboardsApiVersion', () => {
     jest.resetModules();
   });
 
-  it('should return v0 when dashboardScene is disabled and kubernetesDashboards is enabled', () => {
+  it('should return v1 when dashboardScene is disabled and kubernetesDashboards is enabled', () => {
     config.featureToggles = {
       dashboardScene: false,
       kubernetesDashboards: true,
     };
-    expect(getDashboardsApiVersion()).toBe('v0');
+    expect(getDashboardsApiVersion()).toBe('v1');
   });
 
   it('should return legacy when dashboardScene is disabled and kubernetesDashboards is disabled', () => {
@@ -31,13 +31,13 @@ describe('getDashboardsApiVersion', () => {
     expect(getDashboardsApiVersion()).toBe('v2');
   });
 
-  it('should return v0 when dashboardScene is enabled, useV2DashboardsAPI is disabled, and kubernetesDashboards is enabled', () => {
+  it('should return v1 when dashboardScene is enabled, useV2DashboardsAPI is disabled, and kubernetesDashboards is enabled', () => {
     config.featureToggles = {
       dashboardScene: true,
       useV2DashboardsAPI: false,
       kubernetesDashboards: true,
     };
-    expect(getDashboardsApiVersion()).toBe('v0');
+    expect(getDashboardsApiVersion()).toBe('v1');
   });
 
   it('should return legacy when dashboardScene is enabled and both useV2DashboardsAPI and kubernetesDashboards are disabled', () => {
@@ -71,7 +71,7 @@ describe('getDashboardsApiVersion', () => {
         kubernetesDashboards: true,
       };
 
-      expect(getDashboardsApiVersion()).toBe('v0');
+      expect(getDashboardsApiVersion()).toBe('v1');
     });
   });
 });
