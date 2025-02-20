@@ -43,7 +43,7 @@ To access Grafana Metrics Drilldown as a standalone experience:
 
 The **History** button in the upper left corner tracks every step navigating through metric exploration.
 
-![show metrics explore overview](/media/metrics-explore/metrics-explore-overview.png)
+![show metrics explore overview](/media/metrics-explore/metrics-drilldown-overview.png)
 
 ### Metrics exploration
 
