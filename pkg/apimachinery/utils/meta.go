@@ -785,7 +785,7 @@ func (m *grafanaMetaAccessor) GetManagerProperties() (ManagerProperties, bool) {
 func (m *grafanaMetaAccessor) SetManagerProperties(v ManagerProperties) {
 	annot := m.obj.GetAnnotations()
 	if annot == nil {
-		annot = make(map[string]string, 3)
+		annot = make(map[string]string, 4)
 	}
 
 	annot[AnnoKeyManagerIdentity] = v.Identity
@@ -813,7 +813,7 @@ func (m *grafanaMetaAccessor) GetSourceProperties() (SourceProperties, bool) {
 	}
 
 	if hash, ok := annot[AnnoKeySourceHash]; ok && hash != "" {
-		res.Hash = hash
+		res.Checksum = hash
 		found = true
 	}
 
@@ -837,8 +837,8 @@ func (m *grafanaMetaAccessor) SetSourceProperties(v SourceProperties) {
 		annot[AnnoKeySourcePath] = v.Path
 	}
 
-	if v.Hash != "" {
-		annot[AnnoKeySourceHash] = v.Hash
+	if v.Checksum != "" {
+		annot[AnnoKeySourceHash] = v.Checksum
 	}
 
 	if !v.Timestamp.IsZero() {

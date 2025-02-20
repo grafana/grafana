@@ -57,9 +57,9 @@ type SourceProperties struct {
 	// Can be a file path, a URL, etc.
 	Path string
 
-	// The hash of the source of the resource.
+	// The checksum of the source of the resource.
 	// An example could be a git commit hash.
-	Hash string
+	Checksum string
 
 	// The timestamp of the source of the resource.
 	// An example could be the file modification time.
