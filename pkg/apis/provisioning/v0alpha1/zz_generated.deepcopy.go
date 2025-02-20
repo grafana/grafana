@@ -314,9 +314,13 @@ func (in *JobStatus) DeepCopyInto(out *JobStatus) {
 	}
 	if in.Summary != nil {
 		in, out := &in.Summary, &out.Summary
-		*out = make([]JobResourceSummary, len(*in))
+		*out = make([]*JobResourceSummary, len(*in))
 		for i := range *in {
-			(*in)[i].DeepCopyInto(&(*out)[i])
+			if (*in)[i] != nil {
+				in, out := &(*in)[i], &(*out)[i]
+				*out = new(JobResourceSummary)
+				(*in).DeepCopyInto(*out)
+			}
 		}
 	}
 	return
