@@ -130,6 +130,10 @@ export function calculateTimesWithin(cfg: TimeRegionConfig, tRange: TimeRange): 
     }
   }
 
+  if (cronExpr === '') {
+    return [];
+  }
+
   try {
     let tz = cfg.timezone === 'browser' ? undefined : cfg.timezone === 'utc' ? 'Etc/UTC' : cfg.timezone;
 
