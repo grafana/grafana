@@ -14,7 +14,7 @@ import (
 )
 
 func NewServer(cfg setting.ZanzanaServerSettings, openfga server.OpenFGAServer, logger log.Logger, tracer tracing.Tracer) (*server.Server, error) {
-	return server.NewServer(cfg, openfga, logger)
+	return server.NewServer(cfg, openfga, logger, tracer)
 }
 
 func NewHealthServer(target server.DiagnosticServer) *server.HealthServer {
