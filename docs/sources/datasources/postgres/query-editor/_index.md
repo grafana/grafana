@@ -60,8 +60,6 @@ refs:
 
 # PostgreSQL query editor
 
-<!-- vale Grafana.Spelling = NO -->
-
 Grafana query editors are unique for each data source.
 
 For general information on Grafana query editors, refer to [Query editors](ref:query-editor).
