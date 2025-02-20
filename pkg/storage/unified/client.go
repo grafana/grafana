@@ -209,7 +209,7 @@ func grpcConn(address string, reg prometheus.Registerer) (*grpc.ClientConn, erro
 
 func defaultUserUnaryClientInterceptor() grpc.UnaryClientInterceptor {
 	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
-		// If no valid orgID is set, just set the no-auth one.
+		// Set the default user as we know its never set.
 		ctx = user.InjectOrgID(ctx, defaultUser)
 		// Invoke the next interceptor in the chain.
 		err := invoker(ctx, method, req, reply, cc, opts...)
@@ -222,7 +222,7 @@ func defaultUserUnaryClientInterceptor() grpc.UnaryClientInterceptor {
 
 func defaultUserStreamClientInterceptor() grpc.StreamClientInterceptor {
 	return func(ctx context.Context, desc *grpc.StreamDesc, cc *grpc.ClientConn, method string, streamer grpc.Streamer, opts ...grpc.CallOption) (grpc.ClientStream, error) {
-		// If no valid orgID is set, just set the no-auth one.
+		// Set the default user as we know its never set.
 		ctx = user.InjectOrgID(ctx, defaultUser)
 		// Invoke the next interceptor in the chain.
 		clientStream, err := streamer(ctx, desc, cc, method, opts...)
