@@ -99,9 +99,9 @@ To create advanced queries, switch to **Code mode** by clicking **Code** in the 
 
 Select **Table** or **Time Series** as the format. Click the **{}** in the bottom right to format the query. Click the **downward caret** to expand the Code mode editor. **CTRL/CMD + Return** serves as a keyboard shortcut to execute the query.
 
-{{% admonition type="warning" %}}
+{{< admonition type="warning" >}}
 Changes made to a query in Code mode will not transfer to Builder mode and will be discarded. You will be prompted to copy your code to the clipboard to save any changes.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ## Macros
 
