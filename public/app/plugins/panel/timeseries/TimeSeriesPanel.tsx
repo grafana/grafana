@@ -18,7 +18,7 @@ import { getPrepareTimeseriesSuggestion } from './suggestions';
 import { getTimezones, prepareGraphableFields } from './utils';
 
 interface TimeSeriesPanelProps extends PanelProps<Options> {
-  customTooltip: React.ReactNode;
+  customTooltip?: React.ReactNode;
 }
 
 export const TimeSeriesPanel = ({
