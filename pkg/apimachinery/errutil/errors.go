@@ -114,7 +114,7 @@ func ValidationFailed(msgID string, opts ...BaseOpt) Base {
 // msgID should be structured as component.errorBrief, for example
 //
 //	sqleng.connectionError
-//	plugin.downstreamError
+//	plugin.requestFailureError
 func Internal(msgID string, opts ...BaseOpt) Base {
 	return NewBase(StatusInternal, msgID, opts...)
 }
