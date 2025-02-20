@@ -103,7 +103,7 @@ Following is a list of PostgreSQL configuration options:
 - **TLS/SSL Mode** - Determines whether or with what priority a secure SSL TCP/IP connection will be negotiated with the server. When **TLS/SSL Mode** is disabled, **TLS/SSL Method** and **TLS/SSL Auth Details** aren't visible options.
 - **TLS/SSL Method** - Determines how TLS/SSL certificates are configured.
   - **File system path** - This option allows you to configure certificates by specifying paths to existing certificates on the local file system where Grafana is running. Ensure this file is readable by the user executing the Grafana process.
-  - **Certificate content** - This option allows you to configure certificate by specifying their content. The content is stored and encrypted in Grafana's database. When connecting to the database, the certificates are saved as files in Grafana's configured data path on the local filesystem.
+  - **Certificate content** - This option allows you to configure certificate by specifying their content. The content is stored and encrypted in the Grafana database. When connecting to the database, the certificates are saved as files, on the local filesystem, in the Grafana data path.
 
 **TLS/SSL Auth Details**
 
