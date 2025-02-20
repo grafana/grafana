@@ -207,14 +207,14 @@ func TestIntegrationProvisioning(t *testing.T) {
 		cleanSlate(t)
 
 		helper.GetEnv().GitHubFactory.Client = ghmock.NewMockedHTTPClient(
-			ghmock.WithRequestMatch(ghmock.GetUser, gh.User{Name: gh.String("github-user")}),
+			ghmock.WithRequestMatch(ghmock.GetUser, gh.User{Name: gh.Ptr("github-user")}),
 			ghmock.WithRequestMatch(ghmock.GetReposHooksByOwnerByRepo, []*gh.Hook{}),
-			ghmock.WithRequestMatch(ghmock.PostReposHooksByOwnerByRepo, gh.Hook{ID: gh.Int64(123)}),
-			ghmock.WithRequestMatch(ghmock.GetReposByOwnerByRepo, gh.Repository{ID: gh.Int64(234)}),
+			ghmock.WithRequestMatch(ghmock.PostReposHooksByOwnerByRepo, gh.Hook{ID: gh.Ptr(int64(123))}),
+			ghmock.WithRequestMatch(ghmock.GetReposByOwnerByRepo, gh.Repository{ID: gh.Ptr(int64(234))}),
 			ghmock.WithRequestMatch(ghmock.GetReposBranchesByOwnerByRepoByBranch, gh.Branch{}),
 			ghmock.WithRequestMatch(ghmock.GetReposGitTreesByOwnerByRepoByTreeSha, gh.Tree{
-				SHA:       gh.String("deadbeef"),
-				Truncated: gh.Bool(false),
+				SHA:       gh.Ptr("deadbeef"),
+				Truncated: gh.Ptr(false),
 				Entries: []*gh.TreeEntry{
 					treeEntry("README.md", []byte("# Hello, World!")),
 					treeEntry("dashboard.json", helper.LoadFile("testdata/all-panels.json")),
