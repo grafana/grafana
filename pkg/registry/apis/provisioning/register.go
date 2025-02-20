@@ -490,6 +490,8 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.storageStatus,
 				b.unified,
 				b.secrets,
+				b.resourceLister,
+				c.ProvisioningV0alpha1(),
 				b.clonedir,
 			))
 			b.jobs.Register(export.NewExportWorker(

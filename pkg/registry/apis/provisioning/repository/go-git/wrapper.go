@@ -208,7 +208,10 @@ func (g *GoGitRepo) Push(ctx context.Context, progress io.Writer) error {
 			All: true, // Add everything that changed
 		})
 		if err != nil {
-			return err
+			// empty commit is fine -- no change
+			if !errors.Is(err, git.ErrEmptyCommit) {
+				return err
+			}
 		}
 	}
 
@@ -321,6 +324,9 @@ func (g *GoGitRepo) Write(ctx context.Context, fpath string, ref string, data []
 		}
 	}
 	_, err = g.tree.Commit(message, opts)
+	if errors.Is(err, git.ErrEmptyCommit) {
+		return nil // empty commit is fine -- no change
+	}
 	return err
 }
 

@@ -9,6 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/apis/dashboard"
 	dashboards "github.com/grafana/grafana/pkg/apis/dashboard"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
@@ -43,6 +44,13 @@ func (r *resourceReader) Write(ctx context.Context, key *resource.ResourceKey, v
 	if err != nil {
 		// TODO: should we fail the entire execution?
 		return fmt.Errorf("failed to unmarshal unstructured: %w", err)
+	}
+
+	// Special dashboard cleanup
+	if key.Group == dashboard.GROUP && key.Resource == dashboard.DASHBOARD_RESOURCE {
+		unstructured.RemoveNestedField(item.Object, "spec", "uid")
+		unstructured.RemoveNestedField(item.Object, "spec", "version")
+		unstructured.RemoveNestedField(item.Object, "spec", "id") // now managed as a label
 	}
 
 	if result := r.job.write(ctx, item); result.Error != nil {
