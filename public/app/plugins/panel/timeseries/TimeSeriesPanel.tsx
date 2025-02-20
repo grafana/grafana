@@ -1,15 +1,12 @@
-import { useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 
-import { PanelProps, DataFrameType, DashboardCursorSync, formattedValueToString } from '@grafana/data';
+import { PanelProps, DataFrameType, DashboardCursorSync } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { TooltipDisplayMode, VizOrientation } from '@grafana/schema';
 import { EventBusPlugin, KeyboardPlugin, TooltipPlugin2, usePanelContext } from '@grafana/ui';
-import { VizCustomizableFooterTooltip } from '@grafana/ui/src/components/VizTooltip/VizCustomizableFooterTooltip';
-import { VizCustomizableHeaderTooltip } from '@grafana/ui/src/components/VizTooltip/VizCustomizableHeaderTooltip';
 import { TimeRange2, TooltipHoverMode } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2';
 import { TimeSeries } from 'app/core/components/TimeSeries/TimeSeries';
 import { config } from 'app/core/config';
-import { TimeSeriesCustomizableTooltip } from 'app/plugins/panel/timeseries/TimeSeriesCustomizableTooltip';
 
 import { TimeSeriesTooltip } from './TimeSeriesTooltip';
 import { Options } from './panelcfg.gen';
@@ -21,7 +18,7 @@ import { getPrepareTimeseriesSuggestion } from './suggestions';
 import { getTimezones, prepareGraphableFields } from './utils';
 
 interface TimeSeriesPanelProps extends PanelProps<Options> {
-  isTooltipCustomizable?: boolean;
+  customTooltip: React.ReactNode;
 }
 
 export const TimeSeriesPanel = ({
@@ -35,7 +32,7 @@ export const TimeSeriesPanel = ({
   fieldConfig,
   onChangeTimeRange,
   replaceVariables,
-  isTooltipCustomizable = true,
+  customTooltip,
 }: TimeSeriesPanelProps) => {
   const {
     sync,
@@ -129,23 +126,8 @@ export const TimeSeriesPanel = ({
                     dismiss();
                   };
 
-                  // custom Header
-                  const xField = alignedFrame.fields[0];
-                  const xVal = formattedValueToString(xField.display!(xField.values[dataIdxs[0]!]));
-                  const headerValue = xField.config.custom?.hideFrom?.tooltip ? { value: '' } : { value: xVal };
-
-                  return isTooltipCustomizable ? (
-                    <TimeSeriesCustomizableTooltip
-                      series={alignedFrame}
-                      dataIdxs={dataIdxs}
-                      seriesIdx={seriesIdx}
-                      isPinned={isPinned}
-                      maxHeight={options.tooltip.maxHeight}
-                      replaceVariables={replaceVariables}
-                      dataLinks={dataLinks}
-                      customHeader={<VizCustomizableHeaderTooltip value={headerValue.value} />}
-                      customFooter={<VizCustomizableFooterTooltip dataLinks={dataLinks} />}
-                    />
+                  return customTooltip ? (
+                    customTooltip
                   ) : (
                     <TimeSeriesTooltip
                       series={alignedFrame}
