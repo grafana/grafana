@@ -2,7 +2,6 @@ import { of } from 'rxjs';
 
 import { DataQueryRequest, DataSourceApi, LoadingState, PanelPlugin } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
-import { setDataSourceSrv } from '@grafana/runtime';
 import {
   CancelActivationHandler,
   CustomVariable,
@@ -14,7 +13,8 @@ import {
   SceneVariableSet,
   VizPanel,
 } from '@grafana/scenes';
-import { mockDataSource, MockDataSourceSrv } from 'app/features/alerting/unified/mocks';
+import { mockDataSource } from 'app/features/alerting/unified/mocks';
+import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
 import * as libAPI from 'app/features/library-panels/state/api';
 
@@ -61,13 +61,16 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 const dataSources = {
-  ds1: mockDataSource({
-    uid: 'ds1',
-    type: DataSourceType.Prometheus,
-  }),
+  ds1: mockDataSource(
+    {
+      uid: 'ds1',
+      type: DataSourceType.Prometheus,
+    },
+    { module: 'core:plugin/prometheus' }
+  ),
 };
 
-setDataSourceSrv(new MockDataSourceSrv(dataSources));
+setupDataSources(...Object.values(dataSources));
 
 let deactivate: CancelActivationHandler | undefined;
 
