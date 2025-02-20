@@ -7,6 +7,7 @@ import { BarGauge } from '../../../BarGauge/BarGauge';
 import { DataLinksContextMenu, DataLinksContextMenuApi } from '../../../DataLinks/DataLinksContextMenu';
 import { getAlignmentFactor, getCellOptions } from '../../utils';
 import { BarGaugeCellProps } from '../types';
+import { extractPixelValue } from '../utils';
 
 const defaultScale: ThresholdsConfig = {
   mode: ThresholdsMode.Absolute,
@@ -25,6 +26,7 @@ const defaultScale: ThresholdsConfig = {
 export const BarGaugeCell = ({ value, field, theme, height, width, rowIdx }: BarGaugeCellProps) => {
   const displayValue = field.display!(value);
   const cellOptions = getCellOptions(field);
+  const heightOffset = extractPixelValue(theme.spacing(1));
 
   let config = getFieldConfigWithMinMax(field, false);
   if (!config.thresholds) {
@@ -63,7 +65,7 @@ export const BarGaugeCell = ({ value, field, theme, height, width, rowIdx }: Bar
     return (
       <BarGauge
         width={width}
-        height={height}
+        height={height - heightOffset}
         field={config}
         display={field.display}
         text={{ valueSize: 14 }}
