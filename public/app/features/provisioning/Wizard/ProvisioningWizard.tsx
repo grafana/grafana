@@ -8,7 +8,6 @@ import { getAppEvents } from '@grafana/runtime';
 import { Button, Stack, useStyles2 } from '@grafana/ui';
 
 import { getDefaultValues } from '../ConfigForm';
-import { RepositorySpec } from '../api';
 import { useCreateOrUpdateRepository } from '../hooks';
 import { dataToSpec } from '../utils/data';
 
@@ -32,12 +31,7 @@ const nextButtonText = {
   migrate: 'Finish',
 } as const;
 
-export interface WizardProps {
-  data?: RepositorySpec;
-  onSubmit: (data: RepositorySpec) => void;
-}
-
-export function ProvisioningWizard({ data, onSubmit }: WizardProps) {
+export function ProvisioningWizard() {
   const navigate = useNavigate();
   const [activeStep, setActiveStep] = useState<WizardStep>('connection');
   const [completedSteps, setCompletedSteps] = useState<WizardStep[]>([]);
@@ -45,7 +39,7 @@ export function ProvisioningWizard({ data, onSubmit }: WizardProps) {
   const [submitData, request] = useCreateOrUpdateRepository();
   const methods = useForm<WizardFormData>({
     defaultValues: {
-      repository: getDefaultValues(data),
+      repository: getDefaultValues(),
       migrate: {
         history: true,
         identifier: false,

@@ -8,15 +8,11 @@ export default function NewRepositoryPage() {
   return (
     <Page
       navId="provisioning"
-      pageNav={{ text: 'Configure repository', subTitle: 'Configure a repository for storing your resources.' }}
+      pageNav={{ text: 'Configure repository', subTitle: 'Migrate instance to provisioning.' }}
     >
       <Page.Contents>
         <SetupWarnings />
-        <ProvisioningWizard
-          onSubmit={(data: any) => {
-            console.log('d', data);
-          }}
-        />
+        <ProvisioningWizard />
       </Page.Contents>
     </Page>
   );
