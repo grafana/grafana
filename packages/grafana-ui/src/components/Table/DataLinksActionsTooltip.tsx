@@ -1,4 +1,4 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import {
   autoUpdate,
   flip,
@@ -56,29 +56,57 @@ export const DataLinksActionsTooltip = ({ links, actions, value, children }: Pro
   const click = useClick(context);
   const dismiss = useDismiss(context);
 
+  const onItemClick = () => {
+    if (hasMultipleLinksOrActions) {
+      setShow(true);
+    }
+  };
+
+  const hasMultipleLinksOrActions = links.length > 1 || Boolean(actions?.length);
+  const renderValue = value || children;
+
   const { getReferenceProps, getFloatingProps } = useInteractions([dismiss, click]);
 
-  return (
-    <>
-      <span ref={refs.setReference} {...getReferenceProps()} className={styles.cursor}>
-        {value ?? children}
-      </span>
-      {show && (
-        <Portal>
-          <div
-            ref={refs.setFloating}
-            style={floatingStyles}
-            {...getFloatingProps()}
-            className={cx(styles.tooltipWrapper, styles.pinned)}
-          >
-            <VizTooltipWrapper>
-              <VizTooltipFooter dataLinks={links} actions={actions} />
-            </VizTooltipWrapper>
-          </div>
-        </Portal>
-      )}
-    </>
-  );
+  if (links.length === 0 && !Boolean(actions?.length)) {
+    return null;
+  }
+
+  if (links.length === 1) {
+    const primaryLink = links[0];
+    return (
+      <a
+        href={primaryLink.href}
+        onClick={primaryLink.onClick}
+        target={primaryLink.target}
+        title={primaryLink.title}
+        className={styles.link}
+      >
+        {renderValue}
+      </a>
+    );
+  } else {
+    return (
+      <>
+        <span ref={refs.setReference} {...getReferenceProps()} className={styles.link} onClick={onItemClick}>
+          {renderValue}
+        </span>
+        {show && hasMultipleLinksOrActions && (
+          <Portal>
+            <div
+              ref={refs.setFloating}
+              style={floatingStyles}
+              {...getFloatingProps()}
+              className={styles.tooltipWrapper}
+            >
+              <VizTooltipWrapper>
+                <VizTooltipFooter dataLinks={links} actions={actions} />
+              </VizTooltipWrapper>
+            </div>
+          </Portal>
+        )}
+      </>
+    );
+  }
 };
 
 const getStyles = (theme: GrafanaTheme2) => {
@@ -92,16 +120,23 @@ const getStyles = (theme: GrafanaTheme2) => {
       position: 'fixed',
       background: theme.colors.background.primary,
       border: `1px solid ${theme.colors.border.weak}`,
-      boxShadow: theme.shadows.z2,
+      boxShadow: theme.shadows.z3,
       userSelect: 'text',
       padding: 0,
       fontSize: theme.typography.bodySmall.fontSize,
     }),
-    pinned: css({
-      boxShadow: theme.shadows.z3,
-    }),
-    cursor: css({
+    link: css({
       cursor: 'pointer',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      userSelect: 'text',
+      whiteSpace: 'nowrap',
+      fontWeight: theme.typography.fontWeightMedium,
+      paddingRight: theme.spacing(1.5),
+      color: `${theme.colors.text.link} !important`,
+      '&:hover': {
+        textDecoration: 'underline',
+      },
     }),
   };
 };
