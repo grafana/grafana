@@ -26,12 +26,12 @@ require (
 	go.opentelemetry.io/otel v1.34.0 // indirect; @grafana/grafana-backend-group
 	go.opentelemetry.io/otel/sdk v1.34.0 // indirect; @grafana/grafana-backend-group
 	go.opentelemetry.io/otel/trace v1.34.0 // indirect; @grafana/grafana-backend-group
-	golang.org/x/crypto v0.32.0 // indirect; @grafana/grafana-backend-group
-	golang.org/x/mod v0.22.0 // @grafana/grafana-backend-group
-	golang.org/x/net v0.34.0 // indirect; @grafana/oss-big-tent @grafana/partner-datasources
+	golang.org/x/crypto v0.33.0 // indirect; @grafana/grafana-backend-group
+	golang.org/x/mod v0.23.0 // @grafana/grafana-backend-group
+	golang.org/x/net v0.35.0 // indirect; @grafana/oss-big-tent @grafana/partner-datasources
 	golang.org/x/oauth2 v0.26.0 // @grafana/identity-access-team
 	golang.org/x/sync v0.11.0 // indirect; @grafana/alerting-backend
-	golang.org/x/text v0.21.0 // indirect; @grafana/grafana-backend-group
+	golang.org/x/text v0.22.0 // indirect; @grafana/grafana-backend-group
 	golang.org/x/time v0.9.0 // indirect; @grafana/grafana-backend-group
 	google.golang.org/api v0.216.0 // @grafana/grafana-backend-group
 	google.golang.org/grpc v1.70.0 // indirect; @grafana/plugins-platform-backend
@@ -48,7 +48,7 @@ require (
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/bmatcuk/doublestar v1.3.4 // indirect
 	github.com/buildkite/yaml v2.1.0+incompatible // indirect
-	github.com/cpuguy83/go-md2man/v2 v2.0.5 // indirect
+	github.com/cpuguy83/go-md2man/v2 v2.0.6 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/docker/go-connections v0.5.0 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
@@ -95,6 +95,7 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/moby/docker-image-spec v1.3.1 // indirect
 	github.com/moby/term v0.5.0 // indirect
+	github.com/rogpeppe/go-internal v1.13.2-0.20241226121412-a5dc8ff20d0a // indirect
 	github.com/sosodev/duration v1.2.0 // indirect
 	github.com/vektah/gqlparser/v2 v2.5.20 // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect

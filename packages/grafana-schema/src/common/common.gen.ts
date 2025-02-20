@@ -166,6 +166,22 @@ export const defaultMapLayerOptions = (): MapLayerOptions => ({
 	name: "",
 });
 
+export interface FrameGeometrySource {
+	mode: FrameGeometrySourceMode;
+	// Field mappings
+	geohash?: string;
+	latitude?: string;
+	longitude?: string;
+	wkt?: string;
+	lookup?: string;
+	// Path to Gazetteer
+	gazetteer?: string;
+}
+
+export const defaultFrameGeometrySource = (): FrameGeometrySource => ({
+	mode: FrameGeometrySourceMode.Auto,
+});
+
 export enum FrameGeometrySourceMode {
 	Auto = "auto",
 	Geohash = "geohash",
@@ -202,6 +218,27 @@ export interface HeatmapCalculationBucketConfig {
 
 export const defaultHeatmapCalculationBucketConfig = (): HeatmapCalculationBucketConfig => ({
 });
+
+// TODO docs
+export interface ScaleDistributionConfig {
+	type: ScaleDistribution;
+	log?: number;
+	linearThreshold?: number;
+}
+
+export const defaultScaleDistributionConfig = (): ScaleDistributionConfig => ({
+	type: ScaleDistribution.Linear,
+});
+
+// TODO docs
+export enum ScaleDistribution {
+	Linear = "linear",
+	Log = "log",
+	Ordinal = "ordinal",
+	Symlog = "symlog",
+}
+
+export const defaultScaleDistribution = (): ScaleDistribution => (ScaleDistribution.Linear);
 
 export enum LogsSortOrder {
 	Descending = "Descending",
@@ -265,16 +302,6 @@ export enum LineInterpolation {
 }
 
 export const defaultLineInterpolation = (): LineInterpolation => (LineInterpolation.Linear);
-
-// TODO docs
-export enum ScaleDistribution {
-	Linear = "linear",
-	Log = "log",
-	Ordinal = "ordinal",
-	Symlog = "symlog",
-}
-
-export const defaultScaleDistribution = (): ScaleDistribution => (ScaleDistribution.Linear);
 
 // TODO docs
 export enum GraphGradientMode {
@@ -375,17 +402,6 @@ export interface PointsConfig {
 }
 
 export const defaultPointsConfig = (): PointsConfig => ({
-});
-
-// TODO docs
-export interface ScaleDistributionConfig {
-	type: ScaleDistribution;
-	log?: number;
-	linearThreshold?: number;
-}
-
-export const defaultScaleDistributionConfig = (): ScaleDistributionConfig => ({
-	type: ScaleDistribution.Linear,
 });
 
 // TODO docs
@@ -512,6 +528,19 @@ export const defaultReduceDataOptions = (): ReduceDataOptions => ({
 });
 
 // TODO docs
+export interface VizTextDisplayOptions {
+	// Explicit title text size
+	titleSize?: number;
+	// Explicit value text size
+	valueSize?: number;
+	// Explicit percent text size
+	percentSize?: number;
+}
+
+export const defaultVizTextDisplayOptions = (): VizTextDisplayOptions => ({
+});
+
+// TODO docs
 export enum VizOrientation {
 	Auto = "auto",
 	Vertical = "vertical",
@@ -530,6 +559,38 @@ export const defaultOptionsWithTooltip = (): OptionsWithTooltip => ({
 });
 
 // TODO docs
+export interface VizTooltipOptions {
+	mode: TooltipDisplayMode;
+	sort: SortOrder;
+	maxWidth?: number;
+	maxHeight?: number;
+	hideZeros?: boolean;
+}
+
+export const defaultVizTooltipOptions = (): VizTooltipOptions => ({
+	mode: TooltipDisplayMode.Single,
+	sort: SortOrder.Ascending,
+});
+
+// TODO docs
+export enum TooltipDisplayMode {
+	Single = "single",
+	Multi = "multi",
+	None = "none",
+}
+
+export const defaultTooltipDisplayMode = (): TooltipDisplayMode => (TooltipDisplayMode.Single);
+
+// TODO docs
+export enum SortOrder {
+	Ascending = "asc",
+	Descending = "desc",
+	None = "none",
+}
+
+export const defaultSortOrder = (): SortOrder => (SortOrder.Ascending);
+
+// TODO docs
 export interface OptionsWithLegend {
 	legend: VizLegendOptions;
 }
@@ -539,12 +600,43 @@ export const defaultOptionsWithLegend = (): OptionsWithLegend => ({
 });
 
 // TODO docs
+export interface VizLegendOptions {
+	displayMode: LegendDisplayMode;
+	placement: LegendPlacement;
+	showLegend: boolean;
+	asTable?: boolean;
+	isVisible?: boolean;
+	sortBy?: string;
+	sortDesc?: boolean;
+	width?: number;
+	calcs: string[];
+}
+
+export const defaultVizLegendOptions = (): VizLegendOptions => ({
+	displayMode: LegendDisplayMode.List,
+	placement: LegendPlacement.Bottom,
+	showLegend: false,
+	calcs: [],
+});
+
+// TODO docs
 export interface OptionsWithTimezones {
 	timezone?: TimeZone[];
 }
 
 export const defaultOptionsWithTimezones = (): OptionsWithTimezones => ({
 });
+
+// A specific timezone from https://en.wikipedia.org/wiki/Tz_database
+export type TimeZone = "utc" | "browser" | string;
+
+export const defaultTimeZone = (): TimeZone => ("browser");
+
+// Use UTC/GMT timezone
+export type TimeZoneUtc = "utc";
+
+// Use the timezone defined by end user web browser
+export type TimeZoneBrowser = "browser";
 
 // TODO docs
 export interface OptionsWithTextFormatting {
@@ -622,37 +714,6 @@ export enum TimelineValueAlignment {
 export const defaultTimelineValueAlignment = (): TimelineValueAlignment => (TimelineValueAlignment.Center);
 
 // TODO docs
-export interface VizTextDisplayOptions {
-	// Explicit title text size
-	titleSize?: number;
-	// Explicit value text size
-	valueSize?: number;
-	// Explicit percent text size
-	percentSize?: number;
-}
-
-export const defaultVizTextDisplayOptions = (): VizTextDisplayOptions => ({
-});
-
-// TODO docs
-export enum TooltipDisplayMode {
-	Single = "single",
-	Multi = "multi",
-	None = "none",
-}
-
-export const defaultTooltipDisplayMode = (): TooltipDisplayMode => (TooltipDisplayMode.Single);
-
-// TODO docs
-export enum SortOrder {
-	Ascending = "asc",
-	Descending = "desc",
-	None = "none",
-}
-
-export const defaultSortOrder = (): SortOrder => (SortOrder.Ascending);
-
-// TODO docs
 export interface GraphFieldConfig {
 	drawStyle?: GraphDrawStyle;
 	gradientMode?: GraphGradientMode;
@@ -694,26 +755,6 @@ export interface GraphFieldConfig {
 export const defaultGraphFieldConfig = (): GraphFieldConfig => ({
 });
 
-// TODO docs
-export interface VizLegendOptions {
-	displayMode: LegendDisplayMode;
-	placement: LegendPlacement;
-	showLegend: boolean;
-	asTable?: boolean;
-	isVisible?: boolean;
-	sortBy?: string;
-	sortDesc?: boolean;
-	width?: number;
-	calcs: string[];
-}
-
-export const defaultVizLegendOptions = (): VizLegendOptions => ({
-	displayMode: LegendDisplayMode.List,
-	placement: LegendPlacement.Bottom,
-	showLegend: false,
-	calcs: [],
-});
-
 // Enum expressing the possible display modes
 // for the bar gauge component of Grafana UI
 export enum BarGaugeDisplayMode {
@@ -750,20 +791,6 @@ export enum BarGaugeSizing {
 }
 
 export const defaultBarGaugeSizing = (): BarGaugeSizing => (BarGaugeSizing.Auto);
-
-// TODO docs
-export interface VizTooltipOptions {
-	mode: TooltipDisplayMode;
-	sort: SortOrder;
-	maxWidth?: number;
-	maxHeight?: number;
-	hideZeros?: boolean;
-}
-
-export const defaultVizTooltipOptions = (): VizTooltipOptions => ({
-	mode: TooltipDisplayMode.Single,
-	sort: SortOrder.Ascending,
-});
 
 export type Labels = Record<string, string>;
 
@@ -831,76 +858,76 @@ export const defaultTableFooterOptions = (): TableFooterOptions => ({
 
 // Auto mode table cell options
 export interface TableAutoCellOptions {
-	type: "auto";
+	type: TableCellDisplayMode.Auto;
 	wrapText?: boolean;
 }
 
 export const defaultTableAutoCellOptions = (): TableAutoCellOptions => ({
-	type: "auto",
+	type: TableCellDisplayMode.Auto,
 });
 
 // Colored text cell options
 export interface TableColorTextCellOptions {
-	type: "color-text";
+	type: TableCellDisplayMode.ColorText;
 	wrapText?: boolean;
 }
 
 export const defaultTableColorTextCellOptions = (): TableColorTextCellOptions => ({
-	type: "color-text",
+	type: TableCellDisplayMode.ColorText,
 });
 
 // Json view cell options
 export interface TableJsonViewCellOptions {
-	type: "json-view";
+	type: TableCellDisplayMode.JSONView;
 }
 
 export const defaultTableJsonViewCellOptions = (): TableJsonViewCellOptions => ({
-	type: "json-view",
+	type: TableCellDisplayMode.JSONView,
 });
 
 // Json view cell options
 export interface TableImageCellOptions {
-	type: "image";
+	type: TableCellDisplayMode.Image;
 	alt?: string;
 	title?: string;
 }
 
 export const defaultTableImageCellOptions = (): TableImageCellOptions => ({
-	type: "image",
+	type: TableCellDisplayMode.Image,
 });
 
 // Show data links in the cell
 export interface TableDataLinksCellOptions {
-	type: "data-links";
+	type: TableCellDisplayMode.DataLinks;
 }
 
 export const defaultTableDataLinksCellOptions = (): TableDataLinksCellOptions => ({
-	type: "data-links",
+	type: TableCellDisplayMode.DataLinks,
 });
 
 // Show actions in the cell
 export interface TableActionsCellOptions {
-	type: "actions";
+	type: TableCellDisplayMode.Actions;
 }
 
 export const defaultTableActionsCellOptions = (): TableActionsCellOptions => ({
-	type: "actions",
+	type: TableCellDisplayMode.Actions,
 });
 
 // Gauge cell options
 export interface TableBarGaugeCellOptions {
-	type: "gauge";
+	type: TableCellDisplayMode.Gauge;
 	mode?: BarGaugeDisplayMode;
 	valueDisplayMode?: BarGaugeValueMode;
 }
 
 export const defaultTableBarGaugeCellOptions = (): TableBarGaugeCellOptions => ({
-	type: "gauge",
+	type: TableCellDisplayMode.Gauge,
 });
 
 // Sparkline cell options
 export interface TableSparklineCellOptions {
-	type: "sparkline";
+	type: TableCellDisplayMode.Sparkline;
 	drawStyle?: GraphDrawStyle;
 	gradientMode?: GraphGradientMode;
 	thresholdsStyle?: GraphThresholdsStyleConfig;
@@ -940,19 +967,19 @@ export interface TableSparklineCellOptions {
 }
 
 export const defaultTableSparklineCellOptions = (): TableSparklineCellOptions => ({
-	type: "sparkline",
+	type: TableCellDisplayMode.Sparkline,
 });
 
 // Colored background cell options
 export interface TableColoredBackgroundCellOptions {
-	type: "color-background";
+	type: TableCellDisplayMode.ColorBackground;
 	mode?: TableCellBackgroundDisplayMode;
 	applyToRow?: boolean;
 	wrapText?: boolean;
 }
 
 export const defaultTableColoredBackgroundCellOptions = (): TableColoredBackgroundCellOptions => ({
-	type: "color-background",
+	type: TableCellDisplayMode.ColorBackground,
 });
 
 // Height of a table cell
@@ -970,12 +997,6 @@ export const defaultTableCellHeight = (): TableCellHeight => (TableCellHeight.Sm
 export type TableCellOptions = TableAutoCellOptions | TableSparklineCellOptions | TableBarGaugeCellOptions | TableColoredBackgroundCellOptions | TableColorTextCellOptions | TableImageCellOptions | TableDataLinksCellOptions | TableActionsCellOptions | TableJsonViewCellOptions;
 
 export const defaultTableCellOptions = (): TableCellOptions => (defaultTableAutoCellOptions());
-
-// Use UTC/GMT timezone
-export type TimeZoneUtc = "utc";
-
-// Use the timezone defined by end user web browser
-export type TimeZoneBrowser = "browser";
 
 // Optional formats for the template variable replace functions
 // See also https://grafana.com/docs/grafana/latest/dashboards/variables/variable-syntax/#advanced-variable-format-options
@@ -1023,22 +1044,6 @@ export interface ResourceDimensionConfig {
 
 export const defaultResourceDimensionConfig = (): ResourceDimensionConfig => ({
 	mode: ResourceDimensionMode.Fixed,
-});
-
-export interface FrameGeometrySource {
-	mode: FrameGeometrySourceMode;
-	// Field mappings
-	geohash?: string;
-	latitude?: string;
-	longitude?: string;
-	wkt?: string;
-	lookup?: string;
-	// Path to Gazetteer
-	gazetteer?: string;
-}
-
-export const defaultFrameGeometrySource = (): FrameGeometrySource => ({
-	mode: FrameGeometrySourceMode.Auto,
 });
 
 export interface HeatmapCalculationOptions {
@@ -1094,9 +1099,4 @@ export const defaultTableFieldOptions = (): TableFieldOptions => ({
 	cellOptions: defaultTableCellOptions(),
 	inspect: false,
 });
-
-// A specific timezone from https://en.wikipedia.org/wiki/Tz_database
-export type TimeZone = "utc" | "browser" | string;
-
-export const defaultTimeZone = (): TimeZone => ("browser");
 
