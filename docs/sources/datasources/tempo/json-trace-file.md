@@ -12,9 +12,7 @@ labels:
     - oss
 menuTitle: Upload JSON trace file
 title: Upload a JSON trace file
-weight: 900
-aliases:
-  - ../json-trace-file/ # /docs/grafana/latest/datasources/tempo/json-trace-file
+weight: 400
 ---
 
 # Upload a JSON trace file
@@ -22,15 +20,7 @@ aliases:
 You can upload a JSON file that contains a single trace and visualize it.
 If the file has multiple traces, Grafana visualizes the first trace.
 
-To upload a trace file:
-
-1. Select **Explore** in Grafana.
-1. Select **Import trace** in the right corner.
-1. Upload your JSON trace file.
-
-## Download a trace or service graph
-
-To download a trace or Service Graph through the [Inspector panel](https://grafana.com/docs/grafana/<TEMPO_VERSION>/explore/explore-inspector/):
+**To download a trace or Service Graph through the inspector:**
 
 1. Open the inspector.
 1. Navigate to the **Data** tab.
