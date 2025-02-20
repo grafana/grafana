@@ -200,7 +200,6 @@ export const install = createAsyncThunk<
     changes.hasUpdate = true;
   }
 
-
   try {
     await installPlugin(id, version);
     await updatePanels();
