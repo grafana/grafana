@@ -57,7 +57,9 @@ export function ShareUrlButton({ collapsed, url, fromParam, toParam }: Props) {
           ref={relativeUrlRef}
         />
       </Menu.Group>
-      <Menu.Group label={t('explore.toolbar.copy-links-absolute-category', 'Time-sync URL links (share with time range intact)')}>
+      <Menu.Group
+        label={t('explore.toolbar.copy-links-absolute-category', 'Time-sync URL links (share with time range intact)')}
+      >
         <Menu.Item
           key="copy-url"
           label={t('explore.toolbar.copy-link-abs-time', 'Copy absolute URL')}
