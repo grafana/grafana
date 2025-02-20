@@ -52,7 +52,7 @@ refs:
     - pattern: /docs/grafana/
       destination: docs/grafana/<GRAFANA_VERSION>/dashboards/variables/#templates
     - pattern: /docs/grafana-cloud/
-      destination: //docs/grafana-cloud/visualizations/dashboards/variables/#templates
+      destination: /docs/grafana-cloud/visualizations/dashboards/variables/#templates
 ---
 
 # PostgreSQL query editor
