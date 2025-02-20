@@ -31,17 +31,20 @@ func checkNilRequester(r Requester) bool {
 	return r == nil || (reflect.ValueOf(r).Kind() == reflect.Ptr && reflect.ValueOf(r).IsNil())
 }
 
-const serviceName = "service"
-const serviceNameForProvisioning = "provisioning"
+const (
+	serviceName                = "service"
+	serviceNameForProvisioning = "provisioning"
+)
 
-func NewServiceIdentity(orgID int64) Requester {
+func newInternalIdentity(name string, namespace string, orgID int64) Requester {
 	return &StaticRequester{
 		Type:           types.TypeAccessPolicy,
-		Name:           serviceName,
-		UserUID:        serviceName,
-		AuthID:         serviceName,
-		Login:          serviceName,
+		Name:           name,
+		UserUID:        name,
+		AuthID:         name,
+		Login:          name,
 		OrgRole:        RoleAdmin,
+		Namespace:      namespace,
 		IsGrafanaAdmin: true,
 		OrgID:          orgID,
 		Permissions: map[int64]map[string][]string{
@@ -55,7 +58,7 @@ func NewServiceIdentity(orgID int64) Requester {
 // This is useful for background tasks that has to communicate with unfied storage. It also returns a Requester with
 // static permissions so it can be used in legacy code paths.
 func WithServiceIdentity(ctx context.Context, orgID int64) (context.Context, Requester) {
-	r := NewServiceIdentity(orgID)
+	r := newInternalIdentity(serviceName, "", orgID)
 	return WithRequester(ctx, r), r
 }
 
@@ -65,21 +68,7 @@ func WithProvisioningIdentitiy(ctx context.Context, namespace string) (context.C
 		return nil, nil, err
 	}
 
-	r := &StaticRequester{
-		Type:           types.TypeAccessPolicy,
-		Name:           serviceNameForProvisioning,
-		UserUID:        serviceNameForProvisioning,
-		AuthID:         serviceNameForProvisioning,
-		Login:          serviceNameForProvisioning,
-		OrgRole:        RoleAdmin,
-		IsGrafanaAdmin: true,
-		Namespace:      namespace,
-		OrgID:          ns.OrgID,
-		Permissions: map[int64]map[string][]string{
-			ns.OrgID: serviceIdentityPermissions,
-		},
-	}
-
+	r := newInternalIdentity(serviceNameForProvisioning, ns.Value, ns.OrgID)
 	return WithRequester(ctx, r), r, nil
 }
 
