@@ -714,7 +714,7 @@ const getStyles = (theme: GrafanaTheme2, textWrap: boolean) => ({
     scrollbarWidth: 'thin',
 
     '&:hover': {
-      '--rdg-row-hover-background-color': theme.colors.action.hover,
+      '--rdg-row-hover-background-color': theme.colors.emphasize(theme.colors.action.hover, 0.6),
       overflow: 'scroll',
     },
 
@@ -740,6 +740,12 @@ const getStyles = (theme: GrafanaTheme2, textWrap: boolean) => ({
     'div[role=columnheader]': {
       borderBottom: `1px solid ${theme.colors.border.medium}`,
       borderInlineEnd: 'unset',
+
+      '.r1y6ywlx7-0-0-beta-46': {
+        '&:hover': {
+          borderRight: `3px solid ${theme.colors.text.link}`,
+        },
+      },
     },
   }),
   menuItem: css({
@@ -755,12 +761,6 @@ const getStyles = (theme: GrafanaTheme2, textWrap: boolean) => ({
 
     // Reset default cell styles for custom cell component styling
     paddingInline: '0',
-
-    '&:hover': {
-      // TODO: border was replaced with boxShadow, because it was causing cell shift on hover
-      boxShadow: 'rgb(61, 113, 217) 0px 0px 2px',
-      backgroundColor: theme.colors.background.primary,
-    },
   }),
   paginationContainer: css({
     alignItems: 'center',

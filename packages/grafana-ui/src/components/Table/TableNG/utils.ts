@@ -180,18 +180,25 @@ export function getFooterItemNG(rows: TableRow[], field: Field, options: TableFo
   return formattedValue;
 }
 
+const CELL_COLOR_DARKENING_MULTIPLIER = 10;
+const CELL_GRADIENT_DARKENING_MULTIPLIER = 15;
+const CELL_GRADIENT_HUE_ROTATION_DEGREES = 5;
+
 export function getCellColors(
   theme: GrafanaTheme2,
   cellOptions: TableCellOptions,
   displayValue: DisplayValue
 ): CellColors {
+  // Convert RGBA hover color to hex to prevent transparency issues on cell hover
+  const autoCellBackgroundHoverColor = convertRGBAToHex(theme.colors.background.primary, theme.colors.action.hover);
+
   // How much to darken elements depends upon if we're in dark mode
   const darkeningFactor = theme.isDark ? 1 : -0.7;
 
   // Setup color variables
   let textColor: string | undefined = undefined;
   let bgColor: string | undefined = undefined;
-  let bgHoverColor: string | undefined = undefined;
+  let bgHoverColor: string = autoCellBackgroundHoverColor;
 
   if (cellOptions.type === TableCellDisplayMode.ColorText) {
     textColor = displayValue.color;
@@ -201,15 +208,19 @@ export function getCellColors(
     if (mode === TableCellBackgroundDisplayMode.Basic) {
       textColor = getTextColorForAlphaBackground(displayValue.color!, theme.isDark);
       bgColor = tinycolor(displayValue.color).toRgbString();
-      bgHoverColor = tinycolor(displayValue.color).setAlpha(1).toRgbString();
+      bgHoverColor = tinycolor(displayValue.color)
+        .darken(CELL_COLOR_DARKENING_MULTIPLIER * darkeningFactor)
+        .toRgbString();
     } else if (mode === TableCellBackgroundDisplayMode.Gradient) {
-      const hoverColor = tinycolor(displayValue.color).setAlpha(1).toRgbString();
+      const hoverColor = tinycolor(displayValue.color)
+        .darken(CELL_GRADIENT_DARKENING_MULTIPLIER * darkeningFactor)
+        .toRgbString();
       const bgColor2 = tinycolor(displayValue.color)
-        .darken(10 * darkeningFactor)
-        .spin(5);
+        .darken(CELL_COLOR_DARKENING_MULTIPLIER * darkeningFactor)
+        .spin(CELL_GRADIENT_HUE_ROTATION_DEGREES);
       textColor = getTextColorForAlphaBackground(displayValue.color!, theme.isDark);
       bgColor = `linear-gradient(120deg, ${bgColor2.toRgbString()}, ${displayValue.color})`;
-      bgHoverColor = `linear-gradient(120deg, ${bgColor2.setAlpha(1).toRgbString()}, ${hoverColor})`;
+      bgHoverColor = `linear-gradient(120deg, ${bgColor2.toRgbString()}, ${hoverColor})`;
     }
   }
 
@@ -255,3 +266,10 @@ export const getCellLinks = (field: Field, rowIdx: number) => {
 export const extractPixelValue = (spacing: string | number): number => {
   return typeof spacing === 'number' ? spacing : parseFloat(spacing) || 0;
 };
+
+/** Converts an RGBA color to hex by blending it with a background color */
+function convertRGBAToHex(backgroundColor: string, rgbaColor: string): string {
+  const bg = tinycolor(backgroundColor);
+  const rgba = tinycolor(rgbaColor);
+  return tinycolor.mix(bg, rgba, rgba.getAlpha() * 100).toHexString();
+}
