@@ -18,6 +18,8 @@ import (
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
+type NewBackendFunc func(ctx context.Context) resource.StorageBackend
+
 // TestCase defines a test case for the storage backend
 type TestCase struct {
 	name string
@@ -26,14 +28,14 @@ type TestCase struct {
 
 // StorageBackendTestSuite defines the test suite for storage backend
 type StorageBackendTestSuite struct {
-	backend resource.StorageBackend
-	cases   []TestCase
+	newBackend NewBackendFunc
+	cases      []TestCase
 }
 
 // NewStorageBackendTestSuite creates a new test suite
-func NewStorageBackendTestSuite(backend resource.StorageBackend) *StorageBackendTestSuite {
+func NewStorageBackendTestSuite(newBackend NewBackendFunc) *StorageBackendTestSuite {
 	return &StorageBackendTestSuite{
-		backend: backend,
+		newBackend: newBackend,
 		cases: []TestCase{
 			{"happy path", runTestIntegrationBackendHappyPath},
 			{"watch write events from latest", runTestIntegrationBackendWatchWriteEventsFromLastest},
@@ -47,14 +49,14 @@ func NewStorageBackendTestSuite(backend resource.StorageBackend) *StorageBackend
 func (s *StorageBackendTestSuite) Run(t *testing.T) {
 	for _, tc := range s.cases {
 		t.Run(tc.name, func(t *testing.T) {
-			tc.fn(t, s.backend)
+			tc.fn(t, s.newBackend(context.Background()))
 		})
 	}
 }
 
 // RunStorageBackendTest runs the storage backend test suite
-func RunStorageBackendTest(t *testing.T, backend resource.StorageBackend) {
-	suite := NewStorageBackendTestSuite(backend)
+func RunStorageBackendTest(t *testing.T, newBackend NewBackendFunc) {
+	suite := NewStorageBackendTestSuite(newBackend)
 	suite.Run(t)
 }
 
