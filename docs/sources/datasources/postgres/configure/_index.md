@@ -141,7 +141,7 @@ If you select the TLS/SSL Mode options **verify-ca** or **verify-full** with the
 
 Click **Manage private data source connect** to be taken to your PDC connection page, where you’ll find your PDC configuration details.
 
-Once you have added your PostgreSQL connection settings, click **Save & test** to test and save the data source connection.
+After you have added your PostgreSQL connection settings, click **Save & test** to test and save the data source connection.
 
 ### Min time interval
 
