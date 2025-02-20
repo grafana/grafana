@@ -1,4 +1,4 @@
-import { useLayoutEffect } from 'react';
+import { useEffect } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 import { usePrevious } from 'react-use';
 
@@ -31,12 +31,20 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
   // After scene migration is complete and we get rid of old dashboard we should refactor dashboardWatcher so this route reload is not need
   const routeReloadCounter = (location.state as any)?.routeReloadCounter;
 
-  // using useLayoutEffect because data links without a slug (referencing same dashboard)
-  //  if data link triggers a query it is lost due to immediate refresh due to url correction
-  useLayoutEffect(() => {
+  useEffect(() => {
     if (route.routeName === DashboardRoutes.Normal && type === 'snapshot') {
       stateManager.loadSnapshot(slug!);
-    } else {
+    }
+
+    return () => {
+      if (route.routeName === DashboardRoutes.Normal && type === 'snapshot') {
+        stateManager.clearState();
+      }
+    };
+  }, [route.routeName, slug, stateManager, type]);
+
+  useEffect(() => {
+    if (type !== 'snapshot') {
       stateManager.loadDashboard({
         type,
         slug,
@@ -49,7 +57,9 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
     return () => {
       stateManager.clearState();
     };
-  }, [stateManager, uid, route.routeName, queryParams.folderUid, routeReloadCounter, slug, type]);
+    // removing slug from dependencies
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stateManager, uid, route.routeName, queryParams.folderUid, routeReloadCounter, type]);
 
   if (!dashboard) {
     let errorElement;
