@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
+import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Stack, useStyles2 } from '@grafana/ui';
@@ -32,6 +33,7 @@ export interface WizardProps {
 }
 
 export function ProvisioningWizard({ data, onSubmit }: WizardProps) {
+  const navigate = useNavigate();
   const [activeStep, setActiveStep] = useState<WizardStep>('connection');
   const [completedSteps, setCompletedSteps] = useState<WizardStep[]>([]);
   const [migrationSuccess, setMigrationSuccess] = useState(false);
@@ -59,6 +61,8 @@ export function ProvisioningWizard({ data, onSubmit }: WizardProps) {
 
       setCompletedSteps([...completedSteps, activeStep]);
       setActiveStep(steps[currentStepIndex + 1].id);
+    } else if (activeStep === 'migrate' && migrationSuccess) {
+      navigate('/dashboards');
     }
   };
 
@@ -69,14 +73,9 @@ export function ProvisioningWizard({ data, onSubmit }: WizardProps) {
     }
   };
 
-  const handleSubmit = (data: WizardFormData) => {
-    // TODO: Redirect somewhere?
-    // onSubmit();
-  };
-
   return (
     <FormProvider {...methods}>
-      <form onSubmit={methods.handleSubmit(handleSubmit)} className={styles.form}>
+      <form className={styles.form}>
         <Stepper
           steps={steps}
           activeStep={activeStep}
@@ -95,17 +94,13 @@ export function ProvisioningWizard({ data, onSubmit }: WizardProps) {
           {activeStep === 'migrate' && <MigrateStep onMigrationStatusChange={setMigrationSuccess} />}
         </div>
 
-        <Stack gap={2} direction="row" justifyContent="flex-end">
+        <Stack gap={2} justifyContent="flex-end">
           {activeStep !== 'connection' && (
-            <Button type="button" variant="secondary" onClick={handleBack}>
+            <Button variant="secondary" onClick={handleBack}>
               Back
             </Button>
           )}
-          <Button
-            type={activeStep === 'migrate' ? 'submit' : 'button'}
-            onClick={activeStep === 'migrate' ? undefined : handleNext}
-            disabled={activeStep === 'migrate' && !migrationSuccess}
-          >
+          <Button onClick={handleNext} disabled={activeStep === 'migrate' && !migrationSuccess}>
             {nextButtonText[activeStep]}
           </Button>
         </Stack>
