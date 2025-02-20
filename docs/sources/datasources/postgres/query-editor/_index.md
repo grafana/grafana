@@ -153,9 +153,9 @@ WHERE $__timeFilter(dashboard.created)
 
 Set the **Format** option to **Time series** to create and run time series queries.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 To run a time series query you must include a column named `time` that returns either a SQL `datetime` value or a numeric datatype representing the UNIX epoch time in seconds. Additionally, the query results must be sorted by the `time` column for proper visualization in panels.
-{{% /admonition %}}
+{{< /admonition >}}
 
 The examples in this section refer to the data in the following table:
 
