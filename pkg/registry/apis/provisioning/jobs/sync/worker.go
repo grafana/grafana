@@ -93,11 +93,12 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	}
 
 	syncError := syncJob.run(ctx, *job.Spec.Sync)
+	jobStatus := progress.Complete(ctx, syncJob.run(ctx, *job.Spec.Sync))
+	syncStatus := jobStatus.ToSyncStatus(job.Name)
 
 	// Create sync status and set hash if successful
-	syncStatus := progress.Complete(ctx, syncError).ToSyncStatus(job.Name)
-	if syncError != nil && syncStatus.State == provisioning.JobStateSuccess {
-		syncStatus.Hash = progress.GetRef()
+	if syncStatus.State == provisioning.JobStateSuccess {
+		syncStatus.LastRef = progress.GetRef()
 	}
 
 	// Update final status using JSON patch
@@ -228,13 +229,13 @@ func (r *syncJob) run(ctx context.Context, options provisioning.SyncJobOptions) 
 		}
 		r.progress.SetRef(currentRef)
 
-		if cfg.Status.Sync.Hash != "" && options.Incremental {
-			if currentRef == cfg.Status.Sync.Hash {
+		if cfg.Status.Sync.LastRef != "" && options.Incremental {
+			if currentRef == cfg.Status.Sync.LastRef {
 				r.progress.SetMessage("same commit as last sync")
 				return nil
 			}
 
-			return r.applyVersionedChanges(ctx, versionedRepo, cfg.Status.Sync.Hash, currentRef)
+			return r.applyVersionedChanges(ctx, versionedRepo, cfg.Status.Sync.LastRef, currentRef)
 		}
 	}
 
