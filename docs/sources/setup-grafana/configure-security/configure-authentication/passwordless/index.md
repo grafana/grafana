@@ -15,7 +15,9 @@ Passwordless authentication lets Grafana users authenticate with a magic link or
 
 ## Enable passwordless authentication
 
-{{< docs/experimental product="passwordless authentication" featureFlag="passwordlessMagicLinkAuthentication" >}}
+{{% admonition type="note" %}}
+Passwordless authentication is an experimental feature. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided. Enable the `passwordlessMagicLinkAuthentication` feature toggle in Grafana to use this feature.
+{{% /admonition %}}
 
 To enable passwordless authentication, use the following configuration:
 
