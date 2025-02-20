@@ -39,7 +39,7 @@ export function getWorkflowOptions(type?: 'github' | 'local'): Array<ComboboxOpt
   if (type === 'github') {
     return opts;
   }
-  return [opts[2]]; // only write
+  return opts.filter((opt) => opt.value === 'write'); // only write
 }
 
 const appEvents = getAppEvents();

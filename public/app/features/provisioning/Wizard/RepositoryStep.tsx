@@ -37,6 +37,33 @@ export function RepositoryStep() {
     }
   };
 
+  const WorkflowsField = () => (
+    <Field
+      label={'Workflows'}
+      required
+      error={errors.repository?.workflows?.message}
+      invalid={!!errors.repository?.workflows}
+    >
+      <Controller
+        name={'repository.workflows'}
+        control={control}
+        rules={{ required: 'This field is required.' }}
+        render={({ field: { ref, onChange, ...field } }) => {
+          return (
+            <MultiCombobox
+              options={getWorkflowOptions(type)}
+              placeholder={'Readonly repository'}
+              onChange={(val) => {
+                onChange(val.map((v) => v.value));
+              }}
+              {...field}
+            />
+          );
+        }}
+      />
+    </Field>
+  );
+
   useEffect(() => {
     if (request.isSuccess) {
       appEvents.publish({
@@ -109,34 +136,11 @@ export function RepositoryStep() {
             <Input {...register('repository.branch')} placeholder={'main'} />
           </Field>
 
-          <Field
-            label={'Workflows'}
-            required
-            error={errors.repository?.workflows?.message}
-            invalid={!!errors.repository?.workflows}
-          >
-            <Controller
-              name={'repository.workflows'}
-              control={control}
-              rules={{ required: 'This field is required.' }}
-              render={({ field: { ref, onChange, ...field } }) => {
-                return (
-                  <MultiCombobox
-                    options={getWorkflowOptions(type)}
-                    placeholder={'Readonly repository'}
-                    onChange={(val) => {
-                      onChange(val.map((v) => v.value));
-                    }}
-                    {...field}
-                  />
-                );
-              }}
-            />
-          </Field>
-
           <Field label={'Show dashboard previews'}>
             <Switch {...register('repository.generateDashboardPreviews')} />
           </Field>
+
+          <WorkflowsField />
 
           <Stack gap={2}>
             <Button
@@ -161,6 +165,8 @@ export function RepositoryStep() {
             placeholder={'/path/to/repo'}
           />
         </Field>
+
+        <WorkflowsField />
       </FieldSet>
     );
   }

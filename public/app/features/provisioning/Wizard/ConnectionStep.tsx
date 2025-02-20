@@ -34,8 +34,12 @@ export function ConnectionStep() {
   const {
     register,
     control,
+    setValue,
+    watch,
     formState: { errors },
   } = useFormContext<WizardFormData>();
+
+  const workflows = watch('repository.workflows');
 
   return (
     <FieldSet label="1. Set up your repository connection details">
@@ -53,8 +57,14 @@ export function ConnectionStep() {
               <Combobox
                 {...field}
                 options={typeOptions}
-                onChange={(value) => onChange(value?.value)}
                 placeholder="Select repository type"
+                onChange={(value) => {
+                  onChange(value?.value);
+                  setValue(
+                    'repository.workflows',
+                    workflows.filter((workflow) => workflow !== 'branch')
+                  );
+                }}
               />
             )}
           />
