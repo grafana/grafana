@@ -82,9 +82,11 @@ jobs:
           app-id: ${{ env.APP_ID }}
           private-key: ${{ env.PRIVATE_KEY }}
 
-      - name: Debug token (redacted)
+      - name: Debug PR Fork Status
+        env:
+            FORK_STATUS: ${{ github.event.pull_request.head.repo.fork }}
         run: |
-          if [ -n "${{ steps.generate_token.outputs.token }}" ]; then echo "Token was generated"; else echo "Token was not generated"; fi
+          echo "Fork status: $FORK_STATUS"
 
       - name: Setup Enterprise (PR only)
         if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false
