@@ -60,11 +60,14 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		Role: ac.RoleDTO{
 			Name:        "fixed:datasources:explorer",
 			DisplayName: "Explorer",
-			Description: "Enable the Explore feature. Data source permissions still apply; you can only query data sources for which you have query permissions.",
+			Description: "Enable the Explore and Drilldown features. Data source permissions still apply; you can only query data sources for which you have query permissions.",
 			Group:       "Data sources",
 			Permissions: []ac.Permission{
 				{
 					Action: ac.ActionDatasourcesExplore,
+				},
+				{
+					Action: ac.ActionDatasourcesDrilldown,
 				},
 			},
 		},

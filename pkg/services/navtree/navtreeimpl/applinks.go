@@ -286,9 +286,9 @@ func (s *ServiceImpl) readNavigationSettings() {
 		"grafana-k8s-app":                  {SectionID: navtree.NavIDInfrastructure, SortWeight: 1, Text: "Kubernetes"},
 		"grafana-dbo11y-app":               {SectionID: navtree.NavIDInfrastructure, SortWeight: 2, Text: "Databases"},
 		"grafana-app-observability-app":    {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightApplication, Text: "Application", Icon: "graph-bar"},
-		"grafana-lokiexplore-app":          {SectionID: navtree.NavIDExplore, SortWeight: 2, Text: "Logs"},
-		"grafana-exploretraces-app":        {SectionID: navtree.NavIDExplore, SortWeight: 3, Text: "Traces"},
-		"grafana-pyroscope-app":            {SectionID: navtree.NavIDExplore, SortWeight: 4, Text: "Profiles"},
+		"grafana-lokiexplore-app":          {SectionID: navtree.NavIDDrilldown, SortWeight: 2, Text: "Logs"},
+		"grafana-exploretraces-app":        {SectionID: navtree.NavIDDrilldown, SortWeight: 3, Text: "Traces"},
+		"grafana-pyroscope-app":            {SectionID: navtree.NavIDDrilldown, SortWeight: 4, Text: "Profiles"},
 		"grafana-kowalski-app":             {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightFrontend, Text: "Frontend", Icon: "frontend-observability"},
 		"grafana-synthetic-monitoring-app": {SectionID: navtree.NavIDTestingAndSynthetics, SortWeight: 2, Text: "Synthetics"},
 		"grafana-irm-app":                  {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 1, Text: "IRM"},
@@ -310,7 +310,7 @@ func (s *ServiceImpl) readNavigationSettings() {
 	}
 
 	if s.features.IsEnabledGlobally(featuremgmt.FlagExploreMetricsUseExternalAppPlugin) {
-		s.navigationAppConfig["grafana-metricsdrilldown-app"] = NavigationAppConfig{SectionID: navtree.NavIDExplore, SortWeight: 1, Text: "Metrics"}
+		s.navigationAppConfig["grafana-metricsdrilldown-app"] = NavigationAppConfig{SectionID: navtree.NavIDDrilldown, SortWeight: 1, Text: "Metrics"}
 	}
 
 	if s.features.IsEnabledGlobally(featuremgmt.FlagGrafanaAdvisor) {

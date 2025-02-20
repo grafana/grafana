@@ -114,7 +114,7 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive']) => ({
     position: 'relative',
     width: '100%',
 
-    '&:hover, &:focus-visible': {
+    '&:hover span, &:focus-visible span': {
       color: theme.colors.text.primary,
       textDecoration: 'underline',
     },

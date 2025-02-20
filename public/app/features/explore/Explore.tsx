@@ -23,14 +23,18 @@ import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import {
   AdHocFilterItem,
+  Alert,
   ErrorBoundaryAlert,
+  LinkButton,
   PanelContainer,
   ScrollContainer,
+  Stack,
   Themeable2,
   withTheme2,
 } from '@grafana/ui';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR } from '@grafana/ui/src/components/Table/types';
 import { supportedFeatures } from 'app/core/history/richHistoryStorageProvider';
+import { t, Trans } from 'app/core/internationalization';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { StoreState } from 'app/types';
 
@@ -564,6 +568,9 @@ export class Explore extends PureComponent<Props, ExploreState> {
     if (showCorrelationHelper && correlationEditorHelperData !== undefined) {
       correlationsBox = <CorrelationHelper exploreId={exploreId} correlations={correlationEditorHelperData} />;
     }
+    const isDsCompatibleWithDrilldown = ['prometheus', 'loki', 'tempo', 'grafana-pyroscope-datasource'].includes(
+      datasourceInstance?.type || ''
+    );
 
     return (
       <ContentOutlineContextProvider refreshDependencies={this.props.queries}>
@@ -593,6 +600,27 @@ export class Explore extends PureComponent<Props, ExploreState> {
                   <>
                     <ContentOutlineItem panelId="Queries" title="Queries" icon="arrow" mergeSingleChild={true}>
                       <PanelContainer className={styles.queryContainer}>
+                        {isDsCompatibleWithDrilldown && (
+                          <Alert
+                            severity={'info'}
+                            title={t(
+                              'explore.drilldownInfo.title',
+                              'Explore Metrics, Logs, Traces and Profiles have moved!'
+                            )}
+                          >
+                            <Stack gap={1} alignItems="flex-end" justifyContent={'space-between'}>
+                              <span>
+                                <Trans i18nKey={'explore.drilldownInfo.description'}>
+                                  Looking for the Grafana Explore apps? They are now called the Grafana Drilldown apps
+                                  and can be found under <b>Menu &gt; Drilldown</b>
+                                </Trans>
+                              </span>
+                              <LinkButton variant={'secondary'} href="/drilldown">
+                                <Trans i18nKey={'explore.drilldownInfo.action'}>Go to Grafana Drilldown</Trans>
+                              </LinkButton>
+                            </Stack>
+                          </Alert>
+                        )}
                         {correlationsBox}
                         <QueryRows exploreId={exploreId} />
                         <SecondaryActions
