@@ -27,19 +27,19 @@ describe('ResponsiveGridLayoutManager', () => {
 function setup() {
   const gridItems = [
     new ResponsiveGridItem({
-      key: 'griditem-1',
+      key: 'grid-item-0',
       body: new VizPanel({
         title: 'Panel A',
-        key: 'panel-1',
+        key: 'panel-0',
         pluginId: 'table',
         $data: new SceneQueryRunner({ key: 'data-query-runner', queries: [{ refId: 'A' }] }),
       }),
     }),
     new ResponsiveGridItem({
-      key: 'griditem-2',
+      key: 'grid-item-1',
       body: new VizPanel({
         title: 'Panel B',
-        key: 'panel-2',
+        key: 'panel-1',
         pluginId: 'table',
       }),
     }),

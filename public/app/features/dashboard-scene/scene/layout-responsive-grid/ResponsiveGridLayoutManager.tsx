@@ -4,7 +4,12 @@ import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/Pan
 
 import { joinCloneKeys } from '../../utils/clone';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
-import { getDashboardSceneFor, getGridItemKeyForPanelId, getVizPanelKeyForPanelId } from '../../utils/utils';
+import {
+  getDashboardSceneFor,
+  getGridItemKeyForPanelId,
+  getPanelIdForVizPanel,
+  getVizPanelKeyForPanelId,
+} from '../../utils/utils';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
 import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
@@ -119,13 +124,16 @@ export class ResponsiveGridLayoutManager
   public cloneLayout(ancestorKey: string, isSource: boolean): DashboardLayoutManager {
     return this.clone({
       layout: this.state.layout.clone({
-        children: this.state.layout.state.children.map((gridItem, index) => {
+        children: this.state.layout.state.children.map((gridItem) => {
           if (gridItem instanceof ResponsiveGridItem) {
-            const gridItemKey = joinCloneKeys(ancestorKey, getGridItemKeyForPanelId(index));
+            // Get the original panel ID from the gridItem's key
+            const panelId = getPanelIdForVizPanel(gridItem.state.body);
+            const gridItemKey = joinCloneKeys(ancestorKey, getGridItemKeyForPanelId(panelId));
+
             return gridItem.clone({
               key: gridItemKey,
               body: gridItem.state.body.clone({
-                key: joinCloneKeys(gridItemKey, getVizPanelKeyForPanelId(index)),
+                key: joinCloneKeys(gridItemKey, getVizPanelKeyForPanelId(panelId)),
               }),
             });
           }
