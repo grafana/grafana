@@ -10,8 +10,8 @@ import {
   InteractiveTable,
   LinkButton,
   ConfirmModal,
+  Button,
 } from '@grafana/ui';
-import { Button } from '@grafana/ui';
 
 import {
   Repository,

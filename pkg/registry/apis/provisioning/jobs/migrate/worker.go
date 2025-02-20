@@ -98,8 +98,16 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 	if err != nil {
 		return fmt.Errorf("unable to read currnet tree: %w", err)
 	}
-	if err = verifyEmptyRepo(tree); err != nil {
-		return err
+
+	if true { // configurable?
+		for _, v := range tree {
+			if v.Blob && !resources.ShouldIgnorePath(v.Path) {
+				err = repo.Delete(ctx, v.Path, "", "initial cleanup")
+				if err != nil {
+					return fmt.Errorf("initial cleanup error: %w", err)
+				}
+			}
+		}
 	}
 
 	dynamicClient, _, err := w.clients.New(repo.Config().Namespace)
