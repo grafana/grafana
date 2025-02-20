@@ -2,7 +2,7 @@ import { skipToken } from '@reduxjs/toolkit/query/react';
 import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
-import { Button, FieldSet, Stack, Text, Switch, Field } from '@grafana/ui';
+import { Button, FieldSet, Stack, Text, Switch, Field, Alert } from '@grafana/ui';
 
 import { JobStatus } from '../JobStatus';
 import { useCreateRepositoryMigrateMutation, useGetRepositoryQuery } from '../api';
@@ -68,6 +68,10 @@ export function MigrateStep({ onMigrationStatusChange }: MigrateStepProps) {
           Migrate all dashboards from this instance to your repository. After this one-time migration, all future
           updates will be automatically saved to the repository.
         </Text>
+
+        <Alert severity="info" title="Note">
+          Dashboards app/Grafana will be unavailable when starting this process.
+        </Alert>
 
         {Boolean(stats.length) && (
           <Stack direction={'column'} width={'300px'}>
