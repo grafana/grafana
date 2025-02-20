@@ -2,7 +2,6 @@ name: Test Backend
 
 on:
   workflow_dispatch:
-    
   push:
     branches:
       - main
