@@ -2028,6 +2028,10 @@ github.com/onsi/gomega v1.4.3/go.mod h1:ex+gbHU/CVuBBDIJjb2X0qEXbFg53c61hWP/1Cpa
 github.com/onsi/gomega v1.5.0/go.mod h1:ex+gbHU/CVuBBDIJjb2X0qEXbFg53c61hWP/1CpauHY=
 github.com/onsi/gomega v1.35.1 h1:Cwbd75ZBPxFSuZ6T+rN/WCb/gOc6YgFBXLlZLhC7Ds4=
 github.com/onsi/gomega v1.35.1/go.mod h1:PvZbdDc8J6XJEpDK4HCuRBm8a6Fzp9/DmhC9C7yFlog=
+github.com/open-feature/go-sdk v1.14.1 h1:jcxjCIG5Up3XkgYwWN5Y/WWfc6XobOhqrIwjyDBsoQo=
+github.com/open-feature/go-sdk v1.14.1/go.mod h1:t337k0VB/t/YxJ9S0prT30ISUHwYmUd/jhUZgFcOvGg=
+github.com/open-feature/go-sdk-contrib/providers/go-feature-flag v0.2.3 h1:6jpO63NCEZv4xunJj+aNlDuFVuRkVBPMcIuxvFPYRWQ=
+github.com/open-feature/go-sdk-contrib/providers/go-feature-flag v0.2.3/go.mod h1:dPUHjAIFzg+ci/wt6XxlNiiMkOh5Yw4SGyeRY0AFT0g=
 github.com/opencontainers/go-digest v1.0.0-rc1/go.mod h1:cMLVZDEM3+U2I4VmLI6N8jQYUd2OVphdqWwCJHrFt2s=
 github.com/opencontainers/go-digest v1.0.0 h1:apOUWs51W5PlhuyGyz9FCeeBIOUDA/6nW8Oi/yOhh5U=
 github.com/opencontainers/go-digest v1.0.0/go.mod h1:0JzlMkj0TRzQZfJkVvzbP0HBR3IKzErnv2BNG4W4MAM=
