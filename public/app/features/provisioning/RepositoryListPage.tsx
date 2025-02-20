@@ -1,4 +1,4 @@
-import { ReactNode, useState } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
 import {
@@ -12,7 +12,6 @@ import {
   Stack,
   TextLink,
   Text,
-  Alert,
 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
@@ -28,22 +27,17 @@ export default function RepositoryListPage() {
   const [items, isLoading] = useRepositoryList({ watch: true });
   const settings = useGetFrontendSettingsQuery();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (settings.data?.legacyStorage && !items?.length) {
+      navigate('/admin/provisioning/setup');
+    }
+  }, [settings, navigate, items?.length]);
+
   return (
     <Page navId="provisioning" subTitle="View and manage your configured repositories">
       <Page.Contents isLoading={isLoading}>
         <SetupWarnings />
-        {settings.data?.legacyStorage && (
-          <Alert
-            title="Legacy Storage"
-            severity="error"
-            buttonContent={<>Use provisioning wizard to configure a repository.</>}
-            onRemove={() => {
-              navigate('/admin/provisioning/setup');
-            }}
-          >
-            Require running the onboarding wizard to convert from legacy to unified
-          </Alert>
-        )}
         <RepositoryListPageContent items={items} />
       </Page.Contents>
     </Page>
