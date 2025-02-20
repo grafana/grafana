@@ -52,6 +52,8 @@ func (o *ExtraOptions) ApplyTo(c *genericapiserver.RecommendedConfig) error {
 	if _, err := logs.GlogSetter(strconv.Itoa(o.Verbosity)); err != nil {
 		logger.Error("failed to set log level", "error", err)
 	}
+	klog.Infof("logger is ready: %t", true)
+	logger.Info("logger was setup")
 	c.ExternalAddress = o.ExternalAddress
 	return nil
 }
