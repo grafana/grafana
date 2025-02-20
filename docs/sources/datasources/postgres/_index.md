@@ -61,7 +61,7 @@ The following documents will help you get started with the PostgreSQL data sourc
 - [Configure the PostgreSQL data source](ref:configure-postgres-data-source)
 - [PostgreSQL query editor](ref:postgres-query-editor)
 
-Once you have configured the data source you can:
+After you have configured the data source you can:
 
 - Create a variety of [visualizations](ref:visualizations)
 - Add [annotations](ref:annotate-visualizations)
