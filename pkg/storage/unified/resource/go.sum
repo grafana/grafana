@@ -397,8 +397,8 @@ github.com/gorilla/mux v1.6.2/go.mod h1:1lud6UwP+6orDFRuTfBEV8e9/aOM/c4fVVCaMa2z
 github.com/gorilla/mux v1.7.1/go.mod h1:1lud6UwP+6orDFRuTfBEV8e9/aOM/c4fVVCaMa2zaAs=
 github.com/gorilla/mux v1.8.1 h1:TuBL49tXwgrFYWhqrNgrUNEY92u81SPhu7sTdzQEiWY=
 github.com/gorilla/mux v1.8.1/go.mod h1:AKf9I4AEqPTmMytcMc0KkNouC66V3BtZ4qD5fmWSiMQ=
-github.com/grafana/alerting v0.0.0-20250219042117-00d67037a5f1 h1:GCgtfJ0G/uHdmZl9oTz2ok31zFT1HJEhVcsmVJFpSBg=
-github.com/grafana/alerting v0.0.0-20250219042117-00d67037a5f1/go.mod h1:hdGB3dSl8Ma9Rjo2YiAEAjMkZ5HiNJbNDqRKDefRZrM=
+github.com/grafana/alerting v0.0.0-20250219142948-d43046431703 h1:Z53rmFhUeif1/cFjOQqxHyv+YfXac4vzyl9yzdjxOoY=
+github.com/grafana/alerting v0.0.0-20250219142948-d43046431703/go.mod h1:hdGB3dSl8Ma9Rjo2YiAEAjMkZ5HiNJbNDqRKDefRZrM=
 github.com/grafana/authlib v0.0.0-20250219100139-6a3b1bbb50e7 h1:NTMmow+74I3Jb033xhbRgWQS7A//5TDhiM4tl7bsVP4=
 github.com/grafana/authlib v0.0.0-20250219100139-6a3b1bbb50e7/go.mod h1:T3X4z0ejGfJOiOmZLFeKCRT/yxWJq/RtclAc/PHj/w4=
 github.com/grafana/authlib/types v0.0.0-20250219092154-21ce22b49f31 h1:EokLC5grHwLPs4tXW8T6E8187H1e5G9AP0QQ5B60HbA=
