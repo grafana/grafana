@@ -137,7 +137,7 @@ func CreateAggregatorConfig(commandOptions *options.Options, sharedConfig generi
 		},
 	}
 
-	klog.Infof("Legacy Client Cert Auth is", commandOptions.KubeAggregatorOptions.LegacyClientCertAuth)
+	klog.Infof("Legacy Client Cert Auth is: %s", commandOptions.KubeAggregatorOptions.LegacyClientCertAuth)
 	if commandOptions.KubeAggregatorOptions.LegacyClientCertAuth {
 		// NOTE: the availability controller below is a bit different and uses the cert/key pair regardless
 		// of the legacy bool, this is because we are still using that for discovery requests
