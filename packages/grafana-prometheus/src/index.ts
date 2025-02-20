@@ -86,7 +86,7 @@ export {
 } from './types';
 export { PrometheusVariableSupport } from './variables';
 
-// For explore metrics
+// For Metrics Drilldown
 export { default as PromQlLanguageProvider } from './language_provider';
 export { getPrometheusTime } from './language_utils';
 export { isValidLegacyName, utf8Support, wrapUtf8Filters } from './utf8_support';
