@@ -17,11 +17,7 @@ export function MigrateStep({ onMigrationStatusChange }: MigrateStepProps) {
   const [migrateRepo, migrateQuery] = useCreateRepositoryMigrateMutation();
   const [showMigrateStatus, setShowMigrateStatus] = useState(false);
   const { watch, register } = useFormContext<WizardFormData>();
-  const [repositoryName, history, identifier] = watch([
-    'repositoryName',
-    'migrate.history',
-    'migrate.identifier',
-  ]);
+  const [repositoryName, history, identifier] = watch(['repositoryName', 'migrate.history', 'migrate.identifier']);
   const migrateName = migrateQuery.data?.metadata?.name;
   const repositoryQuery = useGetRepositoryQuery(repositoryName ? { name: repositoryName } : skipToken);
   const stats = repositoryQuery?.data?.status?.stats || [];
