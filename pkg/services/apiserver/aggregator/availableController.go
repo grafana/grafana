@@ -204,6 +204,10 @@ func (c *AvailableConditionController) sync(key string) error {
 		results := make(chan error, attempts)
 		for i := 0; i < attempts; i++ {
 			go func() {
+				// stagger these requests to reduce pressure on aggregated services
+				waitDuration := time.Second * time.Duration(int32(i))
+				time.Sleep(waitDuration)
+
 				discoveryURL, err := c.serviceResolver.ResolveEndpoint(apiService.Spec.Service.Namespace, apiService.Spec.Service.Name, *apiService.Spec.Service.Port)
 				if err != nil {
 					results <- err
