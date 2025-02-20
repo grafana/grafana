@@ -10,6 +10,7 @@ import (
 
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
@@ -44,10 +45,12 @@ func NewResourceServer(db infraDB.DB, cfg *setting.Cfg,
 		return nil, err
 	}
 
-	// compute isHA by checking if alerting or live HA is enabled.
-	// Eventually we want to have a flag to control this.
-	isHA := len(cfg.UnifiedAlerting.HAPeers) > 0 ||
-		cfg.LiveHAEngine != ""
+	// Check in the config if HA is enabled by default we always assume a HA setup.
+	isHA := cfg.SectionWithEnvOverrides("database").Key("high_availability").MustBool(true)
+	// SQLite is not possible to run in HA, so we set it to false.
+	if db.GetDialect().DriverName() == migrator.SQLite {
+		isHA = false
+	}
 
 	store, err := NewBackend(BackendOptions{DBProvider: eDB, Tracer: tracer, IsHA: isHA})
 	if err != nil {
