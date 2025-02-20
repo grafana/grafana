@@ -43,11 +43,7 @@ export const LogLineMenu = ({ log, styles }: Props) => {
 
   const showContext = useCallback(
     async (event: MouseEvent<HTMLElement>) => {
-      if (getRowContextQuery) {
-        handleOpenLogsContextClick(event, log, getRowContextQuery, (log: LogRowModel) =>
-          onOpenContext?.(log, () => {})
-        );
-      }
+      handleOpenLogsContextClick(event, log, getRowContextQuery, (log: LogRowModel) => onOpenContext?.(log, () => {}));
     },
     [onOpenContext, getRowContextQuery, log]
   );

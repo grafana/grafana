@@ -312,12 +312,12 @@ export const copyText = async (text: string, buttonRef: React.MutableRefObject<E
 export async function handleOpenLogsContextClick(
   event: MouseEvent<HTMLElement>,
   row: LogRowModel,
-  getRowContextQuery: GetRowContextQueryFn,
+  getRowContextQuery: GetRowContextQueryFn | undefined,
   onOpenContext: (row: LogRowModel) => void
 ) {
   event.stopPropagation();
   // if ctrl or meta key is pressed, open query in new Explore tab
-  if (event.nativeEvent.ctrlKey || event.nativeEvent.metaKey || event.nativeEvent.shiftKey) {
+  if (getRowContextQuery && (event.nativeEvent.ctrlKey || event.nativeEvent.metaKey || event.nativeEvent.shiftKey)) {
     const win = window.open('about:blank');
     // for this request we don't want to use the cached filters from a context provider, but always want to refetch and clear
     const query = await getRowContextQuery(row, undefined, false);
