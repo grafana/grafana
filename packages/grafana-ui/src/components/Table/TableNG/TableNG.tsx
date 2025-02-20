@@ -725,6 +725,15 @@ const getStyles = (theme: GrafanaTheme2, textWrap: boolean) => ({
       borderRight: `1px solid ${theme.colors.border.medium}`,
     },
 
+    '.rdg-summary-row': {
+      backgroundColor: theme.colors.background.primary,
+      '--rdg-summary-border-color': theme.colors.border.medium,
+
+      '.rdg-cell': {
+        borderRight: 'none',
+      },
+    },
+
     // Due to stylistic choices, we do not want borders on the column headers
     // other than the bottom border.
     'div[role=columnheader]': {
