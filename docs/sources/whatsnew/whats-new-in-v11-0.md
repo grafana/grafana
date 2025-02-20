@@ -21,7 +21,7 @@ weight: -42
 
 # What’s new in Grafana v11.0
 
-Welcome to Grafana 11.0! This release contains some major improvements: most notably, the ability to explore your Prometheus metrics and Loki logs without writing any PromQL or LogQL, using Explore Metrics and Explore Logs. The dashboard experience is better than ever with edit mode for dashboards, AI-generated dashboard names and descriptions, and general availability for subfolders. You can also take advantage of improvements to the canvas and table visualizations, new transformations, a revamp of the Alert Rule page, and more.
+Welcome to Grafana 11.0! This release contains some major improvements: most notably, the ability to explore your Prometheus metrics and Loki logs without writing any PromQL or LogQL, using Grafana Metrics Drilldown and Grafana Logs Drilldown. The dashboard experience is better than ever with edit mode for dashboards, AI-generated dashboard names and descriptions, and general availability for subfolders. You can also take advantage of improvements to the canvas and table visualizations, new transformations, a revamp of the Alert Rule page, and more.
 
 {{< youtube id="96ZXShRyMB8" >}}
 
@@ -48,15 +48,15 @@ Use full URLs for links. When linking to versioned docs, replace the version wit
 <!--Learn how to upload images here: https://grafana.com/docs/writers-toolkit/write/image-guidelines/#where-to-store-media-assets-->
 <!---->
 
-## Explore Metrics and Logs
+## Grafana Metrics Drilldown and Grafana Logs Drilldown
 
-### Explore Metrics
+### Grafana Metrics Drilldown
 
 <!-- #proj-datatrails-dev, PM: Jay Goodson, Engineering: Darren Janeczek, André Pereira, Design: Catherine Gui -->
 
 _Public preview in all editions of Grafana_
 
-Explore Metrics is a query-less experience for browsing Prometheus-compatible metrics. Search for or filter to find a metric. Quickly find related metrics - all in just a few clicks. You do not need to learn PromQL! With Explore Metrics, you can:
+Grafana Metrics Drilldown is a query-less experience for browsing Prometheus-compatible metrics. Search for or filter to find a metric. Quickly find related metrics - all in just a few clicks. You do not need to learn PromQL! With Grafana Metrics Drilldown, you can:
 
 - easily slice and dice metrics based on their labels, so you can see anomalies right away
 - See the right visualization for your metric based on its type (e.g. gauge vs. counter) without building it yourself
@@ -67,26 +67,26 @@ Explore Metrics is a query-less experience for browsing Prometheus-compatible me
 
 … all without writing any queries!
 
-To learn more, refer to [Explore Metrics](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/explore-metrics/) as well as the following video demo:
+To learn more, refer to [Grafana Metrics Drilldown](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/explore-metrics/) as well as the following video demo:
 
 {{< youtube id="JbaPufQs5LY" >}}
 
-### Explore Logs
+### Grafana Logs Drilldown
 
 <!-- Slack: #proj-lokiapp-dev, PM: Steven Dungan, Engineering: Andrew Stucky, Cyril Tovena, Design: Joan Wortman -->
 
 _Experimental in Grafana Open Source and Enterprise_
 
-Explore Logs is a queryless experience for exploring Loki logs - no LogQL required! The primary interaction modes are point-and-click based on log volume, similar to Explore Metrics.
+Grafana Logs Drilldown is a queryless experience for exploring Loki logs - no LogQL required! The primary interaction modes are point-and-click based on log volume, similar to Grafana Metrics Drilldown.
 
 Highlights:
 
-- View log volume and log line samples when you first land in Explore Logs (no more "blank screen!")
+- View log volume and log line samples when you first land in Grafana Logs Drilldown (no more "blank screen!")
 - Explore additional labels and detected fields in a similar way, focusing on volume and distribution; add them to your "query" to refine your logs search without needing LogQL
   – See common patterns in your log lines, to easily filter out noise or focus in on anomalies
 - For power users, an easy way to hop into the familiar Explore while preserving context
 
-Explore Logs is Open Source, and experimental - some papercuts are to be expected. Give it a try and let us know what you think!
+Grafana Logs Drilldown is Open Source, and experimental - some papercuts are to be expected. Give it a try and let us know what you think!
 
 ## Dashboards and visualizations
 

@@ -25,7 +25,7 @@ With Grafana Metrics Drilldown, you can:
 - View a history of user steps when navigating through metrics and their filters.
 - Seamlessly pivot to related telemetry, including log data.
 
-{{< docs/play title="Explore Metrics" url="https://play.grafana.org/explore/metrics/trail?from=now-1h&to=now&var-ds=grafanacloud-demoinfra-prom&var-filters=&refresh=&metricPrefix=all" >}}
+{{< docs/play title="Grafana Metrics Drilldown" url="https://play.grafana.org/explore/metrics/trail?from=now-1h&to=now&var-ds=grafanacloud-demoinfra-prom&var-filters=&refresh=&metricPrefix=all" >}}
 
 You can access Grafana Metrics Drilldown either as a standalone experience or as part of Grafana dashboards.
 
@@ -67,5 +67,5 @@ To access Grafana Metrics Drilldown via a dashboard:
 
 1. Navigate to your dashboard.
 1. Select a time series panel.
-1. Click the panel menu in the upper right and select **Explore Metrics**. If there are multiple metrics, click on the one you want to explore.
+1. Click the panel menu in the upper right and select **Metrics Drilldown**. If there are multiple metrics, click on the one you want to explore.
 1. You see a slide out drawer with the Metrics Experience, starting with the drill down. You can access the standalone experience by clicking **Open** in the upper right.
