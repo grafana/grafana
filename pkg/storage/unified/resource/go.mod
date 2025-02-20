@@ -19,6 +19,7 @@ require (
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250121113133-e747350fee2d
 	github.com/grafana/grafana/pkg/apiserver v0.0.0-20250121113133-e747350fee2d // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.2.0
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.25.1
 	github.com/hashicorp/golang-lru/v2 v2.0.7
 	github.com/prometheus/client_golang v1.20.5
 	github.com/stretchr/testify v1.10.0
@@ -125,7 +126,6 @@ require (
 	github.com/grafana/pyroscope-go/godeltaprof v0.1.8 // indirect
 	github.com/grafana/sqlds/v4 v4.1.3 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus v1.0.1 // indirect
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.25.1 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-hclog v1.6.3 // indirect
 	github.com/hashicorp/go-immutable-radix v1.3.1 // indirect

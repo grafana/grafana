@@ -2,6 +2,7 @@ import { SceneComponentProps, SceneObjectBase, SceneObjectState, VizPanel } from
 import { t } from 'app/core/internationalization';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
+import { joinCloneKeys } from '../../utils/clone';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import {
   getPanelIdForVizPanel,
@@ -137,6 +138,28 @@ export class ResponsiveGridLayoutManager
     }
 
     return false;
+  }
+
+  public cloneLayout(ancestorKey: string, isSource: boolean): DashboardLayoutManager {
+    return this.clone({
+      layout: this.state.layout.clone({
+        children: this.state.layout.state.children.map((gridItem) => {
+          if (gridItem instanceof ResponsiveGridItem) {
+            // Get the original panel ID from the gridItem's key
+            const panelId = getPanelIdForVizPanel(gridItem.state.body);
+            const gridItemKey = joinCloneKeys(ancestorKey, getGridItemKeyForPanelId(panelId));
+
+            return gridItem.clone({
+              key: gridItemKey,
+              body: gridItem.state.body.clone({
+                key: joinCloneKeys(gridItemKey, getVizPanelKeyForPanelId(panelId)),
+              }),
+            });
+          }
+          throw new Error('Unexpected child type');
+        }),
+      }),
+    });
   }
 
   public addNewRow() {
