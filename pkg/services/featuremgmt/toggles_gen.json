@@ -1544,11 +1544,14 @@
     {
       "metadata": {
         "name": "exploreLogsAggregatedMetrics",
-        "resourceVersion": "1724938092041",
-        "creationTimestamp": "2024-08-29T13:55:59Z"
+        "resourceVersion": "1740084492165",
+        "creationTimestamp": "2024-08-29T13:55:59Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-02-20 20:48:12.165306 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Used in Explore Logs to query by aggregated metrics",
+        "description": "Used in Logs Drilldown to query by aggregated metrics",
         "stage": "experimental",
         "codeowner": "@grafana/observability-logs",
         "frontend": true
@@ -1557,11 +1560,14 @@
     {
       "metadata": {
         "name": "exploreLogsLimitedTimeRange",
-        "resourceVersion": "1724938092041",
-        "creationTimestamp": "2024-08-29T13:55:59Z"
+        "resourceVersion": "1740084492165",
+        "creationTimestamp": "2024-08-29T13:55:59Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-02-20 20:48:12.165306 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Used in Explore Logs to limit the time range",
+        "description": "Used in Logs Drilldown to limit the time range",
         "stage": "experimental",
         "codeowner": "@grafana/observability-logs",
         "frontend": true
@@ -1570,11 +1576,14 @@
     {
       "metadata": {
         "name": "exploreLogsShardSplitting",
-        "resourceVersion": "1724938092041",
-        "creationTimestamp": "2024-08-29T13:55:59Z"
+        "resourceVersion": "1740084492165",
+        "creationTimestamp": "2024-08-29T13:55:59Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-02-20 20:48:12.165306 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Used in Explore Logs to split queries into multiple queries based on the number of shards",
+        "description": "Used in Logs Drilldown to split queries into multiple queries based on the number of shards",
         "stage": "experimental",
         "codeowner": "@grafana/observability-logs",
         "frontend": true
@@ -1583,14 +1592,14 @@
     {
       "metadata": {
         "name": "exploreMetrics",
-        "resourceVersion": "1737658563230",
+        "resourceVersion": "1740084233934",
         "creationTimestamp": "2024-04-09T18:15:18Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2025-01-23 18:56:03.23086 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2025-02-20 20:43:53.934892 +0000 UTC"
         }
       },
       "spec": {
-        "description": "Enables the new Explore Metrics core app",
+        "description": "Enables the new Grafana Metrics Drilldown core app",
         "stage": "GA",
         "codeowner": "@grafana/observability-metrics",
         "frontend": true,
