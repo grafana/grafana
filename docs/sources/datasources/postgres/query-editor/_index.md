@@ -50,7 +50,7 @@ refs:
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/
   templates:
     - pattern: /docs/grafana/
-      destination: docs/grafana/<GRAFANA_VERSION>/dashboards/variables/#templates
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/#templates
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/dashboards/variables/#templates
 ---
