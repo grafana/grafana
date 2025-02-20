@@ -109,7 +109,7 @@ function createCommonEmbeddedTrailStateProps(item: QueryMetric, dashboard: Dashb
 
   const commonProps = {
     scene: embeddedTrail,
-    title: 'Metrics Drilldown',
+    title: 'Metrics drilldown',
   };
 
   return commonProps;
