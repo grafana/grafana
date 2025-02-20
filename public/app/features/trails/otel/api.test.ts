@@ -30,10 +30,10 @@ jest.mock('@grafana/runtime', () => ({
         requestId?: string,
         options?: Partial<BackendSrvRequest>
       ) => {
-        // explore-metrics-otel-resources
+        // metrics-drilldown-otel-resources
         if (
-          requestId === 'explore-metrics-otel-check-total-count(target_info{}) by (job, instance)' ||
-          requestId === 'explore-metrics-otel-check-total-count(metric) by (job, instance)'
+          requestId === 'metrics-drilldown-otel-check-total-count(target_info{}) by (job, instance)' ||
+          requestId === 'metrics-drilldown-otel-check-total-count(metric) by (job, instance)'
         ) {
           return Promise.resolve({
             data: {
@@ -43,17 +43,17 @@ jest.mock('@grafana/runtime', () => ({
               ],
             },
           });
-        } else if (requestId === 'explore-metrics-otel-resources-deployment-env') {
+        } else if (requestId === 'metrics-drilldown-otel-resources-deployment-env') {
           return Promise.resolve({ data: ['env1', 'env2'] });
         } else if (
           requestId ===
-          'explore-metrics-otel-resources-metric-job-instance-metric{job=~"job1|job2",instance=~"instance1|instance2"}'
+          'metrics-drilldown-otel-resources-metric-job-instance-metric{job=~"job1|job2",instance=~"instance1|instance2"}'
         ) {
           // part of getFilteredResourceAttributes to get metric labels. We prioritize metric labels over resource attributes so we use these to filter
           return Promise.resolve({ data: ['promotedResourceAttribute'] });
         } else if (
           requestId ===
-          'explore-metrics-otel-resources-metric-job-instance-target_info{job=~"job1|job2",instance=~"instance1|instance2"}'
+          'metrics-drilldown-otel-resources-metric-job-instance-target_info{job=~"job1|job2",instance=~"instance1|instance2"}'
         ) {
           // part of getFilteredResourceAttributes to get instance labels
           return Promise.resolve({ data: ['promotedResourceAttribute', 'resourceAttribute'] });
