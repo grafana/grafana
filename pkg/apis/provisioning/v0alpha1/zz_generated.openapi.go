@@ -1745,7 +1745,7 @@ func schema_pkg_apis_provisioning_v0alpha1_SyncStatus(ref common.ReferenceCallba
 							},
 						},
 					},
-					"last_ref": {
+					"lastRef": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The repository ref when the last successful sync ran",
 							Type:        []string{"string"},

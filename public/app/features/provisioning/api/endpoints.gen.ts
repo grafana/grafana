@@ -802,7 +802,7 @@ export type RepositorySpec = {
      - `"github"`
      - `"local"` */
   type: 'github' | 'local';
-  /** UI driven Workflow taht allow changes to the contends of the repository. The order is relevant for defining the precedence of the workflows. When empty, the repository does not support any edits (eg, readonly) */
+  /** UI driven Workflow that allow changes to the contends of the repository. The order is relevant for defining the precedence of the workflows. When empty, the repository does not support any edits (eg, readonly) */
   workflows: ('branch' | 'write')[];
 };
 export type HealthStatus = {
@@ -822,12 +822,12 @@ export type ResourceCount = {
 export type SyncStatus = {
   /** When the sync job finished */
   finished?: number;
-  /** The repository hash when the last sync ran */
-  hash?: string;
   /** Incremental synchronization for versioned repositories */
   incremental?: boolean;
   /** The ID for the job that ran this sync */
   job?: string;
+  /** The repository ref when the last successful sync ran */
+  lastRef?: string;
   /** Summary messages (will be shown to users) */
   message: string[];
   /** When the next sync check is scheduled */

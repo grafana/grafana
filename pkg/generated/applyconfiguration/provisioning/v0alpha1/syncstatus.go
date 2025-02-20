@@ -17,7 +17,7 @@ type SyncStatusApplyConfiguration struct {
 	Finished    *int64                         `json:"finished,omitempty"`
 	Scheduled   *int64                         `json:"scheduled,omitempty"`
 	Message     []string                       `json:"message,omitempty"`
-	LastRef     *string                        `json:"last_ref,omitempty"`
+	LastRef     *string                        `json:"lastRef,omitempty"`
 	Incremental *bool                          `json:"incremental,omitempty"`
 }
 

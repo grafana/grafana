@@ -177,7 +177,7 @@ type SyncStatus struct {
 	Message []string `json:"message"`
 
 	// The repository ref when the last successful sync ran
-	LastRef string `json:"last_ref,omitempty"`
+	LastRef string `json:"lastRef,omitempty"`
 
 	// Incremental synchronization for versioned repositories
 	Incremental bool `json:"incremental,omitempty"`
