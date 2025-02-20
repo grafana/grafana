@@ -31,12 +31,16 @@ const targetOptions = [
   { value: 'folder', label: 'Managed folder' },
 ];
 
-const workflowOptionsGit: Array<ComboboxOption<WorkflowOption>> = [
-  { label: 'Branch', value: 'branch', description: 'Create a branch (and pull request) for changes' },
-  { label: 'Write', value: 'write', description: 'Allow writing updates to the remore repository' },
-];
-
-const workflowOptions: Array<ComboboxOption<WorkflowOption>> = [workflowOptionsGit[1]];
+export function GetWorkflowOptions(type?: 'github' | 'local'): Array<ComboboxOption<WorkflowOption>> {
+  const opts: Array<ComboboxOption<WorkflowOption>> = [
+    { label: 'Branch', value: 'branch', description: 'Create a branch (and pull request) for changes' },
+    { label: 'Write', value: 'write', description: 'Allow writing updates to the remore repository' },
+  ];
+  if (type === 'github') {
+    return opts;
+  }
+  return [opts[2]]; // only write
+}
 
 const appEvents = getAppEvents();
 
@@ -213,11 +217,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
           control={control}
           rules={{ required: 'This field is required.' }}
           render={({ field: { ref, ...field } }) => (
-            <MultiCombobox
-              options={type === 'github' ? workflowOptionsGit : workflowOptions}
-              placeholder={'Readonly repository'}
-              {...field}
-            />
+            <MultiCombobox options={GetWorkflowOptions(type)} placeholder={'Readonly repository'} {...field} />
           )}
         />
       </Field>
