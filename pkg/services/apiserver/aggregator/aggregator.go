@@ -145,6 +145,11 @@ func CreateAggregatorConfig(commandOptions *options.Options, sharedConfig generi
 		aggregatorConfig.ExtraConfig.ProxyClientKeyFile = commandOptions.KubeAggregatorOptions.ProxyClientKeyFile
 	}
 
+	customExtraConfig := &CustomExtraConfig{
+		DiscoveryOnlyProxyClientCertFile: commandOptions.KubeAggregatorOptions.ProxyClientCertFile,
+		DiscoveryOnlyProxyClientKeyFile:  commandOptions.KubeAggregatorOptions.ProxyClientKeyFile,
+	}
+
 	if err := commandOptions.KubeAggregatorOptions.ApplyTo(aggregatorConfig, commandOptions.RecommendedOptions.Etcd); err != nil {
 		return nil, err
 	}
@@ -157,7 +162,7 @@ func CreateAggregatorConfig(commandOptions *options.Options, sharedConfig generi
 
 	// Exit early, if no remote services file is configured
 	if commandOptions.KubeAggregatorOptions.RemoteServicesFile == "" {
-		return NewConfig(aggregatorConfig, sharedInformerFactory, []builder.APIGroupBuilder{serviceAPIBuilder}, nil), nil
+		return NewConfig(aggregatorConfig, customExtraConfig, sharedInformerFactory, []builder.APIGroupBuilder{serviceAPIBuilder}, nil), nil
 	}
 
 	remoteServices, err := ReadRemoteServices(commandOptions.KubeAggregatorOptions.RemoteServicesFile)
@@ -177,12 +182,12 @@ func CreateAggregatorConfig(commandOptions *options.Options, sharedConfig generi
 		serviceClientSet: serviceClient,
 	}
 
-	return NewConfig(aggregatorConfig, sharedInformerFactory, []builder.APIGroupBuilder{serviceAPIBuilder}, remoteServicesConfig), nil
+	return NewConfig(aggregatorConfig, customExtraConfig, sharedInformerFactory, []builder.APIGroupBuilder{serviceAPIBuilder}, remoteServicesConfig), nil
 }
 
 // CreateAggregatorServer creates an aggregated server to layer into the existing apiserver
 // TODO: passing options temporarily as that allows us to pass in cert/key for client into AvailableController but skip it in the aggregator lib
-func CreateAggregatorServer(config *Config, optionsTemporary *options.KubeAggregatorOptions, delegateAPIServer genericapiserver.DelegationTarget, reg prometheus.Registerer) (*aggregatorapiserver.APIAggregator, error) {
+func CreateAggregatorServer(config *Config, delegateAPIServer genericapiserver.DelegationTarget, reg prometheus.Registerer) (*aggregatorapiserver.APIAggregator, error) {
 	aggregatorConfig := config.KubeAggregatorConfig
 	sharedInformerFactory := config.Informers
 	remoteServicesConfig := config.RemoteServicesConfig
@@ -260,8 +265,8 @@ func CreateAggregatorServer(config *Config, optionsTemporary *options.KubeAggreg
 	proxyCurrentCertKeyContentFunc := func() ([]byte, []byte) {
 		return nil, nil
 	}
-	if len(optionsTemporary.ProxyClientCertFile) > 0 && len(optionsTemporary.ProxyClientKeyFile) > 0 {
-		aggregatorProxyCerts, err := dynamiccertificates.NewDynamicServingContentFromFiles("aggregator-proxy-cert", optionsTemporary.ProxyClientCertFile, optionsTemporary.ProxyClientKeyFile)
+	if len(config.CustomExtraConfig.DiscoveryOnlyProxyClientCertFile) > 0 && len(config.CustomExtraConfig.DiscoveryOnlyProxyClientKeyFile) > 0 {
+		aggregatorProxyCerts, err := dynamiccertificates.NewDynamicServingContentFromFiles("aggregator-proxy-cert", config.CustomExtraConfig.DiscoveryOnlyProxyClientCertFile, config.CustomExtraConfig.DiscoveryOnlyProxyClientKeyFile)
 		if err != nil {
 			return nil, err
 		}

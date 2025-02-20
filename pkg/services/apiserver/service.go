@@ -507,7 +507,7 @@ func (s *service) createKubeAggregator(
 		return nil, err
 	}
 
-	return kubeaggregator.CreateAggregatorServer(aggregatorConfig, s.options.KubeAggregatorOptions, server, reg)
+	return kubeaggregator.CreateAggregatorServer(aggregatorConfig, server, reg)
 }
 
 func (s *service) startKubeAggregator(
