@@ -18,6 +18,7 @@ import { isInCloneChain } from '../utils/clone';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { DashboardAddPane } from './DashboardAddPane';
+import { DashboardOutline } from './DashboardOutline';
 import { ElementEditPane } from './ElementEditPane';
 import { ElementSelection } from './ElementSelection';
 import { useEditableElement } from './useEditableElement';
@@ -226,7 +227,7 @@ export function DashboardEditPaneRenderer({ editPane, isCollapsed, onToggleColla
       <div className={styles.tabContent}>
         {tab === 'add' && <DashboardAddPane editPane={editPane} />}
         {tab === 'configure' && <ElementEditPane element={editableElement} key={editableElement.typeName} />}
-        {tab === 'outline' && <div />}
+        {tab === 'outline' && <DashboardOutline editPane={editPane} />}
       </div>
     </div>
   );

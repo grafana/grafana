@@ -41,6 +41,10 @@ export class TabItem
     });
   }
 
+  public getEditableElementInfo() {
+    return { typeId: 'tab', icon: 'tag-alt' as const, name: this.state.title ?? '' };
+  }
+
   public getLayout(): DashboardLayoutManager {
     return this.state.layout;
   }

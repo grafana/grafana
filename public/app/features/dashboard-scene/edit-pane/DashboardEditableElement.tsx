@@ -15,6 +15,10 @@ export class DashboardEditableElement implements EditableDashboardElement {
 
   public constructor(private dashboard: DashboardScene) {}
 
+  public getEditableElementInfo() {
+    return { typeId: 'dashboard', icon: 'apps' as const, name: 'Dashbard' };
+  }
+
   public useEditPaneOptions(): OptionsPaneCategoryDescriptor[] {
     const dashboard = this.dashboard;
 
