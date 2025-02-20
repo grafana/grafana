@@ -9,7 +9,7 @@ import { t } from 'app/core/internationalization';
 
 import { isPreinstalledPlugin } from '../helpers';
 import { useInstall } from '../state/hooks';
-import { Version } from '../types';
+import { PluginStatus, Version } from '../types';
 
 const PLUGINS_VERSION_PAGE_UPGRADE_INTERACTION_EVENT_NAME = 'plugins_upgrade_clicked';
 const PLUGINS_VERSION_PAGE_CHANGE_INTERACTION_EVENT_NAME = 'plugins_downgrade_clicked';
@@ -39,6 +39,7 @@ export const VersionInstallButton = ({
   const styles = useStyles2(getStyles);
 
   const isDowngrade = installedVersion && gt(installedVersion, version.version);
+  let installType = PluginStatus.DOWNGRADE;
 
   useEffect(() => {
     if (installedVersion === version.version) {
@@ -70,7 +71,7 @@ export const VersionInstallButton = ({
       });
     }
 
-    install(pluginId, version.version, true);
+    install(pluginId, version.version, installType);
     setIsInstalling(true);
     onConfirmInstallation();
   };
@@ -97,8 +98,11 @@ export const VersionInstallButton = ({
 
   if (!installedVersion) {
     label = 'Install';
+    installType = PluginStatus.INSTALL;
   } else if (gt(version.version, installedVersion)) {
     label = 'Upgrade';
+    installType = PluginStatus.UPDATE;
+
     if (isPreinstalled.withVersion) {
       // Hide button if the plugin is preinstalled with a specific version
       hidden = true;
