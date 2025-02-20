@@ -2,11 +2,12 @@ import { render, screen } from '@testing-library/react';
 
 import { createTheme } from '@grafana/data';
 
+import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
 import { createLogLine } from '../__mocks__/logRow';
 
 import { getStyles, LogLine } from './LogLine';
 import { LogListModel } from './processing';
-import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
+import userEvent from '@testing-library/user-event';
 
 const theme = createTheme();
 const styles = getStyles(theme);
@@ -82,4 +83,23 @@ describe('LogLine', () => {
     expect(screen.getByText(log.body)).toBeInTheDocument();
     expect(screen.getByText('luna')).toBeInTheDocument();
   });
+
+  describe('Log line menu', () => {
+    test('Renders a log line menu', async () => {
+      render(
+        <LogLine
+          displayedFields={[]}
+          index={0}
+          log={log}
+          showTime={true}
+          style={{}}
+          styles={styles}
+          wrapLogMessage={false}
+        />
+      );
+      expect(screen.queryByText('Copy log line')).not.toBeInTheDocument();
+      await userEvent.click(screen.getByLabelText('Log menu'));
+      expect(screen.getByText('Copy log line')).toBeInTheDocument();
+    });
+  })
 });
