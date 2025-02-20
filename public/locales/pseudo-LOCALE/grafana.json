@@ -1337,6 +1337,12 @@
       "time-zone-label": "Ŧįmę žőŉę",
       "week-start-label": "Ŵęęĸ şŧäřŧ"
     },
+    "time-regions": {
+      "advanced-description-cron": "Cřőŉ şyŉŧäχ",
+      "advanced-description-rest": " ŧő đęƒįŉę ä řęčūřřęŉčę şčĥęđūľę äŉđ đūřäŧįőŉ",
+      "advanced-description-use": "Ůşę ",
+      "advanced-label": "Åđväŉčęđ"
+    },
     "variables": {
       "title": "Väřįäþľęş"
     },
