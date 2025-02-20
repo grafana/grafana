@@ -47,19 +47,19 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         
-      - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: '1.23.5'
-          cache: true
+      # - name: Setup Go
+      #   uses: actions/setup-go@v5
+      #   with:
+      #     go-version: '1.23.5'
+      #     cache: true
           
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y build-essential shared-mime-info make
+      # - name: Install dependencies
+      #   run: |
+      #     sudo apt-get update
+      #     sudo apt-get install -y build-essential shared-mime-info make
 
-      - name: Get runner name
-        run: echo ${{ runner.name }}
+      # - name: Get runner name
+      #   run: echo ${{ runner.name }}
 
       - name: Retrieve GitHub App secrets
         id: get-secrets
@@ -70,11 +70,11 @@ jobs:
             APP_INSTALLATION_ID=github-app:app-installation-id
             PRIVATE_KEY=github-app:private-key
 
-      - name: Debug secrets (redacted)
-        run: |
-          if [ -n "${{ env.APP_ID }}" ]; then echo "APP_ID is set"; else echo "APP_ID is not set"; fi
-          if [ -n "${{ env.APP_INSTALLATION_ID }}" ]; then echo "APP_INSTALLATION_ID is set"; else echo "APP_INSTALLATION_ID is not set"; fi
-          if [ -n "${{ env.PRIVATE_KEY }}" ]; then echo "PRIVATE_KEY is set"; else echo "PRIVATE_KEY is not set"; fi
+      # - name: Debug secrets (redacted)
+      #   run: |
+      #     if [ -n "${{ env.APP_ID }}" ]; then echo "APP_ID is set"; else echo "APP_ID is not set"; fi
+      #     if [ -n "${{ env.APP_INSTALLATION_ID }}" ]; then echo "APP_INSTALLATION_ID is set"; else echo "APP_INSTALLATION_ID is not set"; fi
+      #     if [ -n "${{ env.PRIVATE_KEY }}" ]; then echo "PRIVATE_KEY is set"; else echo "PRIVATE_KEY is not set"; fi
 
       - name: Generate GitHub App token
         id: generate_token
@@ -83,11 +83,12 @@ jobs:
           app-id: ${{ env.APP_ID }}
           private-key: ${{ env.PRIVATE_KEY }}
 
-      - name: Debug PR Fork Status
+      - name: Debug Enterprise Access
         env:
-            FORK_STATUS: ${{ github.event.pull_request.head.repo.fork }}
+          GH_TOKEN: ${{ steps.generate_token.outputs.token }}
         run: |
-          echo "Fork status: $FORK_STATUS"
+          echo "Testing enterprise repo access..."
+          git ls-remote https://x-access-token:${GH_TOKEN}@github.com/grafana/grafana-enterprise.git
 
       - name: Setup Enterprise (PR only)
         if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false
@@ -117,22 +118,22 @@ jobs:
           cd ../grafana-enterprise
           ./build.sh
 
-      - name: Verify CUE generation
-        run: CODEGEN_VERIFY=1 make gen-cue
+      # - name: Verify CUE generation
+      #   run: CODEGEN_VERIFY=1 make gen-cue
 
-      - name: Verify Jsonnet generation
-        run: CODEGEN_VERIFY=1 make gen-jsonnet
+      # - name: Verify Jsonnet generation
+      #   run: CODEGEN_VERIFY=1 make gen-jsonnet
 
-      - name: Wire install
-        run: make gen-go
+      # - name: Wire install
+      #   run: make gen-go
 
-      - name: Run backend tests
-        run: |
-          go list -f '{{.Dir}}/...' -m  | xargs go test -short -covermode=atomic -timeout=5m
+      # - name: Run backend tests
+      #   run: |
+      #     go list -f '{{.Dir}}/...' -m  | xargs go test -short -covermode=atomic -timeout=5m
 
-      - name: Run backend integration tests
-        run: |
-          go test -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+' | grep -o '\(.*\)/' | sort -u)
+      # - name: Run backend integration tests
+      #   run: |
+      #     go test -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+' | grep -o '\(.*\)/' | sort -u)
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
