@@ -439,6 +439,9 @@ func (r *githubClient) CreateWebhook(ctx context.Context, owner, repository stri
 	if errors.As(err, &ghErr) && ghErr.Response.StatusCode == http.StatusServiceUnavailable {
 		return WebhookConfig{}, ErrServiceUnavailable
 	}
+	if err != nil {
+		return WebhookConfig{}, err
+	}
 
 	return WebhookConfig{
 		ID: createdHook.GetID(),
