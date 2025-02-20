@@ -189,10 +189,8 @@ export function getCellColors(
   cellOptions: TableCellOptions,
   displayValue: DisplayValue
 ): CellColors {
-  // Calculate RBG value from our RGBA action hover colors given default
-  // light and dark theme background colors.
-  const rgbaToRgb: { [key: string]: string } = { light: '#e5e5e6', dark: '#35373d' };
-  const autoCellBackgroundHoverColor = rgbaToRgb[theme.colors.mode];
+  // Convert RGBA hover color to hex to prevent transparency issues on cell hover
+  const autoCellBackgroundHoverColor = convertRGBAToHex(theme.colors.background.primary, theme.colors.action.hover);
 
   // How much to darken elements depends upon if we're in dark mode
   const darkeningFactor = theme.isDark ? 1 : -0.7;
@@ -268,3 +266,10 @@ export const getCellLinks = (field: Field, rowIdx: number) => {
 export const extractPixelValue = (spacing: string | number): number => {
   return typeof spacing === 'number' ? spacing : parseFloat(spacing) || 0;
 };
+
+/** Converts an RGBA color to hex by blending it with a background color */
+function convertRGBAToHex(backgroundColor: string, rgbaColor: string): string {
+  const bg = tinycolor(backgroundColor);
+  const rgba = tinycolor(rgbaColor);
+  return tinycolor.mix(bg, rgba, rgba.getAlpha() * 100).toHexString();
+}
