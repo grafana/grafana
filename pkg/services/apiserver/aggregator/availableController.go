@@ -200,7 +200,7 @@ func (c *AvailableConditionController) sync(key string) error {
 
 	// actually try to hit the discovery endpoint when it isn't local and when we're routing as a service.
 	if apiService.Spec.Service != nil && c.serviceResolver != nil {
-		attempts := 3
+		attempts := 5
 		results := make(chan error, attempts)
 		for i := 0; i < attempts; i++ {
 			go func() {
