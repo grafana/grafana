@@ -22,9 +22,9 @@ import (
 )
 
 var gvrKeepers = schema.GroupVersionResource{
-	Group:    "secret.grafana.app",
-	Version:  "v0alpha1",
-	Resource: "keepers",
+	Group:    secretv0alpha1.GROUP,
+	Version:  secretv0alpha1.VERSION,
+	Resource: secretv0alpha1.KeeperResourceInfo.GetName(),
 }
 
 func TestIntegrationKeeper(t *testing.T) {
@@ -567,11 +567,12 @@ func TestIntegrationKeeper(t *testing.T) {
 		})
 
 		t.Run("LIST", func(t *testing.T) {
-			// List Keepers from the limited client should return only 1, but it doesn't.
+			// List Keepers from the limited client should return only 1.
 			rawList, err := clientScopedLimited.Resource.List(ctx, metav1.ListOptions{})
 			require.NoError(t, err)
 			require.NotNil(t, rawList)
-			require.Len(t, rawList.Items, 1) // TODO: Can view both Keepers. How can we limit that?
+			require.Len(t, rawList.Items, 1)
+			require.Equal(t, keeperName, rawList.Items[0].GetName())
 
 			// List Keepers from the scope-all client should return all of them.
 			rawList, err = clientScopedAll.Resource.List(ctx, metav1.ListOptions{})

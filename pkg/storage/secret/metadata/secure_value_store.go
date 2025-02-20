@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	claims "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
@@ -17,7 +18,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 )
 
-func ProvideSecureValueStorage(db db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles) (contracts.SecureValueStorage, error) {
+func ProvideSecureValueStorage(db db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, accessClient claims.AccessClient) (contracts.SecureValueStorage, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) ||
 		!features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) {
 		return &secureValueStorage{}, nil
@@ -27,12 +28,13 @@ func ProvideSecureValueStorage(db db.DB, cfg *setting.Cfg, features featuremgmt.
 		return nil, fmt.Errorf("failed to run migrations: %w", err)
 	}
 
-	return &secureValueStorage{db: db}, nil
+	return &secureValueStorage{db: db, accessClient: accessClient}, nil
 }
 
 // secureValueStorage is the actual implementation of the secure value (metadata) storage.
 type secureValueStorage struct {
-	db db.DB
+	db           db.DB
+	accessClient claims.AccessClient
 }
 
 func (s *secureValueStorage) Create(ctx context.Context, sv *secretv0alpha1.SecureValue) (*secretv0alpha1.SecureValue, error) {
@@ -206,9 +208,19 @@ func (s *secureValueStorage) Delete(ctx context.Context, namespace xkube.Namespa
 }
 
 func (s *secureValueStorage) List(ctx context.Context, namespace xkube.Namespace, options *internalversion.ListOptions) (*secretv0alpha1.SecureValueList, error) {
-	_, ok := claims.AuthInfoFrom(ctx)
+	user, ok := claims.AuthInfoFrom(ctx)
 	if !ok {
 		return nil, fmt.Errorf("missing auth info in context")
+	}
+
+	hasPermissionFor, err := s.accessClient.Compile(ctx, user, claims.ListRequest{
+		Group:     secretv0alpha1.GROUP,
+		Resource:  secretv0alpha1.SecureValuesResourceInfo.GetName(),
+		Namespace: namespace.String(),
+		Verb:      utils.VerbGet, // Why not VerbList?
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to compile checker: %w", err)
 	}
 
 	labelSelector := options.LabelSelector
@@ -218,7 +230,7 @@ func (s *secureValueStorage) List(ctx context.Context, namespace xkube.Namespace
 
 	secureValueRows := make([]*secureValueDB, 0)
 
-	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err = s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		cond := &secureValueDB{Namespace: namespace.String()}
 
 		if err := sess.Find(&secureValueRows, cond); err != nil {
@@ -234,6 +246,11 @@ func (s *secureValueStorage) List(ctx context.Context, namespace xkube.Namespace
 	secureValues := make([]secretv0alpha1.SecureValue, 0, len(secureValueRows))
 
 	for _, row := range secureValueRows {
+		// Check whether the user has permission to access this specific SecureValue in the namespace.
+		if !hasPermissionFor(row.Namespace, row.Name, "") {
+			continue
+		}
+
 		secureValue, err := row.toKubernetes()
 		if err != nil {
 			return nil, fmt.Errorf("convert to kubernetes object: %w", err)
