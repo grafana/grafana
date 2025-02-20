@@ -120,6 +120,10 @@ export interface ImageCellProps extends CellNGProps {
   height: number;
 }
 
+export interface ActionCellProps {
+  actions?: ActionModel[];
+}
+
 export interface SparklineCellProps extends BarGaugeCellProps {}
 
 export interface CellColors {
