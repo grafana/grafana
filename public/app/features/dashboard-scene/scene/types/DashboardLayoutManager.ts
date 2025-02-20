@@ -80,7 +80,7 @@ export interface DashboardLayoutManager<S = {}> extends SceneObject {
    * @param ancestorKey
    * @param isSource
    */
-  cloneLayout?(ancestorKey: string, isSource: boolean): DashboardLayoutManager;
+  cloneLayout(ancestorKey: string, isSource: boolean): DashboardLayoutManager;
 }
 
 export interface LayoutManagerSerializer {

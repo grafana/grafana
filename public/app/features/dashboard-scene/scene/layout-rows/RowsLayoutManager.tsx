@@ -77,6 +77,10 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
     return false;
   }
 
+  public cloneLayout(ancestorKey: string, isSource: boolean): DashboardLayoutManager {
+    throw new Error('Method not implemented.');
+  }
+
   public addNewRow() {
     this.setState({ rows: [...this.state.rows, new RowItem()] });
   }
