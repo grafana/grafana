@@ -562,6 +562,8 @@ require (
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
 
+require github.com/google/go-github/v66 v66.0.0
+
 require github.com/google/go-github/v64 v64.0.0 // indirect
 
 // Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream

@@ -20,8 +20,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	gh "github.com/google/go-github/v69/github"
-	ghmock "github.com/migueleliasweb/go-github-mock/src/mock"
-
 	dashboard "github.com/grafana/grafana/pkg/apis/dashboard/v1alpha1"
 	folder "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
@@ -31,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	ghmock "github.com/migueleliasweb/go-github-mock/src/mock"
 )
 
 func TestMain(m *testing.M) {
@@ -98,37 +97,43 @@ func TestIntegrationProvisioning(t *testing.T) {
 			ghmock.WithRequestMatchHandler(
 				ghmock.GetUser,
 				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-					_, _ = w.Write(ghmock.MustMarshal(&gh.User{}))
+					_, err := w.Write(ghmock.MustMarshal(&gh.User{}))
+					require.NoError(t, err)
 				}),
 			),
 			ghmock.WithRequestMatchHandler(
 				ghmock.GetReposHooksByOwnerByRepo,
 				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-					_, _ = w.Write(ghmock.MustMarshal([]*gh.Hook{}))
+					_, err := w.Write(ghmock.MustMarshal([]*gh.Hook{}))
+					require.NoError(t, err)
 				}),
 			),
 			ghmock.WithRequestMatchHandler(
 				ghmock.PostReposHooksByOwnerByRepo,
 				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-					_, _ = w.Write(ghmock.MustMarshal(&gh.Hook{}))
+					_, err := w.Write(ghmock.MustMarshal(&gh.Hook{}))
+					require.NoError(t, err)
 				}),
 			),
 			ghmock.WithRequestMatchHandler(
 				ghmock.GetReposByOwnerByRepo,
 				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-					_, _ = w.Write(ghmock.MustMarshal(&gh.Repository{}))
+					_, err := w.Write(ghmock.MustMarshal(&gh.Repository{}))
+					require.NoError(t, err)
 				}),
 			),
 			ghmock.WithRequestMatchHandler(
 				ghmock.GetReposBranchesByOwnerByRepoByBranch,
 				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-					_, _ = w.Write(ghmock.MustMarshal(&gh.Branch{}))
+					_, err := w.Write(ghmock.MustMarshal(&gh.Branch{}))
+					require.NoError(t, err)
 				}),
 			),
 			ghmock.WithRequestMatchHandler(
 				ghmock.GetReposGitTreesByOwnerByRepoByTreeSha,
 				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-					_, _ = w.Write(ghmock.MustMarshal(&gh.Tree{}))
+					_, err := w.Write(ghmock.MustMarshal(&gh.Tree{}))
+					require.NoError(t, err)
 				}),
 			),
 			ghmock.WithRequestMatchHandler(
@@ -192,14 +197,14 @@ func TestIntegrationProvisioning(t *testing.T) {
 		cleanSlate(t)
 
 		helper.GetEnv().GitHubFactory.Client = ghmock.NewMockedHTTPClient(
-			ghmock.WithRequestMatch(ghmock.GetUser, gh.User{Name: gh.String("github-user")}),
+			ghmock.WithRequestMatch(ghmock.GetUser, gh.User{Name: gh.Ptr("github-user")}),
 			ghmock.WithRequestMatch(ghmock.GetReposHooksByOwnerByRepo, []*gh.Hook{}),
-			ghmock.WithRequestMatch(ghmock.PostReposHooksByOwnerByRepo, gh.Hook{ID: gh.Int64(123)}),
-			ghmock.WithRequestMatch(ghmock.GetReposByOwnerByRepo, gh.Repository{ID: gh.Int64(234)}),
+			ghmock.WithRequestMatch(ghmock.PostReposHooksByOwnerByRepo, gh.Hook{ID: gh.Ptr(int64(123))}),
+			ghmock.WithRequestMatch(ghmock.GetReposByOwnerByRepo, gh.Repository{ID: gh.Ptr(int64(234))}),
 			ghmock.WithRequestMatch(ghmock.GetReposBranchesByOwnerByRepoByBranch, gh.Branch{}),
 			ghmock.WithRequestMatch(ghmock.GetReposGitTreesByOwnerByRepoByTreeSha, gh.Tree{
-				SHA:       gh.String("deadbeef"),
-				Truncated: gh.Bool(false),
+				SHA:       gh.Ptr("deadbeef"),
+				Truncated: gh.Ptr(false),
 				Entries: []*gh.TreeEntry{
 					treeEntry("README.md", []byte("# Hello, World!")),
 					treeEntry("dashboard.json", helper.LoadFile("testdata/all-panels.json")),
@@ -407,12 +412,12 @@ func treeEntry(fpath string, content []byte) *gh.TreeEntry {
 	}
 
 	return &gh.TreeEntry{
-		SHA:     gh.String(hex.EncodeToString(sha[:])),
+		SHA:     gh.Ptr(hex.EncodeToString(sha[:])),
 		Path:    &fpath,
-		Size:    gh.Int(len(content)),
+		Size:    gh.Ptr(len(content)),
 		Type:    &typ,
 		Mode:    &mode,
-		Content: gh.String(string(content)),
+		Content: gh.Ptr(string(content)),
 	}
 }
 
@@ -424,12 +429,12 @@ func repoContent(fpath string, content []byte) *gh.RepositoryContent {
 	}
 
 	return &gh.RepositoryContent{
-		SHA:      gh.String(hex.EncodeToString(sha[:])),
-		Name:     gh.String(path.Base(fpath)),
+		SHA:      gh.Ptr(hex.EncodeToString(sha[:])),
+		Name:     gh.Ptr(path.Base(fpath)),
 		Path:     &fpath,
-		Size:     gh.Int(len(content)),
+		Size:     gh.Ptr(len(content)),
 		Type:     &typ,
-		Content:  gh.String(string(content)),
-		Encoding: gh.String("UTF-8"),
+		Content:  gh.Ptr(string(content)),
+		Encoding: gh.Ptr("UTF-8"),
 	}
 }

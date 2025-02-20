@@ -119,7 +119,7 @@ func (r *githubClient) GetTree(ctx context.Context, owner, repository, ref strin
 			},
 		}
 		if te.GetType() == "tree" {
-			rrc.real.Type = github.String("dir")
+			rrc.real.Type = github.Ptr("dir")
 		} else {
 			rrc.real.Type = te.Type
 		}
@@ -351,7 +351,7 @@ func (r *githubClient) CreateBranch(ctx context.Context, owner, repository, sour
 	}
 
 	if _, _, err := r.gh.Git.CreateRef(ctx, owner, repository, &github.Reference{
-		Ref: github.String(fmt.Sprintf("refs/heads/%s", branchName)),
+		Ref: github.Ptr(fmt.Sprintf("refs/heads/%s", branchName)),
 		Object: &github.GitObject{
 			SHA: baseRef.Commit.SHA,
 		},
