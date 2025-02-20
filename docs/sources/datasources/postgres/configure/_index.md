@@ -52,8 +52,6 @@ refs:
 
 This document provides instructions for configuring the PostgreSQL data source and explains available configuration options. For general information on managing data sources refer to [Data source management](ref:data-source-management).
 
-<!-- vale Grafana.ProductPossessives = NO -->
-<!-- vale Grafana.Spelling = NO -->
 
 ## Before you begin
 
