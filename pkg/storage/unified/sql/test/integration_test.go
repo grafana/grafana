@@ -18,9 +18,9 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	resourcetesting "github.com/grafana/grafana/pkg/storage/unified/resource/testing"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
+	unitest "github.com/grafana/grafana/pkg/storage/unified/testing"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -43,7 +43,7 @@ func TestIntegrationSQLStorageBackend(t *testing.T) {
 	require.NotNil(t, backend)
 	err = backend.Init(testutil.NewDefaultTestContext(t))
 	require.NoError(t, err)
-	resourcetesting.RunStorageBackendTest(t, backend)
+	unitest.RunStorageBackendTest(t, backend)
 }
 
 func TestClientServer(t *testing.T) {
