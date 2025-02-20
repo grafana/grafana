@@ -161,7 +161,6 @@ alertingDisableSendAlertsExternal,experimental,@grafana/alerting-squad,false,fal
 preserveDashboardStateWhenNavigating,experimental,@grafana/dashboards-squad,false,false,false
 alertingCentralAlertHistory,experimental,@grafana/alerting-squad,false,false,true
 pluginProxyPreserveTrailingSlash,GA,@grafana/plugins-platform-backend,false,false,false
-sqlQuerybuilderFunctionParameters,experimental,@grafana/oss-big-tent,false,false,true
 azureMonitorPrometheusExemplars,preview,@grafana/partner-datasources,false,false,false
 pinNavItems,GA,@grafana/grafana-frontend-platform,false,false,false
 authZGRPCServer,experimental,@grafana/identity-access-team,false,false,false
@@ -192,6 +191,7 @@ rolePickerDrawer,experimental,@grafana/identity-access-team,false,false,false
 unifiedStorageSearch,experimental,@grafana/search-and-storage,false,false,false
 unifiedStorageSearchSprinkles,experimental,@grafana/search-and-storage,false,false,false
 unifiedStorageSearchPermissionFiltering,experimental,@grafana/search-and-storage,false,false,false
+managedDualWriter,experimental,@grafana/search-and-storage,false,false,false
 pluginsSriChecks,experimental,@grafana/plugins-platform-backend,false,false,false
 unifiedStorageBigObjectsSupport,experimental,@grafana/search-and-storage,false,false,false
 timeRangeProvider,experimental,@grafana/grafana-frontend-platform,false,false,false

@@ -11,8 +11,6 @@ import (
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 )
 
-const ClusterNamespace = "cluster"
-
 const (
 	TypeUser           string = "user"
 	TypeServiceAccount string = "service-account"

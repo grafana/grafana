@@ -78,11 +78,8 @@ func (s *Server) IsHealthy(ctx context.Context) (bool, error) {
 	return err == nil, nil
 }
 
-func (s *Server) getContextuals(ctx context.Context, subject string) (*openfgav1.ContextualTupleKeys, error) {
-	contextuals, err := s.getGlobalAuthorizationContext(ctx)
-	if err != nil {
-		return nil, err
-	}
+func (s *Server) getContextuals(subject string) (*openfgav1.ContextualTupleKeys, error) {
+	contextuals := make([]*openfgav1.TupleKey, 0)
 
 	if strings.HasPrefix(subject, common.TypeRenderService+":") {
 		contextuals = append(
@@ -104,28 +101,4 @@ func (s *Server) getContextuals(ctx context.Context, subject string) (*openfgav1
 	}
 
 	return nil, nil
-}
-
-func (s *Server) getGlobalAuthorizationContext(ctx context.Context) ([]*openfgav1.TupleKey, error) {
-	const cacheKey = "global_authorization_context"
-	cached, found := s.cache.Get(cacheKey)
-	if found {
-		return cached.([]*openfgav1.TupleKey), nil
-	}
-
-	res, err := s.Read(ctx, &authzextv1.ReadRequest{
-		Namespace: common.ClusterNamespace,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	contextualTuples := make([]*openfgav1.TupleKey, 0, len(res.GetTuples()))
-	tuples := common.ToOpenFGATuples(res.GetTuples())
-	for _, t := range tuples {
-		contextualTuples = append(contextualTuples, t.GetKey())
-	}
-
-	s.cache.SetDefault(cacheKey, contextualTuples)
-	return contextualTuples, nil
 }
