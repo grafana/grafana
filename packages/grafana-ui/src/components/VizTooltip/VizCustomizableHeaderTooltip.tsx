@@ -5,11 +5,11 @@ import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes';
 
-interface VizCustomizableTooltipHeaderProps {
+interface Props {
   value: string | number | React.ReactNode;
 }
 
-export const VizCustomizableTooltipHeader = ({ value }: VizCustomizableTooltipHeaderProps) => {
+export const VizCustomizableHeaderTooltip = ({ value }: Props) => {
   const styles = useStyles2(getStyles);
 
   return (

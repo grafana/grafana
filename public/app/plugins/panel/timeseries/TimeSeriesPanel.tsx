@@ -4,7 +4,7 @@ import { PanelProps, DataFrameType, DashboardCursorSync, formattedValueToString 
 import { PanelDataErrorView } from '@grafana/runtime';
 import { TooltipDisplayMode, VizOrientation } from '@grafana/schema';
 import { EventBusPlugin, KeyboardPlugin, TooltipPlugin2, usePanelContext } from '@grafana/ui';
-import { VizCustomizableTooltipHeader } from '@grafana/ui/src/components/VizTooltip/VizTooltipCustomizableHeader';
+import { VizCustomizableHeaderTooltip } from '@grafana/ui/src/components/VizTooltip/VizCustomizableHeaderTooltip';
 import { TimeRange2, TooltipHoverMode } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2';
 import { TimeSeries } from 'app/core/components/TimeSeries/TimeSeries';
 import { config } from 'app/core/config';
@@ -143,7 +143,7 @@ export const TimeSeriesPanel = ({
                       maxHeight={options.tooltip.maxHeight}
                       replaceVariables={replaceVariables}
                       dataLinks={dataLinks}
-                      customHeader={<VizCustomizableTooltipHeader value={headerValue.value} />}
+                      customHeader={<VizCustomizableHeaderTooltip value={headerValue.value} />}
                     />
                   ) : (
                     <TimeSeriesTooltip
