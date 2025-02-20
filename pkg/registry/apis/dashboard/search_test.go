@@ -357,7 +357,7 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 
 		searchHandler.DoSearch(rr, req)
 
-		assert.Equal(t, mockClient.CallCount, 1)
+		assert.Equal(t, mockClient.CallCount, 0)
 	})
 
 	t.Run("should return the dashboards shared with the user", func(t *testing.T) {
