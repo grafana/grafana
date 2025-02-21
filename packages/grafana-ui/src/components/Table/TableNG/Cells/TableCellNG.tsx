@@ -7,9 +7,8 @@ import { TableAutoCellOptions, TableCellDisplayMode } from '@grafana/schema';
 import { useStyles2 } from '../../../../themes';
 import { IconButton } from '../../../IconButton/IconButton';
 import { TableCellInspectorMode } from '../../TableCellInspector';
-import { getTextAlign } from '../../utils';
 import { CellColors } from '../types';
-import { getCellColors } from '../utils';
+import { getCellColors, getTextAlign } from '../utils';
 
 import { ActionsCell } from './ActionsCell';
 import AutoCell from './AutoCell';

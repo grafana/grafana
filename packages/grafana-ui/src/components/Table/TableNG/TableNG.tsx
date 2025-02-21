@@ -15,21 +15,21 @@ import {
   ReducerID,
 } from '@grafana/data';
 import { TableCellHeight } from '@grafana/schema';
-import { getScrollbarWidth, Pagination } from '@grafana/ui';
 
 import { useStyles2, useTheme2 } from '../../../themes';
 import { Trans } from '../../../utils/i18n';
+import { getScrollbarWidth } from '../../../utils/scrollbar';
 import { ContextMenu } from '../../ContextMenu/ContextMenu';
 import { MenuItem } from '../../Menu/MenuItem';
+import { Pagination } from '../../Pagination/Pagination';
 import { ScrollContainer } from '../../ScrollContainer/ScrollContainer';
 import { TableCellInspector, TableCellInspectorMode } from '../TableCellInspector';
-import { TableNGProps } from '../types';
-import { getTextAlign } from '../utils';
 
 import { HeaderCell } from './Cells/HeaderCell';
 import { RowExpander } from './Cells/RowExpander';
 import { TableCellNG } from './Cells/TableCellNG';
-import { getRowHeight, shouldTextOverflow, getFooterItemNG } from './utils';
+import { TableNGProps, FilterType, TableRow } from './types';
+import { getRowHeight, shouldTextOverflow, getFooterItemNG, getTextAlign } from './utils';
 
 const DEFAULT_CELL_PADDING = 6;
 const COLUMN_MIN_WIDTH = 150;
@@ -38,19 +38,11 @@ const SMALL_PAGINATION_LIMIT = 750;
 const MAX_CELL_HEIGHT = 48;
 const SCROLL_BAR_WIDTH = getScrollbarWidth();
 
-type TableRow = Record<string, unknown>;
-
 interface TableColumn extends Column<TableRow> {
   key: string;
   name: string;
   field: Field;
 }
-
-export type FilterType = {
-  [key: string]: {
-    filteredSet: Set<string>;
-  };
-};
 
 /**
  * getIsNestedTable is a helper function that takes a DataFrame and returns a

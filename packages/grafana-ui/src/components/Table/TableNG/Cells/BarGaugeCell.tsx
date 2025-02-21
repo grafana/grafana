@@ -5,9 +5,8 @@ import { BarGaugeDisplayMode, BarGaugeValueMode, TableCellDisplayMode } from '@g
 
 import { BarGauge } from '../../../BarGauge/BarGauge';
 import { DataLinksContextMenu, DataLinksContextMenuApi } from '../../../DataLinks/DataLinksContextMenu';
-import { getAlignmentFactor, getCellOptions } from '../../utils';
 import { BarGaugeCellProps } from '../types';
-import { extractPixelValue } from '../utils';
+import { extractPixelValue, getCellOptions, getAlignmentFactor } from '../utils';
 
 const defaultScale: ThresholdsConfig = {
   mode: ThresholdsMode.Absolute,
