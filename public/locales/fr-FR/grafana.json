@@ -1337,6 +1337,12 @@
       "time-zone-label": "Fuseau horaire",
       "week-start-label": "Début de la semaine"
     },
+    "time-regions": {
+      "advanced-description-cron": "",
+      "advanced-description-rest": "",
+      "advanced-description-use": "",
+      "advanced-label": ""
+    },
     "variables": {
       "title": "Variables"
     },
@@ -1419,6 +1425,11 @@
   },
   "explore": {
     "add-to-dashboard": "Ajouter au tableau de bord",
+    "drilldownInfo": {
+      "action": "",
+      "description": "",
+      "title": ""
+    },
     "logs": {
       "logs-volume": {
         "add-filters": "",
@@ -2499,6 +2510,9 @@
     "detect": {
       "title": "Détecter"
     },
+    "drilldown": {
+      "title": ""
+    },
     "explore": {
       "title": "Explorer"
     },
@@ -2714,6 +2728,7 @@
       "close": "Fermer le menu",
       "dock": "Ancrer le menu",
       "list-label": "Navigation",
+      "new": "",
       "open": "",
       "undock": "Ancrer le menu"
     },
