@@ -1,12 +1,3 @@
-<!-- 11.5.0 START -->
-
-# 11.5.0 (2025-01-22)
-
-### Features and enhancements
-
-- **Tracing:** introduce `insecure` option to configure in tracing/otlp
-
-<!-- 11.5.0 END -->
 <!-- 11.4.0 START -->
 
 # 11.4.0 (2024-12-05)
