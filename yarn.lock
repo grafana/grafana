@@ -3614,7 +3614,6 @@ __metadata:
     "@floating-ui/react": "npm:0.27.3"
     "@grafana/data": "npm:11.6.0-pre"
     "@grafana/e2e-selectors": "npm:11.6.0-pre"
-    "@grafana/llm": "npm:0.12.0"
     "@grafana/plugin-ui": "npm:0.10.1"
     "@grafana/runtime": "npm:11.6.0-pre"
     "@grafana/schema": "npm:11.6.0-pre"
