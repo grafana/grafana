@@ -23,7 +23,7 @@ func NewSimDatabase() *SimDatabase {
 	}
 }
 
-// When a query to append a message to the outbox queue is received
+// When a query is received by the database
 func (db *SimDatabase) onQuery(query Message) {
 	switch query := query.(type) {
 	case simDatabaseAppendQuery:
