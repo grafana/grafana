@@ -10,6 +10,7 @@ import {
   DisplayValue,
   LinkModel,
   DisplayValueAlignmentFactors,
+  DataFrame,
 } from '@grafana/data';
 import {
   TableCellBackgroundDisplayMode,
@@ -21,7 +22,8 @@ import {
 
 import { getTextColorForAlphaBackground } from '../../../utils';
 
-import { CellColors, TableRow, TableFieldOptionsType } from './types';
+import { CellColors, TableRow, TableFieldOptionsType, TableNGProps } from './types';
+import { COLUMN } from './constants';
 
 export function getCellHeight(
   text: string,
@@ -410,3 +412,16 @@ function convertRGBAToHex(backgroundColor: string, rgbaColor: string): string {
   const rgba = tinycolor(rgbaColor);
   return tinycolor.mix(bg, rgba, rgba.getAlpha() * 100).toHexString();
 }
+
+/** Returns true if the DataFrame contains nested frames */
+export const getIsNestedTable = (dataFrame: DataFrame): boolean =>
+  dataFrame.fields.some(({ type }) => type === FieldType.nestedFrames);
+
+/** Returns the width of a column based on overrides, field config, and defaults */
+export const getColumnWidth = (field: Field, fieldConfig: TableNGProps['fieldConfig'], key: string): number => {
+  const overrideWidth = fieldConfig?.overrides
+    ?.find(({ matcher: { id, options } }) => id === 'byName' && options === key)
+    ?.properties?.find(({ id }) => id === 'width')?.value;
+
+  return overrideWidth ?? field.config?.custom?.width ?? fieldConfig?.defaults?.custom?.width ?? COLUMN.DEFAULT_WIDTH;
+};
