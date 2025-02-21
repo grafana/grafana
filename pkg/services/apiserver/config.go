@@ -43,6 +43,7 @@ func applyGrafanaConfig(cfg *setting.Cfg, features featuremgmt.FeatureToggles, o
 
 	o.KubeAggregatorOptions.ProxyClientCertFile = apiserverCfg.Key("proxy_client_cert_file").MustString("")
 	o.KubeAggregatorOptions.ProxyClientKeyFile = apiserverCfg.Key("proxy_client_key_file").MustString("")
+	o.KubeAggregatorOptions.LegacyClientCertAuth = apiserverCfg.Key("legacy_client_cert_auth").MustBool(true)
 
 	o.KubeAggregatorOptions.APIServiceCABundleFile = apiserverCfg.Key("apiservice_ca_bundle_file").MustString("")
 	o.KubeAggregatorOptions.RemoteServicesFile = apiserverCfg.Key("remote_services_file").MustString("")
