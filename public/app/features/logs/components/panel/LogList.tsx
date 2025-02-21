@@ -74,7 +74,7 @@ export const LogList = ({
     () => (wrapLogMessage ? [] : calculateFieldDimensions(processedLogs, displayedFields)),
     [displayedFields, processedLogs, wrapLogMessage]
   );
-  const styles = getStyles(dimensions);
+  const styles = getStyles(dimensions, { showTime });
 
   useEffect(() => {
     initVirtualization(theme);
@@ -171,12 +171,13 @@ export const LogList = ({
   );
 };
 
-function getStyles(dimensions: LogFieldDimension[]) {
+function getStyles(dimensions: LogFieldDimension[], { showTime }: { showTime: boolean }) {
+  const columns = showTime ? dimensions : dimensions.filter((_, index) => index > 0);
   return {
     logList: css({
       '& .unwrapped-log-line': {
         display: 'grid',
-        gridTemplateColumns: getGridTemplateColumns(dimensions),
+        gridTemplateColumns: getGridTemplateColumns(columns),
       },
     }),
   };
