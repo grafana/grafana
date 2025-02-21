@@ -15,11 +15,13 @@ type SimDatabase struct {
 	outboxQueue []any
 	// Map of namespace -> secret name -> secure value
 	secretMetadata map[string]map[string]secretv0alpha1.SecureValue
+	simNetwork     *SimNetwork
 }
 
-func NewSimDatabase() *SimDatabase {
+func NewSimDatabase(simNetwork *SimNetwork) *SimDatabase {
 	return &SimDatabase{
 		secretMetadata: make(map[string]map[string]secretv0alpha1.SecureValue),
+		simNetwork:     simNetwork,
 	}
 }
 
@@ -32,7 +34,7 @@ func (db *SimDatabase) onQuery(query Message) {
 		// Query executed with no errors
 		// db.simNetwork.Reply(func(){query.cb(nil)})
 		// db.simNetwork.Send(query.from, nil)
-		db.simNetowork.Send(simDatabaseAppendResponse{
+		db.simNetwork.Send(simDatabaseAppendResponse{
 			cb:  query.cb,
 			err: nil,
 		})

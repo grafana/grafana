@@ -54,6 +54,13 @@ type simDatabaseCreateSecureValueMetadataQuery struct {
 
 func (simDatabaseCreateSecureValueMetadataQuery) Message() {}
 
+type simDatabaseAppendResponse struct {
+	cb  func(error)
+	err error
+}
+
+func (simDatabaseAppendResponse) Message() {}
+
 // Returns true when there are messages in flight.
 func (network *SimNetwork) HasWork() bool {
 	return len(network.messages) > 0
