@@ -3312,22 +3312,6 @@
     },
     {
       "metadata": {
-        "name": "prometheusPromQAIL",
-        "resourceVersion": "1735845919509",
-        "creationTimestamp": "2023-10-19T15:45:32Z",
-        "annotations": {
-          "grafana.app/updatedTimestamp": "2025-01-02 19:25:19.509884 +0000 UTC"
-        }
-      },
-      "spec": {
-        "description": "Prometheus and AI/ML to assist users in creating a query",
-        "stage": "experimental",
-        "codeowner": "@grafana/oss-big-tent",
-        "frontend": true
-      }
-    },
-    {
-      "metadata": {
         "name": "prometheusRunQueriesInParallel",
         "resourceVersion": "1735845919509",
         "creationTimestamp": "2024-08-12T12:31:39Z",

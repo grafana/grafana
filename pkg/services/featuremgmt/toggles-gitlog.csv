@@ -228,7 +228,6 @@ pluginsInstrumentationStatusSource,2023-10-17T08:27:45Z,2024-02-21T11:57:40Z,f50
 teamHttpHeaders,2023-10-17T10:23:54Z,,be5ba6813209b5b24e955e0f761032cb5826b578,Eric Leijonmarck
 costManagementUi,2023-10-17T16:15:51Z,2024-01-08T14:25:11Z,de1ed216f4bbf6f341aa22b144fa66d583a63981,Adam Bannach
 managedPluginsInstall,2023-10-18T13:17:03Z,,43add83d1a84fe0945860a9cc700df92c7e8341f,Hugo Kiyodi Oshiro
-prometheusPromQAIL,2023-10-19T15:45:32Z,,5580d061019bee46ea2e69c94041f3da14585ceb,Brendan O'Handley
 cloudWatchBatchQueries,2023-10-20T19:09:41Z,,ecbc52f51529e1f35e26895db1a10f8a1c2f4244,Isabella Siu
 alertingContactPointsV2,2023-10-25T13:57:53Z,2023-11-30T12:37:14Z,e12e40fc2493160338237b0b94e72fa530a78ef4,Gilles De Mey
 alertmanagerRemoteOnly,2023-10-30T16:27:08Z,,363830883cb1f5de30f7015df5cba419df47468e,Santiago
