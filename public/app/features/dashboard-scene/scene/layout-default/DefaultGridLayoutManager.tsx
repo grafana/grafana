@@ -10,6 +10,7 @@ import {
   SceneComponentProps,
   SceneGridItemLike,
   useSceneObjectState,
+  SceneGridLayoutDragStartEvent,
 } from '@grafana/scenes';
 import { GRID_COLUMN_COUNT } from 'app/core/constants';
 import { t } from 'app/core/internationalization';
@@ -64,10 +65,18 @@ export class DefaultGridLayoutManager
   constructor(state: DefaultGridLayoutManagerState) {
     super(state);
 
-    this.state.grid.setState({
-      onDragStart: (_evt, panel) => getLayoutOrchestratorFor(panel)?.startDraggingSync(panel),
-    });
+    this.addActivationHandler(this._activationHandler);
   }
+
+  private _activationHandler = () => {
+    if (config.featureToggles.dashboardNewLayouts) {
+      this._subs.add(
+        this.subscribeToEvent(SceneGridLayoutDragStartEvent, ({ payload: { panel } }) =>
+          getLayoutOrchestratorFor(this)?.startDraggingSync(panel)
+        )
+      );
+    }
+  };
 
   public addPanel(vizPanel: VizPanel) {
     const panelId = dashboardSceneGraph.getNextPanelId(this);

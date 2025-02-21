@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { CSSProperties } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { SceneComponentProps } from '@grafana/scenes';
+import { LazyLoader, SceneComponentProps } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 
 import { SceneCSSGridLayout, SceneCSSGridLayoutOptions } from './SceneCSSGridLayout';
@@ -20,6 +20,7 @@ export function SceneCSSGridLayoutRenderer({ model }: SceneComponentProps<SceneC
     alignItems,
     justifyContent,
     md,
+    isLazy,
   } = model.useState();
 
   const styles = useStyles2(
@@ -41,9 +42,17 @@ export function SceneCSSGridLayoutRenderer({ model }: SceneComponentProps<SceneC
 
   return (
     <div className={styles.container}>
-      {children.map((item) => (
-        <item.Component key={item.state.key} model={item} />
-      ))}
+      {children.map((item) => {
+        if (isLazy) {
+          return (
+            <LazyLoader key={item.state.key!} className={styles.container}>
+              <item.Component key={item.state.key} model={item} />
+            </LazyLoader>
+          );
+        }
+
+        return <item.Component key={item.state.key} model={item} />;
+      })}
     </div>
   );
 }
