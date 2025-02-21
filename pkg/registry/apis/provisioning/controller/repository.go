@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 )
 
 type RepoGetter interface {
@@ -59,6 +60,7 @@ type RepositoryController struct {
 	parsers        *resources.ParserFactory
 	logger         logging.Logger
 	secrets        secrets.Service
+	dualwrite      dualwrite.Service
 
 	jobs      jobs.JobQueue
 	finalizer *finalizer
@@ -84,6 +86,7 @@ func NewRepositoryController(
 	tester RepositoryTester,
 	jobs jobs.JobQueue,
 	secrets secrets.Service,
+	dualwrite dualwrite.Service,
 ) (*RepositoryController, error) {
 	rc := &RepositoryController{
 		client:         provisioningClient,
@@ -102,10 +105,11 @@ func NewRepositoryController(
 			lister: resourceLister,
 			client: parsers.Client,
 		},
-		tester:  tester,
-		jobs:    jobs,
-		logger:  logging.DefaultLogger.With("logger", loggerName),
-		secrets: secrets,
+		tester:    tester,
+		jobs:      jobs,
+		logger:    logging.DefaultLogger.With("logger", loggerName),
+		secrets:   secrets,
+		dualwrite: dualwrite,
 	}
 
 	_, err := repoInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
@@ -412,7 +416,8 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	}
 
 	// Trigger sync job after we have applied all patch operations
-	if obj.Spec.Sync.Enabled && obj.Status.Health.Healthy {
+	if obj.Spec.Sync.Enabled && obj.Status.Health.Healthy &&
+		!dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, rc.dualwrite) {
 		job, err := rc.jobs.Add(ctx, &provisioning.Job{
 			ObjectMeta: v1.ObjectMeta{
 				Namespace: obj.Namespace,
