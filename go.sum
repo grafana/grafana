@@ -1412,8 +1412,6 @@ github.com/google/go-cmp v0.5.9/go.mod h1:17dUlkBOakJ0+DkrSSNjCkIjxS6bF9zb3elmeN
 github.com/google/go-cmp v0.6.0 h1:ofyhxvXcZhMsU5ulbFiLKl/XBFqE1GSq7atu8tAmTRI=
 github.com/google/go-cmp v0.6.0/go.mod h1:17dUlkBOakJ0+DkrSSNjCkIjxS6bF9zb3elmeNGIjoY=
 github.com/google/go-github v17.0.0+incompatible/go.mod h1:zLgOLi98H3fifZn+44m+umXrS52loVEgC2AApnigrVQ=
-github.com/google/go-github/v69 v69.2.0 h1:wR+Wi/fN2zdUx9YxSmYE0ktiX9IAR/BeePzeaUUbEHE=
-github.com/google/go-github/v69 v69.2.0/go.mod h1:xne4jymxLR6Uj9b7J7PyTpkMYstEMMwGZa0Aehh1azM=
 github.com/google/go-querystring v1.0.0/go.mod h1:odCYkC5MyYFN7vkCjXpyrEuKhc/BUO6wN/zVPAxq5ck=
 github.com/google/go-querystring v1.1.0 h1:AnCroh3fv4ZBgVIf1Iwtovgjaw/GiKJo8M8yD/fhyJ8=
 github.com/google/go-querystring v1.1.0/go.mod h1:Kcdr2DB4koayq7X8pmAG4sNG59So17icRSOU623lUBU=
@@ -1563,8 +1561,6 @@ github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250220154326-6e5de80ef295 h
 github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250220154326-6e5de80ef295/go.mod h1:1iWqntBW91TsiyqneHrqTFV12vd1Tei+f5VY2ovkNAo=
 github.com/grafana/grafana/pkg/apiserver v0.0.0-20250220154326-6e5de80ef295 h1:ivbywO8ZnmzDDkn169qUb9REsCGYAA7H8W6VfqSmCEw=
 github.com/grafana/grafana/pkg/apiserver v0.0.0-20250220154326-6e5de80ef295/go.mod h1:OugmKouuvgWeOI8Kghram2Pv8b/1SuXRR8/iW068uLk=
-github.com/grafana/grafana/pkg/build v0.0.0-20250221143555-66bad69e0086 h1:AlD/NDaKnaB8ajhk3dZvfPUO8TNtcCLr/kjm9aE+fY0=
-github.com/grafana/grafana/pkg/build v0.0.0-20250221143555-66bad69e0086/go.mod h1:STVpVboMYeBAfyn6Zw6XHhTHqUxzMy7pzRiVgk1l0W0=
 github.com/grafana/grafana/pkg/promlib v0.0.8 h1:VUWsqttdf0wMI4j9OX9oNrykguQpZcruudDAFpJJVw0=
 github.com/grafana/grafana/pkg/promlib v0.0.8/go.mod h1:U1ezG/MGaEPoThqsr3lymMPN5yIPdVTJnDZ+wcXT+ao=
 github.com/grafana/grafana/pkg/semconv v0.0.0-20250220164708-c8d4ff28a450 h1:wSqgLKFwI7fyeqf3djRXGClBLb/UPjZ4XPm/UsKFDB0=
