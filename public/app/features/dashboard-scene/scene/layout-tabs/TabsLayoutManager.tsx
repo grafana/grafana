@@ -135,7 +135,7 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
 
   public static createEmpty(): TabsLayoutManager {
     const tab = new TabItem();
-    return new TabsLayoutManager({ tabs: [tab], currentTabIndex: 0 });
+    return new TabsLayoutManager({ tabs: [tab] });
   }
 
   public static createFromLayout(layout: DashboardLayoutManager): TabsLayoutManager {
