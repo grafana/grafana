@@ -1609,15 +1609,17 @@
     {
       "metadata": {
         "name": "exploreMetricsRelatedLogs",
-        "resourceVersion": "1730125602673",
-        "creationTimestamp": "2024-11-05T16:28:43Z"
+        "resourceVersion": "1740088730007",
+        "creationTimestamp": "2024-11-05T16:28:43Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-02-20 21:58:50.007589 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Display Related Logs in Explore Metrics",
+        "description": "Display Related Logs in Grafana Metrics Drilldown",
         "stage": "experimental",
         "codeowner": "@grafana/observability-metrics",
-        "frontend": true,
-        "hideFromDocs": true
+        "frontend": true
       }
     },
     {
