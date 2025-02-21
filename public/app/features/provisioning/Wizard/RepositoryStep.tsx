@@ -1,19 +1,30 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { Field, FieldSet, Input, MultiCombobox, SecretInput, Stack, Switch, ControlledCollapse } from '@grafana/ui';
+import { AppEvents } from '@grafana/data';
+import { getAppEvents } from '@grafana/runtime';
+import {
+  Field,
+  FieldSet,
+  Input,
+  MultiCombobox,
+  SecretInput,
+  Stack,
+  Switch,
+  ControlledCollapse,
+  Button,
+} from '@grafana/ui';
 
 import { getWorkflowOptions } from '../ConfigForm';
 import { TokenPermissionsInfo } from '../TokenPermissionsInfo';
+import { useCreateOrUpdateRepository } from '../hooks';
+import { dataToSpec } from '../utils/data';
 
 import { RequestErrorAlert } from './RequestErrorAlert';
 import { WizardFormData } from './types';
 
 interface Props {
-  request: {
-    isError: boolean;
-    error?: unknown;
-  };
+  onStatusChange: (success: boolean) => void;
 }
 
 const AdvancedSettingsFields = () => {
@@ -35,17 +46,52 @@ const AdvancedSettingsFields = () => {
   );
 };
 
-export function RepositoryStep({ request }: Props) {
+export function RepositoryStep({ onStatusChange }: Props) {
   const {
     register,
     control,
     watch,
     setValue,
+    getValues,
     formState: { errors },
   } = useFormContext<WizardFormData>();
 
   const type = watch('repository.type');
   const [tokenConfigured, setTokenConfigured] = useState(false);
+  const [submitData, verifyRequest] = useCreateOrUpdateRepository();
+
+  const handleVerify = async () => {
+    const formData = getValues();
+    const spec = dataToSpec(formData.repository);
+    if (spec.github) {
+      spec.github.token = formData.repository.token || '';
+    }
+    await submitData(spec);
+  };
+
+  // Handle verification response
+  useEffect(() => {
+    const appEvents = getAppEvents();
+    if (verifyRequest.isSuccess) {
+      if (verifyRequest.data?.metadata?.name) {
+        setValue('repositoryName', verifyRequest.data.metadata.name);
+      }
+      appEvents.publish({
+        type: AppEvents.alertSuccess.name,
+        payload: ['Repository settings verified successfully'],
+      });
+      onStatusChange(true);
+    } else if (verifyRequest.isError) {
+      onStatusChange(false);
+    }
+  }, [
+    verifyRequest.isSuccess,
+    verifyRequest.isError,
+    verifyRequest.data,
+    verifyRequest.error,
+    setValue,
+    onStatusChange,
+  ]);
 
   const WorkflowsField = () => (
     <Field
@@ -78,7 +124,7 @@ export function RepositoryStep({ request }: Props) {
     return (
       <FieldSet label="2. Configure repository">
         <Stack direction="column" gap={1}>
-          <RequestErrorAlert request={request} />
+          <RequestErrorAlert request={verifyRequest} />
           <TokenPermissionsInfo />
 
           <Field
@@ -137,6 +183,16 @@ export function RepositoryStep({ request }: Props) {
 
           <WorkflowsField />
           <AdvancedSettingsFields />
+
+          <Stack direction="row" gap={2}>
+            <Button
+              onClick={handleVerify}
+              disabled={verifyRequest.isLoading}
+              icon={verifyRequest.isLoading ? 'spinner' : 'check-circle'}
+            >
+              {verifyRequest.isLoading ? 'Verifying...' : 'Connect & verify'}
+            </Button>
+          </Stack>
         </Stack>
       </FieldSet>
     );
@@ -146,7 +202,7 @@ export function RepositoryStep({ request }: Props) {
     return (
       <FieldSet label="2. Configure repository">
         <Stack direction="column" gap={2}>
-          <RequestErrorAlert request={request} />
+          <RequestErrorAlert request={verifyRequest} />
 
           <Field label={'Local path'} error={errors.repository?.path?.message} invalid={!!errors.repository?.path}>
             <Input
@@ -157,6 +213,16 @@ export function RepositoryStep({ request }: Props) {
 
           <WorkflowsField />
           <AdvancedSettingsFields />
+
+          <Stack direction="row" gap={2}>
+            <Button
+              onClick={handleVerify}
+              disabled={verifyRequest.isLoading}
+              icon={verifyRequest.isLoading ? 'spinner' : 'check-circle'}
+            >
+              {verifyRequest.isLoading ? 'Verifying...' : 'Connect & verify'}
+            </Button>
+          </Stack>
         </Stack>
       </FieldSet>
     );

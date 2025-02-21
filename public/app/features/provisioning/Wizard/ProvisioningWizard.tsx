@@ -9,7 +9,6 @@ import { Button, Stack, useStyles2 } from '@grafana/ui';
 
 import { getDefaultValues } from '../ConfigForm';
 import { useCreateOrUpdateRepository } from '../hooks';
-import { dataToSpec } from '../utils/data';
 
 import { ConnectionStep } from './ConnectionStep';
 import { MigrateStep } from './MigrateStep';
@@ -27,7 +26,7 @@ const steps: Array<Step<WizardStep>> = [
 
 const nextButtonText = {
   connection: 'Next',
-  repository: 'Connect and verify',
+  repository: 'Next',
   migrate: 'Finish',
 } as const;
 
@@ -36,11 +35,10 @@ export function ProvisioningWizard() {
   const [activeStep, setActiveStep] = useState<WizardStep>('connection');
   const [completedSteps, setCompletedSteps] = useState<WizardStep[]>([]);
   const [stepSuccess, setStepSuccess] = useState(false);
-  const [submitData, request] = useCreateOrUpdateRepository();
+  const [, request] = useCreateOrUpdateRepository();
   const methods = useForm<WizardFormData>({
     defaultValues: {
       repository: getDefaultValues(),
-
       migrate: {
         history: true,
         identifier: false,
@@ -78,16 +76,10 @@ export function ProvisioningWizard() {
   const handleNext = async () => {
     const currentStepIndex = steps.findIndex((s) => s.id === activeStep);
     if (currentStepIndex < steps.length - 1) {
-      if (['connection', 'repository'].includes(activeStep)) {
+      if (activeStep === 'connection') {
         // Validate repository form data before proceeding
         const isValid = await methods.trigger('repository');
         if (!isValid) {
-          return;
-        }
-
-        if (activeStep === 'repository') {
-          const formData = methods.getValues();
-          await submitData(dataToSpec(formData.repository));
           return;
         }
       }
@@ -112,11 +104,11 @@ export function ProvisioningWizard() {
     }
   };
 
-  const getButtonText = () => {
-    if (activeStep === 'repository' && request.isLoading) {
-      return 'Connecting...';
+  const handleStatusChange = (success: boolean) => {
+    setStepSuccess(success);
+    if (success) {
+      setCompletedSteps((prev) => [...prev, activeStep]);
     }
-    return nextButtonText[activeStep];
   };
 
   return (
@@ -135,8 +127,8 @@ export function ProvisioningWizard() {
 
         <div className={styles.content}>
           {activeStep === 'connection' && <ConnectionStep />}
-          {activeStep === 'repository' && <RepositoryStep request={request} />}
-          {activeStep === 'migrate' && <MigrateStep onMigrationStatusChange={setStepSuccess} />}
+          {activeStep === 'repository' && <RepositoryStep onStatusChange={handleStatusChange} />}
+          {activeStep === 'migrate' && <MigrateStep onStatusChange={handleStatusChange} />}
         </div>
 
         <Stack gap={2} justifyContent="flex-end">
@@ -147,14 +139,9 @@ export function ProvisioningWizard() {
           )}
           <Button
             onClick={handleNext}
-            disabled={
-              request.isLoading ||
-              (activeStep === 'repository' && (request.isLoading || request.isError)) ||
-              (activeStep === 'migrate' && (!stepSuccess || request.isLoading))
-            }
-            icon={request.isLoading ? 'spinner' : undefined}
+            disabled={(activeStep === 'repository' && !stepSuccess) || (activeStep === 'migrate' && !stepSuccess)}
           >
-            {getButtonText()}
+            {nextButtonText[activeStep]}
           </Button>
         </Stack>
       </form>

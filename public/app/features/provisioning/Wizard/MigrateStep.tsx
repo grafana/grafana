@@ -1,5 +1,5 @@
 import { skipToken } from '@reduxjs/toolkit/query/react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { Alert, Button, FieldSet, Stack, Text, Switch, Field } from '@grafana/ui';
@@ -11,10 +11,10 @@ import { RequestErrorAlert } from './RequestErrorAlert';
 import { WizardFormData } from './types';
 
 export interface MigrateStepProps {
-  onMigrationStatusChange: (success: boolean) => void;
+  onStatusChange: (success: boolean) => void;
 }
 
-export function MigrateStep({ onMigrationStatusChange }: MigrateStepProps) {
+export function MigrateStep({ onStatusChange }: MigrateStepProps) {
   const [migrateRepo, migrateQuery] = useCreateRepositoryMigrateMutation();
   const [showMigrateStatus, setShowMigrateStatus] = useState(false);
   const { watch, register } = useFormContext<WizardFormData>();
@@ -23,24 +23,29 @@ export function MigrateStep({ onMigrationStatusChange }: MigrateStepProps) {
   const repositoryQuery = useGetRepositoryQuery(repositoryName ? { name: repositoryName } : skipToken);
   const stats = repositoryQuery?.data?.status?.stats || [];
 
+  useEffect(() => {
+    if (migrateQuery.isSuccess) {
+      setShowMigrateStatus(false);
+      onStatusChange(true);
+    } else if (migrateQuery.isError) {
+      onStatusChange(false);
+      setShowMigrateStatus(false);
+    }
+  }, [migrateQuery.isSuccess, migrateQuery.isError, onStatusChange]);
+
   const handleMigrate = async () => {
     if (!repositoryName) {
       return;
     }
 
-    try {
-      await migrateRepo({
-        name: repositoryName,
-        body: {
-          identifier,
-          history,
-        },
-      });
-      setShowMigrateStatus(true);
-      onMigrationStatusChange(true);
-    } catch (error) {
-      onMigrationStatusChange(false);
-    }
+    await migrateRepo({
+      name: repositoryName,
+      body: {
+        identifier,
+        history,
+      },
+    });
+    setShowMigrateStatus(true);
   };
 
   if (showMigrateStatus && migrateName) {
