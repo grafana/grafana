@@ -549,8 +549,13 @@ require (
 )
 
 require (
-	github.com/open-feature/go-sdk v1.14.1 // indirect
-	github.com/open-feature/go-sdk-contrib/providers/go-feature-flag v0.2.3 // indirect
+	github.com/open-feature/go-sdk v1.14.1
+	github.com/open-feature/go-sdk-contrib/providers/go-feature-flag v0.2.3
+)
+
+require (
+	github.com/bluele/gcache v0.0.2 // indirect
+	github.com/open-feature/go-sdk-contrib/providers/ofrep v0.1.5 // indirect
 )
 
 // Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream

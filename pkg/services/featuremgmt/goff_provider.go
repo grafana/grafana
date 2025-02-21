@@ -12,7 +12,7 @@ func newGOFFProvider(url string) (openfeature.FeatureProvider, error) {
 	options := gofeatureflag.ProviderOptions{
 		Endpoint: url,
 		HTTPClient: &http.Client{
-			Timeout: 1 * time.Second,
+			Timeout: 10 * time.Second,
 		},
 	}
 	provider, err := gofeatureflag.NewProvider(options)
