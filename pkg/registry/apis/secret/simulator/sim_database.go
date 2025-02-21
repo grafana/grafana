@@ -30,7 +30,14 @@ func (db *SimDatabase) onQuery(query Message) {
 		// TODO: maybe error
 		db.outboxQueue = append(db.outboxQueue, query.foo)
 		// Query executed with no errors
-		query.cb(nil)
+		// db.simNetwork.Reply(func(){query.cb(nil)})
+		// db.simNetwork.Send(query.from, nil)
+		db.simNetowork.Send(simDatabaseAppendResponse{
+			cb:  query.cb,
+			err: nil,
+		})
+		// db.simNetwork.Reply(query.cb, nil)
+		// query.cb(nil)
 
 	case simDatabaseSecretMetadataHasPendingStatusQuery:
 		ns, ok := db.secretMetadata[query.namespace.String()]
@@ -47,6 +54,7 @@ func (db *SimDatabase) onQuery(query Message) {
 			return
 		}
 
+		// TODO: Don't call cb directly. Send a message through the network because replies may be lost/delayed
 		query.cb(secureValue.Status.Phase == "Pending", nil)
 
 	case simDatabaseCreateSecureValueMetadataQuery:

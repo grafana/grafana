@@ -78,3 +78,7 @@ func (network *SimNetwork) Tick() {
 func (network *SimNetwork) Send(msg Message) {
 	network.messages = append(network.messages, msg)
 }
+
+func (network *SimNetwork) Reply(toCallback func()) {
+	network.messages = append(network.messages, msg)
+}
