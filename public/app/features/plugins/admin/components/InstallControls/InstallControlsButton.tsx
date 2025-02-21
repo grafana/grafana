@@ -126,6 +126,13 @@ export function InstallControlsButton({
     uninstallTitle = 'Preinstalled plugin. Remove from Grafana config before uninstalling.';
   }
 
+  // TODO && parent plugin is still installed
+  const dependencyOf = plugin.details?.dependantPlugins?.map((dep) => dep.pluginName);
+  if (dependencyOf?.length) {
+    disableUninstall = true;
+    uninstallTitle = `Dependent plugins must be removed first: ${dependencyOf.join(', ')}`;
+  }
+
   if (pluginStatus === PluginStatus.UNINSTALL) {
     return (
       <>
@@ -148,7 +155,7 @@ export function InstallControlsButton({
   }
 
   if (!plugin.isPublished || hasInstallWarning) {
-    // Cannot be updated or installed
+    // Cannot be updated/installed/uninstalled
     return null;
   }
 
@@ -162,7 +169,7 @@ export function InstallControlsButton({
             {isInstalling ? 'Updating' : 'Update'}
           </Button>
         )}
-        <Button variant="destructive" disabled={disableUninstall} onClick={onUninstall} title={uninstallTitle}>
+        <Button variant="destructive" disabled={disableUninstall} onClick={showConfirmModal} title={uninstallTitle}>
           {uninstallBtnText}
         </Button>
       </Stack>

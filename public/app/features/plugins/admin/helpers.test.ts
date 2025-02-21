@@ -209,6 +209,11 @@ describe('Plugins/Helpers', () => {
         isFullyInstalled: false,
         angularDetected: false,
         url: 'https://github.com/alexanderzobnin/grafana-zabbix',
+        details: {
+          dependantPlugins: [],
+          links: [],
+          pluginDependencies: [],
+        },
       });
     });
 
@@ -291,6 +296,24 @@ describe('Plugins/Helpers', () => {
         installedVersion: '4.2.2',
         isFullyInstalled: true,
         angularDetected: false,
+        details: {
+          dependantPlugins: [],
+          links: [
+            {
+              name: 'GitHub',
+              url: 'https://github.com/alexanderzobnin/grafana-zabbix',
+            },
+            {
+              name: 'Docs',
+              url: 'https://alexanderzobnin.github.io/grafana-zabbix',
+            },
+            {
+              name: 'License',
+              url: 'https://github.com/alexanderzobnin/grafana-zabbix/blob/master/LICENSE',
+            },
+          ],
+          pluginDependencies: [],
+        },
       });
     });
 
@@ -347,6 +370,24 @@ describe('Plugins/Helpers', () => {
         isFullyInstalled: true,
         angularDetected: false,
         url: 'https://github.com/alexanderzobnin/grafana-zabbix',
+        details: {
+          dependantPlugins: [],
+          links: [
+            {
+              name: 'GitHub',
+              url: 'https://github.com/alexanderzobnin/grafana-zabbix',
+            },
+            {
+              name: 'Docs',
+              url: 'https://alexanderzobnin.github.io/grafana-zabbix',
+            },
+            {
+              name: 'License',
+              url: 'https://github.com/alexanderzobnin/grafana-zabbix/blob/master/LICENSE',
+            },
+          ],
+          pluginDependencies: [],
+        },
       });
     });
 
