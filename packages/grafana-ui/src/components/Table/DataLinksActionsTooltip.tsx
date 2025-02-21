@@ -38,6 +38,7 @@ export const DataLinksActionsTooltip = ({ links, actions, value, coords, onToolt
   const virtual = useMemo(() => {
     const { clientX, clientY } = coords;
 
+    // https://floating-ui.com/docs/virtual-elements
     return {
       getBoundingClientRect() {
         return {
@@ -56,7 +57,6 @@ export const DataLinksActionsTooltip = ({ links, actions, value, coords, onToolt
 
   const refCallback = (el: HTMLDivElement) => {
     refs.setFloating(el);
-    // https://floating-ui.com/docs/virtual-elements
     refs.setReference(virtual);
   };
 
