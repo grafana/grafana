@@ -32,14 +32,10 @@ func (db *SimDatabase) onQuery(query Message) {
 		// TODO: maybe error
 		db.outboxQueue = append(db.outboxQueue, query.foo)
 		// Query executed with no errors
-		// db.simNetwork.Reply(func(){query.cb(nil)})
-		// db.simNetwork.Send(query.from, nil)
 		db.simNetwork.Send(simDatabaseAppendResponse{
 			cb:  query.cb,
 			err: nil,
 		})
-		// db.simNetwork.Reply(query.cb, nil)
-		// query.cb(nil)
 
 	case simDatabaseSecretMetadataHasPendingStatusQuery:
 		ns, ok := db.secretMetadata[query.namespace.String()]
@@ -56,21 +52,40 @@ func (db *SimDatabase) onQuery(query Message) {
 			return
 		}
 
-		// TODO: Don't call cb directly. Send a message through the network because replies may be lost/delayed
-		query.cb(secureValue.Status.Phase == "Pending", nil)
+		db.simNetwork.Send(simDatabaseSecretMetadataHasPendingStatusResponse{
+			cb:        query.cb,
+			isPending: secureValue.Status.Phase == "Pending",
+			err:       nil,
+		})
 
 	case simDatabaseCreateSecureValueMetadataQuery:
 		v := *query.sv
 		v.SetUID(types.UID(uuid.NewString()))
 		v.ObjectMeta.SetResourceVersion(strconv.FormatInt(metav1.Now().UnixMicro(), 10))
 		v.Spec.Value = ""
+
 		ns, ok := db.secretMetadata[query.sv.Namespace]
 		if !ok {
 			ns = make(map[string]secretv0alpha1.SecureValue)
 			db.secretMetadata[query.sv.Namespace] = ns
 		}
+
+		if _, ok := ns[query.sv.Name]; ok {
+			db.simNetwork.Send(simDatabaseCreateSecureValueMetadataResponse{
+				cb:  query.cb,
+				sv:  &v,
+				err: fmt.Errorf("securevalue %v already exists", query.sv.Name),
+			})
+			return
+		}
+
 		ns[query.sv.Name] = v
-		query.cb(&v, nil)
+
+		db.simNetwork.Send(simDatabaseCreateSecureValueMetadataResponse{
+			cb:  query.cb,
+			sv:  &v,
+			err: nil,
+		})
 
 	default:
 		panic(fmt.Sprintf("unhandled query: %T %+v", query, query))

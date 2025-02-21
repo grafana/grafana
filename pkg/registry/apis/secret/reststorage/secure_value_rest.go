@@ -198,6 +198,11 @@ func (s *SecureValueRest) Create2(
 
 			// /\ db' = [db EXCEPT !.secret_metadata = @ \union {[name |-> s, status |-> "Pending"]}]
 			s.storage.Create(ctx, tx, sv, func(createdSecureValue *secretv0alpha1.SecureValue, err error) {
+				if err != nil {
+					cb(nil, fmt.Errorf("failed to create securevalue: %w", err))
+					return
+				}
+
 				// 			// /\ queue' = [queue EXCEPT !.pending = Append(queue.pending, s)]
 				s.outboxQueue.Append(ctx, tx, createdSecureValue, func(err error) {
 					if err != nil {

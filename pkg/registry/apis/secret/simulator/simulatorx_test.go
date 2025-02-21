@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/reststorage"
+	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
@@ -27,14 +28,16 @@ type Simulator struct {
 	// A seeded prng.
 	rng                *rand.Rand
 	simNetwork         *SimNetwork
+	simDatabase        *SimDatabase
 	secureValueStorage *SimSecureValueStorage
 	secureValueRest    *reststorage.SecureValueRest
 }
 
-func NewSimulator(rng *rand.Rand, simNetwork *SimNetwork, secureValueStorage *SimSecureValueStorage, secureValueRest *reststorage.SecureValueRest) *Simulator {
+func NewSimulator(rng *rand.Rand, simNetwork *SimNetwork, simDatabase *SimDatabase, secureValueStorage *SimSecureValueStorage, secureValueRest *reststorage.SecureValueRest) *Simulator {
 	return &Simulator{
 		rng:                rng,
 		simNetwork:         simNetwork,
+		simDatabase:        simDatabase,
 		secureValueStorage: secureValueStorage,
 		secureValueRest:    secureValueRest,
 	}
@@ -79,9 +82,15 @@ func (sim *Simulator) step() {
 	switch action {
 	case ActionCreateSecret:
 		sim.secureValueRest.Create2(context.Background(), &secretv0alpha1.SecureValue{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "sv-1",
+			},
 			Spec: secretv0alpha1.SecureValueSpec{
 				Title: "foo",
 				Value: secretv0alpha1.NewExposedSecureValue("value1"),
+			},
+			Status: secretv0alpha1.SecureValueStatus{
+				Phase: secretv0alpha1.SecureValuePhasePending,
 			},
 		},
 			// TODO: replace with real func
@@ -118,7 +127,7 @@ func getSeedFromEnvOrRandom() int64 {
 func TestSimulate(t *testing.T) {
 	t.Parallel()
 
-	seed := getSeedFromEnvOrRandom()
+	seed := int64(490660684584332) //getSeedFromEnvOrRandom()
 	rng := rand.New(rand.NewSource(seed))
 
 	t.Cleanup(func() {
@@ -127,9 +136,13 @@ func TestSimulate(t *testing.T) {
 		}
 	})
 
-	simDatabase := NewSimDatabase()
+	simNetworkConfig := SimNetworkConfig{errProbability: 0.2, rng: rng}
 
-	simNetwork := NewSimNetwork(rng, simDatabase)
+	simDatabase := NewSimDatabase(nil)
+
+	simNetwork := NewSimNetwork(simNetworkConfig, simDatabase)
+
+	simDatabase.simNetwork = simNetwork
 
 	simSecureValueStorage := NewSimSecureValueStorage(simNetwork)
 
@@ -137,9 +150,64 @@ func TestSimulate(t *testing.T) {
 
 	secureValueRest := reststorage.NewSecureValueRest(simSecureValueStorage, simOutboxQueue, utils.ResourceInfo{})
 
-	simulator := NewSimulator(rng, simNetwork, simSecureValueStorage, secureValueRest)
+	simulator := NewSimulator(rng, simNetwork, simDatabase, simSecureValueStorage, secureValueRest)
 
-	for range 10 {
+	for range 100 {
 		simulator.step()
+
+		// Invariant
+		/*
+			OnlyOneOperationPerSecureValueInTheQueueAtATime ==
+				\A secret \in Secrets:
+					LET PendingQueueSet == {queue.pending[i]: i \in DOMAIN queue.pending}
+						SecretInQueue   == {i \in DOMAIN queue.pending: queue.pending[i] = secret} IN
+						\* There is either no secret in the pending queue, or at most one.
+						Cardinality(SecretInQueue) <= 1
+		*/
+		uniqueSecretName := make(map[string]struct{}, 0)
+		for _, sv := range simDatabase.outboxQueue {
+			secureValueName := sv.(*secretv0alpha1.SecureValue).Name
+
+			require.NotContains(t, uniqueSecretName, secureValueName, fmt.Sprintf("Current SecureValues: %v", uniqueSecretName))
+
+			uniqueSecretName[secureValueName] = struct{}{}
+		}
+
+		/*
+			SecretMetadataHasPendingStatusWhenTheresAnOperationInTheQueue ==
+				\* For all secrets
+				\A s \in Secrets:
+				LET secret_in_pending_queue ==
+					\E i \in DOMAIN queue.pending:
+						queue.pending[i] = s
+				IN
+				\* the secret is either in the outbox queue
+				\/ /\ secret_in_pending_queue
+					\* and the secret metadata status is Pending
+					/\ SecretMetadataHasPendingStatus(s)
+				\* or the secret is not in the queue
+				\/ /\ ~secret_in_pending_queue
+					\* and the secret metadata status is not Pending
+					/\ ~SecretMetadataHasPendingStatus(s)
+		*/
+		secureValuesInQueue := make(map[string]map[string]struct{}, 0)
+		for _, rawSV := range simDatabase.outboxQueue {
+			sv := rawSV.(*secretv0alpha1.SecureValue)
+
+			if _, ok := secureValuesInQueue[sv.Namespace]; !ok {
+				secureValuesInQueue[sv.Namespace] = make(map[string]struct{})
+			}
+
+			secureValuesInQueue[sv.Namespace][sv.Name] = struct{}{}
+		}
+
+		for namespace, secureValues := range simDatabase.secretMetadata {
+			for _, secureValue := range secureValues {
+				_, exists := secureValuesInQueue[namespace][secureValue.Name]
+				statusPending := secureValue.Status.Phase == secretv0alpha1.SecureValuePhasePending
+
+				require.True(t, (statusPending && exists || (!statusPending && !exists)), fmt.Sprintf("statusPending=%v exists=%v metadata_db=%v", statusPending, exists, simDatabase.secretMetadata))
+			}
+		}
 	}
 }
