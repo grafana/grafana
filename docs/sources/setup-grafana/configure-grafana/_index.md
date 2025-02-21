@@ -950,17 +950,9 @@ If you manage users externally you can replace the user invite button for organi
 
 #### `viewers_can_edit`
 
-{{< admonition type="note" >}}
-This option is deprecated - assign your viewers as editors, if you are using RBAC assign the data sources explorer role to your users.
-{{< /admonition >}}
-
 Viewers can access and use [Explore]({{< relref "../../explore" >}}) and perform temporary edits on panels in dashboards they have access to. They cannot save their changes. Default is `false`.
 
 #### `editors_can_admin`
-
-{{< admonition type="note" >}}
-This option is deprecated - assign your editors as admins, if you are using RBAC assign the team creator role to your users.
-{{< /admonition >}}
 
 Editors can administrate dashboards, folders and teams they create.
 Default is `false`.
@@ -1523,16 +1515,6 @@ Options are `debug`, `info`, `warn`, `error`, and `critical`. Default is `info`.
 Optional settings to set different levels for specific loggers.
 For example: `filters = sqlstore:debug`
 
-You can use multiple filters with a comma-seperated list:
-For example: `filters = sqlstore:debug,plugins:info`
-
-The equivalent for a `docker-compose.yaml` looks like this:
-
-```
-GF_LOG_FILTERS: sqlstore:debug,plugins:info
-GF_LOG_LEVEL: error
-```
-
 #### `user_facing_default_error`
 
 Use this configuration option to set the default error message shown to users. This message is displayed instead of sensitive backend errors, which should be obfuscated. The default message is `Please inspect the Grafana server log for details.`.
@@ -1839,7 +1821,7 @@ The timeout string is a possibly signed sequence of decimal numbers, followed by
 
 #### `max_attempts`
 
-Sets a maximum number of times Grafana attempts to evaluate an alert rule before giving up on that evaluation. The default value is `3`.
+Sets a maximum number of times Grafana attempts to evaluate an alert rule before giving up on that evaluation. The default value is `1`.
 
 #### `min_interval`
 
