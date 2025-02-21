@@ -27,16 +27,16 @@ type StateHistoryMap = Record<string, StateHistoryRowItem[]>;
 type StateHistoryRow = DynamicTableItemProps<StateHistoryRowItem>;
 
 interface Props {
-  alertId: string;
+  ruleUID: string;
 }
 
-const StateHistory = ({ alertId }: Props) => {
+const StateHistory = ({ ruleUID }: Props) => {
   const [textFilter, setTextFilter] = useState<string>('');
   const handleTextFilter = useCallback((event: FormEvent<HTMLInputElement>) => {
     setTextFilter(event.currentTarget.value);
   }, []);
 
-  const { loading, error, result = [] } = useManagedAlertStateHistory(alertId);
+  const { loading, error, result = [] } = useManagedAlertStateHistory(ruleUID);
 
   const styles = useStyles2(getStyles);
 
