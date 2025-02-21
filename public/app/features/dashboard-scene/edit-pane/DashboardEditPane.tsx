@@ -118,6 +118,11 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
 
   public clearSelection() {
     const dashboard = getDashboardSceneFor(this);
+
+    if (this.state.selection?.getFirstObject() === dashboard) {
+      return;
+    }
+
     this.setState({
       selection: new ElementSelection([[dashboard.state.uid!, dashboard.getRef()]]),
       selectionContext: {
