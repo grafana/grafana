@@ -1,5 +1,5 @@
 import { SelectableValue } from '@grafana/data';
-import { EditorField } from '@grafana/experimental';
+import { EditorField } from '@grafana/plugin-ui';
 import { Alert, Select } from '@grafana/ui';
 
 import { VariableQueryType } from '../../types';

@@ -28,6 +28,7 @@ declare -A env=(
 testFilesForSingleSuite="*.spec.ts"
 rootForEnterpriseSuite="./e2e/extensions-suite"
 rootForOldArch="./e2e/old-arch"
+rootForDashboardsSchemaV2="./e2e/dashboards-suite"
 
 declare -A cypressConfig=(
   [screenshotsFolder]=./e2e/"${args[0]}"/screenshots
@@ -110,6 +111,24 @@ case "$1" in
       cypressConfig[specPattern]=./e2e/"${args[0]}"/$testFilesForSingleSuite
       cypressConfig[video]=${args[1]}
       env[DISABLE_SCENES]=true
+      ;;
+    "dashboards-schema-v2")
+      env[useV2DashboardsAPI]=true
+      cypressConfig[specPattern]=$rootForDashboardsSchemaV2/$testFilesForSingleSuite
+      cypressConfig[video]=false
+          case "$2" in
+            "debug")
+                echo -e "Debug mode"
+                env[SLOWMO]=1
+                PARAMS="--no-exit"
+                enterpriseSuite=$(basename "${args[2]}")
+                ;;
+            "dev")
+                echo "Dev mode"
+                CMD="cypress open"
+                enterpriseSuite=$(basename "${args[2]}")
+                ;;
+          esac
       ;;
    "enterprise-smtp")
       env[SMTP_PLUGIN_ENABLED]=true

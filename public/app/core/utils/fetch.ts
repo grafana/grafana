@@ -15,6 +15,7 @@ export const parseInitFromOptions = (options: BackendSrvRequest): RequestInit =>
     headers,
     body,
     credentials,
+    signal: options.abortSignal,
   };
 };
 
@@ -135,7 +136,6 @@ export async function parseResponseBody<T>(
           console.warn(`${response.url} returned an invalid JSON`);
           return {} as T;
         }
-
         return await response.json();
 
       case 'text':

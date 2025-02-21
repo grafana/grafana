@@ -14,12 +14,16 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	acfakes "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol/fakes"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/state"
+	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -191,4 +195,98 @@ grafana_alerting_state_history_info{backend="noop"} 0
 		err = testutil.GatherAndCompare(reg, exp, "grafana_alerting_state_history_info")
 		require.NoError(t, err)
 	})
+}
+
+type mockDB struct {
+	db.DB
+}
+
+func TestInitInstanceStore(t *testing.T) {
+	sqlStore := &mockDB{}
+	logger := log.New()
+
+	tests := []struct {
+		name                      string
+		ft                        featuremgmt.FeatureToggles
+		expectedInstanceStoreType interface{}
+	}{
+		{
+			name: "Compressed flag enabled, no periodic flag",
+			ft: featuremgmt.WithFeatures(
+				featuremgmt.FlagAlertingSaveStateCompressed,
+			),
+			expectedInstanceStoreType: store.ProtoInstanceDBStore{},
+		},
+		{
+			name: "Compressed flag enabled with periodic flag",
+			ft: featuremgmt.WithFeatures(
+				featuremgmt.FlagAlertingSaveStateCompressed,
+				featuremgmt.FlagAlertingSaveStatePeriodic,
+			),
+			expectedInstanceStoreType: store.ProtoInstanceDBStore{},
+		},
+		{
+			name:                      "Compressed flag disabled",
+			ft:                        featuremgmt.WithFeatures(),
+			expectedInstanceStoreType: store.InstanceDBStore{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			instanceStore, instanceReader := initInstanceStore(sqlStore, logger, tt.ft)
+			assert.IsType(t, tt.expectedInstanceStoreType, instanceStore)
+			assert.IsType(t, &state.MultiInstanceReader{}, instanceReader)
+			assert.IsType(t, store.ProtoInstanceDBStore{}, instanceReader.(*state.MultiInstanceReader).ProtoDBReader)
+			assert.IsType(t, store.InstanceDBStore{}, instanceReader.(*state.MultiInstanceReader).DBReader)
+		})
+	}
+}
+
+func TestInitStatePersister(t *testing.T) {
+	ua := setting.UnifiedAlertingSettings{
+		StatePeriodicSaveInterval: 1 * time.Minute,
+	}
+	cfg := state.ManagerCfg{}
+
+	tests := []struct {
+		name                       string
+		ft                         featuremgmt.FeatureToggles
+		expectedStatePersisterType state.StatePersister
+	}{
+		{
+			name: "Compressed flag enabled",
+			ft: featuremgmt.WithFeatures(
+				featuremgmt.FlagAlertingSaveStateCompressed,
+			),
+			expectedStatePersisterType: &state.SyncRuleStatePersister{},
+		},
+		{
+			name: "Periodic flag enabled",
+			ft: featuremgmt.WithFeatures(
+				featuremgmt.FlagAlertingSaveStatePeriodic,
+			),
+			expectedStatePersisterType: &state.AsyncStatePersister{},
+		},
+		{
+			name:                       "No flags enabled",
+			ft:                         featuremgmt.WithFeatures(),
+			expectedStatePersisterType: &state.SyncStatePersister{},
+		},
+		{
+			name: "Both flags enabled - compressed takes precedence",
+			ft: featuremgmt.WithFeatures(
+				featuremgmt.FlagAlertingSaveStateCompressed,
+				featuremgmt.FlagAlertingSaveStatePeriodic,
+			),
+			expectedStatePersisterType: &state.SyncRuleStatePersister{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			statePersister := initStatePersister(ua, cfg, tt.ft)
+			assert.IsType(t, tt.expectedStatePersisterType, statePersister)
+		})
+	}
 }

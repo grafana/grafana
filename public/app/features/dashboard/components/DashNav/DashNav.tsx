@@ -275,7 +275,7 @@ export const DashNav = memo<Props>((props) => {
   };
 
   const renderRightActions = () => {
-    const { dashboard, isFullscreen, kioskMode, hideTimePicker } = props;
+    const { dashboard, isFullscreen, hideTimePicker } = props;
     const { canSave, canEdit, showSettings, canShare } = dashboard.meta;
     const { snapshot } = dashboard;
     const snapshotUrl = snapshot && snapshot.originalUrl;
@@ -283,10 +283,6 @@ export const DashNav = memo<Props>((props) => {
 
     if (isPlaylistRunning()) {
       return [renderPlaylistControls(), renderTimeControls()];
-    }
-
-    if (kioskMode === KioskMode.TV) {
-      return [renderTimeControls()];
     }
 
     if (snapshotUrl) {

@@ -4,7 +4,7 @@ import * as React from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { EditorField } from '@grafana/experimental';
+import { EditorField } from '@grafana/plugin-ui';
 import { AutoSizeInput, Select } from '@grafana/ui';
 
 import { LegendFormatMode } from '../../types';

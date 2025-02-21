@@ -124,10 +124,7 @@ export const CentralAlertHistoryScene = () => {
       body: new SceneFlexLayout({
         direction: 'column',
         children: [
-          new SceneFlexItem({
-            ySizing: 'content',
-            body: getEventsSceneObject(),
-          }),
+          getEventsScenesFlexItem(),
           new SceneFlexItem({
             body: new HistoryEventsListObject({}),
           }),
@@ -145,16 +142,6 @@ export const CentralAlertHistoryScene = () => {
 
   return <scene.Component model={scene} />;
 };
-/**
- * Creates a SceneFlexItem with a timeseries panel that shows the events.
- * The query uses a runtime datasource that fetches the events from the history api.
- */
-function getEventsSceneObject() {
-  return new SceneFlexLayout({
-    direction: 'column',
-    children: [getEventsScenesFlexItem()],
-  });
-}
 
 /**
  * Creates a SceneQueryRunner with the datasource information for the runtime datasource.
@@ -182,6 +169,7 @@ function getQueryRunnerForAlertHistoryDataSource() {
 export function getEventsScenesFlexItem() {
   return new SceneFlexItem({
     minHeight: 300,
+    ySizing: 'content',
     body: PanelBuilders.timeseries()
       .setTitle('Alert Events')
       .setDescription(

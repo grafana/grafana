@@ -151,7 +151,7 @@ You can sort the dashboards by:
 
 ## Visualize usage insights data
 
-If you set up your installation to [export logs of usage insights](ref:export-logs-of-usage-insights), we've created two dashboards to help you take advantage of this data.
+If you set up your installation to [export logs of usage insights](ref:export-logs-of-usage-insights), there are two dashboards to help you take advantage of this data.
 
 1. [Usage Insights overview](/grafana/dashboards/13785) provides a top-level perspective of user activity.
 1. [Data source details](/grafana/dashboards/13786) dashboard provides a view of data source activity and health.

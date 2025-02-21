@@ -60,7 +60,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flexDirection: 'column',
     flex: 1,
     gap: 2,
-    borderTop: `1px solid ${theme.colors.border.medium}`,
+    borderTop: `1px solid ${theme.colors.border.weak}`,
     padding: theme.spacing(1),
   }),
 });

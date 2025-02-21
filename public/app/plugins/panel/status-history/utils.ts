@@ -24,6 +24,8 @@ export const getDataLinks = (field: Field, rowIdx: number) => {
   return links;
 };
 
+export const getAllFrameActions = (dataFrame: DataFrame) => {};
+
 export const getFieldActions = (
   dataFrame: DataFrame,
   field: Field,

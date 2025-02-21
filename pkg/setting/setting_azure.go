@@ -49,13 +49,19 @@ func (cfg *Cfg) readAzureSettings() {
 		azureAdSection := cfg.Raw.Section("auth.azuread")
 		if azureAdSection.Key("enabled").MustBool(false) {
 			tokenEndpointSettings.TokenUrl = azureAdSection.Key("token_url").String()
+			tokenEndpointSettings.ClientAuthentication = azureAdSection.Key("client_authentication").String()
 			tokenEndpointSettings.ClientId = azureAdSection.Key("client_id").String()
 			tokenEndpointSettings.ClientSecret = azureAdSection.Key("client_secret").String()
+			tokenEndpointSettings.ManagedIdentityClientId = azureAdSection.Key("managed_identity_client_id").String()
+			tokenEndpointSettings.FederatedCredentialAudience = azureAdSection.Key("federated_credential_audience").String()
 		}
 
 		// Override individual settings
 		if val := azureSection.Key("user_identity_token_url").String(); val != "" {
 			tokenEndpointSettings.TokenUrl = val
+		}
+		if val := azureSection.Key("user_identity_client_authentication").String(); val != "" {
+			tokenEndpointSettings.ClientAuthentication = val
 		}
 		if val := azureSection.Key("user_identity_client_id").String(); val != "" {
 			tokenEndpointSettings.ClientId = val
@@ -63,6 +69,12 @@ func (cfg *Cfg) readAzureSettings() {
 		}
 		if val := azureSection.Key("user_identity_client_secret").String(); val != "" {
 			tokenEndpointSettings.ClientSecret = val
+		}
+		if val := azureSection.Key("user_identity_managed_identity_client_id").String(); val != "" {
+			tokenEndpointSettings.ManagedIdentityClientId = val
+		}
+		if val := azureSection.Key("user_identity_federated_credential_audience").String(); val != "" {
+			tokenEndpointSettings.FederatedCredentialAudience = val
 		}
 		if val := azureSection.Key("username_assertion").String(); val != "" && val == "username" {
 			tokenEndpointSettings.UsernameAssertion = true

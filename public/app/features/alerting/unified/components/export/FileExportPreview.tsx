@@ -6,6 +6,7 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, Button, ClipboardButton, CodeEditor, TextLink, useStyles2 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 import { ExportFormats, ExportProvider, ProvisioningType, allGrafanaExportProviders } from './providers';
 
@@ -59,7 +60,7 @@ export function FileExportPreview({ format, textDefinition, downloadFileName, on
       </div>
       <div className={styles.actions}>
         <Button variant="secondary" onClick={onClose}>
-          Cancel
+          <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
         </Button>
         <ClipboardButton icon="copy" getText={() => textDefinition}>
           Copy code

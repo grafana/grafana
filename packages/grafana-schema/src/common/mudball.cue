@@ -264,6 +264,7 @@ VizTooltipOptions: {
 	sort: SortOrder
 	maxWidth?: number
 	maxHeight?: number
+	hideZeros?: bool
 } @cuetsy(kind="interface")
 
 Labels: {

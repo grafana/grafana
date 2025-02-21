@@ -238,6 +238,7 @@ datasources:
       database: grafanadstest
 
   - name: gdev-cloudwatch
+    uid: gdev-cloudwatch
     type: cloudwatch
     editable: true
     jsonData:

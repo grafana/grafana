@@ -3,6 +3,80 @@ import { buildVisualQueryFromString } from './parsing';
 import { PromOperationId, PromVisualQuery } from './types';
 
 describe('buildVisualQueryFromString', () => {
+  describe('utf8 support', () => {
+    it('supports uts-8 label names', () => {
+      expect(buildVisualQueryFromString('{"glück:🍀.dot"="luck"} == 11')).toEqual({
+        query: {
+          labels: [
+            {
+              label: 'glück:🍀.dot',
+              op: '=',
+              value: 'luck',
+            },
+          ],
+          metric: '',
+          operations: [
+            {
+              id: PromOperationId.EqualTo,
+              params: [11, false],
+            },
+          ],
+        },
+        errors: [],
+      });
+    });
+
+    it('supports uts-8 metric names', () => {
+      expect(buildVisualQueryFromString('{"I am a metric"}')).toEqual({
+        query: {
+          labels: [],
+          metric: 'I am a metric',
+          operations: [],
+        },
+        errors: [],
+      });
+    });
+
+    it('supports uts-8 metric names with labels', () => {
+      expect(buildVisualQueryFromString('{"metric.name", label_field="label value"}')).toEqual({
+        query: {
+          labels: [
+            {
+              label: 'label_field',
+              op: '=',
+              value: 'label value',
+            },
+          ],
+          metric: 'metric.name',
+          operations: [],
+        },
+        errors: [],
+      });
+    });
+
+    it('supports uts-8 metric names with utf8 labels', () => {
+      expect(buildVisualQueryFromString('{"metric.name", "glück:🍀.dot"="luck"} == 11')).toEqual({
+        query: {
+          labels: [
+            {
+              label: 'glück:🍀.dot',
+              op: '=',
+              value: 'luck',
+            },
+          ],
+          metric: 'metric.name',
+          operations: [
+            {
+              id: PromOperationId.EqualTo,
+              params: [11, false],
+            },
+          ],
+        },
+        errors: [],
+      });
+    });
+  });
+
   it('creates no errors for empty query', () => {
     expect(buildVisualQueryFromString('')).toEqual(
       noErrors({
@@ -244,6 +318,31 @@ describe('buildVisualQueryFromString', () => {
     expect(buildVisualQueryFromString('sum without (app, version)(metric_name{instance="internal:3000"})')).toEqual(
       noErrors(visQuery)
     );
+  });
+
+  it('parses query with aggregation by utf8 labels', () => {
+    const visQuery = {
+      metric: 'metric_name',
+      labels: [
+        {
+          label: 'instance',
+          op: '=',
+          value: 'internal:3000',
+        },
+      ],
+      operations: [
+        {
+          id: '__sum_by',
+          params: ['cluster', '"app.version"'],
+        },
+      ],
+    };
+    expect(
+      buildVisualQueryFromString('sum(metric_name{instance="internal:3000"}) by ("app.version", cluster)')
+    ).toEqual(noErrors(visQuery));
+    expect(
+      buildVisualQueryFromString('sum by ("app.version", cluster)(metric_name{instance="internal:3000"})')
+    ).toEqual(noErrors(visQuery));
   });
 
   it('parses aggregation with params', () => {

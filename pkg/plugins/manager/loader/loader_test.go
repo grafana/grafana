@@ -58,6 +58,7 @@ func TestLoader_Load(t *testing.T) {
 		t.Errorf("could not construct absolute path of current dir")
 		return
 	}
+	zeroCfg := &config.PluginManagementCfg{}
 	tests := []struct {
 		name        string
 		class       plugins.Class
@@ -105,6 +106,7 @@ func TestLoader_Load(t *testing.T) {
 						Extensions: plugins.Extensions{
 							AddedLinks:        []plugins.AddedLink{},
 							AddedComponents:   []plugins.AddedComponent{},
+							AddedFunctions:    []plugins.AddedFunction{},
 							ExposedComponents: []plugins.ExposedComponent{},
 							ExtensionPoints:   []plugins.ExtensionPoint{},
 						},
@@ -121,56 +123,6 @@ func TestLoader_Load(t *testing.T) {
 					FS:        mustNewStaticFSForTests(t, filepath.Join(corePluginDir, "app/plugins/datasource/cloudwatch")),
 					Signature: plugins.SignatureStatusInternal,
 					Class:     plugins.ClassCore,
-				},
-			},
-		},
-		{
-			name:        "Load a Bundled plugin",
-			class:       plugins.ClassBundled,
-			cfg:         &config.PluginManagementCfg{},
-			pluginPaths: []string{"../testdata/valid-v2-signature"},
-			want: []*plugins.Plugin{
-				{
-					JSONData: plugins.JSONData{
-						ID:   "test-datasource",
-						Type: plugins.TypeDataSource,
-						Name: "Test",
-						Info: plugins.Info{
-							Author: plugins.InfoLink{
-								Name: "Will Browne",
-								URL:  "https://willbrowne.com",
-							},
-							Version: "1.0.0",
-							Logos: plugins.Logos{
-								Small: "public/img/icn-datasource.svg",
-								Large: "public/img/icn-datasource.svg",
-							},
-							Description: "Test",
-						},
-						Dependencies: plugins.Dependencies{
-							GrafanaVersion: "*",
-							Plugins:        []plugins.Dependency{},
-							Extensions: plugins.ExtensionsDependencies{
-								ExposedComponents: []string{},
-							},
-						},
-						Extensions: plugins.Extensions{
-							AddedLinks:        []plugins.AddedLink{},
-							AddedComponents:   []plugins.AddedComponent{},
-							ExposedComponents: []plugins.ExposedComponent{},
-							ExtensionPoints:   []plugins.ExtensionPoint{},
-						},
-						Executable: "test",
-						Backend:    true,
-						State:      "alpha",
-					},
-					Module:        "public/plugins/test-datasource/module.js",
-					BaseURL:       "public/plugins/test-datasource",
-					FS:            mustNewStaticFSForTests(t, filepath.Join(parentDir, "testdata/valid-v2-signature/plugin/")),
-					Signature:     "valid",
-					SignatureType: plugins.SignatureTypeGrafana,
-					SignatureOrg:  "Grafana Labs",
-					Class:         plugins.ClassBundled,
 				},
 			},
 		},
@@ -250,8 +202,10 @@ func TestLoader_Load(t *testing.T) {
 							},
 						},
 						Extensions: plugins.Extensions{
-							AddedLinks:        []plugins.AddedLink{},
-							AddedComponents:   []plugins.AddedComponent{},
+							AddedLinks:      []plugins.AddedLink{},
+							AddedComponents: []plugins.AddedComponent{},
+							AddedFunctions:  []plugins.AddedFunction{},
+
 							ExposedComponents: []plugins.ExposedComponent{},
 							ExtensionPoints:   []plugins.ExtensionPoint{},
 						},
@@ -298,8 +252,10 @@ func TestLoader_Load(t *testing.T) {
 							},
 						},
 						Extensions: plugins.Extensions{
-							AddedLinks:        []plugins.AddedLink{},
-							AddedComponents:   []plugins.AddedComponent{},
+							AddedLinks:      []plugins.AddedLink{},
+							AddedComponents: []plugins.AddedComponent{},
+							AddedFunctions:  []plugins.AddedFunction{},
+
 							ExposedComponents: []plugins.ExposedComponent{},
 							ExtensionPoints:   []plugins.ExtensionPoint{},
 						},
@@ -353,8 +309,10 @@ func TestLoader_Load(t *testing.T) {
 							},
 						},
 						Extensions: plugins.Extensions{
-							AddedLinks:        []plugins.AddedLink{},
-							AddedComponents:   []plugins.AddedComponent{},
+							AddedLinks:      []plugins.AddedLink{},
+							AddedComponents: []plugins.AddedComponent{},
+							AddedFunctions:  []plugins.AddedFunction{},
+
 							ExposedComponents: []plugins.ExposedComponent{},
 							ExtensionPoints:   []plugins.ExtensionPoint{},
 						},
@@ -447,8 +405,10 @@ func TestLoader_Load(t *testing.T) {
 							{Name: "Root Page (react)", Type: "page", Role: org.RoleViewer, Action: plugins.ActionAppAccess, Path: "/a/my-simple-app", DefaultNav: true, AddToNav: true, Slug: "root-page-react"},
 						},
 						Extensions: plugins.Extensions{
-							AddedLinks:        []plugins.AddedLink{},
-							AddedComponents:   []plugins.AddedComponent{},
+							AddedLinks:      []plugins.AddedLink{},
+							AddedComponents: []plugins.AddedComponent{},
+							AddedFunctions:  []plugins.AddedFunction{},
+
 							ExposedComponents: []plugins.ExposedComponent{},
 							ExtensionPoints:   []plugins.ExtensionPoint{},
 						},
@@ -470,7 +430,7 @@ func TestLoader_Load(t *testing.T) {
 			require.NoError(t, err)
 			et := pluginerrs.ProvideErrorTracker()
 
-			l := New(discovery.New(tt.cfg, discovery.Opts{}), bootstrap.New(tt.cfg, bootstrap.Opts{}),
+			l := New(zeroCfg, discovery.New(tt.cfg, discovery.Opts{}), bootstrap.New(tt.cfg, bootstrap.Opts{}),
 				validation.New(tt.cfg, validation.Opts{}), initialization.New(tt.cfg, initialization.Opts{}),
 				terminationStage, et)
 
@@ -505,6 +465,7 @@ func TestLoader_Load(t *testing.T) {
 
 		var steps []string
 		l := New(
+			zeroCfg,
 			&fakes.FakeDiscoverer{
 				DiscoverFunc: func(ctx context.Context, s plugins.PluginSource) ([]*plugins.FoundBundle, error) {
 					require.Equal(t, src, s)
@@ -562,6 +523,7 @@ func TestLoader_Load(t *testing.T) {
 
 		var steps []string
 		l := New(
+			zeroCfg,
 			&fakes.FakeDiscoverer{
 				DiscoverFunc: func(ctx context.Context, s plugins.PluginSource) ([]*plugins.FoundBundle, error) {
 					require.Equal(t, src, s)
@@ -624,6 +586,7 @@ func TestLoader_Load(t *testing.T) {
 
 		var steps []string
 		l := New(
+			zeroCfg,
 			&fakes.FakeDiscoverer{
 				DiscoverFunc: func(ctx context.Context, s plugins.PluginSource) ([]*plugins.FoundBundle, error) {
 					require.Equal(t, src, s)
@@ -679,7 +642,9 @@ func TestLoader_Unload(t *testing.T) {
 		}
 
 		for _, tc := range tcs {
-			l := New(&fakes.FakeDiscoverer{},
+			l := New(
+				&config.PluginManagementCfg{},
+				&fakes.FakeDiscoverer{},
 				&fakes.FakeBootstrapper{},
 				&fakes.FakeValidator{},
 				&fakes.FakeInitializer{},

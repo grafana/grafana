@@ -7,7 +7,7 @@ import { alertRuleApi } from '../../api/alertRuleApi';
 import { featureDiscoveryApi } from '../../api/featureDiscoveryApi';
 import { notFoundToNullOrThrow } from '../../api/util';
 import { ruleGroupReducer } from '../../reducers/ruler/ruleGroups';
-import { DEFAULT_GROUP_EVALUATION_INTERVAL } from '../../utils/rule-form';
+import { DEFAULT_GROUP_EVALUATION_INTERVAL } from '../../rule-editor/formDefaults';
 
 const { useLazyGetRuleGroupForNamespaceQuery } = alertRuleApi;
 const { useLazyDiscoverDsFeaturesQuery } = featureDiscoveryApi;

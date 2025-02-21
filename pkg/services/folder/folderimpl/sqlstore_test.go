@@ -11,10 +11,12 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
@@ -975,10 +977,14 @@ func CreateOrg(t *testing.T, db db.DB, cfg *setting.Cfg) int64 {
 
 	orgService, err := orgimpl.ProvideService(db, cfg, quotatest.New(false, nil))
 	require.NoError(t, err)
+	dashSvc := &dashboards.FakeDashboardService{}
+	dashSvc.On("DeleteAllDashboards", mock.Anything, mock.Anything).Return(nil)
+	deleteOrgService, err := orgimpl.ProvideDeletionService(db, cfg, dashSvc)
+	require.NoError(t, err)
 	orgID, err := orgService.GetOrCreate(context.Background(), "test-org")
 	require.NoError(t, err)
 	t.Cleanup(func() {
-		err = orgService.Delete(context.Background(), &org.DeleteOrgCommand{ID: orgID})
+		err = deleteOrgService.Delete(context.Background(), &org.DeleteOrgCommand{ID: orgID})
 		require.NoError(t, err)
 	})
 

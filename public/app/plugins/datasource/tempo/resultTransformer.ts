@@ -464,6 +464,42 @@ function transformToTraceData(data: TraceSearchMetadata) {
   };
 }
 
+export function enhanceTraceQlMetricsResponse(
+  data: DataQueryResponse,
+  instanceSettings: DataSourceInstanceSettings
+): DataQueryResponse {
+  data.data
+    ?.filter((f) => f.name === 'exemplar' && f.meta?.dataTopic === 'annotations')
+    .map((frame) => {
+      const traceIDField = frame.fields.find((field: Field) => field.name === 'traceId');
+      if (traceIDField) {
+        const links = getDataLinks(instanceSettings);
+        traceIDField.config.links = traceIDField.config.links?.length
+          ? [...traceIDField.config.links, ...links]
+          : links;
+      }
+      return frame;
+    });
+  return data;
+}
+
+function getDataLinks(instanceSettings: DataSourceInstanceSettings): DataLink[] {
+  const dataLinks: DataLink[] = [];
+
+  if (instanceSettings.uid) {
+    dataLinks.push({
+      title: 'View trace',
+      url: '',
+      internal: {
+        query: { query: '${__value.raw}', queryType: 'traceql' },
+        datasourceUid: instanceSettings.uid,
+        datasourceName: instanceSettings?.name ?? 'Data source not found',
+      },
+    });
+  }
+  return dataLinks;
+}
+
 export function formatTraceQLResponse(
   data: TraceSearchMetadata[],
   instanceSettings: DataSourceInstanceSettings,

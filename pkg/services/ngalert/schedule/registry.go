@@ -314,8 +314,6 @@ func (r ruleWithFolder) Fingerprint() fingerprint {
 
 	// fields that do not affect the state.
 	// TODO consider removing fields below from the fingerprint
-	writeInt(rule.ID)
-	writeInt(rule.OrgID)
 	writeInt(int64(rule.For))
 	if rule.DashboardUID != nil {
 		writeString(*rule.DashboardUID)

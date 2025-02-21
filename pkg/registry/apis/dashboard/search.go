@@ -1,38 +1,55 @@
 package dashboard
 
 import (
+	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/url"
+	"slices"
+	"sort"
 	"strconv"
 	"strings"
 
 	"go.opentelemetry.io/otel/trace"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
+	"github.com/grafana/grafana/pkg/storage/unified/search"
+
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apis/dashboard"
 	dashboardv0alpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
+	folderv0alpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/services/dashboards"
+	dashboardsearch "github.com/grafana/grafana/pkg/services/dashboards/service/search"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	foldermodel "github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 )
 
 // The DTO returns everything the UI needs in a single request
 type SearchHandler struct {
-	log    log.Logger
-	client resource.ResourceIndexClient
-	tracer trace.Tracer
+	log      log.Logger
+	client   resource.ResourceIndexClient
+	tracer   trace.Tracer
+	features featuremgmt.FeatureToggles
 }
 
-func NewSearchHandler(client resource.ResourceIndexClient, tracer trace.Tracer) *SearchHandler {
+func NewSearchHandler(tracer trace.Tracer, dual dualwrite.Service, legacyDashboardSearcher resource.ResourceIndexClient, resourceClient resource.ResourceClient, features featuremgmt.FeatureToggles) *SearchHandler {
+	searchClient := resource.NewSearchClient(dual, dashboard.DashboardResourceInfo.GroupResource(), resourceClient, legacyDashboardSearcher)
 	return &SearchHandler{
-		client: client,
-		log:    log.New("grafana-apiserver.dashboards.search"),
-		tracer: tracer,
+		client:   searchClient,
+		log:      log.New("grafana-apiserver.dashboards.search"),
+		tracer:   tracer,
+		features: features,
 	}
 }
 
@@ -190,6 +207,9 @@ func (s *SearchHandler) DoSortable(w http.ResponseWriter, r *http.Request) {
 	s.write(w, sortable)
 }
 
+const rootFolder = "general"
+
+// nolint:gocyclo
 func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	ctx, span := s.tracer.Start(r.Context(), "dashboard.search")
 	defer span.End()
@@ -209,44 +229,69 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	// get limit and offset from query params
 	limit := 50
 	offset := 0
+	page := 1
 	if queryParams.Has("limit") {
 		limit, _ = strconv.Atoi(queryParams.Get("limit"))
 	}
 	if queryParams.Has("offset") {
 		offset, _ = strconv.Atoi(queryParams.Get("offset"))
+	} else if queryParams.Has("page") {
+		page, _ = strconv.Atoi(queryParams.Get("page"))
 	}
 
 	searchRequest := &resource.ResourceSearchRequest{
-		Options: &resource.ListOptions{
-			Key: &resource.ResourceKey{
-				Namespace: user.GetNamespace(),
-				Group:     dashboardv0alpha1.GROUP,
-				Resource:  "dashboards",
-			},
-		},
-		Query:  queryParams.Get("query"),
-		Limit:  int64(limit),
-		Offset: int64(offset),
-		Fields: []string{
-			"title",
-			"folder",
-			"tags",
-		},
+		Options: &resource.ListOptions{},
+		Query:   queryParams.Get("query"),
+		Limit:   int64(limit),
+		Offset:  int64(offset),
+		Page:    int64(page), // for modes 0-2 (legacy)
+		Explain: queryParams.Has("explain") && queryParams.Get("explain") != "false",
 	}
+	fields := []string{"title", "folder", "tags"}
+	if queryParams.Has("field") {
+		// add fields to search and exclude duplicates
+		for _, f := range queryParams["field"] {
+			if f != "" && !slices.Contains(fields, f) {
+				fields = append(fields, f)
+			}
+		}
+	}
+	searchRequest.Fields = fields
 
-	// Add the folder constraint. Note this does not do recursive search
-	folder := queryParams.Get("folder")
-	if folder != "" {
-		searchRequest.Options.Fields = []*resource.Requirement{{
-			Key:      "folder",
-			Operator: "=",
-			Values:   []string{folder},
-		}}
+	types := queryParams["type"]
+	var federate *resource.ResourceKey
+	switch len(types) {
+	case 0:
+		// When no type specified, search for dashboards
+		searchRequest.Options.Key, err = asResourceKey(user.GetNamespace(), dashboard.DASHBOARD_RESOURCE)
+		// Currently a search query is across folders and dashboards
+		if err == nil {
+			federate, err = asResourceKey(user.GetNamespace(), folderv0alpha1.RESOURCE)
+		}
+	case 1:
+		searchRequest.Options.Key, err = asResourceKey(user.GetNamespace(), types[0])
+	case 2:
+		searchRequest.Options.Key, err = asResourceKey(user.GetNamespace(), types[0])
+		if err == nil {
+			federate, err = asResourceKey(user.GetNamespace(), types[1])
+		}
+	default:
+		err = apierrors.NewBadRequest("too many type requests")
+	}
+	if err != nil {
+		errhttp.Write(ctx, err, w)
+		return
+	}
+	if federate != nil {
+		searchRequest.Federated = []*resource.ResourceKey{federate}
 	}
 
 	// Add sorting
 	if queryParams.Has("sort") {
 		for _, sort := range queryParams["sort"] {
+			if slices.Contains(search.DashboardFields(), sort) {
+				sort = resource.SEARCH_FIELD_PREFIX + sort
+			}
 			s := &resource.ResourceSearchRequest_Sort{Field: sort}
 			if strings.HasPrefix(sort, "-") {
 				s.Desc = true
@@ -256,18 +301,8 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Also query folders
-	if searchRequest.Query != "" {
-		searchRequest.Federated = []*resource.ResourceKey{{
-			Namespace: searchRequest.Options.Key.Namespace,
-			Group:     "folder.grafana.app",
-			Resource:  "folders",
-		}}
-	}
-
 	// The facet term fields
-	facets, ok := queryParams["facet"]
-	if ok {
+	if facets, ok := queryParams["facet"]; ok {
 		searchRequest.Facet = make(map[string]*resource.ResourceSearchRequest_Facet)
 		for _, v := range facets {
 			searchRequest.Facet[v] = &resource.ResourceSearchRequest_Facet{
@@ -277,56 +312,193 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Run the query
+	// The tags filter
+	if tags, ok := queryParams["tag"]; ok {
+		searchRequest.Options.Fields = []*resource.Requirement{{
+			Key:      "tags",
+			Operator: "=",
+			Values:   tags,
+		}}
+	}
+
+	// The names filter
+	names := queryParams["name"]
+
+	// Add the folder constraint. Note this does not do recursive search
+	folder := queryParams.Get("folder")
+	if folder == foldermodel.SharedWithMeFolderUID {
+		dashboardUIDs, err := s.getDashboardsUIDsSharedWithUser(ctx, user)
+		if err != nil {
+			errhttp.Write(ctx, err, w)
+			return
+		}
+
+		// hijacks the "name" query param to only search for shared dashboard UIDs
+		if len(dashboardUIDs) > 0 {
+			names = append(names, dashboardUIDs...)
+		}
+	} else if folder != "" {
+		if folder == rootFolder {
+			folder = "" // root folder is empty in the search index
+		}
+		searchRequest.Options.Fields = []*resource.Requirement{{
+			Key:      "folder",
+			Operator: "=",
+			Values:   []string{folder},
+		}}
+	}
+
+	if len(names) > 0 {
+		if searchRequest.Options.Fields == nil {
+			searchRequest.Options.Fields = []*resource.Requirement{}
+		}
+		namesFilter := []*resource.Requirement{{
+			Key:      "name",
+			Operator: "in",
+			Values:   names,
+		}}
+		searchRequest.Options.Fields = append(searchRequest.Options.Fields, namesFilter...)
+	}
+
 	result, err := s.client.Search(ctx, searchRequest)
 	if err != nil {
 		errhttp.Write(ctx, err, w)
 		return
 	}
 
-	sr := &dashboardv0alpha1.SearchResults{
-		Offset:    searchRequest.Offset,
-		TotalHits: result.TotalHits,
-		QueryCost: result.QueryCost,
-		MaxScore:  result.MaxScore,
-		Hits:      make([]dashboardv0alpha1.DashboardHit, len(result.Results.Rows)),
-	}
-	for i, row := range result.Results.Rows {
-		hit := &dashboardv0alpha1.DashboardHit{
-			Kind:   dashboardv0alpha1.HitTypeDash,
-			Name:   row.Key.Name,
-			Title:  string(row.Cells[0]),
-			Folder: string(row.Cells[1]),
-		}
-		if row.Cells[2] != nil {
-			_ = json.Unmarshal(row.Cells[2], &hit.Tags)
-		}
-		sr.Hits[i] = *hit
+	parsedResults, err := dashboardsearch.ParseResults(result, searchRequest.Offset)
+	if err != nil {
+		errhttp.Write(ctx, err, w)
+		return
 	}
 
-	// Add facet results
-	if result.Facet != nil {
-		sr.Facets = make(map[string]dashboardv0alpha1.FacetResult)
-		for k, v := range result.Facet {
-			sr.Facets[k] = dashboardv0alpha1.FacetResult{
-				Field:   v.Field,
-				Total:   v.Total,
-				Missing: v.Missing,
-				Terms:   make([]dashboardv0alpha1.TermFacet, len(v.Terms)),
-			}
-			for j, t := range v.Terms {
-				sr.Facets[k].Terms[j] = dashboardv0alpha1.TermFacet{
-					Term:  t.Term,
-					Count: t.Count,
-				}
-			}
-		}
+	if len(searchRequest.SortBy) == 0 {
+		// default sort by resource descending ( folders then dashboards ) then title
+		sort.Slice(parsedResults.Hits, func(i, j int) bool {
+			return parsedResults.Hits[i].Resource > parsedResults.Hits[j].Resource ||
+				(parsedResults.Hits[i].Resource == parsedResults.Hits[j].Resource && strings.ToLower(parsedResults.Hits[i].Title) < strings.ToLower(parsedResults.Hits[j].Title))
+		})
 	}
 
-	s.write(w, sr)
+	s.write(w, parsedResults)
 }
 
 func (s *SearchHandler) write(w http.ResponseWriter, obj any) {
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(obj)
+}
+
+// Given a namespace and type convert it to a search key
+func asResourceKey(ns string, k string) (*resource.ResourceKey, error) {
+	key, err := resource.AsResourceKey(ns, k)
+	if err != nil {
+		return nil, apierrors.NewBadRequest(err.Error())
+	}
+
+	return key, nil
+}
+
+func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, user identity.Requester) ([]string, error) {
+	if !s.features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageSearchPermissionFiltering) {
+		return []string{}, nil
+	}
+
+	// gets dashboards that the user was granted read access to
+	permissions := user.GetPermissions()
+	dashboardPermissions := permissions[dashboards.ActionDashboardsRead]
+	dashboardUids := make([]string, 0)
+	sharedDashboards := make([]string, 0)
+
+	for _, dashboardPermission := range dashboardPermissions {
+		if dashboardUid, found := strings.CutPrefix(dashboardPermission, dashboards.ScopeDashboardsPrefix); found {
+			if !slices.Contains(dashboardUids, dashboardUid) {
+				dashboardUids = append(dashboardUids, dashboardUid)
+			}
+		}
+	}
+
+	if len(dashboardUids) == 0 {
+		return sharedDashboards, nil
+	}
+
+	key, err := asResourceKey(user.GetNamespace(), dashboard.DASHBOARD_RESOURCE)
+	if err != nil {
+		return sharedDashboards, err
+	}
+
+	dashboardSearchRequest := &resource.ResourceSearchRequest{
+		Fields: []string{"folder"},
+		Limit:  int64(len(dashboardUids)),
+		Options: &resource.ListOptions{
+			Key: key,
+			Fields: []*resource.Requirement{{
+				Key:      "name",
+				Operator: "in",
+				Values:   dashboardUids,
+			}},
+		},
+	}
+	// get all dashboards user has access to, along with their parent folder uid
+	dashboardResult, err := s.client.Search(ctx, dashboardSearchRequest)
+	if err != nil {
+		return sharedDashboards, err
+	}
+
+	folderUidIdx := -1
+	for i, col := range dashboardResult.Results.Columns {
+		if col.Name == "folder" {
+			folderUidIdx = i
+		}
+	}
+
+	if folderUidIdx == -1 {
+		return sharedDashboards, fmt.Errorf("Error retrieving folder information")
+	}
+
+	// populate list of unique folder UIDs in the list of dashboards user has read permissions
+	allFolders := make([]string, 0)
+	for _, dash := range dashboardResult.Results.Rows {
+		folderUid := string(dash.Cells[folderUidIdx])
+		if folderUid != "" && !slices.Contains(allFolders, folderUid) {
+			allFolders = append(allFolders, folderUid)
+		}
+	}
+
+	// only folders the user has access to will be returned here
+	folderKey, err := asResourceKey(user.GetNamespace(), folderv0alpha1.RESOURCE)
+	if err != nil {
+		return sharedDashboards, err
+	}
+
+	folderSearchRequest := &resource.ResourceSearchRequest{
+		Fields: []string{"folder"},
+		Limit:  int64(len(allFolders)),
+		Options: &resource.ListOptions{
+			Key: folderKey,
+			Fields: []*resource.Requirement{{
+				Key:      "name",
+				Operator: "in",
+				Values:   allFolders,
+			}},
+		},
+	}
+	foldersResult, err := s.client.Search(ctx, folderSearchRequest)
+	if err != nil {
+		return sharedDashboards, err
+	}
+
+	foldersWithAccess := make([]string, 0, len(foldersResult.Results.Rows))
+	for _, fold := range foldersResult.Results.Rows {
+		foldersWithAccess = append(foldersWithAccess, fold.Key.Name)
+	}
+
+	// add to sharedDashboards dashboards user has access to, but does NOT have access to it's parent folder
+	for _, dash := range dashboardResult.Results.Rows {
+		dashboardUid := dash.Key.Name
+		folderUid := string(dash.Cells[folderUidIdx])
+		if folderUid != "" && !slices.Contains(foldersWithAccess, folderUid) {
+			sharedDashboards = append(sharedDashboards, dashboardUid)
+		}
+	}
+	return sharedDashboards, nil
 }

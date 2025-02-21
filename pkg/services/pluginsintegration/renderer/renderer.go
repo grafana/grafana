@@ -141,5 +141,5 @@ func createLoader(cfg *config.PluginManagementCfg, pluginEnvProvider envvars.Pro
 
 	et := pluginerrs.ProvideErrorTracker()
 
-	return loader.New(d, b, v, i, t, et), nil
+	return loader.New(cfg, d, b, v, i, t, et), nil
 }

@@ -1,10 +1,9 @@
 import { within } from '@testing-library/react';
 import { render, screen, userEvent, waitFor } from 'test/test-utils';
-import { byRole, byText } from 'testing-library-selector';
+import { byLabelText, byRole, byText } from 'testing-library-selector';
 
 import { setPluginLinksHook } from '@grafana/runtime';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
-import { setFolderAccessControl } from 'app/features/alerting/unified/mocks/server/configure';
 import { AlertManagerDataSourceJsonData } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
 import { CombinedRule, RuleIdentifier } from 'app/types/unified-alerting';
@@ -20,6 +19,7 @@ import {
   mockPromAlertingRule,
 } from '../../mocks';
 import { grafanaRulerRule } from '../../mocks/grafanaRulerApi';
+import { grantPermissionsHelper } from '../../test/test-utils';
 import { setupDataSources } from '../../testSetup/datasources';
 import { Annotation } from '../../utils/constants';
 import { DataSourceType } from '../../utils/datasource';
@@ -40,7 +40,7 @@ const ELEMENTS = {
     label: ([key, value]: [string, string]) => byRole('listitem', { name: `${key}: ${value}` }),
   },
   details: {
-    pendingPeriod: byText(/Pending period/i),
+    pendingPeriod: byLabelText(/Pending period/i),
   },
   actions: {
     edit: byRole('link', { name: 'Edit' }),
@@ -76,16 +76,6 @@ setPluginLinksHook(() => ({
   isLoading: false,
 }));
 
-/**
- * "Grants" permissions via contextSrv mock, and additionally sets folder access control
- * API response to match
- */
-const grantPermissionsHelper = (permissions: AccessControlAction[]) => {
-  const permissionsHash = permissions.reduce((hash, permission) => ({ ...hash, [permission]: true }), {});
-  grantUserPermissions(permissions);
-  setFolderAccessControl(permissionsHash);
-};
-
 const openSilenceDrawer = async () => {
   const user = userEvent.setup();
   await user.click(ELEMENTS.actions.more.button.get());
@@ -117,6 +107,10 @@ const dataSources = {
 };
 
 describe('RuleViewer', () => {
+  beforeEach(() => {
+    setupDataSources(...Object.values(dataSources));
+  });
+
   describe('Grafana managed alert rule', () => {
     const mockRule = getGrafanaRule(
       {
@@ -199,6 +193,75 @@ describe('RuleViewer', () => {
         grafanaRulerRule.grafana_alert.title
       );
     });
+
+    describe('version history', () => {
+      it('renders version history tab, and the compare version is enabled only when we have 2 versions selected', async () => {
+        const { user } = await renderRuleViewer(mockRule, mockRuleIdentifier, ActiveTab.VersionHistory);
+
+        expect(await screen.findByRole('button', { name: /Compare versions/i })).toBeDisabled();
+
+        expect(screen.getAllByRole('row')).toHaveLength(7);
+        expect(screen.getAllByRole('row')[1]).toHaveTextContent(/6Provisioning2025-01-18 04:35:17/i);
+        expect(screen.getAllByRole('row')[1]).toHaveTextContent('+3-3Latest');
+
+        expect(screen.getAllByRole('row')[2]).toHaveTextContent(/5Alerting2025-01-17 04:35:17/i);
+        expect(screen.getAllByRole('row')[2]).toHaveTextContent('+5-5');
+
+        expect(screen.getAllByRole('row')[3]).toHaveTextContent(/4different user2025-01-16 04:35:17/i);
+        expect(screen.getAllByRole('row')[3]).toHaveTextContent('+5-5');
+
+        expect(screen.getAllByRole('row')[4]).toHaveTextContent(/3user12025-01-15 04:35:17/i);
+        expect(screen.getAllByRole('row')[4]).toHaveTextContent('+5-9');
+
+        expect(screen.getAllByRole('row')[5]).toHaveTextContent(/2User ID foo2025-01-14 04:35:17/i);
+        expect(screen.getAllByRole('row')[5]).toHaveTextContent('+11-7');
+
+        expect(screen.getAllByRole('row')[6]).toHaveTextContent(/1Unknown 2025-01-13 04:35:17/i);
+
+        await user.click(screen.getByLabelText('1'));
+        await user.click(screen.getByLabelText('2'));
+        expect(await screen.findByRole('button', { name: /Compare versions/i })).toBeEnabled();
+        await user.click(screen.getByLabelText('1'));
+        expect(await screen.findByRole('button', { name: /Compare versions/i })).toBeDisabled();
+      });
+      it('shows version history with special case `updated_by` values', async () => {
+        await renderRuleViewer(mockRule, mockRuleIdentifier, ActiveTab.VersionHistory);
+        expect(await screen.findByRole('button', { name: /Compare versions/i })).toBeDisabled();
+
+        expect(screen.getByRole('cell', { name: /provisioning/i })).toBeInTheDocument();
+        expect(screen.getByRole('cell', { name: /alerting/i })).toBeInTheDocument();
+        expect(screen.getByRole('cell', { name: /Unknown/i })).toBeInTheDocument();
+        expect(screen.getByRole('cell', { name: /user id foo/i })).toBeInTheDocument();
+      });
+
+      it('shows comparison of versions', async () => {
+        const { user } = await renderRuleViewer(mockRule, mockRuleIdentifier, ActiveTab.VersionHistory);
+        expect(await screen.findByRole('button', { name: /Compare versions/i })).toBeDisabled();
+
+        await user.click(screen.getByLabelText('1'));
+        await user.click(screen.getByLabelText('2'));
+        await user.click(screen.getByRole('button', { name: /Compare versions/i }));
+        await screen.findByText(/comparing versions/i);
+        expect(await screen.findByText(/pending period/i)).toBeInTheDocument();
+        expect(screen.getAllByTestId('diffGroup')[0]).toHaveTextContent(/pending period changed 5m2h/i);
+        expect(screen.getAllByTestId('diffGroup')[1]).toHaveTextContent(/labels added foo bar/i);
+        expect(screen.getAllByTestId('diffGroup')[2]).toHaveTextContent(/contact point routing added/i);
+      });
+
+      it('renders version summary correctly for special cases', async () => {
+        const { user } = await renderRuleViewer(mockRule, mockRuleIdentifier, ActiveTab.VersionHistory);
+        expect(await screen.findByRole('button', { name: /Compare versions/i })).toBeDisabled();
+
+        await user.click(screen.getByLabelText('6'));
+        await user.click(screen.getByLabelText('5'));
+        await user.click(screen.getByRole('button', { name: /Compare versions/i }));
+        await screen.findByText(/comparing versions/i);
+
+        const versionSummary = screen.getByRole('heading', { level: 4 });
+        expect(versionSummary).toHaveTextContent(/Version 5 updated by alerting/i);
+        expect(versionSummary).toHaveTextContent(/Version 6 updated by provisioning/i);
+      });
+    });
   });
 
   describe('Data source managed alert rule', () => {
@@ -219,10 +282,6 @@ describe('RuleViewer', () => {
         AccessControlAction.AlertingRuleExternalRead,
         AccessControlAction.AlertingRuleExternalWrite,
       ]);
-    });
-
-    beforeEach(() => {
-      setupDataSources(...Object.values(dataSources));
     });
 
     it('should render a data source managed alert rule', () => {
@@ -301,14 +360,14 @@ describe('RuleViewer', () => {
       // One summary is rendered by the Title component, and the other by the DetailsTab component
       expect(ELEMENTS.metadata.summary(mockRule.annotations[Annotation.summary]).getAll()).toHaveLength(2);
 
-      expect(within(ELEMENTS.details.pendingPeriod.get()).getByText(/15m/i)).toBeInTheDocument();
+      expect(ELEMENTS.details.pendingPeriod.get()).toHaveTextContent(/15m/i);
     });
   });
 });
 
 const renderRuleViewer = async (rule: CombinedRule, identifier: RuleIdentifier, tab: ActiveTab = ActiveTab.Query) => {
   const path = `/alerting/${identifier.ruleSourceName}/${stringifyIdentifier(identifier)}/view?tab=${tab}`;
-  render(
+  const view = render(
     <AlertRuleProvider identifier={identifier} rule={rule}>
       <RuleViewer />
     </AlertRuleProvider>,
@@ -316,6 +375,8 @@ const renderRuleViewer = async (rule: CombinedRule, identifier: RuleIdentifier, 
   );
 
   await waitFor(() => expect(ELEMENTS.loading.query()).not.toBeInTheDocument());
+
+  return view;
 };
 
 jest.mock('@grafana/runtime', () => ({

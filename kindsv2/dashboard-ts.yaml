@@ -1,0 +1,22 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/grafana/cog/main/schemas/pipeline.json
+
+inputs:
+  - cue:
+      entrypoint: '%__config_dir%/../packages/grafana-schema/src/schema/dashboard/v2alpha0'
+      metadata:
+        kind: core
+      cue_imports:
+        - '%__config_dir%/../packages/grafana-schema/src/common:github.com/grafana/grafana/packages/grafana-schema/src/common'
+
+output:
+  directory: '%__config_dir%/../packages/grafana-schema/src/schema/dashboard/'
+
+  types: true
+
+  languages:
+    - typescript:
+        skip_runtime: true
+        enums_as_union_types: true
+        path_prefix: ""
+        packages_import_map:
+          common: '@grafana/schema'

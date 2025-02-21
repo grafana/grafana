@@ -14,7 +14,7 @@ describe('Resolver', () => {
     );
     expect(pages.Alerting.AddAlertRule.url).toBe('/alerting/new/alerting');
     expect(pages.AddDashboard.Settings.Variables.Edit.url('test')).toBe(
-      '/dashboard/new?orgId=1&editview=templating&editIndex=test'
+      '/dashboard/new?orgId=1&editview=variables&editIndex=test'
     );
   });
 

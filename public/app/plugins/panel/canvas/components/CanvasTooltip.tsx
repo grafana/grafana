@@ -88,7 +88,6 @@ export const CanvasTooltip = ({ scene }: Props) => {
       }
     });
   }
-  // ---------
 
   if (scene.data?.series) {
     getElementFields(scene.data?.series, element.options).forEach((field) => {

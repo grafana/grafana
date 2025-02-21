@@ -1,8 +1,9 @@
-import { locationService, setDataSourceSrv } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import { AdHocFiltersVariable, sceneGraph, sceneUtils } from '@grafana/scenes';
+import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
 
-import { MockDataSourceSrv, mockDataSource } from '../../alerting/unified/mocks';
+import { mockDataSource } from '../../alerting/unified/mocks';
 import { DataTrail } from '../DataTrail';
 import { TRAIL_BOOKMARKS_KEY, RECENT_TRAILS_KEY, VAR_FILTERS } from '../shared';
 
@@ -31,13 +32,10 @@ describe('TrailStore', () => {
     jest.useFakeTimers();
 
     // Having the mock service set up is required for activating the loaded trails
-    setDataSourceSrv(
-      new MockDataSourceSrv({
-        prom: mockDataSource({
-          name: 'Prometheus',
-          type: DataSourceType.Prometheus,
-          uid: 'ds',
-        }),
+    setupDataSources(
+      mockDataSource({
+        name: 'Prometheus',
+        type: DataSourceType.Prometheus,
       })
     );
   });
@@ -66,6 +64,7 @@ describe('TrailStore', () => {
           'var-ds': 'cb3a3391-700f-4cc6-81be-a122488e93e6',
           'var-filters': [],
           refresh: '',
+          nativeHistogramMetric: '',
         },
         type: 'start',
         description: 'Test',
@@ -80,6 +79,7 @@ describe('TrailStore', () => {
           'var-ds': 'cb3a3391-700f-4cc6-81be-a122488e93e6',
           'var-filters': [],
           refresh: '',
+          nativeHistogramMetric: '',
         },
         type: 'metric',
         description: 'Test',
@@ -228,6 +228,7 @@ describe('TrailStore', () => {
           'var-ds': 'ds',
           'var-filters': [],
           refresh: '',
+          nativeHistogramMetric: '',
         },
         type: 'start',
         description: 'Test',
@@ -242,6 +243,7 @@ describe('TrailStore', () => {
           'var-ds': 'ds',
           'var-filters': [],
           refresh: '',
+          nativeHistogramMetric: '',
         },
         type: 'metric',
         description: 'Test',
@@ -256,6 +258,7 @@ describe('TrailStore', () => {
           'var-ds': 'ds',
           'var-filters': [],
           refresh: '',
+          nativeHistogramMetric: '',
         },
         type: 'metric',
         description: 'Test',
@@ -506,13 +509,15 @@ describe('TrailStore', () => {
           {
             urlValues: {
               metric: 'bookmarked_metric',
+              nativeHistogramMetric: '',
               from: 'now-1h',
               to: 'now',
               timezone,
               'var-ds': 'prom-mock',
-              'var-deployment_environment': ['undefined'],
               'var-otel_resources': [''],
               'var-filters': [],
+              'var-otel_and_metric_filters': [''],
+              'var-deployment_environment': [''],
               refresh: '',
             },
             type: 'time',
@@ -602,6 +607,7 @@ describe('TrailStore', () => {
                   'var-ds': 'cb3a3391-700f-4cc6-81be-a122488e93e6',
                   'var-filters': [],
                   refresh: '',
+                  nativeHistogramMetric: '',
                 },
                 type: 'start',
                 description: 'Test',
@@ -615,6 +621,7 @@ describe('TrailStore', () => {
                   'var-ds': 'cb3a3391-700f-4cc6-81be-a122488e93e6',
                   'var-filters': [],
                   refresh: '',
+                  nativeHistogramMetric: '',
                 },
                 type: 'time',
                 description: 'Test',
@@ -654,6 +661,7 @@ describe('TrailStore', () => {
                   'var-ds': 'prom-mock',
                   'var-filters': [],
                   refresh: '',
+                  nativeHistogramMetric: '',
                 },
                 type: 'start',
               },
@@ -665,6 +673,7 @@ describe('TrailStore', () => {
                   'var-ds': 'prom-mock',
                   'var-filters': [],
                   refresh: '',
+                  nativeHistogramMetric: '',
                 },
                 type: 'time',
               },
@@ -676,6 +685,7 @@ describe('TrailStore', () => {
                   'var-ds': 'prom-mock',
                   'var-filters': [],
                   refresh: '',
+                  nativeHistogramMetric: '',
                 },
                 type: 'metric',
               },
@@ -712,13 +722,15 @@ describe('TrailStore', () => {
             history: [
               {
                 urlValues: {
+                  nativeHistogramMetric: '',
                   from: 'now-1h',
                   to: 'now',
                   timezone,
                   'var-ds': 'prom-mock',
-                  'var-deployment_environment': ['undefined'],
                   'var-otel_resources': [''],
                   'var-filters': [],
+                  'var-otel_and_metric_filters': [''],
+                  'var-deployment_environment': [''],
                   refresh: '',
                 },
                 type: 'start',
@@ -726,13 +738,15 @@ describe('TrailStore', () => {
               {
                 urlValues: {
                   metric: 'bookmarked_metric',
+                  nativeHistogramMetric: '',
                   from: 'now-1h',
                   to: 'now',
                   timezone,
                   'var-ds': 'prom-mock',
-                  'var-deployment_environment': ['undefined'],
                   'var-otel_resources': [''],
                   'var-filters': [],
+                  'var-otel_and_metric_filters': [''],
+                  'var-deployment_environment': [''],
                   refresh: '',
                 },
                 type: 'time',
@@ -740,13 +754,15 @@ describe('TrailStore', () => {
               {
                 urlValues: {
                   metric: 'some_other_metric',
+                  nativeHistogramMetric: '',
                   from: 'now-1h',
                   to: 'now',
                   timezone,
                   'var-ds': 'prom-mock',
-                  'var-deployment_environment': ['undefined'],
                   'var-otel_resources': [''],
                   'var-filters': [],
+                  'var-otel_and_metric_filters': [''],
+                  'var-deployment_environment': [''],
                   refresh: '',
                 },
                 type: 'metric',
@@ -762,13 +778,15 @@ describe('TrailStore', () => {
           {
             urlValues: {
               metric: 'bookmarked_metric',
+              nativeHistogramMetric: '',
               from: 'now-1h',
               to: 'now',
               timezone,
               'var-ds': 'prom-mock',
-              'var-deployment_environment': ['undefined'],
               'var-otel_resources': [''],
               'var-filters': [],
+              'var-otel_and_metric_filters': [''],
+              'var-deployment_environment': [''],
               refresh: '',
             },
             type: 'time',

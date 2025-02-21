@@ -29,6 +29,7 @@ type RulerApi interface {
 	RouteGetNamespaceGrafanaRulesConfig(*contextmodel.ReqContext) response.Response
 	RouteGetNamespaceRulesConfig(*contextmodel.ReqContext) response.Response
 	RouteGetRuleByUID(*contextmodel.ReqContext) response.Response
+	RouteGetRuleVersionsByUID(*contextmodel.ReqContext) response.Response
 	RouteGetRulegGroupConfig(*contextmodel.ReqContext) response.Response
 	RouteGetRulesConfig(*contextmodel.ReqContext) response.Response
 	RouteGetRulesForExport(*contextmodel.ReqContext) response.Response
@@ -85,6 +86,11 @@ func (f *RulerApiHandler) RouteGetRuleByUID(ctx *contextmodel.ReqContext) respon
 	// Parse Path Parameters
 	ruleUIDParam := web.Params(ctx.Req)[":RuleUID"]
 	return f.handleRouteGetRuleByUID(ctx, ruleUIDParam)
+}
+func (f *RulerApiHandler) RouteGetRuleVersionsByUID(ctx *contextmodel.ReqContext) response.Response {
+	// Parse Path Parameters
+	ruleUIDParam := web.Params(ctx.Req)[":RuleUID"]
+	return f.handleRouteGetRuleVersionsByUID(ctx, ruleUIDParam)
 }
 func (f *RulerApiHandler) RouteGetRulegGroupConfig(ctx *contextmodel.ReqContext) response.Response {
 	// Parse Path Parameters
@@ -240,6 +246,18 @@ func (api *API) RegisterRulerApiEndpoints(srv RulerApi, m *metrics.API) {
 				http.MethodGet,
 				"/api/ruler/grafana/api/v1/rule/{RuleUID}",
 				api.Hooks.Wrap(srv.RouteGetRuleByUID),
+				m,
+			),
+		)
+		group.Get(
+			toMacaronPath("/api/ruler/grafana/api/v1/rule/{RuleUID}/versions"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
+			api.authorize(http.MethodGet, "/api/ruler/grafana/api/v1/rule/{RuleUID}/versions"),
+			metrics.Instrument(
+				http.MethodGet,
+				"/api/ruler/grafana/api/v1/rule/{RuleUID}/versions",
+				api.Hooks.Wrap(srv.RouteGetRuleVersionsByUID),
 				m,
 			),
 		)

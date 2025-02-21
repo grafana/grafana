@@ -34,5 +34,11 @@ export function useFolder(uid?: string): ReturnBag {
 }
 
 export function stringifyFolder({ title, parents }: FolderDTO) {
-  return parents && parents?.length ? [...parents.map((p) => p.title), title].join('/') : title;
+  return parents && parents?.length
+    ? [...parents.map((p) => p.title), title].map(encodeTitle).join('/')
+    : encodeTitle(title);
+}
+
+export function encodeTitle(title: string): string {
+  return title.replaceAll('/', '\\/');
 }

@@ -38,13 +38,12 @@ jest.mock('../../../../../influxql_metadata_query', () => {
   };
 });
 
-jest.mock('@grafana/runtime', () => {
-  return {
-    getTemplateSrv: jest.fn().mockReturnValueOnce({
-      getVariables: jest.fn().mockReturnValueOnce([]),
-    }),
-  };
-});
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getTemplateSrv: jest.fn().mockReturnValueOnce({
+    getVariables: jest.fn().mockReturnValueOnce([]),
+  }),
+}));
 
 beforeEach(() => {
   (mockedMeta.getTagKeys as jest.Mock).mockClear();

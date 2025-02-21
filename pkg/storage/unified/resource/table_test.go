@@ -1,6 +1,8 @@
 package resource
 
 import (
+	"bytes"
+	"encoding/binary"
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -311,4 +313,16 @@ func TestColumnEncoding(t *testing.T) {
 		require.Empty(t, missingTypes, "missing tests for types")
 		require.Empty(t, missingArrays, "missing array tests for types")
 	})
+}
+
+func TestDecodeCell(t *testing.T) {
+	colDef := &ResourceTableColumnDefinition{Type: ResourceTableColumnDefinition_INT64}
+	var buf bytes.Buffer
+	err := binary.Write(&buf, binary.BigEndian, int64(123))
+	require.NoError(t, err)
+
+	res, err := DecodeCell(colDef, 0, buf.Bytes())
+
+	require.NoError(t, err)
+	require.Equal(t, int64(123), res)
 }

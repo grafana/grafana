@@ -16,7 +16,7 @@ import { useEffect, useMemo, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { config, reportInteraction } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
 import { EmptyState, Icon, LoadingBar, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
@@ -161,8 +161,6 @@ const getCommandPalettePosition = () => {
 };
 
 const getSearchStyles = (theme: GrafanaTheme2, lateralSpace: number) => {
-  const isSingleTopNav = config.featureToggles.singleTopNav;
-
   return {
     positioner: css({
       zIndex: theme.zIndex.portal,
@@ -188,15 +186,13 @@ const getSearchStyles = (theme: GrafanaTheme2, lateralSpace: number) => {
       border: `1px solid ${theme.colors.border.weak}`,
       overflow: 'hidden',
       boxShadow: theme.shadows.z3,
-      ...(isSingleTopNav && {
-        [theme.breakpoints.up('lg')]: {
-          position: 'fixed',
-          right: lateralSpace,
-          left: lateralSpace,
-          maxWidth: 'unset',
-          width: 'unset',
-        },
-      }),
+      [theme.breakpoints.up('lg')]: {
+        position: 'fixed',
+        right: lateralSpace,
+        left: lateralSpace,
+        maxWidth: 'unset',
+        width: 'unset',
+      },
     }),
     loadingBarContainer: css({
       position: 'absolute',

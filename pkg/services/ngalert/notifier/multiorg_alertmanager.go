@@ -160,7 +160,7 @@ func NewMultiOrgAlertmanager(
 	moa.factory = func(ctx context.Context, orgID int64) (Alertmanager, error) {
 		m := metrics.NewAlertmanagerMetrics(moa.metrics.GetOrCreateOrgRegistry(orgID), l)
 		stateStore := NewFileStore(orgID, kvStore)
-		return NewAlertmanager(ctx, orgID, moa.settings, moa.configStore, stateStore, moa.peer, moa.decryptFn, moa.ns, m, featureManager.IsEnabled(ctx, featuremgmt.FlagAlertingSimplifiedRouting))
+		return NewAlertmanager(ctx, orgID, moa.settings, moa.configStore, stateStore, moa.peer, moa.decryptFn, moa.ns, m, featureManager)
 	}
 
 	for _, opt := range opts {
@@ -254,7 +254,7 @@ func (moa *MultiOrgAlertmanager) Run(ctx context.Context) error {
 func (moa *MultiOrgAlertmanager) LoadAndSyncAlertmanagersForOrgs(ctx context.Context) error {
 	moa.logger.Debug("Synchronizing Alertmanagers for orgs")
 	// First, load all the organizations from the database.
-	orgIDs, err := moa.orgStore.GetOrgs(ctx)
+	orgIDs, err := moa.orgStore.FetchOrgIds(ctx)
 	if err != nil {
 		return err
 	}

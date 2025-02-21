@@ -2,10 +2,12 @@ import { StoryFn, Meta } from '@storybook/react';
 import { useState } from 'react';
 
 import { KeyValue } from '@grafana/data';
-import { Field, Button, Input } from '@grafana/ui';
 
 import { getAvailableIcons } from '../../types';
+import { Button } from '../Button';
+import { Field } from '../Forms/Field';
 
+import { Input } from './Input';
 import mdx from './Input.mdx';
 import { parseAccessory } from './storyUtils';
 

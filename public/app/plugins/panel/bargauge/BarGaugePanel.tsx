@@ -29,6 +29,9 @@ export class BarGaugePanel extends PureComponent<BarGaugePanelProps> {
     const { value, alignmentFactors, orientation, width, height, count } = valueProps;
     const { field, display, view, colIndex } = value;
     const { openMenu, targetClassName } = menuProps;
+    const spacing = this.getItemSpacing();
+    // check if the total height is bigger than the visualization height, if so, there will be scrollbars for overflow
+    const isOverflow = (height + spacing) * count - spacing > this.props.height;
 
     let processor: DisplayProcessor | undefined = undefined;
     if (view && isNumber(colIndex)) {
@@ -45,7 +48,7 @@ export class BarGaugePanel extends PureComponent<BarGaugePanelProps> {
         text={options.text}
         display={processor}
         theme={config.theme2}
-        itemSpacing={this.getItemSpacing()}
+        itemSpacing={spacing}
         displayMode={options.displayMode}
         onClick={openMenu}
         className={targetClassName}
@@ -53,6 +56,7 @@ export class BarGaugePanel extends PureComponent<BarGaugePanelProps> {
         showUnfilled={options.showUnfilled}
         valueDisplayMode={options.valueMode}
         namePlacement={options.namePlacement}
+        isOverflow={isOverflow}
       />
     );
   };

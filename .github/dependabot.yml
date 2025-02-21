@@ -8,6 +8,7 @@ updates:
     directories:
       - "/"
       - "/apps/playlist"
+      - "/apps/investigations"
       - "/pkg/aggregator"
       - "/pkg/apimachinery"
       - "/pkg/apiserver"
@@ -18,6 +19,21 @@ updates:
       - "/pkg/storage/unified/apistore"
       - "/pkg/storage/unified/resource"
       - "/pkg/util/xorm"
+    schedule:
+      interval: "daily"
+      time: "02:00"
+      timezone: Etc/UTC
+    open-pull-requests-limit: 10
+  - package-ecosystem: "docker"
+    directories:
+      - "/"
+      - "/packaging/docker/custom"
+      - "/scripts/verify-repo-update"
+      - "/scripts/build/ci-deploy"
+      - "/scripts/build/ci-windows-test"
+      - "/scripts/build/ci-e2e"
+      - "/scripts/build/ci-wix"
+      - "/scripts/build/ci-msi-build"
     schedule:
       interval: "daily"
       time: "02:00"

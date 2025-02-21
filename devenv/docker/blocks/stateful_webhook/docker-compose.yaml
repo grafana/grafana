@@ -1,0 +1,5 @@
+  stateful_webhook:
+    build:
+      context: docker/blocks/stateful_webhook
+    ports:
+      - "8080:8080"

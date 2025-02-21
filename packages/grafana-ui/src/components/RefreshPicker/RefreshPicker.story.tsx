@@ -2,8 +2,7 @@ import { action } from '@storybook/addon-actions';
 import { useArgs } from '@storybook/preview-api';
 import { Meta, StoryFn } from '@storybook/react';
 
-import { RefreshPicker } from '@grafana/ui';
-
+import { RefreshPicker } from './RefreshPicker';
 import mdx from './RefreshPicker.mdx';
 
 const meta: Meta<typeof RefreshPicker> = {

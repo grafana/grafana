@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
@@ -41,15 +42,29 @@ func (g *genericStrategy) GetResetFields() map[fieldpath.APIVersion]*fieldpath.S
 	return fields
 }
 
-func (g *genericStrategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {}
-
-func (g *genericStrategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
-	oldMeta, err := utils.MetaAccessor(old)
+func (g *genericStrategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
+	meta, err := utils.MetaAccessor(obj)
 	if err != nil {
 		return
 	}
+	meta.SetGeneration(1)
+	objCopy := obj.DeepCopyObject()
+	err = runtime.SetZeroValue(objCopy)
+	if err != nil {
+		return
+	}
+	metaCopy, err := utils.MetaAccessor(objCopy)
+	if err != nil {
+		return
+	}
+	status, err := metaCopy.GetStatus()
+	if err == nil {
+		_ = meta.SetStatus(status)
+	}
+}
 
-	status, err := oldMeta.GetStatus()
+func (g *genericStrategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
+	oldMeta, err := utils.MetaAccessor(old)
 	if err != nil {
 		return
 	}
@@ -59,7 +74,27 @@ func (g *genericStrategy) PrepareForUpdate(ctx context.Context, obj, old runtime
 		return
 	}
 
-	_ = newMeta.SetStatus(status)
+	// update shouldn't change the status
+	status, err := oldMeta.GetStatus()
+	if err != nil {
+		_ = newMeta.SetStatus(nil)
+	} else {
+		_ = newMeta.SetStatus(status)
+	}
+
+	spec, err := newMeta.GetSpec()
+	if err != nil {
+		return
+	}
+
+	oldSpec, err := oldMeta.GetSpec()
+	if err != nil {
+		return
+	}
+
+	if !apiequality.Semantic.DeepEqual(spec, oldSpec) {
+		newMeta.SetGeneration(oldMeta.GetGeneration() + 1)
+	}
 }
 
 func (g *genericStrategy) Validate(ctx context.Context, obj runtime.Object) field.ErrorList {

@@ -26,6 +26,9 @@ export class AddLibraryPanelDrawer extends SceneObjectBase<AddLibraryPanelDrawer
     const newPanel = getDefaultVizPanel();
 
     newPanel.setState({
+      // Panel title takes precedence over library panel title when resolving the library panel
+      title: panelInfo.model.title,
+      hoverHeader: !panelInfo.model.title,
       $behaviors: [new LibraryPanelBehavior({ uid: panelInfo.uid, name: panelInfo.name })],
     });
 

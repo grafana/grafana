@@ -42,19 +42,19 @@ func ProvideService(
 	cfg *setting.Cfg,
 	dataSourceCache datasources.CacheService,
 	expressionService *expr.Service,
-	pluginRequestValidator validations.PluginRequestValidator,
+	dataSourceRequestValidator validations.DataSourceRequestValidator,
 	pluginClient plugins.Client,
 	pCtxProvider *plugincontext.Provider,
 ) *ServiceImpl {
 	g := &ServiceImpl{
-		cfg:                    cfg,
-		dataSourceCache:        dataSourceCache,
-		expressionService:      expressionService,
-		pluginRequestValidator: pluginRequestValidator,
-		pluginClient:           pluginClient,
-		pCtxProvider:           pCtxProvider,
-		log:                    log.New("query_data"),
-		concurrentQueryLimit:   cfg.SectionWithEnvOverrides("query").Key("concurrent_query_limit").MustInt(runtime.NumCPU()),
+		cfg:                        cfg,
+		dataSourceCache:            dataSourceCache,
+		expressionService:          expressionService,
+		dataSourceRequestValidator: dataSourceRequestValidator,
+		pluginClient:               pluginClient,
+		pCtxProvider:               pCtxProvider,
+		log:                        log.New("query_data"),
+		concurrentQueryLimit:       cfg.SectionWithEnvOverrides("query").Key("concurrent_query_limit").MustInt(runtime.NumCPU()),
 	}
 	g.log.Info("Query Service initialization")
 	return g
@@ -70,14 +70,14 @@ type Service interface {
 var _ Service = (*ServiceImpl)(nil)
 
 type ServiceImpl struct {
-	cfg                    *setting.Cfg
-	dataSourceCache        datasources.CacheService
-	expressionService      *expr.Service
-	pluginRequestValidator validations.PluginRequestValidator
-	pluginClient           plugins.Client
-	pCtxProvider           *plugincontext.Provider
-	log                    log.Logger
-	concurrentQueryLimit   int
+	cfg                        *setting.Cfg
+	dataSourceCache            datasources.CacheService
+	expressionService          *expr.Service
+	dataSourceRequestValidator validations.DataSourceRequestValidator
+	pluginClient               plugins.Client
+	pCtxProvider               *plugincontext.Provider
+	log                        log.Logger
+	concurrentQueryLimit       int
 }
 
 // Run ServiceImpl.
@@ -244,7 +244,7 @@ func (s *ServiceImpl) handleExpressions(ctx context.Context, user identity.Reque
 func (s *ServiceImpl) handleQuerySingleDatasource(ctx context.Context, user identity.Requester, parsedReq *parsedRequest) (*backend.QueryDataResponse, error) {
 	queries := parsedReq.getFlattenedQueries()
 	ds := queries[0].datasource
-	if err := s.pluginRequestValidator.Validate(ds.URL, nil); err != nil {
+	if err := s.dataSourceRequestValidator.Validate(ds, nil); err != nil {
 		return nil, datasources.ErrDataSourceAccessDenied
 	}
 

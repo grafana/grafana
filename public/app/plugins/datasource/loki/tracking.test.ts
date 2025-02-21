@@ -1,5 +1,5 @@
 import { CoreApp, DashboardLoadedEvent, DataQueryRequest, dateTime } from '@grafana/data';
-import { QueryEditorMode } from '@grafana/experimental';
+import { QueryEditorMode } from '@grafana/plugin-ui';
 import { reportInteraction } from '@grafana/runtime';
 
 import pluginJson from './plugin.json';

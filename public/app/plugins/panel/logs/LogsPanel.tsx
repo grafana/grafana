@@ -27,9 +27,11 @@ import {
   TimeZone,
   toUtc,
   urlUtil,
+  LogSortOrderChangeEvent,
+  LoadingState,
 } from '@grafana/data';
 import { convertRawToRange } from '@grafana/data/src/datetime/rangeutil';
-import { config } from '@grafana/runtime';
+import { config, getAppEvents } from '@grafana/runtime';
 import { ScrollContainer, usePanelContext, useStyles2 } from '@grafana/ui';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
 import { InfiniteScroll } from 'app/features/logs/components/InfiniteScroll';
@@ -130,10 +132,8 @@ export const LogsPanel = ({
 }: LogsPanelProps) => {
   const isAscending = sortOrder === LogsSortOrder.Ascending;
   const style = useStyles2(getStyles);
-  const [scrollTop, setScrollTop] = useState(0);
   const logsContainerRef = useRef<HTMLDivElement>(null);
   const [contextRow, setContextRow] = useState<LogRowModel | null>(null);
-  const dataSourcesMap = useDatasourcesFromTargets(data.request?.targets);
   const [scrollElement, setScrollElement] = useState<HTMLDivElement | null>(null);
   const [displayedFields, setDisplayedFields] = useState<string[]>(options.displayedFields ?? []);
   // Loading state to be passed as a prop to the <InfiniteScroll> component
@@ -141,13 +141,20 @@ export const LogsPanel = ({
   // Loading ref to prevent firing multiple requests
   const loadingRef = useRef(false);
   const [panelData, setPanelData] = useState(data);
+  const dataSourcesMap = useDatasourcesFromTargets(panelData.request?.targets);
+  // Prevents the scroll position to change when new data from infinite scrolling is received
+  const keepScrollPositionRef = useRef(false);
   let closeCallback = useRef<() => void>();
+  const { eventBus, onAddAdHocFilter } = usePanelContext();
 
   useEffect(() => {
-    scrollElement?.scrollTo(0, scrollTop);
-  }, [scrollElement, scrollTop]);
+    getAppEvents().publish(
+      new LogSortOrderChangeEvent({
+        order: sortOrder,
+      })
+    );
+  }, [sortOrder]);
 
-  const { eventBus, onAddAdHocFilter } = usePanelContext();
   const onLogRowHover = useCallback(
     (row?: LogRowModel) => {
       if (row) {
@@ -188,9 +195,9 @@ export const LogsPanel = ({
         !row.dataFrame.refId ||
         !dataSourcesMap ||
         (!showLogContextToggle &&
-          data.request?.app !== CoreApp.Dashboard &&
-          data.request?.app !== CoreApp.PanelEditor &&
-          data.request?.app !== CoreApp.PanelViewer)
+          panelData.request?.app !== CoreApp.Dashboard &&
+          panelData.request?.app !== CoreApp.PanelEditor &&
+          panelData.request?.app !== CoreApp.PanelViewer)
       ) {
         return false;
       }
@@ -198,16 +205,16 @@ export const LogsPanel = ({
       const dataSource = dataSourcesMap.get(row.dataFrame.refId);
       return hasLogsContextSupport(dataSource);
     },
-    [dataSourcesMap, showLogContextToggle, data.request?.app]
+    [dataSourcesMap, showLogContextToggle, panelData.request?.app]
   );
 
   const showPermaLink = useCallback(() => {
     return !(
-      data.request?.app !== CoreApp.Dashboard &&
-      data.request?.app !== CoreApp.PanelEditor &&
-      data.request?.app !== CoreApp.PanelViewer
+      panelData.request?.app !== CoreApp.Dashboard &&
+      panelData.request?.app !== CoreApp.PanelEditor &&
+      panelData.request?.app !== CoreApp.PanelViewer
     );
-  }, [data.request?.app]);
+  }, [panelData.request?.app]);
 
   const getLogRowContext = useCallback(
     async (row: LogRowModel, origRow: LogRowModel, options: LogRowContextOptions): Promise<DataQueryResponse> => {
@@ -215,7 +222,7 @@ export const LogsPanel = ({
         return Promise.resolve({ data: [] });
       }
 
-      const query = data.request?.targets[0];
+      const query = panelData.request?.targets[0];
       if (!query) {
         return Promise.resolve({ data: [] });
       }
@@ -225,9 +232,11 @@ export const LogsPanel = ({
         return Promise.resolve({ data: [] });
       }
 
+      options.scopedVars = panelData.request?.scopedVars;
+
       return dataSource.getLogRowContext(row, options, query);
     },
-    [data.request?.targets, dataSourcesMap]
+    [panelData.request?.targets, panelData.request?.scopedVars, dataSourcesMap]
   );
 
   const getLogRowContextUi = useCallback(
@@ -236,7 +245,7 @@ export const LogsPanel = ({
         return <></>;
       }
 
-      const query = data.request?.targets[0];
+      const query = panelData.request?.targets[0];
       if (!query) {
         return <></>;
       }
@@ -250,46 +259,54 @@ export const LogsPanel = ({
         return <></>;
       }
 
-      return dataSource.getLogRowContextUi(origRow, runContextQuery, query);
+      return dataSource.getLogRowContextUi(origRow, runContextQuery, query, panelData.request?.scopedVars);
     },
-    [data.request?.targets, dataSourcesMap]
+    [panelData.request?.targets, panelData.request?.scopedVars, dataSourcesMap]
   );
 
   // Important to memoize stuff here, as panel rerenders a lot for example when resizing.
   const [logRows, deduplicatedRows, commonLabels] = useMemo(() => {
     const logs = panelData
-      ? dataFrameToLogsModel(panelData.series, data.request?.intervalMs, undefined, data.request?.targets)
+      ? dataFrameToLogsModel(panelData.series, panelData.request?.intervalMs, undefined, panelData.request?.targets)
       : null;
     const logRows = logs?.rows || [];
     const commonLabels = logs?.meta?.find((m) => m.label === COMMON_LABELS);
     const deduplicatedRows = dedupLogRows(logRows, dedupStrategy);
     return [logRows, deduplicatedRows, commonLabels];
-  }, [data.request?.intervalMs, data.request?.targets, dedupStrategy, panelData]);
+  }, [dedupStrategy, panelData]);
 
   const onPermalinkClick = useCallback(
     async (row: LogRowModel) => {
-      return await copyDashboardUrl(row, logRows, data.timeRange);
+      return await copyDashboardUrl(row, logRows, panelData.timeRange);
     },
-    [data.timeRange, logRows]
+    [panelData.timeRange, logRows]
   );
 
   useEffect(() => {
-    setPanelData(data);
+    if (data.state !== LoadingState.Loading) {
+      setPanelData(data);
+    }
   }, [data]);
 
   useLayoutEffect(() => {
-    if (isAscending && logsContainerRef.current) {
-      setScrollTop(logsContainerRef.current.offsetHeight);
-    } else {
-      setScrollTop(0);
+    if (!logsContainerRef.current || !scrollElement || keepScrollPositionRef.current) {
+      keepScrollPositionRef.current = false;
+      return;
     }
-  }, [isAscending, logRows]);
+    /**
+     * In dashboards, users with newest logs at the bottom have the expectation of keeping the scroll at the bottom
+     * when new data is received. See https://github.com/grafana/grafana/pull/37634
+     */
+    if (panelData.request?.app === CoreApp.Dashboard || panelData.request?.app === CoreApp.PanelEditor) {
+      scrollElement.scrollTo(0, isAscending ? logsContainerRef.current.scrollHeight : 0);
+    }
+  }, [panelData.request?.app, isAscending, scrollElement, logRows]);
 
   const getFieldLinks = useCallback(
     (field: Field, rowIndex: number) => {
-      return getFieldLinksForExplore({ field, rowIndex, range: data.timeRange });
+      return getFieldLinksForExplore({ field, rowIndex, range: panelData.timeRange });
     },
-    [data]
+    [panelData]
   );
 
   /**
@@ -374,6 +391,7 @@ export const LogsPanel = ({
         loadingRef.current = false;
       }
 
+      keepScrollPositionRef.current = true;
       setPanelData({
         ...panelData,
         series: newSeries,
@@ -425,11 +443,11 @@ export const LogsPanel = ({
             range={data.timeRange}
             timeZone={timeZone}
             rows={logRows}
-            scrollElement={scrollElement ?? undefined}
+            scrollElement={scrollElement}
             sortOrder={sortOrder}
           >
             <LogRows
-              containerRendered={logsContainerRef.current !== null}
+              scrollElement={scrollElement}
               scrollIntoView={scrollIntoView}
               permalinkedRowId={getLogsPanelState()?.logs?.id ?? undefined}
               onPermalinkClick={showPermaLink() ? onPermalinkClick : undefined}
@@ -465,6 +483,8 @@ export const LogsPanel = ({
               onClickHideField={displayedFields !== undefined ? onClickHideField : undefined}
               logRowMenuIconsBefore={isReactNodeArray(logRowMenuIconsBefore) ? logRowMenuIconsBefore : undefined}
               logRowMenuIconsAfter={isReactNodeArray(logRowMenuIconsAfter) ? logRowMenuIconsAfter : undefined}
+              // Ascending order causes scroll to stick to the bottom, so previewing is futile
+              renderPreview={isAscending ? false : true}
             />
           </InfiniteScroll>
           {showCommonLabels && isAscending && renderCommonLabels()}
@@ -543,7 +563,7 @@ async function copyDashboardUrl(row: LogRowModel, rows: LogRowModel[], timeRange
   return Promise.resolve();
 }
 
-async function requestMoreLogs(
+export async function requestMoreLogs(
   dataSourcesMap: Map<string, DataSourceApi>,
   panelData: PanelData,
   timeRange: AbsoluteTimeRange,
@@ -565,7 +585,7 @@ async function requestMoreLogs(
   for (const uid in targetGroups) {
     const dataSource = dataSourcesMap.get(panelData.request.targets[0].refId);
     if (!dataSource) {
-      console.log('no ds');
+      console.warn(`Could not resolve data source for target ${panelData.request.targets[0].refId}`);
       continue;
     }
     dataRequests.push(

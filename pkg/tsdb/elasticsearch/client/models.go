@@ -207,10 +207,10 @@ func newAggDef(key string, aggregation *aggContainer) *aggDef {
 
 // HistogramAgg represents a histogram aggregation
 type HistogramAgg struct {
-	Interval    int    `json:"interval,omitempty"`
-	Field       string `json:"field"`
-	MinDocCount int    `json:"min_doc_count"`
-	Missing     *int   `json:"missing,omitempty"`
+	Interval    float64 `json:"interval,omitempty"`
+	Field       string  `json:"field"`
+	MinDocCount int     `json:"min_doc_count"`
+	Missing     *int    `json:"missing,omitempty"`
 }
 
 // DateHistogramAgg represents a date histogram aggregation

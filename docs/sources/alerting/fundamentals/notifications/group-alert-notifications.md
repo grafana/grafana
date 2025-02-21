@@ -35,6 +35,10 @@ refs:
 
 Grouping in Grafana Alerting allows you to batch relevant alerts together into a smaller number of notifications. This is particularly important if notifications are delivered to first-responders, such as engineers on-call, where receiving lots of notifications in a short period of time can be overwhelming. In some cases, it can negatively impact a first-responders ability to respond to an incident. For example, consider a large outage where many of your systems are down. In this case, grouping can be the difference between receiving 1 phone call and 100 phone calls.
 
+{{< admonition type="tip" >}}
+For a practical example of grouping, refer to our [Getting Started with Grouping tutorial](https://grafana.com/tutorials/alerting-get-started-pt3/).
+{{< /admonition  >}}
+
 ## Group notifications
 
 Grouping combines similar alert instances within a specific period into a single notification, reducing alert noise.
@@ -61,7 +65,7 @@ If you want to group alerts by other labels, something other than the alert rule
 
 ### A single group for all alerts
 
-If you want to group all alerts handled by the notification policy in a single group (without grouping notifications by alert rule or other labels), you can do so by leaving `Group by` empty.
+If you want to group all alerts handled by the notification policy in a single group (without grouping notifications by alert rule or other labels), leave `Group by` empty in the Default policy.
 
 ### Disable grouping
 

@@ -61,6 +61,10 @@ export function mapPromMetricsToServiceMap(
   collectMetricData(frames[secondsMetric], 'seconds', secondsMetric, nodesMap, edgesMap);
   collectMetricData(frames[failedMetric], 'failed', failedMetric, nodesMap, edgesMap);
 
+  collectIsInstrumented(frames[`${totalsMetric}_labels`], nodesMap);
+  collectIsInstrumented(frames[`${secondsMetric}_labels`], nodesMap);
+  collectIsInstrumented(frames[`${failedMetric}_labels`], nodesMap);
+
   return convertToDataFrames(nodesMap, edgesMap, range);
 }
 
@@ -95,6 +99,11 @@ function createServiceMapDataFrames() {
       name: Fields.arc + 'failed',
       type: FieldType.number,
       config: { displayName: 'Failed', color: { fixedColor: 'red', mode: FieldColorModeId.Fixed } },
+      values: [],
+    },
+    {
+      name: Fields.isInstrumented,
+      type: FieldType.boolean,
       values: [],
     },
   ]);
@@ -145,6 +154,7 @@ type ServiceMapStatistics = {
 type NodeObject = ServiceMapStatistics & {
   name: string;
   namespace?: string;
+  isInstrumented?: boolean;
 };
 
 type EdgeObject = ServiceMapStatistics & {
@@ -240,6 +250,21 @@ function collectMetricData(
   }
 }
 
+function collectIsInstrumented(frame: DataFrameView | undefined, nodesMap: Record<string, NodeObject>) {
+  if (!frame) {
+    return;
+  }
+
+  for (let i = 0; i < frame.length; i++) {
+    const row = frame.get(i);
+    const serverId = row.server_service_namespace ? `${row.server_service_namespace}/${row.server}` : row.server;
+
+    if (nodesMap[serverId] && nodesMap[serverId].isInstrumented !== true) {
+      nodesMap[serverId].isInstrumented = row.connection_type === '' || row.connection_type === 'messaging_system';
+    }
+  }
+}
+
 function convertToDataFrames(
   nodesMap: Record<string, NodeObject>,
   edgesMap: Record<string, EdgeObject>,
@@ -258,6 +283,7 @@ function convertToDataFrames(
       [Fields.secondaryStat]: node.total ? Math.round(node.total * 100) / 100 : Number.NaN, // Request per second (to 2 decimals)
       [Fields.arc + 'success']: node.total ? (node.total - Math.min(node.failed || 0, node.total)) / node.total : 1,
       [Fields.arc + 'failed']: node.total ? Math.min(node.failed || 0, node.total) / node.total : 0,
+      [Fields.isInstrumented]: node.isInstrumented ?? true,
     });
   }
   for (const edgeId of Object.keys(edgesMap)) {

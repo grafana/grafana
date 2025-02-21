@@ -1,20 +1,6 @@
 import { AppChromeService } from './AppChromeService';
 
 describe('AppChromeService', () => {
-  it('onToggleKioskMode should set chromeless to true when searchbar is hidden', () => {
-    const chromeService = new AppChromeService();
-    chromeService.onToggleSearchBar();
-    chromeService.onToggleKioskMode();
-    expect(chromeService.state.getValue().chromeless).toBe(true);
-  });
-
-  it('onToggleSearchBar should clear kiosk mode', () => {
-    const chromeService = new AppChromeService();
-    chromeService.onToggleKioskMode();
-    chromeService.onToggleSearchBar();
-    expect(chromeService.state.getValue().kioskMode).toBeFalsy();
-  });
-
   it('Ignore state updates when sectionNav and pageNav have new instance but same text, url or active child', () => {
     const chromeService = new AppChromeService();
     let stateChanges = 0;

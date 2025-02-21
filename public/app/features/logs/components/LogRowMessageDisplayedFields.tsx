@@ -24,6 +24,7 @@ export interface Props {
   onBlur: () => void;
   logRowMenuIconsBefore?: ReactNode[];
   logRowMenuIconsAfter?: ReactNode[];
+  preview?: boolean;
 }
 
 export const LogRowMessageDisplayedFields = memo((props: Props) => {
@@ -37,6 +38,7 @@ export const LogRowMessageDisplayedFields = memo((props: Props) => {
     pinned,
     logRowMenuIconsBefore,
     logRowMenuIconsAfter,
+    preview,
     ...rest
   } = props;
   const wrapClassName = wrapLogMessage ? '' : displayedFieldsStyles.noWrap;
@@ -52,8 +54,7 @@ export const LogRowMessageDisplayedFields = memo((props: Props) => {
       }
 
       const field = fields.find((field) => {
-        const { keys } = field;
-        return keys[0] === parsedKey;
+        return field.keys[0] === parsedKey;
       });
 
       if (field != null) {
@@ -67,7 +68,18 @@ export const LogRowMessageDisplayedFields = memo((props: Props) => {
     return line.trimStart();
   }, [detectedFields, fields, row.entry, row.labels]);
 
-  const shouldShowMenu = useMemo(() => mouseIsOver || pinned, [mouseIsOver, pinned]);
+  const shouldShowMenu = mouseIsOver || pinned;
+
+  if (preview) {
+    return (
+      <>
+        <td>
+          <div>{line}</div>
+        </td>
+        <td></td>
+      </>
+    );
+  }
 
   return (
     <>

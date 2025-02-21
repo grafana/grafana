@@ -1,8 +1,8 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import { DataSourceInstanceSettings, ScopedVars } from '@grafana/data';
-import { LanguageDefinition } from '@grafana/experimental';
-import { TemplateSrv, config } from '@grafana/runtime';
+import { LanguageDefinition } from '@grafana/plugin-ui';
+import { TemplateSrv } from '@grafana/runtime';
 import {
   COMMON_FNS,
   DB,
@@ -75,17 +75,13 @@ export class MssqlDatasource extends SqlDatasource {
   }
 
   getFunctions = (): ReturnType<DB['functions']> => {
-    if (config.featureToggles.sqlQuerybuilderFunctionParameters) {
-      const columnParam: FuncParameter = {
-        name: 'Column',
-        required: true,
-        options: (query) => this.fetchFields(query),
-      };
+    const columnParam: FuncParameter = {
+      name: 'Column',
+      required: true,
+      options: (query) => this.fetchFields(query),
+    };
 
-      return [...MACRO_FUNCTIONS(columnParam), ...COMMON_FNS.map((fn) => ({ ...fn, parameters: [columnParam] }))];
-    } else {
-      return COMMON_FNS;
-    }
+    return [...MACRO_FUNCTIONS(columnParam), ...COMMON_FNS.map((fn) => ({ ...fn, parameters: [columnParam] }))];
   };
 
   getDB(): DB {

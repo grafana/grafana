@@ -3,13 +3,13 @@ import { useCallback, useMemo } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { isFetchError } from '@grafana/runtime';
+import { getIrmIfPresentOrOnCallPluginId } from 'app/features/alerting/unified/utils/config';
 
 import { useAppNotification } from '../../../../../../../core/copy/appNotification';
 import { Receiver } from '../../../../../../../plugins/datasource/alertmanager/types';
 import { NotifierDTO } from '../../../../../../../types';
 import { ONCALL_INTEGRATION_V2_FEATURE, onCallApi } from '../../../../api/onCallApi';
 import { usePluginBridge } from '../../../../hooks/usePluginBridge';
-import { SupportedPlugin } from '../../../../types/pluginBridges';
 import { option } from '../../../../utils/notifier-types';
 import { GRAFANA_APP_RECEIVERS_SOURCE_IMAGE } from '../types';
 
@@ -41,7 +41,7 @@ function useOnCallPluginStatus() {
     installed: isOnCallEnabled,
     loading: isPluginBridgeLoading,
     error: pluginError,
-  } = usePluginBridge(SupportedPlugin.OnCall);
+  } = usePluginBridge(getIrmIfPresentOrOnCallPluginId());
 
   const {
     data: onCallFeatures = [],
@@ -240,7 +240,7 @@ export function useOnCallIntegration() {
       description: isOnCallEnabled
         ? 'Connect effortlessly to Grafana OnCall'
         : 'Enable Grafana OnCall plugin to use this integration',
-      iconUrl: GRAFANA_APP_RECEIVERS_SOURCE_IMAGE[SupportedPlugin.OnCall],
+      iconUrl: GRAFANA_APP_RECEIVERS_SOURCE_IMAGE[getIrmIfPresentOrOnCallPluginId()],
     },
     extendOnCallNotifierFeatures,
     extendOnCallReceivers,

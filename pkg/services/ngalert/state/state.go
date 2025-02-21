@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"maps"
 	"math"
+	"net/url"
 	"strings"
 	"time"
 
@@ -74,6 +75,35 @@ type State struct {
 	LastEvaluationString string
 	LastEvaluationTime   time.Time
 	EvaluationDuration   time.Duration
+}
+
+func newState(ctx context.Context, log log.Logger, alertRule *models.AlertRule, result eval.Result, extraLabels data.Labels, externalURL *url.URL) *State {
+	lbs, annotations := expandAnnotationsAndLabels(ctx, log, alertRule, result, extraLabels, externalURL)
+
+	cacheID := lbs.Fingerprint()
+	// For new states, we set StartsAt & EndsAt to EvaluatedAt as this is the
+	// expected value for a Normal state during state transition.
+	return &State{
+		OrgID:                alertRule.OrgID,
+		AlertRuleUID:         alertRule.UID,
+		CacheID:              cacheID,
+		State:                eval.Normal,
+		StateReason:          "",
+		ResultFingerprint:    result.Instance.Fingerprint(), // remember original result fingerprint
+		LatestResult:         nil,
+		Error:                nil,
+		Image:                nil,
+		Annotations:          annotations,
+		Labels:               lbs,
+		Values:               nil,
+		StartsAt:             result.EvaluatedAt,
+		EndsAt:               result.EvaluatedAt,
+		ResolvedAt:           nil,
+		LastSentAt:           nil,
+		LastEvaluationString: "",
+		LastEvaluationTime:   result.EvaluatedAt,
+		EvaluationDuration:   result.EvaluationDuration,
+	}
 }
 
 // Copy creates a shallow copy of the State except for labels and annotations.
@@ -231,11 +261,6 @@ func (a *State) SetNextValues(result eval.Result) {
 		}
 	}
 	a.Values = newValues
-}
-
-// IsNormalStateWithNoReason returns true if the state is Normal and reason is empty
-func IsNormalStateWithNoReason(s *State) bool {
-	return s.State == eval.Normal && s.StateReason == ""
 }
 
 // StateTransition describes the transition from one state to another.
@@ -575,13 +600,24 @@ func (a *State) IsStale() bool {
 	return a.StateReason == models.StateReasonMissingSeries
 }
 
-// shouldTakeImage returns true if the state just has transitioned to alerting from another state,
-// transitioned to alerting in a previous evaluation but does not have a screenshot, or has just
-// been resolved.
-func shouldTakeImage(state, previousState eval.State, previousImage *models.Image, resolved bool) bool {
-	return resolved ||
-		state == eval.Alerting && previousState != eval.Alerting ||
-		state == eval.Alerting && previousImage == nil
+// shouldTakeImage determines whether a new image should be taken for a given transition. This should return true when
+// newly transitioning to an alerting state, when no valid image exists, or when the alert has been resolved.
+func shouldTakeImage(state, previousState eval.State, previousImage *models.Image, resolved bool) string {
+	if resolved {
+		return "resolved"
+	}
+	if state == eval.Alerting {
+		if previousState != eval.Alerting {
+			return "transition to alerting"
+		}
+		if previousImage == nil {
+			return "no image"
+		}
+		if previousImage.HasExpired() {
+			return "expired image"
+		}
+	}
+	return ""
 }
 
 // takeImage takes an image for the alert rule. It returns nil if screenshots are disabled or
@@ -657,4 +693,148 @@ func GetRuleExtraLabels(l log.Logger, rule *models.AlertRule, folderTitle string
 		return mergeLabels(extraLabels, rule.NotificationSettings[0].ToLabels())
 	}
 	return extraLabels
+}
+
+func patch(newState, existingState *State, result eval.Result) {
+	// if there is existing state, copy over the current values that may be needed to determine the final state.
+	// TODO remove some unnecessary assignments below because they are overridden in setNextState
+	newState.State = existingState.State
+	newState.StateReason = existingState.StateReason
+	newState.Image = existingState.Image
+	newState.LatestResult = existingState.LatestResult
+	newState.Error = existingState.Error
+	newState.Values = existingState.Values
+	newState.LastEvaluationString = existingState.LastEvaluationString
+	newState.StartsAt = existingState.StartsAt
+	newState.EndsAt = existingState.EndsAt
+	newState.ResolvedAt = existingState.ResolvedAt
+	newState.LastSentAt = existingState.LastSentAt
+	// Annotations can change over time, however we also want to maintain
+	// certain annotations across evaluations
+	for key := range models.InternalAnnotationNameSet { // Changing in
+		value, ok := existingState.Annotations[key]
+		if !ok {
+			continue
+		}
+		// If the annotation is not present then it should be copied from
+		// the current state to the new state
+		if _, ok = newState.Annotations[key]; !ok {
+			newState.Annotations[key] = value
+		}
+	}
+
+	// if the current state is "data source error" then it may have additional labels that may not exist in the new state.
+	// See https://github.com/grafana/grafana/blob/c7fdf8ce706c2c9d438f5e6eabd6e580bac4946b/pkg/services/ngalert/state/state.go#L161-L163
+	// copy known labels over to the new instance, it can help reduce flapping
+	// TODO fix this?
+	if existingState.State == eval.Error && result.State == eval.Error {
+		setIfExist := func(lbl string) {
+			if v, ok := existingState.Labels[lbl]; ok {
+				newState.Labels[lbl] = v
+			}
+		}
+		setIfExist("datasource_uid")
+		setIfExist("ref_id")
+	}
+}
+
+func (a *State) transition(alertRule *models.AlertRule, result eval.Result, extraAnnotations data.Labels, logger log.Logger, takeImageFn takeImageFn) StateTransition {
+	a.LastEvaluationTime = result.EvaluatedAt
+	a.EvaluationDuration = result.EvaluationDuration
+	a.SetNextValues(result)
+	a.LatestResult = &Evaluation{
+		EvaluationTime:  result.EvaluatedAt,
+		EvaluationState: result.State,
+		Values:          a.Values,
+		Condition:       alertRule.Condition,
+	}
+	a.LastEvaluationString = result.EvaluationString
+	oldState := a.State
+	oldReason := a.StateReason
+
+	// Add the instance to the log context to help correlate log lines for a state
+	logger = logger.New("instance", result.Instance)
+
+	// if the current state is Error but the result is different, then we need o clean up the extra labels
+	// that were added after the state key was calculated
+	// https://github.com/grafana/grafana/blob/1df4d332c982dc5e394201bb2ef35b442727ce63/pkg/services/ngalert/state/state.go#L298-L311
+	// Usually, it happens in the case of classic conditions when the evalResult does not have labels.
+	//
+	// This is temporary change to make sure that the labels are not persistent in the state after it was in Error state
+	// TODO yuri. Remove it when correct Error result with labels is provided
+	if a.State == eval.Error && result.State != eval.Error {
+		// This is possible because state was updated after the CacheID was calculated.
+		_, curOk := a.Labels["ref_id"]
+		_, resOk := result.Instance["ref_id"]
+		if curOk && !resOk {
+			delete(a.Labels, "ref_id")
+		}
+		_, curOk = a.Labels["datasource_uid"]
+		_, resOk = result.Instance["datasource_uid"]
+		if curOk && !resOk {
+			delete(a.Labels, "datasource_uid")
+		}
+	}
+
+	switch result.State {
+	case eval.Normal:
+		logger.Debug("Setting next state", "handler", "resultNormal")
+		resultNormal(a, alertRule, result, logger, "")
+	case eval.Alerting:
+		logger.Debug("Setting next state", "handler", "resultAlerting")
+		resultAlerting(a, alertRule, result, logger, "")
+	case eval.Error:
+		logger.Debug("Setting next state", "handler", "resultError")
+		resultError(a, alertRule, result, logger)
+	case eval.NoData:
+		logger.Debug("Setting next state", "handler", "resultNoData")
+		resultNoData(a, alertRule, result, logger)
+	case eval.Pending: // we do not emit results with this state
+		logger.Debug("Ignoring set next state as result is pending")
+	}
+
+	// Set reason iff: result and state are different, reason is not Alerting or Normal
+	a.StateReason = ""
+
+	if a.State != result.State &&
+		result.State != eval.Normal &&
+		result.State != eval.Alerting {
+		a.StateReason = resultStateReason(result, alertRule)
+	}
+
+	// Set Resolved property so the scheduler knows to send a postable alert
+	// to Alertmanager.
+	newlyResolved := false
+	if oldState == eval.Alerting && a.State == eval.Normal {
+		a.ResolvedAt = &result.EvaluatedAt
+		newlyResolved = true
+	} else if a.State != eval.Normal && a.State != eval.Pending { // Retain the last resolved time for Normal->Normal and Normal->Pending.
+		a.ResolvedAt = nil
+	}
+
+	if reason := shouldTakeImage(a.State, oldState, a.Image, newlyResolved); reason != "" {
+		image := takeImageFn(reason)
+		if image != nil {
+			a.Image = image
+		}
+	}
+
+	for key, val := range extraAnnotations {
+		a.Annotations[key] = val
+	}
+
+	nextState := StateTransition{
+		State:               a,
+		PreviousState:       oldState,
+		PreviousStateReason: oldReason,
+	}
+	return nextState
+}
+
+func resultStateReason(result eval.Result, rule *models.AlertRule) string {
+	if rule.ExecErrState == models.KeepLastErrState || rule.NoDataState == models.KeepLast {
+		return models.ConcatReasons(result.State.String(), models.StateReasonKeepLast)
+	}
+
+	return result.State.String()
 }

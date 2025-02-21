@@ -44,7 +44,7 @@ func Query(ctx context.Context, dsInfo *models.DatasourceInfo, req backend.Query
 	for _, q := range req.Queries {
 		qm, err := getQueryModel(q)
 		if err != nil {
-			tRes.Responses[q.RefID] = backend.ErrDataResponse(backend.StatusInternal, "bad request")
+			tRes.Responses[q.RefID] = backend.ErrDataResponseWithSource(backend.StatusValidationFailed, backend.ErrorSourceDownstream, "bad request")
 			continue
 		}
 

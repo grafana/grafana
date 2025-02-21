@@ -16,7 +16,7 @@ import {
   Labels,
 } from '@grafana/data';
 import { DataFrame } from '@grafana/data/';
-import { reportInteraction } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { Button, Dropdown, Menu, ToolbarButton, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { downloadDataFrameAsCsv, downloadLogsModelAsTxt } from '../../inspector/utils/download';
@@ -182,11 +182,13 @@ export const LogsMetaRow = memo(
                 };
               })}
             />
-            <Dropdown overlay={downloadMenu}>
-              <ToolbarButton isOpen={false} variant="canvas" icon="download-alt">
-                Download
-              </ToolbarButton>
-            </Dropdown>
+            {!config.exploreHideLogsDownload && (
+              <Dropdown overlay={downloadMenu}>
+                <ToolbarButton isOpen={false} variant="canvas" icon="download-alt">
+                  Download
+                </ToolbarButton>
+              </Dropdown>
+            )}
           </div>
         )}
       </>

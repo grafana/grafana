@@ -72,6 +72,14 @@ export const tagHelper = (f: TraceqlFilter, filters: TraceqlFilter[]) => {
   return f.tag;
 };
 
+export const filterToQuerySection = (f: TraceqlFilter, filters: TraceqlFilter[], lp: TempoLanguageProvider) => {
+  if (Array.isArray(f.value) && f.value.length > 1 && !isRegExpOperator(f.operator!)) {
+    return `(${f.value.map((v) => `${scopeHelper(f, lp)}${tagHelper(f, filters)}${f.operator}${valueHelper({ ...f, value: v })}`).join(' || ')})`;
+  }
+
+  return `${scopeHelper(f, lp)}${tagHelper(f, filters)}${f.operator}${valueHelper(f)}`;
+};
+
 export const generateQueryFromAdHocFilters = (filters: AdHocVariableFilter[], lp: TempoLanguageProvider) => {
   return `{${filters
     .filter((f) => f.key && f.operator && f.value)

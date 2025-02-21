@@ -36,7 +36,7 @@ cards:
       description: Choose how, when, and where to send your alert notifications.
       height: 24
     - title: Monitor status
-      href: ./manage-notifications/
+      href: ./monitor-status/
       description: Monitor, respond to, and triage issues within your services.
       height: 24
     - title: Additional configuration

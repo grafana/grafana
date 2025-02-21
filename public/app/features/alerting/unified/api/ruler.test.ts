@@ -2,17 +2,14 @@ import { RulerDataSourceConfig } from 'app/types/unified-alerting';
 
 import { mockDataSource } from '../mocks';
 import { setupDataSources } from '../testSetup/datasources';
-import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
+import { DataSourceType } from '../utils/datasource';
 
+import { GRAFANA_RULER_CONFIG } from './featureDiscoveryApi';
 import { rulerUrlBuilder } from './ruler';
-
-const grafanaConfig: RulerDataSourceConfig = {
-  dataSourceName: GRAFANA_RULES_SOURCE_NAME,
-  apiVersion: 'legacy',
-};
 
 const mimirConfig: RulerDataSourceConfig = {
   dataSourceName: 'Mimir-cloud',
+  dataSourceUid: 'mimir-1',
   apiVersion: 'config',
 };
 
@@ -28,6 +25,7 @@ describe('rulerUrlBuilder', () => {
     // Arrange
     const config: RulerDataSourceConfig = {
       dataSourceName: 'Cortex',
+      dataSourceUid: 'cortex-1',
       apiVersion: 'legacy',
     };
 
@@ -121,7 +119,7 @@ describe('rulerUrlBuilder', () => {
     // GMA uses folderUIDs as namespaces and they should never contain slashes
     it('Should only replace the group segment for Grafana-managed rules', () => {
       // Act
-      const builder = rulerUrlBuilder(grafanaConfig);
+      const builder = rulerUrlBuilder(GRAFANA_RULER_CONFIG);
 
       const group = builder.namespaceGroup('test/ns', 'test/gr');
 

@@ -180,4 +180,5 @@ export const shareDashboardType: {
   pdf: 'pdf',
   report: 'report',
   publicDashboard: 'public_dashboard',
+  inviteUser: 'invite_user',
 };

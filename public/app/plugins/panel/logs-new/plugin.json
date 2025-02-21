@@ -1,0 +1,17 @@
+{
+  "type": "panel",
+  "name": "Logs new",
+  "id": "logs-new",
+  "state": "alpha",
+
+  "info": {
+    "author": {
+      "name": "Grafana Labs",
+      "url": "https://grafana.com"
+    },
+    "logos": {
+      "small": "img/icn-logs-panel.svg",
+      "large": "img/icn-logs-panel.svg"
+    }
+  }
+}

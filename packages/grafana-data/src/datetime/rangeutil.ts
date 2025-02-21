@@ -1,5 +1,3 @@
-import { each } from 'lodash';
-
 import { RawTimeRange, TimeRange, TimeZone, IntervalValues, RelativeTimeRange, TimeOption } from '../types/time';
 
 import * as dateMath from './datemath';
@@ -17,7 +15,7 @@ const spans: { [key: string]: { display: string; section?: number } } = {
   y: { display: 'year' },
 };
 
-const rangeOptions: TimeOption[] = [
+const BASE_RANGE_OPTIONS: TimeOption[] = [
   { from: 'now/d', to: 'now/d', display: 'Today' },
   { from: 'now/d', to: 'now', display: 'Today so far' },
   { from: 'now/w', to: 'now/w', display: 'This week' },
@@ -66,7 +64,7 @@ const rangeOptions: TimeOption[] = [
   { from: 'now/fy', to: 'now/fy', display: 'This fiscal year' },
 ];
 
-const hiddenRangeOptions: TimeOption[] = [
+const HIDDEN_RANGE_OPTIONS: TimeOption[] = [
   { from: 'now', to: 'now+1m', display: 'Next minute' },
   { from: 'now', to: 'now+5m', display: 'Next 5 minutes' },
   { from: 'now', to: 'now+15m', display: 'Next 15 minutes' },
@@ -86,13 +84,11 @@ const hiddenRangeOptions: TimeOption[] = [
   { from: 'now', to: 'now+5y', display: 'Next 5 years' },
 ];
 
-const rangeIndex: Record<string, TimeOption> = {};
-each(rangeOptions, (frame) => {
-  rangeIndex[frame.from + ' to ' + frame.to] = frame;
-});
-each(hiddenRangeOptions, (frame) => {
-  rangeIndex[frame.from + ' to ' + frame.to] = frame;
-});
+const STANDARD_RANGE_OPTIONS = BASE_RANGE_OPTIONS.concat(HIDDEN_RANGE_OPTIONS);
+
+function findRangeInOptions(range: RawTimeRange, options: TimeOption[]) {
+  return options.find((option) => option.from === range.from && option.to === range.to);
+}
 
 // handles expressions like
 // 5m
@@ -106,7 +102,7 @@ export function describeTextRange(expr: string): TimeOption {
     expr = (isLast ? 'now-' : 'now') + expr;
   }
 
-  let opt = rangeIndex[expr + ' to now'];
+  let opt = findRangeInOptions({ from: expr, to: 'now' }, STANDARD_RANGE_OPTIONS);
   if (opt) {
     return opt;
   }
@@ -141,17 +137,15 @@ export function describeTextRange(expr: string): TimeOption {
 /**
  * Use this function to get a properly formatted string representation of a {@link @grafana/data:RawTimeRange | range}.
  *
- * @example
- * ```
- * // Prints "2":
- * console.log(add(1,1));
- * ```
  * @category TimeUtils
  * @param range - a time range (usually specified by the TimePicker)
+ * @param timeZone - optional time zone.
+ * @param quickRanges - optional dashboard's custom quick ranges to pick range names from.
  * @alpha
  */
-export function describeTimeRange(range: RawTimeRange, timeZone?: TimeZone): string {
-  const option = rangeIndex[range.from.toString() + ' to ' + range.to.toString()];
+export function describeTimeRange(range: RawTimeRange, timeZone?: TimeZone, quickRanges?: TimeOption[]): string {
+  const rangeOptions = quickRanges ? quickRanges.concat(STANDARD_RANGE_OPTIONS) : STANDARD_RANGE_OPTIONS;
+  const option = findRangeInOptions(range, rangeOptions);
 
   if (option) {
     return option.display;

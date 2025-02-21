@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -394,11 +393,9 @@ func (hs *HTTPServer) AddDataSource(c *contextmodel.ReqContext) response.Respons
 
 	// It's forbidden to update the rules from the datasource api.
 	// team HTTP headers update have to be done through `updateDatasourceLBACRules`
-	if hs.Features != nil && hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagTeamHttpHeaders) {
-		if cmd.JsonData != nil {
-			if _, ok := cmd.JsonData.CheckGet("teamHttpHeaders"); ok {
-				return response.Error(http.StatusForbidden, "Cannot create datasource with team HTTP headers, need to use updateDatasourceLBACRules API", nil)
-			}
+	if cmd.JsonData != nil {
+		if _, ok := cmd.JsonData.CheckGet("teamHttpHeaders"); ok {
+			return response.Error(http.StatusForbidden, "Cannot create datasource with team HTTP headers, need to use updateDatasourceLBACRules API", nil)
 		}
 	}
 
@@ -841,12 +838,7 @@ func (hs *HTTPServer) checkDatasourceHealth(c *contextmodel.ReqContext, ds *data
 		Headers:       map[string]string{},
 	}
 
-	var dsURL string
-	if req.PluginContext.DataSourceInstanceSettings != nil {
-		dsURL = req.PluginContext.DataSourceInstanceSettings.URL
-	}
-
-	err = hs.PluginRequestValidator.Validate(dsURL, c.Req)
+	err = hs.DataSourceRequestValidator.Validate(ds, c.Req)
 	if err != nil {
 		return response.Error(http.StatusForbidden, "Access denied", err)
 	}

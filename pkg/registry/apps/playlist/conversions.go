@@ -3,7 +3,6 @@ package playlist
 import (
 	"encoding/json"
 	"fmt"
-	"strconv"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -96,12 +95,7 @@ func convertToK8sResource(v *playlistsvc.PlaylistDTO, namespacer request.Namespa
 	if err == nil {
 		meta.SetUpdatedTimestampMillis(v.UpdatedAt)
 		if v.Id > 0 {
-			createdAt := time.UnixMilli(v.CreatedAt)
-			meta.SetRepositoryInfo(&utils.ResourceRepositoryInfo{
-				Name:      "SQL",
-				Path:      fmt.Sprintf("%d", v.Id),
-				Timestamp: &createdAt,
-			})
+			meta.SetDeprecatedInternalID(v.Id) // nolint:staticcheck
 		}
 	}
 
@@ -135,12 +129,5 @@ func getLegacyID(item *unstructured.Unstructured) int64 {
 	if err != nil {
 		return 0
 	}
-	info, _ := meta.GetRepositoryInfo()
-	if info != nil && info.Name == "SQL" {
-		i, err := strconv.ParseInt(info.Path, 10, 64)
-		if err == nil {
-			return i
-		}
-	}
-	return 0
+	return meta.GetDeprecatedInternalID() // nolint:staticcheck
 }

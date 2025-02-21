@@ -51,6 +51,7 @@ export function setupForLogs() {
   queryMock.mockReturnValueOnce(of(envelope(logsFrame)));
 
   setDataSourceSrv({
+    registerRuntimeDataSource: jest.fn(),
     async get() {
       const ds: DataSourceApi = {
         name: 'Xray',

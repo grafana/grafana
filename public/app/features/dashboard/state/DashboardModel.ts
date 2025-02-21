@@ -28,7 +28,7 @@ import { isAngularDatasourcePluginAndNotHidden } from 'app/features/plugins/angu
 import { variableAdapters } from 'app/features/variables/adapters';
 import { onTimeRangeUpdated } from 'app/features/variables/state/actions';
 import { GetVariables, getVariablesByKey } from 'app/features/variables/state/selectors';
-import { CoreEvents, DashboardMeta, KioskMode } from 'app/types';
+import { CoreEvents, DashboardMeta } from 'app/types';
 import { DashboardMetaChangedEvent, DashboardPanelsChangedEvent, RenderEvent } from 'app/types/events';
 
 import { appEvents } from '../../../core/core';
@@ -55,6 +55,12 @@ export interface CloneOptions {
 }
 
 export type DashboardLinkType = 'link' | 'dashboards';
+
+/** @experimental */
+export interface ScopeMeta {
+  trait: string;
+  groups: string[];
+}
 
 export class DashboardModel implements TimeModel {
   /** @deprecated use UID */
@@ -87,6 +93,7 @@ export class DashboardModel implements TimeModel {
   panelInEdit?: PanelModel;
   panelInView?: PanelModel;
   fiscalYearStartMonth?: number;
+  scopeMeta?: ScopeMeta;
   private panelsAffectedByVariableChange: number[] | null;
   private appEventsSubscription: Subscription;
   private lastRefresh: number;
@@ -155,6 +162,8 @@ export class DashboardModel implements TimeModel {
     this.links = data.links ?? [];
     this.gnetId = data.gnetId || null;
     this.panels = map(data.panels ?? [], (panelData) => new PanelModel(panelData));
+    // @ts-expect-error - experimental and it's not included in the schema
+    this.scopeMeta = data.scopeMeta;
     // Deep clone original dashboard to avoid mutations by object reference
     this.originalDashboard = cloneDeep(data);
     this.originalTemplating = cloneDeep(this.templating);
@@ -277,6 +286,8 @@ export class DashboardModel implements TimeModel {
    *
    * @internal and experimental
    */
+  // TODO: remove this as it's not being used anymore
+  // Also remove public/app/features/dashboard/utils/panelMerge.ts
   updatePanels(panels: IPanelModel[]): PanelMergeInfo {
     const info = mergePanels(this.panels, panels ?? []);
     if (info.changed) {
@@ -1130,7 +1141,7 @@ export class DashboardModel implements TimeModel {
     let visibleHeight = viewHeight - navbarHeight - margin;
 
     // add back navbar height
-    if (kioskMode && kioskMode !== KioskMode.TV) {
+    if (kioskMode) {
       visibleHeight += navbarHeight;
     }
 

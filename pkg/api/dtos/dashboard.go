@@ -54,10 +54,10 @@ type CalculateDiffOptions struct {
 
 type CalculateDiffTarget struct {
 	DashboardId      int64            `json:"dashboardId"`
-	Version          int              `json:"version"`
+	Version          int64            `json:"version"`
 	UnsavedDashboard *simplejson.Json `json:"unsavedDashboard"`
 }
 
 type RestoreDashboardVersionCommand struct {
-	Version int `json:"version" binding:"Required"`
+	Version int64 `json:"version" binding:"Required"`
 }

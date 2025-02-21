@@ -3,8 +3,11 @@ import { Dashboard, DataSourceRef } from '@grafana/schema';
 import { ObjectMeta } from 'app/features/apiserver/types';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 
+export interface HomeDashboardRedirectDTO {
+  redirectUri: string;
+}
+
 export interface DashboardDTO {
-  redirectUri?: string;
   dashboard: DashboardDataDTO;
   meta: DashboardMeta;
 }
@@ -56,6 +59,7 @@ export interface DashboardMeta {
   isSnapshot?: boolean;
   folderTitle?: string;
   folderUrl?: string;
+  folderId?: number;
   created?: string;
   createdBy?: string;
   updated?: string;
@@ -65,9 +69,9 @@ export interface DashboardMeta {
   hasUnsavedFolderChange?: boolean;
   annotationsPermissions?: AnnotationsPermissions;
   publicDashboardEnabled?: boolean;
-  dashboardNotFound?: boolean;
   isEmbedded?: boolean;
   isNew?: boolean;
+  version?: number;
 
   // When loaded from kubernetes, we stick the raw metadata here
   // yes weird, but this means all the editor structures can exist unchanged
@@ -121,7 +125,6 @@ export interface DashboardInitError {
 }
 
 export enum KioskMode {
-  TV = 'tv',
   Full = 'full',
 }
 
@@ -140,3 +143,7 @@ export interface DashboardState {
 }
 
 export const DASHBOARD_FROM_LS_KEY = 'DASHBOARD_FROM_LS_KEY';
+
+export function isRedirectResponse(dto: DashboardDTO | HomeDashboardRedirectDTO): dto is HomeDashboardRedirectDTO {
+  return 'redirectUri' in dto;
+}

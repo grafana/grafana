@@ -65,6 +65,7 @@ describe('TraceQLSearch', () => {
     },
   } as TempoDatasource;
   datasource.isStreamingSearchEnabled = () => false;
+  datasource.isStreamingMetricsEnabled = () => false;
   const lp = new TempoLanguageProvider(datasource);
   lp.getIntrinsics = () => ['duration'];
   lp.generateQueryFromFilters = () => '{}';
@@ -221,6 +222,8 @@ describe('TraceQLSearch', () => {
       },
     } as TempoDatasource;
     datasource.isStreamingSearchEnabled = () => false;
+    datasource.isStreamingMetricsEnabled = () => false;
+
     const lp = new TempoLanguageProvider(datasource);
     lp.getIntrinsics = () => ['duration'];
     lp.generateQueryFromFilters = () => '{}';

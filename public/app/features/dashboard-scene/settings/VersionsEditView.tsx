@@ -1,6 +1,7 @@
 import * as React from 'react';
 
 import { PageLayoutType, dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase, sceneGraph } from '@grafana/scenes';
 import { Spinner, Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
@@ -41,6 +42,7 @@ export class VersionsEditView extends SceneObjectBase<VersionsEditViewState> imp
   public static Component = VersionsEditorSettingsListView;
   private _limit: number = VERSIONS_FETCH_LIMIT;
   private _start = 0;
+  private _continueToken = '';
 
   constructor(state: VersionsEditViewState) {
     super({
@@ -102,14 +104,20 @@ export class VersionsEditView extends SceneObjectBase<VersionsEditViewState> imp
 
     this.setState({ isAppending: append });
 
+    const requestOptions = this._continueToken
+      ? { limit: this._limit, start: this._start, continueToken: this._continueToken }
+      : { limit: this._limit, start: this._start };
+
     historySrv
-      .getHistoryList(uid, { limit: this._limit, start: this._start })
+      .getHistoryList(uid, requestOptions)
       .then((result) => {
         this.setState({
           isLoading: false,
-          versions: [...(this.state.versions ?? []), ...this.decorateVersions(result)],
+          versions: [...(this.state.versions ?? []), ...this.decorateVersions(result.versions)],
         });
         this._start += this._limit;
+        // Update the continueToken for the next request, if available
+        this._continueToken = result.continueToken ?? '';
       })
       .catch((err) => console.log(err))
       .finally(() => this.setState({ isAppending: false }));
@@ -127,9 +135,15 @@ export class VersionsEditView extends SceneObjectBase<VersionsEditViewState> imp
     if (!this._dashboard.state.uid) {
       return;
     }
-
-    const lhs = await historySrv.getDashboardVersion(this._dashboard.state.uid, baseInfo.version);
-    const rhs = await historySrv.getDashboardVersion(this._dashboard.state.uid, newInfo.version);
+    let lhs, rhs;
+    if (config.featureToggles.kubernetesClientDashboardsFolders) {
+      // the id here is the resource version in k8s, use this instead to get the specific version
+      lhs = await historySrv.getDashboardVersion(this._dashboard.state.uid, baseInfo.id);
+      rhs = await historySrv.getDashboardVersion(this._dashboard.state.uid, newInfo.id);
+    } else {
+      lhs = await historySrv.getDashboardVersion(this._dashboard.state.uid, baseInfo.version);
+      rhs = await historySrv.getDashboardVersion(this._dashboard.state.uid, newInfo.version);
+    }
 
     this.setState({
       baseInfo,
@@ -145,6 +159,7 @@ export class VersionsEditView extends SceneObjectBase<VersionsEditViewState> imp
   };
 
   public reset = () => {
+    this._continueToken = '';
     this.setState({
       baseInfo: undefined,
       diffData: {

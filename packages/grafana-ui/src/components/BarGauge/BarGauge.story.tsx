@@ -1,11 +1,11 @@
 import { StoryFn, Meta } from '@storybook/react';
 
 import { VizOrientation, ThresholdsMode, Field, FieldType, getDisplayProcessor } from '@grafana/data';
-import { BarGauge, BarGaugeDisplayMode } from '@grafana/ui';
+import { BarGaugeDisplayMode } from '@grafana/schema';
 
 import { useTheme2 } from '../../themes';
 
-import { Props } from './BarGauge';
+import { BarGauge, Props } from './BarGauge';
 import mdx from './BarGauge.mdx';
 
 const meta: Meta = {

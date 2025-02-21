@@ -13,3 +13,6 @@ type folder
     define create: [user, service-account, team#member, role#assignee] or edit or create from parent
     define update: [user, service-account, team#member, role#assignee] or edit or update from parent
     define delete: [user, service-account, team#member, role#assignee] or edit or delete from parent
+
+    define get_permissions: [user, service-account, team#member, role#assignee] or admin or get_permissions from parent
+    define set_permissions: [user, service-account, team#member, role#assignee] or admin or set_permissions from parent

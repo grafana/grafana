@@ -19,7 +19,7 @@ func TestParseResultFormat(t *testing.T) {
 		{
 			name:                 "returns the time series format as default for logs queries if input format is nil",
 			queryResultFormat:    nil,
-			queryType:            dataquery.AzureQueryTypeAzureLogAnalytics,
+			queryType:            dataquery.AzureQueryTypeLogAnalytics,
 			expectedResultFormat: dataquery.ResultFormatTimeSeries,
 		},
 		{
@@ -31,7 +31,7 @@ func TestParseResultFormat(t *testing.T) {
 		{
 			name:                 "returns the logs format as default for logs queries if input format is empty",
 			queryResultFormat:    &emptyResultFormat,
-			queryType:            dataquery.AzureQueryTypeAzureLogAnalytics,
+			queryType:            dataquery.AzureQueryTypeLogAnalytics,
 			expectedResultFormat: dataquery.ResultFormatTimeSeries,
 		},
 		{

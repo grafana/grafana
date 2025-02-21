@@ -9,18 +9,17 @@ import (
 	"github.com/stretchr/testify/require"
 
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 )
 
 func TestNewFolderIDScopeResolver(t *testing.T) {
 	t.Run("prefix should be expected", func(t *testing.T) {
-		prefix, _ := NewFolderIDScopeResolver(foldertest.NewFakeFolderStore(t), folder.NewFakeStore())
+		prefix, _ := NewFolderIDScopeResolver(foldertest.NewFakeFolderStore(t), foldertest.NewFakeService())
 		require.Equal(t, "folders:id:", prefix)
 	})
 
 	t.Run("resolver should fail if input scope is not expected", func(t *testing.T) {
-		_, resolver := NewFolderIDScopeResolver(foldertest.NewFakeFolderStore(t), folder.NewFakeStore())
+		_, resolver := NewFolderIDScopeResolver(foldertest.NewFakeFolderStore(t), foldertest.NewFakeService())
 
 		_, err := resolver.Resolve(context.Background(), rand.Int63(), "folders:uid:123")
 		require.ErrorIs(t, err, ac.ErrInvalidScope)
@@ -30,7 +29,7 @@ func TestNewFolderIDScopeResolver(t *testing.T) {
 		var (
 			orgId       = rand.Int63()
 			scope       = "folders:id:0"
-			_, resolver = NewFolderIDScopeResolver(foldertest.NewFakeFolderStore(t), folder.NewFakeStore())
+			_, resolver = NewFolderIDScopeResolver(foldertest.NewFakeFolderStore(t), foldertest.NewFakeService())
 		)
 
 		resolved, err := resolver.Resolve(context.Background(), orgId, scope)
@@ -41,7 +40,7 @@ func TestNewFolderIDScopeResolver(t *testing.T) {
 	})
 
 	t.Run("resolver should fail if resource of input scope is empty", func(t *testing.T) {
-		_, resolver := NewFolderIDScopeResolver(foldertest.NewFakeFolderStore(t), folder.NewFakeStore())
+		_, resolver := NewFolderIDScopeResolver(foldertest.NewFakeFolderStore(t), foldertest.NewFakeService())
 
 		_, err := resolver.Resolve(context.Background(), rand.Int63(), "folders:id:")
 		require.ErrorIs(t, err, ac.ErrInvalidScope)
@@ -49,7 +48,7 @@ func TestNewFolderIDScopeResolver(t *testing.T) {
 	t.Run("returns 'not found' if folder does not exist", func(t *testing.T) {
 		folderStore := foldertest.NewFakeFolderStore(t)
 		folderStore.On("GetFolderByID", mock.Anything, mock.Anything, mock.Anything).Return(nil, ErrDashboardNotFound).Once()
-		_, resolver := NewFolderIDScopeResolver(folderStore, folder.NewFakeStore())
+		_, resolver := NewFolderIDScopeResolver(folderStore, foldertest.NewFakeService())
 
 		orgId := rand.Int63()
 		scope := "folders:id:10"
@@ -61,12 +60,12 @@ func TestNewFolderIDScopeResolver(t *testing.T) {
 
 func TestNewDashboardIDScopeResolver(t *testing.T) {
 	t.Run("prefix should be expected", func(t *testing.T) {
-		prefix, _ := NewDashboardIDScopeResolver(foldertest.NewFakeFolderStore(t), &FakeDashboardService{}, folder.NewFakeStore())
+		prefix, _ := NewDashboardIDScopeResolver(&FakeDashboardService{}, foldertest.NewFakeService())
 		require.Equal(t, "dashboards:id:", prefix)
 	})
 
 	t.Run("resolver should fail if input scope is not expected", func(t *testing.T) {
-		_, resolver := NewDashboardIDScopeResolver(foldertest.NewFakeFolderStore(t), &FakeDashboardService{}, folder.NewFakeStore())
+		_, resolver := NewDashboardIDScopeResolver(&FakeDashboardService{}, foldertest.NewFakeService())
 		_, err := resolver.Resolve(context.Background(), rand.Int63(), "dashboards:uid:123")
 		require.ErrorIs(t, err, ac.ErrInvalidScope)
 	})
@@ -74,12 +73,12 @@ func TestNewDashboardIDScopeResolver(t *testing.T) {
 
 func TestNewDashboardUIDScopeResolver(t *testing.T) {
 	t.Run("prefix should be expected", func(t *testing.T) {
-		prefix, _ := NewDashboardUIDScopeResolver(foldertest.NewFakeFolderStore(t), &FakeDashboardService{}, folder.NewFakeStore())
+		prefix, _ := NewDashboardUIDScopeResolver(&FakeDashboardService{}, foldertest.NewFakeService())
 		require.Equal(t, "dashboards:uid:", prefix)
 	})
 
 	t.Run("resolver should fail if input scope is not expected", func(t *testing.T) {
-		_, resolver := NewDashboardUIDScopeResolver(foldertest.NewFakeFolderStore(t), &FakeDashboardService{}, folder.NewFakeStore())
+		_, resolver := NewDashboardUIDScopeResolver(&FakeDashboardService{}, foldertest.NewFakeService())
 		_, err := resolver.Resolve(context.Background(), rand.Int63(), "dashboards:id:123")
 		require.ErrorIs(t, err, ac.ErrInvalidScope)
 	})

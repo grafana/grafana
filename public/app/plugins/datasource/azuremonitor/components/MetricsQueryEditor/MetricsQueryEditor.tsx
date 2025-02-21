@@ -1,5 +1,5 @@
 import { PanelData } from '@grafana/data';
-import { EditorRows, EditorRow, EditorFieldGroup } from '@grafana/experimental';
+import { EditorRows, EditorRow, EditorFieldGroup } from '@grafana/plugin-ui';
 
 import { multiResourceCompatibleTypes } from '../../azureMetadata';
 import type Datasource from '../../datasource';

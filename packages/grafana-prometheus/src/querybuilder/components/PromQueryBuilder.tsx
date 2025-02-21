@@ -4,9 +4,9 @@ import { memo, useEffect, useState } from 'react';
 
 import { DataSourceApi, PanelData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { EditorRow } from '@grafana/experimental';
+import { EditorRow } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
-import { Drawer, useStyles2 } from '@grafana/ui';
+import { Drawer } from '@grafana/ui';
 
 import { PrometheusDatasource } from '../../datasource';
 import promqlGrammar from '../../promql';
@@ -58,7 +58,6 @@ export const PromQueryBuilder = memo<PromQueryBuilderProps>((props) => {
       checkLlms();
     }
   }, [prometheusPromQAIL]);
-  const styles = useStyles2(getPromQueryBuilderStyles);
 
   return (
     <>
@@ -72,12 +71,9 @@ export const PromQueryBuilder = memo<PromQueryBuilderProps>((props) => {
           />
         </Drawer>
       )}
-      <span className={styles.addaptToParent}>
-        <EditorRow>
-          <MetricsLabelsSection query={query} onChange={onChange} datasource={datasource} />
-        </EditorRow>
-      </span>
-
+      <EditorRow>
+        <MetricsLabelsSection query={query} onChange={onChange} datasource={datasource} />
+      </EditorRow>
       {initHints.length ? (
         <div
           className={css({
@@ -97,7 +93,7 @@ export const PromQueryBuilder = memo<PromQueryBuilderProps>((props) => {
       {showExplain && (
         <OperationExplainedBox
           stepNumber={1}
-          title={<RawQuery query={`${query.metric} ${promQueryModeller.renderLabels(query.labels)}`} lang={lang} />}
+          title={<RawQuery query={`${promQueryModeller.renderQuery(query)}`} lang={lang} />}
         >
           {EXPLAIN_LABEL_FILTER_CONTENT}
         </OperationExplainedBox>
@@ -154,9 +150,5 @@ export const PromQueryBuilder = memo<PromQueryBuilderProps>((props) => {
     </>
   );
 });
-const getPromQueryBuilderStyles = () => ({
-  addaptToParent: css({
-    maxWidth: '100%',
-  }),
-});
+
 PromQueryBuilder.displayName = 'PromQueryBuilder';

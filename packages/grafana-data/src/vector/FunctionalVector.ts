@@ -8,7 +8,7 @@ export abstract class FunctionalVector<T = unknown> {
   abstract get(index: number): T;
 
   // Implement "iterator protocol"
-  *iterator() {
+  *iterator(): Generator<T> {
     for (let i = 0; i < this.length; i++) {
       yield this.get(i);
     }

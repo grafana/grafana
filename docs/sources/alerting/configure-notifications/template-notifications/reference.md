@@ -86,6 +86,12 @@ Here's an example that prints all available notification data from dot (`.`):
 {{ end }}
 ```
 
+You can execute this template by passing the dot (`.`):
+
+```go
+{{ template "custom_template" . }}
+```
+
 ## Alert
 
 `Alert` contains data for an individual alert:
@@ -131,6 +137,12 @@ This example iterates over the list of firing and resolved alerts (`.Alerts`) in
   {{ .ValueString }}
 {{ end }}
 {{ end }}
+```
+
+You can run this template by passing the dot (`.`):
+
+```go
+{{ template "custom_template" . }}
 ```
 
 ## KV

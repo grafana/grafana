@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/sandbox"
 	"github.com/grafana/grafana/pkg/services/stats"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -39,6 +40,7 @@ type Service struct {
 	features           *featuremgmt.FeatureManager
 	datasources        datasources.DataSourceService
 	httpClientProvider httpclient.Provider
+	sandbox            sandbox.Sandbox
 
 	log log.Logger
 
@@ -58,6 +60,7 @@ func ProvideService(
 	features *featuremgmt.FeatureManager,
 	datasourceService datasources.DataSourceService,
 	httpClientProvider httpclient.Provider,
+	sandbox sandbox.Sandbox,
 ) *Service {
 	s := &Service{
 		cfg:                cfg,
@@ -69,6 +72,7 @@ func ProvideService(
 		features:           features,
 		datasources:        datasourceService,
 		httpClientProvider: httpClientProvider,
+		sandbox:            sandbox,
 
 		startTime: time.Now(),
 		log:       log.New("infra.usagestats.collector"),
@@ -146,6 +150,7 @@ func (s *Service) collectSystemStats(ctx context.Context) (map[string]any, error
 	m["stats.plugins.apps.count"] = s.appCount(ctx)
 	m["stats.plugins.panels.count"] = s.panelCount(ctx)
 	m["stats.plugins.datasources.count"] = s.dataSourceCount(ctx)
+	m["stats.plugins.sandboxed_plugins.count"] = s.sandboxCount()
 	m["stats.alerts.count"] = statsResult.Alerts
 	m["stats.active_users.count"] = statsResult.ActiveUsers
 	m["stats.active_admins.count"] = statsResult.ActiveAdmins
@@ -360,4 +365,13 @@ func (s *Service) panelCount(ctx context.Context) int {
 
 func (s *Service) dataSourceCount(ctx context.Context) int {
 	return len(s.plugins.Plugins(ctx, plugins.TypeDataSource))
+}
+
+func (s *Service) sandboxCount() int {
+	ps, err := s.sandbox.Plugins()
+	if err != nil {
+		s.log.Error("Failed to get sandboxed plugin count", "error", err)
+		return 0
+	}
+	return len(ps)
 }

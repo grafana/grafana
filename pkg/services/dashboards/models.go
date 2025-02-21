@@ -260,6 +260,8 @@ type GetDashboardQuery struct {
 	FolderID  *int64
 	FolderUID *string
 	OrgID     int64
+
+	IncludeDeleted bool // only supported when using unified storage
 }
 
 type DashboardTagCloudItem struct {
@@ -303,6 +305,7 @@ type SaveDashboardDTO struct {
 type DashboardSearchProjection struct {
 	ID       int64  `xorm:"id"`
 	UID      string `xorm:"uid"`
+	OrgID    int64  `xorm:"org_id"`
 	Title    string
 	Slug     string
 	Term     string
@@ -313,6 +316,7 @@ type DashboardSearchProjection struct {
 	FolderSlug  string
 	FolderTitle string
 	SortMeta    int64
+	Tags        []string
 	Deleted     *time.Time
 }
 
@@ -352,6 +356,11 @@ func FromDashboard(dash *Dashboard) *folder.Folder {
 }
 
 type DeleteDashboardsInFolderRequest struct {
+	FolderUIDs []string
+	OrgID      int64
+}
+
+type GetAllDashboardsInFolderRequest struct {
 	FolderUIDs []string
 	OrgID      int64
 }
@@ -424,6 +433,10 @@ type FindPersistedDashboardsQuery struct {
 	Permission dashboardaccess.PermissionType
 	Sort       model.SortOption
 	IsDeleted  bool
+
+	ProvisionedRepo       string
+	ProvisionedPath       string
+	ProvisionedReposNotIn []string
 
 	Filters []any
 

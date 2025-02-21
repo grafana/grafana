@@ -364,7 +364,7 @@ If you want to apply this setting to only some fields instead of all fields, you
 
 ### Data links
 
-{{< docs/shared lookup="visualizations/datalink-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+{{< docs/shared lookup="visualizations/datalink-options-1.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ### Value mappings
 

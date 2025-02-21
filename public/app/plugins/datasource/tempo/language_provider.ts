@@ -3,18 +3,22 @@ import { getTemplateSrv } from '@grafana/runtime';
 import { VariableFormatID } from '@grafana/schema';
 
 import {
+  filterToQuerySection,
   getAllTags,
   getIntrinsicTags,
   getTagsByScope,
   getUnscopedTags,
-  scopeHelper,
-  tagHelper,
-  valueHelper,
 } from './SearchTraceQLEditor/utils';
 import { TraceqlFilter, TraceqlSearchScope } from './dataquery.gen';
 import { TempoDatasource } from './datasource';
 import { intrinsicsV1 } from './traceql/traceql';
 import { Scope } from './types';
+
+// Limit maximum tags retrieved from the backend
+export const TAGS_LIMIT = 5000;
+
+// Limit maximum options in select dropdowns
+export const OPTIONS_LIMIT = 1000;
 
 export default class TempoLanguageProvider extends LanguageProvider {
   datasource: TempoDatasource;
@@ -42,10 +46,14 @@ export default class TempoLanguageProvider extends LanguageProvider {
     return this.startTask;
   };
 
+  getTagsLimit = () => {
+    return this.datasource.instanceSettings.jsonData?.tagLimit || TAGS_LIMIT;
+  };
+
   async fetchTags() {
     let v1Resp, v2Resp;
     try {
-      v2Resp = await this.request('/api/v2/search/tags', []);
+      v2Resp = await this.request('/api/v2/search/tags', { limit: this.getTagsLimit() });
     } catch (error) {
       v1Resp = await this.request('/api/search/tags', []);
     }
@@ -152,7 +160,9 @@ export default class TempoLanguageProvider extends LanguageProvider {
     const encodedTag = this.encodeTag(tag);
     const response = await this.request(
       `/api/v2/search/tag/${encodedTag}/values`,
-      query ? { q: getTemplateSrv().replace(query, {}, VariableFormatID.Pipe) } : {}
+      query
+        ? { q: getTemplateSrv().replace(query, {}, VariableFormatID.Pipe), limit: this.getTagsLimit() }
+        : { limit: this.getTagsLimit() }
     );
     let options: Array<SelectableValue<string>> = [];
     if (response && response.tagValues) {
@@ -188,7 +198,7 @@ export default class TempoLanguageProvider extends LanguageProvider {
 
     return `{${filters
       .filter((f) => f.tag && f.operator && f.value?.length)
-      .map((f) => `${scopeHelper(f, this)}${tagHelper(f, filters)}${f.operator}${valueHelper(f)}`)
+      .map((f) => filterToQuerySection(f, filters, this))
       .join(' && ')}}`;
   }
 }

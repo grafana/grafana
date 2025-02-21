@@ -2,8 +2,7 @@ import { css } from '@emotion/css';
 import { useCallback, useState } from 'react';
 import { useDebounce } from 'react-use';
 
-import { Stack } from '@grafana/experimental';
-import { Button, Field, Icon, Input, useStyles2 } from '@grafana/ui';
+import { Button, Field, Icon, Input, Stack, useStyles2 } from '@grafana/ui';
 
 import { useURLSearchParams } from '../../../hooks/useURLSearchParams';
 

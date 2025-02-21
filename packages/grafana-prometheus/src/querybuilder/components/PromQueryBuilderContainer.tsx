@@ -3,7 +3,6 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { useEffect, useReducer } from 'react';
 
 import { PanelData } from '@grafana/data';
-import { config } from '@grafana/runtime';
 
 import { PrometheusDatasource } from '../../datasource';
 import { PromQuery } from '../../types';
@@ -29,8 +28,6 @@ export interface State {
   expr: string;
 }
 
-const prometheusMetricEncyclopedia = config.featureToggles.prometheusMetricEncyclopedia;
-
 /**
  * This component is here just to contain the translation logic between string query and the visual query builder model.
  */
@@ -40,17 +37,14 @@ export function PromQueryBuilderContainer(props: PromQueryBuilderContainerProps)
   // Only rebuild visual query if expr changes from outside
   useEffect(() => {
     dispatch(exprChanged(query.expr));
-
-    if (prometheusMetricEncyclopedia) {
-      dispatch(
-        setMetricsModalSettings({
-          useBackend: query.useBackend ?? false,
-          disableTextWrap: query.disableTextWrap ?? false,
-          fullMetaSearch: query.fullMetaSearch ?? false,
-          includeNullMetadata: query.includeNullMetadata ?? true,
-        })
-      );
-    }
+    dispatch(
+      setMetricsModalSettings({
+        useBackend: query.useBackend ?? false,
+        disableTextWrap: query.disableTextWrap ?? false,
+        fullMetaSearch: query.fullMetaSearch ?? false,
+        includeNullMetadata: query.includeNullMetadata ?? true,
+      })
+    );
   }, [query]);
 
   useEffect(() => {
@@ -61,12 +55,8 @@ export function PromQueryBuilderContainer(props: PromQueryBuilderContainerProps)
     const expr = promQueryModeller.renderQuery(visQuery);
     dispatch(visualQueryChange({ visQuery, expr }));
 
-    if (prometheusMetricEncyclopedia) {
-      const metricsModalSettings = getSettings(visQuery);
-      onChange({ ...props.query, expr: expr, ...metricsModalSettings });
-    } else {
-      onChange({ ...props.query, expr: expr });
-    }
+    const metricsModalSettings = getSettings(visQuery);
+    onChange({ ...props.query, expr: expr, ...metricsModalSettings });
   };
 
   if (!state.visQuery) {
@@ -109,7 +99,7 @@ const stateSlice = createSlice({
       }
     },
     setMetricsModalSettings: (state, action: PayloadAction<MetricsModalSettings>) => {
-      if (state.visQuery && prometheusMetricEncyclopedia) {
+      if (state.visQuery) {
         state.visQuery.useBackend = action.payload.useBackend;
         state.visQuery.disableTextWrap = action.payload.disableTextWrap;
         state.visQuery.fullMetaSearch = action.payload.fullMetaSearch;

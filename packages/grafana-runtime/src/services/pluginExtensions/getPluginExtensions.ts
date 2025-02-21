@@ -1,4 +1,10 @@
-import type { PluginExtension, PluginExtensionLink, PluginExtensionComponent } from '@grafana/data';
+import type {
+  PluginExtension,
+  PluginExtensionLink,
+  PluginExtensionComponent,
+  PluginExtensionFunction,
+  PluginExtensionComponentMeta,
+} from '@grafana/data';
 
 import { isPluginExtensionComponent, isPluginExtensionLink } from './utils';
 
@@ -37,7 +43,7 @@ export type UsePluginComponentResult<Props = {}> = {
 };
 
 export type UsePluginComponentsResult<Props = {}> = {
-  components: Array<React.ComponentType<Props>>;
+  components: Array<React.ComponentType<Props> & { meta: PluginExtensionComponentMeta }>;
   isLoading: boolean;
 };
 
@@ -50,6 +56,16 @@ export type UsePluginLinksOptions = {
 export type UsePluginLinksResult = {
   isLoading: boolean;
   links: PluginExtensionLink[];
+};
+
+export type UsePluginFunctionsOptions = {
+  extensionPointId: string;
+  limitPerPlugin?: number;
+};
+
+export type UsePluginFunctionsResult<Signature> = {
+  isLoading: boolean;
+  functions: Array<PluginExtensionFunction<Signature>>;
 };
 
 let singleton: GetPluginExtensions | undefined;

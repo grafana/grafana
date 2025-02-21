@@ -1,10 +1,11 @@
-import { VizPanel, sceneGraph, behaviors } from '@grafana/scenes';
+import { VizPanel, sceneGraph, behaviors, SceneObject, SceneGridRow } from '@grafana/scenes';
 
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene } from '../scene/DashboardScene';
 import { VizPanelLinks } from '../scene/PanelLinks';
 
-import { getLayoutManagerFor } from './utils';
+import { isClonedKey } from './clone';
+import { getDashboardSceneFor, getLayoutManagerFor, getPanelIdForVizPanel } from './utils';
 
 function getTimePicker(scene: DashboardScene) {
   return scene.state.controls?.state.timePicker;
@@ -28,6 +29,29 @@ function getVizPanels(scene: DashboardScene): VizPanel[] {
   return scene.state.body.getVizPanels();
 }
 
+/**
+ * Will look for all panels in the entire scene starting from root
+ * and find the next free panel id
+ */
+export function getNextPanelId(scene: SceneObject): number {
+  let max = 0;
+
+  sceneGraph
+    .findAllObjects(scene.getRoot(), (obj) => obj instanceof VizPanel || obj instanceof SceneGridRow)
+    .forEach((panel) => {
+      if (isClonedKey(panel.state.key!)) {
+        return;
+      }
+
+      const panelId = getPanelIdForVizPanel(panel);
+      if (panelId > max) {
+        max = panelId;
+      }
+    });
+
+  return max + 1;
+}
+
 function getDataLayers(scene: DashboardScene): DashboardDataLayerSet {
   const data = sceneGraph.getData(scene);
 
@@ -36,6 +60,14 @@ function getDataLayers(scene: DashboardScene): DashboardDataLayerSet {
   }
 
   return data;
+}
+
+function getAllSelectedObjects(scene: SceneObject): SceneObject[] {
+  return (
+    getDashboardSceneFor(scene)
+      .state.editPane.state.selection?.getSelectionEntries()
+      .map(([, ref]) => ref.resolve()) ?? []
+  );
 }
 
 export function getCursorSync(scene: DashboardScene) {
@@ -54,6 +86,8 @@ export const dashboardSceneGraph = {
   getPanelLinks,
   getVizPanels,
   getDataLayers,
+  getAllSelectedObjects,
   getCursorSync,
   getLayoutManagerFor,
+  getNextPanelId,
 };

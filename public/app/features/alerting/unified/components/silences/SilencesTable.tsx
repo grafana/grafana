@@ -12,7 +12,6 @@ import {
   LoadingPlaceholder,
   Stack,
   useStyles2,
-  withErrorBoundary,
 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { Trans } from 'app/core/internationalization';
@@ -27,6 +26,7 @@ import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbili
 import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { parsePromQLStyleMatcherLooseSafe } from '../../utils/matchers';
 import { getSilenceFiltersFromUrlParams, makeAMLink, stringifyErrorLike } from '../../utils/misc';
+import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { AlertmanagerPageWrapper } from '../AlertingPageWrapper';
 import { Authorize } from '../Authorize';
 import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
@@ -393,4 +393,5 @@ function SilencesTablePage() {
     </AlertmanagerPageWrapper>
   );
 }
-export default withErrorBoundary(SilencesTablePage, { style: 'page' });
+
+export default withPageErrorBoundary(SilencesTablePage);

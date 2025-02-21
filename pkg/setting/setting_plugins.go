@@ -30,6 +30,7 @@ var (
 	defaultPreinstallPlugins = map[string]InstallPlugin{
 		// Default preinstalled plugins
 		"grafana-lokiexplore-app": {"grafana-lokiexplore-app", "", ""},
+		"grafana-pyroscope-app":   {"grafana-pyroscope-app", "", ""},
 	}
 )
 

@@ -1,6 +1,5 @@
 import { take, tap, withAbort } from 'ix/asynciterable/operators';
 import { useEffect, useRef, useState, useTransition } from 'react';
-import Skeleton from 'react-loading-skeleton';
 
 import { Card, EmptyState, Stack, Text } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
@@ -9,12 +8,17 @@ import { isLoading, useAsync } from '../hooks/useAsync';
 import { RulesFilter } from '../search/rulesSearchParser';
 import { hashRule } from '../utils/rule-id';
 
-import { AlertRuleLoader } from './AlertRuleLoader';
+import { DataSourceRuleLoader } from './DataSourceRuleLoader';
+import { GrafanaRuleLoader } from './GrafanaRuleLoader';
 import LoadMoreHelper from './LoadMoreHelper';
-import { ListItem } from './components/ListItem';
-import { ActionsLoader } from './components/RuleActionsButtons.V2';
-import { RuleListIcon } from './components/RuleListIcon';
-import { RuleWithOrigin, useFilteredRulesIteratorProvider } from './hooks/useFilteredRulesIterator';
+import { UnknownRuleListItem } from './components/AlertRuleListItem';
+import { AlertRuleListItemLoader } from './components/AlertRuleListItemLoader';
+import {
+  GrafanaRuleWithOrigin,
+  PromRuleWithOrigin,
+  RuleWithOrigin,
+  useFilteredRulesIteratorProvider,
+} from './hooks/useFilteredRulesIterator';
 
 interface FilterViewProps {
   filterState: RulesFilter;
@@ -30,13 +34,13 @@ export function FilterView({ filterState }: FilterViewProps) {
   return <FilterViewResults filterState={filterState} key={JSON.stringify(filterState)} />;
 }
 
-interface KeyedRuleWithOrigin extends RuleWithOrigin {
+type KeyedRuleWithOrigin = RuleWithOrigin & {
   /**
    * Artificial frontend-only identifier for the rule.
    * It's used as a key for the rule in the rule list to prevent key duplication
    */
   key: string;
-}
+};
 
 /**
  * Renders the list of rules that match the filter.
@@ -107,9 +111,25 @@ function FilterViewResults({ filterState }: FilterViewProps) {
   return (
     <Stack direction="column" gap={0}>
       <ul aria-label="filtered-rule-list">
-        {rules.map(({ key, rule, groupIdentifier }) => (
-          <AlertRuleLoader key={key} rule={rule} groupIdentifier={groupIdentifier} />
-        ))}
+        {rules.map((ruleWithOrigin) => {
+          const { key, rule, groupIdentifier, origin } = ruleWithOrigin;
+
+          switch (origin) {
+            case 'grafana':
+              return (
+                <GrafanaRuleLoader
+                  key={key}
+                  rule={rule}
+                  groupIdentifier={groupIdentifier}
+                  namespaceName={ruleWithOrigin.namespaceName}
+                />
+              );
+            case 'datasource':
+              return <DataSourceRuleLoader key={key} rule={rule} groupIdentifier={groupIdentifier} />;
+            default:
+              return <UnknownRuleListItem key={key} rule={rule} groupIdentifier={groupIdentifier} />;
+          }
+        })}
         {loading && (
           <>
             <AlertRuleListItemLoader />
@@ -126,27 +146,32 @@ function FilterViewResults({ filterState }: FilterViewProps) {
           </Text>
         </Card>
       )}
-      {!doneSearching && <LoadMoreHelper handleLoad={loadResultPage} />}
+      {!doneSearching && !loading && <LoadMoreHelper handleLoad={loadResultPage} />}
     </Stack>
   );
 }
-
-const AlertRuleListItemLoader = () => (
-  <ListItem
-    title={<Skeleton width={64} />}
-    icon={<RuleListIcon isPaused={false} />}
-    description={<Skeleton width={256} />}
-    actions={<ActionsLoader />}
-    data-testid="alert-rule-list-item-loader"
-  />
-);
 
 // simple helper function to detect the end of the source async iterable
 function onFinished<T>(fn: () => void) {
   return tap<T>(undefined, undefined, fn);
 }
 
-function getRuleKey(ruleWithOrigin: RuleWithOrigin) {
+function getRuleKey(ruleWithOrigin: RuleWithOrigin): string {
+  if (ruleWithOrigin.origin === 'grafana') {
+    return getGrafanaRuleKey(ruleWithOrigin);
+  }
+  return getDataSourceRuleKey(ruleWithOrigin);
+}
+
+function getGrafanaRuleKey(ruleWithOrigin: GrafanaRuleWithOrigin) {
+  const {
+    groupIdentifier: { namespace, groupName },
+    rule,
+  } = ruleWithOrigin;
+  return `grafana-${namespace.uid}-${groupName}-${rule.uid}}`;
+}
+
+function getDataSourceRuleKey(ruleWithOrigin: PromRuleWithOrigin) {
   const {
     rule,
     groupIdentifier: { rulesSource, namespace, groupName },

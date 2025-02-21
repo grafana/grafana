@@ -10,6 +10,8 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
+	"k8s.io/apiserver/pkg/authentication/user"
+	"k8s.io/apiserver/pkg/endpoints/request"
 
 	grafanaresponsewriter "github.com/grafana/grafana/pkg/apiserver/endpoints/responsewriter"
 )
@@ -157,6 +159,44 @@ func TestResponseAdapter(t *testing.T) {
 			}()
 		}
 		wg.Wait()
+	})
+
+	t.Run("should fork the context", func(t *testing.T) {
+		t.Parallel()
+
+		type K int
+		var key K
+		baseCtx := context.Background()
+		baseCtx = context.WithValue(baseCtx, key, "hello, world!") // we expect this one not to be sent to the inner handler.
+
+		expectedUsr := &user.DefaultInfo{Name: "hello, world!"}
+		baseCtx = request.WithUser(baseCtx, expectedUsr)
+		// There are more keys to consider, but this should be sufficient to decide that we do actually propagate select data across.
+
+		client := &http.Client{
+			Transport: &roundTripperFunc{
+				ready: make(chan struct{}),
+				// ignore the lint error because the response is passed directly to the client,
+				// so the client will be responsible for closing the response body.
+				//nolint:bodyclose
+				fn: grafanaresponsewriter.WrapHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					require.Nil(t, r.Context().Value(key), "inner handler should not have a value for key of type K")
+					usr, ok := request.UserFrom(r.Context())
+					require.True(t, ok, "no user found in request context")
+					require.Equal(t, expectedUsr.Name, usr.GetName(), "user data was not propagated through request context")
+
+					_, err := w.Write([]byte("OK"))
+					require.NoError(t, err)
+				})),
+			},
+		}
+
+		req, err := http.NewRequestWithContext(baseCtx, http.MethodGet, "/", nil)
+		require.NoError(t, err)
+
+		resp, err := client.Do(req)
+		require.NoError(t, err, "request should not fail")
+		require.NoError(t, resp.Body.Close())
 	})
 }
 

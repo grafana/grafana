@@ -42,18 +42,15 @@ type eventStore interface {
 	GetAllEventsAfter(ctx context.Context, id int64) ([]*store.EntityEvent, error)
 }
 
-// While we migrate away from internal IDs... this lets us lookup values in SQL
-// NOTE: folderId is unique across all orgs
-type folderUIDLookup = func(ctx context.Context, folderId int64) (string, error)
-
 type dashboard struct {
-	id       int64
-	uid      string
-	isFolder bool
-	folderID int64
-	slug     string
-	created  time.Time
-	updated  time.Time
+	id        int64
+	uid       string
+	isFolder  bool
+	folderID  int64
+	folderUID string
+	slug      string
+	created   time.Time
+	updated   time.Time
 
 	// Use generic structure
 	summary *entity.EntitySummary
@@ -99,14 +96,13 @@ type searchIndex struct {
 	logger                  log.Logger
 	buildSignals            chan buildSignal
 	extender                DocumentExtender
-	folderIdLookup          folderUIDLookup
 	syncCh                  chan chan struct{}
 	tracer                  tracing.Tracer
 	features                featuremgmt.FeatureToggles
 	settings                setting.SearchSettings
 }
 
-func newSearchIndex(dashLoader dashboardLoader, evStore eventStore, extender DocumentExtender, folderIDs folderUIDLookup, tracer tracing.Tracer, features featuremgmt.FeatureToggles, settings setting.SearchSettings) *searchIndex {
+func newSearchIndex(dashLoader dashboardLoader, evStore eventStore, extender DocumentExtender, tracer tracing.Tracer, features featuremgmt.FeatureToggles, settings setting.SearchSettings) *searchIndex {
 	return &searchIndex{
 		loader:          dashLoader,
 		eventStore:      evStore,
@@ -115,7 +111,6 @@ func newSearchIndex(dashLoader dashboardLoader, evStore eventStore, extender Doc
 		logger:          log.New("searchIndex"),
 		buildSignals:    make(chan buildSignal),
 		extender:        extender,
-		folderIdLookup:  folderIDs,
 		syncCh:          make(chan chan struct{}),
 		tracer:          tracer,
 		features:        features,
@@ -763,11 +758,7 @@ func (i *searchIndex) updateDashboard(ctx context.Context, orgID int64, index *o
 	if dash.folderID == 0 {
 		folderUID = folder.GeneralFolderUID
 	} else {
-		var err error
-		folderUID, err = i.folderIdLookup(ctx, dash.folderID)
-		if err != nil {
-			return err
-		}
+		folderUID = dash.folderUID
 	}
 
 	location := folderUID
@@ -860,7 +851,7 @@ func (l sqlDashboardLoader) loadAllDashboards(ctx context.Context, limit int, or
 					sess.Where("uid = ?", dashboardUID)
 				}
 
-				sess.Cols("id", "uid", "is_folder", "folder_id", "data", "slug", "created", "updated")
+				sess.Cols("id", "uid", "is_folder", "folder_id", "folder_uid", "data", "slug", "created", "updated")
 
 				sess.OrderBy("id ASC")
 				sess.Limit(limit)
@@ -950,14 +941,15 @@ func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, das
 				// But append info anyway for now, since we possibly extracted useful information.
 			}
 			dashboards = append(dashboards, dashboard{
-				id:       row.Id,
-				uid:      row.Uid,
-				isFolder: row.IsFolder,
-				folderID: row.FolderID,
-				slug:     row.Slug,
-				created:  row.Created,
-				updated:  row.Updated,
-				summary:  summary,
+				id:        row.Id,
+				uid:       row.Uid,
+				isFolder:  row.IsFolder,
+				folderID:  row.FolderID,
+				folderUID: row.FolderUID,
+				slug:      row.Slug,
+				created:   row.Created,
+				updated:   row.Updated,
+				summary:   summary,
 			})
 		}
 		readDashboardSpan.End()
@@ -966,30 +958,14 @@ func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, das
 	return dashboards, err
 }
 
-func newFolderIDLookup(sql db.DB) folderUIDLookup {
-	return func(ctx context.Context, folderID int64) (string, error) {
-		uid := ""
-		err := sql.WithDbSession(ctx, func(sess *db.Session) error {
-			res, err := sess.Query("SELECT uid FROM dashboard WHERE id=?", folderID)
-			if err != nil {
-				return err
-			}
-			if len(res) > 0 {
-				uid = string(res[0]["uid"])
-			}
-			return nil
-		})
-		return uid, err
-	}
-}
-
 type dashboardQueryResult struct {
-	Id       int64
-	Uid      string
-	IsFolder bool   `xorm:"is_folder"`
-	FolderID int64  `xorm:"folder_id"`
-	Slug     string `xorm:"slug"`
-	Data     []byte
-	Created  time.Time
-	Updated  time.Time
+	Id        int64
+	Uid       string
+	IsFolder  bool   `xorm:"is_folder"`
+	FolderID  int64  `xorm:"folder_id"`
+	FolderUID string `xorm:"folder_uid"`
+	Slug      string `xorm:"slug"`
+	Data      []byte
+	Created   time.Time
+	Updated   time.Time
 }

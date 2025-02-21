@@ -126,7 +126,7 @@ describe('TagsInput', () => {
         setError={() => {}}
         staticTags={[]}
         isTagsLoading={false}
-        query={''}
+        generateQueryWithoutFilter={() => ''}
         addVariablesToOptions={true}
       />
     );

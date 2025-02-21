@@ -223,7 +223,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
         <Button variant="primary" onClick={() => this.exportCsv(dataFrames, hasLogs)} size="sm">
           <Trans i18nKey="dashboard.inspect-data.download-csv">Download CSV</Trans>
         </Button>
-        {hasLogs && (
+        {hasLogs && !config.exploreHideLogsDownload && (
           <Button variant="primary" onClick={this.onExportLogsAsTxt} size="sm">
             <Trans i18nKey="dashboard.inspect-data.download-logs">Download logs</Trans>
           </Button>

@@ -164,6 +164,9 @@ export enum AccessControlAction {
   // GroupSync
   GroupSyncMappingsRead = 'groupsync.mappings:read',
   GroupSyncMappingsWrite = 'groupsync.mappings:write',
+
+  // Migration Assistant
+  MigrationAssistantMigrate = 'migrationassistant:migrate',
 }
 
 export interface Role {

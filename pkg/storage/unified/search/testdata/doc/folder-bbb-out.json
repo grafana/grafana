@@ -5,11 +5,13 @@
     "resource": "dashboards",
     "name": "bbb"
   },
+  "name": "bbb",
   "rv": 1234,
-  "title": "bbb",
+  "title": "test-bbb",
+  "title_phrase": "test-bbb",
   "created": 1730490142000,
   "createdBy": "user:1",
-  "repository": {
+  "repo": {
     "name": "SQL"
   }
 }

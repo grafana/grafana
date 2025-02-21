@@ -97,7 +97,7 @@ export const UpdateAllModal = ({ isOpen, onDismiss, isLoading, plugins }: Props)
       setInProgress(true);
 
       // in cloud the requests need to be sync
-      if (config.pluginAdminExternalManageEnabled && config.featureToggles.managedPluginsInstall) {
+      if (config.pluginAdminExternalManageEnabled) {
         for (let plugin of plugins) {
           if (selectedPlugins?.has(plugin.id)) {
             await install(plugin.id, plugin.latestVersion, true);

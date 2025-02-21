@@ -20,8 +20,10 @@ import (
 	"github.com/go-kit/log/level"
 	"github.com/go-stack/stack"
 	"github.com/mattn/go-isatty"
+	sloggokit "github.com/tjhop/slog-gokit"
 	"gopkg.in/ini.v1"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/infra/log/term"
 	"github.com/grafana/grafana/pkg/infra/log/text"
 	"github.com/grafana/grafana/pkg/util"
@@ -52,6 +54,7 @@ func init() {
 	}
 	logger := level.NewFilter(format(os.Stderr), level.AllowInfo())
 	root = newManager(logger)
+	initAppSDKLogger(logger)
 
 	RegisterContextualLogProvider(func(ctx context.Context) ([]any, bool) {
 		pFromCtx := ctx.Value(logParamsContextKey{})
@@ -109,6 +112,8 @@ func (lm *logManager) initialize(loggers []logWithFilters) {
 
 		lm.loggersByName[name].Swap(&compositeLogger{loggers: ctxLoggers})
 	}
+
+	initAppSDKLogger(lm.ConcreteLogger)
 }
 
 func (lm *logManager) New(ctx ...any) *ConcreteLogger {
@@ -544,4 +549,10 @@ func SetupConsoleLogger(level string) error {
 	}
 
 	return nil
+}
+
+func initAppSDKLogger(gkl gokitlog.Logger) {
+	// We need to allow Debug logs here. go-kit/log does not support sharing the level we're using.
+	// TODO: Refactor such that we can pass in a level in a more appropriate manner.
+	logging.DefaultLogger = logging.NewSLogLogger(sloggokit.NewGoKitHandler(gkl, slog.LevelDebug))
 }

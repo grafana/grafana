@@ -15,8 +15,11 @@ export const emptySettings: SSOProviderDTO = {
   authStyle: '',
   authUrl: '',
   autoLogin: false,
+  clientAuthentication: '',
   clientId: '',
   clientSecret: '',
+  managedIdentityClientId: '',
+  federatedCredentialAudience: '',
   emailAttributeName: '',
   emailAttributePath: '',
   emptyScopes: false,
@@ -53,7 +56,10 @@ const strToValue = (val: string | string[]): SelectableValue[] => {
   }
   // Stored as JSON Array
   if (val.startsWith('[') && val.endsWith(']')) {
-    return JSON.parse(val).map((v: string) => ({ label: v, value: v }));
+    // Fallback to parsing it like a non-json string if it is not valid json, instead of crashing.
+    try {
+      return JSON.parse(val).map((v: string) => ({ label: v, value: v }));
+    } catch {}
   }
 
   return val.split(/[\s,]/).map((s) => ({ label: s, value: s }));
@@ -75,10 +81,7 @@ export function dataToDTO(data?: SSOProvider): SSOProviderDTO {
 }
 
 const valuesToString = (values: Array<SelectableValue<string>>) => {
-  if (values.length <= 1) {
-    return values.map(({ value }) => value).join(',');
-  }
-  // Store as JSON array if there are multiple values
+  // Store arrays as JSON array
   return JSON.stringify(values.map(({ value }) => value));
 };
 

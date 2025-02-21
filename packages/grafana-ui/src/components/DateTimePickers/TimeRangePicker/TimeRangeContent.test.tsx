@@ -1,7 +1,7 @@
 import { fireEvent, render, RenderResult } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { dateTimeParse, TimeRange } from '@grafana/data';
+import { dateTimeParse, systemDateFormats, TimeRange } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { TimeRangeContent } from './TimeRangeContent';
@@ -91,6 +91,34 @@ describe('TimeRangeForm', () => {
 
     expect(getByLabelText('From')).toHaveValue('2021-06-16 20:00:00');
     expect(getByLabelText('To')).toHaveValue('2021-06-19 19:59:00');
+  });
+
+  describe('Given custom system date format', () => {
+    const originalFullDate = systemDateFormats.fullDate;
+    beforeEach(() => {
+      systemDateFormats.fullDate = 'DD.MM.YYYY HH:mm:ss';
+    });
+
+    afterAll(() => {
+      systemDateFormats.fullDate = originalFullDate;
+    });
+
+    it('should parse UTC iso strings and render in current timezone', () => {
+      const { getByLabelText } = setup(
+        {
+          from: defaultTimeRange.from,
+          to: defaultTimeRange.to,
+          raw: {
+            from: defaultTimeRange.from.toISOString(),
+            to: defaultTimeRange.to.toISOString(),
+          },
+        },
+        'America/New_York'
+      );
+
+      expect(getByLabelText('From')).toHaveValue('16.06.2021 20:00:00');
+      expect(getByLabelText('To')).toHaveValue('19.06.2021 19:59:00');
+    });
   });
 
   it('should close calendar when clicking the close icon', () => {

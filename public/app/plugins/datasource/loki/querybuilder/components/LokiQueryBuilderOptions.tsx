@@ -1,10 +1,18 @@
 import { trim } from 'lodash';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import * as React from 'react';
 
-import { CoreApp, isValidDuration, isValidGrafanaDuration, SelectableValue } from '@grafana/data';
-import { EditorField, EditorRow, QueryOptionGroup } from '@grafana/experimental';
-import { config, reportInteraction } from '@grafana/runtime';
+import {
+  CoreApp,
+  isValidDuration,
+  isValidGrafanaDuration,
+  LogSortOrderChangeEvent,
+  LogsSortOrder,
+  SelectableValue,
+  store,
+} from '@grafana/data';
+import { EditorField, EditorRow, QueryOptionGroup } from '@grafana/plugin-ui';
+import { config, getAppEvents, reportInteraction } from '@grafana/runtime';
 import { Alert, AutoSizeInput, RadioButtonGroup, Select } from '@grafana/ui';
 
 import {
@@ -31,6 +39,16 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
     const [splitDurationValid, setSplitDurationValid] = useState(true);
 
     useEffect(() => {
+      if (app !== CoreApp.Explore && app !== CoreApp.Dashboard && app !== CoreApp.PanelEditor) {
+        return;
+      }
+      // Initialize the query direction according to the current environment.
+      if (!query.direction) {
+        onChange({ ...query, direction: getDefaultQueryDirection(app) });
+      }
+    }, [app, onChange, query]);
+
+    useEffect(() => {
       if (query.step && !isValidGrafanaDuration(`${query.step}`) && parseInt(query.step, 10)) {
         onChange({
           ...query,
@@ -44,10 +62,13 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
       onRunQuery();
     };
 
-    const onQueryDirectionChange = (value: LokiQueryDirection) => {
-      onChange({ ...query, direction: value });
-      onRunQuery();
-    };
+    const onQueryDirectionChange = useCallback(
+      (value: LokiQueryDirection) => {
+        onChange({ ...query, direction: value });
+        onRunQuery();
+      },
+      [onChange, onRunQuery, query]
+    );
 
     const onResolutionChange = (option: SelectableValue<number>) => {
       reportInteraction('grafana_loki_resolution_clicked', {
@@ -87,13 +108,32 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
       onRunQuery();
     }
 
+    useEffect(() => {
+      if (app !== CoreApp.Dashboard && app !== CoreApp.PanelEditor) {
+        return;
+      }
+      const subscription = getAppEvents().subscribe(LogSortOrderChangeEvent, (sortEvent: LogSortOrderChangeEvent) => {
+        if (query.direction === LokiQueryDirection.Scan) {
+          return;
+        }
+        const newDirection =
+          sortEvent.payload.order === LogsSortOrder.Ascending
+            ? LokiQueryDirection.Forward
+            : LokiQueryDirection.Backward;
+        if (newDirection !== query.direction) {
+          onQueryDirectionChange(newDirection);
+        }
+      });
+      return () => {
+        subscription.unsubscribe();
+      };
+    }, [app, onQueryDirectionChange, query.direction]);
+
     let queryType = getLokiQueryType(query);
     const isLogQuery = isLogsQuery(query.expr);
     const filteredQueryTypeOptions = isLogQuery
       ? queryTypeOptions.filter((o) => o.value !== LokiQueryType.Instant)
       : queryTypeOptions;
-
-    const queryDirection = query.direction ?? LokiQueryDirection.Backward;
 
     // if the state's queryType is still Instant, trigger a change to range for log queries
     if (isLogQuery && queryType === LokiQueryType.Instant) {
@@ -112,7 +152,7 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
       <EditorRow>
         <QueryOptionGroup
           title="Options"
-          collapsedInfo={getCollapsedInfo(query, queryType, maxLines, isLogQuery, isValidStep, queryDirection)}
+          collapsedInfo={getCollapsedInfo(query, queryType, maxLines, isLogQuery, isValidStep, query.direction)}
           queryStats={queryStats}
         >
           <EditorField
@@ -145,7 +185,11 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
                 />
               </EditorField>
               <EditorField label="Direction" tooltip="Direction to search for logs.">
-                <RadioButtonGroup options={queryDirections} value={queryDirection} onChange={onQueryDirectionChange} />
+                <RadioButtonGroup
+                  options={queryDirections}
+                  value={query.direction ?? getDefaultQueryDirection(app)}
+                  onChange={onQueryDirectionChange}
+                />
               </EditorField>
             </>
           )}
@@ -214,7 +258,7 @@ function getCollapsedInfo(
   maxLines: number,
   isLogQuery: boolean,
   isValidStep: boolean,
-  direction: LokiQueryDirection
+  direction: LokiQueryDirection | undefined
 ): string[] {
   const queryTypeLabel = queryTypeOptions.find((x) => x.value === queryType);
   const resolutionLabel = RESOLUTION_OPTIONS.find((x) => x.value === (query.resolution ?? 1));
@@ -227,7 +271,7 @@ function getCollapsedInfo(
 
   items.push(`Type: ${queryTypeLabel?.label}`);
 
-  if (isLogQuery) {
+  if (isLogQuery && direction) {
     items.push(`Line limit: ${query.maxLines ?? maxLines}`);
     items.push(`Direction: ${getQueryDirectionLabel(direction)}`);
   } else {
@@ -241,6 +285,22 @@ function getCollapsedInfo(
   }
 
   return items;
+}
+
+function getDefaultQueryDirection(app?: CoreApp) {
+  if (app !== CoreApp.Explore) {
+    /**
+     * The default direction is backward because the default sort order is Descending.
+     * See:
+     * - public/app/features/explore/Logs/Logs.tsx
+     * - public/app/plugins/panel/logs/module.tsx
+     */
+    return LokiQueryDirection.Backward;
+  }
+  // See app/features/explore/Logs/utils/logs
+  const key = 'grafana.explore.logs.sortOrder';
+  const storedOrder = store.get(key) || LogsSortOrder.Descending;
+  return storedOrder === LogsSortOrder.Ascending ? LokiQueryDirection.Forward : LokiQueryDirection.Backward;
 }
 
 LokiQueryBuilderOptions.displayName = 'LokiQueryBuilderOptions';

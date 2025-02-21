@@ -4,13 +4,12 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"strconv"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	"github.com/grafana/authlib/claims"
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	dashboard "github.com/grafana/grafana/pkg/apis/dashboard"
@@ -120,16 +119,14 @@ func (r *DTOConnector) Connect(ctx context.Context, name string, opts runtime.Ob
 	dto := &dashboards.Dashboard{
 		UID:   name,
 		OrgID: info.OrgID,
+		ID:    obj.GetDeprecatedInternalID(), // nolint:staticcheck
 	}
 	repo, err := obj.GetRepositoryInfo()
 	if err != nil {
 		return nil, err
 	}
-	if repo != nil && repo.Name == "SQL" {
-		dto.ID, err = strconv.ParseInt(repo.Path, 10, 64)
-		if err == nil {
-			return nil, err
-		}
+	if repo != nil && repo.Name == dashboard.PluginIDRepoName {
+		dto.PluginID = repo.Path
 	}
 
 	guardian, err := guardian.NewByDashboard(ctx, dto, info.OrgID, user)

@@ -410,7 +410,7 @@ func TestTimeSeriesFilter(t *testing.T) {
 			parameters: &dataquery.TimeSeriesQuery{
 				Query:       "fetch gce_instance::compute.googleapis.com/instance/cpu/utilization | sum",
 				ProjectName: "test",
-				GraphPeriod: strPtr("60s"),
+				GraphPeriod: "60s",
 			},
 		}
 		err = query.parseResponse(res, data, "", service.logger)

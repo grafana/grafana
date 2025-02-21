@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"reflect"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
@@ -40,6 +41,16 @@ func Write(ctx context.Context, err error, w http.ResponseWriter, opts ...func(E
 
 	var gErr errutil.Error
 	if !errors.As(err, &gErr) {
+		// Write k8s response if this is a k8s error
+		k8s, ok := err.(apierrors.APIStatus)
+		if ok {
+			status := k8s.Status()
+			w.Header().Add("Content-Type", "application/json")
+			w.WriteHeader(int(status.Code))
+			_ = json.NewEncoder(w).Encode(status)
+			return
+		}
+
 		gErr = fallbackOrInternalError(err, opt)
 	}
 

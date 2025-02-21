@@ -1,18 +1,23 @@
 import { Factory } from 'fishery';
+import { uniqueId } from 'lodash';
 
 import { DataSourceInstanceSettings, PluginType } from '@grafana/data';
-import { config, setDataSourceSrv } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
+import { FolderDTO } from 'app/types';
 import {
   PromAlertingRuleDTO,
   PromAlertingRuleState,
   PromRuleGroupDTO,
   PromRuleType,
+  RulerAlertingRuleDTO,
+  RulerRecordingRuleDTO,
+  RulerRuleGroupDTO,
 } from 'app/types/unified-alerting-dto';
 
-import { MockDataSourceSrv } from '../../mocks';
+import { setupDataSources } from '../../testSetup/datasources';
 import { DataSourceType } from '../../utils/datasource';
 
-const ruleFactory = Factory.define<PromAlertingRuleDTO>(({ sequence }) => ({
+const prometheusRuleFactory = Factory.define<PromAlertingRuleDTO>(({ sequence }) => ({
   name: `test-rule-${sequence}`,
   query: 'test-query',
   state: PromAlertingRuleState.Inactive,
@@ -21,15 +26,35 @@ const ruleFactory = Factory.define<PromAlertingRuleDTO>(({ sequence }) => ({
   labels: { team: 'infra' },
 }));
 
-const groupFactory = Factory.define<PromRuleGroupDTO>(({ sequence }) => {
+const rulerAlertingRuleFactory = Factory.define<RulerAlertingRuleDTO>(({ sequence }) => ({
+  alert: `ruler-alerting-rule-${sequence}`,
+  expr: 'vector(0)',
+  annotations: { 'annotation-key-1': 'annotation-value-1' },
+  labels: { 'label-key-1': 'label-value-1' },
+  for: '5m',
+}));
+
+const rulerRecordingRuleFactory = Factory.define<RulerRecordingRuleDTO>(({ sequence }) => ({
+  record: `ruler-recording-rule-${sequence}`,
+  expr: 'vector(0)',
+  labels: { 'label-key-1': 'label-value-1' },
+}));
+
+const rulerRuleGroupFactory = Factory.define<RulerRuleGroupDTO>(({ sequence }) => ({
+  name: `ruler-rule-group-${sequence}`,
+  rules: [],
+  interval: '1m',
+}));
+
+const prometheusRuleGroupFactory = Factory.define<PromRuleGroupDTO>(({ sequence }) => {
   const group = {
     name: `test-group-${sequence}`,
     file: `test-namespace`,
     interval: 10,
-    rules: ruleFactory.buildList(10),
+    rules: prometheusRuleFactory.buildList(10),
   };
 
-  ruleFactory.rewindSequence();
+  prometheusRuleFactory.rewindSequence();
 
   return group;
 });
@@ -37,7 +62,7 @@ const groupFactory = Factory.define<PromRuleGroupDTO>(({ sequence }) => {
 const dataSourceFactory = Factory.define<DataSourceInstanceSettings>(({ sequence, params, afterBuild }) => {
   afterBuild((dataSource) => {
     config.datasources[dataSource.name] = dataSource;
-    setDataSourceSrv(new MockDataSourceSrv(config.datasources));
+    setupDataSources(...Object.values(config.datasources));
   });
 
   const uid = params.uid ?? `mock-ds-${sequence}`;
@@ -72,8 +97,33 @@ const dataSourceFactory = Factory.define<DataSourceInstanceSettings>(({ sequence
   };
 });
 
+const grafanaFolderFactory = Factory.define<FolderDTO>(({ sequence }) => ({
+  id: sequence,
+  uid: uniqueId(),
+  title: `Mock Folder ${sequence}`,
+  version: 1,
+  url: '',
+  canAdmin: true,
+  canDelete: true,
+  canEdit: true,
+  canSave: true,
+  created: '',
+  createdBy: '',
+  hasAcl: false,
+  updated: '',
+  updatedBy: '',
+}));
+
 export const alertingFactory = {
-  group: groupFactory,
-  rule: ruleFactory,
+  folder: grafanaFolderFactory,
+  prometheus: {
+    group: prometheusRuleGroupFactory,
+    rule: prometheusRuleFactory,
+  },
+  ruler: {
+    group: rulerRuleGroupFactory,
+    alertingRule: rulerAlertingRuleFactory,
+    recordingRule: rulerRecordingRuleFactory,
+  },
   dataSource: dataSourceFactory,
 };

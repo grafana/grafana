@@ -1138,11 +1138,29 @@ func TestSocialAzureAD_Validate(t *testing.T) {
 			name: "SSOSettings is valid",
 			settings: ssoModels.SSOSettings{
 				Settings: map[string]any{
+					"client_authentication":      "client_secret_post",
 					"client_id":                  "client-id",
+					"client_secret":              "client_secret",
 					"allowed_groups":             "0bb9c9cc-4945-418f-9b6a-c1d3b81141b0, 6034d328-0e6a-4240-8d03-cb9f2c1f16e4",
 					"allow_assign_grafana_admin": "true",
 					"auth_url":                   "https://example.com/auth",
 					"token_url":                  "https://example.com/token",
+				},
+			},
+			requester: &user.SignedInUser{IsGrafanaAdmin: true},
+		},
+		{
+			name: "SSOSettings is valid",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_authentication":         "managed_identity",
+					"client_id":                     "client-id",
+					"managed_identity_client_id":    "managed-identity-client-id",
+					"federated_credential_audience": "api://AzureADTokenExchange",
+					"allowed_groups":                "0bb9c9cc-4945-418f-9b6a-c1d3b81141b0, 6034d328-0e6a-4240-8d03-cb9f2c1f16e4",
+					"allow_assign_grafana_admin":    "true",
+					"auth_url":                      "https://example.com/auth",
+					"token_url":                     "https://example.com/token",
 				},
 			},
 			requester: &user.SignedInUser{IsGrafanaAdmin: true},

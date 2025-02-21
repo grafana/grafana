@@ -198,10 +198,7 @@ func (ecp *ContactPointService) CreateContactPoint(
 		// check if uid is already used in receiver
 		for _, rec := range receiver.PostableGrafanaReceivers.GrafanaManagedReceivers {
 			if grafanaReceiver.UID == rec.UID {
-				return apimodels.EmbeddedContactPoint{}, fmt.Errorf(
-					"receiver configuration with UID '%s' already exist in contact point '%s'. Please use unique identifiers for receivers across all contact points",
-					rec.UID,
-					rec.Name)
+				return apimodels.EmbeddedContactPoint{}, MakeErrContactPointUidExists(rec.UID, rec.Name)
 			}
 		}
 		if receiver.Name == contactPoint.Name {

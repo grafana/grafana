@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package ngalert.store.v1;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/grafana/grafana/pkg/services/ngalert/store/proto/v1";
+
+message AlertInstance {
+    string labels_hash = 1;
+    map<string, string> labels = 2;
+    string current_state = 3;
+    string current_reason = 4;
+    google.protobuf.Timestamp current_state_since = 5;
+    google.protobuf.Timestamp current_state_end = 6;
+    google.protobuf.Timestamp last_eval_time = 7;
+    google.protobuf.Timestamp last_sent_at = 8;
+    google.protobuf.Timestamp resolved_at = 9;
+    string result_fingerprint = 10;
+}
+
+message AlertInstances {
+    repeated AlertInstance instances = 1;
+}

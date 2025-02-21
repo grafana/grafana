@@ -12,8 +12,6 @@
         "annotation": "test-annotation"
       },
       "grafana_alert": {
-        "id": 1,
-        "orgId": 1,
         "title": "Rule1",
         "condition": "A",
         "data": [
@@ -60,8 +58,6 @@
         "annotation": "test-annotation"
       },
       "grafana_alert": {
-        "id": 2,
-        "orgId": 1,
         "title": "Rule2",
         "condition": "A",
         "data": [

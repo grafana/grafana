@@ -156,7 +156,8 @@ export const LogRowMessage = memo((props: Props) => {
     () => restructureLog(raw, prettifyLogMessage, wrapLogMessage, Boolean(expanded)),
     [raw, prettifyLogMessage, wrapLogMessage, expanded]
   );
-  const shouldShowMenu = useMemo(() => mouseIsOver || pinned, [mouseIsOver, pinned]);
+  const shouldShowMenu = mouseIsOver || pinned;
+
   return (
     <>
       {
@@ -165,9 +166,9 @@ export const LogRowMessage = memo((props: Props) => {
       }
       <td className={styles.logsRowMessage}>
         <div className={wrapLogMessage ? styles.positionRelative : styles.horizontalScroll}>
-          <button className={`${styles.logLine} ${styles.positionRelative}`}>
+          <div className={`${styles.logLine} ${styles.positionRelative}`}>
             <LogMessage hasAnsi={hasAnsi} entry={restructuredEntry} highlights={row.searchWords} styles={styles} />
-          </button>
+          </div>
         </div>
       </td>
       <td className={`log-row-menu-cell ${styles.logRowMenuCell}`}>

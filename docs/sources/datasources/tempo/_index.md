@@ -71,7 +71,14 @@ refs:
 
 # Tempo data source
 
-Grafana ships with built-in support for [Tempo](https://grafana.com/docs/tempo/latest/), a high-volume, minimal-dependency trace storage, open source tracing solution from Grafana Labs. This topic explains configuration and queries specific to the Tempo data source.
+Grafana ships with built-in support for [Tempo](https://grafana.com/docs/tempo/<TEMPO_VERSION>/), a high-volume, minimal-dependency trace storage, open source tracing solution from Grafana Labs.
+
+To learn more about traces, refer to [Introduction to tracing](https://grafana.com/docs/tempo/<TEMPO_VERSION>/introduction/).
+
+To use traces, you need you have an application or service that is instrumented to emit traces.
+Refer to the [Instrument for tracing](https://grafana.com/docs/tempo/<TEMPO_VERSION>/getting-started/instrumentation/) for more information.
+
+## Add a data source
 
 For instructions on how to add a data source to Grafana, refer to the [administration documentation](ref:data-source-management).
 Only users with the organization administrator role can add data sources.
@@ -81,6 +88,8 @@ This video explains how to add data sources, including Loki, Tempo, and Mimir, t
 
 {{< youtube id="cqHO0oYW6Ic" start="298" >}}
 
-Once you've added the data source, you can [configure it]({{< relref "./configure-tempo-data-source/" >}}) so that your Grafana instance's users can create queries in its [query editor]({{< relref "./query-editor/" >}}) when they [build dashboards](ref:build-dashboards) and use [Explore](ref:explore).
+## Learn more
+
+After you've added the data source, you can [configure it](./configure-tempo-data-source/) so that your Grafana instance's users can create queries in its [query editor](./query-editor/) when they [build dashboards](ref:build-dashboards) and use [Explore](ref:explore).
 
 {{< section withDescriptions="true">}}

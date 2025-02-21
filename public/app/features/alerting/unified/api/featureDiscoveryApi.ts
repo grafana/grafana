@@ -12,6 +12,7 @@ import { discoverAlertmanagerFeatures, discoverFeaturesByUid } from './buildInfo
 
 export const GRAFANA_RULER_CONFIG: RulerDataSourceConfig = {
   dataSourceName: 'grafana',
+  dataSourceUid: 'grafana',
   apiVersion: 'legacy',
 };
 
@@ -63,6 +64,7 @@ export const featureDiscoveryApi = alertingApi.injectEndpoints({
         const rulerConfig = features.features.rulerApiEnabled
           ? ({
               dataSourceName: dataSourceSettings.name,
+              dataSourceUid: dataSourceSettings.uid,
               apiVersion: features.application === PromApplication.Cortex ? 'legacy' : 'config',
             } satisfies RulerDataSourceConfig)
           : undefined;

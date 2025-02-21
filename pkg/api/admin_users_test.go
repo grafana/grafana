@@ -14,10 +14,11 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
-	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/login/social/socialtest"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/authtest"
+	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/authn/authntest"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/authinfotest"
@@ -243,39 +244,72 @@ func Test_AdminUpdateUserPermissions(t *testing.T) {
 		authEnabled             bool
 		skipOrgRoleSync         bool
 		expectedRespCode        int
+		enabledAuthnClients     []string
+		authnClientConfig       authn.SSOClientConfig
 	}{
+		// oauth
 		{
-			name:                    "Should allow updating an externally synced OAuth user if Grafana Admin role is not synced",
-			authModule:              login.GenericOAuthModule,
-			authEnabled:             true,
-			allowAssignGrafanaAdmin: false,
-			skipOrgRoleSync:         false,
-			expectedRespCode:        http.StatusOK,
+			name:                "Should allow updating an externally synced OAuth user if Grafana Admin role is not synced",
+			authModule:          login.GenericOAuthModule,
+			enabledAuthnClients: []string{authn.ClientWithPrefix("generic_oauth")},
+			authnClientConfig: &authntest.FakeSSOClientConfig{
+				ExpectedIsSkipOrgRoleSyncEnabled:         false,
+				ExpectedIsAllowAssignGrafanaAdminEnabled: false,
+			},
+			expectedRespCode: http.StatusOK,
 		},
 		{
-			name:                    "Should allow updating an externally synced OAuth user if OAuth provider is not enabled",
-			authModule:              login.GenericOAuthModule,
-			authEnabled:             false,
-			allowAssignGrafanaAdmin: true,
-			skipOrgRoleSync:         false,
-			expectedRespCode:        http.StatusOK,
+			name:                "Should allow updating an externally synced OAuth user if OAuth provider is not enabled",
+			authModule:          login.GenericOAuthModule,
+			expectedRespCode:    http.StatusOK,
+			enabledAuthnClients: []string{},
+			authnClientConfig: &authntest.FakeSSOClientConfig{
+				ExpectedIsSkipOrgRoleSyncEnabled:         false,
+				ExpectedIsAllowAssignGrafanaAdminEnabled: true,
+			},
 		},
 		{
-			name:                    "Should allow updating an externally synced OAuth user if org roles are not being synced",
-			authModule:              login.GenericOAuthModule,
-			authEnabled:             true,
-			allowAssignGrafanaAdmin: true,
-			skipOrgRoleSync:         true,
-			expectedRespCode:        http.StatusOK,
+			name:                "Should allow updating an externally synced OAuth user if org roles are not being synced",
+			authModule:          login.GenericOAuthModule,
+			expectedRespCode:    http.StatusOK,
+			enabledAuthnClients: []string{authn.ClientWithPrefix("generic_oauth")},
+			authnClientConfig: &authntest.FakeSSOClientConfig{
+				ExpectedIsSkipOrgRoleSyncEnabled:         true,
+				ExpectedIsAllowAssignGrafanaAdminEnabled: true,
+			},
 		},
 		{
-			name:                    "Should not allow updating an externally synced OAuth user",
-			authModule:              login.GenericOAuthModule,
-			authEnabled:             true,
-			allowAssignGrafanaAdmin: true,
-			skipOrgRoleSync:         false,
-			expectedRespCode:        http.StatusForbidden,
+			name:                "Should not allow updating an externally synced OAuth user",
+			authModule:          login.GenericOAuthModule,
+			expectedRespCode:    http.StatusForbidden,
+			enabledAuthnClients: []string{authn.ClientWithPrefix("generic_oauth")},
+			authnClientConfig: &authntest.FakeSSOClientConfig{
+				ExpectedIsSkipOrgRoleSyncEnabled:         false,
+				ExpectedIsAllowAssignGrafanaAdminEnabled: true,
+			},
 		},
+		// saml
+		{
+			name:                "Should allow updating an externally synced SAML user if org roles are not being synced",
+			authModule:          login.SAMLAuthModule,
+			expectedRespCode:    http.StatusOK,
+			enabledAuthnClients: []string{authn.ClientSAML},
+			authnClientConfig: &authntest.FakeSSOClientConfig{
+				ExpectedIsSkipOrgRoleSyncEnabled:         true,
+				ExpectedIsAllowAssignGrafanaAdminEnabled: true,
+			},
+		},
+		{
+			name:                "Should not allow updating an externally synced SAML user",
+			authModule:          login.SAMLAuthModule,
+			expectedRespCode:    http.StatusForbidden,
+			enabledAuthnClients: []string{authn.ClientSAML},
+			authnClientConfig: &authntest.FakeSSOClientConfig{
+				ExpectedIsSkipOrgRoleSyncEnabled:         false,
+				ExpectedIsAllowAssignGrafanaAdminEnabled: true,
+			},
+		},
+		// jwt
 		{
 			name:                    "Should allow updating an externally synced JWT user if Grafana Admin role is not synced",
 			authModule:              login.JWTModule,
@@ -316,10 +350,7 @@ func Test_AdminUpdateUserPermissions(t *testing.T) {
 			socialService := &socialtest.FakeSocialService{}
 			cfg := setting.NewCfg()
 
-			switch tc.authModule {
-			case login.GenericOAuthModule:
-				socialService.ExpectedAuthInfoProvider = &social.OAuthInfo{AllowAssignGrafanaAdmin: tc.allowAssignGrafanaAdmin, Enabled: tc.authEnabled, SkipOrgRoleSync: tc.skipOrgRoleSync}
-			case login.JWTModule:
+			if tc.authModule == login.JWTModule {
 				cfg.JWTAuth.Enabled = tc.authEnabled
 				cfg.JWTAuth.SkipOrgRoleSync = tc.skipOrgRoleSync
 				cfg.JWTAuth.AllowAssignGrafanaAdmin = tc.allowAssignGrafanaAdmin
@@ -330,6 +361,10 @@ func Test_AdminUpdateUserPermissions(t *testing.T) {
 				authInfoService: authInfoService,
 				SocialService:   socialService,
 				userService:     usertest.NewUserServiceFake(),
+				authnService: &authntest.FakeService{
+					ExpectedClientConfig: tc.authnClientConfig,
+					EnabledClients:       tc.enabledAuthnClients,
+				},
 			}
 
 			sc := setupScenarioContext(t, "/api/admin/users/1/permissions")

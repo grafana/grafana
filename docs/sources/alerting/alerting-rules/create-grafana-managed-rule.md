@@ -148,8 +148,6 @@ You can toggle between the two options. Once you have created an alert rule, the
 
 Switching from advanced to default may result in queries and expressions that cannot be converted. In this case, a warning message asks if you want to continue to reset to default settings.
 
-Default and advanced options are enabled by default for Grafana Cloud users and this feature is being rolled out progressively. OSS users can enable them via the [`alertingQueryAndExpressionsStepMode` feature toggle](/setup-grafana/configure-grafana/feature-toggles/).
-
 {{< docs/shared lookup="alerts/configure-alert-rule-name.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ## Define query and condition
@@ -259,16 +257,11 @@ Complete the following steps to set up notifications.
 
    1. You can also optionally select a mute timing as well as groupings and timings to define when not to send notifications.
 
-      {{< admonition type="note" >}}
-      An auto-generated notification policy is generated. Only admins can view these auto-generated policies from the **Notification policies** list view. Any changes have to be made in the alert rules form. {{< /admonition >}}
-
    **Use notification policy**
 
-   1. Choose this option to use the [notification policy tree](ref:notification-policies) to direct your notifications.
+   1. Choose this option to use the [notification policy tree](ref:notification-policies) to handle alert notifications.
 
-      {{< admonition type="note" >}}
-      All alert rules and instances, irrespective of their labels, match the default notification policy. If there are no nested policies, or no nested policies match the labels in the alert rule or alert instance, then the default notification policy is the matching policy.
-      {{< /admonition >}}
+      All notifications for this alert rule are managed by the notification policy tree, which routes alerts based on their labels. If an alert does not match a specific policy, the default notification policy applies, ensuring all alerts are handled.
 
    1. Preview your alert instance routing set up.
 

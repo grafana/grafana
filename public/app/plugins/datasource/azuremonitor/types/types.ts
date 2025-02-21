@@ -343,12 +343,8 @@ export interface ResourceGroup {
   type: string;
 }
 
-export interface Namespace {
-  classification: {
-    Custom: string;
-    Platform: string;
-    Qos: string;
-  };
+export interface MetricNamespace {
+  classification: 'Custom' | 'Platform' | 'Qos';
   id: string;
   name: string;
   properties: { metricNamespaceName: string };

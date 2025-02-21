@@ -15,6 +15,7 @@ import {
   useGetShapshotListQuery,
   useGetSnapshotQuery,
   useUploadSnapshotMutation,
+  useGetLocalPluginListQuery,
 } from '../api';
 import { AlertWithTraceID } from '../shared/AlertWithTraceID';
 
@@ -121,6 +122,8 @@ export const Page = () => {
   const [performUploadSnapshot, uploadSnapshotResult] = useUploadSnapshotMutation();
   const [performCancelSnapshot, cancelSnapshotResult] = useCancelSnapshotMutation();
   const [performDisconnect, disconnectResult] = useDeleteSessionMutation();
+
+  const { currentData: localPlugins = [] } = useGetLocalPluginListQuery();
 
   useNotifySuccessful(snapshot.data);
 
@@ -240,6 +243,7 @@ export const Page = () => {
           <Stack gap={4} direction="column">
             <ResourcesTable
               resources={snapshot.data.results}
+              localPlugins={localPlugins}
               onChangePage={setPage}
               numberOfPages={Math.ceil((snapshot?.data?.stats?.total || 0) / PAGE_SIZE)}
               page={page}

@@ -13,15 +13,10 @@
 
 'use strict';
 
-// accessible variables in this scope
-let window, document, $, jQuery, moment, kbn;
+// accessible variables in this scope: window, document, $, jQuery, moment, kbn;
 
 // Setup some variables
 let dashboard;
-
-// All url parameters are available via the ARGS object
-// eslint-disable-next-line no-redeclare
-let ARGS;
 
 // Initialize a skeleton with nothing but a rows array and service object
 dashboard = {
@@ -56,6 +51,7 @@ for (let i = 0; i < rows; i++) {
     height: '300px',
     panels: [
       {
+        id: 1,
         title: 'Events',
         type: 'graph',
         span: 12,
@@ -63,23 +59,17 @@ for (let i = 0; i < rows; i++) {
         linewidth: 2,
         targets: [
           {
-            target: "randomWalk('" + seriesName + "')",
+            scenarioId: 'random_walk',
+            refId: 'A',
+            seriesCount: 1,
+            alias: seriesName,
           },
           {
-            target: "randomWalk('random walk2')",
+            scenarioId: 'random_walk',
+            refId: 'B',
+            seriesCount: 1,
           },
         ],
-        seriesOverrides: [
-          {
-            alias: '/random/',
-            yaxis: 2,
-            fill: 0,
-            linewidth: 5,
-          },
-        ],
-        tooltip: {
-          shared: true,
-        },
       },
     ],
   });
