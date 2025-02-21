@@ -159,7 +159,7 @@ func RegisterRBACAuthZService(
 	if folderAPIURL == "" {
 		folderStore = store.NewSQLFolderStore(db, tracer)
 	} else {
-		folderStore = store.NewAPIFolderStore(tracer, func(ctx context.Context) *rest.Config {
+		folderStore = store.NewAPIFolderStore(tracer, func(ctx context.Context) (*rest.Config, error) {
 			return &rest.Config{
 				Host: folderAPIURL,
 				WrapTransport: func(rt http.RoundTripper) http.RoundTripper {
@@ -167,7 +167,7 @@ func RegisterRBACAuthZService(
 				},
 				QPS:   50,
 				Burst: 100,
-			}
+			}, nil
 		})
 	}
 

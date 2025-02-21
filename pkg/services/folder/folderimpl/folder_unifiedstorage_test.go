@@ -48,10 +48,10 @@ type rcp struct {
 	Host string
 }
 
-func (r rcp) GetRestConfig(ctx context.Context) *clientrest.Config {
+func (r rcp) GetRestConfig(ctx context.Context) (*clientrest.Config, error) {
 	return &clientrest.Config{
 		Host: r.Host,
-	}
+	}, nil
 }
 
 func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
