@@ -197,6 +197,7 @@ export const trackAlertRuleFormError = (
 export const trackNewGrafanaAlertRuleFormSavedSuccess = (payload: {
   simplifiedQueryEditor: boolean;
   simplifiedNotificationEditor: boolean;
+  canBeTransformedToSimpleQuery: boolean;
 }) => {
   reportInteraction('grafana_alerting_grafana_rule_creation_new_success', payload);
 };
