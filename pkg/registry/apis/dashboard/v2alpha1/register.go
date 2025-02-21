@@ -1,20 +1,15 @@
 package v2alpha1
 
 import (
-	"context"
-	"fmt"
-
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	dashboardinternal "github.com/grafana/grafana/pkg/apis/dashboard"
 	dashboardv2alpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
@@ -212,28 +207,4 @@ func (b *DashboardsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 	delete(oas.Paths.Paths, root+dashboardv2alpha1.DashboardResourceInfo.GroupResource().Resource)
 
 	return oas, nil
-}
-
-// Mutate removes any internal ID set in the spec & adds it as a label
-func (b *DashboardsAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
-	op := a.GetOperation()
-	if op == admission.Create || op == admission.Update {
-		obj := a.GetObject()
-		dash, ok := obj.(*dashboardv2alpha1.Dashboard)
-		if !ok {
-			return fmt.Errorf("expected v2alpha1 dashboard")
-		}
-
-		if id, ok := dash.Spec.Object["id"].(float64); ok {
-			delete(dash.Spec.Object, "id")
-			if id != 0 {
-				meta, err := utils.MetaAccessor(obj)
-				if err != nil {
-					return err
-				}
-				meta.SetDeprecatedInternalID(int64(id)) // nolint:staticcheck
-			}
-		}
-	}
-	return nil
 }
