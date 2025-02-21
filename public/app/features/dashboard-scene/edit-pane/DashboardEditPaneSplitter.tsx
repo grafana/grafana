@@ -81,13 +81,7 @@ export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls
             return;
           }
 
-          // onPointerDown events tigger before any link clicks so this timeout is preventing us from re-rendering and breaking the link click event from firing
-          setTimeout(() => {
-            if (!editPane.isActive) {
-              return;
-            }
-            editPane.clearSelection();
-          }, 10);
+          editPane.clearSelection();
         }}
       >
         <NavToolbarActions dashboard={dashboard} />
