@@ -810,6 +810,7 @@
     "collapse": "Cőľľäpşę",
     "edit": "Ēđįŧ",
     "help": "Ħęľp",
+    "loading": "Ŀőäđįŉģ...",
     "locale": {
       "default": "Đęƒäūľŧ"
     },
@@ -1642,6 +1643,10 @@
     "incomplete-request-error": "Ŝőřřy, Ĩ ŵäş ūŉäþľę ŧő čőmpľęŧę yőūř řęqūęşŧ. Pľęäşę ŧřy äģäįŉ.",
     "send-custom-feedback": "Ŝęŉđ"
   },
+  "get-enterprise": {
+    "requires-license": "Ŗęqūįřęş ä Ğřäƒäŉä Ēŉŧęřpřįşę ľįčęŉşę",
+    "title": "Ēŉŧęřpřįşę"
+  },
   "grafana-ui": {
     "action-editor": {
       "button": {
@@ -2045,6 +2050,7 @@
       "render-image-error-description": "Åŉ ęřřőř őččūřřęđ ŵĥęŉ ģęŉęřäŧįŉģ ŧĥę įmäģę"
     }
   },
+  "lock-icon": "ľőčĸ įčőŉ",
   "login": {
     "divider": {
       "connecting-text": "őř"
@@ -2839,10 +2845,11 @@
   },
   "plugins": {
     "catalog": {
+      "no-updates-available": "Ńő ūpđäŧęş äväįľäþľę",
       "update-all": {
         "all-plugins-updated": "Åľľ pľūģįŉş ūpđäŧęđ!",
         "available-header": "Åväįľäþľę",
-        "button": "Ůpđäŧę äľľ",
+        "button": "Ůpđäŧę äľľ ({{length}})",
         "cloud-update-message": "* Ĩŧ mäy ŧäĸę ä ƒęŵ mįŉūŧęş ƒőř ŧĥę pľūģįŉş ŧő þę äväįľäþľę ƒőř ūşäģę.",
         "error": "Ēřřőř ūpđäŧįŉģ pľūģįŉ:",
         "error-status-text": "ƒäįľęđ - şęę ęřřőř męşşäģęş",
@@ -2897,6 +2904,12 @@
     },
     "empty-state": {
       "message": "Ńő pľūģįŉş ƒőūŉđ"
+    },
+    "filter": {
+      "disabled": "Ŧĥįş ƒįľŧęř ĥäş þęęŉ đįşäþľęđ þęčäūşę ŧĥę Ğřäƒäŉä şęřvęř čäŉŉőŧ äččęşş ģřäƒäŉä.čőm",
+      "sort": "Ŝőřŧ",
+      "sort-list": "Ŝőřŧ Pľūģįŉş Ŀįşŧ",
+      "state": "Ŝŧäŧę"
     },
     "plugin-help": {
       "error": "Åŉ ęřřőř őččūřřęđ ŵĥęŉ ľőäđįŉģ ĥęľp.",
