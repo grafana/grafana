@@ -1340,6 +1340,12 @@
       "time-zone-label": "Time zone",
       "week-start-label": "Week start"
     },
+    "time-regions": {
+      "advanced-description-cron": "Cron syntax",
+      "advanced-description-rest": " to define a recurrence schedule and duration",
+      "advanced-description-use": "Use ",
+      "advanced-label": "Advanced"
+    },
     "variables": {
       "title": "Variables"
     },
@@ -1422,6 +1428,11 @@
   },
   "explore": {
     "add-to-dashboard": "Add to dashboard",
+    "drilldownInfo": {
+      "action": "Go to Grafana Drilldown",
+      "description": "Looking for the Grafana Explore apps? They are now called the Grafana Drilldown apps and can be found under <1>Menu > Drilldown</1>",
+      "title": "Explore Metrics, Logs, Traces and Profiles have moved!"
+    },
     "logs": {
       "logs-volume": {
         "add-filters": "Add more labels to your query to narrow down your search.",
@@ -2502,6 +2513,9 @@
     "detect": {
       "title": "Detect"
     },
+    "drilldown": {
+      "title": "Drilldown"
+    },
     "explore": {
       "title": "Explore"
     },
@@ -2717,6 +2731,7 @@
       "close": "Close menu",
       "dock": "Dock menu",
       "list-label": "Navigation",
+      "new": "New!",
       "open": "Open menu",
       "undock": "Undock menu"
     },

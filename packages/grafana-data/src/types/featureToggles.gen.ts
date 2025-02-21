@@ -117,9 +117,7 @@ export interface FeatureToggles {
   cloudWatchBatchQueries?: boolean;
   recoveryThreshold?: boolean;
   lokiStructuredMetadata?: boolean;
-  teamHttpHeaders?: boolean;
   cachingOptimizeSerializationMemoryUsage?: boolean;
-  prometheusPromQAIL?: boolean;
   prometheusCodeModeMetricNamesSearch?: boolean;
   addFieldFromCalculationStatFunctions?: boolean;
   alertmanagerRemoteSecondary?: boolean;
