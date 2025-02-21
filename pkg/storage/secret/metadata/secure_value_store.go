@@ -249,13 +249,16 @@ func (s *secureValueStorage) List(ctx context.Context, namespace xkube.Namespace
 	}, nil
 }
 
-// /\ ~SecretMetadataHasPendingStatus(s)
+// /\ SecretMetadataHasPendingStatus(s)
 func (s *secureValueStorage) SecretMetadataHasPendingStatus(ctx context.Context, tx *db.Session, namespace xkube.Namespace, name string) (bool, error) {
 	secureValueDB := &secureValueDB{Name: name, Namespace: namespace.String()}
+
 	found, err := tx.Table(secureValueDB.TableName()).ForUpdate().Get(secureValueDB)
 	if err != nil {
 		return false, fmt.Errorf("failed to get sv: %w", err)
 	}
+
+	// TODO: maybe we need to fix this, if there's no metadata found, we want to proceed and not return false necessarily.
 
 	if found && secureValueDB.StatusPhase == string(secretv0alpha1.SecureValuePhasePending) {
 		return true, nil

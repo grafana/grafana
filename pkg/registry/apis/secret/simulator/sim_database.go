@@ -63,11 +63,22 @@ func (db *SimDatabase) onQuery(query Message) {
 		v.SetUID(types.UID(uuid.NewString()))
 		v.ObjectMeta.SetResourceVersion(strconv.FormatInt(metav1.Now().UnixMicro(), 10))
 		v.Spec.Value = ""
+
 		ns, ok := db.secretMetadata[query.sv.Namespace]
 		if !ok {
 			ns = make(map[string]secretv0alpha1.SecureValue)
 			db.secretMetadata[query.sv.Namespace] = ns
 		}
+
+		if _, ok := ns[query.sv.Name]; ok {
+			db.simNetwork.Send(simDatabaseCreateSecureValueMetadataResponse{
+				cb:  query.cb,
+				sv:  &v,
+				err: fmt.Errorf("securevalue %v already exists", query.sv.Name),
+			})
+			return
+		}
+
 		ns[query.sv.Name] = v
 
 		db.simNetwork.Send(simDatabaseCreateSecureValueMetadataResponse{
