@@ -60,10 +60,11 @@ func newNotifier(b *backend) (eventNotifier, error) {
 }
 
 type channelNotifier struct {
-	subscribers map[chan *resource.WrittenEvent]bool
+	log        log.Logger
+	bufferSize int
+
 	mu          sync.RWMutex
-	log         log.Logger
-	bufferSize  int
+	subscribers map[chan *resource.WrittenEvent]bool
 }
 
 func newChannelNotifier(bufferSize int, log log.Logger) *channelNotifier {
