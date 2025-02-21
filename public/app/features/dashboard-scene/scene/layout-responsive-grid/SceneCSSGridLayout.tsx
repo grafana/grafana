@@ -31,7 +31,6 @@ export class SceneCSSGridLayout extends SceneObjectBase<SceneCSSGridLayoutState>
   public static Component = SceneCSSGridLayoutRenderer;
 
   private _draggedGridItem: ResponsiveGridItem | null = null;
-  private _layoutRef: HTMLDivElement | null = null;
 
   public constructor(state: Partial<SceneCSSGridLayoutState>) {
     super({
@@ -67,10 +66,6 @@ export class SceneCSSGridLayout extends SceneObjectBase<SceneCSSGridLayoutState>
     };
   }
 
-  public setLayoutRef(ref: HTMLDivElement | null) {
-    this._layoutRef = ref;
-  }
-
   // Handle dragging an item from the same grid over another item from the same grid
   public onDragOverItem(evt: MouseEvent, item: ResponsiveGridItem) {
     evt.preventDefault();
@@ -104,7 +99,7 @@ export class SceneCSSGridLayout extends SceneObjectBase<SceneCSSGridLayoutState>
     }
 
     this._draggedGridItem = panel.parent;
-    this._draggedGridItem.startDragging(this._layoutRef!.getBoundingClientRect());
+    this._draggedGridItem.startDragging();
 
     this.setState({ isDragging: true });
 

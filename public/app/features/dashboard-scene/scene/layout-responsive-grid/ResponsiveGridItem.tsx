@@ -25,10 +25,6 @@ export class ResponsiveGridItem extends SceneObjectBase<ResponsiveGridItemState>
 
   public _itemRef: HTMLDivElement | null = null;
 
-  // The position and the size of the layout
-  // This is used for various calculation and we memoize it here when dragging starts
-  public _layoutRect: DOMRect | null = null;
-
   public readonly isDashboardLayoutItem = true;
 
   public getOptions(): OptionsPaneCategoryDescriptor {
@@ -51,8 +47,7 @@ export class ResponsiveGridItem extends SceneObjectBase<ResponsiveGridItemState>
     this._itemRef = ref;
   }
 
-  public startDragging(layoutRect: DOMRect) {
-    this._layoutRect = layoutRect;
+  public startDragging() {
     const { width, height } = this._itemRef!.getBoundingClientRect();
     this.setState({
       dragged: {
@@ -79,6 +74,5 @@ export class ResponsiveGridItem extends SceneObjectBase<ResponsiveGridItemState>
 
   public stopDragging() {
     this.setState({ dragged: undefined });
-    this._layoutRect = null;
   }
 }

@@ -40,7 +40,7 @@ export function SceneCSSGridLayoutRenderer({ model }: SceneComponentProps<SceneC
   }
 
   return (
-    <div className={styles.container} ref={(ref) => model.setLayoutRef(ref)}>
+    <div className={styles.container}>
       {children.map((item) => (
         <item.Component key={item.state.key} model={item} />
       ))}
