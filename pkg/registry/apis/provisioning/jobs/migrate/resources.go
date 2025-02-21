@@ -38,21 +38,20 @@ func (r *resourceReader) CloseWithResults() (*resource.BatchResponse, error) {
 
 // Write implements resource.BatchResourceWriter.
 func (r *resourceReader) Write(ctx context.Context, key *resource.ResourceKey, value []byte) error {
-	item := &unstructured.Unstructured{}
-	err := item.UnmarshalJSON(value)
+	// Reuse the same parse+cleanup logic
+	parsed, err := r.job.parser.Parse(ctx, &repository.FileInfo{
+		Path: "", // empty path to ignore file system
+		Data: value,
+	}, false)
 	if err != nil {
 		// TODO: should we fail the entire execution?
 		return fmt.Errorf("failed to unmarshal unstructured: %w", err)
 	}
 
-	// Special dashboard cleanup
-	if key.Group == dashboard.GROUP && key.Resource == dashboard.DASHBOARD_RESOURCE {
-		unstructured.RemoveNestedField(item.Object, "spec", "uid")
-		unstructured.RemoveNestedField(item.Object, "spec", "version")
-		unstructured.RemoveNestedField(item.Object, "spec", "id") // now managed as a label
-	}
+	// clear anything so it will get written
+	parsed.Meta.SetRepositoryInfo(nil)
 
-	if result := r.job.write(ctx, item); result.Error != nil {
+	if result := r.job.write(ctx, parsed.Obj); result.Error != nil {
 		r.job.progress.Record(ctx, result)
 		if err := r.job.progress.TooManyErrors(); err != nil {
 			return err
