@@ -26,6 +26,7 @@ type Message interface {
 	Message()
 }
 
+/*** Request ***/
 type simDatabaseAppendQuery struct {
 	ctx context.Context
 	tx  *db.Session
@@ -54,12 +55,29 @@ type simDatabaseCreateSecureValueMetadataQuery struct {
 
 func (simDatabaseCreateSecureValueMetadataQuery) Message() {}
 
+/*** Response ***/
 type simDatabaseAppendResponse struct {
 	cb  func(error)
 	err error
 }
 
 func (simDatabaseAppendResponse) Message() {}
+
+type simDatabaseSecretMetadataHasPendingStatusResponse struct {
+	cb        func(bool, error)
+	isPending bool
+	err       error
+}
+
+func (simDatabaseSecretMetadataHasPendingStatusResponse) Message() {}
+
+type simDatabaseCreateSecureValueMetadataResponse struct {
+	cb  func(*secretv0alpha1.SecureValue, error)
+	sv  *secretv0alpha1.SecureValue
+	err error
+}
+
+func (simDatabaseCreateSecureValueMetadataResponse) Message() {}
 
 // Returns true when there are messages in flight.
 func (network *SimNetwork) HasWork() bool {
