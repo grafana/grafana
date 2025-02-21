@@ -1721,7 +1721,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					InputType:    InputTypeText,
 					Placeholder:  "https://grafana.atlassian.net/rest/api/3",
 					PropertyName: "api_url",
-					Description:  "Supported v2 or v3 APIs, e.g. https://grafana.atlassian.net/rest/api/3",
+					Description:  "Supported v2 or v3 APIs",
 					Required:     true,
 				},
 				{
