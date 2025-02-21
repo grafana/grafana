@@ -50,7 +50,7 @@ type jobProgressRecorder struct {
 func newJobProgressRecorder(ProgressFn ProgressFn) JobProgressRecorder {
 	return &jobProgressRecorder{
 		started:    time.Now(),
-		progressFn: maybeNotifyProgress(15*time.Second, ProgressFn),
+		progressFn: maybeNotifyProgress(5*time.Second, ProgressFn),
 		summaries:  make(map[string]*provisioning.JobResourceSummary),
 	}
 }
