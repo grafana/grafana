@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func Test_buildBasePath(t *testing.T) {
+func Test_buildURL(t *testing.T) {
 	t.Parallel()
 
 	// Domain is required
@@ -38,6 +38,7 @@ func Test_buildBasePath(t *testing.T) {
 		description string
 		domain      string
 		clusterSlug string
+		path        string
 		expected    string
 	}{
 		{
@@ -53,16 +54,33 @@ func Test_buildBasePath(t *testing.T) {
 			expected:    "https://some-domain:8080",
 		},
 		{
+			description: "domain starts with https://, should return domain",
+			domain:      "https://some-domain:8080",
+			clusterSlug: "anything",
+			path:        "/test?foo=bar&baz=qax#fragment",
+			expected:    "https://some-domain:8080/test?foo=bar&baz=qax#fragment",
+		},
+		{
 			description: "domain doesn't start with http or https, should build a string using the domain and clusterSlug",
 			domain:      "gms-dev",
 			clusterSlug: "us-east-1",
 			expected:    "https://cms-us-east-1.gms-dev/cloud-migrations",
 		},
+		{
+			description: "it parses and escapes the path when building the URL",
+			domain:      "gms-dev",
+			clusterSlug: "use-east-1",
+			path:        `/this//is//a/\very-Nice_páTh?x=/çç&y=/éé#aaaa`,
+			expected:    "https://cms-use-east-1.gms-dev/cloud-migrations/this//is//a/%5Cvery-Nice_p%C3%A1Th?x=/çç&y=/éé#aaaa",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.description, func(t *testing.T) {
 			client.cfg.CloudMigration.GMSDomain = tt.domain
-			assert.Equal(t, tt.expected, client.buildBasePath(tt.clusterSlug))
+
+			url, err := client.buildURL(tt.clusterSlug, tt.path)
+			assert.NoError(t, err)
+			assert.Equal(t, tt.expected, url)
 		})
 	}
 }
