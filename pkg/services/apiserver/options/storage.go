@@ -11,7 +11,6 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/server/options"
 
-	"github.com/grafana/authlib/authn"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
@@ -123,17 +122,15 @@ func (o *StorageOptions) ApplyTo(serverConfig *genericapiserver.RecommendedConfi
 	if err != nil {
 		return err
 	}
-	authCfg := authn.GrpcClientConfig{
-		TokenClientConfig: &authn.TokenExchangeConfig{
-			Token:            o.GrpcClientAuthenticationToken,
-			TokenExchangeURL: o.GrpcClientAuthenticationTokenExchangeURL,
-		},
-		TokenRequest: &authn.TokenExchangeRequest{
-			Audiences: []string{"resourceStore"},
-			Namespace: o.GrpcClientAuthenticationTokenNamespace,
-		},
-	}
-	unified, err := resource.NewRemoteResourceClient(tracer, conn, authCfg, o.GrpcClientAuthenticationAllowInsecure)
+
+	const resourceStoreAudience = "resourceStore"
+
+	unified, err := resource.NewRemoteResourceClient(tracer, conn, resource.RemoteResourceClientConfig{
+		Token:            o.GrpcClientAuthenticationToken,
+		TokenExchangeURL: o.GrpcClientAuthenticationTokenExchangeURL,
+		Namespace:        o.GrpcClientAuthenticationTokenNamespace,
+		Audiences:        []string{resourceStoreAudience},
+	})
 	if err != nil {
 		return err
 	}

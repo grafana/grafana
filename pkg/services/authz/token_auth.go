@@ -25,7 +25,9 @@ func (t *tokenAuth) GetRequestMetadata(ctx context.Context, _ ...string) (map[st
 		return nil, err
 	}
 
-	return map[string]string{authn.DefaultAccessTokenMetadataKey: token.Token}, nil
+	const metadataKey = "X-Access-Token"
+
+	return map[string]string{metadataKey: token.Token}, nil
 }
 
 func (t *tokenAuth) RequireTransportSecurity() bool { return false }
