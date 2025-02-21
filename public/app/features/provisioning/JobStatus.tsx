@@ -19,8 +19,8 @@ export function JobStatus({ name }: { name: string }) {
       <Stack direction={'column'} gap={2}>
         {job.status && (
           <Stack direction="column" gap={2}>
-            <Text element="p">
-              {job.status.message} // {job.status.state}
+            <Text element="p" weight="medium">
+              {job.status.message ?? ''}
             </Text>
             <ProgressBar progress={job.status.progress} />
 

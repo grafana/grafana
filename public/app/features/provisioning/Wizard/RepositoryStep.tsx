@@ -1,16 +1,41 @@
 import { useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { Field, FieldSet, Input, MultiCombobox, SecretInput, Stack, Switch } from '@grafana/ui';
+import { Field, FieldSet, Input, MultiCombobox, SecretInput, Stack, Switch, ControlledCollapse } from '@grafana/ui';
 
 import { getWorkflowOptions } from '../ConfigForm';
 import { TokenPermissionsInfo } from '../TokenPermissionsInfo';
-import { useCreateOrUpdateRepository } from '../hooks';
 
 import { RequestErrorAlert } from './RequestErrorAlert';
 import { WizardFormData } from './types';
 
-export function RepositoryStep() {
+interface Props {
+  request: {
+    isError: boolean;
+    error?: unknown;
+  };
+}
+
+const AdvancedSettingsFields = () => {
+  const { register } = useFormContext<WizardFormData>();
+
+  return (
+    <ControlledCollapse label="Advanced settings" isOpen={true}>
+      <Field label={'Enable sync'}>
+        <Switch {...register('repository.sync.enabled')} />
+      </Field>
+      <Field label={'Sync interval (seconds)'}>
+        <Input
+          {...register('repository.sync.intervalSeconds', { valueAsNumber: true })}
+          type={'number'}
+          placeholder={'60'}
+        />
+      </Field>
+    </ControlledCollapse>
+  );
+};
+
+export function RepositoryStep({ request }: Props) {
   const {
     register,
     control,
@@ -21,7 +46,6 @@ export function RepositoryStep() {
 
   const type = watch('repository.type');
   const [tokenConfigured, setTokenConfigured] = useState(false);
-  const [, request] = useCreateOrUpdateRepository();
 
   const WorkflowsField = () => (
     <Field
@@ -54,9 +78,8 @@ export function RepositoryStep() {
     return (
       <FieldSet label="2. Configure repository">
         <Stack direction="column" gap={2}>
-          <TokenPermissionsInfo />
-
           <RequestErrorAlert request={request} />
+          <TokenPermissionsInfo />
 
           <Field
             label={'Token'}
@@ -113,6 +136,7 @@ export function RepositoryStep() {
           </Field>
 
           <WorkflowsField />
+          <AdvancedSettingsFields />
         </Stack>
       </FieldSet>
     );
@@ -131,9 +155,8 @@ export function RepositoryStep() {
             />
           </Field>
 
-          <RequestErrorAlert request={request} />
-
           <WorkflowsField />
+          <AdvancedSettingsFields />
         </Stack>
       </FieldSet>
     );

@@ -15,7 +15,6 @@ import { ConnectionStep } from './ConnectionStep';
 import { MigrateStep } from './MigrateStep';
 import { RepositoryStep } from './RepositoryStep';
 import { Stepper, Step } from './Stepper';
-import { SyncStep } from './SyncStep';
 import { WizardFormData, WizardStep } from './types';
 
 const appEvents = getAppEvents();
@@ -24,14 +23,12 @@ const steps: Array<Step<WizardStep>> = [
   { id: 'connection', name: 'Repository connection' },
   { id: 'repository', name: 'Repository configuration' },
   { id: 'migrate', name: 'Migrate dashboards' },
-  { id: 'sync', name: 'Configure sync' },
 ];
 
 const nextButtonText = {
   connection: 'Next',
   repository: 'Connect and verify',
-  migrate: 'Next',
-  sync: 'Finish',
+  migrate: 'Finish',
 } as const;
 
 export function ProvisioningWizard() {
@@ -42,7 +39,14 @@ export function ProvisioningWizard() {
   const [submitData, request] = useCreateOrUpdateRepository();
   const methods = useForm<WizardFormData>({
     defaultValues: {
-      repository: getDefaultValues(),
+      repository: {
+        ...getDefaultValues(),
+        sync: {
+          enabled: true,
+          intervalSeconds: 60,
+          target: 'instance',
+        },
+      },
       migrate: {
         history: true,
         identifier: false,
@@ -97,12 +101,12 @@ export function ProvisioningWizard() {
         }
       }
 
-      if (activeStep === 'migrate' || activeStep === 'sync') {
+      if (activeStep === 'migrate') {
         setCompletedSteps((prev) => [...prev, activeStep]);
       }
       setActiveStep(steps[currentStepIndex + 1].id);
       setStepSuccess(false);
-    } else if (activeStep === 'sync') {
+    } else if (activeStep === 'migrate') {
       navigate('/dashboards');
     }
   };
@@ -135,15 +139,13 @@ export function ProvisioningWizard() {
             connection: { valid: true },
             repository: { valid: true },
             migrate: { valid: true },
-            sync: { valid: true },
           }}
         />
 
         <div className={styles.content}>
           {activeStep === 'connection' && <ConnectionStep />}
-          {activeStep === 'repository' && <RepositoryStep />}
+          {activeStep === 'repository' && <RepositoryStep request={request} />}
           {activeStep === 'migrate' && <MigrateStep onMigrationStatusChange={setStepSuccess} />}
-          {activeStep === 'sync' && <SyncStep onSyncSuccess={() => setStepSuccess(true)} />}
         </div>
 
         <Stack gap={2} justifyContent="flex-end">
@@ -156,8 +158,8 @@ export function ProvisioningWizard() {
             onClick={handleNext}
             disabled={
               request.isLoading ||
-              (!stepSuccess && (activeStep === 'migrate' || activeStep === 'sync')) ||
-              (activeStep === 'repository' && (request.isLoading || request.isError))
+              (activeStep === 'repository' && (request.isLoading || request.isError)) ||
+              (activeStep === 'migrate' && (!stepSuccess || request.isLoading))
             }
             icon={request.isLoading ? 'spinner' : undefined}
           >
