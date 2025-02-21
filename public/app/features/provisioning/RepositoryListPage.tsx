@@ -29,7 +29,7 @@ export default function RepositoryListPage() {
   const settings = useGetFrontendSettingsQuery();
 
   if (!items?.length && !isLoading) {
-    return <OnboardingPage settings={settings.data} />;
+    return <OnboardingPage />;
   }
 
   return (

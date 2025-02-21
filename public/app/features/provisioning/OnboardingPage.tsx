@@ -1,40 +1,12 @@
-import { Card, EmptyState, LinkButton } from '@grafana/ui';
+import SVG from 'react-inlinesvg';
+
+import { EmptyState, LinkButton, Alert, Stack, Text } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
 import { SetupWarnings } from './SetupWarnings';
-import { RepositoryViewList } from './api';
-import { NEW_URL, PROVISIONING_URL } from './constants';
+import { NEW_URL } from './constants';
 
-interface OnboardingPageProps {
-  settings?: RepositoryViewList;
-}
-
-export default function OnboardingPage({ settings }: OnboardingPageProps) {
-  const renderOptions = () => {
-    if (settings?.legacyStorage) {
-      return (
-        <Card href={`${PROVISIONING_URL}/migrate`}>
-          <Card.Heading>Migrate instance</Card.Heading>
-          <Card.Description>
-            Move all dashbaords from their current storage into a provisioning source and use that to manage
-          </Card.Description>
-        </Card>
-      );
-    }
-
-    return (
-      <EmptyState
-        variant="call-to-action"
-        message="You haven't created any repository configs yet"
-        button={
-          <LinkButton icon="plus" href={NEW_URL} size="lg">
-            Create repository config
-          </LinkButton>
-        }
-      />
-    );
-  };
-
+export default function OnboardingPage() {
   return (
     <Page
       navId="provisioning"
@@ -42,7 +14,29 @@ export default function OnboardingPage({ settings }: OnboardingPageProps) {
     >
       <Page.Contents>
         <SetupWarnings />
-        {renderOptions()}
+        <Alert severity="info" title="Setting up this connection could cause a temporary outage">
+          When you connect your whole instance, depending on its size, the setup might make the dashboard unavailable to
+          users for up to 30 minutes. We recommend warning your users before starting the process. You can use the
+          announcement banner or your preferred channels.
+        </Alert>
+        <EmptyState
+          variant="call-to-action"
+          message="Set up your provisioning connection!"
+          image={<SVG src="public/img/provisioning-empty.svg" width={300} />}
+          button={
+            <LinkButton size="lg" icon="plus" href={NEW_URL}>
+              Connect Grafana to repository
+            </LinkButton>
+          }
+        >
+          <Stack direction="column" alignItems="center">
+            <Text>Store and provision your Grafana resources externally by connecting to a repository.</Text>
+            <Text>We currently support GitHub and local storage.</Text>
+            <LinkButton fill="text" href="#" icon="external-link-alt">
+              Learn more
+            </LinkButton>
+          </Stack>
+        </EmptyState>
       </Page.Contents>
     </Page>
   );
