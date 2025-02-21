@@ -15,6 +15,7 @@
             "intervalSeconds": 60
         },
         "title": "Load tmp dashboards",
-        "type": "local"
+        "type": "local",
+        "workflows": []
     }
 }

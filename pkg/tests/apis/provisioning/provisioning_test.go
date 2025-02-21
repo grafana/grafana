@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"regexp"
 	"strings"
 	"testing"
 	"time"
@@ -48,9 +49,19 @@ type provisioningTestHelper struct {
 	REST         *rest.RESTClient
 }
 
-func runGrafana(t *testing.T) *provisioningTestHelper {
+type grafanaOption func(opts *testinfra.GrafanaOpts)
+
+// Useful for debugging a test in development.
+//
+//lint:ignore U1000 This is used when needed while debugging.
+//nolint:golint,unused
+func withLogs(opts *testinfra.GrafanaOpts) {
+	opts.EnableLog = true
+}
+
+func runGrafana(t *testing.T, options ...grafanaOption) *provisioningTestHelper {
 	provisioningPath := t.TempDir()
-	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+	opts := testinfra.GrafanaOpts{
 		AppModeProduction: false, // required for experimental APIs
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagProvisioning,
@@ -67,51 +78,19 @@ func runGrafana(t *testing.T) *provisioningTestHelper {
 			},
 		},
 		PermittedProvisioningPaths: ".|" + provisioningPath,
-	})
+	}
+	for _, o := range options {
+		o(&opts)
+	}
+	helper := apis.NewK8sTestHelper(t, opts)
 
 	helper.GetEnv().GitHubFactory.Client = ghmock.NewMockedHTTPClient(
-		ghmock.WithRequestMatchHandler(
-			ghmock.GetUser,
-			http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-				_, err := w.Write(ghmock.MustMarshal(&gh.User{}))
-				require.NoError(t, err)
-			}),
-		),
-		ghmock.WithRequestMatchHandler(
-			ghmock.GetReposHooksByOwnerByRepo,
-			http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-				_, err := w.Write(ghmock.MustMarshal([]*gh.Hook{}))
-				require.NoError(t, err)
-			}),
-		),
-		ghmock.WithRequestMatchHandler(
-			ghmock.PostReposHooksByOwnerByRepo,
-			http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-				_, err := w.Write(ghmock.MustMarshal(&gh.Hook{}))
-				require.NoError(t, err)
-			}),
-		),
-		ghmock.WithRequestMatchHandler(
-			ghmock.GetReposByOwnerByRepo,
-			http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-				_, err := w.Write(ghmock.MustMarshal(&gh.Repository{}))
-				require.NoError(t, err)
-			}),
-		),
-		ghmock.WithRequestMatchHandler(
-			ghmock.GetReposBranchesByOwnerByRepoByBranch,
-			http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-				_, err := w.Write(ghmock.MustMarshal(&gh.Branch{}))
-				require.NoError(t, err)
-			}),
-		),
-		ghmock.WithRequestMatchHandler(
-			ghmock.GetReposGitTreesByOwnerByRepoByTreeSha,
-			http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-				_, err := w.Write(ghmock.MustMarshal(&gh.Tree{}))
-				require.NoError(t, err)
-			}),
-		),
+		ghmock.WithRequestMatchHandler(ghmock.GetUser, ghAlwaysWrite(t, &gh.User{})),
+		ghmock.WithRequestMatchHandler(ghmock.GetReposHooksByOwnerByRepo, ghAlwaysWrite(t, []*gh.Hook{})),
+		ghmock.WithRequestMatchHandler(ghmock.PostReposHooksByOwnerByRepo, ghAlwaysWrite(t, &gh.Hook{})),
+		ghmock.WithRequestMatchHandler(ghmock.GetReposByOwnerByRepo, ghAlwaysWrite(t, &gh.Repository{})),
+		ghmock.WithRequestMatchHandler(ghmock.GetReposBranchesByOwnerByRepoByBranch, ghAlwaysWrite(t, &gh.Branch{})),
+		ghmock.WithRequestMatchHandler(ghmock.GetReposGitTreesByOwnerByRepoByTreeSha, ghAlwaysWrite(t, &gh.Tree{})),
 		ghmock.WithRequestMatchHandler(
 			ghmock.DeleteReposHooksByOwnerByRepoByHookId,
 			http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
@@ -176,6 +155,14 @@ func runGrafana(t *testing.T) *provisioningTestHelper {
 	}
 }
 
+func ghAlwaysWrite(t *testing.T, body any) http.HandlerFunc {
+	marshalled := ghmock.MustMarshal(body)
+	return http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, err := w.Write(marshalled)
+		require.NoError(t, err, "failed to write body in mock")
+	})
+}
+
 func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
@@ -228,12 +215,18 @@ func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
 	ctx := context.Background()
 
 	helper.GetEnv().GitHubFactory.Client = ghmock.NewMockedHTTPClient(
-		ghmock.WithRequestMatch(ghmock.GetUser, gh.User{Name: gh.Ptr("github-user")}),
-		ghmock.WithRequestMatch(ghmock.GetReposHooksByOwnerByRepo, []*gh.Hook{}),
-		ghmock.WithRequestMatch(ghmock.PostReposHooksByOwnerByRepo, gh.Hook{ID: gh.Ptr(int64(123))}),
-		ghmock.WithRequestMatch(ghmock.GetReposByOwnerByRepo, gh.Repository{ID: gh.Ptr(int64(234))}),
-		ghmock.WithRequestMatch(ghmock.GetReposBranchesByOwnerByRepoByBranch, gh.Branch{}),
-		ghmock.WithRequestMatch(ghmock.GetReposGitTreesByOwnerByRepoByTreeSha, gh.Tree{
+		ghmock.WithRequestMatchHandler(ghmock.GetUser, ghAlwaysWrite(t, &gh.User{Name: gh.Ptr("github-user")})),
+		ghmock.WithRequestMatchHandler(ghmock.GetReposHooksByOwnerByRepo, ghAlwaysWrite(t, []*gh.Hook{})),
+		ghmock.WithRequestMatchHandler(ghmock.PostReposHooksByOwnerByRepo, ghAlwaysWrite(t, &gh.Hook{ID: gh.Ptr(int64(123))})),
+		ghmock.WithRequestMatchHandler(ghmock.GetReposByOwnerByRepo, ghAlwaysWrite(t, &gh.Repository{ID: gh.Ptr(int64(234))})),
+		ghmock.WithRequestMatchHandler(
+			ghmock.GetReposBranchesByOwnerByRepoByBranch,
+			ghAlwaysWrite(t, &gh.Branch{
+				Name:   gh.Ptr("main"),
+				Commit: &gh.RepositoryCommit{SHA: gh.Ptr("deadbeef")},
+			}),
+		),
+		ghmock.WithRequestMatchHandler(ghmock.GetReposGitTreesByOwnerByRepoByTreeSha, ghAlwaysWrite(t, &gh.Tree{
 			SHA:       gh.Ptr("deadbeef"),
 			Truncated: gh.Ptr(false),
 			Entries: []*gh.TreeEntry{
@@ -241,18 +234,25 @@ func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
 				treeEntry("dashboard.json", helper.LoadFile("testdata/all-panels.json")),
 				treeEntry("subdir/dashboard2.yaml", helper.LoadFile("testdata/text-options.json")),
 			},
-		}),
+		})),
 		ghmock.WithRequestMatchHandler(
 			ghmock.GetReposContentsByOwnerByRepoByPath,
 			http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				pathRegex := regexp.MustCompile(`/repos/[^/]+/[^/]+/contents/(.*)`)
+				matches := pathRegex.FindStringSubmatch(r.URL.Path)
+				require.NotNil(t, matches, "no match for contents?")
+				path := matches[1]
+
 				var err error
-				switch r.PathValue("path") {
+				switch path {
 				case "README.md":
 					_, err = w.Write(ghmock.MustMarshal(repoContent("README.md", []byte("# Hello, World"))))
 				case "dashboard.json":
 					_, err = w.Write(ghmock.MustMarshal(repoContent("dashboard.json", helper.LoadFile("testdata/all-panels.json"))))
 				case "subdir/dashboard2.yaml":
 					_, err = w.Write(ghmock.MustMarshal(repoContent("subdir/dashboard2.yaml", helper.LoadFile("testdata/text-options.json"))))
+				default:
+					t.Fatalf("got unexpected path: %s", path)
 				}
 				require.NoError(t, err)
 			}),
@@ -297,8 +297,8 @@ func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
 	for _, v := range found.Items {
 		names = append(names, v.GetName())
 	}
-	require.Contains(t, names, "dashboard-R-GC4gTF44qh", "should contain dashboard.json's contents")
-	require.Contains(t, names, "dashboard2-1jw3H-Mqm75v", "should contain dashboard2.yaml's contents")
+	require.Contains(t, names, "n1jR8vnnz", "should contain dashboard.json's contents")
+	require.Contains(t, names, "WZ7AhQiVz", "should contain dashboard2.yaml's contents")
 }
 
 func TestIntegrationProvisioning_SafePathUsages(t *testing.T) {
@@ -368,7 +368,7 @@ func TestIntegrationProvisioning_ImportAllPanelsFromLocalRepository(t *testing.T
 	require.NoError(t, err, "valid path should be fine")
 
 	// But the dashboard shouldn't exist yet
-	const allPanels = "all-panels-hallaxjov44rbumtikbi1sbzroco9"
+	const allPanels = "n1jR8vnnz"
 	_, err = helper.Dashboards.Resource.Get(ctx, allPanels, metav1.GetOptions{})
 	require.Error(t, err, "no all-panels dashboard should exist")
 
@@ -469,12 +469,11 @@ func repoContent(fpath string, content []byte) *gh.RepositoryContent {
 	}
 
 	return &gh.RepositoryContent{
-		SHA:      gh.Ptr(hex.EncodeToString(sha[:])),
-		Name:     gh.Ptr(path.Base(fpath)),
-		Path:     &fpath,
-		Size:     gh.Ptr(len(content)),
-		Type:     &typ,
-		Content:  gh.Ptr(string(content)),
-		Encoding: gh.Ptr("UTF-8"),
+		SHA:     gh.Ptr(hex.EncodeToString(sha[:])),
+		Name:    gh.Ptr(path.Base(fpath)),
+		Path:    &fpath,
+		Size:    gh.Ptr(len(content)),
+		Type:    &typ,
+		Content: gh.Ptr(string(content)),
 	}
 }
