@@ -15,6 +15,33 @@ import (
 	time "time"
 )
 
+type Spec struct {
+	// Folder UID
+	FolderUid *string `json:"folderUid,omitempty"`
+	// Library element UID
+	Uid string `json:"uid"`
+	// Panel name (also saved in the model)
+	Name string `json:"name"`
+	// Panel description
+	Description *string `json:"description,omitempty"`
+	// The panel type (from inside the model)
+	Type string `json:"type"`
+	// Dashboard version when this was saved (zero if unknown)
+	SchemaVersion *uint16 `json:"schemaVersion,omitempty"`
+	// panel version, incremented each time the dashboard is updated.
+	Version int64 `json:"version"`
+	// TODO: should be the same panel schema defined in dashboard
+	// Typescript: Omit<Panel, 'gridPos' | 'id' | 'libraryPanel'>;
+	Model map[string]any `json:"model"`
+	// Object storage metadata
+	Meta *LibraryElementDTOMeta `json:"meta,omitempty"`
+}
+
+// NewSpec creates a new Spec object.
+func NewSpec() *Spec {
+	return &Spec{}
+}
+
 type LibraryElementDTOMeta struct {
 	FolderName          string                    `json:"folderName"`
 	FolderUid           string                    `json:"folderUid"`
@@ -42,31 +69,4 @@ type LibraryElementDTOMetaUser struct {
 // NewLibraryElementDTOMetaUser creates a new LibraryElementDTOMetaUser object.
 func NewLibraryElementDTOMetaUser() *LibraryElementDTOMetaUser {
 	return &LibraryElementDTOMetaUser{}
-}
-
-type Spec struct {
-	// Folder UID
-	FolderUid *string `json:"folderUid,omitempty"`
-	// Library element UID
-	Uid string `json:"uid"`
-	// Panel name (also saved in the model)
-	Name string `json:"name"`
-	// Panel description
-	Description *string `json:"description,omitempty"`
-	// The panel type (from inside the model)
-	Type string `json:"type"`
-	// Dashboard version when this was saved (zero if unknown)
-	SchemaVersion *uint16 `json:"schemaVersion,omitempty"`
-	// panel version, incremented each time the dashboard is updated.
-	Version int64 `json:"version"`
-	// TODO: should be the same panel schema defined in dashboard
-	// Typescript: Omit<Panel, 'gridPos' | 'id' | 'libraryPanel'>;
-	Model map[string]any `json:"model"`
-	// Object storage metadata
-	Meta *LibraryElementDTOMeta `json:"meta,omitempty"`
-}
-
-// NewSpec creates a new Spec object.
-func NewSpec() *Spec {
-	return &Spec{}
 }
