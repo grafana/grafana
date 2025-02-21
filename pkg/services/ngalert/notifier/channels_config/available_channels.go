@@ -1729,7 +1729,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Element:      ElementTypeInput,
 					InputType:    InputTypeText,
 					PropertyName: "user",
-					Description:  "Username to use for Jira authentication. Usually, it should be your email address.",
+					Description:  "Username to use for Jira authentication.",
 					Secure:       true,
 					Required:     false,
 				},
@@ -1755,7 +1755,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 				},
 				{
 					Label:        "Project Key",
-					Description:  "The project key where issues are created",
+					Description:  "The project key associated with the relevant Jira project",
 					Element:      ElementTypeInput,
 					InputType:    InputTypeText,
 					Placeholder:  "Grafana",
@@ -1773,7 +1773,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 				},
 				{
 					Label:        "Summary",
-					Description:  fmt.Sprintf("The summary of the Jira issue. You can use templates to customize this field. Maximum length is %d characters. Otheriwse, the text will be truncated", jira.MaxSummaryLenRunes),
+					Description:  fmt.Sprintf("The summary of the Jira issue. You can use templates to customize this field. Maximum length is %d characters.", jira.MaxSummaryLenRunes),
 					Element:      ElementTypeInput,
 					InputType:    InputTypeText,
 					Placeholder:  jira.DefaultSummary,
@@ -1781,7 +1781,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 				},
 				{
 					Label:        "Description",
-					Description:  fmt.Sprintf("The description of the Jira issue. You can use templates to customize this field. Maximum length is %d characters. Otheriwse, the text will be truncated", jira.MaxDescriptionLenRunes),
+					Description:  fmt.Sprintf("The description of the Jira issue. You can use templates to customize this field. Maximum length is %d characters.", jira.MaxDescriptionLenRunes),
 					Element:      ElementTypeTextArea,
 					InputType:    InputTypeText,
 					Placeholder:  jira.DefaultDescription,
@@ -1831,7 +1831,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 				},
 				{
 					Label:        "\"Won't fix\" Transition",
-					Description:  `If reopen transition is defined, ignore issues with that resolution`,
+					Description:  `If reopen transition is defined, ignore issues with that resolution.`,
 					Element:      ElementTypeInput,
 					InputType:    InputTypeText,
 					Placeholder:  "",
@@ -1840,7 +1840,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 				},
 				{
 					Label:          "Custom field ID for deduplication",
-					Description:    "Id of custom field where the deduplication key should be stored. Otherwise, it will be added to labels in format 'ALERT($KEY)'",
+					Description:    "Id of the custom field where the deduplication key should be stored. Otherwise, it is added to labels in format 'ALERT($KEY).'",
 					Element:        ElementTypeInput,
 					InputType:      InputTypeText,
 					Placeholder:    "10000",
