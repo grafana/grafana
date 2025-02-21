@@ -2,6 +2,7 @@ import { defaults, each, sortBy } from 'lodash';
 
 import { DataSourceRef, PanelPluginMeta, VariableOption, VariableRefresh } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
+import { DashboardV2Spec, LibraryPanelKind, PanelKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import config from 'app/core/config';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { getLibraryPanel } from 'app/features/library-panels/state/api';
@@ -47,6 +48,11 @@ export interface ExternalDashboard {
   panels: Array<PanelModel | PanelWithExportableLibraryPanel>;
 }
 
+export interface ExternalDashboardV2 {
+  __inputs?: Input[];
+  __elements?: Record<string, LibraryElementExport>;
+}
+
 interface PanelWithExportableLibraryPanel {
   gridPos: GridPos;
   id: number;
@@ -78,7 +84,13 @@ export interface LibraryElementExport {
   kind: LibraryElementKind;
 }
 
-export class DashboardExporter {
+export type DashboardV2Json = ExternalDashboardV2 & DashboardV2Spec;
+
+export interface DashboardExporterLike<T, J> {
+  makeExportable(dashboard: T): Promise<J | { error: unknown }>;
+}
+
+export class DashboardExporterV1 implements DashboardExporterLike<DashboardModel, DashboardJson> {
   async makeExportable(dashboard: DashboardModel) {
     // clean up repeated rows and panels,
     // this is done on the live real dashboard instance, not on a clone
@@ -324,4 +336,198 @@ export class DashboardExporter {
       };
     }
   }
+}
+
+export class DashboardExporterV2 implements DashboardExporterLike<DashboardV2Spec, DashboardV2Json> {
+  async makeExportable(dashboard: DashboardV2Spec) {
+    console.log('make exportable');
+    const requires: Requires = {};
+    const datasources: DataSources = {};
+    const variableLookup: { [key: string]: any } = {};
+    const libraryPanels: Map<string, LibraryElementExport> = new Map<string, LibraryElementExport>();
+
+    for (const variable of dashboard.variables) {
+      variableLookup[variable.kind] = variable.spec;
+    }
+
+    // TODO: will need to make it type safe so it's easier to reason about
+    const templateizeDatasourceUsage = (obj: any, fallback?: DataSourceRef) => {
+      if (obj === undefined) {
+        obj.datasource = fallback;
+        return;
+      }
+
+      let datasource = obj.datasource;
+      let datasourceVariable: any = null;
+
+      const datasourceUid: string | undefined = datasource?.uid;
+      const match = datasourceUid && variableRegex.exec(datasourceUid);
+
+      // ignore data source properties that contain a variable
+      if (match) {
+        const varName = match[1] || match[2] || match[4];
+        datasourceVariable = variableLookup[varName];
+        if (datasourceVariable && datasourceVariable.current) {
+          datasource = datasourceVariable.current.value;
+        }
+      }
+
+      return getDataSourceSrv()
+        .get(datasource)
+        .then((ds) => {
+          if (ds.meta?.builtIn) {
+            return;
+          }
+
+          // add data source type to require list
+          requires['datasource' + ds.meta?.id] = {
+            type: 'datasource',
+            id: ds.meta.id,
+            name: ds.meta.name,
+            version: ds.meta.info.version || '1.0.0',
+          };
+
+          // if used via variable we can skip templatizing usage
+          if (datasourceVariable) {
+            return;
+          }
+
+          const libraryPanel = obj.libraryPanel;
+          const libraryPanelSuffix = !!libraryPanel ? '-for-library-panel' : '';
+          let refName = 'DS_' + ds.name.replace(' ', '_').toUpperCase() + libraryPanelSuffix.toUpperCase();
+
+          datasources[refName] = {
+            name: refName,
+            label: ds.name,
+            description: '',
+            type: 'datasource',
+            pluginId: ds.meta?.id,
+            pluginName: ds.meta?.name,
+            usage: datasources[refName]?.usage,
+          };
+
+          if (!!libraryPanel) {
+            const libPanels = datasources[refName]?.usage?.libraryPanels || [];
+            libPanels.push({ name: libraryPanel.name, uid: libraryPanel.uid });
+
+            datasources[refName].usage = {
+              libraryPanels: libPanels,
+            };
+          }
+
+          obj.datasource = { type: ds.meta.id, uid: '${' + refName + '}' };
+        });
+    };
+
+    const processPanel = async (panel: PanelKind) => {
+      await templateizeDatasourceUsage(panel);
+      // TODO:
+      if (panel.spec.data.spec.queries) {
+        for (const query of panel.spec.data.spec.queries) {
+          await templateizeDatasourceUsage(query.spec);
+        }
+      }
+
+      const panelDef: PanelPluginMeta = config.panels[panel.kind];
+      if (panelDef) {
+        requires['panel' + panelDef.id] = {
+          type: 'panel',
+          id: panelDef.id,
+          name: panelDef.name,
+          version: panelDef.info.version,
+        };
+      }
+    };
+
+    const processLibraryPanels = async (panel: LibraryPanelKind) => {
+      // TODO:
+    };
+
+    try {
+      // check up panel data sources
+      // support only grid layout for now
+      if (dashboard.layout.kind !== 'GridLayout') {
+        throw new Error('Only GridLayout is supported');
+      }
+
+      const gridLayoutItems = dashboard.layout.spec.items;
+      const elements = dashboard.elements;
+
+      gridLayoutItems.forEach((item) => {
+        if (item.kind === 'GridLayoutItem') {
+          // skip repeated panels
+          if (item.spec.repeat) {
+            return;
+          }
+
+          const panel = elements[item.spec.element.name];
+
+          if (panel.kind === 'Panel') {
+            processPanel(panel);
+          }
+        }
+      });
+
+      // TODO: handle collapsed rows
+
+      // templatize template vars
+      for (const variable of dashboard.variables) {
+        if (variable.kind === 'QueryVariable') {
+          await templateizeDatasourceUsage(variable.spec);
+          variable.spec.options = [];
+          variable.spec.current = {} as unknown as VariableOption;
+        } else if (variable.kind === 'DatasourceVariable') {
+          variable.spec.current = {
+            text: '',
+            value: '',
+          };
+        }
+      }
+
+      // templatize annotations vars
+      for (const annotation of dashboard.annotations) {
+        await templateizeDatasourceUsage(annotation.spec);
+      }
+
+      // add grafana version
+      requires['grafana'] = {
+        type: 'grafana',
+        id: 'grafana',
+        name: 'Grafana',
+        version: config.buildInfo.version,
+      };
+
+      // TODO: process library panels
+
+      const __elements = [...libraryPanels.entries()].reduce<Record<string, LibraryElementExport>>(
+        (prev, [curKey, curLibPanel]) => {
+          prev[curKey] = curLibPanel;
+          return prev;
+        },
+        {}
+      );
+
+      const newObj: DashboardV2Json = defaults(
+        {
+          __elements,
+          __requires: sortBy(requires, ['id']),
+        },
+        dashboard
+      );
+
+      return newObj;
+    } catch (err) {
+      console.error('Export failed:', err);
+      return {
+        error: err,
+      };
+    }
+  }
+}
+
+export function getDashboardExporter(): DashboardExporterLike<
+  DashboardModel | DashboardV2Spec,
+  DashboardJson | DashboardV2Json
+> {
+  return config.featureToggles.useV2DashboardsAPI ? new DashboardExporterV2() : new DashboardExporterV1();
 }
