@@ -3,10 +3,11 @@ import { useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { SceneObject, VizPanel } from '@grafana/scenes';
-import { Box, Icon, IconButton, Stack, useStyles2 } from '@grafana/ui';
+import { Box, Icon, IconButton, Stack, useElementSelection, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
 import { isEditableDashboardElement } from '../scene/types/EditableDashboardElement';
+import { isInCloneChain } from '../utils/clone';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { DashboardEditPane } from './DashboardEditPane';
@@ -28,19 +29,19 @@ export function DashboardOutline({ editPane }: Props) {
 
 function DashboardOutlineNode({ sceneObject }: { sceneObject: SceneObject }) {
   const [isExpanded, setIsExpanded] = useState(true);
-  const styles = useStyles2(getStyles);
   const { key } = sceneObject.useState();
+  const styles = useStyles2(getStyles);
 
   const editableElement = useMemo(() => {
     return getEditableElementFor(sceneObject)!;
   }, [sceneObject]);
 
-  const children: SceneObject[] = [];
-  collectChildren(sceneObject, children);
+  const children = collectEditableElementChildren(sceneObject);
 
   const hasChildren = children.length > 0;
-  const isCloned = false;
+  const isCloned = useMemo(() => isInCloneChain(key!), [key]);
   const elementInfo = editableElement.getEditableElementInfo();
+  const { isSelected, onSelect } = useElementSelection(key);
 
   return (
     <>
@@ -65,11 +66,11 @@ function DashboardOutlineNode({ sceneObject }: { sceneObject: SceneObject }) {
         )}
         <button
           role="treeitem"
-          className={cx(isCloned && styles.cloned, !isCloned && styles.clickable)}
-          onClick={() => {}}
+          className={cx(styles.nodeButton, isCloned && styles.nodeButtonClone, isSelected && styles.nodeButtonSelected)}
+          onPointerDown={(evt) => onSelect?.(evt)}
         >
           <span>{elementInfo.name}</span>
-          <Icon name={elementInfo.icon} className={cx(isCloned && styles.cloned)} />
+          <Icon name={elementInfo.icon} />
         </button>
       </Stack>
       {hasChildren && isExpanded && (
@@ -93,34 +94,45 @@ function getStyles(theme: GrafanaTheme2) {
       paddingLeft: theme.spacing(1.5),
       borderLeft: `1px solid ${theme.colors.border.medium}`,
     }),
-    clickable: css({
-      cursor: 'pointer',
+    nodeButton: css({
       boxShadow: 'none',
       border: 'none',
       background: 'transparent',
-      padding: theme.spacing(0.25, 0.5),
+      padding: theme.spacing(0.25, 1),
       borderRadius: theme.shape.radius.default,
       display: 'flex',
       alignItems: 'center',
       gap: theme.spacing(1),
+      overflow: 'hidden',
       '&:hover': {
-        backgroundColor: theme.colors.emphasize(theme.colors.background.primary, 0.05),
+        backgroundColor: theme.colors.action.hover,
+      },
+      '> span': {
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
       },
     }),
-    cloned: css({
+    nodeButtonSelected: css({
+      color: theme.colors.primary.text,
+    }),
+    nodeButtonClone: css({
       color: theme.colors.text.secondary,
+      cursor: 'not-allowed',
     }),
   };
 }
 
-function collectChildren(sceneObject: SceneObject, children: SceneObject[]) {
+function collectEditableElementChildren(sceneObject: SceneObject, children: SceneObject[] = []) {
   sceneObject.forEachChild((child) => {
     if (isEditableDashboardElement(child)) {
       children.push(child);
     } else if (child instanceof VizPanel) {
       children.push(child);
     } else {
-      collectChildren(child, children);
+      collectEditableElementChildren(child, children);
     }
   });
+
+  return children;
 }
