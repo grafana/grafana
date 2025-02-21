@@ -32,16 +32,28 @@ const alertStateSortScore = {
 export enum EvalFunction {
   'IsAbove' = 'gt',
   'IsBelow' = 'lt',
+  'IsEqual' = 'eq',
+  'IsNotEqual' = 'ne',
+  'IsGreaterThanEqual' = 'gte',
+  'IsLessThanEqual' = 'lte',
   'IsOutsideRange' = 'outside_range',
   'IsWithinRange' = 'within_range',
+  'IsWithinRangeIncluded' = 'within_range_included',
+  'IsOutsideRangeIncluded' = 'outside_range_included',
   'HasNoValue' = 'no_value',
 }
 
 const evalFunctions = [
   { value: EvalFunction.IsAbove, text: 'IS ABOVE' },
   { value: EvalFunction.IsBelow, text: 'IS BELOW' },
+  { value: EvalFunction.IsEqual, text: 'IS EQUAL TO' },
+  { value: EvalFunction.IsNotEqual, text: 'IS NOT EQUAL TO' },
+  { value: EvalFunction.IsGreaterThanEqual, text: 'IS ABOVE OR EQUAL TO' },
+  { value: EvalFunction.IsLessThanEqual, text: 'IS BELOW OR EQUAL TO' },
   { value: EvalFunction.IsOutsideRange, text: 'IS OUTSIDE RANGE' },
   { value: EvalFunction.IsWithinRange, text: 'IS WITHIN RANGE' },
+  { value: EvalFunction.IsOutsideRangeIncluded, text: 'IS OUTSIDE RANGE INCLUDED' },
+  { value: EvalFunction.IsWithinRangeIncluded, text: 'IS WITHIN RANGE INCLUDED' },
   { value: EvalFunction.HasNoValue, text: 'HAS NO VALUE' },
 ];
 

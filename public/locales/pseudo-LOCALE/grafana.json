@@ -528,6 +528,19 @@
       },
       "pause": {
         "label": "Päūşę ęväľūäŧįőŉ"
+      },
+      "threshold": {
+        "recovery": {
+          "stop-alerting-above": "Ŝŧőp äľęřŧįŉģ ŵĥęŉ äþővę",
+          "stop-alerting-bellow": "Ŝŧőp äľęřŧįŉģ ŵĥęŉ þęľőŵ",
+          "stop-alerting-equal": "Ŝŧőp äľęřŧįŉģ ŵĥęŉ ęqūäľ ŧő",
+          "stop-alerting-inside-range": "Ŝŧőp äľęřŧįŉģ ŵĥęŉ įŉşįđę řäŉģę",
+          "stop-alerting-less": "Ŝŧőp äľęřŧįŉģ ŵĥęŉ ľęşş ŧĥäŉ",
+          "stop-alerting-more": "Ŝŧőp äľęřŧįŉģ ŵĥęŉ mőřę ŧĥäŉ",
+          "stop-alerting-not-equal": "Ŝŧőp äľęřŧįŉģ ŵĥęŉ ŉőŧ ęqūäľ ŧő",
+          "stop-alerting-outside-range": "Ŝŧőp äľęřŧįŉģ ŵĥęŉ őūŧşįđę řäŉģę",
+          "title": "Cūşŧőm řęčővęřy ŧĥřęşĥőľđ"
+        }
       }
     },
     "rule-groups": {

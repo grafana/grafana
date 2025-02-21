@@ -126,8 +126,14 @@ export const upsamplingTypes: Array<SelectableValue<string>> = [
 export const thresholdFunctions: Array<SelectableValue<EvalFunction>> = [
   { value: EvalFunction.IsAbove, label: 'Is above' },
   { value: EvalFunction.IsBelow, label: 'Is below' },
+  { value: EvalFunction.IsEqual, label: 'Is equal to' },
+  { value: EvalFunction.IsNotEqual, label: 'Is not equal to' },
+  { value: EvalFunction.IsGreaterThanEqual, label: 'Is above or equal to' },
+  { value: EvalFunction.IsLessThanEqual, label: 'Is below or equal to' },
   { value: EvalFunction.IsWithinRange, label: 'Is within range' },
   { value: EvalFunction.IsOutsideRange, label: 'Is outside range' },
+  { value: EvalFunction.IsWithinRangeIncluded, label: 'Is within range included' },
+  { value: EvalFunction.IsOutsideRangeIncluded, label: 'Is outside range included' },
 ];
 
 /**

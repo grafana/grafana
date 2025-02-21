@@ -754,8 +754,14 @@
                           "enum": [
                             "gt",
                             "lt",
+                            "eq",
+                            "ne",
+                            "gte",
+                            "lte",
                             "within_range",
-                            "outside_range"
+                            "outside_range",
+                            "within_range_included",
+                            "outside_range_included"
                           ],
                           "x-enum-description": {}
                         }
@@ -786,8 +792,14 @@
                           "enum": [
                             "gt",
                             "lt",
+                            "eq",
+                            "ne",
+                            "gte",
+                            "lte",
                             "within_range",
-                            "outside_range"
+                            "outside_range",
+                            "within_range_included",
+                            "outside_range_included"
                           ],
                           "x-enum-description": {}
                         }
