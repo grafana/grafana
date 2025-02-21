@@ -37,23 +37,23 @@ var (
 )
 
 type SecretAPIBuilder struct {
-	tracer             tracing.Tracer
-	secureValueStorage contracts.SecureValueStorage
-	keeperStorage      contracts.KeeperStorage
-	decryptStorage     contracts.DecryptStorage
-	accessClient       claims.AccessClient
-	isDevMode          bool // REMOVE ME
+	tracer                     tracing.Tracer
+	secureValueMetadataStorage contracts.SecureValueMetadataStorage
+	keeperMetadataStorage      contracts.KeeperMetadataStorage
+	decryptStorage             contracts.DecryptStorage
+	accessClient               claims.AccessClient
+	isDevMode                  bool // REMOVE ME
 }
 
 func NewSecretAPIBuilder(
 	tracer tracing.Tracer,
-	secureValueStorage contracts.SecureValueStorage,
-	keeperStorage contracts.KeeperStorage,
+	secureValueMetadataStorage contracts.SecureValueMetadataStorage,
+	keeperMetadataStorage contracts.KeeperMetadataStorage,
 	decryptStorage contracts.DecryptStorage,
 	accessClient claims.AccessClient,
 	isDevMode bool, // REMOVE ME
 ) *SecretAPIBuilder {
-	return &SecretAPIBuilder{tracer, secureValueStorage, keeperStorage, decryptStorage, accessClient, isDevMode}
+	return &SecretAPIBuilder{tracer, secureValueMetadataStorage, keeperMetadataStorage, decryptStorage, accessClient, isDevMode}
 }
 
 func RegisterAPIService(
@@ -61,8 +61,8 @@ func RegisterAPIService(
 	cfg *setting.Cfg,
 	apiregistration builder.APIRegistrar,
 	tracer tracing.Tracer,
-	secureValueStorage contracts.SecureValueStorage,
-	keeperStorage contracts.KeeperStorage,
+	secureValueMetadataStorage contracts.SecureValueMetadataStorage,
+	keeperMetadataStorage contracts.KeeperMetadataStorage,
 	decryptStorage contracts.DecryptStorage,
 	accessClient claims.AccessClient,
 	accessControlService accesscontrol.Service,
@@ -77,16 +77,16 @@ func RegisterAPIService(
 	// TODO: Remove before launch
 	if cfg.SecretsManagement.IsDeveloperMode {
 		fmt.Println("developer mode enabled")
-		secureValueStorage = reststorage.NewFakeSecureValueStore(cfg.SecretsManagement.DeveloperStubLatency)
-		keeperStorage = reststorage.NewFakeKeeperStore(cfg.SecretsManagement.DeveloperStubLatency)
-		decryptStorage = reststorage.NewFakeDecryptStore(secureValueStorage)
+		secureValueMetadataStorage = reststorage.NewFakeSecureValueMetadataStore(cfg.SecretsManagement.DeveloperStubLatency)
+		keeperMetadataStorage = reststorage.NewFakeKeeperMetadataStore(cfg.SecretsManagement.DeveloperStubLatency)
+		decryptStorage = reststorage.NewFakeDecryptStore(secureValueMetadataStorage)
 	}
 
 	if err := RegisterAccessControlRoles(accessControlService); err != nil {
 		return nil, fmt.Errorf("register secret access control roles: %w", err)
 	}
 
-	builder := NewSecretAPIBuilder(tracer, secureValueStorage, keeperStorage, decryptStorage, accessClient, cfg.SecretsManagement.IsDeveloperMode)
+	builder := NewSecretAPIBuilder(tracer, secureValueMetadataStorage, keeperMetadataStorage, decryptStorage, accessClient, cfg.SecretsManagement.IsDeveloperMode)
 	apiregistration.RegisterAPI(builder)
 	return builder, nil
 }
@@ -130,14 +130,14 @@ func (b *SecretAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 	secureRestStorage := map[string]rest.Storage{
 		// Default path for `securevalue`.
 		// The `reststorage.SecureValueRest` struct will implement interfaces for CRUDL operations on `securevalue`.
-		secureValueResource.StoragePath(): reststorage.NewSecureValueRest(b.secureValueStorage, secureValueResource),
+		secureValueResource.StoragePath(): reststorage.NewSecureValueRest(b.secureValueMetadataStorage, secureValueResource),
 
 		// TODO: only for testing purposes; remove it in favour of the grpc handler.
 		// This is a subresource from `securevalue`. It gets accessed like `securevalue/xyz/decrypt`.
 		secureValueResource.StoragePath("decrypt"): reststorage.NewDecryptRest(secureValueResource, b.decryptStorage),
 
 		// The `reststorage.KeeperRest` struct will implement interfaces for CRUDL operations on `keeper`.
-		keeperResource.StoragePath(): reststorage.NewKeeperRest(b.keeperStorage, keeperResource),
+		keeperResource.StoragePath(): reststorage.NewKeeperRest(b.keeperMetadataStorage, keeperResource),
 	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[secretv0alpha1.VERSION] = secureRestStorage

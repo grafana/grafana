@@ -34,13 +34,13 @@ var (
 
 // KeeperRest is an implementation of CRUDL operations on a `keeper` backed by TODO.
 type KeeperRest struct {
-	storage        contracts.KeeperStorage
+	storage        contracts.KeeperMetadataStorage
 	resource       utils.ResourceInfo
 	tableConverter rest.TableConvertor
 }
 
 // NewKeeperRest is a returns a constructed `*KeeperRest`.
-func NewKeeperRest(storage contracts.KeeperStorage, resource utils.ResourceInfo) *KeeperRest {
+func NewKeeperRest(storage contracts.KeeperMetadataStorage, resource utils.ResourceInfo) *KeeperRest {
 	return &KeeperRest{storage, resource, resource.TableConverter()}
 }
 

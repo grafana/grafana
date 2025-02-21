@@ -34,13 +34,13 @@ var (
 
 // SecureValueRest is an implementation of CRUDL operations on a `securevalue` backed by a persistence layer `store`.
 type SecureValueRest struct {
-	storage        contracts.SecureValueStorage
+	storage        contracts.SecureValueMetadataStorage
 	resource       utils.ResourceInfo
 	tableConverter rest.TableConvertor
 }
 
 // NewSecureValueRest is a returns a constructed `*SecureValueRest`.
-func NewSecureValueRest(storage contracts.SecureValueStorage, resource utils.ResourceInfo) *SecureValueRest {
+func NewSecureValueRest(storage contracts.SecureValueMetadataStorage, resource utils.ResourceInfo) *SecureValueRest {
 	return &SecureValueRest{storage, resource, resource.TableConverter()}
 }
 

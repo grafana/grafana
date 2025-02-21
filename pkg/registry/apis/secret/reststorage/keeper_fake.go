@@ -14,19 +14,19 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-func NewFakeKeeperStore(latency time.Duration) contracts.KeeperStorage {
-	return &fakeKeeperStorage{
+func NewFakeKeeperMetadataStore(latency time.Duration) contracts.KeeperMetadataStorage {
+	return &fakeKeeperMetadataStorage{
 		values:  make(map[string]map[string]secretv0alpha1.Keeper),
 		latency: latency,
 	}
 }
 
-type fakeKeeperStorage struct {
+type fakeKeeperMetadataStorage struct {
 	values  map[string]map[string]secretv0alpha1.Keeper
 	latency time.Duration
 }
 
-func (s *fakeKeeperStorage) Create(ctx context.Context, k *secretv0alpha1.Keeper) (*secretv0alpha1.Keeper, error) {
+func (s *fakeKeeperMetadataStorage) Create(ctx context.Context, k *secretv0alpha1.Keeper) (*secretv0alpha1.Keeper, error) {
 	v := *k
 	v.SetUID(types.UID(uuid.NewString()))
 	v.ObjectMeta.SetResourceVersion(strconv.FormatInt(metav1.Now().UnixMicro(), 10))
@@ -42,7 +42,7 @@ func (s *fakeKeeperStorage) Create(ctx context.Context, k *secretv0alpha1.Keeper
 	return &v, nil
 }
 
-func (s *fakeKeeperStorage) Read(ctx context.Context, namespace xkube.Namespace, name string) (*secretv0alpha1.Keeper, error) {
+func (s *fakeKeeperMetadataStorage) Read(ctx context.Context, namespace xkube.Namespace, name string) (*secretv0alpha1.Keeper, error) {
 	ns, ok := s.values[namespace.String()]
 	if !ok {
 		return nil, contracts.ErrSecureValueNotFound
@@ -55,7 +55,7 @@ func (s *fakeKeeperStorage) Read(ctx context.Context, namespace xkube.Namespace,
 	return &v, nil
 }
 
-func (s *fakeKeeperStorage) Update(ctx context.Context, nk *secretv0alpha1.Keeper) (*secretv0alpha1.Keeper, error) {
+func (s *fakeKeeperMetadataStorage) Update(ctx context.Context, nk *secretv0alpha1.Keeper) (*secretv0alpha1.Keeper, error) {
 	v := *nk
 	v.ObjectMeta.SetResourceVersion(strconv.FormatInt(metav1.Now().UnixMicro(), 10))
 	ns, ok := s.values[nk.Namespace]
@@ -73,7 +73,7 @@ func (s *fakeKeeperStorage) Update(ctx context.Context, nk *secretv0alpha1.Keepe
 	return &v, nil
 }
 
-func (s *fakeKeeperStorage) Delete(ctx context.Context, namespace xkube.Namespace, name string) error {
+func (s *fakeKeeperMetadataStorage) Delete(ctx context.Context, namespace xkube.Namespace, name string) error {
 	ns, ok := s.values[namespace.String()]
 	if !ok {
 		return contracts.ErrSecureValueNotFound
@@ -89,7 +89,7 @@ func (s *fakeKeeperStorage) Delete(ctx context.Context, namespace xkube.Namespac
 	return nil
 }
 
-func (s *fakeKeeperStorage) List(ctx context.Context, namespace xkube.Namespace, options *internalversion.ListOptions) (*secretv0alpha1.KeeperList, error) {
+func (s *fakeKeeperMetadataStorage) List(ctx context.Context, namespace xkube.Namespace, options *internalversion.ListOptions) (*secretv0alpha1.KeeperList, error) {
 	ns, ok := s.values[namespace.String()]
 	if !ok {
 		s.values[namespace.String()] = ns
