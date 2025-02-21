@@ -1,1 +1,0 @@
-/Users/mmandrus/dev/grafana-enterprise/src/pkg/build/cmd/exportversion.go
