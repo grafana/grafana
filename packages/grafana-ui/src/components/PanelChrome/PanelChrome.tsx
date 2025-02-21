@@ -66,6 +66,7 @@ interface BaseProps {
    */
   onMouseMove?: () => void;
   onMouseEnter?: () => void;
+  hideHeader?: boolean;
 }
 
 interface FixedDimensions extends BaseProps {
@@ -134,13 +135,14 @@ export function PanelChrome({
   onFocus,
   onMouseMove,
   onMouseEnter,
+  hideHeader,
 }: PanelChromeProps) {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
   const panelContentId = useId();
   const panelTitleId = useId().replace(/:/g, '_');
 
-  const hasHeader = !hoverHeader;
+  const hasHeader = hideHeader ? false : !hoverHeader;
 
   const [isOpen, toggleOpen] = useToggle(true);
 

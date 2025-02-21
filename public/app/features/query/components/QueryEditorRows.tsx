@@ -36,6 +36,7 @@ export interface Props {
   onQueryToggled?: (queryStatus?: boolean | undefined) => void;
   queryRowWrapper?: (children: ReactNode, refId: string) => ReactNode;
   queryBuilderOnly?: boolean;
+  hideQueryEditor?: boolean;
 }
 
 export class QueryEditorRows extends PureComponent<Props> {
@@ -145,6 +146,7 @@ export class QueryEditorRows extends PureComponent<Props> {
       onQueryToggled,
       queryRowWrapper,
       queryBuilderOnly,
+      hideQueryEditor,
     } = this.props;
 
     return (
@@ -152,7 +154,7 @@ export class QueryEditorRows extends PureComponent<Props> {
         <Droppable droppableId="transformations-list" direction="vertical">
           {(provided) => {
             return (
-              <div data-testid="query-editor-rows" ref={provided.innerRef} {...provided.droppableProps}>
+              <div style={{height: hideQueryEditor ? 0 : 'auto'}} data-testid="query-editor-rows" ref={provided.innerRef} {...provided.droppableProps}>
                 {queries.map((query, index) => {
                   const dataSourceSettings = getDataSourceSettings(query, dsSettings);
                   const onChangeDataSourceSettings = dsSettings.meta.mixed

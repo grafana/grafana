@@ -135,7 +135,7 @@ export const GraphContainer = ({
   return (
     <PanelChrome
       title={title ? title : queryBuilderOnly ? '' : t('graph.container.title', 'Graph')}
-      hoverHeader={queryBuilderOnly && title?.length === 0}
+      hideHeader={!title && queryBuilderOnly && hideQueryEditor && hideMiniOptions}
       titleItems={[
         !showAllSeries && MAX_NUMBER_OF_TIME_SERIES < data.length && (
           <div key="disclaimer" className={styles.timeSeriesDisclaimer}>
