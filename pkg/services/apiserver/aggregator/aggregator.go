@@ -50,6 +50,7 @@ import (
 	servicev0alpha1applyconfiguration "github.com/grafana/grafana/pkg/generated/applyconfiguration/service/v0alpha1"
 	serviceclientset "github.com/grafana/grafana/pkg/generated/clientset/versioned"
 	informersv0alpha1 "github.com/grafana/grafana/pkg/generated/informers/externalversions"
+	infralog "github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apis/service"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
@@ -136,15 +137,17 @@ func CreateAggregatorConfig(commandOptions *options.Options, sharedConfig generi
 			ServiceResolver: serviceResolver,
 		},
 	}
-
-	klog.Infof("Legacy Client Cert Auth is: %t", commandOptions.KubeAggregatorOptions.LegacyClientCertAuth)
+	log := infralog.New("grafana-aggregator")
+	log.Info("Legacy Client Cert Auth", "bool", commandOptions.KubeAggregatorOptions.LegacyClientCertAuth)
 	if commandOptions.KubeAggregatorOptions.LegacyClientCertAuth {
+		log.Info("Adding certs to aggregator config")
 		// NOTE: the availability controller below is a bit different and uses the cert/key pair regardless
 		// of the legacy bool, this is because we are still using that for discovery requests
 		aggregatorConfig.ExtraConfig.ProxyClientCertFile = commandOptions.KubeAggregatorOptions.ProxyClientCertFile
 		aggregatorConfig.ExtraConfig.ProxyClientKeyFile = commandOptions.KubeAggregatorOptions.ProxyClientKeyFile
 	}
 
+	log.Info("Adding certs to custom extra config")
 	customExtraConfig := &CustomExtraConfig{
 		DiscoveryOnlyProxyClientCertFile: commandOptions.KubeAggregatorOptions.ProxyClientCertFile,
 		DiscoveryOnlyProxyClientKeyFile:  commandOptions.KubeAggregatorOptions.ProxyClientKeyFile,
