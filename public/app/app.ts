@@ -206,7 +206,8 @@ export class GrafanaApp {
       initWindowRuntime();
 
       // Do not pre-load apps if improveRendererTraffic is true and the request comes from the image renderer
-      const skipAppPluginsPreload = config.featureToggles.improveRendererTraffic && contextSrv.user.authenticatedBy === 'render'
+      const skipAppPluginsPreload =
+        config.featureToggles.improveRendererTraffic && contextSrv.user.authenticatedBy === 'render';
       if (contextSrv.user.orgRole !== '' && !skipAppPluginsPreload) {
         const appPluginsToAwait = getAppPluginsToAwait();
         const appPluginsToPreload = getAppPluginsToPreload();
