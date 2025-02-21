@@ -1,13 +1,11 @@
 package prom
 
 import (
-	"encoding/json"
 	"fmt"
 	"time"
 
 	"gopkg.in/yaml.v3"
 
-	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
@@ -238,110 +236,4 @@ func (p *Converter) createQuery(expr string, isRecordingRule bool) ([]models.Ale
 	}
 
 	return []models.AlertQuery{queryNode, mathNode, thresholdNode}, nil
-}
-
-func createQueryNode(datasourceUID, datasourceType, expr string, fromTimeRange, evaluationOffset time.Duration) (models.AlertQuery, error) {
-	modelData := map[string]interface{}{
-		"datasource": map[string]interface{}{
-			"type": datasourceType,
-			"uid":  datasourceUID,
-		},
-		"expr":    expr,
-		"instant": true,
-		"range":   false,
-		"refId":   queryRefID,
-	}
-
-	if datasourceType == datasources.DS_LOKI {
-		modelData["queryType"] = "instant"
-	}
-
-	modelJSON, err := json.Marshal(modelData)
-	if err != nil {
-		return models.AlertQuery{}, err
-	}
-
-	return models.AlertQuery{
-		DatasourceUID: datasourceUID,
-		Model:         modelJSON,
-		RefID:         queryRefID,
-		RelativeTimeRange: models.RelativeTimeRange{
-			From: models.Duration(fromTimeRange + evaluationOffset),
-			To:   models.Duration(0 + evaluationOffset),
-		},
-	}, nil
-}
-
-func createMathNode() (models.AlertQuery, error) {
-	modelData := map[string]interface{}{
-		"datasource": map[string]interface{}{
-			"name": expr.TypeCMDNode.String(),
-			"type": expr.DatasourceType,
-			"uid":  expr.DatasourceUID,
-		},
-		"conditions": []map[string]interface{}{
-			{
-				"type":     "query",
-				"reducer":  map[string]interface{}{"type": "avg", "params": []interface{}{}},
-				"operator": map[string]interface{}{"type": "and"},
-				"query":    map[string]interface{}{"params": []interface{}{}},
-				"evaluator": map[string]interface{}{
-					"type":   "gt",
-					"params": []interface{}{0, 0},
-				},
-			},
-		},
-		"refId":      prometheusMathRefID,
-		"type":       string(expr.QueryTypeMath),
-		"expression": fmt.Sprintf("is_number($%[1]s) || is_nan($%[1]s) || is_inf($%[1]s)", queryRefID),
-	}
-
-	modelJSON, err := json.Marshal(modelData)
-	if err != nil {
-		return models.AlertQuery{}, err
-	}
-
-	return models.AlertQuery{
-		DatasourceUID: expr.DatasourceUID,
-		Model:         modelJSON,
-		RefID:         prometheusMathRefID,
-		QueryType:     string(expr.QueryTypeMath),
-	}, nil
-}
-
-func createThresholdNode() (models.AlertQuery, error) {
-	modelData := map[string]interface{}{
-		"datasource": map[string]interface{}{
-			"name": expr.TypeCMDNode.String(),
-			"type": expr.DatasourceType,
-			"uid":  expr.DatasourceUID,
-		},
-		"conditions": []map[string]interface{}{
-			{
-				"type":     "query",
-				"reducer":  map[string]interface{}{"type": "last", "params": []interface{}{}},
-				"operator": map[string]interface{}{"type": "and"},
-				"query":    map[string]interface{}{"params": []interface{}{}},
-				"evaluator": map[string]interface{}{
-					"type":   string(expr.ThresholdIsAbove),
-					"params": []interface{}{0},
-				},
-			},
-		},
-		"refId":      thresholdRefID,
-		"type":       string(expr.QueryTypeThreshold),
-		"expression": prometheusMathRefID,
-	}
-
-	modelJSON, err := json.Marshal(modelData)
-	if err != nil {
-		return models.AlertQuery{}, err
-	}
-
-	return models.AlertQuery{
-		DatasourceUID: expr.DatasourceUID,
-		Model:         modelJSON,
-		RefID:         thresholdRefID,
-		QueryType:     string(expr.QueryTypeThreshold),
-	}, nil
 }

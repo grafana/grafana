@@ -10,6 +10,7 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/grafana/grafana/pkg/expr"
+	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
@@ -216,16 +217,6 @@ func TestCreateMathNode(t *testing.T) {
 	require.Equal(t, expr.TypeCMDNode.String(), ds["name"])
 	require.Equal(t, expr.DatasourceType, ds["type"])
 	require.Equal(t, expr.DatasourceUID, ds["uid"])
-
-	conditions := model["conditions"].([]interface{})
-	require.Len(t, conditions, 1)
-
-	condition := conditions[0].(map[string]interface{})
-	require.Equal(t, "query", condition["type"])
-
-	evaluator := condition["evaluator"].(map[string]interface{})
-	require.Equal(t, "gt", evaluator["type"])
-	require.Equal(t, []interface{}{float64(0), float64(0)}, evaluator["params"])
 }
 
 func TestCreateThresholdNode(t *testing.T) {
@@ -252,8 +243,6 @@ func TestCreateThresholdNode(t *testing.T) {
 	require.Len(t, conditions, 1)
 
 	condition := conditions[0].(map[string]interface{})
-	require.Equal(t, "query", condition["type"])
-
 	evaluator := condition["evaluator"].(map[string]interface{})
 	require.Equal(t, string(expr.ThresholdIsAbove), evaluator["type"])
 	require.Equal(t, []interface{}{float64(0)}, evaluator["params"])
@@ -285,9 +274,19 @@ func TestPrometheusRulesToGrafana_NodesInRules(t *testing.T) {
 
 		// First node should be query
 		require.Equal(t, "query", result.Rules[0].Data[0].RefID)
+
 		// Second node should be math
 		require.Equal(t, "prometheus_math", result.Rules[0].Data[1].RefID)
 		require.Equal(t, string(expr.QueryTypeMath), result.Rules[0].Data[1].QueryType)
+		// Check that the math expression is valid
+		var model map[string]interface{}
+		err = json.Unmarshal(result.Rules[0].Data[1].Model, &model)
+		require.NoError(t, err)
+		require.Equal(t, "is_number($query) || is_nan($query) || is_inf($query)", model["expression"])
+		// The math expression should be parsed successfully
+		_, err = mathexp.New(model["expression"].(string))
+		require.NoError(t, err)
+
 		// Third node should be threshold
 		require.Equal(t, "threshold", result.Rules[0].Data[2].RefID)
 		require.Equal(t, string(expr.QueryTypeThreshold), result.Rules[0].Data[2].QueryType)
