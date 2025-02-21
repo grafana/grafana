@@ -18,13 +18,13 @@ import {
   Combobox,
   ComboboxOption,
   TextLink,
+  WeekStart,
 } from '@grafana/ui';
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 import { t, Trans } from 'app/core/internationalization';
 import { LANGUAGES, PSEUDO_LOCALE } from 'app/core/internationalization/constants';
 import { PreferencesService } from 'app/core/services/PreferencesService';
 import { changeTheme } from 'app/core/services/theme';
-
 export interface Props {
   resourceUri: string;
   disabled?: boolean;
@@ -152,7 +152,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
     this.setState({ timezone: timezone });
   };
 
-  onWeekStartChanged = (weekStart: string) => {
+  onWeekStartChanged = (weekStart?: WeekStart) => {
     this.setState({ weekStart: weekStart });
   };
 

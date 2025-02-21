@@ -8,7 +8,7 @@ import { ComboboxOption } from '../Combobox/types';
 
 export interface Props {
   onChange: (weekStart?: WeekStart) => void;
-  value: string;
+  value?: WeekStart;
   width?: number;
   autoFocus?: boolean;
   onBlur?: () => void;
@@ -63,7 +63,7 @@ export const WeekStartPicker = (props: Props) => {
     [onChange]
   );
 
-  const selected = useMemo(() => weekStarts.find((item) => item.value === value)?.value ?? null, [value]);
+  const selected = useMemo(() => weekStarts.find((item) => item.value === value)?.value ?? '', [value]);
 
   return (
     <Combobox

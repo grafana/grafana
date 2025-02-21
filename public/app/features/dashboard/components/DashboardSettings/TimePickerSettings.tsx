@@ -20,7 +20,7 @@ interface Props {
   timePickerHidden?: boolean;
   nowDelay?: string;
   timezone: TimeZone;
-  weekStart: string;
+  weekStart?: WeekStart;
   liveNow?: boolean;
 }
 
