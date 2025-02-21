@@ -48,7 +48,6 @@ export function makeNewDashboardRequestBody(dashboardName: string, folderUid?: s
       timezone: '',
       title: dashboardName,
       version: 0,
-      weekStart: '',
       uid: '',
     },
     message: '',

@@ -24,9 +24,9 @@ const weekStarts: ComboboxOption[] = [
   { value: 'monday', label: 'Monday' },
 ];
 
-const isWeekStart = (value: string): value is WeekStart => {
+export function isWeekStart(value: string): value is WeekStart {
   return ['saturday', 'sunday', 'monday'].includes(value);
-};
+}
 
 declare global {
   interface Window {

@@ -19,6 +19,7 @@ import {
   ComboboxOption,
   TextLink,
   WeekStart,
+  isWeekStart,
 } from '@grafana/ui';
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 import { t, Trans } from 'app/core/internationalization';
@@ -153,7 +154,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
   };
 
   onWeekStartChanged = (weekStart?: WeekStart) => {
-    this.setState({ weekStart: weekStart });
+    this.setState({ weekStart: weekStart ?? '' });
   };
 
   onHomeDashboardChanged = (dashboardUID: string) => {
@@ -249,7 +250,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
             data-testid={selectors.components.WeekStartPicker.containerV2}
           >
             <WeekStartPicker
-              value={weekStart || ''}
+              value={weekStart && isWeekStart(weekStart) ? weekStart : undefined}
               onChange={this.onWeekStartChanged}
               inputId="shared-preferences-week-start-picker"
             />
