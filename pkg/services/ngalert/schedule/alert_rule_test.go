@@ -353,7 +353,7 @@ func TestRuleRoutine(t *testing.T) {
 				s := states[0]
 				require.Equal(t, rule.UID, s.AlertRuleUID)
 				require.NotNil(t, s.LatestResult)
-				var expectedStatus = evalState
+				expectedStatus := evalState
 				if evalState == eval.Pending {
 					expectedStatus = eval.Alerting
 				}
@@ -601,17 +601,17 @@ func TestRuleRoutine(t *testing.T) {
 		waitForTimeChannel(t, evalAppliedChan)
 
 		// define some state
-		states := make([]*state.State, 0, len(allStates))
+		states := make([]*state.AlertInstance, 0, len(allStates))
 		for _, s := range allStates {
 			for i := 0; i < 2; i++ {
-				states = append(states, &state.State{
-					AlertRuleUID: rule.UID,
-					CacheID:      data.Labels(rule.Labels).Fingerprint(),
-					OrgID:        rule.OrgID,
-					State:        s,
-					StartsAt:     sch.clock.Now(),
-					EndsAt:       sch.clock.Now().Add(time.Duration(rand.Intn(25)+5) * time.Second),
-					Labels:       rule.Labels,
+				states = append(states, &state.AlertInstance{
+					AlertRuleUID:    rule.UID,
+					CacheID:         data.Labels(rule.Labels).Fingerprint(),
+					OrgID:           rule.OrgID,
+					EvaluationState: s,
+					StartsAt:        sch.clock.Now(),
+					EndsAt:          sch.clock.Now().Add(time.Duration(rand.Intn(25)+5) * time.Second),
+					Labels:          rule.Labels,
 				})
 			}
 		}
@@ -620,7 +620,7 @@ func TestRuleRoutine(t *testing.T) {
 		states = sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID)
 		expectedToBeSent := 0
 		for _, s := range states {
-			if s.State == eval.Normal || s.State == eval.Pending {
+			if s.EvaluationState == eval.Normal || s.EvaluationState == eval.Pending {
 				continue
 			}
 			expectedToBeSent++
@@ -858,7 +858,7 @@ func TestRuleRoutine(t *testing.T) {
 		sch, ruleStore, _, _ := createSchedule(evalAppliedChan, sender)
 		sch.stateManager.ResolvedRetention = 4 * time.Second
 		sch.stateManager.ResendDelay = 2 * time.Second
-		sch.stateManager.Put([]*state.State{
+		sch.stateManager.Put([]*state.AlertInstance{
 			stateForRule(rule, sch.clock.Now(), eval.Alerting), // Add existing Alerting state so evals will resolve.
 		})
 
@@ -908,12 +908,12 @@ func ruleFactoryFromScheduler(sch *schedule) ruleFactory {
 	return newRuleFactory(sch.appURL, sch.disableGrafanaFolder, sch.maxAttempts, sch.alertsSender, sch.stateManager, sch.evaluatorFactory, &sch.schedulableAlertRules, sch.clock, sch.rrCfg, sch.metrics, sch.log, sch.tracer, sch.recordingWriter, sch.evalAppliedFunc, sch.stopAppliedFunc)
 }
 
-func stateForRule(rule *models.AlertRule, ts time.Time, evalState eval.State) *state.State {
-	s := &state.State{
+func stateForRule(rule *models.AlertRule, ts time.Time, evalState eval.State) *state.AlertInstance {
+	s := &state.AlertInstance{
 		OrgID:              rule.OrgID,
 		AlertRuleUID:       rule.UID,
 		CacheID:            0,
-		State:              evalState,
+		EvaluationState:    evalState,
 		Annotations:        make(map[string]string),
 		Labels:             make(map[string]string),
 		StartsAt:           ts,

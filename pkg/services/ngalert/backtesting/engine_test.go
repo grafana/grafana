@@ -72,7 +72,8 @@ func TestNewBacktestingEvaluator(t *testing.T) {
 					},
 				},
 				expectedEval: &dataEvaluator{},
-			}, {
+			},
+			{
 				name: "fails if queries contain data and other queries",
 				condition: models.Condition{
 					Condition: refID,
@@ -125,7 +126,8 @@ func TestNewBacktestingEvaluator(t *testing.T) {
 					},
 				},
 				error: true,
-			}, {
+			},
+			{
 				name: "fails if condition refID and data refID does not match",
 				condition: models.Condition{
 					Condition: refID,
@@ -159,12 +161,12 @@ func TestNewBacktestingEvaluator(t *testing.T) {
 
 func TestEvaluatorTest(t *testing.T) {
 	states := []eval.State{eval.Normal, eval.Alerting, eval.Pending}
-	generateState := func(prefix string) *state.State {
+	generateState := func(prefix string) *state.AlertInstance {
 		labels := models.GenerateAlertLabels(rand.Intn(5)+1, prefix+"-")
-		return &state.State{
-			CacheID: labels.Fingerprint(),
-			Labels:  labels,
-			State:   states[rand.Intn(len(states))],
+		return &state.AlertInstance{
+			CacheID:         labels.Fingerprint(),
+			Labels:          labels,
+			EvaluationState: states[rand.Intn(len(states))],
 		}
 	}
 
@@ -204,11 +206,11 @@ func TestEvaluatorTest(t *testing.T) {
 		for _, s := range allStates {
 			labels := models.GenerateAlertLabels(rand.Intn(5)+1, s.String()+"-")
 			states = append(states, state.StateTransition{
-				State: &state.State{
-					CacheID:     labels.Fingerprint(),
-					Labels:      labels,
-					State:       s,
-					StateReason: util.GenerateShortUID(),
+				AlertInstance: &state.AlertInstance{
+					CacheID:         labels.Fingerprint(),
+					Labels:          labels,
+					EvaluationState: s,
+					StateReason:     util.GenerateShortUID(),
 				},
 			})
 		}
@@ -255,12 +257,12 @@ func TestEvaluatorTest(t *testing.T) {
 				require.Equal(t, expectedTime, timestampField.At(i).(time.Time))
 				for _, s := range states {
 					f := fieldByState[s.CacheID]
-					if s.State.State == eval.NoData {
+					if s.AlertInstance.EvaluationState == eval.NoData {
 						require.Nil(t, f.At(i))
 					} else {
 						v := f.At(i).(*string)
 						require.NotNilf(t, v, "Field [%s] value at index %d should not be nil", s.CacheID, i)
-						require.Equal(t, fmt.Sprintf("%s (%s)", s.State.State, s.StateReason), *v)
+						require.Equal(t, fmt.Sprintf("%s (%s)", s.AlertInstance.EvaluationState, s.StateReason), *v)
 					}
 				}
 			}
@@ -274,11 +276,11 @@ func TestEvaluatorTest(t *testing.T) {
 		labels := models.GenerateAlertLabels(rand.Intn(5)+1, "test-")
 		states := []state.StateTransition{
 			{
-				State: &state.State{
-					CacheID:     labels.Fingerprint(),
-					Labels:      labels,
-					State:       eval.Normal,
-					StateReason: util.GenerateShortUID(),
+				AlertInstance: &state.AlertInstance{
+					CacheID:         labels.Fingerprint(),
+					Labels:          labels,
+					EvaluationState: eval.Normal,
+					StateReason:     util.GenerateShortUID(),
 				},
 			},
 		}
@@ -302,13 +304,13 @@ func TestEvaluatorTest(t *testing.T) {
 		from := time.Unix(0, 0)
 
 		state1 := state.StateTransition{
-			State: generateState("1"),
+			AlertInstance: generateState("1"),
 		}
 		state2 := state.StateTransition{
-			State: generateState("2"),
+			AlertInstance: generateState("2"),
 		}
 		state3 := state.StateTransition{
-			State: generateState("3"),
+			AlertInstance: generateState("3"),
 		}
 		stateByTime := map[time.Time][]state.StateTransition{
 			from:                       {state1, state2},
@@ -390,7 +392,7 @@ func (f *fakeStateManager) ProcessEvalResults(_ context.Context, evaluatedAt tim
 	return f.stateCallback(evaluatedAt)
 }
 
-func (f *fakeStateManager) GetStatesForRuleUID(orgID int64, alertRuleUID string) []*state.State {
+func (f *fakeStateManager) GetStatesForRuleUID(orgID int64, alertRuleUID string) []*state.AlertInstance {
 	return nil
 }
 

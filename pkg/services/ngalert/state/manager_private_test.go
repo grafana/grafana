@@ -223,7 +223,7 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 		"system + rule + datasource-error": data.Labels{}.Fingerprint(),
 	}
 
-	patchState := func(r *ngmodels.AlertRule, s *State) {
+	patchState := func(r *ngmodels.AlertRule, s *AlertInstance) {
 		// patch all optional fields of the expected state
 		setCacheID(s)
 		if s.AlertRuleUID == "" {
@@ -299,7 +299,7 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 			}
 			expectedTransitionsMap := make(map[data.Fingerprint]StateTransition, len(expectedTransitions))
 			for i := range expectedTransitions {
-				patchState(alertRule, expectedTransitions[i].State)
+				patchState(alertRule, expectedTransitions[i].AlertInstance)
 				expectedTransitionsMap[expectedTransitions[i].CacheID] = expectedTransitions[i]
 			}
 
@@ -345,9 +345,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 				t1: {
 					{
 						PreviousState: eval.Normal,
-						State: &State{
+						AlertInstance: &AlertInstance{
 							Labels:             labels["system + rule + labels1"],
-							State:              eval.Normal,
+							EvaluationState:    eval.Normal,
 							LatestResult:       newEvaluation(t1, eval.Normal),
 							StartsAt:           t1,
 							EndsAt:             t1,
@@ -356,9 +356,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 					},
 					{
 						PreviousState: eval.Normal,
-						State: &State{
+						AlertInstance: &AlertInstance{
 							Labels:             labels["system + rule + labels2"],
-							State:              eval.Normal,
+							EvaluationState:    eval.Normal,
 							LatestResult:       newEvaluation(t1, eval.Normal),
 							StartsAt:           t1,
 							EndsAt:             t1,
@@ -381,9 +381,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 				t1: {
 					{
 						PreviousState: eval.Normal,
-						State: &State{
+						AlertInstance: &AlertInstance{
 							Labels:             labels["system + rule + labels1"],
-							State:              eval.Alerting,
+							EvaluationState:    eval.Alerting,
 							LatestResult:       newEvaluation(t1, eval.Alerting),
 							StartsAt:           t1,
 							EndsAt:             t1.Add(ResendDelay * 4),
@@ -393,9 +393,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 					},
 					{
 						PreviousState: eval.Normal,
-						State: &State{
+						AlertInstance: &AlertInstance{
 							Labels:             labels["system + rule + labels2"],
-							State:              eval.Normal,
+							EvaluationState:    eval.Normal,
 							LatestResult:       newEvaluation(t1, eval.Normal),
 							StartsAt:           t1,
 							EndsAt:             t1,
@@ -418,9 +418,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 				t1: {
 					{
 						PreviousState: eval.Normal,
-						State: &State{
+						AlertInstance: &AlertInstance{
 							Labels:             labels["system + rule + labels1"],
-							State:              eval.Pending,
+							EvaluationState:    eval.Pending,
 							LatestResult:       newEvaluation(t1, eval.Alerting),
 							StartsAt:           t1,
 							EndsAt:             t1.Add(ResendDelay * 4),
@@ -429,9 +429,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 					},
 					{
 						PreviousState: eval.Normal,
-						State: &State{
+						AlertInstance: &AlertInstance{
 							Labels:             labels["system + rule + labels2"],
-							State:              eval.Normal,
+							EvaluationState:    eval.Normal,
 							LatestResult:       newEvaluation(t1, eval.Normal),
 							StartsAt:           t1,
 							EndsAt:             t1,
@@ -458,9 +458,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 				t2: {
 					{
 						PreviousState: eval.Normal,
-						State: &State{
+						AlertInstance: &AlertInstance{
 							Labels:             labels["system + rule + labels1"],
-							State:              eval.Alerting,
+							EvaluationState:    eval.Alerting,
 							LatestResult:       newEvaluation(t2, eval.Alerting),
 							StartsAt:           t2,
 							EndsAt:             t2.Add(ResendDelay * 4),
@@ -470,9 +470,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 					},
 					{
 						PreviousState: eval.Normal,
-						State: &State{
+						AlertInstance: &AlertInstance{
 							Labels:             labels["system + rule + labels2"],
-							State:              eval.Normal,
+							EvaluationState:    eval.Normal,
 							LatestResult:       newEvaluation(t2, eval.Normal),
 							StartsAt:           t1,
 							EndsAt:             t1,
@@ -500,9 +500,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 				t1: {
 					{
 						PreviousState: eval.Normal,
-						State: &State{
+						AlertInstance: &AlertInstance{
 							Labels:             labels["system + rule + labels1"],
-							State:              eval.Pending,
+							EvaluationState:    eval.Pending,
 							LatestResult:       newEvaluation(t1, eval.Alerting),
 							StartsAt:           t1,
 							EndsAt:             t1.Add(ResendDelay * 4),
@@ -513,9 +513,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 				t2: {
 					{
 						PreviousState: eval.Pending,
-						State: &State{
+						AlertInstance: &AlertInstance{
 							Labels:             labels["system + rule + labels1"],
-							State:              eval.Pending,
+							EvaluationState:    eval.Pending,
 							LatestResult:       newEvaluation(t2, eval.Alerting),
 							StartsAt:           t1,
 							EndsAt:             t1.Add(ResendDelay * 4), // TODO probably it should be t1 (semantic of Normal)?
@@ -526,9 +526,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 				t3: {
 					{
 						PreviousState: eval.Pending,
-						State: &State{
+						AlertInstance: &AlertInstance{
 							Labels:             labels["system + rule + labels1"],
-							State:              eval.Alerting,
+							EvaluationState:    eval.Alerting,
 							LatestResult:       newEvaluation(t3, eval.Alerting),
 							StartsAt:           t3,
 							EndsAt:             t3.Add(ResendDelay * 4),
@@ -554,9 +554,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 				t2: {
 					{
 						PreviousState: eval.Pending,
-						State: &State{
+						AlertInstance: &AlertInstance{
 							Labels:             labels["system + rule + labels1"],
-							State:              eval.Normal,
+							EvaluationState:    eval.Normal,
 							LatestResult:       newEvaluation(t2, eval.Normal),
 							StartsAt:           t2,
 							EndsAt:             t2,
@@ -578,19 +578,20 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 				},
 			},
 			expectedTransitions: map[time.Time][]StateTransition{
-				t2: {{
-					PreviousState: eval.Alerting,
-					State: &State{
-						Labels:             labels["system + rule + labels1"],
-						State:              eval.Normal,
-						LatestResult:       newEvaluation(t2, eval.Normal),
-						StartsAt:           t2,
-						EndsAt:             t2,
-						LastEvaluationTime: t2,
-						ResolvedAt:         &t2,
-						LastSentAt:         &t2,
+				t2: {
+					{
+						PreviousState: eval.Alerting,
+						AlertInstance: &AlertInstance{
+							Labels:             labels["system + rule + labels1"],
+							EvaluationState:    eval.Normal,
+							LatestResult:       newEvaluation(t2, eval.Normal),
+							StartsAt:           t2,
+							EndsAt:             t2,
+							LastEvaluationTime: t2,
+							ResolvedAt:         &t2,
+							LastSentAt:         &t2,
+						},
 					},
-				},
 				},
 			},
 		},
@@ -614,9 +615,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 				t2: {
 					{
 						PreviousState: eval.Normal,
-						State: &State{
+						AlertInstance: &AlertInstance{
 							Labels:             labels["system + rule + labels3"],
-							State:              eval.Normal,
+							EvaluationState:    eval.Normal,
 							LatestResult:       newEvaluation(t2, eval.Normal),
 							StartsAt:           t1,
 							EndsAt:             t1,
@@ -627,9 +628,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 				t3: {
 					{
 						PreviousState: eval.Normal,
-						State: &State{
+						AlertInstance: &AlertInstance{
 							Labels:             labels["system + rule + labels1"],
-							State:              eval.Normal,
+							EvaluationState:    eval.Normal,
 							StateReason:        ngmodels.StateReasonMissingSeries,
 							LatestResult:       newEvaluation(t1, eval.Normal),
 							StartsAt:           t1,
@@ -639,9 +640,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 					},
 					{
 						PreviousState: eval.Alerting,
-						State: &State{
+						AlertInstance: &AlertInstance{
 							Labels:             labels["system + rule + labels2"],
-							State:              eval.Normal,
+							EvaluationState:    eval.Normal,
 							StateReason:        ngmodels.StateReasonMissingSeries,
 							LatestResult:       newEvaluation(t1, eval.Alerting),
 							StartsAt:           t1,
@@ -653,9 +654,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 					},
 					{
 						PreviousState: eval.Normal,
-						State: &State{
+						AlertInstance: &AlertInstance{
 							Labels:             labels["system + rule + labels3"],
-							State:              eval.Normal,
+							EvaluationState:    eval.Normal,
 							LatestResult:       newEvaluation(t3, eval.Normal),
 							StartsAt:           t1,
 							EndsAt:             t1,
@@ -677,9 +678,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 				t1: {
 					{
 						PreviousState: eval.Normal,
-						State: &State{
+						AlertInstance: &AlertInstance{
 							Labels:             labels["system + rule"],
-							State:              eval.Normal,
+							EvaluationState:    eval.Normal,
 							LatestResult:       newEvaluation(t1, eval.Normal),
 							StartsAt:           t1,
 							EndsAt:             t1,
@@ -701,9 +702,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 				t1: {
 					{
 						PreviousState: eval.Normal,
-						State: &State{
+						AlertInstance: &AlertInstance{
 							Labels:             labels["system + rule"],
-							State:              eval.Alerting,
+							EvaluationState:    eval.Alerting,
 							LatestResult:       newEvaluation(t1, eval.Alerting),
 							StartsAt:           t1,
 							EndsAt:             t1.Add(ResendDelay * 4),
@@ -726,9 +727,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 				t1: {
 					{
 						PreviousState: eval.Normal,
-						State: &State{
+						AlertInstance: &AlertInstance{
 							Labels:             labels["system + rule"],
-							State:              eval.Pending,
+							EvaluationState:    eval.Pending,
 							LatestResult:       newEvaluation(t1, eval.Alerting),
 							StartsAt:           t1,
 							EndsAt:             t1.Add(ResendDelay * 4),
@@ -753,9 +754,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 				t2: {
 					{
 						PreviousState: eval.Normal,
-						State: &State{
+						AlertInstance: &AlertInstance{
 							Labels:             labels["system + rule"],
-							State:              eval.Alerting,
+							EvaluationState:    eval.Alerting,
 							LatestResult:       newEvaluation(t2, eval.Alerting),
 							StartsAt:           t2,
 							EndsAt:             t2.Add(ResendDelay * 4),
@@ -840,9 +841,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t1: {
 							{
 								PreviousState: eval.Normal,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + no-data"],
-									State:              eval.NoData,
+									EvaluationState:    eval.NoData,
 									LatestResult:       newEvaluation(t1, eval.NoData),
 									StartsAt:           t1,
 									EndsAt:             t1.Add(ResendDelay * 4),
@@ -856,9 +857,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t1: {
 							{
 								PreviousState: eval.Normal,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + no-data"],
-									State:              eval.Alerting,
+									EvaluationState:    eval.Alerting,
 									StateReason:        eval.NoData.String(),
 									LatestResult:       newEvaluation(t1, eval.NoData),
 									StartsAt:           t1,
@@ -873,9 +874,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t1: {
 							{
 								PreviousState: eval.Normal,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + no-data"],
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									StateReason:        eval.NoData.String(),
 									LatestResult:       newEvaluation(t1, eval.NoData),
 									StartsAt:           t1,
@@ -889,9 +890,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t1: {
 							{
 								PreviousState: eval.Normal,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + no-data"],
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									StateReason:        ngmodels.ConcatReasons(eval.NoData.String(), ngmodels.StateReasonKeepLast),
 									LatestResult:       newEvaluation(t1, eval.NoData),
 									StartsAt:           t1,
@@ -922,9 +923,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t2: {
 							{
 								PreviousState: eval.Normal,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + no-data"],
-									State:              eval.NoData,
+									EvaluationState:    eval.NoData,
 									LatestResult:       newEvaluation(t2, eval.NoData),
 									StartsAt:           t2,
 									EndsAt:             t2.Add(ResendDelay * 4),
@@ -939,9 +940,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t2: {
 							{
 								PreviousState: eval.Normal,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + no-data"],
-									State:              eval.Alerting,
+									EvaluationState:    eval.Alerting,
 									StateReason:        eval.NoData.String(),
 									LatestResult:       newEvaluationWithValues(t2, eval.NoData, map[string]float64{}),
 									StartsAt:           t2,
@@ -957,9 +958,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t2: {
 							{
 								PreviousState: eval.Normal,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + no-data"],
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									StateReason:        eval.NoData.String(),
 									LatestResult:       newEvaluationWithValues(t2, eval.NoData, map[string]float64{}),
 									StartsAt:           t2,
@@ -974,9 +975,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t2: {
 							{
 								PreviousState: eval.Normal,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + no-data"],
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									StateReason:        ngmodels.ConcatReasons(eval.NoData.String(), ngmodels.StateReasonKeepLast),
 									LatestResult:       newEvaluation(t2, eval.NoData),
 									StartsAt:           t2,
@@ -992,10 +993,10 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t2: {
 							{
 								PreviousState: eval.Normal,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + labels1"],
 									Annotations:        mergeLabels(baseRule.Annotations, noDataAnnotations),
-									State:              eval.Alerting,
+									EvaluationState:    eval.Alerting,
 									StateReason:        eval.NoData.String(),
 									LatestResult:       newEvaluationWithValues(t2, eval.NoData, map[string]float64{"A": float64(-1)}),
 									StartsAt:           t2,
@@ -1011,10 +1012,10 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t2: {
 							{
 								PreviousState: eval.Normal,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + labels1"],
 									Annotations:        mergeLabels(baseRule.Annotations, noDataAnnotations),
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									StateReason:        eval.NoData.String(),
 									LatestResult:       newEvaluationWithValues(t2, eval.NoData, map[string]float64{"A": float64(-1)}),
 									StartsAt:           t1,
@@ -1029,10 +1030,10 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t2: {
 							{
 								PreviousState: eval.Normal,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + labels1"],
 									Annotations:        mergeLabels(baseRule.Annotations, noDataAnnotations),
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									StateReason:        ngmodels.ConcatReasons(eval.NoData.String(), ngmodels.StateReasonKeepLast),
 									LatestResult:       newEvaluationWithValues(t2, eval.NoData, map[string]float64{"A": float64(-1)}),
 									StartsAt:           t1,
@@ -1064,9 +1065,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t2: {
 							{
 								PreviousState: eval.Normal,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + no-data"],
-									State:              eval.NoData,
+									EvaluationState:    eval.NoData,
 									LatestResult:       newEvaluation(t2, eval.NoData),
 									StartsAt:           t2,
 									EndsAt:             t2.Add(ResendDelay * 4),
@@ -1078,9 +1079,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t3: {
 							{
 								PreviousState: eval.Normal,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + labels1"],
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									StateReason:        ngmodels.StateReasonMissingSeries,
 									LatestResult:       newEvaluation(t1, eval.Normal),
 									StartsAt:           t1,
@@ -1090,9 +1091,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							},
 							{
 								PreviousState: eval.Alerting,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + labels2"],
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									StateReason:        ngmodels.StateReasonMissingSeries,
 									LatestResult:       newEvaluation(t1, eval.Alerting),
 									StartsAt:           t1,
@@ -1104,9 +1105,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							},
 							{
 								PreviousState: eval.NoData,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + no-data"],
-									State:              eval.NoData,
+									EvaluationState:    eval.NoData,
 									LatestResult:       newEvaluation(t3, eval.NoData),
 									StartsAt:           t2,
 									EndsAt:             t3.Add(ResendDelay * 4),
@@ -1120,9 +1121,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t3: {
 							{
 								PreviousState: eval.Normal,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + labels1"],
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									StateReason:        ngmodels.StateReasonMissingSeries,
 									LatestResult:       newEvaluation(t1, eval.Normal),
 									StartsAt:           t1,
@@ -1132,9 +1133,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							},
 							{
 								PreviousState: eval.Alerting,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + labels2"],
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									StateReason:        ngmodels.StateReasonMissingSeries,
 									LatestResult:       newEvaluation(t1, eval.Alerting),
 									StartsAt:           t1,
@@ -1147,9 +1148,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							{
 								PreviousState:       eval.Alerting,
 								PreviousStateReason: eval.NoData.String(),
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + no-data"],
-									State:              eval.Alerting,
+									EvaluationState:    eval.Alerting,
 									StateReason:        eval.NoData.String(),
 									LatestResult:       newEvaluation(t3, eval.NoData),
 									StartsAt:           t2,
@@ -1164,9 +1165,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t3: {
 							{
 								PreviousState: eval.Normal,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + labels1"],
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									StateReason:        ngmodels.StateReasonMissingSeries,
 									LatestResult:       newEvaluation(t1, eval.Normal),
 									StartsAt:           t1,
@@ -1176,9 +1177,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							},
 							{
 								PreviousState: eval.Alerting,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + labels2"],
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									StateReason:        ngmodels.StateReasonMissingSeries,
 									LatestResult:       newEvaluation(t1, eval.Alerting),
 									StartsAt:           t1,
@@ -1191,9 +1192,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							{
 								PreviousState:       eval.Normal,
 								PreviousStateReason: eval.NoData.String(),
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + no-data"],
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									StateReason:        eval.NoData.String(),
 									LatestResult:       newEvaluation(t3, eval.NoData),
 									StartsAt:           t2,
@@ -1207,9 +1208,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t3: {
 							{
 								PreviousState: eval.Normal,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + labels1"],
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									StateReason:        ngmodels.StateReasonMissingSeries,
 									LatestResult:       newEvaluation(t1, eval.Normal),
 									StartsAt:           t1,
@@ -1219,9 +1220,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							},
 							{
 								PreviousState: eval.Alerting,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + labels2"],
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									StateReason:        ngmodels.StateReasonMissingSeries,
 									LatestResult:       newEvaluation(t1, eval.Alerting),
 									StartsAt:           t1,
@@ -1234,9 +1235,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							{
 								PreviousState:       eval.Normal,
 								PreviousStateReason: ngmodels.ConcatReasons(eval.NoData.String(), ngmodels.StateReasonKeepLast),
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + no-data"],
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									StateReason:        ngmodels.ConcatReasons(eval.NoData.String(), ngmodels.StateReasonKeepLast),
 									LatestResult:       newEvaluation(t3, eval.NoData),
 									StartsAt:           t2,
@@ -1252,10 +1253,10 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t2: {
 							{
 								PreviousState: eval.Normal,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + labels1"],
 									Annotations:        mergeLabels(baseRule.Annotations, noDataAnnotations),
-									State:              eval.Alerting,
+									EvaluationState:    eval.Alerting,
 									StateReason:        eval.NoData.String(),
 									LatestResult:       newEvaluation(t2, eval.NoData),
 									StartsAt:           t2,
@@ -1266,10 +1267,10 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							},
 							{
 								PreviousState: eval.Alerting,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + labels2"],
 									Annotations:        mergeLabels(baseRule.Annotations, noDataAnnotations),
-									State:              eval.Alerting,
+									EvaluationState:    eval.Alerting,
 									StateReason:        eval.NoData.String(),
 									LatestResult:       newEvaluation(t2, eval.NoData),
 									StartsAt:           t1,
@@ -1283,9 +1284,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							{
 								PreviousState:       eval.Alerting,
 								PreviousStateReason: eval.NoData.String(),
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + labels1"],
-									State:              eval.Alerting,
+									EvaluationState:    eval.Alerting,
 									Annotations:        mergeLabels(baseRule.Annotations, noDataAnnotations),
 									StateReason:        eval.NoData.String(),
 									LatestResult:       newEvaluation(t3, eval.NoData),
@@ -1298,9 +1299,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							{
 								PreviousState:       eval.Alerting,
 								PreviousStateReason: eval.NoData.String(),
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + labels2"],
-									State:              eval.Alerting,
+									EvaluationState:    eval.Alerting,
 									Annotations:        mergeLabels(baseRule.Annotations, noDataAnnotations),
 									StateReason:        eval.NoData.String(),
 									LatestResult:       newEvaluation(t3, eval.NoData),
@@ -1316,10 +1317,10 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t2: {
 							{
 								PreviousState: eval.Normal,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + labels1"],
 									Annotations:        mergeLabels(baseRule.Annotations, noDataAnnotations),
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									StateReason:        eval.NoData.String(),
 									LatestResult:       newEvaluation(t2, eval.NoData),
 									StartsAt:           t1,
@@ -1329,10 +1330,10 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							},
 							{
 								PreviousState: eval.Alerting,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + labels2"],
 									Annotations:        mergeLabels(baseRule.Annotations, noDataAnnotations),
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									StateReason:        eval.NoData.String(),
 									LatestResult:       newEvaluation(t2, eval.NoData),
 									StartsAt:           t2,
@@ -1347,10 +1348,10 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							{
 								PreviousState:       eval.Normal,
 								PreviousStateReason: eval.NoData.String(),
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + labels1"],
 									Annotations:        mergeLabels(baseRule.Annotations, noDataAnnotations),
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									StateReason:        eval.NoData.String(),
 									LatestResult:       newEvaluation(t3, eval.NoData),
 									StartsAt:           t1,
@@ -1361,10 +1362,10 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							{
 								PreviousState:       eval.Normal,
 								PreviousStateReason: eval.NoData.String(),
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + labels2"],
 									Annotations:        mergeLabels(baseRule.Annotations, noDataAnnotations),
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									StateReason:        eval.NoData.String(),
 									LatestResult:       newEvaluation(t3, eval.NoData),
 									StartsAt:           t2,
@@ -1380,10 +1381,10 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t2: {
 							{
 								PreviousState: eval.Normal,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + labels1"],
 									Annotations:        mergeLabels(baseRule.Annotations, noDataAnnotations),
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									StateReason:        ngmodels.ConcatReasons(eval.NoData.String(), ngmodels.StateReasonKeepLast),
 									LatestResult:       newEvaluation(t2, eval.NoData),
 									StartsAt:           t1,
@@ -1393,10 +1394,10 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							},
 							{
 								PreviousState: eval.Alerting,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + labels2"],
 									Annotations:        mergeLabels(baseRule.Annotations, noDataAnnotations),
-									State:              eval.Alerting,
+									EvaluationState:    eval.Alerting,
 									StateReason:        ngmodels.ConcatReasons(eval.NoData.String(), ngmodels.StateReasonKeepLast),
 									LatestResult:       newEvaluation(t2, eval.NoData),
 									StartsAt:           t1,
@@ -1410,10 +1411,10 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							{
 								PreviousState:       eval.Normal,
 								PreviousStateReason: ngmodels.ConcatReasons(eval.NoData.String(), ngmodels.StateReasonKeepLast),
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + labels1"],
 									Annotations:        mergeLabels(baseRule.Annotations, noDataAnnotations),
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									StateReason:        ngmodels.ConcatReasons(eval.NoData.String(), ngmodels.StateReasonKeepLast),
 									LatestResult:       newEvaluation(t3, eval.NoData),
 									StartsAt:           t1,
@@ -1424,10 +1425,10 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							{
 								PreviousState:       eval.Alerting,
 								PreviousStateReason: ngmodels.ConcatReasons(eval.NoData.String(), ngmodels.StateReasonKeepLast),
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + labels2"],
 									Annotations:        mergeLabels(baseRule.Annotations, noDataAnnotations),
-									State:              eval.Alerting,
+									EvaluationState:    eval.Alerting,
 									StateReason:        ngmodels.ConcatReasons(eval.NoData.String(), ngmodels.StateReasonKeepLast),
 									LatestResult:       newEvaluation(t3, eval.NoData),
 									StartsAt:           t1,
@@ -1460,9 +1461,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t2: {
 							{
 								PreviousState: eval.Normal,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + no-data"],
-									State:              eval.NoData,
+									EvaluationState:    eval.NoData,
 									LatestResult:       newEvaluation(t2, eval.NoData),
 									StartsAt:           t2,
 									EndsAt:             t2.Add(ResendDelay * 4),
@@ -1474,9 +1475,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t3: {
 							{
 								PreviousState: eval.Normal,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + labels1"],
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									StateReason:        ngmodels.StateReasonMissingSeries,
 									LatestResult:       newEvaluation(t1, eval.Normal),
 									StartsAt:           t1,
@@ -1486,9 +1487,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							},
 							{
 								PreviousState: eval.Pending,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + labels2"],
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									StateReason:        ngmodels.StateReasonMissingSeries,
 									LatestResult:       newEvaluation(t1, eval.Alerting),
 									StartsAt:           t1,
@@ -1498,9 +1499,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							},
 							{
 								PreviousState: eval.NoData,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + no-data"],
-									State:              eval.NoData,
+									EvaluationState:    eval.NoData,
 									LatestResult:       newEvaluation(t3, eval.NoData),
 									StartsAt:           t2,
 									EndsAt:             t3.Add(ResendDelay * 4),
@@ -1514,9 +1515,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t2: {
 							{
 								PreviousState: eval.Normal,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + no-data"],
-									State:              eval.Pending,
+									EvaluationState:    eval.Pending,
 									StateReason:        eval.NoData.String(),
 									LatestResult:       newEvaluation(t2, eval.NoData),
 									StartsAt:           t2,
@@ -1528,9 +1529,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t3: {
 							{
 								PreviousState: eval.Normal,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + labels1"],
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									StateReason:        ngmodels.StateReasonMissingSeries,
 									LatestResult:       newEvaluation(t1, eval.Normal),
 									StartsAt:           t1,
@@ -1540,9 +1541,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							},
 							{
 								PreviousState: eval.Pending,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + labels2"],
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									StateReason:        ngmodels.StateReasonMissingSeries,
 									LatestResult:       newEvaluation(t1, eval.Alerting),
 									StartsAt:           t1,
@@ -1553,9 +1554,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							{
 								PreviousState:       eval.Pending,
 								PreviousStateReason: eval.NoData.String(),
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + no-data"],
-									State:              eval.Alerting,
+									EvaluationState:    eval.Alerting,
 									StateReason:        eval.NoData.String(),
 									LatestResult:       newEvaluation(t3, eval.NoData),
 									StartsAt:           t3,
@@ -1570,9 +1571,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t3: {
 							{
 								PreviousState: eval.Normal,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + labels1"],
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									StateReason:        ngmodels.StateReasonMissingSeries,
 									LatestResult:       newEvaluation(t1, eval.Normal),
 									StartsAt:           t1,
@@ -1582,9 +1583,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							},
 							{
 								PreviousState: eval.Pending,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + labels2"],
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									StateReason:        ngmodels.StateReasonMissingSeries,
 									LatestResult:       newEvaluation(t1, eval.Alerting),
 									StartsAt:           t1,
@@ -1595,9 +1596,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							{
 								PreviousState:       eval.Normal,
 								PreviousStateReason: eval.NoData.String(),
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + no-data"],
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									StateReason:        eval.NoData.String(),
 									LatestResult:       newEvaluation(t3, eval.NoData),
 									StartsAt:           t2,
@@ -1611,9 +1612,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t3: {
 							{
 								PreviousState: eval.Normal,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + labels1"],
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									StateReason:        ngmodels.StateReasonMissingSeries,
 									LatestResult:       newEvaluation(t1, eval.Normal),
 									StartsAt:           t1,
@@ -1623,9 +1624,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							},
 							{
 								PreviousState: eval.Pending,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + labels2"],
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									StateReason:        ngmodels.StateReasonMissingSeries,
 									LatestResult:       newEvaluation(t1, eval.Alerting),
 									StartsAt:           t1,
@@ -1636,9 +1637,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							{
 								PreviousState:       eval.Normal,
 								PreviousStateReason: ngmodels.ConcatReasons(eval.NoData.String(), ngmodels.StateReasonKeepLast),
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + no-data"],
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									StateReason:        ngmodels.ConcatReasons(eval.NoData.String(), ngmodels.StateReasonKeepLast),
 									LatestResult:       newEvaluation(t3, eval.NoData),
 									StartsAt:           t2,
@@ -1654,10 +1655,10 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t2: {
 							{
 								PreviousState: eval.Normal,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + labels1"],
 									Annotations:        mergeLabels(baseRule.Annotations, noDataAnnotations),
-									State:              eval.Pending,
+									EvaluationState:    eval.Pending,
 									StateReason:        eval.NoData.String(),
 									LatestResult:       newEvaluation(t2, eval.NoData),
 									StartsAt:           t2,
@@ -1667,10 +1668,10 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							},
 							{
 								PreviousState: eval.Pending,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + labels2"],
 									Annotations:        mergeLabels(baseRule.Annotations, noDataAnnotations),
-									State:              eval.Alerting,
+									EvaluationState:    eval.Alerting,
 									StateReason:        eval.NoData.String(),
 									LatestResult:       newEvaluation(t2, eval.NoData),
 									StartsAt:           t2,
@@ -1684,10 +1685,10 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							{
 								PreviousState:       eval.Pending,
 								PreviousStateReason: eval.NoData.String(),
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + labels1"],
 									Annotations:        mergeLabels(baseRule.Annotations, noDataAnnotations),
-									State:              eval.Alerting,
+									EvaluationState:    eval.Alerting,
 									StateReason:        eval.NoData.String(),
 									LatestResult:       newEvaluation(t3, eval.NoData),
 									StartsAt:           t3,
@@ -1699,10 +1700,10 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							{
 								PreviousState:       eval.Alerting,
 								PreviousStateReason: eval.NoData.String(),
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + labels2"],
 									Annotations:        mergeLabels(baseRule.Annotations, noDataAnnotations),
-									State:              eval.Alerting,
+									EvaluationState:    eval.Alerting,
 									StateReason:        eval.NoData.String(),
 									LatestResult:       newEvaluation(t3, eval.NoData),
 									StartsAt:           t2,
@@ -1717,10 +1718,10 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t2: {
 							{
 								PreviousState: eval.Normal,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + labels1"],
 									Annotations:        mergeLabels(baseRule.Annotations, noDataAnnotations),
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									StateReason:        eval.NoData.String(),
 									LatestResult:       newEvaluation(t2, eval.NoData),
 									StartsAt:           t1,
@@ -1730,10 +1731,10 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							},
 							{
 								PreviousState: eval.Pending,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + labels2"],
 									Annotations:        mergeLabels(baseRule.Annotations, noDataAnnotations),
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									StateReason:        eval.NoData.String(),
 									LatestResult:       newEvaluation(t2, eval.NoData),
 									StartsAt:           t2,
@@ -1746,10 +1747,10 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							{
 								PreviousState:       eval.Normal,
 								PreviousStateReason: eval.NoData.String(),
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + labels1"],
 									Annotations:        mergeLabels(baseRule.Annotations, noDataAnnotations),
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									StateReason:        eval.NoData.String(),
 									LatestResult:       newEvaluation(t3, eval.NoData),
 									StartsAt:           t1,
@@ -1760,10 +1761,10 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							{
 								PreviousState:       eval.Normal,
 								PreviousStateReason: eval.NoData.String(),
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + labels2"],
 									Annotations:        mergeLabels(baseRule.Annotations, noDataAnnotations),
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									StateReason:        eval.NoData.String(),
 									LatestResult:       newEvaluation(t3, eval.NoData),
 									StartsAt:           t2,
@@ -1777,10 +1778,10 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t2: {
 							{
 								PreviousState: eval.Normal,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + labels1"],
 									Annotations:        mergeLabels(baseRule.Annotations, noDataAnnotations),
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									StateReason:        ngmodels.ConcatReasons(eval.NoData.String(), ngmodels.StateReasonKeepLast),
 									LatestResult:       newEvaluation(t2, eval.NoData),
 									StartsAt:           t1,
@@ -1790,10 +1791,10 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							},
 							{
 								PreviousState: eval.Pending,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + labels2"],
 									Annotations:        mergeLabels(baseRule.Annotations, noDataAnnotations),
-									State:              eval.Alerting,
+									EvaluationState:    eval.Alerting,
 									StateReason:        ngmodels.ConcatReasons(eval.NoData.String(), ngmodels.StateReasonKeepLast),
 									LatestResult:       newEvaluation(t2, eval.NoData),
 									StartsAt:           t2,
@@ -1807,10 +1808,10 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							{
 								PreviousState:       eval.Normal,
 								PreviousStateReason: ngmodels.ConcatReasons(eval.NoData.String(), ngmodels.StateReasonKeepLast),
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + labels1"],
 									Annotations:        mergeLabels(baseRule.Annotations, noDataAnnotations),
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									StateReason:        ngmodels.ConcatReasons(eval.NoData.String(), ngmodels.StateReasonKeepLast),
 									LatestResult:       newEvaluation(t3, eval.NoData),
 									StartsAt:           t1,
@@ -1821,10 +1822,10 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							{
 								PreviousState:       eval.Alerting,
 								PreviousStateReason: ngmodels.ConcatReasons(eval.NoData.String(), ngmodels.StateReasonKeepLast),
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + labels2"],
 									Annotations:        mergeLabels(baseRule.Annotations, noDataAnnotations),
-									State:              eval.Alerting,
+									EvaluationState:    eval.Alerting,
 									StateReason:        ngmodels.ConcatReasons(eval.NoData.String(), ngmodels.StateReasonKeepLast),
 									LatestResult:       newEvaluation(t3, eval.NoData),
 									StartsAt:           t2,
@@ -1856,9 +1857,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t3: {
 							{
 								PreviousState: eval.Pending,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + labels1"],
-									State:              eval.Alerting,
+									EvaluationState:    eval.Alerting,
 									LatestResult:       newEvaluation(t3, eval.Alerting),
 									StartsAt:           t3,
 									EndsAt:             t3.Add(ResendDelay * 4),
@@ -1872,9 +1873,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t3: {
 							{
 								PreviousState: eval.Pending,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + labels1"],
-									State:              eval.Alerting,
+									EvaluationState:    eval.Alerting,
 									LatestResult:       newEvaluation(t3, eval.Alerting),
 									StartsAt:           t3,
 									EndsAt:             t3.Add(ResendDelay * 4),
@@ -1888,9 +1889,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t3: {
 							{
 								PreviousState: eval.Pending,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + labels1"],
-									State:              eval.Alerting,
+									EvaluationState:    eval.Alerting,
 									LatestResult:       newEvaluation(t3, eval.Alerting),
 									StartsAt:           t3,
 									EndsAt:             t3.Add(ResendDelay * 4),
@@ -1904,9 +1905,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t3: {
 							{
 								PreviousState: eval.Pending,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + labels1"],
-									State:              eval.Alerting,
+									EvaluationState:    eval.Alerting,
 									LatestResult:       newEvaluation(t3, eval.Alerting),
 									StartsAt:           t3,
 									EndsAt:             t3.Add(ResendDelay * 4),
@@ -1923,9 +1924,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							{
 								PreviousState:       eval.Pending,
 								PreviousStateReason: eval.NoData.String(),
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + labels1"],
-									State:              eval.Alerting,
+									EvaluationState:    eval.Alerting,
 									LatestResult:       newEvaluation(t3, eval.Alerting),
 									StartsAt:           t3,
 									EndsAt:             t3.Add(ResendDelay * 4),
@@ -1940,9 +1941,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							{
 								PreviousState:       eval.Normal,
 								PreviousStateReason: eval.NoData.String(),
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + labels1"],
-									State:              eval.Pending,
+									EvaluationState:    eval.Pending,
 									LatestResult:       newEvaluation(t3, eval.Alerting),
 									StartsAt:           t3,
 									EndsAt:             t3.Add(ResendDelay * 4),
@@ -1956,9 +1957,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							{
 								PreviousState:       eval.Pending,
 								PreviousStateReason: ngmodels.ConcatReasons(eval.NoData.String(), ngmodels.StateReasonKeepLast),
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + labels1"],
-									State:              eval.Alerting,
+									EvaluationState:    eval.Alerting,
 									LatestResult:       newEvaluation(t3, eval.Alerting),
 									StartsAt:           t3,
 									EndsAt:             t3.Add(ResendDelay * 4),
@@ -1988,9 +1989,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t3: {
 							{
 								PreviousState: eval.Normal,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + labels1"],
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									LatestResult:       newEvaluation(t3, eval.Normal),
 									StartsAt:           t2,
 									EndsAt:             t2,
@@ -1999,9 +2000,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							},
 							{
 								PreviousState: eval.NoData,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + no-data"],
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									StateReason:        ngmodels.StateReasonMissingSeries,
 									LatestResult:       newEvaluation(t1, eval.NoData),
 									StartsAt:           t1,
@@ -2016,9 +2017,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t3: {
 							{
 								PreviousState: eval.Normal,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + labels1"],
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									LatestResult:       newEvaluation(t3, eval.Normal),
 									StartsAt:           t2,
 									EndsAt:             t2,
@@ -2028,9 +2029,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							{
 								PreviousState:       eval.Alerting,
 								PreviousStateReason: eval.NoData.String(),
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + no-data"],
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									StateReason:        ngmodels.StateReasonMissingSeries,
 									LatestResult:       newEvaluation(t1, eval.NoData),
 									StartsAt:           t1,
@@ -2046,9 +2047,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t3: {
 							{
 								PreviousState: eval.Normal,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + labels1"],
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									LatestResult:       newEvaluation(t3, eval.Normal),
 									StartsAt:           t2,
 									EndsAt:             t2,
@@ -2058,9 +2059,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							{
 								PreviousState:       eval.Normal,
 								PreviousStateReason: eval.NoData.String(),
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + no-data"],
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									StateReason:        ngmodels.StateReasonMissingSeries,
 									LatestResult:       newEvaluation(t1, eval.NoData),
 									StartsAt:           t1,
@@ -2074,9 +2075,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t3: {
 							{
 								PreviousState: eval.Normal,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + labels1"],
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									LatestResult:       newEvaluation(t3, eval.Normal),
 									StartsAt:           t2,
 									EndsAt:             t2,
@@ -2086,9 +2087,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							{
 								PreviousState:       eval.Normal,
 								PreviousStateReason: ngmodels.ConcatReasons(eval.NoData.String(), ngmodels.StateReasonKeepLast),
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + no-data"],
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									StateReason:        ngmodels.StateReasonMissingSeries,
 									LatestResult:       newEvaluation(t1, eval.NoData),
 									StartsAt:           t1,
@@ -2115,9 +2116,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t2: {
 							{
 								PreviousState: eval.Normal,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + no-data"],
-									State:              eval.NoData,
+									EvaluationState:    eval.NoData,
 									LatestResult:       newEvaluation(t2, eval.NoData),
 									StartsAt:           t2,
 									EndsAt:             t2.Add(ResendDelay * 4),
@@ -2131,9 +2132,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t2: {
 							{
 								PreviousState: eval.Normal,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + no-data"],
-									State:              eval.Alerting,
+									EvaluationState:    eval.Alerting,
 									StateReason:        eval.NoData.String(),
 									LatestResult:       newEvaluation(t2, eval.NoData),
 									StartsAt:           t2,
@@ -2148,9 +2149,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t2: {
 							{
 								PreviousState: eval.Normal,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + no-data"],
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									StateReason:        eval.NoData.String(),
 									LatestResult:       newEvaluation(t2, eval.NoData),
 									StartsAt:           t2,
@@ -2164,9 +2165,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t2: {
 							{
 								PreviousState: eval.Normal,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + no-data"],
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									StateReason:        ngmodels.ConcatReasons(eval.NoData.String(), ngmodels.StateReasonKeepLast),
 									LatestResult:       newEvaluation(t2, eval.NoData),
 									StartsAt:           t2,
@@ -2182,10 +2183,10 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t2: {
 							{
 								PreviousState: eval.Normal,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule"],
 									Annotations:        mergeLabels(baseRule.Annotations, noDataAnnotations),
-									State:              eval.Alerting,
+									EvaluationState:    eval.Alerting,
 									StateReason:        eval.NoData.String(),
 									LatestResult:       newEvaluation(t2, eval.NoData),
 									StartsAt:           t2,
@@ -2200,10 +2201,10 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t2: {
 							{
 								PreviousState: eval.Normal,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule"],
 									Annotations:        mergeLabels(baseRule.Annotations, noDataAnnotations),
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									StateReason:        eval.NoData.String(),
 									LatestResult:       newEvaluation(t2, eval.NoData),
 									StartsAt:           t1,
@@ -2217,10 +2218,10 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t2: {
 							{
 								PreviousState: eval.Normal,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule"],
 									Annotations:        mergeLabels(baseRule.Annotations, noDataAnnotations),
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									StateReason:        ngmodels.ConcatReasons(eval.NoData.String(), ngmodels.StateReasonKeepLast),
 									LatestResult:       newEvaluation(t2, eval.NoData),
 									StartsAt:           t1,
@@ -2250,9 +2251,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t2: {
 							{
 								PreviousState: eval.Normal,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + no-data"],
-									State:              eval.NoData,
+									EvaluationState:    eval.NoData,
 									LatestResult:       newEvaluation(t2, eval.NoData),
 									StartsAt:           t2,
 									EndsAt:             t2.Add(ResendDelay * 4),
@@ -2264,9 +2265,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t3: {
 							{
 								PreviousState: eval.Alerting,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule"],
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									StateReason:        ngmodels.StateReasonMissingSeries,
 									LatestResult:       newEvaluation(t1, eval.Alerting),
 									StartsAt:           t1,
@@ -2278,9 +2279,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							},
 							{
 								PreviousState: eval.NoData,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + no-data"],
-									State:              eval.NoData,
+									EvaluationState:    eval.NoData,
 									LatestResult:       newEvaluation(t3, eval.NoData),
 									StartsAt:           t2,
 									EndsAt:             t3.Add(ResendDelay * 4),
@@ -2294,9 +2295,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t3: {
 							{
 								PreviousState: eval.Alerting,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule"],
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									StateReason:        ngmodels.StateReasonMissingSeries,
 									LatestResult:       newEvaluation(t1, eval.Alerting),
 									StartsAt:           t1,
@@ -2309,9 +2310,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							{
 								PreviousState:       eval.Alerting,
 								PreviousStateReason: eval.NoData.String(),
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + no-data"],
-									State:              eval.Alerting,
+									EvaluationState:    eval.Alerting,
 									StateReason:        eval.NoData.String(),
 									LatestResult:       newEvaluation(t3, eval.NoData),
 									StartsAt:           t2,
@@ -2326,9 +2327,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t3: {
 							{
 								PreviousState: eval.Alerting,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule"],
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									StateReason:        ngmodels.StateReasonMissingSeries,
 									LatestResult:       newEvaluation(t1, eval.Alerting),
 									StartsAt:           t1,
@@ -2341,9 +2342,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							{
 								PreviousState:       eval.Normal,
 								PreviousStateReason: eval.NoData.String(),
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + no-data"],
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									StateReason:        eval.NoData.String(),
 									LatestResult:       newEvaluation(t3, eval.NoData),
 									StartsAt:           t2,
@@ -2357,9 +2358,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t3: {
 							{
 								PreviousState: eval.Alerting,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule"],
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									StateReason:        ngmodels.StateReasonMissingSeries,
 									LatestResult:       newEvaluation(t1, eval.Alerting),
 									StartsAt:           t1,
@@ -2372,9 +2373,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							{
 								PreviousState:       eval.Normal,
 								PreviousStateReason: ngmodels.ConcatReasons(eval.NoData.String(), ngmodels.StateReasonKeepLast),
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + no-data"],
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									StateReason:        ngmodels.ConcatReasons(eval.NoData.String(), ngmodels.StateReasonKeepLast),
 									LatestResult:       newEvaluation(t3, eval.NoData),
 									StartsAt:           t2,
@@ -2390,10 +2391,10 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t2: {
 							{
 								PreviousState: eval.Alerting,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule"],
 									Annotations:        mergeLabels(baseRule.Annotations, noDataAnnotations),
-									State:              eval.Alerting,
+									EvaluationState:    eval.Alerting,
 									StateReason:        eval.NoData.String(),
 									LatestResult:       newEvaluation(t2, eval.NoData),
 									StartsAt:           t1,
@@ -2407,10 +2408,10 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							{
 								PreviousState:       eval.Alerting,
 								PreviousStateReason: eval.NoData.String(),
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule"],
 									Annotations:        mergeLabels(baseRule.Annotations, noDataAnnotations),
-									State:              eval.Alerting,
+									EvaluationState:    eval.Alerting,
 									StateReason:        eval.NoData.String(),
 									LatestResult:       newEvaluation(t3, eval.NoData),
 									StartsAt:           t1,
@@ -2425,10 +2426,10 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t2: {
 							{
 								PreviousState: eval.Alerting,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule"],
 									Annotations:        mergeLabels(baseRule.Annotations, noDataAnnotations),
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									StateReason:        eval.NoData.String(),
 									LatestResult:       newEvaluation(t2, eval.NoData),
 									StartsAt:           t2,
@@ -2443,10 +2444,10 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							{
 								PreviousState:       eval.Normal,
 								PreviousStateReason: eval.NoData.String(),
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule"],
 									Annotations:        mergeLabels(baseRule.Annotations, noDataAnnotations),
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									StateReason:        eval.NoData.String(),
 									LatestResult:       newEvaluation(t3, eval.NoData),
 									StartsAt:           t2,
@@ -2462,10 +2463,10 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t2: {
 							{
 								PreviousState: eval.Alerting,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule"],
 									Annotations:        mergeLabels(baseRule.Annotations, noDataAnnotations),
-									State:              eval.Alerting,
+									EvaluationState:    eval.Alerting,
 									StateReason:        ngmodels.ConcatReasons(eval.NoData.String(), ngmodels.StateReasonKeepLast),
 									LatestResult:       newEvaluation(t2, eval.NoData),
 									StartsAt:           t1,
@@ -2479,10 +2480,10 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							{
 								PreviousState:       eval.Alerting,
 								PreviousStateReason: ngmodels.ConcatReasons(eval.NoData.String(), ngmodels.StateReasonKeepLast),
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule"],
 									Annotations:        mergeLabels(baseRule.Annotations, noDataAnnotations),
-									State:              eval.Alerting,
+									EvaluationState:    eval.Alerting,
 									StateReason:        ngmodels.ConcatReasons(eval.NoData.String(), ngmodels.StateReasonKeepLast),
 									LatestResult:       newEvaluation(t3, eval.NoData),
 									StartsAt:           t1,
@@ -2514,9 +2515,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t2: {
 							{
 								PreviousState: eval.Normal,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + no-data"],
-									State:              eval.NoData,
+									EvaluationState:    eval.NoData,
 									LatestResult:       newEvaluation(t2, eval.NoData),
 									StartsAt:           t2,
 									EndsAt:             t2.Add(ResendDelay * 4),
@@ -2528,9 +2529,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t3: {
 							{
 								PreviousState: eval.Pending,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule"],
-									State:              eval.Alerting,
+									EvaluationState:    eval.Alerting,
 									LatestResult:       newEvaluation(t3, eval.Alerting),
 									StartsAt:           t3,
 									EndsAt:             t3.Add(ResendDelay * 4),
@@ -2544,9 +2545,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t3: {
 							{
 								PreviousState: eval.Pending,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule"],
-									State:              eval.Alerting,
+									EvaluationState:    eval.Alerting,
 									LatestResult:       newEvaluation(t3, eval.Alerting),
 									StartsAt:           t3,
 									EndsAt:             t3.Add(ResendDelay * 4),
@@ -2560,9 +2561,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t3: {
 							{
 								PreviousState: eval.Pending,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule"],
-									State:              eval.Alerting,
+									EvaluationState:    eval.Alerting,
 									LatestResult:       newEvaluation(t3, eval.Alerting),
 									StartsAt:           t3,
 									EndsAt:             t3.Add(ResendDelay * 4),
@@ -2576,9 +2577,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t3: {
 							{
 								PreviousState: eval.Pending,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule"],
-									State:              eval.Alerting,
+									EvaluationState:    eval.Alerting,
 									LatestResult:       newEvaluation(t3, eval.Alerting),
 									StartsAt:           t3,
 									EndsAt:             t3.Add(ResendDelay * 4),
@@ -2594,10 +2595,10 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t2: {
 							{
 								PreviousState: eval.Pending,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule"],
 									Annotations:        mergeLabels(baseRule.Annotations, noDataAnnotations),
-									State:              eval.Pending,
+									EvaluationState:    eval.Pending,
 									StateReason:        eval.NoData.String(),
 									LatestResult:       newEvaluation(t2, eval.NoData),
 									StartsAt:           t1,
@@ -2610,9 +2611,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							{
 								PreviousState:       eval.Pending,
 								PreviousStateReason: eval.NoData.String(),
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule"],
-									State:              eval.Alerting,
+									EvaluationState:    eval.Alerting,
 									LatestResult:       newEvaluation(t3, eval.Alerting),
 									StartsAt:           t3,
 									EndsAt:             t3.Add(ResendDelay * 4),
@@ -2626,10 +2627,10 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t2: {
 							{
 								PreviousState: eval.Pending,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule"],
 									Annotations:        mergeLabels(baseRule.Annotations, noDataAnnotations),
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									StateReason:        eval.NoData.String(),
 									LatestResult:       newEvaluation(t2, eval.NoData),
 									StartsAt:           t2,
@@ -2642,9 +2643,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							{
 								PreviousState:       eval.Normal,
 								PreviousStateReason: eval.NoData.String(),
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule"],
-									State:              eval.Pending,
+									EvaluationState:    eval.Pending,
 									LatestResult:       newEvaluation(t3, eval.Alerting),
 									StartsAt:           t3,
 									EndsAt:             t3.Add(ResendDelay * 4),
@@ -2657,10 +2658,10 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t2: {
 							{
 								PreviousState: eval.Pending,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule"],
 									Annotations:        mergeLabels(baseRule.Annotations, noDataAnnotations),
-									State:              eval.Pending,
+									EvaluationState:    eval.Pending,
 									StateReason:        ngmodels.ConcatReasons(eval.NoData.String(), ngmodels.StateReasonKeepLast),
 									LatestResult:       newEvaluation(t2, eval.NoData),
 									StartsAt:           t1,
@@ -2673,9 +2674,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							{
 								PreviousState:       eval.Pending,
 								PreviousStateReason: ngmodels.ConcatReasons(eval.NoData.String(), ngmodels.StateReasonKeepLast),
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule"],
-									State:              eval.Alerting,
+									EvaluationState:    eval.Alerting,
 									LatestResult:       newEvaluation(t3, eval.Alerting),
 									StartsAt:           t3,
 									EndsAt:             t3.Add(ResendDelay * 4),
@@ -2757,10 +2758,10 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t1: {
 							{
 								PreviousState: eval.Normal,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									CacheID:            labels["system + rule"].Fingerprint(),
 									Labels:             labels["system + rule + datasource-error"],
-									State:              eval.Error,
+									EvaluationState:    eval.Error,
 									Error:              datasourceError,
 									LatestResult:       newEvaluation(t1, eval.Error),
 									StartsAt:           t1,
@@ -2778,9 +2779,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t1: {
 							{
 								PreviousState: eval.Normal,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule"],
-									State:              eval.Alerting,
+									EvaluationState:    eval.Alerting,
 									StateReason:        eval.Error.String(),
 									Error:              datasourceError,
 									Annotations:        datasourceErrorAnnotations,
@@ -2797,9 +2798,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t1: {
 							{
 								PreviousState: eval.Normal,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule"],
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									StateReason:        eval.Error.String(),
 									LatestResult:       newEvaluation(t1, eval.Error),
 									Annotations:        datasourceErrorAnnotations,
@@ -2814,9 +2815,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t1: {
 							{
 								PreviousState: eval.Normal,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule"],
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									StateReason:        ngmodels.ConcatReasons(eval.Error.String(), ngmodels.StateReasonKeepLast),
 									Annotations:        datasourceErrorAnnotations,
 									LatestResult:       newEvaluation(t1, eval.Error),
@@ -2841,9 +2842,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t1: {
 							{
 								PreviousState: eval.Normal,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule"],
-									State:              eval.Error,
+									EvaluationState:    eval.Error,
 									Error:              genericError,
 									LatestResult:       newEvaluation(t1, eval.Error),
 									StartsAt:           t1,
@@ -2859,9 +2860,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t1: {
 							{
 								PreviousState: eval.Normal,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule"],
-									State:              eval.Alerting,
+									EvaluationState:    eval.Alerting,
 									StateReason:        eval.Error.String(),
 									Error:              genericError,
 									Annotations:        genericErrorAnnotations,
@@ -2878,9 +2879,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t1: {
 							{
 								PreviousState: eval.Normal,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule"],
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									StateReason:        eval.Error.String(),
 									Annotations:        genericErrorAnnotations,
 									LatestResult:       newEvaluation(t1, eval.Error),
@@ -2895,9 +2896,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t1: {
 							{
 								PreviousState: eval.Normal,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule"],
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									StateReason:        ngmodels.ConcatReasons(eval.Error.String(), ngmodels.StateReasonKeepLast),
 									Annotations:        genericErrorAnnotations,
 									LatestResult:       newEvaluation(t1, eval.Error),
@@ -2926,10 +2927,10 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t2: {
 							{
 								PreviousState: eval.Normal,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									CacheID:            labels["system + rule"].Fingerprint(),
 									Labels:             labels["system + rule + datasource-error"],
-									State:              eval.Error,
+									EvaluationState:    eval.Error,
 									Error:              datasourceError,
 									LatestResult:       newEvaluation(t2, eval.Error),
 									StartsAt:           t2,
@@ -2947,9 +2948,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t2: {
 							{
 								PreviousState: eval.Normal,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule"],
-									State:              eval.Pending,
+									EvaluationState:    eval.Pending,
 									StateReason:        eval.Error.String(),
 									Error:              datasourceError,
 									Annotations:        datasourceErrorAnnotations,
@@ -2965,9 +2966,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t2: {
 							{
 								PreviousState: eval.Normal,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule"],
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									StateReason:        eval.Error.String(),
 									LatestResult:       newEvaluation(t2, eval.Error),
 									Annotations:        datasourceErrorAnnotations,
@@ -2982,9 +2983,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t2: {
 							{
 								PreviousState: eval.Normal,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule"],
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									StateReason:        ngmodels.ConcatReasons(eval.Error.String(), ngmodels.StateReasonKeepLast),
 									LatestResult:       newEvaluation(t2, eval.Error),
 									Annotations:        datasourceErrorAnnotations,
@@ -3001,9 +3002,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t2: {
 							{
 								PreviousState: eval.Pending,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + labels1"],
-									State:              eval.Alerting,
+									EvaluationState:    eval.Alerting,
 									StateReason:        eval.Error.String(),
 									Error:              datasourceError,
 									Annotations:        datasourceErrorAnnotations,
@@ -3021,9 +3022,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t2: {
 							{
 								PreviousState: eval.Pending,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + labels1"],
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									StateReason:        eval.Error.String(),
 									Annotations:        datasourceErrorAnnotations,
 									LatestResult:       newEvaluationWithValues(t2, eval.Error, map[string]float64{"A": float64(-1)}),
@@ -3039,9 +3040,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t2: {
 							{
 								PreviousState: eval.Pending,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + labels1"],
-									State:              eval.Alerting,
+									EvaluationState:    eval.Alerting,
 									StateReason:        ngmodels.ConcatReasons(eval.Error.String(), ngmodels.StateReasonKeepLast),
 									Annotations:        datasourceErrorAnnotations,
 									LatestResult:       newEvaluationWithValues(t2, eval.Error, map[string]float64{"A": float64(-1)}),
@@ -3071,10 +3072,10 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t2: {
 							{
 								PreviousState: eval.Normal,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									CacheID:            labels["system + rule"].Fingerprint(),
 									Labels:             labels["system + rule + datasource-error"],
-									State:              eval.Error,
+									EvaluationState:    eval.Error,
 									Error:              datasourceError,
 									LatestResult:       newEvaluation(t2, eval.Error),
 									StartsAt:           t2,
@@ -3092,9 +3093,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t2: {
 							{
 								PreviousState: eval.Normal,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule"],
-									State:              eval.Alerting,
+									EvaluationState:    eval.Alerting,
 									StateReason:        eval.Error.String(),
 									Error:              datasourceError,
 									Annotations:        datasourceErrorAnnotations,
@@ -3111,9 +3112,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t2: {
 							{
 								PreviousState: eval.Normal,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule"],
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									StateReason:        eval.Error.String(),
 									LatestResult:       newEvaluation(t2, eval.Error),
 									Annotations:        datasourceErrorAnnotations,
@@ -3128,9 +3129,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t2: {
 							{
 								PreviousState: eval.Normal,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule"],
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									StateReason:        ngmodels.ConcatReasons(eval.Error.String(), ngmodels.StateReasonKeepLast),
 									LatestResult:       newEvaluation(t2, eval.Error),
 									Annotations:        datasourceErrorAnnotations,
@@ -3147,9 +3148,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t2: {
 							{
 								PreviousState: eval.Normal,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + labels1"],
-									State:              eval.Alerting,
+									EvaluationState:    eval.Alerting,
 									StateReason:        eval.Error.String(),
 									Error:              datasourceError,
 									Annotations:        datasourceErrorAnnotations,
@@ -3167,9 +3168,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t2: {
 							{
 								PreviousState: eval.Normal,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + labels1"],
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									StateReason:        eval.Error.String(),
 									LatestResult:       newEvaluationWithValues(t2, eval.Error, map[string]float64{"A": float64(-1)}),
 									Annotations:        datasourceErrorAnnotations,
@@ -3185,9 +3186,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t2: {
 							{
 								PreviousState: eval.Normal,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + labels1"],
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									StateReason:        ngmodels.ConcatReasons(eval.Error.String(), ngmodels.StateReasonKeepLast),
 									LatestResult:       newEvaluationWithValues(t2, eval.Error, map[string]float64{"A": float64(-1)}),
 									Annotations:        datasourceErrorAnnotations,
@@ -3219,9 +3220,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t3: {
 							{
 								PreviousState: eval.Normal,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + labels1"],
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									LatestResult:       newEvaluation(t3, eval.Normal),
 									StartsAt:           t2,
 									EndsAt:             t2,
@@ -3230,11 +3231,11 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							},
 							{
 								PreviousState: eval.Error,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									CacheID:            labels["system + rule"].Fingerprint(),
 									Labels:             labels["system + rule + datasource-error"],
 									Error:              datasourceError,
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									StateReason:        ngmodels.StateReasonMissingSeries,
 									LatestResult:       newEvaluation(t1, eval.Error),
 									StartsAt:           t1,
@@ -3252,9 +3253,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t3: {
 							{
 								PreviousState: eval.Normal,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + labels1"],
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									LatestResult:       newEvaluation(t3, eval.Normal),
 									StartsAt:           t2,
 									EndsAt:             t2,
@@ -3264,11 +3265,11 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							{
 								PreviousState:       eval.Alerting,
 								PreviousStateReason: eval.Error.String(),
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule"],
 									Error:              datasourceError,
 									Annotations:        datasourceErrorAnnotations,
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									StateReason:        ngmodels.StateReasonMissingSeries,
 									LatestResult:       newEvaluation(t1, eval.Error),
 									StartsAt:           t1,
@@ -3284,9 +3285,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t3: {
 							{
 								PreviousState: eval.Normal,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + labels1"],
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									LatestResult:       newEvaluation(t3, eval.Normal),
 									StartsAt:           t2,
 									EndsAt:             t2,
@@ -3296,9 +3297,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							{
 								PreviousState:       eval.Normal,
 								PreviousStateReason: eval.Error.String(),
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule"],
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									StateReason:        ngmodels.StateReasonMissingSeries,
 									LatestResult:       newEvaluation(t1, eval.Error),
 									Annotations:        datasourceErrorAnnotations,
@@ -3313,9 +3314,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t3: {
 							{
 								PreviousState: eval.Normal,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule + labels1"],
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									LatestResult:       newEvaluation(t3, eval.Normal),
 									StartsAt:           t2,
 									EndsAt:             t2,
@@ -3325,9 +3326,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							{
 								PreviousState:       eval.Normal,
 								PreviousStateReason: ngmodels.ConcatReasons(eval.Error.String(), ngmodels.StateReasonKeepLast),
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule"],
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									StateReason:        ngmodels.StateReasonMissingSeries,
 									LatestResult:       newEvaluation(t1, eval.Error),
 									Annotations:        datasourceErrorAnnotations,
@@ -3355,10 +3356,10 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t2: {
 							{
 								PreviousState: eval.Normal,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									CacheID:            labels["system + rule"].Fingerprint(),
 									Labels:             labels["system + rule + datasource-error"],
-									State:              eval.Error,
+									EvaluationState:    eval.Error,
 									Error:              datasourceError,
 									LatestResult:       newEvaluation(t2, eval.Error),
 									StartsAt:           t2,
@@ -3376,9 +3377,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t2: {
 							{
 								PreviousState: eval.Normal,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule"],
-									State:              eval.Alerting,
+									EvaluationState:    eval.Alerting,
 									StateReason:        eval.Error.String(),
 									Error:              datasourceError,
 									Annotations:        datasourceErrorAnnotations,
@@ -3395,9 +3396,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t2: {
 							{
 								PreviousState: eval.Normal,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule"],
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									StateReason:        eval.Error.String(),
 									LatestResult:       newEvaluation(t2, eval.Error),
 									Annotations:        datasourceErrorAnnotations,
@@ -3412,9 +3413,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t2: {
 							{
 								PreviousState: eval.Normal,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule"],
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									StateReason:        ngmodels.ConcatReasons(eval.Error.String(), ngmodels.StateReasonKeepLast),
 									LatestResult:       newEvaluation(t2, eval.Error),
 									Annotations:        datasourceErrorAnnotations,
@@ -3443,9 +3444,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t1: {
 							{
 								PreviousState: eval.Normal,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule"],
-									State:              eval.Pending,
+									EvaluationState:    eval.Pending,
 									LatestResult:       newEvaluation(t1, eval.Alerting),
 									StartsAt:           t1,
 									EndsAt:             t1.Add(ResendDelay * 4),
@@ -3456,10 +3457,10 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t2: {
 							{
 								PreviousState: eval.Pending,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									CacheID:            labels["system + rule"].Fingerprint(),
 									Labels:             labels["system + rule + datasource-error"],
-									State:              eval.Error,
+									EvaluationState:    eval.Error,
 									Error:              datasourceError,
 									LatestResult:       newEvaluation(t2, eval.Error),
 									StartsAt:           t2,
@@ -3477,9 +3478,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t2: {
 							{
 								PreviousState: eval.Pending,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule"],
-									State:              eval.Alerting,
+									EvaluationState:    eval.Alerting,
 									StateReason:        eval.Error.String(),
 									Error:              datasourceError,
 									Annotations:        datasourceErrorAnnotations,
@@ -3496,9 +3497,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t2: {
 							{
 								PreviousState: eval.Pending,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule"],
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									StateReason:        eval.Error.String(),
 									Annotations:        datasourceErrorAnnotations,
 									LatestResult:       newEvaluation(t2, eval.Error),
@@ -3513,9 +3514,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t2: {
 							{
 								PreviousState: eval.Pending,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule"],
-									State:              eval.Alerting,
+									EvaluationState:    eval.Alerting,
 									StateReason:        ngmodels.ConcatReasons(eval.Error.String(), ngmodels.StateReasonKeepLast),
 									Annotations:        datasourceErrorAnnotations,
 									LatestResult:       newEvaluation(t2, eval.Error),
@@ -3548,10 +3549,10 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t2: {
 							{
 								PreviousState: eval.Pending,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									CacheID:            labels["system + rule"].Fingerprint(),
 									Labels:             labels["system + rule + datasource-error"],
-									State:              eval.Error,
+									EvaluationState:    eval.Error,
 									Error:              datasourceError,
 									LatestResult:       newEvaluation(t2, eval.Error),
 									StartsAt:           t2,
@@ -3567,9 +3568,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t3: {
 							{
 								PreviousState: eval.Error,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule"],
-									State:              eval.Pending,
+									EvaluationState:    eval.Pending,
 									LatestResult:       newEvaluation(t3, eval.Alerting),
 									StartsAt:           t3,
 									EndsAt:             t3.Add(ResendDelay * 4),
@@ -3583,9 +3584,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t2: {
 							{
 								PreviousState: eval.Pending,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule"],
-									State:              eval.Pending,
+									EvaluationState:    eval.Pending,
 									StateReason:        eval.Error.String(),
 									Error:              datasourceError,
 									Annotations:        datasourceErrorAnnotations,
@@ -3600,9 +3601,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							{
 								PreviousState:       eval.Pending,
 								PreviousStateReason: eval.Error.String(),
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule"],
-									State:              eval.Alerting,
+									EvaluationState:    eval.Alerting,
 									LatestResult:       newEvaluation(t3, eval.Alerting),
 									StartsAt:           t3,
 									EndsAt:             t3.Add(ResendDelay * 4),
@@ -3616,9 +3617,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t2: {
 							{
 								PreviousState: eval.Pending,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule"],
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									StateReason:        eval.Error.String(),
 									LatestResult:       newEvaluation(t2, eval.Error),
 									Annotations:        datasourceErrorAnnotations,
@@ -3632,9 +3633,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							{
 								PreviousState:       eval.Normal,
 								PreviousStateReason: eval.Error.String(),
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule"],
-									State:              eval.Pending,
+									EvaluationState:    eval.Pending,
 									LatestResult:       newEvaluation(t3, eval.Alerting),
 									StartsAt:           t3,
 									EndsAt:             t3.Add(ResendDelay * 4),
@@ -3647,9 +3648,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t2: {
 							{
 								PreviousState: eval.Pending,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule"],
-									State:              eval.Pending,
+									EvaluationState:    eval.Pending,
 									StateReason:        ngmodels.ConcatReasons(eval.Error.String(), ngmodels.StateReasonKeepLast),
 									LatestResult:       newEvaluation(t2, eval.Error),
 									Annotations:        datasourceErrorAnnotations,
@@ -3663,9 +3664,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							{
 								PreviousState:       eval.Pending,
 								PreviousStateReason: ngmodels.ConcatReasons(eval.Error.String(), ngmodels.StateReasonKeepLast),
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule"],
-									State:              eval.Alerting,
+									EvaluationState:    eval.Alerting,
 									LatestResult:       newEvaluation(t3, eval.Alerting),
 									StartsAt:           t3,
 									EndsAt:             t3.Add(ResendDelay * 4),
@@ -3692,9 +3693,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t2: {
 							{
 								PreviousState: eval.Error,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule"],
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									LatestResult:       newEvaluation(t2, eval.Normal),
 									StartsAt:           t2,
 									EndsAt:             t2,
@@ -3709,9 +3710,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							{
 								PreviousState:       eval.Alerting,
 								PreviousStateReason: eval.Error.String(),
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule"],
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									LatestResult:       newEvaluation(t2, eval.Normal),
 									StartsAt:           t2,
 									EndsAt:             t2,
@@ -3727,9 +3728,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							{
 								PreviousState:       eval.Normal,
 								PreviousStateReason: eval.Error.String(),
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule"],
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									LatestResult:       newEvaluation(t2, eval.Normal),
 									StartsAt:           t1,
 									EndsAt:             t1,
@@ -3743,9 +3744,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							{
 								PreviousState:       eval.Normal,
 								PreviousStateReason: ngmodels.ConcatReasons(eval.Error.String(), ngmodels.StateReasonKeepLast),
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule"],
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									LatestResult:       newEvaluation(t2, eval.Normal),
 									StartsAt:           t1,
 									EndsAt:             t1,
@@ -3772,10 +3773,10 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t1: {
 							{
 								PreviousState: eval.Normal,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									CacheID:            labels["system + rule"].Fingerprint(),
 									Labels:             labels["system + rule + datasource-error"],
-									State:              eval.Error,
+									EvaluationState:    eval.Error,
 									Error:              datasourceError,
 									LatestResult:       newEvaluation(t1, eval.Error),
 									StartsAt:           t1,
@@ -3791,10 +3792,10 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t2: {
 							{
 								PreviousState: eval.Error,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									CacheID:            labels["system + rule"].Fingerprint(),
 									Labels:             labels["system + rule + datasource-error"],
-									State:              eval.Error,
+									EvaluationState:    eval.Error,
 									Error:              genericError,
 									LatestResult:       newEvaluation(t2, eval.Error),
 									StartsAt:           t1,
@@ -3810,9 +3811,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t1: {
 							{
 								PreviousState: eval.Normal,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule"],
-									State:              eval.Alerting,
+									EvaluationState:    eval.Alerting,
 									StateReason:        eval.Error.String(),
 									Error:              datasourceError,
 									Annotations:        datasourceErrorAnnotations,
@@ -3828,9 +3829,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							{
 								PreviousState:       eval.Alerting,
 								PreviousStateReason: eval.Error.String(),
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule"],
-									State:              eval.Alerting,
+									EvaluationState:    eval.Alerting,
 									StateReason:        eval.Error.String(),
 									Error:              genericError,
 									Annotations:        genericErrorAnnotations,
@@ -3847,9 +3848,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t1: {
 							{
 								PreviousState: eval.Normal,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule"],
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									StateReason:        eval.Error.String(),
 									LatestResult:       newEvaluation(t1, eval.Error),
 									Annotations:        datasourceErrorAnnotations,
@@ -3863,9 +3864,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							{
 								PreviousState:       eval.Normal,
 								PreviousStateReason: eval.Error.String(),
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule"],
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									StateReason:        eval.Error.String(),
 									LatestResult:       newEvaluation(t2, eval.Error),
 									Annotations:        genericErrorAnnotations,
@@ -3880,9 +3881,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						t1: {
 							{
 								PreviousState: eval.Normal,
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule"],
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									StateReason:        ngmodels.ConcatReasons(eval.Error.String(), ngmodels.StateReasonKeepLast),
 									LatestResult:       newEvaluation(t1, eval.Error),
 									Annotations:        datasourceErrorAnnotations,
@@ -3896,9 +3897,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							{
 								PreviousState:       eval.Normal,
 								PreviousStateReason: ngmodels.ConcatReasons(eval.Error.String(), ngmodels.StateReasonKeepLast),
-								State: &State{
+								AlertInstance: &AlertInstance{
 									Labels:             labels["system + rule"],
-									State:              eval.Normal,
+									EvaluationState:    eval.Normal,
 									StateReason:        ngmodels.ConcatReasons(eval.Error.String(), ngmodels.StateReasonKeepLast),
 									LatestResult:       newEvaluation(t2, eval.Error),
 									Annotations:        genericErrorAnnotations,
@@ -3941,14 +3942,14 @@ func TestProcessEvalResults_Screenshots(t *testing.T) {
 		return &ngmodels.Image{Token: fmt.Sprint(rand.Int())}
 	}
 
-	newState := func(s eval.State, labels data.Labels, image *ngmodels.Image) State {
-		res := State{
+	newState := func(s eval.State, labels data.Labels, image *ngmodels.Image) AlertInstance {
+		res := AlertInstance{
 			AlertRuleUID:      baseRule.UID,
 			OrgID:             baseRule.OrgID,
 			Image:             image,
 			Labels:            labels,
 			ResultFingerprint: labels.Fingerprint(),
-			State:             s,
+			EvaluationState:   s,
 			LatestResult: &Evaluation{
 				EvaluationState: s,
 			},
@@ -3983,7 +3984,7 @@ func TestProcessEvalResults_Screenshots(t *testing.T) {
 	testCases := []struct {
 		desc                string
 		rule                ngmodels.AlertRule
-		initStates          []State
+		initStates          []AlertInstance
 		results             [][]eval.Result
 		imageService        *CountingImageService
 		expectedCalledTimes int
@@ -3991,7 +3992,7 @@ func TestProcessEvalResults_Screenshots(t *testing.T) {
 		{
 			desc:       "when transition to Alerting from empty state",
 			rule:       baseRule,
-			initStates: []State{},
+			initStates: []AlertInstance{},
 			results: [][]eval.Result{
 				{
 					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
@@ -4004,7 +4005,7 @@ func TestProcessEvalResults_Screenshots(t *testing.T) {
 		},
 		{
 			desc: "when transition to Alerting from Normal states, existing images ignored",
-			initStates: []State{
+			initStates: []AlertInstance{
 				newState(eval.Normal, labels1, randomImage()),
 				newState(eval.Normal, labels2, nil),
 				newState(eval.Normal, labels3, randomImage()),
@@ -4021,7 +4022,7 @@ func TestProcessEvalResults_Screenshots(t *testing.T) {
 		},
 		{
 			desc: "when Alerting and no screenshot",
-			initStates: []State{
+			initStates: []AlertInstance{
 				newState(eval.Alerting, labels1, nil),
 				newState(eval.Alerting, labels2, nil),
 				newState(eval.Alerting, labels3, nil),
@@ -4076,7 +4077,7 @@ func TestProcessEvalResults_Screenshots(t *testing.T) {
 	}
 }
 
-func setCacheID(s *State) *State {
+func setCacheID(s *AlertInstance) *AlertInstance {
 	if s.CacheID != 0 {
 		return s
 	}

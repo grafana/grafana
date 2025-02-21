@@ -46,11 +46,9 @@ const (
 
 const defaultQueryRange = 6 * time.Hour
 
-var (
-	ErrLokiQueryTooLong = errutil.BadRequest("loki.requestTooLong").MustTemplate(
-		"Request to Loki exceeded ({{.Public.QuerySize}} bytes) configured maximum size of {{.Public.MaxLimit}} bytes. Query: {{.Private.Query}}",
-		errutil.WithPublic("Query for Loki exceeded the configured limit of {{.Public.MaxLimit}} bytes. Remove some filters and try again."),
-	)
+var ErrLokiQueryTooLong = errutil.BadRequest("loki.requestTooLong").MustTemplate(
+	"Request to Loki exceeded ({{.Public.QuerySize}} bytes) configured maximum size of {{.Public.MaxLimit}} bytes. Query: {{.Private.Query}}",
+	errutil.WithPublic("Query for Loki exceeded the configured limit of {{.Public.MaxLimit}} bytes. Remove some filters and try again."),
 )
 
 func NewErrLokiQueryTooLong(query string, maxLimit int) error {
@@ -288,7 +286,7 @@ func StatesToStream(rule history_model.RuleMeta, states []state.StateTransition,
 			SchemaVersion:  1,
 			Previous:       state.PreviousFormatted(),
 			Current:        state.Formatted(),
-			Values:         valuesAsDataBlob(state.State),
+			Values:         valuesAsDataBlob(state.AlertInstance),
 			Condition:      rule.Condition,
 			DashboardUID:   rule.DashboardUID,
 			PanelID:        rule.PanelID,
@@ -298,7 +296,7 @@ func StatesToStream(rule history_model.RuleMeta, states []state.StateTransition,
 			RuleUID:        rule.UID,
 			InstanceLabels: sanitizedLabels,
 		}
-		if state.State.State == eval.Error {
+		if state.AlertInstance.EvaluationState == eval.Error {
 			entry.Error = state.Error.Error()
 		}
 
@@ -310,7 +308,7 @@ func StatesToStream(rule history_model.RuleMeta, states []state.StateTransition,
 		line := string(jsn)
 
 		samples = append(samples, Sample{
-			T: state.State.LastEvaluationTime,
+			T: state.AlertInstance.LastEvaluationTime,
 			V: line,
 		})
 	}
@@ -348,8 +346,8 @@ type LokiEntry struct {
 	InstanceLabels map[string]string `json:"labels"`
 }
 
-func valuesAsDataBlob(state *state.State) *simplejson.Json {
-	if state.State == eval.Error || state.State == eval.NoData {
+func valuesAsDataBlob(state *state.AlertInstance) *simplejson.Json {
+	if state.EvaluationState == eval.Error || state.EvaluationState == eval.NoData {
 		return simplejson.New()
 	}
 

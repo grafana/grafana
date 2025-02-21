@@ -40,12 +40,12 @@ func Test_FormatValues(t *testing.T) {
 
 	tc := []struct {
 		name       string
-		alertState *state.State
+		alertState *state.AlertInstance
 		expected   string
 	}{
 		{
 			name: "with no value, it renders the evaluation string",
-			alertState: &state.State{
+			alertState: &state.AlertInstance{
 				LastEvaluationString: "[ var='A' metric='vector(10) + time() % 50' labels={} value=1.1 ]",
 				LatestResult:         &state.Evaluation{Condition: "A", Values: map[string]float64{}},
 			},
@@ -53,7 +53,7 @@ func Test_FormatValues(t *testing.T) {
 		},
 		{
 			name: "with one value, it renders the single value",
-			alertState: &state.State{
+			alertState: &state.AlertInstance{
 				LastEvaluationString: "[ var='A' metric='vector(10) + time() % 50' labels={} value=1.1 ]",
 				LatestResult:         &state.Evaluation{Condition: "A", Values: map[string]float64{"A": val1}},
 			},
@@ -61,7 +61,7 @@ func Test_FormatValues(t *testing.T) {
 		},
 		{
 			name: "with two values, it renders the value based on their refID and position",
-			alertState: &state.State{
+			alertState: &state.AlertInstance{
 				LastEvaluationString: "[ var='B0' metric='vector(10) + time() % 50' labels={} value=1.1 ], [ var='B1' metric='vector(10) + time() % 50' labels={} value=1.4 ]",
 				LatestResult:         &state.Evaluation{Condition: "B", Values: map[string]float64{"B0": val1, "B1": val2}},
 			},
@@ -69,7 +69,7 @@ func Test_FormatValues(t *testing.T) {
 		},
 		{
 			name: "with a high number of values, it renders the value based on their refID and position using a natural order",
-			alertState: &state.State{
+			alertState: &state.AlertInstance{
 				LastEvaluationString: "[ var='B0' metric='vector(10) + time() % 50' labels={} value=1.1 ], [ var='B1' metric='vector(10) + time() % 50' labels={} value=1.4 ]",
 				LatestResult:         &state.Evaluation{Condition: "B", Values: map[string]float64{"B0": val1, "B1": val2, "B2": val1, "B10": val2, "B11": val1}},
 			},
@@ -237,8 +237,8 @@ func TestRouteGetAlertStatuses(t *testing.T) {
 }
 
 func withAlertingState() forEachState {
-	return func(s *state.State) *state.State {
-		s.State = eval.Alerting
+	return func(s *state.AlertInstance) *state.AlertInstance {
+		s.EvaluationState = eval.Alerting
 		s.LatestResult = &state.Evaluation{
 			EvaluationState: eval.Alerting,
 			EvaluationTime:  timeNow(),
@@ -250,7 +250,7 @@ func withAlertingState() forEachState {
 }
 
 func withAlertingErrorState() forEachState {
-	return func(s *state.State) *state.State {
+	return func(s *state.AlertInstance) *state.AlertInstance {
 		s.SetAlerting("", timeNow(), timeNow().Add(5*time.Minute))
 		s.Error = errors.New("this is an error")
 		return s
@@ -258,14 +258,14 @@ func withAlertingErrorState() forEachState {
 }
 
 func withErrorState() forEachState {
-	return func(s *state.State) *state.State {
+	return func(s *state.AlertInstance) *state.AlertInstance {
 		s.SetError(errors.New("this is an error"), timeNow(), timeNow().Add(5*time.Minute))
 		return s
 	}
 }
 
 func withLabels(labels data.Labels) forEachState {
-	return func(s *state.State) *state.State {
+	return func(s *state.AlertInstance) *state.AlertInstance {
 		for k, v := range labels {
 			s.Labels[k] = v
 		}
@@ -1540,7 +1540,7 @@ func generateRuleAndInstanceWithQuery(t *testing.T, orgID int64, fakeAIM *fakeAl
 	gen := ngmodels.RuleGen
 	r := gen.With(gen.WithOrgID(orgID), asFixture(), query).GenerateRef()
 
-	fakeAIM.GenerateAlertInstances(orgID, r.UID, 1, func(s *state.State) *state.State {
+	fakeAIM.GenerateAlertInstances(orgID, r.UID, 1, func(s *state.AlertInstance) *state.AlertInstance {
 		s.Labels = data.Labels{
 			"job":                            "prometheus",
 			alertingModels.NamespaceUIDLabel: "test_namespace_uid",
