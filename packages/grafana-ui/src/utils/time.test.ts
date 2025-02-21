@@ -45,7 +45,7 @@ describe('absoluteTimeRangeURL', () => {
 
     const result = absoluteTimeRangeURL({ url });
 
-    expect(result).toBe(url);
+    expect(result).toBe(encodeURI(url));
   });
 
   it('should use custom parameter names when provided', () => {
@@ -93,7 +93,7 @@ describe('absoluteTimeRangeURL', () => {
 
       expect(result).toBe(invalidUrl);
       // verify error was logged
-      expect(console.error).toHaveBeenCalledWith('Failed to parse URL:', expect.any(Error));
+      expect(console.error).toHaveBeenCalledWith('Failed to parse URL:', expect.any(TypeError));
     });
 
     it('should handle invalid relative time ranges', () => {

@@ -53,7 +53,7 @@ export function absoluteTimeRangeURL(opts?: AbsoluteTimeRangeURLOptions): string
       try {
         const range = rangeUtil.convertRawToRange({ from, to });
 
-        if (!range.from || !range.to) {
+        if (!range.from || !range.to || isNaN(range.from.valueOf()) || isNaN(range.to.valueOf())) {
           throw new Error('Invalid time range conversion');
         }
 
