@@ -41,10 +41,17 @@ func NewGrafanaComProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapp
 	info.TokenUrl = cfg.GrafanaComURL + "/api/oauth2/token"
 	info.AuthStyle = "inheader"
 
+	s := newSocialBase(social.GrafanaComProviderName, orgRoleMapper, info, features, cfg)
+
+	allowedOrganizations, err := util.SplitStringWithError(info.Extra[allowedOrganizationsKey])
+	if err != nil {
+		s.log.Error("Invalid auth configuration setting", "config", allowedOrganizationsKey, "provider", social.GrafanaComProviderName, "error", err)
+	}
+
 	provider := &SocialGrafanaCom{
-		SocialBase:           newSocialBase(social.GrafanaComProviderName, orgRoleMapper, info, features, cfg),
+		SocialBase:           s,
 		url:                  cfg.GrafanaComURL,
-		allowedOrganizations: util.SplitString(info.Extra[allowedOrganizationsKey]),
+		allowedOrganizations: allowedOrganizations,
 	}
 
 	if features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsApi) {
@@ -77,9 +84,14 @@ func (s *SocialGrafanaCom) Validate(ctx context.Context, newSettings ssoModels.S
 }
 
 func (s *SocialGrafanaCom) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {
-	newInfo, err := CreateOAuthInfoFromKeyValues(settings.Settings)
+	newInfo, err := CreateOAuthInfoFromKeyValuesWithLogging(s.log, social.GrafanaComProviderName, settings.Settings)
 	if err != nil {
 		return ssosettings.ErrInvalidSettings.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
+	}
+
+	allowedOrganizations, err := util.SplitStringWithError(newInfo.Extra[allowedOrganizationsKey])
+	if err != nil {
+		s.log.Error("Invalid auth configuration setting", "config", allowedOrganizationsKey, "provider", social.GrafanaComProviderName, "error", err)
 	}
 
 	// Override necessary settings
@@ -93,7 +105,7 @@ func (s *SocialGrafanaCom) Reload(ctx context.Context, settings ssoModels.SSOSet
 	s.updateInfo(ctx, social.GrafanaComProviderName, newInfo)
 
 	s.url = s.cfg.GrafanaComURL
-	s.allowedOrganizations = util.SplitString(newInfo.Extra[allowedOrganizationsKey])
+	s.allowedOrganizations = allowedOrganizations
 
 	return nil
 }

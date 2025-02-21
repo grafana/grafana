@@ -121,6 +121,10 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 		return nil, dashboards.ErrDashboardTitleEmpty
 	}
 
+	if len(dash.Title) > 5000 {
+		return nil, dashboards.ErrDashboardTitleTooLong
+	}
+
 	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Dashboard).Inc()
 	// nolint:staticcheck
 	if dash.IsFolder && dash.FolderID > 0 {
