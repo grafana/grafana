@@ -77,7 +77,7 @@ export function RepositoryStep({ request }: Props) {
   if (type === 'github') {
     return (
       <FieldSet label="2. Configure repository">
-        <Stack direction="column" gap={2}>
+        <Stack direction="column" gap={1}>
           <RequestErrorAlert request={request} />
           <TokenPermissionsInfo />
 
