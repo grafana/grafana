@@ -11,15 +11,9 @@ import (
 )
 
 type CommonQueryModel struct {
-	Datasource Datasource     `json:"datasource"`
-	RefID      string         `json:"refId"`
-	Type       expr.QueryType `json:"type"`
-}
-
-type Datasource struct {
-	Name string `json:"name"`
-	Type string `json:"type"`
-	UID  string `json:"uid"`
+	Datasource datasources.DataSource `json:"datasource"`
+	RefID      string                 `json:"refId"`
+	Type       expr.QueryType         `json:"type"`
 }
 
 func createQueryNode(datasourceUID, datasourceType, expr string, fromTimeRange, evaluationOffset time.Duration) (models.AlertQuery, error) {
@@ -60,15 +54,16 @@ type MathQueryModel struct {
 }
 
 func createMathNode() (models.AlertQuery, error) {
+	ds, err := expr.DataSourceModelFromNodeType(expr.TypeCMDNode)
+	if err != nil {
+		return models.AlertQuery{}, err
+	}
+
 	model := MathQueryModel{
 		CommonQueryModel: CommonQueryModel{
-			Datasource: Datasource{
-				Name: expr.TypeCMDNode.String(),
-				Type: expr.DatasourceType,
-				UID:  expr.DatasourceUID,
-			},
-			RefID: prometheusMathRefID,
-			Type:  expr.QueryTypeMath,
+			Datasource: *ds,
+			RefID:      prometheusMathRefID,
+			Type:       expr.QueryTypeMath,
 		},
 		MathQuery: expr.MathQuery{
 			Expression: fmt.Sprintf("is_number($%[1]s) || is_nan($%[1]s) || is_inf($%[1]s)", queryRefID),
@@ -94,15 +89,16 @@ type ThresholdQueryModel struct {
 }
 
 func createThresholdNode() (models.AlertQuery, error) {
+	ds, err := expr.DataSourceModelFromNodeType(expr.TypeCMDNode)
+	if err != nil {
+		return models.AlertQuery{}, err
+	}
+
 	model := ThresholdQueryModel{
 		CommonQueryModel: CommonQueryModel{
-			Datasource: Datasource{
-				Name: expr.TypeCMDNode.String(),
-				Type: expr.DatasourceType,
-				UID:  expr.DatasourceUID,
-			},
-			RefID: thresholdRefID,
-			Type:  expr.QueryTypeThreshold,
+			Datasource: *ds,
+			RefID:      thresholdRefID,
+			Type:       expr.QueryTypeThreshold,
 		},
 		ThresholdQuery: expr.ThresholdQuery{
 			Expression: prometheusMathRefID,

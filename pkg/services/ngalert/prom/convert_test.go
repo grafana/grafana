@@ -214,7 +214,7 @@ func TestCreateMathNode(t *testing.T) {
 	require.Equal(t, "is_number($query) || is_nan($query) || is_inf($query)", model["expression"])
 
 	ds := model["datasource"].(map[string]interface{})
-	require.Equal(t, expr.TypeCMDNode.String(), ds["name"])
+	require.Equal(t, expr.DatasourceUID, ds["name"])
 	require.Equal(t, expr.DatasourceType, ds["type"])
 	require.Equal(t, expr.DatasourceUID, ds["uid"])
 }
@@ -235,7 +235,7 @@ func TestCreateThresholdNode(t *testing.T) {
 	require.Equal(t, string(expr.QueryTypeThreshold), model["type"])
 
 	ds := model["datasource"].(map[string]interface{})
-	require.Equal(t, expr.TypeCMDNode.String(), ds["name"])
+	require.Equal(t, expr.DatasourceUID, ds["name"])
 	require.Equal(t, expr.DatasourceType, ds["type"])
 	require.Equal(t, expr.DatasourceUID, ds["uid"])
 
