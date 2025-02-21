@@ -4,7 +4,7 @@ import { EmptyState, LinkButton, Alert, Stack, Text } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
 import { SetupWarnings } from './SetupWarnings';
-import { MIGRATE_URL, NEW_URL } from './constants';
+import { MIGRATE_URL } from './constants';
 
 export default function OnboardingPage() {
   return (
