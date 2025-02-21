@@ -48,6 +48,7 @@ func (o *ExtraOptions) ApplyTo(c *genericapiserver.RecommendedConfig) error {
 	}); err != nil {
 		return err
 	}
+	// TODO: klog isn't working as expected, investigate - it logs some of the time
 	klog.SetSlogLogger(logger)
 	if _, err := logs.GlogSetter(strconv.Itoa(o.Verbosity)); err != nil {
 		logger.Error("failed to set log level", "error", err)
