@@ -190,6 +190,12 @@ export const PromQueryEditorSelector = memo<Props>((props) => {
     setExplain(e.currentTarget.checked);
   };
 
+  const searchParams = new URLSearchParams(window.location.search);
+  const hideQueryEditor = searchParams.has('hideQueryBuilder');
+  if (hideQueryEditor) {
+    return null;
+  }
+
   return (
     <>
       <ConfirmModal

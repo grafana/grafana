@@ -72,13 +72,13 @@ import { updateTimeRange } from './state/time';
 const eventSourceOodleGrafana = 'oodle';
 const eventTypeUpdateThresholds = 'updateThresholds';
 
-const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (queryBuilderOnly: boolean, hideQueryEditor: boolean, theme: GrafanaTheme2) => {
   return {
     exploreMain: css({
       label: 'exploreMain',
       // Is needed for some transition animations to work.
       position: 'relative',
-      marginTop: '21px',
+      marginTop: hideQueryEditor ? '0px' : '21px',
       display: 'flex',
       flexDirection: 'column',
       gap: theme.spacing(1),
@@ -91,13 +91,13 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: 'exploreContainer',
       display: 'flex',
       flexDirection: 'column',
-      paddingRight: theme.spacing(2),
-      marginBottom: theme.spacing(2),
+      paddingRight: hideQueryEditor ? theme.spacing(0) : theme.spacing(2),
+      marginBottom: queryBuilderOnly ? theme.spacing(0) : theme.spacing(2),
     }),
     wrapper: css({
       position: 'absolute',
       top: 0,
-      left: theme.spacing(2),
+      left: hideQueryEditor ? theme.spacing(0) : theme.spacing(2),
       right: 0,
       bottom: 0,
       display: 'flex',
@@ -430,7 +430,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
     const searchParams = new URLSearchParams(window.location.search);
     let panelHeight = showFlameGraph ? 180 : 400;
     let panelWidth = width;
-    let panelTitle = "Graph";
+    let panelTitle = queryBuilderOnly ? "" : "Graph";
 
     const panelHeightParam = searchParams.get('panelHeight');
     if (panelHeightParam) {
@@ -448,6 +448,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
     }
 
     const hideQueryEditor = searchParams.has('hideQueryBuilder');
+    const hideMiniOptions = searchParams.has('hideMiniOptions');
 
     return (
       <ContentOutlineItem panelId="Graph" title={panelTitle} icon="graph-bar">
@@ -468,6 +469,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
           criticalThreshold={criticalThreshold}
           queryBuilderOnly={queryBuilderOnly}
           hideQueryEditor={hideQueryEditor}
+          hideMiniOptions={hideMiniOptions}
         />
       </ContentOutlineItem>
     );
@@ -633,7 +635,10 @@ export class Explore extends PureComponent<Props, ExploreState> {
       contentOutlineVisible = false;
     }
 
-    const styles = getStyles(theme);
+    const searchParams = new URLSearchParams(window.location.search);
+    const hideQueryEditor = searchParams.has('hideQueryBuilder');
+
+    const styles = getStyles(queryBuilderOnly || false, hideQueryEditor, theme);
     const showPanels = queryResponse && queryResponse.state !== LoadingState.NotStarted;
     const richHistoryRowButtonHidden = !supportedFeatures().queryHistoryAvailable;
     const showNoData =
@@ -655,9 +660,6 @@ export class Explore extends PureComponent<Props, ExploreState> {
     if (showCorrelationHelper && correlationEditorHelperData !== undefined) {
       correlationsBox = <CorrelationHelper exploreId={exploreId} correlations={correlationEditorHelperData} />;
     }
-
-    const searchParams = new URLSearchParams(window.location.search);
-    const hideQueryEditor = searchParams.has('hideQueryBuilder');
 
     const showSpinner = queryBuilderOnly && hideQueryEditor && !graphResult;
     return (
@@ -691,6 +693,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
               <div className={styles.exploreContainer}>
                 {datasourceInstance ? (
                   <>
+                    {hideQueryEditor && <QueryRows exploreId={exploreId} queryBuilderOnly={queryBuilderOnly} hideQueryEditor={hideQueryEditor} />}
                     {!hideQueryEditor && <ContentOutlineItem panelId="Queries" title="Queries" icon="arrow" mergeSingleChild={true}>
                       <PanelContainer className={styles.queryContainer}>
                         {correlationsBox}

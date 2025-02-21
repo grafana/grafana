@@ -54,6 +54,7 @@ interface Props extends Pick<PanelChromeProps, 'statusMessage'> {
   criticalThreshold?: number;
   queryBuilderOnly?: boolean;
   hideQueryEditor?: boolean;
+  hideMiniOptions?: boolean;
   title?: string;
 }
 
@@ -77,6 +78,7 @@ export const GraphContainer = ({
   criticalThreshold,
   queryBuilderOnly,
   hideQueryEditor,
+  hideMiniOptions,
 }: Props) => {
   const [showAllSeries, toggleShowAllSeries] = useToggle(false);
   const [graphStyle, setGraphStyle] = useState(loadGraphStyle);
@@ -122,15 +124,18 @@ export const GraphContainer = ({
   }, [updateTimeRange]);
 
   let actions: ReactNode = null;
-  if (queryBuilderOnly && hideQueryEditor) {
-    actions = <ExploreGraphTimeSelector timeRange={timeRangeOption} onChangeTimeRange={onTimeRangeChange} />
-  } else {
-    actions = <ExploreGraphLabel graphStyle={graphStyle} onChangeGraphStyle={onGraphStyleChange} />
+  if (!hideMiniOptions) {
+    if (queryBuilderOnly && hideQueryEditor) {
+      actions = <ExploreGraphTimeSelector timeRange={timeRangeOption} onChangeTimeRange={onTimeRangeChange}/>
+    } else {
+      actions = <ExploreGraphLabel graphStyle={graphStyle} onChangeGraphStyle={onGraphStyleChange}/>
+    }
   }
 
   return (
     <PanelChrome
-      title={title ? title : t('graph.container.title', 'Graph')}
+      title={title ? title : queryBuilderOnly ? '' : t('graph.container.title', 'Graph')}
+      hideHeader={!title && queryBuilderOnly && hideQueryEditor && hideMiniOptions}
       titleItems={[
         !showAllSeries && MAX_NUMBER_OF_TIME_SERIES < data.length && (
           <div key="disclaimer" className={styles.timeSeriesDisclaimer}>

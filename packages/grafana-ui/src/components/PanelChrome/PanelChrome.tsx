@@ -66,6 +66,7 @@ interface BaseProps {
    */
   onMouseMove?: () => void;
   onMouseEnter?: () => void;
+  hideHeader?: boolean;
 }
 
 interface FixedDimensions extends BaseProps {
@@ -134,13 +135,14 @@ export function PanelChrome({
   onFocus,
   onMouseMove,
   onMouseEnter,
+  hideHeader,
 }: PanelChromeProps) {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
   const panelContentId = useId();
   const panelTitleId = useId().replace(/:/g, '_');
 
-  const hasHeader = !hoverHeader;
+  const hasHeader = hideHeader ? false : !hoverHeader;
 
   const [isOpen, toggleOpen] = useToggle(true);
 
@@ -177,6 +179,9 @@ export function PanelChrome({
   }
 
   const testid = typeof title === 'string' ? selectors.components.Panels.Panel.title(title) : 'Panel';
+
+  const searchParams = new URLSearchParams(window.location.search);
+  const hideQueryEditor = searchParams.has('hideQueryBuilder');
 
   const headerContent = (
     <>
@@ -273,7 +278,7 @@ export function PanelChrome({
         ) : null}
       </div>
 
-      {hoverHeader && (
+      {hoverHeader && !hideQueryEditor && (
         <>
           <HoverWidget
             menu={menu}
