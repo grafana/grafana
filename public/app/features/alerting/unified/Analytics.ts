@@ -237,7 +237,7 @@ export const trackRuleVersionsRestoreSuccess = async (payload: RuleVersionCompar
 export const trackRuleVersionsRestoreFail = async (
   payload: RuleVersionComparisonProps & { origin: Origin; error: Error }
 ) => {
-  reportInteraction('grafana_alerting_rule_versions_restore_success', { ...payload });
+  reportInteraction('grafana_alerting_rule_versions_restore_error', { ...payload });
 };
 
 interface RulesSearchInteractionPayload {
