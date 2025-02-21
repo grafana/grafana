@@ -115,44 +115,100 @@ func (s *SecureValueRest) Create(
 	createValidation rest.ValidateObjectFunc,
 	options *metav1.CreateOptions,
 ) (runtime.Object, error) {
+	// sv, ok := obj.(*secretv0alpha1.SecureValue)
+	// if !ok {
+	// 	return nil, fmt.Errorf("expected SecureValue for create")
+	// }
+
+	// if err := createValidation(ctx, obj); err != nil {
+	// 	return nil, err
+	// }
+
+	panic("TODO")
+
+	//====== Move this to a servicve layer ======
+	// TODO: start transaction
+	// var tx *db.Session
+
+	// // /\ ~SecretMetadataHasPendingStatus(s)
+	// isPending, err := s.storage.SecretMetadataHasPendingStatus(ctx, tx, xkube.Namespace(sv.Namespace), sv.Name)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("failed to create secure value: %w", err)
+	// }
+
+	// if isPending {
+	// 	return nil, fmt.Errorf("already pending")
+	// }
+
+	// // TODO: Consume sv.rawSecret and encrypt value here before storing!
+	// // TODO: handle REF vs VALUE
+	// _ = sv.Spec.Value.DangerouslyExposeAndConsumeValue()
+
+	// // /\ db' = [db EXCEPT !.secret_metadata = @ \union {[name |-> s, status |-> "Pending"]}]
+	// createdSecureValue, err := s.storage.Create(ctx, tx, sv)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("failed to create secure value: %w", err)
+	// }
+
+	// // /\ queue' = [queue EXCEPT !.pending = Append(queue.pending, s)]
+	// if err := s.outboxQueue.Append(ctx, tx, createdSecureValue); err != nil {
+	// 	return nil, fmt.Errorf("failed to append to queue: %w", err)
+	// }
+
+	// return createdSecureValue, nil
+}
+
+func (s *SecureValueRest) Create2(
+	ctx context.Context,
+	obj runtime.Object,
+	createValidation rest.ValidateObjectFunc,
+	options *metav1.CreateOptions,
+	cb func(runtime.Object, error),
+) {
 	sv, ok := obj.(*secretv0alpha1.SecureValue)
 	if !ok {
-		return nil, fmt.Errorf("expected SecureValue for create")
+		cb(nil, fmt.Errorf("expected SecureValue for create"))
+		return
 	}
 
 	if err := createValidation(ctx, obj); err != nil {
-		return nil, err
+		cb(nil, err)
+		return
 	}
 
-	//====== Move this to a servicve layer ======
+	//====== Move this to a service layer ======
 	var tx *db.Session
 
 	// /\ ~SecretMetadataHasPendingStatus(s)
-	isPending, err := s.storage.SecretMetadataHasPendingStatus(ctx, tx, xkube.Namespace(sv.Namespace), sv.Name)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create secure value: %w", err)
-	}
+	s.storage.SecretMetadataHasPendingStatus(ctx, tx, xkube.Namespace(sv.Namespace), sv.Name,
+		func(isPending bool, err error) {
+			if err != nil {
+				cb(nil, fmt.Errorf("failed to create secure value: %w", err))
+				return
+			}
 
-	if isPending {
-		return nil, fmt.Errorf("already pending")
-	}
+			if isPending {
+				cb(nil, fmt.Errorf("already pending"))
+				return
+			}
 
-	// TODO: Consume sv.rawSecret and encrypt value here before storing!
-	// TODO: handle REF vs VALUE
-	_ = sv.Spec.Value.DangerouslyExposeAndConsumeValue()
+			// TODO: Consume sv.rawSecret and encrypt value here before storing!
+			// TODO: handle REF vs VALUE
+			_ = sv.Spec.Value.DangerouslyExposeAndConsumeValue()
 
-	// /\ db' = [db EXCEPT !.secret_metadata = @ \union {[name |-> s, status |-> "Pending"]}]
-	createdSecureValue, err := s.storage.Create(ctx, tx, sv)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create secure value: %w", err)
-	}
+			// /\ db' = [db EXCEPT !.secret_metadata = @ \union {[name |-> s, status |-> "Pending"]}]
+			s.storage.Create(ctx, tx, sv, func(createdSecureValue *secretv0alpha1.SecureValue, err error) {
+				// 			// /\ queue' = [queue EXCEPT !.pending = Append(queue.pending, s)]
+				s.outboxQueue.Append(ctx, tx, createdSecureValue, func(err error) {
+					if err != nil {
+						cb(nil, fmt.Errorf("failed to append to queue: %w", err))
+						return
+					}
 
-	// /\ queue' = [queue EXCEPT !.pending = Append(queue.pending, s)]
-	if err := s.outboxQueue.Append(ctx, tx, createdSecureValue); err != nil {
-		return nil, fmt.Errorf("failed to append to queue: %w", err)
-	}
-
-	return createdSecureValue, nil
+					cb(createdSecureValue, nil)
+				})
+			})
+		})
 }
 
 // Update a `securevalue`'s `value`. The second return parameter indicates whether the resource was newly created.

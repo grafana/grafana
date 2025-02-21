@@ -15,10 +15,11 @@ import (
 )
 
 func NewFakeSecureValueStore(latency time.Duration) contracts.SecureValueStorage {
-	return &fakeSecureValueStorage{
-		values:  make(map[string]map[string]secretv0alpha1.SecureValue),
-		latency: latency,
-	}
+	panic("TODO")
+	// return &fakeSecureValueStorage{
+	// 	values:  make(map[string]map[string]secretv0alpha1.SecureValue),
+	// 	latency: latency,
+	// }
 }
 
 type fakeSecureValueStorage struct {

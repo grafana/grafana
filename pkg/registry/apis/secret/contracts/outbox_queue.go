@@ -7,5 +7,5 @@ import (
 )
 
 type OutboxQueue interface {
-	Append(ctx context.Context, tx *db.Session, foo any) error
+	Append(ctx context.Context, tx *db.Session, foo any, cb func(error))
 }
