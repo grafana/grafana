@@ -1337,6 +1337,12 @@
       "time-zone-label": "Zeitzone",
       "week-start-label": "Wochenbeginn"
     },
+    "time-regions": {
+      "advanced-description-cron": "",
+      "advanced-description-rest": "",
+      "advanced-description-use": "",
+      "advanced-label": ""
+    },
     "variables": {
       "title": "Variable"
     },
@@ -1419,6 +1425,11 @@
   },
   "explore": {
     "add-to-dashboard": "Zum Dashboard hinzufügen",
+    "drilldownInfo": {
+      "action": "",
+      "description": "",
+      "title": ""
+    },
     "logs": {
       "logs-volume": {
         "add-filters": "",
@@ -2499,6 +2510,9 @@
     "detect": {
       "title": "Erkennen"
     },
+    "drilldown": {
+      "title": ""
+    },
     "explore": {
       "title": "Entdecken"
     },
@@ -2714,6 +2728,7 @@
       "close": "Menü schließen",
       "dock": "Menü andocken",
       "list-label": "Navigation",
+      "new": "",
       "open": "",
       "undock": "Menü abdocken"
     },
