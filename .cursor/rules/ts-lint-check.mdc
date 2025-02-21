@@ -1,0 +1,49 @@
+---
+description: TypeScript Linting Check After Task
+globs: *.ts,*.tsx
+---
+ ---
+description: TypeScript Linting Check After Task
+globs: ["*.ts", "*.tsx"]
+---
+
+# TypeScript Linting Check After Task
+
+This rule ensures TypeScript linting is run after completing a task that modifies TypeScript files.
+
+<rule>
+name: ts_lint_check
+description: Run TypeScript linting after task completion
+
+filters:
+  - type: file_extension
+    pattern: "\\.(ts|tsx)$"
+  - type: event
+    pattern: "file_modify|file_create"
+
+actions:
+  - type: suggest
+    message: |
+      After completing your task, please run TypeScript checks:
+      
+      1. Run the TypeScript compiler check:
+         ```bash
+         yarn tsc --noEmit
+         ```
+         
+      2. Fix any type errors that appear
+      
+      3. Verify the changes by running the check again
+
+examples:
+  - input: |
+      // Modified TypeScript file
+      function example(param: string) {
+        console.log(param);
+      }
+    output: "Run yarn tsc --noEmit to check for TypeScript errors"
+
+metadata:
+  priority: high
+  version: 1.0
+</rule>

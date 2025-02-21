@@ -15,6 +15,7 @@ import { ConnectionStep } from './ConnectionStep';
 import { MigrateStep } from './MigrateStep';
 import { RepositoryStep } from './RepositoryStep';
 import { Stepper, Step } from './Stepper';
+import { SyncStep } from './SyncStep';
 import { WizardFormData, WizardStep } from './types';
 
 const appEvents = getAppEvents();
@@ -23,12 +24,14 @@ const steps: Array<Step<WizardStep>> = [
   { id: 'connection', name: 'Repository connection' },
   { id: 'repository', name: 'Repository configuration' },
   { id: 'migrate', name: 'Migrate dashboards' },
+  { id: 'sync', name: 'Configure sync' },
 ];
 
 const nextButtonText = {
   connection: 'Next',
   repository: 'Connect and verify',
-  migrate: 'Finish',
+  migrate: 'Next',
+  sync: 'Finish',
 } as const;
 
 export function ProvisioningWizard() {
@@ -122,6 +125,7 @@ export function ProvisioningWizard() {
             connection: { valid: true },
             repository: { valid: true },
             migrate: { valid: true },
+            sync: { valid: true },
           }}
           getNextUrl={() => ''}
         />
@@ -130,6 +134,7 @@ export function ProvisioningWizard() {
           {activeStep === 'connection' && <ConnectionStep />}
           {activeStep === 'repository' && <RepositoryStep />}
           {activeStep === 'migrate' && <MigrateStep onMigrationStatusChange={setMigrationSuccess} />}
+          {activeStep === 'sync' && <SyncStep />}
         </div>
 
         <Stack gap={2} justifyContent="flex-end">
