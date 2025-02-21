@@ -1328,6 +1328,12 @@
       "time-zone-label": "时区",
       "week-start-label": "每周开始日"
     },
+    "time-regions": {
+      "advanced-description-cron": "",
+      "advanced-description-rest": "",
+      "advanced-description-use": "",
+      "advanced-label": ""
+    },
     "variables": {
       "title": "变量"
     },
@@ -1410,6 +1416,11 @@
   },
   "explore": {
     "add-to-dashboard": "添加到仪表板",
+    "drilldownInfo": {
+      "action": "",
+      "description": "",
+      "title": ""
+    },
     "logs": {
       "logs-volume": {
         "add-filters": "",
@@ -2489,6 +2500,9 @@
     "detect": {
       "title": "检测"
     },
+    "drilldown": {
+      "title": ""
+    },
     "explore": {
       "title": "探索"
     },
@@ -2704,6 +2718,7 @@
       "close": "关闭菜单",
       "dock": "停靠菜单",
       "list-label": "导航",
+      "new": "",
       "open": "",
       "undock": "取消停靠菜单"
     },
