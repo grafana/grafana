@@ -483,6 +483,19 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			}
 			b.repositoryLister = repoInformer.Lister()
 
+			b.jobs.Register(export.NewExportWorker(
+				b.client,
+				b.storageStatus,
+				b.secrets,
+				b.clonedir,
+			))
+			syncWorker := sync.NewSyncWorker(
+				c.ProvisioningV0alpha1(),
+				b.parsers,
+				b.resourceLister,
+				b.storageStatus,
+			)
+			b.jobs.Register(syncWorker)
 			b.jobs.Register(migrate.NewMigrationWorker(
 				b.client,
 				b.legacyMigrator,
@@ -490,19 +503,8 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.storageStatus,
 				b.unified,
 				b.secrets,
+				syncWorker,
 				b.clonedir,
-			))
-			b.jobs.Register(export.NewExportWorker(
-				b.client,
-				b.storageStatus,
-				b.secrets,
-				b.clonedir,
-			))
-			b.jobs.Register(sync.NewSyncWorker(
-				c.ProvisioningV0alpha1(),
-				b.parsers,
-				b.resourceLister,
-				b.storageStatus,
 			))
 
 			renderer := pullrequest.NewRenderer(b.render, b.blobstore)
