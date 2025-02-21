@@ -91,6 +91,13 @@ func ContactPointToContactPointExport(cp definitions.ContactPoint) (notify.APIRe
 		}
 		integration = append(integration, el)
 	}
+	for _, i := range cp.Jira {
+		el, err := marshallIntegration(j, "jira", i, i.DisableResolveMessage)
+		if err != nil {
+			errs = append(errs, err)
+		}
+		integration = append(integration, el)
+	}
 	for _, i := range cp.Kafka {
 		el, err := marshallIntegration(j, "kafka", i, i.DisableResolveMessage)
 		if err != nil {
@@ -270,6 +277,11 @@ func parseIntegration(json jsoniter.API, result *definitions.ContactPoint, recei
 		integration := definitions.GooglechatIntegration{DisableResolveMessage: disable}
 		if err = json.Unmarshal(data, &integration); err == nil {
 			result.Googlechat = append(result.Googlechat, integration)
+		}
+	case "jira":
+		integration := definitions.JiraIntegration{DisableResolveMessage: disable}
+		if err = json.Unmarshal(data, &integration); err == nil {
+			result.Jira = append(result.Jira, integration)
 		}
 	case "kafka":
 		integration := definitions.KafkaIntegration{DisableResolveMessage: disable}

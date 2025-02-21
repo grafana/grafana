@@ -45,6 +45,8 @@ const (
 	ElementTypeSubform = "subform"
 	// ElementSubformArray will render a multiple sub-forms with schema defined in SubformOptions
 	ElementSubformArray = "subform_array"
+	// ElementStringArray will render a set of fields to manage an array of strings.
+	ElementStringArray = "string_array"
 )
 
 // InputType is the type of input that can be rendered in the frontend.
