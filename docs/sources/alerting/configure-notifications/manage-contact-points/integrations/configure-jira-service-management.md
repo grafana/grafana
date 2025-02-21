@@ -14,7 +14,7 @@ labels:
     - oss
 menuTitle: Jira Service Management
 title: Configure Jira Service Management for Alerting
-weight: 139
+weight: 121
 ---
 
 # Configure Jira Service Management for Alerting
@@ -45,14 +45,14 @@ To create a contact point with a Jira integration, complete the following steps:
 - **URL**: The URL of your Jira instance (e.g., `https://your-domain.atlassian.net` or `https://jira.your-domain.com`).
 - **Basic Auth User**: Username for authentication. 
 - **Basic Auth Password**: Password or personal token. For Jira Cloud, you need to obtain a personal token [here](https://id.atlassian.com/manage-profile/security/api-tokens)) and use it as the password.
-- **API Token**: An alternative to basic authentication, a bearer token is used to authorize the API requests. See [Atlassian documentation](https://confluence.atlassian.com/enterprise/using-personal-access-tokens-1026032365.html) for more information.
+- **API Token**: An alternative to basic authentication, a bearer token is used to authorize the API requests. See [Jira documentation](https://confluence.atlassian.com/enterprise/using-personal-access-tokens-1026032365.html) for more information.
 - **Project Key**: The project key where issues are be created (e.g., `ALERTS`).
 - **Issue Type**: The type of issue to create (e.g., `Task`, `Bug`, `Incident`). Make sure that you specify a type that is available in your project. 
 
 ### Optional Settings
 
 - **Title**: The issue title. Supports templating. Max length is 255 characters. 
-- **Description**: The description of the issue. Depending on version of the API, it can be a text, markdown, or JSON (v3 API only). Maximum size of the field is 32kb. 
+- **Description**: The description of the issue. Depending on version of the API, it can be a text, Markdown, or JSON (v3 API only). Maximum size of the field is 32kb. 
 {{< admonition type="note" >}}
 JSON is not limited by the client, and if it exceeds the size, the API is likely to reject the request.
 {{< /admonition >}}
@@ -62,5 +62,5 @@ JSON is not limited by the client, and if it exceeds the size, the API is likely
 - **Reopen Transition**: The transition name to move the issue back to an open state when an alert reoccurs. Ensure that the value matches a valid transition available in your Jira workflow for the specified issue type. If this field is empty, the issue will not be reopened.
 - **Reopen Duration**: The time duration (in minutes) to control whether to reopen an issue that was closed within this duration or create a new one. If not specified, the most recent issue that matches the deduplication key will be updated and reopened (if reopen transition is specified).
 - **Ignored Resolution**: Specify a resolution status that should be ignored when searching for existing issues. For example, issues with this resolution will not be reopened or updated by subsequent alerts.
-- **Deduplication Key Field**: Custom field to store the deduplication key. Must be a text field. If not specified, the deduplication key is added to labels in the format of `ALERT(hash sum)`. Check [Atlassian documentation](https://support.atlassian.com/jira-cloud-administration/docs/create-a-custom-field/) for how to create custom fields.
+- **Deduplication Key Field**: Custom field to store the deduplication key. Must be a text field. If not specified, the deduplication key is added to labels in the format of `ALERT(hash sum)`. See [Jira documentation](https://support.atlassian.com/jira-cloud-administration/docs/create-a-custom-field/) for how to create custom fields.
 - **Fields**: Allows to configure custom fields of Jira issue. The field name should be of the format like `customfield_10001`.
