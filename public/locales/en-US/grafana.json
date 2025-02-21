@@ -528,6 +528,19 @@
       },
       "pause": {
         "label": "Pause evaluation"
+      },
+      "threshold": {
+        "recovery": {
+          "stop-alerting-above": "Stop alerting when above",
+          "stop-alerting-bellow": "Stop alerting when below",
+          "stop-alerting-equal": "Stop alerting when equal to",
+          "stop-alerting-inside-range": "Stop alerting when inside range",
+          "stop-alerting-less": "Stop alerting when less than",
+          "stop-alerting-more": "Stop alerting when more than",
+          "stop-alerting-not-equal": "Stop alerting when not equal to",
+          "stop-alerting-outside-range": "Stop alerting when outside range",
+          "title": "Custom recovery threshold"
+        }
       }
     },
     "rule-groups": {
