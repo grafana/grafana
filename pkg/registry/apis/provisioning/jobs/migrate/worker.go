@@ -9,7 +9,6 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
-	client "github.com/grafana/grafana/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
@@ -44,11 +43,8 @@ type MigrationWorker struct {
 	// Decrypt secret from config object
 	secrets secrets.Service
 
-	// Passed to the sync job (for stats)
-	lister resources.ResourceLister
-
-	// Passed to the sync job (to update stats)
-	client client.ProvisioningV0alpha1Interface
+	// Delegate the import to sync worker
+	syncWorker *sync.SyncWorker
 }
 
 func NewMigrationWorker(clients *resources.ClientFactory,
@@ -57,8 +53,7 @@ func NewMigrationWorker(clients *resources.ClientFactory,
 	storageStatus dualwrite.Service,
 	batch resource.BatchStoreClient,
 	secrets secrets.Service,
-	lister resources.ResourceLister,
-	client client.ProvisioningV0alpha1Interface,
+	syncWorker *sync.SyncWorker,
 	clonedir string,
 ) *MigrationWorker {
 	return &MigrationWorker{
@@ -69,8 +64,7 @@ func NewMigrationWorker(clients *resources.ClientFactory,
 		legacyMigrator,
 		batch,
 		secrets,
-		lister,
-		client,
+		syncWorker,
 	}
 }
 
@@ -174,9 +168,8 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 	// enable sync (won't be saved)
 	repo.Config().Spec.Sync.Enabled = true
 
-	// Delegate the import to a sync (from the already checked out repository!)
-	sss := sync.NewSyncWorker(w.client, w.parsers, w.lister, w.storageStatus)
-	return sss.Process(ctx, repo, provisioning.Job{
+	// Delegate the import to a sync (from the already checked out go-git repository!)
+	return w.syncWorker.Process(ctx, repo, provisioning.Job{
 		Spec: provisioning.JobSpec{
 			Sync: &provisioning.SyncJobOptions{
 				Incremental: false,
