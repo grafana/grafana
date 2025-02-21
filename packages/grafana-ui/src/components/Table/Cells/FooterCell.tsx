@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 
 import { KeyValue } from '@grafana/data';
 
-import { FooterItem } from './types';
+import { FooterItem } from '../types';
 
 export interface FooterProps {
   value: FooterItem;

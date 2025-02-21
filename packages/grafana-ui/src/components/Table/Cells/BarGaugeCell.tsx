@@ -3,11 +3,10 @@ import { isFunction } from 'lodash';
 import { ThresholdsConfig, ThresholdsMode, VizOrientation, getFieldConfigWithMinMax } from '@grafana/data';
 import { BarGaugeDisplayMode, BarGaugeValueMode, TableCellDisplayMode } from '@grafana/schema';
 
-import { BarGauge } from '../BarGauge/BarGauge';
-import { DataLinksContextMenu, DataLinksContextMenuApi } from '../DataLinks/DataLinksContextMenu';
-
-import { TableCellProps } from './types';
-import { getAlignmentFactor, getCellOptions } from './utils';
+import { BarGauge } from '../../BarGauge/BarGauge';
+import { DataLinksContextMenu, DataLinksContextMenuApi } from '../../DataLinks/DataLinksContextMenu';
+import { TableCellProps } from '../types';
+import { getAlignmentFactor, getCellOptions } from '../utils';
 
 const defaultScale: ThresholdsConfig = {
   mode: ThresholdsMode.Absolute,
