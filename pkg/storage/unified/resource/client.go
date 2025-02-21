@@ -109,7 +109,7 @@ func NewRemoteResourceClient(tracer tracing.Tracer, conn *grpc.ClientConn, cfg R
 	tc, err := authnlib.NewTokenExchangeClient(authnlib.TokenExchangeConfig{
 		Token:            cfg.Token,
 		TokenExchangeURL: cfg.TokenExchangeURL,
-	})
+	}, exchangeOpts...)
 
 	if err != nil {
 		return nil, err
