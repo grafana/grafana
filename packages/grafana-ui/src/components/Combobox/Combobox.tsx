@@ -108,7 +108,7 @@ export const VIRTUAL_OVERSCAN_ITEMS = 4;
  */
 export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => {
   const {
-    // options,
+    options: allOptions,
     onChange,
     value: valueProp,
     placeholder: placeholderProp,
@@ -130,7 +130,6 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
   // get a consistent Value from it
   const value = typeof valueProp === 'object' ? valueProp?.value : valueProp;
 
-  const allOptions = props.options;
   const {
     options: filteredOptions,
     updateOptions,
