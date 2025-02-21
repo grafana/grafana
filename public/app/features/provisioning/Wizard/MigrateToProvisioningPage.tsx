@@ -4,11 +4,11 @@ import { SetupWarnings } from '../SetupWarnings';
 
 import { ProvisioningWizard } from './ProvisioningWizard';
 
-export default function NewRepositoryPage() {
+export default function MigrateToProvisioningPage() {
   return (
     <Page
       navId="provisioning"
-      pageNav={{ text: 'Configure repository', subTitle: 'Migrate instance to provisioning.' }}
+      pageNav={{ text: 'Migrate to Provisioning', subTitle: 'Manage this instance from provisioning' }}
     >
       <Page.Contents>
         <SetupWarnings />

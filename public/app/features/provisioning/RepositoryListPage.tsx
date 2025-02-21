@@ -1,6 +1,7 @@
 import { ReactNode, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom-v5-compat';
 
+import { AppEvents } from '@grafana/data';
+import { getAppEvents } from '@grafana/runtime';
 import {
   Card,
   EmptySearchResult,
@@ -12,33 +13,69 @@ import {
   Stack,
   TextLink,
   Text,
+  Alert,
+  ConfirmModal,
 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
 import { DeleteRepositoryButton } from './DeleteRepositoryButton';
+import OnboardingPage from './OnboardingPage';
 import { SetupWarnings } from './SetupWarnings';
 import { StatusBadge } from './StatusBadge';
 import { SyncRepository } from './SyncRepository';
-import { Repository, ResourceCount, useGetFrontendSettingsQuery } from './api';
+import { Repository, ResourceCount, useDeletecollectionRepositoryMutation, useGetFrontendSettingsQuery } from './api';
 import { NEW_URL, PROVISIONING_URL } from './constants';
 import { useRepositoryList } from './hooks';
+
+const appEvents = getAppEvents();
 
 export default function RepositoryListPage() {
   const [items, isLoading] = useRepositoryList({ watch: true });
   const settings = useGetFrontendSettingsQuery();
-  const navigate = useNavigate();
+  const [deleteAll, deleteAllResult] = useDeletecollectionRepositoryMutation();
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   useEffect(() => {
-    if (settings.data?.legacyStorage && !items?.length) {
-      navigate('/admin/provisioning/setup');
+    if (deleteAllResult.isSuccess) {
+      appEvents.publish({
+        type: AppEvents.alertSuccess.name,
+        payload: ['All configured repositories deleted'],
+      });
     }
-  }, [settings, navigate, items?.length]);
+  }, [deleteAllResult.isSuccess]);
+
+  if (!items?.length && !isLoading) {
+    return <OnboardingPage />;
+  }
+
+  const onConfirmDelete = () => {
+    deleteAll({ deleteOptions: {} });
+    setShowDeleteModal(false);
+  };
 
   return (
     <Page navId="provisioning" subTitle="View and manage your configured repositories">
       <Page.Contents isLoading={isLoading}>
         <SetupWarnings />
+        {settings.data?.legacyStorage && (
+          <Alert
+            title="Legacy storage detected"
+            severity="error"
+            buttonContent={<>Remove all configured repositories</>}
+            onRemove={() => setShowDeleteModal(true)}
+          >
+            Configured repositories will not work while running legacy storage.
+          </Alert>
+        )}
         <RepositoryListPageContent items={items} />
+        <ConfirmModal
+          isOpen={showDeleteModal}
+          title="Delete all configured repositories"
+          body="Are you sure you want to delete all configured repositories? This action cannot be undone."
+          confirmText="Delete repositories"
+          onConfirm={onConfirmDelete}
+          onDismiss={() => setShowDeleteModal(false)}
+        />
       </Page.Contents>
     </Page>
   );
