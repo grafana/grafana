@@ -1,1 +1,0 @@
-/Users/kay/Documents/grafana-enterprise/src/pkg/build/cmd/artifactspage.go
