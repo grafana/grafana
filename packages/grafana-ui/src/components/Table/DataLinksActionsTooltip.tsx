@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
-import { autoUpdate, flip, offset, shift, useDismiss, useFloating, useInteractions } from '@floating-ui/react';
-import { ReactElement } from 'react';
+import { flip, shift, useDismiss, useFloating, useInteractions } from '@floating-ui/react';
+import { ReactElement, useMemo } from 'react';
 
 import { ActionModel, GrafanaTheme2, LinkModel } from '@grafana/data';
 
@@ -13,7 +13,7 @@ interface Props {
   links: LinkModel[];
   actions?: ActionModel[];
   value?: string | ReactElement;
-  cellRef?: React.RefObject<HTMLDivElement>;
+  coords: { clientX: number; clientY: number };
   onTooltipClose?: () => void;
 }
 
@@ -21,12 +21,11 @@ interface Props {
  *
  * @internal
  */
-export const DataLinksActionsTooltip = ({ links, actions, value, cellRef, onTooltipClose }: Props) => {
+export const DataLinksActionsTooltip = ({ links, actions, value, coords, onTooltipClose }: Props) => {
   const styles = useStyles2(getStyles);
 
   // the order of middleware is important!
   const middleware = [
-    offset(-10),
     flip({
       fallbackAxisSideDirection: 'end',
       // see https://floating-ui.com/docs/flip#combining-with-shift
@@ -36,17 +35,37 @@ export const DataLinksActionsTooltip = ({ links, actions, value, cellRef, onTool
     shift(),
   ];
 
+  const virtual = useMemo(() => {
+    const { clientX, clientY } = coords;
+
+    return {
+      getBoundingClientRect() {
+        return {
+          width: 0,
+          height: 0,
+          x: clientX,
+          y: clientY,
+          top: clientY,
+          left: clientX,
+          right: clientX,
+          bottom: clientY,
+        };
+      },
+    };
+  }, [coords]);
+
   const refCallback = (el: HTMLDivElement) => {
     refs.setFloating(el);
-    refs.setReference(cellRef?.current!);
+    // https://floating-ui.com/docs/virtual-elements
+    refs.setReference(virtual);
   };
 
   const { context, refs, floatingStyles } = useFloating({
     open: true,
-    placement: 'bottom',
+    placement: 'right-start',
     onOpenChange: onTooltipClose,
     middleware,
-    whileElementsMounted: autoUpdate,
+    // whileElementsMounted: autoUpdate,
   });
 
   const dismiss = useDismiss(context);
