@@ -42,21 +42,10 @@ export function MigrateStep({ onMigrationStatusChange }: MigrateStepProps) {
     }
   };
 
-  const onAbort = () => {
-    migrateQuery.reset();
-    setShowMigrateStatus(false);
-    onMigrationStatusChange(false);
-  };
-
   if (showMigrateStatus && migrateName) {
     return (
       <Stack direction="column" gap={2}>
         <JobStatus name={migrateName} />
-        <Stack gap={2}>
-          <Button variant="secondary" onClick={onAbort}>
-            Abort migration
-          </Button>
-        </Stack>
       </Stack>
     );
   }
@@ -70,7 +59,7 @@ export function MigrateStep({ onMigrationStatusChange }: MigrateStepProps) {
         </Text>
 
         <Alert severity="info" title="Note">
-          Dashboards app/Grafana will be unavailable when starting this process.
+          Dashboards will be unavailable while running this process.
         </Alert>
 
         {Boolean(stats.length) && (

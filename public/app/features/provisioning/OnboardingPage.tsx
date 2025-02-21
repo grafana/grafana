@@ -15,9 +15,8 @@ export default function OnboardingPage() {
       <Page.Contents>
         <SetupWarnings />
         <Alert severity="info" title="Setting up this connection could cause a temporary outage">
-          When you connect your whole instance, depending on its size, the setup might make the dashboard unavailable to
-          users for up to 30 minutes. We recommend warning your users before starting the process. You can use the
-          announcement banner or your preferred channels.
+          When you connect your whole instance, dashboards will be unavailable while running the migration. We recommend
+          warning your users before starting the process.
         </Alert>
         <EmptyState
           variant="call-to-action"
