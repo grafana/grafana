@@ -11,8 +11,10 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
+	genericapifilters "k8s.io/apiserver/pkg/endpoints/filters"
 	"k8s.io/apiserver/pkg/endpoints/responsewriter"
 	genericapiserver "k8s.io/apiserver/pkg/server"
+	"k8s.io/apiserver/pkg/util/notfoundhandler"
 	clientrest "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	aggregatorapiserver "k8s.io/kube-aggregator/pkg/apiserver"
@@ -47,6 +49,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
@@ -137,6 +140,7 @@ type service struct {
 
 	authorizer        *authorizer.GrafanaAuthorizer
 	serverLockService builder.ServerLockService
+	storageStatus     dualwrite.Service
 	kvStore           kvstore.KVStore
 
 	pluginClient    plugins.Client
@@ -161,6 +165,7 @@ func ProvideService(
 	datasources datasource.ScopedPluginDatasourceProvider,
 	contextProvider datasource.PluginContextWrapper,
 	pluginStore pluginstore.Store,
+	storageStatus dualwrite.Service,
 	unified resource.ResourceClient,
 	buildHandlerChainFuncFromBuilders builder.BuildHandlerChainFuncFromBuilders,
 ) (*service, error) {
@@ -181,6 +186,7 @@ func ProvideService(
 		contextProvider:                   contextProvider,
 		pluginStore:                       pluginStore,
 		serverLockService:                 serverLockService,
+		storageStatus:                     storageStatus,
 		unified:                           unified,
 		buildHandlerChainFuncFromBuilders: buildHandlerChainFuncFromBuilders,
 	}
@@ -359,8 +365,10 @@ func (s *service) start(ctx context.Context) error {
 		return err
 	}
 
+	notFoundHandler := notfoundhandler.New(Codecs, genericapifilters.NoMuxAndDiscoveryIncompleteKey)
+
 	// Create the server
-	server, err := serverConfig.Complete().New("grafana-apiserver", genericapiserver.NewEmptyDelegate())
+	server, err := serverConfig.Complete().New("grafana-apiserver", genericapiserver.NewEmptyDelegateWithCustomHandler(notFoundHandler))
 	if err != nil {
 		return err
 	}
@@ -370,6 +378,7 @@ func (s *service) start(ctx context.Context) error {
 		// Required for the dual writer initialization
 		s.metrics, request.GetNamespaceMapper(s.cfg), kvstore.WithNamespace(s.kvStore, 0, "storage.dualwriting"),
 		s.serverLockService,
+		s.storageStatus,
 		optsregister,
 	)
 	if err != nil {

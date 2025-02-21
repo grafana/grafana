@@ -127,7 +127,10 @@ func NewAvailableConditionController(
 func (c *AvailableConditionController) sync(key string) error {
 	originalAPIService, err := c.apiServiceLister.Get(key)
 	if apierrors.IsNotFound(err) {
-		c.metrics.ForgetAPIService(key)
+		if originalAPIService.Spec.Service != nil {
+			// Only reset state, if the service was a remote service
+			c.metrics.ForgetAPIService(key)
+		}
 		return nil
 	}
 	if err != nil {
@@ -201,6 +204,10 @@ func (c *AvailableConditionController) sync(key string) error {
 		results := make(chan error, attempts)
 		for i := 0; i < attempts; i++ {
 			go func() {
+				// stagger these requests to reduce pressure on aggregated services
+				waitDuration := time.Second * time.Duration(int32(i))
+				time.Sleep(waitDuration)
+
 				discoveryURL, err := c.serviceResolver.ResolveEndpoint(apiService.Spec.Service.Namespace, apiService.Spec.Service.Name, *apiService.Spec.Service.Port)
 				if err != nil {
 					results <- err
@@ -292,7 +299,10 @@ func (c *AvailableConditionController) sync(key string) error {
 // apiservices. Doing that means we don't want to quickly issue no-op updates.
 func (c *AvailableConditionController) updateAPIServiceStatus(originalAPIService, newAPIService *apiregistrationv1.APIService) (*apiregistrationv1.APIService, error) {
 	// update this metric on every sync operation to reflect the actual state
-	c.metrics.SetUnavailableGauge(newAPIService)
+	if newAPIService.Spec.Service != nil {
+		// Only expose the metric for remote services, trusts the type on the new object
+		c.metrics.SetUnavailableGauge(newAPIService)
+	}
 
 	if equality.Semantic.DeepEqual(originalAPIService.Status, newAPIService.Status) {
 		return newAPIService, nil
@@ -319,7 +329,10 @@ func (c *AvailableConditionController) updateAPIServiceStatus(originalAPIService
 		return nil, err
 	}
 
-	c.metrics.SetUnavailableCounter(originalAPIService, newAPIService)
+	if newAPIService.Spec.Service != nil {
+		// Only expose the metric for remote services, trusts the type on the new object
+		c.metrics.SetUnavailableCounter(originalAPIService, newAPIService)
+	}
 	return newAPIService, nil
 }
 

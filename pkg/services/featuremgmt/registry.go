@@ -744,27 +744,11 @@ var (
 			Expression:   "true",
 		},
 		{
-			Name:           "teamHttpHeaders",
-			Description:    "Enables LBAC for datasources to apply LogQL filtering of logs to the client requests for users in teams",
-			Stage:          FeatureStagePublicPreview,
-			FrontendOnly:   false,
-			AllowSelfServe: true,
-			Owner:          identityAccessTeam,
-			Expression:     "true",
-		},
-		{
 			Name:         "cachingOptimizeSerializationMemoryUsage",
 			Description:  "If enabled, the caching backend gradually serializes query responses for the cache, comparing against the configured `[caching]max_value_mb` value as it goes. This can can help prevent Grafana from running out of memory while attempting to cache very large query responses.",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaOperatorExperienceSquad,
 			FrontendOnly: false,
-		},
-		{
-			Name:         "prometheusPromQAIL",
-			Description:  "Prometheus and AI/ML to assist users in creating a query",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaOSSBigTent,
 		},
 		{
 			Name:         "prometheusCodeModeMetricNamesSearch",
@@ -886,7 +870,7 @@ var (
 		},
 		{
 			Name:         "exploreMetrics",
-			Description:  "Enables the new Explore Metrics core app",
+			Description:  "Enables the new Grafana Metrics Drilldown core app",
 			Stage:        FeatureStageGeneralAvailability,
 			Expression:   "true", // enabled by default
 			FrontendOnly: true,
@@ -1234,13 +1218,6 @@ var (
 			Expression:  "false", // disabled by default
 		},
 		{
-			Name:         "sqlQuerybuilderFunctionParameters",
-			Description:  "Enables SQL query builder function parameters",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaOSSBigTent,
-			FrontendOnly: true,
-		},
-		{
 			Name:        "azureMonitorPrometheusExemplars",
 			Description: "Allows configuration of Azure Monitor as a data source that can provide Prometheus exemplars",
 			Stage:       FeatureStagePublicPreview,
@@ -1362,21 +1339,21 @@ var (
 		},
 		{
 			Name:         "exploreLogsShardSplitting",
-			Description:  "Used in Explore Logs to split queries into multiple queries based on the number of shards",
+			Description:  "Used in Logs Drilldown to split queries into multiple queries based on the number of shards",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityLogsSquad,
 		},
 		{
 			Name:         "exploreLogsAggregatedMetrics",
-			Description:  "Used in Explore Logs to query by aggregated metrics",
+			Description:  "Used in Logs Drilldown to query by aggregated metrics",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityLogsSquad,
 		},
 		{
 			Name:         "exploreLogsLimitedTimeRange",
-			Description:  "Used in Explore Logs to limit the time range",
+			Description:  "Used in Logs Drilldown to limit the time range",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityLogsSquad,
@@ -1462,6 +1439,14 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
+			Name:              "managedDualWriter",
+			Description:       "Pick the dual write mode from database configs",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaSearchAndStorageSquad,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+		},
+		{
 			Name:        "pluginsSriChecks",
 			Description: "Enables SRI checks for plugin assets",
 			Stage:       FeatureStageExperimental,
@@ -1524,11 +1509,11 @@ var (
 		},
 		{
 			Name:         "exploreMetricsRelatedLogs",
-			Description:  "Display Related Logs in Explore Metrics",
+			Description:  "Display Related Logs in Grafana Metrics Drilldown",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaObservabilityMetricsSquad,
 			FrontendOnly: true,
-			HideFromDocs: true,
+			HideFromDocs: false,
 		},
 		{
 			Name:         "prometheusSpecialCharsInLabelValues",
