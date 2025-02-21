@@ -12,7 +12,7 @@ const getStyles = (theme: GrafanaTheme2) => {
 
   return {
     container: css({
-      padding: '36px 79px',
+      padding: theme.spacing(4),
       background: theme.components.panel.background,
     }),
     footer: css({
@@ -22,7 +22,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     header: css({
       height: '137px',
-      padding: '40px 0 0 79px',
+      padding: theme.spacing(4, 0, 0, 4),
       position: 'relative',
       background: `url('${backgroundUrl}') right`,
     }),
@@ -52,7 +52,7 @@ export function LicenseChrome({ header, editionNotice, subheader, children }: Pr
             background: '#0A1C36',
             position: 'absolute',
             top: '19px',
-            left: '71%',
+            right: '5%',
           }}
         >
           <img
