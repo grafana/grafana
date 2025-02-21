@@ -10,11 +10,14 @@ import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 
 export class MultiSelectedVizPanelsEditableElement implements MultiSelectedEditableDashboardElement {
   public readonly isMultiSelectedEditableDashboardElement = true;
-  public readonly typeName = 'Panels';
   public readonly key: string;
 
   constructor(private _panels: VizPanel[]) {
     this.key = uuidv4();
+  }
+
+  public getEditableElementInfo() {
+    return { name: 'Panels', typeId: 'panels', icon: 'folder' as const };
   }
 
   renderActions(): ReactNode {
