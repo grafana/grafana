@@ -7,6 +7,7 @@ import {
 } from '@grafana/scenes';
 import { t } from 'app/core/internationalization';
 
+import { getLayoutManagerFor } from '../../utils/utils';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
@@ -113,6 +114,11 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
   }
 
   public removeTab(tabToRemove: TabItem) {
+    // Do not allow removing last tab (for now)
+    if (this.state.tabs.length === 1) {
+      return;
+    }
+
     const currentTab = this.getCurrentTab();
 
     if (currentTab === tabToRemove) {
