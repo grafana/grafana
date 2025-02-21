@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -20,15 +21,16 @@ func GetAuthorizer() authorizer.Authorizer {
 
 		// require a user
 		u, err := identity.GetRequester(ctx)
-		l.Info("GetAuthorizer", "user", u, "err", err)
+		l.Info("GetAuthorizer", "user", fmt.Sprintf("%+v", u), "err", err)
 		if err != nil {
 			return authorizer.DecisionDeny, "valid user is required", err
 		}
 
-		l.Info("IsAdmin", "isAdmin", u.GetIsGrafanaAdmin())
+		l.Info("IsAdmin", "isAdmin", u.GetIsGrafanaAdmin(), "hasRole", u.HasRole(identity.RoleAdmin))
+		l.Info("Roles", "roles", u.GetOrgRole())
 		l.Info("IsAPIKey", "uid", u.GetUID(), "email", u.GetEmail())
 		// check if is admin
-		if u.GetIsGrafanaAdmin() {
+		if u.HasRole(identity.RoleAdmin) {
 			return authorizer.DecisionAllow, "", nil
 		}
 
