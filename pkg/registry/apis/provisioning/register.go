@@ -521,6 +521,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				&repository.Tester{},
 				b.jobs,
 				b.secrets,
+				b.storageStatus,
 			)
 			if err != nil {
 				return err
