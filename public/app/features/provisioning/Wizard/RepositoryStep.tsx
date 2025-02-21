@@ -1,26 +1,12 @@
 import { useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import {
-  ControlledCollapse,
-  Field,
-  FieldSet,
-  Input,
-  MultiCombobox,
-  RadioButtonGroup,
-  SecretInput,
-  Switch,
-} from '@grafana/ui';
+import { ControlledCollapse, Field, FieldSet, Input, MultiCombobox, SecretInput, Switch } from '@grafana/ui';
 
 import { getWorkflowOptions } from '../ConfigForm';
 import { TokenPermissionsInfo } from '../TokenPermissionsInfo';
 
 import { WizardFormData } from './types';
-
-const targetOptions = [
-  { value: 'instance', label: 'Entire instance' },
-  { value: 'folder', label: 'Managed folder' },
-];
 
 export function RepositoryStep() {
   const {
@@ -64,22 +50,7 @@ export function RepositoryStep() {
   const AdvancedFields = () => (
     <ControlledCollapse label="Advanced" isOpen={false}>
       <Field label={'Enabled'} description={'Once sync is enabled, the target cannot be changed.'}>
-        <Switch {...register('repository.sync.enabled')} id={'repository.sync.enabled'} defaultChecked={true} />
-      </Field>
-      <Field
-        label={'Target'}
-        required
-        error={errors?.repository?.sync?.target?.message}
-        invalid={!!errors?.repository?.sync?.target}
-      >
-        <Controller
-          name={'repository.sync.target'}
-          control={control}
-          rules={{ required: 'This field is required.' }}
-          render={({ field: { ref, onChange, ...field } }) => {
-            return <RadioButtonGroup options={targetOptions} onChange={onChange} {...field} />;
-          }}
-        />
+        <Switch {...register('repository.sync.enabled')} id={'repository.sync.enabled'} />
       </Field>
       <Field label={'Interval (seconds)'}>
         <Input
