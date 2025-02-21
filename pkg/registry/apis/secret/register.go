@@ -48,12 +48,12 @@ type SecretAPIBuilder struct {
 func NewSecretAPIBuilder(
 	tracer tracing.Tracer,
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage,
-	keeperStorage contracts.KeeperMetadataStorage,
+	keeperMetadataStorage contracts.KeeperMetadataStorage,
 	decryptStorage contracts.DecryptStorage,
 	accessClient claims.AccessClient,
 	isDevMode bool, // REMOVE ME
 ) *SecretAPIBuilder {
-	return &SecretAPIBuilder{tracer, secureValueMetadataStorage, keeperStorage, decryptStorage, accessClient, isDevMode}
+	return &SecretAPIBuilder{tracer, secureValueMetadataStorage, keeperMetadataStorage, decryptStorage, accessClient, isDevMode}
 }
 
 func RegisterAPIService(
