@@ -15,6 +15,7 @@ export function MigrateToRepository({ repo }: Props) {
 
   const { register, formState, handleSubmit } = useForm<MigrateJobOptions>({
     defaultValues: {
+      identifier: true, // Keep URLs the same
       history: true,
       prefix: '',
     },

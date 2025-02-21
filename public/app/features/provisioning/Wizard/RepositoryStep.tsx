@@ -1,14 +1,41 @@
 import { useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { Field, FieldSet, Input, MultiCombobox, SecretInput, Switch } from '@grafana/ui';
+import { Field, FieldSet, Input, MultiCombobox, SecretInput, Stack, Switch, ControlledCollapse } from '@grafana/ui';
 
 import { getWorkflowOptions } from '../ConfigForm';
 import { TokenPermissionsInfo } from '../TokenPermissionsInfo';
 
+import { RequestErrorAlert } from './RequestErrorAlert';
 import { WizardFormData } from './types';
 
-export function RepositoryStep() {
+interface Props {
+  request: {
+    isError: boolean;
+    error?: unknown;
+  };
+}
+
+const AdvancedSettingsFields = () => {
+  const { register } = useFormContext<WizardFormData>();
+
+  return (
+    <ControlledCollapse label="Advanced settings" isOpen={true}>
+      <Field label={'Enable sync'}>
+        <Switch {...register('repository.sync.enabled')} />
+      </Field>
+      <Field label={'Sync interval (seconds)'}>
+        <Input
+          {...register('repository.sync.intervalSeconds', { valueAsNumber: true })}
+          type={'number'}
+          placeholder={'60'}
+        />
+      </Field>
+    </ControlledCollapse>
+  );
+};
+
+export function RepositoryStep({ request }: Props) {
   const {
     register,
     control,
@@ -50,7 +77,8 @@ export function RepositoryStep() {
   if (type === 'github') {
     return (
       <FieldSet label="2. Configure repository">
-        <div>
+        <Stack direction="column" gap={1}>
+          <RequestErrorAlert request={request} />
           <TokenPermissionsInfo />
 
           <Field
@@ -108,7 +136,8 @@ export function RepositoryStep() {
           </Field>
 
           <WorkflowsField />
-        </div>
+          <AdvancedSettingsFields />
+        </Stack>
       </FieldSet>
     );
   }
@@ -116,14 +145,19 @@ export function RepositoryStep() {
   if (type === 'local') {
     return (
       <FieldSet label="2. Configure repository">
-        <Field label={'Local path'} error={errors.repository?.path?.message} invalid={!!errors.repository?.path}>
-          <Input
-            {...register('repository.path', { required: 'This field is required.' })}
-            placeholder={'/path/to/repo'}
-          />
-        </Field>
+        <Stack direction="column" gap={2}>
+          <RequestErrorAlert request={request} />
 
-        <WorkflowsField />
+          <Field label={'Local path'} error={errors.repository?.path?.message} invalid={!!errors.repository?.path}>
+            <Input
+              {...register('repository.path', { required: 'This field is required.' })}
+              placeholder={'/path/to/repo'}
+            />
+          </Field>
+
+          <WorkflowsField />
+          <AdvancedSettingsFields />
+        </Stack>
       </FieldSet>
     );
   }

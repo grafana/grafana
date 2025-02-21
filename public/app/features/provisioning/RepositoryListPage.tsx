@@ -45,7 +45,7 @@ export default function RepositoryListPage() {
   }, [deleteAllResult.isSuccess]);
 
   if (!items?.length && !isLoading) {
-    return <OnboardingPage />;
+    return <OnboardingPage legacyStorage={settings.data?.legacyStorage} />;
   }
 
   const onConfirmDelete = () => {
