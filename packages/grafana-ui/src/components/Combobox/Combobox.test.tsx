@@ -450,7 +450,7 @@ describe('Combobox', () => {
         jest.advanceTimersByTimeAsync(500);
       });
       expect(asyncOptions).rejects.toThrow('Could not retrieve options');
-      waitFor(() => expect(consoleErrorSpy).toHaveBeenCalled());
+      await waitFor(() => expect(consoleErrorSpy).toHaveBeenCalled());
       asyncOptions.mockClear();
     });
 
