@@ -1,6 +1,6 @@
 import { selectors } from '@grafana/e2e-selectors';
 import { Box, Card, Icon } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 
 import { DashboardInteractions } from '../utils/interactions';
 import { getDashboardSceneFor } from '../utils/utils';
@@ -19,7 +19,7 @@ export function DashboardAddPane({ editPane }: Props) {
       <Card
         onClick={() => dashboard.onCreateNewPanel()}
         data-testid={selectors.components.PageToolbar.itemButton('add_visualization')}
-        title="The container for visualizations and other widgets"
+        title={t('dashboard.toolbar.add-panel-description', 'A container for visualizations and other content')}
       >
         <Card.Heading>
           <Trans i18nKey="dashboard.toolbar.add-panel">Panel</Trans>
@@ -34,7 +34,10 @@ export function DashboardAddPane({ editPane }: Props) {
           DashboardInteractions.toolbarAddButtonClicked({ item: 'add_library_panel' });
         }}
         data-testid={selectors.pages.AddDashboard.itemButton('Add new panel from panel library menu item')}
-        title={'Libray panels allow you share and reuse panels between dashboards'}
+        title={t(
+          'dashboard.toolbar.libray-panel-description',
+          'Libray panels allow you share and reuse panels between dashboards'
+        )}
       >
         <Card.Heading>Import library panel</Card.Heading>
         <Card.Figure>
@@ -44,7 +47,7 @@ export function DashboardAddPane({ editPane }: Props) {
       <Card
         onClick={() => dashboard.onCreateNewRow()}
         data-testid={selectors.components.PageToolbar.itemButton('add_row')}
-        title="A grouping for panels with optional header"
+        title={t('dashboard.toolbar.row-description', 'A group of panels with an optional header')}
       >
         <Card.Heading>
           <Trans i18nKey="dashboard.toolbar.add-row">Row</Trans>
@@ -56,7 +59,7 @@ export function DashboardAddPane({ editPane }: Props) {
       <Card
         onClick={() => dashboard.onCreateNewTab()}
         data-testid={selectors.components.PageToolbar.itemButton('add_tab')}
-        title="Break up your dashboard into different horizontal tabs"
+        title={t('dashboard.toolbar.tabs-description', 'Break up your dashboard into different horizontal tabs')}
       >
         <Card.Heading>
           <Trans i18nKey="dashboard.toolbar.add-tab">Tab</Trans>
