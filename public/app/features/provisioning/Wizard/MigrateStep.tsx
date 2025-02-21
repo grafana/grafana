@@ -67,7 +67,7 @@ export function MigrateStep({ onMigrationStatusChange }: MigrateStepProps) {
         <RequestErrorAlert request={migrateQuery} />
 
         <Alert severity="info" title="Note">
-          Dashboards app/Grafana will be unavailable when starting this process.
+          Dashboards will be unavailable while running this process.
         </Alert>
 
         {Boolean(stats.length) && (

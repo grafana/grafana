@@ -1,10 +1,11 @@
 package migrate
 
 import (
+	"bufio"
 	"context"
 	"errors"
 	"fmt"
-	"os"
+	"io"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -88,12 +89,21 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 		buffered *gogit.GoGitRepo
 	)
 
+	progress.SetTotal(10) // will show a progress bar
 	if repo.Config().Spec.GitHub != nil {
-		progress.SetMessage("clone target")
+		progress.SetMessage("clone " + repo.Config().Spec.GitHub.URL)
+		reader, writer := io.Pipe()
+		go func() {
+			scanner := bufio.NewScanner(reader)
+			for scanner.Scan() {
+				progress.SetMessage(scanner.Text())
+			}
+		}()
+
 		buffered, err = gogit.Clone(ctx, repo.Config(), gogit.GoGitCloneOptions{
 			Root:                   w.clonedir,
 			SingleCommitBeforePush: !options.History,
-		}, w.secrets, os.Stdout)
+		}, w.secrets, writer)
 		if err != nil {
 			return fmt.Errorf("unable to clone target: %w", err)
 		}
@@ -132,7 +142,7 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 	}
 
 	if options.History {
-		progress.SetMessage("load users")
+		progress.SetMessage("loading users")
 		err = worker.loadUsers(ctx)
 		if err != nil {
 			return fmt.Errorf("error loading users: %w", err)
@@ -140,21 +150,29 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 	}
 
 	// Load and write all folders
-	progress.SetMessage("start folder export")
+	progress.SetMessage("exporting folders")
 	err = worker.loadFolders(ctx)
 	if err != nil {
 		return err
 	}
 
-	progress.SetMessage("start resource export")
+	progress.SetMessage("exporting resources")
 	err = worker.loadResources(ctx)
 	if err != nil {
 		return err
 	}
 
 	if buffered != nil {
-		progress.SetMessage("push changes")
-		if err := buffered.Push(ctx, os.Stdout); err != nil {
+		progress.SetMessage("pushing changes")
+		reader, writer := io.Pipe()
+		go func() {
+			scanner := bufio.NewScanner(reader)
+			for scanner.Scan() {
+				progress.SetMessage(scanner.Text())
+			}
+		}()
+
+		if err := buffered.Push(ctx, writer); err != nil {
 			return fmt.Errorf("error pushing changes: %w", err)
 		}
 	}
