@@ -355,9 +355,9 @@ func resultNormal(state *State, rule *models.AlertRule, result eval.Result, logg
 			state.EndsAt = nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt)
 		}
 	default:
-		if rule.KeepFiringFor > 0 {
-			// If the rule has a KeepFiringFor duration then the state should be set to Recovering when it
-			// transitions from Alerting to Normal.
+		if state.State == eval.Alerting && rule.KeepFiringFor > 0 {
+			// If the old state is Alerting and the rule has a KeepFiringFor duration then
+			// the state should be set to Recovering when it transitions to Normal.
 			//
 			// EndsAt must be set to a future time for the Alertmanager, the same as for Alerting states.
 			nextEndsAt := nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt)

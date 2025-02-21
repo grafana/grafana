@@ -387,6 +387,7 @@ func TestPatchPartialAlertRule(t *testing.T) {
 	})
 }
 
+// nolint:gocyclo
 func TestDiff(t *testing.T) {
 	t.Run("should return nil if there is no diff", func(t *testing.T) {
 		rule1 := RuleGen.GenerateRef()

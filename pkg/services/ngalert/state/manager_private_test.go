@@ -4331,10 +4331,10 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 								PreviousState: eval.Error,
 								State: &State{
 									Labels:             labels["system + rule"],
-									State:              eval.Recovering,
+									State:              eval.Normal,
 									LatestResult:       newEvaluation(t2, eval.Normal),
 									StartsAt:           t2,
-									EndsAt:             t2.Add(ResendDelay * 4),
+									EndsAt:             t2,
 									LastEvaluationTime: t2,
 									LastSentAt:         &t1,
 								},
@@ -4342,13 +4342,13 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						},
 						t3: {
 							{
-								PreviousState: eval.Recovering,
+								PreviousState: eval.Normal,
 								State: &State{
 									Labels:             labels["system + rule"],
-									State:              eval.Recovering,
+									State:              eval.Normal,
 									LatestResult:       newEvaluation(t3, eval.Normal),
 									StartsAt:           t2,
-									EndsAt:             t3.Add(ResendDelay * 4),
+									EndsAt:             t2,
 									LastEvaluationTime: t3,
 									LastSentAt:         &t1,
 								},
@@ -4356,16 +4356,15 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						},
 						t4: {
 							{
-								PreviousState: eval.Recovering,
+								PreviousState: eval.Normal,
 								State: &State{
 									Labels:             labels["system + rule"],
 									State:              eval.Normal,
 									LatestResult:       newEvaluation(t4, eval.Normal),
-									StartsAt:           t4,
-									EndsAt:             t4,
+									StartsAt:           t2,
+									EndsAt:             t2,
 									LastEvaluationTime: t4,
-									ResolvedAt:         &t4,
-									LastSentAt:         &t4,
+									LastSentAt:         &t1,
 								},
 							},
 						},
