@@ -183,8 +183,8 @@ type SyncStatus struct {
 	// +listType=atomic
 	Message []string `json:"message"`
 
-	// The repository hash when the last sync ran
-	Hash string `json:"hash,omitempty"`
+	// The repository ref when the last successful sync ran
+	LastRef string `json:"lastRef,omitempty"`
 
 	// Incremental synchronization for versioned repositories
 	Incremental bool `json:"incremental,omitempty"`
