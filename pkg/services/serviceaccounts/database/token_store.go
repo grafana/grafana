@@ -45,7 +45,7 @@ func (s *ServiceAccountsStoreImpl) AddServiceAccountToken(ctx context.Context, s
 	var apiKey *apikey.APIKey
 
 	return apiKey, s.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		if _, err := s.RetrieveServiceAccount(ctx, cmd.OrgId, serviceAccountId); err != nil {
+		if _, err := s.RetrieveServiceAccount(ctx, &serviceaccounts.GetServiceAccountQuery{OrgID: cmd.OrgId, ID: serviceAccountId}); err != nil {
 			return err
 		}
 

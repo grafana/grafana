@@ -28,4 +28,12 @@ func AddMigration(mg *migrator.Migrator) {
 	}
 
 	mg.AddMigration("create user_external_session table", migrator.NewAddTableMigration(externalSessionV1))
+
+	mg.AddMigration("increase name_id column length to 1024", migrator.NewRawSQLMigration("").
+		Mysql("ALTER TABLE user_external_session MODIFY name_id NVARCHAR(1024);").
+		Postgres("ALTER TABLE user_external_session ALTER COLUMN name_id TYPE VARCHAR(1024);"))
+
+	mg.AddMigration("increase session_id column length to 1024", migrator.NewRawSQLMigration("").
+		Mysql("ALTER TABLE user_external_session MODIFY session_id NVARCHAR(1024);").
+		Postgres("ALTER TABLE user_external_session ALTER COLUMN session_id TYPE VARCHAR(1024);"))
 }

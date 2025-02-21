@@ -70,6 +70,16 @@ type DataSource struct {
 
 	Created time.Time `json:"created,omitempty"`
 	Updated time.Time `json:"updated,omitempty"`
+
+	isSecureSocksDSProxyEnabled *bool `xorm:"-"`
+}
+
+func (ds *DataSource) IsSecureSocksDSProxyEnabled() bool {
+	if ds.isSecureSocksDSProxyEnabled == nil {
+		enabled := ds.JsonData != nil && ds.JsonData.Get("enableSecureSocksProxy").MustBool(false)
+		ds.isSecureSocksDSProxyEnabled = &enabled
+	}
+	return *ds.isSecureSocksDSProxyEnabled
 }
 
 type TeamHTTPHeadersJSONData struct {
@@ -86,10 +96,6 @@ type TeamHeaders map[string][]TeamHTTPHeader
 type TeamHTTPHeader struct {
 	Header string `json:"header"`
 	Value  string `json:"value"`
-}
-
-func (ds DataSource) TeamHTTPHeaders() (*TeamHTTPHeaders, error) {
-	return GetTeamHTTPHeaders(ds.JsonData)
 }
 
 func GetTeamHTTPHeaders(jsonData *simplejson.Json) (*TeamHTTPHeaders, error) {
@@ -206,7 +212,7 @@ type UpdateDataSourceCommand struct {
 	UpdateSecretFn          UpdateSecretFn    `json:"-"`
 	IgnoreOldSecureJsonData bool              `json:"-"`
 
-	OnlyUpdateLBACRulesFromAPI bool `json:"-"`
+	AllowLBACRuleUpdates bool `json:"-"`
 }
 
 // DeleteDataSourceCommand will delete a DataSource based on OrgID as well as the UID (preferred), ID, or Name.

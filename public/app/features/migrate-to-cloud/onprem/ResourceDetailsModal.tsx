@@ -18,6 +18,21 @@ function getTMessage(errorCode: MigrateDataResponseItemDto['errorCode']): string
         'migrate-to-cloud.resource-details.error-messages.datasource-name-conflict',
         'There is a data source with the same name in the target instance. Rename one of them and try again.'
       );
+    case 'DATASOURCE_INVALID_URL':
+      return t(
+        'migrate-to-cloud.resource-details.error-messages.datasource-invalid-url',
+        'There is a data source which has an invalid URL. Provide a valid URL and try again.'
+      );
+    case 'DATASOURCE_ALREADY_MANAGED':
+      return t(
+        'migrate-to-cloud.resource-details.error-messages.datasource-already-managed',
+        'Data source is already provisioned and managed by Grafana in the cloud instance. If this is a different resource, set another UID and try again.'
+      );
+    case 'FOLDER_NAME_CONFLICT':
+      return t(
+        'migrate-to-cloud.resource-details.error-messages.folder-name-conflict',
+        'There is a folder with the same name in the target instance. Rename one of them and try again.'
+      );
     case 'DASHBOARD_ALREADY_MANAGED':
       return t(
         'migrate-to-cloud.resource-details.error-messages.dashboard-already-managed',
@@ -37,11 +52,6 @@ function getTMessage(errorCode: MigrateDataResponseItemDto['errorCode']): string
       return t(
         'migrate-to-cloud.resource-details.error-messages.resource-conflict',
         'There is a resource conflict with the target instance. Please check the Grafana server logs for more details.'
-      );
-    case 'ONLY_CORE_DATA_SOURCES':
-      return t(
-        'migrate-to-cloud.resource-details.error-messages.only-core-data-sources',
-        'Only core data sources are supported. Please ensure the plugin is installed on the cloud stack.'
       );
     case 'UNEXPECTED_STATUS_CODE':
       return t(

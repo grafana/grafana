@@ -23,7 +23,11 @@ function PluginListItemComponent({ plugin, pathName }: Props) {
 
   const reportUserClickInteraction = () => {
     if (locationService.getSearchObject()?.q) {
-      reportInteraction('plugins_search_user_click', {});
+      reportInteraction('plugins_search_user_click', {
+        plugin_id: plugin.id,
+        creator_team: 'grafana_plugins_catalog',
+        schema_version: '1.0.0',
+      });
     }
   };
   return (

@@ -26,6 +26,49 @@ Each dataframe also supports using the following custom property under `datafram
 - @deprecated use `FieldType.nestedFrames` instead
   - **parentRowIndex**: number - The index of the parent row in the main dataframe (under the `data` prop of the Table component).
 
+## Table rendering
+
+Table component only works in conjunction with the applyFieldOverrides function from the @grafana/data package otherwise data will not render.
+
+```javascript
+import { DataFrame, applyFieldOverrides, GrafanaTheme2 } from '@grafana/data';
+import { Table, useTheme2 } from '@grafana/ui';
+
+const TableComponent = (dataFrame: DataFrame) => {
+  const theme = useTheme2();
+  const displayData = applyFieldOverrides({
+    data: dataFrame,
+    fieldConfig: {
+      defaults: {
+        custom: {
+          align: 'auto',
+          cellOptions: {
+            type: 'gauge',
+            mode: 'gradient',
+          },
+          inspect: false,
+        },
+        mappings: [],
+        unit: 'locale',
+      },
+      overrides: [],
+    },
+    theme,
+    replaceVariables: (value) => value,
+  });
+
+  return (
+    <Table
+      data={displayData}
+      width={1000}
+      height={400}
+      columnMinWidth={50}
+      footerOptions={{ show: true, reducer: ['sum'] }}
+    />
+  )
+}
+```
+
 ## Cell rendering
 
 Cell rendering is controlled by table specific field config in the DataFrame passed as `data` prop. Each field can set its `field.config.custom` to be type `TableFieldOptions`. `TableFieldOptions` contain generic options to control some aspects of the cell and column rendering. They also contain `cellOptions` property which can be further used to control type of cell renderer that will be used. `cellOptions` subtypes:

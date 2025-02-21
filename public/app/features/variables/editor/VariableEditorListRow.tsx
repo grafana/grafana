@@ -154,38 +154,38 @@ function VariableCheckIndicator({ passed }: VariableCheckIndicatorProps): ReactE
 
 function getStyles(theme: GrafanaTheme2) {
   return {
-    dragHandle: css`
-      cursor: grab;
-      margin-left: ${theme.spacing(1)};
-    `,
-    column: css`
-      width: 1%;
-    `,
-    nameLink: css`
-      cursor: pointer;
-      color: ${theme.colors.primary.text};
-    `,
-    definitionColumn: css`
-      width: 100%;
-      max-width: 200px;
-      cursor: pointer;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      -o-text-overflow: ellipsis;
-      white-space: nowrap;
-    `,
-    iconPassed: css`
-      color: ${theme.v1.palette.greenBase};
-      margin-right: ${theme.spacing(2)};
-    `,
-    iconFailed: css`
-      color: ${theme.v1.palette.orange};
-      margin-right: ${theme.spacing(2)};
-    `,
-    icons: css`
-      display: flex;
-      gap: ${theme.spacing(2)};
-      align-items: center;
-    `,
+    dragHandle: css({
+      cursor: 'grab',
+      marginLeft: theme.spacing(1),
+    }),
+    column: css({
+      width: '1%',
+    }),
+    nameLink: css({
+      cursor: 'pointer',
+      color: theme.colors.primary.text,
+    }),
+    definitionColumn: css({
+      width: '100%',
+      maxWidth: '200px',
+      cursor: 'pointer',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      OTextOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
+    }),
+    iconPassed: css({
+      color: theme.v1.palette.greenBase,
+      marginRight: theme.spacing(2),
+    }),
+    iconFailed: css({
+      color: theme.v1.palette.orange,
+      marginRight: theme.spacing(2),
+    }),
+    icons: css({
+      display: 'flex',
+      gap: theme.spacing(2),
+      alignItems: 'center',
+    }),
   };
 }

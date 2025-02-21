@@ -136,7 +136,7 @@ Service account access tokens inherit permissions from the service account.
 ### API keys
 
 {{% admonition type="note" %}}
-If you use Grafana v8.5 or newer, you should use service accounts instead of API keys. API keys will be deprecated in the near future. For more information, refer to [Grafana service accounts]({{< relref ".#service-accounts" >}}).
+Grafana recommends using service accounts instead of API keys. API keys will be deprecated in the near future. For more information, refer to [Grafana service accounts]({{< relref ".#service-accounts" >}}).
 {{% /admonition %}}
 
 You can use Grafana API keys to interact with data sources via HTTP APIs.

@@ -114,15 +114,21 @@ Each derived field consists of the following:
 
 - **Type** - Defines the type of the derived field. It can be either:
 
-  - **Regex**: A regular expression to parse a part of the log message and capture it as the value of the new field. Can contain only one capture group.
+{{% admonition type="caution" %}}
+Using complex regular expressions in either type can impact browser performance when processing large volumes of logs. Consider using simpler patterns when possible.
+{{% /admonition %}}
 
-  - **Label**: A label from the selected log line. This can be any type of label - indexed, parsed or structured metadata. The label's value will be used as the value of the derived field.
+- **Regex**: A regular expression to parse a part of the log message and capture it as the value of the new field. Can contain only one capture group.
+
+- **Label**: A label from the selected log line. This can be any type of label - indexed, parsed or structured metadata. When using this type, the input will match as a regular expression against label keys, allowing you to match variations like `traceid` and `trace_id` with a single regex pattern like `trace[_]?id`. The value of the matched label will be used as the value of the derived field.
 
 - **URL/query** Sets the full link URL if the link is external, or a query for the target data source if the link is internal. You can interpolate the value from the field with the `${__value.raw}` macro.
 
 - **URL Label** - Sets a custom display label for the link. This setting overrides the link label, which defaults to the full external URL or name of the linked internal data source.
 
 - **Internal link** - Toggle on to define an internal link. For internal links, you can select the target data source from a selector. This supports only tracing data sources.
+
+- **Open in new tab** - Toggle on to open the link in a new tab or window.
 
 - **Show example log message** - Click to paste an example log line to test the regular expression of your derived fields.
 

@@ -23,6 +23,7 @@ export interface NewThemeOptions {
 /** @internal */
 export function createTheme(options: NewThemeOptions = {}): GrafanaTheme2 {
   const {
+    name,
     colors: colorsInput = {},
     spacing: spacingInput = {},
     shape: shapeInput = {},
@@ -40,7 +41,7 @@ export function createTheme(options: NewThemeOptions = {}): GrafanaTheme2 {
   const visualization = createVisualizationColors(colors);
 
   const theme = {
-    name: colors.mode === 'dark' ? 'Dark' : 'Light',
+    name: name ?? (colors.mode === 'dark' ? 'Dark' : 'Light'),
     isDark: colors.mode === 'dark',
     isLight: colors.mode === 'light',
     colors,

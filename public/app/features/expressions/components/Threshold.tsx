@@ -1,16 +1,18 @@
 import { css } from '@emotion/css';
 import { AnyAction } from '@reduxjs/toolkit';
-import { FormEvent, useEffect, useReducer } from 'react';
+import { uniqueId } from 'lodash';
 import * as React from 'react';
+import { FormEvent, useEffect, useReducer } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
-import { ButtonSelect, InlineField, InlineFieldRow, InlineSwitch, Input, Select, useStyles2 } from '@grafana/ui';
+import { InlineField, InlineFieldRow, InlineSwitch, Input, Select, useStyles2, Stack } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { EvalFunction } from 'app/features/alerting/state/alertDef';
 
 import { ClassicCondition, ExpressionQuery, thresholdFunctions } from '../types';
 
+import { ThresholdSelect } from './ThresholdSelect';
+import { ToLabel } from './ToLabel';
 import {
   isInvalid,
   thresholdReducer,
@@ -83,20 +85,18 @@ export const Threshold = ({ labelWidth, onChange, refIds, query, onError, useHys
 
   const hysteresisEnabled = Boolean(config.featureToggles?.recoveryThreshold) && useHysteresis;
 
+  const id = uniqueId('threshold-');
+
   return (
     <>
       <InlineFieldRow>
-        <InlineField label="Input" labelWidth={labelWidth}>
-          <Select onChange={onRefIdChange} options={refIds} value={query.expression} width={20} />
+        <InlineField label="Input" labelWidth={labelWidth} htmlFor={id}>
+          <Select inputId={id} onChange={onRefIdChange} options={refIds} value={query.expression} width={20} />
         </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>
-        <ButtonSelect
-          className={styles.buttonSelectText}
-          options={thresholdFunctions}
-          onChange={onEvalFunctionChange}
-          value={thresholdFunction}
-        />
+        <ThresholdSelect onChange={onEvalFunctionChange} value={thresholdFunction} />
+
         {isRange ? (
           <>
             <Input
@@ -105,7 +105,7 @@ export const Threshold = ({ labelWidth, onChange, refIds, query, onError, useHys
               onChange={(event) => onEvaluateValueChange(event, 0)}
               defaultValue={conditionInState.evaluator.params[0]}
             />
-            <div className={styles.button}>TO</div>
+            <ToLabel />
             <Input
               type="number"
               width={10}
@@ -144,10 +144,10 @@ export const Threshold = ({ labelWidth, onChange, refIds, query, onError, useHys
 
     return (
       <div className={styles.hysteresis}>
-        {/* This is to enhance the user experience for mouse users. 
-        The onBlur event in RecoveryThresholdRow inputs triggers validations, 
-        but we want to skip them when the switch is clicked as this click should inmount this component. 
-        To achieve this, we use the onMouseDown event to set a flag, which is later utilized in the onBlur event to bypass validations. 
+        {/* This is to enhance the user experience for mouse users.
+        The onBlur event in RecoveryThresholdRow inputs triggers validations,
+        but we want to skip them when the switch is clicked as this click should inmount this component.
+        To achieve this, we use the onMouseDown event to set a flag, which is later utilized in the onBlur event to bypass validations.
         The onMouseDown event precedes the onBlur event, unlike onchange. */}
 
         {/*Disabling the a11y rules here as the InlineSwitch handles keyboard interactions */}
@@ -203,7 +203,7 @@ function RecoveryThresholdRow({ isRange, condition, onError, dispatch, allowOnbl
     return <RecoveryForSingleValue allowOnblur={allowOnblur} />;
   }
 
-  /* We prioritize the onMouseDown event over the onBlur event. This is because the onBlur event is executed before the onChange event that we have 
+  /* We prioritize the onMouseDown event over the onBlur event. This is because the onBlur event is executed before the onChange event that we have
    in the hysteresis checkbox, and because of that, we were validating when unchecking the switch.
   We need to uncheck the switch before the onBlur event is executed.*/
   interface RecoveryProps {
@@ -226,7 +226,7 @@ function RecoveryThresholdRow({ isRange, condition, onError, dispatch, allowOnbl
                   />
                 </InlineField>
               </div>
-              <div className={styles.button}>TO</div>
+              <ToLabel />
               <div className={styles.range}>
                 <InlineField invalid={Boolean(errorMsgTo)} error={errorMsgTo}>
                   <Input
@@ -257,7 +257,7 @@ function RecoveryThresholdRow({ isRange, condition, onError, dispatch, allowOnbl
                 </InlineField>
               </div>
 
-              <div className={styles.button}>TO</div>
+              <ToLabel />
               <div className={styles.range}>
                 <InlineField invalid={Boolean(errorMsgTo)} error={errorMsgTo}>
                   <Input
@@ -321,26 +321,6 @@ function RecoveryThresholdRow({ isRange, condition, onError, dispatch, allowOnbl
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  buttonSelectText: css({
-    color: theme.colors.primary.text,
-    fontSize: theme.typography.bodySmall.fontSize,
-    textTransform: 'uppercase',
-    padding: `0 ${theme.spacing(1)}`,
-  }),
-  button: css({
-    height: '32px',
-    color: theme.colors.primary.text,
-    fontSize: theme.typography.bodySmall.fontSize,
-    textTransform: 'uppercase',
-    display: 'flex',
-    alignItems: 'center',
-    borderRadius: theme.shape.radius.default,
-    fontWeight: theme.typography.fontWeightBold,
-    border: `1px solid ${theme.colors.border.medium}`,
-    whiteSpace: 'nowrap',
-    padding: `0 ${theme.spacing(1)}`,
-    backgroundColor: theme.colors.background.primary,
-  }),
   range: css({
     width: 'min-content',
   }),

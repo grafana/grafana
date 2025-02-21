@@ -23,6 +23,7 @@ type KubeAggregatorOptions struct {
 	AlternateDNS           []string
 	ProxyClientCertFile    string
 	ProxyClientKeyFile     string
+	LegacyClientCertAuth   bool
 	RemoteServicesFile     string
 	APIServiceCABundleFile string
 }
@@ -36,11 +37,19 @@ func (o *KubeAggregatorOptions) AddFlags(fs *pflag.FlagSet) {
 		return
 	}
 
+	// the following two config variables are slated to be faded out in cloud deployments after which
+	// their scope is restricted to local development and non Grafana Cloud use-cases only
+	// leaving them unspecified leads to graceful behavior in grafana-aggregator
+	// and would work for configurations where the aggregated servers and aggregator are auth-less and trusting
+	// of each other
 	fs.StringVar(&o.ProxyClientCertFile, "proxy-client-cert-file", o.ProxyClientCertFile,
 		"path to proxy client cert file")
 
 	fs.StringVar(&o.ProxyClientKeyFile, "proxy-client-key-file", o.ProxyClientKeyFile,
 		"path to proxy client key file")
+
+	fs.BoolVar(&o.LegacyClientCertAuth, "legacy-client-cert-auth", true,
+		"whether to use legacy client cert auth")
 }
 
 func (o *KubeAggregatorOptions) Validate() []error {
@@ -81,7 +90,7 @@ func (o *KubeAggregatorOptions) ApplyTo(aggregatorConfig *aggregatorapiserver.Co
 		return err
 	}
 	// override the RESTOptionsGetter to use the in memory storage options
-	restOptionsGetter, err := apistore.NewRESTOptionsGetterMemory(etcdOptions.StorageConfig, make(map[string]any))
+	restOptionsGetter, err := apistore.NewRESTOptionsGetterMemory(etcdOptions.StorageConfig)
 	if err != nil {
 		return err
 	}
@@ -101,9 +110,8 @@ func (o *KubeAggregatorOptions) ApplyTo(aggregatorConfig *aggregatorapiserver.Co
 	genericConfig.PostStartHooks = map[string]genericapiserver.PostStartHookConfigEntry{}
 
 	// These hooks use v1 informers, which are not available in the grafana aggregator.
-	genericConfig.DisabledPostStartHooks = genericConfig.DisabledPostStartHooks.Insert("apiservice-status-local-available-controller")
-	genericConfig.DisabledPostStartHooks = genericConfig.DisabledPostStartHooks.Insert("apiservice-status-remote-available-controller")
 	genericConfig.DisabledPostStartHooks = genericConfig.DisabledPostStartHooks.Insert("start-kube-aggregator-informers")
+	genericConfig.DisabledPostStartHooks = genericConfig.DisabledPostStartHooks.Insert("apiservice-status-local-available-controller")
 
 	return nil
 }

@@ -331,7 +331,7 @@ func TestReceiver_Fingerprint(t *testing.T) {
 	completelyDifferentReceiver.Integrations[0].Config = IntegrationConfig{Type: completelyDifferentReceiver.Integrations[0].Config.Type} // Remove all fields except Type.
 
 	t.Run("stable across code changes", func(t *testing.T) {
-		expectedFingerprint := "a3402fdaba03030c" // If this is a valid fingerprint generation change, update the expected value.
+		expectedFingerprint := "c0c82936be34b183" // If this is a valid fingerprint generation change, update the expected value.
 		assert.Equal(t, expectedFingerprint, baseReceiver.Fingerprint())
 	})
 	t.Run("stable across clones", func(t *testing.T) {

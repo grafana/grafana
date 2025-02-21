@@ -73,7 +73,7 @@ For details, refer to the [Graphite docs on the autocomplete API for tags](http:
 
 ### Use multi-value variables in tag queries
 
-Multi-value variables in tag queries use the advanced formatting syntax for variables introduced in Grafana v5.0: `{var:regex}`.
+Multi-value variables in tag queries use the advanced formatting syntax for variables: `{var:regex}`.
 Non-tag queries use the default glob formatting for multi-value variables.
 
 #### Tag expression example

@@ -37,15 +37,13 @@ func (auth orgRoleAuthorizer) Authorize(ctx context.Context, a authorizer.Attrib
 		default:
 			return authorizer.DecisionDeny, errorMessageForGrafanaOrgRole(orgRole, a), nil
 		}
-	case org.RoleViewer:
+	case org.RoleViewer, org.RoleNone:
 		switch a.GetVerb() {
 		case "get", "list", "watch":
 			return authorizer.DecisionAllow, "", nil
 		default:
 			return authorizer.DecisionDeny, errorMessageForGrafanaOrgRole(orgRole, a), nil
 		}
-	case org.RoleNone:
-		return authorizer.DecisionDeny, errorMessageForGrafanaOrgRole(orgRole, a), nil
 	}
 	return authorizer.DecisionDeny, "", nil
 }

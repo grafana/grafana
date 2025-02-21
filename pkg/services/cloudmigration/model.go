@@ -21,6 +21,7 @@ var (
 // CloudMigrationSession represents a configured migration token
 type CloudMigrationSession struct {
 	ID          int64  `xorm:"pk autoincr 'id'"`
+	OrgID       int64  `xorm:"org_id"`
 	UID         string `xorm:"uid"`
 	AuthToken   string
 	Slug        string
@@ -66,7 +67,7 @@ const (
 
 type CloudMigrationResource struct {
 	ID  int64  `xorm:"pk autoincr 'id'"`
-	UID string `xorm:"uid"`
+	UID string `xorm:"uid" json:"uid"`
 
 	Name      string            `xorm:"name" json:"name"`
 	Type      MigrateDataType   `xorm:"resource_type" json:"type"`
@@ -87,18 +88,21 @@ const (
 	FolderDataType           MigrateDataType = "FOLDER"
 	LibraryElementDataType   MigrateDataType = "LIBRARY_ELEMENT"
 	AlertRuleType            MigrateDataType = "ALERT_RULE"
+	AlertRuleGroupType       MigrateDataType = "ALERT_RULE_GROUP"
 	ContactPointType         MigrateDataType = "CONTACT_POINT"
 	NotificationPolicyType   MigrateDataType = "NOTIFICATION_POLICY"
 	NotificationTemplateType MigrateDataType = "NOTIFICATION_TEMPLATE"
 	MuteTimingType           MigrateDataType = "MUTE_TIMING"
+	PluginDataType           MigrateDataType = "PLUGIN"
 )
 
 type ItemStatus string
 
 const (
-	ItemStatusOK      ItemStatus = "OK"
-	ItemStatusWarning ItemStatus = "WARNING"
-	ItemStatusError   ItemStatus = "ERROR"
+	// Returned by GMS
+	ItemStatusOK    ItemStatus = "OK"
+	ItemStatusError ItemStatus = "ERROR"
+	// Used by default while awaiting GMS results
 	ItemStatusPending ItemStatus = "PENDING"
 )
 
@@ -106,13 +110,15 @@ type ResourceErrorCode string
 
 const (
 	ErrDatasourceNameConflict     ResourceErrorCode = "DATASOURCE_NAME_CONFLICT"
+	ErrDatasourceInvalidURL       ResourceErrorCode = "DATASOURCE_INVALID_URL"
+	ErrDatasourceAlreadyManaged   ResourceErrorCode = "DATASOURCE_ALREADY_MANAGED"
+	ErrFolderNameConflict         ResourceErrorCode = "FOLDER_NAME_CONFLICT"
 	ErrDashboardAlreadyManaged    ResourceErrorCode = "DASHBOARD_ALREADY_MANAGED"
 	ErrLibraryElementNameConflict ResourceErrorCode = "LIBRARY_ELEMENT_NAME_CONFLICT"
 	ErrUnsupportedDataType        ResourceErrorCode = "UNSUPPORTED_DATA_TYPE"
 	ErrResourceConflict           ResourceErrorCode = "RESOURCE_CONFLICT"
 	ErrUnexpectedStatus           ResourceErrorCode = "UNEXPECTED_STATUS_CODE"
 	ErrInternalServiceError       ResourceErrorCode = "INTERNAL_SERVICE_ERROR"
-	ErrOnlyCoreDataSources        ResourceErrorCode = "ONLY_CORE_DATA_SOURCES"
 	ErrGeneric                    ResourceErrorCode = "GENERIC_ERROR"
 )
 
@@ -141,6 +147,8 @@ type CloudMigrationRunList struct {
 
 type CloudMigrationSessionRequest struct {
 	AuthToken string
+	// OrgId in the on prem instance
+	OrgID int64
 }
 
 type CloudMigrationSessionResponse struct {
@@ -156,6 +164,7 @@ type CloudMigrationSessionListResponse struct {
 
 type GetSnapshotsQuery struct {
 	SnapshotUID string
+	OrgID       int64
 	SessionUID  string
 	ResultPage  int
 	ResultLimit int
@@ -163,6 +172,7 @@ type GetSnapshotsQuery struct {
 
 type ListSnapshotsQuery struct {
 	SessionUID string
+	OrgID      int64
 	Page       int
 	Limit      int
 	Sort       string
@@ -172,7 +182,11 @@ type UpdateSnapshotCmd struct {
 	UID       string
 	SessionID string
 	Status    SnapshotStatus
-	Resources []CloudMigrationResource
+
+	// LocalResourcesToCreate represents the local state of a resource before it has been uploaded to GMS
+	LocalResourcesToCreate []CloudMigrationResource
+	// CloudResourcesToUpdate represents resource state from GMS, to be merged with the local state
+	CloudResourcesToUpdate []CloudMigrationResource
 }
 
 // access token
@@ -186,13 +200,14 @@ type Base64EncodedTokenPayload struct {
 	Instance Base64HGInstance
 }
 
-func (p Base64EncodedTokenPayload) ToMigration() CloudMigrationSession {
+func (p Base64EncodedTokenPayload) ToMigration(orgID int64) CloudMigrationSession {
 	return CloudMigrationSession{
 		AuthToken:   p.Token,
 		Slug:        p.Instance.Slug,
 		StackID:     p.Instance.StackID,
 		RegionSlug:  p.Instance.RegionSlug,
 		ClusterSlug: p.Instance.ClusterSlug,
+		OrgID:       orgID,
 	}
 }
 

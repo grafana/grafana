@@ -8,6 +8,12 @@ load(
     "integration_test_services_volumes",
 )
 load(
+    "scripts/drone/steps/github.star",
+    "github_app_generate_token_step",
+    "github_app_pipeline_volumes",
+    "github_app_step_volumes",
+)
+load(
     "scripts/drone/steps/lib.star",
     "compile_build_cmd",
     "download_grabpl_step",
@@ -22,8 +28,6 @@ load(
     "verify_gen_cue_step",
     "verify_gen_jsonnet_step",
     "verify_grafanacom_step",
-    "verify_linux_DEB_packages_step",
-    "verify_linux_RPM_packages_step",
     "wire_install_step",
     "yarn_install_step",
 )
@@ -69,10 +73,10 @@ def release_pr_step(depends_on = []):
         "image": images["curl"],
         "depends_on": depends_on,
         "environment": {
-            "GITHUB_TOKEN": from_secret("github_token"),
             "GH_CLI_URL": "https://github.com/cli/cli/releases/download/v2.50.0/gh_2.50.0_linux_amd64.tar.gz",
         },
         "commands": [
+            "export GITHUB_TOKEN=$(cat /github-app/token)",
             "apk add perl",
             "v_target=`echo $${{TAG}} | perl -pe 's/{}/v\\1.\\2.x/'`".format(semver_regex),
             # Install gh CLI
@@ -86,6 +90,7 @@ def release_pr_step(depends_on = []):
             "-f latest=$${LATEST} " +
             "--repo=grafana/grafana release-pr.yml",
         ],
+        "volumes": github_app_step_volumes(),
     }
 
 def release_npm_packages_step():
@@ -149,7 +154,8 @@ def publish_artifacts_pipelines(mode):
         compile_build_cmd(),
         publish_artifacts_step(),
         publish_storybook_step(),
-        release_pr_step(depends_on = ["publish-artifacts"]),
+        github_app_generate_token_step(),
+        release_pr_step(depends_on = ["publish-artifacts", github_app_generate_token_step()["name"]]),
     ]
 
     return [
@@ -162,12 +168,14 @@ def publish_artifacts_pipelines(mode):
             steps = [
                 release_pr_step(),
             ],
+            volumes = github_app_pipeline_volumes(),
         ),
         pipeline(
             name = "publish-artifacts-{}".format(mode),
             trigger = trigger,
             steps = steps,
             environment = {"EDITION": "oss"},
+            volumes = github_app_pipeline_volumes(),
         ),
     ]
 
@@ -186,8 +194,6 @@ def publish_packages_pipeline():
         compile_build_cmd(),
         publish_linux_packages_step(package_manager = "deb"),
         publish_linux_packages_step(package_manager = "rpm"),
-        verify_linux_DEB_packages_step(depends_on = ["publish-linux-packages-deb"]),
-        verify_linux_RPM_packages_step(depends_on = ["publish-linux-packages-rpm"]),
         publish_grafanacom_step(ver_mode = "release"),
         verify_grafanacom_step(),
     ]
@@ -206,17 +212,6 @@ def publish_packages_pipeline():
             },
             steps = [
                 verify_grafanacom_step(depends_on = []),
-            ],
-        ),
-        pipeline(
-            name = "verify-linux-packages",
-            trigger = {
-                "event": ["promote"],
-                "target": "verify-linux-packages",
-            },
-            steps = [
-                verify_linux_DEB_packages_step(),
-                verify_linux_RPM_packages_step(),
             ],
         ),
         pipeline(
@@ -278,7 +273,6 @@ def integration_test_pipelines():
     pipelines = []
     volumes = integration_test_services_volumes()
     integration_test_steps = postgres_integration_tests_steps() + \
-                             mysql_integration_tests_steps("mysql57", "5.7") + \
                              mysql_integration_tests_steps("mysql80", "8.0") + \
                              redis_integration_tests_steps() + \
                              memcached_integration_tests_steps() + \
@@ -310,7 +304,6 @@ def verify_release_pipeline(
         trigger = {},
         depends_on = [
             "release-build-e2e-publish",
-            "release-windows",
         ]):
     """
     Runs a script that 'gsutil stat's every artifact that should have been produced by the pre-release process.

@@ -1170,145 +1170,6 @@
         }
       }
     },
-    "/groupsync/mappings": {
-      "get": {
-        "tags": [
-          "group_attribute_sync",
-          "enterprise"
-        ],
-        "summary": "List group mappings. This endpoint is behind the feature flag `groupAttributeSync` and is considered experimental.",
-        "operationId": "getGroupMappings",
-        "responses": {
-          "200": {
-            "$ref": "#/responses/getGroupMappingsResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "group_attribute_sync",
-          "enterprise"
-        ],
-        "summary": "Create a group mapping. This endpoint is behind the feature flag `groupAttributeSync` and is considered experimental.",
-        "operationId": "createGroupMapping",
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/groupMappingRequestBody"
-            }
-          }
-        ],
-        "responses": {
-          "201": {
-            "$ref": "#/responses/apiResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "409": {
-            "$ref": "#/responses/conflictError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
-    "/groupsync/mappings/{mapping_uid}": {
-      "get": {
-        "tags": [
-          "group_attribute_sync",
-          "enterprise"
-        ],
-        "summary": "Get a group mapping. This endpoint is behind the feature flag `groupAttributeSync` and is considered experimental.",
-        "operationId": "getGroupMapping",
-        "parameters": [
-          {
-            "type": "string",
-            "name": "mapping_uid",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/getGroupMappingResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "group_attribute_sync",
-          "enterprise"
-        ],
-        "summary": "Delete a group mapping. This endpoint is behind the feature flag `groupAttributeSync` and is considered experimental.",
-        "operationId": "deleteGroupMapping",
-        "parameters": [
-          {
-            "type": "string",
-            "name": "mapping_uid",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "204": {
-            "$ref": "#/responses/okResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
     "/licensing/check": {
       "get": {
         "tags": [
@@ -2119,13 +1980,14 @@
     },
     "/reports/{id}": {
       "get": {
-        "description": "Available to org admins only and with a valid or expired license.\n\nYou need to have a permission with action `reports:read` with scope `reports:id:\u003creport ID\u003e`.",
+        "description": "Available to org admins only and with a valid or expired license.\n\nYou need to have a permission with action `reports:read` with scope `reports:id:\u003creport ID\u003e`.\n\nRequesting reports using the internal id will stop workgin in the future\nUse the reporting apiserver to manage reports.  See: /apis/reporting.grafana.app/",
         "tags": [
           "reports",
           "enterprise"
         ],
         "summary": "Get a report.",
         "operationId": "getReport",
+        "deprecated": true,
         "parameters": [
           {
             "type": "integer",
@@ -2157,13 +2019,14 @@
         }
       },
       "put": {
-        "description": "Available to org admins only and with a valid or expired license.\n\nYou need to have a permission with action `reports.admin:write` with scope `reports:id:\u003creport ID\u003e`.",
+        "description": "Available to org admins only and with a valid or expired license.\n\nYou need to have a permission with action `reports.admin:write` with scope `reports:id:\u003creport ID\u003e`.\n\nRequesting reports using the internal id will stop workgin in the future\nUse the reporting apiserver to manage reports.  See: /apis/reporting.grafana.app/",
         "tags": [
           "reports",
           "enterprise"
         ],
         "summary": "Update a report.",
         "operationId": "updateReport",
+        "deprecated": true,
         "parameters": [
           {
             "name": "body",
@@ -2203,13 +2066,14 @@
         }
       },
       "delete": {
-        "description": "Available to org admins only and with a valid or expired license.\n\nYou need to have a permission with action `reports.delete` with scope `reports:id:\u003creport ID\u003e`.",
+        "description": "Available to org admins only and with a valid or expired license.\n\nYou need to have a permission with action `reports.delete` with scope `reports:id:\u003creport ID\u003e`.\n\nRequesting reports using the internal id will stop workgin in the future\nUse the reporting apiserver to manage reports.  See: /apis/reporting.grafana.app/",
         "tags": [
           "reports",
           "enterprise"
         ],
         "summary": "Delete a report.",
         "operationId": "deleteReport",
+        "deprecated": true,
         "parameters": [
           {
             "type": "integer",
@@ -2717,6 +2581,9 @@
         },
         "message": {
           "type": "string"
+        },
+        "uid": {
+          "type": "string"
         }
       }
     },
@@ -2970,7 +2837,6 @@
     },
     "AnnotationPanelFilter": {
       "type": "object",
-      "title": "AnnotationPanelFilter defines model for AnnotationPanelFilter.",
       "properties": {
         "exclude": {
           "description": "Should the specified panels be included or excluded",
@@ -2981,7 +2847,7 @@
           "type": "array",
           "items": {
             "type": "integer",
-            "format": "int64"
+            "format": "uint8"
           }
         }
       }
@@ -3004,7 +2870,7 @@
         "builtIn": {
           "description": "Set to 1 for the standard annotation query all dashboards have by default.",
           "type": "number",
-          "format": "float"
+          "format": "double"
         },
         "datasource": {
           "$ref": "#/definitions/DataSourceRef"
@@ -3571,20 +3437,10 @@
     },
     "CookiePreferences": {
       "type": "object",
-      "title": "CookiePreferences defines model for CookiePreferences.",
       "properties": {
-        "analytics": {
-          "type": "object",
-          "additionalProperties": {}
-        },
-        "functional": {
-          "type": "object",
-          "additionalProperties": {}
-        },
-        "performance": {
-          "type": "object",
-          "additionalProperties": {}
-        }
+        "analytics": {},
+        "functional": {},
+        "performance": {}
       }
     },
     "CookieType": {
@@ -4077,6 +3933,9 @@
           "type": "integer",
           "format": "int64"
         },
+        "teamUid": {
+          "type": "string"
+        },
         "title": {
           "type": "string"
         },
@@ -4101,6 +3960,9 @@
           "format": "int64"
         },
         "userLogin": {
+          "type": "string"
+        },
+        "userUid": {
           "type": "string"
         }
       }
@@ -4887,6 +4749,10 @@
             "$ref": "#/definitions/Folder"
           }
         },
+        "repository": {
+          "description": "When the folder belongs to a repository\nNOTE: this is only populated when folders are managed by unified storage",
+          "type": "string"
+        },
         "title": {
           "type": "string"
         },
@@ -4917,6 +4783,10 @@
           "format": "int64"
         },
         "parentUid": {
+          "type": "string"
+        },
+        "repository": {
+          "description": "When the folder belongs to a repository\nNOTE: this is only populated when folders are managed by unified storage",
           "type": "string"
         },
         "title": {
@@ -5163,24 +5033,6 @@
         }
       }
     },
-    "GroupMapping": {
-      "type": "object",
-      "properties": {
-        "groupID": {
-          "type": "string"
-        },
-        "orgID": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "uid": {
-          "type": "string"
-        },
-        "variant": {
-          "type": "string"
-        }
-      }
-    },
     "Hit": {
       "type": "object",
       "properties": {
@@ -5206,6 +5058,10 @@
         },
         "isStarred": {
           "type": "boolean"
+        },
+        "orgId": {
+          "type": "integer",
+          "format": "int64"
         },
         "permanentlyDeleteDate": {
           "type": "string",
@@ -5605,7 +5461,6 @@
     },
     "LibraryElementDTOMetaUser": {
       "type": "object",
-      "title": "LibraryElementDTOMetaUser defines model for LibraryElementDTOMetaUser.",
       "properties": {
         "avatarUrl": {
           "type": "string"
@@ -5773,13 +5628,15 @@
           "type": "string",
           "enum": [
             "DATASOURCE_NAME_CONFLICT",
+            "DATASOURCE_INVALID_URL",
+            "DATASOURCE_ALREADY_MANAGED",
+            "FOLDER_NAME_CONFLICT",
             "DASHBOARD_ALREADY_MANAGED",
             "LIBRARY_ELEMENT_NAME_CONFLICT",
             "UNSUPPORTED_DATA_TYPE",
             "RESOURCE_CONFLICT",
             "UNEXPECTED_STATUS_CODE",
             "INTERNAL_SERVICE_ERROR",
-            "ONLY_CORE_DATA_SOURCES",
             "GENERIC_ERROR"
           ]
         },
@@ -5813,10 +5670,12 @@
             "FOLDER",
             "LIBRARY_ELEMENT",
             "ALERT_RULE",
+            "ALERT_RULE_GROUP",
             "CONTACT_POINT",
             "NOTIFICATION_POLICY",
             "NOTIFICATION_TEMPLATE",
-            "MUTE_TIMING"
+            "MUTE_TIMING",
+            "PLUGIN"
           ]
         }
       }
@@ -5881,7 +5740,6 @@
     },
     "NavbarPreference": {
       "type": "object",
-      "title": "NavbarPreference defines model for NavbarPreference.",
       "properties": {
         "bookmarkUrls": {
           "type": "array",
@@ -6028,6 +5886,9 @@
           "format": "int64"
         },
         "role": {
+          "type": "string"
+        },
+        "uid": {
           "type": "string"
         },
         "userId": {
@@ -6388,7 +6249,7 @@
           "$ref": "#/definitions/QueryHistoryPreference"
         },
         "theme": {
-          "description": "Theme light, dark, empty is default",
+          "description": "light, dark, empty is default",
           "type": "string"
         },
         "timezone": {
@@ -6396,7 +6257,7 @@
           "type": "string"
         },
         "weekStart": {
-          "description": "WeekStart day of the week (sunday, monday, etc)",
+          "description": "day of the week (sunday, monday, etc)",
           "type": "string"
         }
       }
@@ -6589,10 +6450,9 @@
     },
     "QueryHistoryPreference": {
       "type": "object",
-      "title": "QueryHistoryPreference defines model for QueryHistoryPreference.",
       "properties": {
         "homeTab": {
-          "description": "HomeTab one of: '' | 'query' | 'starred';",
+          "description": "one of: '' | 'query' | 'starred';",
           "type": "string"
         }
       }
@@ -6986,6 +6846,9 @@
         "branding": {
           "$ref": "#/definitions/ReportBrandingOptions"
         },
+        "embeddedImageTheme": {
+          "type": "string"
+        },
         "id": {
           "type": "integer",
           "format": "int64"
@@ -6993,6 +6856,9 @@
         "orgId": {
           "type": "integer",
           "format": "int64"
+        },
+        "pdfTheme": {
+          "type": "string"
         },
         "userId": {
           "type": "integer",
@@ -7097,6 +6963,9 @@
           "type": "string"
         },
         "hidden": {
+          "type": "boolean"
+        },
+        "mapped": {
           "type": "boolean"
         },
         "name": {
@@ -7419,6 +7288,10 @@
           "type": "integer",
           "format": "int64",
           "example": 0
+        },
+        "uid": {
+          "type": "string",
+          "example": "fe1xejlha91xce"
         }
       }
     },
@@ -7484,6 +7357,10 @@
         "tokens": {
           "type": "integer",
           "format": "int64"
+        },
+        "uid": {
+          "type": "string",
+          "example": "fe1xejlha91xce"
         },
         "updatedAt": {
           "type": "string",
@@ -7797,6 +7674,9 @@
           }
         },
         "teamId": {
+          "type": "string"
+        },
+        "teamUid": {
           "type": "string"
         }
       }
@@ -8589,6 +8469,9 @@
         "login": {
           "type": "string"
         },
+        "uid": {
+          "type": "string"
+        },
         "userId": {
           "type": "integer",
           "format": "int64"
@@ -8827,17 +8710,6 @@
         }
       }
     },
-    "getGroupMappings": {
-      "type": "object",
-      "properties": {
-        "mappings": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/GroupMapping"
-          }
-        }
-      }
-    },
     "getGroupsResponse": {
       "type": "object",
       "properties": {
@@ -8850,20 +8722,6 @@
         "total": {
           "type": "integer",
           "format": "int64"
-        }
-      }
-    },
-    "groupMappingRequestBody": {
-      "type": "object",
-      "properties": {
-        "groupID": {
-          "type": "string"
-        },
-        "mapping": {
-          "type": "object"
-        },
-        "variant": {
-          "type": "string"
         }
       }
     },
@@ -8961,6 +8819,9 @@
           "type": "integer",
           "format": "int64"
         },
+        "teamUid": {
+          "type": "string"
+        },
         "userAvatarUrl": {
           "type": "string"
         },
@@ -8969,6 +8830,9 @@
           "format": "int64"
         },
         "userLogin": {
+          "type": "string"
+        },
+        "userUid": {
           "type": "string"
         }
       }
@@ -9564,18 +9428,6 @@
         "items": {
           "$ref": "#/definitions/FolderSearchHit"
         }
-      }
-    },
-    "getGroupMappingResponse": {
-      "description": "",
-      "schema": {
-        "$ref": "#/definitions/GroupMapping"
-      }
-    },
-    "getGroupMappingsResponse": {
-      "description": "",
-      "schema": {
-        "$ref": "#/definitions/getGroupMappings"
       }
     },
     "getGroupRolesResponse": {
@@ -10390,14 +10242,17 @@
             "type": "integer",
             "format": "int64"
           },
-          "lbacRules": {
-            "$ref": "#/definitions/TeamLBACRules"
-          },
           "message": {
             "type": "string"
           },
           "name": {
             "type": "string"
+          },
+          "rules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/TeamLBACRule"
+            }
           },
           "uid": {
             "type": "string"

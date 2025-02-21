@@ -50,9 +50,9 @@ const renderInput = (field: FieldSchema, onChange: SchemaFormProps['onChange'], 
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    jsonView: css`
-      margin-bottom: ${theme.spacing(1)};
-    `,
+    jsonView: css({
+      marginBottom: theme.spacing(1),
+    }),
   };
 };
 

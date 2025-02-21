@@ -3,7 +3,9 @@ package cloudmigrationimpl
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"testing"
+	"time"
 
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/stretchr/testify/require"
@@ -14,25 +16,18 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	ac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestGetAlertMuteTimings(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)
 
-	t.Run("when the feature flag `onPremToCloudMigrationsAlerts` is not enabled it returns nil", func(t *testing.T) {
+	t.Run("it returns the mute timings", func(t *testing.T) {
 		s := setUpServiceTest(t, false).(*Service)
 		s.features = featuremgmt.WithFeatures(featuremgmt.FlagOnPremToCloudMigrations)
-
-		muteTimeIntervals, err := s.getAlertMuteTimings(ctx, nil)
-		require.NoError(t, err)
-		require.Nil(t, muteTimeIntervals)
-	})
-
-	t.Run("when the feature flag `onPremToCloudMigrationsAlerts` is enabled it returns the mute timings", func(t *testing.T) {
-		s := setUpServiceTest(t, false).(*Service)
-		s.features = featuremgmt.WithFeatures(featuremgmt.FlagOnPremToCloudMigrations, featuremgmt.FlagOnPremToCloudMigrationsAlerts)
 
 		user := &user.SignedInUser{OrgID: 1}
 
@@ -50,18 +45,8 @@ func TestGetNotificationTemplates(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)
 
-	t.Run("when the feature flag `onPremToCloudMigrationsAlerts` is not enabled it returns nil", func(t *testing.T) {
+	t.Run("it returns the notification templates", func(t *testing.T) {
 		s := setUpServiceTest(t, false).(*Service)
-		s.features = featuremgmt.WithFeatures(featuremgmt.FlagOnPremToCloudMigrations)
-
-		notificationTemplates, err := s.getNotificationTemplates(ctx, nil)
-		require.NoError(t, err)
-		require.Nil(t, notificationTemplates)
-	})
-
-	t.Run("when the feature flag `onPremToCloudMigrationsAlerts` is enabled it returns the notification templates", func(t *testing.T) {
-		s := setUpServiceTest(t, false).(*Service)
-		s.features = featuremgmt.WithFeatures(featuremgmt.FlagOnPremToCloudMigrations, featuremgmt.FlagOnPremToCloudMigrationsAlerts)
 
 		user := &user.SignedInUser{OrgID: 1}
 
@@ -79,18 +64,8 @@ func TestGetContactPoints(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)
 
-	t.Run("when the feature flag `onPremToCloudMigrationsAlerts` is not enabled it returns nil", func(t *testing.T) {
+	t.Run("it returns the contact points", func(t *testing.T) {
 		s := setUpServiceTest(t, false).(*Service)
-		s.features = featuremgmt.WithFeatures(featuremgmt.FlagOnPremToCloudMigrations)
-
-		contactPoints, err := s.getContactPoints(ctx, nil)
-		require.NoError(t, err)
-		require.Nil(t, contactPoints)
-	})
-
-	t.Run("when the feature flag `onPremToCloudMigrationsAlerts` is enabled it returns the contact points", func(t *testing.T) {
-		s := setUpServiceTest(t, false).(*Service)
-		s.features = featuremgmt.WithFeatures(featuremgmt.FlagOnPremToCloudMigrations, featuremgmt.FlagOnPremToCloudMigrationsAlerts)
 
 		user := &user.SignedInUser{
 			OrgID: 1,
@@ -117,18 +92,8 @@ func TestGetNotificationPolicies(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)
 
-	t.Run("when the feature flag `onPremToCloudMigrationsAlerts` is not enabled it returns nil", func(t *testing.T) {
+	t.Run("it returns the contact points", func(t *testing.T) {
 		s := setUpServiceTest(t, false).(*Service)
-		s.features = featuremgmt.WithFeatures(featuremgmt.FlagOnPremToCloudMigrations)
-
-		notificationPolicies, err := s.getNotificationPolicies(ctx, nil)
-		require.NoError(t, err)
-		require.Empty(t, notificationPolicies)
-	})
-
-	t.Run("when the feature flag `onPremToCloudMigrationsAlerts` is enabled it returns the contact points", func(t *testing.T) {
-		s := setUpServiceTest(t, false).(*Service)
-		s.features = featuremgmt.WithFeatures(featuremgmt.FlagOnPremToCloudMigrations, featuremgmt.FlagOnPremToCloudMigrationsAlerts)
 
 		user := &user.SignedInUser{OrgID: 1}
 
@@ -144,6 +109,123 @@ func TestGetNotificationPolicies(t *testing.T) {
 		require.NoError(t, err)
 		require.NotEmpty(t, notificationPolicies.Routes.Receiver)
 		require.NotNil(t, notificationPolicies.Routes.Routes)
+	})
+}
+
+func TestGetAlertRules(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+
+	t.Run("it returns the alert rules", func(t *testing.T) {
+		s := setUpServiceTest(t, false).(*Service)
+
+		user := &user.SignedInUser{OrgID: 1}
+
+		alertRule := createAlertRule(t, ctx, s, user, false, "")
+
+		alertRules, err := s.getAlertRules(ctx, user)
+		require.NoError(t, err)
+		require.Len(t, alertRules, 1)
+		require.Equal(t, alertRule.UID, alertRules[0].UID)
+	})
+
+	t.Run("when the alert_rules_state config is `paused`, then the alert rules are all returned in `paused` state", func(t *testing.T) {
+		alertRulesState := func(c *setting.Cfg) {
+			c.CloudMigration.AlertRulesState = setting.GMSAlertRulesPaused
+		}
+
+		s := setUpServiceTest(t, false, alertRulesState).(*Service)
+
+		user := &user.SignedInUser{OrgID: 1}
+
+		alertRulePaused := createAlertRule(t, ctx, s, user, true, "")
+		require.True(t, alertRulePaused.IsPaused)
+
+		alertRuleUnpaused := createAlertRule(t, ctx, s, user, false, "")
+		require.False(t, alertRuleUnpaused.IsPaused)
+
+		alertRules, err := s.getAlertRules(ctx, user)
+		require.NoError(t, err)
+		require.Len(t, alertRules, 2)
+		require.True(t, alertRules[0].IsPaused)
+		require.True(t, alertRules[1].IsPaused)
+	})
+}
+
+func TestGetAlertRuleGroups(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+
+	t.Run("it returns the alert rule groups", func(t *testing.T) {
+		s := setUpServiceTest(t, false).(*Service)
+
+		user := &user.SignedInUser{OrgID: 1}
+
+		ruleGroupTitle := "ruleGroupTitle"
+
+		alertRule1 := createAlertRule(t, ctx, s, user, true, ruleGroupTitle)
+		alertRule2 := createAlertRule(t, ctx, s, user, false, ruleGroupTitle)
+		alertRule3 := createAlertRule(t, ctx, s, user, false, "anotherRuleGroup")
+
+		createAlertRuleGroup(t, ctx, s, user, ruleGroupTitle, []models.AlertRule{alertRule1, alertRule2})
+
+		ruleGroups, err := s.getAlertRuleGroups(ctx, user)
+		require.NoError(t, err)
+		require.Len(t, ruleGroups, 2)
+
+		for _, ruleGroup := range ruleGroups {
+			alertRuleUIDs := make([]string, 0)
+			for _, alertRule := range ruleGroup.Rules {
+				alertRuleUIDs = append(alertRuleUIDs, alertRule.UID)
+			}
+
+			if ruleGroup.Title == ruleGroupTitle {
+				require.Len(t, ruleGroup.Rules, 2)
+				require.ElementsMatch(t, []string{alertRule1.UID, alertRule2.UID}, alertRuleUIDs)
+			} else {
+				require.Len(t, ruleGroup.Rules, 1)
+				require.ElementsMatch(t, []string{alertRule3.UID}, alertRuleUIDs)
+			}
+		}
+	})
+
+	t.Run("with the alert rules state set to paused, it returns the alert rule groups with alert rules paused", func(t *testing.T) {
+		alertRulesState := func(c *setting.Cfg) {
+			c.CloudMigration.AlertRulesState = setting.GMSAlertRulesPaused
+		}
+
+		s := setUpServiceTest(t, false, alertRulesState).(*Service)
+
+		user := &user.SignedInUser{OrgID: 1}
+
+		ruleGroupTitle := "ruleGroupTitle"
+
+		alertRule1 := createAlertRule(t, ctx, s, user, true, ruleGroupTitle)
+		alertRule2 := createAlertRule(t, ctx, s, user, false, ruleGroupTitle)
+		alertRule3 := createAlertRule(t, ctx, s, user, false, "anotherRuleGroup")
+
+		createAlertRuleGroup(t, ctx, s, user, ruleGroupTitle, []models.AlertRule{alertRule1, alertRule2})
+
+		ruleGroups, err := s.getAlertRuleGroups(ctx, user)
+		require.NoError(t, err)
+		require.Len(t, ruleGroups, 2)
+
+		for _, ruleGroup := range ruleGroups {
+			alertRuleUIDs := make([]string, 0)
+			for _, alertRule := range ruleGroup.Rules {
+				alertRuleUIDs = append(alertRuleUIDs, alertRule.UID)
+
+				require.True(t, alertRule.IsPaused)
+			}
+
+			if ruleGroup.Title == ruleGroupTitle {
+				require.Len(t, ruleGroup.Rules, 2)
+				require.ElementsMatch(t, []string{alertRule1.UID, alertRule2.UID}, alertRuleUIDs)
+			} else {
+				require.Len(t, ruleGroup.Rules, 1)
+				require.ElementsMatch(t, []string{alertRule3.UID}, alertRuleUIDs)
+			}
+		}
 	})
 }
 
@@ -258,6 +340,54 @@ func updateNotificationPolicyTree(t *testing.T, ctx context.Context, service *Se
 		Routes:   []*definition.Route{&child},
 	}
 
-	err := service.ngAlert.Api.Policies.UpdatePolicyTree(ctx, user.GetOrgID(), tree, "", "")
+	_, _, err := service.ngAlert.Api.Policies.UpdatePolicyTree(ctx, user.GetOrgID(), tree, "", "")
 	require.NoError(t, err)
+}
+
+func createAlertRule(t *testing.T, ctx context.Context, service *Service, user *user.SignedInUser, isPaused bool, ruleGroup string) models.AlertRule {
+	t.Helper()
+
+	rule := models.AlertRule{
+		OrgID:        user.GetOrgID(),
+		Title:        fmt.Sprintf("Alert Rule SLO (Paused: %v) - %v", isPaused, ruleGroup),
+		NamespaceUID: "folderUID",
+		Condition:    "A",
+		Data: []models.AlertQuery{
+			{
+				RefID: "A",
+				Model: []byte(`{"queryType": "a"}`),
+				RelativeTimeRange: models.RelativeTimeRange{
+					From: models.Duration(60),
+					To:   models.Duration(0),
+				},
+			},
+		},
+		IsPaused:        isPaused,
+		RuleGroup:       ruleGroup,
+		For:             time.Minute,
+		IntervalSeconds: 60,
+		NoDataState:     models.OK,
+		ExecErrState:    models.OkErrState,
+	}
+
+	createdRule, err := service.ngAlert.Api.AlertRules.CreateAlertRule(ctx, user, rule, "")
+	require.NoError(t, err)
+
+	return createdRule
+}
+
+func createAlertRuleGroup(t *testing.T, ctx context.Context, service *Service, user *user.SignedInUser, title string, rules []models.AlertRule) models.AlertRuleGroup {
+	t.Helper()
+
+	group := models.AlertRuleGroup{
+		Title:     title,
+		FolderUID: "folderUID",
+		Interval:  300,
+		Rules:     rules,
+	}
+
+	err := service.ngAlert.Api.AlertRules.ReplaceRuleGroup(ctx, user, group, "")
+	require.NoError(t, err)
+
+	return group
 }

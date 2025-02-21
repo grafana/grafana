@@ -4,23 +4,26 @@ import { Dispatch, FormEvent } from 'react';
 import { UnknownAction } from 'redux';
 
 import { GrafanaTheme2, PanelData, ReducerID, SelectableValue } from '@grafana/data';
-import { ButtonSelect, InlineField, InlineFieldRow, Input, Select, Stack, Text, useStyles2 } from '@grafana/ui';
+import { InlineField, InlineFieldRow, Input, Select, Stack, Text, useStyles2 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 import { EvalFunction } from 'app/features/alerting/state/alertDef';
+import { ThresholdSelect } from 'app/features/expressions/components/ThresholdSelect';
 import { ExpressionQuery, ExpressionQueryType, reducerTypes, thresholdFunctions } from 'app/features/expressions/types';
 import { getReducerType } from 'app/features/expressions/utils/expressionTypes';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
+import { ToLabel } from '../../../../../expressions/components/ToLabel';
 import { ExpressionResult } from '../../expressions/Expression';
 
 import { updateExpression } from './reducer';
 
-export const SIMPLE_CONDITION_QUERY_ID = 'A';
-export const SIMPLE_CONDITION_REDUCER_ID = 'B';
-export const SIMPLE_CONDITION_THRESHOLD_ID = 'C';
-
+export const SimpleConditionIdentifier = {
+  queryId: 'A',
+  reducerId: 'B',
+  thresholdId: 'C',
+} as const;
 export interface SimpleCondition {
-  whenField: string;
+  whenField?: string;
   evaluator: {
     params: number[];
     type: EvalFunction;
@@ -104,22 +107,19 @@ export const SimpleConditionEditor = ({
           </Text>
         </header>
         <InlineFieldRow className={styles.condition.container}>
-          <InlineField label="WHEN">
-            <Select
-              options={reducerTypes}
-              value={reducerTypes.find((o) => o.value === simpleCondition.whenField)}
-              onChange={onReducerTypeChange}
-              width={20}
-            />
-          </InlineField>
-          <InlineField label="OF QUERY">
-            <Stack direction="row" gap={1} alignItems="center">
-              <ButtonSelect
-                className={styles.buttonSelectText}
-                options={thresholdFunctions}
-                onChange={onEvalFunctionChange}
-                value={thresholdFunction}
+          {simpleCondition.whenField && (
+            <InlineField label="WHEN">
+              <Select
+                options={reducerTypes}
+                value={reducerTypes.find((o) => o.value === simpleCondition.whenField)}
+                onChange={onReducerTypeChange}
+                width={20}
               />
+            </InlineField>
+          )}
+          <InlineField label={simpleCondition.whenField ? 'OF QUERY' : 'WHEN QUERY'}>
+            <Stack direction="row" gap={1} alignItems="center">
+              <ThresholdSelect onChange={onEvalFunctionChange} value={thresholdFunction} />
               {isRange ? (
                 <>
                   <Input
@@ -128,9 +128,7 @@ export const SimpleConditionEditor = ({
                     value={simpleCondition.evaluator.params[0]}
                     onChange={(event) => onEvaluateValueChange(event, 0)}
                   />
-                  <div className={styles.condition.button}>
-                    <Trans i18nKey="alerting.simpleCondition.ofQuery.To">TO</Trans>
-                  </div>
+                  <ToLabel />
                   <Input
                     type="number"
                     width={10}
@@ -161,7 +159,8 @@ function updateReduceExpression(
   dispatch: Dispatch<UnknownAction>
 ) {
   const reduceExpression = expressionQueriesList.find(
-    (query) => query.model.type === ExpressionQueryType.reduce && query.model.refId === SIMPLE_CONDITION_REDUCER_ID
+    (query) =>
+      query.model.type === ExpressionQueryType.reduce && query.model.refId === SimpleConditionIdentifier.reducerId
   );
 
   const newReduceExpression = reduceExpression
@@ -181,7 +180,8 @@ function updateThresholdFunction(
   dispatch: Dispatch<UnknownAction>
 ) {
   const thresholdExpression = expressionQueriesList.find(
-    (query) => query.model.type === ExpressionQueryType.threshold && query.model.refId === SIMPLE_CONDITION_THRESHOLD_ID
+    (query) =>
+      query.model.type === ExpressionQueryType.threshold && query.model.refId === SimpleConditionIdentifier.thresholdId
   );
 
   const newThresholdExpression = produce(thresholdExpression, (draft) => {
@@ -199,7 +199,8 @@ function updateThresholdValue(
   dispatch: Dispatch<UnknownAction>
 ) {
   const thresholdExpression = expressionQueriesList.find(
-    (query) => query.model.type === ExpressionQueryType.threshold && query.model.refId === SIMPLE_CONDITION_THRESHOLD_ID
+    (query) =>
+      query.model.type === ExpressionQueryType.threshold && query.model.refId === SimpleConditionIdentifier.thresholdId
   );
 
   const newThresholdExpression = produce(thresholdExpression, (draft) => {
@@ -212,13 +213,14 @@ function updateThresholdValue(
 
 export function getSimpleConditionFromExpressions(expressions: Array<AlertQuery<ExpressionQuery>>): SimpleCondition {
   const reduceExpression = expressions.find(
-    (query) => query.model.type === ExpressionQueryType.reduce && query.refId === SIMPLE_CONDITION_REDUCER_ID
+    (query) => query.model.type === ExpressionQueryType.reduce && query.refId === SimpleConditionIdentifier.reducerId
   );
   const thresholdExpression = expressions.find(
-    (query) => query.model.type === ExpressionQueryType.threshold && query.refId === SIMPLE_CONDITION_THRESHOLD_ID
+    (query) =>
+      query.model.type === ExpressionQueryType.threshold && query.refId === SimpleConditionIdentifier.thresholdId
   );
   const conditionsFromThreshold = thresholdExpression?.model.conditions ?? [];
-  const whenField = reduceExpression?.model.reducer ?? ReducerID.last;
+  const whenField = reduceExpression?.model.reducer;
   const params = conditionsFromThreshold[0]?.evaluator?.params
     ? [...conditionsFromThreshold[0]?.evaluator?.params]
     : [0];
@@ -260,20 +262,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
       padding: `${theme.spacing(0.5)} ${theme.spacing(1)}`,
       borderBottom: `solid 1px ${theme.colors.border.weak}`,
       flex: 1,
-    }),
-    button: css({
-      height: '32px',
-      color: theme.colors.primary.text,
-      fontSize: theme.typography.bodySmall.fontSize,
-      textTransform: 'uppercase',
-      display: 'flex',
-      alignItems: 'center',
-      borderRadius: theme.shape.radius.default,
-      fontWeight: theme.typography.fontWeightBold,
-      border: `1px solid ${theme.colors.border.medium}`,
-      whiteSpace: 'nowrap',
-      padding: `0 ${theme.spacing(1)}`,
-      backgroundColor: theme.colors.background.primary,
     }),
   },
 });

@@ -5,6 +5,7 @@ import { getTemplateSrv } from '@grafana/runtime';
 import { VariableFormatID } from '@grafana/schema';
 
 import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
+import { getEscapedSpanNames } from '../datasource';
 import TempoLanguageProvider from '../language_provider';
 import { Scope } from '../types';
 
@@ -28,14 +29,20 @@ export const interpolateFilters = (filters: TraceqlFilter[], scopedVars?: Scoped
   return interpolatedFilters;
 };
 
+const isRegExpOperator = (operator: string) => operator === '=~' || operator === '!~';
+
+const escapeValues = (values: string[]) => getEscapedSpanNames(values);
+
 export const valueHelper = (f: TraceqlFilter) => {
-  if (Array.isArray(f.value) && f.value.length > 1) {
-    return `"${f.value.join('|')}"`;
+  const value = Array.isArray(f.value) && isRegExpOperator(f.operator!) ? escapeValues(f.value) : f.value;
+
+  if (Array.isArray(value) && value.length > 1) {
+    return `"${value.join('|')}"`;
   }
   if (f.valueType === 'string') {
-    return `"${f.value}"`;
+    return `"${value}"`;
   }
-  return f.value;
+  return value;
 };
 
 export const scopeHelper = (f: TraceqlFilter, lp: TempoLanguageProvider) => {
@@ -63,6 +70,14 @@ export const tagHelper = (f: TraceqlFilter, filters: TraceqlFilter[]) => {
     return f.tag;
   }
   return f.tag;
+};
+
+export const filterToQuerySection = (f: TraceqlFilter, filters: TraceqlFilter[], lp: TempoLanguageProvider) => {
+  if (Array.isArray(f.value) && f.value.length > 1 && !isRegExpOperator(f.operator!)) {
+    return `(${f.value.map((v) => `${scopeHelper(f, lp)}${tagHelper(f, filters)}${f.operator}${valueHelper({ ...f, value: v })}`).join(' || ')})`;
+  }
+
+  return `${scopeHelper(f, lp)}${tagHelper(f, filters)}${f.operator}${valueHelper(f)}`;
 };
 
 export const generateQueryFromAdHocFilters = (filters: AdHocVariableFilter[], lp: TempoLanguageProvider) => {

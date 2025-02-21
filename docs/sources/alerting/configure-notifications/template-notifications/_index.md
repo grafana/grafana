@@ -14,7 +14,7 @@ labels:
     - enterprise
     - oss
 title: Template notifications
-weight: 430
+weight: 450
 refs:
   template-annotations-and-labels:
     - pattern: /docs/grafana/
@@ -99,7 +99,7 @@ The notification template is assigned to the contact point to determine the noti
 
 {{< figure src="/media/docs/alerting/how-notification-templates-works.png" max-width="1200px" caption="A flow of the alert notification process, from querying the alert rule to sending the alert notification message." >}}
 
-By default, Grafana provides default templates, such as `default.title` and `default.message`, to format notification messages.
+By default, Grafana provides default templates, such as `{{define "default.title"}}` and `{{define "default.message"}}`, to format notification messages.
 
 ## More information
 
@@ -108,3 +108,7 @@ For further details on how to write notification templates, refer to:
 - [Select, create, and preview a notification template](ref:manage-notification-templates)
 - [Notification template reference](ref:reference)
 - [Notification template examples](ref:examples)
+
+{{< admonition type="tip" >}}
+For a practical example of templating, refer to our [Getting Started with Templating tutorial](https://grafana.com/tutorials/alerting-get-started-pt4/).
+{{< /admonition  >}}

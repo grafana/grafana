@@ -1,0 +1,8 @@
+{
+    "status" : "success",
+    "data" : {
+       "resultType" : "vector",
+       "result" : []
+    },
+    "infos" : ["info 1", "info 2"]
+ }

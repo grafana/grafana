@@ -2,8 +2,9 @@ import { Subscription } from 'rxjs';
 
 import { AnnotationQuery, DashboardCursorSync, dateTimeFormat, DateTimeInput, EventBusSrv } from '@grafana/data';
 import { TimeRangeUpdatedEvent } from '@grafana/runtime';
-import { behaviors, SceneDataLayerSet, sceneGraph, SceneObject, VizPanel } from '@grafana/scenes';
+import { behaviors, sceneGraph, SceneObject, VizPanel } from '@grafana/scenes';
 
+import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene } from '../scene/DashboardScene';
 import { dataLayersToAnnotations } from '../serialization/dataLayersToAnnotations';
 
@@ -104,8 +105,8 @@ export class DashboardModelCompatibilityWrapper {
   public get annotations(): { list: AnnotationQuery[] } {
     const annotations: { list: AnnotationQuery[] } = { list: [] };
 
-    if (this._scene.state.$data instanceof SceneDataLayerSet) {
-      annotations.list = dataLayersToAnnotations(this._scene.state.$data.state.layers);
+    if (this._scene.state.$data instanceof DashboardDataLayerSet) {
+      annotations.list = dataLayersToAnnotations(this._scene.state.$data.state.annotationLayers);
     }
 
     return annotations;

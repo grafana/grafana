@@ -73,6 +73,7 @@ func ProvideInitializationStage(cfg *config.PluginManagementCfg, pr registry.Ser
 			RegisterPluginRolesStep(roleRegistry),
 			RegisterActionSetsStep(actionSetRegistry),
 			ReportBuildMetrics,
+			ReportTargetMetrics,
 			initialization.PluginRegistrationStep(pr),
 		},
 	})

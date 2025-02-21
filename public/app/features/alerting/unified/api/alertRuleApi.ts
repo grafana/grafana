@@ -3,7 +3,12 @@ import { set } from 'lodash';
 import { RelativeTimeRange } from '@grafana/data';
 import { t } from 'app/core/internationalization';
 import { Matcher } from 'app/plugins/datasource/alertmanager/types';
-import { RuleIdentifier, RuleNamespace, RulerDataSourceConfig } from 'app/types/unified-alerting';
+import {
+  GrafanaRuleGroupIdentifier,
+  RuleIdentifier,
+  RuleNamespace,
+  RulerDataSourceConfig,
+} from 'app/types/unified-alerting';
 import {
   AlertQuery,
   Annotations,
@@ -17,17 +22,18 @@ import {
 } from 'app/types/unified-alerting-dto';
 
 import { ExportFormats } from '../components/export/providers';
-import { Folder } from '../components/rule-editor/RuleFolderPicker';
-import { getDatasourceAPIUid, GRAFANA_RULES_SOURCE_NAME, isGrafanaRulesSource } from '../utils/datasource';
+import { Folder } from '../types/rule-form';
+import { GRAFANA_RULES_SOURCE_NAME, getDatasourceAPIUid, isGrafanaRulesSource } from '../utils/datasource';
 import { arrayKeyValuesToObject } from '../utils/labels';
-import { isCloudRuleIdentifier, isPrometheusRuleIdentifier } from '../utils/rules';
+import { isCloudRuleIdentifier, isGrafanaRulerRule, isPrometheusRuleIdentifier } from '../utils/rules';
 
-import { alertingApi, WithNotificationOptions } from './alertingApi';
+import { WithNotificationOptions, alertingApi } from './alertingApi';
+import { GRAFANA_RULER_CONFIG } from './featureDiscoveryApi';
 import {
   FetchPromRulesFilter,
+  getRulesFilterSearchParams,
   groupRulesByFileName,
   paramsWithMatcherAndState,
-  getRulesFilterSearchParams,
 } from './prometheus';
 import { FetchRulerRulesFilter, rulerUrlBuilder } from './ruler';
 
@@ -173,9 +179,21 @@ export const alertRuleApi = alertingApi.injectEndpoints({
         dashboardUid?: string;
         panelId?: number;
         limitAlerts?: number;
+        maxGroups?: number;
+        excludeAlerts?: boolean;
       }
     >({
-      query: ({ ruleSourceName, namespace, groupName, ruleName, dashboardUid, panelId, limitAlerts }) => {
+      query: ({
+        ruleSourceName,
+        namespace,
+        groupName,
+        ruleName,
+        dashboardUid,
+        panelId,
+        limitAlerts,
+        maxGroups,
+        excludeAlerts,
+      }) => {
         const queryParams: Record<string, string | undefined> = {
           rule_group: groupName,
           rule_name: ruleName,
@@ -193,6 +211,14 @@ export const alertRuleApi = alertingApi.injectEndpoints({
 
         if (limitAlerts !== undefined) {
           set(queryParams, PrometheusAPIFilters.LimitAlerts, String(limitAlerts));
+        }
+
+        if (maxGroups) {
+          set(queryParams, 'max_groups', maxGroups);
+        }
+
+        if (excludeAlerts) {
+          set(queryParams, 'exclude_alerts', 'true');
         }
 
         return {
@@ -222,6 +248,7 @@ export const alertRuleApi = alertingApi.injectEndpoints({
         const { path, params } = rulerUrlBuilder(rulerConfig).namespace(namespace);
         return { url: path, params };
       },
+      providesTags: (_result, _error, { namespace }) => [{ type: 'RuleNamespace', id: namespace }],
     }),
 
     // TODO This should be probably a separate ruler API file
@@ -237,12 +264,20 @@ export const alertRuleApi = alertingApi.injectEndpoints({
           notificationOptions,
         };
       },
-      providesTags: (_result, _error, { namespace, group }) => [
-        {
-          type: 'RuleGroup',
-          id: `${namespace}/${group}`,
-        },
-        { type: 'RuleNamespace', id: namespace },
+      providesTags: (_result, _error, { namespace, group, rulerConfig }) => [
+        { type: 'RuleGroup', id: `${rulerConfig.dataSourceUid}/${namespace}/${group}` },
+        { type: 'RuleNamespace', id: `${rulerConfig.dataSourceUid}/${namespace}` },
+      ],
+    }),
+
+    getGrafanaRulerGroup: build.query<RulerRuleGroupDTO<RulerGrafanaRuleDTO>, GrafanaRuleGroupIdentifier>({
+      query: ({ namespace, groupName }) => {
+        const { path, params } = rulerUrlBuilder(GRAFANA_RULER_CONFIG).namespaceGroup(namespace.uid, groupName);
+        return { url: path, params };
+      },
+      providesTags: (_result, _error, { namespace, groupName }) => [
+        { type: 'RuleGroup', id: `grafana/${namespace.uid}/${groupName}` },
+        { type: 'RuleNamespace', id: `grafana/${namespace.uid}` },
       ],
     }),
 
@@ -264,12 +299,9 @@ export const alertRuleApi = alertingApi.injectEndpoints({
           },
         };
       },
-      invalidatesTags: (_result, _error, { namespace, group }) => [
-        {
-          type: 'RuleGroup',
-          id: `${namespace}/${group}`,
-        },
-        { type: 'RuleNamespace', id: namespace },
+      invalidatesTags: (_result, _error, { namespace, group, rulerConfig }) => [
+        { type: 'RuleGroup', id: `${rulerConfig.dataSourceUid}/${namespace}/${group}` },
+        { type: 'RuleNamespace', id: `${rulerConfig.dataSourceUid}/${namespace}` },
       ],
     }),
 
@@ -297,20 +329,28 @@ export const alertRuleApi = alertingApi.injectEndpoints({
           },
         };
       },
-      invalidatesTags: (result, _error, { namespace, payload }) => [
-        { type: 'RuleNamespace', id: namespace },
-        {
-          type: 'RuleGroup',
-          id: `${namespace}/${payload.name}`,
-        },
-      ],
-    }),
+      invalidatesTags: (result, _error, { namespace, payload, rulerConfig }) => {
+        const grafanaRulerRules = payload.rules.filter((rule) => isGrafanaRulerRule(rule));
 
+        return [
+          { type: 'RuleNamespace', id: `${rulerConfig.dataSourceUid}/${namespace}` },
+          { type: 'RuleGroup', id: `${rulerConfig.dataSourceUid}/${namespace}/${payload.name}` },
+          ...grafanaRulerRules.flatMap((rule) => [
+            { type: 'GrafanaRulerRule', id: rule.grafana_alert.uid } as const,
+            { type: 'GrafanaRulerRuleVersion', id: rule.grafana_alert.uid } as const,
+          ]),
+        ];
+      },
+    }),
     getAlertRule: build.query<RulerGrafanaRuleDTO, { uid: string }>({
       // TODO: In future, if supported in other rulers, parametrize ruler source name
       // For now, to make the consumption of this hook clearer, only support Grafana ruler
       query: ({ uid }) => ({ url: `/api/ruler/${GRAFANA_RULES_SOURCE_NAME}/api/v1/rule/${uid}` }),
       providesTags: (_result, _error, { uid }) => [{ type: 'GrafanaRulerRule', id: uid }],
+    }),
+    getAlertVersionHistory: build.query<RulerGrafanaRuleDTO[], { uid: string }>({
+      query: ({ uid }) => ({ url: `/api/ruler/${GRAFANA_RULES_SOURCE_NAME}/api/v1/rule/${uid}/versions` }),
+      providesTags: (_result, _error, { uid }) => [{ type: 'GrafanaRulerRuleVersion', id: uid }],
     }),
 
     exportRules: build.query<string, ExportRulesParams>({

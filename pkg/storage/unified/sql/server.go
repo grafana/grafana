@@ -1,23 +1,24 @@
 package sql
 
 import (
-	"context"
-	"errors"
 	"os"
 	"strings"
 
-	"github.com/grafana/authlib/claims"
+	"github.com/prometheus/client_golang/prometheus"
+
+	"github.com/grafana/authlib/types"
+
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 // Creates a new ResourceServer
-func NewResourceServer(ctx context.Context, db infraDB.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer tracing.Tracer, reg prometheus.Registerer) (resource.ResourceServer, error) {
+func NewResourceServer(db infraDB.DB, cfg *setting.Cfg,
+	tracer tracing.Tracer, reg prometheus.Registerer, ac types.AccessClient, searchOptions resource.SearchOptions) (resource.ResourceServer, error) {
 	apiserverCfg := cfg.SectionWithEnvOverrides("grafana-apiserver")
 	opts := resource.ResourceServerOptions{
 		Tracer: tracer,
@@ -26,7 +27,9 @@ func NewResourceServer(ctx context.Context, db infraDB.DB, cfg *setting.Cfg, fea
 		},
 		Reg: reg,
 	}
-
+	if ac != nil {
+		opts.AccessClient = resource.NewAuthzLimitedClient(ac, resource.AuthzOptions{Tracer: tracer, Registry: reg})
+	}
 	// Support local file blob
 	if strings.HasPrefix(opts.Blob.URL, "./data/") {
 		dir := strings.Replace(opts.Blob.URL, "./data", cfg.DataPath, 1)
@@ -41,39 +44,29 @@ func NewResourceServer(ctx context.Context, db infraDB.DB, cfg *setting.Cfg, fea
 	if err != nil {
 		return nil, err
 	}
-	store, err := NewBackend(BackendOptions{DBProvider: eDB, Tracer: tracer})
+
+	dbCfg := cfg.SectionWithEnvOverrides("database")
+	// Check in the config if HA is enabled by default we always assume a HA setup.
+	isHA := dbCfg.Key("high_availability").MustBool(true)
+	// SQLite is not possible to run in HA, so we set it to false.
+	databaseType := dbCfg.Key("type").MustString(migrator.SQLite)
+	if databaseType == migrator.SQLite {
+		isHA = false
+	}
+
+	store, err := NewBackend(BackendOptions{DBProvider: eDB, Tracer: tracer, IsHA: isHA})
 	if err != nil {
 		return nil, err
 	}
 	opts.Backend = store
 	opts.Diagnostics = store
 	opts.Lifecycle = store
+	opts.Search = searchOptions
 
-	if features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageSearch) {
-		opts.Index = resource.NewResourceIndexServer(cfg)
-		server, err := resource.NewResourceServer(opts)
-		if err != nil {
-			return nil, err
-		}
-		// initialze the search index
-		indexer, ok := server.(resource.ResourceIndexer)
-		if !ok {
-			return nil, errors.New("index server does not implement ResourceIndexer")
-		}
-		_, err = indexer.Index(ctx)
-		return server, err
+	rs, err := resource.NewResourceServer(opts)
+	if err != nil {
+		return nil, err
 	}
 
-	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesFolders) {
-		opts.WriteAccess = resource.WriteAccessHooks{
-			Folder: func(ctx context.Context, user claims.AuthInfo, uid string) bool {
-				// #TODO build on the logic here
-				// #TODO only enable write access when the resource being written in the folder
-				// is another folder
-				return true
-			},
-		}
-	}
-
-	return resource.NewResourceServer(opts)
+	return rs, nil
 }

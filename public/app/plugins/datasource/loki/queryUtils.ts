@@ -22,11 +22,13 @@ import {
   Json,
   OrFilter,
   FilterOp,
+  RangeOp,
+  VectorOp,
+  BinOpExpr,
 } from '@grafana/lezer-logql';
 import { DataQuery } from '@grafana/schema';
 
-import { REF_ID_STARTER_LOG_VOLUME } from './datasource';
-import { addLabelToQuery, getStreamSelectorPositions, NodePosition } from './modifyQuery';
+import { addDropToQuery, addLabelToQuery, getStreamSelectorPositions, NodePosition } from './modifyQuery';
 import { ErrorId } from './querybuilder/parsingUtils';
 import { LabelType, LokiQuery, LokiQueryDirection, LokiQueryType } from './types';
 
@@ -317,13 +319,57 @@ export function requestSupportsSplitting(allQueries: LokiQuery[]) {
 export function requestSupportsSharding(allQueries: LokiQuery[]) {
   const queries = allQueries
     .filter((query) => !query.hide)
+    .filter((query) => query.queryType !== LokiQueryType.Instant)
     .filter((query) => !query.refId.includes('do-not-shard'))
     .filter((query) => query.expr)
     .filter(
-      (query) => query.direction === LokiQueryDirection.Scan || query.refId?.startsWith(REF_ID_STARTER_LOG_VOLUME)
+      (query) =>
+        (query.direction === LokiQueryDirection.Scan && isLogsQuery(query.expr)) || metricSupportsSharding(query.expr)
     );
 
   return queries.length > 0;
+}
+
+function metricSupportsSharding(query: string) {
+  if (isLogsQuery(query)) {
+    return false;
+  }
+  query = query.trim().toLowerCase();
+
+  const disallowed = getNodesFromQuery(query, [BinOpExpr]);
+  if (disallowed.length > 0) {
+    return false;
+  }
+
+  /**
+   * If there are VectorAggregationExpr, we want to make sure that the leftmost VectorOp is sum, meaning that
+   * it's wrapped in a sum. E.g.
+   * Disallowed: avg(sum by (level) (avg_over_time({place="luna"}[1m])))
+   * Allowed: sum(sum by (level) (avg_over_time({place="luna"}[1m])))
+   */
+  const vectorOps = getNodesFromQuery(query, [VectorOp]);
+  const supportedVectorOps = vectorOps.filter((node) => getNodeString(query, node) === 'sum');
+  const unsupportedVectorOps = vectorOps.filter((node) => getNodeString(query, node) !== 'sum');
+  const supportedWrappingVectorOpps = supportedVectorOps.filter((supportedOp) =>
+    unsupportedVectorOps.every((unsupportedOp) => supportedOp.from < unsupportedOp.from)
+  );
+  if (unsupportedVectorOps.length > 0) {
+    return supportedWrappingVectorOpps.length > 0;
+  }
+
+  const rangeOps = getNodesFromQuery(query, [RangeOp]);
+  const supportedRangeOps = ['count_over_time', 'sum_over_time', 'bytes_over_time'];
+  for (const node of rangeOps) {
+    if (!supportedRangeOps.includes(getNodeString(query, node))) {
+      return supportedWrappingVectorOpps.length > 0;
+    }
+  }
+
+  return true;
+}
+
+function getNodeString(query: string, node: SyntaxNode) {
+  return query.substring(node.from, node.to);
 }
 
 export const isLokiQuery = (query: DataQuery): query is LokiQuery => {
@@ -354,15 +400,23 @@ export const interpolateShardingSelector = (queries: LokiQuery[], shards: number
     shardValue = shardValue === '-1' ? '' : shardValue;
     return queries.map((query) => ({
       ...query,
-      expr: addLabelToQuery(query.expr, '__stream_shard__', '=', shardValue, LabelType.Indexed),
+      expr: addStreamShardLabelsToQuery(query.expr, '=', shardValue),
     }));
   }
 
   return queries.map((query) => ({
     ...query,
-    expr: addLabelToQuery(query.expr, '__stream_shard__', '=~', shardValue, LabelType.Indexed),
+    expr: addStreamShardLabelsToQuery(query.expr, '=~', shardValue),
   }));
 };
+
+function addStreamShardLabelsToQuery(query: string, operator: string, shardValue: string) {
+  const shardedQuery = addLabelToQuery(query, '__stream_shard__', operator, shardValue, LabelType.Indexed);
+  if (!isLogsQuery(query)) {
+    return addDropToQuery(shardedQuery, ['__stream_shard__']);
+  }
+  return shardedQuery;
+}
 
 export const getSelectorForShardValues = (query: string) => {
   const selector = getNodesFromQuery(query, [Selector]);

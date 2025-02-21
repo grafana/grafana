@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Action, DataFrame, VariableSuggestion } from '@grafana/data';
 import { Button } from '@grafana/ui/src/components/Button';
 import { Modal } from '@grafana/ui/src/components/Modal/Modal';
+import { Trans } from 'app/core/internationalization';
 
 import { ActionEditor } from './ActionEditor';
 
@@ -13,6 +14,7 @@ interface ActionEditorModalContentProps {
   onSave: (index: number, action: Action) => void;
   onCancel: (index: number) => void;
   getSuggestions: () => VariableSuggestion[];
+  showOneClick: boolean;
 }
 
 export const ActionEditorModalContent = ({
@@ -21,6 +23,7 @@ export const ActionEditorModalContent = ({
   onSave,
   onCancel,
   getSuggestions,
+  showOneClick,
 }: ActionEditorModalContentProps) => {
   const [dirtyAction, setDirtyAction] = useState(action);
 
@@ -33,10 +36,11 @@ export const ActionEditorModalContent = ({
           setDirtyAction(action);
         }}
         suggestions={getSuggestions()}
+        showOneClick={showOneClick}
       />
       <Modal.ButtonRow>
         <Button variant="secondary" onClick={() => onCancel(index)} fill="outline">
-          Cancel
+          <Trans i18nKey="action-editor.modal.cancel-button">Cancel</Trans>
         </Button>
         <Button
           onClick={() => {
@@ -44,7 +48,7 @@ export const ActionEditorModalContent = ({
           }}
           disabled={dirtyAction.title.trim() === '' || dirtyAction.fetch.url.trim() === ''}
         >
-          Save
+          <Trans i18nKey="action-editor.modal.save-button">Save</Trans>
         </Button>
       </Modal.ButtonRow>
     </>

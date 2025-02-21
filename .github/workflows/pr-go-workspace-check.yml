@@ -4,6 +4,15 @@ on:
   workflow_dispatch:
   pull_request:
     branches: [main]
+    paths:
+      - .github/workflows/pr-go-workspace-check.yml
+      - go.mod
+      - go.sum
+      - go.work
+      - go.work.sum
+      - '**/go.mod'
+      - '**/go.sum'
+      - '**.go'
 
 jobs:
   check:

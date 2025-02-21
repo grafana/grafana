@@ -4,7 +4,7 @@ import { useAsync } from 'react-use';
 import SwaggerUI from 'swagger-ui-react';
 
 import { createTheme, monacoLanguageRegistry, SelectableValue } from '@grafana/data';
-import { Stack, Select } from '@grafana/ui';
+import { Stack, Select, UserIcon, UserView, Button } from '@grafana/ui';
 import { setMonacoEnv } from 'app/core/monacoEnv';
 import { ThemeProvider } from 'app/core/utils/ConfigProvider';
 
@@ -49,14 +49,32 @@ export const Page = () => {
     return urls;
   });
 
+  const [userView, setUserView] = useState<UserView>();
+
   const namespace = useAsync(async () => {
     const response = await fetch('api/frontend/settings');
     if (!response.ok) {
       console.warn('No settings found');
-      return '';
+      return 'default';
     }
     const val = await response.json();
     return val.namespace;
+  });
+
+  useAsync(async () => {
+    const response = await fetch('api/user');
+    if (!response.ok) {
+      console.warn('No user found, show login button');
+      return;
+    }
+    const val = await response.json();
+    setUserView({
+      user: {
+        name: val.email || val.login,
+        avatarUrl: val.avatarUrl,
+      },
+      lastActiveAt: new Date(),
+    });
   });
 
   return (
@@ -83,6 +101,15 @@ export const Page = () => {
                 value={url}
                 isLoading={urls.loading}
               />
+              <div style={{ marginTop: '5px' }}>
+                {userView ? (
+                  <UserIcon userView={userView} />
+                ) : (
+                  <a href="/login">
+                    <Button variant="primary">Login</Button>
+                  </a>
+                )}
+              </div>
             </Stack>
           </div>
 

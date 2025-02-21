@@ -17,7 +17,7 @@ type store interface {
 	ListTokens(ctx context.Context, query *serviceaccounts.GetSATokensQuery) ([]apikey.APIKey, error)
 	MigrateApiKey(ctx context.Context, orgID int64, keyId int64) error
 	MigrateApiKeysToServiceAccounts(ctx context.Context, orgID int64) (*serviceaccounts.MigrationResult, error)
-	RetrieveServiceAccount(ctx context.Context, orgID, serviceAccountID int64) (*serviceaccounts.ServiceAccountProfileDTO, error)
+	RetrieveServiceAccount(ctx context.Context, query *serviceaccounts.GetServiceAccountQuery) (*serviceaccounts.ServiceAccountProfileDTO, error)
 	RetrieveServiceAccountIdByName(ctx context.Context, orgID int64, name string) (int64, error)
 	RevokeServiceAccountToken(ctx context.Context, orgId, serviceAccountId, tokenId int64) error
 	SearchOrgServiceAccounts(ctx context.Context, query *serviceaccounts.SearchOrgServiceAccountsQuery) (*serviceaccounts.SearchOrgServiceAccountsResult, error)

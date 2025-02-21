@@ -26,8 +26,8 @@ export const AddPermission = ({
   onCancel,
 }: Props) => {
   const [target, setPermissionTarget] = useState<PermissionTarget>(PermissionTarget.None);
-  const [teamId, setTeamId] = useState(0);
-  const [userId, setUserId] = useState(0);
+  const [teamUid, setTeamUid] = useState('');
+  const [userUid, setUserUid] = useState('');
   const [builtInRole, setBuiltinRole] = useState('');
   const [permission, setPermission] = useState('');
 
@@ -61,9 +61,9 @@ export const AddPermission = ({
   }, [permissions]);
 
   const isValid = () =>
-    (target === PermissionTarget.Team && teamId > 0) ||
-    (target === PermissionTarget.User && userId > 0) ||
-    (target === PermissionTarget.ServiceAccount && userId > 0) ||
+    (target === PermissionTarget.Team && teamUid) ||
+    (target === PermissionTarget.User && userUid) ||
+    (target === PermissionTarget.ServiceAccount && userUid) ||
     (PermissionTarget.BuiltInRole && OrgRole.hasOwnProperty(builtInRole));
 
   return (
@@ -75,7 +75,7 @@ export const AddPermission = ({
         name="addPermission"
         onSubmit={(event) => {
           event.preventDefault();
-          onAdd({ userId, teamId, builtInRole, permission, target });
+          onAdd({ userUid, teamUid, builtInRole, permission, target });
         }}
       >
         <Stack gap={1} direction="row">
@@ -88,13 +88,13 @@ export const AddPermission = ({
             width="auto"
           />
 
-          {target === PermissionTarget.User && <UserPicker onSelected={(u) => setUserId(u?.value || 0)} />}
+          {target === PermissionTarget.User && <UserPicker onSelected={(u) => setUserUid(u?.value?.uid || '')} />}
 
           {target === PermissionTarget.ServiceAccount && (
-            <ServiceAccountPicker onSelected={(u) => setUserId(u?.value || 0)} />
+            <ServiceAccountPicker onSelected={(u) => setUserUid(u?.value?.uid || '')} />
           )}
 
-          {target === PermissionTarget.Team && <TeamPicker onSelected={(t) => setTeamId(t.value?.id || 0)} />}
+          {target === PermissionTarget.Team && <TeamPicker onSelected={(t) => setTeamUid(t.value?.uid || '')} />}
 
           {target === PermissionTarget.BuiltInRole && (
             <Select

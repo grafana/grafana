@@ -1,10 +1,10 @@
 import { useMemo } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { config, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import { Menu } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
-import { DashboardModel } from 'app/features/dashboard/state';
+import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import {
   getCopiedPanelPlugin,
   onAddLibraryPanel,
@@ -39,17 +39,6 @@ const AddPanelMenu = ({ dashboard }: Props) => {
           dispatch(setInitialDatasource(undefined));
         }}
       />
-      {config.featureToggles.vizAndWidgetSplit && (
-        <Menu.Item
-          key="add-widget"
-          testId={selectors.pages.AddDashboard.itemButton('Add new widget menu item')}
-          label={t('dashboard.add-menu.widget', 'Widget')}
-          onClick={() => {
-            DashboardInteractions.toolbarAddButtonClicked({ item: 'add_widget' });
-            locationService.partial({ addWidget: true });
-          }}
-        />
-      )}
       <Menu.Item
         key="add-row"
         testId={selectors.pages.AddDashboard.itemButton('Add new row menu item')}

@@ -50,6 +50,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/language/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/language/
+  group-alert-notifications:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/group-alert-notifications/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notifications/group-alert-notifications/
 ---
 
 # Notification template examples
@@ -59,7 +64,7 @@ Notification templates allows you to change the default notification messages.
 You can modify the content and format of notification messages. For example, you can customize the content to show only specific information or adjust the format to suit a particular contact point, such as Slack or Email.
 
 {{% admonition type="note" %}}
-Avoid adding extra information about alert instances in notification templates, as this information is only be visible in the notification message.
+Avoid adding extra information about alert instances in notification templates, as this information is only visible in the notification message.
 
 Instead, you should [use annotations or labels](ref:template-annotations-and-labels) to add information directly to the alert, ensuring it's also visible in the alert state and alert history within Grafana. You can then print the new alert annotation or label in notification templates.
 {{% /admonition %}}
@@ -106,6 +111,12 @@ The name of the alert is {{ .Labels.alertname }}
 {{ end }}
 ```
 
+You can then use the template by passing the [notification data (dot `.`)](ref:reference-notification-data):
+
+```go
+{{ template "custom_message" . }}
+```
+
 ```template_output
 The name of the alert is InstanceDown
 
@@ -135,7 +146,11 @@ In this example:
 - A template (`alert.summary_and_description`) is defined to print the `summary`, `status`, and `description` of one [alert](ref:reference-alert).
 - The main template `custom.alerts` iterates the list of alerts (`.Alerts`) in [notification data](ref:reference-notification-data), executing the `alert.summary_and_description` template to print the details of each alert.
 
-The notification message would look like this:
+Execute the template by passing the dot (`.`):
+
+```go
+{{ template "custom.alerts" . }}
+```
 
 ```template_output
 2 alert(s)
@@ -173,7 +188,11 @@ The following example is similar to the previous one, but it separates firing an
 
 Instead of `.Alerts`, the template accesses `.Alerts.Firing` and `.Alerts.Resolved` separately to print details for each alert.
 
-The output might now look like this:
+Run the template by passing the dot (`.`):
+
+```go
+{{ template "custom.firing_and_resolved_alerts" . }}
+```
 
 ```template_output
 1 resolved alert(s)
@@ -209,6 +228,12 @@ Common annotations: {{ len .CommonAnnotations.SortedPairs }}
 ```
 
 Note that `.CommonAnnotations` and `.CommonLabels` are part of [notification data](ref:reference-notification-data).
+
+Execute the template by passing the dot (`.`) as argument:
+
+```go
+{{ template "custom.common_labels_and_annotations" . }}
+```
 
 ```template_output
 1 resolved alert(s)
@@ -251,6 +276,12 @@ In this example:
 
 - The `custom.alert_labels_and_annotations` template iterates over the list of resolved and firing alerts, similar to previous examples. It then executes `alert.labels_and_annotations` for each alert.
 - The `alert.labels_and_annotations` template prints all the alert labels and annotations by accessing `.Labels.SortedPairs` and `.Annotations.SortedPairs`.
+
+Run the template by passing the dot (`.`):
+
+```go
+{{ template "custom.alert_labels_and_annotations" . }}
+```
 
 ```template_output
 1 resolved alert(s)
@@ -302,7 +333,11 @@ Note that the following example works only for Grafana-managed alerts. It displa
 {{ end -}}
 ```
 
-The output of this template looks like this:
+Pass the dot (`.`) to execute the template:
+
+```go
+{{ template "custom.alert_additional_details" . }}
+```
 
 ```template_output
 1 resolved alert(s)
@@ -320,4 +355,50 @@ The output of this template looks like this:
 - AlertGenerator: ?orgId=1
 - Silence: https://example.com/alerting/silence/new
 - RunbookURL: https://example.com/on-call/web_server_http_errors
+```
+
+## Print a notification title or subject
+
+A title or subject provides a one-line summary of the notification content.
+
+Here’s a basic example that displays the number of firing and resolved alerts in the notification.
+
+```go
+{{ define "custom_title" -}}
+{{ if gt (.Alerts.Firing | len) 0 }}🚨 {{ .Alerts.Firing | len }} firing alerts. {{ end }}{{ if gt (.Alerts.Resolved | len) 0 }}✅ {{ .Alerts.Resolved | len }} resolved alerts.{{ end }}
+{{ end -}}
+```
+
+Execute the template by passing the dot (`.`) as argument:
+
+```go
+{{ template "custom_title" . }}
+```
+
+```template_output
+🚨 1 firing alerts. ✅ 1 resolved alerts.
+```
+
+The next example is a copy of the default title/subject template used in Grafana.
+
+```go
+{{ define "copy_of_default_title" -}}
+[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ if gt (.Alerts.Resolved | len) 0 }}, RESOLVED:{{ .Alerts.Resolved | len }}{{ end }}{{ end }}] {{ .GroupLabels.SortedPairs.Values | join " " }} {{ if gt (len .CommonLabels) (len .GroupLabels) }}({{ with .CommonLabels.Remove .GroupLabels.Names }}{{ .Values | join " " }}{{ end }}){{ end }}
+{{ end }}
+```
+
+This is a more advanced example:
+
+- Prints the number of firing and resolved alerts in the notification.
+- Outputs `.GroupLabels`, the labels used to [group multiple alerts in one notification](ref:group-alert-notifications).
+- Prints `CommonLabels`, excluding labels in `.GroupLabels`.
+
+Execute the template by passing the dot (`.`):
+
+```go
+{{ template "copy_of_default_title" . }}
+```
+
+```template_output
+[FIRING:1, RESOLVED:1] api warning (sql_db)
 ```

@@ -8,20 +8,23 @@ import { TraceView } from 'app/features/explore/TraceView/TraceView';
 import { SpanLinkFunc } from 'app/features/explore/TraceView/components';
 import { transformDataFrames } from 'app/features/explore/TraceView/utils/transform';
 
+import { replaceSearchVariables, SearchProps } from '../../../features/explore/TraceView/useSearch';
+
 const styles = {
-  wrapper: css`
-    height: 100%;
-    overflow: scroll;
-  `,
+  wrapper: css({
+    height: '100%',
+    overflow: 'scroll',
+  }),
 };
 
 export interface TracesPanelOptions {
   createSpanLink?: SpanLinkFunc;
   focusedSpanId?: string;
   createFocusSpanLink?: (traceId: string, spanId: string) => LinkModel<Field>;
+  spanFilters?: SearchProps;
 }
 
-export const TracesPanel = ({ data, options }: PanelProps<TracesPanelOptions>) => {
+export const TracesPanel = ({ data, options, replaceVariables }: PanelProps<TracesPanelOptions>) => {
   const topOfViewRef = createRef<HTMLDivElement>();
   const traceProp = useMemo(() => transformDataFrames(data.series[0]), [data.series]);
   const dataSource = useAsync(async () => {
@@ -48,6 +51,7 @@ export const TracesPanel = ({ data, options }: PanelProps<TracesPanelOptions>) =
         createSpanLink={options.createSpanLink}
         focusedSpanId={options.focusedSpanId}
         createFocusSpanLink={options.createFocusSpanLink}
+        spanFilters={replaceSearchVariables(replaceVariables, options.spanFilters)}
       />
     </div>
   );

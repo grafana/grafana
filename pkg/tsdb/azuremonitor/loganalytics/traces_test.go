@@ -14,6 +14,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 	"github.com/stretchr/testify/require"
@@ -25,6 +26,10 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 	ctx := context.Background()
 	svr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
+		if strings.Contains(r.URL.Path, "missing-op-id") {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
 		w.WriteHeader(http.StatusOK)
 		var correlationRes AzureCorrelationAPIResponse
 		if strings.Contains(r.URL.Path, "test-op-id") {
@@ -94,7 +99,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 	tests := []struct {
 		name                   string
 		queryModel             backend.DataQuery
-		azureLogAnalyticsQuery AzureLogAnalyticsQuery
+		azureLogAnalyticsQuery *AzureLogAnalyticsQuery
 		Err                    require.ErrorAssertionFunc
 	}{
 		{
@@ -113,7 +118,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 				TimeRange: timeRange,
 				QueryType: string(dataquery.AzureQueryTypeAzureTraces),
 			},
-			azureLogAnalyticsQuery: AzureLogAnalyticsQuery{
+			azureLogAnalyticsQuery: &AzureLogAnalyticsQuery{
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTable,
 				URL:          "v1/apps/r1/query",
@@ -189,7 +194,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 				TimeRange: timeRange,
 				QueryType: string(dataquery.AzureQueryTypeAzureTraces),
 			},
-			azureLogAnalyticsQuery: AzureLogAnalyticsQuery{
+			azureLogAnalyticsQuery: &AzureLogAnalyticsQuery{
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTable,
 				URL:          "v1/apps/r1/query",
@@ -263,7 +268,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 				TimeRange: timeRange,
 				QueryType: string(dataquery.AzureQueryTypeAzureTraces),
 			},
-			azureLogAnalyticsQuery: AzureLogAnalyticsQuery{
+			azureLogAnalyticsQuery: &AzureLogAnalyticsQuery{
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTable,
 				URL:          "v1/apps/r1/query",
@@ -336,7 +341,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 				TimeRange: timeRange,
 				QueryType: string(dataquery.AzureQueryTypeAzureTraces),
 			},
-			azureLogAnalyticsQuery: AzureLogAnalyticsQuery{
+			azureLogAnalyticsQuery: &AzureLogAnalyticsQuery{
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTable,
 				URL:          "v1/apps/r1/query",
@@ -412,7 +417,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 				TimeRange: timeRange,
 				QueryType: string(dataquery.AzureQueryTypeAzureTraces),
 			},
-			azureLogAnalyticsQuery: AzureLogAnalyticsQuery{
+			azureLogAnalyticsQuery: &AzureLogAnalyticsQuery{
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTable,
 				URL:          "v1/apps/r1/query",
@@ -492,7 +497,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 				TimeRange: timeRange,
 				QueryType: string(dataquery.AzureQueryTypeAzureTraces),
 			},
-			azureLogAnalyticsQuery: AzureLogAnalyticsQuery{
+			azureLogAnalyticsQuery: &AzureLogAnalyticsQuery{
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTable,
 				URL:          "v1/apps/r1/query",
@@ -572,7 +577,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 				TimeRange: timeRange,
 				QueryType: string(dataquery.AzureQueryTypeAzureTraces),
 			},
-			azureLogAnalyticsQuery: AzureLogAnalyticsQuery{
+			azureLogAnalyticsQuery: &AzureLogAnalyticsQuery{
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTable,
 				URL:          "v1/apps/r1/query",
@@ -650,7 +655,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 				TimeRange: timeRange,
 				QueryType: string(dataquery.AzureQueryTypeAzureTraces),
 			},
-			azureLogAnalyticsQuery: AzureLogAnalyticsQuery{
+			azureLogAnalyticsQuery: &AzureLogAnalyticsQuery{
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTrace,
 				URL:          "v1/apps/r1/query",
@@ -723,7 +728,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 				TimeRange: timeRange,
 				QueryType: string(dataquery.AzureQueryTypeAzureTraces),
 			},
-			azureLogAnalyticsQuery: AzureLogAnalyticsQuery{
+			azureLogAnalyticsQuery: &AzureLogAnalyticsQuery{
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTrace,
 				URL:          "v1/apps/r1/query",
@@ -799,7 +804,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 				TimeRange: timeRange,
 				QueryType: string(dataquery.AzureQueryTypeAzureTraces),
 			},
-			azureLogAnalyticsQuery: AzureLogAnalyticsQuery{
+			azureLogAnalyticsQuery: &AzureLogAnalyticsQuery{
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTrace,
 				URL:          "v1/apps/r1/query",
@@ -841,7 +846,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 				TimeRange: timeRange,
 				QueryType: string(dataquery.AzureQueryTypeAzureTraces),
 			},
-			azureLogAnalyticsQuery: AzureLogAnalyticsQuery{
+			azureLogAnalyticsQuery: &AzureLogAnalyticsQuery{
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTrace,
 				URL:          "v1/apps/r1/query",
@@ -919,7 +924,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 				TimeRange: timeRange,
 				QueryType: string(dataquery.AzureQueryTypeAzureTraces),
 			},
-			azureLogAnalyticsQuery: AzureLogAnalyticsQuery{
+			azureLogAnalyticsQuery: &AzureLogAnalyticsQuery{
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTrace,
 				URL:          "v1/apps/r1/query",
@@ -996,7 +1001,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 				TimeRange: timeRange,
 				QueryType: string(dataquery.AzureQueryTypeAzureTraces),
 			},
-			azureLogAnalyticsQuery: AzureLogAnalyticsQuery{
+			azureLogAnalyticsQuery: &AzureLogAnalyticsQuery{
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTrace,
 				URL:          "v1/apps/r1/query",
@@ -1075,7 +1080,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 				TimeRange: timeRange,
 				QueryType: string(dataquery.AzureQueryTypeAzureTraces),
 			},
-			azureLogAnalyticsQuery: AzureLogAnalyticsQuery{
+			azureLogAnalyticsQuery: &AzureLogAnalyticsQuery{
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTrace,
 				URL:          "v1/apps/r1/query",
@@ -1146,13 +1151,34 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 			},
 			Err: require.NoError,
 		},
+		{
+			name: "trace query with missing operation ID",
+			queryModel: backend.DataQuery{
+				JSON: []byte(fmt.Sprintf(`{
+							"queryType": "Azure Traces",
+							"azureTraces": {
+								"resources":     ["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"],
+								"resultFormat": "%s",
+								"traceTypes":	["trace"],
+								"operationId":	"missing-op-id"
+							}
+						}`, dataquery.ResultFormatTable)),
+				RefID:     "A",
+				TimeRange: timeRange,
+				QueryType: string(dataquery.AzureQueryTypeAzureTraces),
+			},
+			azureLogAnalyticsQuery: nil,
+			Err: func(tt require.TestingT, err error, i ...interface{}) {
+				require.ErrorContains(tt, err, "requested trace not found by Application Insights indexing. Select the relevant Application Insights resource to search for the Operation ID directly")
+			},
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			query, err := buildAppInsightsQuery(ctx, tt.queryModel, dsInfo, appInsightsRegExp, backend.Logger)
+			query, err := buildAppInsightsQuery(ctx, tt.queryModel, dsInfo, appInsightsRegExp, log.NewNullLogger())
 			tt.Err(t, err)
-			if diff := cmp.Diff(&tt.azureLogAnalyticsQuery, query); diff != "" {
+			if diff := cmp.Diff(tt.azureLogAnalyticsQuery, query); diff != "" {
 				t.Errorf("Result mismatch (-want +got): \n%s", diff)
 			}
 		})

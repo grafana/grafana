@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/sandbox"
 	"github.com/grafana/grafana/pkg/services/stats"
 	"github.com/grafana/grafana/pkg/services/stats/statstest"
 	"github.com/grafana/grafana/pkg/setting"
@@ -139,15 +140,16 @@ func TestCollectingUsageStats(t *testing.T) {
 	s := createService(t, &setting.Cfg{
 		ReportingEnabled:     true,
 		BuildVersion:         "5.0.0",
-		AnonymousEnabled:     true,
+		Anonymous:            setting.AnonymousSettings{Enabled: true},
 		BasicAuthEnabled:     true,
 		LDAPAuthEnabled:      true,
 		AuthProxy:            setting.AuthProxySettings{Enabled: true},
 		Packaging:            "deb",
 		ReportingDistributor: "hosted-grafana",
-		RemoteCacheOptions: &setting.RemoteCacheOptions{
+		RemoteCacheOptions: &setting.RemoteCacheSettings{
 			Name: "database",
 		},
+		EnableFrontendSandboxForPlugins: []string{"grafana-worldmap-panel"},
 	}, sqlStore, statsService,
 		withDatasources(mockDatasourceService{datasources: expectedDataSources}))
 
@@ -178,6 +180,8 @@ func TestCollectingUsageStats(t *testing.T) {
 	assert.EqualValues(t, 3, metrics["stats.correlations.count"])
 
 	assert.InDelta(t, int64(65), metrics["stats.uptime"], 6)
+
+	assert.EqualValues(t, 1, metrics["stats.plugins.sandboxed_plugins.count"])
 }
 
 func TestDatasourceStats(t *testing.T) {
@@ -382,6 +386,7 @@ func createService(t testing.TB, cfg *setting.Cfg, store db.DB, statsService sta
 		featuremgmt.WithManager("feature1", "feature2"),
 		o.datasources,
 		httpclient.NewProvider(sdkhttpclient.ProviderOptions{Middlewares: []sdkhttpclient.Middleware{}}),
+		sandbox.ProvideService(cfg),
 	)
 }
 

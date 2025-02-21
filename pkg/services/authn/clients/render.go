@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/grafana/authlib/claims"
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
@@ -41,9 +41,13 @@ func (c *Render) Authenticate(ctx context.Context, r *authn.Request) (*authn.Ide
 	}
 
 	if renderUsr.UserID <= 0 {
+		identityType := claims.TypeAnonymous
+		if org.RoleType(renderUsr.OrgRole) == org.RoleAdmin {
+			identityType = claims.TypeRenderService
+		}
 		return &authn.Identity{
 			ID:              "0",
-			Type:            claims.TypeRenderService,
+			Type:            identityType,
 			OrgID:           renderUsr.OrgID,
 			OrgRoles:        map[int64]org.RoleType{renderUsr.OrgID: org.RoleType(renderUsr.OrgRole)},
 			ClientParams:    authn.ClientParams{SyncPermissions: true},

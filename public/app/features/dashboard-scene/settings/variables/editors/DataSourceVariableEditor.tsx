@@ -12,7 +12,7 @@ interface DataSourceVariableEditorProps {
 }
 
 export function DataSourceVariableEditor({ variable, onRunQuery }: DataSourceVariableEditorProps) {
-  const { pluginId, regex, isMulti, allValue, includeAll } = variable.useState();
+  const { pluginId, regex, isMulti, allValue, includeAll, allowCustomValue } = variable.useState();
 
   const optionTypes = getOptionDataSourceTypes();
 
@@ -44,6 +44,10 @@ export function DataSourceVariableEditor({ variable, onRunQuery }: DataSourceVar
     variable.setState({ allValue: event.currentTarget.value });
   };
 
+  const onAllowCustomValueChange = (event: FormEvent<HTMLInputElement>) => {
+    variable.setState({ allowCustomValue: event.currentTarget.checked });
+  };
+
   return (
     <DataSourceVariableForm
       query={pluginId}
@@ -52,11 +56,13 @@ export function DataSourceVariableEditor({ variable, onRunQuery }: DataSourceVar
       allValue={allValue}
       includeAll={includeAll || false}
       optionTypes={optionTypes}
+      allowCustomValue={allowCustomValue}
       onChange={onChangeType}
       onRegExBlur={onRegExChange}
       onMultiChange={onMultiChange}
       onIncludeAllChange={onIncludeAllChange}
       onAllValueChange={onAllValueChange}
+      onAllowCustomValueChange={onAllowCustomValueChange}
     />
   );
 }

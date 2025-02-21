@@ -4,6 +4,7 @@ import (
 	"context"
 	cryptoRand "crypto/rand"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -14,12 +15,18 @@ import (
 	snapshot "github.com/grafana/grafana-cloud-migration-snapshot/src"
 	"github.com/grafana/grafana-cloud-migration-snapshot/src/contracts"
 	"github.com/grafana/grafana-cloud-migration-snapshot/src/infra/crypto"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	plugins "github.com/grafana/grafana/pkg/plugins"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	libraryelements "github.com/grafana/grafana/pkg/services/libraryelements/model"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util/retryer"
 	"golang.org/x/crypto/nacl/box"
@@ -36,14 +43,24 @@ var currentMigrationTypes = []cloudmigration.MigrateDataType{
 	cloudmigration.NotificationTemplateType,
 	cloudmigration.ContactPointType,
 	cloudmigration.NotificationPolicyType,
+	cloudmigration.AlertRuleGroupType,
+	cloudmigration.AlertRuleType,
+	cloudmigration.PluginDataType,
 }
 
 func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.SignedInUser) (*cloudmigration.MigrateDataRequest, error) {
 	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.getMigrationDataJSON")
 	defer span.End()
 
+	// Plugins
+	plugins, err := s.getPlugins(ctx, signedInUser)
+	if err != nil {
+		s.log.Error("Failed to get plugins", "err", err)
+		return nil, err
+	}
+
 	// Data sources
-	dataSources, err := s.getDataSourceCommands(ctx)
+	dataSources, err := s.getDataSourceCommands(ctx, signedInUser)
 	if err != nil {
 		s.log.Error("Failed to get datasources", "err", err)
 		return nil, err
@@ -90,11 +107,34 @@ func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.S
 		return nil, err
 	}
 
+	// Alerts: Alert Rule Groups
+	alertRuleGroups, err := s.getAlertRuleGroups(ctx, signedInUser)
+	if err != nil {
+		s.log.Error("Failed to get alert rule groups", "err", err)
+		return nil, err
+	}
+
+	// Alerts: Alert Rules
+	alertRules, err := s.getAlertRules(ctx, signedInUser)
+	if err != nil {
+		s.log.Error("Failed to get alert rules", "err", err)
+		return nil, err
+	}
+
 	migrationDataSlice := make(
 		[]cloudmigration.MigrateDataRequestItem, 0,
-		len(dataSources)+len(dashs)+len(folders)+len(libraryElements)+
-			len(muteTimings)+len(notificationTemplates)+len(contactPoints),
+		len(plugins)+len(dataSources)+len(dashs)+len(folders)+len(libraryElements)+
+			len(muteTimings)+len(notificationTemplates)+len(contactPoints)+len(alertRules),
 	)
+
+	for _, plugin := range plugins {
+		migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
+			Type:  cloudmigration.PluginDataType,
+			RefID: plugin.ID,
+			Name:  plugin.Name,
+			Data:  plugin.SettingCmd,
+		})
+	}
 
 	for _, ds := range dataSources {
 		migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
@@ -167,7 +207,7 @@ func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.S
 		})
 	}
 
-	if s.features.IsEnabledGlobally(featuremgmt.FlagOnPremToCloudMigrationsAlerts) && len(notificationPolicies.Name) > 0 {
+	if len(notificationPolicies.Name) > 0 {
 		// Notification Policy can only be managed by updating its entire tree, so we send the whole thing as one item.
 		migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
 			Type:  cloudmigration.NotificationPolicyType,
@@ -177,8 +217,26 @@ func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.S
 		})
 	}
 
+	for _, alertRuleGroup := range alertRuleGroups {
+		migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
+			Type:  cloudmigration.AlertRuleGroupType,
+			RefID: alertRuleGroup.Title, // no UID available
+			Name:  alertRuleGroup.Title,
+			Data:  alertRuleGroup,
+		})
+	}
+
+	for _, alertRule := range alertRules {
+		migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
+			Type:  cloudmigration.AlertRuleType,
+			RefID: alertRule.UID,
+			Name:  alertRule.Title,
+			Data:  alertRule,
+		})
+	}
+
 	// Obtain the names of parent elements for Dashboard and Folders data types
-	parentNamesByType, err := s.getParentNames(ctx, signedInUser, dashs, folders, libraryElements)
+	parentNamesByType, err := s.getParentNames(ctx, signedInUser, dashs, folders, libraryElements, alertRules)
 	if err != nil {
 		s.log.Error("Failed to get parent folder names", "err", err)
 	}
@@ -191,17 +249,17 @@ func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.S
 	return migrationData, nil
 }
 
-func (s *Service) getDataSourceCommands(ctx context.Context) ([]datasources.AddDataSourceCommand, error) {
+func (s *Service) getDataSourceCommands(ctx context.Context, signedInUser *user.SignedInUser) ([]datasources.AddDataSourceCommand, error) {
 	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.getDataSourceCommands")
 	defer span.End()
 
-	dataSources, err := s.dsService.GetAllDataSources(ctx, &datasources.GetAllDataSourcesQuery{})
+	dataSources, err := s.dsService.GetDataSources(ctx, &datasources.GetDataSourcesQuery{OrgID: signedInUser.GetOrgID()})
 	if err != nil {
 		s.log.Error("Failed to get all datasources", "err", err)
 		return nil, err
 	}
 
-	result := []datasources.AddDataSourceCommand{}
+	result := make([]datasources.AddDataSourceCommand, 0, len(dataSources))
 	for _, dataSource := range dataSources {
 		// Decrypt secure json to send raw credentials
 		decryptedData, err := s.secretsService.DecryptJsonData(ctx, dataSource.SecureJsonData)
@@ -236,7 +294,7 @@ func (s *Service) getDashboardAndFolderCommands(ctx context.Context, signedInUse
 	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.getDashboardAndFolderCommands")
 	defer span.End()
 
-	dashs, err := s.dashboardService.GetAllDashboards(ctx)
+	dashs, err := s.dashboardService.GetAllDashboardsByOrgId(ctx, signedInUser.GetOrgID())
 	if err != nil {
 		return nil, nil, err
 	}
@@ -262,20 +320,21 @@ func (s *Service) getDashboardAndFolderCommands(ctx context.Context, signedInUse
 	folders, err := s.folderService.GetFolders(ctx, folder.GetFoldersQuery{
 		UIDs:             folderUids,
 		SignedInUser:     signedInUser,
+		OrgID:            signedInUser.GetOrgID(),
 		WithFullpathUIDs: true,
 	})
 	if err != nil {
 		return nil, nil, err
 	}
 
-	folderCmds := make([]folder.CreateFolderCommand, len(folders))
-	for i, f := range folders {
-		folderCmds[i] = folder.CreateFolderCommand{
+	folderCmds := make([]folder.CreateFolderCommand, 0, len(folders))
+	for _, f := range folders {
+		folderCmds = append(folderCmds, folder.CreateFolderCommand{
 			UID:         f.UID,
 			Title:       f.Title,
 			Description: f.Description,
 			ParentUID:   f.ParentUID,
-		}
+		})
 	}
 
 	return dashboardCmds, folderCmds, nil
@@ -336,6 +395,105 @@ func (s *Service) getLibraryElementsCommands(ctx context.Context, signedInUser *
 	}
 
 	return cmds, nil
+}
+
+type PluginCmd struct {
+	ID         string                                `json:"id"`
+	Name       string                                `json:"name"`
+	SettingCmd pluginsettings.UpdatePluginSettingCmd `json:"settingCmd"`
+}
+
+// IsPublicSignatureType returns true if plugin signature type is public
+func IsPublicSignatureType(signatureType plugins.SignatureType) bool {
+	switch signatureType {
+	case plugins.SignatureTypeGrafana, plugins.SignatureTypeCommercial, plugins.SignatureTypeCommunity:
+		return true
+	case plugins.SignatureTypePrivate, plugins.SignatureTypePrivateGlob:
+		return false
+	}
+	return false
+}
+
+// getPlugins returns the json payloads required by the plugin creation API
+func (s *Service) getPlugins(ctx context.Context, signedInUser *user.SignedInUser) ([]PluginCmd, error) {
+	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.getPlugins")
+	defer span.End()
+
+	results := make([]PluginCmd, 0)
+	plugins := s.pluginStore.Plugins(ctx)
+
+	// Obtain plugins from gcom
+	requestID := tracing.TraceIDFromContext(ctx, false)
+	gcomPlugins, err := s.gcomService.GetPlugins(ctx, requestID)
+	if err != nil {
+		return results, fmt.Errorf("fetching gcom plugins: %w", err)
+	}
+
+	// Permissions for listing plugins, taken from plugins api
+	userIsOrgAdmin := signedInUser.HasRole(org.RoleAdmin)
+	hasAccess, _ := s.accessControl.Evaluate(ctx, signedInUser, ac.EvalAny(
+		ac.EvalPermission(datasources.ActionCreate),
+		ac.EvalPermission(pluginaccesscontrol.ActionInstall),
+	))
+	if !(userIsOrgAdmin || hasAccess) {
+		s.log.Info("user is not allowed to list non-core plugins", "UID", signedInUser.UserUID)
+		return results, nil
+	}
+
+	for _, plugin := range plugins {
+		// filter plugins to keep only the ones allowed by gcom
+		if _, exists := gcomPlugins[plugin.ID]; !exists {
+			continue
+		}
+
+		// filter plugins to keep only non core, signed, with public signature type plugins
+		if plugin.IsCorePlugin() || !plugin.Signature.IsValid() || !IsPublicSignatureType(plugin.SignatureType) {
+			continue
+		}
+		// filter out dependent app plugins
+		if plugin.IncludedInAppID != "" {
+			continue
+		}
+
+		// Permissions filtering, taken from plugins api
+		hasAccess, _ = s.accessControl.Evaluate(ctx, signedInUser, ac.EvalPermission(pluginaccesscontrol.ActionWrite, pluginaccesscontrol.ScopeProvider.GetResourceScope(plugin.ID)))
+		if !hasAccess {
+			continue
+		}
+
+		pluginSettingCmd := pluginsettings.UpdatePluginSettingCmd{
+			Enabled:       plugin.JSONData.AutoEnabled,
+			Pinned:        plugin.Pinned,
+			PluginVersion: plugin.Info.Version,
+			PluginId:      plugin.ID,
+		}
+
+		// get plugin settings from db if they exist
+		ps, err := s.pluginSettingsService.GetPluginSettingByPluginID(ctx, &pluginsettings.GetByPluginIDArgs{
+			PluginID: plugin.ID,
+			OrgID:    signedInUser.OrgID,
+		})
+		if err != nil && !errors.Is(err, pluginsettings.ErrPluginSettingNotFound) {
+			return nil, fmt.Errorf("failed to get plugin settings: %w", err)
+		} else if ps != nil {
+			pluginSettingCmd.Enabled = ps.Enabled
+			pluginSettingCmd.Pinned = ps.Pinned
+			pluginSettingCmd.JsonData = ps.JSONData
+			decryptedData, err := s.secretsService.DecryptJsonData(ctx, ps.SecureJSONData)
+			if err != nil {
+				return nil, fmt.Errorf("failed to decrypt secure json data: %w", err)
+			}
+			pluginSettingCmd.SecureJsonData = decryptedData
+		}
+
+		results = append(results, PluginCmd{
+			ID:         plugin.ID,
+			Name:       plugin.Name,
+			SettingCmd: pluginSettingCmd,
+		})
+	}
+
+	return results, nil
 }
 
 // asynchronous process for writing the snapshot to the filesystem and updating the snapshot status
@@ -428,10 +586,10 @@ func (s *Service) buildSnapshot(ctx context.Context, signedInUser *user.SignedIn
 
 	// update snapshot status to pending upload with retries
 	if err := s.updateSnapshotWithRetries(ctx, cloudmigration.UpdateSnapshotCmd{
-		UID:       snapshotMeta.UID,
-		SessionID: snapshotMeta.SessionUID,
-		Status:    cloudmigration.SnapshotStatusPendingUpload,
-		Resources: localSnapshotResource,
+		UID:                    snapshotMeta.UID,
+		SessionID:              snapshotMeta.SessionUID,
+		Status:                 cloudmigration.SnapshotStatusPendingUpload,
+		LocalResourcesToCreate: localSnapshotResource,
 	}); err != nil {
 		return err
 	}
@@ -573,7 +731,7 @@ func (s *Service) updateSnapshotWithRetries(ctx context.Context, cmd cloudmigrat
 		}
 		return retryer.FuncComplete, nil
 	}, maxRetries, time.Millisecond*10, time.Second*5); err != nil {
-		s.log.Error("failed to update snapshot status", "snapshotUid", cmd.UID, "status", cmd.Status, "num_resources", len(cmd.Resources), "error", err.Error())
+		s.log.Error("failed to update snapshot status", "snapshotUid", cmd.UID, "status", cmd.Status, "num_local_resources", len(cmd.LocalResourcesToCreate), "num_cloud_resources", len(cmd.CloudResourcesToUpdate), "error", err.Error())
 		return fmt.Errorf("failed to update snapshot status: %w", err)
 	}
 	return nil
@@ -624,6 +782,7 @@ func (s *Service) getFolderNamesForFolderUIDs(ctx context.Context, signedInUser 
 	folders, err := s.folderService.GetFolders(ctx, folder.GetFoldersQuery{
 		UIDs:             folderUIDs,
 		SignedInUser:     signedInUser,
+		OrgID:            signedInUser.GetOrgID(),
 		WithFullpathUIDs: true,
 	})
 	if err != nil {
@@ -643,16 +802,26 @@ func (s *Service) getFolderNamesForFolderUIDs(ctx context.Context, signedInUser 
 
 // getParentNames finds the parent names for resources and returns a map of data type: {data UID : parentName}
 // for dashboards, folders and library elements - the parent is the parent folder
-func (s *Service) getParentNames(ctx context.Context, signedInUser *user.SignedInUser, dashboards []dashboards.Dashboard, folders []folder.CreateFolderCommand, libraryElements []libraryElement) (map[cloudmigration.MigrateDataType]map[string](string), error) {
-	parentNamesByType := make(map[cloudmigration.MigrateDataType]map[string](string))
+func (s *Service) getParentNames(
+	ctx context.Context,
+	signedInUser *user.SignedInUser,
+	dashboards []dashboards.Dashboard,
+	folders []folder.CreateFolderCommand,
+	libraryElements []libraryElement,
+	alertRules []alertRule,
+) (map[cloudmigration.MigrateDataType]map[string](string), error) {
+	parentNamesByType := make(map[cloudmigration.MigrateDataType]map[string]string)
 	for _, dataType := range currentMigrationTypes {
 		parentNamesByType[dataType] = make(map[string]string)
 	}
 
 	// Obtain list of unique folderUIDs
-	parentFolderUIDsSet := make(map[string]struct{}, len(dashboards)+len(folders)+len(libraryElements))
+	parentFolderUIDsSet := make(map[string]struct{})
 	for _, dashboard := range dashboards {
-		parentFolderUIDsSet[dashboard.FolderUID] = struct{}{}
+		// we dont need the root folder
+		if dashboard.FolderUID != "" {
+			parentFolderUIDsSet[dashboard.FolderUID] = struct{}{}
+		}
 	}
 	for _, f := range folders {
 		parentFolderUIDsSet[f.ParentUID] = struct{}{}
@@ -660,6 +829,11 @@ func (s *Service) getParentNames(ctx context.Context, signedInUser *user.SignedI
 	for _, libraryElement := range libraryElements {
 		if libraryElement.FolderUID != nil {
 			parentFolderUIDsSet[*libraryElement.FolderUID] = struct{}{}
+		}
+	}
+	for _, alertRule := range alertRules {
+		if alertRule.FolderUID != "" {
+			parentFolderUIDsSet[alertRule.FolderUID] = struct{}{}
 		}
 	}
 	parentFolderUIDsSlice := make([]string, 0, len(parentFolderUIDsSet))
@@ -684,6 +858,11 @@ func (s *Service) getParentNames(ctx context.Context, signedInUser *user.SignedI
 	for _, libraryElement := range libraryElements {
 		if libraryElement.FolderUID != nil {
 			parentNamesByType[cloudmigration.LibraryElementDataType][libraryElement.UID] = foldersUIDsToFolderName[*libraryElement.FolderUID]
+		}
+	}
+	for _, alertRule := range alertRules {
+		if alertRule.FolderUID != "" {
+			parentNamesByType[cloudmigration.AlertRuleType][alertRule.UID] = foldersUIDsToFolderName[alertRule.FolderUID]
 		}
 	}
 

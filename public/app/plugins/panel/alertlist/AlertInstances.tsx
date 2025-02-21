@@ -138,15 +138,15 @@ export const AlertInstances = ({
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  clickable: css`
-    cursor: pointer;
-  `,
-  footerRow: css`
-    display: flex;
-    flex-direction: column;
-    gap: ${theme.spacing(1)};
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-  `,
+  clickable: css({
+    cursor: 'pointer',
+  }),
+  footerRow: css({
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing(1),
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
+  }),
 });

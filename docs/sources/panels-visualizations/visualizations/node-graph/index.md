@@ -25,7 +25,7 @@ Node graphs are useful when you need to visualize elements that are related to e
 
 Node graphs display useful information about each node, as well as the relationships between them, allowing you to visualize complex infrastructure maps, hierarchies, or execution diagrams.
 
-![Node graph visualization](/media/docs/grafana/data-sources/tempo/query-editor/tempo-ds-query-node-graph.png 'Node graph')
+![Node graph visualization](/media/docs/grafana/panels-visualizations/screenshot-node-graph-v11.3.png 'Node graph')
 
 The appearance of nodes and edges can also be customized in several ways including color, borders, and line style.
 
@@ -79,30 +79,7 @@ Similar to the nodes dataset, the edges dataset needs one unique ID field for ea
 
 If a node lacks edge connections, it’s displayed on its own outside of the network.
 
-## Panel options
-
-{{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
-
-## Nodes options
-
-The **Nodes** options section provides configurations for node behaviors.
-
-- **Main stat unit** - Choose which unit the main stat displays in the graph's nodes.
-- **Secondary stat unit** - Choose which unit the secondary stat displays in the graph's nodes.
-- **Arc sections** - Configure which fields define the size of the colored circle around the node and select a color for each. You can add multiple fields.
-
-{{< admonition type="note" >}}
-Defining arc sections overrides the automatic detection of `arc__*` and `color` fields described in the **Optional fields** section of [Nodes data frame structure](#nodes-data-frame-structure).
-{{< /admonition >}}
-
-## Edges options
-
-The **Edges** options section provides configurations for node edges behaviors.
-
-- **Main stat unit** - Choose which unit the main stat displays in the graph's edges.
-- **Secondary stat unit** - Choose which unit the secondary stat displays in the graph's edges.
-
-## Data requirements
+### Data requirements
 
 A node graph requires a specific shape of the data to be able to display its nodes and edges. This means not every data source or query can be visualized with this graph. If you want to use this as a data source developer see the section about data API.
 
@@ -113,7 +90,7 @@ A node graph consists of _nodes_ and _edges_.
 
 Both nodes and edges can have associated metadata or statistics. The data source defines what information and values is shown, so different data sources can show different type of values or not show some values.
 
-### Nodes
+#### Nodes
 
 {{% admonition type="note" %}}
 Node graphs can show only 1,500 nodes. If this limit is crossed a warning will be visible in upper right corner, and some nodes will be hidden. You can expand hidden parts of the graph by clicking on the "Hidden nodes" markers in the graph.
@@ -125,47 +102,88 @@ For example, you can have the percentage of errors represented by a red portion 
 Additional details can be displayed in a context menu which is displayed when you click on the node.
 There also can be additional links in the context menu that can target either other parts of Grafana or any external link.
 
-![Node graph navigation](/media/docs/grafana/data-sources/tempo/query-editor/node-graph-navigation.png 'Node graph navigation')
+![Node context menu](/media/docs/grafana/panels-visualizations/screenshot-node-links-v11.3.png 'Node context menu')
 
-### Edges
+#### Edges
 
 Edges can also show statistics when you hover over the edge. Similar to nodes, you can open a context menu with additional details and links by clicking on the edge.
 
 The first data source supporting this visualization is X-Ray data source for its Service map feature. For more information, refer to the [X-Ray plugin documentation](https://grafana.com/grafana/plugins/grafana-x-ray-datasource).
 
-## Navigating the node graph
+## Node graph navigation
 
-You can pan and zoom in or out a node graph.
+You can use pan, zoom, and other functions to navigate a node graph.
 
 ### Pan
 
 You can pan the view by clicking outside any node or edge and dragging your mouse.
 
-### Zoom in or out
+### Zoom
 
-Use the buttons in the upper left corner or use the mouse wheel, touchpad scroll, together with either Ctrl or Cmd key to zoom in or out.
+Use the buttons in the lower right corner to zoom in or out. You can also use the mouse wheel or touchpad scroll, together with either Ctrl or Cmd key to do so.
 
-### Explore hidden nodes
+### Hidden nodes
 
 The number of nodes shown at a given time is limited to maintain a reasonable visualization performance. Nodes that are not currently visible are hidden behind clickable markers that show an approximate number of hidden nodes that are connected by a particular edge. You can click on the marker to expand the graph around that node.
 
-![Node graph exploration](/static/img/docs/node-graph/node-graph-exploration-8-0.png 'Node graph exploration')
+![Node graph exploration](/media/docs/grafana/panels-visualizations/node-graph-exploration-8.0-2.png 'Node graph exploration')
 
 ### Grid view
 
 You can switch to the grid view to have a better overview of the most interesting nodes in the graph. Grid view shows nodes in a grid without edges and can be sorted by stats shown inside the node or by stats represented by the a colored border of the nodes.
 
-<!-- Screenshot from v11.2 -->
-
-![Node graph grid](/media/docs/grafana/data-sources/tempo/query-editor/node-graph-grid-view.png 'Node graph grid')
+![Node graph grid](/media/docs/grafana/panels-visualizations/screenshot-node-graph-grid-v11.3.png 'Node graph grid')
 
 To sort the nodes, click on the stats inside the legend. The marker next to the stat name shows which stat is currently used for sorting and sorting direction.
 
-![Node graph legend](/static/img/docs/node-graph/node-graph-legend-8-0.png 'Node graph legend')
+![Node graph legend](/media/docs/grafana/panels-visualizations/screenshot-node-graph-legend-v11.3.png 'Node graph legend')
 
 Click on the node and select "Show in Graph layout" option to switch back to graph layout and focus on the selected node, to show it in context of the full graph.
 
-![Node graph grid to default](/static/img/docs/node-graph/node-graph-grid-to-default-8-0.png 'Node graph grid to default')
+![Node graph grid to default](/media/docs/grafana/panels-visualizations/screenshot-node-graph-view-v11.3.png 'Node graph grid to default')
+
+## Configuration options
+
+{{< docs/shared lookup="visualizations/config-options-intro.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+### Panel options
+
+{{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+### Node graph options
+
+Use the following options to refine your node graph visualization.
+
+- **Zoom mode** - Choose how the node graph should handle zoom and scroll events.
+
+### Nodes options
+
+The **Nodes** options section provides configurations for node behaviors.
+
+- **Main stat unit** - Choose which unit the main stat displays in the graph's nodes.
+- **Secondary stat unit** - Choose which unit the secondary stat displays in the graph's nodes.
+- **Arc sections** - Configure which fields define the size of the colored circle around the node and select a color for each. You can add multiple fields.
+
+{{< admonition type="note" >}}
+Defining arc sections overrides the automatic detection of `arc__*` and `color` fields described in the **Optional fields** section of [Nodes data frame structure](#nodes-data-frame-structure).
+{{< /admonition >}}
+
+### Edges options
+
+The **Edges** options section provides configurations for node edges behaviors.
+
+- **Main stat unit** - Choose which unit the main stat displays in the graph's edges.
+- **Secondary stat unit** - Choose which unit the secondary stat displays in the graph's edges.
+
+### Data links
+
+{{< docs/shared lookup="visualizations/datalink-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+In node graphs, some data fields may have pre-configured data links. To add a different data link in those cases, use a [field override](#field-overrides).
+
+### Field overrides
+
+{{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ## Data API
 
@@ -211,15 +229,15 @@ Required fields:
 
 Optional fields:
 
-| Field name    | Type          | Description                                                                                                                                                                                                                                                                                                                                                               |
-| ------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| title         | string        | Name of the node visible in just under the node.                                                                                                                                                                                                                                                                                                                          |
-| subtitle      | string        | Additional, name, type or other identifier shown under the title.                                                                                                                                                                                                                                                                                                         |
-| mainstat      | string/number | First stat shown inside the node itself. It can either be a string showing the value as is or a number. If it is a number, any unit associated with that field is also shown.                                                                                                                                                                                             |
-| secondarystat | string/number | Same as mainStat, but shown under it inside the node.                                                                                                                                                                                                                                                                                                                     |
-| arc\_\_\*     | number        | Any field prefixed with `arc__` will be used to create the color circle around the node. All values in these fields should add up to 1. You can specify color using `config.color.fixedColor`.                                                                                                                                                                            |
-| detail\_\_\*  | string/number | Any field prefixed with `detail__` will be shown in the header of context menu when clicked on the node. Use `config.displayName` for more human readable label.                                                                                                                                                                                                          |
-| color         | string/number | Can be used to specify a single color instead of using the `arc__` fields to specify color sections. It can be either a string which should then be an acceptable HTML color string or it can be a number in which case the behaviour depends on `field.config.color.mode` setting. This can be for example used to create gradient colors controlled by the field value. |
-| icon          | string        | Name of the icon to show inside the node instead of the default stats. Only Grafana built in icons are allowed (see the available icons [here](https://developers.grafana.com/ui/latest/index.html?path=/story/docs-overview-icon--icons-overview)).                                                                                                                      |
-| nodeRadius    | number        | Radius value in pixels. Used to manage node size.                                                                                                                                                                                                                                                                                                                         |
-| highlighted   | boolean       | Sets whether the node should be highlighted. Useful for example to represent a specific path in the graph by highlighting several nodes and edges. Default: `false`                                                                                                                                                                                                       |
+| Field name    | Type          | Description                                                                                                                                                                                                                                                                                                                                                              |
+| ------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| title         | string        | Name of the node visible in just under the node.                                                                                                                                                                                                                                                                                                                         |
+| subtitle      | string        | Additional, name, type or other identifier shown under the title.                                                                                                                                                                                                                                                                                                        |
+| mainstat      | string/number | First stat shown inside the node itself. It can either be a string showing the value as is or a number. If it is a number, any unit associated with that field is also shown.                                                                                                                                                                                            |
+| secondarystat | string/number | Same as mainStat, but shown under it inside the node.                                                                                                                                                                                                                                                                                                                    |
+| arc\_\_\*     | number        | Any field prefixed with `arc__` will be used to create the color circle around the node. All values in these fields should add up to 1. You can specify color using `config.color.fixedColor`.                                                                                                                                                                           |
+| detail\_\_\*  | string/number | Any field prefixed with `detail__` will be shown in the header of context menu when clicked on the node. Use `config.displayName` for more human readable label.                                                                                                                                                                                                         |
+| color         | string/number | Can be used to specify a single color instead of using the `arc__` fields to specify color sections. It can be either a string which should then be an acceptable HTML color string or it can be a number in which case the behavior depends on `field.config.color.mode` setting. This can be for example used to create gradient colors controlled by the field value. |
+| icon          | string        | Name of the icon to show inside the node instead of the default stats. Only Grafana [built in icons](https://developers.grafana.com/ui/latest/index.html?path=/story/docs-overview-icon--icons-overview)) are allowed.                                                                                                                                                   |
+| nodeRadius    | number        | Radius value in pixels. Used to manage node size.                                                                                                                                                                                                                                                                                                                        |
+| highlighted   | boolean       | Sets whether the node should be highlighted. Useful for example to represent a specific path in the graph by highlighting several nodes and edges. Default: `false`                                                                                                                                                                                                      |

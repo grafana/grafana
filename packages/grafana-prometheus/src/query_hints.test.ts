@@ -1,6 +1,6 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/query_hints.test.ts
 import { QueryHint } from '@grafana/data';
-import { QueryBuilderLabelFilter } from '@grafana/experimental';
+import { QueryBuilderLabelFilter } from '@grafana/plugin-ui';
 
 import { PrometheusDatasource } from './datasource';
 import {
@@ -8,6 +8,7 @@ import {
   getQueryHints,
   getQueryLabelsForRuleName,
   getRecordingRuleIdentifierIdx,
+  isRuleInQuery,
   SUM_HINT_THRESHOLD_COUNT,
 } from './query_hints';
 import { buildVisualQueryFromString } from './querybuilder/parsing';
@@ -216,13 +217,11 @@ describe('getQueryHints()', () => {
     const datasource = mock as PrometheusDatasource;
 
     let hints = getQueryHints('foo', series, datasource);
-    expect(hints!.length).toBe(6);
+    expect(hints!.length).toBe(3);
     const hintsString = JSON.stringify(hints);
     expect(hintsString).toContain('ADD_HISTOGRAM_AVG');
     expect(hintsString).toContain('ADD_HISTOGRAM_COUNT');
-    expect(hintsString).toContain('ADD_HISTOGRAM_SUM');
-    expect(hintsString).toContain('ADD_HISTOGRAM_FRACTION');
-    expect(hintsString).toContain('ADD_HISTOGRAM_AVG');
+    expect(hintsString).toContain('ADD_HISTOGRAM_QUANTILE');
   });
 
   it('returns no hints for native histogram when there are native histogram functions in the query', () => {
@@ -360,6 +359,92 @@ describe('getExpandRulesHints', () => {
                 expandedQuery: 'expanded_metric_query_111[5m]',
                 identifier: 'uuid',
                 identifierValue: '111',
+              },
+            },
+          },
+        },
+      },
+    ]);
+  });
+
+  it('should return expand rule hint, when given query include a non-unique rule name', () => {
+    const extractedMapping: RuleQueryMapping = {
+      'duration:p95': [
+        {
+          query: 'expanded_duration_p95{}',
+          labels: {},
+        },
+        {
+          query: 'expanded_duration_p95_aggregated{}',
+          labels: {
+            span_name: '__aggregated__',
+          },
+        },
+      ],
+      'duration:p95:upper_threshold': [
+        {
+          query: 'expanded_duration_p95_upper_threshold{}',
+          labels: {},
+        },
+      ],
+    };
+    const query = 'sum(rate(duration:p95:upper_threshold{label="foo"}[5m])) by(bar)';
+    const hints = getExpandRulesHints(query, extractedMapping);
+    expect(hints).toEqual([
+      {
+        type: 'EXPAND_RULES',
+        label: 'Query contains recording rules.',
+        fix: {
+          label: 'Expand rules',
+          action: {
+            type: 'EXPAND_RULES',
+            query,
+            options: {
+              'duration:p95:upper_threshold': {
+                expandedQuery: 'expanded_duration_p95_upper_threshold{}',
+              },
+            },
+          },
+        },
+      },
+    ]);
+  });
+
+  it('should return expand rule hint, when given query include a non-unique rule name - second case', () => {
+    const extractedMapping: RuleQueryMapping = {
+      'duration:p95': [
+        {
+          query: 'expanded_duration_p95{}',
+          labels: {},
+        },
+        {
+          query: 'expanded_duration_p95_aggregated{}',
+          labels: {
+            span_name: '__aggregated__',
+          },
+        },
+      ],
+      'upper_threshold:duration:p95': [
+        {
+          query: 'expanded_duration_p95_upper_threshold{}',
+          labels: {},
+        },
+      ],
+    };
+    const query = 'sum(rate(upper_threshold:duration:p95{label="foo"}[5m])) by(bar)';
+    const hints = getExpandRulesHints(query, extractedMapping);
+    expect(hints).toEqual([
+      {
+        type: 'EXPAND_RULES',
+        label: 'Query contains recording rules.',
+        fix: {
+          label: 'Expand rules',
+          action: {
+            type: 'EXPAND_RULES',
+            query,
+            options: {
+              'upper_threshold:duration:p95': {
+                expandedQuery: 'expanded_duration_p95_upper_threshold{}',
               },
             },
           },
@@ -505,5 +590,75 @@ describe('getQueryLabelsForRuleName', () => {
     const result = getQueryLabelsForRuleName(metricName, visualQuery);
     const expected: QueryBuilderLabelFilter[] = [{ label: 'uuid', op: '=', value: '999' }];
     expect(result).toEqual(expected);
+  });
+});
+
+describe('ruleInQuery', () => {
+  it('should return true when ruleName is present in the query', () => {
+    expect(isRuleInQuery('rate(http_requests_total{job="api"}[5m])', 'http_requests_total')).toBe(true);
+  });
+
+  it('should return false when ruleName is not present in the query', () => {
+    expect(isRuleInQuery('rate(cpu_usage{instance="localhost"}[5m])', 'http_requests_total')).toBe(false);
+  });
+
+  it('should return true for ruleName at the start of the query', () => {
+    expect(isRuleInQuery('http_requests_total{job="api"}', 'http_requests_total')).toBe(true);
+  });
+
+  it('should return true for ruleName at the end of the query', () => {
+    expect(isRuleInQuery('sum by (instance) (http_requests_total)', 'http_requests_total')).toBe(true);
+    expect(isRuleInQuery('sum(http_requests_total)', 'http_requests_total')).toBe(true);
+    expect(isRuleInQuery('http_requests_total', 'http_requests_total')).toBe(true);
+  });
+
+  it('should return true when ruleName is followed by spaces', () => {
+    expect(isRuleInQuery('http_requests_total { job="api" }', 'http_requests_total')).toBe(true);
+  });
+
+  it('should return false when ruleName is a substring of another metric', () => {
+    expect(isRuleInQuery('rate(http_requests_total_new{job="api"}[5m])', 'http_requests_total')).toBe(false);
+  });
+
+  it('should return false for escaped ruleName usage', () => {
+    expect(isRuleInQuery('rate(\"http_requests_total\"{job="api"}[5m])', 'http_requests_total')).toBe(false);
+  });
+
+  it('should return false when query is empty', () => {
+    expect(isRuleInQuery('', 'http_requests_total')).toBe(false);
+  });
+
+  it('should return false when ruleName is an empty string', () => {
+    expect(isRuleInQuery('rate(http_requests_total{job="api"}[5m])', '')).toBe(false);
+  });
+
+  it('should return false when both query and ruleName are empty', () => {
+    expect(isRuleInQuery('', '')).toBe(false);
+  });
+
+  it('should return true when used with binary operations', () => {
+    expect(isRuleInQuery('rate(http_requests_total{job="api"}[5m]) + my:rule', 'my:rule')).toBe(true);
+    expect(isRuleInQuery('rate(http_requests_total{job="api"}[5m])+my:rule', 'my:rule')).toBe(true);
+  });
+
+  it('should return true when ruleName is inside nested functions', () => {
+    expect(isRuleInQuery('sum(rate(http_requests_total[5m]))', 'http_requests_total')).toBe(true);
+  });
+
+  it('should return false when ruleName is part of a label value', () => {
+    expect(isRuleInQuery('http_requests_total_bytes{rule="http_requests_total"}', 'http_requests_total')).toBe(false);
+  });
+
+  it('should return true when ruleName contains special characters like colon', () => {
+    expect(isRuleInQuery('rate(my_namespace:http_requests_total[5m])', 'my_namespace:http_requests_total')).toBe(true);
+  });
+
+  it('should return false when ruleName appears within string literals', () => {
+    expect(
+      isRuleInQuery(
+        'label_replace(http_requests_total, "label", "value", "instance", "http_requests_total")',
+        'http_requests_total'
+      )
+    ).toBe(false);
   });
 });

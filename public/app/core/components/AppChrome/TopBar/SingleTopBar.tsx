@@ -14,11 +14,12 @@ import { useSelector } from 'app/types';
 import { Branding } from '../../Branding/Branding';
 import { Breadcrumbs } from '../../Breadcrumbs/Breadcrumbs';
 import { buildBreadcrumbs } from '../../Breadcrumbs/utils';
+import { HistoryContainer } from '../History/HistoryContainer';
 import { enrichHelpItem } from '../MegaMenu/utils';
-import { NewsContainer } from '../News/NewsContainer';
 import { QuickAdd } from '../QuickAdd/QuickAdd';
 import { TOP_BAR_LEVEL_HEIGHT } from '../types';
 
+import { ProfileButton } from './ProfileButton';
 import { SignInLink } from './SignInLink';
 import { TopNavBarMenu } from './TopNavBarMenu';
 import { TopSearchBarCommandPaletteTrigger } from './TopSearchBarCommandPaletteTrigger';
@@ -49,6 +50,7 @@ export const SingleTopBar = memo(function SingleTopBar({
   const profileNode = navIndex['profile'];
   const homeNav = useSelector((state) => state.navIndex)[HOME_NAV_ID];
   const breadcrumbs = buildBreadcrumbs(sectionNav, pageNav, homeNav);
+  const unifiedHistoryEnabled = config.featureToggles.unifiedHistory;
 
   return (
     <div className={styles.layout}>
@@ -71,27 +73,21 @@ export const SingleTopBar = memo(function SingleTopBar({
 
       <Stack gap={0.5} alignItems="center">
         <TopSearchBarCommandPaletteTrigger />
+        {unifiedHistoryEnabled && <HistoryContainer />}
         <QuickAdd />
         {enrichedHelpNode && (
           <Dropdown overlay={() => <TopNavBarMenu node={enrichedHelpNode} />} placement="bottom-end">
             <ToolbarButton iconOnly icon="question-circle" aria-label="Help" />
           </Dropdown>
         )}
-        {config.newsFeedEnabled && <NewsContainer />}
+        <ToolbarButton
+          icon="monitor"
+          className={styles.kioskToggle}
+          onClick={onToggleKioskMode}
+          tooltip="Enable kiosk mode"
+        />
         {!contextSrv.user.isSignedIn && <SignInLink />}
-        {profileNode && (
-          <Dropdown overlay={() => <TopNavBarMenu node={profileNode} />} placement="bottom-end">
-            <ToolbarButton
-              className={styles.profileButton}
-              imgSrc={contextSrv.user.gravatarUrl}
-              imgAlt="User avatar"
-              aria-label="Profile"
-            />
-          </Dropdown>
-        )}
-        <ToolbarButton className={styles.kioskToggle} onClick={onToggleKioskMode} narrow aria-label="Enable kiosk mode">
-          <Icon name="angle-up" size="xl" />
-        </ToolbarButton>
+        {profileNode && <ProfileButton profileNode={profileNode} />}
       </Stack>
     </div>
   );
@@ -109,9 +105,8 @@ const getStyles = (theme: GrafanaTheme2, menuDockedAndOpen: boolean) => ({
     justifyContent: 'space-between',
 
     [theme.breakpoints.up('lg')]: {
-      gridTemplateColumns: '2fr minmax(440px, 1fr)',
+      gridTemplateColumns: '2fr minmax(550px, 1fr)',
       display: 'grid',
-
       justifyContent: 'flex-start',
     },
   }),
@@ -126,15 +121,6 @@ const getStyles = (theme: GrafanaTheme2, menuDockedAndOpen: boolean) => ({
     alignSelf: 'center',
     height: theme.spacing(3),
     width: theme.spacing(3),
-  }),
-  profileButton: css({
-    padding: theme.spacing(0, 0.25),
-    img: {
-      borderRadius: theme.shape.radius.circle,
-      height: '24px',
-      marginRight: 0,
-      width: '24px',
-    },
   }),
   kioskToggle: css({
     [theme.breakpoints.down('lg')]: {

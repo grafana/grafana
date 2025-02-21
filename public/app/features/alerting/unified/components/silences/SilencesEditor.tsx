@@ -6,9 +6,9 @@ import { useParams } from 'react-router-dom-v5-compat';
 import { useDebounce } from 'react-use';
 
 import {
+  GrafanaTheme2,
   addDurationToDate,
   dateTime,
-  GrafanaTheme2,
   intervalToAbbreviatedDurationString,
   isValidDate,
   parseDuration,
@@ -25,11 +25,11 @@ import {
   Stack,
   TextArea,
   useStyles2,
-  withErrorBoundary,
 } from '@grafana/ui';
-import { alertSilencesApi, SilenceCreatedResponse } from 'app/features/alerting/unified/api/alertSilencesApi';
+import { Trans } from 'app/core/internationalization';
+import { SilenceCreatedResponse, alertSilencesApi } from 'app/features/alerting/unified/api/alertSilencesApi';
 import { MATCHER_ALERT_RULE_UID } from 'app/features/alerting/unified/utils/constants';
-import { getDatasourceAPIUid, GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME, getDatasourceAPIUid } from 'app/features/alerting/unified/utils/datasource';
 import { MatcherOperator, SilenceCreatePayload } from 'app/plugins/datasource/alertmanager/types';
 
 import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbilities';
@@ -37,6 +37,7 @@ import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { SilenceFormFields } from '../../types/silence-form';
 import { matcherFieldToMatcher } from '../../utils/alertmanager';
 import { makeAMLink } from '../../utils/misc';
+import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { AlertmanagerPageWrapper } from '../AlertingPageWrapper';
 import { GrafanaAlertmanagerDeliveryWarning } from '../GrafanaAlertmanagerDeliveryWarning';
 
@@ -258,7 +259,7 @@ export const SilencesEditor = ({
           )}
           {!isLoading && <Button type="submit">Save silence</Button>}
           <LinkButton onClick={onCancelHandler} variant={'secondary'}>
-            Cancel
+            <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
           </LinkButton>
         </Stack>
       </form>
@@ -295,4 +296,5 @@ function ExistingSilenceEditorPage() {
     </AlertmanagerPageWrapper>
   );
 }
-export default withErrorBoundary(ExistingSilenceEditorPage, { style: 'page' });
+
+export default withPageErrorBoundary(ExistingSilenceEditorPage);

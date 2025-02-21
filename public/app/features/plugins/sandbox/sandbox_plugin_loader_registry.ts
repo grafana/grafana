@@ -1,6 +1,7 @@
 import { PluginSignatureType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
+import { getPluginDetails } from '../admin/api';
 import { getPluginSettings } from '../pluginSettings';
 
 type SandboxEligibilityCheckParams = {
@@ -25,7 +26,7 @@ export async function shouldLoadPluginInFrontendSandbox({
   pluginId,
 }: SandboxEligibilityCheckParams): Promise<boolean> {
   // basic check if the plugin is eligible for the sandbox
-  if (!(await isPluginFrontendSandboxElegible({ isAngular, pluginId }))) {
+  if (!(await isPluginFrontendSandboxEligible({ isAngular, pluginId }))) {
     return false;
   }
 
@@ -36,7 +37,7 @@ export async function shouldLoadPluginInFrontendSandbox({
  * This is a basic check that checks if the plugin is eligible to run in the sandbox.
  * It does not check if the plugin is actually enabled for the sandbox.
  */
-async function isPluginFrontendSandboxElegible({
+export async function isPluginFrontendSandboxEligible({
   isAngular,
   pluginId,
 }: SandboxEligibilityCheckParams): Promise<boolean> {
@@ -61,13 +62,24 @@ async function isPluginFrontendSandboxElegible({
     return false;
   }
 
-  // don't run grafana-signed plugins in sandbox
-  const pluginMeta = await getPluginSettings(pluginId);
-  if (pluginMeta.signatureType === PluginSignatureType.grafana) {
-    return false;
-  }
+  // grafana signature and internal plugins are not allowed in the sandbox
+  return isPluginSignatureEligibleForSandbox({ pluginId });
+}
 
-  return true;
+async function isPluginSignatureEligibleForSandbox({ pluginId }: SandboxEligibilityCheckParams): Promise<boolean> {
+  try {
+    // this can fail if we are trying to fetch settings of a non-installed plugin
+    const pluginMeta = await getPluginSettings(pluginId, { showErrorAlert: false });
+    return pluginMeta.signatureType !== PluginSignatureType.grafana && pluginMeta.signature !== 'internal';
+  } catch (e) {
+    try {
+      //this can fail if gcom is not accesible
+      const details = await getPluginDetails(pluginId);
+      return details.signatureType !== PluginSignatureType.grafana && details.signature !== 'internal';
+    } catch (e) {
+      return false;
+    }
+  }
 }
 
 /**

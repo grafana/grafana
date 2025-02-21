@@ -66,11 +66,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     margin: 0,
     padding: 0,
   }),
-  input: css`
-    margin: 0;
-    padding: 0;
-    input {
-      height: 25px;
+  input: css({
+    margin: 0,
+    padding: 0,
+    input: {
+      height: '25px',
     },
-  `,
+  }),
 });

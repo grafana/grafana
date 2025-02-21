@@ -60,6 +60,9 @@ const BrowseDashboardsPage = memo(() => {
     if (!isSearching && searchState.result) {
       stateManager.setState({ result: undefined, includePanels: undefined });
     }
+    if (isSearching && searchState.result?.totalRows === 0) {
+      reportInteraction('grafana_empty_state_shown', { source: 'browse_dashboards' });
+    }
   }, [isSearching, searchState.result, stateManager]);
 
   const { data: folderDTO } = useGetFolderQuery(folderUID ?? skipToken);
@@ -81,8 +84,10 @@ const BrowseDashboardsPage = memo(() => {
 
   const hasSelection = useHasSelection();
 
-  const { data: rootFolder } = useGetFolderQuery('general');
-  let folder = folderDTO ? folderDTO : rootFolder;
+  // Fetch the root (aka general) folder if we're not in a specific folder
+  const { data: rootFolderDTO } = useGetFolderQuery(folderDTO ? skipToken : 'general');
+  const folder = folderDTO ?? rootFolderDTO;
+
   const { canEditFolders, canEditDashboards, canCreateDashboards, canCreateFolders } = getFolderPermissions(folder);
   const hasAdminRights = contextSrv.hasRole('Admin') || contextSrv.isGrafanaAdmin;
 
@@ -97,7 +102,6 @@ const BrowseDashboardsPage = memo(() => {
       if ('error' in result) {
         reportInteraction('grafana_browse_dashboards_page_edit_folder_name', {
           status: 'failed_with_error',
-          error: result.error,
         });
         throw result.error;
       } else {
@@ -113,7 +117,6 @@ const BrowseDashboardsPage = memo(() => {
       origin: window.location.pathname === getConfig().appSubUrl + '/dashboards' ? 'Dashboards' : 'Folder view',
     });
   };
-
   return (
     <Page
       navId="dashboards/browse"

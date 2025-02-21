@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { EditorField, EditorFieldGroup } from '@grafana/experimental';
+import { EditorField, EditorFieldGroup } from '@grafana/plugin-ui';
 
 import { ALIGNMENT_PERIODS } from '../constants';
 import CloudMonitoringDatasource from '../datasource';

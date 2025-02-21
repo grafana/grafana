@@ -1,6 +1,5 @@
-import { t } from 'i18next';
-
-import { getBackendSrv } from '@grafana/runtime';
+import { t } from 'app/core/internationalization';
+import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 
 import { validationSrv } from '../services/ValidationSrv';
 
@@ -47,13 +46,19 @@ export const validateTitle = (newTitle: string, folderUid: string) => {
 };
 
 export const validateUid = (value: string) => {
-  return getBackendSrv()
-    .get(`/api/dashboards/uid/${value}`)
+  return getDashboardAPI()
+    .getDashboardDTO(value)
     .then((existingDashboard) => {
       return `Dashboard named '${existingDashboard?.dashboard.title}' in folder '${existingDashboard?.meta.folderTitle}' has the same UID`;
     })
     .catch((error) => {
       error.isHandled = true;
+
+      // when Editor user tries to import admin only dashboard (with same uid) he gets an unhelpful 403 error
+      //  therefore handling this use case to return some indication of whats wrong
+      if (error.status === 403) {
+        return 'Dashboard with the same UID already exists';
+      }
       return true;
     });
 };

@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { groupBy, size, upperFirst } from 'lodash';
 import { Fragment, ReactNode } from 'react';
 
-import { dateTime, GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, dateTime } from '@grafana/data';
 import { Icon, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 import { PrimaryText } from 'app/features/alerting/unified/components/common/TextVariants';
@@ -19,7 +19,7 @@ import { ReceiverMetadataBadge } from '../receivers/grafanaAppReceivers/Receiver
 import { ReceiverPluginMetadata } from '../receivers/grafanaAppReceivers/useReceiversMetadata';
 
 import { RECEIVER_META_KEY, RECEIVER_PLUGIN_META_KEY, RECEIVER_STATUS_KEY } from './constants';
-import { ContactPointWithMetadata, getReceiverDescription, ReceiverConfigWithMetadata } from './utils';
+import { ContactPointWithMetadata, ReceiverConfigWithMetadata, getReceiverDescription } from './utils';
 
 interface ContactPointProps {
   contactPoint: ContactPointWithMetadata;
@@ -47,13 +47,7 @@ export const ContactPoint = ({ contactPoint }: ContactPointProps) => {
             })
           }
         />
-        {receivers.length === 0 && (
-          <div className={styles.noIntegrationsContainer}>
-            <MetaText color="warning" icon="exclamation-circle">
-              <Trans i18nKey="alerting.contact-points.no-integrations">No integrations configured</Trans>
-            </MetaText>
-          </div>
-        )}
+
         {showFullMetadata ? (
           <div>
             {receivers.map((receiver, index) => {
@@ -176,6 +170,11 @@ export const ContactPointReceiverSummary = ({ receivers, limit }: ContactPointRe
   return (
     <Stack direction="column" gap={0}>
       <Stack direction="row" alignItems="center" gap={1}>
+        {integrationsShown.length === 0 && (
+          <MetaText color="warning" icon="exclamation-triangle">
+            <Trans i18nKey="alerting.contact-points.no-integrations">No integrations configured</Trans>
+          </MetaText>
+        )}
         {integrationsShown.map(([type, receivers], index) => {
           const iconName = INTEGRATION_ICONS[type];
           const receiverName = receiverTypeNames[type] ?? upperFirst(type);
@@ -198,7 +197,7 @@ export const ContactPointReceiverSummary = ({ receivers, limit }: ContactPointRe
                 {iconName && <Icon name={iconName} />}
                 <span>
                   {receiverName}
-                  {receivers.length > 1 && receivers.length}
+                  {receivers.length > 1 && ` (${receivers.length})`}
                 </span>
               </Stack>
               {!isLastItem && '⋅'}

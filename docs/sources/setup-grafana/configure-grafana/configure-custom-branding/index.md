@@ -32,9 +32,9 @@ With custom branding, you have the ability to modify the following elements:
 - Side menu top logo
 - Footer and help menu links
 - Fav icon (shown in browser tab)
-- Login title (will not appear if a login logo is set, Grafana v7.0+)
-- Login subtitle (will not appear if a login logo is set, Grafana v7.0+)
-- Login box background (Grafana v7.0+)
+- Login title (will not appear if a login logo is set)
+- Login subtitle (will not appear if a login logo is set)
+- Login box background
 - Loading logo
 
 > You will have to host your logo and other images used by the custom branding feature separately. Make sure Grafana can access the URL where the assets are stored.

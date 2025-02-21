@@ -74,12 +74,10 @@ export const Permissions = ({
 
   const onAdd = (state: SetPermission) => {
     let promise: Promise<void> | null = null;
-    if (state.target === PermissionTarget.User) {
-      promise = setUserPermission(resource, resourceId, state.userId!, state.permission);
-    } else if (state.target === PermissionTarget.ServiceAccount) {
-      promise = setUserPermission(resource, resourceId, state.userId!, state.permission);
+    if (state.target === PermissionTarget.User || state.target === PermissionTarget.ServiceAccount) {
+      promise = setUserPermission(resource, resourceId, state.userUid!, state.permission);
     } else if (state.target === PermissionTarget.Team) {
-      promise = setTeamPermission(resource, resourceId, state.teamId!, state.permission);
+      promise = setTeamPermission(resource, resourceId, state.teamUid!, state.permission);
     } else if (state.target === PermissionTarget.BuiltInRole) {
       promise = setBuiltInRolePermission(resource, resourceId, state.builtInRole!, state.permission);
     }
@@ -91,12 +89,10 @@ export const Permissions = ({
 
   const onRemove = (item: ResourcePermission) => {
     let promise: Promise<void> | null = null;
-    if (item.userId) {
-      promise = setUserPermission(resource, resourceId, item.userId, EMPTY_PERMISSION);
-    } else if (item.teamId) {
-      promise = setTeamPermission(resource, resourceId, item.teamId, EMPTY_PERMISSION);
-    } else if (item.isServiceAccount && item.userId) {
-      promise = setUserPermission(resource, resourceId, item.userId, EMPTY_PERMISSION);
+    if (item.userUid) {
+      promise = setUserPermission(resource, resourceId, item.userUid, EMPTY_PERMISSION);
+    } else if (item.teamUid) {
+      promise = setTeamPermission(resource, resourceId, item.teamUid, EMPTY_PERMISSION);
     } else if (item.builtInRole) {
       promise = setBuiltInRolePermission(resource, resourceId, item.builtInRole, EMPTY_PERMISSION);
     }
@@ -107,15 +103,14 @@ export const Permissions = ({
   };
 
   const onChange = (item: ResourcePermission, permission: string) => {
+    console.log('onChange', item, permission);
     if (item.permission === permission) {
       return;
     }
-    if (item.userId) {
-      onAdd({ permission, userId: item.userId, target: PermissionTarget.User });
-    } else if (item.isServiceAccount) {
-      onAdd({ permission, userId: item.userId, target: PermissionTarget.User });
-    } else if (item.teamId) {
-      onAdd({ permission, teamId: item.teamId, target: PermissionTarget.Team });
+    if (item.userUid || item.isServiceAccount) {
+      onAdd({ permission, userUid: item.userUid, target: PermissionTarget.User });
+    } else if (item.teamUid) {
+      onAdd({ permission, teamUid: item.teamUid, target: PermissionTarget.Team });
     } else if (item.builtInRole) {
       onAdd({ permission, builtInRole: item.builtInRole, target: PermissionTarget.BuiltInRole });
     }
@@ -259,11 +254,11 @@ const getDescription = async (resource: string): Promise<Description> => {
 const getPermissions = (resource: string, resourceId: ResourceId): Promise<ResourcePermission[]> =>
   getBackendSrv().get(`/api/access-control/${resource}/${resourceId}`);
 
-const setUserPermission = (resource: string, resourceId: ResourceId, userId: number, permission: string) =>
-  setPermission(resource, resourceId, 'users', userId, permission);
+const setUserPermission = (resource: string, resourceId: ResourceId, userUid: string, permission: string) =>
+  setPermission(resource, resourceId, 'users', userUid, permission);
 
-const setTeamPermission = (resource: string, resourceId: ResourceId, teamId: number, permission: string) =>
-  setPermission(resource, resourceId, 'teams', teamId, permission);
+const setTeamPermission = (resource: string, resourceId: ResourceId, teamUid: string, permission: string) =>
+  setPermission(resource, resourceId, 'teams', teamUid, permission);
 
 const setBuiltInRolePermission = (resource: string, resourceId: ResourceId, builtInRole: string, permission: string) =>
   setPermission(resource, resourceId, 'builtInRoles', builtInRole, permission);

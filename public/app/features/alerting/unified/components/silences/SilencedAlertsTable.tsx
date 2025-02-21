@@ -28,11 +28,11 @@ const SilencedAlertsTable = ({ silencedAlerts }: Props) => {
         </colgroup>
         <thead>
           <tr>
-            <th></th>
+            <th />
             <th>
               <Trans i18nKey="silences-table.header.state">State</Trans>
             </th>
-            <th></th>
+            <th />
             <th>
               <Trans i18nKey="silences-table.header.alert-name">Alert name</Trans>
             </th>

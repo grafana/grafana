@@ -124,6 +124,8 @@ const grafanaAlertmanagerConfig: AlertManagerCortexConfig = {
               addresses:
                 'gilles.demey+1@grafana.com, gilles.demey+2@grafana.com, gilles.demey+3@grafana.com, gilles.demey+4@grafana.com',
               singleEmail: false,
+              message: '{{ template "slack-template" . }}',
+              subject: 'some custom value',
             },
             secureFields: {},
           },

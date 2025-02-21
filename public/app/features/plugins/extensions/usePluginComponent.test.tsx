@@ -1,5 +1,4 @@
-import { act, render, screen, waitFor } from '@testing-library/react';
-import { renderHook } from '@testing-library/react-hooks';
+import { act, render, renderHook, screen, waitFor } from '@testing-library/react';
 
 import { PluginContextProvider, PluginLoadingStrategy, PluginMeta, PluginType } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -7,11 +6,16 @@ import { config } from '@grafana/runtime';
 import { ExtensionRegistriesProvider } from './ExtensionRegistriesContext';
 import { log } from './logs/log';
 import { resetLogMock } from './logs/testUtils';
-import { setupPluginExtensionRegistries } from './registry/setup';
+import { AddedComponentsRegistry } from './registry/AddedComponentsRegistry';
+import { AddedFunctionsRegistry } from './registry/AddedFunctionsRegistry';
+import { AddedLinksRegistry } from './registry/AddedLinksRegistry';
+import { ExposedComponentsRegistry } from './registry/ExposedComponentsRegistry';
 import { PluginExtensionRegistries } from './registry/types';
+import { useLoadAppPlugins } from './useLoadAppPlugins';
 import { usePluginComponent } from './usePluginComponent';
 import { isGrafanaDevMode, wrapWithPluginContext } from './utils';
 
+jest.mock('./useLoadAppPlugins');
 jest.mock('app/features/plugins/pluginSettings', () => ({
   getPluginSettings: jest.fn().mockResolvedValue({
     id: 'my-app-plugin',
@@ -75,6 +79,7 @@ describe('usePluginComponent()', () => {
     extensions: {
       addedLinks: [],
       addedComponents: [],
+      addedFunctions: [],
       // This is necessary, so we can register exposed components to the registry during the tests
       // (Otherwise the registry would reject it in the imitated production mode)
       exposedComponents: [exposedComponentConfig],
@@ -83,7 +88,13 @@ describe('usePluginComponent()', () => {
   };
 
   beforeEach(() => {
-    registries = setupPluginExtensionRegistries();
+    registries = {
+      addedComponentsRegistry: new AddedComponentsRegistry(),
+      exposedComponentsRegistry: new ExposedComponentsRegistry(),
+      addedLinksRegistry: new AddedLinksRegistry(),
+      addedFunctionsRegistry: new AddedFunctionsRegistry(),
+    };
+    jest.mocked(useLoadAppPlugins).mockReturnValue({ isLoading: false });
     jest.mocked(isGrafanaDevMode).mockReturnValue(false);
     resetLogMock(log);
 
@@ -114,6 +125,7 @@ describe('usePluginComponent()', () => {
         addedComponents: [],
         exposedComponents: [],
         extensionPoints: [],
+        addedFunctions: [],
       },
       dependencies: {
         grafanaVersion: '8.0.0',
@@ -288,7 +300,7 @@ describe('usePluginComponent()', () => {
     // Shouldn't return the component, as it's not present in the plugin.json dependencies
     let { result } = renderHook(() => usePluginComponent(exposedComponentId), { wrapper });
     expect(result.current.component).toBe(null);
-    expect(log.warning).toHaveBeenCalled();
+    expect(log.error).toHaveBeenCalled();
   });
 
   it('should return the exposed component if the meta-info is correct and in dev mode', () => {

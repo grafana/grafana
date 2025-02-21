@@ -13,7 +13,7 @@ labels:
     - oss
 menuTitle: Microsoft Teams
 title: Configure Microsoft Teams for Alerting
-weight: 0
+weight: 135
 refs:
   notification-templates:
     - pattern: /docs/grafana/

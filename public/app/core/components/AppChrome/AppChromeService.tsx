@@ -10,16 +10,17 @@ import { isShallowEqual } from 'app/core/utils/isShallowEqual';
 import { KioskMode } from 'app/types';
 
 import { RouteDescriptor } from '../../navigation/types';
+import { buildBreadcrumbs } from '../Breadcrumbs/utils';
 
+import { logDuplicateUnifiedHistoryEntryEvent } from './History/eventsTracking';
 import { ReturnToPreviousProps } from './ReturnToPrevious/ReturnToPrevious';
-import { TOP_BAR_LEVEL_HEIGHT } from './types';
+import { HistoryEntry, TOP_BAR_LEVEL_HEIGHT } from './types';
 
 export interface AppChromeState {
   chromeless?: boolean;
   sectionNav: NavModel;
   pageNav?: NavModelItem;
   actions?: React.ReactNode;
-  searchBarHidden?: boolean;
   megaMenuOpen: boolean;
   megaMenuDocked: boolean;
   kioskMode: KioskMode | null;
@@ -32,6 +33,7 @@ export interface AppChromeState {
 
 export const DOCKED_LOCAL_STORAGE_KEY = 'grafana.navigation.docked';
 export const DOCKED_MENU_OPEN_LOCAL_STORAGE_KEY = 'grafana.navigation.open';
+export const HISTORY_LOCAL_STORAGE_KEY = 'grafana.navigation.history';
 
 export class AppChromeService {
   searchBarStorageKey = 'SearchBar_Hidden';
@@ -49,7 +51,6 @@ export class AppChromeService {
   readonly state = new BehaviorSubject<AppChromeState>({
     chromeless: true, // start out hidden to not flash it on pages without chrome
     sectionNav: { node: { text: t('nav.home.title', 'Home') }, main: { text: '' } },
-    searchBarHidden: store.getBool(this.searchBarStorageKey, false),
     megaMenuOpen: this.megaMenuDocked && store.getBool(DOCKED_MENU_OPEN_LOCAL_STORAGE_KEY, true),
     megaMenuDocked: this.megaMenuDocked,
     kioskMode: null,
@@ -59,23 +60,13 @@ export class AppChromeService {
 
   public headerHeightObservable = this.state
     .pipe(
-      map(({ actions, chromeless, kioskMode, searchBarHidden }) => {
-        if (config.featureToggles.singleTopNav) {
-          if (kioskMode || chromeless) {
-            return 0;
-          } else if (actions) {
-            return TOP_BAR_LEVEL_HEIGHT * 2;
-          } else {
-            return TOP_BAR_LEVEL_HEIGHT;
-          }
+      map(({ actions, chromeless, kioskMode }) => {
+        if (kioskMode || chromeless) {
+          return 0;
+        } else if (actions) {
+          return TOP_BAR_LEVEL_HEIGHT * 2;
         } else {
-          if (kioskMode || chromeless) {
-            return 0;
-          } else if (searchBarHidden) {
-            return TOP_BAR_LEVEL_HEIGHT;
-          } else {
-            return TOP_BAR_LEVEL_HEIGHT * 2;
-          }
+          return TOP_BAR_LEVEL_HEIGHT;
         }
       })
     )
@@ -111,6 +102,8 @@ export class AppChromeService {
     newState.chromeless = newState.kioskMode === KioskMode.Full || this.currentRoute?.chromeless;
 
     if (!this.ignoreStateUpdate(newState, current)) {
+      config.featureToggles.unifiedHistory &&
+        store.setObject(HISTORY_LOCAL_STORAGE_KEY, this.getUpdatedHistory(newState));
       this.state.next(newState);
     }
   }
@@ -139,6 +132,40 @@ export class AppChromeService {
     window.sessionStorage.removeItem('returnToPrevious');
   };
 
+  private getUpdatedHistory(newState: AppChromeState): HistoryEntry[] {
+    const breadcrumbs = buildBreadcrumbs(newState.sectionNav.node, newState.pageNav, { text: 'Home', url: '/' }, true);
+    const newPageNav = newState.pageNav || newState.sectionNav.node;
+
+    let entries = store.getObject<HistoryEntry[]>(HISTORY_LOCAL_STORAGE_KEY, []);
+    const clickedHistory = store.getObject<boolean>('CLICKING_HISTORY');
+    if (clickedHistory) {
+      store.setObject('CLICKING_HISTORY', false);
+      return entries;
+    }
+    if (!newPageNav) {
+      return entries;
+    }
+
+    const lastEntry = entries[0];
+    const newEntry = { name: newPageNav.text, views: [], breadcrumbs, time: Date.now(), url: window.location.href };
+    const isSamePath = lastEntry && newEntry.url.split('?')[0] === lastEntry.url.split('?')[0];
+
+    // To avoid adding an entry with the same path twice, we always use the latest one
+    if (isSamePath) {
+      entries[0] = newEntry;
+    } else {
+      if (lastEntry && lastEntry.name === newEntry.name) {
+        logDuplicateUnifiedHistoryEntryEvent({
+          entryName: newEntry.name,
+          lastEntryURL: lastEntry.url,
+          newEntryURL: newEntry.url,
+        });
+      }
+      entries = [newEntry, ...entries];
+    }
+
+    return entries;
+  }
   private ignoreStateUpdate(newState: AppChromeState, current: AppChromeState) {
     if (isShallowEqual(newState, current)) {
       return true;
@@ -169,7 +196,9 @@ export class AppChromeService {
     if (megaMenuDocked) {
       store.set(DOCKED_MENU_OPEN_LOCAL_STORAGE_KEY, newOpenState);
     }
-    reportInteraction('grafana_mega_menu_open', { state: newOpenState });
+    reportInteraction('grafana_mega_menu_open', {
+      state: newOpenState,
+    });
     this.update({
       megaMenuOpen: newOpenState,
     });
@@ -185,36 +214,28 @@ export class AppChromeService {
     });
   };
 
-  public onToggleSearchBar = () => {
-    const { searchBarHidden, kioskMode } = this.state.getValue();
-    const newSearchBarHidden = !searchBarHidden;
-    store.set(this.searchBarStorageKey, newSearchBarHidden);
-
-    if (kioskMode) {
-      locationService.partial({ kiosk: null });
-    }
-
-    this.update({ searchBarHidden: newSearchBarHidden, kioskMode: null });
-  };
-
   public onToggleKioskMode = () => {
     const nextMode = this.getNextKioskMode();
     this.update({ kioskMode: nextMode });
     locationService.partial({ kiosk: this.getKioskUrlValue(nextMode) });
+    reportInteraction('grafana_kiosk_mode', {
+      action: 'toggle',
+      mode: nextMode,
+    });
   };
 
   public exitKioskMode() {
     this.update({ kioskMode: undefined });
     locationService.partial({ kiosk: null });
+    reportInteraction('grafana_kiosk_mode', {
+      action: 'exit',
+    });
   }
 
   public setKioskModeFromUrl(kiosk: UrlQueryValue) {
     let newKioskMode: KioskMode | undefined;
 
     switch (kiosk) {
-      case 'tv':
-        newKioskMode = KioskMode.TV;
-        break;
       case '1':
       case true:
         newKioskMode = KioskMode.Full;
@@ -227,8 +248,6 @@ export class AppChromeService {
 
   public getKioskUrlValue(mode: KioskMode | null) {
     switch (mode) {
-      case KioskMode.TV:
-        return 'tv';
       case KioskMode.Full:
         return true;
       default:
@@ -237,18 +256,8 @@ export class AppChromeService {
   }
 
   private getNextKioskMode() {
-    const { kioskMode, searchBarHidden } = this.state.getValue();
-
-    if (searchBarHidden || kioskMode === KioskMode.TV || config.featureToggles.singleTopNav) {
-      appEvents.emit(AppEvents.alertInfo, [t('navigation.kiosk.tv-alert', 'Press ESC to exit kiosk mode')]);
-      return KioskMode.Full;
-    }
-
-    if (!kioskMode) {
-      return KioskMode.TV;
-    }
-
-    return null;
+    appEvents.emit(AppEvents.alertInfo, [t('navigation.kiosk.tv-alert', 'Press ESC to exit kiosk mode')]);
+    return KioskMode.Full;
   }
 }
 

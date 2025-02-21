@@ -38,9 +38,7 @@ export interface AlertRule {
 
 export type GrafanaNotifierType =
   | 'discord'
-  | 'hipchat'
   | 'email'
-  | 'sensu'
   | 'sensugo'
   | 'googlechat'
   | 'threema'
@@ -57,7 +55,10 @@ export type GrafanaNotifierType =
   | 'LINE'
   | 'kafka'
   | 'wecom'
-  | 'mqtt';
+  | 'webex'
+  | 'mqtt'
+  | 'oncall'
+  | 'sns';
 
 export type CloudNotifierType =
   | 'oncall' // Only FE implementation for now
@@ -73,7 +74,8 @@ export type CloudNotifierType =
   | 'telegram'
   | 'sns'
   | 'discord'
-  | 'msteams';
+  | 'msteams'
+  | 'jira';
 
 export type NotifierType = GrafanaNotifierType | CloudNotifierType;
 export interface NotifierDTO<T = NotifierType> {

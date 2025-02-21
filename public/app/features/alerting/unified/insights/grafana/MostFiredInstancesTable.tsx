@@ -14,7 +14,7 @@ import { Link, useStyles2 } from '@grafana/ui';
 
 import { PANEL_STYLES } from '../../home/Insights';
 import { createRelativeUrl } from '../../utils/url';
-import { InsightsRatingModal } from '../RatingModal';
+import { InsightsMenuButton } from '../InsightsMenuButton';
 
 export function getMostFiredInstancesScene(datasource: DataSourceRef, panelTitle: string) {
   const query = new SceneQueryRunner({
@@ -101,7 +101,7 @@ export function getMostFiredInstancesScene(datasource: DataSourceRef, panelTitle
       .setDescription('The alert rule instances that have fired the most')
       .setData(transformation)
       .setNoValue('No new alerts fired last week')
-      .setHeaderActions(<InsightsRatingModal panel={panelTitle} />)
+      .setHeaderActions([new InsightsMenuButton({ panel: panelTitle })])
       .build(),
   });
 }

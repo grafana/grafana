@@ -17,6 +17,11 @@ title: Notification template reference
 menuTitle: Template reference
 weight: 102
 refs:
+  label-types:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/annotation-label/#label-types
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/annotation-label/#label-types
   alert-rule-template-reference:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/reference/
@@ -81,19 +86,25 @@ Here's an example that prints all available notification data from dot (`.`):
 {{ end }}
 ```
 
+You can execute this template by passing the dot (`.`):
+
+```go
+{{ template "custom_template" . }}
+```
+
 ## Alert
 
 `Alert` contains data for an individual alert:
 
-| Name           | Type      | Description                                                                                                                                    |
-| -------------- | --------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Status`       | string    | Firing or resolved.                                                                                                                            |
-| `Labels`       | [KV](#kv) | The labels for this alert.                                                                                                                     |
-| `Annotations`  | [KV](#kv) | The annotations for this alert.                                                                                                                |
-| `StartsAt`     | time      | The time the alert fired                                                                                                                       |
-| `EndsAt`       | time      | Only set if the end time of an alert is known. Otherwise set to a configurable timeout period from the time since the last alert was received. |
-| `GeneratorURL` | string    | A link to Grafana, or the source of the alert if using an external alert generator.                                                            |
-| `Fingerprint`  | string    | A unique string that identifies the alert.                                                                                                     |
+| Name           | Type          | Description                                                                                                                                    |
+| -------------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Status`       | string        | Firing or resolved.                                                                                                                            |
+| `Labels`       | [KV](#kv)     | The labels for this alert. It includes all [types of labels](ref:label-types).                                                                 |
+| `Annotations`  | [KV](#kv)     | The annotations for this alert.                                                                                                                |
+| `StartsAt`     | [Time](#time) | The time the alert fired                                                                                                                       |
+| `EndsAt`       | [Time](#time) | Only set if the end time of an alert is known. Otherwise set to a configurable timeout period from the time since the last alert was received. |
+| `GeneratorURL` | string        | A link to Grafana, or the source of the alert if using an external alert generator.                                                            |
+| `Fingerprint`  | string        | A unique string that identifies the alert.                                                                                                     |
 
 Grafana-managed alerts include these additional properties:
 
@@ -126,6 +137,12 @@ This example iterates over the list of firing and resolved alerts (`.Alerts`) in
   {{ .ValueString }}
 {{ end }}
 {{ end }}
+```
+
+You can run this template by passing the dot (`.`):
+
+```go
+{{ template "custom_template" . }}
 ```
 
 ## KV
@@ -162,6 +179,27 @@ Here's an example of using these methods:
 {{ end }}
 ```
 
+## Time
+
+Some template functions and properties return a `Time` object, which refers to the [type `Time`](https://pkg.go.dev/time#Time) in Go's time package.
+
+When accessing a `Time` object, you can use various [`Time` functions](https://pkg.go.dev/time#Time) in your templates as follows.
+
+```go
+{{ define "custom_template" }}
+  {{ range .Alerts }}
+    {{ .StartsAt  }}
+    {{ .StartsAt.Add 6000000000000  }}
+    {{ .StartsAt.Add -6000000000000  }}
+    {{ .StartsAt.AddDate 1 0 0  }}
+    {{ .StartsAt.Year   }}/{{ .StartsAt.Month   }}/{{ .StartsAt.Day   }}
+    {{ .StartsAt.Hour   }}:{{ .StartsAt.Minute   }}:{{ .StartsAt.Second   }}
+    {{ .StartsAt.YearDay   }}-{{ .StartsAt.Weekday   }}
+    {{ .StartsAt.Unix }} {{ .StartsAt.UnixMilli }}
+  {{ end}}
+{{ end }}
+```
+
 ## Functions
 
 Functions can perform actions in templates such as transforming or formatting data.
@@ -170,21 +208,21 @@ Note that the [functions provided by Go's template language](ref:template-langua
 
 In addition, the following functions are also available for templating notifications:
 
-### Strings
+| Name           | Arguments                  | Returns       | Description                                                                                                                                                                                                      |
+| -------------- | -------------------------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `title`        | string                     | string        | Capitalizes the first character of each word.                                                                                                                                                                    |
+| `toUpper`      | string                     | string        | Returns all text in uppercase.                                                                                                                                                                                   |
+| `toLower`      | string                     | string        | Returns all text in lowercase.                                                                                                                                                                                   |
+| `trimSpace`    | string                     | string        | Removes leading and trailing white spaces.                                                                                                                                                                       |
+| `match`        | pattern, text              | boolean       | Matches the text against a regular expression pattern.                                                                                                                                                           |
+| `reReplaceAll` | pattern, replacement, text | string        | Replaces text matching the regular expression.                                                                                                                                                                   |
+| `join`         | sep string, s []string     | string        | Concatenates the elements of s to create a single string. The separator string sep is placed between elements in the resulting string.                                                                           |
+| `safeHtml`     | string                     | string        | Marks string as HTML not requiring auto-escaping.                                                                                                                                                                |
+| `stringSlice`  | ...string                  | string        | Returns the passed strings as a slice of strings. auto-escaping.                                                                                                                                                 |
+| `date`         | string, [Time](#time)      | string        | Format a time in the specified format. For format options, refer to [Go's time format documentation](https://pkg.go.dev/time#pkg-constants).                                                                     |
+| `tz`           | string, [Time](#time)      | [Time](#time) | Returns the time in the specified timezone, such as `Europe/Paris`. For available timezone options, refer to the [list of tz database time zones](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones). |
 
-| Name           | Arguments                  | Returns | Description                                                                                                                            |
-| -------------- | -------------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| `title`        | string                     | string  | Capitalizes the first character of each word.                                                                                          |
-| `toUpper`      | string                     | string  | Returns all text in uppercase.                                                                                                         |
-| `toLower`      | string                     | string  | Returns all text in lowercase.                                                                                                         |
-| `trimSpace`    | string                     | string  | Removes leading and trailing white spaces.                                                                                             |
-| `match`        | pattern, text              | boolean | Matches the text against a regular expression pattern.                                                                                 |
-| `reReplaceAll` | pattern, replacement, text | string  | Replaces text matching the regular expression.                                                                                         |
-| `join`         | sep string, s []string     | string  | Concatenates the elements of s to create a single string. The separator string sep is placed between elements in the resulting string. |
-| `safeHtml`     | string                     | string  | Marks string as HTML not requiring auto-escaping.                                                                                      |
-| `stringSlice`  | ...string                  | string  | Returns the passed strings as a slice of strings. auto-escaping.                                                                       |
-
-Here's an example of using these functions:
+Here's an example using some functions to format text:
 
 ```go
 {{ define "custom_template" }}
@@ -200,26 +238,31 @@ Here's an example of using these functions:
 {{ end }}
 ```
 
-### Time
-
-You can format a time in a number of different formats using the `date` function.
-For example, to print the time that an alert fired in the format `15:04:05 MST`:
+`date` and `tz` can format times. For example, to print the time an alert fired in the format `15:04:05 MST`:
 
 ```go
 {{ define "custom_template" }}
-  {{ with (index .Alerts 0) }}
+  {{ range .Alerts }}
     {{ .StartsAt | date "15:04:05 MST" }}
   {{ end}}
 {{ end }}
 ```
 
-You can also use the `tz` function to change the timezone from UTC to a local time. For example:
+You can then use `tz` to change the timezone from UTC to local time, such as `Europe/Paris`.
 
 ```go
-{{ .StartsAt | tz "Europe/Paris" | date "15:04:05 MST" }}
+{{ define "custom_template" }}
+  {{ range .Alerts }}
+    {{ .StartsAt | tz "Europe/Paris" }}
+    {{ .StartsAt | tz "Europe/Paris" | date "15:04:05 MST" }}
+  {{ end}}
+{{ end }}
 ```
 
-You can find a reference for Go's time format [here](https://pkg.go.dev/time#pkg-constants).
+```template-output
+2024-10-30 21:01:45.227 +0100 CET
+21:01:45 CET
+```
 
 ## Differences with annotation and label templates
 

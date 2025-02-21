@@ -2,7 +2,6 @@ import { of } from 'rxjs';
 
 import { DataQueryRequest, DataSourceApi, LoadingState, PanelPlugin } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
-import { setDataSourceSrv } from '@grafana/runtime';
 import {
   CancelActivationHandler,
   CustomVariable,
@@ -14,13 +13,14 @@ import {
   SceneVariableSet,
   VizPanel,
 } from '@grafana/scenes';
-import { mockDataSource, MockDataSourceSrv } from 'app/features/alerting/unified/mocks';
+import { mockDataSource } from 'app/features/alerting/unified/mocks';
+import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
 import * as libAPI from 'app/features/library-panels/state/api';
 
-import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
+import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
 import { activateFullSceneTree } from '../utils/test-utils';
@@ -61,13 +61,16 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 const dataSources = {
-  ds1: mockDataSource({
-    uid: 'ds1',
-    type: DataSourceType.Prometheus,
-  }),
+  ds1: mockDataSource(
+    {
+      uid: 'ds1',
+      type: DataSourceType.Prometheus,
+    },
+    { module: 'core:plugin/prometheus' }
+  ),
 };
 
-setDataSourceSrv(new MockDataSourceSrv(dataSources));
+setupDataSources(...Object.values(dataSources));
 
 let deactivate: CancelActivationHandler | undefined;
 
@@ -200,7 +203,6 @@ describe('PanelEditor', () => {
 
       const libPanelBehavior = new LibraryPanelBehavior({
         isLoaded: true,
-        title: libraryPanelModel.title,
         uid: libraryPanelModel.uid,
         name: libraryPanelModel.name,
         _loadedPanel: libraryPanelModel,
@@ -239,7 +241,7 @@ describe('PanelEditor', () => {
       // Wait for mock api to return and update the library panel
       expect(libPanelBehavior.state._loadedPanel?.version).toBe(2);
       expect(libPanelBehavior.state.name).toBe('changed name');
-      expect(libPanelBehavior.state.title).toBe('changed title');
+      expect(panel.state.title).toBe('changed title');
       expect((gridItem.state.body as VizPanel).state.title).toBe('changed title');
     });
 
@@ -258,7 +260,6 @@ describe('PanelEditor', () => {
 
       const libPanelBehavior = new LibraryPanelBehavior({
         isLoaded: true,
-        title: libraryPanelModel.title,
         uid: libraryPanelModel.uid,
         name: libraryPanelModel.name,
         _loadedPanel: libraryPanelModel,
@@ -267,6 +268,8 @@ describe('PanelEditor', () => {
       // Just adding an extra stateless behavior to verify unlinking does not remvoe it
       const otherBehavior = jest.fn();
       const panel = new VizPanel({ key: 'panel-1', pluginId: 'text', $behaviors: [libPanelBehavior, otherBehavior] });
+      new DashboardGridItem({ body: panel });
+
       const editScene = buildPanelEditScene(panel);
       editScene.onConfirmUnlinkLibraryPanel();
 

@@ -1,35 +1,30 @@
 package zanzana
 
 import (
-	"fmt"
+	"net/http"
 
-	openfgav1 "github.com/openfga/api/proto/openfga/v1"
-	"github.com/openfga/openfga/pkg/server"
-	"github.com/openfga/openfga/pkg/storage"
+	openfgaserver "github.com/openfga/openfga/pkg/server"
+	openfgastorage "github.com/openfga/openfga/pkg/storage"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana/server"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/setting"
-
-	zserver "github.com/grafana/grafana/pkg/services/authz/zanzana/server"
 )
 
-func NewOpenFGAServer(cfg *setting.Cfg, store storage.OpenFGADatastore, logger log.Logger) (*server.Server, error) {
-	return zserver.NewOpenFGA(&cfg.Zanzana, store, logger)
+func NewServer(cfg setting.ZanzanaServerSettings, openfga server.OpenFGAServer, logger log.Logger, tracer tracing.Tracer) (*server.Server, error) {
+	return server.NewServer(cfg, openfga, logger, tracer)
 }
 
-func NewAuthzServer(cfg *setting.Cfg, openfga openfgav1.OpenFGAServiceServer) (*zserver.Server, error) {
-	stackID := cfg.StackID
-	if stackID == "" {
-		stackID = "default"
-	}
-
-	return zserver.NewAuthz(
-		openfga,
-		zserver.WithTenantID(fmt.Sprintf("stack-%s", stackID)),
-	)
+func NewHealthServer(target server.DiagnosticServer) *server.HealthServer {
+	return server.NewHealthServer(target)
 }
 
-func StartOpenFGAHttpSever(cfg *setting.Cfg, srv grpcserver.Provider, logger log.Logger) error {
-	return zserver.StartOpenFGAHttpSever(cfg, srv, logger)
+func NewOpenFGAServer(cfg setting.ZanzanaServerSettings, store openfgastorage.OpenFGADatastore, logger log.Logger) (*openfgaserver.Server, error) {
+	return server.NewOpenFGAServer(cfg, store, logger)
+}
+
+func NewOpenFGAHttpServer(cfg setting.ZanzanaServerSettings, srv grpcserver.Provider) (*http.Server, error) {
+	return server.NewOpenFGAHttpServer(cfg, srv)
 }

@@ -127,10 +127,12 @@ const (
 	FolderDataType           MigrateDataType = "FOLDER"
 	LibraryElementDataType   MigrateDataType = "LIBRARY_ELEMENT"
 	AlertRuleType            MigrateDataType = "ALERT_RULE"
+	AlertRuleGroupType       MigrateDataType = "ALERT_RULE_GROUP"
 	ContactPointType         MigrateDataType = "CONTACT_POINT"
 	NotificationPolicyType   MigrateDataType = "NOTIFICATION_POLICY"
 	NotificationTemplateType MigrateDataType = "NOTIFICATION_TEMPLATE"
 	MuteTimingType           MigrateDataType = "MUTE_TIMING"
+	PluginDataType           MigrateDataType = "PLUGIN"
 )
 
 // swagger:enum ItemStatus
@@ -149,13 +151,15 @@ type ItemErrorCode string
 
 const (
 	ErrDatasourceNameConflict     ItemErrorCode = "DATASOURCE_NAME_CONFLICT"
+	ErrDatasourceInvalidURL       ItemErrorCode = "DATASOURCE_INVALID_URL"
+	ErrDatasourceAlreadyManaged   ItemErrorCode = "DATASOURCE_ALREADY_MANAGED"
+	ErrFolderNameConflict         ItemErrorCode = "FOLDER_NAME_CONFLICT"
 	ErrDashboardAlreadyManaged    ItemErrorCode = "DASHBOARD_ALREADY_MANAGED"
 	ErrLibraryElementNameConflict ItemErrorCode = "LIBRARY_ELEMENT_NAME_CONFLICT"
 	ErrUnsupportedDataType        ItemErrorCode = "UNSUPPORTED_DATA_TYPE"
 	ErrResourceConflict           ItemErrorCode = "RESOURCE_CONFLICT"
 	ErrUnexpectedStatus           ItemErrorCode = "UNEXPECTED_STATUS_CODE"
 	ErrInternalServiceError       ItemErrorCode = "INTERNAL_SERVICE_ERROR"
-	ErrOnlyCoreDataSources        ItemErrorCode = "ONLY_CORE_DATA_SOURCES"
 	ErrGeneric                    ItemErrorCode = "GENERIC_ERROR"
 )
 

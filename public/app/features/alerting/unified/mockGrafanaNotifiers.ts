@@ -1,7 +1,7 @@
-import { NotifierDTO } from 'app/types';
+import { GrafanaNotifierType, NotifierDTO } from 'app/types';
 
-export const grafanaAlertNotifiersMock: NotifierDTO[] = [
-  {
+export const grafanaAlertNotifiers: Record<GrafanaNotifierType, NotifierDTO> = {
+  dingding: {
     type: 'dingding',
     name: 'DingDing',
     heading: 'DingDing settings',
@@ -87,7 +87,7 @@ export const grafanaAlertNotifiersMock: NotifierDTO[] = [
       },
     ],
   },
-  {
+  kafka: {
     type: 'kafka',
     name: 'Kafka REST Proxy',
     heading: 'Kafka settings',
@@ -242,7 +242,7 @@ export const grafanaAlertNotifiersMock: NotifierDTO[] = [
       },
     ],
   },
-  {
+  email: {
     type: 'email',
     name: 'Email',
     heading: 'Email settings',
@@ -289,7 +289,7 @@ export const grafanaAlertNotifiersMock: NotifierDTO[] = [
         label: 'Message',
         description:
           'Optional message. You can use templates to customize this field. Using a custom message will replace the default message',
-        placeholder: '',
+        placeholder: '{{ template "default.message" . }}',
         propertyName: 'message',
         selectOptions: null,
         showWhen: {
@@ -320,7 +320,7 @@ export const grafanaAlertNotifiersMock: NotifierDTO[] = [
       },
     ],
   },
-  {
+  pagerduty: {
     type: 'pagerduty',
     name: 'PagerDuty',
     heading: 'PagerDuty settings',
@@ -500,7 +500,7 @@ export const grafanaAlertNotifiersMock: NotifierDTO[] = [
       },
     ],
   },
-  {
+  victorops: {
     type: 'victorops',
     name: 'VictorOps',
     heading: 'VictorOps settings',
@@ -586,7 +586,7 @@ export const grafanaAlertNotifiersMock: NotifierDTO[] = [
       },
     ],
   },
-  {
+  pushover: {
     type: 'pushover',
     name: 'Pushover',
     heading: 'Pushover settings',
@@ -1011,7 +1011,7 @@ export const grafanaAlertNotifiersMock: NotifierDTO[] = [
       },
     ],
   },
-  {
+  slack: {
     type: 'slack',
     name: 'Slack',
     heading: 'Slack settings',
@@ -1242,7 +1242,7 @@ export const grafanaAlertNotifiersMock: NotifierDTO[] = [
       },
     ],
   },
-  {
+  sensugo: {
     type: 'sensugo',
     name: 'Sensu Go',
     heading: 'Sensu Go Settings',
@@ -1370,7 +1370,7 @@ export const grafanaAlertNotifiersMock: NotifierDTO[] = [
       },
     ],
   },
-  {
+  teams: {
     type: 'teams',
     name: 'Microsoft Teams',
     heading: 'Teams settings',
@@ -1447,7 +1447,7 @@ export const grafanaAlertNotifiersMock: NotifierDTO[] = [
       },
     ],
   },
-  {
+  telegram: {
     type: 'telegram',
     name: 'Telegram',
     heading: 'Telegram API settings',
@@ -1592,7 +1592,7 @@ export const grafanaAlertNotifiersMock: NotifierDTO[] = [
       },
     ],
   },
-  {
+  webhook: {
     type: 'webhook',
     name: 'Webhook',
     heading: 'Webhook settings',
@@ -1750,7 +1750,7 @@ export const grafanaAlertNotifiersMock: NotifierDTO[] = [
         element: 'textarea',
         inputType: '',
         label: 'Message',
-        description: 'Custom message. You can use template variables.',
+        description: 'Templated message to be used in the payload\'s "message" field.',
         placeholder: '{{ template "default.message" . }}',
         propertyName: 'message',
         selectOptions: null,
@@ -1765,7 +1765,7 @@ export const grafanaAlertNotifiersMock: NotifierDTO[] = [
       },
     ],
   },
-  {
+  oncall: {
     type: 'oncall',
     name: 'Grafana OnCall',
     heading: 'Grafana OnCall settings',
@@ -1938,7 +1938,7 @@ export const grafanaAlertNotifiersMock: NotifierDTO[] = [
       },
     ],
   },
-  {
+  wecom: {
     type: 'wecom',
     name: 'WeCom',
     heading: 'WeCom settings',
@@ -2092,7 +2092,7 @@ export const grafanaAlertNotifiersMock: NotifierDTO[] = [
       },
     ],
   },
-  {
+  'prometheus-alertmanager': {
     type: 'prometheus-alertmanager',
     name: 'Alertmanager',
     heading: 'Alertmanager Settings',
@@ -2152,7 +2152,7 @@ export const grafanaAlertNotifiersMock: NotifierDTO[] = [
       },
     ],
   },
-  {
+  discord: {
     type: 'discord',
     name: 'Discord',
     heading: 'Discord settings',
@@ -2247,7 +2247,7 @@ export const grafanaAlertNotifiersMock: NotifierDTO[] = [
       },
     ],
   },
-  {
+  googlechat: {
     type: 'googlechat',
     name: 'Google Hangouts Chat',
     heading: 'Google Hangouts Chat settings',
@@ -2268,7 +2268,7 @@ export const grafanaAlertNotifiersMock: NotifierDTO[] = [
         },
         required: true,
         validationRule: '',
-        secure: false,
+        secure: true,
         dependsOn: '',
       },
       {
@@ -2307,7 +2307,7 @@ export const grafanaAlertNotifiersMock: NotifierDTO[] = [
       },
     ],
   },
-  {
+  LINE: {
     type: 'LINE',
     name: 'LINE',
     heading: 'LINE notify settings',
@@ -2367,7 +2367,7 @@ export const grafanaAlertNotifiersMock: NotifierDTO[] = [
       },
     ],
   },
-  {
+  threema: {
     type: 'threema',
     name: 'Threema Gateway',
     heading: 'Threema Gateway settings',
@@ -2461,7 +2461,7 @@ export const grafanaAlertNotifiersMock: NotifierDTO[] = [
       },
     ],
   },
-  {
+  mqtt: {
     type: 'mqtt',
     name: 'MQTT',
     heading: 'MQTT settings',
@@ -2733,7 +2733,7 @@ export const grafanaAlertNotifiersMock: NotifierDTO[] = [
       },
     ],
   },
-  {
+  opsgenie: {
     type: 'opsgenie',
     name: 'OpsGenie',
     heading: 'OpsGenie settings',
@@ -2874,7 +2874,7 @@ export const grafanaAlertNotifiersMock: NotifierDTO[] = [
       },
     ],
   },
-  {
+  webex: {
     type: 'webex',
     name: 'Cisco Webex Teams',
     heading: 'Webex settings',
@@ -2951,4 +2951,254 @@ export const grafanaAlertNotifiersMock: NotifierDTO[] = [
       },
     ],
   },
-];
+  sns: {
+    type: 'sns',
+    name: 'AWS SNS',
+    heading: 'Webex settings',
+    description: 'Sends notifications to AWS Simple Notification Service',
+    info: '',
+    options: [
+      {
+        element: 'input',
+        inputType: 'text',
+        label: 'The Amazon SNS API URL',
+        description: '',
+        placeholder: '',
+        propertyName: 'api_url',
+        selectOptions: null,
+        showWhen: {
+          field: '',
+          is: '',
+        },
+        required: false,
+        validationRule: '',
+        secure: false,
+        dependsOn: '',
+        subformOptions: undefined,
+      },
+      {
+        element: 'subform',
+        inputType: '',
+        label: 'SigV4 Authentication',
+        description: "Configures AWS's Signature Verification 4 signing process to sign requests",
+        placeholder: '',
+        propertyName: 'sigv4',
+        selectOptions: null,
+        showWhen: {
+          field: '',
+          is: '',
+        },
+        required: false,
+        validationRule: '',
+        secure: false,
+        dependsOn: '',
+        subformOptions: [
+          {
+            element: 'input',
+            inputType: 'text',
+            label: 'Region',
+            description: 'The AWS region. If blank, the region from the default credentials chain is used.',
+            placeholder: '',
+            propertyName: 'region',
+            selectOptions: null,
+            showWhen: {
+              field: '',
+              is: '',
+            },
+            required: false,
+            validationRule: '',
+            secure: false,
+            dependsOn: '',
+            subformOptions: undefined,
+          },
+          {
+            element: 'input',
+            inputType: 'text',
+            label: 'Access Key',
+            description: 'The AWS API access key.',
+            placeholder: '',
+            propertyName: 'access_key',
+            selectOptions: null,
+            showWhen: {
+              field: '',
+              is: '',
+            },
+            required: false,
+            validationRule: '',
+            secure: true,
+            dependsOn: '',
+            subformOptions: undefined,
+          },
+          {
+            element: 'input',
+            inputType: 'text',
+            label: 'Secret Key',
+            description: 'The AWS API secret key.',
+            placeholder: '',
+            propertyName: 'secret_key',
+            selectOptions: null,
+            showWhen: {
+              field: '',
+              is: '',
+            },
+            required: false,
+            validationRule: '',
+            secure: true,
+            dependsOn: '',
+            subformOptions: undefined,
+          },
+          {
+            element: 'input',
+            inputType: 'text',
+            label: 'Profile',
+            description: 'Named AWS profile used to authenticate',
+            placeholder: '',
+            propertyName: 'profile',
+            selectOptions: null,
+            showWhen: {
+              field: '',
+              is: '',
+            },
+            required: false,
+            validationRule: '',
+            secure: false,
+            dependsOn: '',
+            subformOptions: undefined,
+          },
+          {
+            element: 'input',
+            inputType: 'text',
+            label: 'Role ARN',
+            description: 'AWS Role ARN, an alternative to using AWS API keys',
+            placeholder: '',
+            propertyName: 'role_arn',
+            selectOptions: null,
+            showWhen: {
+              field: '',
+              is: '',
+            },
+            required: false,
+            validationRule: '',
+            secure: false,
+            dependsOn: '',
+            subformOptions: undefined,
+          },
+        ],
+      },
+      {
+        element: 'input',
+        inputType: 'text',
+        label: 'SNS topic ARN',
+        description:
+          "If you don't specify this value, you must specify a value for the phone_number or target_arn. If you are using a FIFO SNS topic you should set a message group interval longer than 5 minutes to prevent messages with the same group key being deduplicated by the SNS default deduplication window.",
+        placeholder: '',
+        propertyName: 'topic_arn',
+        selectOptions: null,
+        showWhen: {
+          field: '',
+          is: '',
+        },
+        required: false,
+        validationRule: '',
+        secure: false,
+        dependsOn: '',
+        subformOptions: undefined,
+      },
+      {
+        element: 'input',
+        inputType: 'text',
+        label: 'Phone number',
+        description:
+          "Phone number if message is delivered via SMS in E.164 format. If you don't specify this value, you must specify a value for the topic_arn or target_arn",
+        placeholder: '',
+        propertyName: 'phone_number',
+        selectOptions: null,
+        showWhen: {
+          field: '',
+          is: '',
+        },
+        required: false,
+        validationRule: '',
+        secure: false,
+        dependsOn: '',
+        subformOptions: undefined,
+      },
+      {
+        element: 'input',
+        inputType: 'text',
+        label: 'Target ARN',
+        description:
+          "The mobile platform endpoint ARN if message is delivered via mobile notifications. If you don't specify this value, you must specify a value for the topic_arn or phone_number",
+        placeholder: '',
+        propertyName: 'target_arn',
+        selectOptions: null,
+        showWhen: {
+          field: '',
+          is: '',
+        },
+        required: false,
+        validationRule: '',
+        secure: false,
+        dependsOn: '',
+        subformOptions: undefined,
+      },
+      {
+        element: 'input',
+        inputType: 'text',
+        label: 'Subject',
+        description: 'Optional subject. You can use templates to customize this field',
+        placeholder: '{{ template "default.title" . }}',
+        propertyName: 'subject',
+        selectOptions: null,
+        showWhen: {
+          field: '',
+          is: '',
+        },
+        required: false,
+        validationRule: '',
+        secure: false,
+        dependsOn: '',
+        subformOptions: undefined,
+      },
+      {
+        element: 'textarea',
+        inputType: '',
+        label: 'Message',
+        description:
+          'Optional message. You can use templates to customize this field. Using a custom message will replace the default message',
+        placeholder: '{{ template "default.message" . }}',
+        propertyName: 'message',
+        selectOptions: null,
+        showWhen: {
+          field: '',
+          is: '',
+        },
+        required: false,
+        validationRule: '',
+        secure: false,
+        dependsOn: '',
+        subformOptions: undefined,
+      },
+      {
+        element: 'key_value_map',
+        inputType: 'text',
+        label: 'Attributes',
+        description: 'SNS message attributes',
+        placeholder: '',
+        propertyName: 'attributes',
+        selectOptions: null,
+        showWhen: {
+          field: '',
+          is: '',
+        },
+        required: false,
+        validationRule: '',
+        secure: false,
+        dependsOn: '',
+        subformOptions: undefined,
+      },
+    ],
+  },
+};
+
+export const grafanaAlertNotifiersMock: NotifierDTO[] = Object.values(grafanaAlertNotifiers);

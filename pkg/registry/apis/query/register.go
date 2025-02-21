@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry/apis/query/client"
+	"github.com/grafana/grafana/pkg/registry/apis/query/clientapi"
 	"github.com/grafana/grafana/pkg/registry/apis/query/queryschema"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -40,14 +41,14 @@ type QueryAPIBuilder struct {
 	tracer     tracing.Tracer
 	metrics    *queryMetrics
 	parser     *queryParser
-	client     DataSourceClientSupplier
+	client     clientapi.DataSourceClientSupplier
 	registry   query.DataSourceApiServerRegistry
 	converter  *expr.ResultConverter
 	queryTypes *query.QueryTypeDefinitionList
 }
 
 func NewQueryAPIBuilder(features featuremgmt.FeatureToggles,
-	client DataSourceClientSupplier,
+	client clientapi.DataSourceClientSupplier,
 	registry query.DataSourceApiServerRegistry,
 	legacy service.LegacyDataSourceLookup,
 	registerer prometheus.Registerer,
@@ -75,7 +76,7 @@ func NewQueryAPIBuilder(features featuremgmt.FeatureToggles,
 		log:                  log.New("query_apiserver"),
 		client:               client,
 		registry:             registry,
-		parser:               newQueryParser(reader, legacy, tracer),
+		parser:               newQueryParser(reader, legacy, tracer, log.New("query_parser")),
 		metrics:              newQueryMetrics(registerer),
 		tracer:               tracer,
 		features:             features,
@@ -98,8 +99,9 @@ func RegisterAPIService(features featuremgmt.FeatureToggles,
 	tracer tracing.Tracer,
 	legacy service.LegacyDataSourceLookup,
 ) (*QueryAPIBuilder, error) {
-	if !(features.IsEnabledGlobally(featuremgmt.FlagQueryService) ||
-		features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs)) {
+	if !featuremgmt.AnyEnabled(features,
+		featuremgmt.FlagQueryService,
+		featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		return nil, nil // skip registration unless explicitly added (or all experimental are added)
 	}
 
@@ -162,11 +164,6 @@ func (b *QueryAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIG
 
 func (b *QueryAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
 	return query.GetOpenAPIDefinitions
-}
-
-// Register additional routes with the server
-func (b *QueryAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
-	return nil
 }
 
 func (b *QueryAPIBuilder) GetAuthorizer() authorizer.Authorizer {
@@ -255,10 +252,5 @@ func (b *QueryAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI
 		return oas, nil
 	}
 
-	// The root API discovery list
-	sub := oas.Paths.Paths[root]
-	if sub != nil && sub.Get != nil {
-		sub.Get.Tags = []string{"API Discovery"} // sorts first in the list
-	}
 	return oas, nil
 }

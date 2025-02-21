@@ -34,7 +34,7 @@ import {
 import { hasAlphaPanels } from 'app/core/config';
 import * as DFImport from 'app/features/dataframe-import';
 import { getManagedChannelInfo } from 'app/features/live/info';
-import { SearchQuery } from 'app/features/search/service';
+import { SearchQuery } from 'app/features/search/service/types';
 
 import { GrafanaDatasource } from '../datasource';
 import { defaultQuery, GrafanaQuery, GrafanaQueryType } from '../types';
@@ -504,16 +504,16 @@ export const QueryEditor = withTheme2(UnthemedQueryEditor);
 
 function getStyles(theme: GrafanaTheme2) {
   return {
-    file: css`
-      width: 100%;
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      justify-content: space-between;
-      padding: ${theme.spacing(2)};
-      border: 1px dashed ${theme.colors.border.medium};
-      background-color: ${theme.colors.background.secondary};
-      margin-top: ${theme.spacing(1)};
-    `,
+    file: css({
+      width: '100%',
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      padding: theme.spacing(2),
+      border: `1px dashed ${theme.colors.border.medium}`,
+      backgroundColor: theme.colors.background.secondary,
+      marginTop: theme.spacing(1),
+    }),
   };
 }

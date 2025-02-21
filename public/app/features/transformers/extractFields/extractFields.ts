@@ -20,7 +20,9 @@ export const extractFieldsTransformer: SynchronousDataTransformerInfo<ExtractFie
   id: DataTransformerID.extractFields,
   name: 'Extract fields',
   description: 'Parse fields from the contends of another',
-  defaultOptions: {},
+  defaultOptions: {
+    delimiter: ',',
+  },
 
   operator: (options, ctx) => (source) =>
     source.pipe(map((data) => extractFieldsTransformer.transformer(options, ctx)(data))),
@@ -52,13 +54,14 @@ export function addExtractedFields(frame: DataFrame, options: ExtractFieldsOptio
   const count = frame.length;
   const names: string[] = []; // keep order
   const values = new Map<string, any[]>();
+  const parse = ext.getParser(options);
 
   for (let i = 0; i < count; i++) {
     let obj = source.values[i];
 
     if (isString(obj)) {
       try {
-        obj = ext.parse(obj);
+        obj = parse(obj);
       } catch {
         obj = {}; // empty
       }

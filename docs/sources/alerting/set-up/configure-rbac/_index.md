@@ -52,7 +52,7 @@ Grafana Alerting has the following permissions.
 | `alert.provisioning:write`            | n/a                                    | Update all Grafana alert rules, notification policies, etc via provisioning API. Permissions to folders and data source are not required.                                                                           |
 | `alert.provisioning.provenance:write` | n/a                                    | Set provisioning status for alerting resources. Cannot be used alone. Requires user to have permissions to access resources                                                                                         |
 
-Contact point permissions. To enable these permissions, enable the `alertingApiServer` feature toggle.
+Contact point permissions. To enable API and user interface that use these permissions, enable the `alertingApiServer` feature toggle.
 
 | Action                                       | Applicable scope                   | Description                                                                                                 |
 | -------------------------------------------- | ---------------------------------- | ----------------------------------------------------------------------------------------------------------- |
@@ -64,7 +64,7 @@ Contact point permissions. To enable these permissions, enable the `alertingApiS
 | `receivers.permissions:read`                 | `receivers:*`<br>`receivers:uid:*` | Read permissions for contact points.                                                                        |
 | `receivers.permissions:write`                | `receivers:*`<br>`receivers:uid:*` | Manage permissions for contact points.                                                                      |
 
-Mute time interval permissions. To enable these permissions, enable the `alertingApiServer` feature toggle.
+Mute time interval permissions. To enable API and user interface that use these permissions, enable the `alertingApiServer` feature toggle.
 
 | Action                                      | Applicable scope | Description                                        |
 | ------------------------------------------- | ---------------- | -------------------------------------------------- |
@@ -79,5 +79,12 @@ Notification template permissions. To enable these permissions, enable the `aler
 | `alert.notifications.templates:read`   | n/a              | Read templates.                          |
 | `alert.notifications.templates:write`  | n/a              | Create new or update existing templates. |
 | `alert.notifications.templates:delete` | n/a              | Delete existing templates.               |
+
+Notification policies permissions. To enable API and user interface that use these permissions, enable the `alertingApiServer` feature toggle.
+
+| Action                             | Applicable scope | Description                                          |
+| ---------------------------------- | ---------------- | ---------------------------------------------------- |
+| `alert.notifications.routes:read`  | n/a              | Read notification policies.                          |
+| `alert.notifications.routes:write` | n/a              | Create new, update and update notification policies. |
 
 To help plan your RBAC rollout strategy, refer to [Plan your RBAC rollout strategy](https://grafana.com/docs/grafana/next/administration/roles-and-permissions/access-control/plan-rbac-rollout-strategy/).

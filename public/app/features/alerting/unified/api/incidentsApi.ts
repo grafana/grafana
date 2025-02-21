@@ -1,4 +1,4 @@
-import { SupportedPlugin } from '../types/pluginBridges';
+import { getIrmIfPresentOrIncidentPluginId } from '../utils/config';
 
 import { alertingApi } from './alertingApi';
 
@@ -7,7 +7,7 @@ interface IncidentsPluginConfigDto {
   isIncidentCreated: boolean;
 }
 
-const getProxyApiUrl = (path: string) => `/api/plugins/${SupportedPlugin.Incident}/resources${path}`;
+const getProxyApiUrl = (path: string) => `/api/plugins/${getIrmIfPresentOrIncidentPluginId()}/resources${path}`;
 
 export const incidentsApi = alertingApi.injectEndpoints({
   endpoints: (build) => ({

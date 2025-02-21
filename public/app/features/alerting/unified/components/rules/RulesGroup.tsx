@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import pluralize from 'pluralize';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -8,11 +8,12 @@ import { Badge, ConfirmModal, Icon, Spinner, Stack, Tooltip, useStyles2 } from '
 import { CombinedRuleGroup, CombinedRuleNamespace, RuleGroupIdentifier, RulesSource } from 'app/types/unified-alerting';
 
 import { LogMessages, logInfo } from '../../Analytics';
+import { featureDiscoveryApi } from '../../api/featureDiscoveryApi';
 import { useDeleteRuleGroup } from '../../hooks/ruleGroup/useDeleteRuleGroup';
 import { useFolder } from '../../hooks/useFolder';
 import { useHasRuler } from '../../hooks/useHasRuler';
 import { useRulesAccess } from '../../utils/accessControlHooks';
-import { getRulesSourceName, GRAFANA_RULES_SOURCE_NAME, isCloudRulesSource } from '../../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME, getRulesSourceName, isCloudRulesSource } from '../../utils/datasource';
 import { makeFolderLink, makeFolderSettingsLink } from '../../utils/misc';
 import { isFederatedRuleGroup, isGrafanaRulerRule } from '../../utils/rules';
 import { CollapseToggle } from '../CollapseToggle';
@@ -22,10 +23,10 @@ import { GrafanaRuleGroupExporter } from '../export/GrafanaRuleGroupExporter';
 import { decodeGrafanaNamespace } from '../expressions/util';
 
 import { ActionIcon } from './ActionIcon';
-import { EditCloudGroupModal } from './EditRuleGroupModal';
+import { EditRuleGroupModal } from './EditRuleGroupModal';
 import { ReorderCloudGroupModal } from './ReorderRuleGroupModal';
 import { RuleGroupStats } from './RuleStats';
-import { RulesTable } from './RulesTable';
+import { RulesTable, useIsRulesLoading } from './RulesTable';
 
 type ViewMode = 'grouped' | 'list';
 
@@ -36,8 +37,13 @@ interface Props {
   viewMode: ViewMode;
 }
 
+const { useDiscoverDsFeaturesQuery } = featureDiscoveryApi;
+
 export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }: Props) => {
   const { rulesSource } = namespace;
+  const rulesSourceName = getRulesSourceName(rulesSource);
+  const rulerRulesLoaded = useIsRulesLoading(rulesSource);
+
   const [deleteRuleGroup] = useDeleteRuleGroup();
   const styles = useStyles2(getStyles);
 
@@ -53,7 +59,9 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
     setIsCollapsed(!expandAll);
   }, [expandAll]);
 
-  const { hasRuler, rulerRulesLoaded } = useHasRuler(namespace.rulesSource);
+  const { hasRuler, rulerConfig } = useHasRuler(namespace.rulesSource);
+  const { currentData: dsFeatures } = useDiscoverDsFeaturesQuery({ rulesSourceName });
+
   const rulerRule = group.rules[0]?.rulerRule;
   const folderUID = (rulerRule && isGrafanaRulerRule(rulerRule) && rulerRule.grafana_alert.namespace_uid) || undefined;
   const { folder } = useFolder(folderUID);
@@ -71,12 +79,15 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
   const isListView = viewMode === 'list';
   const isGroupView = viewMode === 'grouped';
 
-  const deleteGroup = async () => {
-    const namespaceName = decodeGrafanaNamespace(namespace).name;
+  const ruleGroupIdentifier = useMemo<RuleGroupIdentifier>(() => {
+    const namespaceName = namespace.uid ?? namespace.name;
     const groupName = group.name;
     const dataSourceName = getRulesSourceName(namespace.rulesSource);
 
-    const ruleGroupIdentifier: RuleGroupIdentifier = { namespaceName, groupName, dataSourceName };
+    return { namespaceName, groupName, dataSourceName };
+  }, [namespace, group.name]);
+
+  const deleteGroup = async () => {
     await deleteRuleGroup.execute(ruleGroupIdentifier);
     setIsDeletingGroup(false);
   };
@@ -267,21 +278,22 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
           rules={group.rules}
         />
       )}
-      {isEditingGroup && (
-        <EditCloudGroupModal
-          namespace={namespace}
-          group={group}
+      {isEditingGroup && rulerConfig && (
+        <EditRuleGroupModal
+          ruleGroupIdentifier={ruleGroupIdentifier}
+          rulerConfig={rulerConfig}
+          folderTitle={decodeGrafanaNamespace(namespace).name}
           onClose={() => closeEditModal()}
           folderUrl={folder?.canEdit ? makeFolderSettingsLink(folder.uid) : undefined}
-          folderUid={folderUID}
         />
       )}
-      {isReorderingGroup && (
+      {isReorderingGroup && dsFeatures?.rulerConfig && (
         <ReorderCloudGroupModal
           group={group}
           folderUid={folderUID}
           namespace={namespace}
           onClose={() => setIsReorderingGroup(false)}
+          rulerConfig={dsFeatures.rulerConfig}
         />
       )}
       <ConfirmModal

@@ -1,11 +1,14 @@
-import { act } from '@testing-library/react';
-import { renderHook } from '@testing-library/react-hooks';
+import { act, renderHook } from '@testing-library/react';
 
 import { AddedComponentsRegistry } from './registry/AddedComponentsRegistry';
+import { AddedFunctionsRegistry } from './registry/AddedFunctionsRegistry';
 import { AddedLinksRegistry } from './registry/AddedLinksRegistry';
 import { ExposedComponentsRegistry } from './registry/ExposedComponentsRegistry';
 import { PluginExtensionRegistries } from './registry/types';
+import { useLoadAppPlugins } from './useLoadAppPlugins';
 import { createUsePluginExtensions } from './usePluginExtensions';
+
+jest.mock('./useLoadAppPlugins');
 
 describe('usePluginExtensions()', () => {
   let registries: PluginExtensionRegistries;
@@ -17,7 +20,9 @@ describe('usePluginExtensions()', () => {
       addedComponentsRegistry: new AddedComponentsRegistry(),
       addedLinksRegistry: new AddedLinksRegistry(),
       exposedComponentsRegistry: new ExposedComponentsRegistry(),
+      addedFunctionsRegistry: new AddedFunctionsRegistry(),
     };
+    jest.mocked(useLoadAppPlugins).mockReturnValue({ isLoading: false });
   });
 
   it('should return an empty array if there are no extensions registered for the extension point', () => {

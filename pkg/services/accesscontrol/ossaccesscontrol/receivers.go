@@ -3,7 +3,7 @@ package ossaccesscontrol
 import (
 	"context"
 
-	"github.com/grafana/authlib/claims"
+	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -42,6 +42,9 @@ func ProvideReceiverPermissionsService(
 	options := resourcepermissions.Options{
 		Resource:          "receivers",
 		ResourceAttribute: "uid",
+		ResourceTranslator: func(ctx context.Context, orgID int64, resourceID string) (string, error) {
+			return alertingac.ScopeReceiversProvider.GetResourceIDFromUID(resourceID), nil
+		},
 		Assignments: resourcepermissions.Assignments{
 			Users:           true,
 			Teams:           true,
@@ -168,8 +171,8 @@ func (r ReceiverPermissionsService) toSetResourcePermissionCommands(permissions 
 		cmds = append(cmds, accesscontrol.SetResourcePermissionCommand{
 			Permission:  permission,
 			BuiltinRole: p.BuiltInRole,
-			TeamID:      p.TeamId,
-			UserID:      p.UserId,
+			TeamID:      p.TeamID,
+			UserID:      p.UserID,
 		})
 	}
 	return cmds

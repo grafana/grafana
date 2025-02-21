@@ -7,7 +7,7 @@ import { Button, ClipboardButton, CodeEditor, Field, Modal, Stack, Switch } from
 import { t, Trans } from 'app/core/internationalization';
 import { DashboardExporter } from 'app/features/dashboard/components/DashExportModal';
 import { shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
-import { DashboardModel } from 'app/features/dashboard/state';
+import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 
 import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
 import { getVariablesCompatibility } from '../utils/getVariablesCompatibility';
@@ -95,7 +95,6 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
 
 function ShareExportTabRenderer({ model }: SceneComponentProps<ShareExportTab>) {
   const { isSharingExternally, isViewingJSON, modalRef } = model.useState();
-
   const dashboardJson = useAsync(async () => {
     if (isViewingJSON) {
       const json = await model.getExportableDashboardJson();
@@ -143,7 +142,6 @@ function ShareExportTabRenderer({ model }: SceneComponentProps<ShareExportTab>) 
           </Modal.ButtonRow>
         </>
       )}
-
       {isViewingJSON && (
         <>
           <AutoSizer disableHeight>
@@ -161,7 +159,12 @@ function ShareExportTabRenderer({ model }: SceneComponentProps<ShareExportTab>) 
               }
 
               if (dashboardJson.loading) {
-                return <div>Loading...</div>;
+                return (
+                  <div>
+                    {' '}
+                    <Trans i18nKey="share-modal.export.loading">Loading...</Trans>
+                  </div>
+                );
               }
 
               return null;

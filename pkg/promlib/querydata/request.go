@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/utils/maputil"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/status"
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/promlib/client"
@@ -234,10 +235,7 @@ func (s *QueryData) fetch(traceCtx context.Context, client *client.Client, q *mo
 func (s *QueryData) rangeQuery(ctx context.Context, c *client.Client, q *models.Query, enablePrometheusDataplaneFlag bool) backend.DataResponse {
 	res, err := c.QueryRange(ctx, q)
 	if err != nil {
-		return backend.DataResponse{
-			Error:  err,
-			Status: backend.StatusBadGateway,
-		}
+		return addErrorSourceToDataResponse(err)
 	}
 
 	defer func() {
@@ -253,16 +251,14 @@ func (s *QueryData) rangeQuery(ctx context.Context, c *client.Client, q *models.
 func (s *QueryData) instantQuery(ctx context.Context, c *client.Client, q *models.Query, enablePrometheusDataplaneFlag bool) backend.DataResponse {
 	res, err := c.QueryInstant(ctx, q)
 	if err != nil {
-		return backend.DataResponse{
-			Error:  err,
-			Status: backend.StatusBadGateway,
-		}
+		return addErrorSourceToDataResponse(err)
 	}
 
 	// This is only for health check fall back scenario
 	if res.StatusCode != 200 && q.RefId == "__healthcheck__" {
 		return backend.DataResponse{
-			Error: errors.New(res.Status),
+			Error:       errors.New(res.Status),
+			ErrorSource: backend.ErrorSourceFromHTTPStatus(res.StatusCode),
 		}
 	}
 
@@ -279,9 +275,14 @@ func (s *QueryData) instantQuery(ctx context.Context, c *client.Client, q *model
 func (s *QueryData) exemplarQuery(ctx context.Context, c *client.Client, q *models.Query, enablePrometheusDataplaneFlag bool) backend.DataResponse {
 	res, err := c.QueryExemplars(ctx, q)
 	if err != nil {
-		return backend.DataResponse{
+		response := backend.DataResponse{
 			Error: err,
 		}
+
+		if backend.IsDownstreamHTTPError(err) {
+			response.ErrorSource = backend.ErrorSourceDownstream
+		}
+		return response
 	}
 
 	defer func() {
@@ -300,7 +301,20 @@ func addDataResponse(res *backend.DataResponse, dr *backend.DataResponse) {
 		} else {
 			dr.Error = fmt.Errorf("%v %w", dr.Error, res.Error)
 		}
+		dr.ErrorSource = status.SourceFromHTTPStatus(int(res.Status))
 		dr.Status = res.Status
 	}
 	dr.Frames = append(dr.Frames, res.Frames...)
+}
+
+func addErrorSourceToDataResponse(err error) backend.DataResponse {
+	response := backend.DataResponse{
+		Error:  err,
+		Status: backend.StatusBadGateway,
+	}
+
+	if backend.IsDownstreamHTTPError(err) {
+		response.ErrorSource = backend.ErrorSourceDownstream
+	}
+	return response
 }

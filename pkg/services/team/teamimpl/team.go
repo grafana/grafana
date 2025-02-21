@@ -2,23 +2,31 @@ package teamimpl
 
 import (
 	"context"
+	"fmt"
+	"time"
 
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+// At package level
+const defaultCacheDuration = 5 * time.Minute
+
 type Service struct {
+	cache  *localcache.CacheService
 	store  store
 	tracer tracing.Tracer
 }
 
 func ProvideService(db db.DB, cfg *setting.Cfg, tracer tracing.Tracer) (team.Service, error) {
 	return &Service{
+		cache:  localcache.New(defaultCacheDuration, 2*defaultCacheDuration),
 		store:  &xormStore{db: db, cfg: cfg, deletes: []string{}},
 		tracer: tracer,
 	}, nil
@@ -112,7 +120,25 @@ func (s *Service) GetUserTeamMemberships(ctx context.Context, orgID, userID int6
 		attribute.Int64("userID", userID),
 	))
 	defer span.End()
-	return s.store.GetMemberships(ctx, orgID, userID, external)
+	cacheKey := fmt.Sprintf("teams:%d:%d:%t", orgID, userID, external)
+	if cached, found := s.cache.Get(cacheKey); found {
+		if teams, ok := cached.([]*team.TeamMemberDTO); ok {
+			return teams, nil
+		}
+		s.cache.Delete(cacheKey)
+	}
+	teams, err := s.store.GetMemberships(ctx, orgID, userID, external)
+	if err != nil {
+		return nil, err
+	}
+	if len(teams) == 0 {
+		// Cache empty headers if no teams found
+		s.cache.Set(cacheKey, []*team.TeamMemberDTO{}, defaultCacheDuration)
+		return []*team.TeamMemberDTO{}, nil
+	}
+
+	s.cache.Set(cacheKey, teams, defaultCacheDuration)
+	return teams, nil
 }
 
 func (s *Service) GetTeamMembers(ctx context.Context, query *team.GetTeamMembersQuery) ([]*team.TeamMemberDTO, error) {

@@ -82,21 +82,22 @@ function ensureLogQL(monaco: Monaco) {
 
 const getStyles = (theme: GrafanaTheme2, placeholder: string) => {
   return {
-    container: css`
-      border-radius: ${theme.shape.radius.default};
-      border: 1px solid ${theme.components.input.borderColor};
-      width: 100%;
-      .monaco-editor .suggest-widget {
-        min-width: 50%;
-      }
-    `,
-    placeholder: css`
-      ::after {
-        content: '${placeholder}';
-        font-family: ${theme.typography.fontFamilyMonospace};
-        opacity: 0.3;
-      }
-    `,
+    container: css({
+      borderRadius: theme.shape.radius.default,
+      border: `1px solid ${theme.components.input.borderColor}`,
+      width: '100%',
+      '.monaco-editor .suggest-widget': {
+        minWidth: '50%',
+      },
+      overflow: 'hidden',
+    }),
+    placeholder: css({
+      '::after': {
+        content: `'${placeholder}'`,
+        fontFamily: theme.typography.fontFamilyMonospace,
+        opacity: 0.3,
+      },
+    }),
   };
 };
 

@@ -61,31 +61,30 @@ export const UserAdminPage = ({
 }: Props) => {
   const { id = '' } = useParams();
   useEffect(() => {
-    const userId = parseInt(id, 10);
-    loadAdminUserPage(userId);
+    loadAdminUserPage(id);
   }, [id, loadAdminUserPage]);
 
   const onPasswordChange = (password: string) => {
     if (user) {
-      setUserPassword(user.id, password);
+      setUserPassword(user.uid, password);
     }
   };
 
   const onGrafanaAdminChange = (isGrafanaAdmin: boolean) => {
     if (user) {
-      updateUserPermissions(user.id, isGrafanaAdmin);
+      updateUserPermissions(user.uid, isGrafanaAdmin);
     }
   };
 
   const onOrgRemove = (orgId: number) => {
     if (user) {
-      deleteOrgUser(user.id, orgId);
+      deleteOrgUser(user.uid, orgId);
     }
   };
 
   const onOrgRoleChange = (orgId: number, newRole: string) => {
     if (user) {
-      updateOrgUserRole(user.id, orgId, newRole);
+      updateOrgUserRole(user.uid, orgId, newRole);
     }
   };
 
@@ -97,19 +96,19 @@ export const UserAdminPage = ({
 
   const onSessionRevoke = (tokenId: number) => {
     if (user) {
-      revokeSession(tokenId, user.id);
+      revokeSession(tokenId, user.uid);
     }
   };
 
   const onAllSessionsRevoke = () => {
     if (user) {
-      revokeAllSessions(user.id);
+      revokeAllSessions(user.uid);
     }
   };
 
   const onUserSync = () => {
     if (user) {
-      syncLdapUser(user.id);
+      syncLdapUser(user.id, user.uid);
     }
   };
 

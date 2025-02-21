@@ -2,11 +2,11 @@ import { xor } from 'lodash';
 
 import {
   DataFrame,
-  isTimeSeriesFrames,
   LoadingState,
   PanelData,
   ThresholdsConfig,
   ThresholdsMode,
+  isTimeSeriesFrames,
 } from '@grafana/data';
 import { GraphThresholdsStyleMode } from '@grafana/schema';
 import { config } from 'app/core/config';
@@ -14,8 +14,6 @@ import { EvalFunction } from 'app/features/alerting/state/alertDef';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { ClassicCondition, ExpressionQueryType } from 'app/features/expressions/types';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
-
-import { RuleFormType } from '../../types/rule-form';
 
 import { createDagFromQueries, getOriginOfRefId } from './dag';
 
@@ -310,18 +308,6 @@ export function getStatusMessage(data: PanelData): string | undefined {
   }
 
   return data.error?.message ?? genericErrorMessage;
-}
-
-export function translateRouteParamToRuleType(param = ''): RuleFormType {
-  if (param === 'recording') {
-    return RuleFormType.cloudRecording;
-  }
-
-  if (param === 'grafana-recording') {
-    return RuleFormType.grafanaRecording;
-  }
-
-  return RuleFormType.grafana;
 }
 
 /**

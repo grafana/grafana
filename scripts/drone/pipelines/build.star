@@ -1,6 +1,11 @@
 """This module contains the comprehensive build pipeline."""
 
 load(
+    "scripts/drone/steps/github.star",
+    "github_app_generate_token_step",
+    "github_app_pipeline_volumes",
+)
+load(
     "scripts/drone/steps/lib.star",
     "build_frontend_package_step",
     "build_storybook_step",
@@ -27,13 +32,11 @@ load(
     "upload_packages_step",
     "verify_gen_cue_step",
     "verify_gen_jsonnet_step",
-    "wire_install_step",
     "yarn_install_step",
 )
 load(
     "scripts/drone/steps/rgm.star",
     "rgm_artifacts_step",
-    "rgm_build_docker_step",
 )
 load(
     "scripts/drone/utils/images.star",
@@ -44,6 +47,7 @@ load(
     "pipeline",
 )
 
+# This function isn't actually unused but I don't know why the linter thinks it is...
 # @unused
 def build_e2e(trigger, ver_mode):
     """Perform e2e building, testing, and publishing.
@@ -58,42 +62,64 @@ def build_e2e(trigger, ver_mode):
 
     environment = {"EDITION": "oss"}
     init_steps = [
+        github_app_generate_token_step(),
         identify_runner_step(),
         download_grabpl_step(),
         compile_build_cmd(),
         verify_gen_cue_step(),
         verify_gen_jsonnet_step(),
-        wire_install_step(),
         yarn_install_step(),
     ]
 
     build_steps = []
+
+    create_packages = rgm_artifacts_step(
+        alpine = images["alpine"],
+        artifacts = [
+            "targz:grafana:linux/amd64",
+            "targz:grafana:linux/arm64",
+            "targz:grafana:linux/arm/v7",
+            "docker:grafana:linux/amd64",
+            "docker:grafana:linux/amd64:ubuntu",
+            "docker:grafana:linux/arm64",
+            "docker:grafana:linux/arm64:ubuntu",
+            "docker:grafana:linux/arm/v7",
+            "docker:grafana:linux/arm/v7:ubuntu",
+        ],
+        file = "packages.txt",
+        tag_format = "{{ .version_base }}-{{ .buildID }}-{{ .arch }}",
+        ubuntu = images["ubuntu"],
+        ubuntu_tag_format = "{{ .version_base }}-{{ .buildID }}-ubuntu-{{ .arch }}",
+    )
+
+    publish_docker = publish_images_step(
+        depends_on = [create_packages["name"]],
+        docker_repo = "grafana",
+        trigger = trigger_oss,
+        ver_mode = ver_mode,
+    )
 
     if ver_mode == "pr":
         build_steps.extend(
             [
                 build_frontend_package_step(),
                 enterprise_downstream_step(ver_mode = ver_mode),
-                rgm_artifacts_step(artifacts = ["targz:grafana:linux/amd64", "targz:grafana:linux/arm64", "targz:grafana:linux/arm/v7"], file = "packages.txt"),
             ],
         )
     else:
+        # The only other event or "ver_mode" where this is used is 'main'
+        update_package_json = update_package_json_version()
+        create_packages["depends_on"] = [update_package_json["name"]]
+
         build_steps.extend([
-            update_package_json_version(),
+            update_package_json,
             build_frontend_package_step(depends_on = ["update-package-json-version"]),
-            rgm_artifacts_step(
-                artifacts = [
-                    "targz:grafana:linux/amd64",
-                    "targz:grafana:linux/arm64",
-                    "targz:grafana:linux/arm/v7",
-                ],
-                depends_on = ["update-package-json-version"],
-                file = "packages.txt",
-            ),
         ])
 
     build_steps.extend(
         [
+            create_packages,
+            publish_docker,
             build_test_plugins_step(),
             grafana_server_step(),
             e2e_tests_step("dashboards-suite"),
@@ -123,45 +149,20 @@ def build_e2e(trigger, ver_mode):
             [
                 store_storybook_step(trigger = trigger_oss, ver_mode = ver_mode),
                 frontend_metrics_step(trigger = trigger_oss),
-                rgm_build_docker_step(
-                    images["ubuntu"],
-                    images["alpine"],
-                    depends_on = ["update-package-json-version"],
-                    tag_format = "{{ .version_base }}-{{ .buildID }}-{{ .arch }}",
-                    ubuntu_tag_format = "{{ .version_base }}-{{ .buildID }}-ubuntu-{{ .arch }}",
-                ),
                 publish_images_step(
-                    docker_repo = "grafana",
-                    trigger = trigger_oss,
-                    ver_mode = ver_mode,
-                ),
-                publish_images_step(
+                    depends_on = [create_packages["name"]],
                     docker_repo = "grafana-oss",
                     trigger = trigger_oss,
                     ver_mode = ver_mode,
                 ),
                 release_canary_npm_packages_step(trigger = trigger_oss),
                 upload_packages_step(
+                    depends_on = [create_packages["name"]],
                     trigger = trigger_oss,
                     ver_mode = ver_mode,
                 ),
                 upload_cdn_step(
-                    trigger = trigger_oss,
-                    ver_mode = ver_mode,
-                ),
-            ],
-        )
-    elif ver_mode == "pr":
-        build_steps.extend(
-            [
-                rgm_build_docker_step(
-                    images["ubuntu"],
-                    images["alpine"],
-                    tag_format = "{{ .version_base }}-{{ .buildID }}-{{ .arch }}",
-                    ubuntu_tag_format = "{{ .version_base }}-{{ .buildID }}-ubuntu-{{ .arch }}",
-                ),
-                publish_images_step(
-                    docker_repo = "grafana",
+                    depends_on = [create_packages["name"]],
                     trigger = trigger_oss,
                     ver_mode = ver_mode,
                 ),
@@ -178,4 +179,5 @@ def build_e2e(trigger, ver_mode):
         services = [],
         steps = init_steps + build_steps,
         trigger = trigger,
+        volumes = github_app_pipeline_volumes(),
     )

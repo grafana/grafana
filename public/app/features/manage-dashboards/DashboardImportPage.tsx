@@ -256,15 +256,15 @@ export default DashboardImport;
 
 const importStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
-    option: css`
-      margin-bottom: ${theme.spacing(4)};
-      max-width: 600px;
-    `,
-    labelWithLink: css`
-      max-width: 100%;
-    `,
-    linkWithinLabel: css`
-      font-size: inherit;
-    `,
+    option: css({
+      marginBottom: theme.spacing(4),
+      maxWidth: '600px',
+    }),
+    labelWithLink: css({
+      maxWidth: '100%',
+    }),
+    linkWithinLabel: css({
+      fontSize: 'inherit',
+    }),
   };
 });

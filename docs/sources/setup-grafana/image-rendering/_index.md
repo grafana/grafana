@@ -20,8 +20,6 @@ weight: 1000
 
 Grafana supports automatic rendering of panels as PNG images. This allows Grafana to automatically generate images of your panels to include in alert notifications, [PDF export]({{< relref "../../dashboards/create-reports#export-dashboard-as-pdf" >}}), and [Reporting]({{< relref "../../dashboards/create-reports" >}}). PDF Export and Reporting are available only in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise" >}}) and [Grafana Cloud](/docs/grafana-cloud/).
 
-> **Note:** Image rendering of dashboards is not supported at this time.
-
 While an image is being rendered, the PNG image is temporarily written to the file system. When the image is rendered, the PNG image is temporarily written to the `png` folder in the Grafana `data` folder.
 
 A background job runs every 10 minutes and removes temporary images. You can configure how long an image should be stored before being removed by configuring the [temp_data_lifetime]({{< relref "../configure-grafana#temp_data_lifetime" >}}) setting.
@@ -35,10 +33,16 @@ Alert notifications can include images, but rendering many images at the same ti
 ## Install Grafana Image Renderer plugin
 
 {{% admonition type="note" %}}
-Starting from Grafana v7.0.0, all PhantomJS support has been removed. Please use the Grafana Image Renderer plugin or remote rendering service.
+All PhantomJS support has been removed. Instead, use the Grafana Image Renderer plugin or remote rendering service.
 {{% /admonition %}}
 
 To install the plugin, refer to the [Grafana Image Renderer Installation instructions](/grafana/plugins/grafana-image-renderer/?tab=installation#installation).
+
+### Memory requirements
+
+Rendering images requires a lot of memory, mainly because Grafana creates browser instances in the background for the actual rendering. Grafana recommends a minimum of 16GB of free memory on the system rendering images.
+
+Rendering multiple images in parallel requires an even bigger memory footprint. You can use the remote rendering service in order to render images on a remote system, so your local system resources are not affected.
 
 ## Configuration
 
@@ -217,10 +221,14 @@ HTTPS protocol is supported in the image renderer v3.11.0 and later.
 
 Change the protocol of the server, it can be `http` or `https`. Default is `http`.
 
+```bash
+HTTP_PROTOCOL=https
+```
+
 ```json
 {
   "service": {
-    "protocol": "http"
+    "protocol": "https"
   }
 }
 ```
@@ -228,6 +236,11 @@ Change the protocol of the server, it can be `http` or `https`. Default is `http
 #### HTTPS certificate and key file
 
 Path to the image renderer certificate and key file used to start an HTTPS server.
+
+```bash
+HTTP_CERT_FILE=./path/to/cert
+HTTP_CERT_KEY=./path/to/key
+```
 
 ```json
 {
@@ -241,6 +254,10 @@ Path to the image renderer certificate and key file used to start an HTTPS serve
 #### HTTPS min TLS version
 
 Minimum TLS version allowed. Accepted values are: `TLSv1.2`, `TLSv1.3`. Default is `TLSv1.2`.
+
+```bash
+HTTP_MIN_TLS_VERSION=TLSv1.2
+```
 
 ```json
 {

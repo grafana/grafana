@@ -168,7 +168,7 @@ func isSymlinkRelativeTo(basePath string, symlinkDestPath string, symlinkOrigPat
 		return false
 	}
 	fileDir := filepath.Dir(symlinkOrigPath)
-	cleanPath := filepath.Clean(filepath.Join(fileDir, "/", symlinkDestPath))
+	cleanPath := filepath.Clean(filepath.Join(fileDir, symlinkDestPath))
 	p, err := filepath.Rel(basePath, cleanPath)
 	if err != nil {
 		return false

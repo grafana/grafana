@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { FormEvent, useCallback } from 'react';
 
 import { DataSourceInstanceSettings, MetricFindValue, readCSV } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -6,21 +6,26 @@ import { DataSourceRef } from '@grafana/schema';
 import { Alert, CodeEditor, Field, Switch } from '@grafana/ui';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
+import { VariableCheckboxField } from './VariableCheckboxField';
 import { VariableLegend } from './VariableLegend';
 
 export interface AdHocVariableFormProps {
   datasource?: DataSourceRef;
   onDataSourceChange: (dsSettings: DataSourceInstanceSettings) => void;
+  allowCustomValue?: boolean;
   infoText?: string;
   defaultKeys?: MetricFindValue[];
   onDefaultKeysChange?: (keys?: MetricFindValue[]) => void;
+  onAllowCustomValueChange?: (event: FormEvent<HTMLInputElement>) => void;
 }
 
 export function AdHocVariableForm({
   datasource,
   infoText,
+  allowCustomValue,
   onDataSourceChange,
   onDefaultKeysChange,
+  onAllowCustomValueChange,
   defaultKeys,
 }: AdHocVariableFormProps) {
   const updateStaticKeys = useCallback(
@@ -79,6 +84,16 @@ export function AdHocVariableForm({
             />
           )}
         </>
+      )}
+
+      {onAllowCustomValueChange && (
+        <VariableCheckboxField
+          value={allowCustomValue ?? true}
+          name="Allow custom values"
+          description="Enables users to add custom values to the list"
+          onChange={onAllowCustomValueChange}
+          testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsAllowCustomValueSwitch}
+        />
       )}
     </>
   );

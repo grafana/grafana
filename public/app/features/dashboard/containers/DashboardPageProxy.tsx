@@ -8,6 +8,7 @@ import { getDashboardScenePageStateManager } from 'app/features/dashboard-scene/
 import { DashboardRoutes } from 'app/types';
 
 import DashboardPage, { DashboardPageParams } from './DashboardPage';
+import { DashboardPageError } from './DashboardPageError';
 import { DashboardPageRouteParams, DashboardPageRouteSearchParams } from './types';
 
 export type DashboardPageProxyProps = Omit<
@@ -22,6 +23,12 @@ function DashboardPageProxy(props: DashboardPageProxyProps) {
   const forceOld = props.queryParams.scenes === false;
   const params = useParams<DashboardPageParams>();
   const location = useLocation();
+
+  // Force scenes if v2 api and scenes are enabled
+  if (config.featureToggles.useV2DashboardsAPI && config.featureToggles.dashboardScene && !forceOld) {
+    console.log('DashboardPageProxy: forcing scenes because of v2 api');
+    return <DashboardScenePage {...props} />;
+  }
 
   if (forceScenes || (config.featureToggles.dashboardScene && !forceOld)) {
     return <DashboardScenePage {...props} />;
@@ -40,11 +47,16 @@ function DashboardPageProxy(props: DashboardPageProxyProps) {
       return null;
     }
 
-    return stateManager.fetchDashboard({ route: props.route.routeName as DashboardRoutes, uid: params.uid ?? '' });
+    return stateManager.fetchDashboard({
+      route: props.route.routeName as DashboardRoutes,
+      uid: params.uid ?? '',
+      type: params.type,
+      slug: params.slug,
+    });
   }, [params.uid, props.route.routeName]);
 
-  if (!config.featureToggles.dashboardSceneForViewers) {
-    return <DashboardPage {...props} params={params} location={location} />;
+  if (dashboard.error) {
+    return <DashboardPageError error={dashboard.error} />;
   }
 
   if (dashboard.loading) {
@@ -53,6 +65,10 @@ function DashboardPageProxy(props: DashboardPageProxyProps) {
 
   if (dashboard?.value?.dashboard?.uid !== params.uid && dashboard.value?.meta?.isNew !== true) {
     return null;
+  }
+
+  if (!config.featureToggles.dashboardSceneForViewers) {
+    return <DashboardPage {...props} params={params} location={location} />;
   }
 
   if (

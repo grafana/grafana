@@ -21,7 +21,7 @@ import {
   toDataFrame,
   getSearchFilterScopedVar,
 } from '@grafana/data';
-import { BackendSrvRequest, getBackendSrv } from '@grafana/runtime';
+import { BackendSrvRequest, FetchResponse, getBackendSrv } from '@grafana/runtime';
 import { isVersionGtOrEq, SemVersion } from 'app/core/utils/version';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 import { getRollupNotice, getRuntimeConsolidationNotice } from 'app/plugins/datasource/graphite/meta';
@@ -209,6 +209,17 @@ export class GraphiteDatasource
       return merge(...streams);
     }
 
+    // Use this object to map the original refID of the query to our sanitised one
+    const refIds: { [key: string]: string } = {};
+    for (const target of options.targets) {
+      // Sanitise the refID otherwise the Graphite query will fail
+      const formattedRefId = target.refId.replaceAll(' ', '_');
+      refIds[formattedRefId] = target.refId;
+      // Use aliasSub to include the refID in the response series name. This allows us to set the refID on the frame.
+      const updatedTarget = `aliasSub(${target.target}, "(^.*$)", "\\1 ${formattedRefId}")`;
+      target.target = updatedTarget;
+    }
+
     // handle the queries here
     const graphOptions = {
       from: this.translateTime(options.range.from, false, options.timezone),
@@ -243,7 +254,7 @@ export class GraphiteDatasource
       httpOptions.requestId = this.name + '.panelId.' + options.panelId;
     }
 
-    return this.doGraphiteRequest(httpOptions).pipe(map(this.convertResponseToDataFrames));
+    return this.doGraphiteRequest(httpOptions).pipe(map((result) => this.convertResponseToDataFrames(result, refIds)));
   }
 
   addTracingHeaders(
@@ -267,7 +278,7 @@ export class GraphiteDatasource
     }
   }
 
-  convertResponseToDataFrames = (result: any): DataQueryResponse => {
+  convertResponseToDataFrames = (result: FetchResponse, refIdMap: { [key: string]: string }): DataQueryResponse => {
     const data: DataFrame[] = [];
     if (!result || !result.data) {
       return { data };
@@ -282,6 +293,9 @@ export class GraphiteDatasource
 
     for (let i = 0; i < series.length; i++) {
       const s = series[i];
+      // Retrieve the original refID of the query
+      const [target, refId] = s.target.split(' ');
+      s.target = target;
 
       // Disables Grafana own series naming
       s.title = s.target;
@@ -291,6 +305,8 @@ export class GraphiteDatasource
       }
 
       const frame = toDataFrame(s);
+      // Set the refID value on the frame
+      frame.refId = refIdMap[refId];
 
       // Metrictank metadata
       if (s.meta) {
@@ -648,7 +664,7 @@ export class GraphiteDatasource
 
     return lastValueFrom(
       this.doGraphiteRequest(httpOptions).pipe(
-        map((results: any) => {
+        map((results: FetchResponse) => {
           return _map(results.data, (metric) => {
             return {
               text: metric.text,
@@ -689,7 +705,7 @@ export class GraphiteDatasource
 
     return lastValueFrom(
       this.doGraphiteRequest(httpOptions).pipe(
-        map((results: any) => {
+        map((results: FetchResponse) => {
           return _map(results.data.results, (metric) => {
             return {
               text: metric,
@@ -720,7 +736,7 @@ export class GraphiteDatasource
 
     return lastValueFrom(
       this.doGraphiteRequest(httpOptions).pipe(
-        map((results: any) => {
+        map((results: FetchResponse) => {
           return _map(results.data, (tag) => {
             return {
               text: tag.tag,
@@ -750,7 +766,7 @@ export class GraphiteDatasource
 
     return lastValueFrom(
       this.doGraphiteRequest(httpOptions).pipe(
-        map((results: any) => {
+        map((results: FetchResponse) => {
           if (results.data && results.data.values) {
             return _map(results.data.values, (value) => {
               return {
@@ -833,7 +849,7 @@ export class GraphiteDatasource
 
     return lastValueFrom(
       this.doGraphiteRequest(httpOptions).pipe(
-        map((results: any) => {
+        map((results: FetchResponse) => {
           if (results.data) {
             const semver = new SemVersion(results.data);
             return semver.isValid() ? results.data : '';
@@ -880,7 +896,7 @@ export class GraphiteDatasource
 
     return lastValueFrom(
       this.doGraphiteRequest(httpOptions).pipe(
-        map((results: any) => {
+        map((results: FetchResponse) => {
           // Fix for a Graphite bug: https://github.com/graphite-project/graphite-web/issues/2609
           // There is a fix for it https://github.com/graphite-project/graphite-web/pull/2612 but
           // it was merged to master in July 2020 but it has never been released (the last Graphite
@@ -950,7 +966,7 @@ export class GraphiteDatasource
   buildGraphiteParams(options: any, scopedVars?: ScopedVars): string[] {
     const graphiteOptions = ['from', 'until', 'rawData', 'format', 'maxDataPoints', 'cacheTimeout'];
     const cleanOptions = [],
-      targets: any = {};
+      targets: Record<string, string> = {};
     let target, targetValue, i;
     const regex = /\#([A-Z])/g;
     const intervalFormatFixRegex = /'(\d+)m'/gi;
@@ -977,7 +993,7 @@ export class GraphiteDatasource
       targets[target.refId] = targetValue;
     }
 
-    function nestedSeriesRegexReplacer(match: any, g1: string | number) {
+    function nestedSeriesRegexReplacer(match: string, g1: string | number) {
       return targets[g1] || match;
     }
 
@@ -1022,7 +1038,7 @@ function supportsFunctionIndex(version: string): boolean {
   return isVersionGtOrEq(version, '1.1');
 }
 
-function mapToTags(): OperatorFunction<any, Array<{ text: string }>> {
+function mapToTags(): OperatorFunction<FetchResponse, Array<{ text: string }>> {
   return pipe(
     map((results) => {
       if (results.data) {

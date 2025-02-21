@@ -16,9 +16,9 @@ export const fetchRoleOptions = async (orgId?: number): Promise<Role[]> => {
 };
 
 export const fetchUserRoles = async (userId: number, orgId?: number): Promise<Role[]> => {
-  let userRolesUrl = `/api/access-control/users/${userId}/roles`;
+  let userRolesUrl = `/api/access-control/users/${userId}/roles?includeMapped=true`;
   if (orgId) {
-    userRolesUrl += `?targetOrgId=${orgId}`;
+    userRolesUrl += `&targetOrgId=${orgId}`;
   }
   try {
     const roles = await getBackendSrv().get(userRolesUrl);
@@ -39,7 +39,8 @@ export const updateUserRoles = (roles: Role[], userId: number, orgId?: number) =
   if (orgId) {
     userRolesUrl += `?targetOrgId=${orgId}`;
   }
-  const roleUids = roles.flatMap((x) => x.uid);
+  const filteredRoles = roles.filter((role) => !role.mapped);
+  const roleUids = filteredRoles.flatMap((x) => x.uid);
   return getBackendSrv().put(userRolesUrl, {
     orgId,
     roleUids,

@@ -15,18 +15,17 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/log"
-	"github.com/grafana/grafana/pkg/plugins/pfs"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/plugins/storage"
 )
 
 type FakePluginInstaller struct {
-	AddFunc func(ctx context.Context, pluginID, version string, opts plugins.CompatOpts) error
+	AddFunc func(ctx context.Context, pluginID, version string, opts plugins.AddOpts) error
 	// Remove removes a plugin from the store.
 	RemoveFunc func(ctx context.Context, pluginID, version string) error
 }
 
-func (i *FakePluginInstaller) Add(ctx context.Context, pluginID, version string, opts plugins.CompatOpts) error {
+func (i *FakePluginInstaller) Add(ctx context.Context, pluginID, version string, opts plugins.AddOpts) error {
 	if i.AddFunc != nil {
 		return i.AddFunc(ctx, pluginID, version, opts)
 	}
@@ -125,6 +124,10 @@ func (pc *FakePluginClient) IsDecommissioned() bool {
 	pc.mutex.RLock()
 	defer pc.mutex.RUnlock()
 	return pc.decommissioned
+}
+
+func (pc *FakePluginClient) Target() backendplugin.Target {
+	return "test-target"
 }
 
 func (pc *FakePluginClient) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
@@ -267,6 +270,10 @@ func (r *FakePluginRepo) PluginVersion(ctx context.Context, pluginID, version st
 		return r.PluginVersionFunc(ctx, pluginID, version, compatOpts)
 	}
 	return repo.VersionData{}, nil
+}
+
+func (r *FakePluginRepo) PluginInfo(ctx context.Context, pluginID string) (*repo.PluginInfo, error) {
+	return &repo.PluginInfo{}, nil
 }
 
 type fakeTracerProvider struct {
@@ -487,7 +494,7 @@ func (s *FakePluginSource) PluginURIs(ctx context.Context) []string {
 	return []string{}
 }
 
-func (s *FakePluginSource) DefaultSignature(ctx context.Context) (plugins.Signature, bool) {
+func (s *FakePluginSource) DefaultSignature(ctx context.Context, _ string) (plugins.Signature, bool) {
 	if s.DefaultSignatureFunc != nil {
 		return s.DefaultSignatureFunc(ctx)
 	}
@@ -513,7 +520,7 @@ func (f *FakeAuthService) HasExternalService(ctx context.Context, pluginID strin
 	return f.Result != nil, nil
 }
 
-func (f *FakeAuthService) RegisterExternalService(ctx context.Context, pluginID string, pType pfs.Type, svc *pfs.IAM) (*auth.ExternalService, error) {
+func (f *FakeAuthService) RegisterExternalService(ctx context.Context, pluginID string, pType string, svc *auth.IAM) (*auth.ExternalService, error) {
 	return f.Result, nil
 }
 
@@ -645,4 +652,8 @@ func (p *FakeBackendPlugin) Kill() {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 	p.Running = false
+}
+
+func (p *FakeBackendPlugin) Target() backendplugin.Target {
+	return "test-target"
 }

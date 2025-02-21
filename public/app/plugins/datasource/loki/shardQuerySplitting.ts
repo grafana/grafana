@@ -40,7 +40,7 @@ import { LokiQuery } from './types';
  *       . nextRequest() will use the current cycle and group size to determine the next request or complete execution with done().
  *     - If the response is unsuccessful:
  *       . If the response is not a query error, and the group size bigger than 1, it will decrease the group size.
- *       . If the group size is already 1, it will retry the request up to 4 times.
+ *       . If the group size is already 1, it will retry the request up to 2 times.
  *       . If there are retry attempts, it will retry the current cycle, or else stop querying.
  * - Once all request groups have been executed, it will be done().
  */
@@ -75,16 +75,16 @@ function splitQueriesByStreamShard(
       subquerySubscription = null;
     }
 
-    if (shouldStop) {
-      subscriber.complete();
-      return;
-    }
-
     const done = () => {
-      mergedResponse.state = LoadingState.Done;
+      mergedResponse.state = shouldStop ? LoadingState.Error : LoadingState.Done;
       subscriber.next(mergedResponse);
       subscriber.complete();
     };
+
+    if (shouldStop) {
+      done();
+      return;
+    }
 
     const nextRequest = () => {
       const nextGroup =
@@ -122,7 +122,7 @@ function splitQueriesByStreamShard(
       const key = `${group}_${cycle}`;
       const retries = retriesMap.get(key) ?? 0;
 
-      if (retries > 3) {
+      if (retries > 1) {
         shouldStop = true;
         return false;
       }
@@ -160,9 +160,10 @@ function splitQueriesByStreamShard(
 
     debug(shardsToQuery.length ? `Querying ${shardsToQuery.join(', ')}` : 'Running regular query');
 
-    const queryRunner =
-      shardsToQuery.length > 0 ? datasource.runQuery.bind(datasource) : runSplitQuery.bind(null, datasource);
-    subquerySubscription = queryRunner(subRequest).subscribe({
+    subquerySubscription = runSplitQuery(datasource, subRequest, {
+      skipPartialUpdates: true,
+      disableRetry: true,
+    }).subscribe({
       next: (partialResponse: DataQueryResponse) => {
         if ((partialResponse.errors ?? []).length > 0 || partialResponse.error != null) {
           if (retry(partialResponse)) {

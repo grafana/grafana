@@ -21,7 +21,7 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-func createTestClient(t *testing.T, opts *setting.RemoteCacheOptions, sqlstore db.DB) CacheStorage {
+func createTestClient(t *testing.T, opts *setting.RemoteCacheSettings, sqlstore db.DB) CacheStorage {
 	t.Helper()
 
 	cfg := &setting.Cfg{
@@ -45,7 +45,7 @@ func TestCachedBasedOnConfig(t *testing.T) {
 }
 
 func TestInvalidCacheTypeReturnsError(t *testing.T) {
-	_, err := createClient(&setting.RemoteCacheOptions{Name: "invalid"}, nil, nil)
+	_, err := createClient(&setting.RemoteCacheSettings{Name: "invalid"}, nil, nil)
 	assert.Equal(t, err, ErrInvalidCacheType)
 }
 
@@ -94,7 +94,7 @@ func TestCollectUsageStats(t *testing.T) {
 		"stats.remote_cache.encrypt_enabled.count": 1,
 	}
 	cfg := setting.NewCfg()
-	cfg.RemoteCacheOptions = &setting.RemoteCacheOptions{Name: redisCacheType, Encryption: true}
+	cfg.RemoteCacheOptions = &setting.RemoteCacheSettings{Name: redisCacheType, Encryption: true}
 
 	remoteCache := &RemoteCache{
 		Cfg: cfg,

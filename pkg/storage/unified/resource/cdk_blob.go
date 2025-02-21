@@ -7,13 +7,15 @@ import (
 	"encoding/hex"
 	"fmt"
 	"mime"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/noop"
 	"gocloud.dev/blob"
+
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 
 	// Supported drivers
 	_ "gocloud.dev/blob/azureblob"
@@ -32,6 +34,14 @@ type CDKBlobSupportOptions struct {
 
 // Called in a context that loaded the possible drivers
 func OpenBlobBucket(ctx context.Context, url string) (*blob.Bucket, error) {
+	if strings.HasPrefix(url, "file:") {
+		// Don't write metadata attributes
+		if strings.Contains(url, "?") {
+			url += "&metadata=skip"
+		} else {
+			url += "?metadata=skip"
+		}
+	}
 	return blob.OpenBucket(ctx, url)
 }
 

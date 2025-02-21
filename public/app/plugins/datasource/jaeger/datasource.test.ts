@@ -101,6 +101,22 @@ describe('JaegerDatasource', () => {
     expect(mock).toHaveBeenCalledWith({ url: `${defaultSettings.url}/api/traces/a%2Fb` });
   });
 
+  it('should trim whitespace from traceid', async () => {
+    const mock = setupFetchMock({ data: [testResponse] });
+    const ds = new JaegerDatasource(defaultSettings);
+    const query = {
+      ...defaultQuery,
+      targets: [
+        {
+          query: 'a/b  ',
+          refId: '1',
+        },
+      ],
+    };
+    await lastValueFrom(ds.query(query));
+    expect(mock).toHaveBeenCalledWith({ url: `${defaultSettings.url}/api/traces/a%2Fb` });
+  });
+
   it('returns empty response if trace id is not specified', async () => {
     const ds = new JaegerDatasource(defaultSettings);
     const response = await lastValueFrom(
