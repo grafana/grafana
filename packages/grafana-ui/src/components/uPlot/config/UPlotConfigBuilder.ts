@@ -1,8 +1,8 @@
 import { merge } from 'lodash';
 import uPlot, { Cursor, Band, Hooks, Select, AlignedData, Padding, Series } from 'uplot';
 
-import { DataFrame, DefaultTimeZone, Field, getTimeZoneInfo, GrafanaTheme2, TimeRange, TimeZone } from '@grafana/data';
-import { AxisPlacement, VizOrientation } from '@grafana/schema';
+import { DataFrame, Field, getTimeZoneInfo, GrafanaTheme2, TimeRange, TimeZone } from '@grafana/data';
+import {AxisPlacement, defaultTimeZone, VizOrientation} from '@grafana/schema';
 
 import { FacetedData, PlotConfig } from '../types';
 import { DEFAULT_PLOT_CONFIG, getStackingBands, pluginLog, StackingGroup } from '../utils';
@@ -52,7 +52,7 @@ export class UPlotConfigBuilder {
 
   prepData: PrepData | undefined = undefined;
 
-  constructor(timeZone: TimeZone = DefaultTimeZone) {
+  constructor(timeZone: TimeZone = defaultTimeZone()) {
     this.tz = getTimeZoneInfo(timeZone, Date.now())?.ianaName;
   }
 
