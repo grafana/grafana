@@ -12,6 +12,7 @@ import (
 
 var (
 	allowedCoreActions = map[string]string{
+		"plugins:write":             "plugins:id:",
 		"plugins.app:access":        "plugins:id:",
 		"folders:create":            "folders:uid:",
 		"folders:read":              "folders:uid:",
