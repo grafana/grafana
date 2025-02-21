@@ -127,7 +127,7 @@ func getSeedFromEnvOrRandom() int64 {
 func TestSimulate(t *testing.T) {
 	t.Parallel()
 
-	seed := int64(490660684584332) //getSeedFromEnvOrRandom()
+	seed := getSeedFromEnvOrRandom() //int64(490660684584332)
 	rng := rand.New(rand.NewSource(seed))
 
 	t.Cleanup(func() {
