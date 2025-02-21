@@ -4,7 +4,7 @@ import { EmptyState, LinkButton, Alert, Stack, Text } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
 import { SetupWarnings } from './SetupWarnings';
-import { NEW_URL } from './constants';
+import { MIGRATE_URL, NEW_URL } from './constants';
 
 export default function OnboardingPage() {
   return (
@@ -24,7 +24,7 @@ export default function OnboardingPage() {
           message="Set up your provisioning connection!"
           image={<SVG src="public/img/provisioning-empty.svg" width={300} />}
           button={
-            <LinkButton size="lg" icon="plus" href={NEW_URL}>
+            <LinkButton size="lg" icon="plus" href={MIGRATE_URL}>
               Connect Grafana to repository
             </LinkButton>
           }
