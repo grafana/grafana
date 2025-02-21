@@ -18,7 +18,6 @@ import { TableCellHeight } from '@grafana/schema';
 
 import { useStyles2, useTheme2 } from '../../../themes';
 import { Trans } from '../../../utils/i18n';
-import { getScrollbarWidth } from '../../../utils/scrollbar';
 import { ContextMenu } from '../../ContextMenu/ContextMenu';
 import { MenuItem } from '../../Menu/MenuItem';
 import { Pagination } from '../../Pagination/Pagination';
@@ -28,28 +27,22 @@ import { TableCellInspector, TableCellInspectorMode } from '../TableCellInspecto
 import { HeaderCell } from './Cells/HeaderCell';
 import { RowExpander } from './Cells/RowExpander';
 import { TableCellNG } from './Cells/TableCellNG';
+import { COLUMN, TABLE } from './constants';
 import { TableNGProps, FilterType, TableRow } from './types';
-import { getRowHeight, shouldTextOverflow, getFooterItemNG, getTextAlign } from './utils';
-
-const DEFAULT_CELL_PADDING = 6;
-const COLUMN_MIN_WIDTH = 150;
-const EXPANDER_WIDTH = 50;
-const SMALL_PAGINATION_LIMIT = 750;
-const MAX_CELL_HEIGHT = 48;
-const SCROLL_BAR_WIDTH = getScrollbarWidth();
+import {
+  getColumnWidth,
+  getFooterItemNG,
+  getIsNestedTable,
+  getRowHeight,
+  getTextAlign,
+  shouldTextOverflow,
+} from './utils';
 
 interface TableColumn extends Column<TableRow> {
   key: string;
   name: string;
   field: Field;
 }
-
-/**
- * getIsNestedTable is a helper function that takes a DataFrame and returns a
- * boolean value based on the presence of nested frames
- */
-const getIsNestedTable = (dataFrame: DataFrame): boolean =>
-  dataFrame.fields.some(({ type }) => type === FieldType.nestedFrames);
 
 export function TableNG(props: TableNGProps) {
   const {
@@ -82,11 +75,7 @@ export function TableNG(props: TableNGProps) {
 
   // TODO: this is a hack to force the column width to update when the fieldConfig changes
   const [revId, setRevId] = useState(0);
-  const columnWidth = useMemo(() => {
-    setRevId(revId + 1);
-    return fieldConfig?.defaults?.custom?.width || 'auto';
-  }, [fieldConfig]); // eslint-disable-line react-hooks/exhaustive-deps
-  const columnMinWidth = fieldConfig?.defaults?.custom?.minWidth || COLUMN_MIN_WIDTH;
+  const columnMinWidth = fieldConfig?.defaults?.custom?.minWidth || COLUMN.MIN_WIDTH;
 
   const prevProps = useRef(props);
   useEffect(() => {
@@ -170,10 +159,10 @@ export function TableNG(props: TableNGProps) {
       case TableCellHeight.Md:
         return 42;
       case TableCellHeight.Lg:
-        return MAX_CELL_HEIGHT;
+        return TABLE.MAX_CELL_HEIGHT;
     }
 
-    return DEFAULT_CELL_PADDING * 2 + bodyFontSize * lineHeight;
+    return TABLE.CELL_PADDING * 2 + bodyFontSize * lineHeight;
   }
   const defaultRowHeight = getDefaultRowHeight();
   const defaultLineHeight = theme.typography.body.lineHeight * theme.typography.fontSize;
@@ -285,13 +274,13 @@ export function TableNG(props: TableNGProps) {
               rows={expandedRecords}
               columns={expandedColumns}
               rowHeight={defaultRowHeight}
-              style={{ height: '100%', overflow: 'visible', marginLeft: EXPANDER_WIDTH }}
+              style={{ height: '100%', overflow: 'visible', marginLeft: COLUMN.EXPANDER_WIDTH }}
               headerRowHeight={row.data.meta?.custom?.noHeader ? 0 : undefined}
             />
           );
         },
-        width: EXPANDER_WIDTH,
-        minWidth: EXPANDER_WIDTH,
+        width: COLUMN.EXPANDER_WIDTH,
+        minWidth: COLUMN.EXPANDER_WIDTH,
       });
     }
 
@@ -301,13 +290,7 @@ export function TableNG(props: TableNGProps) {
         return;
       }
       const key = field.name;
-
-      // get column width from overrides
-      const override = fieldConfig?.overrides?.find(
-        (o) => o.matcher.id === 'byName' && o.matcher.options === field.name
-      );
-      const width = override?.properties?.find((p) => p.id === 'width')?.value || field.config?.custom?.width;
-
+      const width = getColumnWidth(field, fieldConfig, key);
       const justifyColumnContent = getTextAlign(field);
       const footerStyles = getFooterStyles(justifyColumnContent);
 
@@ -340,7 +323,7 @@ export function TableNG(props: TableNGProps) {
                   osContext,
                   defaultLineHeight,
                   defaultRowHeight,
-                  DEFAULT_CELL_PADDING,
+                  TABLE.CELL_PADDING,
                   textWrap,
                   cellInspect
                 )
@@ -380,8 +363,8 @@ export function TableNG(props: TableNGProps) {
             crossFilterRows={crossFilterRows}
           />
         ),
+        width,
         // TODO these anys are making me sad
-        width: width ?? columnWidth,
         minWidth: field.config?.custom?.minWidth ?? columnMinWidth,
       });
     });
@@ -492,14 +475,14 @@ export function TableNG(props: TableNGProps) {
   // TODO consolidate calculations into pagination wrapper component and only use when needed
   const numRows = sortedRows.length;
   // calculate number of rowsPerPage based on height stack
-  let headerCellHeight = MAX_CELL_HEIGHT;
+  let headerCellHeight = TABLE.MAX_CELL_HEIGHT;
   if (noHeader) {
     headerCellHeight = 0;
   } else if (!noHeader && Object.keys(headerCellRefs.current).length > 0) {
     headerCellHeight = headerCellRefs.current[Object.keys(headerCellRefs.current)[0]].getBoundingClientRect().height;
   }
   let rowsPerPage = Math.floor(
-    (height - headerCellHeight - SCROLL_BAR_WIDTH - paginationHeight - panelPaddingHeight) / defaultRowHeight
+    (height - headerCellHeight - TABLE.SCROLL_BAR_WIDTH - paginationHeight - panelPaddingHeight) / defaultRowHeight
   );
   // if footer calcs are on, remove one row per page
   if (isFooterVisible) {
@@ -520,7 +503,7 @@ export function TableNG(props: TableNGProps) {
   if (displayedEnd > numRows) {
     displayedEnd = numRows;
   }
-  const smallPagination = width < SMALL_PAGINATION_LIMIT;
+  const smallPagination = width < TABLE.PAGINATION_LIMIT;
 
   const paginatedRows = useMemo(() => {
     const pageOffset = page * rowsPerPage;
@@ -588,7 +571,7 @@ export function TableNG(props: TableNGProps) {
         osContext,
         defaultLineHeight,
         defaultRowHeight,
-        DEFAULT_CELL_PADDING
+        TABLE.CELL_PADDING
       );
     },
     [expandedRows, defaultRowHeight, columnTypes, headerCellRefs, osContext, defaultLineHeight]
