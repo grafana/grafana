@@ -16,12 +16,15 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 	dashboardinternal "github.com/grafana/grafana/pkg/apis/dashboard"
+	"github.com/grafana/grafana/pkg/apis/dashboard/migration"
 	dashboardv0alpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	dashboardv1alpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v1alpha1"
 	dashboardv2alpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 var (
@@ -38,10 +41,16 @@ func RegisterAPIService(
 	features featuremgmt.FeatureToggles,
 	apiregistration builder.APIRegistrar,
 	provisioningDashboardService dashboards.DashboardProvisioningService,
+	datasourceService datasources.DataSourceService,
+	cfg *setting.Cfg,
 ) *DashboardsAPIBuilder {
 	builder := &DashboardsAPIBuilder{
 		ProvisioningDashboardService: provisioningDashboardService,
 	}
+	migration.Initialize(&datasourceInfoProvider{
+		cfg:               cfg,
+		datasourceService: datasourceService,
+	})
 	apiregistration.RegisterAPI(builder)
 	return builder
 }
