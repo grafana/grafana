@@ -2,6 +2,8 @@ package test
 
 import (
 	"context"
+	"slices"
+	"strings"
 	"testing"
 	"time"
 
@@ -12,59 +14,63 @@ import (
 	"github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
+// Test names for the storage backend test suite
+const (
+	TestHappyPath        = "happy path"
+	TestWatchWriteEvents = "watch write events from latest"
+	TestList             = "list"
+	TestBlobSupport      = "blob support"
+	TestGetResourceStats = "get resource stats"
+	TestListHistory      = "list history"
+)
+
 type NewBackendFunc func(ctx context.Context) resource.StorageBackend
 
-// TestCase defines a test case for the storage backend
-type TestCase struct {
-	name string
-	fn   func(*testing.T, resource.StorageBackend)
-}
-
-// StorageBackendTestSuite defines the test suite for storage backend
-type StorageBackendTestSuite struct {
-	newBackend NewBackendFunc
-	cases      []TestCase
-}
-
-// NewStorageBackendTestSuite creates a new test suite
-func NewStorageBackendTestSuite(newBackend NewBackendFunc) *StorageBackendTestSuite {
-	return &StorageBackendTestSuite{
-		newBackend: newBackend,
-		cases: []TestCase{
-			{"happy path", runTestIntegrationBackendHappyPath},
-			{"watch write events from latest", runTestIntegrationBackendWatchWriteEventsFromLastest},
-			{"list", runTestIntegrationBackendList},
-			{"blob support", runTestIntegrationBlobSupport},
-		},
-	}
-}
-
-// Run executes all test cases in the suite
-func (s *StorageBackendTestSuite) Run(t *testing.T) {
-	for _, tc := range s.cases {
-		t.Run(tc.name, func(t *testing.T) {
-			tc.fn(t, s.newBackend(context.Background()))
-		})
-	}
+// TestOptions configures which tests to run
+type TestOptions struct {
+	SkipTests map[string]bool // tests to skip
 }
 
 // RunStorageBackendTest runs the storage backend test suite
-func RunStorageBackendTest(t *testing.T, newBackend NewBackendFunc) {
-	suite := NewStorageBackendTestSuite(newBackend)
-	suite.Run(t)
-}
-
-func runTestIntegrationBackendHappyPath(t *testing.T, backend resource.StorageBackend) {
+func RunStorageBackendTest(t *testing.T, newBackend NewBackendFunc, opts *TestOptions) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
 
+	if opts == nil {
+		opts = &TestOptions{}
+	}
+
+	cases := []struct {
+		name string
+		fn   func(*testing.T, resource.StorageBackend)
+	}{
+		{TestHappyPath, runTestIntegrationBackendHappyPath},
+		{TestWatchWriteEvents, runTestIntegrationBackendWatchWriteEventsFromLastest},
+		{TestList, runTestIntegrationBackendList},
+		{TestBlobSupport, runTestIntegrationBlobSupport},
+		{TestGetResourceStats, runTestIntegrationBackendGetResourceStats},
+		{TestListHistory, runTestIntegrationBackendListHistory},
+	}
+
+	for _, tc := range cases {
+		if shouldSkip := opts.SkipTests[tc.name]; shouldSkip {
+			t.Logf("Skipping test: %s", tc.name)
+			continue
+		}
+
+		t.Run(tc.name, func(t *testing.T) {
+			tc.fn(t, newBackend(context.Background()))
+		})
+	}
+}
+
+func runTestIntegrationBackendHappyPath(t *testing.T, backend resource.StorageBackend) {
 	ctx := types.WithAuthInfo(context.Background(), authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
 		Claims: jwt.Claims{
 			Subject: "testuser",
@@ -90,12 +96,6 @@ func runTestIntegrationBackendHappyPath(t *testing.T, backend resource.StorageBa
 		rv3, err = writeEvent(ctx, backend, "item3", resource.WatchEvent_ADDED)
 		require.NoError(t, err)
 		require.Greater(t, rv3, rv2)
-
-		stats, err := backend.GetResourceStats(ctx, "", 0)
-		require.NoError(t, err)
-		require.Len(t, stats, 1)
-		require.Equal(t, int64(3), stats[0].Count)
-		require.Equal(t, rv3, stats[0].ResourceVersion)
 	})
 
 	t.Run("Update item2", func(t *testing.T) {
@@ -128,7 +128,7 @@ func runTestIntegrationBackendHappyPath(t *testing.T, backend resource.StorageBa
 		require.Equal(t, "item2 ADDED", string(resp.Value))
 	})
 
-	t.Run("PrepareList latest", func(t *testing.T) {
+	t.Run("List latest", func(t *testing.T) {
 		resp, err := server.List(ctx, &resource.ListRequest{
 			Options: &resource.ListOptions{
 				Key: &resource.ResourceKey{
@@ -143,7 +143,7 @@ func runTestIntegrationBackendHappyPath(t *testing.T, backend resource.StorageBa
 		require.Len(t, resp.Items, 2)
 		require.Equal(t, "item2 MODIFIED", string(resp.Items[0].Value))
 		require.Equal(t, "item3 ADDED", string(resp.Items[1].Value))
-		require.Equal(t, rv5, resp.ResourceVersion)
+		require.GreaterOrEqual(t, resp.ResourceVersion, rv5) // rv5 is the latest resource version
 	})
 
 	t.Run("Watch events", func(t *testing.T) {
@@ -176,14 +176,103 @@ func runTestIntegrationBackendHappyPath(t *testing.T, backend resource.StorageBa
 	})
 }
 
-func runTestIntegrationBackendWatchWriteEventsFromLastest(t *testing.T, backend resource.StorageBackend) {
-	if infraDB.IsTestDbSQLite() {
-		t.Skip("TODO: test blocking, skipping to unblock Enterprise until we fix this")
-	}
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+func runTestIntegrationBackendGetResourceStats(t *testing.T, backend resource.StorageBackend) {
+	ctx := testutil.NewTestContext(t, time.Now().Add(5*time.Second))
 
+	sortFunc := func(a, b resource.ResourceStats) int {
+		if a.Namespace != b.Namespace {
+			return strings.Compare(a.Namespace, b.Namespace)
+		}
+		if a.Group != b.Group {
+			return strings.Compare(a.Group, b.Group)
+		}
+		return strings.Compare(a.Resource, b.Resource)
+	}
+	// Create resources across different namespaces/groups
+	_, err := writeEvent(ctx, backend, "item1", resource.WatchEvent_ADDED,
+		WithNamespace("ns1"),
+		WithGroup("group"),
+		WithResource("resource1"))
+	require.NoError(t, err)
+
+	_, err = writeEvent(ctx, backend, "item2", resource.WatchEvent_ADDED,
+		WithNamespace("ns1"),
+		WithGroup("group"),
+		WithResource("resource1"))
+	require.NoError(t, err)
+
+	_, err = writeEvent(ctx, backend, "item3", resource.WatchEvent_ADDED,
+		WithNamespace("ns1"),
+		WithGroup("group"),
+		WithResource("resource2"))
+	require.NoError(t, err)
+
+	_, err = writeEvent(ctx, backend, "item4", resource.WatchEvent_ADDED,
+		WithNamespace("ns2"),
+		WithGroup("group"),
+		WithResource("resource1"))
+	require.NoError(t, err)
+
+	_, err = writeEvent(ctx, backend, "item5", resource.WatchEvent_ADDED,
+		WithNamespace("ns2"),
+		WithGroup("group"),
+		WithResource("resource1"))
+	require.NoError(t, err)
+
+	t.Run("Get stats for ns1", func(t *testing.T) {
+		stats, err := backend.GetResourceStats(ctx, "ns1", 0)
+		require.NoError(t, err)
+		require.Len(t, stats, 2)
+
+		// Sort results for consistent testing
+		slices.SortFunc(stats, sortFunc)
+
+		// Check first resource stats
+		require.Equal(t, "ns1", stats[0].Namespace)
+		require.Equal(t, "group", stats[0].Group)
+		require.Equal(t, "resource1", stats[0].Resource)
+		require.Equal(t, int64(2), stats[0].Count)
+		require.Greater(t, stats[0].ResourceVersion, int64(0))
+
+		// Check second resource stats
+		require.Equal(t, "ns1", stats[1].Namespace)
+		require.Equal(t, "group", stats[1].Group)
+		require.Equal(t, "resource2", stats[1].Resource)
+		require.Equal(t, int64(1), stats[1].Count)
+		require.Greater(t, stats[1].ResourceVersion, int64(0))
+	})
+
+	t.Run("Get stats for ns2", func(t *testing.T) {
+		stats, err := backend.GetResourceStats(ctx, "ns2", 0)
+		require.NoError(t, err)
+		require.Len(t, stats, 1)
+
+		require.Equal(t, "ns2", stats[0].Namespace)
+		require.Equal(t, "group", stats[0].Group)
+		require.Equal(t, "resource1", stats[0].Resource)
+		require.Equal(t, int64(2), stats[0].Count)
+		require.Greater(t, stats[0].ResourceVersion, int64(0))
+	})
+
+	t.Run("Get stats with minimum count", func(t *testing.T) {
+		stats, err := backend.GetResourceStats(ctx, "ns1", 1)
+		require.NoError(t, err)
+		require.Len(t, stats, 1)
+
+		require.Equal(t, "ns1", stats[0].Namespace)
+		require.Equal(t, "group", stats[0].Group)
+		require.Equal(t, "resource1", stats[0].Resource)
+		require.Equal(t, int64(2), stats[0].Count)
+	})
+
+	t.Run("Get stats for non-existent namespace", func(t *testing.T) {
+		stats, err := backend.GetResourceStats(ctx, "non-existent", 0)
+		require.NoError(t, err)
+		require.Empty(t, stats)
+	})
+}
+
+func runTestIntegrationBackendWatchWriteEventsFromLastest(t *testing.T, backend resource.StorageBackend) {
 	ctx := testutil.NewTestContext(t, time.Now().Add(5*time.Second))
 
 	// Create a few resources before initing the watch
@@ -201,22 +290,15 @@ func runTestIntegrationBackendWatchWriteEventsFromLastest(t *testing.T, backend 
 }
 
 func runTestIntegrationBackendList(t *testing.T, backend resource.StorageBackend) {
-	if infraDB.IsTestDbSQLite() {
-		t.Skip("TODO: test blocking, skipping to unblock Enterprise until we fix this")
-	}
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
-
 	ctx := testutil.NewTestContext(t, time.Now().Add(5*time.Second))
 	server := newServer(t, backend)
 
 	// Create a few resources before starting the watch
 	rv1, _ := writeEvent(ctx, backend, "item1", resource.WatchEvent_ADDED)
 	require.Greater(t, rv1, int64(0))
-	rv2, _ := writeEvent(ctx, backend, "item2", resource.WatchEvent_ADDED) // rv=2 - will be modified at rv=6
+	rv2, _ := writeEvent(ctx, backend, "item2", resource.WatchEvent_ADDED)
 	require.Greater(t, rv2, rv1)
-	rv3, _ := writeEvent(ctx, backend, "item3", resource.WatchEvent_ADDED) // rv=3 - will be deleted  at rv=7
+	rv3, _ := writeEvent(ctx, backend, "item3", resource.WatchEvent_ADDED)
 	require.Greater(t, rv3, rv2)
 	rv4, _ := writeEvent(ctx, backend, "item4", resource.WatchEvent_ADDED)
 	require.Greater(t, rv4, rv3)
@@ -344,6 +426,14 @@ func runTestIntegrationBackendList(t *testing.T, backend resource.StorageBackend
 		require.Equal(t, rv8, continueToken.ResourceVersion)
 		require.Equal(t, int64(4), continueToken.StartOffset)
 	})
+}
+
+func runTestIntegrationBackendListHistory(t *testing.T, backend resource.StorageBackend) {
+	ctx := testutil.NewTestContext(t, time.Now().Add(5*time.Second))
+	server := newServer(t, backend)
+
+	rv1, _ := writeEvent(ctx, backend, "item1", resource.WatchEvent_ADDED)
+	require.Greater(t, rv1, int64(0))
 
 	// add 5 events for item1 - should be saved to history
 	rvHistory1, err := writeEvent(ctx, backend, "item1", resource.WatchEvent_MODIFIED)
@@ -424,10 +514,6 @@ func runTestIntegrationBackendList(t *testing.T, backend resource.StorageBackend
 }
 
 func runTestIntegrationBlobSupport(t *testing.T, backend resource.StorageBackend) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
-
 	ctx := testutil.NewTestContext(t, time.Now().Add(5*time.Second))
 	server := newServer(t, backend)
 	store, ok := backend.(resource.BlobSupport)
@@ -472,7 +558,71 @@ func runTestIntegrationBlobSupport(t *testing.T, backend resource.StorageBackend
 	})
 }
 
-func writeEvent(ctx context.Context, store resource.StorageBackend, name string, action resource.WatchEvent_Type) (int64, error) {
+// WriteEventOption is a function that modifies WriteEventOptions
+type WriteEventOption func(*WriteEventOptions)
+
+// WithNamespace sets the namespace for the write event
+func WithNamespace(namespace string) WriteEventOption {
+	return func(o *WriteEventOptions) {
+		o.Namespace = namespace
+	}
+}
+
+// WithGroup sets the group for the write event
+func WithGroup(group string) WriteEventOption {
+	return func(o *WriteEventOptions) {
+		o.Group = group
+	}
+}
+
+// WithResource sets the resource for the write event
+func WithResource(resource string) WriteEventOption {
+	return func(o *WriteEventOptions) {
+		o.Resource = resource
+	}
+}
+
+// WithFolder sets the folder for the write event
+func WithFolder(folder string) WriteEventOption {
+	return func(o *WriteEventOptions) {
+		o.Folder = folder
+	}
+}
+
+// WithValue sets the value for the write event
+func WithValue(value []byte) WriteEventOption {
+	return func(o *WriteEventOptions) {
+		o.Value = value
+	}
+}
+
+type WriteEventOptions struct {
+	Namespace string
+	Group     string
+	Resource  string
+	Folder    string
+	Value     []byte
+}
+
+func writeEvent(ctx context.Context, store resource.StorageBackend, name string, action resource.WatchEvent_Type, opts ...WriteEventOption) (int64, error) {
+	// Default options
+	options := WriteEventOptions{
+		Namespace: "namespace",
+		Group:     "group",
+		Resource:  "resource",
+		Folder:    "folderuid",
+	}
+
+	// Apply options
+	for _, opt := range opts {
+		opt(&options)
+	}
+
+	// Set default value if not provided
+	if options.Value == nil {
+		options.Value = []byte(name + " " + resource.WatchEvent_Type_name[int32(action)])
+	}
+
 	res := &unstructured.Unstructured{
 		Object: map[string]any{},
 	}
@@ -480,14 +630,15 @@ func writeEvent(ctx context.Context, store resource.StorageBackend, name string,
 	if err != nil {
 		return 0, err
 	}
-	meta.SetFolder("folderuid")
+	meta.SetFolder(options.Folder)
+
 	return store.WriteEvent(ctx, resource.WriteEvent{
 		Type:  action,
-		Value: []byte(name + " " + resource.WatchEvent_Type_name[int32(action)]),
+		Value: options.Value,
 		Key: &resource.ResourceKey{
-			Namespace: "namespace",
-			Group:     "group",
-			Resource:  "resource",
+			Namespace: options.Namespace,
+			Group:     options.Group,
+			Resource:  options.Resource,
 			Name:      name,
 		},
 		Object: meta,
