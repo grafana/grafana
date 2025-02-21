@@ -20,7 +20,7 @@ export interface LogFieldDimension {
   width: number;
 }
 
-interface PreProcessOptions {
+export interface PreProcessOptions {
   escape: boolean;
   getFieldLinks?: GetFieldLinksFn;
   order: LogsSortOrder;

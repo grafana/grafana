@@ -6,8 +6,9 @@ import { LogListModel } from './processing';
 let ctx: CanvasRenderingContext2D | null = null;
 let gridSize = 8;
 let paddingBottom = gridSize * 0.75;
-let lineHeight = 22;
+export let lineHeight = 22;
 let measurementMode: 'canvas' | 'dom' = 'canvas';
+const iconWidth = 24;
 
 // Controls the space between fields in the log line, timestamp, level, displayed fields, and log line body
 export const FIELD_GAP_MULTIPLIER = 1.5;
@@ -203,7 +204,7 @@ export function hasUnderOrOverflow(element: HTMLDivElement, calculatedHeight?: n
 const scrollBarWidth = getScrollbarWidth();
 
 export function getLogContainerWidth(container: HTMLDivElement) {
-  return container.clientWidth - scrollBarWidth;
+  return container.clientWidth - scrollBarWidth - iconWidth;
 }
 
 export function getScrollbarWidth() {
