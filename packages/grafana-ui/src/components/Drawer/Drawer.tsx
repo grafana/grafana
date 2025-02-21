@@ -45,7 +45,11 @@ export interface Props {
   size?: 'sm' | 'md' | 'lg';
   /** Tabs */
   tabs?: React.ReactNode;
-  /** Whether the content should be wrapped in a ScrollContainer */
+  /**
+   * Whether the content should be wrapped in a ScrollContainer
+   * Only change this if you intend to manage scroll behaviour yourself
+   * (e.g. having a split pane with independent scrolling)
+   **/
   scrollableContent?: boolean;
   /** Callback for closing the drawer */
   onClose: () => void;
