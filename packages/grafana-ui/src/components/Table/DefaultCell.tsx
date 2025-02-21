@@ -1,4 +1,4 @@
-import { ReactElement } from 'react';
+import { ReactElement, useRef, useState } from 'react';
 import * as React from 'react';
 
 import { DisplayValue, formattedValueToString } from '@grafana/data';
@@ -76,10 +76,19 @@ export const DefaultCell = (props: TableCellProps) => {
   const { key, ...rest } = cellProps;
   const links = getCellLinks(field, row) || [];
 
+  const [tooltipOpen, setTooltipOpen] = useState(false);
+  const cellRef = useRef<HTMLDivElement>(null);
+
   return (
-    <div key={key} {...rest} className={cellStyle}>
-      {hasLinks || hasActions ? (
-        <DataLinksActionsTooltip links={links} actions={actions} value={value} />
+    <div key={key} {...rest} className={cellStyle} onClick={() => setTooltipOpen(true)} ref={cellRef}>
+      {(hasLinks || hasActions) && tooltipOpen ? (
+        <DataLinksActionsTooltip
+          links={links}
+          actions={actions}
+          value={value}
+          cellRef={cellRef}
+          onTooltipClose={() => setTooltipOpen(false)}
+        />
       ) : isStringValue ? (
         `${value}`
       ) : (

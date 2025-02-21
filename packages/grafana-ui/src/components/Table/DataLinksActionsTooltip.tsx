@@ -1,15 +1,6 @@
 import { css } from '@emotion/css';
-import {
-  autoUpdate,
-  flip,
-  offset,
-  shift,
-  useClick,
-  useDismiss,
-  useFloating,
-  useInteractions,
-} from '@floating-ui/react';
-import { ReactElement, useState } from 'react';
+import { autoUpdate, flip, offset, shift, useDismiss, useFloating, useInteractions } from '@floating-ui/react';
+import { ReactElement } from 'react';
 
 import { ActionModel, GrafanaTheme2, LinkModel } from '@grafana/data';
 
@@ -22,19 +13,20 @@ interface Props {
   links: LinkModel[];
   actions?: ActionModel[];
   value?: string | ReactElement;
+  cellRef?: React.RefObject<HTMLDivElement>;
+  onTooltipClose?: () => void;
 }
 
 /**
  *
  * @internal
  */
-export const DataLinksActionsTooltip = ({ links, actions, value }: Props) => {
+export const DataLinksActionsTooltip = ({ links, actions, value, cellRef, onTooltipClose }: Props) => {
   const styles = useStyles2(getStyles);
-  const [show, setShow] = useState(false);
 
   // the order of middleware is important!
   const middleware = [
-    offset(16),
+    offset(-10),
     flip({
       fallbackAxisSideDirection: 'end',
       // see https://floating-ui.com/docs/flip#combining-with-shift
@@ -44,26 +36,24 @@ export const DataLinksActionsTooltip = ({ links, actions, value }: Props) => {
     shift(),
   ];
 
+  const refCallback = (el: HTMLDivElement) => {
+    refs.setFloating(el);
+    refs.setReference(cellRef?.current!);
+  };
+
   const { context, refs, floatingStyles } = useFloating({
-    open: show,
+    open: true,
     placement: 'bottom',
-    onOpenChange: setShow,
+    onOpenChange: onTooltipClose,
     middleware,
     whileElementsMounted: autoUpdate,
   });
 
-  const click = useClick(context);
   const dismiss = useDismiss(context);
-
-  const onItemClick = () => {
-    if (hasMultipleLinksOrActions) {
-      setShow(true);
-    }
-  };
 
   const hasMultipleLinksOrActions = links.length > 1 || Boolean(actions?.length);
 
-  const { getReferenceProps, getFloatingProps } = useInteractions([dismiss, click]);
+  const { getFloatingProps } = useInteractions([dismiss]);
 
   if (links.length === 0 && !Boolean(actions?.length)) {
     return null;
@@ -85,23 +75,10 @@ export const DataLinksActionsTooltip = ({ links, actions, value }: Props) => {
   } else {
     return (
       <>
-        <span
-          ref={refs.setReference}
-          {...getReferenceProps()}
-          className={styles.link}
-          onClick={onItemClick}
-          style={{ cursor: 'context-menu' }}
-        >
-          {value}
-        </span>
-        {show && hasMultipleLinksOrActions && (
+        {value}
+        {hasMultipleLinksOrActions && (
           <Portal>
-            <div
-              ref={refs.setFloating}
-              style={floatingStyles}
-              {...getFloatingProps()}
-              className={styles.tooltipWrapper}
-            >
+            <div ref={refCallback} style={floatingStyles} {...getFloatingProps()} className={styles.tooltipWrapper}>
               <VizTooltipWrapper>
                 <VizTooltipFooter dataLinks={links} actions={actions} />
               </VizTooltipWrapper>
