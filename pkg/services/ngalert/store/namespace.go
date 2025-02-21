@@ -3,11 +3,11 @@ package store
 import (
 	"context"
 	"errors"
+	"sort"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 // GetUserVisibleNamespaces returns the folders that are visible to the user
@@ -42,16 +42,28 @@ func (st DBstore) GetNamespaceByUID(ctx context.Context, uid string, orgID int64
 
 // GetNamespaceInRootByTitle gets namespace by its title in the root folder.
 func (st DBstore) GetNamespaceInRootByTitle(ctx context.Context, title string, orgID int64, user identity.Requester) (*folder.Folder, error) {
-	folder, err := st.FolderService.Get(ctx, &folder.GetFolderQuery{
-		OrgID:        orgID,
-		Title:        util.Pointer(title),
-		SignedInUser: user,
-	})
+	folders, err := st.GetUserVisibleNamespaces(ctx, orgID, user)
 	if err != nil {
 		return nil, err
 	}
 
-	return folder, nil
+	foundByTitle := []*folder.Folder{}
+	for _, f := range folders {
+		if f.Title == title && f.ParentUID == folder.RootFolderUID {
+			foundByTitle = append(foundByTitle, f)
+		}
+	}
+
+	if len(foundByTitle) == 0 {
+		return nil, dashboards.ErrFolderAccessDenied
+	}
+
+	// Sort by UID to return the first folder in case of multiple folders with the same title
+	sort.Slice(foundByTitle, func(i, j int) bool {
+		return foundByTitle[i].UID < foundByTitle[j].UID
+	})
+
+	return foundByTitle[0], nil
 }
 
 // GetOrCreateNamespaceInRootByTitle gets or creates a namespace by title in the _root_ folder.
@@ -60,7 +72,7 @@ func (st DBstore) GetOrCreateNamespaceInRootByTitle(ctx context.Context, title s
 	var err error
 
 	f, err = st.GetNamespaceInRootByTitle(ctx, title, orgID, user)
-	if err != nil && !errors.Is(err, dashboards.ErrFolderNotFound) {
+	if err != nil && !errors.Is(err, dashboards.ErrFolderAccessDenied) {
 		return nil, err
 	}
 
