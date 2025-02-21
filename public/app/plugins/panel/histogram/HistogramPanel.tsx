@@ -40,7 +40,7 @@ export const HistogramPanel = ({ data, options, width, height }: Props) => {
         return histogramFieldsToFrame(info);
       }
     }
-    const hist = buildHistogram(data.series, options);
+    const hist = buildHistogram(data.series, options, theme);
     if (!hist) {
       return undefined;
     }
