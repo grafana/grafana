@@ -12,7 +12,6 @@ import (
 	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
 	"google.golang.org/grpc"
 
-	"github.com/grafana/authlib/authn"
 	authnlib "github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -101,7 +100,7 @@ type RemoteResourceClientConfig struct {
 }
 
 func NewRemoteResourceClient(tracer tracing.Tracer, conn *grpc.ClientConn, cfg RemoteResourceClientConfig) (ResourceClient, error) {
-	exchangeOpts := []authn.ExchangeClientOpts{}
+	exchangeOpts := []authnlib.ExchangeClientOpts{}
 
 	if cfg.AllowInsecure {
 		exchangeOpts = append(exchangeOpts, authnlib.WithHTTPClient(&http.Client{Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}}))

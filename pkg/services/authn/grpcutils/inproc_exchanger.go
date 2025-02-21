@@ -1,7 +1,6 @@
 package grpcutils
 
 import (
-	"context"
 	"encoding/base64"
 	"encoding/json"
 
@@ -10,10 +9,6 @@ import (
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
-
-type inProcExchanger struct {
-	tokenResponse *authn.TokenExchangeResponse
-}
 
 func ProvideInProcExchanger() authn.StaticTokenExchanger {
 	token, err := createInProcToken()
@@ -24,16 +19,12 @@ func ProvideInProcExchanger() authn.StaticTokenExchanger {
 	return authn.NewStaticTokenExchanger(token)
 }
 
-func (e *inProcExchanger) Exchange(ctx context.Context, r authn.TokenExchangeRequest) (*authn.TokenExchangeResponse, error) {
-	return e.tokenResponse, nil
-}
-
 func createInProcToken() (string, error) {
 	claims := authn.Claims[authn.AccessTokenClaims]{
 		Claims: jwt.Claims{
-			Audience: []string{"resourceStore"},
 			Issuer:   "grafana",
 			Subject:  types.NewTypeID(types.TypeAccessPolicy, "grafana"),
+			Audience: []string{"resourceStore"},
 		},
 		Rest: authn.AccessTokenClaims{
 			Namespace:            "*",
