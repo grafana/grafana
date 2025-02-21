@@ -5,9 +5,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/registry/apis/alerting/notifications"
 	dashboardinternal "github.com/grafana/grafana/pkg/registry/apis/dashboard"
-	dashboardv0alpha1 "github.com/grafana/grafana/pkg/registry/apis/dashboard/v0alpha1"
-	dashboardv1alpha1 "github.com/grafana/grafana/pkg/registry/apis/dashboard/v1alpha1"
-	dashboardv2alpha1 "github.com/grafana/grafana/pkg/registry/apis/dashboard/v2alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboardsnapshot"
 	"github.com/grafana/grafana/pkg/registry/apis/datasource"
 	"github.com/grafana/grafana/pkg/registry/apis/featuretoggle"
@@ -30,9 +27,6 @@ var WireSet = wire.NewSet(
 
 	// Each must be added here *and* in the ServiceSink above
 	dashboardinternal.RegisterAPIService,
-	dashboardv0alpha1.RegisterAPIService,
-	dashboardv1alpha1.RegisterAPIService,
-	dashboardv2alpha1.RegisterAPIService,
 	dashboardsnapshot.RegisterAPIService,
 	featuretoggle.RegisterAPIService,
 	datasource.RegisterAPIService,
