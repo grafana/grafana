@@ -877,7 +877,7 @@ var (
 		},
 		{
 			Name:         "exploreMetrics",
-			Description:  "Enables the new Explore Metrics core app",
+			Description:  "Enables the new Grafana Metrics Drilldown core app",
 			Stage:        FeatureStageGeneralAvailability,
 			Expression:   "true", // enabled by default
 			FrontendOnly: true,
@@ -1346,21 +1346,21 @@ var (
 		},
 		{
 			Name:         "exploreLogsShardSplitting",
-			Description:  "Used in Explore Logs to split queries into multiple queries based on the number of shards",
+			Description:  "Used in Logs Drilldown to split queries into multiple queries based on the number of shards",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityLogsSquad,
 		},
 		{
 			Name:         "exploreLogsAggregatedMetrics",
-			Description:  "Used in Explore Logs to query by aggregated metrics",
+			Description:  "Used in Logs Drilldown to query by aggregated metrics",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityLogsSquad,
 		},
 		{
 			Name:         "exploreLogsLimitedTimeRange",
-			Description:  "Used in Explore Logs to limit the time range",
+			Description:  "Used in Logs Drilldown to limit the time range",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityLogsSquad,

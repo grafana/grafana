@@ -320,6 +320,7 @@
     "combokeys": "^3.0.0",
     "comlink": "4.4.2",
     "common-tags": "1.8.2",
+    "croner": "^9.0.0",
     "d3": "7.9.0",
     "d3-force": "3.0.0",
     "d3-scale-chromatic": "3.1.0",

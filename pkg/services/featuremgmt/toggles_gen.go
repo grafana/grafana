@@ -476,7 +476,7 @@ const (
 	FlagLogsInfiniteScrolling = "logsInfiniteScrolling"
 
 	// FlagExploreMetrics
-	// Enables the new Explore Metrics core app
+	// Enables the new Grafana Metrics Drilldown core app
 	FlagExploreMetrics = "exploreMetrics"
 
 	// FlagAlertingSimplifiedRouting
@@ -716,15 +716,15 @@ const (
 	FlagAlertingPrometheusRulesPrimary = "alertingPrometheusRulesPrimary"
 
 	// FlagExploreLogsShardSplitting
-	// Used in Explore Logs to split queries into multiple queries based on the number of shards
+	// Used in Logs Drilldown to split queries into multiple queries based on the number of shards
 	FlagExploreLogsShardSplitting = "exploreLogsShardSplitting"
 
 	// FlagExploreLogsAggregatedMetrics
-	// Used in Explore Logs to query by aggregated metrics
+	// Used in Logs Drilldown to query by aggregated metrics
 	FlagExploreLogsAggregatedMetrics = "exploreLogsAggregatedMetrics"
 
 	// FlagExploreLogsLimitedTimeRange
-	// Used in Explore Logs to limit the time range
+	// Used in Logs Drilldown to limit the time range
 	FlagExploreLogsLimitedTimeRange = "exploreLogsLimitedTimeRange"
 
 	// FlagHomeSetupGuide
