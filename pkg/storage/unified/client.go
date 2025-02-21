@@ -4,7 +4,10 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
+	"time"
 
+	otgrpc "github.com/opentracing-contrib/go-grpc"
+	"github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
@@ -14,6 +17,7 @@ import (
 
 	authnlib "github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
+	"github.com/grafana/dskit/flagext"
 	"github.com/grafana/dskit/grpcclient"
 	"github.com/grafana/dskit/middleware"
 
@@ -42,8 +46,9 @@ type Options struct {
 	Docs     resource.DocumentBuilderSupplier
 }
 
-type ClientMetrics struct {
+type clientMetrics struct {
 	requestDuration *prometheus.HistogramVec
+	requestRetries  *prometheus.CounterVec
 }
 
 // This adds a UnifiedStorage client into the wire dependency tree
@@ -112,7 +117,7 @@ func newClient(opts options.StorageOptions,
 		}
 
 		// Create a connection to the gRPC server.
-		conn, err := grpcConn(opts.Address, reg)
+		conn, err := GrpcConn(opts.Address, reg)
 		if err != nil {
 			return nil, err
 		}
@@ -158,25 +163,39 @@ func newResourceClient(conn *grpc.ClientConn, cfg *setting.Cfg, features feature
 	return resource.NewRemoteResourceClient(tracer, conn, clientCfgMapping(grpcutils.ReadGrpcClientConfig(cfg)), cfg.Env == setting.Dev)
 }
 
-// grpcConn creates a new gRPC connection to the provided address.
-func grpcConn(address string, reg prometheus.Registerer) (*grpc.ClientConn, error) {
+// GrpcConn creates a new gRPC connection to the provided address.
+func GrpcConn(address string, reg prometheus.Registerer) (*grpc.ClientConn, error) {
 	// This works for now as the Provide function is only called once during startup.
-	// We might eventually want to tie this factory to a struct for more runtime control.
-	metrics := ClientMetrics{
+	// We might eventually want to tight this factory to a struct for more runtime control.
+	metrics := clientMetrics{
 		requestDuration: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
 			Name:    "resource_server_client_request_duration_seconds",
 			Help:    "Time spent executing requests to the resource server.",
 			Buckets: prometheus.ExponentialBuckets(0.008, 4, 7),
 		}, []string{"operation", "status_code"}),
+		requestRetries: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "resource_server_client_request_retries_total",
+			Help: "Total number of retries for requests to the resource server.",
+		}, []string{"operation"}),
 	}
 
 	// Report gRPC status code errors as labels.
-	var instrumentationOptions []middleware.InstrumentationOption
-	instrumentationOptions = append(instrumentationOptions, middleware.ReportGRPCStatusOption)
-	unary, stream := grpcclient.Instrument(metrics.requestDuration, instrumentationOptions...)
+	unary, stream := instrument(metrics.requestDuration, middleware.ReportGRPCStatusOption)
 
-	// We can later pass in the gRPC config here, i.e. to set MaxRecvMsgSize etc.
+	// Add middleware to retry on transient connection issues. Note that
+	// we do not implement it for streams, as we don't currently use streams.
+	retryCfg := retryConfig{
+		Max:           3,
+		Backoff:       time.Second,
+		BackoffJitter: 0.5,
+	}
+	unary = append(unary, unaryRetryInterceptor(retryCfg))
+	unary = append(unary, unaryRetryInstrument(metrics.requestRetries))
+
 	cfg := grpcclient.Config{}
+	// Set the defaults that are normally set by Config.RegisterFlags.
+	flagext.DefaultValues(&cfg)
+
 	opts, err := cfg.DialOption(unary, stream)
 	if err != nil {
 		return nil, fmt.Errorf("could not instrument grpc client: %w", err)
@@ -185,7 +204,7 @@ func grpcConn(address string, reg prometheus.Registerer) (*grpc.ClientConn, erro
 	opts = append(opts, grpc.WithStatsHandler(otelgrpc.NewClientHandler()))
 	opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 
-	// Use round_robin to balance requests more evenly over the available Storage server.
+	// Use round_robin to balances requests more evenly over the available Storage server.
 	opts = append(opts, grpc.WithDefaultServiceConfig(`{"loadBalancingPolicy":"round_robin"}`))
 
 	// Disable looking up service config from TXT DNS records.
@@ -194,4 +213,16 @@ func grpcConn(address string, reg prometheus.Registerer) (*grpc.ClientConn, erro
 
 	// Create a connection to the gRPC server
 	return grpc.NewClient(address, opts...)
+}
+
+// instrument is the same as grpcclient.Instrument but without the middleware.ClientUserHeaderInterceptor
+// and middleware.StreamClientUserHeaderInterceptor as we don't need them.
+func instrument(requestDuration *prometheus.HistogramVec, instrumentationLabelOptions ...middleware.InstrumentationOption) ([]grpc.UnaryClientInterceptor, []grpc.StreamClientInterceptor) {
+	return []grpc.UnaryClientInterceptor{
+			otgrpc.OpenTracingClientInterceptor(opentracing.GlobalTracer()),
+			middleware.UnaryClientInstrumentInterceptor(requestDuration, instrumentationLabelOptions...),
+		}, []grpc.StreamClientInterceptor{
+			otgrpc.OpenTracingStreamClientInterceptor(opentracing.GlobalTracer()),
+			middleware.StreamClientInstrumentInterceptor(requestDuration, instrumentationLabelOptions...),
+		}
 }
