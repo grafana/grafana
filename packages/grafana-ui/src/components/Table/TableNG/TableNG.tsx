@@ -413,34 +413,6 @@ export function TableNG(props: TableNGProps) {
     );
   }, [props.data.fields]);
 
-  // Sort rows
-  const sortedRows = useMemo(() => {
-    const comparators = sortColumns.map(({ columnKey }) => getComparator(columnTypes[columnKey]));
-    const sortDirs = sortColumns.map(({ direction }) => (direction === 'ASC' ? 1 : -1));
-
-    if (sortColumns.length === 0) {
-      return rows;
-    }
-
-    return rows.slice().sort((a, b) => {
-      let result = 0;
-      let sortIndex = 0;
-
-      for (const { columnKey } of sortColumns) {
-        const compare = comparators[sortIndex];
-        result = sortDirs[sortIndex] * compare(a[columnKey], b[columnKey]);
-
-        if (result !== 0) {
-          break;
-        }
-
-        sortIndex += 1;
-      }
-
-      return result;
-    });
-  }, [rows, sortColumns, columnTypes]);
-
   const getDisplayedValue = (row: TableRow, key: string) => {
     const field = props.data.fields.find((field) => field.name === key)!;
     const displayedValue = formattedValueToString(field.display!(row[key]));
@@ -453,7 +425,7 @@ export function TableNG(props: TableNGProps) {
     if (filterValues.length === 0) {
       // reset cross filter order
       crossFilterOrder.current = [];
-      return sortedRows;
+      return rows;
     }
 
     // Update crossFilterOrder
@@ -471,7 +443,7 @@ export function TableNG(props: TableNGProps) {
     // reset crossFilterRows
     crossFilterRows.current = {};
 
-    return sortedRows.filter((row) => {
+    return rows.filter((row) => {
       for (const [key, value] of filterValues) {
         const displayedValue = getDisplayedValue(row, key);
         if (!value.filteredSet.has(displayedValue)) {
@@ -486,11 +458,39 @@ export function TableNG(props: TableNGProps) {
       }
       return true;
     });
-  }, [rows, filter, sortedRows, props.data.fields]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [rows, filter, props.data.fields]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Sort rows
+  const sortedRows = useMemo(() => {
+    const comparators = sortColumns.map(({ columnKey }) => getComparator(columnTypes[columnKey]));
+    const sortDirs = sortColumns.map(({ direction }) => (direction === 'ASC' ? 1 : -1));
+
+    if (sortColumns.length === 0) {
+      return filteredRows;
+    }
+
+    return filteredRows.slice().sort((a, b) => {
+      let result = 0;
+      let sortIndex = 0;
+
+      for (const { columnKey } of sortColumns) {
+        const compare = comparators[sortIndex];
+        result = sortDirs[sortIndex] * compare(a[columnKey], b[columnKey]);
+
+        if (result !== 0) {
+          break;
+        }
+
+        sortIndex += 1;
+      }
+
+      return result;
+    });
+  }, [filteredRows, sortColumns, columnTypes]);
 
   // Paginated rows
   // TODO consolidate calculations into pagination wrapper component and only use when needed
-  const numRows = filteredRows.length;
+  const numRows = sortedRows.length;
   // calculate number of rowsPerPage based on height stack
   let headerCellHeight = MAX_CELL_HEIGHT;
   if (noHeader) {
@@ -524,8 +524,8 @@ export function TableNG(props: TableNGProps) {
 
   const paginatedRows = useMemo(() => {
     const pageOffset = page * rowsPerPage;
-    return filteredRows.slice(pageOffset, pageOffset + rowsPerPage);
-  }, [rows, filteredRows, page, rowsPerPage]); // eslint-disable-line react-hooks/exhaustive-deps
+    return sortedRows.slice(pageOffset, pageOffset + rowsPerPage);
+  }, [rows, sortedRows, page, rowsPerPage]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useMemo(() => {
     calcsRef.current = props.data.fields.map((field, index) => {
@@ -533,15 +533,15 @@ export function TableNG(props: TableNGProps) {
         delete field.state?.calcs;
       }
       if (isCountRowsSet) {
-        return index === 0 ? `${filteredRows.length}` : '';
+        return index === 0 ? `${sortedRows.length}` : '';
       }
       if (index === 0) {
         const footerCalcReducer = footerOptions?.reducer[0];
         return footerCalcReducer ? fieldReducers.get(footerCalcReducer).name : '';
       }
-      return getFooterItemNG(filteredRows, field, footerOptions);
+      return getFooterItemNG(sortedRows, field, footerOptions);
     });
-  }, [filteredRows, props.data.fields, footerOptions, isCountRowsSet]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [sortedRows, props.data.fields, footerOptions, isCountRowsSet]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const columns = useMemo(
     () => mapFrameToDataGrid(props.data, calcsRef),
@@ -601,7 +601,7 @@ export function TableNG(props: TableNGProps) {
         <DataGrid
           className={styles.dataGrid}
           key={`DataGrid${revId}`}
-          rows={enablePagination ? paginatedRows : filteredRows}
+          rows={enablePagination ? paginatedRows : sortedRows}
           columns={columns}
           headerRowHeight={noHeader ? 0 : undefined}
           defaultColumnOptions={{
