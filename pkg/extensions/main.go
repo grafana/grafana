@@ -19,7 +19,6 @@ import (
 	_ "github.com/grpc-ecosystem/go-grpc-middleware/v2"
 	_ "github.com/hashicorp/go-multierror"
 	_ "github.com/hashicorp/golang-lru/v2"
-	_ "github.com/linkedin/goavro/v2"
 	_ "github.com/m3db/prometheus_remote_client_golang/promremote"
 	_ "github.com/phpdave11/gofpdi"
 	_ "github.com/robfig/cron/v3"
