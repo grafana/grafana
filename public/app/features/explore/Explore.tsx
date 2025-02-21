@@ -430,7 +430,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
     const searchParams = new URLSearchParams(window.location.search);
     let panelHeight = showFlameGraph ? 180 : 400;
     let panelWidth = width;
-    let panelTitle = "Graph";
+    let panelTitle = queryBuilderOnly ? "" : "Graph";
 
     const panelHeightParam = searchParams.get('panelHeight');
     if (panelHeightParam) {
@@ -448,6 +448,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
     }
 
     const hideQueryEditor = searchParams.has('hideQueryBuilder');
+    const hideMiniOptions = searchParams.has('hideMiniOptions');
 
     return (
       <ContentOutlineItem panelId="Graph" title={panelTitle} icon="graph-bar">
@@ -468,6 +469,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
           criticalThreshold={criticalThreshold}
           queryBuilderOnly={queryBuilderOnly}
           hideQueryEditor={hideQueryEditor}
+          hideMiniOptions={hideMiniOptions}
         />
       </ContentOutlineItem>
     );

@@ -20,6 +20,14 @@ const containerStyles = css({
   height: '100%',
 });
 
+const containerStylesQueryBuilderOnly = css({
+  label: 'explorePaneContainer',
+  display: 'flex',
+  flexDirection: 'column',
+  minWidth: '100px',
+  height: '100%',
+});
+
 interface Props {
   exploreId: string;
   queryBuilderOnly?: boolean;
@@ -47,7 +55,11 @@ function ExplorePaneContainerUnconnected({ exploreId, queryBuilderOnly = false }
 
   return (
     <CustomScrollbar hideVerticalTrack>
-      <div className={containerStyles} ref={ref} data-testid={selectors.pages.Explore.General.container}>
+      <div
+        className={queryBuilderOnly ? containerStylesQueryBuilderOnly : containerStyles}
+        ref={ref}
+        data-testid={selectors.pages.Explore.General.container}
+      >
         <Explore
           exploreId={exploreId}
           eventBus={eventBus.current}

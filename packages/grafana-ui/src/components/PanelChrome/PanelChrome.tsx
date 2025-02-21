@@ -178,6 +178,9 @@ export function PanelChrome({
 
   const testid = typeof title === 'string' ? selectors.components.Panels.Panel.title(title) : 'Panel';
 
+  const searchParams = new URLSearchParams(window.location.search);
+  const hideQueryEditor = searchParams.has('hideQueryBuilder');
+
   const headerContent = (
     <>
       {/* Non collapsible title */}
@@ -273,7 +276,7 @@ export function PanelChrome({
         ) : null}
       </div>
 
-      {hoverHeader && (
+      {hoverHeader && !hideQueryEditor && (
         <>
           <HoverWidget
             menu={menu}
