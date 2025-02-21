@@ -17,7 +17,6 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/endpoints/request"
-	"k8s.io/apiserver/pkg/registry/generic"
 )
 
 func TestLatest(t *testing.T) {
@@ -31,7 +30,6 @@ func TestLatest(t *testing.T) {
 	r := &latestREST{
 		unified: mockClient,
 		gr:      gr,
-		opts:    generic.RESTOptions{},
 	}
 
 	t.Run("no namespace in context", func(t *testing.T) {

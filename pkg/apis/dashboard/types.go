@@ -16,7 +16,12 @@ type Dashboard struct {
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	// The dashboard body (unstructured for now)
-	Spec common.Unstructured `json:"spec"`
+	Spec DashboardSpec `json:"spec"`
+}
+
+type DashboardSpec struct {
+	Title               string `json:"title"`
+	common.Unstructured `json:",inline"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

@@ -19,33 +19,27 @@ import (
 )
 
 type streamDecoder struct {
-	client             resource.ResourceStore_WatchClient
-	newFunc            func() runtime.Object
-	predicate          storage.SelectionPredicate
-	codec              runtime.Codec
-	cancelWatch        context.CancelFunc
-	done               sync.WaitGroup
-	internalConversion func([]byte, runtime.Object) (runtime.Object, error)
+	client      resource.ResourceStore_WatchClient
+	newFunc     func() runtime.Object
+	predicate   storage.SelectionPredicate
+	codec       runtime.Codec
+	cancelWatch context.CancelFunc
+	done        sync.WaitGroup
 }
 
-func newStreamDecoder(client resource.ResourceStore_WatchClient, newFunc func() runtime.Object, predicate storage.SelectionPredicate, codec runtime.Codec, cancelWatch context.CancelFunc, internalConversion func([]byte, runtime.Object) (runtime.Object, error)) *streamDecoder {
+func newStreamDecoder(client resource.ResourceStore_WatchClient, newFunc func() runtime.Object, predicate storage.SelectionPredicate, codec runtime.Codec, cancelWatch context.CancelFunc) *streamDecoder {
 	return &streamDecoder{
-		client:             client,
-		newFunc:            newFunc,
-		predicate:          predicate,
-		codec:              codec,
-		cancelWatch:        cancelWatch,
-		internalConversion: internalConversion,
+		client:      client,
+		newFunc:     newFunc,
+		predicate:   predicate,
+		codec:       codec,
+		cancelWatch: cancelWatch,
 	}
 }
 func (d *streamDecoder) toObject(w *resource.WatchEvent_Resource) (runtime.Object, error) {
 	var obj runtime.Object
 	var err error
-	if d.internalConversion != nil {
-		obj, err = d.internalConversion(w.Value, d.newFunc())
-	} else {
-		obj, _, err = d.codec.Decode(w.Value, nil, d.newFunc())
-	}
+	obj, _, err = d.codec.Decode(w.Value, nil, d.newFunc())
 	if err == nil {
 		accessor, err := utils.MetaAccessor(obj)
 		if err != nil {
