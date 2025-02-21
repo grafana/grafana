@@ -1,4 +1,4 @@
-import { SceneComponentProps, SceneCSSGridLayout, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
+import { SceneComponentProps, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
 import { t } from 'app/core/internationalization';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
@@ -17,6 +17,7 @@ import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
 import { ResponsiveGridItem } from './ResponsiveGridItem';
 import { getEditOptions } from './ResponsiveGridLayoutManagerEditor';
+import { SceneCSSGridLayout } from './SceneCSSGridLayout';
 
 interface ResponsiveGridLayoutManagerState extends SceneObjectState {
   layout: SceneCSSGridLayout;
@@ -49,13 +50,6 @@ export class ResponsiveGridLayoutManager
     templateColumns: 'repeat(auto-fit, minmax(400px, auto))',
     autoRows: 'minmax(300px, auto)',
   };
-
-  public constructor(state: ResponsiveGridLayoutManagerState) {
-    super(state);
-
-    // @ts-ignore
-    this.state.layout.getDragClassCancel = () => 'drag-cancel';
-  }
 
   public addPanel(vizPanel: VizPanel) {
     const panelId = dashboardSceneGraph.getNextPanelId(this);

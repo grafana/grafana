@@ -9,7 +9,6 @@ import {
   GroupByVariable,
   IntervalVariable,
   QueryVariable,
-  SceneCSSGridLayout,
   SceneGridLayout,
   SceneGridRow,
   SceneRefreshPicker,
@@ -42,6 +41,7 @@ import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLay
 import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior';
 import { ResponsiveGridItem } from '../scene/layout-responsive-grid/ResponsiveGridItem';
 import { ResponsiveGridLayoutManager } from '../scene/layout-responsive-grid/ResponsiveGridLayoutManager';
+import { SceneCSSGridLayout } from '../scene/layout-responsive-grid/SceneCSSGridLayout';
 import { RowItem } from '../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
 import { TabItem } from '../scene/layout-tabs/TabItem';

@@ -73,5 +73,25 @@ export function getDashboardGridStyles(theme: GrafanaTheme2) {
       outlineOffset: '0px',
       borderRadius: '2px',
     },
+
+    // Universal style for marking drop targets when dragging between layouts
+    '.dashboard-drop-target': {
+      outline: `2px solid ${theme.colors.primary.border}`,
+      outlineOffset: '0px',
+      borderRadius: '2px',
+    },
+
+    // Body style for preventing selection when dragging
+    '.dashboard-draggable-transparent-selection': {
+      '*::selection': {
+        all: 'inherit',
+      },
+    },
+
+    // Prevent pointer events for dragged panels
+    // Useful for dragging and dropping between layouts
+    '.react-draggable-dragging': {
+      pointerEvents: 'none',
+    },
   });
 }

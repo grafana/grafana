@@ -334,8 +334,9 @@ export function PanelChrome({
               !evt.target.closest(`.${dragClassCancel}`)
             ) {
               onSelect?.(pointerDownEvt.current);
-              pointerDownEvt.current = null;
             }
+
+            pointerDownEvt.current = null;
           }}
         >
           {statusMessage && (

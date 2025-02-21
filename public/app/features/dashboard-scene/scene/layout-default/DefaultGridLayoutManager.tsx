@@ -25,6 +25,7 @@ import {
   getVizPanelKeyForPanelId,
   getGridItemKeyForPanelId,
   getDashboardSceneFor,
+  getLayoutOrchestratorFor,
 } from '../../utils/utils';
 import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
@@ -59,6 +60,14 @@ export class DefaultGridLayoutManager
   };
 
   public readonly descriptor = DefaultGridLayoutManager.descriptor;
+
+  constructor(state: DefaultGridLayoutManagerState) {
+    super(state);
+
+    this.state.grid.setState({
+      onDragStart: (_evt, panel) => getLayoutOrchestratorFor(panel)?.startDraggingSync(panel),
+    });
+  }
 
   public addPanel(vizPanel: VizPanel) {
     const panelId = dashboardSceneGraph.getNextPanelId(this);
