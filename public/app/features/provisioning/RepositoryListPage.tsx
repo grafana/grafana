@@ -1,5 +1,7 @@
-import { ReactNode, useState } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 
+import { AppEvents } from '@grafana/data';
+import { getAppEvents } from '@grafana/runtime';
 import {
   Card,
   EmptySearchResult,
@@ -12,6 +14,7 @@ import {
   TextLink,
   Text,
   Alert,
+  ConfirmModal,
 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
@@ -20,17 +23,35 @@ import OnboardingPage from './OnboardingPage';
 import { SetupWarnings } from './SetupWarnings';
 import { StatusBadge } from './StatusBadge';
 import { SyncRepository } from './SyncRepository';
-import { Repository, ResourceCount, useGetFrontendSettingsQuery } from './api';
+import { Repository, ResourceCount, useDeletecollectionRepositoryMutation, useGetFrontendSettingsQuery } from './api';
 import { NEW_URL, PROVISIONING_URL } from './constants';
 import { useRepositoryList } from './hooks';
+
+const appEvents = getAppEvents();
 
 export default function RepositoryListPage() {
   const [items, isLoading] = useRepositoryList({ watch: true });
   const settings = useGetFrontendSettingsQuery();
+  const [deleteAll, deleteAllResult] = useDeletecollectionRepositoryMutation();
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+
+  useEffect(() => {
+    if (deleteAllResult.isSuccess) {
+      appEvents.publish({
+        type: AppEvents.alertSuccess.name,
+        payload: ['All repository configs deleted'],
+      });
+    }
+  }, [deleteAllResult.isSuccess]);
 
   if (!items?.length && !isLoading) {
     return <OnboardingPage />;
   }
+
+  const onConfirmDelete = () => {
+    deleteAll({ deleteOptions: {} });
+    setShowDeleteModal(false);
+  };
 
   return (
     <Page navId="provisioning" subTitle="View and manage your configured repositories">
@@ -40,15 +61,21 @@ export default function RepositoryListPage() {
           <Alert
             title="Legacy Storage"
             severity="error"
-            buttonContent={<>Remove repository and migrate instance.</>}
-            onRemove={() => {
-              alert('TODO, delete repo'); // DELETE without name
-            }}
+            buttonContent={<>Remove repository and migrate instance</>}
+            onRemove={() => setShowDeleteModal(true)}
           >
             Configured repository will not work while running legacy storage
           </Alert>
         )}
         <RepositoryListPageContent items={items} />
+        <ConfirmModal
+          isOpen={showDeleteModal}
+          title="Delete all repositories"
+          body="Are you sure you want to delete all repositories? This action cannot be undone."
+          confirmText="Delete all"
+          onConfirm={onConfirmDelete}
+          onDismiss={() => setShowDeleteModal(false)}
+        />
       </Page.Contents>
     </Page>
   );
