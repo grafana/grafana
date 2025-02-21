@@ -1,5 +1,4 @@
-import { ReactNode, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom-v5-compat';
+import { ReactNode, useState } from 'react';
 
 import {
   Card,
@@ -12,10 +11,12 @@ import {
   Stack,
   TextLink,
   Text,
+  Alert,
 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
 import { DeleteRepositoryButton } from './DeleteRepositoryButton';
+import OnboardingPage from './OnboardingPage';
 import { SetupWarnings } from './SetupWarnings';
 import { StatusBadge } from './StatusBadge';
 import { SyncRepository } from './SyncRepository';
@@ -26,18 +27,27 @@ import { useRepositoryList } from './hooks';
 export default function RepositoryListPage() {
   const [items, isLoading] = useRepositoryList({ watch: true });
   const settings = useGetFrontendSettingsQuery();
-  const navigate = useNavigate();
 
-  useEffect(() => {
-    if (settings.data?.legacyStorage && !items?.length) {
-      navigate('/admin/provisioning/setup');
-    }
-  }, [settings, navigate, items?.length]);
+  if (!items?.length && !isLoading) {
+    return <OnboardingPage settings={settings.data} />;
+  }
 
   return (
     <Page navId="provisioning" subTitle="View and manage your configured repositories">
       <Page.Contents isLoading={isLoading}>
         <SetupWarnings />
+        {settings.data?.legacyStorage && (
+          <Alert
+            title="Legacy Storage"
+            severity="error"
+            buttonContent={<>Remove repository and migrate instance.</>}
+            onRemove={() => {
+              alert('TODO, delete repo'); // DELETE without name
+            }}
+          >
+            Configured repository will not work while running legacy storage
+          </Alert>
+        )}
         <RepositoryListPageContent items={items} />
       </Page.Contents>
     </Page>
