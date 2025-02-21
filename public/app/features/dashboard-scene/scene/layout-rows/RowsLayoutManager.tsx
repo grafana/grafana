@@ -3,11 +3,9 @@ import { t } from 'app/core/internationalization';
 
 import { isClonedKey } from '../../utils/clone';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
-import { getDashboardSceneFor } from '../../utils/utils';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
 import { RowRepeaterBehavior } from '../layout-default/RowRepeaterBehavior';
-import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
@@ -83,17 +81,6 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
 
   public addNewRow() {
     this.setState({ rows: [...this.state.rows, new RowItem()] });
-  }
-
-  public addNewTab() {
-    const shouldAddTab = this.hasVizPanels();
-    const tabsLayout = TabsLayoutManager.createFromLayout(this);
-
-    if (shouldAddTab) {
-      tabsLayout.addNewTab();
-    }
-
-    getDashboardSceneFor(this).switchLayout(tabsLayout);
   }
 
   public editModeChanged(isEditing: boolean) {
