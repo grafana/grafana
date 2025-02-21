@@ -9,7 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	dashboards "github.com/grafana/grafana/pkg/apis/dashboard"
+	"github.com/grafana/grafana/pkg/apis/dashboard"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -38,14 +38,20 @@ func (r *resourceReader) CloseWithResults() (*resource.BatchResponse, error) {
 
 // Write implements resource.BatchResourceWriter.
 func (r *resourceReader) Write(ctx context.Context, key *resource.ResourceKey, value []byte) error {
-	item := &unstructured.Unstructured{}
-	err := item.UnmarshalJSON(value)
+	// Reuse the same parse+cleanup logic
+	parsed, err := r.job.parser.Parse(ctx, &repository.FileInfo{
+		Path: "", // empty path to ignore file system
+		Data: value,
+	}, false)
 	if err != nil {
 		// TODO: should we fail the entire execution?
 		return fmt.Errorf("failed to unmarshal unstructured: %w", err)
 	}
 
-	if result := r.job.write(ctx, item); result.Error != nil {
+	// clear anything so it will get written
+	parsed.Meta.SetRepositoryInfo(nil)
+
+	if result := r.job.write(ctx, parsed.Obj); result.Error != nil {
 		r.job.progress.Record(ctx, result)
 		if err := r.job.progress.TooManyErrors(); err != nil {
 			return err
@@ -57,8 +63,8 @@ func (r *resourceReader) Write(ctx context.Context, key *resource.ResourceKey, v
 
 func (j *migrationJob) loadResources(ctx context.Context) error {
 	kinds := []schema.GroupVersionResource{{
-		Group:    dashboards.GROUP,
-		Resource: dashboards.DASHBOARD_RESOURCE,
+		Group:    dashboard.GROUP,
+		Resource: dashboard.DASHBOARD_RESOURCE,
 		Version:  "v1alpha1",
 	}}
 

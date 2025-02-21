@@ -6,12 +6,11 @@ export const dataToSpec = (data: RepositoryFormData): RepositorySpec => {
     type: data.type,
     sync: data.sync,
     title: data.title || '',
-    readOnly: data.readOnly,
+    workflows: data.workflows,
   };
   switch (data.type) {
     case 'github':
       spec.github = {
-        workflows: data.workflows,
         generateDashboardPreviews: data.generateDashboardPreviews,
         url: data.url || '',
         branch: data.branch,
@@ -33,6 +32,7 @@ export const specToData = (spec: RepositorySpec): RepositoryFormData => {
     ...spec,
     ...spec.github,
     ...spec.local,
+    branch: spec.github?.branch || '',
     url: spec.github?.url || '',
   };
 };

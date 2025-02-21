@@ -3438,7 +3438,7 @@
             ]
           },
           "workflows": {
-            "description": "UI driven Workflow taht allow changes to the contends of the repository. The order is relevant for defining the precedence of the workflows. When empty, the repository does not support any edits (eg, readonly)",
+            "description": "UI driven Workflow that allow changes to the contends of the repository. The order is relevant for defining the precedence of the workflows. When empty, the repository does not support any edits (eg, readonly)",
             "type": "array",
             "items": {
               "type": "string",
@@ -3938,16 +3938,16 @@
             "type": "integer",
             "format": "int64"
           },
-          "hash": {
-            "description": "The repository hash when the last sync ran",
-            "type": "string"
-          },
           "incremental": {
             "description": "Incremental synchronization for versioned repositories",
             "type": "boolean"
           },
           "job": {
             "description": "The ID for the job that ran this sync",
+            "type": "string"
+          },
+          "lastRef": {
+            "description": "The repository ref when the last successful sync ran",
             "type": "string"
           },
           "message": {

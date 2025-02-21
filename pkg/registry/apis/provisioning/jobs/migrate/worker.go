@@ -11,6 +11,7 @@ import (
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	gogit "github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/go-git"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -41,6 +42,9 @@ type MigrationWorker struct {
 
 	// Decrypt secret from config object
 	secrets secrets.Service
+
+	// Delegate the import to sync worker
+	syncWorker *sync.SyncWorker
 }
 
 func NewMigrationWorker(clients *resources.ClientFactory,
@@ -49,6 +53,7 @@ func NewMigrationWorker(clients *resources.ClientFactory,
 	storageStatus dualwrite.Service,
 	batch resource.BatchStoreClient,
 	secrets secrets.Service,
+	syncWorker *sync.SyncWorker,
 	clonedir string,
 ) *MigrationWorker {
 	return &MigrationWorker{
@@ -59,6 +64,7 @@ func NewMigrationWorker(clients *resources.ClientFactory,
 		legacyMigrator,
 		batch,
 		secrets,
+		syncWorker,
 	}
 }
 
@@ -153,10 +159,23 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 		}
 	}
 
-	// Now import from out local checkout
-	// TODO: can we skip this and write while exporting?
-	// YES... but :( the export with *history* does not know the current value
-	return worker.importFromRepo(ctx, w.storageStatus)
+	// Clear unified and allow writing
+	err = worker.wipeUnifiedAndSetMigratedFlag(ctx, w.storageStatus)
+	if err != nil {
+		return fmt.Errorf("unable to reset unified storage %w", err)
+	}
+
+	// enable sync (won't be saved)
+	repo.Config().Spec.Sync.Enabled = true
+
+	// Delegate the import to a sync (from the already checked out go-git repository!)
+	return w.syncWorker.Process(ctx, repo, provisioning.Job{
+		Spec: provisioning.JobSpec{
+			Sync: &provisioning.SyncJobOptions{
+				Incremental: false,
+			},
+		},
+	}, progress)
 }
 
 // MigrationJob holds all context for a running job

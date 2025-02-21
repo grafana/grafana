@@ -93,11 +93,12 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	}
 
 	syncError := syncJob.run(ctx, *job.Spec.Sync)
+	jobStatus := progress.Complete(ctx, syncError)
+	syncStatus := jobStatus.ToSyncStatus(job.Name)
 
 	// Create sync status and set hash if successful
-	syncStatus := progress.Complete(ctx, syncError).ToSyncStatus(job.Name)
-	if syncError != nil && syncStatus.State == provisioning.JobStateSuccess {
-		syncStatus.Hash = progress.GetRef()
+	if syncStatus.State == provisioning.JobStateSuccess {
+		syncStatus.LastRef = progress.GetRef()
 	}
 
 	// Update final status using JSON patch
@@ -165,7 +166,7 @@ func (r *SyncWorker) createJob(ctx context.Context, repo repository.Repository, 
 			Version:  "v1alpha1",
 			Resource: dashboard.DASHBOARD_RESOURCE,
 		}),
-		resourcesLookup: map[resourceID]bool{},
+		resourcesLookup: map[resourceID]string{},
 	}
 
 	return job, nil
@@ -201,7 +202,7 @@ type syncJob struct {
 	folders         dynamic.ResourceInterface
 	dashboards      dynamic.ResourceInterface
 	folderLookup    *resources.FolderTree
-	resourcesLookup map[resourceID]bool
+	resourcesLookup map[resourceID]string // the path with this k8s name
 }
 
 func (r *syncJob) run(ctx context.Context, options provisioning.SyncJobOptions) error {
@@ -228,13 +229,13 @@ func (r *syncJob) run(ctx context.Context, options provisioning.SyncJobOptions) 
 		}
 		r.progress.SetRef(currentRef)
 
-		if cfg.Status.Sync.Hash != "" && options.Incremental {
-			if currentRef == cfg.Status.Sync.Hash {
+		if cfg.Status.Sync.LastRef != "" && options.Incremental {
+			if currentRef == cfg.Status.Sync.LastRef {
 				r.progress.SetMessage("same commit as last sync")
 				return nil
 			}
 
-			return r.applyVersionedChanges(ctx, versionedRepo, cfg.Status.Sync.Hash, currentRef)
+			return r.applyVersionedChanges(ctx, versionedRepo, cfg.Status.Sync.LastRef, currentRef)
 		}
 	}
 
@@ -265,6 +266,10 @@ func (r *syncJob) run(ctx context.Context, options provisioning.SyncJobOptions) 
 }
 
 func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange) error {
+	if len(r.resourcesLookup) > 0 {
+		return fmt.Errorf("this should be empty")
+	}
+
 	// Do the longest paths first (important for delete)
 	sort.Slice(changes, func(i, j int) bool {
 		return len(changes[i].Path) > len(changes[j].Path)
@@ -436,12 +441,12 @@ func (r *syncJob) writeResourceFromFile(ctx context.Context, path string, ref st
 		Resource: parsed.GVR.Resource,
 		Group:    parsed.GVK.Group,
 	}
-
-	if r.resourcesLookup[id] {
-		result.Error = fmt.Errorf("duplicate resource name: %s", parsed.Obj.GetName())
+	existing, found := r.resourcesLookup[id]
+	if found {
+		result.Error = fmt.Errorf("duplicate resource name: %s, %s and %s", parsed.Obj.GetName(), path, existing)
 		return result
 	}
-	r.resourcesLookup[id] = true
+	r.resourcesLookup[id] = path
 
 	// Make sure the parent folders exist
 	folder, err := r.ensureFolderPathExists(ctx, path)

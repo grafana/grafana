@@ -70,7 +70,7 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Prop
       if (isNew) {
         dashboard.setRepoName(defaultValues.repo);
       }
-      const prLink = workflow !== 'push' ? href : undefined;
+      const prLink = workflow !== 'write' ? href : undefined;
       dashboard.closeModal();
       locationService.partial({
         viewPanel: null,
@@ -102,7 +102,7 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Prop
       description: description,
     });
 
-    if (workflow === 'push') {
+    if (workflow === 'write') {
       ref = undefined;
     }
 
@@ -112,7 +112,7 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Prop
   return (
     <form onSubmit={handleSubmit(doSave)}>
       <Stack direction="column" gap={2}>
-        {repositoryConfig?.readOnly && (
+        {!repositoryConfig?.workflows.length && (
           <Alert title="This repository is read only">
             If you have direct access to the target, copy the JSON and paste it there.
           </Alert>

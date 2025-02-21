@@ -140,7 +140,7 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
                     <Text color="secondary">Last Ref:</Text>
                   </div>
                   <div className={styles.valueColumn}>
-                    <Text variant="body">{status?.sync.hash ? status.sync.hash.substring(0, 7) : 'N/A'}</Text>
+                    <Text variant="body">{status?.sync.lastRef ? status.sync.lastRef.substring(0, 7) : 'N/A'}</Text>
                   </div>
 
                   <div className={styles.labelColumn}>

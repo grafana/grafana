@@ -4,19 +4,15 @@ import { SetupWarnings } from '../SetupWarnings';
 
 import { ProvisioningWizard } from './ProvisioningWizard';
 
-export default function NewRepositoryPage() {
+export default function MigrateToProvisioningPage() {
   return (
     <Page
       navId="provisioning"
-      pageNav={{ text: 'Configure repository', subTitle: 'Configure a repository for storing your resources.' }}
+      pageNav={{ text: 'Migrate to Provisioning', subTitle: 'Manage this instance from provisioning' }}
     >
       <Page.Contents>
         <SetupWarnings />
-        <ProvisioningWizard
-          onSubmit={(data: any) => {
-            console.log('d', data);
-          }}
-        />
+        <ProvisioningWizard />
       </Page.Contents>
     </Page>
   );

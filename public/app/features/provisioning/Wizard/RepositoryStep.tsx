@@ -1,18 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { AppEvents } from '@grafana/data';
-import { getAppEvents } from '@grafana/runtime';
-import { Button, Field, FieldSet, Input, MultiCombobox, SecretInput, Stack, Switch } from '@grafana/ui';
+import { Field, FieldSet, Input, MultiCombobox, SecretInput, Switch } from '@grafana/ui';
 
-import { GetWorkflowOptions } from '../ConfigForm';
+import { getWorkflowOptions } from '../ConfigForm';
 import { TokenPermissionsInfo } from '../TokenPermissionsInfo';
-import { useCreateOrUpdateRepository } from '../hooks';
-import { dataToSpec } from '../utils/data';
 
 import { WizardFormData } from './types';
-
-const appEvents = getAppEvents();
 
 export function RepositoryStep() {
   const {
@@ -20,38 +14,38 @@ export function RepositoryStep() {
     control,
     watch,
     setValue,
-    getValues,
     formState: { errors },
   } = useFormContext<WizardFormData>();
-  const [submitData, request] = useCreateOrUpdateRepository();
 
   const type = watch('repository.type');
   const [tokenConfigured, setTokenConfigured] = useState(false);
 
-  const handleConnect = async () => {
-    const formData = getValues();
-    const response = await submitData(dataToSpec(formData.repository));
-
-    if (response.data?.metadata?.name) {
-      setValue('repositoryName', response.data.metadata.name);
-    }
-  };
-
-  useEffect(() => {
-    if (request.isSuccess) {
-      appEvents.publish({
-        type: AppEvents.alertSuccess.name,
-        payload: ['Repository settings saved'],
-      });
-    }
-
-    if (request.isError) {
-      appEvents.publish({
-        type: AppEvents.alertError.name,
-        payload: ['Failed to save repository settings', request.error],
-      });
-    }
-  }, [request.error, request.isError, request.isSuccess]);
+  const WorkflowsField = () => (
+    <Field
+      label={'Workflows'}
+      required
+      error={errors.repository?.workflows?.message}
+      invalid={!!errors.repository?.workflows}
+    >
+      <Controller
+        name={'repository.workflows'}
+        control={control}
+        rules={{ required: 'This field is required.' }}
+        render={({ field: { ref, onChange, ...field } }) => {
+          return (
+            <MultiCombobox
+              options={getWorkflowOptions(type)}
+              placeholder={'Readonly repository'}
+              onChange={(val) => {
+                onChange(val.map((v) => v.value));
+              }}
+              {...field}
+            />
+          );
+        }}
+      />
+    </Field>
+  );
 
   if (type === 'github') {
     return (
@@ -109,35 +103,11 @@ export function RepositoryStep() {
             <Input {...register('repository.branch')} placeholder={'main'} />
           </Field>
 
-          <Field
-            label={'Workflows'}
-            required
-            error={errors.repository?.workflows?.message}
-            invalid={!!errors.repository?.workflows}
-          >
-            <Controller
-              name={'repository.workflows'}
-              control={control}
-              rules={{ required: 'This field is required.' }}
-              render={({ field: { ref, ...field } }) => (
-                <MultiCombobox options={GetWorkflowOptions(type)} placeholder={'Select workflows'} {...field} />
-              )}
-            />
-          </Field>
-
           <Field label={'Show dashboard previews'}>
             <Switch {...register('repository.generateDashboardPreviews')} />
           </Field>
 
-          <Stack gap={2}>
-            <Button
-              onClick={handleConnect}
-              disabled={request.isLoading}
-              icon={request.isLoading ? 'spinner' : 'check-circle'}
-            >
-              {request.isLoading ? 'Connecting...' : 'Connect & verify'}
-            </Button>
-          </Stack>
+          <WorkflowsField />
         </div>
       </FieldSet>
     );
@@ -152,6 +122,8 @@ export function RepositoryStep() {
             placeholder={'/path/to/repo'}
           />
         </Field>
+
+        <WorkflowsField />
       </FieldSet>
     );
   }

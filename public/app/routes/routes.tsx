@@ -164,6 +164,10 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
+      path: '/drilldown',
+      component: () => <NavLandingPage navId="drilldown" />,
+    },
+    {
       path: '/apps',
       component: () => <NavLandingPage navId="apps" />,
     },

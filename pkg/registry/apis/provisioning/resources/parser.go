@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/apis/dashboard"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/lint"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
@@ -126,7 +127,7 @@ func (r *Parser) Parse(ctx context.Context, info *repository.FileInfo, validate 
 		Info: info,
 	}
 
-	if ShouldIgnorePath(info.Path) {
+	if ShouldIgnorePath(info.Path) && info.Path != "" {
 		return parsed, ErrUnableToReadResourceBytes
 	}
 
@@ -138,6 +139,13 @@ func (r *Parser) Parse(ctx context.Context, info *repository.FileInfo, validate 
 			logger.Debug("also failed to get GVK from fallback loader?", "error", err)
 			return parsed, err
 		}
+	}
+
+	// Remove the internal UID,version and id if they exist
+	if parsed.GVK.Group == dashboard.GROUP && parsed.GVK.Kind == "Dashboard" {
+		unstructured.RemoveNestedField(parsed.Obj.Object, "spec", "uid")
+		unstructured.RemoveNestedField(parsed.Obj.Object, "spec", "version")
+		unstructured.RemoveNestedField(parsed.Obj.Object, "spec", "id") // now managed as a label
 	}
 
 	parsed.Meta, err = utils.MetaAccessor(parsed.Obj)
@@ -160,13 +168,16 @@ func (r *Parser) Parse(ctx context.Context, info *repository.FileInfo, validate 
 		Timestamp: nil, // ???&info.Modified.Time,
 	})
 
-	objName, folderName := NamesFromHashedRepoPath(cfg.Name, info.Path)
-	if obj.GetName() == "" {
-		obj.SetName(objName) // use the name saved in config
+	// Calculate name+folder from the file path
+	if info.Path != "" {
+		objName, folderName := NamesFromHashedRepoPath(cfg.Name, info.Path)
+		parsed.Meta.SetFolder(folderName)
+		if obj.GetName() == "" {
+			obj.SetName(objName) // use the name saved in config
+		}
 	}
 	obj.SetUID("")             // clear identifiers
 	obj.SetResourceVersion("") // clear identifiers
-	parsed.Meta.SetFolder(folderName)
 
 	// We can not do anything more if no kind is defined
 	if parsed.GVK == nil {
