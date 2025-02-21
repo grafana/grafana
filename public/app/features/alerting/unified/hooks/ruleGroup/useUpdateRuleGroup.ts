@@ -40,11 +40,15 @@ export interface UpdateGroupExtraOptions {
   beforeGroupCleanup?: (newGroupIdentifier: RuleGroupIdentifierV2) => void;
 }
 
+export const deleteRuleGroupCacheKey = 'delete:rule-group:cleanup';
+
 export function useUpdateRuleGroup() {
   const [produceNewRuleGroup] = useProduceNewRuleGroup();
   const [fetchRuleGroup] = alertRuleApi.endpoints.getRuleGroupForNamespace.useLazyQuery();
   const [upsertRuleGroup] = alertRuleApi.endpoints.upsertRuleGroupForNamespace.useMutation();
-  const [deleteRuleGroup] = alertRuleApi.endpoints.deleteRuleGroupFromNamespace.useMutation();
+  const [deleteRuleGroup] = alertRuleApi.endpoints.deleteRuleGroupFromNamespace.useMutation({
+    fixedCacheKey: deleteRuleGroupCacheKey,
+  });
 
   return useAsync(
     async (

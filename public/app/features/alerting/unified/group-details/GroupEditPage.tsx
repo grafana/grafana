@@ -19,7 +19,7 @@ import { featureDiscoveryApi } from '../api/featureDiscoveryApi';
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
 import { EvaluationGroupQuickPick } from '../components/rule-editor/EvaluationGroupQuickPick';
 import { evaluateEveryValidationOptions } from '../components/rules/EditRuleGroupModal';
-import { UpdateGroupDelta, useUpdateRuleGroup } from '../hooks/ruleGroup/useUpdateRuleGroup';
+import { deleteRuleGroupCacheKey, UpdateGroupDelta, useUpdateRuleGroup } from '../hooks/ruleGroup/useUpdateRuleGroup';
 import { useFolder } from '../hooks/useFolder';
 import { useRuleGroupConsistencyCheck } from '../hooks/usePrometheusConsistencyCheck';
 import { SwapOperation } from '../reducers/ruler/ruleGroups';
@@ -94,9 +94,12 @@ function GroupEditForm({ rulerGroup, groupIdentifier }: GroupEditFormProps) {
       }
     );
 
-    await waitForGroupConsistency(updatedGroupIdentifier);
+    const shouldWaitForPromConsistency = !!changeDelta.namespaceName || !!changeDelta.groupName;
+    if (shouldWaitForPromConsistency) {
+      await waitForGroupConsistency(updatedGroupIdentifier);
+    }
 
-    const successMessage = t('alerting.rule-groups.move.success', 'Successfully updated the rule group');
+    const successMessage = t('alerting.rule-groups.update.success', 'Successfully updated the rule group');
     appInfo.success(successMessage);
   };
 
@@ -170,9 +173,12 @@ type GroupEditPageRouteParams = {
 };
 
 const { useDiscoverDsFeaturesQuery } = featureDiscoveryApi;
-const { useGetRuleGroupForNamespaceQuery } = alertRuleApi;
+const { useGetRuleGroupForNamespaceQuery, useDeleteRuleGroupFromNamespaceMutation } = alertRuleApi;
 
 function GroupEditPage() {
+  const [_, deleteMutation] = useDeleteRuleGroupFromNamespaceMutation({
+    fixedCacheKey: deleteRuleGroupCacheKey,
+  });
   const { sourceId = '', namespaceId = '', groupName = '' } = useParams<GroupEditPageRouteParams>();
 
   const { folder, loading: isFolderLoading } = useFolder(sourceId === 'grafana' ? namespaceId : '');
@@ -200,6 +206,7 @@ function GroupEditPage() {
   );
 
   const isLoading = isFolderLoading || isDsFeaturesLoading || isRuleGroupLoading || isRuleGroupUninitialized;
+  const isDeleting = deleteMutation.isLoading;
 
   const pageNav: NavModelItem = {
     text: 'Edit rule group',
@@ -255,7 +262,9 @@ function GroupEditPage() {
             <div>{stringifyErrorLike(dsFeaturesError)}</div>
           </Alert>
         )}
-        {ruleGroupError && (
+        {/* If the rule group is being deleted, RTKQ will try to referch it due to cache invalidation */}
+        {/* For a few miliseconds before redirecting, the rule group will be missing and 404 error would blink */}
+        {ruleGroupError && !isDeleting && (
           <Alert
             title={t('alerting.rule-groups.edit.rule-group-error', 'Error loading rule group')}
             bottomSpacing={0}
