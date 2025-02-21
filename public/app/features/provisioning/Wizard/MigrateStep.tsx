@@ -2,11 +2,12 @@ import { skipToken } from '@reduxjs/toolkit/query/react';
 import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
-import { Button, FieldSet, Stack, Text, Switch, Field, Alert } from '@grafana/ui';
+import { Alert, Button, FieldSet, Stack, Text, Switch, Field } from '@grafana/ui';
 
 import { JobStatus } from '../JobStatus';
 import { useCreateRepositoryMigrateMutation, useGetRepositoryQuery } from '../api';
 
+import { RequestErrorAlert } from './RequestErrorAlert';
 import { WizardFormData } from './types';
 
 export interface MigrateStepProps {
@@ -42,21 +43,10 @@ export function MigrateStep({ onMigrationStatusChange }: MigrateStepProps) {
     }
   };
 
-  const onAbort = () => {
-    migrateQuery.reset();
-    setShowMigrateStatus(false);
-    onMigrationStatusChange(false);
-  };
-
   if (showMigrateStatus && migrateName) {
     return (
       <Stack direction="column" gap={2}>
         <JobStatus name={migrateName} />
-        <Stack gap={2}>
-          <Button variant="secondary" onClick={onAbort}>
-            Abort migration
-          </Button>
-        </Stack>
       </Stack>
     );
   }
@@ -68,6 +58,13 @@ export function MigrateStep({ onMigrationStatusChange }: MigrateStepProps) {
           Migrate all dashboards from this instance to your repository. After this one-time migration, all future
           updates will be automatically saved to the repository.
         </Text>
+
+        {!repositoryName && (
+          <Alert severity="error" title="Repository name required">
+            Repository name is required to migrate dashboards. Please complete the repository configuration step first.
+          </Alert>
+        )}
+        <RequestErrorAlert request={migrateQuery} />
 
         <Alert severity="info" title="Note">
           Dashboards app/Grafana will be unavailable when starting this process.

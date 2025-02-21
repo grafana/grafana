@@ -38,7 +38,7 @@ export function ProvisioningWizard() {
   const navigate = useNavigate();
   const [activeStep, setActiveStep] = useState<WizardStep>('connection');
   const [completedSteps, setCompletedSteps] = useState<WizardStep[]>([]);
-  const [migrationSuccess, setMigrationSuccess] = useState(false);
+  const [stepSuccess, setStepSuccess] = useState(false);
   const [submitData, request] = useCreateOrUpdateRepository();
   const methods = useForm<WizardFormData>({
     defaultValues: {
@@ -54,19 +54,23 @@ export function ProvisioningWizard() {
 
   useEffect(() => {
     if (request.isSuccess) {
-      appEvents.publish({
-        type: AppEvents.alertSuccess.name,
-        payload: ['Repository settings saved'],
-      });
+      if (activeStep === 'repository') {
+        appEvents.publish({
+          type: AppEvents.alertSuccess.name,
+          payload: ['Repository settings saved'],
+        });
+      }
 
       if (request.data?.metadata?.name) {
         methods.setValue('repositoryName', request.data.metadata.name);
       }
 
-      const currentStepIndex = steps.findIndex((s) => s.id === activeStep);
-      if (currentStepIndex < steps.length - 1) {
-        setCompletedSteps([...completedSteps, activeStep]);
-        setActiveStep(steps[currentStepIndex + 1].id);
+      if (activeStep === 'repository') {
+        const currentStepIndex = steps.findIndex((s) => s.id === activeStep);
+        if (currentStepIndex < steps.length - 1) {
+          setCompletedSteps((prev) => [...prev, activeStep]);
+          setActiveStep(steps[currentStepIndex + 1].id);
+        }
       }
     } else if (request.isError) {
       appEvents.publish({
@@ -74,7 +78,7 @@ export function ProvisioningWizard() {
         payload: ['Failed to save repository settings', request.error],
       });
     }
-  }, [request.isSuccess, request.isError, request.data, request.error, activeStep, completedSteps, methods]);
+  }, [request.isSuccess, request.isError, request.data, request.error, activeStep, methods]);
 
   const handleNext = async () => {
     const currentStepIndex = steps.findIndex((s) => s.id === activeStep);
@@ -93,9 +97,12 @@ export function ProvisioningWizard() {
         }
       }
 
-      setCompletedSteps([...completedSteps, activeStep]);
+      if (activeStep === 'migrate' || activeStep === 'sync') {
+        setCompletedSteps((prev) => [...prev, activeStep]);
+      }
       setActiveStep(steps[currentStepIndex + 1].id);
-    } else if (activeStep === 'migrate' && migrationSuccess) {
+      setStepSuccess(false);
+    } else if (activeStep === 'sync') {
       navigate('/dashboards');
     }
   };
@@ -104,6 +111,9 @@ export function ProvisioningWizard() {
     const currentStepIndex = steps.findIndex((s) => s.id === activeStep);
     if (currentStepIndex > 0) {
       setActiveStep(steps[currentStepIndex - 1].id);
+      setStepSuccess(false);
+      // Remove the last completed step when going back
+      setCompletedSteps((prev) => prev.slice(0, -1));
     }
   };
 
@@ -120,21 +130,20 @@ export function ProvisioningWizard() {
         <Stepper
           steps={steps}
           activeStep={activeStep}
-          onStepChange={() => {}}
+          visitedSteps={completedSteps}
           validationResults={{
             connection: { valid: true },
             repository: { valid: true },
             migrate: { valid: true },
             sync: { valid: true },
           }}
-          getNextUrl={() => ''}
         />
 
         <div className={styles.content}>
           {activeStep === 'connection' && <ConnectionStep />}
           {activeStep === 'repository' && <RepositoryStep />}
-          {activeStep === 'migrate' && <MigrateStep onMigrationStatusChange={setMigrationSuccess} />}
-          {activeStep === 'sync' && <SyncStep />}
+          {activeStep === 'migrate' && <MigrateStep onMigrationStatusChange={setStepSuccess} />}
+          {activeStep === 'sync' && <SyncStep onSyncSuccess={() => setStepSuccess(true)} />}
         </div>
 
         <Stack gap={2} justifyContent="flex-end">
@@ -145,7 +154,13 @@ export function ProvisioningWizard() {
           )}
           <Button
             onClick={handleNext}
-            disabled={(activeStep === 'migrate' && !migrationSuccess) || request.isLoading}
+            disabled={
+              request.isLoading ||
+              (!stepSuccess && (activeStep === 'migrate' || activeStep === 'sync')) ||
+              (activeStep === 'repository' && (request.isLoading || request.isError)) ||
+              (activeStep === 'migrate' && migrateQuery.isError) ||
+              (activeStep === 'sync' && request.isError)
+            }
             icon={request.isLoading ? 'spinner' : undefined}
           >
             {getButtonText()}

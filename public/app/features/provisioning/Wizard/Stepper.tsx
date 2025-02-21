@@ -1,5 +1,4 @@
 import { css, cx } from '@emotion/css';
-import { MouseEvent } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, Icon } from '@grafana/ui';
@@ -13,19 +12,15 @@ export interface Step<T> {
 
 export interface Props<T extends string | number> {
   activeStep?: T;
-  onStepChange: (step: T, event: MouseEvent<HTMLAnchorElement>) => void;
   reportId?: string;
   visitedSteps?: T[];
   steps: Array<Step<T>>;
   validationResults: Record<T, ValidationResult>;
-  getNextUrl: (step: T) => string;
 }
 
 export function Stepper<T extends string | number>({
   validationResults,
-  onStepChange,
   visitedSteps = [],
-  getNextUrl,
   steps,
   activeStep = steps[0]?.id,
 }: Props<T>) {
@@ -37,9 +32,9 @@ export function Stepper<T extends string | number>({
       {steps.map((step) => {
         const isLast = step.id === lastStep.id;
         const isActive = step.id === activeStep;
-        const isVisited = visitedSteps.includes(step.id) || activeStep === lastStep.id;
-        const hasMissingFields = !isLast && !validationResults[step.id].valid;
-        const showIndicator = !isActive && !isLast && isVisited;
+        const isVisited = visitedSteps.includes(step.id);
+        const hasMissingFields = !validationResults[step.id].valid;
+        const showIndicator = !isActive && isVisited;
         const successField = showIndicator && !hasMissingFields;
         const warnField = showIndicator && hasMissingFields;
         const itemStyles = cx(styles.item, {

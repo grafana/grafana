@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { Field, FieldSet, Input, MultiCombobox, SecretInput, Switch } from '@grafana/ui';
+import { Field, FieldSet, Input, MultiCombobox, SecretInput, Stack, Switch } from '@grafana/ui';
 
 import { getWorkflowOptions } from '../ConfigForm';
 import { TokenPermissionsInfo } from '../TokenPermissionsInfo';
+import { useCreateOrUpdateRepository } from '../hooks';
 
+import { RequestErrorAlert } from './RequestErrorAlert';
 import { WizardFormData } from './types';
 
 export function RepositoryStep() {
@@ -19,6 +21,7 @@ export function RepositoryStep() {
 
   const type = watch('repository.type');
   const [tokenConfigured, setTokenConfigured] = useState(false);
+  const [, request] = useCreateOrUpdateRepository();
 
   const WorkflowsField = () => (
     <Field
@@ -50,8 +53,10 @@ export function RepositoryStep() {
   if (type === 'github') {
     return (
       <FieldSet label="2. Configure repository">
-        <div>
+        <Stack direction="column" gap={2}>
           <TokenPermissionsInfo />
+
+          <RequestErrorAlert request={request} />
 
           <Field
             label={'Token'}
@@ -108,7 +113,7 @@ export function RepositoryStep() {
           </Field>
 
           <WorkflowsField />
-        </div>
+        </Stack>
       </FieldSet>
     );
   }
@@ -116,14 +121,20 @@ export function RepositoryStep() {
   if (type === 'local') {
     return (
       <FieldSet label="2. Configure repository">
-        <Field label={'Local path'} error={errors.repository?.path?.message} invalid={!!errors.repository?.path}>
-          <Input
-            {...register('repository.path', { required: 'This field is required.' })}
-            placeholder={'/path/to/repo'}
-          />
-        </Field>
+        <Stack direction="column" gap={2}>
+          <RequestErrorAlert request={request} />
 
-        <WorkflowsField />
+          <Field label={'Local path'} error={errors.repository?.path?.message} invalid={!!errors.repository?.path}>
+            <Input
+              {...register('repository.path', { required: 'This field is required.' })}
+              placeholder={'/path/to/repo'}
+            />
+          </Field>
+
+          <RequestErrorAlert request={request} />
+
+          <WorkflowsField />
+        </Stack>
       </FieldSet>
     );
   }
