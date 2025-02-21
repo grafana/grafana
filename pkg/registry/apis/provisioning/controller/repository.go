@@ -416,7 +416,8 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	}
 
 	// Trigger sync job after we have applied all patch operations
-	if obj.Spec.Sync.Enabled && obj.Status.Health.Healthy &&
+	if obj.Spec.Sync.Enabled &&
+		obj.Status.Health.Healthy &&
 		!dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, rc.dualwrite) {
 		job, err := rc.jobs.Add(ctx, &provisioning.Job{
 			ObjectMeta: v1.ObjectMeta{
