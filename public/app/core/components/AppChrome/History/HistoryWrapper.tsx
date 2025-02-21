@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { FieldType, GrafanaTheme2, store } from '@grafana/data';
 import { Button, Card, IconButton, Space, Stack, Text, useStyles2, Box, Sparkline, useTheme2, Icon } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
+import { formatDate } from 'app/core/internationalization/dates';
 
 import { HISTORY_LOCAL_STORAGE_KEY } from '../AppChromeService';
 import { HistoryEntry } from '../types';
@@ -139,7 +140,7 @@ function HistoryEntryAppView({ entry, isSelected, onClick }: ItemProps) {
                 ))}
               </div>
               <Text variant="bodySmall" color="secondary">
-                {moment(time).format('h:mm A')}
+                {formatDate(time, { timeStyle: 'short' })}
               </Text>
               {sparklineData && (
                 <Sparkline
