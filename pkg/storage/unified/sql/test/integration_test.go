@@ -63,7 +63,7 @@ func TestIntegrationSQLStorageBackend(t *testing.T) {
 		err = backend.Init(testutil.NewDefaultTestContext(t))
 		require.NoError(t, err)
 		return backend
-	})
+	}, nil)
 }
 
 func TestClientServer(t *testing.T) {

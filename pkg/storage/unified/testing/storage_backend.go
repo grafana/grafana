@@ -19,24 +19,51 @@ import (
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
+// Test names for the storage backend test suite
+const (
+	TestHappyPath        = "happy path"
+	TestWatchWriteEvents = "watch write events from latest"
+	TestList             = "list"
+	TestBlobSupport      = "blob support"
+	TestGetResourceStats = "get resource stats"
+	TestListHistory      = "list history"
+)
+
 type NewBackendFunc func(ctx context.Context) resource.StorageBackend
 
+// TestOptions configures which tests to run
+type TestOptions struct {
+	SkipTests map[string]bool // tests to skip
+}
+
 // RunStorageBackendTest runs the storage backend test suite
-func RunStorageBackendTest(t *testing.T, newBackend NewBackendFunc) {
+func RunStorageBackendTest(t *testing.T, newBackend NewBackendFunc, opts *TestOptions) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
+
+	if opts == nil {
+		opts = &TestOptions{}
+	}
+
 	cases := []struct {
 		name string
 		fn   func(*testing.T, resource.StorageBackend)
 	}{
-		{"happy path", runTestIntegrationBackendHappyPath},
-		{"watch write events from latest", runTestIntegrationBackendWatchWriteEventsFromLastest},
-		{"list", runTestIntegrationBackendList},
-		// {"blob support", runTestIntegrationBlobSupport},
-		{"get resource stats", runTestIntegrationBackendGetResourceStats},
+		{TestHappyPath, runTestIntegrationBackendHappyPath},
+		{TestWatchWriteEvents, runTestIntegrationBackendWatchWriteEventsFromLastest},
+		{TestList, runTestIntegrationBackendList},
+		{TestBlobSupport, runTestIntegrationBlobSupport},
+		{TestGetResourceStats, runTestIntegrationBackendGetResourceStats},
+		{TestListHistory, runTestIntegrationBackendListHistory},
 	}
+
 	for _, tc := range cases {
+		if shouldSkip := opts.SkipTests[tc.name]; shouldSkip {
+			t.Logf("Skipping test: %s", tc.name)
+			continue
+		}
+
 		t.Run(tc.name, func(t *testing.T) {
 			tc.fn(t, newBackend(context.Background()))
 		})
@@ -150,17 +177,16 @@ func runTestIntegrationBackendHappyPath(t *testing.T, backend resource.StorageBa
 }
 
 func runTestIntegrationBackendGetResourceStats(t *testing.T, backend resource.StorageBackend) {
-	// if testing.Short() {
-	// 	t.Skip("skipping integration test")
-	// }
-
 	ctx := testutil.NewTestContext(t, time.Now().Add(5*time.Second))
 
 	sortFunc := func(a, b resource.ResourceStats) int {
 		if a.Namespace != b.Namespace {
 			return strings.Compare(a.Namespace, b.Namespace)
 		}
-		return strings.Compare(a.Group, b.Group)
+		if a.Group != b.Group {
+			return strings.Compare(a.Group, b.Group)
+		}
+		return strings.Compare(a.Resource, b.Resource)
 	}
 	// Create resources across different namespaces/groups
 	_, err := writeEvent(ctx, backend, "item1", resource.WatchEvent_ADDED,
@@ -400,6 +426,14 @@ func runTestIntegrationBackendList(t *testing.T, backend resource.StorageBackend
 		require.Equal(t, rv8, continueToken.ResourceVersion)
 		require.Equal(t, int64(4), continueToken.StartOffset)
 	})
+}
+
+func runTestIntegrationBackendListHistory(t *testing.T, backend resource.StorageBackend) {
+	ctx := testutil.NewTestContext(t, time.Now().Add(5*time.Second))
+	server := newServer(t, backend)
+
+	rv1, _ := writeEvent(ctx, backend, "item1", resource.WatchEvent_ADDED)
+	require.Greater(t, rv1, int64(0))
 
 	// add 5 events for item1 - should be saved to history
 	rvHistory1, err := writeEvent(ctx, backend, "item1", resource.WatchEvent_MODIFIED)
