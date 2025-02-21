@@ -8,18 +8,18 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 )
 
-func NewFakeDecryptStore(securevaluestore contracts.SecureValueStorage) contracts.DecryptStorage {
+func NewFakeDecryptStore(securevaluestore contracts.SecureValueMetadataStorage) contracts.DecryptStorage {
 	return &fakeDecryptStorage{
-		securevaluestore: securevaluestore,
+		securevaluemetadatastore: securevaluestore,
 	}
 }
 
 type fakeDecryptStorage struct {
-	securevaluestore contracts.SecureValueStorage
+	securevaluemetadatastore contracts.SecureValueMetadataStorage
 }
 
 func (s *fakeDecryptStorage) Decrypt(ctx context.Context, namespace xkube.Namespace, name string) (secretv0alpha1.ExposedSecureValue, error) {
-	_, err := s.securevaluestore.Read(ctx, namespace, name)
+	_, err := s.securevaluemetadatastore.Read(ctx, namespace, name)
 	if err != nil {
 		return "", contracts.ErrSecureValueNotFound
 	}
