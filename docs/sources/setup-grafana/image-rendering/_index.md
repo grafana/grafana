@@ -583,7 +583,7 @@ RENDERING_VIEWPORT_PAGE_ZOOM_LEVEL=1
 
 #### Tracing
 
-Enable OpenTelemetry Tracing by setting the tracing url. Default is empty (disabled).
+Enable OpenTelemetry Tracing by setting the tracing URL. Default is empty (disabled).
 
 ```bash
 RENDERING_TRACING_URL="http://localhost:4318/v1/traces"
