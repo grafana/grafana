@@ -80,11 +80,15 @@ export function TableNG(props: TableNGProps) {
   const prevProps = useRef(props);
   useEffect(() => {
     // TODO: there is a usecase when adding a new column to the table doesn't update the table
-    if (prevProps.current.data.fields.length !== props.data.fields.length) {
+    if (
+      prevProps.current.data.fields.length !== props.data.fields.length ||
+      prevProps.current.fieldConfig?.overrides !== fieldConfig?.overrides ||
+      prevProps.current.fieldConfig?.defaults !== fieldConfig?.defaults
+    ) {
       setRevId(revId + 1);
     }
     prevProps.current = props;
-  }, [props.data]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [props, revId, fieldConfig?.overrides, fieldConfig?.defaults]);
 
   const [contextMenuProps, setContextMenuProps] = useState<{
     rowIdx?: number;
