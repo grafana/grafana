@@ -40,6 +40,8 @@ export type FilterType = {
   };
 };
 
+export type TableRow = Record<string, unknown>;
+
 export interface CustomHeaderRendererProps {
   field: Field;
   defaultContent: React.ReactNode;
@@ -131,5 +133,3 @@ export interface CellColors {
   bgColor?: string;
   bgHoverColor?: string;
 }
-
-export type TableRow = Record<string, unknown>;

@@ -28,7 +28,7 @@ import { TableCellInspector, TableCellInspectorMode } from '../TableCellInspecto
 import { HeaderCell } from './Cells/HeaderCell';
 import { RowExpander } from './Cells/RowExpander';
 import { TableCellNG } from './Cells/TableCellNG';
-import { TableNGProps, FilterType } from './types';
+import { TableNGProps, FilterType, TableRow } from './types';
 import { getRowHeight, shouldTextOverflow, getFooterItemNG, getTextAlign } from './utils';
 
 const DEFAULT_CELL_PADDING = 6;
@@ -37,8 +37,6 @@ const EXPANDER_WIDTH = 50;
 const SMALL_PAGINATION_LIMIT = 750;
 const MAX_CELL_HEIGHT = 48;
 const SCROLL_BAR_WIDTH = getScrollbarWidth();
-
-type TableRow = Record<string, unknown>;
 
 interface TableColumn extends Column<TableRow> {
   key: string;
