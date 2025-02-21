@@ -157,9 +157,7 @@ export function ProvisioningWizard() {
             disabled={
               request.isLoading ||
               (!stepSuccess && (activeStep === 'migrate' || activeStep === 'sync')) ||
-              (activeStep === 'repository' && (request.isLoading || request.isError)) ||
-              (activeStep === 'migrate' && migrateQuery.isError) ||
-              (activeStep === 'sync' && request.isError)
+              (activeStep === 'repository' && (request.isLoading || request.isError))
             }
             icon={request.isLoading ? 'spinner' : undefined}
           >

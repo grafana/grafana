@@ -22,17 +22,21 @@ export function SyncStep({ onSyncSuccess }: SyncStepProps) {
       return;
     }
 
-    const formData = getValues('repository');
-    await submitData(
-      dataToSpec({
-        ...formData,
-        sync: {
-          ...formData.sync,
-          enabled: true,
-        },
-      })
-    );
-    onSyncSuccess();
+    try {
+      const formData = getValues('repository');
+      await submitData(
+        dataToSpec({
+          ...formData,
+          sync: {
+            ...formData.sync,
+            enabled: true,
+          },
+        })
+      );
+      onSyncSuccess();
+    } catch {
+      // Error will be shown via RequestErrorAlert
+    }
   };
 
   return (

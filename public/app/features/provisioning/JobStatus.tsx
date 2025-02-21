@@ -4,6 +4,7 @@ import { Box, ControlledCollapse, Stack, Text, TextLink } from '@grafana/ui';
 
 import ProgressBar from './ProgressBar';
 import { useGetRepositoryQuery, useListJobQuery } from './api';
+import { getRemoteURL } from './utils/git';
 
 export function JobStatus({ name }: { name: string }) {
   const jobQuery = useListJobQuery({ watch: true, fieldSelector: `metadata.name=${name}` });
@@ -46,10 +47,15 @@ function RepositoryLink({ name }: RepositoryLinkProps) {
     return null;
   }
 
+  const href = getRemoteURL(repo);
+
+  if (!href) {
+    return null;
+  }
   return (
     <Stack direction={'column'}>
       <Text>Your dashboards and folders are now in your repository.</Text>
-      <TextLink external href={repo.spec?.github?.url}>
+      <TextLink external href={href}>
         View repository
       </TextLink>
     </Stack>
