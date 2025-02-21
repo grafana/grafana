@@ -39,14 +39,8 @@ export function ProvisioningWizard() {
   const [submitData, request] = useCreateOrUpdateRepository();
   const methods = useForm<WizardFormData>({
     defaultValues: {
-      repository: {
-        ...getDefaultValues(),
-        sync: {
-          enabled: true,
-          intervalSeconds: 60,
-          target: 'instance',
-        },
-      },
+      repository: getDefaultValues(),
+
       migrate: {
         history: true,
         identifier: false,
@@ -58,18 +52,15 @@ export function ProvisioningWizard() {
 
   useEffect(() => {
     if (request.isSuccess) {
+      if (request.data?.metadata?.name) {
+        methods.setValue('repositoryName', request.data.metadata.name);
+      }
       if (activeStep === 'repository') {
         appEvents.publish({
           type: AppEvents.alertSuccess.name,
           payload: ['Repository settings saved'],
         });
-      }
 
-      if (request.data?.metadata?.name) {
-        methods.setValue('repositoryName', request.data.metadata.name);
-      }
-
-      if (activeStep === 'repository') {
         const currentStepIndex = steps.findIndex((s) => s.id === activeStep);
         if (currentStepIndex < steps.length - 1) {
           setCompletedSteps((prev) => [...prev, activeStep]);
