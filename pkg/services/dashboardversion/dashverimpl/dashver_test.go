@@ -44,7 +44,7 @@ func TestDashboardVersionService(t *testing.T) {
 		dashboardVersionService := Service{dashSvc: dashboardService, features: featuremgmt.WithFeatures()}
 		mockCli := new(client.MockK8sHandler)
 		dashboardVersionService.k8sclient = mockCli
-		dashboardVersionService.features = featuremgmt.WithFeatures(featuremgmt.FlagKubernetesCliDashboards)
+		dashboardVersionService.features = featuremgmt.WithFeatures(featuremgmt.FlagKubernetesClientDashboardsFolders)
 		dashboardService.On("GetDashboardUIDByID", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardRefByIDQuery")).Return(&dashboards.DashboardRef{UID: "uid"}, nil)
 
 		mockCli.On("GetUserFromMeta", mock.Anything, "user:1").Return(&user.User{ID: 1}, nil)
@@ -232,7 +232,7 @@ func TestListDashboardVersions(t *testing.T) {
 		dashboardVersionService := Service{dashSvc: dashboardService, features: featuremgmt.WithFeatures()}
 		mockCli := new(client.MockK8sHandler)
 		dashboardVersionService.k8sclient = mockCli
-		dashboardVersionService.features = featuremgmt.WithFeatures(featuremgmt.FlagKubernetesCliDashboards)
+		dashboardVersionService.features = featuremgmt.WithFeatures(featuremgmt.FlagKubernetesClientDashboardsFolders)
 
 		dashboardService.On("GetDashboardUIDByID", mock.Anything,
 			mock.AnythingOfType("*dashboards.GetDashboardRefByIDQuery")).

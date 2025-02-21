@@ -108,9 +108,8 @@ export interface FeatureToggles {
   kubernetesPlaylists?: boolean;
   kubernetesSnapshots?: boolean;
   kubernetesDashboards?: boolean;
-  kubernetesCliDashboards?: boolean;
   kubernetesRestore?: boolean;
-  kubernetesFoldersServiceV2?: boolean;
+  kubernetesClientDashboardsFolders?: boolean;
   datasourceQueryTypes?: boolean;
   queryService?: boolean;
   queryServiceRewrite?: boolean;
@@ -118,9 +117,7 @@ export interface FeatureToggles {
   cloudWatchBatchQueries?: boolean;
   recoveryThreshold?: boolean;
   lokiStructuredMetadata?: boolean;
-  teamHttpHeaders?: boolean;
   cachingOptimizeSerializationMemoryUsage?: boolean;
-  prometheusPromQAIL?: boolean;
   prometheusCodeModeMetricNamesSearch?: boolean;
   addFieldFromCalculationStatFunctions?: boolean;
   alertmanagerRemoteSecondary?: boolean;
@@ -181,7 +178,6 @@ export interface FeatureToggles {
   preserveDashboardStateWhenNavigating?: boolean;
   alertingCentralAlertHistory?: boolean;
   pluginProxyPreserveTrailingSlash?: boolean;
-  sqlQuerybuilderFunctionParameters?: boolean;
   azureMonitorPrometheusExemplars?: boolean;
   pinNavItems?: boolean;
   authZGRPCServer?: boolean;
@@ -212,6 +208,7 @@ export interface FeatureToggles {
   unifiedStorageSearch?: boolean;
   unifiedStorageSearchSprinkles?: boolean;
   unifiedStorageSearchPermissionFiltering?: boolean;
+  managedDualWriter?: boolean;
   pluginsSriChecks?: boolean;
   unifiedStorageBigObjectsSupport?: boolean;
   timeRangeProvider?: boolean;
