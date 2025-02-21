@@ -1790,8 +1790,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 				{
 					Label:        "Labels",
 					Description:  "Labels to assign to the Jira issue. You can use templates to customize this field.",
-					Element:      ElementSubformArray,
-					InputType:    InputTypeText,
+					Element:      ElementStringArray,
 					Placeholder:  "",
 					PropertyName: "labels",
 				},
