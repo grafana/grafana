@@ -10,6 +10,7 @@ import (
 
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
@@ -43,7 +44,17 @@ func NewResourceServer(db infraDB.DB, cfg *setting.Cfg,
 	if err != nil {
 		return nil, err
 	}
-	store, err := NewBackend(BackendOptions{DBProvider: eDB, Tracer: tracer})
+
+	dbCfg := cfg.SectionWithEnvOverrides("database")
+	// Check in the config if HA is enabled by default we always assume a HA setup.
+	isHA := dbCfg.Key("high_availability").MustBool(true)
+	// SQLite is not possible to run in HA, so we set it to false.
+	databaseType := dbCfg.Key("type").MustString(migrator.SQLite)
+	if databaseType == migrator.SQLite {
+		isHA = false
+	}
+
+	store, err := NewBackend(BackendOptions{DBProvider: eDB, Tracer: tracer, IsHA: isHA})
 	if err != nil {
 		return nil, err
 	}
