@@ -117,18 +117,12 @@ func (p *pollingNotifier) poller(ctx context.Context, since groupResourceRV, str
 	t := time.NewTicker(p.pollingInterval)
 	defer close(stream)
 	defer t.Stop()
-	isSQLite := p.dialect.DialectName() == sqltemplate.SQLite.DialectName()
 
 	for {
 		select {
 		case <-p.done:
 			return
 		case <-t.C:
-			// Block polling during import to avoid database locked issues.
-			if isSQLite && p.batchLock.Active() {
-				continue
-			}
-
 			ctx, span := p.tracer.Start(ctx, tracePrefix+"poller")
 			// List the latest RVs to see if any of those are not have been seen before.
 			grv, err := p.listLatestRVs(ctx)
