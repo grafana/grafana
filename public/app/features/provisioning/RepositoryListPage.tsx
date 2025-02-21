@@ -39,7 +39,7 @@ export default function RepositoryListPage() {
     if (deleteAllResult.isSuccess) {
       appEvents.publish({
         type: AppEvents.alertSuccess.name,
-        payload: ['All repository configs deleted'],
+        payload: ['All configured repositories deleted'],
       });
     }
   }, [deleteAllResult.isSuccess]);
@@ -59,20 +59,20 @@ export default function RepositoryListPage() {
         <SetupWarnings />
         {settings.data?.legacyStorage && (
           <Alert
-            title="Legacy Storage"
+            title="Legacy storage detected"
             severity="error"
-            buttonContent={<>Remove repository and migrate instance</>}
+            buttonContent={<>Remove all configured repositories</>}
             onRemove={() => setShowDeleteModal(true)}
           >
-            Configured repository will not work while running legacy storage
+            Configured repositories will not work while running legacy storage.
           </Alert>
         )}
         <RepositoryListPageContent items={items} />
         <ConfirmModal
           isOpen={showDeleteModal}
-          title="Delete all repositories"
-          body="Are you sure you want to delete all repositories? This action cannot be undone."
-          confirmText="Delete all"
+          title="Delete all configured repositories"
+          body="Are you sure you want to delete all configured repositories? This action cannot be undone."
+          confirmText="Delete repositories"
           onConfirm={onConfirmDelete}
           onDismiss={() => setShowDeleteModal(false)}
         />
