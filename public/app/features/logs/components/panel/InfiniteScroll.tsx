@@ -1,4 +1,4 @@
-import { ReactNode, useCallback, useEffect, useRef, useState } from 'react';
+import { ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { usePrevious } from 'react-use';
 import { ListChildComponentProps, ListOnItemsRenderedProps } from 'react-window';
 
@@ -60,7 +60,7 @@ export const InfiniteScroll = ({
   const countRef = useRef(0);
   const lastLogOfPage = useRef<string[]>([]);
   const theme = useTheme2();
-  const styles = getStyles(theme);
+  const styles = useMemo(() => getStyles(theme), [theme]);
 
   useEffect(() => {
     // Logs have not changed, ignore effect
