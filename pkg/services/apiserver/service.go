@@ -92,7 +92,7 @@ func init() {
 // The client Config gets initialized during the first call to
 // ProvideService.
 // Any call to GetRestConfig will block until we have a restConfig available
-func GetRestConfig(ctx context.Context) *clientrest.Config {
+func GetRestConfig(ctx context.Context) (*clientrest.Config, error) {
 	<-ready
 	return restConfig.GetRestConfig(ctx)
 }
@@ -104,7 +104,7 @@ type Service interface {
 }
 
 type RestConfigProvider interface {
-	GetRestConfig(context.Context) *clientrest.Config
+	GetRestConfig(context.Context) (*clientrest.Config, error)
 }
 
 type DirectRestConfigProvider interface {
@@ -244,11 +244,11 @@ func ProvideService(
 	return s, nil
 }
 
-func (s *service) GetRestConfig(ctx context.Context) *clientrest.Config {
+func (s *service) GetRestConfig(ctx context.Context) (*clientrest.Config, error) {
 	if err := s.NamedService.AwaitRunning(ctx); err != nil {
-		return nil
+		return nil, fmt.Errorf("unable to get rest config: %w", err)
 	}
-	return s.restConfig
+	return s.restConfig, nil
 }
 
 func (s *service) IsDisabled() bool {
