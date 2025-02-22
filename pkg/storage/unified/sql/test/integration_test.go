@@ -39,13 +39,31 @@ func TestIntegrationSQLStorageBackend(t *testing.T) {
 
 		backend, err := sql.NewBackend(sql.BackendOptions{
 			DBProvider: eDB,
+			IsHA:       true,
 		})
 		require.NoError(t, err)
 		require.NotNil(t, backend)
 		err = backend.Init(testutil.NewDefaultTestContext(t))
 		require.NoError(t, err)
 		return backend
-	})
+	}, nil)
+	// Run single instance tests with in-process notifier.
+	unitest.RunStorageBackendTest(t, func(ctx context.Context) resource.StorageBackend {
+		dbstore := infraDB.InitTestDB(t)
+		eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
+		require.NoError(t, err)
+		require.NotNil(t, eDB)
+
+		backend, err := sql.NewBackend(sql.BackendOptions{
+			DBProvider: eDB,
+			IsHA:       false,
+		})
+		require.NoError(t, err)
+		require.NotNil(t, backend)
+		err = backend.Init(testutil.NewDefaultTestContext(t))
+		require.NoError(t, err)
+		return backend
+	}, nil)
 }
 
 func TestClientServer(t *testing.T) {

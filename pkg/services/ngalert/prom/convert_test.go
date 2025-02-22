@@ -2,9 +2,11 @@ package prom
 
 import (
 	"encoding/json"
+	"fmt"
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	prommodel "github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
@@ -13,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func TestPrometheusRulesToGrafana(t *testing.T) {
@@ -141,6 +144,10 @@ func TestPrometheusRulesToGrafana(t *testing.T) {
 				for k, v := range promRule.Labels {
 					expectedLabels[k] = v
 				}
+
+				uidData := fmt.Sprintf("%d|%s|%s|%d", tc.orgID, tc.namespace, tc.promGroup.Name, j)
+				u := uuid.NewSHA1(uuid.NameSpaceOID, []byte(uidData))
+				require.Equal(t, u.String(), grafanaRule.UID, tc.name)
 
 				require.Equal(t, expectedLabels, grafanaRule.Labels, tc.name)
 				require.Equal(t, promRule.Annotations, grafanaRule.Annotations, tc.name)
@@ -310,5 +317,107 @@ func TestPrometheusRulesToGrafana_NodesInRules(t *testing.T) {
 
 		// Should only have query node
 		require.Equal(t, "query", result.Rules[0].Data[0].RefID)
+	})
+}
+
+func TestPrometheusRulesToGrafana_UID(t *testing.T) {
+	orgID := int64(1)
+	namespace := "some-namespace"
+
+	promGroup := PrometheusRuleGroup{
+		Name:     "test-group-1",
+		Interval: prommodel.Duration(10 * time.Second),
+		Rules: []PrometheusRule{
+			{
+				Alert: "alert-1",
+				Expr:  "cpu_usage > 80",
+				For:   util.Pointer(prommodel.Duration(5 * time.Minute)),
+				Labels: map[string]string{
+					"severity":   "critical",
+					ruleUIDLabel: "rule-uid-1",
+				},
+				Annotations: map[string]string{
+					"summary": "CPU usage is critical",
+				},
+			},
+		},
+	}
+
+	converter, err := NewConverter(Config{
+		DatasourceUID:  "datasource-uid",
+		DatasourceType: datasources.DS_PROMETHEUS,
+	})
+	require.NoError(t, err)
+
+	t.Run("if not specified, UID is generated based on the rule index", func(t *testing.T) {
+		grafanaGroup, err := converter.PrometheusRulesToGrafana(orgID, namespace, promGroup)
+		require.NoError(t, err)
+
+		firstUID := grafanaGroup.Rules[0].UID
+
+		// Convert again
+		grafanaGroup, err = converter.PrometheusRulesToGrafana(orgID, namespace, promGroup)
+		require.NoError(t, err)
+
+		secondUID := grafanaGroup.Rules[0].UID
+
+		// They must be equal
+		require.NotEmpty(t, firstUID)
+		require.Equal(t, firstUID, secondUID)
+	})
+
+	t.Run("if the special label is specified", func(t *testing.T) {
+		t.Run("and the label is valid it should be used", func(t *testing.T) {
+			orgID := int64(1)
+			namespace := "some-namespace"
+
+			converter, err := NewConverter(Config{
+				DatasourceUID:  "datasource-uid",
+				DatasourceType: datasources.DS_PROMETHEUS,
+			})
+			require.NoError(t, err)
+
+			promGroup.Rules[0].Labels[ruleUIDLabel] = "rule-uid-1"
+
+			grafanaGroup, err := converter.PrometheusRulesToGrafana(orgID, namespace, promGroup)
+			require.NoError(t, err)
+
+			require.Equal(t, "rule-uid-1", grafanaGroup.Rules[0].UID)
+		})
+
+		t.Run("and the label is invalid", func(t *testing.T) {
+			orgID := int64(1)
+			namespace := "some-namespace"
+
+			converter, err := NewConverter(Config{
+				DatasourceUID:  "datasource-uid",
+				DatasourceType: datasources.DS_PROMETHEUS,
+			})
+			require.NoError(t, err)
+
+			// create a string of 50 characters
+			promGroup.Rules[0].Labels[ruleUIDLabel] = "aaaabbbbccccddddeeeeffffgggghhhhiiiijjjjkkkkllllmm" // too long
+
+			grafanaGroup, err := converter.PrometheusRulesToGrafana(orgID, namespace, promGroup)
+			require.Errorf(t, err, "invalid UID label value")
+			require.Nil(t, grafanaGroup)
+		})
+
+		t.Run("and the label is empty", func(t *testing.T) {
+			orgID := int64(1)
+			namespace := "some-namespace"
+
+			converter, err := NewConverter(Config{
+				DatasourceUID:  "datasource-uid",
+				DatasourceType: datasources.DS_PROMETHEUS,
+			})
+			require.NoError(t, err)
+
+			promGroup.Rules[0].Labels[ruleUIDLabel] = ""
+
+			grafanaGroup, err := converter.PrometheusRulesToGrafana(orgID, namespace, promGroup)
+			require.Errorf(t, err, "invalid UID label value")
+			require.Nil(t, grafanaGroup)
+		})
 	})
 }

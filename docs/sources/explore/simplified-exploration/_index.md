@@ -12,7 +12,7 @@ hero:
   level: 1
   width: 100
   height: 100
-  description: Use the Drilldown apps to investigate and identify issues using telemetry data.
+  description: Use the Grafana Drilldown apps to investigate and identify issues using telemetry data.
 cards:
   title_class: pt-0 lh-1
   items:
@@ -39,6 +39,8 @@ cards:
 The Grafana Drilldown apps are designed for effortless data exploration through intuitive, queryless interactions.
 
 Easily explore telemetry signals with these specialized tools, tailored specifically for the Grafana databases to provide quick and accurate insights.
+
+{{< docs/shared source="grafana" lookup="plugins/rename-note.md" version="<GRAFANA_VERSION>" >}}
 
 To learn more, read:
 
