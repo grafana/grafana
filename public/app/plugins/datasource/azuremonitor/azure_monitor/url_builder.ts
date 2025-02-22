@@ -46,39 +46,32 @@ export default class UrlBuilder {
     return urlArray.join('/');
   }
 
-  static buildAzureMonitorGetMetricNamespacesUrl(
-    baseUrl: string,
-    apiVersion: string,
-    query: GetMetricNamespacesQuery,
-    templateSrv: TemplateSrv,
-    globalRegion?: boolean,
-    region?: string
-  ) {
-    let resourceUri: string;
-
-    if ('resourceUri' in query) {
-      resourceUri = query.resourceUri;
-    } else {
-      const { subscription, resourceGroup, metricNamespace, resourceName } = query;
-      resourceUri = UrlBuilder.buildResourceUri(templateSrv, {
-        subscription,
-        resourceGroup,
-        metricNamespace,
-        resourceName,
-      });
-    }
-
-    if (resourceUri.includes('resourceGroups')) {
-      return `${baseUrl}${resourceUri}/resources?api-version=${apiVersion}${
-        region ? `&region=${region}` : globalRegion ? '&region=global' : ''
-      }`;
-    } else {
-      apiVersion = '2017-12-01-preview';
-      return `${baseUrl}${resourceUri}/providers/microsoft.insights/metricNamespaces?api-version=${apiVersion}${
-        region ? `&region=${region}` : globalRegion ? '&region=global' : ''
-      }`;
-    }
-  }
+   static buildAzureMonitorGetMetricNamespacesUrl(
+     baseUrl: string,
+     apiVersion: string,
+     query: GetMetricNamespacesQuery,
+     templateSrv: TemplateSrv,
+     globalRegion?: boolean,
+     region?: string
+   ) {
+     let resourceUri: string;
+   
+     if ('resourceUri' in query) {
+       resourceUri = query.resourceUri;
+     } else {
+       const { subscription, resourceGroup, metricNamespace, resourceName } = query;
+       resourceUri = UrlBuilder.buildResourceUri(templateSrv, {
+         subscription,
+         resourceGroup,
+         metricNamespace,
+         resourceName,
+       });
+     }
+   
+     return `${baseUrl}${resourceUri}/providers/microsoft.insights/metricNamespaces?api-version=${apiVersion}${
+       region ? `&region=${region}` : globalRegion ? '&region=global' : ''
+     }`;
+   }  
 
   static buildAzureMonitorGetMetricNamesUrl(
     baseUrl: string,
