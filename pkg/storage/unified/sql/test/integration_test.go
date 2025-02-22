@@ -46,7 +46,7 @@ func TestIntegrationSQLStorageBackend(t *testing.T) {
 		err = backend.Init(testutil.NewDefaultTestContext(t))
 		require.NoError(t, err)
 		return backend
-	})
+	}, nil)
 	// Run single instance tests with in-process notifier.
 	unitest.RunStorageBackendTest(t, func(ctx context.Context) resource.StorageBackend {
 		dbstore := infraDB.InitTestDB(t)
@@ -63,7 +63,7 @@ func TestIntegrationSQLStorageBackend(t *testing.T) {
 		err = backend.Init(testutil.NewDefaultTestContext(t))
 		require.NoError(t, err)
 		return backend
-	})
+	}, nil)
 }
 
 func TestClientServer(t *testing.T) {
