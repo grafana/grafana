@@ -1833,8 +1833,14 @@
           {
             "type": "integer",
             "format": "int64",
-            "description": "Find annotations for a specified alert.",
+            "description": "Find annotations for a specified alert rule by its ID.\ndeprecated: AlertID is deprecated and will be removed in future versions. Please use AlertUID instead.",
             "name": "alertId",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "Find annotations for a specified alert rule by its UID.",
+            "name": "alertUID",
             "in": "query"
           },
           {

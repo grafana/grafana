@@ -11,8 +11,10 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
+	genericapifilters "k8s.io/apiserver/pkg/endpoints/filters"
 	"k8s.io/apiserver/pkg/endpoints/responsewriter"
 	genericapiserver "k8s.io/apiserver/pkg/server"
+	"k8s.io/apiserver/pkg/util/notfoundhandler"
 	clientrest "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	aggregatorapiserver "k8s.io/kube-aggregator/pkg/apiserver"
@@ -90,7 +92,7 @@ func init() {
 // The client Config gets initialized during the first call to
 // ProvideService.
 // Any call to GetRestConfig will block until we have a restConfig available
-func GetRestConfig(ctx context.Context) *clientrest.Config {
+func GetRestConfig(ctx context.Context) (*clientrest.Config, error) {
 	<-ready
 	return restConfig.GetRestConfig(ctx)
 }
@@ -102,7 +104,7 @@ type Service interface {
 }
 
 type RestConfigProvider interface {
-	GetRestConfig(context.Context) *clientrest.Config
+	GetRestConfig(context.Context) (*clientrest.Config, error)
 }
 
 type DirectRestConfigProvider interface {
@@ -242,11 +244,11 @@ func ProvideService(
 	return s, nil
 }
 
-func (s *service) GetRestConfig(ctx context.Context) *clientrest.Config {
+func (s *service) GetRestConfig(ctx context.Context) (*clientrest.Config, error) {
 	if err := s.NamedService.AwaitRunning(ctx); err != nil {
-		return nil
+		return nil, fmt.Errorf("unable to get rest config: %w", err)
 	}
-	return s.restConfig
+	return s.restConfig, nil
 }
 
 func (s *service) IsDisabled() bool {
@@ -363,8 +365,10 @@ func (s *service) start(ctx context.Context) error {
 		return err
 	}
 
+	notFoundHandler := notfoundhandler.New(Codecs, genericapifilters.NoMuxAndDiscoveryIncompleteKey)
+
 	// Create the server
-	server, err := serverConfig.Complete().New("grafana-apiserver", genericapiserver.NewEmptyDelegate())
+	server, err := serverConfig.Complete().New("grafana-apiserver", genericapiserver.NewEmptyDelegateWithCustomHandler(notFoundHandler))
 	if err != nil {
 		return err
 	}
