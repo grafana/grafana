@@ -1,4 +1,5 @@
 import { AnyAction } from '@reduxjs/toolkit';
+import { cloneDeep } from 'lodash';
 import { useMemo } from 'react';
 import * as React from 'react';
 
@@ -210,7 +211,7 @@ export function EditDataSourceView({
           <div key={extension.id}>
             <Component
               context={{
-                dataSource: dataSource,
+                dataSource: cloneDeep(dataSource),
                 dataSourceMeta: dataSourceMeta,
                 testingStatus,
                 setJsonData: (jsonData) =>

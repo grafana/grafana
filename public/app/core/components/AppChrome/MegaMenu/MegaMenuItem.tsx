@@ -5,8 +5,9 @@ import { useLocation } from 'react-router-dom-v5-compat';
 import { useLocalStorage } from 'react-use';
 
 import { GrafanaTheme2, NavModelItem, toIconName } from '@grafana/data';
-import { useStyles2, Text, IconButton, Icon, Stack } from '@grafana/ui';
+import { useStyles2, Text, IconButton, Icon, Stack, Badge } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
+import { t } from 'app/core/internationalization';
 
 import { Indent } from '../../Indent/Indent';
 
@@ -35,7 +36,7 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick, onPin, isPi
   const isActive = link === activeItem || (level === MAX_DEPTH && hasActiveChild);
   const [sectionExpanded, setSectionExpanded] = useLocalStorage(
     `grafana.navigation.expanded[${link.text}]`,
-    Boolean(hasActiveChild)
+    Boolean(hasActiveChild || link.isNew)
   );
   const showExpandButton = level < MAX_DEPTH && Boolean(linkHasChildren(link) || link.emptyMessage);
   const item = useRef<HTMLLIElement>(null);
@@ -107,6 +108,7 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick, onPin, isPi
             >
               {level === 0 && iconElement && <FeatureHighlightWrapper>{iconElement}</FeatureHighlightWrapper>}
               <Text truncate>{link.text}</Text>
+              {link.isNew && <Badge text={t('navigation.megamenu.new', 'New!')} color={'blue'} />}
             </div>
           </MegaMenuItemText>
         </div>

@@ -255,7 +255,6 @@ export function SelectBase<T, Rest = {}>({
     menuIsOpen: isOpen,
     menuPlacement: menuPlacement === 'auto' && closeToBottom ? 'top' : menuPlacement,
     menuPosition,
-    menuShouldBlockScroll: true,
     menuPortalTarget: menuShouldPortal && typeof document !== 'undefined' ? document.body : undefined,
     menuShouldScrollIntoView: false,
     onBlur,

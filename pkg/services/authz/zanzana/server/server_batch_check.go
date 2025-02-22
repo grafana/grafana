@@ -11,7 +11,7 @@ import (
 )
 
 func (s *Server) BatchCheck(ctx context.Context, r *authzextv1.BatchCheckRequest) (*authzextv1.BatchCheckResponse, error) {
-	ctx, span := tracer.Start(ctx, "server.BatchCheck")
+	ctx, span := s.tracer.Start(ctx, "server.BatchCheck")
 	defer span.End()
 
 	if err := authorize(ctx, r.GetNamespace()); err != nil {

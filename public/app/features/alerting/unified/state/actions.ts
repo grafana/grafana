@@ -183,7 +183,7 @@ export function fetchAllPromRulesAction(
 
 export const fetchGrafanaAnnotationsAction = createAsyncThunk(
   'unifiedalerting/fetchGrafanaAnnotations',
-  (alertId: string): Promise<StateHistoryItem[]> => withSerializedError(fetchAnnotations(alertId))
+  (ruleUID: string): Promise<StateHistoryItem[]> => withSerializedError(fetchAnnotations(ruleUID))
 );
 
 interface UpdateAlertManagerConfigActionOptions {

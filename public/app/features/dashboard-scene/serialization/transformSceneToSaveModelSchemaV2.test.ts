@@ -549,14 +549,7 @@ describe('dynamic layouts', () => {
       }),
     ];
 
-    const scene = setupDashboardScene(
-      getMinimalSceneState(
-        new TabsLayoutManager({
-          currentTab: tabs[0],
-          tabs,
-        })
-      )
-    );
+    const scene = setupDashboardScene(getMinimalSceneState(new TabsLayoutManager({ tabs })));
     const result = transformSceneToSaveModelSchemaV2(scene);
     expect(result.layout.kind).toBe('TabsLayout');
     const tabsLayout = result.layout.spec as TabsLayoutSpec;

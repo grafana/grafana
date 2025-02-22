@@ -14,6 +14,7 @@ export interface NavLinkDTO {
   sortWeight?: number;
   hideFromTabs?: boolean;
   roundIcon?: boolean;
+  isNew?: boolean;
   /**
    * This is true for some sections that have no children (but is still a section)
    **/

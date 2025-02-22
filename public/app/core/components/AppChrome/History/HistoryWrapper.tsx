@@ -5,9 +5,12 @@ import { useState } from 'react';
 import { FieldType, GrafanaTheme2, store } from '@grafana/data';
 import { Button, Card, IconButton, Space, Stack, Text, useStyles2, Box, Sparkline, useTheme2, Icon } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
+import { formatDate } from 'app/core/internationalization/dates';
 
 import { HISTORY_LOCAL_STORAGE_KEY } from '../AppChromeService';
 import { HistoryEntry } from '../types';
+
+import { logClickUnifiedHistoryEntryEvent, logUnifiedHistoryShowMoreEvent } from './eventsTracking';
 
 export function HistoryWrapper({ onClose }: { onClose: () => void }) {
   const history = store.getObject<HistoryEntry[]>(HISTORY_LOCAL_STORAGE_KEY, []).filter((entry) => {
@@ -60,7 +63,14 @@ export function HistoryWrapper({ onClose }: { onClose: () => void }) {
       </Box>
       {history.length > numItemsToShow && (
         <Box paddingLeft={2}>
-          <Button variant="secondary" fill="text" onClick={() => setNumItemsToShow(numItemsToShow + 5)}>
+          <Button
+            variant="secondary"
+            fill="text"
+            onClick={() => {
+              setNumItemsToShow(numItemsToShow + 5);
+              logUnifiedHistoryShowMoreEvent();
+            }}
+          >
             {t('nav.history-wrapper.show-more', 'Show more')}
           </Button>
         </Box>
@@ -115,6 +125,7 @@ function HistoryEntryAppView({ entry, isSelected, onClick }: ItemProps) {
             onClick={() => {
               store.setObject('CLICKING_HISTORY', true);
               onClick();
+              logClickUnifiedHistoryEntryEvent({ entryURL: url });
             }}
             href={url}
             isCompact={true}
@@ -129,7 +140,7 @@ function HistoryEntryAppView({ entry, isSelected, onClick }: ItemProps) {
                 ))}
               </div>
               <Text variant="bodySmall" color="secondary">
-                {moment(time).format('h:mm A')}
+                {formatDate(time, { timeStyle: 'short' })}
               </Text>
               {sparklineData && (
                 <Sparkline
@@ -170,6 +181,7 @@ function HistoryEntryAppView({ entry, isSelected, onClick }: ItemProps) {
                   onClick={() => {
                     store.setObject('CLICKING_HISTORY', true);
                     onClick();
+                    logClickUnifiedHistoryEntryEvent({ entryURL: view.url, subEntry: 'timeRange' });
                   }}
                   isCompact={true}
                   className={view.time === selectedViewTime ? undefined : styles.subCard}

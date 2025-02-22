@@ -21,7 +21,7 @@ export function ElementEditPane({ element }: Props) {
       {element.renderActions && (
         <OptionsPaneCategory
           id="selected-item"
-          title={elementInfo.name}
+          title={elementInfo.typeId}
           isOpenDefault={true}
           className={styles.noBorderTop}
         >

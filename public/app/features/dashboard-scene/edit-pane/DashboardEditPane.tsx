@@ -17,6 +17,7 @@ import { t } from 'app/core/internationalization';
 import { isInCloneChain } from '../utils/clone';
 import { getDashboardSceneFor } from '../utils/utils';
 
+import { DashboardAddPane } from './DashboardAddPane';
 import { DashboardOutline } from './DashboardOutline';
 import { ElementEditPane } from './ElementEditPane';
 import { ElementSelection } from './ElementSelection';
@@ -25,8 +26,10 @@ import { useEditableElement } from './useEditableElement';
 export interface DashboardEditPaneState extends SceneObjectState {
   selection?: ElementSelection;
   selectionContext: ElementSelectionContextState;
-  tab?: string;
+  tab?: EditPaneTab;
 }
+
+export type EditPaneTab = 'add' | 'configure' | 'outline';
 
 export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
   public constructor() {
@@ -118,6 +121,11 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
 
   public clearSelection() {
     const dashboard = getDashboardSceneFor(this);
+
+    if (this.state.selection?.getFirstObject() === dashboard) {
+      return;
+    }
+
     this.setState({
       selection: new ElementSelection([[dashboard.state.uid!, dashboard.getRef()]]),
       selectionContext: {
@@ -127,7 +135,7 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
     });
   }
 
-  public onChangeTab = (tab: string) => {
+  public onChangeTab = (tab: EditPaneTab) => {
     this.setState({ tab });
   };
 }
@@ -174,6 +182,8 @@ export function DashboardEditPaneRenderer({ editPane, isCollapsed, onToggleColla
     return null;
   }
 
+  const elementInfo = editableElement.getEditableElementInfo();
+
   if (isCollapsed) {
     return (
       <>
@@ -190,7 +200,7 @@ export function DashboardEditPaneRenderer({ editPane, isCollapsed, onToggleColla
 
         {openOverlay && (
           <Resizable className={cx(styles.fixed, styles.container)} defaultSize={{ height: '100%', width: '20vw' }}>
-            <ElementEditPane element={editableElement} key={editableElement.typeName} />
+            <ElementEditPane element={editableElement} key={elementInfo.typeId} />
           </Resizable>
         )}
       </>
@@ -216,9 +226,11 @@ export function DashboardEditPaneRenderer({ editPane, isCollapsed, onToggleColla
           onChangeTab={() => editPane.onChangeTab('outline')}
         />
       </TabsBar>
-      {tab === 'add' && <div>add</div>}
-      {tab === 'configure' && <ElementEditPane element={editableElement} key={editableElement.typeName} />}
-      {tab === 'outline' && <DashboardOutline editPane={editPane} />}
+      <div className={styles.tabContent}>
+        {tab === 'add' && <DashboardAddPane editPane={editPane} />}
+        {tab === 'configure' && <ElementEditPane element={editableElement} key={elementInfo.typeId} />}
+        {tab === 'outline' && <DashboardOutline editPane={editPane} />}
+      </div>
     </div>
   );
 }
@@ -229,6 +241,12 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       flexDirection: 'column',
       flex: '1 1 0',
+    }),
+    tabContent: css({
+      display: 'flex',
+      flex: '1 1 0',
+      flexDirection: 'column',
+      minHeight: 0,
       overflow: 'auto',
     }),
     rotate180: css({

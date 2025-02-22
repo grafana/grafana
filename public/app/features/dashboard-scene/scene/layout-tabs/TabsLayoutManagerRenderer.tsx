@@ -8,7 +8,8 @@ import { TabsLayoutManager } from './TabsLayoutManager';
 
 export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLayoutManager>) {
   const styles = useStyles2(getStyles);
-  const { tabs, currentTab } = model.useState();
+  const { tabs, currentTabIndex } = model.useState();
+  const currentTab = tabs[currentTabIndex];
   const { layout } = currentTab.useState();
 
   return (
@@ -18,7 +19,9 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
           <tab.Component model={tab} key={tab.state.key!} />
         ))}
       </TabsBar>
-      <TabContent className={styles.tabContentContainer}>{layout && <layout.Component model={layout} />}</TabContent>
+      <TabContent className={styles.tabContentContainer}>
+        {currentTab && <layout.Component model={layout} />}
+      </TabContent>
     </>
   );
 }

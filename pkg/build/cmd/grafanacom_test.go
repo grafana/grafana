@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/build/packaging"
+	"github.com/grafana/grafana/pkg/build/versions"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -257,4 +258,27 @@ func TestBuildsWithPlus(t *testing.T) {
 			assert.Equal(t, expect[i].Arch, builds[i].Arch)
 		})
 	}
+}
+
+func TestReleaseURLs(t *testing.T) {
+	f := "https://grafana.com/whats-new-in-v%[1]s-%[2]s"
+
+	smv := versions.Semver{
+		Major: "1",
+		Minor: "2",
+		Patch: "3",
+	}
+
+	conf := packageConf{
+		Grafana: grafanaConf{
+			WhatsNewURL:     f,
+			ReleaseNotesURL: "https://example.com",
+		},
+	}
+
+	expect := "https://grafana.com/whats-new-in-v1-2"
+
+	a, _, err := getReleaseURLs(smv, &conf)
+	require.NoError(t, err)
+	require.Equal(t, expect, a)
 }

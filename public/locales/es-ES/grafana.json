@@ -1337,6 +1337,12 @@
       "time-zone-label": "Huso horario",
       "week-start-label": "Inicio de la semana"
     },
+    "time-regions": {
+      "advanced-description-cron": "",
+      "advanced-description-rest": "",
+      "advanced-description-use": "",
+      "advanced-label": ""
+    },
     "variables": {
       "title": "Variables"
     },
@@ -1419,6 +1425,11 @@
   },
   "explore": {
     "add-to-dashboard": "Añadir al tablero",
+    "drilldownInfo": {
+      "action": "",
+      "description": "",
+      "title": ""
+    },
     "logs": {
       "logs-volume": {
         "add-filters": "",
@@ -2499,6 +2510,9 @@
     "detect": {
       "title": "Detectar"
     },
+    "drilldown": {
+      "title": ""
+    },
     "explore": {
       "title": "Explorar"
     },
@@ -2714,6 +2728,7 @@
       "close": "Cerrar menú",
       "dock": "Anclar el menú",
       "list-label": "Navegación",
+      "new": "",
       "open": "",
       "undock": "Desanclar el menú"
     },
