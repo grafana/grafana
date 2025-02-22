@@ -1057,6 +1057,11 @@
         }
       }
     },
+    "editpane": {
+      "add": "Add",
+      "configure": "Configure",
+      "outline": "Outline"
+    },
     "empty": {
       "add-library-panel-body": "Add visualizations that are shared with other dashboards.",
       "add-library-panel-button": "Add library panel",
@@ -1194,7 +1199,8 @@
     "toolbar": {
       "add": "Add",
       "add-panel": "Panel",
-      "add-panel-lib": "Import",
+      "add-panel-description": "A container for visualizations and other content",
+      "add-panel-lib": "Import library panel",
       "add-row": "Row",
       "add-tab": "Tab",
       "alert-rules": "Alert rules",
@@ -1219,6 +1225,7 @@
         "label": "Exit edit",
         "tooltip": "Exits edit mode and discards unsaved changes"
       },
+      "libray-panel-description": "Libray panels allow you share and reuse panels between dashboards",
       "mark-favorite": "Mark as favorite",
       "more-save-options": "More save options",
       "open-original": "Open original dashboard",
@@ -1227,6 +1234,7 @@
       "playlist-stop": "Stop playlist",
       "public-dashboard": "Public",
       "refresh": "Refresh dashboard",
+      "row-description": "A group of panels with an optional header",
       "save": "Save dashboard",
       "save-dashboard": {
         "label": "Save dashboard",
@@ -1246,6 +1254,7 @@
       "share-button": "Share",
       "show-hidden-elements": "Show hidden",
       "switch-old-dashboard": "Switch to old dashboard page",
+      "tabs-description": "Break up your dashboard into different horizontal tabs",
       "unlink-library-panel": "Unlink library panel",
       "unmark-favorite": "Unmark as favorite"
     },
