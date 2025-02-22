@@ -1,7 +1,6 @@
 package prom
 
 import (
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -20,6 +19,13 @@ const (
 	ruleUIDLabel = "__grafana_alert_rule_uid__"
 )
 
+const (
+	queryRefID          = "query"
+	prometheusMathRefID = "prometheus_math"
+	thresholdRefID      = "threshold"
+)
+
+// Config defines the configuration options for the Prometheus to Grafana rules converter.
 type Config struct {
 	DatasourceUID    string
 	DatasourceType   string
@@ -31,6 +37,7 @@ type Config struct {
 	AlertRules       RulesConfig
 }
 
+// RulesConfig contains configuration that applies to either recording or alerting rules.
 type RulesConfig struct {
 	IsPaused bool
 }
@@ -43,7 +50,7 @@ var (
 		FromTimeRange:    &defaultTimeRange,
 		EvaluationOffset: &defaultEvaluationOffset,
 		ExecErrState:     models.ErrorErrState,
-		NoDataState:      models.NoData,
+		NoDataState:      models.OK,
 	}
 )
 
@@ -51,6 +58,9 @@ type Converter struct {
 	cfg Config
 }
 
+// NewConverter creates a new Converter instance with the provided configuration.
+// It validates the configuration and returns an error if any required fields are missing
+// or if the configuration is invalid.
 func NewConverter(cfg Config) (*Converter, error) {
 	if cfg.DatasourceUID == "" {
 		return nil, fmt.Errorf("datasource UID is required")
@@ -166,15 +176,28 @@ func (p *Converter) convertRule(orgID int64, namespaceUID, group string, rule Pr
 		forInterval = time.Duration(*rule.For)
 	}
 
-	queryNode, err := createAlertQueryNode(p.cfg.DatasourceUID, p.cfg.DatasourceType, rule.Expr, *p.cfg.FromTimeRange, *p.cfg.EvaluationOffset)
+	var query []models.AlertQuery
+	var title string
+	var isPaused bool
+	var record *models.Record
+	var err error
+
+	isRecordingRule := rule.Record != ""
+	query, err = p.createQuery(rule.Expr, isRecordingRule)
 	if err != nil {
 		return models.AlertRule{}, err
 	}
 
-	var title string
-	if rule.Record != "" {
+	if isRecordingRule {
+		record = &models.Record{
+			From:   queryRefID,
+			Metric: rule.Record,
+		}
+
+		isPaused = p.cfg.RecordingRules.IsPaused
 		title = rule.Record
 	} else {
+		isPaused = p.cfg.AlertRules.IsPaused
 		title = rule.Alert
 	}
 
@@ -192,14 +215,16 @@ func (p *Converter) convertRule(orgID int64, namespaceUID, group string, rule Pr
 		OrgID:        orgID,
 		NamespaceUID: namespaceUID,
 		Title:        title,
-		Data:         []models.AlertQuery{queryNode},
-		Condition:    "A",
+		Data:         query,
+		Condition:    query[len(query)-1].RefID,
 		NoDataState:  p.cfg.NoDataState,
 		ExecErrState: p.cfg.ExecErrState,
 		Annotations:  rule.Annotations,
 		Labels:       labels,
 		For:          forInterval,
 		RuleGroup:    group,
+		IsPaused:     isPaused,
+		Record:       record,
 		Metadata: models.AlertRuleMetadata{
 			PrometheusStyleRule: &models.PrometheusStyleRule{
 				OriginalRuleDefinition: string(originalRuleDefinition),
@@ -207,47 +232,41 @@ func (p *Converter) convertRule(orgID int64, namespaceUID, group string, rule Pr
 		},
 	}
 
-	if rule.Record != "" {
-		result.Record = &models.Record{
-			From:   "A",
-			Metric: rule.Record,
-		}
-		result.IsPaused = p.cfg.RecordingRules.IsPaused
-	} else {
-		result.IsPaused = p.cfg.AlertRules.IsPaused
-	}
-
 	return result, nil
 }
 
-func createAlertQueryNode(datasourceUID, datasourceType, expr string, fromTimeRange, evaluationOffset time.Duration) (models.AlertQuery, error) {
-	modelData := map[string]interface{}{
-		"datasource": map[string]interface{}{
-			"type": datasourceType,
-			"uid":  datasourceUID,
-		},
-		"expr":    expr,
-		"instant": true,
-		"range":   false,
-		"refId":   "A",
-	}
-
-	if datasourceType == datasources.DS_LOKI {
-		modelData["queryType"] = "instant"
-	}
-
-	modelJSON, err := json.Marshal(modelData)
+// createQuery constructs the alert query nodes for a given Prometheus rule expression.
+// It returns a slice of AlertQuery that represent the evaluation steps for the rule.
+//
+// For recording rules it generates a single query node that
+// executes the PromQL query in the configured datasource.
+//
+// For alerting rules, it generates three query nodes:
+//  1. Query Node (query): Executes the PromQL query using the configured datasource.
+//  2. Math Node (prometheus_math): Applies a math expression "is_number($query) || is_nan($query) || is_inf($query)".
+//  3. Threshold Node (threshold): Gets the result from the math node and checks that it's greater than 0.
+//
+// This is needed to ensure that we keep the Prometheus behaviour, where any returned result
+// is considered alerting, and only when the query returns no data is the alert treated as normal.
+func (p *Converter) createQuery(expr string, isRecordingRule bool) ([]models.AlertQuery, error) {
+	queryNode, err := createQueryNode(p.cfg.DatasourceUID, p.cfg.DatasourceType, expr, *p.cfg.FromTimeRange, *p.cfg.EvaluationOffset)
 	if err != nil {
-		return models.AlertQuery{}, err
+		return nil, err
 	}
 
-	return models.AlertQuery{
-		DatasourceUID: datasourceUID,
-		Model:         modelJSON,
-		RefID:         "A",
-		RelativeTimeRange: models.RelativeTimeRange{
-			From: models.Duration(fromTimeRange + evaluationOffset),
-			To:   models.Duration(0 + evaluationOffset),
-		},
-	}, nil
+	if isRecordingRule {
+		return []models.AlertQuery{queryNode}, nil
+	}
+
+	mathNode, err := createMathNode()
+	if err != nil {
+		return nil, err
+	}
+
+	thresholdNode, err := createThresholdNode()
+	if err != nil {
+		return nil, err
+	}
+
+	return []models.AlertQuery{queryNode, mathNode, thresholdNode}, nil
 }
