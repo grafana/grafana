@@ -292,6 +292,10 @@ type AlertRule struct {
 	IsPaused             bool
 	NotificationSettings []NotificationSettings
 	Metadata             AlertRuleMetadata
+	// ResolveAfterMissingFor is the duration after which an alert
+	// should be resolved if the data has been missing for the specified duration.
+	// If it is nil, the alert will be resolved after 2 evaluation intervals.
+	ResolveAfterMissingFor *time.Duration
 }
 
 type AlertRuleMetadata struct {
@@ -642,6 +646,17 @@ func validateAlertRuleFields(rule *AlertRule) error {
 		return err
 	}
 
+	if rule.ResolveAfterMissingFor != nil {
+		// ResolveAfterMissingFor is optional, but if it is set, it must be non-negative.
+		if *rule.ResolveAfterMissingFor < 0 {
+			return fmt.Errorf("%w: field `resolve_after_missing_for` cannot be negative", ErrAlertRuleFailedValidation)
+		}
+		// ResolveAfterMissingFor must be a multiple of the interval.
+		if *rule.ResolveAfterMissingFor%time.Duration(rule.IntervalSeconds)*time.Second != 0 {
+			return fmt.Errorf("%w: field `resolve_after_missing_for` must be a multiple of the evaluation interval", ErrAlertRuleFailedValidation)
+		}
+	}
+
 	return nil
 }
 
@@ -691,24 +706,25 @@ func (alertRule *AlertRule) Copy() *AlertRule {
 		return nil
 	}
 	result := AlertRule{
-		ID:              alertRule.ID,
-		OrgID:           alertRule.OrgID,
-		Title:           alertRule.Title,
-		Condition:       alertRule.Condition,
-		Updated:         alertRule.Updated,
-		UpdatedBy:       alertRule.UpdatedBy,
-		IntervalSeconds: alertRule.IntervalSeconds,
-		Version:         alertRule.Version,
-		UID:             alertRule.UID,
-		NamespaceUID:    alertRule.NamespaceUID,
-		RuleGroup:       alertRule.RuleGroup,
-		RuleGroupIndex:  alertRule.RuleGroupIndex,
-		NoDataState:     alertRule.NoDataState,
-		ExecErrState:    alertRule.ExecErrState,
-		For:             alertRule.For,
-		Record:          alertRule.Record,
-		IsPaused:        alertRule.IsPaused,
-		Metadata:        alertRule.Metadata,
+		ID:                     alertRule.ID,
+		OrgID:                  alertRule.OrgID,
+		Title:                  alertRule.Title,
+		Condition:              alertRule.Condition,
+		Updated:                alertRule.Updated,
+		UpdatedBy:              alertRule.UpdatedBy,
+		IntervalSeconds:        alertRule.IntervalSeconds,
+		Version:                alertRule.Version,
+		UID:                    alertRule.UID,
+		NamespaceUID:           alertRule.NamespaceUID,
+		RuleGroup:              alertRule.RuleGroup,
+		RuleGroupIndex:         alertRule.RuleGroupIndex,
+		NoDataState:            alertRule.NoDataState,
+		ExecErrState:           alertRule.ExecErrState,
+		For:                    alertRule.For,
+		Record:                 alertRule.Record,
+		IsPaused:               alertRule.IsPaused,
+		Metadata:               alertRule.Metadata,
+		ResolveAfterMissingFor: alertRule.ResolveAfterMissingFor,
 	}
 
 	if alertRule.DashboardUID != nil {
@@ -771,6 +787,7 @@ func ClearRecordingRuleIgnoredFields(rule *AlertRule) {
 	rule.Condition = ""
 	rule.For = 0
 	rule.NotificationSettings = nil
+	rule.ResolveAfterMissingFor = nil
 }
 
 // GetAlertRuleByUIDQuery is the query for retrieving/deleting an alert rule by UID and organisation ID.
@@ -917,6 +934,9 @@ func PatchPartialAlertRule(existingRule *AlertRule, ruleToPatch *AlertRuleWithOp
 	}
 	if !ruleToPatch.HasPause {
 		ruleToPatch.IsPaused = existingRule.IsPaused
+	}
+	if ruleToPatch.ResolveAfterMissingFor == nil {
+		ruleToPatch.ResolveAfterMissingFor = existingRule.ResolveAfterMissingFor
 	}
 
 	// Currently metadata contains only editor settings, so we can just copy it.

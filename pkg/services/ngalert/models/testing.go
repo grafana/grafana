@@ -101,6 +101,8 @@ func (g *AlertRuleGenerator) Generate() AlertRule {
 		updatedBy = util.Pointer(UserUID(util.GenerateShortUID()))
 	}
 
+	intervalSeconds := rand.Int63n(60) + 1
+
 	rule := AlertRule{
 		ID:                   0,
 		OrgID:                rand.Int63n(1500) + 1, // Prevent OrgID=0 as this does not pass alert rule validation.
@@ -109,7 +111,7 @@ func (g *AlertRuleGenerator) Generate() AlertRule {
 		Data:                 []AlertQuery{g.GenerateQuery()},
 		Updated:              time.Now().Add(-time.Duration(rand.Intn(100) + 1)),
 		UpdatedBy:            updatedBy,
-		IntervalSeconds:      rand.Int63n(60) + 1,
+		IntervalSeconds:      intervalSeconds,
 		Version:              rand.Int63n(1500), // Don't generate a rule ID too big for postgres
 		UID:                  util.GenerateShortUID(),
 		NamespaceUID:         util.GenerateShortUID(),
@@ -124,6 +126,8 @@ func (g *AlertRuleGenerator) Generate() AlertRule {
 		Labels:               labels,
 		NotificationSettings: ns,
 		Metadata:             GenerateMetadata(),
+		// ResolveAfterMissingFor must be a multiple of the evaluation interval
+		ResolveAfterMissingFor: util.Pointer(time.Duration(2*intervalSeconds) * time.Second),
 	}
 
 	for _, mutator := range g.mutators {
@@ -301,11 +305,13 @@ func (a *AlertRuleMutators) WithIntervalSeconds(seconds int64) AlertRuleMutator 
 	}
 }
 
-// WithIntervalMatching mutator that generates random interval and `for` duration that are times of the provided base interval.
+// WithIntervalMatching mutator that generates random interval, `for` and `resolve_after_missing_for`
+// durations that are times of the provided base interval.
 func (a *AlertRuleMutators) WithIntervalMatching(baseInterval time.Duration) AlertRuleMutator {
 	return func(rule *AlertRule) {
 		rule.IntervalSeconds = int64(baseInterval.Seconds()) * (rand.Int63n(10) + 1)
 		rule.For = time.Duration(rule.IntervalSeconds*rand.Int63n(9)+1) * time.Second
+		rule.ResolveAfterMissingFor = util.Pointer(time.Duration(rule.IntervalSeconds*2) * time.Second)
 	}
 }
 
@@ -489,11 +495,24 @@ func (a *AlertRuleMutators) WithSameGroup() AlertRuleMutator {
 	}
 }
 
+func (a *AlertRuleMutators) WithResolveAfterMissingFor(interval *time.Duration) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		rule.ResolveAfterMissingFor = interval
+	}
+}
+
+func (a *AlertRuleMutators) WithResolveAfterMissingForNTimes(timesOfInterval int64) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		rule.ResolveAfterMissingFor = util.Pointer(time.Duration(rule.IntervalSeconds*timesOfInterval) * time.Second)
+	}
+}
+
 func (a *AlertRuleMutators) WithNotificationSettingsGen(ns func() NotificationSettings) AlertRuleMutator {
 	return func(rule *AlertRule) {
 		rule.NotificationSettings = []NotificationSettings{ns()}
 	}
 }
+
 func (a *AlertRuleMutators) WithNotificationSettings(ns NotificationSettings) AlertRuleMutator {
 	return func(rule *AlertRule) {
 		rule.NotificationSettings = []NotificationSettings{ns}
@@ -1327,6 +1346,7 @@ func ConvertToRecordingRule(rule *AlertRule) {
 	rule.ExecErrState = ""
 	rule.For = 0
 	rule.NotificationSettings = nil
+	rule.ResolveAfterMissingFor = nil
 }
 
 func nameToUid(name string) string { // Avoid legacy_storage.NameToUid import cycle.
