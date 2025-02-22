@@ -7,7 +7,6 @@ import {
 } from '@grafana/scenes';
 import { t } from 'app/core/internationalization';
 
-import { getLayoutManagerFor } from '../../utils/utils';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
