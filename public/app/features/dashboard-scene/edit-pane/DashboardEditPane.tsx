@@ -223,9 +223,11 @@ export function DashboardEditPaneRenderer({ editPane, isCollapsed, onToggleColla
           onChangeTab={() => editPane.onChangeTab('outline')}
         />
       </TabsBar>
-      {tab === 'add' && <DashboardAddPane editPane={editPane} />}
-      {tab === 'configure' && <ElementEditPane element={editableElement} key={editableElement.typeName} />}
-      {tab === 'outline' && <div />}
+      <div className={styles.tabContent}>
+        {tab === 'add' && <DashboardAddPane editPane={editPane} />}
+        {tab === 'configure' && <ElementEditPane element={editableElement} key={editableElement.typeName} />}
+        {tab === 'outline' && <div />}
+      </div>
     </div>
   );
 }
@@ -236,6 +238,12 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       flexDirection: 'column',
       flex: '1 1 0',
+    }),
+    tabContent: css({
+      display: 'flex',
+      flex: '1 1 0',
+      flexDirection: 'column',
+      minHeight: 0,
       overflow: 'auto',
     }),
     rotate180: css({
