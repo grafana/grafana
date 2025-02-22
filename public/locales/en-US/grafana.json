@@ -1186,6 +1186,7 @@
       "add": "Add",
       "add-panel": "Panel",
       "add-panel-description": "A container for visualizations and other content",
+      "add-panel-lib": "Import library panel",
       "add-row": "Row",
       "add-tab": "Tab",
       "alert-rules": "Alert rules",

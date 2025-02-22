@@ -134,7 +134,7 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
     });
   }
 
-  public onChangeTab = (tab: string) => {
+  public onChangeTab = (tab: EditPaneTab) => {
     this.setState({ tab });
   };
 }
