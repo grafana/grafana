@@ -453,20 +453,14 @@ export class DashboardExporterV2 implements DashboardExporterLike<DashboardV2Spe
       const gridLayoutItems = dashboard.layout.spec.items;
       const elements = dashboard.elements;
 
-      gridLayoutItems.forEach((item) => {
-        if (item.kind === 'GridLayoutItem') {
-          // skip repeated panels
-          if (item.spec.repeat) {
-            return;
-          }
-
+      for (const item of gridLayoutItems) {
+        if (item.kind === 'GridLayoutItem' && !item.spec.repeat) {
           const panel = elements[item.spec.element.name];
-
           if (panel.kind === 'Panel') {
-            processPanel(panel);
+            await processPanel(panel);
           }
         }
-      });
+      }
 
       // TODO: handle collapsed rows
 
