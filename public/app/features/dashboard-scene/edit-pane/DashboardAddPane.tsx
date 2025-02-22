@@ -39,7 +39,9 @@ export function DashboardAddPane({ editPane }: Props) {
           'Libray panels allow you share and reuse panels between dashboards'
         )}
       >
-        <Card.Heading>Import library panel</Card.Heading>
+        <Card.Heading>
+          <Trans i18nKey="dashboard.toolbar.add-panel-lib">Import library panel</Trans>
+        </Card.Heading>
         <Card.Figure>
           <Icon name="import" size="xl" />
         </Card.Figure>
