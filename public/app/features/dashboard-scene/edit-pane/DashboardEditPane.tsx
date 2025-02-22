@@ -25,8 +25,10 @@ import { useEditableElement } from './useEditableElement';
 export interface DashboardEditPaneState extends SceneObjectState {
   selection?: ElementSelection;
   selectionContext: ElementSelectionContextState;
-  tab?: string;
+  tab?: EditPaneTab;
 }
+
+export type EditPaneTab = 'add' | 'configure' | 'outline';
 
 export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
   public constructor() {
@@ -223,7 +225,7 @@ export function DashboardEditPaneRenderer({ editPane, isCollapsed, onToggleColla
       </TabsBar>
       {tab === 'add' && <DashboardAddPane editPane={editPane} />}
       {tab === 'configure' && <ElementEditPane element={editableElement} key={editableElement.typeName} />}
-      {tab === 'outline' && <div>Outline</div>}
+      {tab === 'outline' && <div />}
     </div>
   );
 }
