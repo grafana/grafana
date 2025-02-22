@@ -1035,11 +1035,6 @@
         }
       },
       "open": "Open options pane",
-      "panels": {
-        "multi-select": {
-          "selection-number": "No. of panels selected: {{length}}"
-        }
-      },
       "row": {
         "header": {
           "hide": "Hide",
@@ -1048,12 +1043,6 @@
         "multi-select": {
           "options-header": "Multi-selected Row options",
           "selection-number": "No. of rows selected: {{length}}"
-        }
-      },
-      "tab": {
-        "multi-select": {
-          "options-header": "Multi-selected Tab options",
-          "selection-number": "No. of tabs selected: "
         }
       }
     },
@@ -1123,6 +1112,17 @@
       "rows": "Total number rows",
       "table-title": "Stats"
     },
+    "layout": {
+      "common": {
+        "copy": "Copy",
+        "copy-or-duplicate": "Copy or Duplicate",
+        "delete": "Delete",
+        "duplicate": "Duplicate",
+        "layout": "Layout",
+        "panels": "Panels",
+        "selected": "Selected"
+      }
+    },
     "options": {
       "description": "Description",
       "title": "Dashboard options",
@@ -1157,6 +1157,15 @@
       "row": {
         "collapse": "Collapse row",
         "expand": "Expand row",
+        "menu": {
+          "add": "Add row",
+          "add-panel": "Panel",
+          "add-row-above": "Row above",
+          "add-row-below": "Row below",
+          "move-down": "Move row down",
+          "move-row": "Move row",
+          "move-up": "Move row up"
+        },
         "new": "New row",
         "repeat": {
           "learn-more": "Learn more",
@@ -1165,25 +1174,35 @@
       },
       "row-options": {
         "height": {
-          "expand": "Expand",
-          "hide-row-header": "Hide row header",
-          "min": "Min",
-          "title": "Height"
+          "hide-row-header": "Hide row header"
         },
         "repeat": {
-          "title": "Repeat options",
           "variable": {
-            "title": "Variable"
+            "title": "Repeat for"
           }
         },
-        "title": "Row options",
+        "title": "Row",
         "title-option": "Title"
       }
     },
     "tabs-layout": {
       "description": "Tabs layout",
       "name": "Tabs",
+      "row": {
+        "menu": {
+          "move-tab": "Move tab"
+        }
+      },
       "tab": {
+        "menu": {
+          "add": "Add tab",
+          "add-panel": "Panel",
+          "add-tab-above": "Tab before",
+          "add-tab-after": "Tab after",
+          "add-tab-before": "Tab before",
+          "move-left": "Move tab left",
+          "move-right": "Move tab right"
+        },
         "new": "New tab"
       },
       "tab-options": {
@@ -1258,7 +1277,6 @@
     "viz-panel": {
       "options": {
         "description": "Description",
-        "title": "Panel options",
         "title-option": "Title",
         "transparent-background": "Transparent background"
       }

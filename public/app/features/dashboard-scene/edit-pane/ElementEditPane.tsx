@@ -23,6 +23,8 @@ export function ElementEditPane({ element }: Props) {
           title={element.typeName}
           isOpenDefault={true}
           className={styles.noBorderTop}
+          renderTitle={element.renderTitle}
+          alwaysExpanded={element.alwaysExpanded}
         >
           <div className={styles.actionsBox}>{element.renderActions()}</div>
         </OptionsPaneCategory>

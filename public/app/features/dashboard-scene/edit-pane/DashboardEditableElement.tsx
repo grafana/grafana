@@ -6,7 +6,7 @@ import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { DashboardScene } from '../scene/DashboardScene';
-import { useLayoutCategory } from '../scene/layouts-shared/DashboardLayoutSelector';
+import { DashboardLayoutSelector } from '../scene/layouts-shared/DashboardLayoutSelector';
 import { EditableDashboardElement } from '../scene/types/EditableDashboardElement';
 
 export class DashboardEditableElement implements EditableDashboardElement {
@@ -26,6 +26,7 @@ export class DashboardEditableElement implements EditableDashboardElement {
         title: t('dashboard.options.title', 'Dashboard options'),
         id: 'dashboard-options',
         isOpenDefault: true,
+        alwaysExpanded: true,
       })
         .addItem(
           new OptionsPaneItemDescriptor({
@@ -42,12 +43,18 @@ export class DashboardEditableElement implements EditableDashboardElement {
               return <DashboardDescriptionInput dashboard={dashboard} />;
             },
           })
+        )
+        .addItem(
+          new OptionsPaneItemDescriptor({
+            title: t('dashboard.layout.common.layout', 'Layout'),
+            render: function renderTitle() {
+              return <DashboardLayoutSelector layoutManager={body} />;
+            },
+          })
         );
-    }, [dashboard]);
+    }, [body, dashboard]);
 
-    const layoutCategory = useLayoutCategory(body);
-
-    return [dashboardOptions, layoutCategory];
+    return [dashboardOptions];
   }
 }
 
