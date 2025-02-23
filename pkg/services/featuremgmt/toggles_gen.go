@@ -227,6 +227,10 @@ const (
 	// Enables previous SQL data source dataset dropdown behavior
 	FlagSqlDatasourceDatabaseSelection = "sqlDatasourceDatabaseSelection"
 
+	// FlagJsonStreamingV2
+	// Use the new json streaming plumbing
+	FlagJsonStreamingV2 = "jsonStreamingV2"
+
 	// FlagRecordedQueriesMulti
 	// Enables writing multiple items from a single query within Recorded Queries
 	FlagRecordedQueriesMulti = "recordedQueriesMulti"

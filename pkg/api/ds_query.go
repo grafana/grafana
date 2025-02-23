@@ -97,7 +97,11 @@ func (hs *HTTPServer) toJsonStreamingResponse(ctx context.Context, qdr *backend.
 		requestmeta.WithDownstreamStatusSource(ctx)
 	}
 
-	return response.JSONStreaming(statusCode, qdr)
+	if hs.Features.IsEnabledGlobally(featuremgmt.FlagJsonStreamingV2) {
+		return response.JSONStreamingV2(statusCode, qdr)
+	} else {
+		return response.JSONStreaming(statusCode, qdr)
+	}
 }
 
 // swagger:parameters queryMetricsWithExpressions

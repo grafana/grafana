@@ -8,8 +8,11 @@ import (
 	"fmt"
 	"net/http"
 	"reflect"
+	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	jsoniter "github.com/json-iterator/go"
+	"github.com/launchdarkly/go-jsonstream/v3/jwriter"
 	"gopkg.in/yaml.v3"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
@@ -131,9 +134,10 @@ func (r *NormalResponse) SetHeader(key, value string) *NormalResponse {
 
 // StreamingResponse is a response that streams itself back to the client.
 type StreamingResponse struct {
-	body   any
-	status int
-	header http.Header
+	body          any
+	status        int
+	header        http.Header
+	queryResponse *backend.QueryDataResponse
 }
 
 // Status gets the response's status.
@@ -148,6 +152,88 @@ func (r StreamingResponse) Body() []byte {
 	return nil
 }
 
+func (r StreamingResponse) WriteToJSONWriter(jsonWriter *jwriter.Writer) error {
+	topLevel := jsonWriter.Object()
+	topLevel.Name("results")
+	for refid, res := range r.queryResponse.Responses {
+		resO := jsonWriter.Object()
+		resO.Name(refid)
+
+		res1 := jsonWriter.Object()
+		res1.Name("status").Int(int(res.Status))
+		res1.Name("frames")
+
+		frames := jsonWriter.Array()
+		for _, frame := range res.Frames {
+			f := frames.Object()
+
+			f.Name("schema")
+			s := jsonWriter.Object()
+			s.Name("refId").String(refid)
+			s.Name("fields")
+			fs := jsonWriter.Array()
+			for _, field := range frame.Fields {
+				fj := jsonWriter.Object()
+				fj.Name("name").String(field.Name)
+				typeString := "string"
+				switch true {
+				case field.Type().Numeric():
+					typeString = "number"
+				case field.Type().Time():
+					typeString = "time"
+				}
+				fj.Name("type").String(typeString)
+				ti := fj.Name("typeInfo").Object()
+				ti.Name("frame").String(field.Type().ItemTypeString())
+				if field.Type().Nullable() {
+					ti.Name("nullable").Bool(true)
+				}
+				ti.End()
+				fj.End()
+			}
+			fs.End()
+			s.End()
+
+			f.Name("data")
+
+			v := jsonWriter.Object()
+			v.Name("values")
+			vOuter := jsonWriter.Array()
+
+			for _, field := range frame.Fields {
+				vInner := jsonWriter.Array()
+				for i := 0; i < field.Len(); i++ {
+					val, ok := field.ConcreteAt(i)
+					switch {
+					case field.Type().Numeric():
+						vInner.Int(int(val.(int64)))
+					case field.Type().Time():
+						vInner.Int(int(val.(time.Time).UnixMilli()))
+					case !ok:
+						vInner.Null()
+					default:
+						vInner.String(val.(string))
+					}
+				}
+				vInner.End()
+			}
+
+			vOuter.End()
+			v.End()
+
+			f.End()
+		}
+
+		frames.End()
+		res1.End()
+		resO.End()
+	}
+
+	topLevel.End()
+	jsonWriter.Flush()
+	return jsonWriter.Error()
+}
+
 // WriteTo writes the response to the provided context.
 // Required to implement api.Response.
 func (r StreamingResponse) WriteTo(ctx *contextmodel.ReqContext) {
@@ -157,12 +243,20 @@ func (r StreamingResponse) WriteTo(ctx *contextmodel.ReqContext) {
 	}
 	ctx.Resp.WriteHeader(r.status)
 
-	// Use a configuration that's compatible with the standard library
-	// to minimize the risk of introducing bugs. This will make sure
-	// that map keys is ordered.
-	jsonCfg := jsoniter.ConfigCompatibleWithStandardLibrary
-	enc := jsonCfg.NewEncoder(ctx.Resp)
-	if err := enc.Encode(r.body); err != nil {
+	var err error
+	if r.queryResponse != nil {
+		ctx.Logger.Error("Using json v2 response writer")
+		w := jwriter.NewStreamingWriter(ctx.Resp, 1024)
+		err = r.WriteToJSONWriter(&w)
+	} else {
+		// Use a configuration that's compatible with the standard library
+		// to minimize the risk of introducing bugs. This will make sure
+		// that map keys is ordered.
+		jsonCfg := jsoniter.ConfigCompatibleWithStandardLibrary
+		enc := jsonCfg.NewEncoder(ctx.Resp)
+		err = enc.Encode(r.body)
+	}
+	if err != nil {
 		ctx.Logger.Error("Error writing to response", "err", err)
 	}
 }
@@ -193,6 +287,17 @@ func (r *RedirectResponse) Body() []byte {
 func JSON(status int, body any) *NormalResponse {
 	return Respond(status, body).
 		SetHeader("Content-Type", "application/json")
+}
+
+// JSONStreamingV2 creates a streaming JSON response.
+func JSONStreamingV2(status int, queryData *backend.QueryDataResponse) StreamingResponse {
+	header := make(http.Header)
+	header.Set("Content-Type", "application/json")
+	return StreamingResponse{
+		status:        status,
+		queryResponse: queryData,
+		header:        header,
+	}
 }
 
 // JSONStreaming creates a streaming JSON response.
