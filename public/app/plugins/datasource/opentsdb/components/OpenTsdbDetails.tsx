@@ -9,6 +9,7 @@ const tsdbVersions = [
   { label: '<=2.1', value: 1 },
   { label: '==2.2', value: 2 },
   { label: '==2.3', value: 3 },
+  { label: '==2.4', value: 4 },
 ];
 
 const tsdbResolutions = [
