@@ -2,6 +2,7 @@ import tinycolor from 'tinycolor2';
 import uPlot from 'uplot';
 
 import {
+  EnumFieldConfig,
   FALLBACK_COLOR,
   Field,
   FieldType,
@@ -429,7 +430,11 @@ export const prepConfig = (xySeries: XYSeries[], theme: GrafanaTheme2) => {
 
   const dispColors = xySeries.map((s): FieldColorValuesWithCache => {
     const cfg: FieldColorValuesWithCache = {
-      index: [],
+      index: {
+        color: [],
+        text: [],
+        icon: [],
+      },
       getAll: () => [],
       getOne: () => -1,
       // cache for renderer, refreshed in prepData()
@@ -440,8 +445,8 @@ export const prepConfig = (xySeries: XYSeries[], theme: GrafanaTheme2) => {
     const f = s.color.field;
 
     if (f != null) {
-      Object.assign(cfg, fieldValueColors(f, theme));
-      cfg.hasAlpha = cfg.index.some((v) => !(v as string).endsWith('ff'));
+      Object.assign(cfg, getEnumConfig(f, theme));
+      cfg.hasAlpha = cfg.index.color!.some((v) => !(v as string).endsWith('ff'));
     }
 
     return cfg;
@@ -551,7 +556,7 @@ function getHex8Color(color: string, theme: GrafanaTheme2) {
 }
 
 interface FieldColorValues {
-  index: unknown[];
+  index: EnumFieldConfig;
   getOne: GetOneValue;
   getAll: GetAllValues;
 }
@@ -563,8 +568,13 @@ type GetAllValues = (values: unknown[], min?: number, max?: number) => number[];
 type GetOneValue = (value: unknown, min?: number, max?: number) => number;
 
 /** compiler for values to palette color idxs (from thresholds, mappings, by-value gradients) */
-function fieldValueColors(f: Field, theme: GrafanaTheme2): FieldColorValues {
-  let index: unknown[] = [];
+export function getEnumConfig(f: Field, theme: GrafanaTheme2): FieldColorValues {
+  const index: EnumFieldConfig = {
+    color: [],
+    text: [],
+    icon: [],
+  };
+
   let getAll: GetAllValues = () => [];
   let getOne: GetOneValue = () => -1;
 
@@ -574,21 +584,42 @@ function fieldValueColors(f: Field, theme: GrafanaTheme2): FieldColorValues {
   if (f.config.mappings?.length ?? 0 > 0) {
     let mappings = f.config.mappings!;
 
+    // this is color+text+icon that deduplicates the index above
+    // e.g. if multiple values + ranges map "OK"+"green", this ensures they map to same state by key
+    let keys: string[] = [];
+
+    function indexOf(color = '', text = '', icon = '') {
+      let key = `${color}|${text}|${icon}`;
+
+      let idx = keys.indexOf(key);
+
+      if (idx === -1) {
+        idx = keys.length;
+        keys.push(key);
+
+        index.color!.push(getHex8Color(color, theme));
+        index.text!.push(text);
+        index.icon!.push(icon);
+      }
+
+      return idx;
+    }
+
     for (let i = 0; i < mappings.length; i++) {
       let m = mappings[i];
 
       if (m.type === MappingType.ValueToText) {
         for (let k in m.options) {
-          let { color } = m.options[k];
+          let { color, text, icon } = m.options[k];
 
           if (color != null) {
-            let rhs = f.type === FieldType.string ? JSON.stringify(k) : Number(k);
-            conds += `v === ${rhs} ? ${index.length} : `;
-            index.push(getHex8Color(color, theme));
+            let idx = indexOf(color, text, icon);
+            let rhs = k.toLowerCase() === 'null' ? 'null' : f.type === FieldType.string ? JSON.stringify(k) : Number(k);
+            conds += `v === ${rhs} ? ${idx} : `;
           }
         }
       } else if (m.options.result.color != null) {
-        let { color } = m.options.result;
+        let { color, text, icon } = m.options.result;
 
         if (m.type === MappingType.RangeToText) {
           let range = [];
@@ -602,8 +633,8 @@ function fieldValueColors(f: Field, theme: GrafanaTheme2): FieldColorValues {
           }
 
           if (range.length > 0) {
-            conds += `${range.join(' && ')} ? ${index.length} : `;
-            index.push(getHex8Color(color, theme));
+            let idx = indexOf(color, text, icon);
+            conds += `${range.join(' && ')} ? ${idx} : `;
           }
         } else if (m.type === MappingType.SpecialValue) {
           let spl = m.options.match;
@@ -626,8 +657,8 @@ function fieldValueColors(f: Field, theme: GrafanaTheme2): FieldColorValues {
             }`;
           }
 
-          conds += ` ? ${index.length} : `;
-          index.push(getHex8Color(color, theme));
+          let idx = indexOf(color, text, icon);
+          conds += ` ? ${idx} : `;
         } else if (m.type === MappingType.RegexToText) {
           // TODO
         }
@@ -646,18 +677,20 @@ function fieldValueColors(f: Field, theme: GrafanaTheme2): FieldColorValues {
 
       conds += '0';
 
-      index = steps.map((s) => getHex8Color(s.color, theme));
+      index.color = steps.map((s) => getHex8Color(s.color, theme));
+      index.text = Array(steps.length).fill('');
+      index.icon = index.text!.slice();
     } else {
       // TODO: percent thresholds?
     }
   } else if (f.config.color?.mode?.startsWith('continuous')) {
     let calc = getFieldColorModeForField(f).getCalculator(f, theme);
 
-    index = Array(32);
+    index.color = Array(32);
 
-    for (let i = 0; i < index.length; i++) {
-      let pct = i / (index.length - 1);
-      index[i] = getHex8Color(calc(pct, pct), theme);
+    for (let i = 0; i < index.color.length; i++) {
+      let pct = i / (index.color.length - 1);
+      index.color[i] = getHex8Color(calc(pct, pct), theme);
     }
 
     getAll = (vals, min, max) => valuesToFills(vals as number[], index as string[], min!, max!);
