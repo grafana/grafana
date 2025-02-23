@@ -33,6 +33,7 @@ import {
   RulerGrafanaRuleDTO,
   RulerRecordingRuleDTO,
   RulerRuleDTO,
+  RulerRuleGroupDTO,
   mapStateWithReasonToBaseState,
 } from 'app/types/unified-alerting-dto';
 
@@ -88,6 +89,11 @@ export function isCloudRulerRule(rule?: RulerRuleDTO | PostableRuleDTO): rule is
 
 export function isGrafanaRulerRulePaused(rule: RulerGrafanaRuleDTO) {
   return rule && isGrafanaRulerRule(rule) && Boolean(rule.grafana_alert.is_paused);
+}
+export function isCloudRulerGroup(
+  rulerRuleGroup: RulerRuleGroupDTO
+): rulerRuleGroup is RulerRuleGroupDTO<RulerCloudRuleDTO> {
+  return rulerRuleGroup.rules.every((r) => isCloudRulerRule(r));
 }
 
 export function alertInstanceKey(alert: Alert): string {
@@ -296,7 +302,7 @@ export function getFirstActiveAt(promRule?: AlertingRule) {
  *
  * see https://grafana.com/docs/metrics-enterprise/latest/tenant-management/tenant-federation/#cross-tenant-alerting-and-recording-rule-federation
  */
-export function isFederatedRuleGroup(group: CombinedRuleGroup) {
+export function isFederatedRuleGroup(group: CombinedRuleGroup | RulerRuleGroupDTO) {
   return Array.isArray(group.source_tenants);
 }
 
