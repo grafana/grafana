@@ -54,7 +54,10 @@ func (c *ClientFactory) New(ns string) (*DynamicClient, KindsLookup, error) {
 	if err != nil {
 		return nil, nil, err
 	}
-	config := c.configProvider.GetRestConfig(ctx)
+	config, err := c.configProvider.GetRestConfig(ctx)
+	if err != nil {
+		return nil, nil, err
+	}
 	client, err := dynamic.NewForConfig(config)
 	if err != nil {
 		return nil, nil, err
