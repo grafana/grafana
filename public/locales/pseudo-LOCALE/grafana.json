@@ -364,7 +364,8 @@
     "list-view": {
       "empty": {
         "new-alert-rule": "Ńęŵ äľęřŧ řūľę",
-        "new-recording-rule": "Ńęŵ řęčőřđįŉģ řūľę",
+        "new-grafana-recording-rule": "Ńęŵ Ğřäƒäŉä řęčőřđįŉģ řūľę",
+        "new-recording-rule": "Ńęŵ đäŧä şőūřčę řęčőřđįŉģ řūľę",
         "provisioning": "Ÿőū čäŉ äľşő đęƒįŉę řūľęş ŧĥřőūģĥ ƒįľę přővįşįőŉįŉģ őř Ŧęřřäƒőřm. <2>Ŀęäřŉ mőřę</2>"
       },
       "section": {
