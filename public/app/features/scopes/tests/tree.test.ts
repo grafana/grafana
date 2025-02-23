@@ -1,5 +1,7 @@
 import { config } from '@grafana/runtime';
 
+import { ScopesSelectorService } from '../selector/ScopesSelectorService';
+
 import {
   applyScopes,
   clearScopesSearch,
@@ -39,7 +41,7 @@ import {
   expectSelectedScopePath,
   expectTreeScopePath,
 } from './utils/assertions';
-import { fetchNodesSpy, fetchScopeSpy, getDatasource, getInstanceSettings, getMock } from './utils/mocks';
+import { getDatasource, getInstanceSettings, getMock } from './utils/mocks';
 import { renderDashboard, resetScenes } from './utils/render';
 
 jest.mock('@grafana/runtime', () => ({
@@ -52,17 +54,22 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 describe('Tree', () => {
+  let fetchNodesSpy: jest.SpyInstance;
+  let fetchScopeSpy: jest.SpyInstance;
+
   beforeAll(() => {
     config.featureToggles.scopeFilters = true;
     config.featureToggles.groupByVariable = true;
   });
 
-  beforeEach(() => {
-    renderDashboard();
+  beforeEach(async () => {
+    await renderDashboard();
+    fetchNodesSpy = jest.spyOn(ScopesSelectorService.instance!, 'fetchNodeApi');
+    fetchScopeSpy = jest.spyOn(ScopesSelectorService.instance!, 'fetchScopeApi');
   });
 
   afterEach(async () => {
-    await resetScenes();
+    await resetScenes([fetchNodesSpy, fetchScopeSpy]);
   });
 
   it('Fetches scope details on select', async () => {
@@ -126,16 +133,16 @@ describe('Tree', () => {
     await openSelector();
     await expandResultApplications();
     await searchScopes('Cloud');
-    expect(fetchNodesSpy).toHaveBeenCalledTimes(2);
+    expect(fetchNodesSpy).toHaveBeenCalledTimes(3);
     expectResultApplicationsGrafanaNotPresent();
     expectResultApplicationsMimirNotPresent();
     expectResultApplicationsCloudPresent();
 
     await clearScopesSearch();
-    expect(fetchNodesSpy).toHaveBeenCalledTimes(3);
+    expect(fetchNodesSpy).toHaveBeenCalledTimes(4);
 
     await searchScopes('Grafana');
-    expect(fetchNodesSpy).toHaveBeenCalledTimes(4);
+    expect(fetchNodesSpy).toHaveBeenCalledTimes(5);
     expectResultApplicationsGrafanaPresent();
     expectResultApplicationsCloudNotPresent();
   });
@@ -156,7 +163,7 @@ describe('Tree', () => {
     await expandResultApplications();
     await selectResultApplicationsMimir();
     await searchScopes('grafana');
-    expect(fetchNodesSpy).toHaveBeenCalledTimes(2);
+    expect(fetchNodesSpy).toHaveBeenCalledTimes(3);
     expectPersistedApplicationsMimirPresent();
     expectPersistedApplicationsGrafanaNotPresent();
     expectResultApplicationsMimirNotPresent();
@@ -168,7 +175,7 @@ describe('Tree', () => {
     await expandResultApplications();
     await selectResultApplicationsMimir();
     await searchScopes('mimir');
-    expect(fetchNodesSpy).toHaveBeenCalledTimes(2);
+    expect(fetchNodesSpy).toHaveBeenCalledTimes(3);
     expectPersistedApplicationsMimirNotPresent();
     expectResultApplicationsMimirPresent();
   });
@@ -178,10 +185,10 @@ describe('Tree', () => {
     await expandResultApplications();
     await selectResultApplicationsMimir();
     await searchScopes('grafana');
-    expect(fetchNodesSpy).toHaveBeenCalledTimes(2);
+    expect(fetchNodesSpy).toHaveBeenCalledTimes(3);
 
     await clearScopesSearch();
-    expect(fetchNodesSpy).toHaveBeenCalledTimes(3);
+    expect(fetchNodesSpy).toHaveBeenCalledTimes(4);
     expectPersistedApplicationsMimirNotPresent();
     expectPersistedApplicationsGrafanaNotPresent();
     expectResultApplicationsMimirPresent();
@@ -192,15 +199,15 @@ describe('Tree', () => {
     await openSelector();
     await expandResultApplications();
     await searchScopes('mimir');
-    expect(fetchNodesSpy).toHaveBeenCalledTimes(2);
+    expect(fetchNodesSpy).toHaveBeenCalledTimes(3);
 
     await selectResultApplicationsMimir();
     await searchScopes('unknown');
-    expect(fetchNodesSpy).toHaveBeenCalledTimes(3);
+    expect(fetchNodesSpy).toHaveBeenCalledTimes(4);
     expectPersistedApplicationsMimirPresent();
 
     await clearScopesSearch();
-    expect(fetchNodesSpy).toHaveBeenCalledTimes(4);
+    expect(fetchNodesSpy).toHaveBeenCalledTimes(5);
     expectResultApplicationsMimirPresent();
     expectResultApplicationsGrafanaPresent();
   });
@@ -210,7 +217,7 @@ describe('Tree', () => {
     await expandResultApplications();
     await selectResultApplicationsMimir();
     await searchScopes('grafana');
-    expect(fetchNodesSpy).toHaveBeenCalledTimes(2);
+    expect(fetchNodesSpy).toHaveBeenCalledTimes(3);
 
     await selectResultApplicationsGrafana();
     await applyScopes();
@@ -222,7 +229,7 @@ describe('Tree', () => {
     await expandResultApplications();
     await selectResultApplicationsMimir();
     await searchScopes('grafana');
-    expect(fetchNodesSpy).toHaveBeenCalledTimes(2);
+    expect(fetchNodesSpy).toHaveBeenCalledTimes(3);
 
     await selectResultApplicationsGrafana();
     await applyScopes();
@@ -239,11 +246,11 @@ describe('Tree', () => {
     expectScopesHeadline('Recommended');
 
     await searchScopes('Applications');
-    expect(fetchNodesSpy).toHaveBeenCalledTimes(1);
+    expect(fetchNodesSpy).toHaveBeenCalledTimes(2);
     expectScopesHeadline('Results');
 
     await searchScopes('unknown');
-    expect(fetchNodesSpy).toHaveBeenCalledTimes(2);
+    expect(fetchNodesSpy).toHaveBeenCalledTimes(3);
     expectScopesHeadline('No results found for your query');
   });
 

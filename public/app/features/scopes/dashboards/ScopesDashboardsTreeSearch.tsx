@@ -15,21 +15,21 @@ export interface ScopesDashboardsTreeSearchProps {
 export function ScopesDashboardsTreeSearch({ disabled, query, onChange }: ScopesDashboardsTreeSearchProps) {
   const styles = useStyles2(getStyles);
 
-  const [inputState, setInputState] = useState<{ value: string; isDirty: boolean }>({ value: query, isDirty: false });
+  const [inputState, setInputState] = useState<{ value: string; dirty: boolean }>({ value: query, dirty: false });
 
   const [getDebounceState] = useDebounce(
     () => {
-      if (inputState.isDirty) {
+      if (inputState.dirty) {
         onChange(inputState.value);
       }
     },
     500,
-    [inputState.isDirty, inputState.value]
+    [inputState.dirty, inputState.value]
   );
 
   useEffect(() => {
-    if ((getDebounceState() || !inputState.isDirty) && inputState.value !== query) {
-      setInputState({ value: query, isDirty: false });
+    if ((getDebounceState() || !inputState.dirty) && inputState.value !== query) {
+      setInputState({ value: query, dirty: false });
     }
   }, [getDebounceState, inputState, query]);
 
@@ -40,7 +40,7 @@ export function ScopesDashboardsTreeSearch({ disabled, query, onChange }: Scopes
         placeholder={t('scopes.dashboards.search', 'Search')}
         value={inputState.value}
         data-testid="scopes-dashboards-search"
-        onChange={(value) => setInputState({ value, isDirty: true })}
+        onChange={(value) => setInputState({ value, dirty: true })}
       />
     </div>
   );

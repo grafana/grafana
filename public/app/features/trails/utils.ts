@@ -20,12 +20,12 @@ import {
   SceneObject,
   SceneObjectState,
   SceneObjectUrlValues,
+  SceneScopesBridge,
   SceneTimeRange,
   sceneUtils,
   SceneVariable,
   SceneVariableState,
 } from '@grafana/scenes';
-import { getClosestScopesFacade } from 'app/features/scopes';
 
 import { getDatasourceSrv } from '../plugins/datasource_srv';
 
@@ -51,6 +51,10 @@ export function isConstantVariable(variable: SceneVariable | null): variable is 
 
 export function getTrailFor(model: SceneObject): DataTrail {
   return sceneGraph.getAncestor(model, DataTrail);
+}
+
+export function getScopesBridgeFor(model: SceneObject): SceneScopesBridge | undefined {
+  return sceneGraph.getScopesBridge(getTrailFor(model));
 }
 
 export function getTrailSettings(model: SceneObject): DataTrailSettings {
@@ -193,7 +197,7 @@ export function limitAdhocProviders(
 
       const opts = {
         filters,
-        scopes: getClosestScopesFacade(variable)?.value,
+        scopes: sceneGraph.getScopesBridge(dataTrail)?.getValue(),
         queries: dataTrail.getQueries(),
       };
 
@@ -237,7 +241,7 @@ export function limitAdhocProviders(
       const opts = {
         key: filter.key,
         filters,
-        scopes: getClosestScopesFacade(variable)?.value,
+        scopes: sceneGraph.getScopesBridge(dataTrail)?.getValue(),
         queries: dataTrail.getQueries(),
       };
 
