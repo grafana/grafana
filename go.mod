@@ -71,7 +71,7 @@ require (
 	github.com/googleapis/gax-go/v2 v2.14.1 // @grafana/grafana-backend-group
 	github.com/gorilla/mux v1.8.1 // @grafana/grafana-backend-group
 	github.com/gorilla/websocket v1.5.3 // @grafana/grafana-app-platform-squad
-	github.com/grafana/alerting v0.0.0-20250220212119-4baca04e46bb // @grafana/alerting-backend
+	github.com/grafana/alerting v0.0.0-20250221202230-9d7e00921e44 // @grafana/alerting-backend
 	github.com/grafana/authlib v0.0.0-20250219100139-6a3b1bbb50e7 // @grafana/identity-access-team
 	github.com/grafana/authlib/types v0.0.0-20250219092154-21ce22b49f31 // @grafana/identity-access-team
 	github.com/grafana/dataplane/examples v0.0.1 // @grafana/observability-metrics
@@ -111,7 +111,6 @@ require (
 	github.com/jmoiron/sqlx v1.3.5 // @grafana/grafana-backend-group
 	github.com/json-iterator/go v1.1.12 // @grafana/grafana-backend-group
 	github.com/lib/pq v1.10.9 // @grafana/grafana-backend-group
-	github.com/linkedin/goavro/v2 v2.10.0 // @grafana/grafana-backend-group
 	github.com/m3db/prometheus_remote_client_golang v0.4.4 // @grafana/grafana-backend-group
 	github.com/madflojo/testcerts v1.1.1 // @grafana/alerting-backend
 	github.com/magefile/mage v1.15.0 // @grafana/grafana-developer-enablement-squad
