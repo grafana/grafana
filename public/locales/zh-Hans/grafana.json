@@ -524,6 +524,19 @@
       },
       "pause": {
         "label": ""
+      },
+      "threshold": {
+        "recovery": {
+          "stop-alerting-above": "",
+          "stop-alerting-bellow": "",
+          "stop-alerting-equal": "",
+          "stop-alerting-inside-range": "",
+          "stop-alerting-less": "",
+          "stop-alerting-more": "",
+          "stop-alerting-not-equal": "",
+          "stop-alerting-outside-range": "",
+          "title": ""
+        }
       }
     },
     "rule-groups": {
@@ -801,6 +814,7 @@
     "collapse": "",
     "edit": "",
     "help": "",
+    "loading": "",
     "locale": {
       "default": "默认"
     },
@@ -1034,6 +1048,11 @@
         }
       }
     },
+    "editpane": {
+      "add": "",
+      "configure": "",
+      "outline": ""
+    },
     "empty": {
       "add-library-panel-body": "添加与其他仪表板共享的可视化。",
       "add-library-panel-button": "添加库面板",
@@ -1171,6 +1190,7 @@
     "toolbar": {
       "add": "添加",
       "add-panel": "",
+      "add-panel-description": "",
       "add-panel-lib": "",
       "add-row": "",
       "add-tab": "",
@@ -1196,6 +1216,7 @@
         "label": "",
         "tooltip": ""
       },
+      "libray-panel-description": "",
       "mark-favorite": "标记为收藏",
       "more-save-options": "",
       "open-original": "打开原始仪表板",
@@ -1204,6 +1225,7 @@
       "playlist-stop": "停止播放列表",
       "public-dashboard": "",
       "refresh": "刷新仪表板",
+      "row-description": "",
       "save": "保存仪表板",
       "save-dashboard": {
         "label": "",
@@ -1223,6 +1245,7 @@
       "share-button": "分享",
       "show-hidden-elements": "",
       "switch-old-dashboard": "",
+      "tabs-description": "",
       "unlink-library-panel": "",
       "unmark-favorite": "取消标记为收藏"
     },
@@ -1633,6 +1656,10 @@
     "incomplete-request-error": "",
     "send-custom-feedback": ""
   },
+  "get-enterprise": {
+    "requires-license": "",
+    "title": ""
+  },
   "grafana-ui": {
     "action-editor": {
       "button": {
@@ -2035,6 +2062,7 @@
       "render-image-error-description": ""
     }
   },
+  "lock-icon": "",
   "login": {
     "divider": {
       "connecting-text": ""
@@ -2829,6 +2857,7 @@
   },
   "plugins": {
     "catalog": {
+      "no-updates-available": "",
       "update-all": {
         "all-plugins-updated": "",
         "available-header": "",
@@ -2887,6 +2916,12 @@
     },
     "empty-state": {
       "message": ""
+    },
+    "filter": {
+      "disabled": "",
+      "sort": "",
+      "sort-list": "",
+      "state": ""
     },
     "plugin-help": {
       "error": "",
