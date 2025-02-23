@@ -958,4 +958,8 @@ const (
 	// FlagNewShareReportDrawer
 	// Enables the report creation drawer in a dashboard
 	FlagNewShareReportDrawer = "newShareReportDrawer"
+
+	// FlagImproveRendererTraffic
+	// Reduce number of requests done when the request is coming from the renderer
+	FlagImproveRendererTraffic = "improveRendererTraffic"
 )
