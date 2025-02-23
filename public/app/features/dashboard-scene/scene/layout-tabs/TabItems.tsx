@@ -10,11 +10,14 @@ import { getEditOptions, renderActions } from './TabItemsEditor';
 
 export class TabItems implements MultiSelectedEditableDashboardElement {
   public readonly isMultiSelectedEditableDashboardElement = true;
-  public readonly typeName = 'Tabs';
   public readonly key: string;
 
   public constructor(private _tabs: TabItem[]) {
     this.key = uuidv4();
+  }
+
+  public getEditableElementInfo() {
+    return { name: 'Tabs', typeId: 'tabs', icon: 'folder' as const };
   }
 
   public useEditPaneOptions(): OptionsPaneCategoryDescriptor[] {

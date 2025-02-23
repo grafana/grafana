@@ -73,38 +73,40 @@ export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls
 
   return (
     <div {...containerProps} style={containerStyle}>
-      <div
-        {...primaryProps}
-        className={cx(primaryProps.className, styles.canvasWithSplitter)}
-        onPointerDown={(evt) => {
-          if (evt.shiftKey) {
-            return;
-          }
+      <ElementSelectionContext.Provider value={selectionContext}>
+        <div
+          {...primaryProps}
+          className={cx(primaryProps.className, styles.canvasWithSplitter)}
+          onPointerDown={(evt) => {
+            if (evt.shiftKey) {
+              return;
+            }
 
-          editPane.clearSelection();
-        }}
-      >
-        <NavToolbarActions dashboard={dashboard} />
-        <div className={cx(!isEditing && styles.controlsWrapperSticky)}>{controls}</div>
-        <div className={styles.bodyWrapper}>
-          <div className={cx(styles.body, isEditing && styles.bodyEditing)} ref={onBodyRef}>
-            <ElementSelectionContext.Provider value={selectionContext}>{body}</ElementSelectionContext.Provider>
+            editPane.clearSelection();
+          }}
+        >
+          <NavToolbarActions dashboard={dashboard} />
+          <div className={cx(!isEditing && styles.controlsWrapperSticky)}>{controls}</div>
+          <div className={styles.bodyWrapper}>
+            <div className={cx(styles.body, isEditing && styles.bodyEditing)} ref={onBodyRef}>
+              {body}
+            </div>
           </div>
         </div>
-      </div>
-      {isEditing && (
-        <>
-          <div {...splitterProps} data-edit-pane-splitter={true} />
-          <div {...secondaryProps} className={cx(secondaryProps.className, styles.editPane)}>
-            <DashboardEditPaneRenderer
-              editPane={editPane}
-              isCollapsed={splitterState.collapsed}
-              onToggleCollapse={onToggleCollapse}
-              openOverlay={selectionContext.selected.length > 0}
-            />
-          </div>
-        </>
-      )}
+        {isEditing && (
+          <>
+            <div {...splitterProps} data-edit-pane-splitter={true} />
+            <div {...secondaryProps} className={cx(secondaryProps.className, styles.editPane)}>
+              <DashboardEditPaneRenderer
+                editPane={editPane}
+                isCollapsed={splitterState.collapsed}
+                onToggleCollapse={onToggleCollapse}
+                openOverlay={selectionContext.selected.length > 0}
+              />
+            </div>
+          </>
+        )}
+      </ElementSelectionContext.Provider>
     </div>
   );
 }

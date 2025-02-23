@@ -23,6 +23,10 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
 
   public constructor(private panel: VizPanel) {}
 
+  public getEditableElementInfo() {
+    return { typeId: 'panel', icon: 'chart-line' as const, name: this.panel.state.title };
+  }
+
   public useEditPaneOptions(): OptionsPaneCategoryDescriptor[] {
     const panel = this.panel;
     const layoutElement = panel.parent!;

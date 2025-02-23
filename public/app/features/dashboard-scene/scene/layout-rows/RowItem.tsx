@@ -35,7 +35,6 @@ export class RowItem
   });
 
   public readonly isEditableDashboardElement = true;
-  public readonly typeName = 'Row';
 
   public constructor(state?: Partial<RowItemState>) {
     super({
@@ -43,6 +42,10 @@ export class RowItem
       title: state?.title ?? t('dashboard.rows-layout.row.new', 'New row'),
       layout: state?.layout ?? ResponsiveGridLayoutManager.createEmpty(),
     });
+  }
+
+  public getEditableElementInfo() {
+    return { typeId: 'row', icon: 'line-alt' as const, name: this.state.title ?? '' };
   }
 
   public getLayout(): DashboardLayoutManager {

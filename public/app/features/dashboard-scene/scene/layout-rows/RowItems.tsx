@@ -10,11 +10,14 @@ import { getEditOptions, renderActions } from './RowItemsEditor';
 
 export class RowItems implements MultiSelectedEditableDashboardElement {
   public readonly isMultiSelectedEditableDashboardElement = true;
-  public readonly typeName = 'Rows';
   public readonly key: string;
 
   public constructor(private _rows: RowItem[]) {
     this.key = uuidv4();
+  }
+
+  public getEditableElementInfo() {
+    return { name: 'Rows', typeId: 'rows', icon: 'folder' as const };
   }
 
   public useEditPaneOptions(): OptionsPaneCategoryDescriptor[] {

@@ -9,11 +9,14 @@ import { MultiSelectedEditableDashboardElement } from '../scene/types/MultiSelec
 
 export class MultiSelectedObjectsEditableElement implements MultiSelectedEditableDashboardElement {
   public readonly isMultiSelectedEditableDashboardElement = true;
-  public readonly typeName = 'Objects';
   public readonly key: string;
 
   constructor(private _elements: BulkActionElement[]) {
     this.key = uuidv4();
+  }
+
+  public getEditableElementInfo() {
+    return { name: 'Objects', typeId: 'objects', icon: 'folder' as const };
   }
 
   public renderActions(): ReactNode {
