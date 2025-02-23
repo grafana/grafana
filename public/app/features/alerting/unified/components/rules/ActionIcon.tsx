@@ -1,11 +1,14 @@
+import { ComponentProps } from 'react';
+
 import { Button, IconName, LinkButton, Tooltip } from '@grafana/ui';
-import { PopoverContent, TooltipPlacement } from '@grafana/ui/src/components/Tooltip';
+
+type TooltipProps = ComponentProps<typeof Tooltip>;
 
 interface Props {
-  tooltip: PopoverContent;
+  tooltip: TooltipProps['content'];
   icon: IconName;
   className?: string;
-  tooltipPlacement?: TooltipPlacement;
+  tooltipPlacement?: TooltipProps['placement'];
   to?: string;
   target?: string;
   onClick?: () => void;
