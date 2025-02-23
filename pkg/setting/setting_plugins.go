@@ -26,13 +26,19 @@ func extractPluginSettings(sections []*ini.Section) PluginSettings {
 	return psMap
 }
 
-var (
-	defaultPreinstallPlugins = map[string]InstallPlugin{
+func getDefaultPreinstallPlugins(isFeatureToggleEnabled func(key string) bool) map[string]InstallPlugin {
+	plugins := map[string]InstallPlugin{
 		// Default preinstalled plugins
 		"grafana-lokiexplore-app": {"grafana-lokiexplore-app", "", ""},
 		"grafana-pyroscope-app":   {"grafana-pyroscope-app", "", ""},
 	}
-)
+
+	if isFeatureToggleEnabled("exploreMetricsUseExternalAppPlugin") {
+		plugins["grafana-metricsdrilldown-app"] = InstallPlugin{"grafana-metricsdrilldown-app", "", ""}
+	}
+
+	return plugins
+}
 
 func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 	pluginsSection := iniFile.Section("plugins")
@@ -52,7 +58,7 @@ func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 		rawInstallPlugins := util.SplitString(pluginsSection.Key("preinstall").MustString(""))
 		preinstallPlugins := make(map[string]InstallPlugin)
 		// Add the default preinstalled plugins
-		for _, plugin := range defaultPreinstallPlugins {
+		for _, plugin := range getDefaultPreinstallPlugins(cfg.IsFeatureToggleEnabled) {
 			preinstallPlugins[plugin.ID] = plugin
 		}
 		// Add the plugins defined in the configuration
