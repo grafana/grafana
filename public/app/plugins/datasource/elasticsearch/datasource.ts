@@ -1108,7 +1108,7 @@ export class ElasticDatasource
     }
     let finalQuery = query;
     adhocFilters.forEach((filter) => {
-      finalQuery = addAddHocFilter(finalQuery, filter);
+      finalQuery = addAddHocFilter(finalQuery, filter, this.logLevelField);
     });
 
     return finalQuery;
