@@ -17,7 +17,6 @@ autoMigrateWorldmapPanel,preview,@grafana/dataviz-squad,false,false,true
 autoMigrateStatPanel,preview,@grafana/dataviz-squad,false,false,true
 disableAngular,preview,@grafana/dataviz-squad,false,false,true
 canvasPanelNesting,experimental,@grafana/dataviz-squad,false,false,true
-vizActions,experimental,@grafana/dataviz-squad,false,false,true
 disableSecretsCompatibility,experimental,@grafana/hosted-grafana-team,false,true,false
 logRequestsInstrumentedAsUnknown,experimental,@grafana/hosted-grafana-team,false,false,false
 grpcServer,preview,@grafana/search-and-storage,false,false,false
