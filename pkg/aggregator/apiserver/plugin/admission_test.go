@@ -22,13 +22,17 @@ import (
 func TestAdmissionMutation(t *testing.T) {
 	dps := v0alpha1.DataPlaneService{
 		Spec: v0alpha1.DataPlaneServiceSpec{
-			PluginID: "testds",
-			Group:    "testds.example.com",
-			Version:  "v1",
+			Group:   "testds.example.com",
+			Version: "v1",
 			Services: []v0alpha1.Service{
 				{
 					Type: v0alpha1.AdmissionControlServiceType,
 				},
+			},
+			Backend: v0alpha1.Backend{
+				Type:       v0alpha1.BackendTypePlugin,
+				PluginID:   "testds",
+				PluginType: v0alpha1.DataSourcePluginType,
 			},
 		},
 	}
@@ -110,13 +114,17 @@ func TestAdmissionMutation(t *testing.T) {
 func TestAdmissionValidation(t *testing.T) {
 	dps := v0alpha1.DataPlaneService{
 		Spec: v0alpha1.DataPlaneServiceSpec{
-			PluginID: "testds",
-			Group:    "testds.example.com",
-			Version:  "v1",
+			Group:   "testds.example.com",
+			Version: "v1",
 			Services: []v0alpha1.Service{
 				{
 					Type: v0alpha1.AdmissionControlServiceType,
 				},
+			},
+			Backend: v0alpha1.Backend{
+				Type:       v0alpha1.BackendTypePlugin,
+				PluginID:   "testds",
+				PluginType: v0alpha1.DataSourcePluginType,
 			},
 		},
 	}
