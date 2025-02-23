@@ -1,6 +1,7 @@
 import * as DOMUtil from './dom'; // includes Element.closest polyfill
 import * as ReactUtils from './reactUtils';
 
+export * from './clipboard';
 export * from './colors';
 export * from './validate';
 export * from './slate';
@@ -8,6 +9,7 @@ export * from './dataLinks';
 export * from './tags';
 export * from './scrollbar';
 export * from './table';
+export * from './time';
 export * from './measureText';
 export * from './useForceUpdate';
 export { SearchFunctionType } from './searchFunctions';
