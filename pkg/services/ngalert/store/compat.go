@@ -33,6 +33,7 @@ func alertRuleToModelsAlertRule(ar alertRule, l log.Logger) (models.AlertRule, e
 		RuleGroup:       ar.RuleGroup,
 		RuleGroupIndex:  ar.RuleGroupIndex,
 		For:             ar.For,
+		KeepFiringFor:   ar.KeepFiringFor,
 		IsPaused:        ar.IsPaused,
 	}
 
@@ -122,6 +123,7 @@ func alertRuleFromModelsAlertRule(ar models.AlertRule) (alertRule, error) {
 		NoDataState:     ar.NoDataState.String(),
 		ExecErrState:    ar.ExecErrState.String(),
 		For:             ar.For,
+		KeepFiringFor:   ar.KeepFiringFor,
 		IsPaused:        ar.IsPaused,
 	}
 
@@ -197,6 +199,7 @@ func alertRuleToAlertRuleVersion(rule alertRule) alertRuleVersion {
 		NoDataState:          rule.NoDataState,
 		ExecErrState:         rule.ExecErrState,
 		For:                  rule.For,
+		KeepFiringFor:        rule.KeepFiringFor,
 		Annotations:          rule.Annotations,
 		Labels:               rule.Labels,
 		IsPaused:             rule.IsPaused,
@@ -228,6 +231,7 @@ func alertRuleVersionToAlertRule(version alertRuleVersion) alertRule {
 		NoDataState:          version.NoDataState,
 		ExecErrState:         version.ExecErrState,
 		For:                  version.For,
+		KeepFiringFor:        version.KeepFiringFor,
 		Annotations:          version.Annotations,
 		Labels:               version.Labels,
 		IsPaused:             version.IsPaused,
