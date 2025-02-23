@@ -75,7 +75,7 @@ import {
 import { useContentOutlineContext } from '../ContentOutline/ContentOutlineContext';
 import { getUrlStateFromPaneState } from '../hooks/useStateSync';
 import { changePanelState } from '../state/explorePane';
-import { changeQueries } from '../state/query';
+import { changeQueries, runQueries } from '../state/query';
 
 import { LogsFeedback } from './LogsFeedback';
 import { LogsMetaRow } from './LogsMetaRow';
@@ -478,12 +478,11 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
           if (query.datasource?.type !== 'loki' || !isLokiQuery(query)) {
             return query;
           }
-          hasLokiQueries = true;
-
           if (query.direction === LokiQueryDirection.Scan) {
             // Don't override Scan. When the direction is Scan it means that the user specifically assigned this direction to the query.
             return query;
           }
+          hasLokiQueries = true;
           const newDirection =
             newSortOrder === LogsSortOrder.Ascending ? LokiQueryDirection.Forward : LokiQueryDirection.Backward;
           if (newDirection !== query.direction) {
@@ -494,6 +493,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
 
         if (hasLokiQueries) {
           dispatch(changeQueries({ exploreId, queries: newQueries }));
+          dispatch(runQueries({ exploreId }));
         }
       }
 
