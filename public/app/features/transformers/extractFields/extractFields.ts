@@ -79,7 +79,7 @@ export function addExtractedFields(frame: DataFrame, options: ExtractFieldsOptio
       if (filteredPaths.length > 0) {
         filteredPaths.forEach((path: JSONPath) => {
           const key = path.alias && path.alias.length > 0 ? path.alias : path.path;
-          newObj[key] = get(obj, path.path) ?? 'Not Found';
+          newObj[key] = get(obj, path.path) ?? undefined;
         });
 
         obj = newObj;
