@@ -19,6 +19,13 @@ export function getDashboardGridStyles(theme: GrafanaTheme2) {
       },
     },
 
+    '.dragging-active': {
+      '*': {
+        cursor: 'move',
+        userSelect: 'none',
+      },
+    },
+
     [theme.breakpoints.down('md')]: {
       '.react-grid-layout': {
         height: 'unset !important',

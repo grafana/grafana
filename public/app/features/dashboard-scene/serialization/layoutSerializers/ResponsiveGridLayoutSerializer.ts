@@ -1,8 +1,8 @@
-import { SceneCSSGridLayout } from '@grafana/scenes';
 import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 
 import { ResponsiveGridItem } from '../../scene/layout-responsive-grid/ResponsiveGridItem';
 import { ResponsiveGridLayoutManager } from '../../scene/layout-responsive-grid/ResponsiveGridLayoutManager';
+import { SceneCSSGridLayout } from '../../scene/layout-responsive-grid/SceneCSSGridLayout';
 import { DashboardLayoutManager, LayoutManagerSerializer } from '../../scene/types/DashboardLayoutManager';
 import { getGridItemKeyForPanelId } from '../../utils/utils';
 

@@ -46,6 +46,7 @@ import { DashboardGridItem, RepeatDirection } from '../scene/layout-default/Dash
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior';
 import { RowActions } from '../scene/layout-default/row-actions/RowActions';
+import { LayoutOrchestrator } from '../scene/layout-manager/LayoutOrchestrator';
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
 import { preserveDashboardSceneStateInLocalStorage } from '../utils/dashboardSessionState';
@@ -263,10 +264,12 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
     title: oldModel.title,
     version: oldModel.version,
     scopeMeta,
-    body: new DefaultGridLayoutManager({
-      grid: new SceneGridLayout({
-        isLazy: !(dto.preload || contextSrv.user.authenticatedBy === 'render'),
-        children: createSceneObjectsForPanels(oldModel.panels),
+    body: new LayoutOrchestrator({
+      manager: new DefaultGridLayoutManager({
+        grid: new SceneGridLayout({
+          isLazy: !(dto.preload || contextSrv.user.authenticatedBy === 'render'),
+          children: createSceneObjectsForPanels(oldModel.panels),
+        }),
       }),
     }),
     $timeRange: new SceneTimeRange({
