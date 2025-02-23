@@ -595,28 +595,34 @@ func readScalar(iter *sdkjsoniter.Iterator, dataPlane bool) backend.DataResponse
 	}
 }
 
-func readMatrixOrVectorMulti(iter *sdkjsoniter.Iterator, resultType string, opt Options) backend.DataResponse {
+func readMatrixOrVectorMulti(bufIter *sdkjsoniter.Iterator, resultType string, opt Options) backend.DataResponse {
 	rsp := backend.DataResponse{}
 
-	for more, err := iter.ReadArray(); more; more, err = iter.ReadArray() {
+	for more, err := bufIter.ReadArray(); more; more, err = bufIter.ReadArray() {
 		if err != nil {
 			return rspErr(err)
 		}
-		timeField := data.NewFieldFromFieldType(data.FieldTypeTime, 0)
-		timeField.Name = data.TimeSeriesTimeFieldName
-		valueField := data.NewFieldFromFieldType(data.FieldTypeFloat64, 0)
-		valueField.Name = data.TimeSeriesValueFieldName
-		valueField.Labels = data.Labels{}
 
+		// First read all values to temporary storage
+		var tempTimes []time.Time
+		var tempValues []float64
+		var labels data.Labels
 		var histogram *histogramInfo
 
+		// Read the current series
+		raw, err := bufIter.SkipAndReturnBytes()
+		if err != nil {
+			return rspErr(err)
+		}
+
+		iter := sdkjsoniter.NewIterator(jsoniter.ParseBytes(jsoniter.ConfigDefault, raw))
 		for l1Field, err := iter.ReadObject(); l1Field != ""; l1Field, err = iter.ReadObject() {
 			if err != nil {
 				return rspErr(err)
 			}
 			switch l1Field {
 			case "metric":
-				if err = iter.ReadVal(&valueField.Labels); err != nil {
+				if err = iter.ReadVal(&labels); err != nil {
 					return rspErr(err)
 				}
 
@@ -625,10 +631,9 @@ func readMatrixOrVectorMulti(iter *sdkjsoniter.Iterator, resultType string, opt 
 				if err != nil {
 					return rspErr(err)
 				}
-				timeField.Append(t)
-				valueField.Append(v)
+				tempTimes = append(tempTimes, t)
+				tempValues = append(tempValues, v)
 
-			// nolint:goconst
 			case "values":
 				for more, err := iter.ReadArray(); more; more, err = iter.ReadArray() {
 					if err != nil {
@@ -638,8 +643,8 @@ func readMatrixOrVectorMulti(iter *sdkjsoniter.Iterator, resultType string, opt 
 					if err != nil {
 						return rspErr(err)
 					}
-					timeField.Append(t)
-					valueField.Append(v)
+					tempTimes = append(tempTimes, t)
+					tempValues = append(tempValues, v)
 				}
 
 			case "histogram":
@@ -673,8 +678,8 @@ func readMatrixOrVectorMulti(iter *sdkjsoniter.Iterator, resultType string, opt 
 		}
 
 		if histogram != nil {
-			histogram.yMin.Labels = valueField.Labels
-			frame := data.NewFrame(valueField.Name, histogram.time, histogram.yMin, histogram.yMax, histogram.count, histogram.yLayout)
+			histogram.yMin.Labels = labels
+			frame := data.NewFrame("", histogram.time, histogram.yMin, histogram.yMax, histogram.count, histogram.yLayout)
 			frame.Meta = &data.FrameMeta{
 				Type: "heatmap-cells",
 			}
@@ -683,7 +688,7 @@ func readMatrixOrVectorMulti(iter *sdkjsoniter.Iterator, resultType string, opt 
 			}
 			rsp.Frames = append(rsp.Frames, frame)
 		} else {
-			frame := data.NewFrame("", timeField, valueField)
+			frame := data.NewFrame("", data.NewField(data.TimeSeriesTimeFieldName, nil, tempTimes), data.NewField(data.TimeSeriesValueFieldName, labels, tempValues))
 			frame.Meta = &data.FrameMeta{
 				Type:   data.FrameTypeTimeSeriesMulti,
 				Custom: resultTypeToCustomMeta(resultType),
