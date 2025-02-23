@@ -1,3 +1,4 @@
+import { css } from '@emotion/css';
 import * as React from 'react';
 
 import {
@@ -13,7 +14,8 @@ import {
 } from '@grafana/data';
 import { FilterFieldsByNameTransformerOptions } from '@grafana/data/src/transformations/transformers/filterByName';
 import { getTemplateSrv } from '@grafana/runtime/src/services';
-import { Input, FilterPill, InlineFieldRow, InlineField, InlineSwitch, Select } from '@grafana/ui';
+import { Input, FilterPill, InlineFieldRow, InlineField, InlineSwitch, Select, Button, Stack } from '@grafana/ui';
+import { Trans } from '@grafana/ui/src/utils/i18n';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
 
@@ -194,13 +196,22 @@ export class FilterByNameTransformerEditor extends React.PureComponent<
     this.setState({ byVariable: val });
   };
 
+  onSelectAll = () => {
+    const allFieldNames = this.state.options.map((o) => o.name);
+    this.onChange(allFieldNames);
+  };
+
+  onDeselectAll = () => {
+    this.onChange([]);
+  };
+
   render() {
     const { options, selected, isRegexValid } = this.state;
     return (
-      <div>
-        <InlineFieldRow label="Use variable">
+      <Stack direction="column" gap={2}>
+        <InlineFieldRow>
           <InlineField label="From variable">
-            <InlineSwitch value={this.state.byVariable} onChange={this.onFromVariableChange}></InlineSwitch>
+            <InlineSwitch value={this.state.byVariable} onChange={this.onFromVariableChange} />
           </InlineField>
         </InlineFieldRow>
         {this.state.byVariable ? (
@@ -210,44 +221,64 @@ export class FilterByNameTransformerEditor extends React.PureComponent<
                 value={this.state.variable}
                 onChange={this.onVariableChange}
                 options={this.state.variables || []}
-              ></Select>
+              />
             </InlineField>
           </InlineFieldRow>
         ) : (
-          <InlineFieldRow label="Identifier">
-            <InlineField
-              label="Identifier"
-              invalid={!isRegexValid}
-              error={!isRegexValid ? 'Invalid pattern' : undefined}
-            >
-              <Input
-                placeholder="Regular expression pattern"
-                value={this.state.regex || ''}
-                onChange={(e) => this.setState({ regex: e.currentTarget.value })}
-                onBlur={this.onInputBlur}
-                width={25}
-              />
-            </InlineField>
-            {options.map((o, i) => {
-              const label = `${o.name}${o.count > 1 ? ' (' + o.count + ')' : ''}`;
-              const isSelected = selected.indexOf(o.name) > -1;
-              return (
-                <FilterPill
-                  key={`${o.name}/${i}`}
-                  onClick={() => {
-                    this.onFieldToggle(o.name);
-                  }}
-                  label={label}
-                  selected={isSelected}
+          <Stack direction="column" gap={1}>
+            <InlineFieldRow>
+              <InlineField
+                label="Identifier"
+                invalid={!isRegexValid}
+                error={!isRegexValid ? 'Invalid pattern' : undefined}
+              >
+                <Input
+                  placeholder="Regular expression pattern"
+                  value={this.state.regex || ''}
+                  onChange={(e) => this.setState({ regex: e.currentTarget.value })}
+                  onBlur={this.onInputBlur}
+                  width={25}
                 />
-              );
-            })}
-          </InlineFieldRow>
+              </InlineField>
+            </InlineFieldRow>
+            <Stack direction="row" gap={1}>
+              <Button variant="secondary" size="sm" onClick={this.onSelectAll}>
+                <Trans i18nKey="grafana-ui.filter-by-name-transformer-editor.select-all">Select All</Trans>
+              </Button>
+              <Button variant="secondary" size="sm" onClick={this.onDeselectAll}>
+                <Trans i18nKey="grafana-ui.filter-by-name-transformer-editor.deselect-all">Deselect All</Trans>
+              </Button>
+            </Stack>
+            <div className={styles.pillContainer}>
+              {options.map((o, i) => {
+                const label = `${o.name}${o.count > 1 ? ' (' + o.count + ')' : ''}`;
+                const isSelected = selected.indexOf(o.name) > -1;
+                return (
+                  <FilterPill
+                    key={`${o.name}/${i}`}
+                    onClick={() => {
+                      this.onFieldToggle(o.name);
+                    }}
+                    label={label}
+                    selected={isSelected}
+                  />
+                );
+              })}
+            </div>
+          </Stack>
         )}
-      </div>
+      </Stack>
     );
   }
 }
+
+const styles = {
+  pillContainer: css({
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+    gap: '8px',
+  }),
+};
 
 export const filterFieldsByNameTransformRegistryItem: TransformerRegistryItem<FilterFieldsByNameTransformerOptions> = {
   id: DataTransformerID.filterFieldsByName,
