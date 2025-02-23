@@ -17,11 +17,12 @@ var (
 // fixtures that insert DashboardVersions directly into a database which must be
 // refactored first.
 type DashboardVersion struct {
-	ID            int64 `json:"id" xorm:"pk autoincr 'id'" db:"id"`
-	DashboardID   int64 `json:"dashboardId"  xorm:"dashboard_id" db:"dashboard_id"`
-	ParentVersion int   `json:"parentVersion" db:"parent_version"`
-	RestoredFrom  int   `json:"restoredFrom" db:"restored_from"`
-	Version       int   `json:"version" db:"version"`
+	ID            int64  `json:"id" xorm:"pk autoincr 'id'" db:"id"`
+	DashboardID   int64  `json:"dashboardId"  xorm:"dashboard_id" db:"dashboard_id"`
+	ParentVersion int    `json:"parentVersion" db:"parent_version"`
+	RestoredFrom  int    `json:"restoredFrom" db:"restored_from"`
+	Version       int    `json:"version" db:"version"`
+	APIVersion    string `json:"apiVersion" xorm:"api_version" db:"api_version"`
 
 	Created   time.Time `json:"created" db:"created"`
 	CreatedBy int64     `json:"createdBy" db:"created_by"`

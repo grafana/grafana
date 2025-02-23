@@ -1954,13 +1954,14 @@ func (dr *DashboardServiceImpl) UnstructuredToLegacyDashboard(ctx context.Contex
 	}
 
 	out := dashboards.Dashboard{
-		OrgID:     orgID,
-		ID:        obj.GetDeprecatedInternalID(), // nolint:staticcheck
-		UID:       uid,
-		Slug:      obj.GetSlug(),
-		FolderUID: obj.GetFolder(),
-		Version:   dashVersion,
-		Data:      simplejson.NewFromAny(spec),
+		OrgID:      orgID,
+		ID:         obj.GetDeprecatedInternalID(), // nolint:staticcheck
+		UID:        uid,
+		Slug:       obj.GetSlug(),
+		FolderUID:  obj.GetFolder(),
+		Version:    dashVersion,
+		Data:       simplejson.NewFromAny(spec),
+		APIVersion: strings.TrimPrefix(item.GetAPIVersion(), dashboard.GROUP+"/"), // ??? will always be v1!!!
 	}
 
 	out.Created = obj.GetCreationTimestamp().Time

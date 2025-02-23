@@ -14517,6 +14517,9 @@
         "annotationsPermissions": {
           "$ref": "#/definitions/AnnotationPermission"
         },
+        "apiVersion": {
+          "type": "string"
+        },
         "canAdmin": {
           "type": "boolean"
         },

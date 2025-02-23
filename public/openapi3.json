@@ -4585,6 +4585,9 @@
           "annotationsPermissions": {
             "$ref": "#/components/schemas/AnnotationPermission"
           },
+          "apiVersion": {
+            "type": "string"
+          },
           "canAdmin": {
             "type": "boolean"
           },

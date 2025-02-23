@@ -182,6 +182,7 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 		UpdatedBy:              updater,
 		CreatedBy:              creator,
 		Version:                dash.Version,
+		APIVersion:             dash.APIVersion,
 		HasACL:                 dash.HasACL,
 		IsFolder:               dash.IsFolder,
 		FolderId:               dash.FolderID, // nolint:staticcheck
