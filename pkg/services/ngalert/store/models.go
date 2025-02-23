@@ -4,30 +4,31 @@ import "time"
 
 // alertRule represents a record in alert_rule table
 type alertRule struct {
-	ID                   int64 `xorm:"pk autoincr 'id'"`
-	OrgID                int64 `xorm:"org_id"`
-	Title                string
-	Condition            string
-	Data                 string
-	Updated              time.Time
-	UpdatedBy            *string `xorm:"updated_by"`
-	IntervalSeconds      int64
-	Version              int64   `xorm:"version"` // this tag makes xorm add optimistic lock (see https://xorm.io/docs/chapter-06/1.lock/)
-	UID                  string  `xorm:"uid"`
-	NamespaceUID         string  `xorm:"namespace_uid"`
-	DashboardUID         *string `xorm:"dashboard_uid"`
-	PanelID              *int64  `xorm:"panel_id"`
-	RuleGroup            string
-	RuleGroupIndex       int `xorm:"rule_group_idx"`
-	Record               string
-	NoDataState          string
-	ExecErrState         string
-	For                  time.Duration
-	Annotations          string
-	Labels               string
-	IsPaused             bool
-	NotificationSettings string `xorm:"notification_settings"`
-	Metadata             string `xorm:"metadata"`
+	ID                     int64 `xorm:"pk autoincr 'id'"`
+	OrgID                  int64 `xorm:"org_id"`
+	Title                  string
+	Condition              string
+	Data                   string
+	Updated                time.Time
+	UpdatedBy              *string `xorm:"updated_by"`
+	IntervalSeconds        int64
+	Version                int64   `xorm:"version"` // this tag makes xorm add optimistic lock (see https://xorm.io/docs/chapter-06/1.lock/)
+	UID                    string  `xorm:"uid"`
+	NamespaceUID           string  `xorm:"namespace_uid"`
+	DashboardUID           *string `xorm:"dashboard_uid"`
+	PanelID                *int64  `xorm:"panel_id"`
+	RuleGroup              string
+	RuleGroupIndex         int `xorm:"rule_group_idx"`
+	Record                 string
+	NoDataState            string
+	ExecErrState           string
+	For                    time.Duration
+	Annotations            string
+	Labels                 string
+	IsPaused               bool
+	NotificationSettings   string         `xorm:"notification_settings"`
+	Metadata               string         `xorm:"metadata"`
+	ResolveAfterMissingFor *time.Duration `xorm:"resolve_after_missing_for"`
 }
 
 func (a alertRule) TableName() string {
@@ -57,12 +58,13 @@ type alertRuleVersion struct {
 	ExecErrState    string
 	// ideally this field should have been apimodels.ApiDuration
 	// but this is currently not possible because of circular dependencies
-	For                  time.Duration
-	Annotations          string
-	Labels               string
-	IsPaused             bool
-	NotificationSettings string `xorm:"notification_settings"`
-	Metadata             string `xorm:"metadata"`
+	For                    time.Duration
+	Annotations            string
+	Labels                 string
+	IsPaused               bool
+	NotificationSettings   string         `xorm:"notification_settings"`
+	Metadata               string         `xorm:"metadata"`
+	ResolveAfterMissingFor *time.Duration `xorm:"resolve_after_missing_for"`
 }
 
 // EqualSpec compares two alertRuleVersion objects for equality based on their specifications and returns true if they match.
@@ -85,7 +87,8 @@ func (a alertRuleVersion) EqualSpec(b alertRuleVersion) bool {
 		a.Labels == b.Labels &&
 		a.IsPaused == b.IsPaused &&
 		a.NotificationSettings == b.NotificationSettings &&
-		a.Metadata == b.Metadata
+		a.Metadata == b.Metadata &&
+		a.ResolveAfterMissingFor == b.ResolveAfterMissingFor
 }
 
 func (a alertRuleVersion) TableName() string {

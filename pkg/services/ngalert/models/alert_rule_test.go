@@ -18,6 +18,7 @@ import (
 	"golang.org/x/exp/maps"
 	"gopkg.in/yaml.v3"
 
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/cmputil"
 )
@@ -531,6 +532,13 @@ func TestDiff(t *testing.T) {
 			assert.Equal(t, rule2.Record, diff[0].Right.String())
 			difCnt++
 		}
+		if rule1.ResolveAfterMissingFor != rule2.ResolveAfterMissingFor {
+			diff := diffs.GetDiffsForField("ResolveAfterMissingFor")
+			assert.Len(t, diff, 1)
+			assert.Equal(t, *rule1.ResolveAfterMissingFor, diff[0].Left.Interface())
+			assert.Equal(t, *rule2.ResolveAfterMissingFor, diff[0].Right.Interface())
+			difCnt++
+		}
 
 		require.Lenf(t, diffs, difCnt, "Got some unexpected diffs. Either add to ignore or add assert to it")
 
@@ -1007,4 +1015,64 @@ func TestGeneratorFillsAllFields(t *testing.T) {
 	}
 
 	require.FailNow(t, "AlertRule generator does not populate fields", "skipped fields: %v", maps.Keys(fields))
+}
+
+func TestResolveAfterMissingForValidation(t *testing.T) {
+	baseInterval := int64(10)
+	cfg := setting.UnifiedAlertingSettings{
+		BaseInterval: time.Duration(baseInterval) * time.Second,
+	}
+
+	testCases := []struct {
+		name                   string
+		resolveAfterMissingFor *time.Duration
+		intervalSeconds        int64
+		expectedErrorContains  string
+	}{
+		{
+			name:            "should allow nil value",
+			intervalSeconds: 60,
+		},
+		{
+			name:                   "should reject negative duration",
+			resolveAfterMissingFor: util.Pointer(-30 * time.Second),
+			intervalSeconds:        60,
+			expectedErrorContains:  "field `resolve_after_missing_for` cannot be negative",
+		},
+		{
+			name:                   "should reject duration that is not multiple of evaluation interval",
+			resolveAfterMissingFor: util.Pointer(70 * time.Second),
+			intervalSeconds:        60,
+			expectedErrorContains:  "field `resolve_after_missing_for` must be a multiple of the evaluation interval",
+		},
+		{
+			name:                   "should accept duration that is multiple of evaluation interval",
+			resolveAfterMissingFor: util.Pointer(180 * time.Second),
+			intervalSeconds:        60,
+		},
+		{
+			name:                   "should accept zero duration",
+			resolveAfterMissingFor: util.Pointer(0 * time.Second),
+			intervalSeconds:        60,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			rule := RuleGen.With(
+				RuleMuts.WithIntervalSeconds(tc.intervalSeconds),
+				RuleMuts.WithResolveAfterMissingFor(tc.resolveAfterMissingFor),
+			).Generate()
+
+			err := rule.ValidateAlertRule(cfg)
+
+			if tc.expectedErrorContains != "" {
+				require.Error(t, err)
+				require.ErrorIs(t, err, ErrAlertRuleFailedValidation)
+				require.Contains(t, err.Error(), tc.expectedErrorContains)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
 }

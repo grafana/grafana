@@ -519,7 +519,7 @@ func (st *Manager) deleteStaleStatesFromCache(logger log.Logger, evaluatedAt tim
 	// If we are removing two or more stale series it makes sense to share the resolved image as the alert rule is the same.
 	// TODO: We will need to change this when we support images without screenshots as each series will have a different image
 	staleStates := st.cache.deleteRuleStates(alertRule.GetKey(), func(s *State) bool {
-		return stateIsStale(evaluatedAt, s.LastEvaluationTime, alertRule.IntervalSeconds)
+		return stateIsStale(evaluatedAt, s.LastEvaluationTime, alertRule.IntervalSeconds, alertRule.ResolveAfterMissingFor)
 	})
 	resolvedStates := make([]StateTransition, 0, len(staleStates))
 
@@ -551,8 +551,25 @@ func (st *Manager) deleteStaleStatesFromCache(logger log.Logger, evaluatedAt tim
 	return resolvedStates
 }
 
-func stateIsStale(evaluatedAt time.Time, lastEval time.Time, intervalSeconds int64) bool {
-	return !lastEval.Add(2 * time.Duration(intervalSeconds) * time.Second).After(evaluatedAt)
+// stateIsStale determines whether the evaluation state is considered stale.
+// A state is considered stale if the last evaluation time is older than the resolveAfterMissingFor duration.
+// If resolveAfterMissingFor is not provided, "2*evaluation interval" is used as the default.
+func stateIsStale(evaluatedAt time.Time, lastEval time.Time, intervalSeconds int64, resolveAfterMissingFor *time.Duration) bool {
+	// Use the provided duration if available, otherwise default to twice the interval in seconds.
+	var resolveAfter time.Duration
+	if resolveAfterMissingFor != nil {
+		resolveAfter = *resolveAfterMissingFor
+	} else {
+		resolveAfter = time.Duration(2*intervalSeconds) * time.Second
+	}
+
+	// If the last evaluation time equals the current evaluation time, the state is not stale.
+	if evaluatedAt.Equal(lastEval) {
+		return false
+	}
+
+	// The state is stale if the last evaluation time is older than the resolveAfter duration.
+	return evaluatedAt.Sub(lastEval) >= resolveAfter
 }
 
 func StatesToRuleStatus(states []*State) ngModels.RuleStatus {
