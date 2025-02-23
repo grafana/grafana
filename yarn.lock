@@ -4925,6 +4925,32 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@mapbox/unitbezier@npm:^0.0.1":
+  version: 0.0.1
+  resolution: "@mapbox/unitbezier@npm:0.0.1"
+  checksum: 10/bf104c85dbff37bf47d3217d9457a3abbf23714f78fefadea64e56bdc7c538491b626166809ef28db134f09baccd6ca3df6988a6422df90d8d0c9a23b0686043
+  languageName: node
+  linkType: hard
+
+"@maplibre/maplibre-gl-style-spec@npm:^23.1.0":
+  version: 23.1.0
+  resolution: "@maplibre/maplibre-gl-style-spec@npm:23.1.0"
+  dependencies:
+    "@mapbox/jsonlint-lines-primitives": "npm:~2.0.2"
+    "@mapbox/unitbezier": "npm:^0.0.1"
+    json-stringify-pretty-compact: "npm:^4.0.0"
+    minimist: "npm:^1.2.8"
+    quickselect: "npm:^3.0.0"
+    rw: "npm:^1.3.3"
+    tinyqueue: "npm:^3.0.0"
+  bin:
+    gl-style-format: dist/gl-style-format.mjs
+    gl-style-migrate: dist/gl-style-migrate.mjs
+    gl-style-validate: dist/gl-style-validate.mjs
+  checksum: 10/532590b62042211bed1865f261deec26f4680427c9f55d89737225923cad2595e44aaee6bf1a17be7678c521bbbbc67cef90c2becb06336343496ee72b80a772
+  languageName: node
+  linkType: hard
+
 "@mdx-js/react@npm:^3.0.0":
   version: 3.0.1
   resolution: "@mdx-js/react@npm:3.0.1"
@@ -17914,6 +17940,7 @@ __metadata:
     nx: "npm:19.8.2"
     ol: "npm:7.4.0"
     ol-ext: "npm:4.0.26"
+    ol-mapbox-style: "npm:^12.5.0"
     openapi-types: "npm:^12.1.3"
     pdf-parse: "npm:^1.1.1"
     pluralize: "npm:^8.0.0"
@@ -20722,6 +20749,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"json-stringify-pretty-compact@npm:^4.0.0":
+  version: 4.0.0
+  resolution: "json-stringify-pretty-compact@npm:4.0.0"
+  checksum: 10/a10d5c423e467872994a49c5c1b56b073f277ce02d899cf567fc625f3783b89406bee6408bfb3b4bdeeff509b6a562f5259227e26754a6186f721809ca895f0c
+  languageName: node
+  linkType: hard
+
 "json-stringify-safe@npm:^5.0.1, json-stringify-safe@npm:~5.0.1":
   version: 5.0.1
   resolution: "json-stringify-safe@npm:5.0.1"
@@ -21737,6 +21771,13 @@ __metadata:
   version: 2.4.1
   resolution: "mapbox-to-css-font@npm:2.4.1"
   checksum: 10/224fc0f39a2f546bbe5b69a67a4e8c54928606cac44490650ee711723747edb393b4936c0005bcc72cb12f70b31fab50078a65e3e27e0f3e7d65f1ab8a3a253b
+  languageName: node
+  linkType: hard
+
+"mapbox-to-css-font@npm:^3.0.2":
+  version: 3.0.2
+  resolution: "mapbox-to-css-font@npm:3.0.2"
+  checksum: 10/35839c281f19d4bc0adb2ab7e474509bf46f0a00845958327da9a6a22039d6a2e0d8f413e7f539779a598aee5055b0356b1310c92098a23568c9d4ccd8401a26
   languageName: node
   linkType: hard
 
@@ -23281,6 +23322,18 @@ __metadata:
     mapbox-to-css-font: "npm:^2.4.1"
     ol: "npm:^7.3.0"
   checksum: 10/069421f5260b6d7b02e6f753eef5e9e10d3a86df8fe425aab1317b5e3d75684709b4b506e4c47e9840abeb503066c64a73dd29ec4a1cf65a8cbc484e91c70bfb
+  languageName: node
+  linkType: hard
+
+"ol-mapbox-style@npm:^12.5.0":
+  version: 12.5.0
+  resolution: "ol-mapbox-style@npm:12.5.0"
+  dependencies:
+    "@maplibre/maplibre-gl-style-spec": "npm:^23.1.0"
+    mapbox-to-css-font: "npm:^3.0.2"
+  peerDependencies:
+    ol: "*"
+  checksum: 10/f929b08d3e42a5853d3dcaf190d906371c7e7dbb90d1d43d75acd2d4cbbfd9c2b61de77e75b458e35fd45113fb6f64a862b2fbb09fbd8726aabcc72afbd2f019
   languageName: node
   linkType: hard
 
@@ -25096,6 +25149,13 @@ __metadata:
   version: 2.0.0
   resolution: "quickselect@npm:2.0.0"
   checksum: 10/ed2e78431050d223fb75da20ee98011aef1a03f7cb04e1a32ee893402e640be3cfb76d72e9dbe01edf3bb457ff6a62e5c2d85748424d1aa531f6ba50daef098c
+  languageName: node
+  linkType: hard
+
+"quickselect@npm:^3.0.0":
+  version: 3.0.0
+  resolution: "quickselect@npm:3.0.0"
+  checksum: 10/8f72bedb8bb14bce5c3767c55f567bc296fa3ca9d98ba385e3867e434463bc633feee1eddf3dfec17914b7e88feeb08c7b313cf47114a8ff11bf964f77f51cfc
   languageName: node
   linkType: hard
 
@@ -29544,6 +29604,13 @@ __metadata:
   version: 1.6.0
   resolution: "tinycolor2@npm:1.6.0"
   checksum: 10/066c3acf4f82b81c58a0d3ab85f49407efe95ba87afc3c7a16b1d77625193dfbe10dd46c26d0a263c1137361dd5a6a68bff2fb71def5fb9b9aec940fb030bcd4
+  languageName: node
+  linkType: hard
+
+"tinyqueue@npm:^3.0.0":
+  version: 3.0.0
+  resolution: "tinyqueue@npm:3.0.0"
+  checksum: 10/44195ae628e98f4de49acefac1fafa63a7f2b5d8a5c23ace6f49917109db3435db8ec9854f87c0d50f8a8c6a73f1526f3941921618a071e4ee1d246afacf69bb
   languageName: node
   linkType: hard
 
