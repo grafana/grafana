@@ -1070,8 +1070,10 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                   <LogList
                     app={CoreApp.Explore}
                     containerElement={logsContainerRef.current}
+                    displayedFields={displayedFields}
                     eventBus={eventBus}
                     forceEscape={forceEscape}
+                    getFieldLinks={getFieldLinks}
                     loadMore={loadMoreLogs}
                     logs={dedupedRows}
                     showTime={showTime}

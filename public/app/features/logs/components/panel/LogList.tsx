@@ -1,12 +1,24 @@
+import { css } from '@emotion/css';
 import { debounce } from 'lodash';
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { VariableSizeList } from 'react-window';
 
-import { AbsoluteTimeRange, CoreApp, EventBus, LogRowModel, LogsSortOrder, TimeRange } from '@grafana/data';
+import {
+  AbsoluteTimeRange,
+  CoreApp,
+  DataFrame,
+  EventBus,
+  Field,
+  LinkModel,
+  LogRowModel,
+  LogsSortOrder,
+  TimeRange,
+} from '@grafana/data';
 import { useTheme2 } from '@grafana/ui';
 
 import { InfiniteScroll } from './InfiniteScroll';
-import { preProcessLogs, LogListModel } from './processing';
+import { getGridTemplateColumns } from './LogLine';
+import { preProcessLogs, LogListModel, calculateFieldDimensions, LogFieldDimension } from './processing';
 import {
   getLogLineSize,
   init as initVirtualization,
@@ -15,14 +27,18 @@ import {
   storeLogLineSize,
 } from './virtualization';
 
+export type GetFieldLinksFn = (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>;
+
 interface Props {
   app: CoreApp;
-  logs: LogRowModel[];
   containerElement: HTMLDivElement;
+  displayedFields: string[];
   eventBus: EventBus;
   forceEscape?: boolean;
+  getFieldLinks?: GetFieldLinksFn;
   initialScrollPosition?: 'top' | 'bottom';
   loadMore?: (range: AbsoluteTimeRange) => void;
+  logs: LogRowModel[];
   showTime: boolean;
   sortOrder: LogsSortOrder;
   timeRange: TimeRange;
@@ -33,8 +49,10 @@ interface Props {
 export const LogList = ({
   app,
   containerElement,
+  displayedFields = [],
   eventBus,
   forceEscape = false,
+  getFieldLinks,
   initialScrollPosition = 'top',
   loadMore,
   logs,
@@ -52,6 +70,11 @@ export const LogList = ({
   const listRef = useRef<VariableSizeList | null>(null);
   const widthRef = useRef(containerElement.clientWidth);
   const scrollRef = useRef<HTMLDivElement | null>(null);
+  const dimensions = useMemo(
+    () => (wrapLogMessage ? [] : calculateFieldDimensions(processedLogs, displayedFields)),
+    [displayedFields, processedLogs, wrapLogMessage]
+  );
+  const styles = getStyles(dimensions, { showTime });
 
   useEffect(() => {
     initVirtualization(theme);
@@ -65,9 +88,11 @@ export const LogList = ({
   }, [eventBus, logs.length]);
 
   useEffect(() => {
-    setProcessedLogs(preProcessLogs(logs, { wrap: wrapLogMessage, escape: forceEscape, order: sortOrder, timeZone }));
+    setProcessedLogs(
+      preProcessLogs(logs, { getFieldLinks, wrap: wrapLogMessage, escape: forceEscape, order: sortOrder, timeZone })
+    );
     listRef.current?.resetAfterIndex(0);
-  }, [forceEscape, logs, sortOrder, timeZone, wrapLogMessage]);
+  }, [forceEscape, getFieldLinks, logs, sortOrder, timeZone, wrapLogMessage]);
 
   useEffect(() => {
     const handleResize = debounce(() => {
@@ -110,6 +135,7 @@ export const LogList = ({
 
   return (
     <InfiniteScroll
+      displayedFields={displayedFields}
       handleOverflow={handleOverflow}
       logs={processedLogs}
       loadMore={loadMore}
@@ -123,9 +149,13 @@ export const LogList = ({
     >
       {({ getItemKey, itemCount, onItemsRendered, Renderer }) => (
         <VariableSizeList
+          className={styles.logList}
           height={listHeight}
           itemCount={itemCount}
-          itemSize={getLogLineSize.bind(null, processedLogs, containerElement, { wrap: wrapLogMessage, showTime })}
+          itemSize={getLogLineSize.bind(null, processedLogs, containerElement, displayedFields, {
+            wrap: wrapLogMessage,
+            showTime,
+          })}
           itemKey={getItemKey}
           layout="vertical"
           onItemsRendered={onItemsRendered}
@@ -140,6 +170,18 @@ export const LogList = ({
     </InfiniteScroll>
   );
 };
+
+function getStyles(dimensions: LogFieldDimension[], { showTime }: { showTime: boolean }) {
+  const columns = showTime ? dimensions : dimensions.filter((_, index) => index > 0);
+  return {
+    logList: css({
+      '& .unwrapped-log-line': {
+        display: 'grid',
+        gridTemplateColumns: getGridTemplateColumns(columns),
+      },
+    }),
+  };
+}
 
 function handleScrollToEvent(event: ScrollToLogsEvent, logsCount: number, list: VariableSizeList | null) {
   if (event.payload.scrollTo === 'top') {
