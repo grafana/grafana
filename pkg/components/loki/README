@@ -1,5 +1,26 @@
+# Logproto
+
 The Loki package is derived from the Grafana Loki project's logproto and
 promtail packages with removals to support Grafana's needs.
 
-- https://github.com/grafana/loki/tree/2fc20af9a4e55483afe0f09f8a8119ab380daea9/clients/pkg/promtail/client
-- https://github.com/grafana/loki/tree/2fc20af9a4e55483afe0f09f8a8119ab380daea9/pkg/logproto
+- <https://github.com/grafana/loki/tree/2fc20af9a4e55483afe0f09f8a8119ab380daea9/clients/pkg/promtail/client>
+- <https://github.com/grafana/loki/tree/2fc20af9a4e55483afe0f09f8a8119ab380daea9/pkg/logproto>
+
+## Generating the `logproto.pb.go` file
+
+It is easier to rebuild the package using the following commands after installing the dependencies:
+
+```bash
+mkdir -p proto/github.com/gogo/protobuf/gogoproto
+ln -s $GOPATH/pkg/mod/github.com/gogo/protobuf@v1.3.2/gogoproto/gogo.proto proto/github.com/gogo/protobuf/gogoproto/gogo.proto
+protoc \
+  --proto_path=proto \
+  --proto_path=. \
+  --gogoslick_out=plugins=grpc:. logproto.proto
+rm -rf proto
+```
+
+After generating the `logproto.pb.go` file, these modifications are needed to support Grafana's needs:
+
+1. Revert imports to the original `logproto.pb.go` file, unless you add a new import.
+2. Replace all instances of `interface{}` with `any`.
