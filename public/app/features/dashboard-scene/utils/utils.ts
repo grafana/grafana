@@ -14,6 +14,7 @@ import {
 import { initialIntervalVariableModelState } from 'app/features/variables/interval/reducer';
 
 import { DashboardDatasourceBehaviour } from '../scene/DashboardDatasourceBehaviour';
+import { DashboardLayoutOrchestrator } from '../scene/DashboardLayoutOrchestrator';
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
@@ -434,4 +435,8 @@ export function getLayoutManagerFor(sceneObject: SceneObject): DashboardLayoutMa
 
 export function getGridItemKeyForPanelId(panelId: number): string {
   return `grid-item-${panelId}`;
+}
+
+export function getLayoutOrchestratorFor(scene: SceneObject): DashboardLayoutOrchestrator | undefined {
+  return getDashboardSceneFor(scene).state.layoutOrchestrator;
 }

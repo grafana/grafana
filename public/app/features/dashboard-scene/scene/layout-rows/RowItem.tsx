@@ -1,11 +1,19 @@
 import { ReactNode } from 'react';
 
-import { SceneObjectState, SceneObjectBase, sceneGraph, VariableDependencyConfig, SceneObject } from '@grafana/scenes';
+import {
+  SceneObjectState,
+  SceneObjectBase,
+  sceneGraph,
+  VariableDependencyConfig,
+  SceneObject,
+  VizPanel,
+} from '@grafana/scenes';
 import { t } from 'app/core/internationalization';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 
 import { ResponsiveGridLayoutManager } from '../layout-responsive-grid/ResponsiveGridLayoutManager';
 import { BulkActionElement } from '../types/BulkActionElement';
+import { DashboardDropTarget } from '../types/DashboardDropTarget';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { EditableDashboardElement } from '../types/EditableDashboardElement';
 import { LayoutParent } from '../types/LayoutParent';
@@ -21,12 +29,13 @@ export interface RowItemState extends SceneObjectState {
   title?: string;
   isCollapsed?: boolean;
   isHeaderHidden?: boolean;
+  isDropTarget?: boolean;
   height?: 'expand' | 'min';
 }
 
 export class RowItem
   extends SceneObjectBase<RowItemState>
-  implements LayoutParent, BulkActionElement, EditableDashboardElement
+  implements LayoutParent, BulkActionElement, EditableDashboardElement, DashboardDropTarget
 {
   public static Component = RowItemRenderer;
 
@@ -35,6 +44,7 @@ export class RowItem
   });
 
   public readonly isEditableDashboardElement = true;
+  public readonly isDashboardDropTarget = true;
   public readonly typeName = 'Row';
 
   public constructor(state?: Partial<RowItemState>) {
@@ -68,6 +78,23 @@ export class RowItem
 
   public createMultiSelectedElement(items: SceneObject[]): RowItems {
     return new RowItems(items.filter((item) => item instanceof RowItem));
+  }
+
+  public setIsDropTarget(isDropTarget: boolean) {
+    if (!!this.state.isDropTarget !== isDropTarget) {
+      this.setState({ isDropTarget });
+    }
+  }
+
+  public draggedPanelOutside(panel: VizPanel) {
+    this.getLayout().removePanel?.(panel);
+    this.setIsDropTarget(false);
+  }
+
+  public draggedPanelInside(panel: VizPanel) {
+    panel.clearParent();
+    this.getLayout().addPanel(panel);
+    this.setIsDropTarget(false);
   }
 
   public getRepeatVariable(): string | undefined {
