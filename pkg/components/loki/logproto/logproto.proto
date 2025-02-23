@@ -37,6 +37,11 @@ message StreamAdapter {
   uint64 hash = 3 [(gogoproto.jsontag) = "-"];
 }
 
+message LabelPairAdapter {
+  string name = 1;
+  string value = 2;
+}
+
 message EntryAdapter {
   google.protobuf.Timestamp timestamp = 1 [
     (gogoproto.stdtime) = true,
@@ -44,4 +49,8 @@ message EntryAdapter {
     (gogoproto.jsontag) = "ts"
   ];
   string line = 2 [(gogoproto.jsontag) = "line"];
+  repeated LabelPairAdapter structuredMetadata = 3 [
+    (gogoproto.nullable) = false,
+    (gogoproto.jsontag) = "structuredMetadata,omitempty"
+  ];
 }
