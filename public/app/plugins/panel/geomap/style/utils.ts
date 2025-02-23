@@ -91,3 +91,49 @@ export function getDisplacement(symbolAlign: SymbolAlign, radius: number) {
   }
   return displacement;
 }
+
+export function getRGBValues(colorString: string) {
+  // Check if it's a hex color
+  if (colorString.startsWith('#')) {
+    return getRGBFromHex(colorString);
+  }
+
+  // Check if it's an RGB color
+  else if (colorString.startsWith('rgb')) {
+    return getRGBFromRGBString(colorString);
+  }
+
+  // Handle other color formats if needed
+  else {
+    console.warn(`Unsupported color format: ${colorString}`);
+  }
+  return null;
+}
+
+function getRGBFromHex(hexColor: string) {
+  // Remove the '#' character
+  hexColor = hexColor.slice(1);
+
+  // Convert hex to decimal values
+  const r = parseInt(hexColor.slice(0, 2), 16);
+  const g = parseInt(hexColor.slice(2, 4), 16);
+  const b = parseInt(hexColor.slice(4, 6), 16);
+
+  return { r, g, b };
+}
+
+function getRGBFromRGBString(rgbString: string) {
+  // Use regex to extract the numbers
+  const matches = rgbString.match(/\d+/g);
+
+  if (matches && matches.length === 3) {
+    return {
+      r: parseInt(matches[0], 10),
+      g: parseInt(matches[1], 10),
+      b: parseInt(matches[2], 10),
+    };
+  } else {
+    console.warn(`Unsupported color format: ${rgbString}`);
+  }
+  return null;
+}
