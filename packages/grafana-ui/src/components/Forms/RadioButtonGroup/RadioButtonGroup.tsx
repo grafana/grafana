@@ -8,7 +8,6 @@ import { useStyles2 } from '../../../themes';
 import { Icon } from '../../Icon/Icon';
 
 import { RadioButtonSize, RadioButton } from './RadioButton';
-
 export interface RadioButtonGroupProps<T> {
   value?: T;
   id?: string;
