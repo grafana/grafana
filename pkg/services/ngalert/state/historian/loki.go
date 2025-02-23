@@ -284,19 +284,22 @@ func StatesToStream(rule history_model.RuleMeta, states []state.StateTransition,
 		}
 
 		sanitizedLabels := removePrivateLabels(state.Labels)
+		sanitizedStructuredMetadata := removePrivateLabels(state.Annotations)
+
 		entry := LokiEntry{
-			SchemaVersion:  1,
-			Previous:       state.PreviousFormatted(),
-			Current:        state.Formatted(),
-			Values:         valuesAsDataBlob(state.State),
-			Condition:      rule.Condition,
-			DashboardUID:   rule.DashboardUID,
-			PanelID:        rule.PanelID,
-			Fingerprint:    labelFingerprint(sanitizedLabels),
-			RuleTitle:      rule.Title,
-			RuleID:         rule.ID,
-			RuleUID:        rule.UID,
-			InstanceLabels: sanitizedLabels,
+			SchemaVersion:      1,
+			Previous:           state.PreviousFormatted(),
+			Current:            state.Formatted(),
+			Values:             valuesAsDataBlob(state.State),
+			Condition:          rule.Condition,
+			DashboardUID:       rule.DashboardUID,
+			PanelID:            rule.PanelID,
+			Fingerprint:        labelFingerprint(sanitizedLabels),
+			RuleTitle:          rule.Title,
+			RuleID:             rule.ID,
+			RuleUID:            rule.UID,
+			InstanceLabels:     sanitizedLabels,
+			StructuredMetadata: sanitizedStructuredMetadata,
 		}
 		if state.State.State == eval.Error {
 			entry.Error = state.Error.Error()
@@ -345,7 +348,8 @@ type LokiEntry struct {
 	RuleUID       string           `json:"ruleUID"`
 	// InstanceLabels is exactly the set of labels associated with the alert instance in Alertmanager.
 	// These should not be conflated with labels associated with log streams.
-	InstanceLabels map[string]string `json:"labels"`
+	InstanceLabels     map[string]string `json:"labels"`
+	StructuredMetadata map[string]string `json:"structuredMetadata,omitempty"`
 }
 
 func valuesAsDataBlob(state *state.State) *simplejson.Json {
