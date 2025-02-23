@@ -50,8 +50,8 @@ export default class UrlBuilder {
     baseUrl: string,
     apiVersion: string,
     query: GetMetricNamespacesQuery,
-    globalRegion: boolean,
     templateSrv: TemplateSrv,
+    globalRegion?: boolean,
     region?: string
   ) {
     let resourceUri: string;
@@ -68,9 +68,16 @@ export default class UrlBuilder {
       });
     }
 
-    return `${baseUrl}${resourceUri}/providers/microsoft.insights/metricNamespaces?api-version=${apiVersion}${
-      region ? `&region=${region}` : globalRegion ? '&region=global' : ''
-    }`;
+    if (resourceUri.includes('resourceGroups')) {
+      return `${baseUrl}${resourceUri}/resources?api-version=${apiVersion}${
+        region ? `&region=${region}` : globalRegion ? '&region=global' : ''
+      }`;
+    } else {
+      apiVersion = '2017-12-01-preview';
+      return `${baseUrl}${resourceUri}/providers/microsoft.insights/metricNamespaces?api-version=${apiVersion}${
+        region ? `&region=${region}` : globalRegion ? '&region=global' : ''
+      }`;
+    }
   }
 
   static buildAzureMonitorGetMetricNamesUrl(

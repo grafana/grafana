@@ -282,22 +282,16 @@ describe('AzureMonitorDatasource', () => {
     const response = {
       value: [
         {
-          id: '/subscriptions/mock-subscription-id/resourceGroups/nodeapp/providers/microsoft.insights/components/resource1/providers/microsoft.insights/metricNamespaces/Azure.ApplicationInsights',
+          id: '/subscriptions/mock-subscription-id/resourceGroups/nodeapp/providers/microsoft.insights/components/Azure.ApplicationInsights',
           name: 'Azure.ApplicationInsights',
-          type: 'Microsoft.Insights/metricNamespaces',
+          type: 'Azure.ApplicationInsights',
           classification: 'Custom',
-          properties: {
-            metricNamespaceName: 'Azure.ApplicationInsights',
-          },
         },
         {
-          id: '/subscriptions/mock-subscription-id/resourceGroups/nodeapp/providers/microsoft.insights/components/resource1/providers/microsoft.insights/metricNamespaces/microsoft.insights-components',
+          id: '/subscriptions/mock-subscription-id/resourceGroups/nodeapp/providers/microsoft.insights/components/microsoft.insights-components',
           name: 'microsoft.insights-components',
-          type: 'Microsoft.Insights/metricNamespaces',
+          type: 'Microsoft.Insights/components',
           classification: 'Platform',
-          properties: {
-            metricNamespaceName: 'microsoft.insights/components',
-          },
         },
       ],
     };
@@ -308,10 +302,7 @@ describe('AzureMonitorDatasource', () => {
           return Promise.reject('failed to retrieve due to timeout');
         }
         const basePath = 'azuremonitor/subscriptions/mock-subscription-id/resourceGroups/nodeapp';
-        const expected =
-          basePath +
-          '/providers/microsoft.insights/components/resource1/providers/microsoft.insights/metricNamespaces?api-version=2017-12-01-preview' +
-          (path.includes('&region=global') ? '&region=global' : '');
+        const expected = basePath + '/resources?api-version=2018-01-01';
         expect(path).toBe(expected);
         return Promise.resolve(response);
       });
@@ -321,17 +312,18 @@ describe('AzureMonitorDatasource', () => {
       return ctx.ds.azureMonitorDatasource
         .getMetricNamespaces(
           {
-            resourceUri:
-              '/subscriptions/mock-subscription-id/resourceGroups/nodeapp/providers/microsoft.insights/components/resource1',
+            resourceUri: '/subscriptions/mock-subscription-id/resourceGroups/nodeapp',
           },
-          true
+          false,
+          undefined,
+          false
         )
         .then((results: Array<{ text: string; value: string }>) => {
           expect(results.length).toEqual(2);
-          expect(results[0].text).toEqual('Azure.ApplicationInsights');
+          expect(results[0].text).toEqual('azure.applicationinsights');
           expect(results[0].value).toEqual('Azure.ApplicationInsights');
           expect(results[1].text).toEqual('microsoft.insights/components');
-          expect(results[1].value).toEqual('microsoft.insights/components');
+          expect(results[1].value).toEqual('microsoft.insights-components');
         });
     });
 
@@ -340,11 +332,11 @@ describe('AzureMonitorDatasource', () => {
       return ctx.ds.azureMonitorDatasource
         .getMetricNamespaces(
           {
-            resourceUri:
-              '/subscriptions/mock-subscription-id/resourceGroups/nodeapp/providers/microsoft.insights/components/resource1',
+            resourceUri: '/subscriptions/mock-subscription-id/resourceGroups/nodeapp',
           },
           true,
-          'westeurope'
+          'westeurope',
+          false
         )
         .then((results: Array<{ text: string; value: string }>) => {
           expect(results.length).toEqual(0);
@@ -359,8 +351,7 @@ describe('AzureMonitorDatasource', () => {
       return ctx.ds.azureMonitorDatasource
         .getMetricNamespaces(
           {
-            resourceUri:
-              '/subscriptions/mock-subscription-id/resourceGroups/nodeapp/providers/microsoft.insights/components/resource1',
+            resourceUri: '/subscriptions/mock-subscription-id/resourceGroups/nodeapp',
           },
           false,
           undefined,
@@ -368,7 +359,7 @@ describe('AzureMonitorDatasource', () => {
         )
         .then((results: Array<{ text: string; value: string }>) => {
           expect(results.length).toEqual(1);
-          expect(results[0].text).toEqual('Azure.ApplicationInsights');
+          expect(results[0].text).toEqual('azure.applicationinsights');
           expect(results[0].value).toEqual('Azure.ApplicationInsights');
         });
     });
@@ -428,9 +419,9 @@ describe('AzureMonitorDatasource', () => {
         })
         .then((results: Array<{ text: string; value: string }>) => {
           expect(results.length).toEqual(2);
-          expect(results[0].text).toEqual('Used capacity');
+          expect(results[0].text).toEqual('used capacity');
           expect(results[0].value).toEqual('UsedCapacity');
-          expect(results[1].text).toEqual('Free capacity');
+          expect(results[1].text).toEqual('free capacity');
           expect(results[1].value).toEqual('FreeCapacity');
         });
     });
@@ -455,9 +446,9 @@ describe('AzureMonitorDatasource', () => {
         )
         .then((results: Array<{ text: string; value: string }>) => {
           expect(results.length).toEqual(2);
-          expect(results[0].text).toEqual('Used capacity');
+          expect(results[0].text).toEqual('used capacity');
           expect(results[0].value).toEqual('UsedCapacity');
-          expect(results[1].text).toEqual('Free capacity');
+          expect(results[1].text).toEqual('free capacity');
           expect(results[1].value).toEqual('FreeCapacity');
         });
     });
@@ -1073,9 +1064,9 @@ describe('AzureMonitorDatasource', () => {
           })
           .then((results: Array<{ text: string; value: string }>) => {
             expect(results.length).toEqual(2);
-            expect(results[0].text).toEqual('Used capacity');
+            expect(results[0].text).toEqual('used capacity');
             expect(results[0].value).toEqual('UsedCapacity');
-            expect(results[1].text).toEqual('Free capacity');
+            expect(results[1].text).toEqual('free capacity');
             expect(results[1].value).toEqual('FreeCapacity');
           });
       });
