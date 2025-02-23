@@ -1,14 +1,20 @@
 import { IconName } from '@grafana/data';
 import { BadgeColor } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
+import { RuleWithLocation } from 'app/types/unified-alerting';
 import {
   GrafanaAlertRuleDTOField,
   GrafanaRuleDefinition,
   RulerGrafanaRuleDTO,
+  RulerRuleDTO,
   TopLevelGrafanaRuleDTOField,
 } from 'app/types/unified-alerting-dto';
 
-import { grafanaAlertPropertiesToIgnore } from './AlertVersionHistory';
+import { useUpdateRuleInRuleGroup } from '../../../../hooks/ruleGroup/useUpsertRuleFromRuleGroup';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../../../utils/datasource';
+import { fromRulerRuleAndRuleGroupIdentifier } from '../../../../utils/rule-id';
+import { getRuleGroupLocationFromRuleWithLocation } from '../../../../utils/rules';
+import { grafanaAlertPropertiesToIgnore } from '../AlertVersionHistory';
 
 interface SpecialUidsDisplayMapEntry {
   name: string;
@@ -103,4 +109,22 @@ export function preprocessRuleForDiffDisplay(rulerRule: RulerGrafanaRuleDTO<Graf
     ...processedTopLevel,
     ...processedGrafanaAlert,
   };
+}
+export function useRestoreVersion() {
+  const [updateRuleInRuleGroup] = useUpdateRuleInRuleGroup();
+
+  const onRestoreVersion = async (
+    newVersion: RulerGrafanaRuleDTO<GrafanaRuleDefinition>,
+    ruleWithLocation: RuleWithLocation<RulerRuleDTO>
+  ) => {
+    const ruleGroupIdentifier = getRuleGroupLocationFromRuleWithLocation(ruleWithLocation);
+    const ruleIdentifier = fromRulerRuleAndRuleGroupIdentifier(ruleGroupIdentifier, newVersion);
+    // restore version
+    return updateRuleInRuleGroup.execute(ruleGroupIdentifier, ruleIdentifier, newVersion, {
+      dataSourceName: GRAFANA_RULES_SOURCE_NAME,
+      namespaceName: newVersion.grafana_alert.namespace_uid,
+      groupName: newVersion.grafana_alert.rule_group,
+    });
+  };
+  return onRestoreVersion;
 }

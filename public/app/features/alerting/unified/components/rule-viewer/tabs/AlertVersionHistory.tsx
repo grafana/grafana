@@ -1,17 +1,24 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
-import { config } from '@grafana/runtime';
-import { Alert, Box, Button, Drawer, EmptyState, LoadingPlaceholder, Stack, Text, Tooltip } from '@grafana/ui';
-import { RevisionModel, VersionHistoryComparison } from 'app/core/components/VersionHistory/VersionHistoryComparison';
+import { Alert, Button, EmptyState, LoadingPlaceholder, Stack, Text, Tooltip } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
+import { RuleIdentifier } from 'app/types/unified-alerting';
 import { GrafanaRuleDefinition, RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
-import { LogMessages, logInfo, trackRuleVersionsComparisonClick } from '../../../Analytics';
+import {
+  LogMessages,
+  logInfo,
+  trackRuleVersionsComparisonClick,
+  trackRuleVersionsRestoreFail,
+  trackRuleVersionsRestoreSuccess,
+} from '../../../Analytics';
 import { alertRuleApi } from '../../../api/alertRuleApi';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
 import { stringifyErrorLike } from '../../../utils/misc';
 
-import { VersionHistoryTable } from './components/VersionHistoryTable';
-import { getSpecialUidsDisplayMap, preprocessRuleForDiffDisplay } from './versions-utils';
+import { ComparisonDrawer } from './version-history/ComparisonDrawer';
+import { Origin } from './version-history/ConfirmVersionRestoreModal';
+import { VersionHistoryTable } from './version-history/VersionHistoryTable';
 
 const { useGetAlertVersionHistoryQuery } = alertRuleApi;
 
@@ -35,12 +42,43 @@ export const grafanaAlertPropertiesToIgnore: Array<keyof GrafanaRuleDefinition> 
 export function AlertVersionHistory({ ruleUid }: AlertVersionHistoryProps) {
   const { isLoading, currentData: ruleVersions = [], error } = useGetAlertVersionHistoryQuery({ uid: ruleUid });
 
+  const ruleIdentifier: RuleIdentifier = useMemo(
+    () => ({ ruleSourceName: GRAFANA_RULES_SOURCE_NAME, uid: ruleUid }),
+    [ruleUid]
+  );
+
   const [oldVersion, setOldVersion] = useState<RulerGrafanaRuleDTO<GrafanaRuleDefinition>>();
   const [newVersion, setNewVersion] = useState<RulerGrafanaRuleDTO<GrafanaRuleDefinition>>();
   const [showDrawer, setShowDrawer] = useState(false);
   // checked versions for comparison. key is the version number, value is whether it's checked
   const [checkedVersions, setCheckedVersions] = useState(new Set<string>());
   const canCompare = useMemo(() => checkedVersions.size > 1, [checkedVersions]);
+
+  //tracking functions for restore action
+  const onRestoreSuccess = useCallback(
+    (origin: Origin) => {
+      trackRuleVersionsRestoreSuccess({
+        origin,
+        latest: newVersion === ruleVersions[0],
+        oldVersion: oldVersion?.grafana_alert.version || 0,
+        newVersion: newVersion?.grafana_alert.version || 0,
+      });
+    },
+    [oldVersion, newVersion, ruleVersions]
+  );
+
+  const onRestoreFail = useCallback(
+    (origin: Origin, error: Error) => {
+      trackRuleVersionsRestoreFail({
+        origin,
+        latest: newVersion === ruleVersions[0],
+        oldVersion: oldVersion?.grafana_alert.version || 0,
+        newVersion: newVersion?.grafana_alert.version || 0,
+        error,
+      });
+    },
+    [oldVersion, newVersion, ruleVersions]
+  );
 
   if (error) {
     return (
@@ -66,6 +104,7 @@ export function AlertVersionHistory({ ruleUid }: AlertVersionHistoryProps) {
   }
 
   const compareVersions = () => {
+    // precondition: we have only two versions selected in checkedVersions
     const [older, newer] = ruleVersions
       .filter((rule) => {
         const version = rule.grafana_alert.version;
@@ -89,6 +128,7 @@ export function AlertVersionHistory({ ruleUid }: AlertVersionHistoryProps) {
       newVersion: newer?.grafana_alert.version || 0,
     });
 
+    // setting the versions to compare
     setOldVersion(older);
     setNewVersion(newer);
     setShowDrawer(true);
@@ -103,6 +143,8 @@ export function AlertVersionHistory({ ruleUid }: AlertVersionHistoryProps) {
     setOldVersion(undefined);
     setNewVersion(undefined);
   }
+
+  const isNewLatest = ruleVersions[0].grafana_alert.version === newVersion?.grafana_alert.version;
 
   return (
     <Stack direction="column" gap={2}>
@@ -123,68 +165,24 @@ export function AlertVersionHistory({ ruleUid }: AlertVersionHistoryProps) {
         </Tooltip>
       </Stack>
       {showDrawer && oldVersion && newVersion && (
-        <Drawer
-          onClose={() => setShowDrawer(false)}
-          title={t('alerting.alertVersionHistory.comparing-versions', 'Comparing versions')}
-        >
-          <VersionHistoryComparison
-            oldSummary={parseVersionInfoToSummary(oldVersion)}
-            oldVersion={oldVersion}
-            newSummary={parseVersionInfoToSummary(newVersion)}
-            newVersion={newVersion}
-            preprocessVersion={preprocessRuleForDiffDisplay}
-          />
-          {config.featureToggles.alertingRuleVersionHistoryRestore && (
-            <Box paddingTop={2}>
-              <Stack justifyContent="flex-end">
-                <Button variant="destructive" onClick={() => {}}>
-                  <Trans i18nKey="alerting.alertVersionHistory.reset">
-                    Reset to version {{ version: oldVersion.grafana_alert.version }}
-                  </Trans>
-                </Button>
-              </Stack>
-            </Box>
-          )}
-        </Drawer>
+        <ComparisonDrawer
+          oldVersion={oldVersion}
+          newVersion={newVersion}
+          ruleIdentifier={ruleIdentifier}
+          isNewLatest={isNewLatest}
+          setShowDrawer={setShowDrawer}
+          onRestoreSuccess={() => onRestoreSuccess('comparison-drawer')}
+          onRestoreError={(err: Error) => onRestoreFail('comparison-drawer', err)}
+        />
       )}
-
       <VersionHistoryTable
         onVersionsChecked={handleCheckedVersionChange}
         ruleVersions={ruleVersions}
         disableSelection={canCompare}
         checkedVersions={checkedVersions}
+        onRestoreSuccess={() => onRestoreSuccess('version-list')}
+        onRestoreError={(err: Error) => onRestoreFail('version-list', err)}
       />
     </Stack>
   );
-}
-
-/**
- * Turns a version of a Grafana rule definition into data structure
- * used to display the version summary when comparing versions
- */
-function parseVersionInfoToSummary(version: RulerGrafanaRuleDTO<GrafanaRuleDefinition>): RevisionModel {
-  const unknown = t('alerting.alertVersionHistory.unknown', 'Unknown');
-  const SPECIAL_UID_MAP = getSpecialUidsDisplayMap();
-  const createdBy = (() => {
-    const updatedBy = version?.grafana_alert.updated_by;
-    const uid = updatedBy?.uid;
-    const name = updatedBy?.name;
-
-    if (!updatedBy) {
-      return unknown;
-    }
-    if (uid && SPECIAL_UID_MAP[uid]) {
-      return SPECIAL_UID_MAP[uid].name;
-    }
-    if (name) {
-      return name;
-    }
-    return uid ? t('alerting.alertVersionHistory.user-id', 'User ID {{uid}}', { uid }) : unknown;
-  })();
-
-  return {
-    created: version.grafana_alert.updated || unknown,
-    createdBy,
-    version: version.grafana_alert.version || unknown,
-  };
 }
