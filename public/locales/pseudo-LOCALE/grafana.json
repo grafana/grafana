@@ -1057,6 +1057,11 @@
         }
       }
     },
+    "editpane": {
+      "add": "Åđđ",
+      "configure": "Cőŉƒįģūřę",
+      "outline": "Øūŧľįŉę"
+    },
     "empty": {
       "add-library-panel-body": "Åđđ vįşūäľįžäŧįőŉş ŧĥäŧ äřę şĥäřęđ ŵįŧĥ őŧĥęř đäşĥþőäřđş.",
       "add-library-panel-button": "Åđđ ľįþřäřy päŉęľ",
@@ -1194,7 +1199,8 @@
     "toolbar": {
       "add": "Åđđ",
       "add-panel": "Päŉęľ",
-      "add-panel-lib": "Ĩmpőřŧ",
+      "add-panel-description": "Å čőŉŧäįŉęř ƒőř vįşūäľįžäŧįőŉş äŉđ őŧĥęř čőŉŧęŉŧ",
+      "add-panel-lib": "Ĩmpőřŧ ľįþřäřy päŉęľ",
       "add-row": "Ŗőŵ",
       "add-tab": "Ŧäþ",
       "alert-rules": "Åľęřŧ řūľęş",
@@ -1219,6 +1225,7 @@
         "label": "Ēχįŧ ęđįŧ",
         "tooltip": "Ēχįŧş ęđįŧ mőđę äŉđ đįşčäřđş ūŉşävęđ čĥäŉģęş"
       },
+      "libray-panel-description": "Ŀįþřäy päŉęľş äľľőŵ yőū şĥäřę äŉđ řęūşę päŉęľş þęŧŵęęŉ đäşĥþőäřđş",
       "mark-favorite": "Mäřĸ äş ƒävőřįŧę",
       "more-save-options": "Mőřę şävę őpŧįőŉş",
       "open-original": "Øpęŉ őřįģįŉäľ đäşĥþőäřđ",
@@ -1227,6 +1234,7 @@
       "playlist-stop": "Ŝŧőp pľäyľįşŧ",
       "public-dashboard": "Pūþľįč",
       "refresh": "Ŗęƒřęşĥ đäşĥþőäřđ",
+      "row-description": "Å ģřőūp őƒ päŉęľş ŵįŧĥ äŉ őpŧįőŉäľ ĥęäđęř",
       "save": "Ŝävę đäşĥþőäřđ",
       "save-dashboard": {
         "label": "Ŝävę đäşĥþőäřđ",
@@ -1246,6 +1254,7 @@
       "share-button": "Ŝĥäřę",
       "show-hidden-elements": "Ŝĥőŵ ĥįđđęŉ",
       "switch-old-dashboard": "Ŝŵįŧčĥ ŧő őľđ đäşĥþőäřđ päģę",
+      "tabs-description": "ßřęäĸ ūp yőūř đäşĥþőäřđ įŉŧő đįƒƒęřęŉŧ ĥőřįžőŉŧäľ ŧäþş",
       "unlink-library-panel": "Ůŉľįŉĸ ľįþřäřy päŉęľ",
       "unmark-favorite": "Ůŉmäřĸ äş ƒävőřįŧę"
     },
