@@ -36,8 +36,20 @@ var (
 // Provision scans a directory for provisioning config files
 // and provisions the datasource in those files.
 func Provision(ctx context.Context, configDirectory string, dsService BaseDataSourceService, correlationsStore CorrelationsStore, orgService org.Service) error {
-	dc := newDatasourceProvisioner(log.New("provisioning.datasources"), dsService, correlationsStore, orgService)
+	dc := newDatasourceProvisioner(dsService, correlationsStore, orgService)
 	return dc.applyChanges(ctx, configDirectory)
+}
+
+// GetCacheConfigs scans a directory for provisioning config files
+// and returns cache configs of the the datasources in those files.
+func GetDeleteCacheConfigs(ctx context.Context, configDirectory string, dsService BaseDataSourceService, correlationsStore CorrelationsStore, orgService org.Service) ([]string, error) {
+	dc := newDatasourceProvisioner(dsService, correlationsStore, orgService)
+	return dc.getDeleteCachingConfigs(ctx, configDirectory)
+}
+
+func GetCreateCacheConfigs(ctx context.Context, configDirectory string, dsService BaseDataSourceService, correlationsStore CorrelationsStore, orgService org.Service) ([]DatasourceCachingConfig, error) {
+	dc := newDatasourceProvisioner(dsService, correlationsStore, orgService)
+	return dc.getCreateCachingConfigs(ctx, configDirectory)
 }
 
 // DatasourceProvisioner is responsible for provisioning datasources based on
@@ -49,10 +61,11 @@ type DatasourceProvisioner struct {
 	correlationsStore CorrelationsStore
 }
 
-func newDatasourceProvisioner(log log.Logger, dsService BaseDataSourceService, correlationsStore CorrelationsStore, orgService org.Service) DatasourceProvisioner {
+func newDatasourceProvisioner(dsService BaseDataSourceService, correlationsStore CorrelationsStore, orgService org.Service) DatasourceProvisioner {
+	logger := log.New("provisioning.datasources")
 	return DatasourceProvisioner{
-		log:               log,
-		cfgProvider:       &configReader{log: log, orgService: orgService},
+		log:               logger,
+		cfgProvider:       &configReader{log: logger, orgService: orgService},
 		dsService:         dsService,
 		correlationsStore: correlationsStore,
 	}
@@ -270,4 +283,99 @@ func (dc *DatasourceProvisioner) deleteDatasources(ctx context.Context, dsToDele
 	}
 
 	return nil
+}
+
+type DatasourceCachingConfig struct {
+	DataSourceUID string
+	Enabled       bool
+	QueriesTTL    int64
+	ResourcesTTL  int64
+	UseDefaultTTL bool
+}
+
+func (dc *DatasourceProvisioner) getDeleteCachingConfigs(ctx context.Context, configPath string) ([]string, error) {
+	configs, err := dc.cfgProvider.readConfig(ctx, configPath)
+	if err != nil {
+		return nil, err
+	}
+
+	// Get UIDs for datasources marked for deletion
+	deleteDatasourceUIDs := dc.getDeleteDatasourceUIDs(ctx, configs)
+
+	return deleteDatasourceUIDs, nil
+}
+
+func (dc *DatasourceProvisioner) getCreateCachingConfigs(ctx context.Context, configPath string) ([]DatasourceCachingConfig, error) {
+	configs, err := dc.cfgProvider.readConfig(ctx, configPath)
+	if err != nil {
+		return nil, err
+	}
+
+	// Obtain caching configurations of new datasources
+	dsCachingConfigs := dc.buildDatasourceCachingConfigs(ctx, configs)
+
+	return dsCachingConfigs, nil
+}
+
+func (dc *DatasourceProvisioner) getDeleteDatasourceUIDs(ctx context.Context, configs []*configs) []string {
+	deleteDatasourceUIDsMap := make(map[string]bool)
+
+	// Add prunable provisioned datasource UIDs to the deletion map
+	if prunableDatasources, err := dc.dsService.GetPrunableProvisionedDataSources(ctx); err == nil {
+		for _, ds := range prunableDatasources {
+			deleteDatasourceUIDsMap[ds.UID] = true
+		}
+	}
+
+	// Add UIDs for datasources marked for deletion
+	for _, config := range configs {
+		for _, ds := range config.DeleteDatasources {
+			cmd := &datasources.GetDataSourceQuery{OrgID: ds.OrgID, Name: ds.Name}
+			deleteDatasource, err := dc.dsService.GetDataSource(ctx, cmd)
+			if err != nil || deleteDatasource == nil {
+				continue
+			}
+			deleteDatasourceUIDsMap[deleteDatasource.UID] = true
+		}
+	}
+
+	deleteDatasourceUIDs := make([]string, 0, len(deleteDatasourceUIDsMap))
+	for uid := range deleteDatasourceUIDsMap {
+		deleteDatasourceUIDs = append(deleteDatasourceUIDs, uid)
+	}
+	return deleteDatasourceUIDs
+}
+
+func (dc *DatasourceProvisioner) buildDatasourceCachingConfigs(ctx context.Context, configs []*configs) []DatasourceCachingConfig {
+	dsCachingConfigs := make([]DatasourceCachingConfig, 0)
+
+	for _, config := range configs {
+		for _, ds := range config.Datasources {
+			if ds.Caching == nil {
+				continue
+			}
+
+			dsUID := ds.UID
+			if dsUID == "" {
+				// Caching config must contain datasource uid
+				cmd := &datasources.GetDataSourceQuery{OrgID: ds.OrgID, Name: ds.Name}
+				dataSource, err := dc.dsService.GetDataSource(ctx, cmd)
+				if err != nil {
+					dc.log.Warn("Could not obtain datasource UID to get caching config", "name", ds.Name, "orgID", ds.OrgID)
+					continue
+				}
+				dsUID = dataSource.UID
+			}
+
+			dsCachingConfigs = append(dsCachingConfigs, DatasourceCachingConfig{
+				DataSourceUID: dsUID,
+				Enabled:       ds.Caching.Enabled,
+				QueriesTTL:    ds.Caching.QueriesTTL,
+				ResourcesTTL:  ds.Caching.ResourcesTTL,
+				UseDefaultTTL: ds.Caching.UseDefaultTTL,
+			})
+		}
+	}
+
+	return dsCachingConfigs
 }
