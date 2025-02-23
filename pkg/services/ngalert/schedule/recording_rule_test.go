@@ -165,14 +165,16 @@ func blankRecordingRuleForTests(ctx context.Context) *recordingRule {
 	st := setting.RecordingRuleSettings{
 		Enabled: true,
 	}
-	return newRecordingRule(context.Background(), models.AlertRuleKeyWithGroup{}, 0, nil, nil, st, log.NewNopLogger(), nil, nil, writer.FakeWriter{}, nil, nil)
+
+	return newRecordingRule(context.Background(), models.AlertRuleKeyWithGroup{}, 0, 0, 0, nil, nil, st, log.NewNopLogger(), nil, nil, writer.FakeWriter{}, nil, nil)
 }
 
 func TestRecordingRule_Integration(t *testing.T) {
 	gen := models.RuleGen.With(models.RuleGen.WithAllRecordingRules(), models.RuleGen.WithOrgID(123))
 	ruleStore := newFakeRulesStore()
 	reg := prometheus.NewPedanticRegistry()
-	sch := setupScheduler(t, ruleStore, nil, reg, nil, nil, nil)
+	clk := clock.NewMock()
+	sch := setupScheduler(t, ruleStore, nil, reg, nil, nil, nil, withSchedulerClock(clk))
 	writeTarget := writer.NewTestRemoteWriteTarget(t)
 	defer writeTarget.Close()
 	writerReg := prometheus.NewPedanticRegistry()
@@ -349,6 +351,13 @@ func TestRecordingRule_Integration(t *testing.T) {
 			rule:        rule,
 			folderTitle: folderTitle,
 		})
+
+		// Because we are using a mock clock, first we need to wait until the rule evaluation
+		// reaches the point where it sleeps for the duration of the retry interval.
+		time.Sleep(200 * time.Millisecond)
+		// Then advance the mock clock to trigger the retry.
+		clk.Add(2 * time.Second)
+
 		_ = waitForTimeChannel(t, evalDoneChan)
 
 		t.Run("reports basic evaluation metrics", func(t *testing.T) {
@@ -487,6 +496,13 @@ func TestRecordingRule_Integration(t *testing.T) {
 			rule:        rule,
 			folderTitle: folderTitle,
 		})
+
+		// Because we are using a mock clock, first we need to wait until the rule evaluation
+		// reaches the point where it sleeps for the duration of the retry interval.
+		time.Sleep(200 * time.Millisecond)
+		// Then advance the mock clock to trigger the retry.
+		clk.Add(2 * time.Second)
+
 		_ = waitForTimeChannel(t, evalDoneChan)
 
 		t.Run("status shows evaluation", func(t *testing.T) {
