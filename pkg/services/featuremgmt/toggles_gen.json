@@ -111,7 +111,8 @@
       "metadata": {
         "name": "alertStateHistoryLokiOnly",
         "resourceVersion": "1718727528075",
-        "creationTimestamp": "2023-03-30T18:53:21Z"
+        "creationTimestamp": "2023-03-30T18:53:21Z",
+        "deletionTimestamp": "2025-02-17T20:12:03Z"
       },
       "spec": {
         "description": "Disable Grafana alerts from emitting annotations when a remote Loki instance is available.",
@@ -123,7 +124,8 @@
       "metadata": {
         "name": "alertStateHistoryLokiPrimary",
         "resourceVersion": "1718727528075",
-        "creationTimestamp": "2023-03-30T18:53:21Z"
+        "creationTimestamp": "2023-03-30T18:53:21Z",
+        "deletionTimestamp": "2025-02-17T20:12:03Z"
       },
       "spec": {
         "description": "Enable a remote Loki instance as the primary source for state history reads.",
@@ -135,7 +137,8 @@
       "metadata": {
         "name": "alertStateHistoryLokiSecondary",
         "resourceVersion": "1718727528075",
-        "creationTimestamp": "2023-03-30T18:53:21Z"
+        "creationTimestamp": "2023-03-30T18:53:21Z",
+        "deletionTimestamp": "2025-02-17T20:12:03Z"
       },
       "spec": {
         "description": "Enable Grafana to write alert state history to an external Loki instance in addition to Grafana annotations.",

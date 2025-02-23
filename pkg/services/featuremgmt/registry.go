@@ -315,24 +315,6 @@ var (
 			Owner:       grafanaObservabilityMetricsSquad,
 		},
 		{
-			Name:        "alertStateHistoryLokiSecondary",
-			Description: "Enable Grafana to write alert state history to an external Loki instance in addition to Grafana annotations.",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaAlertingSquad,
-		},
-		{
-			Name:        "alertStateHistoryLokiPrimary",
-			Description: "Enable a remote Loki instance as the primary source for state history reads.",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaAlertingSquad,
-		},
-		{
-			Name:        "alertStateHistoryLokiOnly",
-			Description: "Disable Grafana alerts from emitting annotations when a remote Loki instance is available.",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaAlertingSquad,
-		},
-		{
 			Name:              "unifiedRequestLog",
 			Description:       "Writes error logs to the request logger",
 			Stage:             FeatureStageGeneralAvailability,
