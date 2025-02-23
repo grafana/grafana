@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 
 import { PanelProps, DataFrameType, DashboardCursorSync } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
@@ -17,9 +17,12 @@ import { ThresholdControlsPlugin } from './plugins/ThresholdControlsPlugin';
 import { getPrepareTimeseriesSuggestion } from './suggestions';
 import { getTimezones, prepareGraphableFields } from './utils';
 
-interface TimeSeriesPanelProps extends PanelProps<Options> {}
+interface TimeSeriesPanelProps extends PanelProps<Options> {
+  customTooltip?: React.ReactNode;
+}
 
 export const TimeSeriesPanel = ({
+  id,
   data,
   timeRange,
   timeZone,
@@ -29,7 +32,7 @@ export const TimeSeriesPanel = ({
   fieldConfig,
   onChangeTimeRange,
   replaceVariables,
-  id,
+  customTooltip,
 }: TimeSeriesPanelProps) => {
   const {
     sync,
@@ -42,7 +45,7 @@ export const TimeSeriesPanel = ({
     eventBus,
   } = usePanelContext();
   // Vertical orientation is not available for users through config.
-  // It is simplified version of horizontal time series panel and it does not support all plugins.
+  // It is a simplified version of horizontal time series panel, and it does not support all plugins.
   const isVerticallyOriented = options.orientation === VizOrientation.Vertical;
   const frames = useMemo(() => prepareGraphableFields(data.series, config.theme2, timeRange), [data.series, timeRange]);
   const timezones = useMemo(() => getTimezones(options.timezone, timeZone), [options.timezone, timeZone]);
@@ -123,20 +126,21 @@ export const TimeSeriesPanel = ({
                     dismiss();
                   };
 
-                  return (
-                    // not sure it header time here works for annotations, since it's taken from nearest datapoint index
+                  return customTooltip ? (
+                    customTooltip
+                  ) : (
                     <TimeSeriesTooltip
                       series={alignedFrame}
                       dataIdxs={dataIdxs}
                       seriesIdx={seriesIdx}
                       mode={viaSync ? TooltipDisplayMode.Multi : options.tooltip.mode}
                       sortOrder={options.tooltip.sort}
-                      hideZeros={options.tooltip.hideZeros}
                       isPinned={isPinned}
                       annotate={enableAnnotationCreation ? annotate : undefined}
                       maxHeight={options.tooltip.maxHeight}
                       replaceVariables={replaceVariables}
                       dataLinks={dataLinks}
+                      hideZeros={options.tooltip.hideZeros}
                     />
                   );
                 }}
