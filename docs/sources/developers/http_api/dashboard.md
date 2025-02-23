@@ -97,6 +97,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 {
   "dashboard": {
     "id": 1,
+    "uid": "e883f11b-77c0-4ee3-9a70-3ba223d66e56", 
     "title": "Production Overview Updated",
     "tags": [ "templated" ],
     "timezone": "browser",
@@ -106,7 +107,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
   },
   "folderUid": "l3KqBxCMz",
   "message": "Made changes to xyz",
-  "overwrite": false
+  "overwrite": true
 }
 ```
 
@@ -118,6 +119,7 @@ Content-Type: application/json; charset=UTF-8
 Content-Length: 78
 
 {
+    "folderUid": "l3KqBxCMz",
     "id": 1,
     "uid": "e883f11b-77c0-4ee3-9a70-3ba223d66e56",
     "url": "/d/e883f11b-77c0-4ee3-9a70-3ba223d66e56/production-overview-updated",
