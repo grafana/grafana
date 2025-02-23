@@ -155,11 +155,12 @@ type Stream struct {
 type Sample struct {
 	T time.Time
 	V string
+	M map[string]string
 }
 
 func (r *Sample) MarshalJSON() ([]byte, error) {
-	return json.Marshal([2]string{
-		fmt.Sprintf("%d", r.T.UnixNano()), r.V,
+	return json.Marshal([]any{
+		fmt.Sprintf("%d", r.T.UnixNano()), r.V, r.M,
 	})
 }
 
@@ -167,7 +168,8 @@ func (r *Sample) UnmarshalJSON(b []byte) error {
 	// A Loki stream sample is formatted like a list with two elements, [At, Val]
 	// At is a string wrapping a timestamp, in nanosecond unix epoch.
 	// Val is a string containing the log line.
-	var tuple [2]string
+	// Metadata is a map of string to string.
+	var tuple [3]string
 	if err := json.Unmarshal(b, &tuple); err != nil {
 		return fmt.Errorf("failed to deserialize sample in Loki response: %w", err)
 	}
@@ -177,6 +179,14 @@ func (r *Sample) UnmarshalJSON(b []byte) error {
 	}
 	r.T = time.Unix(0, nano)
 	r.V = tuple[1]
+
+	if len(tuple) > 2 && tuple[2] != "" {
+		var metadata map[string]string
+		if err := json.Unmarshal([]byte(tuple[2]), &metadata); err != nil {
+			return fmt.Errorf("failed to deserialize metadata in Loki response: %w", err)
+		}
+		r.M = metadata
+	}
 	return nil
 }
 

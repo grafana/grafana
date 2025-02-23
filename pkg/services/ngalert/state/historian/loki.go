@@ -34,9 +34,10 @@ const (
 	GroupLabel     = "group"
 	FolderUIDLabel = "folderUID"
 	// Name of the columns used in the dataframe.
-	dfTime   = "time"
-	dfLine   = "line"
-	dfLabels = "labels"
+	dfTime     = "time"
+	dfLine     = "line"
+	dfLabels   = "labels"
+	dfMetadata = "metadata"
 )
 
 const (
@@ -199,9 +200,11 @@ func merge(res []Stream, folderUIDToFilter []string) (*data.Frame, error) {
 	//   1. `time` - timestamp - when the transition happened
 	//   2. `line` - JSON - the full data of the transition
 	//   3. `labels` - JSON - the labels associated with that state transition
+	//   4. `structuredMetadata` - JSON - the structured metadata associated with that state transition
 	times := make([]time.Time, 0, totalLen)
 	lines := make([]json.RawMessage, 0, totalLen)
 	labels := make([]json.RawMessage, 0, totalLen)
+	metadata := make([]json.RawMessage, 0, totalLen)
 
 	// Initialize a slice of pointers to the current position in each array.
 	pointers := make([]int, len(res))
@@ -255,17 +258,22 @@ func merge(res []Stream, folderUIDToFilter []string) (*data.Frame, error) {
 		if err != nil {
 			return nil, fmt.Errorf("a line was in an invalid format: %w", err)
 		}
+		meta, err := json.Marshal(minEl.M)
+		if err != nil {
+			return nil, fmt.Errorf("failed to serialize structured metadata: %w", err)
+		}
 
 		times = append(times, time.Unix(0, tsNano))
 		labels = append(labels, lblsJson)
 		lines = append(lines, line)
+		metadata = append(metadata, meta)
 		pointers[minElStreamIdx]++
 	}
 
 	frame.Fields = append(frame.Fields, data.NewField(dfTime, lbls, times))
 	frame.Fields = append(frame.Fields, data.NewField(dfLine, lbls, lines))
 	frame.Fields = append(frame.Fields, data.NewField(dfLabels, lbls, labels))
-
+	frame.Fields = append(frame.Fields, data.NewField(dfMetadata, lbls, metadata))
 	return frame, nil
 }
 
@@ -284,22 +292,20 @@ func StatesToStream(rule history_model.RuleMeta, states []state.StateTransition,
 		}
 
 		sanitizedLabels := removePrivateLabels(state.Labels)
-		sanitizedStructuredMetadata := removePrivateLabels(state.Annotations)
 
 		entry := LokiEntry{
-			SchemaVersion:      1,
-			Previous:           state.PreviousFormatted(),
-			Current:            state.Formatted(),
-			Values:             valuesAsDataBlob(state.State),
-			Condition:          rule.Condition,
-			DashboardUID:       rule.DashboardUID,
-			PanelID:            rule.PanelID,
-			Fingerprint:        labelFingerprint(sanitizedLabels),
-			RuleTitle:          rule.Title,
-			RuleID:             rule.ID,
-			RuleUID:            rule.UID,
-			InstanceLabels:     sanitizedLabels,
-			StructuredMetadata: sanitizedStructuredMetadata,
+			SchemaVersion:  1,
+			Previous:       state.PreviousFormatted(),
+			Current:        state.Formatted(),
+			Values:         valuesAsDataBlob(state.State),
+			Condition:      rule.Condition,
+			DashboardUID:   rule.DashboardUID,
+			PanelID:        rule.PanelID,
+			Fingerprint:    labelFingerprint(sanitizedLabels),
+			RuleTitle:      rule.Title,
+			RuleID:         rule.ID,
+			RuleUID:        rule.UID,
+			InstanceLabels: sanitizedLabels,
 		}
 		if state.State.State == eval.Error {
 			entry.Error = state.Error.Error()
@@ -315,6 +321,7 @@ func StatesToStream(rule history_model.RuleMeta, states []state.StateTransition,
 		samples = append(samples, Sample{
 			T: state.State.LastEvaluationTime,
 			V: line,
+			M: removePrivateLabels(state.Annotations),
 		})
 	}
 
@@ -348,8 +355,7 @@ type LokiEntry struct {
 	RuleUID       string           `json:"ruleUID"`
 	// InstanceLabels is exactly the set of labels associated with the alert instance in Alertmanager.
 	// These should not be conflated with labels associated with log streams.
-	InstanceLabels     map[string]string `json:"labels"`
-	StructuredMetadata map[string]string `json:"structuredMetadata,omitempty"`
+	InstanceLabels map[string]string `json:"labels"`
 }
 
 func valuesAsDataBlob(state *state.State) *simplejson.Json {
