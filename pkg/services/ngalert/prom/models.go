@@ -1,8 +1,18 @@
 package prom
 
 import (
+	"fmt"
+
 	prommodel "github.com/prometheus/common/model"
 )
+
+type ValidationError struct {
+	Message string
+}
+
+func (e *ValidationError) Error() string {
+	return fmt.Sprintf("validation failed: %s", e.Message)
+}
 
 type PrometheusRulesFile struct {
 	Groups []PrometheusRuleGroup `yaml:"groups"`
@@ -22,4 +32,12 @@ type PrometheusRule struct {
 	Labels        map[string]string   `yaml:"labels,omitempty"`
 	Annotations   map[string]string   `yaml:"annotations,omitempty"`
 	Record        string              `yaml:"record,omitempty"`
+}
+
+func (r *PrometheusRule) Validate() error {
+	if r.KeepFiringFor != nil {
+		return &ValidationError{Message: "keep_firing_for is not supported"}
+	}
+
+	return nil
 }
