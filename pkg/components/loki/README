@@ -24,3 +24,4 @@ After generating the `logproto.pb.go` file, these modifications are needed to su
 
 1. Revert imports to the original `logproto.pb.go` file, unless you add a new import.
 2. Replace all instances of `interface{}` with `any`.
+3. Add StructuredMetadata to the `Entry` message in `types.go` and implement or update the necessary methods.
