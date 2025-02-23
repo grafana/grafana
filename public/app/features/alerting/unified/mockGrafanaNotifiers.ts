@@ -3146,7 +3146,8 @@ export const grafanaAlertNotifiers: Record<GrafanaNotifierType, NotifierDTO> = {
         element: 'input',
         inputType: 'text',
         label: 'Subject',
-        description: 'Optional subject. You can use templates to customize this field',
+        description:
+          'Optional subject. By default, this field uses the default title template and can be customized using templates. It cannot be an empty string',
         placeholder: '{{ template "default.title" . }}',
         propertyName: 'subject',
         selectOptions: null,
@@ -3165,7 +3166,7 @@ export const grafanaAlertNotifiers: Record<GrafanaNotifierType, NotifierDTO> = {
         inputType: '',
         label: 'Message',
         description:
-          'Optional message. You can use templates to customize this field. Using a custom message will replace the default message',
+          'Optional message. By default, this field uses the default message template and can be customized with templates and custom messages',
         placeholder: '{{ template "default.message" . }}',
         propertyName: 'message',
         selectOptions: null,
