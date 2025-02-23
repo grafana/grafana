@@ -1510,10 +1510,14 @@ func (dr *DashboardServiceImpl) CleanUpDeletedDashboards(ctx context.Context) (i
 // -----------------------------------------------------------------------------------------
 
 func (dr *DashboardServiceImpl) getDashboardThroughK8s(ctx context.Context, query *dashboards.GetDashboardQuery) (*dashboards.Dashboard, error) {
+	var latestSub, dtoSub string
 	// if including deleted dashboards for restore, use the /latest subresource
-	subresource := ""
 	if query.IncludeDeleted && dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesRestore) {
-		subresource = "latest"
+		latestSub = "latest"
+	}
+	// The DTO subresource is required in order to return a rehydrated large object.
+	if dr.features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageBigObjectsSupport) {
+		dtoSub = "dto"
 	}
 
 	// get uid if not passed in
@@ -1528,7 +1532,7 @@ func (dr *DashboardServiceImpl) getDashboardThroughK8s(ctx context.Context, quer
 		query.UID = result.UID
 	}
 
-	out, err := dr.k8sclient.Get(ctx, query.UID, query.OrgID, v1.GetOptions{}, subresource)
+	out, err := dr.k8sclient.Get(ctx, query.UID, query.OrgID, v1.GetOptions{}, latestSub, dtoSub)
 	if err != nil && !apierrors.IsNotFound(err) {
 		return nil, err
 	} else if err != nil || out == nil {

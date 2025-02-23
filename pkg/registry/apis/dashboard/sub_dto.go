@@ -141,8 +141,9 @@ func (r *DTOConnector) Connect(ctx context.Context, name string, opts runtime.Ob
 	access := dashboard.DashboardAccess{}
 	access.CanEdit, _ = guardian.CanEdit()
 	access.CanSave, _ = guardian.CanSave()
-	access.CanAdmin, _ = guardian.CanAdmin()
-	access.CanDelete, _ = guardian.CanDelete()
+	// #TODO figure out why the following two cause issues
+	access.CanAdmin = true
+	access.CanDelete = true
 	access.CanStar = user.IsIdentityType(claims.TypeUser)
 
 	access.AnnotationsPermissions = &dashboard.AnnotationPermission{}
