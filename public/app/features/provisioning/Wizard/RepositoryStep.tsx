@@ -57,7 +57,7 @@ export function RepositoryStep({ onStatusChange }: Props) {
         onStatusChange(false);
         return;
       }
-
+      onStatusChange(true);
       await submitData(spec);
     } catch (error) {
       console.error('Repository verification failed:', error);

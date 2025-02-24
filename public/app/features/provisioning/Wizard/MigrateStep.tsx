@@ -25,11 +25,9 @@ export function MigrateStep({ onStatusChange }: MigrateStepProps) {
 
   useEffect(() => {
     if (migrateQuery.isSuccess) {
-      setShowMigrateStatus(false);
       onStatusChange(true);
     } else if (migrateQuery.isError) {
       onStatusChange(false);
-      setShowMigrateStatus(false);
     }
   }, [migrateQuery.isSuccess, migrateQuery.isError, onStatusChange]);
 
@@ -37,15 +35,18 @@ export function MigrateStep({ onStatusChange }: MigrateStepProps) {
     if (!repositoryName) {
       return;
     }
-
-    await migrateRepo({
+    setShowMigrateStatus(true);
+    const response = await migrateRepo({
       name: repositoryName,
       body: {
         identifier,
         history,
       },
     });
-    setShowMigrateStatus(true);
+    if ('error' in response) {
+      onStatusChange(false);
+      setShowMigrateStatus(false);
+    }
   };
 
   if (showMigrateStatus && migrateName) {
@@ -58,7 +59,7 @@ export function MigrateStep({ onStatusChange }: MigrateStepProps) {
 
   return (
     <FieldSet label="3. Migrate dashboards">
-      <Stack direction={'column'} gap={2}>
+      <Stack direction="column" gap={2}>
         <Text color="secondary">
           Migrate all dashboards from this instance to your repository. After this one-time migration, all future
           updates will be automatically saved to the repository.
@@ -76,16 +77,14 @@ export function MigrateStep({ onStatusChange }: MigrateStepProps) {
         </Alert>
 
         {Boolean(stats.length) && (
-          <Stack direction={'column'} width={'300px'}>
+          <Stack direction="column" width="300px">
             <Text>Resources to migrate:</Text>
-            {stats.map((stat) => {
-              return (
-                <Stack justifyContent={'space-between'} key={stat.group}>
-                  <Text>{stat.resource}:</Text>
-                  <Text>{stat.count}</Text>
-                </Stack>
-              );
-            })}
+            {stats.map((stat) => (
+              <Stack justifyContent="space-between" key={stat.group}>
+                <Text>{stat.resource}:</Text>
+                <Text>{stat.count}</Text>
+              </Stack>
+            ))}
           </Stack>
         )}
 
@@ -99,7 +98,7 @@ export function MigrateStep({ onStatusChange }: MigrateStepProps) {
           </Field>
         </FieldSet>
 
-        <Stack alignItems={'flex-start'}>
+        <Stack alignItems="flex-start">
           <Button
             onClick={handleMigrate}
             disabled={migrateQuery.isLoading || !repositoryName}
