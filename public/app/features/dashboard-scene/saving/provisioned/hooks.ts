@@ -1,3 +1,5 @@
+import Chance from 'chance';
+
 import { dateTime } from '@grafana/data';
 import { AnnoKeyRepoName, AnnoKeyRepoPath } from 'app/features/apiserver/types';
 import { useGetResourceRepository } from 'app/features/provisioning/hooks';
@@ -31,8 +33,8 @@ export function useDefaultValues({ meta, defaultTitle, defaultDescription }: Use
   const repositoryConfig = useGetResourceRepository({ name: annoName, folderUid: meta.folderUid });
   const repository = repositoryConfig?.spec;
 
-  const randomizer = newLetterRandomizer(); // replace with random
-  const timestamp = `${dateTime().format('YYYY-MM-DD')}-${randomizer('xxxxx')}`;
+  const random = Chance(1);
+  const timestamp = `${dateTime().format('YYYY-MM-DD')}-${random.string({ length: 5, alpha: true })}`;
 
   return {
     values: {
