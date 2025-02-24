@@ -164,6 +164,7 @@ function ShareExportTabRenderer({ model }: SceneComponentProps<ShareExportTab>) 
                 return (
                   <CodeEditor
                     value={dashboardJson.value ?? ''}
+                    showLineNumbers={true}
                     language="json"
                     showMiniMap={false}
                     height="500px"

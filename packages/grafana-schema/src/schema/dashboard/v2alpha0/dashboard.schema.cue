@@ -51,6 +51,26 @@ DashboardV2Spec: {
   variables: [...VariableKind]
 }
 
+// Importable Dashboard
+ImportableDashboard: {
+  kind: "ImportableDashboard"
+  spec: {
+    dashboard: DashboardV2Spec
+    elements?: [...LibraryPanelExport]
+  }
+  metadata?: {
+    requirements?: [...ImportableDashboardRequirements]
+  }
+}
+
+// ImportableDashboard requirements 
+ImportableDashboardRequirements: {
+  type: string
+  id: string
+  name: string
+  version: string
+}
+
 // Supported dashboard elements
 Element: PanelKind | LibraryPanelKind // |* more element types in the future
 
@@ -72,10 +92,12 @@ LibraryPanelSpec: {
 // When you make a change to a library panel, that change propagates to all instances of where the panel is used.
 // Library panels streamline reuse of panels across multiple dashboards.
 LibraryPanelRef: {
-  // Library panel name
   name: string
-  // Library panel uid
   uid: string
+}
+
+LibraryPanelExport: LibraryPanelRef & {
+  model: _
 }
 
 AnnotationPanelFilter: {

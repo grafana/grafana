@@ -1,8 +1,14 @@
-import { defaults, each, sortBy } from 'lodash';
+import { defaults, each, sortBy, uniqBy } from 'lodash';
 
 import { DataSourceRef, PanelPluginMeta, VariableOption, VariableRefresh } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { DashboardV2Spec, LibraryPanelKind, PanelKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
+import {
+  DashboardV2Spec,
+  ImportableDashboard,
+  LibraryPanelExport,
+  LibraryPanelKind,
+  PanelKind,
+} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import config from 'app/core/config';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { getLibraryPanel } from 'app/features/library-panels/state/api';
@@ -84,7 +90,7 @@ export interface LibraryElementExport {
   kind: LibraryElementKind;
 }
 
-export type DashboardV2Json = ExternalDashboardV2 & DashboardV2Spec;
+export type DashboardV2Json = ImportableDashboard;
 
 export interface DashboardExporterLike<T, J> {
   makeExportable(dashboard: T): Promise<J | { error: unknown }>;
@@ -344,7 +350,7 @@ export class DashboardExporterV2 implements DashboardExporterLike<DashboardV2Spe
     const requires: Requires = {};
     const datasources: DataSources = {};
     const variableLookup: { [key: string]: any } = {};
-    const libraryPanels: Map<string, LibraryElementExport> = new Map<string, LibraryElementExport>();
+    const libraryPanels: LibraryPanelExport[] = [];
 
     for (const variable of dashboard.variables) {
       variableLookup[variable.kind] = variable.spec;
@@ -440,11 +446,22 @@ export class DashboardExporterV2 implements DashboardExporterLike<DashboardV2Spe
     };
 
     const processLibraryPanels = async (panel: LibraryPanelKind) => {
-      // TODO:
+      const { uid } = panel.spec.libraryPanel;
+
+      const libPanel = await getLibraryPanel(uid, true);
+      const exportableLibPanel: LibraryPanelExport = {
+        name: libPanel.name,
+        uid: libPanel.uid,
+        model: libPanel.model,
+      };
+
+      await templateizeDatasourceUsage(exportableLibPanel.model);
+
+      libraryPanels.push(exportableLibPanel);
     };
 
     try {
-      // check up panel data sources
+      // check panel data sources
       // support only grid layout for now
       if (dashboard.layout.kind !== 'GridLayout') {
         throw new Error('Only GridLayout is supported');
@@ -461,8 +478,6 @@ export class DashboardExporterV2 implements DashboardExporterLike<DashboardV2Spe
           }
         }
       }
-
-      // TODO: handle collapsed rows
 
       // templatize template vars
       for (const variable of dashboard.variables) {
@@ -491,23 +506,25 @@ export class DashboardExporterV2 implements DashboardExporterLike<DashboardV2Spe
         version: config.buildInfo.version,
       };
 
-      // TODO: process library panels
+      for (const item of gridLayoutItems) {
+        if (item.kind === 'GridLayoutItem' && !item.spec.repeat) {
+          const panel = elements[item.spec.element.name];
+          if (panel.kind === 'LibraryPanel') {
+            await processLibraryPanels(panel);
+          }
+        }
+      }
 
-      const __elements = [...libraryPanels.entries()].reduce<Record<string, LibraryElementExport>>(
-        (prev, [curKey, curLibPanel]) => {
-          prev[curKey] = curLibPanel;
-          return prev;
+      const newObj: DashboardV2Json = {
+        kind: 'ImportableDashboard',
+        spec: {
+          dashboard,
+          elements: uniqBy(libraryPanels, 'uid'),
         },
-        {}
-      );
-
-      const newObj: DashboardV2Json = defaults(
-        {
-          __elements,
-          __requires: sortBy(requires, ['id']),
+        metadata: {
+          requirements: sortBy(requires, ['id']),
         },
-        dashboard
-      );
+      };
 
       return newObj;
     } catch (err) {

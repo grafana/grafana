@@ -51,6 +51,40 @@ export const defaultDashboardV2Spec = (): DashboardV2Spec => ({
 	variables: [],
 });
 
+// Importable Dashboard
+export interface ImportableDashboard {
+	kind: "ImportableDashboard";
+	spec: {
+		dashboard: DashboardV2Spec;
+		elements?: LibraryPanelExport[];
+	};
+	metadata?: {
+		requirements?: ImportableDashboardRequirements[];
+	};
+}
+
+export const defaultImportableDashboard = (): ImportableDashboard => ({
+	kind: "ImportableDashboard",
+	spec: {
+	dashboard: defaultDashboardV2Spec(),
+},
+});
+
+// ImportableDashboard requirements
+export interface ImportableDashboardRequirements {
+	type: string;
+	id: string;
+	name: string;
+	version: string;
+}
+
+export const defaultImportableDashboardRequirements = (): ImportableDashboardRequirements => ({
+	type: "",
+	id: "",
+	name: "",
+	version: "",
+});
+
 // Supported dashboard elements
 // |* more element types in the future
 export type Element = PanelKind | LibraryPanelKind;
@@ -85,14 +119,24 @@ export const defaultLibraryPanelSpec = (): LibraryPanelSpec => ({
 // When you make a change to a library panel, that change propagates to all instances of where the panel is used.
 // Library panels streamline reuse of panels across multiple dashboards.
 export interface LibraryPanelRef {
-	// Library panel name
 	name: string;
-	// Library panel uid
 	uid: string;
 }
 
 export const defaultLibraryPanelRef = (): LibraryPanelRef => ({
 	name: "",
+	uid: "",
+});
+
+export interface LibraryPanelExport {
+	name: string;
+	model: any;
+	uid: string;
+}
+
+export const defaultLibraryPanelExport = (): LibraryPanelExport => ({
+	name: "",
+	model: {},
 	uid: "",
 });
 
