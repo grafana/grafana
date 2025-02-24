@@ -349,7 +349,7 @@ func getRestoreVersion(msg string) (int, error) {
 }
 
 func safeInt64ToInt(i64 int64) (int, error) {
-	if i64 > math.MaxInt || i64 < math.MinInt {
+	if i64 > math.MaxInt32 || i64 < math.MinInt32 {
 		return 0, fmt.Errorf("int64 value %d overflows int", i64)
 	}
 	return int(i64), nil

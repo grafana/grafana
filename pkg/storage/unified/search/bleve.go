@@ -231,6 +231,7 @@ func (b *bleveBackend) cleanOldIndexes(dir string, skip string) {
 	}
 }
 
+// isValidPath does a sanity check in case it tries to access dirs above the file tree
 func isValidPath(path string) bool {
 	if strings.Contains(path, "\\") || strings.Contains(path, "..") {
 		return false
@@ -691,7 +692,7 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resource.Res
 }
 
 func safeInt64ToInt(i64 int64) (int, error) {
-	if i64 > math.MaxInt || i64 < math.MinInt {
+	if i64 > math.MaxInt32 || i64 < math.MinInt32 {
 		return 0, fmt.Errorf("int64 value %d overflows int", i64)
 	}
 	return int(i64), nil
