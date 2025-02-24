@@ -53,7 +53,6 @@ func (tx sqlTx) QueryContext(ctx context.Context, query string, args ...any) (db
 	if err != nil {
 		return nil, err
 	}
-	defer stmt.Close()
 	return stmt.QueryContext(ctx, args...)
 }
 
@@ -62,6 +61,5 @@ func (tx sqlTx) QueryRowContext(ctx context.Context, query string, args ...any) 
 	if err != nil {
 		return nil
 	}
-	defer stmt.Close()
 	return stmt.QueryRowContext(ctx, args...)
 }
