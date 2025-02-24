@@ -27,8 +27,8 @@ export function RequestErrorAlert({ request, error, title }: RequestErrorAlertPr
     return null;
   }
 
-  const errorTitle = title || (request ? getDefaultTitle(request.endpointName) : 'Operation failed');
-  const errorMessage = request ? getMessageFromError(request.error) : getMessageFromError(error);
+  const errorTitle = title || getDefaultTitle(request.endpointName);
+  const errorMessage = getMessageFromError(request.error);
 
   return (
     <Alert severity="error" title={errorTitle}>
