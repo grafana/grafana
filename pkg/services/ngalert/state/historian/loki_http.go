@@ -159,6 +159,12 @@ type Sample struct {
 }
 
 func (r *Sample) MarshalJSON() ([]byte, error) {
+	// For backward compatibility, if M is nil, we don't include it in the JSON.
+	if r.M == nil {
+		return json.Marshal([]any{
+			fmt.Sprintf("%d", r.T.UnixNano()), r.V,
+		})
+	}
 	return json.Marshal([]any{
 		fmt.Sprintf("%d", r.T.UnixNano()), r.V, r.M,
 	})
