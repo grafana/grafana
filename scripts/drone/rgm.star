@@ -20,6 +20,7 @@ load(
     "scripts/drone/steps/github.star",
     "github_app_generate_token_step",
     "github_app_step_volumes",
+    "github_app_pipeline_volumes",
 )
 load(
     "scripts/drone/utils/images.star",
@@ -375,7 +376,7 @@ def rgm_promotion_pipeline():
             name = "rgm-promotion",
             trigger = promotion_trigger,
             steps = steps,
-            volumes = github_app_step_volumes(),
+            volumes = github_app_step_volumes() + github_app_pipeline_volumes(),
         ),
     ]
 
