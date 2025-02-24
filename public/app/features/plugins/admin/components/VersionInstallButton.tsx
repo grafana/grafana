@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { useEffect, useState } from 'react';
-import { gt } from 'semver';
+import { gt, valid } from 'semver';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
@@ -38,7 +38,7 @@ export const VersionInstallButton = ({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const styles = useStyles2(getStyles);
 
-  const isDowngrade = installedVersion && gt(installedVersion, version.version);
+  const downgrade = isDowngrade(installedVersion, version.version);
 
   useEffect(() => {
     if (installedVersion === version.version) {
@@ -61,7 +61,7 @@ export const VersionInstallButton = ({
       schema_version: '1.0.0',
     };
 
-    if (!installedVersion || gt(version.version, installedVersion)) {
+    if (downgrade !== undefined && !downgrade) {
       reportInteraction(PLUGINS_VERSION_PAGE_UPGRADE_INTERACTION_EVENT_NAME, trackProps);
     } else {
       reportInteraction(PLUGINS_VERSION_PAGE_CHANGE_INTERACTION_EVENT_NAME, {
@@ -76,7 +76,7 @@ export const VersionInstallButton = ({
   };
 
   const onInstallClick = () => {
-    if (isDowngrade) {
+    if (downgrade) {
       setIsModalOpen(true);
     } else {
       performInstallation();
@@ -91,22 +91,24 @@ export const VersionInstallButton = ({
     setIsModalOpen(false);
   };
 
-  let label = 'Downgrade';
+  let label = 'Install';
   let hidden = false;
   const isPreinstalled = isPreinstalledPlugin(pluginId);
 
-  if (!installedVersion) {
-    label = 'Install';
-  } else if (gt(version.version, installedVersion)) {
-    label = 'Upgrade';
-    if (isPreinstalled.withVersion) {
-      // Hide button if the plugin is preinstalled with a specific version
-      hidden = true;
-    }
-  } else {
-    if (isPreinstalled.found && Boolean(config.featureToggles.preinstallAutoUpdate)) {
-      // Hide the downgrade button if the plugin is preinstalled since it will be auto-updated
-      hidden = true;
+  if (downgrade !== undefined) {
+    if (downgrade) {
+      label = 'Downgrade';
+      if (isPreinstalled.found && Boolean(config.featureToggles.preinstallAutoUpdate)) {
+        // Hide the downgrade button if the plugin is preinstalled since it will be auto-updated
+        hidden = true;
+      }
+    } else {
+      label = 'Upgrade';
+      if (isPreinstalled.withVersion) {
+        // Hide button if the plugin is preinstalled with a specific version
+        hidden = true;
+      }
+
     }
   }
 
@@ -148,6 +150,16 @@ function getIcon(label: string) {
     return <Icon name="arrow-up" />;
   }
   return '';
+}
+
+function isDowngrade(installedVersion?: string, version?: string): boolean | undefined {
+  if (!installedVersion || !version) {
+    return undefined;
+  }
+  if (!valid(installedVersion) || !valid(version)) {
+    return undefined;
+  }
+  return gt(installedVersion, version);
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
