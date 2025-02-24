@@ -528,6 +528,19 @@
       },
       "pause": {
         "label": ""
+      },
+      "threshold": {
+        "recovery": {
+          "stop-alerting-above": "",
+          "stop-alerting-bellow": "",
+          "stop-alerting-equal": "",
+          "stop-alerting-inside-range": "",
+          "stop-alerting-less": "",
+          "stop-alerting-more": "",
+          "stop-alerting-not-equal": "",
+          "stop-alerting-outside-range": "",
+          "title": ""
+        }
       }
     },
     "rule-groups": {
@@ -810,6 +823,7 @@
     "collapse": "",
     "edit": "",
     "help": "",
+    "loading": "",
     "locale": {
       "default": "Padrão"
     },
@@ -1043,6 +1057,11 @@
         }
       }
     },
+    "editpane": {
+      "add": "",
+      "configure": "",
+      "outline": ""
+    },
     "empty": {
       "add-library-panel-body": "Adicione visualizações que são compartilhadas com outros painéis de controle.",
       "add-library-panel-button": "Adicionar painel de biblioteca",
@@ -1180,6 +1199,7 @@
     "toolbar": {
       "add": "Adicionar",
       "add-panel": "",
+      "add-panel-description": "",
       "add-panel-lib": "",
       "add-row": "",
       "add-tab": "",
@@ -1205,6 +1225,7 @@
         "label": "",
         "tooltip": ""
       },
+      "libray-panel-description": "",
       "mark-favorite": "Marcar como favorito",
       "more-save-options": "",
       "open-original": "Abrir painel de controle original",
@@ -1213,6 +1234,7 @@
       "playlist-stop": "Parar lista de reprodução",
       "public-dashboard": "",
       "refresh": "Atualizar painel de controle",
+      "row-description": "",
       "save": "Salvar painel de controle",
       "save-dashboard": {
         "label": "",
@@ -1232,6 +1254,7 @@
       "share-button": "Compartilhar",
       "show-hidden-elements": "",
       "switch-old-dashboard": "",
+      "tabs-description": "",
       "unlink-library-panel": "",
       "unmark-favorite": "Desmarcar como favorito"
     },
@@ -1337,6 +1360,12 @@
       "time-zone-label": "Fuso horário",
       "week-start-label": "Início da semana"
     },
+    "time-regions": {
+      "advanced-description-cron": "",
+      "advanced-description-rest": "",
+      "advanced-description-use": "",
+      "advanced-label": ""
+    },
     "variables": {
       "title": "Variáveis"
     },
@@ -1419,6 +1448,11 @@
   },
   "explore": {
     "add-to-dashboard": "Adicionar ao painel de controle",
+    "drilldownInfo": {
+      "action": "",
+      "description": "",
+      "title": ""
+    },
     "logs": {
       "logs-volume": {
         "add-filters": "",
@@ -1630,6 +1664,10 @@
     "apply-suggestion": "",
     "incomplete-request-error": "",
     "send-custom-feedback": ""
+  },
+  "get-enterprise": {
+    "requires-license": "",
+    "title": ""
   },
   "grafana-ui": {
     "action-editor": {
@@ -2034,6 +2072,7 @@
       "render-image-error-description": ""
     }
   },
+  "lock-icon": "",
   "login": {
     "divider": {
       "connecting-text": ""
@@ -2499,6 +2538,9 @@
     "detect": {
       "title": "Detectar"
     },
+    "drilldown": {
+      "title": ""
+    },
     "explore": {
       "title": "Explorar"
     },
@@ -2536,6 +2578,8 @@
     "history-wrapper": {
       "collapse": "",
       "expand": "",
+      "icon-selected": "",
+      "icon-unselected": "",
       "show-more": "",
       "today": "",
       "yesterday": ""
@@ -2712,6 +2756,7 @@
       "close": "Fechar menu",
       "dock": "Menu da dock",
       "list-label": "Navegação",
+      "new": "",
       "open": "",
       "undock": "Desacoplar menu"
     },
@@ -2822,6 +2867,7 @@
   },
   "plugins": {
     "catalog": {
+      "no-updates-available": "",
       "update-all": {
         "all-plugins-updated": "",
         "available-header": "",
@@ -2880,6 +2926,12 @@
     },
     "empty-state": {
       "message": ""
+    },
+    "filter": {
+      "disabled": "",
+      "sort": "",
+      "sort-list": "",
+      "state": ""
     },
     "plugin-help": {
       "error": "",
