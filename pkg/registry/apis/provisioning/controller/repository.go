@@ -51,11 +51,6 @@ type queueItem struct {
 	attempts int
 }
 
-type syncDecision struct {
-	shouldSkip  bool
-	incremental bool
-}
-
 // RepositoryController controls how and when CRD is established.
 type RepositoryController struct {
 	client         client.ProvisioningV0alpha1Interface
