@@ -1,4 +1,4 @@
-import Chance from 'chance';
+import { Chance } from 'chance';
 
 import { dateTime } from '@grafana/data';
 import { AnnoKeyRepoName, AnnoKeyRepoPath } from 'app/features/apiserver/types';
