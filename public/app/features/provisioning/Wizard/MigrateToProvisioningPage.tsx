@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { Page } from 'app/core/components/Page/Page';
