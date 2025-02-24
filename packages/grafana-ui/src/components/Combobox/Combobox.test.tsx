@@ -1,4 +1,4 @@
-import { act, render, screen, fireEvent } from '@testing-library/react';
+import { act, render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
@@ -395,7 +395,9 @@ describe('Combobox', () => {
       const input = screen.getByRole('combobox');
       await user.click(input);
 
-      expect(asyncSpy).toHaveBeenCalledTimes(1); // Called on open
+      expect(asyncSpy).not.toHaveBeenCalledTimes(1); // Not called yet
+      act(() => jest.advanceTimersByTime(200)); // Add the debounce time
+      expect(asyncSpy).toHaveBeenCalledTimes(1); // Then check if called on open
       asyncSpy.mockClear();
 
       await user.keyboard('a');
@@ -434,9 +436,9 @@ describe('Combobox', () => {
     });
 
     it('should display message when there is an error loading async options', async () => {
-      const asyncOptions = jest.fn(() => {
-        throw new Error('Could not retrieve options');
-      });
+      const fetchData = jest.fn();
+      const asyncOptions = fetchData.mockRejectedValue(new Error('Could not retrieve options'));
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
 
       render(<Combobox options={asyncOptions} value={null} onChange={onChangeHandler} />);
 
@@ -445,12 +447,15 @@ describe('Combobox', () => {
       await user.type(input, 'test');
 
       await act(async () => {
-        jest.advanceTimersToNextTimer();
+        jest.advanceTimersByTimeAsync(500);
       });
+      expect(asyncOptions).rejects.toThrow('Could not retrieve options');
+      await waitFor(() => expect(consoleErrorSpy).toHaveBeenCalled());
 
       const emptyMessage = screen.queryByText('An error occurred while loading options.');
-
       expect(emptyMessage).toBeInTheDocument();
+
+      asyncOptions.mockClear();
     });
 
     describe('with a value already selected', () => {
