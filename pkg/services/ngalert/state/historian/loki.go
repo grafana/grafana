@@ -304,6 +304,13 @@ func StatesToStream(rule history_model.RuleMeta, states []state.StateTransition,
 			state.State.Values = map[string]float64{}
 		}
 
+		thresholdInputValue := 0.0
+		if state.State.State == eval.Alerting {
+			if value, ok := state.State.Values[rule.Condition]; ok {
+				thresholdInputValue = value
+			}
+		}
+
 		entry := LokiEntry{
 			SchemaVersion:             1,
 			Previous:                  state.PreviousFormatted(),
@@ -320,6 +327,7 @@ func StatesToStream(rule history_model.RuleMeta, states []state.StateTransition,
 			Annotations:               cleanAnnotations(state.Annotations, annotationsToDelete),
 			Error:                     errMsg,
 			EvaluationDurationSeconds: state.EvaluationDuration.Seconds(),
+			ThresholdInputValue:       thresholdInputValue,
 		}
 
 		jsn, err := json.Marshal(entry)
@@ -381,6 +389,7 @@ type LokiEntry struct {
 	InstanceLabels            map[string]string `json:"labels"`
 	Annotations               map[string]string `json:"annotations"`
 	EvaluationDurationSeconds float64           `json:"evaluationDurationSeconds"`
+	ThresholdInputValue       float64           `json:"thresholdInputValue"`
 }
 
 func valuesAsDataBlob(state *state.State) *simplejson.Json {
