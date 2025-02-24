@@ -351,31 +351,6 @@ func (rc *RepositoryController) process(item *queueItem) error {
 			"value": healthStatus,
 		})
 
-		// If health check fails, add sync state patch operation
-		if healthStatusChanged && obj.Spec.Sync.Enabled {
-			switch {
-			case !healthStatus.Healthy:
-				patchOperations = append(patchOperations, map[string]interface{}{
-					"op":   "replace",
-					"path": "/status/sync",
-					"value": provisioning.SyncStatus{
-						State: provisioning.JobStateError,
-						Message: []string{
-							"Repository is unhealthy",
-						},
-					},
-				})
-
-			// Clear the sync error state
-			case !shouldResync && obj.Status.Sync.State == provisioning.JobStateError:
-				patchOperations = append(patchOperations, map[string]interface{}{
-					"op":    "replace",
-					"path":  "/status/sync",
-					"value": provisioning.SyncStatus{},
-				})
-			}
-		}
-
 		logger.Info("health check completed",
 			"healthy", res.Success,
 			"checked", now,
@@ -386,7 +361,6 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	switch {
 	case !obj.Status.Health.Healthy:
 		logger.Info("unhealthy repository")
-
 	case obj.Status.ObservedGeneration < 1:
 		logger.Info("handle repository create")
 		if hooks != nil {
@@ -425,13 +399,37 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	triggerSyncJob := obj.Spec.Sync.Enabled &&
 		obj.Status.Health.Healthy &&
 		!dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, rc.dualwrite)
-	if triggerSyncJob {
+
+	isUnhealthyMsg := "Repository is unhealthy"
+	isUnhealthySyncStatus := len(obj.Status.Sync.Message) > 0 && obj.Status.Sync.Message[0] == isUnhealthyMsg && obj.Status.Sync.State == provisioning.JobStateError
+
+	switch {
+	case triggerSyncJob:
 		patchOperations = append(patchOperations, map[string]interface{}{
 			"op":   "replace",
 			"path": "/status/sync",
 			"value": provisioning.SyncStatus{
 				State:   provisioning.JobStatePending,
 				Started: time.Now().UnixMilli(),
+			},
+		})
+	case healthStatusChanged && obj.Status.Health.Healthy && isUnhealthySyncStatus:
+		// clear the sync status
+		// FIXME: is this the clearest way to do this? Should we introduce another status or way of way of handling more
+		// specific errors?
+		patchOperations = append(patchOperations, map[string]interface{}{
+			"op":    "replace",
+			"path":  "/status/sync",
+			"value": provisioning.SyncStatus{},
+		})
+	case healthStatusChanged && !obj.Status.Health.Healthy && !isUnhealthySyncStatus:
+		// If health check fails, add sync state patch operation
+		patchOperations = append(patchOperations, map[string]interface{}{
+			"op":   "replace",
+			"path": "/status/sync",
+			"value": provisioning.SyncStatus{
+				State:   provisioning.JobStateError,
+				Message: []string{isUnhealthyMsg},
 			},
 		})
 	}
