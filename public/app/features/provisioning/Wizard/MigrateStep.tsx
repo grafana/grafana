@@ -1,11 +1,10 @@
-import { skipToken } from '@reduxjs/toolkit/query/react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { Alert, Button, FieldSet, Stack, Text, Switch, Field } from '@grafana/ui';
 
 import { JobStatus } from '../JobStatus';
-import { useCreateRepositoryMigrateMutation, useGetRepositoryQuery } from '../api';
+import { useCreateRepositoryMigrateMutation } from '../api';
 
 import { RequestErrorAlert } from './RequestErrorAlert';
 import { WizardFormData } from './types';
@@ -20,16 +19,6 @@ export function MigrateStep({ onStatusChange }: MigrateStepProps) {
   const { watch, register } = useFormContext<WizardFormData>();
   const [repositoryName, history, identifier] = watch(['repositoryName', 'migrate.history', 'migrate.identifier']);
   const migrateName = migrateQuery.data?.metadata?.name;
-  const repositoryQuery = useGetRepositoryQuery(repositoryName ? { name: repositoryName } : skipToken);
-  const stats = repositoryQuery?.data?.status?.stats || [];
-
-  useEffect(() => {
-    if (migrateQuery.isSuccess) {
-      onStatusChange(true);
-    } else if (migrateQuery.isError) {
-      onStatusChange(false);
-    }
-  }, [migrateQuery.isSuccess, migrateQuery.isError, onStatusChange]);
 
   const handleMigrate = async () => {
     if (!repositoryName) {
@@ -52,7 +41,7 @@ export function MigrateStep({ onStatusChange }: MigrateStepProps) {
   if (showMigrateStatus && migrateName) {
     return (
       <Stack direction="column" gap={2}>
-        <JobStatus name={migrateName} />
+        <JobStatus name={migrateName} onStatusChange={onStatusChange} />
       </Stack>
     );
   }
@@ -75,18 +64,6 @@ export function MigrateStep({ onStatusChange }: MigrateStepProps) {
         <Alert severity="info" title="Note">
           Dashboards will be unavailable while running this process.
         </Alert>
-
-        {Boolean(stats.length) && (
-          <Stack direction="column" width="300px">
-            <Text>Resources to migrate:</Text>
-            {stats.map((stat) => (
-              <Stack justifyContent="space-between" key={stat.group}>
-                <Text>{stat.resource}:</Text>
-                <Text>{stat.count}</Text>
-              </Stack>
-            ))}
-          </Stack>
-        )}
 
         <FieldSet>
           <Field label="Identifier" description="Include the current identifier in exported metadata">
