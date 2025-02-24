@@ -141,6 +141,8 @@ func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.Ge
 	if err != nil || dto == nil {
 		if errors.Is(err, dashboards.ErrFolderNotFound) || err == nil {
 			err = resourceInfo.NewNotFound(name)
+		} else if errors.Is(err, dashboards.ErrFolderAccessDenied) {
+			err = resourceInfo.NewForbidden(name, err)
 		}
 		return nil, err
 	}

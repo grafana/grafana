@@ -144,6 +144,11 @@ func (ss *FolderUnifiedStoreImpl) GetParents(ctx context.Context, q folder.GetPa
 	for parentUid != "" {
 		out, err := ss.k8sclient.Get(ctx, parentUid, q.OrgID, v1.GetOptions{})
 		if err != nil {
+			if err.(*apierrors.StatusError).ErrStatus.Code == http.StatusForbidden {
+				// If we get a Forbidden error wher requesting the parent folder, it means the user does not have access
+				// to it, nor its parents. So we can stop looping
+				break
+			}
 			return nil, err
 		}
 
