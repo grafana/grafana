@@ -43,9 +43,9 @@ jobs:
       - name: Get runner name
         run: echo ${{ runner.name }}
 
-      # - name: Setup Enterprise (PR only)
-      #   if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false
-      #   uses: ./.github/workflows/actions/setup-enterprise
+      - name: Setup Enterprise (PR only)
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false
+        uses: ./.github/actions/setup-enterprise
         # Optionally enable debug output with:
         # with:
         #   debug: 'true'
@@ -60,14 +60,14 @@ jobs:
         run: make gen-go
 
       - name: Run backend tests
-        uses: ./.github/workflows/actions/run-backend-tests
+        uses: ./.github/actions/run-backend-tests
         # Optionally configure with:
         # with:
         #   timeout: '10m'
         #   short: 'false'
 
       - name: Run backend integration tests
-        uses: ./.github/workflows/actions/run-backend-integration-tests
+        uses: ./.github/actions/run-backend-integration-tests
         # Optionally configure with:
         # with:
         #   timeout: '10m'
