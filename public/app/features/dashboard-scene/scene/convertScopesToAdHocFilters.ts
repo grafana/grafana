@@ -5,8 +5,7 @@ import {
   reverseScopeFilterOperatorMap,
   scopeFilterOperatorMap,
 } from '@grafana/data';
-import { AdHocFilterWithLabels } from '@grafana/scenes';
-import { FilterSource } from '@grafana/scenes/src/variables/adhoc/AdHocFiltersVariable';
+import { AdHocFilterWithLabels, FilterSource } from '@grafana/scenes';
 
 export function convertScopesToAdHocFilters(scopes: Scope[]): AdHocFilterWithLabels[] {
   const formattedFilters: Map<string, AdHocFilterWithLabels> = new Map();

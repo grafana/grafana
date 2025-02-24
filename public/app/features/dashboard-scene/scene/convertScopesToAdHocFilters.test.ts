@@ -1,5 +1,5 @@
-import { Scope, ScopeSpecFilter } from '@grafana/data/src/types/scopes';
-import { FilterSource } from '@grafana/scenes/src/variables/adhoc/AdHocFiltersVariable';
+import { Scope, ScopeSpecFilter } from '@grafana/data';
+import { FilterSource } from '@grafana/scenes';
 
 import { convertScopesToAdHocFilters } from './convertScopesToAdHocFilters';
 
