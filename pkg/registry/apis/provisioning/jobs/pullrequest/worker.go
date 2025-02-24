@@ -104,6 +104,122 @@ func (c *PullRequestWorker) IsSupported(ctx context.Context, job provisioning.Jo
 	return job.Spec.Action == provisioning.JobActionPullRequest
 }
 
+// generatePreviewComment creates a formatted comment for dashboard previews
+func (c *PullRequestWorker) generatePreviewComment(previews []resourcePreview) (string, error) {
+	var buf bytes.Buffer
+	if err := c.prevTemplate.Execute(&buf, previews); err != nil {
+		return "", fmt.Errorf("execute previews comment template: %w", err)
+	}
+	return buf.String(), nil
+}
+
+func (c *PullRequestWorker) lintFile(
+	ctx context.Context,
+	prRepo PullRequestRepo,
+	options *provisioning.PullRequestJobOptions,
+	path string,
+	ref string,
+	lintResults []provisioning.LintIssue,
+) error {
+	if len(lintResults) == 0 {
+		return nil
+	}
+	var buf bytes.Buffer
+	if err := c.lintTemplate.Execute(&buf, lintResults); err != nil {
+		return fmt.Errorf("execute lint comment template: %w", err)
+	}
+
+	if err := prRepo.CommentPullRequestFile(ctx, options.PR, path, ref, buf.String()); err != nil {
+		return fmt.Errorf("comment pull request file %s: %w", path, err)
+	}
+
+	logging.FromContext(ctx).Info("lint comment added", "path", path)
+	return nil
+}
+
+// processFile handles the parsing, linting, and preview generation for a single file
+func (c *PullRequestWorker) processFile(
+	ctx context.Context,
+	f repository.VersionedFileChange,
+	prRepo PullRequestRepo,
+	parser *resources.Parser,
+	options *provisioning.PullRequestJobOptions,
+	baseURL *url.URL,
+	ref string,
+	linting bool,
+) (*resourcePreview, error) {
+	if resources.ShouldIgnorePath(f.Path) {
+		return nil, nil
+	}
+
+	cfg := prRepo.Config().Spec
+	logger := logging.FromContext(ctx).With("file", f.Path)
+	fileInfo, err := prRepo.Read(ctx, f.Path, ref)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read file: %w", err)
+	}
+
+	parsed, err := parser.Parse(ctx, fileInfo, true)
+	if err != nil {
+		if errors.Is(err, resources.ErrUnableToReadResourceBytes) {
+			logger.Debug("file is not a resource", "path", f.Path)
+		} else {
+			logger.Error("failed to parse resource", "error", err)
+		}
+		return nil, nil
+	}
+
+	if linting && f.Action != repository.FileActionDeleted {
+		if err := c.lintFile(ctx, prRepo, options, f.Path, ref, parsed.Lint); err != nil {
+			return nil, fmt.Errorf("failed to lint file: %w", err)
+		}
+	}
+
+	repoName := prRepo.Config().GetName()
+	preview := &resourcePreview{
+		Filename:    path.Base(f.Path),
+		Path:        f.Path,
+		Kind:        "dashboard", // TODO: add more kinds
+		Action:      string(f.Action),
+		PreviewURL:  c.getPreviewURL(f, baseURL, repoName, ref, options.URL),
+		OriginalURL: c.getOriginalURL(f, baseURL, repoName, cfg.GitHub.Branch, options.URL),
+	}
+
+	if cfg.GitHub.GenerateDashboardPreviews && f.Action != repository.FileActionDeleted {
+		screenshotURL, err := c.renderer.RenderDashboardPreview(ctx, prRepo.Config().GetNamespace(), prRepo.Config().GetName(), f.Path, ref)
+		if err != nil {
+			return nil, fmt.Errorf("render dashboard preview: %w", err)
+		}
+		preview.PreviewScreenshotURL = screenshotURL
+		logger.Info("dashboard preview added", "screenshotURL", screenshotURL)
+	}
+
+	return preview, nil
+}
+
+// getOriginalURL returns the URL for the original version of the file based on the action
+func (c *PullRequestWorker) getOriginalURL(f repository.VersionedFileChange, baseURL *url.URL, repoName, base, pullRequestURL string) string {
+	if f.Action == repository.FileActionCreated {
+		return "" // No original URL for new files
+	}
+
+	path := f.Path
+	if f.Action == repository.FileActionRenamed {
+		path = f.PreviousPath
+	}
+
+	return c.previewURL(baseURL, repoName, base, path, pullRequestURL)
+}
+
+// getPreviewURL returns the URL for the preview version of the file based on the action
+func (c *PullRequestWorker) getPreviewURL(f repository.VersionedFileChange, baseURL *url.URL, repoName, ref, pullRequestURL string) string {
+	if f.Action == repository.FileActionDeleted {
+		return ""
+	}
+
+	return c.previewURL(baseURL, repoName, ref, f.Path, pullRequestURL)
+}
+
 //nolint:gocyclo
 func (c *PullRequestWorker) Process(ctx context.Context,
 	repo repository.Repository,
@@ -111,7 +227,6 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 	progress jobs.JobProgressRecorder,
 ) error {
 	cfg := repo.Config().Spec
-
 	options := job.Spec.PullRequest
 	if options == nil {
 		return apierrors.NewBadRequest("missing spec.pr")
@@ -152,10 +267,9 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 	logger.Info("process pull request")
 	defer logger.Info("pull request processed")
 
+	// list pull requests changes files
 	base := cfg.GitHub.Branch
 	ref := options.Hash
-
-	// list pull requests changes files
 	files, err := prRepo.CompareFiles(ctx, base, ref)
 	if err != nil {
 		return fmt.Errorf("failed to list pull request files: %s", err.Error())
@@ -172,88 +286,31 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 	}
 
 	previews := make([]resourcePreview, 0, len(files))
-
 	for _, f := range files {
-		if resources.ShouldIgnorePath(f.Path) {
-			continue
-		}
-
-		logger := logger.With("file", f.Path)
-		fileInfo, err := prRepo.Read(ctx, f.Path, ref)
+		preview, err := c.processFile(ctx, f, prRepo, parser, options, baseURL, ref, linting)
 		if err != nil {
-			return fmt.Errorf("failed to read file %s: %+v", f.Path, err)
+			return fmt.Errorf("failed to process file %s: %w", f.Path, err)
 		}
-
-		parsed, err := parser.Parse(ctx, fileInfo, true)
-		if err != nil {
-			if errors.Is(err, resources.ErrUnableToReadResourceBytes) {
-				logger.Debug("file is not a resource", "path", f.Path)
-			} else {
-				logger.Error("failed to parse resource", "path", f.Path, "error", err)
-			}
-			continue
+		if preview != nil {
+			previews = append(previews, *preview)
 		}
-
-		if linting && len(parsed.Lint) > 0 && f.Action != repository.FileActionDeleted {
-			var buf bytes.Buffer
-			if err := c.lintTemplate.Execute(&buf, parsed.Lint); err != nil {
-				return fmt.Errorf("execute lint comment template: %w", err)
-			}
-
-			if err := prRepo.CommentPullRequestFile(ctx, options.PR, f.Path, ref, buf.String()); err != nil {
-				return fmt.Errorf("comment pull request file %s: %w", f.Path, err)
-			}
-
-			logger.Info("lint comment added")
-		}
-
-		preview := resourcePreview{
-			Filename: path.Base(f.Path),
-			Path:     f.Path,
-			Kind:     "dashboard", // TODO: add more kinds
-			Action:   string(f.Action),
-		}
-
-		switch f.Action {
-		case repository.FileActionCreated:
-			preview.PreviewURL = c.previewURL(baseURL, repo.Config().GetName(), ref, f.Path, options.URL)
-		case repository.FileActionUpdated:
-			preview.OriginalURL = c.previewURL(baseURL, repo.Config().GetName(), ref, f.Path, options.URL)
-			preview.PreviewURL = c.previewURL(baseURL, repo.Config().GetName(), ref, f.Path, options.URL)
-		case repository.FileActionRenamed:
-			preview.OriginalURL = c.previewURL(baseURL, repo.Config().GetName(), base, f.PreviousPath, options.URL)
-			preview.PreviewURL = c.previewURL(baseURL, repo.Config().GetName(), ref, f.Path, options.URL)
-		case repository.FileActionDeleted:
-			preview.OriginalURL = c.previewURL(baseURL, repo.Config().GetName(), base, f.Path, options.URL)
-		default:
-			return fmt.Errorf("unknown file action: %s", f.Action)
-		}
-
-		if cfg.GitHub.GenerateDashboardPreviews && f.Action != repository.FileActionDeleted {
-			screenshotURL, err := c.renderer.RenderDashboardPreview(ctx, repo.Config().GetNamespace(), repo.Config().GetName(), f.Path, ref)
-			if err != nil {
-				return fmt.Errorf("render dashboard preview: %w", err)
-			}
-			preview.PreviewScreenshotURL = screenshotURL
-			logger.Info("dashboard preview added", "screenshotURL", screenshotURL)
-		}
-
-		previews = append(previews, preview)
 	}
 
-	if len(previews) > 0 && cfg.GitHub.GenerateDashboardPreviews {
-		var buf bytes.Buffer
-		if err := c.prevTemplate.Execute(&buf, previews); err != nil {
-			return fmt.Errorf("execute previews comment template: %w", err)
-		}
-
-		if err := prRepo.CommentPullRequest(ctx, options.PR, buf.String()); err != nil {
-			return fmt.Errorf("comment pull request: %w", err)
-		}
-
-		logger.Info("previews comment added", "number", len(previews))
+	if len(previews) == 0 || !cfg.GitHub.GenerateDashboardPreviews {
+		progress.SetMessage("no previews to add")
+		return nil
 	}
 
+	comment, err := c.generatePreviewComment(previews)
+	if err != nil {
+		return err
+	}
+
+	if err := prRepo.CommentPullRequest(ctx, options.PR, comment); err != nil {
+		return fmt.Errorf("comment pull request: %w", err)
+	}
+
+	logger.Info("previews comment added", "number", len(previews))
 	return nil
 }
 
