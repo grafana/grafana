@@ -8,6 +8,7 @@ import {
   AbsoluteTimeRange,
   DataFrame,
   EventBus,
+  getNextRefId,
   GrafanaTheme2,
   hasToggleableQueryFiltersSupport,
   LoadingState,
@@ -22,14 +23,18 @@ import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import {
   AdHocFilterItem,
+  Alert,
   ErrorBoundaryAlert,
+  LinkButton,
   PanelContainer,
   ScrollContainer,
+  Stack,
   Themeable2,
   withTheme2,
 } from '@grafana/ui';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR } from '@grafana/ui/src/components/Table/types';
 import { supportedFeatures } from 'app/core/history/richHistoryStorageProvider';
+import { t, Trans } from 'app/core/internationalization';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { StoreState } from 'app/types';
 
@@ -54,6 +59,7 @@ import { ResponseErrorContainer } from './ResponseErrorContainer';
 import { SecondaryActions } from './SecondaryActions';
 import TableContainer from './Table/TableContainer';
 import { TraceViewContainer } from './TraceView/TraceViewContainer';
+import { changeDatasource } from './state/datasource';
 import { changeSize } from './state/explorePane';
 import { splitOpen } from './state/main';
 import {
@@ -65,7 +71,7 @@ import {
   setQueries,
   setSupplementaryQueryEnabled,
 } from './state/query';
-import { isSplit } from './state/selectors';
+import { isSplit, selectExploreDSMaps } from './state/selectors';
 import { updateTimeRange } from './state/time';
 
 const getStyles = (theme: GrafanaTheme2) => {
@@ -562,6 +568,9 @@ export class Explore extends PureComponent<Props, ExploreState> {
     if (showCorrelationHelper && correlationEditorHelperData !== undefined) {
       correlationsBox = <CorrelationHelper exploreId={exploreId} correlations={correlationEditorHelperData} />;
     }
+    const isDsCompatibleWithDrilldown = ['prometheus', 'loki', 'tempo', 'grafana-pyroscope-datasource'].includes(
+      datasourceInstance?.type || ''
+    );
 
     return (
       <ContentOutlineContextProvider refreshDependencies={this.props.queries}>
@@ -591,6 +600,27 @@ export class Explore extends PureComponent<Props, ExploreState> {
                   <>
                     <ContentOutlineItem panelId="Queries" title="Queries" icon="arrow" mergeSingleChild={true}>
                       <PanelContainer className={styles.queryContainer}>
+                        {isDsCompatibleWithDrilldown && (
+                          <Alert
+                            severity={'info'}
+                            title={t(
+                              'explore.drilldownInfo.title',
+                              'Explore Metrics, Logs, Traces and Profiles have moved!'
+                            )}
+                          >
+                            <Stack gap={1} alignItems="flex-end" justifyContent={'space-between'}>
+                              <span>
+                                <Trans i18nKey={'explore.drilldownInfo.description'}>
+                                  Looking for the Grafana Explore apps? They are now called the Grafana Drilldown apps
+                                  and can be found under <b>Menu &gt; Drilldown</b>
+                                </Trans>
+                              </span>
+                              <LinkButton variant={'secondary'} href="/drilldown">
+                                <Trans i18nKey={'explore.drilldownInfo.action'}>Go to Grafana Drilldown</Trans>
+                              </LinkButton>
+                            </Stack>
+                          </Alert>
+                        )}
                         {correlationsBox}
                         <QueryRows exploreId={exploreId} />
                         <SecondaryActions
@@ -605,6 +635,28 @@ export class Explore extends PureComponent<Props, ExploreState> {
                           queryInspectorButtonActive={showQueryInspector}
                           onClickAddQueryRowButton={this.onClickAddQueryRowButton}
                           onClickQueryInspectorButton={() => setShowQueryInspector(!showQueryInspector)}
+                          onSelectQueryFromLibrary={async (query) => {
+                            const { changeDatasource, queries, setQueries } = this.props;
+                            const newQueries = [
+                              ...queries,
+                              {
+                                ...query,
+                                refId: getNextRefId(queries),
+                              },
+                            ];
+                            setQueries(exploreId, newQueries);
+                            if (query.datasource?.uid) {
+                              const uniqueDatasources = new Set(newQueries.map((q) => q.datasource?.uid));
+                              const isMixed = uniqueDatasources.size > 1;
+                              const newDatasourceRef = {
+                                uid: isMixed ? MIXED_DATASOURCE_NAME : query.datasource.uid,
+                              };
+                              const shouldChangeDatasource = datasourceInstance.uid !== newDatasourceRef.uid;
+                              if (shouldChangeDatasource) {
+                                await changeDatasource({ exploreId, datasource: newDatasourceRef });
+                              }
+                            }
+                          }}
                         />
                         <ResponseErrorContainer exploreId={exploreId} />
                       </PanelContainer>
@@ -716,10 +768,12 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     showLogsSample,
     correlationEditorHelperData,
     correlationEditorDetails: explore.correlationEditorDetails,
+    exploreActiveDS: selectExploreDSMaps(state),
   };
 }
 
 const mapDispatchToProps = {
+  changeDatasource,
   changeSize,
   modifyQueries,
   scanStart,

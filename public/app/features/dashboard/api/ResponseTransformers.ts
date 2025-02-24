@@ -41,6 +41,7 @@ import {
   GridLayoutItemKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import { DashboardLink, DataTransformerConfig } from '@grafana/schema/src/raw/dashboard/x/dashboard_types.gen';
+import { WeekStart } from '@grafana/ui';
 import {
   AnnoKeyCreatedBy,
   AnnoKeyDashboardGnetId,
@@ -62,6 +63,7 @@ import {
   transformVariableRefreshToEnumV1,
 } from 'app/features/dashboard-scene/serialization/transformToV1TypesUtils';
 import {
+  LEGACY_STRING_VALUE_KEY,
   transformCursorSynctoEnum,
   transformDataTopic,
   transformSortVariableToEnum,
@@ -133,7 +135,7 @@ export function ensureV2Response(
     };
     creationTimestamp = dto.meta.created;
     labelsMeta = {
-      [DeprecatedInternalId]: dashboard.id ?? undefined,
+      [DeprecatedInternalId]: dashboard.id?.toString() ?? undefined,
     };
   }
 
@@ -158,8 +160,9 @@ export function ensureV2Response(
       autoRefreshIntervals: dashboard.timepicker?.refresh_intervals || timeSettingsDefaults.autoRefreshIntervals,
       fiscalYearStartMonth: dashboard.fiscalYearStartMonth || timeSettingsDefaults.fiscalYearStartMonth,
       hideTimepicker: dashboard.timepicker?.hidden || timeSettingsDefaults.hideTimepicker,
-      quickRanges: dashboard.timepicker?.time_options || timeSettingsDefaults.quickRanges,
-      weekStart: dashboard.weekStart || timeSettingsDefaults.weekStart,
+      quickRanges: dashboard.timepicker?.quick_ranges,
+      // casting WeekStart here to avoid editing old schema
+      weekStart: (dashboard.weekStart as WeekStart) || timeSettingsDefaults.weekStart,
       nowDelay: dashboard.timepicker?.nowDelay || timeSettingsDefaults.nowDelay,
     },
     links: dashboard.links || [],
@@ -187,13 +190,13 @@ export function ensureV2Response(
 export function ensureV1Response(
   dashboard: DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec> | DashboardWithAccessInfo<DashboardDataDTO>
 ): DashboardDTO {
-  // if dashboard is not on v0 schema or v2 schema, return as is
+  // if dashboard is not on v1 schema or v2 schema, return as is
   if (!isDashboardResource(dashboard)) {
     return dashboard;
   }
 
   const spec = dashboard.spec;
-  // if dashboard is on v0 schema
+  // if dashboard is on v1 schema
   if (isDashboardV0Spec(spec)) {
     return {
       meta: {
@@ -249,7 +252,7 @@ export function ensureV1Response(
         timepicker: {
           refresh_intervals: spec.timeSettings.autoRefreshIntervals,
           hidden: spec.timeSettings.hideTimepicker,
-          time_options: spec.timeSettings.quickRanges,
+          quick_ranges: spec.timeSettings.quickRanges,
           nowDelay: spec.timeSettings.nowDelay,
         },
         fiscalYearStartMonth: spec.timeSettings.fiscalYearStartMonth,
@@ -380,7 +383,7 @@ function buildElement(p: Panel): [PanelKind | LibraryPanelKind, string] {
       },
     };
 
-    return [panelKind, p.id!.toString()];
+    return [panelKind, `panel-${p.id}`];
   } else {
     // PanelKind
 
@@ -430,7 +433,7 @@ function buildElement(p: Panel): [PanelKind | LibraryPanelKind, string] {
       },
     };
 
-    return [panelKind, p.id!.toString()];
+    return [panelKind, `panel-${p.id}`];
   }
 }
 
@@ -504,8 +507,12 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
         let query = v.query || {};
 
         if (typeof query === 'string') {
-          console.error('Query variable query is a string. It needs to extend DataQuery.');
-          query = {};
+          console.warn(
+            'Query variable query is a string which is deprecated in the schema v2. It should extend DataQuery'
+          );
+          query = {
+            [LEGACY_STRING_VALUE_KEY]: query,
+          };
         }
 
         const qv: QueryVariableKind = {
@@ -526,9 +533,7 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
             sort: transformSortVariableToEnum(v.sort),
             query: {
               kind: v.datasource?.type || getDefaultDatasourceType(),
-              spec: {
-                ...query,
-              },
+              spec: query,
             },
           },
         };
@@ -708,7 +713,10 @@ function getVariablesV1(vars: DashboardV2Spec['variables']): VariableModel[] {
           ...commonProperties,
           current: v.spec.current,
           options: v.spec.options,
-          query: typeof v.spec.query === 'string' ? v.spec.query : v.spec.query.spec,
+          query:
+            LEGACY_STRING_VALUE_KEY in v.spec.query.spec
+              ? v.spec.query.spec[LEGACY_STRING_VALUE_KEY]
+              : v.spec.query.spec,
           datasource: v.spec.datasource,
           sort: transformSortVariableToEnumV1(v.spec.sort),
           refresh: transformVariableRefreshToEnumV1(v.spec.refresh),
@@ -851,6 +859,10 @@ function getPanelsV1(
   const panelsV1: Array<Panel | LibraryPanelDTO | RowPanel> = [];
 
   let maxPanelId = 0;
+
+  if (layout.kind !== 'GridLayout') {
+    throw new Error('Cannot convert non-GridLayout layout to v1');
+  }
 
   for (const item of layout.spec.items) {
     if (item.kind === 'GridLayoutItem') {

@@ -91,20 +91,22 @@ func (r *LokiHistorianStore) Get(ctx context.Context, query annotations.ItemQuer
 		return make([]*annotations.ItemDTO, 0), nil
 	}
 
-	rule := &ngmodels.AlertRule{}
-	if query.AlertID != 0 {
-		var err error
-		rule, err = r.ruleStore.GetRuleByID(ctx, ngmodels.GetAlertRuleByIDQuery{OrgID: query.OrgID, ID: query.AlertID})
+	var ruleUID string
+	if query.AlertUID != "" {
+		ruleUID = query.AlertUID
+	} else if query.AlertID != 0 {
+		rule, err := r.ruleStore.GetRuleByID(ctx, ngmodels.GetAlertRuleByIDQuery{OrgID: query.OrgID, ID: query.AlertID})
 		if err != nil {
 			if errors.Is(err, ngmodels.ErrAlertRuleNotFound) {
 				return make([]*annotations.ItemDTO, 0), ErrLokiStoreNotFound.Errorf("rule with ID %d does not exist", query.AlertID)
 			}
 			return make([]*annotations.ItemDTO, 0), ErrLokiStoreInternal.Errorf("failed to query rule: %w", err)
 		}
+		ruleUID = rule.UID
 	}
 
 	// No folders in the filter because it filter by Dashboard UID, and the request is already authorized.
-	logQL, err := historian.BuildLogQuery(buildHistoryQuery(&query, accessResources.Dashboards, rule.UID), nil, r.client.MaxQuerySize())
+	logQL, err := historian.BuildLogQuery(buildHistoryQuery(&query, accessResources.Dashboards, ruleUID), nil, r.client.MaxQuerySize())
 	if err != nil {
 		grafanaErr := errutil.Error{}
 		if errors.As(err, &grafanaErr) {

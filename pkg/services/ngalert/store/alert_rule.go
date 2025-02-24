@@ -68,6 +68,13 @@ func (st DBstore) DeleteAlertRulesByUID(ctx context.Context, orgID int64, ruleUI
 			return err
 		}
 		logger.Debug("Deleted alert instances", "count", rows)
+
+		rows, err = sess.Table("alert_rule_state").Where("org_id = ?", orgID).In("rule_uid", ruleUID).Delete(alertRule{})
+		if err != nil {
+			return err
+		}
+		logger.Debug("Deleted alert rule state", "count", rows)
+
 		return nil
 	})
 }
@@ -121,11 +128,12 @@ func (st DBstore) GetAlertRuleByUID(ctx context.Context, query *ngmodels.GetAler
 func (st DBstore) GetAlertRuleVersions(ctx context.Context, key ngmodels.AlertRuleKey) ([]*ngmodels.AlertRule, error) {
 	alertRules := make([]*ngmodels.AlertRule, 0)
 	err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
-		rows, err := sess.Table(new(alertRuleVersion)).Where("rule_org_id = ? AND rule_uid = ?", key.OrgID, key.UID).Desc("id").Rows(new(alertRuleVersion))
+		rows, err := sess.Table(new(alertRuleVersion)).Where("rule_org_id = ? AND rule_uid = ?", key.OrgID, key.UID).Asc("id").Rows(new(alertRuleVersion))
 		if err != nil {
 			return err
 		}
 		// Deserialize each rule separately in case any of them contain invalid JSON.
+		var previousVersion *alertRuleVersion
 		for rows.Next() {
 			rule := new(alertRuleVersion)
 			err = rows.Scan(rule)
@@ -133,11 +141,17 @@ func (st DBstore) GetAlertRuleVersions(ctx context.Context, key ngmodels.AlertRu
 				st.Logger.Error("Invalid rule version found in DB store, ignoring it", "func", "GetAlertRuleVersions", "error", err)
 				continue
 			}
+			// skip version that has no diff with previous version
+			// this is pretty basic comparison, it may have false negatives
+			if previousVersion != nil && previousVersion.EqualSpec(*rule) {
+				continue
+			}
 			converted, err := alertRuleToModelsAlertRule(alertRuleVersionToAlertRule(*rule), st.Logger)
 			if err != nil {
 				st.Logger.Error("Invalid rule found in DB store, cannot convert, ignoring it", "func", "GetAlertRuleVersions", "error", err, "version_id", rule.ID)
 				continue
 			}
+			previousVersion = rule
 			alertRules = append(alertRules, &converted)
 		}
 		return nil
@@ -145,6 +159,15 @@ func (st DBstore) GetAlertRuleVersions(ctx context.Context, key ngmodels.AlertRu
 	if err != nil {
 		return nil, err
 	}
+	slices.SortFunc(alertRules, func(a, b *ngmodels.AlertRule) int {
+		if a.ID > b.ID {
+			return -1
+		}
+		if a.ID < b.ID {
+			return 1
+		}
+		return 0
+	})
 	return alertRules, nil
 }
 
@@ -313,7 +336,13 @@ func (st DBstore) UpdateAlertRules(ctx context.Context, user *ngmodels.UserUID, 
 			v := alertRuleToAlertRuleVersion(converted)
 			v.Version++
 			v.ParentVersion = r.Existing.Version
-			ruleVersions = append(ruleVersions, v)
+
+			// check if there is diff between existing and new, and if no, skip saving version.
+			existingConverted, err := alertRuleFromModelsAlertRule(*r.Existing)
+			if err != nil || !alertRuleToAlertRuleVersion(existingConverted).EqualSpec(v) {
+				ruleVersions = append(ruleVersions, v)
+			}
+
 			keys = append(keys, ngmodels.AlertRuleKey{OrgID: r.New.OrgID, UID: r.New.UID})
 		}
 		if len(ruleVersions) > 0 {
@@ -968,7 +997,7 @@ func (st DBstore) RenameReceiverInNotificationSettings(ctx context.Context, orgI
 			continue
 		}
 
-		r := ngmodels.CopyRule(rule)
+		r := rule.Copy()
 		for idx := range r.NotificationSettings {
 			if r.NotificationSettings[idx].Receiver == oldReceiver {
 				r.NotificationSettings[idx].Receiver = newReceiver
@@ -1043,7 +1072,7 @@ func (st DBstore) RenameTimeIntervalInNotificationSettings(
 			continue
 		}
 
-		r := ngmodels.CopyRule(rule)
+		r := rule.Copy()
 		for idx := range r.NotificationSettings {
 			for mtIdx := range r.NotificationSettings[idx].MuteTimeIntervals {
 				if r.NotificationSettings[idx].MuteTimeIntervals[mtIdx] == oldTimeInterval {
