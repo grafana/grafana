@@ -96,6 +96,7 @@ LibraryPanelRef: {
   uid: string
 }
 
+// Exportable library panel - we need to load the full model when exporting a dashboard
 LibraryPanelExport: LibraryPanelRef & {
   model: _
 }

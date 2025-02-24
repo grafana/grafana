@@ -128,6 +128,7 @@ export const defaultLibraryPanelRef = (): LibraryPanelRef => ({
 	uid: "",
 });
 
+// Exportable library panel - we need to load the full model when exporting a dashboard
 export interface LibraryPanelExport {
 	name: string;
 	model: any;
