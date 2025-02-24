@@ -50,7 +50,7 @@ export const ExemplarHoverView = ({ displayValues, links, header = 'Exemplar', m
   );
 };
 
-const getStyles = (theme: GrafanaTheme2, padding = 0, maxHeight = 250) => {
+const getStyles = (theme: GrafanaTheme2, padding = 0, maxHeight?: number) => {
   return {
     exemplarWrapper: css({
       display: 'flex',
@@ -81,7 +81,7 @@ const getStyles = (theme: GrafanaTheme2, padding = 0, maxHeight = 250) => {
       borderTop: `1px solid ${theme.colors.border.medium}`,
       padding: theme.spacing(1),
       overflowY: 'auto',
-      maxHeight: maxHeight,
+      maxHeight: maxHeight ?? 'none',
     }),
     exemplarFooter: css({
       display: 'flex',
