@@ -9,6 +9,7 @@ import (
 
 	"github.com/go-jose/go-jose/v3/jwt"
 	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/grafana/authlib/authn"
@@ -33,44 +34,33 @@ type NewBackendFunc func(ctx context.Context) resource.StorageBackend
 // TestOptions configures which tests to run
 type TestOptions struct {
 	SkipTests map[string]bool // tests to skip
-
 }
 
-// RunStorageBackendTest runs the storage backend test suite
-func RunStorageBackendTest(t *testing.T, newBackend NewBackendFunc, opts *TestOptions) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+type storageBackendSuite struct {
+	suite.Suite
+	newBackend NewBackendFunc
+	opts       *TestOptions
+}
 
+func NewStorageBackendSuite(t *testing.T, newBackend NewBackendFunc, opts *TestOptions) *storageBackendSuite {
 	if opts == nil {
 		opts = &TestOptions{}
 	}
-
-	cases := []struct {
-		name string
-		fn   func(*testing.T, resource.StorageBackend)
-	}{
-		{TestHappyPath, runTestIntegrationBackendHappyPath},
-		{TestWatchWriteEvents, runTestIntegrationBackendWatchWriteEventsFromLastest},
-		{TestList, runTestIntegrationBackendList},
-		{TestBlobSupport, runTestIntegrationBlobSupport},
-		{TestGetResourceStats, runTestIntegrationBackendGetResourceStats},
-		{TestListHistory, runTestIntegrationBackendListHistory},
+	s := &storageBackendSuite{
+		newBackend: newBackend,
+		opts:       opts,
 	}
-
-	for _, tc := range cases {
-		if shouldSkip := opts.SkipTests[tc.name]; shouldSkip {
-			t.Logf("Skipping test: %s", tc.name)
-			continue
-		}
-
-		t.Run(tc.name, func(t *testing.T) {
-			tc.fn(t, newBackend(context.Background()))
-		})
-	}
+	return s
 }
 
-func runTestIntegrationBackendHappyPath(t *testing.T, backend resource.StorageBackend) {
+func (s *storageBackendSuite) skipTest(name string) bool {
+	return s.opts.SkipTests[name]
+}
+
+func (s *storageBackendSuite) TestHappyPath() {
+	if s.skipTest(TestHappyPath) {
+		s.T().Skip("skipping happy path test")
+	}
 	ctx := types.WithAuthInfo(context.Background(), authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
 		Claims: jwt.Claims{
 			Subject: "testuser",
@@ -78,57 +68,58 @@ func runTestIntegrationBackendHappyPath(t *testing.T, backend resource.StorageBa
 		Rest: authn.AccessTokenClaims{},
 	}))
 
-	server := newServer(t, backend)
+	backend := s.newBackend(ctx)
+	server := newServer(s.T(), backend)
 
 	stream, err := backend.WatchWriteEvents(context.Background()) // Using a different context to avoid canceling the stream after the DefaultContextTimeout
-	require.NoError(t, err)
+	s.Require().NoError(err)
 	var rv1, rv2, rv3, rv4, rv5 int64
 
-	t.Run("Add 3 resources", func(t *testing.T) {
+	s.Run("Add 3 resources", func() {
 		rv1, err = writeEvent(ctx, backend, "item1", resource.WatchEvent_ADDED)
-		require.NoError(t, err)
-		require.Greater(t, rv1, int64(0))
+		s.Require().NoError(err)
+		s.Require().Greater(rv1, int64(0))
 
 		rv2, err = writeEvent(ctx, backend, "item2", resource.WatchEvent_ADDED)
-		require.NoError(t, err)
-		require.Greater(t, rv2, rv1)
+		s.Require().NoError(err)
+		s.Require().Greater(rv2, rv1)
 
 		rv3, err = writeEvent(ctx, backend, "item3", resource.WatchEvent_ADDED)
-		require.NoError(t, err)
-		require.Greater(t, rv3, rv2)
+		s.Require().NoError(err)
+		s.Require().Greater(rv3, rv2)
 	})
 
-	t.Run("Update item2", func(t *testing.T) {
+	s.Run("Update item2", func() {
 		rv4, err = writeEvent(ctx, backend, "item2", resource.WatchEvent_MODIFIED)
-		require.NoError(t, err)
-		require.Greater(t, rv4, rv3)
+		s.Require().NoError(err)
+		s.Require().Greater(rv4, rv3)
 	})
 
-	t.Run("Delete item1", func(t *testing.T) {
+	s.Run("Delete item1", func() {
 		rv5, err = writeEvent(ctx, backend, "item1", resource.WatchEvent_DELETED)
-		require.NoError(t, err)
-		require.Greater(t, rv5, rv4)
+		s.Require().NoError(err)
+		s.Require().Greater(rv5, rv4)
 	})
 
-	t.Run("Read latest item 2", func(t *testing.T) {
+	s.Run("Read latest item 2", func() {
 		resp := backend.ReadResource(ctx, &resource.ReadRequest{Key: resourceKey("item2")})
-		require.Nil(t, resp.Error)
-		require.Equal(t, rv4, resp.ResourceVersion)
-		require.Equal(t, "item2 MODIFIED", string(resp.Value))
-		require.Equal(t, "folderuid", resp.Folder)
+		s.Require().Nil(resp.Error)
+		s.Require().Equal(rv4, resp.ResourceVersion)
+		s.Require().Equal("item2 MODIFIED", string(resp.Value))
+		s.Require().Equal("folderuid", resp.Folder)
 	})
 
-	t.Run("Read early version of item2", func(t *testing.T) {
+	s.Run("Read early version of item2", func() {
 		resp := backend.ReadResource(ctx, &resource.ReadRequest{
 			Key:             resourceKey("item2"),
 			ResourceVersion: rv3, // item2 was created at rv2 and updated at rv4
 		})
-		require.Nil(t, resp.Error)
-		require.Equal(t, rv2, resp.ResourceVersion)
-		require.Equal(t, "item2 ADDED", string(resp.Value))
+		s.Require().Nil(resp.Error)
+		s.Require().Equal(rv2, resp.ResourceVersion)
+		s.Require().Equal("item2 ADDED", string(resp.Value))
 	})
 
-	t.Run("List latest", func(t *testing.T) {
+	s.Run("List latest", func() {
 		resp, err := server.List(ctx, &resource.ListRequest{
 			Options: &resource.ListOptions{
 				Key: &resource.ResourceKey{
@@ -138,46 +129,49 @@ func runTestIntegrationBackendHappyPath(t *testing.T, backend resource.StorageBa
 				},
 			},
 		})
-		require.NoError(t, err)
-		require.Nil(t, resp.Error)
-		require.Len(t, resp.Items, 2)
-		require.Equal(t, "item2 MODIFIED", string(resp.Items[0].Value))
-		require.Equal(t, "item3 ADDED", string(resp.Items[1].Value))
-		require.GreaterOrEqual(t, resp.ResourceVersion, rv5) // rv5 is the latest resource version
+		s.Require().NoError(err)
+		s.Require().Nil(resp.Error)
+		s.Require().Len(resp.Items, 2)
+		s.Require().Equal("item2 MODIFIED", string(resp.Items[0].Value))
+		s.Require().Equal("item3 ADDED", string(resp.Items[1].Value))
+		s.Require().GreaterOrEqual(resp.ResourceVersion, rv5) // rv5 is the latest resource version
 	})
 
-	t.Run("Watch events", func(t *testing.T) {
+	s.Run("Watch events", func() {
 		event := <-stream
-		require.Equal(t, "item1", event.Key.Name)
-		require.Equal(t, rv1, event.ResourceVersion)
-		require.Equal(t, resource.WatchEvent_ADDED, event.Type)
-		require.Equal(t, "folderuid", event.Folder)
+		s.Require().Equal("item1", event.Key.Name)
+		s.Require().Equal(rv1, event.ResourceVersion)
+		s.Require().Equal(resource.WatchEvent_ADDED, event.Type)
+		s.Require().Equal("folderuid", event.Folder)
 
 		event = <-stream
-		require.Equal(t, "item2", event.Key.Name)
-		require.Equal(t, rv2, event.ResourceVersion)
-		require.Equal(t, resource.WatchEvent_ADDED, event.Type)
-		require.Equal(t, "folderuid", event.Folder)
+		s.Require().Equal("item2", event.Key.Name)
+		s.Require().Equal(rv2, event.ResourceVersion)
+		s.Require().Equal(resource.WatchEvent_ADDED, event.Type)
+		s.Require().Equal("folderuid", event.Folder)
 
 		event = <-stream
-		require.Equal(t, "item3", event.Key.Name)
-		require.Equal(t, rv3, event.ResourceVersion)
-		require.Equal(t, resource.WatchEvent_ADDED, event.Type)
+		s.Require().Equal("item3", event.Key.Name)
+		s.Require().Equal(rv3, event.ResourceVersion)
+		s.Require().Equal(resource.WatchEvent_ADDED, event.Type)
 
 		event = <-stream
-		require.Equal(t, "item2", event.Key.Name)
-		require.Equal(t, rv4, event.ResourceVersion)
-		require.Equal(t, resource.WatchEvent_MODIFIED, event.Type)
+		s.Require().Equal("item2", event.Key.Name)
+		s.Require().Equal(rv4, event.ResourceVersion)
+		s.Require().Equal(resource.WatchEvent_MODIFIED, event.Type)
 
 		event = <-stream
-		require.Equal(t, "item1", event.Key.Name)
-		require.Equal(t, rv5, event.ResourceVersion)
-		require.Equal(t, resource.WatchEvent_DELETED, event.Type)
+		s.Require().Equal("item1", event.Key.Name)
+		s.Require().Equal(rv5, event.ResourceVersion)
+		s.Require().Equal(resource.WatchEvent_DELETED, event.Type)
 	})
 }
 
-func runTestIntegrationBackendGetResourceStats(t *testing.T, backend resource.StorageBackend) {
-	ctx := testutil.NewTestContext(t, time.Now().Add(5*time.Second))
+func (s *storageBackendSuite) TestGetResourceStats() {
+	if s.skipTest(TestGetResourceStats) {
+		s.T().Skip("skipping get resource stats test")
+	}
+	ctx := testutil.NewTestContext(s.T(), time.Now().Add(5*time.Second))
 
 	sortFunc := func(a, b resource.ResourceStats) int {
 		if a.Namespace != b.Namespace {
@@ -188,138 +182,146 @@ func runTestIntegrationBackendGetResourceStats(t *testing.T, backend resource.St
 		}
 		return strings.Compare(a.Resource, b.Resource)
 	}
+	backend := s.newBackend(ctx)
 	// Create resources across different namespaces/groups
 	_, err := writeEvent(ctx, backend, "item1", resource.WatchEvent_ADDED,
 		WithNamespace("ns1"),
 		WithGroup("group"),
 		WithResource("resource1"))
-	require.NoError(t, err)
+	s.Require().NoError(err)
 
 	_, err = writeEvent(ctx, backend, "item2", resource.WatchEvent_ADDED,
 		WithNamespace("ns1"),
 		WithGroup("group"),
 		WithResource("resource1"))
-	require.NoError(t, err)
+	s.Require().NoError(err)
 
 	_, err = writeEvent(ctx, backend, "item3", resource.WatchEvent_ADDED,
 		WithNamespace("ns1"),
 		WithGroup("group"),
 		WithResource("resource2"))
-	require.NoError(t, err)
+	s.Require().NoError(err)
 
 	_, err = writeEvent(ctx, backend, "item4", resource.WatchEvent_ADDED,
 		WithNamespace("ns2"),
 		WithGroup("group"),
 		WithResource("resource1"))
-	require.NoError(t, err)
+	s.Require().NoError(err)
 
 	_, err = writeEvent(ctx, backend, "item5", resource.WatchEvent_ADDED,
 		WithNamespace("ns2"),
 		WithGroup("group"),
 		WithResource("resource1"))
-	require.NoError(t, err)
+	s.Require().NoError(err)
 
-	t.Run("Get stats for ns1", func(t *testing.T) {
+	s.Run("Get stats for ns1", func() {
 		stats, err := backend.GetResourceStats(ctx, "ns1", 0)
-		require.NoError(t, err)
-		require.Len(t, stats, 2)
+		s.Require().NoError(err)
+		s.Require().Len(stats, 2)
 
 		// Sort results for consistent testing
 		slices.SortFunc(stats, sortFunc)
 
 		// Check first resource stats
-		require.Equal(t, "ns1", stats[0].Namespace)
-		require.Equal(t, "group", stats[0].Group)
-		require.Equal(t, "resource1", stats[0].Resource)
-		require.Equal(t, int64(2), stats[0].Count)
-		require.Greater(t, stats[0].ResourceVersion, int64(0))
+		s.Require().Equal("ns1", stats[0].Namespace)
+		s.Require().Equal("group", stats[0].Group)
+		s.Require().Equal("resource1", stats[0].Resource)
+		s.Require().Equal(int64(2), stats[0].Count)
+		s.Require().Greater(stats[0].ResourceVersion, int64(0))
 
 		// Check second resource stats
-		require.Equal(t, "ns1", stats[1].Namespace)
-		require.Equal(t, "group", stats[1].Group)
-		require.Equal(t, "resource2", stats[1].Resource)
-		require.Equal(t, int64(1), stats[1].Count)
-		require.Greater(t, stats[1].ResourceVersion, int64(0))
+		s.Require().Equal("ns1", stats[1].Namespace)
+		s.Require().Equal("group", stats[1].Group)
+		s.Require().Equal("resource2", stats[1].Resource)
+		s.Require().Equal(int64(1), stats[1].Count)
+		s.Require().Greater(stats[1].ResourceVersion, int64(0))
 	})
 
-	t.Run("Get stats for ns2", func(t *testing.T) {
+	s.Run("Get stats for ns2", func() {
 		stats, err := backend.GetResourceStats(ctx, "ns2", 0)
-		require.NoError(t, err)
-		require.Len(t, stats, 1)
+		s.Require().NoError(err)
+		s.Require().Len(stats, 1)
 
-		require.Equal(t, "ns2", stats[0].Namespace)
-		require.Equal(t, "group", stats[0].Group)
-		require.Equal(t, "resource1", stats[0].Resource)
-		require.Equal(t, int64(2), stats[0].Count)
-		require.Greater(t, stats[0].ResourceVersion, int64(0))
+		s.Require().Equal("ns2", stats[0].Namespace)
+		s.Require().Equal("group", stats[0].Group)
+		s.Require().Equal("resource1", stats[0].Resource)
+		s.Require().Equal(int64(2), stats[0].Count)
+		s.Require().Greater(stats[0].ResourceVersion, int64(0))
 	})
 
-	t.Run("Get stats with minimum count", func(t *testing.T) {
+	s.Run("Get stats with minimum count", func() {
 		stats, err := backend.GetResourceStats(ctx, "ns1", 1)
-		require.NoError(t, err)
-		require.Len(t, stats, 1)
+		s.Require().NoError(err)
+		s.Require().Len(stats, 1)
 
-		require.Equal(t, "ns1", stats[0].Namespace)
-		require.Equal(t, "group", stats[0].Group)
-		require.Equal(t, "resource1", stats[0].Resource)
-		require.Equal(t, int64(2), stats[0].Count)
+		s.Require().Equal("ns1", stats[0].Namespace)
+		s.Require().Equal("group", stats[0].Group)
+		s.Require().Equal("resource1", stats[0].Resource)
+		s.Require().Equal(int64(2), stats[0].Count)
 	})
 
-	t.Run("Get stats for non-existent namespace", func(t *testing.T) {
+	s.Run("Get stats for non-existent namespace", func() {
 		stats, err := backend.GetResourceStats(ctx, "non-existent", 0)
-		require.NoError(t, err)
-		require.Empty(t, stats)
+		s.Require().NoError(err)
+		s.Require().Empty(stats)
 	})
 }
 
-func runTestIntegrationBackendWatchWriteEventsFromLastest(t *testing.T, backend resource.StorageBackend) {
-	ctx := testutil.NewTestContext(t, time.Now().Add(5*time.Second))
-
+func (s *storageBackendSuite) TestWatchWriteEventsFromLastest() {
+	if s.skipTest(TestWatchWriteEvents) {
+		s.T().Skip("skipping watch write events test")
+	}
+	ctx := testutil.NewTestContext(s.T(), time.Now().Add(5*time.Second))
+	backend := s.newBackend(ctx)
 	// Create a few resources before initing the watch
 	_, err := writeEvent(ctx, backend, "item1", resource.WatchEvent_ADDED)
-	require.NoError(t, err)
+	s.Require().NoError(err)
 
 	// Start the watch
 	stream, err := backend.WatchWriteEvents(ctx)
-	require.NoError(t, err)
+	s.Require().NoError(err)
 
 	// Create one more event
 	_, err = writeEvent(ctx, backend, "item2", resource.WatchEvent_ADDED)
-	require.NoError(t, err)
-	require.Equal(t, "item2", (<-stream).Key.Name)
+	s.Require().NoError(err)
+	s.Require().Equal("item2", (<-stream).Key.Name)
 }
 
-func runTestIntegrationBackendList(t *testing.T, backend resource.StorageBackend) {
-	ctx := testutil.NewTestContext(t, time.Now().Add(5*time.Second))
-	server := newServer(t, backend)
+func (s *storageBackendSuite) TestList() {
+	if s.skipTest(TestList) {
+		s.T().Skip("skipping list test")
+	}
+	ctx := testutil.NewTestContext(s.T(), time.Now().Add(5*time.Second))
+	backend := s.newBackend(ctx)
+	server := newServer(s.T(), backend)
 
 	// Create a few resources before starting the watch
 	rv1, err := writeEvent(ctx, backend, "item1", resource.WatchEvent_ADDED)
-	require.NoError(t, err)
-	require.Greater(t, rv1, int64(0))
+	s.Require().NoError(err)
+	s.Require().Greater(rv1, int64(0))
 	rv2, err := writeEvent(ctx, backend, "item2", resource.WatchEvent_ADDED)
-	require.NoError(t, err)
-	require.Greater(t, rv2, rv1)
+	s.Require().NoError(err)
+	s.Require().Greater(rv2, rv1)
 	rv3, err := writeEvent(ctx, backend, "item3", resource.WatchEvent_ADDED)
-	require.NoError(t, err)
-	require.Greater(t, rv3, rv2)
+	s.Require().NoError(err)
+	s.Require().Greater(rv3, rv2)
 	rv4, err := writeEvent(ctx, backend, "item4", resource.WatchEvent_ADDED)
-	require.NoError(t, err)
-	require.Greater(t, rv4, rv3)
+	s.Require().NoError(err)
+	s.Require().Greater(rv4, rv3)
 	rv5, err := writeEvent(ctx, backend, "item5", resource.WatchEvent_ADDED)
-	require.NoError(t, err)
-	require.Greater(t, rv5, rv4)
+	s.Require().NoError(err)
+	s.Require().Greater(rv5, rv4)
 	rv6, err := writeEvent(ctx, backend, "item2", resource.WatchEvent_MODIFIED)
-	require.NoError(t, err)
-	require.Greater(t, rv6, rv5)
+	s.Require().NoError(err)
+	s.Require().Greater(rv6, rv5)
 	rv7, err := writeEvent(ctx, backend, "item3", resource.WatchEvent_DELETED)
-	require.NoError(t, err)
-	require.Greater(t, rv7, rv6)
+	s.Require().NoError(err)
+	s.Require().Greater(rv7, rv6)
 	rv8, err := writeEvent(ctx, backend, "item6", resource.WatchEvent_ADDED)
-	require.NoError(t, err)
-	require.Greater(t, rv8, rv7)
+	s.Require().NoError(err)
+	s.Require().Greater(rv8, rv7)
 
-	t.Run("fetch all latest", func(t *testing.T) {
+	s.Run("fetch all latest", func() {
 		res, err := server.List(ctx, &resource.ListRequest{
 			Options: &resource.ListOptions{
 				Key: &resource.ResourceKey{
@@ -328,20 +330,20 @@ func runTestIntegrationBackendList(t *testing.T, backend resource.StorageBackend
 				},
 			},
 		})
-		require.NoError(t, err)
-		require.Nil(t, res.Error)
-		require.Len(t, res.Items, 5)
+		s.Require().NoError(err)
+		s.Require().Nil(res.Error)
+		s.Require().Len(res.Items, 5)
 		// should be sorted by key ASC
-		require.Equal(t, "item1 ADDED", string(res.Items[0].Value))
-		require.Equal(t, "item2 MODIFIED", string(res.Items[1].Value))
-		require.Equal(t, "item4 ADDED", string(res.Items[2].Value))
-		require.Equal(t, "item5 ADDED", string(res.Items[3].Value))
-		require.Equal(t, "item6 ADDED", string(res.Items[4].Value))
+		s.Require().Equal("item1 ADDED", string(res.Items[0].Value))
+		s.Require().Equal("item2 MODIFIED", string(res.Items[1].Value))
+		s.Require().Equal("item4 ADDED", string(res.Items[2].Value))
+		s.Require().Equal("item5 ADDED", string(res.Items[3].Value))
+		s.Require().Equal("item6 ADDED", string(res.Items[4].Value))
 
-		require.Empty(t, res.NextPageToken)
+		s.Require().Empty(res.NextPageToken)
 	})
 
-	t.Run("list latest first page ", func(t *testing.T) {
+	s.Run("list latest first page ", func() {
 		res, err := server.List(ctx, &resource.ListRequest{
 			Limit: 3,
 			Options: &resource.ListOptions{
@@ -351,18 +353,18 @@ func runTestIntegrationBackendList(t *testing.T, backend resource.StorageBackend
 				},
 			},
 		})
-		require.NoError(t, err)
-		require.Nil(t, res.Error)
-		require.Len(t, res.Items, 3)
+		s.Require().NoError(err)
+		s.Require().Nil(res.Error)
+		s.Require().Len(res.Items, 3)
 		continueToken, err := resource.GetContinueToken(res.NextPageToken)
-		require.NoError(t, err)
-		require.Equal(t, "item1 ADDED", string(res.Items[0].Value))
-		require.Equal(t, "item2 MODIFIED", string(res.Items[1].Value))
-		require.Equal(t, "item4 ADDED", string(res.Items[2].Value))
-		require.GreaterOrEqual(t, continueToken.ResourceVersion, rv8)
+		s.Require().NoError(err)
+		s.Require().Equal("item1 ADDED", string(res.Items[0].Value))
+		s.Require().Equal("item2 MODIFIED", string(res.Items[1].Value))
+		s.Require().Equal("item4 ADDED", string(res.Items[2].Value))
+		s.Require().GreaterOrEqual(continueToken.ResourceVersion, rv8)
 	})
 
-	t.Run("list at revision", func(t *testing.T) {
+	s.Run("list at revision", func() {
 		res, err := server.List(ctx, &resource.ListRequest{
 			ResourceVersion: rv4,
 			Options: &resource.ListOptions{
@@ -372,17 +374,17 @@ func runTestIntegrationBackendList(t *testing.T, backend resource.StorageBackend
 				},
 			},
 		})
-		require.NoError(t, err)
-		require.Nil(t, res.Error)
-		require.Len(t, res.Items, 4)
-		require.Equal(t, "item1 ADDED", string(res.Items[0].Value))
-		require.Equal(t, "item2 ADDED", string(res.Items[1].Value))
-		require.Equal(t, "item3 ADDED", string(res.Items[2].Value))
-		require.Equal(t, "item4 ADDED", string(res.Items[3].Value))
-		require.Empty(t, res.NextPageToken)
+		s.Require().NoError(err)
+		s.Require().Nil(res.Error)
+		s.Require().Len(res.Items, 4)
+		s.Require().Equal("item1 ADDED", string(res.Items[0].Value))
+		s.Require().Equal("item2 ADDED", string(res.Items[1].Value))
+		s.Require().Equal("item3 ADDED", string(res.Items[2].Value))
+		s.Require().Equal("item4 ADDED", string(res.Items[3].Value))
+		s.Require().Empty(res.NextPageToken)
 	})
 
-	t.Run("fetch first page at revision with limit", func(t *testing.T) {
+	s.Run("fetch first page at revision with limit", func() {
 		res, err := server.List(ctx, &resource.ListRequest{
 			Limit:           3,
 			ResourceVersion: rv7,
@@ -393,21 +395,20 @@ func runTestIntegrationBackendList(t *testing.T, backend resource.StorageBackend
 				},
 			},
 		})
-		require.NoError(t, err)
-		require.NoError(t, err)
-		require.Nil(t, res.Error)
-		require.Len(t, res.Items, 3)
-		t.Log(res.Items)
-		require.Equal(t, "item1 ADDED", string(res.Items[0].Value))
-		require.Equal(t, "item2 MODIFIED", string(res.Items[1].Value))
-		require.Equal(t, "item4 ADDED", string(res.Items[2].Value))
+		s.Require().NoError(err)
+		s.Require().NoError(err)
+		s.Require().Nil(res.Error)
+		s.Require().Len(res.Items, 3)
+		s.Require().Equal("item1 ADDED", string(res.Items[0].Value))
+		s.Require().Equal("item2 MODIFIED", string(res.Items[1].Value))
+		s.Require().Equal("item4 ADDED", string(res.Items[2].Value))
 
 		continueToken, err := resource.GetContinueToken(res.NextPageToken)
-		require.NoError(t, err)
-		require.Equal(t, rv7, continueToken.ResourceVersion)
+		s.Require().NoError(err)
+		s.Require().Equal(rv7, continueToken.ResourceVersion)
 	})
 
-	t.Run("fetch second page at revision", func(t *testing.T) {
+	s.Run("fetch second page at revision", func() {
 		continueToken := &resource.ContinueToken{
 			ResourceVersion: rv8,
 			StartOffset:     2,
@@ -422,45 +423,48 @@ func runTestIntegrationBackendList(t *testing.T, backend resource.StorageBackend
 				},
 			},
 		})
-		require.NoError(t, err)
-		require.Nil(t, res.Error)
-		require.Len(t, res.Items, 2)
-		t.Log(res.Items)
-		require.Equal(t, "item4 ADDED", string(res.Items[0].Value))
-		require.Equal(t, "item5 ADDED", string(res.Items[1].Value))
+		s.Require().NoError(err)
+		s.Require().Nil(res.Error)
+		s.Require().Len(res.Items, 2)
+		s.Require().Equal("item4 ADDED", string(res.Items[0].Value))
+		s.Require().Equal("item5 ADDED", string(res.Items[1].Value))
 
 		continueToken, err = resource.GetContinueToken(res.NextPageToken)
-		require.NoError(t, err)
-		require.Equal(t, rv8, continueToken.ResourceVersion)
-		require.Equal(t, int64(4), continueToken.StartOffset)
+		s.Require().NoError(err)
+		s.Require().Equal(rv8, continueToken.ResourceVersion)
+		s.Require().Equal(int64(4), continueToken.StartOffset)
 	})
 }
 
-func runTestIntegrationBackendListHistory(t *testing.T, backend resource.StorageBackend) {
-	ctx := testutil.NewTestContext(t, time.Now().Add(5*time.Second))
-	server := newServer(t, backend)
+func (s *storageBackendSuite) TestListHistory() {
+	if s.skipTest(TestListHistory) {
+		s.T().Skip("skipping list history test")
+	}
+	ctx := testutil.NewTestContext(s.T(), time.Now().Add(5*time.Second))
+	backend := s.newBackend(ctx)
+	server := newServer(s.T(), backend)
 
 	rv1, _ := writeEvent(ctx, backend, "item1", resource.WatchEvent_ADDED)
-	require.Greater(t, rv1, int64(0))
+	s.Require().Greater(rv1, int64(0))
 
 	// add 5 events for item1 - should be saved to history
 	rvHistory1, err := writeEvent(ctx, backend, "item1", resource.WatchEvent_MODIFIED)
-	require.NoError(t, err)
-	require.Greater(t, rvHistory1, rv1)
+	s.Require().NoError(err)
+	s.Require().Greater(rvHistory1, rv1)
 	rvHistory2, err := writeEvent(ctx, backend, "item1", resource.WatchEvent_MODIFIED)
-	require.NoError(t, err)
-	require.Greater(t, rvHistory2, rvHistory1)
+	s.Require().NoError(err)
+	s.Require().Greater(rvHistory2, rvHistory1)
 	rvHistory3, err := writeEvent(ctx, backend, "item1", resource.WatchEvent_MODIFIED)
-	require.NoError(t, err)
-	require.Greater(t, rvHistory3, rvHistory2)
+	s.Require().NoError(err)
+	s.Require().Greater(rvHistory3, rvHistory2)
 	rvHistory4, err := writeEvent(ctx, backend, "item1", resource.WatchEvent_MODIFIED)
-	require.NoError(t, err)
-	require.Greater(t, rvHistory4, rvHistory3)
+	s.Require().NoError(err)
+	s.Require().Greater(rvHistory4, rvHistory3)
 	rvHistory5, err := writeEvent(ctx, backend, "item1", resource.WatchEvent_MODIFIED)
-	require.NoError(t, err)
-	require.Greater(t, rvHistory5, rvHistory4)
+	s.Require().NoError(err)
+	s.Require().Greater(rvHistory5, rvHistory4)
 
-	t.Run("fetch first history page at revision with limit", func(t *testing.T) {
+	s.Run("fetch first history page at revision with limit", func() {
 		res, err := server.List(ctx, &resource.ListRequest{
 			Limit:  3,
 			Source: resource.ListRequest_HISTORY,
@@ -473,26 +477,25 @@ func runTestIntegrationBackendListHistory(t *testing.T, backend resource.Storage
 				},
 			},
 		})
-		require.NoError(t, err)
-		require.NoError(t, err)
-		require.Nil(t, res.Error)
-		require.Len(t, res.Items, 3)
-		t.Log(res.Items)
+		s.Require().NoError(err)
+		s.Require().NoError(err)
+		s.Require().Nil(res.Error)
+		s.Require().Len(res.Items, 3)
 		// should be in desc order, so the newest RVs are returned first
-		require.Equal(t, "item1 MODIFIED", string(res.Items[0].Value))
-		require.Equal(t, rvHistory5, res.Items[0].ResourceVersion)
-		require.Equal(t, "item1 MODIFIED", string(res.Items[1].Value))
-		require.Equal(t, rvHistory4, res.Items[1].ResourceVersion)
-		require.Equal(t, "item1 MODIFIED", string(res.Items[2].Value))
-		require.Equal(t, rvHistory3, res.Items[2].ResourceVersion)
+		s.Require().Equal("item1 MODIFIED", string(res.Items[0].Value))
+		s.Require().Equal(rvHistory5, res.Items[0].ResourceVersion)
+		s.Require().Equal("item1 MODIFIED", string(res.Items[1].Value))
+		s.Require().Equal(rvHistory4, res.Items[1].ResourceVersion)
+		s.Require().Equal("item1 MODIFIED", string(res.Items[2].Value))
+		s.Require().Equal(rvHistory3, res.Items[2].ResourceVersion)
 
 		continueToken, err := resource.GetContinueToken(res.NextPageToken)
-		require.NoError(t, err)
+		s.Require().NoError(err)
 		//  should return the furthest back RV as the next page token
-		require.Equal(t, rvHistory3, continueToken.ResourceVersion)
+		s.Require().Equal(rvHistory3, continueToken.ResourceVersion)
 	})
 
-	t.Run("fetch second page of history at revision", func(t *testing.T) {
+	s.Run("fetch second page of history at revision", func() {
 		continueToken := &resource.ContinueToken{
 			ResourceVersion: rvHistory3,
 			StartOffset:     2,
@@ -510,24 +513,27 @@ func runTestIntegrationBackendListHistory(t *testing.T, backend resource.Storage
 				},
 			},
 		})
-		require.NoError(t, err)
-		require.Nil(t, res.Error)
-		require.Len(t, res.Items, 2)
-		t.Log(res.Items)
-		require.Equal(t, "item1 MODIFIED", string(res.Items[0].Value))
-		require.Equal(t, rvHistory2, res.Items[0].ResourceVersion)
-		require.Equal(t, "item1 MODIFIED", string(res.Items[1].Value))
-		require.Equal(t, rvHistory1, res.Items[1].ResourceVersion)
+		s.Require().NoError(err)
+		s.Require().Nil(res.Error)
+		s.Require().Len(res.Items, 2)
+		s.Require().Equal("item1 MODIFIED", string(res.Items[0].Value))
+		s.Require().Equal(rvHistory2, res.Items[0].ResourceVersion)
+		s.Require().Equal("item1 MODIFIED", string(res.Items[1].Value))
+		s.Require().Equal(rvHistory1, res.Items[1].ResourceVersion)
 	})
 }
 
-func runTestIntegrationBlobSupport(t *testing.T, backend resource.StorageBackend) {
-	ctx := testutil.NewTestContext(t, time.Now().Add(5*time.Second))
-	server := newServer(t, backend)
+func (s *storageBackendSuite) TestBlobSupport() {
+	if s.skipTest(TestBlobSupport) {
+		s.T().Skip("skipping blob support test")
+	}
+	ctx := testutil.NewTestContext(s.T(), time.Now().Add(5*time.Second))
+	backend := s.newBackend(ctx)
+	server := newServer(s.T(), backend)
 	store, ok := backend.(resource.BlobSupport)
-	require.True(t, ok)
+	s.Require().True(ok)
 
-	t.Run("put and fetch blob", func(t *testing.T) {
+	s.Run("put and fetch blob", func() {
 		key := &resource.ResourceKey{
 			Namespace: "ns",
 			Group:     "g",
@@ -541,9 +547,9 @@ func runTestIntegrationBlobSupport(t *testing.T, backend resource.StorageBackend
 			ContentType: "plain/text",
 			Value:       []byte("hello 11111"),
 		})
-		require.NoError(t, err)
-		require.Nil(t, b1.Error)
-		require.Equal(t, "c894ae57bd227b8f8c63f38a2ddf458b", b1.Hash)
+		s.Require().NoError(err)
+		s.Require().Nil(b1.Error)
+		s.Require().Equal("c894ae57bd227b8f8c63f38a2ddf458b", b1.Hash)
 
 		b2, err := server.PutBlob(ctx, &resource.PutBlobRequest{
 			Resource:    key,
@@ -551,18 +557,18 @@ func runTestIntegrationBlobSupport(t *testing.T, backend resource.StorageBackend
 			ContentType: "plain/text",
 			Value:       []byte("hello 22222"), // the most recent
 		})
-		require.NoError(t, err)
-		require.Nil(t, b2.Error)
-		require.Equal(t, "b0da48de4ff92e0ad0d836de4d746937", b2.Hash)
+		s.Require().NoError(err)
+		s.Require().Nil(b2.Error)
+		s.Require().Equal("b0da48de4ff92e0ad0d836de4d746937", b2.Hash)
 
 		// Check that we can still access both values
 		found, err := store.GetResourceBlob(ctx, key, &utils.BlobInfo{UID: b1.Uid}, true)
-		require.NoError(t, err)
-		require.Equal(t, []byte("hello 11111"), found.Value)
+		s.Require().NoError(err)
+		s.Require().Equal([]byte("hello 11111"), found.Value)
 
 		found, err = store.GetResourceBlob(ctx, key, &utils.BlobInfo{UID: b2.Uid}, true)
-		require.NoError(t, err)
-		require.Equal(t, []byte("hello 22222"), found.Value)
+		s.Require().NoError(err)
+		s.Require().Equal([]byte("hello 22222"), found.Value)
 	})
 }
 

@@ -8,6 +8,7 @@ import (
 	"github.com/go-jose/go-jose/v3/jwt"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 
 	"github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
@@ -31,7 +32,7 @@ func TestMain(m *testing.M) {
 
 // TestStorageBackend is a test for the StorageBackend interface.
 func TestIntegrationSQLStorageBackend(t *testing.T) {
-	unitest.RunStorageBackendTest(t, func(ctx context.Context) resource.StorageBackend {
+	ha := unitest.NewStorageBackendSuite(t, func(ctx context.Context) resource.StorageBackend {
 		dbstore := infraDB.InitTestDB(t)
 		eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
 		require.NoError(t, err)
@@ -47,8 +48,9 @@ func TestIntegrationSQLStorageBackend(t *testing.T) {
 		require.NoError(t, err)
 		return backend
 	}, nil)
+	suite.Run(t, ha)
 	// Run single instance tests with in-process notifier.
-	unitest.RunStorageBackendTest(t, func(ctx context.Context) resource.StorageBackend {
+	inproc := unitest.NewStorageBackendSuite(t, func(ctx context.Context) resource.StorageBackend {
 		dbstore := infraDB.InitTestDB(t)
 		eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
 		require.NoError(t, err)
@@ -64,6 +66,7 @@ func TestIntegrationSQLStorageBackend(t *testing.T) {
 		require.NoError(t, err)
 		return backend
 	}, nil)
+	suite.Run(t, inproc)
 }
 
 func TestClientServer(t *testing.T) {
