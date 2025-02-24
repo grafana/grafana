@@ -5,6 +5,7 @@ import { NavModelItem } from '@grafana/data';
 import { isFetchError } from '@grafana/runtime';
 import { Alert } from '@grafana/ui';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
+import { t } from 'app/core/internationalization';
 
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 import { AlertRuleProvider } from './components/rule-viewer/RuleContext';
@@ -71,7 +72,8 @@ const RuleViewer = (): JSX.Element => {
     );
   }
 
-  return <>something went wrong</>;
+  // we should never get to this state
+  return <></>;
 };
 
 export const defaultPageNav: NavModelItem = {
@@ -88,7 +90,11 @@ function ErrorMessage({ error }: ErrorMessageProps) {
     return <EntityNotFound entity="Rule" />;
   }
 
-  return <Alert title={'Something went wrong loading the rule'}>{stringifyErrorLike(error)}</Alert>;
+  return (
+    <Alert title={t('alerting.rule-viewer.error-loading', 'Something went wrong loading the rule')}>
+      {stringifyErrorLike(error)}
+    </Alert>
+  );
 }
 
 export default withPageErrorBoundary(RuleViewer);
