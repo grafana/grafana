@@ -2,6 +2,7 @@ package authz
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"net/http"
@@ -151,29 +152,37 @@ func RegisterRBACAuthZService(
 	reg prometheus.Registerer,
 	cache cache.Cache,
 	exchangeClient authnlib.TokenExchanger,
-	folderAPIURL string,
+	cfg RBACServerSettings,
 ) {
 	var folderStore store.FolderStore
 	// FIXME: for now we default to using database read proxy for folders if the api url is not configured.
 	// we should remove this and the sql implementation once we have verified that is works correctly
-	if folderAPIURL == "" {
+	if cfg.Folder.Host == "" {
 		folderStore = store.NewSQLFolderStore(db, tracer)
 	} else {
 		folderStore = store.NewAPIFolderStore(tracer, func(ctx context.Context) (*rest.Config, error) {
 			return &rest.Config{
-				Host: folderAPIURL,
+				Host: cfg.Folder.Host,
 				WrapTransport: func(rt http.RoundTripper) http.RoundTripper {
 					return &tokenExhangeRoundTripper{te: exchangeClient, rt: rt}
 				},
 				TLSClientConfig: rest.TLSClientConfig{
-					// FIXME: We should provide ca cert so we can verify ceritificates
-					// https://github.com/grafana/identity-access-team/issues/1096
-					Insecure: true,
+					Insecure: cfg.Folder.Insecure,
+					CAFile:   cfg.Folder.CAFile,
+					CAData:   []byte{},
 				},
 				QPS:   50,
 				Burst: 100,
 			}, nil
 		})
+	}
+
+	_ = &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: false,
+			},
+		},
 	}
 
 	server := rbac.NewService(

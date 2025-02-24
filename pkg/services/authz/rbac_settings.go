@@ -57,3 +57,13 @@ func readAuthzClientSettings(cfg *setting.Cfg) (*authzClientSettings, error) {
 
 	return s, nil
 }
+
+type RBACServerSettings struct {
+	Folder FolderAPISettings
+}
+
+type FolderAPISettings struct {
+	Host     string
+	Insecure bool
+	CAFile   string
+}
