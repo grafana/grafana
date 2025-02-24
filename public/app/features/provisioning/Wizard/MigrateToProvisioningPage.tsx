@@ -14,11 +14,11 @@ export default function MigrateToProvisioningPage() {
   const navigate = useNavigate();
   useEffect(() => {
     if (settings.data) {
-      // Do run the migration wizard if you are already using unified storage
+      // Do not run the migration wizard if you are already using unified storage
       if (!Boolean(settings.data.legacyStorage)) {
         navigate(PROVISIONING_URL);
       }
-      // Do run the migration wizard if something is already targeting the instance
+      // Do not run the migration wizard if something is already targeting the instance
       if (settings.data.items.find((v) => v.target === 'instance')) {
         navigate(PROVISIONING_URL);
       }
