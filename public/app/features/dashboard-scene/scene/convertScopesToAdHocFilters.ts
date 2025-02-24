@@ -4,7 +4,7 @@ import {
   isScopeFilterSingleOrMultiOperator,
   reverseScopeFilterOperatorMap,
   scopeFilterOperatorMap,
-} from '@grafana/data/src/types/scopes';
+} from '@grafana/data';
 import { AdHocFilterWithLabels } from '@grafana/scenes';
 import { FilterSource } from '@grafana/scenes/src/variables/adhoc/AdHocFiltersVariable';
 

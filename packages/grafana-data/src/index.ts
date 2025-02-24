@@ -575,6 +575,8 @@ export {
   type ScopeNodeSpec,
   type ScopeNode,
   scopeFilterOperatorMap,
+  reverseScopeFilterOperatorMap,
+  isScopeFilterSingleOrMultiOperator,
 } from './types/scopes';
 export {
   PluginState,
