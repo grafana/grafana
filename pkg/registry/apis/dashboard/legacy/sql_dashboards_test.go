@@ -6,11 +6,13 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/stretchr/testify/require"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	dashboardinternal "github.com/grafana/grafana/pkg/apis/dashboard"
+	"github.com/grafana/grafana/pkg/services/provisioning"
 )
 
 func TestScanRow(t *testing.T) {
@@ -50,8 +52,10 @@ func TestScanRow(t *testing.T) {
 		require.NotNil(t, row)
 		require.Equal(t, "Test Dashboard", row.Dash.Name)
 		require.Equal(t, version, row.RV) // rv should be the dashboard version
-		require.Equal(t, v0alpha1.Unstructured{
-			Object: map[string]interface{}{"key": "value"},
+		require.Equal(t, dashboardinternal.DashboardSpec{
+			Unstructured: common.Unstructured{
+				Object: map[string]interface{}{"key": "value"},
+			},
 		}, row.Dash.Spec)
 		require.Equal(t, "default", row.Dash.Namespace)
 		require.Equal(t, &continueToken{orgId: int64(1), id: id}, row.token)

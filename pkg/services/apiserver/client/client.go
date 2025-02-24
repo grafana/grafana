@@ -11,6 +11,8 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	k8sUser "k8s.io/apiserver/pkg/authentication/user"
+	k8sRequest "k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
 
@@ -19,12 +21,10 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacysearcher"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/storage/unified"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	k8sUser "k8s.io/apiserver/pkg/authentication/user"
-	k8sRequest "k8s.io/apiserver/pkg/endpoints/request"
 )
 
 type K8sHandler interface {
@@ -45,16 +45,15 @@ var _ K8sHandler = (*k8sHandler)(nil)
 type k8sHandler struct {
 	namespacer  request.NamespaceMapper
 	gvr         schema.GroupVersionResource
-	restConfig  func(context.Context) *rest.Config
-	searcher    func(context.Context) resource.ResourceIndexClient
+	restConfig  func(context.Context) (*rest.Config, error)
+	searcher    resource.ResourceIndexClient
 	userService user.Service
 }
 
-func NewK8sHandler(cfg *setting.Cfg, namespacer request.NamespaceMapper, gvr schema.GroupVersionResource,
-	restConfig func(context.Context) *rest.Config, dashStore dashboards.Store, userSvc user.Service) K8sHandler {
-	legacySearcher := legacysearcher.NewDashboardSearchClient(dashStore)
-	key := gvr.Resource + "." + gvr.Group // the unified storage key in the config.ini is resource + group
-	searchClient := resource.NewSearchClient(cfg, key, unified.GetResourceClient, legacySearcher)
+func NewK8sHandler(dual dualwrite.Service, namespacer request.NamespaceMapper, gvr schema.GroupVersionResource,
+	restConfig func(context.Context) (*rest.Config, error), dashStore dashboards.Store, userSvc user.Service, resourceClient resource.ResourceClient, sorter sort.Service) K8sHandler {
+	legacySearcher := legacysearcher.NewDashboardSearchClient(dashStore, sorter)
+	searchClient := resource.NewSearchClient(dual, gvr.GroupResource(), resourceClient, legacySearcher)
 
 	return &k8sHandler{
 		namespacer:  namespacer,
@@ -79,9 +78,9 @@ func (h *k8sHandler) Get(ctx context.Context, name string, orgID int64, options 
 		defer cancel()
 	}
 
-	client, ok := h.getClient(newCtx, orgID)
-	if !ok {
-		return nil, nil
+	client, err := h.getClient(newCtx, orgID)
+	if err != nil {
+		return nil, err
 	}
 
 	return client.Get(newCtx, name, options, subresource...)
@@ -97,9 +96,9 @@ func (h *k8sHandler) Create(ctx context.Context, obj *unstructured.Unstructured,
 		defer cancel()
 	}
 
-	client, ok := h.getClient(newCtx, orgID)
-	if !ok {
-		return nil, nil
+	client, err := h.getClient(newCtx, orgID)
+	if err != nil {
+		return nil, err
 	}
 
 	return client.Create(newCtx, obj, v1.CreateOptions{})
@@ -115,9 +114,9 @@ func (h *k8sHandler) Update(ctx context.Context, obj *unstructured.Unstructured,
 		defer cancel()
 	}
 
-	client, ok := h.getClient(newCtx, orgID)
-	if !ok {
-		return nil, nil
+	client, err := h.getClient(newCtx, orgID)
+	if err != nil {
+		return nil, err
 	}
 
 	return client.Update(newCtx, obj, v1.UpdateOptions{})
@@ -133,9 +132,9 @@ func (h *k8sHandler) Delete(ctx context.Context, name string, orgID int64, optio
 		defer cancel()
 	}
 
-	client, ok := h.getClient(newCtx, orgID)
-	if !ok {
-		return nil
+	client, err := h.getClient(newCtx, orgID)
+	if err != nil {
+		return err
 	}
 
 	return client.Delete(newCtx, name, options)
@@ -151,9 +150,9 @@ func (h *k8sHandler) DeleteCollection(ctx context.Context, orgID int64) error {
 		defer cancel()
 	}
 
-	client, ok := h.getClient(newCtx, orgID)
-	if !ok {
-		return fmt.Errorf("could not get k8s client")
+	client, err := h.getClient(newCtx, orgID)
+	if err != nil {
+		return err
 	}
 
 	return client.DeleteCollection(newCtx, v1.DeleteOptions{}, v1.ListOptions{})
@@ -169,9 +168,9 @@ func (h *k8sHandler) List(ctx context.Context, orgID int64, options v1.ListOptio
 		defer cancel()
 	}
 
-	client, ok := h.getClient(newCtx, orgID)
-	if !ok {
-		return nil, fmt.Errorf("could not get k8s client")
+	client, err := h.getClient(newCtx, orgID)
+	if err != nil {
+		return nil, err
 	}
 
 	return client.List(newCtx, options)
@@ -191,12 +190,12 @@ func (h *k8sHandler) Search(ctx context.Context, orgID int64, in *resource.Resou
 		}
 	}
 
-	return h.searcher(ctx).Search(ctx, in)
+	return h.searcher.Search(ctx, in)
 }
 
 func (h *k8sHandler) GetStats(ctx context.Context, orgID int64) (*resource.ResourceStatsResponse, error) {
 	// goes directly through grpc, so doesn't need the new context
-	return h.searcher(ctx).GetStats(ctx, &resource.ResourceStatsRequest{
+	return h.searcher.GetStats(ctx, &resource.ResourceStatsRequest{
 		Namespace: h.GetNamespace(orgID),
 		Kinds: []string{
 			h.gvr.Group + "/" + h.gvr.Resource,
@@ -226,18 +225,18 @@ func (h *k8sHandler) GetUserFromMeta(ctx context.Context, userMeta string) (*use
 	return u, err
 }
 
-func (h *k8sHandler) getClient(ctx context.Context, orgID int64) (dynamic.ResourceInterface, bool) {
-	cfg := h.restConfig(ctx)
-	if cfg == nil {
-		return nil, false
+func (h *k8sHandler) getClient(ctx context.Context, orgID int64) (dynamic.ResourceInterface, error) {
+	cfg, err := h.restConfig(ctx)
+	if err != nil {
+		return nil, err
 	}
 
 	dyn, err := dynamic.NewForConfig(cfg)
 	if err != nil {
-		return nil, false
+		return nil, fmt.Errorf("could not create dynamic client: %w", err)
 	}
 
-	return dyn.Resource(h.gvr).Namespace(h.GetNamespace(orgID)), true
+	return dyn.Resource(h.gvr).Namespace(h.GetNamespace(orgID)), nil
 }
 
 func (h *k8sHandler) getK8sContext(ctx context.Context) (context.Context, context.CancelFunc, error) {

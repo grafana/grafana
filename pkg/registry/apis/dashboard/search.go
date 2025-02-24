@@ -11,14 +11,15 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/storage/unified"
-	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"go.opentelemetry.io/otel/trace"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
+
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
+	"github.com/grafana/grafana/pkg/storage/unified/search"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apis/dashboard"
@@ -30,7 +31,6 @@ import (
 	dashboardsearch "github.com/grafana/grafana/pkg/services/dashboards/service/search"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	foldermodel "github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 )
@@ -38,13 +38,13 @@ import (
 // The DTO returns everything the UI needs in a single request
 type SearchHandler struct {
 	log      log.Logger
-	client   func(context.Context) resource.ResourceIndexClient
+	client   resource.ResourceIndexClient
 	tracer   trace.Tracer
 	features featuremgmt.FeatureToggles
 }
 
-func NewSearchHandler(tracer trace.Tracer, cfg *setting.Cfg, legacyDashboardSearcher resource.ResourceIndexClient, features featuremgmt.FeatureToggles) *SearchHandler {
-	searchClient := resource.NewSearchClient(cfg, setting.UnifiedStorageConfigKeyDashboard, unified.GetResourceClient, legacyDashboardSearcher)
+func NewSearchHandler(tracer trace.Tracer, dual dualwrite.Service, legacyDashboardSearcher resource.ResourceIndexClient, resourceClient resource.ResourceClient, features featuremgmt.FeatureToggles) *SearchHandler {
+	searchClient := resource.NewSearchClient(dual, dashboard.DashboardResourceInfo.GroupResource(), resourceClient, legacyDashboardSearcher)
 	return &SearchHandler{
 		client:   searchClient,
 		log:      log.New("grafana-apiserver.dashboards.search"),
@@ -290,7 +290,7 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	if queryParams.Has("sort") {
 		for _, sort := range queryParams["sort"] {
 			if slices.Contains(search.DashboardFields(), sort) {
-				sort = "fields." + sort
+				sort = resource.SEARCH_FIELD_PREFIX + sort
 			}
 			s := &resource.ResourceSearchRequest_Sort{Field: sort}
 			if strings.HasPrefix(sort, "-") {
@@ -333,10 +333,14 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// hijacks the "name" query param to only search for shared dashboard UIDs
-		if len(dashboardUIDs) > 0 {
-			names = append(names, dashboardUIDs...)
+		if len(dashboardUIDs) == 0 {
+			s.write(w, dashboardv0alpha1.SearchResults{
+				Hits: []dashboardv0alpha1.DashboardHit{},
+			})
+			return
 		}
+		// hijacks the "name" query param to only search for shared dashboard UIDs
+		names = append(names, dashboardUIDs...)
 	} else if folder != "" {
 		if folder == rootFolder {
 			folder = "" // root folder is empty in the search index
@@ -360,7 +364,7 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		searchRequest.Options.Fields = append(searchRequest.Options.Fields, namesFilter...)
 	}
 
-	result, err := s.client(ctx).Search(ctx, searchRequest)
+	result, err := s.client.Search(ctx, searchRequest)
 	if err != nil {
 		errhttp.Write(ctx, err, w)
 		return
@@ -439,7 +443,7 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 		},
 	}
 	// get all dashboards user has access to, along with their parent folder uid
-	dashboardResult, err := s.client(ctx).Search(ctx, dashboardSearchRequest)
+	dashboardResult, err := s.client.Search(ctx, dashboardSearchRequest)
 	if err != nil {
 		return sharedDashboards, err
 	}
@@ -482,7 +486,7 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 			}},
 		},
 	}
-	foldersResult, err := s.client(ctx).Search(ctx, folderSearchRequest)
+	foldersResult, err := s.client.Search(ctx, folderSearchRequest)
 	if err != nil {
 		return sharedDashboards, err
 	}
