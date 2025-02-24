@@ -1,5 +1,5 @@
 import { isFunction } from 'lodash';
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 
 import { ThresholdsConfig, ThresholdsMode, VizOrientation, getFieldConfigWithMinMax } from '@grafana/data';
 import { BarGaugeDisplayMode, BarGaugeValueMode, TableCellDisplayMode } from '@grafana/schema';
@@ -85,18 +85,23 @@ export const BarGaugeCell = (props: TableCellProps) => {
     );
   };
 
-  const [tooltipOpen, setTooltipOpen] = useState(false);
-  const cellRef = useRef<HTMLDivElement>(null);
+  const [tooltipCoords, setTooltipCoords] = useState<{ clientX: number; clientY: number }>();
 
   return (
-    <div {...cellProps} className={tableStyles.cellContainer} ref={cellRef} onClick={() => setTooltipOpen(true)}>
-      {(hasLinks || hasActions) && tooltipOpen ? (
+    <div
+      {...cellProps}
+      className={tableStyles.cellContainer}
+      onClick={({ clientX, clientY }) => {
+        setTooltipCoords({ clientX, clientY });
+      }}
+    >
+      {(hasLinks || hasActions) && tooltipCoords ? (
         <DataLinksActionsTooltip
           links={getLinks()}
           actions={actions}
           value={renderComponent({})}
-          cellRef={cellRef}
-          onTooltipClose={() => setTooltipOpen(false)}
+          coords={tooltipCoords}
+          onTooltipClose={() => setTooltipCoords(undefined)}
         />
       ) : (
         renderComponent({})
