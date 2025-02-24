@@ -3,14 +3,13 @@ package checktyperegisterer
 import (
 	"context"
 	"fmt"
-	"strconv"
 
-	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/k8s"
 	"github.com/grafana/grafana-app-sdk/resource"
 	advisorv0alpha1 "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checkregistry"
+	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -32,13 +31,9 @@ func New(cfg app.Config) (app.Runnable, error) {
 		return nil, fmt.Errorf("invalid config type")
 	}
 	checkRegistry := specificConfig.CheckRegistry
-	namespace := metav1.NamespaceDefault
-	if specificConfig.StackID != "" {
-		stackId, err := strconv.ParseInt(specificConfig.StackID, 10, 64)
-		if err != nil {
-			return nil, fmt.Errorf("invalid stack id: %s", specificConfig.StackID)
-		}
-		namespace = types.CloudNamespaceFormatter(stackId)
+	namespace, err := checks.GetNamespace(specificConfig.StackID)
+	if err != nil {
+		return nil, err
 	}
 
 	// Prepare storage client

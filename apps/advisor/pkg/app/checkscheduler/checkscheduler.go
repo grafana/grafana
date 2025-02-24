@@ -7,7 +7,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/k8s"
 	"github.com/grafana/grafana-app-sdk/resource"
@@ -49,13 +48,9 @@ func New(cfg app.Config) (app.Runnable, error) {
 	if err != nil {
 		return nil, err
 	}
-	namespace := metav1.NamespaceDefault
-	if specificConfig.StackID != "" {
-		stackId, err := strconv.ParseInt(specificConfig.StackID, 10, 64)
-		if err != nil {
-			return nil, fmt.Errorf("invalid stack id: %s", specificConfig.StackID)
-		}
-		namespace = types.CloudNamespaceFormatter(stackId)
+	namespace, err := checks.GetNamespace(specificConfig.StackID)
+	if err != nil {
+		return nil, err
 	}
 
 	// Prepare storage client
