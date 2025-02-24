@@ -1,6 +1,6 @@
 {
   "name": "@grafana/saga-icons",
-  "version": "11.1.12",
+  "version": "11.1.13",
   "private": true,
   "description": "Icons for Grafana",
   "author": "Grafana Labs",
