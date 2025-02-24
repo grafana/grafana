@@ -153,10 +153,10 @@ type FrontendSettingsSqlConnectionLimitsDTO struct {
 }
 
 type DependencyInfo struct {
-	PluginID      string `json:"pluginId"`
-	PluginName    string `json:"pluginName"`
-	PluginType    string `json:"pluginType"`
-	PluginVersion string `json:"pluginVersion"`
+	PluginID      string `json:"id"`
+	PluginName    string `json:"name"`
+	PluginType    string `json:"type"`
+	PluginVersion string `json:"version"`
 }
 
 type FrontendSettingsDTO struct {

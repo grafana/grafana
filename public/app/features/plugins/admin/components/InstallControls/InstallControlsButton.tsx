@@ -127,7 +127,7 @@ export function InstallControlsButton({
   }
 
   // TODO && parent plugin is still installed
-  const dependencyOf = plugin.details?.dependantPlugins?.map((dep) => dep.pluginName);
+  const dependencyOf = plugin.details?.dependantPlugins?.map((dep) => dep.name);
   if (dependencyOf?.length) {
     disableUninstall = true;
     uninstallTitle = `Dependent plugins must be removed first: ${dependencyOf.join(', ')}`;

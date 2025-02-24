@@ -1,7 +1,14 @@
 import uFuzzy from '@leeoniya/ufuzzy';
 
-import { PluginSignatureStatus, dateTimeParse, PluginError, PluginType, PluginErrorCode } from '@grafana/data';
-import { config, DependantInfo, featureEnabled } from '@grafana/runtime';
+import {
+  PluginSignatureStatus,
+  dateTimeParse,
+  PluginError,
+  PluginType,
+  PluginErrorCode,
+  PluginDependencyInfo,
+} from '@grafana/data';
+import { config, featureEnabled } from '@grafana/runtime';
 import { Settings } from 'app/core/config';
 import { contextSrv } from 'app/core/core';
 import { getBackendSrv } from 'app/core/services/backend_srv';
@@ -421,13 +428,13 @@ export function isManagedPlugin(id: string) {
   return pluginCatalogManagedPlugins?.includes(id);
 }
 
-export function dependantPlugins(id: string): DependantInfo[] {
+export function dependantPlugins(id: string): PluginDependencyInfo[] {
   const { pluginDependants } = config;
   if (!pluginDependants) {
     return [];
   }
 
-  const dependants: DependantInfo[] = [];
+  const dependants: PluginDependencyInfo[] = [];
   if (pluginDependants[id]) {
     for (let dependant of pluginDependants[id]) {
       dependants.push(dependant);

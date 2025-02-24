@@ -19,8 +19,8 @@ import {
   AngularMeta,
   PluginLoadingStrategy,
   PluginDependencies,
+  PluginDependencyInfo,
   PluginExtensions,
-  PluginType,
 } from '@grafana/data';
 
 export interface AzureSettings {
@@ -53,13 +53,6 @@ export type AppPluginConfig = {
 export type PreinstalledPlugin = {
   id: string;
   version: string;
-};
-
-export type DependantInfo = {
-  pluginId: string;
-  pluginName: string;
-  pluginVersion: string;
-  pluginType: PluginType;
 };
 
 export class GrafanaBootConfig implements GrafanaConfig {
@@ -149,7 +142,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   pluginCatalogManagedPlugins: string[] = [];
   pluginCatalogPreinstalledPlugins: PreinstalledPlugin[] = [];
   pluginsCDNBaseURL = '';
-  pluginDependants?: { [key: string]: DependantInfo[] } = {};
+  pluginDependants?: { [key: string]: PluginDependencyInfo[] } = {};
   expressionsEnabled = false;
   awsAllowedAuthProviders: string[] = [];
   awsAssumeRoleEnabled = false;

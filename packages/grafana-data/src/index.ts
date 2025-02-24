@@ -590,6 +590,7 @@ export {
   type AngularMeta,
   type PluginMeta,
   type PluginDependencies,
+  type PluginDependencyInfo,
   type PluginExtensions,
   type PluginInclude,
   type PluginBuildInfo,

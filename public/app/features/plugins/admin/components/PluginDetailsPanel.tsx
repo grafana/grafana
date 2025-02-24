@@ -2,8 +2,8 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 import * as React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { config, DependantInfo, reportInteraction } from '@grafana/runtime';
+import { GrafanaTheme2, PluginDependencyInfo } from '@grafana/data';
+import { config, reportInteraction } from '@grafana/runtime';
 import { PageInfoItem } from '@grafana/runtime/src/components/PluginPage';
 import {
   Stack,
@@ -65,7 +65,7 @@ export function PluginDetailsPanel(props: Props): React.ReactElement | null {
     grafanaDependency = latestCompatibleVersion?.grafanaDependency;
   }
 
-  let pluginDependants: DependantInfo[] = [];
+  let pluginDependants: PluginDependencyInfo[] = [];
   if (config.pluginDependants && config.pluginDependants[plugin.id]) {
     pluginDependants = config.pluginDependants[plugin.id];
   }
@@ -126,19 +126,14 @@ export function PluginDetailsPanel(props: Props): React.ReactElement | null {
 
               {pluginDependencies && pluginDependencies.length > 0 && (
                 <Stack direction="column" gap={1}>
-                  <Text color="secondary">
-                    <Trans i18nKey={'plugins.details.labels.pluginDependencies'}>Plugins: </Trans>
-                  </Text>
-                  <Stack direction="column" gap={2}>
-                    {pluginDependencies.map((p) => {
-                      return (
-                        <TextLink key={p.id} href={'/plugins/' + p.id}>
-                          <Icon name={PluginIconName[p.type]} className={styles.icon} />
-                          {p.name} {p.version}
-                        </TextLink>
-                      );
-                    })}
-                  </Stack>
+                  {pluginDependencies.map((p) => {
+                    return (
+                      <TextLink key={p.id} href={'/plugins/' + p.id}>
+                        <Icon name={PluginIconName[p.type]} className={styles.icon} />
+                        {p.name} {p.version}
+                      </TextLink>
+                    );
+                  })}
                 </Stack>
               )}
 
@@ -149,9 +144,9 @@ export function PluginDetailsPanel(props: Props): React.ReactElement | null {
                   </Text>
                   {pluginDependants.map((p) => {
                     return (
-                      <TextLink key={p.pluginId} href={'/plugins/' + p.pluginId}>
-                        <Icon name={PluginIconName[p.pluginType]} className={styles.icon} />
-                        {p.pluginName} {p.pluginVersion}
+                      <TextLink key={p.id} href={'/plugins/' + p.id}>
+                        <Icon name={PluginIconName[p.type]} className={styles.icon} />
+                        {p.name} {p.version}
                       </TextLink>
                     );
                   })}
