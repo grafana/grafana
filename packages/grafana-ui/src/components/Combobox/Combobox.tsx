@@ -1,11 +1,9 @@
 import { cx } from '@emotion/css';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useCombobox } from 'downshift';
-import { debounce } from 'lodash';
-import { useCallback, useId, useMemo, useState } from 'react';
+import { useId, useMemo } from 'react';
 
 import { useStyles2 } from '../../themes';
-import { logOptions } from '../../utils';
 import { t } from '../../utils/i18n';
 import { Icon } from '../Icon/Icon';
 import { AutoSizeInput } from '../Input/AutoSizeInput';
@@ -14,11 +12,11 @@ import { Portal } from '../Portal/Portal';
 import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
 
 import { AsyncError, NotFoundError } from './MessageRows';
-import { fuzzyFind, itemToString } from './filter';
+import { itemToString } from './filter';
 import { getComboboxStyles, MENU_OPTION_HEIGHT, MENU_OPTION_HEIGHT_DESCRIPTION } from './getComboboxStyles';
 import { ComboboxOption } from './types';
 import { useComboboxFloat } from './useComboboxFloat';
-import { StaleResultError, useLatestAsyncCall } from './useLatestAsyncCall';
+import { useOptions } from './useOptions';
 
 // TODO: It would be great if ComboboxOption["label"] was more generic so that if consumers do pass it in (for async),
 // then the onChange handler emits ComboboxOption with the label as non-undefined.
@@ -64,8 +62,6 @@ export interface ComboboxBaseProps<T extends string | number>
   onBlur?: () => void;
 }
 
-const RECOMMENDED_ITEMS_AMOUNT = 100_000;
-
 type ClearableConditionals<T extends number | string> =
   | {
       /**
@@ -102,7 +98,6 @@ export type ComboboxProps<T extends string | number> = ComboboxBaseProps<T> &
   ClearableConditionals<T>;
 
 const noop = () => {};
-const asyncNoop = () => Promise.resolve([]);
 
 export const VIRTUAL_OVERSCAN_ITEMS = 4;
 
@@ -113,7 +108,7 @@ export const VIRTUAL_OVERSCAN_ITEMS = 4;
  */
 export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => {
   const {
-    options,
+    options: allOptions,
     onChange,
     value: valueProp,
     placeholder: placeholderProp,
@@ -135,45 +130,13 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
   // get a consistent Value from it
   const value = typeof valueProp === 'object' ? valueProp?.value : valueProp;
 
-  const isAsync = typeof options === 'function';
-  const loadOptions = useLatestAsyncCall(isAsync ? options : asyncNoop); // loadOptions isn't called at all if not async
-  const [asyncLoading, setAsyncLoading] = useState(false);
-  const [asyncError, setAsyncError] = useState(false);
-
-  // A custom setter to always prepend the custom value at the beginning, if needed
-  const [items, baseSetItems] = useState(isAsync ? [] : options);
-  const setItems = useCallback(
-    (items: Array<ComboboxOption<T>>, inputValue: string | undefined) => {
-      let itemsToSet = items;
-      logOptions(itemsToSet.length, RECOMMENDED_ITEMS_AMOUNT, id, ariaLabelledBy);
-      if (inputValue && createCustomValue) {
-        //Since the label of a normal option does not have to match its value and a custom option has the same value and label,
-        //we just focus on the value to check if the option already exists
-        const optionMatchingInput = items.find((opt) => opt.value === inputValue);
-
-        if (!optionMatchingInput) {
-          const customValueOption = {
-            label: inputValue,
-            // Type casting needed to make this work when T is a number
-            value: inputValue as T,
-            description: t('combobox.custom-value.description', 'Use custom value'),
-          };
-
-          itemsToSet = items.slice(0);
-          itemsToSet.unshift(customValueOption);
-        }
-      }
-
-      baseSetItems(itemsToSet);
-    },
-    [createCustomValue, id, ariaLabelledBy]
-  );
-
-  // Memoize for using in fuzzy search
-  const stringifiedItems = useMemo(
-    () => (isAsync ? [] : options.map((item) => itemToString(item))),
-    [options, isAsync]
-  );
+  const {
+    options: filteredOptions,
+    updateOptions,
+    asyncLoading,
+    asyncError,
+  } = useOptions(props.options, createCustomValue);
+  const isAsync = typeof allOptions === 'function';
 
   const selectedItemIndex = useMemo(() => {
     if (isAsync) {
@@ -184,13 +147,13 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
       return null;
     }
 
-    const index = options.findIndex((option) => option.value === value);
+    const index = allOptions.findIndex((option) => option.value === value);
     if (index === -1) {
       return null;
     }
 
     return index;
-  }, [valueProp, options, value, isAsync]);
+  }, [valueProp, allOptions, value, isAsync]);
 
   const selectedItem = useMemo(() => {
     if (valueProp === undefined || valueProp === null) {
@@ -198,11 +161,11 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     }
 
     if (selectedItemIndex !== null && !isAsync) {
-      return options[selectedItemIndex];
+      return allOptions[selectedItemIndex];
     }
 
     return typeof valueProp === 'object' ? valueProp : { value: valueProp, label: valueProp.toString() };
-  }, [selectedItemIndex, isAsync, valueProp, options]);
+  }, [selectedItemIndex, isAsync, valueProp, allOptions]);
 
   const menuId = `downshift-${useId().replace(/:/g, '--')}-menu`;
   const labelId = `downshift-${useId().replace(/:/g, '--')}-label`;
@@ -210,32 +173,14 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
   const styles = useStyles2(getComboboxStyles);
 
   const virtualizerOptions = {
-    count: items.length,
+    count: filteredOptions.length,
     getScrollElement: () => scrollRef.current,
-    estimateSize: (index: number) => (items[index].description ? MENU_OPTION_HEIGHT_DESCRIPTION : MENU_OPTION_HEIGHT),
+    estimateSize: (index: number) =>
+      filteredOptions[index].description ? MENU_OPTION_HEIGHT_DESCRIPTION : MENU_OPTION_HEIGHT,
     overscan: VIRTUAL_OVERSCAN_ITEMS,
   };
 
   const rowVirtualizer = useVirtualizer(virtualizerOptions);
-
-  const debounceAsync = useMemo(
-    () =>
-      debounce((inputValue: string) => {
-        loadOptions(inputValue)
-          .then((opts) => {
-            setItems(opts, inputValue);
-            setAsyncLoading(false);
-            setAsyncError(false);
-          })
-          .catch((err) => {
-            if (!(err instanceof StaleResultError)) {
-              setAsyncError(true);
-              setAsyncLoading(false);
-            }
-          });
-      }, 200),
-    [loadOptions, setItems]
-  );
 
   const {
     isOpen,
@@ -250,7 +195,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     menuId,
     labelId,
     inputId: id,
-    items,
+    items: filteredOptions,
     itemToString,
     selectedItem,
 
@@ -267,48 +212,9 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
 
     scrollIntoView: () => {},
 
-    onInputValueChange: ({ inputValue, isOpen }) => {
-      if (!isOpen) {
-        // Prevent stale options from showing on reopen
-        if (isAsync) {
-          setItems([], '');
-        }
-
-        // Otherwise there's nothing else to do when the menu isnt open
-        return;
-      }
-
-      if (!isAsync) {
-        const filteredItems = fuzzyFind(options, stringifiedItems, inputValue);
-        setItems(filteredItems, inputValue);
-      } else {
-        if (inputValue && createCustomValue) {
-          setItems([], inputValue);
-        }
-
-        setAsyncLoading(true);
-        debounceAsync(inputValue);
-      }
-    },
-
     onIsOpenChange: ({ isOpen, inputValue }) => {
-      // Loading async options mostly happens in onInputValueChange, but if the menu is opened with an empty input
-      // then onInputValueChange isn't called (because the input value hasn't changed)
-      if (isAsync && isOpen && inputValue === '') {
-        setAsyncLoading(true);
-        // TODO: dedupe this loading logic with debounceAsync
-        loadOptions(inputValue)
-          .then((opts) => {
-            setItems(opts, inputValue);
-            setAsyncLoading(false);
-            setAsyncError(false);
-          })
-          .catch((err) => {
-            if (!(err instanceof StaleResultError)) {
-              setAsyncError(true);
-              setAsyncLoading(false);
-            }
-          });
+      if (isOpen && inputValue === '') {
+        updateOptions(inputValue);
       }
     },
 
@@ -317,7 +223,16 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
         rowVirtualizer.scrollToIndex(highlightedIndex);
       }
     },
+    onStateChange: ({ inputValue: newInputValue, type, selectedItem: newSelectedItem }) => {
+      switch (type) {
+        case useCombobox.stateChangeTypes.InputChange:
+          updateOptions(newInputValue ?? '');
 
+          break;
+        default:
+          break;
+      }
+    },
     stateReducer(state, actionAndChanges) {
       let { changes } = actionAndChanges;
       const menuBeingOpened = state.isOpen === false && changes.isOpen === true;
@@ -353,7 +268,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     },
   });
 
-  const { inputRef, floatingRef, floatStyles, scrollRef } = useComboboxFloat(items, isOpen);
+  const { inputRef, floatingRef, floatStyles, scrollRef } = useComboboxFloat(filteredOptions, isOpen);
 
   const isAutoSize = width === 'auto';
 
@@ -429,14 +344,16 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
               {!asyncError && (
                 <ul style={{ height: rowVirtualizer.getTotalSize() }} className={styles.menuUlContainer}>
                   {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+                    const item = filteredOptions[virtualRow.index];
+
                     return (
                       <li
-                        key={`${items[virtualRow.index].value}-${virtualRow.index}`}
+                        key={`${item.value}-${virtualRow.index}`}
                         data-index={virtualRow.index}
                         className={cx(
                           styles.optionBasic,
                           styles.option,
-                          selectedItem && items[virtualRow.index].value === selectedItem.value && styles.optionSelected,
+                          selectedItem && item.value === selectedItem.value && styles.optionSelected,
                           highlightedIndex === virtualRow.index && styles.optionFocused
                         )}
                         style={{
@@ -444,17 +361,13 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
                           transform: `translateY(${virtualRow.start}px)`,
                         }}
                         {...getItemProps({
-                          item: items[virtualRow.index],
+                          item: item,
                           index: virtualRow.index,
                         })}
                       >
                         <div className={styles.optionBody}>
-                          <span className={styles.optionLabel}>
-                            {items[virtualRow.index].label ?? items[virtualRow.index].value}
-                          </span>
-                          {items[virtualRow.index].description && (
-                            <span className={styles.optionDescription}>{items[virtualRow.index].description}</span>
-                          )}
+                          <span className={styles.optionLabel}>{item.label ?? item.value}</span>
+                          {item.description && <span className={styles.optionDescription}>{item.description}</span>}
                         </div>
                       </li>
                     );
@@ -463,7 +376,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
               )}
               <div aria-live="polite">
                 {asyncError && <AsyncError />}
-                {items.length === 0 && !asyncError && <NotFoundError />}
+                {filteredOptions.length === 0 && !asyncError && <NotFoundError />}
               </div>
             </ScrollContainer>
           )}

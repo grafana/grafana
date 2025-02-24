@@ -11,16 +11,14 @@ const (
 
 func NewCheckReportFailure(
 	severity advisor.CheckReportFailureSeverity,
-	reason string,
-	action string,
 	stepID string,
-	itemID string,
+	item string,
+	links []advisor.CheckErrorLink,
 ) *advisor.CheckReportFailure {
 	return &advisor.CheckReportFailure{
 		Severity: severity,
-		Reason:   reason,
-		Action:   action,
 		StepID:   stepID,
-		ItemID:   itemID,
+		Item:     item,
+		Links:    links,
 	}
 }

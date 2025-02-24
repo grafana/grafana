@@ -367,17 +367,13 @@ const (
 	// Use the kubernetes API in the frontend for dashboards
 	FlagKubernetesDashboards = "kubernetesDashboards"
 
-	// FlagKubernetesCliDashboards
-	// Use the k8s client to retrieve dashboards internally
-	FlagKubernetesCliDashboards = "kubernetesCliDashboards"
-
 	// FlagKubernetesRestore
 	// Allow restoring objects in k8s
 	FlagKubernetesRestore = "kubernetesRestore"
 
-	// FlagKubernetesFoldersServiceV2
-	// Use the Folders Service V2, and route Folder Service requests to k8s
-	FlagKubernetesFoldersServiceV2 = "kubernetesFoldersServiceV2"
+	// FlagKubernetesClientDashboardsFolders
+	// Route the folder and dashboard service requests to k8s
+	FlagKubernetesClientDashboardsFolders = "kubernetesClientDashboardsFolders"
 
 	// FlagDatasourceQueryTypes
 	// Show query type endpoints in datasource API servers (currently hardcoded for testdata, expressions, and prometheus)
@@ -407,17 +403,9 @@ const (
 	// Enables the loki data source to request structured metadata from the Loki server
 	FlagLokiStructuredMetadata = "lokiStructuredMetadata"
 
-	// FlagTeamHttpHeaders
-	// Enables LBAC for datasources to apply LogQL filtering of logs to the client requests for users in teams
-	FlagTeamHttpHeaders = "teamHttpHeaders"
-
 	// FlagCachingOptimizeSerializationMemoryUsage
 	// If enabled, the caching backend gradually serializes query responses for the cache, comparing against the configured `[caching]max_value_mb` value as it goes. This can can help prevent Grafana from running out of memory while attempting to cache very large query responses.
 	FlagCachingOptimizeSerializationMemoryUsage = "cachingOptimizeSerializationMemoryUsage"
-
-	// FlagPrometheusPromQAIL
-	// Prometheus and AI/ML to assist users in creating a query
-	FlagPrometheusPromQAIL = "prometheusPromQAIL"
 
 	// FlagPrometheusCodeModeMetricNamesSearch
 	// Enables search for metric names in Code Mode, to improve performance when working with an enormous number of metric names
@@ -484,7 +472,7 @@ const (
 	FlagLogsInfiniteScrolling = "logsInfiniteScrolling"
 
 	// FlagExploreMetrics
-	// Enables the new Explore Metrics core app
+	// Enables the new Grafana Metrics Drilldown core app
 	FlagExploreMetrics = "exploreMetrics"
 
 	// FlagAlertingSimplifiedRouting
@@ -659,10 +647,6 @@ const (
 	// Preserve plugin proxy trailing slash.
 	FlagPluginProxyPreserveTrailingSlash = "pluginProxyPreserveTrailingSlash"
 
-	// FlagSqlQuerybuilderFunctionParameters
-	// Enables SQL query builder function parameters
-	FlagSqlQuerybuilderFunctionParameters = "sqlQuerybuilderFunctionParameters"
-
 	// FlagAzureMonitorPrometheusExemplars
 	// Allows configuration of Azure Monitor as a data source that can provide Prometheus exemplars
 	FlagAzureMonitorPrometheusExemplars = "azureMonitorPrometheusExemplars"
@@ -728,15 +712,15 @@ const (
 	FlagAlertingPrometheusRulesPrimary = "alertingPrometheusRulesPrimary"
 
 	// FlagExploreLogsShardSplitting
-	// Used in Explore Logs to split queries into multiple queries based on the number of shards
+	// Used in Logs Drilldown to split queries into multiple queries based on the number of shards
 	FlagExploreLogsShardSplitting = "exploreLogsShardSplitting"
 
 	// FlagExploreLogsAggregatedMetrics
-	// Used in Explore Logs to query by aggregated metrics
+	// Used in Logs Drilldown to query by aggregated metrics
 	FlagExploreLogsAggregatedMetrics = "exploreLogsAggregatedMetrics"
 
 	// FlagExploreLogsLimitedTimeRange
-	// Used in Explore Logs to limit the time range
+	// Used in Logs Drilldown to limit the time range
 	FlagExploreLogsLimitedTimeRange = "exploreLogsLimitedTimeRange"
 
 	// FlagHomeSetupGuide
@@ -783,6 +767,10 @@ const (
 	// Enable permission filtering on unified storage search
 	FlagUnifiedStorageSearchPermissionFiltering = "unifiedStorageSearchPermissionFiltering"
 
+	// FlagManagedDualWriter
+	// Pick the dual write mode from database configs
+	FlagManagedDualWriter = "managedDualWriter"
+
 	// FlagPluginsSriChecks
 	// Enables SRI checks for plugin assets
 	FlagPluginsSriChecks = "pluginsSriChecks"
@@ -820,7 +808,7 @@ const (
 	FlagPasswordlessMagicLinkAuthentication = "passwordlessMagicLinkAuthentication"
 
 	// FlagExploreMetricsRelatedLogs
-	// Display Related Logs in Explore Metrics
+	// Display Related Logs in Grafana Metrics Drilldown
 	FlagExploreMetricsRelatedLogs = "exploreMetricsRelatedLogs"
 
 	// FlagPrometheusSpecialCharsInLabelValues
@@ -970,4 +958,8 @@ const (
 	// FlagNewShareReportDrawer
 	// Enables the report creation drawer in a dashboard
 	FlagNewShareReportDrawer = "newShareReportDrawer"
+
+	// FlagRendererDisableAppPluginsPreload
+	// Disable pre-loading app plugins when the request is coming from the renderer
+	FlagRendererDisableAppPluginsPreload = "rendererDisableAppPluginsPreload"
 )

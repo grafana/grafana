@@ -267,10 +267,10 @@ func (r *xormRepositoryImpl) Get(ctx context.Context, query annotations.ItemQuer
 				annotation.updated,
 				usr.email,
 				usr.login,
-				alert.name as alert_name
+				r.title as alert_name
 			FROM annotation
 			LEFT OUTER JOIN ` + r.db.GetDialect().Quote("user") + ` as usr on usr.id = annotation.user_id
-			LEFT OUTER JOIN alert on alert.id = annotation.alert_id
+			LEFT OUTER JOIN alert_rule as r on r.id = annotation.alert_id
 			INNER JOIN (
 				SELECT a.id from annotation a
 			`)
@@ -287,6 +287,9 @@ func (r *xormRepositoryImpl) Get(ctx context.Context, query annotations.ItemQuer
 		if query.AlertID != 0 {
 			sql.WriteString(` AND a.alert_id = ?`)
 			params = append(params, query.AlertID)
+		} else if query.AlertUID != "" {
+			sql.WriteString(` AND a.alert_id = (SELECT id FROM alert_rule WHERE uid = ? and org_id = ?)`)
+			params = append(params, query.AlertUID, query.OrgID)
 		}
 
 		if query.DashboardID != 0 {
