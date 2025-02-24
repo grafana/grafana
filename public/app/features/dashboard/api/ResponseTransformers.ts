@@ -41,7 +41,7 @@ import {
   GridLayoutItemKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import { DashboardLink, DataTransformerConfig } from '@grafana/schema/src/raw/dashboard/x/dashboard_types.gen';
-import { WeekStart } from '@grafana/ui';
+import { isWeekStart, WeekStart } from '@grafana/ui';
 import {
   AnnoKeyCreatedBy,
   AnnoKeyDashboardGnetId,
@@ -161,8 +161,7 @@ export function ensureV2Response(
       fiscalYearStartMonth: dashboard.fiscalYearStartMonth || timeSettingsDefaults.fiscalYearStartMonth,
       hideTimepicker: dashboard.timepicker?.hidden || timeSettingsDefaults.hideTimepicker,
       quickRanges: dashboard.timepicker?.quick_ranges,
-      // casting WeekStart here to avoid editing old schema
-      weekStart: (dashboard.weekStart as WeekStart) || timeSettingsDefaults.weekStart,
+      weekStart: getWeekStart(dashboard.weekStart, timeSettingsDefaults.weekStart),
       nowDelay: dashboard.timepicker?.nowDelay || timeSettingsDefaults.nowDelay,
     },
     links: dashboard.links || [],
@@ -330,6 +329,13 @@ function getElementsFromPanels(
 
 function isRowPanel(panel: Panel | RowPanel): panel is RowPanel {
   return panel.type === 'row';
+}
+
+function getWeekStart(weekStart?: string, defaultWeekStart?: WeekStart): WeekStart | undefined {
+  if (!weekStart || !isWeekStart(weekStart)) {
+    return defaultWeekStart;
+  }
+  return weekStart;
 }
 
 function buildRowKind(p: RowPanel, elements: GridLayoutItemKind[]): GridLayoutRowKind {

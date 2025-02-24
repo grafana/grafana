@@ -22,6 +22,7 @@ import {
   SceneInteractionProfileEvent,
   SceneObjectState,
 } from '@grafana/scenes';
+import { isWeekStart } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
@@ -274,7 +275,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
       to: oldModel.time.to,
       fiscalYearStartMonth: oldModel.fiscalYearStartMonth,
       timeZone: oldModel.timezone,
-      weekStart: oldModel.weekStart,
+      weekStart: isWeekStart(oldModel.weekStart) ? oldModel.weekStart : undefined,
       UNSAFE_nowDelay: oldModel.timepicker?.nowDelay,
     }),
     $variables: variables,
