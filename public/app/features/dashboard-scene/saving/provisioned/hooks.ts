@@ -1,5 +1,3 @@
-import { time } from 'console';
-
 import { dateTime } from '@grafana/data';
 import { AnnoKeyRepoName, AnnoKeyRepoPath } from 'app/features/apiserver/types';
 import { useGetResourceRepository } from 'app/features/provisioning/hooks';
@@ -34,7 +32,7 @@ export function useDefaultValues({ meta, defaultTitle, defaultDescription }: Use
   const repository = repositoryConfig?.spec;
 
   const randomizer = newLetterRandomizer(); // replace with random
-  const timestamp = dateTime().format('YYYY-MM-DD-') + randomizer('xxxxx');
+  const timestamp = `${dateTime().format('YYYY-MM-DD')}-${randomizer('xxxxx')}`;
 
   return {
     values: {
