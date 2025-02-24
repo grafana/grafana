@@ -365,6 +365,11 @@ def rgm_promotion_pipeline():
     build_step["depends_on"] = [
         generate_token_step["name"],
     ]
+
+    publish_step["depends_on"] = [
+        build_step["name"],
+    ]
+
     steps = [
         generate_token_step,
         build_step,
