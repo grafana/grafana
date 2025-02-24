@@ -264,8 +264,9 @@ func TestCreateThresholdNode(t *testing.T) {
 
 func TestPrometheusRulesToGrafana_NodesInRules(t *testing.T) {
 	cfg := Config{
-		DatasourceUID:  "datasource-uid",
-		DatasourceType: datasources.DS_PROMETHEUS,
+		DatasourceUID:   "datasource-uid",
+		DatasourceType:  datasources.DS_PROMETHEUS,
+		DefaultInterval: 2 * time.Minute,
 	}
 	converter, err := NewConverter(cfg)
 	require.NoError(t, err)
@@ -351,8 +352,9 @@ func TestPrometheusRulesToGrafana_UID(t *testing.T) {
 	}
 
 	converter, err := NewConverter(Config{
-		DatasourceUID:  "datasource-uid",
-		DatasourceType: datasources.DS_PROMETHEUS,
+		DatasourceUID:   "datasource-uid",
+		DatasourceType:  datasources.DS_PROMETHEUS,
+		DefaultInterval: 2 * time.Minute,
 	})
 	require.NoError(t, err)
 
@@ -379,8 +381,9 @@ func TestPrometheusRulesToGrafana_UID(t *testing.T) {
 			namespace := "some-namespace"
 
 			converter, err := NewConverter(Config{
-				DatasourceUID:  "datasource-uid",
-				DatasourceType: datasources.DS_PROMETHEUS,
+				DatasourceUID:   "datasource-uid",
+				DatasourceType:  datasources.DS_PROMETHEUS,
+				DefaultInterval: 2 * time.Minute,
 			})
 			require.NoError(t, err)
 
@@ -397,8 +400,9 @@ func TestPrometheusRulesToGrafana_UID(t *testing.T) {
 			namespace := "some-namespace"
 
 			converter, err := NewConverter(Config{
-				DatasourceUID:  "datasource-uid",
-				DatasourceType: datasources.DS_PROMETHEUS,
+				DatasourceUID:   "datasource-uid",
+				DatasourceType:  datasources.DS_PROMETHEUS,
+				DefaultInterval: 2 * time.Minute,
 			})
 			require.NoError(t, err)
 
@@ -415,8 +419,9 @@ func TestPrometheusRulesToGrafana_UID(t *testing.T) {
 			namespace := "some-namespace"
 
 			converter, err := NewConverter(Config{
-				DatasourceUID:  "datasource-uid",
-				DatasourceType: datasources.DS_PROMETHEUS,
+				DatasourceUID:   "datasource-uid",
+				DatasourceType:  datasources.DS_PROMETHEUS,
+				DefaultInterval: 2 * time.Minute,
 			})
 			require.NoError(t, err)
 
