@@ -259,6 +259,19 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	hasSpecChanged := obj.Generation != obj.Status.ObservedGeneration
 	patchOperations := []map[string]interface{}{}
 
+	var shouldHealthcheck bool
+	switch {
+	case obj.DeletionTimestamp != nil:
+	case hasSpecChanged:
+		shouldHealthcheck = true
+	case obj.Status.Health.Checked == 0:
+		shouldHealthcheck = true
+	case obj.Status.Health.Healthy:
+		shouldHealthcheck = healthAge > time.Minute*5 // when healthy, check every 5 mins
+	default:
+		shouldHealthcheck = healthAge > time.Minute // otherwise within a minute
+	}
+
 	switch {
 	case hasSpecChanged:
 		logger.Info("spec changed", "Generation", obj.Generation, "ObservedGeneration", obj.Status.ObservedGeneration)
@@ -267,19 +280,12 @@ func (rc *RepositoryController) process(item *queueItem) error {
 			"path":  "/status/observedGeneration",
 			"value": obj.Generation,
 		})
-
 	case obj.DeletionTimestamp != nil:
 		logger.Info("deletion timestamp set")
-	// A reasonable threshold really depends on the error type...
-	// eg... network to github down should re-check frequently
-	// bad password or missing branch, wont ever become OK without a change to generation
-	case !obj.Status.Health.Healthy && healthAge < time.Hour:
-		logger.Info("skipping unhealthy repository", "health_age", healthAge)
-		return nil
 	case shouldResync && obj.Status.Health.Healthy:
 		logger.Info("sync interval triggered", "sync_age", syncAge, "sync_interval", syncInterval, "sync_status", obj.Status.Sync)
-		// Force health check on resync
-	//	healthAge = time.Hour // Force health check to run
+	case shouldHealthcheck:
+		logger.Info("health check is too old", "heath_age", healthAge, "health_status", obj.Status.Health.Healthy)
 	default:
 		logger.Info("skipping as conditions are not met", "status", obj.Status, "generation", obj.Generation, "deletion_timestamp", obj.DeletionTimestamp, "sync_spec", obj.Spec.Sync)
 		return nil
@@ -316,19 +322,7 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		return err // delete will be called again
 	}
 
-	healthStatusChanged := false
-	shouldHealthcheck := false
-	if obj.DeletionTimestamp == nil {
-		switch {
-		case hasSpecChanged:
-			shouldHealthcheck = true
-		case obj.Status.Health.Healthy:
-			shouldHealthcheck = healthAge > time.Minute*5 // when healthy, check every 5 mins
-		default:
-			shouldHealthcheck = healthAge > time.Second // otherwise within a second
-		}
-	}
-
+	var healthStatusChanged bool
 	if shouldHealthcheck {
 		logger.Info("running health check", "healthAge", healthAge)
 		res, err := rc.tester.TestRepository(ctx, repo)
@@ -359,42 +353,24 @@ func (rc *RepositoryController) process(item *queueItem) error {
 			"value": healthStatus,
 		})
 
-		// If health check fails, add sync state patch operation
-		if healthStatusChanged {
-			switch {
-			case !healthStatus.Healthy:
-				patchOperations = append(patchOperations, map[string]interface{}{
-					"op":   "replace",
-					"path": "/status/sync",
-					"value": provisioning.SyncStatus{
-						State: provisioning.JobStateError,
-						Message: []string{
-							"Repository is unhealthy",
-						},
-					},
-				})
-
-			// Clear the sync error state
-			case !shouldResync && obj.Status.Sync.State == provisioning.JobStateError:
-				patchOperations = append(patchOperations, map[string]interface{}{
-					"op":    "replace",
-					"path":  "/status/sync",
-					"value": provisioning.SyncStatus{},
-				})
-			}
-		}
-
 		logger.Info("health check completed",
 			"healthy", res.Success,
 			"checked", now,
 			"errors", len(res.Errors))
 	}
 
-	var incremental bool
-	switch {
-	case !obj.Status.Health.Healthy:
-		logger.Info("unhealthy repository")
+	var (
+		incremental    bool
+		shouldSkipSync bool
+	)
 
+	switch {
+	case !obj.Spec.Sync.Enabled:
+		logger.Info("skip sync as it's disabled")
+		shouldSkipSync = true
+	case !obj.Status.Health.Healthy:
+		logger.Info("skip sync for unhealthy repository")
+		shouldSkipSync = true
 	case obj.Status.ObservedGeneration < 1:
 		logger.Info("handle repository create")
 		if hooks != nil {
@@ -426,20 +402,54 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	case shouldResync:
 		logger.Info("handle repository resync")
 		incremental = true
+	case shouldHealthcheck:
+		logger.Info("skip sync as health didn't change")
+		shouldSkipSync = true
 	default:
 		return errors.New("unknown repository situation")
 	}
 
-	queueSyncJob := obj.Spec.Sync.Enabled &&
-		obj.Status.Health.Healthy &&
-		!dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, rc.dualwrite)
-	if queueSyncJob {
+	if !shouldSkipSync && dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, rc.dualwrite) {
+		logger.Info("skip sync as we are reading from legacy storage")
+		shouldSkipSync = true
+	}
+
+	isUnhealthyMsg := "Repository is unhealthy"
+	isUnhealthySyncStatus := len(obj.Status.Sync.Message) > 0 && obj.Status.Sync.Message[0] == isUnhealthyMsg && obj.Status.Sync.State == provisioning.JobStateError
+
+	// Preserve last ref as we use replace operation
+	lastRef := obj.Status.Sync.LastRef
+	switch {
+	case !shouldSkipSync:
 		patchOperations = append(patchOperations, map[string]interface{}{
 			"op":   "replace",
 			"path": "/status/sync",
 			"value": provisioning.SyncStatus{
+				LastRef: lastRef,
 				State:   provisioning.JobStatePending,
 				Started: time.Now().UnixMilli(),
+			},
+		})
+	case obj.Status.Health.Healthy && isUnhealthySyncStatus:
+		// clear the sync status
+		// FIXME: is this the clearest way to do this? Should we introduce another status or way of way of handling more
+		// specific errors?
+		patchOperations = append(patchOperations, map[string]interface{}{
+			"op":   "replace",
+			"path": "/status/sync",
+			"value": provisioning.SyncStatus{
+				LastRef: lastRef,
+			},
+		})
+	case !obj.Status.Health.Healthy && !isUnhealthySyncStatus:
+		// If health check fails, add sync state patch operation
+		patchOperations = append(patchOperations, map[string]interface{}{
+			"op":   "replace",
+			"path": "/status/sync",
+			"value": provisioning.SyncStatus{
+				LastRef: lastRef,
+				State:   provisioning.JobStateError,
+				Message: []string{isUnhealthyMsg},
 			},
 		})
 	}
@@ -450,7 +460,6 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		if err != nil {
 			return fmt.Errorf("error encoding status patch: %w", err)
 		}
-		fmt.Printf("PATCH: %s\n", string(patch))
 
 		_, err = rc.client.Repositories(obj.GetNamespace()).
 			Patch(ctx, obj.Name, types.JSONPatchType, patch, v1.PatchOptions{}, "status")
@@ -460,7 +469,7 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	}
 
 	// Trigger sync job after we have applied all patch operations
-	if queueSyncJob {
+	if !shouldSkipSync {
 		job, err := rc.jobs.Add(ctx, &provisioning.Job{
 			ObjectMeta: v1.ObjectMeta{
 				Namespace: obj.Namespace,
