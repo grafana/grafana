@@ -51,14 +51,21 @@ func NewGitHub(
 	secrets secrets.Service,
 	webhookURL string,
 ) (*githubRepository, error) {
-	owner, repo, _ := parseOwnerRepo(config.Spec.GitHub.URL)
-	decrypted, err := secrets.Decrypt(ctx, config.Spec.GitHub.EncryptedToken)
+	owner, repo, err := parseOwnerRepo(config.Spec.GitHub.URL)
 	if err != nil {
 		return nil, err
 	}
+	token := config.Spec.GitHub.Token
+	if token == "" {
+		decrypted, err := secrets.Decrypt(ctx, config.Spec.GitHub.EncryptedToken)
+		if err != nil {
+			return nil, err
+		}
+		token = string(decrypted)
+	}
 	return &githubRepository{
 		config:     config,
-		gh:         factory.New(ctx, string(decrypted)), // TODO -- base from URL
+		gh:         factory.New(ctx, token), // TODO, baseURL from config
 		secrets:    secrets,
 		webhookURL: webhookURL,
 		owner:      owner,
