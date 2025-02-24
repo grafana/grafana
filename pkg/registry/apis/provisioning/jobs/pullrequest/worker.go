@@ -129,7 +129,7 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 
 	reader, ok := repo.(repository.Reader)
 	if !ok {
-		return errors.New("pull request job submitted targetting repository that is not a Reader")
+		return errors.New("pull request job submitted targeting repository that is not a Reader")
 	}
 
 	parser, err := c.parsers.GetParser(ctx, reader)
