@@ -3595,6 +3595,21 @@
     },
     {
       "metadata": {
+        "name": "rendererDisableAppPluginsPreload",
+        "resourceVersion": "1740386710764",
+        "creationTimestamp": "2025-02-24T08:45:10Z"
+      },
+      "spec": {
+        "description": "Disable pre-loading app plugins when the request is coming from the renderer",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
+        "frontend": true,
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "reportingRetries",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2023-08-31T07:47:47Z"
