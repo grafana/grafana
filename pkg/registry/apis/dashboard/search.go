@@ -333,10 +333,14 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// hijacks the "name" query param to only search for shared dashboard UIDs
-		if len(dashboardUIDs) > 0 {
-			names = append(names, dashboardUIDs...)
+		if len(dashboardUIDs) == 0 {
+			s.write(w, dashboardv0alpha1.SearchResults{
+				Hits: []dashboardv0alpha1.DashboardHit{},
+			})
+			return
 		}
+		// hijacks the "name" query param to only search for shared dashboard UIDs
+		names = append(names, dashboardUIDs...)
 	} else if folder != "" {
 		if folder == rootFolder {
 			folder = "" // root folder is empty in the search index
