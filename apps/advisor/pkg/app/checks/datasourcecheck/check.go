@@ -2,6 +2,7 @@ package datasourcecheck
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -149,6 +150,10 @@ func (s *healthCheckStep) Run(ctx context.Context, obj *advisor.CheckSpec, i any
 	if err != nil || resp.Status != backend.HealthStatusOk {
 		if err != nil {
 			s.log.Debug("Failed to check health", "datasource_uid", ds.UID, "error", err)
+			if errors.Is(err, plugins.ErrMethodNotImplemented) || errors.Is(err, plugins.ErrPluginUnavailable) {
+				// The plugin does not support backend health checks
+				return nil, nil
+			}
 		} else {
 			s.log.Debug("Failed to check health", "datasource_uid", ds.UID, "status", resp.Status, "message", resp.Message)
 		}
