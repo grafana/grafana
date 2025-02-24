@@ -3,8 +3,8 @@ import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../../../themes';
-import { getCellLinks } from '../utils';
 import { DataLinksCellProps } from '../types';
+import { getCellLinks } from '../utils';
 
 export const DataLinksCell = (props: DataLinksCellProps) => {
   const { field, rowIdx } = props;

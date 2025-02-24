@@ -1,4 +1,5 @@
 import { Property } from 'csstype';
+import { Column } from 'react-data-grid';
 
 import {
   DataFrame,
@@ -13,7 +14,6 @@ import {
 } from '@grafana/data';
 import { TableCellOptions, TableCellHeight, TableFieldOptions } from '@grafana/schema';
 
-import { Column } from 'react-data-grid';
 import { TableCellInspectorMode } from '../TableCellInspector';
 
 export const FILTER_FOR_OPERATOR = '=';

@@ -708,9 +708,15 @@ function getComparator(sortColumnType: FieldType): Comparator {
     case FieldType.boolean:
       return (a, b) => {
         // Handle undefined/null values
-        if (a === b) return 0;
-        if (a == null) return -1;
-        if (b == null) return 1;
+        if (a === b) {
+          return 0;
+        }
+        if (a == null) {
+          return -1;
+        }
+        if (b == null) {
+          return 1;
+        }
         // Safe to do numeric comparison now
         return Number(a) - Number(b);
       };
