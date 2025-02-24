@@ -209,6 +209,8 @@
       "alerting": "Alerting",
       "alerting-change-description": "This update was made by the alerting system due to other changes. For example, when renaming a contact point that is used for simplified routing, this will update affected rules",
       "annotations": "Annotations",
+      "compare": "Compare",
+      "compare-with-latest": "Compare with latest version",
       "compareVersions": "Compare versions",
       "comparing-versions": "Comparing versions",
       "condition": "Alert condition",
@@ -241,7 +243,9 @@
       "rule_group": "Rule group",
       "unknown": "Unknown",
       "unknown-change-description": "This update was made prior to the implementation of alert rule version history. The user who made the change is not tracked, but future changes will include the user",
-      "user-id": "User ID {{uid}}"
+      "user-id": "User ID {{uid}}",
+      "warning-restore-manually": "You are manually restoring an old version of this alert rule. Please review the changes carefully before saving the rule definition.",
+      "warning-restore-manually-title": "Restoring rule manually"
     },
     "annotations": {
       "description": "Add more context to your alert notifications.",
