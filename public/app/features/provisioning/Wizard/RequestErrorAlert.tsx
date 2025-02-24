@@ -7,7 +7,6 @@ interface RequestErrorAlertProps {
     error?: unknown;
     endpointName?: string;
   } | null;
-  error?: unknown;
   title?: string;
 }
 
@@ -22,7 +21,7 @@ function getDefaultTitle(endpointName?: string): string {
   }
 }
 
-export function RequestErrorAlert({ request, error, title }: RequestErrorAlertProps) {
+export function RequestErrorAlert({ request, title }: RequestErrorAlertProps) {
   if (!request || !request.isError) {
     return null;
   }
