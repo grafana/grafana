@@ -15,7 +15,7 @@ export interface ContactPointSelectorProps {
 }
 
 export function ContactPointSelector({ alertManager, onSelectContactPoint }: ContactPointSelectorProps) {
-  const { control, watch, trigger } = useFormContext<RuleFormValues>();
+  const { control, watch, trigger, setError } = useFormContext<RuleFormValues>();
 
   const contactPointInForm = watch(`contactPoints.${alertManager}.selectedContactPoint`);
 
@@ -49,6 +49,11 @@ export function ContactPointSelector({ alertManager, onSelectContactPoint }: Con
                     }}
                     showRefreshButton
                     selectedContactPointName={contactPointInForm}
+                    onError={(error) => {
+                      setError(`contactPoints.${alertManager}.selectedContactPoint`, {
+                        message: error.message,
+                      });
+                    }}
                   />
                   <LinkToContactPoints />
                 </Stack>

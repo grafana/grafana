@@ -1,5 +1,5 @@
 import { css, cx, keyframes } from '@emotion/css';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Alert, IconButton, Select, SelectCommonProps, Stack, Text, useStyles2 } from '@grafana/ui';
@@ -20,12 +20,14 @@ type ContactPointSelectorProps = {
   showRefreshButton?: boolean;
   /** Name of a contact point to optionally find and set as the preset value on the dropdown */
   selectedContactPointName?: string | null;
+  onError?: (error: Error) => void;
 };
 
 export const ContactPointSelector = ({
   selectProps,
   showRefreshButton,
   selectedContactPointName,
+  onError,
 }: ContactPointSelectorProps) => {
   const { selectedAlertmanager } = useAlertmanager();
   const { contactPoints, isLoading, error, refetch } = useContactPointsWithStatus({
@@ -57,6 +59,12 @@ export const ContactPointSelector = ({
       setLoaderSpinning(false);
     });
   };
+
+  useEffect(() => {
+    if (selectedContactPointName && !matchedContactPoint && onError) {
+      onError(new Error(`Contact point "${selectedContactPointName}" could not be found`));
+    }
+  }, [error, matchedContactPoint, onError, selectedContactPointName]);
 
   // TODO error handling
   if (error) {
