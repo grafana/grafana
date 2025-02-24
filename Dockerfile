@@ -73,7 +73,7 @@ COPY pkg/storage/unified/apistore pkg/storage/unified/apistore
 COPY pkg/semconv pkg/semconv
 COPY pkg/aggregator pkg/aggregator
 COPY apps/playlist apps/playlist
-COPY apps/investigation apps/investigation
+COPY apps/investigations apps/investigations
 COPY apps/advisor apps/advisor
 COPY apps apps
 COPY kindsv2 kindsv2
@@ -124,6 +124,7 @@ FROM ${JS_SRC} AS js-src
 FROM ${BASE_IMAGE}
 
 LABEL maintainer="Grafana Labs <hello@grafana.com>"
+LABEL org.opencontainers.image.source="https://github.com/grafana/grafana"
 
 ARG GF_UID="472"
 ARG GF_GID="0"
@@ -163,7 +164,8 @@ RUN if grep -i -q alpine /etc/issue && [ `arch` = "x86_64" ]; then \
         usr/glibc-compat/lib/libdl.so.2 \
         usr/glibc-compat/lib/libm.so.6 \
         usr/glibc-compat/lib/libpthread.so.0 \
-        usr/glibc-compat/lib/librt.so.1 && \
+        usr/glibc-compat/lib/librt.so.1 \
+        usr/glibc-compat/lib/libresolv.so.2 && \
       mkdir /lib64 && \
       ln -s /usr/glibc-compat/lib/ld-linux-x86-64.so.2 /lib64; \
     fi
