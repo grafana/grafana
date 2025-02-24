@@ -9,6 +9,7 @@ import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { removePluginFromNavTree } from 'app/core/reducers/navBarTree';
 import { useDispatch } from 'app/types';
 
+import { isDisabledAngularPlugin } from '../../helpers';
 import {
   useInstallStatus,
   useUninstallStatus,
@@ -179,6 +180,10 @@ export function InstallControlsButton({
 function shouldDisableUninstall(isUninstalling: boolean, plugin: CatalogPlugin) {
   if (config.pluginAdminExternalManageEnabled) {
     return plugin.isUninstallingFromInstance || !plugin.isFullyInstalled || plugin.isUpdatingFromInstance;
+  }
+
+  if (isDisabledAngularPlugin(plugin)) {
+    return true;
   }
 
   return isUninstalling;
