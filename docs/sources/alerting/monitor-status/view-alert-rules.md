@@ -59,7 +59,7 @@ Select a group to expand it and view the list of alert rules within that group.
 
 For details on how rule states and alert instance states are displayed, refer to [View alert state](ref:view-alert-state).
 
-## View and restore previous alert rules
+## View and compare alert rules versions.
 
 To view previous alert rules for an alert, complete the following steps.
 
