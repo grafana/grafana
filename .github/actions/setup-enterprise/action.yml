@@ -9,7 +9,7 @@ inputs:
   github-app-name:
     description: 'Name of the GitHub App in Vault'
     required: false
-    default: '<my-new-gitrhub-app>'
+    default: 'grafana-ci-bot'
   debug:
     description: 'Enable debug output'
     required: false
