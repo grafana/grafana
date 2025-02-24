@@ -615,6 +615,8 @@ The following sections detail the supported settings and secure settings for eac
 
 #### Alert notification `webhook`
 
+<!-- vale Grafana.Spelling = NO -->
+
 | Name        | Secure setting |
 | ----------- | -------------- |
 | url         |                |
@@ -622,6 +624,9 @@ The following sections detail the supported settings and secure settings for eac
 | username    |                |
 | password    | yes            |
 | tls_config  |                |
+| hmac_config |                |
+
+<!-- vale Grafana.Spelling = YES -->
 
 ##### TLS config
 
@@ -631,6 +636,18 @@ The following sections detail the supported settings and secure settings for eac
 | clientCertificate  | yes            |
 | clientKey          | yes            |
 | caCertificate      | yes            |
+
+##### HMAC signature configuration
+
+<!-- vale Grafana.Spelling = NO -->
+
+| Name            | Secure setting |
+| --------------- | -------------- |
+| secret          | yes            |
+| header          |                |
+| timestampHeader |                |
+
+<!-- vale Grafana.Spelling = YES -->
 
 #### Alert notification `googlechat`
 
