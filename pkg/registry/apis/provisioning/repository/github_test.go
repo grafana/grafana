@@ -126,6 +126,12 @@ func TestParseWebhooks(t *testing.T) {
 	gh.owner, gh.repo, err = parseOwnerRepo(gh.config.Spec.GitHub.URL)
 	require.NoError(t, err)
 
+	// Support parsing from a ".git" extension
+	owner, repo, err := parseOwnerRepo(gh.config.Spec.GitHub.URL + ".git")
+	require.NoError(t, err)
+	require.Equal(t, gh.owner, owner)
+	require.Equal(t, gh.repo, repo)
+
 	for _, tt := range tests {
 		name := fmt.Sprintf("webhook-%s-%s.json", tt.messageType, tt.name)
 		t.Run(name, func(t *testing.T) {

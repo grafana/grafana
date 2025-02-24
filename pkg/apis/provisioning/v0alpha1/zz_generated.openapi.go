@@ -321,7 +321,7 @@ func schema_pkg_apis_provisioning_v0alpha1_HealthStatus(ref common.ReferenceCall
 						},
 					},
 				},
-				Required: []string{"healthy", "message"},
+				Required: []string{"healthy"},
 			},
 		},
 	}

@@ -887,7 +887,7 @@ export type HealthStatus = {
   /** When not healthy, requests will not be executed */
   healthy: boolean;
   /** Summary messages (will be shown to users) */
-  message: string[];
+  message?: string[];
 };
 export type ResourceCount = {
   count: number;
