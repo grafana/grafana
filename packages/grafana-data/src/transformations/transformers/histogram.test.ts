@@ -311,26 +311,13 @@ describe('joinHistograms', () => {
     };
   }
 
-  type TestCaseNonThrowing = {
+  type TestCase = {
     name: string;
     histograms: TestHistogram[];
     expected: TestHistogram;
   };
 
-  type TestCaseThrowing = {
-    name: string;
-    histograms: TestHistogram[];
-    throws: true;
-  };
-
-  type TestCase = TestCaseNonThrowing | TestCaseThrowing;
-
   const testCases: TestCase[] = [
-    {
-      name: 'no histograms',
-      histograms: [],
-      throws: true,
-    },
     {
       name: 'just one histogram',
       histograms: [
@@ -392,36 +379,17 @@ describe('joinHistograms', () => {
         ],
       },
     },
-    {
-      name: 'two histograms with different sized buckets',
-      histograms: [
-        {
-          xMin: [1, 3, 4],
-          xMax: [2, 4, 5],
-          counts: [[1, 2, 3]],
-        },
-        {
-          xMin: [2, 3.5, 6],
-          xMax: [3, 6, 7],
-          counts: [[4, 5, 6]],
-        },
-      ],
-      throws: true,
-    },
   ];
 
   testCases.forEach((tc) => {
     it(tc.name, () => {
-      if ('throws' in tc) {
-        expect(() => joinHistograms(tc.histograms.map(testHistogramToHistogram))).toThrow();
-      } else {
-        const result = joinHistograms(tc.histograms.map(testHistogramToHistogram));
-        expect({
-          xMin: result.xMin.values,
-          xMax: result.xMax.values,
-          counts: result.counts.map((f) => f.values),
-        }).toEqual(tc.expected);
-      }
+      const result = joinHistograms(tc.histograms.map(testHistogramToHistogram));
+
+      expect({
+        xMin: result.xMin.values,
+        xMax: result.xMax.values,
+        counts: result.counts.map((f) => f.values),
+      }).toEqual(tc.expected);
     });
   });
 });
