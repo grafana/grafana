@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/infra/log"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -23,6 +24,20 @@ const (
 	recordingRulesPausedHeader = "X-Grafana-Alerting-Recording-Rules-Paused"
 	alertRulesPausedHeader     = "X-Grafana-Alerting-Alert-Rules-Paused"
 )
+
+var (
+	errDatasourceUIDHeaderMissing = errutil.ValidationFailed(
+		"alerting.datasourceUIDHeaderMissing",
+		errutil.WithPublicMessage(fmt.Sprintf("Missing datasource UID header: %s", datasourceUIDHeader)),
+	).Errorf("missing datasource UID header")
+
+	errInvalidHeaderValueMsg  = "Invalid value for header {{.Public.Header}}: must be 'true' or 'false'"
+	errInvalidHeaderValueBase = errutil.ValidationFailed("aleting.invalidHeaderValue").MustTemplate(errInvalidHeaderValueMsg, errutil.WithPublic(errInvalidHeaderValueMsg))
+)
+
+func errInvalidHeaderValue(header string) error {
+	return errInvalidHeaderValueBase.Build(errutil.TemplateData{Public: map[string]any{"Header": header}})
+}
 
 type ConvertPrometheusSrv struct {
 	cfg              *setting.UnifiedAlertingSettings
@@ -65,19 +80,18 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusGetRuleGroup(c *contextmo
 
 func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostRuleGroup(c *contextmodel.ReqContext, namespaceTitle string, promGroup apimodels.PrometheusRuleGroup) response.Response {
 	logger := srv.logger.FromContext(c.Req.Context())
+	logger = logger.New("folder_title", namespaceTitle, "group", promGroup.Name)
 
-	logger.Info("Converting Prometheus rule group", "folder_title", namespaceTitle, "group", promGroup.Name, "rules", len(promGroup.Rules))
+	logger.Info("Converting Prometheus rule group", "rules", len(promGroup.Rules))
 
 	ns, errResp := srv.getOrCreateNamespace(c, namespaceTitle, logger)
 	if errResp != nil {
 		return errResp
 	}
 
-	logger.Debug("Found folder", "folder_title", ns.Title, "folder_uid", ns.UID)
-
 	datasourceUID := strings.TrimSpace(c.Req.Header.Get(datasourceUIDHeader))
 	if datasourceUID == "" {
-		return response.Error(http.StatusBadRequest, fmt.Sprintf("Missing datasource UID header: %s", datasourceUIDHeader), nil)
+		return response.Err(errDatasourceUIDHeaderMissing)
 	}
 	ds, err := srv.datasourceCache.GetDatasourceByUID(c.Req.Context(), datasourceUID, c.SignedInUser, c.SkipDSCache)
 	if err != nil {
@@ -92,7 +106,7 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostRuleGroup(c *contextm
 
 	err = srv.alertRuleService.ReplaceRuleGroup(c.Req.Context(), c.SignedInUser, *group, models.ProvenanceConvertedPrometheus)
 	if err != nil {
-		logger.Error("Failed to replace rule group", "folder_title", namespaceTitle, "group", promGroup.Name, "error", err)
+		logger.Error("Failed to replace rule group", "error", err)
 		return errorToResponse(err)
 	}
 
@@ -100,7 +114,8 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostRuleGroup(c *contextm
 }
 
 func (srv *ConvertPrometheusSrv) getOrCreateNamespace(c *contextmodel.ReqContext, title string, logger log.Logger) (*folder.Folder, response.Response) {
-	logger.Debug("Getting or creating a new folder", "folder_title", title)
+	logger.Debug("Getting or creating a new folder")
+
 	ns, err := srv.ruleStore.GetOrCreateNamespaceInRootByTitle(
 		c.Req.Context(),
 		title,
@@ -111,11 +126,14 @@ func (srv *ConvertPrometheusSrv) getOrCreateNamespace(c *contextmodel.ReqContext
 		logger.Error("Failed to get or create a new folder", "error", err)
 		return nil, toNamespaceErrorResponse(err)
 	}
+
+	logger.Debug("Using folder for the converted rules", "folder_uid", ns.UID)
+
 	return ns, nil
 }
 
 func (srv *ConvertPrometheusSrv) convertToGrafanaRuleGroup(c *contextmodel.ReqContext, ds *datasources.DataSource, namespaceUID string, promGroup apimodels.PrometheusRuleGroup, logger log.Logger) (*models.AlertRuleGroup, error) {
-	logger.Info("Converting Prometheus rules to Grafana rules", "group", promGroup.Name, "rules", len(promGroup.Rules), "folder_uid", namespaceUID, "datasource_uid", ds.UID, "datasource_type", ds.Type)
+	logger.Info("Converting Prometheus rules to Grafana rules", "rules", len(promGroup.Rules), "folder_uid", namespaceUID, "datasource_uid", ds.UID, "datasource_type", ds.Type)
 
 	rules := make([]prom.PrometheusRule, len(promGroup.Rules))
 	for i, r := range promGroup.Rules {
@@ -180,7 +198,7 @@ func parseBooleanHeader(header string, headerName string) (bool, error) {
 	}
 	val, err := strconv.ParseBool(header)
 	if err != nil {
-		return false, fmt.Errorf("%w: invalid value for header %s: must be 'true' or 'false'", errInvalidHeaderValue, headerName)
+		return false, errInvalidHeaderValue(headerName)
 	}
 	return val, nil
 }

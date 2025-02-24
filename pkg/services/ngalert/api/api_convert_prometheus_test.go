@@ -124,13 +124,13 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 				name:          "invalid recording rules pause value",
 				headerName:    recordingRulesPausedHeader,
 				headerValue:   "invalid",
-				expectedError: "invalid value for header X-Grafana-Alerting-Recording-Rules-Paused: must be 'true' or 'false'",
+				expectedError: "Invalid value for header X-Grafana-Alerting-Recording-Rules-Paused: must be 'true' or 'false'",
 			},
 			{
 				name:          "invalid alert rules pause value",
 				headerName:    alertRulesPausedHeader,
 				headerValue:   "invalid",
-				expectedError: "invalid value for header X-Grafana-Alerting-Alert-Rules-Paused: must be 'true' or 'false'",
+				expectedError: "Invalid value for header X-Grafana-Alerting-Alert-Rules-Paused: must be 'true' or 'false'",
 			},
 		}
 
