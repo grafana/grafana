@@ -151,59 +151,61 @@ func TestSimulate(t *testing.T) {
 	for range 100 {
 		simulator.step()
 
-		// Invariant
-		/*
-			OnlyOneOperationPerSecureValueInTheQueueAtATime ==
-				\A secret \in Secrets:
-					LET PendingQueueSet == {queue.pending[i]: i \in DOMAIN queue.pending}
-						SecretInQueue   == {i \in DOMAIN queue.pending: queue.pending[i] = secret} IN
-						\* There is either no secret in the pending queue, or at most one.
-						Cardinality(SecretInQueue) <= 1
-		*/
-		uniqueSecretName := make(map[string]struct{}, 0)
-		for _, sv := range simDatabase.outboxQueue {
-			secureValueName := sv.(*secretv0alpha1.SecureValue).Name
+		invOnlyOneOperationPerSecureValueInTheQueueAtATime(t, simDatabase)
+		invSecretMetadataHasPendingStatusWhenTheresAnOperationInTheQueue(t, simDatabase)
+	}
+}
 
-			require.NotContains(t, uniqueSecretName, secureValueName, fmt.Sprintf("Current SecureValues: %v", uniqueSecretName))
+// TLA+ inv: OnlyOneOperationPerSecureValueInTheQueueAtATime
+func invOnlyOneOperationPerSecureValueInTheQueueAtATime(t *testing.T, simDatabase *SimDatabase) {
+	uniqueSecretName := make(map[string]struct{}, 0)
+	for _, sv := range simDatabase.outboxQueue {
+		secureValueName := sv.(*secretv0alpha1.SecureValue).Name
 
-			uniqueSecretName[secureValueName] = struct{}{}
+		require.NotContains(t, uniqueSecretName, secureValueName, fmt.Sprintf("Current SecureValues: %v", uniqueSecretName))
+
+		uniqueSecretName[secureValueName] = struct{}{}
+	}
+}
+
+// TLA+ inv: SecretMetadataHasPendingStatusWhenTheresAnOperationInTheQueue
+func invSecretMetadataHasPendingStatusWhenTheresAnOperationInTheQueue(t *testing.T, simDatabase *SimDatabase) {
+	secureValuesInQueue := make(map[string]map[string]struct{}, 0)
+	for _, rawSV := range simDatabase.outboxQueue {
+		sv := rawSV.(*secretv0alpha1.SecureValue)
+
+		if _, ok := secureValuesInQueue[sv.Namespace]; !ok {
+			secureValuesInQueue[sv.Namespace] = make(map[string]struct{})
 		}
 
-		/*
-			SecretMetadataHasPendingStatusWhenTheresAnOperationInTheQueue ==
-				\* For all secrets
-				\A s \in Secrets:
-				LET secret_in_pending_queue ==
-					\E i \in DOMAIN queue.pending:
-						queue.pending[i] = s
-				IN
-				\* the secret is either in the outbox queue
-				\/ /\ secret_in_pending_queue
-					\* and the secret metadata status is Pending
-					/\ SecretMetadataHasPendingStatus(s)
-				\* or the secret is not in the queue
-				\/ /\ ~secret_in_pending_queue
-					\* and the secret metadata status is not Pending
-					/\ ~SecretMetadataHasPendingStatus(s)
-		*/
-		secureValuesInQueue := make(map[string]map[string]struct{}, 0)
-		for _, rawSV := range simDatabase.outboxQueue {
-			sv := rawSV.(*secretv0alpha1.SecureValue)
+		secureValuesInQueue[sv.Namespace][sv.Name] = struct{}{}
+	}
 
-			if _, ok := secureValuesInQueue[sv.Namespace]; !ok {
-				secureValuesInQueue[sv.Namespace] = make(map[string]struct{})
-			}
+	for namespace, secureValues := range simDatabase.secretMetadata {
+		for _, secureValue := range secureValues {
+			_, exists := secureValuesInQueue[namespace][secureValue.Name]
+			statusPending := secureValue.Status.Phase == secretv0alpha1.SecureValuePhasePending
 
-			secureValuesInQueue[sv.Namespace][sv.Name] = struct{}{}
-		}
-
-		for namespace, secureValues := range simDatabase.secretMetadata {
-			for _, secureValue := range secureValues {
-				_, exists := secureValuesInQueue[namespace][secureValue.Name]
-				statusPending := secureValue.Status.Phase == secretv0alpha1.SecureValuePhasePending
-
-				require.True(t, (statusPending && exists || (!statusPending && !exists)), fmt.Sprintf("statusPending=%v exists=%v metadata_db=%v", statusPending, exists, simDatabase.secretMetadata))
-			}
+			require.True(t, (statusPending && exists || (!statusPending && !exists)), fmt.Sprintf("statusPending=%v exists=%v metadata_db=%v", statusPending, exists, simDatabase.secretMetadata))
 		}
 	}
 }
+
+// TODO: implement me
+// EventuallyEveryMetadataStatusIsReady ==
+//     \* For all secrets
+//     \A secret \in Secrets:
+//         \* Transform the queue.pending tuple into a set
+//         LET PendingQueueSet == {queue.pending[i]: i \in DOMAIN queue.pending} IN
+//             \* If the secret is in the pending queue
+//             /\ secret \in PendingQueueSet
+//             \* Leads to it eventually
+//             ~>
+//                 \* Being in the processed queue
+//                 /\ secret \in queue.processed
+//                 \* And removed from the pending queue
+//                 /\ secret \notin PendingQueueSet
+//                 \* And the secret being in the metadata table with status "Succeeded"
+//                 /\ \E metadata \in db.secret_metadata:
+//                     /\ metadata.name = secret
+//                     /\ metadata.status = "Succeeded"

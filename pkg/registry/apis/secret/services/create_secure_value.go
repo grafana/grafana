@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
@@ -11,7 +12,7 @@ import (
 )
 
 type CreateSecureValue struct {
-	tx                         contracts.TransactionManager
+	transactionManager         contracts.TransactionManager
 	secureValueMetadataStorage contracts.SecureValueStorage
 	outboxQueue                contracts.OutboxQueue
 }
@@ -25,38 +26,50 @@ func NewCreateSecureValue(
 }
 
 func (s *CreateSecureValue) Handle(ctx context.Context, sv *secretv0alpha1.SecureValue, cb func(runtime.Object, error)) {
-	s.secureValueMetadataStorage.SecretMetadataHasPendingStatus(ctx, s.tx, xkube.Namespace(sv.Namespace), sv.Name,
-		func(isPending bool, err error) {
-			if err != nil {
-				cb(nil, fmt.Errorf("failed to create secure value: %w", err))
-				return
-			}
+	s.transactionManager.BeginTx(ctx, nil, func(tx contracts.Tx, err error) {
+		onError := func(err error) {
+			tx.Rollback(func(txErr error) {
+				cb(nil, errors.Join(err, txErr))
+			})
+		}
+		if err != nil {
+			onError(err)
+			return
+		}
 
-			if isPending {
-				cb(nil, fmt.Errorf("already pending"))
-				return
-			}
-
-			// TODO: Consume sv.rawSecret and encrypt value here before storing!
-			// TODO: handle REF vs VALUE
-			_ = sv.Spec.Value.DangerouslyExposeAndConsumeValue()
-
-			// /\ db' = [db EXCEPT !.secret_metadata = @ \union {[name |-> s, status |-> "Pending"]}]
-			s.secureValueMetadataStorage.Create(ctx, s.tx, sv, func(createdSecureValue *secretv0alpha1.SecureValue, err error) {
+		s.secureValueMetadataStorage.SecretMetadataHasPendingStatus(ctx, tx, xkube.Namespace(sv.Namespace), sv.Name,
+			func(isPending bool, err error) {
 				if err != nil {
-					cb(nil, fmt.Errorf("failed to create securevalue: %w", err))
+					onError(fmt.Errorf("failed to create secure value: %w", err))
 					return
 				}
 
-				// 			// /\ queue' = [queue EXCEPT !.pending = Append(queue.pending, s)]
-				s.outboxQueue.Append(ctx, s.tx, createdSecureValue, func(err error) {
+				if isPending {
+					onError(fmt.Errorf("already pending"))
+					return
+				}
+
+				// TODO: Consume sv.rawSecret and encrypt value here before storing!
+				// TODO: handle REF vs VALUE
+				_ = sv.Spec.Value.DangerouslyExposeAndConsumeValue()
+
+				s.secureValueMetadataStorage.Create(ctx, tx, sv, func(createdSecureValue *secretv0alpha1.SecureValue, err error) {
 					if err != nil {
-						cb(nil, fmt.Errorf("failed to append to queue: %w", err))
+						onError(fmt.Errorf("failed to create securevalue: %w", err))
 						return
 					}
 
-					cb(createdSecureValue, nil)
+					s.outboxQueue.Append(ctx, tx, createdSecureValue, func(err error) {
+						if err != nil {
+							onError(fmt.Errorf("failed to append to queue: %w", err))
+							return
+						}
+
+						tx.Commit(func(err error) {
+							cb(createdSecureValue, err)
+						})
+					})
 				})
 			})
-		})
+	})
 }

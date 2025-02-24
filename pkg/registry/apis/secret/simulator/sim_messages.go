@@ -15,17 +15,17 @@ type Message interface {
 
 /*** Request ***/
 type simDatabaseAppendQuery struct {
-	ctx context.Context
-	tx  contracts.TransactionManager
-	foo any
-	cb  func(error)
+	ctx         context.Context
+	tx          contracts.Tx
+	secureValue *secretv0alpha1.SecureValue
+	cb          func(error)
 }
 
 func (simDatabaseAppendQuery) Message() {}
 
 type simDatabaseSecretMetadataHasPendingStatusQuery struct {
 	ctx       context.Context
-	tx        contracts.TransactionManager
+	tx        contracts.Tx
 	namespace xkube.Namespace
 	name      string
 	cb        func(bool, error)
@@ -35,7 +35,7 @@ func (simDatabaseSecretMetadataHasPendingStatusQuery) Message() {}
 
 type simDatabaseCreateSecureValueMetadataQuery struct {
 	ctx context.Context
-	tx  contracts.TransactionManager
+	tx  contracts.Tx
 	sv  *secretv0alpha1.SecureValue
 	cb  func(*secretv0alpha1.SecureValue, error)
 }
@@ -45,7 +45,7 @@ func (simDatabaseCreateSecureValueMetadataQuery) Message() {}
 type simDatabaseBeginTxQuery struct {
 	ctx  context.Context
 	opts *sql.TxOptions
-	cb   func(*sql.Tx, error)
+	cb   func(tx contracts.Tx, err error)
 }
 
 func (simDatabaseBeginTxQuery) Message() {}
@@ -75,9 +75,33 @@ type simDatabaseCreateSecureValueMetadataResponse struct {
 func (simDatabaseCreateSecureValueMetadataResponse) Message() {}
 
 type simDatabaseBeginTxResponse struct {
-	cb  func(*sql.Tx, error)
-	tx  *sql.Tx
+	cb  func(tx contracts.Tx, err error)
+	tx  contracts.Tx
 	err error
 }
 
 func (simDatabaseBeginTxResponse) Message() {}
+
+type simDatabaseCommit struct {
+	tx contracts.Tx
+}
+
+func (simDatabaseCommit) Message() {}
+
+type simDatabaseCommitResponse struct {
+	err error
+}
+
+func (simDatabaseCommitResponse) Message() {}
+
+type simDatabaseRollback struct {
+	tx contracts.Tx
+}
+
+func (simDatabaseRollback) Message() {}
+
+type simDatabaseRollbackResponse struct {
+	err error
+}
+
+func (simDatabaseRollbackResponse) Message() {}

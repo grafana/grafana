@@ -1,7 +1,6 @@
 package simulator
 
 import (
-	"fmt"
 	"math/rand"
 )
 
@@ -37,8 +36,6 @@ func (network *SimNetwork) Tick() {
 	message := network.messages[i]
 	// Remove the message from in flight messages
 	network.messages = append(network.messages[:i], network.messages[i+1:]...)
-
-	fmt.Printf("\n\naaaaaaa Network: delivering message message %+v\n\n", message)
 
 	// Are we going to have an error? Let's roll the dice
 	if network.config.errProbability > network.config.rng.Float64() {

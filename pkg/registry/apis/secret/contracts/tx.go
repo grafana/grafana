@@ -6,5 +6,10 @@ import (
 )
 
 type TransactionManager interface {
-	BeginTx(ctx context.Context, opts *sql.TxOptions, cb func(*sql.Tx, error))
+	BeginTx(ctx context.Context, opts *sql.TxOptions, cb func(tx Tx, err error))
+}
+
+type Tx interface {
+	Commit(func(error))
+	Rollback(func(error))
 }
