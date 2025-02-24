@@ -4,10 +4,9 @@ import * as React from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 import { useLocalStorage } from 'react-use';
 
-import { GrafanaTheme2, NavModelItem, toIconName } from '@grafana/data';
-import { useStyles2, Text, IconButton, Icon, Stack, Badge } from '@grafana/ui';
+import { FeatureState, GrafanaTheme2, NavModelItem, toIconName } from '@grafana/data';
+import { useStyles2, Text, IconButton, Icon, Stack, FeatureBadge } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
-import { t } from 'app/core/internationalization';
 
 import { Indent } from '../../Indent/Indent';
 
@@ -108,7 +107,7 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick, onPin, isPi
             >
               {level === 0 && iconElement && <FeatureHighlightWrapper>{iconElement}</FeatureHighlightWrapper>}
               <Text truncate>{link.text}</Text>
-              {link.isNew && <Badge text={t('navigation.megamenu.new', 'New!')} color={'blue'} />}
+              {link.isNew && <FeatureBadge featureState={FeatureState.new} />}
             </div>
           </MegaMenuItemText>
         </div>
