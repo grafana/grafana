@@ -76,8 +76,8 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	if !ok {
 		return fmt.Errorf("sync job submitted for repository that does not support read-write -- this is a bug")
 	}
-  
-  syncStatus := job.Status.ToSyncStatus(job.Name)
+
+	syncStatus := job.Status.ToSyncStatus(job.Name)
 	// Preserve last ref as we use replace operation
 	syncStatus.LastRef = repo.Config().Status.Sync.LastRef
 
