@@ -28,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	encryptionstorage "github.com/grafana/grafana/pkg/storage/secret/encryption"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestMain(m *testing.M) {
@@ -39,6 +40,9 @@ func Test_SecretMgmt_StoreInKeeper(t *testing.T) {
 	t.Cleanup(cancel)
 
 	testSV := &secretv0alpha1.SecureValue{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "default",
+		},
 		Spec: secretv0alpha1.SecureValueSpec{
 			Title:      "title",
 			Value:      "value",
@@ -74,6 +78,9 @@ func Test_SecretMgmt_UpdateInKeeper(t *testing.T) {
 	t.Cleanup(cancel)
 
 	testSV := &secretv0alpha1.SecureValue{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "default",
+		},
 		Spec: secretv0alpha1.SecureValueSpec{
 			Title:      "title",
 			Value:      "value",
@@ -128,6 +135,9 @@ func Test_SecretMgmt_DeleteInKeeper(t *testing.T) {
 	}))
 
 	testSV := &secretv0alpha1.SecureValue{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "default",
+		},
 		Spec: secretv0alpha1.SecureValueSpec{
 			Title:      "title",
 			Value:      "value",
@@ -240,8 +250,8 @@ func setupTestService(t *testing.T) contracts.SecureValueMetadataStorage {
 	require.NoError(t, err)
 
 	// Initialize the secure value storage
-	secureValueStorage, err := ProvideSecureValueMetadataStorage(testDB, cfg, features, accessClient, keeperService)
+	secureValueMetadataStorage, err := ProvideSecureValueMetadataStorage(testDB, cfg, features, accessClient, keeperService)
 	require.NoError(t, err)
 
-	return secureValueStorage
+	return secureValueMetadataStorage
 }
