@@ -72,6 +72,11 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 		return fmt.Errorf("sync not supported until storage has migrated")
 	}
 
+	rw, ok := repo.(repository.ReaderWriter)
+	if !ok {
+		return fmt.Errorf("sync job submitted for repository that does not support read-write -- this is a bug!")
+	}
+
 	// Update sync status at start using JSON patch
 	patchOperations := []map[string]interface{}{
 		{
@@ -87,7 +92,7 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	}
 
 	progress.SetMessage("execute sync job")
-	syncJob, err := r.createJob(ctx, repo, progress)
+	syncJob, err := r.createJob(ctx, rw, progress)
 	if err != nil {
 		return fmt.Errorf("failed to create sync job: %w", err)
 	}
@@ -135,7 +140,7 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 }
 
 // start a job and run it
-func (r *SyncWorker) createJob(ctx context.Context, repo repository.Repository, progress jobs.JobProgressRecorder) (*syncJob, error) {
+func (r *SyncWorker) createJob(ctx context.Context, repo repository.ReaderWriter, progress jobs.JobProgressRecorder) (*syncJob, error) {
 	cfg := repo.Config()
 	if !cfg.Spec.Sync.Enabled {
 		return nil, errors.New("sync is not enabled")
@@ -195,7 +200,7 @@ type resourceID struct {
 
 // created once for each sync execution
 type syncJob struct {
-	repository      repository.Repository
+	repository      repository.ReaderWriter
 	progress        jobs.JobProgressRecorder
 	parser          *resources.Parser
 	lister          resources.ResourceLister
@@ -221,7 +226,7 @@ func (r *syncJob) run(ctx context.Context, options provisioning.SyncJobOptions) 
 	var err error
 	var currentRef string
 
-	versionedRepo, _ := r.repository.(repository.VersionedRepository)
+	versionedRepo, _ := r.repository.(repository.Versioned)
 	if versionedRepo != nil {
 		currentRef, err = versionedRepo.LatestRef(ctx)
 		if err != nil {
@@ -321,7 +326,7 @@ func (r *syncJob) applyChanges(ctx context.Context, changes []ResourceFileChange
 }
 
 // Convert git changes into resource file changes
-func (r *syncJob) applyVersionedChanges(ctx context.Context, repo repository.VersionedRepository, previousRef, currentRef string) error {
+func (r *syncJob) applyVersionedChanges(ctx context.Context, repo repository.Versioned, previousRef, currentRef string) error {
 	diff, err := repo.CompareFiles(ctx, previousRef, currentRef)
 	if err != nil {
 		return fmt.Errorf("compare files error: %w", err)

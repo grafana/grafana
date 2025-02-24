@@ -31,7 +31,7 @@ type ParserFactory struct {
 	Client *ClientFactory
 }
 
-func (f *ParserFactory) GetParser(ctx context.Context, repo repository.Repository) (*Parser, error) {
+func (f *ParserFactory) GetParser(ctx context.Context, repo repository.Reader) (*Parser, error) {
 	config := repo.Config()
 	client, kinds, err := f.Client.New(config.Namespace) // As system user
 	if err != nil {

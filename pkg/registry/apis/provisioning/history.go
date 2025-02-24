@@ -60,7 +60,7 @@ func (h *historySubresource) Connect(ctx context.Context, name string, opts runt
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		versioned, ok := repo.(repository.VersionedRepository)
+		versioned, ok := repo.(repository.Versioned)
 		if !ok {
 			responder.Error(errors.NewBadRequest("this repository does not support history"))
 			return

@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-type WalkFunc func(ctx context.Context, path string) error
+type WalkFunc = func(ctx context.Context, path string) error
 
 // Walk walks the given folder path and calls the given function for each folder.
 func Walk(ctx context.Context, p string, fn WalkFunc) error {

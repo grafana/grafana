@@ -10,7 +10,7 @@ import (
 // It is likely we will need to change this when the multi-tenant service comes around.
 //
 // FIXME: this is a temporary service/package until we can make use of
-// the new secrets service in app platform
+// the new secrets service in app platform.
 type Service interface {
 	Encrypt(ctx context.Context, data []byte) ([]byte, error)
 	Decrypt(ctx context.Context, data []byte) ([]byte, error)

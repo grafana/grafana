@@ -146,7 +146,7 @@ func RegisterAPIService(
 	legacyMigrator legacy.LegacyMigrator,
 	storageStatus dualwrite.Service,
 	// FIXME: use multi-tenant service when one exists. In this state, we can't make this a multi-tenant service!
-	secretssvc grafanasecrets.Service,
+	secretsSvc grafanasecrets.Service,
 ) (*APIBuilder, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagProvisioning) &&
 		!features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
@@ -172,7 +172,7 @@ func RegisterAPIService(
 		filepath.Join(cfg.DataPath, "clone"), // where repositories are cloned (temporarialy for now)
 		configProvider, ghFactory,
 		legacyMigrator, storageStatus,
-		secrets.NewSingleTenant(secretssvc))
+		secrets.NewSingleTenant(secretsSvc))
 	apiregistration.RegisterAPI(builder)
 	return builder, nil
 }
@@ -218,12 +218,15 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 		return fmt.Errorf("failed to create repository storage: %w", err)
 	}
 	b.getter = repositoryStorage
-	b.jobs = jobs.NewJobQueue(50, b) // in memory for now
+
+	// FIXME: Make job queue store the jobs somewhere persistent.
+	jobStore := jobs.NewJobStore(50, b) // in memory, for now...
+	b.jobs = jobStore
 
 	repositoryStatusStorage := grafanaregistry.NewRegistryStatusStore(opts.Scheme, repositoryStorage)
 
 	storage := map[string]rest.Storage{}
-	storage[provisioning.JobResourceInfo.StoragePath()] = b.jobs
+	storage[provisioning.JobResourceInfo.StoragePath()] = jobStore
 	storage[provisioning.RepositoryResourceInfo.StoragePath()] = repositoryStorage
 	storage[provisioning.RepositoryResourceInfo.StoragePath("status")] = repositoryStatusStorage
 	storage[provisioning.RepositoryResourceInfo.StoragePath("webhook")] = &webhookConnector{
@@ -259,92 +262,6 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	}
 	apiGroupInfo.VersionedResourcesStorageMap[provisioning.VERSION] = storage
 	return nil
-}
-
-func (b *APIBuilder) GetRepository(ctx context.Context, name string) (repository.Repository, error) {
-	obj, err := b.getter.Get(ctx, name, &metav1.GetOptions{})
-	if err != nil {
-		return nil, err
-	}
-	return b.asRepository(ctx, obj)
-}
-
-func timeSince(when int64) time.Duration {
-	return time.Duration(time.Now().UnixMilli()-when) * time.Millisecond
-}
-
-func (b *APIBuilder) GetHealthyRepository(ctx context.Context, name string) (repository.Repository, error) {
-	repo, err := b.GetRepository(ctx, name)
-	if err != nil {
-		return nil, err
-	}
-	status := repo.Config().Status.Health
-	if !status.Healthy {
-		if timeSince(status.Checked) > time.Second*25 {
-			ctx, _, err = identity.WithProvisioningIdentitiy(ctx, repo.Config().Namespace)
-			if err != nil {
-				return nil, err // The status
-			}
-
-			// Check health again
-			s, err := repository.TestRepository(ctx, repo)
-			if err != nil {
-				return nil, err // The status
-			}
-
-			// Write and return the repo with current status
-			cfg, _ := b.tester.UpdateHealthStatus(ctx, repo.Config(), s)
-			if cfg != nil {
-				status = cfg.Status.Health
-				if cfg.Status.Health.Healthy {
-					status = cfg.Status.Health
-					repo, err = b.AsRepository(ctx, cfg)
-					if err != nil {
-						return nil, err
-					}
-				}
-			}
-		}
-		if !status.Healthy {
-			return nil, &apierrors.StatusError{ErrStatus: metav1.Status{
-				Code:    http.StatusFailedDependency,
-				Message: "The repository configuration is not healthy",
-			}}
-		}
-	}
-	return repo, err
-}
-
-func (b *APIBuilder) asRepository(ctx context.Context, obj runtime.Object) (repository.Repository, error) {
-	if obj == nil {
-		return nil, fmt.Errorf("missing repository object")
-	}
-	r, ok := obj.(*provisioning.Repository)
-	if !ok {
-		return nil, fmt.Errorf("expected repository configuration")
-	}
-	return b.AsRepository(ctx, r)
-}
-
-func (b *APIBuilder) AsRepository(ctx context.Context, r *provisioning.Repository) (repository.Repository, error) {
-	switch r.Spec.Type {
-	case provisioning.LocalRepositoryType:
-		return repository.NewLocal(r, b.localFileResolver), nil
-	case provisioning.GitHubRepositoryType:
-		gvr := provisioning.RepositoryResourceInfo.GroupVersionResource()
-		webhookURL := fmt.Sprintf(
-			"%sapis/%s/%s/namespaces/%s/%s/%s/webhook",
-			b.urlProvider(r.GetNamespace()),
-			gvr.Group,
-			gvr.Version,
-			r.GetNamespace(),
-			gvr.Resource,
-			r.GetName(),
-		)
-		return repository.NewGitHub(ctx, r, b.ghFactory, b.secrets, webhookURL)
-	default:
-		return nil, errors.New("unknown repository type")
-	}
 }
 
 func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
@@ -909,4 +826,92 @@ func (b *APIBuilder) tryRunningOnlyUnifiedStorage() error {
 		return err
 	}
 	return nil
+}
+
+// Helpers for fetching valid Repository objects
+
+func (b *APIBuilder) GetRepository(ctx context.Context, name string) (repository.Repository, error) {
+	obj, err := b.getter.Get(ctx, name, &metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+	return b.asRepository(ctx, obj)
+}
+
+func timeSince(when int64) time.Duration {
+	return time.Duration(time.Now().UnixMilli()-when) * time.Millisecond
+}
+
+func (b *APIBuilder) GetHealthyRepository(ctx context.Context, name string) (repository.Repository, error) {
+	repo, err := b.GetRepository(ctx, name)
+	if err != nil {
+		return nil, err
+	}
+	status := repo.Config().Status.Health
+	if !status.Healthy {
+		if timeSince(status.Checked) > time.Second*25 {
+			ctx, _, err = identity.WithProvisioningIdentitiy(ctx, repo.Config().Namespace)
+			if err != nil {
+				return nil, err // The status
+			}
+
+			// Check health again
+			s, err := repository.TestRepository(ctx, repo)
+			if err != nil {
+				return nil, err // The status
+			}
+
+			// Write and return the repo with current status
+			cfg, _ := b.tester.UpdateHealthStatus(ctx, repo.Config(), s)
+			if cfg != nil {
+				status = cfg.Status.Health
+				if cfg.Status.Health.Healthy {
+					status = cfg.Status.Health
+					repo, err = b.AsRepository(ctx, cfg)
+					if err != nil {
+						return nil, err
+					}
+				}
+			}
+		}
+		if !status.Healthy {
+			return nil, &apierrors.StatusError{ErrStatus: metav1.Status{
+				Code:    http.StatusFailedDependency,
+				Message: "The repository configuration is not healthy",
+			}}
+		}
+	}
+	return repo, err
+}
+
+func (b *APIBuilder) asRepository(ctx context.Context, obj runtime.Object) (repository.Repository, error) {
+	if obj == nil {
+		return nil, fmt.Errorf("missing repository object")
+	}
+	r, ok := obj.(*provisioning.Repository)
+	if !ok {
+		return nil, fmt.Errorf("expected repository configuration")
+	}
+	return b.AsRepository(ctx, r)
+}
+
+func (b *APIBuilder) AsRepository(ctx context.Context, r *provisioning.Repository) (repository.Repository, error) {
+	switch r.Spec.Type {
+	case provisioning.LocalRepositoryType:
+		return repository.NewLocal(r, b.localFileResolver), nil
+	case provisioning.GitHubRepositoryType:
+		gvr := provisioning.RepositoryResourceInfo.GroupVersionResource()
+		webhookURL := fmt.Sprintf(
+			"%sapis/%s/%s/namespaces/%s/%s/%s/webhook",
+			b.urlProvider(r.GetNamespace()),
+			gvr.Group,
+			gvr.Version,
+			r.GetNamespace(),
+			gvr.Resource,
+			r.GetName(),
+		)
+		return repository.NewGitHub(ctx, r, b.ghFactory, b.secrets, webhookURL)
+	default:
+		return nil, errors.New("unknown repository type")
+	}
 }
