@@ -265,6 +265,8 @@ type GetDashboardQuery struct {
 	FolderID  *int64
 	FolderUID *string
 	OrgID     int64
+
+	IncludeDTO bool // Add DTO subresource. Used for K8s dashboards when large object support is enabled.
 }
 
 type DashboardTagCloudItem struct {
