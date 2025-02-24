@@ -151,9 +151,10 @@ type HealthStatus struct {
 	// When the health was checked last time
 	Checked int64 `json:"checked,omitempty"`
 
-	// Summary messages (will be shown to users)
+	// Summary messages (can be shown to users)
+	// Will only be populated when not healthy
 	// +listType=atomic
-	Message []string `json:"message"`
+	Message []string `json:"message,omitempty"`
 }
 
 type SyncStatus struct {
