@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana-app-sdk/resource"
 	advisorv0alpha1 "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checkregistry"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -78,16 +77,12 @@ func (r *Runner) Run(ctx context.Context) error {
 				Steps: stepTypes,
 			},
 		}
-		l := log.New("advisor.checktyperegisterer")
-		l.Info("CreateCheckType", "obj", fmt.Sprintf("%+v", obj), "namespace", r.namespace)
 		id := obj.GetStaticMetadata().Identifier()
 		_, err := r.client.Create(ctx, id, obj, resource.CreateOptions{})
 		if err != nil {
-			l.Error("CreateCheckType", "id", id, "err", err)
 			if errors.IsAlreadyExists(err) {
 				// Already exists, update
 				_, err = r.client.Update(ctx, id, obj, resource.UpdateOptions{})
-				l.Error("UpdateCheckType", "id", id, "err", err)
 				if err != nil {
 					return err
 				} else {
