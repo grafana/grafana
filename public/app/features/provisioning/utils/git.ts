@@ -1,11 +1,4 @@
-import { Repository, RepositorySpec } from '../api';
-
-export function createPRLink(spec?: RepositorySpec, dashboardName?: string, ref?: string, comment?: string) {
-  if (!spec || spec.type !== 'github' || !ref) {
-    return '';
-  }
-  return `${spec.github?.url}/compare/${spec.github?.branch}...${ref}?quick_pull=1&labels=grafana&title=Update dashboard ${dashboardName}&body=${encodeURI(comment || '')}`;
-}
+import { Repository } from '../api';
 
 /**
  * Validates a Git branch name according to the following rules:

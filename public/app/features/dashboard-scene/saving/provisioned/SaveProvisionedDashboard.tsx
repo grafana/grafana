@@ -1,16 +1,19 @@
 import { useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
+import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { AppEvents } from '@grafana/data';
 import { getAppEvents, locationService } from '@grafana/runtime';
-import { Alert, Button, Field, Input, RadioButtonGroup, Stack, TextArea, TextLink } from '@grafana/ui';
+import { Alert, Button, Field, Input, RadioButtonGroup, Stack, TextArea } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
+import { useUrlParams } from 'app/core/navigation/hooks';
 import { AnnoKeyRepoName } from 'app/features/apiserver/types';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 import { RepositoryView } from 'app/features/provisioning/api';
-import { useCreateOrUpdateRepositoryFile, usePullRequestParam } from 'app/features/provisioning/hooks';
+import { PROVISIONING_URL } from 'app/features/provisioning/constants';
+import { useCreateOrUpdateRepositoryFile } from 'app/features/provisioning/hooks';
 import { WorkflowOption } from 'app/features/provisioning/types';
-import { createPRLink, validateBranchName } from 'app/features/provisioning/utils/git';
+import { validateBranchName } from 'app/features/provisioning/utils/git';
 
 import { DashboardScene } from '../../scene/DashboardScene';
 import { SaveDashboardDrawer } from '../SaveDashboardDrawer';
@@ -42,7 +45,8 @@ export interface Props {
 
 export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Props) {
   const { meta, title: defaultTitle, description: defaultDescription } = dashboard.useState();
-  const prURL = usePullRequestParam();
+  const navigate = useNavigate();
+  const [params] = useUrlParams();
 
   const {
     values: defaultValues,
@@ -59,9 +63,9 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Prop
     control,
     setValue,
   } = useForm<FormData>({ defaultValues });
-  const [title, ref, workflow, comment] = watch(['title', 'ref', 'workflow', 'comment']);
+
+  const [ref, workflow, path] = watch(['ref', 'workflow', 'path']);
   const { isDirty } = dashboard.state;
-  const href = createPRLink(repositoryConfig, title, ref, comment);
 
   useEffect(() => {
     const appEvents = getAppEvents();
@@ -70,21 +74,34 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Prop
       if (isNew) {
         dashboard.setRepoName(defaultValues.repo);
       }
-      const prLink = workflow !== 'write' ? href : undefined;
-      dashboard.closeModal();
-      locationService.partial({
-        viewPanel: null,
-        editPanel: null,
-        isPreview: true,
-        prLink,
-      });
+      if (workflow === 'branch' && ref !== '' && path !== '') {
+        // Redirect to the provisioning preview pages
+        navigate(`${PROVISIONING_URL}/${defaultValues.repo}/dashboard/preview/${path}?ref=${ref}`);
+      } else {
+        dashboard.closeModal();
+        locationService.partial({
+          viewPanel: null,
+          editPanel: null,
+        });
+      }
     } else if (request.isError) {
       appEvents.publish({
         type: AppEvents.alertError.name,
         payload: ['Error saving dashboard', request.error],
       });
     }
-  }, [request.isSuccess, request.isError, request.error, dashboard, workflow, href, isNew, defaultValues.repo]);
+  }, [
+    request.isSuccess,
+    request.isError,
+    request.error,
+    dashboard,
+    workflow,
+    isNew,
+    defaultValues.repo,
+    ref,
+    path,
+    navigate,
+  ]);
 
   useEffect(() => {
     setValue('workflow', getDefaultWorkflow(repositoryConfig));
@@ -103,11 +120,13 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Prop
     });
 
     if (workflow === 'write') {
-      ref = undefined;
+      ref = params.get('ref') ?? undefined; // the original ref from URL or undefined
     }
 
     action({ ref, name: repo, path, message: comment, body: saveModel });
   };
+
+  const workflows = getWorkflowOptions(repositoryConfig, ref);
 
   return (
     <form onSubmit={handleSubmit(doSave)}>
@@ -182,7 +201,7 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Prop
                 control={control}
                 name={'workflow'}
                 render={({ field: { ref, ...field } }) => {
-                  return <RadioButtonGroup {...field} options={getWorkflowOptions(repositoryConfig)} />;
+                  return <RadioButtonGroup {...field} options={workflows} />;
                 }}
               />
             </Field>
@@ -197,15 +216,6 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Prop
               </Field>
             )}
           </>
-        )}
-
-        {prURL && (
-          <Alert severity="info" title="Pull request created">
-            A pull request has been created with changes to this dashboard:{' '}
-            <TextLink href={prURL} external>
-              {prURL}
-            </TextLink>
-          </Alert>
         )}
         <Stack gap={2}>
           <Button variant="primary" type="submit" disabled={request.isLoading || !isDirty}>
