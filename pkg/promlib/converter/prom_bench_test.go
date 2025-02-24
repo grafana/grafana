@@ -21,6 +21,8 @@ func readTestData(t *testing.B, filename string) []byte {
 func BenchmarkReadPrometheusStyleResult_FromFile(b *testing.B) {
 	testFiles := []string{
 		"prom-query-range.json",
+		"prom-query-range-big.json",
+		"prom-matrix-histogram-partitioned.json",
 	}
 
 	opt := Options{Dataplane: true}
