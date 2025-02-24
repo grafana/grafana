@@ -307,7 +307,7 @@ func schema_pkg_apis_provisioning_v0alpha1_HealthStatus(ref common.ReferenceCall
 							},
 						},
 						SchemaProps: spec.SchemaProps{
-							Description: "Summary messages (will be shown to users)",
+							Description: "Summary messages (can be shown to users) Will only be populated when not healthy",
 							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
