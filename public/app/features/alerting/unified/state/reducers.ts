@@ -5,7 +5,6 @@ import { createAsyncMapSlice, createAsyncSlice } from '../utils/redux';
 import {
   deleteAlertManagerConfigAction,
   fetchAlertGroupsAction,
-  fetchFolderAction,
   fetchGrafanaAnnotationsAction,
   fetchPromRulesAction,
   fetchRulerRulesAction,
@@ -19,7 +18,6 @@ export const reducer = combineReducers({
     .reducer,
   saveAMConfig: createAsyncSlice('saveAMConfig', updateAlertManagerConfigAction).reducer,
   deleteAMConfig: createAsyncSlice('deleteAMConfig', deleteAlertManagerConfigAction).reducer,
-  folders: createAsyncMapSlice('folders', fetchFolderAction, (uid) => uid).reducer,
   amAlertGroups: createAsyncMapSlice(
     'amAlertGroups',
     fetchAlertGroupsAction,
