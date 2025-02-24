@@ -198,7 +198,7 @@ PercentChangeColorMode: "standard" | "inverted" | "same_as_value" @cuetsy(kind="
 FieldTextAlignment: "auto" | "left" | "right" | "center" @cuetsy(kind="type")
 
 // Controls the value alignment in the TimelineChart component
-TimelineValueAlignment: "center" | "left" | "right" @cuetsy(kind="type")
+TimelineValueAlignment: "center" | "left" | "right" @cuetsy(kind="enum")
 
 // TODO docs
 VizTextDisplayOptions: {
