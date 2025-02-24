@@ -45,14 +45,7 @@ func NewResourceServer(db infraDB.DB, cfg *setting.Cfg,
 		return nil, err
 	}
 
-	dbCfg := cfg.SectionWithEnvOverrides("database")
-	// Check in the config if HA is enabled by default we always assume a HA setup.
-	isHA := dbCfg.Key("high_availability").MustBool(true)
-	// SQLite is not possible to run in HA, so we set it to false.
-	databaseType := dbCfg.Key("type").String()
-	if databaseType == migrator.SQLite {
-		isHA = false
-	}
+	isHA := IsHighAvailabilityEnabled(cfg.SectionWithEnvOverrides("database"))
 
 	store, err := NewBackend(BackendOptions{DBProvider: eDB, Tracer: tracer, IsHA: isHA})
 	if err != nil {
@@ -69,4 +62,19 @@ func NewResourceServer(db infraDB.DB, cfg *setting.Cfg,
 	}
 
 	return rs, nil
+}
+
+// IsHighAvailabilityEnabled determines if high availability mode should be enabled based on database configuration.
+// High availability is enabled by default except for SQLite databases.
+func IsHighAvailabilityEnabled(dbCfg *setting.DynamicSection) bool {
+	// Check in the config if HA is enabled - by default we always assume a HA setup
+	isHA := dbCfg.Key("high_availability").MustBool(true)
+
+	// SQLite is not possible to run in HA, so we force it to false
+	databaseType := dbCfg.Key("type").String()
+	if databaseType == migrator.SQLite {
+		isHA = false
+	}
+
+	return isHA
 }
