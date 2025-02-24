@@ -2,7 +2,6 @@ package authz
 
 import (
 	"context"
-	"crypto/tls"
 	"errors"
 	"fmt"
 	"net/http"
@@ -174,14 +173,6 @@ func RegisterRBACAuthZService(
 				Burst: 100,
 			}, nil
 		})
-	}
-
-	_ = &http.Client{
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{
-				InsecureSkipVerify: false,
-			},
-		},
 	}
 
 	server := rbac.NewService(
