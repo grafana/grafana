@@ -360,17 +360,17 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	}
 
 	var (
-		incremental bool
-		shouldSkip  bool
+		incremental    bool
+		shouldSkipSync bool
 	)
 
 	switch {
 	case !obj.Spec.Sync.Enabled:
 		logger.Info("skip sync as it's disabled")
-		shouldSkip = true
+		shouldSkipSync = true
 	case !obj.Status.Health.Healthy:
 		logger.Info("skip sync for unhealthy repository")
-		shouldSkip = true
+		shouldSkipSync = true
 	case obj.Status.ObservedGeneration < 1:
 		logger.Info("handle repository create")
 		if hooks != nil {
@@ -404,14 +404,14 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		incremental = true
 	case shouldHealthcheck:
 		logger.Info("skip sync as health didn't change")
-		shouldSkip = true
+		shouldSkipSync = true
 	default:
 		return errors.New("unknown repository situation")
 	}
 
-	if !shouldSkip && dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, rc.dualwrite) {
+	if !shouldSkipSync && dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, rc.dualwrite) {
 		logger.Info("skip sync as we are reading from legacy storage")
-		shouldSkip = true
+		shouldSkipSync = true
 	}
 
 	isUnhealthyMsg := "Repository is unhealthy"
@@ -420,7 +420,7 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	// Preserve last ref as we use replace operation
 	lastRef := obj.Status.Sync.LastRef
 	switch {
-	case !shouldSkip:
+	case !shouldSkipSync:
 		patchOperations = append(patchOperations, map[string]interface{}{
 			"op":   "replace",
 			"path": "/status/sync",
@@ -469,7 +469,7 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	}
 
 	// Trigger sync job after we have applied all patch operations
-	if !shouldSkip {
+	if !shouldSkipSync {
 		job, err := rc.jobs.Add(ctx, &provisioning.Job{
 			ObjectMeta: v1.ObjectMeta{
 				Namespace: obj.Namespace,
