@@ -5,8 +5,6 @@ import { AnnoKeyRepoName, AnnoKeyRepoPath } from 'app/features/apiserver/types';
 import { useGetResourceRepository } from 'app/features/provisioning/hooks';
 import { DashboardMeta } from 'app/types';
 
-import { newLetterRandomizer } from '../../inspect/HelpWizard/randomizer';
-
 import { getDefaultWorkflow } from './defaults';
 
 interface UseDefaultValuesParams {
