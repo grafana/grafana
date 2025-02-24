@@ -74,7 +74,7 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 
 	rw, ok := repo.(repository.ReaderWriter)
 	if !ok {
-		return fmt.Errorf("sync job submitted for repository that does not support read-write -- this is a bug!")
+		return fmt.Errorf("sync job submitted for repository that does not support read-write -- this is a bug")
 	}
 
 	// Update sync status at start using JSON patch

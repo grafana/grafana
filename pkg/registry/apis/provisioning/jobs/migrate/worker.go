@@ -112,7 +112,7 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 
 	rw, ok := repo.(repository.ReaderWriter)
 	if !ok {
-		return errors.New("migration job submitted targetting repository that is not a ReaderWriter")
+		return errors.New("migration job submitted targeting repository that is not a ReaderWriter")
 	}
 
 	tree, err := rw.ReadTree(ctx, "")
