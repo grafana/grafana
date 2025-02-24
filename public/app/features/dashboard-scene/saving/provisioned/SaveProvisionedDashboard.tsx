@@ -47,6 +47,7 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Prop
   const { meta, title: defaultTitle, description: defaultDescription } = dashboard.useState();
   const navigate = useNavigate();
   const [params] = useUrlParams();
+  const loadedFromRef = params.get('ref') ?? undefined;
 
   const {
     values: defaultValues,
@@ -120,13 +121,13 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Prop
     });
 
     if (workflow === 'write') {
-      ref = params.get('ref') ?? undefined; // the original ref from URL or undefined
+      ref = loadedFromRef; // the original ref from URL or undefined
     }
 
     action({ ref, name: repo, path, message: comment, body: saveModel });
   };
 
-  const workflows = getWorkflowOptions(repositoryConfig, ref);
+  const workflows = getWorkflowOptions(repositoryConfig, loadedFromRef);
 
   return (
     <form onSubmit={handleSubmit(doSave)}>

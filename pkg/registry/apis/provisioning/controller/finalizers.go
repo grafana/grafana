@@ -43,7 +43,7 @@ func (f *finalizer) process(ctx context.Context,
 		switch finalizer {
 		case CleanFinalizer:
 			// NOTE: the controller loop will never get run unless a finalizer is set
-			hooks, ok := repo.(repository.RepositoryHooks)
+			hooks, ok := repo.(repository.Hooks)
 			if ok {
 				if err := hooks.OnDelete(ctx); err != nil {
 					logger.Warn("Error running deletion hooks", "err", err)

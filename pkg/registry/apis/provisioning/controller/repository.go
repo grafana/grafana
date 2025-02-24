@@ -292,7 +292,7 @@ func (rc *RepositoryController) process(item *queueItem) error {
 
 	// Safe to edit the repository from here
 	obj = obj.DeepCopy()
-	hooks, _ := repo.(repository.RepositoryHooks)
+	hooks, _ := repo.(repository.Hooks)
 
 	if obj.DeletionTimestamp != nil {
 		logger.Info("handle repository delete")

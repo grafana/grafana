@@ -77,7 +77,11 @@ func (r *LocalFolderResolver) LocalPath(p string) (string, error) {
 	return "", &InvalidLocalFolderError{originalPath, "the path matches no permitted prefix"}
 }
 
-var _ Repository = (*localRepository)(nil)
+var (
+	_ Repository = (*localRepository)(nil)
+	_ Writer     = (*localRepository)(nil)
+	_ Reader     = (*localRepository)(nil)
+)
 
 type localRepository struct {
 	config   *provisioning.Repository
