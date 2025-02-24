@@ -4,18 +4,25 @@ import { useGetRepositoryFilesWithPathQuery, useGetRepositoryQuery } from 'app/f
 import { usePullRequestParam } from 'app/features/provisioning/hooks';
 import { DashboardRoutes } from 'app/types';
 
-interface DashboardPreviewBannerProps {
+interface CommonBannerProps {
   queryParams: DashboardPageRouteSearchParams;
-  route?: string;
-  slug?: string;
   path?: string;
+  slug?: string;
 }
 
-export function DashboardPreviewBanner({ queryParams, route, slug, path }: DashboardPreviewBannerProps) {
-  if ('kiosk' in queryParams || !path || route !== DashboardRoutes.Provisioning || !slug) {
-    return null;
-  }
-  const prParam = usePullRequestParam(); // pull_request_url
+interface DashboardPreviewBannerProps extends CommonBannerProps {
+  route?: string;
+}
+
+interface DashboardPreviewBannerContentProps extends Required<Omit<CommonBannerProps, 'route'>> {}
+
+const commonAlertProps = {
+  severity: 'info' as const,
+  style: { flex: 0 } as const,
+};
+
+function DashboardPreviewBannerContent({ queryParams, slug, path }: DashboardPreviewBannerContentProps) {
+  const prParam = usePullRequestParam();
   const file = useGetRepositoryFilesWithPathQuery({ name: slug, path, ref: queryParams.ref });
 
   // Required to create the new PR link
@@ -23,21 +30,23 @@ export function DashboardPreviewBanner({ queryParams, route, slug, path }: Dashb
   const repo = useGetRepositoryQuery({ name: slug });
 
   if (file.data?.errors) {
-    return <Alert title="error loading" severity="error" />;
+    return (
+      <Alert title="Error loading dashboard" severity="error" style={{ flex: 0 }}>
+        {file.data.errors.map((error, index) => (
+          <div key={index}>{error}</div>
+        ))}
+      </Alert>
+    );
   }
 
-  console.log('BANNER', { queryParams, file: file.data, repo: repo.data });
-
   // This page was loaded with a `pull_request_url` in the URL
-  // This is typically from an external link in a rendered pull request
   if (prParam?.length) {
     return (
       <Alert
-        title={'This dashboard is loaded from a pull request in github.'}
-        severity={'info'}
-        style={{ flex: 0 }}
+        {...commonAlertProps}
+        title="This dashboard is loaded from a pull request in GitHub."
         buttonContent={
-          <Stack alignItems={'center'}>
+          <Stack alignItems="center">
             <span>View pull request in GitHub</span>
             <Icon name="external-link-alt" />
           </Stack>
@@ -50,17 +59,16 @@ export function DashboardPreviewBanner({ queryParams, route, slug, path }: Dashb
   }
 
   // Check if this is a github link
-  if (queryParams.ref?.length && repo.data?.spec?.type === 'github') {
-    const spec = repo.data?.spec.github!;
-    const url = `${spec.url}/compare/${spec.branch}...${queryParams.ref}?quick_pull=1&labels=grafana`;
+  const githubSpec = repo.data?.spec?.type === 'github' ? repo.data.spec.github : undefined;
+  if (queryParams.ref?.length && githubSpec) {
+    const url = `${githubSpec.url}/compare/${githubSpec.branch}...${queryParams.ref}?quick_pull=1&labels=grafana`;
 
     return (
       <Alert
-        title={'This dashboard is loaded from a branch in github.'}
-        severity={'info'}
-        style={{ flex: 0 }}
+        {...commonAlertProps}
+        title="This dashboard is loaded from a branch in GitHub."
         buttonContent={
-          <Stack alignItems={'center'}>
+          <Stack alignItems="center">
             <span>Open pull request in GitHub</span>
             <Icon name="external-link-alt" />
           </Stack>
@@ -73,8 +81,16 @@ export function DashboardPreviewBanner({ queryParams, route, slug, path }: Dashb
   }
 
   return (
-    <Alert title={'This dashboard is loaded from an external repository'} severity={'info'} style={{ flex: 0 }}>
+    <Alert {...commonAlertProps} title="This dashboard is loaded from an external repository">
       The value is <strong>not</strong> saved in the grafana database
     </Alert>
   );
+}
+
+export function DashboardPreviewBanner({ queryParams, route, slug, path }: DashboardPreviewBannerProps) {
+  if ('kiosk' in queryParams || !path || route !== DashboardRoutes.Provisioning || !slug) {
+    return null;
+  }
+
+  return <DashboardPreviewBannerContent queryParams={queryParams} slug={slug} path={path} />;
 }
