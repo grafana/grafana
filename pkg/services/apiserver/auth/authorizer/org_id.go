@@ -60,6 +60,11 @@ func (auth orgIDAuthorizer) Authorize(ctx context.Context, a authorizer.Attribut
 		return authorizer.DecisionNoOpinion, "", nil
 	}
 
+	// If we have an anonymous user, let the next authorizers decide.
+	if signedInUser.GetIdentityType() == claims.TypeAnonymous {
+		return authorizer.DecisionNoOpinion, "", nil
+	}
+
 	// Check if the user has access to the specified org
 	// nolint:staticcheck
 	userId, err := signedInUser.GetInternalID()

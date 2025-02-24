@@ -3614,7 +3614,6 @@ __metadata:
     "@floating-ui/react": "npm:0.27.3"
     "@grafana/data": "npm:11.6.0-pre"
     "@grafana/e2e-selectors": "npm:11.6.0-pre"
-    "@grafana/llm": "npm:0.12.0"
     "@grafana/plugin-ui": "npm:0.10.1"
     "@grafana/runtime": "npm:11.6.0-pre"
     "@grafana/schema": "npm:11.6.0-pre"
@@ -3700,6 +3699,7 @@ __metadata:
     lodash: "npm:4.17.21"
     react: "npm:18.3.1"
     react-dom: "npm:18.3.1"
+    react-loading-skeleton: "npm:3.5.0"
     react-use: "npm:17.6.0"
     rimraf: "npm:6.0.1"
     rollup: "npm:^4.22.4"
@@ -13889,6 +13889,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"croner@npm:^9.0.0":
+  version: 9.0.0
+  resolution: "croner@npm:9.0.0"
+  checksum: 10/b3cea758eedfe92e35c4ebae46c9db615565348ad898b5938fd94ea77abc5ff68d86539db248a1666b007b0726da642c9046879e8fd598220afcc87c8135e656
+  languageName: node
+  linkType: hard
+
 "cross-spawn@npm:^7.0.0, cross-spawn@npm:^7.0.3, cross-spawn@npm:^7.0.6":
   version: 7.0.6
   resolution: "cross-spawn@npm:7.0.6"
@@ -18213,6 +18220,7 @@ __metadata:
     copy-webpack-plugin: "npm:12.0.2"
     core-js: "npm:3.40.0"
     crashme: "npm:0.0.15"
+    croner: "npm:^9.0.0"
     css-loader: "npm:7.1.2"
     css-minimizer-webpack-plugin: "npm:7.0.0"
     cypress: "npm:13.10.0"
