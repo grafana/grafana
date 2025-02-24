@@ -65,46 +65,12 @@ jobs:
           app-id: ${{ env.APP_ID }}
           private-key: ${{ env.PRIVATE_KEY }}
 
-      # - name: Debug Enterprise Access
-      #   env:
-      #     GH_TOKEN: ${{ steps.generate_token.outputs.token }}
-      #   run: |
-      #     echo "Testing enterprise repo access..."
-      #     echo "App ID being used: ${{ env.APP_ID }}"
-      #     echo "Installation ID being used: ${{ env.APP_INSTALLATION_ID }}"
-      #     # Test the token
-      #     echo "Token info:"
-      #     curl -H "Authorization: token ${GH_TOKEN}" -H "Accept: application/vnd.github.v3+json" https://api.github.com/installation/repositories
-      #     # Try the clone
-      #     git ls-remote https://x-access-token:${GH_TOKEN}@github.com/grafana/grafana-enterprise.git
-
       - name: Setup Enterprise (PR only)
         if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false
-        env:
-          GH_TOKEN: ${{ steps.generate_token.outputs.token }}
-        run: |
-          # Clone enterprise repo using the GitHub App token
-          if ! git clone https://x-access-token:${GH_TOKEN}@github.com/grafana/grafana-enterprise.git ../grafana-enterprise; then
-            echo "Failed to clone enterprise repository - this is expected for non-enterprise contributors"
-            exit 0
-          fi
-          
-          cd ../grafana-enterprise
-          
-          # Try to checkout the PR branch first, then base branch, then fall back to main
-          if git checkout ${GITHUB_HEAD_REF}; then
-            echo "checked out ${GITHUB_HEAD_REF}"
-          elif git checkout ${GITHUB_BASE_REF}; then
-            echo "checked out ${GITHUB_BASE_REF}"
-          else
-            git checkout main
-          fi
-          
-          # Setup symlink and build
-          cd ../grafana
-          ln -s . grafana
-          cd ../grafana-enterprise
-          ./build.sh
+        uses: ./.github/workflows/actions/setup-enterprise
+        # Optionally enable debug output with:
+        # with:
+        #   debug: 'true'
 
       - name: Verify CUE generation
         run: CODEGEN_VERIFY=1 make gen-cue

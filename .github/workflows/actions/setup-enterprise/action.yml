@@ -1,0 +1,75 @@
+name: 'Setup Grafana Enterprise'
+description: 'Clones and sets up Grafana Enterprise repository for testing'
+
+inputs:
+  vault-url:
+    description: 'Vault URL for retrieving secrets'
+    required: false
+    default: 'https://vault.grafana.net'
+  github-app-name:
+    description: 'Name of the GitHub App in Vault'
+    required: false
+    default: '<my-new-gitrhub-app>'
+  debug:
+    description: 'Enable debug output'
+    required: false
+    default: 'false'
+
+runs:
+  using: "composite"
+  steps:
+    - name: Retrieve GitHub App secrets
+      id: get-secrets
+      uses: grafana/shared-workflows/actions/get-vault-secrets@get-vault-secrets-v1.0.1
+      with:
+        repo_secrets: |
+          APP_ID=${{ inputs.github-app-name }}:app-id
+          APP_INSTALLATION_ID=${{ inputs.github-app-name }}:app-installation-id
+          PRIVATE_KEY=${{ inputs.github-app-name }}:private-key
+
+    - name: Generate GitHub App token
+      id: generate_token
+      uses: actions/create-github-app-token@v1
+      with:
+        app-id: ${{ env.APP_ID }}
+        private-key: ${{ env.PRIVATE_KEY }}
+
+    - name: Debug Enterprise Access
+      if: inputs.debug == 'true'
+      shell: bash
+      env:
+        GH_TOKEN: ${{ steps.generate_token.outputs.token }}
+      run: |
+        echo "Testing enterprise repo access..."
+        echo "App ID being used: ${{ env.APP_ID }}"
+        echo "Installation ID being used: ${{ env.APP_INSTALLATION_ID }}"
+        # Test the token
+        echo "Token info:"
+        curl -H "Authorization: token ${GH_TOKEN}" -H "Accept: application/vnd.github.v3+json" https://api.github.com/installation/repositories
+        # Try the clone
+        git ls-remote https://x-access-token:${GH_TOKEN}@github.com/grafana/grafana-enterprise.git
+
+    - name: Setup Enterprise
+      shell: bash
+      env:
+        GH_TOKEN: ${{ steps.generate_token.outputs.token }}
+      run: |
+        if ! git clone https://x-access-token:${GH_TOKEN}@github.com/grafana/grafana-enterprise.git ../grafana-enterprise; then
+          echo "Failed to clone enterprise repository - this is expected for non-enterprise contributors"
+          exit 0
+        fi
+        
+        cd ../grafana-enterprise
+        
+        if git checkout ${GITHUB_HEAD_REF}; then
+          echo "checked out ${GITHUB_HEAD_REF}"
+        elif git checkout ${GITHUB_BASE_REF}; then
+          echo "checked out ${GITHUB_BASE_REF}"
+        else
+          git checkout main
+        fi
+        
+        cd ../grafana
+        ln -s . grafana
+        cd ../grafana-enterprise
+        ./build.sh 
