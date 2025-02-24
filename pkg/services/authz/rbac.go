@@ -165,6 +165,11 @@ func RegisterRBACAuthZService(
 				WrapTransport: func(rt http.RoundTripper) http.RoundTripper {
 					return &tokenExhangeRoundTripper{te: exchangeClient, rt: rt}
 				},
+				TLSClientConfig: rest.TLSClientConfig{
+					// FIXME: We should provide ca cert so we can verify ceritificates
+					// https://github.com/grafana/identity-access-team/issues/1096
+					Insecure: true,
+				},
 				QPS:   50,
 				Burst: 100,
 			}, nil
