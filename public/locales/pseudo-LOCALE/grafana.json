@@ -295,6 +295,9 @@
       "export-all": "Ēχpőřŧ äľľ",
       "loading": "Ŀőäđįŉģ...",
       "search-by-matchers": "Ŝęäřčĥ þy mäŧčĥęřş",
+      "titles": {
+        "notification-templates": "Ńőŧįƒįčäŧįőŉ Ŧęmpľäŧęş"
+      },
       "view": "Vįęŵ"
     },
     "contact-points": {
@@ -403,6 +406,20 @@
       "preview-routing": "Přęvįęŵ řőūŧįŉģ",
       "title": "Åľęřŧ įŉşŧäŉčę řőūŧįŉģ přęvįęŵ",
       "uninitialized": "Ŵĥęŉ yőū ĥävę yőūř ƒőľđęř şęľęčŧęđ äŉđ yőūř qūęřy äŉđ ľäþęľş äřę čőŉƒįģūřęđ, čľįčĸ \"Přęvįęŵ řőūŧįŉģ\" ŧő şęę ŧĥę řęşūľŧş ĥęřę."
+    },
+    "notification-templates": {
+      "duplicate": {
+        "subTitle": "Đūpľįčäŧę ä ģřőūp őƒ ŉőŧįƒįčäŧįőŉ ŧęmpľäŧęş",
+        "title": "Đūpľįčäŧę ŉőŧįƒįčäŧįőŉ ŧęmpľäŧę ģřőūp"
+      },
+      "edit": {
+        "subTitle": "Ēđįŧ ä ģřőūp őƒ ŉőŧįƒįčäŧįőŉ ŧęmpľäŧęş",
+        "title": "Ēđįŧ ŉőŧįƒįčäŧįőŉ ŧęmpľäŧę ģřőūp"
+      },
+      "new": {
+        "subTitle": "Cřęäŧę ä ŉęŵ ģřőūp őƒ ŉőŧįƒįčäŧįőŉ ŧęmpľäŧęş",
+        "title": "Ńęŵ ŉőŧįƒįčäŧįőŉ ŧęmpľäŧę ģřőūp"
+      }
     },
     "policies": {
       "default-policy": {
