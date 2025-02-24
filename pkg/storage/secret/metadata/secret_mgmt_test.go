@@ -19,6 +19,8 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper"
 	keepertypes "github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/types"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	encryptionprovider "github.com/grafana/grafana/pkg/services/encryption/provider"
 	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -44,7 +46,7 @@ func Test_SecretMgmt_StoreInKeeper(t *testing.T) {
 			Decrypters: []string{"group1/*", "group2/name"},
 		},
 	}
-	s := setupTestService(t).(*secureValueStorage)
+	s := setupTestService(t).(*secureValueMetadataStorage)
 
 	t.Run("store secure value in default sql keeper does not return error", func(t *testing.T) {
 		externalID, err := s.storeInKeeper(ctx, testSV)
@@ -84,7 +86,7 @@ func Test_SecretMgmt_UpdateInKeeper(t *testing.T) {
 		Name:      "name",
 		Keeper:    "kp-default-sql",
 	}
-	s := setupTestService(t).(*secureValueStorage)
+	s := setupTestService(t).(*secureValueMetadataStorage)
 
 	t.Run("store secure value in default sql keeper does not return error", func(t *testing.T) {
 		externalID, err := s.storeInKeeper(ctx, testSV)
@@ -133,7 +135,7 @@ func Test_SecretMgmt_DeleteInKeeper(t *testing.T) {
 			Decrypters: []string{"group1/*", "group2/name"},
 		},
 	}
-	s := setupTestService(t).(*secureValueStorage)
+	s := setupTestService(t).(*secureValueMetadataStorage)
 
 	t.Run("create secure value in default sql keeper does not return error", func(t *testing.T) {
 		sv, err := s.Create(ctx, testSV)
@@ -155,7 +157,7 @@ func Test_SecretMgmt_DeleteInKeeper(t *testing.T) {
 func Test_SecretMgmt_GetKeeperConfig(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)
-	s := setupTestService(t).(*secureValueStorage)
+	s := setupTestService(t).(*secureValueMetadataStorage)
 
 	t.Run("get default sql keeper config", func(t *testing.T) {
 		keeperType, keeperConfig, err := getKeeperConfig(ctx, s.db, "default", "kp-default-sql")
@@ -172,7 +174,7 @@ func Test_SecretMgmt_GetKeeperConfig(t *testing.T) {
 	})
 }
 
-func setupTestService(t *testing.T) contracts.SecureValueStorage {
+func setupTestService(t *testing.T) contracts.SecureValueMetadataStorage {
 	config := `
 	[secrets_manager]
 	secret_key = sdDkslslld
@@ -219,8 +221,12 @@ func setupTestService(t *testing.T) contracts.SecureValueStorage {
 	keeperService, err := secretkeeper.ProvideService(tracing.InitializeTracerForTest(), encMgr, encValueStore)
 	require.NoError(t, err)
 
+	// Initialize access client + access control
+	accessControl := &actest.FakeAccessControl{ExpectedEvaluate: true}
+	accessClient := accesscontrol.NewLegacyAccessClient(accessControl)
+
 	// Initialize the keeper storage and add a test keeper
-	keeperStorage, err := ProvideKeeperStorage(testDB, cfg, features)
+	keeperStorage, err := ProvideKeeperMetadataStorage(testDB, cfg, features, accessClient)
 	require.NoError(t, err)
 	testKeeper := &secretv0alpha1.Keeper{
 		Spec: secretv0alpha1.KeeperSpec{
@@ -234,7 +240,7 @@ func setupTestService(t *testing.T) contracts.SecureValueStorage {
 	require.NoError(t, err)
 
 	// Initialize the secure value storage
-	secureValueStorage, err := ProvideSecureValueStorage(testDB, cfg, features, keeperService)
+	secureValueStorage, err := ProvideSecureValueMetadataStorage(testDB, cfg, features, accessClient, keeperService)
 	require.NoError(t, err)
 
 	return secureValueStorage

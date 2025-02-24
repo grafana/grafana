@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	claims "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
@@ -19,10 +20,10 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 )
 
-func ProvideSecureValueStorage(db db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, keeperService secretkeeper.Service) (contracts.SecureValueStorage, error) {
+func ProvideSecureValueMetadataStorage(db db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, accessClient claims.AccessClient, keeperService secretkeeper.Service) (contracts.SecureValueMetadataStorage, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) ||
 		!features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) {
-		return &secureValueStorage{}, nil
+		return &secureValueMetadataStorage{}, nil
 	}
 
 	if err := migrator.MigrateSecretSQL(db.GetEngine(), cfg); err != nil {
@@ -34,16 +35,17 @@ func ProvideSecureValueStorage(db db.DB, cfg *setting.Cfg, features featuremgmt.
 		return nil, fmt.Errorf("failed to get keepers: %w", err)
 	}
 
-	return &secureValueStorage{db: db, keepers: keepers}, nil
+	return &secureValueMetadataStorage{db: db, accessClient: accessClient, keepers: keepers}, nil
 }
 
-// secureValueStorage is the actual implementation of the secure value (metadata) storage.
-type secureValueStorage struct {
-	db      db.DB
-	keepers map[keepertypes.KeeperType]keepertypes.Keeper
+// secureValueMetadataStorage is the actual implementation of the secure value (metadata) storage.
+type secureValueMetadataStorage struct {
+	db           db.DB
+	accessClient claims.AccessClient
+	keepers      map[keepertypes.KeeperType]keepertypes.Keeper
 }
 
-func (s *secureValueStorage) Create(ctx context.Context, sv *secretv0alpha1.SecureValue) (*secretv0alpha1.SecureValue, error) {
+func (s *secureValueMetadataStorage) Create(ctx context.Context, sv *secretv0alpha1.SecureValue) (*secretv0alpha1.SecureValue, error) {
 	authInfo, ok := claims.AuthInfoFrom(ctx)
 	if !ok {
 		return nil, fmt.Errorf("missing auth info in context")
@@ -97,7 +99,7 @@ func (s *secureValueStorage) Create(ctx context.Context, sv *secretv0alpha1.Secu
 	return createdSecureValue, nil
 }
 
-func (s *secureValueStorage) Read(ctx context.Context, namespace xkube.Namespace, name string) (*secretv0alpha1.SecureValue, error) {
+func (s *secureValueMetadataStorage) Read(ctx context.Context, namespace xkube.Namespace, name string) (*secretv0alpha1.SecureValue, error) {
 	_, ok := claims.AuthInfoFrom(ctx)
 	if !ok {
 		return nil, fmt.Errorf("missing auth info in context")
@@ -129,7 +131,7 @@ func (s *secureValueStorage) Read(ctx context.Context, namespace xkube.Namespace
 	return secureValue, nil
 }
 
-func (s *secureValueStorage) Update(ctx context.Context, newSecureValue *secretv0alpha1.SecureValue) (*secretv0alpha1.SecureValue, error) {
+func (s *secureValueMetadataStorage) Update(ctx context.Context, newSecureValue *secretv0alpha1.SecureValue) (*secretv0alpha1.SecureValue, error) {
 	authInfo, ok := claims.AuthInfoFrom(ctx)
 	if !ok {
 		return nil, fmt.Errorf("missing auth info in context")
@@ -203,7 +205,7 @@ func (s *secureValueStorage) Update(ctx context.Context, newSecureValue *secretv
 	return secureValue, nil
 }
 
-func (s *secureValueStorage) Delete(ctx context.Context, namespace xkube.Namespace, name string) error {
+func (s *secureValueMetadataStorage) Delete(ctx context.Context, namespace xkube.Namespace, name string) error {
 	_, ok := claims.AuthInfoFrom(ctx)
 	if !ok {
 		return fmt.Errorf("missing auth info in context")
@@ -232,10 +234,20 @@ func (s *secureValueStorage) Delete(ctx context.Context, namespace xkube.Namespa
 	return nil
 }
 
-func (s *secureValueStorage) List(ctx context.Context, namespace xkube.Namespace, options *internalversion.ListOptions) (*secretv0alpha1.SecureValueList, error) {
-	_, ok := claims.AuthInfoFrom(ctx)
+func (s *secureValueMetadataStorage) List(ctx context.Context, namespace xkube.Namespace, options *internalversion.ListOptions) (*secretv0alpha1.SecureValueList, error) {
+	user, ok := claims.AuthInfoFrom(ctx)
 	if !ok {
 		return nil, fmt.Errorf("missing auth info in context")
+	}
+
+	hasPermissionFor, err := s.accessClient.Compile(ctx, user, claims.ListRequest{
+		Group:     secretv0alpha1.GROUP,
+		Resource:  secretv0alpha1.SecureValuesResourceInfo.GetName(),
+		Namespace: namespace.String(),
+		Verb:      utils.VerbGet, // Why not VerbList?
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to compile checker: %w", err)
 	}
 
 	labelSelector := options.LabelSelector
@@ -245,7 +257,7 @@ func (s *secureValueStorage) List(ctx context.Context, namespace xkube.Namespace
 
 	secureValueRows := make([]*secureValueDB, 0)
 
-	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err = s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		cond := &secureValueDB{Namespace: namespace.String()}
 
 		if err := sess.Find(&secureValueRows, cond); err != nil {
@@ -261,6 +273,11 @@ func (s *secureValueStorage) List(ctx context.Context, namespace xkube.Namespace
 	secureValues := make([]secretv0alpha1.SecureValue, 0, len(secureValueRows))
 
 	for _, row := range secureValueRows {
+		// Check whether the user has permission to access this specific SecureValue in the namespace.
+		if !hasPermissionFor(row.Namespace, row.Name, "") {
+			continue
+		}
+
 		secureValue, err := row.toKubernetes()
 		if err != nil {
 			return nil, fmt.Errorf("convert to kubernetes object: %w", err)

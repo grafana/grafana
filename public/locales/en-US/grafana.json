@@ -2536,6 +2536,8 @@
     "history-wrapper": {
       "collapse": "Collapse",
       "expand": "Expand",
+      "icon-selected": "Selected Entry",
+      "icon-unselected": "Normal Entry",
       "show-more": "Show more",
       "today": "Today",
       "yesterday": "Yesterday"

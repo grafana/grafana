@@ -18,6 +18,8 @@ import (
 	encryptionmanager "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	encryptionprovider "github.com/grafana/grafana/pkg/services/encryption/provider"
 	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -102,8 +104,12 @@ func setupDecryptTestService(t *testing.T) contracts.DecryptStorage {
 	keeperService, err := secretkeeper.ProvideService(tracing.InitializeTracerForTest(), encMgr, encValueStore)
 	require.NoError(t, err)
 
+	// Initialize access client + access control
+	accessControl := &actest.FakeAccessControl{ExpectedEvaluate: true}
+	accessClient := accesscontrol.NewLegacyAccessClient(accessControl)
+
 	// Initialize the secure value storage and create a secure value
-	svStorage, err := ProvideSecureValueStorage(testDB, cfg, features, keeperService)
+	svStorage, err := ProvideSecureValueMetadataStorage(testDB, cfg, features, accessClient, keeperService)
 	require.NoError(t, err)
 
 	testSV := &secretv0alpha1.SecureValue{

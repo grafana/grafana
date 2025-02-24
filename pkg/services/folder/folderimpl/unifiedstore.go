@@ -8,14 +8,19 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/selection"
 
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 
 	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	internalfolders "github.com/grafana/grafana/pkg/registry/apis/folders"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	dashboardsearch "github.com/grafana/grafana/pkg/services/dashboards/service/search"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
@@ -159,26 +164,71 @@ func (ss *FolderUnifiedStoreImpl) GetParents(ctx context.Context, q folder.GetPa
 }
 
 func (ss *FolderUnifiedStoreImpl) GetChildren(ctx context.Context, q folder.GetChildrenQuery) ([]*folder.Folder, error) {
-	out, err := ss.k8sclient.List(ctx, q.OrgID, v1.ListOptions{})
+	// the general folder is saved as an empty string in the database
+	if q.UID == folder.GeneralFolderUID {
+		q.UID = ""
+	}
+	if q.Limit == 0 {
+		q.Limit = folderSearchLimit
+	}
+	if q.Page == 0 {
+		q.Page = 1
+	}
+
+	req := &resource.ResourceSearchRequest{
+		Options: &resource.ListOptions{
+			Fields: []*resource.Requirement{
+				{
+					Key:      resource.SEARCH_FIELD_FOLDER,
+					Operator: string(selection.In),
+					Values:   []string{q.UID},
+				},
+			},
+		},
+		Limit: q.Limit,
+		// legacy fallback search requires page, unistore requires offset,
+		// so set both
+		Offset: q.Limit * (q.Page - 1),
+		Page:   q.Page,
+	}
+
+	// only filter the folder UIDs if they are provided in the query
+	if len(q.FolderUIDs) > 0 {
+		req.Options.Fields = append(req.Options.Fields, &resource.Requirement{
+			Key:      resource.SEARCH_FIELD_NAME,
+			Operator: string(selection.In),
+			Values:   q.FolderUIDs,
+		})
+	}
+
+	// now, get children of the parent folder
+	out, err := ss.k8sclient.Search(ctx, q.OrgID, req)
 	if err != nil {
 		return nil, err
 	}
 
+	res, err := dashboardsearch.ParseResults(out, 0)
+	if err != nil {
+		return nil, err
+	}
+
+	allowK6Folder := (q.SignedInUser != nil && q.SignedInUser.IsIdentityType(claims.TypeServiceAccount))
 	hits := make([]*folder.Folder, 0)
-	for _, item := range out.Items {
-		// convert item to legacy folder format
-		f, err := ss.UnstructuredToLegacyFolder(ctx, &item)
-		if f == nil {
-			return nil, fmt.Errorf("unable to convert unstructured item to legacy folder %w", err)
+	for _, item := range res.Hits {
+		// filter out k6 folders if request is not from a service account
+		if item.Name == accesscontrol.K6FolderUID && !allowK6Folder {
+			continue
 		}
 
-		// it we are at root level, skip subfolder
-		if q.UID == "" && f.ParentUID != "" {
-			continue // query filter
+		// search only returns a subset of info, get all info of the folder
+		item, err := ss.k8sclient.Get(ctx, item.Name, q.OrgID, v1.GetOptions{})
+		if err != nil {
+			return nil, err
 		}
-		// if we are at a nested folder, then skip folders that don't belong to parentUid
-		if q.UID != "" && !strings.EqualFold(f.ParentUID, q.UID) {
-			continue
+
+		f, err := ss.UnstructuredToLegacyFolder(ctx, item)
+		if err != nil {
+			return nil, err
 		}
 
 		hits = append(hits, f)

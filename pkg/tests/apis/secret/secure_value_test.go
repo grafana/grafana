@@ -24,9 +24,9 @@ import (
 )
 
 var gvrSecureValues = schema.GroupVersionResource{
-	Group:    "secret.grafana.app",
-	Version:  "v0alpha1",
-	Resource: "securevalues",
+	Group:    secretv0alpha1.GROUP,
+	Version:  secretv0alpha1.VERSION,
+	Resource: secretv0alpha1.SecureValuesResourceInfo.GetName(),
 }
 
 func TestIntegrationSecureValue(t *testing.T) {
@@ -504,11 +504,12 @@ func TestIntegrationSecureValue(t *testing.T) {
 		})
 
 		t.Run("LIST", func(t *testing.T) {
-			// List SecureValues from the limited client should return only 1, but it doesn't.
+			// List SecureValues from the limited client should return only 1.
 			rawList, err := clientScopedLimited.Resource.List(ctx, metav1.ListOptions{})
 			require.NoError(t, err)
 			require.NotNil(t, rawList)
-			require.Len(t, rawList.Items, 1) // TODO: Can view both SecureValues. How can we limit that?
+			require.Len(t, rawList.Items, 1)
+			require.Equal(t, secureValueName, rawList.Items[0].GetName())
 
 			// List SecureValues from the scope-all client should return all of them.
 			rawList, err = clientScopedAll.Resource.List(ctx, metav1.ListOptions{})

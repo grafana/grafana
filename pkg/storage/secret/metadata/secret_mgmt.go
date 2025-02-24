@@ -12,7 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
-func (s *secureValueStorage) storeInKeeper(ctx context.Context, sv *secretv0alpha1.SecureValue) (keepertypes.ExternalID, error) {
+func (s *secureValueMetadataStorage) storeInKeeper(ctx context.Context, sv *secretv0alpha1.SecureValue) (keepertypes.ExternalID, error) {
 	// TODO: Implement store by ref
 	if sv.Spec.Ref != "" {
 		return "", fmt.Errorf("store by ref in keeper")
@@ -36,7 +36,7 @@ func (s *secureValueStorage) storeInKeeper(ctx context.Context, sv *secretv0alph
 	return externalID, err
 }
 
-func (s *secureValueStorage) updateInKeeper(ctx context.Context, currRow *secureValueDB, newSV *secretv0alpha1.SecureValue) error {
+func (s *secureValueMetadataStorage) updateInKeeper(ctx context.Context, currRow *secureValueDB, newSV *secretv0alpha1.SecureValue) error {
 	// TODO: Implement update by ref
 	if newSV.Spec.Ref != "" {
 		return fmt.Errorf("update by ref in keeper")
@@ -70,7 +70,7 @@ func (s *secureValueStorage) updateInKeeper(ctx context.Context, currRow *secure
 	return nil
 }
 
-func (s *secureValueStorage) deleteFromKeeper(ctx context.Context, namespace xkube.Namespace, name string) error {
+func (s *secureValueMetadataStorage) deleteFromKeeper(ctx context.Context, namespace xkube.Namespace, name string) error {
 	sv := &secureValueDB{Namespace: namespace.String(), Name: name}
 	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		found, err := sess.Get(sv)

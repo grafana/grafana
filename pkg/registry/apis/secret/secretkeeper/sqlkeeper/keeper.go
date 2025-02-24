@@ -38,7 +38,7 @@ func (s *SQLKeeper) Store(ctx context.Context, cfg secretv0alpha1.KeeperConfig, 
 		return "", fmt.Errorf("unable to encrypt value: %w", err)
 	}
 
-	encryptedVal, err := s.store.Create(ctx, encryptedData)
+	encryptedVal, err := s.store.Create(ctx, namespace, encryptedData)
 	if err != nil {
 		return "", fmt.Errorf("unable to store encrypted value: %w", err)
 	}
@@ -50,7 +50,7 @@ func (s *SQLKeeper) Expose(ctx context.Context, cfg secretv0alpha1.KeeperConfig,
 	ctx, span := s.tracer.Start(ctx, "sqlKeeper.Expose")
 	defer span.End()
 
-	encryptedValue, err := s.store.Get(ctx, externalID.String())
+	encryptedValue, err := s.store.Get(ctx, namespace, externalID.String())
 	if err != nil {
 		if errors.Is(err, encryptionstorage.ErrEncryptedValueNotFound) {
 			return "", keepertypes.ErrSecretNotFound
@@ -71,7 +71,7 @@ func (s *SQLKeeper) Delete(ctx context.Context, cfg secretv0alpha1.KeeperConfig,
 	ctx, span := s.tracer.Start(ctx, "sqlKeeper.Delete")
 	defer span.End()
 
-	err := s.store.Delete(ctx, externalID.String())
+	err := s.store.Delete(ctx, namespace, externalID.String())
 	if err != nil {
 		return fmt.Errorf("failed to delete encrypted value: %w", err)
 	}
@@ -87,7 +87,7 @@ func (s *SQLKeeper) Update(ctx context.Context, cfg secretv0alpha1.KeeperConfig,
 		return fmt.Errorf("unable to encrypt value: %w", err)
 	}
 
-	err = s.store.Update(ctx, externalID.String(), encryptedData)
+	err = s.store.Update(ctx, namespace, externalID.String(), encryptedData)
 	if err != nil {
 		return fmt.Errorf("failed to update encrypted value: %w", err)
 	}
