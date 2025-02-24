@@ -79,7 +79,7 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 
 	rw, ok := repo.(repository.ReaderWriter)
 	if !ok {
-		return errors.New("export job submitted targetting repository that is not a ReaderWriter")
+		return errors.New("export job submitted targeting repository that is not a ReaderWriter")
 	}
 
 	dynamicClient, _, err := r.clients.New(rw.Config().Namespace)
