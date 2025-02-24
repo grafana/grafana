@@ -205,6 +205,41 @@
         "recording": ""
       }
     },
+    "alertVersionHistory": {
+      "alerting": "",
+      "alerting-change-description": "",
+      "annotations": "",
+      "compareVersions": "",
+      "comparing-versions": "",
+      "condition": "",
+      "contactPointRouting": "",
+      "description": "",
+      "errorloading": "",
+      "execErrorState": "",
+      "intervalSeconds": "",
+      "labels": "",
+      "latest": "",
+      "name": "",
+      "namespace_uid": "",
+      "noDataState": "",
+      "noVersionsFound": "",
+      "paused": "",
+      "pendingPeriod": "",
+      "provisioning": "",
+      "provisioning-change-description": "",
+      "queryAndAlertCondition": "",
+      "reset": "",
+      "restore": "",
+      "restore-modal": {
+        "body": "",
+        "summary": "",
+        "title": ""
+      },
+      "rule_group": "",
+      "unknown": "",
+      "unknown-change-description": "",
+      "user-id": ""
+    },
     "annotations": {
       "description": "",
       "title": ""
@@ -283,6 +318,9 @@
       "no-delivery-attempts": "",
       "no-integrations": "",
       "only-firing": "",
+      "receiver-summary": {
+        "jira": ""
+      },
       "telegram": {
         "parse-mode-warning-body": "",
         "parse-mode-warning-title": ""
@@ -296,6 +334,10 @@
       "label": ""
     },
     "copy-to-clipboard": "",
+    "dag": {
+      "missing-reference": "",
+      "self-reference": ""
+    },
     "export": {
       "subtitle": {
         "formats": "",
@@ -486,6 +528,19 @@
       },
       "pause": {
         "label": ""
+      },
+      "threshold": {
+        "recovery": {
+          "stop-alerting-above": "",
+          "stop-alerting-bellow": "",
+          "stop-alerting-equal": "",
+          "stop-alerting-inside-range": "",
+          "stop-alerting-less": "",
+          "stop-alerting-more": "",
+          "stop-alerting-not-equal": "",
+          "stop-alerting-outside-range": "",
+          "title": ""
+        }
       }
     },
     "rule-groups": {
@@ -527,6 +582,14 @@
       "deleting": "",
       "paused": "",
       "recording-rule": ""
+    },
+    "rule-view": {
+      "query": {
+        "datasources-na": {
+          "description": "",
+          "title": ""
+        }
+      }
     },
     "rule-viewer": {
       "prometheus-consistency-check": {
@@ -760,6 +823,7 @@
     "collapse": "",
     "edit": "",
     "help": "",
+    "loading": "",
     "locale": {
       "default": "Por defecto"
     },
@@ -781,6 +845,25 @@
     },
     "search": {
       "placeholder": "Buscar todo"
+    }
+  },
+  "core": {
+    "versionHistory": {
+      "comparison": {
+        "header": {
+          "hide-json-diff": "",
+          "show-json-diff": "",
+          "text": ""
+        },
+        "select": ""
+      },
+      "no-properties-changed": "",
+      "table": {
+        "updated": "",
+        "updatedBy": "",
+        "version": ""
+      },
+      "view-json-diff": ""
     }
   },
   "correlations": {
@@ -974,6 +1057,11 @@
         }
       }
     },
+    "editpane": {
+      "add": "",
+      "configure": "",
+      "outline": ""
+    },
     "empty": {
       "add-library-panel-body": "Añadir las visualizaciones que se comparten con otros tableros.",
       "add-library-panel-button": "Añadir panel de biblioteca",
@@ -1111,6 +1199,7 @@
     "toolbar": {
       "add": "Añadir",
       "add-panel": "",
+      "add-panel-description": "",
       "add-panel-lib": "",
       "add-row": "",
       "add-tab": "",
@@ -1136,6 +1225,7 @@
         "label": "",
         "tooltip": ""
       },
+      "libray-panel-description": "",
       "mark-favorite": "Marcar como favorito",
       "more-save-options": "",
       "open-original": "Abrir el panel de control original",
@@ -1144,6 +1234,7 @@
       "playlist-stop": "Detener la lista de reproducción",
       "public-dashboard": "",
       "refresh": "Actualizar panel de control",
+      "row-description": "",
       "save": "Guardar panel de control",
       "save-dashboard": {
         "label": "",
@@ -1163,6 +1254,7 @@
       "share-button": "Compartir",
       "show-hidden-elements": "",
       "switch-old-dashboard": "",
+      "tabs-description": "",
       "unlink-library-panel": "",
       "unmark-favorite": "Deshacer marca como favorito"
     },
@@ -1268,6 +1360,12 @@
       "time-zone-label": "Huso horario",
       "week-start-label": "Inicio de la semana"
     },
+    "time-regions": {
+      "advanced-description-cron": "",
+      "advanced-description-rest": "",
+      "advanced-description-use": "",
+      "advanced-label": ""
+    },
     "variables": {
       "title": "Variables"
     },
@@ -1283,9 +1381,6 @@
     },
     "panel-queries": {
       "add-query-from-library": ""
-    },
-    "query-library": {
-      "add-query-button": ""
     },
     "settings": {
       "variables": {
@@ -1353,6 +1448,11 @@
   },
   "explore": {
     "add-to-dashboard": "Añadir al tablero",
+    "drilldownInfo": {
+      "action": "",
+      "description": "",
+      "title": ""
+    },
     "logs": {
       "logs-volume": {
         "add-filters": "",
@@ -1368,7 +1468,6 @@
       "close-tooltip": "Cerrar el historial de consultas",
       "datasource-a-z": "Fuente de datos A-Z",
       "datasource-z-a": "Fuente de datos Z-A",
-      "library-history-dropdown": "",
       "newest-first": "El más reciente primero",
       "oldest-first": "El más antiguo primero",
       "query-history": "Historial de consultas",
@@ -1472,6 +1571,7 @@
       "switch-datasource-button": ""
     },
     "secondary-actions": {
+      "add-from-query-library": "",
       "query-add-button": "Añadir consulta",
       "query-add-button-aria-label": "Añadir consulta",
       "query-history-button": "Historial de consultas",
@@ -1564,6 +1664,10 @@
     "apply-suggestion": "",
     "incomplete-request-error": "",
     "send-custom-feedback": ""
+  },
+  "get-enterprise": {
+    "requires-license": "",
+    "title": ""
   },
   "grafana-ui": {
     "action-editor": {
@@ -1968,6 +2072,7 @@
       "render-image-error-description": ""
     }
   },
+  "lock-icon": "",
   "login": {
     "divider": {
       "connecting-text": ""
@@ -2012,6 +2117,10 @@
   },
   "logs": {
     "infinite-scroll": {
+      "end-of-range": "",
+      "load-more": "",
+      "load-newer": "",
+      "load-older": "",
       "older-logs": ""
     },
     "log-details": {
@@ -2429,6 +2538,9 @@
     "detect": {
       "title": "Detectar"
     },
+    "drilldown": {
+      "title": ""
+    },
     "explore": {
       "title": "Explorar"
     },
@@ -2466,6 +2578,8 @@
     "history-wrapper": {
       "collapse": "",
       "expand": "",
+      "icon-selected": "",
+      "icon-unselected": "",
       "show-more": "",
       "today": "",
       "yesterday": ""
@@ -2642,6 +2756,7 @@
       "close": "Cerrar menú",
       "dock": "Anclar el menú",
       "list-label": "Navegación",
+      "new": "",
       "open": "",
       "undock": "Desanclar el menú"
     },
@@ -2752,6 +2867,7 @@
   },
   "plugins": {
     "catalog": {
+      "no-updates-available": "",
       "update-all": {
         "all-plugins-updated": "",
         "available-header": "",
@@ -2810,6 +2926,12 @@
     },
     "empty-state": {
       "message": ""
+    },
+    "filter": {
+      "disabled": "",
+      "sort": "",
+      "sort-list": "",
+      "state": ""
     },
     "plugin-help": {
       "error": "",
