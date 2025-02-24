@@ -1,22 +1,18 @@
 import { css } from '@emotion/css';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
-import { AppEvents, GrafanaTheme2 } from '@grafana/data';
-import { getAppEvents } from '@grafana/runtime';
+import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Stack, useStyles2 } from '@grafana/ui';
 
 import { getDefaultValues } from '../ConfigForm';
-import { useCreateOrUpdateRepository } from '../hooks';
 
 import { ConnectionStep } from './ConnectionStep';
 import { MigrateStep } from './MigrateStep';
 import { RepositoryStep } from './RepositoryStep';
 import { Stepper, Step } from './Stepper';
 import { WizardFormData, WizardStep } from './types';
-
-const appEvents = getAppEvents();
 
 const steps: Array<Step<WizardStep>> = [
   { id: 'connection', name: 'Repository connection' },
@@ -35,7 +31,6 @@ export function ProvisioningWizard() {
   const [activeStep, setActiveStep] = useState<WizardStep>('connection');
   const [completedSteps, setCompletedSteps] = useState<WizardStep[]>([]);
   const [stepSuccess, setStepSuccess] = useState(false);
-  const [, request] = useCreateOrUpdateRepository();
   const methods = useForm<WizardFormData>({
     defaultValues: {
       repository: getDefaultValues(),
@@ -47,31 +42,6 @@ export function ProvisioningWizard() {
   });
 
   const styles = useStyles2(getStyles);
-
-  useEffect(() => {
-    if (request.isSuccess) {
-      if (request.data?.metadata?.name) {
-        methods.setValue('repositoryName', request.data.metadata.name);
-      }
-      if (activeStep === 'repository') {
-        appEvents.publish({
-          type: AppEvents.alertSuccess.name,
-          payload: ['Repository settings saved'],
-        });
-
-        const currentStepIndex = steps.findIndex((s) => s.id === activeStep);
-        if (currentStepIndex < steps.length - 1) {
-          setCompletedSteps((prev) => [...prev, activeStep]);
-          setActiveStep(steps[currentStepIndex + 1].id);
-        }
-      }
-    } else if (request.isError) {
-      appEvents.publish({
-        type: AppEvents.alertError.name,
-        payload: ['Failed to save repository settings', request.error],
-      });
-    }
-  }, [request.isSuccess, request.isError, request.data, request.error, activeStep, methods]);
 
   const handleNext = async () => {
     const currentStepIndex = steps.findIndex((s) => s.id === activeStep);
