@@ -2,10 +2,8 @@ package contracts
 
 import (
 	"context"
-
-	"github.com/grafana/grafana/pkg/infra/db"
 )
 
 type OutboxQueue interface {
-	Append(ctx context.Context, tx *db.Session, foo any, cb func(error))
+	Append(ctx context.Context, tx TransactionManager, foo any, cb func(error))
 }

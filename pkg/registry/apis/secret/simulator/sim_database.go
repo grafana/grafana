@@ -1,6 +1,8 @@
 package simulator
 
 import (
+	"context"
+	"database/sql"
 	"fmt"
 	"strconv"
 
@@ -23,6 +25,10 @@ func NewSimDatabase(simNetwork *SimNetwork) *SimDatabase {
 		secretMetadata: make(map[string]map[string]secretv0alpha1.SecureValue),
 		simNetwork:     simNetwork,
 	}
+}
+
+func (db *SimDatabase) BeginTx(ctx context.Context, opts *sql.TxOptions) (*sql.Tx, error) {
+	return nil, nil
 }
 
 // When a query is received by the database

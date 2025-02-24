@@ -17,8 +17,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/services"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 )
 
@@ -39,11 +39,13 @@ type SecureValueRest struct {
 	outboxQueue    contracts.OutboxQueue
 	resource       utils.ResourceInfo
 	tableConverter rest.TableConvertor
+
+	createSecureValueSvc *services.CreateSecureValue // Interface
 }
 
 // NewSecureValueRest is a returns a constructed `*SecureValueRest`.
-func NewSecureValueRest(storage contracts.SecureValueStorage, outboxQueue contracts.OutboxQueue, resource utils.ResourceInfo) *SecureValueRest {
-	return &SecureValueRest{storage, outboxQueue, resource, resource.TableConverter()}
+func NewSecureValueRest(storage contracts.SecureValueStorage, outboxQueue contracts.OutboxQueue, resource utils.ResourceInfo, createSecureValueSvc *services.CreateSecureValue) *SecureValueRest {
+	return &SecureValueRest{storage, outboxQueue, resource, resource.TableConverter(), createSecureValueSvc}
 }
 
 // New returns an empty `*SecureValue` that is used by the `Create` method.
@@ -115,105 +117,30 @@ func (s *SecureValueRest) Create(
 	createValidation rest.ValidateObjectFunc,
 	options *metav1.CreateOptions,
 ) (runtime.Object, error) {
-	// sv, ok := obj.(*secretv0alpha1.SecureValue)
-	// if !ok {
-	// 	return nil, fmt.Errorf("expected SecureValue for create")
-	// }
-
-	// if err := createValidation(ctx, obj); err != nil {
-	// 	return nil, err
-	// }
-
-	panic("TODO")
-
-	//====== Move this to a servicve layer ======
-	// TODO: start transaction
-	// var tx *db.Session
-
-	// // /\ ~SecretMetadataHasPendingStatus(s)
-	// isPending, err := s.storage.SecretMetadataHasPendingStatus(ctx, tx, xkube.Namespace(sv.Namespace), sv.Name)
-	// if err != nil {
-	// 	return nil, fmt.Errorf("failed to create secure value: %w", err)
-	// }
-
-	// if isPending {
-	// 	return nil, fmt.Errorf("already pending")
-	// }
-
-	// // TODO: Consume sv.rawSecret and encrypt value here before storing!
-	// // TODO: handle REF vs VALUE
-	// _ = sv.Spec.Value.DangerouslyExposeAndConsumeValue()
-
-	// // /\ db' = [db EXCEPT !.secret_metadata = @ \union {[name |-> s, status |-> "Pending"]}]
-	// createdSecureValue, err := s.storage.Create(ctx, tx, sv)
-	// if err != nil {
-	// 	return nil, fmt.Errorf("failed to create secure value: %w", err)
-	// }
-
-	// // /\ queue' = [queue EXCEPT !.pending = Append(queue.pending, s)]
-	// if err := s.outboxQueue.Append(ctx, tx, createdSecureValue); err != nil {
-	// 	return nil, fmt.Errorf("failed to append to queue: %w", err)
-	// }
-
-	// return createdSecureValue, nil
-}
-
-func (s *SecureValueRest) Create2(
-	ctx context.Context,
-	obj runtime.Object,
-	createValidation rest.ValidateObjectFunc,
-	options *metav1.CreateOptions,
-	cb func(runtime.Object, error),
-) {
 	sv, ok := obj.(*secretv0alpha1.SecureValue)
 	if !ok {
-		cb(nil, fmt.Errorf("expected SecureValue for create"))
-		return
+		return nil, fmt.Errorf("expected SecureValue for create")
 	}
 
 	if err := createValidation(ctx, obj); err != nil {
-		cb(nil, err)
-		return
+		return nil, err
 	}
 
-	//====== Move this to a service layer ======
-	var tx *db.Session
+	var createdObj runtime.Object
+	var errCb error
 
-	// /\ ~SecretMetadataHasPendingStatus(s)
-	s.storage.SecretMetadataHasPendingStatus(ctx, tx, xkube.Namespace(sv.Namespace), sv.Name,
-		func(isPending bool, err error) {
-			if err != nil {
-				cb(nil, fmt.Errorf("failed to create secure value: %w", err))
-				return
-			}
+	doneChan := make(chan struct{})
 
-			if isPending {
-				cb(nil, fmt.Errorf("already pending"))
-				return
-			}
+	s.createSecureValueSvc.Handle(ctx, sv, func(o runtime.Object, err error) {
+		createdObj = o
+		errCb = err
 
-			// TODO: Consume sv.rawSecret and encrypt value here before storing!
-			// TODO: handle REF vs VALUE
-			_ = sv.Spec.Value.DangerouslyExposeAndConsumeValue()
+		doneChan <- struct{}{}
+	})
 
-			// /\ db' = [db EXCEPT !.secret_metadata = @ \union {[name |-> s, status |-> "Pending"]}]
-			s.storage.Create(ctx, tx, sv, func(createdSecureValue *secretv0alpha1.SecureValue, err error) {
-				if err != nil {
-					cb(nil, fmt.Errorf("failed to create securevalue: %w", err))
-					return
-				}
+	<-doneChan
 
-				// 			// /\ queue' = [queue EXCEPT !.pending = Append(queue.pending, s)]
-				s.outboxQueue.Append(ctx, tx, createdSecureValue, func(err error) {
-					if err != nil {
-						cb(nil, fmt.Errorf("failed to append to queue: %w", err))
-						return
-					}
-
-					cb(createdSecureValue, nil)
-				})
-			})
-		})
+	return createdObj, errCb
 }
 
 // Update a `securevalue`'s `value`. The second return parameter indicates whether the resource was newly created.

@@ -6,7 +6,7 @@ import (
 	"math/rand"
 
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
-	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 )
 
@@ -35,7 +35,7 @@ type Message interface {
 /*** Request ***/
 type simDatabaseAppendQuery struct {
 	ctx context.Context
-	tx  *db.Session
+	tx  contracts.TransactionManager
 	foo any
 	cb  func(error)
 }
@@ -44,7 +44,7 @@ func (simDatabaseAppendQuery) Message() {}
 
 type simDatabaseSecretMetadataHasPendingStatusQuery struct {
 	ctx       context.Context
-	tx        *db.Session
+	tx        contracts.TransactionManager
 	namespace xkube.Namespace
 	name      string
 	cb        func(bool, error)
@@ -54,7 +54,7 @@ func (simDatabaseSecretMetadataHasPendingStatusQuery) Message() {}
 
 type simDatabaseCreateSecureValueMetadataQuery struct {
 	ctx context.Context
-	tx  *db.Session
+	tx  contracts.TransactionManager
 	sv  *secretv0alpha1.SecureValue
 	cb  func(*secretv0alpha1.SecureValue, error)
 }

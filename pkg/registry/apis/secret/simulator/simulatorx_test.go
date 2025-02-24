@@ -8,9 +8,8 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/reststorage"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/services"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -30,16 +29,16 @@ type Simulator struct {
 	simNetwork         *SimNetwork
 	simDatabase        *SimDatabase
 	secureValueStorage *SimSecureValueStorage
-	secureValueRest    *reststorage.SecureValueRest
+	secureValueService *services.CreateSecureValue
 }
 
-func NewSimulator(rng *rand.Rand, simNetwork *SimNetwork, simDatabase *SimDatabase, secureValueStorage *SimSecureValueStorage, secureValueRest *reststorage.SecureValueRest) *Simulator {
+func NewSimulator(rng *rand.Rand, simNetwork *SimNetwork, simDatabase *SimDatabase, secureValueStorage *SimSecureValueStorage, secureValueService *services.CreateSecureValue) *Simulator {
 	return &Simulator{
 		rng:                rng,
 		simNetwork:         simNetwork,
 		simDatabase:        simDatabase,
 		secureValueStorage: secureValueStorage,
-		secureValueRest:    secureValueRest,
+		secureValueService: secureValueService,
 	}
 }
 
@@ -81,7 +80,7 @@ func (sim *Simulator) step() {
 
 	switch action {
 	case ActionCreateSecret:
-		sim.secureValueRest.Create2(context.Background(), &secretv0alpha1.SecureValue{
+		sim.secureValueService.Handle(context.Background(), &secretv0alpha1.SecureValue{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "sv-1",
 			},
@@ -93,11 +92,6 @@ func (sim *Simulator) step() {
 				Phase: secretv0alpha1.SecureValuePhasePending,
 			},
 		},
-			// TODO: replace with real func
-			func(ctx context.Context, obj runtime.Object) error {
-				return nil
-			},
-			&metav1.CreateOptions{},
 			func(o runtime.Object, err error) {
 				fmt.Printf("\n\naaaaaaa o %+v err %+v\n\n", o, err)
 			},
@@ -148,9 +142,9 @@ func TestSimulate(t *testing.T) {
 
 	simOutboxQueue := NewSimOutboxQueue(simNetwork)
 
-	secureValueRest := reststorage.NewSecureValueRest(simSecureValueStorage, simOutboxQueue, utils.ResourceInfo{})
+	secureValueService := services.NewCreateSecureValue(simDatabase, simSecureValueStorage, simOutboxQueue)
 
-	simulator := NewSimulator(rng, simNetwork, simDatabase, simSecureValueStorage, secureValueRest)
+	simulator := NewSimulator(rng, simNetwork, simDatabase, simSecureValueStorage, secureValueService)
 
 	for range 100 {
 		simulator.step()
