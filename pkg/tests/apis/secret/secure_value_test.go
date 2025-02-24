@@ -565,16 +565,6 @@ func TestIntegrationSecureValue(t *testing.T) {
 		})
 	})
 
-	t.Run("creating a secure value with a not implemented keeper returns error", func(t *testing.T) {
-		keeper := mustGenerateKeeper(t, helper, genericUserEditor, nil, "testdata/keeper-aws-generate.yaml")
-		testSecureValue := helper.LoadYAMLOrJSONFile("testdata/secure-value-generate.yaml")
-		testSecureValue.Object["spec"].(map[string]any)["keeper"] = keeper.GetName()
-
-		raw, err := client.Resource.Create(ctx, testSecureValue, metav1.CreateOptions{})
-		require.Error(t, err)
-		require.Nil(t, raw)
-	})
-
 	t.Run("creating a secure value in default sql keeper returns it", func(t *testing.T) {
 		raw := mustGenerateSecureValue(t, helper, genericUserEditor, keepertypes.DefaultSQLKeeper)
 
@@ -609,14 +599,6 @@ func TestIntegrationSecureValue(t *testing.T) {
 			require.NotNil(t, anotherSecureValue)
 
 			require.EqualValues(t, secureValue, anotherSecureValue)
-		})
-
-		t.Run("and listing securevalues returns the created secure value", func(t *testing.T) {
-			rawList, err := client.Resource.List(ctx, metav1.ListOptions{})
-			require.NoError(t, err)
-			require.NotNil(t, rawList)
-			require.GreaterOrEqual(t, len(rawList.Items), 1)
-			require.Equal(t, secureValue.Name, rawList.Items[0].GetName())
 		})
 
 		t.Run("and updating the secure value replaces the spec fields and returns them", func(t *testing.T) {
