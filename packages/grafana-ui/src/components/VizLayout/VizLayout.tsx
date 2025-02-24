@@ -1,14 +1,14 @@
-import {css} from '@emotion/css';
+import { css } from '@emotion/css';
 import * as React from 'react';
-import {ComponentType, CSSProperties, FC} from 'react';
-import {useMeasure} from 'react-use';
+import { ComponentType, CSSProperties, FC } from 'react';
+import { useMeasure } from 'react-use';
 
-import {GrafanaTheme2} from '@grafana/data';
-import {LegendPlacement} from '@grafana/schema';
+import { GrafanaTheme2 } from '@grafana/data';
+import { LegendPlacement } from '@grafana/schema';
 
-import {useStyles2, useTheme2} from '../../themes/ThemeContext';
-import {getFocusStyles} from '../../themes/mixins';
-import {ScrollContainer} from '../ScrollContainer/ScrollContainer';
+import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
+import { getFocusStyles } from '../../themes/mixins';
+import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
 
 /**
  * @beta

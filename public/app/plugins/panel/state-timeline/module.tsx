@@ -8,7 +8,6 @@ import {
 
 import { TimelineValueAlignment, VisibilityMode } from '@grafana/schema';
 
-  
 import { commonOptionsBuilder } from '@grafana/ui';
 
 import { InsertNullsEditor } from '../timeseries/InsertNullsEditor';
