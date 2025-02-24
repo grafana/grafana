@@ -17,8 +17,7 @@ import {
 
 import { getWorkflowOptions } from '../ConfigForm';
 import { TokenPermissionsInfo } from '../TokenPermissionsInfo';
-import { useCreateRepositoryTestMutation } from '../api';
-import { RepositorySpec } from '../api/endpoints.gen';
+import { useCreateRepositoryTestMutation, RepositorySpec } from '../api';
 import { useCreateOrUpdateRepository } from '../hooks';
 import { dataToSpec } from '../utils/data';
 
@@ -99,15 +98,15 @@ export function RepositoryStep({ onStatusChange }: Props) {
   const type = watch('repository.type');
   const [tokenConfigured, setTokenConfigured] = useState(false);
   const repoName = watch('repositoryName');
-  const [submitData, verifyRequest] = useCreateOrUpdateRepository(repoName);
+  const [submitData, saveRequest] = useCreateOrUpdateRepository(repoName);
   const [testConfig, testConfigRequest] = useCreateRepositoryTestMutation();
+
+  const isLoading = saveRequest.isLoading || testConfigRequest.isLoading;
+  const errorRequest = testConfigRequest.isError ? testConfigRequest : saveRequest;
 
   const handleVerify = async () => {
     const formData = getValues();
     const spec = dataToSpec(formData.repository);
-    if (formData.repository.type === 'github' && spec.github) {
-      spec.github.token = formData.repository.token || '';
-    }
     try {
       const testResponse = await testConfig({ name: 'new', body: { spec } });
 
@@ -125,29 +124,24 @@ export function RepositoryStep({ onStatusChange }: Props) {
 
   useEffect(() => {
     const appEvents = getAppEvents();
-    if (verifyRequest.isSuccess) {
-      if (verifyRequest.data?.metadata?.name) {
-        setValue('repositoryName', verifyRequest.data.metadata.name);
+    if (saveRequest.isSuccess) {
+      if (saveRequest.data?.metadata?.name) {
+        setValue('repositoryName', saveRequest.data.metadata.name);
         appEvents.publish({
           type: AppEvents.alertSuccess.name,
           payload: ['Repository settings verified successfully'],
         });
       }
-    } else if (verifyRequest.isError) {
+    } else if (saveRequest.isError) {
       onStatusChange(false);
     }
-  }, [verifyRequest.isSuccess, verifyRequest.isError, verifyRequest.data, setValue, onStatusChange]);
+  }, [saveRequest.isSuccess, saveRequest.isError, saveRequest.data, setValue, onStatusChange]);
 
   if (type === 'github') {
     return (
       <FieldSet label="2. Configure repository">
         <Stack direction="column" gap={1}>
-          {testConfigRequest.isError && (
-            <RequestErrorAlert request={testConfigRequest} title="Repository test failed" />
-          )}
-          {verifyRequest.isError && (
-            <RequestErrorAlert request={verifyRequest} title="Repository verification failed" />
-          )}
+          <RequestErrorAlert request={errorRequest} title="Repository verification failed" />
           <TokenPermissionsInfo />
 
           <Field
@@ -208,12 +202,8 @@ export function RepositoryStep({ onStatusChange }: Props) {
           <AdvancedSettingsFields />
 
           <Stack direction="row" gap={2}>
-            <Button
-              onClick={handleVerify}
-              disabled={verifyRequest.isLoading || testConfigRequest.isLoading}
-              icon={verifyRequest.isLoading || testConfigRequest.isLoading ? 'spinner' : 'check-circle'}
-            >
-              {verifyRequest.isLoading || testConfigRequest.isLoading ? 'Verifying...' : 'Connect & verify'}
+            <Button onClick={handleVerify} disabled={isLoading} icon={isLoading ? 'spinner' : 'check-circle'}>
+              {isLoading ? 'Verifying...' : 'Connect & verify'}
             </Button>
           </Stack>
         </Stack>
@@ -225,12 +215,7 @@ export function RepositoryStep({ onStatusChange }: Props) {
     return (
       <FieldSet label="2. Configure repository">
         <Stack direction="column" gap={2}>
-          {(testConfigRequest.isError || verifyRequest.isError) && (
-            <RequestErrorAlert
-              request={testConfigRequest.isError ? testConfigRequest : verifyRequest}
-              title="Repository verification failed"
-            />
-          )}
+          <RequestErrorAlert request={errorRequest} title="Repository verification failed" />
 
           <Field label={'Local path'} error={errors.repository?.path?.message} invalid={!!errors.repository?.path}>
             <Input
@@ -243,12 +228,8 @@ export function RepositoryStep({ onStatusChange }: Props) {
           <AdvancedSettingsFields />
 
           <Stack direction="row" gap={2}>
-            <Button
-              onClick={handleVerify}
-              disabled={verifyRequest.isLoading || testConfigRequest.isLoading}
-              icon={verifyRequest.isLoading || testConfigRequest.isLoading ? 'spinner' : 'check-circle'}
-            >
-              {verifyRequest.isLoading || testConfigRequest.isLoading ? 'Verifying...' : 'Connect & verify'}
+            <Button onClick={handleVerify} disabled={isLoading} icon={isLoading ? 'spinner' : 'check-circle'}>
+              {isLoading ? 'Verifying...' : 'Connect & verify'}
             </Button>
           </Stack>
         </Stack>
