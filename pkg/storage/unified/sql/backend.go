@@ -588,11 +588,11 @@ type listIter struct {
 
 // ContinueToken implements resource.ListIterator.
 func (l *listIter) ContinueToken() string {
-	return ContinueToken{ResourceVersion: l.listRV, StartOffset: l.offset}.String()
+	return resource.ContinueToken{ResourceVersion: l.listRV, StartOffset: l.offset}.String()
 }
 
 func (l *listIter) ContinueTokenWithCurrentRV() string {
-	return ContinueToken{ResourceVersion: l.rv, StartOffset: l.offset}.String()
+	return resource.ContinueToken{ResourceVersion: l.rv, StartOffset: l.offset}.String()
 }
 
 func (l *listIter) Error() error {
@@ -679,7 +679,7 @@ func (b *backend) listAtRevision(ctx context.Context, req *resource.ListRequest,
 	// Get the RV
 	iter := &listIter{listRV: req.ResourceVersion}
 	if req.NextPageToken != "" {
-		continueToken, err := GetContinueToken(req.NextPageToken)
+		continueToken, err := resource.GetContinueToken(req.NextPageToken)
 		if err != nil {
 			return 0, fmt.Errorf("get continue token: %w", err)
 		}
@@ -737,7 +737,7 @@ func (b *backend) getHistory(ctx context.Context, req *resource.ListRequest, cb 
 
 	iter := &listIter{}
 	if req.NextPageToken != "" {
-		continueToken, err := GetContinueToken(req.NextPageToken)
+		continueToken, err := resource.GetContinueToken(req.NextPageToken)
 		if err != nil {
 			return 0, fmt.Errorf("get continue token: %w", err)
 		}

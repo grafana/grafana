@@ -923,6 +923,10 @@ func (s *server) initWatcher() error {
 				// pipe all events
 				v := <-events
 
+				if v == nil {
+					s.log.Error("received nil event")
+					continue
+				}
 				// Skip events during batch updates
 				if v.PreviousRV < 0 {
 					continue

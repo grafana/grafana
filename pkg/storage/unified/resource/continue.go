@@ -1,4 +1,4 @@
-package sql
+package resource
 
 import (
 	"encoding/base64"
