@@ -115,34 +115,38 @@ func parseOwnerRepo(giturl string) (owner string, repo string, err error) {
 	return parts[1], parts[2], nil
 }
 
+func fromError(err error, code int) *provisioning.TestResults {
+	statusErr, ok := err.(apierrors.APIStatus)
+	if ok {
+		s := statusErr.Status()
+		return &provisioning.TestResults{
+			Code:    int(s.Code),
+			Success: false,
+			Errors:  []string{s.Message},
+		}
+	}
+	return &provisioning.TestResults{
+		Code:    code,
+		Success: false,
+		Errors:  []string{err.Error()},
+	}
+}
+
 // Test implements provisioning.Repository.
 func (r *githubRepository) Test(ctx context.Context) (*provisioning.TestResults, error) {
 	if err := r.gh.IsAuthenticated(ctx); err != nil {
-		// TODO: should we return a more specific error or error code?
-		return &provisioning.TestResults{
-			Code:    http.StatusBadRequest,
-			Success: false,
-			Errors:  []string{err.Error()},
-		}, nil
+		return fromError(err, http.StatusUnauthorized), nil
 	}
 
 	owner, repo, err := parseOwnerRepo(r.config.Spec.GitHub.URL)
 	if err != nil {
-		return &provisioning.TestResults{
-			Code:    http.StatusBadRequest,
-			Success: false,
-			Errors:  []string{err.Error()},
-		}, nil
+		return fromError(err, http.StatusBadRequest), nil
 	}
 
 	// FIXME: check token permissions
 	ok, err := r.gh.RepoExists(ctx, owner, repo)
 	if err != nil {
-		return &provisioning.TestResults{
-			Code:    http.StatusInternalServerError,
-			Success: false,
-			Errors:  []string{err.Error()},
-		}, nil
+		return fromError(err, http.StatusBadRequest), nil
 	}
 
 	if !ok {
@@ -155,11 +159,7 @@ func (r *githubRepository) Test(ctx context.Context) (*provisioning.TestResults,
 
 	ok, err = r.gh.BranchExists(ctx, r.owner, r.repo, r.config.Spec.GitHub.Branch)
 	if err != nil {
-		return &provisioning.TestResults{
-			Code:    http.StatusInternalServerError,
-			Success: false,
-			Errors:  []string{err.Error()},
-		}, nil
+		return fromError(err, http.StatusBadRequest), nil
 	}
 
 	if !ok {
