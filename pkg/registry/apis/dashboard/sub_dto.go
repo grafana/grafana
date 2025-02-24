@@ -125,7 +125,7 @@ func (r *DTOConnector) Connect(ctx context.Context, name string, opts runtime.Ob
 	if err != nil {
 		return nil, err
 	}
-	if repo != nil && repo.Name == "plugin" {
+	if repo != nil && repo.Name == dashboard.PluginIDRepoName {
 		dto.PluginID = repo.Path
 	}
 

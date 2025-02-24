@@ -26,11 +26,10 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-func ProvideService(cfg *setting.Cfg, tracer tracing.Tracer, authenticator authn.Authenticator, features featuremgmt.FeatureToggles,
+func ProvideService(cfg *setting.Cfg, authenticator authn.Authenticator, features featuremgmt.FeatureToggles,
 ) *ContextHandler {
 	return &ContextHandler{
 		Cfg:           cfg,
-		tracer:        tracer,
 		authenticator: authenticator,
 		features:      features,
 	}
@@ -39,7 +38,6 @@ func ProvideService(cfg *setting.Cfg, tracer tracing.Tracer, authenticator authn
 // ContextHandler is a middleware.
 type ContextHandler struct {
 	Cfg           *setting.Cfg
-	tracer        tracing.Tracer
 	authenticator authn.Authenticator
 	features      featuremgmt.FeatureToggles
 }
@@ -88,7 +86,8 @@ func CopyWithReqContext(ctx context.Context) context.Context {
 func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		_, span := h.tracer.Start(ctx, "Auth - Middleware")
+		// Don't modify context so that the auth middleware span doesn't get propagated as a parent elsewhere
+		_, span := tracing.Start(ctx, "Auth - Middleware")
 
 		reqContext := &contextmodel.ReqContext{
 			Context: web.FromContext(ctx),

@@ -81,7 +81,7 @@ func TestCheck_Run(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, 1, len(items))
 		assert.Len(t, failures, 1)
-		assert.Equal(t, "Invalid UID 'invalid uid' for data source Prometheus", failures[0].Reason)
+		assert.Equal(t, "uid-validation", failures[0].StepID)
 	})
 
 	t.Run("should return failures when datasource health check fails", func(t *testing.T) {
@@ -116,7 +116,7 @@ func TestCheck_Run(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, 1, len(items))
 		assert.Len(t, failures, 1)
-		assert.Equal(t, "Health check failed for Prometheus", failures[0].Reason)
+		assert.Equal(t, "health-check", failures[0].StepID)
 	})
 }
 

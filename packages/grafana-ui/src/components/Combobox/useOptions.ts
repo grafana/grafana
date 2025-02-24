@@ -83,14 +83,11 @@ export function useOptions<T extends string | number>(rawOptions: AsyncOptions<T
 
   const updateOptions = useCallback(
     (inputValue: string) => {
-      if (!isAsync) {
-        setUserTypedSearch(inputValue);
-        return;
+      setUserTypedSearch(inputValue);
+      if (isAsync) {
+        setAsyncLoading(true);
+        debouncedLoadOptions(inputValue);
       }
-
-      setAsyncLoading(true);
-
-      debouncedLoadOptions(inputValue);
     },
     [debouncedLoadOptions, isAsync]
   );

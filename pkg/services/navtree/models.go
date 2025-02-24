@@ -16,6 +16,7 @@ const (
 	WeightSavedItems
 	WeightDashboard
 	WeightExplore
+	WeightDrilldown
 	WeightAlerting
 	WeightAlertsAndIncidents
 	WeightTestingAndSynthetics
@@ -37,6 +38,7 @@ const (
 	NavIDRoot                 = "root"
 	NavIDDashboards           = "dashboards/browse"
 	NavIDExplore              = "explore"
+	NavIDDrilldown            = "drilldown"
 	NavIDCfg                  = "cfg" // NavIDCfg is the id for org configuration navigation node
 	NavIDAlertsAndIncidents   = "alerts-and-incidents"
 	NavIDTestingAndSynthetics = "testing-and-synthetics"
@@ -70,6 +72,7 @@ type NavLink struct {
 	EmptyMessageId string     `json:"emptyMessageId,omitempty"`
 	PluginID       string     `json:"pluginId,omitempty"` // (Optional) The ID of the plugin that registered nav link (e.g. as a standalone plugin page)
 	IsCreateAction bool       `json:"isCreateAction,omitempty"`
+	IsNew          bool       `json:"isNew,omitempty"` // (Optional) Adds "New!" badge to the nav link and expands it by default
 	Keywords       []string   `json:"keywords,omitempty"`
 	ParentItem     *NavLink   `json:"parentItem,omitempty"` // (Optional) The parent item of the nav link
 }

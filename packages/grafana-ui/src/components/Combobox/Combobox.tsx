@@ -8,18 +8,15 @@ import { t } from '../../utils/i18n';
 import { Icon } from '../Icon/Icon';
 import { AutoSizeInput } from '../Input/AutoSizeInput';
 import { Input, Props as InputProps } from '../Input/Input';
-import { Stack } from '../Layout/Stack/Stack';
 import { Portal } from '../Portal/Portal';
 import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
 
 import { AsyncError, NotFoundError } from './MessageRows';
-import { OptionListItem } from './OptionListItem';
 import { itemToString } from './filter';
 import { getComboboxStyles, MENU_OPTION_HEIGHT, MENU_OPTION_HEIGHT_DESCRIPTION } from './getComboboxStyles';
 import { ComboboxOption } from './types';
 import { useComboboxFloat } from './useComboboxFloat';
 import { useOptions } from './useOptions';
-import { isNewGroup } from './utils';
 
 // TODO: It would be great if ComboboxOption["label"] was more generic so that if consumers do pass it in (for async),
 // then the onChange handler emits ComboboxOption with the label as non-undefined.
@@ -36,22 +33,40 @@ export interface ComboboxBaseProps<T extends string | number>
    * Allows the user to set a value which is not in the list of options.
    */
   createCustomValue?: boolean;
-  options: Array<ComboboxOption<T>> | ((inputValue: string) => Promise<Array<ComboboxOption<T>>>);
-  onChange: (option: ComboboxOption<T>) => void;
+
   /**
-   * Most consumers should pass value in as a scalar string | number. However, sometimes with Async because we don't
-   * have the full options loaded to match the value to, consumers may also pass in an Option with a label to display.
+   * An array of options, or a function that returns a promise resolving to an array of options.
+   * If a function, it will be called when the menu is opened and on keypress with the current search query.
+   */
+  options: Array<ComboboxOption<T>> | ((inputValue: string) => Promise<Array<ComboboxOption<T>>>);
+
+  /**
+   * onChange handler is called with the newly selected option.
+   */
+  onChange: (option: ComboboxOption<T>) => void;
+
+  /**
+   * Current selected value. Most consumers should pass a scalar value (string | number). However, sometimes with Async
+   * it may be better to pass in an Option with a label to display.
    */
   value?: T | ComboboxOption<T> | null;
+
   /**
-   * Defaults to 100%. Number is a multiple of 8px. 'auto' will size the input to the content.
+   * Defaults to full width of container. Number is a multiple of the spacing unit. 'auto' will size the input to the content.
    * */
   width?: number | 'auto';
+
+  /**
+   * Called when the input loses focus.
+   */
   onBlur?: () => void;
 }
 
 type ClearableConditionals<T extends number | string> =
   | {
+      /**
+       * Allow the user to clear the selected value. `null` is emitted from the onChange handler
+       */
       isClearable: true;
       /**
        * The onChange handler is called with `null` when clearing the Combobox.
@@ -93,7 +108,7 @@ export const VIRTUAL_OVERSCAN_ITEMS = 4;
  */
 export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => {
   const {
-    // options,
+    options: allOptions,
     onChange,
     value: valueProp,
     placeholder: placeholderProp,
@@ -115,7 +130,6 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
   // get a consistent Value from it
   const value = typeof valueProp === 'object' ? valueProp?.value : valueProp;
 
-  const allOptions = props.options;
   const {
     options: filteredOptions,
     updateOptions,
@@ -161,20 +175,8 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
   const virtualizerOptions = {
     count: filteredOptions.length,
     getScrollElement: () => scrollRef.current,
-    // estimateSize: (index: number) =>
-    //   filteredOptions[index].description ? MENU_OPTION_HEIGHT_DESCRIPTION : MENU_OPTION_HEIGHT,
-    estimateSize: (index: number) => {
-      const firstGroupItem = isNewGroup(filteredOptions[index], index > 0 ? filteredOptions[index - 1] : undefined);
-      const hasDescription = 'description' in filteredOptions[index];
-      let itemHeight = MENU_OPTION_HEIGHT;
-      if (hasDescription) {
-        itemHeight = MENU_OPTION_HEIGHT_DESCRIPTION;
-      }
-      if (firstGroupItem) {
-        itemHeight += MENU_OPTION_HEIGHT;
-      }
-      return itemHeight;
-    },
+    estimateSize: (index: number) =>
+      filteredOptions[index].description ? MENU_OPTION_HEIGHT_DESCRIPTION : MENU_OPTION_HEIGHT,
     overscan: VIRTUAL_OVERSCAN_ITEMS,
   };
 
@@ -343,15 +345,17 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
                 <ul style={{ height: rowVirtualizer.getTotalSize() }} className={styles.menuUlContainer}>
                   {rowVirtualizer.getVirtualItems().map((virtualRow) => {
                     const item = filteredOptions[virtualRow.index];
-                    const startingNewGroup = isNewGroup(item, filteredOptions[virtualRow.index - 1]);
-                    const itemId = 'multicombobox-option-' + item.value.toString(); // TODO
-                    const groupHeaderid = 'multicombobox-option-group-' + item.value.toString(); // TODO
 
                     return (
                       <li
                         key={`${item.value}-${virtualRow.index}`}
                         data-index={virtualRow.index}
-                        className={styles.optionBasic}
+                        className={cx(
+                          styles.optionBasic,
+                          styles.option,
+                          selectedItem && item.value === selectedItem.value && styles.optionSelected,
+                          highlightedIndex === virtualRow.index && styles.optionFocused
+                        )}
                         style={{
                           height: virtualRow.size,
                           transform: `translateY(${virtualRow.start}px)`,
@@ -361,32 +365,10 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
                           index: virtualRow.index,
                         })}
                       >
-                        <Stack direction="column" justifyContent="space-between" width="100%" height="100%" gap={0}>
-                          {startingNewGroup && (
-                            <div className={styles.optionGroup}>
-                              <OptionListItem
-                                label={item.group ?? t('combobox.group.undefined', 'No group')}
-                                id={groupHeaderid}
-                                isGroup={true}
-                              />
-                            </div>
-                          )}
-
-                          <div
-                            className={cx(
-                              styles.option,
-                              selectedItem && item.value === selectedItem.value && styles.optionSelected,
-                              highlightedIndex === virtualRow.index && styles.optionFocused
-                            )}
-                          >
-                            <OptionListItem
-                              label={item.label ?? item.value}
-                              description={item.description}
-                              id={itemId}
-                              isGroup={false}
-                            />
-                          </div>
-                        </Stack>
+                        <div className={styles.optionBody}>
+                          <span className={styles.optionLabel}>{item.label ?? item.value}</span>
+                          {item.description && <span className={styles.optionDescription}>{item.description}</span>}
+                        </div>
                       </li>
                     );
                   })}

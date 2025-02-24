@@ -37,6 +37,8 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
       stateManager.loadSnapshot(slug!);
     } else {
       stateManager.loadDashboard({
+        type,
+        slug,
         uid: uid ?? '',
         route: route.routeName as DashboardRoutes,
         urlFolderUid: queryParams.folderUid,
