@@ -475,11 +475,6 @@ func (s *Service) DeclarePluginRoles(ctx context.Context, ID, name string, regs 
 	ctx, span := tracer.Start(ctx, "accesscontrol.acimpl.DeclarePluginRoles")
 	defer span.End()
 
-	// Protect behind feature toggle
-	if !s.features.IsEnabled(ctx, featuremgmt.FlagAccessControlOnCall) {
-		return nil
-	}
-
 	acRegs := pluginutils.ToRegistrations(ID, name, regs)
 	for _, r := range acRegs {
 		if err := pluginutils.ValidatePluginRole(ID, r.Role); err != nil {
