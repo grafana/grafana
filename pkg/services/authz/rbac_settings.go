@@ -63,7 +63,10 @@ type RBACServerSettings struct {
 }
 
 type FolderAPISettings struct {
-	Host     string
+	// Host is hostname for folder api
+	Host string
+	// Insecure will skip verfication of ceritificates. Should only be used for testing
 	Insecure bool
-	CAFile   string
+	// CAFile is a filepath to trusted root certificates for server
+	CAFile string
 }
