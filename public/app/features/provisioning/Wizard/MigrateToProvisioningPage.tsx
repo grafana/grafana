@@ -11,16 +11,18 @@ import { ProvisioningWizard } from './ProvisioningWizard';
 export default function MigrateToProvisioningPage() {
   const settings = useGetFrontendSettingsQuery();
   const navigate = useNavigate();
-  if (settings.data) {
-    // Do run the migration wizard if you are already using unified storage
-    if (!Boolean(settings.data.legacyStorage)) {
-      navigate(PROVISIONING_URL);
+  useEffect(() => {
+    if (settings.data) {
+      // Do run the migration wizard if you are already using unified storage
+      if (!Boolean(settings.data.legacyStorage)) {
+        navigate(PROVISIONING_URL);
+      }
+      // Do run the migration wizard if something is already targeting the instance
+      if (settings.data.items.find((v) => v.target === 'instance')) {
+        navigate(PROVISIONING_URL);
+      }
     }
-    // Do run the migration wizard if something is already targeting the instance
-    if (settings.data.items.find((v) => v.target === 'instance')) {
-      navigate(PROVISIONING_URL);
-    }
-  }
+  }, [settings.data, navigate]);
 
   return (
     <Page
