@@ -30,7 +30,7 @@ export const ContactPointSelector = ({
   onError,
 }: ContactPointSelectorProps) => {
   const { selectedAlertmanager } = useAlertmanager();
-  const { contactPoints, isLoading, error, refetch } = useContactPointsWithStatus({
+  const { contactPoints, isLoading, error, refetch, isSuccess } = useContactPointsWithStatus({
     alertmanager: selectedAlertmanager!,
   });
   const [loaderSpinning, setLoaderSpinning] = useState(false);
@@ -61,10 +61,11 @@ export const ContactPointSelector = ({
   };
 
   useEffect(() => {
-    if (selectedContactPointName && !matchedContactPoint && onError) {
+    // If the contact points are fetched successfully and the selected contact point is not in the list, show an error
+    if (isSuccess && selectedContactPointName && !matchedContactPoint && onError) {
       onError(new Error(`Contact point "${selectedContactPointName}" could not be found`));
     }
-  }, [error, matchedContactPoint, onError, selectedContactPointName]);
+  }, [error, isSuccess, matchedContactPoint, onError, selectedContactPointName]);
 
   // TODO error handling
   if (error) {
