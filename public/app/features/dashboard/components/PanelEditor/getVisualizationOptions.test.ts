@@ -314,13 +314,11 @@ describe('getVisualizationOptions', () => {
       fieldConfig: fieldConfig,
     });
 
-    it('showIf should get custom fieldConfig if isCustom is true', () => {
-      const showIfSpy = jest.fn().mockReturnValue(true);
-
+    const getOnePropVizPlugin = (isCustom: boolean, showIfSpy: jest.Mock) => {
       const property1: FieldConfigPropertyItem = {
         id: 'custom.property1', // Match field properties
         path: 'property1', // Match field properties
-        isCustom: true,
+        isCustom: isCustom,
         process: (value) => value,
         shouldApply: () => true,
         override: jest.fn(),
@@ -333,61 +331,71 @@ describe('getVisualizationOptions', () => {
         return [property1];
       });
 
-      const plugin = {
+      return {
         meta: { skipDataQuery: false },
         getPanelOptionsSupplier: jest.fn,
         fieldConfigRegistry: customFieldRegistry,
       } as unknown as PanelPlugin;
+    };
+
+    it('showIf should get custom fieldConfig if isCustom is true', () => {
+      const showIfSpy = jest.fn().mockReturnValue(true);
+
+      const plugin = getOnePropVizPlugin(true, showIfSpy);
 
       const vizOptions = getVisualizationOptions2({
         panel: vizPanel,
         eventBus: new EventBusSrv(),
         plugin: plugin,
         instanceState: {},
+        data: {
+          state: LoadingState.Done,
+          series: [],
+          timeRange: getDefaultTimeRange(),
+          annotations: [
+            {
+              fields: [{ name: 'test', type: FieldType.string, config: { displayName: 'annotation' }, values: [1] }],
+              length: 1,
+            },
+          ],
+        },
       });
 
       expect(vizOptions.length).toEqual(1);
       expect(vizOptions[0].items.length).toEqual(1);
       expect(showIfSpy.mock.calls.length).toEqual(1);
       expect(showIfSpy.mock.calls[0][0].displayName).toBe('custom');
+      expect(showIfSpy.mock.calls[0][2][0].fields[0].config.displayName).toBe('annotation');
     });
 
     it('showIf should get normal fieldConfig if isCustom is false', () => {
       const showIfSpy = jest.fn().mockReturnValue(true);
 
-      const property1: FieldConfigPropertyItem = {
-        id: 'custom.property1', // Match field properties
-        path: 'property1', // Match field properties
-        isCustom: false,
-        process: (value) => value,
-        shouldApply: () => true,
-        override: jest.fn(),
-        editor: jest.fn(),
-        name: 'Property 1',
-        showIf: showIfSpy,
-      };
-
-      const customFieldRegistry: FieldConfigOptionsRegistry = new Registry<FieldConfigPropertyItem>(() => {
-        return [property1];
-      });
-
-      const plugin = {
-        meta: { skipDataQuery: false },
-        getPanelOptionsSupplier: jest.fn,
-        fieldConfigRegistry: customFieldRegistry,
-      } as unknown as PanelPlugin;
+      const plugin = getOnePropVizPlugin(false, showIfSpy);
 
       const vizOptions = getVisualizationOptions2({
         panel: vizPanel,
         eventBus: new EventBusSrv(),
         plugin: plugin,
         instanceState: {},
+        data: {
+          state: LoadingState.Done,
+          series: [],
+          timeRange: getDefaultTimeRange(),
+          annotations: [
+            {
+              fields: [{ name: 'test', type: FieldType.string, config: { displayName: 'annotation' }, values: [1] }],
+              length: 1,
+            },
+          ],
+        },
       });
 
       expect(vizOptions.length).toEqual(1);
       expect(vizOptions[0].items.length).toEqual(1);
       expect(showIfSpy.mock.calls.length).toEqual(1);
       expect(showIfSpy.mock.calls[0][0].displayName).toBe('default');
+      expect(showIfSpy.mock.calls[0][2][0].fields[0].config.displayName).toBe('annotation');
     });
   });
 });
