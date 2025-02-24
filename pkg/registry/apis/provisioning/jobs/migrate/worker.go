@@ -1,10 +1,11 @@
 package migrate
 
 import (
+	"bufio"
 	"context"
 	"errors"
 	"fmt"
-	"os"
+	"io"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -88,27 +89,41 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 		buffered *gogit.GoGitRepo
 	)
 
+	progress.SetTotal(10) // will show a progress bar
 	if repo.Config().Spec.GitHub != nil {
-		progress.SetMessage("clone target")
+		progress.SetMessage("clone " + repo.Config().Spec.GitHub.URL)
+		reader, writer := io.Pipe()
+		go func() {
+			scanner := bufio.NewScanner(reader)
+			for scanner.Scan() {
+				progress.SetMessage(scanner.Text())
+			}
+		}()
+
 		buffered, err = gogit.Clone(ctx, repo.Config(), gogit.GoGitCloneOptions{
 			Root:                   w.clonedir,
 			SingleCommitBeforePush: !options.History,
-		}, w.secrets, os.Stdout)
+		}, w.secrets, writer)
 		if err != nil {
 			return fmt.Errorf("unable to clone target: %w", err)
 		}
 		repo = buffered // send all writes to the buffered repo
 	}
 
-	tree, err := repo.ReadTree(ctx, "")
+	rw, ok := repo.(repository.ReaderWriter)
+	if !ok {
+		return errors.New("migration job submitted targetting repository that is not a ReaderWriter")
+	}
+
+	tree, err := rw.ReadTree(ctx, "")
 	if err != nil {
-		return fmt.Errorf("unable to read currnet tree: %w", err)
+		return fmt.Errorf("unable to read current tree: %w", err)
 	}
 
 	if true { // configurable?
 		for _, v := range tree {
 			if v.Blob && !resources.ShouldIgnorePath(v.Path) {
-				err = repo.Delete(ctx, v.Path, "", "initial cleanup")
+				err = rw.Delete(ctx, v.Path, "", "initial cleanup")
 				if err != nil {
 					return fmt.Errorf("initial cleanup error: %w", err)
 				}
@@ -121,18 +136,18 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 		return fmt.Errorf("error getting client: %w", err)
 	}
 
-	parser, err := w.parsers.GetParser(ctx, repo)
+	parser, err := w.parsers.GetParser(ctx, rw)
 	if err != nil {
 		return fmt.Errorf("error getting parser: %w", err)
 	}
 
-	worker, err := newMigrationJob(ctx, repo, *options, dynamicClient, parser, w.batch, w.legacyMigrator, progress)
+	worker, err := newMigrationJob(ctx, rw, *options, dynamicClient, parser, w.batch, w.legacyMigrator, progress)
 	if err != nil {
 		return fmt.Errorf("error creating job: %w", err)
 	}
 
 	if options.History {
-		progress.SetMessage("load users")
+		progress.SetMessage("loading users")
 		err = worker.loadUsers(ctx)
 		if err != nil {
 			return fmt.Errorf("error loading users: %w", err)
@@ -140,21 +155,29 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 	}
 
 	// Load and write all folders
-	progress.SetMessage("start folder export")
+	progress.SetMessage("exporting folders")
 	err = worker.loadFolders(ctx)
 	if err != nil {
 		return err
 	}
 
-	progress.SetMessage("start resource export")
+	progress.SetMessage("exporting resources")
 	err = worker.loadResources(ctx)
 	if err != nil {
 		return err
 	}
 
 	if buffered != nil {
-		progress.SetMessage("push changes")
-		if err := buffered.Push(ctx, os.Stdout); err != nil {
+		progress.SetMessage("pushing changes")
+		reader, writer := io.Pipe()
+		go func() {
+			scanner := bufio.NewScanner(reader)
+			for scanner.Scan() {
+				progress.SetMessage(scanner.Text())
+			}
+		}()
+
+		if err := buffered.Push(ctx, writer); err != nil {
 			return fmt.Errorf("error pushing changes: %w", err)
 		}
 	}
@@ -166,10 +189,10 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 	}
 
 	// enable sync (won't be saved)
-	repo.Config().Spec.Sync.Enabled = true
+	rw.Config().Spec.Sync.Enabled = true
 
 	// Delegate the import to a sync (from the already checked out go-git repository!)
-	return w.syncWorker.Process(ctx, repo, provisioning.Job{
+	return w.syncWorker.Process(ctx, rw, provisioning.Job{
 		Spec: provisioning.JobSpec{
 			Sync: &provisioning.SyncJobOptions{
 				Incremental: false,
@@ -181,7 +204,7 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 // MigrationJob holds all context for a running job
 type migrationJob struct {
 	logger logging.Logger
-	target repository.Repository
+	target repository.ReaderWriter
 	legacy legacy.LegacyMigrator
 	client *resources.DynamicClient // used to read users
 	parser *resources.Parser
@@ -198,7 +221,7 @@ type migrationJob struct {
 }
 
 func newMigrationJob(ctx context.Context,
-	target repository.Repository,
+	target repository.ReaderWriter,
 	options provisioning.MigrateJobOptions,
 	client *resources.DynamicClient,
 	parser *resources.Parser,

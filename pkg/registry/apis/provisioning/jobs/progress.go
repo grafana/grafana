@@ -10,12 +10,9 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 )
 
-// progressFn is a function that can be called to update the progress of a job
-type progressFn func(ctx context.Context, status provisioning.JobStatus) error
-
 // maybeNotifyProgress will only notify if a certain amount of time has passed
 // or if the job completed
-func maybeNotifyProgress(threshold time.Duration, fn progressFn) progressFn {
+func maybeNotifyProgress(threshold time.Duration, fn ProgressFn) ProgressFn {
 	var last time.Time
 
 	return func(ctx context.Context, status provisioning.JobStatus) error {
@@ -46,14 +43,14 @@ type jobProgressRecorder struct {
 	resultCount int
 	errorCount  int
 	errors      []string
-	progressFn  progressFn
+	progressFn  ProgressFn
 	summaries   map[string]*provisioning.JobResourceSummary
 }
 
-func newJobProgressRecorder(progressFn progressFn) JobProgressRecorder {
+func newJobProgressRecorder(ProgressFn ProgressFn) JobProgressRecorder {
 	return &jobProgressRecorder{
 		started:    time.Now(),
-		progressFn: maybeNotifyProgress(15*time.Second, progressFn),
+		progressFn: maybeNotifyProgress(5*time.Second, ProgressFn),
 		summaries:  make(map[string]*provisioning.JobResourceSummary),
 	}
 }

@@ -7,12 +7,12 @@
     "spec": {
         "title": "Load devenv dashboards",
         "description": "Load /devenv/dev-dashboards (from root of repository)",
+        "workflows": ["write"],
         "sync": {
             "enabled": false,
             "target": "folder",
             "intervalSeconds": 60
         },
-        "workflows": ["write"],
         "type": "local",
         "local": {
             "path": "devenv/dev-dashboards"

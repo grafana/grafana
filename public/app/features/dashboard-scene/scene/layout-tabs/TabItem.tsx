@@ -70,10 +70,6 @@ export class TabItem
     return new TabItems(items.filter((item) => item instanceof TabItem));
   }
 
-  public onChangeTab() {
-    this.getParentLayout().changeTab(this);
-  }
-
   public onChangeTitle(title: string) {
     this.setState({ title });
   }

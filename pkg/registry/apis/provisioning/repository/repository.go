@@ -7,13 +7,26 @@ import (
 	"io/fs"
 	"net/http"
 
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 )
 
+type Repository interface {
+	// Config returns the saved Kubernetes object.
+	Config() *provisioning.Repository
+
+	// Validate ensures the resource _looks_ correct.
+	// It should be called before trying to upsert a resource into the Kubernetes API server.
+	// This is not an indication that the connection information works, just that they are reasonably configured (see also Test).
+	Validate() field.ErrorList
+
+	// Test checks if the connection information actually works.
+	Test(ctx context.Context) (*provisioning.TestResults, error)
+}
+
+// ErrFileNotFound indicates that a path could not be found in the repository.
 var ErrFileNotFound error = fs.ErrNotExist
 
 type FileInfo struct {
@@ -47,18 +60,8 @@ type FileTreeEntry struct {
 	Blob bool
 }
 
-//go:generate mockery --name Repository --structname MockRepository --inpackage --filename repository_mock.go
-type Repository interface {
-	// The saved Kubernetes object.
-	Config() *provisioning.Repository
-
-	// This is called before trying to create/update a saved resource
-	// This is not an indication that the connection information works,
-	// just that they are reasonably configured
-	Validate() field.ErrorList
-
-	// Called to check if all connection information actually works
-	Test(ctx context.Context) (*provisioning.TestResults, error)
+type Reader interface {
+	Repository
 
 	// Read a file from the resource
 	// This data will be parsed and validated before it is shown to end users
@@ -70,6 +73,10 @@ type Repository interface {
 	// TODO: Make some API contract that lets us ignore files that aren't relevant to us (e.g. CI/CD, CODEOWNERS, other configs or source code).
 	// TODO: Test scale: do we want to stream entries instead somehow?
 	ReadTree(ctx context.Context, ref string) ([]FileTreeEntry, error)
+}
+
+type Writer interface {
+	Repository
 
 	// Write a file to the repository.
 	// The data has already been validated and is ready for save
@@ -87,8 +94,15 @@ type Repository interface {
 	Delete(ctx context.Context, path, ref, message string) error
 }
 
+type ReaderWriter interface {
+	Reader
+	Writer
+}
+
 // Hooks called after the repository has been created, updated or deleted
-type RepositoryHooks interface {
+type Hooks interface {
+	Repository
+
 	// For repositories that support webhooks
 	Webhook(ctx context.Context, req *http.Request) (*provisioning.WebhookResponse, error)
 	OnCreate(ctx context.Context) (*provisioning.WebhookStatus, error)
@@ -117,19 +131,18 @@ type VersionedFileChange struct {
 	PreviousPath string // rename
 }
 
-// VersionedRepository is a repository that supports versioning
-// this inferface may be extended to make the the original Repository interface
-// more agnostic to the underlying storage system
-type VersionedRepository interface {
+// Versioned is a repository that supports versioning.
+// This interface may be extended to make the the original Repository interface more agnostic to the underlying storage system.
+type Versioned interface {
 	// History of changes for a path
 	History(ctx context.Context, path, ref string) ([]provisioning.HistoryItem, error)
 	LatestRef(ctx context.Context) (string, error)
 	CompareFiles(ctx context.Context, base, ref string) ([]VersionedFileChange, error)
 }
 
-func writeWithReadThenCreateOrUpdate(ctx context.Context, r Repository, path, ref string, data []byte, comment string) error {
+func writeWithReadThenCreateOrUpdate(ctx context.Context, r ReaderWriter, path, ref string, data []byte, comment string) error {
 	_, err := r.Read(ctx, path, ref)
-	if err != nil && !(errors.Is(err, ErrFileNotFound) || apierrors.IsNotFound(err)) {
+	if err != nil && !(errors.Is(err, ErrFileNotFound)) {
 		return fmt.Errorf("failed to check if file exists before writing: %w", err)
 	}
 	if err == nil {

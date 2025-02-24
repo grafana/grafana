@@ -42,6 +42,7 @@ import {
 } from './api';
 import { FileDetails } from './api/types';
 import { PROVISIONING_URL } from './constants';
+import { getRemoteURL } from './utils/git';
 
 enum TabSelection {
   Overview = 'overview',
@@ -252,16 +253,4 @@ function FilesView({ repo }: RepoProps) {
       <InteractiveTable columns={columns} data={data} pageSize={25} getRowId={(f: FileDetails) => String(f.path)} />
     </Stack>
   );
-}
-
-function getRemoteURL(repo: Repository) {
-  if (repo.spec?.type === 'github') {
-    const spec = repo.spec.github;
-    let url = spec?.url || '';
-    if (spec?.branch) {
-      url += `/tree/${spec.branch}`;
-    }
-    return url;
-  }
-  return undefined;
 }
