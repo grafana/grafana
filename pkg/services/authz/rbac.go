@@ -169,7 +169,6 @@ func RegisterRBACAuthZService(
 				TLSClientConfig: rest.TLSClientConfig{
 					Insecure: cfg.Folder.Insecure,
 					CAFile:   cfg.Folder.CAFile,
-					CAData:   []byte{},
 				},
 				QPS:   50,
 				Burst: 100,
