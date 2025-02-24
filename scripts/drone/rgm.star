@@ -351,7 +351,7 @@ def rgm_promotion_pipeline():
             "--grafana-ref=$${GRAFANA_REF} " +
             "--enterprise-ref=$${ENTERPRISE_REF} " +
             "--grafana-repo=$${GRAFANA_REPO} " +
-            "--version=$${VERSION} ",
+            "--version=$${VERSION} " +
             "--go-version={}".format(golang_version),
         ],
         "environment": rgm_env_secrets(env),

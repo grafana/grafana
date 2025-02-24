@@ -4687,9 +4687,9 @@ steps:
     path: /github-app
 - commands:
   - export GITHUB_TOKEN=$(cat /github-app/token)
-  - 'dagger run --silent /src/grafana-build artifacts -a $${ARTIFACTS} --grafana-ref=$${GRAFANA_REF}
-    --enterprise-ref=$${ENTERPRISE_REF} --grafana-repo=$${GRAFANA_REPO} --version=$${VERSION} '
-  - --go-version=1.23.5
+  - dagger run --silent /src/grafana-build artifacts -a $${ARTIFACTS} --grafana-ref=$${GRAFANA_REF}
+    --enterprise-ref=$${ENTERPRISE_REF} --grafana-repo=$${GRAFANA_REPO} --version=$${VERSION}
+    --go-version=1.23.5
   depends_on:
   - github-app-generate-token
   environment:
@@ -5564,6 +5564,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 6b6095edc4bba01854f37bc49d1e26ee6ad9813a6bdf7bc03efbf1aed29357fc
+hmac: 558d477c002eb799c23f6631aafc7df933518e445e59f34ceb989e73f4dc60bc
 
 ...
