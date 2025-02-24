@@ -1,4 +1,5 @@
 import { get, set } from 'lodash';
+import { of } from 'rxjs';
 
 import { ScopedVars } from '@grafana/data';
 import { VariableInterpolation } from '@grafana/runtime';
@@ -279,36 +280,49 @@ describe('AzureMonitorDatasource', () => {
   });
 
   describe('When performing getMetricNamespaces', () => {
-    const response = {
-      value: [
+    const resourceGroupResponse = {
+      data: [
         {
-          id: '/subscriptions/mock-subscription-id/resourceGroups/nodeapp/providers/microsoft.insights/components/Azure.ApplicationInsights',
-          name: 'Azure.ApplicationInsights',
-          type: 'Azure.ApplicationInsights',
-          classification: 'Custom',
-        },
-        {
-          id: '/subscriptions/mock-subscription-id/resourceGroups/nodeapp/providers/microsoft.insights/components/microsoft.insights-components',
-          name: 'microsoft.insights-components',
-          type: 'Microsoft.Insights/components',
-          classification: 'Platform',
+          fields: [
+            {
+              values: ['microsoft.compute/virtualmachines', 'microsoft.keyvault/vaults'],
+            },
+          ],
         },
       ],
     };
 
-    beforeEach(() => {
+    const noResourceGroupResponse = {
+      value: [
+        {
+          id: '/subscriptions/mock-subscription-id/resourceGroups/microsoft.insights/components/microsoft.insights-components',
+          name: 'microsoft.insights-components',
+          type: 'Microsoft.Insights/metricNamespaces',
+          properties: {
+            metricNamespaceName: 'microsoft.appplatform/spring',
+          },
+          classification: 'Platform',
+        },
+        {
+          id: '/subscriptions/mock-subscription-id/providers/microsoft.insights/components/Azure.ApplicationInsights',
+          name: 'Azure.ApplicationInsights',
+          type: 'Microsoft.Insights/metricNamespaces',
+          properties: {
+            metricNamespaceName: 'azure.applicationinsights',
+          },
+          classification: 'Custom',
+        },
+      ],
+    };
+
+    it('should return list of metrics namespaces that emit metrics when a resource group is provided', () => {
       ctx.ds.azureMonitorDatasource.getResource = jest.fn().mockImplementation((path: string) => {
-        if (path.includes('westeurope')) {
-          return Promise.reject('failed to retrieve due to timeout');
-        }
         const basePath = 'azuremonitor/subscriptions/mock-subscription-id/resourceGroups/nodeapp';
         const expected = basePath + '/resources?api-version=2018-01-01';
         expect(path).toBe(expected);
-        return Promise.resolve(response);
+        return Promise.resolve(resourceGroupResponse);
       });
-    });
-
-    it('should return list of Metric Namspaces', () => {
+      ctx.ds.azureMonitorDatasource.runAzureResourceGraphQuery = jest.fn().mockResolvedValue(of(resourceGroupResponse));
       return ctx.ds.azureMonitorDatasource
         .getMetricNamespaces(
           {
@@ -318,21 +332,50 @@ describe('AzureMonitorDatasource', () => {
           undefined,
           false
         )
-        .then((results: Array<{ text: string; value: string }>) => {
+        .then((results) => {
           expect(results.length).toEqual(2);
-          expect(results[0].text).toEqual('azure.applicationinsights');
-          expect(results[0].value).toEqual('Azure.ApplicationInsights');
-          expect(results[1].text).toEqual('microsoft.insights/components');
-          expect(results[1].value).toEqual('microsoft.insights-components');
+          expect(results[0]).toEqual('microsoft.compute/virtualmachines');
+          expect(results[1]).toEqual('microsoft.keyvault/vaults');
         });
     });
 
-    it('should return list of Metric Namespaces even if there is a failure', () => {
+    it('should return list of metrics namespaces at the subscription level when no resource group is provided', () => {
+      ctx.ds.azureMonitorDatasource.getResource = jest.fn().mockImplementation((path: string) => {
+        const basePath = 'azuremonitor/subscriptions/mock-subscription-id/providers/microsoft.insights';
+        const expected = basePath + '/metricNamespaces?api-version=2017-12-01-preview';
+        expect(path).toBe(expected);
+        return Promise.resolve(noResourceGroupResponse);
+      });
+      return ctx.ds.azureMonitorDatasource
+        .getMetricNamespaces(
+          {
+            resourceUri: '/subscriptions/mock-subscription-id',
+          },
+          false,
+          undefined,
+          false
+        )
+        .then((results) => {
+          expect(results.length).toEqual(2);
+          expect(results[0].text).toEqual('microsoft.appplatform/spring');
+          expect(results[0].value).toEqual('microsoft.appplatform/spring');
+          expect(results[1].text).toEqual('azure.applicationinsights');
+          expect(results[1].value).toEqual('azure.applicationinsights');
+        });
+    });
+
+    it('should return list of Metric Namespaces even if there is a failure when no resource group is provided', () => {
+      ctx.ds.azureMonitorDatasource.getResource = jest.fn().mockImplementation((path: string) => {
+        if (path.includes('westeurope')) {
+          return Promise.reject('failed to retrieve due to timeout');
+        }
+        return Promise.resolve(noResourceGroupResponse);
+      });
       const consoleError = jest.spyOn(console, 'error').mockImplementation();
       return ctx.ds.azureMonitorDatasource
         .getMetricNamespaces(
           {
-            resourceUri: '/subscriptions/mock-subscription-id/resourceGroups/nodeapp',
+            resourceUri: '/subscriptions/mock-subscription-id',
           },
           true,
           'westeurope',
@@ -347,11 +390,41 @@ describe('AzureMonitorDatasource', () => {
         });
     });
 
-    it('when custom is specified will only return custom namespaces', () => {
+    it('should return list of Metric Namespaces even if there is a failure when a resource group is provided', () => {
+      ctx.ds.azureMonitorDatasource.getResource = jest.fn().mockImplementation((path: string) => {
+        if (path.includes('westeurope')) {
+          return Promise.reject('failed to retrieve due to timeout');
+        }
+        return Promise.resolve(resourceGroupResponse);
+      });
+      const consoleError = jest.spyOn(console, 'error').mockImplementation();
       return ctx.ds.azureMonitorDatasource
         .getMetricNamespaces(
           {
             resourceUri: '/subscriptions/mock-subscription-id/resourceGroups/nodeapp',
+          },
+          true,
+          'westeurope',
+          false
+        )
+        .then((results) => {
+          expect(results.length).toEqual(0);
+          expect(consoleError).toHaveBeenCalled();
+          expect(consoleError.mock.calls[0][0]).toContain(`Failed to run ARG query`);
+        });
+    });
+
+    it('when custom is specified will only return custom namespaces when no resource group is provided', () => {
+      ctx.ds.azureMonitorDatasource.getResource = jest.fn().mockImplementation((path: string) => {
+        const basePath = 'azuremonitor/subscriptions/mock-subscription-id/providers/microsoft.insights';
+        const expected = basePath + '/metricNamespaces?api-version=2017-12-01-preview';
+        expect(path).toBe(expected);
+        return Promise.resolve(noResourceGroupResponse);
+      });
+      return ctx.ds.azureMonitorDatasource
+        .getMetricNamespaces(
+          {
+            resourceUri: '/subscriptions/mock-subscription-id',
           },
           false,
           undefined,
@@ -360,7 +433,7 @@ describe('AzureMonitorDatasource', () => {
         .then((results: Array<{ text: string; value: string }>) => {
           expect(results.length).toEqual(1);
           expect(results[0].text).toEqual('azure.applicationinsights');
-          expect(results[0].value).toEqual('Azure.ApplicationInsights');
+          expect(results[0].value).toEqual('azure.applicationinsights');
         });
     });
   });
