@@ -332,7 +332,8 @@ func (g *GoGitRepo) Write(ctx context.Context, fpath string, ref string, data []
 
 // Delete implements repository.Repository.
 func (g *GoGitRepo) Delete(ctx context.Context, path string, ref string, message string) error {
-	return g.tree.Filesystem.Remove(path) // missing slash
+	_, err := g.tree.Remove(path)
+	return err // missing slash
 }
 
 // Read implements repository.Repository.

@@ -858,6 +858,11 @@ func (b *APIBuilder) encryptSecrets(ctx context.Context, repo *provisioning.Repo
 // This should run somewhere else at startup by default (dual writer? dashboards?)
 func (b *APIBuilder) tryRunningOnlyUnifiedStorage() error {
 	ctx := context.Background()
+
+	if !b.storageStatus.ShouldManage(dashboard.DashboardResourceInfo.GroupResource()) {
+		return nil // not enabled
+	}
+
 	if !dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, b.storageStatus) {
 		return nil
 	}
