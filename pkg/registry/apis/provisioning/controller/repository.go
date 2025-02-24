@@ -220,6 +220,32 @@ func (rc *RepositoryController) processNextWorkItem(ctx context.Context) bool {
 	return true
 }
 
+func (rc *RepositoryController) handleDelete(ctx context.Context, obj *provisioning.Repository) error {
+	repo, err := rc.repoGetter.AsRepository(ctx, obj)
+	if err != nil {
+		return fmt.Errorf("unable to create repository from configuration: %w", err)
+	}
+
+	// Process any finalizers
+	if len(obj.Finalizers) > 0 {
+		err := rc.finalizer.process(ctx, repo, obj.Finalizers)
+		if err != nil {
+			return fmt.Errorf("error running finalizers %w", err)
+		}
+
+		// remove the finalizers
+		_, err = rc.client.Repositories(obj.GetNamespace()).
+			Patch(ctx, obj.Name, types.JSONPatchType, []byte(`[
+					{ "op": "remove", "path": "/metadata/finalizers" }
+				]`), v1.PatchOptions{
+				FieldManager: "repository-controller",
+			})
+		return err // delete will be called again
+	}
+
+	return nil
+}
+
 //nolint:gocyclo
 func (rc *RepositoryController) process(item *queueItem) error {
 	logger := rc.logger.With("key", item.key)
@@ -243,6 +269,11 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	}
 	logger = logger.WithContext(ctx)
 
+	if obj.DeletionTimestamp != nil {
+		logger.Info("handle repository delete")
+		return rc.handleDelete(ctx, obj)
+	}
+
 	healthAge := time.Since(time.UnixMilli(obj.Status.Health.Checked))
 	syncAge := time.Since(time.UnixMilli(obj.Status.Sync.Finished))
 	if obj.Status.Sync.Finished == 0 && obj.Status.Sync.State == "" {
@@ -261,7 +292,6 @@ func (rc *RepositoryController) process(item *queueItem) error {
 
 	var shouldHealthcheck bool
 	switch {
-	case obj.DeletionTimestamp != nil:
 	case hasSpecChanged:
 		shouldHealthcheck = true
 	case obj.Status.Health.Checked == 0:
@@ -280,14 +310,12 @@ func (rc *RepositoryController) process(item *queueItem) error {
 			"path":  "/status/observedGeneration",
 			"value": obj.Generation,
 		})
-	case obj.DeletionTimestamp != nil:
-		logger.Info("deletion timestamp set")
 	case shouldResync && obj.Status.Health.Healthy:
 		logger.Info("sync interval triggered", "sync_age", syncAge, "sync_interval", syncInterval, "sync_status", obj.Status.Sync)
 	case shouldHealthcheck:
 		logger.Info("health check is too old", "heath_age", healthAge, "health_status", obj.Status.Health.Healthy)
 	default:
-		logger.Info("skipping as conditions are not met", "status", obj.Status, "generation", obj.Generation, "deletion_timestamp", obj.DeletionTimestamp, "sync_spec", obj.Spec.Sync)
+		logger.Info("skipping as conditions are not met", "status", obj.Status, "generation", obj.Generation, "sync_spec", obj.Spec.Sync)
 		return nil
 	}
 
@@ -299,28 +327,6 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	// Safe to edit the repository from here
 	obj = obj.DeepCopy()
 	hooks, _ := repo.(repository.Hooks)
-
-	if obj.DeletionTimestamp != nil {
-		logger.Info("handle repository delete")
-
-		// Process any finalizers
-		if len(obj.Finalizers) > 0 {
-			err = rc.finalizer.process(ctx, repo, obj.Finalizers)
-			if err != nil {
-				return fmt.Errorf("error running finalizers %w", err)
-			}
-
-			// remove the finalizers
-			_, err = rc.client.Repositories(obj.GetNamespace()).
-				Patch(ctx, obj.Name, types.JSONPatchType, []byte(`[
-						{ "op": "remove", "path": "/metadata/finalizers" }
-					]`), v1.PatchOptions{
-					FieldManager: "repository-controller",
-				})
-		}
-
-		return err // delete will be called again
-	}
 
 	var healthStatusChanged bool
 	if shouldHealthcheck {
