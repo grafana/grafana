@@ -16,7 +16,7 @@ export function useFolder(uid?: string): ReturnBag {
   const fetchFolderState = useGetFolderQuery(uid || skipToken);
 
   return {
-    loading: fetchFolderState.isLoading || fetchFolderState.isUninitialized,
+    loading: fetchFolderState.isLoading,
     folder: fetchFolderState.data,
   };
 }
