@@ -8,5 +8,5 @@ export const defaultOptions = {
   ...defaultOptionsGen,
   color: { ...defaultOptionsGen.color, mode: HeatmapColorMode.Scheme, scale: HeatmapColorScale.Exponential },
   yAxis: { ...defaultOptionsGen.yAxis, axisPlacement: AxisPlacement.Left },
-  rowsFrame: { ...defaultOptionsGen.rowsFrame, layout: HeatmapCellLayout.auto },
+  rowsFrame: { ...defaultOptionsGen.rowsFrame, layout: HeatmapCellLayout.Auto },
 } as Options;

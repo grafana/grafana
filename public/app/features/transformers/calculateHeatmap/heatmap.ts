@@ -152,13 +152,13 @@ export function rowsToCellsHeatmap(opts: RowsHeatmapOptions): DataFrame {
   // this name determines whether cells are drawn above, below, or centered on the values
   let ordinalFieldName = yFields[0].labels?.le != null ? 'yMax' : 'y';
   switch (opts.layout) {
-    case HeatmapCellLayout.le:
+    case HeatmapCellLayout.Le:
       ordinalFieldName = 'yMax';
       break;
-    case HeatmapCellLayout.ge:
+    case HeatmapCellLayout.Ge:
       ordinalFieldName = 'yMin';
       break;
-    case HeatmapCellLayout.unknown:
+    case HeatmapCellLayout.Unknown:
       ordinalFieldName = 'y';
       break;
   }
