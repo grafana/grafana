@@ -49,9 +49,19 @@ type sqlTx struct {
 }
 
 func (tx sqlTx) QueryContext(ctx context.Context, query string, args ...any) (db.Rows, error) {
-	return tx.Tx.QueryContext(ctx, query, args...)
+	stmt, err := tx.Tx.PrepareContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer stmt.Close()
+	return stmt.QueryContext(ctx, args...)
 }
 
 func (tx sqlTx) QueryRowContext(ctx context.Context, query string, args ...any) db.Row {
-	return tx.Tx.QueryRowContext(ctx, query, args...)
+	stmt, err := tx.Tx.PrepareContext(ctx, query)
+	if err != nil {
+		return nil
+	}
+	defer stmt.Close()
+	return stmt.QueryRowContext(ctx, args...)
 }
