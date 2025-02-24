@@ -57,3 +57,16 @@ func readAuthzClientSettings(cfg *setting.Cfg) (*authzClientSettings, error) {
 
 	return s, nil
 }
+
+type RBACServerSettings struct {
+	Folder FolderAPISettings
+}
+
+type FolderAPISettings struct {
+	// Host is hostname for folder api
+	Host string
+	// Insecure will skip verification of ceritificates. Should only be used for testing
+	Insecure bool
+	// CAFile is a filepath to trusted root certificates for server
+	CAFile string
+}
