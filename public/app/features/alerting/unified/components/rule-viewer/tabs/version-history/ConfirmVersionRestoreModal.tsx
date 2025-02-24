@@ -67,10 +67,10 @@ export const ConfirmVersionRestoreModal = ({
   }
 
   async function onManualRestore() {
-    if (!ruleWithLocation) {
+    if (!versionToRestore || !ruleWithLocation) {
       return;
     }
-    const payload = rulerRuleToFormValues(ruleWithLocation);
+    const payload = rulerRuleToFormValues({ ...ruleWithLocation, rule: versionToRestore });
     const ruleFormUrl = urlUtil.renderUrl(`/alerting/${ruleIdentifier.uid}/edit`, {
       defaults: JSON.stringify(payload),
       returnTo: location.pathname + location.search,

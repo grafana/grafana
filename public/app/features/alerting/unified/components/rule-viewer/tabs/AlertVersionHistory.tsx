@@ -103,7 +103,7 @@ export function AlertVersionHistory({ ruleUid }: AlertVersionHistoryProps) {
     );
   }
 
-  const compareVersions = () => {
+  const compareSelectedVersions = () => {
     // precondition: we have only two versions selected in checkedVersions
     const [older, newer] = ruleVersions
       .filter((rule) => {
@@ -129,8 +129,15 @@ export function AlertVersionHistory({ ruleUid }: AlertVersionHistoryProps) {
     });
 
     // setting the versions to compare
-    setOldVersion(older);
-    setNewVersion(newer);
+    compareVersions(older, newer);
+  };
+
+  const compareVersions = (
+    oldRule: RulerGrafanaRuleDTO<GrafanaRuleDefinition>,
+    newRule: RulerGrafanaRuleDTO<GrafanaRuleDefinition>
+  ) => {
+    setOldVersion(oldRule);
+    setNewVersion(newRule);
     setShowDrawer(true);
   };
 
@@ -159,7 +166,7 @@ export function AlertVersionHistory({ ruleUid }: AlertVersionHistoryProps) {
           content={t('core.versionHistory.comparison.select', 'Select two versions to start comparing')}
           placement="bottom"
         >
-          <Button type="button" disabled={!canCompare} onClick={compareVersions} icon="code-branch">
+          <Button type="button" disabled={!canCompare} onClick={compareSelectedVersions} icon="code-branch">
             <Trans i18nKey="alerting.alertVersionHistory.compareVersions">Compare versions</Trans>
           </Button>
         </Tooltip>
@@ -176,6 +183,7 @@ export function AlertVersionHistory({ ruleUid }: AlertVersionHistoryProps) {
         />
       )}
       <VersionHistoryTable
+        onCompareSingleVersion={(rule) => compareVersions(rule, ruleVersions[0])}
         onVersionsChecked={handleCheckedVersionChange}
         ruleVersions={ruleVersions}
         disableSelection={canCompare}

@@ -1,9 +1,9 @@
 import { useCallback, useState } from 'react';
 
 import { config } from '@grafana/runtime';
-import { Box, Button, Drawer, Stack } from '@grafana/ui';
+import { Drawer } from '@grafana/ui';
 import { RevisionModel, VersionHistoryComparison } from 'app/core/components/VersionHistory/VersionHistoryComparison';
-import { Trans, t } from 'app/core/internationalization';
+import { t } from 'app/core/internationalization';
 import { GrafanaRuleIdentifier } from 'app/types/unified-alerting';
 import { GrafanaRuleDefinition, RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
@@ -77,24 +77,9 @@ export const ComparisonDrawer = ({
           newSummary={newVersionSummary}
           newVersion={newVersion}
           preprocessVersion={preprocessRuleForDiffDisplay}
+          showRestoreButton={config.featureToggles.alertingRuleVersionHistoryRestore && isNewLatest}
+          onRestore={() => setShowConfirmModal(true)}
         />
-        {config.featureToggles.alertingRuleVersionHistoryRestore && isNewLatest && (
-          <Box paddingTop={2}>
-            <Stack justifyContent="flex-end">
-              <Button
-                variant="destructive"
-                onClick={() => {
-                  setShowConfirmModal(true);
-                }}
-                icon="history"
-              >
-                <Trans i18nKey="alerting.alertVersionHistory.restore-version">
-                  Restore to version {{ version: oldVersion.grafana_alert.version }}
-                </Trans>
-              </Button>
-            </Stack>
-          </Box>
-        )}
       </Drawer>
       {showConfirmModal && (
         <ConfirmVersionRestoreModal

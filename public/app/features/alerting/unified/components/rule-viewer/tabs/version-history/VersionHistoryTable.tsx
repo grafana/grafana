@@ -16,6 +16,7 @@ const VERSIONS_PAGE_SIZE = 20;
 
 export interface VersionHistoryTableProps {
   onVersionsChecked(id: string): void;
+  onCompareSingleVersion(rule: RulerGrafanaRuleDTO<GrafanaRuleDefinition>): void;
   ruleVersions: Array<RulerGrafanaRuleDTO<GrafanaRuleDefinition>>;
   disableSelection: boolean;
   checkedVersions: Set<string>;
@@ -24,6 +25,7 @@ export interface VersionHistoryTableProps {
 }
 export function VersionHistoryTable({
   onVersionsChecked,
+  onCompareSingleVersion,
   ruleVersions,
   disableSelection,
   checkedVersions,
@@ -120,22 +122,36 @@ export function VersionHistoryTable({
       disableGrow: true,
       cell: ({ row }) => {
         const isFirstItem = row.index === 0;
+        const compareWithLatest = t('alerting.alertVersionHistory.compare-with-latest', 'Compare with latest version');
 
         return (
           <Stack direction="row" alignItems="center" justifyContent="flex-end">
             {isFirstItem ? (
               <Badge text={t('alerting.alertVersionHistory.latest', 'Latest')} color="blue" />
             ) : config.featureToggles.alertingRuleVersionHistoryRestore ? (
-              <Button
-                variant="secondary"
-                size="sm"
-                icon="history"
-                onClick={() => {
-                  row.original.grafana_alert.version && showConfirmation(row.original);
-                }}
-              >
-                <Trans i18nKey="alerting.alertVersionHistory.restore">Restore</Trans>
-              </Button>
+              <>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  icon="code-branch"
+                  onClick={() => {
+                    onCompareSingleVersion(row.original);
+                  }}
+                  tooltip={compareWithLatest}
+                >
+                  <Trans i18nKey="alerting.alertVersionHistory.compare">Compare</Trans>
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  icon="history"
+                  onClick={() => {
+                    row.original.grafana_alert.version && showConfirmation(row.original);
+                  }}
+                >
+                  <Trans i18nKey="alerting.alertVersionHistory.restore">Restore</Trans>
+                </Button>
+              </>
             ) : null}
           </Stack>
         );
