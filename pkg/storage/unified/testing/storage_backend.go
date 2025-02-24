@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"github.com/grafana/grafana/pkg/storage/unified/sql"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -34,6 +33,7 @@ type NewBackendFunc func(ctx context.Context) resource.StorageBackend
 // TestOptions configures which tests to run
 type TestOptions struct {
 	SkipTests map[string]bool // tests to skip
+
 }
 
 // RunStorageBackendTest runs the storage backend test suite
@@ -354,7 +354,7 @@ func runTestIntegrationBackendList(t *testing.T, backend resource.StorageBackend
 		require.NoError(t, err)
 		require.Nil(t, res.Error)
 		require.Len(t, res.Items, 3)
-		continueToken, err := sql.GetContinueToken(res.NextPageToken)
+		continueToken, err := resource.GetContinueToken(res.NextPageToken)
 		require.NoError(t, err)
 		require.Equal(t, "item1 ADDED", string(res.Items[0].Value))
 		require.Equal(t, "item2 MODIFIED", string(res.Items[1].Value))
@@ -402,13 +402,13 @@ func runTestIntegrationBackendList(t *testing.T, backend resource.StorageBackend
 		require.Equal(t, "item2 MODIFIED", string(res.Items[1].Value))
 		require.Equal(t, "item4 ADDED", string(res.Items[2].Value))
 
-		continueToken, err := sql.GetContinueToken(res.NextPageToken)
+		continueToken, err := resource.GetContinueToken(res.NextPageToken)
 		require.NoError(t, err)
 		require.Equal(t, rv7, continueToken.ResourceVersion)
 	})
 
 	t.Run("fetch second page at revision", func(t *testing.T) {
-		continueToken := &sql.ContinueToken{
+		continueToken := &resource.ContinueToken{
 			ResourceVersion: rv8,
 			StartOffset:     2,
 		}
@@ -429,7 +429,7 @@ func runTestIntegrationBackendList(t *testing.T, backend resource.StorageBackend
 		require.Equal(t, "item4 ADDED", string(res.Items[0].Value))
 		require.Equal(t, "item5 ADDED", string(res.Items[1].Value))
 
-		continueToken, err = sql.GetContinueToken(res.NextPageToken)
+		continueToken, err = resource.GetContinueToken(res.NextPageToken)
 		require.NoError(t, err)
 		require.Equal(t, rv8, continueToken.ResourceVersion)
 		require.Equal(t, int64(4), continueToken.StartOffset)
@@ -486,14 +486,14 @@ func runTestIntegrationBackendListHistory(t *testing.T, backend resource.Storage
 		require.Equal(t, "item1 MODIFIED", string(res.Items[2].Value))
 		require.Equal(t, rvHistory3, res.Items[2].ResourceVersion)
 
-		continueToken, err := sql.GetContinueToken(res.NextPageToken)
+		continueToken, err := resource.GetContinueToken(res.NextPageToken)
 		require.NoError(t, err)
 		//  should return the furthest back RV as the next page token
 		require.Equal(t, rvHistory3, continueToken.ResourceVersion)
 	})
 
 	t.Run("fetch second page of history at revision", func(t *testing.T) {
-		continueToken := &sql.ContinueToken{
+		continueToken := &resource.ContinueToken{
 			ResourceVersion: rvHistory3,
 			StartOffset:     2,
 		}
