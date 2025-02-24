@@ -1,3 +1,4 @@
+import { cloneDeep } from 'lodash';
 import { useAsyncFn } from 'react-use';
 
 import { locationUtil } from '@grafana/data';
@@ -45,6 +46,8 @@ export const useDashboardSave = (isCopy = false) => {
         const result = await saveDashboard(clone, options, dashboard, saveDashboardRtkQuery);
         dashboard.version = result.version;
 
+        // Altering the clone leads to an error due to the clone being immutable
+        clone = cloneDeep(clone);
         clone.version = result.version;
         dashboard.clearUnsavedChanges(clone, options);
 
