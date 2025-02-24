@@ -37,6 +37,7 @@ var files = []string{
 	"prom-exemplars-b",
 	"prom-exemplars-diff-labels",
 	"prom-query-range",
+	"prom-query-range-big",
 	"loki-streams-a",
 	"loki-streams-b",
 	"loki-streams-c",

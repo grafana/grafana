@@ -595,27 +595,21 @@ func readScalar(iter *sdkjsoniter.Iterator, dataPlane bool) backend.DataResponse
 	}
 }
 
-func readMatrixOrVectorMulti(bufIter *sdkjsoniter.Iterator, resultType string, opt Options) backend.DataResponse {
+func readMatrixOrVectorMulti(iter *sdkjsoniter.Iterator, resultType string, opt Options) backend.DataResponse {
 	rsp := backend.DataResponse{}
+	size := 0
 
-	for more, err := bufIter.ReadArray(); more; more, err = bufIter.ReadArray() {
+	for more, err := iter.ReadArray(); more; more, err = iter.ReadArray() {
 		if err != nil {
 			return rspErr(err)
 		}
 
 		// First read all values to temporary storage
-		var tempTimes []time.Time
-		var tempValues []float64
+		tempTimes := make([]time.Time, 0, size)
+		tempValues := make([]float64, 0, size)
 		var labels data.Labels
 		var histogram *histogramInfo
 
-		// Read the current series
-		raw, err := bufIter.SkipAndReturnBytes()
-		if err != nil {
-			return rspErr(err)
-		}
-
-		iter := sdkjsoniter.NewIterator(jsoniter.ParseBytes(jsoniter.ConfigDefault, raw))
 		for l1Field, err := iter.ReadObject(); l1Field != ""; l1Field, err = iter.ReadObject() {
 			if err != nil {
 				return rspErr(err)
@@ -631,8 +625,14 @@ func readMatrixOrVectorMulti(bufIter *sdkjsoniter.Iterator, resultType string, o
 				if err != nil {
 					return rspErr(err)
 				}
+				// if isSizeKnown {
+				// 	tempTimes[idx] = t
+				// 	tempValues[idx] = v
+				// 	idx++
+				// } else {
 				tempTimes = append(tempTimes, t)
 				tempValues = append(tempValues, v)
+				// }
 
 			case "values":
 				for more, err := iter.ReadArray(); more; more, err = iter.ReadArray() {
@@ -643,8 +643,14 @@ func readMatrixOrVectorMulti(bufIter *sdkjsoniter.Iterator, resultType string, o
 					if err != nil {
 						return rspErr(err)
 					}
+					// if isSizeKnown {
+					// 	tempTimes[idx] = t
+					// 	tempValues[idx] = v
+					// 	idx++
+					// } else {
 					tempTimes = append(tempTimes, t)
 					tempValues = append(tempValues, v)
+					// }
 				}
 
 			case "histogram":
@@ -700,6 +706,7 @@ func readMatrixOrVectorMulti(bufIter *sdkjsoniter.Iterator, resultType string, o
 				frame.Meta.TypeVersion = data.FrameTypeVersion{0, 1}
 			}
 			rsp.Frames = append(rsp.Frames, frame)
+			size = len(tempTimes)
 		}
 	}
 
