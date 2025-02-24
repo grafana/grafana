@@ -451,6 +451,10 @@ describe('Combobox', () => {
       });
       expect(asyncOptions).rejects.toThrow('Could not retrieve options');
       await waitFor(() => expect(consoleErrorSpy).toHaveBeenCalled());
+
+      const emptyMessage = screen.queryByText('An error occurred while loading options.');
+      expect(emptyMessage).toBeInTheDocument();
+
       asyncOptions.mockClear();
     });
 
