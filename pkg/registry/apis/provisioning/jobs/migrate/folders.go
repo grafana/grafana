@@ -25,17 +25,17 @@ type folderReader struct {
 	targetRepoName string
 }
 
-// Close implements resource.BatchResourceWritej.
+// Close implements resource.BatchResourceWrite.
 func (f *folderReader) Close() error {
 	return nil
 }
 
-// CloseWithResults implements resource.BatchResourceWritej.
+// CloseWithResults implements resource.BatchResourceWrite.
 func (f *folderReader) CloseWithResults() (*resource.BatchResponse, error) {
 	return &resource.BatchResponse{}, nil
 }
 
-// Write implements resource.BatchResourceWritej.
+// Write implements resource.BatchResourceWrite.
 func (f *folderReader) Write(ctx context.Context, key *resource.ResourceKey, value []byte) error {
 	item := &unstructured.Unstructured{}
 	err := item.UnmarshalJSON(value)

@@ -39,9 +39,11 @@ type githubRepository struct {
 }
 
 var (
-	_ Repository          = (*githubRepository)(nil)
-	_ RepositoryHooks     = (*githubRepository)(nil)
-	_ VersionedRepository = (*githubRepository)(nil)
+	_ Repository = (*githubRepository)(nil)
+	_ Hooks      = (*githubRepository)(nil)
+	_ Versioned  = (*githubRepository)(nil)
+	_ Writer     = (*githubRepository)(nil)
+	_ Reader     = (*githubRepository)(nil)
 )
 
 func NewGitHub(
