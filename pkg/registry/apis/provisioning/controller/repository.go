@@ -226,6 +226,8 @@ func (rc *RepositoryController) processNextWorkItem(ctx context.Context) bool {
 }
 
 func (rc *RepositoryController) handleDelete(ctx context.Context, obj *provisioning.Repository) error {
+	logger := logging.FromContext(ctx)
+	logger.Info("handle repository delete")
 	repo, err := rc.repoGetter.AsRepository(ctx, obj)
 	if err != nil {
 		return fmt.Errorf("unable to create repository from configuration: %w", err)
@@ -452,7 +454,6 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	logger = logger.WithContext(ctx)
 
 	if obj.DeletionTimestamp != nil {
-		logger.Info("handle repository delete")
 		return rc.handleDelete(ctx, obj)
 	}
 
@@ -496,9 +497,10 @@ func (rc *RepositoryController) process(item *queueItem) error {
 
 	// Run hooks
 	webhookStatus, err := rc.runHooks(ctx, repo, obj)
-	if err != nil {
+	switch {
+	case err != nil:
 		return err
-	} else if webhookStatus != nil {
+	case webhookStatus != nil:
 		patchOperations = append(patchOperations, map[string]interface{}{
 			"op":    "replace",
 			"path":  "/status/webhook",
@@ -506,9 +508,8 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		})
 	}
 
-	// determine the sync strategy
+	// determine the sync strategy and sync status to apply
 	syncOptions := rc.determineSyncStrategy(ctx, obj, shouldResync, healthStatus)
-	// determine the sync status
 	if syncStatus := rc.determineSyncStatus(obj, syncOptions); syncStatus != nil {
 		patchOperations = append(patchOperations, map[string]interface{}{
 			"op":    "replace",
