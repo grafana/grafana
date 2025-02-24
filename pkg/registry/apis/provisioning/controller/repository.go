@@ -417,12 +417,15 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	isUnhealthyMsg := "Repository is unhealthy"
 	isUnhealthySyncStatus := len(obj.Status.Sync.Message) > 0 && obj.Status.Sync.Message[0] == isUnhealthyMsg && obj.Status.Sync.State == provisioning.JobStateError
 
+	// Preserve last ref as we use replace operation
+	lastRef := obj.Status.Sync.LastRef
 	switch {
 	case !shouldSkip:
 		patchOperations = append(patchOperations, map[string]interface{}{
 			"op":   "replace",
 			"path": "/status/sync",
 			"value": provisioning.SyncStatus{
+				LastRef: lastRef,
 				State:   provisioning.JobStatePending,
 				Started: time.Now().UnixMilli(),
 			},
@@ -432,9 +435,11 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		// FIXME: is this the clearest way to do this? Should we introduce another status or way of way of handling more
 		// specific errors?
 		patchOperations = append(patchOperations, map[string]interface{}{
-			"op":    "replace",
-			"path":  "/status/sync",
-			"value": provisioning.SyncStatus{},
+			"op":   "replace",
+			"path": "/status/sync",
+			"value": provisioning.SyncStatus{
+				LastRef: lastRef,
+			},
 		})
 	case !obj.Status.Health.Healthy && !isUnhealthySyncStatus:
 		// If health check fails, add sync state patch operation
@@ -442,6 +447,7 @@ func (rc *RepositoryController) process(item *queueItem) error {
 			"op":   "replace",
 			"path": "/status/sync",
 			"value": provisioning.SyncStatus{
+				LastRef: lastRef,
 				State:   provisioning.JobStateError,
 				Message: []string{isUnhealthyMsg},
 			},
