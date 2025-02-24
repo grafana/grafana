@@ -2,7 +2,7 @@ import 'react-data-grid/lib/styles.css';
 import { css } from '@emotion/css';
 import { Property } from 'csstype';
 import React, { useMemo, useState, useLayoutEffect, useCallback, useRef, useEffect } from 'react';
-import DataGrid, { Column, RenderRowProps, Row, SortColumn, SortDirection } from 'react-data-grid';
+import DataGrid, { RenderRowProps, Row, SortColumn, SortDirection, RenderCellProps } from 'react-data-grid';
 import { useMeasure } from 'react-use';
 
 import {
@@ -13,6 +13,7 @@ import {
   formattedValueToString,
   GrafanaTheme2,
   ReducerID,
+  getDefaultTimeRange,
 } from '@grafana/data';
 import { TableCellHeight } from '@grafana/schema';
 
@@ -28,7 +29,16 @@ import { TableCellInspector, TableCellInspectorMode } from '../TableCellInspecto
 import { HeaderCell } from './Cells/HeaderCell';
 import { RowExpander } from './Cells/RowExpander';
 import { TableCellNG } from './Cells/TableCellNG';
-import { TableNGProps, FilterType, TableRow } from './types';
+import {
+  TableNGProps,
+  FilterType,
+  TableRow,
+  TableColumn,
+  TableSummaryRow,
+  Comparator,
+  FrameToRowsConverter,
+  ColumnTypes,
+} from './types';
 import { getRowHeight, shouldTextOverflow, getFooterItemNG, getTextAlign } from './utils';
 
 const DEFAULT_CELL_PADDING = 6;
@@ -37,12 +47,6 @@ const EXPANDER_WIDTH = 50;
 const SMALL_PAGINATION_LIMIT = 750;
 const MAX_CELL_HEIGHT = 48;
 const SCROLL_BAR_WIDTH = getScrollbarWidth();
-
-interface TableColumn extends Column<TableRow> {
-  key: string;
-  name: string;
-  field: Field;
-}
 
 /**
  * getIsNestedTable is a helper function that takes a DataFrame and returns a
@@ -110,7 +114,7 @@ export function TableNG(props: TableNGProps) {
   const [page, setPage] = useState(0);
 
   const crossFilterOrder = useRef<string[]>([]);
-  const crossFilterRows = useRef<{ [key: string]: TableRow[] }>({});
+  const crossFilterRows = useRef<Record<string, TableRow[]>>({});
 
   const headerCellRefs = useRef<Record<string, HTMLDivElement>>({});
   const [, setReadyForRowHeightCalc] = useState(false);
@@ -206,13 +210,17 @@ export function TableNG(props: TableNGProps) {
     }
   };
 
-  const frameToRecords = useCallback((frame: DataFrame): Array<Record<string, string>> => {
+  const frameToRecords = useCallback((frame: DataFrame): TableRow[] => {
     const fnBody = `
       const rows = Array(frame.length);
       const values = frame.fields.map(f => f.values);
       let rowCount = 0;
       for (let i = 0; i < frame.length; i++) {
-        rows[rowCount] = {__depth: 0, __index: i, ${frame.fields.map((field, fieldIdx) => `${JSON.stringify(field.name)}: values[${fieldIdx}][i]`).join(',')}};
+        rows[rowCount] = {
+          __depth: 0,
+          __index: i,
+          ${frame.fields.map((field, fieldIdx) => `${JSON.stringify(field.name)}: values[${fieldIdx}][i]`).join(',')}
+        };
         rowCount += 1;
         if (rows[rowCount-1]['Nested frames']){
           const childFrame = rows[rowCount-1]['Nested frames'];
@@ -223,12 +231,15 @@ export function TableNG(props: TableNGProps) {
       return rows;
     `;
 
-    const convert = new Function('frame', fnBody);
-
-    const records = convert(frame);
-    return records;
+    // Creates a function that converts a DataFrame into an array of TableRows
+    // Uses new Function() for performance as it's faster than creating rows using loops
+    const convert = new Function('frame', fnBody) as unknown as FrameToRowsConverter;
+    return convert(frame);
   }, []);
+
   const calcsRef = useRef<string[]>([]);
+
+  // Maps a DataFrame into TableColumns for react-data-grid
   const mapFrameToDataGrid = (main: DataFrame, calcsRef: React.MutableRefObject<string[]>) => {
     const columns: TableColumn[] = [];
 
@@ -276,17 +287,22 @@ export function TableNG(props: TableNGProps) {
           }
           // If it's a child, render entire DataGrid at first column position
           let expandedColumns: TableColumn[] = [];
-          let expandedRecords: Array<Record<string, string>> = [];
-          expandedColumns = mapFrameToDataGrid(row.data, calcsRef);
-          expandedRecords = frameToRecords(row.data);
+          let expandedRecords: TableRow[] = [];
+
+          // Type guard to check if data exists as it's optional
+          if (row.data) {
+            expandedColumns = mapFrameToDataGrid(row.data, calcsRef);
+            expandedRecords = frameToRecords(row.data);
+          }
+
           // TODO add renderHeaderCell HeaderCell's here and handle all features
           return (
-            <DataGrid
+            <DataGrid<TableRow, TableSummaryRow>
               rows={expandedRecords}
               columns={expandedColumns}
               rowHeight={defaultRowHeight}
               style={{ height: '100%', overflow: 'visible', marginLeft: EXPANDER_WIDTH }}
-              headerRowHeight={row.data.meta?.custom?.noHeader ? 0 : undefined}
+              headerRowHeight={row.data?.meta?.custom?.noHeader ? 0 : undefined}
             />
           );
         },
@@ -317,17 +333,18 @@ export function TableNG(props: TableNGProps) {
         name: field.name,
         field,
         cellClass: styles.cell,
-        renderCell: (props: any) => {
+        renderCell: (props: RenderCellProps<TableRow, TableSummaryRow>) => {
           const { row, rowIdx } = props;
           const value = row[key];
           // Cell level rendering here
           return (
             <TableCellNG
+              frame={main}
               key={key}
               value={value}
               field={field}
               theme={theme}
-              timeRange={timeRange}
+              timeRange={timeRange ?? getDefaultTimeRange()}
               height={defaultRowHeight}
               justifyContent={justifyColumnContent}
               rowIdx={rowIdx}
@@ -380,7 +397,6 @@ export function TableNG(props: TableNGProps) {
             crossFilterRows={crossFilterRows}
           />
         ),
-        // TODO these anys are making me sad
         width: width ?? columnWidth,
         minWidth: field.config?.custom?.minWidth ?? columnMinWidth,
       });
@@ -389,7 +405,7 @@ export function TableNG(props: TableNGProps) {
     return columns;
   };
 
-  function myRowRenderer(key: React.Key, props: RenderRowProps<TableRow>): React.ReactNode {
+  function myRowRenderer(key: React.Key, props: RenderRowProps<TableRow, TableSummaryRow>): React.ReactNode {
     // Let's render row level things here!
     // i.e. we can look at row styles and such here
     const { row } = props;
@@ -404,13 +420,10 @@ export function TableNG(props: TableNGProps) {
 
   // Create a map of column key to column type
   const columnTypes = useMemo(() => {
-    return props.data.fields.reduce(
-      (acc, field) => {
-        acc[field.name] = field.type;
-        return acc;
-      },
-      {} as { [key: string]: string }
-    );
+    return props.data.fields.reduce((acc, field) => {
+      acc[field.name] = field.type;
+      return acc;
+    }, {} as ColumnTypes);
   }, [props.data.fields]);
 
   const getDisplayedValue = (row: TableRow, key: string) => {
@@ -578,8 +591,8 @@ export function TableNG(props: TableNGProps) {
       if (Number(row.__depth) === 1 && !expandedRows.includes(Number(row.__index))) {
         return 0;
       } else if (Number(row.__depth) === 1 && expandedRows.includes(Number(row.__index))) {
-        const headerCount = row.data.meta?.custom?.noHeader ? 0 : 1;
-        return defaultRowHeight * (row.data.length + headerCount); // TODO this probably isn't very robust
+        const headerCount = row?.data?.meta?.custom?.noHeader ? 0 : 1;
+        return defaultRowHeight * (row.data?.length ?? 0 + headerCount); // TODO this probably isn't very robust
       }
       return getRowHeight(
         row,
@@ -598,7 +611,7 @@ export function TableNG(props: TableNGProps) {
   return (
     <>
       <ScrollContainer>
-        <DataGrid
+        <DataGrid<TableRow, TableSummaryRow>
           className={styles.dataGrid}
           key={`DataGrid${revId}`}
           rows={enablePagination ? paginatedRows : sortedRows}
@@ -616,9 +629,11 @@ export function TableNG(props: TableNGProps) {
             event.preventGridDefault();
             // Do not show the default context menu
             event.preventDefault();
+
+            const cellValue = row[column.key];
             setContextMenuProps({
               // rowIdx: rows.indexOf(row),
-              value: row[column.key],
+              value: String(cellValue ?? ''),
               top: event.clientY,
               left: event.clientX,
             });
@@ -684,20 +699,25 @@ export function TableNG(props: TableNGProps) {
   );
 }
 
-type Comparator = (a: any, b: any) => number;
-
 const compare = new Intl.Collator('en', { sensitivity: 'base' }).compare;
 
-function getComparator(sortColumnType: string): Comparator {
+function getComparator(sortColumnType: FieldType): Comparator {
   switch (sortColumnType) {
     case FieldType.time:
     case FieldType.number:
     case FieldType.boolean:
-      return (a, b) => a - b;
+      return (a, b) => {
+        // Handle undefined/null values
+        if (a === b) return 0;
+        if (a == null) return -1;
+        if (b == null) return 1;
+        // Safe to do numeric comparison now
+        return Number(a) - Number(b);
+      };
     case FieldType.string:
     case FieldType.enum:
     default:
-      return (a, b) => compare(String(a), String(b));
+      return (a, b) => compare(String(a ?? ''), String(b ?? ''));
   }
 }
 

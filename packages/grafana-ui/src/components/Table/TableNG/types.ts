@@ -9,8 +9,12 @@ import {
   FieldConfigSource,
   ActionModel,
   InterpolateFunction,
+  FieldType,
 } from '@grafana/data';
 import { TableCellOptions, TableCellHeight, TableFieldOptions } from '@grafana/schema';
+
+import { Column } from 'react-data-grid';
+import { TableCellInspectorMode } from '../TableCellInspector';
 
 export const FILTER_FOR_OPERATOR = '=';
 export const FILTER_OUT_OPERATOR = '!=';
@@ -40,7 +44,42 @@ export type FilterType = {
   };
 };
 
-export type TableRow = Record<string, unknown>;
+/* ----------------------------- Table specific types ----------------------------- */
+export interface TableSummaryRow {
+  [columnName: string]: string | number | undefined;
+}
+
+export interface TableColumn extends Column<TableRow, TableSummaryRow> {
+  key: string; // Unique identifier used by DataGrid
+  name: string; // Display name in header
+  field: Field; // Grafana field data/config
+  width?: number | string; // Column width
+  minWidth?: number; // Min width constraint
+  cellClass?: string; // CSS styling
+}
+
+// Possible values for table cells based on field types
+export type TableCellValue =
+  | string // FieldType.string, FieldType.enum
+  | number // FieldType.number
+  | boolean // FieldType.boolean
+  | Date // FieldType.time
+  | DataFrame // For nested data
+  | DataFrame[] // For nested frames
+  | undefined; // For undefined values
+
+export interface TableRow {
+  // Required metadata properties
+  __depth: number;
+  __index: number;
+
+  // Nested table properties
+  data?: DataFrame;
+  'Nested frames'?: DataFrame[];
+
+  // Generic typing for column values
+  [columnName: string]: TableCellValue;
+}
 
 export interface CustomHeaderRendererProps {
   field: Field;
@@ -60,7 +99,6 @@ export interface TableFooterCalc {
   countRows?: boolean;
 }
 
-// export interface Props {
 export interface BaseTableProps {
   ariaLabel?: string;
   data: DataFrame;
@@ -90,46 +128,95 @@ export interface BaseTableProps {
   replaceVariables?: InterpolateFunction;
 }
 
-/**
- * Props for the react-data-grid based table.
- */
+/* ---------------------------- Table cell props ---------------------------- */
 export interface TableNGProps extends BaseTableProps {}
 
-export interface CellNGProps {
-  value: any;
+export interface TableCellNGProps {
+  cellInspect: boolean;
   field: Field;
-  theme?: GrafanaTheme2;
-  height?: number;
+  frame: DataFrame;
+  getActions?: GetActionsFunction;
+  height: number;
   justifyContent: Property.JustifyContent;
-  rowIdx?: number;
+  rowIdx: number;
+  setContextMenuProps: (props: { value: string; top?: number; left?: number; mode?: TableCellInspectorMode }) => void;
+  setIsInspecting: (isInspecting: boolean) => void;
+  shouldTextOverflow: () => boolean;
+  theme: GrafanaTheme2;
+  timeRange: TimeRange;
+  value: TableCellValue;
 }
 
+/* ------------------------- Specialized Cell Props ------------------------- */
 export interface RowExpanderNGProps {
   height: number;
   onCellExpand: () => void;
   isExpanded?: boolean;
 }
 
-export interface BarGaugeCellProps extends CellNGProps {
-  height: number;
+export interface SparklineCellProps {
+  field: Field;
+  justifyContent: Property.JustifyContent;
+  rowIdx: number;
   theme: GrafanaTheme2;
   timeRange: TimeRange;
+  value: TableCellValue;
   width: number;
 }
 
-export interface ImageCellProps extends CellNGProps {
-  cellOptions: TableCellOptions;
+export interface BarGaugeCellProps {
+  field: Field;
   height: number;
+  rowIdx: number;
+  theme: GrafanaTheme2;
+  value: TableCellValue;
+  width: number;
+  timeRange: TimeRange;
+}
+
+export interface ImageCellProps {
+  cellOptions: TableCellOptions;
+  field: Field;
+  height: number;
+  justifyContent: Property.JustifyContent;
+  rowIdx: number;
+  value: TableCellValue;
+}
+
+export interface JSONCellProps {
+  justifyContent: Property.JustifyContent;
+  rowIdx: number;
+  value: TableCellValue;
+}
+
+export interface DataLinksCellProps {
+  field: Field;
+  rowIdx: number;
 }
 
 export interface ActionCellProps {
-  actions?: ActionModel[];
+  actions: ActionModel[];
 }
-
-export interface SparklineCellProps extends BarGaugeCellProps {}
 
 export interface CellColors {
   textColor?: string;
   bgColor?: string;
   bgHoverColor?: string;
 }
+
+export interface AutoCellProps {
+  value: TableCellValue;
+  field: Field;
+  justifyContent: Property.JustifyContent;
+  cellOptions: TableCellOptions;
+  rowIdx: number;
+}
+
+// Comparator for sorting table values
+export type Comparator = (a: TableCellValue, b: TableCellValue) => number;
+
+// Type for converting a DataFrame into an array of TableRows
+export type FrameToRowsConverter = (frame: DataFrame) => TableRow[];
+
+// Type for mapping column names to their field types
+export type ColumnTypes = Record<string, FieldType>;

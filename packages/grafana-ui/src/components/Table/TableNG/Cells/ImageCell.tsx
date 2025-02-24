@@ -9,7 +9,7 @@ import { ImageCellProps } from '../types';
 
 const DATALINKS_HEIGHT_OFFSET = 10;
 
-export const ImageCell = ({ cellOptions, field, height, justifyContent, value }: ImageCellProps) => {
+export const ImageCell = ({ cellOptions, field, height, justifyContent, value, rowIdx }: ImageCellProps) => {
   const calculatedHeight = height - DATALINKS_HEIGHT_OFFSET;
   const styles = useStyles2(getStyles, calculatedHeight, justifyContent);
 

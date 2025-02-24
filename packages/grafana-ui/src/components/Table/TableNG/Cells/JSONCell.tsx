@@ -1,28 +1,31 @@
 import { css } from '@emotion/css';
 import { Property } from 'csstype';
-import { isString } from 'lodash';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../../../themes';
-import { CellNGProps } from '../types';
+import { JSONCellProps } from '../types';
 
-export const JSONCell = ({ value, justifyContent }: Omit<CellNGProps, 'theme' | 'field'>) => {
+export const JSONCell = ({ value, justifyContent, rowIdx }: JSONCellProps) => {
   const styles = useStyles2(getStyles, justifyContent);
 
-  let localValue = value;
-  let displayValue = localValue;
+  let displayValue = value;
 
-  if (isString(localValue)) {
+  // Handle string values that might be JSON
+  if (typeof value === 'string') {
     try {
-      localValue = JSON.parse(localValue);
-    } catch {} // ignore errors
+      const parsed = JSON.parse(value);
+      displayValue = JSON.stringify(parsed, null, ' ');
+    } catch {
+      displayValue = value; // Keep original if not valid JSON
+    }
   } else {
-    displayValue = JSON.stringify(localValue, null, ' ');
+    // For non-string values, stringify them
+    displayValue = JSON.stringify(value, null, ' ');
   }
 
   // TODO: Implement DataLinksContextMenu + actions
-  return <div className={styles.jsonText}>{displayValue}</div>;
+  return <div className={styles.jsonText}>{String(displayValue)}</div>;
 };
 
 const getStyles = (theme: GrafanaTheme2, justifyContent: Property.JustifyContent) => ({

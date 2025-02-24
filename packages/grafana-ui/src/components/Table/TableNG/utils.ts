@@ -21,7 +21,7 @@ import {
 
 import { getTextColorForAlphaBackground } from '../../../utils';
 
-import { CellColors, TableRow, TableFieldOptionsType } from './types';
+import { CellColors, TableRow, TableFieldOptionsType, ColumnTypes } from './types';
 
 export function getCellHeight(
   text: string,
@@ -84,8 +84,8 @@ export function getCellHeight(
  * for when textWrap is enabled.
  */
 export function getRowHeight(
-  row: Record<string, string>,
-  columnTypes: Record<string, string>,
+  row: TableRow,
+  columnTypes: ColumnTypes,
   headerCellRefs: React.MutableRefObject<Record<string, HTMLDivElement>>,
   osContext: OffscreenCanvasRenderingContext2D | null,
   lineHeight: number,
@@ -108,7 +108,7 @@ export function getRowHeight(
         return biggestHeight;
       }
       const cellWidth = headerCellRefs.current[key].offsetWidth;
-      const cellText = row[key];
+      const cellText = String(row[key] ?? '');
       const newCellHeight = getCellHeight(cellText, cellWidth, osContext, lineHeight, defaultRowHeight, padding);
 
       if (newCellHeight > biggestHeight) {
@@ -126,8 +126,8 @@ function isTextCell(key: string, columnTypes: Record<string, string>): boolean {
 
 export function shouldTextOverflow(
   key: string,
-  row: Record<string, string>,
-  columnTypes: Record<string, string>,
+  row: TableRow,
+  columnTypes: ColumnTypes,
   headerCellRefs: React.MutableRefObject<Record<string, HTMLDivElement>>,
   osContext: OffscreenCanvasRenderingContext2D | null,
   lineHeight: number,
@@ -142,7 +142,7 @@ export function shouldTextOverflow(
 
   if (isTextCell(key, columnTypes)) {
     const cellWidth = headerCellRefs.current[key].offsetWidth;
-    const cellText = row[key];
+    const cellText = String(row[key] ?? '');
     const newCellHeight = getCellHeight(cellText, cellWidth, osContext, lineHeight, defaultRowHeight, padding);
 
     if (newCellHeight > defaultRowHeight) {

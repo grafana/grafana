@@ -7,7 +7,7 @@ import { TableAutoCellOptions, TableCellDisplayMode } from '@grafana/schema';
 import { useStyles2 } from '../../../../themes';
 import { IconButton } from '../../../IconButton/IconButton';
 import { TableCellInspectorMode } from '../../TableCellInspector';
-import { CellColors } from '../types';
+import { CellColors, TableCellNGProps } from '../types';
 import { getCellColors, getTextAlign } from '../utils';
 
 import { ActionsCell } from './ActionsCell';
@@ -18,13 +18,7 @@ import { ImageCell } from './ImageCell';
 import { JSONCell } from './JSONCell';
 import { SparklineCell } from './SparklineCell';
 
-// interface TableCellNGProps {
-//     fieldConfig: FieldConfig;
-//     fieldDisplay: any?
-// }
-
-// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-export function TableCellNG(props: any) {
+export function TableCellNG(props: TableCellNGProps) {
   const {
     field,
     frame,
@@ -40,6 +34,7 @@ export function TableCellNG(props: any) {
     cellInspect,
     getActions,
   } = props;
+
   const { config: fieldConfig } = field;
   const defaultCellOptions: TableAutoCellOptions = { type: TableCellDisplayMode.Auto };
   const cellOptions = fieldConfig.custom?.cellOptions ?? defaultCellOptions;
@@ -58,7 +53,7 @@ export function TableCellNG(props: any) {
   const [divWidth, setDivWidth] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
 
-  const actions = getActions ? getActions(frame, field) : [];
+  const actions = getActions ? getActions(frame, field, rowIdx) : [];
 
   useLayoutEffect(() => {
     if (divWidthRef.current && divWidthRef.current.clientWidth !== 0) {
@@ -69,7 +64,6 @@ export function TableCellNG(props: any) {
   // Get the correct cell type
   let cell: ReactNode = null;
   switch (cellType) {
-    // case TableCellDisplayMode.
     case TableCellDisplayMode.Sparkline:
       cell = (
         <SparklineCell
@@ -77,7 +71,6 @@ export function TableCellNG(props: any) {
           field={field}
           theme={theme}
           timeRange={timeRange}
-          height={height}
           width={divWidth}
           rowIdx={rowIdx}
           justifyContent={justifyContent}
@@ -93,7 +86,6 @@ export function TableCellNG(props: any) {
           value={value}
           field={field}
           theme={theme}
-          justifyContent={justifyContent}
           timeRange={timeRange}
           height={height}
           width={divWidth}
@@ -117,21 +109,10 @@ export function TableCellNG(props: any) {
       cell = <JSONCell value={value} justifyContent={justifyContent} rowIdx={rowIdx} />;
       break;
     case TableCellDisplayMode.DataLinks:
-      cell = (
-        <DataLinksCell value={value} field={field} theme={theme} justifyContent={justifyContent} rowIdx={rowIdx} />
-      );
+      cell = <DataLinksCell field={field} rowIdx={rowIdx} />;
       break;
     case TableCellDisplayMode.Actions:
-      cell = (
-        <ActionsCell
-          value={value}
-          field={field}
-          theme={theme}
-          justifyContent={justifyContent}
-          rowIdx={rowIdx}
-          actions={actions}
-        />
-      );
+      cell = <ActionsCell actions={actions} />;
       break;
     case TableCellDisplayMode.Auto:
     default:
@@ -139,7 +120,6 @@ export function TableCellNG(props: any) {
         <AutoCell
           value={value}
           field={field}
-          theme={theme}
           justifyContent={justifyContent}
           cellOptions={cellOptions}
           rowIdx={rowIdx}
@@ -155,7 +135,7 @@ export function TableCellNG(props: any) {
       const tableCellDiv = div?.parentElement;
       tableCellDiv?.style.setProperty('position', 'absolute');
       tableCellDiv?.style.setProperty('top', '0');
-      tableCellDiv?.style.setProperty('z-index', theme.zIndex.tooltip);
+      tableCellDiv?.style.setProperty('z-index', String(theme.zIndex.tooltip));
       tableCellDiv?.style.setProperty('white-space', 'normal');
       tableCellDiv?.style.setProperty('min-height', `${height}px`);
     }
@@ -184,7 +164,7 @@ export function TableCellNG(props: any) {
             tooltip="Inspect value"
             onClick={() => {
               setContextMenuProps({
-                value,
+                value: String(value ?? ''),
                 mode:
                   cellType === TableCellDisplayMode.JSONView
                     ? TableCellInspectorMode.code
