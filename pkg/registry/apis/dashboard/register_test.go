@@ -128,7 +128,7 @@ func TestDashboardAPIBuilder_Validate(t *testing.T) {
 			fakeService := &dashboards.FakeDashboardProvisioning{}
 			fakeService.On("GetProvisionedDashboardDataByDashboardUID", mock.Anything, mock.Anything, mock.Anything).Return(tt.dashboardResponse, tt.dashboardErrorResponse).Once()
 			b := &DashboardsAPIBuilder{
-				ProvisioningDashboardService: fakeService,
+				dashboardProvisioningService: fakeService,
 			}
 			err := b.Validate(context.Background(), admission.NewAttributesRecord(
 				tt.inputObj,
