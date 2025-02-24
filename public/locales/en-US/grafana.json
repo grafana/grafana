@@ -535,6 +535,19 @@
       },
       "pause": {
         "label": "Pause evaluation"
+      },
+      "threshold": {
+        "recovery": {
+          "stop-alerting-above": "Stop alerting when above",
+          "stop-alerting-bellow": "Stop alerting when below",
+          "stop-alerting-equal": "Stop alerting when equal to",
+          "stop-alerting-inside-range": "Stop alerting when inside range",
+          "stop-alerting-less": "Stop alerting when less than",
+          "stop-alerting-more": "Stop alerting when more than",
+          "stop-alerting-not-equal": "Stop alerting when not equal to",
+          "stop-alerting-outside-range": "Stop alerting when outside range",
+          "title": "Custom recovery threshold"
+        }
       }
     },
     "rule-groups": {
@@ -817,6 +830,7 @@
     "collapse": "Collapse",
     "edit": "Edit",
     "help": "Help",
+    "loading": "Loading...",
     "locale": {
       "default": "Default"
     },
@@ -1050,6 +1064,11 @@
         }
       }
     },
+    "editpane": {
+      "add": "Add",
+      "configure": "Configure",
+      "outline": "Outline"
+    },
     "empty": {
       "add-library-panel-body": "Add visualizations that are shared with other dashboards.",
       "add-library-panel-button": "Add library panel",
@@ -1187,7 +1206,8 @@
     "toolbar": {
       "add": "Add",
       "add-panel": "Panel",
-      "add-panel-lib": "Import",
+      "add-panel-description": "A container for visualizations and other content",
+      "add-panel-lib": "Import library panel",
       "add-row": "Row",
       "add-tab": "Tab",
       "alert-rules": "Alert rules",
@@ -1212,6 +1232,7 @@
         "label": "Exit edit",
         "tooltip": "Exits edit mode and discards unsaved changes"
       },
+      "libray-panel-description": "Libray panels allow you share and reuse panels between dashboards",
       "mark-favorite": "Mark as favorite",
       "more-save-options": "More save options",
       "open-original": "Open original dashboard",
@@ -1220,6 +1241,7 @@
       "playlist-stop": "Stop playlist",
       "public-dashboard": "Public",
       "refresh": "Refresh dashboard",
+      "row-description": "A group of panels with an optional header",
       "save": "Save dashboard",
       "save-dashboard": {
         "label": "Save dashboard",
@@ -1239,6 +1261,7 @@
       "share-button": "Share",
       "show-hidden-elements": "Show hidden",
       "switch-old-dashboard": "Switch to old dashboard page",
+      "tabs-description": "Break up your dashboard into different horizontal tabs",
       "unlink-library-panel": "Unlink library panel",
       "unmark-favorite": "Unmark as favorite"
     },
@@ -1649,6 +1672,10 @@
     "incomplete-request-error": "Sorry, I was unable to complete your request. Please try again.",
     "send-custom-feedback": "Send"
   },
+  "get-enterprise": {
+    "requires-license": "Requires a Grafana Enterprise license",
+    "title": "Enterprise"
+  },
   "grafana-ui": {
     "action-editor": {
       "button": {
@@ -2052,6 +2079,7 @@
       "render-image-error-description": "An error occurred when generating the image"
     }
   },
+  "lock-icon": "lock icon",
   "login": {
     "divider": {
       "connecting-text": "or"
@@ -2846,10 +2874,11 @@
   },
   "plugins": {
     "catalog": {
+      "no-updates-available": "No updates available",
       "update-all": {
         "all-plugins-updated": "All plugins updated!",
         "available-header": "Available",
-        "button": "Update all",
+        "button": "Update all ({{length}})",
         "cloud-update-message": "* It may take a few minutes for the plugins to be available for usage.",
         "error": "Error updating plugin:",
         "error-status-text": "failed - see error messages",
@@ -2904,6 +2933,12 @@
     },
     "empty-state": {
       "message": "No plugins found"
+    },
+    "filter": {
+      "disabled": "This filter has been disabled because the Grafana server cannot access grafana.com",
+      "sort": "Sort",
+      "sort-list": "Sort Plugins List",
+      "state": "State"
     },
     "plugin-help": {
       "error": "An error occurred when loading help.",

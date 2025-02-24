@@ -808,7 +808,7 @@ const (
 	FlagPasswordlessMagicLinkAuthentication = "passwordlessMagicLinkAuthentication"
 
 	// FlagExploreMetricsRelatedLogs
-	// Display Related Logs in Explore Metrics
+	// Display Related Logs in Grafana Metrics Drilldown
 	FlagExploreMetricsRelatedLogs = "exploreMetricsRelatedLogs"
 
 	// FlagPrometheusSpecialCharsInLabelValues
@@ -958,4 +958,8 @@ const (
 	// FlagNewShareReportDrawer
 	// Enables the report creation drawer in a dashboard
 	FlagNewShareReportDrawer = "newShareReportDrawer"
+
+	// FlagRendererDisableAppPluginsPreload
+	// Disable pre-loading app plugins when the request is coming from the renderer
+	FlagRendererDisableAppPluginsPreload = "rendererDisableAppPluginsPreload"
 )
