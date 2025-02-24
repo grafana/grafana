@@ -261,8 +261,10 @@ func (rc *RepositoryController) process(item *queueItem) error {
 
 	var shouldHealthcheck bool
 	switch {
-	case obj.DeletionTimestamp == nil:
+	case obj.DeletionTimestamp != nil:
 	case hasSpecChanged:
+		shouldHealthcheck = true
+	case obj.Status.Health.Checked == 0:
 		shouldHealthcheck = true
 	case obj.Status.Health.Healthy:
 		shouldHealthcheck = healthAge > time.Minute*5 // when healthy, check every 5 mins
@@ -425,7 +427,7 @@ func (rc *RepositoryController) process(item *queueItem) error {
 				Started: time.Now().UnixMilli(),
 			},
 		})
-	case healthStatusChanged && obj.Status.Health.Healthy && isUnhealthySyncStatus:
+	case obj.Status.Health.Healthy && isUnhealthySyncStatus:
 		// clear the sync status
 		// FIXME: is this the clearest way to do this? Should we introduce another status or way of way of handling more
 		// specific errors?
@@ -434,7 +436,7 @@ func (rc *RepositoryController) process(item *queueItem) error {
 			"path":  "/status/sync",
 			"value": provisioning.SyncStatus{},
 		})
-	case healthStatusChanged && !obj.Status.Health.Healthy && !isUnhealthySyncStatus:
+	case !obj.Status.Health.Healthy && !isUnhealthySyncStatus:
 		// If health check fails, add sync state patch operation
 		patchOperations = append(patchOperations, map[string]interface{}{
 			"op":   "replace",
