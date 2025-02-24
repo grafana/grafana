@@ -18,6 +18,14 @@ export interface ScopeDashboardBinding {
 }
 
 export type ScopeFilterOperator = 'equals' | 'not-equals' | 'regex-match' | 'regex-not-match' | 'one-of' | 'not-one-of';
+export type ScopeFilterSingleOrMultiOperator = Extract<
+  ScopeFilterOperator,
+  'equals' | 'not-equals' | 'one-of' | 'not-one-of'
+>;
+
+export function isScopeFilterSingleOrMultiOperator(value: string): value is ScopeFilterSingleOrMultiOperator {
+  return value === 'equals' || value === 'not-equals' || value === 'one-of' || value === 'not-one-of';
+}
 
 export const scopeFilterOperatorMap: Record<string, ScopeFilterOperator> = {
   '=': 'equals',
@@ -27,6 +35,11 @@ export const scopeFilterOperatorMap: Record<string, ScopeFilterOperator> = {
   '=|': 'one-of',
   '!=|': 'not-one-of',
 };
+
+export const reverseScopeFilterOperatorMap: Record<ScopeFilterOperator, string> = Object.fromEntries(
+  Object.entries(scopeFilterOperatorMap).map(([symbol, operator]) => [operator, symbol])
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+) as Record<ScopeFilterOperator, string>;
 
 export interface ScopeSpecFilter {
   key: string;
