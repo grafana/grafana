@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	advisor "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -28,6 +29,7 @@ func TestCheck_Run(t *testing.T) {
 			DatasourceSvc:         mockDatasourceSvc,
 			PluginContextProvider: mockPluginContextProvider,
 			PluginClient:          mockPluginClient,
+			log:                   log.New("advisor.datasourcecheck"),
 		}
 
 		ctx := identity.WithRequester(context.Background(), &user.SignedInUser{})
@@ -62,6 +64,7 @@ func TestCheck_Run(t *testing.T) {
 			DatasourceSvc:         mockDatasourceSvc,
 			PluginContextProvider: mockPluginContextProvider,
 			PluginClient:          mockPluginClient,
+			log:                   log.New("advisor.datasourcecheck"),
 		}
 
 		ctx := identity.WithRequester(context.Background(), &user.SignedInUser{})
@@ -97,6 +100,7 @@ func TestCheck_Run(t *testing.T) {
 			DatasourceSvc:         mockDatasourceSvc,
 			PluginContextProvider: mockPluginContextProvider,
 			PluginClient:          mockPluginClient,
+			log:                   log.New("advisor.datasourcecheck"),
 		}
 
 		ctx := identity.WithRequester(context.Background(), &user.SignedInUser{})
