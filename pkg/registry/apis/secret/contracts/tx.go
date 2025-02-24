@@ -6,5 +6,5 @@ import (
 )
 
 type TransactionManager interface {
-	BeginTx(ctx context.Context, opts *sql.TxOptions) (*sql.Tx, error)
+	BeginTx(ctx context.Context, opts *sql.TxOptions, cb func(*sql.Tx, error))
 }

@@ -1,8 +1,6 @@
 package simulator
 
 import (
-	"context"
-	"database/sql"
 	"fmt"
 	"strconv"
 
@@ -12,12 +10,18 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
+type TransactionID = string
+type Namespace = string
+type SecureValueName = string
+
 // Simulation version of a database used by secrets.
 type SimDatabase struct {
 	outboxQueue []any
 	// Map of namespace -> secret name -> secure value
-	secretMetadata map[string]map[string]secretv0alpha1.SecureValue
+	secretMetadata map[Namespace]map[SecureValueName]secretv0alpha1.SecureValue
 	simNetwork     *SimNetwork
+
+	txBuffer map[TransactionID]map[Namespace]map[SecureValueName]secretv0alpha1.SecureValue
 }
 
 func NewSimDatabase(simNetwork *SimNetwork) *SimDatabase {
@@ -25,10 +29,6 @@ func NewSimDatabase(simNetwork *SimNetwork) *SimDatabase {
 		secretMetadata: make(map[string]map[string]secretv0alpha1.SecureValue),
 		simNetwork:     simNetwork,
 	}
-}
-
-func (db *SimDatabase) BeginTx(ctx context.Context, opts *sql.TxOptions) (*sql.Tx, error) {
-	return nil, nil
 }
 
 // When a query is received by the database
@@ -90,6 +90,13 @@ func (db *SimDatabase) onQuery(query Message) {
 		db.simNetwork.Send(simDatabaseCreateSecureValueMetadataResponse{
 			cb:  query.cb,
 			sv:  &v,
+			err: nil,
+		})
+
+	case simDatabaseBeginTxQuery:
+		db.simNetwork.Send(simDatabaseBeginTxResponse{
+			cb:  query.cb,
+			tx:  tx,
 			err: nil,
 		})
 

@@ -138,11 +138,13 @@ func TestSimulate(t *testing.T) {
 
 	simDatabase.simNetwork = simNetwork
 
+	simTransactionManager := NewSimTransactionManager(simNetwork)
+
 	simSecureValueStorage := NewSimSecureValueStorage(simNetwork)
 
 	simOutboxQueue := NewSimOutboxQueue(simNetwork)
 
-	secureValueService := services.NewCreateSecureValue(simDatabase, simSecureValueStorage, simOutboxQueue)
+	secureValueService := services.NewCreateSecureValue(simTransactionManager, simSecureValueStorage, simOutboxQueue)
 
 	simulator := NewSimulator(rng, simNetwork, simDatabase, simSecureValueStorage, secureValueService)
 

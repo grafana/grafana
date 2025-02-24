@@ -1,13 +1,8 @@
 package simulator
 
 import (
-	"context"
 	"fmt"
 	"math/rand"
-
-	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 )
 
 type SimNetworkConfig struct {
@@ -27,63 +22,6 @@ type SimNetwork struct {
 func NewSimNetwork(config SimNetworkConfig, simDatabase *SimDatabase) *SimNetwork {
 	return &SimNetwork{config: config, simDatabase: simDatabase}
 }
-
-type Message interface {
-	Message()
-}
-
-/*** Request ***/
-type simDatabaseAppendQuery struct {
-	ctx context.Context
-	tx  contracts.TransactionManager
-	foo any
-	cb  func(error)
-}
-
-func (simDatabaseAppendQuery) Message() {}
-
-type simDatabaseSecretMetadataHasPendingStatusQuery struct {
-	ctx       context.Context
-	tx        contracts.TransactionManager
-	namespace xkube.Namespace
-	name      string
-	cb        func(bool, error)
-}
-
-func (simDatabaseSecretMetadataHasPendingStatusQuery) Message() {}
-
-type simDatabaseCreateSecureValueMetadataQuery struct {
-	ctx context.Context
-	tx  contracts.TransactionManager
-	sv  *secretv0alpha1.SecureValue
-	cb  func(*secretv0alpha1.SecureValue, error)
-}
-
-func (simDatabaseCreateSecureValueMetadataQuery) Message() {}
-
-/*** Response ***/
-type simDatabaseAppendResponse struct {
-	cb  func(error)
-	err error
-}
-
-func (simDatabaseAppendResponse) Message() {}
-
-type simDatabaseSecretMetadataHasPendingStatusResponse struct {
-	cb        func(bool, error)
-	isPending bool
-	err       error
-}
-
-func (simDatabaseSecretMetadataHasPendingStatusResponse) Message() {}
-
-type simDatabaseCreateSecureValueMetadataResponse struct {
-	cb  func(*secretv0alpha1.SecureValue, error)
-	sv  *secretv0alpha1.SecureValue
-	err error
-}
-
-func (simDatabaseCreateSecureValueMetadataResponse) Message() {}
 
 // Returns true when there are messages in flight.
 func (network *SimNetwork) HasWork() bool {
@@ -117,6 +55,9 @@ func (network *SimNetwork) Tick() {
 
 	case simDatabaseCreateSecureValueMetadataResponse:
 		msg.cb(msg.sv, msg.err)
+
+	case simDatabaseBeginTxResponse:
+		msg.cb(msg.tx, msg.err)
 
 	default:
 		network.simDatabase.onQuery(message)
