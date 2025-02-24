@@ -119,7 +119,7 @@ type JobStatus struct {
 	Progress float64 `json:"progress,omitempty"`
 
 	// Summary of processed actions
-	Summary []JobResourceSummary `json:"summary,omitempty"`
+	Summary []*JobResourceSummary `json:"summary,omitempty"`
 }
 
 type JobResourceSummary struct {

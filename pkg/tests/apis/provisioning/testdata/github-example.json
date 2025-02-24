@@ -11,7 +11,6 @@
         "github": {
             "url": "https://github.com/grafana/git-ui-sync-demo",
             "branch": "dummy-branch",
-            "branchWorkflow": true,
             "generateDashboardPreviews": true,
             "token": "github_pat_dummy"
         },
@@ -20,6 +19,6 @@
             "target": "",
             "intervalSeconds": 60
         },
-        "readOnly": false
+        "workflows": ["push"]
     }
 }
