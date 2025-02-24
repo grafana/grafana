@@ -1,5 +1,5 @@
 import { baseAPI as api } from './baseAPI';
-export const addTagTypes = ['Job', 'Repository', 'Provisioning'] as const;
+export const addTagTypes = ['Job', 'Repository'] as const;
 const injectedRtkApi = api
   .enhanceEndpoints({
     addTagTypes,
@@ -263,11 +263,11 @@ const injectedRtkApi = api
       }),
       getFrontendSettings: build.query<GetFrontendSettingsResponse, GetFrontendSettingsArg>({
         query: () => ({ url: `/settings` }),
-        providesTags: ['Provisioning'],
+        providesTags: ['Repository'],
       }),
       getResourceStats: build.query<GetResourceStatsResponse, GetResourceStatsArg>({
         query: () => ({ url: `/stats` }),
-        providesTags: ['Provisioning'],
+        providesTags: ['Repository'],
       }),
     }),
     overrideExisting: false,
