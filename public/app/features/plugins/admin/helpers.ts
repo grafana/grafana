@@ -169,12 +169,6 @@ export function mapRemoteToCatalog(plugin: RemotePlugin, error?: PluginError): C
     latestVersion: plugin.version,
     url,
     raiseAnIssueUrl,
-    details: {
-      pluginDependencies: plugin.json?.dependencies?.plugins || [],
-      dependantPlugins: dependantPlugins(id),
-      links: plugin.json?.info.links || [],
-      grafanaDependency: plugin.json?.dependencies?.grafanaDependency,
-    },
   };
 }
 
@@ -227,13 +221,6 @@ export function mapLocalToCatalog(plugin: LocalPlugin, error?: PluginError): Cat
     iam: plugin.iam,
     latestVersion: plugin.latestVersion,
     raiseAnIssueUrl,
-    details: {
-      pluginDependencies: plugin.dependencies?.plugins || [],
-      dependantPlugins: dependantPlugins(id),
-      links: plugin.info.links || [],
-      grafanaDependency: plugin.dependencies?.grafanaDependency,
-      versions: [],
-    },
   };
 }
 
@@ -299,13 +286,6 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, e
     latestVersion: local?.latestVersion || remote?.version || '',
     url: remote?.url || '',
     raiseAnIssueUrl: remote?.raiseAnIssueUrl || local?.raiseAnIssueUrl,
-    details: {
-      pluginDependencies: local?.dependencies?.plugins || remote?.json?.dependencies?.plugins || [],
-      dependantPlugins: dependantPlugins(id),
-      links: local?.info.links || remote?.json?.info.links || [],
-      grafanaDependency: local?.dependencies?.grafanaDependency || remote?.json?.dependencies?.grafanaDependency || '',
-      versions: [],
-    },
   };
 }
 
