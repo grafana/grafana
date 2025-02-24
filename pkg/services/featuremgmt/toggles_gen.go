@@ -959,7 +959,7 @@ const (
 	// Enables the report creation drawer in a dashboard
 	FlagNewShareReportDrawer = "newShareReportDrawer"
 
-	// FlagImproveRendererTraffic
-	// Reduce number of requests done when the request is coming from the renderer
-	FlagImproveRendererTraffic = "improveRendererTraffic"
+	// FlagRendererDisableAppPluginsPreload
+	// Disable pre-loading app plugins when the request is coming from the renderer
+	FlagRendererDisableAppPluginsPreload = "rendererDisableAppPluginsPreload"
 )

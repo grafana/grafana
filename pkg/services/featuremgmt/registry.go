@@ -1790,8 +1790,8 @@ var (
 			HideFromDocs:      true,
 		},
 		{
-			Name:              "improveRendererTraffic",
-			Description:       "Reduce number of requests done when the request is coming from the renderer",
+			Name:              "rendererDisableAppPluginsPreload",
+			Description:       "Disable pre-loading app plugins when the request is coming from the renderer",
 			Stage:             FeatureStageExperimental,
 			Owner:             grafanaSharingSquad,
 			HideFromAdminPage: true,

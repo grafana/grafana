@@ -256,5 +256,5 @@ export interface FeatureToggles {
   alertingJiraIntegration?: boolean;
   alertingRuleVersionHistoryRestore?: boolean;
   newShareReportDrawer?: boolean;
-  improveRendererTraffic?: boolean;
+  rendererDisableAppPluginsPreload?: boolean;
 }
