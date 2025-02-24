@@ -127,7 +127,12 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 		return fmt.Errorf("error parsing base url: %w", err)
 	}
 
-	parser, err := c.parsers.GetParser(ctx, repo)
+	reader, ok := repo.(repository.Reader)
+	if !ok {
+		return errors.New("pull request job submitted targeting repository that is not a Reader")
+	}
+
+	parser, err := c.parsers.GetParser(ctx, reader)
 	if err != nil {
 		return fmt.Errorf("failed to get parser for %s: %w", repo.Config().Name, err)
 	}

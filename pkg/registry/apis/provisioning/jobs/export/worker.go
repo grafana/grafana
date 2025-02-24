@@ -77,12 +77,17 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 		options.Branch = "" // :( the branch is now baked into the repo
 	}
 
-	dynamicClient, _, err := r.clients.New(repo.Config().Namespace)
+	rw, ok := repo.(repository.ReaderWriter)
+	if !ok {
+		return errors.New("export job submitted targeting repository that is not a ReaderWriter")
+	}
+
+	dynamicClient, _, err := r.clients.New(rw.Config().Namespace)
 	if err != nil {
 		return fmt.Errorf("error getting client: %w", err)
 	}
 
-	worker := newExportJob(ctx, repo, *options, dynamicClient, progress)
+	worker := newExportJob(ctx, rw, *options, dynamicClient, progress)
 
 	// Load and write all folders
 	progress.SetMessage("start folder export")

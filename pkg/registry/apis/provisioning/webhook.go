@@ -66,7 +66,7 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 		logger := logging.FromContext(r.Context()).With("logger", "webhook-connector", "repo", name)
 		ctx := logging.Context(r.Context(), logger)
 
-		hooks, ok := repo.(repository.RepositoryHooks)
+		hooks, ok := repo.(repository.Hooks)
 		if !ok {
 			responder.Error(errors.NewBadRequest("the repository does not support webhooks"))
 			return

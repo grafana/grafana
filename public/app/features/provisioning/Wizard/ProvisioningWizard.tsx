@@ -68,7 +68,7 @@ export function ProvisioningWizard() {
     const currentStepIndex = steps.findIndex((s) => s.id === activeStep);
     if (currentStepIndex > 0) {
       setActiveStep(steps[currentStepIndex - 1].id);
-      setStepSuccess(false);
+      setStepSuccess(true);
       // Remove the last completed step when going back
       setCompletedSteps((prev) => prev.slice(0, -1));
     }

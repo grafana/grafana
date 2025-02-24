@@ -60,7 +60,7 @@ export function RepositoryStep({ onStatusChange }: Props) {
       onStatusChange(true);
       await submitData(spec);
     } catch (error) {
-      console.error('Repository verification failed:', error);
+      console.error('Repository connection failed:', error);
       onStatusChange(false);
     }
   };
@@ -72,7 +72,7 @@ export function RepositoryStep({ onStatusChange }: Props) {
         setValue('repositoryName', saveRequest.data.metadata.name);
         appEvents.publish({
           type: AppEvents.alertSuccess.name,
-          payload: ['Repository settings verified successfully'],
+          payload: ['Repository connected successfully'],
         });
       }
     } else if (saveRequest.isError) {

@@ -15,7 +15,7 @@ import (
 type exportJob struct {
 	logger    logging.Logger
 	client    *resources.DynamicClient // Read from
-	target    repository.Repository    // Write to
+	target    repository.ReaderWriter  // Write to
 	namespace string
 
 	progress   jobs.JobProgressRecorder
@@ -27,7 +27,7 @@ type exportJob struct {
 }
 
 func newExportJob(ctx context.Context,
-	target repository.Repository,
+	target repository.ReaderWriter,
 	options provisioning.ExportJobOptions,
 	client *resources.DynamicClient,
 	progress jobs.JobProgressRecorder,
