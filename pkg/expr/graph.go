@@ -19,6 +19,8 @@ import (
 // NodeType is the type of a DPNode. Currently either a expression command or datasource query.
 type NodeType int
 
+var supportedGroupByDSDatasources = []string{"cloudwatch"}
+
 const (
 	// TypeCMDNode is a NodeType for expression commands.
 	TypeCMDNode NodeType = iota
@@ -71,14 +73,17 @@ func (dp *DataPipeline) execute(c context.Context, now time.Time, s *Service) (m
 			if node.NodeType() != TypeDatasourceNode {
 				continue
 			}
-			dsNodes = append(dsNodes, node.(*DSNode))
+			dsNode := node.(*DSNode)
+			if dsNode.datasource != nil && isGroupByDSSupported(dsNode.datasource.Type) {
+				dsNodes = append(dsNodes, dsNode)
+			}
 		}
 
 		executeDSNodesGrouped(c, now, vars, s, dsNodes)
 	}
 
 	for _, node := range *dp {
-		if groupByDSFlag && node.NodeType() == TypeDatasourceNode {
+		if groupByDSFlag && node.NodeType() == TypeDatasourceNode && isGroupByDSSupported(node.(*DSNode).datasource.Type) {
 			continue // already executed via executeDSNodesGrouped
 		}
 
@@ -388,4 +393,9 @@ func GetCommandsFromPipeline[T Command](pipeline DataPipeline) []T {
 		}
 	}
 	return results
+}
+
+// Checks if the datasource supports grouping alerting/expression queries
+func isGroupByDSSupported(dsType string) bool {
+	return slices.Contains(supportedGroupByDSDatasources, dsType)
 }
