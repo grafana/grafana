@@ -75,13 +75,17 @@ const Log = ({ displayedFields, log, showTime, styles }: LogProps) => {
       {showTime && <span className={`${styles.timestamp} level-${log.logLevel} field`}>{log.timestamp}</span>}
       <span className={`${styles.level} level-${log.logLevel} field`}>{log.displayLevel}</span>
       {displayedFields.length > 0 ? (
-        displayedFields.map((field) => (
-          <span className="field" title={field} key={field}>
-            {getDisplayedFieldValue(field, log)}
-          </span>
-        ))
+        displayedFields.map((field) =>
+          field === LOG_LINE_BODY_FIELD_NAME ? (
+            <span className="field prism-syntax-highlight" dangerouslySetInnerHTML={{ __html: log.highlightedBody }} />
+          ) : (
+            <span className="field" title={field} key={field}>
+              {getDisplayedFieldValue(field, log)}
+            </span>
+          )
+        )
       ) : (
-        <span className="field">{log.body}</span>
+        <span className="field prism-syntax-highlight" dangerouslySetInnerHTML={{ __html: log.highlightedBody }} />
       )}
     </>
   );

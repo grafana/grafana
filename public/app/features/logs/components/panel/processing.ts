@@ -1,3 +1,5 @@
+import Prism from 'prismjs';
+
 import { dateTimeFormat, LogLevel, LogRowModel, LogsSortOrder } from '@grafana/data';
 
 import { escapeUnescapedString, sortLogRows } from '../../utils';
@@ -6,10 +8,12 @@ import { FieldDef, getAllFields } from '../logParser';
 
 import { getDisplayedFieldValue } from './LogLine';
 import { GetFieldLinksFn } from './LogList';
+import { logsGrammar } from './grammar';
 import { measureTextWidth } from './virtualization';
 
 export interface LogListModel extends LogRowModel {
   body: string;
+  highlightedBody: string;
   displayLevel: string;
   fields: FieldDef[];
   timestamp: string;
@@ -25,27 +29,24 @@ export interface PreProcessOptions {
   getFieldLinks?: GetFieldLinksFn;
   order: LogsSortOrder;
   timeZone: string;
-  wrap: boolean;
 }
 
 export const preProcessLogs = (
   logs: LogRowModel[],
-  { escape, getFieldLinks, order, timeZone, wrap }: PreProcessOptions
+  { escape, getFieldLinks, order, timeZone }: PreProcessOptions
 ): LogListModel[] => {
   const orderedLogs = sortLogRows(logs, order);
-  return orderedLogs.map((log) => preProcessLog(log, { escape, expanded: false, getFieldLinks, timeZone, wrap }));
+  return orderedLogs.map((log) => preProcessLog(log, { escape, getFieldLinks, timeZone }));
 };
 
 interface PreProcessLogOptions {
   escape: boolean;
-  expanded: boolean; // Not yet implemented
   getFieldLinks?: GetFieldLinksFn;
   timeZone: string;
-  wrap: boolean;
 }
 const preProcessLog = (
   log: LogRowModel,
-  { escape, expanded, getFieldLinks, timeZone, wrap }: PreProcessLogOptions
+  { escape, getFieldLinks, timeZone }: PreProcessLogOptions
 ): LogListModel => {
   let body = log.entry;
   const timestamp = dateTimeFormat(log.timeEpochMs, {
@@ -56,14 +57,15 @@ const preProcessLog = (
   if (escape && log.hasUnescapedContent) {
     body = escapeUnescapedString(body);
   }
-  // With wrapping disabled, we want to turn it into a single-line log entry unless the line is expanded
-  if (!wrap && !expanded) {
-    body = body.replace(/(\r\n|\n|\r)/g, '');
-  }
+  // Turn it into a single-line log entry for the list
+  body = body.replace(/(\r\n|\n|\r)/g, '');
+
+  const highlightedBody = Prism.highlight(body, logsGrammar, 'lokiql');
 
   return {
     ...log,
     body,
+    highlightedBody,
     displayLevel: logLevelToDisplayLevel(log.logLevel),
     fields: getAllFields(log, getFieldLinks),
     timestamp,
