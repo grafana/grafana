@@ -43,12 +43,9 @@ jobs:
       - name: Get runner name
         run: echo ${{ runner.name }}
 
-      - name: Setup Enterprise (PR only)
-        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false
-        uses: ./.github/actions/setup-enterprise
-        # Optionally enable debug output with:
-        # with:
-        #   debug: 'true'
+      # - name: Setup Enterprise (PR only)
+      #   if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false
+      #   uses: ./.github/actions/setup-enterprise
 
       - name: Verify CUE generation
         run: CODEGEN_VERIFY=1 make gen-cue
@@ -61,16 +58,9 @@ jobs:
 
       - name: Run backend tests
         uses: ./.github/actions/run-backend-tests
-        # Optionally configure with:
-        # with:
-        #   timeout: '10m'
-        #   short: 'false'
 
       - name: Run backend integration tests
         uses: ./.github/actions/run-backend-integration-tests
-        # Optionally configure with:
-        # with:
-        #   timeout: '10m'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
