@@ -8,7 +8,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
-	"github.com/grafana/grafana/pkg/services/ngalert/prom"
 )
 
 var (
@@ -37,8 +36,7 @@ func errorToResponse(err error) response.Response {
 	if errors.Is(err, datasources.ErrDataSourceNotFound) {
 		return ErrResp(404, err, "")
 	}
-	var validationErr *prom.ValidationError
-	if errors.Is(err, errUnexpectedDatasourceType) || errors.As(err, &validationErr) || errors.Is(err, errInvalidHeaderValue) {
+	if errors.Is(err, errUnexpectedDatasourceType) || errors.Is(err, errInvalidHeaderValue) {
 		return ErrResp(400, err, "")
 	}
 	if errors.Is(err, errFolderAccess) {

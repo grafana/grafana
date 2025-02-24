@@ -1,18 +1,14 @@
 package prom
 
 import (
-	"fmt"
-
 	prommodel "github.com/prometheus/common/model"
+
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 )
 
-type ValidationError struct {
-	Message string
-}
-
-func (e *ValidationError) Error() string {
-	return fmt.Sprintf("validation failed: %s", e.Message)
-}
+var (
+	ErrPrometheusRuleValidationFailed = errutil.ValidationFailed("alerting.prometheusRuleInvalid")
+)
 
 type PrometheusRulesFile struct {
 	Groups []PrometheusRuleGroup `yaml:"groups"`
@@ -36,7 +32,7 @@ type PrometheusRule struct {
 
 func (r *PrometheusRule) Validate() error {
 	if r.KeepFiringFor != nil {
-		return &ValidationError{Message: "keep_firing_for is not supported"}
+		return ErrPrometheusRuleValidationFailed.Errorf("keep_firing_for is not supported")
 	}
 
 	return nil
