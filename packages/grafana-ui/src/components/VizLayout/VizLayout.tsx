@@ -1,14 +1,14 @@
-import { css } from '@emotion/css';
-import { FC, CSSProperties, ComponentType } from 'react';
+import {css} from '@emotion/css';
 import * as React from 'react';
-import { useMeasure } from 'react-use';
+import {ComponentType, CSSProperties, FC} from 'react';
+import {useMeasure} from 'react-use';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { LegendPlacement } from '@grafana/schema';
+import {GrafanaTheme2} from '@grafana/data';
+import {LegendPlacement} from '@grafana/schema';
 
-import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
-import { getFocusStyles } from '../../themes/mixins';
-import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
+import {useStyles2, useTheme2} from '../../themes/ThemeContext';
+import {getFocusStyles} from '../../themes/mixins';
+import {ScrollContainer} from '../ScrollContainer/ScrollContainer';
 
 /**
  * @beta
@@ -53,7 +53,7 @@ export const VizLayout: VizLayoutComponentType = ({ width, height, legend, child
   let { placement, maxHeight = '35%', maxWidth = '60%' } = legend.props;
 
   if (document.body.clientWidth < theme.breakpoints.values.lg) {
-    placement = 'bottom';
+    placement = LegendPlacement.Bottom;
   }
 
   let size: VizSize | null = null;
