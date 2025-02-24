@@ -152,13 +152,6 @@ type FrontendSettingsSqlConnectionLimitsDTO struct {
 	ConnMaxLifetime int `json:"connMaxLifetime"`
 }
 
-type DependencyInfo struct {
-	PluginID      string `json:"id"`
-	PluginName    string `json:"name"`
-	PluginType    string `json:"type"`
-	PluginVersion string `json:"version"`
-}
-
 type FrontendSettingsDTO struct {
 	DefaultDatasource  string                           `json:"defaultDatasource"`
 	Datasources        map[string]plugins.DataSourceDTO `json:"datasources"`
@@ -227,31 +220,31 @@ type FrontendSettingsDTO struct {
 
 	LicenseInfo FrontendSettingsLicenseInfoDTO `json:"licenseInfo"`
 
-	FeatureToggles                   map[string]bool                `json:"featureToggles"`
-	AnonymousEnabled                 bool                           `json:"anonymousEnabled"`
-	AnonymousDeviceLimit             int64                          `json:"anonymousDeviceLimit"`
-	RendererAvailable                bool                           `json:"rendererAvailable"`
-	RendererVersion                  string                         `json:"rendererVersion"`
-	RendererDefaultImageWidth        int                            `json:"rendererDefaultImageWidth"`
-	RendererDefaultImageHeight       int                            `json:"rendererDefaultImageHeight"`
-	RendererDefaultImageScale        float64                        `json:"rendererDefaultImageScale"`
-	SecretsManagerPluginEnabled      bool                           `json:"secretsManagerPluginEnabled"`
-	Http2Enabled                     bool                           `json:"http2Enabled"`
-	GrafanaJavascriptAgent           setting.GrafanaJavascriptAgent `json:"grafanaJavascriptAgent"`
-	PluginCatalogURL                 string                         `json:"pluginCatalogURL"`
-	PluginAdminEnabled               bool                           `json:"pluginAdminEnabled"`
-	PluginAdminExternalManageEnabled bool                           `json:"pluginAdminExternalManageEnabled"`
-	PluginCatalogHiddenPlugins       []string                       `json:"pluginCatalogHiddenPlugins"`
-	PluginCatalogManagedPlugins      []string                       `json:"pluginCatalogManagedPlugins"`
-	PluginCatalogPreinstalledPlugins []setting.InstallPlugin        `json:"pluginCatalogPreinstalledPlugins"`
-	ExpressionsEnabled               bool                           `json:"expressionsEnabled"`
-	AwsAllowedAuthProviders          []string                       `json:"awsAllowedAuthProviders"`
-	AwsAssumeRoleEnabled             bool                           `json:"awsAssumeRoleEnabled"`
-	SupportBundlesEnabled            bool                           `json:"supportBundlesEnabled"`
-	SnapshotEnabled                  bool                           `json:"snapshotEnabled"`
-	SecureSocksDSProxyEnabled        bool                           `json:"secureSocksDSProxyEnabled"`
-	ReportingStaticContext           map[string]string              `json:"reportingStaticContext"`
-	PluginDependencies               map[string][]DependencyInfo    `json:"pluginDependants"`
+	FeatureToggles                   map[string]bool                 `json:"featureToggles"`
+	AnonymousEnabled                 bool                            `json:"anonymousEnabled"`
+	AnonymousDeviceLimit             int64                           `json:"anonymousDeviceLimit"`
+	RendererAvailable                bool                            `json:"rendererAvailable"`
+	RendererVersion                  string                          `json:"rendererVersion"`
+	RendererDefaultImageWidth        int                             `json:"rendererDefaultImageWidth"`
+	RendererDefaultImageHeight       int                             `json:"rendererDefaultImageHeight"`
+	RendererDefaultImageScale        float64                         `json:"rendererDefaultImageScale"`
+	SecretsManagerPluginEnabled      bool                            `json:"secretsManagerPluginEnabled"`
+	Http2Enabled                     bool                            `json:"http2Enabled"`
+	GrafanaJavascriptAgent           setting.GrafanaJavascriptAgent  `json:"grafanaJavascriptAgent"`
+	PluginCatalogURL                 string                          `json:"pluginCatalogURL"`
+	PluginAdminEnabled               bool                            `json:"pluginAdminEnabled"`
+	PluginAdminExternalManageEnabled bool                            `json:"pluginAdminExternalManageEnabled"`
+	PluginCatalogHiddenPlugins       []string                        `json:"pluginCatalogHiddenPlugins"`
+	PluginCatalogManagedPlugins      []string                        `json:"pluginCatalogManagedPlugins"`
+	PluginCatalogPreinstalledPlugins []setting.InstallPlugin         `json:"pluginCatalogPreinstalledPlugins"`
+	ExpressionsEnabled               bool                            `json:"expressionsEnabled"`
+	AwsAllowedAuthProviders          []string                        `json:"awsAllowedAuthProviders"`
+	AwsAssumeRoleEnabled             bool                            `json:"awsAssumeRoleEnabled"`
+	SupportBundlesEnabled            bool                            `json:"supportBundlesEnabled"`
+	SnapshotEnabled                  bool                            `json:"snapshotEnabled"`
+	SecureSocksDSProxyEnabled        bool                            `json:"secureSocksDSProxyEnabled"`
+	ReportingStaticContext           map[string]string               `json:"reportingStaticContext"`
+	PluginDependencies               map[string][]plugins.Dependency `json:"pluginDependants"`
 
 	Azure FrontendSettingsAzureDTO `json:"azure"`
 
