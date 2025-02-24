@@ -1,10 +1,6 @@
 name: Trivy Scan
 on:
   pull_request:
-    # only run on PRs where go.mod/go.sum/etc have been updated
-    paths:
-      - go.*
-      - .github/workflows/trivy-scan.yml
   push:
     branches:
       - main
@@ -13,6 +9,7 @@ on:
 jobs:
   test-frontend:
     runs-on: ubuntu-latest
+    run-name: Test Frontend
     steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-node@v4
