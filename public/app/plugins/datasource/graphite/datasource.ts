@@ -304,10 +304,9 @@ export class GraphiteDatasource
       const splitTarget = s.target.split(' ');
 
       let refId = '';
-      let target = '';
       if (splitTarget.length === 1) {
         // If there is only one element, it means that there is no refID
-        target = splitTarget[0];
+        s.target = splitTarget[0];
       } else {
         // refID should always be the last element
         refId = splitTarget.pop() || '';
