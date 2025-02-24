@@ -17,6 +17,8 @@ import {
 
 import { getWorkflowOptions } from '../ConfigForm';
 import { TokenPermissionsInfo } from '../TokenPermissionsInfo';
+import { useCreateRepositoryTestMutation, useListRepositoryQuery } from '../api';
+import { RepositorySpec } from '../api/endpoints.gen';
 import { useCreateOrUpdateRepository } from '../hooks';
 import { dataToSpec } from '../utils/data';
 
@@ -26,6 +28,31 @@ import { WizardFormData } from './types';
 interface Props {
   onStatusChange: (success: boolean) => void;
 }
+
+interface RepositoryHealthProps {
+  name: string;
+  onHealthChange: (isHealthy: boolean) => void;
+}
+
+const RepositoryHealth = ({ name, onHealthChange }: RepositoryHealthProps) => {
+  const { data: repoData } = useListRepositoryQuery({ watch: true });
+  const repo = repoData?.items?.[0];
+  console.log('r', repo);
+
+  if (!repo) {
+    return null;
+  }
+
+  return (
+    repo?.status?.health?.healthy === false &&
+    repo?.status?.health?.message && (
+      <RequestErrorAlert
+        error={{ message: repo.status.health.message.join('\n') }}
+        title="Repository health check failed"
+      />
+    )
+  );
+};
 
 const AdvancedSettingsFields = () => {
   const { register } = useFormContext<WizardFormData>();
@@ -46,54 +73,17 @@ const AdvancedSettingsFields = () => {
   );
 };
 
-export function RepositoryStep({ onStatusChange }: Props) {
+interface WorkflowsFieldProps {
+  type: RepositorySpec['type'];
+}
+
+const WorkflowsField = ({ type }: WorkflowsFieldProps) => {
   const {
-    register,
     control,
-    watch,
-    setValue,
-    getValues,
     formState: { errors },
   } = useFormContext<WizardFormData>();
 
-  const type = watch('repository.type');
-  const [tokenConfigured, setTokenConfigured] = useState(false);
-  const [submitData, verifyRequest] = useCreateOrUpdateRepository();
-
-  const handleVerify = async () => {
-    const formData = getValues();
-    const spec = dataToSpec(formData.repository);
-    if (spec.github) {
-      spec.github.token = formData.repository.token || '';
-    }
-    await submitData(spec);
-  };
-
-  // Handle verification response
-  useEffect(() => {
-    const appEvents = getAppEvents();
-    if (verifyRequest.isSuccess) {
-      if (verifyRequest.data?.metadata?.name) {
-        setValue('repositoryName', verifyRequest.data.metadata.name);
-      }
-      appEvents.publish({
-        type: AppEvents.alertSuccess.name,
-        payload: ['Repository settings verified successfully'],
-      });
-      onStatusChange(true);
-    } else if (verifyRequest.isError) {
-      onStatusChange(false);
-    }
-  }, [
-    verifyRequest.isSuccess,
-    verifyRequest.isError,
-    verifyRequest.data,
-    verifyRequest.error,
-    setValue,
-    onStatusChange,
-  ]);
-
-  const WorkflowsField = () => (
+  return (
     <Field
       label={'Workflows'}
       required
@@ -119,12 +109,57 @@ export function RepositoryStep({ onStatusChange }: Props) {
       />
     </Field>
   );
+};
+
+export function RepositoryStep({ onStatusChange }: Props) {
+  const {
+    register,
+    control,
+    watch,
+    setValue,
+    getValues,
+    formState: { errors },
+  } = useFormContext<WizardFormData>();
+
+  const type = watch('repository.type');
+  const [tokenConfigured, setTokenConfigured] = useState(false);
+  const repoName = watch('repositoryName');
+  const [submitData, verifyRequest] = useCreateOrUpdateRepository(repoName);
+  const [verify] = useCreateRepositoryTestMutation();
+
+  const handleVerify = async () => {
+    const formData = getValues();
+    const spec = dataToSpec(formData.repository);
+    if (formData.repository.type === 'github' && spec.github) {
+      spec.github.token = formData.repository.token || '';
+    }
+    const test = await verify({ name: 'new', body: { spec } });
+    console.log('t', test);
+    await submitData(spec);
+  };
+
+  // Handle verification response
+  useEffect(() => {
+    const appEvents = getAppEvents();
+    if (verifyRequest.isSuccess) {
+      if (verifyRequest.data?.metadata?.name) {
+        setValue('repositoryName', verifyRequest.data.metadata.name);
+        appEvents.publish({
+          type: AppEvents.alertSuccess.name,
+          payload: ['Repository settings verified successfully'],
+        });
+      }
+    } else if (verifyRequest.isError) {
+      onStatusChange(false);
+    }
+  }, [verifyRequest.isSuccess, verifyRequest.isError, verifyRequest.data, setValue, onStatusChange]);
 
   if (type === 'github') {
     return (
       <FieldSet label="2. Configure repository">
         <Stack direction="column" gap={1}>
-          <RequestErrorAlert request={verifyRequest} />
+          {verifyRequest.isError && <RequestErrorAlert request={verifyRequest} />}
+          {repoName && <RepositoryHealth name={repoName} onHealthChange={onStatusChange} />}
           <TokenPermissionsInfo />
 
           <Field
@@ -181,7 +216,7 @@ export function RepositoryStep({ onStatusChange }: Props) {
             <Switch {...register('repository.generateDashboardPreviews')} />
           </Field>
 
-          <WorkflowsField />
+          <WorkflowsField type={type} />
           <AdvancedSettingsFields />
 
           <Stack direction="row" gap={2}>
@@ -202,7 +237,8 @@ export function RepositoryStep({ onStatusChange }: Props) {
     return (
       <FieldSet label="2. Configure repository">
         <Stack direction="column" gap={2}>
-          <RequestErrorAlert request={verifyRequest} />
+          {verifyRequest.isError && <RequestErrorAlert request={verifyRequest} />}
+          {repoName && <RepositoryHealth name={repoName} onHealthChange={onStatusChange} />}
 
           <Field label={'Local path'} error={errors.repository?.path?.message} invalid={!!errors.repository?.path}>
             <Input
@@ -211,7 +247,7 @@ export function RepositoryStep({ onStatusChange }: Props) {
             />
           </Field>
 
-          <WorkflowsField />
+          <WorkflowsField type={type} />
           <AdvancedSettingsFields />
 
           <Stack direction="row" gap={2}>
