@@ -108,7 +108,6 @@ export const VersionInstallButton = ({
         // Hide button if the plugin is preinstalled with a specific version
         hidden = true;
       }
-
     }
   }
 
