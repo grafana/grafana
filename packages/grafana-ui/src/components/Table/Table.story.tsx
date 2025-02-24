@@ -20,7 +20,8 @@ import { Button } from '../Button/Button';
 
 import { Table } from './Table';
 import mdx from './Table.mdx';
-import { FooterItem, TableCellDisplayMode, TableCustomCellOptions } from './types';
+import { FooterItem, TableCustomCellOptions } from './types';
+import { TableCellDisplayMode } from '@grafana/schema';
 
 const meta: Meta<typeof Table> = {
   title: 'Visualizations/Table',

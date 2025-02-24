@@ -3,23 +3,24 @@ import { assertIsDefined } from 'test/helpers/asserts';
 import {
   createTheme,
   FieldConfig,
+  FieldConfigSource,
   FieldType,
   MutableDataFrame,
   VizOrientation,
-  FieldConfigSource,
 } from '@grafana/data';
 import {
+  defaultTimeZone,
+  GraphGradientMode,
   LegendDisplayMode,
+  LegendPlacement,
+  SortOrder,
+  StackingMode,
   TooltipDisplayMode,
   VisibilityMode,
-  GraphGradientMode,
-  StackingMode,
-  SortOrder,
-  defaultTimeZone,
 } from '@grafana/schema';
 
 import { FieldConfig as PanelFieldConfig } from './panelcfg.gen';
-import { prepSeries, prepConfig, PrepConfigOpts } from './utils';
+import { prepConfig, PrepConfigOpts, prepSeries } from './utils';
 
 const fieldConfig: FieldConfigSource = {
   defaults: {},
@@ -96,7 +97,7 @@ describe('BarChart utils', () => {
       series: [mockDataFrame()],
       totalSeries: 2,
       // color?: Field | null;
-      timeZone: defaultTimeZone,
+      timeZone: defaultTimeZone(),
       theme: createTheme(),
       orientation: VizOrientation.Auto,
 
@@ -108,7 +109,7 @@ describe('BarChart utils', () => {
         legend: {
           displayMode: LegendDisplayMode.List,
           showLegend: true,
-          placement: 'bottom',
+          placement: LegendPlacement.Bottom,
           calcs: [],
         },
         xTickLabelRotation: 0,

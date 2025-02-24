@@ -82,19 +82,19 @@ export const WithNoValues: StoryFn = ({ containerWidth, seriesCount }) => {
         name="List mode, placement bottom"
         displayMode={LegendDisplayMode.List}
         seriesCount={seriesCount}
-        placement="bottom"
+        placement={LegendPlacement.Bottom}
       />
       <LegendStoryDemo
         name="List mode, placement right"
         displayMode={LegendDisplayMode.List}
         seriesCount={seriesCount}
-        placement="right"
+        placement={LegendPlacement.Right}
       />
       <LegendStoryDemo
         name="Table mode"
         displayMode={LegendDisplayMode.Table}
         seriesCount={seriesCount}
-        placement="bottom"
+        placement={LegendPlacement.Bottom}
       />
     </div>
   );
@@ -125,21 +125,21 @@ export const WithValues: StoryFn = ({ containerWidth, seriesCount }) => {
         name="List mode, placement bottom"
         displayMode={LegendDisplayMode.List}
         seriesCount={seriesCount}
-        placement="bottom"
+        placement={LegendPlacement.Bottom}
         stats={stats}
       />
       <LegendStoryDemo
         name="List mode, placement right"
         displayMode={LegendDisplayMode.List}
         seriesCount={seriesCount}
-        placement="right"
+        placement={LegendPlacement.Right}
         stats={stats}
       />
       <LegendStoryDemo
         name="Table mode"
         displayMode={LegendDisplayMode.Table}
         seriesCount={seriesCount}
-        placement="bottom"
+        placement={LegendPlacement.Bottom}
         stats={stats}
       />
     </div>
