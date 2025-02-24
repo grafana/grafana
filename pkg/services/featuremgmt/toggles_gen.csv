@@ -237,3 +237,4 @@ pluginsCDNSyncLoader,experimental,@grafana/plugins-platform-backend,false,false,
 alertingJiraIntegration,experimental,@grafana/alerting-squad,false,false,true
 alertingRuleVersionHistoryRestore,experimental,@grafana/alerting-squad,false,false,true
 newShareReportDrawer,experimental,@grafana/sharing-squad,false,false,false
+rendererDisableAppPluginsPreload,experimental,@grafana/sharing-squad,false,false,true
