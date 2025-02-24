@@ -42,7 +42,12 @@ func (st DBstore) GetNamespaceByUID(ctx context.Context, uid string, orgID int64
 
 // GetNamespaceInRootByTitle gets namespace by its title in the root folder.
 func (st DBstore) GetNamespaceInRootByTitle(ctx context.Context, title string, orgID int64, user identity.Requester) (*folder.Folder, error) {
-	folders, err := st.GetUserVisibleNamespaces(ctx, orgID, user)
+	q := &folder.GetChildrenQuery{
+		UID:          folder.RootFolderUID,
+		OrgID:        orgID,
+		SignedInUser: user,
+	}
+	folders, err := st.FolderService.GetChildren(ctx, q)
 	if err != nil {
 		return nil, err
 	}
