@@ -354,10 +354,9 @@ interface EdgesProps {
 const Edges = memo(function Edges(props: EdgesProps) {
   return (
     <>
-      {props.edges.map((e, index) => (
+      {props.edges.map((e) => (
         <Edge
-          key={`${e.id}-${index}-${props.processedNodesLength}`}
-          index={index}
+          key={`${e.id}-${e.source.y ?? ''}-${props.processedNodesLength}`}
           edge={e}
           hovering={
             (e.source as NodeDatum).id === props.nodeHoveringId ||
