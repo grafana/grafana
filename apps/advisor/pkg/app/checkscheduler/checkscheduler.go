@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/k8s"
 	"github.com/grafana/grafana-app-sdk/resource"
@@ -29,6 +30,7 @@ type Runner struct {
 	client             resource.Client
 	evaluationInterval time.Duration
 	maxHistory         int
+	namespace          string
 }
 
 // NewRunner creates a new Runner.
@@ -47,6 +49,14 @@ func New(cfg app.Config) (app.Runnable, error) {
 	if err != nil {
 		return nil, err
 	}
+	namespace := metav1.NamespaceDefault
+	if specificConfig.StackID != "" {
+		stackId, err := strconv.ParseInt(specificConfig.StackID, 10, 64)
+		if err != nil {
+			return nil, fmt.Errorf("invalid stack id: %s", specificConfig.StackID)
+		}
+		namespace = types.CloudNamespaceFormatter(stackId)
+	}
 
 	// Prepare storage client
 	clientGenerator := k8s.NewClientRegistry(cfg.KubeConfig, k8s.ClientConfig{})
@@ -60,6 +70,7 @@ func New(cfg app.Config) (app.Runnable, error) {
 		client:             client,
 		evaluationInterval: evalInterval,
 		maxHistory:         maxHistory,
+		namespace:          namespace,
 	}, nil
 }
 
@@ -114,7 +125,7 @@ func (r *Runner) Run(ctx context.Context) error {
 // regardless of its ID. This assumes that the checks are created in batches
 // so a batch will have a similar creation time.
 func (r *Runner) checkLastCreated(ctx context.Context) (time.Time, error) {
-	list, err := r.client.List(ctx, metav1.NamespaceDefault, resource.ListOptions{})
+	list, err := r.client.List(ctx, r.namespace, resource.ListOptions{})
 	if err != nil {
 		return time.Time{}, err
 	}
@@ -134,7 +145,7 @@ func (r *Runner) createChecks(ctx context.Context) error {
 		obj := &advisorv0alpha1.Check{
 			ObjectMeta: metav1.ObjectMeta{
 				GenerateName: "check-",
-				Namespace:    metav1.NamespaceDefault,
+				Namespace:    r.namespace,
 				Labels: map[string]string{
 					checks.TypeLabel: check.ID(),
 				},
@@ -152,7 +163,7 @@ func (r *Runner) createChecks(ctx context.Context) error {
 
 // cleanupChecks deletes the olders checks if the number of checks exceeds the limit.
 func (r *Runner) cleanupChecks(ctx context.Context) error {
-	list, err := r.client.List(ctx, metav1.NamespaceDefault, resource.ListOptions{Limit: -1})
+	list, err := r.client.List(ctx, r.namespace, resource.ListOptions{Limit: -1})
 	if err != nil {
 		return err
 	}

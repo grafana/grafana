@@ -62,4 +62,5 @@ func (s *Service) Checks() []checks.Check {
 type AdvisorAppConfig struct {
 	CheckRegistry CheckService
 	PluginConfig  map[string]string
+	StackID       string
 }
