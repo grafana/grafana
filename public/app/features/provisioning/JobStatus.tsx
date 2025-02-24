@@ -16,13 +16,14 @@ export function JobStatus({ name, onStatusChange }: JobStatusProps) {
   const jobQuery = useListJobQuery({ watch: true, fieldSelector: `metadata.name=${name}` });
   const job = jobQuery.data?.items?.[0];
   const hasNotifiedSuccess = useRef(false);
+  const isSuccess = job?.status?.state === 'success';
 
   useEffect(() => {
-    if (job?.status?.state === 'success' && onStatusChange && !hasNotifiedSuccess.current) {
+    if (isSuccess && onStatusChange && !hasNotifiedSuccess.current) {
       hasNotifiedSuccess.current = true;
       onStatusChange(true);
     }
-  }, [job?.status?.state, onStatusChange]);
+  }, [isSuccess, onStatusChange]);
 
   if (jobQuery.isLoading || !job) {
     return (
@@ -38,7 +39,7 @@ export function JobStatus({ name, onStatusChange }: JobStatusProps) {
       {job.status && (
         <Stack direction="column" gap={2}>
           <Text element="p" weight="medium">
-            {job.status.message ?? ''}
+            {isSuccess ? 'Migration successful!' : (job.status.message ?? '')}
           </Text>
           <ProgressBar progress={job.status.progress} />
 
