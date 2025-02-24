@@ -43,31 +43,9 @@ jobs:
       - name: Get runner name
         run: echo ${{ runner.name }}
 
-      - name: Retrieve GitHub App secrets
-        id: get-secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@get-vault-secrets-v1.0.1
-        with:
-          repo_secrets: |
-            APP_ID=<my-new-gitrhub-app>:app-id
-            APP_INSTALLATION_ID=<my-new-gitrhub-app>:app-installation-id
-            PRIVATE_KEY=<my-new-gitrhub-app>:private-key
-
-      - name: Debug secrets (redacted)
-        run: |
-          if [ -n "${{ env.APP_ID }}" ]; then echo "APP_ID is set"; else echo "APP_ID is not set"; fi
-          if [ -n "${{ env.APP_INSTALLATION_ID }}" ]; then echo "APP_INSTALLATION_ID is set"; else echo "APP_INSTALLATION_ID is not set"; fi
-          if [ -n "${{ env.PRIVATE_KEY }}" ]; then echo "PRIVATE_KEY is set"; else echo "PRIVATE_KEY is not set"; fi
-
-      - name: Generate GitHub App token
-        id: generate_token
-        uses: actions/create-github-app-token@v1
-        with:
-          app-id: ${{ env.APP_ID }}
-          private-key: ${{ env.PRIVATE_KEY }}
-
-      - name: Setup Enterprise (PR only)
-        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false
-        uses: ./.github/workflows/actions/setup-enterprise
+      # - name: Setup Enterprise (PR only)
+      #   if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false
+      #   uses: ./.github/workflows/actions/setup-enterprise
         # Optionally enable debug output with:
         # with:
         #   debug: 'true'
@@ -82,12 +60,17 @@ jobs:
         run: make gen-go
 
       - name: Run backend tests
-        run: |
-          go list -f '{{.Dir}}/...' -m  | xargs go test -short -covermode=atomic -timeout=5m
+        uses: ./.github/workflows/actions/run-backend-tests
+        # Optionally configure with:
+        # with:
+        #   timeout: '10m'
+        #   short: 'false'
 
       - name: Run backend integration tests
-        run: |
-          go test -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+' | grep -o '\(.*\)/' | sort -u)
+        uses: ./.github/workflows/actions/run-backend-integration-tests
+        # Optionally configure with:
+        # with:
+        #   timeout: '10m'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

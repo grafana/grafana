@@ -1,0 +1,21 @@
+name: 'Run Backend Integration Tests'
+description: 'Runs the Grafana backend integration tests'
+
+inputs:
+  timeout:
+    description: 'Test timeout duration'
+    default: '5m'
+    required: false
+  coverage-mode:
+    description: 'Coverage mode for tests'
+    default: 'atomic'
+    required: false
+
+runs:
+  using: "composite"
+  steps:
+    - name: Run integration tests
+      shell: bash
+      run: |
+        go test -count=1 -covermode=${{ inputs.coverage-mode }} -timeout=${{ inputs.timeout }} \
+          -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+' | grep -o '\(.*\)/' | sort -u) 
