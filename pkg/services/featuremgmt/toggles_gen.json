@@ -2038,22 +2038,6 @@
     },
     {
       "metadata": {
-        "name": "improveRendererTraffic",
-        "resourceVersion": "1738935493033",
-        "creationTimestamp": "2025-02-07T13:38:13Z",
-        "deletionTimestamp": "2025-02-24T08:45:10Z"
-      },
-      "spec": {
-        "description": "Reduce number of requests done when the request is coming from the renderer",
-        "stage": "experimental",
-        "codeowner": "@grafana/sharing-squad",
-        "frontend": true,
-        "hideFromAdminPage": true,
-        "hideFromDocs": true
-      }
-    },
-    {
-      "metadata": {
         "name": "improvedExternalSessionHandling",
         "resourceVersion": "1737370880023",
         "creationTimestamp": "2024-09-17T10:54:39Z",
