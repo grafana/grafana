@@ -54,10 +54,7 @@ runs:
       env:
         GH_TOKEN: ${{ steps.generate_token.outputs.token }}
       run: |
-        if ! git clone https://x-access-token:${GH_TOKEN}@github.com/grafana/grafana-enterprise.git ../grafana-enterprise; then
-          echo "Failed to clone enterprise repository - this is expected for non-enterprise contributors"
-          exit 0
-        fi
+        git clone https://x-access-token:${GH_TOKEN}@github.com/grafana/grafana-enterprise.git ../grafana-enterprise
         
         cd ../grafana-enterprise
         
