@@ -625,14 +625,8 @@ func readMatrixOrVectorMulti(iter *sdkjsoniter.Iterator, resultType string, opt 
 				if err != nil {
 					return rspErr(err)
 				}
-				// if isSizeKnown {
-				// 	tempTimes[idx] = t
-				// 	tempValues[idx] = v
-				// 	idx++
-				// } else {
 				tempTimes = append(tempTimes, t)
 				tempValues = append(tempValues, v)
-				// }
 
 			case "values":
 				for more, err := iter.ReadArray(); more; more, err = iter.ReadArray() {
@@ -643,14 +637,8 @@ func readMatrixOrVectorMulti(iter *sdkjsoniter.Iterator, resultType string, opt 
 					if err != nil {
 						return rspErr(err)
 					}
-					// if isSizeKnown {
-					// 	tempTimes[idx] = t
-					// 	tempValues[idx] = v
-					// 	idx++
-					// } else {
 					tempTimes = append(tempTimes, t)
 					tempValues = append(tempValues, v)
-					// }
 				}
 
 			case "histogram":
