@@ -16,7 +16,7 @@ type SecureValueName = string
 
 // Simulation version of a database used by secrets.
 type SimDatabase struct {
-	outboxQueue []any
+	outboxQueue []*secretv0alpha1.SecureValue
 	// Map of namespace -> secret name -> secure value
 	secretMetadata map[Namespace]map[SecureValueName]secretv0alpha1.SecureValue
 	simNetwork     *SimNetwork
@@ -27,13 +27,13 @@ type SimDatabase struct {
 }
 
 type transaction struct {
-	outboxQueue    []any
+	outboxQueue    []*secretv0alpha1.SecureValue
 	secretMetadata map[Namespace]map[SecureValueName]secretv0alpha1.SecureValue
 }
 
 func newTransaction() *transaction {
 	return &transaction{
-		outboxQueue:    make([]any, 0),
+		outboxQueue:    make([]*secretv0alpha1.SecureValue, 0),
 		secretMetadata: make(map[Namespace]map[SecureValueName]secretv0alpha1.SecureValue),
 	}
 }
