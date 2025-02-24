@@ -45,7 +45,7 @@ func NewResourceServer(db infraDB.DB, cfg *setting.Cfg,
 		return nil, err
 	}
 
-	isHA := IsHighAvailabilityEnabled(cfg.SectionWithEnvOverrides("database"))
+	isHA := isHighAvailabilityEnabled(cfg.SectionWithEnvOverrides("database"))
 
 	store, err := NewBackend(BackendOptions{DBProvider: eDB, Tracer: tracer, IsHA: isHA})
 	if err != nil {
@@ -64,10 +64,10 @@ func NewResourceServer(db infraDB.DB, cfg *setting.Cfg,
 	return rs, nil
 }
 
-// IsHighAvailabilityEnabled determines if high availability mode should
+// isHighAvailabilityEnabled determines if high availability mode should
 // be enabled based on database configuration. High availability is enabled
 // by default except for SQLite databases.
-func IsHighAvailabilityEnabled(dbCfg *setting.DynamicSection) bool {
+func isHighAvailabilityEnabled(dbCfg *setting.DynamicSection) bool {
 	// Check in the config if HA is enabled - by default we always assume a HA setup.
 	isHA := dbCfg.Key("high_availability").MustBool(true)
 

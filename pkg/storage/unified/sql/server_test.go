@@ -89,7 +89,7 @@ func TestIsHighAvailabilityEnabled(t *testing.T) {
 				cfg.Key("high_availability").SetValue(strconv.FormatBool(*tt.haConfigValue))
 			}
 
-			result := IsHighAvailabilityEnabled(cfg)
+			result := isHighAvailabilityEnabled(cfg)
 			require.Equal(t, tt.isHA, result)
 		})
 	}
