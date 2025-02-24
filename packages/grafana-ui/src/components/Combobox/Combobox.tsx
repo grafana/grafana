@@ -359,8 +359,8 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
                   {rowVirtualizer.getVirtualItems().map((virtualRow) => {
                     const item = filteredOptions[virtualRow.index];
                     const startingNewGroup = isNewGroup(item, filteredOptions[virtualRow.index - 1]);
-                    const itemId = 'multicombobox-option-' + item.value.toString(); // TODO
-                    const groupHeaderid = 'multicombobox-option-group-' + item.value.toString(); // TODO
+                    const itemId = 'combobox-option-' + item.value.toString();
+                    const groupHeaderid = 'combobox-option-group-' + item.value.toString();
                     return (
                       <li
                         key={`${item.value}-${virtualRow.index}`}

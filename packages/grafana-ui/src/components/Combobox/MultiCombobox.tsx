@@ -354,6 +354,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
                   const itemProps = getItemProps({ item, index });
                   const isSelected = isOptionSelected(item);
                   const id = 'multicombobox-option-' + item.value.toString();
+                  const groupHeaderid = 'multicombobox-option-group-' + item.value.toString();
                   const isAll = item.value === ALL_OPTION_VALUE;
 
                   // TODO: fix bug where if the search filtered items list is the
@@ -374,7 +375,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
                           <div className={styles.optionGroup}>
                             <OptionListItem
                               label={item.group ?? t('combobox.group.undefined', 'No group')}
-                              id={id} // TODO: uses same ID twice
+                              id={groupHeaderid}
                               isGroup={true}
                             />
                           </div>
