@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
@@ -33,8 +34,8 @@ func TestSearchFallback(t *testing.T) {
 				"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode0},
 			},
 		}
-		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), cfg, mockLegacyClient, mockClient, nil)
-		searchHandler.client = resource.NewSearchClient(cfg, setting.UnifiedStorageConfigKeyDashboard, mockClient, mockLegacyClient)
+		dual := dualwrite.ProvideService(featuremgmt.WithFeatures(), nil, cfg)
+		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), dual, mockLegacyClient, mockClient, nil)
 
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/search", nil)
@@ -60,8 +61,8 @@ func TestSearchFallback(t *testing.T) {
 				"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode1},
 			},
 		}
-		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), cfg, mockLegacyClient, mockClient, nil)
-		searchHandler.client = resource.NewSearchClient(cfg, setting.UnifiedStorageConfigKeyDashboard, mockClient, mockLegacyClient)
+		dual := dualwrite.ProvideService(featuremgmt.WithFeatures(), nil, cfg)
+		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), dual, mockLegacyClient, mockClient, nil)
 
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/search", nil)
@@ -87,8 +88,8 @@ func TestSearchFallback(t *testing.T) {
 				"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode2},
 			},
 		}
-		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), cfg, mockLegacyClient, mockClient, nil)
-		searchHandler.client = resource.NewSearchClient(cfg, setting.UnifiedStorageConfigKeyDashboard, mockClient, mockLegacyClient)
+		dual := dualwrite.ProvideService(featuremgmt.WithFeatures(), nil, cfg)
+		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), dual, mockLegacyClient, mockClient, nil)
 
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/search", nil)
@@ -114,8 +115,8 @@ func TestSearchFallback(t *testing.T) {
 				"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode3},
 			},
 		}
-		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), cfg, mockLegacyClient, mockClient, nil)
-		searchHandler.client = resource.NewSearchClient(cfg, setting.UnifiedStorageConfigKeyDashboard, mockClient, mockLegacyClient)
+		dual := dualwrite.ProvideService(featuremgmt.WithFeatures(), nil, cfg)
+		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), dual, mockLegacyClient, mockClient, nil)
 
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/search", nil)
@@ -141,8 +142,8 @@ func TestSearchFallback(t *testing.T) {
 				"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode4},
 			},
 		}
-		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), cfg, mockLegacyClient, mockClient, nil)
-		searchHandler.client = resource.NewSearchClient(cfg, setting.UnifiedStorageConfigKeyDashboard, mockClient, mockLegacyClient)
+		dual := dualwrite.ProvideService(featuremgmt.WithFeatures(), nil, cfg)
+		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), dual, mockLegacyClient, mockClient, nil)
 
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/search", nil)
@@ -168,8 +169,8 @@ func TestSearchFallback(t *testing.T) {
 				"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode5},
 			},
 		}
-		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), cfg, mockLegacyClient, mockClient, nil)
-		searchHandler.client = resource.NewSearchClient(cfg, setting.UnifiedStorageConfigKeyDashboard, mockClient, mockLegacyClient)
+		dual := dualwrite.ProvideService(featuremgmt.WithFeatures(), nil, cfg)
+		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), dual, mockLegacyClient, mockClient, nil)
 
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/search", nil)
@@ -356,7 +357,131 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 
 		searchHandler.DoSearch(rr, req)
 
-		assert.Equal(t, mockClient.CallCount, 1)
+		assert.Equal(t, mockClient.CallCount, 0)
+	})
+
+	t.Run("should return empty result without searching if user does not have shared dashboards", func(t *testing.T) {
+		mockClient := &MockClient{}
+
+		features := featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorageSearchPermissionFiltering)
+		searchHandler := SearchHandler{
+			log:      log.New("test", "test"),
+			client:   mockClient,
+			tracer:   tracing.NewNoopTracerService(),
+			features: features,
+		}
+		rr := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", "/search?folder=sharedwithme", nil)
+		req.Header.Add("content-type", "application/json")
+		// "Permissions" prop in "SignedInUser" is where we store the uid of dashboards shared with the user
+		// doesn't exist here, which represents a user without any shared dashboards
+		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test"}))
+
+		searchHandler.DoSearch(rr, req)
+
+		assert.Equal(t, mockClient.CallCount, 0)
+
+		resp := rr.Result()
+		defer func() {
+			if err := resp.Body.Close(); err != nil {
+				t.Fatal(err)
+			}
+		}()
+
+		p := &v0alpha1.SearchResults{}
+		err := json.NewDecoder(resp.Body).Decode(p)
+		require.NoError(t, err)
+		assert.Equal(t, 0, len(p.Hits))
+	})
+
+	t.Run("should return empty result if user has access to folder of all shared dashboards", func(t *testing.T) {
+		// dashboardSearchRequest
+		mockResponse1 := &resource.ResourceSearchResponse{
+			Results: &resource.ResourceTable{
+				Columns: []*resource.ResourceTableColumnDefinition{
+					{
+						Name: "folder",
+					},
+				},
+				Rows: []*resource.ResourceTableRow{
+					{
+						Key: &resource.ResourceKey{
+							Name:     "dashboardinroot",
+							Resource: "dashboard",
+						},
+						Cells: [][]byte{[]byte("")}, // root folder doesn't have uid
+					},
+					{
+						Key: &resource.ResourceKey{
+							Name:     "dashboardinpublicfolder",
+							Resource: "dashboard",
+						},
+						Cells: [][]byte{
+							[]byte("publicfolder"), // folder uid
+						},
+					},
+				},
+			},
+		}
+
+		// folderSearchRequest
+		mockResponse2 := &resource.ResourceSearchResponse{
+			Results: &resource.ResourceTable{
+				Columns: []*resource.ResourceTableColumnDefinition{
+					{
+						Name: "folder",
+					},
+				},
+				Rows: []*resource.ResourceTableRow{
+					{
+						Key: &resource.ResourceKey{
+							Name:     "publicfolder",
+							Resource: "folder",
+						},
+						Cells: [][]byte{
+							[]byte(""), // root folder uid
+						},
+					},
+				},
+			},
+		}
+
+		mockClient := &MockClient{
+			MockResponses: []*resource.ResourceSearchResponse{mockResponse1, mockResponse2},
+		}
+
+		features := featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorageSearchPermissionFiltering)
+		searchHandler := SearchHandler{
+			log:      log.New("test", "test"),
+			client:   mockClient,
+			tracer:   tracing.NewNoopTracerService(),
+			features: features,
+		}
+		rr := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", "/search?folder=sharedwithme", nil)
+		req.Header.Add("content-type", "application/json")
+		allPermissions := make(map[int64]map[string][]string)
+		permissions := make(map[string][]string)
+		permissions[dashboards.ActionDashboardsRead] = []string{"dashboards:uid:dashboardinroot", "dashboards:uid:dashboardinpublicfolder"}
+		allPermissions[1] = permissions
+		// "Permissions" is where we store the uid of dashboards shared with the user
+		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test", OrgID: 1, Permissions: allPermissions}))
+
+		searchHandler.DoSearch(rr, req)
+
+		assert.Equal(t, mockClient.CallCount, 2)
+
+		resp := rr.Result()
+		defer func() {
+			if err := resp.Body.Close(); err != nil {
+				t.Fatal(err)
+			}
+		}()
+
+		p := &v0alpha1.SearchResults{}
+		err := json.NewDecoder(resp.Body).Decode(p)
+		require.NoError(t, err)
+		assert.Equal(t, 0, len(p.Hits))
 	})
 
 	t.Run("should return the dashboards shared with the user", func(t *testing.T) {
@@ -420,8 +545,29 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 			},
 		}
 
+		mockResponse3 := &resource.ResourceSearchResponse{
+			Results: &resource.ResourceTable{
+				Columns: []*resource.ResourceTableColumnDefinition{
+					{
+						Name: "folder",
+					},
+				},
+				Rows: []*resource.ResourceTableRow{
+					{
+						Key: &resource.ResourceKey{
+							Name:     "dashboardinprivatefolder",
+							Resource: "dashboard",
+						},
+						Cells: [][]byte{
+							[]byte("privatefolder"), // folder uid
+						},
+					},
+				},
+			},
+		}
+
 		mockClient := &MockClient{
-			MockResponses: []*resource.ResourceSearchResponse{mockResponse1, mockResponse2},
+			MockResponses: []*resource.ResourceSearchResponse{mockResponse1, mockResponse2, mockResponse3},
 		}
 
 		features := featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorageSearchPermissionFiltering)
@@ -438,6 +584,7 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 		permissions := make(map[string][]string)
 		permissions[dashboards.ActionDashboardsRead] = []string{"dashboards:uid:dashboardinroot", "dashboards:uid:dashboardinprivatefolder", "dashboards:uid:dashboardinpublicfolder"}
 		allPermissions[1] = permissions
+		// "Permissions" is where we store the uid of dashboards shared with the user
 		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test", OrgID: 1, Permissions: allPermissions}))
 
 		searchHandler.DoSearch(rr, req)
@@ -454,6 +601,18 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 		// permission to read
 		thirdCall := mockClient.MockCalls[2]
 		assert.Equal(t, thirdCall.Options.Fields[0].Values, []string{"dashboardinprivatefolder"})
+
+		resp := rr.Result()
+		defer func() {
+			if err := resp.Body.Close(); err != nil {
+				t.Fatal(err)
+			}
+		}()
+
+		p := &v0alpha1.SearchResults{}
+		err := json.NewDecoder(resp.Body).Decode(p)
+		require.NoError(t, err)
+		assert.Equal(t, len(mockResponse3.Results.Rows), len(p.Hits))
 	})
 }
 

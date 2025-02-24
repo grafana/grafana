@@ -18,6 +18,7 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -30,7 +31,6 @@ import (
 	dashboardsearch "github.com/grafana/grafana/pkg/services/dashboards/service/search"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	foldermodel "github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 )
@@ -43,8 +43,8 @@ type SearchHandler struct {
 	features featuremgmt.FeatureToggles
 }
 
-func NewSearchHandler(tracer trace.Tracer, cfg *setting.Cfg, legacyDashboardSearcher resource.ResourceIndexClient, resourceClient resource.ResourceClient, features featuremgmt.FeatureToggles) *SearchHandler {
-	searchClient := resource.NewSearchClient(cfg, setting.UnifiedStorageConfigKeyDashboard, resourceClient, legacyDashboardSearcher)
+func NewSearchHandler(tracer trace.Tracer, dual dualwrite.Service, legacyDashboardSearcher resource.ResourceIndexClient, resourceClient resource.ResourceClient, features featuremgmt.FeatureToggles) *SearchHandler {
+	searchClient := resource.NewSearchClient(dual, dashboard.DashboardResourceInfo.GroupResource(), resourceClient, legacyDashboardSearcher)
 	return &SearchHandler{
 		client:   searchClient,
 		log:      log.New("grafana-apiserver.dashboards.search"),
@@ -333,10 +333,14 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// hijacks the "name" query param to only search for shared dashboard UIDs
-		if len(dashboardUIDs) > 0 {
-			names = append(names, dashboardUIDs...)
+		if len(dashboardUIDs) == 0 {
+			s.write(w, dashboardv0alpha1.SearchResults{
+				Hits: []dashboardv0alpha1.DashboardHit{},
+			})
+			return
 		}
+		// hijacks the "name" query param to only search for shared dashboard UIDs
+		names = append(names, dashboardUIDs...)
 	} else if folder != "" {
 		if folder == rootFolder {
 			folder = "" // root folder is empty in the search index

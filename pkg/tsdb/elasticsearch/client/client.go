@@ -135,7 +135,7 @@ func (c *baseClientImpl) executeRequest(method, uriPath, uriQuery string, body [
 	c.logger.Debug("Sending request to Elasticsearch", "url", c.ds.URL)
 	u, err := url.Parse(c.ds.URL)
 	if err != nil {
-		return nil, err
+		return nil, backend.DownstreamError(fmt.Errorf("URL could not be parsed: %w", err))
 	}
 	u.Path = path.Join(u.Path, uriPath)
 	u.RawQuery = uriQuery
