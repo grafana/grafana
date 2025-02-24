@@ -45,17 +45,14 @@ export function RepositoryStep({ onStatusChange }: Props) {
   const [testConfig, testConfigRequest] = useCreateRepositoryTestMutation();
 
   const isLoading = saveRequest.isLoading || testConfigRequest.isLoading;
-  const errorRequest = testConfigRequest.isError ? testConfigRequest : saveRequest;
+  const errorRequest = testConfigRequest.isError ? testConfigRequest : saveRequest.isError ? saveRequest : null;
 
   const handleVerify = async () => {
     const formData = getValues();
     const spec = dataToSpec(formData.repository);
-    if (formData.repository.type === 'github' && spec.github) {
-      spec.github.token = formData.repository.token || '';
-    }
+
     try {
       const testResponse = await testConfig({ name: 'new', body: { spec } });
-
       if ('error' in testResponse || !testResponse.data?.success) {
         onStatusChange(false);
         return;
