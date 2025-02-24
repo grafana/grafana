@@ -2884,8 +2884,7 @@
       "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.HealthStatus": {
         "type": "object",
         "required": [
-          "healthy",
-          "message"
+          "healthy"
         ],
         "properties": {
           "checked": {

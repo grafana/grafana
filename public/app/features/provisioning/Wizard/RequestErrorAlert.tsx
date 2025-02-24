@@ -2,11 +2,11 @@ import { Alert } from '@grafana/ui';
 import { getMessageFromError } from 'app/core/utils/errors';
 
 interface RequestErrorAlertProps {
-  request: {
+  request?: {
     isError: boolean;
     error?: unknown;
     endpointName?: string;
-  };
+  } | null;
   title?: string;
 }
 
@@ -22,15 +22,16 @@ function getDefaultTitle(endpointName?: string): string {
 }
 
 export function RequestErrorAlert({ request, title }: RequestErrorAlertProps) {
-  if (!request.isError) {
+  if (!request || !request.isError) {
     return null;
   }
 
   const errorTitle = title || getDefaultTitle(request.endpointName);
+  const errorMessage = getMessageFromError(request.error);
 
   return (
     <Alert severity="error" title={errorTitle}>
-      {getMessageFromError(request.error)}
+      {errorMessage}
     </Alert>
   );
 }
