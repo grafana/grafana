@@ -1,12 +1,13 @@
 package featuremgmt
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/setting"
+
 	gofeatureflag "github.com/open-feature/go-sdk-contrib/providers/go-feature-flag/pkg"
 	"github.com/open-feature/go-sdk/openfeature/memprovider"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 

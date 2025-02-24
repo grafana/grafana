@@ -2,6 +2,7 @@ package featuremgmt
 
 import (
 	"fmt"
+
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/open-feature/go-sdk/openfeature/memprovider"

@@ -26,6 +26,7 @@ instance_slug = grafana
 	require.NoError(t, err)
 
 	p, err := ProvideOpenFeatureManager(cfg)
+	require.NoError(t, err)
 
 	ctx := context.Background()
 	evalCtx := openfeature.NewEvaluationContext("grafana", nil)
