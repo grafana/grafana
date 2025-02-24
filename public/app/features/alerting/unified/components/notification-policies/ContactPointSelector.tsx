@@ -80,6 +80,7 @@ export const ContactPointSelector = ({
         value={matchedContactPoint}
         {...selectProps}
         isLoading={isLoading}
+        disabled={isLoading}
       />
       {showRefreshButton && (
         <IconButton
