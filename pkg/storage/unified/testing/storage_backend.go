@@ -51,7 +51,7 @@ func RunStorageBackendTest(t *testing.T, newBackend NewBackendFunc, opts *TestOp
 		fn   func(*testing.T, resource.StorageBackend)
 	}{
 		{TestHappyPath, runTestIntegrationBackendHappyPath},
-		{TestWatchWriteEvents, runTestIntegrationBackendWatchWriteEventsFromLastest},
+		{TestWatchWriteEvents, runTestIntegrationBackendWatchWriteEvents},
 		{TestList, runTestIntegrationBackendList},
 		{TestBlobSupport, runTestIntegrationBlobSupport},
 		{TestGetResourceStats, runTestIntegrationBackendGetResourceStats},
@@ -272,7 +272,7 @@ func runTestIntegrationBackendGetResourceStats(t *testing.T, backend resource.St
 	})
 }
 
-func runTestIntegrationBackendWatchWriteEventsFromLastest(t *testing.T, backend resource.StorageBackend) {
+func runTestIntegrationBackendWatchWriteEvents(t *testing.T, backend resource.StorageBackend) {
 	ctx := testutil.NewTestContext(t, time.Now().Add(5*time.Second))
 
 	// Create a few resources before initing the watch
@@ -287,6 +287,12 @@ func runTestIntegrationBackendWatchWriteEventsFromLastest(t *testing.T, backend 
 	_, err = writeEvent(ctx, backend, "item2", resource.WatchEvent_ADDED)
 	require.NoError(t, err)
 	require.Equal(t, "item2", (<-stream).Key.Name)
+
+	// Should close the stream
+	ctx.Cancel()
+
+	_, ok := <-stream
+	require.False(t, ok)
 }
 
 func runTestIntegrationBackendList(t *testing.T, backend resource.StorageBackend) {
