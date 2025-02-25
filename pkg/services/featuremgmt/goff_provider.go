@@ -11,6 +11,7 @@ import (
 func newGOFFProvider(url string) (openfeature.FeatureProvider, error) {
 	options := gofeatureflag.ProviderOptions{
 		Endpoint: url,
+		// consider using github.com/grafana/grafana/pkg/infra/httpclient/provider.go
 		HTTPClient: &http.Client{
 			Timeout: 10 * time.Second,
 		},

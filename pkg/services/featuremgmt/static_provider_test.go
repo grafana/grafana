@@ -12,43 +12,47 @@ import (
 )
 
 func Test_StaticProvider(t *testing.T) {
-	conf := []byte(`
-[feature_toggles]
-enable = featureOne, featureTwo
-featureThree = true
-featureFour = false
+	ctx := context.Background()
+	evalCtx := openfeature.NewEvaluationContext("grafana", nil)
 
-[feature_toggles.openfeature]
-provider = static
+	stFeat := standardFeatureFlags[0]
+	stFeatName := stFeat.Name
+	stFeatValue := stFeat.Expression == "true"
+
+	t.Run("empty config loads standard flags", func(t *testing.T) {
+		p := provider(t, []byte(``))
+		// Check for one of the standard flags
+		feat, err := p.Client.BooleanValueDetails(ctx, stFeatName, !stFeatValue, evalCtx)
+		assert.NoError(t, err)
+		assert.True(t, stFeatValue == feat.Value)
+	})
+
+	t.Run("featureOne does not exist in standard flags but should be loaded", func(t *testing.T) {
+		conf := []byte(`
+[feature_toggles]
+featureOne = true
 `)
+		p := provider(t, conf)
+		feat, err := p.Client.BooleanValueDetails(ctx, "featureOne", false, evalCtx)
+		assert.NoError(t, err)
+		assert.True(t, feat.Value)
+	})
+
+	t.Run("missing feature should return default evaluation value and an error", func(t *testing.T) {
+		p := provider(t, []byte(``))
+		missingFeature, err := p.Client.BooleanValueDetails(ctx, "missingFeature", true, evalCtx)
+		assert.Error(t, err)
+		assert.True(t, missingFeature.Value)
+		assert.Equal(t, openfeature.ErrorCode("FLAG_NOT_FOUND"), missingFeature.ErrorCode)
+	})
+}
+
+func provider(t *testing.T, conf []byte) *OpenFeatureService {
+	t.Helper()
 	cfg, err := setting.NewCfgFromBytes(conf)
 	require.NoError(t, err)
 
 	p, err := ProvideOpenFeatureService(cfg)
 	require.NoError(t, err)
-
-	ctx := context.Background()
-	evalCtx := openfeature.NewEvaluationContext("grafana", nil)
-
-	featOne, err := p.Client.BooleanValueDetails(ctx, "featureOne", false, evalCtx)
-	assert.NoError(t, err)
-	assert.True(t, featOne.Value)
-
-	featureTwo, err := p.Client.BooleanValueDetails(ctx, "featureTwo", false, evalCtx)
-	assert.NoError(t, err)
-	assert.True(t, featureTwo.Value)
-
-	featureThree, err := p.Client.BooleanValueDetails(ctx, "featureThree", false, evalCtx)
-	assert.NoError(t, err)
-	assert.True(t, featureThree.Value)
-
-	featureFour, err := p.Client.BooleanValueDetails(ctx, "featureFour", true, evalCtx)
-	assert.NoError(t, err)
-	assert.False(t, featureFour.Value)
-
-	// since such a feature does not exist, evaluation should return default value and an error
-	missingFeature, err := p.Client.BooleanValueDetails(ctx, "missingFeature", true, evalCtx)
-	assert.Error(t, err)
-	assert.True(t, missingFeature.Value)
-	assert.Equal(t, openfeature.ErrorCode("FLAG_NOT_FOUND"), missingFeature.ErrorCode)
+	return p
 }
