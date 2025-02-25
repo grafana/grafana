@@ -148,7 +148,7 @@ func (ss *FolderUnifiedStoreImpl) GetParents(ctx context.Context, q folder.GetPa
 		if err != nil {
 			var statusError *apierrors.StatusError
 			if errors.As(err, &statusError) && statusError.ErrStatus.Code == http.StatusForbidden {
-				// If we get a Forbidden error wher requesting the parent folder, it means the user does not have access
+				// If we get a Forbidden error when requesting the parent folder, it means the user does not have access
 				// to it, nor its parents. So we can stop looping
 				break
 			}
