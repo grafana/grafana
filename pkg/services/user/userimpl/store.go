@@ -597,7 +597,7 @@ func isUniqueConstraintError(err error) bool {
 		return true
 	}
 
-	// for posgres we check the error message
+	// for postgres we check the error message
 	if strings.Contains(err.Error(), "duplicate key value") {
 		return true
 	}
