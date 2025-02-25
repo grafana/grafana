@@ -51,6 +51,8 @@ type SignedInUser struct {
 
 	// When other settings are not deterministic, this value is used
 	FallbackType claims.IdentityType
+
+	IsProvisioned bool
 }
 
 func (u *SignedInUser) GetID() string {

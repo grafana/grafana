@@ -79,6 +79,8 @@ type Identity struct {
 
 	IDTokenClaims     *authn.Claims[authn.IDTokenClaims]
 	AccessTokenClaims *authn.Claims[authn.AccessTokenClaims]
+
+	IsProvisioned bool
 }
 
 func (i *Identity) GetID() string {
@@ -304,6 +306,7 @@ func (i *Identity) SignedInUser() *user.SignedInUser {
 		IDTokenClaims:     i.IDTokenClaims,
 		AccessTokenClaims: i.AccessTokenClaims,
 		FallbackType:      i.Type,
+		IsProvisioned:     i.IsProvisioned,
 	}
 
 	if i.IsIdentityType(claims.TypeAPIKey) {
