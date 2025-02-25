@@ -16,17 +16,19 @@ import (
 type screenshotRenderer struct {
 	render    rendering.Service
 	blobstore blob.PublicBlobStore
+	isPublic  bool
 }
 
-func NewScreenshotRenderer(render rendering.Service, blobstore blob.PublicBlobStore) *screenshotRenderer {
+func NewScreenshotRenderer(render rendering.Service, blobstore blob.PublicBlobStore, isPublic bool) *screenshotRenderer {
 	return &screenshotRenderer{
 		render:    render,
 		blobstore: blobstore,
+		isPublic:  isPublic,
 	}
 }
 
 func (r *screenshotRenderer) IsAvailable(ctx context.Context) bool {
-	return r.render != nil && r.render.IsAvailable(ctx) && r.blobstore.IsAvailable()
+	return r.render != nil && r.render.IsAvailable(ctx) && r.blobstore.IsAvailable() && r.isPublic
 }
 
 func (r *screenshotRenderer) RenderDashboardPreview(ctx context.Context, namespace, repoName, path, ref string) (string, error) {

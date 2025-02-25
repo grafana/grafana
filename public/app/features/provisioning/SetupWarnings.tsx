@@ -4,6 +4,8 @@ import { FeatureToggles } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Alert, Text, Collapse } from '@grafana/ui';
 
+import { useGetFrontendSettingsQuery } from './api';
+
 const requiredFeatureToggles: Array<keyof FeatureToggles> = [
   'provisioning',
   'kubernetesDashboards',
@@ -56,6 +58,8 @@ root_url = https://d60d-83-33-235-27.ngrok-free.app`;
 export function SetupWarnings() {
   const [isCustomIniOpen, setCustomIniOpen] = useLocalStorage('collapse_custom_ini', true);
   const [isWebhookOpen, setWebhookOpen] = useLocalStorage('collapse_webhook', true);
+  const [isDashboardPreviewOpen, setDashboardPreviewOpen] = useLocalStorage('collapse_dashboard_preview', true);
+  const settings = useGetFrontendSettingsQuery();
 
   const missingFeatures = requiredFeatureToggles.filter((feature) => !config.featureToggles[feature]);
 
@@ -66,20 +70,29 @@ export function SetupWarnings() {
   const handleWebhookToggle = () => {
     setWebhookOpen(!isWebhookOpen);
   };
+  const handleDashboardPreviewToggle = () => {
+    setDashboardPreviewOpen(!isDashboardPreviewOpen);
+  };
 
-  if (missingFeatures.length === 0) {
+  if (
+    missingFeatures.length === 0 &&
+    settings.data?.githubWebhooks !== false &&
+    settings.data?.generateDashboardPreviews !== false
+  ) {
     return null;
   }
 
   return (
     <>
-      <Alert title="Provisioning Setup Error" severity="error">
-        {missingFeatures.map((feature) => (
-          <Text key={feature} element="p">
-            Missing required feature toggle: <strong>{feature}</strong>
-          </Text>
-        ))}
-      </Alert>
+      {missingFeatures.length > 0 && (
+        <Alert title="Provisioning Setup Error" severity="error">
+          {missingFeatures.map((feature) => (
+            <Text key={feature} element="p">
+              Missing required feature toggle: <strong>{feature}</strong>
+            </Text>
+          ))}
+        </Alert>
+      )}
 
       <Collapse
         isOpen={isCustomIniOpen}
@@ -96,19 +109,44 @@ export function SetupWarnings() {
           </Text>
         </Alert>
       </Collapse>
+      {settings.data?.generateDashboardPreviews === false && (
+        <Collapse
+          isOpen={isDashboardPreviewOpen}
+          label="Dashboard Preview Generation Disabled"
+          onToggle={handleDashboardPreviewToggle}
+          collapsible
+        >
+          <Alert severity="info" title="">
+            <Text element="h5">
+              Dashboard preview generation is currently disabled. This feature allows you to see previews of dashboards
+              in pull requests.
+            </Text>
+            <Text element="p">To enable this feature, you need to configure it in your Grafana settings.</Text>
+          </Alert>
+        </Collapse>
+      )}
 
-      <Collapse isOpen={isWebhookOpen} label="Webhook Support" onToggle={handleWebhookToggle} collapsible>
-        <Alert severity="info" title="">
-          <Text element="h5">Webhook support requires the server to run on a public URL.</Text>
-          <pre>
-            <code>{webhook_ini}</code>
-          </pre>
-          <Text element="h5">To set up public access to a local machine, consider ngrok</Text>
-          <pre>
-            <code>{ngrok_example}</code>
-          </pre>
-        </Alert>
-      </Collapse>
+      {settings.data?.githubWebhooks === false && (
+        <Collapse
+          isOpen={isWebhookOpen}
+          label="Github Webhook Support Disable"
+          onToggle={handleWebhookToggle}
+          collapsible
+        >
+          <Alert severity="info" title="">
+            <Text element="h5">
+              GitHub webhook support is currently disabled. To enable it, the server must run on a public URL.
+            </Text>
+            <pre>
+              <code>{webhook_ini}</code>
+            </pre>
+            <Text element="h5">To set up public access to a local machine, consider ngrok</Text>
+            <pre>
+              <code>{ngrok_example}</code>
+            </pre>
+          </Alert>
+        </Collapse>
+      )}
     </>
   );
 }

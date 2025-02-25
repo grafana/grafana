@@ -1152,6 +1152,20 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryViewList(ref common.Referen
 							Format:      "",
 						},
 					},
+					"generateDashboardPreviews": {
+						SchemaProps: spec.SchemaProps{
+							Description: "GenerateDashboardPreviews is available to render dashboard previews",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"githubWebhooks": {
+						SchemaProps: spec.SchemaProps{
+							Description: "GithubWebhooks is available to sync changes from a repository as soon as they are pushed or react to pull requests",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
 					"items": {
 						VendorExtensible: spec.VendorExtensible{
 							Extensions: spec.Extensions{
