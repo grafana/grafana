@@ -1757,6 +1757,12 @@
     "drawer": {
       "close": "Cľőşę"
     },
+    "feature-badge": {
+      "experimental": "Ēχpęřįmęŉŧäľ",
+      "new": "Ńęŵ!",
+      "preview": "Přęvįęŵ",
+      "private-preview": "Přįväŧę přęvįęŵ"
+    },
     "field-link-list": {
       "external-links-heading": "Ēχŧęřŉäľ ľįŉĸş"
     },
@@ -2763,7 +2769,6 @@
       "close": "Cľőşę męŉū",
       "dock": "Đőčĸ męŉū",
       "list-label": "Ńävįģäŧįőŉ",
-      "new": "Ńęŵ!",
       "open": "Øpęŉ męŉū",
       "undock": "Ůŉđőčĸ męŉū"
     },

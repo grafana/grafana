@@ -1750,6 +1750,12 @@
     "drawer": {
       "close": "Fermer"
     },
+    "feature-badge": {
+      "experimental": "",
+      "new": "",
+      "preview": "",
+      "private-preview": ""
+    },
     "field-link-list": {
       "external-links-heading": ""
     },
@@ -2756,7 +2762,6 @@
       "close": "Fermer le menu",
       "dock": "Ancrer le menu",
       "list-label": "Navigation",
-      "new": "",
       "open": "",
       "undock": "Ancrer le menu"
     },

@@ -84,11 +84,11 @@ type RouteConvertPrometheusPostRuleGroupParams struct {
 	// in: path
 	NamespaceTitle string
 	// in: header
-	DatasourceUID string `json:"x-datasource-uid"`
+	DatasourceUID string `json:"x-grafana-alerting-datasource-uid"`
 	// in: header
-	RecordingRulesPaused bool `json:"x-recording-rules-paused"`
+	RecordingRulesPaused bool `json:"x-grafana-alerting-recording-rules-paused"`
 	// in: header
-	AlertRulesPaused bool `json:"x-alert-rules-paused"`
+	AlertRulesPaused bool `json:"x-grafana-alerting-alert-rules-paused"`
 	// in:body
 	Body PrometheusRuleGroup
 }

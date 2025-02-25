@@ -1741,6 +1741,12 @@
     "drawer": {
       "close": "关闭"
     },
+    "feature-badge": {
+      "experimental": "",
+      "new": "",
+      "preview": "",
+      "private-preview": ""
+    },
     "field-link-list": {
       "external-links-heading": ""
     },
@@ -2746,7 +2752,6 @@
       "close": "关闭菜单",
       "dock": "停靠菜单",
       "list-label": "导航",
-      "new": "",
       "open": "",
       "undock": "取消停靠菜单"
     },
