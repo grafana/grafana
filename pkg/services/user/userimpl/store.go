@@ -605,7 +605,7 @@ func isUniqueConstraintError(err error) bool {
 	}
 
 	var se sqlite3.Error
-	if errors.As(err, &se) && se.Code == sqlite3.ErrConstraint {
+	if errors.As(err, &se) && se.ExtendedCode == sqlite3.ErrConstraintUnique {
 		return true
 	}
 
