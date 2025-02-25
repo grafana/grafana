@@ -24,7 +24,7 @@ func ProvideOpenFeatureService(cfg *setting.Cfg) (*OpenFeatureService, error) {
 	conf := cfg.Raw.Section(configSectionName)
 	provType := conf.Key("provider").MustString(staticProviderType)
 	url := conf.Key("url").MustString("")
-	key := conf.Key("targetingKey").MustString(cfg.AppURL) // OR cfg.Slug?
+	key := conf.Key("targetingKey").MustString(cfg.AppURL)
 
 	var provider openfeature.FeatureProvider
 	var err error
