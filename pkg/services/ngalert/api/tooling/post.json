@@ -4932,6 +4932,7 @@
    "type": "object"
   },
   "gettableAlerts": {
+   "description": "GettableAlerts gettable alerts",
    "items": {
     "$ref": "#/definitions/gettableAlert",
     "type": "object"
@@ -6515,17 +6516,17 @@
      },
      {
       "in": "header",
-      "name": "x-datasource-uid",
+      "name": "x-grafana-alerting-datasource-uid",
       "type": "string"
      },
      {
       "in": "header",
-      "name": "x-recording-rules-paused",
+      "name": "x-grafana-alerting-recording-rules-paused",
       "type": "boolean"
      },
      {
       "in": "header",
-      "name": "x-alert-rules-paused",
+      "name": "x-grafana-alerting-alert-rules-paused",
       "type": "boolean"
      },
      {

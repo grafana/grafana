@@ -782,58 +782,6 @@ func TestIntegration_DeleteAlertRulesByUID(t *testing.T) {
 	})
 }
 
-func TestIntegration_GetNamespaceByUID(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
-
-	sqlStore := db.InitTestDB(t)
-	cfg := setting.NewCfg()
-	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
-	b := &fakeBus{}
-	logger := log.New("test-dbstore")
-	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, b)
-
-	u := &user.SignedInUser{
-		UserID:         1,
-		OrgID:          1,
-		OrgRole:        org.RoleAdmin,
-		IsGrafanaAdmin: true,
-	}
-
-	uid := uuid.NewString()
-	parentUid := uuid.NewString()
-	title := "folder/title"
-	parentTitle := "parent-title"
-	createFolder(t, store, parentUid, parentTitle, 1, "")
-	createFolder(t, store, uid, title, 1, parentUid)
-
-	actual, err := store.GetNamespaceByUID(context.Background(), uid, 1, u)
-	require.NoError(t, err)
-	require.Equal(t, title, actual.Title)
-	require.Equal(t, uid, actual.UID)
-	require.Equal(t, title, actual.Fullpath)
-
-	t.Run("error when user does not have permissions", func(t *testing.T) {
-		someUser := &user.SignedInUser{
-			UserID:  2,
-			OrgID:   1,
-			OrgRole: org.RoleViewer,
-		}
-		_, err = store.GetNamespaceByUID(context.Background(), uid, 1, someUser)
-		require.ErrorIs(t, err, dashboards.ErrFolderAccessDenied)
-	})
-
-	t.Run("when nested folders are enabled full path should be populated with correct value", func(t *testing.T) {
-		store.FolderService = setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders))
-		actual, err := store.GetNamespaceByUID(context.Background(), uid, 1, u)
-		require.NoError(t, err)
-		require.Equal(t, title, actual.Title)
-		require.Equal(t, uid, actual.UID)
-		require.Equal(t, "parent-title/folder\\/title", actual.Fullpath)
-	})
-}
-
 func TestIntegrationInsertAlertRules(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")

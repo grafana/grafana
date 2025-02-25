@@ -8,10 +8,12 @@ const (
 	ProvenanceNone Provenance = ""
 	ProvenanceAPI  Provenance = "api"
 	ProvenanceFile Provenance = "file"
+	// ProvenanceConvertedPrometheus is used for objects converted from Prometheus definitions.
+	ProvenanceConvertedPrometheus Provenance = "converted_prometheus"
 )
 
 var (
-	KnownProvenances = []Provenance{ProvenanceNone, ProvenanceAPI, ProvenanceFile}
+	KnownProvenances = []Provenance{ProvenanceNone, ProvenanceAPI, ProvenanceFile, ProvenanceConvertedPrometheus}
 )
 
 // Provisionable represents a resource that can be created through a provisioning mechanism, such as Terraform or config file.

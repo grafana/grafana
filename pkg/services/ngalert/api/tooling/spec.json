@@ -1194,17 +1194,17 @@
           },
           {
             "type": "string",
-            "name": "x-datasource-uid",
+            "name": "x-grafana-alerting-datasource-uid",
             "in": "header"
           },
           {
             "type": "boolean",
-            "name": "x-recording-rules-paused",
+            "name": "x-grafana-alerting-recording-rules-paused",
             "in": "header"
           },
           {
             "type": "boolean",
-            "name": "x-alert-rules-paused",
+            "name": "x-grafana-alerting-alert-rules-paused",
             "in": "header"
           },
           {
@@ -8872,6 +8872,7 @@
       }
     },
     "gettableAlerts": {
+      "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
         "type": "object",
