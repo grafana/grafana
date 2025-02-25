@@ -47,6 +47,39 @@ function CodeBlockWithCopy({ code, className }: CodeBlockWithCopyProps) {
   );
 }
 
+// Add the FeatureSection component
+interface FeatureSectionProps {
+  title: string;
+  description: string;
+  configInstructions?: string;
+  configCode?: string;
+}
+
+function FeatureSection({ title, description, configInstructions, configCode }: FeatureSectionProps) {
+  const styles = useStyles2(getStyles);
+
+  return (
+    <div className={styles.featureSection}>
+      <div className={styles.featureTitle}>
+        <Text element="h5" weight="medium">
+          {title}
+        </Text>
+      </div>
+      <Box marginBottom={2}>
+        <Text element="p">{description}</Text>
+      </Box>
+      {configInstructions && configCode && (
+        <>
+          <Box marginTop={2} marginBottom={1}>
+            <Text element="h6">{configInstructions}</Text>
+          </Box>
+          <CodeBlockWithCopy code={configCode} />
+        </>
+      )}
+    </div>
+  );
+}
+
 const requiredFeatureToggles: Array<keyof FeatureToggles> = [
   'provisioning',
   'kubernetesDashboards',
@@ -171,59 +204,28 @@ export function SetupWarnings() {
           >
             <Box marginTop={3}>
               {settings.data?.generateDashboardPreviews === false && (
-                <div className={styles.featureSection}>
-                  <div className={styles.featureTitle}>
-                    <Text element="h5" weight="medium">
-                      Dashboard Preview Generation
-                    </Text>
-                  </div>
-                  <Box marginBottom={2}>
-                    <Text element="p">This feature generates dashboard preview images in pull requests.</Text>
-                  </Box>
-                  <Box marginTop={2} marginBottom={1}>
-                    <Text element="h6">
-                      To connect to the rendering service locally, you need to configure the following:
-                    </Text>
-                  </Box>
-                  <CodeBlockWithCopy code={render_ini} />
-                </div>
+                <FeatureSection
+                  title="Dashboard Preview Generation"
+                  description="This feature generates dashboard preview images in pull requests."
+                  configInstructions="To connect to the rendering service locally, you need to configure the following:"
+                  configCode={render_ini}
+                />
               )}
 
               {settings.data?.githubWebhooks === false && (
-                <div className={styles.featureSection}>
-                  <div className={styles.featureTitle}>
-                    <Text element="h5" weight="medium">
-                      Github Webhook Integration
-                    </Text>
-                  </div>
-                  <Box marginBottom={2}>
-                    <Text element="p">
-                      This feature automatically syncs resources from GitHub when commits are pushed to the configured
-                      branch, eliminating the need for regular polling intervals. It also enhances pull requests by
-                      automatically adding preview links and dashboard snapshots.
-                    </Text>
-                  </Box>
-                  <Box marginTop={2} marginBottom={1}>
-                    <Text element="h6">To enable webhook support, you need to configure the following:</Text>
-                  </Box>
-                  <CodeBlockWithCopy code={webhook_ini} />
-                </div>
+                <FeatureSection
+                  title="Github Webhook Integration"
+                  description="This feature automatically syncs resources from GitHub when commits are pushed to the configured branch, eliminating the need for regular polling intervals. It also enhances pull requests by automatically adding preview links and dashboard snapshots."
+                  configInstructions="To enable webhook support, you need to configure the following:"
+                  configCode={webhook_ini}
+                />
               )}
 
-              <div className={styles.featureSection}>
-                <div className={styles.featureTitle}>
-                  <Text element="h5" weight="medium">
-                    Public Access Setup
-                  </Text>
-                </div>
-                <Box marginBottom={2}>
-                  <Text element="p">
-                    For both features, you'll need to set up public access to your local machine. ngrok is a recommended
-                    tool for this:
-                  </Text>
-                </Box>
-                <CodeBlockWithCopy code={ngrok_example} />
-              </div>
+              <FeatureSection
+                title="Public Access Setup"
+                description="For both features, you'll need to set up public access to your local machine. ngrok is a recommended tool for this:"
+                configCode={ngrok_example}
+              />
             </Box>
           </Collapse>
         </Alert>
