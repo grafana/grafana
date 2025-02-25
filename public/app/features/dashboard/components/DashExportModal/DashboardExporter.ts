@@ -54,11 +54,6 @@ export interface ExternalDashboard {
   panels: Array<PanelModel | PanelWithExportableLibraryPanel>;
 }
 
-export interface ExternalDashboardV2 {
-  __inputs?: Input[];
-  __elements?: Record<string, LibraryElementExport>;
-}
-
 interface PanelWithExportableLibraryPanel {
   gridPos: GridPos;
   id: number;
@@ -346,7 +341,6 @@ export class DashboardExporterV1 implements DashboardExporterLike<DashboardModel
 
 export class DashboardExporterV2 implements DashboardExporterLike<DashboardV2Spec, DashboardV2Json> {
   async makeExportable(dashboard: DashboardV2Spec) {
-    console.log('make exportable');
     const requires: Requires = {};
     const datasources: DataSources = {};
     const variableLookup: { [key: string]: any } = {};
