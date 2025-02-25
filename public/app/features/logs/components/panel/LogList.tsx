@@ -99,11 +99,13 @@ export const LogList = ({
   }, [eventBus, logs.length]);
 
   useEffect(() => {
-    setProcessedLogs(
-      preProcessLogs(logs, { getFieldLinks, escape: forceEscape, order: sortOrder, timeZone })
-    );
+    setProcessedLogs(preProcessLogs(logs, { getFieldLinks, escape: forceEscape, order: sortOrder, timeZone }));
     listRef.current?.resetAfterIndex(0);
   }, [forceEscape, getFieldLinks, logs, sortOrder, timeZone]);
+
+  useEffect(() => {
+    listRef.current?.resetAfterIndex(0);
+  }, [wrapLogMessage]);
 
   useEffect(() => {
     const handleResize = debounce(() => {
