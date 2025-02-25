@@ -7,16 +7,15 @@ import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/Pan
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { useLayoutCategory } from '../scene/layouts-shared/DashboardLayoutSelector';
-import { EditableDashboardElement } from '../scene/types/EditableDashboardElement';
+import { EditableDashboardElement, EditableDashboardElementInfo } from '../scene/types/EditableDashboardElement';
 
 export class DashboardEditableElement implements EditableDashboardElement {
   public readonly isEditableDashboardElement = true;
-  public readonly typeName = 'Dashboard';
 
   public constructor(private dashboard: DashboardScene) {}
 
-  public getEditableElementInfo() {
-    return { typeId: 'dashboard', icon: 'apps' as const, name: 'Dashboard' };
+  public getEditableElementInfo(): EditableDashboardElementInfo {
+    return { typeId: 'dashboard', icon: 'apps', name: t('dashboard.edit-pane.elements.dashboard', 'Dashboard') };
   }
 
   public useEditPaneOptions(): OptionsPaneCategoryDescriptor[] {

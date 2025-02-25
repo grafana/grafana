@@ -182,6 +182,8 @@ export function DashboardEditPaneRenderer({ editPane, isCollapsed, onToggleColla
     return null;
   }
 
+  const { typeId } = editableElement.getEditableElementInfo();
+
   if (isCollapsed) {
     return (
       <>
@@ -198,7 +200,7 @@ export function DashboardEditPaneRenderer({ editPane, isCollapsed, onToggleColla
 
         {openOverlay && (
           <Resizable className={cx(styles.fixed, styles.container)} defaultSize={{ height: '100%', width: '20vw' }}>
-            <ElementEditPane element={editableElement} key={editableElement.typeName} />
+            <ElementEditPane element={editableElement} key={typeId} />
           </Resizable>
         )}
       </>
@@ -226,7 +228,7 @@ export function DashboardEditPaneRenderer({ editPane, isCollapsed, onToggleColla
       </TabsBar>
       <div className={styles.tabContent}>
         {tab === 'add' && <DashboardAddPane editPane={editPane} />}
-        {tab === 'configure' && <ElementEditPane element={editableElement} key={editableElement.typeName} />}
+        {tab === 'configure' && <ElementEditPane element={editableElement} key={typeId} />}
         {tab === 'outline' && <DashboardOutline editPane={editPane} />}
       </div>
     </div>

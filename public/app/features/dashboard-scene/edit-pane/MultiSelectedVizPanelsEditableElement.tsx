@@ -3,8 +3,9 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { VizPanel } from '@grafana/scenes';
 import { Button, Stack, Text } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 
+import { EditableDashboardElementInfo } from '../scene/types/EditableDashboardElement';
 import { MultiSelectedEditableDashboardElement } from '../scene/types/MultiSelectedEditableDashboardElement';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 
@@ -16,8 +17,8 @@ export class MultiSelectedVizPanelsEditableElement implements MultiSelectedEdita
     this.key = uuidv4();
   }
 
-  public getEditableElementInfo() {
-    return { name: 'Panels', typeId: 'panels', icon: 'folder' as const };
+  public getEditableElementInfo(): EditableDashboardElementInfo {
+    return { name: t('dashboard.edit-pane.elements.panels', 'Panels'), typeId: 'panels', icon: 'folder' };
   }
 
   renderActions(): ReactNode {

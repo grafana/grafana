@@ -2,9 +2,10 @@ import { ReactNode } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
 import { Stack, Text, Button } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 
 import { BulkActionElement } from '../scene/types/BulkActionElement';
+import { EditableDashboardElementInfo } from '../scene/types/EditableDashboardElement';
 import { MultiSelectedEditableDashboardElement } from '../scene/types/MultiSelectedEditableDashboardElement';
 
 export class MultiSelectedObjectsEditableElement implements MultiSelectedEditableDashboardElement {
@@ -15,8 +16,8 @@ export class MultiSelectedObjectsEditableElement implements MultiSelectedEditabl
     this.key = uuidv4();
   }
 
-  public getEditableElementInfo() {
-    return { name: 'Objects', typeId: 'objects', icon: 'folder' as const };
+  public getEditableElementInfo(): EditableDashboardElementInfo {
+    return { name: t('dashboard.edit-pane.elements.objects', 'Objects'), typeId: 'objects', icon: 'folder' };
   }
 
   public renderActions(): ReactNode {

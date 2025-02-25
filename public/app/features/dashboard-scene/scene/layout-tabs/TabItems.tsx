@@ -1,8 +1,10 @@
 import { ReactNode } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
+import { t } from 'app/core/internationalization';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 
+import { EditableDashboardElementInfo } from '../types/EditableDashboardElement';
 import { MultiSelectedEditableDashboardElement } from '../types/MultiSelectedEditableDashboardElement';
 
 import { TabItem } from './TabItem';
@@ -16,8 +18,8 @@ export class TabItems implements MultiSelectedEditableDashboardElement {
     this.key = uuidv4();
   }
 
-  public getEditableElementInfo() {
-    return { name: 'Tabs', typeId: 'tabs', icon: 'folder' as const };
+  public getEditableElementInfo(): EditableDashboardElementInfo {
+    return { name: t('dashboard.edit-pane.elements.tabs', 'Tabs'), typeId: 'tabs', icon: 'folder' };
   }
 
   public useEditPaneOptions(): OptionsPaneCategoryDescriptor[] {

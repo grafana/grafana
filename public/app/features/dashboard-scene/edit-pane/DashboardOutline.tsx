@@ -3,15 +3,15 @@ import { useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { SceneObject, VizPanel } from '@grafana/scenes';
-import { Box, Icon, IconButton, Stack, useElementSelection, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+import { Box, Icon, IconButton, Stack, Text, useElementSelection, useStyles2 } from '@grafana/ui';
+import { t, Trans } from 'app/core/internationalization';
 
-import { isEditableDashboardElement } from '../scene/types/EditableDashboardElement';
+import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { isInCloneChain } from '../utils/clone';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { DashboardEditPane } from './DashboardEditPane';
-import { getEditableElementFor } from './shared';
+import { getEditableElementFor, hasEditableElement } from './shared';
 
 export interface Props {
   editPane: DashboardEditPane;
@@ -21,27 +21,22 @@ export function DashboardOutline({ editPane }: Props) {
   const dashboard = getDashboardSceneFor(editPane);
 
   return (
-    <Box padding={1} gap={0.5} display="flex" direction={'column'}>
-      <DashboardOutlineNode sceneObject={dashboard} />
+    <Box padding={1} gap={0.5} display="flex" direction="column">
+      <DashboardOutlineNode sceneObject={dashboard} expandable />
     </Box>
   );
 }
 
-function DashboardOutlineNode({ sceneObject }: { sceneObject: SceneObject }) {
+function DashboardOutlineNode({ sceneObject, expandable }: { sceneObject: SceneObject; expandable: boolean }) {
   const [isExpanded, setIsExpanded] = useState(true);
   const { key } = sceneObject.useState();
   const styles = useStyles2(getStyles);
-
-  const editableElement = useMemo(() => {
-    return getEditableElementFor(sceneObject)!;
-  }, [sceneObject]);
+  const { isSelected, onSelect } = useElementSelection(key);
+  const isCloned = useMemo(() => isInCloneChain(key!), [key]);
+  const editableElement = useMemo(() => getEditableElementFor(sceneObject)!, [sceneObject]);
 
   const children = collectEditableElementChildren(sceneObject);
-
-  const hasChildren = children.length > 0;
-  const isCloned = useMemo(() => isInCloneChain(key!), [key]);
   const elementInfo = editableElement.getEditableElementInfo();
-  const { isSelected, onSelect } = useElementSelection(key);
 
   return (
     <>
@@ -50,10 +45,10 @@ function DashboardOutlineNode({ sceneObject }: { sceneObject: SceneObject }) {
         gap={0.5}
         alignItems="center"
         role="presentation"
-        aria-expanded={hasChildren ? isExpanded : undefined}
-        aria-owns={hasChildren ? key : undefined}
+        aria-expanded={expandable ? isExpanded : undefined}
+        aria-owns={expandable ? key : undefined}
       >
-        {hasChildren && (
+        {expandable && (
           <IconButton
             name={isExpanded ? 'angle-down' : 'angle-right'}
             onClick={() => setIsExpanded(!isExpanded)}
@@ -69,15 +64,25 @@ function DashboardOutlineNode({ sceneObject }: { sceneObject: SceneObject }) {
           className={cx(styles.nodeButton, isCloned && styles.nodeButtonClone, isSelected && styles.nodeButtonSelected)}
           onPointerDown={(evt) => onSelect?.(evt)}
         >
-          <span>{elementInfo.name}</span>
           <Icon name={elementInfo.icon} />
+          <span>{elementInfo.name}</span>
         </button>
       </Stack>
-      {hasChildren && isExpanded && (
+      {expandable && isExpanded && (
         <div className={styles.container} role="group">
-          {children.map((child) => (
-            <DashboardOutlineNode key={child.state.key} sceneObject={child} />
-          ))}
+          {children.length > 0 ? (
+            children.map((child) => (
+              <DashboardOutlineNode
+                key={child.sceneObject.state.key}
+                sceneObject={child.sceneObject}
+                expandable={child.expandable}
+              />
+            ))
+          ) : (
+            <Text element="p" color="secondary">
+              <Trans i18nKey="dashboard.outline.tree.item.empty">(empty)</Trans>
+            </Text>
+          )}
         </div>
       )}
     </>
@@ -123,12 +128,28 @@ function getStyles(theme: GrafanaTheme2) {
   };
 }
 
-function collectEditableElementChildren(sceneObject: SceneObject, children: SceneObject[] = []) {
+interface EditableElementConfig {
+  sceneObject: SceneObject;
+  expandable: boolean;
+}
+
+function collectEditableElementChildren(
+  sceneObject: SceneObject,
+  children: EditableElementConfig[] = []
+): EditableElementConfig[] {
   sceneObject.forEachChild((child) => {
-    if (isEditableDashboardElement(child)) {
-      children.push(child);
+    if (child instanceof DashboardGridItem) {
+      // DashboardGridItem is a special case as it can contain repeated panels
+      // In this case, we want to show the repeated panels as separate items, otherwise show the body panel
+      if (child.state.repeatedPanels?.length) {
+        children.push(...child.state.repeatedPanels.map((panel) => ({ sceneObject: panel, expandable: false })));
+      } else {
+        children.push({ sceneObject: child.state.body, expandable: false });
+      }
     } else if (child instanceof VizPanel) {
-      children.push(child);
+      children.push({ sceneObject: child, expandable: false });
+    } else if (hasEditableElement(child)) {
+      children.push({ sceneObject: child, expandable: true });
     } else {
       collectEditableElementChildren(child, children);
     }

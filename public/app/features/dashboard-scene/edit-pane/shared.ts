@@ -1,8 +1,9 @@
 import { useSessionStorage } from 'react-use';
 
-import { SceneObject, VizPanel } from '@grafana/scenes';
+import { SceneGridRow, SceneObject, VizPanel } from '@grafana/scenes';
 
 import { DashboardScene } from '../scene/DashboardScene';
+import { SceneGridRowEditableElement } from '../scene/layout-default/SceneGridRowEditableElement';
 import { EditableDashboardElement, isEditableDashboardElement } from '../scene/types/EditableDashboardElement';
 
 import { DashboardEditableElement } from './DashboardEditableElement';
@@ -25,9 +26,30 @@ export function getEditableElementFor(sceneObj: SceneObject | undefined): Editab
     return new VizPanelEditableElement(sceneObj);
   }
 
+  if (sceneObj instanceof SceneGridRow) {
+    return new SceneGridRowEditableElement(sceneObj);
+  }
+
   if (sceneObj instanceof DashboardScene) {
     return new DashboardEditableElement(sceneObj);
   }
 
   return undefined;
+}
+
+export function hasEditableElement(sceneObj: SceneObject | undefined): boolean {
+  if (!sceneObj) {
+    return false;
+  }
+
+  if (
+    isEditableDashboardElement(sceneObj) ||
+    sceneObj instanceof VizPanel ||
+    sceneObj instanceof SceneGridRow ||
+    sceneObj instanceof DashboardScene
+  ) {
+    return true;
+  }
+
+  return false;
 }
