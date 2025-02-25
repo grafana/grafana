@@ -3,7 +3,7 @@ import { useState } from 'react';
 
 import { FeatureToggles, GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Alert, Text, Collapse, Box, Button } from '@grafana/ui';
+import { Alert, Text, Collapse, Box, Button, InteractiveTable, IconButton } from '@grafana/ui';
 import { css } from '@emotion/css';
 import { useStyles2 } from '@grafana/ui';
 
@@ -47,35 +47,78 @@ function CodeBlockWithCopy({ code, className }: CodeBlockWithCopyProps) {
   );
 }
 
-// Add the FeatureSection component
-interface FeatureSectionProps {
+interface FeatureInfo {
   title: string;
   description: string;
+  configTitle?: string;
   configInstructions?: string;
   configCode?: string;
+  requiresPublicAccess: boolean;
 }
 
-function FeatureSection({ title, description, configInstructions, configCode }: FeatureSectionProps) {
+function FeaturesTable({ features }: { features: FeatureInfo[] }) {
   const styles = useStyles2(getStyles);
 
-  return (
-    <div className={styles.featureSection}>
-      <div className={styles.featureTitle}>
-        <Text element="h5" weight="medium">
-          {title}
-        </Text>
-      </div>
-      <Box marginBottom={2}>
-        <Text element="p">{description}</Text>
-      </Box>
-      {configInstructions && configCode && (
-        <>
-          <Box marginTop={2} marginBottom={1}>
-            <Text element="h6">{configInstructions}</Text>
+  const columns = [
+    {
+      id: 'feature',
+      header: 'Feature',
+      cell: ({ row }: { row: { original: FeatureInfo } }) => {
+        return <Text weight="medium">{row.original.title}</Text>;
+      },
+    },
+    {
+      id: 'description',
+      header: 'Description',
+      cell: ({ row }: { row: { original: FeatureInfo } }) => {
+        return <Text>{row.original.description}</Text>;
+      },
+    },
+  ];
+
+  const renderExpandedRow = (feature: FeatureInfo) => {
+    return (
+      <Box padding={2}>
+        {feature.configTitle && (
+          <Box marginBottom={2}>
+            <Text element="h6">{feature.configTitle}</Text>
           </Box>
-          <CodeBlockWithCopy code={configCode} />
-        </>
-      )}
+        )}
+
+        {feature.configInstructions && (
+          <Box marginBottom={2}>
+            <Text element="h6">{feature.configInstructions}</Text>
+          </Box>
+        )}
+
+        {feature.configCode && <CodeBlockWithCopy code={feature.configCode} />}
+
+        {feature.requiresPublicAccess && (
+          <Box marginTop={3}>
+            <Text element="h6">Public Access Required</Text>
+            <Text element="p">
+              This feature requires public access to your local machine. ngrok is a recommended tool for this:
+            </Text>
+            <CodeBlockWithCopy code={ngrok_example} />
+
+            <Box marginTop={2} marginBottom={1}>
+              <Text element="h6">After setting up ngrok, configure the root_url in your custom.ini:</Text>
+            </Box>
+            <CodeBlockWithCopy code={root_url_ini} />
+          </Box>
+        )}
+      </Box>
+    );
+  };
+
+  return (
+    <div>
+      <InteractiveTable
+        columns={columns}
+        data={features}
+        getRowId={(row) => row.title}
+        renderExpandedRow={(rowData) => renderExpandedRow(rowData)}
+      />
     </div>
   );
 }
@@ -130,7 +173,7 @@ HTTP Requests
 09:18:46.147 CET             GET  /favicon.ico                   302 Found
 09:18:46.402 CET             GET  /login`;
 
-const webhook_ini = `[server]
+const root_url_ini = `[server]
 root_url = https://d60d-83-33-235-27.ngrok-free.app`;
 
 const render_ini = `[rendering]
@@ -140,17 +183,12 @@ callback_url = http://localhost:3000/
 
 export function SetupWarnings() {
   const [isCustomIniOpen, setCustomIniOpen] = useLocalStorage('collapse_custom_ini', true);
-  const [isDisabledFeaturesOpen, setDisabledFeaturesOpen] = useLocalStorage('collapse_disabled_features', false);
   const settings = useGetFrontendSettingsQuery();
 
   const missingFeatures = requiredFeatureToggles.filter((feature) => !config.featureToggles[feature]);
 
   const handleCustomIniToggle = () => {
     setCustomIniOpen(!isCustomIniOpen);
-  };
-
-  const handleDisabledFeaturesToggle = () => {
-    setDisabledFeaturesOpen(!isDisabledFeaturesOpen);
   };
 
   const styles = useStyles2(getStyles);
@@ -161,6 +199,29 @@ export function SetupWarnings() {
     settings.data?.generateDashboardPreviews !== false
   ) {
     return null;
+  }
+
+  // Prepare features data for the table
+  const featuresData: FeatureInfo[] = [];
+
+  if (settings.data?.generateDashboardPreviews === false) {
+    featuresData.push({
+      title: 'Dashboard Preview Generation',
+      description: 'This feature generates dashboard preview images in pull requests.',
+      configTitle: 'Rendering Service',
+      configInstructions: 'To connect to the rendering service locally, you need to configure the following:',
+      configCode: render_ini,
+      requiresPublicAccess: true,
+    });
+  }
+
+  if (settings.data?.githubWebhooks === false) {
+    featuresData.push({
+      title: 'Github Webhook Integration',
+      description:
+        'This feature automatically syncs resources from GitHub when commits are pushed to the configured branch, eliminating the need for regular polling intervals. It also enhances pull requests by automatically adding preview links and dashboard snapshots.',
+      requiresPublicAccess: true,
+    });
   }
 
   return (
@@ -190,44 +251,13 @@ export function SetupWarnings() {
         </>
       )}
 
-      {(settings.data?.generateDashboardPreviews === false || settings.data?.githubWebhooks === false) && (
+      {featuresData.length > 0 && (
         <Alert severity="info" title="Some features are currently unavailable">
           <Box marginBottom={2}>
             <Text element="p">These features enhance your whole experience working with Grafana and GitHub.</Text>
           </Box>
 
-          <Collapse
-            isOpen={isDisabledFeaturesOpen}
-            label="See how to enable them"
-            onToggle={handleDisabledFeaturesToggle}
-            collapsible
-          >
-            <Box marginTop={3}>
-              {settings.data?.generateDashboardPreviews === false && (
-                <FeatureSection
-                  title="Dashboard Preview Generation"
-                  description="This feature generates dashboard preview images in pull requests."
-                  configInstructions="To connect to the rendering service locally, you need to configure the following:"
-                  configCode={render_ini}
-                />
-              )}
-
-              {settings.data?.githubWebhooks === false && (
-                <FeatureSection
-                  title="Github Webhook Integration"
-                  description="This feature automatically syncs resources from GitHub when commits are pushed to the configured branch, eliminating the need for regular polling intervals. It also enhances pull requests by automatically adding preview links and dashboard snapshots."
-                  configInstructions="To enable webhook support, you need to configure the following:"
-                  configCode={webhook_ini}
-                />
-              )}
-
-              <FeatureSection
-                title="Public Access Setup"
-                description="For both features, you'll need to set up public access to your local machine. ngrok is a recommended tool for this:"
-                configCode={ngrok_example}
-              />
-            </Box>
-          </Collapse>
+          <FeaturesTable features={featuresData} />
         </Alert>
       )}
     </>
@@ -258,6 +288,10 @@ const getStyles = (theme: GrafanaTheme2) => {
       right: theme.spacing(1),
       top: theme.spacing(1),
       zIndex: 1,
+    }),
+    expandedRow: css({
+      backgroundColor: theme.colors.background.secondary,
+      borderRadius: theme.shape.borderRadius(),
     }),
   };
 };
