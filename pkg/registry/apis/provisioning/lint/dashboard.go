@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
 	"sort"
 
 	"github.com/grafana/dashboard-linter/lint"
@@ -28,6 +29,13 @@ func (f *DashboardLinterFactory) NewFromConfig(cfg []byte) (Linter, error) {
 	}
 
 	return &DashboardLinter{rules: lint.NewRuleSet(), cfg: lintCfg}, nil
+}
+
+func (f *DashboardLinterFactory) IsEnabled() bool {
+	lintingVal, ok := os.LookupEnv("GRAFANA_LINTING")
+	linting := ok && lintingVal == "true"
+
+	return linting
 }
 
 func (f *DashboardLinterFactory) ConfigPath() string {

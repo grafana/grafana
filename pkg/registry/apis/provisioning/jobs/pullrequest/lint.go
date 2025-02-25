@@ -12,12 +12,18 @@ import (
 
 type Linter struct {
 	lintTemplate *template.Template
+	available    bool
 }
 
-func NewLinter() *Linter {
+func NewLinter(available bool) *Linter {
 	return &Linter{
 		lintTemplate: template.Must(template.New("lint").Parse(lintDashboardIssuesTemplate)),
+		available:    available,
 	}
+}
+
+func (l *Linter) IsAvailable() bool {
+	return l.available
 }
 
 const lintDashboardIssuesTemplate = `Hey there! 👋

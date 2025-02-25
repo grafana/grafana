@@ -7,7 +7,6 @@ import (
 	"log/slog"
 	"net/http"
 	"net/url"
-	"os"
 	"regexp"
 	"slices"
 	"strings"
@@ -36,6 +35,8 @@ type githubRepository struct {
 
 	owner string
 	repo  string
+
+	ignorePullRequestsEvents bool
 }
 
 var (
@@ -52,6 +53,7 @@ func NewGitHub(
 	factory *pgh.Factory,
 	secrets secrets.Service,
 	webhookURL string,
+	ignorePullRequestsEvents bool,
 ) (*githubRepository, error) {
 	owner, repo, err := parseOwnerRepo(config.Spec.GitHub.URL)
 	if err != nil {
@@ -66,12 +68,13 @@ func NewGitHub(
 		token = string(decrypted)
 	}
 	return &githubRepository{
-		config:     config,
-		gh:         factory.New(ctx, token), // TODO, baseURL from config
-		secrets:    secrets,
-		webhookURL: webhookURL,
-		owner:      owner,
-		repo:       repo,
+		config:                   config,
+		gh:                       factory.New(ctx, token), // TODO, baseURL from config
+		secrets:                  secrets,
+		webhookURL:               webhookURL,
+		owner:                    owner,
+		repo:                     repo,
+		ignorePullRequestsEvents: ignorePullRequestsEvents,
 	}, nil
 }
 
@@ -578,7 +581,7 @@ func (r *githubRepository) parsePullRequestEvent(event *github.PullRequestEvent)
 		return nil, fmt.Errorf("missing github config")
 	}
 
-	if !r.shouldLintPullRequest() && !cfg.GenerateDashboardPreviews {
+	if r.ignorePullRequestsEvents {
 		return &provisioning.WebhookResponse{
 			Code:    http.StatusOK, // Nothing needed
 			Message: "no action required on pull request event",
@@ -688,12 +691,6 @@ func (r *githubRepository) CompareFiles(ctx context.Context, base, ref string) (
 	}
 
 	return changes, nil
-}
-
-func (r *githubRepository) shouldLintPullRequest() bool {
-	// TODO: Figure out how we want to determine this in practice.
-	val, ok := os.LookupEnv("GRAFANA_LINTING")
-	return ok && val == "true"
 }
 
 // ClearAllPullRequestFileComments clears all comments on a pull request

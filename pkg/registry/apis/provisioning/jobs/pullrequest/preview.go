@@ -51,14 +51,20 @@ type Previewer struct {
 	template    *template.Template
 	urlProvider func(namespace string) string
 	renderer    PreviewRenderer
+	available   bool
 }
 
-func NewPreviewer(renderer PreviewRenderer, urlProvider func(namespace string) string) *Previewer {
+func NewPreviewer(available bool, renderer PreviewRenderer, urlProvider func(namespace string) string) *Previewer {
 	return &Previewer{
 		template:    template.Must(template.New("comment").Parse(previewsCommentTemplate)),
 		urlProvider: urlProvider,
 		renderer:    renderer,
+		available:   available,
 	}
+}
+
+func (p *Previewer) IsAvailable() bool {
+	return p.available
 }
 
 // GenerateComment creates a formatted comment for dashboard previews

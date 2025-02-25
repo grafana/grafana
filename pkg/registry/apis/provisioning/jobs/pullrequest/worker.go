@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
@@ -73,14 +72,8 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 		return fmt.Errorf("failed to get parser for %s: %w", repo.Config().Name, err)
 	}
 
-	// TODO: Figure out how we want to determine this in practice.
-	lintingVal, ok := os.LookupEnv("GRAFANA_LINTING")
-	linting := ok && lintingVal == "true"
-
-	// TODO: clean specification to have better options
-	if !linting &&
-		!cfg.GitHub.GenerateDashboardPreviews {
-		progress.SetMessage("linting and previews are not required")
+	if !c.linter.IsAvailable() && !c.previewer.IsAvailable() {
+		progress.SetMessage("linting and previews are not available")
 		return nil
 	}
 
