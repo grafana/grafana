@@ -2,6 +2,7 @@ package folderimpl
 
 import (
 	"context"
+	"net/http"
 	"testing"
 
 	claims "github.com/grafana/authlib/types"
@@ -12,6 +13,8 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/selection"
 )
@@ -83,6 +86,90 @@ func TestComputeFullPath(t *testing.T) {
 			require.Equal(t, tc.wantPathUIDs, gotPathUIDs)
 		})
 	}
+}
+
+func TestGetParents(t *testing.T) {
+	mockCli := new(client.MockK8sHandler)
+	store := FolderUnifiedStoreImpl{
+		k8sclient: mockCli,
+	}
+
+	ctx := context.Background()
+	orgID := int64(1)
+
+	t.Run("should return list of parent folders of a given folder uid", func(t *testing.T) {
+		mockCli.On("Get", mock.Anything, "parentone", orgID, mock.Anything, mock.Anything).Return(&unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"metadata": map[string]interface{}{
+					"name":        "parentone",
+					"annotations": map[string]interface{}{"grafana.app/folder": "parenttwo"},
+				},
+			},
+		}, nil).Once()
+		mockCli.On("Get", mock.Anything, "parenttwo", orgID, mock.Anything, mock.Anything).Return(&unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"metadata": map[string]interface{}{
+					"name":        "parenttwo",
+					"annotations": map[string]interface{}{"grafana.app/folder": "parentthree"},
+				},
+			},
+		}, nil).Once()
+		mockCli.On("Get", mock.Anything, "parentthree", orgID, mock.Anything, mock.Anything).Return(&unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"metadata": map[string]interface{}{
+					"name":        "parentthree",
+					"annotations": map[string]interface{}{"grafana.app/folder": "parentfour"},
+				},
+			},
+		}, nil).Once()
+		mockCli.On("Get", mock.Anything, "parentfour", orgID, mock.Anything, mock.Anything).Return(&unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"metadata": map[string]interface{}{
+					"name": "parentfour",
+				},
+			},
+		}, nil).Once()
+		result, err := store.GetParents(ctx, folder.GetParentsQuery{
+			UID:   "parentone",
+			OrgID: orgID,
+		})
+
+		require.NoError(t, err)
+		require.Len(t, result, 3)
+		require.Equal(t, "parentfour", result[0].UID)
+		require.Equal(t, "parentthree", result[1].UID)
+		require.Equal(t, "parenttwo", result[2].UID)
+	})
+
+	t.Run("should stop if user doesnt have access to the parent folder", func(t *testing.T) {
+		mockCli.On("Get", mock.Anything, "parentone", orgID, mock.Anything, mock.Anything).Return(&unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"metadata": map[string]interface{}{
+					"name":        "parentone",
+					"annotations": map[string]interface{}{"grafana.app/folder": "parenttwo"},
+				},
+			},
+		}, nil).Once()
+		mockCli.On("Get", mock.Anything, "parenttwo", orgID, mock.Anything, mock.Anything).Return(&unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"metadata": map[string]interface{}{
+					"name":        "parenttwo",
+					"annotations": map[string]interface{}{"grafana.app/folder": "parentthree"},
+				},
+			},
+		}, nil).Once()
+		mockCli.On("Get", mock.Anything, "parentthree", orgID, mock.Anything, mock.Anything).Return(nil, &apierrors.StatusError{
+			ErrStatus: metav1.Status{Code: http.StatusForbidden},
+		}).Once()
+		result, err := store.GetParents(ctx, folder.GetParentsQuery{
+			UID:   "parentone",
+			OrgID: orgID,
+		})
+
+		require.NoError(t, err)
+		require.Len(t, result, 1)
+		require.Equal(t, "parenttwo", result[0].UID)
+	})
 }
 
 func TestGetChildren(t *testing.T) {
