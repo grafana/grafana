@@ -27,8 +27,8 @@ import { useStyles2 } from '../../../../themes';
 import { measureText } from '../../../../utils';
 import { FormattedValueDisplay } from '../../../FormattedValueDisplay/FormattedValueDisplay';
 import { Sparkline } from '../../../Sparkline/Sparkline';
-import { getAlignmentFactor, getCellOptions } from '../../utils';
 import { SparklineCellProps } from '../types';
+import { getAlignmentFactor, getCellOptions } from '../utils';
 
 export const defaultSparklineCellConfig: TableSparklineCellOptions = {
   type: TableCellDisplayMode.Sparkline,
@@ -44,7 +44,7 @@ export const defaultSparklineCellConfig: TableSparklineCellOptions = {
 };
 
 export const SparklineCell = (props: SparklineCellProps) => {
-  const { field, value, theme, timeRange, rowIdx, justifyContent } = props;
+  const { field, value, theme, timeRange, rowIdx, justifyContent, width } = props;
   const styles = useStyles2(getStyles, justifyContent);
   const sparkline = getSparkline(value);
 
@@ -110,7 +110,7 @@ export const SparklineCell = (props: SparklineCellProps) => {
   return (
     <div className={styles.cellContainer}>
       {valueElement}
-      <Sparkline width={200} height={25} sparkline={sparkline} config={config} theme={theme} />
+      <Sparkline width={width - valueWidth} height={25} sparkline={sparkline} config={config} theme={theme} />
     </div>
   );
 };

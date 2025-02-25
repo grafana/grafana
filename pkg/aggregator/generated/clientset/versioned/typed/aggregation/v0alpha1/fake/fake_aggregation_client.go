@@ -15,7 +15,7 @@ type FakeAggregationV0alpha1 struct {
 }
 
 func (c *FakeAggregationV0alpha1) DataPlaneServices() v0alpha1.DataPlaneServiceInterface {
-	return &FakeDataPlaneServices{c}
+	return newFakeDataPlaneServices(c)
 }
 
 // RESTClient returns a RESTClient that is used to communicate

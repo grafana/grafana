@@ -15,20 +15,21 @@ import {
   ReducerID,
 } from '@grafana/data';
 import { TableCellHeight } from '@grafana/schema';
-import { getScrollbarWidth, Pagination } from '@grafana/ui';
 
 import { useStyles2, useTheme2 } from '../../../themes';
 import { Trans } from '../../../utils/i18n';
+import { getScrollbarWidth } from '../../../utils/scrollbar';
 import { ContextMenu } from '../../ContextMenu/ContextMenu';
 import { MenuItem } from '../../Menu/MenuItem';
+import { Pagination } from '../../Pagination/Pagination';
+import { ScrollContainer } from '../../ScrollContainer/ScrollContainer';
 import { TableCellInspector, TableCellInspectorMode } from '../TableCellInspector';
-import { TableNGProps } from '../types';
-import { getTextAlign } from '../utils';
 
 import { HeaderCell } from './Cells/HeaderCell';
 import { RowExpander } from './Cells/RowExpander';
 import { TableCellNG } from './Cells/TableCellNG';
-import { getRowHeight, shouldTextOverflow, getFooterItemNG } from './utils';
+import { TableNGProps, FilterType, TableRow } from './types';
+import { getRowHeight, shouldTextOverflow, getFooterItemNG, getTextAlign } from './utils';
 
 const DEFAULT_CELL_PADDING = 6;
 const COLUMN_MIN_WIDTH = 150;
@@ -37,19 +38,11 @@ const SMALL_PAGINATION_LIMIT = 750;
 const MAX_CELL_HEIGHT = 48;
 const SCROLL_BAR_WIDTH = getScrollbarWidth();
 
-type TableRow = Record<string, unknown>;
-
 interface TableColumn extends Column<TableRow> {
   key: string;
   name: string;
   field: Field;
 }
-
-export type FilterType = {
-  [key: string]: {
-    filteredSet: Set<string>;
-  };
-};
 
 /**
  * getIsNestedTable is a helper function that takes a DataFrame and returns a
@@ -69,6 +62,7 @@ export function TableNG(props: TableNGProps) {
     footerOptions,
     onColumnResize,
     enablePagination,
+    getActions,
   } = props;
 
   const textWrap = fieldConfig?.defaults?.custom?.cellOptions.wrapText ?? false;
@@ -183,6 +177,7 @@ export function TableNG(props: TableNGProps) {
   }
   const defaultRowHeight = getDefaultRowHeight();
   const defaultLineHeight = theme.typography.body.lineHeight * theme.typography.fontSize;
+  const panelPaddingHeight = theme.components.panel.padding * theme.spacing.gridSize * 2;
 
   const handleSort = (columnKey: string, direction: SortDirection, isMultiSort: boolean) => {
     let currentSortColumn: SortColumn | undefined;
@@ -234,7 +229,7 @@ export function TableNG(props: TableNGProps) {
     return records;
   }, []);
   const calcsRef = useRef<string[]>([]);
-  const mapFrameToDataGrid = (main: DataFrame, calcsRef: React.MutableRefObject<string[]>, subTable?: boolean) => {
+  const mapFrameToDataGrid = (main: DataFrame, calcsRef: React.MutableRefObject<string[]>) => {
     const columns: TableColumn[] = [];
 
     const hasNestedFrames = getIsNestedTable(main);
@@ -282,7 +277,7 @@ export function TableNG(props: TableNGProps) {
           // If it's a child, render entire DataGrid at first column position
           let expandedColumns: TableColumn[] = [];
           let expandedRecords: Array<Record<string, string>> = [];
-          expandedColumns = mapFrameToDataGrid(row.data, calcsRef, true);
+          expandedColumns = mapFrameToDataGrid(row.data, calcsRef);
           expandedRecords = frameToRecords(row.data);
           // TODO add renderHeaderCell HeaderCell's here and handle all features
           return (
@@ -290,7 +285,7 @@ export function TableNG(props: TableNGProps) {
               rows={expandedRecords}
               columns={expandedColumns}
               rowHeight={defaultRowHeight}
-              style={{ height: '100%', overflow: 'visible' }}
+              style={{ height: '100%', overflow: 'visible', marginLeft: EXPANDER_WIDTH }}
               headerRowHeight={row.data.meta?.custom?.noHeader ? 0 : undefined}
             />
           );
@@ -322,42 +317,41 @@ export function TableNG(props: TableNGProps) {
         name: field.name,
         field,
         cellClass: styles.cell,
-        renderCell: subTable
-          ? undefined
-          : (props: any) => {
-              const { row, rowIdx } = props;
-              const value = row[key];
-              // Cell level rendering here
-              return (
-                <TableCellNG
-                  key={key}
-                  value={value}
-                  field={field}
-                  theme={theme}
-                  timeRange={timeRange}
-                  height={defaultRowHeight}
-                  justifyContent={justifyColumnContent}
-                  rowIdx={rowIdx}
-                  shouldTextOverflow={() =>
-                    shouldTextOverflow(
-                      key,
-                      row,
-                      columnTypes,
-                      headerCellRefs,
-                      osContext,
-                      defaultLineHeight,
-                      defaultRowHeight,
-                      DEFAULT_CELL_PADDING,
-                      textWrap,
-                      cellInspect
-                    )
-                  }
-                  setIsInspecting={setIsInspecting}
-                  setContextMenuProps={setContextMenuProps}
-                  cellInspect={cellInspect}
-                />
-              );
-            },
+        renderCell: (props: any) => {
+          const { row, rowIdx } = props;
+          const value = row[key];
+          // Cell level rendering here
+          return (
+            <TableCellNG
+              key={key}
+              value={value}
+              field={field}
+              theme={theme}
+              timeRange={timeRange}
+              height={defaultRowHeight}
+              justifyContent={justifyColumnContent}
+              rowIdx={rowIdx}
+              shouldTextOverflow={() =>
+                shouldTextOverflow(
+                  key,
+                  row,
+                  columnTypes,
+                  headerCellRefs,
+                  osContext,
+                  defaultLineHeight,
+                  defaultRowHeight,
+                  DEFAULT_CELL_PADDING,
+                  textWrap,
+                  cellInspect
+                )
+              }
+              setIsInspecting={setIsInspecting}
+              setContextMenuProps={setContextMenuProps}
+              cellInspect={cellInspect}
+              getActions={getActions}
+            />
+          );
+        },
         renderSummaryCell: () => {
           if (isCountRowsSet && fieldIndex === 0) {
             return (
@@ -419,34 +413,6 @@ export function TableNG(props: TableNGProps) {
     );
   }, [props.data.fields]);
 
-  // Sort rows
-  const sortedRows = useMemo(() => {
-    const comparators = sortColumns.map(({ columnKey }) => getComparator(columnTypes[columnKey]));
-    const sortDirs = sortColumns.map(({ direction }) => (direction === 'ASC' ? 1 : -1));
-
-    if (sortColumns.length === 0) {
-      return rows;
-    }
-
-    return rows.slice().sort((a, b) => {
-      let result = 0;
-      let sortIndex = 0;
-
-      for (const { columnKey } of sortColumns) {
-        const compare = comparators[sortIndex];
-        result = sortDirs[sortIndex] * compare(a[columnKey], b[columnKey]);
-
-        if (result !== 0) {
-          break;
-        }
-
-        sortIndex += 1;
-      }
-
-      return result;
-    });
-  }, [rows, sortColumns, columnTypes]);
-
   const getDisplayedValue = (row: TableRow, key: string) => {
     const field = props.data.fields.find((field) => field.name === key)!;
     const displayedValue = formattedValueToString(field.display!(row[key]));
@@ -459,7 +425,7 @@ export function TableNG(props: TableNGProps) {
     if (filterValues.length === 0) {
       // reset cross filter order
       crossFilterOrder.current = [];
-      return sortedRows;
+      return rows;
     }
 
     // Update crossFilterOrder
@@ -477,7 +443,7 @@ export function TableNG(props: TableNGProps) {
     // reset crossFilterRows
     crossFilterRows.current = {};
 
-    return sortedRows.filter((row) => {
+    return rows.filter((row) => {
       for (const [key, value] of filterValues) {
         const displayedValue = getDisplayedValue(row, key);
         if (!value.filteredSet.has(displayedValue)) {
@@ -492,11 +458,39 @@ export function TableNG(props: TableNGProps) {
       }
       return true;
     });
-  }, [rows, filter, sortedRows, props.data.fields]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [rows, filter, props.data.fields]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Sort rows
+  const sortedRows = useMemo(() => {
+    const comparators = sortColumns.map(({ columnKey }) => getComparator(columnTypes[columnKey]));
+    const sortDirs = sortColumns.map(({ direction }) => (direction === 'ASC' ? 1 : -1));
+
+    if (sortColumns.length === 0) {
+      return filteredRows;
+    }
+
+    return filteredRows.slice().sort((a, b) => {
+      let result = 0;
+      let sortIndex = 0;
+
+      for (const { columnKey } of sortColumns) {
+        const compare = comparators[sortIndex];
+        result = sortDirs[sortIndex] * compare(a[columnKey], b[columnKey]);
+
+        if (result !== 0) {
+          break;
+        }
+
+        sortIndex += 1;
+      }
+
+      return result;
+    });
+  }, [filteredRows, sortColumns, columnTypes]);
 
   // Paginated rows
   // TODO consolidate calculations into pagination wrapper component and only use when needed
-  const numRows = filteredRows.length;
+  const numRows = sortedRows.length;
   // calculate number of rowsPerPage based on height stack
   let headerCellHeight = MAX_CELL_HEIGHT;
   if (noHeader) {
@@ -504,7 +498,9 @@ export function TableNG(props: TableNGProps) {
   } else if (!noHeader && Object.keys(headerCellRefs.current).length > 0) {
     headerCellHeight = headerCellRefs.current[Object.keys(headerCellRefs.current)[0]].getBoundingClientRect().height;
   }
-  let rowsPerPage = Math.floor((height - headerCellHeight - SCROLL_BAR_WIDTH - paginationHeight) / defaultRowHeight);
+  let rowsPerPage = Math.floor(
+    (height - headerCellHeight - SCROLL_BAR_WIDTH - paginationHeight - panelPaddingHeight) / defaultRowHeight
+  );
   // if footer calcs are on, remove one row per page
   if (isFooterVisible) {
     rowsPerPage -= 1;
@@ -528,8 +524,8 @@ export function TableNG(props: TableNGProps) {
 
   const paginatedRows = useMemo(() => {
     const pageOffset = page * rowsPerPage;
-    return filteredRows.slice(pageOffset, pageOffset + rowsPerPage);
-  }, [rows, filteredRows, page, rowsPerPage]); // eslint-disable-line react-hooks/exhaustive-deps
+    return sortedRows.slice(pageOffset, pageOffset + rowsPerPage);
+  }, [rows, sortedRows, page, rowsPerPage]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useMemo(() => {
     calcsRef.current = props.data.fields.map((field, index) => {
@@ -537,15 +533,15 @@ export function TableNG(props: TableNGProps) {
         delete field.state?.calcs;
       }
       if (isCountRowsSet) {
-        return index === 0 ? `${filteredRows.length}` : '';
+        return index === 0 ? `${sortedRows.length}` : '';
       }
       if (index === 0) {
         const footerCalcReducer = footerOptions?.reducer[0];
         return footerCalcReducer ? fieldReducers.get(footerCalcReducer).name : '';
       }
-      return getFooterItemNG(filteredRows, field, footerOptions);
+      return getFooterItemNG(sortedRows, field, footerOptions);
     });
-  }, [filteredRows, props.data.fields, footerOptions, isCountRowsSet]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [sortedRows, props.data.fields, footerOptions, isCountRowsSet]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const columns = useMemo(
     () => mapFrameToDataGrid(props.data, calcsRef),
@@ -601,47 +597,49 @@ export function TableNG(props: TableNGProps) {
   // Return the data grid
   return (
     <>
-      <DataGrid
-        className={styles.dataGrid}
-        key={`DataGrid${revId}`}
-        rows={enablePagination ? paginatedRows : filteredRows}
-        columns={columns}
-        headerRowHeight={noHeader ? 0 : undefined}
-        defaultColumnOptions={{
-          sortable: true,
-          resizable: true,
-        }}
-        rowHeight={textWrap || isNestedTable ? calculateRowHeight : defaultRowHeight}
-        // TODO: This doesn't follow current table behavior
-        style={{ width, height: height - (enablePagination ? paginationHeight : 0) }}
-        renderers={{ renderRow: myRowRenderer }}
-        onCellContextMenu={({ row, column }, event) => {
-          event.preventGridDefault();
-          // Do not show the default context menu
-          event.preventDefault();
-          setContextMenuProps({
-            // rowIdx: rows.indexOf(row),
-            value: row[column.key],
-            top: event.clientY,
-            left: event.clientX,
-          });
-          setIsContextMenuOpen(true);
-        }}
-        // sorting
-        sortColumns={sortColumns}
-        // footer
-        // TODO figure out exactly how this works - some array needs to be here for it to render regardless of renderSummaryCell()
-        bottomSummaryRows={isFooterVisible ? [{}] : undefined}
-        onColumnResize={() => {
-          // NOTE: This method is called continuously during the column resize drag operation,
-          // providing the current column width. There is no separate event for the end of the drag operation.
-          if (textWrap) {
-            // This is needed only when textWrap is enabled
-            // TODO: this is a hack to force rowHeight re-calculation
-            setResizeTrigger((prev) => prev + 1);
-          }
-        }}
-      />
+      <ScrollContainer>
+        <DataGrid
+          className={styles.dataGrid}
+          key={`DataGrid${revId}`}
+          rows={enablePagination ? paginatedRows : sortedRows}
+          columns={columns}
+          headerRowHeight={noHeader ? 0 : undefined}
+          defaultColumnOptions={{
+            sortable: true,
+            resizable: true,
+          }}
+          rowHeight={textWrap || isNestedTable ? calculateRowHeight : defaultRowHeight}
+          // TODO: This doesn't follow current table behavior
+          style={{ width, height: height - (enablePagination ? paginationHeight : 0) }}
+          renderers={{ renderRow: myRowRenderer }}
+          onCellContextMenu={({ row, column }, event) => {
+            event.preventGridDefault();
+            // Do not show the default context menu
+            event.preventDefault();
+            setContextMenuProps({
+              // rowIdx: rows.indexOf(row),
+              value: row[column.key],
+              top: event.clientY,
+              left: event.clientX,
+            });
+            setIsContextMenuOpen(true);
+          }}
+          // sorting
+          sortColumns={sortColumns}
+          // footer
+          // TODO figure out exactly how this works - some array needs to be here for it to render regardless of renderSummaryCell()
+          bottomSummaryRows={isFooterVisible ? [{}] : undefined}
+          onColumnResize={() => {
+            // NOTE: This method is called continuously during the column resize drag operation,
+            // providing the current column width. There is no separate event for the end of the drag operation.
+            if (textWrap) {
+              // This is needed only when textWrap is enabled
+              // TODO: this is a hack to force rowHeight re-calculation
+              setResizeTrigger((prev) => prev + 1);
+            }
+          }}
+        />
+      </ScrollContainer>
 
       {enablePagination && (
         <div className={styles.paginationContainer} ref={paginationWrapperRef}>
@@ -708,15 +706,39 @@ const getStyles = (theme: GrafanaTheme2, textWrap: boolean) => ({
     '--rdg-background-color': theme.colors.background.primary,
     '--rdg-header-background-color': theme.colors.background.primary,
     '--rdg-border-color': 'transparent',
-    '--rdg-summary-border-color': theme.colors.border.medium,
     '--rdg-color': theme.colors.text.primary,
-    // TODO replace with ScrollContainer
-    overflow: 'hidden',
-    scrollbarWidth: 'thin',
-
     '&:hover': {
-      '--rdg-row-hover-background-color': theme.colors.action.hover,
-      overflow: 'scroll',
+      '--rdg-row-hover-background-color': theme.colors.emphasize(theme.colors.action.hover, 0.6),
+    },
+
+    // If we rely solely on borderInlineEnd which is added from data grid, we
+    // get a small gap where the gridCell borders meet the column header borders.
+    // To avoid this, we can unset borderInlineEnd and set borderRight instead.
+    '.rdg-cell': {
+      borderInlineEnd: 'unset',
+      borderRight: `1px solid ${theme.colors.border.medium}`,
+    },
+
+    '.rdg-summary-row': {
+      backgroundColor: theme.colors.background.primary,
+      '--rdg-summary-border-color': theme.colors.border.medium,
+
+      '.rdg-cell': {
+        borderRight: 'none',
+      },
+    },
+
+    // Due to stylistic choices, we do not want borders on the column headers
+    // other than the bottom border.
+    'div[role=columnheader]': {
+      borderBottom: `1px solid ${theme.colors.border.medium}`,
+      borderInlineEnd: 'unset',
+
+      '.r1y6ywlx7-0-0-beta-46': {
+        '&:hover': {
+          borderRight: `3px solid ${theme.colors.text.link}`,
+        },
+      },
     },
   }),
   menuItem: css({
@@ -732,12 +754,6 @@ const getStyles = (theme: GrafanaTheme2, textWrap: boolean) => ({
 
     // Reset default cell styles for custom cell component styling
     paddingInline: '0',
-
-    '&:hover': {
-      // TODO: border was replaced with boxShadow, because it was causing cell shift on hover
-      boxShadow: 'rgb(61, 113, 217) 0px 0px 2px',
-      backgroundColor: theme.colors.background.primary,
-    },
   }),
   paginationContainer: css({
     alignItems: 'center',

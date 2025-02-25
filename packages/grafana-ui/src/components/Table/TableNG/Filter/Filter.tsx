@@ -6,7 +6,7 @@ import { Field, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Popover } from '../../..';
 import { useStyles2 } from '../../../../themes';
 import { Icon } from '../../../Icon/Icon';
-import { TableRow } from '../../types';
+import { TableRow } from '../types';
 
 import { REGEX_OPERATOR } from './FilterList';
 import { FilterPopup } from './FilterPopup';

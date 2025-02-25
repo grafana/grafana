@@ -5,13 +5,14 @@ type folder
     define parent: [folder]
 
     # Action sets
-    define view: [user, team#member, role#assignee] or edit or view from parent
-    define edit: [user, team#member, role#assignee] or admin or edit from parent
-    define admin: [user, team#member, role#assignee] or admin from parent
+    define view: [user, service-account, team#member, role#assignee] or edit or view from parent
+    define edit: [user, service-account, team#member, role#assignee] or admin or edit from parent
+    define admin: [user, service-account, team#member, role#assignee] or admin from parent
 
-    define read: [user, team#member, role#assignee] or view or read from parent
-    define create: [user, team#member, role#assignee] or edit or create from parent
-    define write: [user, team#member, role#assignee] or edit or write from parent
-    define delete: [user, team#member, role#assignee] or edit or delete from parent
-    define permissions_read: [user, team#member, role#assignee] or admin or permissions_read from parent
-    define permissions_write: [user, team#member, role#assignee] or admin or permissions_write from parent
+    define get: [user, service-account, team#member, role#assignee] or view or get from parent
+    define create: [user, service-account, team#member, role#assignee] or edit or create from parent
+    define update: [user, service-account, team#member, role#assignee] or edit or update from parent
+    define delete: [user, service-account, team#member, role#assignee] or edit or delete from parent
+
+    define get_permissions: [user, service-account, team#member, role#assignee] or admin or get_permissions from parent
+    define set_permissions: [user, service-account, team#member, role#assignee] or admin or set_permissions from parent

@@ -11,9 +11,11 @@ import (
 var _ authn.SSOClientConfig = new(FakeSSOClientConfig)
 
 type FakeSSOClientConfig struct {
-	ExpectedName                  string
-	ExpectedIsAutoLoginEnabled    bool
-	ExpectedIsSingleLogoutEnabled bool
+	ExpectedName                             string
+	ExpectedIsAutoLoginEnabled               bool
+	ExpectedIsSingleLogoutEnabled            bool
+	ExpectedIsSkipOrgRoleSyncEnabled         bool
+	ExpectedIsAllowAssignGrafanaAdminEnabled bool
 }
 
 func (f *FakeSSOClientConfig) GetDisplayName() string {
@@ -26,6 +28,14 @@ func (f *FakeSSOClientConfig) IsAutoLoginEnabled() bool {
 
 func (f *FakeSSOClientConfig) IsSingleLogoutEnabled() bool {
 	return f.ExpectedIsSingleLogoutEnabled
+}
+
+func (f *FakeSSOClientConfig) IsSkipOrgRoleSyncEnabled() bool {
+	return f.ExpectedIsSkipOrgRoleSyncEnabled
+}
+
+func (f *FakeSSOClientConfig) IsAllowAssignGrafanaAdminEnabled() bool {
+	return f.ExpectedIsAllowAssignGrafanaAdminEnabled
 }
 
 var (
@@ -41,6 +51,7 @@ type FakeService struct {
 	ExpectedErrs         []error
 	ExpectedIdentities   []*authn.Identity
 	CurrentIndex         int
+	EnabledClients       []string
 }
 
 func (f *FakeService) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
@@ -64,7 +75,17 @@ func (f *FakeService) Authenticate(ctx context.Context, r *authn.Request) (*auth
 }
 
 func (f *FakeService) IsClientEnabled(name string) bool {
-	return true
+	// Consider all clients as enabled if EnabledClients is not explicitly set
+	if f.EnabledClients == nil {
+		return true
+	}
+	// Check if client is in the list of enabled clients
+	for _, s := range f.EnabledClients {
+		if s == name {
+			return true
+		}
+	}
+	return false
 }
 
 func (f *FakeService) GetClientConfig(name string) (authn.SSOClientConfig, bool) {

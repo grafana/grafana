@@ -15,6 +15,7 @@ var (
 
 type StorageApiMetrics struct {
 	WatchEventLatency *prometheus.HistogramVec
+	PollerLatency     prometheus.Histogram
 }
 
 func NewStorageMetrics() *StorageApiMetrics {
@@ -29,6 +30,15 @@ func NewStorageMetrics() *StorageApiMetrics {
 				NativeHistogramMaxBucketNumber:  160,
 				NativeHistogramMinResetDuration: time.Hour,
 			}, []string{"resource"}),
+			PollerLatency: prometheus.NewHistogram(prometheus.HistogramOpts{
+				Namespace:                       "storage_server",
+				Name:                            "poller_query_latency_seconds",
+				Help:                            "poller query latency",
+				Buckets:                         instrument.DefBuckets,
+				NativeHistogramBucketFactor:     1.1, // enable native histograms
+				NativeHistogramMaxBucketNumber:  160,
+				NativeHistogramMinResetDuration: time.Hour,
+			}),
 		}
 	})
 
@@ -37,8 +47,10 @@ func NewStorageMetrics() *StorageApiMetrics {
 
 func (s *StorageApiMetrics) Collect(ch chan<- prometheus.Metric) {
 	s.WatchEventLatency.Collect(ch)
+	s.PollerLatency.Collect(ch)
 }
 
 func (s *StorageApiMetrics) Describe(ch chan<- *prometheus.Desc) {
 	s.WatchEventLatency.Describe(ch)
+	s.PollerLatency.Describe(ch)
 }

@@ -1,4 +1,5 @@
-import { debounce, DebouncedFuncLeading, isNil } from 'lodash';
+import debounce from 'debounce-promise';
+import { isNil } from 'lodash';
 import { Component } from 'react';
 
 import { SelectableValue } from '@grafana/data';
@@ -17,42 +18,38 @@ export interface State {
 }
 
 export class UserPicker extends Component<Props, State> {
-  debouncedSearch: DebouncedFuncLeading<typeof this.search>;
-
   constructor(props: Props) {
     super(props);
     this.state = { isLoading: false };
-    this.search = this.search.bind(this);
-
-    this.debouncedSearch = debounce(this.search, 300, {
-      leading: true,
-      trailing: true,
-    });
   }
 
-  search(query?: string) {
-    this.setState({ isLoading: true });
+  search = debounce(
+    async (query?: string) => {
+      this.setState({ isLoading: true });
 
-    if (isNil(query)) {
-      query = '';
-    }
+      if (isNil(query)) {
+        query = '';
+      }
 
-    return getBackendSrv()
-      .get(`/api/org/users/lookup?query=${query}&limit=100`)
-      .then((result: OrgUser[]) => {
-        return result.map((user) => ({
-          id: user.userId,
-          uid: user.uid,
-          value: user,
-          label: user.login,
-          imgUrl: user.avatarUrl,
-          login: user.login,
-        }));
-      })
-      .finally(() => {
-        this.setState({ isLoading: false });
-      });
-  }
+      return getBackendSrv()
+        .get(`/api/org/users/lookup?query=${query}&limit=100`)
+        .then((result: OrgUser[]) => {
+          return result.map((user) => ({
+            id: user.userId,
+            uid: user.uid,
+            value: user,
+            label: user.login,
+            imgUrl: user.avatarUrl,
+            login: user.login,
+          }));
+        })
+        .finally(() => {
+          this.setState({ isLoading: false });
+        });
+    },
+    300,
+    { leading: true }
+  );
 
   render() {
     const { className, onSelected, inputId } = this.props;
@@ -66,7 +63,7 @@ export class UserPicker extends Component<Props, State> {
           inputId={inputId}
           isLoading={isLoading}
           defaultOptions={true}
-          loadOptions={this.debouncedSearch}
+          loadOptions={this.search}
           onChange={onSelected}
           placeholder="Start typing to search for user"
           noOptionsMessage="No users found"

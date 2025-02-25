@@ -1,18 +1,25 @@
 package models
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/influxdata/influxql"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/log"
+)
+
+var (
+	ErrInvalidQuery = errors.New("invalid InfluxDB query")
 )
 
 type InfluxdbQueryParser struct{}
 
-func QueryParse(query backend.DataQuery) (*Query, error) {
+func QueryParse(query backend.DataQuery, logger log.Logger) (*Query, error) {
 	model, err := simplejson.NewJson(query.JSON)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't unmarshal query")
@@ -31,17 +38,17 @@ func QueryParse(query backend.DataQuery) (*Query, error) {
 
 	tags, err := parseTags(model)
 	if err != nil {
-		return nil, err
+		return nil, errors.Join(ErrInvalidQuery, err)
 	}
 
 	groupBys, err := parseGroupBy(model)
 	if err != nil {
-		return nil, err
+		return nil, errors.Join(ErrInvalidQuery, err)
 	}
 
 	selects, err := parseSelects(model)
 	if err != nil {
-		return nil, err
+		return nil, errors.Join(ErrInvalidQuery, err)
 	}
 
 	interval := query.Interval
@@ -51,6 +58,14 @@ func QueryParse(query backend.DataQuery) (*Query, error) {
 
 	if interval < minInterval {
 		interval = minInterval
+	}
+
+	var statement influxql.Statement
+	if useRawQuery {
+		statement, err = influxql.ParseStatement(rawQuery)
+		if err != nil {
+			logger.Debug(fmt.Sprintf("Couldn't parse raw query: %v", err), "rawQuery", rawQuery)
+		}
 	}
 
 	return &Query{
@@ -68,6 +83,7 @@ func QueryParse(query backend.DataQuery) (*Query, error) {
 		Slimit:       slimit,
 		OrderByTime:  orderByTime,
 		ResultFormat: resultFormat,
+		Statement:    statement,
 	}, nil
 }
 

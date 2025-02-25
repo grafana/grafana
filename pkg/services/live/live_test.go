@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
@@ -37,7 +36,7 @@ func Test_provideLiveService_RedisUnavailable(t *testing.T) {
 		nil,
 		&usagestats.UsageStatsMock{T: t},
 		nil,
-		featuremgmt.WithFeatures(), acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient()), &dashboards.FakeDashboardService{}, annotationstest.NewFakeAnnotationsRepo(), nil)
+		featuremgmt.WithFeatures(), acimpl.ProvideAccessControl(featuremgmt.WithFeatures()), &dashboards.FakeDashboardService{}, annotationstest.NewFakeAnnotationsRepo(), nil)
 
 	// Proceeds without live HA if redis is unavaialble
 	require.NoError(t, err)

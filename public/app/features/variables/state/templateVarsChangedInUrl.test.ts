@@ -1,7 +1,7 @@
 import { TypedVariableModel } from '@grafana/data';
 
 import { DashboardState, StoreState } from '../../../types';
-import { PanelModel } from '../../dashboard/state';
+import { PanelModel } from '../../dashboard/state/PanelModel';
 import { createDashboardModelFixture } from '../../dashboard/state/__fixtures__/dashboardFixtures';
 import { initialState } from '../../dashboard/state/reducers';
 import { variableAdapters } from '../adapters';

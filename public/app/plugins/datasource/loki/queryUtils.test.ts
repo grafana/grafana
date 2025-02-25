@@ -18,8 +18,9 @@ import {
   getNodePositionsFromQuery,
   getLogQueryFromMetricsQueryAtPosition,
   interpolateShardingSelector,
+  requestSupportsSharding,
 } from './queryUtils';
-import { LokiQuery, LokiQueryType } from './types';
+import { LokiQuery, LokiQueryDirection, LokiQueryType } from './types';
 
 describe('getHighlighterExpressionsFromQuery', () => {
   it('returns no expressions for empty query', () => {
@@ -588,5 +589,41 @@ describe('interpolateShardingSelector', () => {
         },
       ]);
     });
+  });
+});
+
+describe('requestSupportsSharding', () => {
+  it('supports log queries with Scan direction', () => {
+    expect(requestSupportsSharding([{ refId: 'A', expr: '{place="luna"}', direction: LokiQueryDirection.Scan }])).toBe(
+      true
+    );
+  });
+
+  it('declines log queries without Scan direction', () => {
+    expect(
+      requestSupportsSharding([{ refId: 'A', expr: '{place="luna"}', direction: LokiQueryDirection.Backward }])
+    ).toBe(false);
+  });
+
+  it.each([
+    'count_over_time({place="luna"}[1m])',
+    'sum_over_time({place="luna"}[1m])',
+    'sum by (level) (count_over_time({place="luna"}[1m]))',
+    'sum by (level) (rate({place="luna"}[1m]))',
+    'sum(sum by (level) (avg_over_time({place="luna"}[1m])))',
+    'sum(rate({place="luna"}[1m]))',
+  ])('allows supported metric queries', (expr: string) => {
+    expect(requestSupportsSharding([{ refId: 'A', expr }])).toBe(true);
+  });
+
+  it.each([
+    'avg_over_time({place="luna"}[1m])',
+    'avg(sum_over_time({place="luna"}[1m]))',
+    'avg(rate({place="luna"}[1m]))',
+    'count_over_time({place="luna"}[1m]) / count_over_time({place="luna"}[1m])',
+    'avg(sum by (level) (avg_over_time({place="luna"}[1m])))',
+    'sum(rate({place="luna"}[1m])) / sum(rate({place="luna"}[1m]))',
+  ])('declines supported metric queries', (expr: string) => {
+    expect(requestSupportsSharding([{ refId: 'A', expr }])).toBe(false);
   });
 });

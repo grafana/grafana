@@ -101,6 +101,7 @@ export function LogsSamplePanel(props: Props) {
             prettifyLogMessage={store.getBool(SETTINGS_KEYS.prettifyLogMessage, false)}
             timeZone={timeZone}
             enableLogDetails={true}
+            scrollElement={null}
           />
         </div>
       </>

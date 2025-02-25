@@ -2,15 +2,15 @@ import { css } from '@emotion/css';
 import { ReactNode, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { TableCellDisplayMode } from '@grafana/schema';
+import { TableAutoCellOptions, TableCellDisplayMode } from '@grafana/schema';
 
 import { useStyles2 } from '../../../../themes';
 import { IconButton } from '../../../IconButton/IconButton';
 import { TableCellInspectorMode } from '../../TableCellInspector';
-import { getTextAlign } from '../../utils';
 import { CellColors } from '../types';
-import { getCellColors } from '../utils';
+import { getCellColors, getTextAlign } from '../utils';
 
+import { ActionsCell } from './ActionsCell';
 import AutoCell from './AutoCell';
 import { BarGaugeCell } from './BarGaugeCell';
 import { DataLinksCell } from './DataLinksCell';
@@ -27,6 +27,7 @@ import { SparklineCell } from './SparklineCell';
 export function TableCellNG(props: any) {
   const {
     field,
+    frame,
     value,
     theme,
     timeRange,
@@ -37,16 +38,16 @@ export function TableCellNG(props: any) {
     setIsInspecting,
     setContextMenuProps,
     cellInspect,
+    getActions,
   } = props;
   const { config: fieldConfig } = field;
-  const { type: cellType } = fieldConfig.custom.cellOptions;
+  const defaultCellOptions: TableAutoCellOptions = { type: TableCellDisplayMode.Auto };
+  const cellOptions = fieldConfig.custom?.cellOptions ?? defaultCellOptions;
+  const { type: cellType } = cellOptions;
 
   const isRightAligned = getTextAlign(field) === 'flex-end';
   const displayValue = field.display!(value);
-  const colors = useMemo(
-    () => getCellColors(theme, fieldConfig.custom.cellOptions, displayValue),
-    [theme, fieldConfig.custom.cellOptions, displayValue]
-  );
+  const colors = useMemo(() => getCellColors(theme, cellOptions, displayValue), [theme, cellOptions, displayValue]);
   const styles = useStyles2(getStyles, isRightAligned, colors);
 
   // TODO
@@ -56,6 +57,8 @@ export function TableCellNG(props: any) {
   const divWidthRef = useRef<HTMLDivElement>(null);
   const [divWidth, setDivWidth] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
+
+  const actions = getActions ? getActions(frame, field) : [];
 
   useLayoutEffect(() => {
     if (divWidthRef.current && divWidthRef.current.clientWidth !== 0) {
@@ -101,7 +104,7 @@ export function TableCellNG(props: any) {
     case TableCellDisplayMode.Image:
       cell = (
         <ImageCell
-          cellOptions={fieldConfig.custom.cellOptions}
+          cellOptions={cellOptions}
           field={field}
           height={height}
           justifyContent={justifyContent}
@@ -118,6 +121,18 @@ export function TableCellNG(props: any) {
         <DataLinksCell value={value} field={field} theme={theme} justifyContent={justifyContent} rowIdx={rowIdx} />
       );
       break;
+    case TableCellDisplayMode.Actions:
+      cell = (
+        <ActionsCell
+          value={value}
+          field={field}
+          theme={theme}
+          justifyContent={justifyContent}
+          rowIdx={rowIdx}
+          actions={actions}
+        />
+      );
+      break;
     case TableCellDisplayMode.Auto:
     default:
       cell = (
@@ -126,7 +141,7 @@ export function TableCellNG(props: any) {
           field={field}
           theme={theme}
           justifyContent={justifyContent}
-          cellOptions={fieldConfig.custom.cellOptions}
+          cellOptions={cellOptions}
           rowIdx={rowIdx}
         />
       );
@@ -190,8 +205,9 @@ const getStyles = (theme: GrafanaTheme2, isRightAligned: boolean, color: CellCol
     alignContent: 'center',
     paddingInline: '8px',
     // TODO: follow-up on this: change styles on hover on table row level
-    background: color.bgColor || theme.colors.background.primary,
+    background: color.bgColor || 'none',
     color: color.textColor,
+    '&:hover': { background: color.bgHoverColor },
   }),
   cellActions: css({
     display: 'flex',

@@ -280,7 +280,7 @@ exports[`transformSceneToSaveModel Given a scene with rows Should transform back
   ],
   "preload": false,
   "refresh": "",
-  "schemaVersion": 40,
+  "schemaVersion": 41,
   "tags": [
     "templating",
     "gdev",
@@ -288,7 +288,6 @@ exports[`transformSceneToSaveModel Given a scene with rows Should transform back
   "templating": {
     "list": [
       {
-        "allowCustomValue": true,
         "current": {
           "text": [
             "A",
@@ -307,7 +306,6 @@ exports[`transformSceneToSaveModel Given a scene with rows Should transform back
         "type": "custom",
       },
       {
-        "allowCustomValue": true,
         "current": {
           "text": [
             "1",
@@ -550,7 +548,7 @@ exports[`transformSceneToSaveModel Given a simple scene with custom settings Sho
   ],
   "preload": false,
   "refresh": "5m",
-  "schemaVersion": 40,
+  "schemaVersion": 41,
   "tags": [
     "tag1",
     "tag2",
@@ -558,7 +556,6 @@ exports[`transformSceneToSaveModel Given a simple scene with custom settings Sho
   "templating": {
     "list": [
       {
-        "allowCustomValue": true,
         "baseFilters": [],
         "datasource": {
           "type": "prometheus",
@@ -634,7 +631,6 @@ exports[`transformSceneToSaveModel Given a simple scene with custom settings Sho
         "type": "interval",
       },
       {
-        "allowCustomValue": true,
         "current": {
           "text": [
             "a",
@@ -651,7 +647,6 @@ exports[`transformSceneToSaveModel Given a simple scene with custom settings Sho
         "type": "custom",
       },
       {
-        "allowCustomValue": true,
         "current": {
           "text": "gdev-testdata",
           "value": "PD8C576611E62080A",
@@ -665,7 +660,6 @@ exports[`transformSceneToSaveModel Given a simple scene with custom settings Sho
         "type": "datasource",
       },
       {
-        "allowCustomValue": true,
         "current": {
           "text": "A",
           "value": "A",
@@ -912,7 +906,7 @@ exports[`transformSceneToSaveModel Given a simple scene with variables Should tr
   ],
   "preload": false,
   "refresh": "",
-  "schemaVersion": 40,
+  "schemaVersion": 41,
   "tags": [
     "gdev",
     "graph-ng",
@@ -921,7 +915,6 @@ exports[`transformSceneToSaveModel Given a simple scene with variables Should tr
   "templating": {
     "list": [
       {
-        "allowCustomValue": true,
         "baseFilters": [],
         "datasource": {
           "type": "prometheus",
@@ -997,7 +990,6 @@ exports[`transformSceneToSaveModel Given a simple scene with variables Should tr
         "type": "interval",
       },
       {
-        "allowCustomValue": true,
         "current": {
           "text": [
             "a",
@@ -1014,7 +1006,6 @@ exports[`transformSceneToSaveModel Given a simple scene with variables Should tr
         "type": "custom",
       },
       {
-        "allowCustomValue": true,
         "current": {
           "text": "gdev-testdata",
           "value": "PD8C576611E62080A",
@@ -1028,7 +1019,6 @@ exports[`transformSceneToSaveModel Given a simple scene with variables Should tr
         "type": "datasource",
       },
       {
-        "allowCustomValue": true,
         "current": {
           "text": "A",
           "value": "A",

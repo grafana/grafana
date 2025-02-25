@@ -35,6 +35,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/state/historian"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests"
+	alertTestUtil "github.com/grafana/grafana/pkg/services/ngalert/testutil"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -47,10 +50,14 @@ func TestWarmStateCache(t *testing.T) {
 	evaluationTime, err := time.Parse("2006-01-02", "2021-03-25")
 	require.NoError(t, err)
 	ctx := context.Background()
-	_, dbstore := tests.SetupTestEnv(t, 1)
+	ng, dbstore := tests.SetupTestEnv(t, 1)
 
-	const mainOrgID int64 = 1
-	rule := tests.CreateTestAlertRule(t, ctx, dbstore, 600, mainOrgID)
+	orgService, err := alertTestUtil.SetupOrgService(t, dbstore.SQLStore, setting.NewCfg())
+	require.NoError(t, err)
+	mainOrg, err := orgService.CreateWithMember(ctx, &org.CreateOrgCommand{})
+	require.NoError(t, err)
+
+	rule := tests.CreateTestAlertRule(t, ctx, dbstore, 600, mainOrg.ID)
 
 	expectedEntries := []*state.State{
 		{
@@ -216,13 +223,13 @@ func TestWarmStateCache(t *testing.T) {
 		ResultFingerprint: data.Fingerprint(2).String(),
 	})
 	for _, instance := range instances {
-		_ = dbstore.SaveAlertInstance(ctx, instance)
+		_ = ng.InstanceStore.SaveAlertInstance(ctx, instance)
 	}
 
 	cfg := state.ManagerCfg{
 		Metrics:       metrics.NewNGAlert(prometheus.NewPedanticRegistry()).GetStateMetrics(),
 		ExternalURL:   nil,
-		InstanceStore: dbstore,
+		InstanceStore: ng.InstanceStore,
 		Images:        &state.NoopImageService{},
 		Clock:         clock.NewMock(),
 		Historian:     &state.FakeHistorian{},
@@ -230,7 +237,7 @@ func TestWarmStateCache(t *testing.T) {
 		Log:           log.New("ngalert.state.manager"),
 	}
 	st := state.NewManager(cfg, state.NewNoopPersister())
-	st.Warm(ctx, dbstore, dbstore)
+	st.Warm(ctx, dbstore, dbstore, ng.InstanceStore)
 
 	t.Run("instance cache has expected entries", func(t *testing.T) {
 		for _, entry := range expectedEntries {
@@ -250,7 +257,7 @@ func TestDashboardAnnotations(t *testing.T) {
 	require.NoError(t, err)
 
 	ctx := context.Background()
-	_, dbstore := tests.SetupTestEnv(t, 1)
+	ng, dbstore := tests.SetupTestEnv(t, 1)
 
 	fakeAnnoRepo := annotationstest.NewFakeAnnotationsRepo()
 	historianMetrics := metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem)
@@ -261,7 +268,7 @@ func TestDashboardAnnotations(t *testing.T) {
 	cfg := state.ManagerCfg{
 		Metrics:       metrics.NewNGAlert(prometheus.NewPedanticRegistry()).GetStateMetrics(),
 		ExternalURL:   nil,
-		InstanceStore: dbstore,
+		InstanceStore: ng.InstanceStore,
 		Images:        &state.NoopImageService{},
 		Clock:         clock.New(),
 		Historian:     hist,
@@ -277,7 +284,7 @@ func TestDashboardAnnotations(t *testing.T) {
 		"test2": "{{ $labels.instance_label }}",
 	})
 
-	st.Warm(ctx, dbstore, dbstore)
+	st.Warm(ctx, dbstore, dbstore, ng.InstanceStore)
 	bValue := float64(42)
 	cValue := float64(1)
 	_ = st.ProcessEvalResults(ctx, evaluationTime, rule, eval.Results{{
@@ -1697,10 +1704,14 @@ func TestStaleResultsHandler(t *testing.T) {
 	interval := time.Minute
 
 	ctx := context.Background()
-	_, dbstore := tests.SetupTestEnv(t, 1)
+	ng, dbstore := tests.SetupTestEnv(t, 1)
 
-	const mainOrgID int64 = 1
-	rule := tests.CreateTestAlertRule(t, ctx, dbstore, int64(interval.Seconds()), mainOrgID)
+	orgService, err := alertTestUtil.SetupOrgService(t, dbstore.SQLStore, setting.NewCfg())
+	require.NoError(t, err)
+	mainOrg, err := orgService.CreateWithMember(ctx, &org.CreateOrgCommand{})
+	require.NoError(t, err)
+
+	rule := tests.CreateTestAlertRule(t, ctx, dbstore, int64(interval.Seconds()), mainOrg.ID)
 	lastEval := evaluationTime.Add(-2 * interval)
 
 	labels1 := models.InstanceLabels{
@@ -1751,7 +1762,7 @@ func TestStaleResultsHandler(t *testing.T) {
 	}
 
 	for _, instance := range instances {
-		_ = dbstore.SaveAlertInstance(ctx, instance)
+		_ = ng.InstanceStore.SaveAlertInstance(ctx, instance)
 	}
 
 	testCases := []struct {
@@ -1805,7 +1816,7 @@ func TestStaleResultsHandler(t *testing.T) {
 		cfg := state.ManagerCfg{
 			Metrics:       metrics.NewNGAlert(prometheus.NewPedanticRegistry()).GetStateMetrics(),
 			ExternalURL:   nil,
-			InstanceStore: dbstore,
+			InstanceStore: ng.InstanceStore,
 			Images:        &state.NoopImageService{},
 			Clock:         clock.New(),
 			Historian:     &state.FakeHistorian{},
@@ -1813,7 +1824,7 @@ func TestStaleResultsHandler(t *testing.T) {
 			Log:           log.New("ngalert.state.manager"),
 		}
 		st := state.NewManager(cfg, state.NewNoopPersister())
-		st.Warm(ctx, dbstore, dbstore)
+		st.Warm(ctx, dbstore, dbstore, ng.InstanceStore)
 		existingStatesForRule := st.GetStatesForRuleUID(rule.OrgID, rule.UID)
 
 		// We have loaded the expected number of entries from the db
@@ -1978,10 +1989,14 @@ func TestStaleResults(t *testing.T) {
 func TestDeleteStateByRuleUID(t *testing.T) {
 	interval := time.Minute
 	ctx := context.Background()
-	_, dbstore := tests.SetupTestEnv(t, 1)
+	ng, dbstore := tests.SetupTestEnv(t, 1)
 
-	const mainOrgID int64 = 1
-	rule := tests.CreateTestAlertRule(t, ctx, dbstore, int64(interval.Seconds()), mainOrgID)
+	orgService, err := alertTestUtil.SetupOrgService(t, dbstore.SQLStore, setting.NewCfg())
+	require.NoError(t, err)
+	mainOrg, err := orgService.CreateWithMember(ctx, &org.CreateOrgCommand{})
+	require.NoError(t, err)
+
+	rule := tests.CreateTestAlertRule(t, ctx, dbstore, int64(interval.Seconds()), mainOrg.ID)
 
 	labels1 := models.InstanceLabels{"test1": "testValue1"}
 	_, hash1, _ := labels1.StringAndHash()
@@ -2009,7 +2024,7 @@ func TestDeleteStateByRuleUID(t *testing.T) {
 	}
 
 	for _, instance := range instances {
-		_ = dbstore.SaveAlertInstance(ctx, instance)
+		_ = ng.InstanceStore.SaveAlertInstance(ctx, instance)
 	}
 
 	testCases := []struct {
@@ -2025,7 +2040,7 @@ func TestDeleteStateByRuleUID(t *testing.T) {
 	}{
 		{
 			desc:          "all states/instances are removed from cache and DB",
-			instanceStore: dbstore,
+			instanceStore: ng.InstanceStore,
 			expectedStates: []*state.State{
 				{
 					AlertRuleUID:       rule.UID,
@@ -2065,7 +2080,7 @@ func TestDeleteStateByRuleUID(t *testing.T) {
 			cfg := state.ManagerCfg{
 				Metrics:       metrics.NewNGAlert(prometheus.NewPedanticRegistry()).GetStateMetrics(),
 				ExternalURL:   nil,
-				InstanceStore: dbstore,
+				InstanceStore: ng.InstanceStore,
 				Images:        &state.NoopImageService{},
 				Clock:         clk,
 				Historian:     &state.FakeHistorian{},
@@ -2073,9 +2088,9 @@ func TestDeleteStateByRuleUID(t *testing.T) {
 				Log:           log.New("ngalert.state.manager"),
 			}
 			st := state.NewManager(cfg, state.NewNoopPersister())
-			st.Warm(ctx, dbstore, dbstore)
+			st.Warm(ctx, dbstore, dbstore, ng.InstanceStore)
 			q := &models.ListAlertInstancesQuery{RuleOrgID: rule.OrgID, RuleUID: rule.UID}
-			alerts, _ := dbstore.ListAlertInstances(ctx, q)
+			alerts, _ := ng.InstanceStore.ListAlertInstances(ctx, q)
 			existingStatesForRule := st.GetStatesForRuleUID(rule.OrgID, rule.UID)
 
 			// We have loaded the expected number of entries from the db
@@ -2107,7 +2122,7 @@ func TestDeleteStateByRuleUID(t *testing.T) {
 			}
 
 			q = &models.ListAlertInstancesQuery{RuleOrgID: rule.OrgID, RuleUID: rule.UID}
-			alertInstances, _ := dbstore.ListAlertInstances(ctx, q)
+			alertInstances, _ := ng.InstanceStore.ListAlertInstances(ctx, q)
 			existingStatesForRule = st.GetStatesForRuleUID(rule.OrgID, rule.UID)
 
 			// The expected number of state entries remains after states are deleted
@@ -2120,10 +2135,14 @@ func TestDeleteStateByRuleUID(t *testing.T) {
 func TestResetStateByRuleUID(t *testing.T) {
 	interval := time.Minute
 	ctx := context.Background()
-	_, dbstore := tests.SetupTestEnv(t, 1)
+	ng, dbstore := tests.SetupTestEnv(t, 1)
 
-	const mainOrgID int64 = 1
-	rule := tests.CreateTestAlertRule(t, ctx, dbstore, int64(interval.Seconds()), mainOrgID)
+	orgService, err := alertTestUtil.SetupOrgService(t, dbstore.SQLStore, setting.NewCfg())
+	require.NoError(t, err)
+	mainOrg, err := orgService.CreateWithMember(ctx, &org.CreateOrgCommand{})
+	require.NoError(t, err)
+
+	rule := tests.CreateTestAlertRule(t, ctx, dbstore, int64(interval.Seconds()), mainOrg.ID)
 
 	labels1 := models.InstanceLabels{"test1": "testValue1"}
 	_, hash1, _ := labels1.StringAndHash()
@@ -2151,7 +2170,7 @@ func TestResetStateByRuleUID(t *testing.T) {
 	}
 
 	for _, instance := range instances {
-		_ = dbstore.SaveAlertInstance(ctx, instance)
+		_ = ng.InstanceStore.SaveAlertInstance(ctx, instance)
 	}
 
 	testCases := []struct {
@@ -2168,7 +2187,7 @@ func TestResetStateByRuleUID(t *testing.T) {
 	}{
 		{
 			desc:          "all states/instances are removed from cache and DB and saved in historian",
-			instanceStore: dbstore,
+			instanceStore: ng.InstanceStore,
 			expectedStates: []*state.State{
 				{
 					AlertRuleUID:       rule.UID,
@@ -2206,7 +2225,7 @@ func TestResetStateByRuleUID(t *testing.T) {
 			cfg := state.ManagerCfg{
 				Metrics:       metrics.NewNGAlert(prometheus.NewPedanticRegistry()).GetStateMetrics(),
 				ExternalURL:   nil,
-				InstanceStore: dbstore,
+				InstanceStore: ng.InstanceStore,
 				Images:        &state.NoopImageService{},
 				Clock:         clk,
 				Historian:     fakeHistorian,
@@ -2214,9 +2233,9 @@ func TestResetStateByRuleUID(t *testing.T) {
 				Log:           log.New("ngalert.state.manager"),
 			}
 			st := state.NewManager(cfg, state.NewNoopPersister())
-			st.Warm(ctx, dbstore, dbstore)
+			st.Warm(ctx, dbstore, dbstore, ng.InstanceStore)
 			q := &models.ListAlertInstancesQuery{RuleOrgID: rule.OrgID, RuleUID: rule.UID}
-			alerts, _ := dbstore.ListAlertInstances(ctx, q)
+			alerts, _ := ng.InstanceStore.ListAlertInstances(ctx, q)
 			existingStatesForRule := st.GetStatesForRuleUID(rule.OrgID, rule.UID)
 
 			// We have loaded the expected number of entries from the db
@@ -2251,7 +2270,7 @@ func TestResetStateByRuleUID(t *testing.T) {
 			assert.Equal(t, transitions, fakeHistorian.StateTransitions)
 
 			q = &models.ListAlertInstancesQuery{RuleOrgID: rule.OrgID, RuleUID: rule.UID}
-			alertInstances, _ := dbstore.ListAlertInstances(ctx, q)
+			alertInstances, _ := ng.InstanceStore.ListAlertInstances(ctx, q)
 			existingStatesForRule = st.GetStatesForRuleUID(rule.OrgID, rule.UID)
 
 			// The expected number of state entries remains after states are deleted

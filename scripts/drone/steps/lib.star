@@ -611,7 +611,7 @@ def betterer_frontend_step():
         ],
         "commands": [
             "apk add --update git bash",
-            "yarn betterer ci",
+            "yarn betterer:ci",
         ],
     }
 
@@ -667,6 +667,28 @@ def verify_i18n_step():
             # Verify that translation extraction has been committed
             '''
             file_diff=$(git diff --dirstat public/locales)
+            if [ -n "$file_diff" ]; then
+                echo $file_diff
+                echo "{}"
+                exit 1
+            fi
+            '''.format(uncommited_error_message),
+        ],
+    }
+
+def verify_api_clients_step():
+    uncommited_error_message = "\nAPI client generation has not been committed. Please run 'yarn generate-apis', commit the changes and push again."
+    return {
+        "name": "verify-api-clients",
+        "image": images["node_deb"],
+        "depends_on": [
+            "yarn-install",
+        ],
+        "commands": [
+            "yarn generate-apis",
+            # Verify that client generation has been run and committed
+            '''
+            file_diff=$(git diff ':!conf')
             if [ -n "$file_diff" ]; then
                 echo $file_diff
                 echo "{}"
@@ -752,16 +774,6 @@ def frontend_metrics_step(trigger = None):
     if trigger:
         step = dict(step, when = trigger)
     return step
-
-def codespell_step():
-    return {
-        "name": "codespell",
-        "image": images["python"],
-        "commands": [
-            "pip3 install codespell",
-            "codespell -I docs/.codespellignore docs/",
-        ],
-    }
 
 def grafana_server_step():
     """Runs the grafana-server binary as a service.
@@ -1075,8 +1087,8 @@ def postgres_integration_tests_steps():
 
 def mysql_integration_tests_steps(hostname, version):
     cmds = [
-        "apk add --update mysql-client",
-        "cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h {} -P 3306 -u root -prootpass".format(hostname),
+        "apk add --update mariadb-client",  # alpine doesn't package mysql anymore; more info: https://wiki.alpinelinux.org/wiki/MySQL
+        "cat devenv/docker/blocks/mysql_tests/setup.sql | mariadb -h {} -P 3306 -u root -prootpass --disable-ssl-verify-server-cert".format(hostname),
         "go clean -testcache",
         "go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+' | grep -o '\\(.*\\)/' | sort -u)",
     ]
@@ -1111,7 +1123,7 @@ def remote_alertmanager_integration_tests_steps():
         "AM_URL": "http://mimir_backend:8080",
     }
 
-    return integration_tests_steps("remote-alertmanager", cmds, "mimir_backend", "8080", environment = environment, canFail = True)
+    return integration_tests_steps("remote-alertmanager", cmds, "mimir_backend", "8080", environment = environment)
 
 def memcached_integration_tests_steps():
     cmds = [
@@ -1301,94 +1313,6 @@ def retry_command(command, attempts = 60, delay = 30):
         "    fi",
         "done",
     ]
-
-def verify_linux_DEB_packages_step(depends_on = []):
-    install_command = "apt-get update >/dev/null 2>&1 && DEBIAN_FRONTEND=noninteractive apt-get install -yq grafana=$version >/dev/null 2>&1"
-
-    return {
-        "name": "verify-linux-DEB-packages",
-        "image": images["ubuntu"],
-        "environment": {},
-        "commands": [
-            'export version=$(echo ${TAG} | sed -e "s/+security-/-/g")',
-            'echo "Step 1: Updating package lists..."',
-            "apt-get update >/dev/null 2>&1",
-            'echo "Step 2: Installing prerequisites..."',
-            "DEBIAN_FRONTEND=noninteractive apt-get install -yq apt-transport-https software-properties-common wget >/dev/null 2>&1",
-            'echo "Step 3: Adding Grafana GPG key..."',
-            "mkdir -p /etc/apt/keyrings/",
-            "wget -q -O - https://apt.grafana.com/gpg.key | gpg --dearmor | tee /etc/apt/keyrings/grafana.gpg > /dev/null",
-            'echo "Step 4: Adding Grafana repository..."',
-            'echo "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable main" | tee -a /etc/apt/sources.list.d/grafana.list',
-            'echo "Step 5: Installing Grafana..."',
-            # The packages take a bit of time to propogate within the repo. This retry will check their availability within 10 minutes.
-        ] + retry_command(install_command) + [
-            'echo "Step 6: Verifying Grafana installation..."',
-            'if dpkg -s grafana | grep -q "Version: $version"; then',
-            '    echo "Successfully verified Grafana version $version"',
-            "else",
-            '    echo "Failed to verify Grafana version $version"',
-            "    exit 1",
-            "fi",
-            'echo "Verification complete."',
-        ],
-        "depends_on": depends_on,
-    }
-
-def verify_linux_RPM_packages_step(depends_on = []):
-    repo_config = (
-        "[grafana]\n" +
-        "name=grafana\n" +
-        "baseurl=https://rpm.grafana.com\n" +
-        "repo_gpgcheck=0\n" +  # Change this to 0
-        "enabled=1\n" +
-        "gpgcheck=0\n" +  # Change this to 0
-        "gpgkey=https://rpm.grafana.com/gpg.key\n" +
-        "sslverify=1\n" +
-        "sslcacert=/etc/pki/tls/certs/ca-bundle.crt\n"
-    )
-
-    install_command = "dnf install -y --nogpgcheck grafana-$version >/dev/null 2>&1"
-
-    return {
-        "name": "verify-linux-RPM-packages",
-        "image": images["rocky"],
-        "environment": {},
-        "commands": [
-            'echo "Step 1: Updating package lists..."',
-            "dnf check-update -y >/dev/null 2>&1 || true",
-            'echo "Step 2: Installing prerequisites..."',
-            "dnf install -y dnf-utils >/dev/null 2>&1",
-            'echo "Step 3: Adding Grafana GPG key..."',
-            "rpm --import https://rpm.grafana.com/gpg.key",
-            'echo "Step 4: Configuring Grafana repository..."',
-            "echo -e '" + repo_config + "' > /etc/yum.repos.d/grafana.repo",
-            'echo "Step 5: Checking RPM repository..."',
-            'export version=$(echo "${TAG}" | sed -e "s/+security-/^security_/g")',
-            "dnf list available grafana-$version",
-            "if [ $? -eq 0 ]; then",
-            '    echo "Grafana package found in repository. Installing from repo..."',
-        ] + retry_command(install_command) + [
-            '    echo "Verifying GPG key..."',
-            "    rpm --import https://rpm.grafana.com/gpg.key",
-            "    rpm -qa gpg-pubkey* | xargs rpm -qi | grep -i grafana",
-            "else",
-            '    echo "Grafana package version $version not found in repository."',
-            "    dnf repolist",
-            "    dnf list available grafana*",
-            "    exit 1",
-            "fi",
-            'echo "Step 6: Verifying Grafana installation..."',
-            'if rpm -q grafana | grep -q "$verison"; then',
-            '    echo "Successfully verified Grafana version $version"',
-            "else",
-            '    echo "Failed to verify Grafana version $version"',
-            "    exit 1",
-            "fi",
-            'echo "Verification complete."',
-        ],
-        "depends_on": depends_on,
-    }
 
 def verify_gen_cue_step():
     return {

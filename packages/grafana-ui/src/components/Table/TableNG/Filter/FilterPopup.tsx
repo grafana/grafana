@@ -6,7 +6,7 @@ import { Field, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Button, ClickOutsideWrapper, IconButton, Label, Stack } from '../../..';
 import { useStyles2, useTheme2 } from '../../../../themes';
 import { Trans } from '../../../../utils/i18n';
-import { FilterType } from '../TableNG';
+import { FilterType } from '../types';
 
 import { FilterList } from './FilterList';
 import { calculateUniqueFieldValues, getFilteredOptions, valuesToOptions } from './utils';

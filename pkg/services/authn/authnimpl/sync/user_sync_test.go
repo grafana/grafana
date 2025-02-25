@@ -4,9 +4,11 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/authlib/claims"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+
+	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/authn"
@@ -448,6 +450,35 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 			require.EqualValues(t, tt.wantID, tt.args.id)
 		})
 	}
+}
+
+func TestUserSync_SyncUserRetryFetch(t *testing.T) {
+	userSrv := usertest.NewMockService(t)
+	userSrv.On("GetByEmail", mock.Anything, mock.Anything).Return(nil, user.ErrUserNotFound).Once()
+	userSrv.On("Create", mock.Anything, mock.Anything).Return(nil, user.ErrUserAlreadyExists).Once()
+	userSrv.On("GetByEmail", mock.Anything, mock.Anything).Return(&user.User{ID: 1}, nil).Once()
+
+	s := ProvideUserSync(
+		userSrv,
+		authinfoimpl.ProvideOSSUserProtectionService(),
+		&authinfotest.FakeService{},
+		&quotatest.FakeQuotaService{},
+		tracing.NewNoopTracerService(),
+		featuremgmt.WithFeatures(),
+	)
+
+	email := "test@test.com"
+
+	err := s.SyncUserHook(context.Background(), &authn.Identity{
+		ClientParams: authn.ClientParams{
+			SyncUser:    true,
+			AllowSignUp: true,
+			LookUpParams: login.UserLookupParams{
+				Email: &email,
+			},
+		},
+	}, nil)
+	require.NoError(t, err)
 }
 
 func TestUserSync_FetchSyncedUserHook(t *testing.T) {

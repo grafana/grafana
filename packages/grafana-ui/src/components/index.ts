@@ -85,6 +85,7 @@ export { PageToolbar } from './PageLayout/PageToolbar';
 export { SetInterval } from './SetInterval/SetInterval';
 
 export { Table } from './Table/Table';
+export { TableCellInspector, TableCellInspectorMode } from './Table/TableCellInspector';
 export {
   type TableCustomCellOptions,
   type CustomCellRendererProps,
@@ -168,6 +169,10 @@ export { MenuGroup, type MenuItemsGroup, type MenuGroupProps } from './Menu/Menu
 export { MenuItem, type MenuItemProps } from './Menu/MenuItem';
 export { WithContextMenu } from './ContextMenu/WithContextMenu';
 export { DataLinksInlineEditor } from './DataLinks/DataLinksInlineEditor/DataLinksInlineEditor';
+export {
+  DataLinksInlineEditorBase,
+  type DataLinksInlineEditorBaseProps,
+} from './DataLinks/DataLinksInlineEditor/DataLinksInlineEditorBase';
 export { DataLinkInput } from './DataLinks/DataLinkInput';
 export {
   DataLinksContextMenu,
@@ -238,7 +243,9 @@ export { SelectMenuOptions } from './Select/SelectMenu';
 export { getSelectStyles } from './Select/getSelectStyles';
 export * from './Select/types';
 
-export { Combobox, type ComboboxOption } from './Combobox/Combobox';
+export { Combobox } from './Combobox/Combobox';
+export { MultiCombobox } from './Combobox/MultiCombobox';
+export { type ComboboxOption } from './Combobox/types';
 
 export { HorizontalGroup, VerticalGroup, Container } from './Layout/Layout';
 export { Badge, type BadgeColor, type BadgeProps } from './Badge/Badge';
@@ -268,6 +275,7 @@ export { ButtonSelect } from './Dropdown/ButtonSelect';
 export { Dropdown } from './Dropdown/Dropdown';
 export { PluginSignatureBadge, type PluginSignatureBadgeProps } from './PluginSignatureBadge/PluginSignatureBadge';
 export { UserIcon, type UserIconProps } from './UsersIndicator/UserIcon';
+export { UsersIndicator, type UsersIndicatorProps } from './UsersIndicator/UsersIndicator';
 export { type UserView } from './UsersIndicator/types';
 export { Avatar } from './UsersIndicator/Avatar';
 // Export this until we've figured out a good approach to inline form styles.
@@ -322,3 +330,10 @@ export { type GraphNGLegendEvent } from '../graveyard/GraphNG/types';
 
 export { ZoomPlugin } from '../graveyard/uPlot/plugins/ZoomPlugin';
 export { TooltipPlugin } from '../graveyard/uPlot/plugins/TooltipPlugin';
+
+export {
+  ElementSelectionContext,
+  useElementSelection,
+  type ElementSelectionContextState,
+  type ElementSelectionContextItem,
+} from './ElementSelectionContext/ElementSelectionContext';

@@ -1,7 +1,7 @@
 import { PromAlertingRuleState, PromRuleType } from '../../../../types/unified-alerting-dto';
 import { getFilter } from '../utils/search';
 
-import { applySearchFilterToQuery, getSearchFilterFromQuery, RuleHealth } from './rulesSearchParser';
+import { RuleHealth, applySearchFilterToQuery, getSearchFilterFromQuery } from './rulesSearchParser';
 
 describe('Alert rules searchParser', () => {
   describe('getSearchFilterFromQuery', () => {

@@ -20,8 +20,6 @@ weight: 1000
 
 Grafana supports automatic rendering of panels as PNG images. This allows Grafana to automatically generate images of your panels to include in alert notifications, [PDF export]({{< relref "../../dashboards/create-reports#export-dashboard-as-pdf" >}}), and [Reporting]({{< relref "../../dashboards/create-reports" >}}). PDF Export and Reporting are available only in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise" >}}) and [Grafana Cloud](/docs/grafana-cloud/).
 
-> **Note:** Image rendering of dashboards is not supported at this time.
-
 While an image is being rendered, the PNG image is temporarily written to the file system. When the image is rendered, the PNG image is temporarily written to the `png` folder in the Grafana `data` folder.
 
 A background job runs every 10 minutes and removes temporary images. You can configure how long an image should be stored before being removed by configuring the [temp_data_lifetime]({{< relref "../configure-grafana#temp_data_lifetime" >}}) setting.
@@ -223,10 +221,14 @@ HTTPS protocol is supported in the image renderer v3.11.0 and later.
 
 Change the protocol of the server, it can be `http` or `https`. Default is `http`.
 
+```bash
+HTTP_PROTOCOL=https
+```
+
 ```json
 {
   "service": {
-    "protocol": "http"
+    "protocol": "https"
   }
 }
 ```
@@ -234,6 +236,11 @@ Change the protocol of the server, it can be `http` or `https`. Default is `http
 #### HTTPS certificate and key file
 
 Path to the image renderer certificate and key file used to start an HTTPS server.
+
+```bash
+HTTP_CERT_FILE=./path/to/cert
+HTTP_CERT_KEY=./path/to/key
+```
 
 ```json
 {
@@ -247,6 +254,10 @@ Path to the image renderer certificate and key file used to start an HTTPS serve
 #### HTTPS min TLS version
 
 Minimum TLS version allowed. Accepted values are: `TLSv1.2`, `TLSv1.3`. Default is `TLSv1.2`.
+
+```bash
+HTTP_MIN_TLS_VERSION=TLSv1.2
+```
 
 ```json
 {

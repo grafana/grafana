@@ -7,14 +7,11 @@ import { Field, GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../../../themes';
 import { Icon } from '../../../Icon/Icon';
-import { TableColumnResizeActionCallback, TableRow } from '../../types';
-import { FilterType } from '../TableNG';
-
-import { Filter } from './../Filter/Filter';
+import { Filter } from '../Filter/Filter';
+import { TableColumnResizeActionCallback, FilterType, TableRow } from '../types';
 
 interface HeaderCellProps {
   column: Column<any>;
-  // rows: Record<string, string>[];
   rows: TableRow[];
   field: Field;
   onSort: (columnKey: string, direction: SortDirection, isMultiSort: boolean) => void;
