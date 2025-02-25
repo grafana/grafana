@@ -33,12 +33,13 @@ func TestOpenTsdbExecutor(t *testing.T) {
 	t.Run("Parse response should handle invalid JSON", func(t *testing.T) {
 		response := `{ invalid }`
 
-		result, err := service.parseResponse(logger, &http.Response{Body: io.NopCloser(strings.NewReader(response))}, "A")
+		tsdbVersion := float32(4)
+		result, err := service.parseResponse(logger, &http.Response{Body: io.NopCloser(strings.NewReader(response))}, "A", tsdbVersion)
 		require.Nil(t, result)
 		require.Error(t, err)
 	})
 
-	t.Run("Parse response should handle JSON", func(t *testing.T) {
+	t.Run("Parse response should handle JSON (v2.4 and above)", func(t *testing.T) {
 		response := `
 		[
 			{
@@ -57,7 +58,7 @@ func TestOpenTsdbExecutor(t *testing.T) {
 			data.NewField("Time", nil, []time.Time{
 				time.Date(2014, 7, 16, 20, 55, 46, 0, time.UTC),
 			}),
-			data.NewField("value", map[string]string{"env": "prod", "app": "grafana"}, []float64{
+			data.NewField("test", map[string]string{"env": "prod", "app": "grafana"}, []float64{
 				50}),
 		)
 		testFrame.Meta = &data.FrameMeta{
@@ -65,10 +66,124 @@ func TestOpenTsdbExecutor(t *testing.T) {
 			TypeVersion: data.FrameTypeVersion{0, 1},
 		}
 		testFrame.RefID = "A"
+		tsdbVersion := float32(4)
 
 		resp := http.Response{Body: io.NopCloser(strings.NewReader(response))}
 		resp.StatusCode = 200
-		result, err := service.parseResponse(logger, &resp, "A")
+		result, err := service.parseResponse(logger, &resp, "A", tsdbVersion)
+		require.NoError(t, err)
+
+		frame := result.Responses["A"]
+
+		if diff := cmp.Diff(testFrame, frame.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
+			t.Errorf("Result mismatch (-want +got):\n%s", diff)
+		}
+	})
+
+	t.Run("Parse response should handle JSON (v2.3 and below)", func(t *testing.T) {
+		response := `
+		[
+			{
+				"metric": "test",
+				"dps": {
+					"1405544146": 50.0
+				},
+				"tags" : {
+					"env": "prod",
+					"app": "grafana"
+				}
+			}
+		]`
+
+		testFrame := data.NewFrame("test",
+			data.NewField("Time", nil, []time.Time{
+				time.Date(2014, 7, 16, 20, 55, 46, 0, time.UTC),
+			}),
+			data.NewField("test", map[string]string{"env": "prod", "app": "grafana"}, []float64{
+				50}),
+		)
+		testFrame.Meta = &data.FrameMeta{
+			Type:        data.FrameTypeTimeSeriesMulti,
+			TypeVersion: data.FrameTypeVersion{0, 1},
+		}
+		testFrame.RefID = "A"
+		tsdbVersion := float32(3)
+
+		resp := http.Response{Body: io.NopCloser(strings.NewReader(response))}
+		resp.StatusCode = 200
+		result, err := service.parseResponse(logger, &resp, "A", tsdbVersion)
+		require.NoError(t, err)
+
+		frame := result.Responses["A"]
+
+		if diff := cmp.Diff(testFrame, frame.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
+			t.Errorf("Result mismatch (-want +got):\n%s", diff)
+		}
+	})
+
+	t.Run("Parse response should handle unordered JSON (v2.3 and below)", func(t *testing.T) {
+		response := `
+		[
+			{
+				"metric": "test",
+				"dps": {
+					"1405094109": 55.0,
+					"1405124146": 124.0,
+					"1405124212": 1284.0,
+					"1405019246": 50.0,
+					"1408352146": 812.0,
+					"1405534153": 153.0,
+					"1405124397": 9035.0,
+					"1401234774": 215.0,
+					"1409712532": 356.0,
+					"1491523811": 8953.0,
+					"1405239823": 258.0
+				},
+				"tags" : {
+					"env": "prod",
+					"app": "grafana"
+				}
+			}
+		]`
+
+		testFrame := data.NewFrame("test",
+			data.NewField("Time", nil, []time.Time{
+				time.Date(2014, 5, 27, 23, 52, 54, 0, time.UTC),
+				time.Date(2014, 7, 10, 19, 7, 26, 0, time.UTC),
+				time.Date(2014, 7, 11, 15, 55, 9, 0, time.UTC),
+				time.Date(2014, 7, 12, 0, 15, 46, 0, time.UTC),
+				time.Date(2014, 7, 12, 0, 16, 52, 0, time.UTC),
+				time.Date(2014, 7, 12, 0, 19, 57, 0, time.UTC),
+				time.Date(2014, 7, 13, 8, 23, 43, 0, time.UTC),
+				time.Date(2014, 7, 16, 18, 9, 13, 0, time.UTC),
+				time.Date(2014, 8, 18, 8, 55, 46, 0, time.UTC),
+				time.Date(2014, 9, 3, 2, 48, 52, 0, time.UTC),
+				time.Date(2017, 4, 7, 0, 10, 11, 0, time.UTC),
+			}),
+			data.NewField("test", map[string]string{"env": "prod", "app": "grafana"}, []float64{
+				215,
+				50,
+				55,
+				124,
+				1284,
+				9035,
+				258,
+				153,
+				812,
+				356,
+				8953,
+			}),
+		)
+		testFrame.Meta = &data.FrameMeta{
+			Type:        data.FrameTypeTimeSeriesMulti,
+			TypeVersion: data.FrameTypeVersion{0, 1},
+		}
+		testFrame.RefID = "A"
+		tsdbVersion := float32(3)
+
+		resp := http.Response{Body: io.NopCloser(strings.NewReader(response))}
+		resp.StatusCode = 200
+		result, err := service.parseResponse(logger, &resp, "A", tsdbVersion)
 		require.NoError(t, err)
 
 		frame := result.Responses["A"]
@@ -99,7 +214,7 @@ func TestOpenTsdbExecutor(t *testing.T) {
 			data.NewField("Time", nil, []time.Time{
 				time.Date(2014, 7, 16, 20, 55, 46, 0, time.UTC),
 			}),
-			data.NewField("value", map[string]string{"env": "prod", "app": "grafana"}, []float64{
+			data.NewField("test", map[string]string{"env": "prod", "app": "grafana"}, []float64{
 				50}),
 		)
 		testFrame.Meta = &data.FrameMeta{
@@ -108,9 +223,11 @@ func TestOpenTsdbExecutor(t *testing.T) {
 		}
 		testFrame.RefID = myRefid
 
+		tsdbVersion := float32(4)
+
 		resp := http.Response{Body: io.NopCloser(strings.NewReader(response))}
 		resp.StatusCode = 200
-		result, err := service.parseResponse(logger, &resp, myRefid)
+		result, err := service.parseResponse(logger, &resp, myRefid, tsdbVersion)
 		require.NoError(t, err)
 
 		if diff := cmp.Diff(testFrame, result.Responses[myRefid].Frames[0], data.FrameTestCompareOptions()...); diff != "" {
