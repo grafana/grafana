@@ -4,7 +4,7 @@
 # "docker.languageserver.formatter.ignoreMultilineInstructions": true
 
 ARG BASE_IMAGE=alpine:3.21
-ARG JS_IMAGE=node:22-alpine
+ARG JS_IMAGE=node:20-alpine
 ARG JS_PLATFORM=linux/amd64
 ARG GO_IMAGE=golang:1.22.11-alpine
 
