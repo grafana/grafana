@@ -16,8 +16,8 @@ const requiredFeatureToggles: Array<keyof FeatureToggles> = [
   'unifiedStorageSearchUI',
 ];
 
-const custom_ini = `app_mode = development
-
+const custom_ini = `# In your custom.ini file
+app_mode = development
 [feature_toggles]
 provisioning = true
 kubernetesDashboards = true
