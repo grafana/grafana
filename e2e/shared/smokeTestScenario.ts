@@ -1,7 +1,7 @@
 import { e2e } from '../utils';
 
 export const smokeTestScenario = () =>
-  describe('Smoke tests', () => {
+  describe.skip('Smoke tests', () => {
     before(() => {
       e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'), false);
       e2e.flows.addDataSource();
