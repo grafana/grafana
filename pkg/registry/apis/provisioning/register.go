@@ -41,7 +41,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/migrate"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/pullrequest"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/lint"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -80,7 +79,6 @@ type APIBuilder struct {
 	blobstore         blob.PublicBlobStore
 	client            *resources.ClientFactory
 	parsers           *resources.ParserFactory
-	linters           lint.LinterFactory
 	ghFactory         *github.Factory
 	clonedir          string // where repo clones are managed
 	jobs              jobs.JobQueue
@@ -112,8 +110,6 @@ func NewAPIBuilder(
 	secrets secrets.Service,
 ) *APIBuilder {
 	clientFactory := resources.NewFactory(configProvider)
-	// TODO: linting is experimental, so we disable it for now
-	linters := lint.NewDashboardLinterFactory(false)
 	return &APIBuilder{
 		urlProvider:       urlProvider,
 		localFileResolver: local,
@@ -121,10 +117,8 @@ func NewAPIBuilder(
 		features:          features,
 		ghFactory:         ghFactory,
 		client:            clientFactory,
-		linters:           linters,
 		parsers: &resources.ParserFactory{
-			Client:        clientFactory,
-			LinterFactory: linters,
+			Client: clientFactory,
 		},
 		render:         render,
 		clonedir:       clonedir,
@@ -431,10 +425,9 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			))
 
 			// Pull request worker
-			linter := pullrequest.NewLinter(b.linters.IsEnabled())
 			renderer := pullrequest.NewScreenshotRenderer(b.render, b.blobstore)
 			previewer := pullrequest.NewPreviewer(renderer, b.urlProvider)
-			pullRequestWorker, err := pullrequest.NewPullRequestWorker(b.parsers, previewer, linter)
+			pullRequestWorker, err := pullrequest.NewPullRequestWorker(b.parsers, previewer)
 			if err != nil {
 				return fmt.Errorf("create pull request worker: %w", err)
 			}

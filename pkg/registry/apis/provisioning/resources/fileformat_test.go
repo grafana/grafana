@@ -3,7 +3,6 @@ package resources
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"os"
 	"path"
 	"testing"
@@ -13,7 +12,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/lint"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 )
 
@@ -110,7 +108,6 @@ spec:
 
 		// try to validate (and lint)
 		validate := true
-		parser.linter = lint.NewDashboardLinter()
 
 		// Support dashboard conversion
 		parsed, err := parser.Parse(context.Background(), info, validate)
@@ -122,21 +119,5 @@ spec:
 			Version: "v1alpha1",
 			Kind:    "Dashboard",
 		}, parsed.GVK)
-
-		jj, err := json.MarshalIndent(parsed.Lint, "", "  ")
-		require.NoError(t, err)
-		// fmt.Printf("%s\n", string(jj))
-		require.JSONEq(t, `[
-			{
-				"severity": "error",
-				"rule": "template-datasource-rule",
-				"message": "Dashboard 'Timeline Demo' does not have a templated data source"
-			},
-			{
-				"severity": "error",
-				"rule": "uneditable-dashboard",
-				"message": "Dashboard 'Timeline Demo' is editable, it should be set to 'editable: false'"
-			}
-		]`, string(jj))
 	})
 }

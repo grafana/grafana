@@ -3211,36 +3211,6 @@
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.LintIssue": {
-        "type": "object",
-        "required": [
-          "severity",
-          "rule",
-          "message"
-        ],
-        "properties": {
-          "message": {
-            "type": "string",
-            "default": ""
-          },
-          "rule": {
-            "type": "string",
-            "default": ""
-          },
-          "severity": {
-            "description": "Possible enum values:\n - `\"error\"`\n - `\"exclude\"`\n - `\"fixed\"`\n - `\"quiet\"`\n - `\"warning\"`",
-            "type": "string",
-            "default": "",
-            "enum": [
-              "error",
-              "exclude",
-              "fixed",
-              "quiet",
-              "warning"
-            ]
-          }
-        }
-      },
       "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.LocalRepositoryConfig": {
         "type": "object",
         "properties": {
@@ -3833,19 +3803,6 @@
           "kind": {
             "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
             "type": "string"
-          },
-          "lint": {
-            "description": "Lint results",
-            "type": "array",
-            "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.LintIssue"
-                }
-              ]
-            },
-            "x-kubernetes-list-type": "atomic"
           },
           "path": {
             "description": "Path to the remote file",
