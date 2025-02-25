@@ -75,4 +75,8 @@ func (m *mockUser) GetIsGrafanaAdmin() bool {
 	return m.isGrafanaAdmin
 }
 
+func (m *mockUser) HasRole(role identity.RoleType) bool {
+	return role == identity.RoleAdmin && m.isGrafanaAdmin
+}
+
 // Implement other methods of identity.Requester as needed
