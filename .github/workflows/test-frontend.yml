@@ -1,4 +1,4 @@
-name: Trivy Scan
+name: Frontend unit tests
 on:
   pull_request:
   push:
@@ -9,7 +9,6 @@ on:
 jobs:
   test-frontend:
     runs-on: ubuntu-latest
-    run-name: Test Frontend
     steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-node@v4
