@@ -231,32 +231,9 @@ type ResourceWrapper struct {
 	// Different flavors of the same object
 	Resource ResourceObjects `json:"resource"`
 
-	// Lint results
-	// +listType=atomic
-	Lint []LintIssue `json:"lint,omitempty"`
-
 	// If errors exist, show them here
 	// +listType=atomic
 	Errors []string `json:"errors,omitempty"`
-}
-
-// The kubernetes action required when loading a given resource
-// +enum
-type LintSeverity string
-
-// ResourceAction values
-const (
-	LintSeverityExclude LintSeverity = "exclude"
-	LintSeverityQuiet   LintSeverity = "quiet"
-	LintSeverityWarning LintSeverity = "warning"
-	LintSeverityError   LintSeverity = "error"
-	LintSeverityFixed   LintSeverity = "fixed"
-)
-
-type LintIssue struct {
-	Severity LintSeverity `json:"severity"`
-	Rule     string       `json:"rule"`
-	Message  string       `json:"message"`
 }
 
 type ResourceType struct {

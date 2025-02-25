@@ -25,18 +25,15 @@ type PullRequestRepo interface {
 
 type PullRequestWorker struct {
 	parsers   *resources.ParserFactory
-	linter    *Linter
 	previewer *Previewer
 }
 
 func NewPullRequestWorker(
 	parsers *resources.ParserFactory,
 	previewer *Previewer,
-	linter *Linter,
 ) (*PullRequestWorker, error) {
 	return &PullRequestWorker{
 		parsers:   parsers,
-		linter:    linter,
 		previewer: previewer,
 	}, nil
 }
@@ -129,14 +126,6 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 		result.Resource = parsed.GVR.Resource
 		result.Group = parsed.GVR.Group
 		result.Name = parsed.Obj.GetName()
-
-		if f.Action != repository.FileActionDeleted && len(parsed.Lint) > 0 {
-			if err := c.linter.Lint(ctx, prRepo, options, f.Path, ref, parsed.Lint); err != nil {
-				result.Error = fmt.Errorf("failed to lint file: %w", err)
-				progress.Record(ctx, result)
-				continue
-			}
-		}
 
 		preview, err := c.previewer.Preview(ctx, f, job.Namespace, repo.Config().Name, cfg.GitHub.Branch, ref, options.URL, cfg.GitHub.GenerateDashboardPreviews)
 		if err != nil {
