@@ -216,6 +216,14 @@ func (a *AlertRuleMutators) WithEditorSettingsSimplifiedNotificationsSection(ena
 	}
 }
 
+func (a *AlertRuleMutators) WithPrometheusOriginalRuleDefinition(definition string) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		rule.Metadata.PrometheusStyleRule = &PrometheusStyleRule{
+			OriginalRuleDefinition: definition,
+		}
+	}
+}
+
 func (a *AlertRuleMutators) WithGroupIndex(groupIndex int) AlertRuleMutator {
 	return func(rule *AlertRule) {
 		rule.RuleGroupIndex = groupIndex

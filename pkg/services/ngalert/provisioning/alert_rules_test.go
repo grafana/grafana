@@ -1644,7 +1644,7 @@ func TestProvisiongWithFullpath(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, namespaceTitle, res2.FolderFullpath)
 
-		res3, err := ruleService.GetAlertGroupsWithFolderFullpath(context.Background(), &signedInUser, []string{namespaceUID})
+		res3, err := ruleService.GetAlertGroupsWithFolderFullpath(context.Background(), &signedInUser, &FilterOptions{NamespaceUIDs: []string{namespaceUID}})
 		require.NoError(t, err)
 		assert.Equal(t, namespaceTitle, res3[0].FolderFullpath)
 	})
@@ -1675,7 +1675,7 @@ func TestProvisiongWithFullpath(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, "my-namespace/my-other-namespace containing multiple \\/\\/", res2.FolderFullpath)
 
-		res3, err := ruleService.GetAlertGroupsWithFolderFullpath(context.Background(), &signedInUser, []string{otherNamespaceUID})
+		res3, err := ruleService.GetAlertGroupsWithFolderFullpath(context.Background(), &signedInUser, &FilterOptions{NamespaceUIDs: []string{otherNamespaceUID}})
 		require.NoError(t, err)
 		assert.Equal(t, "my-namespace/my-other-namespace containing multiple \\/\\/", res3[0].FolderFullpath)
 	})
