@@ -51,24 +51,30 @@ DashboardV2Spec: {
   variables: [...VariableKind]
 }
 
-// Importable Dashboard
-ImportableDashboard: {
-  kind: "ImportableDashboard"
+// Resources used to import a dashboard
+ImportableResources: {
+  kind: "ImportableResources"
   spec: {
-    dashboard: DashboardV2Spec
-    elements?: [...LibraryPanelExport]
-  }
-  metadata?: {
-    requirements?: [...ImportableDashboardRequirements]
+    resources: [...(DashboardKind | LibraryPanelImport)]
+    requirements: [...DashboardImportableRequirements]
   }
 }
 
+// DashboardKind - used for importing/exporting dashboards
+DashboardKind: {
+  kind: "DashboardKind"
+  spec: DashboardV2Spec
+}
+
 // ImportableDashboard requirements 
-ImportableDashboardRequirements: {
-  type: string
-  id: string
-  name: string
-  version: string
+DashboardImportableRequirements: {
+  // kind is the type of the requirement
+  kind: string
+  spec: {
+    id: string
+    name: string
+    version: string
+  }
 }
 
 // Supported dashboard elements
@@ -96,10 +102,15 @@ LibraryPanelRef: {
   uid: string
 }
 
-// Exportable library panel - we need to load the full model when exporting a dashboard
-LibraryPanelExport: LibraryPanelRef & {
+// Portable (can be exported and imported) library panel - we need to load the full model when exporting a dashboard
+LibraryPanelImport: {
+  kind: "LibraryPanelImport"
+  spec: LibraryPanelRef & {
   model: _
+  }
 }
+
+
 
 AnnotationPanelFilter: {
   // Should the specified panels be included or excluded

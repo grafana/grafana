@@ -51,38 +51,52 @@ export const defaultDashboardV2Spec = (): DashboardV2Spec => ({
 	variables: [],
 });
 
-// Importable Dashboard
-export interface ImportableDashboard {
-	kind: "ImportableDashboard";
+// Resources used to import a dashboard
+export interface ImportableResources {
+	kind: "ImportableResources";
 	spec: {
-		dashboard: DashboardV2Spec;
-		elements?: LibraryPanelExport[];
-	};
-	metadata?: {
-		requirements?: ImportableDashboardRequirements[];
+		resources: (DashboardKind | LibraryPanelImport)[];
+		requirements: DashboardImportableRequirements[];
 	};
 }
 
-export const defaultImportableDashboard = (): ImportableDashboard => ({
-	kind: "ImportableDashboard",
+export const defaultImportableResources = (): ImportableResources => ({
+	kind: "ImportableResources",
 	spec: {
-	dashboard: defaultDashboardV2Spec(),
+	resources: [],
+	requirements: [],
 },
 });
 
-// ImportableDashboard requirements
-export interface ImportableDashboardRequirements {
-	type: string;
-	id: string;
-	name: string;
-	version: string;
+// DashboardKind - used for importing/exporting dashboards
+export interface DashboardKind {
+	kind: "DashboardKind";
+	spec: DashboardV2Spec;
 }
 
-export const defaultImportableDashboardRequirements = (): ImportableDashboardRequirements => ({
-	type: "",
+export const defaultDashboardKind = (): DashboardKind => ({
+	kind: "DashboardKind",
+	spec: defaultDashboardV2Spec(),
+});
+
+// ImportableDashboard requirements
+export interface DashboardImportableRequirements {
+	// kind is the type of the requirement
+	kind: string;
+	spec: {
+		id: string;
+		name: string;
+		version: string;
+	};
+}
+
+export const defaultDashboardImportableRequirements = (): DashboardImportableRequirements => ({
+	kind: "",
+	spec: {
 	id: "",
 	name: "",
 	version: "",
+},
 });
 
 // Supported dashboard elements
@@ -128,17 +142,23 @@ export const defaultLibraryPanelRef = (): LibraryPanelRef => ({
 	uid: "",
 });
 
-// Exportable library panel - we need to load the full model when exporting a dashboard
-export interface LibraryPanelExport {
-	name: string;
-	model: any;
-	uid: string;
+// Portable (can be exported and imported) library panel - we need to load the full model when exporting a dashboard
+export interface LibraryPanelImport {
+	kind: "LibraryPanelImport";
+	spec: {
+		name: string;
+		model: any;
+		uid: string;
+	};
 }
 
-export const defaultLibraryPanelExport = (): LibraryPanelExport => ({
+export const defaultLibraryPanelImport = (): LibraryPanelImport => ({
+	kind: "LibraryPanelImport",
+	spec: {
 	name: "",
 	model: {},
 	uid: "",
+},
 });
 
 export interface AnnotationPanelFilter {

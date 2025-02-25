@@ -4,7 +4,7 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { config } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase } from '@grafana/scenes';
-import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
+import { DashboardKind, DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import { Button, ClipboardButton, CodeEditor, Field, Modal, Stack, Switch } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 import {
@@ -69,7 +69,11 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
 
     if (config.featureToggles.useV2DashboardsAPI) {
       const saveModelV2 = transformSceneToSaveModelSchemaV2(getDashboardSceneFor(this));
-      return isSharingExternally ? this._exporter.makeExportable(saveModelV2) : saveModelV2;
+      const dashboardKind: DashboardKind = {
+        kind: 'DashboardKind',
+        spec: saveModelV2,
+      };
+      return isSharingExternally ? this._exporter.makeExportable(saveModelV2) : dashboardKind;
     }
 
     const saveModelV1 = transformSceneToSaveModel(getDashboardSceneFor(this));

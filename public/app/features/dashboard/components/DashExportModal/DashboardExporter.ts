@@ -3,9 +3,11 @@ import { defaults, each, sortBy, uniqBy } from 'lodash';
 import { DataSourceRef, PanelPluginMeta, VariableOption, VariableRefresh } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import {
+  DashboardKind,
+  DashboardImportableRequirements,
   DashboardV2Spec,
-  ImportableDashboard,
-  LibraryPanelExport,
+  ImportableResources,
+  LibraryPanelImport,
   LibraryPanelKind,
   PanelKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
@@ -85,7 +87,7 @@ export interface LibraryElementExport {
   kind: LibraryElementKind;
 }
 
-export type DashboardV2Json = ImportableDashboard;
+export type DashboardV2Json = ImportableResources;
 
 export interface DashboardExporterLike<T, J> {
   makeExportable(dashboard: T): Promise<J | { error: unknown }>;
@@ -341,10 +343,10 @@ export class DashboardExporterV1 implements DashboardExporterLike<DashboardModel
 
 export class DashboardExporterV2 implements DashboardExporterLike<DashboardV2Spec, DashboardV2Json> {
   async makeExportable(dashboard: DashboardV2Spec) {
-    const requires: Requires = {};
+    const requires: DashboardImportableRequirements[] = [];
     const datasources: DataSources = {};
     const variableLookup: { [key: string]: any } = {};
-    const libraryPanels: LibraryPanelExport[] = [];
+    const libraryPanels: LibraryPanelImport[] = [];
 
     for (const variable of dashboard.variables) {
       variableLookup[variable.kind] = variable.spec;
@@ -379,13 +381,14 @@ export class DashboardExporterV2 implements DashboardExporterLike<DashboardV2Spe
             return;
           }
 
-          // add data source type to require list
-          requires['datasource' + ds.meta?.id] = {
-            type: 'datasource',
-            id: ds.meta.id,
-            name: ds.meta.name,
-            version: ds.meta.info.version || '1.0.0',
-          };
+          requires.push({
+            kind: 'datasource',
+            spec: {
+              id: ds.meta.id,
+              name: ds.meta.name,
+              version: ds.meta.info.version || '1.0.0',
+            },
+          });
 
           // if used via variable we can skip templatizing usage
           if (datasourceVariable) {
@@ -430,12 +433,14 @@ export class DashboardExporterV2 implements DashboardExporterLike<DashboardV2Spe
 
       const panelDef: PanelPluginMeta = config.panels[panel.kind];
       if (panelDef) {
-        requires['panel' + panelDef.id] = {
-          type: 'panel',
-          id: panelDef.id,
-          name: panelDef.name,
-          version: panelDef.info.version,
-        };
+        requires.push({
+          kind: 'panel',
+          spec: {
+            id: panelDef.id,
+            name: panelDef.name,
+            version: panelDef.info.version,
+          },
+        });
       }
     };
 
@@ -443,13 +448,16 @@ export class DashboardExporterV2 implements DashboardExporterLike<DashboardV2Spe
       const { uid } = panel.spec.libraryPanel;
 
       const libPanel = await getLibraryPanel(uid, true);
-      const exportableLibPanel: LibraryPanelExport = {
-        name: libPanel.name,
-        uid: libPanel.uid,
-        model: libPanel.model,
+      const exportableLibPanel: LibraryPanelImport = {
+        kind: 'LibraryPanelImport',
+        spec: {
+          name: libPanel.name,
+          uid: libPanel.uid,
+          model: libPanel.model,
+        },
       };
 
-      await templateizeDatasourceUsage(exportableLibPanel.model);
+      await templateizeDatasourceUsage(exportableLibPanel.spec.model);
 
       libraryPanels.push(exportableLibPanel);
     };
@@ -493,12 +501,14 @@ export class DashboardExporterV2 implements DashboardExporterLike<DashboardV2Spe
       }
 
       // add grafana version
-      requires['grafana'] = {
-        type: 'grafana',
-        id: 'grafana',
-        name: 'Grafana',
-        version: config.buildInfo.version,
-      };
+      requires.push({
+        kind: 'grafana',
+        spec: {
+          id: 'grafana',
+          name: 'Grafana',
+          version: config.buildInfo.version,
+        },
+      });
 
       for (const item of gridLayoutItems) {
         if (item.kind === 'GridLayoutItem' && !item.spec.repeat) {
@@ -509,14 +519,16 @@ export class DashboardExporterV2 implements DashboardExporterLike<DashboardV2Spe
         }
       }
 
+      const importableDashboard: DashboardKind = {
+        kind: 'DashboardKind',
+        spec: dashboard,
+      };
+
       const newObj: DashboardV2Json = {
-        kind: 'ImportableDashboard',
+        kind: 'ImportableResources',
         spec: {
-          dashboard,
-          elements: uniqBy(libraryPanels, 'uid'),
-        },
-        metadata: {
-          requirements: sortBy(requires, ['id']),
+          resources: [importableDashboard, ...uniqBy(libraryPanels, 'uid')],
+          requirements: uniqBy(sortBy(requires, ['id']), 'spec.id'),
         },
       };
 
