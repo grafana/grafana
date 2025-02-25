@@ -40,10 +40,10 @@ func (st DBstore) GetNamespaceByUID(ctx context.Context, uid string, orgID int64
 	return f[0], nil
 }
 
-// GetNamespaceInRootByTitle gets namespace by its title in the root folder.
-func (st DBstore) GetNamespaceInRootByTitle(ctx context.Context, title string, orgID int64, user identity.Requester) (*folder.Folder, error) {
+// GetNamespaceChildren gets namespace (folder) children (first level) by its UID.
+func (st DBstore) GetNamespaceChildren(ctx context.Context, uid string, orgID int64, user identity.Requester) ([]*folder.Folder, error) {
 	q := &folder.GetChildrenQuery{
-		UID:          folder.RootFolderUID,
+		UID:          uid,
 		OrgID:        orgID,
 		SignedInUser: user,
 	}
@@ -52,15 +52,32 @@ func (st DBstore) GetNamespaceInRootByTitle(ctx context.Context, title string, o
 		return nil, err
 	}
 
+	found := make([]*folder.Folder, 0, len(folders))
+	for _, f := range folders {
+		if f.ParentUID == uid {
+			found = append(found, f)
+		}
+	}
+
+	return found, nil
+}
+
+// GetNamespaceByTitle gets namespace by its title in the specified folder.
+func (st DBstore) GetNamespaceByTitle(ctx context.Context, title string, orgID int64, user identity.Requester, parentUID string) (*folder.Folder, error) {
+	folders, err := st.GetNamespaceChildren(ctx, parentUID, orgID, user)
+	if err != nil {
+		return nil, err
+	}
+
 	foundByTitle := []*folder.Folder{}
 	for _, f := range folders {
-		if f.Title == title && f.ParentUID == folder.RootFolderUID {
+		if f.Title == title {
 			foundByTitle = append(foundByTitle, f)
 		}
 	}
 
 	if len(foundByTitle) == 0 {
-		return nil, dashboards.ErrFolderAccessDenied
+		return nil, dashboards.ErrFolderNotFound
 	}
 
 	// Sort by UID to return the first folder in case of multiple folders with the same title
@@ -71,13 +88,13 @@ func (st DBstore) GetNamespaceInRootByTitle(ctx context.Context, title string, o
 	return foundByTitle[0], nil
 }
 
-// GetOrCreateNamespaceInRootByTitle gets or creates a namespace by title in the _root_ folder.
-func (st DBstore) GetOrCreateNamespaceInRootByTitle(ctx context.Context, title string, orgID int64, user identity.Requester) (*folder.Folder, error) {
+// GetOrCreateNamespaceByTitle gets or creates a namespace by title in the specified folder.
+func (st DBstore) GetOrCreateNamespaceByTitle(ctx context.Context, title string, orgID int64, user identity.Requester, parentUID string) (*folder.Folder, error) {
 	var f *folder.Folder
 	var err error
 
-	f, err = st.GetNamespaceInRootByTitle(ctx, title, orgID, user)
-	if err != nil && !errors.Is(err, dashboards.ErrFolderAccessDenied) {
+	f, err = st.GetNamespaceByTitle(ctx, title, orgID, user, parentUID)
+	if err != nil && !errors.Is(err, dashboards.ErrFolderNotFound) {
 		return nil, err
 	}
 
@@ -86,6 +103,7 @@ func (st DBstore) GetOrCreateNamespaceInRootByTitle(ctx context.Context, title s
 			OrgID:        orgID,
 			Title:        title,
 			SignedInUser: user,
+			ParentUID:    parentUID,
 		}
 		f, err = st.FolderService.Create(ctx, cmd)
 		if err != nil {
