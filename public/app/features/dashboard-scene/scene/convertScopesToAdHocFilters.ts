@@ -38,9 +38,9 @@ function processFilter(formattedFilters: Map<string, AdHocFilterWithLabels>, fil
 }
 
 function mergeFilterValues(adHocFilter: AdHocFilterWithLabels, filter: ScopeSpecFilter) {
-  // If the existing filter does NOT support multi-values, ignore the filter
+  // If the existing filter does NOT support multi-values or the operators are different, ignore the filter
   // The rest of the filters with the same key will be lost
-  if (!isScopeFilterSingleOrMultiOperator(scopeFilterOperatorMap[adHocFilter.operator])) {
+  if (invalidOperator(adHocFilter.operator, filter.operator)) {
     return;
   }
 
@@ -64,4 +64,22 @@ function mergeFilterValues(adHocFilter: AdHocFilterWithLabels, filter: ScopeSpec
   } else if (filter.operator === 'not-equals' && adHocFilter.operator === reverseScopeFilterOperatorMap['not-equals']) {
     adHocFilter.operator = reverseScopeFilterOperatorMap['not-one-of'];
   }
+}
+
+function invalidOperator(adHocFilterOperator: string, filterOperator: string) {
+  const scopeConvertedOperator = scopeFilterOperatorMap[adHocFilterOperator];
+
+  // If the existing filter does NOT support multi-values, ignore the filter
+  if (!isScopeFilterSingleOrMultiOperator(scopeConvertedOperator)) {
+    return true;
+  }
+
+  if (
+    (scopeConvertedOperator.includes('not') && !filterOperator.includes('not')) ||
+    (!scopeConvertedOperator.includes('not') && filterOperator.includes('not'))
+  ) {
+    return true;
+  }
+
+  return false;
 }

@@ -94,6 +94,24 @@ describe('convertScopesToAdHocFilters', () => {
     ]);
   });
 
+  it('should ignore the rest of the duplicate filters, if they are a combination of equals and not-equals', () => {
+    let scopes = generateScopes([
+      [{ key: 'key1', value: 'value1', operator: 'equals' }],
+      [{ key: 'key1', value: 'value2', operator: 'not-equals' }],
+      [{ key: 'key1', value: 'value3', operator: 'equals' }],
+    ]);
+
+    expect(convertScopesToAdHocFilters(scopes)).toEqual([
+      {
+        key: 'key1',
+        value: 'value1',
+        operator: '=|',
+        source: FilterSource.Scopes,
+        values: ['value1', 'value3'],
+      },
+    ]);
+  });
+
   it('should return formatted filters and keep only the first filter of the same key if operator is not multi-value', () => {
     let scopes = generateScopes([
       [
