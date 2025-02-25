@@ -397,8 +397,8 @@ func TestRouteConvertPrometheusGetNamespace(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Len(t, respNamespaces, 1)
-		require.Contains(t, respNamespaces, fldr.Fullpath)
-		require.ElementsMatch(t, respNamespaces[fldr.Fullpath], []apimodels.PrometheusRuleGroup{promGroup1, promGroup2})
+		require.Contains(t, respNamespaces, fldr.Title)
+		require.ElementsMatch(t, respNamespaces[fldr.Title], []apimodels.PrometheusRuleGroup{promGroup1, promGroup2})
 	})
 }
 
@@ -489,8 +489,8 @@ func TestRouteConvertPrometheusGetRules(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Len(t, respNamespaces, 1)
-		require.Contains(t, respNamespaces, fldr.Fullpath)
-		require.ElementsMatch(t, respNamespaces[fldr.Fullpath], []apimodels.PrometheusRuleGroup{promGroup1, promGroup2})
+		require.Contains(t, respNamespaces, fldr.Title)
+		require.ElementsMatch(t, respNamespaces[fldr.Title], []apimodels.PrometheusRuleGroup{promGroup1, promGroup2})
 	})
 }
 
@@ -757,4 +757,40 @@ func createRequestCtx() *contextmodel.ReqContext {
 		},
 		SignedInUser: &user.SignedInUser{OrgID: 1},
 	}
+}
+
+func TestGetWorkingFolderUID(t *testing.T) {
+	t.Run("should return root folder UID when header is not present", func(t *testing.T) {
+		rc := createRequestCtx()
+		rc.Req.Header.Del(folderUIDHeader)
+
+		folderUID := getWorkingFolderUID(rc)
+		require.Equal(t, folder.RootFolderUID, folderUID)
+	})
+
+	t.Run("should return specified folder UID when header is present", func(t *testing.T) {
+		rc := createRequestCtx()
+		specifiedFolderUID := "specified-folder-uid"
+		rc.Req.Header.Set(folderUIDHeader, specifiedFolderUID)
+
+		folderUID := getWorkingFolderUID(rc)
+		require.Equal(t, specifiedFolderUID, folderUID)
+	})
+
+	t.Run("should return root folder UID when header is empty", func(t *testing.T) {
+		rc := createRequestCtx()
+		rc.Req.Header.Set(folderUIDHeader, "")
+
+		folderUID := getWorkingFolderUID(rc)
+		require.Equal(t, folder.RootFolderUID, folderUID)
+	})
+
+	t.Run("should trim whitespace from header value", func(t *testing.T) {
+		rc := createRequestCtx()
+		specifiedFolderUID := "specified-folder-uid"
+		rc.Req.Header.Set(folderUIDHeader, "  "+specifiedFolderUID+"  ")
+
+		folderUID := getWorkingFolderUID(rc)
+		require.Equal(t, specifiedFolderUID, folderUID)
+	})
 }

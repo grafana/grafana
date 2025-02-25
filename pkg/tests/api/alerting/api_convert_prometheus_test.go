@@ -150,18 +150,18 @@ func TestIntegrationConvertPrometheusEndpoints(t *testing.T) {
 			createRule(t, apiClient, namespace3UID)
 
 			// Now get the first group
-			group1 := apiClient.ConvertPrometheusGetRuleGroupRules(t, namespace1, promGroup1.Name)
+			group1 := apiClient.ConvertPrometheusGetRuleGroupRules(t, namespace1, promGroup1.Name, nil)
 			require.Equal(t, promGroup1, group1)
 
 			// Get namespace1
-			ns1 := apiClient.ConvertPrometheusGetNamespaceRules(t, namespace1)
+			ns1 := apiClient.ConvertPrometheusGetNamespaceRules(t, namespace1, nil)
 			expectedNs1 := map[string][]apimodels.PrometheusRuleGroup{
 				namespace1: {promGroup1, promGroup2},
 			}
 			require.Equal(t, expectedNs1, ns1)
 
 			// Get all namespaces
-			namespaces := apiClient.ConvertPrometheusGetAllRules(t)
+			namespaces := apiClient.ConvertPrometheusGetAllRules(t, nil)
 			expectedNamespaces := map[string][]apimodels.PrometheusRuleGroup{
 				namespace1: {promGroup1, promGroup2},
 				namespace2: {promGroup3},
@@ -182,10 +182,10 @@ func TestIntegrationConvertPrometheusEndpoints(t *testing.T) {
 			_, status, body = apiClient.ConvertPrometheusPostRuleGroup(t, namespace2, ds.Body.Datasource.UID, promGroup3, nil)
 			requireStatusCode(t, http.StatusAccepted, status, body)
 
-			apiClient.ConvertPrometheusDeleteRuleGroup(t, namespace1, promGroup1.Name)
+			apiClient.ConvertPrometheusDeleteRuleGroup(t, namespace1, promGroup1.Name, nil)
 
 			// Check that the promGroup2 and promGroup3 are still there
-			namespaces := apiClient.ConvertPrometheusGetAllRules(t)
+			namespaces := apiClient.ConvertPrometheusGetAllRules(t, nil)
 			expectedNamespaces := map[string][]apimodels.PrometheusRuleGroup{
 				namespace1: {promGroup2},
 				namespace2: {promGroup3},
@@ -193,10 +193,10 @@ func TestIntegrationConvertPrometheusEndpoints(t *testing.T) {
 			require.Equal(t, expectedNamespaces, namespaces)
 
 			// Delete the second namespace
-			apiClient.ConvertPrometheusDeleteNamespace(t, namespace2)
+			apiClient.ConvertPrometheusDeleteNamespace(t, namespace2, nil)
 
 			// Check that only the first namespace is left
-			namespaces = apiClient.ConvertPrometheusGetAllRules(t)
+			namespaces = apiClient.ConvertPrometheusGetAllRules(t, nil)
 			expectedNamespaces = map[string][]apimodels.PrometheusRuleGroup{
 				namespace1: {promGroup2},
 			}
@@ -272,7 +272,7 @@ func TestIntegrationConvertPrometheusEndpoints_UpdateRule(t *testing.T) {
 			requireStatusCode(t, http.StatusAccepted, status, body)
 
 			// Now get the group
-			group1 := apiClient.ConvertPrometheusGetRuleGroupRules(t, namespace1, promGroup.Name)
+			group1 := apiClient.ConvertPrometheusGetRuleGroupRules(t, namespace1, promGroup.Name, nil)
 			require.Equal(t, promGroup, group1)
 
 			// Update the rule group interval
@@ -287,7 +287,7 @@ func TestIntegrationConvertPrometheusEndpoints_UpdateRule(t *testing.T) {
 			requireStatusCode(t, http.StatusAccepted, status, body)
 
 			// Now get the group again and check that the rule group has been updated
-			group1 = apiClient.ConvertPrometheusGetRuleGroupRules(t, namespace1, promGroup.Name)
+			group1 = apiClient.ConvertPrometheusGetRuleGroupRules(t, namespace1, promGroup.Name, nil)
 			require.Equal(t, promGroup, group1)
 		})
 	}
@@ -410,6 +410,7 @@ func TestIntegrationConvertPrometheusEndpoints_CreatePausedRules(t *testing.T) {
 			Login:          "admin",
 		})
 		apiClient := newAlertingApiClient(grafanaListedAddr, "admin", "password")
+		apiClient.prometheusConversionUseLokiPaths = enableLokiPaths
 
 		ds := apiClient.CreateDatasource(t, datasources.DS_PROMETHEUS)
 
@@ -488,6 +489,159 @@ func TestIntegrationConvertPrometheusEndpoints_CreatePausedRules(t *testing.T) {
 					}
 				})
 			}
+		})
+	}
+
+	t.Run("with the mimirtool paths", func(t *testing.T) {
+		runTest(t, false)
+	})
+
+	t.Run("with the cortextool Loki paths", func(t *testing.T) {
+		runTest(t, true)
+	})
+}
+
+func TestIntegrationConvertPrometheusEndpoints_FolderUIDHeader(t *testing.T) {
+	runTest := func(t *testing.T, enableLokiPaths bool) {
+		testinfra.SQLiteIntegrationTest(t)
+
+		folderUIDHeader := "X-Grafana-Alerting-Folder-UID"
+
+		// Setup Grafana and its Database
+		dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+			DisableLegacyAlerting: true,
+			EnableUnifiedAlerting: true,
+			DisableAnonymous:      true,
+			AppModeProduction:     true,
+			EnableFeatureToggles:  []string{"alertingConversionAPI"},
+		})
+
+		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
+
+		createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+			DefaultOrgRole: string(org.RoleAdmin),
+			Password:       "password",
+			Login:          "admin",
+		})
+		apiClient := newAlertingApiClient(grafanaListedAddr, "admin", "password")
+		apiClient.prometheusConversionUseLokiPaths = enableLokiPaths
+
+		ds := apiClient.CreateDatasource(t, datasources.DS_PROMETHEUS)
+
+		// Create a parent folder
+		parentFolderUID := util.GenerateShortUID()
+		parentFolderTitle := "parent-folder"
+		apiClient.CreateFolder(t, parentFolderUID, parentFolderTitle)
+
+		// Create a child folder inside the parent folder
+		childFolderUID := util.GenerateShortUID()
+		childFolderTitle := "child-folder"
+		apiClient.CreateFolder(t, childFolderUID, childFolderTitle, parentFolderUID)
+
+		// Create another folder in root
+		otherFolderUID := util.GenerateShortUID()
+		otherFolderTitle := "other-folder"
+		apiClient.CreateFolder(t, otherFolderUID, otherFolderTitle)
+
+		t.Run("create and delete rule groups with folder UID header", func(t *testing.T) {
+			// Post the namespace to parentFolderUID, it should create a new folder with the namespace name,
+			// and put the rule group in it.
+			headers := map[string]string{
+				folderUIDHeader: parentFolderUID,
+			}
+			_, status, body := apiClient.ConvertPrometheusPostRuleGroup(t, childFolderTitle, ds.Body.Datasource.UID, promGroup1, headers)
+			requireStatusCode(t, http.StatusAccepted, status, body)
+
+			// Check that it's not visible when we get all namespaces from the root.
+			namespaces := apiClient.ConvertPrometheusGetAllRules(t, nil)
+			require.Empty(t, namespaces)
+
+			// Post the group2 to the root, it should create a new folder with the namespace name.
+			_, status, body = apiClient.ConvertPrometheusPostRuleGroup(t, otherFolderTitle, ds.Body.Datasource.UID, promGroup2, nil)
+			requireStatusCode(t, http.StatusAccepted, status, body)
+
+			// Now we should have:
+			// - parentFolderUID/child-folder/test-group-1
+			// - other-folder/test-group-2
+
+			// Verify the rule group was created in the child folder
+			//
+			// First try to get the group in the root folder, it should not be found
+			_, status, _ = apiClient.RawConvertPrometheusGetRuleGroupRules(t, childFolderTitle, promGroup1.Name, nil)
+			require.Equal(t, http.StatusNotFound, status)
+			// Now try to get the group in the child folder
+			group1 := apiClient.ConvertPrometheusGetRuleGroupRules(t, childFolderTitle, promGroup1.Name, headers)
+			require.Equal(t, promGroup1, group1)
+
+			// Verify the rule group was created in the other folder
+			group2 := apiClient.ConvertPrometheusGetRuleGroupRules(t, otherFolderTitle, promGroup2.Name, nil)
+			require.Equal(t, promGroup2, group2)
+		})
+
+		t.Run("get rule groups with folder UID header", func(t *testing.T) {
+			// Set up rules in child folder
+			headers := map[string]string{
+				folderUIDHeader: parentFolderUID,
+			}
+			_, status, body := apiClient.ConvertPrometheusPostRuleGroup(t, childFolderTitle, ds.Body.Datasource.UID, promGroup1, headers)
+			requireStatusCode(t, http.StatusAccepted, status, body)
+			_, status, body = apiClient.ConvertPrometheusPostRuleGroup(t, childFolderTitle, ds.Body.Datasource.UID, promGroup2, headers)
+			requireStatusCode(t, http.StatusAccepted, status, body)
+
+			// Get rules from child folder using parent folder as working folder
+			rules := apiClient.ConvertPrometheusGetNamespaceRules(t, childFolderTitle, headers)
+			expectedRules := map[string][]apimodels.PrometheusRuleGroup{
+				childFolderTitle: {promGroup1, promGroup2},
+			}
+			require.Equal(t, expectedRules, rules)
+
+			// Get specific rule group from child folder
+			group := apiClient.ConvertPrometheusGetRuleGroupRules(t, childFolderTitle, promGroup1.Name, headers)
+			require.Equal(t, promGroup1, group)
+		})
+
+		t.Run("delete rule groups with folder UID header", func(t *testing.T) {
+			// Set up rules in child folder
+			headers := map[string]string{
+				folderUIDHeader: parentFolderUID,
+			}
+			_, status, body := apiClient.ConvertPrometheusPostRuleGroup(t, childFolderTitle, ds.Body.Datasource.UID, promGroup1, headers)
+			requireStatusCode(t, http.StatusAccepted, status, body)
+			_, status, body = apiClient.ConvertPrometheusPostRuleGroup(t, childFolderTitle, ds.Body.Datasource.UID, promGroup2, headers)
+			requireStatusCode(t, http.StatusAccepted, status, body)
+
+			// Delete specific rule group from child folder
+			apiClient.ConvertPrometheusDeleteRuleGroup(t, childFolderTitle, promGroup1.Name, headers)
+
+			// Verify the group does not exist  anymore
+			_, status, _ = apiClient.RawConvertPrometheusGetRuleGroupRules(t, childFolderTitle, promGroup1.Name, headers)
+			require.Equal(t, http.StatusNotFound, status)
+
+			// Delete entire namespace (child folder)
+			apiClient.ConvertPrometheusDeleteNamespace(t, childFolderTitle, headers)
+
+			// Verify all rules are gone
+			groups := apiClient.ConvertPrometheusGetNamespaceRules(t, childFolderTitle, headers)
+			require.Empty(t, groups)
+		})
+
+		t.Run("empty folder UID header defaults to root", func(t *testing.T) {
+			// Create a folder at root level
+			rootFolderUID := util.GenerateShortUID()
+			rootFolderTitle := "root-folder"
+			apiClient.CreateFolder(t, rootFolderUID, rootFolderTitle)
+
+			// Use empty folder UID header which should default to root
+			headers := map[string]string{
+				folderUIDHeader: "",
+			}
+
+			_, status, body := apiClient.ConvertPrometheusPostRuleGroup(t, rootFolderTitle, ds.Body.Datasource.UID, promGroup3, headers)
+			requireStatusCode(t, http.StatusAccepted, status, body)
+
+			// Verify the rule group was created
+			group := apiClient.ConvertPrometheusGetRuleGroupRules(t, rootFolderTitle, promGroup3.Name, headers)
+			require.Equal(t, promGroup3, group)
 		})
 	}
 
