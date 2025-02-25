@@ -77,6 +77,7 @@ require (
 	github.com/grafana/alerting v0.0.0-20250221202230-9d7e00921e44 // @grafana/alerting-backend
 	github.com/grafana/authlib v0.0.0-20250219100139-6a3b1bbb50e7 // @grafana/identity-access-team
 	github.com/grafana/authlib/types v0.0.0-20250219092154-21ce22b49f31 // @grafana/identity-access-team
+	github.com/grafana/dashboard-linter v0.0.0-20241106223805-1e7999311752 // @grafana/grafana-app-platform-squad
 	github.com/grafana/dataplane/examples v0.0.1 // @grafana/observability-metrics
 	github.com/grafana/dataplane/sdata v0.0.9 // @grafana/observability-metrics
 	github.com/grafana/dskit v0.0.0-20241105154643-a6b453a88040 // @grafana/grafana-backend-group
@@ -368,6 +369,7 @@ require (
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/s2a-go v0.1.8 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.4 // indirect
+	github.com/grafana/grafana-foundation-sdk/go v0.0.0-20241101005901-83e3491f2a70 // indirect
 	github.com/grafana/jsonparser v0.0.0-20240425183733-ea80629e1a32 // indirect
 	github.com/grafana/loki/pkg/push v0.0.0-20231124142027-e52380921608 // indirect
 	github.com/grafana/regexp v0.0.0-20240518133315-a468a5bfb3bc // indirect
@@ -559,10 +561,7 @@ require (
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
 
-require (
-	github.com/HdrHistogram/hdrhistogram-go v1.1.2 // indirect
-	github.com/google/go-github/v64 v64.0.0 // indirect
-)
+require github.com/google/go-github/v64 v64.0.0 // indirect
 
 // Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream
 replace github.com/crewjam/saml => github.com/grafana/saml v0.4.15-0.20240917091248-ae3bbdad8a56
