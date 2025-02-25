@@ -142,7 +142,8 @@ func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.Ge
 		if errors.Is(err, dashboards.ErrFolderNotFound) || err == nil {
 			err = resourceInfo.NewNotFound(name)
 		}
-		return nil, err
+		statusErr := apierrors.ToFolderStatusError(err)
+		return nil, &statusErr
 	}
 
 	r, err := convertToK8sResource(dto, s.namespacer)
