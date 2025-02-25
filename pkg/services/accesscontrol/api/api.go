@@ -17,20 +17,17 @@ import (
 	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/accesscontrol/api")
 
-func NewAccessControlAPI(router routing.RouteRegister, accesscontrol ac.AccessControl, service ac.Service,
-	userSvc user.Service, features featuremgmt.FeatureToggles) *AccessControlAPI {
+func NewAccessControlAPI(router routing.RouteRegister, accesscontrol ac.AccessControl, service ac.Service, userSvc user.Service) *AccessControlAPI {
 	return &AccessControlAPI{
 		RouteRegister: router,
 		Service:       service,
 		userSvc:       userSvc,
 		AccessControl: accesscontrol,
-		features:      features,
 	}
 }
 
@@ -39,7 +36,6 @@ type AccessControlAPI struct {
 	AccessControl ac.AccessControl
 	RouteRegister routing.RouteRegister
 	userSvc       user.Service
-	features      featuremgmt.FeatureToggles
 }
 
 func (api *AccessControlAPI) RegisterAPIEndpoints() {
