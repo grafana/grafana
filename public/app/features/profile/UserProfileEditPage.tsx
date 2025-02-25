@@ -1,10 +1,10 @@
-import { Fragment, useState } from 'react';
+import { Fragment, useMemo, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import { useMount } from 'react-use';
 
 import { PluginExtensionComponent, PluginExtensionPoints } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { usePluginComponentExtensions } from '@grafana/runtime';
+import { usePluginComponentExtensions, usePluginComponents } from '@grafana/runtime';
 import { Tab, TabsBar, TabContent, Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import SharedPreferences from 'app/core/components/SharedPreferences/SharedPreferences';
@@ -17,6 +17,7 @@ import UserProfileEditForm from './UserProfileEditForm';
 import UserSessions from './UserSessions';
 import { UserTeams } from './UserTeams';
 import { changeUserOrg, initUserProfilePage, revokeUserSession, updateUserProfile } from './state/actions';
+import { string } from 'yargs';
 
 const TAB_QUERY_PARAM = 'tab';
 const GENERAL_SETTINGS_TAB = 'general';
@@ -162,3 +163,38 @@ export function UserProfileEditPage({
 }
 
 export default connector(UserProfileEditPage);
+
+type useProfileTabeExtensionsResult = {
+  components: Record<string, React.ComponentType[]>;
+  tabs: TabInfo[];
+  isLoading: boolean;
+};
+
+function useProfileTabeExtensions(): useProfileTabeExtensionsResult {
+  const { components, isLoading } = usePluginComponents({
+    extensionPointId: PluginExtensionPoints.UserProfileTab,
+  });
+
+  const grouped: Record<string, React.ComponentType[]> = {};
+
+  for (const component of components) {
+    const { title } = component.meta;
+  }
+
+  return useMemo(() => {
+    const grouped = components.reduce<Record<string, React.ComponentType[]>>((acc, component) => {
+      const { title } = component.meta;
+      if (acc[title]) {
+        acc[title].push(component);
+      } else {
+        acc[title] = [component];
+      }
+      return acc;
+    }, {});
+
+    return {
+      components: grouped,
+      isLoading,
+    };
+  }, [components, isLoading]);
+}
