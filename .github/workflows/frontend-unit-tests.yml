@@ -18,3 +18,5 @@ jobs:
         cache-dependency-path: 'yarn.lock'
     - run: yarn install --immutable --check-cache
     - run: yarn run ci:test-frontend
+      env:
+        TEST_MAX_WORKERS: 8
