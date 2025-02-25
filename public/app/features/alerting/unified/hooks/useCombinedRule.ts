@@ -173,9 +173,18 @@ export interface RuleLocation {
 }
 
 export function useRuleLocation(ruleIdentifier: RuleIdentifier): RequestState<RuleLocation> {
+  const validIdentifier = (() => {
+    if (isGrafanaRuleIdentifier(ruleIdentifier) && ruleIdentifier.uid !== '') {
+      return { uid: ruleIdentifier.uid };
+    }
+    return skipToken;
+  })();
+
   const { isLoading, currentData, error, isUninitialized } = alertRuleApi.endpoints.getAlertRule.useQuery(
-    isGrafanaRuleIdentifier(ruleIdentifier) && ruleIdentifier.uid !== '' ? { uid: ruleIdentifier.uid } : skipToken,
-    { refetchOnMountOrArgChange: true }
+    validIdentifier,
+    {
+      refetchOnMountOrArgChange: true,
+    }
   );
 
   return useMemo(() => {

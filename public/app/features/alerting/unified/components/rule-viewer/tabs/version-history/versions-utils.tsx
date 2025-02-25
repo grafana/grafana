@@ -1,19 +1,14 @@
 import { IconName } from '@grafana/data';
 import { BadgeColor } from '@grafana/ui';
+import { RevisionModel } from 'app/core/components/VersionHistory/VersionHistoryComparison';
 import { t } from 'app/core/internationalization';
-import { RuleWithLocation } from 'app/types/unified-alerting';
 import {
   GrafanaAlertRuleDTOField,
   GrafanaRuleDefinition,
   RulerGrafanaRuleDTO,
-  RulerRuleDTO,
   TopLevelGrafanaRuleDTOField,
 } from 'app/types/unified-alerting-dto';
 
-import { useUpdateRuleInRuleGroup } from '../../../../hooks/ruleGroup/useUpsertRuleFromRuleGroup';
-import { GRAFANA_RULES_SOURCE_NAME } from '../../../../utils/datasource';
-import { fromRulerRuleAndRuleGroupIdentifier } from '../../../../utils/rule-id';
-import { getRuleGroupLocationFromRuleWithLocation } from '../../../../utils/rules';
 import { grafanaAlertPropertiesToIgnore } from '../AlertVersionHistory';
 
 interface SpecialUidsDisplayMapEntry {
@@ -110,21 +105,34 @@ export function preprocessRuleForDiffDisplay(rulerRule: RulerGrafanaRuleDTO<Graf
     ...processedGrafanaAlert,
   };
 }
-export function useRestoreVersion() {
-  const [updateRuleInRuleGroup] = useUpdateRuleInRuleGroup();
 
-  const onRestoreVersion = async (
-    newVersion: RulerGrafanaRuleDTO<GrafanaRuleDefinition>,
-    ruleWithLocation: RuleWithLocation<RulerRuleDTO>
-  ) => {
-    const ruleGroupIdentifier = getRuleGroupLocationFromRuleWithLocation(ruleWithLocation);
-    const ruleIdentifier = fromRulerRuleAndRuleGroupIdentifier(ruleGroupIdentifier, newVersion);
-    // restore version
-    return updateRuleInRuleGroup.execute(ruleGroupIdentifier, ruleIdentifier, newVersion, {
-      dataSourceName: GRAFANA_RULES_SOURCE_NAME,
-      namespaceName: newVersion.grafana_alert.namespace_uid,
-      groupName: newVersion.grafana_alert.rule_group,
-    });
+/**
+ * Turns a version of a Grafana rule definition into data structure
+ * used to display the version summary when comparing versions
+ */
+export function parseVersionInfoToSummary(version: RulerGrafanaRuleDTO<GrafanaRuleDefinition>): RevisionModel {
+  const unknown = t('alerting.alertVersionHistory.unknown', 'Unknown');
+  const SPECIAL_UID_MAP = getSpecialUidsDisplayMap();
+  const createdBy = (() => {
+    const updatedBy = version?.grafana_alert.updated_by;
+    const uid = updatedBy?.uid;
+    const name = updatedBy?.name;
+
+    if (!updatedBy) {
+      return unknown;
+    }
+    if (uid && SPECIAL_UID_MAP[uid]) {
+      return SPECIAL_UID_MAP[uid].name;
+    }
+    if (name) {
+      return name;
+    }
+    return uid ? t('alerting.alertVersionHistory.user-id', 'User ID {{uid}}', { uid }) : unknown;
+  })();
+
+  return {
+    created: version.grafana_alert.updated || unknown,
+    createdBy,
+    version: version.grafana_alert.version || unknown,
   };
-  return onRestoreVersion;
 }
