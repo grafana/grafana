@@ -1,8 +1,10 @@
 import { useLocalStorage } from 'react-use';
 
-import { FeatureToggles } from '@grafana/data';
+import { FeatureToggles, GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Alert, Text, Collapse } from '@grafana/ui';
+import { Alert, Text, Collapse, Box } from '@grafana/ui';
+import { css } from '@emotion/css';
+import { useStyles2 } from '@grafana/ui';
 
 import { useGetFrontendSettingsQuery } from './api';
 
@@ -86,6 +88,8 @@ export function SetupWarnings() {
     setDashboardPreviewOpen(!isDashboardPreviewOpen);
   };
 
+  const styles = useStyles2(getStyles);
+
   if (
     missingFeatures.length === 0 &&
     settings.data?.githubWebhooks !== false &&
@@ -121,45 +125,116 @@ export function SetupWarnings() {
           </Text>
         </Alert>
       </Collapse>
-      {settings.data?.generateDashboardPreviews === false && (
-        <Alert severity="info" title="Dashboard Preview Generation Disabled">
-          <Text element="h5">This feature generates dashboard preview images in pull requests.</Text>
-          <Collapse isOpen={isDashboardPreviewOpen} label="Details" onToggle={handleDashboardPreviewToggle} collapsible>
-            <Text element="h5">To connect to the rendering service locally, you need to configure the following:</Text>
-            <pre>
-              <code>{render_ini}</code>
-            </pre>
-            <Text element="h5">To enable webhook support, you need to configure the following:</Text>
-            <pre>
-              <code>{webhook_ini}</code>
-            </pre>
-            <Text element="h5">To set up public access to a local machine, consider ngrok</Text>
-            <pre>
-              <code>{ngrok_example}</code>
-            </pre>
-          </Collapse>
-        </Alert>
-      )}
+      {(settings.data?.generateDashboardPreviews === false || settings.data?.githubWebhooks === false) && (
+        <Alert
+          severity="info"
+          title={<div className={styles.mainTitle}>You can still use this but some cool features are disabled</div>}
+        >
+          {settings.data?.generateDashboardPreviews === false && (
+            <div className={styles.featureSection}>
+              <div className={styles.featureTitle}>
+                <Text element="h4" weight="medium">
+                  Dashboard Preview Generation
+                </Text>
+              </div>
+              <Box marginBottom={2}>
+                <Text element="p">This feature generates dashboard preview images in pull requests.</Text>
+              </Box>
+              <Collapse
+                isOpen={isDashboardPreviewOpen}
+                label="Details"
+                onToggle={handleDashboardPreviewToggle}
+                collapsible
+                className={styles.detailsCollapse}
+              >
+                <Box marginTop={2} marginBottom={1}>
+                  <Text element="h5">
+                    To connect to the rendering service locally, you need to configure the following:
+                  </Text>
+                </Box>
+                <pre className={styles.codeBlock}>
+                  <code>{render_ini}</code>
+                </pre>
+                <Box marginTop={2} marginBottom={1}>
+                  <Text element="h5">To enable webhook support, you need to configure the following:</Text>
+                </Box>
+                <pre className={styles.codeBlock}>
+                  <code>{webhook_ini}</code>
+                </pre>
+                <Box marginTop={2} marginBottom={1}>
+                  <Text element="h5">To set up public access to a local machine, consider ngrok</Text>
+                </Box>
+                <pre className={styles.codeBlock}>
+                  <code>{ngrok_example}</code>
+                </pre>
+              </Collapse>
+            </div>
+          )}
 
-      {settings.data?.githubWebhooks === false && (
-        <Alert severity="info" title="Github Webhook Integration Disabled">
-          <Text element="h5">
-            This feature automatically syncs resources from GitHub when commits are pushed to the configured branch,
-            eliminating the need for regular polling intervals. It also enhances pull requests by automatically adding
-            preview links and dashboard snapshots.
-          </Text>
-          <Collapse isOpen={isWebhookOpen} label="Details" onToggle={handleWebhookToggle} collapsible>
-            <Text element="h5">To enable webhook support, you need to configure the following:</Text>
-            <pre>
-              <code>{webhook_ini}</code>
-            </pre>
-            <Text element="h5">To set up public access to a local machine, consider ngrok</Text>
-            <pre>
-              <code>{ngrok_example}</code>
-            </pre>
-          </Collapse>
+          {settings.data?.githubWebhooks === false && (
+            <div className={styles.featureSection}>
+              <div className={styles.featureTitle}>
+                <Text element="h4" weight="medium">
+                  Github Webhook Integration
+                </Text>
+              </div>
+              <Box marginBottom={2}>
+                <Text element="p">
+                  This feature automatically syncs resources from GitHub when commits are pushed to the configured
+                  branch, eliminating the need for regular polling intervals. It also enhances pull requests by
+                  automatically adding preview links and dashboard snapshots.
+                </Text>
+              </Box>
+              <Collapse
+                isOpen={isWebhookOpen}
+                label="Details"
+                onToggle={handleWebhookToggle}
+                collapsible
+                className={styles.detailsCollapse}
+              >
+                <Box marginTop={2} marginBottom={1}>
+                  <Text element="h5">To enable webhook support, you need to configure the following:</Text>
+                </Box>
+                <pre className={styles.codeBlock}>
+                  <code>{webhook_ini}</code>
+                </pre>
+                <Box marginTop={2} marginBottom={1}>
+                  <Text element="h5">To set up public access to a local machine, consider ngrok</Text>
+                </Box>
+                <pre className={styles.codeBlock}>
+                  <code>{ngrok_example}</code>
+                </pre>
+              </Collapse>
+            </div>
+          )}
         </Alert>
       )}
     </>
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    mainTitle: css({
+      fontSize: theme.typography.h4.fontSize,
+      fontWeight: theme.typography.h4.fontWeight,
+      marginBottom: theme.spacing(2),
+      color: theme.colors.text.primary,
+    }),
+    featureSection: css({
+      marginBottom: theme.spacing(3),
+      '&:last-child': {
+        marginBottom: 0,
+      },
+    }),
+    featureTitle: css({
+      marginBottom: theme.spacing(1),
+    }),
+    detailsCollapse: css({
+      marginTop: theme.spacing(1),
+    }),
+    codeBlock: css({
+      marginBottom: theme.spacing(2),
+    }),
+  };
+};
