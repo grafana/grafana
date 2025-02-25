@@ -5882,7 +5882,8 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "21"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "22"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "23"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "24"]
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "24"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "25"]
     ],
     "public/app/features/provisioning/SyncRepository.tsx:5381": [
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],

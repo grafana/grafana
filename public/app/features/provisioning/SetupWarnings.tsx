@@ -329,7 +329,6 @@ function InstructionsModal({ feature, isOpen, onDismiss }: InstructionsModalProp
 
 function CompactFeaturesList({ features }: { features: FeatureInfo[] }) {
   const styles = useStyles2(getCompactStyles);
-  const [isModalOpen, setIsModalOpen] = useState(false);
 
   return (
     <div>
@@ -338,31 +337,21 @@ function CompactFeaturesList({ features }: { features: FeatureInfo[] }) {
           <li key={feature.title} className={styles.featureItem}>
             <div className={styles.featureContent}>
               <span className={styles.bulletPoint}>•</span>
-              <span className={styles.featureTitle}>
+              <div className={styles.titleWithInfo}>
                 <Text element="span" weight="medium">
                   {feature.title}
                 </Text>
-              </span>
-              <IconButton
-                name="info-circle"
-                tooltip={feature.description}
-                className={styles.infoButton}
-                tooltipPlacement="top"
-              />
+                <IconButton
+                  name="info-circle"
+                  tooltip={feature.description}
+                  className={styles.infoButton}
+                  tooltipPlacement="top"
+                />
+              </div>
             </div>
           </li>
         ))}
       </ul>
-
-      <Box marginTop={2}>
-        <Button variant="secondary" icon="cog" onClick={() => setIsModalOpen(true)}>
-          Setup Features
-        </Button>
-      </Box>
-
-      {isModalOpen && (
-        <FeatureSetupModal features={features} isOpen={isModalOpen} onDismiss={() => setIsModalOpen(false)} />
-      )}
     </div>
   );
 }
@@ -647,6 +636,9 @@ export function SetupWarnings() {
   const [isCustomIniModalOpen, setCustomIniModalOpen] = useState(false);
   const settings = useGetFrontendSettingsQuery();
   const missingFeatures = requiredFeatureToggles.filter((feature) => !config.featureToggles[feature]);
+  const styles = useStyles2(getStyles);
+  const compactStyles = useStyles2(getCompactStyles);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Create a feature info object for the missing features
   const missingFeaturesInfo: FeatureInfo = {
@@ -708,20 +700,31 @@ export function SetupWarnings() {
     <>
       {missingFeatures.length > 0 && (
         <>
-          <Alert title="Some required features are disabled" severity="error">
+          <Alert title="Some required features are disabled" severity="error" className={styles.alert}>
             <Box marginBottom={2}>
               <Text element="p">
                 The following feature toggles are required for proper functionality but are currently disabled:
               </Text>
-              {missingFeatures.map((feature) => (
-                <li key={feature}>
-                  <strong>{feature}</strong>
-                </li>
-              ))}
+              <ul className={compactStyles.featuresList}>
+                {missingFeatures.map((feature) => (
+                  <li key={feature} className={compactStyles.featureItem}>
+                    <div className={compactStyles.featureContent}>
+                      <span className={compactStyles.bulletPoint}>•</span>
+                      <div className={compactStyles.titleWithInfo}>
+                        <Text element="span" weight="medium">
+                          {feature}
+                        </Text>
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
             </Box>
-            <Button onClick={() => setCustomIniModalOpen(true)} variant="secondary" icon="info-circle">
-              See example configuration
-            </Button>
+            <div className={styles.alertButtonWrapper}>
+              <Button onClick={() => setCustomIniModalOpen(true)} variant="secondary" icon="info-circle">
+                See example configuration
+              </Button>
+            </div>
           </Alert>
 
           <InstructionsModal
@@ -733,12 +736,22 @@ export function SetupWarnings() {
       )}
 
       {featuresData.length > 0 && (
-        <Alert severity="info" title="Some features are currently unavailable">
+        <Alert severity="info" title="Some features are currently unavailable" className={styles.alert}>
           <Box marginBottom={2}>
             <Text element="p">These features enhance your whole experience working with Grafana and GitHub.</Text>
           </Box>
 
           <CompactFeaturesList features={featuresData} />
+
+          <div className={styles.alertButtonWrapper}>
+            <Button variant="secondary" icon="cog" onClick={() => setIsModalOpen(true)}>
+              Setup Features
+            </Button>
+          </div>
+
+          {isModalOpen && (
+            <FeatureSetupModal features={featuresData} isOpen={isModalOpen} onDismiss={() => setIsModalOpen(false)} />
+          )}
         </Alert>
       )}
     </>
@@ -1063,6 +1076,21 @@ const getStyles = (theme: GrafanaTheme2) => {
       top: '50%',
       transform: 'translateY(-50%)',
     }),
+    alert: css({
+      position: 'relative',
+    }),
+    alertContent: css({
+      display: 'flex',
+      flexDirection: 'column',
+      position: 'relative',
+      paddingTop: theme.spacing(4),
+    }),
+    alertButtonWrapper: css({
+      position: 'absolute',
+      top: theme.spacing(2),
+      right: theme.spacing(2),
+      zIndex: 1,
+    }),
   };
 };
 
@@ -1089,12 +1117,15 @@ const getCompactStyles = (theme: GrafanaTheme2) => {
       color: theme.colors.text.secondary,
       marginRight: theme.spacing(0.5),
     }),
-    featureTitle: css({
-      margin: 0,
+    titleWithInfo: css({
+      display: 'flex',
+      alignItems: 'center',
       flex: 1,
     }),
     infoButton: css({
       color: theme.colors.text.secondary,
+      padding: 0,
+      marginLeft: theme.spacing(0.5),
       '&:hover': {
         color: theme.colors.text.primary,
       },
