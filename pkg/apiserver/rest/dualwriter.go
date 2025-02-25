@@ -210,8 +210,8 @@ func SetDualWritingMode(
 		// Once we are done with running the syncer, we can change the mode back on the config to the desired one.
 		cfg.Mode = cfgModeTmp
 		if err != nil {
-			klog.Info("data syncer failed for mode:", m)
-			return Mode0, err
+			klog.Error("data syncer failed for mode:", m, "err", err)
+			return currentMode, nil
 		}
 		if !syncOk {
 			klog.Info("data syncer not ok for mode:", m)
