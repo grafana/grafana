@@ -9,12 +9,12 @@ import (
 	"github.com/fullstorydev/grpchan/inprocgrpc"
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
-	"go.opentelemetry.io/otel"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	dashboardalpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 	"github.com/grafana/grafana/pkg/setting"
@@ -24,8 +24,6 @@ const cacheCleanInterval = 2 * time.Minute
 
 var _ authzv1.AuthzServiceServer = (*Server)(nil)
 var _ authzextv1.AuthzExtentionServiceServer = (*Server)(nil)
-
-var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/authz/zanzana/server")
 
 type OpenFGAServer interface {
 	openfgav1.OpenFGAServiceServer
@@ -40,10 +38,12 @@ type Server struct {
 	openfgaClient openfgav1.OpenFGAServiceClient
 
 	cfg      setting.ZanzanaServerSettings
-	logger   log.Logger
 	stores   map[string]storeInfo
 	storesMU *sync.Mutex
 	cache    *localcache.CacheService
+
+	logger log.Logger
+	tracer tracing.Tracer
 }
 
 type storeInfo struct {
@@ -51,7 +51,7 @@ type storeInfo struct {
 	ModelID string
 }
 
-func NewServer(cfg setting.ZanzanaServerSettings, openfga OpenFGAServer, logger log.Logger) (*Server, error) {
+func NewServer(cfg setting.ZanzanaServerSettings, openfga OpenFGAServer, logger log.Logger, tracer tracing.Tracer) (*Server, error) {
 	channel := &inprocgrpc.Channel{}
 	openfgav1.RegisterOpenFGAServiceServer(channel, openfga)
 	openFGAClient := openfgav1.NewOpenFGAServiceClient(channel)
@@ -64,6 +64,7 @@ func NewServer(cfg setting.ZanzanaServerSettings, openfga OpenFGAServer, logger 
 		cfg:           cfg,
 		cache:         localcache.New(cfg.CheckQueryCacheTTL, cacheCleanInterval),
 		logger:        logger,
+		tracer:        tracer,
 	}
 
 	return s, nil

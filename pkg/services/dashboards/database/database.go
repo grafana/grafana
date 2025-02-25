@@ -400,6 +400,20 @@ func saveDashboard(sess *db.Session, cmd *dashboards.SaveDashboardCommand, emitE
 		userId = -1
 	}
 
+	// we don't save FolderID in kubernetes object when saving through k8s
+	// this block guarantees we save dashboards with folder_id and folder_uid in those cases
+	if !dash.IsFolder && dash.FolderUID != "" && dash.FolderID == 0 { // nolint:staticcheck
+		var existing dashboards.Dashboard
+		folderIdFound, err := sess.Where("uid=? AND org_id=?", dash.FolderUID, dash.OrgID).Get(&existing)
+		if err != nil {
+			return nil, err
+		}
+
+		if folderIdFound {
+			dash.FolderID = existing.ID // nolint:staticcheck
+		}
+	}
+
 	if dash.ID > 0 {
 		var existing dashboards.Dashboard
 		dashWithIdExists, err := sess.Where("id=? AND org_id=?", dash.ID, dash.OrgID).Get(&existing)

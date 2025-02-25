@@ -378,6 +378,23 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		require.False(t, dashboard.Updated.IsZero())
 	})
 
+	t.Run("Should populate FolderID if FolderUID is provided when creating a dashboard", func(t *testing.T) {
+		setup()
+		cmd := dashboards.SaveDashboardCommand{
+			OrgID: 1,
+			Dashboard: simplejson.NewFromAny(map[string]interface{}{
+				"title": "folderId",
+				"tags":  []interface{}{},
+			}),
+			FolderUID: savedFolder.UID,
+			UserID:    100,
+		}
+		dashboard, err := dashboardStore.SaveDashboard(context.Background(), cmd)
+		require.NoError(t, err)
+		require.EqualValues(t, dashboard.FolderID, savedFolder.ID) //nolint:staticcheck
+		require.EqualValues(t, dashboard.FolderUID, savedFolder.UID)
+	})
+
 	t.Run("Should be able to update dashboard by id and remove folderId", func(t *testing.T) {
 		setup()
 		cmd := dashboards.SaveDashboardCommand{
