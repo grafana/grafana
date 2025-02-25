@@ -9,7 +9,15 @@ export function ResponsiveGridItemRenderer({ model }: SceneComponentProps<Respon
   const { body } = model.useState();
   const style = useStyles2(getStyles);
 
-  return (
+  return model.state.repeatedPanels ? (
+    <>
+      {model.state.repeatedPanels.map((item, index) => (
+        <div className={cx(style.wrapper)}>
+          <item.Component key={index} model={item} />
+        </div>
+      ))}
+    </>
+  ) : (
     <div className={cx(style.wrapper)}>
       <body.Component model={body} />
     </div>
