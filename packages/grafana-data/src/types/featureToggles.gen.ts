@@ -83,6 +83,8 @@ export interface FeatureToggles {
   datasourceAPIServers?: boolean;
   grafanaAPIServerWithExperimentalAPIs?: boolean;
   provisioning?: boolean;
+  provisioningLint?: boolean;
+  provisioningPullRequestPreviews?: boolean;
   grafanaAPIServerEnsureKubectlAccess?: boolean;
   featureToggleAdminPage?: boolean;
   awsAsyncQueryCaching?: boolean;

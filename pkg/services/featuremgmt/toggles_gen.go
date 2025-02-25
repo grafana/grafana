@@ -267,6 +267,14 @@ const (
 	// Next generation provisioning... and git
 	FlagProvisioning = "provisioning"
 
+	// FlagProvisioningLint
+	// Linting for next generation provisioning... and git
+	FlagProvisioningLint = "provisioningLint"
+
+	// FlagProvisioningPullRequestPreviews
+	// Preview resources in pull requests for next generation provisioning... and git
+	FlagProvisioningPullRequestPreviews = "provisioningPullRequestPreviews"
+
 	// FlagGrafanaAPIServerEnsureKubectlAccess
 	// Start an additional https handler and write kubectl options
 	FlagGrafanaAPIServerEnsureKubectlAccess = "grafanaAPIServerEnsureKubectlAccess"

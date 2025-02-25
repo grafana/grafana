@@ -40,9 +40,6 @@ func (l *Linter) Lint(
 	ref string,
 	lintResults []provisioning.LintIssue,
 ) error {
-	if len(lintResults) == 0 {
-		return nil
-	}
 	var buf bytes.Buffer
 	if err := l.lintTemplate.Execute(&buf, lintResults); err != nil {
 		return fmt.Errorf("execute lint comment template: %w", err)

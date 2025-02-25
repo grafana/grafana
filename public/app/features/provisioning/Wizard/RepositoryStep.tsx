@@ -137,10 +137,6 @@ export function RepositoryStep({ onStatusChange }: Props) {
             <Field label={'Branch'} error={errors.repository?.branch?.message} invalid={!!errors.repository?.branch}>
               <Input {...register('repository.branch')} placeholder={'main'} />
             </Field>
-
-            <Field label={'Show dashboard previews'}>
-              <Switch {...register('repository.generateDashboardPreviews')} />
-            </Field>
           </>
         )}
 

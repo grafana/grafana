@@ -116,8 +116,6 @@ func TestParseWebhooks(t *testing.T) {
 				GitHub: &provisioning.GitHubRepositoryConfig{
 					URL:    "https://github.com/grafana/git-ui-sync-demo",
 					Branch: "main",
-
-					GenerateDashboardPreviews: true,
 				},
 			},
 		},

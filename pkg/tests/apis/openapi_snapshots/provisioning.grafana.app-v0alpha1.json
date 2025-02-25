@@ -2867,10 +2867,6 @@
             "format": "byte",
             "x-kubernetes-list-type": "atomic"
           },
-          "generateDashboardPreviews": {
-            "description": "Whether we should show dashboard previews for pull requests. By default, this is false (i.e. we will not create previews).",
-            "type": "boolean"
-          },
           "token": {
             "description": "Token for accessing the repository. If set, it will be encrypted into encryptedToken, then set to an empty string again.",
             "type": "string"
@@ -2898,7 +2894,7 @@
             "default": false
           },
           "message": {
-            "description": "Summary messages (will be shown to users)",
+            "description": "Summary messages (can be shown to users) Will only be populated when not healthy",
             "type": "array",
             "items": {
               "type": "string",

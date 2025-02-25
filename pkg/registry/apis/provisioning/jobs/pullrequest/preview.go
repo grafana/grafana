@@ -147,8 +147,7 @@ func (p *Previewer) CreatePreview(
 		PreviewURL:  p.getPreviewURL(ctx, f, baseURL, repoName, ref, pullRequestURL),
 	}
 
-	// TODO: if option enabled
-	if true && len(preview.PreviewURL) > 0 {
+	if len(preview.PreviewURL) > 0 {
 		screenshotURL, err := p.renderer.RenderDashboardPreview(ctx, namespace, repoName, f.Path, ref)
 		if err != nil {
 			return nil, fmt.Errorf("render dashboard preview: %w", err)

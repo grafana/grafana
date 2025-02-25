@@ -486,6 +486,20 @@ var (
 			Owner:           grafanaAppPlatformSquad,
 		},
 		{
+			Name:            "provisioningLint",
+			Description:     "Linting for next generation provisioning... and git",
+			Stage:           FeatureStageExperimental,
+			RequiresRestart: true,
+			Owner:           grafanaAppPlatformSquad,
+		},
+		{
+			Name:            "provisioningPullRequestPreviews",
+			Description:     "Preview resources in pull requests for next generation provisioning... and git",
+			Stage:           FeatureStageExperimental,
+			RequiresRestart: true,
+			Owner:           grafanaAppPlatformSquad,
+		},
+		{
 			Name:            "grafanaAPIServerEnsureKubectlAccess",
 			Description:     "Start an additional https handler and write kubectl options",
 			Stage:           FeatureStageExperimental,

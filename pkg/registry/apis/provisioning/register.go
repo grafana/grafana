@@ -112,7 +112,7 @@ func NewAPIBuilder(
 	secrets secrets.Service,
 ) *APIBuilder {
 	clientFactory := resources.NewFactory(configProvider)
-	linters := lint.NewDashboardLinterFactory()
+	linters := lint.NewDashboardLinterFactory(features.IsEnabledGlobally(featuremgmt.FlagProvisioningLint))
 	return &APIBuilder{
 		urlProvider:       urlProvider,
 		localFileResolver: local,
@@ -432,7 +432,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			// Pull request worker
 			linter := pullrequest.NewLinter(b.linters.IsEnabled())
 			renderer := pullrequest.NewScreenshotRenderer(b.render, b.blobstore)
-			previewer := pullrequest.NewPreviewer(true, renderer, b.urlProvider)
+			previewer := pullrequest.NewPreviewer(b.features.IsEnabledGlobally(featuremgmt.FlagProvisioningPullRequestPreviews), renderer, b.urlProvider)
 			pullRequestWorker, err := pullrequest.NewPullRequestWorker(b.parsers, previewer, linter)
 			if err != nil {
 				return fmt.Errorf("create pull request worker: %w", err)

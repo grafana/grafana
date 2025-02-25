@@ -11,7 +11,6 @@ export const dataToSpec = (data: RepositoryFormData): RepositorySpec => {
   switch (data.type) {
     case 'github':
       spec.github = {
-        generateDashboardPreviews: data.generateDashboardPreviews,
         url: data.url || '',
         branch: data.branch,
         token: data.token,

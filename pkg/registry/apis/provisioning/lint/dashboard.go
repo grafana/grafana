@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"os"
 	"sort"
 
 	"github.com/grafana/dashboard-linter/lint"
@@ -12,10 +11,12 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-type DashboardLinterFactory struct{}
+type DashboardLinterFactory struct {
+	enabled bool
+}
 
-func NewDashboardLinterFactory() *DashboardLinterFactory {
-	return &DashboardLinterFactory{}
+func NewDashboardLinterFactory(enabled bool) *DashboardLinterFactory {
+	return &DashboardLinterFactory{enabled: enabled}
 }
 
 func (f *DashboardLinterFactory) New() Linter {
@@ -32,10 +33,7 @@ func (f *DashboardLinterFactory) NewFromConfig(cfg []byte) (Linter, error) {
 }
 
 func (f *DashboardLinterFactory) IsEnabled() bool {
-	lintingVal, ok := os.LookupEnv("GRAFANA_LINTING")
-	linting := ok && lintingVal == "true"
-
-	return linting
+	return f.enabled
 }
 
 func (f *DashboardLinterFactory) ConfigPath() string {

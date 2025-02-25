@@ -135,12 +135,16 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 		result.Group = parsed.GVR.Group
 		result.Name = parsed.Obj.GetName()
 
-		if f.Action != repository.FileActionDeleted {
+		if f.Action != repository.FileActionDeleted && len(parsed.Lint) > 0 {
 			if err := c.linter.Lint(ctx, prRepo, options, f.Path, ref, parsed.Lint); err != nil {
 				result.Error = fmt.Errorf("failed to lint file: %w", err)
 				progress.Record(ctx, result)
 				continue
 			}
+		}
+		if !c.previewer.IsAvailable() {
+			progress.Record(ctx, result)
+			continue
 		}
 
 		preview, err := c.previewer.CreatePreview(ctx, f, job.Namespace, repo.Config().Name, cfg.GitHub.Branch, ref, options.URL)
@@ -154,7 +158,7 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 		progress.Record(ctx, result)
 	}
 
-	if len(previews) == 0 || !cfg.GitHub.GenerateDashboardPreviews {
+	if len(previews) == 0 {
 		progress.SetMessage("no previews to add")
 		return nil
 	}

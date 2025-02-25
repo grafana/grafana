@@ -45,10 +45,6 @@ type GitHubRepositoryConfig struct {
 	// Token for accessing the repository, but encrypted. This is not possible to read back to a user decrypted.
 	// +listType=atomic
 	EncryptedToken []byte `json:"encryptedToken,omitempty"`
-
-	// Whether we should show dashboard previews for pull requests.
-	// By default, this is false (i.e. we will not create previews).
-	GenerateDashboardPreviews bool `json:"generateDashboardPreviews,omitempty"`
 }
 
 // RepositoryType defines the types of Repository

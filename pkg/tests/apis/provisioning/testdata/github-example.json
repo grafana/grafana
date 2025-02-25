@@ -11,7 +11,6 @@
         "github": {
             "url": "https://github.com/grafana/git-ui-sync-demo",
             "branch": "dummy-branch",
-            "generateDashboardPreviews": true,
             "token": "github_pat_dummy"
         },
         "sync": {
