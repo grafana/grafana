@@ -69,11 +69,7 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
 
     if (config.featureToggles.useV2DashboardsAPI) {
       const saveModelV2 = transformSceneToSaveModelSchemaV2(getDashboardSceneFor(this));
-      const dashboardKind: DashboardKind = {
-        kind: 'DashboardKind',
-        spec: saveModelV2,
-      };
-      return isSharingExternally ? this._exporter.makeExportable(saveModelV2) : dashboardKind;
+      return isSharingExternally ? this._exporter.makeExportable(saveModelV2) : saveModelV2;
     }
 
     const saveModelV1 = transformSceneToSaveModel(getDashboardSceneFor(this));
