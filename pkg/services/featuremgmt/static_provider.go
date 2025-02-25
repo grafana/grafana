@@ -14,7 +14,7 @@ func newStaticProvider(cfg *setting.Cfg) (openfeature.FeatureProvider, error) {
 		return nil, fmt.Errorf("failed to read feature toggles from config: %w", err)
 	}
 
-	flags := make(map[string]memprovider.InMemoryFlag, len(confFlags)+len(standardFeatureFlags))
+	flags := make(map[string]memprovider.InMemoryFlag, len(standardFeatureFlags))
 
 	// Add flags from config.ini file
 	for name, value := range confFlags {
