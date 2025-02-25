@@ -1736,6 +1736,10 @@
       "tooltip-remove": "Remove",
       "url-not-provided": "Data link url not provided"
     },
+    "data-source-basic-auth-settings": {
+      "user-label": "User",
+      "user-placeholder": "user"
+    },
     "data-source-http-proxy-settings": {
       "oauth-identity-label": "Forward OAuth Identity",
       "oauth-identity-tooltip": "Forward the user's upstream OAuth identity to the data source (Their access token gets passed along).",
@@ -1802,7 +1806,11 @@
     },
     "date-time-picker": {
       "apply": "Apply",
-      "cancel": "Cancel"
+      "calendar-icon-label": "Time picker",
+      "cancel": "Cancel",
+      "next-label": "Next month",
+      "previous-label": "Previous month",
+      "select-placeholder": "Select date/time"
     },
     "drawer": {
       "close": "Close"
@@ -3760,10 +3768,13 @@
       "example": "Example: to select a time range from 10 minutes ago to now",
       "example-details": "From: now-10m To: now",
       "example-title": "Example time ranges",
+      "from-label": "From",
       "from-to": "{{timeOptionFrom}} to {{timeOptionTo}}",
       "more-info": "For more information see <2>docs <1></1></2>.",
       "specify": "Specify time range <1></1>",
-      "supported-formats": "Supported formats: <1>now-[digit]s/m/h/d/w</1>"
+      "submit-button-label": "TimePicker submit button",
+      "supported-formats": "Supported formats: <1>now-[digit]s/m/h/d/w</1>",
+      "to-label": "To"
     },
     "zone": {
       "select-aria-label": "Time zone picker",

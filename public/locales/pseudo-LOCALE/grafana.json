@@ -1736,6 +1736,10 @@
       "tooltip-remove": "Ŗęmővę",
       "url-not-provided": "Đäŧä ľįŉĸ ūřľ ŉőŧ přővįđęđ"
     },
+    "data-source-basic-auth-settings": {
+      "user-label": "Ůşęř",
+      "user-placeholder": "ūşęř"
+    },
     "data-source-http-proxy-settings": {
       "oauth-identity-label": "Főřŵäřđ ØÅūŧĥ Ĩđęŉŧįŧy",
       "oauth-identity-tooltip": "Főřŵäřđ ŧĥę ūşęř'ş ūpşŧřęäm ØÅūŧĥ įđęŉŧįŧy ŧő ŧĥę đäŧä şőūřčę (Ŧĥęįř äččęşş ŧőĸęŉ ģęŧş päşşęđ äľőŉģ).",
@@ -1802,7 +1806,11 @@
     },
     "date-time-picker": {
       "apply": "Åppľy",
-      "cancel": "Cäŉčęľ"
+      "calendar-icon-label": "Ŧįmę pįčĸęř",
+      "cancel": "Cäŉčęľ",
+      "next-label": "Ńęχŧ mőŉŧĥ",
+      "previous-label": "Přęvįőūş mőŉŧĥ",
+      "select-placeholder": "Ŝęľęčŧ đäŧę/ŧįmę"
     },
     "drawer": {
       "close": "Cľőşę"
@@ -3760,10 +3768,13 @@
       "example": "Ēχämpľę: ŧő şęľęčŧ ä ŧįmę řäŉģę ƒřőm 10 mįŉūŧęş äģő ŧő ŉőŵ",
       "example-details": "Fřőm: ŉőŵ-10m Ŧő: ŉőŵ",
       "example-title": "Ēχämpľę ŧįmę řäŉģęş",
+      "from-label": "Fřőm",
       "from-to": "{{timeOptionFrom}} ŧő {{timeOptionTo}}",
       "more-info": "Főř mőřę įŉƒőřmäŧįőŉ şęę <2>đőčş <1></1></2>.",
       "specify": "Ŝpęčįƒy ŧįmę řäŉģę <1></1>",
-      "supported-formats": "Ŝūppőřŧęđ ƒőřmäŧş: <1>ŉőŵ-[đįģįŧ]ş/m/ĥ/đ/ŵ</1>"
+      "submit-button-label": "ŦįmęPįčĸęř şūþmįŧ þūŧŧőŉ",
+      "supported-formats": "Ŝūppőřŧęđ ƒőřmäŧş: <1>ŉőŵ-[đįģįŧ]ş/m/ĥ/đ/ŵ</1>",
+      "to-label": "Ŧő"
     },
     "zone": {
       "select-aria-label": "Ŧįmę žőŉę pįčĸęř",
