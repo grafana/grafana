@@ -1,4 +1,4 @@
-import { ComponentProps, useState } from 'react';
+import { ComponentProps } from 'react';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { urlUtil } from '@grafana/data';
@@ -12,7 +12,8 @@ import { jsonDiff } from 'app/features/dashboard-scene/settings/version-history/
 import { GrafanaRuleIdentifier } from 'app/types/unified-alerting';
 import { GrafanaRuleDefinition, RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
-import { preprocessRuleForDiffDisplay, useRestoreVersion } from './versions-utils';
+import { useRestoreVersion } from './useRestoreVersion';
+import { preprocessRuleForDiffDisplay } from './versions-utils';
 
 export type Origin = 'version-list' | 'comparison-drawer';
 
@@ -36,7 +37,7 @@ export const ConfirmVersionRestoreModal = ({
 }: ModalProps) => {
   const { result: ruleWithLocation } = useRuleWithLocation({ ruleIdentifier });
   const navigate = useNavigate();
-  const [error, setRestoreError] = useState<Error | undefined>();
+  const [restoreMethod, { error }] = useRestoreVersion();
 
   const title = t('alerting.alertVersionHistory.restore-modal.title', 'Restore version');
   const errorTitle = t('alerting.alertVersionHistory.restore-modal.error', 'Could not restore alert rule version ');
@@ -49,19 +50,17 @@ export const ConfirmVersionRestoreModal = ({
       ? jsonDiff(preprocessRuleForDiffDisplay(baseVersion), preprocessRuleForDiffDisplay(versionToRestore))
       : undefined;
 
-  const restoreMethod = useRestoreVersion();
-
   async function onRestoreConfirm() {
     if (!versionToRestore || !ruleWithLocation) {
       return;
     }
-    return restoreMethod(versionToRestore, ruleWithLocation)
+    return restoreMethod
+      .execute(versionToRestore, ruleWithLocation)
       .then(() => {
         onDismiss();
         onRestoreSucess();
       })
       .catch((err) => {
-        setRestoreError(err);
         onRestoreError(err);
       });
   }
