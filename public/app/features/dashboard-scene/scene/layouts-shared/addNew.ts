@@ -31,7 +31,7 @@ export function addNewRowTo(sceneObject: SceneObject) {
   }
 
   if (sceneObject instanceof TabsLayoutManager) {
-    const currentTab = sceneObject.state.currentTab;
+    const currentTab = sceneObject.getCurrentTab();
     addNewRowTo(currentTab.state.layout);
     return;
   }
