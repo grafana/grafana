@@ -3,6 +3,7 @@ package search
 import (
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/blevesearch/bleve/v2/document"
 	"github.com/stretchr/testify/require"
@@ -25,11 +26,14 @@ func TestDocumentMapping(t *testing.T) {
 			"x": "y",
 		},
 		RV: 1234,
-		RepoInfo: &utils.ResourceRepositoryInfo{
-			Name:      "nnn",
+		Manager: &utils.ManagerProperties{
+			Kind:     utils.ManagerKindRepo,
+			Identity: "nnn",
+		},
+		Source: &utils.SourceProperties{
 			Path:      "ppp",
-			Hash:      "hhh",
-			Timestamp: asTimePointer(1234),
+			Checksum:  "hhh",
+			Timestamp: time.UnixMilli(1234),
 		},
 	}
 

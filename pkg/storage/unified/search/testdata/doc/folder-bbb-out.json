@@ -10,8 +10,5 @@
   "title": "test-bbb",
   "title_phrase": "test-bbb",
   "created": 1730490142000,
-  "createdBy": "user:1",
-  "repo": {
-    "name": "SQL"
-  }
+  "createdBy": "user:1"
 }

@@ -3,11 +3,11 @@ package dashboard
 import (
 	"strings"
 
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
-var PluginIDRepoName = "plugin"
 var fileProvisionedRepoPrefix = "file:"
 
 // ProvisionedFileNameWithPrefix adds the `file:` prefix to the
@@ -37,15 +37,16 @@ func SetPluginIDMeta(obj unstructured.Unstructured, pluginID string) {
 	if annotations == nil {
 		annotations = map[string]string{}
 	}
-	annotations[utils.AnnoKeyRepoName] = PluginIDRepoName
-	annotations[utils.AnnoKeyRepoPath] = pluginID
+	annotations[utils.AnnoKeyManagerKind] = string(utils.ManagerKindPlugin)
+	annotations[utils.AnnoKeyManagerIdentity] = pluginID
 	obj.SetAnnotations(annotations)
 }
 
 // GetPluginIDFromMeta returns the plugin ID from the meta if the repo name is "plugin"
 func GetPluginIDFromMeta(obj utils.GrafanaMetaAccessor) string {
-	if obj.GetRepositoryName() == PluginIDRepoName {
-		return obj.GetRepositoryPath()
+	p, ok := obj.GetManagerProperties()
+	if ok && p.Kind == utils.ManagerKindPlugin {
+		return p.Identity
 	}
 	return ""
 }

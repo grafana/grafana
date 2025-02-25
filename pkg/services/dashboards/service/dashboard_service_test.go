@@ -548,10 +548,10 @@ func TestGetProvisionedDashboardData(t *testing.T) {
 					utils.LabelKeyDeprecatedInternalID: "1", // nolint:staticcheck
 				},
 				"annotations": map[string]any{
-					utils.AnnoKeyRepoName:      dashboard.ProvisionedFileNameWithPrefix("test"),
-					utils.AnnoKeyRepoHash:      "hash",
-					utils.AnnoKeyRepoPath:      "path/to/file",
-					utils.AnnoKeyRepoTimestamp: "2025-01-01T00:00:00Z",
+					utils.AnnoKeyManagerIdentity: dashboard.ProvisionedFileNameWithPrefix("test"),
+					utils.AnnoKeySourceHash:      "hash",
+					utils.AnnoKeySourcePath:      "path/to/file",
+					utils.AnnoKeySourceTimestamp: "2025-01-01T00:00:00Z",
 				},
 			},
 			"spec": map[string]any{
@@ -647,10 +647,10 @@ func TestGetProvisionedDashboardDataByDashboardID(t *testing.T) {
 					utils.LabelKeyDeprecatedInternalID: "1", // nolint:staticcheck
 				},
 				"annotations": map[string]any{
-					utils.AnnoKeyRepoName:      dashboard.ProvisionedFileNameWithPrefix("test"),
-					utils.AnnoKeyRepoHash:      "hash",
-					utils.AnnoKeyRepoPath:      "path/to/file",
-					utils.AnnoKeyRepoTimestamp: "2025-01-01T00:00:00Z",
+					utils.AnnoKeyManagerIdentity: dashboard.ProvisionedFileNameWithPrefix("test"),
+					utils.AnnoKeySourceHash:      "hash",
+					utils.AnnoKeySourcePath:      "path/to/file",
+					utils.AnnoKeySourceTimestamp: "2025-01-01T00:00:00Z",
 				},
 			},
 			"spec": map[string]any{
@@ -737,10 +737,10 @@ func TestGetProvisionedDashboardDataByDashboardUID(t *testing.T) {
 					utils.LabelKeyDeprecatedInternalID: "1", // nolint:staticcheck
 				},
 				"annotations": map[string]any{
-					utils.AnnoKeyRepoName:      dashboard.ProvisionedFileNameWithPrefix("test"),
-					utils.AnnoKeyRepoHash:      "hash",
-					utils.AnnoKeyRepoPath:      "path/to/file",
-					utils.AnnoKeyRepoTimestamp: "2025-01-01T00:00:00Z",
+					utils.AnnoKeyManagerIdentity: dashboard.ProvisionedFileNameWithPrefix("test"),
+					utils.AnnoKeySourceHash:      "hash",
+					utils.AnnoKeySourcePath:      "path/to/file",
+					utils.AnnoKeySourceTimestamp: "2025-01-01T00:00:00Z",
 				},
 			},
 			"spec": map[string]any{
@@ -826,10 +826,10 @@ func TestDeleteOrphanedProvisionedDashboards(t *testing.T) {
 			"metadata": map[string]any{
 				"name": "uid",
 				"annotations": map[string]any{
-					utils.AnnoKeyRepoName:      dashboard.ProvisionedFileNameWithPrefix("orphaned"),
-					utils.AnnoKeyRepoHash:      "hash",
-					utils.AnnoKeyRepoPath:      "path/to/file",
-					utils.AnnoKeyRepoTimestamp: "2025-01-01T00:00:00Z",
+					utils.AnnoKeyManagerIdentity: dashboard.ProvisionedFileNameWithPrefix("orphaned"),
+					utils.AnnoKeySourceHash:      "hash",
+					utils.AnnoKeySourcePath:      "path/to/file",
+					utils.AnnoKeySourceTimestamp: "2025-01-01T00:00:00Z",
 				},
 			},
 			"spec": map[string]any{},
@@ -839,8 +839,8 @@ func TestDeleteOrphanedProvisionedDashboards(t *testing.T) {
 			"metadata": map[string]any{
 				"name": "uid2",
 				"annotations": map[string]any{
-					utils.AnnoKeyRepoName: dashboard.PluginIDRepoName,
-					utils.AnnoKeyRepoHash: "app",
+					utils.AnnoKeyManagerKind:     utils.ManagerKindPlugin,
+					utils.AnnoKeyManagerIdentity: "app",
 				},
 			},
 			"spec": map[string]any{},
@@ -850,10 +850,10 @@ func TestDeleteOrphanedProvisionedDashboards(t *testing.T) {
 			"metadata": map[string]any{
 				"name": "uid3",
 				"annotations": map[string]any{
-					utils.AnnoKeyRepoName:      dashboard.ProvisionedFileNameWithPrefix("orphaned"),
-					utils.AnnoKeyRepoHash:      "hash",
-					utils.AnnoKeyRepoPath:      "path/to/file",
-					utils.AnnoKeyRepoTimestamp: "2025-01-01T00:00:00Z",
+					utils.AnnoKeyManagerIdentity: dashboard.ProvisionedFileNameWithPrefix("orphaned"),
+					utils.AnnoKeySourceHash:      "hash",
+					utils.AnnoKeySourcePath:      "path/to/file",
+					utils.AnnoKeySourceTimestamp: "2025-01-01T00:00:00Z",
 				},
 			},
 			"spec": map[string]any{},
@@ -960,10 +960,10 @@ func TestUnprovisionDashboard(t *testing.T) {
 			"metadata": map[string]any{
 				"name": "uid",
 				"annotations": map[string]any{
-					utils.AnnoKeyRepoName:      dashboard.ProvisionedFileNameWithPrefix("test"),
-					utils.AnnoKeyRepoHash:      "hash",
-					utils.AnnoKeyRepoPath:      "path/to/file",
-					utils.AnnoKeyRepoTimestamp: "2025-01-01T00:00:00Z",
+					utils.AnnoKeyManagerIdentity: dashboard.ProvisionedFileNameWithPrefix("test"),
+					utils.AnnoKeySourceHash:      "hash",
+					utils.AnnoKeySourcePath:      "path/to/file",
+					utils.AnnoKeySourceTimestamp: "2025-01-01T00:00:00Z",
 				},
 			},
 			"spec": map[string]any{},
@@ -1054,8 +1054,9 @@ func TestGetDashboardsByPluginID(t *testing.T) {
 		k8sCliMock.On("Get", mock.Anything, "uid", mock.Anything, mock.Anything, mock.Anything).Return(uidUnstructured, nil)
 		k8sCliMock.On("GetUserFromMeta", mock.Anything, mock.Anything).Return(&user.User{}, nil)
 		k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.MatchedBy(func(req *resource.ResourceSearchRequest) bool {
-			return req.Options.Fields[0].Key == "repo.name" && req.Options.Fields[0].Values[0] == dashboard.PluginIDRepoName &&
-				req.Options.Fields[1].Key == "repo.path" && req.Options.Fields[1].Values[0] == "testing"
+			return ( // gofmt comment helper
+			req.Options.Fields[0].Key == "manager.kind" && req.Options.Fields[0].Values[0] == utils.AnnoKeyManagerKind &&
+				req.Options.Fields[1].Key == "manager.id" && req.Options.Fields[1].Values[0] == "testing")
 		})).Return(&resource.ResourceSearchResponse{
 			Results: &resource.ResourceTable{
 				Columns: []*resource.ResourceTableColumnDefinition{
@@ -1993,10 +1994,10 @@ func TestSearchProvisionedDashboardsThroughK8sRaw(t *testing.T) {
 		"metadata": map[string]any{
 			"name": "uid",
 			"annotations": map[string]any{
-				utils.AnnoKeyRepoName:      dashboard.ProvisionedFileNameWithPrefix("test"),
-				utils.AnnoKeyRepoHash:      "hash",
-				utils.AnnoKeyRepoPath:      "path/to/file",
-				utils.AnnoKeyRepoTimestamp: "2025-01-01T00:00:00Z",
+				utils.AnnoKeyManagerIdentity: dashboard.ProvisionedFileNameWithPrefix("test"),
+				utils.AnnoKeySourceHash:      "hash",
+				utils.AnnoKeySourcePath:      "path/to/file",
+				utils.AnnoKeySourceTimestamp: "2025-01-01T00:00:00Z",
 			},
 		},
 		"spec": map[string]any{},

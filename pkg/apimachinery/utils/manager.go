@@ -31,6 +31,7 @@ const (
 	ManagerKindRepo      ManagerKind = "repo"
 	ManagerKindTerraform ManagerKind = "terraform"
 	ManagerKindKubectl   ManagerKind = "kubectl"
+	ManagerKindPlugin    ManagerKind = "plugin"
 )
 
 // ParseManagerKindString parses a string into a ManagerKind.

@@ -18,10 +18,11 @@ import (
 	"github.com/blevesearch/bleve/v2/search/query"
 	bleveSearch "github.com/blevesearch/bleve/v2/search/searcher"
 	index "github.com/blevesearch/bleve_index_api"
-	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"go.opentelemetry.io/otel/trace"
 	"k8s.io/apimachinery/pkg/selection"
+
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"

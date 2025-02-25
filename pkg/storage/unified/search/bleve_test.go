@@ -9,18 +9,17 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
-	"github.com/grafana/grafana/pkg/services/user"
-
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/store/kind/dashboard"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
@@ -90,11 +89,14 @@ func TestBleveBackend(t *testing.T) {
 					utils.LabelKeyDeprecatedInternalID: "10", // nolint:staticcheck
 				},
 				Tags: []string{"aa", "bb"},
-				RepoInfo: &utils.ResourceRepositoryInfo{
-					Name:      "repo-1",
+				Manager: &utils.ManagerProperties{
+					Kind:     utils.ManagerKindRepo,
+					Identity: "repo-1",
+				},
+				Source: &utils.SourceProperties{
 					Path:      "path/to/aaa.json",
-					Hash:      "xyz",
-					Timestamp: asTimePointer(1609462800000), // 2021
+					Checksum:  "xyz",
+					Timestamp: time.UnixMilli(1609462800000), // 2021
 				},
 			})
 			_ = index.Write(&resource.IndexableDocument{
@@ -119,11 +121,14 @@ func TestBleveBackend(t *testing.T) {
 					"region":                           "east",
 					utils.LabelKeyDeprecatedInternalID: "11", // nolint:staticcheck
 				},
-				RepoInfo: &utils.ResourceRepositoryInfo{
-					Name:      "repo-1",
+				Manager: &utils.ManagerProperties{
+					Kind:     utils.ManagerKindRepo,
+					Identity: "repo-1",
+				},
+				Source: &utils.SourceProperties{
 					Path:      "path/to/bbb.json",
-					Hash:      "hijk",
-					Timestamp: asTimePointer(1640998800000), // 2022
+					Checksum:  "hijk",
+					Timestamp: time.UnixMilli(1640998800000), // 2022
 				},
 			})
 			_ = index.Write(&resource.IndexableDocument{
@@ -138,8 +143,11 @@ func TestBleveBackend(t *testing.T) {
 				Title:       "ccc (dash)",
 				TitlePhrase: "ccc (dash)",
 				Folder:      "zzz",
-				RepoInfo: &utils.ResourceRepositoryInfo{
-					Name: "repo2",
+				Manager: &utils.ManagerProperties{
+					Kind:     utils.ManagerKindRepo,
+					Identity: "repo2",
+				},
+				Source: &utils.SourceProperties{
 					Path: "path/in/repo2.yaml",
 				},
 				Fields: map[string]any{},
@@ -334,11 +342,14 @@ func TestBleveBackend(t *testing.T) {
 				},
 				Title:       "zzz (folder)",
 				TitlePhrase: "zzz (folder)",
-				RepoInfo: &utils.ResourceRepositoryInfo{
-					Name:      "repo-1",
+				Manager: &utils.ManagerProperties{
+					Kind:     utils.ManagerKindRepo,
+					Identity: "repo-1",
+				},
+				Source: &utils.SourceProperties{
 					Path:      "path/to/folder.json",
-					Hash:      "xxxx",
-					Timestamp: asTimePointer(300),
+					Checksum:  "xxxx",
+					Timestamp: time.UnixMilli(300),
 				},
 			})
 			_ = index.Write(&resource.IndexableDocument{
@@ -557,14 +568,6 @@ func TestGetSortFields(t *testing.T) {
 		sortFields := getSortFields(searchReq)
 		assert.Equal(t, []string{"description"}, sortFields)
 	})
-}
-
-func asTimePointer(milli int64) *time.Time {
-	if milli > 0 {
-		t := time.UnixMilli(milli)
-		return &t
-	}
-	return nil
 }
 
 var _ authlib.AccessClient = (*StubAccessClient)(nil)
