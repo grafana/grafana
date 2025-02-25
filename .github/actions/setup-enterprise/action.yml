@@ -1,6 +1,16 @@
 name: 'Setup Grafana Enterprise'
 description: 'Clones and sets up Grafana Enterprise repository for testing'
 
+inputs:
+  github-app-name:
+    description: 'Name of the GitHub App in Vault'
+    required: false
+    default: 'grafana-ci-bot'
+  debug:
+    description: 'Enable debug output'
+    required: false
+    default: 'false'
+
 runs:
   using: "composite"
   steps:
@@ -9,9 +19,16 @@ runs:
       uses: grafana/shared-workflows/actions/get-vault-secrets@get-vault-secrets-v1.0.1
       with:
         repo_secrets: |
-          APP_ID=grafana-ci-bot:app-id
-          APP_INSTALLATION_ID=grafana-ci-bot:app-installation-id
-          PRIVATE_KEY=grafana-ci-bot:private-key
+          APP_ID=${{ inputs.github-app-name }}:app-id
+          APP_INSTALLATION_ID=${{ inputs.github-app-name }}:app-installation-id
+          PRIVATE_KEY=${{ inputs.github-app-name }}:private-key
+
+    - name: Debug secrets (redacted)
+      shell: bash
+      run: |
+        if [ -n "${{ env.APP_ID }}" ]; then echo "APP_ID is set"; else echo "APP_ID is not set"; fi
+        if [ -n "${{ env.APP_INSTALLATION_ID }}" ]; then echo "APP_INSTALLATION_ID is set"; else echo "APP_INSTALLATION_ID is not set"; fi
+        if [ -n "${{ env.PRIVATE_KEY }}" ]; then echo "PRIVATE_KEY is set"; else echo "PRIVATE_KEY is not set"; fi
 
     - name: Generate GitHub App token
       id: generate_token
