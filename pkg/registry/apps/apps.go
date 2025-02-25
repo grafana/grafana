@@ -34,13 +34,13 @@ func ProvideRegistryServiceSink(
 	investigationAppProvider *investigations.InvestigationsAppProvider,
 	advisorAppProvider *advisor.AdvisorAppProvider,
 ) (*Service, error) {
-	cfgWrapper := func(ctx context.Context) *rest.Config {
-		cfg := restConfigProvider.GetRestConfig(ctx)
-		if cfg == nil {
-			return nil
+	cfgWrapper := func(ctx context.Context) (*rest.Config, error) {
+		cfg, err := restConfigProvider.GetRestConfig(ctx)
+		if err != nil {
+			return nil, err
 		}
 		cfg.APIPath = "/apis"
-		return cfg
+		return cfg, nil
 	}
 
 	cfg := runner.RunnerConfig{
