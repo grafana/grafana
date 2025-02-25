@@ -258,6 +258,40 @@ func (f *RuleStore) GetNamespaceByUID(_ context.Context, uid string, orgID int64
 	return nil, fmt.Errorf("not found")
 }
 
+func (f *RuleStore) GetOrCreateNamespaceInRootByTitle(ctx context.Context, title string, orgID int64, user identity.Requester) (*folder.Folder, error) {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+
+	for _, folder := range f.Folders[orgID] {
+		if folder.Title == title {
+			return folder, nil
+		}
+	}
+
+	newFolder := &folder.Folder{
+		ID:       rand.Int63(), // nolint:staticcheck
+		UID:      util.GenerateShortUID(),
+		Title:    title,
+		Fullpath: "fullpath_" + title,
+	}
+
+	f.Folders[orgID] = append(f.Folders[orgID], newFolder)
+	return newFolder, nil
+}
+
+func (f *RuleStore) GetNamespaceInRootByTitle(ctx context.Context, title string, orgID int64, user identity.Requester) (*folder.Folder, error) {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+
+	for _, folder := range f.Folders[orgID] {
+		if folder.Title == title && folder.ParentUID == "" {
+			return folder, nil
+		}
+	}
+
+	return nil, fmt.Errorf("namespace with title '%s' not found", title)
+}
+
 func (f *RuleStore) UpdateAlertRules(_ context.Context, _ *models.UserUID, q []models.UpdateRule) error {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
