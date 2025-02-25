@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/stretchr/testify/require"
 )
 
@@ -106,7 +107,7 @@ func TestCache(t *testing.T) {
 }
 
 func TestBroadcaster(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx := testutil.NewDefaultTestContext(t)
 	ch := make(chan int)
 	input := []int{1, 2, 3}
 	go func() {
@@ -139,7 +140,7 @@ func TestBroadcaster(t *testing.T) {
 	require.Equal(t, len(input), count)
 
 	// cancel the context should close the stream
-	cancel()
+	ctx.Cancel()
 	_, ok := <-sub
 	require.False(t, ok)
 }

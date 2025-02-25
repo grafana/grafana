@@ -124,11 +124,12 @@ func (b *broadcaster[T]) Subscribe(ctx context.Context) (<-chan T, error) {
 
 	// create the subscription
 	sub := make(chan T, 100)
-
 	select {
 	case <-ctx.Done(): // client canceled
+		close(sub)
 		return nil, ctx.Err()
 	case <-b.terminated: // no more data
+		close(sub)
 		return nil, io.EOF
 	case b.subscribe <- sub: // success submitting subscription
 		return sub, nil
