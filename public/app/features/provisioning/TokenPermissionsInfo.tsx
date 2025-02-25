@@ -5,22 +5,31 @@ export function TokenPermissionsInfo() {
     <ControlledCollapse collapsible label="Access Token Permissions">
       <div>
         To create a new Access Token, navigate to{' '}
-        <TextLink external href="https://github.com/settings/tokens">
+        <TextLink external href="https://github.com/settings/personal-access-tokens/new">
           Personal Access Tokens
         </TextLink>{' '}
-        and click &quot;Generate new token.&quot;
       </div>
 
-      <p>Ensure that your token has the following permissions:</p>
-
-      <p>For all repositories:</p>
-      <pre>public_repo, repo:status, repo_deployment, read:packages, read:user, user:email</pre>
-
-      <p>For GitHub projects:</p>
-      <pre>read:org, read:project</pre>
-
-      <p>An extra setting is required for private repositories:</p>
-      <pre>repo (Full control of private repositories)</pre>
+      <p>Select the appropriate owner and repository. Then expand Repository permissions, granting</p>
+      <table>
+        <tr>
+          <td>Content</td>
+          <td>Read and write</td>
+        </tr>
+        <tr>
+          <td>Metadata</td>
+          <td>Read only</td>
+        </tr>
+        <tr>
+          <td>Pull requests&nbsp;</td>
+          <td>Read and write</td>
+        </tr>
+        <tr>
+          <td>Webhooks</td>
+          <td>Read and write &nbsp;&nbsp;</td>
+          <td>If this instance has a public URL, and should be notified of changes</td>
+        </tr>
+      </table>
     </ControlledCollapse>
   );
 }
