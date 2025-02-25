@@ -34,8 +34,15 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
       ref={ref}
     >
       {(!isHeaderHidden || (isEditing && showHiddenElements)) && (
-        <div className={styles.rowHeader}>
+        <div
+          className={styles.rowHeader}
+          onPointerDown={(evt) => {
+            onSelect?.(evt);
+            evt.preventDefault();
+          }}
+        >
           <button
+            onPointerDown={(evt) => evt.stopPropagation()}
             onClick={() => model.onCollapseToggle()}
             className={styles.rowTitleButton}
             aria-label={
