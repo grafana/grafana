@@ -205,6 +205,41 @@
         "recording": ""
       }
     },
+    "alertVersionHistory": {
+      "alerting": "",
+      "alerting-change-description": "",
+      "annotations": "",
+      "compareVersions": "",
+      "comparing-versions": "",
+      "condition": "",
+      "contactPointRouting": "",
+      "description": "",
+      "errorloading": "",
+      "execErrorState": "",
+      "intervalSeconds": "",
+      "labels": "",
+      "latest": "",
+      "name": "",
+      "namespace_uid": "",
+      "noDataState": "",
+      "noVersionsFound": "",
+      "paused": "",
+      "pendingPeriod": "",
+      "provisioning": "",
+      "provisioning-change-description": "",
+      "queryAndAlertCondition": "",
+      "reset": "",
+      "restore": "",
+      "restore-modal": {
+        "body": "",
+        "summary": "",
+        "title": ""
+      },
+      "rule_group": "",
+      "unknown": "",
+      "unknown-change-description": "",
+      "user-id": ""
+    },
     "annotations": {
       "description": "",
       "title": ""
@@ -299,6 +334,10 @@
       "label": ""
     },
     "copy-to-clipboard": "",
+    "dag": {
+      "missing-reference": "",
+      "self-reference": ""
+    },
     "export": {
       "subtitle": {
         "formats": "",
@@ -489,6 +528,19 @@
       },
       "pause": {
         "label": ""
+      },
+      "threshold": {
+        "recovery": {
+          "stop-alerting-above": "",
+          "stop-alerting-bellow": "",
+          "stop-alerting-equal": "",
+          "stop-alerting-inside-range": "",
+          "stop-alerting-less": "",
+          "stop-alerting-more": "",
+          "stop-alerting-not-equal": "",
+          "stop-alerting-outside-range": "",
+          "title": ""
+        }
       }
     },
     "rule-groups": {
@@ -530,6 +582,14 @@
       "deleting": "",
       "paused": "",
       "recording-rule": ""
+    },
+    "rule-view": {
+      "query": {
+        "datasources-na": {
+          "description": "",
+          "title": ""
+        }
+      }
     },
     "rule-viewer": {
       "prometheus-consistency-check": {
@@ -763,6 +823,7 @@
     "collapse": "",
     "edit": "",
     "help": "",
+    "loading": "",
     "locale": {
       "default": "Par défaut"
     },
@@ -784,6 +845,25 @@
     },
     "search": {
       "placeholder": "Rechercher tout"
+    }
+  },
+  "core": {
+    "versionHistory": {
+      "comparison": {
+        "header": {
+          "hide-json-diff": "",
+          "show-json-diff": "",
+          "text": ""
+        },
+        "select": ""
+      },
+      "no-properties-changed": "",
+      "table": {
+        "updated": "",
+        "updatedBy": "",
+        "version": ""
+      },
+      "view-json-diff": ""
     }
   },
   "correlations": {
@@ -977,6 +1057,11 @@
         }
       }
     },
+    "editpane": {
+      "add": "",
+      "configure": "",
+      "outline": ""
+    },
     "empty": {
       "add-library-panel-body": "Ajoutez des visualisations partagées avec d'autres tableaux de bord.",
       "add-library-panel-button": "Ajouter un panneau Bibliothèque",
@@ -1114,6 +1199,7 @@
     "toolbar": {
       "add": "Ajouter",
       "add-panel": "",
+      "add-panel-description": "",
       "add-panel-lib": "",
       "add-row": "",
       "add-tab": "",
@@ -1139,6 +1225,7 @@
         "label": "",
         "tooltip": ""
       },
+      "libray-panel-description": "",
       "mark-favorite": "Marquer comme favori",
       "more-save-options": "",
       "open-original": "Ouvrir le tableau de bord d'origine",
@@ -1147,6 +1234,7 @@
       "playlist-stop": "Arrêter la liste de lecture",
       "public-dashboard": "",
       "refresh": "Actualiser le tableau de bord",
+      "row-description": "",
       "save": "Enregistrer le tableau de bord",
       "save-dashboard": {
         "label": "",
@@ -1166,6 +1254,7 @@
       "share-button": "Partager",
       "show-hidden-elements": "",
       "switch-old-dashboard": "",
+      "tabs-description": "",
       "unlink-library-panel": "",
       "unmark-favorite": "Supprimer des favoris"
     },
@@ -1271,6 +1360,12 @@
       "time-zone-label": "Fuseau horaire",
       "week-start-label": "Début de la semaine"
     },
+    "time-regions": {
+      "advanced-description-cron": "",
+      "advanced-description-rest": "",
+      "advanced-description-use": "",
+      "advanced-label": ""
+    },
     "variables": {
       "title": "Variables"
     },
@@ -1353,6 +1448,11 @@
   },
   "explore": {
     "add-to-dashboard": "Ajouter au tableau de bord",
+    "drilldownInfo": {
+      "action": "",
+      "description": "",
+      "title": ""
+    },
     "logs": {
       "logs-volume": {
         "add-filters": "",
@@ -1565,6 +1665,10 @@
     "incomplete-request-error": "",
     "send-custom-feedback": ""
   },
+  "get-enterprise": {
+    "requires-license": "",
+    "title": ""
+  },
   "grafana-ui": {
     "action-editor": {
       "button": {
@@ -1645,6 +1749,12 @@
     },
     "drawer": {
       "close": "Fermer"
+    },
+    "feature-badge": {
+      "experimental": "",
+      "new": "",
+      "preview": "",
+      "private-preview": ""
     },
     "field-link-list": {
       "external-links-heading": ""
@@ -1968,6 +2078,7 @@
       "render-image-error-description": ""
     }
   },
+  "lock-icon": "",
   "login": {
     "divider": {
       "connecting-text": ""
@@ -2433,6 +2544,9 @@
     "detect": {
       "title": "Détecter"
     },
+    "drilldown": {
+      "title": ""
+    },
     "explore": {
       "title": "Explorer"
     },
@@ -2470,6 +2584,8 @@
     "history-wrapper": {
       "collapse": "",
       "expand": "",
+      "icon-selected": "",
+      "icon-unselected": "",
       "show-more": "",
       "today": "",
       "yesterday": ""
@@ -2756,6 +2872,7 @@
   },
   "plugins": {
     "catalog": {
+      "no-updates-available": "",
       "update-all": {
         "all-plugins-updated": "",
         "available-header": "",
@@ -2814,6 +2931,12 @@
     },
     "empty-state": {
       "message": ""
+    },
+    "filter": {
+      "disabled": "",
+      "sort": "",
+      "sort-list": "",
+      "state": ""
     },
     "plugin-help": {
       "error": "",

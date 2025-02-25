@@ -7,9 +7,9 @@ import {
   DataSourceSettings as DataSourceSettingsType,
   PluginExtensionPoints,
   PluginExtensionDataSourceConfigContext,
-  DataSourceJsonData,
   DataSourceUpdatedSuccessfully,
   PluginExtensionComponent,
+  DataSourceJsonData,
 } from '@grafana/data';
 import { getDataSourceSrv, usePluginComponentExtensions } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
@@ -205,11 +205,9 @@ export function EditDataSourceView({
 
       {/* Extension point */}
       {allowedExtensions.map((extension) => {
-        const Component = extension.component;
-
         return (
           <div key={extension.id}>
-            <Component
+            <extension.component
               context={{
                 dataSource: dataSource,
                 dataSourceMeta: dataSourceMeta,

@@ -120,10 +120,10 @@ func Test_StateToPostableAlert(t *testing.T) {
 					require.Equal(t, expected, result.Annotations)
 				})
 
-				t.Run("add __alertImageToken__ if there is an image token", func(t *testing.T) {
+				t.Run("add both annotations if there is an image token and url", func(t *testing.T) {
 					alertState := randomTransition(eval.Normal, tc.state)
 					alertState.Annotations = randomMapOfStrings()
-					alertState.Image = &ngModels.Image{Token: "test_token"}
+					alertState.Image = &ngModels.Image{Token: "test_token", URL: "test_url"}
 
 					result := StateToPostableAlert(alertState, appURL)
 
@@ -131,12 +131,17 @@ func Test_StateToPostableAlert(t *testing.T) {
 					for k, v := range alertState.Annotations {
 						expected[k] = v
 					}
-					expected["__alertImageToken__"] = alertState.Image.Token
+					expected[alertingModels.ImageTokenAnnotation] = alertState.Image.Token
+					expected[alertingModels.ImageURLAnnotation] = alertState.Image.URL
+
+					// Sanity check that the annotation is correct.
+					require.Contains(t, result.Annotations[alertingModels.ImageTokenAnnotation], alertState.Image.Token)
+					require.Contains(t, result.Annotations[alertingModels.ImageURLAnnotation], alertState.Image.URL)
 
 					require.Equal(t, expected, result.Annotations)
 				})
 
-				t.Run("don't add __alertImageToken__ if there's no image token", func(t *testing.T) {
+				t.Run("don't add annotations if there's no image token or url", func(t *testing.T) {
 					alertState := randomTransition(eval.Normal, tc.state)
 					alertState.Annotations = randomMapOfStrings()
 					alertState.Image = &ngModels.Image{}
