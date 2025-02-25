@@ -6,19 +6,19 @@ import "time"
 type ManagerProperties struct {
 	// The kind of manager, which is responsible for managing the resource.
 	// Examples include "git", "terraform", "kubectl", etc.
-	Kind ManagerKind
+	Kind ManagerKind `json:"kind,omitempty"`
 
 	// The identity of the manager, which refers to a specific instance of the manager.
 	// The format & the value depends on the manager kind.
-	Identity string
+	Identity string `json:"id,omitempty"`
 
 	// AllowsEdits indicates whether the manager allows edits to the resource.
 	// If set to true, it means that other requesters can edit the resource.
-	AllowsEdits bool
+	AllowsEdits bool `json:"allowEdits,omitempty"`
 
 	// Suspended indicates whether the manager is suspended.
 	// If set to true, then the manager skip updates to the resource.
-	Suspended bool
+	Suspended bool `json:"suspended,omitempty"`
 }
 
 // ManagerKind is the type of manager, which is responsible for managing the resource.
@@ -56,13 +56,13 @@ func ParseManagerKindString(v string) ManagerKind {
 type SourceProperties struct {
 	// The path to the source of the resource.
 	// Can be a file path, a URL, etc.
-	Path string
+	Path string `json:"path,omitempty"`
 
 	// The checksum of the source of the resource.
 	// An example could be a git commit hash.
-	Checksum string
+	Checksum string `json:"checksum,omitempty"`
 
 	// The timestamp of the source of the resource.
 	// An example could be the file modification time.
-	Timestamp time.Time
+	Timestamp time.Time `json:"time,omitempty"`
 }
