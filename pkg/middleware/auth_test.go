@@ -326,7 +326,7 @@ func TestRoleAppPluginAuth(t *testing.T) {
 					},
 				})
 
-				sc.m.Get("/a/:id/*", RoleAppPluginAuth(ac, ps, featuremgmt.WithFeatures(), logger), func(c *contextmodel.ReqContext) {
+				sc.m.Get("/a/:id/*", RoleAppPluginAuth(ac, ps, logger), func(c *contextmodel.ReqContext) {
 					c.JSON(http.StatusOK, map[string]interface{}{})
 				})
 				sc.fakeReq("GET", path).exec()
