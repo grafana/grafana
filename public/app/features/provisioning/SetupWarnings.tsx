@@ -1,12 +1,51 @@
 import { useLocalStorage } from 'react-use';
+import { useState } from 'react';
 
 import { FeatureToggles, GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Alert, Text, Collapse, Box } from '@grafana/ui';
+import { Alert, Text, Collapse, Box, Button } from '@grafana/ui';
 import { css } from '@emotion/css';
 import { useStyles2 } from '@grafana/ui';
 
 import { useGetFrontendSettingsQuery } from './api';
+
+// Add the CodeBlockWithCopy component
+interface CodeBlockWithCopyProps {
+  code: string;
+  className?: string;
+}
+
+function CodeBlockWithCopy({ code, className }: CodeBlockWithCopyProps) {
+  const styles = useStyles2(getStyles);
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(code);
+    setCopied(true);
+
+    // Reset the copied state after a delay
+    setTimeout(() => {
+      setCopied(false);
+    }, 500);
+  };
+
+  return (
+    <div className={`${styles.codeBlockWithCopy} ${className || ''}`}>
+      <pre className={styles.codeBlock}>
+        <code>{code}</code>
+      </pre>
+      <Button
+        icon={copied ? 'check' : 'copy'}
+        variant={copied ? 'success' : 'secondary'}
+        size="sm"
+        className={styles.copyButton}
+        onClick={handleCopy}
+        aria-label={copied ? 'Copied to clipboard' : 'Copy to clipboard'}
+        tooltip={copied ? 'Copied to clipboard' : 'Copy to clipboard'}
+      />
+    </div>
+  );
+}
 
 const requiredFeatureToggles: Array<keyof FeatureToggles> = [
   'provisioning',
@@ -58,13 +97,10 @@ HTTP Requests
 09:18:46.147 CET             GET  /favicon.ico                   302 Found
 09:18:46.402 CET             GET  /login`;
 
-const webhook_ini = `...
-
-[server]
+const webhook_ini = `[server]
 root_url = https://d60d-83-33-235-27.ngrok-free.app`;
 
-const render_ini = `...
-[rendering]
+const render_ini = `[rendering]
 server_url = http://localhost:8081/render
 callback_url = http://localhost:3000/
 `;
@@ -115,9 +151,7 @@ export function SetupWarnings() {
               onToggle={handleCustomIniToggle}
               collapsible
             >
-              <pre>
-                <code>{custom_ini}</code>
-              </pre>
+              <CodeBlockWithCopy code={custom_ini} />
             </Collapse>
           </Alert>
         </>
@@ -151,9 +185,7 @@ export function SetupWarnings() {
                       To connect to the rendering service locally, you need to configure the following:
                     </Text>
                   </Box>
-                  <pre className={styles.codeBlock}>
-                    <code>{render_ini}</code>
-                  </pre>
+                  <CodeBlockWithCopy code={render_ini} />
                 </div>
               )}
 
@@ -174,9 +206,7 @@ export function SetupWarnings() {
                   <Box marginTop={2} marginBottom={1}>
                     <Text element="h6">To enable webhook support, you need to configure the following:</Text>
                   </Box>
-                  <pre className={styles.codeBlock}>
-                    <code>{webhook_ini}</code>
-                  </pre>
+                  <CodeBlockWithCopy code={webhook_ini} />
                 </div>
               )}
 
@@ -192,9 +222,7 @@ export function SetupWarnings() {
                     tool for this:
                   </Text>
                 </Box>
-                <pre className={styles.codeBlock}>
-                  <code>{ngrok_example}</code>
-                </pre>
+                <CodeBlockWithCopy code={ngrok_example} />
               </div>
             </Box>
           </Collapse>
@@ -216,7 +244,18 @@ const getStyles = (theme: GrafanaTheme2) => {
       marginBottom: theme.spacing(1),
     }),
     codeBlock: css({
+      marginBottom: 0,
+      width: '100%',
+    }),
+    codeBlockWithCopy: css({
+      position: 'relative',
       marginBottom: theme.spacing(2),
+    }),
+    copyButton: css({
+      position: 'absolute',
+      right: theme.spacing(1),
+      top: theme.spacing(1),
+      zIndex: 1,
     }),
   };
 };
