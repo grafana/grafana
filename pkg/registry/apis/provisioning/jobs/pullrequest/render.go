@@ -3,30 +3,34 @@ package pullrequest
 import (
 	"context"
 	"fmt"
+	"mime"
 	"os"
 	"path/filepath"
 	"time"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/rendering"
-	"github.com/grafana/grafana/pkg/storage/unified/blob"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 type screenshotRenderer struct {
-	render    rendering.Service
-	blobstore blob.PublicBlobStore
+	render      rendering.Service
+	blobstore   resource.BlobStoreClient
+	urlProvider func(namespace string) string
 }
 
-func NewScreenshotRenderer(render rendering.Service, blobstore blob.PublicBlobStore) *screenshotRenderer {
+func NewScreenshotRenderer(render rendering.Service, blobstore resource.BlobStoreClient, urlProvider func(namespace string) string) *screenshotRenderer {
 	return &screenshotRenderer{
-		render:    render,
-		blobstore: blobstore,
+		render:      render,
+		blobstore:   blobstore,
+		urlProvider: urlProvider,
 	}
 }
 
 func (r *screenshotRenderer) IsAvailable(ctx context.Context) bool {
-	return r.render != nil && r.render.IsAvailable(ctx) && r.blobstore.IsAvailable()
+	return r.render != nil && r.render.IsAvailable(ctx)
 }
 
 func (r *screenshotRenderer) RenderDashboardPreview(ctx context.Context, namespace, repoName, path, ref string) (string, error) {
@@ -60,9 +64,22 @@ func (r *screenshotRenderer) RenderDashboardPreview(ctx context.Context, namespa
 		return "", err
 	}
 
-	return r.blobstore.SaveBlob(ctx, namespace, ext, body, map[string]string{
-		"repo": repoName,
-		"path": path, // only used when saving in GCS/S3++
-		"ref":  ref,
+	rsp, err := r.blobstore.PutBlob(ctx, &resource.PutBlobRequest{
+		Resource: &resource.ResourceKey{
+			Namespace: namespace,
+			Group:     provisioning.GROUP,
+			Resource:  provisioning.RepositoryResourceInfo.GroupResource().Resource,
+		},
+		Method:      resource.PutBlobRequest_GRPC,
+		ContentType: mime.TypeByExtension(ext), // image/png
+		Value:       body,
 	})
+	if err != nil {
+		return "", err
+	}
+	if rsp.Url != "" {
+		return rsp.Url, nil
+	}
+	return fmt.Sprintf("%s/apis/%s/namespaces/%s/repositories/*s/render/%s",
+		r.urlProvider(namespace), provisioning.APIVERSION, namespace, repoName, rsp.Uid), nil
 }
