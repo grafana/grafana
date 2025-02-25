@@ -2,10 +2,10 @@ name: 'Setup Grafana Enterprise'
 description: 'Clones and sets up Grafana Enterprise repository for testing'
 
 inputs:
-  vault-url:
-    description: 'Vault URL for retrieving secrets'
+  vault-instance:
+    description: 'Vault instance to use'
     required: false
-    default: 'https://vault-github-actions.grafana-ops.net'
+    default: 'ops'
   github-app-name:
     description: 'Name of the GitHub App in Vault'
     required: false
@@ -26,11 +26,11 @@ runs:
       id: get-secrets
       uses: grafana/shared-workflows/actions/get-vault-secrets@get-vault-secrets-v1.0.1
       with:
-        vault_url: ${{ inputs.vault-url }}
+        vault_instance: ${{ inputs.vault-instance }}
         repo_secrets: |
-          APP_ID=${{ inputs.vault-path }}/${{ inputs.github-app-name }} app-id
-          APP_INSTALLATION_ID=${{ inputs.vault-path }}/${{ inputs.github-app-name }} app-installation-id
-          PRIVATE_KEY=${{ inputs.vault-path }}/${{ inputs.github-app-name }} private-key
+          APP_ID=${{ inputs.vault-path }}/${{ inputs.github-app-name }}/app-id
+          APP_INSTALLATION_ID=${{ inputs.vault-path }}/${{ inputs.github-app-name }}/app-installation-id
+          PRIVATE_KEY=${{ inputs.vault-path }}/${{ inputs.github-app-name }}/private-key
 
     - name: Generate GitHub App token
       id: generate_token
