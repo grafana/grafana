@@ -3,7 +3,7 @@ import * as React from 'react';
 
 import { KeyValue } from '@grafana/data';
 
-import { Trans } from '../../utils/i18n';
+import { t, Trans } from '../../utils/i18n';
 import { FormField } from '../FormField/FormField';
 import { Icon } from '../Icon/Icon';
 import { Tooltip } from '../Tooltip/Tooltip';
@@ -64,7 +64,10 @@ export const TLSAuthSettings = ({ dataSourceConfig, onChange }: HttpSettingsBase
         </h6>
         <Tooltip
           placement="right-end"
-          content="TLS/SSL Certs are encrypted and stored in the Grafana database."
+          content={t(
+            'grafana-ui.data-source-settings.tls-tooltip',
+            'TLS/SSL Certs are encrypted and stored in the Grafana database.'
+          )}
           theme="info"
         >
           <Icon name="info-circle" size="xs" style={{ marginLeft: '10px' }} />
@@ -75,8 +78,11 @@ export const TLSAuthSettings = ({ dataSourceConfig, onChange }: HttpSettingsBase
           <CertificationKey
             hasCert={!!hasTLSCACert}
             onChange={onCertificateChangeFactory('tlsCACert')}
-            placeholder="Begins with -----BEGIN CERTIFICATE-----"
-            label="CA Cert"
+            placeholder={t(
+              'grafana-ui.data-source-settings.tls-certification-placeholder',
+              'Begins with -----BEGIN CERTIFICATE-----'
+            )}
+            label={t('grafana-ui.data-source-settings.tls-certification-label', 'CA Cert')}
             onClick={onResetClickFactory('tlsCACert')}
           />
         )}
@@ -85,26 +91,32 @@ export const TLSAuthSettings = ({ dataSourceConfig, onChange }: HttpSettingsBase
           <>
             <div className="gf-form">
               <FormField
-                label="ServerName"
+                label={t('grafana-ui.data-source-settings.tls-server-name-label', 'ServerName')}
                 labelWidth={7}
                 inputWidth={30}
-                placeholder="domain.example.com"
+                placeholder={t('grafana-ui.data-source-settings.tls-server-name-placeholder', 'domain.example.com')}
                 value={hasServerName && dataSourceConfig.jsonData.serverName}
                 onChange={onServerNameLabelChange}
               />
             </div>
             <CertificationKey
               hasCert={!!hasTLSClientCert}
-              label="Client Cert"
+              label={t('grafana-ui.data-source-settings.tls-client-certification-label', 'Client Cert')}
               onChange={onCertificateChangeFactory('tlsClientCert')}
-              placeholder="Begins with -----BEGIN CERTIFICATE-----"
+              placeholder={t(
+                'grafana-ui.data-source-settings.tls-certification-placeholder',
+                'Begins with -----BEGIN CERTIFICATE-----'
+              )}
               onClick={onResetClickFactory('tlsClientCert')}
             />
 
             <CertificationKey
               hasCert={!!hasTLSClientKey}
-              label="Client Key"
-              placeholder="Begins with -----BEGIN RSA PRIVATE KEY-----"
+              label={t('grafana-ui.data-source-settings.tls-client-key-label', 'Client Key')}
+              placeholder={t(
+                'grafana-ui.data-source-settings.tls-client-key-placeholder',
+                'Begins with -----BEGIN RSA PRIVATE KEY-----'
+              )}
               onChange={onCertificateChangeFactory('tlsClientKey')}
               onClick={onResetClickFactory('tlsClientKey')}
             />

@@ -5,7 +5,7 @@ import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { useTheme2 } from '../../themes';
-import { Trans } from '../../utils/i18n';
+import { t, Trans } from '../../utils/i18n';
 import { Alert } from '../Alert/Alert';
 import { FormField } from '../FormField/FormField';
 import { InlineFormLabel } from '../FormLabel/FormLabel';
@@ -26,23 +26,23 @@ import { HttpSettingsProps } from './types';
 
 const ACCESS_OPTIONS: Array<SelectableValue<string>> = [
   {
-    label: 'Server (default)',
+    label: t('grafana-ui.data-source-http-settings.access-options-proxy', 'Server (default)'),
     value: 'proxy',
   },
   {
-    label: 'Browser',
+    label: t('grafana-ui.data-source-http-settings.access-options-browser', 'Browser'),
     value: 'direct',
   },
 ];
 
 const DEFAULT_ACCESS_OPTION = {
-  label: 'Server (default)',
+  label: t('grafana-ui.data-source-http-settings.access-options-proxy', 'Server (default)'),
   value: 'proxy',
 };
 
 const HttpAccessHelp = () => {
   return (
-    <Alert severity="info" title="" topSpacing={3}>
+    <Alert severity="info" title={t('grafana-ui.data-source-http-settings.alert-title-empty', '')} topSpacing={3}>
       <p>
         <Trans i18nKey="grafana-ui.data-source-http-settings.access-help-details">
           Access mode controls how requests to the data source will be handled.
@@ -161,7 +161,7 @@ export const DataSourceHttpSettings = (props: HttpSettingsProps) => {
 
   const accessSelect = (
     <Select
-      aria-label="Access"
+      aria-label={t('grafana-ui.data-source-http-settings.default-url-access-select', 'Access')}
       className="width-20 gf-form-input"
       options={ACCESS_OPTIONS}
       value={ACCESS_OPTIONS.filter((o) => o.value === dataSourceConfig.access)[0] || DEFAULT_ACCESS_OPTION}
@@ -204,7 +204,7 @@ export const DataSourceHttpSettings = (props: HttpSettingsProps) => {
           <div className="gf-form">
             <FormField
               interactive={urlDocs ? true : false}
-              label={urlLabel ?? 'URL'}
+              label={urlLabel ?? t('grafana-ui.data-source-http-settings.url-label', 'URL')}
               labelWidth={13}
               tooltip={urlTooltip}
               inputEl={urlInput}
@@ -215,7 +215,12 @@ export const DataSourceHttpSettings = (props: HttpSettingsProps) => {
             <>
               <div className="gf-form-inline">
                 <div className="gf-form">
-                  <FormField label="Access" labelWidth={13} inputWidth={20} inputEl={accessSelect} />
+                  <FormField
+                    label={t('grafana-ui.data-source-http-settings.access-label', 'Access')}
+                    labelWidth={13}
+                    inputWidth={20}
+                    inputEl={accessSelect}
+                  />
                 </div>
                 <div className="gf-form">
                   <button
@@ -238,7 +243,10 @@ export const DataSourceHttpSettings = (props: HttpSettingsProps) => {
               <div className="gf-form">
                 <InlineFormLabel
                   width={13}
-                  tooltip="Grafana proxy deletes forwarded cookies by default. Specify cookies by name that should be forwarded to the data source."
+                  tooltip={t(
+                    'grafana-ui.data-source-http-settings.allowed-cookies-tooltip',
+                    'Grafana proxy deletes forwarded cookies by default. Specify cookies by name that should be forwarded to the data source.'
+                  )}
                 >
                   <Trans i18nKey="grafana-ui.data-source-http-settings.allowed-cookies">Allowed cookies</Trans>
                 </InlineFormLabel>
@@ -253,13 +261,13 @@ export const DataSourceHttpSettings = (props: HttpSettingsProps) => {
               </div>
               <div className="gf-form">
                 <FormField
-                  label="Timeout"
+                  label={t('grafana-ui.data-source-http-settings.timeout-form-label', 'Timeout')}
                   type="number"
                   labelWidth={13}
                   inputWidth={20}
-                  tooltip="HTTP request timeout in seconds"
-                  placeholder="Timeout in seconds"
-                  aria-label="Timeout in seconds"
+                  tooltip={t('grafana-ui.data-source-http-settings.timeout-tooltip', 'HTTP request timeout in seconds')}
+                  placeholder={t('grafana-ui.data-source-http-settings.timeout-label', 'Timeout in seconds')}
+                  aria-label={t('grafana-ui.data-source-http-settings.timeout-label', 'Timeout in seconds')}
                   value={dataSourceConfig.jsonData.timeout}
                   onChange={(event) => {
                     onSettingsChange({
@@ -280,7 +288,11 @@ export const DataSourceHttpSettings = (props: HttpSettingsProps) => {
         </h3>
         <div className="gf-form-group">
           <div className="gf-form-inline">
-            <InlineField label="Basic auth" labelWidth={LABEL_WIDTH} disabled={dataSourceConfig.readOnly}>
+            <InlineField
+              label={t('grafana-ui.data-source-http-settings.basic-auth-label', 'Basic auth')}
+              labelWidth={LABEL_WIDTH}
+              disabled={dataSourceConfig.readOnly}
+            >
               <InlineSwitch
                 id="http-settings-basic-auth"
                 value={dataSourceConfig.basicAuth}
@@ -291,8 +303,11 @@ export const DataSourceHttpSettings = (props: HttpSettingsProps) => {
             </InlineField>
 
             <InlineField
-              label="With Credentials"
-              tooltip="Whether credentials such as cookies or auth headers should be sent with cross-site requests."
+              label={t('grafana-ui.data-source-http-settings.with-credential-label', 'With Credentials')}
+              tooltip={t(
+                'grafana-ui.data-source-http-settings.with-credential-tooltip',
+                'Whether credentials such as cookies or auth headers should be sent with cross-site requests.'
+              )}
               labelWidth={LABEL_WIDTH}
               disabled={dataSourceConfig.readOnly}
             >
@@ -309,8 +324,11 @@ export const DataSourceHttpSettings = (props: HttpSettingsProps) => {
           {azureAuthSettings?.azureAuthSupported && (
             <div className="gf-form-inline">
               <InlineField
-                label="Azure Authentication"
-                tooltip="Use Azure authentication for Azure endpoint."
+                label={t('grafana-ui.data-source-http-settings.azure-auth-label', 'Azure Authentication')}
+                tooltip={t(
+                  'grafana-ui.data-source-http-settings.azure-auth-tooltip',
+                  'Use Azure authentication for Azure endpoint.'
+                )}
                 labelWidth={LABEL_WIDTH}
                 disabled={dataSourceConfig.readOnly}
               >
@@ -329,7 +347,11 @@ export const DataSourceHttpSettings = (props: HttpSettingsProps) => {
 
           {sigV4AuthToggleEnabled && (
             <div className="gf-form-inline">
-              <InlineField label="SigV4 auth" labelWidth={LABEL_WIDTH} disabled={dataSourceConfig.readOnly}>
+              <InlineField
+                label={t('grafana-ui.data-source-http-settings.sigV4-auth-label', 'SigV4 auth')}
+                labelWidth={LABEL_WIDTH}
+                disabled={dataSourceConfig.readOnly}
+              >
                 <InlineSwitch
                   id="http-settings-sigv4-auth"
                   value={dataSourceConfig.jsonData.sigV4Auth || false}
