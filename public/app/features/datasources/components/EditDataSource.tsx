@@ -1,5 +1,4 @@
 import { AnyAction } from '@reduxjs/toolkit';
-import { useMemo } from 'react';
 import * as React from 'react';
 
 import {
@@ -10,6 +9,7 @@ import {
   PluginExtensionDataSourceConfigContext,
   DataSourceJsonData,
   DataSourceUpdatedSuccessfully,
+  PluginExtensionComponent,
 } from '@grafana/data';
 import { getDataSourceSrv, usePluginComponentExtensions } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
@@ -137,14 +137,15 @@ export function EditDataSourceView({
   };
 
   const extensionPointId = PluginExtensionPoints.DataSourceConfig;
-  const { extensions } = usePluginComponentExtensions<{
+  usePluginComponentExtensions<{
     context: PluginExtensionDataSourceConfigContext<DataSourceJsonData>;
   }>({ extensionPointId });
 
-  const allowedExtensions = useMemo(() => {
-    const allowedPluginIds = ['grafana-pdc-app', 'grafana-auth-app'];
-    return extensions.filter((e) => allowedPluginIds.includes(e.pluginId));
-  }, [extensions]);
+  const allowedExtensions: Array<
+    PluginExtensionComponent<{
+      context: PluginExtensionDataSourceConfigContext<DataSourceJsonData>;
+    }>
+  > = [];
 
   if (loadError) {
     return (
