@@ -14,6 +14,12 @@ import { Version } from '../types';
 const PLUGINS_VERSION_PAGE_UPGRADE_INTERACTION_EVENT_NAME = 'plugins_upgrade_clicked';
 const PLUGINS_VERSION_PAGE_CHANGE_INTERACTION_EVENT_NAME = 'plugins_downgrade_clicked';
 
+enum InstallState {
+  INSTALL = 'Install',
+  UPGRADE = 'Upgrade',
+  DOWNGRADE = 'Downgrade',
+}
+
 interface Props {
   pluginId: string;
   version: Version;
@@ -38,7 +44,7 @@ export const VersionInstallButton = ({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const styles = useStyles2(getStyles);
 
-  const downgrade = isDowngrade(installedVersion, version.version);
+  const installState = getInstallState(installedVersion, version.version);
 
   useEffect(() => {
     if (installedVersion === version.version) {
@@ -61,7 +67,7 @@ export const VersionInstallButton = ({
       schema_version: '1.0.0',
     };
 
-    if (downgrade !== undefined && !downgrade) {
+    if (installState === InstallState.UPGRADE) {
       reportInteraction(PLUGINS_VERSION_PAGE_UPGRADE_INTERACTION_EVENT_NAME, trackProps);
     } else {
       reportInteraction(PLUGINS_VERSION_PAGE_CHANGE_INTERACTION_EVENT_NAME, {
@@ -76,7 +82,7 @@ export const VersionInstallButton = ({
   };
 
   const onInstallClick = () => {
-    if (downgrade) {
+    if (installState === InstallState.DOWNGRADE) {
       setIsModalOpen(true);
     } else {
       performInstallation();
@@ -91,25 +97,9 @@ export const VersionInstallButton = ({
     setIsModalOpen(false);
   };
 
-  let label = 'Install';
-  let hidden = false;
   const isPreinstalled = isPreinstalledPlugin(pluginId);
 
-  if (downgrade !== undefined) {
-    if (downgrade) {
-      label = 'Downgrade';
-      if (isPreinstalled.found && Boolean(config.featureToggles.preinstallAutoUpdate)) {
-        // Hide the downgrade button if the plugin is preinstalled since it will be auto-updated
-        hidden = true;
-      }
-    } else {
-      label = 'Upgrade';
-      if (isPreinstalled.withVersion) {
-        // Hide button if the plugin is preinstalled with a specific version
-        hidden = true;
-      }
-    }
-  }
+  const hidden = getButtonHiddenState(installState, isPreinstalled);
 
   return (
     <>
@@ -125,7 +115,7 @@ export const VersionInstallButton = ({
         tooltip={tooltip}
         tooltipPlacement="bottom-start"
       >
-        {label} {isInstalling ? <Spinner className={styles.spinner} inline size="sm" /> : getIcon(label)}
+        {installState} {isInstalling ? <Spinner className={styles.spinner} inline size="sm" /> : getIcon(installState)}
       </Button>
       <ConfirmModal
         isOpen={isModalOpen}
@@ -141,24 +131,36 @@ export const VersionInstallButton = ({
   );
 };
 
-function getIcon(label: string) {
-  if (label === 'Downgrade') {
+function getIcon(installState: InstallState) {
+  if (installState === InstallState.DOWNGRADE) {
     return <Icon name="arrow-down" />;
   }
-  if (label === 'Upgrade') {
+  if (installState === InstallState.UPGRADE) {
     return <Icon name="arrow-up" />;
   }
   return '';
 }
 
-function isDowngrade(installedVersion?: string, version?: string): boolean | undefined {
-  if (!installedVersion || !version) {
-    return undefined;
+function getInstallState(installedVersion?: string, version?: string): InstallState {
+  if (!installedVersion || !version || !valid(installedVersion) || !valid(version)) {
+    return InstallState.INSTALL;
   }
-  if (!valid(installedVersion) || !valid(version)) {
-    return undefined;
+  return gt(installedVersion, version) ? InstallState.DOWNGRADE : InstallState.UPGRADE;
+}
+
+function getButtonHiddenState(installState: InstallState, isPreinstalled: { found: boolean; withVersion: boolean }) {
+  // Default state for initial install
+  if (installState === InstallState.INSTALL) {
+    return false;
   }
-  return gt(installedVersion, version);
+
+  // Handle downgrade case
+  if (installState === InstallState.DOWNGRADE) {
+    return isPreinstalled.found && Boolean(config.featureToggles.preinstallAutoUpdate);
+  }
+
+  // Handle upgrade case
+  return isPreinstalled.withVersion;
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
