@@ -8,11 +8,12 @@ import { FieldDef, getAllFields } from '../logParser';
 
 import { getDisplayedFieldValue } from './LogLine';
 import { GetFieldLinksFn } from './LogList';
-import { logsGrammar } from './grammar';
+import { generateLogGrammar } from './grammar';
 import { measureTextWidth } from './virtualization';
 
 export interface LogListModel extends LogRowModel {
   body: string;
+  _highlightedBody: string;
   highlightedBody: string;
   displayLevel: string;
   fields: FieldDef[];
@@ -44,10 +45,7 @@ interface PreProcessLogOptions {
   getFieldLinks?: GetFieldLinksFn;
   timeZone: string;
 }
-const preProcessLog = (
-  log: LogRowModel,
-  { escape, getFieldLinks, timeZone }: PreProcessLogOptions
-): LogListModel => {
+const preProcessLog = (log: LogRowModel, { escape, getFieldLinks, timeZone }: PreProcessLogOptions): LogListModel => {
   let body = log.entry;
   const timestamp = dateTimeFormat(log.timeEpochMs, {
     timeZone,
@@ -60,12 +58,16 @@ const preProcessLog = (
   // Turn it into a single-line log entry for the list
   body = body.replace(/(\r\n|\n|\r)/g, '');
 
-  const highlightedBody = Prism.highlight(body, logsGrammar, 'lokiql');
-
   return {
     ...log,
     body,
-    highlightedBody,
+    _highlightedBody: '',
+    get highlightedBody() {
+      if (!this._highlightedBody) {
+        this._highlightedBody = Prism.highlight(body, generateLogGrammar(this), 'lokiql');
+      }
+      return this._highlightedBody;
+    },
     displayLevel: logLevelToDisplayLevel(log.logLevel),
     fields: getAllFields(log, getFieldLinks),
     timestamp,
