@@ -16,4 +16,5 @@ jobs:
         node-version-file: '.nvmrc'
         cache: 'yarn'
         cache-dependency-path: 'yarn.lock'
+    - run: yarn install --immutable --check-cache
     - run: yarn run ci:test-frontend
