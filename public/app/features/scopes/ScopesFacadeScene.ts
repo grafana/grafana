@@ -1,6 +1,7 @@
 import { isEqual } from 'lodash';
 
 import {
+  CancelActivationHandler,
   SceneObjectBase,
   SceneObjectState,
   SceneObjectUrlSyncConfig,
@@ -49,7 +50,13 @@ export class ScopesFacade extends SceneObjectBase<ScopesFacadeState> implements 
   }
 
   private _activationHandler = () => {
+    let deactivate: CancelActivationHandler | undefined;
+
     this.enable();
+
+    if (!scopesSelectorScene?.isActive) {
+      deactivate = scopesSelectorScene?.activate();
+    }
 
     this._subs.add(
       scopesSelectorScene?.subscribeToState((newState, prevState) => {
@@ -61,6 +68,7 @@ export class ScopesFacade extends SceneObjectBase<ScopesFacadeState> implements 
     );
 
     return () => {
+      deactivate?.();
       this.disable();
     };
   };
