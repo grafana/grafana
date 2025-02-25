@@ -80,7 +80,7 @@ export function ToolbarActions({ dashboard }: Props) {
   const dashboardNewLayouts = config.featureToggles.dashboardNewLayouts;
 
   // Internal only;
-  // allows viewer editing without ability to save 
+  // allows viewer editing without ability to save
   // used for grafana play
   const canEdit = grafanaConfig.viewersCanEdit;
 
