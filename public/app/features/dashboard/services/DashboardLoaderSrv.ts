@@ -16,6 +16,8 @@ import { appEvents } from '../../../core/core';
 import { ResponseTransformers } from '../api/ResponseTransformers';
 import { getDashboardAPI } from '../api/dashboard_api';
 import { DashboardWithAccessInfo } from '../api/types';
+import { DashboardVersionError } from '../api/types';
+import { isDashboardV2Resource } from '../api/utils';
 
 import { getDashboardSrv } from './DashboardSrv';
 import { getDashboardSnapshotSrv } from './SnapshotSrv';
@@ -118,7 +120,7 @@ export class DashboardLoaderSrv extends DashboardLoaderSrvBase<DashboardDTO> {
     uid: string | undefined,
     params?: UrlQueryMap
   ): Promise<DashboardDTO> {
-    const stateManager = getDashboardScenePageStateManager();
+    const stateManager = getDashboardScenePageStateManager('v1');
     let promise;
 
     if (type === 'script' && slug) {
@@ -141,6 +143,12 @@ export class DashboardLoaderSrv extends DashboardLoaderSrvBase<DashboardDTO> {
 
       promise = getDashboardAPI()
         .getDashboardDTO(uid, params)
+        .then((result) => {
+          if (isDashboardV2Resource(result)) {
+            throw new DashboardVersionError(true, 'Dashboard is V2 format');
+          }
+          return result;
+        })
         .catch((e) => {
           console.error('Failed to load dashboard', e);
           if (isFetchError(e)) {
@@ -204,6 +212,12 @@ export class DashboardLoaderSrvV2 extends DashboardLoaderSrvBase<DashboardWithAc
 
       promise = getDashboardAPI('v2')
         .getDashboardDTO(uid, params)
+        .then((result) => {
+          if (!isDashboardV2Resource(result)) {
+            throw new DashboardVersionError(false, 'Dashboard is V1 format');
+          }
+          return result;
+        })
         .catch((e) => {
           console.error('Failed to load dashboard', e);
           if (isFetchError(e)) {

@@ -5,7 +5,9 @@ import { config } from '@grafana/runtime';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import DashboardScenePage from 'app/features/dashboard-scene/pages/DashboardScenePage';
 import { getDashboardScenePageStateManager } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
-import { DashboardRoutes } from 'app/types';
+import { DashboardDTO, DashboardRoutes } from 'app/types';
+
+import { isDashboardV2Resource } from '../api/utils';
 
 import DashboardPage, { DashboardPageParams } from './DashboardPage';
 import { DashboardPageError } from './DashboardPageError';
@@ -23,18 +25,12 @@ function DashboardPageProxy(props: DashboardPageProxyProps) {
   const forceOld = props.queryParams.scenes === false;
   const params = useParams<DashboardPageParams>();
   const location = useLocation();
-
-  // Force scenes if v2 api and scenes are enabled
-  if (config.featureToggles.useV2DashboardsAPI && config.featureToggles.dashboardScene && !forceOld) {
-    console.log('DashboardPageProxy: forcing scenes because of v2 api');
-    return <DashboardScenePage {...props} />;
-  }
+  const stateManager = getDashboardScenePageStateManager();
 
   if (forceScenes || (config.featureToggles.dashboardScene && !forceOld)) {
     return <DashboardScenePage {...props} />;
   }
 
-  const stateManager = getDashboardScenePageStateManager();
   const isScenesSupportedRoute = Boolean(
     props.route.routeName === DashboardRoutes.Home || (props.route.routeName === DashboardRoutes.Normal && params.uid)
   );
@@ -63,7 +59,17 @@ function DashboardPageProxy(props: DashboardPageProxyProps) {
     return null;
   }
 
-  if (dashboard?.value?.dashboard?.uid !== params.uid && dashboard.value?.meta?.isNew !== true) {
+  // Force scenes if v2 api and scenes are enabled
+
+  const isV2Dashboard = dashboard.value && isDashboardV2Resource(dashboard.value);
+  if (isV2Dashboard && !forceOld) {
+    console.log('DashboardPageProxy: forcing scenes requesting v2 dashboard');
+    return <DashboardScenePage {...props} />;
+  }
+
+  const dashboardValue = dashboard.value ? (dashboard.value as DashboardDTO) : null;
+
+  if (dashboardValue?.dashboard?.uid !== params.uid && dashboardValue?.meta?.isNew !== true) {
     return null;
   }
 
@@ -72,8 +78,8 @@ function DashboardPageProxy(props: DashboardPageProxyProps) {
   }
 
   if (
-    dashboard.value &&
-    !(dashboard.value.meta?.canEdit || dashboard.value.meta?.canMakeEditable) &&
+    dashboardValue &&
+    !(dashboardValue.meta?.canEdit || dashboardValue.meta?.canMakeEditable) &&
     isScenesSupportedRoute
   ) {
     return <DashboardScenePage {...props} />;

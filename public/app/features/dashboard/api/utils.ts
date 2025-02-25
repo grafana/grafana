@@ -22,10 +22,6 @@ export function getDashboardsApiVersion() {
     return 'legacy';
   }
 
-  if (config.featureToggles.useV2DashboardsAPI) {
-    return 'v2';
-  }
-
   if (config.featureToggles.kubernetesDashboards) {
     return 'v1';
   }

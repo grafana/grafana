@@ -44,7 +44,8 @@ export function getDashboardAPI(
     };
   }
 
-  if (v === 'v2' && requestV2Response === 'v2') {
+  // TODO: Not sure if I need to do this
+  if (requestV2Response === 'v2') {
     return new K8sDashboardV2API(false);
   }
 
