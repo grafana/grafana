@@ -42,6 +42,7 @@ type SecretAPIBuilder struct {
 	keeperMetadataStorage      contracts.KeeperMetadataStorage
 	decryptStorage             contracts.DecryptStorage
 	accessClient               claims.AccessClient
+	decryptersAllowList        []string
 	isDevMode                  bool // REMOVE ME
 }
 
@@ -51,9 +52,10 @@ func NewSecretAPIBuilder(
 	keeperMetadataStorage contracts.KeeperMetadataStorage,
 	decryptStorage contracts.DecryptStorage,
 	accessClient claims.AccessClient,
+	decryptersAllowList []string,
 	isDevMode bool, // REMOVE ME
 ) *SecretAPIBuilder {
-	return &SecretAPIBuilder{tracer, secureValueMetadataStorage, keeperMetadataStorage, decryptStorage, accessClient, isDevMode}
+	return &SecretAPIBuilder{tracer, secureValueMetadataStorage, keeperMetadataStorage, decryptStorage, accessClient, decryptersAllowList, isDevMode}
 }
 
 func RegisterAPIService(
@@ -86,8 +88,18 @@ func RegisterAPIService(
 		return nil, fmt.Errorf("register secret access control roles: %w", err)
 	}
 
-	builder := NewSecretAPIBuilder(tracer, secureValueMetadataStorage, keeperMetadataStorage, decryptStorage, accessClient, cfg.SecretsManagement.IsDeveloperMode)
+	builder := NewSecretAPIBuilder(
+		tracer,
+		secureValueMetadataStorage,
+		keeperMetadataStorage,
+		decryptStorage,
+		accessClient,
+		nil, // OSS does not need an allow list.
+		cfg.SecretsManagement.IsDeveloperMode,
+	)
+
 	apiregistration.RegisterAPI(builder)
+
 	return builder, nil
 }
 
@@ -209,7 +221,7 @@ func (b *SecretAPIBuilder) Validate(ctx context.Context, a admission.Attributes,
 			}
 		}
 
-		if errs := reststorage.ValidateSecureValue(typedObj, oldObj, operation); len(errs) > 0 {
+		if errs := reststorage.ValidateSecureValue(typedObj, oldObj, operation, b.decryptersAllowList); len(errs) > 0 {
 			return apierrors.NewInvalid(groupKind, a.GetName(), errs)
 		}
 
