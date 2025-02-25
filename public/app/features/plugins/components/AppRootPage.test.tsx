@@ -30,9 +30,6 @@ jest.mock('../plugin_loader', () => ({
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   config: {
-    featureToggles: {
-      accessControlOnCall: true,
-    },
     apps: {},
     theme2: {
       breakpoints: {
