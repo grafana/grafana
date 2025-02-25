@@ -35,7 +35,7 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick, onPin, isPi
   const isActive = link === activeItem || (level === MAX_DEPTH && hasActiveChild);
   const [sectionExpanded, setSectionExpanded] = useLocalStorage(
     `grafana.navigation.expanded[${link.text}]`,
-    Boolean(hasActiveChild || link.isNew)
+    Boolean(hasActiveChild)
   );
   const showExpandButton = level < MAX_DEPTH && Boolean(linkHasChildren(link) || link.emptyMessage);
   const item = useRef<HTMLLIElement>(null);
