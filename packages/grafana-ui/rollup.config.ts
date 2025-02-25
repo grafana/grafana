@@ -1,4 +1,7 @@
+import PackageJson from '@npmcli/package-json';
+import { mkdir } from 'node:fs/promises';
 import { createRequire } from 'node:module';
+import type { Plugin } from 'rollup';
 import copy from 'rollup-plugin-copy';
 import svg from 'rollup-plugin-svg-import';
 
@@ -34,6 +37,7 @@ export default [
         targets: [{ src: iconSrcPaths, dest: './dist/public/' }],
         flatten: false,
       }),
+      generateAliasPackageJson({ alias: 'unstable' }),
     ],
     output: [cjsOutput(pkg), esmOutput(pkg, 'grafana-ui')],
   },
@@ -46,3 +50,33 @@ export default [
     },
   }),
 ];
+
+interface RollupAliasPkgJsonOptions {
+  alias: string;
+}
+
+// This rollup plugin allows the generation of "nested" package.json files to alias bare specifiers so they resolve
+// to the correct location on the file system. This is handy for skipping `dist` directories in imports.
+// e.g. import { attachSkeleton } from '@grafana/ui/unstable' rather than '@grafana/ui/dist/unstable'.
+function generateAliasPackageJson(options: RollupAliasPkgJsonOptions): Plugin {
+  const { alias }: Required<RollupAliasPkgJsonOptions> = options;
+  return {
+    name: 'generate-alias-package-json',
+    async writeBundle() {
+      const aliasName = `@grafana/ui/${alias}`;
+      console.log(`📦 Writing alias package.json for ${alias}.`);
+      const pkgJsonPath = `./${alias}`;
+      await mkdir(pkgJsonPath, { recursive: true });
+      const pkgJson = await PackageJson.create(pkgJsonPath, {
+        data: {
+          name: aliasName,
+          types: `../dist/${alias}.d.ts`,
+          main: `../dist/${alias}.js`,
+          module: `../dist/esm/${alias}.js`,
+        },
+      });
+
+      await pkgJson.save();
+    },
+  };
+}
