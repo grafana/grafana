@@ -144,7 +144,8 @@ func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.Ge
 		} else if errors.Is(err, dashboards.ErrFolderAccessDenied) {
 			err = resourceInfo.NewForbidden(name, err)
 		}
-		return nil, err
+		statusErr := apierrors.ToFolderStatusError(err)
+		return nil, &statusErr
 	}
 
 	r, err := convertToK8sResource(dto, s.namespacer)
