@@ -185,8 +185,7 @@ func parseResponse24(responseData []OpenTsdbResponse24, refID string, frames dat
 	for _, val := range responseData {
 		frame := createInitialFrame(val.OpenTsdbCommon, len(val.DataPoints), refID)
 
-		points := val.DataPoints
-		for i, point := range points {
+		for i, point := range val.DataPoints {
 			frame.SetRow(i, time.Unix(int64(point[0]), 0).UTC(), point[1])
 		}
 
