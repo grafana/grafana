@@ -418,6 +418,15 @@ func TestDiff(t *testing.T) {
 			assert.Equal(t, rule2.ID, diff[0].Right.Int())
 			difCnt++
 		}
+
+		if rule1.GUID != rule2.GUID {
+			diff := diffs.GetDiffsForField("GUID")
+			assert.Len(t, diff, 1)
+			assert.Equal(t, rule1.GUID, diff[0].Left.String())
+			assert.Equal(t, rule2.GUID, diff[0].Right.String())
+			difCnt++
+		}
+
 		if rule1.OrgID != rule2.OrgID {
 			diff := diffs.GetDiffsForField("OrgID")
 			assert.Len(t, diff, 1)
