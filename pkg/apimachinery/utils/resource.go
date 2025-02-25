@@ -125,7 +125,3 @@ func (info *ResourceInfo) TableConverter() TableConvertor {
 func (info *ResourceInfo) NewNotFound(name string) *errors.StatusError {
 	return errors.NewNotFound(info.SingularGroupResource(), name)
 }
-
-func (info *ResourceInfo) NewForbidden(name string, err error) *errors.StatusError {
-	return errors.NewForbidden(info.SingularGroupResource(), name, err)
-}
