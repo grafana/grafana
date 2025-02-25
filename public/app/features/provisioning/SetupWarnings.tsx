@@ -98,28 +98,28 @@ export function SetupWarnings() {
     <>
       {missingFeatures.length > 0 && (
         <>
-          <Alert title="Provisioning Setup Error" severity="error">
-            {missingFeatures.map((feature) => (
-              <Text key={feature} element="p">
-                Missing required feature toggle: <strong>{feature}</strong>
+          <Alert title="Missing required features" severity="error">
+            <Box marginBottom={2}>
+              <Text element="p">
+                The following feature toggles are required for proper functionality but are currently disabled:
               </Text>
-            ))}
-          </Alert>
-          <Collapse
-            isOpen={isCustomIniOpen}
-            label="Working custom.ini for local testing"
-            onToggle={handleCustomIniToggle}
-            collapsible
-          >
-            <Alert severity="info" title="">
+              {missingFeatures.map((feature) => (
+                <li key={feature}>
+                  <strong>{feature}</strong>
+                </li>
+              ))}
+            </Box>
+            <Collapse
+              isOpen={isCustomIniOpen}
+              label="See example configuration for local testing"
+              onToggle={handleCustomIniToggle}
+              collapsible
+            >
               <pre>
                 <code>{custom_ini}</code>
               </pre>
-              <Text element="h5">
-                NOTE: the above config is <strong>not</strong> this machine's config
-              </Text>
-            </Alert>
-          </Collapse>
+            </Collapse>
+          </Alert>
         </>
       )}
 
