@@ -7,7 +7,6 @@ import (
 	"log/slog"
 	"net/http"
 	"net/url"
-	"os"
 	"regexp"
 	"slices"
 	"strings"
@@ -578,13 +577,6 @@ func (r *githubRepository) parsePullRequestEvent(event *github.PullRequestEvent)
 		return nil, fmt.Errorf("missing github config")
 	}
 
-	if !r.shouldLintPullRequest() && !cfg.GenerateDashboardPreviews {
-		return &provisioning.WebhookResponse{
-			Code:    http.StatusOK, // Nothing needed
-			Message: "no action required on pull request event",
-		}, nil
-	}
-
 	if event.GetRepo().GetFullName() != fmt.Sprintf("%s/%s", r.owner, r.repo) {
 		return nil, fmt.Errorf("repository mismatch")
 	}
@@ -688,12 +680,6 @@ func (r *githubRepository) CompareFiles(ctx context.Context, base, ref string) (
 	}
 
 	return changes, nil
-}
-
-func (r *githubRepository) shouldLintPullRequest() bool {
-	// TODO: Figure out how we want to determine this in practice.
-	val, ok := os.LookupEnv("GRAFANA_LINTING")
-	return ok && val == "true"
 }
 
 // ClearAllPullRequestFileComments clears all comments on a pull request

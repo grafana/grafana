@@ -12,6 +12,7 @@ type Linter interface {
 
 type LinterFactory interface {
 	ConfigPath() string
+	IsEnabled() bool
 	NewFromConfig(cfg []byte) (Linter, error)
 	New() Linter
 }

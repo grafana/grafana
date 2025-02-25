@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"os"
 	"path"
 
 	"gopkg.in/yaml.v3"
@@ -28,7 +27,8 @@ import (
 var ErrNamespaceMismatch = errors.New("the file namespace does not match target namespace")
 
 type ParserFactory struct {
-	Client *ClientFactory
+	Client        *ClientFactory
+	LinterFactory lint.LinterFactory
 }
 
 func (f *ParserFactory) GetParser(ctx context.Context, repo repository.Reader) (*Parser, error) {
@@ -43,24 +43,21 @@ func (f *ParserFactory) GetParser(ctx context.Context, repo repository.Reader) (
 		client: client,
 		kinds:  kinds,
 	}
-	// TODO: Figure out how we want to determine this in practice.
-	linting, ok := os.LookupEnv("GRAFANA_LINTING")
-	if ok && linting == "true" {
-		linterFactory := lint.NewDashboardLinterFactory()
-		cfg, err := repo.Read(ctx, linterFactory.ConfigPath(), "")
 
+	if f.LinterFactory.IsEnabled() {
+		cfg, err := repo.Read(ctx, f.LinterFactory.ConfigPath(), "")
 		logger := logging.FromContext(ctx)
 		var linter lint.Linter
 		switch {
 		case err == nil:
 			logger.Info("linter config found", "config", string(cfg.Data))
-			linter, err = linterFactory.NewFromConfig(cfg.Data)
+			linter, err = f.LinterFactory.NewFromConfig(cfg.Data)
 			if err != nil {
 				return nil, fmt.Errorf("failed to create linter: %w", err)
 			}
 		case apierrors.IsNotFound(err):
 			logger.Info("no linter config found, using default")
-			linter = linterFactory.New()
+			linter = f.LinterFactory.New()
 		default:
 			return nil, fmt.Errorf("failed to read linter config: %w", err)
 		}
