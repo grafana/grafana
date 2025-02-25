@@ -112,8 +112,8 @@ func NewAPIBuilder(
 ) *APIBuilder {
 	clientFactory := resources.NewFactory(configProvider)
 
-	// HACK: Assume is only public if it is not HTTP
-	isPublic := !strings.HasPrefix(urlProvider(""), "http://")
+	// HACK: Assume is only public if it is HTTPS
+	isPublic := strings.HasPrefix(urlProvider(""), "https://")
 
 	return &APIBuilder{
 		urlProvider:       urlProvider,

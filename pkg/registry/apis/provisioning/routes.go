@@ -149,7 +149,7 @@ func (b *APIBuilder) handleSettings(w http.ResponseWriter, r *http.Request) {
 	settings := provisioning.RepositoryViewList{
 		Items:                     make([]provisioning.RepositoryView, len(all)),
 		LegacyStorage:             dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, b.storageStatus),
-		GenerateDashboardPreviews: b.render != nil && b.render.IsAvailable(ctx),
+		GenerateDashboardPreviews: b.render != nil && b.render.IsAvailable(ctx) && b.isPublic,
 		GithubWebhooks:            b.isPublic,
 	}
 
