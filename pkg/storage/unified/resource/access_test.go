@@ -57,7 +57,7 @@ func TestAuthzLimitedClient_Compile(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, checker)
 
-		result := checker("namespace", "name", "folder")
+		result := checker("name", "folder")
 		assert.Equal(t, test.expected, result)
 	}
 }
