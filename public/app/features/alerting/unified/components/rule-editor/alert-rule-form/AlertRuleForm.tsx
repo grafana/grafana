@@ -96,7 +96,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
   const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
 
   const defaultValues: RuleFormValues = useMemo(() => {
-    // If we have an existing AND a prefil, then we're coming from the restore dialog
+    // If we have an existing AND a prefill, then we're coming from the restore dialog
     // and we want to merge the two
     if (existing && prefill) {
       return { ...formValuesFromExistingRule(existing), ...formValuesFromPrefill(prefill) };
