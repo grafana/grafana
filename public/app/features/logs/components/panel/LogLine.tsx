@@ -77,7 +77,7 @@ const Log = ({ displayedFields, log, showTime, styles }: LogProps) => {
       {displayedFields.length > 0 ? (
         displayedFields.map((field) =>
           field === LOG_LINE_BODY_FIELD_NAME ? (
-            <span className="field prism-syntax-highlight" dangerouslySetInnerHTML={{ __html: log.highlightedBody }} />
+            <span className="field log-syntax-highlight" dangerouslySetInnerHTML={{ __html: log.highlightedBody }} />
           ) : (
             <span className="field" title={field} key={field}>
               {getDisplayedFieldValue(field, log)}
@@ -85,7 +85,7 @@ const Log = ({ displayedFields, log, showTime, styles }: LogProps) => {
           )
         )
       ) : (
-        <span className="field prism-syntax-highlight" dangerouslySetInnerHTML={{ __html: log.highlightedBody }} />
+        <span className="field log-syntax-highlight" dangerouslySetInnerHTML={{ __html: log.highlightedBody }} />
       )}
     </>
   );
@@ -142,6 +142,17 @@ export const getStyles = (theme: GrafanaTheme2) => {
           position: 'absolute',
           top: -3,
           width: '100%',
+        },
+      },
+      '& .log-syntax-highlight': {
+        '.token.log-token-string': {
+          color: theme.colors.text.maxContrast,
+        },
+        '.token.log-token-number': {
+          color: theme.colors.success.text,
+        },
+        '.token.log-token-label': {
+          color: theme.colors.text.secondary,
         },
       },
     }),
