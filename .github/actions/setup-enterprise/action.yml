@@ -27,10 +27,7 @@ runs:
       uses: grafana/shared-workflows/actions/get-vault-secrets@get-vault-secrets-v1.0.1
       with:
         vault_instance: ${{ inputs.vault-instance }}
-        repo_secrets: |
-          APP_ID=${{ inputs.vault-path }}/${{ inputs.github-app-name }}/app-id
-          APP_INSTALLATION_ID=${{ inputs.vault-path }}/${{ inputs.github-app-name }}/app-installation-id
-          PRIVATE_KEY=${{ inputs.vault-path }}/${{ inputs.github-app-name }}/private-key
+        repo_secrets: APP_ID=${{ inputs.vault-path }}/${{ inputs.github-app-name }}/app-id|APP_INSTALLATION_ID=${{ inputs.vault-path }}/${{ inputs.github-app-name }}/app-installation-id|PRIVATE_KEY=${{ inputs.vault-path }}/${{ inputs.github-app-name }}/private-key
 
     - name: Generate GitHub App token
       id: generate_token
