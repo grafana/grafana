@@ -97,30 +97,31 @@ export function SetupWarnings() {
   return (
     <>
       {missingFeatures.length > 0 && (
-        <Alert title="Provisioning Setup Error" severity="error">
-          {missingFeatures.map((feature) => (
-            <Text key={feature} element="p">
-              Missing required feature toggle: <strong>{feature}</strong>
-            </Text>
-          ))}
-        </Alert>
+        <>
+          <Alert title="Provisioning Setup Error" severity="error">
+            {missingFeatures.map((feature) => (
+              <Text key={feature} element="p">
+                Missing required feature toggle: <strong>{feature}</strong>
+              </Text>
+            ))}
+          </Alert>
+          <Collapse
+            isOpen={isCustomIniOpen}
+            label="Working custom.ini for local testing"
+            onToggle={handleCustomIniToggle}
+            collapsible
+          >
+            <Alert severity="info" title="">
+              <pre>
+                <code>{custom_ini}</code>
+              </pre>
+              <Text element="h5">
+                NOTE: the above config is <strong>not</strong> this machine's config
+              </Text>
+            </Alert>
+          </Collapse>
+        </>
       )}
-
-      <Collapse
-        isOpen={isCustomIniOpen}
-        label="Working custom.ini for local testing"
-        onToggle={handleCustomIniToggle}
-        collapsible
-      >
-        <Alert severity="info" title="">
-          <pre>
-            <code>{custom_ini}</code>
-          </pre>
-          <Text element="h5">
-            NOTE: the above config is <strong>not</strong> this machine's config
-          </Text>
-        </Alert>
-      </Collapse>
 
       {(settings.data?.generateDashboardPreviews === false || settings.data?.githubWebhooks === false) && (
         <Alert severity="info" title="Some features are currently unavailable">
