@@ -6,6 +6,7 @@ import {
   ReducerID,
   standardEditorsRegistry,
   identityOverrideProcessor,
+  FieldConfigProperty,
 } from '@grafana/data';
 import { TableCellOptions, TableCellDisplayMode, defaultTableFieldOptions, TableCellHeight } from '@grafana/schema';
 
@@ -23,6 +24,11 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
   .setPanelChangeHandler(tablePanelChangedHandler)
   .setMigrationHandler(tableMigrationHandler)
   .useFieldConfig({
+    standardOptions: {
+      [FieldConfigProperty.Actions]: {
+        hideFromDefaults: false,
+      },
+    },
     useCustomConfig: (builder) => {
       builder
         .addNumberInput({
