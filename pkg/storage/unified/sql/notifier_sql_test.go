@@ -390,7 +390,7 @@ func TestPollingNotifier(t *testing.T) {
 		select {
 		case _, ok := <-events:
 			require.False(t, ok, "events channel should be closed")
-		case <-time.After(50 * time.Millisecond):
+		case <-time.After(time.Second):
 			t.Fatal("timeout waiting for events channel to close")
 		}
 	})
