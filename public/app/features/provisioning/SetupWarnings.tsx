@@ -47,13 +47,41 @@ function CodeBlockWithCopy({ code, className }: CodeBlockWithCopyProps) {
   );
 }
 
+interface InstructionStep {
+  title: string;
+  description?: string;
+  code?: string;
+}
+
 interface FeatureInfo {
   title: string;
   description: string;
-  configTitle?: string;
-  configInstructions?: string;
-  configCode?: string;
+  steps: InstructionStep[];
   requiresPublicAccess: boolean;
+}
+
+function InstructionStepComponent({
+  step,
+  index,
+  totalSteps,
+}: {
+  step: InstructionStep;
+  index: number;
+  totalSteps: number;
+}) {
+  const styles = useStyles2(getStyles);
+
+  return (
+    <Box marginBottom={3}>
+      <Text element="h5">{totalSteps > 1 ? `Step ${index + 1}: ${step.title}` : step.title}</Text>
+      {step.description && (
+        <Box marginY={1}>
+          <div className={styles.stepDescription} dangerouslySetInnerHTML={{ __html: step.description }} />
+        </Box>
+      )}
+      {step.code && <CodeBlockWithCopy code={step.code} />}
+    </Box>
+  );
 }
 
 interface InstructionsModalProps {
@@ -67,37 +95,31 @@ function InstructionsModal({ feature, isOpen, onDismiss }: InstructionsModalProp
     return null;
   }
 
+  // Combine feature steps with public access steps if required
+  const allSteps = [...feature.steps];
+
+  if (feature.requiresPublicAccess) {
+    allSteps.push(
+      {
+        title: 'Set up public access to your local machine',
+        description:
+          "You need a public URL for your local Grafana instance. We recommend using <a href='https://ngrok.com/' target='_blank' rel='noopener noreferrer'>ngrok</a> (click to visit website), but you can use any similar service:",
+        code: ngrok_example,
+      },
+      {
+        title: 'Configure the root_url in your custom.ini',
+        description: 'Update your custom.ini with the ngrok URL:',
+        code: root_url_ini,
+      }
+    );
+  }
+
   return (
     <Modal title={`Configure ${feature.title}`} isOpen={isOpen} onDismiss={onDismiss}>
-      <Box padding={2}>
-        {feature.configTitle && (
-          <Box marginBottom={2}>
-            <Text element="h6">{feature.configTitle}</Text>
-          </Box>
-        )}
-
-        {feature.configInstructions && (
-          <Box marginBottom={2}>
-            <Text element="h6">{feature.configInstructions}</Text>
-          </Box>
-        )}
-
-        {feature.configCode && <CodeBlockWithCopy code={feature.configCode} />}
-
-        {feature.requiresPublicAccess && (
-          <Box marginTop={3}>
-            <Text element="h6">Public Access Required</Text>
-            <Text element="p">
-              This feature requires public access to your local machine. ngrok is a recommended tool for this:
-            </Text>
-            <CodeBlockWithCopy code={ngrok_example} />
-
-            <Box marginTop={2} marginBottom={1}>
-              <Text element="h6">After setting up ngrok, configure the root_url in your custom.ini:</Text>
-            </Box>
-            <CodeBlockWithCopy code={root_url_ini} />
-          </Box>
-        )}
+      <Box padding={3}>
+        {allSteps.map((step, index) => (
+          <InstructionStepComponent key={index} step={step} index={index} totalSteps={allSteps.length} />
+        ))}
       </Box>
     </Modal>
   );
@@ -217,8 +239,13 @@ export function SetupWarnings() {
   const missingFeaturesInfo: FeatureInfo = {
     title: 'Required Features',
     description: 'Configure these required feature toggles for proper functionality',
-    configInstructions: 'Add the following to your custom.ini file:',
-    configCode: custom_ini,
+    steps: [
+      {
+        title: 'Update your custom.ini file',
+        description: 'Add the following configuration to enable required features:',
+        code: custom_ini,
+      },
+    ],
     requiresPublicAccess: false,
   };
 
@@ -229,9 +256,19 @@ export function SetupWarnings() {
     featuresData.push({
       title: 'Dashboard Preview Generation',
       description: 'This feature generates dashboard preview images in pull requests.',
-      configTitle: 'Rendering Service',
-      configInstructions: 'To connect to the rendering service locally, you need to configure the following:',
-      configCode: render_ini,
+      steps: [
+        {
+          title: 'Install the Grafana Image Renderer',
+          description:
+            "You need to run the grafana-image-renderer service locally. Check out the <a href='https://github.com/grafana/grafana-image-renderer' target='_blank' rel='noopener noreferrer'>grafana-image-renderer GitHub repository</a> for more details:",
+          code: 'git clone https://github.com/grafana/grafana-image-renderer.git\ncd grafana-image-renderer\nnpm install\nnpm run build\nnpm run start',
+        },
+        {
+          title: 'Configure the rendering service',
+          description: 'Connect to the rendering service locally with these settings:',
+          code: render_ini,
+        },
+      ],
       requiresPublicAccess: true,
     });
   }
@@ -241,6 +278,7 @@ export function SetupWarnings() {
       title: 'Github Webhook Integration',
       description:
         'This feature automatically syncs resources from GitHub when commits are pushed to the configured branch, eliminating the need for regular polling intervals. It also enhances pull requests by automatically adding preview links and dashboard snapshots.',
+      steps: [],
       requiresPublicAccess: true,
     });
   }
@@ -322,6 +360,17 @@ const getStyles = (theme: GrafanaTheme2) => {
     expandedRow: css({
       backgroundColor: theme.colors.background.secondary,
       borderRadius: theme.shape.borderRadius(),
+    }),
+    stepDescription: css({
+      '& a': {
+        color: theme.colors.primary.text,
+        textDecoration: 'underline',
+        fontWeight: 500,
+        '&:hover': {
+          color: theme.colors.primary.shade,
+          textDecoration: 'underline',
+        },
+      },
     }),
   };
 };
