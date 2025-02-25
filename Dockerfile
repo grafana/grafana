@@ -3,13 +3,8 @@
 # to maintain formatting of multiline commands in vscode, add the following to settings.json:
 # "docker.languageserver.formatter.ignoreMultilineInstructions": true
 
-<<<<<<< HEAD
-ARG BASE_IMAGE=alpine:3.19.1
-ARG JS_IMAGE=node:20-alpine
-=======
 ARG BASE_IMAGE=alpine:3.21
-ARG JS_IMAGE=node:22-alpine
->>>>>>> a7ecb19c314 (Chore: Update base alpine docker image (#101320))
+ARG JS_IMAGE=node:20-alpine
 ARG JS_PLATFORM=linux/amd64
 ARG GO_IMAGE=golang:1.23.5-alpine
 
