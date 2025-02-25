@@ -816,13 +816,23 @@ func (r *githubRepository) deleteWebhook(ctx context.Context) error {
 	return nil
 }
 
+func (r *githubRepository) supportsWebhook() bool {
+	u, err := url.Parse(r.webhookURL)
+	if err != nil || u.Hostname() == "localhost" {
+		return false
+	}
+	return true
+}
+
 func (r *githubRepository) OnCreate(ctx context.Context) (*provisioning.WebhookStatus, error) {
+	if !r.supportsWebhook() {
+		return nil, nil
+	}
 	ctx, _ = r.logger(ctx, "")
 	hook, err := r.createWebhook(ctx)
 	if err != nil {
 		return nil, err
 	}
-
 	return &provisioning.WebhookStatus{
 		ID:               hook.ID,
 		URL:              hook.URL,
@@ -832,6 +842,9 @@ func (r *githubRepository) OnCreate(ctx context.Context) (*provisioning.WebhookS
 }
 
 func (r *githubRepository) OnUpdate(ctx context.Context) (*provisioning.WebhookStatus, error) {
+	if !r.supportsWebhook() {
+		return nil, nil
+	}
 	ctx, _ = r.logger(ctx, "")
 	hook, _, err := r.updateWebhook(ctx)
 	if err != nil {

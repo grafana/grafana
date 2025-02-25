@@ -451,6 +451,7 @@ export const {
   useDeleteItemsMutation,
   useGetAffectedItemsQuery,
   useGetFolderQuery,
+  useLazyGetFolderQuery,
   useMoveFolderMutation,
   useMoveItemsMutation,
   useNewFolderMutation,
