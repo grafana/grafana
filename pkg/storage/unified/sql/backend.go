@@ -35,11 +35,12 @@ type Backend interface {
 }
 
 type BackendOptions struct {
-	DBProvider      db.DBProvider
-	Tracer          trace.Tracer
-	PollingInterval time.Duration
-	WatchBufferSize int
-	IsHA            bool
+	DBProvider            db.DBProvider
+	Tracer                trace.Tracer
+	PollingInterval       time.Duration
+	WatchBufferSize       int
+	IsHA                  bool
+	unifiedStorageMetrics resource.StorageApiMetrics
 }
 
 func NewBackend(opts BackendOptions) (Backend, error) {
@@ -58,15 +59,16 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 		opts.WatchBufferSize = defaultWatchBufferSize
 	}
 	return &backend{
-		isHA:            opts.IsHA,
-		done:            ctx.Done(),
-		cancel:          cancel,
-		log:             log.New("sql-resource-server"),
-		tracer:          opts.Tracer,
-		dbProvider:      opts.DBProvider,
-		pollingInterval: opts.PollingInterval,
-		watchBufferSize: opts.WatchBufferSize,
-		batchLock:       &batchLock{running: make(map[string]bool)},
+		isHA:                  opts.IsHA,
+		done:                  ctx.Done(),
+		cancel:                cancel,
+		log:                   log.New("sql-resource-server"),
+		tracer:                opts.Tracer,
+		dbProvider:            opts.DBProvider,
+		pollingInterval:       opts.PollingInterval,
+		watchBufferSize:       opts.WatchBufferSize,
+		unifiedStorageMetrics: opts.unifiedStorageMetrics,
+		batchLock:             &batchLock{running: make(map[string]bool)},
 	}, nil
 }
 
@@ -81,8 +83,9 @@ type backend struct {
 	initErr  error
 
 	// o11y
-	log    log.Logger
-	tracer trace.Tracer
+	log                   log.Logger
+	tracer                trace.Tracer
+	unifiedStorageMetrics resource.StorageApiMetrics
 
 	// database
 	dbProvider db.DBProvider

@@ -230,10 +230,6 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 	}
 
 	logger := slog.Default().With("logger", "resource-server")
-	// register metrics
-	if err := prometheus.Register(NewStorageMetrics()); err != nil {
-		logger.Warn("failed to register storage metrics", "error", err)
-	}
 
 	// Make this cancelable
 	ctx, cancel := context.WithCancel(context.Background())

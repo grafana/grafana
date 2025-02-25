@@ -30,8 +30,9 @@ type pollingNotifier struct {
 	pollingInterval time.Duration
 	watchBufferSize int
 
-	log    log.Logger
-	tracer trace.Tracer
+	log                   log.Logger
+	tracer                trace.Tracer
+	unifiedStorageMetrics resource.StorageApiMetrics
 
 	batchLock     *batchLock
 	listLatestRVs func(ctx context.Context) (groupResourceRV, error)
@@ -45,8 +46,9 @@ type pollingNotifierConfig struct {
 	pollingInterval time.Duration
 	watchBufferSize int
 
-	log    log.Logger
-	tracer trace.Tracer
+	log                   log.Logger
+	tracer                trace.Tracer
+	unifiedStorageMetrics resource.StorageApiMetrics
 
 	batchLock     *batchLock
 	listLatestRVs func(ctx context.Context) (groupResourceRV, error)
@@ -91,15 +93,16 @@ func newPollingNotifier(cfg *pollingNotifierConfig) (*pollingNotifier, error) {
 		return nil, fmt.Errorf("invalid polling notifier config: %w", err)
 	}
 	return &pollingNotifier{
-		dialect:         cfg.dialect,
-		pollingInterval: cfg.pollingInterval,
-		watchBufferSize: cfg.watchBufferSize,
-		log:             cfg.log,
-		tracer:          cfg.tracer,
-		batchLock:       cfg.batchLock,
-		listLatestRVs:   cfg.listLatestRVs,
-		historyPoll:     cfg.historyPoll,
-		done:            cfg.done,
+		dialect:               cfg.dialect,
+		pollingInterval:       cfg.pollingInterval,
+		watchBufferSize:       cfg.watchBufferSize,
+		log:                   cfg.log,
+		tracer:                cfg.tracer,
+		batchLock:             cfg.batchLock,
+		listLatestRVs:         cfg.listLatestRVs,
+		historyPoll:           cfg.historyPoll,
+		done:                  cfg.done,
+		unifiedStorageMetrics: cfg.unifiedStorageMetrics,
 	}, nil
 }
 
@@ -169,7 +172,7 @@ func (p *pollingNotifier) poll(ctx context.Context, grp string, res string, sinc
 	if err != nil {
 		return 0, fmt.Errorf("poll history: %w", err)
 	}
-	resource.NewStorageMetrics().PollerLatency.Observe(time.Since(start).Seconds())
+	p.unifiedStorageMetrics.PollerLatency.Observe(time.Since(start).Seconds())
 
 	var nextRV int64
 	for _, rec := range records {

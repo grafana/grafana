@@ -16,13 +16,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/authz"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 )
 
 // NewModule returns an instance of a ModuleServer, responsible for managing
 // dskit modules (services).
-func NewModule(opts Options, apiOpts api.ServerOptions, features featuremgmt.FeatureToggles, cfg *setting.Cfg) (*ModuleServer, error) {
-	s, err := newModuleServer(opts, apiOpts, features, cfg)
+func NewModule(opts Options, apiOpts api.ServerOptions, features featuremgmt.FeatureToggles, cfg *setting.Cfg, unifiedStorageMetrics resource.StorageApiMetrics) (*ModuleServer, error) {
+	s, err := newModuleServer(opts, apiOpts, features, cfg, unifiedStorageMetrics)
 	if err != nil {
 		return nil, err
 	}
@@ -34,22 +35,23 @@ func NewModule(opts Options, apiOpts api.ServerOptions, features featuremgmt.Fea
 	return s, nil
 }
 
-func newModuleServer(opts Options, apiOpts api.ServerOptions, features featuremgmt.FeatureToggles, cfg *setting.Cfg) (*ModuleServer, error) {
+func newModuleServer(opts Options, apiOpts api.ServerOptions, features featuremgmt.FeatureToggles, cfg *setting.Cfg, unifiedStorageMetrics resource.StorageApiMetrics) (*ModuleServer, error) {
 	rootCtx, shutdownFn := context.WithCancel(context.Background())
 
 	s := &ModuleServer{
-		opts:             opts,
-		apiOpts:          apiOpts,
-		context:          rootCtx,
-		shutdownFn:       shutdownFn,
-		shutdownFinished: make(chan struct{}),
-		log:              log.New("base-server"),
-		features:         features,
-		cfg:              cfg,
-		pidFile:          opts.PidFile,
-		version:          opts.Version,
-		commit:           opts.Commit,
-		buildBranch:      opts.BuildBranch,
+		opts:                  opts,
+		apiOpts:               apiOpts,
+		context:               rootCtx,
+		shutdownFn:            shutdownFn,
+		shutdownFinished:      make(chan struct{}),
+		log:                   log.New("base-server"),
+		features:              features,
+		cfg:                   cfg,
+		pidFile:               opts.PidFile,
+		version:               opts.Version,
+		commit:                opts.Commit,
+		buildBranch:           opts.BuildBranch,
+		unifiedStorageMetrics: unifiedStorageMetrics,
 	}
 
 	return s, nil
@@ -62,15 +64,16 @@ type ModuleServer struct {
 	opts    Options
 	apiOpts api.ServerOptions
 
-	features         featuremgmt.FeatureToggles
-	context          context.Context
-	shutdownFn       context.CancelFunc
-	log              log.Logger
-	cfg              *setting.Cfg
-	shutdownOnce     sync.Once
-	shutdownFinished chan struct{}
-	isInitialized    bool
-	mtx              sync.Mutex
+	features              featuremgmt.FeatureToggles
+	context               context.Context
+	shutdownFn            context.CancelFunc
+	log                   log.Logger
+	cfg                   *setting.Cfg
+	shutdownOnce          sync.Once
+	shutdownFinished      chan struct{}
+	isInitialized         bool
+	mtx                   sync.Mutex
+	unifiedStorageMetrics resource.StorageApiMetrics
 
 	pidFile     string
 	version     string
@@ -135,7 +138,7 @@ func (s *ModuleServer) Run() error {
 		if err != nil {
 			return nil, err
 		}
-		return sql.ProvideUnifiedStorageGrpcService(s.cfg, s.features, nil, s.log, nil, docBuilders)
+		return sql.ProvideUnifiedStorageGrpcService(s.cfg, s.features, nil, s.log, nil, docBuilders, s.unifiedStorageMetrics)
 	})
 
 	m.RegisterModule(modules.ZanzanaServer, func() (services.Service, error) {
