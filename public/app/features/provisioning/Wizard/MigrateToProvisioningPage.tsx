@@ -4,13 +4,13 @@ import { useNavigate } from 'react-router-dom-v5-compat';
 import { Page } from 'app/core/components/Page/Page';
 
 import { SetupWarnings } from '../SetupWarnings';
-import { useGetFrontendSettingsQuery } from '../api';
 import { PROVISIONING_URL } from '../constants';
+import { useFrontendSettingsWithDelay } from '../hooks/useFrontendSettingsWithDelay';
 
 import { ProvisioningWizard } from './ProvisioningWizard';
 
 export default function MigrateToProvisioningPage() {
-  const settingsQuery = useGetFrontendSettingsQuery();
+  const settingsQuery = useFrontendSettingsWithDelay();
   const navigate = useNavigate();
   const configChecked = useRef(false);
 

@@ -23,15 +23,16 @@ import OnboardingPage from './OnboardingPage';
 import { SetupWarnings } from './SetupWarnings';
 import { StatusBadge } from './StatusBadge';
 import { SyncRepository } from './SyncRepository';
-import { Repository, ResourceCount, useDeletecollectionRepositoryMutation, useGetFrontendSettingsQuery } from './api';
+import { Repository, ResourceCount, useDeletecollectionRepositoryMutation } from './api';
 import { NEW_URL, PROVISIONING_URL } from './constants';
 import { useRepositoryList } from './hooks';
+import { useFrontendSettingsWithDelay } from './hooks/useFrontendSettingsWithDelay';
 
 const appEvents = getAppEvents();
 
 export default function RepositoryListPage() {
   const [items, isLoading] = useRepositoryList({ watch: true });
-  const settings = useGetFrontendSettingsQuery();
+  const settings = useFrontendSettingsWithDelay();
   const [deleteAll, deleteAllResult] = useDeletecollectionRepositoryMutation();
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
@@ -51,6 +52,8 @@ export default function RepositoryListPage() {
   const onConfirmDelete = () => {
     deleteAll({ deleteOptions: {} });
     setShowDeleteModal(false);
+
+    settings.refetchWithDelay(2000);
   };
 
   return (
@@ -62,7 +65,9 @@ export default function RepositoryListPage() {
             title="Legacy storage detected"
             severity="error"
             buttonContent={<>Remove all configured repositories</>}
-            onRemove={() => setShowDeleteModal(true)}
+            onRemove={() => {
+              setShowDeleteModal(true);
+            }}
           >
             Configured repositories will not work while running legacy storage.
           </Alert>
