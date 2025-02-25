@@ -1,10 +1,10 @@
 import { useLocalStorage } from 'react-use';
-import { useState } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 import { FeatureToggles, GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Alert, Text, Collapse, Box, Button, InteractiveTable, IconButton, Modal } from '@grafana/ui';
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { useStyles2 } from '@grafana/ui';
 
 import { useGetFrontendSettingsQuery } from './api';
@@ -18,6 +18,7 @@ interface CodeBlockWithCopyProps {
 function CodeBlockWithCopy({ code, className }: CodeBlockWithCopyProps) {
   const styles = useStyles2(getStyles);
   const [copied, setCopied] = useState(false);
+  const codeBlockRef = useRef<HTMLPreElement>(null);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(code);
@@ -26,13 +27,20 @@ function CodeBlockWithCopy({ code, className }: CodeBlockWithCopyProps) {
     // Reset the copied state after a delay
     setTimeout(() => {
       setCopied(false);
-    }, 500);
+    }, 1500);
   };
 
   return (
     <div className={`${styles.codeBlockWithCopy} ${className || ''}`}>
-      <pre className={styles.codeBlock}>
+      <pre className={cx(styles.codeBlock, copied && styles.codeCopied)} ref={codeBlockRef}>
         <code>{code}</code>
+        {copied && (
+          <div className={styles.copyOverlay}>
+            <span className={styles.copyMessage}>
+              <i className="fa fa-check" /> Copied!
+            </span>
+          </div>
+        )}
       </pre>
       <Button
         icon={copied ? 'check' : 'copy'}
@@ -41,7 +49,7 @@ function CodeBlockWithCopy({ code, className }: CodeBlockWithCopyProps) {
         className={styles.copyButton}
         onClick={handleCopy}
         aria-label={copied ? 'Copied to clipboard' : 'Copy to clipboard'}
-        tooltip={copied ? 'Copied to clipboard' : 'Copy to clipboard'}
+        tooltip={copied ? 'Copied to clipboard' : 'Copy to clipboard (Ctrl+C)'}
       />
     </div>
   );
@@ -60,18 +68,44 @@ interface FeatureInfo {
   requiresPublicAccess: boolean;
 }
 
-function InstructionStepComponent({ step, totalSteps }: { step: InstructionStep; totalSteps: number }) {
+interface InstructionStepComponentProps {
+  step: InstructionStep;
+  totalSteps: number;
+  copied: boolean;
+  onCopy: () => void;
+}
+
+function InstructionStepComponent({ step, totalSteps, copied, onCopy }: InstructionStepComponentProps) {
   const styles = useStyles2(getStyles);
+  const codeBlockRef = useRef<HTMLDivElement>(null);
 
   return (
-    <Box marginBottom={3}>
-      {step.description && (
-        <Box marginY={1}>
-          <div className={styles.stepDescription} dangerouslySetInnerHTML={{ __html: step.description }} />
-        </Box>
+    <div>
+      <div dangerouslySetInnerHTML={{ __html: step.description || '' }} />
+      {step.code && (
+        <div ref={codeBlockRef} className={cx(styles.codeBlockContainer, copied && styles.codeCopiedContainer)}>
+          <pre className={cx(styles.codeBlock, copied && styles.codeCopied)}>
+            <code>{step.code}</code>
+            {copied && (
+              <div className={styles.copyOverlay}>
+                <span className={styles.copyMessage}>
+                  <i className="fa fa-check" /> Copied to clipboard!
+                </span>
+              </div>
+            )}
+          </pre>
+          <Button
+            icon={copied ? 'check' : 'copy'}
+            variant={copied ? 'success' : 'secondary'}
+            size="sm"
+            className={styles.copyButton}
+            onClick={onCopy}
+            aria-label={copied ? 'Copied to clipboard' : 'Copy to clipboard'}
+            tooltip={copied ? 'Copied to clipboard' : 'Copy to clipboard (Ctrl+C)'}
+          />
+        </div>
       )}
-      {step.code && <CodeBlockWithCopy code={step.code} />}
-    </Box>
+    </div>
   );
 }
 
@@ -84,6 +118,8 @@ interface InstructionsModalProps {
 function InstructionsModal({ feature, isOpen, onDismiss }: InstructionsModalProps) {
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const styles = useStyles2(getStyles);
+  const [copied, setCopied] = useState(false);
+  const codeBlockRef = useRef<HTMLDivElement>(null);
 
   if (!isOpen) {
     return null;
@@ -111,51 +147,182 @@ function InstructionsModal({ feature, isOpen, onDismiss }: InstructionsModalProp
   const totalSteps = allSteps.length;
   const currentStep = allSteps[currentStepIndex];
 
-  const handleNext = () => {
+  const handleNext = useCallback(() => {
     if (currentStepIndex < totalSteps - 1) {
       setCurrentStepIndex(currentStepIndex + 1);
     }
-  };
+  }, [currentStepIndex, totalSteps]);
 
-  const handlePrevious = () => {
+  const handlePrevious = useCallback(() => {
     if (currentStepIndex > 0) {
       setCurrentStepIndex(currentStepIndex - 1);
     }
+  }, [currentStepIndex]);
+
+  const handleStepClick = (index: number) => {
+    setCurrentStepIndex(index);
   };
 
+  // Copy current step's code with Ctrl+C
+  const copyCurrentStepCode = useCallback(() => {
+    if (currentStep.code) {
+      navigator.clipboard.writeText(currentStep.code);
+      setCopied(true);
+
+      setTimeout(() => {
+        setCopied(false);
+      }, 1500);
+
+      return true; // Indicate that we handled the copy
+    }
+    return false; // No code to copy
+  }, [currentStep]);
+
+  // Handle keyboard shortcuts
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Handle Ctrl+C for copying code
+      if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
+        // Check if there's a text selection first
+        const selectedText = window.getSelection()?.toString();
+
+        // If there's no text selection or it's empty, copy the code
+        if (!selectedText) {
+          const handled = copyCurrentStepCode();
+          if (handled) {
+            // Prevent default only if we handled the copy
+            e.preventDefault();
+          }
+        }
+        // If there is a text selection, let the browser handle the copy
+        return;
+      }
+
+      // Only handle arrow keys if no input elements are focused
+      if (document.activeElement?.tagName === 'INPUT' || document.activeElement?.tagName === 'TEXTAREA') {
+        return;
+      }
+
+      switch (e.key) {
+        case 'ArrowLeft':
+        case 'ArrowUp':
+          handlePrevious();
+          e.preventDefault();
+          break;
+        case 'ArrowRight':
+        case 'ArrowDown':
+          handleNext();
+          e.preventDefault();
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+
+    // Clean up event listener on unmount or when modal closes
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen, handleNext, handlePrevious, copyCurrentStepCode]);
+
   return (
-    <Modal title={`Configure ${feature.title}`} isOpen={isOpen} onDismiss={onDismiss}>
-      <Box padding={3}>
-        {/* Step title and indicator */}
-        <Box marginBottom={3}>
-          <Text element="h4">{currentStep.title}</Text>
+    <Modal title={`Configure ${feature.title}`} isOpen={isOpen} onDismiss={onDismiss} className={styles.largeModal}>
+      <div className={styles.modalContent}>
+        {/* Step indicator sidebar - always shown */}
+        <div className={styles.stepSidebar}>
+          <div className={styles.timelineTrack}>
+            {allSteps.map((step, index) => (
+              <div key={index} className={styles.timelineItem}>
+                {/* Connector line before the first step */}
+                {index === 0 && <div className={styles.timelineConnectorStart}></div>}
+
+                {/* Step indicator dot */}
+                <div
+                  className={cx(
+                    styles.timelineStepIndicator,
+                    index < currentStepIndex && styles.completedStep,
+                    index === currentStepIndex && styles.activeStep,
+                    index > currentStepIndex && styles.futureStep
+                  )}
+                  onClick={() => handleStepClick(index)}
+                >
+                  {index < currentStepIndex && <span className={styles.checkmark}>✓</span>}
+                </div>
+
+                {/* Step title */}
+                <div
+                  className={cx(
+                    styles.timelineStepName,
+                    index < currentStepIndex && styles.completedStepName,
+                    index === currentStepIndex && styles.activeStepName,
+                    index > currentStepIndex && styles.futureStepName
+                  )}
+                  onClick={() => handleStepClick(index)}
+                >
+                  {step.title}
+                </div>
+
+                {/* Connector line after each step except the last */}
+                {index < allSteps.length - 1 && (
+                  <div
+                    className={cx(
+                      styles.timelineConnector,
+                      index < currentStepIndex && styles.completedConnector,
+                      index === currentStepIndex && styles.activeConnector,
+                      index > currentStepIndex && styles.futureConnector
+                    )}
+                  ></div>
+                )}
+
+                {/* Connector line after the last step */}
+                {index === allSteps.length - 1 && <div className={styles.timelineConnectorEnd}></div>}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Main content */}
+        <div className={styles.stepContent}>
+          <div className={styles.contentWrapper}>
+            <InstructionStepComponent
+              step={currentStep}
+              totalSteps={totalSteps}
+              copied={copied}
+              onCopy={copyCurrentStepCode}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Fixed navigation footer */}
+      <div className={styles.navigationFooter}>
+        <div className={styles.navigationButtons}>
           {totalSteps > 1 && (
-            <Text element="p">
-              Step {currentStepIndex + 1} of {totalSteps}
-            </Text>
-          )}
-        </Box>
-
-        {/* Current step content */}
-        <InstructionStepComponent step={currentStep} totalSteps={totalSteps} />
-
-        {/* Navigation buttons */}
-        <Box display="flex" justifyContent="space-between" marginTop={3}>
-          <Button onClick={handlePrevious} variant="secondary" icon="angle-left" disabled={currentStepIndex === 0}>
-            Previous
-          </Button>
-
-          {currentStepIndex < totalSteps - 1 ? (
-            <Button onClick={handleNext} variant="primary" icon="angle-right">
-              Next
-            </Button>
-          ) : (
-            <Button onClick={onDismiss} variant="primary" icon="check">
-              Done
+            <Button onClick={handlePrevious} variant="secondary" icon="angle-left" disabled={currentStepIndex === 0}>
+              Previous
             </Button>
           )}
-        </Box>
-      </Box>
+
+          <div className={styles.keyboardHint}>
+            {totalSteps > 1 ? <span>Use ←↑→↓ arrow keys to navigate</span> : null}
+            {currentStep.code && <span>{totalSteps > 1 ? ' • ' : ''}Press Ctrl+C to copy code</span>}
+          </div>
+
+          <div className={styles.rightButtons}>
+            {totalSteps > 1 && currentStepIndex < totalSteps - 1 ? (
+              <Button onClick={handleNext} variant="primary" icon="angle-right">
+                Next
+              </Button>
+            ) : (
+              <Button onClick={onDismiss} variant="primary" icon="check">
+                Done
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
     </Modal>
   );
 }
@@ -378,13 +545,17 @@ const getStyles = (theme: GrafanaTheme2) => {
     featureTitle: css({
       marginBottom: theme.spacing(1),
     }),
-    codeBlock: css({
+    codeBlockSimple: css({
       marginBottom: 0,
       width: '100%',
     }),
     codeBlockWithCopy: css({
       position: 'relative',
       marginBottom: theme.spacing(2),
+      '&:focus': {
+        outline: `2px solid ${theme.colors.primary.border}`,
+        outlineOffset: '2px',
+      },
     }),
     copyButton: css({
       position: 'absolute',
@@ -406,6 +577,249 @@ const getStyles = (theme: GrafanaTheme2) => {
           textDecoration: 'underline',
         },
       },
+    }),
+    stepSidebar: css({
+      borderRight: `1px solid ${theme.colors.border.weak}`,
+      display: 'flex',
+      flexDirection: 'column',
+      padding: theme.spacing(2),
+      width: '280px',
+      overflowY: 'auto',
+    }),
+    timelineTrack: css({
+      display: 'flex',
+      flexDirection: 'column',
+      position: 'relative',
+      height: '100%',
+      paddingLeft: theme.spacing(1),
+    }),
+    timelineItem: css({
+      display: 'flex',
+      flexDirection: 'column',
+      position: 'relative',
+      marginBottom: theme.spacing(3),
+      '&:last-child': {
+        marginBottom: 0,
+      },
+    }),
+    timelineStepIndicator: css({
+      width: '16px',
+      height: '16px',
+      borderRadius: '50%',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: theme.colors.background.canvas,
+      border: `2px solid ${theme.colors.border.medium}`,
+      marginBottom: theme.spacing(1),
+      cursor: 'pointer',
+      zIndex: 2,
+      transition: 'all 0.2s ease',
+      fontSize: theme.typography.size.xs,
+    }),
+    timelineConnector: css({
+      position: 'absolute',
+      left: '8px',
+      top: '16px',
+      bottom: '-24px',
+      width: '2px',
+      backgroundColor: theme.colors.border.medium,
+      zIndex: 1,
+    }),
+    timelineConnectorStart: css({
+      position: 'absolute',
+      left: '8px',
+      top: '-16px',
+      height: '16px',
+      width: '2px',
+      backgroundColor: theme.colors.border.medium,
+      zIndex: 1,
+    }),
+    timelineConnectorEnd: css({
+      position: 'absolute',
+      left: '8px',
+      top: '16px',
+      height: '16px',
+      width: '2px',
+      backgroundColor: theme.colors.border.medium,
+      zIndex: 1,
+    }),
+    timelineStepName: css({
+      fontSize: theme.typography.size.sm,
+      fontWeight: theme.typography.fontWeightMedium,
+      marginLeft: theme.spacing(3),
+      cursor: 'pointer',
+      transition: 'all 0.2s ease',
+      wordBreak: 'break-word',
+    }),
+    activeStep: css({
+      backgroundColor: theme.colors.primary.main,
+      color: theme.colors.primary.contrastText,
+      borderColor: theme.colors.primary.main,
+      boxShadow: theme.shadows.z2,
+    }),
+    completedStep: css({
+      backgroundColor: theme.colors.success.main,
+      color: theme.colors.success.contrastText,
+      borderColor: theme.colors.success.main,
+    }),
+    futureStep: css({
+      opacity: 0.6,
+      filter: 'blur(0.5px)',
+    }),
+    activeStepName: css({
+      color: theme.colors.text.primary,
+    }),
+    completedStepName: css({
+      color: theme.colors.success.text,
+    }),
+    futureStepName: css({
+      opacity: 0.6,
+      filter: 'blur(0.5px)',
+    }),
+    completedConnector: css({
+      backgroundColor: theme.colors.success.main,
+    }),
+    activeConnector: css({
+      background: `linear-gradient(to bottom, ${theme.colors.success.main} 0%, ${theme.colors.border.medium} 100%)`,
+    }),
+    futureConnector: css({
+      opacity: 0.6,
+    }),
+    checkmark: css({
+      fontSize: theme.typography.size.xs,
+      fontWeight: theme.typography.fontWeightBold,
+    }),
+    stepContent: css({
+      display: 'flex',
+      flexDirection: 'column',
+      width: '100%',
+      overflowY: 'auto',
+    }),
+    contentWrapper: css({
+      padding: theme.spacing(3),
+      flexGrow: 1,
+    }),
+    navigationFooter: css({
+      borderTop: `1px solid ${theme.colors.border.weak}`,
+      padding: theme.spacing(2),
+      backgroundColor: theme.colors.background.primary,
+      position: 'sticky',
+      bottom: 0,
+      left: 0,
+      right: 0,
+      zIndex: 1,
+    }),
+    navigationButtons: css({
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      width: '100%',
+    }),
+    keyboardHint: css({
+      color: theme.colors.text.secondary,
+      fontSize: theme.typography.size.sm,
+      textAlign: 'center',
+      flex: 1,
+    }),
+    rightButtons: css({
+      display: 'flex',
+      justifyContent: 'flex-end',
+    }),
+    singleStepContent: css({
+      padding: theme.spacing(3),
+      minHeight: '200px',
+      maxHeight: 'calc(80vh - 120px)',
+      overflowY: 'auto',
+    }),
+    largeModal: css({
+      width: '90%',
+      maxWidth: '1000px',
+      height: 'auto',
+      maxHeight: '90vh',
+    }),
+    modalContent: css({
+      display: 'flex',
+      height: 'auto',
+      minHeight: '300px',
+      maxHeight: 'calc(80vh - 120px)',
+    }),
+    copyToast: css({
+      position: 'fixed',
+      bottom: '80px',
+      left: '50%',
+      transform: 'translateX(-50%)',
+      backgroundColor: theme.colors.success.main,
+      color: theme.colors.success.contrastText,
+      padding: `${theme.spacing(1)} ${theme.spacing(2)}`,
+      borderRadius: theme.shape.borderRadius(),
+      boxShadow: theme.shadows.z2,
+      zIndex: 1000,
+      animation: 'fadeIn 0.3s, fadeOut 0.5s 0.5s',
+      animationFillMode: 'forwards',
+      '@keyframes fadeIn': {
+        from: { opacity: 0 },
+        to: { opacity: 1 },
+      },
+      '@keyframes fadeOut': {
+        from: { opacity: 1 },
+        to: { opacity: 0 },
+      },
+    }),
+    codeBlockContainer: css({
+      position: 'relative',
+      marginTop: theme.spacing(2),
+      marginBottom: theme.spacing(2),
+      borderRadius: theme.shape.borderRadius(1),
+      overflow: 'hidden',
+      transition: 'all 0.2s ease-in-out',
+    }),
+    codeCopiedContainer: css({
+      boxShadow: `0 0 0 2px ${theme.colors.success.border}`,
+    }),
+    codeBlock: css({
+      position: 'relative',
+      backgroundColor: theme.colors.background.secondary,
+      color: theme.colors.text.primary,
+      padding: theme.spacing(2),
+      borderRadius: theme.shape.borderRadius(1),
+      overflow: 'auto',
+      fontFamily: theme.typography.fontFamilyMonospace,
+      fontSize: theme.typography.size.sm,
+      margin: 0,
+      transition: 'all 0.2s ease-in-out',
+    }),
+    codeCopied: css({
+      backgroundColor: theme.colors.success.transparent,
+    }),
+    copyOverlay: css({
+      position: 'absolute',
+      top: 0,
+      right: 0,
+      bottom: 0,
+      left: 0,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: 'rgba(0, 0, 0, 0.1)',
+      animation: 'fadeIn 0.2s, fadeOut 0.5s 1s',
+      animationFillMode: 'forwards',
+      '@keyframes fadeIn': {
+        from: { opacity: 0 },
+        to: { opacity: 1 },
+      },
+      '@keyframes fadeOut': {
+        from: { opacity: 1 },
+        to: { opacity: 0 },
+      },
+    }),
+    copyMessage: css({
+      backgroundColor: theme.colors.success.main,
+      color: theme.colors.success.contrastText,
+      padding: `${theme.spacing(1)} ${theme.spacing(2)}`,
+      borderRadius: theme.shape.borderRadius(),
+      fontWeight: theme.typography.fontWeightMedium,
+      boxShadow: theme.shadows.z2,
     }),
   };
 };
