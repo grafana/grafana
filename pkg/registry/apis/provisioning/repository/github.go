@@ -35,8 +35,6 @@ type githubRepository struct {
 
 	owner string
 	repo  string
-
-	ignorePullRequestsEvents bool
 }
 
 var (
@@ -53,7 +51,6 @@ func NewGitHub(
 	factory *pgh.Factory,
 	secrets secrets.Service,
 	webhookURL string,
-	ignorePullRequestsEvents bool,
 ) (*githubRepository, error) {
 	owner, repo, err := parseOwnerRepo(config.Spec.GitHub.URL)
 	if err != nil {
@@ -68,13 +65,12 @@ func NewGitHub(
 		token = string(decrypted)
 	}
 	return &githubRepository{
-		config:                   config,
-		gh:                       factory.New(ctx, token), // TODO, baseURL from config
-		secrets:                  secrets,
-		webhookURL:               webhookURL,
-		owner:                    owner,
-		repo:                     repo,
-		ignorePullRequestsEvents: ignorePullRequestsEvents,
+		config:     config,
+		gh:         factory.New(ctx, token), // TODO, baseURL from config
+		secrets:    secrets,
+		webhookURL: webhookURL,
+		owner:      owner,
+		repo:       repo,
 	}, nil
 }
 
@@ -579,13 +575,6 @@ func (r *githubRepository) parsePullRequestEvent(event *github.PullRequestEvent)
 	cfg := r.config.Spec.GitHub
 	if cfg == nil {
 		return nil, fmt.Errorf("missing github config")
-	}
-
-	if r.ignorePullRequestsEvents {
-		return &provisioning.WebhookResponse{
-			Code:    http.StatusOK, // Nothing needed
-			Message: "no action required on pull request event",
-		}, nil
 	}
 
 	if event.GetRepo().GetFullName() != fmt.Sprintf("%s/%s", r.owner, r.repo) {

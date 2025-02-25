@@ -51,20 +51,14 @@ type Previewer struct {
 	template    *template.Template
 	urlProvider func(namespace string) string
 	renderer    PreviewRenderer
-	available   bool
 }
 
-func NewPreviewer(available bool, renderer PreviewRenderer, urlProvider func(namespace string) string) *Previewer {
+func NewPreviewer(renderer PreviewRenderer, urlProvider func(namespace string) string) *Previewer {
 	return &Previewer{
 		template:    template.Must(template.New("comment").Parse(previewsCommentTemplate)),
 		urlProvider: urlProvider,
 		renderer:    renderer,
-		available:   available,
 	}
-}
-
-func (p *Previewer) IsAvailable() bool {
-	return p.available
 }
 
 // GenerateComment creates a formatted comment for dashboard previews
@@ -132,6 +126,7 @@ func (p *Previewer) CreatePreview(
 	base string,
 	ref string,
 	pullRequestURL string,
+	generateScreenshot bool,
 ) (*resourcePreview, error) {
 	baseURL, err := url.Parse(p.urlProvider(namespace))
 	if err != nil {
@@ -147,7 +142,7 @@ func (p *Previewer) CreatePreview(
 		PreviewURL:  p.getPreviewURL(ctx, f, baseURL, repoName, ref, pullRequestURL),
 	}
 
-	if len(preview.PreviewURL) > 0 {
+	if len(preview.PreviewURL) > 0 && generateScreenshot {
 		screenshotURL, err := p.renderer.RenderDashboardPreview(ctx, namespace, repoName, f.Path, ref)
 		if err != nil {
 			return nil, fmt.Errorf("render dashboard preview: %w", err)

@@ -839,6 +839,8 @@ export type GitHubRepositoryConfig = {
   branch: string;
   /** Token for accessing the repository, but encrypted. This is not possible to read back to a user decrypted. */
   encryptedToken?: string;
+  /** Whether we should show dashboard previews for pull requests. By default, this is false (i.e. we will not create previews). */
+  generateDashboardPreviews?: boolean;
   /** Token for accessing the repository. If set, it will be encrypted into encryptedToken, then set to an empty string again. */
   token?: string;
   /** The repository URL (e.g. `https://github.com/example/test`). */

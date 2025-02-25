@@ -72,11 +72,6 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 		return fmt.Errorf("failed to get parser for %s: %w", repo.Config().Name, err)
 	}
 
-	if !c.linter.IsAvailable() && !c.previewer.IsAvailable() {
-		progress.SetMessage("linting and previews are not available")
-		return nil
-	}
-
 	logger := logging.FromContext(ctx).With("pr", options.PR)
 	logger.Info("process pull request")
 	defer logger.Info("pull request processed")
@@ -142,12 +137,8 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 				continue
 			}
 		}
-		if !c.previewer.IsAvailable() {
-			progress.Record(ctx, result)
-			continue
-		}
 
-		preview, err := c.previewer.CreatePreview(ctx, f, job.Namespace, repo.Config().Name, cfg.GitHub.Branch, ref, options.URL)
+		preview, err := c.previewer.CreatePreview(ctx, f, job.Namespace, repo.Config().Name, cfg.GitHub.Branch, ref, options.URL, cfg.GitHub.GenerateDashboardPreviews)
 		if err != nil {
 			result.Error = fmt.Errorf("create preview: %w", err)
 			progress.Record(ctx, result)

@@ -112,7 +112,8 @@ func NewAPIBuilder(
 	secrets secrets.Service,
 ) *APIBuilder {
 	clientFactory := resources.NewFactory(configProvider)
-	linters := lint.NewDashboardLinterFactory(features.IsEnabledGlobally(featuremgmt.FlagProvisioningLint))
+	// TODO: linting is experimental, so we disable it for now
+	linters := lint.NewDashboardLinterFactory(false)
 	return &APIBuilder{
 		urlProvider:       urlProvider,
 		localFileResolver: local,
@@ -432,7 +433,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			// Pull request worker
 			linter := pullrequest.NewLinter(b.linters.IsEnabled())
 			renderer := pullrequest.NewScreenshotRenderer(b.render, b.blobstore)
-			previewer := pullrequest.NewPreviewer(b.features.IsEnabledGlobally(featuremgmt.FlagProvisioningPullRequestPreviews), renderer, b.urlProvider)
+			previewer := pullrequest.NewPreviewer(renderer, b.urlProvider)
 			pullRequestWorker, err := pullrequest.NewPullRequestWorker(b.parsers, previewer, linter)
 			if err != nil {
 				return fmt.Errorf("create pull request worker: %w", err)
@@ -918,8 +919,7 @@ func (b *APIBuilder) AsRepository(ctx context.Context, r *provisioning.Repositor
 			gvr.Resource,
 			r.GetName(),
 		)
-		shouldIgnorePullRequestEvents := !b.linters.IsEnabled()
-		return repository.NewGitHub(ctx, r, b.ghFactory, b.secrets, webhookURL, shouldIgnorePullRequestEvents)
+		return repository.NewGitHub(ctx, r, b.ghFactory, b.secrets, webhookURL)
 	default:
 		return nil, errors.New("unknown repository type")
 	}

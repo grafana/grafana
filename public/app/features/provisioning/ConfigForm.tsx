@@ -52,6 +52,7 @@ export function getDefaultValues(repository?: RepositorySpec): RepositoryFormDat
       token: '',
       url: '',
       branch: 'main',
+      generateDashboardPreviews: true,
       workflows: ['write', 'branch'],
       sync: {
         enabled: true,
@@ -182,6 +183,19 @@ export function ConfigForm({ data }: ConfigFormProps) {
           <Field label={'Branch'}>
             <Input {...register('branch')} placeholder={'main'} />
           </Field>
+          <Field
+            label={'Attach dashboard previews to pull requests'}
+            description={
+              <span>
+                Render before/after images and link them to the pull request.
+                <br />
+                NOTE! these will be public URLs!!!"
+              </span>
+            }
+          >
+            <Switch {...register('generateDashboardPreviews')} id={'generateDashboardPreviews'} />
+          </Field>
+          {/* The lint option is intentionally not presented here, as it's an experimental feature. */}
         </FieldSet>
       )}
 
