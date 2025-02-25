@@ -149,7 +149,7 @@ function ExpandedRow({ row }: ExpandedRowProps) {
             <Text variant="bodySmall" color="secondary">
               Job Specification
             </Text>
-            <JSONFormatter json={row.spec!} open={3} config={{}} />
+            <JSONFormatter json={row.spec ?? ''} open={3} config={{}} />
           </Stack>
         )}
         {hasErrors && (

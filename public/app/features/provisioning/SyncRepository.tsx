@@ -31,7 +31,7 @@ export function SyncRepository({ repository }: Props) {
         payload: ['Error importing resources', syncQuery.error],
       });
     }
-  }, [syncQuery.error, syncQuery.isError, syncQuery.isSuccess, navigate]);
+  }, [syncQuery.error, syncQuery.isError, syncQuery.isSuccess]);
 
   const onClick = () => {
     if (!name) {
@@ -50,20 +50,11 @@ export function SyncRepository({ repository }: Props) {
         variant={'secondary'}
         tooltip={isHealthy ? undefined : 'Unable to sync an unhealthy repository'}
         disabled={syncQuery.isLoading || !name || !isHealthy}
-        onClick={() => setIsModalOpen(true)}
+        onClick={onClick}
       >
         Sync
       </Button>
-      {repository.spec?.sync.enabled ? (
-        <ConfirmModal
-          isOpen={isModalOpen}
-          title={'Synchronize resources from repository'}
-          body={`This will trigger a job that will import everything from the repository into grafana. Proceed?`}
-          confirmText={syncQuery.isLoading ? 'Syncing...' : 'Sync'}
-          onConfirm={onClick}
-          onDismiss={() => setIsModalOpen(false)}
-        />
-      ) : (
+      {!repository.spec?.sync.enabled && (
         <ConfirmModal
           isOpen={isModalOpen}
           title={'Sync is not enabled'}
