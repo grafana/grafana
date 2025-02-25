@@ -96,7 +96,7 @@ require (
 	// Check go.work file for details
 	github.com/grafana/grafana/pkg/promlib v0.0.6 // @grafana/observability-metrics
 	github.com/grafana/otel-profiling-go v0.5.1 // @grafana/grafana-backend-group
-	github.com/grafana/pyroscope-go/godeltaprof v0.1.7 // @grafana/observability-traces-and-profiling
+	github.com/grafana/pyroscope-go/godeltaprof v0.1.8 // @grafana/observability-traces-and-profiling
 	github.com/grafana/pyroscope/api v0.3.0 // @grafana/observability-traces-and-profiling
 	github.com/grafana/tempo v1.5.1-0.20240604192202-01f4bc8ac2d1 // @grafana/observability-traces-and-profiling
 	github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus v1.0.1 // @grafana/plugins-platform-backend
