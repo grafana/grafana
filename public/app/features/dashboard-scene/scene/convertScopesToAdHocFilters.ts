@@ -1,7 +1,7 @@
 import {
   Scope,
   ScopeSpecFilter,
-  isScopeFilterSingleOrMultiOperator,
+  isEqualityOrMultiOperator,
   reverseScopeFilterOperatorMap,
   scopeFilterOperatorMap,
 } from '@grafana/data';
@@ -77,10 +77,7 @@ function mergeFilterValues(adHocFilter: AdHocFilterWithLabels, filter: ScopeSpec
 function canValueBeMerged(adHocFilterOperator: string, filterOperator: string) {
   const scopeConvertedOperator = scopeFilterOperatorMap[adHocFilterOperator];
 
-  if (
-    !isScopeFilterSingleOrMultiOperator(scopeConvertedOperator) ||
-    !isScopeFilterSingleOrMultiOperator(filterOperator)
-  ) {
+  if (!isEqualityOrMultiOperator(scopeConvertedOperator) || !isEqualityOrMultiOperator(filterOperator)) {
     return false;
   }
 

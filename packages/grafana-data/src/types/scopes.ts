@@ -18,13 +18,11 @@ export interface ScopeDashboardBinding {
 }
 
 export type ScopeFilterOperator = 'equals' | 'not-equals' | 'regex-match' | 'regex-not-match' | 'one-of' | 'not-one-of';
-export type ScopeFilterSingleOrMultiOperator = Extract<
-  ScopeFilterOperator,
-  'equals' | 'not-equals' | 'one-of' | 'not-one-of'
->;
+export type EqualityOrMultiOperator = Extract<ScopeFilterOperator, 'equals' | 'not-equals' | 'one-of' | 'not-one-of'>;
 
-export function isScopeFilterSingleOrMultiOperator(value: string): value is ScopeFilterSingleOrMultiOperator {
-  return value === 'equals' || value === 'not-equals' || value === 'one-of' || value === 'not-one-of';
+export function isEqualityOrMultiOperator(value: string): value is EqualityOrMultiOperator {
+  const operators = new Set(['equals', 'not-equals', 'one-of', 'not-one-of']);
+  return operators.has(value);
 }
 
 export const scopeFilterOperatorMap: Record<string, ScopeFilterOperator> = {
