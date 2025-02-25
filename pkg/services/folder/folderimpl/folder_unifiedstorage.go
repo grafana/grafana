@@ -314,7 +314,9 @@ func (s *Service) getFolderByTitleFromApiServer(ctx context.Context, orgID int64
 
 	request := &resource.ResourceSearchRequest{
 		Options: &resource.ListOptions{
-			Key: folderkey,
+			Key:    folderkey,
+			Fields: []*resource.Requirement{},
+			Labels: []*resource.Requirement{},
 		},
 		Query: title,
 		Limit: folderSearchLimit}
