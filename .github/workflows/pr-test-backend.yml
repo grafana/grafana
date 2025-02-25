@@ -45,7 +45,7 @@ jobs:
 
       - name: Setup Enterprise (PR only)
         if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false
-        uses: ./.github/actions/ci/setup-enterprise
+        uses: ./.github/actions/setup-enterprise
 
       - name: Verify CUE generation
         run: CODEGEN_VERIFY=1 make gen-cue
@@ -57,10 +57,10 @@ jobs:
         run: make gen-go
 
       - name: Run backend tests
-        uses: ./.github/actions/ci/run-backend-tests
+        uses: ./.github/actions/run-backend-tests
 
       - name: Run backend integration tests
-        uses: ./.github/actions/ci/run-backend-integration-tests
+        uses: ./.github/actions/run-backend-integration-tests
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
