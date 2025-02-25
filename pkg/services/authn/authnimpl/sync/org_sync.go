@@ -37,6 +37,11 @@ func (s *OrgSync) SyncOrgRolesHook(ctx context.Context, id *authn.Identity, _ *a
 		return nil
 	}
 
+	// ignore org syncing if the user is provisioned
+	if id.IsProvisioned {
+		return nil
+	}
+
 	ctxLogger := s.log.FromContext(ctx).New("id", id.ID, "login", id.Login)
 
 	if !id.IsIdentityType(claims.TypeUser) {
