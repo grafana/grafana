@@ -11,8 +11,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	encryptionmanager "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
-	keepertypes "github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/types"
 	encryptionprovider "github.com/grafana/grafana/pkg/services/encryption/provider"
 	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -38,7 +38,7 @@ func Test_SQLKeeperSetup(t *testing.T) {
 	namespace2 := "namespace2"
 	plaintext1 := "very secret string in namespace 1"
 	plaintext2 := "very secret string in namespace 2"
-	nonExistentID := keepertypes.ExternalID("non existent")
+	nonExistentID := contracts.ExternalID("non existent")
 
 	sqlKeeper, err := setupTestService(t, cfg)
 	require.NoError(t, err)

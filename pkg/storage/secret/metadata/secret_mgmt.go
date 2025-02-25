@@ -7,12 +7,11 @@ import (
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
-	keepertypes "github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/types"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
-func (s *secureValueMetadataStorage) storeInKeeper(ctx context.Context, sv *secretv0alpha1.SecureValue) (keepertypes.ExternalID, error) {
+func (s *secureValueMetadataStorage) storeInKeeper(ctx context.Context, sv *secretv0alpha1.SecureValue) (contracts.ExternalID, error) {
 	// TODO: Implement store by ref
 	if sv.Spec.Ref != "" {
 		return "", fmt.Errorf("store by ref in keeper")
@@ -62,7 +61,7 @@ func (s *secureValueMetadataStorage) updateInKeeper(ctx context.Context, currRow
 		return fmt.Errorf("could not find keeper: %s", keeperType)
 	}
 
-	err = keeper.Update(ctx, keeperConfig, currRow.Namespace, keepertypes.ExternalID(currRow.ExternalID), string(newSV.Spec.Value))
+	err = keeper.Update(ctx, keeperConfig, currRow.Namespace, contracts.ExternalID(currRow.ExternalID), string(newSV.Spec.Value))
 	if err != nil {
 		return fmt.Errorf("update in keeper: %s", err)
 	}
@@ -98,17 +97,17 @@ func (s *secureValueMetadataStorage) deleteFromKeeper(ctx context.Context, names
 	if !ok {
 		return fmt.Errorf("could not find keeper: %s", keeperType)
 	}
-	err = keeper.Delete(ctx, keeperConfig, namespace.String(), keepertypes.ExternalID(sv.ExternalID))
+	err = keeper.Delete(ctx, keeperConfig, namespace.String(), contracts.ExternalID(sv.ExternalID))
 	if err != nil {
 		return fmt.Errorf("delete in keeper: %w", err)
 	}
 	return nil
 }
 
-func getKeeperConfig(ctx context.Context, db db.DB, namespace string, name string) (keepertypes.KeeperType, secretv0alpha1.KeeperConfig, error) {
+func getKeeperConfig(ctx context.Context, db db.DB, namespace string, name string) (contracts.KeeperType, secretv0alpha1.KeeperConfig, error) {
 	// Check if keeper is default sql.
-	if name == keepertypes.DefaultSQLKeeper {
-		return keepertypes.SQLKeeperType, nil, nil
+	if name == contracts.DefaultSQLKeeper {
+		return contracts.SQLKeeperType, nil, nil
 	}
 
 	// Load keeper config from metadata store, or TODO: keeper cache.
@@ -129,9 +128,8 @@ func getKeeperConfig(ctx context.Context, db db.DB, namespace string, name strin
 	}
 
 	keeperConfig := toProvider(kp.Type, kp.Payload)
-	keeperType := toType(kp.Type)
 
 	// TODO: this would be a good place to check if credentials are secure values and load them.
 
-	return keeperType, keeperConfig, nil
+	return kp.Type, keeperConfig, nil
 }

@@ -10,9 +10,9 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	encryptionmanager "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/sqlkeeper"
-	keepertypes "github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/types"
 	encryptionprovider "github.com/grafana/grafana/pkg/services/encryption/provider"
 	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -42,7 +42,7 @@ func Test_OSSKeeperService_GetKeepers(t *testing.T) {
 
 		assert.NotNil(t, keeperMap)
 		assert.Equal(t, 1, len(keeperMap))
-		assert.IsType(t, &sqlkeeper.SQLKeeper{}, keeperMap[keepertypes.SQLKeeperType])
+		assert.IsType(t, &sqlkeeper.SQLKeeper{}, keeperMap[contracts.SQLKeeperType])
 	})
 }
 

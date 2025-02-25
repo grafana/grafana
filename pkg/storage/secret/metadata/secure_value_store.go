@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper"
-	keepertypes "github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/types"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -42,7 +41,7 @@ func ProvideSecureValueMetadataStorage(db db.DB, cfg *setting.Cfg, features feat
 type secureValueMetadataStorage struct {
 	db           db.DB
 	accessClient claims.AccessClient
-	keepers      map[keepertypes.KeeperType]keepertypes.Keeper
+	keepers      map[contracts.KeeperType]contracts.Keeper
 }
 
 func (s *secureValueMetadataStorage) Create(ctx context.Context, sv *secretv0alpha1.SecureValue) (*secretv0alpha1.SecureValue, error) {
@@ -67,7 +66,7 @@ func (s *secureValueMetadataStorage) Create(ctx context.Context, sv *secretv0alp
 	}
 
 	err = s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		if row.Keeper != keepertypes.DefaultSQLKeeper {
+		if row.Keeper != contracts.DefaultSQLKeeper {
 			// Validate before inserting that the chosen `keeper` exists.
 			keeperRow := &keeperDB{Name: row.Keeper, Namespace: row.Namespace}
 
@@ -171,7 +170,7 @@ func (s *secureValueMetadataStorage) Update(ctx context.Context, newSecureValue 
 	}
 
 	err = s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		if newRow.Keeper != keepertypes.DefaultSQLKeeper {
+		if newRow.Keeper != contracts.DefaultSQLKeeper {
 			// Validate before updating that the new `keeper` exists.
 			keeperRow := &keeperDB{Name: newRow.Keeper, Namespace: newRow.Namespace}
 

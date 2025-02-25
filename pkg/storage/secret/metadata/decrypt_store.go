@@ -9,7 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper"
-	keepertypes "github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/types"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -33,7 +32,7 @@ func ProvideDecryptStorage(db db.DB, cfg *setting.Cfg, features featuremgmt.Feat
 // decryptStorage is the actual implementation of the decrypt storage.
 type decryptStorage struct {
 	db      db.DB
-	keepers map[keepertypes.KeeperType]keepertypes.Keeper
+	keepers map[contracts.KeeperType]contracts.Keeper
 }
 
 func (s *decryptStorage) Decrypt(ctx context.Context, namespace xkube.Namespace, name string) (secretv0alpha1.ExposedSecureValue, error) {
@@ -69,7 +68,7 @@ func (s *decryptStorage) Decrypt(ctx context.Context, namespace xkube.Namespace,
 	if !ok {
 		return "", fmt.Errorf("could not find keeper: %s", keeperType)
 	}
-	exposedValue, err := keeper.Expose(ctx, keeperConfig, namespace.String(), keepertypes.ExternalID(sv.ExternalID))
+	exposedValue, err := keeper.Expose(ctx, keeperConfig, namespace.String(), contracts.ExternalID(sv.ExternalID))
 	if err != nil {
 		return "", fmt.Errorf("decrypt from keeper: %w", err)
 	}
