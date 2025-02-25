@@ -3399,20 +3399,6 @@
     },
     {
       "metadata": {
-        "name": "provisioningPullRequestResourcePreviews",
-        "resourceVersion": "1740475197564",
-        "creationTimestamp": "2025-02-25T09:19:57Z",
-        "deletionTimestamp": "2025-02-25T09:20:58Z"
-      },
-      "spec": {
-        "description": "Preview resources in pull requests for next generation provisioning... and git",
-        "stage": "experimental",
-        "codeowner": "@grafana/grafana-app-platform-squad",
-        "requiresRestart": true
-      }
-    },
-    {
-      "metadata": {
         "name": "publicDashboards",
         "resourceVersion": "1720021873452",
         "creationTimestamp": "2022-04-07T18:30:19Z",
