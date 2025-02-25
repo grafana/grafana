@@ -11,6 +11,7 @@ import {
   VizPanelState,
   SceneVariableSet,
   LocalValueVariable,
+  VariableDependencyConfig,
 } from '@grafana/scenes';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 
@@ -21,7 +22,6 @@ import { DashboardRepeatsProcessedEvent } from '../types/DashboardRepeatsProcess
 
 import { getOptions } from './ResponsiveGridItemEditor';
 import { ResponsiveGridItemRenderer } from './ResponsiveGridItemRenderer';
-import { ResponsiveGridItemVariableDependencyHandler } from './ResponsiveGridItemVariableDependencyHandler';
 
 export interface ResponsiveGridItemState extends SceneObjectState {
   body: VizPanel;
@@ -33,7 +33,10 @@ export interface ResponsiveGridItemState extends SceneObjectState {
 export class ResponsiveGridItem extends SceneObjectBase<ResponsiveGridItemState> implements DashboardLayoutItem {
   public static Component = ResponsiveGridItemRenderer;
   private _prevRepeatValues?: VariableValueSingle[];
-  protected _variableDependency = new ResponsiveGridItemVariableDependencyHandler(this);
+  protected _variableDependency = new VariableDependencyConfig(this, {
+    variableNames: this.state.variableName ? [this.state.variableName] : [],
+    onVariableUpdateCompleted: () => this.performRepeat(),
+  });
   public readonly isDashboardLayoutItem = true;
 
   public constructor(state: ResponsiveGridItemState) {
@@ -122,6 +125,8 @@ export class ResponsiveGridItem extends SceneObjectBase<ResponsiveGridItemState>
     if (this.state.body.state.$variables) {
       this.state.body.setState({ $variables: undefined });
     }
+
+    this._variableDependency.setVariableNames(variableName ? [variableName] : []);
 
     this.setState(stateUpdate);
     this.performRepeat();
