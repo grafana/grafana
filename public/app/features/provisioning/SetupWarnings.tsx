@@ -71,8 +71,7 @@ callback_url = http://localhost:3000/
 
 export function SetupWarnings() {
   const [isCustomIniOpen, setCustomIniOpen] = useLocalStorage('collapse_custom_ini', true);
-  const [isWebhookOpen, setWebhookOpen] = useLocalStorage('collapse_webhook', true);
-  const [isDashboardPreviewOpen, setDashboardPreviewOpen] = useLocalStorage('collapse_dashboard_preview', true);
+  const [isDisabledFeaturesOpen, setDisabledFeaturesOpen] = useLocalStorage('collapse_disabled_features', false);
   const settings = useGetFrontendSettingsQuery();
 
   const missingFeatures = requiredFeatureToggles.filter((feature) => !config.featureToggles[feature]);
@@ -81,11 +80,8 @@ export function SetupWarnings() {
     setCustomIniOpen(!isCustomIniOpen);
   };
 
-  const handleWebhookToggle = () => {
-    setWebhookOpen(!isWebhookOpen);
-  };
-  const handleDashboardPreviewToggle = () => {
-    setDashboardPreviewOpen(!isDashboardPreviewOpen);
+  const handleDisabledFeaturesToggle = () => {
+    setDisabledFeaturesOpen(!isDisabledFeaturesOpen);
   };
 
   const styles = useStyles2(getStyles);
@@ -125,88 +121,82 @@ export function SetupWarnings() {
           </Text>
         </Alert>
       </Collapse>
+
       {(settings.data?.generateDashboardPreviews === false || settings.data?.githubWebhooks === false) && (
-        <Alert
-          severity="info"
-          title={<div className={styles.mainTitle}>You can still use this but some cool features are disabled</div>}
-        >
-          {settings.data?.generateDashboardPreviews === false && (
-            <div className={styles.featureSection}>
-              <div className={styles.featureTitle}>
-                <Text element="h4" weight="medium">
-                  Dashboard Preview Generation
-                </Text>
-              </div>
-              <Box marginBottom={2}>
-                <Text element="p">This feature generates dashboard preview images in pull requests.</Text>
-              </Box>
-              <Collapse
-                isOpen={isDashboardPreviewOpen}
-                label="Details"
-                onToggle={handleDashboardPreviewToggle}
-                collapsible
-                className={styles.detailsCollapse}
-              >
-                <Box marginTop={2} marginBottom={1}>
-                  <Text element="h5">
-                    To connect to the rendering service locally, you need to configure the following:
+        <Alert severity="info" title="Some features are currently unavailable">
+          <Box marginBottom={2}>
+            <Text element="p">These features enhance your whole experience working with Grafana and GitHub.</Text>
+          </Box>
+
+          <Collapse
+            isOpen={isDisabledFeaturesOpen}
+            label="See how to enable them"
+            onToggle={handleDisabledFeaturesToggle}
+            collapsible
+          >
+            <Box marginTop={3}>
+              {settings.data?.generateDashboardPreviews === false && (
+                <div className={styles.featureSection}>
+                  <div className={styles.featureTitle}>
+                    <Text element="h5" weight="medium">
+                      Dashboard Preview Generation
+                    </Text>
+                  </div>
+                  <Box marginBottom={2}>
+                    <Text element="p">This feature generates dashboard preview images in pull requests.</Text>
+                  </Box>
+                  <Box marginTop={2} marginBottom={1}>
+                    <Text element="h6">
+                      To connect to the rendering service locally, you need to configure the following:
+                    </Text>
+                  </Box>
+                  <pre className={styles.codeBlock}>
+                    <code>{render_ini}</code>
+                  </pre>
+                </div>
+              )}
+
+              {settings.data?.githubWebhooks === false && (
+                <div className={styles.featureSection}>
+                  <div className={styles.featureTitle}>
+                    <Text element="h5" weight="medium">
+                      Github Webhook Integration
+                    </Text>
+                  </div>
+                  <Box marginBottom={2}>
+                    <Text element="p">
+                      This feature automatically syncs resources from GitHub when commits are pushed to the configured
+                      branch, eliminating the need for regular polling intervals. It also enhances pull requests by
+                      automatically adding preview links and dashboard snapshots.
+                    </Text>
+                  </Box>
+                  <Box marginTop={2} marginBottom={1}>
+                    <Text element="h6">To enable webhook support, you need to configure the following:</Text>
+                  </Box>
+                  <pre className={styles.codeBlock}>
+                    <code>{webhook_ini}</code>
+                  </pre>
+                </div>
+              )}
+
+              <div className={styles.featureSection}>
+                <div className={styles.featureTitle}>
+                  <Text element="h5" weight="medium">
+                    Public Access Setup
+                  </Text>
+                </div>
+                <Box marginBottom={2}>
+                  <Text element="p">
+                    For both features, you'll need to set up public access to your local machine. ngrok is a recommended
+                    tool for this:
                   </Text>
                 </Box>
                 <pre className={styles.codeBlock}>
-                  <code>{render_ini}</code>
-                </pre>
-                <Box marginTop={2} marginBottom={1}>
-                  <Text element="h5">To enable webhook support, you need to configure the following:</Text>
-                </Box>
-                <pre className={styles.codeBlock}>
-                  <code>{webhook_ini}</code>
-                </pre>
-                <Box marginTop={2} marginBottom={1}>
-                  <Text element="h5">To set up public access to a local machine, consider ngrok</Text>
-                </Box>
-                <pre className={styles.codeBlock}>
                   <code>{ngrok_example}</code>
                 </pre>
-              </Collapse>
-            </div>
-          )}
-
-          {settings.data?.githubWebhooks === false && (
-            <div className={styles.featureSection}>
-              <div className={styles.featureTitle}>
-                <Text element="h4" weight="medium">
-                  Github Webhook Integration
-                </Text>
               </div>
-              <Box marginBottom={2}>
-                <Text element="p">
-                  This feature automatically syncs resources from GitHub when commits are pushed to the configured
-                  branch, eliminating the need for regular polling intervals. It also enhances pull requests by
-                  automatically adding preview links and dashboard snapshots.
-                </Text>
-              </Box>
-              <Collapse
-                isOpen={isWebhookOpen}
-                label="Details"
-                onToggle={handleWebhookToggle}
-                collapsible
-                className={styles.detailsCollapse}
-              >
-                <Box marginTop={2} marginBottom={1}>
-                  <Text element="h5">To enable webhook support, you need to configure the following:</Text>
-                </Box>
-                <pre className={styles.codeBlock}>
-                  <code>{webhook_ini}</code>
-                </pre>
-                <Box marginTop={2} marginBottom={1}>
-                  <Text element="h5">To set up public access to a local machine, consider ngrok</Text>
-                </Box>
-                <pre className={styles.codeBlock}>
-                  <code>{ngrok_example}</code>
-                </pre>
-              </Collapse>
-            </div>
-          )}
+            </Box>
+          </Collapse>
         </Alert>
       )}
     </>
@@ -215,12 +205,6 @@ export function SetupWarnings() {
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    mainTitle: css({
-      fontSize: theme.typography.h4.fontSize,
-      fontWeight: theme.typography.h4.fontWeight,
-      marginBottom: theme.spacing(2),
-      color: theme.colors.text.primary,
-    }),
     featureSection: css({
       marginBottom: theme.spacing(3),
       '&:last-child': {
@@ -229,9 +213,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     featureTitle: css({
       marginBottom: theme.spacing(1),
-    }),
-    detailsCollapse: css({
-      marginTop: theme.spacing(1),
     }),
     codeBlock: css({
       marginBottom: theme.spacing(2),
