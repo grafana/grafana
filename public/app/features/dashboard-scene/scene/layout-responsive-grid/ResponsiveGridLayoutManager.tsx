@@ -6,8 +6,14 @@ import {
   schemaV2RemoveElementIdentifierForVizPanel,
   schemaV2SetElementIdentifierForVizPanel,
 } from '../../serialization/layoutSerializers/utils';
+import { joinCloneKeys } from '../../utils/clone';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
-import { getDashboardSceneFor, getGridItemKeyForPanelId, getVizPanelKeyForPanelId } from '../../utils/utils';
+import {
+  getDashboardSceneFor,
+  getGridItemKeyForPanelId,
+  getPanelIdForVizPanel,
+  getVizPanelKeyForPanelId,
+} from '../../utils/utils';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
 import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
@@ -122,6 +128,28 @@ export class ResponsiveGridLayoutManager
     }
 
     return false;
+  }
+
+  public cloneLayout(ancestorKey: string, isSource: boolean): DashboardLayoutManager {
+    return this.clone({
+      layout: this.state.layout.clone({
+        children: this.state.layout.state.children.map((gridItem) => {
+          if (gridItem instanceof ResponsiveGridItem) {
+            // Get the original panel ID from the gridItem's key
+            const panelId = getPanelIdForVizPanel(gridItem.state.body);
+            const gridItemKey = joinCloneKeys(ancestorKey, getGridItemKeyForPanelId(panelId));
+
+            return gridItem.clone({
+              key: gridItemKey,
+              body: gridItem.state.body.clone({
+                key: joinCloneKeys(gridItemKey, getVizPanelKeyForPanelId(panelId)),
+              }),
+            });
+          }
+          throw new Error('Unexpected child type');
+        }),
+      }),
+    });
   }
 
   public addNewRow() {

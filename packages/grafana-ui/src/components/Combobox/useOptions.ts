@@ -3,7 +3,7 @@ import { useState, useCallback, useMemo } from 'react';
 
 import { t } from '../../utils/i18n';
 
-import { itemFilter } from './filter';
+import { fuzzyFind, itemToString } from './filter';
 import { ComboboxOption } from './types';
 import { StaleResultError, useLatestAsyncCall } from './useLatestAsyncCall';
 
@@ -83,28 +83,52 @@ export function useOptions<T extends string | number>(rawOptions: AsyncOptions<T
 
   const updateOptions = useCallback(
     (inputValue: string) => {
-      if (!isAsync) {
-        setUserTypedSearch(inputValue);
-        return;
+      setUserTypedSearch(inputValue);
+      if (isAsync) {
+        setAsyncLoading(true);
+        debouncedLoadOptions(inputValue);
       }
-
-      setAsyncLoading(true);
-
-      debouncedLoadOptions(inputValue);
     },
     [debouncedLoadOptions, isAsync]
   );
 
-  const finalOptions = useMemo(() => {
-    let currentOptions = [];
-    if (isAsync) {
-      currentOptions = addCustomValue(asyncOptions);
-    } else {
-      currentOptions = addCustomValue(rawOptions.filter(itemFilter(userTypedSearch)));
+  const organizeOptionsByGroup = useCallback((options: Array<ComboboxOption<T>>) => {
+    const groupedOptions = new Map<string | undefined, Array<ComboboxOption<T>>>();
+    for (const option of options) {
+      const groupExists = groupedOptions.has(option.group);
+      if (groupExists) {
+        groupedOptions.get(option.group)?.push(option);
+      } else {
+        groupedOptions.set(option.group, [option]);
+      }
     }
 
-    return currentOptions;
-  }, [isAsync, addCustomValue, asyncOptions, rawOptions, userTypedSearch]);
+    // Reorganize options to have groups first, then undefined group
+    const reorganizeOptions = [];
+    for (const [group, groupOptions] of groupedOptions) {
+      if (!group) {
+        continue;
+      }
+      reorganizeOptions.push(...groupOptions);
+    }
+
+    const undefinedGroupOptions = groupedOptions.get(undefined);
+    if (undefinedGroupOptions) {
+      reorganizeOptions.push(...undefinedGroupOptions);
+    }
+    return reorganizeOptions;
+  }, []);
+
+  const stringifiedOptions = useMemo(() => {
+    return isAsync ? [] : rawOptions.map(itemToString);
+  }, [isAsync, rawOptions]);
+
+  const finalOptions = useMemo(() => {
+    const currentOptions = isAsync ? asyncOptions : fuzzyFind(rawOptions, stringifiedOptions, userTypedSearch);
+    const currentOptionsOrganised = organizeOptionsByGroup(currentOptions);
+
+    return addCustomValue(currentOptionsOrganised);
+  }, [isAsync, organizeOptionsByGroup, addCustomValue, asyncOptions, rawOptions, userTypedSearch, stringifiedOptions]);
 
   return { options: finalOptions, updateOptions, asyncLoading, asyncError };
 }

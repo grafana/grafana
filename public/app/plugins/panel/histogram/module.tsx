@@ -81,6 +81,11 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(HistogramPanel)
           mode: FieldColorModeId.PaletteClassic,
         },
       },
+      [FieldConfigProperty.Links]: {
+        settings: {
+          showOneClick: true,
+        },
+      },
     },
     useCustomConfig: (builder) => {
       const cfg = defaultFieldConfig;

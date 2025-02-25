@@ -923,6 +923,10 @@ func (s *server) initWatcher() error {
 				// pipe all events
 				v := <-events
 
+				if v == nil {
+					s.log.Error("received nil event")
+					continue
+				}
 				// Skip events during batch updates
 				if v.PreviousRV < 0 {
 					continue
@@ -952,6 +956,7 @@ func (s *server) Watch(req *WatchRequest, srv ResourceStore_WatchServer) error {
 		Group:     key.Group,
 		Resource:  key.Resource,
 		Namespace: key.Namespace,
+		Verb:      utils.VerbGet,
 	})
 	if err != nil {
 		return err
