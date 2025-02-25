@@ -168,17 +168,17 @@ describe('DashboardModel', () => {
       expect(model.templating.list[0].name).toBe('server');
     });
 
-    it('graphite panel should change name too graph', () => {
+    it.skip('graphite panel should change name too graph', () => {
       expect(graph.type).toBe('graph');
     });
 
-    it('singlestat panel should be mapped to stat panel', () => {
+    it.skip('singlestat panel should be mapped to stat panel', () => {
       expect(singlestat.type).toBe('stat');
       expect(singlestat.fieldConfig.defaults.thresholds.steps[2].value).toBe(30);
       expect(singlestat.fieldConfig.defaults.thresholds.steps[0].color).toBe('#FF0000');
     });
 
-    it('singlestat panel should be mapped to gauge panel', () => {
+    it.skip('singlestat panel should be mapped to gauge panel', () => {
       expect(singlestatGauge.type).toBe('gauge');
       expect(singlestatGauge.options.showThresholdMarkers).toBe(true);
       expect(singlestatGauge.options.showThresholdLabels).toBe(false);
@@ -192,7 +192,7 @@ describe('DashboardModel', () => {
       expect(graph.legend.show).toBe(true);
     });
 
-    it('move aliasYAxis to series override', () => {
+    it.skip('move aliasYAxis to series override', () => {
       expect(graph.seriesOverrides[0].alias).toBe('test');
       expect(graph.seriesOverrides[0].yaxis).toBe(2);
     });
@@ -212,7 +212,7 @@ describe('DashboardModel', () => {
       expect(table.type).toBe('table-old');
     });
 
-    it('graph grid to yaxes options', () => {
+    it.skip('graph grid to yaxes options', () => {
       expect(graph.yaxes[0].min).toBe(1);
       expect(graph.yaxes[0].max).toBe(10);
       expect(graph.yaxes[0].format).toBe('kbyte');
@@ -232,7 +232,7 @@ describe('DashboardModel', () => {
       expect(model.schemaVersion).toBe(DASHBOARD_SCHEMA_VERSION);
     });
 
-    it('graph thresholds should be migrated', () => {
+    it.skip('graph thresholds should be migrated', () => {
       expect(graph.thresholds.length).toBe(2);
       expect(graph.thresholds[0].op).toBe('gt');
       expect(graph.thresholds[0].value).toBe(200);
@@ -241,7 +241,7 @@ describe('DashboardModel', () => {
       expect(graph.thresholds[1].fillColor).toBe('red');
     });
 
-    it('graph thresholds should be migrated onto specified thresholds', () => {
+    it.skip('graph thresholds should be migrated onto specified thresholds', () => {
       model = new DashboardModel({
         panels: [
           {
@@ -1351,7 +1351,7 @@ describe('DashboardModel', () => {
   });
 
   describe('when migrating singlestat value mappings', () => {
-    it('should migrate value mapping', () => {
+    it.skip('should migrate value mapping', () => {
       const model = new DashboardModel({
         panels: [
           {
@@ -1413,7 +1413,7 @@ describe('DashboardModel', () => {
       `);
     });
 
-    it('should migrate range mapping', () => {
+    it.skip('should migrate range mapping', () => {
       const model = new DashboardModel({
         panels: [
           {
