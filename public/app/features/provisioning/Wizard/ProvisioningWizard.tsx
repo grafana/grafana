@@ -7,6 +7,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Stack, useStyles2 } from '@grafana/ui';
 
 import { getDefaultValues } from '../ConfigForm';
+import { useGetFrontendSettingsQuery } from '../api';
 
 import { ConnectionStep } from './ConnectionStep';
 import { MigrateStep } from './MigrateStep';
@@ -27,10 +28,11 @@ const nextButtonText = {
 } as const;
 
 export function ProvisioningWizard() {
-  const navigate = useNavigate();
   const [activeStep, setActiveStep] = useState<WizardStep>('connection');
   const [completedSteps, setCompletedSteps] = useState<WizardStep[]>([]);
   const [stepSuccess, setStepSuccess] = useState(false);
+  const settingsQuery = useGetFrontendSettingsQuery();
+  const navigate = useNavigate();
   const methods = useForm<WizardFormData>({
     defaultValues: {
       repository: getDefaultValues(),
@@ -60,6 +62,7 @@ export function ProvisioningWizard() {
       setActiveStep(steps[currentStepIndex + 1].id);
       setStepSuccess(false);
     } else if (activeStep === 'migrate') {
+      settingsQuery.refetch();
       navigate('/dashboards');
     }
   };

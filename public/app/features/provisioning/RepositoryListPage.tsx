@@ -23,16 +23,15 @@ import OnboardingPage from './OnboardingPage';
 import { SetupWarnings } from './SetupWarnings';
 import { StatusBadge } from './StatusBadge';
 import { SyncRepository } from './SyncRepository';
-import { Repository, ResourceCount, useDeletecollectionRepositoryMutation } from './api';
+import { Repository, ResourceCount, useDeletecollectionRepositoryMutation, useGetFrontendSettingsQuery } from './api';
 import { NEW_URL, PROVISIONING_URL } from './constants';
 import { useRepositoryList } from './hooks';
-import { useFrontendSettingsWithDelay } from './hooks/useFrontendSettingsWithDelay';
 
 const appEvents = getAppEvents();
 
 export default function RepositoryListPage() {
   const [items, isLoading] = useRepositoryList({ watch: true });
-  const settings = useFrontendSettingsWithDelay();
+  const settings = useGetFrontendSettingsQuery();
   const [deleteAll, deleteAllResult] = useDeletecollectionRepositoryMutation();
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
@@ -52,8 +51,6 @@ export default function RepositoryListPage() {
   const onConfirmDelete = () => {
     deleteAll({ deleteOptions: {} });
     setShowDeleteModal(false);
-
-    settings.refetchWithDelay(2000);
   };
 
   return (
