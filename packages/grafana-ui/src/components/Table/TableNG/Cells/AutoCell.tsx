@@ -64,6 +64,10 @@ const getStyles = (theme: GrafanaTheme2, justifyContent: Property.JustifyContent
   cell: css({
     display: 'flex',
     justifyContent: justifyContent,
+
+    a: {
+      color: 'inherit',
+    },
   }),
   cellLinkForColoredCell: css({
     cursor: 'pointer',
