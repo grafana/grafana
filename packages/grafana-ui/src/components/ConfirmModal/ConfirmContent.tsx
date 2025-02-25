@@ -91,7 +91,7 @@ export const ConfirmContent = ({
   };
 
   const { handleSubmit } = useForm();
-  const placeholder = t('grafana-ui.confirm-content.placeholder', 'Type {{confirmPromptText}} to confirm', {
+  const placeholder = t('grafana-ui.confirm-content.placeholder', 'Type "{{confirmPromptText}}" to confirm', {
     confirmPromptText,
   });
   return (
