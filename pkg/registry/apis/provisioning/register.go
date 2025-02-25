@@ -424,8 +424,11 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.clonedir,
 			))
 
-			renderer := pullrequest.NewRenderer(b.render, b.blobstore)
-			pullRequestWorker, err := pullrequest.NewPullRequestWorker(b.parsers, renderer, b.urlProvider)
+			// Pull request worker
+			linter := pullrequest.NewLinter()
+			renderer := pullrequest.NewScreenshotRenderer(b.render, b.blobstore)
+			previewer := pullrequest.NewPreviewer(renderer, b.urlProvider)
+			pullRequestWorker, err := pullrequest.NewPullRequestWorker(b.parsers, previewer, linter)
 			if err != nil {
 				return fmt.Errorf("create pull request worker: %w", err)
 			}
