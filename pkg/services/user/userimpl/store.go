@@ -2,6 +2,7 @@ package userimpl
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -593,7 +594,8 @@ func handleSQLError(err error) error {
 
 func isUniqueConstraintError(err error) bool {
 	// check mysql error code
-	if me, ok := err.(*mysql.MySQLError); ok && me.Number == 1062 {
+	var me *mysql.MySQLError
+	if errors.As(err, &me) && me.Number == 1062 {
 		return true
 	}
 
@@ -602,8 +604,8 @@ func isUniqueConstraintError(err error) bool {
 		return true
 	}
 
-	if se, ok := err.(sqlite3.Error); ok && se.Code == sqlite3.ErrConstraint {
-		fmt.Println(se.Code)
+	var se sqlite3.Error
+	if errors.As(err, &se) && se.Code == sqlite3.ErrConstraint {
 		return true
 	}
 
