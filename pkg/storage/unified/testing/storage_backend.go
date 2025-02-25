@@ -288,7 +288,7 @@ func runTestIntegrationBackendWatchWriteEvents(t *testing.T, backend resource.St
 	require.NoError(t, err)
 	require.Equal(t, "item2", (<-stream).Key.Name)
 
-	// Sould close the stream
+	// Should close the stream
 	ctx.Cancel()
 
 	_, ok := <-stream
