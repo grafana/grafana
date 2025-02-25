@@ -38,7 +38,7 @@ export const unaryOperators = new Registry<UnaryOperatorInfo>(() => {
     },
     {
       id: UnaryOperationID.Round,
-      name: 'Ceiling',
+      name: 'Round',
       operation: (value: number) => Math.round(value),
       unaryOperationID: UnaryOperationID.Round,
     },
