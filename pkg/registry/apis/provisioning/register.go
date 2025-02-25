@@ -260,6 +260,9 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 		jobs:       b.jobs,
 		dual:       b.storageStatus,
 	}
+	storage[provisioning.RepositoryResourceInfo.StoragePath("render")] = &renderConnector{
+		blob: b.unified,
+	}
 	apiGroupInfo.VersionedResourcesStorageMap[provisioning.VERSION] = storage
 	return nil
 }

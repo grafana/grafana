@@ -7,11 +7,12 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/authlib/types"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/authn"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestProvisioning_Test(t *testing.T) {
@@ -27,6 +28,7 @@ func TestProvisioning_Test(t *testing.T) {
 		{"Provisioning path that isn't webhook", "https://grafana.localhost/apis/provisioning.grafana.app/v0alpha1/namespaces/x/repositories/y/unittest", false},
 		{"Webhook path", "https://grafana.localhost/apis/provisioning.grafana.app/v0alpha1/namespaces/x/repositories/y/webhook", true},
 		{"Webhook path with subpath", "https://grafana.localhost/apis/provisioning.grafana.app/v0alpha1/namespaces/x/repositories/y/webhook/unittest", false}, // this'll have to change if we ever want subpaths
+		{"Render image url", "https://grafana.localhost/apis/provisioning.grafana.app/v0alpha1/namespaces/x/repositories/y/render/image-uid", true},
 	} {
 		t.Run(tt.Name, func(t *testing.T) {
 			t.Parallel()
