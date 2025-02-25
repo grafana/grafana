@@ -59,7 +59,15 @@ runs:
       env:
         GH_TOKEN: ${{ steps.generate_token.outputs.token }}
       run: |
-        git clone https://x-access-token:${GH_TOKEN}@github.com/grafana/grafana-enterprise.git ../grafana-enterprise
+        if ! git clone https://x-access-token:${GH_TOKEN}@github.com/grafana/grafana-enterprise.git ../grafana-enterprise; then
+          echo "ERROR: Failed to clone enterprise repository."
+          echo "This is unexpected as this step should only run on internal PRs."
+          echo "Please check:"
+          echo "  1. The GitHub App token has correct permissions"
+          echo "  2. The enterprise repository exists and is accessible"
+          echo "  3. The network connection is stable"
+          exit 1
+        fi
         
         cd ../grafana-enterprise
         
@@ -71,4 +79,4 @@ runs:
           git checkout main
         fi
         
-        ./build.sh 
+        ./build.sh
