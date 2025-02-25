@@ -32,129 +32,110 @@ export interface UpdateGroupDelta {
   ruleSwaps?: SwapOperation[];
 }
 
-export interface UpdateGroupExtraOptions {
-  /**
-   * Called after successful group update but before the old group is deleted.
-   * This is useful for updating the URL to the new group.
-   */
-  beforeGroupCleanup?: (newGroupIdentifier: RuleGroupIdentifierV2) => void;
-}
-
-export const deleteRuleGroupCacheKey = 'delete:rule-group:cleanup';
-
 export function useUpdateRuleGroup() {
   const [produceNewRuleGroup] = useProduceNewRuleGroup();
   const [fetchRuleGroup] = alertRuleApi.endpoints.getRuleGroupForNamespace.useLazyQuery();
   const [upsertRuleGroup] = alertRuleApi.endpoints.upsertRuleGroupForNamespace.useMutation();
-  const [deleteRuleGroup] = alertRuleApi.endpoints.deleteRuleGroupFromNamespace.useMutation({
-    fixedCacheKey: deleteRuleGroupCacheKey,
-  });
+  const [deleteRuleGroup] = alertRuleApi.endpoints.deleteRuleGroupFromNamespace.useMutation();
 
-  return useAsync(
-    async (
-      ruleGroup: RuleGroupIdentifier,
-      delta: UpdateGroupDelta,
-      { beforeGroupCleanup }: { beforeGroupCleanup?: (newGroupIdentifier: RuleGroupIdentifierV2) => void } = {}
-    ) => {
-      const updateActions: Action[] = [];
+  return useAsync(async (ruleGroup: RuleGroupIdentifier, delta: UpdateGroupDelta) => {
+    const updateActions: Action[] = [];
 
-      if (delta.namespaceName) {
-        // we could technically support moving rule groups to another folder, though we don't have a "move" wizard yet.
-        if (isGrafanaRulesSource(ruleGroup.dataSourceName)) {
-          throw new Error('Moving a Grafana-managed rule group to another folder is currently not supported.');
-        }
-        updateActions.push(moveRuleGroupAction({ newNamespaceName: delta.namespaceName }));
+    if (delta.namespaceName) {
+      // we could technically support moving rule groups to another folder, though we don't have a "move" wizard yet.
+      if (isGrafanaRulesSource(ruleGroup.dataSourceName)) {
+        throw new Error('Moving a Grafana-managed rule group to another folder is currently not supported.');
       }
+      updateActions.push(moveRuleGroupAction({ newNamespaceName: delta.namespaceName }));
+    }
 
-      if (delta.groupName) {
-        updateActions.push(renameRuleGroupAction({ groupName: delta.groupName }));
-      }
+    if (delta.groupName) {
+      updateActions.push(renameRuleGroupAction({ groupName: delta.groupName }));
+    }
 
-      if (delta.interval) {
-        updateActions.push(updateRuleGroupAction({ interval: delta.interval }));
-      }
+    if (delta.interval) {
+      updateActions.push(updateRuleGroupAction({ interval: delta.interval }));
+    }
 
-      if (delta.ruleSwaps) {
-        updateActions.push(reorderRulesInRuleGroupAction({ swaps: delta.ruleSwaps }));
-      }
+    if (delta.ruleSwaps) {
+      updateActions.push(reorderRulesInRuleGroupAction({ swaps: delta.ruleSwaps }));
+    }
 
-      const { newRuleGroupDefinition, rulerConfig } = await produceNewRuleGroup(ruleGroup, updateActions);
+    const { newRuleGroupDefinition, rulerConfig } = await produceNewRuleGroup(ruleGroup, updateActions);
 
-      const oldNamespace = ruleGroup.namespaceName;
-      const targetNamespace = delta.namespaceName ?? oldNamespace;
+    const oldNamespace = ruleGroup.namespaceName;
+    const targetNamespace = delta.namespaceName ?? oldNamespace;
 
-      const oldGroupName = ruleGroup.groupName;
-      const targetGroupName = newRuleGroupDefinition.name;
+    const oldGroupName = ruleGroup.groupName;
+    const targetGroupName = newRuleGroupDefinition.name;
 
-      const isNamespaceChanged = oldNamespace !== targetNamespace;
-      const isGroupRenamed = oldGroupName !== targetGroupName;
+    const isNamespaceChanged = oldNamespace !== targetNamespace;
+    const isGroupRenamed = oldGroupName !== targetGroupName;
 
-      const shouldRemoveOldGroup = isNamespaceChanged || isGroupRenamed;
+    // TODO We should skip this for GMA
+    const shouldRemoveOldGroup = isNamespaceChanged || isGroupRenamed;
 
-      // if we're also renaming the group, check if the target does not already exist
-      if (targetGroupName && isGroupRenamed) {
-        const targetGroup = await fetchRuleGroup({
-          rulerConfig,
-          namespace: targetNamespace,
-          group: targetGroupName,
-          // since this could throw 404
-          notificationOptions: { showErrorAlert: false },
-        })
-          .unwrap()
-          .catch(notFoundToNullOrThrow);
-
-        if (targetGroup?.rules?.length) {
-          throw new Error('Target group already has rules, merging rule groups is currently not supported.');
-        }
-      }
-
-      // create the new group in the target namespace or update the existing one
-      // ⚠️ it's important to do this before we remove the old group – better to have two groups than none if one of these requests fails
-      await upsertRuleGroup({
+    // if we're also renaming the group, check if the target does not already exist
+    if (targetGroupName && isGroupRenamed) {
+      const targetGroup = await fetchRuleGroup({
         rulerConfig,
         namespace: targetNamespace,
-        payload: newRuleGroupDefinition,
-        notificationOptions: { showSuccessAlert: false },
-      }).unwrap();
+        group: targetGroupName,
+        // since this could throw 404
+        notificationOptions: { showErrorAlert: false },
+      })
+        .unwrap()
+        .catch(notFoundToNullOrThrow);
 
-      const newGroupIdentifier: RuleGroupIdentifierV2 =
-        rulerConfig.dataSourceName === 'grafana'
-          ? ({
-              groupName: targetGroupName,
-              namespace: { uid: targetNamespace },
-              groupOrigin: 'grafana',
-            } satisfies GrafanaRuleGroupIdentifier)
-          : ({
-              groupName: targetGroupName,
-              namespace: { name: targetNamespace },
-              groupOrigin: 'datasource',
-              rulesSource: {
-                uid: rulerConfig.dataSourceUid,
-                name: rulerConfig.dataSourceName,
-                ruleSourceType: 'datasource',
-              },
-            } satisfies DataSourceRuleGroupIdentifier);
-
-      beforeGroupCleanup?.(newGroupIdentifier);
-
-      // TODO How to make this safer?
-      if (shouldRemoveOldGroup) {
-        // now remove the old one
-        await deleteRuleGroup({
-          rulerConfig,
-          namespace: oldNamespace,
-          group: oldGroupName,
-          notificationOptions: { showSuccessAlert: false },
-        })
-          .unwrap()
-          .catch((e) => {
-            logError(e);
-          });
+      if (targetGroup?.rules?.length) {
+        throw new Error('Target group already has rules, merging rule groups is currently not supported.');
       }
-
-      return newGroupIdentifier;
     }
-  );
+
+    // create the new group in the target namespace or update the existing one
+    // ⚠️ it's important to do this before we remove the old group – better to have two groups than none if one of these requests fails
+    await upsertRuleGroup({
+      rulerConfig,
+      namespace: targetNamespace,
+      payload: newRuleGroupDefinition,
+      notificationOptions: { showSuccessAlert: false },
+    }).unwrap();
+
+    const newGroupIdentifier: RuleGroupIdentifierV2 =
+      rulerConfig.dataSourceName === 'grafana'
+        ? ({
+            groupName: targetGroupName,
+            namespace: { uid: targetNamespace },
+            groupOrigin: 'grafana',
+          } satisfies GrafanaRuleGroupIdentifier)
+        : ({
+            groupName: targetGroupName,
+            namespace: { name: targetNamespace },
+            groupOrigin: 'datasource',
+            rulesSource: {
+              uid: rulerConfig.dataSourceUid,
+              name: rulerConfig.dataSourceName,
+              ruleSourceType: 'datasource',
+            },
+          } satisfies DataSourceRuleGroupIdentifier);
+
+    // TODO How to make this safer?
+    if (shouldRemoveOldGroup) {
+      // now remove the old one
+      await deleteRuleGroup({
+        rulerConfig,
+        namespace: oldNamespace,
+        group: oldGroupName,
+        notificationOptions: { showSuccessAlert: false },
+      })
+        .unwrap()
+        .catch((e) => {
+          logError(e);
+        });
+    }
+
+    return newGroupIdentifier;
+  });
 }
 
 /**

@@ -1,7 +1,6 @@
 import { css } from '@emotion/css';
-import { skipToken } from '@reduxjs/toolkit/query';
 import { produce } from 'immer';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { useParams } from 'react-router-dom-v5-compat';
 
@@ -11,7 +10,8 @@ import { Alert, Button, Field, Input, Stack, useStyles2, withErrorBoundary } fro
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { Trans, t } from 'app/core/internationalization';
-import { GrafanaRulesSourceSymbol, RuleGroupIdentifierV2 } from 'app/types/unified-alerting';
+import { useDispatch } from 'app/types';
+import { GrafanaRulesSourceSymbol, RuleGroupIdentifierV2, RulerDataSourceConfig } from 'app/types/unified-alerting';
 import { RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../api/alertRuleApi';
@@ -19,7 +19,8 @@ import { featureDiscoveryApi } from '../api/featureDiscoveryApi';
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
 import { EvaluationGroupQuickPick } from '../components/rule-editor/EvaluationGroupQuickPick';
 import { evaluateEveryValidationOptions } from '../components/rules/EditRuleGroupModal';
-import { deleteRuleGroupCacheKey, UpdateGroupDelta, useUpdateRuleGroup } from '../hooks/ruleGroup/useUpdateRuleGroup';
+import { UpdateGroupDelta, useUpdateRuleGroup } from '../hooks/ruleGroup/useUpdateRuleGroup';
+import { isLoading, useAsync } from '../hooks/useAsync';
 import { useFolder } from '../hooks/useFolder';
 import { useRuleGroupConsistencyCheck } from '../hooks/usePrometheusConsistencyCheck';
 import { SwapOperation } from '../reducers/ruler/ruleGroups';
@@ -85,14 +86,10 @@ function GroupEditForm({ rulerGroup, groupIdentifier }: GroupEditFormProps) {
 
     const updatedGroupIdentifier = await updateRuleGroup.execute(
       ruleGroupIdentifierV2toV1(groupIdentifier),
-      changeDelta,
-      {
-        // We need to update the URL before the old group is deleted
-        // Otherwise, RTKQ will refetch the old group after it's deleted
-        // and we'll end up with a blinking group not found error
-        beforeGroupCleanup: (newGroupIdentifier) => setMatchingGroupPageUrl(newGroupIdentifier),
-      }
+      changeDelta
     );
+
+    setMatchingGroupPageUrl(updatedGroupIdentifier);
 
     const shouldWaitForPromConsistency = !!changeDelta.namespaceName || !!changeDelta.groupName;
     if (shouldWaitForPromConsistency) {
@@ -173,12 +170,9 @@ type GroupEditPageRouteParams = {
 };
 
 const { useDiscoverDsFeaturesQuery } = featureDiscoveryApi;
-const { useGetRuleGroupForNamespaceQuery, useDeleteRuleGroupFromNamespaceMutation } = alertRuleApi;
 
 function GroupEditPage() {
-  const [_, deleteMutation] = useDeleteRuleGroupFromNamespaceMutation({
-    fixedCacheKey: deleteRuleGroupCacheKey,
-  });
+  const dispatch = useDispatch();
   const { sourceId = '', namespaceId = '', groupName = '' } = useParams<GroupEditPageRouteParams>();
 
   const { folder, loading: isFolderLoading } = useFolder(sourceId === 'grafana' ? namespaceId : '');
@@ -190,23 +184,26 @@ function GroupEditPage() {
     error: dsFeaturesError,
   } = useDiscoverDsFeaturesQuery({ uid: ruleSourceUid });
 
-  const {
-    data: rulerGroup,
-    isLoading: isRuleGroupLoading,
-    isUninitialized: isRuleGroupUninitialized,
-    error: ruleGroupError,
-  } = useGetRuleGroupForNamespaceQuery(
-    dsFeatures?.rulerConfig
-      ? {
-          rulerConfig: dsFeatures.rulerConfig,
-          namespace: namespaceId,
-          group: groupName,
-        }
-      : skipToken
-  );
+  // We use useAsync instead of RTKQ query to avoid cache invalidation issues when the group is being deleted
+  // RTKQ query would refetch the group after it's deleted and we'd end up with a blinking group not found error
+  const [getGroupAction, groupRequestState] = useAsync(async (rulerConfig: RulerDataSourceConfig) => {
+    return dispatch(
+      alertRuleApi.endpoints.getRuleGroupForNamespace.initiate({
+        rulerConfig: rulerConfig,
+        namespace: namespaceId,
+        group: groupName,
+      })
+    ).unwrap();
+  });
 
-  const isLoading = isFolderLoading || isDsFeaturesLoading || isRuleGroupLoading || isRuleGroupUninitialized;
-  const isDeleting = deleteMutation.isLoading;
+  useEffect(() => {
+    if (namespaceId && groupName && dsFeatures?.rulerConfig) {
+      getGroupAction.execute(dsFeatures.rulerConfig);
+    }
+  }, [namespaceId, groupName, dsFeatures?.rulerConfig, getGroupAction]);
+
+  const isLoadingGroup = isFolderLoading || isDsFeaturesLoading || isLoading(groupRequestState);
+  const { result: rulerGroup, error: ruleGroupError } = groupRequestState;
 
   const pageNav: NavModelItem = {
     text: 'Edit rule group',
@@ -221,7 +218,7 @@ function GroupEditPage() {
 
   if (!!dsFeatures && !dsFeatures.rulerConfig) {
     return (
-      <AlertingPageWrapper pageNav={pageNav} title={groupName} isLoading={isLoading}>
+      <AlertingPageWrapper pageNav={pageNav} title={groupName} isLoading={isLoadingGroup}>
         <Alert title={t('alerting.rule-groups.edit.group-not-editable', 'Selected group cannot be edited')}>
           <Trans i18nKey="alerting.rule-groups.edit.group-not-editable-description">
             This group belongs to a data source that does not support editing.
@@ -250,7 +247,7 @@ function GroupEditPage() {
       pageNav={pageNav}
       title={t('alerting.rule-groups.edit.title', 'Edit evaluation group')}
       navId="alert-list"
-      isLoading={isLoading}
+      isLoading={isLoadingGroup}
     >
       <>
         {dsFeaturesError && (
@@ -264,7 +261,7 @@ function GroupEditPage() {
         )}
         {/* If the rule group is being deleted, RTKQ will try to referch it due to cache invalidation */}
         {/* For a few miliseconds before redirecting, the rule group will be missing and 404 error would blink */}
-        {ruleGroupError && !isDeleting && (
+        {ruleGroupError && (
           <Alert
             title={t('alerting.rule-groups.edit.rule-group-error', 'Error loading rule group')}
             bottomSpacing={0}
@@ -274,8 +271,8 @@ function GroupEditPage() {
           </Alert>
         )}
       </>
-      {!isLoading && !rulerGroup && <EntityNotFound entity={`${namespaceId}/${groupName}`} />}
-      {!isLoading && rulerGroup && <GroupEditForm rulerGroup={rulerGroup} groupIdentifier={groupIdentifier} />}
+      {!isLoadingGroup && !rulerGroup && <EntityNotFound entity={`${namespaceId}/${groupName}`} />}
+      {!isLoadingGroup && rulerGroup && <GroupEditForm rulerGroup={rulerGroup} groupIdentifier={groupIdentifier} />}
     </AlertingPageWrapper>
   );
 }

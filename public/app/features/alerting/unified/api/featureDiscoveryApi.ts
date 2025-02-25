@@ -16,7 +16,7 @@ export const GRAFANA_RULER_CONFIG: RulerDataSourceConfig = {
   apiVersion: 'legacy',
 };
 
-interface RulesSourceFeatures {
+export interface RulesSourceFeatures {
   name: string;
   uid: string;
   application: RulesSourceApplication;
