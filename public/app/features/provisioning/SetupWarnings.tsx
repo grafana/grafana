@@ -329,64 +329,259 @@ function InstructionsModal({ feature, isOpen, onDismiss }: InstructionsModalProp
 
 function CompactFeaturesList({ features }: { features: FeatureInfo[] }) {
   const styles = useStyles2(getCompactStyles);
-  const [selectedFeature, setSelectedFeature] = useState<FeatureInfo | null>(null);
-  const [expandedFeature, setExpandedFeature] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const toggleDescription = (featureTitle: string) => {
-    if (expandedFeature === featureTitle) {
-      setExpandedFeature(null);
-    } else {
-      setExpandedFeature(featureTitle);
+  return (
+    <div>
+      <ul className={styles.featuresList}>
+        {features.map((feature) => (
+          <li key={feature.title} className={styles.featureItem}>
+            <div className={styles.featureContent}>
+              <span className={styles.bulletPoint}>•</span>
+              <span className={styles.featureTitle}>
+                <Text element="span" weight="medium">
+                  {feature.title}
+                </Text>
+              </span>
+              <IconButton
+                name="info-circle"
+                tooltip={feature.description}
+                className={styles.infoButton}
+                tooltipPlacement="top"
+              />
+            </div>
+          </li>
+        ))}
+      </ul>
+
+      <Box marginTop={2}>
+        <Button variant="secondary" icon="cog" onClick={() => setIsModalOpen(true)}>
+          Setup Features
+        </Button>
+      </Box>
+
+      {isModalOpen && (
+        <FeatureSetupModal features={features} isOpen={isModalOpen} onDismiss={() => setIsModalOpen(false)} />
+      )}
+    </div>
+  );
+}
+
+interface FeatureSetupModalProps {
+  features: FeatureInfo[];
+  isOpen: boolean;
+  onDismiss: () => void;
+}
+
+function FeatureSetupModal({ features, isOpen, onDismiss }: FeatureSetupModalProps) {
+  const [selectedFeature, setSelectedFeature] = useState<FeatureInfo | null>(null);
+  const [currentStepIndex, setCurrentStepIndex] = useState(0);
+  const styles = useStyles2(getStyles);
+  const [copied, setCopied] = useState(false);
+
+  if (!isOpen) {
+    return null;
+  }
+
+  // If no feature is selected, show the feature selection step
+  if (!selectedFeature) {
+    return (
+      <Modal title="Setup Features" isOpen={isOpen} onDismiss={onDismiss} className={styles.largeModal}>
+        <div className={styles.featureSelectionContent}>
+          <Text element="p" color="secondary">
+            Select a feature to set up:
+          </Text>
+
+          <div className={styles.featureSelectionList}>
+            {features.map((feature) => (
+              <div
+                key={feature.title}
+                className={styles.featureSelectionItem}
+                onClick={() => setSelectedFeature(feature)}
+              >
+                <div style={{ flex: 1, paddingRight: '60px' }}>
+                  <Text element="h4" weight="medium">
+                    {feature.title}
+                  </Text>
+                  <Text element="p" color="secondary">
+                    {feature.description}
+                  </Text>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className={styles.navigationFooter}>
+          <div className={styles.navigationButtons}>
+            <div></div>
+            <Button onClick={onDismiss} variant="secondary">
+              Cancel
+            </Button>
+          </div>
+        </div>
+      </Modal>
+    );
+  }
+
+  // Once a feature is selected, show the regular instructions modal
+  // Combine feature steps with public access steps if required
+  const allSteps = [...selectedFeature.steps];
+
+  if (selectedFeature.requiresPublicAccess) {
+    allSteps.push(
+      {
+        title: 'Set up public access to your local machine',
+        description:
+          "You need a public URL for your local Grafana instance. We recommend using <a href='https://ngrok.com/' target='_blank' rel='noopener noreferrer'>ngrok</a> (click to visit website), but you can use any similar service:",
+        code: ngrok_example,
+      },
+      {
+        title: 'Configure the root_url in your custom.ini',
+        description: 'Update your custom.ini with the ngrok URL:',
+        code: root_url_ini,
+      }
+    );
+  }
+
+  const totalSteps = allSteps.length;
+  const currentStep = allSteps[currentStepIndex];
+
+  const handleNext = () => {
+    if (currentStepIndex < totalSteps - 1) {
+      setCurrentStepIndex(currentStepIndex + 1);
     }
   };
 
-  return (
-    <ul className={styles.featuresList}>
-      {features.map((feature) => (
-        <li key={feature.title} className={styles.featureItem}>
-          <div className={styles.featureContent}>
-            <Text element="span" weight="medium" className={styles.featureTitle}>
-              {feature.title}
-            </Text>
-            <div className={styles.buttonGroup}>
-              <Button
-                size="sm"
-                variant="secondary"
-                onClick={() => toggleDescription(feature.title)}
-                icon="info-circle"
-                className={styles.infoButton}
-              >
-                Info
-              </Button>
-              <Button
-                size="sm"
-                variant="secondary"
-                onClick={() => setSelectedFeature(feature)}
-                icon="cog"
-                className={styles.setupButton}
-              >
-                Setup
-              </Button>
-            </div>
-          </div>
-          {expandedFeature === feature.title && (
-            <div className={styles.featureDescription}>
-              <Text element="p" color="secondary">
-                {feature.description}
-              </Text>
-            </div>
-          )}
-        </li>
-      ))}
+  const handlePrevious = () => {
+    if (currentStepIndex > 0) {
+      setCurrentStepIndex(currentStepIndex - 1);
+    } else {
+      // If we're at the first step, go back to feature selection
+      setSelectedFeature(null);
+      setCurrentStepIndex(0);
+    }
+  };
 
-      {selectedFeature && (
-        <InstructionsModal
-          feature={selectedFeature}
-          isOpen={selectedFeature !== null}
-          onDismiss={() => setSelectedFeature(null)}
-        />
-      )}
-    </ul>
+  const handleStepClick = (index: number) => {
+    setCurrentStepIndex(index);
+  };
+
+  // Copy current step's code
+  const copyCurrentStepCode = () => {
+    if (currentStep.code) {
+      navigator.clipboard.writeText(currentStep.code);
+      setCopied(true);
+
+      setTimeout(() => {
+        setCopied(false);
+      }, 1500);
+
+      return true;
+    }
+    return false;
+  };
+
+  return (
+    <Modal
+      title={`Configure ${selectedFeature.title}`}
+      isOpen={isOpen}
+      onDismiss={onDismiss}
+      className={styles.largeModal}
+    >
+      <div className={styles.modalContent}>
+        {/* Step indicator sidebar - always shown */}
+        <div className={styles.stepSidebar}>
+          <div className={styles.timelineTrack}>
+            {allSteps.map((step, index) => (
+              <div key={index} className={styles.timelineItem}>
+                {/* Connector line before the first step */}
+                {index === 0 && <div className={styles.timelineConnectorStart}></div>}
+
+                {/* Step indicator dot */}
+                <div
+                  className={cx(
+                    styles.timelineStepIndicator,
+                    index < currentStepIndex && styles.completedStep,
+                    index === currentStepIndex && styles.activeStep,
+                    index > currentStepIndex && styles.futureStep
+                  )}
+                  onClick={() => handleStepClick(index)}
+                >
+                  {index < currentStepIndex && <span className={styles.checkmark}>✓</span>}
+                </div>
+
+                {/* Step title */}
+                <div
+                  className={cx(
+                    styles.timelineStepName,
+                    index < currentStepIndex && styles.completedStepName,
+                    index === currentStepIndex && styles.activeStepName,
+                    index > currentStepIndex && styles.futureStepName
+                  )}
+                  onClick={() => handleStepClick(index)}
+                >
+                  {step.title}
+                </div>
+
+                {/* Connector line after each step except the last */}
+                {index < allSteps.length - 1 && (
+                  <div
+                    className={cx(
+                      styles.timelineConnector,
+                      index < currentStepIndex && styles.completedConnector,
+                      index === currentStepIndex && styles.activeConnector,
+                      index > currentStepIndex && styles.futureConnector
+                    )}
+                  ></div>
+                )}
+
+                {/* Connector line after the last step */}
+                {index === allSteps.length - 1 && <div className={styles.timelineConnectorEnd}></div>}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Main content */}
+        <div className={styles.stepContent}>
+          <div className={styles.contentWrapper}>
+            <InstructionStepComponent
+              step={currentStep}
+              totalSteps={totalSteps}
+              copied={copied}
+              onCopy={copyCurrentStepCode}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Fixed navigation footer */}
+      <div className={styles.navigationFooter}>
+        <div className={styles.navigationButtons}>
+          <Button onClick={handlePrevious} variant="secondary" icon="angle-left">
+            {currentStepIndex === 0 ? 'Back to Features' : 'Previous'}
+          </Button>
+
+          <div className={styles.keyboardHint}>
+            {totalSteps > 1 ? <span>Use ←↑→↓ arrow keys to navigate</span> : null}
+            {currentStep.code && <span>{totalSteps > 1 ? ' • ' : ''}Press Ctrl+C to copy code</span>}
+          </div>
+
+          <div className={styles.rightButtons}>
+            {currentStepIndex < totalSteps - 1 ? (
+              <Button onClick={handleNext} variant="primary" icon="angle-right">
+                Next
+              </Button>
+            ) : (
+              <Button onClick={onDismiss} variant="primary" icon="check">
+                Done
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
+    </Modal>
   );
 }
 
@@ -837,6 +1032,37 @@ const getStyles = (theme: GrafanaTheme2) => {
       fontWeight: theme.typography.fontWeightMedium,
       boxShadow: theme.shadows.z2,
     }),
+    featureSelectionContent: css({
+      padding: theme.spacing(3),
+      overflowY: 'auto',
+      maxHeight: 'calc(80vh - 120px)',
+    }),
+    featureSelectionList: css({
+      display: 'flex',
+      flexDirection: 'column',
+      gap: theme.spacing(2),
+      marginTop: theme.spacing(2),
+    }),
+    featureSelectionItem: css({
+      padding: theme.spacing(2),
+      backgroundColor: theme.colors.background.secondary,
+      borderRadius: theme.shape.borderRadius(1),
+      cursor: 'pointer',
+      transition: 'all 0.2s ease',
+      position: 'relative',
+      display: 'flex',
+      flexDirection: 'column',
+      '&:hover': {
+        backgroundColor: theme.colors.background.canvas,
+        boxShadow: theme.shadows.z1,
+      },
+    }),
+    selectFeatureButton: css({
+      position: 'absolute',
+      right: theme.spacing(2),
+      top: '50%',
+      transform: 'translateY(-50%)',
+    }),
   };
 };
 
@@ -848,38 +1074,30 @@ const getCompactStyles = (theme: GrafanaTheme2) => {
       padding: 0,
     }),
     featureItem: css({
-      padding: `${theme.spacing(1)} 0`,
-      borderBottom: `1px solid ${theme.colors.border.weak}`,
+      padding: `${theme.spacing(0.5)} 0`,
       '&:last-child': {
         borderBottom: 'none',
       },
     }),
     featureContent: css({
       display: 'flex',
-      justifyContent: 'space-between',
       alignItems: 'center',
+      gap: theme.spacing(0.5),
+    }),
+    bulletPoint: css({
+      fontSize: theme.typography.size.lg,
+      color: theme.colors.text.secondary,
+      marginRight: theme.spacing(0.5),
     }),
     featureTitle: css({
       margin: 0,
-    }),
-    buttonGroup: css({
-      display: 'flex',
-      gap: theme.spacing(1),
+      flex: 1,
     }),
     infoButton: css({
-      minWidth: '70px',
-    }),
-    setupButton: css({
-      minWidth: '80px',
-    }),
-    featureDescription: css({
-      marginTop: theme.spacing(1),
-      paddingLeft: theme.spacing(2),
-      paddingRight: theme.spacing(2),
-      paddingBottom: theme.spacing(1),
-      borderLeft: `3px solid ${theme.colors.border.medium}`,
-      backgroundColor: theme.colors.background.canvas,
-      borderRadius: `0 ${theme.shape.borderRadius(1)}px ${theme.shape.borderRadius(1)}px 0`,
+      color: theme.colors.text.secondary,
+      '&:hover': {
+        color: theme.colors.text.primary,
+      },
     }),
   };
 };
