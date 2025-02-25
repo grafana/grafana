@@ -22,9 +22,9 @@ export function getOptions(model: ResponsiveGridItem): OptionsPaneCategoryDescri
 
   category.addItem(
     new OptionsPaneItemDescriptor({
-      title: t('dashboard.default-layout.item-options.repeat.variable.title', 'Repeat by variable'),
+      title: t('dashboard.responsive-layout.item-options.repeat.variable.title', 'Repeat by variable'),
       description: t(
-        'dashboard.default-layout.item-options.repeat.variable.description',
+        'dashboard.responsive-layout.item-options.repeat.variable.description',
         'Repeat this panel for each value in the selected variable. This is not visible while in edit mode. You need to go back to dashboard and then update the variable or reload the dashboard.'
       ),
       render: () => <RepeatByOption item={model} />,

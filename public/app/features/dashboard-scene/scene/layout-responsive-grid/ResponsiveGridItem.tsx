@@ -36,7 +36,7 @@ export class ResponsiveGridItem extends SceneObjectBase<ResponsiveGridItemState>
   protected _variableDependency = new ResponsiveGridItemVariableDependencyHandler(this);
   public readonly isDashboardLayoutItem = true;
 
-  constructor(state: ResponsiveGridItemState) {
+  public constructor(state: ResponsiveGridItemState) {
     super(state);
     this.addActivationHandler(() => this._activationHandler());
   }
@@ -124,5 +124,6 @@ export class ResponsiveGridItem extends SceneObjectBase<ResponsiveGridItemState>
     }
 
     this.setState(stateUpdate);
+    this.performRepeat();
   }
 }

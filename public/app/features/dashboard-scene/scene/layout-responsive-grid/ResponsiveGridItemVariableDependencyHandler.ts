@@ -3,7 +3,7 @@ import { SceneVariable, SceneVariableDependencyConfigLike } from '@grafana/scene
 import { ResponsiveGridItem } from './ResponsiveGridItem';
 
 export class ResponsiveGridItemVariableDependencyHandler implements SceneVariableDependencyConfigLike {
-  constructor(private _gridItem: ResponsiveGridItem) {}
+  public constructor(private _gridItem: ResponsiveGridItem) {}
 
   public getNames(): Set<string> {
     if (this._gridItem.state.variableName) {
