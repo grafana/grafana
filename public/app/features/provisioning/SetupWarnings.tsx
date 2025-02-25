@@ -68,7 +68,7 @@ function InstructionsModal({ feature, isOpen, onDismiss }: InstructionsModalProp
   }
 
   return (
-    <Modal title={`How to enable ${feature.title}`} isOpen={isOpen} onDismiss={onDismiss}>
+    <Modal title={`Configure ${feature.title}`} isOpen={isOpen} onDismiss={onDismiss}>
       <Box padding={2}>
         {feature.configTitle && (
           <Box marginBottom={2}>
@@ -209,24 +209,18 @@ callback_url = http://localhost:3000/
 `;
 
 export function SetupWarnings() {
-  const [isCustomIniOpen, setCustomIniOpen] = useLocalStorage('collapse_custom_ini', true);
+  const [isCustomIniModalOpen, setCustomIniModalOpen] = useState(false);
   const settings = useGetFrontendSettingsQuery();
-
   const missingFeatures = requiredFeatureToggles.filter((feature) => !config.featureToggles[feature]);
 
-  const handleCustomIniToggle = () => {
-    setCustomIniOpen(!isCustomIniOpen);
+  // Create a feature info object for the missing features
+  const missingFeaturesInfo: FeatureInfo = {
+    title: 'Required Features',
+    description: 'Configure these required feature toggles for proper functionality',
+    configInstructions: 'Add the following to your custom.ini file:',
+    configCode: custom_ini,
+    requiresPublicAccess: false,
   };
-
-  const styles = useStyles2(getStyles);
-
-  if (
-    missingFeatures.length === 0 &&
-    settings.data?.githubWebhooks !== false &&
-    settings.data?.generateDashboardPreviews !== false
-  ) {
-    return null;
-  }
 
   // Prepare features data for the table
   const featuresData: FeatureInfo[] = [];
@@ -251,11 +245,19 @@ export function SetupWarnings() {
     });
   }
 
+  if (
+    missingFeatures.length === 0 &&
+    settings.data?.githubWebhooks !== false &&
+    settings.data?.generateDashboardPreviews !== false
+  ) {
+    return null;
+  }
+
   return (
     <>
       {missingFeatures.length > 0 && (
         <>
-          <Alert title="Missing required features" severity="error">
+          <Alert title="Some required features are disabled" severity="error">
             <Box marginBottom={2}>
               <Text element="p">
                 The following feature toggles are required for proper functionality but are currently disabled:
@@ -266,15 +268,16 @@ export function SetupWarnings() {
                 </li>
               ))}
             </Box>
-            <Collapse
-              isOpen={isCustomIniOpen}
-              label="See example configuration for local testing"
-              onToggle={handleCustomIniToggle}
-              collapsible
-            >
-              <CodeBlockWithCopy code={custom_ini} />
-            </Collapse>
+            <Button onClick={() => setCustomIniModalOpen(true)} variant="secondary" icon="info-circle">
+              See example configuration
+            </Button>
           </Alert>
+
+          <InstructionsModal
+            feature={missingFeaturesInfo}
+            isOpen={isCustomIniModalOpen}
+            onDismiss={() => setCustomIniModalOpen(false)}
+          />
         </>
       )}
 
