@@ -2814,7 +2814,8 @@
       "old-password-required": "Øľđ päşşŵőřđ įş řęqūįřęđ",
       "passwords-must-match": "Päşşŵőřđş mūşŧ mäŧčĥ",
       "strong-password-validation-register": "Päşşŵőřđ đőęş ŉőŧ čőmpľy ŵįŧĥ ŧĥę şŧřőŉģ päşşŵőřđ pőľįčy"
-    }
+    },
+    "change-theme": "Cĥäŉģę ŧĥęmę"
   },
   "public-dashboard": {
     "acknowledgment-checkboxes": {
@@ -3491,6 +3492,16 @@
       "message": "Ńő ŧęämş ƒőūŉđ",
       "pro-tip": "Åşşįģŉ ƒőľđęř äŉđ đäşĥþőäřđ pęřmįşşįőŉş ŧő ŧęämş įŉşŧęäđ őƒ ūşęřş ŧő ęäşę äđmįŉįşŧřäŧįőŉ. <2>Ŀęäřŉ mőřę</2>",
       "title": "Ÿőū ĥävęŉ'ŧ čřęäŧęđ äŉy ŧęämş yęŧ"
+    }
+  },
+  "theme-preview": {
+    "breadcrumbs": {
+      "dashboards": "Đäşĥþőäřđş",
+      "home": "Ħőmę"
+    },
+    "panel": {
+      "form-label": "Főřm ľäþęľ",
+      "title": "Päŉęľ"
     }
   },
   "time-picker": {

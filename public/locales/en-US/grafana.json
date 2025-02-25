@@ -2814,7 +2814,8 @@
       "old-password-required": "Old password is required",
       "passwords-must-match": "Passwords must match",
       "strong-password-validation-register": "Password does not comply with the strong password policy"
-    }
+    },
+    "change-theme": "Change theme"
   },
   "public-dashboard": {
     "acknowledgment-checkboxes": {
@@ -3491,6 +3492,16 @@
       "message": "No teams found",
       "pro-tip": "Assign folder and dashboard permissions to teams instead of users to ease administration. <2>Learn more</2>",
       "title": "You haven't created any teams yet"
+    }
+  },
+  "theme-preview": {
+    "breadcrumbs": {
+      "dashboards": "Dashboards",
+      "home": "Home"
+    },
+    "panel": {
+      "form-label": "Form label",
+      "title": "Panel"
     }
   },
   "time-picker": {
