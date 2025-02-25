@@ -45,7 +45,6 @@ export const createLogLine = (
     escape: false,
     order: LogsSortOrder.Descending,
     timeZone: 'browser',
-    wrap: false,
   }
 ): LogListModel => {
   const logs = preProcessLogs([createLogRow(overrides)], processOptions);
