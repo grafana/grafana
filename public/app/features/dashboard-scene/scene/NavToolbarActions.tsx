@@ -79,7 +79,9 @@ export function ToolbarActions({ dashboard }: Props) {
   const showScopesSelector = config.featureToggles.scopeFilters && !isEditing;
   const dashboardNewLayouts = config.featureToggles.dashboardNewLayouts;
 
-  // Internal only; only used for grafana play
+  // Internal only;
+  // allows viewer editing without ability to save 
+  // used for grafana play
   const canEdit = grafanaConfig.viewersCanEdit;
 
   if (!isEditingPanel) {
